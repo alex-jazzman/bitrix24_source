@@ -5,8 +5,6 @@ import { SaveButton } from 'ui.buttons';
 import 'ui.hint';
 import 'ui.alerts';
 
-import { AliasEditor } from './alias-editor';
-
 import './css/style.css';
 
 type SenderData = {
@@ -25,7 +23,6 @@ type Options = {
 	senderId?: number,
 	setSenderCallback?: Function,
 	addSenderCallback?: Function,
-	onClose?: Function,
 };
 
 const SidePanel = BX.SidePanel;
@@ -52,7 +49,6 @@ export class SmtpEditor
 			this.setSender = options.setSenderCallback ?? null;
 			this.addSender = options.addSenderCallback ?? null;
 		}
-		this.onCloseAction = options.onClose ?? null;
 
 		this.#createContentContainer();
 		this.#prepareNecessaryFields();
@@ -211,15 +207,6 @@ export class SmtpEditor
 				}
 
 				BX.SidePanel.Instance.getTopSlider().close();
-				if (!this.senderId && !this.addSender)
-				{
-					AliasEditor.openSlider({
-						senderId: data.senderId,
-						email: this.email,
-						setSenderCallback: this.setSender,
-						onClose: this.onCloseAction,
-					});
-				}
 			})
 			.catch((response) => {
 				this.#showAlertNode(response.errors[0].message);

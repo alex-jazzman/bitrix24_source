@@ -14,3 +14,4 @@ $MESS['HR_BIC_STRUCTURE_FIELD_ID_PARENT_NAME'] = "ID и название выш�
 $MESS['HR_BIC_STRUCTURE_FIELD_ID_PARENT_NAME_FULL'] = "Идентификатор и название вышестоящего отдела в структуре";
 $MESS['HR_BIC_STRUCTURE_FIELD_ID_NAME_MSG_VER1'] = "Идентификатор и название отдела";
 $MESS['HR_BIC_STRUCTURE_FIELD_ID_NAME_FULL_MSG_VER1'] = "Идентификатор и название отдела в структуре";
+$MESS['HR_BIC_STRUCTURE_TABLE_DESCRIPTION_FULL'] = "Набор содержит информацию о подразделениях компании: их названия, типы, статусы.";

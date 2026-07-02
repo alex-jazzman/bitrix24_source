@@ -1,4 +1,4 @@
-import { Loc } from 'main.core';
+import { Loc, Extension } from 'main.core';
 
 import { Hint } from 'ui.vue3.components.hint';
 import { hint } from 'ui.vue3.directives.hint';
@@ -9,7 +9,9 @@ export const promptTypes: PromptTypesInfo = [
 	{
 		id: 'DEFAULT',
 		title: Loc.getMessage('PROMPT_MASTER_TYPE_FIRST_TITLE'),
-		description: Loc.getMessage('PROMPT_MASTER_TYPE_FIRST_DESCRIPTION'),
+		description: Loc.getMessage('PROMPT_MASTER_TYPE_FIRST_DESCRIPTION_MSGVER_1', {
+			'#COPILOT_NAME#': getCopilotName(),
+		}),
 		example: Loc.getMessage('PROMPT_MASTER_TYPE_FIRST_EXAMPLE'),
 		active: false,
 		icon: 'stars',
@@ -17,7 +19,9 @@ export const promptTypes: PromptTypesInfo = [
 	{
 		id: 'SIMPLE_TEMPLATE',
 		title: Loc.getMessage('PROMPT_MASTER_TYPE_SECOND_TITLE'),
-		description: Loc.getMessage('PROMPT_MASTER_TYPE_SECOND_DESCRIPTION'),
+		description: Loc.getMessage('PROMPT_MASTER_TYPE_SECOND_DESCRIPTION_MSGVER_1', {
+			'#COPILOT_NAME#': getCopilotName(),
+		}),
 		example: Loc.getMessage('PROMPT_MASTER_TYPE_SECOND_EXAMPLE', {
 			'#accent#': '<strong>',
 			'#/accent#': '</strong>',
@@ -37,6 +41,11 @@ type PromptTypeInfo = {
 	active: boolean;
 	icon: string;
 };
+
+function getCopilotName(): string
+{
+	return Extension.getSettings('ai.prompt-master').get('copilotName');
+}
 
 export const PromptMasterPromptTypes = {
 	components: {

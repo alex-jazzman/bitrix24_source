@@ -11,6 +11,9 @@ jn.define('im/messenger/lib/widget/header-button/popup-create-button', (require,
 	 */
 	class PopupCreateButton
 	{
+		#shouldShow = null;
+		#callback = null;
+
 		/**
 		 * @param {HeaderPopupCreateButtonConfig} options
 		 * @return {PopupCreateButton}
@@ -28,7 +31,7 @@ jn.define('im/messenger/lib/widget/header-button/popup-create-button', (require,
 			this.id = options.id;
 			this.type = options.type;
 			this.title = options.title;
-			this.buttons = options.buttons;
+			this.buttons = options.buttons ?? [];
 
 			this.sections = Type.isArrayFilled(options.sections) ? options.sections : [{ id: 'general' }];
 			this.testId = Type.isStringFilled(options.testId) ? options.testId : `${options.id}_button`;
@@ -37,10 +40,22 @@ jn.define('im/messenger/lib/widget/header-button/popup-create-button', (require,
 			this.getSections = options.getSections ?? (() => this.sections);
 			this.isAccent = options.isAccent ?? (() => false);
 			this.getType = options.getType ?? (() => this.type);
+			this.#shouldShow = options.shouldShow ?? null;
+			this.#callback = options.callback ?? null;
 		}
 
 		async shouldShow()
 		{
+			if (this.#shouldShow)
+			{
+				return this.#shouldShow();
+			}
+
+			if (this.#callback)
+			{
+				return true;
+			}
+
 			const shouldShowPromiseList = this.buttons.map(async (button) => button.shouldShow());
 			const shouldShowResult = await Promise.all(shouldShowPromiseList);
 
@@ -49,6 +64,11 @@ jn.define('im/messenger/lib/widget/header-button/popup-create-button', (require,
 
 		async callback()
 		{
+			if (this.#callback)
+			{
+				return this.#callback();
+			}
+
 			const menuPopup = window.dialogs.createPopupMenu();
 			const shouldShowButtonPromiseList = this.buttons.map(async (button) => {
 				const isVisible = await button.shouldShow();
@@ -76,6 +96,15 @@ jn.define('im/messenger/lib/widget/header-button/popup-create-button', (require,
 				}
 			};
 
+			try
+			{
+				console.warn('to show', menuButtons, this.getSections(), menuButtonHandler);
+
+			}
+			catch (e)
+			{
+				console.error(e);
+			}
 			menuPopup.setData(menuButtons, this.getSections(), menuButtonHandler);
 			menuPopup.show([]);
 		}

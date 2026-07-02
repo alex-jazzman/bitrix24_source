@@ -1,4 +1,5 @@
 import { SidebarMainPanelBlock, ChatType } from 'im.v2.const';
+import { Loc } from 'main.core';
 
 import { SidebarPreset } from '../classes/preset';
 
@@ -15,6 +16,7 @@ const taskCommentsPreset = new SidebarPreset({
 		SidebarMainPanelBlock.taskCommentsHistory,
 	],
 	isHeaderMenuEnabled: () => false,
+	getHeaderTitle: () => Loc.getMessage('IM_SIDEBAR_TASK_COMMENTS_HEADER_TITLE'),
 });
 
 export { isTaskComments, taskCommentsPreset };

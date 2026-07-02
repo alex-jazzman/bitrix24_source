@@ -101,6 +101,7 @@ jn.define('im/messenger/db/table/recent', (require, exports, module) => {
 				dialogTypes = [],
 				exceptDialogTypes = [],
 				lastActivityDate = null,
+				parentChatId = null,
 				limit,
 			},
 		)
@@ -120,6 +121,7 @@ jn.define('im/messenger/db/table/recent', (require, exports, module) => {
 				dialogTypes,
 				exceptDialogTypes,
 				lastActivityDate,
+				parentChatId,
 			});
 
 			const query = `
@@ -288,12 +290,14 @@ jn.define('im/messenger/db/table/recent', (require, exports, module) => {
 		 * @param {DialoguesFilter['dialogTypes']} dialogTypes
 		 * @param {DialoguesFilter['exceptDialogTypes']} exceptDialogTypes
 		 * @param {string} lastActivityDate
+		 * @param {number|null} parentChatId
 		 * @return {string}
 		 */
 		createFilter({
 			dialogTypes = [],
 			exceptDialogTypes = [],
 			lastActivityDate = null,
+			parentChatId = null,
 		})
 		{
 			let filterString = '';
@@ -322,6 +326,15 @@ jn.define('im/messenger/db/table/recent', (require, exports, module) => {
 				filterString.length > 0
 					? filterString += ` AND ${this.getName()}.lastActivityDate < '${lastActivityDate}'`
 					: filterString = ` WHERE ${this.getName()}.lastActivityDate < '${lastActivityDate}'`;
+			}
+
+			if (Type.isNumber(parentChatId))
+			{
+				// eslint-disable-next-line no-unused-expressions
+				filterString.length > 0
+					? filterString += ` AND ${DialogTable.getTableName()}.parentChatId = ${parentChatId}`
+					: filterString = ` WHERE ${DialogTable.getTableName()}.parentChatId = ${parentChatId}}`
+				;
 			}
 
 			return filterString;

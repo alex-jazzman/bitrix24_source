@@ -9,7 +9,7 @@ $message = $arResult['MESSAGE'];
 
 $datetimeFormat = \Bitrix\Main\Loader::includeModule('intranet') ? \CIntranetUtils::getCurrentDatetimeFormat() : false;
 $datetimeFormatted = \CComponentUtil::getDateTimeFormatted(
-	$message['FIELD_DATE']->getTimestamp()+\CTimeZone::getOffset(),
+	($message['INTERNALDATE'] ?? $message['FIELD_DATE'])->getTimestamp()+\CTimeZone::getOffset(),
 	$datetimeFormat,
 	\CTimeZone::getOffset()
 );

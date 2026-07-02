@@ -795,79 +795,6 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	      btnText.innerHTML = main_core.Loc.getMessage('SBPE_MORE');
 	    }
 	  }, {
-	    key: "getTaskForm",
-	    value: function getTaskForm() {
-	      var _this6 = this;
-	      var tabContainer = document.getElementById('feed-add-post-form-tab-tasks') && document.getElementById('feed-add-post-form-tab-tasks').style.display !== 'none' ? document.getElementById('feed-add-post-form-tab-tasks') : document.getElementById('feed-add-post-form-link-more');
-	      var content = document.getElementById('feed-add-post-content-tasks');
-	      var contentContainer = document.getElementById('feed-add-post-content-tasks-container');
-	      if (contentContainer && contentContainer.innerHTML.length <= 0 && !this.clickDisabled) {
-	        this.clickDisabled = true;
-	        PostForm.getInstance().showWait(contentContainer);
-	        this.startAnimation();
-	        var componentParameters = {
-	          GROUP_ID: main_core.Loc.getMessage('TASK_SOCNET_GROUP_ID'),
-	          PATH_TO_USER_TASKS: main_core.Loc.getMessage('PATH_TO_USER_TASKS'),
-	          PATH_TO_USER_TASKS_TASK: main_core.Loc.getMessage('PATH_TO_USER_TASKS_TASK'),
-	          PATH_TO_GROUP_TASKS: main_core.Loc.getMessage('PATH_TO_GROUP_TASKS'),
-	          PATH_TO_GROUP_TASKS_TASK: main_core.Loc.getMessage('PATH_TO_GROUP_TASKS_TASK'),
-	          PATH_TO_USER_PROFILE: main_core.Loc.getMessage('PATH_TO_USER_PROFILE'),
-	          PATH_TO_GROUP: main_core.Loc.getMessage('PATH_TO_GROUP'),
-	          PATH_TO_USER_TASKS_PROJECTS_OVERVIEW: main_core.Loc.getMessage('PATH_TO_USER_TASKS_PROJECTS_OVERVIEW'),
-	          PATH_TO_USER_TASKS_TEMPLATES: main_core.Loc.getMessage('PATH_TO_USER_TASKS_TEMPLATES'),
-	          PATH_TO_USER_TEMPLATES_TEMPLATE: main_core.Loc.getMessage('PATH_TO_USER_TEMPLATES_TEMPLATE'),
-	          ENABLE_FOOTER: 'N',
-	          TEMPLATE_CONTROLLER_ID: 'livefeed_task_form',
-	          ENABLE_FORM: 'N',
-	          BACKURL: main_core.Loc.getMessage('TASK_SUBMIT_BACKURL')
-	        };
-	        main_core.ajax.runComponentAction('bitrix:tasks.task', 'uiEdit', {
-	          mode: 'class',
-	          data: {
-	            parameters: {
-	              COMPONENT_PARAMETERS: componentParameters
-	            }
-	          },
-	          analytics: {
-	            tool: 'tasks',
-	            category: 'task_operations',
-	            event: 'click_create',
-	            type: 'task',
-	            c_section: 'feed',
-	            c_element: 'create_button'
-	          }
-	        }).then(function (response) {
-	          main_core.Runtime.html(contentContainer, response.data.html).then(function () {
-	            _this6.clickDisabled = false;
-	            _this6.closeWait(contentContainer);
-	            _this6.endAnimation();
-	            main_core_events.EventEmitter.emit(document.getElementById('divlivefeed_task_form'), 'OnShowLHE', new main_core_events.BaseEvent({
-	              compatData: ['justShow']
-	            }));
-	          });
-	          main_core.Dom.adjust(content, {
-	            style: {
-	              display: 'block'
-	            }
-	          });
-	        }, function (response) {
-	          _this6.clickDisabled = false;
-	          _this6.closeWait(contentContainer);
-	          _this6.endAnimation();
-	          if (response.errors && response.errors.length) {
-	            var errors = [];
-	            response.errors.forEach(function (error) {
-	              errors.push(error.message);
-	            });
-	            throw new Error(errors.join(' '));
-	          }
-	        });
-	      } else {
-	        this.startAnimation();
-	        this.endAnimation();
-	      }
-	    }
-	  }, {
 	    key: "closeWait",
 	    value: function closeWait(node) {
 	      var waiterNode = node.bxmsg;
@@ -889,7 +816,7 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	  }, {
 	    key: "getLists",
 	    value: function getLists() {
-	      var _this7 = this;
+	      var _this6 = this;
 	      var tabContainer = document.getElementById('feed-add-post-form-tab-lists') && document.getElementById('feed-add-post-form-tab-lists').style.display !== 'none' ? document.getElementById('feed-add-post-form-tab-lists') : document.getElementById('feed-add-post-form-link-more');
 	      var tabs = tabContainer.querySelectorAll('span.feed-add-post-form-link-lists');
 	      var tabsDefault = tabContainer.querySelectorAll('span.feed-add-post-form-link-lists-default');
@@ -942,7 +869,7 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	                }));
 	              }
 	              tabs = tabContainer.querySelectorAll('span.feed-add-post-form-link-lists');
-	              menuItemsLists = _this7.getMenuItems(tabs, canOpenInSlider ? _classPrivateMethodGet(_this7, _handleCreateListInSlider, _handleCreateListInSlider2).bind(_this7) : _this7.createOnclickLists);
+	              menuItemsLists = _this6.getMenuItems(tabs, canOpenInSlider ? _classPrivateMethodGet(_this6, _handleCreateListInSlider, _handleCreateListInSlider2).bind(_this6) : _this6.createOnclickLists);
 	              if (!tabsDefault.length) {
 	                for (var _k in result.permissions) {
 	                  if (!result.permissions.hasOwnProperty(_k)) {
@@ -980,9 +907,9 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	                }
 	                tabsDefault = tabContainer.querySelectorAll('span.feed-add-post-form-link-lists-default');
 	              }
-	              menuItemsListsDefault = _this7.getMenuItemsDefault(tabsDefault);
+	              menuItemsListsDefault = _this6.getMenuItemsDefault(tabsDefault);
 	              menuItemsLists = menuItemsLists.concat(menuItemsListsDefault);
-	              _this7.showMoreMenuLists(menuItemsLists);
+	              _this6.showMoreMenuLists(menuItemsLists);
 	            } else {
 	              tabContainer.appendChild(main_core.Dom.create('span', {
 	                attrs: {
@@ -998,8 +925,8 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	                }
 	              }));
 	              tabs = tabContainer.querySelectorAll('span.feed-add-post-form-link-lists-default');
-	              menuItemsLists = _this7.getMenuItems(tabs, false);
-	              _this7.showMoreMenuLists(menuItemsLists);
+	              menuItemsLists = _this6.getMenuItems(tabs, false);
+	              _this6.showMoreMenuLists(menuItemsLists);
 	            }
 	          }
 	        });
@@ -1008,7 +935,7 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	  }, {
 	    key: "clickStartWorkflowButton",
 	    value: function clickStartWorkflowButton() {
-	      var _this8 = this;
+	      var _this7 = this;
 	      main_core.Runtime.loadExtension('bizproc.router').then(function (_ref) {
 	        var Router = _ref.Router;
 	        if (main_core.Type.isFunction(Router.openUserProcessesStart)) {
@@ -1030,7 +957,7 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	          };
 	          Router.openUserProcessesStart(options);
 	        } else {
-	          _this8.getLists(); // TODO delete in future version
+	          _this7.getLists(); // TODO delete in future version
 	        }
 	      })["catch"](function (e) {
 	        return console.error(e);
@@ -1120,7 +1047,7 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	  return PostFormTabs;
 	}(main_core_events.EventEmitter);
 	function _handleCreateListInSlider2(id, iblock) {
-	  var _this9 = this;
+	  var _this8 = this;
 	  return function () {
 	    main_core.Runtime.loadExtension('lists.element.creation-guide').then(function (_ref3) {
 	      var CreationGuide = _ref3.CreationGuide;
@@ -1142,9 +1069,9 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	        });
 	        return;
 	      }
-	      _this9.createOnclickLists(id, iblock)();
+	      _this8.createOnclickLists(id, iblock)();
 	    })["catch"](function () {
-	      _this9.createOnclickLists(id, iblock)();
+	      _this8.createOnclickLists(id, iblock)();
 	    });
 	  };
 	}

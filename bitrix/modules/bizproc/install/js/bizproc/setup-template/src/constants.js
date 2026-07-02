@@ -17,7 +17,9 @@ export const CONSTANT_TYPES: Record<string, ConstantType> = Object.freeze({
 	SELECT: 'select',
 	KNOWLEDGE: 'rag_knowledge_base',
 	PROJECT: 'project',
+	ENTITY_SELECTOR: 'entityselector',
 	TIME: 'time',
+	BI_DASHBOARD: 'bi_dashboard',
 });
 
 export const DELIMITER_TYPES: Record<string, DelimiterType> = Object.freeze({

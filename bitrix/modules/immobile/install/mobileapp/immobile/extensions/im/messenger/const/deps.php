@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'type',
+		'tokens',
 	],
 	'bundle' => [
 		'./src/ai-assistant-button',
@@ -38,9 +39,11 @@ return [
 		'./src/file-download-types',
 		'./src/file-status',
 		'./src/file-type',
+		'./src/folder',
 		'./src/keyboard',
 		'./src/message',
 		'./src/message-menu-action-type',
+		'./src/message-menu-section-id',
 		'./src/messages-auto-delete',
 		'./src/messenger-component-request-method',
 		'./src/messenger-init-rest',
@@ -69,5 +72,6 @@ return [
 		'./src/widget',
 		'./src/chat-search-selector-section',
 		'./src/recent-filter',
+		'./src/recent-menu-section',
 	],
 ];

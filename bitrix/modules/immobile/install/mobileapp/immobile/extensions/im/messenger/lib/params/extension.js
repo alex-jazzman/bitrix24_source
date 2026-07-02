@@ -30,8 +30,14 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		isCopilotMentionAvailable: false,
 		isCopilotReasoningAvailable: false,
 		videoNoteTranscriptionAvailable: false,
+		isBitrixGptV2Available: false,
 		aiAssistantMcpSelectorAvailable: false,
 		isAddingUserByMentionAvailable: false,
+		isMessageBuilderAvailable: false,
+		isNestedChatAvailable: false,
+		isExternalChatMessageForwardingAvailable: false,
+		isChatFoldersAvailable: false,
+		chatSharingLinkAvailable: false,
 	};
 
 	/**
@@ -134,6 +140,14 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		/**
 		 * @return boolean
 		 */
+		isMarkdownParserEnabled()
+		{
+			return this.get('IS_MARKDOWN_PARSER_ENABLED', false);
+		}
+
+		/**
+		 * @return boolean
+		 */
 		isOpenlinesInMessengerAvailable()
 		{
 			return this.get('IS_OPENLINES_IN_MESSENGER_V2_AVAILABLE', false);
@@ -145,6 +159,14 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		isRecentFilterAvailable()
 		{
 			return this.get('IS_RECENT_FILTER_AVAILABLE', false);
+		}
+
+		/**
+		 * @return boolean
+		 */
+		isExternalChatMessageForwardingAvailable()
+		{
+			return this.get('IS_EXTERNAL_CHAT_MESSAGE_FORWARDING_AVAILABLE', false);
 		}
 
 		/**
@@ -262,6 +284,21 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		getCopilotBotName()
 		{
 			return this.get('COPILOT_BOT_NAME', '');
+		}
+
+		getCopilotMCPButtonAvailable()
+		{
+			return this.get('IS_COPILOT_MCP_BUTTON_AVAILABLE', false);
+		}
+
+		getSearchModeButtonAvailable()
+		{
+			return this.get('IS_SEARCH_MODE_BUTTON_AVAILABLE', false);
+		}
+
+		getAgentButtonAvailable()
+		{
+			return this.get('IS_AGENT_BUTTON_AVAILABLE', false);
 		}
 
 		canUseAudioPanel()

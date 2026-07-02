@@ -9,13 +9,13 @@ return [
 	'js' => 'dist/messages.bundle.js',
 	'rel' => [
 		'crm.autorun',
-		'ui.notification',
-		'main.popup',
 		'crm.integration.analytics',
-		'ui.entity-catalog',
 		'main.core',
 		'main.core.events',
+		'main.popup',
 		'ui.design-tokens',
+		'ui.entity-catalog',
+		'ui.notification',
 	],
 	'skip_core' => false,
 ];

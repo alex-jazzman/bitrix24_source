@@ -6,7 +6,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	'use strict';
 
 	let _ = t => t,
-	  _t;
+	  _t,
+	  _t2;
 	const settings = main_core.Extension.getSettings('tasks.v2.application.task-card');
 	const load = top.BX.Runtime.loadExtension;
 	class TaskCard {
@@ -81,18 +82,28 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    };
 	    BX.SidePanel.Instance.open((_params$url = params.url) != null ? _params$url : this.getUrl(params.taskId), options);
 	  }
-	  static async embedFullCard(params) {
+	  static embedFullCard(params) {
 	    let card = null;
-	    const exports = await load('tasks.v2.application.task-full-card');
-	    card = new exports.TaskFullCard(params);
+	    let unmounted = false;
+	    const loading = load('tasks.v2.application.task-full-card');
 	    return {
 	      mount: container => {
-	        var _card3;
-	        return (_card3 = card) == null ? void 0 : _card3.mountEmbedded(container);
+	        const skeleton = main_core.Tag.render(_t2 || (_t2 = _`<div style="width: 100%; height: 100%"/>`));
+	        main_core.Dom.append(skeleton, container);
+	        void ui_system_skeleton.renderSkeleton('/bitrix/js/tasks/v2/application/task-card/src/skeleton-full-embedded.html?v=1', skeleton);
+	        void loading.then(exports => {
+	          if (unmounted) {
+	            return;
+	          }
+	          main_core.Dom.remove(skeleton, container);
+	          card = new exports.TaskFullCard(params);
+	          void card.mountEmbedded(container);
+	        });
 	      },
 	      unmount: () => {
-	        var _card4;
-	        return (_card4 = card) == null ? void 0 : _card4.unmountEmbedded();
+	        var _card3;
+	        unmounted = true;
+	        (_card3 = card) == null ? void 0 : _card3.unmountEmbedded();
 	      },
 	      taskId: params == null ? void 0 : params.taskId,
 	      taskUrl: TaskCard.getUrl(params.taskId)

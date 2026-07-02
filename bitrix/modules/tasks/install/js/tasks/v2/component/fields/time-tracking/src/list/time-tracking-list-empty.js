@@ -12,6 +12,12 @@ export const TimeTrackingListEmpty = {
 		HeadlineXs,
 		UiButton,
 	},
+	props: {
+		addBtnDisabled: {
+			type: Boolean,
+			default: false,
+		},
+	},
 	emits: ['add'],
 	setup(): Object
 	{
@@ -34,6 +40,7 @@ export const TimeTrackingListEmpty = {
 					:text="loc('TASKS_V2_TIME_TRACKING_SHEET_LIST_EMPTY_ADD_BTN')"
 					:style="AirButtonStyle.FILLED"
 					:size="ButtonSize.MEDIUM"
+					:disabled="addBtnDisabled"
 				/>
 			</div>
 		</div>

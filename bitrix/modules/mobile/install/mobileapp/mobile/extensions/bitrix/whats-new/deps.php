@@ -7,5 +7,6 @@ return [
 		'whats-new/service',
 		'whats-new/counter-manager',
 		'layout/ui/whats-new/analytics',
+		'tourist',
 	],
 ];

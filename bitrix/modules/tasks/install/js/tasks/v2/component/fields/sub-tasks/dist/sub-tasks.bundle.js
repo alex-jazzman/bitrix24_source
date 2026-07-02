@@ -11,6 +11,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  icon: ui_iconSet_api_vue.Outline.RELATED_TASKS,
 	  idsField: 'subTaskIds',
 	  containsField: 'containsSubTasks',
+	  showCompletedField: 'showCompletedSubTasks',
 	  getTitle: isTemplate => {
 	    if (isTemplate) {
 	      return main_core.Loc.getMessage('TASKS_V2_SUB_TEMPLATES_TITLE');

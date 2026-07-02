@@ -1,24 +1,23 @@
-import { Type } from 'main.core';
-import { GroupSharingController } from 'calendar.sharing.interface';
+import { Type, type JsonObject } from 'main.core';
+import { type PopupOptions } from 'main.popup';
 import { BIcon, Outline as OutlineIcons } from 'ui.icon-set.api.vue';
+
+import { GroupSharingController } from 'calendar.sharing.interface';
 import { VoteApplication } from 'vote.application';
 
 import { Core } from 'im.v2.application.core';
 import { MessengerMenu, MenuItem, MenuItemIcon } from 'im.v2.component.elements.menu';
-import { ActionByRole, ChatType, Color } from 'im.v2.const';
-import { EntityCreator } from 'im.v2.lib.entity-creator';
+import { ActionByRole, ChatType, Color, type ChatTypeItem } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
+import { EntityCreator } from 'im.v2.lib.entity-creator';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
-import { PermissionManager } from 'im.v2.lib.permission';
 import { Notifier } from 'im.v2.lib.notifier';
+import { PermissionManager } from 'im.v2.lib.permission';
+import { type ImModelChat, type ImModelCollabInfo } from 'im.v2.model';
 
 import { DiskPopup } from './disk-popup';
 
 import '../../css/upload-menu.css';
-
-import type { PopupOptions } from 'main.popup';
-import type { JsonObject } from 'main.core';
-import type { ImModelChat, ImModelCollabInfo } from 'im.v2.model';
 
 type UploadMenuItem = {
 	icon: $Values<typeof MenuItemIcon>,
@@ -125,7 +124,7 @@ export const UploadMenu = {
 		{
 			return this.$store.getters['chats/get'](this.dialogId, true);
 		},
-		chatType(): $Values<typeof ChatType>
+		chatType(): ChatTypeItem
 		{
 			return this.dialog.type;
 		},

@@ -1,9 +1,7 @@
-import { Core } from 'im.v2.application.core';
+import { type JsonObject } from 'main.core';
+
 import { Messenger } from 'im.public';
-import { Analytics } from 'im.v2.lib.analytics';
-import { ChatService } from 'im.v2.provider.service.chat';
-import { EmptyAvatarType } from 'im.v2.component.elements.avatar';
-import { Color } from 'im.v2.const';
+import { Core } from 'im.v2.application.core';
 import {
 	TitleInput,
 	ChatAvatar,
@@ -11,15 +9,15 @@ import {
 	CreateChatHeading,
 	TextareaInput,
 } from 'im.v2.component.content.chat-forms.elements';
+import { EmptyAvatarType } from 'im.v2.component.elements.avatar';
+import { type CustomColorScheme } from 'im.v2.component.elements.button';
+import { Color } from 'im.v2.const';
+import { Analytics } from 'im.v2.lib.analytics';
+import { type ImModelChat, type ImModelCollabInfo } from 'im.v2.model';
+import { ChatService } from 'im.v2.provider.service.chat';
 
-import { RightsSection } from '../create/collab/components/rights-section';
 import { ChatMemberDiffManager } from '../../classes/chat-member-diff-manager';
-
-import type { JsonObject } from 'main.core';
-import type { ImModelChat, ImModelCollabInfo } from 'im.v2.model';
-import type { CustomColorScheme } from 'im.v2.component.elements.button';
-
-import type { AccessRightsFormResult } from '../create/collab/components/rights-section';
+import { RightsSection, type AccessRightsFormResult } from '../create/collab/components/rights-section';
 
 // @vue/component
 export const CollabUpdating = {

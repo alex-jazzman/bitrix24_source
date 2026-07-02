@@ -1,8 +1,8 @@
 import { Type } from 'main.core';
-import { BuilderModel, GetterTree, ActionTree, MutationTree } from 'ui.vue3.vuex';
+import { BuilderModel, type GetterTree, type ActionTree, type MutationTree } from 'ui.vue3.vuex';
 
 import { Core } from 'im.v2.application.core';
-import { type AnchorType, ChatType } from 'im.v2.const';
+import { type AnchorType, type ChatTypeItem } from 'im.v2.const';
 
 import { isAnchorsEqual, isAnchorWithTypeFromCurrentChat } from './helpers';
 
@@ -89,7 +89,7 @@ export class AnchorsModel extends BuilderModel
 				return anchors.at(0)?.messageId;
 			},
 			/** @function messages/anchors/getAnchorsByChatType */
-			getAnchorsByChatType: (state: AnchorsState) => (chatType: $Values<typeof ChatType>) => {
+			getAnchorsByChatType: (state: AnchorsState) => (chatType: ChatTypeItem) => {
 				return state.anchors.filter((anchor: Anchor) => {
 					const { type } = Core.getStore().getters['chats/getByChatId'](anchor.chatId, true);
 
@@ -150,7 +150,7 @@ export class AnchorsModel extends BuilderModel
 				store.commit('removeChatAnchors', chatId);
 			},
 			/** @function messages/anchors/removeAllAnchorsByChatType */
-			removeAllAnchorsByChatType: (store, payload: { type: $Values<typeof ChatType> }) => {
+			removeAllAnchorsByChatType: (store, payload: { type: ChatTypeItem }) => {
 				store.commit('removeAllAnchorsByChatType', payload);
 			},
 			/** @function messages/anchors/removeAllAnchors */
@@ -186,7 +186,7 @@ export class AnchorsModel extends BuilderModel
 					return anchor.chatId !== chatId;
 				});
 			},
-			removeAllAnchorsByChatType: (state: AnchorsState, payload: { type: $Values<typeof ChatType> }) => {
+			removeAllAnchorsByChatType: (state: AnchorsState, payload: { type: ChatTypeItem }) => {
 				const { type } = payload;
 				const anchors = Core.getStore().getters['messages/anchors/getAnchorsByChatType'](type);
 				const chatIds = new Set(anchors.map((anchor: Anchor) => anchor.chatId));

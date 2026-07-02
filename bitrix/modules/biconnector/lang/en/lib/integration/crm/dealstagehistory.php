@@ -21,3 +21,4 @@ $MESS["CRM_BIC_DSH_FIELD_STAGE_SEMANTIC_ID"] = "Stage type ID";
 $MESS["CRM_BIC_DSH_FIELD_START_DATE"] = "Start date";
 $MESS["CRM_BIC_DSH_FIELD_TYPE_ID"] = "Record type";
 $MESS["CRM_BIC_DSH_TABLE"] = "Deal: stage history";
+$MESS["CRM_BIC_DSH_TABLE_DESCRIPTION_FULL"] = "Contains data on deal progress from standard fields: date, deal status, responsible users' name, and more.";

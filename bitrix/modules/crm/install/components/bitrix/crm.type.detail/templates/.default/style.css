@@ -665,6 +665,11 @@ body.crm-type-settings-presets #workarea-content {
 	padding: 0 20px;
 }
 
+.crm-type .crm-type-tab .ui-ctl-label-text {
+	display: flex;
+	align-items: center;
+}
+
 .crm-type-permissions-reset-alert{
 	margin: 10px 0 0;
 }

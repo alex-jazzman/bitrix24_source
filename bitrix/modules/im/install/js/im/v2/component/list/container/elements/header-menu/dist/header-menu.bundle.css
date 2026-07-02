@@ -1,0 +1,24 @@
+.bx-im-list-container-header-menu__container {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 34px;
+	margin-right: 8px;
+	cursor: pointer;
+	background-color: inherit;
+	border: none;
+}
+
+.bx-im-list-container-header-menu-icon {
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+	--ui-icon-set__icon-size: 26px;
+}
+
+.bx-im-list-container-header-menu__container.--active .bx-im-list-container-header-menu-icon {
+	--ui-icon-set__icon-color: var(--im-color-accent-blue);
+}
+
+.bx-im-list-container-header-menu__container.--menu-opened .bx-im-list-container-header-menu-icon {
+	--ui-icon-set__icon-color: var(--ui-color-base-2);
+}

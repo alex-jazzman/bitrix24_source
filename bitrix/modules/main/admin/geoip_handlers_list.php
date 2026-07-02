@@ -1,12 +1,12 @@
-<?
+<?php
 /**
  * @global CUser $USER
  * @global CMain $APPLICATION
  */
 require_once(__DIR__."/../include/prolog_admin_before.php");
 
-use Bitrix\Main\Service\GeoIp,
-	Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Service\GeoIp;
+use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
@@ -17,11 +17,6 @@ $isAdmin = $USER->CanDoOperation('edit_other_settings');
 
 $sTableID = "tbl_geoip_handlers";
 $oSort = new CAdminSorting($sTableID, "SORT", "ASC");
-
-if(!isset($by))
-	$by = 'SORT';
-if(!isset($order))
-	$order = 'ASC';
 
 $lAdmin = new CAdminList($sTableID, $oSort);
 $backUrl = urlencode($APPLICATION->GetCurPageParam());
@@ -88,11 +83,11 @@ foreach(GeoIp\Manager::getHandlers() as $className => $handler)
 	);
 }
 
-sortByColumn($handlers, array($by => (strtoupper($order) == 'ASC' ? SORT_ASC : SORT_DESC)));
+sortByColumn($handlers, array($oSort->getField() => (strtoupper($oSort->getOrder()) == 'ASC' ? SORT_ASC : SORT_DESC)));
 
 foreach($handlers as $fields)
 {
-	$row =&$lAdmin->AddRow($fields['ID'], $fields);
+	$row = $lAdmin->AddRow($fields['ID'], $fields);
 
 	$row->AddViewField("ID", $fields['ID']);
 	$row->AddViewField("TITLE", $fields['TITLE']);
@@ -111,7 +106,7 @@ foreach($handlers as $fields)
 			"ICON" => "edit",
 			"DEFAULT" => true,
 			"TEXT" => Loc::getMessage('GEOIP_LIST_EDIT'),
-			"ACTION" => $lAdmin->ActionRedirect("geoip_handler_edit.php?lang=".LANG."&ID=".$fields['ID']."&CLASS_NAME=".urlencode($fields['CLASS_NAME']))
+			"ACTION" => $lAdmin->ActionRedirect("geoip_handler_edit.php?lang=".LANGUAGE_ID."&ID=".$fields['ID']."&CLASS_NAME=".urlencode($fields['CLASS_NAME']))
 		);
 
 		$arActions[] = 	array(
@@ -139,7 +134,7 @@ if($isAdmin)
 
 		$menu[] = array(
 			"TEXT" => $handler->getTitle(),
-			"LINK" => "geoip_handler_edit.php?lang=".LANG."&CLASS_NAME=".urlencode($className)."&back_url=".$backUrl
+			"LINK" => "geoip_handler_edit.php?lang=".LANGUAGE_ID."&CLASS_NAME=".urlencode($className)."&back_url=".$backUrl
 		);
 	}
 

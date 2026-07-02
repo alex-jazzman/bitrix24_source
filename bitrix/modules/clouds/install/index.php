@@ -122,6 +122,15 @@ class clouds extends CModule
 				'IS_PERIOD' => 'N',
 			]);
 
+			CAgent::RemoveAgent('CCloudStorage::ResizeImageCleanAgent();', 'clouds');
+			CAgent::Add([
+				'NAME' => 'CCloudStorage::ResizeImageCleanAgent();',
+				'MODULE_ID' => 'clouds',
+				'ACTIVE' => 'Y',
+				'AGENT_INTERVAL' => 86400,
+				'IS_PERIOD' => 'N',
+			]);
+
 			return true;
 		}
 	}
@@ -165,6 +174,7 @@ class clouds extends CModule
 
 		//agents
 		CAgent::RemoveAgent('CCloudStorage::CleanUp();', 'clouds');
+		CAgent::RemoveAgent('CCloudStorage::ResizeImageCleanAgent();', 'clouds');
 
 		UnRegisterModule('clouds');
 

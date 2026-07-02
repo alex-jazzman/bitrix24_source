@@ -9,9 +9,9 @@ return [
 	'js' => 'dist/favorites-service.bundle.js',
 	'rel' => [
 		'booking.const',
-		'main.core',
 		'booking.core',
 		'booking.lib.api-client',
+		'main.core',
 	],
 	'skip_core' => false,
 ];

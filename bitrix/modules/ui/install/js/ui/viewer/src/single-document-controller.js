@@ -1,6 +1,6 @@
-import {Dom, Text, Loc, Tag, Reflection, Uri} from 'main.core';
-import {EventEmitter} from 'main.core.events';
-import {Document} from './item-document';
+import { Dom, Loc, Reflection, Tag, Text, Uri } from 'main.core';
+import { EventEmitter } from 'main.core.events';
+import { DEFAULT_SCALE, Document } from './item-document';
 
 const InlineController = Reflection.namespace('BX.UI.Viewer.InlineController');
 
@@ -219,7 +219,7 @@ const SCALE_MAX = 3;
 
 class ScaleControl extends EventEmitter
 {
-	scale: number = SCALE_MIN;
+	scale: number = DEFAULT_SCALE;
 	container: HTMLElement = null;
 	zoomInContainer: HTMLElement = null;
 	zoomOutContainer: HTMLElement = null;
@@ -228,7 +228,7 @@ class ScaleControl extends EventEmitter
 	constructor()
 	{
 		super();
-		this.scale = SCALE_MIN;
+		this.scale = DEFAULT_SCALE;
 		this.setEventNamespace('BX.UI.Viewer.SingleDocumentController.ScaleControl');
 		this.scaleClickHandler = this.handleScaleClick.bind(this);
 	}
@@ -240,7 +240,7 @@ class ScaleControl extends EventEmitter
 
 	setDefaultScale(): void
 	{
-		this.update(SCALE_MIN);
+		this.update(DEFAULT_SCALE);
 	}
 
 	adjust()

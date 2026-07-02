@@ -1049,6 +1049,10 @@ th.task-deadline-column:hover { background-color: #ede8c4; border-color:#e5e0bd;
 	transform: translateX(0);
 }
 
+.task-deadline-readonly {
+	pointer-events: none;
+}
+
 .task-deadline-time {
     display: inline-block;
 }

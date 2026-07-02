@@ -1,5 +1,4 @@
 <?php
-$MESS["BIZPROC_WRITE_DATA_ACTIVITY_ANOTHER_FIELD"] = "Other field";
 $MESS["BIZPROC_WRITE_DATA_ACTIVITY_AUTHOR_NOT_FOUND"] = "User selected in field \"Add record as\" was not found.";
 $MESS["BIZPROC_WRITE_DATA_ACTIVITY_CREATE_NEW_STORAGE"] = "Create new storage";
 $MESS["BIZPROC_WRITE_DATA_ACTIVITY_FIELDS_ADD_FIELD"] = "Add field";
@@ -25,3 +24,4 @@ $MESS["BIZPROC_WRITE_DATA_ACTIVITY_UNKNOWN_MODE"] = "Unknown write mode: \"#MODE
 $MESS["BIZPROC_WRITE_DATA_ACTIVITY_WRONG_FIELD_VALUE"] = "Incorrect data selected to write to storage.";
 $MESS["BIZPROC_WRITE_DATA_ACTIVITY_WRONG_ITEM_ID"] = "Storage record ID must be a positive number.";
 $MESS["BIZPROC_WRITE_DATA_ACTIVITY_WRONG_STORAGE_ID"] = "Storage ID must be a positive number.";
+$MESS["BIZPROC_WRITE_DATA_ACTIVITY_CREATE_NEW_FIELD"] = "Create new field";

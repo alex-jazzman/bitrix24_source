@@ -20,7 +20,7 @@ jn.define('tasks/layout/flow/detail/src/common', (require, exports, module) => {
 	const { H3 } = require('ui-system/typography/heading');
 	const { Text4, Text6 } = require('ui-system/typography/text');
 	const { Color, Indent, Typography } = require('tokens');
-	const { WorkgroupUtil } = require('project/utils');
+	const { ProjectOpener } = require('project/opener');
 	const { DialogOpener } = require('im/messenger/api/dialog-opener');
 	const { UserProfile } = require('user-profile');
 
@@ -342,7 +342,7 @@ jn.define('tasks/layout/flow/detail/src/common', (require, exports, module) => {
 		};
 
 		openGroupDetail = (groupId) => {
-			void WorkgroupUtil.openProject(null, {
+			void ProjectOpener.open({
 				projectId: groupId,
 				siteId: env.siteId,
 				siteDir: env.siteDir,

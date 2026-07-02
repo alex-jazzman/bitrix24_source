@@ -1,1 +1,405 @@
-this.BX=this.BX||{},function(e,t){"use strict";var r=function e(){babelHelpers.classCallCheck(this,e)};function n(){/*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */n=function(){return e};var e={},t=Object.prototype,r=t.hasOwnProperty,o=Object.defineProperty||function(e,t,r){e[t]=r.value},i="function"==typeof Symbol?Symbol:{},a=i.iterator||"@@iterator",s=i.asyncIterator||"@@asyncIterator",c=i.toStringTag||"@@toStringTag";function l(e,t,r){return Object.defineProperty(e,t,{value:r,enumerable:!0,configurable:!0,writable:!0}),e[t]}try{l({},"")}catch(e){l=function(e,t,r){return e[t]=r}}function u(e,t,r,n){var i=t&&t.prototype instanceof d?t:d,a=Object.create(i.prototype),s=new k(n||[]);return o(a,"_invoke",{value:x(e,r,s)}),a}function h(e,t,r){try{return{type:"normal",arg:e.call(t,r)}}catch(e){return{type:"throw",arg:e}}}e.wrap=u;var f={};function d(){}function p(){}function v(){}var y={};l(y,a,(function(){return this}));var g=Object.getPrototypeOf,b=g&&g(g(G([])));b&&b!==t&&r.call(b,a)&&(y=b);var m=v.prototype=d.prototype=Object.create(y);function w(e){["next","throw","return"].forEach((function(t){l(e,t,(function(e){return this._invoke(t,e)}))}))}function E(e,t){var n;o(this,"_invoke",{value:function(o,i){function a(){return new t((function(n,a){!function n(o,i,a,s){var c=h(e[o],e,i);if("throw"!==c.type){var l=c.arg,u=l.value;return u&&"object"==babelHelpers.typeof(u)&&r.call(u,"__await")?t.resolve(u.__await).then((function(e){n("next",e,a,s)}),(function(e){n("throw",e,a,s)})):t.resolve(u).then((function(e){l.value=e,a(l)}),(function(e){return n("throw",e,a,s)}))}s(c.arg)}(o,i,n,a)}))}return n=n?n.then(a,a):a()}})}function x(e,t,r){var n="suspendedStart";return function(o,i){if("executing"===n)throw new Error("Generator is already running");if("completed"===n){if("throw"===o)throw i;return H()}for(r.method=o,r.arg=i;;){var a=r.delegate;if(a){var s=P(a,r);if(s){if(s===f)continue;return s}}if("next"===r.method)r.sent=r._sent=r.arg;else if("throw"===r.method){if("suspendedStart"===n)throw n="completed",r.arg;r.dispatchException(r.arg)}else"return"===r.method&&r.abrupt("return",r.arg);n="executing";var c=h(e,t,r);if("normal"===c.type){if(n=r.done?"completed":"suspendedYield",c.arg===f)continue;return{value:c.arg,done:r.done}}"throw"===c.type&&(n="completed",r.method="throw",r.arg=c.arg)}}}function P(e,t){var r=t.method,n=e.iterator[r];if(void 0===n)return t.delegate=null,"throw"===r&&e.iterator.return&&(t.method="return",t.arg=void 0,P(e,t),"throw"===t.method)||"return"!==r&&(t.method="throw",t.arg=new TypeError("The iterator does not provide a '"+r+"' method")),f;var o=h(n,e.iterator,t.arg);if("throw"===o.type)return t.method="throw",t.arg=o.arg,t.delegate=null,f;var i=o.arg;return i?i.done?(t[e.resultName]=i.value,t.next=e.nextLoc,"return"!==t.method&&(t.method="next",t.arg=void 0),t.delegate=null,f):i:(t.method="throw",t.arg=new TypeError("iterator result is not an object"),t.delegate=null,f)}function L(e){var t={tryLoc:e[0]};1 in e&&(t.catchLoc=e[1]),2 in e&&(t.finallyLoc=e[2],t.afterLoc=e[3]),this.tryEntries.push(t)}function _(e){var t=e.completion||{};t.type="normal",delete t.arg,e.completion=t}function k(e){this.tryEntries=[{tryLoc:"root"}],e.forEach(L,this),this.reset(!0)}function G(e){if(e){var t=e[a];if(t)return t.call(e);if("function"==typeof e.next)return e;if(!isNaN(e.length)){var n=-1,o=function t(){for(;++n<e.length;)if(r.call(e,n))return t.value=e[n],t.done=!1,t;return t.value=void 0,t.done=!0,t};return o.next=o}}return{next:H}}function H(){return{value:void 0,done:!0}}return p.prototype=v,o(m,"constructor",{value:v,configurable:!0}),o(v,"constructor",{value:p,configurable:!0}),p.displayName=l(v,c,"GeneratorFunction"),e.isGeneratorFunction=function(e){var t="function"==typeof e&&e.constructor;return!!t&&(t===p||"GeneratorFunction"===(t.displayName||t.name))},e.mark=function(e){return Object.setPrototypeOf?Object.setPrototypeOf(e,v):(e.__proto__=v,l(e,c,"GeneratorFunction")),e.prototype=Object.create(m),e},e.awrap=function(e){return{__await:e}},w(E.prototype),l(E.prototype,s,(function(){return this})),e.AsyncIterator=E,e.async=function(t,r,n,o,i){void 0===i&&(i=Promise);var a=new E(u(t,r,n,o),i);return e.isGeneratorFunction(r)?a:a.next().then((function(e){return e.done?e.value:a.next()}))},w(m),l(m,c,"Generator"),l(m,a,(function(){return this})),l(m,"toString",(function(){return"[object Generator]"})),e.keys=function(e){var t=Object(e),r=[];for(var n in t)r.push(n);return r.reverse(),function e(){for(;r.length;){var n=r.pop();if(n in t)return e.value=n,e.done=!1,e}return e.done=!0,e}},e.values=G,k.prototype={constructor:k,reset:function(e){if(this.prev=0,this.next=0,this.sent=this._sent=void 0,this.done=!1,this.delegate=null,this.method="next",this.arg=void 0,this.tryEntries.forEach(_),!e)for(var t in this)"t"===t.charAt(0)&&r.call(this,t)&&!isNaN(+t.slice(1))&&(this[t]=void 0)},stop:function(){this.done=!0;var e=this.tryEntries[0].completion;if("throw"===e.type)throw e.arg;return this.rval},dispatchException:function(e){if(this.done)throw e;var t=this;function n(r,n){return a.type="throw",a.arg=e,t.next=r,n&&(t.method="next",t.arg=void 0),!!n}for(var o=this.tryEntries.length-1;o>=0;--o){var i=this.tryEntries[o],a=i.completion;if("root"===i.tryLoc)return n("end");if(i.tryLoc<=this.prev){var s=r.call(i,"catchLoc"),c=r.call(i,"finallyLoc");if(s&&c){if(this.prev<i.catchLoc)return n(i.catchLoc,!0);if(this.prev<i.finallyLoc)return n(i.finallyLoc)}else if(s){if(this.prev<i.catchLoc)return n(i.catchLoc,!0)}else{if(!c)throw new Error("try statement without catch or finally");if(this.prev<i.finallyLoc)return n(i.finallyLoc)}}}},abrupt:function(e,t){for(var n=this.tryEntries.length-1;n>=0;--n){var o=this.tryEntries[n];if(o.tryLoc<=this.prev&&r.call(o,"finallyLoc")&&this.prev<o.finallyLoc){var i=o;break}}i&&("break"===e||"continue"===e)&&i.tryLoc<=t&&t<=i.finallyLoc&&(i=null);var a=i?i.completion:{};return a.type=e,a.arg=t,i?(this.method="next",this.next=i.finallyLoc,f):this.complete(a)},complete:function(e,t){if("throw"===e.type)throw e.arg;return"break"===e.type||"continue"===e.type?this.next=e.arg:"return"===e.type?(this.rval=this.arg=e.arg,this.method="return",this.next="end"):"normal"===e.type&&t&&(this.next=t),f},finish:function(e){for(var t=this.tryEntries.length-1;t>=0;--t){var r=this.tryEntries[t];if(r.finallyLoc===e)return this.complete(r.completion,r.afterLoc),_(r),f}},catch:function(e){for(var t=this.tryEntries.length-1;t>=0;--t){var r=this.tryEntries[t];if(r.tryLoc===e){var n=r.completion;if("throw"===n.type){var o=n.arg;_(r)}return o}}throw new Error("illegal catch attempt")},delegateYield:function(e,t,r){return this.delegate={iterator:G(e),resultName:t,nextLoc:r},"next"===this.method&&(this.arg=void 0),f}},e}babelHelpers.defineProperty(r,"GET","get"),babelHelpers.defineProperty(r,"REPLY","reply"),babelHelpers.defineProperty(r,"EMIT","emit"),babelHelpers.defineProperty(r,"ERROR","error");var o=function(){function e(r){var o=this,i=r.port,a=r.name,s=void 0===a?"switchboard":a,c=r.debug,l=void 0!==c&&c;babelHelpers.classCallCheck(this,e),babelHelpers.defineProperty(this,"port",null),babelHelpers.defineProperty(this,"name",""),babelHelpers.defineProperty(this,"methods",[]),babelHelpers.defineProperty(this,"incrementor",1),babelHelpers.defineProperty(this,"debugMode",!1),this.port=i,this.name=s,this.debugMode=l,t.Event.bind("message",function(){var e=babelHelpers.asyncToGenerator(n().mark((function e(t){var r,i,a,s;return n().wrap((function(e){for(;;)switch(e.prev=e.next){case 0:if(o.log("message received",t),r=t.data,console.log(r),!o.isGet(r)){e.next=11;break}return e.t0=o.port,e.next=7,o.getMethodResult(r);case 7:e.t1=e.sent,e.t0.postMessage.call(e.t0,e.t1),e.next=12;break;case 11:o.isEmit(r)&&(i=r.method,a=r.args,(s=o.methods[i])&&s(a));case 12:case"end":return e.stop()}}),e)})));return function(t){return e.apply(this,arguments)}}())}var o;return babelHelpers.createClass(e,[{key:"getMethodResult",value:(o=babelHelpers.asyncToGenerator(n().mark((function e(t){var o,i,a,s,c;return n().wrap((function(e){for(;;)switch(e.prev=e.next){case 0:if(o=t.messageId,i=t.method,a=t.args,null!=(s=this.methods[i])){e.next=4;break}return e.abrupt("return",{switchboardAction:r.ERROR,messageId:o,error:"[".concat(this.name,'] Method "').concat(i,'" is not defined')});case 4:return e.prev=4,e.next=7,s(a);case 7:return c=e.sent,e.abrupt("return",{switchboardAction:r.REPLY,messageId:o,result:c});case 11:return e.prev=11,e.t0=e.catch(4),this.logError(e.t0),e.abrupt("return",{switchboardAction:r.ERROR,messageId:o,error:"[".concat(this.name,'] Method "').concat(i,'" threw an error')});case 15:case"end":return e.stop()}}),e,this,[[4,11]])}))),function(e){return o.apply(this,arguments)})},{key:"defineMethod",value:function(e,t){this.methods[e]=t}},{key:"get",value:function(e,n){var o=this;return new Promise((function(i,a){var s=o.getNewMessageId();t.Event.bind(o.port,"message",(function e(r){var n=r.data;if(n.messageId===s)if(t.Event.unbind(o.port,"message",e),o.isReply(n))i(n.result);else{var c=o.isError(n)?n.error:"Unexpected response message";a(new Error(c))}})),o.port.start();var c={switchboardAction:r.GET,method:e,messageId:s,args:n};o.port.postMessage(c)}))}},{key:"emit",value:function(e,t){var n={switchboardAction:r.EMIT,method:e,args:t};this.port.postMessage(n)}},{key:"start",value:function(){this.port.start()}},{key:"log",value:function(){if(this.debugMode){for(var e,t=arguments.length,r=new Array(t),n=0;n<t;n++)r[n]=arguments[n];(e=console).debug.apply(e,["[".concat(this.name,"]")].concat(r))}}},{key:"logError",value:function(){for(var e,t=arguments.length,r=new Array(t),n=0;n<t;n++)r[n]=arguments[n];(e=console).error.apply(e,["[".concat(this.name,"]")].concat(r))}},{key:"getNewMessageId",value:function(){return"m_".concat(this.name,"_").concat(this.incrementor++)}},{key:"isGet",value:function(e){return e.switchboardAction===r.GET}},{key:"isReply",value:function(e){return e.switchboardAction===r.REPLY}},{key:"isEmit",value:function(e){return e.switchboardAction===r.EMIT}},{key:"isError",value:function(e){return e.switchboardAction===r.ERROR}}]),e}();function i(){/*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */i=function(){return e};var e={},t=Object.prototype,r=t.hasOwnProperty,n=Object.defineProperty||function(e,t,r){e[t]=r.value},o="function"==typeof Symbol?Symbol:{},a=o.iterator||"@@iterator",s=o.asyncIterator||"@@asyncIterator",c=o.toStringTag||"@@toStringTag";function l(e,t,r){return Object.defineProperty(e,t,{value:r,enumerable:!0,configurable:!0,writable:!0}),e[t]}try{l({},"")}catch(e){l=function(e,t,r){return e[t]=r}}function u(e,t,r,o){var i=t&&t.prototype instanceof d?t:d,a=Object.create(i.prototype),s=new k(o||[]);return n(a,"_invoke",{value:x(e,r,s)}),a}function h(e,t,r){try{return{type:"normal",arg:e.call(t,r)}}catch(e){return{type:"throw",arg:e}}}e.wrap=u;var f={};function d(){}function p(){}function v(){}var y={};l(y,a,(function(){return this}));var g=Object.getPrototypeOf,b=g&&g(g(G([])));b&&b!==t&&r.call(b,a)&&(y=b);var m=v.prototype=d.prototype=Object.create(y);function w(e){["next","throw","return"].forEach((function(t){l(e,t,(function(e){return this._invoke(t,e)}))}))}function E(e,t){var o;n(this,"_invoke",{value:function(n,i){function a(){return new t((function(o,a){!function n(o,i,a,s){var c=h(e[o],e,i);if("throw"!==c.type){var l=c.arg,u=l.value;return u&&"object"==babelHelpers.typeof(u)&&r.call(u,"__await")?t.resolve(u.__await).then((function(e){n("next",e,a,s)}),(function(e){n("throw",e,a,s)})):t.resolve(u).then((function(e){l.value=e,a(l)}),(function(e){return n("throw",e,a,s)}))}s(c.arg)}(n,i,o,a)}))}return o=o?o.then(a,a):a()}})}function x(e,t,r){var n="suspendedStart";return function(o,i){if("executing"===n)throw new Error("Generator is already running");if("completed"===n){if("throw"===o)throw i;return H()}for(r.method=o,r.arg=i;;){var a=r.delegate;if(a){var s=P(a,r);if(s){if(s===f)continue;return s}}if("next"===r.method)r.sent=r._sent=r.arg;else if("throw"===r.method){if("suspendedStart"===n)throw n="completed",r.arg;r.dispatchException(r.arg)}else"return"===r.method&&r.abrupt("return",r.arg);n="executing";var c=h(e,t,r);if("normal"===c.type){if(n=r.done?"completed":"suspendedYield",c.arg===f)continue;return{value:c.arg,done:r.done}}"throw"===c.type&&(n="completed",r.method="throw",r.arg=c.arg)}}}function P(e,t){var r=t.method,n=e.iterator[r];if(void 0===n)return t.delegate=null,"throw"===r&&e.iterator.return&&(t.method="return",t.arg=void 0,P(e,t),"throw"===t.method)||"return"!==r&&(t.method="throw",t.arg=new TypeError("The iterator does not provide a '"+r+"' method")),f;var o=h(n,e.iterator,t.arg);if("throw"===o.type)return t.method="throw",t.arg=o.arg,t.delegate=null,f;var i=o.arg;return i?i.done?(t[e.resultName]=i.value,t.next=e.nextLoc,"return"!==t.method&&(t.method="next",t.arg=void 0),t.delegate=null,f):i:(t.method="throw",t.arg=new TypeError("iterator result is not an object"),t.delegate=null,f)}function L(e){var t={tryLoc:e[0]};1 in e&&(t.catchLoc=e[1]),2 in e&&(t.finallyLoc=e[2],t.afterLoc=e[3]),this.tryEntries.push(t)}function _(e){var t=e.completion||{};t.type="normal",delete t.arg,e.completion=t}function k(e){this.tryEntries=[{tryLoc:"root"}],e.forEach(L,this),this.reset(!0)}function G(e){if(e){var t=e[a];if(t)return t.call(e);if("function"==typeof e.next)return e;if(!isNaN(e.length)){var n=-1,o=function t(){for(;++n<e.length;)if(r.call(e,n))return t.value=e[n],t.done=!1,t;return t.value=void 0,t.done=!0,t};return o.next=o}}return{next:H}}function H(){return{value:void 0,done:!0}}return p.prototype=v,n(m,"constructor",{value:v,configurable:!0}),n(v,"constructor",{value:p,configurable:!0}),p.displayName=l(v,c,"GeneratorFunction"),e.isGeneratorFunction=function(e){var t="function"==typeof e&&e.constructor;return!!t&&(t===p||"GeneratorFunction"===(t.displayName||t.name))},e.mark=function(e){return Object.setPrototypeOf?Object.setPrototypeOf(e,v):(e.__proto__=v,l(e,c,"GeneratorFunction")),e.prototype=Object.create(m),e},e.awrap=function(e){return{__await:e}},w(E.prototype),l(E.prototype,s,(function(){return this})),e.AsyncIterator=E,e.async=function(t,r,n,o,i){void 0===i&&(i=Promise);var a=new E(u(t,r,n,o),i);return e.isGeneratorFunction(r)?a:a.next().then((function(e){return e.done?e.value:a.next()}))},w(m),l(m,c,"Generator"),l(m,a,(function(){return this})),l(m,"toString",(function(){return"[object Generator]"})),e.keys=function(e){var t=Object(e),r=[];for(var n in t)r.push(n);return r.reverse(),function e(){for(;r.length;){var n=r.pop();if(n in t)return e.value=n,e.done=!1,e}return e.done=!0,e}},e.values=G,k.prototype={constructor:k,reset:function(e){if(this.prev=0,this.next=0,this.sent=this._sent=void 0,this.done=!1,this.delegate=null,this.method="next",this.arg=void 0,this.tryEntries.forEach(_),!e)for(var t in this)"t"===t.charAt(0)&&r.call(this,t)&&!isNaN(+t.slice(1))&&(this[t]=void 0)},stop:function(){this.done=!0;var e=this.tryEntries[0].completion;if("throw"===e.type)throw e.arg;return this.rval},dispatchException:function(e){if(this.done)throw e;var t=this;function n(r,n){return a.type="throw",a.arg=e,t.next=r,n&&(t.method="next",t.arg=void 0),!!n}for(var o=this.tryEntries.length-1;o>=0;--o){var i=this.tryEntries[o],a=i.completion;if("root"===i.tryLoc)return n("end");if(i.tryLoc<=this.prev){var s=r.call(i,"catchLoc"),c=r.call(i,"finallyLoc");if(s&&c){if(this.prev<i.catchLoc)return n(i.catchLoc,!0);if(this.prev<i.finallyLoc)return n(i.finallyLoc)}else if(s){if(this.prev<i.catchLoc)return n(i.catchLoc,!0)}else{if(!c)throw new Error("try statement without catch or finally");if(this.prev<i.finallyLoc)return n(i.finallyLoc)}}}},abrupt:function(e,t){for(var n=this.tryEntries.length-1;n>=0;--n){var o=this.tryEntries[n];if(o.tryLoc<=this.prev&&r.call(o,"finallyLoc")&&this.prev<o.finallyLoc){var i=o;break}}i&&("break"===e||"continue"===e)&&i.tryLoc<=t&&t<=i.finallyLoc&&(i=null);var a=i?i.completion:{};return a.type=e,a.arg=t,i?(this.method="next",this.next=i.finallyLoc,f):this.complete(a)},complete:function(e,t){if("throw"===e.type)throw e.arg;return"break"===e.type||"continue"===e.type?this.next=e.arg:"return"===e.type?(this.rval=this.arg=e.arg,this.method="return",this.next="end"):"normal"===e.type&&t&&(this.next=t),f},finish:function(e){for(var t=this.tryEntries.length-1;t>=0;--t){var r=this.tryEntries[t];if(r.finallyLoc===e)return this.complete(r.completion,r.afterLoc),_(r),f}},catch:function(e){for(var t=this.tryEntries.length-1;t>=0;--t){var r=this.tryEntries[t];if(r.tryLoc===e){var n=r.completion;if("throw"===n.type){var o=n.arg;_(r)}return o}}throw new Error("illegal catch attempt")},delegateYield:function(e,t,r){return this.delegate={iterator:G(e),resultName:t,nextLoc:r},"next"===this.method&&(this.arg=void 0),f}},e}function a(e,t,r){!function(e,t){if(t.has(e))throw new TypeError("Cannot initialize the same private elements twice on an object")}(e,t),t.set(e,r)}var s=new WeakMap,c=new WeakMap,l=function(){function e(t){babelHelpers.classCallCheck(this,e),a(this,s,{writable:!0,value:void 0}),a(this,c,{writable:!0,value:void 0}),babelHelpers.classPrivateFieldSet(this,s,t),this.communicationsChannel=new MessageChannel,babelHelpers.classPrivateFieldSet(this,c,null)}var r,n;return babelHelpers.createClass(e,[{key:"embedDashboard",value:(n=babelHelpers.asyncToGenerator(i().mark((function e(){var t,r,n,o,a,l,u,h,f,d=this;return i().wrap((function(e){for(;;)switch(e.prev=e.next){case 0:return t=babelHelpers.classPrivateFieldGet(this,s).fetchGuestToken,this.log("embedding"),e.next=4,Promise.all([this.mountIframe()]);case 4:return r=e.sent,n=babelHelpers.slicedToArray(r,1),o=n[0],babelHelpers.classPrivateFieldSet(this,c,o),babelHelpers.classPrivateFieldGet(this,c).emit("guestToken",{guestToken:t}),this.log("sent guest token"),a=function(){return babelHelpers.classPrivateFieldGet(d,c).get("getScrollSize")},l=function(e){return babelHelpers.classPrivateFieldGet(d,c).get("getDashboardPermalink",{anchor:e})},u=function(){return babelHelpers.classPrivateFieldGet(d,c).get("getActiveTabs")},h=function(){return babelHelpers.classPrivateFieldGet(d,c).get("getScreenshot")},f=function(){return babelHelpers.classPrivateFieldGet(d,c).get("getPdf")},e.abrupt("return",{getScrollSize:a,getDashboardPermalink:l,getActiveTabs:u,getScreenshot:h,getPdf:f});case 16:case"end":return e.stop()}}),e,this)}))),function(){return n.apply(this,arguments)})},{key:"calculateConfig",value:function(){var e=0,t=babelHelpers.classPrivateFieldGet(this,s).dashboardUiConfig;return t?(t.hideTitle&&(e+=1),t.hideTab&&(e+=2),t.hideChartControls&&(e+=8),e):e}},{key:"mountIframe",value:(r=babelHelpers.asyncToGenerator(i().mark((function r(){var n=this;return i().wrap((function(r){for(;;)switch(r.prev=r.next){case 0:return r.abrupt("return",new Promise((function(r){var i,a,c,l=t.Dom.create("iframe"),u=babelHelpers.classPrivateFieldGet(n,s).id,h=babelHelpers.classPrivateFieldGet(n,s).dashboardUiConfig?"?uiConfig=".concat(n.calculateConfig()):"",f=(null===(i=babelHelpers.classPrivateFieldGet(n,s).dashboardUiConfig)||void 0===i?void 0:i.filters)||{},d=Object.keys(f),p="";if(d.length>0){var v=d.map((function(t){return"".concat(e.DASHBOARD_UI_FILTER_CONFIG_URL_PARAM_KEY[t],"=").concat(f[t])})).join("&");p+="&".concat(v)}var y=babelHelpers.classPrivateFieldGet(n,s).supersetDomain,g=babelHelpers.classPrivateFieldGet(n,s).debug;l.sandbox.add("allow-same-origin"),l.sandbox.add("allow-scripts"),l.sandbox.add("allow-presentation"),l.sandbox.add("allow-downloads"),l.sandbox.add("allow-forms"),l.sandbox.add("allow-popups"),t.Event.bind(l,"load",(function(){var t=n.communicationsChannel,i=t.port1,a=t.port2;l.contentWindow.postMessage({type:e.IFRAME_COMMS_MESSAGE_TYPE,handshake:"port transfer"},y,[a]),n.log("sent message channel to the iframe"),r(new o({port:i,name:"superset-embedded-sdk",debug:g}))})),l.src=t.Uri.addParam("".concat(y,"/embedded/").concat(u).concat(h).concat(p),null!==(a=null===(c=babelHelpers.classPrivateFieldGet(n,s).dashboardUiConfig)||void 0===c?void 0:c.urlParams)&&void 0!==a?a:{}),t.Type.isDomNode(babelHelpers.classPrivateFieldGet(n,s).mountPoint)&&t.Dom.append(l,babelHelpers.classPrivateFieldGet(n,s).mountPoint),n.log("placed the iframe")})));case 1:case"end":return r.stop()}}),r)}))),function(){return r.apply(this,arguments)})},{key:"getScreenshot",value:function(){return babelHelpers.classPrivateFieldGet(this,c).get("getScreenshot")}},{key:"getPdf",value:function(e){return babelHelpers.classPrivateFieldGet(this,c).get("getPdf",{dashboardTitle:e})}},{key:"log",value:function(){if(this.isDebug()){for(var e,t=arguments.length,r=new Array(t),n=0;n<t;n++)r[n]=arguments[n];(e=console).debug.apply(e,["[superset-embedded-sdk][dashboard ".concat(babelHelpers.classPrivateFieldGet(this,s).id,"]")].concat(r))}}},{key:"isDebug",value:function(){return!0===babelHelpers.classPrivateFieldGet(this,s).debug}}]),e}();babelHelpers.defineProperty(l,"IFRAME_COMMS_MESSAGE_TYPE","__embedded_comms__"),babelHelpers.defineProperty(l,"DASHBOARD_UI_FILTER_CONFIG_URL_PARAM_KEY",{visible:"show_filters",expanded:"expand_filters",nativeFiltersKey:"native_filters_key",preselectFilters:"preselect_filters",nativeFilters:"native_filters"}),e.ApacheSupersetEmbeddedLoader=l}(this.BX.BIConnector=this.BX.BIConnector||{},BX);
+/* eslint-disable */
+this.BX = this.BX || {};
+(function (exports, main_core) {
+	'use strict';
+
+	class SwitchboardAction {
+		static GET = 'get';
+		static REPLY = 'reply';
+		static EMIT = 'emit';
+		static ERROR = 'error';
+	}
+
+	/**
+	 * A utility for communications between an iframe and its parent, used by the Expertbridge embedded SDK.
+	 * This builds useful patterns on top of the basic functionality offered by MessageChannel.
+	 *
+	 * Both windows instantiate a Switchboard, passing in their MessagePorts.
+	 * Calling methods on the switchboard causes messages to be sent through the channel.
+	 */
+	class Switchboard {
+		port = null;
+		name = '';
+		methods = [];
+		incrementor = 1;
+		debugMode = false;
+		constructor({
+			port,
+			name = 'switchboard',
+			debug = false
+		}) {
+			this.port = port;
+			this.name = name;
+			this.debugMode = debug;
+			main_core.Event.bind(this.port, 'message', async event => {
+				this.log('message received', event);
+				const message = event.data;
+				if (this.isGet(message)) {
+					// find the method, call it, and reply with the result
+					this.port.postMessage(await this.getMethodResult(message));
+				} else if (this.isEmit(message)) {
+					const {
+						method,
+						args
+					} = message;
+					const executor = this.methods[method];
+					if (executor) {
+						executor(args);
+					}
+				}
+			});
+			this.port.start();
+		}
+		async getMethodResult({
+			messageId,
+			method,
+			args
+		}) {
+			const executor = this.methods[method];
+			if (executor == null) {
+				return {
+					switchboardAction: SwitchboardAction.ERROR,
+					messageId,
+					error: `[${this.name}] Method "${method}" is not defined`
+				};
+			}
+			try {
+				const result = await executor(args);
+				return {
+					switchboardAction: SwitchboardAction.REPLY,
+					messageId,
+					result
+				};
+			} catch (err) {
+				this.logError(err);
+				return {
+					switchboardAction: SwitchboardAction.ERROR,
+					messageId,
+					error: `[${this.name}] Method "${method}" threw an error`
+				};
+			}
+		}
+
+		/**
+		 * Defines a method that can be "called" from the other side by sending an event.
+		 */
+		defineMethod(methodName, executor) {
+			this.methods[methodName] = executor;
+		}
+
+		/**
+		 * Calls a method registered on the other side, and returns the result.
+		 *
+		 * How this is accomplished:
+		 * This switchboard sends a "get" message over the channel describing which method to call with which arguments.
+		 * The other side's switchboard finds a method with that name, and calls it with the arguments.
+		 * It then packages up the returned value into a "reply" message, sending it back to us across the channel.
+		 * This switchboard has attached a listener on the channel, which will resolve with the result
+		 * when a reply is detected.
+		 *
+		 * Instead of an arguments list, arguments are supplied as a map.
+		 *
+		 * @param method the name of the method to call
+		 * @param args arguments that will be supplied. Must be serializable, no functions or other nonense.
+		 * @returns whatever is returned from the method
+		 */
+		get(method, args) {
+			return new Promise((resolve, reject) => {
+				// In order to "call a method" on the other side of the port,
+				// we will send a message with a unique id
+				const messageId = this.getNewMessageId();
+				// attach a new listener to our port, and remove it when we get a response
+				const listener = event => {
+					const message = event.data;
+					if (message.messageId !== messageId) {
+						return;
+					}
+					main_core.Event.unbind(this.port, 'message', listener);
+					if (this.isReply(message)) {
+						resolve(message.result);
+					} else {
+						const errStr = this.isError(message) ? message.error : 'Unexpected response message';
+						reject(new Error(errStr));
+					}
+				};
+				main_core.Event.bind(this.port, 'message', listener);
+				this.port.start();
+				const message = {
+					switchboardAction: SwitchboardAction.GET,
+					method,
+					messageId,
+					args
+				};
+				this.port.postMessage(message);
+			});
+		}
+
+		/**
+		 * Emit calls a method on the other side just like get does.
+		 * But emit doesn't wait for a response, it just sends and forgets.
+		 *
+		 * @param method
+		 * @param args
+		 */
+		emit(method, args) {
+			const message = {
+				switchboardAction: SwitchboardAction.EMIT,
+				method,
+				args
+			};
+			this.port.postMessage(message);
+		}
+		start() {
+			this.port.start();
+		}
+		log(...args) {
+			if (this.debugMode) {
+				console.debug(`[${this.name}]`, ...args);
+			}
+		}
+		logError(...args) {
+			console.error(`[${this.name}]`, ...args);
+		}
+		getNewMessageId() {
+			// eslint-disable-next-line no-plusplus
+			return `m_${this.name}_${this.incrementor++}`;
+		} // @ts-ignore
+
+		isGet(message) {
+			return message.switchboardAction === SwitchboardAction.GET;
+		}
+		isReply(message) {
+			return message.switchboardAction === SwitchboardAction.REPLY;
+		}
+		isEmit(message) {
+			return message.switchboardAction === SwitchboardAction.EMIT;
+		}
+		isError(message) {
+			return message.switchboardAction === SwitchboardAction.ERROR;
+		}
+	}
+
+	// Each message we send on the channel specifies an action we want the other side to cooperate with.
+	// var Actions;
+
+	// helper types/functions for making sure wires don't get crossed
+	// (function(Actions) { Actions.GET = 'get'; Actions.REPLY = 'reply'; Actions.EMIT = 'emit'; Actions.ERROR = 'error'; })(Actions || (Actions = {}));
+
+	// function isError(message)
+	// {
+	// 	return message.switchboardAction === Actions.ERROR;
+	// }
+
+	// (function() { var reactHotLoader = typeof reactHotLoaderGlobal === 'undefined' ? undefined : reactHotLoaderGlobal.default; if (!reactHotLoader)
+	//
+	//
+	// //   { return;
+	// // }reactHotLoader.register(Switchboard, 'Switchboard', '/Users/ville/src/expertbridge-release/expertbridge-frontend/packages/expertbridge-ui-switchboard/src/switchboard.ts'); reactHotLoader.register(isGet, 'isGet', '/Users/ville/src/expertbridge-release/expertbridge-frontend/packages/expertbridge-ui-switchboard/src/switchboard.ts'); reactHotLoader.register(isReply, 'isReply', '/Users/ville/src/expertbridge-release/expertbridge-frontend/packages/expertbridge-ui-switchboard/src/switchboard.ts'); reactHotLoader.register(isEmit, 'isEmit', '/Users/ville/src/expertbridge-release/expertbridge-frontend/packages/expertbridge-ui-switchboard/src/switchboard.ts'); reactHotLoader.register(isError, 'isError', '/Users/ville/src/expertbridge-release/expertbridge-frontend/packages/expertbridge-ui-switchboard/src/switchboard.ts'); })();
+	//
+	// (function() { var leaveModule = typeof reactHotLoaderGlobal === 'undefined' ? undefined : reactHotLoaderGlobal.leaveModule; leaveModule && leaveModule(module); })();
+
+	class ApacheSupersetEmbeddedLoader {
+		static IFRAME_COMMS_MESSAGE_TYPE = '__embedded_comms__';
+		static DASHBOARD_UI_FILTER_CONFIG_URL_PARAM_KEY = {
+			visible: 'show_filters',
+			expanded: 'expand_filters',
+			nativeFiltersKey: 'native_filters_key',
+			preselectFilters: 'preselect_filters',
+			nativeFilters: 'native_filters'
+		};
+		#options;
+		#switchboard;
+		#embedAlive;
+		constructor(options) {
+			this.#options = options;
+			this.communicationsChannel = new MessageChannel();
+			this.#switchboard = null;
+			this.#embedAlive = false;
+		}
+		async embedDashboard() {
+			const guestToken = this.#options.fetchGuestToken;
+			this.log('embedding');
+			const [result] = await Promise.all([this.mountIframe()]);
+			this.#switchboard = result;
+			this.#switchboard.emit('guestToken', {
+				guestToken
+			});
+			this.log('sent guest token');
+			if (this.#options.onTokenExpired) {
+				this.#switchboard.defineMethod('refreshGuestToken', async () => {
+					const newToken = await this.#options.onTokenExpired();
+					return {
+						guestToken: newToken
+					};
+				});
+			}
+			const getScrollSize = () => this.#switchboard.get('getScrollSize');
+			const getDashboardPermalink = anchor => this.#switchboard.get('getDashboardPermalink', {
+				anchor
+			});
+			const getActiveTabs = () => this.#switchboard.get('getActiveTabs');
+			const getScreenshot = () => this.#switchboard.get('getScreenshot');
+			const getPdf = () => this.#switchboard.get('getPdf');
+			return {
+				getScrollSize,
+				getDashboardPermalink,
+				getActiveTabs,
+				getScreenshot,
+				getPdf
+			};
+		}
+		calculateConfig() {
+			let configNumber = 0;
+			const dashboardUiConfig = this.#options.dashboardUiConfig;
+			if (!dashboardUiConfig) {
+				return configNumber;
+			}
+			if (dashboardUiConfig.hideTitle) {
+				configNumber += 1;
+			}
+			if (dashboardUiConfig.hideTab) {
+				configNumber += 2;
+			}
+			if (dashboardUiConfig.hideChartControls) {
+				configNumber += 8;
+			}
+			return configNumber;
+		}
+		async mountIframe() {
+			return new Promise((resolve, reject) => {
+				const iframe = main_core.Dom.create('iframe');
+				const id = this.#options.id;
+				const dashboardConfig = this.#options.dashboardUiConfig ? `?uiConfig=${this.calculateConfig()}` : '';
+				const filterConfig = this.#options.dashboardUiConfig?.filters || {};
+				const filterConfigKeys = Object.keys(filterConfig);
+				let filterConfigUrlParams = '';
+				if (filterConfigKeys.length > 0) {
+					const stringParams = filterConfigKeys.map(key => `${ApacheSupersetEmbeddedLoader.DASHBOARD_UI_FILTER_CONFIG_URL_PARAM_KEY[key]}=${filterConfig[key]}`).join('&');
+					filterConfigUrlParams += `&${stringParams}`;
+				}
+				const supersetDomain = this.#options.supersetDomain;
+				const debug = this.#options.debug;
+				const onAlive = event => {
+					if (event.source === iframe.contentWindow && typeof event.data === 'object' && event.data.type === ApacheSupersetEmbeddedLoader.IFRAME_COMMS_MESSAGE_TYPE && event.data.handshake === 'alive') {
+						this.#embedAlive = true;
+						iframe.style.visibility = '';
+						this.log('received alive signal from embed');
+					}
+				};
+				main_core.Event.bind(window, 'message', onAlive);
+				iframe.style.visibility = 'hidden';
+
+				// set up the iframe's sandbox configuration
+				iframe.sandbox.add('allow-same-origin'); // needed for postMessage to work
+				iframe.sandbox.add('allow-scripts'); // obviously the iframe needs scripts
+				iframe.sandbox.add('allow-presentation'); // for fullscreen charts
+				iframe.sandbox.add('allow-downloads'); // for downloading charts as image
+				iframe.sandbox.add('allow-forms'); // for forms to submit
+				iframe.sandbox.add('allow-popups'); // for exporting charts as csv
+				// add these if it turns out we need them:
+				// iframe.sandbox.add("allow-top-navigation");
+
+				main_core.Event.bind(iframe, 'load', () => {
+					main_core.Event.unbind(window, 'message', onAlive);
+					if (!this.#embedAlive) {
+						this.log('embed did not send alive signal, rejecting');
+						main_core.Dom.remove(iframe);
+						reject(new Error('Embedded dashboard is not available'));
+						return;
+					}
+					const commsChannel = this.communicationsChannel;
+					const ourPort = commsChannel.port1;
+					const theirPort = commsChannel.port2;
+
+					// Send one of the message channel ports to the iframe to initialize embedded comms
+					// See https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
+					// we know the content window isn't null because we are in the load event handler.
+
+					iframe.contentWindow.postMessage({
+						type: ApacheSupersetEmbeddedLoader.IFRAME_COMMS_MESSAGE_TYPE,
+						handshake: 'port transfer'
+					}, supersetDomain, [theirPort]);
+					this.log('sent message channel to the iframe');
+					// return our port from the promise
+
+					resolve(new Switchboard({
+						port: ourPort,
+						name: 'superset-embedded-sdk',
+						debug
+					}));
+				});
+				iframe.src = main_core.Uri.addParam(`${supersetDomain}/embedded/${id}${dashboardConfig}${filterConfigUrlParams}`, this.#options.dashboardUiConfig?.urlParams ?? {});
+				if (main_core.Type.isDomNode(this.#options.mountPoint)) {
+					main_core.Dom.append(iframe, this.#options.mountPoint);
+				}
+				this.log('placed the iframe');
+			});
+		}
+
+		// Reserved for the BitrixGPT integration (see #onGptButtonClick in
+		// detail-instance.js). The legacy AI prototype consumed both helpers; the
+		// next iteration will go through the MCP tool set — kept here as
+		// scaffolding so the switchboard contract is documented next to the
+		// other passthrough methods.
+		/*
+		getDataMask(): Promise
+		{
+			return this.#switchboard.get('getDataMask');
+		}
+			getAppliedFilters(): Promise
+		{
+			return this.#switchboard.get('getAppliedFilters');
+		}
+		*/
+
+		// Need patched superset with getScreenshot and getPdf actions - superset-frontend/src/embedded/api.tsx:61
+		getScreenshot() {
+			return this.#switchboard.get('getScreenshot');
+		}
+		getPdf(dashboardTitle) {
+			return this.#switchboard.get('getPdf', {
+				dashboardTitle
+			});
+		}
+
+		/**
+		 * Sets locked external filter values for shared dashboards.
+		 * These filters will be displayed as read-only with locked values.
+		 *
+		 * @param lockedFilters Format: {filterId: {value: [...], label: '...'}, ...}
+		 * @returns Promise with result
+		 */
+		setLockedExternalFilters(lockedFilters) {
+			if (!this.#switchboard) {
+				return Promise.reject(new Error('Switchboard not initialized'));
+			}
+			return this.#switchboard.get('setLockedExternalFilters', {
+				lockedFilters
+			});
+		}
+
+		/**
+		 * Gets current values of external filters (CompanyStructure, TasksFlow, BPWorkflowTemplate).
+		 * Use this to capture filter state when sharing a dashboard.
+		 *
+		 * @returns Promise with external filter values: {filterId: {value: [...], label: '...', filterType: '...'}, ...}
+		 */
+		getExternalFilterValues() {
+			if (!this.#switchboard) {
+				return Promise.reject(new Error('Switchboard not initialized'));
+			}
+			return this.#switchboard.get('getExternalFilterValues');
+		}
+		log(...info) {
+			if (this.isDebug()) {
+				console.debug(`[superset-embedded-sdk][dashboard ${this.#options.id}]`, ...info);
+			}
+		}
+		isDebug() {
+			return this.#options.debug === true;
+		}
+	}
+
+	exports.ApacheSupersetEmbeddedLoader = ApacheSupersetEmbeddedLoader;
+
+})(this.BX.BIConnector = this.BX.BIConnector || {}, BX);

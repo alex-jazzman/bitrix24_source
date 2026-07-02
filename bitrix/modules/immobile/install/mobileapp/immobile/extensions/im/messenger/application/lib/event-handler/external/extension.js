@@ -14,29 +14,15 @@ jn.define('im/messenger/application/lib/event-handler/external', (require, expor
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { waitViewLoaded } = require('im/messenger/lib/wait-view-loaded');
+
 	/**
+	 * @implements {Unsubscribable}
 	 * @class ExternalEventHandler
 	 */
 	class ExternalEventHandler
 	{
-		static #instance;
-
-		/**
-		 * @return {ExternalEventHandler}
-		 */
-		static getInstance()
-		{
-			if (!this.#instance)
-			{
-				this.#instance = new this();
-			}
-
-			return this.#instance;
-		}
-
 		constructor()
 		{
-			this.isLaunched = false;
 			this.logger = getLoggerWithContext('messenger--external-event-handler', this);
 
 			this.#bindMethods();
@@ -102,11 +88,6 @@ jn.define('im/messenger/application/lib/event-handler/external', (require, expor
 
 		subscribeEvents()
 		{
-			if (this.isLaunched)
-			{
-				return;
-			}
-
 			BX.addCustomEvent(EventType.app.activeBefore, this.appActiveBeforeHandler);
 			BX.addCustomEvent(EventType.app.active, this.appActiveHandler);
 			BX.addCustomEvent(EventType.app.failRestoreConnection, this.failRestoreConnectionHandler);
@@ -116,17 +97,10 @@ jn.define('im/messenger/application/lib/event-handler/external', (require, expor
 			BX.addCustomEvent(EventType.notification.reload, this.notificationReloadHandler);
 
 			jnComponent.on(EventType.jnComponent.openRequest, this.openRequestHandler);
-
-			this.isLaunched = true;
 		}
 
 		unsubscribeEvents()
 		{
-			if (!this.isLaunched)
-			{
-				return;
-			}
-
 			BX.removeCustomEvent(EventType.app.activeBefore, this.appActiveBeforeHandler);
 			BX.removeCustomEvent(EventType.app.active, this.appActiveHandler);
 			BX.removeCustomEvent(EventType.app.failRestoreConnection, this.failRestoreConnectionHandler);
@@ -136,8 +110,6 @@ jn.define('im/messenger/application/lib/event-handler/external', (require, expor
 			BX.removeCustomEvent(EventType.notification.reload, this.notificationReloadHandler);
 
 			jnComponent.off(EventType.jnComponent.openRequest, this.openRequestHandler);
-
-			this.isLaunched = false;
 		}
 
 		async appActiveBeforeHandler()

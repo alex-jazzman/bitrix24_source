@@ -29,5 +29,7 @@ return [
 		'./src/playback/model',
 		'./src/playback/default-element',
 		'./src/playback/validator',
+		'./src/builder/model',
+		'./src/builder/validator',
 	],
 ];

@@ -4,17 +4,24 @@
 jn.define('ui-system/blocks/chips/chip-filter', (require, exports, module) => {
 	const { Color, Indent } = require('tokens');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
-	const { ChipInnerTabClass, BadgeCounterDesign } = require('ui-system/blocks/chips/chip-inner-tab');
+	const {
+		ChipInnerTabClass,
+		ChipInnerTabDesign,
+		ChipInnerTabMode,
+		ChipInnerTabBadgeType,
+		BadgeCounterDesign,
+	} = require('ui-system/blocks/chips/chip-inner-tab');
 
 	/**
 	 * @function ChipFilter
-	 * @params {object} props
-	 * @params {string} [props.text]
-	 * @params {value} [props.counterValue]
-	 * @params {BadgeCounterDesign} [props.counterDesign]
-	 * @params {boolean} [props.selected=false]
-	 * @params {boolean} [props.modeMore=false]
-	 * @params {function} [props.forwardRef]
+	 * @param {object} props
+	 * @param {string} [props.text]
+	 * @param {value} [props.counterValue]
+	 * @param {BadgeCounterDesign} [props.counterDesign]
+	 * @param {boolean} [props.selected=false]
+	 * @param {boolean} [props.modeMore=false]
+	 * @param {boolean} [props.showCross=true]
+	 * @param {function} [props.forwardRef]
 	 * @return ChipFilter
 	 */
 	class ChipFilter extends ChipInnerTabClass
@@ -63,9 +70,9 @@ jn.define('ui-system/blocks/chips/chip-filter', (require, exports, module) => {
 
 		shouldRenderCross()
 		{
-			const { selected, modeMore } = this.props;
+			const { showCross, selected, modeMore } = this.props;
 
-			return selected && !modeMore;
+			return showCross && selected && !modeMore;
 		}
 
 		getBadgeCounterDesign()
@@ -77,7 +84,7 @@ jn.define('ui-system/blocks/chips/chip-filter', (require, exports, module) => {
 
 		getContentStyle()
 		{
-			const backgroundColor = this.selected ? Color.accentSoftBlue2 : null;
+			const backgroundColor = this.selected ? Color.accentSoftBlue2 : Color.bgNavigation;
 
 			return {
 				...super.getContentStyle(),
@@ -112,6 +119,7 @@ jn.define('ui-system/blocks/chips/chip-filter', (require, exports, module) => {
 	ChipFilter.defaultProps = {
 		selected: false,
 		modeMore: false,
+		showCross: true,
 	};
 
 	ChipFilter.propTypes = {
@@ -119,6 +127,7 @@ jn.define('ui-system/blocks/chips/chip-filter', (require, exports, module) => {
 		text: PropTypes.string,
 		modeMore: PropTypes.bool,
 		selected: PropTypes.bool,
+		showCross: PropTypes.bool,
 		counterValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 		counterDesign: PropTypes.object,
 		forwardRef: PropTypes.func,
@@ -126,6 +135,9 @@ jn.define('ui-system/blocks/chips/chip-filter', (require, exports, module) => {
 
 	module.exports = {
 		ChipFilter: (props) => new ChipFilter(props),
+		ChipInnerTabDesign,
+		ChipInnerTabMode,
+		ChipInnerTabBadgeType,
 		BadgeCounterDesign,
 	};
 });

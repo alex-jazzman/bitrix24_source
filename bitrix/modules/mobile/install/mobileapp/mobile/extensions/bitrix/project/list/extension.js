@@ -5,7 +5,7 @@
 	const require = (ext) => jn.require(ext);
 
 	const AppTheme = require('apptheme');
-	const { WorkgroupUtil } = require('project/utils');
+	const { ProjectOpener } = require('project/opener');
 	const { toMD5 } = require('utils/object');
 	const { RequestExecutor } = require('rest');
 
@@ -81,7 +81,8 @@
 						}
 						else
 						{
-							void WorkgroupUtil.openProject(item, {
+							void ProjectOpener.open({
+								item,
 								projectId: item.id,
 								siteId: this.siteId,
 								siteDir: this.siteDir,

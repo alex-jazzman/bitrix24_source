@@ -1,4 +1,4 @@
-import { BitrixVueComponentProps } from 'ui.vue3';
+import { type BitrixVueComponentProps } from 'ui.vue3';
 
 import { FooterNote } from '../../layout/footer-note/footer-note';
 

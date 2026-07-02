@@ -52,3 +52,4 @@ $MESS["SN_BIC_GROUP_FIELD_SUBJECT_MSGVER_1_FULL"] = "Workgroup subject";
 $MESS["SN_BIC_GROUP_FIELD_TYPE"] = "Workgroup type";
 $MESS["SN_BIC_GROUP_FIELD_TYPE_FULL"] = "Workgroup type: group, project or scrum";
 $MESS["SN_BIC_GROUP_TABLE"] = "Project";
+$MESS["SN_BIC_GROUP_TABLE_DESCRIPTION_FULL"] = "Offers information about projects, including names, owners, members, types, deadlines, and activity.";

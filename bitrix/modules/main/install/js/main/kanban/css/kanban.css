@@ -100,6 +100,7 @@
 	-webkit-box-flex: 1;
 	-ms-flex: 1;
 	flex: 1;
+	gap: 4px;
 	position: relative;
 	margin-top: -8px;
 	padding-top: 8px;
@@ -290,6 +291,8 @@
 .main-kanban-column-title-info {
 	display: -ms-flexbox;
 	display: flex;
+	align-items: center;
+	height: 32px;
 	position: relative;
 	z-index: 9;
 	margin: 0 18px 0 12px;
@@ -298,16 +301,15 @@
 .main-kanban-column-title-text {
 	display: -ms-flexbox;
 	display: flex;
+	align-items: baseline;
 	-ms-flex: 1;
 	flex: 1;
 	overflow: hidden;
 	margin: 0 4px 0 0;
 	vertical-align: middle;
-	height: 32px;
-	line-height: 32px;
 	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-semi-bold, 600);
-	font-size: 12px;
+	font-weight: var(--ui-font-weight-medium, 500);
+	font-size: var(--ui-font-size-sm);
 	color: #000;
 	white-space: nowrap;
 	text-overflow: ellipsis;
@@ -324,10 +326,8 @@
 .main-kanban-column-total-item {
 	-ms-flex: 1;
 	flex: 1;
-	height: 32px;
-	margin: 0 0 0 2px;
-	line-height: 32px;
-	font-size: 11px;
+	margin: 0 0 0 6px;
+	font-size: var(--ui-font-size-xs);
 	color: #000;
 	opacity: .7;
 	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
@@ -340,9 +340,6 @@
 
 .main-kanban-column-title-dark .main-kanban-column-total-item,
 .main-kanban-column-title-dark .main-kanban-column-title-text { color: #fff }
-
-.main-kanban-column-total-item:before { content: '(' }
-.main-kanban-column-total-item:after { content: ')' }
 
 .main-kanban-column-edit {
 	display: inline-block;
@@ -442,7 +439,7 @@
 	content: '';
 	opacity: .5;
 	box-shadow: none;
-	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2010%2010%22%3E%0A%20%20%3Cpath%20fill%3D%22%2380868E%22%20fill-rule%3D%22evenodd%22%20d%3D%22M109%2C16%20L109%2C12%20L107%2C12%20L107%2C16%20L103%2C16%20L103%2C18%20L107%2C18%20L107%2C22%20L109%2C22%20L109%2C18%20L113%2C18%20L113%2C16%20L109%2C16%20Z%22%20transform%3D%22translate%28-103%20-12%29%22/%3E%0A%3C/svg%3E') center center no-repeat;
+	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2210%22%20height%3D%2210%22%20viewBox%3D%220%200%209.42%209.42%20%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M4.70801%200C5.00716%206.06316e-08%205.25%200.242838%205.25%200.541992V4.16602H8.875C9.174%204.16619%209.41602%204.40896%209.41602%204.70801C9.41602%205.00705%209.174%205.24982%208.875%205.25H5.25V8.875C5.25%209.17415%205.00716%209.41699%204.70801%209.41699C4.40885%209.41699%204.16602%209.17415%204.16602%208.875V5.25H0.541016C0.242011%205.24982%201.77128e-08%205.00705%200%204.70801C0%204.40896%200.242011%204.16619%200.541016%204.16602H4.16602V0.541992C4.16602%200.242838%204.40885%200%204.70801%200Z%22%20fill%3D%22%23828B95%22/%3E%3C/svg%3E') center center no-repeat;
 	background-size: 10px 10px;
 }
 
@@ -707,12 +704,14 @@
 
 .main-kanban-column-header {
 	position: relative;
-	margin: 0 -4px 5px 0;
+	margin: 0 -4px 10px 0;
 	z-index: 9;
 }
 
 .main-kanban-column:last-child .main-kanban-column-header {
-	margin: 0 0 5px 0;
+	margin-left: 0;
+	margin-right: 0;
+	margin-top: 0;
 }
 
 .main-kanban-column-top-button-shown .main-kanban-column-header {
@@ -786,14 +785,14 @@
 	right: 13px;
 	z-index: -999;
 	background: #ace9fb;
-	border-radius: var(--ui-border-radius-2xs, 3px);
+	border-radius: var(--ui-border-radius-xs, 6px);
 	border-top-right-radius: 0;
 	border-bottom-right-radius: 0;
 }
 
 .main-kanban-column-title-right {
 	content: '';
-	width: 14px;
+	width: 28px;
 	height: 32px;
 	position: absolute;
 	right: 0;
@@ -2061,7 +2060,7 @@
 
 /*css for column revert */
 .main-kanban.--columns-revert .main-kanban-column-title-bg {
-	left: 13px;
+	left: 16px;
 	right: -3px;
 	border-radius: var(--ui-border-radius-2xs, 3px);
 	border-top-left-radius: 0;

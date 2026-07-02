@@ -4,6 +4,8 @@ import { PlaceholdersApp } from './app';
 import { Loader } from 'main.loader';
 import './style.css';
 
+export { PlaceholdersApp };
+
 const sidePanelConfig = Object.freeze({
 	link: 'sign:stub:placeholder-list',
 	width: 500,

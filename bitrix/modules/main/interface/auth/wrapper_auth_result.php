@@ -51,7 +51,7 @@ if ($bOnHit):
 <script>
 	BX.ready(function(){BX.defer(BX.adminLogin.setAuthResult, BX.adminLogin)(<?= Json::encode($arAuthResult) ?>);});
 </script>
-<?
+<?php
 else:
 ?>
 <script bxrunfirst="true">
@@ -69,5 +69,5 @@ if (!empty($pullConfig))
 ?>
 	top.BX.adminLogin.setAuthResult(<?= Json::encode($arAuthResult) ?>);
 </script>
-<?
+<?php
 endif;

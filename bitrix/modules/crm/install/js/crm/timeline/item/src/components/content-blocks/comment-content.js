@@ -6,6 +6,7 @@ import { CommentEditor } from 'crm.timeline.editors.comment-editor';
 import { Action } from '../../action';
 import { EditableDescription } from './editable-description';
 import { ButtonState } from '../enums/button-state';
+import 'main.lazyload';
 
 const TYPE_LOAD_FILES_BLOCK = 1;
 const TYPE_LOAD_TEXT_CONTENT = 2;
@@ -42,8 +43,6 @@ export default BitrixVue.cloneComponent(EditableDescription, {
 			isMoving: false,
 			isFilesBlockDisplayed: this.filesCount > 0,
 			filesHtmlBlock: null,
-			loader: Object.freeze(null),
-			editor: Object.freeze(null),
 		};
 	},
 

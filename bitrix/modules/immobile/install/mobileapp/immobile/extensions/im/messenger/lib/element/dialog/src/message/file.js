@@ -2,6 +2,8 @@
  * @module im/messenger/lib/element/dialog/message/file
  */
 jn.define('im/messenger/lib/element/dialog/message/file', (require, exports, module) => {
+	const { Color } = require('tokens');
+
 	const { MessageType } = require('im/messenger/const');
 	const { Message } = require('im/messenger/lib/element/dialog/message/base');
 	const { File } = require('im/messenger/lib/element/dialog/message/element/file/file');
@@ -13,17 +15,16 @@ jn.define('im/messenger/lib/element/dialog/message/file', (require, exports, mod
 	{
 		/**
 		 * @param {MessagesModelState} modelMessage
-		 * @param {CreateMessageOptions} options
-		 * @param {FilesModelState} file
+		 * @param {CreateMessageOptions|{}} options
 		 */
-		constructor(modelMessage = {}, options = {}, file = {})
+		constructor(modelMessage, options = {})
 		{
 			super(modelMessage, options);
 
 			this.setMessage(modelMessage.text, { dialogId: options.dialogId });
-			this.setShowTail(true);
 
-			this.file = File.createByFileModel(file).toMessageFormat();
+			const [firstFile = {}] = this.getModelFiles();
+			this.file = File.createByFileModel(firstFile).toMessageFormat();
 
 			/* region deprecated properties */
 			this.fileName = this.file.name;
@@ -51,6 +52,20 @@ jn.define('im/messenger/lib/element/dialog/message/file', (require, exports, mod
 		getType()
 		{
 			return MessageType.file;
+		}
+
+		setSystemStyle()
+		{
+			super.setSystemStyle();
+
+			this.style.file = {
+				nameColor: Color.base1.toHex(),
+				downloadIconColor: Color.chatOtherBase1_1.toHex(),
+				progressIconColor: Color.accentMainPrimary.toHex(),
+				fileSizeColor: Color.chatOtherBase1_1.toHex(),
+			};
+
+			return this;
 		}
 	}
 

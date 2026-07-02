@@ -44,6 +44,7 @@ return [
 		'im:messenger/lib/element/chat-avatar',
 		'im:messenger/controller/dialog/lib/helper/text',
 		'im:messenger/controller/dialog/lib/sidebar',
+		'im:messenger/controller/dialog/lib/source',
 		'im:messenger/lib/permission-manager',
 		'im:messenger/lib/reaction-assets-manager',
 		'intranet:fire-admin',
@@ -78,6 +79,7 @@ return [
 		'./src/message/copilot-prompt',
 		'./src/message/error',
 		'./src/message/unread-separator',
+		'./src/message/marked-separator',
 		'./src/message/check-in/const/type',
 		'./src/message/check-in/const/configuration',
 		'./src/message/check-in/configuration',
@@ -94,6 +96,7 @@ return [
 		'./src/message/call/factory',
 		'./src/message/call/handler',
 		'./src/message/ai-assistant',
+		'./src/message/empty',
 
 		'./src/message/banner/message',
 		'./src/message/banner/handler',
@@ -129,5 +132,12 @@ return [
 		'./src/message/deleted-sticker',
 		'./src/message/ai-bizproc/message',
 		'./src/message/ai-bizproc/handler',
+
+		'./src/message/builder/message',
+		'./src/message/builder/factory',
+		'./src/message/builder/handler',
+		'./src/message/builder/button/custom-configuration',
+		'./src/message/builder/button/system-configuration',
+		'./src/message/builder/configuration',
 	],
 ];

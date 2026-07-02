@@ -43,7 +43,7 @@ class CClock
 			case 'label':
 				?>
 				<input type="hidden" id="<?=$inputId?>" name="<?=$inputName?>" value="<?=$initTime?>">
-				<div class="bx-clock-label" onmouseover="this.className='bx-clock-label-over';" onmouseout="this.className='bx-clock-label';" onclick=""><? echo ($arParams['initTime']? $initTime : 'Time'); ?></div><?
+				<div class="bx-clock-label" onmouseover="this.className='bx-clock-label-over';" onmouseout="this.className='bx-clock-label';" onclick=""><?= ($arParams['initTime']? $initTime : 'Time'); ?></div><?
 				break;
 			case 'select':
 				?>
@@ -92,12 +92,12 @@ class CClock
 		?><script>
 		function bxLoadClock_<?=$jsInputId?>(callback)
 		{
-			<?if(!isset($arParams['view']) || $arParams['view'] != 'inline'):?>
+			<?php if(!isset($arParams['view']) || $arParams['view'] != 'inline'):?>
 			if (!window.JCClock && !window.jsUtils)
 			{
 				return setTimeout(function(){bxLoadClock_<?=$jsInputId?>(callback);}, 50);
 			}
-			<?endif;?>
+			<?php endif;?>
 
 			if (!window.JCClock)
 			{

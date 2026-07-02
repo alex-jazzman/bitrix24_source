@@ -25,7 +25,7 @@ export const CollabNotifier = {
 
 	onUpdateLinkComplete(): void
 	{
-		showNotification(Loc.getMessage('IM_NOTIFIER_COLLAB_LINK_UPDATE_COMPLETE'));
+		showNotification(Loc.getMessage('IM_NOTIFIER_LINK_UPDATE_COMPLETE'));
 	},
 
 	handleCreateError(error: RunActionError): void

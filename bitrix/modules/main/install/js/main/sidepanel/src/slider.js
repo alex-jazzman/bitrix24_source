@@ -2,22 +2,24 @@ import { Type, Loc, Dom, Event, Runtime, Text, Browser, Uri, Tag, Easing, type J
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { MemoryCache, type BaseCache } from 'main.core.cache';
 import { ZIndexManager, type ZIndexComponent } from 'main.core.z-index-manager';
-import type { Popup } from 'main.popup';
-
+import { FocusTrap, FocusMonitor, type FocusTrapOptions } from 'ui.a11y';
+import { type Popup } from 'main.popup';
 import { renderSkeleton } from 'ui.system.skeleton';
+import 'clipboard';
 
 import { Dictionary } from './dictionary';
 import { Label } from './label';
 import { MessageEvent } from './message-event';
 import { SliderEvent } from './slider-event';
 
-import type { SliderOptions, SliderEvents } from './types/slider-options';
+import { type SliderOptions, type SliderEvents } from './types/slider-options';
 import { type MinimizeOptions } from './types/minimize-options';
 import { type OuterBoundary } from './types/outer-boundary';
 
 export class Slider
 {
 	#refs: BaseCache<HTMLElement> = new MemoryCache();
+	#options: SliderOptions | null = {};
 
 	#startPosition: 'right' | 'bottom' | 'top' = 'right';
 	#startAnimationState: JsonObject = null;
@@ -28,10 +30,13 @@ export class Slider
 	#designSystemContext: string = '--ui-context-content-light';
 	#zIndexComponent: ZIndexComponent = null;
 	#autoOffset: boolean = true;
+	#focusTrap: FocusTrap = null;
+	#targetContainer: HTMLElement | string = null;
 
 	constructor(url: string, sliderOptions: SliderOptions)
 	{
 		const options: SliderOptions = Type.isPlainObject(sliderOptions) ? sliderOptions : {};
+		this.#options = options;
 
 		this.contentCallback = Type.isFunction(options.contentCallback) ? options.contentCallback : null;
 		this.contentCallbackInvoved = false;
@@ -215,19 +220,9 @@ export class Slider
 			onclick: this.handlePrintBtnClick.bind(this),
 		});
 
-		// Compatibility
-		if (
-			this.url.includes('crm.activity.planner/slider.php')
-			&& options.events
-			&& Type.isFunction(options.events.onOpen)
-			&& options.events.compatibleEvents !== false
-		)
+		if (Type.isStringFilled(options.targetContainer) || Type.isElementNode(options.targetContainer))
 		{
-			const onOpen = options.events.onOpen;
-			delete options.events.onOpen;
-			options.events.onLoad = function(event) {
-				onOpen(event.getSlider());
-			};
+			this.#targetContainer = options.targetContainer;
 		}
 
 		[options.events].flat().forEach((events: SliderEvents) => this.#subscribeEvents(events));
@@ -281,11 +276,21 @@ export class Slider
 
 		this.adjustLayout();
 
-		ZIndexManager.bringToFront(this.getOverlay());
+		this.#zIndexComponent.getStack().bringToFront(this.getOverlay());
 
 		this.opened = true;
 
 		this.fireEvent('onOpenStart');
+
+		if (this.isLoaded())
+		{
+			this.getFocusTrap().activate();
+		}
+		else
+		{
+			this.getFocusTrap().activate({ initialFocus: false });
+			this.getFocusTrap().focusContainer({ preventScroll: true });
+		}
 
 		this.animateOpening();
 
@@ -1045,6 +1050,15 @@ export class Slider
 		ZIndexManager.unregister(this.layout.overlay);
 		this.#zIndexComponent = null;
 
+		FocusMonitor.Instance.detachIframe(this.getFrame());
+
+		if (this.#focusTrap !== null)
+		{
+			this.#focusTrap.destroy();
+		}
+
+		this.#focusTrap = null;
+
 		Dom.remove(this.layout.overlay);
 
 		this.layout.container = null;
@@ -1147,6 +1161,8 @@ export class Slider
 		);
 
 		this.getLabel().adjustLayout();
+
+		this.fireEvent('onLayout');
 	}
 
 	/**
@@ -1159,10 +1175,16 @@ export class Slider
 			return;
 		}
 
+		this.getContainer().ariaModal = this.getFocusTrap().isLooped();
+		if (this.getTitle() !== null)
+		{
+			this.getContainer().ariaLabel = this.getTitle();
+		}
+
 		if (this.isSelfContained())
 		{
 			Dom.addClass(this.getOverlay(), '--self-contained');
-			Dom.append(this.getOverlay(), document.body);
+			Dom.append(this.getOverlay(), this.getTargetContainer());
 
 			this.setContent();
 
@@ -1171,11 +1193,33 @@ export class Slider
 		else
 		{
 			Dom.append(this.getFrame(), this.getContentContainer());
-			Dom.append(this.getOverlay(), document.body);
+			Dom.append(this.getOverlay(), this.getTargetContainer());
 			this.setFrameSrc(); // setFrameSrc must be below than appendChild, otherwise POST method fails.
 		}
 
-		this.#zIndexComponent = ZIndexManager.register(this.getOverlay());
+		const stack = ZIndexManager.getOrAddStack(document.body);
+		this.#zIndexComponent = stack.register(this.getOverlay());
+	}
+
+	getTargetContainer(): HTMLElement
+	{
+		if (this.#targetContainer === null)
+		{
+			return document.body;
+		}
+
+		if (Type.isElementNode(this.#targetContainer))
+		{
+			return this.#targetContainer;
+		}
+
+		const container = document.querySelector(this.#targetContainer);
+		if (Type.isElementNode(container))
+		{
+			return container;
+		}
+
+		return document.body;
 	}
 
 	getFrame(): HTMLIFrameElement
@@ -1297,7 +1341,7 @@ export class Slider
 		`;
 
 		this.layout.container = Tag.render`
-			<div class="side-panel side-panel-container">
+			<div class="side-panel side-panel-container" role="dialog" aria-busy="true">
 				${
 					this.hideControls
 						? content
@@ -1428,14 +1472,19 @@ export class Slider
 					return;
 				}
 
+				const onLoad = () => {
+					this.getContainer().ariaLabel = this.getTitle() || '';
+					this.getContainer().ariaBusy = false;
+					this.getFocusTrap().applyInitialFocus();
+					this.removeLoader();
+					this.loaded = true;
+					this.firePageEvent('onLoad');
+				};
+
 				if (Type.isPlainObject(result) && Type.isStringFilled(result.html))
 				{
 					Runtime.html(this.getContentContainer(), result.html)
-						.then(() => {
-							this.removeLoader();
-							this.loaded = true;
-							this.firePageEvent('onLoad');
-						})
+						.then(onLoad)
 						.catch((reason) => {
 							this.removeLoader();
 							this.getContentContainer().innerHTML = reason;
@@ -1452,9 +1501,7 @@ export class Slider
 						this.getContentContainer().innerHTML = result;
 					}
 
-					this.removeLoader();
-					this.loaded = true;
-					this.firePageEvent('onLoad');
+					onLoad();
 				}
 			})
 			.catch((reason) => {
@@ -1758,6 +1805,25 @@ export class Slider
 		this.layout.loader = null;
 	}
 
+	getFocusTrap(): FocusTrap
+	{
+		if (this.#focusTrap === null)
+		{
+			const defaultFocusTrapOptions: FocusTrapOptions = {
+				isolateOutside: true,
+				initialFocus: ['[data-autofocus]', 'container'],
+			};
+
+			const focusTrapOptions: FocusTrapOptions = (
+				Type.isPlainObject(this.#options.focusTrap) ? this.#options.focusTrap : {}
+			);
+
+			this.#focusTrap = new FocusTrap(this.getContainer(), Runtime.merge(defaultFocusTrapOptions, focusTrapOptions));
+		}
+
+		return this.#focusTrap;
+	}
+
 	/**
 	 * @private
 	 */
@@ -1876,11 +1942,6 @@ export class Slider
 			{
 				this.showLoader();
 			}
-
-			if (this.isFocusable())
-			{
-				this.focus();
-			}
 		}
 		else
 		{
@@ -1922,6 +1983,11 @@ export class Slider
 			if (Type.isFunction(callback))
 			{
 				callback(this);
+			}
+
+			if (!this.isDestroyed())
+			{
+				this.getFocusTrap().deactivate();
 			}
 
 			if (!this.isCacheable())
@@ -2180,6 +2246,22 @@ export class Slider
 		this.loaded = true;
 		this.loadedCnt++;
 
+		FocusMonitor.Instance.detachIframe(this.getFrame());
+		FocusMonitor.Instance.attachIframe(this.getFrame());
+
+		if (this.getTitle() === null)
+		{
+			// fallback
+			const title = this.getFrameWindow() ? this.getFrameWindow()?.document?.title : null;
+			if (Type.isStringFilled(title))
+			{
+				this.getContainer().ariaLabel = Type.isStringFilled(title) ? title : '';
+			}
+		}
+
+		this.getContainer().ariaBusy = false;
+		this.getFocusTrap().applyInitialFocus();
+
 		if (this.loadedCnt > 1)
 		{
 			this.firePageEvent('onLoad');
@@ -2192,11 +2274,6 @@ export class Slider
 		{
 			this.firePageEvent('onLoad');
 			this.fireFrameEvent('onLoad');
-		}
-
-		if (this.isFocusable())
-		{
-			this.focus();
 		}
 
 		this.closeLoader();
@@ -2293,7 +2370,7 @@ export class Slider
 		const sameStack = this.getZIndexComponent().getStack() === popup.getZIndexComponent().getStack();
 		const popupOnTop = sameStack && popup.getZindex() > this.getZindex();
 		let popupInside = this.getContainer().contains(popup.getPopupContainer());
-		if (this.getFrameWindow())
+		if (this.getFrameWindow() && !this.allowCrossOrigin)
 		{
 			popupInside = this.getFrameWindow().document.contains(popup.getPopupContainer());
 		}

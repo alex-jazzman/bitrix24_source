@@ -2,13 +2,13 @@
 
 return [
 	'extensions' => [
-		'type',
 		'im:messenger/application/lib/channel-pull-watch-manager',
 		'im:messenger/application/lib/counters-update-system',
 		'im:messenger/application/lib/dialog-manager',
 		'im:messenger/application/lib/event-handler/external',
 		'im:messenger/application/lib/event-handler/messenger',
 		'im:messenger/application/lib/event-handler/store',
+		'im:messenger/application/lib/folder-launcher',
 		'im:messenger/application/lib/message-queue-request-manager',
 		'im:messenger/application/lib/plan-limits-updater',
 		'im:messenger/application/lib/pull-handler-launcher',
@@ -16,6 +16,7 @@ return [
 		'im:messenger/application/lib/refresher',
 		'im:messenger/application/lib/revision-checker',
 		'im:messenger/application/lib/update-notifier',
+		'im:messenger/assets/icon',
 		'im:messenger/const',
 		'im:messenger/controller/dialog/lib/assets',
 		'im:messenger/controller/dialog-creator',
@@ -24,6 +25,7 @@ return [
 		'im:messenger/controller/recent/manager',
 		'im:messenger/controller/sidebar-v2/factory',
 		'im:messenger/core/messenger',
+		'im:messenger/global/subscription-manager',
 		'im:messenger/lib/anchors',
 		'im:messenger/lib/copilot',
 		'im:messenger/lib/counters/tab-counters',
@@ -35,6 +37,7 @@ return [
 		'im:messenger/lib/promotion',
 		'im:messenger/lib/visibility-manager',
 		'im:messenger/lib/wait-view-loaded',
+		'im:messenger/provider/data',
 		'im:messenger/provider/pull/anchor',
 		'im:messenger/provider/services/connection',
 		'im:messenger/provider/services/messenger-init',

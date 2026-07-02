@@ -1,8 +1,8 @@
 <?php
 /**
- * @global \CUser $USER
- * @global \CMain $APPLICATION
- * @global \CDatabase $DB
+ * @global CUser $USER
+ * @global CMain $APPLICATION
+ * @global CDatabase $DB
  */
 
 require_once(__DIR__."/../include/prolog_admin_before.php");
@@ -18,7 +18,7 @@ if (isset($_POST["CLEAR_DATA"]) && $_POST["CLEAR_DATA"] == 'Y' && $USER->IsAdmin
 {
 	\Bitrix\Main\Application::getInstance()->getSession()["SESS_ADMIN"]["RATING_CONFIG_CLEAR_DATA"]=array("MESSAGE"=>GetMessage("RATING_SETTINGS_FRM_RATING_CLEAR_DATA_OK"), "TYPE"=>"OK");
 	CRatings::ClearData();
-	LocalRedirect("rating_settings.php?lang=".LANG);
+	LocalRedirect("rating_settings.php?lang=".LANGUAGE_ID);
 }
 
 // set default values
@@ -236,9 +236,9 @@ $aTabs = array(
 );
 $editTab = new CAdminTabControl("editTab", $aTabs, true, true);
 ?>
-<form name="form1" action="<?echo $APPLICATION->GetCurPage()?>?lang=<?=LANG?>" method="POST">
+<form name="form1" action="<?= $APPLICATION->GetCurPage()?>?lang=<?=LANGUAGE_ID?>" method="POST">
 <input type="hidden" name="ACTION" value="" id="ACTION">
-<?
+<?php
 echo bitrix_sessid_post();
 
 $editTab->Begin();
@@ -251,7 +251,7 @@ $editTab->BeginNextTab();
 			<?=InputType("radio", 'RATING_WEIGHT_TYPE', 'manual', $sRatingWeightType, false, GetMessage('RATING_SETTINGS_FRM_TYPE_MANUAL'), "onclick=\"jsTypeChanged('form1')\"");?>
 		</td>
 	</tr>
-<?
+<?php
 $arRatingsList = array();
 $db_res = CRatings::GetList(array("ID" => "ASC"), array("ENTITY_ID" => "USER"));
 while ($res = $db_res->Fetch())
@@ -264,7 +264,7 @@ while ($res = $db_res->Fetch())
 		<td width="50%"><?=GetMessage('RATING_SETTINGS_FRM_RATING_ID')?>:</td>
 		<td><?=SelectBoxFromArray("RATING_ID", $arRatingsList, $ratingId, "", "onChange=\"jsTypeChanged('form1')\"");?></td>
 	</tr>
-<?
+<?php
 if ($sRatingWeightType == 'auto')
 {
 	$communitySize = COption::GetOptionString("main", "rating_community_size", 3);
@@ -297,7 +297,7 @@ if ($sRatingWeightType == 'auto')
 				<?=InputType("radio", 'RATING_AUTHORITY_WEIGHT', 'N', $sRatingAuthrorityWeight, false, GetMessage('RATING_SETTINGS_FRM_AUTHORITY_WEIGHT_N'));?>
 			</td>
 		</tr>
-	<?
+	<?php
 }
 if ($sRatingWeightType == 'manual')
 {
@@ -322,14 +322,14 @@ if ($sRatingWeightType == 'manual')
 		<tr class="heading">
 			<td colspan="2"><?=GetMessage('RATING_SETTINGS_CAT_CONFIG')?></td>
 		</tr>
-	<?
+	<?php
 	$db_res = CRatings::GetWeightList(array("RATING_TO" => "ASC"), array());
 	$conditionCount = 0;
 	$conditionMaxCount = 0;
 	?>
 		<tr>
 			<td colspan="2" align="left" class="rating_settings" id="rating_settings_weight">
-				<?
+				<?php
 				$arCondition = array();
 				while ($res = $db_res->Fetch())
 				{
@@ -341,22 +341,22 @@ if ($sRatingWeightType == 'manual')
 					$conditionCount++;
 				?>
 					<div id="rating_settings_weight_<?=$conditionCount?>">
-						<?if($conditionCount == $conditionMaxCount):?>
+						<?php if($conditionCount == $conditionMaxCount):?>
 							<span><?=GetMessage('RATING_SETTINGS_FRM_FROM')?> <input type="text" size="6" value="<?=($res['RATING_FROM'] == -1000000? 0 : floatVal($res['RATING_FROM']-0.0001))?>" id="rating_settings_weight_<?=$conditionCount?>_from" name="CONFIG[<?=$conditionCount?>][RATING_FROM]" class="rating_settings_from" readonly></span>
-						<?else:?>
+						<?php else:?>
 							<span><?=GetMessage('RATING_SETTINGS_FRM_TO')?> <input type="text" size="7" value="<?=$res['RATING_TO']?>" id="rating_settings_weight_<?=$conditionCount?>_to" name="CONFIG[<?=$conditionCount?>][RATING_TO]" onchange="jsChangeRatingWeight()"></span>
-						<?endif;?>
+						<?php endif;?>
 						<span><?=GetMessage('RATING_SETTINGS_FRM_WEIGHT')?> <input type="text" size="6" value="<?=$res['WEIGHT']?>" id="rating_settings_weight_<?=$conditionCount?>_weight" name="CONFIG[<?=$conditionCount?>][WEIGHT]"></span>
 						<span><?=GetMessage('RATING_SETTINGS_FRM_COUNT')?> <input type="text" size="3" value="<?=$res['COUNT']?>" id="rating_settings_weight_<?=$conditionCount?>_count" name="CONFIG[<?=$conditionCount?>][COUNT]"></span>
-						<?if($conditionCount != $conditionMaxCount):?>
+						<?php if($conditionCount != $conditionMaxCount):?>
 							<a href="#delete" onclick="jsDeleteRatingWeight(<?=$conditionCount?>);return false;"><img src="/bitrix/themes/.default/images/cross.gif" title="<?=GetMessage('RATING_SETTINGS_FRM_DELETE')?>" border="0" align="absmiddle"></a>
-						<?endif;?>
+						<?php endif;?>
 					</div>
-				<?}?>
+				<?php }?>
 				<div id="rating_settings_weight_add" rel="<?=$conditionMaxCount?>"><span class="settings_add"><a href="#add" onclick="jsAddRatingWeight();return false;"><?=GetMessage('RATING_SETTINGS_FRM_ADD')?></a></span></div>
 			</td>
 		</tr>
-	<?
+	<?php
 }
 ?>
 	<tr class="heading">
@@ -364,7 +364,7 @@ if ($sRatingWeightType == 'manual')
 	</tr>
 	<tr>
 		<td colspan="2">
-<?
+<?php
 $subTabControl = new CAdminViewTabControl("subTabControl", $aSubTabs);
 $subTabControl->Begin();
 foreach ($arSites as $site):
@@ -412,7 +412,7 @@ foreach ($arSites as $site):
 		<td><input type="text" value="<?=htmlspecialcharsBx($arRatingTextLikeD[$subLang])?>" name="RATING_TEXT_LIKE_D[<?=$subLang?>]"></td>
 	</tr>
 	</table>
-<?
+<?php
 endforeach;
 $subTabControl->End();
 ?>
@@ -425,7 +425,7 @@ $subTabControl->End();
 		<?=EndNote()?>
 		</td>
 	</tr>
-<?
+<?php
 $editTab->BeginNextTab();
 ?>
 	<tr>
@@ -446,7 +446,7 @@ $editTab->BeginNextTab();
 			<?=InputType("radio", 'RATING_ASSIGN_TYPE', 'manual', $sRatingAssignType, false, GetMessage('MAIN_NO'), "onclick=\"jsAutoAssign('hide')\"");?>
 		</td>
 	</tr>
-<?
+<?php
 	$arRatingVoteGroupIdList = Array();
 	$arRatingVoteGroupIdList2 = Array();
 	$arRatingVoteGroupIdList2["REFERENCE"][] = "";
@@ -510,7 +510,7 @@ $editTab->BeginNextTab();
 			<td width="50%"></td>
 			<td> <?=(COption::GetOptionString("main", "rating_weight_type", "auto") == "auto"? GetMessage('RATING_SETTINGS_FRM_ASSIGN_VOTE_1') : GetMessage('RATING_SETTINGS_FRM_ASSIGN_AUTHORITY'))?><input name="RATING_ASSIGN_AUTHORITY_GROUP_ADD" value="<?=$ratingAssignAuthorityGroupAdd?>" style="width:45px;" type="text"><br> <?=GetMessage('RATING_SETTINGS_FRM_ASSIGN_VOTE_2')?>: <input name="RATING_ASSIGN_AUTHORITY_GROUP_DELETE" value="<?=$ratingAssignAuthorityGroupDelete?>" style="width:45px;" type="text"></td>
 		</tr>
-<?
+<?php
 $editTab->BeginNextTab();
 ?>
 	<tr>
@@ -521,7 +521,7 @@ $editTab->BeginNextTab();
 		<td width="50%" valign="top" style="padding-top: 9px;"><?=GetMessage('RATING_SETTINGS_FRM_DEF_VALUE')?>:</td>
 		<td>
 			<?=InputType("radio", 'RATING_AUTHORITY_DEFAULT', '1', '', false, GetMessage('RATING_SETTINGS_FRM_DEF_VALUE_1'));?>
-			<?
+			<?php
 			if (IsModuleInstalled("forum"))
 			{
 				echo '<br>'.InputType("radio", 'RATING_AUTHORITY_DEFAULT', '2', '', false, GetMessage('RATING_SETTINGS_FRM_DEF_VALUE_2'));
@@ -531,7 +531,7 @@ $editTab->BeginNextTab();
 			<br><?=InputType("radio", 'RATING_AUTHORITY_DEFAULT', '0', '0', false, GetMessage('RATING_SETTINGS_FRM_DEF_VALUE_4'));?>
 		</td>
 	</tr>
-<?if($USER->IsAdmin()):?>
+<?php if($USER->IsAdmin()):?>
 	<tr class="heading">
 		<td colspan="2"><?=GetMessage('RATING_SETTINGS_FRM_CLEAR')?></td>
 	</tr>
@@ -539,28 +539,28 @@ $editTab->BeginNextTab();
 		<td width="50%"><?=GetMessage('RATING_SETTINGS_FRM_RATING_CLEAR_DATA')?>:</td>
 		<td><input type="checkbox" name="CLEAR_DATA" value="Y" onclick="return confirm('<?=GetMessage("RATING_SETTINGS_FRM_RATING_CLEAR_DATA_CONFIRM")?>')? true: false"></td>
 	</tr>
-<?
+<?php
 endif;
 $editTab->Buttons();
 ?>
 	<input type="submit" accesskey="x" name="save" value="<?=GetMessage("RATING_SETTINGS_BUTTON_SAVE")?>" class="adm-btn-save">
-	<input type="button" name="cancel" value="<?=GetMessage("RATING_SETTINGS_BUTTON_RESET")?>" title="<?=GetMessage("RATING_SETTINGS_BUTTON_RESET_TITLE")?>" onclick="window.location='<?=(isset($_REQUEST["addurl"]) && str_starts_with($_REQUEST["addurl"], '/') ? htmlspecialcharsbx(CUtil::addslashes($_REQUEST["addurl"])):"rating_settings.php?lang=".LANG)?>'">
-<?
+	<input type="button" name="cancel" value="<?=GetMessage("RATING_SETTINGS_BUTTON_RESET")?>" title="<?=GetMessage("RATING_SETTINGS_BUTTON_RESET_TITLE")?>" onclick="window.location='<?=(isset($_REQUEST["addurl"]) && str_starts_with($_REQUEST["addurl"], '/') ? htmlspecialcharsbx(CUtil::addslashes($_REQUEST["addurl"])):"rating_settings.php?lang=".LANGUAGE_ID)?>'">
+<?php
 $editTab->End();
 ?>
 </form>
 <script>
-<?foreach ($arSites as $site):
+<?php foreach ($arSites as $site):
 	$subLang = $site['ID'];?>
 	jsVoteTypeChanged('<?=$arRatingVoteType[$subLang]?>', '<?=$subLang?>', '<?=$arRatingVoteTemplate[$subLang]?>');
-<?endforeach;?>
-<?if($sRatingAssignType=="manual"):?>
+<?php endforeach;?>
+<?php if($sRatingAssignType=="manual"):?>
 	jsAutoAssign('hide');
-<?endif;?>
-<?if($sRatingNormalizationType=="auto"):?>
+<?php endif;?>
+<?php if($sRatingNormalizationType=="auto"):?>
 	jsNormType('hide');
-<?endif;?>
-<?if ($sRatingWeightType == 'manual'):?>
+<?php endif;?>
+<?php if ($sRatingWeightType == 'manual'):?>
 	var new_weight_config_to = 50;
 	var new_weight_config_weight = 1;
 	var new_weight_config_count = 10;
@@ -670,7 +670,7 @@ $editTab->End();
 		}
 		input_end.value = max_weight;
 	}
-<?endif;?>
+<?php endif;?>
 	function jsTypeChanged(form_id)
 	{
 		var _form = document.forms[form_id];
@@ -736,6 +736,6 @@ $editTab->End();
 		}
 	}
 </script>
-<?
+<?php
 require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin.php");
 ?>

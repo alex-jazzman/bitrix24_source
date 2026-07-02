@@ -32,6 +32,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 	const { isOnline } = require('device/connection');
 	const { Notification } = require('im/messenger/lib/ui/notification');
 	const { AutoDeleteMessages } = require('im/messenger/lib/messages-auto-delete');
+	const { Feature } = require('im/messenger/lib/feature');
 
 	class SidebarBaseController
 	{
@@ -302,10 +303,15 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 		 */
 		getHeaderContextMenuItems()
 		{
+			const copyLinkItem = this.permissionManager.canCopyLink()
+				? this.#getCopyLinkOrChatIdItem()
+				: null
+			;
+
 			const items = [
 				this.permissionManager.canPin() ? this.getHeaderContextMenuItemPin() : null,
 				this.permissionManager.canEdit() ? this.getHeaderContextMenuItemEdit() : null,
-				this.permissionManager.canCopyLink() ? this.getHeaderContextMenuItemCopyLink() : null,
+				copyLinkItem,
 				this.permissionManager.canLeave() ? this.getHeaderContextMenuItemLeave() : null,
 				this.permissionManager.canClearHistory() ? this.getHeaderContextMenuItemClearHistory() : null,
 				this.permissionManager.canDelete() ? this.getHeaderContextMenuItemDelete() : null,
@@ -313,6 +319,19 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 			];
 
 			return items.filter(Boolean);
+		}
+
+		/**
+		 * @return {SidebarContextMenuItem}
+		 */
+		#getCopyLinkOrChatIdItem()
+		{
+			if (Feature.isChatSharingLinkAvailable)
+			{
+				return this.getHeaderContextMenuItemCopyChatId();
+			}
+
+			return this.getHeaderContextMenuItemCopyLink();
 		}
 
 		/**
@@ -433,6 +452,22 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 		 * @protected
 		 * @return {SidebarContextMenuItem}
 		 */
+		getHeaderContextMenuItemCopyChatId()
+		{
+			return {
+				id: SidebarContextMenuActionId.COPY_CHAT_ID,
+				title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_ACTION_COPY_CHAT_ID'),
+				icon: Icon.COPY,
+				testId: 'sidebar-context-menu-copy-chat-id',
+				sort: SidebarContextMenuActionPosition.TOP,
+				onItemSelected: this.handleOnCopyChatIdAction,
+			};
+		}
+
+		/**
+		 * @protected
+		 * @return {SidebarContextMenuItem}
+		 */
 		getHeaderContextMenuItemLeave()
 		{
 			return {
@@ -505,6 +540,18 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 		{
 			this.headerContextMenu?.hide();
 		}
+
+		handleOnCopyChatIdAction = () => {
+			DialogTextHelper.copyToClipboard(
+				this.dialogHelper.dialogId,
+				{
+					notificationText: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_COPY_CHAT_ID_SUCCESS'),
+					notificationIcon: Icon.COPY,
+					toastOffset: SIDEBAR_DEFAULT_TOAST_OFFSET,
+				},
+				true,
+			);
+		};
 
 		handleOnCopyLinkAction = () => {
 			const link = this.dialogHelper.chatLink;

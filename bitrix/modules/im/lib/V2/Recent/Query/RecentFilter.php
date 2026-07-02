@@ -2,6 +2,9 @@
 
 namespace Bitrix\Im\V2\Recent\Query;
 
+use Bitrix\Im\V2\Chat\Access\ParentChainFilterFactory;
+use Bitrix\Im\V2\Chat\Tree\ChatTreeFilterFactory;
+use Bitrix\Im\V2\Chat\Tree\TreeOrigin;
 use Bitrix\Im\V2\Chat\Type\Query\TypeFilter;
 use Bitrix\Im\V2\Chat\Type\TypeCondition;
 use Bitrix\Im\V2\Chat\Type\TypeRegistry;
@@ -10,21 +13,23 @@ use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\Provider\Params\FilterInterface;
+use Bitrix\Main\Provider\Params\PrepareQueryInterface;
 use Bitrix\Main\Type\DateTime;
 
 /**
- * @method self with(?int $userId = null,?DateTime $lastMessageDate = null,?int $lastMessageId = null,bool $unreadOnly = null,array $chatIds = null,?string $recentSection = null,?int $parentChatId = null,?TypeCondition $typeCondition = null,)
+ * @method self with(int $userId = null,?DateTime $lastMessageDate = null,?int $lastMessageId = null,bool $unreadOnly = null,array $chatIds = null,array $excludeChatIds = null,?string $recentSection = null,?int $parentChatId = null,?TypeCondition $typeCondition = null,)
  */
-class RecentFilter implements FilterInterface
+class RecentFilter implements FilterInterface, PrepareQueryInterface
 {
 	use WithableTrait;
 
 	public function __construct(
-		public readonly ?int $userId = null,
+		public readonly int $userId,
 		public readonly ?DateTime $lastMessageDate = null,
 		public readonly ?int $lastMessageId = null,
 		public readonly bool $unreadOnly = false,
 		public readonly array $chatIds = [],
+		public readonly array $excludeChatIds = [],
 		public readonly ?string $recentSection = null,
 		public readonly ?int $parentChatId = null,
 		public readonly ?TypeCondition $typeCondition = null,
@@ -34,11 +39,12 @@ class RecentFilter implements FilterInterface
 	public static function fromArray(array $filter = [], ?TypeRegistry $typeRegistry = null): self
 	{
 		return new self(
-			userId: isset($filter['userId']) ? (int)$filter['userId'] : null,
+			userId: (int)$filter['userId'],
 			lastMessageDate: $filter['lastMessageDate'] instanceof DateTime ? $filter['lastMessageDate'] : null,
 			lastMessageId: isset($filter['lastMessageId']) ? (int)$filter['lastMessageId'] : null,
 			unreadOnly: isset($filter['unread']) && $filter['unread'] === 'Y',
 			chatIds: is_array($filter['chatIds'] ?? null) ? $filter['chatIds'] : [],
+			excludeChatIds: is_array($filter['excludeChatIds'] ?? null) ? $filter['excludeChatIds'] : [],
 			recentSection: isset($filter['recentSection']) ? (string)$filter['recentSection'] : null,
 			parentChatId: isset($filter['parentId']) ? (int)$filter['parentId'] : null,
 			typeCondition: $filter['typeCondition'] instanceof TypeCondition ? $filter['typeCondition'] : null,
@@ -55,10 +61,7 @@ class RecentFilter implements FilterInterface
 	{
 		$result = new ConditionTree();
 
-		if (isset($this->userId))
-		{
-			$result->where('USER_ID', $this->userId);
-		}
+		$result->where('USER_ID', $this->userId);
 
 		$this->applyTypeConditionFilter($result);
 
@@ -82,18 +85,47 @@ class RecentFilter implements FilterInterface
 			$result->whereIn('ITEM_CID', $this->chatIds);
 		}
 
-		if ($this->unreadOnly)
+		if (!empty($this->excludeChatIds))
 		{
-			$result->where(
-				Query::filter()
-					->logic('OR')
-					->where('UNREAD', true)
-					->where('HAS_UNREAD_MESSAGE', 1)
-					->where('HAS_UNREAD_COMMENTS', 1)
-			);
+			$result->whereNotIn('ITEM_CID', $this->excludeChatIds);
 		}
 
 		return $result;
+	}
+
+	private function applyTypeConditionFilter(ConditionTree $result): void
+	{
+		$condition = $this->resolveTypeCondition();
+
+		if ($condition->hasConditions())
+		{
+			$result->where((new TypeFilter($condition))->toConditionTree());
+		}
+	}
+
+	public function prepareQuery(Query $query): void
+	{
+		$query->where($this->prepareFilter());
+
+		if ($this->unreadOnly)
+		{
+			ServiceLocator::getInstance()
+				->get(ChatTreeFilterFactory::class)
+				->forUnread($this->userId)
+				->apply($query);
+		}
+
+		if ($this->canIncludeNestedChats())
+		{
+			ServiceLocator::getInstance()->get(ParentChainFilterFactory::class)
+				->forUser($this->userId, TreeOrigin::forChat('CHAT'))
+				->apply($query);
+		}
+	}
+
+	private function canIncludeNestedChats(): bool
+	{
+		return $this->parentChatId !== 0;
 	}
 
 	private function resolveTypeCondition(): TypeCondition
@@ -107,16 +139,6 @@ class RecentFilter implements FilterInterface
 		}
 
 		return $condition;
-	}
-
-	private function applyTypeConditionFilter(ConditionTree $result): void
-	{
-		$condition = $this->resolveTypeCondition();
-
-		if ($condition->hasConditions())
-		{
-			$result->where((new TypeFilter($condition))->toConditionTree());
-		}
 	}
 
 	private function getTypeRegistry(): TypeRegistry

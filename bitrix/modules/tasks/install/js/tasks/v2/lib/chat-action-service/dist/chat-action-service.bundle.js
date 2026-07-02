@@ -295,8 +295,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  if (isCreator || !task.maxDeadlineChanges) {
 	    return false;
 	  }
-	  const deadlineChangeCount = tasks_v2_core.Core.getStore().getters[`${tasks_v2_const.Model.Interface}/deadlineChangeCount`];
-	  return deadlineChangeCount >= task.maxDeadlineChanges;
+	  return task.deadlineChangeCount !== null && task.deadlineChangeCount >= task.maxDeadlineChanges;
 	}
 	function _showAccessDeniedHint2(payload) {
 	  const task = tasks_v2_provider_service_taskService.taskService.getStoreTask(payload.taskId);
@@ -406,9 +405,15 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	var _defaultActions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("defaultActions");
 	var _actionDispatcher = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("actionDispatcher");
 	var _linkParser = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("linkParser");
+	var _pendingActions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("pendingActions");
 	var _registerDefaultActions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerDefaultActions");
+	var _subscribeToCardInit = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribeToCardInit");
+	var _onCardInit = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onCardInit");
 	class ChatActionService {
 	  constructor(dependencies) {
+	    Object.defineProperty(this, _subscribeToCardInit, {
+	      value: _subscribeToCardInit2
+	    });
 	    Object.defineProperty(this, _registerDefaultActions, {
 	      value: _registerDefaultActions2
 	    });
@@ -424,9 +429,29 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _pendingActions, {
+	      writable: true,
+	      value: new Map()
+	    });
+	    Object.defineProperty(this, _onCardInit, {
+	      writable: true,
+	      value: event => {
+	        const {
+	          task
+	        } = event.getData();
+	        const taskId = Number(task == null ? void 0 : task.id);
+	        if (!babelHelpers.classPrivateFieldLooseBase(this, _pendingActions)[_pendingActions].has(taskId)) {
+	          return;
+	        }
+	        const pendingAction = babelHelpers.classPrivateFieldLooseBase(this, _pendingActions)[_pendingActions].get(taskId);
+	        void babelHelpers.classPrivateFieldLooseBase(this, _actionDispatcher)[_actionDispatcher].execute(pendingAction.actionName, pendingAction.payload);
+	        babelHelpers.classPrivateFieldLooseBase(this, _pendingActions)[_pendingActions].delete(taskId);
+	      }
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _actionDispatcher)[_actionDispatcher] = dependencies.actionDispatcher;
 	    babelHelpers.classPrivateFieldLooseBase(this, _linkParser)[_linkParser] = dependencies.linkParser;
 	    babelHelpers.classPrivateFieldLooseBase(this, _registerDefaultActions)[_registerDefaultActions]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _subscribeToCardInit)[_subscribeToCardInit]();
 	  }
 	  async process(link, options = {}) {
 	    try {
@@ -438,7 +463,21 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        ...parsedLink.payload,
 	        ...options
 	      };
-	      await babelHelpers.classPrivateFieldLooseBase(this, _actionDispatcher)[_actionDispatcher].execute(parsedLink.actionName, payload);
+	      const taskId = Number(payload.taskId);
+	      const event = new main_core_events.BaseEvent({
+	        data: {
+	          taskId
+	        }
+	      });
+	      await main_core_events.EventEmitter.emitAsync(tasks_v2_const.EventName.ChatActionBeforeExecute, event);
+	      if (event.isDefaultPrevented()) {
+	        babelHelpers.classPrivateFieldLooseBase(this, _pendingActions)[_pendingActions].set(taskId, {
+	          actionName: parsedLink.actionName,
+	          payload
+	        });
+	      } else {
+	        await babelHelpers.classPrivateFieldLooseBase(this, _actionDispatcher)[_actionDispatcher].execute(parsedLink.actionName, payload);
+	      }
 	    } catch (error) {
 	      console.error('ChatActionService: Failed to process link', error);
 	    }
@@ -452,6 +491,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      console.error('ChatActionService: Failed to register action', action.getName(), error);
 	    }
 	  });
+	}
+	function _subscribeToCardInit2() {
+	  main_core_events.EventEmitter.subscribe(tasks_v2_const.EventName.FullCardInit, babelHelpers.classPrivateFieldLooseBase(this, _onCardInit)[_onCardInit]);
 	}
 	const chatActionService = new ChatActionService({
 	  actionDispatcher: new ChatActionDispatcher(),

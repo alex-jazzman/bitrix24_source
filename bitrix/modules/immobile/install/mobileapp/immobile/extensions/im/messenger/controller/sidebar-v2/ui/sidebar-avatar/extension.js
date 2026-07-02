@@ -27,18 +27,9 @@ jn.define('im/messenger/controller/sidebar-v2/ui/sidebar-avatar', (require, expo
 
 		getNoticeParams()
 		{
-			const { isNotes, size } = this.props;
+			const { isNotes } = this.props;
 
-			const params = {
-				isNotes,
-			};
-
-			if (size > 40)
-			{
-				params.placeholderSvgSize = 47;
-			}
-
-			return params;
+			return { isNotes };
 		}
 
 		getDialogId()

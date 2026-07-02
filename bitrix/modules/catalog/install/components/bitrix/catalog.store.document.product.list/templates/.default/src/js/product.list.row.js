@@ -1,17 +1,17 @@
 import { ajax, Cache, Dom, Event, Loc, Reflection, Runtime, Tag, Text, Type } from 'main.core';
-import { Editor } from './product.list.editor';
+import type { Editor } from './product.list.editor';
 import { CurrencyCore } from 'currency.currency-core';
 import 'ui.hint';
 import HintPopup from './hint.popup';
 import { ProductModel } from 'catalog.product-model';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { type BaseEvent, EventEmitter } from 'main.core.events';
 import { ProductSelector } from 'catalog.product-selector';
 import { StoreSelector } from 'catalog.store-selector';
 import { PopupMenu } from 'main.popup';
 
 import { PriceCalculator } from './price.calculator';
 import { AccessDeniedInput } from './access.denied.input';
-import { FieldScheme, ProductCalculator } from 'catalog.product-calculator';
+import type { FieldScheme, ProductCalculator } from 'catalog.product-calculator';
 
 type Action = {
 	type: string,
@@ -1249,7 +1249,7 @@ export class Row
 		value = Math.max(value, 0);
 		if (mode === MODE_SET)
 		{
-			this.updateUiField('BASE_PRICE', value.toFixed(this.getPricePrecision()));
+			this.updateUiField('BASE_PRICE', value.toFixed(this.getDisplayPrecision()));
 		}
 		this.setField('BASE_PRICE', value);
 		this.addActionProductChange();
@@ -1267,7 +1267,7 @@ export class Row
 		value = Math.max(value, 0);
 
 		this.setField('TOTAL_PRICE', value);
-		this.updateUiField('TOTAL_PRICE', value.toFixed(this.getPricePrecision()));
+		this.updateUiField('TOTAL_PRICE', value.toFixed(this.getDisplayPrecision()));
 	}
 
 	updateProductStoreValues()
@@ -1365,7 +1365,7 @@ export class Row
 
 		if (mode === MODE_SET)
 		{
-			this.updateUiField('PURCHASING_PRICE', value.toFixed(this.getPricePrecision()));
+			this.updateUiField('PURCHASING_PRICE', value.toFixed(this.getDisplayPrecision()));
 		}
 		this.setField('PURCHASING_PRICE', value);
 		this.addActionProductChange();
@@ -1628,7 +1628,7 @@ export class Row
 				break;
 
 			case 'money':
-				value = BX.util.number_format(value, this.getPricePrecision(), '.', '');
+				value = BX.util.number_format(value, this.getDisplayPrecision(), '.', '');
 				this.updateUiInputField(uiName, value);
 				break;
 
@@ -1709,6 +1709,11 @@ export class Row
 	getPricePrecision(): number
 	{
 		return this.getEditor().getPricePrecision();
+	}
+
+	getDisplayPrecision(): number
+	{
+		return this.getEditor().getDisplayPrecision();
 	}
 
 	getQuantityPrecision(): number

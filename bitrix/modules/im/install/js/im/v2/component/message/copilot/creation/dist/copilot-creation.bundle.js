@@ -3,69 +3,68 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_provider_service_sending,im_v2_component_message_base,im_v2_component_elements_avatar) {
+(function (exports, im_v2_provider_service_sending, im_v2_component_message_base, im_v2_component_elements_avatar) {
 	'use strict';
 
 	// @vue/component
 	const ChatCopilotCreationMessage = {
-	  name: 'ChatCopilotCreationMessage',
-	  components: {
-	    BaseMessage: im_v2_component_message_base.BaseMessage,
-	    MessageAvatar: im_v2_component_elements_avatar.MessageAvatar
-	  },
-	  props: {
-	    item: {
-	      type: Object,
-	      required: true
-	    },
-	    dialogId: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  computed: {
-	    AvatarSize: () => im_v2_component_elements_avatar.AvatarSize,
-	    message() {
-	      return this.item;
-	    },
-	    preparedTitle() {
-	      var _this$message$compone;
-	      const phrase = (_this$message$compone = this.message.componentParams) != null && _this$message$compone.copilotRoleUpdated ? 'IM_MESSAGE_COPILOT_CREATION_HEADER_TITLE_AFTER_CHANGE' : 'IM_MESSAGE_COPILOT_CREATION_HEADER_TITLE';
-	      return this.loc(phrase, {
-	        '#COPILOT_ROLE_NAME#': this.roleName
-	      });
-	    },
-	    promptList() {
-	      return this.$store.getters['copilot/messages/getPrompts'](this.message.id);
-	    },
-	    role() {
-	      return this.$store.getters['copilot/messages/getRole'](this.message.id);
-	    },
-	    roleName() {
-	      return this.role.name;
-	    }
-	  },
-	  methods: {
-	    onMessageClick(prompt) {
-	      void this.getSendingService().sendCopilotPrompt({
-	        text: prompt.text,
-	        copilot: {
-	          promptCode: prompt.code
-	        },
-	        dialogId: this.dialogId
-	      });
-	    },
-	    getSendingService() {
-	      if (!this.sendingService) {
-	        this.sendingService = im_v2_provider_service_sending.SendingService.getInstance();
-	      }
-	      return this.sendingService;
-	    },
-	    loc(phraseCode, replacements = {}) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
-	    }
-	  },
-	  template: `
+		name: 'ChatCopilotCreationMessage',
+		components: {
+			BaseMessage: im_v2_component_message_base.BaseMessage,
+			MessageAvatar: im_v2_component_elements_avatar.MessageAvatar
+		},
+		props: {
+			item: {
+				type: Object,
+				required: true
+			},
+			dialogId: {
+				type: String,
+				required: true
+			}
+		},
+		computed: {
+			AvatarSize: () => im_v2_component_elements_avatar.AvatarSize,
+			message() {
+				return this.item;
+			},
+			preparedTitle() {
+				const phrase = this.message.componentParams?.copilotRoleUpdated ? 'IM_MESSAGE_COPILOT_CREATION_HEADER_TITLE_AFTER_CHANGE' : 'IM_MESSAGE_COPILOT_CREATION_HEADER_TITLE';
+				return this.loc(phrase, {
+					'#COPILOT_ROLE_NAME#': this.roleName
+				});
+			},
+			promptList() {
+				return this.$store.getters['copilot/messages/getPrompts'](this.message.id);
+			},
+			role() {
+				return this.$store.getters['copilot/messages/getRole'](this.message.id);
+			},
+			roleName() {
+				return this.role.name;
+			}
+		},
+		methods: {
+			onMessageClick(prompt) {
+				void this.getSendingService().sendCopilotPrompt({
+					text: prompt.text,
+					copilot: {
+						promptCode: prompt.code
+					},
+					dialogId: this.dialogId
+				});
+			},
+			getSendingService() {
+				if (!this.sendingService) {
+					this.sendingService = im_v2_provider_service_sending.SendingService.getInstance();
+				}
+				return this.sendingService;
+			},
+			loc(phraseCode, replacements = {}) {
+				return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+			}
+		},
+		template: `
 		<BaseMessage
 			:dialogId="dialogId"
 			:item="item"
@@ -112,5 +111,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.ChatCopilotCreationMessage = ChatCopilotCreationMessage;
 
-}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX.Messenger.v2.Service,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Elements));
+})(this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}, BX.Messenger.v2.Service, BX.Messenger.v2.Component.Message, BX.Messenger.v2.Component.Elements);
 //# sourceMappingURL=copilot-creation.bundle.js.map

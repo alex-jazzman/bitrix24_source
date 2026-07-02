@@ -1,17 +1,14 @@
-import { Type } from 'main.core';
-import { BuilderModel } from 'ui.vue3.vuex';
+import { Type, type JsonObject } from 'main.core';
+import { BuilderModel, type Store, type ActionTree, type GetterTree, type MutationTree } from 'ui.vue3.vuex';
 
 import { formatFieldsWithConfig } from 'im.v2.model';
-import { StickerPackType } from 'im.v2.const';
 
+import { type Pack, type RawPack, type PackIdentifier } from '../../../type/stickers';
 import { packFieldsConfig } from './field-config';
-
-import type { JsonObject } from 'main.core';
-import type { Store, ActionTree, GetterTree, MutationTree } from 'ui.vue3.vuex';
-import type { Pack, RawPack, PackIdentifier } from '../../../type/stickers';
 
 type PacksState = {
 	collection: Map<string, Pack>,
+	sortedKeys: string[],
 };
 
 /* eslint-disable no-param-reassign */
@@ -21,6 +18,7 @@ export class PacksModel extends BuilderModel
 	{
 		return {
 			collection: new Map(),
+			sortedKeys: [],
 		};
 	}
 
@@ -41,18 +39,15 @@ export class PacksModel extends BuilderModel
 		return {
 			/** @function stickers/packs/get */
 			get: (state: PacksState): Pack[] => {
+				const orderMap = new Map(state.sortedKeys.map((key, index) => [key, index]));
+
 				return [...state.collection.values()]
 					.filter((pack) => pack.isAdded)
-					.sort((firstPack, secondPack) => {
-						// Temporary manual sorting (until backend adds sort field):
-						// - Custom packs: id desc
-						// - Vendor packs: id desc
-						if (firstPack.type !== secondPack.type)
-						{
-							return firstPack.type === StickerPackType.custom ? -1 : 1;
-						}
+					.sort((first, second) => {
+						const firstPackOrder = orderMap.get(first.key) ?? Infinity;
+						const secondPackOrder = orderMap.get(second.key) ?? Infinity;
 
-						return secondPack.id - firstPack.id;
+						return firstPackOrder - secondPackOrder;
 					});
 			},
 			/** @function stickers/packs/getByIdentifier */
@@ -117,6 +112,11 @@ export class PacksModel extends BuilderModel
 					fields: { isAdded: false },
 				});
 			},
+			/** @function stickers/packs/addSortOrder */
+			addSortOrder: (store: Store, payload: PackIdentifier[]) => {
+				const keys = payload.map((item) => this.#getPackKey(item));
+				store.commit('addSortOrder', keys);
+			},
 			/** @function stickers/packs/delete */
 			delete: (store: Store, payload: PackIdentifier) => {
 				const packKey = this.#getPackKey(payload);
@@ -134,6 +134,12 @@ export class PacksModel extends BuilderModel
 			},
 			delete: (state: PacksState, payload: { key: string }) => {
 				state.collection.delete(payload.key);
+				state.sortedKeys = state.sortedKeys.filter((key) => key !== payload.key);
+			},
+			addSortOrder: (state: PacksState, keys: string[]) => {
+				const existingKeys = new Set(state.sortedKeys);
+				const newKeys = keys.filter((key) => !existingKeys.has(key));
+				state.sortedKeys = [...state.sortedKeys, ...newKeys];
 			},
 			update: (state: PacksState, payload: {key: string, fields: Partial<Pack>}) => {
 				const pack = state.collection.get(payload.key);

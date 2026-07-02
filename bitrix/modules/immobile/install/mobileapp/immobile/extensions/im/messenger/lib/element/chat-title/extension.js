@@ -16,6 +16,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 		BotCode,
 		UserType,
 		UserInputAction,
+		Color: MessengerColor,
 	} = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const {
@@ -24,6 +25,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 	} = require('im/messenger/lib/helper');
 	const { Loc } = require('im/messenger/loc');
 	const { ChatTitleAssets } = require('im/messenger/assets/common');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 
 	const ChatType = Object.freeze({
 		user: 'user',
@@ -146,8 +148,22 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {DialogType} dialogType
+		 * @return {DialogHeaderTitleParams}
 		 */
+		static createOptimisticCopilotTitleParams()
+		{
+			const title = Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_COPILOT_OPTIMISTIC_TITLE');
+			const avatar = ChatAvatar.createOptimisticCopilotAvatar(title);
+
+			return {
+				text: title,
+				detailText: ChatTitle.getChatDescriptionByDialogType(DialogType.copilot),
+				imageUrl: avatar.uri,
+				useLetterImage: true,
+				avatar,
+			};
+		}
+
 		static getChatDescriptionByDialogType(dialogType)
 		{
 			switch (dialogType)
@@ -196,10 +212,22 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 
 		static getCopilotMentionTitle(copilotData)
 		{
-			return {
+			const title = {
 				title: copilotData.name,
-				titleColor: Color.copilotAccentPrimary.toHex(),
 				description: Loc.getMessage('IMMOBILE_MESSENGER_CHAT_TITLE_MENTION_COPILOT_DESCRIPTION'),
+			};
+
+			if (Feature.isBitrixGptV2Enabled)
+			{
+				return {
+					...title,
+					titleColorGradient: MessengerColor.copilotGradient,
+				};
+			}
+
+			return {
+				...title,
+				titleColor: Color.copilotAccentPrimary.toHex(),
 			};
 		}
 
@@ -259,9 +287,32 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 				return;
 			}
 
+			this.#setRightTitleIcons(dialogHelper, dialog);
+			this.#setLeftTitleIcons(dialogHelper);
+		}
+
+		/**
+		 * @private
+		 * @param {DialogHelper} dialogHelper
+		 * @param {DialoguesModelState} dialog
+		 */
+		#setRightTitleIcons(dialogHelper, dialog)
+		{
 			if (dialogHelper.isComment)
 			{
 				this.#setCommentTitleIcons();
+
+				return;
+			}
+
+			if (dialog.messagesAutoDeleteDelay)
+			{
+				this.titleIcons = {
+					right: {
+						name: Icon.SMALL_TIMER_DOT.getIconName(),
+						tintColor: AppTheme.colors.base3,
+					},
+				};
 
 				return;
 			}
@@ -275,13 +326,39 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 					},
 				};
 			}
+		}
 
-			if (dialog.messagesAutoDeleteDelay)
+		/**
+		 * @private
+		 * @param {DialogHelper} dialogHelper
+		 */
+		#setLeftTitleIcons(dialogHelper)
+		{
+			if (!dialogHelper.isDirect || dialogHelper.isNotes)
+			{
+				return;
+			}
+
+			const hasVacation = this.store.getters['usersModel/hasVacation'](this.dialogId);
+			if (hasVacation)
 			{
 				this.titleIcons = {
-					right: {
-						name: Icon.SMALL_TIMER_DOT.getIconName(),
-						tintColor: AppTheme.colors.base3,
+					left: {
+						name: Icon.SMALL_VACATION.getIconName(),
+						tintColor: Color.accentSoftElementGreen.toHex(),
+					},
+				};
+
+				return;
+			}
+
+			const hasBirthday = this.store.getters['usersModel/hasBirthday'](this.dialogId);
+			if (hasBirthday)
+			{
+				this.titleIcons = {
+					left: {
+						name: Icon.SMALL_GIFT.getIconName(),
+						tintColor: Color.accentSoftElementGreen.toHex(),
 					},
 				};
 			}
@@ -415,7 +492,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 			} = options;
 
 			const titleParams = {
-				detailTextColor: AppTheme.colors.base3,
+				...this.#buildDetailTextColorParams(),
 			};
 
 			if (this.titleIcons)
@@ -446,7 +523,6 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 				;
 				titleParams.detailLottie = this.#buildDetailLottie();
 				titleParams.hasInputActions = true;
-				titleParams.detailTextColor = Theme.colors.accentMainPrimaryalt;
 			}
 
 			if (this.isCurrentUser)
@@ -464,7 +540,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 			} = options;
 
 			const titleParams = {
-				detailTextColor: AppTheme.colors.base3,
+				...this.#buildDetailTextColorParams(),
 			};
 
 			if (this.name)
@@ -543,10 +619,31 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 				titleParams.detailText = this.buildInputActionTextGroupChat();
 				titleParams.detailLottie = this.#buildDetailLottie();
 				titleParams.hasInputActions = true;
-				titleParams.detailTextColor = Theme.colors.accentMainPrimaryalt;
 			}
 
 			return titleParams;
+		}
+
+		#buildDetailTextColorParams()
+		{
+			if (!Type.isArrayFilled(this.inputActions))
+			{
+				return { detailTextColor: Color.base3.toHex() };
+			}
+
+			if (this.inputActions.length !== 1 || !Feature.isBitrixGptV2Enabled)
+			{
+				return { detailTextColor: Color.accentMainPrimaryalt.toHex() };
+			}
+
+			const userId = this.inputActions[0].userId;
+			const isCopilot = UserHelper.createByUserId(userId)?.isCopilotBot;
+			if (isCopilot)
+			{
+				return { detailTextColorGradient: MessengerColor.copilotGradient };
+			}
+
+			return { detailTextColor: Color.accentMainPrimaryalt.toHex() };
 		}
 
 		/**

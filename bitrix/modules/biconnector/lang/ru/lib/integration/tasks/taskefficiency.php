@@ -11,3 +11,4 @@ $MESS['TASK_EFFICIENCY_DATETIME_REPAIR_MSGVER_1'] = 'Время исправле
 $MESS['TASK_EFFICIENCY_DATETIME_REPAIR_MSGVER_1_FULL'] = 'Время изменения крайнего срока у просроченной задачи';
 $MESS['TASK_EFFICIENCY_IS_VIOLATION_MSGVER_1'] = 'Событие является замечанием';
 $MESS['TASK_EFFICIENCY_IS_VIOLATION_MSGVER_1_FULL'] = 'Является ли событие, о котором создана запись, замечанием: Y — да, N — нет';
+$MESS['TASK_EFFICIENCY_TABLE_DESCRIPTION_FULL'] = "Набор содержит данные о событиях, влияющих на выполнение задач: изменение крайних сроков и наличие просрочек.";

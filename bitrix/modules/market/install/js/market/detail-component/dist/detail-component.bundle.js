@@ -1,343 +1,345 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,market_slider,market_listItem,market_rating,market_popupInstall,market_popupUninstall,market_scopeList,market_installStore,market_uninstallStore,main_core_events,main_popup,ui_ears,ui_designTokens,ui_vue3_pinia) {
+(function (exports, market_slider, market_listItem, market_rating, market_popupInstall, market_popupUninstall, market_scopeList, market_installStore, market_uninstallStore, main_core_events, main_popup, ui_ears, ui_designTokens, ui_vue3_pinia) {
 	'use strict';
 
 	const DetailComponent = {
-	  components: {
-	    Slider: market_slider.Slider,
-	    ListItem: market_listItem.ListItem,
-	    Rating: market_rating.Rating,
-	    PopupInstall: market_popupInstall.PopupInstall,
-	    PopupUninstall: market_popupUninstall.PopupUninstall,
-	    ScopeList: market_scopeList.ScopeList
-	  },
-	  props: ['params', 'result'],
-	  data() {
-	    return {
-	      headerIsFixed: false,
-	      hideDescription: true,
-	      descriptionWrapper: null,
-	      descriptionHeight: 0,
-	      showYouMayLike: false,
-	      popupShown: false,
-	      installResult: false,
-	      testInstallProcess: false,
-	      menuPopup1: null,
-	      menuPopup2: null
-	    };
-	  },
-	  computed: {
-	    isFavoriteApp: function () {
-	      return this.result.APP.IS_FAVORITE === 'Y';
-	    },
-	    favoriteButtonTitle: function () {
-	      return this.isFavoriteApp ? this.$Bitrix.Loc.getMessage('MARKET_DETAIL_ACTION_JS_RM_FAVORITE') : this.$Bitrix.Loc.getMessage('MARKET_DETAIL_ACTION_JS_ADD_FAVORITE');
-	    },
-	    installDescriptionIsLanding: function () {
-	      return this.result.APP.LINK_INSTALL.length > 0;
-	    },
-	    widthInstallSlider: function () {
-	      return this.installDescriptionIsLanding ? 880 : false;
-	    },
-	    pricePolicySlider: function () {
-	      return this.result.PRICE_POLICY_SLIDER && this.result.PRICE_POLICY_SLIDER.length > 0 ? this.result.PRICE_POLICY_SLIDER : '';
-	    },
-	    showInstallButton: function () {
-	      return this.result.APP.BUTTONS.hasOwnProperty('INSTALL') && this.result.APP.BUTTONS.INSTALL === 'Y';
-	    },
-	    showNoAccessInstallButton: function () {
-	      return this.result.APP.BUTTONS.hasOwnProperty('NO_ACCESS_INSTALL') && this.result.APP.BUTTONS.NO_ACCESS_INSTALL === 'Y';
-	    },
-	    showConfigButton: function () {
-	      return Object.prototype.hasOwnProperty.call(this.result.APP.BUTTONS, 'CONFIGURATION_IMPORT') && this.result.APP.BUTTONS.CONFIGURATION_IMPORT === 'Y';
-	    },
-	    showReimportButton: function () {
-	      return Object.prototype.hasOwnProperty.call(this.result.APP.BUTTONS, 'REIMPORT') && this.result.APP.BUTTONS.REIMPORT === 'Y';
-	    },
-	    showUpdateButton: function () {
-	      return this.result.APP.BUTTONS.hasOwnProperty('UPDATE') && this.result.APP.BUTTONS.UPDATE === 'Y';
-	    },
-	    showDeleteButton: function () {
-	      return this.result.APP.BUTTONS.hasOwnProperty('DELETE') && this.result.APP.BUTTONS.DELETE === 'Y';
-	    },
-	    showPreviewButton: function () {
-	      return this.result.APP.BUTTONS.hasOwnProperty('OPEN_PREVIEW') && this.result.APP.BUTTONS.OPEN_PREVIEW === 'Y';
-	    },
-	    showOpenAppButton: function () {
-	      return this.result.APP.hasOwnProperty('BUTTON_OPEN_APP') && this.result.APP.BUTTON_OPEN_APP.length > 0;
-	    },
-	    showRightsButton: function () {
-	      return this.result.APP.BUTTONS.hasOwnProperty('RIGHTS') && this.result.APP.BUTTONS.RIGHTS === 'Y';
-	    },
-	    needOpenImport: function () {
-	      return this.result.hasOwnProperty('OPEN_IMPORT') && this.result.OPEN_IMPORT === 'Y';
-	    },
-	    isTestInstall: function () {
-	      return this.result.hasOwnProperty('START_INSTALL') && this.result.START_INSTALL === true;
-	    },
-	    getCategoriesCount: function () {
-	      return parseInt(this.result.APP.CATEGORIES.length, 10);
-	    },
-	    getContactDeveloper: function () {
-	      var _this$result$APP$CONT;
-	      return (_this$result$APP$CONT = this.result.APP.CONTACT_DEVELOPER) != null ? _this$result$APP$CONT : '';
-	    },
-	    getRequestDemoInfo: function () {
-	      var _this$result$APP$REQU;
-	      return (_this$result$APP$REQU = this.result.APP.REQUEST_DEMO) != null ? _this$result$APP$REQU : '';
-	    },
-	    countReviews: function () {
-	      return parseInt(this.result.APP.REVIEWS.RATING.COUNT, 10);
-	    },
-	    totalRating: function () {
-	      if (this.result.APP.REVIEWS.RATING && this.result.APP.REVIEWS.RATING.RATING) {
-	        return this.result.APP.REVIEWS.RATING.RATING;
-	      }
-	      return 0;
-	    },
-	    canShowAppForm: function () {
-	      return this.result.APP.hasOwnProperty('HAS_APP_FORM') && this.result.APP.HAS_APP_FORM === true && this.result.APP.hasOwnProperty('INSTALLED') && this.result.APP.INSTALLED === 'Y';
-	    },
-	    ...ui_vue3_pinia.mapState(market_installStore.marketInstallState, ['installStep', 'slider', 'timer', 'installError'])
-	  },
-	  created() {
-	    window.addEventListener('scroll', this.handleScroll);
-	    this.checkFixedHeader();
-	  },
-	  mounted() {
-	    this.descriptionWrapper = document.querySelector('[data-role="market-detail__wrapper"]');
-	    this.descriptionHeight = document.querySelector('[data-role="market-detail__content"]').scrollHeight;
-	    if (this.descriptionHeight <= 565) {
-	      this.hideDescription = false;
-	      this.descriptionWrapper.style.maxHeight = 'none';
-	    } else {
-	      this.descriptionWrapper.style.height = `${this.descriptionWrapper.clientHeight}px`;
-	      this.descriptionWrapper.style.maxHeight = 'none';
-	    }
-	    this.setAppInfo(this.result.APP);
-	    main_core_events.EventEmitter.subscribe('BX.Main.Popup:onShow', this.onShowPopup);
-	    main_core_events.EventEmitter.subscribe('BX.Main.Popup:onClose', this.onClosePopup);
-	    this.initOther();
-	    this.createPopupMenu();
-	    if (this.needOpenImport) {
-	      setTimeout(() => this.configApp(), 500);
-	      return;
-	    }
-	    if (this.isTestInstall) {
-	      this.testInstall();
-	    }
-	  },
-	  destroyed() {
-	    window.removeEventListener('scroll', this.handleScroll);
-	  },
-	  methods: {
-	    onShowPopup: function (event) {
-	      if (event.target.popupContainer.id === 'menu-popup-detail-popup-menu-2') {
-	        return;
-	      }
-	      this.popupShown = true;
-	      this.headerIsFixed = false;
-	    },
-	    onClosePopup: function () {
-	      this.popupShown = false;
-	      this.checkFixedHeader();
-	      if (this.installStep === 2 && this.installError) {
-	        this.reloadSlider();
-	      } else if (this.installStep === 3) {
-	        clearTimeout(this.timer);
-	        this.reloadSlider();
-	        if (this.closeDetailAfterInstall()) {
-	          this.openApplication();
-	        }
-	      }
-	    },
-	    handleScroll: function () {
-	      this.checkFixedHeader();
-	    },
-	    checkFixedHeader: function () {
-	      this.headerIsFixed = !!(scrollY > 204 && !this.popupShown);
-	    },
-	    moreDescriptionClick: function () {
-	      this.hideDescription = false;
-	      this.descriptionWrapper.clientHeight; // it's needed, Tyutereva magic
-	      this.descriptionWrapper.style.height = `${this.descriptionHeight}px`;
-	      this.descriptionWrapper.addEventListener('transitionend', this.setHeightAutoFunction);
-	    },
-	    setHeightAutoFunction: function () {
-	      this.descriptionWrapper.style.height = 'auto';
-	      this.descriptionWrapper.removeEventListener('transitionend', this.setHeightAutoFunction);
-	    },
-	    initOther: function () {
-	      if (this.showYouMayLike) {
-	        new ui_ears.Ears({
-	          container: document.querySelector(".market-detail__catalog-elements"),
-	          smallSize: true,
-	          noScrollbar: true
-	        }).init();
-	      }
-	    },
-	    feedbackHeaderClick: function () {
-	      window.scrollTo({
-	        top: document.querySelector('.market-detail__app-rating_feedback-content').getBoundingClientRect().top,
-	        behavior: 'smooth'
-	      });
-	    },
-	    favoritesEvent: function () {
-	      const action = this.isFavoriteApp ? 'rmFavorite' : 'addFavorite';
-	      this.changeFavorite(action);
-	    },
-	    changeFavorite: function (action) {
-	      BX.ajax.runAction('market.Favorites.' + action, {
-	        data: {
-	          appCode: this.result.APP.CODE
-	        },
-	        analyticsLabel: {
-	          viewMode: 'detail',
-	          appCode: this.result.APP.CODE
-	        }
-	      }).then(response => {
-	        if (response.data && typeof response.data.total !== 'undefined' && BX.type.isString(response.data.currentValue)) {
-	          let total = parseInt(response.data.total, 10);
-	          BX.SidePanel.Instance.postMessageAll(window, 'total-fav-number', {
-	            total: total,
-	            appCode: this.result.APP.CODE,
-	            currentValue: response.data.currentValue
-	          });
-	          this.result.APP.IS_FAVORITE = response.data.currentValue;
-	        }
-	      }, response => {});
-	    },
-	    testInstall: function () {
-	      if (this.testInstallProcess) {
-	        return;
-	      }
-	      this.testInstallProcess = true;
-	      this.showInstallPopup();
-	    },
-	    installApp: function () {
-	      if (!this.showInstallButton) {
-	        return;
-	      }
-	      if (this.result.ACCESS_HELPER_CODE) {
-	        top.BX.UI.InfoHelper.show(this.result.ACCESS_HELPER_CODE);
-	        return;
-	      }
-	      this.showInstallPopup();
-	    },
-	    updateApp: function () {
-	      if (!this.showUpdateButton) {
-	        return;
-	      }
-	      this.showInstallPopup(true);
-	    },
-	    deleteApp: function () {
-	      this.setDeleteActionInfo(this.result.APP.ADDITIONAL_ACTION_DEL);
-	      this.deleteAction(this.result.APP.CODE);
-	    },
-	    configApp: function () {
-	      BX.SidePanel.Instance.open(this.result.IMPORT_PAGE);
-	    },
-	    createPopupMenu: function () {
-	      if (this.result.APP.MENU_ITEMS.length <= 0 && !this.showRightsButton) {
-	        return;
-	      }
-	      if (this.showRightsButton) {
-	        this.result.APP.MENU_ITEMS.push({
-	          text: this.$Bitrix.Loc.getMessage('MARKET_DETAIL_ITEM_JS_BTN_ACCESS'),
-	          onclick: event => {
-	            this.menuPopup1.close();
-	            this.menuPopup2.close();
-	            this.setRights();
-	          }
-	        });
-	      }
-	      if (this.canShowAppForm) {
-	        this.result.APP.MENU_ITEMS.push({
-	          text: this.$Bitrix.Loc.getMessage('MARKET_DETAIL_ACTION_JS_CONFIG'),
-	          onclick: event => {
-	            this.menuPopup1.close();
-	            this.menuPopup2.close();
-	            top.BX.Rest.AppForm.buildByAppWithLoader(this.result.APP.CODE, top.BX.Rest.EventType.DISPLAY).then(form => {
-	              form.show();
-	            });
-	          }
-	        });
-	      }
-	      let menuParams = {
-	        closeByEsc: true,
-	        autoHide: true,
-	        angle: true,
-	        offsetLeft: 20
-	      };
-	      this.menuPopup1 = main_popup.MenuManager.create('detail-popup-menu-1', this.$refs.marketDetailMenu, this.result.APP.MENU_ITEMS, menuParams);
-	      this.menuPopup2 = main_popup.MenuManager.create('detail-popup-menu-2', this.$refs.marketDetailHeaderFixedMenu, this.result.APP.MENU_ITEMS, menuParams);
-	    },
-	    showMenu1: function () {
-	      if (this.menuPopup1 !== null) {
-	        this.menuPopup1.show();
-	      }
-	    },
-	    showMenu2: function () {
-	      if (this.menuPopup2 !== null) {
-	        this.menuPopup2.show();
-	      }
-	    },
-	    setRights: function () {
-	      BX.Access.Init({
-	        other: {
-	          disabled: false,
-	          disabled_g2: true,
-	          disabled_cr: true
-	        },
-	        groups: {
-	          disabled: true
-	        },
-	        socnetgroups: {
-	          disabled: true
-	        }
-	      });
-	      BX.ajax.runAction('market.Application.getRights', {
-	        data: {
-	          appCode: this.result.APP.CODE
-	        },
-	        analyticsLabel: {
-	          viewMode: 'detail'
-	        }
-	      }).then(response => {
-	        BX.Access.SetSelected(response.data, "bind");
-	        BX.Access.ShowForm({
-	          bind: "bind",
-	          showSelected: true,
-	          callback: rights => {
-	            BX.ajax.runAction('market.Application.setRights', {
-	              data: {
-	                appCode: this.result.APP.CODE,
-	                rights: rights
-	              },
-	              analyticsLabel: {
-	                viewMode: 'detail'
-	              }
-	            }).then(response => {});
-	          }
-	        });
-	      });
-	    },
-	    pricePolicyClick: function () {
-	      if (!this.pricePolicySlider) {
-	        return;
-	      }
-	      if (this.result.ADDITIONAL_MARKET_ACTION) {
-	        try {
-	          eval(this.result.ADDITIONAL_MARKET_ACTION);
-	        } catch (e) {}
-	      }
-	      BX.UI.InfoHelper.show(this.pricePolicySlider);
-	    },
-	    ...ui_vue3_pinia.mapActions(market_installStore.marketInstallState, ['showInstallPopup', 'setAppInfo', 'openSliderWithContent', 'reloadSlider', 'isSubscriptionApp', 'isHiddenBuy', 'closeDetailAfterInstall', 'openApplication']),
-	    ...ui_vue3_pinia.mapActions(market_uninstallStore.marketUninstallState, ['deleteAction', 'setDeleteActionInfo'])
-	  },
-	  template: `
+		components: {
+			Slider: market_slider.Slider,
+			ListItem: market_listItem.ListItem,
+			Rating: market_rating.Rating,
+			PopupInstall: market_popupInstall.PopupInstall,
+			PopupUninstall: market_popupUninstall.PopupUninstall,
+			ScopeList: market_scopeList.ScopeList
+		},
+		props: ['params', 'result'],
+		setup: function () {
+			return {
+				menuPopup1: null,
+				menuPopup2: null
+			};
+		},
+		data() {
+			return {
+				headerIsFixed: false,
+				hideDescription: true,
+				descriptionWrapper: null,
+				descriptionHeight: 0,
+				showYouMayLike: false,
+				popupShown: false,
+				installResult: false,
+				testInstallProcess: false
+			};
+		},
+		computed: {
+			isFavoriteApp: function () {
+				return this.result.APP.IS_FAVORITE === 'Y';
+			},
+			favoriteButtonTitle: function () {
+				return this.isFavoriteApp ? this.$Bitrix.Loc.getMessage('MARKET_DETAIL_ACTION_JS_RM_FAVORITE') : this.$Bitrix.Loc.getMessage('MARKET_DETAIL_ACTION_JS_ADD_FAVORITE');
+			},
+			installDescriptionIsLanding: function () {
+				return this.result.APP.LINK_INSTALL.length > 0;
+			},
+			widthInstallSlider: function () {
+				return this.installDescriptionIsLanding ? 880 : false;
+			},
+			pricePolicySlider: function () {
+				return this.result.PRICE_POLICY_SLIDER && this.result.PRICE_POLICY_SLIDER.length > 0 ? this.result.PRICE_POLICY_SLIDER : '';
+			},
+			showInstallButton: function () {
+				return this.result.APP.BUTTONS.hasOwnProperty('INSTALL') && this.result.APP.BUTTONS.INSTALL === 'Y';
+			},
+			showNoAccessInstallButton: function () {
+				return this.result.APP.BUTTONS.hasOwnProperty('NO_ACCESS_INSTALL') && this.result.APP.BUTTONS.NO_ACCESS_INSTALL === 'Y';
+			},
+			showConfigButton: function () {
+				return Object.prototype.hasOwnProperty.call(this.result.APP.BUTTONS, 'CONFIGURATION_IMPORT') && this.result.APP.BUTTONS.CONFIGURATION_IMPORT === 'Y';
+			},
+			showReimportButton: function () {
+				return Object.prototype.hasOwnProperty.call(this.result.APP.BUTTONS, 'REIMPORT') && this.result.APP.BUTTONS.REIMPORT === 'Y';
+			},
+			showUpdateButton: function () {
+				return this.result.APP.BUTTONS.hasOwnProperty('UPDATE') && this.result.APP.BUTTONS.UPDATE === 'Y';
+			},
+			showDeleteButton: function () {
+				return this.result.APP.BUTTONS.hasOwnProperty('DELETE') && this.result.APP.BUTTONS.DELETE === 'Y';
+			},
+			showPreviewButton: function () {
+				return this.result.APP.BUTTONS.hasOwnProperty('OPEN_PREVIEW') && this.result.APP.BUTTONS.OPEN_PREVIEW === 'Y';
+			},
+			showOpenAppButton: function () {
+				return this.result.APP.hasOwnProperty('BUTTON_OPEN_APP') && this.result.APP.BUTTON_OPEN_APP.length > 0;
+			},
+			showRightsButton: function () {
+				return this.result.APP.BUTTONS.hasOwnProperty('RIGHTS') && this.result.APP.BUTTONS.RIGHTS === 'Y';
+			},
+			needOpenImport: function () {
+				return this.result.hasOwnProperty('OPEN_IMPORT') && this.result.OPEN_IMPORT === 'Y';
+			},
+			isTestInstall: function () {
+				return this.result.hasOwnProperty('START_INSTALL') && this.result.START_INSTALL === true;
+			},
+			getCategoriesCount: function () {
+				return parseInt(this.result.APP.CATEGORIES.length, 10);
+			},
+			getContactDeveloper: function () {
+				return this.result.APP.CONTACT_DEVELOPER ?? '';
+			},
+			getRequestDemoInfo: function () {
+				return this.result.APP.REQUEST_DEMO ?? '';
+			},
+			countReviews: function () {
+				return parseInt(this.result.APP.REVIEWS.RATING.COUNT, 10);
+			},
+			totalRating: function () {
+				if (this.result.APP.REVIEWS.RATING && this.result.APP.REVIEWS.RATING.RATING) {
+					return this.result.APP.REVIEWS.RATING.RATING;
+				}
+				return 0;
+			},
+			canShowAppForm: function () {
+				return this.result.APP.hasOwnProperty('HAS_APP_FORM') && this.result.APP.HAS_APP_FORM === true && this.result.APP.hasOwnProperty('INSTALLED') && this.result.APP.INSTALLED === 'Y';
+			},
+			...ui_vue3_pinia.mapState(market_installStore.marketInstallState, ['installStep', 'slider', 'timer', 'installError'])
+		},
+		created() {
+			window.addEventListener('scroll', this.handleScroll);
+			this.checkFixedHeader();
+		},
+		mounted() {
+			this.descriptionWrapper = document.querySelector('[data-role="market-detail__wrapper"]');
+			this.descriptionHeight = document.querySelector('[data-role="market-detail__content"]').scrollHeight;
+			if (this.descriptionHeight <= 565) {
+				this.hideDescription = false;
+				this.descriptionWrapper.style.maxHeight = 'none';
+			} else {
+				this.descriptionWrapper.style.height = `${this.descriptionWrapper.clientHeight}px`;
+				this.descriptionWrapper.style.maxHeight = 'none';
+			}
+			this.setAppInfo(this.result.APP);
+			main_core_events.EventEmitter.subscribe('BX.Main.Popup:onShow', this.onShowPopup);
+			main_core_events.EventEmitter.subscribe('BX.Main.Popup:onClose', this.onClosePopup);
+			this.initOther();
+			this.createPopupMenu();
+			if (this.needOpenImport) {
+				setTimeout(() => this.configApp(), 500);
+				return;
+			}
+			if (this.isTestInstall) {
+				this.testInstall();
+			}
+		},
+		destroyed() {
+			window.removeEventListener('scroll', this.handleScroll);
+		},
+		methods: {
+			onShowPopup: function (event) {
+				if (event.target.popupContainer.id === 'menu-popup-detail-popup-menu-2') {
+					return;
+				}
+				this.popupShown = true;
+				this.headerIsFixed = false;
+			},
+			onClosePopup: function () {
+				this.popupShown = false;
+				this.checkFixedHeader();
+				if (this.installStep === 2 && this.installError) {
+					this.reloadSlider();
+				} else if (this.installStep === 3) {
+					clearTimeout(this.timer);
+					this.reloadSlider();
+					if (this.closeDetailAfterInstall()) {
+						this.openApplication();
+					}
+				}
+			},
+			handleScroll: function () {
+				this.checkFixedHeader();
+			},
+			checkFixedHeader: function () {
+				this.headerIsFixed = !!(scrollY > 204 && !this.popupShown);
+			},
+			moreDescriptionClick: function () {
+				this.hideDescription = false;
+				this.descriptionWrapper.clientHeight; // it's needed, Tyutereva magic
+				this.descriptionWrapper.style.height = `${this.descriptionHeight}px`;
+				this.descriptionWrapper.addEventListener('transitionend', this.setHeightAutoFunction);
+			},
+			setHeightAutoFunction: function () {
+				this.descriptionWrapper.style.height = 'auto';
+				this.descriptionWrapper.removeEventListener('transitionend', this.setHeightAutoFunction);
+			},
+			initOther: function () {
+				if (this.showYouMayLike) {
+					new ui_ears.Ears({
+						container: document.querySelector(".market-detail__catalog-elements"),
+						smallSize: true,
+						noScrollbar: true
+					}).init();
+				}
+			},
+			feedbackHeaderClick: function () {
+				window.scrollTo({
+					top: document.querySelector('.market-detail__app-rating_feedback-content').getBoundingClientRect().top,
+					behavior: 'smooth'
+				});
+			},
+			favoritesEvent: function () {
+				const action = this.isFavoriteApp ? 'rmFavorite' : 'addFavorite';
+				this.changeFavorite(action);
+			},
+			changeFavorite: function (action) {
+				BX.ajax.runAction('market.Favorites.' + action, {
+					data: {
+						appCode: this.result.APP.CODE
+					},
+					analyticsLabel: {
+						viewMode: 'detail',
+						appCode: this.result.APP.CODE
+					}
+				}).then(response => {
+					if (response.data && typeof response.data.total !== 'undefined' && BX.type.isString(response.data.currentValue)) {
+						let total = parseInt(response.data.total, 10);
+						BX.SidePanel.Instance.postMessageAll(window, 'total-fav-number', {
+							total: total,
+							appCode: this.result.APP.CODE,
+							currentValue: response.data.currentValue
+						});
+						this.result.APP.IS_FAVORITE = response.data.currentValue;
+					}
+				}, response => {});
+			},
+			testInstall: function () {
+				if (this.testInstallProcess) {
+					return;
+				}
+				this.testInstallProcess = true;
+				this.showInstallPopup();
+			},
+			installApp: function () {
+				if (!this.showInstallButton) {
+					return;
+				}
+				if (this.result.ACCESS_HELPER_CODE) {
+					top.BX.UI.InfoHelper.show(this.result.ACCESS_HELPER_CODE);
+					return;
+				}
+				this.showInstallPopup();
+			},
+			updateApp: function () {
+				if (!this.showUpdateButton) {
+					return;
+				}
+				this.showInstallPopup(true);
+			},
+			deleteApp: function () {
+				this.setDeleteActionInfo(this.result.APP.ADDITIONAL_ACTION_DEL);
+				this.deleteAction(this.result.APP.CODE);
+			},
+			configApp: function () {
+				BX.SidePanel.Instance.open(this.result.IMPORT_PAGE);
+			},
+			createPopupMenu: function () {
+				if (this.result.APP.MENU_ITEMS.length <= 0 && !this.showRightsButton) {
+					return;
+				}
+				if (this.showRightsButton) {
+					this.result.APP.MENU_ITEMS.push({
+						text: this.$Bitrix.Loc.getMessage('MARKET_DETAIL_ITEM_JS_BTN_ACCESS'),
+						onclick: event => {
+							this.menuPopup1.close();
+							this.menuPopup2.close();
+							this.setRights();
+						}
+					});
+				}
+				if (this.canShowAppForm) {
+					this.result.APP.MENU_ITEMS.push({
+						text: this.$Bitrix.Loc.getMessage('MARKET_DETAIL_ACTION_JS_CONFIG'),
+						onclick: event => {
+							this.menuPopup1.close();
+							this.menuPopup2.close();
+							top.BX.Rest.AppForm.buildByAppWithLoader(this.result.APP.CODE, top.BX.Rest.EventType.DISPLAY).then(form => {
+								form.show();
+							});
+						}
+					});
+				}
+				let menuParams = {
+					closeByEsc: true,
+					autoHide: true,
+					angle: true,
+					offsetLeft: 20
+				};
+				this.menuPopup1 = main_popup.MenuManager.create('detail-popup-menu-1', this.$refs.marketDetailMenu, this.result.APP.MENU_ITEMS, menuParams);
+				this.menuPopup2 = main_popup.MenuManager.create('detail-popup-menu-2', this.$refs.marketDetailHeaderFixedMenu, this.result.APP.MENU_ITEMS, menuParams);
+			},
+			showMenu1: function () {
+				if (this.menuPopup1 !== null) {
+					this.menuPopup1.show();
+				}
+			},
+			showMenu2: function () {
+				if (this.menuPopup2 !== null) {
+					this.menuPopup2.show();
+				}
+			},
+			setRights: function () {
+				BX.Access.Init({
+					other: {
+						disabled: false,
+						disabled_g2: true,
+						disabled_cr: true
+					},
+					groups: {
+						disabled: true
+					},
+					socnetgroups: {
+						disabled: true
+					}
+				});
+				BX.ajax.runAction('market.Application.getRights', {
+					data: {
+						appCode: this.result.APP.CODE
+					},
+					analyticsLabel: {
+						viewMode: 'detail'
+					}
+				}).then(response => {
+					BX.Access.SetSelected(response.data, "bind");
+					BX.Access.ShowForm({
+						bind: "bind",
+						showSelected: true,
+						callback: rights => {
+							BX.ajax.runAction('market.Application.setRights', {
+								data: {
+									appCode: this.result.APP.CODE,
+									rights: rights
+								},
+								analyticsLabel: {
+									viewMode: 'detail'
+								}
+							}).then(response => {});
+						}
+					});
+				});
+			},
+			pricePolicyClick: function () {
+				if (!this.pricePolicySlider) {
+					return;
+				}
+				if (this.result.ADDITIONAL_MARKET_ACTION) {
+					try {
+						eval(this.result.ADDITIONAL_MARKET_ACTION);
+					} catch (e) {}
+				}
+				BX.UI.InfoHelper.show(this.pricePolicySlider);
+			},
+			...ui_vue3_pinia.mapActions(market_installStore.marketInstallState, ['showInstallPopup', 'setAppInfo', 'openSliderWithContent', 'reloadSlider', 'isSubscriptionApp', 'isHiddenBuy', 'closeDetailAfterInstall', 'openApplication']),
+			...ui_vue3_pinia.mapActions(market_uninstallStore.marketUninstallState, ['deleteAction', 'setDeleteActionInfo'])
+		},
+		template: `
 		<div class="market-detail">
 			<div class="market-detail__header-fixed"
 				 :class="{'--fixed': headerIsFixed}"
@@ -396,8 +398,8 @@ this.BX = this.BX || {};
 								{{ $Bitrix.Loc.getMessage('MARKET_DETAIL_ACTION_JS_VIEW_DEMO') }}
 							</button>
 							<a class="ui-btn ui-btn-light-border ui-btn-xs"
-							   v-if="showOpenAppButton"
-							   :href="result.APP.BUTTON_OPEN_APP"
+								 v-if="showOpenAppButton"
+								 :href="result.APP.BUTTON_OPEN_APP"
 							>
 								{{ $Bitrix.Loc.getMessage('MARKET_DETAIL_ACTION_JS_OPEN_APP') }}
 							</a>
@@ -412,9 +414,9 @@ this.BX = this.BX || {};
 									 viewBox="0 0 15 16" fill="none" xmlns="http://www.w3.org/2000/svg">
 									<circle cx="7.5" cy="8" r="7.5" fill="#8DBB00"/>
 									<path d="M4.41361 7.14596L7.94914 10.6815L6.53493 12.0957L2.9994 8.56017L4.41361 7.14596Z"
-										  fill="white"/>
+											fill="white"/>
 									<path d="M12.1918 6.43885L6.53493 12.0957L5.12072 10.6815L10.7776 5.02464L12.1918 6.43885Z"
-										  fill="white"/>
+											fill="white"/>
 								</svg>
 								{{ $Bitrix.Loc.getMessage('MARKET_DETAIL_ITEM_JS_AVAILABLE_IN_SUBCRIPTION') }}
 							</template>
@@ -452,11 +454,11 @@ this.BX = this.BX || {};
 							 :class="{'&#45;&#45;favorite': isFavoriteApp}"
 							 width="24" height="24"  viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 							<path class="market-detail__favorites-fill"
-								  d="M11.2227 6.92764L11.223 6.92802L11.2235 6.9286L11.2237 6.92878L12.0024 7.9031L12.7813 6.9286C12.781 6.92897 12.7812 6.92877 12.7818 6.92802L12.7821 6.92764L12.7908 6.91717C12.8004 6.90578 12.817 6.88631 12.8404 6.85991C12.8872 6.80704 12.9609 6.72686 13.0595 6.62841C13.2576 6.43063 13.5513 6.16416 13.9255 5.89808C14.6818 5.36036 15.7079 4.86474 16.9087 4.86475C19.32 4.86475 21.204 6.71908 21.204 9.16008C21.204 11.614 19.5141 13.8465 17.3533 15.6682C15.2599 17.4331 12.933 18.635 12.0024 19.081C11.0719 18.635 8.74495 17.4331 6.6515 15.6682C4.49074 13.8465 2.80078 11.614 2.80078 9.16008C2.80078 6.71908 4.68485 4.86475 7.09612 4.86475C8.29688 4.86474 9.32303 5.36036 10.0793 5.89808C10.4535 6.16416 10.7472 6.43063 10.9453 6.62841C11.044 6.72686 11.1176 6.80704 11.1645 6.85991C11.1879 6.88631 11.2045 6.90578 11.214 6.91717L11.2227 6.92764Z"
-								  stroke-width="2"></path>
+									d="M11.2227 6.92764L11.223 6.92802L11.2235 6.9286L11.2237 6.92878L12.0024 7.9031L12.7813 6.9286C12.781 6.92897 12.7812 6.92877 12.7818 6.92802L12.7821 6.92764L12.7908 6.91717C12.8004 6.90578 12.817 6.88631 12.8404 6.85991C12.8872 6.80704 12.9609 6.72686 13.0595 6.62841C13.2576 6.43063 13.5513 6.16416 13.9255 5.89808C14.6818 5.36036 15.7079 4.86474 16.9087 4.86475C19.32 4.86475 21.204 6.71908 21.204 9.16008C21.204 11.614 19.5141 13.8465 17.3533 15.6682C15.2599 17.4331 12.933 18.635 12.0024 19.081C11.0719 18.635 8.74495 17.4331 6.6515 15.6682C4.49074 13.8465 2.80078 11.614 2.80078 9.16008C2.80078 6.71908 4.68485 4.86475 7.09612 4.86475C8.29688 4.86474 9.32303 5.36036 10.0793 5.89808C10.4535 6.16416 10.7472 6.43063 10.9453 6.62841C11.044 6.72686 11.1176 6.80704 11.1645 6.85991C11.1879 6.88631 11.2045 6.90578 11.214 6.91717L11.2227 6.92764Z"
+									stroke-width="2"></path>
 							<path class="market-detail__favorites-stroke" fill-rule="evenodd" clip-rule="evenodd"
-								  d="M9.50762 1.97569C10.4604 2.61848 11.0063 3.30145 11.0063 3.30145C11.0063 3.30145 11.5522 2.61848 12.505 1.97569C13.3519 1.40434 14.5203 0.864744 15.9126 0.864746C18.8713 0.86475 21.2079 3.1619 21.2079 6.16008C21.2079 12.7611 11.0063 17.1827 11.0063 17.1827C11.0063 17.1827 0.804688 12.7611 0.804688 6.16008C0.804688 3.1619 3.14137 0.86475 6.10003 0.864746C7.49231 0.864744 8.66071 1.40434 9.50762 1.97569ZM11.0063 14.9661C11.1945 14.8708 11.4105 14.7585 11.6483 14.6298C12.545 14.1444 13.7284 13.439 14.9001 12.5521C17.3825 10.6731 19.2079 8.44129 19.2079 6.16008C19.2079 4.27625 17.7765 2.86475 15.9126 2.86475C14.9904 2.86474 14.1647 3.2468 13.5089 3.71306C13.1889 3.94063 12.9373 4.16899 12.7699 4.3361C12.6871 4.41879 12.6274 4.48397 12.5927 4.52308C12.5762 4.54173 12.5656 4.55422 12.5611 4.55959L11.0063 6.50475L9.45157 4.55959C9.44706 4.55422 9.43643 4.54173 9.4199 4.52308C9.38525 4.48397 9.32555 4.41879 9.24273 4.3361C9.07534 4.16899 8.82375 3.94063 8.5037 3.71306C7.84795 3.2468 7.02222 2.86474 6.10003 2.86475C4.23614 2.86475 2.80469 4.27625 2.80469 6.16008C2.80469 8.44129 4.63016 10.6731 7.11258 12.5521C8.28419 13.439 9.46762 14.1444 10.3643 14.6298C10.6021 14.7585 10.8181 14.8708 11.0063 14.9661Z"
-								  fill="#DFE0E3" transform="translate(1, 3)"/>
+									d="M9.50762 1.97569C10.4604 2.61848 11.0063 3.30145 11.0063 3.30145C11.0063 3.30145 11.5522 2.61848 12.505 1.97569C13.3519 1.40434 14.5203 0.864744 15.9126 0.864746C18.8713 0.86475 21.2079 3.1619 21.2079 6.16008C21.2079 12.7611 11.0063 17.1827 11.0063 17.1827C11.0063 17.1827 0.804688 12.7611 0.804688 6.16008C0.804688 3.1619 3.14137 0.86475 6.10003 0.864746C7.49231 0.864744 8.66071 1.40434 9.50762 1.97569ZM11.0063 14.9661C11.1945 14.8708 11.4105 14.7585 11.6483 14.6298C12.545 14.1444 13.7284 13.439 14.9001 12.5521C17.3825 10.6731 19.2079 8.44129 19.2079 6.16008C19.2079 4.27625 17.7765 2.86475 15.9126 2.86475C14.9904 2.86474 14.1647 3.2468 13.5089 3.71306C13.1889 3.94063 12.9373 4.16899 12.7699 4.3361C12.6871 4.41879 12.6274 4.48397 12.5927 4.52308C12.5762 4.54173 12.5656 4.55422 12.5611 4.55959L11.0063 6.50475L9.45157 4.55959C9.44706 4.55422 9.43643 4.54173 9.4199 4.52308C9.38525 4.48397 9.32555 4.41879 9.24273 4.3361C9.07534 4.16899 8.82375 3.94063 8.5037 3.71306C7.84795 3.2468 7.02222 2.86474 6.10003 2.86475C4.23614 2.86475 2.80469 4.27625 2.80469 6.16008C2.80469 8.44129 4.63016 10.6731 7.11258 12.5521C8.28419 13.439 9.46762 14.1444 10.3643 14.6298C10.6021 14.7585 10.8181 14.8708 11.0063 14.9661Z"
+									fill="#DFE0E3" transform="translate(1, 3)"/>
 						</svg>
 					</div>
 				</div>
@@ -520,8 +522,8 @@ this.BX = this.BX || {};
 							{{ $Bitrix.Loc.getMessage('MARKET_DETAIL_ACTION_JS_VIEW_DEMO') }}
 						</button>
 						<a class="ui-btn ui-btn-light-border ui-btn-md"
-						   v-if="showOpenAppButton"
-						   :href="result.APP.BUTTON_OPEN_APP"
+							 v-if="showOpenAppButton"
+							 :href="result.APP.BUTTON_OPEN_APP"
 						>
 							{{ $Bitrix.Loc.getMessage('MARKET_DETAIL_ACTION_JS_OPEN_APP') }}
 						</a>
@@ -535,9 +537,9 @@ this.BX = this.BX || {};
 									 viewBox="0 0 15 16" fill="none" xmlns="http://www.w3.org/2000/svg">
 									<circle cx="7.5" cy="8" r="7.5" fill="#8DBB00"/>
 									<path d="M4.41361 7.14596L7.94914 10.6815L6.53493 12.0957L2.9994 8.56017L4.41361 7.14596Z"
-										  fill="white"/>
+											fill="white"/>
 									<path d="M12.1918 6.43885L6.53493 12.0957L5.12072 10.6815L10.7776 5.02464L12.1918 6.43885Z"
-										  fill="white"/>
+											fill="white"/>
 								</svg>
 								{{ $Bitrix.Loc.getMessage('MARKET_DETAIL_ITEM_JS_AVAILABLE_IN_SUBCRIPTION') }}
 							</template>
@@ -560,10 +562,10 @@ this.BX = this.BX || {};
 							 :class="{'--favorite': isFavoriteApp}"
 							 width="24" height="24"  viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 							<path class="market-detail__favorites-fill" d="M11.2227 6.92764L11.223 6.92802L11.2235 6.9286L11.2237 6.92878L12.0024 7.9031L12.7813 6.9286C12.781 6.92897 12.7812 6.92877 12.7818 6.92802L12.7821 6.92764L12.7908 6.91717C12.8004 6.90578 12.817 6.88631 12.8404 6.85991C12.8872 6.80704 12.9609 6.72686 13.0595 6.62841C13.2576 6.43063 13.5513 6.16416 13.9255 5.89808C14.6818 5.36036 15.7079 4.86474 16.9087 4.86475C19.32 4.86475 21.204 6.71908 21.204 9.16008C21.204 11.614 19.5141 13.8465 17.3533 15.6682C15.2599 17.4331 12.933 18.635 12.0024 19.081C11.0719 18.635 8.74495 17.4331 6.6515 15.6682C4.49074 13.8465 2.80078 11.614 2.80078 9.16008C2.80078 6.71908 4.68485 4.86475 7.09612 4.86475C8.29688 4.86474 9.32303 5.36036 10.0793 5.89808C10.4535 6.16416 10.7472 6.43063 10.9453 6.62841C11.044 6.72686 11.1176 6.80704 11.1645 6.85991C11.1879 6.88631 11.2045 6.90578 11.214 6.91717L11.2227 6.92764Z"
-								  stroke-width="2"></path>
+									stroke-width="2"></path>
 							<path class="market-detail__favorites-stroke" fill-rule="evenodd" clip-rule="evenodd"
-								  d="M9.50762 1.97569C10.4604 2.61848 11.0063 3.30145 11.0063 3.30145C11.0063 3.30145 11.5522 2.61848 12.505 1.97569C13.3519 1.40434 14.5203 0.864744 15.9126 0.864746C18.8713 0.86475 21.2079 3.1619 21.2079 6.16008C21.2079 12.7611 11.0063 17.1827 11.0063 17.1827C11.0063 17.1827 0.804688 12.7611 0.804688 6.16008C0.804688 3.1619 3.14137 0.86475 6.10003 0.864746C7.49231 0.864744 8.66071 1.40434 9.50762 1.97569ZM11.0063 14.9661C11.1945 14.8708 11.4105 14.7585 11.6483 14.6298C12.545 14.1444 13.7284 13.439 14.9001 12.5521C17.3825 10.6731 19.2079 8.44129 19.2079 6.16008C19.2079 4.27625 17.7765 2.86475 15.9126 2.86475C14.9904 2.86474 14.1647 3.2468 13.5089 3.71306C13.1889 3.94063 12.9373 4.16899 12.7699 4.3361C12.6871 4.41879 12.6274 4.48397 12.5927 4.52308C12.5762 4.54173 12.5656 4.55422 12.5611 4.55959L11.0063 6.50475L9.45157 4.55959C9.44706 4.55422 9.43643 4.54173 9.4199 4.52308C9.38525 4.48397 9.32555 4.41879 9.24273 4.3361C9.07534 4.16899 8.82375 3.94063 8.5037 3.71306C7.84795 3.2468 7.02222 2.86474 6.10003 2.86475C4.23614 2.86475 2.80469 4.27625 2.80469 6.16008C2.80469 8.44129 4.63016 10.6731 7.11258 12.5521C8.28419 13.439 9.46762 14.1444 10.3643 14.6298C10.6021 14.7585 10.8181 14.8708 11.0063 14.9661Z"
-								  fill="#DFE0E3" transform="translate(1, 3)"/>
+									d="M9.50762 1.97569C10.4604 2.61848 11.0063 3.30145 11.0063 3.30145C11.0063 3.30145 11.5522 2.61848 12.505 1.97569C13.3519 1.40434 14.5203 0.864744 15.9126 0.864746C18.8713 0.86475 21.2079 3.1619 21.2079 6.16008C21.2079 12.7611 11.0063 17.1827 11.0063 17.1827C11.0063 17.1827 0.804688 12.7611 0.804688 6.16008C0.804688 3.1619 3.14137 0.86475 6.10003 0.864746C7.49231 0.864744 8.66071 1.40434 9.50762 1.97569ZM11.0063 14.9661C11.1945 14.8708 11.4105 14.7585 11.6483 14.6298C12.545 14.1444 13.7284 13.439 14.9001 12.5521C17.3825 10.6731 19.2079 8.44129 19.2079 6.16008C19.2079 4.27625 17.7765 2.86475 15.9126 2.86475C14.9904 2.86474 14.1647 3.2468 13.5089 3.71306C13.1889 3.94063 12.9373 4.16899 12.7699 4.3361C12.6871 4.41879 12.6274 4.48397 12.5927 4.52308C12.5762 4.54173 12.5656 4.55422 12.5611 4.55959L11.0063 6.50475L9.45157 4.55959C9.44706 4.55422 9.43643 4.54173 9.4199 4.52308C9.38525 4.48397 9.32555 4.41879 9.24273 4.3361C9.07534 4.16899 8.82375 3.94063 8.5037 3.71306C7.84795 3.2468 7.02222 2.86474 6.10003 2.86475C4.23614 2.86475 2.80469 4.27625 2.80469 6.16008C2.80469 8.44129 4.63016 10.6731 7.11258 12.5521C8.28419 13.439 9.46762 14.1444 10.3643 14.6298C10.6021 14.7585 10.8181 14.8708 11.0063 14.9661Z"
+									fill="#DFE0E3" transform="translate(1, 3)"/>
 						</svg>
 					</div>
 					<button class="ui-btn ui-btn-round market-detail__more-btn"
@@ -598,9 +600,9 @@ this.BX = this.BX || {};
 				<div class="market-detail__main-info_item">
 					<div class="market-detail__main-info_item-title">{{ $Bitrix.Loc.getMessage('MARKET_DETAIL_ITEM_JS_DEVELOPER') }}</div>
 					<a class="market-detail__main-info_item-details" 
-					   v-if="result.APP.PARTNER_URL"
-					   :href="result.APP.PARTNER_URL"
-					   target="_blank"
+						 v-if="result.APP.PARTNER_URL"
+						 :href="result.APP.PARTNER_URL"
+						 target="_blank"
 					>
 						{{ result.APP.PARTNER_NAME }}
 					</a>
@@ -648,16 +650,16 @@ this.BX = this.BX || {};
 
 						<div class="market-detail__description_btn-block" v-if="getContactDeveloper.length > 0 || getRequestDemoInfo.length > 0">
 							<a class="ui-btn ui-btn-primary ui-btn-round ui-btn-icon- market-detail__description_btn-contact"
-							   v-if="getContactDeveloper.length > 0"
-							   :href="getContactDeveloper"
-							   target="_blank"
+								 v-if="getContactDeveloper.length > 0"
+								 :href="getContactDeveloper"
+								 target="_blank"
 							>
 								{{ $Bitrix.Loc.getMessage('MARKET_DETAIL_ITEM_JS_CONTACT_DEVELOPERS') }}
 							</a>
 							<a class="ui-btn ui-btn-primary ui-btn-round ui-btn-icon- market-detail__description_btn-request"
-							   v-if="getRequestDemoInfo.length > 0"
-							   :href="getRequestDemoInfo"
-							   target="_blank"
+								 v-if="getRequestDemoInfo.length > 0"
+								 :href="getRequestDemoInfo"
+								 target="_blank"
 							>
 								{{ $Bitrix.Loc.getMessage('MARKET_DETAIL_ITEM_JS_REQUEST_A_DEMO') }}
 							</a>
@@ -673,13 +675,13 @@ this.BX = this.BX || {};
 
 			<div class="market-detail__useful-links">
 				<span class="market-detail__useful-links_item --link"
-					  @click="openSliderWithContent(slider.install, widthInstallSlider)"
+						@click="openSliderWithContent(slider.install, widthInstallSlider)"
 				>
 					<div class="market-detail__useful-links_item-icon">
 						<svg width="41" height="40" viewBox="0 0 41 40" fill="none" xmlns="http://www.w3.org/2000/svg">
 							<path fill-rule="evenodd" clip-rule="evenodd"
-								  d="M11.75 10.9091C11.75 9.71666 12.7376 8.75 13.9559 8.75H22.5087C23.1259 8.75 23.7148 9.00309 24.1326 9.44782L29.918 15.6073C30.2923 16.0058 30.5 16.5273 30.5 17.0686V30.3409C30.5 31.5333 29.5124 32.5 28.2941 32.5H13.9559C12.7376 32.5 11.75 31.5333 11.75 30.3409V10.9091ZM22.5087 10.9091H13.9559V30.3409H28.2941V17.0686L22.5087 10.9091Z"
-								  fill="#559BE6"/>
+									d="M11.75 10.9091C11.75 9.71666 12.7376 8.75 13.9559 8.75H22.5087C23.1259 8.75 23.7148 9.00309 24.1326 9.44782L29.918 15.6073C30.2923 16.0058 30.5 16.5273 30.5 17.0686V30.3409C30.5 31.5333 29.5124 32.5 28.2941 32.5H13.9559C12.7376 32.5 11.75 31.5333 11.75 30.3409V10.9091ZM22.5087 10.9091H13.9559V30.3409H28.2941V17.0686L22.5087 10.9091Z"
+									fill="#559BE6"/>
 							<rect x="15.5" y="15" width="6.25" height="1.875" rx="0.9375" fill="#559BE6"/>
 							<rect x="15.5" y="18.75" width="11.25" height="1.875" rx="0.9375" fill="#559BE6"/>
 							<rect x="15.5" y="21.25" width="8.75" height="1.875" rx="0.9375" fill="#559BE6"/>
@@ -691,13 +693,13 @@ this.BX = this.BX || {};
 					</div>
 				</span>
 				<span class="market-detail__useful-links_item --link"
-					  @click="openSliderWithContent(slider.support)"
+						@click="openSliderWithContent(slider.support)"
 				>
 					<div class="market-detail__useful-links_item-icon">
 						<svg width="41" height="40" viewBox="0 0 41 40" fill="none" xmlns="http://www.w3.org/2000/svg">
 							<path fill-rule="evenodd" clip-rule="evenodd"
-								  d="M25.2695 21.0716C24.8758 22.9222 23.4205 24.3775 21.57 24.771C18.0418 25.5213 14.9769 22.4555 15.7274 18.9282C16.0823 17.2602 17.7584 15.5839 19.4264 15.229C22.9539 14.4782 26.02 17.5433 25.2695 21.0716ZM31.9917 18.194L29.5349 17.7841C29.3604 17.0705 29.1077 16.3877 28.7797 15.7494C28.7659 15.7225 28.7691 15.6902 28.7881 15.6667L30.3297 13.7552C30.6642 13.3431 30.649 12.7501 30.2963 12.3523L29.3192 11.2526C28.965 10.8552 28.3777 10.7712 27.9297 11.0543L25.8286 12.3751C24.9178 11.7387 23.8878 11.2663 22.7771 10.988C22.7477 10.9806 22.7253 10.9566 22.7203 10.9266L22.3175 8.50588C22.2312 7.98287 21.7786 7.59912 21.2474 7.59912H19.7749C19.2447 7.59912 18.7905 7.98287 18.7062 8.50588L18.3012 10.9275C18.2961 10.9574 18.2738 10.9814 18.2444 10.9887C17.3456 11.214 16.5014 11.5695 15.728 12.0343C15.7019 12.05 15.6692 12.0488 15.6444 12.0312L13.687 10.6342C13.2564 10.3265 12.6649 10.3747 12.2891 10.7497L11.2488 11.7907C10.8738 12.1665 10.8257 12.758 11.1342 13.1887L12.5344 15.15C12.5521 15.1747 12.5533 15.2074 12.5377 15.2335C12.0774 16.0009 11.7255 16.8401 11.5005 17.7308C11.4931 17.7602 11.4691 17.7824 11.4392 17.7874L9.00436 18.194C8.48216 18.2803 8.09766 18.7329 8.09766 19.2642V20.7356C8.09766 21.2669 8.48216 21.7196 9.00436 21.8058L11.4392 22.2123C11.4691 22.2174 11.4931 22.2396 11.5005 22.2691C11.6835 22.9962 11.9443 23.6918 12.2871 24.3393C12.3013 24.3663 12.2983 24.3991 12.2791 24.4229L10.7451 26.3228C10.4118 26.7346 10.4258 27.328 10.7784 27.7254L11.7548 28.8251C12.109 29.2232 12.6967 29.3057 13.1447 29.0234L15.2339 27.711C15.2595 27.6949 15.2922 27.6955 15.3172 27.7125C16.2089 28.3151 17.2148 28.7588 18.2929 29.0234L18.7062 31.4939C18.7906 32.0169 19.2447 32.4007 19.7749 32.4007H21.2474C21.7787 32.4007 22.2312 32.0169 22.3175 31.4939L22.721 29.0727C22.726 29.0428 22.7483 29.0188 22.7778 29.0114C23.665 28.7892 24.4983 28.44 25.2643 27.9834C25.2904 27.9678 25.323 27.9691 25.3477 27.9867L27.3885 29.4443C27.8184 29.7531 28.4103 29.7046 28.7857 29.3284L29.8264 28.2877C30.201 27.9131 30.2517 27.3219 29.9406 26.8904L28.4878 24.8535C28.4702 24.8287 28.469 24.796 28.4846 24.77C28.9463 24 29.3 23.1592 29.5238 22.2645C29.5311 22.2351 29.5551 22.2127 29.585 22.2077L31.9925 21.8057C32.5163 21.7194 32.8992 21.2668 32.8992 20.7355V19.2641C32.8984 18.7329 32.5155 18.2803 31.9917 18.194Z"
-								  fill="#559BE6"/>
+									d="M25.2695 21.0716C24.8758 22.9222 23.4205 24.3775 21.57 24.771C18.0418 25.5213 14.9769 22.4555 15.7274 18.9282C16.0823 17.2602 17.7584 15.5839 19.4264 15.229C22.9539 14.4782 26.02 17.5433 25.2695 21.0716ZM31.9917 18.194L29.5349 17.7841C29.3604 17.0705 29.1077 16.3877 28.7797 15.7494C28.7659 15.7225 28.7691 15.6902 28.7881 15.6667L30.3297 13.7552C30.6642 13.3431 30.649 12.7501 30.2963 12.3523L29.3192 11.2526C28.965 10.8552 28.3777 10.7712 27.9297 11.0543L25.8286 12.3751C24.9178 11.7387 23.8878 11.2663 22.7771 10.988C22.7477 10.9806 22.7253 10.9566 22.7203 10.9266L22.3175 8.50588C22.2312 7.98287 21.7786 7.59912 21.2474 7.59912H19.7749C19.2447 7.59912 18.7905 7.98287 18.7062 8.50588L18.3012 10.9275C18.2961 10.9574 18.2738 10.9814 18.2444 10.9887C17.3456 11.214 16.5014 11.5695 15.728 12.0343C15.7019 12.05 15.6692 12.0488 15.6444 12.0312L13.687 10.6342C13.2564 10.3265 12.6649 10.3747 12.2891 10.7497L11.2488 11.7907C10.8738 12.1665 10.8257 12.758 11.1342 13.1887L12.5344 15.15C12.5521 15.1747 12.5533 15.2074 12.5377 15.2335C12.0774 16.0009 11.7255 16.8401 11.5005 17.7308C11.4931 17.7602 11.4691 17.7824 11.4392 17.7874L9.00436 18.194C8.48216 18.2803 8.09766 18.7329 8.09766 19.2642V20.7356C8.09766 21.2669 8.48216 21.7196 9.00436 21.8058L11.4392 22.2123C11.4691 22.2174 11.4931 22.2396 11.5005 22.2691C11.6835 22.9962 11.9443 23.6918 12.2871 24.3393C12.3013 24.3663 12.2983 24.3991 12.2791 24.4229L10.7451 26.3228C10.4118 26.7346 10.4258 27.328 10.7784 27.7254L11.7548 28.8251C12.109 29.2232 12.6967 29.3057 13.1447 29.0234L15.2339 27.711C15.2595 27.6949 15.2922 27.6955 15.3172 27.7125C16.2089 28.3151 17.2148 28.7588 18.2929 29.0234L18.7062 31.4939C18.7906 32.0169 19.2447 32.4007 19.7749 32.4007H21.2474C21.7787 32.4007 22.2312 32.0169 22.3175 31.4939L22.721 29.0727C22.726 29.0428 22.7483 29.0188 22.7778 29.0114C23.665 28.7892 24.4983 28.44 25.2643 27.9834C25.2904 27.9678 25.323 27.9691 25.3477 27.9867L27.3885 29.4443C27.8184 29.7531 28.4103 29.7046 28.7857 29.3284L29.8264 28.2877C30.201 27.9131 30.2517 27.3219 29.9406 26.8904L28.4878 24.8535C28.4702 24.8287 28.469 24.796 28.4846 24.77C28.9463 24 29.3 23.1592 29.5238 22.2645C29.5311 22.2351 29.5551 22.2127 29.585 22.2077L31.9925 21.8057C32.5163 21.7194 32.8992 21.2668 32.8992 20.7355V19.2641C32.8984 18.7329 32.5155 18.2803 31.9917 18.194Z"
+									fill="#559BE6"/>
 						</svg>
 					</div>
 					<div class="market-detail__useful-links_item-text --link">
@@ -705,7 +707,7 @@ this.BX = this.BX || {};
 					</div>
 				</span>
 				<span class="market-detail__useful-links_item --link"
-					  @click="openSliderWithContent(slider.scope, 558)"
+						@click="openSliderWithContent(slider.scope, 558)"
 				>
 					<div class="market-detail__useful-links_item-icon">
 						<svg width="41" height="40" viewBox="0 0 41 40" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -727,8 +729,8 @@ this.BX = this.BX || {};
 					<div class="market-detail__useful-links_item-icon">
 						<svg width="41" height="40" viewBox="0 0 41 40" fill="none" xmlns="http://www.w3.org/2000/svg">
 							<path fill-rule="evenodd" clip-rule="evenodd"
-								  d="M22.3413 22.1305L24.1021 19.4965V22.1305H22.3413ZM24.1021 24.9818H25.5232V23.4297H26.4752V22.1305H25.5232V17.2403H24.2895L20.9665 22.1366V23.4297H24.1021V24.9818ZM17.1287 21.6573C16.3061 22.425 15.7569 23.0406 15.4768 23.5062C15.1989 23.9703 15.0305 24.4632 14.9754 24.9818H20.1239V23.6092H17.2067C17.2831 23.4752 17.3839 23.3389 17.5074 23.1988C17.6309 23.058 17.9242 22.7741 18.3881 22.3471C18.8513 21.9185 19.1718 21.5915 19.349 21.3621C19.6174 21.0198 19.8129 20.692 19.9379 20.377C20.0599 20.0636 20.1239 19.7335 20.1239 19.386C20.1239 18.7757 19.9078 18.2662 19.4747 17.8558C19.0439 17.4462 18.4491 17.2403 17.6934 17.2403C17.0023 17.2403 16.4281 17.4167 15.9679 17.771C15.5084 18.1261 15.2349 18.7091 15.1482 19.5223L16.6112 19.6707C16.6391 19.2391 16.7428 18.9302 16.9258 18.7447C17.106 18.5585 17.35 18.4661 17.6566 18.4661C17.9669 18.4661 18.2087 18.5539 18.3844 18.7311C18.5616 18.9082 18.6498 19.1611 18.6498 19.4912C18.6498 19.788 18.5477 20.0916 18.3462 20.3952C18.1955 20.6163 17.7897 21.0373 17.1287 21.6573ZM11.1253 28.1057H29.8747V14.9568H11.1253V28.1057ZM30.1129 8.66747H28.3125V9.45336C28.3125 10.7564 27.2626 11.8118 25.9687 11.8118C24.6748 11.8118 23.6249 10.7564 23.6249 9.45336V8.66747H17.3751V9.45336C17.3751 10.7564 16.3252 11.8118 15.0313 11.8118C13.7374 11.8118 12.6875 10.7564 12.6875 9.45336V8.66747H10.8871C9.20056 8.66747 8 9.96063 8 11.8118V29.6775C8 30.5459 8.69916 31.25 9.56227 31.25H31.4377C32.3008 31.25 33 30.5459 33 29.6775V11.8118C33 10.0591 31.6039 8.66747 30.1129 8.66747ZM15.0313 10.2975C15.6658 10.2975 16.1804 9.78044 16.1804 9.14143V7.40612C16.1804 6.76711 15.6658 6.25 15.0313 6.25C14.3961 6.25 13.8822 6.76711 13.8822 7.40612V9.14143C13.8822 9.78044 14.3961 10.2975 15.0313 10.2975ZM25.9687 10.1855C26.5679 10.1855 27.0538 9.6964 27.0538 9.09297V7.45457C27.0538 6.85115 26.5679 6.36205 25.9687 6.36205C25.3695 6.36205 24.8835 6.85115 24.8835 7.45457V9.09297C24.8835 9.6964 25.3695 10.1855 25.9687 10.1855Z"
-								  fill="#559BE6"/>
+									d="M22.3413 22.1305L24.1021 19.4965V22.1305H22.3413ZM24.1021 24.9818H25.5232V23.4297H26.4752V22.1305H25.5232V17.2403H24.2895L20.9665 22.1366V23.4297H24.1021V24.9818ZM17.1287 21.6573C16.3061 22.425 15.7569 23.0406 15.4768 23.5062C15.1989 23.9703 15.0305 24.4632 14.9754 24.9818H20.1239V23.6092H17.2067C17.2831 23.4752 17.3839 23.3389 17.5074 23.1988C17.6309 23.058 17.9242 22.7741 18.3881 22.3471C18.8513 21.9185 19.1718 21.5915 19.349 21.3621C19.6174 21.0198 19.8129 20.692 19.9379 20.377C20.0599 20.0636 20.1239 19.7335 20.1239 19.386C20.1239 18.7757 19.9078 18.2662 19.4747 17.8558C19.0439 17.4462 18.4491 17.2403 17.6934 17.2403C17.0023 17.2403 16.4281 17.4167 15.9679 17.771C15.5084 18.1261 15.2349 18.7091 15.1482 19.5223L16.6112 19.6707C16.6391 19.2391 16.7428 18.9302 16.9258 18.7447C17.106 18.5585 17.35 18.4661 17.6566 18.4661C17.9669 18.4661 18.2087 18.5539 18.3844 18.7311C18.5616 18.9082 18.6498 19.1611 18.6498 19.4912C18.6498 19.788 18.5477 20.0916 18.3462 20.3952C18.1955 20.6163 17.7897 21.0373 17.1287 21.6573ZM11.1253 28.1057H29.8747V14.9568H11.1253V28.1057ZM30.1129 8.66747H28.3125V9.45336C28.3125 10.7564 27.2626 11.8118 25.9687 11.8118C24.6748 11.8118 23.6249 10.7564 23.6249 9.45336V8.66747H17.3751V9.45336C17.3751 10.7564 16.3252 11.8118 15.0313 11.8118C13.7374 11.8118 12.6875 10.7564 12.6875 9.45336V8.66747H10.8871C9.20056 8.66747 8 9.96063 8 11.8118V29.6775C8 30.5459 8.69916 31.25 9.56227 31.25H31.4377C32.3008 31.25 33 30.5459 33 29.6775V11.8118C33 10.0591 31.6039 8.66747 30.1129 8.66747ZM15.0313 10.2975C15.6658 10.2975 16.1804 9.78044 16.1804 9.14143V7.40612C16.1804 6.76711 15.6658 6.25 15.0313 6.25C14.3961 6.25 13.8822 6.76711 13.8822 7.40612V9.14143C13.8822 9.78044 14.3961 10.2975 15.0313 10.2975ZM25.9687 10.1855C26.5679 10.1855 27.0538 9.6964 27.0538 9.09297V7.45457C27.0538 6.85115 26.5679 6.36205 25.9687 6.36205C25.3695 6.36205 24.8835 6.85115 24.8835 7.45457V9.09297C24.8835 9.6964 25.3695 10.1855 25.9687 10.1855Z"
+									fill="#559BE6"/>
 						</svg>
 					</div>
 					<div class="market-detail__useful-links_item-text">
@@ -751,8 +753,8 @@ this.BX = this.BX || {};
 						<svg class="market-detail__btn-icon" width="6" height="12" viewBox="0 0 6 12" fill="none"
 							 xmlns="http://www.w3.org/2000/svg">
 							<path fill-rule="evenodd" clip-rule="evenodd"
-								  d="M0 3.99088L3.06862 6.79917L3.86345 7.49975L3.06862 8.20075L0 11.009L1.08283 12L6 7.5L1.08283 3L0 3.99088Z"
-								  fill="#B9BFC3"/>
+									d="M0 3.99088L3.06862 6.79917L3.86345 7.49975L3.06862 8.20075L0 11.009L1.08283 12L6 7.5L1.08283 3L0 3.99088Z"
+									fill="#B9BFC3"/>
 						</svg>
 					</div>
 				</div>
@@ -848,4 +850,4 @@ this.BX = this.BX || {};
 
 	exports.DetailComponent = DetailComponent;
 
-}((this.BX.Market = this.BX.Market || {}),BX.Market,BX.Market,BX.Market,BX.Market,BX.Market,BX.Market,BX.Market,BX.Market,BX.Event,BX.Main,BX.UI,BX,BX.Vue3.Pinia));
+})(this.BX.Market = this.BX.Market || {}, BX.Market, BX.Market, BX.Market, BX.Market, BX.Market, BX.Market, BX.Market, BX.Market, BX.Event, BX.Main, BX.UI, BX, BX.Vue3.Pinia);

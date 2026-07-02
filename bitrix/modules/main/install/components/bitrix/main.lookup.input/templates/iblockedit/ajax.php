@@ -1,4 +1,4 @@
-<?
+<?php
 define("STOP_STATISTICS", true);
 define("BX_SECURITY_SHOW_MESSAGE", true);
 

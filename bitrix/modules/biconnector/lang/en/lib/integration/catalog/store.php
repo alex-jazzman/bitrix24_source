@@ -5,3 +5,4 @@ $MESS["CATALOG_STORE_FIELD_DATE_CREATE"] = "Warehouse created on";
 $MESS["CATALOG_STORE_FIELD_ID"] = "Unique warehouse ID";
 $MESS["CATALOG_STORE_FIELD_TITLE"] = "Warehouse name";
 $MESS["CATALOG_STORE_TABLE"] = "Warehouses";
+$MESS["CATALOG_STORE_TABLE_DESCRIPTION_FULL"] = "Contains information about warehouses registered with the Inventory Management.";

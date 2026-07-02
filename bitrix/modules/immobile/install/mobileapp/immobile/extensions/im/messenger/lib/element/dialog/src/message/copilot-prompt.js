@@ -14,7 +14,7 @@ jn.define('im/messenger/lib/element/dialog/message/copilot-prompt', (require, ex
 
 	class CopilotPromptMessage extends TextMessage
 	{
-		constructor(modelMessage = {}, options = {})
+		constructor(modelMessage, options = {})
 		{
 			super(modelMessage, options);
 

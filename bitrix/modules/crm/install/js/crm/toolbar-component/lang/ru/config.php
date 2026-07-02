@@ -8,6 +8,7 @@ $MESS['CRM_TOOLBAR_COMPONENT_TELEPHONY_NOT_SUPPORTED_OK'] = 'Понятно';
 
 $MESS['CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_CALL'] = 'Чтобы позвонить, добавьте клиента с номером телефона';
 $MESS['CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_CALL_DEAL'] = 'Чтобы позвонить, добавьте в эту сделку клиента с номером телефона';
+$MESS['CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_CALL_DEAL_RECURRING'] = 'Чтобы позвонить, добавьте в эту сделку клиента с номером телефона';
 $MESS['CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_CALL_LEAD'] = 'Чтобы позвонить, добавьте в этот лид клиента с номером телефона';
 $MESS['CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_CALL_CONTACT'] = 'Чтобы позвонить, добавьте в этот контакт номер телефона клиента';
 $MESS['CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_CALL_COMPANY'] = 'Чтобы позвонить, добавьте в эту компанию клиента с номером телефона';
@@ -16,6 +17,7 @@ $MESS['CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_CALL_SMART_INVOICE'] = 'Чтобы �
 $MESS['CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_CALL_QUOTE'] = 'Чтобы позвонить, добавьте в это предложение клиента с номером телефона';
 $MESS['CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_EMAIL_SEND'] = 'Чтобы отправить письмо, добавьте клиента c e-mail';
 $MESS['CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_EMAIL_SEND_DEAL'] = 'Чтобы отправить письмо, добавьте в эту сделку клиента c e-mail';
+$MESS['CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_EMAIL_SEND_DEAL_RECURRING'] = 'Чтобы отправить письмо, добавьте в эту сделку клиента c e-mail';
 $MESS['CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_EMAIL_SEND_LEAD'] = 'Чтобы отправить письмо, добавьте в этот лид клиента c e-mail';
 $MESS['CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_EMAIL_SEND_CONTACT'] = 'Чтобы отправить письмо, добавьте в этот контакт клиента c e-mail';
 $MESS['CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_EMAIL_SEND_COMPANY'] = 'Чтобы отправить письмо, добавьте в эту компанию клиента c e-mail';

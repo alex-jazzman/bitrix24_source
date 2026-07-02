@@ -1,14 +1,20 @@
 import { Switcher } from 'ui.vue3.components.switcher';
 import { SwitcherSize } from 'ui.switcher';
 import { hint, type HintParams } from 'ui.vue3.directives.hint';
-import { CrmIntegrationSettingsType } from '../../utils/crm-integration-settings-type';
+import { mapState } from 'ui.vue3.pinia';
+import { type CrmIntegrationSettingsType } from '../../utils/crm-integration-settings-type';
 import { BitrixSettingSelector } from '../tools/bitrix-setting-selector';
 import { UserSelector } from '../tools/user-selector';
-import { CrmIntegrationOptions } from '../../utils/options/crm-integration-options/component-options';
 import { LocalizationMixin } from '../../mixins/localization-mixin';
 import { PreparedIndirectPhraseMixin } from '../../mixins/prepared-indirect-phrase-mixin';
-import { PrepareOptionsPhrasesMixin } from '../../mixins/prepare-options-phrases-mixin';
+import { useWizardStore } from '../../store/wizard';
 import './integrations.css';
+
+const CRM_LEAD_SOURCE_DIALOG_OPTIONS = Object.freeze({
+	width: 300,
+	height: 300,
+	enableSearch: true,
+});
 
 // @vue/component
 export const CrmIntegration = {
@@ -22,7 +28,7 @@ export const CrmIntegration = {
 		UserSelector,
 	},
 
-	mixins: [LocalizationMixin, PrepareOptionsPhrasesMixin, PreparedIndirectPhraseMixin],
+	mixins: [LocalizationMixin, PreparedIndirectPhraseMixin],
 
 	props: {
 		/** @type CrmIntegrationSettingsType */
@@ -44,11 +50,12 @@ export const CrmIntegration = {
 	{
 		return {
 			showAddressTextarea: false,
-			crmLeadSourceDialogOptions: CrmIntegrationOptions.crmLeadSourceDialogOptions,
+			crmLeadSourceDialogOptions: CRM_LEAD_SOURCE_DIALOG_OPTIONS,
 		};
 	},
 
 	computed: {
+		...mapState(useWizardStore, ['crmSourceOptions', 'crmSyncOptions', 'crmEntityOptions']),
 		localModelValue: {
 			get(): CrmIntegrationSettingsType
 			{
@@ -77,15 +84,15 @@ export const CrmIntegration = {
 		},
 		syncPeriodOptions(): Object
 		{
-			return this.prepareOptionPhrases(CrmIntegrationOptions.syncPeriodOptions);
+			return this.crmSyncOptions;
 		},
 		createActionOptions(): Object
 		{
-			return this.prepareOptionPhrases(CrmIntegrationOptions.createActionOptions);
+			return this.crmEntityOptions;
 		},
 		sourceOptions(): Object
 		{
-			return this.prepareOptionPhrases(CrmIntegrationOptions.sourceOptions);
+			return this.crmSourceOptions;
 		},
 		switcherOptions(): Object
 		{
@@ -100,7 +107,7 @@ export const CrmIntegration = {
 			return {
 				text: this.loc('MAIL_MASSCONNECT_FORM_MAILBOX_SETTINGS_INTEGRATION_CRM_NO_ACCESS_HINT'),
 				popupOptions: {
-					className: 'mail_massconnect-hint',
+					className: 'mail_massconnect__integration_crm_hint',
 					darkMode: false,
 					offsetTop: 2,
 					background: 'var(--ui-color-bg-content-inapp)',

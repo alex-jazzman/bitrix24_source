@@ -11,9 +11,9 @@ return [
 	'rel' => [
 		'main.core',
 		'main.core.events',
-		'ui.entity-selector',
 		'pull.client',
 		'ui.design-tokens',
+		'ui.entity-selector',
 	],
 	'skip_core' => false,
 ];

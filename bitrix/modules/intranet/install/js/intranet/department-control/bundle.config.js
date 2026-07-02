@@ -3,5 +3,4 @@ module.exports = {
 	output: 'dist/department-control.bundle.js',
 	namespace: 'BX.Intranet',
 	browserslist: true,
-	minification: true,
 };

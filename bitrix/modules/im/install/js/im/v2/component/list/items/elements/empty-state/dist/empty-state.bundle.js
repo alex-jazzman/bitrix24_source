@@ -8,19 +8,19 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	// @vue/component
 	const RecentEmptyState = {
-	  name: 'RecentEmptyState',
-	  props: {
-	    title: {
-	      type: String,
-	      required: true
-	    },
-	    subtitle: {
-	      type: String,
-	      required: false,
-	      default: ''
-	    }
-	  },
-	  template: `
+		name: 'RecentEmptyState',
+		props: {
+			title: {
+				type: String,
+				required: true
+			},
+			subtitle: {
+				type: String,
+				required: false,
+				default: ''
+			}
+		},
+		template: `
 		<div class="bx-im-list-recent-empty-state__container">
 			<div class="bx-im-list-recent-empty-state__image"></div>
 			<div class="bx-im-list-recent-empty-state__title">{{ title }}</div>
@@ -32,5 +32,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.RecentEmptyState = RecentEmptyState;
 
-}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {})));
+})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {});
 //# sourceMappingURL=empty-state.bundle.js.map

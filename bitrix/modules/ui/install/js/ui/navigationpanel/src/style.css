@@ -2,7 +2,7 @@
 	/*colors*/
 	--color_background: rgba(82, 92, 105, .08);
 	--color_text: rgba(82, 92, 105, .8);
-	--color_text-hover: #fff;
+	--color_text-hover: rgba(82, 92, 105, 1);
 	--color_border-bottom: rgba(82, 92, 105, .4);
 	--color_chevron: var(--color_text);
 	--color_chevron-hover: var(--color_text-hover);
@@ -169,26 +169,4 @@
 
 .ui-nav-panel__item.--active .ui-nav-panel__item-dropdown-icon {
 	--ui-icon-set__icon-color: var(--color_chevron-active);
-}
-
-.ui-nav-panel__menu-item {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-}
-
-.ui-nav-panel__menu-item-icon {
-	position: absolute;
-	left: 16px;
-	top: 50%;
-	transform: translateY(-50%);
-	display: inline-flex;
-}
-
-.ui-nav-panel__menu-item .ui-nav-panel__menu-item-icon {
-	--ui-icon-set__icon-color: var(--ui-color-primary);
-}
-
-.ui-nav-panel__menu-item.--air .ui-nav-panel__menu-item-icon {
-	--ui-icon-set__icon-color: var(--ui-color-design-filled-stroke);
 }

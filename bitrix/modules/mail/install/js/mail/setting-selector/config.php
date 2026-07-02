@@ -9,9 +9,9 @@ return [
 	'js' => 'dist/setting-selector.bundle.js',
 	'rel' => [
 		'main.core',
-		'ui.icon-set.api.core',
 		'ui.entity-selector',
 		'ui.icon-set.actions',
+		'ui.icon-set.api.core',
 	],
 	'skip_core' => false,
 ];

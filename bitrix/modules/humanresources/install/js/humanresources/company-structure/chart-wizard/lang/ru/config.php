@@ -82,6 +82,13 @@ $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_COLLAB_REMOVE_CHE
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_COLLAB_REMOVE_CHECKBOX_LABEL_NOT_INSIDE'] = 'Создадим коллабу для всего отдела. Чтобы увидеть её, добавьте себя в отдел';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_COLLAB_ADD_CHECKBOX_HINT'] = 'Все участники сразу добавятся в новую коллабу. Состав коллабы автообновляется при любых изменениях в отделе';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_COLLAB_ADD_CHECKBOX_WARNING'] = 'Чтобы создать коллабу отдела, добавьте руководителя на предыдущем шаге. Он будет владельцем этой коллабы';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_PROJECT_TITLE'] = 'Проекты';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_PROJECT_DESCRIPTION'] = 'Выберите, в какие проекты добавить сотрудников отдела';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_PROJECT_ADD_CHECKBOX_LABEL'] = '<span>+</span> Хочу создать новый проект для всего отдела';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_PROJECT_REMOVE_CHECKBOX_LABEL'] = 'Создадим проект для всего отдела';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_PROJECT_REMOVE_CHECKBOX_LABEL_NOT_INSIDE'] = 'Создадим проект для всего отдела. Чтобы увидеть его, добавьте себя в отдел';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_PROJECT_ADD_CHECKBOX_HINT'] = 'Все участники сразу добавятся в новый проект. Состав проекта автообновляется при любых изменениях в отделе';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_PROJECT_ADD_CHECKBOX_WARNING'] = 'Чтобы создать проект отдела, добавьте руководителя на предыдущем шаге. Он будет владельцем этого проекта';
 
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHATS_DESCRIPTION'] = 'Выберите, в какие чаты добавить участников команды';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHATS_ADD_CHECKBOX_LABEL_MSGVER_1'] = '<span>+</span> Хочу создать новый чат для всей команды';
@@ -101,6 +108,12 @@ $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_COLLAB_REMOV
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_COLLAB_REMOVE_CHECKBOX_LABEL_NOT_INSIDE'] = 'Создадим коллабу для всей команды. Чтобы увидеть её, добавьте себя в команду';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_COLLAB_ADD_CHECKBOX_HINT'] = 'Все участники сразу добавятся в новую коллабу. Состав коллабы автообновляется при любых изменениях в команде';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_COLLAB_ADD_CHECKBOX_WARNING'] = 'Чтобы создать коллабу команды, добавьте руководителя на предыдущем шаге. Он будет владельцем этой коллабы';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_PROJECT_DESCRIPTION'] = 'Выберите, в какие проекты добавить участников команды';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_PROJECT_ADD_CHECKBOX_LABEL'] = '<span>+</span> Хочу создать новый проект для всей команды';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_PROJECT_REMOVE_CHECKBOX_LABEL'] = 'Создадим проект для всей команды';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_PROJECT_REMOVE_CHECKBOX_LABEL_NOT_INSIDE'] = 'Создадим проект для всей команды. Чтобы увидеть его, добавьте себя в команду';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_PROJECT_ADD_CHECKBOX_HINT'] = 'Все участники сразу добавятся в новый проект. Состав проекта автообновляется при любых изменениях в команде';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_PROJECT_ADD_CHECKBOX_WARNING'] = 'Чтобы создать проект команды, добавьте руководителя на предыдущем шаге. Он будет владельцем этого проекта';
 
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_TITLE'] = 'Полномочия руководителей команды';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_BREADCRUMBS'] = 'Настройки';
@@ -136,6 +149,8 @@ $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_REPORTS_TITLE'] = 'К
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_REPORTS_DESCRIPTION'] = 'Выберите, кто из руководителей или заместителей будет подтверждать рабочие отчёты участников команды <b>#DEPARTMENT_NAME#</b>';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_REPORTS_DESCRIPTION'] = 'Выберите, кто из руководителей или заместителей будет подтверждать рабочие отчёты сотрудников отдела';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_REPORT_EXCEPTIONS_DESCRIPTION'] = 'Выберите сотрудников, чьи отчёты будут получать непосредственные руководители';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_REPORT_EXCEPTIONS_ADD'] = '<span>+</span> Добавить исключения по сотрудникам';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_REPORT_EXCEPTIONS_HINT'] = 'Отчёты выбранных сотрудников будут отправляться непосредственному руководителю, а не руководителю команды';
 
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TREE_PREVIEW_DEPARTMENT_TITLE'] = 'Отдел в компании';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TREE_PREVIEW_TEAM_TITLE'] = 'Команда в компании';

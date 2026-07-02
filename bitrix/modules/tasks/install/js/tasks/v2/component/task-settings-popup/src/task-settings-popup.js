@@ -9,6 +9,7 @@ import 'ui.icon-set.outline';
 
 import { Model } from 'tasks.v2.const';
 import { QuestionMark } from 'tasks.v2.component.elements.question-mark';
+import { calendar } from 'tasks.v2.lib.calendar';
 import { deadlineService } from 'tasks.v2.provider.service.deadline-service';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import { stateService } from 'tasks.v2.provider.service.state-service';
@@ -138,12 +139,32 @@ export const TaskSettingsPopup = {
 				});
 			}
 
-			this.$emit('close');
-
-			await taskService.update(this.taskId, {
+			const updateFields = {
 				...this.pendingFlagsData,
 				...this.pendingDeadlineUserOption,
-			});
+			};
+
+			const isMatchesWorkTimeChanged = (
+				!Type.isNil(this.pendingFlagsData.matchesWorkTime)
+				&& this.task.matchesWorkTime !== this.pendingFlagsData.matchesWorkTime
+			);
+
+			if (
+				this.isTemplate
+				&& this.task.deadlineAfter
+				&& isMatchesWorkTimeChanged
+			)
+			{
+				updateFields.deadlineAfter = calendar.recalculateDurationByMatchWorkTime(
+					this.task.deadlineAfter,
+					this.task.matchesWorkTime,
+					this.pendingFlagsData.matchesWorkTime,
+				);
+			}
+
+			this.$emit('close');
+
+			await taskService.update(this.taskId, updateFields);
 
 			this.saving = false;
 		},

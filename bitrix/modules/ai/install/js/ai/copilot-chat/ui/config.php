@@ -4,14 +4,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use Bitrix\AI\Services\CopilotNameService;
-use Bitrix\Main\Loader;
+use Bitrix\Ui\Public\Services\Copilot\CopilotNameService;
 
-$copilotName = '';
-if (Loader::includeModule('ai'))
-{
-	$copilotName = (new CopilotNameService())->getCopilotName();
-}
+$copilotName = (new CopilotNameService())->getCopilotName();
 
 return [
 	'css' => 'dist/copilot-chat.bundle.css',

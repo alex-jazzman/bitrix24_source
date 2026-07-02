@@ -1,12 +1,12 @@
-import { Extension, Tag, Uri } from 'main.core';
+import { Extension, Tag, Uri, Dom } from 'main.core';
 import { Popup, PopupManager } from 'main.popup';
-import type { Slider, LinkOptions, SliderEvent } from 'main.sidepanel';
+import { type Slider, type LinkOptions, type SliderEvent } from 'main.sidepanel';
 
 import { renderSkeleton } from 'ui.system.skeleton';
-import type { BitrixVueComponentProps } from 'ui.vue3';
+import { type BitrixVueComponentProps } from 'ui.vue3';
 
 import { idUtils } from 'tasks.v2.lib.id-utils';
-import type { TaskModel } from 'tasks.v2.model.tasks';
+import { type TaskModel } from 'tasks.v2.model.tasks';
 
 export type Params = TaskModel & {
 	taskId?: number,
@@ -154,17 +154,40 @@ export class TaskCard
 		BX.SidePanel.Instance.open(params.url ?? this.getUrl(params.taskId), options);
 	}
 
-	static async embedFullCard(params: Params): Promise<EmbedParams>
+	static embedFullCard(params: Params): EmbedParams
 	{
 		let card = null;
+		let unmounted = false;
 
-		const exports = await load('tasks.v2.application.task-full-card');
-
-		card = new exports.TaskFullCard(params);
+		const loading = load('tasks.v2.application.task-full-card');
 
 		return {
-			mount: (container: HTMLElement) => card?.mountEmbedded(container),
-			unmount: () => card?.unmountEmbedded(),
+			mount: (container: HTMLElement) => {
+				const skeleton = Tag.render`<div style="width: 100%; height: 100%"/>`;
+
+				Dom.append(skeleton, container);
+
+				void renderSkeleton(
+					'/bitrix/js/tasks/v2/application/task-card/src/skeleton-full-embedded.html?v=1',
+					skeleton,
+				);
+
+				void loading.then((exports) => {
+					if (unmounted)
+					{
+						return;
+					}
+
+					Dom.remove(skeleton, container);
+
+					card = new exports.TaskFullCard(params);
+					void card.mountEmbedded(container);
+				});
+			},
+			unmount: () => {
+				unmounted = true;
+				card?.unmountEmbedded();
+			},
 			taskId: params?.taskId,
 			taskUrl: TaskCard.getUrl(params.taskId),
 		};

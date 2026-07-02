@@ -1,4 +1,8 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+
+/**
+ * @var array $arResult
+ */
 
 if (is_array($arResult['VALUE']) && !empty($arResult['VALUE']))
 {
@@ -14,5 +18,3 @@ if (is_array($arResult['VALUE']) && !empty($arResult['VALUE']))
 	$arResult['VALUE'] = $arValue;
 
 }
-
-?>

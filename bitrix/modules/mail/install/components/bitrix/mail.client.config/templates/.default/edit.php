@@ -1,6 +1,8 @@
 <?php
 
 use Bitrix\Mail\Helper\LicenseManager;
+use Bitrix\Mail\Helper\Enum\MailboxStatus;
+use Bitrix\Mail\Helper\Mailbox\MailboxSettingsConfig;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
@@ -34,6 +36,13 @@ $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."w
 
 $mailbox = $arParams['MAILBOX'];
 $settings = $arParams['SERVICE'];
+$isPasswordlessMailbox =
+	!empty($mailbox)
+	&& in_array($mailbox['ACTIVE'], [
+		MailboxStatus::Pending->value,
+		MailboxStatus::Canceled->value,
+	], true)
+;
 
 if ('N' == $_REQUEST['oauth'])
 {
@@ -283,6 +292,19 @@ $senderNameBlockHtml = '
 					<? endif ?>
 				</div>
 
+				<div class="mail-connect-section-block" id="mail-mailbox-connection-request-owner-block" style="display: none;">
+					<div class="mail-connect-form-inner">
+						<label class="mail-connect-form-label"><?= Loc::getMessage('MAIL_CLIENT_CONFIG_CONNECTION_REQUEST_OWNER') ?></label>
+						<div id="mail-mailbox-connection-request-selector-container"></div>
+					</div>
+					<input
+						type="hidden"
+						id="mail-mailbox-connection-request-id-input"
+						name="fields[mailbox_connection_request_id]"
+						value=""
+					>
+				</div>
+
 				<? $maxAgeLimit = LicenseManager::getSyncOldLimit(); ?>
 				<? if (empty($mailbox)): ?>
 					<div class="mail-connect-section-block">
@@ -294,7 +316,7 @@ $senderNameBlockHtml = '
 							<?=$label2 ?>
 						</div>
 					</div>
-				<? else: ?>
+				<? elseif (!$isPasswordlessMailbox): ?>
 					<div class="mail-connect-section-block">
 						<a
 								class="mail-connect-dashed-switch"
@@ -728,15 +750,14 @@ $senderNameBlockHtml = '
 </div>
 
 <?
+$settingsConfig = MailboxSettingsConfig::getConfig();
 $messageSyncIntervals = [];
 $crmSyncIntervals = [];
 
 $fullSyncPeriodKey = -1;
-$periodsInDaysForMessagesSync = [1, 7, 30, 60, 90];
-$periodsInDaysForAddToCrm = [7, 30];
-
-$defaultMaxAgeMessageSync = 7;
-$defaultMaxCrmSync = 7;
+$defaultSettings = $settingsConfig['defaults'] ?? [];
+$defaultMaxAgeMessageSync = (int)($defaultSettings['messageMaxAge'] ?? 7);
+$defaultMaxCrmSync = (int)($defaultSettings['crmSyncPeriod'] ?? 7);
 
 
 if (empty($mailbox))
@@ -754,11 +775,12 @@ if (empty($mailbox))
 		$showTariffUpgradeOffer = true;
 	}
 
-	foreach ($periodsInDaysForMessagesSync as $value)
+	foreach (($settingsConfig['mailSyncIntervals'] ?? []) as $item)
 	{
-		if ($maxAgeLimit <= 0 || $value <= $maxAgeLimit)
+		$val = $item['value'];
+		if ($maxAgeLimit <= 0 || $val <= $maxAgeLimit)
 		{
-			$messageSyncIntervals[(string)$value] = htmlspecialcharsbx(Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_AGE_2_' . $value));
+			$messageSyncIntervals[(string)$val] = htmlspecialcharsbx($item['label']);
 		}
 	}
 
@@ -767,12 +789,18 @@ if (empty($mailbox))
 		$messageSyncIntervals[$fullSyncPeriodKey] = htmlspecialcharsbx(Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_AGE_2_I'));
 	}
 
-	foreach ($periodsInDaysForAddToCrm as $value)
+	foreach (($settingsConfig['crmSyncIntervals'] ?? []) as $item)
 	{
-		$crmSyncIntervals[(string)$value] = htmlspecialcharsbx(Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_AGE_2_' . $value));
-	}
+		$val = $item['value'];
+		if ((int)$val === $fullSyncPeriodKey)
+		{
+			$crmSyncIntervals[(string)$val] = htmlspecialcharsbx($item['label']);
 
-	$crmSyncIntervals[$fullSyncPeriodKey] = htmlspecialcharsbx(Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_AGE_2_I'));
+			continue;
+		}
+
+		$crmSyncIntervals[(string)$val] = htmlspecialcharsbx($item['label']);
+	}
 }
 
 $ownerData = null;
@@ -1392,7 +1420,8 @@ $arJsParams = [
 			}
 
 			var passwordField = form.elements['fields[pass_imap]'];
-			if (passwordField && !passwordField.hasAttribute('data-placeholder'))
+			var isPasswordless = <?= $isPasswordlessMailbox ? 'true' : 'false' ?>;
+			if (passwordField && !passwordField.hasAttribute('data-placeholder') && !isPasswordless)
 			{
 				result *= fieldError(
 					passwordField,
@@ -1664,33 +1693,47 @@ $arJsParams = [
 							<? else: ?>
 
 							if (json.data && json.data.id > 0) {
-								const url = BX.util.add_url_param(
-  									'<?=\CUtil::jsEscape($arParams['PATH_TO_MAIL_CONFIG_DIRS'])?>',
-  									{
-										mailboxId: json.data.id,
-										INIT: 'Y',
-									}
-								);
-								top.BX.SidePanel.Instance.open(
-									url,
-									{
-										width: 640,
-										cacheable: false,
-										events: {
-											onClose: function () {
-												closeForm(json.data.id);
-												top.BX.SidePanel.Instance.postMessage(
-													window,
-													'mail-mailbox-config-success',
-													{
-														id: json.data.id,
-														changed: changedDirs
-													}
-												);
-											},
+								if (json.data.connectionRequestCompleted)
+								{
+									top.BX.SidePanel.Instance.postMessage(
+										window,
+										'mail-mailbox-connection-request-completed',
+										{
+											id: json.data.id,
 										}
-									}
-								);
+									);
+									closeForm(json.data.id);
+								}
+								else
+								{
+									const url = BX.util.add_url_param(
+										'<?=\CUtil::jsEscape($arParams['PATH_TO_MAIL_CONFIG_DIRS'])?>',
+										{
+											mailboxId: json.data.id,
+											INIT: 'Y',
+										}
+									);
+									top.BX.SidePanel.Instance.open(
+										url,
+										{
+											width: 640,
+											cacheable: false,
+											events: {
+												onClose: function () {
+													closeForm(json.data.id);
+													top.BX.SidePanel.Instance.postMessage(
+														window,
+														'mail-mailbox-config-success',
+														{
+															id: json.data.id,
+															changed: changedDirs
+														}
+													);
+												},
+											}
+										}
+									);
+								}
 							} else {
 								closeForm(0);
 							}
@@ -1872,6 +1915,24 @@ $arJsParams = [
 		BXMailMailbox.init(mailboxData);
 
 		<? endif ?>
+
+		<?php if (!empty($mailbox) && isset($_REQUEST['open_dirs'])): ?>
+
+		top.BX.SidePanel.Instance.open(
+			BX.util.add_url_param(
+				'<?=\CUtil::jsEscape($arParams['PATH_TO_MAIL_CONFIG_DIRS'])?>',
+				{
+					mailboxId: <?= (int)$mailbox['ID'] ?>,
+					INIT: 'Y',
+				}
+			),
+			{
+				width: 640,
+				cacheable: false,
+			}
+		);
+
+		<?php endif ?>
 
 		<? if (!empty($settings['oauth']) && !empty($settings['oauth_user'])): ?>
 

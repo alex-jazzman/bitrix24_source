@@ -20,6 +20,8 @@ export function useInitAppElements(options: Options): UseInitAppElements
 		blockDiagramRef,
 		blockDiagramTop,
 		blockDiagramLeft,
+		blockDiagramWidth,
+		blockDiagramHeight,
 	} = useBlockDiagram();
 
 	let observer: typeof IntersectionObserver | null = null;
@@ -27,10 +29,12 @@ export function useInitAppElements(options: Options): UseInitAppElements
 	function handleInterObserver(entries): void
 	{
 		entries.forEach((entry) => {
-			const { top, left } = entry.boundingClientRect;
+			const { top, left, width, height } = entry.boundingClientRect;
 
 			blockDiagramTop.value = top;
 			blockDiagramLeft.value = left;
+			blockDiagramWidth.value = width;
+			blockDiagramHeight.value = height;
 		});
 	}
 
@@ -38,10 +42,12 @@ export function useInitAppElements(options: Options): UseInitAppElements
 	{
 		blockDiagramRef.value = toValue(newBlockDiagramRef);
 
-		const { left, top } = toValue(newBlockDiagramRef).getBoundingClientRect();
+		const { left, top, width, height } = toValue(newBlockDiagramRef).getBoundingClientRect();
 
 		blockDiagramTop.value = top;
 		blockDiagramLeft.value = left;
+		blockDiagramWidth.value = width;
+		blockDiagramHeight.value = height;
 
 		observer = new IntersectionObserver(handleInterObserver);
 		observer.observe(toValue(blockDiagramRef));

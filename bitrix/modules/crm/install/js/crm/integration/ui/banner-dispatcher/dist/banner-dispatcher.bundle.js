@@ -1,2 +1,43 @@
-this.BX=this.BX||{},this.BX.Crm=this.BX.Crm||{},this.BX.Crm.Integration=this.BX.Crm.Integration||{},function(e,t,r,i){"use strict";const s={LOW:"low",NORMAL:"normal",HIGH:"high",CRITICAL:"critical"};var a=babelHelpers.classPrivateFieldLooseKey("isBannerDispatcherDefined"),n=babelHelpers.classPrivateFieldLooseKey("isCorrectBannerDispatcher");function o(e){return i.Type.isPlainObject(e)&&Object.prototype.hasOwnProperty.call(e,"toQueue")}e.Priority=s,e.BannerDispatcher=class{constructor(){Object.defineProperty(this,n,{value:o}),Object.defineProperty(this,a,{writable:!0,value:void 0}),babelHelpers.classPrivateFieldLooseBase(this,a)[a]=i.Type.isPlainObject(t.BannerDispatcher)}isAvailable(){return babelHelpers.classPrivateFieldLooseBase(this,a)[a]}toQueue(e,r=s.NORMAL,i={}){if(!this.isAvailable())return e(()=>{}),!1;const a=t.BannerDispatcher[r];if(!babelHelpers.classPrivateFieldLooseBase(this,n)[n](a))throw new RangeError("Priority property is invalid");return a.toQueue(e,i),!0}}}(this.BX.Crm.Integration.UI=this.BX.Crm.Integration.UI||{},BX.UI,BX.UI.AutoLaunch,BX);
+/* eslint-disable */
+this.BX = this.BX || {};
+this.BX.Crm = this.BX.Crm || {};
+this.BX.Crm.Integration = this.BX.Crm.Integration || {};
+(function (exports, ui_bannerDispatcher, ui_autoLaunch, main_core) {
+	'use strict';
+
+	const Priority = {
+		LOW: 'low',
+		NORMAL: 'normal',
+		HIGH: 'high',
+		CRITICAL: 'critical'
+	};
+	class BannerDispatcher {
+		#isBannerDispatcherDefined;
+		constructor() {
+			this.#isBannerDispatcherDefined = main_core.Type.isPlainObject(ui_bannerDispatcher.BannerDispatcher);
+		}
+		isAvailable() {
+			return this.#isBannerDispatcherDefined;
+		}
+		toQueue(callback, priority = Priority.NORMAL, options = {}) {
+			if (!this.isAvailable()) {
+				callback(() => {});
+				return false;
+			}
+			const bannerDispatcher = ui_bannerDispatcher.BannerDispatcher[priority];
+			if (!this.#isCorrectBannerDispatcher(bannerDispatcher)) {
+				throw new RangeError('Priority property is invalid');
+			}
+			bannerDispatcher.toQueue(callback, options);
+			return true;
+		}
+		#isCorrectBannerDispatcher(bannerDispatcher) {
+			return main_core.Type.isPlainObject(bannerDispatcher) && Object.prototype.hasOwnProperty.call(bannerDispatcher, 'toQueue');
+		}
+	}
+
+	exports.BannerDispatcher = BannerDispatcher;
+	exports.Priority = Priority;
+
+})(this.BX.Crm.Integration.UI = this.BX.Crm.Integration.UI || {}, BX.UI, BX.UI.AutoLaunch, BX);
 //# sourceMappingURL=banner-dispatcher.bundle.js.map

@@ -1,1 +1,2 @@
-<?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/admin/wizard_list.php");?>
+<?php 
+require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/admin/wizard_list.php");

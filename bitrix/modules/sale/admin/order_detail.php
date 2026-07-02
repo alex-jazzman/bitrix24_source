@@ -820,21 +820,42 @@ elseif ($saleModulePermissions >= "U" && check_bitrix_sessid() && !array_key_exi
 
 			$arPaySys = CSalePaySystem::GetByID($arOrder["PAY_SYSTEM_ID"], $arOrder["PERSON_TYPE_ID"]);
 
-			$psActionPath = $_SERVER["DOCUMENT_ROOT"].$arPaySys["PSA_ACTION_FILE"];
-			$psActionPath = str_replace("\\", "/", $psActionPath);
-			while (mb_substr($psActionPath, mb_strlen($psActionPath) - 1, 1) == "/")
-				$psActionPath = mb_substr($psActionPath, 0, mb_strlen($psActionPath) - 1);
-
-			if (file_exists($psActionPath) && is_dir($psActionPath))
+			try
 			{
-				if (file_exists($psActionPath."/result.php") && is_file($psActionPath."/result.php"))
-					$psResultFile = $psActionPath."/result.php";
+				$handlerFolder = \Bitrix\Sale\PaySystem\Manager::getPathToHandlerFolder($arPaySys["PSA_ACTION_FILE"]);
+			}
+			catch (\Bitrix\Main\IO\InvalidPathException $e)
+			{
+				$handlerFolder = null;
+			}
+			if ($handlerFolder !== null)
+			{
+				$psActionPath = $_SERVER["DOCUMENT_ROOT"] . $handlerFolder;
+				if (file_exists($psActionPath . "/result.php") && is_file($psActionPath . "/result.php"))
+				{
+					$psResultFile = $psActionPath . "/result.php";
+				}
 			}
 			elseif ($arPaySys["PSA_RESULT_FILE"] <> '')
 			{
-				if (file_exists($_SERVER["DOCUMENT_ROOT"].$arPaySys["PSA_RESULT_FILE"])
-					&& is_file($_SERVER["DOCUMENT_ROOT"].$arPaySys["PSA_RESULT_FILE"]))
-					$psResultFile = $_SERVER["DOCUMENT_ROOT"].$arPaySys["PSA_RESULT_FILE"];
+				$resultFile = $arPaySys["PSA_RESULT_FILE"];
+				try
+				{
+					$resultFolder = \Bitrix\Sale\PaySystem\Manager::getPathToHandlerFolder(
+						\Bitrix\Main\IO\Path::getDirectory($resultFile)
+					);
+					if ($resultFolder !== null)
+					{
+						$candidate = $_SERVER["DOCUMENT_ROOT"] . $resultFolder . '/' . \Bitrix\Main\IO\Path::getName($resultFile);
+						if (\Bitrix\Main\IO\File::isFileExists($candidate))
+						{
+							$psResultFile = $candidate;
+						}
+					}
+				}
+				catch (\Bitrix\Main\IO\InvalidPathException $e)
+				{
+				}
 			}
 
 			if ($psResultFile == '')

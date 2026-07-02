@@ -3,87 +3,134 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports) {
+(function (exports, im_v2_lib_directives) {
 	'use strict';
+
+	const ScrollDirection = {
+		vertical: 'vertical',
+		horizontal: 'horizontal'
+	};
+	const ScrollStrategy = {
+		[ScrollDirection.vertical]: {
+			startGradientClass: '--top',
+			endGradientClass: '--bottom',
+			containerClass: '',
+			scrollContainerClass: '',
+			getScrollPosition: el => el.scrollTop,
+			getVisibleSize: el => el.clientHeight,
+			getFullSize: el => el.scrollHeight,
+			getGradientSizeStyle: size => ({
+				maxHeight: `${size}px`
+			})
+		},
+		[ScrollDirection.horizontal]: {
+			startGradientClass: '--left',
+			endGradientClass: '--right',
+			containerClass: '--horizontal',
+			scrollContainerClass: '--hidden-scroll',
+			getScrollPosition: el => el.scrollLeft,
+			getVisibleSize: el => el.clientWidth,
+			getFullSize: el => el.scrollWidth,
+			getGradientSizeStyle: size => ({
+				maxWidth: `${size}px`
+			})
+		}
+	};
 
 	// @vue/component
 	const ScrollWithGradient = {
-	  name: 'ScrollWithGradient',
-	  expose: ['getContainer'],
-	  props: {
-	    containerMaxHeight: {
-	      type: Number,
-	      default: 0,
-	      required: false
-	    },
-	    gradientHeight: {
-	      type: Number,
-	      default: 0
-	    },
-	    withShadow: {
-	      type: Boolean,
-	      default: true
-	    }
-	  },
-	  data() {
-	    return {
-	      showTopGradient: false,
-	      showBottomGradient: false
-	    };
-	  },
-	  computed: {
-	    contentHeightStyle() {
-	      if (!this.containerMaxHeight) {
-	        return {
-	          height: '100%'
-	        };
-	      }
-	      return {
-	        maxHeight: `${this.containerMaxHeight}px`
-	      };
-	    },
-	    gradientHeightStyle() {
-	      return {
-	        maxHeight: `${this.gradientHeightStyle}px`
-	      };
-	    }
-	  },
-	  mounted() {
-	    // const container = this.$refs['scroll-container'];
-	    // this.showBottomGradient = container.scrollHeight > container.clientHeight;
-	  },
-	  methods: {
-	    getContainer() {
-	      return this.$refs['scroll-container'];
-	    },
-	    onScroll(event) {
-	      this.$emit('scroll', event);
-	      const scrollPosition = Math.floor(event.target.scrollTop + event.target.clientHeight);
-	      this.showBottomGradient = scrollPosition !== event.target.scrollHeight;
-	      if (event.target.scrollTop === 0) {
-	        this.showTopGradient = false;
-	        return;
-	      }
-	      this.showTopGradient = true;
-	    }
-	  },
-	  template: `
-		<div class="bx-im-scroll-with-gradient__container">
+		name: 'ScrollWithGradient',
+		directives: {
+			horizontalScroll: im_v2_lib_directives.horizontalScroll
+		},
+		expose: ['getContainer'],
+		props: {
+			gradientSize: {
+				type: Number,
+				default: 28
+			},
+			withShadow: {
+				type: Boolean,
+				default: false
+			},
+			direction: {
+				type: String,
+				default: ScrollDirection.vertical,
+				validator: value => Object.values(ScrollDirection).includes(value)
+			}
+		},
+		data() {
+			return {
+				showStartGradient: false,
+				showEndGradient: false
+			};
+		},
+		computed: {
+			strategy() {
+				return ScrollStrategy[this.direction];
+			},
+			isHorizontal() {
+				return this.direction === ScrollDirection.horizontal;
+			},
+			startGradientClass() {
+				return this.strategy.startGradientClass;
+			},
+			endGradientClass() {
+				return this.strategy.endGradientClass;
+			},
+			containerClass() {
+				return this.strategy.containerClass;
+			},
+			scrollContainerClass() {
+				return this.strategy.scrollContainerClass;
+			},
+			gradientSizeStyle() {
+				return this.strategy.getGradientSizeStyle(this.gradientSize);
+			}
+		},
+		mounted() {
+			this.updateGradientStatus();
+		},
+		methods: {
+			getContainer() {
+				return this.$refs['scroll-container'];
+			},
+			onScroll(event) {
+				this.$emit('scroll', event);
+				this.updateGradientStatus();
+			},
+			updateGradientStatus() {
+				const element = this.getContainer();
+				const {
+					getScrollPosition,
+					getVisibleSize,
+					getFullSize
+				} = this.strategy;
+				const scrollPosition = getScrollPosition(element);
+				const visibleSize = getVisibleSize(element);
+				const fullSize = getFullSize(element);
+				this.showStartGradient = scrollPosition > 0;
+				this.showEndGradient = Math.floor(scrollPosition + visibleSize) < fullSize;
+			}
+		},
+		template: `
+		<div class="bx-im-scroll-with-gradient__container" :class="containerClass">
 			<Transition name="gradient-fade">
-				<div v-if="showTopGradient" class="bx-im-scroll-with-gradient__gradient --top" :style="gradientHeightStyle">
+				<div v-if="showStartGradient" class="bx-im-scroll-with-gradient__gradient" :class="startGradientClass" :style="gradientSizeStyle">
 					<div v-if="withShadow" class="bx-im-scroll-with-gradient__gradient-inner"></div>
 				</div>
 			</Transition>
-			<div 
-				class="bx-im-scroll-with-gradient__content" 
-				:style="contentHeightStyle" 
+			<div
+				v-horizontal-scroll="isHorizontal"
+				class="bx-im-scroll-with-gradient__content"
+				:class="scrollContainerClass"
 				@scroll="onScroll"
 				ref="scroll-container"
 			>
 				<slot></slot>
 			</div>
 			<Transition name="gradient-fade">
-				<div v-if="showBottomGradient" class="bx-im-scroll-with-gradient__gradient --bottom" :style="gradientHeightStyle">
+				<div v-if="showEndGradient" class="bx-im-scroll-with-gradient__gradient" :class="endGradientClass" :style="gradientSizeStyle">
 					<div v-if="withShadow" class="bx-im-scroll-with-gradient__gradient-inner"></div>
 				</div>
 			</Transition>
@@ -91,7 +138,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
+	exports.ScrollDirection = ScrollDirection;
 	exports.ScrollWithGradient = ScrollWithGradient;
 
-}((this.BX.Messenger.v2.Component.Elements = this.BX.Messenger.v2.Component.Elements || {})));
+})(this.BX.Messenger.v2.Component.Elements = this.BX.Messenger.v2.Component.Elements || {}, BX.Messenger.v2.Lib);
 //# sourceMappingURL=scroll-with-gradient.bundle.js.map

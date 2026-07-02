@@ -33,7 +33,7 @@ export class StickerMenu extends BaseMenu
 		};
 	}
 
-	getMenuItems(): MenuItemOptions
+	getMenuItems(): MenuItemOptions[]
 	{
 		return [
 			this.getSendItem(),

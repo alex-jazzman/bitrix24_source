@@ -6,7 +6,7 @@ import { InvitePage } from './page/invite-page';
 import { MassPage } from './page/mass-page';
 import { RegisterPage } from './page/register-page';
 import { Loc, Type } from 'main.core';
-import DepartmentControl, { EntityType } from 'intranet.department-control';
+import { DepartmentControl, EntityType } from 'intranet.department-control';
 import { InputRowFactory } from './input-row-factory';
 import type { PageOptions } from './type/page-options';
 import { LinkDisabledPage } from './page/link-disabled-page';
@@ -75,7 +75,7 @@ export class PageFactory
 	createIntegratorPage(): IntegratorPage
 	{
 		return new IntegratorPage({
-			transport: this.#options.transport,
+			...this.#options,
 		});
 	}
 

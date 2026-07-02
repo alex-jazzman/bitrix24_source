@@ -1,4 +1,5 @@
 import 'window';
+import { BitrixVue, markRaw } from 'ui.vue3';
 import { Dom, Tag, Type, Event, Loc, ajax, Text } from 'main.core';
 import { MenuManager, type MenuItem } from 'main.popup';
 import { EventEmitter, BaseEvent } from 'main.core.events';
@@ -73,8 +74,12 @@ export const CommonNodeSettingsForm = {
 		autoScrollFrameId: number,
 		scrollBoundaries: { top: number, bottom: number } | null,
 		rendererInstance: ?Object,
-		entitySelectorDialogs: Set<Object>,
 		lastRenderRequestId: number,
+		dynamicComponents: Object,
+		customFieldsData: Object,
+		childVueApps: Array<any>,
+		collectionRenderFinishedHandler: ?Function,
+		pendingCollectionRenderResolve: ?Function,
 		}
 	{
 		return {
@@ -93,8 +98,12 @@ export const CommonNodeSettingsForm = {
 			autoScrollFrameId: null,
 			scrollBoundaries: null,
 			rendererInstance: null,
-			entitySelectorDialogs: new Set(),
 			lastRenderRequestId: 0,
+			dynamicComponents: {},
+			customFieldsData: {},
+			childVueApps: [],
+			collectionRenderFinishedHandler: null,
+			pendingCollectionRenderResolve: null,
 		};
 	},
 	computed:
@@ -161,7 +170,6 @@ export const CommonNodeSettingsForm = {
 		EventEmitter.subscribe('Bizproc.SetupTemplate:Draggable:start', this.onDragStart);
 		EventEmitter.subscribe('Bizproc.SetupTemplate:Draggable:move', this.onDragMove);
 		EventEmitter.subscribe('Bizproc.SetupTemplate:Draggable:end', this.onDragEnd);
-		EventEmitter.subscribe('BX.UI.EntitySelector.Dialog:onShow', this.onEntitySelectorShow);
 		EventEmitter.subscribe('Bizproc.NodeSettings:askShowValueSelector', this.onAskShowValueSelector);
 
 		window.BPAShowSelector = this.showSelector;
@@ -182,10 +190,8 @@ export const CommonNodeSettingsForm = {
 		EventEmitter.unsubscribe('Bizproc.SetupTemplate:Draggable:move', this.onDragMove);
 		EventEmitter.unsubscribe('Bizproc.SetupTemplate:Draggable:end', this.onDragEnd);
 		EventEmitter.emit('BX.Bizproc.Activity.unmount');
-		EventEmitter.unsubscribe('BX.UI.EntitySelector.Dialog:onShow', this.onEntitySelectorShow);
 		EventEmitter.unsubscribe('Bizproc.NodeSettings:askShowValueSelector', this.onAskShowValueSelector);
 
-		this.destroyEntitySelectorDialogs();
 		this.destroyRendererInstance();
 	},
 	methods: {
@@ -533,6 +539,7 @@ export const CommonNodeSettingsForm = {
 				? settingControls.brokenLinks
 				: {}
 			;
+			this.resetDynamicComponents();
 			const eventName = 'BX.Bizproc.FieldType.onCollectionRenderControlFinished';
 
 			this.nodeControls = this.nodeControls.map((property) => {
@@ -576,7 +583,7 @@ export const CommonNodeSettingsForm = {
 				let instance = null;
 				if (RendererClass)
 				{
-					instance = RendererClass ? new RendererClass() : null;
+					instance = RendererClass ? markRaw(new RendererClass()) : null;
 					this.rendererInstance = instance;
 					customRenderers = (instance && Type.isFunction(instance.getControlRenderers))
 						? instance.getControlRenderers()
@@ -588,10 +595,36 @@ export const CommonNodeSettingsForm = {
 
 					if (field.property.Type === 'custom' && instance && customRenderers)
 					{
-						const renderer = customRenderers?.[field?.property?.CustomType];
-						if (Type.isFunction(renderer))
+						const rendererOrComponent = customRenderers?.[field?.property?.CustomType];
+
+						if (rendererOrComponent)
 						{
-							control = renderer(field);
+							const isVueComponent = (
+								Type.isPlainObject(rendererOrComponent)
+								&& (
+									Type.isFunction(rendererOrComponent.render)
+									|| Type.isFunction(rendererOrComponent.setup)
+									|| Type.isStringFilled(rendererOrComponent.template)
+								)
+							);
+							if (isVueComponent)
+							{
+								const componentKey = `${field.property.CustomType}_${field.controlId}`;
+								const wrapper = Dom.create('div', {
+									attrs: {
+										class: 'vue-field-wrapper',
+										'data-component-key': componentKey,
+									},
+								});
+								this.dynamicComponents[componentKey] = rendererOrComponent;
+								this.customFieldsData[componentKey] = field;
+
+								control = wrapper;
+							}
+							else if (Type.isObject(rendererOrComponent) || Type.isFunction(rendererOrComponent))
+							{
+								control = rendererOrComponent(field);
+							}
 						}
 					}
 
@@ -619,8 +652,13 @@ export const CommonNodeSettingsForm = {
 
 				this.$refs.contentContainer.innerHTML = '';
 				Dom.append(form, this.$refs.contentContainer);
+				this.mountDynamicComponents();
 
-				Event.EventEmitter.subscribeOnce(eventName, () => {
+				this.cancelPendingCollectionRender();
+				this.pendingCollectionRenderResolve = resolve;
+				this.collectionRenderFinishedHandler = async () => {
+					this.unsubscribeCollectionRenderFinished();
+
 					if (this.isRenderCancelled(requestId))
 					{
 						resolve();
@@ -628,20 +666,35 @@ export const CommonNodeSettingsForm = {
 						return;
 					}
 
-					if (instance && Type.isFunction(instance.afterFormRender))
+					try
 					{
-						const activityFields = this.nodeControls.reduce((acc, field) => {
-							acc[field.fieldName] = field;
+						if (instance && Type.isFunction(instance.afterFormRender))
+						{
+							const activityFields = this.nodeControls.reduce((acc, field) => {
+								acc[field.fieldName] = field;
 
-							return acc;
-						}, {});
-						instance.afterFormRender(form, activityFields);
+								return acc;
+							}, {});
+							await instance.afterFormRender(form, activityFields);
+						}
+						EventEmitter.emit('BX.Bizproc.CommonNodeSettings:onBlocksReady', {
+							blocks: this.store.blocks,
+						});
+
+						this.hasSettings = true;
 					}
-
-					this.hasSettings = true;
-					this.isLoading = false;
-					resolve();
-				});
+					catch (error)
+					{
+						console.error('afterFormRender failed:', error);
+					}
+					finally
+					{
+						this.isLoading = false;
+						this.pendingCollectionRenderResolve = null;
+						resolve();
+					}
+				};
+				Event.EventEmitter.subscribe(eventName, this.collectionRenderFinishedHandler);
 			});
 		},
 		renderBrokenLinksAlert(brokenLinks: { [key: string]: string }): HTMLElement
@@ -867,24 +920,6 @@ export const CommonNodeSettingsForm = {
 			this.scrollBoundaries = null;
 			this.stopAutoScroll();
 		},
-		onEntitySelectorShow(event: BaseEvent): void
-		{
-			const dialog = event.getTarget();
-			if (dialog)
-			{
-				this.entitySelectorDialogs.add(dialog);
-			}
-		},
-		destroyEntitySelectorDialogs(): void
-		{
-			this.entitySelectorDialogs.forEach((dialog) => {
-				if (dialog && Type.isFunction(dialog.destroy))
-				{
-					dialog.destroy();
-				}
-			});
-			this.entitySelectorDialogs.clear();
-		},
 		destroyRendererInstance(): void
 		{
 			if (this.rendererInstance && Type.isFunction(this.rendererInstance.destroy))
@@ -934,8 +969,62 @@ export const CommonNodeSettingsForm = {
 
 			this.autoScrollFrameId = requestAnimationFrame(this.processAutoScroll);
 		},
+		mountDynamicComponents(): void
+		{
+			Object.entries(this.dynamicComponents).forEach(([componentKey, component]) => {
+				const escapedKey = CSS.escape(componentKey);
+				const wrapper = this.$el.querySelector(`[data-component-key="${escapedKey}"]`);
+				if (!wrapper || wrapper.children.length > 0)
+				{
+					return;
+				}
+
+				const field = this.customFieldsData[componentKey];
+				if (field)
+				{
+					const app = BitrixVue.createApp(component, { field });
+					app.mount(wrapper);
+					this.childVueApps.push(app);
+				}
+			});
+		},
+		resetDynamicComponents(): void
+		{
+			this.childVueApps.forEach((app) => {
+				if (app && Type.isFunction(app.unmount))
+				{
+					app.unmount();
+				}
+			});
+			this.childVueApps = [];
+			this.dynamicComponents = {};
+			this.customFieldsData = {};
+		},
+		unsubscribeCollectionRenderFinished(): void
+		{
+			if (this.collectionRenderFinishedHandler)
+			{
+				Event.EventEmitter.unsubscribe(
+					'BX.Bizproc.FieldType.onCollectionRenderControlFinished',
+					this.collectionRenderFinishedHandler,
+				);
+				this.collectionRenderFinishedHandler = null;
+			}
+		},
+		cancelPendingCollectionRender(): void
+		{
+			this.unsubscribeCollectionRenderFinished();
+
+			if (this.pendingCollectionRenderResolve)
+			{
+				this.pendingCollectionRenderResolve();
+				this.pendingCollectionRenderResolve = null;
+			}
+		},
 		cleanupFormResources(): void
 		{
+			this.cancelPendingCollectionRender();
+
 			if (this.inputListeners && this.handleFieldInput)
 			{
 				this.inputListeners.forEach((input) => {
@@ -943,6 +1032,8 @@ export const CommonNodeSettingsForm = {
 				});
 				this.inputListeners = [];
 			}
+
+			this.resetDynamicComponents();
 
 			if (Type.isFunction(this.rendererInstance?.destroy))
 			{

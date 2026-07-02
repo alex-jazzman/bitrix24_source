@@ -133,35 +133,38 @@ export class RcwAnalytics
 			return;
 		}
 
-		const isCurrentSenderAvailable = $store.getters[`${Model.Notifications}/isCurrentSenderAvailable`];
 		const resource = $store.state[Model.ResourceCreationWizard].resource;
 
+		const senders = $store.getters[`${Model.Notifications}/getSenders`];
+		const activeSender = senders.find((s) => s.code === resource.senderCode) ?? senders[0] ?? null;
+		const senderCanUse = activeSender?.canUse ?? false;
+
 		const getP1 = (): P1InfoNotification => {
-			return isCurrentSenderAvailable && resource.isInfoNotificationOn
+			return senderCanUse && resource.isInfoNotificationOn
 				? 'infoNotification_Y'
 				: 'infoNotification_N';
 		};
 
 		const getP2 = (): P2ConfirmationNotification => {
-			return isCurrentSenderAvailable && resource.isConfirmationNotificationOn
+			return senderCanUse && resource.isConfirmationNotificationOn
 				? 'confirmationNotification_Y'
 				: 'confirmationNotification_N';
 		};
 
 		const getP3 = (): P3ReminderNotification => {
-			return isCurrentSenderAvailable && resource.isReminderNotificationOn
+			return senderCanUse && resource.isReminderNotificationOn
 				? 'reminderNotification_Y'
 				: 'reminderNotification_N';
 		};
 
 		const getP4 = (): P4DelayedNotification => {
-			return isCurrentSenderAvailable && resource.isDelayedNotificationOn
+			return senderCanUse && resource.isDelayedNotificationOn
 				? 'delayedNotification_Y'
 				: 'delayedNotification_N';
 		};
 
 		const getP5 = (): P5FeedbackNotification => {
-			return isCurrentSenderAvailable && resource.isFeedbackNotificationOn
+			return senderCanUse && resource.isFeedbackNotificationOn
 				? 'feedbackNotification_Y'
 				: 'feedbackNotification_N';
 		};

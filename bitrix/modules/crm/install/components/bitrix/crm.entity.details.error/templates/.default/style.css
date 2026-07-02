@@ -49,8 +49,8 @@
 }
 
 .crm-entity-details-error-image-no-read-permission-error {
-	width: 470px;
-	height: 246px;
+	min-width: 470px;
+	min-height: 246px;
 	margin-top: 49px;
 	background: url(images/no-read-permission-error.svg) no-repeat;
 }

@@ -143,6 +143,11 @@ export const Button = {
 				if (waiting !== this.button?.isWaiting())
 				{
 					this.button?.setWaiting(waiting);
+
+					if (!waiting && this.disabled)
+					{
+						this.button?.setDisabled(true);
+					}
 				}
 			},
 			immediate: true,

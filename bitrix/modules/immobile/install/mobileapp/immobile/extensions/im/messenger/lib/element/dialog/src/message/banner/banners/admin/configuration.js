@@ -39,6 +39,7 @@ jn.define('im/messenger/lib/element/dialog/src/message/banner/banners/admin/conf
 
 	const createHelpdeskButton = (id) => ({
 		id,
+		testId: id,
 		text: Loc.getMessage('IMMOBILE_ADMIN_MESSAGE_FIRE_REQUEST_MORE_BUTTON'),
 		height: ButtonSize.S.getName(),
 		rightIconName: 'question',
@@ -49,6 +50,7 @@ jn.define('im/messenger/lib/element/dialog/src/message/banner/banners/admin/conf
 
 	const createSupportButton = (id, senderPage) => ({
 		id,
+		testId: id,
 		text: Loc.getMessage('IMMOBILE_ADMIN_MESSAGE_FIRE_SUPPORT_BUTTON'),
 		design: ButtonDesignType.outlineNoAccent,
 		callback: ({ messageData }) => {
@@ -80,6 +82,7 @@ jn.define('im/messenger/lib/element/dialog/src/message/banner/banners/admin/conf
 
 	const createCancelButton = (id, text, action) => ({
 		id,
+		testId: id,
 		text: Loc.getMessage(text),
 		height: ButtonSize.S.getName(),
 		design: ButtonDesignType.outlineAccent2,
@@ -98,6 +101,7 @@ jn.define('im/messenger/lib/element/dialog/src/message/banner/banners/admin/conf
 
 	const createConfirmButton = (id, text, openFn) => ({
 		id,
+		testId: id,
 		text: Loc.getMessage(text),
 		height: ButtonSize.S.getName(),
 		design: ButtonDesignType.outlineNoAccent,

@@ -720,7 +720,7 @@ jn.define('layout/ui/search-bar/search-bar', (require, exports, module) => {
 			top: 0,
 			position: isVisible ? 'absolute' : 'relative',
 			zIndex: 10,
-			height: isVisible ? 50 : 0,
+			height: isVisible ? 54 : 0,
 			display: isVisible ? 'flex' : 'none',
 			width: '100%',
 			backgroundColor: Color.bgNavigation.toHex(),
@@ -729,14 +729,14 @@ jn.define('layout/ui/search-bar/search-bar', (require, exports, module) => {
 			paddingTop: Application.getPlatform() === 'ios' ? 6 : 0,
 		}),
 		presetsScrollView: {
-			height: 50,
+			height: 54,
 		},
 		presetsWrapper: {
 			flexDirection: 'row',
 			alignItems: 'center',
 			alignContent: 'center',
 			marginTop: 0,
-			height: 40,
+			height: 43,
 			paddingHorizontal: Component.paddingLr.toNumber(),
 		},
 	};

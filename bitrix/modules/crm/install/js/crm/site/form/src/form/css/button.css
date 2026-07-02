@@ -63,3 +63,8 @@
 .b24-form-btn.b24-form-btn-tight {
 	width: initial;
 }
+
+.b24-form-btn:focus-visible {
+	outline: 2px solid var(--b24-primary-color, #2fc7f7);
+	outline-offset: 2px;
+}

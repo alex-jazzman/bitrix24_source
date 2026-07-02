@@ -2,7 +2,7 @@
 import { BuilderModel } from 'ui.vue3.vuex';
 import { YandexCabinetIdExtractor } from 'booking.provider.service.yandex-integration-wizard-service';
 import { IntegrationMapItemStatus, Model } from 'booking.const';
-import { ResourceModel } from 'booking.model.resources';
+import type { ResourceModel } from 'booking.model.resources';
 
 import type { ActionTree, GetterTree, MutationTree } from 'ui.vue3.vuex';
 import type {
@@ -63,8 +63,8 @@ export class YandexIntegrationWizardModel extends BuilderModel
 			/** @function yandex-integration-wizard/isConnected */
 			isConnected: (state): YandexIntegrationModel => {
 				return [
-					IntegrationMapItemStatus.CONNECTED,
-					IntegrationMapItemStatus.IN_PROGRESS,
+					IntegrationMapItemStatus.Connected,
+					IntegrationMapItemStatus.InProgress,
 				].includes(state.integration.status);
 			},
 			/** @function yandex-integration-wizard/getResources */

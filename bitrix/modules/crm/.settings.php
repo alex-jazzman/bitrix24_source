@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Crm\Copilot\CallAssessment\EntitySelector\CallScriptProvider;
+use Bitrix\Crm\Integration\AiAssistant\ToolSets\OpenLineToolSet;
 use Bitrix\Crm\Integration\UI\EntitySelector\ActivityProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\CopilotLanguageProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\CountryProvider;
@@ -796,6 +797,7 @@ return [
 			'toolSets' => [
 				//Bitrix\Crm\Integration\AiAssistant\ToolSets\SearchToolSet::class,
 				Bitrix\Crm\Integration\AiAssistant\ToolSets\TuningToolSet::class,
+				OpenLineToolSet::class,
 			],
 			'profileDataProviders' => [
 				Bitrix\Crm\Integration\AiAssistant\DataProviders\CrmProvider::class,

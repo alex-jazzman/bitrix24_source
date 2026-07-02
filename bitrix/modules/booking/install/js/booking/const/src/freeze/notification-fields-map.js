@@ -4,6 +4,7 @@ const NotificationOn = Object.freeze({
 	reminder: 'isReminderNotificationOn',
 	delayed: 'isDelayedNotificationOn',
 	feedback: 'isFeedbackNotificationOn',
+	cancellation: 'isCancellationNotificationOn',
 });
 
 const TemplateType = Object.freeze({
@@ -20,19 +21,11 @@ const Settings = Object.freeze({
 	reminder: ['reminderNotificationDelay'],
 	delayed: ['delayedNotificationDelay', 'delayedCounterDelay'],
 	feedback: [],
-});
-
-const Ordinal = Object.freeze({
-	info: 1,
-	confirmation: 2,
-	reminder: 3,
-	delayed: 4,
-	feedback: 5,
+	cancellation: ['cancellationNotificationDelay'],
 });
 
 export const NotificationFieldsMap = Object.freeze({
 	NotificationOn,
 	TemplateType,
 	Settings,
-	Ordinal,
 });

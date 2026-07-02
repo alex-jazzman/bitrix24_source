@@ -170,3 +170,8 @@ $MESS["MAIL_CLIENT_CONFIG_OWNER_CHANGE_TO_NOTIFY_MESSAGE_PARAMS_PLAIN_TEXT"] = "
 
 $MESS['MAIL_CLIENT_CONFIG_TOOLBAR_MAILBOXES_LIST'] = 'Групповое управление ящиками';
 $MESS['MAIL_CLIENT_CONFIG_TOOLBAR_MAILBOXES_MASS_CONNECT'] = 'Подключить сразу несколько ящиков';
+$MESS['MAIL_CLIENT_CONFIG_TOOLBAR_CONNECTION_REQUEST'] = 'Помощь с подключением';
+$MESS['MAIL_CLIENT_CONFIG_CONNECTION_REQUEST_GUIDE_TITLE'] = 'Запросите подключение почтового ящика';
+$MESS['MAIL_CLIENT_CONFIG_CONNECTION_REQUEST_GUIDE_TEXT'] = 'Отправьте запрос администратору — он получит уведомление и настроит всё за вас';
+$MESS['MAIL_CLIENT_CONFIG_CONNECTION_REQUEST_NOT_PENDING'] = 'Запрос на подключение почты был отменён или уже обработан';
+$MESS['MAIL_CLIENT_CONFIG_MAILBOX_GRID_GUIDE_TEXT'] = 'Вы можете подключить и настроить ящики сразу для нескольких сотрудников';

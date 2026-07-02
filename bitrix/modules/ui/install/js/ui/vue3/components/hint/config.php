@@ -9,8 +9,11 @@ return [
 		'./dist/hint.bundle.js',
 	],
 	'rel' => [
-		'main.polyfill.core',
+		'main.core',
+		'ui.icon-set.api.vue',
+		'ui.icon-set.main',
+		'ui.icon-set.outline',
 		'ui.vue3.directives.hint',
 	],
-	'skip_core' => true,
+	'skip_core' => false,
 ];

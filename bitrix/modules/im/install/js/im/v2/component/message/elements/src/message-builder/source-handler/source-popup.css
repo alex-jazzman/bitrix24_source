@@ -1,0 +1,29 @@
+.bx-im-source-popup__container {
+	min-width: 200px;
+	max-width: 400px;
+	padding: 24px;
+}
+
+.bx-im-source-popup__link {
+	display: block;
+	color: inherit;
+	text-decoration: none;
+}
+
+.bx-im-source-popup__title {
+	margin-bottom: 2px;
+	color: var(--ui-color-base-1);
+	font: var(--ui-font-size-lg)/20px var(--ui-font-family-primary);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.bx-im-source-popup__description {
+	margin-bottom: 2px;
+	color: var(--ui-color-base-3);
+	font: var(--ui-font-size-md)/19px var(--ui-font-family-primary);
+}
+
+.bx-im-source-popup__url {
+	color: var(--ui-color-base-3);
+	font: var(--ui-font-size-xs)/15px var(--ui-font-family-primary);
+}

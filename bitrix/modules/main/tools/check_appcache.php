@@ -1,4 +1,4 @@
-<?
+<?php
 define('BX_SECURITY_SHOW_MESSAGE', 1);
 define("NO_KEEP_STATISTIC", true);
 define("NOT_CHECK_FILE_PERMISSIONS", true);
@@ -22,4 +22,3 @@ if($_REQUEST["manifest_id"] && !\Bitrix\Main\Composite\AppCache::getDebug())
 
 header("HTTP/1.0 404 Not Found");
 die();
-?>

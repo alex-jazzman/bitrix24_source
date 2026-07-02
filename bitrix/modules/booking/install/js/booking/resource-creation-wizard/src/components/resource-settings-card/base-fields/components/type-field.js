@@ -1,8 +1,6 @@
 import { Text } from 'main.core';
-import { BaseEvent } from 'main.core.events';
 import { Dialog } from 'ui.entity-selector';
 import { EntitySelectorEntity } from 'booking.const';
-import { ResourceTypeModel } from 'booking.model.resource-types';
 import { resourceTypeService } from 'booking.provider.service.resources-type-service';
 import { UiErrorMessage } from 'booking.component.ui-error-message';
 

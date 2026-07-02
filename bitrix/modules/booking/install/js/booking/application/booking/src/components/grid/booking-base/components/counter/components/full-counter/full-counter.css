@@ -1,0 +1,35 @@
+.booking-booking-booking__counter .ui-counter-inner {
+	min-width: unset;
+	width: var(--ui-counter-current-size);
+	border-width: 2px;
+}
+
+.booking-booking-booking__counter_icon {
+	display: flex;
+	border-radius: 1in;
+	border: var(--ui-border-width-thick) solid var(--ui-color-base-8);
+}
+
+.booking-booking-booking__counter_icon .ui-icon-set {
+	--ui-icon-set__icon-size: 13px;
+}
+
+
+.booking-booking-booking__counter_icon.--confirmed {
+	background: var(--ui-color-palette-green-60);
+}
+
+.booking-booking-booking__counter_icon.--confirmed .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-base-8);
+	transform: scale(0.9);
+}
+
+
+.booking-booking-booking__counter_icon.--clocking {
+	background: var(--ui-color-base-7);
+}
+
+.booking-booking-booking__counter_icon.--clocking .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
+	transform: scale(1.5);
+}

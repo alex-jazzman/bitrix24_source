@@ -2,715 +2,564 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,ui_iconSet_outline,ui_uploader_core,im_v2_provider_service_message,im_v2_lib_soundNotification,im_v2_lib_inputAction,im_v2_lib_escManager,im_v2_lib_message,im_v2_lib_desktopApi,ui_system_chip_vue,im_v2_lib_localStorage,im_v2_component_elements_pulseAnimation,im_v2_lib_smileManager,im_v2_provider_service_sticker,main_polyfill_intersectionobserver,main_core_events,im_v2_provider_service_sending,im_v2_component_sticker,im_v2_lib_sticker,im_v2_lib_promo,calendar_sharing_interface,vote_application,im_v2_component_elements_menu,im_v2_lib_entityCreator,file_dialog,im_v2_model,im_v2_lib_draft,im_v2_lib_hotkey,im_v2_provider_service_uploading,im_v2_component_elements_mediaGallery,im_v2_component_elements_sendButton,ui_icons,im_v2_lib_channel,im_v2_lib_copilot,im_v2_lib_user,im_v2_lib_logger,im_v2_component_elements_scrollWithGradient,im_v2_component_elements_avatar,im_v2_component_elements_chatTitle,im_v2_lib_textHighlighter,im_v2_lib_permission,im_v2_lib_feature,ui_iconSet_api_core,im_v2_lib_menu,im_v2_lib_notifier,im_v2_provider_service_collabInvitation,im_public,im_v2_lib_rest,im_v2_lib_search,im_v2_application_core,im_v2_lib_parser,ui_vue3_components_richLoc,im_v2_component_elements_loader,im_v2_lib_market,im_v2_component_elements_autoDelete,im_v2_provider_service_chat,im_v2_lib_autoDelete,im_v2_const,main_core,main_popup,im_v2_lib_textarea,im_v2_component_elements_popup,im_v2_lib_quote,im_v2_lib_analytics,ui_system_input_vue,ui_iconSet_api_vue,im_v2_lib_utils) {
+(function (exports, main_core, main_core_events, ui_iconSet_api_vue, ui_uploader_core, ui_iconSet_outline, im_v2_component_elements_sendButton, im_v2_const, im_v2_lib_analytics, im_v2_lib_draft, im_v2_lib_escManager, im_v2_lib_feature, im_v2_lib_hotkey, im_v2_lib_inputAction, im_v2_lib_localStorage, im_v2_lib_logger, im_v2_lib_message, im_v2_lib_parser, im_v2_lib_soundNotification, im_v2_lib_textarea, im_v2_lib_utils, im_v2_provider_service_message, im_v2_provider_service_sending, im_v2_provider_service_uploading, im_v2_application_core, im_v2_lib_rest, im_v2_lib_notifier, im_v2_lib_desktopApi, im_v2_component_elements_autoDelete, im_v2_provider_service_chat, im_v2_lib_autoDelete, im_v2_lib_promo, im_v2_component_elements_pulseAnimation, ui_system_chip_vue, im_v2_component_elements_popup, im_v2_lib_smileManager, main_popup, im_v2_lib_sticker, im_v2_component_sticker, im_v2_provider_service_sticker, im_v2_component_elements_loader, main_polyfill_intersectionobserver, im_v2_lib_menu, im_v2_lib_permission, im_v2_lib_directives, im_v2_lib_quote, ui_system_input_vue, im_v2_lib_copilot, im_v2_lib_channel, im_v2_lib_search, im_v2_lib_user, im_v2_component_elements_scrollWithGradient, im_v2_component_elements_avatar, im_v2_component_elements_chatTitle, im_v2_lib_textHighlighter, ui_iconSet_api_core, im_v2_provider_service_collabInvitation, im_public, ui_vue3_components_richLoc, im_v2_lib_market, calendar_sharing_interface, vote_application, im_v2_component_elements_menu, im_v2_lib_entityCreator, file_dialog, im_v2_component_elements_mediaGallery) {
 	'use strict';
+
+	const EVENT_NAMESPACE$1 = 'BX.Messenger.v2.Textarea.FormatToolbarManager';
+	const FORMAT_TOOLBAR_DELAY = 0;
+	class FormatToolbarManager extends main_core_events.EventEmitter {
+		#timer = null;
+		static events = {
+			show: 'show',
+			hide: 'hide'
+		};
+		constructor() {
+			super();
+			this.setEventNamespace(EVENT_NAMESPACE$1);
+		}
+		handleTextSelect(event, textarea) {
+			this.#clearTimer();
+			const clickPosition = {
+				left: event.pageX,
+				top: event.pageY
+			};
+
+			// we need to wait for selectionStart/selectionEnd update
+			requestAnimationFrame(() => {
+				if (!this.#hasValidSelection(textarea)) {
+					this.emit(FormatToolbarManager.events.hide);
+					return;
+				}
+				this.#timer = setTimeout(() => {
+					if (!this.#hasValidSelection(textarea)) {
+						return;
+					}
+					this.emit(FormatToolbarManager.events.show, {
+						bindPosition: clickPosition
+					});
+				}, FORMAT_TOOLBAR_DELAY);
+			});
+		}
+		hide() {
+			this.#clearTimer();
+			this.emit(FormatToolbarManager.events.hide);
+		}
+		destroy() {
+			this.#clearTimer();
+		}
+		#clearTimer() {
+			if (this.#timer) {
+				clearTimeout(this.#timer);
+				this.#timer = null;
+			}
+		}
+		#hasValidSelection(textarea) {
+			if (!textarea) {
+				return false;
+			}
+			return textarea.selectionStart !== textarea.selectionEnd;
+		}
+	}
+
+	const ACTIVE_STATUS_DURATION = 15000;
+	const REQUEST_DELAY = 5000;
+	class InputSenderService {
+		#dialogId;
+		#statusTimerMap = {};
+		#requestDelayMap = {};
+		constructor(dialogId) {
+			this.#dialogId = dialogId;
+		}
+		startAction(actionType) {
+			if (this.#isActive(actionType) || this.#isSelfChat()) {
+				return;
+			}
+			this.#statusTimerMap[actionType] = setTimeout(() => {
+				delete this.#statusTimerMap[actionType];
+			}, ACTIVE_STATUS_DURATION);
+			this.#requestDelayMap[actionType] = setTimeout(() => {
+				this.#sendRequest(actionType);
+			}, REQUEST_DELAY);
+		}
+		stopAction(actionType) {
+			clearTimeout(this.#statusTimerMap[actionType]);
+			delete this.#statusTimerMap[actionType];
+			clearTimeout(this.#requestDelayMap[actionType]);
+			delete this.#requestDelayMap[actionType];
+		}
+		#isActive(actionType) {
+			return Boolean(this.#statusTimerMap[actionType]);
+		}
+		#sendRequest(actionType) {
+			const queryParams = {
+				dialogId: this.#dialogId,
+				type: actionType
+			};
+			im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatInputActionNotify, {
+				data: queryParams
+			}).catch(([error]) => {
+				console.error('InputSenderService: sendRequest error', error);
+			});
+		}
+		#isSelfChat() {
+			return Number(this.#dialogId) === im_v2_application_core.Core.getUserId();
+		}
+	}
 
 	const MentionSymbols = new Set(['@', '+']);
 	const WAIT_FOR_NEXT_SYMBOL_TIME = 10;
 	const WAIT_FOR_LAST_SYMBOL_TIME = 10;
 	const MentionManagerEvents = Object.freeze({
-	  showMentionPopup: 'showMentionPopup',
-	  hideMentionPopup: 'hideMentionPopup',
-	  insertMention: 'insertMention'
+		showMentionPopup: 'showMentionPopup',
+		hideMentionPopup: 'hideMentionPopup',
+		insertMention: 'insertMention'
 	});
-	var _mentionPopupOpened = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("mentionPopupOpened");
-	var _mentionSymbol = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("mentionSymbol");
-	var _textarea = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("textarea");
-	var _emitter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("emitter");
-	var _mentionReplacementMap = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("mentionReplacementMap");
-	var _onClosedMentionKeyDown = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onClosedMentionKeyDown");
-	var _onOpenedMentionKeyDown = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onOpenedMentionKeyDown");
-	var _checkMentionSymbol = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("checkMentionSymbol");
-	var _isValidQuery = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isValidQuery");
-	var _isInsertMentionCombination = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isInsertMentionCombination");
-	var _isOpenMentionCombination = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isOpenMentionCombination");
-	var _sendHidePopupEvent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendHidePopupEvent");
-	var _sendInsertMentionEvent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendInsertMentionEvent");
-	var _getTextBeforeCursor = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTextBeforeCursor");
-	var _getMentionSymbolIndex = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMentionSymbolIndex");
-	var _getQuery = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getQuery");
-	var _getQueryWithoutMentionSymbol = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getQueryWithoutMentionSymbol");
-	var _isNavigateCombination = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isNavigateCombination");
-	var _isValidFirstSymbol = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isValidFirstSymbol");
-	var _hasWhitespace = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasWhitespace");
-	var _hasNumber = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasNumber");
-	var _hasSpecialSymbol = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasSpecialSymbol");
 	class MentionManager extends main_core_events.EventEmitter {
-	  constructor(payload) {
-	    super();
-	    Object.defineProperty(this, _hasSpecialSymbol, {
-	      value: _hasSpecialSymbol2
-	    });
-	    Object.defineProperty(this, _hasNumber, {
-	      value: _hasNumber2
-	    });
-	    Object.defineProperty(this, _hasWhitespace, {
-	      value: _hasWhitespace2
-	    });
-	    Object.defineProperty(this, _isValidFirstSymbol, {
-	      value: _isValidFirstSymbol2
-	    });
-	    Object.defineProperty(this, _isNavigateCombination, {
-	      value: _isNavigateCombination2
-	    });
-	    Object.defineProperty(this, _getQueryWithoutMentionSymbol, {
-	      value: _getQueryWithoutMentionSymbol2
-	    });
-	    Object.defineProperty(this, _getQuery, {
-	      value: _getQuery2
-	    });
-	    Object.defineProperty(this, _getMentionSymbolIndex, {
-	      value: _getMentionSymbolIndex2
-	    });
-	    Object.defineProperty(this, _getTextBeforeCursor, {
-	      value: _getTextBeforeCursor2
-	    });
-	    Object.defineProperty(this, _sendInsertMentionEvent, {
-	      value: _sendInsertMentionEvent2
-	    });
-	    Object.defineProperty(this, _sendHidePopupEvent, {
-	      value: _sendHidePopupEvent2
-	    });
-	    Object.defineProperty(this, _isOpenMentionCombination, {
-	      value: _isOpenMentionCombination2
-	    });
-	    Object.defineProperty(this, _isInsertMentionCombination, {
-	      value: _isInsertMentionCombination2
-	    });
-	    Object.defineProperty(this, _isValidQuery, {
-	      value: _isValidQuery2
-	    });
-	    Object.defineProperty(this, _checkMentionSymbol, {
-	      value: _checkMentionSymbol2
-	    });
-	    Object.defineProperty(this, _onOpenedMentionKeyDown, {
-	      value: _onOpenedMentionKeyDown2
-	    });
-	    Object.defineProperty(this, _onClosedMentionKeyDown, {
-	      value: _onClosedMentionKeyDown2
-	    });
-	    Object.defineProperty(this, _mentionPopupOpened, {
-	      writable: true,
-	      value: false
-	    });
-	    Object.defineProperty(this, _mentionSymbol, {
-	      writable: true,
-	      value: ''
-	    });
-	    Object.defineProperty(this, _textarea, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _emitter, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _mentionReplacementMap, {
-	      writable: true,
-	      value: {}
-	    });
-	    this.setEventNamespace(MentionManager.eventNamespace);
-	    const {
-	      textareaElement,
-	      context: {
-	        emitter
-	      }
-	    } = payload;
-	    babelHelpers.classPrivateFieldLooseBase(this, _textarea)[_textarea] = textareaElement;
-	    babelHelpers.classPrivateFieldLooseBase(this, _emitter)[_emitter] = emitter;
-	  }
+		#mentionPopupOpened = false;
+		#mentionSymbol = '';
+		#textarea;
+		#emitter;
+		#mentionReplacementMap = {};
+		static eventNamespace = 'BX.Messenger.v2.Textarea.MentionManager';
+		constructor(payload) {
+			super();
+			this.setEventNamespace(MentionManager.eventNamespace);
+			const {
+				textareaElement,
+				context: {
+					emitter
+				}
+			} = payload;
+			this.#textarea = textareaElement;
+			this.#emitter = emitter;
+		}
 
-	  // region 'popup'
-	  onActiveMentionKeyDown(event) {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _mentionPopupOpened)[_mentionPopupOpened]) {
-	      return;
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _onOpenedMentionKeyDown)[_onOpenedMentionKeyDown](event);
-	  }
-	  onKeyDown(event) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _onClosedMentionKeyDown)[_onClosedMentionKeyDown](event);
-	  }
-	  onMentionPopupClose() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _mentionPopupOpened)[_mentionPopupOpened] = false;
-	  }
-	  // endregion 'popup'
+		// region 'popup'
+		onActiveMentionKeyDown(event) {
+			if (!this.#mentionPopupOpened) {
+				return;
+			}
+			this.#onOpenedMentionKeyDown(event);
+		}
+		onKeyDown(event) {
+			this.#onClosedMentionKeyDown(event);
+		}
+		onMentionPopupClose() {
+			this.#mentionPopupOpened = false;
+		}
+		#onClosedMentionKeyDown(event) {
+			if (!this.#isOpenMentionCombination(event)) {
+				return;
+			}
+			setTimeout(() => {
+				if (!this.#checkMentionSymbol()) {
+					return;
+				}
+				this.#mentionPopupOpened = true;
+				this.emit(MentionManagerEvents.showMentionPopup, {
+					mentionQuery: ''
+				});
+			}, WAIT_FOR_NEXT_SYMBOL_TIME);
+		}
+		#onOpenedMentionKeyDown(event) {
+			if (this.#isNavigateCombination(event)) {
+				event.preventDefault();
+				return;
+			}
+			if (this.#isInsertMentionCombination(event)) {
+				event.preventDefault();
+				this.#sendInsertMentionEvent(event);
+				return;
+			}
+			setTimeout(() => {
+				if (!this.#isValidQuery()) {
+					this.#sendHidePopupEvent();
+					return;
+				}
+				this.emit(MentionManagerEvents.showMentionPopup, {
+					mentionQuery: this.#getQueryWithoutMentionSymbol()
+				});
+			}, WAIT_FOR_LAST_SYMBOL_TIME);
+		}
+		#checkMentionSymbol() {
+			const cursorPosition = this.#textarea.selectionEnd;
+			this.#mentionSymbol = this.#textarea.value.slice(cursorPosition - 1, cursorPosition);
+			if (!MentionSymbols.has(this.#mentionSymbol)) {
+				return false;
+			}
+			const symbolBeforeMentionSymbol = this.#textarea.value.slice(cursorPosition - 2, cursorPosition - 1);
+			return symbolBeforeMentionSymbol.length === 0 || this.#hasWhitespace(symbolBeforeMentionSymbol);
+		}
+		#isValidQuery() {
+			const query = this.#getQuery();
+			if (query.length === 0) {
+				return false;
+			}
+			const firstQuerySymbol = this.#getQueryWithoutMentionSymbol().slice(0, 1);
+			if (firstQuerySymbol.length === 0) {
+				return true;
+			}
+			if (!this.#isValidFirstSymbol(firstQuerySymbol)) {
+				return false;
+			}
+			return !this.#hasWhitespace(firstQuerySymbol);
+		}
+		#isInsertMentionCombination(event) {
+			return event.key === 'Enter';
+		}
+		#isOpenMentionCombination(event) {
+			return event.key === '+' || event.key === '@';
+		}
+		#sendHidePopupEvent() {
+			this.#mentionPopupOpened = false;
+			this.#mentionSymbol = '';
+			this.emit(MentionManagerEvents.hideMentionPopup);
+		}
+		#sendInsertMentionEvent(event) {
+			event.preventDefault();
+			this.#emitter.emit(im_v2_const.EventType.mention.selectItem);
+			this.#sendHidePopupEvent();
+		}
+		#getTextBeforeCursor() {
+			return this.#textarea.value.slice(0, Math.max(0, this.#textarea.selectionEnd));
+		}
+		#getMentionSymbolIndex() {
+			const textBeforeCursor = this.#getTextBeforeCursor();
+			return textBeforeCursor.lastIndexOf(this.#mentionSymbol);
+		}
+		#getQuery() {
+			const textBeforeCursor = this.#getTextBeforeCursor();
+			const mentionSymbolIndex = this.#getMentionSymbolIndex();
+			if (mentionSymbolIndex < 0) {
+				return '';
+			}
+			return textBeforeCursor.slice(mentionSymbolIndex, this.#textarea.selectionEnd);
+		}
+		#getQueryWithoutMentionSymbol() {
+			return this.#getQuery().slice(1);
+		}
+		#isNavigateCombination(event) {
+			return event.key === 'ArrowUp' || event.key === 'ArrowDown';
+		}
+		#isValidFirstSymbol(firstQuerySymbol) {
+			return !(this.#hasNumber(firstQuerySymbol) || this.#hasWhitespace(firstQuerySymbol) || this.#hasSpecialSymbol(firstQuerySymbol));
+		}
+		#hasWhitespace(text) {
+			return /^\s/.test(text);
+		}
+		#hasNumber(text) {
+			return /\d$/.test(text);
+		}
+		#hasSpecialSymbol(text) {
+			const regex = /[!"#$%&'()*+,./<>@\\^_|-]/;
+			return regex.test(text);
+		}
+		// endregion 'popup'
 
-	  // region 'replace'
-	  setMentionReplacements(mentionsMap) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _mentionReplacementMap)[_mentionReplacementMap] = mentionsMap;
-	  }
-	  addMentionReplacement(textToReplace, textToInsert) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _mentionReplacementMap)[_mentionReplacementMap][textToReplace] = textToInsert;
-	    return babelHelpers.classPrivateFieldLooseBase(this, _mentionReplacementMap)[_mentionReplacementMap];
-	  }
-	  getMentionSymbol() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _mentionSymbol)[_mentionSymbol];
-	  }
-	  replaceMentions(text) {
-	    let resultText = text;
-	    Object.entries(babelHelpers.classPrivateFieldLooseBase(this, _mentionReplacementMap)[_mentionReplacementMap]).forEach(([textToReplace, textToInsert]) => {
-	      resultText = resultText.replaceAll(textToReplace, textToInsert);
-	    });
-	    return resultText;
-	  }
-	  extractMentions(text) {
-	    const CHAT_MENTION_CODE = 'chat';
-	    const mentions = {};
-	    const mentionRegExp = /\[(?<type>user|chat)=(?<dialogId>\w+)](?<mentionText>.*?)\[\/(user|chat)]/gi;
-	    const matches = text.matchAll(mentionRegExp);
-	    for (const match of matches) {
-	      const {
-	        mentionText
-	      } = match.groups;
-	      let {
-	        type: mentionType,
-	        dialogId
-	      } = match.groups;
-	      mentionType = mentionType.toLowerCase();
-	      if (mentionType === CHAT_MENTION_CODE) {
-	        dialogId = `${mentionType}${dialogId}`;
-	      }
-	      mentions[mentionText] = im_v2_lib_utils.Utils.text.getMentionBbCode(dialogId, mentionText);
-	    }
-	    return mentions;
-	  }
-	  clearMentionSymbol() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _mentionSymbol)[_mentionSymbol] = '';
-	  }
-	  clearMentionReplacements() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _mentionReplacementMap)[_mentionReplacementMap] = {};
-	  }
-	  // endregion 'replace'
-	}
-	function _onClosedMentionKeyDown2(event) {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isOpenMentionCombination)[_isOpenMentionCombination](event)) {
-	    return;
-	  }
-	  setTimeout(() => {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _checkMentionSymbol)[_checkMentionSymbol]()) {
-	      return;
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _mentionPopupOpened)[_mentionPopupOpened] = true;
-	    this.emit(MentionManagerEvents.showMentionPopup, {
-	      mentionQuery: ''
-	    });
-	  }, WAIT_FOR_NEXT_SYMBOL_TIME);
-	}
-	function _onOpenedMentionKeyDown2(event) {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _isNavigateCombination)[_isNavigateCombination](event)) {
-	    event.preventDefault();
-	    return;
-	  }
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _isInsertMentionCombination)[_isInsertMentionCombination](event)) {
-	    event.preventDefault();
-	    babelHelpers.classPrivateFieldLooseBase(this, _sendInsertMentionEvent)[_sendInsertMentionEvent](event);
-	    return;
-	  }
-	  setTimeout(() => {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isValidQuery)[_isValidQuery]()) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _sendHidePopupEvent)[_sendHidePopupEvent]();
-	      return;
-	    }
-	    this.emit(MentionManagerEvents.showMentionPopup, {
-	      mentionQuery: babelHelpers.classPrivateFieldLooseBase(this, _getQueryWithoutMentionSymbol)[_getQueryWithoutMentionSymbol]()
-	    });
-	  }, WAIT_FOR_LAST_SYMBOL_TIME);
-	}
-	function _checkMentionSymbol2() {
-	  const cursorPosition = babelHelpers.classPrivateFieldLooseBase(this, _textarea)[_textarea].selectionEnd;
-	  babelHelpers.classPrivateFieldLooseBase(this, _mentionSymbol)[_mentionSymbol] = babelHelpers.classPrivateFieldLooseBase(this, _textarea)[_textarea].value.slice(cursorPosition - 1, cursorPosition);
-	  if (!MentionSymbols.has(babelHelpers.classPrivateFieldLooseBase(this, _mentionSymbol)[_mentionSymbol])) {
-	    return false;
-	  }
-	  const symbolBeforeMentionSymbol = babelHelpers.classPrivateFieldLooseBase(this, _textarea)[_textarea].value.slice(cursorPosition - 2, cursorPosition - 1);
-	  return symbolBeforeMentionSymbol.length === 0 || babelHelpers.classPrivateFieldLooseBase(this, _hasWhitespace)[_hasWhitespace](symbolBeforeMentionSymbol);
-	}
-	function _isValidQuery2() {
-	  const query = babelHelpers.classPrivateFieldLooseBase(this, _getQuery)[_getQuery]();
-	  if (query.length === 0) {
-	    return false;
-	  }
-	  const firstQuerySymbol = babelHelpers.classPrivateFieldLooseBase(this, _getQueryWithoutMentionSymbol)[_getQueryWithoutMentionSymbol]().slice(0, 1);
-	  if (firstQuerySymbol.length === 0) {
-	    return true;
-	  }
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isValidFirstSymbol)[_isValidFirstSymbol](firstQuerySymbol)) {
-	    return false;
-	  }
-	  return !babelHelpers.classPrivateFieldLooseBase(this, _hasWhitespace)[_hasWhitespace](firstQuerySymbol);
-	}
-	function _isInsertMentionCombination2(event) {
-	  return event.key === 'Enter';
-	}
-	function _isOpenMentionCombination2(event) {
-	  return event.key === '+' || event.key === '@';
-	}
-	function _sendHidePopupEvent2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _mentionPopupOpened)[_mentionPopupOpened] = false;
-	  babelHelpers.classPrivateFieldLooseBase(this, _mentionSymbol)[_mentionSymbol] = '';
-	  this.emit(MentionManagerEvents.hideMentionPopup);
-	}
-	function _sendInsertMentionEvent2(event) {
-	  event.preventDefault();
-	  babelHelpers.classPrivateFieldLooseBase(this, _emitter)[_emitter].emit(im_v2_const.EventType.mention.selectItem);
-	  babelHelpers.classPrivateFieldLooseBase(this, _sendHidePopupEvent)[_sendHidePopupEvent]();
-	}
-	function _getTextBeforeCursor2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _textarea)[_textarea].value.slice(0, Math.max(0, babelHelpers.classPrivateFieldLooseBase(this, _textarea)[_textarea].selectionEnd));
-	}
-	function _getMentionSymbolIndex2() {
-	  const textBeforeCursor = babelHelpers.classPrivateFieldLooseBase(this, _getTextBeforeCursor)[_getTextBeforeCursor]();
-	  return textBeforeCursor.lastIndexOf(babelHelpers.classPrivateFieldLooseBase(this, _mentionSymbol)[_mentionSymbol]);
-	}
-	function _getQuery2() {
-	  const textBeforeCursor = babelHelpers.classPrivateFieldLooseBase(this, _getTextBeforeCursor)[_getTextBeforeCursor]();
-	  const mentionSymbolIndex = babelHelpers.classPrivateFieldLooseBase(this, _getMentionSymbolIndex)[_getMentionSymbolIndex]();
-	  if (mentionSymbolIndex < 0) {
-	    return '';
-	  }
-	  return textBeforeCursor.slice(mentionSymbolIndex, babelHelpers.classPrivateFieldLooseBase(this, _textarea)[_textarea].selectionEnd);
-	}
-	function _getQueryWithoutMentionSymbol2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _getQuery)[_getQuery]().slice(1);
-	}
-	function _isNavigateCombination2(event) {
-	  return event.key === 'ArrowUp' || event.key === 'ArrowDown';
-	}
-	function _isValidFirstSymbol2(firstQuerySymbol) {
-	  return !(babelHelpers.classPrivateFieldLooseBase(this, _hasNumber)[_hasNumber](firstQuerySymbol) || babelHelpers.classPrivateFieldLooseBase(this, _hasWhitespace)[_hasWhitespace](firstQuerySymbol) || babelHelpers.classPrivateFieldLooseBase(this, _hasSpecialSymbol)[_hasSpecialSymbol](firstQuerySymbol));
-	}
-	function _hasWhitespace2(text) {
-	  return /^\s/.test(text);
-	}
-	function _hasNumber2(text) {
-	  return /\d$/.test(text);
-	}
-	function _hasSpecialSymbol2(text) {
-	  const regex = /[!"#$%&'()*+,./<>@\\^_|-]/;
-	  return regex.test(text);
-	}
-	MentionManager.eventNamespace = 'BX.Messenger.v2.Textarea.MentionManager';
-
-	const ACTIVE_STATUS_DURATION = 15000;
-	const REQUEST_DELAY = 5000;
-	var _dialogId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dialogId");
-	var _statusTimerMap = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("statusTimerMap");
-	var _requestDelayMap = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("requestDelayMap");
-	var _isActive = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isActive");
-	var _sendRequest = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendRequest");
-	var _isSelfChat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isSelfChat");
-	class InputSenderService {
-	  constructor(dialogId) {
-	    Object.defineProperty(this, _isSelfChat, {
-	      value: _isSelfChat2
-	    });
-	    Object.defineProperty(this, _sendRequest, {
-	      value: _sendRequest2
-	    });
-	    Object.defineProperty(this, _isActive, {
-	      value: _isActive2
-	    });
-	    Object.defineProperty(this, _dialogId, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _statusTimerMap, {
-	      writable: true,
-	      value: {}
-	    });
-	    Object.defineProperty(this, _requestDelayMap, {
-	      writable: true,
-	      value: {}
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _dialogId)[_dialogId] = dialogId;
-	  }
-	  startAction(actionType) {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _isActive)[_isActive](actionType) || babelHelpers.classPrivateFieldLooseBase(this, _isSelfChat)[_isSelfChat]()) {
-	      return;
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _statusTimerMap)[_statusTimerMap][actionType] = setTimeout(() => {
-	      delete babelHelpers.classPrivateFieldLooseBase(this, _statusTimerMap)[_statusTimerMap][actionType];
-	    }, ACTIVE_STATUS_DURATION);
-	    babelHelpers.classPrivateFieldLooseBase(this, _requestDelayMap)[_requestDelayMap][actionType] = setTimeout(() => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _sendRequest)[_sendRequest](actionType);
-	    }, REQUEST_DELAY);
-	  }
-	  stopAction(actionType) {
-	    clearTimeout(babelHelpers.classPrivateFieldLooseBase(this, _statusTimerMap)[_statusTimerMap][actionType]);
-	    delete babelHelpers.classPrivateFieldLooseBase(this, _statusTimerMap)[_statusTimerMap][actionType];
-	    clearTimeout(babelHelpers.classPrivateFieldLooseBase(this, _requestDelayMap)[_requestDelayMap][actionType]);
-	    delete babelHelpers.classPrivateFieldLooseBase(this, _requestDelayMap)[_requestDelayMap][actionType];
-	  }
-	}
-	function _isActive2(actionType) {
-	  return Boolean(babelHelpers.classPrivateFieldLooseBase(this, _statusTimerMap)[_statusTimerMap][actionType]);
-	}
-	function _sendRequest2(actionType) {
-	  const queryParams = {
-	    dialogId: babelHelpers.classPrivateFieldLooseBase(this, _dialogId)[_dialogId],
-	    type: actionType
-	  };
-	  im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatInputActionNotify, {
-	    data: queryParams
-	  }).catch(([error]) => {
-	    console.error('InputSenderService: sendRequest error', error);
-	  });
-	}
-	function _isSelfChat2() {
-	  return Number(babelHelpers.classPrivateFieldLooseBase(this, _dialogId)[_dialogId]) === im_v2_application_core.Core.getUserId();
+		// region 'replace'
+		setMentionReplacements(mentionsMap) {
+			this.#mentionReplacementMap = mentionsMap;
+		}
+		addMentionReplacement(textToReplace, textToInsert) {
+			this.#mentionReplacementMap[textToReplace] = textToInsert;
+			return this.#mentionReplacementMap;
+		}
+		getMentionSymbol() {
+			return this.#mentionSymbol;
+		}
+		replaceMentions(text) {
+			let resultText = text;
+			Object.entries(this.#mentionReplacementMap).forEach(([textToReplace, textToInsert]) => {
+				resultText = resultText.replaceAll(textToReplace, textToInsert);
+			});
+			return resultText;
+		}
+		extractMentions(text) {
+			const CHAT_MENTION_CODE = 'chat';
+			const mentions = {};
+			const mentionRegExp = /\[(?<type>user|chat)=(?<dialogId>\w+)](?<mentionText>.*?)\[\/(user|chat)]/gi;
+			const matches = text.matchAll(mentionRegExp);
+			for (const match of matches) {
+				const {
+					mentionText
+				} = match.groups;
+				let {
+					type: mentionType,
+					dialogId
+				} = match.groups;
+				mentionType = mentionType.toLowerCase();
+				if (mentionType === CHAT_MENTION_CODE) {
+					dialogId = `${mentionType}${dialogId}`;
+				}
+				mentions[mentionText] = im_v2_lib_utils.Utils.text.getMentionBbCode(dialogId, mentionText);
+			}
+			return mentions;
+		}
+		clearMentionSymbol() {
+			this.#mentionSymbol = '';
+		}
+		clearMentionReplacements() {
+			this.#mentionReplacementMap = {};
+		}
+		// endregion 'replace'
 	}
 
 	const ResizeDirection = {
-	  up: 'up',
-	  down: 'down'
+		up: 'up',
+		down: 'down'
 	};
-	var _calculateNewMaxPoint = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("calculateNewMaxPoint");
 	class ResizeManager extends main_core_events.EventEmitter {
-	  constructor(options = {}) {
-	    super();
-	    Object.defineProperty(this, _calculateNewMaxPoint, {
-	      value: _calculateNewMaxPoint2
-	    });
-	    this.isDragging = false;
-	    const {
-	      direction,
-	      maxHeight,
-	      minHeight
-	    } = options;
-	    this.direction = direction;
-	    this.maxHeight = maxHeight;
-	    this.minHeight = minHeight;
-	    this.setEventNamespace(ResizeManager.eventNamespace);
-	  }
-	  onResizeStart(event, currentHeight) {
-	    if (this.isDragging) {
-	      return;
-	    }
-	    this.isDragging = true;
-	    this.resizeCursorStartPoint = event.clientY;
-	    this.resizeHeightStartPoint = currentHeight;
-	    this.addResizeEvents();
-	  }
-	  onResizeContinue(event) {
-	    if (!this.isDragging) {
-	      return;
-	    }
-	    this.resizeCursorControlPoint = event.clientY;
-	    const maxPoint = babelHelpers.classPrivateFieldLooseBase(this, _calculateNewMaxPoint)[_calculateNewMaxPoint]();
-	    const newHeight = Math.max(maxPoint, this.minHeight);
-	    this.emit(ResizeManager.events.onHeightChange, {
-	      newHeight
-	    });
-	  }
-	  onResizeStop() {
-	    if (!this.isDragging) {
-	      return;
-	    }
-	    this.isDragging = false;
-	    this.removeResizeEvents();
-	    this.emit(ResizeManager.events.onResizeStop);
-	  }
-	  addResizeEvents() {
-	    this.onContinueDragHandler = this.onResizeContinue.bind(this);
-	    this.onStopDragHandler = this.onResizeStop.bind(this);
-	    document.addEventListener('mousemove', this.onContinueDragHandler);
-	    document.addEventListener('touchmove', this.onContinueDragHandler);
-	    document.addEventListener('touchend', this.onStopDragHandler);
-	    document.addEventListener('mouseup', this.onStopDragHandler);
-	    document.addEventListener('mouseleave', this.onStopDragHandler);
-	  }
-	  removeResizeEvents() {
-	    document.removeEventListener('mousemove', this.onContinueDragHandler);
-	    document.removeEventListener('touchmove', this.onContinueDragHandler);
-	    document.removeEventListener('touchend', this.onStopDragHandler);
-	    document.removeEventListener('mouseup', this.onStopDragHandler);
-	    document.removeEventListener('mouseleave', this.onStopDragHandler);
-	  }
-	  destroy() {
-	    this.removeResizeEvents();
-	  }
+		static eventNamespace = 'BX.Messenger.v2.Textarea.ResizeManager';
+		static events = {
+			onHeightChange: 'onHeightChange',
+			onResizeStop: 'onResizeStop'
+		};
+		isDragging = false;
+		constructor(options = {}) {
+			super();
+			const {
+				direction,
+				maxHeight,
+				minHeight
+			} = options;
+			this.direction = direction;
+			this.maxHeight = maxHeight;
+			this.minHeight = minHeight;
+			this.setEventNamespace(ResizeManager.eventNamespace);
+		}
+		onResizeStart(event, currentHeight) {
+			if (this.isDragging) {
+				return;
+			}
+			this.isDragging = true;
+			this.resizeCursorStartPoint = event.clientY;
+			this.resizeHeightStartPoint = currentHeight;
+			this.addResizeEvents();
+		}
+		onResizeContinue(event) {
+			if (!this.isDragging) {
+				return;
+			}
+			this.resizeCursorControlPoint = event.clientY;
+			const maxPoint = this.#calculateNewMaxPoint();
+			const newHeight = Math.max(maxPoint, this.minHeight);
+			this.emit(ResizeManager.events.onHeightChange, {
+				newHeight
+			});
+		}
+		onResizeStop() {
+			if (!this.isDragging) {
+				return;
+			}
+			this.isDragging = false;
+			this.removeResizeEvents();
+			this.emit(ResizeManager.events.onResizeStop);
+		}
+		#calculateNewMaxPoint() {
+			const distance = this.direction === ResizeDirection.up ? this.resizeCursorStartPoint - this.resizeCursorControlPoint : this.resizeCursorControlPoint - this.resizeCursorStartPoint;
+			return Math.min(this.resizeHeightStartPoint + distance, this.maxHeight);
+		}
+		addResizeEvents() {
+			this.onContinueDragHandler = this.onResizeContinue.bind(this);
+			this.onStopDragHandler = this.onResizeStop.bind(this);
+			document.addEventListener('mousemove', this.onContinueDragHandler);
+			document.addEventListener('touchmove', this.onContinueDragHandler);
+			document.addEventListener('touchend', this.onStopDragHandler);
+			document.addEventListener('mouseup', this.onStopDragHandler);
+			document.addEventListener('mouseleave', this.onStopDragHandler);
+		}
+		removeResizeEvents() {
+			document.removeEventListener('mousemove', this.onContinueDragHandler);
+			document.removeEventListener('touchmove', this.onContinueDragHandler);
+			document.removeEventListener('touchend', this.onStopDragHandler);
+			document.removeEventListener('mouseup', this.onStopDragHandler);
+			document.removeEventListener('mouseleave', this.onStopDragHandler);
+		}
+		destroy() {
+			this.removeResizeEvents();
+		}
 	}
-	function _calculateNewMaxPoint2() {
-	  const distance = this.direction === ResizeDirection.up ? this.resizeCursorStartPoint - this.resizeCursorControlPoint : this.resizeCursorControlPoint - this.resizeCursorStartPoint;
-	  return Math.min(this.resizeHeightStartPoint + distance, this.maxHeight);
-	}
-	ResizeManager.eventNamespace = 'BX.Messenger.v2.Textarea.ResizeManager';
-	ResizeManager.events = {
-	  onHeightChange: 'onHeightChange',
-	  onResizeStop: 'onResizeStop'
-	};
-
-	const EVENT_NAMESPACE = 'BX.Messenger.v2.Textarea.FormatToolbarManager';
-	const FORMAT_TOOLBAR_DELAY = 0;
-	var _timer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("timer");
-	var _clearTimer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("clearTimer");
-	var _hasValidSelection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasValidSelection");
-	class FormatToolbarManager extends main_core_events.EventEmitter {
-	  constructor() {
-	    super();
-	    Object.defineProperty(this, _hasValidSelection, {
-	      value: _hasValidSelection2
-	    });
-	    Object.defineProperty(this, _clearTimer, {
-	      value: _clearTimer2
-	    });
-	    Object.defineProperty(this, _timer, {
-	      writable: true,
-	      value: null
-	    });
-	    this.setEventNamespace(EVENT_NAMESPACE);
-	  }
-	  handleTextSelect(event, textarea) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _clearTimer)[_clearTimer]();
-	    const clickPosition = {
-	      left: event.pageX,
-	      top: event.pageY
-	    };
-
-	    // we need to wait for selectionStart/selectionEnd update
-	    requestAnimationFrame(() => {
-	      if (!babelHelpers.classPrivateFieldLooseBase(this, _hasValidSelection)[_hasValidSelection](textarea)) {
-	        this.emit(FormatToolbarManager.events.hide);
-	        return;
-	      }
-	      babelHelpers.classPrivateFieldLooseBase(this, _timer)[_timer] = setTimeout(() => {
-	        if (!babelHelpers.classPrivateFieldLooseBase(this, _hasValidSelection)[_hasValidSelection](textarea)) {
-	          return;
-	        }
-	        this.emit(FormatToolbarManager.events.show, {
-	          bindPosition: clickPosition
-	        });
-	      }, FORMAT_TOOLBAR_DELAY);
-	    });
-	  }
-	  hide() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _clearTimer)[_clearTimer]();
-	    this.emit(FormatToolbarManager.events.hide);
-	  }
-	  destroy() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _clearTimer)[_clearTimer]();
-	  }
-	}
-	function _clearTimer2() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _timer)[_timer]) {
-	    clearTimeout(babelHelpers.classPrivateFieldLooseBase(this, _timer)[_timer]);
-	    babelHelpers.classPrivateFieldLooseBase(this, _timer)[_timer] = null;
-	  }
-	}
-	function _hasValidSelection2(textarea) {
-	  if (!textarea) {
-	    return false;
-	  }
-	  return textarea.selectionStart !== textarea.selectionEnd;
-	}
-	FormatToolbarManager.events = {
-	  show: 'show',
-	  hide: 'hide'
-	};
 
 	const RecognizerEvent = {
-	  audioend: 'audioend',
-	  audiostart: 'audiostart',
-	  end: 'end',
-	  error: 'error',
-	  nomatch: 'nomatch',
-	  result: 'result',
-	  soundend: 'soundend',
-	  soundstart: 'soundstart',
-	  speechend: 'speechend',
-	  speechstart: 'speechstart',
-	  start: 'start'
+		end: 'end',
+		error: 'error',
+		result: 'result',
+		start: 'start'
 	};
-	const EVENT_NAMESPACE$1 = 'BX.Messenger.v2.CopilotAudioManager';
-	var _bindEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindEvents");
-	var _getRecognizedText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getRecognizedText");
-	var _getNewText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getNewText");
-	var _initSettings = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initSettings");
+	const EVENT_NAMESPACE = 'BX.Messenger.v2.CopilotAudioManager';
 	class AudioManager extends main_core_events.EventEmitter {
-	  static isAvailable() {
-	    if (im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
-	      return im_v2_lib_desktopApi.DesktopApi.getApiVersion() > 74;
-	    }
-	    return Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
-	  }
-	  constructor() {
-	    super();
-	    Object.defineProperty(this, _initSettings, {
-	      value: _initSettings2
-	    });
-	    Object.defineProperty(this, _getNewText, {
-	      value: _getNewText2
-	    });
-	    Object.defineProperty(this, _getRecognizedText, {
-	      value: _getRecognizedText2
-	    });
-	    Object.defineProperty(this, _bindEvents, {
-	      value: _bindEvents2
-	    });
-	    this.recognizer = null;
-	    this.setEventNamespace(EVENT_NAMESPACE$1);
-	    this.recognizer = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-	    babelHelpers.classPrivateFieldLooseBase(this, _initSettings)[_initSettings]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _bindEvents)[_bindEvents]();
-	  }
-	  startRecognition() {
-	    this.recognizer.start();
-	  }
-	  stopRecognition() {
-	    this.recognizer.stop();
-	  }
+		static events = {
+			recognitionStart: 'recognitionStart',
+			recognitionError: 'recognitionError',
+			recognitionEnd: 'recognitionEnd',
+			recognitionResult: 'recognitionResult'
+		};
+		recognizer = null;
+		static isAvailable() {
+			if (im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
+				return im_v2_lib_desktopApi.DesktopApi.getApiVersion() > 74;
+			}
+			return Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
+		}
+		constructor() {
+			super();
+			this.setEventNamespace(EVENT_NAMESPACE);
+			this.recognizer = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+			this.#initSettings();
+			this.#bindEvents();
+		}
+		startRecognition() {
+			this.recognizer.start();
+		}
+		stopRecognition() {
+			this.recognizer.stop();
+		}
+		#bindEvents() {
+			main_core.Event.bind(this.recognizer, RecognizerEvent.start, () => {
+				this.lastRecognizedText = '';
+				this.emit(AudioManager.events.recognitionStart);
+			});
+			main_core.Event.bind(this.recognizer, RecognizerEvent.error, event => {
+				this.emit(AudioManager.events.recognitionError, event.error);
+				console.error('Copilot: AudioManager: error', event.error);
+			});
+			main_core.Event.bind(this.recognizer, RecognizerEvent.end, () => {
+				this.lastRecognizedText = '';
+				this.emit(AudioManager.events.recognitionEnd);
+			});
+			main_core.Event.bind(this.recognizer, RecognizerEvent.result, event => {
+				const recognizedText = this.#getRecognizedText(event);
+				const newText = this.#getNewText(recognizedText);
+				if (newText !== '') {
+					this.emit(AudioManager.events.recognitionResult, newText);
+				}
+				this.lastRecognizedText = recognizedText;
+			});
+		}
+		#getRecognizedText(event) {
+			let recognizedChunk = '';
+			Object.values(event.results).forEach(result => {
+				if (result.isFinal) {
+					return;
+				}
+				const [alternative] = result;
+				const {
+					transcript
+				} = alternative;
+				recognizedChunk += transcript;
+			});
+			return recognizedChunk;
+		}
+		#getNewText(fullText) {
+			let additionalText = '';
+			const lastChunkLength = this.lastRecognizedText.length;
+			if (fullText.length > lastChunkLength) {
+				additionalText = fullText.slice(lastChunkLength);
+			}
+			return additionalText;
+		}
+		#initSettings() {
+			this.recognizer.continuous = true;
+			this.recognizer.interimResults = true;
+		}
 	}
-	function _bindEvents2() {
-	  main_core.Event.bind(this.recognizer, RecognizerEvent.start, () => {
-	    this.lastRecognizedText = '';
-	    this.emit(AudioManager.events.recognitionStart);
-	  });
-	  main_core.Event.bind(this.recognizer, RecognizerEvent.error, event => {
-	    this.emit(AudioManager.events.recognitionError, event.error);
-	    console.error('Copilot: AudioManager: error', event.error);
-	  });
-	  main_core.Event.bind(this.recognizer, RecognizerEvent.end, () => {
-	    this.lastRecognizedText = '';
-	    this.emit(AudioManager.events.recognitionEnd);
-	  });
-	  main_core.Event.bind(this.recognizer, RecognizerEvent.result, event => {
-	    const recognizedText = babelHelpers.classPrivateFieldLooseBase(this, _getRecognizedText)[_getRecognizedText](event);
-	    const newText = babelHelpers.classPrivateFieldLooseBase(this, _getNewText)[_getNewText](recognizedText);
-	    if (newText !== '') {
-	      this.emit(AudioManager.events.recognitionResult, newText);
-	    }
-	    this.lastRecognizedText = recognizedText;
-	  });
-	}
-	function _getRecognizedText2(event) {
-	  let recognizedChunk = '';
-	  Object.values(event.results).forEach(result => {
-	    if (result.isFinal) {
-	      return;
-	    }
-	    const [alternative] = result;
-	    const {
-	      transcript
-	    } = alternative;
-	    recognizedChunk += transcript;
-	  });
-	  return recognizedChunk;
-	}
-	function _getNewText2(fullText) {
-	  let additionalText = '';
-	  const lastChunkLength = this.lastRecognizedText.length;
-	  if (fullText.length > lastChunkLength) {
-	    additionalText = fullText.slice(lastChunkLength);
-	  }
-	  return additionalText;
-	}
-	function _initSettings2() {
-	  this.recognizer.continuous = true;
-	  this.recognizer.interimResults = true;
-	}
-	AudioManager.events = {
-	  recognitionStart: 'recognitionStart',
-	  recognitionError: 'recognitionError',
-	  recognitionEnd: 'recognitionEnd',
-	  recognitionResult: 'recognitionResult'
-	};
 
 	// @vue/component
 	const AudioInput = {
-	  name: 'AudioInput',
-	  props: {
-	    dialogId: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  emits: ['inputStart', 'inputResult'],
-	  data() {
-	    return {
-	      audioMode: false,
-	      audioUsed: false
-	    };
-	  },
-	  watch: {
-	    audioMode(newValue, oldValue) {
-	      if (oldValue === false && newValue === true) {
-	        this.startAudio();
-	      }
-	      if (oldValue === true && newValue === false) {
-	        this.stopAudio();
-	      }
-	    }
-	  },
-	  created() {
-	    this.getEmitter().subscribe(im_v2_const.EventType.textarea.onAfterSendMessage, this.handleOnAfterSendMessage);
-	  },
-	  beforeUnmount() {
-	    this.getEmitter().unsubscribe(im_v2_const.EventType.textarea.onAfterSendMessage, this.handleOnAfterSendMessage);
-	  },
-	  methods: {
-	    onClick() {
-	      if (this.audioMode) {
-	        this.audioMode = false;
-	        return;
-	      }
-	      this.audioMode = true;
-	    },
-	    startAudio() {
-	      this.getAudioManager().startRecognition();
-	      this.bindAudioEvents();
-	    },
-	    stopAudio() {
-	      this.getAudioManager().stopRecognition();
-	      this.unbindAudioEvents();
-	    },
-	    bindAudioEvents() {
-	      this.getAudioManager().subscribe(AudioManager.events.recognitionResult, event => {
-	        const text = event.getData();
-	        this.$emit('inputResult', text);
-	        this.audioUsed = true;
-	      });
-	      this.getAudioManager().subscribe(AudioManager.events.recognitionStart, () => {
-	        this.$emit('inputStart');
-	      });
-	      this.getAudioManager().subscribe(AudioManager.events.recognitionEnd, () => {
-	        this.audioMode = false;
-	      });
-	      this.getAudioManager().subscribe(AudioManager.events.recognitionError, () => {
-	        this.audioMode = false;
-	        im_v2_lib_notifier.Notifier.speech.onRecognitionError();
-	      });
-	    },
-	    unbindAudioEvents() {
-	      this.getAudioManager().unsubscribeAll(AudioManager.events.recognitionResult);
-	      this.getAudioManager().unsubscribeAll(AudioManager.events.recognitionStart);
-	      this.getAudioManager().unsubscribeAll(AudioManager.events.recognitionEnd);
-	      this.getAudioManager().unsubscribeAll(AudioManager.events.recognitionError);
-	    },
-	    isAudioModeAvailable() {
-	      return AudioManager.isAvailable();
-	    },
-	    getAudioManager() {
-	      if (!this.audioManager) {
-	        this.audioManager = new AudioManager();
-	      }
-	      return this.audioManager;
-	    },
-	    handleOnAfterSendMessage() {
-	      if (this.audioUsed) {
-	        im_v2_lib_analytics.Analytics.getInstance().copilot.onUseAudioInput(this.dialogId);
-	        im_v2_lib_analytics.Analytics.getInstance().aiAssistant.onUseAudioInput(this.dialogId);
-	        this.audioUsed = false;
-	      }
-	      this.audioMode = false;
-	    },
-	    getEmitter() {
-	      return this.$Bitrix.eventEmitter;
-	    },
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
-	    }
-	  },
-	  template: `
+		name: 'AudioInput',
+		props: {
+			dialogId: {
+				type: String,
+				required: true
+			}
+		},
+		emits: ['inputStart', 'inputResult'],
+		data() {
+			return {
+				audioMode: false,
+				audioUsed: false
+			};
+		},
+		watch: {
+			audioMode(newValue, oldValue) {
+				if (oldValue === false && newValue === true) {
+					this.startAudio();
+				}
+				if (oldValue === true && newValue === false) {
+					this.stopAudio();
+				}
+			}
+		},
+		created() {
+			this.getEmitter().subscribe(im_v2_const.EventType.textarea.onAfterSendMessage, this.handleOnAfterSendMessage);
+		},
+		beforeUnmount() {
+			this.getEmitter().unsubscribe(im_v2_const.EventType.textarea.onAfterSendMessage, this.handleOnAfterSendMessage);
+		},
+		methods: {
+			onClick() {
+				if (this.audioMode) {
+					this.audioMode = false;
+					return;
+				}
+				this.audioMode = true;
+			},
+			startAudio() {
+				this.getAudioManager().startRecognition();
+				this.bindAudioEvents();
+			},
+			stopAudio() {
+				this.getAudioManager().stopRecognition();
+				this.unbindAudioEvents();
+			},
+			bindAudioEvents() {
+				this.getAudioManager().subscribe(AudioManager.events.recognitionResult, event => {
+					const text = event.getData();
+					this.$emit('inputResult', text);
+					this.audioUsed = true;
+				});
+				this.getAudioManager().subscribe(AudioManager.events.recognitionStart, () => {
+					this.$emit('inputStart');
+				});
+				this.getAudioManager().subscribe(AudioManager.events.recognitionEnd, () => {
+					this.audioMode = false;
+				});
+				this.getAudioManager().subscribe(AudioManager.events.recognitionError, () => {
+					this.audioMode = false;
+					im_v2_lib_notifier.Notifier.speech.onRecognitionError();
+				});
+			},
+			unbindAudioEvents() {
+				this.getAudioManager().unsubscribeAll(AudioManager.events.recognitionResult);
+				this.getAudioManager().unsubscribeAll(AudioManager.events.recognitionStart);
+				this.getAudioManager().unsubscribeAll(AudioManager.events.recognitionEnd);
+				this.getAudioManager().unsubscribeAll(AudioManager.events.recognitionError);
+			},
+			isAudioModeAvailable() {
+				return AudioManager.isAvailable();
+			},
+			getAudioManager() {
+				if (!this.audioManager) {
+					this.audioManager = new AudioManager();
+				}
+				return this.audioManager;
+			},
+			handleOnAfterSendMessage() {
+				if (this.audioUsed) {
+					im_v2_lib_analytics.Analytics.getInstance().copilot.onUseAudioInput(this.dialogId);
+					im_v2_lib_analytics.Analytics.getInstance().aiAssistant.onUseAudioInput(this.dialogId);
+					this.audioUsed = false;
+				}
+				this.audioMode = false;
+			},
+			getEmitter() {
+				return this.$Bitrix.eventEmitter;
+			},
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
 		<div
 			v-if="isAudioModeAvailable()"
 			@click="onClick"
@@ -720,3031 +569,3127 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	`
 	};
 
+	const ICON_SIZE$5 = 24;
+	const AutoDeleteSelector = {
+		name: 'AutoDeleteSelector',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon,
+			AutoDeleteHint: im_v2_component_elements_autoDelete.AutoDeleteHint,
+			AutoDeletePopup: im_v2_component_elements_autoDelete.AutoDeletePopup
+		},
+		props: {
+			dialogId: {
+				type: String,
+				required: true
+			}
+		},
+		data() {
+			return {
+				showAutoDeleteMessagesPopup: false,
+				showAutoDeleteMessagesHintPopup: false,
+				hintConfig: {
+					width: 316,
+					offsetLeft: -106,
+					offsetTop: 5,
+					angle: {
+						offset: 141
+					}
+				}
+			};
+		},
+		computed: {
+			OutlineIcons: () => ui_iconSet_api_vue.Outline,
+			ICON_SIZE: () => ICON_SIZE$5,
+			Color: () => im_v2_const.Color,
+			isAutoDeleteAllowed() {
+				return im_v2_lib_autoDelete.AutoDeleteManager.isAutoDeleteAllowed(this.dialogId);
+			},
+			dialog() {
+				return this.$store.getters['chats/get'](this.dialogId, true);
+			},
+			autoDeleteDelayInHours() {
+				return this.$store.getters['chats/autoDelete/getDelay'](this.dialog.chatId);
+			}
+		},
+		methods: {
+			onIconClick() {
+				if (!this.isAutoDeleteAllowed) {
+					this.showAutoDeleteMessagesHintPopup = true;
+					return;
+				}
+				this.showAutoDeleteMessagesPopup = true;
+			},
+			closePopup() {
+				this.showAutoDeleteMessagesPopup = false;
+			},
+			hideAutoDeleteMessagesHintPopup() {
+				this.showAutoDeleteMessagesHintPopup = false;
+			},
+			onAutoDeleteDelayChange(delay) {
+				this.getChatService().setMessagesAutoDeleteDelay(this.dialogId, delay);
+				this.$emit('close');
+			},
+			getChatService() {
+				if (!this.chatService) {
+					this.chatService = new im_v2_provider_service_chat.ChatService();
+				}
+				return this.chatService;
+			},
+			loc(phraseCode, replacements = {}) {
+				return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+			}
+		},
+		template: `
+		<div ref="autoDeleteIcon" class="bx-im-textarea__icon-container">
+			<BIcon 
+				:name="OutlineIcons.TIMER_DOT"
+				:color="Color.accentBlue"
+				:title="loc('IM_TEXTAREA_AUTO_DELETE_TITLE')"
+				:size="ICON_SIZE"
+				class="bx-im-textarea__icon"
+				@click="onIconClick"
+			/>
+		</div>
+		<AutoDeletePopup
+			v-if="showAutoDeleteMessagesPopup"
+			:autoDeleteDelay="autoDeleteDelayInHours"
+			@close="closePopup"
+			@autoDeleteDelayChange="onAutoDeleteDelayChange"
+		/>
+		<AutoDeleteHint
+			v-if="showAutoDeleteMessagesHintPopup"
+			:bindElement="$refs['autoDeleteIcon']"
+			:config="hintConfig"
+			@close="hideAutoDeleteMessagesHintPopup"
+		/>
+	`
+	};
+
 	const emoji = [{
-	  id: 1,
-	  code: 'PEOPLE',
-	  showForWindows: true,
-	  emoji: [{
-	    symbol: '\uD83D\uDE00'
-	  }, {
-	    symbol: '\uD83D\uDE03'
-	  }, {
-	    symbol: '\uD83D\uDE04'
-	  }, {
-	    symbol: '\uD83D\uDE01'
-	  }, {
-	    symbol: '\uD83D\uDE06'
-	  }, {
-	    symbol: '\uD83D\uDE05'
-	  }, {
-	    symbol: '\uD83D\uDE02'
-	  }, {
-	    symbol: '\uD83E\uDD23'
-	  }, {
-	    symbol: '\uD83D\uDE0A'
-	  }, {
-	    symbol: '\uD83D\uDE07'
-	  }, {
-	    symbol: '\uD83D\uDE42'
-	  }, {
-	    symbol: '\uD83D\uDE43'
-	  }, {
-	    symbol: '\uD83D\uDE09'
-	  }, {
-	    symbol: '\uD83D\uDE0C'
-	  }, {
-	    symbol: '\uD83D\uDE0D'
-	  }, {
-	    symbol: '\uD83E\uDD70'
-	  }, {
-	    symbol: '\uD83D\uDE18'
-	  }, {
-	    symbol: '\uD83D\uDE17'
-	  }, {
-	    symbol: '\uD83D\uDE19'
-	  }, {
-	    symbol: '\uD83D\uDE1A'
-	  }, {
-	    symbol: '\uD83D\uDE0B'
-	  }, {
-	    symbol: '\uD83D\uDE1B'
-	  }, {
-	    symbol: '\uD83D\uDE1D'
-	  }, {
-	    symbol: '\uD83D\uDE1C'
-	  }, {
-	    symbol: '\uD83E\uDD2A'
-	  }, {
-	    symbol: '\uD83E\uDD28'
-	  }, {
-	    symbol: '\uD83E\uDDD0'
-	  }, {
-	    symbol: '\uD83E\uDD13'
-	  }, {
-	    symbol: '\uD83D\uDE0E'
-	  }, {
-	    symbol: '\uD83E\uDD29'
-	  }, {
-	    symbol: '\uD83E\uDD73'
-	  }, {
-	    symbol: '\uD83D\uDE0F'
-	  }, {
-	    symbol: '\uD83D\uDE12'
-	  }, {
-	    symbol: '\uD83D\uDE1E'
-	  }, {
-	    symbol: '\uD83D\uDE14'
-	  }, {
-	    symbol: '\uD83D\uDE1F'
-	  }, {
-	    symbol: '\uD83D\uDE15'
-	  }, {
-	    symbol: '\uD83D\uDE41'
-	  }, {
-	    symbol: '\uD83D\uDE23'
-	  }, {
-	    symbol: '\uD83D\uDE2B'
-	  }, {
-	    symbol: '\uD83D\uDE29'
-	  }, {
-	    symbol: '\uD83E\uDD7A'
-	  }, {
-	    symbol: '\uD83D\uDE22'
-	  }, {
-	    symbol: '\uD83D\uDE2D'
-	  }, {
-	    symbol: '\uD83D\uDE24'
-	  }, {
-	    symbol: '\uD83D\uDE20'
-	  }, {
-	    symbol: '\uD83D\uDE21'
-	  }, {
-	    symbol: '\uD83E\uDD2C'
-	  }, {
-	    symbol: '\uD83E\uDD2F'
-	  }, {
-	    symbol: '\uD83D\uDE33'
-	  }, {
-	    symbol: '\uD83E\uDD75'
-	  }, {
-	    symbol: '\uD83E\uDD76'
-	  }, {
-	    symbol: '\uD83D\uDE31'
-	  }, {
-	    symbol: '\uD83D\uDE28'
-	  }, {
-	    symbol: '\uD83D\uDE30'
-	  }, {
-	    symbol: '\uD83D\uDE25'
-	  }, {
-	    symbol: '\uD83D\uDE13'
-	  }, {
-	    symbol: '\uD83E\uDD17'
-	  }, {
-	    symbol: '\uD83E\uDD14'
-	  }, {
-	    symbol: '\uD83E\uDD2D'
-	  }, {
-	    symbol: '\uD83E\uDD2B'
-	  }, {
-	    symbol: '\uD83E\uDD25'
-	  }, {
-	    symbol: '\uD83D\uDE36'
-	  }, {
-	    symbol: '\uD83D\uDE10'
-	  }, {
-	    symbol: '\uD83D\uDE11'
-	  }, {
-	    symbol: '\uD83D\uDE2C'
-	  }, {
-	    symbol: '\uD83D\uDE44'
-	  }, {
-	    symbol: '\uD83D\uDE2F'
-	  }, {
-	    symbol: '\uD83D\uDE26'
-	  }, {
-	    symbol: '\uD83D\uDE27'
-	  }, {
-	    symbol: '\uD83D\uDE2E'
-	  }, {
-	    symbol: '\uD83D\uDE32'
-	  }, {
-	    symbol: '\uD83D\uDE34'
-	  }, {
-	    symbol: '\uD83E\uDD24'
-	  }, {
-	    symbol: '\uD83D\uDE2A'
-	  }, {
-	    symbol: '\uD83D\uDE35'
-	  }, {
-	    symbol: '\uD83E\uDD10'
-	  }, {
-	    symbol: '\uD83E\uDD74'
-	  }, {
-	    symbol: '\uD83E\uDD22'
-	  }, {
-	    symbol: '\uD83E\uDD2E'
-	  }, {
-	    symbol: '\uD83E\uDD27'
-	  }, {
-	    symbol: '\uD83D\uDE37'
-	  }, {
-	    symbol: '\uD83E\uDD12'
-	  }, {
-	    symbol: '\uD83E\uDD15'
-	  }, {
-	    symbol: '\uD83E\uDD11'
-	  }, {
-	    symbol: '\uD83E\uDD20'
-	  }, {
-	    symbol: '\uD83D\uDE08'
-	  }, {
-	    symbol: '\uD83D\uDC7F'
-	  }, {
-	    symbol: '\uD83D\uDC79'
-	  }, {
-	    symbol: '\uD83D\uDC7A'
-	  }, {
-	    symbol: '\uD83E\uDD21'
-	  }, {
-	    symbol: '\uD83D\uDCA9'
-	  }, {
-	    symbol: '\uD83D\uDC7B'
-	  }, {
-	    symbol: '\u2620'
-	  }, {
-	    symbol: '\uD83D\uDC80'
-	  }, {
-	    symbol: '\uD83D\uDC7D'
-	  }, {
-	    symbol: '\uD83D\uDC7E'
-	  }, {
-	    symbol: '\uD83E\uDD16'
-	  }, {
-	    symbol: '\uD83C\uDF83'
-	  }, {
-	    symbol: '\uD83D\uDE3A'
-	  }, {
-	    symbol: '\uD83D\uDE38'
-	  }, {
-	    symbol: '\uD83D\uDE39'
-	  }, {
-	    symbol: '\uD83D\uDE3B'
-	  }, {
-	    symbol: '\uD83D\uDE3C'
-	  }, {
-	    symbol: '\uD83D\uDE3D'
-	  }, {
-	    symbol: '\uD83D\uDE40'
-	  }, {
-	    symbol: '\uD83D\uDE3F'
-	  }, {
-	    symbol: '\uD83D\uDE3E'
-	  }, {
-	    symbol: '\uD83E\uDD32'
-	  }, {
-	    symbol: '\uD83D\uDC50'
-	  }, {
-	    symbol: '\uD83D\uDE4C'
-	  }, {
-	    symbol: '\uD83D\uDC4F'
-	  }, {
-	    symbol: '\uD83E\uDD1D'
-	  }, {
-	    symbol: '\uD83D\uDC4D'
-	  }, {
-	    symbol: '\uD83D\uDC4E'
-	  }, {
-	    symbol: '\uD83D\uDC4A'
-	  }, {
-	    symbol: '\u270A'
-	  }, {
-	    symbol: '\uD83E\uDD1B'
-	  }, {
-	    symbol: '\uD83E\uDD1C'
-	  }, {
-	    symbol: '\uD83E\uDD1E'
-	  }, {
-	    symbol: '\u270C'
-	  }, {
-	    symbol: '\uD83E\uDD1F'
-	  }, {
-	    symbol: '\uD83E\uDD18'
-	  }, {
-	    symbol: '\uD83D\uDC4C'
-	  }, {
-	    symbol: '\uD83D\uDC48'
-	  }, {
-	    symbol: '\uD83D\uDC49'
-	  }, {
-	    symbol: '\uD83D\uDC46'
-	  }, {
-	    symbol: '\uD83D\uDC47'
-	  }, {
-	    symbol: '\uD83E\uDD1A'
-	  }, {
-	    symbol: '\uD83D\uDD90'
-	  }, {
-	    symbol: '\uD83D\uDD96'
-	  }, {
-	    symbol: '\uD83D\uDC4B'
-	  }, {
-	    symbol: '\uD83E\uDD19'
-	  }, {
-	    symbol: '\uD83D\uDCAA'
-	  }, {
-	    symbol: '\uD83D\uDD95'
-	  }, {
-	    symbol: '\u270D'
-	  }, {
-	    symbol: '\uD83D\uDE4F'
-	  }, {
-	    symbol: '\uD83E\uDDB6'
-	  }, {
-	    symbol: '\uD83E\uDDB5'
-	  }, {
-	    symbol: '\uD83D\uDC84'
-	  }, {
-	    symbol: '\uD83D\uDC8B'
-	  }, {
-	    symbol: '\uD83D\uDC44'
-	  }, {
-	    symbol: '\uD83E\uDDB7'
-	  }, {
-	    symbol: '\uD83D\uDC45'
-	  }, {
-	    symbol: '\uD83D\uDC43'
-	  }, {
-	    symbol: '\uD83D\uDC63'
-	  }, {
-	    symbol: '\uD83D\uDC41'
-	  }, {
-	    symbol: '\uD83D\uDC40'
-	  }, {
-	    symbol: '\uD83E\uDDE0'
-	  }, {
-	    symbol: '\uD83D\uDDE3'
-	  }, {
-	    symbol: '\uD83D\uDC64'
-	  }, {
-	    symbol: '\uD83D\uDC65'
-	  }, {
-	    symbol: '\uD83D\uDC76'
-	  }, {
-	    symbol: '\uD83D\uDC67'
-	  }, {
-	    symbol: '\uD83E\uDDD2'
-	  }, {
-	    symbol: '\uD83D\uDC66'
-	  }, {
-	    symbol: '\uD83D\uDC69'
-	  }, {
-	    symbol: '\uD83E\uDDD1'
-	  }, {
-	    symbol: '\uD83D\uDC68'
-	  }, {
-	    symbol: '\uD83D\uDC71'
-	  }, {
-	    symbol: '\uD83E\uDDD4'
-	  }, {
-	    symbol: '\uD83D\uDC75'
-	  }, {
-	    symbol: '\uD83E\uDDD3'
-	  }, {
-	    symbol: '\uD83D\uDC74'
-	  }, {
-	    symbol: '\uD83D\uDC72'
-	  }, {
-	    symbol: '\uD83D\uDC73'
-	  }, {
-	    symbol: '\uD83E\uDDD5'
-	  }, {
-	    symbol: '\uD83D\uDC6E'
-	  }, {
-	    symbol: '\uD83D\uDC77'
-	  }, {
-	    symbol: '\uD83D\uDC82'
-	  }, {
-	    symbol: '\uD83D\uDD75'
-	  }, {
-	    symbol: '\u2695'
-	  }, {
-	    symbol: '\uD83C\uDF3E'
-	  }, {
-	    symbol: '\uD83C\uDF73'
-	  }, {
-	    symbol: '\uD83C\uDF93'
-	  }, {
-	    symbol: '\uD83C\uDFA4'
-	  }, {
-	    symbol: '\uD83C\uDFEB'
-	  }, {
-	    symbol: '\uD83C\uDFED'
-	  }, {
-	    symbol: '\uD83D\uDCBB'
-	  }, {
-	    symbol: '\uD83D\uDCBC'
-	  }, {
-	    symbol: '\uD83D\uDC69'
-	  }, {
-	    symbol: '\u2764'
-	  }, {
-	    symbol: '\uD83D\uDD27'
-	  }, {
-	    symbol: '\uD83D\uDD2C'
-	  }, {
-	    symbol: '\uD83C\uDFA8'
-	  }, {
-	    symbol: '\uD83D\uDE92'
-	  }, {
-	    symbol: '\uD83D\uDE80'
-	  }, {
-	    symbol: '\uD83D\uDC70'
-	  }, {
-	    symbol: '\uD83E\uDD35'
-	  }, {
-	    symbol: '\uD83D\uDC78'
-	  }, {
-	    symbol: '\uD83E\uDD34'
-	  }, {
-	    symbol: '\uD83E\uDDB8'
-	  }, {
-	    symbol: '\uD83E\uDDB9'
-	  }, {
-	    symbol: '\uD83E\uDD36'
-	  }, {
-	    symbol: '\uD83C\uDF85'
-	  }, {
-	    symbol: '\uD83E\uDDD9'
-	  }, {
-	    symbol: '\uD83E\uDDDD'
-	  }, {
-	    symbol: '\uD83E\uDDDB'
-	  }, {
-	    symbol: '\uD83E\uDDDF'
-	  }, {
-	    symbol: '\uD83E\uDDDE'
-	  }, {
-	    symbol: '\uD83E\uDDDC'
-	  }, {
-	    symbol: '\uD83E\uDDDA'
-	  }, {
-	    symbol: '\uD83D\uDC7C'
-	  }, {
-	    symbol: '\uD83E\uDD30'
-	  }, {
-	    symbol: '\uD83E\uDD31'
-	  }, {
-	    symbol: '\uD83D\uDE47'
-	  }, {
-	    symbol: '\uD83D\uDC81'
-	  }, {
-	    symbol: '\uD83D\uDE45'
-	  }, {
-	    symbol: '\uD83D\uDE46'
-	  }, {
-	    symbol: '\uD83D\uDE4B'
-	  }, {
-	    symbol: '\uD83E\uDD26'
-	  }, {
-	    symbol: '\uD83E\uDD37'
-	  }, {
-	    symbol: '\uD83D\uDE4E'
-	  }, {
-	    symbol: '\uD83D\uDE4D'
-	  }, {
-	    symbol: '\uD83D\uDC87'
-	  }, {
-	    symbol: '\uD83D\uDC86'
-	  }, {
-	    symbol: '\uD83E\uDDD6'
-	  }, {
-	    symbol: '\uD83D\uDC85'
-	  }, {
-	    symbol: '\uD83E\uDD33'
-	  }, {
-	    symbol: '\uD83D\uDC83'
-	  }, {
-	    symbol: '\uD83D\uDD7A'
-	  }, {
-	    symbol: '\uD83D\uDC6F'
-	  }, {
-	    symbol: '\uD83D\uDD74'
-	  }, {
-	    symbol: '\uD83D\uDEB6'
-	  }, {
-	    symbol: '\uD83C\uDFC3'
-	  }, {
-	    symbol: '\uD83D\uDC6B'
-	  }, {
-	    symbol: '\uD83D\uDC6D'
-	  }, {
-	    symbol: '\uD83D\uDC6C'
-	  }, {
-	    symbol: '\uD83D\uDC91'
-	  }, {
-	    symbol: '\uD83D\uDC8F'
-	  }, {
-	    symbol: '\uD83D\uDC6A'
-	  }, {
-	    symbol: '\uD83E\uDDF6'
-	  }, {
-	    symbol: '\uD83E\uDDF5'
-	  }, {
-	    symbol: '\uD83E\uDDE5'
-	  }, {
-	    symbol: '\uD83E\uDD7C'
-	  }, {
-	    symbol: '\uD83D\uDC5A'
-	  }, {
-	    symbol: '\uD83D\uDC55'
-	  }, {
-	    symbol: '\uD83D\uDC56'
-	  }, {
-	    symbol: '\uD83D\uDC54'
-	  }, {
-	    symbol: '\uD83D\uDC57'
-	  }, {
-	    symbol: '\uD83D\uDC59'
-	  }, {
-	    symbol: '\uD83D\uDC58'
-	  }, {
-	    symbol: '\uD83E\uDD7F'
-	  }, {
-	    symbol: '\uD83D\uDC60'
-	  }, {
-	    symbol: '\uD83D\uDC61'
-	  }, {
-	    symbol: '\uD83D\uDC62'
-	  }, {
-	    symbol: '\uD83D\uDC5E'
-	  }, {
-	    symbol: '\uD83D\uDC5F'
-	  }, {
-	    symbol: '\uD83E\uDD7E'
-	  }, {
-	    symbol: '\uD83E\uDDE6'
-	  }, {
-	    symbol: '\uD83E\uDDE4'
-	  }, {
-	    symbol: '\uD83E\uDDE3'
-	  }, {
-	    symbol: '\uD83C\uDFA9'
-	  }, {
-	    symbol: '\uD83E\uDDE2'
-	  }, {
-	    symbol: '\uD83D\uDC52'
-	  }, {
-	    symbol: '\uD83C\uDF93'
-	  }, {
-	    symbol: '\u26D1'
-	  }, {
-	    symbol: '\uD83D\uDC51'
-	  }, {
-	    symbol: '\uD83D\uDC8D'
-	  }, {
-	    symbol: '\uD83D\uDC5D'
-	  }, {
-	    symbol: '\uD83D\uDC5B'
-	  }, {
-	    symbol: '\uD83D\uDC5C'
-	  }, {
-	    symbol: '\uD83D\uDCBC'
-	  }, {
-	    symbol: '\uD83C\uDF92'
-	  }, {
-	    symbol: '\uD83E\uDDF3'
-	  }, {
-	    symbol: '\uD83D\uDC53'
-	  }, {
-	    symbol: '\uD83D\uDD76'
-	  }, {
-	    symbol: '\uD83E\uDD7D'
-	  }, {
-	    symbol: '\uD83C\uDF02'
-	  }]
+		id: 1,
+		code: 'PEOPLE',
+		showForWindows: true,
+		emoji: [{
+			symbol: '\uD83D\uDE00'
+		}, {
+			symbol: '\uD83D\uDE03'
+		}, {
+			symbol: '\uD83D\uDE04'
+		}, {
+			symbol: '\uD83D\uDE01'
+		}, {
+			symbol: '\uD83D\uDE06'
+		}, {
+			symbol: '\uD83D\uDE05'
+		}, {
+			symbol: '\uD83D\uDE02'
+		}, {
+			symbol: '\uD83E\uDD23'
+		}, {
+			symbol: '\uD83D\uDE0A'
+		}, {
+			symbol: '\uD83D\uDE07'
+		}, {
+			symbol: '\uD83D\uDE42'
+		}, {
+			symbol: '\uD83D\uDE43'
+		}, {
+			symbol: '\uD83D\uDE09'
+		}, {
+			symbol: '\uD83D\uDE0C'
+		}, {
+			symbol: '\uD83D\uDE0D'
+		}, {
+			symbol: '\uD83E\uDD70'
+		}, {
+			symbol: '\uD83D\uDE18'
+		}, {
+			symbol: '\uD83D\uDE17'
+		}, {
+			symbol: '\uD83D\uDE19'
+		}, {
+			symbol: '\uD83D\uDE1A'
+		}, {
+			symbol: '\uD83D\uDE0B'
+		}, {
+			symbol: '\uD83D\uDE1B'
+		}, {
+			symbol: '\uD83D\uDE1D'
+		}, {
+			symbol: '\uD83D\uDE1C'
+		}, {
+			symbol: '\uD83E\uDD2A'
+		}, {
+			symbol: '\uD83E\uDD28'
+		}, {
+			symbol: '\uD83E\uDDD0'
+		}, {
+			symbol: '\uD83E\uDD13'
+		}, {
+			symbol: '\uD83D\uDE0E'
+		}, {
+			symbol: '\uD83E\uDD29'
+		}, {
+			symbol: '\uD83E\uDD73'
+		}, {
+			symbol: '\uD83D\uDE0F'
+		}, {
+			symbol: '\uD83D\uDE12'
+		}, {
+			symbol: '\uD83D\uDE1E'
+		}, {
+			symbol: '\uD83D\uDE14'
+		}, {
+			symbol: '\uD83D\uDE1F'
+		}, {
+			symbol: '\uD83D\uDE15'
+		}, {
+			symbol: '\uD83D\uDE41'
+		}, {
+			symbol: '\uD83D\uDE23'
+		}, {
+			symbol: '\uD83D\uDE2B'
+		}, {
+			symbol: '\uD83D\uDE29'
+		}, {
+			symbol: '\uD83E\uDD7A'
+		}, {
+			symbol: '\uD83D\uDE22'
+		}, {
+			symbol: '\uD83D\uDE2D'
+		}, {
+			symbol: '\uD83D\uDE24'
+		}, {
+			symbol: '\uD83D\uDE20'
+		}, {
+			symbol: '\uD83D\uDE21'
+		}, {
+			symbol: '\uD83E\uDD2C'
+		}, {
+			symbol: '\uD83E\uDD2F'
+		}, {
+			symbol: '\uD83D\uDE33'
+		}, {
+			symbol: '\uD83E\uDD75'
+		}, {
+			symbol: '\uD83E\uDD76'
+		}, {
+			symbol: '\uD83D\uDE31'
+		}, {
+			symbol: '\uD83D\uDE28'
+		}, {
+			symbol: '\uD83D\uDE30'
+		}, {
+			symbol: '\uD83D\uDE25'
+		}, {
+			symbol: '\uD83D\uDE13'
+		}, {
+			symbol: '\uD83E\uDD17'
+		}, {
+			symbol: '\uD83E\uDD14'
+		}, {
+			symbol: '\uD83E\uDD2D'
+		}, {
+			symbol: '\uD83E\uDD2B'
+		}, {
+			symbol: '\uD83E\uDD25'
+		}, {
+			symbol: '\uD83D\uDE36'
+		}, {
+			symbol: '\uD83D\uDE10'
+		}, {
+			symbol: '\uD83D\uDE11'
+		}, {
+			symbol: '\uD83D\uDE2C'
+		}, {
+			symbol: '\uD83D\uDE44'
+		}, {
+			symbol: '\uD83D\uDE2F'
+		}, {
+			symbol: '\uD83D\uDE26'
+		}, {
+			symbol: '\uD83D\uDE27'
+		}, {
+			symbol: '\uD83D\uDE2E'
+		}, {
+			symbol: '\uD83D\uDE32'
+		}, {
+			symbol: '\uD83D\uDE34'
+		}, {
+			symbol: '\uD83E\uDD24'
+		}, {
+			symbol: '\uD83D\uDE2A'
+		}, {
+			symbol: '\uD83D\uDE35'
+		}, {
+			symbol: '\uD83E\uDD10'
+		}, {
+			symbol: '\uD83E\uDD74'
+		}, {
+			symbol: '\uD83E\uDD22'
+		}, {
+			symbol: '\uD83E\uDD2E'
+		}, {
+			symbol: '\uD83E\uDD27'
+		}, {
+			symbol: '\uD83D\uDE37'
+		}, {
+			symbol: '\uD83E\uDD12'
+		}, {
+			symbol: '\uD83E\uDD15'
+		}, {
+			symbol: '\uD83E\uDD11'
+		}, {
+			symbol: '\uD83E\uDD20'
+		}, {
+			symbol: '\uD83D\uDE08'
+		}, {
+			symbol: '\uD83D\uDC7F'
+		}, {
+			symbol: '\uD83D\uDC79'
+		}, {
+			symbol: '\uD83D\uDC7A'
+		}, {
+			symbol: '\uD83E\uDD21'
+		}, {
+			symbol: '\uD83D\uDCA9'
+		}, {
+			symbol: '\uD83D\uDC7B'
+		}, {
+			symbol: '\u2620'
+		}, {
+			symbol: '\uD83D\uDC80'
+		}, {
+			symbol: '\uD83D\uDC7D'
+		}, {
+			symbol: '\uD83D\uDC7E'
+		}, {
+			symbol: '\uD83E\uDD16'
+		}, {
+			symbol: '\uD83C\uDF83'
+		}, {
+			symbol: '\uD83D\uDE3A'
+		}, {
+			symbol: '\uD83D\uDE38'
+		}, {
+			symbol: '\uD83D\uDE39'
+		}, {
+			symbol: '\uD83D\uDE3B'
+		}, {
+			symbol: '\uD83D\uDE3C'
+		}, {
+			symbol: '\uD83D\uDE3D'
+		}, {
+			symbol: '\uD83D\uDE40'
+		}, {
+			symbol: '\uD83D\uDE3F'
+		}, {
+			symbol: '\uD83D\uDE3E'
+		}, {
+			symbol: '\uD83E\uDD32'
+		}, {
+			symbol: '\uD83D\uDC50'
+		}, {
+			symbol: '\uD83D\uDE4C'
+		}, {
+			symbol: '\uD83D\uDC4F'
+		}, {
+			symbol: '\uD83E\uDD1D'
+		}, {
+			symbol: '\uD83D\uDC4D'
+		}, {
+			symbol: '\uD83D\uDC4E'
+		}, {
+			symbol: '\uD83D\uDC4A'
+		}, {
+			symbol: '\u270A'
+		}, {
+			symbol: '\uD83E\uDD1B'
+		}, {
+			symbol: '\uD83E\uDD1C'
+		}, {
+			symbol: '\uD83E\uDD1E'
+		}, {
+			symbol: '\u270C'
+		}, {
+			symbol: '\uD83E\uDD1F'
+		}, {
+			symbol: '\uD83E\uDD18'
+		}, {
+			symbol: '\uD83D\uDC4C'
+		}, {
+			symbol: '\uD83D\uDC48'
+		}, {
+			symbol: '\uD83D\uDC49'
+		}, {
+			symbol: '\uD83D\uDC46'
+		}, {
+			symbol: '\uD83D\uDC47'
+		}, {
+			symbol: '\uD83E\uDD1A'
+		}, {
+			symbol: '\uD83D\uDD90'
+		}, {
+			symbol: '\uD83D\uDD96'
+		}, {
+			symbol: '\uD83D\uDC4B'
+		}, {
+			symbol: '\uD83E\uDD19'
+		}, {
+			symbol: '\uD83D\uDCAA'
+		}, {
+			symbol: '\uD83D\uDD95'
+		}, {
+			symbol: '\u270D'
+		}, {
+			symbol: '\uD83D\uDE4F'
+		}, {
+			symbol: '\uD83E\uDDB6'
+		}, {
+			symbol: '\uD83E\uDDB5'
+		}, {
+			symbol: '\uD83D\uDC84'
+		}, {
+			symbol: '\uD83D\uDC8B'
+		}, {
+			symbol: '\uD83D\uDC44'
+		}, {
+			symbol: '\uD83E\uDDB7'
+		}, {
+			symbol: '\uD83D\uDC45'
+		}, {
+			symbol: '\uD83D\uDC43'
+		}, {
+			symbol: '\uD83D\uDC63'
+		}, {
+			symbol: '\uD83D\uDC41'
+		}, {
+			symbol: '\uD83D\uDC40'
+		}, {
+			symbol: '\uD83E\uDDE0'
+		}, {
+			symbol: '\uD83D\uDDE3'
+		}, {
+			symbol: '\uD83D\uDC64'
+		}, {
+			symbol: '\uD83D\uDC65'
+		}, {
+			symbol: '\uD83D\uDC76'
+		}, {
+			symbol: '\uD83D\uDC67'
+		}, {
+			symbol: '\uD83E\uDDD2'
+		}, {
+			symbol: '\uD83D\uDC66'
+		}, {
+			symbol: '\uD83D\uDC69'
+		}, {
+			symbol: '\uD83E\uDDD1'
+		}, {
+			symbol: '\uD83D\uDC68'
+		}, {
+			symbol: '\uD83D\uDC71'
+		}, {
+			symbol: '\uD83E\uDDD4'
+		}, {
+			symbol: '\uD83D\uDC75'
+		}, {
+			symbol: '\uD83E\uDDD3'
+		}, {
+			symbol: '\uD83D\uDC74'
+		}, {
+			symbol: '\uD83D\uDC72'
+		}, {
+			symbol: '\uD83D\uDC73'
+		}, {
+			symbol: '\uD83E\uDDD5'
+		}, {
+			symbol: '\uD83D\uDC6E'
+		}, {
+			symbol: '\uD83D\uDC77'
+		}, {
+			symbol: '\uD83D\uDC82'
+		}, {
+			symbol: '\uD83D\uDD75'
+		}, {
+			symbol: '\u2695'
+		}, {
+			symbol: '\uD83C\uDF3E'
+		}, {
+			symbol: '\uD83C\uDF73'
+		}, {
+			symbol: '\uD83C\uDF93'
+		}, {
+			symbol: '\uD83C\uDFA4'
+		}, {
+			symbol: '\uD83C\uDFEB'
+		}, {
+			symbol: '\uD83C\uDFED'
+		}, {
+			symbol: '\uD83D\uDCBB'
+		}, {
+			symbol: '\uD83D\uDCBC'
+		}, {
+			symbol: '\uD83D\uDC69'
+		}, {
+			symbol: '\u2764'
+		}, {
+			symbol: '\uD83D\uDD27'
+		}, {
+			symbol: '\uD83D\uDD2C'
+		}, {
+			symbol: '\uD83C\uDFA8'
+		}, {
+			symbol: '\uD83D\uDE92'
+		}, {
+			symbol: '\uD83D\uDE80'
+		}, {
+			symbol: '\uD83D\uDC70'
+		}, {
+			symbol: '\uD83E\uDD35'
+		}, {
+			symbol: '\uD83D\uDC78'
+		}, {
+			symbol: '\uD83E\uDD34'
+		}, {
+			symbol: '\uD83E\uDDB8'
+		}, {
+			symbol: '\uD83E\uDDB9'
+		}, {
+			symbol: '\uD83E\uDD36'
+		}, {
+			symbol: '\uD83C\uDF85'
+		}, {
+			symbol: '\uD83E\uDDD9'
+		}, {
+			symbol: '\uD83E\uDDDD'
+		}, {
+			symbol: '\uD83E\uDDDB'
+		}, {
+			symbol: '\uD83E\uDDDF'
+		}, {
+			symbol: '\uD83E\uDDDE'
+		}, {
+			symbol: '\uD83E\uDDDC'
+		}, {
+			symbol: '\uD83E\uDDDA'
+		}, {
+			symbol: '\uD83D\uDC7C'
+		}, {
+			symbol: '\uD83E\uDD30'
+		}, {
+			symbol: '\uD83E\uDD31'
+		}, {
+			symbol: '\uD83D\uDE47'
+		}, {
+			symbol: '\uD83D\uDC81'
+		}, {
+			symbol: '\uD83D\uDE45'
+		}, {
+			symbol: '\uD83D\uDE46'
+		}, {
+			symbol: '\uD83D\uDE4B'
+		}, {
+			symbol: '\uD83E\uDD26'
+		}, {
+			symbol: '\uD83E\uDD37'
+		}, {
+			symbol: '\uD83D\uDE4E'
+		}, {
+			symbol: '\uD83D\uDE4D'
+		}, {
+			symbol: '\uD83D\uDC87'
+		}, {
+			symbol: '\uD83D\uDC86'
+		}, {
+			symbol: '\uD83E\uDDD6'
+		}, {
+			symbol: '\uD83D\uDC85'
+		}, {
+			symbol: '\uD83E\uDD33'
+		}, {
+			symbol: '\uD83D\uDC83'
+		}, {
+			symbol: '\uD83D\uDD7A'
+		}, {
+			symbol: '\uD83D\uDC6F'
+		}, {
+			symbol: '\uD83D\uDD74'
+		}, {
+			symbol: '\uD83D\uDEB6'
+		}, {
+			symbol: '\uD83C\uDFC3'
+		}, {
+			symbol: '\uD83D\uDC6B'
+		}, {
+			symbol: '\uD83D\uDC6D'
+		}, {
+			symbol: '\uD83D\uDC6C'
+		}, {
+			symbol: '\uD83D\uDC91'
+		}, {
+			symbol: '\uD83D\uDC8F'
+		}, {
+			symbol: '\uD83D\uDC6A'
+		}, {
+			symbol: '\uD83E\uDDF6'
+		}, {
+			symbol: '\uD83E\uDDF5'
+		}, {
+			symbol: '\uD83E\uDDE5'
+		}, {
+			symbol: '\uD83E\uDD7C'
+		}, {
+			symbol: '\uD83D\uDC5A'
+		}, {
+			symbol: '\uD83D\uDC55'
+		}, {
+			symbol: '\uD83D\uDC56'
+		}, {
+			symbol: '\uD83D\uDC54'
+		}, {
+			symbol: '\uD83D\uDC57'
+		}, {
+			symbol: '\uD83D\uDC59'
+		}, {
+			symbol: '\uD83D\uDC58'
+		}, {
+			symbol: '\uD83E\uDD7F'
+		}, {
+			symbol: '\uD83D\uDC60'
+		}, {
+			symbol: '\uD83D\uDC61'
+		}, {
+			symbol: '\uD83D\uDC62'
+		}, {
+			symbol: '\uD83D\uDC5E'
+		}, {
+			symbol: '\uD83D\uDC5F'
+		}, {
+			symbol: '\uD83E\uDD7E'
+		}, {
+			symbol: '\uD83E\uDDE6'
+		}, {
+			symbol: '\uD83E\uDDE4'
+		}, {
+			symbol: '\uD83E\uDDE3'
+		}, {
+			symbol: '\uD83C\uDFA9'
+		}, {
+			symbol: '\uD83E\uDDE2'
+		}, {
+			symbol: '\uD83D\uDC52'
+		}, {
+			symbol: '\uD83C\uDF93'
+		}, {
+			symbol: '\u26D1'
+		}, {
+			symbol: '\uD83D\uDC51'
+		}, {
+			symbol: '\uD83D\uDC8D'
+		}, {
+			symbol: '\uD83D\uDC5D'
+		}, {
+			symbol: '\uD83D\uDC5B'
+		}, {
+			symbol: '\uD83D\uDC5C'
+		}, {
+			symbol: '\uD83D\uDCBC'
+		}, {
+			symbol: '\uD83C\uDF92'
+		}, {
+			symbol: '\uD83E\uDDF3'
+		}, {
+			symbol: '\uD83D\uDC53'
+		}, {
+			symbol: '\uD83D\uDD76'
+		}, {
+			symbol: '\uD83E\uDD7D'
+		}, {
+			symbol: '\uD83C\uDF02'
+		}]
 	}, {
-	  id: 2,
-	  code: 'ANIMALS',
-	  showForWindows: true,
-	  emoji: [{
-	    symbol: '\uD83D\uDC36'
-	  }, {
-	    symbol: '\uD83D\uDC31'
-	  }, {
-	    symbol: '\uD83D\uDC2D'
-	  }, {
-	    symbol: '\uD83D\uDC39'
-	  }, {
-	    symbol: '\uD83D\uDC30'
-	  }, {
-	    symbol: '\uD83E\uDD8A'
-	  }, {
-	    symbol: '\uD83D\uDC3B'
-	  }, {
-	    symbol: '\uD83D\uDC3C'
-	  }, {
-	    symbol: '\uD83D\uDC28'
-	  }, {
-	    symbol: '\uD83D\uDC2F'
-	  }, {
-	    symbol: '\uD83E\uDD81'
-	  }, {
-	    symbol: '\uD83D\uDC2E'
-	  }, {
-	    symbol: '\uD83D\uDC37'
-	  }, {
-	    symbol: '\uD83D\uDC3D'
-	  }, {
-	    symbol: '\uD83D\uDC38'
-	  }, {
-	    symbol: '\uD83D\uDC35'
-	  }, {
-	    symbol: '\uD83D\uDE48'
-	  }, {
-	    symbol: '\uD83D\uDE49'
-	  }, {
-	    symbol: '\uD83D\uDE4A'
-	  }, {
-	    symbol: '\uD83D\uDC12'
-	  }, {
-	    symbol: '\uD83D\uDC14'
-	  }, {
-	    symbol: '\uD83D\uDC27'
-	  }, {
-	    symbol: '\uD83D\uDC26'
-	  }, {
-	    symbol: '\uD83D\uDC24'
-	  }, {
-	    symbol: '\uD83D\uDC23'
-	  }, {
-	    symbol: '\uD83D\uDC25'
-	  }, {
-	    symbol: '\uD83E\uDD86'
-	  }, {
-	    symbol: '\uD83E\uDD85'
-	  }, {
-	    symbol: '\uD83E\uDD89'
-	  }, {
-	    symbol: '\uD83E\uDD87'
-	  }, {
-	    symbol: '\uD83D\uDC3A'
-	  }, {
-	    symbol: '\uD83D\uDC17'
-	  }, {
-	    symbol: '\uD83D\uDC34'
-	  }, {
-	    symbol: '\uD83E\uDD84'
-	  }, {
-	    symbol: '\uD83D\uDC1D'
-	  }, {
-	    symbol: '\uD83D\uDC1B'
-	  }, {
-	    symbol: '\uD83E\uDD8B'
-	  }, {
-	    symbol: '\uD83D\uDC0C'
-	  }, {
-	    symbol: '\uD83D\uDC1E'
-	  }, {
-	    symbol: '\uD83D\uDC1C'
-	  }, {
-	    symbol: '\uD83E\uDD9F'
-	  }, {
-	    symbol: '\uD83E\uDD97'
-	  }, {
-	    symbol: '\uD83D\uDD77'
-	  }, {
-	    symbol: '\uD83D\uDD78'
-	  }, {
-	    symbol: '\uD83E\uDD82'
-	  }, {
-	    symbol: '\uD83D\uDC22'
-	  }, {
-	    symbol: '\uD83D\uDC0D'
-	  }, {
-	    symbol: '\uD83E\uDD8E'
-	  }, {
-	    symbol: '\uD83E\uDD96'
-	  }, {
-	    symbol: '\uD83E\uDD95'
-	  }, {
-	    symbol: '\uD83D\uDC19'
-	  }, {
-	    symbol: '\uD83E\uDD91'
-	  }, {
-	    symbol: '\uD83E\uDD90'
-	  }, {
-	    symbol: '\uD83E\uDD9E'
-	  }, {
-	    symbol: '\uD83E\uDD80'
-	  }, {
-	    symbol: '\uD83D\uDC21'
-	  }, {
-	    symbol: '\uD83D\uDC20'
-	  }, {
-	    symbol: '\uD83D\uDC1F'
-	  }, {
-	    symbol: '\uD83D\uDC2C'
-	  }, {
-	    symbol: '\uD83D\uDC33'
-	  }, {
-	    symbol: '\uD83D\uDC0B'
-	  }, {
-	    symbol: '\uD83E\uDD88'
-	  }, {
-	    symbol: '\uD83D\uDC0A'
-	  }, {
-	    symbol: '\uD83D\uDC05'
-	  }, {
-	    symbol: '\uD83D\uDC06'
-	  }, {
-	    symbol: '\uD83E\uDD93'
-	  }, {
-	    symbol: '\uD83E\uDD8D'
-	  }, {
-	    symbol: '\uD83D\uDC18'
-	  }, {
-	    symbol: '\uD83E\uDD9B'
-	  }, {
-	    symbol: '\uD83E\uDD8F'
-	  }, {
-	    symbol: '\uD83D\uDC2A'
-	  }, {
-	    symbol: '\uD83D\uDC2B'
-	  }, {
-	    symbol: '\uD83E\uDD92'
-	  }, {
-	    symbol: '\uD83E\uDD98'
-	  }, {
-	    symbol: '\uD83D\uDC03'
-	  }, {
-	    symbol: '\uD83D\uDC02'
-	  }, {
-	    symbol: '\uD83D\uDC04'
-	  }, {
-	    symbol: '\uD83D\uDC0E'
-	  }, {
-	    symbol: '\uD83D\uDC16'
-	  }, {
-	    symbol: '\uD83D\uDC0F'
-	  }, {
-	    symbol: '\uD83D\uDC11'
-	  }, {
-	    symbol: '\uD83E\uDD99'
-	  }, {
-	    symbol: '\uD83D\uDC10'
-	  }, {
-	    symbol: '\uD83E\uDD8C'
-	  }, {
-	    symbol: '\uD83D\uDC15'
-	  }, {
-	    symbol: '\uD83D\uDC29'
-	  }, {
-	    symbol: '\uD83D\uDC08'
-	  }, {
-	    symbol: '\uD83D\uDC13'
-	  }, {
-	    symbol: '\uD83E\uDD83'
-	  }, {
-	    symbol: '\uD83E\uDD9A'
-	  }, {
-	    symbol: '\uD83E\uDD9C'
-	  }, {
-	    symbol: '\uD83E\uDDA2'
-	  }, {
-	    symbol: '\uD83D\uDD4A'
-	  }, {
-	    symbol: '\uD83D\uDC07'
-	  }, {
-	    symbol: '\uD83E\uDD9D'
-	  }, {
-	    symbol: '\uD83E\uDDA1'
-	  }, {
-	    symbol: '\uD83D\uDC01'
-	  }, {
-	    symbol: '\uD83D\uDC00'
-	  }, {
-	    symbol: '\uD83D\uDC3F'
-	  }, {
-	    symbol: '\uD83E\uDD94'
-	  }, {
-	    symbol: '\uD83D\uDC3E'
-	  }, {
-	    symbol: '\uD83D\uDC09'
-	  }, {
-	    symbol: '\uD83D\uDC32'
-	  }, {
-	    symbol: '\uD83C\uDF35'
-	  }, {
-	    symbol: '\uD83C\uDF84'
-	  }, {
-	    symbol: '\uD83C\uDF32'
-	  }, {
-	    symbol: '\uD83C\uDF33'
-	  }, {
-	    symbol: '\uD83C\uDF34'
-	  }, {
-	    symbol: '\uD83C\uDF31'
-	  }, {
-	    symbol: '\uD83C\uDF3F'
-	  }, {
-	    symbol: '\u2618'
-	  }, {
-	    symbol: '\uD83C\uDF40'
-	  }, {
-	    symbol: '\uD83C\uDF8D'
-	  }, {
-	    symbol: '\uD83C\uDF8B'
-	  }, {
-	    symbol: '\uD83C\uDF43'
-	  }, {
-	    symbol: '\uD83C\uDF42'
-	  }, {
-	    symbol: '\uD83C\uDF41'
-	  }, {
-	    symbol: '\uD83C\uDF44'
-	  }, {
-	    symbol: '\uD83D\uDC1A'
-	  }, {
-	    symbol: '\uD83C\uDF3E'
-	  }, {
-	    symbol: '\uD83D\uDC90'
-	  }, {
-	    symbol: '\uD83C\uDF37'
-	  }, {
-	    symbol: '\uD83C\uDF39'
-	  }, {
-	    symbol: '\uD83E\uDD40'
-	  }, {
-	    symbol: '\uD83C\uDF3A'
-	  }, {
-	    symbol: '\uD83C\uDF38'
-	  }, {
-	    symbol: '\uD83C\uDF3C'
-	  }, {
-	    symbol: '\uD83C\uDF3B'
-	  }, {
-	    symbol: '\uD83C\uDF1E'
-	  }, {
-	    symbol: '\uD83C\uDF1D'
-	  }, {
-	    symbol: '\uD83C\uDF1B'
-	  }, {
-	    symbol: '\uD83C\uDF1C'
-	  }, {
-	    symbol: '\uD83C\uDF1A'
-	  }, {
-	    symbol: '\uD83C\uDF15'
-	  }, {
-	    symbol: '\uD83C\uDF16'
-	  }, {
-	    symbol: '\uD83C\uDF17'
-	  }, {
-	    symbol: '\uD83C\uDF18'
-	  }, {
-	    symbol: '\uD83C\uDF11'
-	  }, {
-	    symbol: '\uD83C\uDF12'
-	  }, {
-	    symbol: '\uD83C\uDF13'
-	  }, {
-	    symbol: '\uD83C\uDF14'
-	  }, {
-	    symbol: '\uD83C\uDF19'
-	  }, {
-	    symbol: '\uD83C\uDF0E'
-	  }, {
-	    symbol: '\uD83C\uDF0D'
-	  }, {
-	    symbol: '\uD83C\uDF0F'
-	  }, {
-	    symbol: '\uD83D\uDCAB'
-	  }, {
-	    symbol: '\u2B50'
-	  }, {
-	    symbol: '\uD83C\uDF1F'
-	  }, {
-	    symbol: '\u2728'
-	  }, {
-	    symbol: '\u26A1'
-	  }, {
-	    symbol: '\u2604'
-	  }, {
-	    symbol: '\uD83D\uDCA5'
-	  }, {
-	    symbol: '\uD83D\uDD25'
-	  }, {
-	    symbol: '\uD83C\uDF2A'
-	  }, {
-	    symbol: '\uD83C\uDF08'
-	  }, {
-	    symbol: '\u2600'
-	  }, {
-	    symbol: '\uD83C\uDF24'
-	  }, {
-	    symbol: '\uD83C\uDF25'
-	  }, {
-	    symbol: '\uD83C\uDF26'
-	  }, {
-	    symbol: '\uD83C\uDF27'
-	  }, {
-	    symbol: '\uD83C\uDF29'
-	  }, {
-	    symbol: '\uD83C\uDF28'
-	  }, {
-	    symbol: '\u2744'
-	  }, {
-	    symbol: '\u2603'
-	  }, {
-	    symbol: '\u26C4'
-	  }, {
-	    symbol: '\uD83C\uDF2C'
-	  }, {
-	    symbol: '\uD83D\uDCA8'
-	  }, {
-	    symbol: '\uD83D\uDCA7'
-	  }, {
-	    symbol: '\uD83D\uDCA6'
-	  }, {
-	    symbol: '\u2614'
-	  }, {
-	    symbol: '\u2602'
-	  }, {
-	    symbol: '\uD83C\uDF0A'
-	  }, {
-	    symbol: '\uD83C\uDF2B'
-	  }]
+		id: 2,
+		code: 'ANIMALS',
+		showForWindows: true,
+		emoji: [{
+			symbol: '\uD83D\uDC36'
+		}, {
+			symbol: '\uD83D\uDC31'
+		}, {
+			symbol: '\uD83D\uDC2D'
+		}, {
+			symbol: '\uD83D\uDC39'
+		}, {
+			symbol: '\uD83D\uDC30'
+		}, {
+			symbol: '\uD83E\uDD8A'
+		}, {
+			symbol: '\uD83D\uDC3B'
+		}, {
+			symbol: '\uD83D\uDC3C'
+		}, {
+			symbol: '\uD83D\uDC28'
+		}, {
+			symbol: '\uD83D\uDC2F'
+		}, {
+			symbol: '\uD83E\uDD81'
+		}, {
+			symbol: '\uD83D\uDC2E'
+		}, {
+			symbol: '\uD83D\uDC37'
+		}, {
+			symbol: '\uD83D\uDC3D'
+		}, {
+			symbol: '\uD83D\uDC38'
+		}, {
+			symbol: '\uD83D\uDC35'
+		}, {
+			symbol: '\uD83D\uDE48'
+		}, {
+			symbol: '\uD83D\uDE49'
+		}, {
+			symbol: '\uD83D\uDE4A'
+		}, {
+			symbol: '\uD83D\uDC12'
+		}, {
+			symbol: '\uD83D\uDC14'
+		}, {
+			symbol: '\uD83D\uDC27'
+		}, {
+			symbol: '\uD83D\uDC26'
+		}, {
+			symbol: '\uD83D\uDC24'
+		}, {
+			symbol: '\uD83D\uDC23'
+		}, {
+			symbol: '\uD83D\uDC25'
+		}, {
+			symbol: '\uD83E\uDD86'
+		}, {
+			symbol: '\uD83E\uDD85'
+		}, {
+			symbol: '\uD83E\uDD89'
+		}, {
+			symbol: '\uD83E\uDD87'
+		}, {
+			symbol: '\uD83D\uDC3A'
+		}, {
+			symbol: '\uD83D\uDC17'
+		}, {
+			symbol: '\uD83D\uDC34'
+		}, {
+			symbol: '\uD83E\uDD84'
+		}, {
+			symbol: '\uD83D\uDC1D'
+		}, {
+			symbol: '\uD83D\uDC1B'
+		}, {
+			symbol: '\uD83E\uDD8B'
+		}, {
+			symbol: '\uD83D\uDC0C'
+		}, {
+			symbol: '\uD83D\uDC1E'
+		}, {
+			symbol: '\uD83D\uDC1C'
+		}, {
+			symbol: '\uD83E\uDD9F'
+		}, {
+			symbol: '\uD83E\uDD97'
+		}, {
+			symbol: '\uD83D\uDD77'
+		}, {
+			symbol: '\uD83D\uDD78'
+		}, {
+			symbol: '\uD83E\uDD82'
+		}, {
+			symbol: '\uD83D\uDC22'
+		}, {
+			symbol: '\uD83D\uDC0D'
+		}, {
+			symbol: '\uD83E\uDD8E'
+		}, {
+			symbol: '\uD83E\uDD96'
+		}, {
+			symbol: '\uD83E\uDD95'
+		}, {
+			symbol: '\uD83D\uDC19'
+		}, {
+			symbol: '\uD83E\uDD91'
+		}, {
+			symbol: '\uD83E\uDD90'
+		}, {
+			symbol: '\uD83E\uDD9E'
+		}, {
+			symbol: '\uD83E\uDD80'
+		}, {
+			symbol: '\uD83D\uDC21'
+		}, {
+			symbol: '\uD83D\uDC20'
+		}, {
+			symbol: '\uD83D\uDC1F'
+		}, {
+			symbol: '\uD83D\uDC2C'
+		}, {
+			symbol: '\uD83D\uDC33'
+		}, {
+			symbol: '\uD83D\uDC0B'
+		}, {
+			symbol: '\uD83E\uDD88'
+		}, {
+			symbol: '\uD83D\uDC0A'
+		}, {
+			symbol: '\uD83D\uDC05'
+		}, {
+			symbol: '\uD83D\uDC06'
+		}, {
+			symbol: '\uD83E\uDD93'
+		}, {
+			symbol: '\uD83E\uDD8D'
+		}, {
+			symbol: '\uD83D\uDC18'
+		}, {
+			symbol: '\uD83E\uDD9B'
+		}, {
+			symbol: '\uD83E\uDD8F'
+		}, {
+			symbol: '\uD83D\uDC2A'
+		}, {
+			symbol: '\uD83D\uDC2B'
+		}, {
+			symbol: '\uD83E\uDD92'
+		}, {
+			symbol: '\uD83E\uDD98'
+		}, {
+			symbol: '\uD83D\uDC03'
+		}, {
+			symbol: '\uD83D\uDC02'
+		}, {
+			symbol: '\uD83D\uDC04'
+		}, {
+			symbol: '\uD83D\uDC0E'
+		}, {
+			symbol: '\uD83D\uDC16'
+		}, {
+			symbol: '\uD83D\uDC0F'
+		}, {
+			symbol: '\uD83D\uDC11'
+		}, {
+			symbol: '\uD83E\uDD99'
+		}, {
+			symbol: '\uD83D\uDC10'
+		}, {
+			symbol: '\uD83E\uDD8C'
+		}, {
+			symbol: '\uD83D\uDC15'
+		}, {
+			symbol: '\uD83D\uDC29'
+		}, {
+			symbol: '\uD83D\uDC08'
+		}, {
+			symbol: '\uD83D\uDC13'
+		}, {
+			symbol: '\uD83E\uDD83'
+		}, {
+			symbol: '\uD83E\uDD9A'
+		}, {
+			symbol: '\uD83E\uDD9C'
+		}, {
+			symbol: '\uD83E\uDDA2'
+		}, {
+			symbol: '\uD83D\uDD4A'
+		}, {
+			symbol: '\uD83D\uDC07'
+		}, {
+			symbol: '\uD83E\uDD9D'
+		}, {
+			symbol: '\uD83E\uDDA1'
+		}, {
+			symbol: '\uD83D\uDC01'
+		}, {
+			symbol: '\uD83D\uDC00'
+		}, {
+			symbol: '\uD83D\uDC3F'
+		}, {
+			symbol: '\uD83E\uDD94'
+		}, {
+			symbol: '\uD83D\uDC3E'
+		}, {
+			symbol: '\uD83D\uDC09'
+		}, {
+			symbol: '\uD83D\uDC32'
+		}, {
+			symbol: '\uD83C\uDF35'
+		}, {
+			symbol: '\uD83C\uDF84'
+		}, {
+			symbol: '\uD83C\uDF32'
+		}, {
+			symbol: '\uD83C\uDF33'
+		}, {
+			symbol: '\uD83C\uDF34'
+		}, {
+			symbol: '\uD83C\uDF31'
+		}, {
+			symbol: '\uD83C\uDF3F'
+		}, {
+			symbol: '\u2618'
+		}, {
+			symbol: '\uD83C\uDF40'
+		}, {
+			symbol: '\uD83C\uDF8D'
+		}, {
+			symbol: '\uD83C\uDF8B'
+		}, {
+			symbol: '\uD83C\uDF43'
+		}, {
+			symbol: '\uD83C\uDF42'
+		}, {
+			symbol: '\uD83C\uDF41'
+		}, {
+			symbol: '\uD83C\uDF44'
+		}, {
+			symbol: '\uD83D\uDC1A'
+		}, {
+			symbol: '\uD83C\uDF3E'
+		}, {
+			symbol: '\uD83D\uDC90'
+		}, {
+			symbol: '\uD83C\uDF37'
+		}, {
+			symbol: '\uD83C\uDF39'
+		}, {
+			symbol: '\uD83E\uDD40'
+		}, {
+			symbol: '\uD83C\uDF3A'
+		}, {
+			symbol: '\uD83C\uDF38'
+		}, {
+			symbol: '\uD83C\uDF3C'
+		}, {
+			symbol: '\uD83C\uDF3B'
+		}, {
+			symbol: '\uD83C\uDF1E'
+		}, {
+			symbol: '\uD83C\uDF1D'
+		}, {
+			symbol: '\uD83C\uDF1B'
+		}, {
+			symbol: '\uD83C\uDF1C'
+		}, {
+			symbol: '\uD83C\uDF1A'
+		}, {
+			symbol: '\uD83C\uDF15'
+		}, {
+			symbol: '\uD83C\uDF16'
+		}, {
+			symbol: '\uD83C\uDF17'
+		}, {
+			symbol: '\uD83C\uDF18'
+		}, {
+			symbol: '\uD83C\uDF11'
+		}, {
+			symbol: '\uD83C\uDF12'
+		}, {
+			symbol: '\uD83C\uDF13'
+		}, {
+			symbol: '\uD83C\uDF14'
+		}, {
+			symbol: '\uD83C\uDF19'
+		}, {
+			symbol: '\uD83C\uDF0E'
+		}, {
+			symbol: '\uD83C\uDF0D'
+		}, {
+			symbol: '\uD83C\uDF0F'
+		}, {
+			symbol: '\uD83D\uDCAB'
+		}, {
+			symbol: '\u2B50'
+		}, {
+			symbol: '\uD83C\uDF1F'
+		}, {
+			symbol: '\u2728'
+		}, {
+			symbol: '\u26A1'
+		}, {
+			symbol: '\u2604'
+		}, {
+			symbol: '\uD83D\uDCA5'
+		}, {
+			symbol: '\uD83D\uDD25'
+		}, {
+			symbol: '\uD83C\uDF2A'
+		}, {
+			symbol: '\uD83C\uDF08'
+		}, {
+			symbol: '\u2600'
+		}, {
+			symbol: '\uD83C\uDF24'
+		}, {
+			symbol: '\uD83C\uDF25'
+		}, {
+			symbol: '\uD83C\uDF26'
+		}, {
+			symbol: '\uD83C\uDF27'
+		}, {
+			symbol: '\uD83C\uDF29'
+		}, {
+			symbol: '\uD83C\uDF28'
+		}, {
+			symbol: '\u2744'
+		}, {
+			symbol: '\u2603'
+		}, {
+			symbol: '\u26C4'
+		}, {
+			symbol: '\uD83C\uDF2C'
+		}, {
+			symbol: '\uD83D\uDCA8'
+		}, {
+			symbol: '\uD83D\uDCA7'
+		}, {
+			symbol: '\uD83D\uDCA6'
+		}, {
+			symbol: '\u2614'
+		}, {
+			symbol: '\u2602'
+		}, {
+			symbol: '\uD83C\uDF0A'
+		}, {
+			symbol: '\uD83C\uDF2B'
+		}]
 	}, {
-	  id: 3,
-	  code: 'FOOD',
-	  showForWindows: true,
-	  emoji: [{
-	    symbol: '\uD83C\uDF4F'
-	  }, {
-	    symbol: '\uD83C\uDF4E'
-	  }, {
-	    symbol: '\uD83C\uDF50'
-	  }, {
-	    symbol: '\uD83C\uDF4A'
-	  }, {
-	    symbol: '\uD83C\uDF4B'
-	  }, {
-	    symbol: '\uD83C\uDF4C'
-	  }, {
-	    symbol: '\uD83C\uDF49'
-	  }, {
-	    symbol: '\uD83C\uDF47'
-	  }, {
-	    symbol: '\uD83C\uDF53'
-	  }, {
-	    symbol: '\uD83C\uDF48'
-	  }, {
-	    symbol: '\uD83C\uDF52'
-	  }, {
-	    symbol: '\uD83C\uDF51'
-	  }, {
-	    symbol: '\uD83E\uDD6D'
-	  }, {
-	    symbol: '\uD83C\uDF4D'
-	  }, {
-	    symbol: '\uD83E\uDD65'
-	  }, {
-	    symbol: '\uD83E\uDD5D'
-	  }, {
-	    symbol: '\uD83C\uDF45'
-	  }, {
-	    symbol: '\uD83C\uDF46'
-	  }, {
-	    symbol: '\uD83E\uDD51'
-	  }, {
-	    symbol: '\uD83E\uDD66'
-	  }, {
-	    symbol: '\uD83E\uDD6C'
-	  }, {
-	    symbol: '\uD83E\uDD52'
-	  }, {
-	    symbol: '\uD83C\uDF36'
-	  }, {
-	    symbol: '\uD83C\uDF3D'
-	  }, {
-	    symbol: '\uD83E\uDD55'
-	  }, {
-	    symbol: '\uD83E\uDD54'
-	  }, {
-	    symbol: '\uD83C\uDF60'
-	  }, {
-	    symbol: '\uD83E\uDD50'
-	  }, {
-	    symbol: '\uD83E\uDD6F'
-	  }, {
-	    symbol: '\uD83C\uDF5E'
-	  }, {
-	    symbol: '\uD83E\uDD56'
-	  }, {
-	    symbol: '\uD83E\uDD68'
-	  }, {
-	    symbol: '\uD83E\uDDC0'
-	  }, {
-	    symbol: '\uD83E\uDD5A'
-	  }, {
-	    symbol: '\uD83C\uDF73'
-	  }, {
-	    symbol: '\uD83E\uDD5E'
-	  }, {
-	    symbol: '\uD83E\uDD53'
-	  }, {
-	    symbol: '\uD83E\uDD69'
-	  }, {
-	    symbol: '\uD83C\uDF57'
-	  }, {
-	    symbol: '\uD83C\uDF56'
-	  }, {
-	    symbol: '\uD83E\uDDB4'
-	  }, {
-	    symbol: '\uD83C\uDF2D'
-	  }, {
-	    symbol: '\uD83C\uDF54'
-	  }, {
-	    symbol: '\uD83C\uDF5F'
-	  }, {
-	    symbol: '\uD83C\uDF55'
-	  }, {
-	    symbol: '\uD83E\uDD6A'
-	  }, {
-	    symbol: '\uD83E\uDD59'
-	  }, {
-	    symbol: '\uD83C\uDF2E'
-	  }, {
-	    symbol: '\uD83C\uDF2F'
-	  }, {
-	    symbol: '\uD83E\uDD57'
-	  }, {
-	    symbol: '\uD83E\uDD58'
-	  }, {
-	    symbol: '\uD83E\uDD6B'
-	  }, {
-	    symbol: '\uD83C\uDF5D'
-	  }, {
-	    symbol: '\uD83C\uDF5C'
-	  }, {
-	    symbol: '\uD83C\uDF72'
-	  }, {
-	    symbol: '\uD83C\uDF5B'
-	  }, {
-	    symbol: '\uD83C\uDF63'
-	  }, {
-	    symbol: '\uD83C\uDF71'
-	  }, {
-	    symbol: '\uD83E\uDD5F'
-	  }, {
-	    symbol: '\uD83C\uDF64'
-	  }, {
-	    symbol: '\uD83C\uDF59'
-	  }, {
-	    symbol: '\uD83C\uDF5A'
-	  }, {
-	    symbol: '\uD83C\uDF58'
-	  }, {
-	    symbol: '\uD83C\uDF65'
-	  }, {
-	    symbol: '\uD83E\uDD60'
-	  }, {
-	    symbol: '\uD83E\uDD6E'
-	  }, {
-	    symbol: '\uD83C\uDF62'
-	  }, {
-	    symbol: '\uD83C\uDF61'
-	  }, {
-	    symbol: '\uD83C\uDF67'
-	  }, {
-	    symbol: '\uD83C\uDF68'
-	  }, {
-	    symbol: '\uD83C\uDF66'
-	  }, {
-	    symbol: '\uD83E\uDD67'
-	  }, {
-	    symbol: '\uD83E\uDDC1'
-	  }, {
-	    symbol: '\uD83C\uDF70'
-	  }, {
-	    symbol: '\uD83C\uDF82'
-	  }, {
-	    symbol: '\uD83C\uDF6E'
-	  }, {
-	    symbol: '\uD83C\uDF6D'
-	  }, {
-	    symbol: '\uD83C\uDF6C'
-	  }, {
-	    symbol: '\uD83C\uDF6B'
-	  }, {
-	    symbol: '\uD83C\uDF7F'
-	  }, {
-	    symbol: '\uD83C\uDF69'
-	  }, {
-	    symbol: '\uD83C\uDF6A'
-	  }, {
-	    symbol: '\uD83C\uDF30'
-	  }, {
-	    symbol: '\uD83E\uDD5C'
-	  }, {
-	    symbol: '\uD83C\uDF6F'
-	  }, {
-	    symbol: '\uD83E\uDD5B'
-	  }, {
-	    symbol: '\uD83C\uDF7C'
-	  }, {
-	    symbol: '\u2615'
-	  }, {
-	    symbol: '\uD83C\uDF75'
-	  }, {
-	    symbol: '\uD83E\uDD64'
-	  }, {
-	    symbol: '\uD83C\uDF76'
-	  }, {
-	    symbol: '\uD83C\uDF7A'
-	  }, {
-	    symbol: '\uD83C\uDF7B'
-	  }, {
-	    symbol: '\uD83E\uDD42'
-	  }, {
-	    symbol: '\uD83C\uDF77'
-	  }, {
-	    symbol: '\uD83E\uDD43'
-	  }, {
-	    symbol: '\uD83C\uDF78'
-	  }, {
-	    symbol: '\uD83C\uDF79'
-	  }, {
-	    symbol: '\uD83C\uDF7E'
-	  }, {
-	    symbol: '\uD83E\uDD44'
-	  }, {
-	    symbol: '\uD83C\uDF74'
-	  }, {
-	    symbol: '\uD83C\uDF7D'
-	  }, {
-	    symbol: '\uD83E\uDD63'
-	  }, {
-	    symbol: '\uD83E\uDD61'
-	  }, {
-	    symbol: '\uD83E\uDD62'
-	  }, {
-	    symbol: '\uD83E\uDDC2'
-	  }]
+		id: 3,
+		code: 'FOOD',
+		showForWindows: true,
+		emoji: [{
+			symbol: '\uD83C\uDF4F'
+		}, {
+			symbol: '\uD83C\uDF4E'
+		}, {
+			symbol: '\uD83C\uDF50'
+		}, {
+			symbol: '\uD83C\uDF4A'
+		}, {
+			symbol: '\uD83C\uDF4B'
+		}, {
+			symbol: '\uD83C\uDF4C'
+		}, {
+			symbol: '\uD83C\uDF49'
+		}, {
+			symbol: '\uD83C\uDF47'
+		}, {
+			symbol: '\uD83C\uDF53'
+		}, {
+			symbol: '\uD83C\uDF48'
+		}, {
+			symbol: '\uD83C\uDF52'
+		}, {
+			symbol: '\uD83C\uDF51'
+		}, {
+			symbol: '\uD83E\uDD6D'
+		}, {
+			symbol: '\uD83C\uDF4D'
+		}, {
+			symbol: '\uD83E\uDD65'
+		}, {
+			symbol: '\uD83E\uDD5D'
+		}, {
+			symbol: '\uD83C\uDF45'
+		}, {
+			symbol: '\uD83C\uDF46'
+		}, {
+			symbol: '\uD83E\uDD51'
+		}, {
+			symbol: '\uD83E\uDD66'
+		}, {
+			symbol: '\uD83E\uDD6C'
+		}, {
+			symbol: '\uD83E\uDD52'
+		}, {
+			symbol: '\uD83C\uDF36'
+		}, {
+			symbol: '\uD83C\uDF3D'
+		}, {
+			symbol: '\uD83E\uDD55'
+		}, {
+			symbol: '\uD83E\uDD54'
+		}, {
+			symbol: '\uD83C\uDF60'
+		}, {
+			symbol: '\uD83E\uDD50'
+		}, {
+			symbol: '\uD83E\uDD6F'
+		}, {
+			symbol: '\uD83C\uDF5E'
+		}, {
+			symbol: '\uD83E\uDD56'
+		}, {
+			symbol: '\uD83E\uDD68'
+		}, {
+			symbol: '\uD83E\uDDC0'
+		}, {
+			symbol: '\uD83E\uDD5A'
+		}, {
+			symbol: '\uD83C\uDF73'
+		}, {
+			symbol: '\uD83E\uDD5E'
+		}, {
+			symbol: '\uD83E\uDD53'
+		}, {
+			symbol: '\uD83E\uDD69'
+		}, {
+			symbol: '\uD83C\uDF57'
+		}, {
+			symbol: '\uD83C\uDF56'
+		}, {
+			symbol: '\uD83E\uDDB4'
+		}, {
+			symbol: '\uD83C\uDF2D'
+		}, {
+			symbol: '\uD83C\uDF54'
+		}, {
+			symbol: '\uD83C\uDF5F'
+		}, {
+			symbol: '\uD83C\uDF55'
+		}, {
+			symbol: '\uD83E\uDD6A'
+		}, {
+			symbol: '\uD83E\uDD59'
+		}, {
+			symbol: '\uD83C\uDF2E'
+		}, {
+			symbol: '\uD83C\uDF2F'
+		}, {
+			symbol: '\uD83E\uDD57'
+		}, {
+			symbol: '\uD83E\uDD58'
+		}, {
+			symbol: '\uD83E\uDD6B'
+		}, {
+			symbol: '\uD83C\uDF5D'
+		}, {
+			symbol: '\uD83C\uDF5C'
+		}, {
+			symbol: '\uD83C\uDF72'
+		}, {
+			symbol: '\uD83C\uDF5B'
+		}, {
+			symbol: '\uD83C\uDF63'
+		}, {
+			symbol: '\uD83C\uDF71'
+		}, {
+			symbol: '\uD83E\uDD5F'
+		}, {
+			symbol: '\uD83C\uDF64'
+		}, {
+			symbol: '\uD83C\uDF59'
+		}, {
+			symbol: '\uD83C\uDF5A'
+		}, {
+			symbol: '\uD83C\uDF58'
+		}, {
+			symbol: '\uD83C\uDF65'
+		}, {
+			symbol: '\uD83E\uDD60'
+		}, {
+			symbol: '\uD83E\uDD6E'
+		}, {
+			symbol: '\uD83C\uDF62'
+		}, {
+			symbol: '\uD83C\uDF61'
+		}, {
+			symbol: '\uD83C\uDF67'
+		}, {
+			symbol: '\uD83C\uDF68'
+		}, {
+			symbol: '\uD83C\uDF66'
+		}, {
+			symbol: '\uD83E\uDD67'
+		}, {
+			symbol: '\uD83E\uDDC1'
+		}, {
+			symbol: '\uD83C\uDF70'
+		}, {
+			symbol: '\uD83C\uDF82'
+		}, {
+			symbol: '\uD83C\uDF6E'
+		}, {
+			symbol: '\uD83C\uDF6D'
+		}, {
+			symbol: '\uD83C\uDF6C'
+		}, {
+			symbol: '\uD83C\uDF6B'
+		}, {
+			symbol: '\uD83C\uDF7F'
+		}, {
+			symbol: '\uD83C\uDF69'
+		}, {
+			symbol: '\uD83C\uDF6A'
+		}, {
+			symbol: '\uD83C\uDF30'
+		}, {
+			symbol: '\uD83E\uDD5C'
+		}, {
+			symbol: '\uD83C\uDF6F'
+		}, {
+			symbol: '\uD83E\uDD5B'
+		}, {
+			symbol: '\uD83C\uDF7C'
+		}, {
+			symbol: '\u2615'
+		}, {
+			symbol: '\uD83C\uDF75'
+		}, {
+			symbol: '\uD83E\uDD64'
+		}, {
+			symbol: '\uD83C\uDF76'
+		}, {
+			symbol: '\uD83C\uDF7A'
+		}, {
+			symbol: '\uD83C\uDF7B'
+		}, {
+			symbol: '\uD83E\uDD42'
+		}, {
+			symbol: '\uD83C\uDF77'
+		}, {
+			symbol: '\uD83E\uDD43'
+		}, {
+			symbol: '\uD83C\uDF78'
+		}, {
+			symbol: '\uD83C\uDF79'
+		}, {
+			symbol: '\uD83C\uDF7E'
+		}, {
+			symbol: '\uD83E\uDD44'
+		}, {
+			symbol: '\uD83C\uDF74'
+		}, {
+			symbol: '\uD83C\uDF7D'
+		}, {
+			symbol: '\uD83E\uDD63'
+		}, {
+			symbol: '\uD83E\uDD61'
+		}, {
+			symbol: '\uD83E\uDD62'
+		}, {
+			symbol: '\uD83E\uDDC2'
+		}]
 	}, {
-	  id: 4,
-	  code: 'HOBBY',
-	  showForWindows: true,
-	  emoji: [{
-	    symbol: '\u26BD'
-	  }, {
-	    symbol: '\uD83C\uDFC0'
-	  }, {
-	    symbol: '\uD83C\uDFC8'
-	  }, {
-	    symbol: '\u26BE'
-	  }, {
-	    symbol: '\uD83E\uDD4E'
-	  }, {
-	    symbol: '\uD83C\uDFBE'
-	  }, {
-	    symbol: '\uD83C\uDFD0'
-	  }, {
-	    symbol: '\uD83C\uDFC9'
-	  }, {
-	    symbol: '\uD83E\uDD4F'
-	  }, {
-	    symbol: '\uD83C\uDFB1'
-	  }, {
-	    symbol: '\uD83C\uDFD3'
-	  }, {
-	    symbol: '\uD83C\uDFF8'
-	  }, {
-	    symbol: '\uD83C\uDFD2'
-	  }, {
-	    symbol: '\uD83C\uDFD1'
-	  }, {
-	    symbol: '\uD83E\uDD4D'
-	  }, {
-	    symbol: '\uD83C\uDFCF'
-	  }, {
-	    symbol: '\uD83E\uDD45'
-	  }, {
-	    symbol: '\u26F3'
-	  }, {
-	    symbol: '\uD83C\uDFF9'
-	  }, {
-	    symbol: '\uD83C\uDFA3'
-	  }, {
-	    symbol: '\uD83E\uDD4A'
-	  }, {
-	    symbol: '\uD83E\uDD4B'
-	  }, {
-	    symbol: '\uD83C\uDFBD'
-	  }, {
-	    symbol: '\uD83D\uDEF9'
-	  }, {
-	    symbol: '\uD83D\uDEF7'
-	  }, {
-	    symbol: '\u26F8'
-	  }, {
-	    symbol: '\uD83E\uDD4C'
-	  }, {
-	    symbol: '\uD83C\uDFBF'
-	  }, {
-	    symbol: '\u26F7'
-	  }, {
-	    symbol: '\uD83C\uDFC2'
-	  }, {
-	    symbol: '\uD83C\uDFCB'
-	  }, {
-	    symbol: '\uD83E\uDD3C'
-	  }, {
-	    symbol: '\uD83E\uDD38'
-	  }, {
-	    symbol: '\u26F9'
-	  }, {
-	    symbol: '\uD83E\uDD3A'
-	  }, {
-	    symbol: '\uD83E\uDD3E'
-	  }, {
-	    symbol: '\uD83C\uDFCC'
-	  }, {
-	    symbol: '\uD83C\uDFC7'
-	  }, {
-	    symbol: '\uD83E\uDDD8'
-	  }, {
-	    symbol: '\uD83C\uDFC4'
-	  }, {
-	    symbol: '\uD83C\uDFCA'
-	  }, {
-	    symbol: '\uD83E\uDD3D'
-	  }, {
-	    symbol: '\uD83D\uDEA3'
-	  }, {
-	    symbol: '\uD83E\uDDD7'
-	  }, {
-	    symbol: '\uD83D\uDEB5'
-	  }, {
-	    symbol: '\uD83D\uDEB4'
-	  }, {
-	    symbol: '\uD83C\uDFC6'
-	  }, {
-	    symbol: '\uD83E\uDD47'
-	  }, {
-	    symbol: '\uD83E\uDD48'
-	  }, {
-	    symbol: '\uD83E\uDD49'
-	  }, {
-	    symbol: '\uD83C\uDFC5'
-	  }, {
-	    symbol: '\uD83C\uDF96'
-	  }, {
-	    symbol: '\uD83C\uDFF5'
-	  }, {
-	    symbol: '\uD83C\uDF97'
-	  }, {
-	    symbol: '\uD83C\uDFAB'
-	  }, {
-	    symbol: '\uD83C\uDF9F'
-	  }, {
-	    symbol: '\uD83C\uDFAA'
-	  }, {
-	    symbol: '\uD83E\uDD39'
-	  }, {
-	    symbol: '\uD83C\uDFAD'
-	  }, {
-	    symbol: '\uD83C\uDFA8'
-	  }, {
-	    symbol: '\uD83C\uDFAC'
-	  }, {
-	    symbol: '\uD83C\uDFA4'
-	  }, {
-	    symbol: '\uD83C\uDFA7'
-	  }, {
-	    symbol: '\uD83C\uDFBC'
-	  }, {
-	    symbol: '\uD83C\uDFB9'
-	  }, {
-	    symbol: '\uD83E\uDD41'
-	  }, {
-	    symbol: '\uD83C\uDFB7'
-	  }, {
-	    symbol: '\uD83C\uDFBA'
-	  }, {
-	    symbol: '\uD83C\uDFB8'
-	  }, {
-	    symbol: '\uD83C\uDFBB'
-	  }, {
-	    symbol: '\uD83C\uDFB2'
-	  }, {
-	    symbol: '\u265F'
-	  }, {
-	    symbol: '\uD83C\uDFAF'
-	  }, {
-	    symbol: '\uD83C\uDFB3'
-	  }, {
-	    symbol: '\uD83C\uDFAE'
-	  }, {
-	    symbol: '\uD83C\uDFB0'
-	  }, {
-	    symbol: '\uD83E\uDDE9'
-	  }]
+		id: 4,
+		code: 'HOBBY',
+		showForWindows: true,
+		emoji: [{
+			symbol: '\u26BD'
+		}, {
+			symbol: '\uD83C\uDFC0'
+		}, {
+			symbol: '\uD83C\uDFC8'
+		}, {
+			symbol: '\u26BE'
+		}, {
+			symbol: '\uD83E\uDD4E'
+		}, {
+			symbol: '\uD83C\uDFBE'
+		}, {
+			symbol: '\uD83C\uDFD0'
+		}, {
+			symbol: '\uD83C\uDFC9'
+		}, {
+			symbol: '\uD83E\uDD4F'
+		}, {
+			symbol: '\uD83C\uDFB1'
+		}, {
+			symbol: '\uD83C\uDFD3'
+		}, {
+			symbol: '\uD83C\uDFF8'
+		}, {
+			symbol: '\uD83C\uDFD2'
+		}, {
+			symbol: '\uD83C\uDFD1'
+		}, {
+			symbol: '\uD83E\uDD4D'
+		}, {
+			symbol: '\uD83C\uDFCF'
+		}, {
+			symbol: '\uD83E\uDD45'
+		}, {
+			symbol: '\u26F3'
+		}, {
+			symbol: '\uD83C\uDFF9'
+		}, {
+			symbol: '\uD83C\uDFA3'
+		}, {
+			symbol: '\uD83E\uDD4A'
+		}, {
+			symbol: '\uD83E\uDD4B'
+		}, {
+			symbol: '\uD83C\uDFBD'
+		}, {
+			symbol: '\uD83D\uDEF9'
+		}, {
+			symbol: '\uD83D\uDEF7'
+		}, {
+			symbol: '\u26F8'
+		}, {
+			symbol: '\uD83E\uDD4C'
+		}, {
+			symbol: '\uD83C\uDFBF'
+		}, {
+			symbol: '\u26F7'
+		}, {
+			symbol: '\uD83C\uDFC2'
+		}, {
+			symbol: '\uD83C\uDFCB'
+		}, {
+			symbol: '\uD83E\uDD3C'
+		}, {
+			symbol: '\uD83E\uDD38'
+		}, {
+			symbol: '\u26F9'
+		}, {
+			symbol: '\uD83E\uDD3A'
+		}, {
+			symbol: '\uD83E\uDD3E'
+		}, {
+			symbol: '\uD83C\uDFCC'
+		}, {
+			symbol: '\uD83C\uDFC7'
+		}, {
+			symbol: '\uD83E\uDDD8'
+		}, {
+			symbol: '\uD83C\uDFC4'
+		}, {
+			symbol: '\uD83C\uDFCA'
+		}, {
+			symbol: '\uD83E\uDD3D'
+		}, {
+			symbol: '\uD83D\uDEA3'
+		}, {
+			symbol: '\uD83E\uDDD7'
+		}, {
+			symbol: '\uD83D\uDEB5'
+		}, {
+			symbol: '\uD83D\uDEB4'
+		}, {
+			symbol: '\uD83C\uDFC6'
+		}, {
+			symbol: '\uD83E\uDD47'
+		}, {
+			symbol: '\uD83E\uDD48'
+		}, {
+			symbol: '\uD83E\uDD49'
+		}, {
+			symbol: '\uD83C\uDFC5'
+		}, {
+			symbol: '\uD83C\uDF96'
+		}, {
+			symbol: '\uD83C\uDFF5'
+		}, {
+			symbol: '\uD83C\uDF97'
+		}, {
+			symbol: '\uD83C\uDFAB'
+		}, {
+			symbol: '\uD83C\uDF9F'
+		}, {
+			symbol: '\uD83C\uDFAA'
+		}, {
+			symbol: '\uD83E\uDD39'
+		}, {
+			symbol: '\uD83C\uDFAD'
+		}, {
+			symbol: '\uD83C\uDFA8'
+		}, {
+			symbol: '\uD83C\uDFAC'
+		}, {
+			symbol: '\uD83C\uDFA4'
+		}, {
+			symbol: '\uD83C\uDFA7'
+		}, {
+			symbol: '\uD83C\uDFBC'
+		}, {
+			symbol: '\uD83C\uDFB9'
+		}, {
+			symbol: '\uD83E\uDD41'
+		}, {
+			symbol: '\uD83C\uDFB7'
+		}, {
+			symbol: '\uD83C\uDFBA'
+		}, {
+			symbol: '\uD83C\uDFB8'
+		}, {
+			symbol: '\uD83C\uDFBB'
+		}, {
+			symbol: '\uD83C\uDFB2'
+		}, {
+			symbol: '\u265F'
+		}, {
+			symbol: '\uD83C\uDFAF'
+		}, {
+			symbol: '\uD83C\uDFB3'
+		}, {
+			symbol: '\uD83C\uDFAE'
+		}, {
+			symbol: '\uD83C\uDFB0'
+		}, {
+			symbol: '\uD83E\uDDE9'
+		}]
 	}, {
-	  id: 5,
-	  code: 'TRAVEL',
-	  showForWindows: true,
-	  emoji: [{
-	    symbol: '\uD83D\uDE97'
-	  }, {
-	    symbol: '\uD83D\uDE95'
-	  }, {
-	    symbol: '\uD83D\uDE99'
-	  }, {
-	    symbol: '\uD83D\uDE8C'
-	  }, {
-	    symbol: '\uD83D\uDE8E'
-	  }, {
-	    symbol: '\uD83C\uDFCE'
-	  }, {
-	    symbol: '\uD83D\uDE93'
-	  }, {
-	    symbol: '\uD83D\uDE91'
-	  }, {
-	    symbol: '\uD83D\uDE92'
-	  }, {
-	    symbol: '\uD83D\uDE90'
-	  }, {
-	    symbol: '\uD83D\uDE9A'
-	  }, {
-	    symbol: '\uD83D\uDE9B'
-	  }, {
-	    symbol: '\uD83D\uDE9C'
-	  }, {
-	    symbol: '\uD83D\uDEF4'
-	  }, {
-	    symbol: '\uD83D\uDEB2'
-	  }, {
-	    symbol: '\uD83D\uDEF5'
-	  }, {
-	    symbol: '\uD83C\uDFCD'
-	  }, {
-	    symbol: '\uD83D\uDEA8'
-	  }, {
-	    symbol: '\uD83D\uDE94'
-	  }, {
-	    symbol: '\uD83D\uDE8D'
-	  }, {
-	    symbol: '\uD83D\uDE98'
-	  }, {
-	    symbol: '\uD83D\uDE96'
-	  }, {
-	    symbol: '\uD83D\uDEA1'
-	  }, {
-	    symbol: '\uD83D\uDEA0'
-	  }, {
-	    symbol: '\uD83D\uDE9F'
-	  }, {
-	    symbol: '\uD83D\uDE83'
-	  }, {
-	    symbol: '\uD83D\uDE8B'
-	  }, {
-	    symbol: '\uD83D\uDE9E'
-	  }, {
-	    symbol: '\uD83D\uDE9D'
-	  }, {
-	    symbol: '\uD83D\uDE84'
-	  }, {
-	    symbol: '\uD83D\uDE85'
-	  }, {
-	    symbol: '\uD83D\uDE88'
-	  }, {
-	    symbol: '\uD83D\uDE82'
-	  }, {
-	    symbol: '\uD83D\uDE86'
-	  }, {
-	    symbol: '\uD83D\uDE87'
-	  }, {
-	    symbol: '\uD83D\uDE8A'
-	  }, {
-	    symbol: '\uD83D\uDE89'
-	  }, {
-	    symbol: '\u2708'
-	  }, {
-	    symbol: '\uD83D\uDEEB'
-	  }, {
-	    symbol: '\uD83D\uDEEC'
-	  }, {
-	    symbol: '\uD83D\uDEE9'
-	  }, {
-	    symbol: '\uD83D\uDCBA'
-	  }, {
-	    symbol: '\uD83D\uDEF0'
-	  }, {
-	    symbol: '\uD83D\uDE80'
-	  }, {
-	    symbol: '\uD83D\uDEF8'
-	  }, {
-	    symbol: '\uD83D\uDE81'
-	  }, {
-	    symbol: '\uD83D\uDEF6'
-	  }, {
-	    symbol: '\u26F5'
-	  }, {
-	    symbol: '\uD83D\uDEA4'
-	  }, {
-	    symbol: '\uD83D\uDEE5'
-	  }, {
-	    symbol: '\uD83D\uDEF3'
-	  }, {
-	    symbol: '\u26F4'
-	  }, {
-	    symbol: '\uD83D\uDEA2'
-	  }, {
-	    symbol: '\u2693'
-	  }, {
-	    symbol: '\u26FD'
-	  }, {
-	    symbol: '\uD83D\uDEA7'
-	  }, {
-	    symbol: '\uD83D\uDEA6'
-	  }, {
-	    symbol: '\uD83D\uDEA5'
-	  }, {
-	    symbol: '\uD83D\uDE8F'
-	  }, {
-	    symbol: '\uD83D\uDDFA'
-	  }, {
-	    symbol: '\uD83D\uDDFF'
-	  }, {
-	    symbol: '\uD83D\uDDFD'
-	  }, {
-	    symbol: '\uD83D\uDDFC'
-	  }, {
-	    symbol: '\uD83C\uDFF0'
-	  }, {
-	    symbol: '\uD83C\uDFEF'
-	  }, {
-	    symbol: '\uD83C\uDFDF'
-	  }, {
-	    symbol: '\uD83C\uDFA1'
-	  }, {
-	    symbol: '\uD83C\uDFA2'
-	  }, {
-	    symbol: '\uD83C\uDFA0'
-	  }, {
-	    symbol: '\u26F2'
-	  }, {
-	    symbol: '\u26F1'
-	  }, {
-	    symbol: '\uD83C\uDFD6'
-	  }, {
-	    symbol: '\uD83C\uDFDD'
-	  }, {
-	    symbol: '\uD83C\uDFDC'
-	  }, {
-	    symbol: '\uD83C\uDF0B'
-	  }, {
-	    symbol: '\u26F0'
-	  }, {
-	    symbol: '\uD83C\uDFD4'
-	  }, {
-	    symbol: '\uD83D\uDDFB'
-	  }, {
-	    symbol: '\uD83C\uDFD5'
-	  }, {
-	    symbol: '\u26FA'
-	  }, {
-	    symbol: '\uD83C\uDFE0'
-	  }, {
-	    symbol: '\uD83C\uDFE1'
-	  }, {
-	    symbol: '\uD83C\uDFD8'
-	  }, {
-	    symbol: '\uD83C\uDFDA'
-	  }, {
-	    symbol: '\uD83C\uDFD7'
-	  }, {
-	    symbol: '\uD83C\uDFED'
-	  }, {
-	    symbol: '\uD83C\uDFE2'
-	  }, {
-	    symbol: '\uD83C\uDFEC'
-	  }, {
-	    symbol: '\uD83C\uDFE3'
-	  }, {
-	    symbol: '\uD83C\uDFE4'
-	  }, {
-	    symbol: '\uD83C\uDFE5'
-	  }, {
-	    symbol: '\uD83C\uDFE6'
-	  }, {
-	    symbol: '\uD83C\uDFE8'
-	  }, {
-	    symbol: '\uD83C\uDFEA'
-	  }, {
-	    symbol: '\uD83C\uDFEB'
-	  }, {
-	    symbol: '\uD83C\uDFE9'
-	  }, {
-	    symbol: '\uD83D\uDC92'
-	  }, {
-	    symbol: '\uD83C\uDFDB'
-	  }, {
-	    symbol: '\u26EA'
-	  }, {
-	    symbol: '\uD83D\uDD4C'
-	  }, {
-	    symbol: '\uD83D\uDD4D'
-	  }, {
-	    symbol: '\uD83D\uDD4B'
-	  }, {
-	    symbol: '\u26E9'
-	  }, {
-	    symbol: '\uD83D\uDEE4'
-	  }, {
-	    symbol: '\uD83D\uDEE3'
-	  }, {
-	    symbol: '\uD83D\uDDFE'
-	  }, {
-	    symbol: '\uD83C\uDF91'
-	  }, {
-	    symbol: '\uD83C\uDFDE'
-	  }, {
-	    symbol: '\uD83C\uDF05'
-	  }, {
-	    symbol: '\uD83C\uDF04'
-	  }, {
-	    symbol: '\uD83C\uDF20'
-	  }, {
-	    symbol: '\uD83C\uDF87'
-	  }, {
-	    symbol: '\uD83C\uDF86'
-	  }, {
-	    symbol: '\uD83C\uDF07'
-	  }, {
-	    symbol: '\uD83C\uDF06'
-	  }, {
-	    symbol: '\uD83C\uDFD9'
-	  }, {
-	    symbol: '\uD83C\uDF03'
-	  }, {
-	    symbol: '\uD83C\uDF0C'
-	  }, {
-	    symbol: '\uD83C\uDF09'
-	  }, {
-	    symbol: '\uD83C\uDF01'
-	  }]
+		id: 5,
+		code: 'TRAVEL',
+		showForWindows: true,
+		emoji: [{
+			symbol: '\uD83D\uDE97'
+		}, {
+			symbol: '\uD83D\uDE95'
+		}, {
+			symbol: '\uD83D\uDE99'
+		}, {
+			symbol: '\uD83D\uDE8C'
+		}, {
+			symbol: '\uD83D\uDE8E'
+		}, {
+			symbol: '\uD83C\uDFCE'
+		}, {
+			symbol: '\uD83D\uDE93'
+		}, {
+			symbol: '\uD83D\uDE91'
+		}, {
+			symbol: '\uD83D\uDE92'
+		}, {
+			symbol: '\uD83D\uDE90'
+		}, {
+			symbol: '\uD83D\uDE9A'
+		}, {
+			symbol: '\uD83D\uDE9B'
+		}, {
+			symbol: '\uD83D\uDE9C'
+		}, {
+			symbol: '\uD83D\uDEF4'
+		}, {
+			symbol: '\uD83D\uDEB2'
+		}, {
+			symbol: '\uD83D\uDEF5'
+		}, {
+			symbol: '\uD83C\uDFCD'
+		}, {
+			symbol: '\uD83D\uDEA8'
+		}, {
+			symbol: '\uD83D\uDE94'
+		}, {
+			symbol: '\uD83D\uDE8D'
+		}, {
+			symbol: '\uD83D\uDE98'
+		}, {
+			symbol: '\uD83D\uDE96'
+		}, {
+			symbol: '\uD83D\uDEA1'
+		}, {
+			symbol: '\uD83D\uDEA0'
+		}, {
+			symbol: '\uD83D\uDE9F'
+		}, {
+			symbol: '\uD83D\uDE83'
+		}, {
+			symbol: '\uD83D\uDE8B'
+		}, {
+			symbol: '\uD83D\uDE9E'
+		}, {
+			symbol: '\uD83D\uDE9D'
+		}, {
+			symbol: '\uD83D\uDE84'
+		}, {
+			symbol: '\uD83D\uDE85'
+		}, {
+			symbol: '\uD83D\uDE88'
+		}, {
+			symbol: '\uD83D\uDE82'
+		}, {
+			symbol: '\uD83D\uDE86'
+		}, {
+			symbol: '\uD83D\uDE87'
+		}, {
+			symbol: '\uD83D\uDE8A'
+		}, {
+			symbol: '\uD83D\uDE89'
+		}, {
+			symbol: '\u2708'
+		}, {
+			symbol: '\uD83D\uDEEB'
+		}, {
+			symbol: '\uD83D\uDEEC'
+		}, {
+			symbol: '\uD83D\uDEE9'
+		}, {
+			symbol: '\uD83D\uDCBA'
+		}, {
+			symbol: '\uD83D\uDEF0'
+		}, {
+			symbol: '\uD83D\uDE80'
+		}, {
+			symbol: '\uD83D\uDEF8'
+		}, {
+			symbol: '\uD83D\uDE81'
+		}, {
+			symbol: '\uD83D\uDEF6'
+		}, {
+			symbol: '\u26F5'
+		}, {
+			symbol: '\uD83D\uDEA4'
+		}, {
+			symbol: '\uD83D\uDEE5'
+		}, {
+			symbol: '\uD83D\uDEF3'
+		}, {
+			symbol: '\u26F4'
+		}, {
+			symbol: '\uD83D\uDEA2'
+		}, {
+			symbol: '\u2693'
+		}, {
+			symbol: '\u26FD'
+		}, {
+			symbol: '\uD83D\uDEA7'
+		}, {
+			symbol: '\uD83D\uDEA6'
+		}, {
+			symbol: '\uD83D\uDEA5'
+		}, {
+			symbol: '\uD83D\uDE8F'
+		}, {
+			symbol: '\uD83D\uDDFA'
+		}, {
+			symbol: '\uD83D\uDDFF'
+		}, {
+			symbol: '\uD83D\uDDFD'
+		}, {
+			symbol: '\uD83D\uDDFC'
+		}, {
+			symbol: '\uD83C\uDFF0'
+		}, {
+			symbol: '\uD83C\uDFEF'
+		}, {
+			symbol: '\uD83C\uDFDF'
+		}, {
+			symbol: '\uD83C\uDFA1'
+		}, {
+			symbol: '\uD83C\uDFA2'
+		}, {
+			symbol: '\uD83C\uDFA0'
+		}, {
+			symbol: '\u26F2'
+		}, {
+			symbol: '\u26F1'
+		}, {
+			symbol: '\uD83C\uDFD6'
+		}, {
+			symbol: '\uD83C\uDFDD'
+		}, {
+			symbol: '\uD83C\uDFDC'
+		}, {
+			symbol: '\uD83C\uDF0B'
+		}, {
+			symbol: '\u26F0'
+		}, {
+			symbol: '\uD83C\uDFD4'
+		}, {
+			symbol: '\uD83D\uDDFB'
+		}, {
+			symbol: '\uD83C\uDFD5'
+		}, {
+			symbol: '\u26FA'
+		}, {
+			symbol: '\uD83C\uDFE0'
+		}, {
+			symbol: '\uD83C\uDFE1'
+		}, {
+			symbol: '\uD83C\uDFD8'
+		}, {
+			symbol: '\uD83C\uDFDA'
+		}, {
+			symbol: '\uD83C\uDFD7'
+		}, {
+			symbol: '\uD83C\uDFED'
+		}, {
+			symbol: '\uD83C\uDFE2'
+		}, {
+			symbol: '\uD83C\uDFEC'
+		}, {
+			symbol: '\uD83C\uDFE3'
+		}, {
+			symbol: '\uD83C\uDFE4'
+		}, {
+			symbol: '\uD83C\uDFE5'
+		}, {
+			symbol: '\uD83C\uDFE6'
+		}, {
+			symbol: '\uD83C\uDFE8'
+		}, {
+			symbol: '\uD83C\uDFEA'
+		}, {
+			symbol: '\uD83C\uDFEB'
+		}, {
+			symbol: '\uD83C\uDFE9'
+		}, {
+			symbol: '\uD83D\uDC92'
+		}, {
+			symbol: '\uD83C\uDFDB'
+		}, {
+			symbol: '\u26EA'
+		}, {
+			symbol: '\uD83D\uDD4C'
+		}, {
+			symbol: '\uD83D\uDD4D'
+		}, {
+			symbol: '\uD83D\uDD4B'
+		}, {
+			symbol: '\u26E9'
+		}, {
+			symbol: '\uD83D\uDEE4'
+		}, {
+			symbol: '\uD83D\uDEE3'
+		}, {
+			symbol: '\uD83D\uDDFE'
+		}, {
+			symbol: '\uD83C\uDF91'
+		}, {
+			symbol: '\uD83C\uDFDE'
+		}, {
+			symbol: '\uD83C\uDF05'
+		}, {
+			symbol: '\uD83C\uDF04'
+		}, {
+			symbol: '\uD83C\uDF20'
+		}, {
+			symbol: '\uD83C\uDF87'
+		}, {
+			symbol: '\uD83C\uDF86'
+		}, {
+			symbol: '\uD83C\uDF07'
+		}, {
+			symbol: '\uD83C\uDF06'
+		}, {
+			symbol: '\uD83C\uDFD9'
+		}, {
+			symbol: '\uD83C\uDF03'
+		}, {
+			symbol: '\uD83C\uDF0C'
+		}, {
+			symbol: '\uD83C\uDF09'
+		}, {
+			symbol: '\uD83C\uDF01'
+		}]
 	}, {
-	  id: 6,
-	  code: 'OBJECTS',
-	  showForWindows: true,
-	  emoji: [{
-	    symbol: '\u231A'
-	  }, {
-	    symbol: '\uD83D\uDCF1'
-	  }, {
-	    symbol: '\uD83D\uDCF2'
-	  }, {
-	    symbol: '\uD83D\uDCBB'
-	  }, {
-	    symbol: '\u2328'
-	  }, {
-	    symbol: '\uD83D\uDDA5'
-	  }, {
-	    symbol: '\uD83D\uDDA8'
-	  }, {
-	    symbol: '\uD83D\uDDB1'
-	  }, {
-	    symbol: '\uD83D\uDDB2'
-	  }, {
-	    symbol: '\uD83D\uDD79'
-	  }, {
-	    symbol: '\uD83D\uDDDC'
-	  }, {
-	    symbol: '\uD83D\uDCBD'
-	  }, {
-	    symbol: '\uD83D\uDCBE'
-	  }, {
-	    symbol: '\uD83D\uDCBF'
-	  }, {
-	    symbol: '\uD83D\uDCC0'
-	  }, {
-	    symbol: '\uD83D\uDCFC'
-	  }, {
-	    symbol: '\uD83D\uDCF7'
-	  }, {
-	    symbol: '\uD83D\uDCF8'
-	  }, {
-	    symbol: '\uD83D\uDCF9'
-	  }, {
-	    symbol: '\uD83C\uDFA5'
-	  }, {
-	    symbol: '\uD83D\uDCFD'
-	  }, {
-	    symbol: '\uD83C\uDF9E'
-	  }, {
-	    symbol: '\uD83D\uDCDE'
-	  }, {
-	    symbol: '\u260E'
-	  }, {
-	    symbol: '\uD83D\uDCDF'
-	  }, {
-	    symbol: '\uD83D\uDCE0'
-	  }, {
-	    symbol: '\uD83D\uDCFA'
-	  }, {
-	    symbol: '\uD83D\uDCFB'
-	  }, {
-	    symbol: '\uD83C\uDF99'
-	  }, {
-	    symbol: '\uD83C\uDF9A'
-	  }, {
-	    symbol: '\uD83C\uDF9B'
-	  }, {
-	    symbol: '\uD83E\uDDED'
-	  }, {
-	    symbol: '\u23F1'
-	  }, {
-	    symbol: '\u23F2'
-	  }, {
-	    symbol: '\u23F0'
-	  }, {
-	    symbol: '\uD83D\uDD70'
-	  }, {
-	    symbol: '\u231B'
-	  }, {
-	    symbol: '\u23F3'
-	  }, {
-	    symbol: '\uD83D\uDCE1'
-	  }, {
-	    symbol: '\uD83D\uDD0B'
-	  }, {
-	    symbol: '\uD83D\uDD0C'
-	  }, {
-	    symbol: '\uD83D\uDCA1'
-	  }, {
-	    symbol: '\uD83D\uDD26'
-	  }, {
-	    symbol: '\uD83D\uDD6F'
-	  }, {
-	    symbol: '\uD83E\uDDEF'
-	  }, {
-	    symbol: '\uD83D\uDEE2'
-	  }, {
-	    symbol: '\uD83D\uDCB8'
-	  }, {
-	    symbol: '\uD83D\uDCB5'
-	  }, {
-	    symbol: '\uD83D\uDCB4'
-	  }, {
-	    symbol: '\uD83D\uDCB6'
-	  }, {
-	    symbol: '\uD83D\uDCB7'
-	  }, {
-	    symbol: '\uD83D\uDCB0'
-	  }, {
-	    symbol: '\uD83D\uDCB3'
-	  }, {
-	    symbol: '\uD83D\uDC8E'
-	  }, {
-	    symbol: '\u2696'
-	  }, {
-	    symbol: '\uD83E\uDDF0'
-	  }, {
-	    symbol: '\uD83D\uDD27'
-	  }, {
-	    symbol: '\uD83D\uDD28'
-	  }, {
-	    symbol: '\u2692'
-	  }, {
-	    symbol: '\uD83D\uDEE0'
-	  }, {
-	    symbol: '\u26CF'
-	  }, {
-	    symbol: '\uD83D\uDD29'
-	  }, {
-	    symbol: '\u2699'
-	  }, {
-	    symbol: '\uD83E\uDDF1'
-	  }, {
-	    symbol: '\u26D3'
-	  }, {
-	    symbol: '\uD83E\uDDF2'
-	  }, {
-	    symbol: '\uD83D\uDD2B'
-	  }, {
-	    symbol: '\uD83D\uDCA3'
-	  }, {
-	    symbol: '\uD83E\uDDE8'
-	  }, {
-	    symbol: '\uD83D\uDD2A'
-	  }, {
-	    symbol: '\uD83D\uDDE1'
-	  }, {
-	    symbol: '\u2694'
-	  }, {
-	    symbol: '\uD83D\uDEE1'
-	  }, {
-	    symbol: '\uD83D\uDEAC'
-	  }, {
-	    symbol: '\u26B0'
-	  }, {
-	    symbol: '\u26B1'
-	  }, {
-	    symbol: '\uD83C\uDFFA'
-	  }, {
-	    symbol: '\uD83D\uDD2E'
-	  }, {
-	    symbol: '\uD83D\uDCFF'
-	  }, {
-	    symbol: '\uD83E\uDDFF'
-	  }, {
-	    symbol: '\uD83D\uDC88'
-	  }, {
-	    symbol: '\u2697'
-	  }, {
-	    symbol: '\uD83D\uDD2D'
-	  }, {
-	    symbol: '\uD83D\uDD2C'
-	  }, {
-	    symbol: '\uD83D\uDD73'
-	  }, {
-	    symbol: '\uD83D\uDC8A'
-	  }, {
-	    symbol: '\uD83D\uDC89'
-	  }, {
-	    symbol: '\uD83E\uDDEC'
-	  }, {
-	    symbol: '\uD83E\uDDA0'
-	  }, {
-	    symbol: '\uD83E\uDDEB'
-	  }, {
-	    symbol: '\uD83E\uDDEA'
-	  }, {
-	    symbol: '\uD83C\uDF21'
-	  }, {
-	    symbol: '\uD83E\uDDF9'
-	  }, {
-	    symbol: '\uD83E\uDDFA'
-	  }, {
-	    symbol: '\uD83E\uDDFB'
-	  }, {
-	    symbol: '\uD83D\uDEBD'
-	  }, {
-	    symbol: '\uD83D\uDEB0'
-	  }, {
-	    symbol: '\uD83D\uDEBF'
-	  }, {
-	    symbol: '\uD83D\uDEC1'
-	  }, {
-	    symbol: '\uD83D\uDEC0'
-	  }, {
-	    symbol: '\uD83E\uDDFC'
-	  }, {
-	    symbol: '\uD83E\uDDFD'
-	  }, {
-	    symbol: '\uD83E\uDDF4'
-	  }, {
-	    symbol: '\uD83D\uDECE'
-	  }, {
-	    symbol: '\uD83D\uDD11'
-	  }, {
-	    symbol: '\uD83D\uDDDD'
-	  }, {
-	    symbol: '\uD83D\uDEAA'
-	  }, {
-	    symbol: '\uD83D\uDECB'
-	  }, {
-	    symbol: '\uD83D\uDECF'
-	  }, {
-	    symbol: '\uD83D\uDECC'
-	  }, {
-	    symbol: '\uD83E\uDDF8'
-	  }, {
-	    symbol: '\uD83D\uDDBC'
-	  }, {
-	    symbol: '\uD83D\uDECD'
-	  }, {
-	    symbol: '\uD83D\uDED2'
-	  }, {
-	    symbol: '\uD83C\uDF81'
-	  }, {
-	    symbol: '\uD83C\uDF88'
-	  }, {
-	    symbol: '\uD83C\uDF8F'
-	  }, {
-	    symbol: '\uD83C\uDF80'
-	  }, {
-	    symbol: '\uD83C\uDF8A'
-	  }, {
-	    symbol: '\uD83C\uDF89'
-	  }, {
-	    symbol: '\uD83C\uDF8E'
-	  }, {
-	    symbol: '\uD83C\uDFEE'
-	  }, {
-	    symbol: '\uD83C\uDF90'
-	  }, {
-	    symbol: '\uD83E\uDDE7'
-	  }, {
-	    symbol: '\u2709'
-	  }, {
-	    symbol: '\uD83D\uDCE9'
-	  }, {
-	    symbol: '\uD83D\uDCE8'
-	  }, {
-	    symbol: '\uD83D\uDCE7'
-	  }, {
-	    symbol: '\uD83D\uDC8C'
-	  }, {
-	    symbol: '\uD83D\uDCE5'
-	  }, {
-	    symbol: '\uD83D\uDCE4'
-	  }, {
-	    symbol: '\uD83D\uDCE6'
-	  }, {
-	    symbol: '\uD83C\uDFF7'
-	  }, {
-	    symbol: '\uD83D\uDCEA'
-	  }, {
-	    symbol: '\uD83D\uDCEB'
-	  }, {
-	    symbol: '\uD83D\uDCEC'
-	  }, {
-	    symbol: '\uD83D\uDCED'
-	  }, {
-	    symbol: '\uD83D\uDCEE'
-	  }, {
-	    symbol: '\uD83D\uDCEF'
-	  }, {
-	    symbol: '\uD83D\uDCDC'
-	  }, {
-	    symbol: '\uD83D\uDCC3'
-	  }, {
-	    symbol: '\uD83D\uDCC4'
-	  }, {
-	    symbol: '\uD83D\uDCD1'
-	  }, {
-	    symbol: '\uD83E\uDDFE'
-	  }, {
-	    symbol: '\uD83D\uDCCA'
-	  }, {
-	    symbol: '\uD83D\uDCC8'
-	  }, {
-	    symbol: '\uD83D\uDCC9'
-	  }, {
-	    symbol: '\uD83D\uDDD2'
-	  }, {
-	    symbol: '\uD83D\uDDD3'
-	  }, {
-	    symbol: '\uD83D\uDCC6'
-	  }, {
-	    symbol: '\uD83D\uDCC5'
-	  }, {
-	    symbol: '\uD83D\uDDD1'
-	  }, {
-	    symbol: '\uD83D\uDCC7'
-	  }, {
-	    symbol: '\uD83D\uDDC3'
-	  }, {
-	    symbol: '\uD83D\uDDF3'
-	  }, {
-	    symbol: '\uD83D\uDDC4'
-	  }, {
-	    symbol: '\uD83D\uDCCB'
-	  }, {
-	    symbol: '\uD83D\uDCC1'
-	  }, {
-	    symbol: '\uD83D\uDCC2'
-	  }, {
-	    symbol: '\uD83D\uDDC2'
-	  }, {
-	    symbol: '\uD83D\uDDDE'
-	  }, {
-	    symbol: '\uD83D\uDCF0'
-	  }, {
-	    symbol: '\uD83D\uDCD3'
-	  }, {
-	    symbol: '\uD83D\uDCD4'
-	  }, {
-	    symbol: '\uD83D\uDCD2'
-	  }, {
-	    symbol: '\uD83D\uDCD5'
-	  }, {
-	    symbol: '\uD83D\uDCD7'
-	  }, {
-	    symbol: '\uD83D\uDCD8'
-	  }, {
-	    symbol: '\uD83D\uDCD9'
-	  }, {
-	    symbol: '\uD83D\uDCDA'
-	  }, {
-	    symbol: '\uD83D\uDCD6'
-	  }, {
-	    symbol: '\uD83D\uDD16'
-	  }, {
-	    symbol: '\uD83E\uDDF7'
-	  }, {
-	    symbol: '\uD83D\uDD17'
-	  }, {
-	    symbol: '\uD83D\uDCCE'
-	  }, {
-	    symbol: '\uD83D\uDD87'
-	  }, {
-	    symbol: '\uD83D\uDCD0'
-	  }, {
-	    symbol: '\uD83D\uDCCF'
-	  }, {
-	    symbol: '\uD83D\uDCCC'
-	  }, {
-	    symbol: '\uD83D\uDCCD'
-	  }, {
-	    symbol: '\u2702'
-	  }, {
-	    symbol: '\uD83D\uDD8A'
-	  }, {
-	    symbol: '\uD83D\uDD8B'
-	  }, {
-	    symbol: '\u2712'
-	  }, {
-	    symbol: '\uD83D\uDD8C'
-	  }, {
-	    symbol: '\uD83D\uDD8D'
-	  }, {
-	    symbol: '\uD83D\uDCDD'
-	  }, {
-	    symbol: '\u270F'
-	  }, {
-	    symbol: '\uD83D\uDD0D'
-	  }, {
-	    symbol: '\uD83D\uDD0E'
-	  }, {
-	    symbol: '\uD83D\uDD0F'
-	  }, {
-	    symbol: '\uD83D\uDD10'
-	  }, {
-	    symbol: '\uD83D\uDD12'
-	  }, {
-	    symbol: '\uD83D\uDD13'
-	  }]
+		id: 6,
+		code: 'OBJECTS',
+		showForWindows: true,
+		emoji: [{
+			symbol: '\u231A'
+		}, {
+			symbol: '\uD83D\uDCF1'
+		}, {
+			symbol: '\uD83D\uDCF2'
+		}, {
+			symbol: '\uD83D\uDCBB'
+		}, {
+			symbol: '\u2328'
+		}, {
+			symbol: '\uD83D\uDDA5'
+		}, {
+			symbol: '\uD83D\uDDA8'
+		}, {
+			symbol: '\uD83D\uDDB1'
+		}, {
+			symbol: '\uD83D\uDDB2'
+		}, {
+			symbol: '\uD83D\uDD79'
+		}, {
+			symbol: '\uD83D\uDDDC'
+		}, {
+			symbol: '\uD83D\uDCBD'
+		}, {
+			symbol: '\uD83D\uDCBE'
+		}, {
+			symbol: '\uD83D\uDCBF'
+		}, {
+			symbol: '\uD83D\uDCC0'
+		}, {
+			symbol: '\uD83D\uDCFC'
+		}, {
+			symbol: '\uD83D\uDCF7'
+		}, {
+			symbol: '\uD83D\uDCF8'
+		}, {
+			symbol: '\uD83D\uDCF9'
+		}, {
+			symbol: '\uD83C\uDFA5'
+		}, {
+			symbol: '\uD83D\uDCFD'
+		}, {
+			symbol: '\uD83C\uDF9E'
+		}, {
+			symbol: '\uD83D\uDCDE'
+		}, {
+			symbol: '\u260E'
+		}, {
+			symbol: '\uD83D\uDCDF'
+		}, {
+			symbol: '\uD83D\uDCE0'
+		}, {
+			symbol: '\uD83D\uDCFA'
+		}, {
+			symbol: '\uD83D\uDCFB'
+		}, {
+			symbol: '\uD83C\uDF99'
+		}, {
+			symbol: '\uD83C\uDF9A'
+		}, {
+			symbol: '\uD83C\uDF9B'
+		}, {
+			symbol: '\uD83E\uDDED'
+		}, {
+			symbol: '\u23F1'
+		}, {
+			symbol: '\u23F2'
+		}, {
+			symbol: '\u23F0'
+		}, {
+			symbol: '\uD83D\uDD70'
+		}, {
+			symbol: '\u231B'
+		}, {
+			symbol: '\u23F3'
+		}, {
+			symbol: '\uD83D\uDCE1'
+		}, {
+			symbol: '\uD83D\uDD0B'
+		}, {
+			symbol: '\uD83D\uDD0C'
+		}, {
+			symbol: '\uD83D\uDCA1'
+		}, {
+			symbol: '\uD83D\uDD26'
+		}, {
+			symbol: '\uD83D\uDD6F'
+		}, {
+			symbol: '\uD83E\uDDEF'
+		}, {
+			symbol: '\uD83D\uDEE2'
+		}, {
+			symbol: '\uD83D\uDCB8'
+		}, {
+			symbol: '\uD83D\uDCB5'
+		}, {
+			symbol: '\uD83D\uDCB4'
+		}, {
+			symbol: '\uD83D\uDCB6'
+		}, {
+			symbol: '\uD83D\uDCB7'
+		}, {
+			symbol: '\uD83D\uDCB0'
+		}, {
+			symbol: '\uD83D\uDCB3'
+		}, {
+			symbol: '\uD83D\uDC8E'
+		}, {
+			symbol: '\u2696'
+		}, {
+			symbol: '\uD83E\uDDF0'
+		}, {
+			symbol: '\uD83D\uDD27'
+		}, {
+			symbol: '\uD83D\uDD28'
+		}, {
+			symbol: '\u2692'
+		}, {
+			symbol: '\uD83D\uDEE0'
+		}, {
+			symbol: '\u26CF'
+		}, {
+			symbol: '\uD83D\uDD29'
+		}, {
+			symbol: '\u2699'
+		}, {
+			symbol: '\uD83E\uDDF1'
+		}, {
+			symbol: '\u26D3'
+		}, {
+			symbol: '\uD83E\uDDF2'
+		}, {
+			symbol: '\uD83D\uDD2B'
+		}, {
+			symbol: '\uD83D\uDCA3'
+		}, {
+			symbol: '\uD83E\uDDE8'
+		}, {
+			symbol: '\uD83D\uDD2A'
+		}, {
+			symbol: '\uD83D\uDDE1'
+		}, {
+			symbol: '\u2694'
+		}, {
+			symbol: '\uD83D\uDEE1'
+		}, {
+			symbol: '\uD83D\uDEAC'
+		}, {
+			symbol: '\u26B0'
+		}, {
+			symbol: '\u26B1'
+		}, {
+			symbol: '\uD83C\uDFFA'
+		}, {
+			symbol: '\uD83D\uDD2E'
+		}, {
+			symbol: '\uD83D\uDCFF'
+		}, {
+			symbol: '\uD83E\uDDFF'
+		}, {
+			symbol: '\uD83D\uDC88'
+		}, {
+			symbol: '\u2697'
+		}, {
+			symbol: '\uD83D\uDD2D'
+		}, {
+			symbol: '\uD83D\uDD2C'
+		}, {
+			symbol: '\uD83D\uDD73'
+		}, {
+			symbol: '\uD83D\uDC8A'
+		}, {
+			symbol: '\uD83D\uDC89'
+		}, {
+			symbol: '\uD83E\uDDEC'
+		}, {
+			symbol: '\uD83E\uDDA0'
+		}, {
+			symbol: '\uD83E\uDDEB'
+		}, {
+			symbol: '\uD83E\uDDEA'
+		}, {
+			symbol: '\uD83C\uDF21'
+		}, {
+			symbol: '\uD83E\uDDF9'
+		}, {
+			symbol: '\uD83E\uDDFA'
+		}, {
+			symbol: '\uD83E\uDDFB'
+		}, {
+			symbol: '\uD83D\uDEBD'
+		}, {
+			symbol: '\uD83D\uDEB0'
+		}, {
+			symbol: '\uD83D\uDEBF'
+		}, {
+			symbol: '\uD83D\uDEC1'
+		}, {
+			symbol: '\uD83D\uDEC0'
+		}, {
+			symbol: '\uD83E\uDDFC'
+		}, {
+			symbol: '\uD83E\uDDFD'
+		}, {
+			symbol: '\uD83E\uDDF4'
+		}, {
+			symbol: '\uD83D\uDECE'
+		}, {
+			symbol: '\uD83D\uDD11'
+		}, {
+			symbol: '\uD83D\uDDDD'
+		}, {
+			symbol: '\uD83D\uDEAA'
+		}, {
+			symbol: '\uD83D\uDECB'
+		}, {
+			symbol: '\uD83D\uDECF'
+		}, {
+			symbol: '\uD83D\uDECC'
+		}, {
+			symbol: '\uD83E\uDDF8'
+		}, {
+			symbol: '\uD83D\uDDBC'
+		}, {
+			symbol: '\uD83D\uDECD'
+		}, {
+			symbol: '\uD83D\uDED2'
+		}, {
+			symbol: '\uD83C\uDF81'
+		}, {
+			symbol: '\uD83C\uDF88'
+		}, {
+			symbol: '\uD83C\uDF8F'
+		}, {
+			symbol: '\uD83C\uDF80'
+		}, {
+			symbol: '\uD83C\uDF8A'
+		}, {
+			symbol: '\uD83C\uDF89'
+		}, {
+			symbol: '\uD83C\uDF8E'
+		}, {
+			symbol: '\uD83C\uDFEE'
+		}, {
+			symbol: '\uD83C\uDF90'
+		}, {
+			symbol: '\uD83E\uDDE7'
+		}, {
+			symbol: '\u2709'
+		}, {
+			symbol: '\uD83D\uDCE9'
+		}, {
+			symbol: '\uD83D\uDCE8'
+		}, {
+			symbol: '\uD83D\uDCE7'
+		}, {
+			symbol: '\uD83D\uDC8C'
+		}, {
+			symbol: '\uD83D\uDCE5'
+		}, {
+			symbol: '\uD83D\uDCE4'
+		}, {
+			symbol: '\uD83D\uDCE6'
+		}, {
+			symbol: '\uD83C\uDFF7'
+		}, {
+			symbol: '\uD83D\uDCEA'
+		}, {
+			symbol: '\uD83D\uDCEB'
+		}, {
+			symbol: '\uD83D\uDCEC'
+		}, {
+			symbol: '\uD83D\uDCED'
+		}, {
+			symbol: '\uD83D\uDCEE'
+		}, {
+			symbol: '\uD83D\uDCEF'
+		}, {
+			symbol: '\uD83D\uDCDC'
+		}, {
+			symbol: '\uD83D\uDCC3'
+		}, {
+			symbol: '\uD83D\uDCC4'
+		}, {
+			symbol: '\uD83D\uDCD1'
+		}, {
+			symbol: '\uD83E\uDDFE'
+		}, {
+			symbol: '\uD83D\uDCCA'
+		}, {
+			symbol: '\uD83D\uDCC8'
+		}, {
+			symbol: '\uD83D\uDCC9'
+		}, {
+			symbol: '\uD83D\uDDD2'
+		}, {
+			symbol: '\uD83D\uDDD3'
+		}, {
+			symbol: '\uD83D\uDCC6'
+		}, {
+			symbol: '\uD83D\uDCC5'
+		}, {
+			symbol: '\uD83D\uDDD1'
+		}, {
+			symbol: '\uD83D\uDCC7'
+		}, {
+			symbol: '\uD83D\uDDC3'
+		}, {
+			symbol: '\uD83D\uDDF3'
+		}, {
+			symbol: '\uD83D\uDDC4'
+		}, {
+			symbol: '\uD83D\uDCCB'
+		}, {
+			symbol: '\uD83D\uDCC1'
+		}, {
+			symbol: '\uD83D\uDCC2'
+		}, {
+			symbol: '\uD83D\uDDC2'
+		}, {
+			symbol: '\uD83D\uDDDE'
+		}, {
+			symbol: '\uD83D\uDCF0'
+		}, {
+			symbol: '\uD83D\uDCD3'
+		}, {
+			symbol: '\uD83D\uDCD4'
+		}, {
+			symbol: '\uD83D\uDCD2'
+		}, {
+			symbol: '\uD83D\uDCD5'
+		}, {
+			symbol: '\uD83D\uDCD7'
+		}, {
+			symbol: '\uD83D\uDCD8'
+		}, {
+			symbol: '\uD83D\uDCD9'
+		}, {
+			symbol: '\uD83D\uDCDA'
+		}, {
+			symbol: '\uD83D\uDCD6'
+		}, {
+			symbol: '\uD83D\uDD16'
+		}, {
+			symbol: '\uD83E\uDDF7'
+		}, {
+			symbol: '\uD83D\uDD17'
+		}, {
+			symbol: '\uD83D\uDCCE'
+		}, {
+			symbol: '\uD83D\uDD87'
+		}, {
+			symbol: '\uD83D\uDCD0'
+		}, {
+			symbol: '\uD83D\uDCCF'
+		}, {
+			symbol: '\uD83D\uDCCC'
+		}, {
+			symbol: '\uD83D\uDCCD'
+		}, {
+			symbol: '\u2702'
+		}, {
+			symbol: '\uD83D\uDD8A'
+		}, {
+			symbol: '\uD83D\uDD8B'
+		}, {
+			symbol: '\u2712'
+		}, {
+			symbol: '\uD83D\uDD8C'
+		}, {
+			symbol: '\uD83D\uDD8D'
+		}, {
+			symbol: '\uD83D\uDCDD'
+		}, {
+			symbol: '\u270F'
+		}, {
+			symbol: '\uD83D\uDD0D'
+		}, {
+			symbol: '\uD83D\uDD0E'
+		}, {
+			symbol: '\uD83D\uDD0F'
+		}, {
+			symbol: '\uD83D\uDD10'
+		}, {
+			symbol: '\uD83D\uDD12'
+		}, {
+			symbol: '\uD83D\uDD13'
+		}]
 	}, {
-	  id: 7,
-	  code: 'SYMBOLS',
-	  showForWindows: true,
-	  emoji: [{
-	    symbol: '\u2764'
-	  }, {
-	    symbol: '\uD83E\uDDE1'
-	  }, {
-	    symbol: '\uD83D\uDC9B'
-	  }, {
-	    symbol: '\uD83D\uDC9A'
-	  }, {
-	    symbol: '\uD83D\uDC99'
-	  }, {
-	    symbol: '\uD83D\uDC9C'
-	  }, {
-	    symbol: '\uD83D\uDDA4'
-	  }, {
-	    symbol: '\uD83D\uDC94'
-	  }, {
-	    symbol: '\u2763'
-	  }, {
-	    symbol: '\uD83D\uDC95'
-	  }, {
-	    symbol: '\uD83D\uDC9E'
-	  }, {
-	    symbol: '\uD83D\uDC93'
-	  }, {
-	    symbol: '\uD83D\uDC97'
-	  }, {
-	    symbol: '\uD83D\uDC96'
-	  }, {
-	    symbol: '\uD83D\uDC98'
-	  }, {
-	    symbol: '\uD83D\uDC9D'
-	  }, {
-	    symbol: '\uD83D\uDC9F'
-	  }, {
-	    symbol: '\u262E'
-	  }, {
-	    symbol: '\u271D'
-	  }, {
-	    symbol: '\u262A'
-	  }, {
-	    symbol: '\uD83D\uDD49'
-	  }, {
-	    symbol: '\u2638'
-	  }, {
-	    symbol: '\u2721'
-	  }, {
-	    symbol: '\uD83D\uDD2F'
-	  }, {
-	    symbol: '\uD83D\uDD4E'
-	  }, {
-	    symbol: '\u262F'
-	  }, {
-	    symbol: '\u2626'
-	  }, {
-	    symbol: '\uD83D\uDED0'
-	  }, {
-	    symbol: '\u26CE'
-	  }, {
-	    symbol: '\u2648'
-	  }, {
-	    symbol: '\u2649'
-	  }, {
-	    symbol: '\u264A'
-	  }, {
-	    symbol: '\u264B'
-	  }, {
-	    symbol: '\u264C'
-	  }, {
-	    symbol: '\u264D'
-	  }, {
-	    symbol: '\u264E'
-	  }, {
-	    symbol: '\u264F'
-	  }, {
-	    symbol: '\u2650'
-	  }, {
-	    symbol: '\u2651'
-	  }, {
-	    symbol: '\u2652'
-	  }, {
-	    symbol: '\u2653'
-	  }, {
-	    symbol: '\uD83C\uDD94'
-	  }, {
-	    symbol: '\u269B'
-	  }, {
-	    symbol: '\uD83C\uDE51'
-	  }, {
-	    symbol: '\u2622'
-	  }, {
-	    symbol: '\u2623'
-	  }, {
-	    symbol: '\uD83D\uDCF4'
-	  }, {
-	    symbol: '\uD83D\uDCF3'
-	  }, {
-	    symbol: '\uD83C\uDE36'
-	  }, {
-	    symbol: '\uD83C\uDE1A'
-	  }, {
-	    symbol: '\uD83C\uDE38'
-	  }, {
-	    symbol: '\uD83C\uDE3A'
-	  }, {
-	    symbol: '\uD83C\uDE37'
-	  }, {
-	    symbol: '\u2734'
-	  }, {
-	    symbol: '\uD83C\uDD9A'
-	  }, {
-	    symbol: '\uD83D\uDCAE'
-	  }, {
-	    symbol: '\uD83C\uDE50'
-	  }, {
-	    symbol: '\u3299'
-	  }, {
-	    symbol: '\u3297'
-	  }, {
-	    symbol: '\uD83C\uDE34'
-	  }, {
-	    symbol: '\uD83C\uDE35'
-	  }, {
-	    symbol: '\uD83C\uDE39'
-	  }, {
-	    symbol: '\uD83C\uDE32'
-	  }, {
-	    symbol: '\uD83C\uDD70'
-	  }, {
-	    symbol: '\uD83C\uDD71'
-	  }, {
-	    symbol: '\uD83C\uDD8E'
-	  }, {
-	    symbol: '\uD83C\uDD91'
-	  }, {
-	    symbol: '\uD83C\uDD7E'
-	  }, {
-	    symbol: '\uD83C\uDD98'
-	  }, {
-	    symbol: '\u274C'
-	  }, {
-	    symbol: '\u2B55'
-	  }, {
-	    symbol: '\uD83D\uDED1'
-	  }, {
-	    symbol: '\u26D4'
-	  }, {
-	    symbol: '\uD83D\uDCDB'
-	  }, {
-	    symbol: '\uD83D\uDEAB'
-	  }, {
-	    symbol: '\uD83D\uDCAF'
-	  }, {
-	    symbol: '\uD83D\uDCA2'
-	  }, {
-	    symbol: '\u2668'
-	  }, {
-	    symbol: '\uD83D\uDEB7'
-	  }, {
-	    symbol: '\uD83D\uDEAF'
-	  }, {
-	    symbol: '\uD83D\uDEB3'
-	  }, {
-	    symbol: '\uD83D\uDEB1'
-	  }, {
-	    symbol: '\uD83D\uDD1E'
-	  }, {
-	    symbol: '\uD83D\uDCF5'
-	  }, {
-	    symbol: '\uD83D\uDEAD'
-	  }, {
-	    symbol: '\u2757'
-	  }, {
-	    symbol: '\u2755'
-	  }, {
-	    symbol: '\u2753'
-	  }, {
-	    symbol: '\u2754'
-	  }, {
-	    symbol: '\u203C'
-	  }, {
-	    symbol: '\u2049'
-	  }, {
-	    symbol: '\uD83D\uDD05'
-	  }, {
-	    symbol: '\uD83D\uDD06'
-	  }, {
-	    symbol: '\u303D'
-	  }, {
-	    symbol: '\u26A0'
-	  }, {
-	    symbol: '\uD83D\uDEB8'
-	  }, {
-	    symbol: '\uD83D\uDD31'
-	  }, {
-	    symbol: '\u269C'
-	  }, {
-	    symbol: '\uD83D\uDD30'
-	  }, {
-	    symbol: '\u267B'
-	  }, {
-	    symbol: '\u2705'
-	  }, {
-	    symbol: '\uD83C\uDE2F'
-	  }, {
-	    symbol: '\uD83D\uDCB9'
-	  }, {
-	    symbol: '\u2747'
-	  }, {
-	    symbol: '\u2733'
-	  }, {
-	    symbol: '\u274E'
-	  }, {
-	    symbol: '\uD83C\uDF10'
-	  }, {
-	    symbol: '\uD83D\uDCA0'
-	  }, {
-	    symbol: '\u24C2'
-	  }, {
-	    symbol: '\uD83C\uDF00'
-	  }, {
-	    symbol: '\uD83D\uDCA4'
-	  }, {
-	    symbol: '\uD83C\uDFE7'
-	  }, {
-	    symbol: '\uD83D\uDEBE'
-	  }, {
-	    symbol: '\u267F'
-	  }, {
-	    symbol: '\uD83C\uDD7F'
-	  }, {
-	    symbol: '\uD83C\uDE33'
-	  }, {
-	    symbol: '\uD83C\uDE02'
-	  }, {
-	    symbol: '\uD83D\uDEC2'
-	  }, {
-	    symbol: '\uD83D\uDEC3'
-	  }, {
-	    symbol: '\uD83D\uDEC4'
-	  }, {
-	    symbol: '\uD83D\uDEC5'
-	  }, {
-	    symbol: '\uD83D\uDEB9'
-	  }, {
-	    symbol: '\uD83D\uDEBA'
-	  }, {
-	    symbol: '\uD83D\uDEBC'
-	  }, {
-	    symbol: '\uD83D\uDEBB'
-	  }, {
-	    symbol: '\uD83D\uDEAE'
-	  }, {
-	    symbol: '\uD83C\uDFA6'
-	  }, {
-	    symbol: '\uD83D\uDCF6'
-	  }, {
-	    symbol: '\uD83C\uDE01'
-	  }, {
-	    symbol: '\uD83D\uDD23'
-	  }, {
-	    symbol: '\u2139'
-	  }, {
-	    symbol: '\uD83D\uDD24'
-	  }, {
-	    symbol: '\uD83D\uDD21'
-	  }, {
-	    symbol: '\uD83D\uDD20'
-	  }, {
-	    symbol: '\uD83C\uDD96'
-	  }, {
-	    symbol: '\uD83C\uDD97'
-	  }, {
-	    symbol: '\uD83C\uDD99'
-	  }, {
-	    symbol: '\uD83C\uDD92'
-	  }, {
-	    symbol: '\uD83C\uDD95'
-	  }, {
-	    symbol: '\uD83C\uDD93'
-	  }, {
-	    symbol: '\u0030'
-	  }, {
-	    symbol: '\u0031'
-	  }, {
-	    symbol: '\u0032'
-	  }, {
-	    symbol: '\u0033'
-	  }, {
-	    symbol: '\u0034'
-	  }, {
-	    symbol: '\u0035'
-	  }, {
-	    symbol: '\u0036'
-	  }, {
-	    symbol: '\u0037'
-	  }, {
-	    symbol: '\u0038'
-	  }, {
-	    symbol: '\u0039'
-	  }, {
-	    symbol: '\uD83D\uDD1F'
-	  }, {
-	    symbol: '\uD83D\uDD22'
-	  }, {
-	    symbol: '\u0023'
-	  }, {
-	    symbol: '\u002A'
-	  }, {
-	    symbol: '\u23CF'
-	  }, {
-	    symbol: '\u25B6'
-	  }, {
-	    symbol: '\u23F8'
-	  }, {
-	    symbol: '\u23EF'
-	  }, {
-	    symbol: '\u23F9'
-	  }, {
-	    symbol: '\u23FA'
-	  }, {
-	    symbol: '\u23ED'
-	  }, {
-	    symbol: '\u23EE'
-	  }, {
-	    symbol: '\u23E9'
-	  }, {
-	    symbol: '\u23EA'
-	  }, {
-	    symbol: '\u23EB'
-	  }, {
-	    symbol: '\u23EC'
-	  }, {
-	    symbol: '\u25C0'
-	  }, {
-	    symbol: '\uD83D\uDD3C'
-	  }, {
-	    symbol: '\uD83D\uDD3D'
-	  }, {
-	    symbol: '\u27A1'
-	  }, {
-	    symbol: '\u2B05'
-	  }, {
-	    symbol: '\u2B06'
-	  }, {
-	    symbol: '\u2B07'
-	  }, {
-	    symbol: '\u2197'
-	  }, {
-	    symbol: '\u2198'
-	  }, {
-	    symbol: '\u2199'
-	  }, {
-	    symbol: '\u2196'
-	  }, {
-	    symbol: '\u2195'
-	  }, {
-	    symbol: '\u2194'
-	  }, {
-	    symbol: '\u21AA'
-	  }, {
-	    symbol: '\u21A9'
-	  }, {
-	    symbol: '\u2934'
-	  }, {
-	    symbol: '\u2935'
-	  }, {
-	    symbol: '\uD83D\uDD00'
-	  }, {
-	    symbol: '\uD83D\uDD01'
-	  }, {
-	    symbol: '\uD83D\uDD02'
-	  }, {
-	    symbol: '\uD83D\uDD04'
-	  }, {
-	    symbol: '\uD83D\uDD03'
-	  }, {
-	    symbol: '\uD83C\uDFB5'
-	  }, {
-	    symbol: '\uD83C\uDFB6'
-	  }, {
-	    symbol: '\u2795'
-	  }, {
-	    symbol: '\u2796'
-	  }, {
-	    symbol: '\u2797'
-	  }, {
-	    symbol: '\u2716'
-	  }, {
-	    symbol: '\u267E'
-	  }, {
-	    symbol: '\uD83D\uDCB2'
-	  }, {
-	    symbol: '\uD83D\uDCB1'
-	  }, {
-	    symbol: '\u2122'
-	  }, {
-	    symbol: '\u00A9'
-	  }, {
-	    symbol: '\u00AE'
-	  }, {
-	    symbol: '\uD83D\uDC41'
-	  }, {
-	    symbol: '\uD83D\uDDE8'
-	  }, {
-	    symbol: '\uD83D\uDD1A'
-	  }, {
-	    symbol: '\uD83D\uDD19'
-	  }, {
-	    symbol: '\uD83D\uDD1B'
-	  }, {
-	    symbol: '\uD83D\uDD1D'
-	  }, {
-	    symbol: '\uD83D\uDD1C'
-	  }, {
-	    symbol: '\u3030'
-	  }, {
-	    symbol: '\u27B0'
-	  }, {
-	    symbol: '\u27BF'
-	  }, {
-	    symbol: '\u2714'
-	  }, {
-	    symbol: '\u2611'
-	  }, {
-	    symbol: '\uD83D\uDD18'
-	  }, {
-	    symbol: '\u26AA'
-	  }, {
-	    symbol: '\u26AB'
-	  }, {
-	    symbol: '\uD83D\uDD34'
-	  }, {
-	    symbol: '\uD83D\uDD35'
-	  }, {
-	    symbol: '\uD83D\uDD3A'
-	  }, {
-	    symbol: '\uD83D\uDD3B'
-	  }, {
-	    symbol: '\uD83D\uDD38'
-	  }, {
-	    symbol: '\uD83D\uDD39'
-	  }, {
-	    symbol: '\uD83D\uDD36'
-	  }, {
-	    symbol: '\uD83D\uDD37'
-	  }, {
-	    symbol: '\uD83D\uDD33'
-	  }, {
-	    symbol: '\uD83D\uDD32'
-	  }, {
-	    symbol: '\u25AA'
-	  }, {
-	    symbol: '\u25AB'
-	  }, {
-	    symbol: '\u25FE'
-	  }, {
-	    symbol: '\u25FD'
-	  }, {
-	    symbol: '\u25FC'
-	  }, {
-	    symbol: '\u25FB'
-	  }, {
-	    symbol: '\u2B1B'
-	  }, {
-	    symbol: '\u2B1C'
-	  }, {
-	    symbol: '\uD83D\uDD08'
-	  }, {
-	    symbol: '\uD83D\uDD07'
-	  }, {
-	    symbol: '\uD83D\uDD09'
-	  }, {
-	    symbol: '\uD83D\uDD0A'
-	  }, {
-	    symbol: '\uD83D\uDD14'
-	  }, {
-	    symbol: '\uD83D\uDD15'
-	  }, {
-	    symbol: '\uD83D\uDCE3'
-	  }, {
-	    symbol: '\uD83D\uDCE2'
-	  }, {
-	    symbol: '\uD83D\uDCAC'
-	  }, {
-	    symbol: '\uD83D\uDCAD'
-	  }, {
-	    symbol: '\uD83D\uDDEF'
-	  }, {
-	    symbol: '\u2660'
-	  }, {
-	    symbol: '\u2663'
-	  }, {
-	    symbol: '\u2665'
-	  }, {
-	    symbol: '\u2666'
-	  }, {
-	    symbol: '\uD83C\uDCCF'
-	  }, {
-	    symbol: '\uD83C\uDFB4'
-	  }, {
-	    symbol: '\uD83C\uDC04'
-	  }, {
-	    symbol: '\uD83D\uDD50'
-	  }, {
-	    symbol: '\uD83D\uDD51'
-	  }, {
-	    symbol: '\uD83D\uDD52'
-	  }, {
-	    symbol: '\uD83D\uDD53'
-	  }, {
-	    symbol: '\uD83D\uDD54'
-	  }, {
-	    symbol: '\uD83D\uDD55'
-	  }, {
-	    symbol: '\uD83D\uDD56'
-	  }, {
-	    symbol: '\uD83D\uDD57'
-	  }, {
-	    symbol: '\uD83D\uDD58'
-	  }, {
-	    symbol: '\uD83D\uDD59'
-	  }, {
-	    symbol: '\uD83D\uDD5A'
-	  }, {
-	    symbol: '\uD83D\uDD5B'
-	  }, {
-	    symbol: '\uD83D\uDD5C'
-	  }, {
-	    symbol: '\uD83D\uDD5D'
-	  }, {
-	    symbol: '\uD83D\uDD5E'
-	  }, {
-	    symbol: '\uD83D\uDD5F'
-	  }, {
-	    symbol: '\uD83D\uDD60'
-	  }, {
-	    symbol: '\uD83D\uDD61'
-	  }, {
-	    symbol: '\uD83D\uDD62'
-	  }, {
-	    symbol: '\uD83D\uDD63'
-	  }, {
-	    symbol: '\uD83D\uDD64'
-	  }, {
-	    symbol: '\uD83D\uDD65'
-	  }, {
-	    symbol: '\uD83D\uDD66'
-	  }, {
-	    symbol: '\uD83D\uDD67'
-	  }]
+		id: 7,
+		code: 'SYMBOLS',
+		showForWindows: true,
+		emoji: [{
+			symbol: '\u2764'
+		}, {
+			symbol: '\uD83E\uDDE1'
+		}, {
+			symbol: '\uD83D\uDC9B'
+		}, {
+			symbol: '\uD83D\uDC9A'
+		}, {
+			symbol: '\uD83D\uDC99'
+		}, {
+			symbol: '\uD83D\uDC9C'
+		}, {
+			symbol: '\uD83D\uDDA4'
+		}, {
+			symbol: '\uD83D\uDC94'
+		}, {
+			symbol: '\u2763'
+		}, {
+			symbol: '\uD83D\uDC95'
+		}, {
+			symbol: '\uD83D\uDC9E'
+		}, {
+			symbol: '\uD83D\uDC93'
+		}, {
+			symbol: '\uD83D\uDC97'
+		}, {
+			symbol: '\uD83D\uDC96'
+		}, {
+			symbol: '\uD83D\uDC98'
+		}, {
+			symbol: '\uD83D\uDC9D'
+		}, {
+			symbol: '\uD83D\uDC9F'
+		}, {
+			symbol: '\u262E'
+		}, {
+			symbol: '\u271D'
+		}, {
+			symbol: '\u262A'
+		}, {
+			symbol: '\uD83D\uDD49'
+		}, {
+			symbol: '\u2638'
+		}, {
+			symbol: '\u2721'
+		}, {
+			symbol: '\uD83D\uDD2F'
+		}, {
+			symbol: '\uD83D\uDD4E'
+		}, {
+			symbol: '\u262F'
+		}, {
+			symbol: '\u2626'
+		}, {
+			symbol: '\uD83D\uDED0'
+		}, {
+			symbol: '\u26CE'
+		}, {
+			symbol: '\u2648'
+		}, {
+			symbol: '\u2649'
+		}, {
+			symbol: '\u264A'
+		}, {
+			symbol: '\u264B'
+		}, {
+			symbol: '\u264C'
+		}, {
+			symbol: '\u264D'
+		}, {
+			symbol: '\u264E'
+		}, {
+			symbol: '\u264F'
+		}, {
+			symbol: '\u2650'
+		}, {
+			symbol: '\u2651'
+		}, {
+			symbol: '\u2652'
+		}, {
+			symbol: '\u2653'
+		}, {
+			symbol: '\uD83C\uDD94'
+		}, {
+			symbol: '\u269B'
+		}, {
+			symbol: '\uD83C\uDE51'
+		}, {
+			symbol: '\u2622'
+		}, {
+			symbol: '\u2623'
+		}, {
+			symbol: '\uD83D\uDCF4'
+		}, {
+			symbol: '\uD83D\uDCF3'
+		}, {
+			symbol: '\uD83C\uDE36'
+		}, {
+			symbol: '\uD83C\uDE1A'
+		}, {
+			symbol: '\uD83C\uDE38'
+		}, {
+			symbol: '\uD83C\uDE3A'
+		}, {
+			symbol: '\uD83C\uDE37'
+		}, {
+			symbol: '\u2734'
+		}, {
+			symbol: '\uD83C\uDD9A'
+		}, {
+			symbol: '\uD83D\uDCAE'
+		}, {
+			symbol: '\uD83C\uDE50'
+		}, {
+			symbol: '\u3299'
+		}, {
+			symbol: '\u3297'
+		}, {
+			symbol: '\uD83C\uDE34'
+		}, {
+			symbol: '\uD83C\uDE35'
+		}, {
+			symbol: '\uD83C\uDE39'
+		}, {
+			symbol: '\uD83C\uDE32'
+		}, {
+			symbol: '\uD83C\uDD70'
+		}, {
+			symbol: '\uD83C\uDD71'
+		}, {
+			symbol: '\uD83C\uDD8E'
+		}, {
+			symbol: '\uD83C\uDD91'
+		}, {
+			symbol: '\uD83C\uDD7E'
+		}, {
+			symbol: '\uD83C\uDD98'
+		}, {
+			symbol: '\u274C'
+		}, {
+			symbol: '\u2B55'
+		}, {
+			symbol: '\uD83D\uDED1'
+		}, {
+			symbol: '\u26D4'
+		}, {
+			symbol: '\uD83D\uDCDB'
+		}, {
+			symbol: '\uD83D\uDEAB'
+		}, {
+			symbol: '\uD83D\uDCAF'
+		}, {
+			symbol: '\uD83D\uDCA2'
+		}, {
+			symbol: '\u2668'
+		}, {
+			symbol: '\uD83D\uDEB7'
+		}, {
+			symbol: '\uD83D\uDEAF'
+		}, {
+			symbol: '\uD83D\uDEB3'
+		}, {
+			symbol: '\uD83D\uDEB1'
+		}, {
+			symbol: '\uD83D\uDD1E'
+		}, {
+			symbol: '\uD83D\uDCF5'
+		}, {
+			symbol: '\uD83D\uDEAD'
+		}, {
+			symbol: '\u2757'
+		}, {
+			symbol: '\u2755'
+		}, {
+			symbol: '\u2753'
+		}, {
+			symbol: '\u2754'
+		}, {
+			symbol: '\u203C'
+		}, {
+			symbol: '\u2049'
+		}, {
+			symbol: '\uD83D\uDD05'
+		}, {
+			symbol: '\uD83D\uDD06'
+		}, {
+			symbol: '\u303D'
+		}, {
+			symbol: '\u26A0'
+		}, {
+			symbol: '\uD83D\uDEB8'
+		}, {
+			symbol: '\uD83D\uDD31'
+		}, {
+			symbol: '\u269C'
+		}, {
+			symbol: '\uD83D\uDD30'
+		}, {
+			symbol: '\u267B'
+		}, {
+			symbol: '\u2705'
+		}, {
+			symbol: '\uD83C\uDE2F'
+		}, {
+			symbol: '\uD83D\uDCB9'
+		}, {
+			symbol: '\u2747'
+		}, {
+			symbol: '\u2733'
+		}, {
+			symbol: '\u274E'
+		}, {
+			symbol: '\uD83C\uDF10'
+		}, {
+			symbol: '\uD83D\uDCA0'
+		}, {
+			symbol: '\u24C2'
+		}, {
+			symbol: '\uD83C\uDF00'
+		}, {
+			symbol: '\uD83D\uDCA4'
+		}, {
+			symbol: '\uD83C\uDFE7'
+		}, {
+			symbol: '\uD83D\uDEBE'
+		}, {
+			symbol: '\u267F'
+		}, {
+			symbol: '\uD83C\uDD7F'
+		}, {
+			symbol: '\uD83C\uDE33'
+		}, {
+			symbol: '\uD83C\uDE02'
+		}, {
+			symbol: '\uD83D\uDEC2'
+		}, {
+			symbol: '\uD83D\uDEC3'
+		}, {
+			symbol: '\uD83D\uDEC4'
+		}, {
+			symbol: '\uD83D\uDEC5'
+		}, {
+			symbol: '\uD83D\uDEB9'
+		}, {
+			symbol: '\uD83D\uDEBA'
+		}, {
+			symbol: '\uD83D\uDEBC'
+		}, {
+			symbol: '\uD83D\uDEBB'
+		}, {
+			symbol: '\uD83D\uDEAE'
+		}, {
+			symbol: '\uD83C\uDFA6'
+		}, {
+			symbol: '\uD83D\uDCF6'
+		}, {
+			symbol: '\uD83C\uDE01'
+		}, {
+			symbol: '\uD83D\uDD23'
+		}, {
+			symbol: '\u2139'
+		}, {
+			symbol: '\uD83D\uDD24'
+		}, {
+			symbol: '\uD83D\uDD21'
+		}, {
+			symbol: '\uD83D\uDD20'
+		}, {
+			symbol: '\uD83C\uDD96'
+		}, {
+			symbol: '\uD83C\uDD97'
+		}, {
+			symbol: '\uD83C\uDD99'
+		}, {
+			symbol: '\uD83C\uDD92'
+		}, {
+			symbol: '\uD83C\uDD95'
+		}, {
+			symbol: '\uD83C\uDD93'
+		}, {
+			symbol: '\u0030'
+		}, {
+			symbol: '\u0031'
+		}, {
+			symbol: '\u0032'
+		}, {
+			symbol: '\u0033'
+		}, {
+			symbol: '\u0034'
+		}, {
+			symbol: '\u0035'
+		}, {
+			symbol: '\u0036'
+		}, {
+			symbol: '\u0037'
+		}, {
+			symbol: '\u0038'
+		}, {
+			symbol: '\u0039'
+		}, {
+			symbol: '\uD83D\uDD1F'
+		}, {
+			symbol: '\uD83D\uDD22'
+		}, {
+			symbol: '\u0023'
+		}, {
+			symbol: '\u002A'
+		}, {
+			symbol: '\u23CF'
+		}, {
+			symbol: '\u25B6'
+		}, {
+			symbol: '\u23F8'
+		}, {
+			symbol: '\u23EF'
+		}, {
+			symbol: '\u23F9'
+		}, {
+			symbol: '\u23FA'
+		}, {
+			symbol: '\u23ED'
+		}, {
+			symbol: '\u23EE'
+		}, {
+			symbol: '\u23E9'
+		}, {
+			symbol: '\u23EA'
+		}, {
+			symbol: '\u23EB'
+		}, {
+			symbol: '\u23EC'
+		}, {
+			symbol: '\u25C0'
+		}, {
+			symbol: '\uD83D\uDD3C'
+		}, {
+			symbol: '\uD83D\uDD3D'
+		}, {
+			symbol: '\u27A1'
+		}, {
+			symbol: '\u2B05'
+		}, {
+			symbol: '\u2B06'
+		}, {
+			symbol: '\u2B07'
+		}, {
+			symbol: '\u2197'
+		}, {
+			symbol: '\u2198'
+		}, {
+			symbol: '\u2199'
+		}, {
+			symbol: '\u2196'
+		}, {
+			symbol: '\u2195'
+		}, {
+			symbol: '\u2194'
+		}, {
+			symbol: '\u21AA'
+		}, {
+			symbol: '\u21A9'
+		}, {
+			symbol: '\u2934'
+		}, {
+			symbol: '\u2935'
+		}, {
+			symbol: '\uD83D\uDD00'
+		}, {
+			symbol: '\uD83D\uDD01'
+		}, {
+			symbol: '\uD83D\uDD02'
+		}, {
+			symbol: '\uD83D\uDD04'
+		}, {
+			symbol: '\uD83D\uDD03'
+		}, {
+			symbol: '\uD83C\uDFB5'
+		}, {
+			symbol: '\uD83C\uDFB6'
+		}, {
+			symbol: '\u2795'
+		}, {
+			symbol: '\u2796'
+		}, {
+			symbol: '\u2797'
+		}, {
+			symbol: '\u2716'
+		}, {
+			symbol: '\u267E'
+		}, {
+			symbol: '\uD83D\uDCB2'
+		}, {
+			symbol: '\uD83D\uDCB1'
+		}, {
+			symbol: '\u2122'
+		}, {
+			symbol: '\u00A9'
+		}, {
+			symbol: '\u00AE'
+		}, {
+			symbol: '\uD83D\uDC41'
+		}, {
+			symbol: '\uD83D\uDDE8'
+		}, {
+			symbol: '\uD83D\uDD1A'
+		}, {
+			symbol: '\uD83D\uDD19'
+		}, {
+			symbol: '\uD83D\uDD1B'
+		}, {
+			symbol: '\uD83D\uDD1D'
+		}, {
+			symbol: '\uD83D\uDD1C'
+		}, {
+			symbol: '\u3030'
+		}, {
+			symbol: '\u27B0'
+		}, {
+			symbol: '\u27BF'
+		}, {
+			symbol: '\u2714'
+		}, {
+			symbol: '\u2611'
+		}, {
+			symbol: '\uD83D\uDD18'
+		}, {
+			symbol: '\u26AA'
+		}, {
+			symbol: '\u26AB'
+		}, {
+			symbol: '\uD83D\uDD34'
+		}, {
+			symbol: '\uD83D\uDD35'
+		}, {
+			symbol: '\uD83D\uDD3A'
+		}, {
+			symbol: '\uD83D\uDD3B'
+		}, {
+			symbol: '\uD83D\uDD38'
+		}, {
+			symbol: '\uD83D\uDD39'
+		}, {
+			symbol: '\uD83D\uDD36'
+		}, {
+			symbol: '\uD83D\uDD37'
+		}, {
+			symbol: '\uD83D\uDD33'
+		}, {
+			symbol: '\uD83D\uDD32'
+		}, {
+			symbol: '\u25AA'
+		}, {
+			symbol: '\u25AB'
+		}, {
+			symbol: '\u25FE'
+		}, {
+			symbol: '\u25FD'
+		}, {
+			symbol: '\u25FC'
+		}, {
+			symbol: '\u25FB'
+		}, {
+			symbol: '\u2B1B'
+		}, {
+			symbol: '\u2B1C'
+		}, {
+			symbol: '\uD83D\uDD08'
+		}, {
+			symbol: '\uD83D\uDD07'
+		}, {
+			symbol: '\uD83D\uDD09'
+		}, {
+			symbol: '\uD83D\uDD0A'
+		}, {
+			symbol: '\uD83D\uDD14'
+		}, {
+			symbol: '\uD83D\uDD15'
+		}, {
+			symbol: '\uD83D\uDCE3'
+		}, {
+			symbol: '\uD83D\uDCE2'
+		}, {
+			symbol: '\uD83D\uDCAC'
+		}, {
+			symbol: '\uD83D\uDCAD'
+		}, {
+			symbol: '\uD83D\uDDEF'
+		}, {
+			symbol: '\u2660'
+		}, {
+			symbol: '\u2663'
+		}, {
+			symbol: '\u2665'
+		}, {
+			symbol: '\u2666'
+		}, {
+			symbol: '\uD83C\uDCCF'
+		}, {
+			symbol: '\uD83C\uDFB4'
+		}, {
+			symbol: '\uD83C\uDC04'
+		}, {
+			symbol: '\uD83D\uDD50'
+		}, {
+			symbol: '\uD83D\uDD51'
+		}, {
+			symbol: '\uD83D\uDD52'
+		}, {
+			symbol: '\uD83D\uDD53'
+		}, {
+			symbol: '\uD83D\uDD54'
+		}, {
+			symbol: '\uD83D\uDD55'
+		}, {
+			symbol: '\uD83D\uDD56'
+		}, {
+			symbol: '\uD83D\uDD57'
+		}, {
+			symbol: '\uD83D\uDD58'
+		}, {
+			symbol: '\uD83D\uDD59'
+		}, {
+			symbol: '\uD83D\uDD5A'
+		}, {
+			symbol: '\uD83D\uDD5B'
+		}, {
+			symbol: '\uD83D\uDD5C'
+		}, {
+			symbol: '\uD83D\uDD5D'
+		}, {
+			symbol: '\uD83D\uDD5E'
+		}, {
+			symbol: '\uD83D\uDD5F'
+		}, {
+			symbol: '\uD83D\uDD60'
+		}, {
+			symbol: '\uD83D\uDD61'
+		}, {
+			symbol: '\uD83D\uDD62'
+		}, {
+			symbol: '\uD83D\uDD63'
+		}, {
+			symbol: '\uD83D\uDD64'
+		}, {
+			symbol: '\uD83D\uDD65'
+		}, {
+			symbol: '\uD83D\uDD66'
+		}, {
+			symbol: '\uD83D\uDD67'
+		}]
 	}, {
-	  id: 8,
-	  code: 'FLAGS',
-	  showForWindows: false,
-	  emoji: [{
-	    symbol: '\uD83C\uDFF3'
-	  }, {
-	    symbol: '\uD83C\uDFF4'
-	  }, {
-	    symbol: '\uD83C\uDFC1'
-	  }, {
-	    symbol: '\uD83D\uDEA9'
-	  }, {
-	    symbol: '\uD83C\uDFF3\uFE0F\u200D\uD83C\uDF08'
-	  }, {
-	    symbol: '\uD83C\uDDFA\uD83C\uDDF3'
-	  }, {
-	    symbol: '\uD83C\uDDE6\uD83C\uDDEB'
-	  }, {
-	    symbol: '\uD83C\uDDE6\uD83C\uDDFD'
-	  }, {
-	    symbol: '\uD83C\uDDE6\uD83C\uDDF1'
-	  }, {
-	    symbol: '\uD83C\uDDE9\uD83C\uDDFF'
-	  }, {
-	    symbol: '\uD83C\uDDE6\uD83C\uDDF8'
-	  }, {
-	    symbol: '\uD83C\uDDE6\uD83C\uDDE9'
-	  }, {
-	    symbol: '\uD83C\uDDE6\uD83C\uDDF4'
-	  }, {
-	    symbol: '\uD83C\uDDE6\uD83C\uDDEE'
-	  }, {
-	    symbol: '\uD83C\uDDE6\uD83C\uDDF6'
-	  }, {
-	    symbol: '\uD83C\uDDE6\uD83C\uDDEC'
-	  }, {
-	    symbol: '\uD83C\uDDE6\uD83C\uDDF7'
-	  }, {
-	    symbol: '\uD83C\uDDE6\uD83C\uDDF2'
-	  }, {
-	    symbol: '\uD83C\uDDE6\uD83C\uDDFC'
-	  }, {
-	    symbol: '\uD83C\uDDE6\uD83C\uDDFA'
-	  }, {
-	    symbol: '\uD83C\uDDE6\uD83C\uDDF9'
-	  }, {
-	    symbol: '\uD83C\uDDE6\uD83C\uDDFF'
-	  }, {
-	    symbol: '\uD83C\uDDE7\uD83C\uDDF8'
-	  }, {
-	    symbol: '\uD83C\uDDE7\uD83C\uDDED'
-	  }, {
-	    symbol: '\uD83C\uDDE7\uD83C\uDDE9'
-	  }, {
-	    symbol: '\uD83C\uDDE7\uD83C\uDDFE'
-	  }, {
-	    symbol: '\uD83C\uDDE7\uD83C\uDDEA'
-	  }, {
-	    symbol: '\uD83C\uDDE7\uD83C\uDDFF'
-	  }, {
-	    symbol: '\uD83C\uDDE7\uD83C\uDDEF'
-	  }, {
-	    symbol: '\uD83C\uDDE7\uD83C\uDDF2'
-	  }, {
-	    symbol: '\uD83C\uDDE7\uD83C\uDDF9'
-	  }, {
-	    symbol: '\uD83C\uDDE7\uD83C\uDDF4'
-	  }, {
-	    symbol: '\uD83C\uDDE7\uD83C\uDDE6'
-	  }, {
-	    symbol: '\uD83C\uDDE7\uD83C\uDDFC'
-	  }, {
-	    symbol: '\uD83C\uDDE7\uD83C\uDDF7'
-	  }, {
-	    symbol: '\uD83C\uDDEE\uD83C\uDDF4'
-	  }, {
-	    symbol: '\uD83C\uDDFB\uD83C\uDDEC'
-	  }, {
-	    symbol: '\uD83C\uDDE7\uD83C\uDDF3'
-	  }, {
-	    symbol: '\uD83C\uDDE7\uD83C\uDDEC'
-	  }, {
-	    symbol: '\uD83C\uDDE7\uD83C\uDDEB'
-	  }, {
-	    symbol: '\uD83C\uDDE7\uD83C\uDDEE'
-	  }, {
-	    symbol: '\uD83C\uDDF0\uD83C\uDDED'
-	  }, {
-	    symbol: '\uD83C\uDDE8\uD83C\uDDF2'
-	  }, {
-	    symbol: '\uD83C\uDDE8\uD83C\uDDE6'
-	  }, {
-	    symbol: '\uD83C\uDDEE\uD83C\uDDE8'
-	  }, {
-	    symbol: '\uD83C\uDDE8\uD83C\uDDFB'
-	  }, {
-	    symbol: '\uD83C\uDDE7\uD83C\uDDF6'
-	  }, {
-	    symbol: '\uD83C\uDDF0\uD83C\uDDFE'
-	  }, {
-	    symbol: '\uD83C\uDDE8\uD83C\uDDEB'
-	  }, {
-	    symbol: '\uD83C\uDDF9\uD83C\uDDE9'
-	  }, {
-	    symbol: '\uD83C\uDDE8\uD83C\uDDF1'
-	  }, {
-	    symbol: '\uD83C\uDDE8\uD83C\uDDF3'
-	  }, {
-	    symbol: '\uD83C\uDDE8\uD83C\uDDFD'
-	  }, {
-	    symbol: '\uD83C\uDDE8\uD83C\uDDF4'
-	  }, {
-	    symbol: '\uD83C\uDDF0\uD83C\uDDF2'
-	  }, {
-	    symbol: '\uD83C\uDDE8\uD83C\uDDEC'
-	  }, {
-	    symbol: '\uD83C\uDDE8\uD83C\uDDE9'
-	  }, {
-	    symbol: '\uD83C\uDDE8\uD83C\uDDF0'
-	  }, {
-	    symbol: '\uD83C\uDDE8\uD83C\uDDF7'
-	  }, {
-	    symbol: '\uD83C\uDDE8\uD83C\uDDEE'
-	  }, {
-	    symbol: '\uD83C\uDDED\uD83C\uDDF7'
-	  }, {
-	    symbol: '\uD83C\uDDE8\uD83C\uDDFA'
-	  }, {
-	    symbol: '\uD83C\uDDE8\uD83C\uDDFC'
-	  }, {
-	    symbol: '\uD83C\uDDE8\uD83C\uDDFE'
-	  }, {
-	    symbol: '\uD83C\uDDE8\uD83C\uDDFF'
-	  }, {
-	    symbol: '\uD83C\uDDE9\uD83C\uDDF0'
-	  }, {
-	    symbol: '\uD83C\uDDE9\uD83C\uDDEF'
-	  }, {
-	    symbol: '\uD83C\uDDE9\uD83C\uDDF2'
-	  }, {
-	    symbol: '\uD83C\uDDE9\uD83C\uDDF4'
-	  }, {
-	    symbol: '\uD83C\uDDEA\uD83C\uDDE8'
-	  }, {
-	    symbol: '\uD83C\uDDEA\uD83C\uDDEC'
-	  }, {
-	    symbol: '\uD83C\uDDF8\uD83C\uDDFB'
-	  }, {
-	    symbol: '\uD83C\uDDEC\uD83C\uDDF6'
-	  }, {
-	    symbol: '\uD83C\uDDEA\uD83C\uDDF7'
-	  }, {
-	    symbol: '\uD83C\uDDEA\uD83C\uDDF9'
-	  }, {
-	    symbol: '\uD83C\uDDEA\uD83C\uDDFA'
-	  }, {
-	    symbol: '\uD83C\uDDEB\uD83C\uDDF0'
-	  }, {
-	    symbol: '\uD83C\uDDEB\uD83C\uDDF4'
-	  }, {
-	    symbol: '\uD83C\uDDEB\uD83C\uDDEF'
-	  }, {
-	    symbol: '\uD83C\uDDEB\uD83C\uDDEE'
-	  }, {
-	    symbol: '\uD83C\uDDEB\uD83C\uDDF7'
-	  }, {
-	    symbol: '\uD83C\uDDEC\uD83C\uDDEB'
-	  }, {
-	    symbol: '\uD83C\uDDF5\uD83C\uDDEB'
-	  }, {
-	    symbol: '\uD83C\uDDEC\uD83C\uDDE6'
-	  }, {
-	    symbol: '\uD83C\uDDEC\uD83C\uDDF2'
-	  }, {
-	    symbol: '\uD83C\uDDEC\uD83C\uDDEA'
-	  }, {
-	    symbol: '\uD83C\uDDE9\uD83C\uDDEA'
-	  }, {
-	    symbol: '\uD83C\uDDEC\uD83C\uDDED'
-	  }, {
-	    symbol: '\uD83C\uDDEC\uD83C\uDDEE'
-	  }, {
-	    symbol: '\uD83C\uDDEC\uD83C\uDDF7'
-	  }, {
-	    symbol: '\uD83C\uDDEC\uD83C\uDDF1'
-	  }, {
-	    symbol: '\uD83C\uDDEC\uD83C\uDDE9'
-	  }, {
-	    symbol: '\uD83C\uDDEC\uD83C\uDDF5'
-	  }, {
-	    symbol: '\uD83C\uDDEC\uD83C\uDDFA'
-	  }, {
-	    symbol: '\uD83C\uDDEC\uD83C\uDDF9'
-	  }, {
-	    symbol: '\uD83C\uDDEC\uD83C\uDDF3'
-	  }, {
-	    symbol: '\uD83C\uDDEC\uD83C\uDDFC'
-	  }, {
-	    symbol: '\uD83C\uDDEC\uD83C\uDDFE'
-	  }, {
-	    symbol: '\uD83C\uDDED\uD83C\uDDF9'
-	  }, {
-	    symbol: '\uD83C\uDDED\uD83C\uDDF3'
-	  }, {
-	    symbol: '\uD83C\uDDED\uD83C\uDDF0'
-	  }, {
-	    symbol: '\uD83C\uDDED\uD83C\uDDFA'
-	  }, {
-	    symbol: '\uD83C\uDDEE\uD83C\uDDF8'
-	  }, {
-	    symbol: '\uD83C\uDDEE\uD83C\uDDF3'
-	  }, {
-	    symbol: '\uD83C\uDDEE\uD83C\uDDE9'
-	  }, {
-	    symbol: '\uD83C\uDDEE\uD83C\uDDF7'
-	  }, {
-	    symbol: '\uD83C\uDDEE\uD83C\uDDF6'
-	  }, {
-	    symbol: '\uD83C\uDDEE\uD83C\uDDEA'
-	  }, {
-	    symbol: '\uD83C\uDDEE\uD83C\uDDF2'
-	  }, {
-	    symbol: '\uD83C\uDDEE\uD83C\uDDF1'
-	  }, {
-	    symbol: '\uD83C\uDDEE\uD83C\uDDF9'
-	  }, {
-	    symbol: '\uD83C\uDDEF\uD83C\uDDF2'
-	  }, {
-	    symbol: '\uD83C\uDDEF\uD83C\uDDF5'
-	  }, {
-	    symbol: '\uD83C\uDDEF\uD83C\uDDEA'
-	  }, {
-	    symbol: '\uD83C\uDDEF\uD83C\uDDF4'
-	  }, {
-	    symbol: '\uD83C\uDDF0\uD83C\uDDFF'
-	  }, {
-	    symbol: '\uD83C\uDDF0\uD83C\uDDEA'
-	  }, {
-	    symbol: '\uD83C\uDDF0\uD83C\uDDEE'
-	  }, {
-	    symbol: '\uD83C\uDDFD\uD83C\uDDF0'
-	  }, {
-	    symbol: '\uD83C\uDDF0\uD83C\uDDFC'
-	  }, {
-	    symbol: '\uD83C\uDDF0\uD83C\uDDEC'
-	  }, {
-	    symbol: '\uD83C\uDDF1\uD83C\uDDE6'
-	  }, {
-	    symbol: '\uD83C\uDDF1\uD83C\uDDFB'
-	  }, {
-	    symbol: '\uD83C\uDDF1\uD83C\uDDE7'
-	  }, {
-	    symbol: '\uD83C\uDDF1\uD83C\uDDF8'
-	  }, {
-	    symbol: '\uD83C\uDDF1\uD83C\uDDF7'
-	  }, {
-	    symbol: '\uD83C\uDDF1\uD83C\uDDFE'
-	  }, {
-	    symbol: '\uD83C\uDDF1\uD83C\uDDEE'
-	  }, {
-	    symbol: '\uD83C\uDDF1\uD83C\uDDF9'
-	  }, {
-	    symbol: '\uD83C\uDDF1\uD83C\uDDFA'
-	  }, {
-	    symbol: '\uD83C\uDDF2\uD83C\uDDF4'
-	  }, {
-	    symbol: '\uD83C\uDDF2\uD83C\uDDF0'
-	  }, {
-	    symbol: '\uD83C\uDDF2\uD83C\uDDEC'
-	  }, {
-	    symbol: '\uD83C\uDDF2\uD83C\uDDFC'
-	  }, {
-	    symbol: '\uD83C\uDDF2\uD83C\uDDFE'
-	  }, {
-	    symbol: '\uD83C\uDDF2\uD83C\uDDFB'
-	  }, {
-	    symbol: '\uD83C\uDDF2\uD83C\uDDF1'
-	  }, {
-	    symbol: '\uD83C\uDDF2\uD83C\uDDF9'
-	  }, {
-	    symbol: '\uD83C\uDDF2\uD83C\uDDED'
-	  }, {
-	    symbol: '\uD83C\uDDF2\uD83C\uDDF7'
-	  }, {
-	    symbol: '\uD83C\uDDF2\uD83C\uDDFA'
-	  }, {
-	    symbol: '\uD83C\uDDFE\uD83C\uDDF9'
-	  }, {
-	    symbol: '\uD83C\uDDF2\uD83C\uDDFD'
-	  }, {
-	    symbol: '\uD83C\uDDEB\uD83C\uDDF2'
-	  }, {
-	    symbol: '\uD83C\uDDF2\uD83C\uDDE9'
-	  }, {
-	    symbol: '\uD83C\uDDF2\uD83C\uDDE8'
-	  }, {
-	    symbol: '\uD83C\uDDF2\uD83C\uDDF3'
-	  }, {
-	    symbol: '\uD83C\uDDF2\uD83C\uDDEA'
-	  }, {
-	    symbol: '\uD83C\uDDF2\uD83C\uDDF8'
-	  }, {
-	    symbol: '\uD83C\uDDF2\uD83C\uDDE6'
-	  }, {
-	    symbol: '\uD83C\uDDF2\uD83C\uDDFF'
-	  }, {
-	    symbol: '\uD83C\uDDF3\uD83C\uDDE6'
-	  }, {
-	    symbol: '\uD83C\uDDF3\uD83C\uDDF7'
-	  }, {
-	    symbol: '\uD83C\uDDF3\uD83C\uDDF5'
-	  }, {
-	    symbol: '\uD83C\uDDF3\uD83C\uDDF1'
-	  }, {
-	    symbol: '\uD83C\uDDF3\uD83C\uDDE8'
-	  }, {
-	    symbol: '\uD83C\uDDF3\uD83C\uDDFF'
-	  }, {
-	    symbol: '\uD83C\uDDF3\uD83C\uDDEE'
-	  }, {
-	    symbol: '\uD83C\uDDF3\uD83C\uDDEA'
-	  }, {
-	    symbol: '\uD83C\uDDF3\uD83C\uDDEC'
-	  }, {
-	    symbol: '\uD83C\uDDF3\uD83C\uDDFA'
-	  }, {
-	    symbol: '\uD83C\uDDF3\uD83C\uDDEB'
-	  }, {
-	    symbol: '\uD83C\uDDF0\uD83C\uDDF5'
-	  }, {
-	    symbol: '\uD83C\uDDF2\uD83C\uDDF5'
-	  }, {
-	    symbol: '\uD83C\uDDF3\uD83C\uDDF4'
-	  }, {
-	    symbol: '\uD83C\uDDF4\uD83C\uDDF2'
-	  }, {
-	    symbol: '\uD83C\uDDF5\uD83C\uDDF0'
-	  }, {
-	    symbol: '\uD83C\uDDF5\uD83C\uDDFC'
-	  }, {
-	    symbol: '\uD83C\uDDF5\uD83C\uDDF8'
-	  }, {
-	    symbol: '\uD83C\uDDF5\uD83C\uDDE6'
-	  }, {
-	    symbol: '\uD83C\uDDF5\uD83C\uDDEC'
-	  }, {
-	    symbol: '\uD83C\uDDF5\uD83C\uDDFE'
-	  }, {
-	    symbol: '\uD83C\uDDF5\uD83C\uDDEA'
-	  }, {
-	    symbol: '\uD83C\uDDF5\uD83C\uDDED'
-	  }, {
-	    symbol: '\uD83C\uDDF5\uD83C\uDDF3'
-	  }, {
-	    symbol: '\uD83C\uDDF5\uD83C\uDDF1'
-	  }, {
-	    symbol: '\uD83C\uDDF5\uD83C\uDDF9'
-	  }, {
-	    symbol: '\uD83C\uDDF5\uD83C\uDDF7'
-	  }, {
-	    symbol: '\uD83C\uDDF6\uD83C\uDDE6'
-	  }, {
-	    symbol: '\uD83C\uDDF7\uD83C\uDDF4'
-	  }, {
-	    symbol: '\uD83C\uDDF7\uD83C\uDDFA'
-	  }, {
-	    symbol: '\uD83C\uDDF7\uD83C\uDDFC'
-	  }, {
-	    symbol: '\uD83C\uDDFC\uD83C\uDDF8'
-	  }, {
-	    symbol: '\uD83C\uDDF8\uD83C\uDDF2'
-	  }, {
-	    symbol: '\uD83C\uDDF8\uD83C\uDDF9'
-	  }, {
-	    symbol: '\uD83C\uDDF8\uD83C\uDDE6'
-	  }, {
-	    symbol: '\uD83C\uDDF8\uD83C\uDDF3'
-	  }, {
-	    symbol: '\uD83C\uDDF7\uD83C\uDDF8'
-	  }, {
-	    symbol: '\uD83C\uDDF8\uD83C\uDDE8'
-	  }, {
-	    symbol: '\uD83C\uDDF8\uD83C\uDDF1'
-	  }, {
-	    symbol: '\uD83C\uDDF8\uD83C\uDDEC'
-	  }, {
-	    symbol: '\uD83C\uDDF8\uD83C\uDDFD'
-	  }, {
-	    symbol: '\uD83C\uDDF8\uD83C\uDDF0'
-	  }, {
-	    symbol: '\uD83C\uDDF8\uD83C\uDDEE'
-	  }, {
-	    symbol: '\uD83C\uDDEC\uD83C\uDDF8'
-	  }, {
-	    symbol: '\uD83C\uDDF8\uD83C\uDDE7'
-	  }, {
-	    symbol: '\uD83C\uDDF8\uD83C\uDDF4'
-	  }, {
-	    symbol: '\uD83C\uDDFF\uD83C\uDDE6'
-	  }, {
-	    symbol: '\uD83C\uDDF0\uD83C\uDDF7'
-	  }, {
-	    symbol: '\uD83C\uDDEA\uD83C\uDDF8'
-	  }, {
-	    symbol: '\uD83C\uDDF1\uD83C\uDDF0'
-	  }, {
-	    symbol: '\uD83C\uDDF8\uD83C\uDDED'
-	  }, {
-	    symbol: '\uD83C\uDDF0\uD83C\uDDF3'
-	  }, {
-	    symbol: '\uD83C\uDDF1\uD83C\uDDE8'
-	  }, {
-	    symbol: '\uD83C\uDDF5\uD83C\uDDF2'
-	  }, {
-	    symbol: '\uD83C\uDDFB\uD83C\uDDE8'
-	  }, {
-	    symbol: '\uD83C\uDDF8\uD83C\uDDE9'
-	  }, {
-	    symbol: '\uD83C\uDDF8\uD83C\uDDF7'
-	  }, {
-	    symbol: '\uD83C\uDDF8\uD83C\uDDFF'
-	  }, {
-	    symbol: '\uD83C\uDDF8\uD83C\uDDEA'
-	  }, {
-	    symbol: '\uD83C\uDDE8\uD83C\uDDED'
-	  }, {
-	    symbol: '\uD83C\uDDF8\uD83C\uDDFE'
-	  }, {
-	    symbol: '\uD83C\uDDF9\uD83C\uDDFC'
-	  }, {
-	    symbol: '\uD83C\uDDF9\uD83C\uDDEF'
-	  }, {
-	    symbol: '\uD83C\uDDF9\uD83C\uDDFF'
-	  }, {
-	    symbol: '\uD83C\uDDF9\uD83C\uDDED'
-	  }, {
-	    symbol: '\uD83C\uDDF9\uD83C\uDDF1'
-	  }, {
-	    symbol: '\uD83C\uDDF9\uD83C\uDDEC'
-	  }, {
-	    symbol: '\uD83C\uDDF9\uD83C\uDDF0'
-	  }, {
-	    symbol: '\uD83C\uDDF9\uD83C\uDDF4'
-	  }, {
-	    symbol: '\uD83C\uDDF9\uD83C\uDDF3'
-	  }, {
-	    symbol: '\uD83C\uDDF9\uD83C\uDDF7'
-	  }, {
-	    symbol: '\uD83C\uDDF9\uD83C\uDDF2'
-	  }, {
-	    symbol: '\uD83C\uDDF9\uD83C\uDDE8'
-	  }, {
-	    symbol: '\uD83C\uDDF9\uD83C\uDDFB'
-	  }, {
-	    symbol: '\uD83C\uDDFB\uD83C\uDDEE'
-	  }, {
-	    symbol: '\uD83C\uDDFA\uD83C\uDDEC'
-	  }, {
-	    symbol: '\uD83C\uDDFA\uD83C\uDDE6'
-	  }, {
-	    symbol: '\uD83C\uDDE6\uD83C\uDDEA'
-	  }, {
-	    symbol: '\uD83C\uDDEC\uD83C\uDDE7'
-	  }, {
-	    symbol: '\uD83C\uDDFA\uD83C\uDDF8'
-	  }, {
-	    symbol: '\uD83C\uDDFA\uD83C\uDDFE'
-	  }, {
-	    symbol: '\uD83C\uDDFA\uD83C\uDDFF'
-	  }, {
-	    symbol: '\uD83C\uDDFB\uD83C\uDDFA'
-	  }, {
-	    symbol: '\uD83C\uDDFB\uD83C\uDDE6'
-	  }, {
-	    symbol: '\uD83C\uDDFB\uD83C\uDDEA'
-	  }, {
-	    symbol: '\uD83C\uDDFB\uD83C\uDDF3'
-	  }, {
-	    symbol: '\uD83C\uDDFC\uD83C\uDDEB'
-	  }, {
-	    symbol: '\uD83C\uDDEA\uD83C\uDDED'
-	  }, {
-	    symbol: '\uD83C\uDDFE\uD83C\uDDEA'
-	  }, {
-	    symbol: '\uD83C\uDDFF\uD83C\uDDF2'
-	  }, {
-	    symbol: '\uD83C\uDDFF\uD83C\uDDFC'
-	  }]
+		id: 8,
+		code: 'FLAGS',
+		showForWindows: false,
+		emoji: [{
+			symbol: '\uD83C\uDFF3'
+		}, {
+			symbol: '\uD83C\uDFF4'
+		}, {
+			symbol: '\uD83C\uDFC1'
+		}, {
+			symbol: '\uD83D\uDEA9'
+		}, {
+			symbol: '\uD83C\uDFF3\uFE0F\u200D\uD83C\uDF08'
+		}, {
+			symbol: '\uD83C\uDDFA\uD83C\uDDF3'
+		}, {
+			symbol: '\uD83C\uDDE6\uD83C\uDDEB'
+		}, {
+			symbol: '\uD83C\uDDE6\uD83C\uDDFD'
+		}, {
+			symbol: '\uD83C\uDDE6\uD83C\uDDF1'
+		}, {
+			symbol: '\uD83C\uDDE9\uD83C\uDDFF'
+		}, {
+			symbol: '\uD83C\uDDE6\uD83C\uDDF8'
+		}, {
+			symbol: '\uD83C\uDDE6\uD83C\uDDE9'
+		}, {
+			symbol: '\uD83C\uDDE6\uD83C\uDDF4'
+		}, {
+			symbol: '\uD83C\uDDE6\uD83C\uDDEE'
+		}, {
+			symbol: '\uD83C\uDDE6\uD83C\uDDF6'
+		}, {
+			symbol: '\uD83C\uDDE6\uD83C\uDDEC'
+		}, {
+			symbol: '\uD83C\uDDE6\uD83C\uDDF7'
+		}, {
+			symbol: '\uD83C\uDDE6\uD83C\uDDF2'
+		}, {
+			symbol: '\uD83C\uDDE6\uD83C\uDDFC'
+		}, {
+			symbol: '\uD83C\uDDE6\uD83C\uDDFA'
+		}, {
+			symbol: '\uD83C\uDDE6\uD83C\uDDF9'
+		}, {
+			symbol: '\uD83C\uDDE6\uD83C\uDDFF'
+		}, {
+			symbol: '\uD83C\uDDE7\uD83C\uDDF8'
+		}, {
+			symbol: '\uD83C\uDDE7\uD83C\uDDED'
+		}, {
+			symbol: '\uD83C\uDDE7\uD83C\uDDE9'
+		}, {
+			symbol: '\uD83C\uDDE7\uD83C\uDDFE'
+		}, {
+			symbol: '\uD83C\uDDE7\uD83C\uDDEA'
+		}, {
+			symbol: '\uD83C\uDDE7\uD83C\uDDFF'
+		}, {
+			symbol: '\uD83C\uDDE7\uD83C\uDDEF'
+		}, {
+			symbol: '\uD83C\uDDE7\uD83C\uDDF2'
+		}, {
+			symbol: '\uD83C\uDDE7\uD83C\uDDF9'
+		}, {
+			symbol: '\uD83C\uDDE7\uD83C\uDDF4'
+		}, {
+			symbol: '\uD83C\uDDE7\uD83C\uDDE6'
+		}, {
+			symbol: '\uD83C\uDDE7\uD83C\uDDFC'
+		}, {
+			symbol: '\uD83C\uDDE7\uD83C\uDDF7'
+		}, {
+			symbol: '\uD83C\uDDEE\uD83C\uDDF4'
+		}, {
+			symbol: '\uD83C\uDDFB\uD83C\uDDEC'
+		}, {
+			symbol: '\uD83C\uDDE7\uD83C\uDDF3'
+		}, {
+			symbol: '\uD83C\uDDE7\uD83C\uDDEC'
+		}, {
+			symbol: '\uD83C\uDDE7\uD83C\uDDEB'
+		}, {
+			symbol: '\uD83C\uDDE7\uD83C\uDDEE'
+		}, {
+			symbol: '\uD83C\uDDF0\uD83C\uDDED'
+		}, {
+			symbol: '\uD83C\uDDE8\uD83C\uDDF2'
+		}, {
+			symbol: '\uD83C\uDDE8\uD83C\uDDE6'
+		}, {
+			symbol: '\uD83C\uDDEE\uD83C\uDDE8'
+		}, {
+			symbol: '\uD83C\uDDE8\uD83C\uDDFB'
+		}, {
+			symbol: '\uD83C\uDDE7\uD83C\uDDF6'
+		}, {
+			symbol: '\uD83C\uDDF0\uD83C\uDDFE'
+		}, {
+			symbol: '\uD83C\uDDE8\uD83C\uDDEB'
+		}, {
+			symbol: '\uD83C\uDDF9\uD83C\uDDE9'
+		}, {
+			symbol: '\uD83C\uDDE8\uD83C\uDDF1'
+		}, {
+			symbol: '\uD83C\uDDE8\uD83C\uDDF3'
+		}, {
+			symbol: '\uD83C\uDDE8\uD83C\uDDFD'
+		}, {
+			symbol: '\uD83C\uDDE8\uD83C\uDDF4'
+		}, {
+			symbol: '\uD83C\uDDF0\uD83C\uDDF2'
+		}, {
+			symbol: '\uD83C\uDDE8\uD83C\uDDEC'
+		}, {
+			symbol: '\uD83C\uDDE8\uD83C\uDDE9'
+		}, {
+			symbol: '\uD83C\uDDE8\uD83C\uDDF0'
+		}, {
+			symbol: '\uD83C\uDDE8\uD83C\uDDF7'
+		}, {
+			symbol: '\uD83C\uDDE8\uD83C\uDDEE'
+		}, {
+			symbol: '\uD83C\uDDED\uD83C\uDDF7'
+		}, {
+			symbol: '\uD83C\uDDE8\uD83C\uDDFA'
+		}, {
+			symbol: '\uD83C\uDDE8\uD83C\uDDFC'
+		}, {
+			symbol: '\uD83C\uDDE8\uD83C\uDDFE'
+		}, {
+			symbol: '\uD83C\uDDE8\uD83C\uDDFF'
+		}, {
+			symbol: '\uD83C\uDDE9\uD83C\uDDF0'
+		}, {
+			symbol: '\uD83C\uDDE9\uD83C\uDDEF'
+		}, {
+			symbol: '\uD83C\uDDE9\uD83C\uDDF2'
+		}, {
+			symbol: '\uD83C\uDDE9\uD83C\uDDF4'
+		}, {
+			symbol: '\uD83C\uDDEA\uD83C\uDDE8'
+		}, {
+			symbol: '\uD83C\uDDEA\uD83C\uDDEC'
+		}, {
+			symbol: '\uD83C\uDDF8\uD83C\uDDFB'
+		}, {
+			symbol: '\uD83C\uDDEC\uD83C\uDDF6'
+		}, {
+			symbol: '\uD83C\uDDEA\uD83C\uDDF7'
+		}, {
+			symbol: '\uD83C\uDDEA\uD83C\uDDF9'
+		}, {
+			symbol: '\uD83C\uDDEA\uD83C\uDDFA'
+		}, {
+			symbol: '\uD83C\uDDEB\uD83C\uDDF0'
+		}, {
+			symbol: '\uD83C\uDDEB\uD83C\uDDF4'
+		}, {
+			symbol: '\uD83C\uDDEB\uD83C\uDDEF'
+		}, {
+			symbol: '\uD83C\uDDEB\uD83C\uDDEE'
+		}, {
+			symbol: '\uD83C\uDDEB\uD83C\uDDF7'
+		}, {
+			symbol: '\uD83C\uDDEC\uD83C\uDDEB'
+		}, {
+			symbol: '\uD83C\uDDF5\uD83C\uDDEB'
+		}, {
+			symbol: '\uD83C\uDDEC\uD83C\uDDE6'
+		}, {
+			symbol: '\uD83C\uDDEC\uD83C\uDDF2'
+		}, {
+			symbol: '\uD83C\uDDEC\uD83C\uDDEA'
+		}, {
+			symbol: '\uD83C\uDDE9\uD83C\uDDEA'
+		}, {
+			symbol: '\uD83C\uDDEC\uD83C\uDDED'
+		}, {
+			symbol: '\uD83C\uDDEC\uD83C\uDDEE'
+		}, {
+			symbol: '\uD83C\uDDEC\uD83C\uDDF7'
+		}, {
+			symbol: '\uD83C\uDDEC\uD83C\uDDF1'
+		}, {
+			symbol: '\uD83C\uDDEC\uD83C\uDDE9'
+		}, {
+			symbol: '\uD83C\uDDEC\uD83C\uDDF5'
+		}, {
+			symbol: '\uD83C\uDDEC\uD83C\uDDFA'
+		}, {
+			symbol: '\uD83C\uDDEC\uD83C\uDDF9'
+		}, {
+			symbol: '\uD83C\uDDEC\uD83C\uDDF3'
+		}, {
+			symbol: '\uD83C\uDDEC\uD83C\uDDFC'
+		}, {
+			symbol: '\uD83C\uDDEC\uD83C\uDDFE'
+		}, {
+			symbol: '\uD83C\uDDED\uD83C\uDDF9'
+		}, {
+			symbol: '\uD83C\uDDED\uD83C\uDDF3'
+		}, {
+			symbol: '\uD83C\uDDED\uD83C\uDDF0'
+		}, {
+			symbol: '\uD83C\uDDED\uD83C\uDDFA'
+		}, {
+			symbol: '\uD83C\uDDEE\uD83C\uDDF8'
+		}, {
+			symbol: '\uD83C\uDDEE\uD83C\uDDF3'
+		}, {
+			symbol: '\uD83C\uDDEE\uD83C\uDDE9'
+		}, {
+			symbol: '\uD83C\uDDEE\uD83C\uDDF7'
+		}, {
+			symbol: '\uD83C\uDDEE\uD83C\uDDF6'
+		}, {
+			symbol: '\uD83C\uDDEE\uD83C\uDDEA'
+		}, {
+			symbol: '\uD83C\uDDEE\uD83C\uDDF2'
+		}, {
+			symbol: '\uD83C\uDDEE\uD83C\uDDF1'
+		}, {
+			symbol: '\uD83C\uDDEE\uD83C\uDDF9'
+		}, {
+			symbol: '\uD83C\uDDEF\uD83C\uDDF2'
+		}, {
+			symbol: '\uD83C\uDDEF\uD83C\uDDF5'
+		}, {
+			symbol: '\uD83C\uDDEF\uD83C\uDDEA'
+		}, {
+			symbol: '\uD83C\uDDEF\uD83C\uDDF4'
+		}, {
+			symbol: '\uD83C\uDDF0\uD83C\uDDFF'
+		}, {
+			symbol: '\uD83C\uDDF0\uD83C\uDDEA'
+		}, {
+			symbol: '\uD83C\uDDF0\uD83C\uDDEE'
+		}, {
+			symbol: '\uD83C\uDDFD\uD83C\uDDF0'
+		}, {
+			symbol: '\uD83C\uDDF0\uD83C\uDDFC'
+		}, {
+			symbol: '\uD83C\uDDF0\uD83C\uDDEC'
+		}, {
+			symbol: '\uD83C\uDDF1\uD83C\uDDE6'
+		}, {
+			symbol: '\uD83C\uDDF1\uD83C\uDDFB'
+		}, {
+			symbol: '\uD83C\uDDF1\uD83C\uDDE7'
+		}, {
+			symbol: '\uD83C\uDDF1\uD83C\uDDF8'
+		}, {
+			symbol: '\uD83C\uDDF1\uD83C\uDDF7'
+		}, {
+			symbol: '\uD83C\uDDF1\uD83C\uDDFE'
+		}, {
+			symbol: '\uD83C\uDDF1\uD83C\uDDEE'
+		}, {
+			symbol: '\uD83C\uDDF1\uD83C\uDDF9'
+		}, {
+			symbol: '\uD83C\uDDF1\uD83C\uDDFA'
+		}, {
+			symbol: '\uD83C\uDDF2\uD83C\uDDF4'
+		}, {
+			symbol: '\uD83C\uDDF2\uD83C\uDDF0'
+		}, {
+			symbol: '\uD83C\uDDF2\uD83C\uDDEC'
+		}, {
+			symbol: '\uD83C\uDDF2\uD83C\uDDFC'
+		}, {
+			symbol: '\uD83C\uDDF2\uD83C\uDDFE'
+		}, {
+			symbol: '\uD83C\uDDF2\uD83C\uDDFB'
+		}, {
+			symbol: '\uD83C\uDDF2\uD83C\uDDF1'
+		}, {
+			symbol: '\uD83C\uDDF2\uD83C\uDDF9'
+		}, {
+			symbol: '\uD83C\uDDF2\uD83C\uDDED'
+		}, {
+			symbol: '\uD83C\uDDF2\uD83C\uDDF7'
+		}, {
+			symbol: '\uD83C\uDDF2\uD83C\uDDFA'
+		}, {
+			symbol: '\uD83C\uDDFE\uD83C\uDDF9'
+		}, {
+			symbol: '\uD83C\uDDF2\uD83C\uDDFD'
+		}, {
+			symbol: '\uD83C\uDDEB\uD83C\uDDF2'
+		}, {
+			symbol: '\uD83C\uDDF2\uD83C\uDDE9'
+		}, {
+			symbol: '\uD83C\uDDF2\uD83C\uDDE8'
+		}, {
+			symbol: '\uD83C\uDDF2\uD83C\uDDF3'
+		}, {
+			symbol: '\uD83C\uDDF2\uD83C\uDDEA'
+		}, {
+			symbol: '\uD83C\uDDF2\uD83C\uDDF8'
+		}, {
+			symbol: '\uD83C\uDDF2\uD83C\uDDE6'
+		}, {
+			symbol: '\uD83C\uDDF2\uD83C\uDDFF'
+		}, {
+			symbol: '\uD83C\uDDF3\uD83C\uDDE6'
+		}, {
+			symbol: '\uD83C\uDDF3\uD83C\uDDF7'
+		}, {
+			symbol: '\uD83C\uDDF3\uD83C\uDDF5'
+		}, {
+			symbol: '\uD83C\uDDF3\uD83C\uDDF1'
+		}, {
+			symbol: '\uD83C\uDDF3\uD83C\uDDE8'
+		}, {
+			symbol: '\uD83C\uDDF3\uD83C\uDDFF'
+		}, {
+			symbol: '\uD83C\uDDF3\uD83C\uDDEE'
+		}, {
+			symbol: '\uD83C\uDDF3\uD83C\uDDEA'
+		}, {
+			symbol: '\uD83C\uDDF3\uD83C\uDDEC'
+		}, {
+			symbol: '\uD83C\uDDF3\uD83C\uDDFA'
+		}, {
+			symbol: '\uD83C\uDDF3\uD83C\uDDEB'
+		}, {
+			symbol: '\uD83C\uDDF0\uD83C\uDDF5'
+		}, {
+			symbol: '\uD83C\uDDF2\uD83C\uDDF5'
+		}, {
+			symbol: '\uD83C\uDDF3\uD83C\uDDF4'
+		}, {
+			symbol: '\uD83C\uDDF4\uD83C\uDDF2'
+		}, {
+			symbol: '\uD83C\uDDF5\uD83C\uDDF0'
+		}, {
+			symbol: '\uD83C\uDDF5\uD83C\uDDFC'
+		}, {
+			symbol: '\uD83C\uDDF5\uD83C\uDDF8'
+		}, {
+			symbol: '\uD83C\uDDF5\uD83C\uDDE6'
+		}, {
+			symbol: '\uD83C\uDDF5\uD83C\uDDEC'
+		}, {
+			symbol: '\uD83C\uDDF5\uD83C\uDDFE'
+		}, {
+			symbol: '\uD83C\uDDF5\uD83C\uDDEA'
+		}, {
+			symbol: '\uD83C\uDDF5\uD83C\uDDED'
+		}, {
+			symbol: '\uD83C\uDDF5\uD83C\uDDF3'
+		}, {
+			symbol: '\uD83C\uDDF5\uD83C\uDDF1'
+		}, {
+			symbol: '\uD83C\uDDF5\uD83C\uDDF9'
+		}, {
+			symbol: '\uD83C\uDDF5\uD83C\uDDF7'
+		}, {
+			symbol: '\uD83C\uDDF6\uD83C\uDDE6'
+		}, {
+			symbol: '\uD83C\uDDF7\uD83C\uDDF4'
+		}, {
+			symbol: '\uD83C\uDDF7\uD83C\uDDFA'
+		}, {
+			symbol: '\uD83C\uDDF7\uD83C\uDDFC'
+		}, {
+			symbol: '\uD83C\uDDFC\uD83C\uDDF8'
+		}, {
+			symbol: '\uD83C\uDDF8\uD83C\uDDF2'
+		}, {
+			symbol: '\uD83C\uDDF8\uD83C\uDDF9'
+		}, {
+			symbol: '\uD83C\uDDF8\uD83C\uDDE6'
+		}, {
+			symbol: '\uD83C\uDDF8\uD83C\uDDF3'
+		}, {
+			symbol: '\uD83C\uDDF7\uD83C\uDDF8'
+		}, {
+			symbol: '\uD83C\uDDF8\uD83C\uDDE8'
+		}, {
+			symbol: '\uD83C\uDDF8\uD83C\uDDF1'
+		}, {
+			symbol: '\uD83C\uDDF8\uD83C\uDDEC'
+		}, {
+			symbol: '\uD83C\uDDF8\uD83C\uDDFD'
+		}, {
+			symbol: '\uD83C\uDDF8\uD83C\uDDF0'
+		}, {
+			symbol: '\uD83C\uDDF8\uD83C\uDDEE'
+		}, {
+			symbol: '\uD83C\uDDEC\uD83C\uDDF8'
+		}, {
+			symbol: '\uD83C\uDDF8\uD83C\uDDE7'
+		}, {
+			symbol: '\uD83C\uDDF8\uD83C\uDDF4'
+		}, {
+			symbol: '\uD83C\uDDFF\uD83C\uDDE6'
+		}, {
+			symbol: '\uD83C\uDDF0\uD83C\uDDF7'
+		}, {
+			symbol: '\uD83C\uDDEA\uD83C\uDDF8'
+		}, {
+			symbol: '\uD83C\uDDF1\uD83C\uDDF0'
+		}, {
+			symbol: '\uD83C\uDDF8\uD83C\uDDED'
+		}, {
+			symbol: '\uD83C\uDDF0\uD83C\uDDF3'
+		}, {
+			symbol: '\uD83C\uDDF1\uD83C\uDDE8'
+		}, {
+			symbol: '\uD83C\uDDF5\uD83C\uDDF2'
+		}, {
+			symbol: '\uD83C\uDDFB\uD83C\uDDE8'
+		}, {
+			symbol: '\uD83C\uDDF8\uD83C\uDDE9'
+		}, {
+			symbol: '\uD83C\uDDF8\uD83C\uDDF7'
+		}, {
+			symbol: '\uD83C\uDDF8\uD83C\uDDFF'
+		}, {
+			symbol: '\uD83C\uDDF8\uD83C\uDDEA'
+		}, {
+			symbol: '\uD83C\uDDE8\uD83C\uDDED'
+		}, {
+			symbol: '\uD83C\uDDF8\uD83C\uDDFE'
+		}, {
+			symbol: '\uD83C\uDDF9\uD83C\uDDFC'
+		}, {
+			symbol: '\uD83C\uDDF9\uD83C\uDDEF'
+		}, {
+			symbol: '\uD83C\uDDF9\uD83C\uDDFF'
+		}, {
+			symbol: '\uD83C\uDDF9\uD83C\uDDED'
+		}, {
+			symbol: '\uD83C\uDDF9\uD83C\uDDF1'
+		}, {
+			symbol: '\uD83C\uDDF9\uD83C\uDDEC'
+		}, {
+			symbol: '\uD83C\uDDF9\uD83C\uDDF0'
+		}, {
+			symbol: '\uD83C\uDDF9\uD83C\uDDF4'
+		}, {
+			symbol: '\uD83C\uDDF9\uD83C\uDDF3'
+		}, {
+			symbol: '\uD83C\uDDF9\uD83C\uDDF7'
+		}, {
+			symbol: '\uD83C\uDDF9\uD83C\uDDF2'
+		}, {
+			symbol: '\uD83C\uDDF9\uD83C\uDDE8'
+		}, {
+			symbol: '\uD83C\uDDF9\uD83C\uDDFB'
+		}, {
+			symbol: '\uD83C\uDDFB\uD83C\uDDEE'
+		}, {
+			symbol: '\uD83C\uDDFA\uD83C\uDDEC'
+		}, {
+			symbol: '\uD83C\uDDFA\uD83C\uDDE6'
+		}, {
+			symbol: '\uD83C\uDDE6\uD83C\uDDEA'
+		}, {
+			symbol: '\uD83C\uDDEC\uD83C\uDDE7'
+		}, {
+			symbol: '\uD83C\uDDFA\uD83C\uDDF8'
+		}, {
+			symbol: '\uD83C\uDDFA\uD83C\uDDFE'
+		}, {
+			symbol: '\uD83C\uDDFA\uD83C\uDDFF'
+		}, {
+			symbol: '\uD83C\uDDFB\uD83C\uDDFA'
+		}, {
+			symbol: '\uD83C\uDDFB\uD83C\uDDE6'
+		}, {
+			symbol: '\uD83C\uDDFB\uD83C\uDDEA'
+		}, {
+			symbol: '\uD83C\uDDFB\uD83C\uDDF3'
+		}, {
+			symbol: '\uD83C\uDDFC\uD83C\uDDEB'
+		}, {
+			symbol: '\uD83C\uDDEA\uD83C\uDDED'
+		}, {
+			symbol: '\uD83C\uDDFE\uD83C\uDDEA'
+		}, {
+			symbol: '\uD83C\uDDFF\uD83C\uDDF2'
+		}, {
+			symbol: '\uD83C\uDDFF\uD83C\uDDFC'
+		}]
 	}];
 
 	// @vue/component
 	const TabEmoji = {
-	  name: 'TabEmoji',
-	  props: {
-	    dialogId: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  data() {
-	    return {
-	      recentEmoji: new Set()
-	    };
-	  },
-	  computed: {
-	    categoryTitles() {
-	      const categoryTitles = emoji.reduce((acc, category) => {
-	        const prefix = 'IM_TEXTAREA_EMOJI_CATEGORY_';
-	        const title = main_core.Loc.getMessage(`${prefix}${category.code}`);
-	        return {
-	          ...acc,
-	          [category.code]: title
-	        };
-	      }, {});
-	      categoryTitles[this.frequentlyUsedLoc] = main_core.Loc.getMessage(this.frequentlyUsedLoc);
-	      return categoryTitles;
-	    },
-	    visibleRecentEmoji() {
-	      const visibleEmoji = [...this.recentEmoji];
-	      return visibleEmoji.slice(0, this.maxRecentEmoji);
-	    }
-	  },
-	  created() {
-	    const smileManager = im_v2_lib_smileManager.SmileManager.getInstance();
-	    if (!smileManager.recentEmoji) {
-	      return;
-	    }
-	    this.emojiSetTitle = 'emoji';
-	    this.emoji = emoji;
-	    this.recentEmoji = new Set(smileManager.recentEmoji);
-	    this.maxRecentEmoji = 18;
-	    this.frequentlyUsedLoc = 'IM_TEXTAREA_EMOJI_CATEGORY_FREQUENTLY';
-	  },
-	  beforeUnmount() {
-	    const smileManager = im_v2_lib_smileManager.SmileManager.getInstance();
-	    if (this.visibleRecentEmoji.length > smileManager.recentEmoji.size) {
-	      smileManager.updateRecentEmoji(new Set(this.recentEmoji));
-	    }
-	  },
-	  methods: {
-	    insertInTextarea(emojiText) {
-	      this.getEmitter().emit(im_v2_const.EventType.textarea.insertText, {
-	        text: emojiText,
-	        dialogId: this.dialogId
-	      });
-	    },
-	    onRecentEmojiClick(emojiText) {
-	      this.insertInTextarea(emojiText);
-	    },
-	    onEmojiClick(emojiText) {
-	      this.insertInTextarea(emojiText);
-	      this.addEmojiToRecent(emojiText);
-	    },
-	    addEmojiToRecent(symbol) {
-	      this.recentEmoji.add(symbol);
-	    },
-	    getEmitter() {
-	      return this.$Bitrix.eventEmitter;
-	    }
-	  },
-	  template: `
+		name: 'TabEmoji',
+		props: {
+			dialogId: {
+				type: String,
+				required: true
+			}
+		},
+		data() {
+			return {
+				recentEmoji: new Set()
+			};
+		},
+		computed: {
+			categoryTitles() {
+				const categoryTitles = emoji.reduce((acc, category) => {
+					const prefix = 'IM_TEXTAREA_EMOJI_CATEGORY_';
+					const title = main_core.Loc.getMessage(`${prefix}${category.code}`);
+					return {
+						...acc,
+						[category.code]: title
+					};
+				}, {});
+				categoryTitles[this.frequentlyUsedLoc] = main_core.Loc.getMessage(this.frequentlyUsedLoc);
+				return categoryTitles;
+			},
+			visibleRecentEmoji() {
+				const visibleEmoji = [...this.recentEmoji];
+				return visibleEmoji.slice(0, this.maxRecentEmoji);
+			}
+		},
+		created() {
+			const smileManager = im_v2_lib_smileManager.SmileManager.getInstance();
+			if (!smileManager.recentEmoji) {
+				return;
+			}
+			this.emojiSetTitle = 'emoji';
+			this.emoji = emoji;
+			this.recentEmoji = new Set(smileManager.recentEmoji);
+			this.maxRecentEmoji = 18;
+			this.frequentlyUsedLoc = 'IM_TEXTAREA_EMOJI_CATEGORY_FREQUENTLY';
+		},
+		beforeUnmount() {
+			const smileManager = im_v2_lib_smileManager.SmileManager.getInstance();
+			if (this.visibleRecentEmoji.length > smileManager.recentEmoji.size) {
+				smileManager.updateRecentEmoji(new Set(this.recentEmoji));
+			}
+		},
+		methods: {
+			insertInTextarea(emojiText) {
+				this.getEmitter().emit(im_v2_const.EventType.textarea.insertText, {
+					text: emojiText,
+					dialogId: this.dialogId
+				});
+			},
+			onRecentEmojiClick(emojiText) {
+				this.insertInTextarea(emojiText);
+			},
+			onEmojiClick(emojiText) {
+				this.insertInTextarea(emojiText);
+				this.addEmojiToRecent(emojiText);
+			},
+			addEmojiToRecent(symbol) {
+				this.recentEmoji.add(symbol);
+			},
+			getEmitter() {
+				return this.$Bitrix.eventEmitter;
+			}
+		},
+		template: `
 		<div class="bx-im-emoji-content__scope">
 			<div class="bx-im-emoji-content__box">
 				<div
@@ -3790,228 +3735,194 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	`
 	};
 
-	var _observer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("observer");
-	var _visiblePacks = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("visiblePacks");
-	var _initObserver = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initObserver");
-	var _getThreshold = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getThreshold");
-	var _handleIntersection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleIntersection");
-	var _calculateActivePack = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("calculateActivePack");
-	var _getPackData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPackData");
-	var _isAtBottom = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isAtBottom");
 	class ObserverManager extends main_core_events.EventEmitter {
-	  constructor() {
-	    super();
-	    Object.defineProperty(this, _isAtBottom, {
-	      value: _isAtBottom2
-	    });
-	    Object.defineProperty(this, _getPackData, {
-	      value: _getPackData2
-	    });
-	    Object.defineProperty(this, _calculateActivePack, {
-	      value: _calculateActivePack2
-	    });
-	    Object.defineProperty(this, _handleIntersection, {
-	      value: _handleIntersection2
-	    });
-	    Object.defineProperty(this, _getThreshold, {
-	      value: _getThreshold2
-	    });
-	    Object.defineProperty(this, _initObserver, {
-	      value: _initObserver2
-	    });
-	    Object.defineProperty(this, _observer, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _visiblePacks, {
-	      writable: true,
-	      value: new Map()
-	    });
-	    this.setEventNamespace('BX.Messenger.v2.Textarea.TabStickers');
-	    babelHelpers.classPrivateFieldLooseBase(this, _initObserver)[_initObserver]();
-	  }
-	  observe(packElement) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _observer)[_observer].observe(packElement);
-	  }
-	  unobserve(packElement) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _observer)[_observer].unobserve(packElement);
-	    babelHelpers.classPrivateFieldLooseBase(this, _visiblePacks)[_visiblePacks].delete(packElement);
-	  }
-	}
-	function _initObserver2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _observer)[_observer] = new IntersectionObserver(entries => babelHelpers.classPrivateFieldLooseBase(this, _handleIntersection)[_handleIntersection](entries), {
-	    threshold: babelHelpers.classPrivateFieldLooseBase(this, _getThreshold)[_getThreshold]()
-	  });
-	}
-	function _getThreshold2() {
-	  const arrayWithZeros = Array.from({
-	    length: 11
-	  }).fill(0);
-	  return arrayWithZeros.map((zero, index) => index * 0.1);
-	}
-	function _handleIntersection2(entries) {
-	  entries.forEach(entry => {
-	    if (entry.isIntersecting) {
-	      if (!babelHelpers.classPrivateFieldLooseBase(this, _visiblePacks)[_visiblePacks].has(entry.target)) {
-	        babelHelpers.classPrivateFieldLooseBase(this, _visiblePacks)[_visiblePacks].set(entry.target, babelHelpers.classPrivateFieldLooseBase(this, _getPackData)[_getPackData](entry.target));
-	      }
-	    } else {
-	      babelHelpers.classPrivateFieldLooseBase(this, _visiblePacks)[_visiblePacks].delete(entry.target);
-	    }
-	  });
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _visiblePacks)[_visiblePacks].size > 0) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _calculateActivePack)[_calculateActivePack]();
-	  }
-	}
-	function _calculateActivePack2() {
-	  const visiblePacks = Array.from(babelHelpers.classPrivateFieldLooseBase(this, _visiblePacks)[_visiblePacks], ([element, packData]) => ({
-	    element,
-	    packData,
-	    top: element.getBoundingClientRect().top
-	  }));
-	  visiblePacks.sort((a, b) => a.top - b.top);
-	  const firstPack = visiblePacks[0];
-	  const lastPack = visiblePacks[visiblePacks.length - 1];
-	  const scrollContainer = lastPack.element.parentElement;
-	  const bestPack = babelHelpers.classPrivateFieldLooseBase(this, _isAtBottom)[_isAtBottom](scrollContainer) ? lastPack.packData : firstPack.packData;
-	  this.emit(ObserverManager.events.onChangeActivePack, {
-	    id: bestPack.id,
-	    type: bestPack.type
-	  });
-	}
-	function _getPackData2(element) {
-	  const {
-	    packId,
-	    packType
-	  } = element.dataset;
-	  return {
-	    id: Number(packId),
-	    type: packType
-	  };
-	}
-	function _isAtBottom2(scrollContainer) {
-	  const MIN_PACK_HEIGHT = 94; // pack 70px + pack header 24px
+		static events = {
+			onChangeActivePack: 'onChangeActivePack'
+		};
+		#observer;
+		#visiblePacks = new Map();
+		constructor() {
+			super();
+			this.setEventNamespace('BX.Messenger.v2.Textarea.TabStickers');
+			this.#initObserver();
+		}
+		observe(packElement) {
+			this.#observer.observe(packElement);
+		}
+		unobserve(packElement) {
+			this.#observer.unobserve(packElement);
+			this.#visiblePacks.delete(packElement);
+		}
+		#initObserver() {
+			this.#observer = new IntersectionObserver(entries => this.#handleIntersection(entries), {
+				threshold: this.#getThreshold()
+			});
+		}
+		#getThreshold() {
+			const arrayWithZeros = Array.from({
+				length: 11
+			}).fill(0);
+			return arrayWithZeros.map((zero, index) => index * 0.1);
+		}
+		#handleIntersection(entries) {
+			entries.forEach(entry => {
+				if (entry.isIntersecting) {
+					if (!this.#visiblePacks.has(entry.target)) {
+						this.#visiblePacks.set(entry.target, this.#getPackData(entry.target));
+					}
+				} else {
+					this.#visiblePacks.delete(entry.target);
+				}
+			});
+			if (this.#visiblePacks.size > 0) {
+				this.#calculateActivePack();
+			}
+		}
+		#calculateActivePack() {
+			const visiblePacks = Array.from(this.#visiblePacks, ([element, packData]) => ({
+				element,
+				packData,
+				top: element.getBoundingClientRect().top
+			}));
+			visiblePacks.sort((a, b) => a.top - b.top);
+			const firstPack = visiblePacks[0];
+			const lastPack = visiblePacks[visiblePacks.length - 1];
+			const scrollContainer = lastPack.element.parentElement;
+			const bestPack = this.#isAtBottom(scrollContainer) ? lastPack.packData : firstPack.packData;
+			this.emit(ObserverManager.events.onChangeActivePack, {
+				id: bestPack.id,
+				type: bestPack.type
+			});
+		}
+		#getPackData(element) {
+			const {
+				packId,
+				packType
+			} = element.dataset;
+			return {
+				id: Number(packId),
+				type: packType
+			};
+		}
+		#isAtBottom(scrollContainer) {
+			const MIN_PACK_HEIGHT = 94; // pack 70px + pack header 24px
 
-	  const scrollPosition = Math.floor(scrollContainer.scrollHeight - scrollContainer.scrollTop);
-	  const containerHeight = scrollContainer.clientHeight + MIN_PACK_HEIGHT; // trigger at the bottom earlier
+			const scrollPosition = Math.floor(scrollContainer.scrollHeight - scrollContainer.scrollTop);
+			const containerHeight = scrollContainer.clientHeight + MIN_PACK_HEIGHT; // trigger at the bottom earlier
 
-	  return scrollPosition <= containerHeight;
+			return scrollPosition <= containerHeight;
+		}
 	}
-	ObserverManager.events = {
-	  onChangeActivePack: 'onChangeActivePack'
-	};
 
-	const ICON_SIZE = 24;
+	const ICON_SIZE$4 = 24;
 
 	// @vue/component
 	const Pack = {
-	  name: 'StickerPack',
-	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon,
-	    StickerPackForm: im_v2_component_sticker.StickerPackForm,
-	    PackStickers: im_v2_component_sticker.PackStickers
-	  },
-	  inject: ['disableAutoHide', 'enableAutoHide'],
-	  props: {
-	    pack: {
-	      type: Object,
-	      required: true
-	    },
-	    dialogId: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  emits: ['close'],
-	  data() {
-	    return {
-	      showPackForm: false
-	    };
-	  },
-	  computed: {
-	    OutlineIcons: () => ui_iconSet_api_vue.Outline,
-	    Color: () => im_v2_const.Color,
-	    ICON_SIZE: () => ICON_SIZE,
-	    canShowContextMenu() {
-	      return this.packItem.type === im_v2_const.StickerPackType.custom || this.isRecentPack;
-	    },
-	    isRecentPack() {
-	      return im_v2_lib_sticker.StickerManager.isRecentPack(this.packItem);
-	    },
-	    packItem() {
-	      return this.pack;
-	    }
-	  },
-	  methods: {
-	    onStickerClick({
-	      sticker
-	    }) {
-	      void im_v2_provider_service_sending.SendingService.getInstance().sendMessageWithSticker({
-	        dialogId: this.dialogId,
-	        stickerParams: {
-	          id: sticker.id,
-	          packId: sticker.packId,
-	          packType: sticker.packType
-	        }
-	      });
-	      this.$emit('close');
-	    },
-	    openPackMenu(event) {
-	      var _PopupManager$getPopu, _PopupManager$getPopu2;
-	      (_PopupManager$getPopu = main_popup.PopupManager.getPopupById(im_v2_const.PopupType.stickerContextMenu)) == null ? void 0 : _PopupManager$getPopu.close();
-	      (_PopupManager$getPopu2 = main_popup.PopupManager.getPopupById(im_v2_const.PopupType.stickerPackContextMenu)) == null ? void 0 : _PopupManager$getPopu2.close();
-	      if (!this.stickerPackMenu) {
-	        this.stickerPackMenu = new im_v2_lib_menu.StickerPackMenu();
-	        this.stickerPackMenu.subscribe(im_v2_lib_menu.BaseMenu.events.close, () => {
-	          if (!this.showPackForm) {
-	            this.enableAutoHide();
-	          }
-	        });
-	        this.stickerPackMenu.subscribe(im_v2_lib_menu.StickerPackMenu.events.closeParentPopup, () => {
-	          this.$emit('close');
-	        });
-	        this.stickerPackMenu.subscribe(im_v2_lib_menu.StickerPackMenu.events.showPackForm, () => {
-	          this.showPackForm = true;
-	        });
-	      }
-	      this.disableAutoHide();
-	      this.stickerPackMenu.openMenu({
-	        pack: this.packItem,
-	        isRecent: this.isRecentPack,
-	        dialogId: this.dialogId
-	      }, event.target);
-	    },
-	    openStickerMenu({
-	      event,
-	      sticker
-	    }) {
-	      var _PopupManager$getPopu3;
-	      (_PopupManager$getPopu3 = main_popup.PopupManager.getPopupById(im_v2_const.PopupType.stickerContextMenu)) == null ? void 0 : _PopupManager$getPopu3.close();
-	      if (!this.stickerMenu) {
-	        this.stickerMenu = new im_v2_lib_menu.StickerMenu();
-	        this.stickerMenu.subscribe(im_v2_lib_menu.StickerMenu.events.closeParentPopup, () => {
-	          this.$emit('close');
-	        });
-	        this.stickerMenu.subscribe(im_v2_lib_menu.BaseMenu.events.close, () => {
-	          this.enableAutoHide();
-	        });
-	      }
-	      this.disableAutoHide();
-	      this.stickerMenu.openMenu({
-	        sticker,
-	        isRecent: this.isRecentPack,
-	        dialogId: this.dialogId
-	      }, event.target);
-	    },
-	    onStickerPackFormClose() {
-	      this.enableAutoHide();
-	      this.showPackForm = false;
-	    },
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
-	    }
-	  },
-	  template: `
+		name: 'StickerPack',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon,
+			StickerPackForm: im_v2_component_sticker.StickerPackForm,
+			PackStickers: im_v2_component_sticker.PackStickers
+		},
+		inject: ['disableAutoHide', 'enableAutoHide'],
+		props: {
+			pack: {
+				type: Object,
+				required: true
+			},
+			dialogId: {
+				type: String,
+				required: true
+			}
+		},
+		emits: ['close'],
+		data() {
+			return {
+				showPackForm: false
+			};
+		},
+		computed: {
+			OutlineIcons: () => ui_iconSet_api_vue.Outline,
+			Color: () => im_v2_const.Color,
+			ICON_SIZE: () => ICON_SIZE$4,
+			canShowContextMenu() {
+				return this.packItem.type === im_v2_const.StickerPackType.custom || this.isRecentPack;
+			},
+			isRecentPack() {
+				return im_v2_lib_sticker.StickerManager.isRecentPack(this.packItem);
+			},
+			packItem() {
+				return this.pack;
+			}
+		},
+		methods: {
+			onStickerClick({
+				sticker
+			}) {
+				void im_v2_provider_service_sending.SendingService.getInstance().sendMessageWithSticker({
+					dialogId: this.dialogId,
+					stickerParams: {
+						id: sticker.id,
+						packId: sticker.packId,
+						packType: sticker.packType
+					}
+				});
+				this.$emit('close');
+			},
+			openPackMenu(event) {
+				main_popup.PopupManager.getPopupById(im_v2_const.PopupType.stickerContextMenu)?.close();
+				main_popup.PopupManager.getPopupById(im_v2_const.PopupType.stickerPackContextMenu)?.close();
+				if (!this.stickerPackMenu) {
+					this.stickerPackMenu = new im_v2_lib_menu.StickerPackMenu();
+					this.stickerPackMenu.subscribe(im_v2_lib_menu.BaseMenu.events.close, () => {
+						if (!this.showPackForm) {
+							this.enableAutoHide();
+						}
+					});
+					this.stickerPackMenu.subscribe(im_v2_lib_menu.StickerPackMenu.events.closeParentPopup, () => {
+						this.$emit('close');
+					});
+					this.stickerPackMenu.subscribe(im_v2_lib_menu.StickerPackMenu.events.showPackForm, () => {
+						this.showPackForm = true;
+					});
+				}
+				this.disableAutoHide();
+				this.stickerPackMenu.openMenu({
+					pack: this.packItem,
+					isRecent: this.isRecentPack,
+					dialogId: this.dialogId
+				}, event.target);
+			},
+			openStickerMenu({
+				event,
+				sticker
+			}) {
+				main_popup.PopupManager.getPopupById(im_v2_const.PopupType.stickerContextMenu)?.close();
+				if (!this.stickerMenu) {
+					this.stickerMenu = new im_v2_lib_menu.StickerMenu();
+					this.stickerMenu.subscribe(im_v2_lib_menu.StickerMenu.events.closeParentPopup, () => {
+						this.$emit('close');
+					});
+					this.stickerMenu.subscribe(im_v2_lib_menu.BaseMenu.events.close, () => {
+						this.enableAutoHide();
+					});
+				}
+				this.disableAutoHide();
+				this.stickerMenu.openMenu({
+					sticker,
+					isRecent: this.isRecentPack,
+					dialogId: this.dialogId
+				}, event.target);
+			},
+			onStickerPackFormClose() {
+				this.enableAutoHide();
+				this.showPackForm = false;
+			},
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
 		<div class="bx-im-sticker-pack__container">
 			<div class="bx-im-sticker-pack__header">
 				<div class="bx-im-sticker-pack__header-title --ellipsis">
@@ -4043,15 +3954,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	// @vue/component
 	const PackSkeleton = {
-	  name: 'PackSkeleton',
-	  components: {
-	    Shimmer: im_v2_component_elements_loader.Shimmer
-	  },
-	  computed: {
-	    STICKERS_IN_PACK: () => STICKERS_IN_PACK,
-	    PACK_COUNT: () => PACK_COUNT
-	  },
-	  template: `
+		name: 'PackSkeleton',
+		components: {
+			Shimmer: im_v2_component_elements_loader.Shimmer
+		},
+		computed: {
+			STICKERS_IN_PACK: () => STICKERS_IN_PACK,
+			PACK_COUNT: () => PACK_COUNT
+		},
+		template: `
 		<div v-for="pack in PACK_COUNT" :key="pack" class="bx-im-sticker-pack-skeleton__container">
 			<div class="bx-im-sticker-pack-skeleton__header">
 				<Shimmer :width="280" :height="12" />
@@ -4065,41 +3976,41 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	// @vue/component
 	const HeaderAddButton = {
-	  name: 'HeaderAddButton',
-	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon,
-	    StickerPackForm: im_v2_component_sticker.StickerPackForm
-	  },
-	  inject: ['disableAutoHide', 'enableAutoHide'],
-	  props: {
-	    dialogId: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  data() {
-	    return {
-	      showPackForm: false
-	    };
-	  },
-	  computed: {
-	    OutlineIcons: () => ui_iconSet_api_vue.Outline
-	  },
-	  methods: {
-	    onAddClick() {
-	      this.disableAutoHide();
-	      this.showPackForm = true;
-	      im_v2_lib_analytics.Analytics.getInstance().stickers.onShowCreateForm(this.dialogId);
-	    },
-	    onPackFormClose() {
-	      this.enableAutoHide();
-	      this.showPackForm = false;
-	    },
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
-	    }
-	  },
-	  template: `
+		name: 'HeaderAddButton',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon,
+			StickerPackForm: im_v2_component_sticker.StickerPackForm
+		},
+		inject: ['disableAutoHide', 'enableAutoHide'],
+		props: {
+			dialogId: {
+				type: String,
+				required: true
+			}
+		},
+		data() {
+			return {
+				showPackForm: false
+			};
+		},
+		computed: {
+			OutlineIcons: () => ui_iconSet_api_vue.Outline
+		},
+		methods: {
+			onAddClick() {
+				this.disableAutoHide();
+				this.showPackForm = true;
+				im_v2_lib_analytics.Analytics.getInstance().stickers.onShowCreateForm(this.dialogId);
+			},
+			onPackFormClose() {
+				this.enableAutoHide();
+				this.showPackForm = false;
+			},
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
 		<div
 			class="bx-im-stickers-header-add-button__container"
 			@click="onAddClick"
@@ -4113,41 +4024,78 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	`
 	};
 
+	const INITIAL_OFFSET = 12;
+	const ADD_BUTTON_WIDTH = 40;
+	const PACK_ITEM_WIDTH = 36;
+	const PACK_ITEM_GAP = 10;
+
+	// @vue/component
+	const HeaderHighlight = {
+		name: 'HeaderHighlight',
+		props: {
+			activeIndex: {
+				type: Number,
+				required: true
+			}
+		},
+		computed: {
+			needAddButton() {
+				return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByUserType(im_v2_const.ActionByUserType.createStickerPack);
+			},
+			offsetLeft() {
+				const addButtonOffset = this.needAddButton ? ADD_BUTTON_WIDTH : 0;
+				const elementIndex = Math.max(0, this.activeIndex);
+				const itemWidth = PACK_ITEM_WIDTH + PACK_ITEM_GAP;
+				return INITIAL_OFFSET + addButtonOffset + itemWidth * elementIndex;
+			},
+			highlightStyles() {
+				return {
+					left: `${this.offsetLeft}px`
+				};
+			}
+		},
+		template: `
+		<div class="bx-im-sticker-header-highlight__container" :style="highlightStyles">
+			<div class="bx-im-sticker-header-highlight__marker"></div>
+		</div>
+	`
+	};
+
 	// @vue/component
 	const HeaderItem = {
-	  name: 'HeaderItem',
-	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon
-	  },
-	  props: {
-	    pack: {
-	      type: Object,
-	      required: true
-	    },
-	    isActive: {
-	      type: Boolean,
-	      required: true
-	    }
-	  },
-	  computed: {
-	    OutlineIcons: () => ui_iconSet_api_vue.Outline,
-	    packItem() {
-	      return this.pack;
-	    },
-	    isRecentPack() {
-	      return im_v2_lib_sticker.StickerManager.isRecentPack(this.packItem);
-	    },
-	    packName() {
-	      return this.packItem.name;
-	    },
-	    packCover() {
-	      return this.$store.getters['stickers/getPackCover']({
-	        id: this.packItem.id,
-	        type: this.packItem.type
-	      });
-	    }
-	  },
-	  template: `
+		name: 'HeaderItem',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon
+		},
+		props: {
+			pack: {
+				type: Object,
+				required: true
+			},
+			isActive: {
+				type: Boolean,
+				required: true
+			}
+		},
+		computed: {
+			OutlineIcons: () => ui_iconSet_api_vue.Outline,
+			packItem() {
+				return this.pack;
+			},
+			isRecentPack() {
+				return im_v2_lib_sticker.StickerManager.isRecentPack(this.packItem);
+			},
+			packName() {
+				return this.packItem.name;
+			},
+			packCover() {
+				return this.$store.getters['stickers/getPackCover']({
+					id: this.packItem.id,
+					type: this.packItem.type
+				});
+			}
+		},
+		template: `
 		<div 
 			:title="packName"
 			:class="{'--active': this.isActive}" 
@@ -4170,53 +4118,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	// @vue/component
 	const HeaderSkeleton = {
-	  name: 'HeaderSkeleton',
-	  components: {
-	    Shimmer: im_v2_component_elements_loader.Shimmer
-	  },
-	  computed: {
-	    STICKERS_COUNT: () => STICKERS_COUNT
-	  },
-	  template: `
+		name: 'HeaderSkeleton',
+		components: {
+			Shimmer: im_v2_component_elements_loader.Shimmer
+		},
+		computed: {
+			STICKERS_COUNT: () => STICKERS_COUNT
+		},
+		template: `
 		<div class="bx-im-stickers-header-skeleton__container">
 			<Shimmer v-for="sticker in STICKERS_COUNT" :key="sticker" :width="36" :height="36" />
-		</div>
-	`
-	};
-
-	const INITIAL_OFFSET = 12;
-	const ADD_BUTTON_WIDTH = 40;
-	const PACK_ITEM_WIDTH = 36;
-	const PACK_ITEM_GAP = 10;
-
-	// @vue/component
-	const HeaderHighlight = {
-	  name: 'HeaderHighlight',
-	  props: {
-	    activeIndex: {
-	      type: Number,
-	      required: true
-	    }
-	  },
-	  computed: {
-	    needAddButton() {
-	      return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByUserType(im_v2_const.ActionByUserType.createStickerPack);
-	    },
-	    offsetLeft() {
-	      const addButtonOffset = this.needAddButton ? ADD_BUTTON_WIDTH : 0;
-	      const elementIndex = Math.max(0, this.activeIndex);
-	      const itemWidth = PACK_ITEM_WIDTH + PACK_ITEM_GAP;
-	      return INITIAL_OFFSET + addButtonOffset + itemWidth * elementIndex;
-	    },
-	    highlightStyles() {
-	      return {
-	        left: `${this.offsetLeft}px`
-	      };
-	    }
-	  },
-	  template: `
-		<div class="bx-im-sticker-header-highlight__container" :style="highlightStyles">
-			<div class="bx-im-sticker-header-highlight__marker"></div>
 		</div>
 	`
 	};
@@ -4225,110 +4136,96 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	// @vue/component
 	const HeaderTabs = {
-	  name: 'HeaderTabs',
-	  components: {
-	    HeaderItem,
-	    HeaderSkeleton,
-	    HeaderAddButton,
-	    HeaderHighlight
-	  },
-	  props: {
-	    dialogId: {
-	      type: String,
-	      required: true
-	    },
-	    packs: {
-	      type: Array,
-	      required: true
-	    },
-	    activePack: {
-	      type: Object,
-	      required: true
-	    },
-	    isLoadingFirstPage: {
-	      type: Boolean,
-	      required: true
-	    },
-	    isLoadingNextPage: {
-	      type: Boolean,
-	      required: true
-	    }
-	  },
-	  emits: ['changeActivePack', 'scrollNextPage'],
-	  computed: {
-	    isLoading() {
-	      return this.isLoadingFirstPage || this.isLoadingNextPage;
-	    },
-	    activePackIndex() {
-	      return this.packs.findIndex(pack => pack.id === this.activePack.id && pack.type === this.activePack.type);
-	    },
-	    needAddButton() {
-	      return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByUserType(im_v2_const.ActionByUserType.createStickerPack);
-	    }
-	  },
-	  watch: {
-	    activePackIndex(newIndex) {
-	      void this.$nextTick(() => {
-	        this.scrollToActiveTab(newIndex);
-	      });
-	    }
-	  },
-	  methods: {
-	    async onScrollHeader(event) {
-	      const container = event.target;
-	      if (this.isLoading || !this.needToLoad(container, SCROLL_LOADING_OFFSET)) {
-	        return;
-	      }
-	      this.$emit('scrollNextPage');
-	    },
-	    needToLoad(container, offset) {
-	      const remaining = container.scrollHeight - container.scrollTop - container.clientHeight;
-	      return remaining <= offset;
-	    },
-	    isPackActive(pack) {
-	      return pack.id === this.activePack.id && pack.type === this.activePack.type;
-	    },
-	    onHeaderPick(pack) {
-	      this.$emit('changeActivePack', {
-	        id: pack.id,
-	        type: pack.type
-	      });
-	    },
-	    scrollToActiveTab(index) {
-	      const packIndex = this.needAddButton ? index + 1 : index; // +1 to skip add button
-	      const pack = this.$refs.tabs.children[packIndex];
-	      pack.scrollIntoView({
-	        inline: 'center',
-	        block: 'nearest',
-	        behavior: 'smooth'
-	      });
-	    },
-	    onWheel(event) {
-	      const {
-	        deltaX,
-	        deltaY,
-	        shiftKey
-	      } = event;
-	      const absX = Math.abs(deltaX);
-	      const absY = Math.abs(deltaY);
-	      const isHorizontalScroll = absX > absY || shiftKey;
-	      if (isHorizontalScroll) {
-	        return;
-	      }
-
-	      // vertical scroll - convert to horizontal scroll
-	      event.preventDefault();
-	      this.$refs.tabs.scrollLeft += Number(deltaY);
-	    },
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
-	    }
-	  },
-	  template: `
+		name: 'HeaderTabs',
+		components: {
+			HeaderItem,
+			HeaderSkeleton,
+			HeaderAddButton,
+			HeaderHighlight
+		},
+		directives: {
+			horizontalScroll: im_v2_lib_directives.horizontalScroll
+		},
+		props: {
+			dialogId: {
+				type: String,
+				required: true
+			},
+			packs: {
+				type: Array,
+				required: true
+			},
+			activePack: {
+				type: Object,
+				required: true
+			},
+			isLoadingFirstPage: {
+				type: Boolean,
+				required: true
+			},
+			isLoadingNextPage: {
+				type: Boolean,
+				required: true
+			}
+		},
+		emits: ['changeActivePack', 'scrollNextPage'],
+		computed: {
+			isLoading() {
+				return this.isLoadingFirstPage || this.isLoadingNextPage;
+			},
+			activePackIndex() {
+				return this.packs.findIndex(pack => pack.id === this.activePack.id && pack.type === this.activePack.type);
+			},
+			needAddButton() {
+				return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByUserType(im_v2_const.ActionByUserType.createStickerPack);
+			}
+		},
+		watch: {
+			activePackIndex(newIndex) {
+				void this.$nextTick(() => {
+					this.scrollToActiveTab(newIndex);
+				});
+			}
+		},
+		methods: {
+			async onScrollHeader(event) {
+				const container = event.target;
+				if (this.isLoading || !this.needToLoad(container, SCROLL_LOADING_OFFSET)) {
+					return;
+				}
+				this.$emit('scrollNextPage');
+			},
+			needToLoad(container, offset) {
+				const remaining = container.scrollHeight - container.scrollTop - container.clientHeight;
+				return remaining <= offset;
+			},
+			isPackActive(pack) {
+				return pack.id === this.activePack.id && pack.type === this.activePack.type;
+			},
+			onHeaderPick(pack) {
+				this.$emit('changeActivePack', {
+					id: pack.id,
+					type: pack.type
+				});
+			},
+			scrollToActiveTab(index) {
+				const packIndex = this.needAddButton ? index + 1 : index; // +1 to skip add button
+				const pack = this.$refs.tabs.children[packIndex];
+				pack.scrollIntoView({
+					inline: 'center',
+					block: 'nearest',
+					behavior: 'smooth'
+				});
+			},
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
 		<div
-			class="bx-im-sticker-header-tabs__container"
+			v-horizontal-scroll
+			class="bx-im-sticker-header-tabs__container --hidden-scroll"
 			@scroll="onScrollHeader"
-			@wheel="onWheel"
 			ref="tabs"
 		>
 			<HeaderAddButton 
@@ -4356,122 +4253,121 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	// @vue/component
 	const TabStickers = {
-	  name: 'TabStickers',
-	  components: {
-	    Pack,
-	    PackSkeleton,
-	    HeaderTabs,
-	    Spinner: im_v2_component_elements_loader.Spinner,
-	    StickerPackForm: im_v2_component_sticker.StickerPackForm
-	  },
-	  directives: {
-	    'pack-observer': {
-	      mounted(element, binding) {
-	        binding.instance.observer.observe(element);
-	      },
-	      beforeUnmount(element, binding) {
-	        binding.instance.observer.unobserve(element);
-	      }
-	    }
-	  },
-	  inject: ['disableAutoHide', 'enableAutoHide'],
-	  props: {
-	    dialogId: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  emits: ['close'],
-	  data() {
-	    return {
-	      activePack: {
-	        id: null,
-	        type: null
-	      },
-	      isLoadingFirstPage: true,
-	      isLoadingNextPage: false,
-	      showSlider: false
-	    };
-	  },
-	  computed: {
-	    SpinnerColor: () => im_v2_component_elements_loader.SpinnerColor,
-	    SpinnerSize: () => im_v2_component_elements_loader.SpinnerSize,
-	    isLoading() {
-	      return this.isLoadingFirstPage || this.isLoadingNextPage;
-	    },
-	    recentPack() {
-	      return im_v2_lib_sticker.StickerManager.getRecentPack();
-	    },
-	    packs() {
-	      const packs = this.$store.getters['stickers/packs/get'];
-	      if (this.hasRecentStickers) {
-	        return [this.recentPack, ...packs];
-	      }
-	      return packs;
-	    },
-	    hasRecentStickers() {
-	      return this.$store.getters['stickers/recent/get'].length > 0;
-	    }
-	  },
-	  async created() {
-	    this.initObserverManager();
-	    this.stickerService = im_v2_provider_service_sticker.StickerService.getInstance();
-	    await this.stickerService.initFirstPage();
-	    this.isLoadingFirstPage = false;
-	  },
-	  methods: {
-	    initObserverManager() {
-	      this.observer = new ObserverManager();
-	      this.observer.subscribe(ObserverManager.events.onChangeActivePack, event => {
-	        const {
-	          id,
-	          type
-	        } = event.getData();
-	        this.activePack = {
-	          id,
-	          type
-	        };
-	      });
-	    },
-	    scrollToPack({
-	      id,
-	      type
-	    }) {
-	      const packElement = this.$refs.packListContainer.querySelector(`[data-pack-type="${type}"][data-pack-id="${id}"]`);
-	      if (packElement && packElement.scrollIntoView) {
-	        packElement.scrollIntoView({
-	          block: 'start',
-	          behavior: 'smooth'
-	        });
-	      }
-	    },
-	    needToLoad(container, offset) {
-	      const remaining = container.scrollHeight - container.scrollTop - container.clientHeight;
-	      return remaining <= offset;
-	    },
-	    closeContextMenus() {
-	      var _PopupManager$getPopu, _PopupManager$getPopu2;
-	      (_PopupManager$getPopu = main_popup.PopupManager.getPopupById(im_v2_const.PopupType.stickerContextMenu)) == null ? void 0 : _PopupManager$getPopu.close();
-	      (_PopupManager$getPopu2 = main_popup.PopupManager.getPopupById(im_v2_const.PopupType.stickerPackContextMenu)) == null ? void 0 : _PopupManager$getPopu2.close();
-	    },
-	    async loadNextPage() {
-	      this.isLoadingNextPage = true;
-	      await this.stickerService.loadNextPage();
-	      this.isLoadingNextPage = false;
-	    },
-	    async onScrollBody(event) {
-	      this.closeContextMenus();
-	      const container = event.target;
-	      if (this.isLoading || !this.needToLoad(container, SCROLL_LOAD_BODY_OFFSET)) {
-	        return;
-	      }
-	      void this.loadNextPage();
-	    },
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
-	    }
-	  },
-	  template: `
+		name: 'TabStickers',
+		components: {
+			Pack,
+			PackSkeleton,
+			HeaderTabs,
+			Spinner: im_v2_component_elements_loader.Spinner,
+			StickerPackForm: im_v2_component_sticker.StickerPackForm
+		},
+		directives: {
+			'pack-observer': {
+				mounted(element, binding) {
+					binding.instance.observer.observe(element);
+				},
+				beforeUnmount(element, binding) {
+					binding.instance.observer.unobserve(element);
+				}
+			}
+		},
+		inject: ['disableAutoHide', 'enableAutoHide'],
+		props: {
+			dialogId: {
+				type: String,
+				required: true
+			}
+		},
+		emits: ['close'],
+		data() {
+			return {
+				activePack: {
+					id: null,
+					type: null
+				},
+				isLoadingFirstPage: true,
+				isLoadingNextPage: false,
+				showSlider: false
+			};
+		},
+		computed: {
+			SpinnerColor: () => im_v2_component_elements_loader.SpinnerColor,
+			SpinnerSize: () => im_v2_component_elements_loader.SpinnerSize,
+			isLoading() {
+				return this.isLoadingFirstPage || this.isLoadingNextPage;
+			},
+			recentPack() {
+				return im_v2_lib_sticker.StickerManager.getRecentPack();
+			},
+			packs() {
+				const packs = this.$store.getters['stickers/packs/get'];
+				if (this.hasRecentStickers) {
+					return [this.recentPack, ...packs];
+				}
+				return packs;
+			},
+			hasRecentStickers() {
+				return this.$store.getters['stickers/recent/get'].length > 0;
+			}
+		},
+		async created() {
+			this.initObserverManager();
+			this.stickerService = im_v2_provider_service_sticker.StickerService.getInstance();
+			await this.stickerService.initFirstPage();
+			this.isLoadingFirstPage = false;
+		},
+		methods: {
+			initObserverManager() {
+				this.observer = new ObserverManager();
+				this.observer.subscribe(ObserverManager.events.onChangeActivePack, event => {
+					const {
+						id,
+						type
+					} = event.getData();
+					this.activePack = {
+						id,
+						type
+					};
+				});
+			},
+			scrollToPack({
+				id,
+				type
+			}) {
+				const packElement = this.$refs.packListContainer.querySelector(`[data-pack-type="${type}"][data-pack-id="${id}"]`);
+				if (packElement && packElement.scrollIntoView) {
+					packElement.scrollIntoView({
+						block: 'start',
+						behavior: 'smooth'
+					});
+				}
+			},
+			needToLoad(container, offset) {
+				const remaining = container.scrollHeight - container.scrollTop - container.clientHeight;
+				return remaining <= offset;
+			},
+			closeContextMenus() {
+				main_popup.PopupManager.getPopupById(im_v2_const.PopupType.stickerContextMenu)?.close();
+				main_popup.PopupManager.getPopupById(im_v2_const.PopupType.stickerPackContextMenu)?.close();
+			},
+			async loadNextPage() {
+				this.isLoadingNextPage = true;
+				await this.stickerService.loadNextPage();
+				this.isLoadingNextPage = false;
+			},
+			async onScrollBody(event) {
+				this.closeContextMenus();
+				const container = event.target;
+				if (this.isLoading || !this.needToLoad(container, SCROLL_LOAD_BODY_OFFSET)) {
+					return;
+				}
+				void this.loadNextPage();
+			},
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
 		<div class="bx-im-emote-selector-tab-stickers__container">
 			<HeaderTabs
 				:dialogId="dialogId"
@@ -4512,88 +4408,88 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	const TabType = {
-	  emoji: 'emoji',
-	  stickers: 'stickers'
+		emoji: 'emoji',
+		stickers: 'stickers'
 	};
 
 	// @vue/component
 	const EmotePopup = {
-	  name: 'EmotePopup',
-	  components: {
-	    MessengerPopup: im_v2_component_elements_popup.MessengerPopup,
-	    TabEmoji,
-	    TabStickers,
-	    Chip: ui_system_chip_vue.Chip,
-	    PulseAnimation: im_v2_component_elements_pulseAnimation.PulseAnimation
-	  },
-	  props: {
-	    bindElement: {
-	      type: Object,
-	      required: true
-	    },
-	    dialogId: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  emits: ['close'],
-	  data() {
-	    return {
-	      currentTab: this.getInitialTab(),
-	      wasStickerTabOpened: false
-	    };
-	  },
-	  computed: {
-	    TabType: () => TabType,
-	    PopupType: () => im_v2_const.PopupType,
-	    ChipDesign: () => ui_system_chip_vue.ChipDesign,
-	    ChipSize: () => ui_system_chip_vue.ChipSize,
-	    popupConfig() {
-	      return {
-	        width: 365,
-	        bindElement: this.bindElement,
-	        bindOptions: {
-	          position: 'top'
-	        },
-	        offsetTop: 25,
-	        offsetLeft: -230,
-	        padding: 0,
-	        contentBorderRadius: '18px',
-	        background: 'transparent'
-	      };
-	    },
-	    needToShowPromo() {
-	      return im_v2_lib_promo.PromoManager.getInstance().needToShow(im_v2_const.PromoId.stickersAvailable);
-	    },
-	    needToShowPulse() {
-	      return this.needToShowPromo && !this.wasStickerTabOpened;
-	    }
-	  },
-	  created() {
-	    if (this.needToShowPromo) {
-	      void im_v2_lib_promo.PromoManager.getInstance().markAsWatched(im_v2_const.PromoId.stickersAvailable);
-	    }
-	  },
-	  methods: {
-	    getInitialTab() {
-	      return im_v2_lib_localStorage.LocalStorageManager.getInstance().get(im_v2_const.LocalStorageKey.emotePopupTab, TabType.emoji);
-	    },
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
-	    },
-	    selectTab(type) {
-	      this.currentTab = type;
-	      im_v2_lib_localStorage.LocalStorageManager.getInstance().set(im_v2_const.LocalStorageKey.emotePopupTab, type);
-	      if (type === TabType.stickers) {
-	        this.wasStickerTabOpened = true;
-	        im_v2_lib_analytics.Analytics.getInstance().stickers.onOpenStickerTab(this.dialogId);
-	      }
-	    },
-	    getChipDesign(type) {
-	      return this.currentTab === type ? ui_system_chip_vue.ChipDesign.Filled : ui_system_chip_vue.ChipDesign.Outline;
-	    }
-	  },
-	  template: `
+		name: 'EmotePopup',
+		components: {
+			MessengerPopup: im_v2_component_elements_popup.MessengerPopup,
+			TabEmoji,
+			TabStickers,
+			Chip: ui_system_chip_vue.Chip,
+			PulseAnimation: im_v2_component_elements_pulseAnimation.PulseAnimation
+		},
+		props: {
+			bindElement: {
+				type: Object,
+				required: true
+			},
+			dialogId: {
+				type: String,
+				required: true
+			}
+		},
+		emits: ['close'],
+		data() {
+			return {
+				currentTab: this.getInitialTab(),
+				wasStickerTabOpened: false
+			};
+		},
+		computed: {
+			TabType: () => TabType,
+			PopupType: () => im_v2_const.PopupType,
+			ChipDesign: () => ui_system_chip_vue.ChipDesign,
+			ChipSize: () => ui_system_chip_vue.ChipSize,
+			popupConfig() {
+				return {
+					width: 365,
+					bindElement: this.bindElement,
+					bindOptions: {
+						position: 'top'
+					},
+					offsetTop: 25,
+					offsetLeft: -230,
+					padding: 0,
+					contentBorderRadius: '18px',
+					background: 'transparent'
+				};
+			},
+			needToShowPromo() {
+				return im_v2_lib_promo.PromoManager.getInstance().needToShow(im_v2_const.PromoId.stickersAvailable);
+			},
+			needToShowPulse() {
+				return this.needToShowPromo && !this.wasStickerTabOpened;
+			}
+		},
+		created() {
+			if (this.needToShowPromo) {
+				void im_v2_lib_promo.PromoManager.getInstance().markAsWatched(im_v2_const.PromoId.stickersAvailable);
+			}
+		},
+		methods: {
+			getInitialTab() {
+				return im_v2_lib_localStorage.LocalStorageManager.getInstance().get(im_v2_const.LocalStorageKey.emotePopupTab, TabType.emoji);
+			},
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			},
+			selectTab(type) {
+				this.currentTab = type;
+				im_v2_lib_localStorage.LocalStorageManager.getInstance().set(im_v2_const.LocalStorageKey.emotePopupTab, type);
+				if (type === TabType.stickers) {
+					this.wasStickerTabOpened = true;
+					im_v2_lib_analytics.Analytics.getInstance().stickers.onOpenStickerTab(this.dialogId);
+				}
+			},
+			getChipDesign(type) {
+				return this.currentTab === type ? ui_system_chip_vue.ChipDesign.Filled : ui_system_chip_vue.ChipDesign.Outline;
+			}
+		},
+		template: `
 		<MessengerPopup
 			:config="popupConfig"
 			:id="PopupType.emoteSelector"
@@ -4636,77 +4532,77 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	`
 	};
 
-	const POPUP_ID = 'im-sticker-promo-popup';
+	const POPUP_ID$3 = 'im-sticker-promo-popup';
 	const POPUP_CLASSNAME = 'bx-im-sticker-promo-popup__container';
 	const DELAY_OPEN = 1000;
 
 	// @vue/component
 	const StickersPromoPopup = {
-	  name: 'StickersPromoPopup',
-	  components: {
-	    MessengerPopup: im_v2_component_elements_popup.MessengerPopup
-	  },
-	  props: {
-	    bindElement: {
-	      type: Object,
-	      required: true
-	    },
-	    dialogId: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  emits: ['close'],
-	  data() {
-	    return {
-	      isVisible: false
-	    };
-	  },
-	  computed: {
-	    PopupType: () => im_v2_const.PopupType,
-	    POPUP_ID: () => POPUP_ID,
-	    popupConfig() {
-	      return {
-	        bindElement: this.bindElement,
-	        className: POPUP_CLASSNAME,
-	        width: 416,
-	        height: 122,
-	        padding: 12,
-	        overlay: false,
-	        offsetLeft: -300,
-	        autoHide: true,
-	        bindOptions: {
-	          position: 'bottom'
-	        },
-	        closeIcon: true,
-	        angle: {
-	          offset: 335,
-	          position: 'bottom'
-	        },
-	        animation: 'fading',
-	        events: {
-	          onPopupClose: () => {
-	            void im_v2_lib_promo.PromoManager.getInstance().markAsWatched(im_v2_const.PromoId.stickersAvailable);
-	            im_v2_lib_analytics.Analytics.getInstance().stickers.onViewPromoPopup(this.dialogId);
-	          }
-	        }
-	      };
-	    }
-	  },
-	  mounted() {
-	    this.timer = setTimeout(() => {
-	      this.isVisible = true;
-	    }, DELAY_OPEN);
-	  },
-	  beforeUnmount() {
-	    clearTimeout(this.timer);
-	  },
-	  methods: {
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
-	    }
-	  },
-	  template: `
+		name: 'StickersPromoPopup',
+		components: {
+			MessengerPopup: im_v2_component_elements_popup.MessengerPopup
+		},
+		props: {
+			bindElement: {
+				type: Object,
+				required: true
+			},
+			dialogId: {
+				type: String,
+				required: true
+			}
+		},
+		emits: ['close'],
+		data() {
+			return {
+				isVisible: false
+			};
+		},
+		computed: {
+			PopupType: () => im_v2_const.PopupType,
+			POPUP_ID: () => POPUP_ID$3,
+			popupConfig() {
+				return {
+					bindElement: this.bindElement,
+					className: POPUP_CLASSNAME,
+					width: 416,
+					height: 122,
+					padding: 12,
+					overlay: false,
+					offsetLeft: -300,
+					autoHide: true,
+					bindOptions: {
+						position: 'bottom'
+					},
+					closeIcon: true,
+					angle: {
+						offset: 335,
+						position: 'bottom'
+					},
+					animation: 'fading',
+					events: {
+						onPopupClose: () => {
+							void im_v2_lib_promo.PromoManager.getInstance().markAsWatched(im_v2_const.PromoId.stickersAvailable);
+							im_v2_lib_analytics.Analytics.getInstance().stickers.onViewPromoPopup(this.dialogId);
+						}
+					}
+				};
+			}
+		},
+		mounted() {
+			this.timer = setTimeout(() => {
+				this.isVisible = true;
+			}, DELAY_OPEN);
+		},
+		beforeUnmount() {
+			clearTimeout(this.timer);
+		},
+		methods: {
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
 		<MessengerPopup
 			v-if="isVisible"
 			:config="popupConfig"
@@ -4726,63 +4622,63 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	`
 	};
 
-	const ICON_SIZE$1 = 24;
+	const ICON_SIZE$3 = 24;
 
 	// @vue/component
 	const EmoteSelector = {
-	  name: 'EmoteSelector',
-	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon,
-	    EmotePopup,
-	    PulseAnimation: im_v2_component_elements_pulseAnimation.PulseAnimation,
-	    StickersPromoPopup
-	  },
-	  props: {
-	    dialogId: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  data() {
-	    return {
-	      showPopup: false,
-	      wasSelectorOpened: false,
-	      selectorElement: null
-	    };
-	  },
-	  computed: {
-	    OutlineIcons: () => ui_iconSet_api_vue.Outline,
-	    ICON_SIZE: () => ICON_SIZE$1,
-	    needToShowPromo() {
-	      return im_v2_lib_promo.PromoManager.getInstance().needToShow(im_v2_const.PromoId.stickersAvailable);
-	    },
-	    needToShowPulse() {
-	      return this.needToShowPromo && !this.wasSelectorOpened;
-	    },
-	    iconColor() {
-	      if (this.needToShowPulse) {
-	        return im_v2_const.Color.accentBlue;
-	      }
-	      return im_v2_const.Color.gray40;
-	    }
-	  },
-	  mounted() {
-	    if (!this.needToShowPromo) {
-	      return;
-	    }
-	    this.selectorElement = this.$refs.stickerSelectorIcon;
-	  },
-	  methods: {
-	    openSelector() {
-	      this.showPopup = true;
-	      this.wasSelectorOpened = true;
-	      im_v2_lib_analytics.Analytics.getInstance().stickers.onOpenEmoteSelector(this.dialogId);
-	    },
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
-	    }
-	  },
-	  template: `
+		name: 'EmoteSelector',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon,
+			EmotePopup,
+			PulseAnimation: im_v2_component_elements_pulseAnimation.PulseAnimation,
+			StickersPromoPopup
+		},
+		props: {
+			dialogId: {
+				type: String,
+				required: true
+			}
+		},
+		data() {
+			return {
+				showPopup: false,
+				wasSelectorOpened: false,
+				selectorElement: null
+			};
+		},
+		computed: {
+			OutlineIcons: () => ui_iconSet_api_vue.Outline,
+			ICON_SIZE: () => ICON_SIZE$3,
+			needToShowPromo() {
+				return im_v2_lib_promo.PromoManager.getInstance().needToShow(im_v2_const.PromoId.stickersAvailable);
+			},
+			needToShowPulse() {
+				return this.needToShowPromo && !this.wasSelectorOpened;
+			},
+			iconColor() {
+				if (this.needToShowPulse) {
+					return im_v2_const.Color.accentBlue;
+				}
+				return im_v2_const.Color.gray40;
+			}
+		},
+		mounted() {
+			if (!this.needToShowPromo) {
+				return;
+			}
+			this.selectorElement = this.$refs.stickerSelectorIcon;
+		},
+		methods: {
+			openSelector() {
+				this.showPopup = true;
+				this.wasSelectorOpened = true;
+				im_v2_lib_analytics.Analytics.getInstance().stickers.onOpenEmoteSelector(this.dialogId);
+			},
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
 		<div ref="stickerSelectorIcon" class="bx-im-textarea__icon-container">
 			<PulseAnimation :showPulse="needToShowPulse">
 				<BIcon
@@ -4805,266 +4701,2521 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	`
 	};
 
+	const ICON_SIZE$2 = 34;
+
+	// @vue/component
+	const LinkInput = {
+		name: 'LinkInput',
+		components: {
+			BInput: ui_system_input_vue.BInput,
+			BIcon: ui_iconSet_api_vue.BIcon
+		},
+		emits: ['insertLink', 'close'],
+		data() {
+			return {
+				linkUrl: ''
+			};
+		},
+		computed: {
+			OutlineIcons: () => ui_iconSet_api_vue.Outline,
+			InputSize: () => ui_system_input_vue.InputSize,
+			InputDesign: () => ui_system_input_vue.InputDesign,
+			ICON_SIZE: () => ICON_SIZE$2,
+			isValidLink() {
+				if (this.linkUrl === '') {
+					return false;
+				}
+				return im_v2_lib_utils.Utils.text.checkUrl(this.linkUrl);
+			},
+			acceptIconClass() {
+				return {
+					'--disabled': !this.isValidLink,
+					'--active': this.isValidLink
+				};
+			}
+		},
+		methods: {
+			onAccept() {
+				this.$emit('insertLink', this.linkUrl);
+			},
+			onClose() {
+				this.$emit('close');
+			},
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
+		<div class="bx-im-format-toolbar-link__container">
+			<div class="bx-im-format-toolbar-link__content">
+				<BInput
+					v-model="linkUrl"
+					:design="InputDesign.Primary"
+					:label="loc('IM_TEXTAREA_FORMAT_TOOLBAR_LINK_LABEL')"
+					:labelInline="true"
+					:placeholder="loc('IM_TEXTAREA_FORMAT_TOOLBAR_LINK_PLACEHOLDER')"
+					:size="InputSize.Md"
+					:active="true"
+					class="bx-im-format-toolbar-link__input"
+					@keydown.enter="onAccept"
+				/>
+				<BIcon
+					:name="OutlineIcons.CHECK_S"
+					:size="ICON_SIZE"
+					:hoverableAlt="true"
+					class="bx-im-format-toolbar-link__action --accept"
+					:class="acceptIconClass"
+					@mousedown.prevent
+					@click="onAccept"
+				/>
+				<BIcon
+					:name="OutlineIcons.CROSS_S"
+					:size="ICON_SIZE"
+					:hoverableAlt="true"
+					class="bx-im-format-toolbar-link__action"
+					@mousedown.prevent
+					@click="onClose"
+				/>
+			</div>
+		</div>
+	`
+	};
+
+	const ToolbarItem = {
+		bold: 'bold',
+		italic: 'italic',
+		underline: 'underline',
+		strikethrough: 'strikethrough',
+		link: 'link',
+		quote: 'quote',
+		code: 'code',
+		separator: 'separator'
+	};
+	const POPUP_ID$2 = 'im-format-toolbar-popup';
+
+	// @vue/component
+	const FormatToolbar = {
+		name: 'FormatToolbar',
+		components: {
+			MessengerPopup: im_v2_component_elements_popup.MessengerPopup,
+			LinkInput,
+			BIcon: ui_iconSet_api_vue.BIcon
+		},
+		props: {
+			dialogId: {
+				type: String,
+				default: ''
+			},
+			textarea: {
+				type: HTMLTextAreaElement,
+				required: true
+			},
+			targetPosition: {
+				type: Object,
+				required: true,
+				validator(value) {
+					return main_core.Type.isNumber(value.left) && main_core.Type.isNumber(value.top);
+				}
+			}
+		},
+		emits: ['close', 'updateText'],
+		data() {
+			return {
+				linkMode: false
+			};
+		},
+		computed: {
+			POPUP_ID: () => POPUP_ID$2,
+			ToolbarItem: () => ToolbarItem,
+			config() {
+				return {
+					bindElement: this.targetPosition,
+					bindOptions: {
+						forceBindPosition: true,
+						position: 'top'
+					},
+					autoHide: true,
+					padding: 0,
+					contentBorderRadius: 12
+				};
+			},
+			toolbarItems() {
+				return [{
+					name: ToolbarItem.bold,
+					icon: ui_iconSet_api_vue.Outline.BOLD,
+					title: this.loc('IM_TEXTAREA_FORMAT_TOOLBAR_ITEM_BOLD'),
+					handler: () => {
+						this.applyDecoration('KeyB');
+						im_v2_lib_analytics.Analytics.getInstance().formatToolbar.onBoldClick(this.dialogId);
+					}
+				}, {
+					name: ToolbarItem.italic,
+					icon: ui_iconSet_api_vue.Outline.ITALIC,
+					title: this.loc('IM_TEXTAREA_FORMAT_TOOLBAR_ITEM_ITALIC'),
+					handler: () => {
+						this.applyDecoration('KeyI');
+						im_v2_lib_analytics.Analytics.getInstance().formatToolbar.onItalicClick(this.dialogId);
+					}
+				}, {
+					name: ToolbarItem.underline,
+					icon: ui_iconSet_api_vue.Outline.UNDERLINE,
+					title: this.loc('IM_TEXTAREA_FORMAT_TOOLBAR_ITEM_UNDERLINE'),
+					handler: () => {
+						this.applyDecoration('KeyU');
+						im_v2_lib_analytics.Analytics.getInstance().formatToolbar.onUnderlineClick(this.dialogId);
+					}
+				}, {
+					name: ToolbarItem.strikethrough,
+					icon: ui_iconSet_api_vue.Outline.STRIKETHROUGH,
+					title: this.loc('IM_TEXTAREA_FORMAT_TOOLBAR_ITEM_STRIKETHROUGH'),
+					handler: () => {
+						this.applyDecoration('KeyS');
+						im_v2_lib_analytics.Analytics.getInstance().formatToolbar.onStrikethroughClick(this.dialogId);
+					}
+				}, {
+					name: ToolbarItem.separator
+				}, {
+					name: ToolbarItem.link,
+					icon: ui_iconSet_api_vue.Outline.LINK,
+					title: this.loc('IM_TEXTAREA_FORMAT_TOOLBAR_ITEM_LINK'),
+					handler: () => {
+						this.openLinkMode();
+						im_v2_lib_analytics.Analytics.getInstance().formatToolbar.onLinkClick(this.dialogId);
+					}
+				}, {
+					name: ToolbarItem.code,
+					icon: ui_iconSet_api_vue.Outline.DEVELOPER_RESOURCES,
+					title: this.loc('IM_TEXTAREA_FORMAT_TOOLBAR_ITEM_CODE'),
+					handler: () => {
+						this.applyDecoration('code');
+						im_v2_lib_analytics.Analytics.getInstance().formatToolbar.onCodeClick(this.dialogId);
+					}
+				}];
+			}
+		},
+		methods: {
+			openLinkMode() {
+				this.linkMode = true;
+			},
+			onCloseLinkMode() {
+				this.linkMode = false;
+			},
+			applyDecoration(key) {
+				const newText = im_v2_lib_textarea.Textarea.handleDecorationTag(this.textarea, key);
+				this.updateText(newText);
+			},
+			onInsertLink(linkUrl) {
+				const newText = im_v2_lib_textarea.Textarea.addUrlTag(this.textarea, linkUrl);
+				this.updateText(newText);
+				this.$emit('close');
+			},
+			insertQuote() {
+				const newText = im_v2_lib_textarea.Textarea.prepareInlineQuote(this.textarea);
+				im_v2_lib_quote.Quote.sendQuoteEvent({
+					text: newText,
+					dialogId: this.dialogId,
+					context: {
+						emitter: this.getEmitter()
+					},
+					additionalParams: {
+						replace: true
+					}
+				});
+			},
+			updateText(newText) {
+				this.$emit('updateText', newText);
+			},
+			getEmitter() {
+				return this.$Bitrix.eventEmitter;
+			},
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
+		<MessengerPopup
+			:config="config"
+			:id="POPUP_ID"
+			@close="$emit('close')"
+		>
+			<LinkInput v-if="linkMode" @insertLink="onInsertLink" @close="onCloseLinkMode" />
+			<div v-else class="bx-im-format-toolbar__container">
+				<template v-for="item in toolbarItems">
+					<div
+						v-if="item.name === ToolbarItem.separator"
+						class="bx-im-format-toolbar__separator"
+					></div>
+					<BIcon
+						v-else
+						:key="item.name"
+						:name="item.icon"
+						:title="item.title"
+						:hoverableAlt="true"
+						class="bx-im-format-toolbar__item"
+						@mousedown.prevent
+						@click="item.handler"
+					/>
+				</template>
+			</div>
+		</MessengerPopup>
+	`
+	};
+
+	const ItemTextByChatType = {
+		[im_v2_const.ChatType.openChannel]: main_core.Loc.getMessage('IM_TEXTAREA_MENTION_OPEN_CHANNEL_TYPE'),
+		[im_v2_const.ChatType.generalChannel]: main_core.Loc.getMessage('IM_TEXTAREA_MENTION_OPEN_CHANNEL_TYPE'),
+		[im_v2_const.ChatType.channel]: main_core.Loc.getMessage('IM_TEXTAREA_MENTION_PRIVATE_CHANNEL_TYPE'),
+		[im_v2_const.ChatType.collab]: main_core.Loc.getMessage('IM_TEXTAREA_MENTION_COLLAB_TYPE'),
+		default: main_core.Loc.getMessage('IM_TEXTAREA_MENTION_CHAT_TYPE')
+	};
+	class MentionItemFormatter {
+		constructor(dialogId) {
+			this.dialogId = dialogId;
+		}
+		format() {
+			return {
+				id: this.dialogId,
+				title: this.getTitle(),
+				subtitle: this.#getSubtitle()
+			};
+		}
+		getTitle() {
+			const dialog = this.#getDialog();
+			return dialog.name;
+		}
+		#getSubtitle() {
+			const dialog = this.#getDialog();
+			if (dialog.type === im_v2_const.ChatType.user) {
+				return im_v2_application_core.Core.getStore().getters['users/getPosition'](this.dialogId) ?? main_core.Loc.getMessage('IM_TEXTAREA_MENTION_USER_TYPE');
+			}
+			return ItemTextByChatType[dialog.type] ?? ItemTextByChatType.default;
+		}
+		#getDialog() {
+			return im_v2_application_core.Core.getStore().getters['chats/get'](this.dialogId, true);
+		}
+	}
+
+	const SEARCH_REQUEST_ENDPOINT = 'ui.entityselector.doSearch';
+	class BaseServerSearch {
+		#storeUpdater;
+		#searchConfig;
+		constructor(searchConfig) {
+			this.#searchConfig = searchConfig;
+			this.#storeUpdater = new im_v2_lib_search.StoreUpdater();
+		}
+		async search(query) {
+			const items = await this.#searchRequest(query);
+			await this.#storeUpdater.update(items);
+			return this.#prepareSearchResults(items);
+		}
+		async loadChatParticipants(dialogId) {
+			const queryParams = {
+				order: {
+					lastSendMessageId: 'desc'
+				},
+				dialogId,
+				limit: 50
+			};
+			try {
+				const response = await im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatMentionList, {
+					data: queryParams
+				});
+				const {
+					users
+				} = response;
+				void new im_v2_lib_user.UserManager().setUsersToModel(users);
+				return this.#getDialogIds(users);
+			} catch (error) {
+				console.error('Mention search service: load chat participants error', error);
+				throw error;
+			}
+		}
+		async #searchRequest(query) {
+			const config = {
+				json: im_v2_lib_search.getSearchConfig(this.#searchConfig)
+			};
+			config.json.searchQuery = {
+				queryWords: im_v2_lib_utils.Utils.text.getWordsFromString(query),
+				query
+			};
+			let items = [];
+			try {
+				const response = await main_core.ajax.runAction(SEARCH_REQUEST_ENDPOINT, config);
+				im_v2_lib_logger.Logger.warn('Mention search service: request result', response);
+				items = response.data.dialog.items;
+			} catch (error) {
+				im_v2_lib_logger.Logger.warn('Mention search service: request error', error);
+			}
+			return items;
+		}
+		#prepareSearchResults(items) {
+			return items.map(item => {
+				const {
+					id,
+					customData
+				} = item;
+				return {
+					dialogId: id.toString(),
+					dateMessage: customData.dateMessage ?? '',
+					isChatParticipant: customData.isContextChatMember ?? null
+				};
+			});
+		}
+		#getDialogIds(items) {
+			return items.map(item => {
+				return {
+					dialogId: item.id.toString()
+				};
+			});
+		}
+	}
+
+	class MentionSearchService {
+		#localSearch;
+		#baseServerSearch;
+		#localCollection = new Map();
+		constructor(searchConfig) {
+			this.#localSearch = new im_v2_lib_search.LocalSearch(searchConfig);
+			this.#baseServerSearch = new BaseServerSearch(searchConfig);
+		}
+		async loadChatParticipants(dialogId) {
+			const items = await this.#baseServerSearch.loadChatParticipants(dialogId);
+			items.forEach(searchItem => {
+				this.#localCollection.set(searchItem.dialogId, searchItem);
+			});
+			return this.#getDialogIds(items);
+		}
+		searchLocal(query) {
+			const localCollection = [...this.#localCollection.values()];
+			const result = this.#localSearch.search(query, localCollection);
+			const sortedResult = im_v2_lib_search.sortByDate(result);
+			return this.#getDialogIds(sortedResult);
+		}
+		async search(query) {
+			const searchResult = await this.#baseServerSearch.search(query);
+			searchResult.forEach(searchItem => {
+				this.#localCollection.set(searchItem.dialogId, searchItem);
+			});
+			return {
+				dialogIds: this.#getDialogIds(searchResult),
+				participantDialogIds: this.#getParticipantDialogIds(searchResult)
+			};
+		}
+		#getDialogIds(items) {
+			return items.map(item => item.dialogId);
+		}
+		#getParticipantDialogIds(items) {
+			const chatParticipants = items.filter(item => item.isChatParticipant);
+			return chatParticipants.map(item => item.dialogId);
+		}
+	}
+
+	class ParticipantsService {
+		async getRecentIds(dialogId) {
+			const recentUsersOptions = {
+				withFakeUsers: false,
+				userLimit: im_v2_lib_search.MAX_ENTITIES_IN_SEARCH_LIST
+			};
+			const userList = im_v2_lib_search.getUsersFromRecentItems(recentUsersOptions);
+			const userIds = userList.map(({
+				dialogId: userId
+			}) => userId);
+			if (userIds.length === 0) {
+				return [];
+			}
+			try {
+				const params = {
+					data: {
+						dialogId,
+						userIds
+					}
+				};
+				const {
+					relations
+				} = await im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatFilterUsersByParticipation, params);
+				const members = relations.filter(member => member.isHidden === false);
+				return members.map(({
+					userId
+				}) => userId.toString());
+			} catch (error) {
+				console.error('ParticipantsService: getIdsFromRecent error', error);
+				return [];
+			}
+		}
+	}
+
+	// @vue/component
+	const ContentFooter = {
+		name: 'MentionContentFooter',
+		components: {
+			Loader: im_v2_component_elements_loader.Loader
+		},
+		props: {
+			isLoading: {
+				type: Boolean,
+				default: false
+			}
+		},
+		computed: {
+			arrowsControlTitle() {
+				return this.$Bitrix.Loc.getMessage('IM_TEXTAREA_MENTION_ARROWS_CONTROL').replace('##ARROWS_ICON##', '');
+			},
+			enterControlTitle() {
+				return this.$Bitrix.Loc.getMessage('IM_TEXTAREA_MENTION_ENTER_CONTROL');
+			},
+			escControlTitle() {
+				return this.$Bitrix.Loc.getMessage('IM_TEXTAREA_MENTION_ESC_CONTROL');
+			}
+		},
+		template: `
+		<div class="bx-im-mention-content-footer__container bx-im-mention-content-footer__scope">
+			<div class="bx-im-mention-content-footer__controls">
+				<div class="bx-im-mention-content-footer__control">
+					<span class="bx-im-mention-content-footer__arrows-control-key"></span>
+					<span class="bx-im-mention-content-footer__control-description">
+						{{ arrowsControlTitle }}
+					</span>
+				</div>
+				<div class="bx-im-mention-content-footer__control">
+					<span class="bx-im-mention-content-footer__control-key">Enter</span>
+					<span class="bx-im-mention-content-footer__control-description">{{ enterControlTitle }}</span>
+				</div>
+				<div class="bx-im-mention-content-footer__control">
+					<span class="bx-im-mention-content-footer__control-key">Esc</span>
+					<span class="bx-im-mention-content-footer__control-description">{{ escControlTitle }}</span>
+				</div>
+			</div>
+			<Loader v-if="isLoading" class="bx-im-mention-content-footer__loader" />
+		</div>
+	`
+	};
+
+	// @vue/component
+	const LoadingState = {
+		name: 'MentionLoadingState',
+		components: {
+			Spinner: im_v2_component_elements_loader.Spinner
+		},
+		computed: {
+			SpinnerSize: () => im_v2_component_elements_loader.SpinnerSize,
+			SpinnerColor: () => im_v2_component_elements_loader.SpinnerColor
+		},
+		template: `
+		<div class="bx-im-mention-loading-state__scope bx-im-mention-loading-state__container">
+			<div class="bx-im-mention-loading-state__loader">
+				<Spinner :size="SpinnerSize.XXS" :color="SpinnerColor.grey"/>
+			</div>
+			<span class="bx-im-mention-loading-state__title">
+				{{ $Bitrix.Loc.getMessage('IM_TEXTAREA_MENTION_LOADING_STATE') }}
+			</span>
+		</div>
+	`
+	};
+
+	class MentionInsertManager {
+		#emitter;
+		#handlersById = {
+			[im_v2_const.SpecialMentionDialogId.allParticipants]: params => this.#emitAllParticipantsEvent(params),
+			default: params => this.#emitBaseEvent(params)
+		};
+		constructor(context) {
+			const {
+				emitter
+			} = context;
+			this.#emitter = emitter;
+		}
+		insert(params) {
+			const handler = this.#handlersById[params.id] || this.#handlersById.default;
+			handler(params);
+		}
+		#emitBaseEvent(params) {
+			const {
+				id,
+				dialogId,
+				query
+			} = params;
+			const mentionText = im_v2_application_core.Core.getStore().getters['chats/get'](id, true).name;
+			const mentionReplacement = im_v2_lib_utils.Utils.text.getMentionBbCode(id, mentionText);
+			this.#emitter.emit(im_v2_const.EventType.textarea.insertMention, {
+				mentionText,
+				mentionReplacement,
+				textToReplace: query,
+				dialogId
+			});
+		}
+		#emitAllParticipantsEvent(params) {
+			const {
+				dialogId,
+				query
+			} = params;
+			const mentionText = main_core.Loc.getMessage('IM_TEXTAREA_MENTION_ALL_PARTICIPANTS_TEXT');
+			const mentionReplacement = `[USER=${im_v2_const.SpecialMentionDialogId.allParticipants}]${mentionText}[/USER]`;
+			this.#emitter.emit(im_v2_const.EventType.textarea.insertMention, {
+				mentionText,
+				mentionReplacement,
+				textToReplace: query,
+				dialogId
+			});
+		}
+	}
+
+	function getNewScrollPosition(element, scrollContainer, marginTop) {
+		const containerPosition = main_core.Dom.getPosition(scrollContainer);
+		const targetElementPosition = main_core.Dom.getPosition(element);
+		const shouldScrollUp = targetElementPosition.top < containerPosition.top;
+		const shouldScrollDown = targetElementPosition.bottom > containerPosition.bottom;
+		let newScrollTop = scrollContainer.scrollTop;
+		if (shouldScrollUp) {
+			newScrollTop -= containerPosition.top - targetElementPosition.top + marginTop;
+		} else if (shouldScrollDown) {
+			newScrollTop += targetElementPosition.bottom - containerPosition.bottom + marginTop;
+		}
+		return newScrollTop;
+	}
+	function getMarginTop(element) {
+		return parseFloat(window.getComputedStyle(element).marginTop);
+	}
+
+	const MentionItem = {
+		name: 'MentionItem',
+		components: {
+			ChatAvatar: im_v2_component_elements_avatar.ChatAvatar,
+			ChatTitle: im_v2_component_elements_chatTitle.ChatTitle
+		},
+		props: {
+			id: {
+				type: String,
+				required: true
+			},
+			title: {
+				type: String,
+				default: ''
+			},
+			subtitle: {
+				type: String,
+				default: ''
+			}
+		},
+		computed: {
+			AvatarSize: () => im_v2_component_elements_avatar.AvatarSize
+		},
+		template: `
+		<slot name="avatar">
+			<ChatAvatar
+				:avatarDialogId="id"
+				:size="AvatarSize.M"
+				class="bx-im-mention-item__avatar-container"
+			/>
+		</slot>
+		<div class="bx-im-mention-item__content-container">
+			<slot name="title">
+				<ChatTitle
+					:dialogId="id"
+					:text="title"
+					:withLeftIcon="false"
+					class="bx-im-mention-item__title"
+				/>
+			</slot>
+			<slot name="subtitle">
+				<div class="bx-im-mention-item__subtitle" :title="subtitle">{{ subtitle }}</div>
+			</slot>
+		</div>
+	`
+	};
+
+	const AllParticipantsItem = {
+		name: 'AllParticipantsItem',
+		components: {
+			MentionItem
+		},
+		props: {
+			item: {
+				type: Object,
+				required: true
+			},
+			selected: {
+				type: Boolean,
+				default: false
+			},
+			dialogId: {
+				type: String,
+				required: true
+			}
+		},
+		computed: {
+			currentItem() {
+				return this.item;
+			}
+		},
+		methods: {
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
+		<div
+			:class="{'--selected': selected}"
+			class="bx-im-mention-item__container bx-im-mention-item__scope"
+		>
+			<MentionItem
+				:id="currentItem.id"
+				:title="currentItem.title"
+				:subtitle="currentItem.subtitle"
+			>
+				<template #avatar>
+					<div 
+						class="bx-im-mention-item__all-avatar-container" 
+						:title="loc('IM_TEXTAREA_MENTION_ALL_PARTICIPANTS_AVATAR_TITLE')"
+					/>
+				</template>
+			</MentionItem>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const CopilotItem = {
+		name: 'CopilotMentionItem',
+		components: {
+			MentionItem
+		},
+		props: {
+			item: {
+				type: Object,
+				required: true
+			},
+			selected: {
+				type: Boolean,
+				default: false
+			},
+			dialogId: {
+				type: String,
+				required: true
+			}
+		},
+		computed: {
+			subtitle() {
+				return this.loc('IM_TEXTAREA_MENTION_COPILOT_SUBTITLE');
+			},
+			currentItem() {
+				return this.item;
+			}
+		},
+		methods: {
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
+		<div
+			:class="{'--selected': selected}"
+			class="bx-im-mention-item__container bx-im-mention-item__scope"
+		>
+			<MentionItem
+				:id="currentItem.id"
+				:title="currentItem.title"
+				:subtitle="currentItem.subtitle"
+			/>
+		</div>
+	`
+	};
+
+	const AddToChatTitleByChatType = {
+		[im_v2_const.ChatType.taskComments]: main_core.Loc.getMessage('IM_TEXTAREA_MENTION_ADD_TO_TASK_COMMENTS_DROPDOWN_MENU'),
+		default: main_core.Loc.getMessage('IM_TEXTAREA_MENTION_ADD_TO_CHAT_DROPDOWN_MENU')
+	};
+	class AddToChatDropdownMenu extends im_v2_lib_menu.BaseMenu {
+		constructor(applicationContext) {
+			super();
+			this.id = im_v2_const.PopupType.mentionAddToChatDropdown;
+			const {
+				emitter
+			} = applicationContext;
+			this.emitter = emitter;
+			this.chatService = new im_v2_provider_service_chat.ChatService();
+		}
+		getMenuOptions() {
+			return {
+				...super.getMenuOptions(),
+				angle: false
+			};
+		}
+		getMenuItems() {
+			return [this.#getAddToChatItem()];
+		}
+		#getAddToChatItem() {
+			return {
+				title: AddToChatTitleByChatType[this.#getChatType()] ?? AddToChatTitleByChatType.default,
+				icon: ui_iconSet_api_core.Outline.ADD_PERSON,
+				onClick: async () => {
+					try {
+						this.#insertMention();
+						await this.#handleAddToChat();
+					} catch {
+						im_v2_lib_notifier.Notifier.chat.handleUserAddError(this.#getChatType());
+					}
+				}
+			};
+		}
+		#insertMention() {
+			const params = {
+				id: this.context.userId,
+				dialogId: this.context.dialogId,
+				query: this.context.searchQuery
+			};
+			const insertManager = new MentionInsertManager({
+				emitter: this.emitter
+			});
+			insertManager.insert(params);
+		}
+		async #handleAddToChat() {
+			im_v2_lib_analytics.Analytics.getInstance().mention.onClickAddToChat(this.context.dialogId);
+			if (this.#isUser()) {
+				await this.#createChatFromUser();
+				return;
+			}
+			await this.#addUserToChat();
+			im_v2_lib_notifier.Notifier.chat.handleUserAddComplete(this.#getChatType());
+		}
+		async #createChatFromUser() {
+			const {
+				newDialogId
+			} = await this.chatService.extendToGroupChat({
+				users: [this.context.dialogId, this.context.userId, im_v2_application_core.Core.getUserId()],
+				ownerId: im_v2_application_core.Core.getUserId()
+			});
+			void im_public.Messenger.openChat(newDialogId);
+		}
+		async #addUserToChat() {
+			const addUserHandlers = {
+				[im_v2_const.ChatType.collab]: () => this.#addToCollab(),
+				default: () => this.#addToChat()
+			};
+			const handler = addUserHandlers[this.#getChatType()] ?? addUserHandlers.default;
+			await handler();
+			this.emitter.emit(im_v2_const.EventType.mention.onAddUserToChat, {
+				userId: this.context.userId
+			});
+		}
+		async #addToChat() {
+			await this.chatService.addToChat({
+				chatId: this.context.chatId,
+				members: [this.context.userId],
+				showHistory: true
+			});
+		}
+		async #addToCollab() {
+			await new im_v2_provider_service_collabInvitation.CollabInvitationService().addEmployees({
+				dialogId: this.context.dialogId,
+				members: [this.context.userId]
+			});
+		}
+		#getChatType() {
+			const dialog = im_v2_application_core.Core.getStore().getters['chats/get'](this.context.dialogId, true);
+			return dialog.type;
+		}
+		#isUser() {
+			return im_v2_application_core.Core.getStore().getters['chats/isUser'](this.context.dialogId);
+		}
+	}
+
+	const DropdownTitleByChatType = {
+		[im_v2_const.ChatType.taskComments]: main_core.Loc.getMessage('IM_TEXTAREA_MENTION_ADD_TO_TASK_COMMENTS_DROPDOWN_TITLE'),
+		default: main_core.Loc.getMessage('IM_TEXTAREA_MENTION_ADD_TO_CHAT_DROPDOWN_TITLE')
+	};
+
+	// @vue/component
+	const AddToChatDropdown = {
+		name: 'AddToChatDropdown',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon
+		},
+		props: {
+			userId: {
+				type: String,
+				required: true
+			},
+			dialogId: {
+				type: String,
+				required: true
+			},
+			searchQuery: {
+				type: String,
+				default: ''
+			}
+		},
+		data() {
+			return {
+				showMenu: false
+			};
+		},
+		computed: {
+			OutlineIcons: () => ui_iconSet_api_vue.Outline,
+			dialog() {
+				return this.$store.getters['chats/get'](this.dialogId, true);
+			},
+			title() {
+				return DropdownTitleByChatType[this.dialog.type] ?? DropdownTitleByChatType.default;
+			}
+		},
+		methods: {
+			closeMenu() {
+				this.showMenu = false;
+				this.getEmitter().emit(im_v2_const.EventType.mention.onNestedMenuClosed);
+			},
+			openMenu(event) {
+				if (!this.contextMenuManager) {
+					this.contextMenuManager = new AddToChatDropdownMenu({
+						emitter: this.getEmitter()
+					});
+					this.contextMenuManager.subscribe(im_v2_lib_menu.BaseMenu.events.close, this.closeMenu);
+				}
+				const context = {
+					chatId: this.dialog.chatId,
+					dialogId: this.dialogId,
+					userId: this.userId,
+					searchQuery: this.searchQuery
+				};
+				this.contextMenuManager.openMenu(context, event.currentTarget);
+				this.showMenu = true;
+			},
+			toggleMenu(event) {
+				if (this.showMenu) {
+					this.closeMenu();
+					return;
+				}
+				this.openMenu(event);
+			},
+			getEmitter() {
+				return this.$Bitrix.eventEmitter;
+			},
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
+		<div class="bx-im-mention-chat-add-dropdown__container" @mousedown.prevent @click.stop="toggleMenu">
+			<div class="bx-im-mention-chat-add-dropdown__separator"></div>
+			<div :title="title" class="bx-im-mention-chat-add-dropdown__title">{{ title }}</div>
+			<BIcon
+				v-if="!showMenu"
+				class="bx-im-mention-chat-add-dropdown__icon"
+				:name="OutlineIcons.CHEVRON_DOWN_S"
+			/>
+			<BIcon
+				v-else
+				class="bx-im-mention-chat-add-dropdown__icon"
+				:name="OutlineIcons.CHEVRON_TOP_S"
+			/>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const DefaultItem = {
+		name: 'DefaultMentionItem',
+		components: {
+			ChatTitleWithHighlighting: im_v2_component_elements_chatTitle.ChatTitleWithHighlighting,
+			MentionItem,
+			AddToChatDropdown
+		},
+		props: {
+			item: {
+				type: Object,
+				required: true
+			},
+			selected: {
+				type: Boolean,
+				default: false
+			},
+			query: {
+				type: String,
+				default: ''
+			},
+			dialogId: {
+				type: String,
+				required: true
+			},
+			isParticipant: {
+				type: Boolean,
+				required: true
+			}
+		},
+		computed: {
+			dialog() {
+				return this.getDialog(this.dialogId);
+			},
+			itemDialog() {
+				return this.getDialog(this.item.id);
+			},
+			isChatUser() {
+				return this.dialog.type === im_v2_const.ChatType.user;
+			},
+			isItemUser() {
+				return this.itemDialog.type === im_v2_const.ChatType.user;
+			},
+			subtitleWithHighlighting() {
+				return im_v2_lib_textHighlighter.highlightText(main_core.Text.encode(this.item.subtitle), this.query);
+			},
+			currentItem() {
+				return this.item;
+			},
+			isAddingUserByMentionAvailable() {
+				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isAddingUserByMentionAvailable);
+			},
+			canAddToChat() {
+				if (!this.isAddingUserByMentionAvailable) {
+					return false;
+				}
+				if (!this.isItemUser || this.isParticipant) {
+					return false;
+				}
+				const canCreateChat = im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByUserType(im_v2_const.ActionByUserType.createChat);
+				if (this.isChatUser && !canCreateChat) {
+					return false;
+				}
+				return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByRole(im_v2_const.ActionByRole.extend, this.dialogId);
+			}
+		},
+		methods: {
+			getDialog(dialogId) {
+				return this.$store.getters['chats/get'](dialogId, true);
+			}
+		},
+		template: `
+		<div
+			:class="{'--selected': selected}"
+			class="bx-im-mention-item__container bx-im-mention-item__scope"
+		>
+			<MentionItem :id="currentItem.id">
+				<template #title>
+					<ChatTitleWithHighlighting
+						:dialogId="currentItem.id"
+						:textToHighlight="query"
+						:text="currentItem.title"
+						class="bx-im-mention-item__title"
+					/>
+				</template>
+				<template #subtitle>
+					<div v-if="isItemUser" class="bx-im-mention-item__subtitle" :title="currentItem.subtitle" v-html="subtitleWithHighlighting"></div>
+					<div v-else class="bx-im-mention-item__subtitle" :title="currentItem.subtitle">{{ currentItem.subtitle }}</div>
+				</template>
+			</MentionItem>
+			<AddToChatDropdown v-if="canAddToChat" :dialogId="dialogId" :userId="currentItem.id" :searchQuery="query" />
+		</div>
+	`
+	};
+
+	const GRADIENT_HEIGHT = 13;
+
+	// @vue/component
+	const MentionItemsContainer = {
+		name: 'MentionItemsContainer',
+		components: {
+			AllParticipantsItem,
+			CopilotItem,
+			DefaultItem,
+			ScrollWithGradient: im_v2_component_elements_scrollWithGradient.ScrollWithGradient
+		},
+		props: {
+			dialogId: {
+				type: String,
+				required: true
+			},
+			items: {
+				type: Array,
+				required: true
+			},
+			participantsIds: {
+				type: Set,
+				required: true
+			},
+			query: {
+				type: String,
+				default: ''
+			}
+		},
+		emits: ['close'],
+		data() {
+			return {
+				selectedIndex: 0
+			};
+		},
+		computed: {
+			GRADIENT_HEIGHT: () => GRADIENT_HEIGHT,
+			preparedQuery() {
+				return this.query.trim().toLowerCase();
+			},
+			copilotBotDialogId() {
+				return this.$store.getters['users/bots/getCopilotBotDialogId'];
+			}
+		},
+		watch: {
+			preparedQuery() {
+				this.selectedIndex = 0;
+			}
+		},
+		created() {
+			main_core.Event.bind(window, 'keydown', this.onKeyDown);
+			this.getEmitter().subscribe(im_v2_const.EventType.mention.selectItem, this.onInsertMentionText);
+		},
+		beforeUnmount() {
+			main_core.Event.unbind(window, 'keydown', this.onKeyDown);
+			this.getEmitter().unsubscribe(im_v2_const.EventType.mention.selectItem, this.onInsertMentionText);
+		},
+		methods: {
+			isParticipant(id) {
+				const currentUserId = im_v2_application_core.Core.getUserId().toString();
+				if (currentUserId === id) {
+					return true;
+				}
+				return this.participantsIds.has(id);
+			},
+			getComponentToShow(id) {
+				const components = {
+					[im_v2_const.SpecialMentionDialogId.allParticipants]: AllParticipantsItem,
+					[this.copilotBotDialogId]: CopilotItem,
+					default: DefaultItem
+				};
+				return components[id] ?? components.default;
+			},
+			onScroll() {
+				main_popup.PopupManager.getPopupById(im_v2_const.PopupType.mentionAddToChatDropdown)?.close();
+			},
+			onKeyDown(event) {
+				if (this.items.length === 0) {
+					return;
+				}
+				const lastIndex = this.items.length - 1;
+				let nextIndex = this.selectedIndex;
+				if (im_v2_lib_utils.Utils.key.isCombination(event, 'ArrowDown')) {
+					nextIndex = nextIndex === lastIndex ? 0 : nextIndex + 1;
+				}
+				if (im_v2_lib_utils.Utils.key.isCombination(event, 'ArrowUp')) {
+					nextIndex = nextIndex === 0 ? lastIndex : nextIndex - 1;
+				}
+				this.selectedIndex = nextIndex;
+				const element = this.getDomElementByIndex(this.selectedIndex);
+				if (!element) {
+					this.selectedIndex = 0;
+				}
+				this.scrollToItem(element);
+			},
+			getDomElementByIndex(index) {
+				return this.$refs['popup-items'].querySelector(`[data-index="${index}"]`);
+			},
+			scrollToItem(element) {
+				const scrollContainer = this.$refs['scroll-gradient'].getContainer();
+				const marginTop = getMarginTop(this.$refs['popup-items']);
+				scrollContainer.scrollTop = getNewScrollPosition(element, scrollContainer, marginTop);
+			},
+			onItemHover(index) {
+				this.selectedIndex = index;
+			},
+			onInsertMentionText() {
+				if (!main_core.Type.isArrayFilled(this.items)) {
+					return;
+				}
+				this.insertMentionText();
+			},
+			onItemClick() {
+				this.insertMentionText();
+				this.$emit('close');
+			},
+			insertMentionText() {
+				const {
+					id
+				} = this.items[this.selectedIndex];
+				const insertManager = new MentionInsertManager({
+					emitter: this.getEmitter()
+				});
+				insertManager.insert({
+					id,
+					dialogId: this.dialogId,
+					query: this.query
+				});
+			},
+			getEmitter() {
+				return this.$Bitrix.eventEmitter;
+			}
+		},
+		template: `
+		<ScrollWithGradient
+			v-if="items.length > 0"
+			ref="scroll-gradient"
+			:gradientSize="GRADIENT_HEIGHT"
+			@scroll="onScroll"
+		>
+			<div class="bx-im-mention-popup-content__items" ref="popup-items">
+				<component
+					v-for="(item, index) in items"
+					:data-index="index"
+					:is="getComponentToShow(item.id)"
+					:isParticipant="isParticipant(item.id)"
+					:item="item"
+					:query="query"
+					:dialogId="dialogId"
+					:selected="index === selectedIndex"
+					@click="onItemClick"
+					@close="$emit('close')"
+					@mouseover="onItemHover(index)"
+				/>
+			</div>
+		</ScrollWithGradient>
+	`
+	};
+
+	// @vue/component
+	const SearchEmptyState = {
+		name: 'MentionSearchEmptyState',
+		template: `
+		<div class="bx-im-mention-empty-state__scope bx-im-mention-empty-state__container">
+			<span class="bx-im-mention-empty-state__icon"></span>
+			<span class="bx-im-mention-empty-state__title">
+				{{ $Bitrix.Loc.getMessage('IM_TEXTAREA_MENTION_EMPTY_STATE') }}
+			</span>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const MentionPopupContent = {
+		name: 'MentionPopupContent',
+		components: {
+			ContentFooter,
+			SearchEmptyState,
+			LoadingState,
+			MentionItemsContainer
+		},
+		props: {
+			dialogId: {
+				type: String,
+				required: true
+			},
+			query: {
+				type: String,
+				default: ''
+			},
+			searchChats: {
+				type: Boolean,
+				default: true
+			}
+		},
+		emits: ['close', 'adjustPosition'],
+		data() {
+			return {
+				isLoading: false,
+				searchResult: [],
+				chatParticipants: [],
+				chatParticipantsLoaded: false,
+				currentServerQueries: 0,
+				needTopShadow: false,
+				needBottomShadow: true,
+				participantsIds: new Set()
+			};
+		},
+		computed: {
+			dialog() {
+				return im_v2_application_core.Core.getStore().getters['chats/get'](this.dialogId, true);
+			},
+			items() {
+				if (!this.isEmptyQuery) {
+					return this.formattedDynamicItems(this.searchResult);
+				}
+				return [...this.fixedItemsToShow, ...this.dynamicItemsToShow];
+			},
+			fixedItemsToShow() {
+				const items = [{
+					id: this.copilotBotDialogId,
+					title: new MentionItemFormatter(this.copilotBotDialogId).getTitle(),
+					subtitle: this.loc('IM_TEXTAREA_MENTION_COPILOT_SUBTITLE'),
+					showCondition: this.needToShowFixedCopilot
+				}, {
+					id: im_v2_const.SpecialMentionDialogId.allParticipants,
+					title: this.loc('IM_TEXTAREA_MENTION_ALL_PARTICIPANTS_TITLE'),
+					subtitle: this.loc('IM_TEXTAREA_MENTION_ALL_PARTICIPANTS_SUBTITLE'),
+					showCondition: this.needToShowAllParticipants
+				}];
+				return items.filter(item => item.showCondition).map(({
+					id,
+					title,
+					subtitle
+				}) => ({
+					id,
+					title,
+					subtitle
+				}));
+			},
+			dynamicItemsToShow() {
+				return this.formattedDynamicItems(this.dynamicItems);
+			},
+			dynamicItems() {
+				if (this.needToShowRecentUsersOnStartScreen) {
+					return this.usersFromRecent;
+				}
+				return this.chatParticipants;
+			},
+			needToShowRecentUsersOnStartScreen() {
+				return this.chatParticipantsLoaded && this.chatParticipants.length <= 1;
+			},
+			usersFromRecent() {
+				return im_v2_lib_search.getUsersFromRecentItems({
+					withFakeUsers: false
+				}).map(({
+					dialogId
+				}) => dialogId);
+			},
+			preparedQuery() {
+				return this.query.trim().toLowerCase();
+			},
+			isEmptyQuery() {
+				return this.preparedQuery.length === 0;
+			},
+			isSearchEmptyState() {
+				if (this.isLoading || this.isEmptyQuery) {
+					return false;
+				}
+				return this.items.length === 0;
+			},
+			searchConfig() {
+				const exclude = [];
+				if (!this.searchChats) {
+					exclude.push(im_v2_lib_search.EntitySearch.chats);
+				}
+				return {
+					exclude,
+					contextChatId: this.dialog.chatId
+				};
+			},
+			copilotBotDialogId() {
+				return this.$store.getters['users/bots/getCopilotBotDialogId'];
+			},
+			needToShowFixedCopilot() {
+				const isChannel = im_v2_lib_channel.ChannelManager.isChannel(this.dialogId);
+				const isCopilotChat = new im_v2_lib_copilot.CopilotManager().isCopilotChat(this.dialogId);
+				if (isChannel || isCopilotChat) {
+					return false;
+				}
+				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isCopilotMentionAvailable);
+			},
+			needToShowAllParticipants() {
+				return this.dialog.type !== im_v2_const.ChatType.user;
+			}
+		},
+		watch: {
+			async isLoading() {
+				await this.adjustPosition();
+			},
+			async searchResult() {
+				await this.adjustPosition();
+			},
+			preparedQuery(newQuery, previousQuery) {
+				if (newQuery === previousQuery) {
+					return;
+				}
+				void this.startSearch(newQuery);
+			}
+		},
+		async created() {
+			this.initSettings();
+			this.searchService = new MentionSearchService(this.searchConfig);
+			this.searchOnServerDelayed = main_core.Runtime.debounce(this.searchOnServer, 400, this);
+			this.getEmitter().subscribe(im_v2_const.EventType.mention.onAddUserToChat, this.onAddUserToChat);
+			void this.initChatParticipants();
+		},
+		beforeUnmount() {
+			this.getEmitter().unsubscribe(im_v2_const.EventType.mention.onAddUserToChat, this.onAddUserToChat);
+		},
+		methods: {
+			async initChatParticipants() {
+				this.isLoading = true;
+				await this.loadChatParticipants();
+				const participantsIdsFromRecent = await this.getRecentParticipantsIds();
+				this.addParticipants(participantsIdsFromRecent);
+				this.isLoading = false;
+			},
+			getRecentParticipantsIds() {
+				const participantsService = new ParticipantsService();
+				return participantsService.getRecentIds(this.dialogId);
+			},
+			onAddUserToChat(event) {
+				const {
+					userId
+				} = event.getData();
+				this.participantsIds.add(userId);
+			},
+			initSettings() {
+				const settings = main_core.Extension.getSettings('im.v2.component.textarea');
+				const defaultMinTokenSize = 3;
+				this.minTokenSize = settings.get('minSearchTokenSize', defaultMinTokenSize);
+			},
+			async loadChatParticipants() {
+				this.chatParticipants = await this.searchService.loadChatParticipants(this.dialogId);
+				this.addParticipants(this.chatParticipants);
+				this.searchResult = this.chatParticipants;
+				this.chatParticipantsLoaded = true;
+			},
+			async searchOnServer(query) {
+				this.currentServerQueries++;
+				try {
+					const {
+						dialogIds,
+						participantDialogIds
+					} = await this.searchService.search(query);
+					if (query !== this.preparedQuery) {
+						return;
+					}
+					this.addParticipants(participantDialogIds);
+					this.searchResult = [...new Set([...this.searchResult, ...dialogIds])];
+				} finally {
+					this.currentServerQueries--;
+					this.stopLoader();
+				}
+			},
+			async startSearch(query) {
+				if (query.length > 0) {
+					const dialogIds = this.searchService.searchLocal(query);
+					if (query !== this.preparedQuery) {
+						return;
+					}
+					this.searchResult = this.appendResult(dialogIds);
+				}
+				if (query.length >= this.minTokenSize) {
+					this.isLoading = true;
+					await this.searchOnServerDelayed(query);
+				}
+				if (query.length === 0) {
+					this.cleanSearchResult();
+				}
+			},
+			stopLoader() {
+				if (this.currentServerQueries > 0) {
+					return;
+				}
+				this.isLoading = false;
+			},
+			cleanSearchResult() {
+				this.searchResult = this.chatParticipants;
+			},
+			async adjustPosition() {
+				await this.$nextTick();
+				this.$emit('adjustPosition');
+			},
+			appendResult(newItems) {
+				const filtered = this.searchResult.filter(dialogId => newItems.includes(dialogId));
+				return [...new Set([...filtered, ...newItems])];
+			},
+			isChat(dialogId) {
+				return dialogId.startsWith(im_v2_const.DialogIdChatPrefix);
+			},
+			formattedDynamicItems(items) {
+				return items.map(dialogId => {
+					return new MentionItemFormatter(dialogId).format();
+				});
+			},
+			addParticipants(items) {
+				items.forEach(userId => this.participantsIds.add(userId));
+			},
+			getEmitter() {
+				return this.$Bitrix.eventEmitter;
+			},
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
+		<div class="bx-im-mention-popup-content__container">
+			<LoadingState v-if="isLoading" />
+			<MentionItemsContainer
+				v-else
+				:dialogId="dialogId"
+				:query="query"
+				:items="items"
+				:participantsIds="participantsIds"
+				@close="$emit('close')"
+			/>
+			<SearchEmptyState v-if="isSearchEmptyState" />
+			<ContentFooter :isLoading="isLoading" />
+		</div>
+	`
+	};
+
+	const POPUP_ID$1 = 'im-mention-popup';
+
+	// @vue/component
+	const MentionPopup = {
+		name: 'MentionPopup',
+		components: {
+			MessengerPopup: im_v2_component_elements_popup.MessengerPopup,
+			MentionPopupContent
+		},
+		props: {
+			bindElement: {
+				type: Object,
+				required: true
+			},
+			dialogId: {
+				type: String,
+				required: true
+			},
+			query: {
+				type: String,
+				default: ''
+			}
+		},
+		emits: ['close', 'onFocusTextarea'],
+		computed: {
+			POPUP_ID: () => POPUP_ID$1,
+			dialog() {
+				return this.$store.getters['chats/get'](this.dialogId, true);
+			},
+			isCopilotType() {
+				return this.dialog.type === im_v2_const.ChatType.copilot;
+			},
+			isGroupCopilotChat() {
+				return new im_v2_lib_copilot.CopilotManager().isGroupCopilotChat(this.dialogId);
+			},
+			needToShowMentionPopup() {
+				if (this.isCopilotType) {
+					return this.isGroupCopilotChat;
+				}
+				return true;
+			},
+			searchChats() {
+				return !this.isCopilotType;
+			},
+			config() {
+				return {
+					height: 200,
+					width: 426,
+					padding: 0,
+					bindElement: this.bindElement,
+					offsetTop: 2,
+					offsetLeft: 0,
+					fixed: true,
+					bindOptions: {
+						position: 'top'
+					},
+					className: 'bx-im-mention-popup__scope'
+				};
+			}
+		},
+		created() {
+			this.getEmitter().subscribe(im_v2_const.EventType.mention.onNestedMenuClosed, this.onFocusTextarea);
+		},
+		beforeUnmount() {
+			this.getEmitter().unsubscribe(im_v2_const.EventType.mention.onNestedMenuClosed, this.onFocusTextarea);
+		},
+		methods: {
+			onFocusTextarea() {
+				this.$emit('onFocusTextarea');
+			},
+			getEmitter() {
+				return this.$Bitrix.eventEmitter;
+			}
+		},
+		template: `
+		<MessengerPopup
+			v-if="needToShowMentionPopup"
+			:config="config"
+			@close="$emit('close');"
+			:id="POPUP_ID"
+			v-slot="{adjustPosition}"
+		>
+			<MentionPopupContent 
+				:dialogId="dialogId"
+				:query="query"
+				:searchChats="searchChats"
+				@close="$emit('close');"
+				@adjustPosition="adjustPosition()"
+			/>
+		</MessengerPopup>
+	`
+	};
+
+	// @vue/component
+	const EditPanel = {
+		name: 'EditPanel',
+		props: {
+			messageId: {
+				type: [Number, String],
+				required: true
+			}
+		},
+		emits: ['close'],
+		computed: {
+			message() {
+				return this.$store.getters['messages/getById'](this.messageId);
+			},
+			preparedText() {
+				return im_v2_lib_parser.Parser.purifyMessage(this.message);
+			}
+		},
+		methods: {
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
+		<div class="bx-im-message-panel__container">
+			<div class="bx-im-message-panel__icon"></div>
+			<div class="bx-im-message-panel__content">
+				<div class="bx-im-message-panel__title">{{ loc('IM_TEXTAREA_EDIT_MESSAGE_TITLE') }}</div>
+				<div class="bx-im-message-panel__text">{{ preparedText }}</div>
+			</div>
+			<div @click="$emit('close')" class="bx-im-message-panel__close"></div>
+		</div>
+	`
+	};
+
+	const NAME_MAX_LENGTH = 40;
+
+	// @vue/component
+	const ReplyPanel = {
+		name: 'ReplyPanel',
+		props: {
+			messageId: {
+				type: Number,
+				required: true
+			}
+		},
+		emits: ['close'],
+		computed: {
+			message() {
+				return this.$store.getters['messages/getById'](this.messageId);
+			},
+			replyAuthor() {
+				return this.$store.getters['users/get'](this.message.authorId);
+			},
+			replyTitle() {
+				return this.replyAuthor ? this.replyAuthor.name : this.loc('IM_DIALOG_CHAT_QUOTE_DEFAULT_TITLE');
+			},
+			messageFile() {
+				return this.$store.getters['messages/getMessageFiles'](this.message.id)[0];
+			},
+			isFile() {
+				return this.messageFile && this.messageFile.type === im_v2_const.FileType.file;
+			},
+			isVideo() {
+				return this.messageFile && this.messageFile.type === im_v2_const.FileType.video;
+			},
+			isImage() {
+				return this.messageFile && this.messageFile.type === im_v2_const.FileType.image;
+			},
+			isAudio() {
+				return this.messageFile && this.messageFile.type === im_v2_const.FileType.audio;
+			},
+			showIcon() {
+				return this.messageFile ? !this.messageFile.urlPreview : false;
+			},
+			truncatedFileName() {
+				return im_v2_lib_utils.Utils.file.getShortFileName(this.messageFile.name, NAME_MAX_LENGTH);
+			},
+			isMessageDeleted() {
+				return this.message.isDeleted;
+			},
+			isSticker() {
+				return this.$store.getters['stickers/messages/isSticker'](this.message.id);
+			},
+			messageText() {
+				if (this.isFile) {
+					return this.truncatedFileName;
+				}
+				if (this.isAudio) {
+					return this.loc('IM_TEXTAREA_REPLY_AUDIO_TITLE');
+				}
+				if (this.isMessageDeleted) {
+					return this.loc('IM_TEXTAREA_REPLY_DELETED_TITLE');
+				}
+				if (this.isSticker) {
+					return this.loc('IM_TEXTAREA_REPLY_STICKER_TITLE');
+				}
+				return im_v2_lib_parser.Parser.purify(this.message);
+			},
+			iconClass() {
+				const iconType = im_v2_lib_utils.Utils.file.getIconTypeByFilename(this.messageFile.name);
+				return `ui-icon-file-${iconType}`;
+			}
+		},
+		methods: {
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
+		<div class="bx-im-message-panel__container">
+			<div class="bx-im-message-panel__icon --quote"></div>
+			<div v-if="showIcon" class="bx-im-message-panel-file__icon">
+				<div :class="iconClass" class="ui-icon"><i></i></div>
+			</div>
+			<div v-else-if="isImage || isVideo" class="bx-im-message-panel__image">
+				<img 
+					v-if="this.messageFile.urlPreview" 
+					class="bx-im-message-panel__image_img" 
+					:src="this.messageFile.urlPreview"
+											:alt="this.messageFile.name"
+				>
+			</div>
+			<div class="bx-im-message-panel__content">
+				<div class="bx-im-message-panel__title">{{ replyTitle }}</div>
+				<div class="bx-im-message-panel__text">{{ messageText }}</div>
+			</div>
+			<div @click="$emit('close')" class="bx-im-message-panel__close"></div>
+		</div>
+	`
+	};
+
+	const MESSAGE_DISPLAY_LIMIT = 5;
+
+	// @vue/component
+	const ForwardPanel = {
+		name: 'ForwardPanel',
+		props: {
+			context: {
+				type: Object,
+				required: true
+			}
+		},
+		emits: ['close'],
+		computed: {
+			forwardContext() {
+				return this.context;
+			},
+			messagesIds() {
+				return this.forwardContext.messagesIds;
+			},
+			sortedMessagesIds() {
+				return [...this.messagesIds].sort();
+			},
+			authorsOfMessages() {
+				return this.sortedMessagesIds.map(id => {
+					const isForward = this.$store.getters['messages/isForward'](id);
+					const message = this.getMessage(id);
+					const userId = isForward ? message.forward.userId : message.authorId;
+					return this.$store.getters['users/get'](userId, true);
+				});
+			},
+			uniqueUsers() {
+				const uniqueUsersObj = {};
+				this.authorsOfMessages.forEach(user => {
+					if (!uniqueUsersObj[user.id]) {
+						uniqueUsersObj[user.id] = user;
+					}
+				});
+				return Object.values(uniqueUsersObj);
+			},
+			forwardMessagesCount() {
+				return this.messagesIds.length;
+			},
+			forwardAuthorName() {
+				const author = this.authorsOfMessages[0];
+				let name = author.name;
+				if (author.id === 0) {
+					name = this.loc('IM_TEXTAREA_FORWARD_SYSTEM');
+				}
+				return `${name}: `;
+			},
+			displayedAuthorNames() {
+				const systemMessagesCount = this.authorsOfMessages.filter(user => user.id === 0).length;
+				const displayedNames = this.uniqueUsers.slice(0, MESSAGE_DISPLAY_LIMIT);
+				const names = [];
+				displayedNames.forEach(user => {
+					if (user.id === 0) {
+						return systemMessagesCount > 1 ? names.push(this.loc('IM_TEXTAREA_FORWARD_MESSAGES_SYSTEM')) : names.push(this.loc('IM_TEXTAREA_FORWARD_SYSTEM'));
+					}
+					if (this.isOwnMessage(user)) {
+						return names.unshift(this.loc('IM_TEXTAREA_FORWARD_OWN_MESSAGE'));
+					}
+					return names.push(user.firstName);
+				});
+				return names.join(', ');
+			},
+			formattedAuthorNames() {
+				if (this.remainingAuthors > 0) {
+					return main_core.Loc.getMessage('IM_TEXTAREA_FORWARD_TEXT_MORE', {
+						'[name]': '<span class="bx-im-message-panel__forward-author_name">',
+						'[/name]': '</span>',
+						'#USER_LIST#': main_core.Text.encode(this.displayedAuthorNames),
+						'[remaining]': '<span class="bx-im-message-panel__forward-author_remaining">',
+						'[/remaining]': '</span>',
+						'#COUNT#': this.remainingAuthors
+					});
+				}
+				return this.loc('IM_TEXTAREA_FORWARD_TEXT', {
+					'#USER_LIST#': main_core.Text.encode(this.displayedAuthorNames)
+				});
+			},
+			remainingAuthors() {
+				return this.uniqueUsers.length - MESSAGE_DISPLAY_LIMIT;
+			},
+			messageText() {
+				return im_v2_lib_parser.Parser.purifyMessage(this.getMessage(this.messagesIds));
+			},
+			titleText() {
+				if (this.forwardMessagesCount > 1) {
+					return this.formattedMessageCounter;
+				}
+				return this.loc('IM_TEXTAREA_FORWARD_TITLE');
+			},
+			formattedMessageCounter() {
+				return main_core.Loc.getMessagePlural('IM_TEXTAREA_FORWARD_TITLE_MULTIPLE_COUNT', this.forwardMessagesCount, {
+					'#COUNT_MESSAGES#': this.forwardMessagesCount
+				});
+			}
+		},
+		methods: {
+			isOwnMessage(user) {
+				return user.id === im_v2_application_core.Core.getUserId() && this.uniqueUsers.length > 1;
+			},
+			getMessage(messageId) {
+				return this.$store.getters['messages/getById'](messageId);
+			},
+			loc(phraseCode, replacements = {}) {
+				return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+			}
+		},
+		template: `
+		<div class="bx-im-message-panel__container">
+			<div class="bx-im-message-panel__icon --forward"></div>
+			<div class="bx-im-message-panel__content">
+				<div class="bx-im-message-panel__title">{{ titleText }}</div>
+				<div v-if="forwardMessagesCount > 1" class="bx-im-message-panel__text" :class="{'--compact': remainingAuthors > 0}">
+					<div class="bx-im-message-panel__bulk-forward-author" v-html="formattedAuthorNames"></div>
+				</div>
+				<div v-else class="bx-im-message-panel__text">
+					<span class="bx-im-message-panel__forward-author">{{ forwardAuthorName }}</span>
+					<span class="bx-im-message-panel__forward-message-text">{{ messageText }}</span>
+				</div>
+			</div>
+			<div @click="$emit('close')" class="bx-im-message-panel__close"></div>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const MarketAppPopup = {
+		name: 'MarketAppPopup',
+		components: {
+			MessengerPopup: im_v2_component_elements_popup.MessengerPopup,
+			Spinner: im_v2_component_elements_loader.Spinner
+		},
+		props: {
+			bindElement: {
+				type: Object,
+				required: true
+			},
+			entityId: {
+				type: String,
+				required: true
+			},
+			width: {
+				type: Number,
+				required: true
+			},
+			height: {
+				type: Number,
+				required: true
+			},
+			dialogId: {
+				type: String,
+				required: true
+			}
+		},
+		emits: ['close'],
+		data() {
+			return {
+				isLoading: true,
+				handleResult: true
+			};
+		},
+		computed: {
+			SpinnerSize: () => im_v2_component_elements_loader.SpinnerSize,
+			popupConfig() {
+				return {
+					width: this.width,
+					height: this.height,
+					bindElement: this.bindElement,
+					bindOptions: {
+						position: 'top'
+					},
+					offsetTop: 0,
+					offsetLeft: 0,
+					padding: 0
+				};
+			}
+		},
+		created() {
+			this.marketManager = im_v2_lib_market.MarketManager.getInstance();
+		},
+		mounted() {
+			const context = {
+				dialogId: this.dialogId
+			};
+			this.marketManager.loadPlacement(this.entityId, context).then(response => {
+				if (!this.handleResult) {
+					return;
+				}
+				this.isLoading = false;
+				main_core.Runtime.html(this.$refs['im-messenger-textarea-placement'], response);
+			});
+		},
+		methods: {
+			onClose() {
+				this.handleResult = false;
+				this.$emit('close');
+			}
+		},
+		template: `
+		<MessengerPopup
+			:config="popupConfig"
+			@close="onClose"
+			id="im-market-app-popup"
+		>
+			<div class="bx-im-market-app-popup__container">
+				<div v-if="isLoading" class="bx-im-market-app-popup__loader-container">
+					<Spinner :size="SpinnerSize.S"/>
+				</div>
+				<div ref="im-messenger-textarea-placement" class="bx-im-market-app-popup__placement-container"></div>
+			</div>
+		</MessengerPopup>
+	`
+	};
+
+	// @vue/component
+	const MarketAppItem = {
+		name: 'MarketAppItem',
+		components: {
+			MarketAppPopup
+		},
+		props: {
+			item: {
+				type: Object,
+				required: true
+			},
+			hideTitle: {
+				type: Boolean,
+				default: false
+			},
+			dialogId: {
+				type: String,
+				required: true
+			}
+		},
+		data() {
+			return {
+				showApp: false
+			};
+		},
+		computed: {
+			marketItem() {
+				return this.item;
+			},
+			iconClass() {
+				return `fa ${this.marketItem.options.iconName}`;
+			},
+			iconColor() {
+				return this.marketItem.options.color;
+			}
+		},
+		methods: {
+			onAppClick() {
+				this.showApp = !this.showApp;
+			}
+		},
+		template: `
+		<div 
+			class="bx-im-market-app-item__container" 
+			:class="{'--short': hideTitle}" 
+			:title="marketItem.title"
+			@click="onAppClick"
+			ref="market-app"
+		>
+			<div class="bx-im-market-app-item__icon-container" :style="{backgroundColor: iconColor}">
+				<i :class="iconClass" aria-hidden="true"></i>
+			</div>
+			<div v-if="!hideTitle" class="bx-im-market-app-item__title-container" :title="marketItem.title">
+				<div class="bx-im-market-app-item__title-text">
+					{{ marketItem.title }}
+				</div>
+			</div>
+			<MarketAppPopup 
+				v-if="showApp" 
+				:bindElement="$refs['market-app']" 
+				:entityId="marketItem.id"
+				:width="marketItem.options.width"
+				:height="marketItem.options.height"
+				:dialogId="dialogId"
+				@close="onAppClick"
+			/>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const MarketShowMorePopupContentItem = {
+		name: 'MarketShowMorePopupContentItem',
+		components: {
+			MarketAppPopup
+		},
+		props: {
+			item: {
+				type: Object,
+				required: true
+			},
+			dialogId: {
+				type: String,
+				required: true
+			}
+		},
+		data() {
+			return {
+				showApp: false
+			};
+		},
+		computed: {
+			marketItem() {
+				return this.item;
+			},
+			iconClass() {
+				return `fa ${this.marketItem.options.iconName}`;
+			},
+			iconColor() {
+				return this.marketItem.options.color;
+			}
+		},
+		methods: {
+			onAppClick() {
+				this.showApp = !this.showApp;
+			}
+		},
+		template: `
+		<div 
+			class="bx-im-market-show-more-popup-content-item__container"
+			:title="marketItem.title"
+			@click="onAppClick"
+			ref="market-app"
+		>
+			<div class="bx-im-market-show-more-popup-content-item__icon-container" :style="{backgroundColor: iconColor}">
+				<i :class="iconClass" aria-hidden="true"></i>
+			</div>
+			<div class="bx-im-market-show-more-popup-content-item__title-container">
+				<div class="bx-im-market-show-more-popup-content-item__title-text">
+					{{ marketItem.title }}
+				</div>
+			</div>
+			<MarketAppPopup
+				v-if="showApp" 
+				:bindElement="$refs['market-app']" 
+				:entityId="marketItem.id"
+				:width="marketItem.options.width"
+				:height="marketItem.options.height" 
+				:dialogId="dialogId"
+				@close="onAppClick"
+			/>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const MarketShowMorePopupContent = {
+		name: 'MarketShowMorePopupContent',
+		components: {
+			MarketShowMorePopupContentItem
+		},
+		props: {
+			marketApps: {
+				type: Array,
+				required: true
+			},
+			dialogId: {
+				type: String,
+				required: true
+			}
+		},
+		data() {
+			return {
+				isLoading: true,
+				needTopShadow: false,
+				needBottomShadow: true
+			};
+		},
+		methods: {
+			onListScroll(event) {
+				this.needBottomShadow = event.target.scrollTop + event.target.clientHeight !== event.target.scrollHeight;
+				if (event.target.scrollTop === 0) {
+					this.needTopShadow = false;
+					return;
+				}
+				this.needTopShadow = true;
+			}
+		},
+		template: `
+		<div class="bx-im-market-show-more-popup-content__scope bx-im-market-show-more-popup-content__container">
+			<div v-if="needTopShadow" class="bx-im-market-show-more-popup-content__shadow --top">
+				<div class="bx-im-market-show-more-popup-content__shadow-inner"></div>
+			</div>
+			<div @scroll="onListScroll" class="bx-im-market-show-more-popup-content__items-container">
+				<MarketShowMorePopupContentItem
+					v-for="item in marketApps"
+					:item="item"
+					:dialogId="dialogId"
+					@onAppClick="$emit('close')"
+				/>
+			</div>
+			<div v-if="needBottomShadow" class="bx-im-market-show-more-popup-content__shadow --bottom">
+				<div class="bx-im-market-show-more-popup-content__shadow-inner"></div>
+			</div>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const MarketShowMorePopup = {
+		name: 'MarketShowMorePopup',
+		components: {
+			MessengerPopup: im_v2_component_elements_popup.MessengerPopup,
+			MarketShowMorePopupContent
+		},
+		props: {
+			marketApps: {
+				type: Array,
+				required: true
+			},
+			dialogId: {
+				type: String,
+				required: true
+			}
+		},
+		emits: ['close'],
+		data() {
+			return {
+				showPopup: false
+			};
+		},
+		computed: {
+			popupConfig() {
+				return {
+					titleBar: this.$Bitrix.Loc.getMessage('IM_TEXTAREA_MARKET_OTHER_APPS'),
+					closeIcon: true,
+					width: 302,
+					height: 422,
+					bindElement: this.$refs['textarea-show-more-market-apps'],
+					bindOptions: {
+						position: 'top'
+					},
+					offsetTop: 0,
+					offsetLeft: 0,
+					padding: 0,
+					contentPadding: 0,
+					contentBackground: '#fff',
+					className: 'bx-im-market-show-more-popup__scope'
+				};
+			},
+			showMoreButtonText() {
+				return this.$Bitrix.Loc.getMessage('IM_TEXTAREA_MARKET_APPS_SHOW_MORE_BUTTON').replace('#NUMBER#', this.marketApps.length);
+			}
+		},
+		template: `
+		<div
+			@click="showPopup = true"
+			class="bx-im-market-apps-panel__more-items-button"
+			:class="{'--active': showPopup}"
+			ref="textarea-show-more-market-apps"
+		>
+			{{ showMoreButtonText }}
+		</div>
+		<MessengerPopup
+			v-if="showPopup"
+			:config="popupConfig"
+			@close="showPopup = false"
+			id="im-market-apps-more-popup"
+		>
+			<MarketShowMorePopupContent :marketApps='marketApps' :dialogId="dialogId" @close="showPopup = false" />
+		</MessengerPopup>
+	`
+	};
+
+	const MAX_EXPANDED_ITEMS = 5;
+	const MAX_COLLAPSED_ITEMS = 15;
+
+	// @vue/component
+	const MarketAppsPanel = {
+		name: 'MarketAppsPanel',
+		components: {
+			MarketAppItem,
+			MarketShowMorePopup,
+			RichLoc: ui_vue3_components_richLoc.RichLoc
+		},
+		props: {
+			dialogId: {
+				type: String,
+				required: true
+			}
+		},
+		computed: {
+			marketMenuItems() {
+				return im_v2_lib_market.MarketManager.getInstance().getAvailablePlacementsByType(im_v2_const.PlacementType.textarea, this.dialogId);
+			},
+			marketItemsToShow() {
+				const maxItems = this.hideTitle ? MAX_COLLAPSED_ITEMS : MAX_EXPANDED_ITEMS;
+				return {
+					displayedItems: this.marketMenuItems.slice(0, maxItems),
+					hiddenItems: this.marketMenuItems.slice(maxItems)
+				};
+			},
+			hideTitle() {
+				return this.marketMenuItems.length > MAX_EXPANDED_ITEMS;
+			},
+			needMoreButton() {
+				return this.marketItemsToShow.hiddenItems.length > 0;
+			},
+			isEmptyState() {
+				return this.marketItemsToShow.displayedItems.length === 0;
+			},
+			emptyStateText() {
+				return this.loc('IM_TEXTAREA_MARKET_APPS_EMPTY_STATE_MSGVER_2');
+			}
+		},
+		methods: {
+			onEmptyStateLinkClick() {
+				im_v2_lib_market.MarketManager.openChatMarket();
+			},
+			loc(phraseCode, replacements = {}) {
+				return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+			}
+		},
+		template: `
+		<div class="bx-im-market-apps-panel__scope">
+			<div v-if="isEmptyState" class="bx-im-market-apps-panel__empty-state-container">
+				<div class="bx-im-market-apps-panel__empty-state-icon"></div>
+				<div class="bx-im-market-apps-panel__empty-state-text">
+					<RichLoc :text="emptyStateText" placeholder="[url]">
+						<template #url="{ text }">
+							<span class="bx-im-market-apps-panel__empty-state-link" @click="onEmptyStateLinkClick">
+								{{ text }}
+							</span>
+						</template>
+					</RichLoc>
+				</div>
+				<div class="bx-im-market-apps-panel__empty-state-button"></div>
+			</div>
+			<div v-else class="bx-im-market-apps-panel__container">
+				<div class="bx-im-market-apps-panel__items-container" :class="{'--short': hideTitle}">
+					<MarketAppItem
+						v-for="item in marketItemsToShow.displayedItems"
+						:item="item"
+						:hideTitle="hideTitle"
+						:dialogId="dialogId"
+					/>
+				</div>
+				<MarketShowMorePopup 
+					v-if="needMoreButton" 
+					:marketApps="marketItemsToShow.hiddenItems"
+					:dialogId="dialogId"
+				/>
+			</div>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const TextareaPanel = {
+		name: 'TextareaPanel',
+		components: {
+			EditPanel,
+			ReplyPanel,
+			ForwardPanel,
+			MarketAppsPanel
+		},
+		props: {
+			dialogId: {
+				type: String,
+				required: true
+			},
+			type: {
+				type: String,
+				required: true
+			},
+			context: {
+				type: Object,
+				required: true
+			}
+		},
+		emits: ['close'],
+		computed: {
+			PanelType: () => im_v2_const.TextareaPanelType,
+			configContext() {
+				return this.context;
+			}
+		},
+		template: `
+		<EditPanel v-if="type === PanelType.edit" :messageId="configContext.messageId" @close="$emit('close')" />
+		<ReplyPanel v-if="type === PanelType.reply" :messageId="configContext.messageId" @close="$emit('close')" />
+		<ForwardPanel v-if="type === PanelType.forward" :context="configContext" @close="$emit('close')" />
+		<MarketAppsPanel v-if="type === PanelType.market" :dialogId="dialogId" />
+	`
+	};
+
 	const FILE_DIALOG_ID = 'im-file-dialog';
 
 	/* eslint-disable @bitrix24/bitrix24-rules/no-bx */
 	// @vue/component
 	const DiskPopup = {
-	  name: 'DiskPopup',
-	  emits: ['close', 'diskFileSelect'],
-	  created() {
-	    if (!BX.DiskFileDialog) {
-	      console.error('Couldn\'t initialize disk popup');
-	      return;
-	    }
-	    this.subscribeEvents();
-	    this.open();
-	  },
-	  beforeUnmount() {
-	    this.unsubscribeEvents();
-	  },
-	  methods: {
-	    subscribeEvents() {
-	      BX.addCustomEvent(BX.DiskFileDialog, 'inited', this.onInited);
-	      BX.addCustomEvent(BX.DiskFileDialog, 'loadItems', this.onLoadItems);
-	    },
-	    unsubscribeEvents() {
-	      BX.removeCustomEvent(BX.DiskFileDialog, 'inited', this.onInited);
-	      BX.removeCustomEvent(BX.DiskFileDialog, 'loadItems', this.onLoadItems);
-	    },
-	    onInited(name) {
-	      if (name !== FILE_DIALOG_ID) {
-	        return;
-	      }
-	      BX.DiskFileDialog.obCallback[name] = {
-	        saveButton: (tab, path, selected) => {
-	          this.$emit('diskFileSelect', {
-	            files: selected
-	          });
-	        },
-	        popupDestroy: () => {
-	          this.unsubscribeEvents();
-	          this.$emit('close');
-	        }
-	      };
-	      BX.DiskFileDialog.openDialog(name);
-	    },
-	    onLoadItems(link, name) {
-	      if (name !== FILE_DIALOG_ID) {
-	        return;
-	      }
-	      BX.DiskFileDialog.target[name] = link.replace('/bitrix/tools/disk/uf.php', '/bitrix/components/bitrix/im.messenger/file.ajax.php');
-	    },
-	    open() {
-	      main_core.ajax({
-	        url: `/bitrix/components/bitrix/im.messenger/file.ajax.php?action=selectFile&dialogName=${FILE_DIALOG_ID}`,
-	        method: 'GET',
-	        skipAuthCheck: true,
-	        timeout: 30
-	      });
-	    }
-	  },
-	  template: '<template></template>'
+		name: 'DiskPopup',
+		emits: ['close', 'diskFileSelect'],
+		created() {
+			if (!BX.DiskFileDialog) {
+				console.error('Couldn\'t initialize disk popup');
+				return;
+			}
+			this.subscribeEvents();
+			this.open();
+		},
+		beforeUnmount() {
+			this.unsubscribeEvents();
+		},
+		methods: {
+			subscribeEvents() {
+				BX.addCustomEvent(BX.DiskFileDialog, 'inited', this.onInited);
+				BX.addCustomEvent(BX.DiskFileDialog, 'loadItems', this.onLoadItems);
+			},
+			unsubscribeEvents() {
+				BX.removeCustomEvent(BX.DiskFileDialog, 'inited', this.onInited);
+				BX.removeCustomEvent(BX.DiskFileDialog, 'loadItems', this.onLoadItems);
+			},
+			onInited(name) {
+				if (name !== FILE_DIALOG_ID) {
+					return;
+				}
+				BX.DiskFileDialog.obCallback[name] = {
+					saveButton: (tab, path, selected) => {
+						this.$emit('diskFileSelect', {
+							files: selected
+						});
+					},
+					popupDestroy: () => {
+						this.unsubscribeEvents();
+						this.$emit('close');
+					}
+				};
+				BX.DiskFileDialog.openDialog(name);
+			},
+			onLoadItems(link, name) {
+				if (name !== FILE_DIALOG_ID) {
+					return;
+				}
+				BX.DiskFileDialog.target[name] = link.replace('/bitrix/tools/disk/uf.php', '/bitrix/components/bitrix/im.messenger/file.ajax.php');
+			},
+			open() {
+				main_core.ajax({
+					url: `/bitrix/components/bitrix/im.messenger/file.ajax.php?action=selectFile&dialogName=${FILE_DIALOG_ID}`,
+					method: 'GET',
+					skipAuthCheck: true,
+					timeout: 30
+				});
+			}
+		},
+		template: '<template></template>'
 	};
 
-	const ICON_SIZE$2 = 24;
+	const ICON_SIZE$1 = 24;
 	const DOCUMENT_SIGN_SLIDER_URL = '/sign/doc/0/?chat_id=';
 
 	// @vue/component
 	const UploadMenu = {
-	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon,
-	    MessengerMenu: im_v2_component_elements_menu.MessengerMenu,
-	    MenuItem: im_v2_component_elements_menu.MenuItem,
-	    DiskPopup
-	  },
-	  props: {
-	    dialogId: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  emits: ['fileSelect', 'diskFileSelect'],
-	  data() {
-	    return {
-	      showMenu: false,
-	      showDiskPopup: false
-	    };
-	  },
-	  computed: {
-	    OutlineIcons: () => ui_iconSet_api_vue.Outline,
-	    ICON_SIZE: () => ICON_SIZE$2,
-	    menuItems() {
-	      return [{
-	        icon: im_v2_component_elements_menu.MenuItemIcon.file,
-	        title: this.loc('IM_TEXTAREA_SELECT_LOCAL_FILE'),
-	        clickHandler: this.onSelectLocalFile
-	      }, {
-	        icon: im_v2_component_elements_menu.MenuItemIcon.b24,
-	        title: this.loc('IM_TEXTAREA_SELECT_FILE_FROM_B24'),
-	        clickHandler: this.onSelectFromB24
-	      }, {
-	        icon: im_v2_component_elements_menu.MenuItemIcon.task,
-	        title: this.loc('IM_TEXTAREA_SELECT_TASK'),
-	        clickHandler: this.onCreateTaskClick,
-	        showCondition: () => !this.isCopilotChat
-	      }, {
-	        icon: im_v2_component_elements_menu.MenuItemIcon.meeting,
-	        title: this.loc('IM_TEXTAREA_SELECT_MEETING'),
-	        clickHandler: this.onCreateMeetingClick,
-	        showCondition: () => !this.isCopilotChat
-	      }, {
-	        icon: im_v2_component_elements_menu.MenuItemIcon.calendarSlot,
-	        title: this.loc('IM_TEXTAREA_SELECT_CALENDAR_SLOT'),
-	        clickHandler: this.onCreateCalendarSlotClick,
-	        showCondition: () => this.isCalendarSlotAvailable
-	      }, {
-	        icon: im_v2_component_elements_menu.MenuItemIcon.documentSign,
-	        title: this.loc('IM_TEXTAREA_SELECT_DOCUMENT_SIGN'),
-	        clickHandler: this.onCreateDocumentSignClick,
-	        showCondition: () => this.isDocumentSignAvailable
-	      }, {
-	        icon: im_v2_component_elements_menu.MenuItemIcon.vote,
-	        title: this.loc('IM_TEXTAREA_SELECT_VOTE'),
-	        clickHandler: this.onCreateVoteClick,
-	        showCondition: () => this.isVoteCreationAvailable
-	      }];
-	    },
-	    availableMenuItems() {
-	      return this.menuItems.filter(item => {
-	        if (!main_core.Type.isFunction(item.showCondition)) {
-	          return true;
-	        }
-	        return item.showCondition();
-	      });
-	    },
-	    menuConfig() {
-	      return {
-	        width: 278,
-	        bindElement: this.$refs.upload || {},
-	        bindOptions: {
-	          position: 'top'
-	        },
-	        offsetTop: 30,
-	        offsetLeft: -10,
-	        padding: 0
-	      };
-	    },
-	    dialog() {
-	      return this.$store.getters['chats/get'](this.dialogId, true);
-	    },
-	    chatType() {
-	      return this.dialog.type;
-	    },
-	    isCopilotChat() {
-	      return this.chatType === im_v2_const.ChatType.copilot;
-	    },
-	    chatId() {
-	      return this.dialog.chatId;
-	    },
-	    isDocumentSignAvailable() {
-	      const isActiveFeature = im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.documentSignAvailable);
-	      if (!isActiveFeature) {
-	        return false;
-	      }
-	      return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByRole(im_v2_const.ActionByRole.createDocumentSign, this.dialogId);
-	    },
-	    isCalendarSlotAvailable() {
-	      return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByRole(im_v2_const.ActionByRole.createCalendarSlots, this.dialogId);
-	    },
-	    isVoteCreationAvailable() {
-	      if (!(vote_application.VoteApplication != null && vote_application.VoteApplication.canCreateVoteInChat(this.chatType))) {
-	        return false;
-	      }
-	      return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.voteCreationAvailable);
-	    },
-	    iconColor() {
-	      if (this.showMenu) {
-	        return im_v2_const.Color.accentBlue;
-	      }
-	      return im_v2_const.Color.gray40;
-	    }
-	  },
-	  methods: {
-	    onSelectLocalFile() {
-	      this.$refs.fileInput.click();
-	      this.showMenu = false;
-	    },
-	    onSelectFromB24() {
-	      this.showDiskPopup = true;
-	      this.showMenu = false;
-	    },
-	    onFileSelect(event) {
-	      this.$emit('fileSelect', {
-	        event
-	      });
-	      this.showMenu = false;
-	    },
-	    onDiskFileSelect(event) {
-	      this.$emit('diskFileSelect', event);
-	    },
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
-	    },
-	    getEntityCreator() {
-	      if (!this.entityCreator) {
-	        this.entityCreator = new im_v2_lib_entityCreator.EntityCreator(this.chatId);
-	      }
-	      return this.entityCreator;
-	    },
-	    onCreateTaskClick() {
-	      void this.getEntityCreator().createTaskForChat();
-	      im_v2_lib_analytics.Analytics.getInstance().chatEntities.onCreateTaskFromTextareaClick(this.dialogId);
-	      this.showMenu = false;
-	    },
-	    onCreateMeetingClick() {
-	      void this.getEntityCreator().createMeetingForChat();
-	      im_v2_lib_analytics.Analytics.getInstance().chatEntities.onCreateEventFromTextareaClick(this.dialogId);
-	      this.showMenu = false;
-	    },
-	    onUploadButtonClick() {
-	      if (this.showMenu !== true) {
-	        im_v2_lib_analytics.Analytics.getInstance().attachMenu.onOpenUploadMenu(this.dialogId);
-	      }
-	      this.showMenu = true;
-	    },
-	    async onCreateCalendarSlotClick(event) {
-	      if (!calendar_sharing_interface.GroupSharingController) {
-	        return;
-	      }
-	      const collabInfo = im_v2_application_core.Core.getStore().getters['chats/collabs/getByChatId'](this.chatId);
-	      if (!collabInfo || !collabInfo.collabId) {
-	        return;
-	      }
-	      try {
-	        const groupSharing = await calendar_sharing_interface.GroupSharingController.getGroupSharing(collabInfo.collabId, event.target);
-	        groupSharing.openDialog();
-	        this.showMenu = false;
-	      } catch (errors) {
-	        im_v2_lib_notifier.Notifier.onDefaultError();
-	        console.error('ChatTextarea: UploadMenu: select slots error', errors);
-	      }
-	    },
-	    onCreateDocumentSignClick() {
-	      const preparedUrl = DOCUMENT_SIGN_SLIDER_URL + this.chatId;
-	      BX.SidePanel.Instance.open(preparedUrl, {
-	        cacheable: false
-	      });
-	    },
-	    onCreateVoteClick() {
-	      const analyticsInstance = im_v2_lib_analytics.Analytics.getInstance();
-	      const analyticsParams = analyticsInstance.vote.getSerializedParams(this.dialogId);
-	      const preparedUrl = `/bitrix/components/bitrix/voting.im.edit/slider.php?chatId=${this.chatId}&${analyticsParams}`;
-	      BX.SidePanel.Instance.open(preparedUrl, {
-	        cacheable: false,
-	        width: 600,
-	        allowChangeHistory: false
-	      });
-	      im_v2_lib_analytics.Analytics.getInstance().chatEntities.onCreateVoteFromTextareaClick(this.dialogId);
-	      this.showMenu = false;
-	    }
-	  },
-	  template: `
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon,
+			MessengerMenu: im_v2_component_elements_menu.MessengerMenu,
+			MenuItem: im_v2_component_elements_menu.MenuItem,
+			DiskPopup
+		},
+		props: {
+			dialogId: {
+				type: String,
+				required: true
+			}
+		},
+		emits: ['fileSelect', 'diskFileSelect'],
+		data() {
+			return {
+				showMenu: false,
+				showDiskPopup: false
+			};
+		},
+		computed: {
+			OutlineIcons: () => ui_iconSet_api_vue.Outline,
+			ICON_SIZE: () => ICON_SIZE$1,
+			menuItems() {
+				return [{
+					icon: im_v2_component_elements_menu.MenuItemIcon.file,
+					title: this.loc('IM_TEXTAREA_SELECT_LOCAL_FILE'),
+					clickHandler: this.onSelectLocalFile
+				}, {
+					icon: im_v2_component_elements_menu.MenuItemIcon.b24,
+					title: this.loc('IM_TEXTAREA_SELECT_FILE_FROM_B24'),
+					clickHandler: this.onSelectFromB24
+				}, {
+					icon: im_v2_component_elements_menu.MenuItemIcon.task,
+					title: this.loc('IM_TEXTAREA_SELECT_TASK'),
+					clickHandler: this.onCreateTaskClick,
+					showCondition: () => !this.isCopilotChat
+				}, {
+					icon: im_v2_component_elements_menu.MenuItemIcon.meeting,
+					title: this.loc('IM_TEXTAREA_SELECT_MEETING'),
+					clickHandler: this.onCreateMeetingClick,
+					showCondition: () => !this.isCopilotChat
+				}, {
+					icon: im_v2_component_elements_menu.MenuItemIcon.calendarSlot,
+					title: this.loc('IM_TEXTAREA_SELECT_CALENDAR_SLOT'),
+					clickHandler: this.onCreateCalendarSlotClick,
+					showCondition: () => this.isCalendarSlotAvailable
+				}, {
+					icon: im_v2_component_elements_menu.MenuItemIcon.documentSign,
+					title: this.loc('IM_TEXTAREA_SELECT_DOCUMENT_SIGN'),
+					clickHandler: this.onCreateDocumentSignClick,
+					showCondition: () => this.isDocumentSignAvailable
+				}, {
+					icon: im_v2_component_elements_menu.MenuItemIcon.vote,
+					title: this.loc('IM_TEXTAREA_SELECT_VOTE'),
+					clickHandler: this.onCreateVoteClick,
+					showCondition: () => this.isVoteCreationAvailable
+				}];
+			},
+			availableMenuItems() {
+				return this.menuItems.filter(item => {
+					if (!main_core.Type.isFunction(item.showCondition)) {
+						return true;
+					}
+					return item.showCondition();
+				});
+			},
+			menuConfig() {
+				return {
+					width: 278,
+					bindElement: this.$refs.upload || {},
+					bindOptions: {
+						position: 'top'
+					},
+					offsetTop: 30,
+					offsetLeft: -10,
+					padding: 0
+				};
+			},
+			dialog() {
+				return this.$store.getters['chats/get'](this.dialogId, true);
+			},
+			chatType() {
+				return this.dialog.type;
+			},
+			isCopilotChat() {
+				return this.chatType === im_v2_const.ChatType.copilot;
+			},
+			chatId() {
+				return this.dialog.chatId;
+			},
+			isDocumentSignAvailable() {
+				const isActiveFeature = im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.documentSignAvailable);
+				if (!isActiveFeature) {
+					return false;
+				}
+				return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByRole(im_v2_const.ActionByRole.createDocumentSign, this.dialogId);
+			},
+			isCalendarSlotAvailable() {
+				return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByRole(im_v2_const.ActionByRole.createCalendarSlots, this.dialogId);
+			},
+			isVoteCreationAvailable() {
+				if (!vote_application.VoteApplication?.canCreateVoteInChat(this.chatType)) {
+					return false;
+				}
+				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.voteCreationAvailable);
+			},
+			iconColor() {
+				if (this.showMenu) {
+					return im_v2_const.Color.accentBlue;
+				}
+				return im_v2_const.Color.gray40;
+			}
+		},
+		methods: {
+			onSelectLocalFile() {
+				this.$refs.fileInput.click();
+				this.showMenu = false;
+			},
+			onSelectFromB24() {
+				this.showDiskPopup = true;
+				this.showMenu = false;
+			},
+			onFileSelect(event) {
+				this.$emit('fileSelect', {
+					event
+				});
+				this.showMenu = false;
+			},
+			onDiskFileSelect(event) {
+				this.$emit('diskFileSelect', event);
+			},
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			},
+			getEntityCreator() {
+				if (!this.entityCreator) {
+					this.entityCreator = new im_v2_lib_entityCreator.EntityCreator(this.chatId);
+				}
+				return this.entityCreator;
+			},
+			onCreateTaskClick() {
+				void this.getEntityCreator().createTaskForChat();
+				im_v2_lib_analytics.Analytics.getInstance().chatEntities.onCreateTaskFromTextareaClick(this.dialogId);
+				this.showMenu = false;
+			},
+			onCreateMeetingClick() {
+				void this.getEntityCreator().createMeetingForChat();
+				im_v2_lib_analytics.Analytics.getInstance().chatEntities.onCreateEventFromTextareaClick(this.dialogId);
+				this.showMenu = false;
+			},
+			onUploadButtonClick() {
+				if (this.showMenu !== true) {
+					im_v2_lib_analytics.Analytics.getInstance().attachMenu.onOpenUploadMenu(this.dialogId);
+				}
+				this.showMenu = true;
+			},
+			async onCreateCalendarSlotClick(event) {
+				if (!calendar_sharing_interface.GroupSharingController) {
+					return;
+				}
+				const collabInfo = im_v2_application_core.Core.getStore().getters['chats/collabs/getByChatId'](this.chatId);
+				if (!collabInfo || !collabInfo.collabId) {
+					return;
+				}
+				try {
+					const groupSharing = await calendar_sharing_interface.GroupSharingController.getGroupSharing(collabInfo.collabId, event.target);
+					groupSharing.openDialog();
+					this.showMenu = false;
+				} catch (errors) {
+					im_v2_lib_notifier.Notifier.onDefaultError();
+					console.error('ChatTextarea: UploadMenu: select slots error', errors);
+				}
+			},
+			onCreateDocumentSignClick() {
+				const preparedUrl = DOCUMENT_SIGN_SLIDER_URL + this.chatId;
+				BX.SidePanel.Instance.open(preparedUrl, {
+					cacheable: false
+				});
+			},
+			onCreateVoteClick() {
+				const analyticsInstance = im_v2_lib_analytics.Analytics.getInstance();
+				const analyticsParams = analyticsInstance.vote.getSerializedParams(this.dialogId);
+				const preparedUrl = `/bitrix/components/bitrix/voting.im.edit/slider.php?chatId=${this.chatId}&${analyticsParams}`;
+				BX.SidePanel.Instance.open(preparedUrl, {
+					cacheable: false,
+					width: 600,
+					allowChangeHistory: false
+				});
+				im_v2_lib_analytics.Analytics.getInstance().chatEntities.onCreateVoteFromTextareaClick(this.dialogId);
+				this.showMenu = false;
+			}
+		},
+		template: `
 		<div ref="upload" class="bx-im-textarea__icon-container">
 			<BIcon
 				:name="OutlineIcons.ATTACH"
@@ -5090,37 +7241,37 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	// @vue/component
 	const FilePreviewItem = {
-	  name: 'FilePreviewItem',
-	  props: {
-	    file: {
-	      type: Object,
-	      required: true
-	    },
-	    maxNameLength: {
-	      type: Number,
-	      default: 25
-	    }
-	  },
-	  computed: {
-	    fileIconClass() {
-	      return `ui-icon ui-icon-file-${this.file.icon}`;
-	    },
-	    fileShortName() {
-	      return im_v2_lib_utils.Utils.file.getShortFileName(this.file.name, this.maxNameLength);
-	    },
-	    fileSize() {
-	      return im_v2_lib_utils.Utils.file.formatFileSize(this.file.size);
-	    },
-	    hasPreview() {
-	      return main_core.Type.isStringFilled(this.file.urlPreview);
-	    },
-	    imageStyles() {
-	      return {
-	        backgroundImage: `url(${this.file.urlPreview})`
-	      };
-	    }
-	  },
-	  template: `
+		name: 'FilePreviewItem',
+		props: {
+			file: {
+				type: Object,
+				required: true
+			},
+			maxNameLength: {
+				type: Number,
+				default: 25
+			}
+		},
+		computed: {
+			fileIconClass() {
+				return `ui-icon ui-icon-file-${this.file.icon}`;
+			},
+			fileShortName() {
+				return im_v2_lib_utils.Utils.file.getShortFileName(this.file.name, this.maxNameLength);
+			},
+			fileSize() {
+				return im_v2_lib_utils.Utils.file.formatFileSize(this.file.size);
+			},
+			hasPreview() {
+				return main_core.Type.isStringFilled(this.file.urlPreview);
+			},
+			imageStyles() {
+				return {
+					backgroundImage: `url(${this.file.urlPreview})`
+				};
+			}
+		},
+		template: `
 		<div class="bx-im-upload-preview-file-item__file-container">
 			<div class="bx-im-upload-preview-file-item__icon">
 				<div v-if="hasPreview" :style="imageStyles" class="bx-im-upload-preview-file-item__preview"></div>
@@ -5136,8 +7287,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	// @vue/component
 	const ErrorPreviewItem = {
-	  name: 'ErrorPreviewItem',
-	  template: `
+		name: 'ErrorPreviewItem',
+		template: `
 		<div class="bx-im-upload-preview-file-item__item-error">
 			<div class="bx-im-upload-preview-file-item__item-error-icon"></div>
 			<div class="bx-im-upload-preview-file-item__item-error-text">
@@ -5149,125 +7300,125 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	// @vue/component
 	const FileItem = {
-	  name: 'FileItem',
-	  components: {
-	    FilePreviewItem,
-	    ErrorPreviewItem
-	  },
-	  props: {
-	    file: {
-	      type: Object,
-	      required: true
-	    },
-	    removable: {
-	      type: Boolean,
-	      default: false
-	    },
-	    highlightDropzone: {
-	      type: Object,
-	      default: null
-	    },
-	    viewerGroupBy: {
-	      type: String || null,
-	      default: null
-	    }
-	  },
-	  emits: ['removeItem', 'itemDragStart', 'itemDragEnd', 'itemDragOver', 'itemDragLeave', 'itemDrop'],
-	  data() {
-	    return {
-	      isDraggable: false
-	    };
-	  },
-	  computed: {
-	    hasError() {
-	      return this.file.status === im_v2_const.FileStatus.error;
-	    },
-	    previewComponentName() {
-	      if (this.hasError) {
-	        return ErrorPreviewItem.name;
-	      }
-	      return FilePreviewItem.name;
-	    },
-	    draggableClasses() {
-	      const classes = {};
-	      if (this.highlightDropzone.fileId === this.file.id) {
-	        classes[`--dropzone-${this.highlightDropzone.position}`] = true;
-	      }
-	      classes['--draggable'] = this.isDraggable;
-	      return classes;
-	    },
-	    viewerAttributes() {
-	      if (this.file.viewerAttrs) {
-	        return im_v2_lib_utils.Utils.file.getViewerDataAttributes({
-	          viewerAttributes: this.file.viewerAttrs,
-	          previewImageSrc: this.file.urlPreview,
-	          context: im_v2_const.FileViewerContext.dialog
-	        });
-	      }
-	      return im_v2_lib_utils.Utils.file.getViewerDataAttributes({
-	        viewerAttributes: {
-	          viewer: true,
-	          viewerResized: true,
-	          viewerType: this.file.type,
-	          title: this.file.name,
-	          src: this.file.urlDownload,
-	          viewerGroupBy: this.viewerGroupBy
-	        },
-	        previewImageSrc: this.file.urlPreview,
-	        context: im_v2_const.FileViewerContext.dialog
-	      });
-	    }
-	  },
-	  methods: {
-	    onRemoveClick() {
-	      this.$emit('removeItem', {
-	        file: this.file
-	      });
-	    },
-	    onDragStart(event) {
-	      this.$emit('itemDragStart', {
-	        file: this.file,
-	        axis: 'y',
-	        event
-	      });
-	      this.isDraggable = true;
-	    },
-	    onDragEnd(event) {
-	      this.$emit('itemDragEnd', {
-	        file: this.file,
-	        axis: 'y',
-	        event
-	      });
-	      this.isDraggable = false;
-	      event.target.removeAttribute('draggable');
-	    },
-	    onDragOver(event) {
-	      this.$emit('itemDragOver', {
-	        file: this.file,
-	        axis: 'y',
-	        event
-	      });
-	    },
-	    onDragLeave(event) {
-	      this.$emit('itemDragLeave', {
-	        file: this.file,
-	        axis: 'y',
-	        event
-	      });
-	    },
-	    onDrop(event) {
-	      this.$emit('itemDrop', {
-	        file: this.file,
-	        axis: 'y',
-	        event
-	      });
-	      this.isDraggable = false;
-	    },
-	    onMouseDown() {
-	      this.$refs.dragElement.setAttribute('draggable', 'true');
-	    }
-	  },
-	  template: `
+		name: 'FileItem',
+		components: {
+			FilePreviewItem,
+			ErrorPreviewItem
+		},
+		props: {
+			file: {
+				type: Object,
+				required: true
+			},
+			removable: {
+				type: Boolean,
+				default: false
+			},
+			highlightDropzone: {
+				type: Object,
+				default: null
+			},
+			viewerGroupBy: {
+				type: String || null,
+				default: null
+			}
+		},
+		emits: ['removeItem', 'itemDragStart', 'itemDragEnd', 'itemDragOver', 'itemDragLeave', 'itemDrop'],
+		data() {
+			return {
+				isDraggable: false
+			};
+		},
+		computed: {
+			hasError() {
+				return this.file.status === im_v2_const.FileStatus.error;
+			},
+			previewComponentName() {
+				if (this.hasError) {
+					return ErrorPreviewItem.name;
+				}
+				return FilePreviewItem.name;
+			},
+			draggableClasses() {
+				const classes = {};
+				if (this.highlightDropzone.fileId === this.file.id) {
+					classes[`--dropzone-${this.highlightDropzone.position}`] = true;
+				}
+				classes['--draggable'] = this.isDraggable;
+				return classes;
+			},
+			viewerAttributes() {
+				if (this.file.viewerAttrs) {
+					return im_v2_lib_utils.Utils.file.getViewerDataAttributes({
+						viewerAttributes: this.file.viewerAttrs,
+						previewImageSrc: this.file.urlPreview,
+						context: im_v2_const.FileViewerContext.dialog
+					});
+				}
+				return im_v2_lib_utils.Utils.file.getViewerDataAttributes({
+					viewerAttributes: {
+						viewer: true,
+						viewerResized: true,
+						viewerType: this.file.type,
+						title: this.file.name,
+						src: this.file.urlDownload,
+						viewerGroupBy: this.viewerGroupBy
+					},
+					previewImageSrc: this.file.urlPreview,
+					context: im_v2_const.FileViewerContext.dialog
+				});
+			}
+		},
+		methods: {
+			onRemoveClick() {
+				this.$emit('removeItem', {
+					file: this.file
+				});
+			},
+			onDragStart(event) {
+				this.$emit('itemDragStart', {
+					file: this.file,
+					axis: 'y',
+					event
+				});
+				this.isDraggable = true;
+			},
+			onDragEnd(event) {
+				this.$emit('itemDragEnd', {
+					file: this.file,
+					axis: 'y',
+					event
+				});
+				this.isDraggable = false;
+				event.target.removeAttribute('draggable');
+			},
+			onDragOver(event) {
+				this.$emit('itemDragOver', {
+					file: this.file,
+					axis: 'y',
+					event
+				});
+			},
+			onDragLeave(event) {
+				this.$emit('itemDragLeave', {
+					file: this.file,
+					axis: 'y',
+					event
+				});
+			},
+			onDrop(event) {
+				this.$emit('itemDrop', {
+					file: this.file,
+					axis: 'y',
+					event
+				});
+				this.isDraggable = false;
+			},
+			onMouseDown() {
+				this.$refs.dragElement.setAttribute('draggable', 'true');
+			}
+		},
+		template: `
 		<div 
 			class="bx-im-upload-preview-file-item__scope"
 			:class="this.draggableClasses"
@@ -5299,333 +7450,332 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const MAX_FILES_COUNT = 100;
 	const BUTTONS_CONTAINER_HEIGHT = 74;
 	const TEXT_LIMIT_COUNTER_SHOW_RANGE = 200;
-	const TextareaHeight = {
-	  max: 208,
-	  min: 46
+	const TextareaHeight$1 = {
+		max: 208,
+		min: 46
 	};
 
 	// @vue/component
 	const UploadPreviewContent = {
-	  name: 'UploadPreviewContent',
-	  components: {
-	    FileItem,
-	    SendButton: im_v2_component_elements_sendButton.SendButton,
-	    MediaGallery: im_v2_component_elements_mediaGallery.MediaGallery
-	  },
-	  props: {
-	    dialogId: {
-	      type: String,
-	      required: true
-	    },
-	    uploaderIds: {
-	      type: Array,
-	      required: true
-	    },
-	    uploadingId: {
-	      type: String || null,
-	      default: null
-	    },
-	    sourceFilesCount: {
-	      type: Number,
-	      required: true
-	    },
-	    textareaValue: {
-	      type: String,
-	      required: false,
-	      default: ''
-	    },
-	    popupId: {
-	      type: String,
-	      required: true
-	    },
-	    allowAdjustPosition: {
-	      type: Boolean,
-	      default: true
-	    }
-	  },
-	  emits: ['sendFiles', 'close', 'updateTitle'],
-	  data() {
-	    return {
-	      text: '',
-	      sendAsFile: false,
-	      chunks: [],
-	      uploaderChunks: [],
-	      textareaHeight: TextareaHeight.min,
-	      textareaResizedHeight: 0,
-	      draggedItemEvent: null,
-	      lastTargetItem: null,
-	      lastTargetPosition: null,
-	      highlightDropzone: {},
-	      draggedFile: null,
-	      axis: 'x',
-	      insertPosition: null
-	    };
-	  },
-	  computed: {
-	    files() {
-	      return this.chunks.flat();
-	    },
-	    uploaderFiles() {
-	      const allUploaderFiles = this.uploaderIds.flatMap(uploaderId => {
-	        return this.getUploadingService().getFiles(uploaderId);
-	      });
-	      const fileIds = this.files.map(file => {
-	        return file.id;
-	      });
-	      return fileIds.map(fileId => {
-	        return allUploaderFiles.find(file => {
-	          return file.getId() === fileId;
-	        });
-	      });
-	    },
-	    isOverMaxFilesLimit() {
-	      return this.sourceFilesCount > MAX_FILES_COUNT;
-	    },
-	    isMediaOnly() {
-	      return this.files.every(file => {
-	        return file.type === im_v2_const.FileType.image || file.type === im_v2_const.FileType.video;
-	      });
-	    },
-	    inputMaxLength() {
-	      const settings = main_core.Extension.getSettings('im.v2.component.textarea');
-	      return settings.get('maxLength');
-	    },
-	    allowedTextLimit() {
-	      return this.inputMaxLength - this.text.length;
-	    },
-	    showInputLengthCounter() {
-	      return this.allowedTextLimit <= TEXT_LIMIT_COUNTER_SHOW_RANGE;
-	    },
-	    textareaHeightStyle() {
-	      return this.textareaHeight === 'auto' ? 'auto' : `${this.textareaHeight}px`;
-	    },
-	    title() {
-	      const filesCount = Math.min(this.files.length, MAX_FILES_COUNT);
-	      return this.$Bitrix.Loc.getMessage('IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_COMPUTED_TITLE', {
-	        '#COUNT#': filesCount
-	      });
-	    }
-	  },
-	  watch: {
-	    async text() {
-	      await this.adjustTextareaHeight();
-	      if (this.allowAdjustPosition) {
-	        this.adjustPopupPosition();
-	      }
-	    },
-	    title() {
-	      this.$emit('updateTitle', this.title);
-	    },
-	    sendAsFile(newValue) {
-	      this.uploaderFiles.forEach(file => {
-	        file.setCustomData('sendAsFile', newValue);
-	      });
-	    }
-	  },
-	  created() {
-	    this.initResizeManager();
-	    this.uploaderIds.forEach(uploaderId => {
-	      const files = [];
-	      this.getUploadingService().getFiles(uploaderId).forEach(file => {
-	        files.push(this.$store.getters['files/get'](file.getId()));
-	      });
-	      this.chunks.push(files);
-	    });
-	  },
-	  mounted() {
-	    this.text = this.textareaValue;
-	    this.insertText('');
-	    this.$refs.messageText.focus();
-	  },
-	  beforeUnmount() {
-	    this.insertText(this.text);
-	    im_v2_lib_draft.DraftManager.getInstance().setDraftText(this.dialogId, this.text);
-	    this.resizeManager.destroy();
-	  },
-	  methods: {
-	    async adjustTextareaHeight() {
-	      this.textareaHeight = 'auto';
-	      await this.$nextTick();
-	      if (!this.$refs.messageText) {
-	        return;
-	      }
-	      const TEXTAREA_BORDERS_WIDTH = 2;
-	      const newMaxPoint = Math.min(TextareaHeight.max, this.$refs.messageText.scrollHeight + TEXTAREA_BORDERS_WIDTH);
-	      if (this.doesContentOverflowScreen(newMaxPoint)) {
-	        const textareaTopPoint = this.$refs.messageText.getBoundingClientRect().top;
-	        const availableHeight = window.innerHeight - textareaTopPoint - BUTTONS_CONTAINER_HEIGHT;
-	        this.textareaHeight = Math.max(TextareaHeight.min, availableHeight);
-	        return;
-	      }
-	      if (this.resizedTextareaHeight) {
-	        this.textareaHeight = Math.max(newMaxPoint, this.resizedTextareaHeight);
-	        return;
-	      }
-	      this.textareaHeight = Math.max(newMaxPoint, TextareaHeight.min);
-	    },
-	    getUploadingService() {
-	      if (!this.uploadingService) {
-	        this.uploadingService = im_v2_provider_service_uploading.UploadingService.getInstance();
-	      }
-	      return this.uploadingService;
-	    },
-	    onCancel() {
-	      this.$emit('close', {
-	        text: this.text
-	      });
-	    },
-	    onSend() {
-	      const sendAsFile = this.sendAsFile || !this.isMediaOnly;
-	      if (sendAsFile) {
-	        this.uploaderFiles.forEach(file => {
-	          this.removePreviewParams(file);
-	          file.setTreatImageAsFile(true);
-	          file.setCustomData('sendAsFile', true);
-	        });
-	      }
-	      this.$emit('sendFiles', {
-	        text: this.text,
-	        uploaderIds: this.uploaderIds,
-	        files: this.uploaderFiles,
-	        sendAsFile
-	      });
-	      this.text = '';
-	    },
-	    onKeyDownHandler(event) {
-	      const sendMessageCombination = im_v2_lib_hotkey.isSendMessageCombination(event);
-	      const newLineCombination = im_v2_lib_hotkey.isNewLineCombination(event);
-	      if (sendMessageCombination && !newLineCombination) {
-	        event.preventDefault();
-	        this.onSend();
-	        return;
-	      }
-	      if (newLineCombination) {
-	        event.preventDefault();
-	        this.text = im_v2_lib_textarea.Textarea.addNewLine(this.$refs.messageText);
-	      }
-	    },
-	    removePreviewParams(file) {
-	      this.$store.dispatch('files/update', {
-	        id: file.getId(),
-	        fields: {
-	          image: false
-	        }
-	      });
-	    },
-	    insertText(text) {
-	      this.getEmitter().emit(im_v2_const.EventType.textarea.insertText, {
-	        text,
-	        dialogId: this.dialogId,
-	        replace: true
-	      });
-	    },
-	    initResizeManager() {
-	      this.resizeManager = new ResizeManager({
-	        direction: ResizeDirection.down,
-	        minHeight: TextareaHeight.min,
-	        maxHeight: TextareaHeight.max
-	      });
-	      this.resizeManager.subscribe(ResizeManager.events.onHeightChange, ({
-	        data: {
-	          newHeight
-	        }
-	      }) => {
-	        this.textareaHeight = newHeight;
-	      });
-	      this.resizeManager.subscribe(ResizeManager.events.onResizeStop, () => {
-	        this.resizedTextareaHeight = this.textareaHeight;
-	      });
-	    },
-	    onResizeStart(event) {
-	      this.resizeManager.onResizeStart(event, this.textareaHeight);
-	    },
-	    doesContentOverflowScreen(newMaxPoint) {
-	      const textareaTop = this.$refs.messageText.getBoundingClientRect().top;
-	      return textareaTop + newMaxPoint + BUTTONS_CONTAINER_HEIGHT > window.innerHeight;
-	    },
-	    onRemoveItem(event) {
-	      const files = this.chunks.flat().filter(file => {
-	        return file.id !== event.file.id;
-	      });
-	      this.chunks = im_v2_provider_service_uploading.MultiUploadingService.makeChunks({
-	        files
-	      });
-	      if (this.chunks.length === 0) {
-	        this.onCancel();
-	      }
-	    },
-	    adjustPopupPosition() {
-	      var _PopupManager$getPopu;
-	      (_PopupManager$getPopu = main_popup.PopupManager.getPopupById(this.popupId)) == null ? void 0 : _PopupManager$getPopu.adjustPosition({
-	        forceBindPosition: true,
-	        position: 'bottom'
-	      });
-	    },
-	    onItemDragStart(event) {
-	      this.draggedItemEvent = event;
-	      this.draggedFile = event.file;
-	      this.axis = event.axis || this.axis;
-	      // eslint-disable-next-line no-param-reassign
-	      event.event.dataTransfer.effectAllowed = 'move';
-	    },
-	    onItemDragEnd(event) {
-	      event.event.preventDefault();
-	      delete this.highlightDropzone.fileId;
-	      delete this.highlightDropzone.position;
-	      const files = this.chunks.flat();
-	      const currentFileIndex = files.indexOf(this.draggedFile);
-	      const targetIndex = (() => {
-	        const index = files.indexOf(this.lastTargetItem);
-	        if (this.lastTargetPosition === 'before') {
-	          return index - 1;
-	        }
-	        return index;
-	      })();
-	      files.splice(currentFileIndex, 1);
-	      files.splice(targetIndex + 1, 0, this.draggedFile);
-	      this.chunks = im_v2_provider_service_uploading.MultiUploadingService.makeChunks({
-	        files
-	      });
-	      this.draggedFile = null;
-	    },
-	    onItemDragOver(event) {
-	      if (this.draggedFile) {
-	        event.event.preventDefault();
-	        const currentTarget = event.file;
-	        const currentTargetPosition = (() => {
-	          const targetRect = event.event.currentTarget.getBoundingClientRect();
-	          const targetCenter = (() => {
-	            if (this.axis === 'x') {
-	              return targetRect.left + targetRect.width / 2;
-	            }
-	            return targetRect.top + targetRect.height / 2;
-	          })();
-	          if (this.axis === 'x' && event.event.x > targetCenter || this.axis === 'y' && event.event.y > targetCenter) {
-	            return 'after';
-	          }
-	          return 'before';
-	        })();
-	        if (currentTarget !== this.lastTargetItem || currentTarget === this.lastTargetItem && currentTargetPosition !== this.lastTargetPosition) {
-	          this.lastTargetPosition = currentTargetPosition;
-	          this.lastTargetItem = currentTarget;
-	          this.highlightDropzone = {
-	            fileId: currentTarget.id,
-	            position: currentTargetPosition
-	          };
-	        }
-	      }
-	    },
-	    onDrop(event) {
-	      event.preventDefault();
-	    },
-	    getEmitter() {
-	      return this.$Bitrix.eventEmitter;
-	    },
-	    loc(phraseCode, replacements = {}) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
-	    }
-	  },
-	  template: `
+		name: 'UploadPreviewContent',
+		components: {
+			FileItem,
+			SendButton: im_v2_component_elements_sendButton.SendButton,
+			MediaGallery: im_v2_component_elements_mediaGallery.MediaGallery
+		},
+		props: {
+			dialogId: {
+				type: String,
+				required: true
+			},
+			uploaderIds: {
+				type: Array,
+				required: true
+			},
+			uploadingId: {
+				type: String || null,
+				default: null
+			},
+			sourceFilesCount: {
+				type: Number,
+				required: true
+			},
+			textareaValue: {
+				type: String,
+				required: false,
+				default: ''
+			},
+			popupId: {
+				type: String,
+				required: true
+			},
+			allowAdjustPosition: {
+				type: Boolean,
+				default: true
+			}
+		},
+		emits: ['sendFiles', 'close', 'updateTitle'],
+		data() {
+			return {
+				text: '',
+				sendAsFile: false,
+				chunks: [],
+				uploaderChunks: [],
+				textareaHeight: TextareaHeight$1.min,
+				textareaResizedHeight: 0,
+				draggedItemEvent: null,
+				lastTargetItem: null,
+				lastTargetPosition: null,
+				highlightDropzone: {},
+				draggedFile: null,
+				axis: 'x',
+				insertPosition: null
+			};
+		},
+		computed: {
+			files() {
+				return this.chunks.flat();
+			},
+			uploaderFiles() {
+				const allUploaderFiles = this.uploaderIds.flatMap(uploaderId => {
+					return this.getUploadingService().getFiles(uploaderId);
+				});
+				const fileIds = this.files.map(file => {
+					return file.id;
+				});
+				return fileIds.map(fileId => {
+					return allUploaderFiles.find(file => {
+						return file.getId() === fileId;
+					});
+				});
+			},
+			isOverMaxFilesLimit() {
+				return this.sourceFilesCount > MAX_FILES_COUNT;
+			},
+			isMediaOnly() {
+				return this.files.every(file => {
+					return file.type === im_v2_const.FileType.image || file.type === im_v2_const.FileType.video;
+				});
+			},
+			inputMaxLength() {
+				const settings = main_core.Extension.getSettings('im.v2.component.textarea');
+				return settings.get('maxLength');
+			},
+			allowedTextLimit() {
+				return this.inputMaxLength - this.text.length;
+			},
+			showInputLengthCounter() {
+				return this.allowedTextLimit <= TEXT_LIMIT_COUNTER_SHOW_RANGE;
+			},
+			textareaHeightStyle() {
+				return this.textareaHeight === 'auto' ? 'auto' : `${this.textareaHeight}px`;
+			},
+			title() {
+				const filesCount = Math.min(this.files.length, MAX_FILES_COUNT);
+				return this.$Bitrix.Loc.getMessage('IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_COMPUTED_TITLE', {
+					'#COUNT#': filesCount
+				});
+			}
+		},
+		watch: {
+			async text() {
+				await this.adjustTextareaHeight();
+				if (this.allowAdjustPosition) {
+					this.adjustPopupPosition();
+				}
+			},
+			title() {
+				this.$emit('updateTitle', this.title);
+			},
+			sendAsFile(newValue) {
+				this.uploaderFiles.forEach(file => {
+					file.setCustomData('sendAsFile', newValue);
+				});
+			}
+		},
+		created() {
+			this.initResizeManager();
+			this.uploaderIds.forEach(uploaderId => {
+				const files = [];
+				this.getUploadingService().getFiles(uploaderId).forEach(file => {
+					files.push(this.$store.getters['files/get'](file.getId()));
+				});
+				this.chunks.push(files);
+			});
+		},
+		mounted() {
+			this.text = this.textareaValue;
+			this.insertText('');
+			this.$refs.messageText.focus();
+		},
+		beforeUnmount() {
+			this.insertText(this.text);
+			im_v2_lib_draft.DraftManager.getInstance().setDraftText(this.dialogId, this.text);
+			this.resizeManager.destroy();
+		},
+		methods: {
+			async adjustTextareaHeight() {
+				this.textareaHeight = 'auto';
+				await this.$nextTick();
+				if (!this.$refs.messageText) {
+					return;
+				}
+				const TEXTAREA_BORDERS_WIDTH = 2;
+				const newMaxPoint = Math.min(TextareaHeight$1.max, this.$refs.messageText.scrollHeight + TEXTAREA_BORDERS_WIDTH);
+				if (this.doesContentOverflowScreen(newMaxPoint)) {
+					const textareaTopPoint = this.$refs.messageText.getBoundingClientRect().top;
+					const availableHeight = window.innerHeight - textareaTopPoint - BUTTONS_CONTAINER_HEIGHT;
+					this.textareaHeight = Math.max(TextareaHeight$1.min, availableHeight);
+					return;
+				}
+				if (this.resizedTextareaHeight) {
+					this.textareaHeight = Math.max(newMaxPoint, this.resizedTextareaHeight);
+					return;
+				}
+				this.textareaHeight = Math.max(newMaxPoint, TextareaHeight$1.min);
+			},
+			getUploadingService() {
+				if (!this.uploadingService) {
+					this.uploadingService = im_v2_provider_service_uploading.UploadingService.getInstance();
+				}
+				return this.uploadingService;
+			},
+			onCancel() {
+				this.$emit('close', {
+					text: this.text
+				});
+			},
+			onSend() {
+				const sendAsFile = this.sendAsFile || !this.isMediaOnly;
+				if (sendAsFile) {
+					this.uploaderFiles.forEach(file => {
+						this.removePreviewParams(file);
+						file.setTreatImageAsFile(true);
+						file.setCustomData('sendAsFile', true);
+					});
+				}
+				this.$emit('sendFiles', {
+					text: this.text,
+					uploaderIds: this.uploaderIds,
+					files: this.uploaderFiles,
+					sendAsFile
+				});
+				this.text = '';
+			},
+			onKeyDownHandler(event) {
+				const sendMessageCombination = im_v2_lib_hotkey.isSendMessageCombination(event);
+				const newLineCombination = im_v2_lib_hotkey.isNewLineCombination(event);
+				if (sendMessageCombination && !newLineCombination) {
+					event.preventDefault();
+					this.onSend();
+					return;
+				}
+				if (newLineCombination) {
+					event.preventDefault();
+					this.text = im_v2_lib_textarea.Textarea.addNewLine(this.$refs.messageText);
+				}
+			},
+			removePreviewParams(file) {
+				this.$store.dispatch('files/update', {
+					id: file.getId(),
+					fields: {
+						image: false
+					}
+				});
+			},
+			insertText(text) {
+				this.getEmitter().emit(im_v2_const.EventType.textarea.insertText, {
+					text,
+					dialogId: this.dialogId,
+					replace: true
+				});
+			},
+			initResizeManager() {
+				this.resizeManager = new ResizeManager({
+					direction: ResizeDirection.down,
+					minHeight: TextareaHeight$1.min,
+					maxHeight: TextareaHeight$1.max
+				});
+				this.resizeManager.subscribe(ResizeManager.events.onHeightChange, ({
+					data: {
+						newHeight
+					}
+				}) => {
+					this.textareaHeight = newHeight;
+				});
+				this.resizeManager.subscribe(ResizeManager.events.onResizeStop, () => {
+					this.resizedTextareaHeight = this.textareaHeight;
+				});
+			},
+			onResizeStart(event) {
+				this.resizeManager.onResizeStart(event, this.textareaHeight);
+			},
+			doesContentOverflowScreen(newMaxPoint) {
+				const textareaTop = this.$refs.messageText.getBoundingClientRect().top;
+				return textareaTop + newMaxPoint + BUTTONS_CONTAINER_HEIGHT > window.innerHeight;
+			},
+			onRemoveItem(event) {
+				const files = this.chunks.flat().filter(file => {
+					return file.id !== event.file.id;
+				});
+				this.chunks = im_v2_provider_service_uploading.MultiUploadingService.makeChunks({
+					files
+				});
+				if (this.chunks.length === 0) {
+					this.onCancel();
+				}
+			},
+			adjustPopupPosition() {
+				main_popup.PopupManager.getPopupById(this.popupId)?.adjustPosition({
+					forceBindPosition: true,
+					position: 'bottom'
+				});
+			},
+			onItemDragStart(event) {
+				this.draggedItemEvent = event;
+				this.draggedFile = event.file;
+				this.axis = event.axis || this.axis;
+				// eslint-disable-next-line no-param-reassign
+				event.event.dataTransfer.effectAllowed = 'move';
+			},
+			onItemDragEnd(event) {
+				event.event.preventDefault();
+				delete this.highlightDropzone.fileId;
+				delete this.highlightDropzone.position;
+				const files = this.chunks.flat();
+				const currentFileIndex = files.indexOf(this.draggedFile);
+				const targetIndex = (() => {
+					const index = files.indexOf(this.lastTargetItem);
+					if (this.lastTargetPosition === 'before') {
+						return index - 1;
+					}
+					return index;
+				})();
+				files.splice(currentFileIndex, 1);
+				files.splice(targetIndex + 1, 0, this.draggedFile);
+				this.chunks = im_v2_provider_service_uploading.MultiUploadingService.makeChunks({
+					files
+				});
+				this.draggedFile = null;
+			},
+			onItemDragOver(event) {
+				if (this.draggedFile) {
+					event.event.preventDefault();
+					const currentTarget = event.file;
+					const currentTargetPosition = (() => {
+						const targetRect = event.event.currentTarget.getBoundingClientRect();
+						const targetCenter = (() => {
+							if (this.axis === 'x') {
+								return targetRect.left + targetRect.width / 2;
+							}
+							return targetRect.top + targetRect.height / 2;
+						})();
+						if (this.axis === 'x' && event.event.x > targetCenter || this.axis === 'y' && event.event.y > targetCenter) {
+							return 'after';
+						}
+						return 'before';
+					})();
+					if (currentTarget !== this.lastTargetItem || currentTarget === this.lastTargetItem && currentTargetPosition !== this.lastTargetPosition) {
+						this.lastTargetPosition = currentTargetPosition;
+						this.lastTargetItem = currentTarget;
+						this.highlightDropzone = {
+							fileId: currentTarget.id,
+							position: currentTargetPosition
+						};
+					}
+				}
+			},
+			onDrop(event) {
+				event.preventDefault();
+			},
+			getEmitter() {
+				return this.$Bitrix.eventEmitter;
+			},
+			loc(phraseCode, replacements = {}) {
+				return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+			}
+		},
+		template: `
 		<div class="bx-im-upload-preview__container" @drop="onDrop">
 			<div class="bx-im-upload-preview__items-container">
 				<div v-if="isMediaOnly && !sendAsFile" v-for="chunk in chunks" class="bx-im-upload-preview__items-chunk">
@@ -5688,112 +7838,110 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	`
 	};
 
-	const POPUP_ID$1 = 'im-chat-upload-preview-popup';
+	const POPUP_ID = 'im-chat-upload-preview-popup';
 
 	// @vue/component
 	const UploadPreviewPopup = {
-	  name: 'UploadPreviewPopup',
-	  components: {
-	    MessengerPopup: im_v2_component_elements_popup.MessengerPopup,
-	    UploadPreviewContent,
-	    Loader: im_v2_component_elements_loader.Loader,
-	    Spinner: im_v2_component_elements_loader.Spinner
-	  },
-	  props: {
-	    dialogId: {
-	      type: String,
-	      required: true
-	    },
-	    uploaderIds: {
-	      type: Array,
-	      required: true
-	    },
-	    uploadingId: {
-	      type: String || null,
-	      default: null
-	    },
-	    sourceFilesCount: {
-	      type: Number,
-	      required: true
-	    },
-	    textareaValue: {
-	      type: String,
-	      required: false,
-	      default: ''
-	    }
-	  },
-	  emits: ['close', 'sendFiles'],
-	  data() {
-	    return {
-	      allowAdjustPosition: true
-	    };
-	  },
-	  computed: {
-	    POPUP_ID: () => POPUP_ID$1,
-	    config() {
-	      return {
-	        width: 400,
-	        targetContainer: document.body,
-	        fixed: true,
-	        draggable: {
-	          restrict: true
-	        },
-	        titleBar: ' ',
-	        offsetTop: 0,
-	        padding: 0,
-	        closeIcon: true,
-	        contentColor: 'transparent',
-	        contentPadding: 0,
-	        className: 'bx-im-upload-preview__scope',
-	        autoHide: true,
-	        closeByEsc: false,
-	        overlay: true
-	      };
-	    },
-	    files() {
-	      const uploadingService = this.getUploadingService();
-	      return this.uploaderIds.flatMap(uploaderId => {
-	        return uploadingService.getFiles(uploaderId).map(file => {
-	          return this.$store.getters['files/get'](file.getId());
-	        });
-	      });
-	    },
-	    isReady() {
-	      return this.files.every(file => {
-	        return file.image !== null;
-	      });
-	    }
-	  },
-	  watch: {
-	    isReady() {
-	      if (this.isReady) {
-	        queueMicrotask(() => {
-	          var _PopupManager$getPopu;
-	          (_PopupManager$getPopu = main_popup.PopupManager.getPopupById(POPUP_ID$1)) == null ? void 0 : _PopupManager$getPopu.adjustPosition({
-	            forceBindPosition: true,
-	            position: 'bottom'
-	          });
-	        });
-	      }
-	    }
-	  },
-	  methods: {
-	    onSendFiles(event) {
-	      this.$emit('sendFiles', event);
-	      this.$emit('close');
-	    },
-	    onUpdateTitle(title) {
-	      var _PopupManager$getPopu2;
-	      (_PopupManager$getPopu2 = main_popup.PopupManager.getPopupById(POPUP_ID$1)) == null ? void 0 : _PopupManager$getPopu2.setTitleBar(title);
-	    },
-	    getUploadingService() {
-	      return im_v2_provider_service_uploading.UploadingService.getInstance();
-	    },
-	    onDragStart() {
-	      this.allowAdjustPosition = false;
-	    }
-	  },
-	  template: `
+		name: 'UploadPreviewPopup',
+		components: {
+			MessengerPopup: im_v2_component_elements_popup.MessengerPopup,
+			UploadPreviewContent,
+			Loader: im_v2_component_elements_loader.Loader,
+			Spinner: im_v2_component_elements_loader.Spinner
+		},
+		props: {
+			dialogId: {
+				type: String,
+				required: true
+			},
+			uploaderIds: {
+				type: Array,
+				required: true
+			},
+			uploadingId: {
+				type: String || null,
+				default: null
+			},
+			sourceFilesCount: {
+				type: Number,
+				required: true
+			},
+			textareaValue: {
+				type: String,
+				required: false,
+				default: ''
+			}
+		},
+		emits: ['close', 'sendFiles'],
+		data() {
+			return {
+				allowAdjustPosition: true
+			};
+		},
+		computed: {
+			POPUP_ID: () => POPUP_ID,
+			config() {
+				return {
+					width: 400,
+					targetContainer: document.body,
+					fixed: true,
+					draggable: {
+						restrict: true
+					},
+					titleBar: ' ',
+					offsetTop: 0,
+					padding: 0,
+					closeIcon: true,
+					contentColor: 'transparent',
+					contentPadding: 0,
+					className: 'bx-im-upload-preview__scope',
+					autoHide: true,
+					closeByEsc: false,
+					overlay: true
+				};
+			},
+			files() {
+				const uploadingService = this.getUploadingService();
+				return this.uploaderIds.flatMap(uploaderId => {
+					return uploadingService.getFiles(uploaderId).map(file => {
+						return this.$store.getters['files/get'](file.getId());
+					});
+				});
+			},
+			isReady() {
+				return this.files.every(file => {
+					return file.image !== null;
+				});
+			}
+		},
+		watch: {
+			isReady() {
+				if (this.isReady) {
+					queueMicrotask(() => {
+						main_popup.PopupManager.getPopupById(POPUP_ID)?.adjustPosition({
+							forceBindPosition: true,
+							position: 'bottom'
+						});
+					});
+				}
+			}
+		},
+		methods: {
+			onSendFiles(event) {
+				this.$emit('sendFiles', event);
+				this.$emit('close');
+			},
+			onUpdateTitle(title) {
+				main_popup.PopupManager.getPopupById(POPUP_ID)?.setTitleBar(title);
+			},
+			getUploadingService() {
+				return im_v2_provider_service_uploading.UploadingService.getInstance();
+			},
+			onDragStart() {
+				this.allowAdjustPosition = false;
+			}
+		},
+		template: `
 		<MessengerPopup
 			:config="config"
 			@close="$emit('close')"
@@ -5820,3205 +7968,779 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	`
 	};
 
-	const SEARCH_REQUEST_ENDPOINT = 'ui.entityselector.doSearch';
-	var _storeUpdater = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("storeUpdater");
-	var _searchConfig = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("searchConfig");
-	var _searchRequest = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("searchRequest");
-	var _prepareSearchResults = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareSearchResults");
-	var _getDialogIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDialogIds");
-	class BaseServerSearch {
-	  constructor(searchConfig) {
-	    Object.defineProperty(this, _getDialogIds, {
-	      value: _getDialogIds2
-	    });
-	    Object.defineProperty(this, _prepareSearchResults, {
-	      value: _prepareSearchResults2
-	    });
-	    Object.defineProperty(this, _searchRequest, {
-	      value: _searchRequest2
-	    });
-	    Object.defineProperty(this, _storeUpdater, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _searchConfig, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _searchConfig)[_searchConfig] = searchConfig;
-	    babelHelpers.classPrivateFieldLooseBase(this, _storeUpdater)[_storeUpdater] = new im_v2_lib_search.StoreUpdater();
-	  }
-	  async search(query) {
-	    const items = await babelHelpers.classPrivateFieldLooseBase(this, _searchRequest)[_searchRequest](query);
-	    await babelHelpers.classPrivateFieldLooseBase(this, _storeUpdater)[_storeUpdater].update(items);
-	    return babelHelpers.classPrivateFieldLooseBase(this, _prepareSearchResults)[_prepareSearchResults](items);
-	  }
-	  async loadChatParticipants(dialogId) {
-	    const queryParams = {
-	      order: {
-	        lastSendMessageId: 'desc'
-	      },
-	      dialogId,
-	      limit: 50
-	    };
-	    try {
-	      const response = await im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatMentionList, {
-	        data: queryParams
-	      });
-	      const {
-	        users
-	      } = response;
-	      void new im_v2_lib_user.UserManager().setUsersToModel(users);
-	      return babelHelpers.classPrivateFieldLooseBase(this, _getDialogIds)[_getDialogIds](users);
-	    } catch (error) {
-	      console.error('Mention search service: load chat participants error', error);
-	      throw error;
-	    }
-	  }
-	}
-	async function _searchRequest2(query) {
-	  const config = {
-	    json: im_v2_lib_search.getSearchConfig(babelHelpers.classPrivateFieldLooseBase(this, _searchConfig)[_searchConfig])
-	  };
-	  config.json.searchQuery = {
-	    queryWords: im_v2_lib_utils.Utils.text.getWordsFromString(query),
-	    query
-	  };
-	  let items = [];
-	  try {
-	    const response = await main_core.ajax.runAction(SEARCH_REQUEST_ENDPOINT, config);
-	    im_v2_lib_logger.Logger.warn('Mention search service: request result', response);
-	    items = response.data.dialog.items;
-	  } catch (error) {
-	    im_v2_lib_logger.Logger.warn('Mention search service: request error', error);
-	  }
-	  return items;
-	}
-	function _prepareSearchResults2(items) {
-	  return items.map(item => {
-	    var _customData$dateMessa, _customData$isContext;
-	    const {
-	      id,
-	      customData
-	    } = item;
-	    return {
-	      dialogId: id.toString(),
-	      dateMessage: (_customData$dateMessa = customData.dateMessage) != null ? _customData$dateMessa : '',
-	      isChatParticipant: (_customData$isContext = customData.isContextChatMember) != null ? _customData$isContext : null
-	    };
-	  });
-	}
-	function _getDialogIds2(items) {
-	  return items.map(item => {
-	    return {
-	      dialogId: item.id.toString()
-	    };
-	  });
-	}
-
-	var _localSearch = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("localSearch");
-	var _baseServerSearch = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("baseServerSearch");
-	var _localCollection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("localCollection");
-	var _getDialogIds$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDialogIds");
-	var _getParticipantDialogIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getParticipantDialogIds");
-	class MentionSearchService {
-	  constructor(searchConfig) {
-	    Object.defineProperty(this, _getParticipantDialogIds, {
-	      value: _getParticipantDialogIds2
-	    });
-	    Object.defineProperty(this, _getDialogIds$1, {
-	      value: _getDialogIds2$1
-	    });
-	    Object.defineProperty(this, _localSearch, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _baseServerSearch, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _localCollection, {
-	      writable: true,
-	      value: new Map()
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _localSearch)[_localSearch] = new im_v2_lib_search.LocalSearch(searchConfig);
-	    babelHelpers.classPrivateFieldLooseBase(this, _baseServerSearch)[_baseServerSearch] = new BaseServerSearch(searchConfig);
-	  }
-	  async loadChatParticipants(dialogId) {
-	    const items = await babelHelpers.classPrivateFieldLooseBase(this, _baseServerSearch)[_baseServerSearch].loadChatParticipants(dialogId);
-	    items.forEach(searchItem => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _localCollection)[_localCollection].set(searchItem.dialogId, searchItem);
-	    });
-	    return babelHelpers.classPrivateFieldLooseBase(this, _getDialogIds$1)[_getDialogIds$1](items);
-	  }
-	  searchLocal(query) {
-	    const localCollection = [...babelHelpers.classPrivateFieldLooseBase(this, _localCollection)[_localCollection].values()];
-	    const result = babelHelpers.classPrivateFieldLooseBase(this, _localSearch)[_localSearch].search(query, localCollection);
-	    const sortedResult = im_v2_lib_search.sortByDate(result);
-	    return babelHelpers.classPrivateFieldLooseBase(this, _getDialogIds$1)[_getDialogIds$1](sortedResult);
-	  }
-	  async search(query) {
-	    const searchResult = await babelHelpers.classPrivateFieldLooseBase(this, _baseServerSearch)[_baseServerSearch].search(query);
-	    searchResult.forEach(searchItem => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _localCollection)[_localCollection].set(searchItem.dialogId, searchItem);
-	    });
-	    return {
-	      dialogIds: babelHelpers.classPrivateFieldLooseBase(this, _getDialogIds$1)[_getDialogIds$1](searchResult),
-	      participantDialogIds: babelHelpers.classPrivateFieldLooseBase(this, _getParticipantDialogIds)[_getParticipantDialogIds](searchResult)
-	    };
-	  }
-	}
-	function _getDialogIds2$1(items) {
-	  return items.map(item => item.dialogId);
-	}
-	function _getParticipantDialogIds2(items) {
-	  const chatParticipants = items.filter(item => item.isChatParticipant);
-	  return chatParticipants.map(item => item.dialogId);
-	}
-
-	// @vue/component
-	const ContentFooter = {
-	  name: 'MentionContentFooter',
-	  components: {
-	    Loader: im_v2_component_elements_loader.Loader
-	  },
-	  props: {
-	    isLoading: {
-	      type: Boolean,
-	      default: false
-	    }
-	  },
-	  computed: {
-	    arrowsControlTitle() {
-	      return this.$Bitrix.Loc.getMessage('IM_TEXTAREA_MENTION_ARROWS_CONTROL').replace('##ARROWS_ICON##', '');
-	    },
-	    enterControlTitle() {
-	      return this.$Bitrix.Loc.getMessage('IM_TEXTAREA_MENTION_ENTER_CONTROL');
-	    },
-	    escControlTitle() {
-	      return this.$Bitrix.Loc.getMessage('IM_TEXTAREA_MENTION_ESC_CONTROL');
-	    }
-	  },
-	  template: `
-		<div class="bx-im-mention-content-footer__container bx-im-mention-content-footer__scope">
-			<div class="bx-im-mention-content-footer__controls">
-				<div class="bx-im-mention-content-footer__control">
-					<span class="bx-im-mention-content-footer__arrows-control-key"></span>
-					<span class="bx-im-mention-content-footer__control-description">
-						{{ arrowsControlTitle }}
-					</span>
-				</div>
-				<div class="bx-im-mention-content-footer__control">
-					<span class="bx-im-mention-content-footer__control-key">Enter</span>
-					<span class="bx-im-mention-content-footer__control-description">{{ enterControlTitle }}</span>
-				</div>
-				<div class="bx-im-mention-content-footer__control">
-					<span class="bx-im-mention-content-footer__control-key">Esc</span>
-					<span class="bx-im-mention-content-footer__control-description">{{ escControlTitle }}</span>
-				</div>
-			</div>
-			<Loader v-if="isLoading" class="bx-im-mention-content-footer__loader" />
-		</div>
-	`
+	const BeforeSendMessageAction = {
+		cancel: 'cancel'
 	};
-
-	// @vue/component
-	const LoadingState = {
-	  name: 'MentionLoadingState',
-	  components: {
-	    Spinner: im_v2_component_elements_loader.Spinner
-	  },
-	  computed: {
-	    SpinnerSize: () => im_v2_component_elements_loader.SpinnerSize,
-	    SpinnerColor: () => im_v2_component_elements_loader.SpinnerColor
-	  },
-	  template: `
-		<div class="bx-im-mention-loading-state__scope bx-im-mention-loading-state__container">
-			<div class="bx-im-mention-loading-state__loader">
-				<Spinner :size="SpinnerSize.XXS" :color="SpinnerColor.grey"/>
-			</div>
-			<span class="bx-im-mention-loading-state__title">
-				{{ $Bitrix.Loc.getMessage('IM_TEXTAREA_MENTION_LOADING_STATE') }}
-			</span>
-		</div>
-	`
-	};
-
-	const MentionItem = {
-	  name: 'MentionItem',
-	  components: {
-	    ChatAvatar: im_v2_component_elements_avatar.ChatAvatar,
-	    ChatTitle: im_v2_component_elements_chatTitle.ChatTitle
-	  },
-	  props: {
-	    id: {
-	      type: String,
-	      required: true
-	    },
-	    title: {
-	      type: String,
-	      default: ''
-	    },
-	    subtitle: {
-	      type: String,
-	      default: ''
-	    }
-	  },
-	  computed: {
-	    AvatarSize: () => im_v2_component_elements_avatar.AvatarSize
-	  },
-	  template: `
-		<slot name="avatar">
-			<ChatAvatar
-				:avatarDialogId="id"
-				:size="AvatarSize.M"
-				class="bx-im-mention-item__avatar-container"
-			/>
-		</slot>
-		<div class="bx-im-mention-item__content-container">
-			<slot name="title">
-				<ChatTitle
-					:dialogId="id"
-					:text="title"
-					:withLeftIcon="false"
-					class="bx-im-mention-item__title"
-				/>
-			</slot>
-			<slot name="subtitle">
-				<div class="bx-im-mention-item__subtitle" :title="subtitle">{{ subtitle }}</div>
-			</slot>
-		</div>
-	`
-	};
-
-	const AllParticipantsItem = {
-	  name: 'AllParticipantsItem',
-	  components: {
-	    MentionItem
-	  },
-	  props: {
-	    item: {
-	      type: Object,
-	      required: true
-	    },
-	    selected: {
-	      type: Boolean,
-	      default: false
-	    },
-	    dialogId: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  computed: {
-	    currentItem() {
-	      return this.item;
-	    }
-	  },
-	  methods: {
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
-	    }
-	  },
-	  template: `
-		<div
-			:class="{'--selected': selected}"
-			class="bx-im-mention-item__container bx-im-mention-item__scope"
-		>
-			<MentionItem
-				:id="currentItem.id"
-				:title="currentItem.title"
-				:subtitle="currentItem.subtitle"
-			>
-				<template #avatar>
-					<div 
-						class="bx-im-mention-item__all-avatar-container" 
-						:title="loc('IM_TEXTAREA_MENTION_ALL_PARTICIPANTS_AVATAR_TITLE')"
-					/>
-				</template>
-			</MentionItem>
-		</div>
-	`
-	};
-
-	// @vue/component
-	const CopilotItem = {
-	  name: 'CopilotMentionItem',
-	  components: {
-	    MentionItem
-	  },
-	  props: {
-	    item: {
-	      type: Object,
-	      required: true
-	    },
-	    selected: {
-	      type: Boolean,
-	      default: false
-	    },
-	    dialogId: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  computed: {
-	    subtitle() {
-	      return this.loc('IM_TEXTAREA_MENTION_COPILOT_SUBTITLE');
-	    },
-	    currentItem() {
-	      return this.item;
-	    }
-	  },
-	  methods: {
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
-	    }
-	  },
-	  template: `
-		<div
-			:class="{'--selected': selected}"
-			class="bx-im-mention-item__container bx-im-mention-item__scope"
-		>
-			<MentionItem
-				:id="currentItem.id"
-				:title="currentItem.title"
-				:subtitle="currentItem.subtitle"
-			/>
-		</div>
-	`
-	};
-
-	var _getAddToChatItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAddToChatItems");
-	var _handleAddToChat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleAddToChat");
-	var _createChatFromUser = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createChatFromUser");
-	var _addUserToChat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addUserToChat");
-	var _addToChat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addToChat");
-	var _addToCollab = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addToCollab");
-	var _getChatType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getChatType");
-	var _isUser = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isUser");
-	class AddToChatDropdownMenu extends im_v2_lib_menu.BaseMenu {
-	  constructor(applicationContext) {
-	    super();
-	    Object.defineProperty(this, _isUser, {
-	      value: _isUser2
-	    });
-	    Object.defineProperty(this, _getChatType, {
-	      value: _getChatType2
-	    });
-	    Object.defineProperty(this, _addToCollab, {
-	      value: _addToCollab2
-	    });
-	    Object.defineProperty(this, _addToChat, {
-	      value: _addToChat2
-	    });
-	    Object.defineProperty(this, _addUserToChat, {
-	      value: _addUserToChat2
-	    });
-	    Object.defineProperty(this, _createChatFromUser, {
-	      value: _createChatFromUser2
-	    });
-	    Object.defineProperty(this, _handleAddToChat, {
-	      value: _handleAddToChat2
-	    });
-	    Object.defineProperty(this, _getAddToChatItems, {
-	      value: _getAddToChatItems2
-	    });
-	    this.id = im_v2_const.PopupType.mentionAddToChatDropdown;
-	    const {
-	      emitter
-	    } = applicationContext;
-	    this.emitter = emitter;
-	    this.chatService = new im_v2_provider_service_chat.ChatService();
-	  }
-	  getMenuOptions() {
-	    return {
-	      ...super.getMenuOptions(),
-	      angle: false
-	    };
-	  }
-	  getMenuItems() {
-	    return [babelHelpers.classPrivateFieldLooseBase(this, _getAddToChatItems)[_getAddToChatItems]()];
-	  }
-	}
-	function _getAddToChatItems2() {
-	  return {
-	    title: main_core.Loc.getMessage('IM_TEXTAREA_MENTION_ADD_TO_CHAT_DROPDOWN_MENU'),
-	    icon: ui_iconSet_api_core.Outline.ADD_PERSON,
-	    onClick: async () => {
-	      try {
-	        await babelHelpers.classPrivateFieldLooseBase(this, _handleAddToChat)[_handleAddToChat]();
-	      } catch {
-	        im_v2_lib_notifier.Notifier.chat.onUserAddError();
-	      }
-	    }
-	  };
-	}
-	async function _handleAddToChat2() {
-	  im_v2_lib_analytics.Analytics.getInstance().mention.onClickAddToChat(this.context.dialogId);
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _isUser)[_isUser]()) {
-	    await babelHelpers.classPrivateFieldLooseBase(this, _createChatFromUser)[_createChatFromUser]();
-	    return;
-	  }
-	  await babelHelpers.classPrivateFieldLooseBase(this, _addUserToChat)[_addUserToChat]();
-	  im_v2_lib_notifier.Notifier.chat.onUserAddComplete();
-	}
-	async function _createChatFromUser2() {
-	  const {
-	    newDialogId
-	  } = await this.chatService.extendToGroupChat({
-	    members: [this.context.dialogId, this.context.userId, im_v2_application_core.Core.getUserId()],
-	    ownerId: im_v2_application_core.Core.getUserId()
-	  });
-	  void im_public.Messenger.openChat(newDialogId);
-	}
-	async function _addUserToChat2() {
-	  var _addUserHandlers$babe;
-	  const addUserHandlers = {
-	    [im_v2_const.ChatType.collab]: () => babelHelpers.classPrivateFieldLooseBase(this, _addToCollab)[_addToCollab](),
-	    default: () => babelHelpers.classPrivateFieldLooseBase(this, _addToChat)[_addToChat]()
-	  };
-	  const handler = (_addUserHandlers$babe = addUserHandlers[babelHelpers.classPrivateFieldLooseBase(this, _getChatType)[_getChatType]()]) != null ? _addUserHandlers$babe : addUserHandlers.default;
-	  await handler();
-	  this.emitter.emit(im_v2_const.EventType.mention.onAddUserToChat, {
-	    userId: this.context.userId
-	  });
-	}
-	async function _addToChat2() {
-	  await this.chatService.addToChat({
-	    chatId: this.context.chatId,
-	    members: [this.context.userId],
-	    showHistory: true
-	  });
-	}
-	async function _addToCollab2() {
-	  await new im_v2_provider_service_collabInvitation.CollabInvitationService().addEmployees({
-	    dialogId: this.context.dialogId,
-	    members: [this.context.userId]
-	  });
-	}
-	function _getChatType2() {
-	  const dialog = im_v2_application_core.Core.getStore().getters['chats/get'](this.context.dialogId, true);
-	  return dialog.type;
-	}
-	function _isUser2() {
-	  return im_v2_application_core.Core.getStore().getters['chats/isUser'](this.context.dialogId);
-	}
-
-	// @vue/component
-	const AddToChatDropdown = {
-	  name: 'AddToChatDropdown',
-	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon
-	  },
-	  inject: ['disableAutoHide', 'enableAutoHide'],
-	  props: {
-	    userId: {
-	      type: String,
-	      required: true
-	    },
-	    dialogId: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  data() {
-	    return {
-	      showMenu: false
-	    };
-	  },
-	  computed: {
-	    OutlineIcons: () => ui_iconSet_api_vue.Outline,
-	    dialog() {
-	      return this.$store.getters['chats/get'](this.dialogId, true);
-	    },
-	    title() {
-	      return this.loc('IM_TEXTAREA_MENTION_ADD_TO_CHAT_DROPDOWN_TITLE');
-	    }
-	  },
-	  methods: {
-	    closeMenu() {
-	      this.enableAutoHide();
-	      this.showMenu = false;
-	      this.getEmitter().emit(im_v2_const.EventType.mention.onNestedMenuClosed);
-	    },
-	    openMenu(event) {
-	      if (!this.contextMenuManager) {
-	        this.contextMenuManager = new AddToChatDropdownMenu({
-	          emitter: this.getEmitter()
-	        });
-	        this.contextMenuManager.subscribe(im_v2_lib_menu.BaseMenu.events.close, this.closeMenu);
-	      }
-	      const context = {
-	        chatId: this.dialog.chatId,
-	        dialogId: this.dialogId,
-	        userId: this.userId
-	      };
-	      this.contextMenuManager.openMenu(context, event.currentTarget);
-	      this.disableAutoHide();
-	      this.showMenu = true;
-	    },
-	    toggleMenu(event) {
-	      if (this.showMenu) {
-	        this.closeMenu();
-	        return;
-	      }
-	      this.openMenu(event);
-	    },
-	    getEmitter() {
-	      return this.$Bitrix.eventEmitter;
-	    },
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
-	    }
-	  },
-	  template: `
-		<div class="bx-im-mention-chat-add-dropdown__container" @mousedown.prevent @click.stop="toggleMenu">
-			<div class="bx-im-mention-chat-add-dropdown__separator"></div>
-			<div :title="title" class="bx-im-mention-chat-add-dropdown__title">{{ title }}</div>
-			<BIcon
-				v-if="!showMenu"
-				class="bx-im-mention-chat-add-dropdown__icon"
-				:name="OutlineIcons.CHEVRON_DOWN_S"
-			/>
-			<BIcon
-				v-else
-				class="bx-im-mention-chat-add-dropdown__icon"
-				:name="OutlineIcons.CHEVRON_TOP_S"
-			/>
-		</div>
-	`
-	};
-
-	// @vue/component
-	const DefaultItem = {
-	  name: 'DefaultMentionItem',
-	  components: {
-	    ChatTitleWithHighlighting: im_v2_component_elements_chatTitle.ChatTitleWithHighlighting,
-	    MentionItem,
-	    AddToChatDropdown
-	  },
-	  props: {
-	    item: {
-	      type: Object,
-	      required: true
-	    },
-	    selected: {
-	      type: Boolean,
-	      default: false
-	    },
-	    query: {
-	      type: String,
-	      default: ''
-	    },
-	    dialogId: {
-	      type: String,
-	      required: true
-	    },
-	    isParticipant: {
-	      type: Boolean,
-	      required: true
-	    }
-	  },
-	  computed: {
-	    dialog() {
-	      return this.getDialog(this.dialogId);
-	    },
-	    itemDialog() {
-	      return this.getDialog(this.item.id);
-	    },
-	    isChatUser() {
-	      return this.dialog.type === im_v2_const.ChatType.user;
-	    },
-	    isItemUser() {
-	      return this.itemDialog.type === im_v2_const.ChatType.user;
-	    },
-	    subtitleWithHighlighting() {
-	      return im_v2_lib_textHighlighter.highlightText(main_core.Text.encode(this.item.subtitle), this.query);
-	    },
-	    currentItem() {
-	      return this.item;
-	    },
-	    isAddingUserByMentionAvailable() {
-	      return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isAddingUserByMentionAvailable);
-	    },
-	    canAddToChat() {
-	      if (!this.isAddingUserByMentionAvailable) {
-	        return false;
-	      }
-	      if (!this.isItemUser || this.isParticipant) {
-	        return false;
-	      }
-	      const canCreateChat = im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByUserType(im_v2_const.ActionByUserType.createChat);
-	      if (this.isChatUser && !canCreateChat) {
-	        return false;
-	      }
-	      return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByRole(im_v2_const.ActionByRole.extend, this.dialogId);
-	    }
-	  },
-	  methods: {
-	    getDialog(dialogId) {
-	      return this.$store.getters['chats/get'](dialogId, true);
-	    }
-	  },
-	  template: `
-		<div
-			:class="{'--selected': selected}"
-			class="bx-im-mention-item__container bx-im-mention-item__scope"
-		>
-			<MentionItem :id="currentItem.id">
-				<template #title>
-					<ChatTitleWithHighlighting
-						:dialogId="currentItem.id"
-						:textToHighlight="query"
-						:text="currentItem.title"
-						class="bx-im-mention-item__title"
-					/>
-				</template>
-				<template #subtitle>
-					<div v-if="isItemUser" class="bx-im-mention-item__subtitle" :title="currentItem.subtitle" v-html="subtitleWithHighlighting"></div>
-					<div v-else class="bx-im-mention-item__subtitle" :title="currentItem.subtitle">{{ currentItem.subtitle }}</div>
-				</template>
-			</MentionItem>
-			<AddToChatDropdown v-if="canAddToChat" :dialogId="dialogId" :userId="currentItem.id" />
-		</div>
-	`
-	};
-
-	var _emitter$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("emitter");
-	var _handlersById = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handlersById");
-	var _emitBaseEvent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("emitBaseEvent");
-	var _emitAllParticipantsEvent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("emitAllParticipantsEvent");
-	class MentionInsertManager {
-	  constructor(context) {
-	    Object.defineProperty(this, _emitAllParticipantsEvent, {
-	      value: _emitAllParticipantsEvent2
-	    });
-	    Object.defineProperty(this, _emitBaseEvent, {
-	      value: _emitBaseEvent2
-	    });
-	    Object.defineProperty(this, _emitter$1, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _handlersById, {
-	      writable: true,
-	      value: {
-	        [im_v2_const.SpecialMentionDialogId.allParticipants]: params => babelHelpers.classPrivateFieldLooseBase(this, _emitAllParticipantsEvent)[_emitAllParticipantsEvent](params),
-	        default: params => babelHelpers.classPrivateFieldLooseBase(this, _emitBaseEvent)[_emitBaseEvent](params)
-	      }
-	    });
-	    const {
-	      emitter
-	    } = context;
-	    babelHelpers.classPrivateFieldLooseBase(this, _emitter$1)[_emitter$1] = emitter;
-	  }
-	  emit(params) {
-	    const handler = babelHelpers.classPrivateFieldLooseBase(this, _handlersById)[_handlersById][params.id] || babelHelpers.classPrivateFieldLooseBase(this, _handlersById)[_handlersById].default;
-	    handler(params);
-	  }
-	}
-	function _emitBaseEvent2(params) {
-	  const {
-	    id,
-	    dialogId,
-	    query
-	  } = params;
-	  const mentionText = im_v2_application_core.Core.getStore().getters['chats/get'](id, true).name;
-	  const mentionReplacement = im_v2_lib_utils.Utils.text.getMentionBbCode(id, mentionText);
-	  babelHelpers.classPrivateFieldLooseBase(this, _emitter$1)[_emitter$1].emit(im_v2_const.EventType.textarea.insertMention, {
-	    mentionText,
-	    mentionReplacement,
-	    textToReplace: query,
-	    dialogId
-	  });
-	}
-	function _emitAllParticipantsEvent2(params) {
-	  const {
-	    dialogId,
-	    query
-	  } = params;
-	  const mentionText = main_core.Loc.getMessage('IM_TEXTAREA_MENTION_ALL_PARTICIPANTS_TEXT');
-	  const mentionReplacement = `[USER=${im_v2_const.SpecialMentionDialogId.allParticipants}]${mentionText}[/USER]`;
-	  babelHelpers.classPrivateFieldLooseBase(this, _emitter$1)[_emitter$1].emit(im_v2_const.EventType.textarea.insertMention, {
-	    mentionText,
-	    mentionReplacement,
-	    textToReplace: query,
-	    dialogId
-	  });
-	}
-
-	function getNewScrollPosition(element, scrollContainer, marginTop) {
-	  const containerPosition = main_core.Dom.getPosition(scrollContainer);
-	  const targetElementPosition = main_core.Dom.getPosition(element);
-	  const shouldScrollUp = targetElementPosition.top < containerPosition.top;
-	  const shouldScrollDown = targetElementPosition.bottom > containerPosition.bottom;
-	  let newScrollTop = scrollContainer.scrollTop;
-	  if (shouldScrollUp) {
-	    newScrollTop -= containerPosition.top - targetElementPosition.top + marginTop;
-	  } else if (shouldScrollDown) {
-	    newScrollTop += targetElementPosition.bottom - containerPosition.bottom + marginTop;
-	  }
-	  return newScrollTop;
-	}
-	function getMarginTop(element) {
-	  return parseFloat(window.getComputedStyle(element).marginTop);
-	}
-
-	const GRADIENT_HEIGHT = 13;
-	const CONTAINER_MAX_HEIGHT = 200;
-
-	// @vue/component
-	const MentionItemsContainer = {
-	  name: 'MentionItemsContainer',
-	  components: {
-	    AllParticipantsItem,
-	    CopilotItem,
-	    DefaultItem,
-	    ScrollWithGradient: im_v2_component_elements_scrollWithGradient.ScrollWithGradient
-	  },
-	  props: {
-	    dialogId: {
-	      type: String,
-	      required: true
-	    },
-	    items: {
-	      type: Array,
-	      required: true
-	    },
-	    participantsIds: {
-	      type: Set,
-	      required: true
-	    },
-	    query: {
-	      type: String,
-	      default: ''
-	    }
-	  },
-	  emits: ['close'],
-	  data() {
-	    return {
-	      selectedIndex: 0
-	    };
-	  },
-	  computed: {
-	    GRADIENT_HEIGHT: () => GRADIENT_HEIGHT,
-	    CONTAINER_MAX_HEIGHT: () => CONTAINER_MAX_HEIGHT,
-	    preparedQuery() {
-	      return this.query.trim().toLowerCase();
-	    },
-	    copilotBotDialogId() {
-	      return this.$store.getters['users/bots/getCopilotBotDialogId'];
-	    }
-	  },
-	  watch: {
-	    preparedQuery() {
-	      this.selectedIndex = 0;
-	    }
-	  },
-	  created() {
-	    main_core.Event.bind(window, 'keydown', this.onKeyDown);
-	    this.getEmitter().subscribe(im_v2_const.EventType.mention.selectItem, this.onInsertMentionText);
-	  },
-	  beforeUnmount() {
-	    main_core.Event.unbind(window, 'keydown', this.onKeyDown);
-	    this.getEmitter().unsubscribe(im_v2_const.EventType.mention.selectItem, this.onInsertMentionText);
-	  },
-	  methods: {
-	    isParticipant(id) {
-	      const currentUserId = im_v2_application_core.Core.getUserId().toString();
-	      if (currentUserId === id) {
-	        return true;
-	      }
-	      return this.participantsIds.has(id);
-	    },
-	    getComponentToShow(id) {
-	      var _components$id;
-	      const components = {
-	        [im_v2_const.SpecialMentionDialogId.allParticipants]: AllParticipantsItem,
-	        [this.copilotBotDialogId]: CopilotItem,
-	        default: DefaultItem
-	      };
-	      return (_components$id = components[id]) != null ? _components$id : components.default;
-	    },
-	    onScroll() {
-	      var _PopupManager$getPopu;
-	      (_PopupManager$getPopu = main_popup.PopupManager.getPopupById(im_v2_const.PopupType.mentionAddToChatDropdown)) == null ? void 0 : _PopupManager$getPopu.close();
-	    },
-	    onKeyDown(event) {
-	      if (this.items.length === 0) {
-	        return;
-	      }
-	      const lastIndex = this.items.length - 1;
-	      let nextIndex = this.selectedIndex;
-	      if (im_v2_lib_utils.Utils.key.isCombination(event, 'ArrowDown')) {
-	        nextIndex = nextIndex === lastIndex ? 0 : nextIndex + 1;
-	      }
-	      if (im_v2_lib_utils.Utils.key.isCombination(event, 'ArrowUp')) {
-	        nextIndex = nextIndex === 0 ? lastIndex : nextIndex - 1;
-	      }
-	      this.selectedIndex = nextIndex;
-	      const element = this.getDomElementByIndex(this.selectedIndex);
-	      if (!element) {
-	        this.selectedIndex = 0;
-	      }
-	      this.scrollToItem(element);
-	    },
-	    getDomElementByIndex(index) {
-	      return this.$refs['popup-items'].querySelector(`[data-index="${index}"]`);
-	    },
-	    scrollToItem(element) {
-	      const scrollContainer = this.$refs['scroll-gradient'].getContainer();
-	      const marginTop = getMarginTop(this.$refs['popup-items']);
-	      scrollContainer.scrollTop = getNewScrollPosition(element, scrollContainer, marginTop);
-	    },
-	    onItemHover(index) {
-	      this.selectedIndex = index;
-	    },
-	    onInsertMentionText() {
-	      if (!main_core.Type.isArrayFilled(this.items)) {
-	        return;
-	      }
-	      this.insertMentionText();
-	    },
-	    onItemClick() {
-	      this.insertMentionText();
-	      this.$emit('close');
-	    },
-	    insertMentionText() {
-	      const {
-	        id
-	      } = this.items[this.selectedIndex];
-	      const insertManager = new MentionInsertManager({
-	        emitter: this.getEmitter()
-	      });
-	      insertManager.emit({
-	        id,
-	        dialogId: this.dialogId,
-	        query: this.query
-	      });
-	    },
-	    getEmitter() {
-	      return this.$Bitrix.eventEmitter;
-	    }
-	  },
-	  template: `
-		<ScrollWithGradient
-			v-if="items.length > 0"
-			ref="scroll-gradient"
-			:gradientHeight="GRADIENT_HEIGHT"
-			:containerMaxHeight="CONTAINER_MAX_HEIGHT"
-			:withShadow="false"
-			@scroll="onScroll"
-		>
-			<div class="bx-im-mention-popup-content__items" ref="popup-items">
-				<component
-					v-for="(item, index) in items"
-					:data-index="index"
-					:is="getComponentToShow(item.id)"
-					:isParticipant="isParticipant(item.id)"
-					:item="item"
-					:query="query"
-					:dialogId="dialogId"
-					:selected="index === selectedIndex"
-					@click="onItemClick"
-					@close="$emit('close')"
-					@mouseover="onItemHover(index)"
-				/>
-			</div>
-		</ScrollWithGradient>
-	`
-	};
-
-	const ItemTextByChatType = {
-	  [im_v2_const.ChatType.openChannel]: main_core.Loc.getMessage('IM_TEXTAREA_MENTION_OPEN_CHANNEL_TYPE'),
-	  [im_v2_const.ChatType.generalChannel]: main_core.Loc.getMessage('IM_TEXTAREA_MENTION_OPEN_CHANNEL_TYPE'),
-	  [im_v2_const.ChatType.channel]: main_core.Loc.getMessage('IM_TEXTAREA_MENTION_PRIVATE_CHANNEL_TYPE'),
-	  [im_v2_const.ChatType.collab]: main_core.Loc.getMessage('IM_TEXTAREA_MENTION_COLLAB_TYPE'),
-	  default: main_core.Loc.getMessage('IM_TEXTAREA_MENTION_CHAT_TYPE')
-	};
-	var _getSubtitle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSubtitle");
-	var _getDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDialog");
-	class MentionItemFormatter {
-	  constructor(dialogId) {
-	    Object.defineProperty(this, _getDialog, {
-	      value: _getDialog2
-	    });
-	    Object.defineProperty(this, _getSubtitle, {
-	      value: _getSubtitle2
-	    });
-	    this.dialogId = dialogId;
-	  }
-	  format() {
-	    return {
-	      id: this.dialogId,
-	      title: this.getTitle(),
-	      subtitle: babelHelpers.classPrivateFieldLooseBase(this, _getSubtitle)[_getSubtitle]()
-	    };
-	  }
-	  getTitle() {
-	    const dialog = babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog]();
-	    return dialog.name;
-	  }
-	}
-	function _getSubtitle2() {
-	  var _ItemTextByChatType$d;
-	  const dialog = babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog]();
-	  if (dialog.type === im_v2_const.ChatType.user) {
-	    var _Core$getStore$getter;
-	    return (_Core$getStore$getter = im_v2_application_core.Core.getStore().getters['users/getPosition'](this.dialogId)) != null ? _Core$getStore$getter : main_core.Loc.getMessage('IM_TEXTAREA_MENTION_USER_TYPE');
-	  }
-	  return (_ItemTextByChatType$d = ItemTextByChatType[dialog.type]) != null ? _ItemTextByChatType$d : ItemTextByChatType.default;
-	}
-	function _getDialog2() {
-	  return im_v2_application_core.Core.getStore().getters['chats/get'](this.dialogId, true);
-	}
-
-	// @vue/component
-	const SearchEmptyState = {
-	  name: 'MentionSearchEmptyState',
-	  template: `
-		<div class="bx-im-mention-empty-state__scope bx-im-mention-empty-state__container">
-			<span class="bx-im-mention-empty-state__icon"></span>
-			<span class="bx-im-mention-empty-state__title">
-				{{ $Bitrix.Loc.getMessage('IM_TEXTAREA_MENTION_EMPTY_STATE') }}
-			</span>
-		</div>
-	`
-	};
-
-	class ParticipantsService {
-	  async getRecentIds(dialogId) {
-	    const recentUsersOptions = {
-	      withFakeUsers: false,
-	      userLimit: im_v2_lib_search.MAX_ENTITIES_IN_SEARCH_LIST
-	    };
-	    const userList = im_v2_lib_search.getUsersFromRecentItems(recentUsersOptions);
-	    const userIds = userList.map(({
-	      dialogId: userId
-	    }) => userId);
-	    if (userIds.length === 0) {
-	      return [];
-	    }
-	    try {
-	      const params = {
-	        data: {
-	          dialogId,
-	          userIds
-	        }
-	      };
-	      const {
-	        relations
-	      } = await im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatFilterUsersByParticipation, params);
-	      const members = relations.filter(member => member.isHidden === false);
-	      return members.map(({
-	        userId
-	      }) => userId.toString());
-	    } catch (error) {
-	      console.error('ParticipantsService: getIdsFromRecent error', error);
-	      return [];
-	    }
-	  }
-	}
-
-	// @vue/component
-	const MentionPopupContent = {
-	  name: 'MentionPopupContent',
-	  components: {
-	    ContentFooter,
-	    SearchEmptyState,
-	    ScrollWithGradient: im_v2_component_elements_scrollWithGradient.ScrollWithGradient,
-	    LoadingState,
-	    MentionItemsContainer
-	  },
-	  props: {
-	    dialogId: {
-	      type: String,
-	      required: true
-	    },
-	    query: {
-	      type: String,
-	      default: ''
-	    },
-	    searchChats: {
-	      type: Boolean,
-	      default: true
-	    }
-	  },
-	  emits: ['close', 'adjustPosition'],
-	  data() {
-	    return {
-	      isLoading: false,
-	      searchResult: [],
-	      chatParticipants: [],
-	      chatParticipantsLoaded: false,
-	      currentServerQueries: 0,
-	      needTopShadow: false,
-	      needBottomShadow: true,
-	      participantsIds: new Set()
-	    };
-	  },
-	  computed: {
-	    dialog() {
-	      return im_v2_application_core.Core.getStore().getters['chats/get'](this.dialogId, true);
-	    },
-	    items() {
-	      if (!this.isEmptyQuery) {
-	        return this.formattedDynamicItems(this.searchResult);
-	      }
-	      return [...this.fixedItemsToShow, ...this.dynamicItemsToShow];
-	    },
-	    fixedItemsToShow() {
-	      const items = [{
-	        id: this.copilotBotDialogId,
-	        title: new MentionItemFormatter(this.copilotBotDialogId).getTitle(),
-	        subtitle: this.loc('IM_TEXTAREA_MENTION_COPILOT_SUBTITLE'),
-	        showCondition: this.needToShowFixedCopilot
-	      }, {
-	        id: im_v2_const.SpecialMentionDialogId.allParticipants,
-	        title: this.loc('IM_TEXTAREA_MENTION_ALL_PARTICIPANTS_TITLE'),
-	        subtitle: this.loc('IM_TEXTAREA_MENTION_ALL_PARTICIPANTS_SUBTITLE'),
-	        showCondition: this.needToShowAllParticipants
-	      }];
-	      return items.filter(item => item.showCondition).map(({
-	        id,
-	        title,
-	        subtitle
-	      }) => ({
-	        id,
-	        title,
-	        subtitle
-	      }));
-	    },
-	    dynamicItemsToShow() {
-	      return this.formattedDynamicItems(this.dynamicItems);
-	    },
-	    dynamicItems() {
-	      if (this.needToShowRecentUsersOnStartScreen) {
-	        return this.usersFromRecent;
-	      }
-	      return this.chatParticipants;
-	    },
-	    needToShowRecentUsersOnStartScreen() {
-	      return this.chatParticipantsLoaded && this.chatParticipants.length <= 1;
-	    },
-	    usersFromRecent() {
-	      return im_v2_lib_search.getUsersFromRecentItems({
-	        withFakeUsers: false
-	      }).map(({
-	        dialogId
-	      }) => dialogId);
-	    },
-	    preparedQuery() {
-	      return this.query.trim().toLowerCase();
-	    },
-	    isEmptyQuery() {
-	      return this.preparedQuery.length === 0;
-	    },
-	    isSearchEmptyState() {
-	      if (this.isLoading || this.isEmptyQuery) {
-	        return false;
-	      }
-	      return this.items.length === 0;
-	    },
-	    searchConfig() {
-	      const exclude = [];
-	      if (!this.searchChats) {
-	        exclude.push(im_v2_lib_search.EntitySearch.chats);
-	      }
-	      return {
-	        exclude,
-	        contextChatId: this.dialog.chatId
-	      };
-	    },
-	    copilotBotDialogId() {
-	      return this.$store.getters['users/bots/getCopilotBotDialogId'];
-	    },
-	    needToShowFixedCopilot() {
-	      const isChannel = im_v2_lib_channel.ChannelManager.isChannel(this.dialogId);
-	      const isCopilotChat = new im_v2_lib_copilot.CopilotManager().isCopilotChat(this.dialogId);
-	      if (isChannel || isCopilotChat) {
-	        return false;
-	      }
-	      return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isCopilotMentionAvailable);
-	    },
-	    needToShowAllParticipants() {
-	      return this.dialog.type !== im_v2_const.ChatType.user;
-	    }
-	  },
-	  watch: {
-	    async isLoading() {
-	      await this.adjustPosition();
-	    },
-	    async searchResult() {
-	      await this.adjustPosition();
-	    },
-	    preparedQuery(newQuery, previousQuery) {
-	      if (newQuery === previousQuery) {
-	        return;
-	      }
-	      void this.startSearch(newQuery);
-	    }
-	  },
-	  async created() {
-	    this.initSettings();
-	    this.searchService = new MentionSearchService(this.searchConfig);
-	    this.searchOnServerDelayed = main_core.Runtime.debounce(this.searchOnServer, 400, this);
-	    this.getEmitter().subscribe(im_v2_const.EventType.mention.onAddUserToChat, this.onAddUserToChat);
-	    void this.initChatParticipants();
-	  },
-	  beforeUnmount() {
-	    this.getEmitter().unsubscribe(im_v2_const.EventType.mention.onAddUserToChat, this.onAddUserToChat);
-	  },
-	  methods: {
-	    async initChatParticipants() {
-	      this.isLoading = true;
-	      await this.loadChatParticipants();
-	      const participantsIdsFromRecent = await this.getRecentParticipantsIds();
-	      this.addParticipants(participantsIdsFromRecent);
-	      this.isLoading = false;
-	    },
-	    getRecentParticipantsIds() {
-	      const participantsService = new ParticipantsService();
-	      return participantsService.getRecentIds(this.dialogId);
-	    },
-	    onAddUserToChat(event) {
-	      const {
-	        userId
-	      } = event.getData();
-	      this.participantsIds.add(userId);
-	    },
-	    initSettings() {
-	      const settings = main_core.Extension.getSettings('im.v2.component.textarea');
-	      const defaultMinTokenSize = 3;
-	      this.minTokenSize = settings.get('minSearchTokenSize', defaultMinTokenSize);
-	    },
-	    async loadChatParticipants() {
-	      this.chatParticipants = await this.searchService.loadChatParticipants(this.dialogId);
-	      this.addParticipants(this.chatParticipants);
-	      this.searchResult = this.chatParticipants;
-	      this.chatParticipantsLoaded = true;
-	    },
-	    async searchOnServer(query) {
-	      this.currentServerQueries++;
-	      try {
-	        const {
-	          dialogIds,
-	          participantDialogIds
-	        } = await this.searchService.search(query);
-	        if (query !== this.preparedQuery) {
-	          return;
-	        }
-	        this.addParticipants(participantDialogIds);
-	        this.searchResult = [...new Set([...this.searchResult, ...dialogIds])];
-	      } finally {
-	        this.currentServerQueries--;
-	        this.stopLoader();
-	      }
-	    },
-	    async startSearch(query) {
-	      if (query.length > 0) {
-	        const dialogIds = this.searchService.searchLocal(query);
-	        if (query !== this.preparedQuery) {
-	          return;
-	        }
-	        this.searchResult = this.appendResult(dialogIds);
-	      }
-	      if (query.length >= this.minTokenSize) {
-	        this.isLoading = true;
-	        await this.searchOnServerDelayed(query);
-	      }
-	      if (query.length === 0) {
-	        this.cleanSearchResult();
-	      }
-	    },
-	    stopLoader() {
-	      if (this.currentServerQueries > 0) {
-	        return;
-	      }
-	      this.isLoading = false;
-	    },
-	    cleanSearchResult() {
-	      this.searchResult = this.chatParticipants;
-	    },
-	    async adjustPosition() {
-	      await this.$nextTick();
-	      this.$emit('adjustPosition');
-	    },
-	    appendResult(newItems) {
-	      const filtered = this.searchResult.filter(dialogId => newItems.includes(dialogId));
-	      return [...new Set([...filtered, ...newItems])];
-	    },
-	    isChat(dialogId) {
-	      return dialogId.startsWith('chat');
-	    },
-	    formattedDynamicItems(items) {
-	      return items.map(dialogId => {
-	        return new MentionItemFormatter(dialogId).format();
-	      });
-	    },
-	    addParticipants(items) {
-	      items.forEach(userId => this.participantsIds.add(userId));
-	    },
-	    getEmitter() {
-	      return this.$Bitrix.eventEmitter;
-	    },
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
-	    }
-	  },
-	  template: `
-		<div class="bx-im-mention-popup-content__container">
-			<LoadingState v-if="isLoading" />
-			<MentionItemsContainer
-				v-else
-				:dialogId="dialogId"
-				:query="query"
-				:items="items"
-				:participantsIds="participantsIds"
-				@close="$emit('close')"
-			/>
-			<SearchEmptyState v-if="isSearchEmptyState" />
-			<ContentFooter :isLoading="isLoading" />
-		</div>
-	`
-	};
-
-	const POPUP_ID$2 = 'im-mention-popup';
-
-	// @vue/component
-	const MentionPopup = {
-	  name: 'MentionPopup',
-	  components: {
-	    MessengerPopup: im_v2_component_elements_popup.MessengerPopup,
-	    MentionPopupContent
-	  },
-	  props: {
-	    bindElement: {
-	      type: Object,
-	      required: true
-	    },
-	    dialogId: {
-	      type: String,
-	      required: true
-	    },
-	    query: {
-	      type: String,
-	      default: ''
-	    }
-	  },
-	  emits: ['close', 'onFocusTextarea'],
-	  computed: {
-	    POPUP_ID: () => POPUP_ID$2,
-	    dialog() {
-	      return this.$store.getters['chats/get'](this.dialogId, true);
-	    },
-	    isCopilotType() {
-	      return this.dialog.type === im_v2_const.ChatType.copilot;
-	    },
-	    isGroupCopilotChat() {
-	      return new im_v2_lib_copilot.CopilotManager().isGroupCopilotChat(this.dialogId);
-	    },
-	    needToShowMentionPopup() {
-	      if (this.isCopilotType) {
-	        return this.isGroupCopilotChat;
-	      }
-	      return true;
-	    },
-	    searchChats() {
-	      return !this.isCopilotType;
-	    },
-	    config() {
-	      return {
-	        height: 200,
-	        width: 426,
-	        padding: 0,
-	        bindElement: this.bindElement,
-	        offsetTop: 2,
-	        offsetLeft: 0,
-	        fixed: true,
-	        bindOptions: {
-	          position: 'top'
-	        },
-	        className: 'bx-im-mention-popup__scope'
-	      };
-	    }
-	  },
-	  created() {
-	    this.getEmitter().subscribe(im_v2_const.EventType.mention.onNestedMenuClosed, this.onFocusTextarea);
-	  },
-	  beforeUnmount() {
-	    this.getEmitter().unsubscribe(im_v2_const.EventType.mention.onNestedMenuClosed, this.onFocusTextarea);
-	  },
-	  methods: {
-	    onFocusTextarea() {
-	      this.$emit('onFocusTextarea');
-	    },
-	    getEmitter() {
-	      return this.$Bitrix.eventEmitter;
-	    }
-	  },
-	  template: `
-		<MessengerPopup
-			v-if="needToShowMentionPopup"
-			:config="config"
-			@close="$emit('close');"
-			:id="POPUP_ID"
-			v-slot="{adjustPosition}"
-		>
-			<MentionPopupContent 
-				:dialogId="dialogId"
-				:query="query"
-				:searchChats="searchChats"
-				@close="$emit('close');"
-				@adjustPosition="adjustPosition()"
-			/>
-		</MessengerPopup>
-	`
-	};
-
-	// @vue/component
-	const EditPanel = {
-	  name: 'EditPanel',
-	  props: {
-	    messageId: {
-	      type: [Number, String],
-	      required: true
-	    }
-	  },
-	  emits: ['close'],
-	  computed: {
-	    message() {
-	      return this.$store.getters['messages/getById'](this.messageId);
-	    },
-	    preparedText() {
-	      return im_v2_lib_parser.Parser.purifyMessage(this.message);
-	    }
-	  },
-	  methods: {
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
-	    }
-	  },
-	  template: `
-		<div class="bx-im-message-panel__container">
-			<div class="bx-im-message-panel__icon"></div>
-			<div class="bx-im-message-panel__content">
-				<div class="bx-im-message-panel__title">{{ loc('IM_TEXTAREA_EDIT_MESSAGE_TITLE') }}</div>
-				<div class="bx-im-message-panel__text">{{ preparedText }}</div>
-			</div>
-			<div @click="$emit('close')" class="bx-im-message-panel__close"></div>
-		</div>
-	`
-	};
-
-	const NAME_MAX_LENGTH = 40;
-
-	// @vue/component
-	const ReplyPanel = {
-	  name: 'ReplyPanel',
-	  props: {
-	    messageId: {
-	      type: Number,
-	      required: true
-	    }
-	  },
-	  emits: ['close'],
-	  computed: {
-	    message() {
-	      return this.$store.getters['messages/getById'](this.messageId);
-	    },
-	    replyAuthor() {
-	      return this.$store.getters['users/get'](this.message.authorId);
-	    },
-	    replyTitle() {
-	      return this.replyAuthor ? this.replyAuthor.name : this.loc('IM_DIALOG_CHAT_QUOTE_DEFAULT_TITLE');
-	    },
-	    messageFile() {
-	      return this.$store.getters['messages/getMessageFiles'](this.message.id)[0];
-	    },
-	    isFile() {
-	      return this.messageFile && this.messageFile.type === im_v2_const.FileType.file;
-	    },
-	    isVideo() {
-	      return this.messageFile && this.messageFile.type === im_v2_const.FileType.video;
-	    },
-	    isImage() {
-	      return this.messageFile && this.messageFile.type === im_v2_const.FileType.image;
-	    },
-	    isAudio() {
-	      return this.messageFile && this.messageFile.type === im_v2_const.FileType.audio;
-	    },
-	    showIcon() {
-	      return this.messageFile ? !this.messageFile.urlPreview : false;
-	    },
-	    truncatedFileName() {
-	      return im_v2_lib_utils.Utils.file.getShortFileName(this.messageFile.name, NAME_MAX_LENGTH);
-	    },
-	    isMessageDeleted() {
-	      return this.message.isDeleted;
-	    },
-	    isSticker() {
-	      return this.$store.getters['stickers/messages/isSticker'](this.message.id);
-	    },
-	    messageText() {
-	      if (this.isFile) {
-	        return this.truncatedFileName;
-	      }
-	      if (this.isAudio) {
-	        return this.loc('IM_TEXTAREA_REPLY_AUDIO_TITLE');
-	      }
-	      if (this.isMessageDeleted) {
-	        return this.loc('IM_TEXTAREA_REPLY_DELETED_TITLE');
-	      }
-	      if (this.isSticker) {
-	        return this.loc('IM_TEXTAREA_REPLY_STICKER_TITLE');
-	      }
-	      return im_v2_lib_parser.Parser.purify(this.message);
-	    },
-	    iconClass() {
-	      const iconType = im_v2_lib_utils.Utils.file.getIconTypeByFilename(this.messageFile.name);
-	      return `ui-icon-file-${iconType}`;
-	    }
-	  },
-	  methods: {
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
-	    }
-	  },
-	  template: `
-		<div class="bx-im-message-panel__container">
-			<div class="bx-im-message-panel__icon --quote"></div>
-			<div v-if="showIcon" class="bx-im-message-panel-file__icon">
-				<div :class="iconClass" class="ui-icon"><i></i></div>
-			</div>
-			<div v-else-if="isImage || isVideo" class="bx-im-message-panel__image">
-				<img 
-					v-if="this.messageFile.urlPreview" 
-					class="bx-im-message-panel__image_img" 
-					:src="this.messageFile.urlPreview"
-		                  :alt="this.messageFile.name"
-				>
-			</div>
-			<div class="bx-im-message-panel__content">
-				<div class="bx-im-message-panel__title">{{ replyTitle }}</div>
-				<div class="bx-im-message-panel__text">{{ messageText }}</div>
-			</div>
-			<div @click="$emit('close')" class="bx-im-message-panel__close"></div>
-		</div>
-	`
-	};
-
-	const MESSAGE_DISPLAY_LIMIT = 5;
-
-	// @vue/component
-	const ForwardPanel = {
-	  name: 'ForwardPanel',
-	  props: {
-	    context: {
-	      type: Object,
-	      required: true
-	    }
-	  },
-	  emits: ['close'],
-	  computed: {
-	    forwardContext() {
-	      return this.context;
-	    },
-	    messagesIds() {
-	      return this.forwardContext.messagesIds;
-	    },
-	    sortedMessagesIds() {
-	      return [...this.messagesIds].sort();
-	    },
-	    authorsOfMessages() {
-	      return this.sortedMessagesIds.map(id => {
-	        const isForward = this.$store.getters['messages/isForward'](id);
-	        const message = this.getMessage(id);
-	        const userId = isForward ? message.forward.userId : message.authorId;
-	        return this.$store.getters['users/get'](userId, true);
-	      });
-	    },
-	    uniqueUsers() {
-	      const uniqueUsersObj = {};
-	      this.authorsOfMessages.forEach(user => {
-	        if (!uniqueUsersObj[user.id]) {
-	          uniqueUsersObj[user.id] = user;
-	        }
-	      });
-	      return Object.values(uniqueUsersObj);
-	    },
-	    forwardMessagesCount() {
-	      return this.messagesIds.length;
-	    },
-	    forwardAuthorName() {
-	      const author = this.authorsOfMessages[0];
-	      let name = author.name;
-	      if (author.id === 0) {
-	        name = this.loc('IM_TEXTAREA_FORWARD_SYSTEM');
-	      }
-	      return `${name}: `;
-	    },
-	    displayedAuthorNames() {
-	      const systemMessagesCount = this.authorsOfMessages.filter(user => user.id === 0).length;
-	      const displayedNames = this.uniqueUsers.slice(0, MESSAGE_DISPLAY_LIMIT);
-	      const names = [];
-	      displayedNames.forEach(user => {
-	        if (user.id === 0) {
-	          return systemMessagesCount > 1 ? names.push(this.loc('IM_TEXTAREA_FORWARD_MESSAGES_SYSTEM')) : names.push(this.loc('IM_TEXTAREA_FORWARD_SYSTEM'));
-	        }
-	        if (this.isOwnMessage(user)) {
-	          return names.unshift(this.loc('IM_TEXTAREA_FORWARD_OWN_MESSAGE'));
-	        }
-	        return names.push(user.firstName);
-	      });
-	      return names.join(', ');
-	    },
-	    formattedAuthorNames() {
-	      if (this.remainingAuthors > 0) {
-	        return main_core.Loc.getMessage('IM_TEXTAREA_FORWARD_TEXT_MORE', {
-	          '[name]': '<span class="bx-im-message-panel__forward-author_name">',
-	          '[/name]': '</span>',
-	          '#USER_LIST#': main_core.Text.encode(this.displayedAuthorNames),
-	          '[remaining]': '<span class="bx-im-message-panel__forward-author_remaining">',
-	          '[/remaining]': '</span>',
-	          '#COUNT#': this.remainingAuthors
-	        });
-	      }
-	      return this.loc('IM_TEXTAREA_FORWARD_TEXT', {
-	        '#USER_LIST#': main_core.Text.encode(this.displayedAuthorNames)
-	      });
-	    },
-	    remainingAuthors() {
-	      return this.uniqueUsers.length - MESSAGE_DISPLAY_LIMIT;
-	    },
-	    messageText() {
-	      return im_v2_lib_parser.Parser.purifyMessage(this.getMessage(this.messagesIds));
-	    },
-	    titleText() {
-	      if (this.forwardMessagesCount > 1) {
-	        return this.formattedMessageCounter;
-	      }
-	      return this.loc('IM_TEXTAREA_FORWARD_TITLE');
-	    },
-	    formattedMessageCounter() {
-	      return main_core.Loc.getMessagePlural('IM_TEXTAREA_FORWARD_TITLE_MULTIPLE_COUNT', this.forwardMessagesCount, {
-	        '#COUNT_MESSAGES#': this.forwardMessagesCount
-	      });
-	    }
-	  },
-	  methods: {
-	    isOwnMessage(user) {
-	      return user.id === im_v2_application_core.Core.getUserId() && this.uniqueUsers.length > 1;
-	    },
-	    getMessage(messageId) {
-	      return this.$store.getters['messages/getById'](messageId);
-	    },
-	    loc(phraseCode, replacements = {}) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
-	    }
-	  },
-	  template: `
-		<div class="bx-im-message-panel__container">
-			<div class="bx-im-message-panel__icon --forward"></div>
-			<div class="bx-im-message-panel__content">
-				<div class="bx-im-message-panel__title">{{ titleText }}</div>
-				<div v-if="forwardMessagesCount > 1" class="bx-im-message-panel__text" :class="{'--compact': remainingAuthors > 0}">
-					<div class="bx-im-message-panel__bulk-forward-author" v-html="formattedAuthorNames"></div>
-				</div>
-				<div v-else class="bx-im-message-panel__text">
-					<span class="bx-im-message-panel__forward-author">{{ forwardAuthorName }}</span>
-					<span class="bx-im-message-panel__forward-message-text">{{ messageText }}</span>
-				</div>
-			</div>
-			<div @click="$emit('close')" class="bx-im-message-panel__close"></div>
-		</div>
-	`
-	};
-
-	// @vue/component
-	const MarketAppPopup = {
-	  name: 'MarketAppPopup',
-	  components: {
-	    MessengerPopup: im_v2_component_elements_popup.MessengerPopup,
-	    Spinner: im_v2_component_elements_loader.Spinner
-	  },
-	  props: {
-	    bindElement: {
-	      type: Object,
-	      required: true
-	    },
-	    entityId: {
-	      type: String,
-	      required: true
-	    },
-	    width: {
-	      type: Number,
-	      required: true
-	    },
-	    height: {
-	      type: Number,
-	      required: true
-	    },
-	    dialogId: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  emits: ['close'],
-	  data() {
-	    return {
-	      isLoading: true,
-	      handleResult: true
-	    };
-	  },
-	  computed: {
-	    SpinnerSize: () => im_v2_component_elements_loader.SpinnerSize,
-	    popupConfig() {
-	      return {
-	        width: this.width,
-	        height: this.height,
-	        bindElement: this.bindElement,
-	        bindOptions: {
-	          position: 'top'
-	        },
-	        offsetTop: 0,
-	        offsetLeft: 0,
-	        padding: 0
-	      };
-	    }
-	  },
-	  created() {
-	    this.marketManager = im_v2_lib_market.MarketManager.getInstance();
-	  },
-	  mounted() {
-	    const context = {
-	      dialogId: this.dialogId
-	    };
-	    this.marketManager.loadPlacement(this.entityId, context).then(response => {
-	      if (!this.handleResult) {
-	        return;
-	      }
-	      this.isLoading = false;
-	      main_core.Runtime.html(this.$refs['im-messenger-textarea-placement'], response);
-	    });
-	  },
-	  methods: {
-	    onClose() {
-	      this.handleResult = false;
-	      this.$emit('close');
-	    }
-	  },
-	  template: `
-		<MessengerPopup
-			:config="popupConfig"
-			@close="onClose"
-			id="im-market-app-popup"
-		>
-			<div class="bx-im-market-app-popup__container">
-				<div v-if="isLoading" class="bx-im-market-app-popup__loader-container">
-					<Spinner :size="SpinnerSize.S"/>
-				</div>
-				<div ref="im-messenger-textarea-placement" class="bx-im-market-app-popup__placement-container"></div>
-			</div>
-		</MessengerPopup>
-	`
-	};
-
-	// @vue/component
-	const MarketAppItem = {
-	  name: 'MarketAppItem',
-	  components: {
-	    MarketAppPopup
-	  },
-	  props: {
-	    item: {
-	      type: Object,
-	      required: true
-	    },
-	    hideTitle: {
-	      type: Boolean,
-	      default: false
-	    },
-	    dialogId: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  data() {
-	    return {
-	      showApp: false
-	    };
-	  },
-	  computed: {
-	    marketItem() {
-	      return this.item;
-	    },
-	    iconClass() {
-	      return `fa ${this.marketItem.options.iconName}`;
-	    },
-	    iconColor() {
-	      return this.marketItem.options.color;
-	    }
-	  },
-	  methods: {
-	    onAppClick() {
-	      this.showApp = !this.showApp;
-	    }
-	  },
-	  template: `
-		<div 
-			class="bx-im-market-app-item__container" 
-			:class="{'--short': hideTitle}" 
-			:title="marketItem.title"
-			@click="onAppClick"
-			ref="market-app"
-		>
-			<div class="bx-im-market-app-item__icon-container" :style="{backgroundColor: iconColor}">
-				<i :class="iconClass" aria-hidden="true"></i>
-			</div>
-			<div v-if="!hideTitle" class="bx-im-market-app-item__title-container" :title="marketItem.title">
-				<div class="bx-im-market-app-item__title-text">
-					{{ marketItem.title }}
-				</div>
-			</div>
-			<MarketAppPopup 
-				v-if="showApp" 
-				:bindElement="$refs['market-app']" 
-				:entityId="marketItem.id"
-				:width="marketItem.options.width"
-				:height="marketItem.options.height"
-				:dialogId="dialogId"
-				@close="onAppClick"
-			/>
-		</div>
-	`
-	};
-
-	// @vue/component
-	const MarketShowMorePopupContentItem = {
-	  name: 'MarketShowMorePopupContentItem',
-	  components: {
-	    MarketAppPopup
-	  },
-	  props: {
-	    item: {
-	      type: Object,
-	      required: true
-	    },
-	    dialogId: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  data() {
-	    return {
-	      showApp: false
-	    };
-	  },
-	  computed: {
-	    marketItem() {
-	      return this.item;
-	    },
-	    iconClass() {
-	      return `fa ${this.marketItem.options.iconName}`;
-	    },
-	    iconColor() {
-	      return this.marketItem.options.color;
-	    }
-	  },
-	  methods: {
-	    onAppClick() {
-	      this.showApp = !this.showApp;
-	    }
-	  },
-	  template: `
-		<div 
-			class="bx-im-market-show-more-popup-content-item__container"
-			:title="marketItem.title"
-			@click="onAppClick"
-			ref="market-app"
-		>
-			<div class="bx-im-market-show-more-popup-content-item__icon-container" :style="{backgroundColor: iconColor}">
-				<i :class="iconClass" aria-hidden="true"></i>
-			</div>
-			<div class="bx-im-market-show-more-popup-content-item__title-container">
-				<div class="bx-im-market-show-more-popup-content-item__title-text">
-					{{ marketItem.title }}
-				</div>
-			</div>
-			<MarketAppPopup
-				v-if="showApp" 
-				:bindElement="$refs['market-app']" 
-				:entityId="marketItem.id"
-				:width="marketItem.options.width"
-				:height="marketItem.options.height" 
-				:dialogId="dialogId"
-				@close="onAppClick"
-			/>
-		</div>
-	`
-	};
-
-	// @vue/component
-	const MarketShowMorePopupContent = {
-	  name: 'MarketShowMorePopupContent',
-	  components: {
-	    MarketShowMorePopupContentItem
-	  },
-	  props: {
-	    marketApps: {
-	      type: Array,
-	      required: true
-	    },
-	    dialogId: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  data() {
-	    return {
-	      isLoading: true,
-	      needTopShadow: false,
-	      needBottomShadow: true
-	    };
-	  },
-	  methods: {
-	    onListScroll(event) {
-	      this.needBottomShadow = event.target.scrollTop + event.target.clientHeight !== event.target.scrollHeight;
-	      if (event.target.scrollTop === 0) {
-	        this.needTopShadow = false;
-	        return;
-	      }
-	      this.needTopShadow = true;
-	    }
-	  },
-	  template: `
-		<div class="bx-im-market-show-more-popup-content__scope bx-im-market-show-more-popup-content__container">
-			<div v-if="needTopShadow" class="bx-im-market-show-more-popup-content__shadow --top">
-				<div class="bx-im-market-show-more-popup-content__shadow-inner"></div>
-			</div>
-			<div @scroll="onListScroll" class="bx-im-market-show-more-popup-content__items-container">
-				<MarketShowMorePopupContentItem
-					v-for="item in marketApps"
-					:item="item"
-					:dialogId="dialogId"
-					@onAppClick="$emit('close')"
-				/>
-			</div>
-			<div v-if="needBottomShadow" class="bx-im-market-show-more-popup-content__shadow --bottom">
-				<div class="bx-im-market-show-more-popup-content__shadow-inner"></div>
-			</div>
-		</div>
-	`
-	};
-
-	// @vue/component
-	const MarketShowMorePopup = {
-	  name: 'MarketShowMorePopup',
-	  components: {
-	    MessengerPopup: im_v2_component_elements_popup.MessengerPopup,
-	    MarketShowMorePopupContent
-	  },
-	  props: {
-	    marketApps: {
-	      type: Array,
-	      required: true
-	    },
-	    dialogId: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  emits: ['close'],
-	  data() {
-	    return {
-	      showPopup: false
-	    };
-	  },
-	  computed: {
-	    popupConfig() {
-	      return {
-	        titleBar: this.$Bitrix.Loc.getMessage('IM_TEXTAREA_MARKET_OTHER_APPS'),
-	        closeIcon: true,
-	        width: 302,
-	        height: 422,
-	        bindElement: this.$refs['textarea-show-more-market-apps'],
-	        bindOptions: {
-	          position: 'top'
-	        },
-	        offsetTop: 0,
-	        offsetLeft: 0,
-	        padding: 0,
-	        contentPadding: 0,
-	        contentBackground: '#fff',
-	        className: 'bx-im-market-show-more-popup__scope'
-	      };
-	    },
-	    showMoreButtonText() {
-	      return this.$Bitrix.Loc.getMessage('IM_TEXTAREA_MARKET_APPS_SHOW_MORE_BUTTON').replace('#NUMBER#', this.marketApps.length);
-	    }
-	  },
-	  template: `
-		<div
-			@click="showPopup = true"
-			class="bx-im-market-apps-panel__more-items-button"
-			:class="{'--active': showPopup}"
-			ref="textarea-show-more-market-apps"
-		>
-			{{ showMoreButtonText }}
-		</div>
-		<MessengerPopup
-			v-if="showPopup"
-			:config="popupConfig"
-			@close="showPopup = false"
-			id="im-market-apps-more-popup"
-		>
-			<MarketShowMorePopupContent :marketApps='marketApps' :dialogId="dialogId" @close="showPopup = false" />
-		</MessengerPopup>
-	`
-	};
-
-	const MAX_EXPANDED_ITEMS = 5;
-	const MAX_COLLAPSED_ITEMS = 15;
-
-	// @vue/component
-	const MarketAppsPanel = {
-	  name: 'MarketAppsPanel',
-	  components: {
-	    MarketAppItem,
-	    MarketShowMorePopup,
-	    RichLoc: ui_vue3_components_richLoc.RichLoc
-	  },
-	  props: {
-	    dialogId: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  computed: {
-	    marketMenuItems() {
-	      return im_v2_lib_market.MarketManager.getInstance().getAvailablePlacementsByType(im_v2_const.PlacementType.textarea, this.dialogId);
-	    },
-	    marketItemsToShow() {
-	      const maxItems = this.hideTitle ? MAX_COLLAPSED_ITEMS : MAX_EXPANDED_ITEMS;
-	      return {
-	        displayedItems: this.marketMenuItems.slice(0, maxItems),
-	        hiddenItems: this.marketMenuItems.slice(maxItems)
-	      };
-	    },
-	    hideTitle() {
-	      return this.marketMenuItems.length > MAX_EXPANDED_ITEMS;
-	    },
-	    needMoreButton() {
-	      return this.marketItemsToShow.hiddenItems.length > 0;
-	    },
-	    isEmptyState() {
-	      return this.marketItemsToShow.displayedItems.length === 0;
-	    },
-	    emptyStateText() {
-	      return this.loc('IM_TEXTAREA_MARKET_APPS_EMPTY_STATE_MSGVER_2');
-	    }
-	  },
-	  methods: {
-	    onEmptyStateLinkClick() {
-	      im_v2_lib_market.MarketManager.openChatMarket();
-	    },
-	    loc(phraseCode, replacements = {}) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
-	    }
-	  },
-	  template: `
-		<div class="bx-im-market-apps-panel__scope">
-			<div v-if="isEmptyState" class="bx-im-market-apps-panel__empty-state-container">
-				<div class="bx-im-market-apps-panel__empty-state-icon"></div>
-				<div class="bx-im-market-apps-panel__empty-state-text">
-					<RichLoc :text="emptyStateText" placeholder="[url]">
-						<template #url="{ text }">
-							<span class="bx-im-market-apps-panel__empty-state-link" @click="onEmptyStateLinkClick">
-								{{ text }}
-							</span>
-						</template>
-					</RichLoc>
-				</div>
-				<div class="bx-im-market-apps-panel__empty-state-button"></div>
-			</div>
-			<div v-else class="bx-im-market-apps-panel__container">
-				<div class="bx-im-market-apps-panel__items-container" :class="{'--short': hideTitle}">
-					<MarketAppItem
-						v-for="item in marketItemsToShow.displayedItems"
-						:item="item"
-						:hideTitle="hideTitle"
-						:dialogId="dialogId"
-					/>
-				</div>
-				<MarketShowMorePopup 
-					v-if="needMoreButton" 
-					:marketApps="marketItemsToShow.hiddenItems"
-					:dialogId="dialogId"
-				/>
-			</div>
-		</div>
-	`
-	};
-
-	// @vue/component
-	const TextareaPanel = {
-	  name: 'TextareaPanel',
-	  components: {
-	    EditPanel,
-	    ReplyPanel,
-	    ForwardPanel,
-	    MarketAppsPanel
-	  },
-	  props: {
-	    dialogId: {
-	      type: String,
-	      required: true
-	    },
-	    type: {
-	      type: String,
-	      required: true
-	    },
-	    context: {
-	      type: Object,
-	      required: true
-	    }
-	  },
-	  emits: ['close'],
-	  computed: {
-	    PanelType: () => im_v2_const.TextareaPanelType,
-	    configContext() {
-	      return this.context;
-	    }
-	  },
-	  template: `
-		<EditPanel v-if="type === PanelType.edit" :messageId="configContext.messageId" @close="$emit('close')" />
-		<ReplyPanel v-if="type === PanelType.reply" :messageId="configContext.messageId" @close="$emit('close')" />
-		<ForwardPanel v-if="type === PanelType.forward" :context="configContext" @close="$emit('close')" />
-		<MarketAppsPanel v-if="type === PanelType.market" :dialogId="dialogId" />
-	`
-	};
-
-	const ICON_SIZE$3 = 24;
-	const AutoDeleteSelector = {
-	  name: 'AutoDeleteSelector',
-	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon,
-	    AutoDeleteHint: im_v2_component_elements_autoDelete.AutoDeleteHint,
-	    AutoDeletePopup: im_v2_component_elements_autoDelete.AutoDeletePopup
-	  },
-	  props: {
-	    dialogId: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  data() {
-	    return {
-	      showAutoDeleteMessagesPopup: false,
-	      showAutoDeleteMessagesHintPopup: false,
-	      hintConfig: {
-	        width: 316,
-	        offsetLeft: -106,
-	        offsetTop: 5,
-	        angle: {
-	          offset: 141
-	        }
-	      }
-	    };
-	  },
-	  computed: {
-	    OutlineIcons: () => ui_iconSet_api_vue.Outline,
-	    ICON_SIZE: () => ICON_SIZE$3,
-	    Color: () => im_v2_const.Color,
-	    isAutoDeleteAllowed() {
-	      return im_v2_lib_autoDelete.AutoDeleteManager.isAutoDeleteAllowed(this.dialogId);
-	    },
-	    dialog() {
-	      return this.$store.getters['chats/get'](this.dialogId, true);
-	    },
-	    autoDeleteDelayInHours() {
-	      return this.$store.getters['chats/autoDelete/getDelay'](this.dialog.chatId);
-	    }
-	  },
-	  methods: {
-	    onIconClick() {
-	      if (!this.isAutoDeleteAllowed) {
-	        this.showAutoDeleteMessagesHintPopup = true;
-	        return;
-	      }
-	      this.showAutoDeleteMessagesPopup = true;
-	    },
-	    closePopup() {
-	      this.showAutoDeleteMessagesPopup = false;
-	    },
-	    hideAutoDeleteMessagesHintPopup() {
-	      this.showAutoDeleteMessagesHintPopup = false;
-	    },
-	    onAutoDeleteDelayChange(delay) {
-	      this.getChatService().setMessagesAutoDeleteDelay(this.dialogId, delay);
-	      this.$emit('close');
-	    },
-	    getChatService() {
-	      if (!this.chatService) {
-	        this.chatService = new im_v2_provider_service_chat.ChatService();
-	      }
-	      return this.chatService;
-	    },
-	    loc(phraseCode, replacements = {}) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
-	    }
-	  },
-	  template: `
-		<div ref="autoDeleteIcon" class="bx-im-textarea__icon-container">
-			<BIcon 
-				:name="OutlineIcons.TIMER_DOT"
-				:color="Color.accentBlue"
-				:title="loc('IM_TEXTAREA_AUTO_DELETE_TITLE')"
-				:size="ICON_SIZE"
-				class="bx-im-textarea__icon"
-				@click="onIconClick"
-			/>
-		</div>
-		<AutoDeletePopup
-			v-if="showAutoDeleteMessagesPopup"
-			:autoDeleteDelay="autoDeleteDelayInHours"
-			@close="closePopup"
-			@autoDeleteDelayChange="onAutoDeleteDelayChange"
-		/>
-		<AutoDeleteHint
-			v-if="showAutoDeleteMessagesHintPopup"
-			:bindElement="$refs['autoDeleteIcon']"
-			:config="hintConfig"
-			@close="hideAutoDeleteMessagesHintPopup"
-		/>
-	`
-	};
-
-	const ICON_SIZE$4 = 34;
-
-	// @vue/component
-	const LinkInput = {
-	  name: 'LinkInput',
-	  components: {
-	    BInput: ui_system_input_vue.BInput,
-	    BIcon: ui_iconSet_api_vue.BIcon
-	  },
-	  emits: ['insertLink', 'close'],
-	  data() {
-	    return {
-	      linkUrl: ''
-	    };
-	  },
-	  computed: {
-	    OutlineIcons: () => ui_iconSet_api_vue.Outline,
-	    InputSize: () => ui_system_input_vue.InputSize,
-	    InputDesign: () => ui_system_input_vue.InputDesign,
-	    ICON_SIZE: () => ICON_SIZE$4,
-	    isValidLink() {
-	      if (this.linkUrl === '') {
-	        return false;
-	      }
-	      return im_v2_lib_utils.Utils.text.checkUrl(this.linkUrl);
-	    },
-	    acceptIconClass() {
-	      return {
-	        '--disabled': !this.isValidLink,
-	        '--active': this.isValidLink
-	      };
-	    }
-	  },
-	  methods: {
-	    onAccept() {
-	      this.$emit('insertLink', this.linkUrl);
-	    },
-	    onClose() {
-	      this.$emit('close');
-	    },
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
-	    }
-	  },
-	  template: `
-		<div class="bx-im-format-toolbar-link__container">
-			<div class="bx-im-format-toolbar-link__content">
-				<BInput
-					v-model="linkUrl"
-					:design="InputDesign.Primary"
-					:label="loc('IM_TEXTAREA_FORMAT_TOOLBAR_LINK_LABEL')"
-					:labelInline="true"
-					:placeholder="loc('IM_TEXTAREA_FORMAT_TOOLBAR_LINK_PLACEHOLDER')"
-					:size="InputSize.Md"
-					:active="true"
-					class="bx-im-format-toolbar-link__input"
-					@keydown.enter="onAccept"
-				/>
-				<BIcon
-					:name="OutlineIcons.CHECK_S"
-					:size="ICON_SIZE"
-					:hoverableAlt="true"
-					class="bx-im-format-toolbar-link__action --accept"
-					:class="acceptIconClass"
-					@mousedown.prevent
-					@click="onAccept"
-				/>
-				<BIcon
-					:name="OutlineIcons.CROSS_S"
-					:size="ICON_SIZE"
-					:hoverableAlt="true"
-					class="bx-im-format-toolbar-link__action"
-					@mousedown.prevent
-					@click="onClose"
-				/>
-			</div>
-		</div>
-	`
-	};
-
-	const ToolbarItem = {
-	  bold: 'bold',
-	  italic: 'italic',
-	  underline: 'underline',
-	  strikethrough: 'strikethrough',
-	  link: 'link',
-	  quote: 'quote',
-	  code: 'code',
-	  separator: 'separator'
-	};
-	const POPUP_ID$3 = 'im-format-toolbar-popup';
-
-	// @vue/component
-	const FormatToolbar = {
-	  name: 'FormatToolbar',
-	  components: {
-	    MessengerPopup: im_v2_component_elements_popup.MessengerPopup,
-	    LinkInput,
-	    BIcon: ui_iconSet_api_vue.BIcon
-	  },
-	  props: {
-	    dialogId: {
-	      type: String,
-	      default: ''
-	    },
-	    textarea: {
-	      type: HTMLTextAreaElement,
-	      required: true
-	    },
-	    targetPosition: {
-	      type: Object,
-	      required: true,
-	      validator(value) {
-	        return main_core.Type.isNumber(value.left) && main_core.Type.isNumber(value.top);
-	      }
-	    }
-	  },
-	  emits: ['close', 'updateText'],
-	  data() {
-	    return {
-	      linkMode: false
-	    };
-	  },
-	  computed: {
-	    POPUP_ID: () => POPUP_ID$3,
-	    ToolbarItem: () => ToolbarItem,
-	    config() {
-	      return {
-	        bindElement: this.targetPosition,
-	        bindOptions: {
-	          forceBindPosition: true,
-	          position: 'top'
-	        },
-	        autoHide: true,
-	        padding: 0,
-	        contentBorderRadius: 12
-	      };
-	    },
-	    toolbarItems() {
-	      return [{
-	        name: ToolbarItem.bold,
-	        icon: ui_iconSet_api_vue.Outline.BOLD,
-	        title: this.loc('IM_TEXTAREA_FORMAT_TOOLBAR_ITEM_BOLD'),
-	        handler: () => {
-	          this.applyDecoration('KeyB');
-	          im_v2_lib_analytics.Analytics.getInstance().formatToolbar.onBoldClick(this.dialogId);
-	        }
-	      }, {
-	        name: ToolbarItem.italic,
-	        icon: ui_iconSet_api_vue.Outline.ITALIC,
-	        title: this.loc('IM_TEXTAREA_FORMAT_TOOLBAR_ITEM_ITALIC'),
-	        handler: () => {
-	          this.applyDecoration('KeyI');
-	          im_v2_lib_analytics.Analytics.getInstance().formatToolbar.onItalicClick(this.dialogId);
-	        }
-	      }, {
-	        name: ToolbarItem.underline,
-	        icon: ui_iconSet_api_vue.Outline.UNDERLINE,
-	        title: this.loc('IM_TEXTAREA_FORMAT_TOOLBAR_ITEM_UNDERLINE'),
-	        handler: () => {
-	          this.applyDecoration('KeyU');
-	          im_v2_lib_analytics.Analytics.getInstance().formatToolbar.onUnderlineClick(this.dialogId);
-	        }
-	      }, {
-	        name: ToolbarItem.strikethrough,
-	        icon: ui_iconSet_api_vue.Outline.STRIKETHROUGH,
-	        title: this.loc('IM_TEXTAREA_FORMAT_TOOLBAR_ITEM_STRIKETHROUGH'),
-	        handler: () => {
-	          this.applyDecoration('KeyS');
-	          im_v2_lib_analytics.Analytics.getInstance().formatToolbar.onStrikethroughClick(this.dialogId);
-	        }
-	      }, {
-	        name: ToolbarItem.separator
-	      }, {
-	        name: ToolbarItem.link,
-	        icon: ui_iconSet_api_vue.Outline.LINK,
-	        title: this.loc('IM_TEXTAREA_FORMAT_TOOLBAR_ITEM_LINK'),
-	        handler: () => {
-	          this.openLinkMode();
-	          im_v2_lib_analytics.Analytics.getInstance().formatToolbar.onLinkClick(this.dialogId);
-	        }
-	      }, {
-	        name: ToolbarItem.code,
-	        icon: ui_iconSet_api_vue.Outline.DEVELOPER_RESOURCES,
-	        title: this.loc('IM_TEXTAREA_FORMAT_TOOLBAR_ITEM_CODE'),
-	        handler: () => {
-	          this.applyDecoration('code');
-	          im_v2_lib_analytics.Analytics.getInstance().formatToolbar.onCodeClick(this.dialogId);
-	        }
-	      }];
-	    }
-	  },
-	  methods: {
-	    openLinkMode() {
-	      this.linkMode = true;
-	    },
-	    onCloseLinkMode() {
-	      this.linkMode = false;
-	    },
-	    applyDecoration(key) {
-	      const newText = im_v2_lib_textarea.Textarea.handleDecorationTag(this.textarea, key);
-	      this.updateText(newText);
-	    },
-	    onInsertLink(linkUrl) {
-	      const newText = im_v2_lib_textarea.Textarea.addUrlTag(this.textarea, linkUrl);
-	      this.updateText(newText);
-	      this.$emit('close');
-	    },
-	    insertQuote() {
-	      const newText = im_v2_lib_textarea.Textarea.prepareInlineQuote(this.textarea);
-	      im_v2_lib_quote.Quote.sendQuoteEvent({
-	        text: newText,
-	        dialogId: this.dialogId,
-	        context: {
-	          emitter: this.getEmitter()
-	        },
-	        additionalParams: {
-	          replace: true
-	        }
-	      });
-	    },
-	    updateText(newText) {
-	      this.$emit('updateText', newText);
-	    },
-	    getEmitter() {
-	      return this.$Bitrix.eventEmitter;
-	    },
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
-	    }
-	  },
-	  template: `
-		<MessengerPopup
-			:config="config"
-			:id="POPUP_ID"
-			@close="$emit('close')"
-		>
-			<LinkInput v-if="linkMode" @insertLink="onInsertLink" @close="onCloseLinkMode" />
-			<div v-else class="bx-im-format-toolbar__container">
-				<template v-for="item in toolbarItems">
-					<div
-						v-if="item.name === ToolbarItem.separator"
-						class="bx-im-format-toolbar__separator"
-					></div>
-					<BIcon
-						v-else
-						:key="item.name"
-						:name="item.icon"
-						:title="item.title"
-						:hoverableAlt="true"
-						class="bx-im-format-toolbar__item"
-						@mousedown.prevent
-						@click="item.handler"
-					/>
-				</template>
-			</div>
-		</MessengerPopup>
-	`
-	};
-
 	const MESSAGE_ACTION_PANELS = new Set([im_v2_const.TextareaPanelType.edit, im_v2_const.TextareaPanelType.reply, im_v2_const.TextareaPanelType.forward]);
-	const TextareaHeight$1 = {
-	  max: 400,
-	  min: 22
+	const TextareaHeight = {
+		max: 400,
+		min: 22
 	};
-	const ICON_SIZE$5 = 24;
+	const ICON_SIZE = 24;
 
 	// @vue/component
 	const ChatTextarea = {
-	  components: {
-	    UploadMenu,
-	    EmoteSelector,
-	    SendButton: im_v2_component_elements_sendButton.SendButton,
-	    UploadPreviewPopup,
-	    MentionPopup,
-	    TextareaPanel,
-	    AudioInput,
-	    AutoDeleteSelector,
-	    BIcon: ui_iconSet_api_vue.BIcon,
-	    FormatToolbar
-	  },
-	  props: {
-	    dialogId: {
-	      type: String,
-	      default: ''
-	    },
-	    placeholder: {
-	      type: String,
-	      default: ''
-	    },
-	    withMarket: {
-	      type: Boolean,
-	      default: true
-	    },
-	    withEdit: {
-	      type: Boolean,
-	      default: true
-	    },
-	    withUploadMenu: {
-	      type: Boolean,
-	      default: true
-	    },
-	    withSmileSelector: {
-	      type: Boolean,
-	      default: true
-	    },
-	    withAutoFocus: {
-	      type: Boolean,
-	      default: true
-	    },
-	    withMention: {
-	      type: Boolean,
-	      default: true
-	    }
-	  },
-	  emits: ['mounted'],
-	  data() {
-	    return {
-	      text: '',
-	      textareaHeight: TextareaHeight$1.min,
-	      showMention: false,
-	      mentionQuery: '',
-	      showUploadPreviewPopup: false,
-	      previewPopupUploaderIds: [],
-	      previewPopupUploadingId: null,
-	      previewPopupSourceFilesCount: 0,
-	      panelType: im_v2_const.TextareaPanelType.none,
-	      panelContext: {
-	        messageId: 0
-	      },
-	      showFormatToolbar: false,
-	      formatToolbarPosition: {}
-	    };
-	  },
-	  computed: {
-	    OutlineIcons: () => ui_iconSet_api_vue.Outline,
-	    ICON_SIZE: () => ICON_SIZE$5,
-	    dialog() {
-	      return this.$store.getters['chats/get'](this.dialogId, true);
-	    },
-	    dialogInited() {
-	      return this.dialog.inited;
-	    },
-	    replyMode() {
-	      return this.panelType === im_v2_const.TextareaPanelType.reply;
-	    },
-	    forwardMode() {
-	      return this.panelType === im_v2_const.TextareaPanelType.forward;
-	    },
-	    editMode() {
-	      return this.panelType === im_v2_const.TextareaPanelType.edit;
-	    },
-	    marketMode() {
-	      return this.panelType === im_v2_const.TextareaPanelType.market;
-	    },
-	    isDisabled() {
-	      return this.text.trim() === '' && !this.editMode && !this.forwardMode;
-	    },
-	    baseTextareaPlaceholder() {
-	      if (im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.copilotActive)) {
-	        return this.loc('IM_TEXTAREA_PLACEHOLDER_MSGVER_1');
-	      }
-	      return this.loc('IM_TEXTAREA_PLACEHOLDER_WITHOUT_AI');
-	    },
-	    textareaPlaceholder() {
-	      if (!this.placeholder) {
-	        return this.baseTextareaPlaceholder;
-	      }
-	      return this.placeholder;
-	    },
-	    textareaStyle() {
-	      let height = `${this.textareaHeight}px`;
-	      if (this.textareaHeight === 'auto') {
-	        height = 'auto';
-	      }
-	      return {
-	        height,
-	        maxHeight: height
-	      };
-	    },
-	    textareaMaxLength() {
-	      const settings = main_core.Extension.getSettings('im.v2.component.textarea');
-	      return settings.get('maxLength');
-	    },
-	    isEmptyText() {
-	      return this.text === '';
-	    },
-	    isAutoDeleteEnabled() {
-	      return this.$store.getters['chats/autoDelete/isEnabled'](this.dialog.chatId);
-	    },
-	    marketIconColor() {
-	      if (this.marketMode) {
-	        return im_v2_const.Color.accentBlue;
-	      }
-	      return im_v2_const.Color.gray40;
-	    },
-	    isFocused() {
-	      return this.$refs.textarea === document.activeElement;
-	    }
-	  },
-	  watch: {
-	    text(newValue) {
-	      this.adjustTextareaHeight();
-	      this.getDraftManager().setDraftText(this.dialogId, newValue);
-	      if (main_core.Type.isStringFilled(newValue)) {
-	        this.getInputActionService().startAction(im_v2_lib_inputAction.InputAction.writing);
-	      }
-	    }
-	  },
-	  created() {
-	    this.initResizeManager();
-	    this.restoreTextareaHeight();
-	    void this.restorePanel();
-	    this.initSendingService();
-	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.dialog.onMessageDeleted, this.onMessageDeleted);
-	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.textarea.insertText, this.onInsertText);
-	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.textarea.getText, this.onGetText);
-	    this.getEmitter().subscribe(im_v2_const.EventType.textarea.sendMessage, this.onSendMessage);
-	    this.getEmitter().subscribe(im_v2_const.EventType.textarea.insertText, this.onInsertText);
-	    this.getEmitter().subscribe(im_v2_const.EventType.textarea.insertMention, this.onInsertMention);
-	    this.getEmitter().subscribe(im_v2_const.EventType.textarea.insertForward, this.onInsertForward);
-	    this.getEmitter().subscribe(im_v2_const.EventType.textarea.editMessage, this.onEditMessage);
-	    this.getEmitter().subscribe(im_v2_const.EventType.textarea.replyMessage, this.onReplyMessage);
-	    this.getEmitter().subscribe(im_v2_const.EventType.dialog.closeComments, this.onCloseComments);
-	    this.getEmitter().subscribe(im_v2_const.EventType.textarea.openUploadPreview, this.onOpenUploadPreview);
-	    this.getEmitter().subscribe(im_v2_const.EventType.key.onBeforeEscape, this.onBeforeEscape);
-	  },
-	  mounted() {
-	    void this.initMentionManager();
-	    if (this.withAutoFocus) {
-	      this.focus();
-	    }
-	    this.$emit('mounted');
-	  },
-	  beforeUnmount() {
-	    this.resizeManager.destroy();
-	    this.getToolbarManager().destroy();
-	    this.unbindUploadingService();
-	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.dialog.onMessageDeleted, this.onMessageDeleted);
-	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.textarea.insertText, this.onInsertText);
-	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.textarea.getText, this.onGetText);
-	    this.getEmitter().unsubscribe(im_v2_const.EventType.textarea.sendMessage, this.onSendMessage);
-	    this.getEmitter().unsubscribe(im_v2_const.EventType.textarea.insertMention, this.onInsertMention);
-	    this.getEmitter().unsubscribe(im_v2_const.EventType.textarea.insertText, this.onInsertText);
-	    this.getEmitter().unsubscribe(im_v2_const.EventType.textarea.insertForward, this.onInsertForward);
-	    this.getEmitter().unsubscribe(im_v2_const.EventType.textarea.editMessage, this.onEditMessage);
-	    this.getEmitter().unsubscribe(im_v2_const.EventType.textarea.replyMessage, this.onReplyMessage);
-	    this.getEmitter().unsubscribe(im_v2_const.EventType.dialog.closeComments, this.onCloseComments);
-	    this.getEmitter().unsubscribe(im_v2_const.EventType.textarea.openUploadPreview, this.onOpenUploadPreview);
-	    this.getEmitter().unsubscribe(im_v2_const.EventType.key.onBeforeEscape, this.onBeforeEscape);
-	  },
-	  methods: {
-	    onGetText(event) {
-	      const {
-	        dialogId
-	      } = event.getData();
-	      if (this.dialogId !== dialogId) {
-	        return '';
-	      }
-	      return this.text;
-	    },
-	    sendMessage() {
-	      this.text = this.text.trim();
-	      if (this.isDisabled || !this.dialogInited) {
-	        return;
-	      }
-	      const text = this.mentionManager.replaceMentions(this.text);
-	      if (this.hasActiveMessageAction()) {
-	        this.handlePanelAction(text);
-	        this.closePanel();
-	      } else {
-	        this.getSendingService().sendMessage({
-	          text,
-	          dialogId: this.dialogId
-	        });
-	        im_v2_lib_soundNotification.SoundNotificationManager.getInstance().playOnce(im_v2_const.SoundType.send);
-	      }
-	      this.getInputActionService().stopAction(im_v2_lib_inputAction.InputAction.writing);
-	      this.clear();
-	      this.getDraftManager().clearDraft(this.dialogId);
-	      this.focus();
-	      this.getEmitter().emit(im_v2_const.EventType.textarea.onAfterSendMessage);
-	    },
-	    handlePanelAction(text) {
-	      if (this.editMode) {
-	        this.handleEditAction(text);
-	      } else if (this.forwardMode) {
-	        void this.getSendingService().forwardMessages({
-	          text,
-	          dialogId: this.dialogId,
-	          forwardIds: this.panelContext.messagesIds
-	        });
-	        im_v2_lib_soundNotification.SoundNotificationManager.getInstance().playOnce(im_v2_const.SoundType.send);
-	      } else if (this.replyMode) {
-	        this.getSendingService().sendMessage({
-	          text,
-	          dialogId: this.dialogId,
-	          replyId: this.panelContext.messageId
-	        });
-	        im_v2_lib_soundNotification.SoundNotificationManager.getInstance().playOnce(im_v2_const.SoundType.send);
-	      }
-	    },
-	    handleEditAction(text) {
-	      if (text === '' && !this.messageHasFiles(this.panelContext.messageId)) {
-	        return this.getMessageService().deleteMessages([this.panelContext.messageId]);
-	      }
-	      return this.getMessageService().editMessageText(this.panelContext.messageId, text);
-	    },
-	    messageHasFiles(messageId) {
-	      const message = this.$store.getters['messages/getById'](messageId);
-	      if (!message) {
-	        return false;
-	      }
-	      return message.files.length > 0;
-	    },
-	    clear() {
-	      var _this$mentionManager;
-	      this.text = '';
-	      (_this$mentionManager = this.mentionManager) == null ? void 0 : _this$mentionManager.clearMentionReplacements();
-	    },
-	    hasActiveMessageAction() {
-	      return MESSAGE_ACTION_PANELS.has(this.panelType);
-	    },
-	    closePanel() {
-	      if (this.editMode) {
-	        this.clear();
-	      }
-	      this.panelType = im_v2_const.TextareaPanelType.none;
-	      this.panelContext = {
-	        messageId: 0
-	      };
-	      this.getDraftManager().setDraftPanel(this.dialogId, this.panelType, this.panelContext);
-	    },
-	    openEditPanel(messageId) {
-	      if (!this.withEdit) {
-	        return;
-	      }
-	      const message = this.$store.getters['messages/getById'](messageId);
-	      if (message.isDeleted) {
-	        return;
-	      }
-	      this.panelType = im_v2_const.TextareaPanelType.edit;
-	      this.panelContext.messageId = messageId;
-	      const mentions = this.mentionManager.extractMentions(message.text);
-	      this.mentionManager.setMentionReplacements(mentions);
-	      this.text = im_v2_lib_parser.Parser.prepareEdit(message);
-	      this.focus();
-	      this.getDraftManager().setDraftText(this.dialogId, this.text);
-	      this.getDraftManager().setDraftPanel(this.dialogId, this.panelType, this.panelContext);
-	      this.getDraftManager().setDraftMentions(this.dialogId, mentions);
-	    },
-	    openReplyPanel(messageId) {
-	      if (this.editMode) {
-	        this.clear();
-	      }
-	      this.panelType = im_v2_const.TextareaPanelType.reply;
-	      this.panelContext.messageId = messageId;
-	      this.focus();
-	      this.getDraftManager().setDraftPanel(this.dialogId, this.panelType, this.panelContext);
-	    },
-	    openForwardPanel(messagesIds) {
-	      this.panelType = im_v2_const.TextareaPanelType.forward;
-	      this.panelContext.messageId = 0;
-	      this.panelContext.messagesIds = messagesIds;
-	      this.clear();
-	      this.focus();
-	      this.getDraftManager().setDraftPanel(this.dialogId, this.panelType, this.panelContext);
-	    },
-	    toggleMarketPanel() {
-	      if (this.marketMode) {
-	        this.panelType = im_v2_const.TextareaPanelType.none;
-	        return;
-	      }
-	      this.panelType = im_v2_const.TextareaPanelType.market;
-	      this.panelContext.messageId = 0;
-	    },
-	    async adjustTextareaHeight() {
-	      this.textareaHeight = 'auto';
-	      await this.$nextTick();
-	      const newMaxPoint = Math.min(TextareaHeight$1.max, this.$refs.textarea.scrollHeight);
-	      if (this.resizedTextareaHeight) {
-	        this.textareaHeight = Math.max(newMaxPoint, this.resizedTextareaHeight);
-	        return;
-	      }
-	      this.textareaHeight = Math.max(newMaxPoint, TextareaHeight$1.min);
-	    },
-	    saveTextareaHeight() {
-	      const WRITE_TO_STORAGE_TIMEOUT = 200;
-	      clearTimeout(this.saveTextareaTimeout);
-	      this.saveTextareaTimeout = setTimeout(() => {
-	        im_v2_lib_localStorage.LocalStorageManager.getInstance().set(im_v2_const.LocalStorageKey.textareaHeight, this.resizedTextareaHeight);
-	      }, WRITE_TO_STORAGE_TIMEOUT);
-	    },
-	    restoreTextareaHeight() {
-	      const rawSavedHeight = im_v2_lib_localStorage.LocalStorageManager.getInstance().get(im_v2_const.LocalStorageKey.textareaHeight);
-	      const savedHeight = Number.parseInt(rawSavedHeight, 10);
-	      if (!savedHeight) {
-	        return;
-	      }
-	      this.resizedTextareaHeight = savedHeight;
-	      this.textareaHeight = savedHeight;
-	    },
-	    checkMessageExists(messageId) {
-	      return this.$store.getters['messages/isExists'](messageId);
-	    },
-	    verifyPanelContext(panelContext) {
-	      if (panelContext.messagesIds) {
-	        return panelContext.messagesIds.every(messageId => this.checkMessageExists(messageId));
-	      }
-	      return this.checkMessageExists(panelContext.messageId);
-	    },
-	    async restorePanel() {
-	      const {
-	        text = '',
-	        panelType = im_v2_const.TextareaPanelType.none,
-	        panelContext = {
-	          messageId: 0
-	        }
-	      } = await this.getDraftManager().getDraft(this.dialogId);
-	      const noPanel = this.panelType === im_v2_const.TextareaPanelType.none;
-	      if (!noPanel && !this.verifyPanelContext(panelContext)) {
-	        return;
-	      }
-	      this.text = text;
-	      if (noPanel) {
-	        this.panelType = panelType;
-	      }
-	      this.panelContext = panelContext;
-	    },
-	    onBeforeEscape() {
-	      if (this.hasActiveMessageAction()) {
-	        this.closePanel();
-	        return im_v2_lib_escManager.EscEventAction.handled;
-	      }
-	      if (this.isFocused && !this.isEmptyText) {
-	        return im_v2_lib_escManager.EscEventAction.handled;
-	      }
-	      return im_v2_lib_escManager.EscEventAction.ignored;
-	    },
-	    onMouseUp(event) {
-	      this.getToolbarManager().handleTextSelect(event, this.$refs.textarea);
-	    },
-	    async onKeyDown(event) {
-	      im_v2_lib_analytics.Analytics.getInstance().onTypeMessage(this.dialog);
-	      this.getToolbarManager().hide();
-	      if (this.showMention && this.withMention) {
-	        this.mentionManager.onActiveMentionKeyDown(event);
-	        return;
-	      }
-	      const sendMessageCombination = im_v2_lib_hotkey.isSendMessageCombination(event);
-	      const newLineCombination = im_v2_lib_hotkey.isNewLineCombination(event);
-	      if (sendMessageCombination && !newLineCombination) {
-	        event.preventDefault();
-	        this.sendMessage();
-	        return;
-	      }
-	      if (newLineCombination) {
-	        this.handleNewLine();
-	        return;
-	      }
-	      const tabCombination = im_v2_lib_utils.Utils.key.isCombination(event, 'Tab');
-	      if (tabCombination) {
-	        this.handleTab(event);
-	        return;
-	      }
-	      const decorationCombination = im_v2_lib_utils.Utils.key.isExactCombination(event, ['Ctrl+b', 'Ctrl+i', 'Ctrl+u', 'Ctrl+s']);
-	      if (decorationCombination) {
-	        event.preventDefault();
-	        this.text = im_v2_lib_textarea.Textarea.handleDecorationTag(this.$refs.textarea, event.code);
-	        return;
-	      }
-	      if (this.text === '' && im_v2_lib_utils.Utils.key.isCombination(event, 'ArrowUp')) {
-	        this.handleLastOwnMessageEdit(event);
-	        return;
-	      }
-	      this.mentionManager.onKeyDown(event);
-	    },
-	    handleNewLine() {
-	      this.text = im_v2_lib_textarea.Textarea.addNewLine(this.$refs.textarea);
-	    },
-	    handleTab(event) {
-	      event.preventDefault();
-	      if (event.shiftKey) {
-	        this.text = im_v2_lib_textarea.Textarea.removeTab(this.$refs.textarea);
-	        return;
-	      }
-	      this.text = im_v2_lib_textarea.Textarea.addTab(this.$refs.textarea);
-	    },
-	    handleLastOwnMessageEdit(event) {
-	      event.preventDefault();
-	      const lastOwnMessageId = this.$store.getters['messages/getLastOwnMessageId'](this.dialog.chatId);
-	      const isEditable = im_v2_lib_message.MessageManager.isEditable(lastOwnMessageId);
-	      if (isEditable) {
-	        this.openEditPanel(lastOwnMessageId);
-	      }
-	    },
-	    onSendMessage(event) {
-	      const {
-	        text,
-	        dialogId
-	      } = event.getData();
-	      if (this.dialogId !== dialogId) {
-	        return;
-	      }
-	      this.getSendingService().sendMessage({
-	        text,
-	        dialogId: this.dialogId
-	      });
-	    },
-	    onResizeStart(event) {
-	      this.resizeManager.onResizeStart(event, this.textareaHeight);
-	    },
-	    async onFileSelect({
-	      event,
-	      sendAsFile
-	    }) {
-	      const multiUploadingService = this.getMultiUploadingService();
-	      const multiUploadingResult = await multiUploadingService.upload({
-	        files: Object.values(event.target.files),
-	        sendAsFile,
-	        dialogId: this.dialogId,
-	        autoUpload: false
-	      });
-	      this.showUploadPreviewPopup = true;
-	      this.previewPopupUploaderIds = multiUploadingResult.uploaderIds;
-	      this.previewPopupUploadingId = multiUploadingResult.uploadingId;
-	      this.previewPopupSourceFilesCount = multiUploadingResult.sourceFilesCount;
-	    },
-	    onDiskFileSelect({
-	      files
-	    }) {
-	      this.getUploadingService().uploadFileFromDisk(files, this.dialogId);
-	    },
-	    onInsertMention(event) {
-	      const {
-	        mentionText,
-	        mentionReplacement,
-	        dialogId,
-	        isMentionSymbol = true
-	      } = event.getData();
-	      let {
-	        textToReplace = ''
-	      } = event.getData();
-	      if (this.dialogId !== dialogId) {
-	        return;
-	      }
-	      const mentions = this.mentionManager.addMentionReplacement(mentionText, mentionReplacement);
-	      this.getDraftManager().setDraftMentions(this.dialogId, mentions);
-	      const mentionSymbol = isMentionSymbol ? this.mentionManager.getMentionSymbol() : '';
-	      textToReplace = `${mentionSymbol}${textToReplace}`;
-	      this.text = im_v2_lib_textarea.Textarea.insertMention(this.$refs.textarea, {
-	        textToInsert: mentionText,
-	        textToReplace
-	      });
-	      this.mentionManager.clearMentionSymbol();
-	    },
-	    onInsertText(event) {
-	      const {
-	        dialogId
-	      } = event.getData();
-	      if (this.dialogId !== dialogId) {
-	        return;
-	      }
-	      this.text = im_v2_lib_textarea.Textarea.insertText(this.$refs.textarea, event.getData());
-	    },
-	    onEditMessage(event) {
-	      const {
-	        messageId,
-	        dialogId
-	      } = event.getData();
-	      if (this.dialogId !== dialogId) {
-	        return;
-	      }
-	      this.openEditPanel(messageId);
-	    },
-	    onReplyMessage(event) {
-	      const {
-	        messageId,
-	        dialogId
-	      } = event.getData();
-	      if (this.dialogId !== dialogId) {
-	        return;
-	      }
-	      this.openReplyPanel(messageId);
-	    },
-	    onInsertForward(event) {
-	      const {
-	        messagesIds,
-	        dialogId
-	      } = event.getData();
-	      if (this.dialogId !== dialogId) {
-	        return;
-	      }
-	      this.openForwardPanel(messagesIds);
-	    },
-	    async onPaste(event) {
-	      this.text = im_v2_lib_textarea.Textarea.handlePasteUrl(this.$refs.textarea, event);
-	      if (!this.withUploadMenu) {
-	        return;
-	      }
-	      if (!event.clipboardData || !ui_uploader_core.isFilePasted(event.clipboardData)) {
-	        return;
-	      }
-	      event.preventDefault();
-	      const multiUploadingService = this.getMultiUploadingService();
-	      const multiUploadingResult = await multiUploadingService.upload({
-	        files: await ui_uploader_core.getFilesFromDataTransfer(event.clipboardData),
-	        dialogId: this.dialogId,
-	        autoUpload: false
-	      });
-	      if (!main_core.Type.isArrayFilled(multiUploadingResult.uploaderIds)) {
-	        return;
-	      }
-	      this.showUploadPreviewPopup = true;
-	      this.previewPopupUploaderIds = multiUploadingResult.uploaderIds;
-	      this.previewPopupUploadingId = multiUploadingResult.uploadingId;
-	      this.previewPopupSourceFilesCount = multiUploadingResult.sourceFilesCount;
-	    },
-	    onOpenUploadPreview(event) {
-	      const {
-	        multiUploadingResult
-	      } = event.getData();
-	      this.showUploadPreviewPopup = true;
-	      this.previewPopupUploaderIds = multiUploadingResult.uploaderIds;
-	      this.previewPopupUploadingId = multiUploadingResult.uploadingId;
-	      this.previewPopupSourceFilesCount = multiUploadingResult.sourceFilesCount;
-	    },
-	    onMarketIconClick() {
-	      this.toggleMarketPanel();
-	    },
-	    onMessageDeleted(event) {
-	      const {
-	        messageId
-	      } = event.getData();
-	      if (this.panelContext.messageId === messageId) {
-	        this.closePanel();
-	      }
-	      if (this.panelContext.messagesIds && this.panelContext.messagesIds.includes(messageId)) {
-	        this.closePanel();
-	      }
-	    },
-	    onShowFormatToolbar(event) {
-	      const {
-	        bindPosition
-	      } = event.getData();
-	      this.formatToolbarPosition = bindPosition;
-	      this.showFormatToolbar = true;
-	    },
-	    onHideFormatToolbar() {
-	      this.showFormatToolbar = false;
-	    },
-	    onFormatToolbarUpdateText(newText) {
-	      this.text = newText;
-	    },
-	    initResizeManager() {
-	      this.resizeManager = new ResizeManager({
-	        direction: ResizeDirection.up,
-	        maxHeight: TextareaHeight$1.max,
-	        minHeight: TextareaHeight$1.min
-	      });
-	      this.resizeManager.subscribe(ResizeManager.events.onHeightChange, ({
-	        data: {
-	          newHeight
-	        }
-	      }) => {
-	        im_v2_lib_logger.Logger.warn('Textarea: Resize height change', newHeight);
-	        this.textareaHeight = newHeight;
-	      });
-	      this.resizeManager.subscribe(ResizeManager.events.onResizeStop, () => {
-	        im_v2_lib_logger.Logger.warn('Textarea: Resize stop');
-	        this.resizedTextareaHeight = this.textareaHeight;
-	        this.saveTextareaHeight();
-	      });
-	    },
-	    initSendingService() {
-	      if (this.sendingService) {
-	        return;
-	      }
-	      this.sendingService = im_v2_provider_service_sending.SendingService.getInstance();
-	    },
-	    async initMentionManager() {
-	      const {
-	        mentions = {}
-	      } = await this.getDraftManager().getDraft(this.dialogId);
-	      this.mentionManager = new MentionManager({
-	        textareaElement: this.$refs.textarea,
-	        context: {
-	          emitter: this.getEmitter()
-	        }
-	      });
-	      this.mentionManager.setMentionReplacements(mentions);
-	      this.mentionManager.subscribe(MentionManagerEvents.showMentionPopup, event => {
-	        const {
-	          mentionQuery
-	        } = event.getData();
-	        this.showMentionPopup(mentionQuery);
-	      });
-	      this.mentionManager.subscribe(MentionManagerEvents.hideMentionPopup, () => {
-	        this.closeMentionPopup();
-	      });
-	    },
-	    getSendingService() {
-	      return this.sendingService;
-	    },
-	    getInputActionService() {
-	      if (!this.inputSenderService) {
-	        this.inputSenderService = new InputSenderService(this.dialogId);
-	      }
-	      return this.inputSenderService;
-	    },
-	    getDraftManager() {
-	      if (!this.draftManager) {
-	        this.draftManager = im_v2_lib_draft.DraftManager.getInstance();
-	      }
-	      return this.draftManager;
-	    },
-	    getToolbarManager() {
-	      if (!this.toolbarManager) {
-	        this.toolbarManager = new FormatToolbarManager();
-	        this.toolbarManager.subscribe(FormatToolbarManager.events.show, this.onShowFormatToolbar);
-	        this.toolbarManager.subscribe(FormatToolbarManager.events.hide, this.onHideFormatToolbar);
-	      }
-	      return this.toolbarManager;
-	    },
-	    getMessageService() {
-	      if (!this.messageService) {
-	        this.messageService = new im_v2_provider_service_message.MessageService({
-	          chatId: this.dialog.chatId
-	        });
-	      }
-	      return this.messageService;
-	    },
-	    getUploadingService() {
-	      if (!this.uploadingService) {
-	        this.initUploadingService();
-	      }
-	      return this.uploadingService;
-	    },
-	    initUploadingService() {
-	      this.uploadingService = im_v2_provider_service_uploading.UploadingService.getInstance();
-	      this.startFileUploadAction = () => {
-	        this.getInputActionService().startAction(im_v2_lib_inputAction.InputAction.sendingFile);
-	      };
-	      this.stopFileUploadAction = () => {
-	        this.getInputActionService().stopAction(im_v2_lib_inputAction.InputAction.sendingFile);
-	      };
-	      this.uploadingService.subscribe(im_v2_provider_service_uploading.UploadingService.event.uploadStart, this.startFileUploadAction);
-	      this.uploadingService.subscribe(im_v2_provider_service_uploading.UploadingService.event.uploadComplete, this.stopFileUploadAction);
-	      this.uploadingService.subscribe(im_v2_provider_service_uploading.UploadingService.event.uploadCancel, this.stopFileUploadAction);
-	      this.uploadingService.subscribe(im_v2_provider_service_uploading.UploadingService.event.uploadError, this.stopFileUploadAction);
-	    },
-	    unbindUploadingService() {
-	      if (!this.uploadingService) {
-	        return;
-	      }
-	      this.uploadingService.unsubscribe(im_v2_provider_service_uploading.UploadingService.event.uploadStart, this.startFileUploadAction);
-	      this.uploadingService.unsubscribe(im_v2_provider_service_uploading.UploadingService.event.uploadComplete, this.stopFileUploadAction);
-	      this.uploadingService.unsubscribe(im_v2_provider_service_uploading.UploadingService.event.uploadCancel, this.stopFileUploadAction);
-	      this.uploadingService.unsubscribe(im_v2_provider_service_uploading.UploadingService.event.uploadError, this.stopFileUploadAction);
-	    },
-	    getMultiUploadingService() {
-	      if (!this.multiUploadingService) {
-	        this.multiUploadingService = new im_v2_provider_service_uploading.MultiUploadingService();
-	      }
-	      return this.multiUploadingService;
-	    },
-	    async onSendFilesFromPreviewPopup(event) {
-	      this.text = '';
-	      const {
-	        text,
-	        files,
-	        sendAsFile
-	      } = event;
-	      const textWithMentions = this.mentionManager.replaceMentions(text);
-	      const multiUploadingResult = await this.getMultiUploadingService().upload({
-	        files,
-	        dialogId: this.dialogId,
-	        autoUpload: false,
-	        sendAsFile
-	      });
-	      await multiUploadingResult.loadAllComplete;
-	      multiUploadingResult.uploaderIds.forEach((uploaderId, index) => {
-	        this.getUploadingService().sendMessageWithFiles({
-	          uploaderId,
-	          text: index === 0 ? textWithMentions : ''
-	        });
-	      });
-	      this.focus();
-	    },
-	    closeMentionPopup() {
-	      this.showMention = false;
-	      this.mentionQuery = '';
-	      this.mentionManager.onMentionPopupClose();
-	    },
-	    showMentionPopup(mentionQuery) {
-	      this.mentionQuery = mentionQuery;
-	      this.showMention = true;
-	    },
-	    focus() {
-	      var _this$$refs$textarea;
-	      (_this$$refs$textarea = this.$refs.textarea) == null ? void 0 : _this$$refs$textarea.focus({
-	        preventScroll: true
-	      });
-	    },
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
-	    },
-	    onAudioInputStart() {
-	      if (this.isEmptyText) {
-	        return;
-	      }
-	      this.text += ' ';
-	    },
-	    onAudioInputResult(inputText) {
-	      this.text += inputText;
-	    },
-	    onCloseComments() {
-	      this.restoreTextareaHeight();
-	    },
-	    getEmitter() {
-	      return this.$Bitrix.eventEmitter;
-	    }
-	  },
-	  template: `
+		components: {
+			UploadMenu,
+			EmoteSelector,
+			SendButton: im_v2_component_elements_sendButton.SendButton,
+			UploadPreviewPopup,
+			MentionPopup,
+			TextareaPanel,
+			AudioInput,
+			AutoDeleteSelector,
+			BIcon: ui_iconSet_api_vue.BIcon,
+			FormatToolbar
+		},
+		props: {
+			dialogId: {
+				type: String,
+				default: ''
+			},
+			placeholder: {
+				type: String,
+				default: ''
+			},
+			withMarket: {
+				type: Boolean,
+				default: true
+			},
+			withEdit: {
+				type: Boolean,
+				default: true
+			},
+			withUploadMenu: {
+				type: Boolean,
+				default: true
+			},
+			withSmileSelector: {
+				type: Boolean,
+				default: true
+			},
+			withAutoFocus: {
+				type: Boolean,
+				default: true
+			},
+			withMention: {
+				type: Boolean,
+				default: true
+			}
+		},
+		emits: ['mounted'],
+		data() {
+			return {
+				text: '',
+				textareaHeight: TextareaHeight.min,
+				showMention: false,
+				mentionQuery: '',
+				showUploadPreviewPopup: false,
+				previewPopupUploaderIds: [],
+				previewPopupUploadingId: null,
+				previewPopupSourceFilesCount: 0,
+				panelType: im_v2_const.TextareaPanelType.none,
+				panelContext: {
+					messageId: 0
+				},
+				showFormatToolbar: false,
+				formatToolbarPosition: {}
+			};
+		},
+		computed: {
+			OutlineIcons: () => ui_iconSet_api_vue.Outline,
+			ICON_SIZE: () => ICON_SIZE,
+			dialog() {
+				return this.$store.getters['chats/get'](this.dialogId, true);
+			},
+			dialogInited() {
+				return this.dialog.inited;
+			},
+			replyMode() {
+				return this.panelType === im_v2_const.TextareaPanelType.reply;
+			},
+			forwardMode() {
+				return this.panelType === im_v2_const.TextareaPanelType.forward;
+			},
+			editMode() {
+				return this.panelType === im_v2_const.TextareaPanelType.edit;
+			},
+			marketMode() {
+				return this.panelType === im_v2_const.TextareaPanelType.market;
+			},
+			isDisabled() {
+				return this.text.trim() === '' && !this.editMode && !this.forwardMode;
+			},
+			baseTextareaPlaceholder() {
+				if (im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.copilotActive)) {
+					return this.loc('IM_TEXTAREA_PLACEHOLDER_MSGVER_1');
+				}
+				return this.loc('IM_TEXTAREA_PLACEHOLDER_WITHOUT_AI');
+			},
+			textareaPlaceholder() {
+				if (!this.placeholder) {
+					return this.baseTextareaPlaceholder;
+				}
+				return this.placeholder;
+			},
+			textareaStyle() {
+				let height = `${this.textareaHeight}px`;
+				if (this.textareaHeight === 'auto') {
+					height = 'auto';
+				}
+				return {
+					height,
+					maxHeight: height
+				};
+			},
+			textareaMaxLength() {
+				const settings = main_core.Extension.getSettings('im.v2.component.textarea');
+				return settings.get('maxLength');
+			},
+			isEmptyText() {
+				return this.text === '';
+			},
+			isAutoDeleteEnabled() {
+				return this.$store.getters['chats/autoDelete/isEnabled'](this.dialog.chatId);
+			},
+			marketIconColor() {
+				if (this.marketMode) {
+					return im_v2_const.Color.accentBlue;
+				}
+				return im_v2_const.Color.gray40;
+			},
+			isFocused() {
+				return this.$refs.textarea === document.activeElement;
+			}
+		},
+		watch: {
+			text(newValue) {
+				this.adjustTextareaHeight();
+				this.getDraftManager().setDraftText(this.dialogId, newValue);
+				if (main_core.Type.isStringFilled(newValue)) {
+					this.getInputActionService().startAction(im_v2_lib_inputAction.InputAction.writing);
+				}
+			}
+		},
+		created() {
+			this.initResizeManager();
+			this.restoreTextareaHeight();
+			void this.restorePanel();
+			this.initSendingService();
+			main_core_events.EventEmitter.subscribe(im_v2_const.EventType.dialog.onMessageDeleted, this.onMessageDeleted);
+			main_core_events.EventEmitter.subscribe(im_v2_const.EventType.textarea.insertText, this.onInsertText);
+			main_core_events.EventEmitter.subscribe(im_v2_const.EventType.textarea.getText, this.onGetText);
+			this.getEmitter().subscribe(im_v2_const.EventType.textarea.sendMessage, this.onSendMessage);
+			this.getEmitter().subscribe(im_v2_const.EventType.textarea.insertText, this.onInsertText);
+			this.getEmitter().subscribe(im_v2_const.EventType.textarea.insertMention, this.onInsertMention);
+			this.getEmitter().subscribe(im_v2_const.EventType.textarea.insertForward, this.onInsertForward);
+			this.getEmitter().subscribe(im_v2_const.EventType.textarea.editMessage, this.onEditMessage);
+			this.getEmitter().subscribe(im_v2_const.EventType.textarea.replyMessage, this.onReplyMessage);
+			this.getEmitter().subscribe(im_v2_const.EventType.dialog.closeComments, this.onCloseComments);
+			this.getEmitter().subscribe(im_v2_const.EventType.textarea.openUploadPreview, this.onOpenUploadPreview);
+			this.getEmitter().subscribe(im_v2_const.EventType.key.onBeforeEscape, this.onBeforeEscape);
+		},
+		mounted() {
+			void this.initMentionManager();
+			if (this.withAutoFocus) {
+				this.focus();
+			}
+			this.$emit('mounted');
+		},
+		beforeUnmount() {
+			this.resizeManager.destroy();
+			this.getToolbarManager().destroy();
+			this.unbindUploadingService();
+			main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.dialog.onMessageDeleted, this.onMessageDeleted);
+			main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.textarea.insertText, this.onInsertText);
+			main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.textarea.getText, this.onGetText);
+			this.getEmitter().unsubscribe(im_v2_const.EventType.textarea.sendMessage, this.onSendMessage);
+			this.getEmitter().unsubscribe(im_v2_const.EventType.textarea.insertMention, this.onInsertMention);
+			this.getEmitter().unsubscribe(im_v2_const.EventType.textarea.insertText, this.onInsertText);
+			this.getEmitter().unsubscribe(im_v2_const.EventType.textarea.insertForward, this.onInsertForward);
+			this.getEmitter().unsubscribe(im_v2_const.EventType.textarea.editMessage, this.onEditMessage);
+			this.getEmitter().unsubscribe(im_v2_const.EventType.textarea.replyMessage, this.onReplyMessage);
+			this.getEmitter().unsubscribe(im_v2_const.EventType.dialog.closeComments, this.onCloseComments);
+			this.getEmitter().unsubscribe(im_v2_const.EventType.textarea.openUploadPreview, this.onOpenUploadPreview);
+			this.getEmitter().unsubscribe(im_v2_const.EventType.key.onBeforeEscape, this.onBeforeEscape);
+		},
+		methods: {
+			onGetText(event) {
+				const {
+					dialogId
+				} = event.getData();
+				if (this.dialogId !== dialogId) {
+					return '';
+				}
+				return this.text;
+			},
+			sendMessage() {
+				this.text = this.text.trim();
+				if (this.isDisabled || !this.dialogInited) {
+					return;
+				}
+				const eventResult = main_core_events.EventEmitter.emit(im_v2_const.EventType.textarea.onBeforeSendMessage);
+				if (eventResult.includes(BeforeSendMessageAction.cancel)) {
+					this.resetTextarea();
+					return;
+				}
+				const text = this.mentionManager.replaceMentions(this.text);
+				if (this.hasActiveMessageAction()) {
+					this.handlePanelAction(text);
+					this.closePanel();
+				} else {
+					this.getSendingService().sendMessage({
+						text,
+						dialogId: this.dialogId
+					});
+					im_v2_lib_soundNotification.SoundNotificationManager.getInstance().playOnce(im_v2_const.SoundType.send);
+				}
+				this.resetTextarea();
+				this.getEmitter().emit(im_v2_const.EventType.textarea.onAfterSendMessage);
+			},
+			resetTextarea() {
+				this.getInputActionService().stopAction(im_v2_lib_inputAction.InputAction.writing);
+				this.clear();
+				this.getDraftManager().clearDraft(this.dialogId);
+				this.focus();
+			},
+			handlePanelAction(text) {
+				if (this.editMode) {
+					this.handleEditAction(text);
+				} else if (this.forwardMode) {
+					void this.getSendingService().forwardMessages({
+						text,
+						dialogId: this.dialogId,
+						forwardIds: this.panelContext.messagesIds
+					});
+					im_v2_lib_soundNotification.SoundNotificationManager.getInstance().playOnce(im_v2_const.SoundType.send);
+				} else if (this.replyMode) {
+					this.getSendingService().sendMessage({
+						text,
+						dialogId: this.dialogId,
+						replyId: this.panelContext.messageId
+					});
+					im_v2_lib_soundNotification.SoundNotificationManager.getInstance().playOnce(im_v2_const.SoundType.send);
+				}
+			},
+			handleEditAction(text) {
+				if (text === '' && !this.messageHasFiles(this.panelContext.messageId)) {
+					return this.getMessageService().deleteMessages([this.panelContext.messageId]);
+				}
+				return this.getMessageService().editMessageText(this.panelContext.messageId, text);
+			},
+			messageHasFiles(messageId) {
+				const message = this.$store.getters['messages/getById'](messageId);
+				if (!message) {
+					return false;
+				}
+				return message.files.length > 0;
+			},
+			clear() {
+				this.text = '';
+				this.mentionManager?.clearMentionReplacements();
+			},
+			hasActiveMessageAction() {
+				return MESSAGE_ACTION_PANELS.has(this.panelType);
+			},
+			closePanel() {
+				if (this.editMode) {
+					this.clear();
+				}
+				this.panelType = im_v2_const.TextareaPanelType.none;
+				this.panelContext = {
+					messageId: 0
+				};
+				this.getDraftManager().setDraftPanel(this.dialogId, this.panelType, this.panelContext);
+			},
+			openEditPanel(messageId) {
+				if (!this.withEdit) {
+					return;
+				}
+				const message = this.$store.getters['messages/getById'](messageId);
+				if (message.isDeleted) {
+					return;
+				}
+				this.panelType = im_v2_const.TextareaPanelType.edit;
+				this.panelContext.messageId = messageId;
+				const mentions = this.mentionManager.extractMentions(message.text);
+				this.mentionManager.setMentionReplacements(mentions);
+				this.text = im_v2_lib_parser.Parser.prepareEdit(message);
+				this.focus();
+				this.getDraftManager().setDraftText(this.dialogId, this.text);
+				this.getDraftManager().setDraftPanel(this.dialogId, this.panelType, this.panelContext);
+				this.getDraftManager().setDraftMentions(this.dialogId, mentions);
+			},
+			openReplyPanel(messageId) {
+				if (this.editMode) {
+					this.clear();
+				}
+				this.panelType = im_v2_const.TextareaPanelType.reply;
+				this.panelContext.messageId = messageId;
+				this.focus();
+				this.getDraftManager().setDraftPanel(this.dialogId, this.panelType, this.panelContext);
+			},
+			openForwardPanel(messagesIds) {
+				this.panelType = im_v2_const.TextareaPanelType.forward;
+				this.panelContext.messageId = 0;
+				this.panelContext.messagesIds = messagesIds;
+				this.clear();
+				this.focus();
+				this.getDraftManager().setDraftPanel(this.dialogId, this.panelType, this.panelContext);
+			},
+			toggleMarketPanel() {
+				if (this.marketMode) {
+					this.panelType = im_v2_const.TextareaPanelType.none;
+					return;
+				}
+				this.panelType = im_v2_const.TextareaPanelType.market;
+				this.panelContext.messageId = 0;
+			},
+			async adjustTextareaHeight() {
+				this.textareaHeight = 'auto';
+				await this.$nextTick();
+				const newMaxPoint = Math.min(TextareaHeight.max, this.$refs.textarea.scrollHeight);
+				if (this.resizedTextareaHeight) {
+					this.textareaHeight = Math.max(newMaxPoint, this.resizedTextareaHeight);
+					return;
+				}
+				this.textareaHeight = Math.max(newMaxPoint, TextareaHeight.min);
+			},
+			saveTextareaHeight() {
+				const WRITE_TO_STORAGE_TIMEOUT = 200;
+				clearTimeout(this.saveTextareaTimeout);
+				this.saveTextareaTimeout = setTimeout(() => {
+					im_v2_lib_localStorage.LocalStorageManager.getInstance().set(im_v2_const.LocalStorageKey.textareaHeight, this.resizedTextareaHeight);
+				}, WRITE_TO_STORAGE_TIMEOUT);
+			},
+			restoreTextareaHeight() {
+				const rawSavedHeight = im_v2_lib_localStorage.LocalStorageManager.getInstance().get(im_v2_const.LocalStorageKey.textareaHeight);
+				const savedHeight = Number.parseInt(rawSavedHeight, 10);
+				if (!savedHeight) {
+					return;
+				}
+				this.resizedTextareaHeight = savedHeight;
+				this.textareaHeight = savedHeight;
+			},
+			checkMessageExists(messageId) {
+				return this.$store.getters['messages/isExists'](messageId);
+			},
+			verifyPanelContext(panelContext) {
+				if (panelContext.messagesIds) {
+					return panelContext.messagesIds.every(messageId => this.checkMessageExists(messageId));
+				}
+				return this.checkMessageExists(panelContext.messageId);
+			},
+			async restorePanel() {
+				const {
+					text = '',
+					panelType = im_v2_const.TextareaPanelType.none,
+					panelContext = {
+						messageId: 0
+					}
+				} = await this.getDraftManager().getDraft(this.dialogId);
+				const noPanel = this.panelType === im_v2_const.TextareaPanelType.none;
+				if (!noPanel && !this.verifyPanelContext(panelContext)) {
+					return;
+				}
+				this.text = text;
+				if (noPanel) {
+					this.panelType = panelType;
+				}
+				this.panelContext = panelContext;
+			},
+			onBeforeEscape() {
+				if (this.hasActiveMessageAction()) {
+					this.closePanel();
+					return im_v2_lib_escManager.EscEventAction.handled;
+				}
+				if (this.isFocused && !this.isEmptyText) {
+					return im_v2_lib_escManager.EscEventAction.handled;
+				}
+				return im_v2_lib_escManager.EscEventAction.ignored;
+			},
+			onMouseUp(event) {
+				this.getToolbarManager().handleTextSelect(event, this.$refs.textarea);
+			},
+			async onKeyDown(event) {
+				im_v2_lib_analytics.Analytics.getInstance().onTypeMessage(this.dialog);
+				this.getToolbarManager().hide();
+				if (this.showMention && this.withMention) {
+					this.mentionManager.onActiveMentionKeyDown(event);
+					return;
+				}
+				const sendMessageCombination = im_v2_lib_hotkey.isSendMessageCombination(event);
+				const newLineCombination = im_v2_lib_hotkey.isNewLineCombination(event);
+				if (sendMessageCombination && !newLineCombination) {
+					event.preventDefault();
+					this.sendMessage();
+					return;
+				}
+				if (newLineCombination) {
+					this.handleNewLine();
+					return;
+				}
+				const tabCombination = im_v2_lib_utils.Utils.key.isCombination(event, 'Tab');
+				if (tabCombination) {
+					this.handleTab(event);
+					return;
+				}
+				const decorationCombination = im_v2_lib_utils.Utils.key.isExactCombination(event, ['Ctrl+b', 'Ctrl+i', 'Ctrl+u', 'Ctrl+s']);
+				if (decorationCombination) {
+					event.preventDefault();
+					this.text = im_v2_lib_textarea.Textarea.handleDecorationTag(this.$refs.textarea, event.code);
+					return;
+				}
+				if (this.text === '' && im_v2_lib_utils.Utils.key.isCombination(event, 'ArrowUp')) {
+					this.handleLastOwnMessageEdit(event);
+					return;
+				}
+				this.mentionManager.onKeyDown(event);
+			},
+			handleNewLine() {
+				this.text = im_v2_lib_textarea.Textarea.addNewLine(this.$refs.textarea);
+			},
+			handleTab(event) {
+				event.preventDefault();
+				if (event.shiftKey) {
+					this.text = im_v2_lib_textarea.Textarea.removeTab(this.$refs.textarea);
+					return;
+				}
+				this.text = im_v2_lib_textarea.Textarea.addTab(this.$refs.textarea);
+			},
+			handleLastOwnMessageEdit(event) {
+				event.preventDefault();
+				const lastOwnMessageId = this.$store.getters['messages/getLastOwnMessageId'](this.dialog.chatId);
+				const isEditable = im_v2_lib_message.MessageManager.isEditable(lastOwnMessageId);
+				if (isEditable) {
+					this.openEditPanel(lastOwnMessageId);
+				}
+			},
+			onSendMessage(event) {
+				const {
+					text,
+					dialogId
+				} = event.getData();
+				if (this.dialogId !== dialogId) {
+					return;
+				}
+				this.getSendingService().sendMessage({
+					text,
+					dialogId: this.dialogId
+				});
+			},
+			onResizeStart(event) {
+				this.resizeManager.onResizeStart(event, this.textareaHeight);
+			},
+			async onFileSelect({
+				event,
+				sendAsFile
+			}) {
+				const multiUploadingService = this.getMultiUploadingService();
+				const multiUploadingResult = await multiUploadingService.upload({
+					files: Object.values(event.target.files),
+					sendAsFile,
+					dialogId: this.dialogId,
+					autoUpload: false
+				});
+				this.showUploadPreviewPopup = true;
+				this.previewPopupUploaderIds = multiUploadingResult.uploaderIds;
+				this.previewPopupUploadingId = multiUploadingResult.uploadingId;
+				this.previewPopupSourceFilesCount = multiUploadingResult.sourceFilesCount;
+			},
+			onDiskFileSelect({
+				files
+			}) {
+				this.getUploadingService().uploadFileFromDisk(files, this.dialogId);
+			},
+			onInsertMention(event) {
+				const {
+					mentionText,
+					mentionReplacement,
+					dialogId,
+					isMentionSymbol = true
+				} = event.getData();
+				let {
+					textToReplace = ''
+				} = event.getData();
+				if (this.dialogId !== dialogId) {
+					return;
+				}
+				const mentions = this.mentionManager.addMentionReplacement(mentionText, mentionReplacement);
+				this.getDraftManager().setDraftMentions(this.dialogId, mentions);
+				const mentionSymbol = isMentionSymbol ? this.mentionManager.getMentionSymbol() : '';
+				textToReplace = `${mentionSymbol}${textToReplace}`;
+				this.text = im_v2_lib_textarea.Textarea.insertMention(this.$refs.textarea, {
+					textToInsert: mentionText,
+					textToReplace
+				});
+				this.mentionManager.clearMentionSymbol();
+			},
+			onInsertText(event) {
+				const {
+					dialogId
+				} = event.getData();
+				if (this.dialogId !== dialogId) {
+					return;
+				}
+				this.text = im_v2_lib_textarea.Textarea.insertText(this.$refs.textarea, event.getData());
+			},
+			onEditMessage(event) {
+				const {
+					messageId,
+					dialogId
+				} = event.getData();
+				if (this.dialogId !== dialogId) {
+					return;
+				}
+				this.openEditPanel(messageId);
+			},
+			onReplyMessage(event) {
+				const {
+					messageId,
+					dialogId
+				} = event.getData();
+				if (this.dialogId !== dialogId) {
+					return;
+				}
+				this.openReplyPanel(messageId);
+			},
+			onInsertForward(event) {
+				const {
+					messagesIds,
+					dialogId
+				} = event.getData();
+				if (this.dialogId !== dialogId) {
+					return;
+				}
+				this.openForwardPanel(messagesIds);
+			},
+			async onPaste(event) {
+				this.text = im_v2_lib_textarea.Textarea.handlePasteUrl(this.$refs.textarea, event);
+				if (!this.withUploadMenu) {
+					return;
+				}
+				if (!event.clipboardData || !ui_uploader_core.isFilePasted(event.clipboardData)) {
+					return;
+				}
+				event.preventDefault();
+				const multiUploadingService = this.getMultiUploadingService();
+				const multiUploadingResult = await multiUploadingService.upload({
+					files: await ui_uploader_core.getFilesFromDataTransfer(event.clipboardData),
+					dialogId: this.dialogId,
+					autoUpload: false
+				});
+				if (!main_core.Type.isArrayFilled(multiUploadingResult.uploaderIds)) {
+					return;
+				}
+				this.showUploadPreviewPopup = true;
+				this.previewPopupUploaderIds = multiUploadingResult.uploaderIds;
+				this.previewPopupUploadingId = multiUploadingResult.uploadingId;
+				this.previewPopupSourceFilesCount = multiUploadingResult.sourceFilesCount;
+			},
+			onOpenUploadPreview(event) {
+				const {
+					multiUploadingResult
+				} = event.getData();
+				this.showUploadPreviewPopup = true;
+				this.previewPopupUploaderIds = multiUploadingResult.uploaderIds;
+				this.previewPopupUploadingId = multiUploadingResult.uploadingId;
+				this.previewPopupSourceFilesCount = multiUploadingResult.sourceFilesCount;
+			},
+			onMarketIconClick() {
+				this.toggleMarketPanel();
+			},
+			onMessageDeleted(event) {
+				const {
+					messageId
+				} = event.getData();
+				if (this.panelContext.messageId === messageId) {
+					this.closePanel();
+				}
+				if (this.panelContext.messagesIds && this.panelContext.messagesIds.includes(messageId)) {
+					this.closePanel();
+				}
+			},
+			onShowFormatToolbar(event) {
+				const {
+					bindPosition
+				} = event.getData();
+				this.formatToolbarPosition = bindPosition;
+				this.showFormatToolbar = true;
+			},
+			onHideFormatToolbar() {
+				this.showFormatToolbar = false;
+			},
+			onFormatToolbarUpdateText(newText) {
+				this.text = newText;
+			},
+			initResizeManager() {
+				this.resizeManager = new ResizeManager({
+					direction: ResizeDirection.up,
+					maxHeight: TextareaHeight.max,
+					minHeight: TextareaHeight.min
+				});
+				this.resizeManager.subscribe(ResizeManager.events.onHeightChange, ({
+					data: {
+						newHeight
+					}
+				}) => {
+					im_v2_lib_logger.Logger.warn('Textarea: Resize height change', newHeight);
+					this.textareaHeight = newHeight;
+				});
+				this.resizeManager.subscribe(ResizeManager.events.onResizeStop, () => {
+					im_v2_lib_logger.Logger.warn('Textarea: Resize stop');
+					this.resizedTextareaHeight = this.textareaHeight;
+					this.saveTextareaHeight();
+				});
+			},
+			initSendingService() {
+				if (this.sendingService) {
+					return;
+				}
+				this.sendingService = im_v2_provider_service_sending.SendingService.getInstance();
+			},
+			async initMentionManager() {
+				const {
+					mentions = {}
+				} = await this.getDraftManager().getDraft(this.dialogId);
+				this.mentionManager = new MentionManager({
+					textareaElement: this.$refs.textarea,
+					context: {
+						emitter: this.getEmitter()
+					}
+				});
+				this.mentionManager.setMentionReplacements(mentions);
+				this.mentionManager.subscribe(MentionManagerEvents.showMentionPopup, event => {
+					const {
+						mentionQuery
+					} = event.getData();
+					this.showMentionPopup(mentionQuery);
+				});
+				this.mentionManager.subscribe(MentionManagerEvents.hideMentionPopup, () => {
+					this.closeMentionPopup();
+				});
+			},
+			getSendingService() {
+				return this.sendingService;
+			},
+			getInputActionService() {
+				if (!this.inputSenderService) {
+					this.inputSenderService = new InputSenderService(this.dialogId);
+				}
+				return this.inputSenderService;
+			},
+			getDraftManager() {
+				if (!this.draftManager) {
+					this.draftManager = im_v2_lib_draft.DraftManager.getInstance();
+				}
+				return this.draftManager;
+			},
+			getToolbarManager() {
+				if (!this.toolbarManager) {
+					this.toolbarManager = new FormatToolbarManager();
+					this.toolbarManager.subscribe(FormatToolbarManager.events.show, this.onShowFormatToolbar);
+					this.toolbarManager.subscribe(FormatToolbarManager.events.hide, this.onHideFormatToolbar);
+				}
+				return this.toolbarManager;
+			},
+			getMessageService() {
+				if (!this.messageService) {
+					this.messageService = new im_v2_provider_service_message.MessageService({
+						chatId: this.dialog.chatId
+					});
+				}
+				return this.messageService;
+			},
+			getUploadingService() {
+				if (!this.uploadingService) {
+					this.initUploadingService();
+				}
+				return this.uploadingService;
+			},
+			initUploadingService() {
+				this.uploadingService = im_v2_provider_service_uploading.UploadingService.getInstance();
+				this.startFileUploadAction = () => {
+					this.getInputActionService().startAction(im_v2_lib_inputAction.InputAction.sendingFile);
+				};
+				this.stopFileUploadAction = () => {
+					this.getInputActionService().stopAction(im_v2_lib_inputAction.InputAction.sendingFile);
+				};
+				this.uploadingService.subscribe(im_v2_provider_service_uploading.UploadingService.event.uploadStart, this.startFileUploadAction);
+				this.uploadingService.subscribe(im_v2_provider_service_uploading.UploadingService.event.uploadComplete, this.stopFileUploadAction);
+				this.uploadingService.subscribe(im_v2_provider_service_uploading.UploadingService.event.uploadCancel, this.stopFileUploadAction);
+				this.uploadingService.subscribe(im_v2_provider_service_uploading.UploadingService.event.uploadError, this.stopFileUploadAction);
+			},
+			unbindUploadingService() {
+				if (!this.uploadingService) {
+					return;
+				}
+				this.uploadingService.unsubscribe(im_v2_provider_service_uploading.UploadingService.event.uploadStart, this.startFileUploadAction);
+				this.uploadingService.unsubscribe(im_v2_provider_service_uploading.UploadingService.event.uploadComplete, this.stopFileUploadAction);
+				this.uploadingService.unsubscribe(im_v2_provider_service_uploading.UploadingService.event.uploadCancel, this.stopFileUploadAction);
+				this.uploadingService.unsubscribe(im_v2_provider_service_uploading.UploadingService.event.uploadError, this.stopFileUploadAction);
+			},
+			getMultiUploadingService() {
+				if (!this.multiUploadingService) {
+					this.multiUploadingService = new im_v2_provider_service_uploading.MultiUploadingService();
+				}
+				return this.multiUploadingService;
+			},
+			async onSendFilesFromPreviewPopup(event) {
+				this.text = '';
+				const {
+					text,
+					files,
+					sendAsFile
+				} = event;
+				const textWithMentions = this.mentionManager.replaceMentions(text);
+				const multiUploadingResult = await this.getMultiUploadingService().upload({
+					files,
+					dialogId: this.dialogId,
+					autoUpload: false,
+					sendAsFile
+				});
+				await multiUploadingResult.loadAllComplete;
+				multiUploadingResult.uploaderIds.forEach((uploaderId, index) => {
+					this.getUploadingService().sendMessageWithFiles({
+						uploaderId,
+						text: index === 0 ? textWithMentions : ''
+					});
+				});
+				this.focus();
+			},
+			closeMentionPopup() {
+				this.showMention = false;
+				this.mentionQuery = '';
+				this.mentionManager.onMentionPopupClose();
+			},
+			showMentionPopup(mentionQuery) {
+				this.mentionQuery = mentionQuery;
+				this.showMention = true;
+			},
+			focus() {
+				this.$refs.textarea?.focus({
+					preventScroll: true
+				});
+			},
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			},
+			onAudioInputStart() {
+				if (this.isEmptyText) {
+					return;
+				}
+				this.text += ' ';
+			},
+			onAudioInputResult(inputText) {
+				this.text += inputText;
+			},
+			onCloseComments() {
+				this.restoreTextareaHeight();
+			},
+			getEmitter() {
+				return this.$Bitrix.eventEmitter;
+			}
+		},
+		template: `
 		<div class="bx-im-send-panel__scope bx-im-send-panel__container --ui-context-content-light">
 			<div class="bx-im-textarea__container">
 				<div @mousedown="onResizeStart" class="bx-im-textarea__drag-handle"></div>
@@ -9107,7 +8829,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	`
 	};
 
+	exports.BeforeSendMessageAction = BeforeSendMessageAction;
 	exports.ChatTextarea = ChatTextarea;
 
-}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX??{},BX?.UI?.Uploader??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.UI?.System?.Chip?.Vue??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Provider?.Service??{},BX??{},BX?.Event??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Component??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Calendar?.Sharing??{},BX?.Vote??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX??{},BX?.Messenger?.v2?.Model??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Component?.Elements??{},BX??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.UI?.IconSet??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Application??{},BX?.Messenger?.v2?.Lib??{},BX?.UI?.Vue3?.Components??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Const??{},BX??{},BX?.Main??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.UI?.System?.Input?.Vue??{},BX?.UI?.IconSet??{},BX?.Messenger?.v2?.Lib??{}));
+})(this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}, BX??{}, BX?.Event??{}, BX?.UI?.IconSet??{}, BX?.UI?.Uploader??{}, window??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Const??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Application??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.UI?.System?.Chip?.Vue??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Main??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component??{}, BX?.Messenger?.v2?.Provider?.Service??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.UI?.System?.Input?.Vue??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Lib??{}, BX?.UI?.IconSet??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Lib??{}, BX?.UI?.Vue3?.Components??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Calendar?.Sharing??{}, BX?.Vote??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Lib??{}, BX??{}, BX?.Messenger?.v2?.Component?.Elements??{});
 //# sourceMappingURL=textarea.bundle.js.map

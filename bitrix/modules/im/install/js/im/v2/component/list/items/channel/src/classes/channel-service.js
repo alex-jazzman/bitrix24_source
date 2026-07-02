@@ -1,27 +1,23 @@
 import { Core } from 'im.v2.application.core';
-import { RecentType, RestMethod } from 'im.v2.const';
-import { BaseRecentService, type RecentRestResult } from 'im.v2.provider.service.recent';
-
-import type { RawMessage, RawRecentItem } from 'im.v2.provider.service.types';
+import { RecentType, RestMethod, type RecentTypeItem } from 'im.v2.const';
+import { BaseRecentService, type RecentRestResult, type BaseRecentFilterParams } from 'im.v2.provider.service.recent';
+import { type RawMessage } from 'im.v2.provider.service.types';
 
 export class ChannelService extends BaseRecentService
 {
 	#lastMessageId: number = 0;
+
+	getRecentType(): RecentTypeItem
+	{
+		return RecentType.openChannel;
+	}
 
 	getRestMethodName(): string
 	{
 		return RestMethod.imV2RecentChannelTail;
 	}
 
-	saveRecentItems(recentItems: RawRecentItem[]): Promise
-	{
-		return Core.getStore().dispatch('recent/setCollection', {
-			type: RecentType.openChannel,
-			items: recentItems,
-		});
-	}
-
-	getRequestFilter(firstPage: boolean = false): Record
+	getRequestFilter(firstPage: boolean = false): BaseRecentFilterParams
 	{
 		return {
 			lastMessageId: firstPage ? null : this.#lastMessageId,

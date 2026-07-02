@@ -32,13 +32,30 @@
 	line-height: 28px; /* because of border-bottom: 1px */
 }
 
-.ui-toolbar.--air .ui-toolbar-star {
+.ui-toolbar.--air .ui-toolbar-star,
+.ui-toolbar.--air .ui-toolbar-fullscreen {
+	display: inline-block;
 	width: 20px;
 	height: 20px;
+	padding: 0;
 	position: relative;
-	top: 3px;
-	mask-image: var(--o-ui-icon-set__path_pin);
-	-webkit-mask-image: var(--o-ui-icon-set__path_pin);
+	margin-bottom: -3px;
+	cursor: pointer;
+	background: none;
+	border: none;
+	line-height: 1;
+}
+
+.ui-toolbar.--air .ui-toolbar-star:focus-visible,
+.ui-toolbar.--air .ui-toolbar-fullscreen:focus-visible {
+	outline-color: var(--ui-color-accent-main-primary);
+}
+
+.ui-toolbar.--air .ui-toolbar-star-btn-icon,
+.ui-toolbar.--air .ui-toolbar-fullscreen-btn-icon {
+	display: flex;
+	width: 20px;
+	height: 20px;
 	mask-size: contain;
 	mask-position: center;
 	mask-repeat: no-repeat;
@@ -46,9 +63,28 @@
 	background-image: none;
 }
 
-.ui-toolbar.--air .ui-toolbar-star-active {
+.ui-toolbar.--air .ui-toolbar-star .ui-toolbar-star-btn-icon {
+	mask-image: var(--o-ui-icon-set__path_pin);
+	-webkit-mask-image: var(--o-ui-icon-set__path_pin);
+}
+
+.ui-toolbar.--air .ui-toolbar-star-active .ui-toolbar-star-btn-icon {
 	mask-image: var(--o-ui-icon-set__path_unpin);
 	-webkit-mask-image: var(--o-ui-icon-set__path_unpin);
+}
+
+.ui-toolbar.--air .ui-toolbar-fullscreen .ui-toolbar-fullscreen-btn-icon {
+	mask-image: var(--o-ui-icon-set__path_expand-l);
+	-webkit-mask-image: var(--o-ui-icon-set__path_expand-l);
+}
+
+.ui-toolbar.--air .ui-toolbar-fullscreen:not(.ui-toolbar-star + *) {
+	margin-left: 5px;
+}
+
+.ui-toolbar.--air .ui-toolbar-fullscreen-active .ui-toolbar-fullscreen-btn-icon {
+	mask-image: var(--o-ui-icon-set__path_collapse-l);
+	-webkit-mask-image: var(--o-ui-icon-set__path_collapse-l);
 }
 
 .ui-toolbar.--air .ui-toolbar-title-item-box-buttons {
@@ -68,7 +104,6 @@
 	flex-grow: 0;
 	flex-shrink: 1;
 	flex-basis: auto;
-	min-width: 300px;
 	max-width: 748px;
 	transition: 0.2s flex-grow ease-in-out;
 }
@@ -76,6 +111,12 @@
 .ui-toolbar.--air .ui-toolbar-filter-box .main-ui-filter-search:focus-within,
 .ui-toolbar.--air .ui-toolbar-filter-box .main-ui-filter-search--showed {
 	flex-grow: 1;
+}
+
+@container filter-search (max-width: 350px) {
+	.ui-toolbar.--air .ui-toolbar-filter-box .main-ui-filter-search {
+		min-width: 34px;
+	}
 }
 
 .ui-toolbar.--air .ui-toolbar-after-title-box {
@@ -99,5 +140,5 @@
 }
 
 .ui-toolbar.--air .ui-toolbar-title-box + .ui-toolbar-after-title-buttons {
-	margin-left: 11px;
+	margin-left: 0;
 }

@@ -1,24 +1,21 @@
 import { type JsonObject } from 'main.core';
 import { type EventEmitter } from 'main.core.events';
 
-import { ListLoadingState as LoadingState } from 'im.v2.component.elements.list-loading-state';
+import { BaseRecentList } from 'im.v2.component.list.items.base';
 import { RecentType } from 'im.v2.const';
-import { Utils } from 'im.v2.lib.utils';
 import { type ImModelRecentItem } from 'im.v2.model';
 
 import { ChannelService } from './classes/channel-service';
 import { ChannelRecentMenu } from './classes/context-menu-manager';
 import { PullWatchManager } from './classes/pull-watch-manager';
-import { ChannelItem } from './components/channel-item/channel-item';
+import { ChannelItem } from './components/channel-item';
 import { EmptyState } from './components/empty-state';
-
-import './css/channel-list.css';
 
 // @vue/component
 export const ChannelList = {
 	name: 'ChannelList',
-	components: { EmptyState, LoadingState, ChannelItem },
-	emits: ['chatClick'],
+	components: { EmptyState, BaseRecentList, ChannelItem },
+	emits: ['selectChat'],
 	data(): JsonObject
 	{
 		return {
@@ -27,15 +24,10 @@ export const ChannelList = {
 			firstPageLoaded: false,
 		};
 	},
-	computed:
-	{
-		preparedItems(): ImModelRecentItem[]
+	computed: {
+		collection(): ImModelRecentItem[]
 		{
 			return this.$store.getters['recent/getSortedCollection']({ type: RecentType.openChannel });
-		},
-		isEmptyCollection(): boolean
-		{
-			return this.preparedItems.length === 0;
 		},
 	},
 	created()
@@ -45,25 +37,33 @@ export const ChannelList = {
 	beforeUnmount()
 	{
 		this.contextMenuManager.destroy();
+		this.getPullWatchManager().unsubscribe();
 	},
-	async activated()
+	activated()
 	{
-		this.isLoading = true;
-		await this.getRecentService().loadFirstPage();
-		this.firstPageLoaded = true;
-		this.isLoading = false;
+		void this.loadInitialItems();
 		this.getPullWatchManager().subscribe();
 	},
 	deactivated()
 	{
 		this.getPullWatchManager().unsubscribe();
 	},
-	methods:
-	{
-		async onScroll(event: Event)
+	methods: {
+		async loadInitialItems()
 		{
-			this.contextMenuManager.close();
-			if (!Utils.dom.isOneScreenRemaining(event.target) || !this.getRecentService().hasMoreItemsToLoad())
+			if (this.isLoading)
+			{
+				return;
+			}
+
+			this.isLoading = true;
+			await this.getRecentService().loadFirstPage();
+			this.firstPageLoaded = true;
+			this.isLoading = false;
+		},
+		async onLoadNextPage()
+		{
+			if (this.isLoadingNextPage || !this.getRecentService().hasMoreItemsToLoad())
 			{
 				return;
 			}
@@ -72,18 +72,27 @@ export const ChannelList = {
 			await this.getRecentService().loadNextPage();
 			this.isLoadingNextPage = false;
 		},
-		onClick(item: ImModelRecentItem)
+		onSelectChat(dialogId: string)
 		{
-			this.$emit('chatClick', item.dialogId);
+			this.$emit('selectChat', dialogId);
 		},
-		onRightClick(item: ImModelRecentItem, event: PointerEvent)
+		onItemRightClick(payload: { item: ImModelRecentItem, event: PointerEvent })
 		{
+			const { item, event } = payload;
 			event.preventDefault();
+
 			const context = {
 				dialogId: item.dialogId,
 				recentItem: item,
 			};
-			this.contextMenuManager.openMenu(context, event.currentTarget);
+			this.contextMenuManager.openMenu(context, {
+				left: event.pageX,
+				top: event.pageY,
+			});
+		},
+		onCloseMenu()
+		{
+			this.contextMenuManager.close();
 		},
 		getRecentService(): ChannelService
 		{
@@ -113,21 +122,25 @@ export const ChannelList = {
 		},
 	},
 	template: `
-		<div class="bx-im-list-channel__container">
-			<LoadingState v-if="isLoading && !firstPageLoaded" />
-			<div v-else @scroll="onScroll" class="bx-im-list-channel__scroll-container">
-				<EmptyState v-if="isEmptyCollection" />
-				<div class="bx-im-list-channel__general_container">
-					<ChannelItem
-						v-for="item in preparedItems"
-						:key="item.dialogId"
-						:item="item"
-						@click="onClick(item)"
-						@click.right="onRightClick(item, $event)"
-					/>
-				</div>
-				<LoadingState v-if="isLoadingNextPage" />
-			</div>
-		</div>
+		<BaseRecentList
+			:collection="collection"
+			:showMainLoader="isLoading && !firstPageLoaded"
+			:showBottomLoader="isLoadingNextPage"
+			@selectChat="onSelectChat"
+			@itemRightClick="onItemRightClick"
+			@closeMenu="onCloseMenu"
+			@loadNextPage="onLoadNextPage"
+		>
+			<template #empty-state>
+				<EmptyState />
+			</template>
+			<template #item="{ item, onClick, onRightClick }">
+				<ChannelItem
+					:item="item"
+					@click="onClick(item)"
+					@click.right="onRightClick(item, $event)"
+				/>
+			</template>
+		</BaseRecentList>
 	`,
 };

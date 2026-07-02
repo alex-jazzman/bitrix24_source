@@ -4,11 +4,12 @@
 
 jn.define('mail/mailbox/connector/steps/services-list', (require, exports, module) => {
 	const { WizardStep } = require('layout/ui/wizard/step');
-	const { ProgressBarNumber } = require('crm/salescenter/progress-bar-number');
+	const { ProgressBarNumber } = require('mail/mailbox/connector/progress-bar-number');
 	const { Loc } = require('loc');
 	const { Color, Corner } = require('tokens');
 	const AppTheme = require('apptheme');
-
+	const ACTIVE_STEP_COLOR = Color.accentMainPrimary.toHex();
+	const NEXT_STEP_COLOR = Color.base6.toHex();
 
 	const services = {
 		aol: {
@@ -130,8 +131,12 @@ jn.define('mail/mailbox/connector/steps/services-list', (require, exports, modul
 
 		renderNumberBlock()
 		{
+			const progressBarSettings = this.getProgressBarSettings();
+
 			return new ProgressBarNumber({
-				number: '1',
+				number: progressBarSettings.number.toString(),
+				backgroundColor: ACTIVE_STEP_COLOR,
+				showOuterDecoration: false,
 			});
 		}
 
@@ -144,7 +149,10 @@ jn.define('mail/mailbox/connector/steps/services-list', (require, exports, modul
 					text: Loc.getMessage('MAILBOX_CONNECTOR_SERVICES_LIST_TITLE_1'),
 				},
 				number: 1,
-				count: 2,
+				count: 3,
+				previousLineColor: ACTIVE_STEP_COLOR,
+				currentLineColor: ACTIVE_STEP_COLOR,
+				nextLineColor: NEXT_STEP_COLOR,
 			};
 		}
 

@@ -30,10 +30,96 @@
 	margin: 0;
 }
 
+.ui-date-picker-body {
+	display: flex;
+	flex-direction: row;
+	flex: 1;
+}
+
 .ui-date-picker-views {
 	display: flex;
 	flex: 1;
 	position: relative;
+}
+
+.ui-date-picker-presets {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 12px 12px 12px 16px;
+	overflow-y: auto;
+	scrollbar-width: none; /* @chef-ignore */
+	height: var(--ui-date-picker-min-height);
+	box-sizing: border-box;
+}
+
+.ui-date-picker.--inline .ui-date-picker-presets {
+	padding-top: 6px;
+}
+
+.ui-date-picker-preset {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	min-width: 160px;
+	max-width: 215px;
+	gap: 2px;
+	padding: var(--ui-space-stack-2xs2) var(--ui-space-inline-sm) var(--ui-space-stack-xs);
+	border: var(--ui-border-width-thin) solid var(--ui-color-design-outline-a2-content-divider);
+	border-radius: 10px;
+	background: transparent;
+	cursor: pointer;
+	text-align: left;
+	font: inherit;
+	color: inherit;
+	transition: border-color .15s, background-color .15s;
+}
+
+.ui-date-picker-preset:hover,
+.ui-date-picker-preset.--active{
+	background: var(--ui-color-accent-soft-blue-3);
+	color: var(--ui-color-accent-main-primary);
+	border-color: var(--ui-color-accent-main-primary-alt-2);
+}
+
+.ui-date-picker-preset.--disabled {
+	cursor: not-allowed;
+	opacity: 0.4;
+	pointer-events: none;
+}
+
+.ui-date-picker-preset:focus-visible,
+.ui-date-picker-preset.--focus-visible {
+	outline: 2px solid var(--ui-date-picker-outiline-color);
+	outline-offset: 1px;
+}
+
+.ui-date-picker-preset-label {
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-semi-bold);
+	color: var(--ui-color-text-primary);
+	line-height: 1.25;
+
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	max-width: 100%;
+}
+
+.ui-date-picker-preset:hover .ui-date-picker-preset-label,
+.ui-date-picker-preset.--active .ui-date-picker-preset-label {
+	color: var(--ui-color-accent-main-primary)
+}
+
+.ui-date-picker-preset-subtitle {
+	font-size: var(--ui-font-size-4xs);
+	color: var(--ui-color-base-70);
+	line-height: 1.25;
+
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	max-width: 100%;
 }
 
 .ui-date-picker-header {
@@ -65,8 +151,7 @@
 	font-weight: var(--ui-font-weight-semi-bold);
 	margin: 0;
 	padding: 5px;
-	-webkit-appearance: none;
-	        appearance: none;
+	appearance: none;
 	background: none;
 	border: none;
 	box-sizing: content-box;
@@ -104,6 +189,15 @@
 
 .ui-date-picker-button:hover .ui-icon-set {
 	opacity: 1;
+}
+
+.ui-date-picker-button:disabled {
+	cursor: not-allowed;
+	pointer-events: none;
+}
+
+.ui-date-picker-button:disabled .ui-icon-set {
+	opacity: 0.2;
 }
 
 .ui-date-picker-button:focus-visible,
@@ -237,15 +331,24 @@
 	-webkit-user-select: none;
 	        user-select: none;
 
-	-webkit-appearance: none;
-
-	        appearance: none;
+	appearance: none;
 	background: none;
 	color: inherit;
 	font: inherit;
 	border: none;
 	box-sizing: content-box;
 	outline: none;
+}
+
+.ui-day-picker-day.--disabled {
+	cursor: not-allowed;
+	opacity: 0.35;
+	pointer-events: none;
+}
+
+.ui-day-picker-day.--disabled .ui-day-picker-day-inner {
+	color: var(--ui-color-text-secondary);
+	background-color: transparent;
 }
 
 /*.ui-day-picker-day:focus-visible .ui-day-picker-day-inner:before,*/
@@ -438,8 +541,7 @@
 
 	padding: 4px 9px;
 	margin: 0 0 0 -7px;
-	-webkit-appearance: none;
-	        appearance: none;
+	appearance: none;
 	background: none;
 	color: inherit;
 	font: inherit;
@@ -471,7 +573,7 @@
 
 .ui-date-picker-time-clock {
 	display: flex;
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='13' height='13' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg opacity='.8' stroke='%232FC6F6' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round' clip-path='url(%23clip0_1420_24392)'%3E%3Cpath d='M12.35 6.5a5.85 5.85 0 11-11.7 0 5.85 5.85 0 0111.7 0z'/%3E%3Cpath d='M6.076 3.706V7.04H8.88'/%3E%3C/g%3E%3Cdefs%3E%3CclipPath id='clip0_1420_24392'%3E%3Cpath fill='%23fff' d='M0 0h13v13H0z'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E");
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13' fill='none' viewBox='0 0 13 13'%3E%3Cg stroke='%232fc6f6' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.2' clip-path='url(%23a)' opacity='.8'%3E%3Cpath d='M12.35 6.5a5.85 5.85 0 1 1-11.7 0 5.85 5.85 0 0 1 11.7 0'/%3E%3Cpath d='M6.076 3.706V7.04H8.88'/%3E%3C/g%3E%3Cdefs%3E%3CclipPath id='a'%3E%3Cpath fill='%23fff' d='M0 0h13v13H0z'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E");
 	background-repeat: no-repeat;
 	width: 13px;
 	height: 13px;
@@ -495,6 +597,13 @@
 	background-color: #fff;
 }
 
+.ui-month-picker-content {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	justify-content: center;
+}
+
 .ui-month-picker-header-title {
 	cursor: pointer;
 	color: var(--ui-color-text-primary);
@@ -503,8 +612,7 @@
 	font-size: var(--ui-font-size-lg);
 	margin: 0;
 	padding: 5px;
-	-webkit-appearance: none;
-	        appearance: none;
+	appearance: none;
 	background: none;
 	border: none;
 	box-sizing: content-box;
@@ -541,9 +649,7 @@
 	padding: 0 8px;
 	margin: 0;
 
-	-webkit-appearance: none;
-
-	        appearance: none;
+	appearance: none;
 	background: none;
 	font: inherit;
 	border: none;
@@ -567,6 +673,13 @@
 	color: var( --ui-color-on-primary);
 }
 
+.ui-month-picker-month.--disabled {
+	cursor: not-allowed;
+	opacity: 0.35;
+	pointer-events: none;
+	color: var(--ui-color-text-secondary);
+}
+
 .ui-time-picker {
 	display: flex;
 	flex-direction: column;
@@ -583,15 +696,24 @@
 }
 
 .ui-time-picker-header-title {
+	background: none;
+	border: none;
+	margin: 0;
+	font: inherit;
 	cursor: pointer;
 	color: var(--ui-color-text-primary);
 	font-weight: var(--ui-font-weight-semi-bold);
 	font-size: var(--ui-font-size-lg);
 	padding: 5px;
+	border-radius: var(--ui-border-radius-3xs);
 }
 
 .ui-time-picker-header-title:hover {
 	color: var(--ui-date-picker-button-hover-color);
+}
+
+.ui-time-picker-header-title:focus-visible {
+	outline: 2px solid var(--ui-date-picker-outiline-color);
 }
 
 .ui-time-picker-content {
@@ -684,8 +806,8 @@
 	overflow-x: hidden;
 	overflow-y: scroll;
 	scroll-snap-type: y mandatory;
-	overscroll-behavior: contain;
-	scrollbar-width: none;
+	overscroll-behavior: contain; /* @chef-ignore */
+	scrollbar-width: none; /* @chef-ignore */
 	outline: none;
 }
 
@@ -777,15 +899,24 @@
 }
 
 .ui-time-picker-grid-header-title {
+	background: none;
+	border: none;
+	margin: 0;
+	font: inherit;
 	cursor: pointer;
 	color: var(--ui-color-text-primary);
 	font-weight: var(--ui-font-weight-semi-bold);
 	font-size: var(--ui-font-size-lg);
 	padding: 5px;
+	border-radius: var(--ui-border-radius-3xs);
 }
 
 .ui-time-picker-grid-header-title:hover {
 	color: var(--ui-date-picker-button-hover-color);
+}
+
+.ui-time-picker-grid-header-title:focus-visible {
+	outline: 2px solid var(--ui-date-picker-outiline-color);
 }
 
 .ui-time-picker-grid-content {
@@ -873,8 +1004,8 @@
 	width: calc(var(--ui-time-picker-grid-item-width) * 2);
 	overflow-x: hidden;
 	overflow-y: scroll;
-	overscroll-behavior: contain;
-	scrollbar-width: none;
+	overscroll-behavior: contain; /* @chef-ignore */
+	scrollbar-width: none; /* @chef-ignore */
 }
 
 .ui-time-picker-grid-column-items.--minutes::-webkit-scrollbar {
@@ -892,9 +1023,7 @@
 	align-items: center;
 	justify-content: center;
 
-	-webkit-appearance: none;
-
-	        appearance: none;
+	appearance: none;
 	background: none;
 	color: inherit;
 	font: inherit;
@@ -960,6 +1089,13 @@
 	background-color: #fff;
 }
 
+.ui-year-picker-content {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	justify-content: center;
+}
+
 .ui-year-picker-trio {
 	display: flex;
 	justify-content: space-between;
@@ -977,8 +1113,7 @@
 	border-radius: var(--ui-border-radius-pill);
 	margin: 0;
 	padding: 0;
-	-webkit-appearance: none;
-	        appearance: none;
+	appearance: none;
 	background: none;
 	color: inherit;
 	font: inherit;
@@ -1002,4 +1137,11 @@
 .ui-year-picker-year.--selected {
 	background-color: var(--ui-color-primary);
 	color: var(--ui-color-on-primary);
+}
+
+.ui-year-picker-year.--disabled {
+	cursor: not-allowed;
+	opacity: 0.35;
+	pointer-events: none;
+	color: var(--ui-color-text-secondary);
 }

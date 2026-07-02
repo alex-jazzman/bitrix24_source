@@ -207,11 +207,18 @@ jn.define('im/messenger/application/lib/refresher', (require, exports, module) =
 		 */
 		#getInitRestMethodsForRefresh()
 		{
-			return [
+			const methodList = [
 				MessengerInitRestMethod.imCounters,
 				MessengerInitRestMethod.anchors,
 				MessengerInitRestMethod.activeCalls,
 			];
+
+			if (Feature.isChatFoldersAvailable)
+			{
+				methodList.push(MessengerInitRestMethod.folderList);
+			}
+
+			return methodList;
 		}
 
 		/**
@@ -254,15 +261,14 @@ jn.define('im/messenger/application/lib/refresher', (require, exports, module) =
 
 			await MessageQueueRequestManager.getInstance().callBatch();
 
-			const recentManager = this.#recentManager;
-			const activeRecent = recentManager?.getActiveRecent();
+			const activeRecent = this.#recentManager?.getActiveRecent();
 			if (Type.isFunction(activeRecent?.getRefreshHandler))
 			{
 				this.#messengerInitService.onceOnInit(activeRecent.getRefreshHandler(mode));
 			}
 
 			const methods = this.getInitRestMethods(shortMode, mode, activeRecent);
-			const options = this.#prepareActionOptions(activeRecent);
+			const options = this.#prepareActionOptions(activeRecent, mode);
 
 			return this.#messengerInitService.runAction(methods, options)
 				.then(() => this.#afterRefresh())
@@ -276,8 +282,13 @@ jn.define('im/messenger/application/lib/refresher', (require, exports, module) =
 		 * @param {RecentController} activeRecent
 		 * @returns {object}
 		 */
-		#prepareActionOptions(activeRecent)
+		#prepareActionOptions(activeRecent, mode)
 		{
+			if (Type.isFunction(activeRecent?.getRefreshOptions))
+			{
+				return activeRecent.getRefreshOptions(mode);
+			}
+
 			const options = {};
 
 			const currentFilterId = activeRecent?.getCurrentFilterId();

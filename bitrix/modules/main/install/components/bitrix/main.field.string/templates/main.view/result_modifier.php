@@ -5,13 +5,17 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+/**
+ * @var array $arResult
+ * @var array $arParams
+ */
+
 use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Main\Page\Asset;
 
 CJSCore::init(['uf']);
 $i = 0;
 
-/** @var $arResult [] */
 foreach($arResult['value'] as $key => $value)
 {
 	if (!is_scalar($value))

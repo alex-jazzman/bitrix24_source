@@ -17,5 +17,3 @@ $MESS["IM_RECENT_CREATE_INVITE_SUBTITLE"] = "Invite multiple users at once";
 $MESS["IM_RECENT_CREATE_INVITE_TITLE"] = "Invite users";
 $MESS["IM_RECENT_HEADER_MENU_CHAT_GROUPS_SUBTITLE"] = "Group chats into folders for faster access.";
 $MESS["IM_RECENT_HEADER_MENU_CHAT_GROUPS_TITLE"] = "Create folders";
-$MESS["IM_RECENT_HEADER_MENU_READ_ALL_MSGVER_1"] = "Mark all as read";
-$MESS["IM_RECENT_HEADER_MENU_SHOW_UNREAD_ONLY_MSGVER_2"] = "Unread";

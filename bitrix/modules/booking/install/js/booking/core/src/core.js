@@ -1,5 +1,5 @@
 import { Extension } from 'main.core';
-import { Builder, BuilderModel, Store } from 'ui.vue3.vuex';
+import { Builder } from 'ui.vue3.vuex';
 
 import { Bookings } from 'booking.model.bookings';
 import { MessageStatus } from 'booking.model.message-status';
@@ -10,11 +10,11 @@ import { ResourceTypes } from 'booking.model.resource-types';
 import { Resources } from 'booking.model.resources';
 import { Favorites } from 'booking.model.favorites';
 import { Dictionary } from 'booking.model.dictionary';
+import { Notifications } from 'booking.model.notifications';
 import { MainResources } from 'booking.model.main-resources';
 import { WaitList } from 'booking.model.wait-list';
 import { BookingPullManager } from 'booking.provider.pull.booking-pull-manager';
 import { Filter } from 'booking.model.filter';
-import { FormsMenu } from 'booking.model.forms-menu';
 import { SaleChannels } from 'booking.model.sale-channels';
 import { SkuModel } from 'booking.model.sku';
 
@@ -80,12 +80,14 @@ class CoreApplication
 					editingBookingId: this.#params.editingBookingId,
 					editingWaitListItemId: this.#params.editingWaitListItemId,
 					timezone: this.#params.timezone,
+					firstWeekDay: this.#params.firstWeekDay,
 					totalClients: this.#params.totalClients,
 					totalNewClientsToday: this.#params.totalClientsToday,
 					moneyStatistics: this.#params.moneyStatistics,
 					isFeatureEnabled: this.#params.isFeatureEnabled,
 					canTurnOnTrial: this.#params.canTurnOnTrial,
 					canTurnOnDemo: this.#params.canTurnOnDemo,
+					isMultidayFeatureAvailable: this.#params.isMultidayFeatureAvailable,
 					embedItems: this.#params.embedItems.map((item: { id: number, code: string, module: string }) => {
 						return {
 							value: item.id,
@@ -100,16 +102,17 @@ class CoreApplication
 					}),
 					calendarExpanded: this.#params.isCalendarExpanded,
 					waitListExpanded: this.#params.isWaitListExpanded,
+					gridMode: this.#params.gridMode,
 					enabledFeature: extractFeatures(this.#params),
 				}))
 				.addModel(ResourceTypes.create())
 				.addModel(Resources.create())
 				.addModel(Favorites.create())
 				.addModel(Dictionary.create())
+				.addModel(Notifications.create())
 				.addModel(MainResources.create())
 				.addModel(WaitList.create())
 				.addModel(Filter.create())
-				.addModel(FormsMenu.create())
 				.addModel(SaleChannels.create())
 				.addModel(SkuModel.create())
 			;

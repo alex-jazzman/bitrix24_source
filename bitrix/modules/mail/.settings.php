@@ -1,9 +1,11 @@
 <?php
 
+use Bitrix\Mail\Internal\Async\Receiver\MailboxAccessNotificationReceiver;
 use Bitrix\Mail\Integration\UI\EntitySelector\AddressBookProvider;
 use Bitrix\Mail\Integration\UI\EntitySelector\MailCrmRecipientProvider;
 use Bitrix\Mail\Integration\UI\EntitySelector\MailUserRecipientAppearanceFilter;
 use Bitrix\Mail\Integration\UI\EntitySelector\MailCrmRecipientAppearanceFilter;
+use Bitrix\Mail\Integration\UI\EntitySelector\DiscussInChatAppearanceFilter;
 
 
 return array(
@@ -45,6 +47,11 @@ return array(
 					'entityId' => 'lead',
 					'className' => MailCrmRecipientAppearanceFilter::class,
 				],
+				[
+					'id' => 'mail.discussInChatAppearanceFilter',
+					'entityId' => 'im-recent-v2',
+					'className' => DiscussInChatAppearanceFilter::class,
+				],
 			],
 
 			'entities' => [
@@ -65,6 +72,21 @@ return array(
 			],
 		],
 		'readonly' => true,
+	],
+	'messenger' => [
+		'value' => [
+			'queues' => [
+				'mail_access_notification' => [
+					'handler' => MailboxAccessNotificationReceiver::class,
+				],
+			],
+		],
+		'readonly' => true,
+	],
+	'rest' => [
+		'value' => [
+			'defaultNamespace' => '\\Bitrix\\Mail\\Infrastructure\\Rest\\Controller',
+		],
 	],
 	'aiassistant.marta' => [
 		'value' => [

@@ -1,14 +1,14 @@
-import { Logger } from 'im.v2.lib.logger';
+import { type JsonObject } from 'main.core';
+import { type BaseEvent, type EventEmitter } from 'main.core.events';
+
+import { EventType, LocalStorageKey, SidebarDetailBlock, DialogIdChatPrefix } from 'im.v2.const';
 import { LocalStorageManager } from 'im.v2.lib.local-storage';
-import { EventType, LocalStorageKey, SidebarDetailBlock } from 'im.v2.const';
+import { Logger } from 'im.v2.lib.logger';
 
 import { SidebarPanel } from './components/sidebar-panel';
 
 import './css/icons.css';
 import './css/sidebar.css';
-
-import type { JsonObject } from 'main.core';
-import type { BaseEvent, EventEmitter } from 'main.core.events';
 
 type SidebarPanelType = $Values<typeof SidebarDetailBlock>;
 
@@ -58,7 +58,7 @@ export const ChatSidebar = {
 		canShowTopPanel(): boolean
 		{
 			const membersPanel = this.topLevelPanelType === SidebarDetailBlock.members;
-			const personalChat = !this.originDialogId.startsWith('chat');
+			const personalChat = !this.originDialogId.startsWith(DialogIdChatPrefix);
 			if (membersPanel && personalChat)
 			{
 				return false;

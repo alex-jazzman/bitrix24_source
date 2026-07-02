@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Bitrix Framework
  * @package bitrix
@@ -202,29 +202,29 @@ $arParams["EVENT_NAME"] = htmlspecialcharsbx($arParams["EVENT_NAME"]);
 
 <form method="POST" action="<?=$APPLICATION->GetCurPage()?>" name="form1">
 <?=bitrix_sessid_post()?>
-<?$tabControl->Begin();?>
-<?$tabControl->BeginNextTab();?>
+<?php $tabControl->Begin();?>
+<?php $tabControl->BeginNextTab();?>
 <tr class="adm-detail-required-field">
 	<td width="40%"><?=GetMessage('EVENT_NAME1')?>:</td>
 	<td width="0%">
-	<?if ($arParams["ACTION"] == "ADD"):?>
+	<?php if ($arParams["ACTION"] == "ADD"):?>
 		<input type="text" name="EVENT_NAME" value="<?=$arParams["EVENT_NAME"]?>" size="50">
-	<?else:?>
+	<?php else:?>
 		<input type="hidden" name="EVENT_NAME" value="<?=$arParams["EVENT_NAME"]?>">
 		<?=$arParams["EVENT_NAME"]?>
-	<?endif;?>
+	<?php endif;?>
 	</td>
 </tr>
 <tr>
-	<td><?echo GetMessage("type_edit_event_type")?></td>
+	<td><?= GetMessage("type_edit_event_type")?></td>
 	<td>
 		<select name="EVENT_TYPE">
-			<option value="<?=EventTypeTable::TYPE_EMAIL?>"<?if(isset($arParams["DATA"]["EVENT_TYPE"]) && $arParams["DATA"]["EVENT_TYPE"] == EventTypeTable::TYPE_EMAIL) echo " selected"?>><?echo GetMessage("type_edit_event_type_email")?></option>
-			<option value="<?=EventTypeTable::TYPE_SMS?>"<?if(isset($arParams["DATA"]["EVENT_TYPE"]) && $arParams["DATA"]["EVENT_TYPE"] == EventTypeTable::TYPE_SMS) echo " selected"?>><?echo GetMessage("type_edit_event_type_sms")?></option>
+			<option value="<?=EventTypeTable::TYPE_EMAIL?>"<?php if(isset($arParams["DATA"]["EVENT_TYPE"]) && $arParams["DATA"]["EVENT_TYPE"] == EventTypeTable::TYPE_EMAIL) echo " selected"?>><?= GetMessage("type_edit_event_type_email")?></option>
+			<option value="<?=EventTypeTable::TYPE_SMS?>"<?php if(isset($arParams["DATA"]["EVENT_TYPE"]) && $arParams["DATA"]["EVENT_TYPE"] == EventTypeTable::TYPE_SMS) echo " selected"?>><?= GetMessage("type_edit_event_type_sms")?></option>
 		</select>
 	</td>
 </tr>
-<?
+<?php
 	foreach ($arParams["LANGUAGE"] as $idLang => $arLang):
 ?>
 <tr class="heading">
@@ -233,12 +233,12 @@ $arParams["EVENT_NAME"] = htmlspecialcharsbx($arParams["EVENT_NAME"]);
 		<input type="checkbox" id="box_<?=$idLang?>" name="<?=$idLang?>" <?=(!empty($arParams["DATA"][$idLang]["ID"]) && (!isset($_REQUEST[$idLang]) || $_REQUEST[$idLang] <> "N") || (isset($_REQUEST[$idLang]) && $_REQUEST[$idLang] == "Y") || empty($arParams["EVENT_NAME"])? " checked" : "")?> value="Y">
 		<label for="box_<?=$idLang?>" >[<?=$arLang["ID"]?>] <?=$arLang["NAME"]?></label></td>
 </tr>
-<?if (isset($arParams["DATA"][$arLang["ID"]]["ID"]) && $arParams["DATA"][$arLang["ID"]]["ID"] > 0):?>
+<?php if (isset($arParams["DATA"][$arLang["ID"]]["ID"]) && $arParams["DATA"][$arLang["ID"]]["ID"] > 0):?>
 <tr><td>ID:</td><td>
 <?=htmlspecialcharsEx($arParams["DATA"][$arLang["ID"]]["ID"])?>
 <input type="hidden" name="FIELDS[<?=$arLang["ID"]?>][ID]" value="<?=htmlspecialcharsbx($arParams["DATA"][$arLang["ID"]]["ID"] ?? '')?>">
 </td></tr>
-<?endif;?>
+<?php endif;?>
 <tr>
 	<td><?=GetMessage("EVENT_SORT_LANG")?>:</td>
 	<td>
@@ -260,22 +260,22 @@ $arParams["EVENT_NAME"] = htmlspecialcharsbx($arParams["EVENT_NAME"]);
 		<textarea name="FIELDS[<?=$arLang["ID"]?>][DESCRIPTION]" style="width:100%;" rows="10"><?=htmlspecialcharsbx($arParams["DATA"][$arLang["ID"]]["DESCRIPTION"] ?? '')?></textarea>
 	</td>
 </tr>
-<?endforeach;?>
-<?
+<?php endforeach;?>
+<?php
 if ($arParams["ACTION"] == "UPDATE" && isset($arParams["DATA"]["EVENT_TYPE"]) && $arParams["DATA"]["EVENT_TYPE"] == EventTypeTable::TYPE_EMAIL):
 	$tabControl->BeginNextTab();
 ?>
 <tr>
 	<td colspan="2">
-		<a href="message_edit.php?lang=<?=LANGUAGE_ID?>&amp;EVENT_NAME=<?=urlencode($arParams["EVENT_NAME"])?>"><?echo GetMessage("type_edit_add_message_template")?></a>
+		<a href="message_edit.php?lang=<?=LANGUAGE_ID?>&amp;EVENT_NAME=<?=urlencode($arParams["EVENT_NAME"])?>"><?= GetMessage("type_edit_add_message_template")?></a>
 	</td>
 </tr>
-<?
+<?php
 	if (is_array($arParams["DATA"]["TEMPLATES"])):
 		foreach ($arParams["DATA"]["TEMPLATES"] as $k => $v):
 ?><tr>
 	<td colspan="2">[<a href="/bitrix/admin/message_edit.php?ID=<?=(int)$v["ID"]?>&amp;lang=<?=LANGUAGE_ID?>"><?=(int)$v["ID"]?></a>]<?=(trim($v["SUBJECT"]) <> '' ? " " : "").htmlspecialcharsEx($v["SUBJECT"])?>
-	<?
+	<?php
 	$arLID = array();
 	$db_LID = CEventMessage::GetLang($v["ID"]);
 	while($arrLID = $db_LID->Fetch())
@@ -286,7 +286,7 @@ if ($arParams["ACTION"] == "UPDATE" && isset($arParams["DATA"]["EVENT_TYPE"]) &&
 	}
 
 ?></td>
-</tr><?
+</tr><?php
 		endforeach;
 	endif;
 endif;
@@ -294,7 +294,7 @@ $tabControl->Buttons(array("disabled"=>!$isAdmin, "back_url"=>"type_admin.php?la
 $tabControl->End();
 ?>
 </form>
-<?
+<?php
 $tabControl->ShowWarnings(
 	"form1", $message,
 	array(
@@ -306,8 +306,8 @@ $tabControl->ShowWarnings(
 );
 ?>
 
-<?echo BeginNote();?>
+<?= BeginNote();?>
 <?=GetMessage("LANG_FIELDS")?>
-<?echo EndNote();?>
+<?= EndNote();?>
 
-<?require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin.php");?>
+<?php require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin.php");?>

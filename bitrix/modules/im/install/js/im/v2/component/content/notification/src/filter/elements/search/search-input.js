@@ -1,7 +1,7 @@
 import { Type } from 'main.core';
 import { BIcon, Outline as OutlineIcons } from 'ui.icon-set.api.vue';
 
-import { NotificationFilterFieldTypes } from '../../notification-filter';
+import { NotificationFilterFieldTypes } from '../../const/const.js';
 import { NotificationFilterValuesContainer } from './values-container';
 import { Color } from 'im.v2.const';
 

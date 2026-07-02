@@ -89,6 +89,7 @@ class mobile extends CModule
 		$eventManager->registerEventHandler('mobile', 'onMobileMenuStructureBuilt', 'mobile', 'CMobileEvent', 'onMobileMenuBuilt');
 		$eventManager->registerEventHandler('main', 'onKernelCheckInstallFilesMappingGet', 'mobile', 'CMobileEvent', 'getKernelCheckPath');
 		$eventManager->registerEventHandler('mobileapp', 'onBeforeComponentContentGet', 'mobile', 'CMobileEvent', 'onBeforeComponentContentGet');
+		$eventManager->registerEventHandler('mobileapp', 'onBuildEnvVariable', 'mobile', \Bitrix\Mobile\Internal\Integration\Mobileapp\EventHandler\OnBuildEnvVariable::class, 'handle');
 
 		return true;
 	}
@@ -103,6 +104,7 @@ class mobile extends CModule
 		$eventManager->unRegisterEventHandler('mobileapp', 'onJNComponentWorkspaceGet', 'mobile', 'CMobileEvent', 'getJNWorkspace');
 		$eventManager->unRegisterEventHandler('main', 'onKernelCheckInstallFilesMappingGet', 'mobile', 'CMobileEvent', 'getKernelCheckPath');
 		$eventManager->unRegisterEventHandler('mobileapp', 'onBeforeComponentContentGet', 'mobile', 'CMobileEvent', 'onBeforeComponentContentGet');
+		$eventManager->unRegisterEventHandler('mobileapp', 'onBuildEnvVariable', 'mobile', \Bitrix\Mobile\Internal\Integration\Mobileapp\EventHandler\OnBuildEnvVariable::class, 'handle');
 		$eventManager->unRegisterEventHandler('pull', 'onPushTokenUniqueHashGet', 'mobile', '\Bitrix\Mobile\Push\EventHandler', 'onPushTokenUniqueHashGet');
 
 		UnRegisterModule("mobile");

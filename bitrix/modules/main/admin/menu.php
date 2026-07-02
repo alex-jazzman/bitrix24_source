@@ -12,9 +12,6 @@
  * @global CMain $APPLICATION
  */
 
-if(!method_exists($USER, "CanDoOperation"))
-	return false;
-
 IncludeModuleLangFile(__FILE__);
 
 global $adminMenu, $adminPage;
@@ -455,7 +452,7 @@ if($USER->CanDoOperation('view_other_settings') || $USER->CanDoOperation('view_e
 		);
 		$toolsItems[] = array(
 			"text" => GetMessage("MAIN_MENU_SQL"),
-			"url" => "sql.php?lang=".LANGUAGE_ID."&amp;del_query=Y",
+			"url" => "sql.php?lang=".LANGUAGE_ID,
 			"more_url" => array("sql.php"),
 			"title" => GetMessage("MAIN_MENU_SQL_ALT"),
 		);
@@ -793,11 +790,6 @@ if($USER->CanDoOperation('view_other_settings'))
 		"more_url" => array("promo_https.php"),
 		"items" => array(),
 	);
-}
-
-if ($USER->CanDoOperation("view_other_settings") && \Bitrix\Main\Analytics\SiteSpeed::isOn())
-{
-	AddEventHandler("main", "OnBuildGlobalMenu", array("\\Bitrix\\Main\\Analytics\\SiteSpeed", "onBuildGlobalMenu"));
 }
 
 return $aMenu;

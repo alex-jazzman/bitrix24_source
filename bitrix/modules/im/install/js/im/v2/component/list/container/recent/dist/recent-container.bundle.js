@@ -3,85 +3,70 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,main_core_events,im_v2_component_search,im_v2_lib_logger,im_v2_provider_service_chat,im_v2_component_list_container_elements_baseHeaderMenu,ui_infoHelper,im_public,im_v2_component_elements_menu,im_v2_component_elements_copilotRolesDialog,im_v2_component_list_container_elements_createChatPromo,im_v2_lib_permission,im_v2_lib_createChat,im_v2_lib_feature,im_v2_provider_service_copilot,im_v2_lib_helpdesk,main_core,im_v2_lib_copilot,im_v2_lib_analytics,im_v2_lib_invite,im_v2_lib_promo,im_v2_const,im_v2_component_animation,im_v2_component_list_items_recent) {
+(function (exports, main_core, main_core_events, im_v2_component_list_items_recent, im_v2_component_search, im_v2_const, im_v2_lib_analytics, im_v2_lib_logger, im_v2_lib_permission, im_v2_component_list_container_elements_headerMenu, im_v2_component_list_container_elements_vibeCodeCatalogButton, ui_infoHelper, im_public, im_v2_component_elements_copilotRolesDialog, im_v2_component_elements_menu, im_v2_component_list_container_elements_createChatPromo, im_v2_lib_createChat, im_v2_lib_feature, im_v2_lib_promo, im_v2_provider_service_copilot, im_v2_lib_copilot, im_v2_lib_helpdesk, im_v2_lib_invite) {
 	'use strict';
 
 	// @vue/component
-	const HeaderMenu = {
-	  components: {
-	    BaseHeaderMenu: im_v2_component_list_container_elements_baseHeaderMenu.BaseHeaderMenu,
-	    MenuItem: im_v2_component_elements_menu.MenuItem
-	  },
-	  props: {
-	    unreadOnlyMode: {
-	      type: Boolean,
-	      default: false
-	    }
-	  },
-	  emits: ['toggleUnreadMode'],
-	  computed: {
-	    unreadCounter() {
-	      const counter = this.$store.getters['counters/getTotalChatCounter'];
-	      return this.unreadOnlyMode ? 0 : counter;
-	    },
-	    isUnreadRecentModeAvailable() {
-	      return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.unreadRecentModeAvailable);
-	    }
-	  },
-	  methods: {
-	    async onReadAllClick(closeCallback) {
-	      new im_v2_provider_service_chat.ChatService().readAll();
-	      closeCallback();
-	    },
-	    onToggleUnreadMode(closeCallback) {
-	      this.$emit('toggleUnreadMode');
-	      closeCallback();
-	    },
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
-	    }
-	  },
-	  template: `
-		<BaseHeaderMenu>
-			<template #menu-items="{ closeCallback }">
-				<MenuItem
-					:title="loc('IM_RECENT_HEADER_MENU_READ_ALL_MSGVER_1')"
-					@click="onReadAllClick(closeCallback)"
-				/>
-				<MenuItem
-					v-if="isUnreadRecentModeAvailable"
-					:title="loc('IM_RECENT_HEADER_MENU_SHOW_UNREAD_ONLY_MSGVER_2')"
-					:counter="unreadCounter"
-					@click="onToggleUnreadMode(closeCallback)"
-				/>
-				<MenuItem
-					v-if="false"
-					:title="loc('IM_RECENT_HEADER_MENU_CHAT_GROUPS_TITLE')"
-					:subtitle="loc('IM_RECENT_HEADER_MENU_CHAT_GROUPS_SUBTITLE')"
-					:disabled="true"
-				/>
-			</template>
-		</BaseHeaderMenu>
+	const DescriptionBanner = {
+		name: 'DescriptionBanner',
+		emits: ['close'],
+		computed: {
+			preparedText() {
+				return main_core.Loc.getMessage('IM_RECENT_CREATE_COLLAB_DESCRIPTION_BANNER', {
+					'[color_highlight]': '<span class="bx-im-create-chat-menu-description-banner__highlight">',
+					'[/color_highlight]': '</span>'
+				});
+			}
+		},
+		template: `
+		<div class="bx-im-create-chat-menu-description-banner__container">
+			<div class="bx-im-create-chat-menu-description-banner__content" v-html="preparedText"></div>
+			<div class="bx-im-create-chat-menu-description-banner__close-icon" @click.stop="$emit('close')"></div>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const CopilotRoleSelectionButton = {
+		computed: {
+			title() {
+				return this.loc('IM_RECENT_CREATE_COPILOT_ROLE_SELECTION_TITLE_MSGVER_1', {
+					'#COPILOT_NAME#': this.copilotManager.getName()
+				});
+			}
+		},
+		created() {
+			this.copilotManager = new im_v2_lib_copilot.CopilotManager();
+		},
+		methods: {
+			loc(phraseCode, replacements = {}) {
+				return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+			}
+		},
+		template: `
+		<div class="bx-im-create-chat-menu-item__button --copilot" :title="title">
+			<div class="bx-im-create-chat-menu-item__icon-more"></div>
+		</div>
 	`
 	};
 
 	// @vue/component
 	const CreateChatHelp = {
-	  emits: ['articleOpen'],
-	  data() {
-	    return {};
-	  },
-	  methods: {
-	    openHelpArticle() {
-	      const ARTICLE_CODE = '17412872';
-	      im_v2_lib_helpdesk.openHelpdeskArticle(ARTICLE_CODE);
-	      this.$emit('articleOpen');
-	    },
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
-	    }
-	  },
-	  template: `
+		emits: ['articleOpen'],
+		data() {
+			return {};
+		},
+		methods: {
+			openHelpArticle() {
+				const ARTICLE_CODE = '17412872';
+				im_v2_lib_helpdesk.openHelpdeskArticle(ARTICLE_CODE);
+				this.$emit('articleOpen');
+			},
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
 		<div class="bx-im-create-chat-help__container">
 			<div @click="openHelpArticle" class="bx-im-create-chat-help__content">
 				<div class="bx-im-create-chat-help__icon"></div>
@@ -92,67 +77,23 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	};
 
 	// @vue/component
-	const DescriptionBanner = {
-	  name: 'DescriptionBanner',
-	  emits: ['close'],
-	  computed: {
-	    preparedText() {
-	      return main_core.Loc.getMessage('IM_RECENT_CREATE_COLLAB_DESCRIPTION_BANNER', {
-	        '[color_highlight]': '<span class="bx-im-create-chat-menu-description-banner__highlight">',
-	        '[/color_highlight]': '</span>'
-	      });
-	    }
-	  },
-	  template: `
-		<div class="bx-im-create-chat-menu-description-banner__container">
-			<div class="bx-im-create-chat-menu-description-banner__content" v-html="preparedText"></div>
-			<div class="bx-im-create-chat-menu-description-banner__close-icon" @click.stop="$emit('close')"></div>
-		</div>
-	`
-	};
-
-	// @vue/component
-	const CopilotRoleSelectionButton = {
-	  computed: {
-	    title() {
-	      return this.loc('IM_RECENT_CREATE_COPILOT_ROLE_SELECTION_TITLE_MSGVER_1', {
-	        '#COPILOT_NAME#': this.copilotManager.getName()
-	      });
-	    }
-	  },
-	  created() {
-	    this.copilotManager = new im_v2_lib_copilot.CopilotManager();
-	  },
-	  methods: {
-	    loc(phraseCode, replacements = {}) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
-	    }
-	  },
-	  template: `
-		<div class="bx-im-create-chat-menu-item__button --copilot" :title="title">
-			<div class="bx-im-create-chat-menu-item__icon-more"></div>
-		</div>
-	`
-	};
-
-	// @vue/component
 	const InvitePromo = {
-	  name: 'InvitePromo',
-	  emits: ['close'],
-	  methods: {
-	    onContainerClick() {
-	      const analyticsContext = im_v2_lib_analytics.Analytics.getInstance().sliderInvite.getRecentCreateMenuContext();
-	      im_v2_lib_invite.InviteManager.openInviteSlider(analyticsContext);
-	    },
-	    onCloseClick() {
-	      void im_v2_lib_promo.PromoManager.getInstance().markAsWatched(im_v2_const.PromoId.recentCreateChatInviteUsers);
-	      this.$emit('close');
-	    },
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
-	    }
-	  },
-	  template: `
+		name: 'InvitePromo',
+		emits: ['close'],
+		methods: {
+			onContainerClick() {
+				const analyticsContext = im_v2_lib_analytics.Analytics.getInstance().sliderInvite.getRecentCreateMenuContext();
+				im_v2_lib_invite.InviteManager.openInviteSlider(analyticsContext);
+			},
+			onCloseClick() {
+				void im_v2_lib_promo.PromoManager.getInstance().markAsWatched(im_v2_const.PromoId.recentCreateChatInviteUsers);
+				this.$emit('close');
+			},
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
 		<div @click="onContainerClick" class="bx-im-recent-invite-promo__container">
 			<div class="bx-im-recent-invite-promo__icon"></div>
 			<div class="bx-im-recent-invite-promo__content">
@@ -169,194 +110,189 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	};
 
 	const PromoByChatType = {
-	  [im_v2_const.ChatType.chat]: im_v2_const.PromoId.createGroupChat,
-	  [im_v2_const.ChatType.videoconf]: im_v2_const.PromoId.createConference,
-	  [im_v2_const.ChatType.channel]: im_v2_const.PromoId.createChannel
+		[im_v2_const.ChatType.chat]: im_v2_const.PromoId.createGroupChat,
+		[im_v2_const.ChatType.videoconf]: im_v2_const.PromoId.createConference,
+		[im_v2_const.ChatType.channel]: im_v2_const.PromoId.createChannel
 	};
 
 	// @vue/component
 	const CreateChatMenu = {
-	  components: {
-	    MessengerMenu: im_v2_component_elements_menu.MessengerMenu,
-	    MenuItem: im_v2_component_elements_menu.MenuItem,
-	    CreateChatHelp,
-	    CreateChatPromo: im_v2_component_list_container_elements_createChatPromo.CreateChatPromo,
-	    DescriptionBanner,
-	    CopilotRoleSelectionButton,
-	    CopilotRolesDialog: im_v2_component_elements_copilotRolesDialog.CopilotRolesDialog,
-	    InvitePromo
-	  },
-	  data() {
-	    return {
-	      showMenu: false,
-	      chatTypeToCreate: '',
-	      showCreateChatPromo: false,
-	      showCollabPromo: false,
-	      showInvitePromo: false,
-	      showCopilotRolesDialog: false,
-	      isLoading: false
-	    };
-	  },
-	  computed: {
-	    ChatType: () => im_v2_const.ChatType,
-	    MenuItemIcon: () => im_v2_component_elements_menu.MenuItemIcon,
-	    menuConfig() {
-	      return {
-	        id: 'im-create-chat-menu',
-	        width: 275,
-	        bindElement: this.$refs.icon || {},
-	        offsetTop: 4,
-	        padding: 0
-	      };
-	    },
-	    collabAvailable() {
-	      const hasAccess = im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByUserType(im_v2_const.ActionByUserType.createCollab);
-	      const creationAvailable = im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.collabCreationAvailable);
-	      const featureAvailable = im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.collabAvailable);
-	      return hasAccess && featureAvailable && creationAvailable;
-	    },
-	    canCreateChat() {
-	      return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByUserType(im_v2_const.ActionByUserType.createChat);
-	    },
-	    canCreateCopilot() {
-	      return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByUserType(im_v2_const.ActionByUserType.createCopilot);
-	    },
-	    isCopilotAvailable() {
-	      return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.copilotAvailable);
-	    },
-	    isCopilotActive() {
-	      return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.copilotActive);
-	    },
-	    isCopilotAvailableAndCreatable() {
-	      return this.isCopilotAvailable && this.canCreateCopilot;
-	    },
-	    canCreateChannel() {
-	      return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByUserType(im_v2_const.ActionByUserType.createChannel);
-	    },
-	    canCreateConference() {
-	      return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByUserType(im_v2_const.ActionByUserType.createConference);
-	    },
-	    iconStatusClasses() {
-	      return {
-	        '--default': !this.isLoading,
-	        '--loading': this.isLoading
-	      };
-	    },
-	    createCopilotTitle() {
-	      return this.loc('IM_RECENT_CREATE_COPILOT_TITLE_MSGVER_1', {
-	        '#COPILOT_NAME#': this.copilotManager.getName()
-	      });
-	    }
-	  },
-	  created() {
-	    this.showCollabPromo = im_v2_lib_promo.PromoManager.getInstance().needToShow(im_v2_const.PromoId.createCollabDescription);
-	    this.showInvitePromo = im_v2_lib_promo.PromoManager.getInstance().needToShow(im_v2_const.PromoId.recentCreateChatInviteUsers);
-	    this.copilotManager = new im_v2_lib_copilot.CopilotManager();
-	  },
-	  methods: {
-	    onChatCreateClick(type) {
-	      im_v2_lib_analytics.Analytics.getInstance().chatCreate.onStartClick(type);
-	      this.chatTypeToCreate = type;
-	      const promoBannerIsNeeded = im_v2_lib_promo.PromoManager.getInstance().needToShow(this.getPromoType());
-	      if (promoBannerIsNeeded) {
-	        this.showCreateChatPromo = true;
-	        this.showMenu = false;
-	        return;
-	      }
-	      this.startChatCreation();
-	      this.showMenu = false;
-	    },
-	    showCopilotPromoter() {
-	      const promoter = new ui_infoHelper.FeaturePromoter({
-	        code: im_v2_const.SliderCode.copilotDisabled
-	      });
-	      promoter.show();
-	    },
-	    checkCopilotActive() {
-	      if (!this.isCopilotActive) {
-	        this.showCopilotPromoter();
-	        return false;
-	      }
-	      return true;
-	    },
-	    async onDefaultCopilotCreateClick() {
-	      if (!this.checkCopilotActive()) {
-	        return;
-	      }
-	      this.showMenu = false;
-	      this.isLoading = true;
-	      try {
-	        const newDialogId = await this.getCopilotService().createDefaultChat();
-	        im_v2_lib_analytics.Analytics.getInstance().copilot.onCreateDefaultChatInRecent();
-	        this.isLoading = false;
-	        void im_public.Messenger.openChat(newDialogId);
-	      } catch {
-	        this.isLoading = false;
-	      }
-	    },
-	    onCopilotRoleSelectClick() {
-	      if (!this.checkCopilotActive()) {
-	        return;
-	      }
-	      im_v2_lib_analytics.Analytics.getInstance().copilot.onSelectRoleInRecent();
-	      this.showCopilotRolesDialog = true;
-	    },
-	    async onCopilotDialogSelectRole(role) {
-	      await this.createCopilotChat(role.code);
-	    },
-	    async createCopilotChat(roleCode) {
-	      this.showMenu = false;
-	      this.isLoading = true;
-	      try {
-	        const newDialogId = await this.getCopilotService().createChat({
-	          roleCode
-	        });
-	        this.isLoading = false;
-	        void im_public.Messenger.openChat(newDialogId);
-	      } catch {
-	        this.isLoading = false;
-	      }
-	    },
-	    onPromoContinueClick() {
-	      im_v2_lib_promo.PromoManager.getInstance().markAsWatched(this.getPromoType());
-	      this.startChatCreation();
-	      this.showCreateChatPromo = false;
-	      this.showMenu = false;
-	      this.chatTypeToCreate = '';
-	    },
-	    onCollabDescriptionClose() {
-	      void im_v2_lib_promo.PromoManager.getInstance().markAsWatched(im_v2_const.PromoId.createCollabDescription);
-	      this.showCollabPromo = false;
-	    },
-	    startChatCreation() {
-	      const {
-	        name: currentLayoutName,
-	        entityId: currentLayoutChatType
-	      } = this.$store.getters['application/getLayout'];
-	      if (currentLayoutName === im_v2_const.Layout.createChat && currentLayoutChatType === this.chatTypeToCreate) {
-	        return;
-	      }
-	      im_v2_lib_createChat.CreateChatManager.getInstance().startChatCreation(this.chatTypeToCreate);
-	    },
-	    getPromoType() {
-	      var _PromoByChatType$this;
-	      return (_PromoByChatType$this = PromoByChatType[this.chatTypeToCreate]) != null ? _PromoByChatType$this : '';
-	    },
-	    loc(phraseCode, replacements = {}) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
-	    },
-	    getCopilotService() {
-	      if (!this.copilotService) {
-	        this.copilotService = new im_v2_provider_service_copilot.CopilotService();
-	      }
-	      return this.copilotService;
-	    },
-	    handleShowPopup() {
-	      im_v2_lib_analytics.Analytics.getInstance().chatCreate.onMenuCreateClick();
-	      this.showMenu = true;
-	    }
-	  },
-	  template: `
+		components: {
+			MessengerMenu: im_v2_component_elements_menu.MessengerMenu,
+			MenuItem: im_v2_component_elements_menu.MenuItem,
+			CreateChatHelp,
+			CreateChatPromo: im_v2_component_list_container_elements_createChatPromo.CreateChatPromo,
+			DescriptionBanner,
+			CopilotRoleSelectionButton,
+			CopilotRolesDialog: im_v2_component_elements_copilotRolesDialog.CopilotRolesDialog,
+			InvitePromo
+		},
+		data() {
+			return {
+				showMenu: false,
+				chatTypeToCreate: '',
+				showCreateChatPromo: false,
+				showCollabPromo: false,
+				showInvitePromo: false,
+				showCopilotRolesDialog: false,
+				isLoading: false
+			};
+		},
+		computed: {
+			ChatType: () => im_v2_const.ChatType,
+			MenuItemIcon: () => im_v2_component_elements_menu.MenuItemIcon,
+			menuConfig() {
+				return {
+					id: 'im-create-chat-menu',
+					width: 275,
+					bindElement: this.$refs.icon || {},
+					offsetTop: 4,
+					padding: 0
+				};
+			},
+			collabAvailable() {
+				const hasAccess = im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByUserType(im_v2_const.ActionByUserType.createCollab);
+				const creationAvailable = im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.collabCreationAvailable);
+				const featureAvailable = im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.collabAvailable);
+				return hasAccess && featureAvailable && creationAvailable;
+			},
+			canCreateChat() {
+				return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByUserType(im_v2_const.ActionByUserType.createChat);
+			},
+			canCreateCopilot() {
+				return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByUserType(im_v2_const.ActionByUserType.createCopilot);
+			},
+			isCopilotAvailable() {
+				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.copilotAvailable);
+			},
+			isCopilotActive() {
+				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.copilotActive);
+			},
+			isCopilotAvailableAndCreatable() {
+				return this.isCopilotAvailable && this.canCreateCopilot;
+			},
+			canCreateChannel() {
+				return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByUserType(im_v2_const.ActionByUserType.createChannel);
+			},
+			canCreateConference() {
+				return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByUserType(im_v2_const.ActionByUserType.createConference);
+			},
+			iconStatusClasses() {
+				return {
+					'--default': !this.isLoading,
+					'--loading': this.isLoading
+				};
+			},
+			createCopilotTitle() {
+				return this.loc('IM_RECENT_CREATE_COPILOT_TITLE_MSGVER_1', {
+					'#COPILOT_NAME#': this.copilotManager.getName()
+				});
+			}
+		},
+		created() {
+			this.showCollabPromo = im_v2_lib_promo.PromoManager.getInstance().needToShow(im_v2_const.PromoId.createCollabDescription);
+			this.showInvitePromo = im_v2_lib_promo.PromoManager.getInstance().needToShow(im_v2_const.PromoId.recentCreateChatInviteUsers);
+			this.copilotManager = new im_v2_lib_copilot.CopilotManager();
+		},
+		methods: {
+			onChatCreateClick(type) {
+				im_v2_lib_analytics.Analytics.getInstance().chatCreate.onStartClick(type);
+				this.chatTypeToCreate = type;
+				const promoBannerIsNeeded = im_v2_lib_promo.PromoManager.getInstance().needToShow(this.getPromoType());
+				if (promoBannerIsNeeded) {
+					this.showCreateChatPromo = true;
+					this.showMenu = false;
+					return;
+				}
+				this.startChatCreation();
+				this.showMenu = false;
+			},
+			showCopilotPromoter() {
+				const promoter = new ui_infoHelper.FeaturePromoter({
+					code: im_v2_const.SliderCode.copilotDisabled
+				});
+				promoter.show();
+			},
+			checkCopilotActive() {
+				if (!this.isCopilotActive) {
+					this.showCopilotPromoter();
+					return false;
+				}
+				return true;
+			},
+			async onDefaultCopilotCreateClick() {
+				if (!this.checkCopilotActive()) {
+					return;
+				}
+				this.showMenu = false;
+				this.isLoading = true;
+				try {
+					const newDialogId = await this.getCopilotChatService().createDefaultChat();
+					im_v2_lib_analytics.Analytics.getInstance().copilot.onCreateDefaultChatInRecent();
+					this.isLoading = false;
+					void im_public.Messenger.openChat(newDialogId);
+				} catch {
+					this.isLoading = false;
+				}
+			},
+			onCopilotRoleSelectClick() {
+				if (!this.checkCopilotActive()) {
+					return;
+				}
+				im_v2_lib_analytics.Analytics.getInstance().copilot.onSelectRoleInRecent();
+				this.showCopilotRolesDialog = true;
+			},
+			async onCopilotDialogSelectRole(role) {
+				await this.createCopilotChat(role.code);
+			},
+			async createCopilotChat(roleCode) {
+				this.showMenu = false;
+				this.isLoading = true;
+				try {
+					const newDialogId = await this.getCopilotChatService().createChat({
+						roleCode
+					});
+					this.isLoading = false;
+					void im_public.Messenger.openChat(newDialogId);
+				} catch {
+					this.isLoading = false;
+				}
+			},
+			onPromoContinueClick() {
+				im_v2_lib_promo.PromoManager.getInstance().markAsWatched(this.getPromoType());
+				this.startChatCreation();
+				this.showCreateChatPromo = false;
+				this.showMenu = false;
+				this.chatTypeToCreate = '';
+			},
+			onCollabDescriptionClose() {
+				void im_v2_lib_promo.PromoManager.getInstance().markAsWatched(im_v2_const.PromoId.createCollabDescription);
+				this.showCollabPromo = false;
+			},
+			startChatCreation() {
+				if (im_v2_lib_createChat.CreateChatManager.getInstance().isCreationLayoutActive(this.chatTypeToCreate)) {
+					return;
+				}
+				void im_v2_lib_createChat.CreateChatManager.getInstance().startChatCreation(this.chatTypeToCreate);
+			},
+			getPromoType() {
+				return PromoByChatType[this.chatTypeToCreate] ?? '';
+			},
+			loc(phraseCode, replacements = {}) {
+				return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+			},
+			getCopilotChatService() {
+				if (!this.copilotService) {
+					this.copilotService = new im_v2_provider_service_copilot.CopilotChatService();
+				}
+				return this.copilotService;
+			},
+			handleShowPopup() {
+				im_v2_lib_analytics.Analytics.getInstance().chatCreate.onMenuCreateClick();
+				this.showMenu = true;
+			}
+		},
+		template: `
 		<div
 			class="bx-im-list-container-recent__create-chat_icon"
 			:class="{'--active': showMenu}"
@@ -433,157 +369,105 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	};
 
 	// @vue/component
-	const RecentUnreadListContainer = {
-	  name: 'RecentUnreadListContainer',
-	  components: {
-	    RecentUnreadList: im_v2_component_list_items_recent.RecentUnreadList
-	  },
-	  emits: ['chatClick', 'toggleUnreadMode'],
-	  methods: {
-	    closeUnreadMode() {
-	      this.$emit('toggleUnreadMode');
-	    },
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
-	    }
-	  },
-	  template: `
-		<div class="bx-im-list-container-recent-unread-slider">
-			<div class="bx-im-list-container-recent-unread-slider__header">
-				<div class="bx-im-list-container-recent-unread-slider__back-icon" @click="closeUnreadMode"></div>
-				<div class="bx-im-list-container-recent-unread-slider__title">{{ loc('IM_LIST_UNREAD_RECENT_SLIDER_TITLE') }}</div>
-			</div>
-			<div class="bx-im-list-container-recent-unread-slider__content">
-				<RecentUnreadList @chatClick="$emit('chatClick', $event)" />
-			</div>
-		</div>
-	`
-	};
-
-	// @vue/component
-	const RecentUnreadListSlider = {
-	  name: 'RecentUnreadListSlider',
-	  components: {
-	    RecentUnreadListContainer,
-	    SlideAnimation: im_v2_component_animation.SlideAnimation
-	  },
-	  props: {
-	    unreadOnlyMode: {
-	      type: Boolean,
-	      default: false
-	    }
-	  },
-	  emits: ['chatClick', 'toggleUnreadMode'],
-	  template: `
-		<SlideAnimation>
-			<RecentUnreadListContainer 
-				v-if="unreadOnlyMode"
-				@chatClick="$emit('chatClick', $event)" 
-				@toggleUnreadMode="$emit('toggleUnreadMode')"
-			/>
-		</SlideAnimation>
-	`
-	};
-
-	// @vue/component
 	const RecentListContainer = {
-	  name: 'RecentListContainer',
-	  components: {
-	    HeaderMenu,
-	    CreateChatMenu,
-	    ChatSearchInput: im_v2_component_search.ChatSearchInput,
-	    RecentList: im_v2_component_list_items_recent.RecentList,
-	    RecentSectionSearch: im_v2_component_search.RecentSectionSearch,
-	    RecentUnreadListSlider
-	  },
-	  emits: ['selectEntity'],
-	  data() {
-	    return {
-	      searchMode: false,
-	      unreadOnlyMode: false,
-	      searchQuery: '',
-	      isSearchLoading: false
-	    };
-	  },
-	  computed: {
-	    RecentType: () => im_v2_const.RecentType,
-	    layout() {
-	      return this.$store.getters['application/getLayout'];
-	    },
-	    layoutName() {
-	      return this.layout.name;
-	    },
-	    canCreateChat() {
-	      const actions = [im_v2_const.ActionByUserType.createChat, im_v2_const.ActionByUserType.createCollab, im_v2_const.ActionByUserType.createChannel, im_v2_const.ActionByUserType.createConference];
-	      return actions.some(action => im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByUserType(action));
-	    }
-	  },
-	  created() {
-	    im_v2_lib_logger.Logger.warn('List: Recent container created');
-	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.recent.openSearch, this.onOpenSearch);
-	    main_core.Event.bind(document, 'mousedown', this.onDocumentClick);
-	  },
-	  beforeUnmount() {
-	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.recent.openSearch, this.onOpenSearch);
-	    main_core.Event.unbind(document, 'mousedown', this.onDocumentClick);
-	  },
-	  methods: {
-	    onChatClick(dialogId) {
-	      this.$emit('selectEntity', {
-	        layoutName: im_v2_const.Layout.chat,
-	        entityId: dialogId
-	      });
-	    },
-	    onOpenSearch() {
-	      if (!this.searchMode) {
-	        im_v2_lib_analytics.Analytics.getInstance().recentSearch.onOpen(this.layoutName);
-	      }
-	      this.searchMode = true;
-	    },
-	    onCloseSearch() {
-	      this.searchMode = false;
-	      this.searchQuery = '';
-	    },
-	    onCloseRecentSearch() {
-	      im_v2_lib_analytics.Analytics.getInstance().recentSearch.onClose(this.layoutName);
-	      this.onCloseSearch();
-	    },
-	    onUpdateSearch(query) {
-	      this.searchMode = true;
-	      this.searchQuery = query;
-	    },
-	    onDocumentClick(event) {
-	      const clickOnRecentContainer = event.composedPath().includes(this.$refs['recent-container']);
-	      if (this.searchMode && !clickOnRecentContainer) {
-	        this.onCloseSearch();
-	        im_v2_lib_analytics.Analytics.getInstance().recentSearch.onClose(this.layoutName);
-	      }
-	    },
-	    onLoading(value) {
-	      this.isSearchLoading = value;
-	    },
-	    onOpenSearchItem(event) {
-	      const {
-	        dialogId
-	      } = event;
-	      this.onChatClick(dialogId);
-	    },
-	    onToggleUnreadMode() {
-	      this.$store.dispatch('recent/clearUnreadCollection', {
-	        type: im_v2_const.RecentType.default
-	      });
-	      this.unreadOnlyMode = !this.unreadOnlyMode;
-	    }
-	  },
-	  template: `
+		name: 'RecentListContainer',
+		components: {
+			HeaderMenu: im_v2_component_list_container_elements_headerMenu.HeaderMenu,
+			CreateChatMenu,
+			ChatSearchInput: im_v2_component_search.ChatSearchInput,
+			RecentList: im_v2_component_list_items_recent.RecentList,
+			RecentSearch: im_v2_component_search.RecentSearch,
+			RecentUnreadList: im_v2_component_list_items_recent.RecentUnreadList,
+			VibeCodeCatalogButton: im_v2_component_list_container_elements_vibeCodeCatalogButton.VibeCodeCatalogButton
+		},
+		emits: ['selectChat'],
+		data() {
+			return {
+				searchMode: false,
+				unreadMode: false,
+				searchQuery: '',
+				isSearchLoading: false
+			};
+		},
+		computed: {
+			RecentType: () => im_v2_const.RecentType,
+			layout() {
+				return this.$store.getters['application/getLayout'];
+			},
+			layoutName() {
+				return this.layout.name;
+			},
+			canCreateChat() {
+				const actions = [im_v2_const.ActionByUserType.createChat, im_v2_const.ActionByUserType.createCollab, im_v2_const.ActionByUserType.createChannel, im_v2_const.ActionByUserType.createConference];
+				return actions.some(action => im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByUserType(action));
+			}
+		},
+		created() {
+			im_v2_lib_logger.Logger.warn('List: Recent container created');
+			main_core_events.EventEmitter.subscribe(im_v2_const.EventType.recent.openSearch, this.onOpenSearch);
+			main_core.Event.bind(document, 'mousedown', this.onDocumentClick);
+		},
+		beforeUnmount() {
+			main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.recent.openSearch, this.onOpenSearch);
+			main_core.Event.unbind(document, 'mousedown', this.onDocumentClick);
+		},
+		methods: {
+			onSelectChat(dialogId) {
+				this.$emit('selectChat', {
+					layoutName: im_v2_const.Layout.chat,
+					dialogId
+				});
+			},
+			onOpenSearch() {
+				if (!this.searchMode) {
+					im_v2_lib_analytics.Analytics.getInstance().recentSearch.onOpen(this.layoutName);
+				}
+				this.searchMode = true;
+			},
+			onCloseSearch() {
+				this.searchMode = false;
+				this.searchQuery = '';
+			},
+			onCloseRecentSearch() {
+				im_v2_lib_analytics.Analytics.getInstance().recentSearch.onClose(this.layoutName);
+				this.onCloseSearch();
+			},
+			onUpdateSearch(query) {
+				this.searchMode = true;
+				this.searchQuery = query;
+			},
+			onDocumentClick(event) {
+				const clickOnRecentContainer = event.composedPath().includes(this.$refs['recent-container']);
+				if (this.searchMode && !clickOnRecentContainer) {
+					this.onCloseSearch();
+					im_v2_lib_analytics.Analytics.getInstance().recentSearch.onClose(this.layoutName);
+				}
+			},
+			onSearchLoading(value) {
+				this.isSearchLoading = value;
+			},
+			onOpenSearchItem(event) {
+				const {
+					dialogId
+				} = event;
+				this.onSelectChat(dialogId);
+			},
+			onToggleUnreadMode() {
+				this.$store.dispatch('recent/clearUnreadCollection', {
+					type: im_v2_const.RecentType.default
+				});
+				this.unreadMode = !this.unreadMode;
+			}
+		},
+		template: `
 		<div class="bx-im-list-container-recent__scope bx-im-list-container-recent__container" ref="recent-container">
-			<RecentUnreadListSlider 
-				:unreadOnlyMode="unreadOnlyMode" 
-				@chatClick="onChatClick" 
-				@toggleUnreadMode="onToggleUnreadMode"
-			/>
 			<div class="bx-im-list-container-recent__header_container">
-				<HeaderMenu :unreadOnlyMode="unreadOnlyMode" @toggleUnreadMode="onToggleUnreadMode" />
+				<VibeCodeCatalogButton />
+				<HeaderMenu
+					:unreadMode="unreadMode"
+					:recentSection="RecentType.default"
+					@toggleUnreadMode="onToggleUnreadMode"
+				/>
 				<div class="bx-im-list-container-recent__search-input_container">
 					<ChatSearchInput 
 						:searchMode="searchMode" 
@@ -597,16 +481,16 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			</div>
 			<div class="bx-im-list-container-recent__elements_container">
 				<div class="bx-im-list-container-recent__elements">
-					<RecentSectionSearch 
+					<RecentSearch
 						v-show="searchMode" 
 						:searchMode="searchMode"
 						:query="searchQuery"
-						:recentSection="RecentType.default"
-						@loading="onLoading"
+						@loading="onSearchLoading"
 						@openItem="onOpenSearchItem"
 						@closeSearch="onCloseSearch"
 					/>
-					<RecentList v-show="!searchMode && !unreadOnlyMode" @chatClick="onChatClick" />
+					<RecentList v-if="!unreadMode" @selectChat="onSelectChat" />
+					<RecentUnreadList v-else @selectChat="onSelectChat" />
 				</div>
 			</div>
 		</div>
@@ -615,5 +499,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.RecentListContainer = RecentListContainer;
 
-}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Event,BX.Messenger.v2.Component,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Component.List,BX.UI,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.List,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Component.Animation,BX.Messenger.v2.Component.List));
+})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX, BX.Event, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.List, BX.UI, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.List, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
 //# sourceMappingURL=recent-container.bundle.js.map

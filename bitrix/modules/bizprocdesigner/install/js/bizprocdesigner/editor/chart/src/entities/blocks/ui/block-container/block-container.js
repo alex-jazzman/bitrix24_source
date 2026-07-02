@@ -1,9 +1,11 @@
-import './block-container.css';
 import { computed, toValue } from 'ui.vue3';
-import { useContextMenu, useBlockDiagram } from 'ui.block-diagram';
+import { useContextMenu } from 'ui.block-diagram';
 import { BLOCK_COLOR_NAMES } from '../../constants';
+import { BX_FLAG_NO } from '../../../../shared/constants';
 // eslint-disable-next-line no-unused-vars
 import type { MenuItemOptions } from 'ui.vue3.components.menu';
+
+import './block-container.css';
 
 type BlockContainerSetup = {
 	blockContainerClassNames: { [string]: boolean };
@@ -22,8 +24,13 @@ const BLOCK_CONTAINER_CLASS_NAMES = {
 
 // @vue/component
 export const BlockContainer = {
-	name: 'block-container',
+	name: 'BlockContainer',
 	props: {
+		/** @type Block */
+		block: {
+			type: Object,
+			default: null,
+		},
 		/** @type Array<MenuItemOptions> */
 		contextMenuItems: {
 			type: Array,
@@ -38,10 +45,6 @@ export const BlockContainer = {
 			default: null,
 		},
 		highlighted: {
-			type: Boolean,
-			default: false,
-		},
-		deactivated: {
 			type: Boolean,
 			default: false,
 		},
@@ -67,13 +70,22 @@ export const BlockContainer = {
 		const {
 			isOpen: isOpenContextMenu,
 			showMenu,
+			closeContextMenu,
 		} = useContextMenu();
-		const { isSelectionActive } = useBlockDiagram();
+
+		const isBlockActivated = computed((): boolean => {
+			if (!props.block?.activity?.Activated)
+			{
+				return true;
+			}
+
+			return props.block.activity.Activated !== BX_FLAG_NO;
+		});
 
 		const blockContainerClassNames = computed((): { [string]: boolean } => ({
 			[BLOCK_CONTAINER_CLASS_NAMES.base]: true,
 			[BLOCK_CONTAINER_CLASS_NAMES.highlighted]: props.highlighted,
-			[BLOCK_CONTAINER_CLASS_NAMES.deactivated]: props.deactivated,
+			[BLOCK_CONTAINER_CLASS_NAMES.deactivated]: !toValue(isBlockActivated),
 			[BLOCK_CONTAINER_CLASS_NAMES.hoverable]: props.hoverable,
 		}));
 
@@ -95,7 +107,7 @@ export const BlockContainer = {
 				style.backgroundColor = props.backgroundColor;
 			}
 
-			if (props.borderColor !== null)
+			if (props.borderColor !== null && !props.highlighted)
 			{
 				style.borderColor = props.borderColor;
 			}
@@ -120,18 +132,24 @@ export const BlockContainer = {
 
 		return {
 			isOpenContextMenu,
+			isBlockActivated,
 			blockContainerClassNames,
 			blockContainerStyle,
 			onShowContextMenu,
+			closeContextMenu,
 		};
 	},
 	template: `
 		<div
 			:class="blockContainerClassNames"
 			:style="blockContainerStyle"
-			@contextmenu="onShowContextMenu"
+			@mousedown="closeContextMenu"
+			@contextmenu.stop="onShowContextMenu"
 		>
-			<slot :isOpenContextMenu="isOpenContextMenu"/>
+			<slot
+				:isOpenContextMenu="isOpenContextMenu"
+				:isBlockActivated="isBlockActivated"
+			/>
 		</div>
 	`,
 };

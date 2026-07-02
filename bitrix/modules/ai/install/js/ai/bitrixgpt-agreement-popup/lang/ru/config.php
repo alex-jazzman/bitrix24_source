@@ -1,8 +1,8 @@
 <?php
 
-$MESS['AI_BITRIXGPT_AGREEMENT_POPUP_TITLE'] = 'Для работы с BitrixGPT примите условия использования';
-$MESS['AI_BITRIXGPT_AGREEMENT_POPUP_TEXT_1'] = 'Чтобы включить BitrixGPT для всех сотрудников, примите условия использования.';
-$MESS['AI_BITRIXGPT_AGREEMENT_POPUP_TEXT_2'] = 'Нажимая «Принять», вы подтверждаете, что ознакомились с #LINK#условиями использования#/LINK# BitrixGPT и принимаете их.';
+$MESS['AI_BITRIXGPT_AGREEMENT_POPUP_TITLE_MSGVER_1'] = 'Для работы с #COPILOT_NAME# примите условия использования';
+$MESS['AI_BITRIXGPT_AGREEMENT_POPUP_TEXT_1_MSGVER_1'] = 'Чтобы включить #COPILOT_NAME# для всех сотрудников, примите условия использования.';
+$MESS['AI_BITRIXGPT_AGREEMENT_POPUP_TEXT_2_MSGVER_1'] = 'Нажимая «Принять», вы подтверждаете, что ознакомились с #LINK#условиями использования#/LINK# #COPILOT_NAME# и принимаете их.';
 $MESS['AI_BITRIXGPT_AGREEMENT_POPUP_ACCEPT'] = 'Принять';
 $MESS['AI_BITRIXGPT_AGREEMENT_POPUP_DECLINE'] = 'Отклонить';
 $MESS['AI_BITRIXGPT_AGREEMENT_POPUP_SKIP'] = 'Пропустить';

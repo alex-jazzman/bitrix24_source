@@ -53,7 +53,12 @@ jn.define('im/messenger/controller/recent/service/select/lib/opener', (require, 
 		});
 	}
 
-	async function openDialog(dialogId)
+	/**
+	 * @param {string} dialogId
+	 * @param {object} [options]
+	 * @param {boolean} [options.skipNestedStrategy]
+	 */
+	async function openDialog(dialogId, options = {})
 	{
 		const dialogManager = serviceLocator.get('dialog-manager');
 		if (!dialogManager)
@@ -63,7 +68,7 @@ jn.define('im/messenger/controller/recent/service/select/lib/opener', (require, 
 			return;
 		}
 
-		await dialogManager.openDialog({ dialogId });
+		await dialogManager.openDialog({ dialogId, ...options });
 		removeUnreadState(dialogId);
 	}
 

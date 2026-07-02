@@ -1,6 +1,5 @@
 import { Tag, Type } from 'main.core';
-import { BaseEvent } from 'main.core.events';
-import { Dialog, BaseFooter, Item } from 'ui.entity-selector';
+import { Dialog, BaseFooter } from 'ui.entity-selector';
 import { mapGetters } from 'ui.vue3.vuex';
 
 import { EntitySelectorEntity, Model } from 'booking.const';

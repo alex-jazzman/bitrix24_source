@@ -1,15 +1,12 @@
-import { Type } from 'main.core';
-import { BuilderModel } from 'ui.vue3.vuex';
+import { Type, type JsonObject } from 'main.core';
+import { BuilderModel, type GetterTree, type ActionTree, type MutationTree } from 'ui.vue3.vuex';
 
-import { MultidialogStatus } from 'im.v2.const';
 import { Core } from 'im.v2.application.core';
+import { type MultidialogStatus } from 'im.v2.const';
 
+import { type ImModelSidebarMultidialogItem } from '../../../registry';
 import { formatFieldsWithConfig } from '../../../utils/validate';
 import { sidebarMultidialogFieldsConfig } from './format/field-config';
-
-import type { JsonObject } from 'main.core';
-import type { GetterTree, ActionTree, MutationTree } from 'ui.vue3.vuex';
-import type { ImModelSidebarMultidialogItem } from '../../../registry';
 
 type MultidialogModelState = {
 	isInited: boolean,

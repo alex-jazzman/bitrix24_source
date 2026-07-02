@@ -12,6 +12,7 @@ jn.define('layout/ui/story-slider', (require, exports, module) => {
 	 * @typedef {Object} StorySliderProps
 	 * @property {Array<LayoutComponent>} slides
 	 * @property {number} [slideDuration=10]
+	 * @property {boolean} [closeOnComplete=true]
 	 * @property {string} [testId]
 	 * @property {Function} [onSlideViewed]
 	 * @property {Object} [clickableInsets]
@@ -73,6 +74,7 @@ jn.define('layout/ui/story-slider', (require, exports, module) => {
 		testId: PropTypes.string.isRequired,
 		slides: PropTypes.array.isRequired,
 		slideDuration: PropTypes.number,
+		closeOnComplete: PropTypes.bool,
 		onSlideViewed: PropTypes.func,
 		onClose: PropTypes.func,
 		clickableInsets: PropTypes.object,
@@ -80,6 +82,7 @@ jn.define('layout/ui/story-slider', (require, exports, module) => {
 
 	module.exports = {
 		StorySlider,
+		Slider,
 		sliderInternalPosition,
 	};
 });

@@ -1,9 +1,11 @@
-import {Extension} from 'main.core';
-import {Dexie} from 'ui.dexie';
-import {RestMethod, LocalStorageKey} from 'im.v2.const';
-import {Core} from 'im.v2.application.core';
-import {RestClient} from 'rest.client';
-import {LocalStorageManager} from 'im.v2.lib.local-storage';
+import { Extension } from 'main.core';
+import { Dexie } from 'ui.dexie';
+
+import { type RestClient } from 'rest.client';
+
+import { Core } from 'im.v2.application.core';
+import { RestMethod, LocalStorageKey } from 'im.v2.const';
+import { LocalStorageManager } from 'im.v2.lib.local-storage';
 
 export type Set = {
 	id: string;

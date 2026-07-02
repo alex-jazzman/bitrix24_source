@@ -5,7 +5,6 @@ use Bitrix\Main\Loader;
 
 require($_SERVER["DOCUMENT_ROOT"]."/mobile/headers.php");
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
-
 $allForms = FeedbackFormProvider::getFormConfig($_REQUEST["formId"]);
 $currentFormData = FeedbackFormProvider::getFormData($_REQUEST["formId"]);
 $hiddenFields = FeedbackFormProvider::getHiddenFieldsParams($_REQUEST['hiddenFields']);
@@ -22,6 +21,7 @@ if (Loader::includeModule('ui'))
 			'PRESETS' => $hiddenFields,
 			'INLINE' => true,
 			'SHOW_TITLE' => 'N',
+			'PORTAL_URI' => $currentFormData['portalUri'] ?? null,
 		],
 		null,
 	);

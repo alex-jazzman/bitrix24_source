@@ -1,0 +1,26 @@
+.booking-booking__grid-navigation-panel_container {
+	grid-column: 2 / 4;
+	grid-row: 1 / 2;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	min-height: 40px;
+	box-sizing: border-box;
+	padding: 8px 11px 7px;
+	border-bottom: 1px solid #000;
+	border-bottom: var(--ui-border-width-thin) solid var(--ui-color-base-7);
+}
+
+.booking-booking__grid-navigation-panel_container-nav-block {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+}
+
+.booking-booking__grid-navigation-panel_container-title {
+	font-size: var(--ui-font-size-xl);
+	font-weight: var(--ui-font-weight-medium);
+	letter-spacing: var(--ui-letter-spacing-m);
+	line-height: var(--ui-font-line-height-2xs);
+	color: var(--ui-color-base-2);
+}

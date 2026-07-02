@@ -1,4 +1,4 @@
-import { Model } from 'tasks.v2.const';
+import { Model, Endpoint } from 'tasks.v2.const';
 import { idUtils, type TaskId } from 'tasks.v2.lib.id-utils';
 import type { TaskDto } from 'tasks.v2.provider.service.task-service';
 import type { GanttLinkModel } from 'tasks.v2.model.gantt-links';
@@ -25,7 +25,7 @@ export class GanttService extends RelationService
 			return null;
 		}
 
-		const error = await this.requestUpdate('Task.Relation.Gantt.Dependence.check', { ganttLink });
+		const error = await this.requestUpdate(Endpoint.TaskRelationGanttDependenceCheck, { ganttLink });
 
 		if (error)
 		{
@@ -48,7 +48,7 @@ export class GanttService extends RelationService
 			return null;
 		}
 
-		const error = await this.requestUpdate('Task.Relation.Gantt.Dependence.add', { ganttLink });
+		const error = await this.requestUpdate(Endpoint.TaskRelationGanttDependenceAdd, { ganttLink });
 
 		if (error)
 		{
@@ -71,7 +71,7 @@ export class GanttService extends RelationService
 			return null;
 		}
 
-		const error = await this.requestUpdate('Task.Relation.Gantt.Dependence.update', { ganttLink });
+		const error = await this.requestUpdate(Endpoint.TaskRelationGanttDependenceUpdate, { ganttLink });
 
 		if (error)
 		{
@@ -94,7 +94,7 @@ export class GanttService extends RelationService
 			return;
 		}
 
-		const error = await this.requestUpdate('Task.Relation.Gantt.Dependence.delete', { ganttLink });
+		const error = await this.requestUpdate(Endpoint.TaskRelationGanttDependenceDelete, { ganttLink });
 
 		if (error)
 		{

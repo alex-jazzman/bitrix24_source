@@ -1,7 +1,7 @@
 /**
- * @module im/messenger/application/lib/dialog-manager/service
+ * @module im/messenger/application/lib/dialog-manager/src/service
  */
-jn.define('im/messenger/application/lib/dialog-manager/service', (require, exports, module) => {
+jn.define('im/messenger/application/lib/dialog-manager/src/service', (require, exports, module) => {
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 	const { ChatDataProvider } = require('im/messenger/provider/data');
 	const { ChatService } = require('im/messenger/provider/services/chat');

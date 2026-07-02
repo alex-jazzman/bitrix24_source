@@ -1,4 +1,4 @@
-import { ChatType, UserRole, ChatActionGroup } from 'im.v2.const';
+import { UserRole, ChatActionGroup, type ChatTypeItem } from 'im.v2.const';
 
 type ActionGroupItem = $Keys<typeof ChatActionGroup>;
 type RoleItem = $Keys<typeof UserRole>;
@@ -6,7 +6,7 @@ type RoleItem = $Keys<typeof UserRole>;
 export type Chat = {
 	dialogId: string,
 	chatId: number,
-	type: $Values<typeof ChatType>,
+	type: ChatTypeItem,
 	name: string,
 	description: string,
 	avatar: string,
@@ -14,6 +14,7 @@ export type Chat = {
 	extranet: boolean,
 	containsCollaber: boolean,
 	userCounter: number,
+	guestCount: number,
 	lastReadId: number,
 	markedId: number,
 	lastMessageId: number,

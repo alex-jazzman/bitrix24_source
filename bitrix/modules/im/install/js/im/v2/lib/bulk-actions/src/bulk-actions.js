@@ -1,11 +1,8 @@
-import { BaseEvent } from 'main.core.events';
+import { type BaseEvent, type EventEmitter } from 'main.core.events';
 
-import { EventType } from 'im.v2.const';
 import { Core } from 'im.v2.application.core';
+import { EventType, type ApplicationContext } from 'im.v2.const';
 import { EscEventAction } from 'im.v2.lib.esc-manager';
-
-import type { EventEmitter } from 'main.core.events';
-import type { ApplicationContext } from 'im.v2.const';
 
 export class BulkActionsManager
 {

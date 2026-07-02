@@ -1,17 +1,17 @@
-import { Analytics } from 'im.v2.lib.analytics';
-import { ImModelSidebarMeetingItem, ImModelChat } from 'im.v2.model';
+import { type EventEmitter } from 'main.core.events';
+
 import { ChatButton, ButtonColor, ButtonSize } from 'im.v2.component.elements.button';
 import { EventType, SidebarDetailBlock, ActionByRole } from 'im.v2.const';
+import { Analytics } from 'im.v2.lib.analytics';
 import { EntityCreator } from 'im.v2.lib.entity-creator';
 import { PermissionManager } from 'im.v2.lib.permission';
+import { type ImModelSidebarMeetingItem, type ImModelChat } from 'im.v2.model';
 
 import { MeetingMenu } from '../../../../classes/context-menu/meeting/meeting-menu';
 import { DetailEmptyState } from '../../../elements/detail-empty-state/detail-empty-state';
 import { MeetingItem } from '../../meeting/meeting-item';
 
 import '../css/meeting.css';
-
-import type { EventEmitter } from 'main.core.events';
 
 // @vue/component
 export const MeetingListPreview = {

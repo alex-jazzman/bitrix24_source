@@ -3,11 +3,10 @@
 namespace Bitrix\AI\Tuning;
 
 use Bitrix\AI\Config;
-use Bitrix\AI\Engine;
 use Bitrix\AI\Facade\Bitrix24;
+use Bitrix\Main\Analytics\AnalyticsEvent;
 use Bitrix\Main\Event;
 use Bitrix\Main\ORM;
-use Bitrix\Main\Web\Json;
 
 /**
  * Class for manage tuning options
@@ -90,7 +89,7 @@ class Manager
 				$group = $this->groups->get($groupCode);
 				$item = Item::create($code, $raw);
 
-				if ($item && !Defaults::isGroupInternal($group))
+				if ($item && $group && !Defaults::isGroupInternal($group))
 				{
 					$item->setValue(
 						array_key_exists($code, $storage)
@@ -118,36 +117,6 @@ class Manager
 	 */
 	private function onAfterLoad(): void
 	{
-		$engineConfigurations = [
-			[
-				'configKey' => 'bitrixgpt_options',
-				'engineCode' => Engine\Cloud\Bitrix24::ENGINE_CODE,
-			]
-		];
-
-		foreach ($engineConfigurations as $config)
-		{
-			$optionValue = Config::getValue($config['configKey']);
-			if ($optionValue === null)
-			{
-				continue;
-			}
-
-			$availableInItems = [];
-			$decodedValue = json_decode($optionValue, true);
-			if (isset($decodedValue['availableIn']) && $config['configKey'] === 'bitrixgpt_options')
-			{
-				$availableInItems = $decodedValue['availableIn'];
-			}
-
-			if (empty($availableInItems))
-			{
-				return;
-			}
-
-			$this->removeEngineFromGroups($availableInItems, $config['engineCode']);
-		}
-
 		if (Bitrix24::shouldUseB24() && Bitrix24::getPortalZone() === 'ru')
 		{
 			$this->removeEngineFromGroups(['landing_site_text_provider'], 'ChatGPT');
@@ -285,8 +254,45 @@ class Manager
 
 		if (!$externalConfig->isEmpty())
 		{
-			Config::setOptionsValue(self::CONFIG_EXTERNAL_CODE, json_encode($externalConfig->toArray()));
+			$savedConfig = static::getTuningStorage();
+			$newConfig = $externalConfig->toArray();
+			Config::setOptionsValue(self::CONFIG_EXTERNAL_CODE, json_encode($newConfig));
+
+			try
+			{
+				foreach ($newConfig as $key => $value)
+				{
+					if (
+						isset($savedConfig[$key])
+						&& $value !== $savedConfig[$key]
+					)
+					{
+						$analyticsEvent = new AnalyticsEvent('change', 'settings', 'ai');
+						$analyticsEvent
+							->setType($key)
+							->setP1('isAdmin_' . (\Bitrix\AI\Facade\User::isAdmin() ? 'Y' : 'N'))
+							->setP2(static::formatSettingValue($value))
+							->setP3(static::formatSettingValue($savedConfig[$key]))
+							->send();
+					}
+				}
+			}
+			catch (\Throwable $e) {}
 		}
+	}
+
+	private static function formatSettingValue(mixed $value): string
+	{
+		if ($value === true)
+		{
+			return 'on';
+		}
+		if ($value === false)
+		{
+			return 'off';
+		}
+
+		return (string)$value;
 	}
 
 	public static function getTuningStorage(): array

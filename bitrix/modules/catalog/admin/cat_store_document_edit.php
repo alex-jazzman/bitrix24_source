@@ -1180,7 +1180,16 @@ if (!empty($arResult['ELEMENT']) && is_array($arResult['ELEMENT']))
 
 		if (isset($elementFields["BASE_PRICE"]))
 		{
-			$row->AddViewField("BASE_PRICE", '<div> <input name="PRODUCT['.$arRes['ID'].'][BASE_PRICE]" onchange="recalculateRow('.$arRes['ID'].');" id="CAT_DOC_BASE_PRICE_'.$arRes['ID'].'" value="'.$value['BASE_PRICE'].'" type="text" size="10"'.$isDisable.'></div>');
+			$row->AddViewField("BASE_PRICE", '<div> '.CCatalogAdminTools::renderMoneyEditField([
+				'NAME' => 'PRODUCT['.$arRes['ID'].'][BASE_PRICE]',
+				'ID' => 'CAT_DOC_BASE_PRICE_'.$arRes['ID'],
+				'VALUE' => $value['BASE_PRICE'],
+				'CURRENCY' => $fields['CURRENCY'],
+				'CURRENCY_CONTROL_ID' => 'CAT_CURRENCY_STORE',
+				'DISABLED' => $bReadOnly,
+				'SIZE' => 10,
+				'ATTRIBUTES' => 'onchange="recalculateRow('.$arRes['ID'].');"',
+			]).'</div>');
 		}
 		if (isset($elementFields["AMOUNT"]))
 		{
@@ -1188,7 +1197,16 @@ if (!empty($arResult['ELEMENT']) && is_array($arResult['ELEMENT']))
 		}
 		if (isset($elementFields["NET_PRICE"]))
 		{
-			$row->AddViewField("PURCHASING_PRICE", '<div> <input name="PRODUCT['.$arRes['ID'].'][PURCHASING_PRICE]" onchange="recalculateRow('.$arRes['ID'].');" id="CAT_DOC_PURCHASING_PRICE_'.$arRes['ID'].'" value="'.$value['PURCHASING_PRICE'].'" type="text" size="10"'.$isDisable.'></div>');
+			$row->AddViewField("PURCHASING_PRICE", '<div> '.CCatalogAdminTools::renderMoneyEditField([
+				'NAME' => 'PRODUCT['.$arRes['ID'].'][PURCHASING_PRICE]',
+				'ID' => 'CAT_DOC_PURCHASING_PRICE_'.$arRes['ID'],
+				'VALUE' => $value['PURCHASING_PRICE'],
+				'CURRENCY' => $fields['CURRENCY'],
+				'CURRENCY_CONTROL_ID' => 'CAT_CURRENCY_STORE',
+				'DISABLED' => $bReadOnly,
+				'SIZE' => 10,
+				'ATTRIBUTES' => 'onchange="recalculateRow('.$arRes['ID'].');"',
+			]).'</div>');
 		}
 		if (isset($elementFields["TOTAL"]))
 		{
@@ -1331,6 +1349,7 @@ else
 	require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php');
 }
 CJSCore::Init(array('file_input', 'currency'));
+\Bitrix\Main\UI\Extension::load('catalog.admin-money-field');
 $APPLICATION->SetAdditionalCSS('/bitrix/panel/catalog/catalog_store_docs.css');
 
 $aMenu = array(
@@ -2351,9 +2370,14 @@ if (typeof showTotalSum === 'undefined')
 		{
 			amount = parseFloat(BX('CAT_DOC_AMOUNT_'+id).value);
 		}
-		if (BX(sumFieldName) && !isNaN(parseFloat(BX(sumFieldName).value)))
+		if (BX(sumFieldName))
 		{
-			price = parseFloat(BX(sumFieldName).value);
+			var rawPrice = BX(sumFieldName).getAttribute('data-money-raw');
+			var priceValue = (rawPrice !== null && rawPrice !== '') ? String(rawPrice).replace(',', '.') : BX(sumFieldName).value;
+			if (!isNaN(parseFloat(priceValue)))
+			{
+				price = parseFloat(priceValue);
+			}
 		}
 		if (BX('CAT_DOC_SUMM_'+id))
 		{

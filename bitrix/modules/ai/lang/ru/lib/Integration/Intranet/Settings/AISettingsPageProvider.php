@@ -1,2 +1,2 @@
 <?php
-$MESS['AI_SETTINGS_PAGE_TITLE'] = 'Настройки BitrixGPT';
+$MESS['AI_SETTINGS_PAGE_TITLE_MSGVER_1'] = 'Настройки #COPILOT_NAME#';

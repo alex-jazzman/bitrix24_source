@@ -3,5 +3,4 @@ module.exports = {
 	output: 'dist/banner-dispatcher.bundle.js',
 	namespace: 'BX.Crm.Integration.UI',
 	browserslist: true,
-	minification: true,
 };

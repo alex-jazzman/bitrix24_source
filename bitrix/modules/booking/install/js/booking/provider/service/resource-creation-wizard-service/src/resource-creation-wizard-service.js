@@ -31,8 +31,8 @@ class ResourceCreationWizardService
 				this.$store.dispatch(`${wizardModel}/setCompanyScheduleUrl`, extractor.getCompanyScheduleUrl()),
 				this.$store.dispatch(`${wizardModel}/setWeekStart`, extractor.getWeekStart()),
 				this.$store.dispatch(`${wizardModel}/setIsChannelChoiceAvailable`, extractor.isChannelChoiceAvailable()),
+				this.$store.dispatch(`${Model.AiAgent}/setAiAgent`, extractor.getAiAgent()),
 				this.$store.dispatch(`${Model.Notifications}/upsertMany`, extractor.getNotifications()),
-				this.$store.dispatch(`${Model.Notifications}/upsertManySenders`, extractor.getSenders()),
 			]);
 		}
 		catch (error)

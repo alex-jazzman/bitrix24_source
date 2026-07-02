@@ -16,7 +16,7 @@ declare interface SingleSelectorProps
 	openWithLoader?: boolean; // searchMode === 'inline' default false
 	openingLoaderTitle?: string;
 	ref: (ref: object) => any;
-	recentText: string,
+	recentText?: string,
 }
 
 declare interface SingleSelectorState

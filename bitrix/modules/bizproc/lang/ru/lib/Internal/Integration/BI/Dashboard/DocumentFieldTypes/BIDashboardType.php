@@ -1,0 +1,2 @@
+<?php
+$MESS['BIZPROC_INTERNAL_INTEGRATION_BI_DASHBOARD_NAME'] = 'Отчет для сводки';

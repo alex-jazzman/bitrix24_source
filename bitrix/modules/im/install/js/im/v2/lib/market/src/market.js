@@ -1,14 +1,13 @@
-import { Store } from 'ui.vue3.vuex';
 import { Runtime } from 'main.core';
+import { type Store } from 'ui.vue3.vuex';
 
 import { Core } from 'im.v2.application.core';
 import { Logger } from 'im.v2.lib.logger';
+import { type ImModelMarketApplication } from 'im.v2.model';
 
+import { AvailabilityManager } from './classes/availability-manager';
 import { IframeCommunicationManager } from './classes/iframe-communication-manager';
 import { MarketService } from './classes/market-service';
-import { AvailabilityManager } from './classes/availability-manager';
-
-import type { ImModelMarketApplication } from 'im.v2.model';
 
 type MarketApps = {
 	items: ImModelMarketApplication[],

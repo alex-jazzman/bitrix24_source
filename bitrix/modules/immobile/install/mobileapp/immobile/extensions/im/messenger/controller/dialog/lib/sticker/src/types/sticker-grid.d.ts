@@ -11,6 +11,8 @@ declare type GridStickerState = {
 	packId: StickerPackId
 	packType: string
 	uri: string
+	width: number
+	height: number
 	isUploading: boolean,
 	uploadProgress: number,
 }
@@ -80,6 +82,8 @@ declare type StickerViewProps = {
 	onClick: (stickerData: StickerViewClickData, ref: object) => void,
 	onLongClick: (stickerData: StickerViewClickData, ref: object) => void,
 	uri: string,
+	width: number,
+	height: number,
 	ref(ref: object): BaseMethods;
 	isUploading: boolean,
 };
@@ -88,9 +92,17 @@ declare type StickerViewClickData = {
 	id: number | string,
 	packId: StickerPackId,
 	packType: StickerPackType,
+	uri: string,
+	width: number,
+	height: number,
 }
 
 declare type StickerViewState = {};
+
+declare type AttachedUploadStickerData = {
+	id: number | string,
+	uri: string,
+};
 
 declare type UploadStatus = 'progress' | 'complete' | 'error';
 

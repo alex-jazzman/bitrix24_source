@@ -1,4 +1,4 @@
-import { BitrixVueComponentProps } from 'ui.vue3';
+import { type BitrixVueComponentProps } from 'ui.vue3';
 
 import { Avatar } from '../../layout/avatar/avatar';
 

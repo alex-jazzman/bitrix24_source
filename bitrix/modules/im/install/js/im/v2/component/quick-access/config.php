@@ -10,8 +10,8 @@ return [
 	'rel' => [
 		'main.polyfill.core',
 		'im.v2.component.list.items.recent-compact',
-		'im.v2.lib.logger',
 		'im.v2.lib.init',
+		'im.v2.lib.logger',
 	],
 	'skip_core' => true,
 ];

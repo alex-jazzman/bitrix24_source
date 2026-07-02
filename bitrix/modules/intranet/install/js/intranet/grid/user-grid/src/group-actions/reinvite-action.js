@@ -12,7 +12,7 @@ export class ReinviteAction extends BaseAction
 
 	getAjaxMethod(): string
 	{
-		return 'intranet.controller.user.userlist.groupReInvite';
+		return 'intranet.v2.UserList.reInvite';
 	}
 
 	handleSuccess(result)

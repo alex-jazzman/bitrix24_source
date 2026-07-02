@@ -49,6 +49,10 @@ declare type RecentConfig = {
 		'external'?: {
 			extension: string,
 			props?: object,
+		},
+		'invite-banner'?: {
+			extension: string,
+			props?: object,
 		}
 	},
 };

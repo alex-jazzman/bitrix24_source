@@ -1,2 +1,36 @@
-this.BX=this.BX||{},this.BX.Booking=this.BX.Booking||{},this.BX.Booking.Provider=this.BX.Booking.Provider||{},function(o,i,e,n){"use strict";class r{async loadBookingInfo(o){try{const r=await n.apiClient.post("CalendarData.bookingInfo",{bookingId:o});await i.Core.getStore().dispatch(e.Model.BookingInfo+"/setBookingInfo",function(o){var i;return{id:o.id,resources:o.resources||[],services:o.services||[],client:o.client,note:null!=(i=o.note)?i:""}}(r))}catch(o){console.error("CalendarDataService. Load booking info error",o)}}}const t=new r;o.calendarDataService=t,o.CalendarDataService=r}(this.BX.Booking.Provider.Service=this.BX.Booking.Provider.Service||{},BX.Booking,BX.Booking.Const,BX.Booking.Lib);
+/* eslint-disable */
+this.BX = this.BX || {};
+this.BX.Booking = this.BX.Booking || {};
+this.BX.Booking.Provider = this.BX.Booking.Provider || {};
+(function (exports, booking_core, booking_const, booking_lib_apiClient) {
+	'use strict';
+
+	function mapDtoToModel(bookingInfoDto) {
+		return {
+			id: bookingInfoDto.id,
+			resources: bookingInfoDto.resources || [],
+			services: bookingInfoDto.services || [],
+			client: bookingInfoDto.client,
+			note: bookingInfoDto.note ?? ''
+		};
+	}
+
+	class CalendarDataService {
+		async loadBookingInfo(bookingId) {
+			try {
+				const bookingInfoDto = await booking_lib_apiClient.apiClient.post('CalendarData.bookingInfo', {
+					bookingId
+				});
+				await booking_core.Core.getStore().dispatch(`${booking_const.Model.BookingInfo}/setBookingInfo`, mapDtoToModel(bookingInfoDto));
+			} catch (error) {
+				console.error('CalendarDataService. Load booking info error', error);
+			}
+		}
+	}
+	const calendarDataService = new CalendarDataService();
+
+	exports.CalendarDataService = CalendarDataService;
+	exports.calendarDataService = calendarDataService;
+
+})(this.BX.Booking.Provider.Service = this.BX.Booking.Provider.Service || {}, BX.Booking, BX.Booking.Const, BX.Booking.Lib);
 //# sourceMappingURL=calendar-data-service.bundle.js.map

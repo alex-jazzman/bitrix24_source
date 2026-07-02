@@ -1,5 +1,5 @@
 import { Text } from 'main.core';
-import { MenuItem, MenuItemOptions } from 'main.popup';
+import { type MenuItem, type MenuItemOptions } from 'main.popup';
 
 export type ChannelParams = {
 	autostartOperationTypes: number[],

@@ -3,12 +3,18 @@
 return [
 	'extensions' => [
 		'loc',
-		'type',
 		'tokens',
-		'utils/object',
-		'ui-system/typography/text',
+		'type',
 		'ui-system/blocks/badges/counter',
-		'ui-system/blocks/reaction/icon',
 		'ui-system/blocks/icon',
+		'ui-system/blocks/reaction/icon',
+		'ui-system/typography/text',
+		'utils/enums/base',
+		'utils/object',
+	],
+	'bundle' => [
+		'./src/badge-type-enum',
+		'./src/design-enum',
+		'./src/mode-enum',
 	],
 ];

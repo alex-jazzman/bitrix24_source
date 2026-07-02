@@ -1,4 +1,4 @@
-import { BitrixVueComponentProps } from 'ui.vue3';
+import { type BitrixVueComponentProps } from 'ui.vue3';
 import { Type } from 'main.core';
 
 import {
@@ -11,7 +11,7 @@ import {
 
 import { ShowMore } from '../../show-more/show-more';
 
-declare type Product = {
+type Product = {
 	title: string,
 	url: string,
 };

@@ -141,6 +141,11 @@ jn.define('im/messenger/provider/services/chat/user', (require, exports, module)
 		 */
 		verifyUsersChatMembership(chatId, userIds)
 		{
+			if (!Type.isArrayFilled(userIds))
+			{
+				return [];
+			}
+
 			const data = {
 				chatId,
 				userIds,

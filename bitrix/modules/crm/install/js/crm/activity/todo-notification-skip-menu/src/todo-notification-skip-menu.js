@@ -1,6 +1,7 @@
 import {MenuItem} from 'main.popup';
 import {Loc} from "main.core";
 import {TodoNotificationSkip}  from 'crm.activity.todo-notification-skip';
+import 'crm_common';
 
 declare type TodoNotificationSkipMenuParams = {
 	selectedValue: ?string,

@@ -1,4 +1,4 @@
-import type { JsonObject, JsonValue } from 'main.core';
+import { type JsonObject, type JsonValue } from 'main.core';
 
 export type PanelContext = {
 	messageId: number,
@@ -14,11 +14,17 @@ export type PlainMessageParams = BaseMessageParams & {
 	forwardIds?: number[],
 };
 
-export type CopilotMessageParams = BaseMessageParams & {
-	copilot: {
-		promptCode: string,
-	},
+export type CopilotModeParams = {
+	reasoning?: string,
+	forceSearch?: string,
+	mcpAuthId?: number,
 };
+
+export type CopilotPromptParams = {
+	promptCode: string,
+};
+
+export type CopilotPromptMessageParams = BaseMessageParams & { copilot: CopilotPromptParams };
 
 export type FileMessageParams = BaseMessageParams & {
 	fileIds: string[],
@@ -34,10 +40,7 @@ export type PreparedMessage = {
 	forwardIds: {[string]: number},
 	text: string,
 	params: JsonObject,
-	copilot: {
-		reasoning: boolean,
-		promptCode: string,
-	},
+	copilot?: CopilotModeParams & CopilotPromptParams,
 	stickerParams: Sticker,
 	aiAssistant?: {
 		mcpAuthId: number

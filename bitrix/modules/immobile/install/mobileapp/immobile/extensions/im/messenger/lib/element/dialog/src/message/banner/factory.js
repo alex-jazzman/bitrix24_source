@@ -2,7 +2,7 @@
  * @module im/messenger/lib/element/dialog/message/banner/factory
  */
 jn.define('im/messenger/lib/element/dialog/message/banner/factory', (require, exports, module) => {
-	const { MessageParams } = require('im/messenger/const');
+	const { MessageComponent } = require('im/messenger/const');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { Feature } = require('im/messenger/lib/feature');
 
@@ -41,7 +41,7 @@ jn.define('im/messenger/lib/element/dialog/message/banner/factory', (require, ex
 
 				switch (modelMessage.params?.componentId)
 				{
-					case MessageParams.ComponentId.OwnChatCreationMessage:
+					case MessageComponent.ownChatCreation:
 						if (Feature.isNotesBannerAvailable)
 						{
 							return new NotesChatBanner(modelMessage, optionsBanner);
@@ -49,24 +49,24 @@ jn.define('im/messenger/lib/element/dialog/message/banner/factory', (require, ex
 
 						return new SystemTextMessage(modelMessage, optionsBanner);
 
-					case MessageParams.ComponentId.ChatCreationMessage:
+					case MessageComponent.chatCreation:
 						return new CreateChatBanner(modelMessage, optionsBanner);
-					case MessageParams.ComponentId.GeneralChatCreationMessage:
+					case MessageComponent.generalChatCreation:
 						return new CreateGeneralChatBanner(modelMessage, optionsBanner);
-					case MessageParams.ComponentId.ChannelCreationMessage:
-					case MessageParams.ComponentId.OpenChannelCreationMessage:
+					case MessageComponent.channelCreation:
+					case MessageComponent.openChannelCreation:
 						return new CreateChannelBanner(modelMessage, { ...optionsBanner, showCommentInfo: false });
-					case MessageParams.ComponentId.GeneralChannelCreationMessage:
+					case MessageComponent.generalChannelCreation:
 						return new CreateGeneralChannelBanner(modelMessage, { ...optionsBanner, showCommentInfo: false });
-					case MessageParams.ComponentId.ConferenceCreationMessage:
+					case MessageComponent.conferenceCreation:
 						return new CreateChatConferenceBanner(modelMessage, optionsBanner);
-					case MessageParams.ComponentId.ChatCopilotAddedUsersMessage:
+					case MessageComponent.copilotAddedUsers:
 						return new InviteUsersCopilotBanner(modelMessage, optionsBanner);
-					case MessageParams.ComponentId.PlanLimitsMessage:
+					case MessageComponent.planLimits:
 						return new PlanLimitsBanner(modelMessage, optionsBanner);
-					case MessageParams.ComponentId.SignMessage:
+					case MessageComponent.sign:
 						return new SignMessage(modelMessage, optionsBanner);
-					case MessageParams.ComponentId.AdminMessage:
+					case MessageComponent.admin:
 						return new AdminMessage(modelMessage, optionsBanner);
 					default: return new TextMessage(modelMessage, optionsBanner);
 				}
@@ -79,23 +79,23 @@ jn.define('im/messenger/lib/element/dialog/message/banner/factory', (require, ex
 			}
 		}
 
-		static checkSuitableForDisplay(modelMessage)
+		static checkSuitableForDisplay(messageComponent)
 		{
 			const creationParams = [
-				MessageParams.ComponentId.ChatCreationMessage,
-				MessageParams.ComponentId.OwnChatCreationMessage,
-				MessageParams.ComponentId.GeneralChatCreationMessage,
-				MessageParams.ComponentId.ChannelCreationMessage,
-				MessageParams.ComponentId.OpenChannelCreationMessage,
-				MessageParams.ComponentId.GeneralChannelCreationMessage,
-				MessageParams.ComponentId.ConferenceCreationMessage,
-				MessageParams.ComponentId.ChatCopilotAddedUsersMessage,
-				MessageParams.ComponentId.PlanLimitsMessage,
-				MessageParams.ComponentId.SignMessage,
-				MessageParams.ComponentId.AdminMessage,
+				MessageComponent.chatCreation,
+				MessageComponent.ownChatCreation,
+				MessageComponent.generalChatCreation,
+				MessageComponent.channelCreation,
+				MessageComponent.openChannelCreation,
+				MessageComponent.generalChannelCreation,
+				MessageComponent.conferenceCreation,
+				MessageComponent.copilotAddedUsers,
+				MessageComponent.planLimits,
+				MessageComponent.sign,
+				MessageComponent.admin,
 			];
 
-			return creationParams.includes(modelMessage.params?.componentId);
+			return creationParams.includes(messageComponent);
 		}
 	}
 

@@ -33,7 +33,7 @@ export const DatasetPropertiesStep = {
 		},
 		defaultHint()
 		{
-			if (this.isEditMode)
+			if (this.isEditMode || this.isSystemDataset)
 			{
 				return '';
 			}
@@ -43,8 +43,20 @@ export const DatasetPropertiesStep = {
 		disabledFields()
 		{
 			return {
-				name: this.$store.getters.isEditMode,
+				name: this.$store.getters.isEditMode && !this.isSystemDataset,
+				description: false,
 			};
+		},
+		readonlyFields()
+		{
+			return {
+				name: this.isSystemDataset,
+				description: this.isSystemDataset,
+			};
+		},
+		isSystemDataset()
+		{
+			return this.$store.state.config.datasetProperties?.isSystem === true;
 		},
 		unvalidatedFields()
 		{
@@ -147,6 +159,7 @@ export const DatasetPropertiesStep = {
 				:default-description="datasetProperties.description"
 				ref="datasetProperties"
 				:disabled-fields="disabledFields"
+				:readonly-fields="readonlyFields"
 				:unvalidated-fields="unvalidatedFields"
 				:dataset-source-code="datasetSourceCode"
 			/>

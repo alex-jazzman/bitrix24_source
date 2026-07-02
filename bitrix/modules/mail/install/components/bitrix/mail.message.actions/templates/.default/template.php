@@ -35,7 +35,7 @@ $createMenu = array(
 				'UF_MAIL_MESSAGE' => (int) $message['ID'],
 				'MAIL_SUBJECT' => rawurlencode($message['SUBJECT'] ?? Loc::getMessage('MAIL_MESSAGE_ACTIONS_SUBJECT_PLACEHOLDER')),
 				'MAIL_FROM' => rawurlencode(htmlspecialchars_decode($message['FIELD_FROM'] ?? '', ENT_QUOTES)),
-				'MAIL_DATE' => rawurlencode($message['FIELD_DATE'] ? $message['FIELD_DATE']->getTimestamp() : ''),
+				'MAIL_DATE' => rawurlencode(($message['INTERNALDATE'] ?? $message['FIELD_DATE'] ?? null)?->getTimestamp() ?? ''),
 			)
 		),
 	),
@@ -89,6 +89,7 @@ $splitButton = new Bitrix\UI\Buttons\Split\Button([
 ]);
 $splitButton->getMainButton()->addAttribute('id', 'mail-msg-'. (int)$message['ID'] .'-actions-create-btn');
 $splitButton->getMenuButton()->addAttribute('id', 'mail-msg-'. (int)$message['ID'] .'-actions-create-menu-btn');
+$splitButton->getMenuButton()->addAttribute('aria-label', Loc::getMessage('MAIL_MESSAGE_ACTIONS_MORE_MENU'));
 Toolbar::addButton($splitButton);
 ?>
 

@@ -42,7 +42,7 @@ $isOldForm = $request->get('OLD_FORM') === 'Y'
 $hasTemplate = (int)$request->get('TEMPLATE') > 0 || (int)$request->get('FLOW_ID') > 0;
 $isCommentLink = (bool)$request->get('MID');
 
-if (Context::getCurrent()->getRequest()->get('IFRAME'))
+if (!$formFeatureEnabled && Context::getCurrent()->getRequest()->get('IFRAME'))
 {
 	include("util_menu.php");
 	include("util_profile.php");

@@ -1,9 +1,9 @@
-<?
+<?php
 /**
  * Bitrix Framework
  * @package bitrix
  * @subpackage main
- * @copyright 2001-2013 Bitrix
+ * @copyright 2001-2026 Bitrix
  */
 
 /**
@@ -13,8 +13,6 @@
  */
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
-
-ClearVars();
 
 $edit_php = $USER->CanDoOperation('edit_php');
 if(!$edit_php && !$USER->CanDoOperation('edit_other_settings') && !$USER->CanDoOperation('lpa_template_edit'))
@@ -31,7 +29,6 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && ($edit_php || $lpa) && check_bitrix_s
 	$CONTENT = $_POST["CONTENT"];
 	$STYLES = $_POST["STYLES"];
 	$TEMPLATE_STYLES = $_POST["TEMPLATE_STYLES"];
-	$strWarning = "";
 
 	// *  *  *  *  *  *  *  *  *  *  *  *  *  *  *   LPA  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *
 	if ($lpa)
@@ -87,7 +84,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && ($edit_php || $lpa) && check_bitrix_s
 						{
 							// Get array with description of component params
 							$arCompParams = CComponentUtil::GetComponentProps($comp_name);
-							$arTemplParams = CComponentUtil::GetTemplateProps($comp_name, $template_name, $template);
+							$arTemplParams = CComponentUtil::GetTemplateProps($comp_name, $template_name);
 
 							$arParameters = array();
 							if (isset($arCompParams["PARAMETERS"]) && is_array($arCompParams["PARAMETERS"]))
@@ -125,22 +122,25 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && ($edit_php || $lpa) && check_bitrix_s
 			$CONTENT = $new_content;
 		}
 		else
-			$CONTENT = LPA::EncodePHPTags($new_content);
+		{
+			$CONTENT = LPA::EncodePHPTags($CONTENT);
+		}
 
 		// Get array of PHP scripts from original template src
+		$template = ['CONTENT' => ''];
 		if($ID <> '')
 		{
 			$templ = CSiteTemplate::GetByID($ID);
-			if(!$templ->ExtractFields("str_"))
+			if(!($template = $templ->Fetch()))
 				$strWarning = GetMessage('templ_create_err', array('#ID#'=>$ID));
 		}
 		else
 		{
 			$strWarning = GetMessage('templ_create_err1');
 		}
-		checkError($strWaring);
+		checkError($strWarning);
 
-		$old_content = htmlspecialcharsback($str_CONTENT);
+		$old_content = $template['CONTENT'];
 		$arPHP = PHPParser::ParseFile($old_content);
 		$l = count($arPHP);
 		$s1 = "";
@@ -186,7 +186,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && ($edit_php || $lpa) && check_bitrix_s
 		// LPA-users CAN delete PHP fragments and swap them but CAN'T add new or modify existent:
 		while (preg_match('/#PHP\d{4}#/i', $CONTENT, $res_php, PREG_OFFSET_CAPTURE))
 		{
-			$php_begin = $res_php[0][1];
+			$php_begin = (int)$res_php[0][1];
 			$php_fr_num = intval(mb_substr($CONTENT, $php_begin + 4, 4)) - 1; // Number of PHP fragment from #PHPXXXX# conctruction
 			if (isset($arPHPscripts[$php_fr_num]))
 			{
@@ -224,36 +224,36 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && ($edit_php || $lpa) && check_bitrix_s
 	{
 		$p = mb_strpos($CONTENT, "#WORK_AREA#");
 		if ($p === false)
-			$strWaring .= GetMessage('MAIN_TP_ERROR_WORK_AREA');
+			$strWarning .= GetMessage('MAIN_TP_ERROR_WORK_AREA');
 
-		checkError($strWaring);
+		checkError($strWarning);
 
 		$header = mb_substr($CONTENT, 0, $p);
 		if (!$APPLICATION->SaveFileContent($_SERVER["DOCUMENT_ROOT"].BX_PERSONAL_ROOT."/tmp/templates/__bx_preview/header.php", $header))
-			$strWaring .= GetMessage('MAIN_TP_ERROR_SAVE_FILE', Array('#FILE#' => 'header.php'));
+			$strWarning .= GetMessage('MAIN_TP_ERROR_SAVE_FILE', Array('#FILE#' => 'header.php'));
 
 		$footer = mb_substr($CONTENT, $p + mb_strlen("#WORK_AREA#"));
 		if (!$APPLICATION->SaveFileContent($_SERVER["DOCUMENT_ROOT"].BX_PERSONAL_ROOT."/tmp/templates/__bx_preview/footer.php", $footer))
-			$strWaring .= GetMessage('MAIN_TP_ERROR_SAVE_FILE', Array('#FILE#' => 'footer.php'));
+			$strWarning .= GetMessage('MAIN_TP_ERROR_SAVE_FILE', Array('#FILE#' => 'footer.php'));
 	}
 
 	if($STYLES == '')
 		$STYLES = ' ';
 	if (!$APPLICATION->SaveFileContent($_SERVER["DOCUMENT_ROOT"].BX_PERSONAL_ROOT."/tmp/templates/__bx_preview/styles.css", $STYLES))
-		$strWaring .= GetMessage('MAIN_TP_ERROR_SAVE_FILE', Array('#FILE#' => 'styles.css'));
+		$strWarning .= GetMessage('MAIN_TP_ERROR_SAVE_FILE', Array('#FILE#' => 'styles.css'));
 
 	if($TEMPLATE_STYLES == '')
 		$TEMPLATE_STYLES = ' ';
 	if (!$APPLICATION->SaveFileContent($_SERVER["DOCUMENT_ROOT"].BX_PERSONAL_ROOT."/tmp/templates/__bx_preview/template_styles.css", $TEMPLATE_STYLES))
-		$strWaring .= GetMessage('MAIN_TP_ERROR_SAVE_FILE', Array('#FILE#' => 'template_styles.css'));
+		$strWarning .= GetMessage('MAIN_TP_ERROR_SAVE_FILE', Array('#FILE#' => 'template_styles.css'));
 
-	checkError($strWaring);
+	checkError($strWarning);
 	?>
 <script bxrunfirst="true">
 BX.adminPanel.closeWait();
 __status = true;
 </script>
-	<?
+	<?php
 }
 
 function unifyPHPfragment($str)
@@ -271,9 +271,9 @@ function _replacer($str)
 	return $str;
 }
 
-function checkError($strWaring)
+function checkError($strWarning)
 {
-	if ($strWaring == '')
+	if ($strWarning == '')
 		return;
 	echo 'ERROR';
 
@@ -281,9 +281,8 @@ function checkError($strWaring)
 <script bxrunfirst="true">
 BX.adminPanel.closeWait();
 __status = false;
-strWarning = '<?=CUtil::JSEscape($strWaring)?>';
+strWarning = '<?=CUtil::JSEscape($strWarning)?>';
 </script>
-	<?
+	<?php
 	die();
 }
-?>

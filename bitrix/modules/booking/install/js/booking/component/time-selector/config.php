@@ -8,12 +8,12 @@ return [
 	'css' => 'dist/time-selector.bundle.css',
 	'js' => 'dist/time-selector.bundle.js',
 	'rel' => [
+		'booking.const',
+		'booking.lib.duration',
 		'main.core',
+		'main.date',
 		'main.popup',
 		'ui.vue3.vuex',
-		'booking.lib.duration',
-		'booking.const',
-		'main.date',
 	],
 	'skip_core' => false,
 ];

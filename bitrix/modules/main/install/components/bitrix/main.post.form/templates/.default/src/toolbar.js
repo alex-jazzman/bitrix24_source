@@ -35,12 +35,28 @@ let justCounter = 0;
 export default class Toolbar {
 	constructor(eventObject, container) {
 		this.container = container.querySelector('[data-bx-role="toolbar"]');
+		this.container.setAttribute('role', 'toolbar');
 
 		this.adjustMorePosition = this.adjustMorePosition.bind(this);
 		this.moreItem = container.querySelector('[data-bx-role="toolbar-item-more"]');
 		this.moreItem.addEventListener('click', this.showSubmenu.bind(this));
 		observeIntersection(this.container, this.adjustMorePosition);
 		window.addEventListener('resize', this.adjustMorePosition);
+
+		this.container.addEventListener('keydown', (event) => {
+			if (event.key !== 'Enter' && event.key !== ' ')
+			{
+				return;
+			}
+			const button = event.target.closest('[data-bx-role="toolbar-item"], [data-bx-role="toolbar-item-more"]');
+			if (!button)
+			{
+				return;
+			}
+			event.preventDefault();
+			const clickTarget = button.firstElementChild || button;
+			clickTarget.click();
+		});
 	}
 
 	insertAfter(button: Button, buttonId: ?String)
@@ -50,7 +66,7 @@ export default class Toolbar {
 			return;
 		}
 
-		const item = Tag.render`<div class="main-post-form-toolbar-button" data-bx-role="toolbar-item"></div>`;
+		const item = Tag.render`<button type="button" class="main-post-form-toolbar-button" data-bx-role="toolbar-item"></button>`;
 
 		if (Type.isElementNode(button['BODY']))
 		{

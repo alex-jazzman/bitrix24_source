@@ -95,13 +95,14 @@ BX.ready(function () {
 				case UiButtonPanel::TYPE_CLOSE:
 				case UiButtonPanel::TYPE_CANCEL:
 					?>
-					<a
+					<button
+						type="button"
 						id="<?=htmlspecialcharsbx($item['ID'])?>"
 						name="<?=htmlspecialcharsbx($item['NAME'])?>"
 						class="ui-btn ui-btn-no-caps ui-btn-lg --air <?=htmlspecialcharsbx($item['CLASS_NAME'])?>"
-						<?if(!empty($item['LINK'])):?>href="<?=htmlspecialcharsbx(\CUtil::JSEscape($item['LINK']))?>"<?endif?>
+						<?if(!empty($item['LINK'])):?>data-link="<?=htmlspecialcharsbx(\CUtil::JSEscape($item['LINK']))?>"<?endif?>
 						<?if(!empty($item['ONCLICK'])):?>onclick="<?=htmlspecialcharsbx($item['ONCLICK'])?>"<?endif?>
-					><span class="ui-btn-text"><?=htmlspecialcharsbx($item['CAPTION'])?></span></a>
+					><span class="ui-btn-text"><?=htmlspecialcharsbx($item['CAPTION'])?></span></button>
 					<?
 					break;
 

@@ -123,7 +123,7 @@ export class FireAction extends BaseAction
 
 	getAjaxMethod(): string
 	{
-		return 'intranet.controller.user.userlist.groupFire';
+		return 'intranet.v2.UserList.fire';
 	}
 
 	getSkippedUsersMessageCode(): string

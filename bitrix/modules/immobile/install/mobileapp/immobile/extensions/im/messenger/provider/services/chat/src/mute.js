@@ -4,7 +4,7 @@
 jn.define('im/messenger/provider/services/chat/mute', (require, exports, module) => {
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { restManager: generalRestManager } = require('im/messenger/lib/rest-manager');
-	const { RestMethod } = require('im/messenger/const/rest');
+	const { RestMethod } = require('im/messenger/const');
 	const { Runtime } = require('runtime');
 	const { Logger } = require('im/messenger/lib/logger');
 

@@ -1,4 +1,4 @@
-import { Tag, Event, Loc, Dom, Text } from 'main.core';
+import { Tag, Event, Loc, Dom, Text, Extension } from 'main.core';
 import { EventEmitter, BaseEvent } from 'main.core.events';
 import { Lottie } from 'ui.lottie';
 import { SpeechConverter, speechConverterEvents } from 'ai.speech-converter';
@@ -286,12 +286,12 @@ export class CopilotInput extends EventEmitter
 		if (useForImages)
 		{
 			this.#isGoOutFromBottomEnabled = false;
-			this.#loaderTextContainer.innerText = Loc.getMessage('AI_COPILOT_INPUT_IMAGE_LOADER_TEXT');
+			this.#loaderTextContainer.innerText = this.#getCopilotMessage('AI_COPILOT_INPUT_IMAGE_LOADER_TEXT_MSGVER_1');
 		}
 		else
 		{
 			this.#isGoOutFromBottomEnabled = true;
-			this.#loaderTextContainer.innerText = Loc.getMessage('AI_COPILOT_INPUT_LOADER_TEXT');
+			this.#loaderTextContainer.innerText = this.#getCopilotMessage('AI_COPILOT_INPUT_LOADER_TEXT_MSGVER_1');
 		}
 	}
 
@@ -315,7 +315,7 @@ export class CopilotInput extends EventEmitter
 		const loader = Tag.render`
 			<div class="ai__copilot_loader">
 				<div class="ai__copilot_loader-left">
-					<div ref="loaderText" class="ai__copilot_loader-text">${Loc.getMessage('AI_COPILOT_INPUT_LOADER_TEXT')}</div>
+					<div ref="loaderText" class="ai__copilot_loader-text">${this.#getCopilotMessage('AI_COPILOT_INPUT_LOADER_TEXT_MSGVER_1')}</div>
 					<div class="ai__copilot_loader-dot dot-flashing"></div>
 				</div>
 				${cancelBtn}
@@ -700,6 +700,13 @@ export class CopilotInput extends EventEmitter
 		htmlWithReplaced = htmlWithReplaced.replaceAll('\n', '<br />');
 
 		this.#textarea.setHtmlContent(htmlWithReplaced);
+	}
+
+	#getCopilotMessage(code: string): string
+	{
+		return Loc.getMessage(code, {
+			'#COPILOT_NAME#': Extension.getSettings('ai.copilot').get('copilotName'),
+		});
 	}
 
 	#adjustTextareaHeight(): void

@@ -10,6 +10,7 @@ type Params = {
 		contextId: string,
 		category: string,
 	},
+	copilotName: string,
 	blogId: string,
 	pathToPostCreate: string,
 };
@@ -44,7 +45,7 @@ export class BlogCopilotReadonly
 	{
 		this.#layout.button = Tag.render`
 			<span class="feed-inform-item feed-inform-comments feed-copilot-readonly">
-				<a>${Loc.getMessage('BLOG_POST_BUTTON_COPILOT')}</a>
+				<a>${this.#params.copilotName}</a>
 			</span>
 		`;
 

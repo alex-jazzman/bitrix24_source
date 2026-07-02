@@ -11,6 +11,7 @@ $MESS["BIC_DASHBOARD_GROUP_SUBTITLE_PLURAL_1"] = "#COUNT# dashboards";
 $MESS["BIC_DASHBOARD_GROUP_SUBTITLE_PLURAL_2"] = "#COUNT# dashboards";
 $MESS["BIC_DASHBOARD_GROUP_TITLE"] = "New group";
 $MESS["BIC_DASHBOARD_NO_ACCESS"] = "Deny access";
+$MESS["BIC_DASHBOARD_SHARE"] = "Share dashboards";
 $MESS["BIC_DASHBOARD_TAG_MODIFY"] = "Create and edit dashboard tags";
 $MESS["BIC_DASHBOARD_VIEW"] = "View";
 $MESS["BIC_DELETE_ALL_UNUSED_ELEMENTS_MSGVER_2"] = "Delete unused elements";

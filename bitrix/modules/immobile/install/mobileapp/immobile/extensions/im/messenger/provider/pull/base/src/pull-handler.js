@@ -49,7 +49,7 @@ jn.define('im/messenger/provider/pull/base/pull-handler', (require, exports, mod
 		 */
 		getSyncService()
 		{
-			return SyncService.getInstance();
+			return serviceLocator.get('sync-service');
 		}
 
 		/**

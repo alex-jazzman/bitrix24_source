@@ -205,16 +205,19 @@ export class Canvas
 
 	setCameraPositionByWheel(event: MouseEvent): void
 	{
-		if (event.shiftKey)
-		{
-			this.#camera.x += event.deltaY / this.#camera.zoom;
-			this.#camera.y += event.deltaX / this.#camera.zoom;
+		const lineStep = 40;
+		const pixelStep = event.deltaMode === 1 ? lineStep : 1;
+		let dx = event.deltaX * pixelStep;
+		let dy = event.deltaY * pixelStep;
 
-			return;
+		if (event.shiftKey && Math.abs(dy) > Math.abs(dx))
+		{
+			dx = dy;
+			dy = 0;
 		}
 
-		this.#camera.x += event.deltaX / this.#camera.zoom;
-		this.#camera.y += event.deltaY / this.#camera.zoom;
+		this.#camera.x += dx / this.#camera.zoom;
+		this.#camera.y += dy / this.#camera.zoom;
 	}
 
 	#getClipSpaceMousePosition(event: MouseEvent): Array<number, number>

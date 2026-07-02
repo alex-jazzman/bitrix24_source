@@ -10,9 +10,9 @@
  * Bitrix vars
  * @global CUser $USER
  * @global CMain $APPLICATION
- * @param array $arParams
- * @param array $arResult
- * @param CBitrixComponent $this
+ * @var array $arParams
+ * @var array $arResult
+ * @var CBitrixComponent $this
  */
 
 use Bitrix\Main\Security\Password;

@@ -14,3 +14,4 @@ $MESS["HR_BIC_STRUCTURE_FIELD_PARENT_ID_FULL"] = "Parent department ID in the co
 $MESS["HR_BIC_STRUCTURE_FIELD_TYPE"] = "Type";
 $MESS["HR_BIC_STRUCTURE_FIELD_TYPE_FULL"] = "DEPARTMENT; COMPANY; TEAM";
 $MESS["HR_BIC_STRUCTURE_TABLE"] = "Company structure";
+$MESS["HR_BIC_STRUCTURE_TABLE_DESCRIPTION_FULL"] = "Contains data about company departments, such as their names, types, statuses, and links to other departments.";

@@ -5,6 +5,7 @@ jn.define('ui-system/typography/bbcodetext', (require, exports, module) => {
 	const { TextBase } = require('ui-system/typography/text-base');
 
 	module.exports = {
+		/** @param {TypographyBBCodeTextProps} props */
 		BBCodeText: (props) => {
 			const { value: propsValue, text: propsText, ...restProps } = props;
 

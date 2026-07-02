@@ -7,9 +7,13 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	'use strict';
 
 	const limit = tasks_v2_const.Limit.RelationList;
+	const UserOptions = main_core.Reflection.namespace('BX.userOptions');
 	var _meta = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("meta");
 	var _updatePromises = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updatePromises");
+	var _addStatusesToStore = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addStatusesToStore");
+	var _deleteStatusesFromStore = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("deleteStatusesFromStore");
 	var _safePromise = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("safePromise");
+	var _filterCompleted = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("filterCompleted");
 	var _getTitle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTitle");
 	var _updateStoreRelationTasks = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateStoreRelationTasks");
 	class RelationService {
@@ -20,8 +24,17 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    Object.defineProperty(this, _getTitle, {
 	      value: _getTitle2
 	    });
+	    Object.defineProperty(this, _filterCompleted, {
+	      value: _filterCompleted2
+	    });
 	    Object.defineProperty(this, _safePromise, {
 	      value: _safePromise2
+	    });
+	    Object.defineProperty(this, _deleteStatusesFromStore, {
+	      value: _deleteStatusesFromStore2
+	    });
+	    Object.defineProperty(this, _addStatusesToStore, {
+	      value: _addStatusesToStore2
 	    });
 	    Object.defineProperty(this, _meta, {
 	      writable: true,
@@ -38,7 +51,8 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    await Promise.all(babelHelpers.classPrivateFieldLooseBase(this, _updatePromises)[_updatePromises]);
 	    const {
 	      tasks,
-	      ids
+	      ids,
+	      statuses
 	    } = await this.requestTasks(taskId, withIds);
 	    if (withIds) {
 	      if (!hasUpdatePromises && ids.length === 0) {
@@ -48,7 +62,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	          isFilled: false
 	        });
 	      }
-	      babelHelpers.classPrivateFieldLooseBase(this, _updateStoreRelationTasks)[_updateStoreRelationTasks](taskId, ids);
+	      babelHelpers.classPrivateFieldLooseBase(this, _updateStoreRelationTasks)[_updateStoreRelationTasks](taskId, ids, false, statuses);
 	    }
 	    tasks.forEach(taskDto => {
 	      if (!tasks_v2_provider_service_taskService.taskService.hasStoreTask(taskDto.id, false)) {
@@ -60,6 +74,34 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	      });
 	    });
 	    return tasks;
+	  }
+	  async listByIds(taskId, taskIds) {
+	    const tasks = await this.requestTasksByIds(taskId, taskIds);
+	    const newTaskIds = tasks.map(({
+	      id
+	    }) => id);
+	    babelHelpers.classPrivateFieldLooseBase(this, _updateStoreRelationTasks)[_updateStoreRelationTasks](taskId, newTaskIds, true);
+	    tasks.forEach(taskDto => {
+	      if (!tasks_v2_provider_service_taskService.taskService.hasStoreTask(taskDto.id, false)) {
+	        void this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/addPartiallyLoaded`, taskDto.id);
+	      }
+	      tasks_v2_provider_service_taskService.taskService.extractTask({
+	        ...taskDto,
+	        [babelHelpers.classPrivateFieldLooseBase(this, _meta)[_meta].relationToField]: taskId
+	      });
+	    });
+	    return tasks;
+	  }
+	  async getSubTaskIds(taskId, taskIds) {
+	    const tasks = await this.requestSubTaskIds(taskId, taskIds);
+	    tasks.forEach(({
+	      id,
+	      subTaskIds
+	    }) => {
+	      tasks_v2_provider_service_taskService.taskService.updateStoreTask(id, {
+	        subTaskIds
+	      });
+	    });
 	  }
 	  async setParent(taskId, parentId) {
 	    return this.add(parentId, [taskId]);
@@ -109,6 +151,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    taskIds.forEach(it => tasks_v2_provider_service_taskService.taskService.updateStoreTask(it, {
 	      [meta.relationToField]: taskId
 	    }));
+	    babelHelpers.classPrivateFieldLooseBase(this, _addStatusesToStore)[_addStatusesToStore](taskId, taskIds);
 	  }
 	  async delete(taskId, taskIds) {
 	    this.deleteStore(taskId, taskIds);
@@ -141,6 +184,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    taskIds.forEach(it => tasks_v2_provider_service_taskService.taskService.updateStoreTask(it, {
 	      [meta.relationToField]: 0
 	    }));
+	    babelHelpers.classPrivateFieldLooseBase(this, _deleteStatusesFromStore)[_deleteStatusesFromStore](taskId, taskIds);
 	  }
 	  areIdsLoaded(taskId) {
 	    const meta = babelHelpers.classPrivateFieldLooseBase(this, _meta)[_meta];
@@ -150,9 +194,9 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    }
 	    return !task[meta.containsField] || task[meta.idsField].length > 0;
 	  }
-	  hasUnloadedIds(taskId) {
+	  hasUnloadedIds(taskId, isTemplateEntities = false) {
 	    const ids = tasks_v2_provider_service_taskService.taskService.getStoreTask(taskId)[babelHelpers.classPrivateFieldLooseBase(this, _meta)[_meta].idsField];
-	    return this.getVisibleIds(ids).some(id => !this.hasStoreTask(id));
+	    return this.getVisibleIds(taskId, ids, isTemplateEntities).some(id => !this.hasStoreTask(id));
 	  }
 	  hasStoreTask(id) {
 	    var _taskService$getStore3, _taskService$getStore4;
@@ -164,11 +208,8 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	  async requestTasks(taskId, withIds = false) {
 	    if (!tasks_v2_lib_idUtils.idUtils.isReal(taskId)) {
 	      const ids = tasks_v2_provider_service_taskService.taskService.getStoreTask(taskId)[babelHelpers.classPrivateFieldLooseBase(this, _meta)[_meta].idsField];
-	      const {
-	        tasks
-	      } = await tasks_v2_lib_apiClient.apiClient.post(`${babelHelpers.classPrivateFieldLooseBase(this, _meta)[_meta].controller}.listByIds`, {
-	        taskIds: this.getVisibleIds(ids)
-	      });
+	      const taskIds = this.getVisibleIds(taskId, ids);
+	      const tasks = await this.requestTasksByIds(taskId, taskIds);
 	      return {
 	        tasks,
 	        ids
@@ -176,18 +217,48 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    }
 	    const {
 	      tasks,
-	      ids
+	      ids,
+	      statuses
 	    } = await tasks_v2_lib_apiClient.apiClient.post(`${babelHelpers.classPrivateFieldLooseBase(this, _meta)[_meta].controller}.list`, {
 	      taskId,
 	      withIds,
+	      withCompleted: this.showCompletedTasks,
+	      withSubTasks: this.showSubTasks,
 	      navigation: {
 	        size: limit
 	      }
 	    });
 	    return {
 	      tasks,
-	      ids
+	      ids,
+	      statuses
 	    };
+	  }
+	  async requestTasksByIds(taskId, taskIds) {
+	    const {
+	      tasks
+	    } = await tasks_v2_lib_apiClient.apiClient.post(`${babelHelpers.classPrivateFieldLooseBase(this, _meta)[_meta].controller}.listByIds`, {
+	      taskIds,
+	      withCompleted: this.showCompletedTasks,
+	      withSubTasks: this.showSubTasks
+	    });
+	    return tasks;
+	  }
+
+	  /** @protected */
+	  async requestSubTaskIds(taskId, taskIds) {
+	    const {
+	      tasks
+	    } = await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TaskRelationChildGetSubTaskIds, {
+	      taskIds
+	    });
+	    return tasks.map(it => {
+	      var _it$subTaskIds;
+	      return {
+	        id: it.id,
+	        subTaskIds: (_it$subTaskIds = it == null ? void 0 : it.subTaskIds) != null ? _it$subTaskIds : []
+	      };
+	    });
 	  }
 
 	  /** @protected */
@@ -216,14 +287,94 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    return error;
 	  }
 	  /** @protected */
-	  getVisibleIds(ids) {
-	    return this.getSortedIds(ids).slice(0, limit);
+	  getVisibleIds(taskId, ids, isTemplateEntities = false) {
+	    return this.getSortedIds(taskId, ids, this.showCompletedTasks, isTemplateEntities).slice(0, limit);
 	  }
-	  getSortedIds(ids) {
+	  getSortedIds(taskId, ids, showCompleted = true, isTemplateEntities = false) {
+	    if (isTemplateEntities) {
+	      return this.getSortedTemplateIds(ids);
+	    }
+	    if (showCompleted) {
+	      return this.getSortedTaskIds(ids);
+	    }
+	    return this.getSortedTaskIds(babelHelpers.classPrivateFieldLooseBase(this, _filterCompleted)[_filterCompleted](ids, taskId));
+	  }
+	  getSortedTemplateIds(ids) {
 	    return ids.sort((id1, id2) => babelHelpers.classPrivateFieldLooseBase(this, _getTitle)[_getTitle](id1).localeCompare(babelHelpers.classPrivateFieldLooseBase(this, _getTitle)[_getTitle](id2)));
+	  }
+	  getSortedTaskIds(ids) {
+	    const exists = task => task ? 1 : 0;
+	    const activityTs = task => {
+	      var _task$activityTs;
+	      return (task == null ? void 0 : task.changedTs) > 0 && (task == null ? void 0 : task.activityTs) > 0 && task.changedTs > task.activityTs ? task.changedTs : (_task$activityTs = task == null ? void 0 : task.activityTs) != null ? _task$activityTs : 0;
+	    };
+	    return ids.sort((id1, id2) => {
+	      const task1 = tasks_v2_provider_service_taskService.taskService.getStoreTask(id1);
+	      const task2 = tasks_v2_provider_service_taskService.taskService.getStoreTask(id2);
+
+	      // existing first
+	      if (exists(task1) !== exists(task2)) {
+	        return exists(task2) - exists(task1);
+	      }
+
+	      // by activity
+	      if (activityTs(task1) !== activityTs(task2)) {
+	        return activityTs(task2) > activityTs(task1) ? 1 : -1;
+	      }
+
+	      // by id
+	      return id2 > id1 ? 1 : -1;
+	    });
+	  }
+	  saveTaskListOptions(taskListOptions) {
+	    void this.$store.dispatch(`${tasks_v2_const.Model.Interface}/updateTaskListOptions`, taskListOptions);
+	    UserOptions.save('tasks', 'fullCard', 'taskListOptions', JSON.stringify(taskListOptions));
+	  }
+	  getTaskListOptions() {
+	    return this.$store.getters[`${tasks_v2_const.Model.Interface}/taskListOptions`];
+	  }
+	  get showCompletedTasks() {
+	    return this.getTaskListOptions()[babelHelpers.classPrivateFieldLooseBase(this, _meta)[_meta].showCompletedField];
+	  }
+	  get showSubTasks() {
+	    return this.getTaskListOptions().showSubTasks;
+	  }
+	  get showSubTemplates() {
+	    return this.getTaskListOptions().showSubTemplates;
 	  }
 	  get $store() {
 	    return tasks_v2_core.Core.getStore();
+	  }
+	}
+	function _addStatusesToStore2(taskId, taskIds) {
+	  const meta = babelHelpers.classPrivateFieldLooseBase(this, _meta)[_meta];
+	  const task = tasks_v2_provider_service_taskService.taskService.getStoreTask(taskId);
+	  if (meta.statusesField && task != null && task[meta.statusesField]) {
+	    const statuses = {
+	      ...task[meta.statusesField]
+	    };
+	    taskIds.forEach(id => {
+	      const addedTask = tasks_v2_provider_service_taskService.taskService.getStoreTask(id);
+	      if (addedTask != null && addedTask.status) {
+	        statuses[id] = addedTask.status;
+	      }
+	    });
+	    tasks_v2_provider_service_taskService.taskService.updateStoreTask(taskId, {
+	      [meta.statusesField]: statuses
+	    });
+	  }
+	}
+	function _deleteStatusesFromStore2(taskId, taskIds) {
+	  const meta = babelHelpers.classPrivateFieldLooseBase(this, _meta)[_meta];
+	  const task = tasks_v2_provider_service_taskService.taskService.getStoreTask(taskId);
+	  if (meta.statusesField && task != null && task[meta.statusesField]) {
+	    const statuses = {
+	      ...task[meta.statusesField]
+	    };
+	    taskIds.forEach(id => delete statuses[id]);
+	    tasks_v2_provider_service_taskService.taskService.updateStoreTask(taskId, {
+	      [meta.statusesField]: statuses
+	    });
 	  }
 	}
 	async function _safePromise2(promise) {
@@ -234,19 +385,39 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	  }
 	  return null;
 	}
+	function _filterCompleted2(ids, taskId) {
+	  const meta = babelHelpers.classPrivateFieldLooseBase(this, _meta)[_meta];
+	  const parentTask = tasks_v2_provider_service_taskService.taskService.getStoreTask(taskId);
+	  return ids.filter(id => {
+	    var _parentTask$meta$stat;
+	    const task = tasks_v2_provider_service_taskService.taskService.getStoreTask(id);
+	    if (task) {
+	      return task.status !== tasks_v2_const.TaskStatus.Completed;
+	    }
+	    const statusFromMap = parentTask == null ? void 0 : (_parentTask$meta$stat = parentTask[meta.statusesField]) == null ? void 0 : _parentTask$meta$stat[id];
+	    if (statusFromMap) {
+	      return statusFromMap !== tasks_v2_const.TaskStatus.Completed;
+	    }
+	    return true;
+	  });
+	}
 	function _getTitle2(id) {
 	  var _ref, _taskService$getStore5, _taskService$getStore6;
 	  return (_ref = (_taskService$getStore5 = (_taskService$getStore6 = tasks_v2_provider_service_taskService.taskService.getStoreTask(id)) == null ? void 0 : _taskService$getStore6.title) != null ? _taskService$getStore5 : this.$store.getters[`${tasks_v2_const.Model.Tasks}/getTitle`](id)) != null ? _ref : '\uFFFF';
 	}
-	function _updateStoreRelationTasks2(taskId, taskIds) {
+	function _updateStoreRelationTasks2(taskId, taskIds, withPartiallyLoaded = false, statuses = null) {
 	  const meta = babelHelpers.classPrivateFieldLooseBase(this, _meta)[_meta];
 	  const relationIds = [...new Set(taskIds)];
 	  const contains = relationIds.length > 0;
-	  if (tasks_v2_provider_service_taskService.taskService.hasStoreTask(taskId, false)) {
-	    void tasks_v2_provider_service_taskService.taskService.updateStoreTask(taskId, {
+	  if (tasks_v2_provider_service_taskService.taskService.hasStoreTask(taskId, withPartiallyLoaded)) {
+	    const fields = {
 	      [meta.idsField]: relationIds,
 	      [meta.containsField]: contains
-	    });
+	    };
+	    if (!main_core.Type.isNil(statuses) && meta.statusesField) {
+	      fields[meta.statusesField] = statuses;
+	    }
+	    void tasks_v2_provider_service_taskService.taskService.updateStoreTask(taskId, fields);
 	  }
 	}
 
@@ -357,9 +528,10 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	      const {
 	        templates,
 	        ids
-	      } = await tasks_v2_lib_apiClient.apiClient.post('Template.Relation.Child.list', {
+	      } = await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TemplateRelationChildList, {
 	        templateId: task.templateId,
 	        withIds,
+	        withSubTemplates: this.showSubTemplates,
 	        navigation: {
 	          size: limit$1
 	        }
@@ -385,15 +557,8 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    }
 	    if (!tasks_v2_lib_idUtils.idUtils.isReal(taskId)) {
 	      const ids = tasks_v2_provider_service_taskService.taskService.getStoreTask(taskId).subTaskIds;
-	      const {
-	        templates
-	      } = await tasks_v2_lib_apiClient.apiClient.post('Template.Relation.Child.listByIds', {
-	        templateIds: this.getVisibleIds(ids).map(id => tasks_v2_lib_idUtils.idUtils.unbox(id))
-	      });
-	      const tasks = templates.map(it => ({
-	        ...it,
-	        id: tasks_v2_lib_idUtils.idUtils.boxTemplate(it.id)
-	      }));
+	      const templateIds = this.getVisibleIds(taskId, ids, true);
+	      const tasks = await this.requestTasksByIds(taskId, templateIds);
 	      return {
 	        tasks,
 	        ids
@@ -402,17 +567,26 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    const {
 	      templates,
 	      ids
-	    } = await tasks_v2_lib_apiClient.apiClient.post('Template.Relation.Child.list', {
+	    } = await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TemplateRelationChildList, {
 	      templateId: tasks_v2_lib_idUtils.idUtils.unbox(taskId),
 	      withIds,
+	      withSubTemplates: this.showSubTemplates,
 	      navigation: {
 	        size: limit$1
 	      }
 	    });
-	    const tasks = templates.map(it => ({
-	      ...it,
-	      id: tasks_v2_lib_idUtils.idUtils.boxTemplate(it.id)
-	    }));
+	    const tasks = templates.map(it => {
+	      var _it$subTemplateIds;
+	      return {
+	        ...it,
+	        id: tasks_v2_lib_idUtils.idUtils.boxTemplate(it.id),
+	        subTaskIds: tasks_v2_lib_idUtils.idUtils.boxTemplates((_it$subTemplateIds = it == null ? void 0 : it.subTemplateIds) != null ? _it$subTemplateIds : []),
+	        rights: {
+	          ...tasks_v2_provider_service_templateService.TemplateMappers.mapRights(it == null ? void 0 : it.rights),
+	          ...(it == null ? void 0 : it.rights)
+	        }
+	      };
+	    });
 	    return {
 	      tasks,
 	      ids: ids == null ? void 0 : ids.map(id => tasks_v2_lib_idUtils.idUtils.boxTemplate(id))
@@ -420,11 +594,55 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	  }
 
 	  /** @protected */
+	  async requestTasksByIds(taskId, taskIds) {
+	    if (!tasks_v2_lib_idUtils.idUtils.isTemplate(taskId)) {
+	      return super.requestTasksByIds(taskId, taskIds);
+	    }
+	    const {
+	      templates
+	    } = await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TemplateRelationChildListByIds, {
+	      templateIds: taskIds.map(id => tasks_v2_lib_idUtils.idUtils.unbox(id)),
+	      withSubTemplates: this.showSubTemplates
+	    });
+	    return templates.map(it => {
+	      var _it$subTemplateIds2;
+	      return {
+	        ...it,
+	        id: tasks_v2_lib_idUtils.idUtils.boxTemplate(it.id),
+	        subTaskIds: tasks_v2_lib_idUtils.idUtils.boxTemplates((_it$subTemplateIds2 = it == null ? void 0 : it.subTemplateIds) != null ? _it$subTemplateIds2 : []),
+	        rights: {
+	          ...tasks_v2_provider_service_templateService.TemplateMappers.mapRights(it == null ? void 0 : it.rights),
+	          ...(it == null ? void 0 : it.rights)
+	        }
+	      };
+	    });
+	  }
+
+	  /** @protected */
+	  async requestSubTaskIds(taskId, taskIds) {
+	    if (!tasks_v2_lib_idUtils.idUtils.isTemplate(taskId)) {
+	      return super.requestSubTaskIds(taskId, taskIds);
+	    }
+	    const {
+	      templates
+	    } = await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TemplateRelationChildGetSubTemplateIds, {
+	      templateIds: taskIds.map(id => tasks_v2_lib_idUtils.idUtils.unbox(id))
+	    });
+	    return templates.map(it => {
+	      var _it$subTemplateIds3;
+	      return {
+	        id: tasks_v2_lib_idUtils.idUtils.boxTemplate(it.id),
+	        subTaskIds: tasks_v2_lib_idUtils.idUtils.boxTemplates((_it$subTemplateIds3 = it == null ? void 0 : it.subTemplateIds) != null ? _it$subTemplateIds3 : [])
+	      };
+	    });
+	  }
+
+	  /** @protected */
 	  requestAdd(taskId, taskIds, noOverride = false) {
 	    if (!tasks_v2_lib_idUtils.idUtils.isTemplate(taskId)) {
 	      return super.requestAdd(taskId, taskIds, noOverride);
 	    }
-	    return this.requestUpdate('Template.Relation.Child.add', {
+	    return this.requestUpdate(tasks_v2_const.Endpoint.TemplateRelationChildAdd, {
 	      templateId: tasks_v2_lib_idUtils.idUtils.unbox(taskId),
 	      templateIds: taskIds.map(id => tasks_v2_lib_idUtils.idUtils.unbox(id)),
 	      noOverride
@@ -436,7 +654,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    if (!tasks_v2_lib_idUtils.idUtils.isTemplate(taskId)) {
 	      return super.requestDelete(taskId, taskIds);
 	    }
-	    return this.requestUpdate('Template.Relation.Child.delete', {
+	    return this.requestUpdate(tasks_v2_const.Endpoint.TemplateRelationChildDelete, {
 	      templateId: tasks_v2_lib_idUtils.idUtils.unbox(taskId),
 	      templateIds: taskIds.map(id => tasks_v2_lib_idUtils.idUtils.unbox(id))
 	    });
@@ -444,16 +662,22 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	}
 	async function _requestParent2(taskId) {
 	  if (tasks_v2_lib_idUtils.idUtils.isTemplate(taskId)) {
+	    var _parent$subTemplateId;
 	    const {
 	      templates
-	    } = await tasks_v2_lib_apiClient.apiClient.post('Template.Relation.Child.listByIds', {
+	    } = await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TemplateRelationChildListByIds, {
 	      templateIds: [tasks_v2_lib_idUtils.idUtils.unbox(taskId)]
 	    });
 	    const parent = templates[0];
-	    if (parent) {
-	      parent.id = tasks_v2_lib_idUtils.idUtils.boxTemplate(parent.id);
-	    }
-	    return parent;
+	    return {
+	      ...parent,
+	      id: tasks_v2_lib_idUtils.idUtils.boxTemplate(parent.id),
+	      subTaskIds: tasks_v2_lib_idUtils.idUtils.boxTemplates((_parent$subTemplateId = parent == null ? void 0 : parent.subTemplateIds) != null ? _parent$subTemplateId : []),
+	      rights: {
+	        ...tasks_v2_provider_service_templateService.TemplateMappers.mapRights(parent == null ? void 0 : parent.rights),
+	        ...(parent == null ? void 0 : parent.rights)
+	      }
+	    };
 	  }
 	  const {
 	    tasks
@@ -485,17 +709,20 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    if (withIds && !((_task$relatedTaskIds = task.relatedTaskIds) != null && _task$relatedTaskIds.length) && task.templateId) {
 	      const {
 	        tasks,
-	        ids
-	      } = await tasks_v2_lib_apiClient.apiClient.post('Template.Relation.Related.list', {
+	        ids,
+	        statuses
+	      } = await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TemplateRelationRelatedList, {
 	        templateId: task.templateId,
 	        withIds,
+	        withCompleted: this.showCompletedTasks,
 	        navigation: {
 	          size: limit$2
 	        }
 	      });
 	      return {
 	        tasks,
-	        ids
+	        ids,
+	        statuses
 	      };
 	    }
 	    if (!tasks_v2_lib_idUtils.idUtils.isTemplate(taskId) || !tasks_v2_lib_idUtils.idUtils.isReal(taskId)) {
@@ -503,17 +730,20 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    }
 	    const {
 	      tasks,
-	      ids
-	    } = await tasks_v2_lib_apiClient.apiClient.post('Template.Relation.Related.list', {
+	      ids,
+	      statuses
+	    } = await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TemplateRelationRelatedList, {
 	      templateId: tasks_v2_lib_idUtils.idUtils.unbox(taskId),
 	      withIds,
+	      withCompleted: this.showCompletedTasks,
 	      navigation: {
 	        size: limit$2
 	      }
 	    });
 	    return {
 	      tasks,
-	      ids
+	      ids,
+	      statuses
 	    };
 	  }
 
@@ -522,7 +752,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    if (!tasks_v2_lib_idUtils.idUtils.isTemplate(taskId)) {
 	      return super.requestAdd(taskId, taskIds, noOverride);
 	    }
-	    return this.requestUpdate('Template.Relation.Related.add', {
+	    return this.requestUpdate(tasks_v2_const.Endpoint.TemplateRelationRelatedAdd, {
 	      templateId: tasks_v2_lib_idUtils.idUtils.unbox(taskId),
 	      taskIds,
 	      noOverride
@@ -534,7 +764,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    if (!tasks_v2_lib_idUtils.idUtils.isTemplate(taskId)) {
 	      return super.requestDelete(taskId, taskIds);
 	    }
-	    return this.requestUpdate('Template.Relation.Related.delete', {
+	    return this.requestUpdate(tasks_v2_const.Endpoint.TemplateRelationRelatedDelete, {
 	      templateId: tasks_v2_lib_idUtils.idUtils.unbox(taskId),
 	      taskIds
 	    });
@@ -564,7 +794,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    if (!tasks_v2_lib_idUtils.idUtils.isReal(ganttLink.taskId)) {
 	      return null;
 	    }
-	    const error = await this.requestUpdate('Task.Relation.Gantt.Dependence.check', {
+	    const error = await this.requestUpdate(tasks_v2_const.Endpoint.TaskRelationGanttDependenceCheck, {
 	      ganttLink
 	    });
 	    if (error) {
@@ -583,7 +813,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    if (!tasks_v2_lib_idUtils.idUtils.isReal(taskId)) {
 	      return null;
 	    }
-	    const error = await this.requestUpdate('Task.Relation.Gantt.Dependence.add', {
+	    const error = await this.requestUpdate(tasks_v2_const.Endpoint.TaskRelationGanttDependenceAdd, {
 	      ganttLink
 	    });
 	    if (error) {
@@ -599,7 +829,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    if (!tasks_v2_lib_idUtils.idUtils.isReal(ganttLink.taskId)) {
 	      return null;
 	    }
-	    const error = await this.requestUpdate('Task.Relation.Gantt.Dependence.update', {
+	    const error = await this.requestUpdate(tasks_v2_const.Endpoint.TaskRelationGanttDependenceUpdate, {
 	      ganttLink
 	    });
 	    if (error) {
@@ -618,7 +848,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    if (!tasks_v2_lib_idUtils.idUtils.isReal(taskId)) {
 	      return;
 	    }
-	    const error = await this.requestUpdate('Task.Relation.Gantt.Dependence.delete', {
+	    const error = await this.requestUpdate(tasks_v2_const.Endpoint.TaskRelationGanttDependenceDelete, {
 	      ganttLink
 	    });
 	    if (error) {
@@ -631,8 +861,10 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	const subTasksMeta = Object.freeze({
 	  id: tasks_v2_const.TaskField.SubTasks,
 	  idsField: 'subTaskIds',
+	  statusesField: 'subTaskStatuses',
 	  containsField: 'containsSubTasks',
 	  relationToField: 'parentId',
+	  showCompletedField: 'showCompletedSubTasks',
 	  controller: 'Task.Relation.Child',
 	  uniqueRight: 'detachParent',
 	  addError: main_core.Loc.getMessage('TASKS_V2_RELATION_SUBTASKS_NO_ACCESS'),
@@ -643,8 +875,10 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	const relatedTasksMeta = Object.freeze({
 	  id: tasks_v2_const.TaskField.RelatedTasks,
 	  idsField: 'relatedTaskIds',
+	  statusesField: 'relatedTaskStatuses',
 	  containsField: 'containsRelatedTasks',
 	  relationToField: 'relatedToTaskId',
+	  showCompletedField: 'showCompletedRelatedTasks',
 	  controller: 'Task.Relation.Related',
 	  uniqueRight: 'detachRelated',
 	  addError: main_core.Loc.getMessage('TASKS_V2_RELATION_RELATED_TASKS_NO_ACCESS'),
@@ -653,8 +887,10 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	const ganttMeta = Object.freeze({
 	  id: tasks_v2_const.TaskField.Gantt,
 	  idsField: 'ganttTaskIds',
+	  statusesField: 'ganttTaskStatuses',
 	  containsField: 'containsGanttLinks',
 	  relationToField: 'ganttParentId',
+	  showCompletedField: 'showCompletedGantt',
 	  controller: 'Task.Relation.Gantt.Dependence',
 	  uniqueRight: 'changeDependence'
 	});

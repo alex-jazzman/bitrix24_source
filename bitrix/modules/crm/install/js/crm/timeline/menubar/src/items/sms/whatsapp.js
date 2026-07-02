@@ -1,11 +1,11 @@
 import { Builder, Dictionary } from 'crm.integration.analytics';
-import { Editor, FilledPlaceholder } from 'crm.template.editor';
+import { Editor, type FilledPlaceholder } from 'crm.template.editor';
 import { TourManager } from 'crm.tour-manager';
 import { ajax as Ajax, Dom, Event, Loc, Runtime, Tag, Text, Type } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
-import { MenuItem, MenuItemOptions, MenuManager } from 'main.popup';
+import { type BaseEvent, EventEmitter } from 'main.core.events';
+import { type MenuItem, type MenuItemOptions, MenuManager } from 'main.popup';
 import { sendData } from 'ui.analytics';
-import { Dialog, DialogOptions } from 'ui.entity-selector';
+import { Dialog, type DialogOptions } from 'ui.entity-selector';
 import { MessageBox } from 'ui.dialogs.messagebox';
 
 import Item from '../../item';
@@ -18,7 +18,7 @@ import {
 	MENU_ITEM_STUB_ID,
 	MENU_SETTINGS_ID,
 } from './internal/menu-helper';
-import { Provider, TemplateItem } from './types';
+import type { Provider, TemplateItem } from './types';
 import Tour from './tour';
 
 import 'ui.design-tokens';

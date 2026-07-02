@@ -22,7 +22,21 @@ export const Router = {
 		else if (urlParams.has(GetParameter.botContext))
 		{
 			const dialogId = urlParams.get(GetParameter.openChat);
-			const context = urlParams.get(GetParameter.botContext);
+			const rawContext = urlParams.get(GetParameter.botContext);
+
+			let context = {};
+			try
+			{
+				context = JSON.parse(decodeURIComponent(rawContext));
+			}
+			catch
+			{
+				console.error('Router: incorrect bot context');
+			}
+
+			const cleanUrl = new URL(window.location.href);
+			cleanUrl.searchParams.delete(GetParameter.botContext);
+			window.history.replaceState(null, '', cleanUrl);
 
 			void Messenger.openChatWithBotContext(dialogId, context);
 		}

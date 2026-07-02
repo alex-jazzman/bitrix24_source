@@ -446,11 +446,16 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      this.$emit('close');
 	    },
 	    handleTemplateUpdate() {
-	      void tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
+	      const updateFields = {
 	        startDatePlanAfter: Number(this.startDatePlanAfter),
 	        endDatePlanAfter: Number(this.startDatePlanAfter + this.templateDuration),
 	        matchesWorkTime: this.matchesWorkTime
-	      });
+	      };
+	      const isMatchesWorkTimeChanged = this.task.matchesWorkTime !== this.matchesWorkTime;
+	      if (this.task.deadlineAfter && isMatchesWorkTimeChanged) {
+	        updateFields.deadlineAfter = tasks_v2_lib_calendar.calendar.recalculateDurationByMatchWorkTime(this.task.deadlineAfter, this.task.matchesWorkTime, this.matchesWorkTime);
+	      }
+	      void tasks_v2_provider_service_taskService.taskService.update(this.taskId, updateFields);
 	    },
 	    async handleTaskUpdate() {
 	      var _result$Endpoint$Task;

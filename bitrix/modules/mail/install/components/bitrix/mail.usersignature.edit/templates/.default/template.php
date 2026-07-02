@@ -92,7 +92,7 @@ $APPLICATION->setPageProperty('BodyClass', trim(sprintf('%s %s', $bodyClass, 'pa
 		}
 		?> />
 
-		<span class="mail-signature-edit-sender-text"><?=Loc::getMessage('MAIL_USERSIGNATURE_SENDER_SELECT') ?></span>
+		<label class="mail-signature-edit-sender-text" for="sender_bind_checkbox"><?=Loc::getMessage('MAIL_USERSIGNATURE_SENDER_SELECT') ?></label>
 
 		<div id="binding-type-field-wrapper"></div>
 

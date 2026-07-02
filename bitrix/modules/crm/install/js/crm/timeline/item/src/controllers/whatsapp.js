@@ -2,9 +2,9 @@ import { Builder, Dictionary } from 'crm.integration.analytics';
 import type { WhatsAppDeleteEvent as WhatsAppDeleteEventStructure } from 'crm.integration.types';
 import { Loc, Type } from 'main.core';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
-import ConfigurableItem from '../configurable-item';
 
-import { ActionParams, Base } from './base';
+import ConfigurableItem from '../configurable-item';
+import { type ActionParams, Base } from './base';
 import { tryToResendWithMessage } from './message/resend';
 
 declare type WhatsAppParams = {

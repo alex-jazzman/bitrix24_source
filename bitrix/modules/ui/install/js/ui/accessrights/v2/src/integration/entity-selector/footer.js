@@ -1,5 +1,5 @@
 import { Dom, Event, Loc, Tag } from 'main.core';
-import { DefaultFooter, Dialog, Item } from 'ui.entity-selector';
+import { DefaultFooter, Dialog } from 'ui.entity-selector';
 
 export class Footer extends DefaultFooter
 {
@@ -10,13 +10,13 @@ export class Footer extends DefaultFooter
 		this.selectAllButton = Tag.render`<div class="ui-selector-footer-link">${
 			Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_ALL_SELECT_LABEL')
 		}</div>`;
-		Dom.hide(this.selectAllButton);
+		Dom.style(this.selectAllButton, 'display', 'none');
 		Event.bind(this.selectAllButton, 'click', this.#selectAll.bind(this));
 
 		this.deselectAllButton = Tag.render`<div class="ui-selector-footer-link">${
 			Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_ALL_DESELECT_LABEL')
 		}</div>`;
-		Dom.hide(this.deselectAllButton);
+		Dom.style(this.deselectAllButton, 'display', 'none');
 		Event.bind(this.deselectAllButton, 'click', this.#deselectAll.bind(this));
 
 		this.getDialog().subscribe('Item:onSelect', this.#onItemStatusChange.bind(this));
@@ -34,13 +34,13 @@ export class Footer extends DefaultFooter
 	{
 		if (this.getDialog().getSelectedItems().length === this.getDialog().getItems().length)
 		{
-			Dom.hide(this.selectAllButton);
-			Dom.show(this.deselectAllButton);
+			Dom.style(this.selectAllButton, 'display', 'none');
+			Dom.style(this.deselectAllButton, 'display', '');
 		}
 		else
 		{
-			Dom.show(this.selectAllButton);
-			Dom.hide(this.deselectAllButton);
+			Dom.style(this.selectAllButton, 'display', '');
+			Dom.style(this.deselectAllButton, 'display', 'none');
 		}
 	}
 

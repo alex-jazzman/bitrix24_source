@@ -5,7 +5,8 @@ jn.define('layout/ui/search-bar/base-item', (require, exports, module) => {
 	const { Indent } = require('tokens');
 	const { Haptics } = require('haptics');
 	const { Loc } = require('loc');
-	const { ChipFilter, BadgeCounterDesign } = require('ui-system/blocks/chips/chip-filter');
+	const { Notify } = require('notify');
+	const { ChipFilter, ChipInnerTabBadgeType, BadgeCounterDesign } = require('ui-system/blocks/chips/chip-filter');
 
 	class BaseItem extends LayoutComponent
 	{
@@ -15,12 +16,24 @@ jn.define('layout/ui/search-bar/base-item', (require, exports, module) => {
 		 */
 		render()
 		{
-			const { active, last, id, value } = this.props;
+			const { active, last, id, value, name, badgeNew, badgeComingSoon, showCross } = this.props;
+
+			let badgeType = null;
+			if (badgeNew)
+			{
+				badgeType = ChipInnerTabBadgeType.NEW;
+			}
+			else if (badgeComingSoon)
+			{
+				badgeType = ChipInnerTabBadgeType.COMING_SOON;
+			}
 
 			return ChipFilter(
 				{
+					badgeType,
+					showCross,
 					testId: id,
-					text: this.props.name,
+					text: name,
 					selected: active,
 					counterValue: value,
 					counterDesign: BadgeCounterDesign.ALERT,
@@ -65,8 +78,29 @@ jn.define('layout/ui/search-bar/base-item', (require, exports, module) => {
 				return;
 			}
 
-			Haptics.impactLight();
+			if (this.shouldIgnoreClick())
+			{
+				return;
+			}
 
+			Haptics.impactLight();
+			this.handleClick();
+		}
+
+		/**
+		 * @protected
+		 * @return {boolean}
+		 */
+		shouldIgnoreClick()
+		{
+			return false;
+		}
+
+		/**
+		 * @protected
+		 */
+		handleClick()
+		{
 			const params = this.getOnClickParams();
 			const active = !this.props.active;
 

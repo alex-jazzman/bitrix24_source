@@ -1,5 +1,7 @@
 (() => {
 	const require = (ext) => jn.require(ext);
+	const { isModuleInstalled } = require('module');
+
 	const { AvaMenu } = require('ava-menu');
 	AvaMenu.init();
 
@@ -12,6 +14,22 @@
 	{
 		console.warn(e);
 	}
+
+	if (isModuleInstalled('timeman'))
+	{
+		try
+		{
+			const { Background } = require('timeman/background');
+			void Background?.init();
+		}
+		catch (e)
+		{
+			console.error(e);
+		}
+	}
+
+	const { registerDeeplink } = require('in-app-url/deeplink');
+	registerDeeplink();
 
 	const { OpenDesktopNotification } = require('background/notifications/open-desktop');
 	OpenDesktopNotification.bindOpenDesktopEvent();

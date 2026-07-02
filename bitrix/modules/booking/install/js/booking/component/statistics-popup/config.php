@@ -10,7 +10,6 @@ return [
 	'js' => 'dist/statistics-popup.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'main.popup',
 		'booking.component.button',
 		'booking.component.popup',
 	],

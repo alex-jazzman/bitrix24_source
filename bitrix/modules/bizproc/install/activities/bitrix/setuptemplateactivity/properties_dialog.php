@@ -5,7 +5,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Bizproc\Activity\PropertiesDialog;
 use Bitrix\Bizproc\FieldType;
+use Bitrix\Bizproc\Internal\Entity\Activity\SetupTemplateActivity\ConstantConfiguration;
 use Bitrix\Main;
 
 Bitrix\Main\UI\Extension::load([
@@ -13,8 +15,8 @@ Bitrix\Main\UI\Extension::load([
 	'bizproc.setup-template',
 ]);
 
-/** @var \Bitrix\Bizproc\Activity\PropertiesDialog $dialog */
-/** @var array<string, string> $typeNames */
+/** @var PropertiesDialog $dialog */
+/** @var ConstantConfiguration[] $constantConfigurationList */
 
 $domElementId = 'bizprocSetupTemplateActivityElement';
 foreach ($dialog->getMap() as $fieldId => $field): ?>
@@ -47,7 +49,7 @@ foreach ($dialog->getMap() as $fieldId => $field): ?>
 		const activity = new BX.Bizproc.SetupTemplateActivity({
 			currentValues: <?= Main\Web\Json::encode($dialog->getCurrentValues()) ?>,
 			domElementId: '<?= CUtil::JSEscape($domElementId) ?>',
-			fieldTypeNames:  <?= Main\Web\Json::encode($typeNames) ?>
+			constantConfigurationList:  <?= Main\Web\Json::encode($constantConfigurationList) ?>
 		});
 		activity.init();
 

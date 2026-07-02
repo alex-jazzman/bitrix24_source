@@ -1,0 +1,3 @@
+<?php
+$MESS["BICONNECTOR_APACHESUPERSET_DASHBOARD_DETAIL_INFO_ACCESS_ERROR"] = "Insufficient permission to view the dashboard.";
+$MESS["BICONNECTOR_APACHESUPERSET_DASHBOARD_DETAIL_INFO_NOT_FOUND"] = "Dashboard was not found.";

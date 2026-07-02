@@ -7,38 +7,12 @@ jn.define('im/messenger/lib/converter/ui/message', (require, exports, module) =>
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const {
 		DialogType,
-		MessageParams,
 	} = require('im/messenger/const');
-	const {
-		TextMessage,
-		EmojiOnlyMessage,
-		DeletedMessage,
-		ImageMessage,
-		MediaGalleryMessage,
-		AudioMessage,
-		VideoMessage,
-		FileMessage,
-		FileGalleryMessage,
-		SystemTextMessage,
-		UnsupportedMessage,
-		CopilotPromptMessage,
-		ErrorMessage,
-		CopilotMessage,
-		CheckInMessageFactory,
-		CreateBannerFactory,
-		GalleryMessageFactory,
-		CallMessageFactory,
-		VoteMessageFactory,
-		AiAssistantMessage,
-		VideoNoteMessage,
-		VideoNoteTextMessage,
-		StickerMessage,
-		DeletedStickerMessage,
-		AiBizprocMessage,
-	} = require('im/messenger/lib/element/dialog');
-	const { Feature } = require('im/messenger/lib/feature');
+	const { EmptyMessage } = require('im/messenger/lib/element/dialog');
 	const { MessageHelper } = require('im/messenger/lib/helper');
 	const { parser } = require('im/messenger/lib/parser');
+	const { Logger } = require('im/messenger/lib/logger');
+	const { messageTypeRules } = require('im/messenger/lib/converter/ui/message/src/message-type-rules');
 
 	/**
 	 * @class MessageUiConverter
@@ -57,6 +31,29 @@ jn.define('im/messenger/lib/converter/ui/message', (require, exports, module) =>
 		}
 
 		/**
+		 * @param {MessagesModelState} modelMessage
+		 * @param {CreateMessageOptions|{}} options
+		 * @return {Message}
+		 */
+		createMessage(modelMessage, options = {})
+		{
+			const messageHelper = MessageHelper.createByModel(modelMessage);
+
+			try
+			{
+				return messageTypeRules.find((rule) => rule.isSuitable(messageHelper))
+					.create(modelMessage, options)
+				;
+			}
+			catch (error)
+			{
+				Logger.error('MessageUiConverter.createMessage catch error:', error);
+
+				return new EmptyMessage(modelMessage);
+			}
+		}
+
+		/**
 		 * @param {Array<MessagesModelState>} modelMessageList
 		 * @return {Array<Message>}
 		 */
@@ -71,156 +68,6 @@ jn.define('im/messenger/lib/converter/ui/message', (require, exports, module) =>
 			const options = this.prepareSharedOptionsForMessages(dialog);
 
 			return modelMessageList.map((modelMessage) => this.createMessage(modelMessage, options));
-		}
-
-		/**
-		 * @param {MessagesModelState} modelMessage
-		 * @param {CreateMessageOptions} options
-		 * @return {Message}
-		 */
-		createMessage(modelMessage = {}, options = {})
-		{
-			if (modelMessage.params?.componentId === MessageParams.ComponentId.ChatCopilotCreationMessage)
-			{
-				return new CopilotPromptMessage(modelMessage, options);
-			}
-
-			if (CreateBannerFactory.checkSuitableForDisplay(modelMessage))
-			{
-				return CreateBannerFactory.create(modelMessage, options);
-			}
-
-			const files = serviceLocator.get('core')
-				.getStore()
-				.getters['filesModel/getListByMessageId'](modelMessage.id)
-			;
-			const messageHelper = MessageHelper.createByModel(
-				modelMessage,
-				files,
-			);
-
-			if (messageHelper.isAiAssistant && Feature.isAiAssistantMessageSupported)
-			{
-				return new AiAssistantMessage(modelMessage, options);
-			}
-
-			if (messageHelper.isSticker)
-			{
-				return new StickerMessage(modelMessage, options);
-			}
-
-			if (messageHelper.isDeletedSticker)
-			{
-				return new DeletedStickerMessage(modelMessage, options);
-			}
-
-			if (messageHelper.isSystem)
-			{
-				return new SystemTextMessage(modelMessage, { ...options, showCommentInfo: false });
-			}
-
-			if (messageHelper.isDeleted)
-			{
-				return new DeletedMessage(modelMessage, options);
-			}
-
-			if (messageHelper.isError)
-			{
-				return new ErrorMessage(modelMessage, options);
-			}
-
-			if (messageHelper.isAiBizproc && Feature.isFootnoteMessageIdAvailable)
-			{
-				return new AiBizprocMessage(modelMessage, options);
-			}
-
-			if (modelMessage.params?.componentId === MessageParams.ComponentId.CopilotMessage)
-			{
-				return new CopilotMessage(modelMessage, options);
-			}
-
-			if (modelMessage.params?.componentId === MessageParams.ComponentId.ConvertToCollabMessage)
-			{
-				return new SystemTextMessage(modelMessage, { ...options, showCommentInfo: false });
-			}
-
-			if (CheckInMessageFactory.checkSuitableForDisplay(modelMessage))
-			{
-				return CheckInMessageFactory.create(modelMessage, options);
-			}
-
-			if (messageHelper.isMediaGallery)
-			{
-				return new MediaGalleryMessage(modelMessage, options, files);
-			}
-
-			if (messageHelper.isFileGallery)
-			{
-				return new FileGalleryMessage(modelMessage, options, files);
-			}
-
-			if (CallMessageFactory.checkSuitableForDisplay(modelMessage))
-			{
-				return CallMessageFactory.create(modelMessage, options);
-			}
-
-			if (messageHelper.isVote && VoteMessageFactory.checkSuitableForDisplay(modelMessage))
-			{
-				return VoteMessageFactory.create(modelMessage, options);
-			}
-
-			const file = files[0];
-			if (messageHelper.isImage)
-			{
-				if (Type.isStringFilled(file?.urlPreview))
-				{
-					return new ImageMessage(modelMessage, options, file);
-				}
-
-				return new FileMessage(modelMessage, options, file);
-			}
-
-			if (messageHelper.isAudio)
-			{
-				return new AudioMessage(modelMessage, options, file);
-			}
-
-			if (messageHelper.isVideo)
-			{
-				return new VideoMessage(modelMessage, options, file);
-			}
-
-			if (messageHelper.isVideoNoteText)
-			{
-				return new VideoNoteTextMessage(modelMessage, options, file);
-			}
-
-			if (messageHelper.isVideoNote && Feature.isVideoNoteSupported)
-			{
-				return new VideoNoteMessage(modelMessage, options, file);
-			}
-
-			if (messageHelper.isFile)
-			{
-				return new FileMessage(modelMessage, options, file);
-			}
-
-			if (messageHelper.isWithAttach)
-			{
-				return new TextMessage(modelMessage, options);
-			}
-
-			if (messageHelper.isEmojiOnly || messageHelper.isSmileOnly)
-			{
-				return new EmojiOnlyMessage(modelMessage, options);
-			}
-
-			if (messageHelper.isText && !messageHelper.isCustom)
-			{
-				return new TextMessage(modelMessage, options);
-			}
-
-			return new UnsupportedMessage(modelMessage, options);
 		}
 
 		createMessageFromRecent()

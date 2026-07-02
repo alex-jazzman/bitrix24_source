@@ -1,0 +1,14 @@
+DROP TABLE IF EXISTS b_note_recycle_bin;
+DROP TABLE IF EXISTS b_note_document_search;
+DROP TABLE IF EXISTS b_note_unresolved_mention;
+DROP TABLE IF EXISTS b_note_import_map;
+DROP TABLE IF EXISTS b_note_import_session;
+DROP TABLE IF EXISTS b_note_document_updates;
+DROP TABLE IF EXISTS b_note_document_file;
+DROP TABLE IF EXISTS b_note_document;
+DROP TABLE IF EXISTS b_note_collection;
+DROP TABLE IF EXISTS b_note_document_access;
+DROP TABLE IF EXISTS b_note_collection_access;
+DROP TABLE IF EXISTS b_note_permission;
+DROP TABLE IF EXISTS b_note_role_relation;
+DROP TABLE IF EXISTS b_note_role;

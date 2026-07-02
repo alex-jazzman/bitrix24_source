@@ -314,12 +314,14 @@
 	display: inline-flex;
 	margin: 0 7px 0 18px;
 	vertical-align: middle;
-	border-top: 1px solid transparent;
-	border-bottom: 1px solid transparent;
+	border: 1px solid transparent;
 	color: #2067b0;
 	transition: .1s;
 	cursor: pointer;
 	align-items: baseline;
+	appearance: none;
+	padding: 0;
+	background-color: transparent;
 	font: var(--ui-font-weight-bold) 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica))
 }
 

@@ -1,4 +1,1353 @@
-this.BX=this.BX||{},function(e,t,i,s,l,a,n,o,r,d,c,p,m){"use strict";var u=babelHelpers.classPrivateFieldLooseKey("componentName"),b=babelHelpers.classPrivateFieldLooseKey("componentProps");class v{constructor(e){if(Object.defineProperty(this,u,{writable:!0,value:void 0}),Object.defineProperty(this,b,{writable:!0,value:void 0}),!p.Type.isStringFilled(e.componentName))throw new RangeError("BX.Crm.MiniCard.Component: options.componentName must be a string filled");if(!p.Type.isPlainObject(e.componentProps))throw new RangeError("BX.Crm.MiniCard.Component: options.componentProps must be a plain object");babelHelpers.classPrivateFieldLooseBase(this,u)[u]=e.componentName,babelHelpers.classPrivateFieldLooseBase(this,b)[b]=e.componentProps}componentName(){return babelHelpers.classPrivateFieldLooseBase(this,u)[u]}componentProps(){return babelHelpers.classPrivateFieldLooseBase(this,b)[b]}}var h=babelHelpers.classPrivateFieldLooseKey("id"),P=babelHelpers.classPrivateFieldLooseKey("title"),y=babelHelpers.classPrivateFieldLooseKey("avatar"),L=babelHelpers.classPrivateFieldLooseKey("controls"),F=babelHelpers.classPrivateFieldLooseKey("fields"),E=babelHelpers.classPrivateFieldLooseKey("footerNotes");class B{constructor(e){if(Object.defineProperty(this,h,{writable:!0,value:void 0}),Object.defineProperty(this,P,{writable:!0,value:void 0}),Object.defineProperty(this,y,{writable:!0,value:void 0}),Object.defineProperty(this,L,{writable:!0,value:void 0}),Object.defineProperty(this,F,{writable:!0,value:void 0}),Object.defineProperty(this,E,{writable:!0,value:void 0}),babelHelpers.classPrivateFieldLooseBase(this,h)[h]=p.Type.isStringFilled(e.id)?e.id:p.Text.getRandom(16),!p.Type.isStringFilled(e.title))throw new RangeError("BX.Crm.MiniCard.MiniCardItem: options.title must be a string filled");babelHelpers.classPrivateFieldLooseBase(this,P)[P]=e.title,babelHelpers.classPrivateFieldLooseBase(this,y)[y]=new v(e.avatar),babelHelpers.classPrivateFieldLooseBase(this,L)[L]=[],e.controls.forEach(e=>{babelHelpers.classPrivateFieldLooseBase(this,L)[L].push(new v(e))}),babelHelpers.classPrivateFieldLooseBase(this,F)[F]=[],e.fields.forEach(e=>{babelHelpers.classPrivateFieldLooseBase(this,F)[F].push(new v(e))}),babelHelpers.classPrivateFieldLooseBase(this,E)[E]=[],e.footerNotes.forEach(e=>{babelHelpers.classPrivateFieldLooseBase(this,E)[E].push(new v(e))})}id(){return babelHelpers.classPrivateFieldLooseBase(this,h)[h]}title(){return babelHelpers.classPrivateFieldLooseBase(this,P)[P]}avatar(){return babelHelpers.classPrivateFieldLooseBase(this,y)[y]}controls(){return babelHelpers.classPrivateFieldLooseBase(this,L)[L]}fields(){return babelHelpers.classPrivateFieldLooseBase(this,F)[F]}footerNotes(){return babelHelpers.classPrivateFieldLooseBase(this,E)[E]}}const C={name:"Loader",template:'\n\t\t<div class="crm-mini-card__loader"></div>\n\t'},I={name:"Avatar",template:'\n\t\t<div class="crm-mini-card__avatar">\n\t\t\t<slot />\n\t\t</div>\n\t'},_={name:"ImageAvatar",components:{Avatar:I},props:{url:{type:String,required:!0}},computed:{encodeUri(){return encodeURI(this.url)}},template:'\n\t\t<Avatar class="--image">\n\t\t\t<img :src="encodeUri" alt=""/>\n\t\t</Avatar>\n\t'},f={name:"IconAvatar",components:{BIcon:i.BIcon,Avatar:I},props:{iconOptions:{type:Object,required:!0},bgColor:{type:String,default:null}},computed:{containerStyles(){const e=this.styleBgColor();return null===e?{}:{backgroundColor:e}}},methods:{styleBgColor(){return this.bgColor?this.bgColor.startsWith("--")?`var(${this.bgColor})`:this.bgColor:null}},template:'\n\t\t<Avatar class="--icon" :style="containerStyles">\n\t\t\t<BIcon v-bind="iconOptions" />\n\t\t</Avatar>\n\t'},H={name:"ButtonControl",components:{Control:{name:"Control",template:'\n\t\t<div class="crm-mini-card__control">\n\t\t\t<slot />\n\t\t</div>\n\t'}},props:{buttonOptions:{type:Object,required:!0}},mounted(){new r.Button(this.buttonOptions).renderTo(this.$refs.button.$el)},template:'\n\t\t<Control class="--button" ref="button" />\n\t'},M={template:'\n\t\t<div class="crm-mini-card__field">\n\t\t\t<slot />\n\t\t</div>\n\t'},O={template:'\n\t\t<div class="crm-mini-card__field-title">\n\t\t\t<slot />\n\t\t</div>\n\t'},T={template:'\n\t\t<div class="crm-mini-card__field-value">\n\t\t\t<slot />\n\t\t</div>\n\t'},w={template:'\n\t\t<div class="crm-mini-card__field-value-list">\n\t\t\t<slot />\n\t\t</div>\n\t'},g={name:"ValueEllipsis",template:'\n\t\t<span class="crm-mini-card__value-ellipsis">\n\t\t\t<slot/>\n\t\t</span>\n\t'},N={name:"CommonField",components:{Field:M,FieldTitle:O,FieldValueList:w,FieldValue:T,ValueEllipsis:g},props:{title:{type:String,required:!0},values:{type:Array,required:!0}},template:'\n\t\t<Field class="--common">\n\t\t\t<FieldTitle>{{ title }}</FieldTitle>\n\t\t\t<FieldValueList>\n\t\t\t\t<FieldValue v-for="value in values">\n\t\t\t\t\t<ValueEllipsis :title="value">{{ value }}</ValueEllipsis>\n\t\t\t\t</FieldValue>\n\t\t\t</FieldValueList>\n\t\t</Field>\n\t'};var S=babelHelpers.classPrivateFieldLooseKey("cache");class A{constructor(){Object.defineProperty(this,S,{writable:!0,value:void 0}),babelHelpers.classPrivateFieldLooseBase(this,S)[S]={}}async loadActivityEditor(e,t,i){var s;if(null!=(s=babelHelpers.classPrivateFieldLooseBase(this,S)[S][e])&&s[t])return babelHelpers.classPrivateFieldLooseBase(this,S)[S][e][t];const l=p.Text.getRandom(16);try{var a,n,o;const s=await p.ajax.runAction("crm.item.minicard.getActivityEditor",{data:{ownerTypeId:e,ownerId:t,editorId:l}});await p.Runtime.html(i,null!=(a=null==s||null==(n=s.data)?void 0:n.html)?a:""),null!=(o=babelHelpers.classPrivateFieldLooseBase(this,S)[S])[e]||(o[e]={}),babelHelpers.classPrivateFieldLooseBase(this,S)[S][e][t]=BX.CrmActivityEditor.items[l]}catch(i){var r;console.error("BX.Crm.MiniCard.ActivityEditorService: Cannot load activity editor:",i),null!=(r=babelHelpers.classPrivateFieldLooseBase(this,S)[S])[e]||(r[e]={}),babelHelpers.classPrivateFieldLooseBase(this,S)[S][e][t]=BX.CrmActivityEditor.getDefault()}return babelHelpers.classPrivateFieldLooseBase(this,S)[S][e][t]}}class V{communicateByPhone(e){if(!window.top.BXIM)return void a.MessageBox.alert(p.Loc.getMessage("CRM_MINI_CARD_COMMUNICATION_PHONE_NOT_SUPPORTS"));const t={ENTITY_TYPE_NAME:BX.CrmEntityType.resolveName(e.entityTypeId),ENTITY_ID:e.entityId};e.ownerTypeId!==e.entityTypeId&&e.ownerId!==e.entityId&&(t.BINDINGS={OWNER_TYPE_NAME:BX.CrmEntityType.resolveName(e.ownerTypeId),OWNER_TYPE_ID:e.ownerTypeId}),window.top.BXIM.phoneTo(e.phone,t)}communicateByEmail(e){return new Promise((t,i)=>{k.getInstance().getActivityEditorService().loadActivityEditor(e.ownerTypeId,e.ownerId,e.activityEditorContainer).then(s=>{s||(a.MessageBox.alert(p.Loc.getMessage("CRM_MINI_CARD_COMMUNICATION_EMAIL_NOT_SUPPORTS")),i());s.addEmail({ownerID:e.ownerId,ownerType:BX.CrmEntityType.resolveName(e.ownerTypeId),communicationsLoaded:!0,communications:[{type:"EMAIL",entityType:BX.CrmEntityType.resolveName(e.entityTypeId),entityId:e.entityId,value:e.email}]})||(window.location.href="mailto:"+e.email),t()}).catch(()=>{i()})})}communicateByIM(e){window.top.BXIM?window.top.BXIM.openMessengerSlider(e.dialogId,{RECENT:"N",MENU:"N"}):a.MessageBox.alert(p.Loc.getMessage("CRM_MINI_CARD_COMMUNICATION_IM_NOT_SUPPORTS"))}}class U{registerChildPopup(e,t){const i=t.getPopupContainer();p.Event.bind(i,"mouseenter",()=>{e.emit(te.INTERNAL_ON_MOUSE_ENTER_CHILD_POPUP)}),p.Event.bind(i,"mouseleave",()=>{e.emit(te.INTERNAL_ON_MOUSE_LEAVE_CHILD_POPUP)}),e.subscribe(te.INTERNAL_ON_CLOSE_MAIN_POPUP,()=>{t.close()})}}var R=babelHelpers.classPrivateFieldLooseKey("instance"),j=babelHelpers.classPrivateFieldLooseKey("activityEditorService"),X=babelHelpers.classPrivateFieldLooseKey("communicationService"),K=babelHelpers.classPrivateFieldLooseKey("eventService");class k{constructor(){Object.defineProperty(this,j,{writable:!0,value:null}),Object.defineProperty(this,X,{writable:!0,value:null}),Object.defineProperty(this,K,{writable:!0,value:null})}static getInstance(){return babelHelpers.classPrivateFieldLooseBase(this,R)[R]=new k,babelHelpers.classPrivateFieldLooseBase(this,R)[R]}getActivityEditorService(){var e;return null!=(e=babelHelpers.classPrivateFieldLooseBase(this,j))[j]||(e[j]=new A),babelHelpers.classPrivateFieldLooseBase(this,j)[j]}getCommunicationService(){var e;return null!=(e=babelHelpers.classPrivateFieldLooseBase(this,X))[X]||(e[X]=new V),babelHelpers.classPrivateFieldLooseBase(this,X)[X]}getEventService(){var e;return null!=(e=babelHelpers.classPrivateFieldLooseBase(this,K))[K]||(e[K]=new U),babelHelpers.classPrivateFieldLooseBase(this,K)[K]}}Object.defineProperty(k,R,{writable:!0,value:null});const D={name:"ShowMore",props:{count:{type:Number,required:!0}},computed:{showMoreTitle(){return this.$Bitrix.Loc.getMessage("CRM_MINI_CARD_SHOW_MORE",{"#COUNT#":this.count})}},template:'\n\t\t<span class="crm-mini-card__show-more">\n\t\t\t{{ showMoreTitle }}\n\t\t</span>\n\t'},x={name:"ShowMoreMenu",components:{ShowMore:D},props:{items:{type:Array,required:!0}},data:()=>({menu:null}),methods:{getMenu(){return null===this.menu&&(this.menu=new o.Menu({items:this.items,bindElement:this.$refs.showMoreContainer.$el,angle:{offset:this.$refs.showMoreContainer.$el.offsetWidth/2}}),k.getInstance().getEventService().registerChildPopup(this.$Bitrix.eventEmitter,this.menu.getPopupWindow())),this.menu},toggleMenu(){this.getMenu().toggle()}},template:'\n\t\t<ShowMore ref="showMoreContainer" :count="items.length" @click="toggleMenu"/>\n\t'},q={name:"PhoneField",components:{Field:M,FieldTitle:O,FieldValue:T,FieldValueList:w,ValueEllipsis:g,ShowMoreMenu:x},props:{title:{type:String,required:!0},phones:{type:Array,required:!0}},computed:{showablePhones(){return this.phones.slice(0,2)},hiddenPhones(){return this.phones.slice(2)},hiddenPhoneItems(){return this.hiddenPhones.map(e=>({text:e.value,href:e.href,onclick:e.onclick}))}},template:'\n\t\t<Field class="--phone">\n\t\t\t<FieldTitle>{{ title }}</FieldTitle>\n\t\t\t<FieldValueList>\n\t\t\t\t<FieldValue v-for="phone in showablePhones">\n\t\t\t\t\t<a class="--value-link" :href="phone.href" :onclick="phone.onclick">\n\t\t\t\t\t\t<ValueEllipsis :title="phone.value">{{ phone.value }}</ValueEllipsis>\n\t\t\t\t\t</a>\n\t\t\t\t</FieldValue>\n\t\t\t\t<ShowMoreMenu\n\t\t\t\t\tv-if="hiddenPhones.length > 0"\n\t\t\t\t\t:items="hiddenPhoneItems" \n\t\t\t\t/>\n\t\t\t</FieldValueList>\n\t\t</Field>\n\t'},$={name:"EmailField",components:{Field:M,FieldTitle:O,FieldValue:T,FieldValueList:w,ValueEllipsis:g,ShowMoreMenu:x},props:{title:{type:String,required:!0},emails:{type:Array,required:!0}},computed:{showableEmails(){return this.emails.slice(0,2)},hiddenEmails(){return this.emails.slice(2)},hiddenEmailItems(){return this.hiddenEmails.map(e=>({text:e.value,onclick:()=>{this.addEmail(e)}}))}},methods:{addEmail(e){k.getInstance().getCommunicationService().communicateByEmail({email:e.value,ownerTypeId:e.ownerTypeId,ownerId:e.ownerId,entityTypeId:e.ownerTypeId,entityId:e.ownerId,activityEditorContainer:this.$refs.activityEditorContainer})}},template:'\n\t\t<Field class="--email">\n\t\t\t<FieldTitle>{{ title }}</FieldTitle>\n\t\t\t<FieldValueList>\n\t\t\t\t<FieldValue v-for="email in showableEmails">\n\t\t\t\t\t<a class="--value-link" @click="addEmail(email)">\n\t\t\t\t\t\t<ValueEllipsis :title="email.value">{{ email.value }}</ValueEllipsis>\n\t\t\t\t\t</a>\n\t\t\t\t</FieldValue>\n\t\t\t\t<ShowMoreMenu\n\t\t\t\t\tv-if="hiddenEmails.length > 0"\n\t\t\t\t\t:items="hiddenEmailItems"\n\t\t\t\t/>\n\t\t\t</FieldValueList>\n\t\t\t<div ref="activityEditorContainer" hidden></div>\n\t\t</Field>\n\t'},G={name:"LinkField",components:{Field:M,FieldTitle:O,FieldValueList:w,FieldValue:T,ValueEllipsis:g,ShowMoreMenu:x},props:{title:{type:String,required:!0},links:{type:Array,required:!0}},computed:{showableLinks(){return this.links.slice(0,2)},hiddenLinks(){return this.links.slice(2)},hiddenLinkItems(){return this.hiddenLinks.map(e=>({text:e.title,href:e.href,target:e.target}))}},template:'\n\t\t<Field class="--link">\n\t\t\t<FieldTitle>{{ title }}</FieldTitle>\n\t\t\t<FieldValueList>\n\t\t\t\t<FieldValue v-for="link in showableLinks">\n\t\t\t\t\t<a\n\t\t\t\t\t\tclass="--value-link"\n\t\t\t\t\t\t:href="link.href"\n\t\t\t\t\t\t:target="link.target"\n\t\t\t\t\t>\n\t\t\t\t\t\t<ValueEllipsis :title="link.title">{{ link.title }}</ValueEllipsis>\n\t\t\t\t\t</a>\n\t\t\t\t</FieldValue>\n\t\t\t\t<ShowMoreMenu\n\t\t\t\t\tv-if="hiddenLinks.length > 0"\n\t\t\t\t\t:items="hiddenLinkItems"\n\t\t\t\t/>\n\t\t\t</FieldValueList>\n\t\t</Field>\n\t'},W={name:"MoneyField",components:{Field:M,FieldTitle:O,FieldValueList:w,FieldValue:T,ValueEllipsis:g},props:{title:{type:String,required:!0},moneyList:{type:Array,required:!0}},template:'\n\t\t<Field class="--money">\n\t\t\t<FieldTitle>{{ title }}</FieldTitle>\n\t\t\t<FieldValueList>\n\t\t\t\t<FieldValue v-for="money in moneyList">\n\t\t\t\t\t<ValueEllipsis v-html="money"/>\n\t\t\t\t</FieldValue>\n\t\t\t</FieldValueList>\n\t\t</Field>\n\t'},Y={name:"StageField",components:{Field:M,FieldTitle:O,FieldValue:T,ValueEllipsis:g},props:{title:{type:String,required:!0},stage:{type:Object,required:!0}},template:'\n\t\t<Field class="--stage">\n\t\t\t<FieldTitle>{{ title }}</FieldTitle>\n\t\t\t<FieldValue>\n\t\t\t\t<div class="crm-mini-card__stage-color" :style="{ backgroundColor: stage.color }"></div>\n\t\t\t\t<ValueEllipsis :title="stage.name">{{ stage.name }}</ValueEllipsis>\n\t\t\t</FieldValue>\n\t\t</Field>\n\t'},z=Object.freeze({Phone:"PHONE",Email:"EMAIL",Im:"IM"}),J=Object.freeze({[z.Phone]:{icon:d.Outline.PHONE_UP,removeRightCorners:!0},[z.Email]:{icon:d.Outline.MAIL,removeLeftCorners:!0,removeRightCorners:!0},[z.Im]:{icon:d.Outline.OPEN_CHANNELS,removeLeftCorners:!0}}),Q={name:"MiniCardComponent",components:{MiniCardContent:{name:"MiniCardContent",components:{ImageAvatar:_,IconAvatar:f,ButtonControl:H,CommonField:N,PhoneField:q,EmailField:$,LinkField:G,MoneyField:W,StageField:Y,ClientField:{name:"ClientField",components:{Field:M,FieldTitle:O,FieldValue:T,FieldValueList:w,ValueEllipsis:g,CommunicationControl:{name:"CommunicationControl",props:{communications:{type:Array,required:!0},entity:{type:Object,required:!0}},buttons:null,data(){return{CommunicationType:z,communicationsByType:{[z.Phone]:this.filterCommunication(z.Phone),[z.Email]:this.filterCommunication(z.Email),[z.Im]:this.filterCommunication(z.Im)}}},mounted(){this.createButton(z.Phone),this.createButton(z.Email),this.createButton(z.Im)},methods:{createButton(e){const t=J[e],i=this.communicationsByType[e],s={size:r.ButtonSize.EXTRA_SMALL,style:r.AirButtonStyle.OUTLINE,useAirDesign:!0,dropdown:!1,...t};1===i.length&&(s.onclick=()=>{this.communicate(i[0])}),i.length>1&&(s.menu={items:i.map(e=>({html:`<span>${this.$Bitrix.Loc.getMessage("CRM_MINI_CARD_FIELD_CLIENT_COMMUNICATION_CONTROL_MENU_ITEM").replace("#VALUE#",p.Text.encode(e.value)).replace("[VALUE_TYPE_TAG]",'<span style="opacity: .5;">').replace("#VALUE_TYPE#",p.Text.encode(e.valueTypeCaption)).replace("[/VALUE_TYPE_TAG]","</span>")}</span>`,onclick:()=>{this.communicate(e)}}))});const l=new r.Button(s);0===i.length&&(l.setDisabled(!0),l.setState(r.Button.State.DISABLED));const a=l.getMenuWindow();a&&k.getInstance().getEventService().registerChildPopup(this.$Bitrix.eventEmitter,a.getPopupWindow()),l.renderTo(this.$refs[e]),null!=this.buttons||(this.buttons={}),this.buttons[e]=l},communicate(e){const t=k.getInstance().getCommunicationService();if(e.typeId!==z.Phone)return e.typeId===z.Email?(this.buttons[z.Email].setState(r.Button.State.WAITING),void t.communicateByEmail({email:e.value,ownerTypeId:this.entity.ownerTypeId,ownerId:this.entity.ownerId,entityTypeId:this.entity.entityTypeId,entityId:this.entity.entityId,activityEditorContainer:this.$refs.activityEditorContainer}).finally(()=>{this.buttons[z.Email].setState(null)})):void(e.typeId===z.Im&&t.communicateByIM({dialogId:e.value}));t.communicateByPhone({phone:e.value,entityTypeId:this.entity.entityTypeId,entityId:this.entity.entityId,ownerTypeId:this.entity.ownerTypeId,ownerId:this.entity.ownerId})},filterCommunication(e){return this.communications.filter(t=>t.typeId===e)}},template:'\n\t\t<div class="crm-mini-card__communication-control">\n\t\t\t<div class="crm-mini-card__communication-phone" :ref="CommunicationType.Phone"></div>\n\t\t\t<div class="crm-mini-card__communication-mail" :ref="CommunicationType.Email"></div>\n\t\t\t<div class="crm-mini-card__communication-im" :ref="CommunicationType.Im"></div>\n\t\t\t<div hidden ref="activityEditorContainer"></div>\n\t\t</div>\n\t'}},props:{title:{type:String,required:!0},clients:{type:Array,required:!0}},computed:{clientsWithOpenUrlFirst(){return this.clients.sort(e=>null===e.openUrl?1:0)}},template:'\n\t\t<Field class="--client">\n\t\t\t<FieldTitle>{{ title }}</FieldTitle>\n\t\t\t<FieldValueList>\n\t\t\t\t<FieldValue v-for="client in clientsWithOpenUrlFirst">\n\t\t\t\t\t<ValueEllipsis\n\t\t\t\t\t\tv-if="client.openUrl === null"\n\t\t\t\t\t\t:title="client.fullName"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ client.fullName }}\n\t\t\t\t\t</ValueEllipsis>\n\t\t\t\t\t<a v-else class="--value-link" :href="client.openUrl">\n\t\t\t\t\t\t<ValueEllipsis :title="client.fullName">{{ client.fullName }}</ValueEllipsis>\n\t\t\t\t\t</a>\n\n\t\t\t\t\t<CommunicationControl\n\t\t\t\t\t\tv-if="client.entity !== null"\n\t\t\t\t\t\t:communications="client.communications"\n\t\t\t\t\t\t:entity="client.entity"\n\t\t\t\t\t/>\n\t\t\t\t</FieldValue>\n\t\t\t</FieldValueList>\n\t\t</Field>\n\t'},ProductField:{name:"ProductField",components:{Field:M,FieldTitle:O,FieldValue:T,FieldValueList:w,ValueEllipsis:g,ShowMore:D},props:{title:{type:String,required:!0},products:{type:Array,required:!0},productsLeftCount:Number,productsLeftUrl:String},computed:{isDisplayShowMore(){return p.Type.isNumber(this.productsLeftCount)&&this.productsLeftCount>0&&p.Type.isStringFilled(this.productsLeftUrl)}},template:'\n\t\t<Field class="--product">\n\t\t\t<FieldTitle>{{ title }}</FieldTitle>\n\t\t\t<FieldValueList>\n\t\t\t\t<FieldValue v-for="product in products">\n\t\t\t\t\t<a class="--value-link" :href="product.url">\n\t\t\t\t\t\t<ValueEllipsis :title="product.title">{{ product.title }}</ValueEllipsis>\n\t\t\t\t\t</a>\n\t\t\t\t</FieldValue>\n\t\t\t\t<a\n\t\t\t\t\tv-if="isDisplayShowMore"\n\t\t\t\t\t:href="productsLeftUrl"\n\t\t\t\t>\n\t\t\t\t\t<ShowMore :count="productsLeftCount" />\n\t\t\t\t</a>\n\t\t\t</FieldValueList>\n\t\t</Field>\n\t'},CommonFooterNote:{name:"CommonFooterNote",components:{FooterNote:{name:"FooterNote",template:'\n\t\t<div class="crm-mini-card-content__footer-note">\n\t\t\t<slot />\n\t\t</div>\n\t'}},props:{content:String},template:'\n\t\t<FooterNote class="--common">\n\t\t\t{{ content }}\n\t\t</FooterNote>\n\t'}},props:{miniCard:{type:B,required:!0},popup:{type:Object,default:()=>null}},mounted(){this.adjustPopup()},methods:{adjustPopup(){this.popup&&(this.popup.adjustPosition(),this.popup.bindOptions={forceBindPosition:!0})}},template:'\n\t\t<div class="crm-mini-card-content" :id="miniCard.id()">\n\t\t\t<div class="crm-mini-card-content__header">\n\t\t\t\t<div class="crm-mini-card-content__header-info">\n\t\t\t\t\t<div class="crm-mini-card-content__header-icon">\n\t\t\t\t\t\t<component :is="miniCard.avatar().componentName()" v-bind="miniCard.avatar().componentProps()" />\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class="crm-mini-card-content__header-title">\n\t\t\t\t\t\t{{ miniCard.title() }}\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class="crm-mini-card-content__header-control-container">\n\t\t\t\t\t<div class="crm-mini-card-content__header-control-list">\n\t\t\t\t\t\t<div class="crm-mini-card-content__header-control-item" v-for="control in miniCard.controls()">\n\t\t\t\t\t\t\t<component :is="control.componentName()" v-bind="control.componentProps()" />\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class="crm-mini-card-content__body">\n\t\t\t\t<div class="crm-mini-card-content__body-field-container">\n\t\t\t\t\t<div class="crm-mini-card-content__body-field-list">\n\t\t\t\t\t\t<div class="crm-mini-card-content__body-field-item" v-for="field in miniCard.fields()">\n\t\t\t\t\t\t\t<component :is="field.componentName()" v-bind="field.componentProps()" />\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class="crm-mini-card-content__footer">\n\t\t\t\t<div class="crm-mini-card-content__footer-notes-list">\n\t\t\t\t\t<div v-for="footerNote in miniCard.footerNotes()" class="crm-mini-card-content__footer-note-item">\n\t\t\t\t\t\t<component :is="footerNote.componentName()" v-bind="footerNote.componentProps()" />\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t'},Loader:C},props:{state:{type:Object,default:()=>({appId:p.Text.getRandom(16),miniCardItem:null,isLoaded:!1,popup:null})}},computed:{miniCardItem(){return this.state.miniCardItem},isLoading(){return!this.state.isLoaded}},mounted(){this.subscribeInternalEvents()},methods:{subscribeInternalEvents(){this.$Bitrix.eventEmitter.subscribe(te.INTERNAL_ON_MOUSE_ENTER_CHILD_POPUP,this.onMouseEnterChildPopup.bind(this)),this.$Bitrix.eventEmitter.subscribe(te.INTERNAL_ON_MOUSE_LEAVE_CHILD_POPUP,this.onMouseLeaveChildPopup.bind(this)),p.Event.EventEmitter.subscribe(te.GLOBAL_ON_CLOSE_MAIN_POPUP,this.onCloseMainPopup.bind(this))},onCloseMainPopup(e){e.getData().appId===this.state.appId&&this.$Bitrix.eventEmitter.emit(te.INTERNAL_ON_CLOSE_MAIN_POPUP)},onMouseEnterChildPopup(){const e=new n.BaseEvent({data:{appId:this.state.appId}});p.Event.EventEmitter.emit(te.GLOBAL_ON_MOUSE_ENTER_CHILD_POPUP,e)},onMouseLeaveChildPopup(){const e=new n.BaseEvent({data:{appId:this.state.appId}});p.Event.EventEmitter.emit(te.GLOBAL_ON_MOUSE_LEAVE_CHILD_POPUP,e)}},template:'\n\t\t<div class="crm-mini-card">\n\t\t\t<Loader v-if="isLoading" />\n\t\t\t<MiniCardContent v-else-if="miniCardItem !== null" :mini-card="miniCardItem" :popup="state.popup" />\n\t\t</div>\n\t'};let Z,ee=e=>e;const te={GLOBAL_ON_CLOSE_MAIN_POPUP:"BX.Crm.MiniCard:OnMainPopupClose",GLOBAL_ON_MOUSE_ENTER_CHILD_POPUP:"BX.Crm.MiniCard:onMouseEnterChildPopup",GLOBAL_ON_MOUSE_LEAVE_CHILD_POPUP:"BX.Crm.MiniCard:onMouseLeaveChildPopup",INTERNAL_ON_CLOSE_MAIN_POPUP:"crm:mini-card:on-close-main-popup",INTERNAL_ON_MOUSE_ENTER_CHILD_POPUP:"crm:mini-card:on-mouse-enter-child-popup",INTERNAL_ON_MOUSE_LEAVE_CHILD_POPUP:"crm:mini-card:on-mouse-leave-child-popup"};var ie=babelHelpers.classPrivateFieldLooseKey("appId"),se=babelHelpers.classPrivateFieldLooseKey("miniCardResolver"),le=babelHelpers.classPrivateFieldLooseKey("bindElement"),ae=babelHelpers.classPrivateFieldLooseKey("application"),ne=babelHelpers.classPrivateFieldLooseKey("popup"),oe=babelHelpers.classPrivateFieldLooseKey("container"),re=babelHelpers.classPrivateFieldLooseKey("hidePopupTimeout"),de=babelHelpers.classPrivateFieldLooseKey("showPopupTimeout"),ce=babelHelpers.classPrivateFieldLooseKey("state"),pe=babelHelpers.classPrivateFieldLooseKey("setBindElement"),me=babelHelpers.classPrivateFieldLooseKey("setMiniCardResolver"),ue=babelHelpers.classPrivateFieldLooseKey("bindEvents"),be=babelHelpers.classPrivateFieldLooseKey("startHidePopup"),ve=babelHelpers.classPrivateFieldLooseKey("startShowPopup"),he=babelHelpers.classPrivateFieldLooseKey("hidePopup"),Pe=babelHelpers.classPrivateFieldLooseKey("initializeSipManager");class ye{constructor(e){Object.defineProperty(this,Pe,{value:_e}),Object.defineProperty(this,he,{value:Ie}),Object.defineProperty(this,ve,{value:Ce}),Object.defineProperty(this,be,{value:Be}),Object.defineProperty(this,ue,{value:Ee}),Object.defineProperty(this,me,{value:Fe}),Object.defineProperty(this,pe,{value:Le}),Object.defineProperty(this,ie,{writable:!0,value:void 0}),Object.defineProperty(this,se,{writable:!0,value:void 0}),Object.defineProperty(this,le,{writable:!0,value:void 0}),Object.defineProperty(this,ae,{writable:!0,value:null}),Object.defineProperty(this,ne,{writable:!0,value:null}),Object.defineProperty(this,oe,{writable:!0,value:null}),Object.defineProperty(this,re,{writable:!0,value:void 0}),Object.defineProperty(this,de,{writable:!0,value:void 0}),Object.defineProperty(this,ce,{writable:!0,value:void 0}),babelHelpers.classPrivateFieldLooseBase(this,ie)[ie]=p.Text.getRandom(16),babelHelpers.classPrivateFieldLooseBase(this,pe)[pe](e.bindElement),babelHelpers.classPrivateFieldLooseBase(this,me)[me](e.miniCardResolver),babelHelpers.classPrivateFieldLooseBase(this,ce)[ce]=c.reactive({appId:babelHelpers.classPrivateFieldLooseBase(this,ie)[ie],miniCardItem:null,isLoaded:!1,popup:null}),babelHelpers.classPrivateFieldLooseBase(this,Pe)[Pe](),babelHelpers.classPrivateFieldLooseBase(this,ue)[ue]()}popup(){return null!==babelHelpers.classPrivateFieldLooseBase(this,ne)[ne]||(babelHelpers.classPrivateFieldLooseBase(this,ne)[ne]=new o.Popup({bindElement:babelHelpers.classPrivateFieldLooseBase(this,le)[le],content:this.container(),padding:0,closeIcon:!0,angle:{offset:150},offsetLeft:babelHelpers.classPrivateFieldLooseBase(this,le)[le].offsetWidth/2-130,animation:"fading",autoHide:!0,events:{onBeforeShow:()=>{babelHelpers.classPrivateFieldLooseBase(this,se)[se].isLoaded()?(babelHelpers.classPrivateFieldLooseBase(this,ce)[ce].miniCardItem=babelHelpers.classPrivateFieldLooseBase(this,se)[se].getMiniCard(),babelHelpers.classPrivateFieldLooseBase(this,ce)[ce].isLoaded=!0,babelHelpers.classPrivateFieldLooseBase(this,ne)[ne].bindOptions={forceBindPosition:!0}):babelHelpers.classPrivateFieldLooseBase(this,ne)[ne].bindOptions={forceBindPosition:!0,forceTop:!0},babelHelpers.classPrivateFieldLooseBase(this,ce)[ce].isLoaded||babelHelpers.classPrivateFieldLooseBase(this,se)[se].loadMiniCard().then(e=>{babelHelpers.classPrivateFieldLooseBase(this,ce)[ce].miniCardItem=e}).catch(e=>{console.error("BX.Crm.MiniCard: Error while resolve mini card element",e.errors),t.UI.Notification.Center.notify({content:p.Text.encode(e.errors[0].message),autoHideDelay:3e3}),this.popup().destroy()}).finally(()=>{babelHelpers.classPrivateFieldLooseBase(this,ce)[ce].isLoaded=!0})},onClose:()=>{clearTimeout(babelHelpers.classPrivateFieldLooseBase(this,de)[de]);const e=new n.BaseEvent({data:{appId:babelHelpers.classPrivateFieldLooseBase(this,ie)[ie]}});p.Event.EventEmitter.emit(te.GLOBAL_ON_CLOSE_MAIN_POPUP,e)}}}),babelHelpers.classPrivateFieldLooseBase(this,ce)[ce].popup=babelHelpers.classPrivateFieldLooseBase(this,ne)[ne],p.Event.bind(babelHelpers.classPrivateFieldLooseBase(this,ne)[ne].getPopupContainer(),"mouseenter",babelHelpers.classPrivateFieldLooseBase(this,ve)[ve].bind(this)),p.Event.bind(babelHelpers.classPrivateFieldLooseBase(this,ne)[ne].getPopupContainer(),"mouseleave",babelHelpers.classPrivateFieldLooseBase(this,be)[be].bind(this))),babelHelpers.classPrivateFieldLooseBase(this,ne)[ne]}container(){return null===babelHelpers.classPrivateFieldLooseBase(this,oe)[oe]&&(babelHelpers.classPrivateFieldLooseBase(this,oe)[oe]=p.Tag.render(Z||(Z=ee`
+/* eslint-disable */
+this.BX = this.BX || {};
+(function (exports, main_core, main_core_events, main_popup, ui_notification, ui_vue3, ui_iconSet_api_vue, ui_iconSet_crm, ui_iconSet_outline, ui_buttons, ui_dialogs_messagebox, ui_iconSet_api_core, main_core_cache) {
+	'use strict';
+
+	class Component {
+		constructor(options) {
+			if (!main_core.Type.isStringFilled(options.componentName)) {
+				throw new RangeError('BX.Crm.MiniCard.Component: options.componentName must be a string filled');
+			}
+			if (!main_core.Type.isPlainObject(options.componentProps)) {
+				throw new RangeError('BX.Crm.MiniCard.Component: options.componentProps must be a plain object');
+			}
+			this.componentName = options.componentName;
+			this.componentProps = options.componentProps;
+		}
+	}
+
+	class MiniCardItem {
+		constructor(options) {
+			this.id = main_core.Type.isStringFilled(options.id) ? options.id : main_core.Text.getRandom(16);
+			if (!main_core.Type.isStringFilled(options.title)) {
+				throw new RangeError('BX.Crm.MiniCard.MiniCardItem: options.title must be a string filled');
+			}
+			this.title = options.title;
+			this.avatar = new Component(options.avatar);
+			this.controls = [];
+			options.controls.forEach(controlOptions => {
+				this.controls.push(new Component(controlOptions));
+			});
+			this.fields = [];
+			options.fields.forEach(fieldOptions => {
+				this.fields.push(new Component(fieldOptions));
+			});
+			this.footerNotes = [];
+			options.footerNotes.forEach(footerNoteOptions => {
+				this.footerNotes.push(new Component(footerNoteOptions));
+			});
+		}
+	}
+
+	const Loader = {
+		name: 'Loader',
+		template: `
+		<div class="crm-mini-card__loader"></div>
+	`
+	};
+
+	const Avatar = {
+		name: 'Avatar',
+		template: `
+		<div class="crm-mini-card__avatar">
+			<slot />
+		</div>
+	`
+	};
+
+	const ImageAvatar = {
+		name: 'ImageAvatar',
+		components: {
+			Avatar
+		},
+		props: {
+			url: {
+				type: String,
+				required: true
+			}
+		},
+		computed: {
+			encodeUri() {
+				return encodeURI(this.url);
+			}
+		},
+		template: `
+		<Avatar class="--image">
+			<img :src="encodeUri" alt=""/>
+		</Avatar>
+	`
+	};
+
+	const IconAvatar = {
+		name: 'IconAvatar',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon,
+			Avatar
+		},
+		props: {
+			iconOptions: {
+				type: Object,
+				required: true
+			},
+			bgColor: {
+				type: String,
+				default: null
+			}
+		},
+		computed: {
+			containerStyles() {
+				const styleBgColor = this.styleBgColor();
+				if (styleBgColor === null) {
+					return {};
+				}
+				return {
+					backgroundColor: styleBgColor
+				};
+			}
+		},
+		methods: {
+			styleBgColor() {
+				if (!this.bgColor) {
+					return null;
+				}
+				if (this.bgColor.startsWith('--')) {
+					return `var(${this.bgColor})`;
+				}
+				return this.bgColor;
+			}
+		},
+		template: `
+		<Avatar class="--icon" :style="containerStyles">
+			<BIcon v-bind="iconOptions" />
+		</Avatar>
+	`
+	};
+
+	const Control = {
+		name: 'Control',
+		template: `
+		<div class="crm-mini-card__control">
+			<slot />
+		</div>
+	`
+	};
+
+	const ButtonControl = {
+		name: 'ButtonControl',
+		components: {
+			Control
+		},
+		props: {
+			buttonOptions: {
+				type: Object,
+				required: true
+			}
+		},
+		mounted() {
+			new ui_buttons.Button(this.buttonOptions).renderTo(this.$refs.button.$el);
+		},
+		template: `
+		<Control class="--button" ref="button" />
+	`
+	};
+
+	const Field = {
+		template: `
+		<div class="crm-mini-card__field">
+			<slot />
+		</div>
+	`
+	};
+
+	const FieldTitle = {
+		template: `
+		<div class="crm-mini-card__field-title">
+			<slot />
+		</div>
+	`
+	};
+
+	const FieldValue = {
+		template: `
+		<div class="crm-mini-card__field-value">
+			<slot />
+		</div>
+	`
+	};
+
+	const FieldValueList = {
+		template: `
+		<div class="crm-mini-card__field-value-list">
+			<slot />
+		</div>
+	`
+	};
+
+	const ValueEllipsis = {
+		name: 'ValueEllipsis',
+		template: `
+		<span class="crm-mini-card__value-ellipsis">
+			<slot/>
+		</span>
+	`
+	};
+
+	const CommonField = {
+		name: 'CommonField',
+		components: {
+			Field,
+			FieldTitle,
+			FieldValueList,
+			FieldValue,
+			ValueEllipsis
+		},
+		props: {
+			title: {
+				type: String,
+				required: true
+			},
+			values: {
+				type: Array,
+				required: true
+			}
+		},
+		template: `
+		<Field class="--common">
+			<FieldTitle>{{ title }}</FieldTitle>
+			<FieldValueList>
+				<FieldValue v-for="value in values">
+					<ValueEllipsis :title="value">{{ value }}</ValueEllipsis>
+				</FieldValue>
+			</FieldValueList>
+		</Field>
+	`
+	};
+
+	class ActivityEditorService {
+		#cache;
+		constructor() {
+			this.#cache = {};
+		}
+		async loadActivityEditor(ownerTypeId, ownerId, activityEditorContainer) {
+			if (this.#cache[ownerTypeId]?.[ownerId]) {
+				return this.#cache[ownerTypeId][ownerId];
+			}
+			const editorId = main_core.Text.getRandom(16);
+			try {
+				const response = await main_core.ajax.runAction('crm.item.minicard.getActivityEditor', {
+					data: {
+						ownerTypeId,
+						ownerId,
+						editorId
+					}
+				});
+				await main_core.Runtime.html(activityEditorContainer, response?.data?.html ?? '');
+				this.#cache[ownerTypeId] ??= {};
+				this.#cache[ownerTypeId][ownerId] = BX.CrmActivityEditor.items[editorId];
+			} catch (error) {
+				console.error('BX.Crm.MiniCard.ActivityEditorService: Cannot load activity editor:', error);
+				this.#cache[ownerTypeId] ??= {};
+				this.#cache[ownerTypeId][ownerId] = BX.CrmActivityEditor.getDefault();
+			}
+			return this.#cache[ownerTypeId][ownerId];
+		}
+	}
+
+	class CommunicationService {
+		#serviceLocator;
+		constructor(serviceLocator) {
+			this.#serviceLocator = serviceLocator;
+		}
+		communicateByPhone(options) {
+			if (!window.top.BXIM) {
+				ui_dialogs_messagebox.MessageBox.alert(main_core.Loc.getMessage('CRM_MINI_CARD_COMMUNICATION_PHONE_NOT_SUPPORTS'));
+				return;
+			}
+			const phoneToParams = {
+				ENTITY_TYPE_NAME: BX.CrmEntityType.resolveName(options.entityTypeId),
+				ENTITY_ID: options.entityId
+			};
+			if (options.ownerTypeId !== options.entityTypeId && options.ownerId !== options.entityId) {
+				phoneToParams.BINDINGS = {
+					OWNER_TYPE_NAME: BX.CrmEntityType.resolveName(options.ownerTypeId),
+					OWNER_TYPE_ID: options.ownerTypeId
+				};
+			}
+			window.top.BXIM.phoneTo(options.phone, phoneToParams);
+		}
+		communicateByEmail(options) {
+			const error = () => {
+				ui_dialogs_messagebox.MessageBox.alert(main_core.Loc.getMessage('CRM_MINI_CARD_COMMUNICATION_EMAIL_NOT_SUPPORTS'));
+			};
+			return new Promise((resolve, reject) => {
+				this.#serviceLocator.getActivityEditorService().loadActivityEditor(options.ownerTypeId, options.ownerId, options.activityEditorContainer).then(editor => {
+					if (!editor) {
+						error();
+						reject();
+					}
+					const isEmailAdded = editor.addEmail({
+						ownerID: options.ownerId,
+						ownerType: BX.CrmEntityType.resolveName(options.ownerTypeId),
+						communicationsLoaded: true,
+						communications: [{
+							type: 'EMAIL',
+							entityType: BX.CrmEntityType.resolveName(options.entityTypeId),
+							entityId: options.entityId,
+							value: options.email
+						}]
+					});
+					if (!isEmailAdded) {
+						window.location.href = `mailto:${options.email}`;
+					}
+					resolve();
+				}).catch(() => {
+					reject();
+				});
+			});
+		}
+		communicateByIM(options) {
+			if (!window.top.BXIM) {
+				ui_dialogs_messagebox.MessageBox.alert(main_core.Loc.getMessage('CRM_MINI_CARD_COMMUNICATION_IM_NOT_SUPPORTS'));
+				return;
+			}
+			window.top.BXIM.openMessengerSlider(options.dialogId, {
+				RECENT: 'N',
+				MENU: 'N'
+			});
+		}
+	}
+
+	const EVENTS = {
+		GLOBAL_ON_CLOSE_MAIN_POPUP: 'BX.Crm.MiniCard:OnMainPopupClose',
+		GLOBAL_ON_MOUSE_ENTER_CHILD_POPUP: 'BX.Crm.MiniCard:onMouseEnterChildPopup',
+		GLOBAL_ON_MOUSE_LEAVE_CHILD_POPUP: 'BX.Crm.MiniCard:onMouseLeaveChildPopup',
+		INTERNAL_ON_CLOSE_MAIN_POPUP: 'crm:mini-card:on-close-main-popup',
+		INTERNAL_ON_MOUSE_ENTER_CHILD_POPUP: 'crm:mini-card:on-mouse-enter-child-popup',
+		INTERNAL_ON_MOUSE_LEAVE_CHILD_POPUP: 'crm:mini-card:on-mouse-leave-child-popup'
+	};
+
+	class EventService {
+		registerChildPopup(eventEmitter, popup) {
+			const popupContainer = popup.getPopupContainer();
+			main_core.Event.bind(popupContainer, 'mouseenter', () => {
+				eventEmitter.emit(EVENTS.INTERNAL_ON_MOUSE_ENTER_CHILD_POPUP);
+			});
+			main_core.Event.bind(popupContainer, 'mouseleave', () => {
+				eventEmitter.emit(EVENTS.INTERNAL_ON_MOUSE_LEAVE_CHILD_POPUP);
+			});
+			eventEmitter.subscribe(EVENTS.INTERNAL_ON_CLOSE_MAIN_POPUP, () => {
+				popup.close();
+			});
+		}
+	}
+
+	class ServiceLocator {
+		static #instance = null;
+		#activityEditorService = null;
+		#communicationService = null;
+		#eventService = null;
+		static getInstance() {
+			this.#instance = new ServiceLocator();
+			return this.#instance;
+		}
+		getActivityEditorService() {
+			this.#activityEditorService ??= new ActivityEditorService();
+			return this.#activityEditorService;
+		}
+		getCommunicationService() {
+			this.#communicationService ??= new CommunicationService(this);
+			return this.#communicationService;
+		}
+		getEventService() {
+			this.#eventService ??= new EventService();
+			return this.#eventService;
+		}
+	}
+
+	const ShowMore = {
+		name: 'ShowMore',
+		props: {
+			count: {
+				type: Number,
+				required: true
+			}
+		},
+		computed: {
+			showMoreTitle() {
+				return this.$Bitrix.Loc.getMessage('CRM_MINI_CARD_SHOW_MORE', {
+					'#COUNT#': this.count
+				});
+			}
+		},
+		template: `
+		<span class="crm-mini-card__show-more">
+			{{ showMoreTitle }}
+		</span>
+	`
+	};
+
+	const ShowMoreMenu = {
+		name: 'ShowMoreMenu',
+		components: {
+			ShowMore
+		},
+		props: {
+			items: {
+				/** @type MenuOptions[] */
+				type: Array,
+				required: true
+			}
+		},
+		methods: {
+			getMenu() {
+				if (!this.menu) {
+					this.menu = new main_popup.Menu({
+						items: this.items,
+						bindElement: this.$refs.showMoreContainer.$el,
+						angle: {
+							offset: this.$refs.showMoreContainer.$el.offsetWidth / 2
+						}
+					});
+					ServiceLocator.getInstance().getEventService().registerChildPopup(this.$Bitrix.eventEmitter, this.menu.getPopupWindow());
+				}
+				return this.menu;
+			},
+			toggleMenu() {
+				this.getMenu().toggle();
+			}
+		},
+		template: `
+		<ShowMore ref="showMoreContainer" :count="items.length" @click="toggleMenu"/>
+	`
+	};
+
+	const SHOWABLE_PHONES_LIMIT = 2;
+	const PhoneField = {
+		name: 'PhoneField',
+		components: {
+			Field,
+			FieldTitle,
+			FieldValue,
+			FieldValueList,
+			ValueEllipsis,
+			ShowMoreMenu
+		},
+		props: {
+			title: {
+				type: String,
+				required: true
+			},
+			/** @type Phone[] */
+			phones: {
+				type: Array,
+				required: true
+			}
+		},
+		computed: {
+			showablePhones() {
+				return this.phones.slice(0, SHOWABLE_PHONES_LIMIT);
+			},
+			hiddenPhones() {
+				return this.phones.slice(SHOWABLE_PHONES_LIMIT);
+			},
+			hiddenPhoneItems() {
+				return this.hiddenPhones.map(phone => {
+					return {
+						text: phone.value,
+						href: phone.href,
+						onclick: phone.onclick
+					};
+				});
+			}
+		},
+		template: `
+		<Field class="--phone">
+			<FieldTitle>{{ title }}</FieldTitle>
+			<FieldValueList>
+				<FieldValue v-for="phone in showablePhones">
+					<a class="--value-link" :href="phone.href" :onclick="phone.onclick">
+						<ValueEllipsis :title="phone.value">{{ phone.value }}</ValueEllipsis>
+					</a>
+				</FieldValue>
+				<ShowMoreMenu
+					v-if="hiddenPhones.length > 0"
+					:items="hiddenPhoneItems" 
+				/>
+			</FieldValueList>
+		</Field>
+	`
+	};
+
+	const SHOWABLE_EMAILS_LIMIT = 2;
+	const EmailField = {
+		name: 'EmailField',
+		components: {
+			Field,
+			FieldTitle,
+			FieldValue,
+			FieldValueList,
+			ValueEllipsis,
+			ShowMoreMenu
+		},
+		props: {
+			title: {
+				type: String,
+				required: true
+			},
+			emails: {
+				/** @type Email[] */
+				type: Array,
+				required: true
+			}
+		},
+		computed: {
+			showableEmails() {
+				return this.emails.slice(0, SHOWABLE_EMAILS_LIMIT);
+			},
+			hiddenEmails() {
+				return this.emails.slice(SHOWABLE_EMAILS_LIMIT);
+			},
+			hiddenEmailItems() {
+				return this.hiddenEmails.map(email => {
+					return {
+						text: email.value,
+						onclick: () => {
+							this.addEmail(email);
+						}
+					};
+				});
+			}
+		},
+		methods: {
+			addEmail(email) {
+				void ServiceLocator.getInstance().getCommunicationService().communicateByEmail({
+					email: email.value,
+					ownerTypeId: email.ownerTypeId,
+					ownerId: email.ownerId,
+					entityTypeId: email.ownerTypeId,
+					entityId: email.ownerId,
+					activityEditorContainer: this.$refs.activityEditorContainer
+				});
+			}
+		},
+		template: `
+		<Field class="--email">
+			<FieldTitle>{{ title }}</FieldTitle>
+			<FieldValueList>
+				<FieldValue v-for="email in showableEmails">
+					<a class="--value-link" @click="addEmail(email)">
+						<ValueEllipsis :title="email.value">{{ email.value }}</ValueEllipsis>
+					</a>
+				</FieldValue>
+				<ShowMoreMenu
+					v-if="hiddenEmails.length > 0"
+					:items="hiddenEmailItems"
+				/>
+			</FieldValueList>
+			<div ref="activityEditorContainer" hidden></div>
+		</Field>
+	`
+	};
+
+	const SHOWABLE_LINKS_LIMIT = 2;
+	const LinkField = {
+		name: 'LinkField',
+		components: {
+			Field,
+			FieldTitle,
+			FieldValueList,
+			FieldValue,
+			ValueEllipsis,
+			ShowMoreMenu
+		},
+		props: {
+			title: {
+				type: String,
+				required: true
+			},
+			links: {
+				type: Array,
+				required: true
+			}
+		},
+		computed: {
+			showableLinks() {
+				return this.links.slice(0, SHOWABLE_LINKS_LIMIT);
+			},
+			hiddenLinks() {
+				return this.links.slice(SHOWABLE_LINKS_LIMIT);
+			},
+			hiddenLinkItems() {
+				return this.hiddenLinks.map(link => {
+					return {
+						text: link.title,
+						href: link.href,
+						target: link.target
+					};
+				});
+			}
+		},
+		template: `
+		<Field class="--link">
+			<FieldTitle>{{ title }}</FieldTitle>
+			<FieldValueList>
+				<FieldValue v-for="link in showableLinks">
+					<a
+						class="--value-link"
+						:href="link.href"
+						:target="link.target"
+					>
+						<ValueEllipsis :title="link.title">{{ link.title }}</ValueEllipsis>
+					</a>
+				</FieldValue>
+				<ShowMoreMenu
+					v-if="hiddenLinks.length > 0"
+					:items="hiddenLinkItems"
+				/>
+			</FieldValueList>
+		</Field>
+	`
+	};
+
+	const MoneyField = {
+		name: 'MoneyField',
+		components: {
+			Field,
+			FieldTitle,
+			FieldValueList,
+			FieldValue,
+			ValueEllipsis
+		},
+		props: {
+			title: {
+				type: String,
+				required: true
+			},
+			moneyList: {
+				type: Array,
+				required: true
+			}
+		},
+		template: `
+		<Field class="--money">
+			<FieldTitle>{{ title }}</FieldTitle>
+			<FieldValueList>
+				<FieldValue v-for="money in moneyList">
+					<ValueEllipsis v-html="money"/>
+				</FieldValue>
+			</FieldValueList>
+		</Field>
+	`
+	};
+
+	const StageField = {
+		name: 'StageField',
+		components: {
+			Field,
+			FieldTitle,
+			FieldValue,
+			ValueEllipsis
+		},
+		props: {
+			title: {
+				type: String,
+				required: true
+			},
+			stage: {
+				/** @type StageItem */
+				type: Object,
+				required: true
+			}
+		},
+		template: `
+		<Field class="--stage">
+			<FieldTitle>{{ title }}</FieldTitle>
+			<FieldValue>
+				<div class="crm-mini-card__stage-color" :style="{ backgroundColor: stage.color }"></div>
+				<ValueEllipsis :title="stage.name">{{ stage.name }}</ValueEllipsis>
+			</FieldValue>
+		</Field>
+	`
+	};
+
+	const CommunicationType = Object.freeze({
+		Phone: 'PHONE',
+		Email: 'EMAIL',
+		Im: 'IM'
+	});
+	const BUTTON_CONFIGURATION = Object.freeze({
+		[CommunicationType.Phone]: {
+			icon: ui_iconSet_api_core.Outline.PHONE_UP,
+			removeRightCorners: true
+		},
+		[CommunicationType.Email]: {
+			icon: ui_iconSet_api_core.Outline.MAIL,
+			removeLeftCorners: true,
+			removeRightCorners: true
+		},
+		[CommunicationType.Im]: {
+			icon: ui_iconSet_api_core.Outline.OPEN_CHANNELS,
+			removeLeftCorners: true
+		}
+	});
+	const CommunicationControl = {
+		name: 'CommunicationControl',
+		props: {
+			communications: {
+				/** @type Communication[] */
+				type: Array,
+				required: true
+			},
+			entity: {
+				/** @type Entity */
+				type: Object,
+				required: true
+			}
+		},
+		buttons: null,
+		data() {
+			return {
+				CommunicationType,
+				communicationsByType: {
+					[CommunicationType.Phone]: this.filterCommunication(CommunicationType.Phone),
+					[CommunicationType.Email]: this.filterCommunication(CommunicationType.Email),
+					[CommunicationType.Im]: this.filterCommunication(CommunicationType.Im)
+				}
+			};
+		},
+		mounted() {
+			this.createButton(CommunicationType.Phone);
+			this.createButton(CommunicationType.Email);
+			this.createButton(CommunicationType.Im);
+		},
+		methods: {
+			createButton(typeId) {
+				const communicationButtonOptions = BUTTON_CONFIGURATION[typeId];
+				const communicationsByType = this.communicationsByType[typeId];
+				const buttonOptions = {
+					size: ui_buttons.ButtonSize.EXTRA_SMALL,
+					style: ui_buttons.AirButtonStyle.OUTLINE,
+					useAirDesign: true,
+					dropdown: false,
+					...communicationButtonOptions
+				};
+				if (communicationsByType.length === 1) {
+					buttonOptions.onclick = () => {
+						this.communicate(communicationsByType[0]);
+					};
+				}
+				if (communicationsByType.length > 1) {
+					buttonOptions.menu = {
+						items: communicationsByType.map(communication => {
+							const itemHtmlContent = this.$Bitrix.Loc.getMessage('CRM_MINI_CARD_FIELD_CLIENT_COMMUNICATION_CONTROL_MENU_ITEM').replace('#VALUE#', main_core.Text.encode(communication.value)).replace('[VALUE_TYPE_TAG]', '<span style="opacity: .5;">').replace('#VALUE_TYPE#', main_core.Text.encode(communication.valueTypeCaption)).replace('[/VALUE_TYPE_TAG]', '</span>');
+							return {
+								html: `<span>${itemHtmlContent}</span>`,
+								onclick: () => {
+									this.communicate(communication);
+								}
+							};
+						})
+					};
+				}
+				const button = new ui_buttons.Button(buttonOptions);
+				if (communicationsByType.length === 0) {
+					button.setDisabled(true);
+					button.setState(ui_buttons.Button.State.DISABLED);
+				}
+				const menuWindow = button.getMenuWindow();
+				if (menuWindow) {
+					ServiceLocator.getInstance().getEventService().registerChildPopup(this.$Bitrix.eventEmitter, menuWindow.getPopupWindow());
+				}
+				button.renderTo(this.$refs[typeId]);
+				this.buttons ??= {};
+				this.buttons[typeId] = button;
+			},
+			communicate(communication) {
+				const communicationService = ServiceLocator.getInstance().getCommunicationService();
+				if (communication.typeId === CommunicationType.Phone) {
+					communicationService.communicateByPhone({
+						phone: communication.value,
+						entityTypeId: this.entity.entityTypeId,
+						entityId: this.entity.entityId,
+						ownerTypeId: this.entity.ownerTypeId,
+						ownerId: this.entity.ownerId
+					});
+					return;
+				}
+				if (communication.typeId === CommunicationType.Email) {
+					this.buttons[CommunicationType.Email].setState(ui_buttons.Button.State.WAITING);
+					void communicationService.communicateByEmail({
+						email: communication.value,
+						ownerTypeId: this.entity.ownerTypeId,
+						ownerId: this.entity.ownerId,
+						entityTypeId: this.entity.entityTypeId,
+						entityId: this.entity.entityId,
+						activityEditorContainer: this.$refs.activityEditorContainer
+					}).finally(() => {
+						this.buttons[CommunicationType.Email].setState(null);
+					});
+					return;
+				}
+				if (communication.typeId === CommunicationType.Im) {
+					communicationService.communicateByIM({
+						dialogId: communication.value
+					});
+				}
+			},
+			filterCommunication(typeId) {
+				return this.communications.filter(communication => communication.typeId === typeId);
+			}
+		},
+		template: `
+		<div class="crm-mini-card__communication-control">
+			<div class="crm-mini-card__communication-phone" :ref="CommunicationType.Phone"></div>
+			<div class="crm-mini-card__communication-mail" :ref="CommunicationType.Email"></div>
+			<div class="crm-mini-card__communication-im" :ref="CommunicationType.Im"></div>
+			<div hidden ref="activityEditorContainer"></div>
+		</div>
+	`
+	};
+
+	const ClientField = {
+		name: 'ClientField',
+		components: {
+			Field,
+			FieldTitle,
+			FieldValue,
+			FieldValueList,
+			ValueEllipsis,
+			CommunicationControl
+		},
+		props: {
+			title: {
+				type: String,
+				required: true
+			},
+			clients: {
+				/** @type Array<Client> */
+				type: Array,
+				required: true
+			}
+		},
+		computed: {
+			clientsWithOpenUrlFirst() {
+				return [...this.clients].sort(client => {
+					if (client.openUrl === null) {
+						return 1;
+					}
+					return 0;
+				});
+			}
+		},
+		template: `
+		<Field class="--client">
+			<FieldTitle>{{ title }}</FieldTitle>
+			<FieldValueList>
+				<FieldValue v-for="client in clientsWithOpenUrlFirst">
+					<ValueEllipsis
+						v-if="client.openUrl === null"
+						:title="client.fullName"
+					>
+						{{ client.fullName }}
+					</ValueEllipsis>
+					<a v-else class="--value-link" :href="client.openUrl">
+						<ValueEllipsis :title="client.fullName">{{ client.fullName }}</ValueEllipsis>
+					</a>
+
+					<CommunicationControl
+						v-if="client.entity !== null"
+						:communications="client.communications"
+						:entity="client.entity"
+					/>
+				</FieldValue>
+			</FieldValueList>
+		</Field>
+	`
+	};
+
+	const ProductField = {
+		name: 'ProductField',
+		components: {
+			Field,
+			FieldTitle,
+			FieldValue,
+			FieldValueList,
+			ValueEllipsis,
+			ShowMore
+		},
+		props: {
+			title: {
+				type: String,
+				required: true
+			},
+			products: {
+				/** @type Product[] */
+				type: Array,
+				required: true
+			},
+			productsLeftCount: Number,
+			productsLeftUrl: String
+		},
+		computed: {
+			isDisplayShowMore() {
+				return main_core.Type.isNumber(this.productsLeftCount) && this.productsLeftCount > 0 && main_core.Type.isStringFilled(this.productsLeftUrl);
+			}
+		},
+		template: `
+		<Field class="--product">
+			<FieldTitle>{{ title }}</FieldTitle>
+			<FieldValueList>
+				<FieldValue v-for="product in products">
+					<a class="--value-link" :href="product.url">
+						<ValueEllipsis :title="product.title">{{ product.title }}</ValueEllipsis>
+					</a>
+				</FieldValue>
+				<a
+					v-if="isDisplayShowMore"
+					:href="productsLeftUrl"
+				>
+					<ShowMore :count="productsLeftCount" />
+				</a>
+			</FieldValueList>
+		</Field>
+	`
+	};
+
+	const FooterNote = {
+		name: 'FooterNote',
+		template: `
+		<div class="crm-mini-card-content__footer-note">
+			<slot />
+		</div>
+	`
+	};
+
+	const CommonFooterNote = {
+		name: 'CommonFooterNote',
+		components: {
+			FooterNote
+		},
+		props: {
+			content: String
+		},
+		template: `
+		<FooterNote class="--common">
+			{{ content }}
+		</FooterNote>
+	`
+	};
+
+	const MiniCardContent = {
+		name: 'MiniCardContent',
+		components: {
+			ImageAvatar,
+			IconAvatar,
+			ButtonControl,
+			CommonField,
+			PhoneField,
+			EmailField,
+			LinkField,
+			MoneyField,
+			StageField,
+			ClientField,
+			ProductField,
+			CommonFooterNote
+		},
+		props: {
+			miniCard: {
+				type: MiniCardItem,
+				required: true
+			},
+			popup: {
+				type: Object,
+				default: () => null
+			}
+		},
+		mounted() {
+			this.adjustPopup();
+		},
+		methods: {
+			adjustPopup() {
+				if (!this.popup) {
+					return;
+				}
+				this.popup.adjustPosition();
+				this.popup.bindOptions = {
+					forceBindPosition: true
+				};
+			}
+		},
+		template: `
+		<div class="crm-mini-card-content" :id="miniCard.id">
+			<div class="crm-mini-card-content__header">
+				<div class="crm-mini-card-content__header-info">
+					<div class="crm-mini-card-content__header-icon">
+						<component :is="miniCard.avatar.componentName" v-bind="miniCard.avatar.componentProps" />
+					</div>
+					<div class="crm-mini-card-content__header-title">
+						{{ miniCard.title }}
+					</div>
+				</div>
+				<div class="crm-mini-card-content__header-control-container">
+					<div class="crm-mini-card-content__header-control-list">
+						<div class="crm-mini-card-content__header-control-item" v-for="control in miniCard.controls">
+							<component :is="control.componentName" v-bind="control.componentProps" />
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="crm-mini-card-content__body">
+				<div class="crm-mini-card-content__body-field-container">
+					<div class="crm-mini-card-content__body-field-list">
+						<div class="crm-mini-card-content__body-field-item" v-for="field in miniCard.fields">
+							<component :is="field.componentName" v-bind="field.componentProps" />
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="crm-mini-card-content__footer">
+				<div class="crm-mini-card-content__footer-notes-list">
+					<div v-for="footerNote in miniCard.footerNotes" class="crm-mini-card-content__footer-note-item">
+						<component :is="footerNote.componentName" v-bind="footerNote.componentProps" />
+					</div>
+				</div>
+			</div>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const MiniCardComponent = {
+		name: 'MiniCardComponent',
+		components: {
+			MiniCardContent,
+			Loader
+		},
+		props: {
+			state: {
+				type: Object,
+				default: () => {
+					return {
+						appId: main_core.Text.getRandom(16),
+						miniCardItem: null,
+						isLoaded: false,
+						popup: null
+					};
+				}
+			}
+		},
+		computed: {
+			miniCardItem() {
+				return this.state.miniCardItem;
+			},
+			isLoading() {
+				return !this.state.isLoaded;
+			}
+		},
+		mounted() {
+			this.subscribeInternalEvents();
+		},
+		methods: {
+			subscribeInternalEvents() {
+				this.$Bitrix.eventEmitter.subscribe(EVENTS.INTERNAL_ON_MOUSE_ENTER_CHILD_POPUP, this.onMouseEnterChildPopup.bind(this));
+				this.$Bitrix.eventEmitter.subscribe(EVENTS.INTERNAL_ON_MOUSE_LEAVE_CHILD_POPUP, this.onMouseLeaveChildPopup.bind(this));
+				main_core.Event.EventEmitter.subscribe(EVENTS.GLOBAL_ON_CLOSE_MAIN_POPUP, this.onCloseMainPopup.bind(this));
+			},
+			onCloseMainPopup(event) {
+				const appId = event.getData().appId;
+				if (appId !== this.state.appId) {
+					return;
+				}
+				this.$Bitrix.eventEmitter.emit(EVENTS.INTERNAL_ON_CLOSE_MAIN_POPUP);
+			},
+			onMouseEnterChildPopup() {
+				const event = new main_core_events.BaseEvent({
+					data: {
+						appId: this.state.appId
+					}
+				});
+				main_core.Event.EventEmitter.emit(EVENTS.GLOBAL_ON_MOUSE_ENTER_CHILD_POPUP, event);
+			},
+			onMouseLeaveChildPopup() {
+				const event = new main_core_events.BaseEvent({
+					data: {
+						appId: this.state.appId
+					}
+				});
+				main_core.Event.EventEmitter.emit(EVENTS.GLOBAL_ON_MOUSE_LEAVE_CHILD_POPUP, event);
+			}
+		},
+		template: `
+		<div class="crm-mini-card">
+			<Loader v-if="isLoading" />
+			<MiniCardContent v-else-if="miniCardItem !== null" :mini-card="miniCardItem" :popup="state.popup" />
+		</div>
+	`
+	};
+
+	class MiniCard {
+		#appId;
+		#miniCardResolver;
+		#bindElement;
+		#application = null;
+		#popup = null;
+		#container = null;
+		#hidePopupTimeout = undefined;
+		#showPopupTimeout = undefined;
+		#state;
+		constructor(options) {
+			this.#appId = main_core.Text.getRandom(16);
+			this.#setBindElement(options.bindElement);
+			this.#setMiniCardResolver(options.miniCardResolver);
+			this.#state = ui_vue3.reactive({
+				appId: this.#appId,
+				miniCardItem: null,
+				isLoaded: false,
+				popup: null
+			});
+			this.#initializeSipManager();
+			this.#bindEvents();
+		}
+		#setBindElement(bindElement) {
+			if (!main_core.Type.isElementNode(bindElement)) {
+				throw new RangeError('BX.Crm.MiniCard: bindElement must be an element node');
+			}
+			this.#bindElement = bindElement;
+		}
+		#setMiniCardResolver(miniCardResolver) {
+			this.#miniCardResolver = miniCardResolver;
+		}
+		popup() {
+			if (this.#popup !== null) {
+				return this.#popup;
+			}
+			this.#popup = new main_popup.Popup({
+				bindElement: this.#bindElement,
+				content: this.container(),
+				padding: 0,
+				closeIcon: true,
+				angle: {
+					offset: 150
+				},
+				offsetLeft: this.#bindElement.offsetWidth / 2 - 130,
+				animation: 'fading',
+				autoHide: true,
+				events: {
+					onBeforeShow: () => {
+						if (this.#miniCardResolver.isLoaded()) {
+							this.#state.miniCardItem = this.#miniCardResolver.getMiniCard();
+							this.#state.isLoaded = true;
+							this.#popup.bindOptions = {
+								forceBindPosition: true
+							};
+						} else {
+							this.#popup.bindOptions = {
+								forceBindPosition: true,
+								forceTop: true
+							};
+						}
+						if (this.#state.isLoaded) {
+							return;
+						}
+						void this.#miniCardResolver.loadMiniCard().then(miniCard => {
+							this.#state.miniCardItem = miniCard;
+						}).catch(response => {
+							console.error('BX.Crm.MiniCard: Error while resolve mini card element', response.errors);
+							ui_notification.UI.Notification.Center.notify({
+								content: main_core.Text.encode(response.errors[0].message),
+								autoHideDelay: 3000
+							});
+							this.popup().destroy();
+						}).finally(() => {
+							this.#state.isLoaded = true;
+						});
+					},
+					onClose: () => {
+						clearTimeout(this.#showPopupTimeout);
+						const event = new main_core_events.BaseEvent({
+							data: {
+								appId: this.#appId
+							}
+						});
+						main_core.Event.EventEmitter.emit(EVENTS.GLOBAL_ON_CLOSE_MAIN_POPUP, event);
+					}
+				}
+			});
+			this.#state.popup = this.#popup;
+			main_core.Event.bind(this.#popup.getPopupContainer(), 'mouseenter', this.#startShowPopup.bind(this));
+			main_core.Event.bind(this.#popup.getPopupContainer(), 'mouseleave', this.#startHidePopup.bind(this));
+			return this.#popup;
+		}
+		#bindEvents() {
+			main_core.Event.bind(this.#bindElement, 'mouseenter', this.#startShowPopup.bind(this));
+			main_core.Event.bind(this.#bindElement, 'mouseleave', this.#startHidePopup.bind(this));
+			main_core.Event.bind(this.#bindElement, 'click', this.#hidePopup.bind(this));
+		}
+		#startHidePopup() {
+			clearTimeout(this.#showPopupTimeout);
+			this.#hidePopupTimeout = setTimeout(() => {
+				this.popup().close();
+			}, 500);
+		}
+		#startShowPopup() {
+			clearTimeout(this.#hidePopupTimeout);
+			this.#showPopupTimeout = setTimeout(() => {
+				if (main_core.Type.isDomNode(this.#bindElement) && document.body.contains(this.#bindElement)) {
+					this.popup().show();
+				}
+			}, 1000);
+		}
+		#hidePopup() {
+			clearTimeout(this.#showPopupTimeout);
+			if (this.popup().isShown()) {
+				this.popup().close();
+			}
+		}
+		container() {
+			if (this.#container === null) {
+				this.#container = main_core.Tag.render`
 				<div class="crm-mini-card-container"></div>
-			`)),this.application().mount(babelHelpers.classPrivateFieldLooseBase(this,oe)[oe])),babelHelpers.classPrivateFieldLooseBase(this,oe)[oe]}application(){return null===babelHelpers.classPrivateFieldLooseBase(this,ae)[ae]&&(babelHelpers.classPrivateFieldLooseBase(this,ae)[ae]=c.BitrixVue.createApp(Q,{state:babelHelpers.classPrivateFieldLooseBase(this,ce)[ce]}),p.Event.EventEmitter.subscribe(te.GLOBAL_ON_MOUSE_ENTER_CHILD_POPUP,e=>{e.getData().appId===babelHelpers.classPrivateFieldLooseBase(this,ie)[ie]&&babelHelpers.classPrivateFieldLooseBase(this,ve)[ve]()}),p.Event.EventEmitter.subscribe(te.GLOBAL_ON_MOUSE_LEAVE_CHILD_POPUP,e=>{e.getData().appId===babelHelpers.classPrivateFieldLooseBase(this,ie)[ie]&&babelHelpers.classPrivateFieldLooseBase(this,be)[be]()})),babelHelpers.classPrivateFieldLooseBase(this,ae)[ae]}}function Le(e){if(!p.Type.isElementNode(e))throw new RangeError("BX.Crm.MiniCard: bindElement must be an element node");babelHelpers.classPrivateFieldLooseBase(this,le)[le]=e}function Fe(e){babelHelpers.classPrivateFieldLooseBase(this,se)[se]=e}function Ee(){p.Event.bind(babelHelpers.classPrivateFieldLooseBase(this,le)[le],"mouseenter",babelHelpers.classPrivateFieldLooseBase(this,ve)[ve].bind(this)),p.Event.bind(babelHelpers.classPrivateFieldLooseBase(this,le)[le],"mouseleave",babelHelpers.classPrivateFieldLooseBase(this,be)[be].bind(this)),p.Event.bind(babelHelpers.classPrivateFieldLooseBase(this,le)[le],"click",babelHelpers.classPrivateFieldLooseBase(this,he)[he].bind(this))}function Be(){clearTimeout(babelHelpers.classPrivateFieldLooseBase(this,de)[de]),babelHelpers.classPrivateFieldLooseBase(this,re)[re]=setTimeout(()=>{this.popup().close()},500)}function Ce(){clearTimeout(babelHelpers.classPrivateFieldLooseBase(this,re)[re]),babelHelpers.classPrivateFieldLooseBase(this,de)[de]=setTimeout(()=>{p.Type.isDomNode(babelHelpers.classPrivateFieldLooseBase(this,le)[le])&&document.body.contains(babelHelpers.classPrivateFieldLooseBase(this,le)[le])&&this.popup().show()},1e3)}function Ie(){clearTimeout(babelHelpers.classPrivateFieldLooseBase(this,de)[de]),this.popup().isShown()&&this.popup().close()}function _e(){if(!window.BXIM||!BX.CrmSipManager)return;BX.CrmSipManager.messages||(BX.CrmSipManager.messages={unknownRecipient:p.Loc.getMessage("CRM_SIP_MGR_UNKNOWN_RECIPIENT"),makeCall:p.Loc.getMessage("CRM_SIP_MGR_MAKE_CALL")});const e=BX.CrmSipManager.getCurrent(),t=BX.bitrix_sessid();e.setServiceUrl("CRM_LEAD","/bitrix/components/bitrix/crm.lead.show/ajax.php?sessid="+t),e.setServiceUrl("CRM_CONTACT","/bitrix/components/bitrix/crm.contact.show/ajax.php?sessid="+t),e.setServiceUrl("CRM_COMPANY","/bitrix/components/bitrix/crm.company.show/ajax.php?sessid="+t)}var fe=babelHelpers.classPrivateFieldLooseKey("cache"),He=babelHelpers.classPrivateFieldLooseKey("cacheId"),Me=babelHelpers.classPrivateFieldLooseKey("entityTypeId"),Oe=babelHelpers.classPrivateFieldLooseKey("entityId");class Te{constructor(e){Object.defineProperty(this,He,{writable:!0,value:void 0}),Object.defineProperty(this,Me,{writable:!0,value:void 0}),Object.defineProperty(this,Oe,{writable:!0,value:void 0}),babelHelpers.classPrivateFieldLooseBase(this,Me)[Me]=e.entityTypeId,babelHelpers.classPrivateFieldLooseBase(this,Oe)[Oe]=e.entityId,babelHelpers.classPrivateFieldLooseBase(this,He)[He]=`${babelHelpers.classPrivateFieldLooseBase(this,Me)[Me]}_${babelHelpers.classPrivateFieldLooseBase(this,Oe)[Oe]}`}async loadMiniCard(){const e={data:{entityTypeId:babelHelpers.classPrivateFieldLooseBase(this,Me)[Me],entityId:babelHelpers.classPrivateFieldLooseBase(this,Oe)[Oe]}},t=await p.ajax.runAction("crm.item.minicard.get",e);if(null!=t&&t.data){const e=new B(t.data);return babelHelpers.classPrivateFieldLooseBase(Te,fe)[fe].set(babelHelpers.classPrivateFieldLooseBase(this,He)[He],e),e}return null}getMiniCard(){return babelHelpers.classPrivateFieldLooseBase(Te,fe)[fe].get(babelHelpers.classPrivateFieldLooseBase(this,He)[He])}isLoaded(){return babelHelpers.classPrivateFieldLooseBase(Te,fe)[fe].has(babelHelpers.classPrivateFieldLooseBase(this,He)[He])}}Object.defineProperty(Te,fe,{writable:!0,value:new m.MemoryCache});const we=BX.CrmEntityType.enumeration,ge=BX.CrmEntityType;var Ne=babelHelpers.classPrivateFieldLooseKey("entityTypeId"),Se=babelHelpers.classPrivateFieldLooseKey("entityId"),Ae=babelHelpers.classPrivateFieldLooseKey("bindElement"),Ve=babelHelpers.classPrivateFieldLooseKey("miniCard"),Ue=babelHelpers.classPrivateFieldLooseKey("setEntityTypeId"),Re=babelHelpers.classPrivateFieldLooseKey("setEntityId"),je=babelHelpers.classPrivateFieldLooseKey("setBindElement");function Xe(e){const t=[we.lead,we.deal,we.contact,we.company,we.quote,we.order,we.smartinvoice].includes(e)||ge.isDynamicTypeByTypeId(e);if(!p.Type.isNumber(e))throw new RangeError(`BX.Crm.EntityMiniCard: entityTypeId ${e} must be number`);if(!t)throw new RangeError(`BX.Crm.EntityMiniCard: entityTypeId ${e} is not supported`);babelHelpers.classPrivateFieldLooseBase(this,Ne)[Ne]=e}function Ke(e){if(!p.Type.isNumber(e)||e<=0)throw new RangeError("BX.Crm.EntityMiniCard: entityId must be a number and greater than 0");babelHelpers.classPrivateFieldLooseBase(this,Se)[Se]=e}function ke(e){if(!p.Type.isElementNode(e))throw new RangeError("BX.Crm.EntityMiniCard: bindElement must be an element node");babelHelpers.classPrivateFieldLooseBase(this,Ae)[Ae]=e}e.MiniCard=ye,e.EntityMiniCard=class{constructor(e){Object.defineProperty(this,je,{value:ke}),Object.defineProperty(this,Re,{value:Ke}),Object.defineProperty(this,Ue,{value:Xe}),Object.defineProperty(this,Ne,{writable:!0,value:void 0}),Object.defineProperty(this,Se,{writable:!0,value:void 0}),Object.defineProperty(this,Ae,{writable:!0,value:void 0}),Object.defineProperty(this,Ve,{writable:!0,value:void 0}),babelHelpers.classPrivateFieldLooseBase(this,Ue)[Ue](e.entityTypeId),babelHelpers.classPrivateFieldLooseBase(this,Re)[Re](e.entityId),babelHelpers.classPrivateFieldLooseBase(this,je)[je](e.bindElement),babelHelpers.classPrivateFieldLooseBase(this,Ve)[Ve]=new ye({bindElement:babelHelpers.classPrivateFieldLooseBase(this,Ae)[Ae],miniCardResolver:new Te({entityTypeId:babelHelpers.classPrivateFieldLooseBase(this,Ne)[Ne],entityId:babelHelpers.classPrivateFieldLooseBase(this,Se)[Se]})})}getMiniCard(){return babelHelpers.classPrivateFieldLooseBase(this,Ve)[Ve]}},e.MiniCardItem=B,e.Component=v,e.MiniCardComponent=Q}(this.BX.Crm=this.BX.Crm||{},BX,BX.UI.IconSet,BX,BX,BX.UI.Dialogs,BX.Event,BX.Main,BX.UI,BX.UI.IconSet,BX.Vue3,BX,BX.Cache);
+			`;
+				this.application().mount(this.#container);
+			}
+			return this.#container;
+		}
+		application() {
+			if (this.#application === null) {
+				this.#application = ui_vue3.BitrixVue.createApp(MiniCardComponent, {
+					state: this.#state
+				});
+				main_core.Event.EventEmitter.subscribe(EVENTS.GLOBAL_ON_MOUSE_ENTER_CHILD_POPUP, event => {
+					const data = event.getData();
+					if (data.appId !== this.#appId) {
+						return;
+					}
+					this.#startShowPopup();
+				});
+				main_core.Event.EventEmitter.subscribe(EVENTS.GLOBAL_ON_MOUSE_LEAVE_CHILD_POPUP, event => {
+					const data = event.getData();
+					if (data.appId !== this.#appId) {
+						return;
+					}
+					this.#startHidePopup();
+				});
+			}
+			return this.#application;
+		}
+		#initializeSipManager() {
+			if (!window.BXIM || !BX.CrmSipManager) {
+				return;
+			}
+			if (!BX.CrmSipManager.messages) {
+				BX.CrmSipManager.messages = {
+					unknownRecipient: main_core.Loc.getMessage('CRM_SIP_MGR_UNKNOWN_RECIPIENT'),
+					makeCall: main_core.Loc.getMessage('CRM_SIP_MGR_MAKE_CALL')
+				};
+			}
+			const sipMgr = BX.CrmSipManager.getCurrent();
+
+			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx
+			const sessid = BX.bitrix_sessid();
+			sipMgr.setServiceUrl('CRM_LEAD', `/bitrix/components/bitrix/crm.lead.show/ajax.php?sessid=${sessid}`);
+			sipMgr.setServiceUrl('CRM_CONTACT', `/bitrix/components/bitrix/crm.contact.show/ajax.php?sessid=${sessid}`);
+			sipMgr.setServiceUrl('CRM_COMPANY', `/bitrix/components/bitrix/crm.company.show/ajax.php?sessid=${sessid}`);
+		}
+	}
+
+	class MiniCardResolver {
+		static #cache = new main_core_cache.MemoryCache();
+		#cacheId;
+		#entityTypeId;
+		#entityId;
+		constructor(options) {
+			this.#entityTypeId = options.entityTypeId;
+			this.#entityId = options.entityId;
+			this.#cacheId = `${this.#entityTypeId}_${this.#entityId}`;
+		}
+		async loadMiniCard() {
+			const config = {
+				data: {
+					entityTypeId: this.#entityTypeId,
+					entityId: this.#entityId
+				}
+			};
+			const response = await main_core.ajax.runAction('crm.item.minicard.get', config);
+			if (response?.data) {
+				const item = this.#deepFreeze(new MiniCardItem(response.data));
+				MiniCardResolver.#cache.set(this.#cacheId, item);
+				return item;
+			}
+			return null;
+		}
+		getMiniCard() {
+			return MiniCardResolver.#cache.get(this.#cacheId);
+		}
+		isLoaded() {
+			return MiniCardResolver.#cache.has(this.#cacheId);
+		}
+		#deepFreeze(target) {
+			if (main_core.Type.isObject(target)) {
+				Object.values(target).forEach(value => {
+					this.#deepFreeze(value);
+				});
+				return Object.freeze(target);
+			}
+			return target;
+		}
+	}
+
+	const EntityTypeEnum = BX.CrmEntityType.enumeration;
+	const EntityType = BX.CrmEntityType;
+	class EntityMiniCard {
+		#entityTypeId;
+		#entityId;
+		#bindElement;
+		#miniCard;
+		constructor(options) {
+			this.#setEntityTypeId(options.entityTypeId);
+			this.#setEntityId(options.entityId);
+			this.#setBindElement(options.bindElement);
+			this.#miniCard = new MiniCard({
+				bindElement: this.#bindElement,
+				miniCardResolver: new MiniCardResolver({
+					entityTypeId: this.#entityTypeId,
+					entityId: this.#entityId
+				})
+			});
+		}
+		getMiniCard() {
+			return this.#miniCard;
+		}
+		#setEntityTypeId(entityTypeId) {
+			const availableEntityTypeIds = [EntityTypeEnum.lead, EntityTypeEnum.deal, EntityTypeEnum.contact, EntityTypeEnum.company, EntityTypeEnum.quote, EntityTypeEnum.order, EntityTypeEnum.smartinvoice];
+			const isAvailableEntityType = availableEntityTypeIds.includes(entityTypeId) || EntityType.isDynamicTypeByTypeId(entityTypeId);
+			if (!main_core.Type.isNumber(entityTypeId)) {
+				throw new RangeError(`BX.Crm.EntityMiniCard: entityTypeId ${entityTypeId} must be number`);
+			}
+			if (!isAvailableEntityType) {
+				throw new RangeError(`BX.Crm.EntityMiniCard: entityTypeId ${entityTypeId} is not supported`);
+			}
+			this.#entityTypeId = entityTypeId;
+		}
+		#setEntityId(entityId) {
+			if (!main_core.Type.isNumber(entityId) || entityId <= 0) {
+				throw new RangeError('BX.Crm.EntityMiniCard: entityId must be a number and greater than 0');
+			}
+			this.#entityId = entityId;
+		}
+		#setBindElement(element) {
+			if (!main_core.Type.isElementNode(element)) {
+				throw new RangeError('BX.Crm.EntityMiniCard: bindElement must be an element node');
+			}
+			this.#bindElement = element;
+		}
+	}
+
+	exports.Component = Component;
+	exports.EntityMiniCard = EntityMiniCard;
+	exports.MiniCard = MiniCard;
+	exports.MiniCardComponent = MiniCardComponent;
+	exports.MiniCardItem = MiniCardItem;
+
+})(this.BX.Crm = this.BX.Crm || {}, BX, BX.Event, BX.Main, BX, BX.Vue3, BX.UI.IconSet, window, window, BX.UI, BX.UI.Dialogs, BX.UI.IconSet, BX.Cache);
 //# sourceMappingURL=index.bundle.js.map

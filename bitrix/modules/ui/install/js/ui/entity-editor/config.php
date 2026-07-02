@@ -53,6 +53,8 @@ return [
 		"ui.entity-selector",
 		"ui.design-tokens",
 		"ui.fonts.opensans",
+		"ui.icon-set.api.core",
+		"ui.icon-set.outline",
 		"ui.entity-editor.user-field-configurators.tooltip-configurator",
 		"intranet.old-interface.intranet-common",
 	],

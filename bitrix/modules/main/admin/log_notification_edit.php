@@ -123,124 +123,124 @@ if(!empty($errors))
 <?=bitrix_sessid_post()?>
 <input type="hidden" name="lang" value="<?=LANGUAGE_ID?>">
 <input type="hidden" name="ID" value="<?= $ID?>">
-<?if($COPY_ID > 0):?><input type="hidden" name="COPY_ID" value="<?= $COPY_ID?>"><?endif?>
-<?
+<?php if($COPY_ID > 0):?><input type="hidden" name="COPY_ID" value="<?= $COPY_ID?>"><?php endif?>
+<?php
 $tabControl->Begin();
 
 $tabControl->BeginNextTab();
 ?>
-<?if($ID > 0):?>
+<?php if($ID > 0):?>
 	<tr>
 		<td>ID:</td>
 		<td><?= $ID?></td>
 	</tr>
 	<tr>
-		<td><?echo Loc::getMessage("notification_edit_date_check")?></td>
+		<td><?= Loc::getMessage("notification_edit_date_check")?></td>
 		<td><?= $notification->getDateChecked()?></td>
 	</tr>
-<?endif?>
+<?php endif?>
 	<tr>
-		<td><label for="active"><?echo Loc::getMessage("notification_edit_active")?></label></td>
-		<td><input type="checkbox" name="ACTIVE" id="active" value="Y"<?if($notification->getActive()) echo " checked"?>></td>
+		<td><label for="active"><?= Loc::getMessage("notification_edit_active")?></label></td>
+		<td><input type="checkbox" name="ACTIVE" id="active" value="Y"<?php if($notification->getActive()) echo " checked"?>></td>
 	</tr>
 	<tr>
-		<td><?echo Loc::getMessage("notification_edit_name")?></td>
+		<td><?= Loc::getMessage("notification_edit_name")?></td>
 		<td><input type="text" name="NAME" size="30" value="<?= HtmlFilter::encode($notification->getName())?>"></td>
 	</tr>
 	<tr class="heading">
-		<td colspan="2"><?echo Loc::getMessage("notification_edit_header")?></td>
+		<td colspan="2"><?= Loc::getMessage("notification_edit_header")?></td>
 	</tr>
 	<tr class="adm-detail-required-field">
-		<td><?echo Loc::getMessage("notification_edit_event_type")?></td>
+		<td><?= Loc::getMessage("notification_edit_event_type")?></td>
 		<td>
 			<select name="AUDIT_TYPE_ID">
-				<option value=""><?echo Loc::getMessage("notification_edit_event_type_choose")?></option>
-				<?
+				<option value=""><?= Loc::getMessage("notification_edit_event_type_choose")?></option>
+				<?php
 				$types = CEventLog::GetEventTypes();
 				?>
-				<? foreach($types as $typeId => $typeName): ?>
-					<option value="<?=HtmlFilter::encode($typeId)?>"<? if($notification->getAuditTypeId() == $typeId) echo " selected" ?>>
+				<?php foreach($types as $typeId => $typeName): ?>
+					<option value="<?=HtmlFilter::encode($typeId)?>"<?php if($notification->getAuditTypeId() == $typeId) echo " selected" ?>>
 						<?= HtmlFilter::encode($typeName)?>
 					</option>
-				<? endforeach; ?>
+				<?php endforeach; ?>
 			</select>
 		</td>
 	</tr>
 	<tr>
-		<td><?echo Loc::getMessage("notification_edit_object")?></td>
+		<td><?= Loc::getMessage("notification_edit_object")?></td>
 		<td><input type="text" name="ITEM_ID" size="30" value="<?= HtmlFilter::encode($notification->getItemId())?>"></td>
 	</tr>
 	<tr>
-		<td><?echo Loc::getMessage("notification_edit_user")?></td>
+		<td><?= Loc::getMessage("notification_edit_user")?></td>
 		<td><input type="text" name="USER_ID" size="30" value="<?= HtmlFilter::encode($notification->getUserId())?>"></td>
 	</tr>
 	<tr>
-		<td><?echo Loc::getMessage("notification_edit_ip_addr")?></td>
+		<td><?= Loc::getMessage("notification_edit_ip_addr")?></td>
 		<td><input type="text" name="REMOTE_ADDR" size="30" value="<?= HtmlFilter::encode($notification->getRemoteAddr())?>"></td>
 	</tr>
 	<tr>
-		<td><?echo Loc::getMessage("notification_edit_browser")?></td>
+		<td><?= Loc::getMessage("notification_edit_browser")?></td>
 		<td><input type="text" name="USER_AGENT" size="30" value="<?= HtmlFilter::encode($notification->getUserAgent())?>"></td>
 	</tr>
 	<tr>
-		<td><?echo Loc::getMessage("notification_edit_uri")?></td>
+		<td><?= Loc::getMessage("notification_edit_uri")?></td>
 		<td><input type="text" name="REQUEST_URI" size="30" value="<?= HtmlFilter::encode($notification->getRequestUri())?>"></td>
 	</tr>
 	<tr class="heading">
-		<td colspan="2"><?echo Loc::getMessage("notification_edit_conditions_header")?></td>
+		<td colspan="2"><?= Loc::getMessage("notification_edit_conditions_header")?></td>
 	</tr>
 	<tr>
-		<td><?echo Loc::getMessage("notification_edit_interval")?></td>
+		<td><?= Loc::getMessage("notification_edit_interval")?></td>
 		<td><input type="text" name="CHECK_INTERVAL" size="30" value="<?= HtmlFilter::encode($notification->getCheckInterval())?>"></td>
 	</tr>
 	<tr>
-		<td><?echo Loc::getMessage("notification_edit_number")?></td>
+		<td><?= Loc::getMessage("notification_edit_number")?></td>
 		<td><input type="text" name="ALERT_COUNT" size="30" value="<?= HtmlFilter::encode($notification->getAlertCount())?>"></td>
 	</tr>
 
-<?$tabControl->BeginNextTab();?>
+<?php $tabControl->BeginNextTab();?>
 
-<?
+<?php
 foreach($notification->getActions() as $i => $action):
 ?>
 	<tr class="heading">
 		<td colspan="2">
-			<?echo Loc::getMessage("notification_edit_action")?>
+			<?= Loc::getMessage("notification_edit_action")?>
 			<input type="hidden" name="ACTIONS[<?=$i?>][ID]" value="<?= HtmlFilter::encode($i)?>">
 		</td>
 	</tr>
 	<tr>
-		<td><?echo Loc::getMessage("notification_edit_action_type")?></td>
+		<td><?= Loc::getMessage("notification_edit_action_type")?></td>
 		<td><select name="ACTIONS[<?=$i?>][NOTIFICATION_TYPE]">
-				<option value="<?=EventLog\Action::TYPE_EMAIL?>"<?if($action->getType() == EventLog\Action::TYPE_EMAIL) echo " selected"?>><?echo Loc::getMessage("notification_edit_action_type_email")?></option>
-				<option value="<?=EventLog\Action::TYPE_SMS?>"<?if($action->getType() == EventLog\Action::TYPE_SMS) echo " selected"?>><?echo Loc::getMessage("notification_edit_action_type_sms")?></option>
+				<option value="<?=EventLog\Action::TYPE_EMAIL?>"<?php if($action->getType() == EventLog\Action::TYPE_EMAIL) echo " selected"?>><?= Loc::getMessage("notification_edit_action_type_email")?></option>
+				<option value="<?=EventLog\Action::TYPE_SMS?>"<?php if($action->getType() == EventLog\Action::TYPE_SMS) echo " selected"?>><?= Loc::getMessage("notification_edit_action_type_sms")?></option>
 			</select></td>
 	</tr>
 	<tr>
-		<td><?echo Loc::getMessage("notification_edit_receiver")?></td>
+		<td><?= Loc::getMessage("notification_edit_receiver")?></td>
 		<td><input type="text" name="ACTIONS[<?=$i?>][RECIPIENT]" size="30" value="<?= HtmlFilter::encode($action->getRecipient())?>"></td>
 	</tr>
 	<tr>
-		<td class="adm-detail-valign-top"><?echo Loc::getMessage("notification_edit_text")?></td>
+		<td class="adm-detail-valign-top"><?= Loc::getMessage("notification_edit_text")?></td>
 		<td><textarea name="ACTIONS[<?=$i?>][ADDITIONAL_TEXT]" cols="40" rows="3"><?= HtmlFilter::encode($action->getText())?></textarea></td>
 	</tr>
 	<tr>
 		<td></td>
-		<td><a class="bx-action-href" href="javascript:void(0)" onclick="BxDeleteNotificationAction(this)"><?echo Loc::getMessage("notification_edit_action_delete")?></a></td>
+		<td><a class="bx-action-href" href="javascript:void(0)" onclick="BxDeleteNotificationAction(this)"><?= Loc::getMessage("notification_edit_action_delete")?></a></td>
 	</tr>
-<?endforeach;?>
+<?php endforeach;?>
 	<tr id="bx_add_notification_action_row">
 		<td colspan="2">
-			<a class="bx-action-href" href="javascript:void(0)" onclick="BxAddNotificationAction()"><?echo Loc::getMessage("notification_edit_action_add")?></a>
+			<a class="bx-action-href" href="javascript:void(0)" onclick="BxAddNotificationAction()"><?= Loc::getMessage("notification_edit_action_add")?></a>
 		</td>
 	</tr>
 
-<?
+<?php
 $tabControl->Buttons(array("back_url"=>"log_notifications.php?lang=".LANGUAGE_ID));
 $tabControl->End();
 ?>
 </form>
-<?
+<?php
 $messages = [
 	"log_notification_edit_action" => Loc::getMessage("notification_edit_action"),
 	"log_notification_edit_type" => Loc::getMessage("notification_edit_action_type"),
@@ -344,7 +344,7 @@ function BxDeleteNotificationAction(ob)
 }
 </script>
 
-<?
+<?php
 if(\Bitrix\Main\ModuleManager::isModuleInstalled("messageservice"))
 {
 	$url = "/bitrix/admin/settings.php?lang=".LANGUAGE_ID."&amp;mid=messageservice";
@@ -358,10 +358,10 @@ else
 ?>
 <?=BeginNote()?>
 	<?=$smsNote?><br><br>
-	<a href="message_admin.php?PAGEN_1=1&amp;lang=<?=LANGUAGE_ID?>&amp;set_filter=Y&amp;find_type_id=<?=EventLog\ActionEmail::EVENT_TYPE?>"><?echo Loc::getMessage("notification_edit_mail_templates")?></a><br>
-	<a href="sms_template_admin.php?lang=<?=LANGUAGE_ID?>&amp;set_filter=Y&amp;find_event_name_id=<?=EventLog\ActionSms::EVENT_TYPE?>&amp;nav-sms-template=page-1"><?echo Loc::getMessage("notification_edit_sms_templates")?></a><br><br>
-	<?echo Loc::getMessage("notification_edit_def_site")?>
+	<a href="message_admin.php?PAGEN_1=1&amp;lang=<?=LANGUAGE_ID?>&amp;set_filter=Y&amp;find_type_id=<?=EventLog\ActionEmail::EVENT_TYPE?>"><?= Loc::getMessage("notification_edit_mail_templates")?></a><br>
+	<a href="sms_template_admin.php?lang=<?=LANGUAGE_ID?>&amp;set_filter=Y&amp;find_event_name_id=<?=EventLog\ActionSms::EVENT_TYPE?>&amp;nav-sms-template=page-1"><?= Loc::getMessage("notification_edit_sms_templates")?></a><br><br>
+	<?= Loc::getMessage("notification_edit_def_site")?>
 <?=EndNote()?>
 
-<?
+<?php
 require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin.php");

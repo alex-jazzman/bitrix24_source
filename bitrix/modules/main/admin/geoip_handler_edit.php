@@ -14,14 +14,14 @@ if(!$USER->CanDoOperation('edit_other_settings'))
 
 Loc::loadMessages(__FILE__);
 
-$className = isset($_REQUEST['CLASS_NAME']) ? htmlspecialcharsbx($_REQUEST['CLASS_NAME']) : '';
+$className = $_REQUEST['CLASS_NAME'] ?? '';
 $id = isset($_REQUEST["ID"]) && intval($_REQUEST["ID"]) > 0 ? intval($_REQUEST["ID"]) : 0;
 $errMess = null;
 
 $handler = GeoIp\Manager::getHandlerByClassName($className);
 
 if(!$handler)
-	LocalRedirect(!empty($_REQUEST["back_url"]) ? $_REQUEST["back_url"] : 'geoip_handlers_list.php?lang='.LANG);
+	LocalRedirect(!empty($_REQUEST["back_url"]) ? $_REQUEST["back_url"] : 'geoip_handlers_list.php?lang='.LANGUAGE_ID);
 
 if($_SERVER['REQUEST_METHOD'] == "POST" && (!empty($_POST['save']) || !empty($_POST['apply'])) && check_bitrix_sessid())
 {
@@ -46,9 +46,9 @@ if($_SERVER['REQUEST_METHOD'] == "POST" && (!empty($_POST['save']) || !empty($_P
 		$id = $res->getId();
 
 		if(isset($_POST['apply']))
-			LocalRedirect("geoip_handler_edit.php?lang=".LANG."&ID=".$id."&CLASS_NAME=".urlencode($className));
+			LocalRedirect("geoip_handler_edit.php?lang=".LANGUAGE_ID."&ID=".$id."&CLASS_NAME=".urlencode($className));
 		else
-			LocalRedirect(!empty($_REQUEST["back_url"]) ? $_REQUEST["back_url"] : 'geoip_handlers_list.php?lang='.LANG);
+			LocalRedirect(!empty($_REQUEST["back_url"]) ? $_REQUEST["back_url"] : 'geoip_handlers_list.php?lang='.LANGUAGE_ID);
 	}
 	else
 	{
@@ -67,7 +67,7 @@ $menu = array(
 	array(
 		"TEXT" => Loc::getMessage('GEOIP_EDIT_LIST'),
 		"TITLE" => Loc::getMessage('GEOIP_EDIT_LIST_T'),
-		"LINK"=>"geoip_handlers_list.php?lang=".LANG,
+		"LINK"=>"geoip_handlers_list.php?lang=".LANGUAGE_ID,
 		"ICON"=>"btn_list",
 	)
 );
@@ -77,7 +77,7 @@ if($id > 0)
 	$menu[] = array(
 		"TEXT" => Loc::getMessage('GEOIP_EDIT_DELETE'),
 		"TITLE" => Loc::getMessage('GEOIP_EDIT_DELETE_T'),
-		"LINK" => "javascript:if(confirm('".GetMessage("GEOIP_EDIT_DELETE_CONFIRM")."')) window.location='geoip_handlers_list.php?ID=".$id."&action=delete&lang=".LANG."&".bitrix_sessid_get()."';",
+		"LINK" => "javascript:if(confirm('".GetMessage("GEOIP_EDIT_DELETE_CONFIRM")."')) window.location='geoip_handlers_list.php?ID=".$id."&action=delete&lang=".LANGUAGE_ID."&".bitrix_sessid_get()."';",
 		"ICON" => "btn_delete",
 	);
 }
@@ -100,16 +100,16 @@ $tabControl = new CAdminTabControl("tabControl", $aTabs);
 <?=bitrix_sessid_post()?>
 <input type="hidden" name="ID" value=<?=$id?>>
 <input type="hidden" name="lang" value="<?=LANGUAGE_ID?>">
-<?
+<?php
 $tabControl->Begin();
 $tabControl->BeginNextTab();
 ?>
-<?if($id > 0):?>
+<?php if($id > 0):?>
 	<tr>
 		<td width="40%"><?=Loc::getMessage('GEOIP_EDIT_F_ID')?>:</td>
 		<td width="60%"><?=$id?></td>
 	</tr>
-<?endif;?>
+<?php endif;?>
 	<tr>
 		<td><?=Loc::getMessage('GEOIP_EDIT_F_TITLE')?>:</td>
 		<td><?=$handler->getTitle()?></td>
@@ -128,7 +128,7 @@ $tabControl->BeginNextTab();
 	</tr>
 	<tr>
 		<td><?=Loc::getMessage('GEOIP_EDIT_F_CLASS')?>:</td>
-		<td><input type="text" name="CLASS_NAME" size="45" maxlength="255" value="<?=$className?>" readonly></td>
+		<td><input type="text" name="CLASS_NAME" size="45" maxlength="255" value="<?=htmlspecialcharsbx($className)?>" readonly></td>
 	</tr>
 	<tr>
 		<td><?=Loc::getMessage('GEOIP_EDIT_F_IS_INSTALLED')?>:</td>
@@ -215,19 +215,19 @@ $tabControl->BeginNextTab();
 		<td><input type="checkbox"<?=$providingData->asnOrganizationName ? ' checked' : ''?> disabled></td>
 	</tr>
 
-<?$tabControl->BeginNextTab();?>
-	<?$adminConfigHtml = GeoIp\Manager::getHandlerAdminConfigHtml($handler);?>
+<?php $tabControl->BeginNextTab();?>
+	<?php $adminConfigHtml = GeoIp\Manager::getHandlerAdminConfigHtml($handler);?>
 
-	<?if(!empty($adminConfigHtml)):?>
+	<?php if(!empty($adminConfigHtml)):?>
 		<?=$adminConfigHtml?>
-	<?else:?>
+	<?php else:?>
 		<tr>
 			<td colspan="2"><?=Loc::getMessage('GEOIP_EDIT_SPECIFIC_ABSENT')?>:</td>
 		</tr>
-	<?endif;?>
-<?
+	<?php endif;?>
+<?php
 $tabControl->Buttons(array(
-	"back_url" => "geoip_handlers_list.php?lang=".LANG,
+	"back_url" => "geoip_handlers_list.php?lang=".LANGUAGE_ID,
 ));
 $tabControl->End();
 ?>

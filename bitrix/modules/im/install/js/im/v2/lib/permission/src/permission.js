@@ -1,14 +1,12 @@
 import { Type } from 'main.core';
 
 import { Core } from 'im.v2.application.core';
+import { ChatType, ActionByRole, UserRole, ActionByUserType, type ChatActionGroup, type ChatTypeItem, type UserType } from 'im.v2.const';
 import { Logger } from 'im.v2.lib.logger';
-import { ChatType, ActionByRole, ChatActionGroup, UserRole, UserType, ActionByUserType } from 'im.v2.const';
+import { type ImModelChat } from 'im.v2.model';
 
 import { MinimalRoleForAction } from './const/action-config';
 
-import type { ImModelChat } from 'im.v2.model';
-
-type ChatTypeItem = $Keys<typeof ChatType>;
 type ActionTypeItem = $Keys<typeof ActionByRole>;
 type ActionByUserTypeItem = $Keys<typeof ActionByUserType>;
 type ActionGroupItem = $Keys<typeof ChatActionGroup>;

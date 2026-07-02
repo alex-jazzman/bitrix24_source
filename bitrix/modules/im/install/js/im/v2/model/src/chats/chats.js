@@ -1,18 +1,16 @@
 import { Type, type JsonObject } from 'main.core';
-import { BuilderModel } from 'ui.vue3.vuex';
+import { BuilderModel, type GetterTree, type ActionTree, type MutationTree } from 'ui.vue3.vuex';
 
 import { Core } from 'im.v2.application.core';
-import { Color, ChatType, UserRole } from 'im.v2.const';
+import { Color, ChatType, UserRole, type ChatTypeItem } from 'im.v2.const';
 import { Utils } from 'im.v2.lib.utils';
 import { formatFieldsWithConfig } from 'im.v2.model';
 
+import { type Chat as ImModelChat } from '../type/chat';
 import { chatFieldsConfig } from './format/field-config';
 import { AutoDeleteModel } from './nested-modules/auto-delete/auto-delete';
 import { CollabsModel } from './nested-modules/collabs/collabs';
 import { InputActionsModel } from './nested-modules/input-actions';
-
-import type { GetterTree, ActionTree, MutationTree } from 'ui.vue3.vuex';
-import type { Chat as ImModelChat } from '../type/chat';
 
 type ChatState = {
 	collection: {[dialogId: string]: ImModelChat},
@@ -55,6 +53,7 @@ export class ChatsModel extends BuilderModel
 			extranet: false,
 			containsCollaber: false,
 			userCounter: 0,
+			guestCount: 0,
 			lastReadId: 0,
 			markedId: 0,
 			lastMessageId: 0,
@@ -202,7 +201,7 @@ export class ChatsModel extends BuilderModel
 				return state.collection[dialogId].backgroundId;
 			},
 			/** @function chats/getCollectionByChatType */
-			getCollectionByChatType: (state: ChatState) => (type: $Values<typeof ChatType>): ImModelChat[] => {
+			getCollectionByChatType: (state: ChatState) => (type: ChatTypeItem): ImModelChat[] => {
 				return Object.values(state.collection).filter((item) => {
 					return item.type === type;
 				});
@@ -287,7 +286,7 @@ export class ChatsModel extends BuilderModel
 				store.commit('delete', { dialogId: payload.dialogId });
 			},
 			/** @function chats/clearMarkedChatsByType */
-			clearMarkedChatsByType: (store, payload: { type: $Values<typeof ChatType> }) => {
+			clearMarkedChatsByType: (store, payload: { type: ChatTypeItem }) => {
 				store.commit('clearMarkedChatsByType', payload);
 			},
 			/** @function chats/clearMarkedChats */
@@ -404,7 +403,7 @@ export class ChatsModel extends BuilderModel
 			delete: (state: ChatState, payload) => {
 				delete state.collection[payload.dialogId];
 			},
-			clearMarkedChatsByType: (state: ChatState, payload: { type: $Values<typeof ChatType> }) => {
+			clearMarkedChatsByType: (state: ChatState, payload: { type: ChatTypeItem }) => {
 				const { type } = payload;
 				const items = this.store.getters['chats/getCollectionByChatType'](type);
 

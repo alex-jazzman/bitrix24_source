@@ -1,0 +1,5 @@
+<?php
+$MESS["MOBILE_PROJECT_CHAT_SETTINGS_SERVICE_CHAT_NOT_FOUND"] = "Could not get project chat.";
+$MESS["MOBILE_PROJECT_CHAT_SETTINGS_SERVICE_CHAT_UNAVAILABLE"] = "Project chat is not available.";
+$MESS["MOBILE_PROJECT_CHAT_SETTINGS_SERVICE_INCORRECT_AUTO_DELETE_DELAY"] = "Message auto delete parameter is incorrect.";
+$MESS["MOBILE_PROJECT_CHAT_SETTINGS_SERVICE_INCORRECT_SHOW_HISTORY"] = "Chat history parameter is incorrect.";

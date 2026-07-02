@@ -44,6 +44,7 @@ jn.define('layout/ui/context-menu', (require, exports, module) => {
 	 * @property {Function} onClose
 	 * @property {Object} params
 	 * @property {string} params.title
+	 * @property {string} params.titleType
 	 * @property {boolean} params.showActionLoader
 	 * @property {string} params.helpUrl
 	 * @class ContextMenu
@@ -312,7 +313,7 @@ jn.define('layout/ui/context-menu', (require, exports, module) => {
 				.enableOnlyMediumPosition()
 				.setTitleParams({
 					text: this.getTitle(),
-					type: 'dialog',
+					type: this.getTitleType(),
 				});
 
 			if (helpUrl)
@@ -529,6 +530,11 @@ jn.define('layout/ui/context-menu', (require, exports, module) => {
 			return BX.prop.getString(this.params, 'title', '');
 		}
 
+		getTitleType()
+		{
+			return BX.prop.getString(this.params, 'titleType', 'dialog');
+		}
+
 		hasTitle()
 		{
 			return Type.isStringFilled(this.getTitle());
@@ -587,6 +593,7 @@ jn.define('layout/ui/context-menu', (require, exports, module) => {
 		),
 		params: PropTypes.shape({
 			title: PropTypes.string,
+			titleType: PropTypes.string,
 			shouldResizeContent: PropTypes.bool,
 			showActionLoader: PropTypes.bool,
 			showPartiallyHidden: PropTypes.bool,

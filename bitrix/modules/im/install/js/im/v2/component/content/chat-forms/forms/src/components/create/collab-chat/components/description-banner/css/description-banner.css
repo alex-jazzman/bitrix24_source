@@ -1,0 +1,46 @@
+.bx-im-create-collab-chat-description-banner__container {
+	position: relative;
+	width: 100%;
+	margin-bottom: 36px;
+	padding: 18px;
+	border-radius: 10px;
+	border: 1px solid var(--ui-color-accent-soft-blue-1);
+	background: linear-gradient(90deg, var(--ui-color-blue-15) 65%, var(--ui-color-blue-30) 75%, var(--ui-color-blue-25) 90%);
+}
+
+.bx-im-create-collab-chat-description-banner__container::after {
+	content: '';
+	position: absolute;
+	width: 189px;
+	height: 100%;
+	top: 0;
+	right: 0;
+	background-image: url('./images/chat.png?v2');
+	background-size: cover;
+	background-repeat: no-repeat;
+	pointer-events: none;
+}
+
+.bx-im-create-collab-chat-description-banner__title {
+	margin-bottom: 4px;
+	font: var(--im-font-size-lg)/20px var(--im-font-family-system);
+	font-weight: var(--im-font-weight-medium);
+	color: var(--ui-color-base-1);
+}
+
+.bx-im-create-collab-chat-description-banner__text {
+	max-width: 60%;
+	font: var(--im-font-size-sm)/17px var(--im-font-family-system);
+	color: var(--ui-color-base-2);
+	white-space: pre-line;
+}
+
+.bx-im-create-collab-chat-description-banner__close {
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+	--ui-icon-set__icon-size: 18px;
+
+	position: absolute;
+	right: 8px;
+	top: 8px;
+	cursor: pointer;
+}

@@ -2,15 +2,13 @@ import {DialoguesMessengerModel, DialoguesModelActions, DialoguesModelMutation} 
 import {ApplicationModelActions, ApplicationModelMutation} from "../../model/application/src/types";
 import {FilesModelActions, FilesModelMutation} from "../../model/files/src/types";
 import {MessagesMessengerModel, MessagesModelActions, MessagesModelMutation} from "../../model/messages/src/types/messages";
-import {RecentMessengerModel, RecentModelActions, RecentModelMutation} from "../../model/recent/src/types";
+import {RecentMessengerModel, RecentModelActions, RecentModelActionParams, RecentModelMutation} from "../../model/recent/src/types";
 import {UsersModel, UsersModelActions, UsersModelMutation} from "../../model/users/src/types";
 import {DraftModelActions, DraftModelMutation} from "../../model/draft/src/types";
 import {ReactionsModelActions, ReactionsModelMutation} from "../../model/messages/src/reactions/types";
 import {SidebarModelActions, SidebarModelMutation} from "../../model/sidebar/src/types";
 import {
 	RecentSearchModel,
-	RecentSearchModelActions,
-	RecentSearchModelMutation
 } from "../../model/recent/src/search/types";
 import {QueueModelActions, QueueModelMutation} from "../../model/queue/src/types";
 import {PinModelActions, PinModelMutation} from "../../model/messages/src/pin/types";
@@ -32,10 +30,12 @@ import { PlaybackModelActions, PlaybackModelMutation } from "../../model/message
 import { StickerPackActionParams, StickerPackActions, StickerPackMutation } from "../../model/sticker-pack/src/types";
 import { OpenlinesModelActions, OpenlinesModelMutation } from "../../model/dialogues/src/openlines/type";
 import {
+	RecentFilteredMessengerModel,
 	RecentFilteredModelActionParams,
 	RecentFilteredModelActions,
 	RecentFilteredModelMutation
 } from "../../model/recent/src/filter/types";
+import {BuilderMessengerModelActions, BuilderMessengerModelMutation} from "../../model/messages/src/builder/types";
 
 export type MessengerStoreActions =
 	FilesModelActions
@@ -48,7 +48,6 @@ export type MessengerStoreActions =
 	| ReactionsModelActions
 	| PlaybackModelActions
 	| SidebarModelActions
-	| RecentSearchModelActions
 	| QueueModelActions
 	| PinModelActions
 	| CommentModelActions
@@ -63,6 +62,7 @@ export type MessengerStoreActions =
 	| OpenlinesModelActions
 	| StickerPackActions
 	| RecentFilteredModelActions
+	| BuilderMessengerModelActions
 
 export type MessengerStoreMutation =
 	ApplicationModelMutation
@@ -75,7 +75,6 @@ export type MessengerStoreMutation =
 	| PlaybackModelMutation
 	| ReactionsModelMutation
 	| SidebarModelMutation
-	| RecentSearchModelMutation
 	| QueueModelMutation
 	| PinModelMutation
 	| CommentModelMutation
@@ -90,11 +89,13 @@ export type MessengerStoreMutation =
 	| OpenlinesModelMutation
 	| StickerPackMutation
 	| RecentFilteredModelMutation
+	| BuilderMessengerModelMutation
 
 export type AllActionParams =
 	StickerPackActionParams
 	& AnchorModelActionParams
 	& RecentFilteredModelActionParams
+	& RecentModelActionParams
 ;
 
 export type ParamsForAction<T extends MessengerStoreActions> =
@@ -110,7 +111,7 @@ type MessengerCoreStore = {
 		commentModel: ReturnType<CommentMessengerModel['state']>,
 		dialoguesModel: ReturnType<DialoguesMessengerModel['state']>,
 		recentModel: ReturnType<RecentMessengerModel['state']>
-			& { searchModel: ReturnType<RecentSearchModel['state']> }
+			& { recentFilteredModel: ReturnType<RecentFilteredMessengerModel['state']> }
 		,
 		usersModel: ReturnType<UsersModel['state']>,
 		anchorModel: ReturnType<AnchorMessengerModel['state']>,

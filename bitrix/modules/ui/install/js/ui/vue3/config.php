@@ -1,4 +1,4 @@
-<?
+<?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -12,7 +12,6 @@ if (
 	$js = './vue/dev/dist/vue.bundle.js';
 	$rel = [
 		'main.core',
-		'main.core.events',
 		'ui.vue3.bitrixvue',
 		'ui.vue3.devtools',
 	];
@@ -25,7 +24,6 @@ else
 	$js = './vue/prod/dist/vue.bundle.js';
 	$rel = [
 		'main.core',
-		'main.core.events',
 		'ui.vue3.bitrixvue',
 	];
 	$settings = [];

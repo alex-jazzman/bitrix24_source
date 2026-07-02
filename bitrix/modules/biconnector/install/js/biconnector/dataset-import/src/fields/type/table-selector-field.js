@@ -1,7 +1,7 @@
 import { Dom } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { EventEmitter } from 'main.core.events';
 import { BaseField } from './base-field';
-import { TagSelector, Dialog } from 'ui.entity-selector';
+import { TagSelector } from 'ui.entity-selector';
 import { BIcon, Set } from 'ui.icon-set.api.vue';
 import { hint } from 'ui.vue3.directives.hint';
 import '../../css/entity-selector-field.css';
@@ -112,16 +112,8 @@ export const TableSelectorField = {
 
 			return {
 				text: this.$Bitrix.Loc.getMessage(hintCode),
-				popupOptions: {
-					bindOptions: {
-						position: 'top',
-					},
-					offsetTop: -10,
-					angle: {
-						position: 'top',
-						offset: 34,
-					},
-				},
+				position: 'top',
+				icon: true,
 			};
 		},
 	},

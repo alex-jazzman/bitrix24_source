@@ -15,6 +15,7 @@ jn.define('im/messenger/provider/services/connection/service', (require, exports
 	const STATUS_CHANGED_EVENT = 'statusChanged';
 
 	/**
+	 * @implements {Unsubscribable}
 	 * @class ConnectionService
 	 */
 	class ConnectionService
@@ -29,19 +30,25 @@ jn.define('im/messenger/provider/services/connection/service', (require, exports
 			this.eventEmitter = new JNEventEmitter();
 			this.handleStatusChanged = this.statusChangedHandler.bind(this);
 
+			this.subscribeEvents();
+		}
+
+		subscribeEvents()
+		{
 			if (Type.isFunction(this.device.getConnectionStatus))
 			{
 				this.device.on(DEVICE_CONNECTION_STATUS_CHANGED_EVENT, this.handleStatusChanged);
 			}
 		}
 
-		destructor()
+		unsubscribeEvents()
 		{
 			if (Type.isFunction(this.device.getConnectionStatus))
 			{
 				this.device.off(DEVICE_CONNECTION_STATUS_CHANGED_EVENT, this.handleStatusChanged);
 			}
 		}
+
 
 		/**
 		 * @return {boolean}

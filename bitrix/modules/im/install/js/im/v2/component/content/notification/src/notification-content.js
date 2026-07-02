@@ -1,31 +1,29 @@
+import { Dom, Event, Runtime, Type, type JsonObject } from 'main.core';
+import { type BaseEvent, EventEmitter } from 'main.core.events';
 import 'main.polyfill.intersectionobserver';
-import { Dom, Event, Runtime, Type } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { type BitrixVueComponentProps } from 'ui.vue3';
 import { mapState } from 'ui.vue3.vuex';
 
-import { Logger } from 'im.v2.lib.logger';
-import { NotificationTypesCodes, Settings } from 'im.v2.const';
-import { NotificationService } from 'im.v2.provider.service.notification';
-import { UserListPopup } from 'im.v2.component.elements.user-list-popup';
 import { Loader } from 'im.v2.component.elements.loader';
-import { Utils } from 'im.v2.lib.utils';
-import { SpecialBackground, ThemeManager, type BackgroundStyle } from 'im.v2.lib.theme';
+import { UserListPopup } from 'im.v2.component.elements.user-list-popup';
+import { NotificationTypesCodes, Settings } from 'im.v2.const';
 import { CounterManager } from 'im.v2.lib.counter';
+import { Logger } from 'im.v2.lib.logger';
+import { SpecialBackground, ThemeManager, type BackgroundStyle } from 'im.v2.lib.theme';
+import { Utils } from 'im.v2.lib.utils';
+import { type ImModelNotification } from 'im.v2.model';
+import { NotificationService } from 'im.v2.provider.service.notification';
 
 import { NotificationHeaderMenu } from './classes/notification-header-menu';
 import { NotificationMenu } from './classes/notification-menu';
+import { NotificationReadService } from './classes/notification-read-service';
+import { NotificationSearchService } from './classes/notification-search-service';
 import { NotificationComponents } from './components';
 import { ItemPlaceholder } from './components/elements/placeholder';
 import { ScrollButton } from './components/elements/scroll-button';
 import { NotificationFilter } from './filter/notification-filter';
-import { NotificationSearchService } from './classes/notification-search-service';
-import { NotificationReadService } from './classes/notification-read-service';
 
 import './css/notification-content.css';
-
-import type { JsonObject } from 'main.core';
-import type { ImModelNotification } from 'im.v2.model';
-import type { BitrixVueComponentProps } from 'ui.vue3';
 
 // @vue/component
 export const NotificationContent = {

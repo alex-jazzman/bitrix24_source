@@ -364,8 +364,15 @@ export const Results = {
 			this.showCreatorResultHint = true;
 			this.highlightField();
 		},
-		showResponsibleHint(): void
+		showResponsibleHint(event: BaseEvent): void
 		{
+			const { taskId } = event.getData();
+
+			if (this.taskId !== taskId)
+			{
+				return;
+			}
+
 			this.showResponsibleResultHint = true;
 			this.highlightField();
 		},

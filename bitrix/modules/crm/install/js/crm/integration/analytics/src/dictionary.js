@@ -53,6 +53,7 @@ export const Dictionary = Object.freeze({
 	EVENT_WA_DELETE: 'wa_delete',
 
 	EVENT_CONNECT: 'connect',
+	EVENT_INVITE: 'invite',
 	EVENT_VIEW: 'view',
 	EVENT_EDIT: 'edit',
 	EVENT_SEND: 'send',
@@ -212,6 +213,7 @@ export const Dictionary = Object.freeze({
 	ELEMENT_ELEMENT_ADD: 'element_add',
 	ELEMENT_AHA_MOMENT: 'aha_moment',
 	ELEMENT_INFO_BUTTON: 'info_button',
+	ELEMENT_GOTOCHAT: 'gotochat',
 	// endregion
 
 	// region Status const

@@ -7,6 +7,7 @@ jn.define('im/messenger/const/message-menu-action-type', (require, exports, modu
 		reply: 'reply',
 		copy: 'copy',
 		copyLink: 'copy-link',
+		mark: 'mark',
 		pin: 'pin',
 		unpin: 'unpin',
 		forward: 'forward',
@@ -16,6 +17,8 @@ jn.define('im/messenger/const/message-menu-action-type', (require, exports, modu
 		downloadToDisk: 'download-to-disk',
 		downloadToDevice: 'download-to-device',
 		create: 'create',
+		createTask: 'createTask',
+		createEvent: 'createEvent',
 		feedback: 'feedback',
 		subscribe: 'subscribe',
 		unsubscribe: 'unsubscribe',
@@ -26,6 +29,7 @@ jn.define('im/messenger/const/message-menu-action-type', (require, exports, modu
 		openVoteResult: 'open-vote-result',
 		goToMessage: 'go-to-message',
 		askCopilot: 'ask-copilot',
+		more: 'more',
 	});
 
 	module.exports = { MessageMenuActionType };

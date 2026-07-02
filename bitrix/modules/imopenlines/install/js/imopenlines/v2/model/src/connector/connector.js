@@ -1,10 +1,9 @@
-import { BuilderModel } from 'ui.vue3.vuex';
+import { BuilderModel, type ActionTree, type GetterTree, type MutationTree } from 'ui.vue3.vuex';
 
-import type { ActionTree, GetterTree, MutationTree } from 'ui.vue3.vuex';
-import type { RawConnector } from 'imopenlines.v2.provider.service';
+import { type ImolModelConnector } from 'imopenlines.v2.model';
 
 type ConnectorState = {
-	collection: { [dialogId: string]: RawConnector }
+	collection: { [dialogId: string]: ImolModelConnector }
 }
 
 /* eslint-disable no-param-reassign */
@@ -22,7 +21,7 @@ export class ConnectorModel extends BuilderModel
 		};
 	}
 
-	getElementState(): RawConnector
+	getElementState(): ImolModelConnector
 	{
 		return {
 			connectorId: '',
@@ -35,8 +34,8 @@ export class ConnectorModel extends BuilderModel
 	getGetters(): GetterTree<ConnectorState>
 	{
 		return {
-			/** @function openlines/connector/getByDialogId */
-			getByDialogId: (state: ConnectorState) => (dialogId: string): ?RawConnector => {
+			/** @function openLines/connector/getByDialogId */
+			getByDialogId: (state: ConnectorState) => (dialogId: string): ?ImolModelConnector => {
 				return state.collection[dialogId] || null;
 			},
 		};
@@ -45,8 +44,8 @@ export class ConnectorModel extends BuilderModel
 	getActions(): ActionTree<ConnectorState>
 	{
 		return {
-			/** @function openlines/connector/set */
-			set: (store, payload: { dialogId: string, data: RawConnector }) => {
+			/** @function openLines/connector/set */
+			set: (store, payload: { dialogId: string, data: ImolModelConnector }) => {
 				if (!payload.data)
 				{
 					return;
@@ -59,7 +58,7 @@ export class ConnectorModel extends BuilderModel
 	getMutations(): MutationTree<ConnectorState>
 	{
 		return {
-			set: (state: ConnectorState, payload: { dialogId: string, data: RawConnector }) => {
+			set: (state: ConnectorState, payload: { dialogId: string, data: ImolModelConnector }) => {
 				const { dialogId, data } = payload;
 				const currentElement = state.collection[dialogId] ?? this.getElementState();
 				state.collection[dialogId] = { ...currentElement, ...data };

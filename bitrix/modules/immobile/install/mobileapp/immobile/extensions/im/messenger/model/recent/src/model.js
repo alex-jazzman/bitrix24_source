@@ -4,12 +4,16 @@
  */
 jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 	const { Type } = require('type');
+	const { uniqBy } = require('utils/array');
 	const { Uuid } = require('utils/uuid');
 
 	const {
 		DialogType,
 		RecentTab,
+		RecentTabByNavigationTab,
+		NavigationTabByRecentTab,
 		NavigationTabId,
+		ROOT_PARENT_CHAT_ID,
 	} = require('im/messenger/const');
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
 	const { DialogHelper } = require('im/messenger/lib/helper');
@@ -23,56 +27,30 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 	const { getLogger } = require('im/messenger/lib/logger');
 	const logger = getLogger('model--recent');
 
-	const MutationSetCollectionIdByTab = {
-		[NavigationTabId.chats]: 'setChatIdCollection',
-		[NavigationTabId.copilot]: 'setCopilotIdCollection',
-		[NavigationTabId.channel]: 'setChannelIdCollection',
-		[NavigationTabId.collab]: 'setCollabIdCollection',
-		[NavigationTabId.task]: 'setTaskIdCollection',
-		[NavigationTabId.openlines]: 'setOpenlineIdCollection',
-	};
-
-	const MutationHideCollectionIdByTab = {
-		[NavigationTabId.chats]: 'deleteFromChatIdCollection',
-		[NavigationTabId.copilot]: 'deleteFromCopilotIdCollection',
-		[NavigationTabId.channel]: 'deleteFromChannelIdCollection',
-		[NavigationTabId.collab]: 'deleteFromCollabIdCollection',
-		[NavigationTabId.task]: 'deleteFromTaskIdCollection',
-		[NavigationTabId.openlines]: 'deleteOpenlineIdCollection',
-	};
-
-	const CollectionByTab = {
-		[NavigationTabId.chats]: 'chatIdCollection',
-		[NavigationTabId.copilot]: 'copilotIdCollection',
-		[NavigationTabId.channel]: 'channelIdCollection',
-		[NavigationTabId.collab]: 'collabIdCollection',
-		[NavigationTabId.task]: 'taskIdCollection',
-		[NavigationTabId.openlines]: 'openlineIdCollection',
-	};
-
-	// TODO: MessengerV2 move to helper
-	const NavigationTabByRecentTab = {
-		[RecentTab.chat]: NavigationTabId.chats,
-		[RecentTab.copilot]: NavigationTabId.copilot,
-		[RecentTab.collab]: NavigationTabId.collab,
-		[RecentTab.openChannel]: NavigationTabId.channel,
-		[RecentTab.tasksTask]: NavigationTabId.task,
-		[RecentTab.openlines]: NavigationTabId.openlines,
-	};
-
 	const FIRST_PAGE_SIZE = 50;
+
+	/**
+	 * Recent sections whose items must also be propagated to ROOT_PARENT_CHAT_ID
+	 * when written with parentChatId > ROOT_PARENT_CHAT_ID.
+	 * Add new RecentTab values here to enable propagation for them.
+	 *
+	 * Currently only tasksTask: nested task chats must appear both in the
+	 * nested navigation and in the global "Tasks" tab.
+	 * Other nested tabs (collabChat, calendar, collabDefault) are only
+	 * shown inside their parent collab's nested navigation.
+	 */
+	const SectionsWithTopLevelPropagation = new Set([
+		RecentTab.tasksTask,
+	]);
+
+	const RecentTabValues = new Set(Object.values(RecentTab));
 
 	/** @type {RecentMessengerModel} */
 	const recentModel = {
 		namespaced: true,
 		state: () => ({
 			collection: {},
-			chatIdCollection: new Set(),
-			copilotIdCollection: new Set(),
-			channelIdCollection: new Set(),
-			collabIdCollection: new Set(),
-			taskIdCollection: new Set(),
-			openlineIdCollection: new Set(),
+			nestedIdCollection: {},
 		}),
 		modules: {
 			recentFilteredModel,
@@ -81,13 +59,14 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			/**
 			 * @function recentModel/getIdCollection
 			 * @param {string} tabId
+			 * @param {number} [parentChatId]
 			 * @return {Set<string>}
 			 */
-			getIdCollection: (state, getters, rootState, rootGetters) => (tabId) => {
+			getIdCollection: (state, getters, rootState, rootGetters) => (tabId, parentChatId = ROOT_PARENT_CHAT_ID) => {
 				const hasSelectedFilter = rootGetters['recentModel/recentFilteredModel/hasSelectedFilter'](tabId);
 				if (!hasSelectedFilter)
 				{
-					const rawCollection = state[CollectionByTab[tabId]];
+					const rawCollection = getSectionSet(state, RecentTabByNavigationTab[tabId], parentChatId);
 
 					return rawCollection ? new Set(rawCollection) : new Set();
 				}
@@ -147,7 +126,7 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			 * @return {Array<RecentModelState>}
 			 */
 			getCopilotFirstPage: (state, getters) => () => {
-				return getters.getFirstPageByIdCollection(state.copilotIdCollection);
+				return getters.getFirstPageByIdCollection(getters.getCopilotIdCollection());
 			},
 
 			/**
@@ -163,7 +142,7 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			 * @return {Array<RecentModelState>}
 			 */
 			getCollabFirstPage: (state, getters) => () => {
-				return getters.getFirstPageByIdCollection(state.collabIdCollection);
+				return getters.getFirstPageByIdCollection(getters.getCollabIdCollection());
 			},
 
 			/**
@@ -179,7 +158,7 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			 * @return {Array<RecentModelState>}
 			 */
 			getChannelFirstPage: (state, getters) => () => {
-				return getters.getFirstPageByIdCollection(state.channelIdCollection, sortListByMessageDate);
+				return getters.getFirstPageByIdCollection(getters.getChannelIdCollection(), sortListByMessageDate);
 			},
 
 			/**
@@ -195,7 +174,7 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			 * @return {Array<RecentModelState>}
 			 */
 			getOpenlinesFirstPage: (state, getters) => () => {
-				return getters.getFirstPageByIdCollection(state.openlineIdCollection);
+				return getters.getFirstPageByIdCollection(getters.getOpenlinesIdCollection());
 			},
 
 			/**
@@ -241,7 +220,7 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			 * @return {Array<RecentModelState>}
 			 */
 			getChatCollection: (state, getters, rootState, rootGetters) => () => {
-				return [...state.chatIdCollection]
+				return [...(getSectionSet(state, RecentTab.chat) ?? [])]
 					.filter((dialogId) => {
 						return Type.isStringFilled(dialogId);
 					})
@@ -301,9 +280,12 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			 * @return {Array<string>} // value NavigationTabId properties
 			 */
 			getTabsContainsItem: (state) => (id) => {
-				return Object.entries(CollectionByTab)
-					.filter(([_, collectionKey]) => state[collectionKey]?.has(id))
-					.map(([tabId]) => tabId);
+				const topLevel = state.nestedIdCollection[ROOT_PARENT_CHAT_ID] ?? {};
+
+				return Object.entries(topLevel)
+					.filter(([, set]) => set?.has(id))
+					.map(([recentTab]) => NavigationTabByRecentTab[recentTab])
+					.filter(Boolean);
 			},
 
 			/**
@@ -311,7 +293,7 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			 * @return {number|null}
 			 */
 			getCollectionSizeByTabId: (state) => (tabId) => {
-				return state[CollectionByTab[tabId]]?.size;
+				return getSectionSet(state, RecentTabByNavigationTab[tabId])?.size;
 			},
 
 			/**
@@ -349,8 +331,8 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			 * @return {recentModelHasItemInTab}
 			 */
 			hasItemInTab: (state) => (dialogId, navigationTabId) => {
-				const collection = state[CollectionByTab[navigationTabId]];
-				if (!Type.isObject(collection))
+				const collection = getSectionSet(state, RecentTabByNavigationTab[navigationTabId]);
+				if (!collection)
 				{
 					logger.error('recentModel/hasItemInTab invalid navigationTabId', navigationTabId);
 
@@ -379,6 +361,12 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 
 				const hasBirthday = rootGetters['usersModel/hasBirthday'](dialogId);
 				if (!hasBirthday)
+				{
+					return false;
+				}
+
+				const hasVacation = rootGetters['usersModel/hasVacation'](dialogId);
+				if (hasVacation)
 				{
 					return false;
 				}
@@ -432,10 +420,11 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 		actions: {
 			/**
 			 * @function recentModel/syncFilteredIdCollection
-			 * @param {string} payload.tabId
+			 * @param {MessengerStore<RecentMessengerModel>} store
+			 * @param {RecentModelActionParams['recentModel/syncFilteredIdCollection']} payload
 			 */
 			syncFilteredIdCollection: async (store, payload) => {
-				const { tabId } = payload;
+				const { tabId, parentChatId = ROOT_PARENT_CHAT_ID } = payload;
 				const hasTab = store.getters['recentFilteredModel/hasNavigationTabId'](tabId);
 				const hasSelectedFilter = store.getters['recentFilteredModel/hasSelectedFilter'](tabId);
 				if (!hasTab || !hasSelectedFilter)
@@ -443,11 +432,11 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 					return;
 				}
 
-				const baseIds = store.state[CollectionByTab[tabId]] || new Set();
+				const baseIds = getSectionSet(store.state, RecentTabByNavigationTab[tabId], parentChatId) || new Set();
 				const currentFilterId = store.getters['recentFilteredModel/getCurrentFilterId'](tabId);
 				const rootGetters = store.rootGetters;
 				const resolver = filterResolvers[currentFilterId];
-				const filteredIds = resolver ? resolver(tabId, baseIds, rootGetters) : baseIds;
+				const filteredIds = resolver ? resolver(tabId, baseIds, rootGetters, parentChatId) : baseIds;
 
 				await store.dispatch('recentFilteredModel/setIdCollection', {
 					tabId,
@@ -455,117 +444,229 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 				});
 			},
 
-			/** @function recentModel/setChat */
+			/**
+			 * @function recentModel/setChat
+			 * @param {MessengerStore<RecentMessengerModel>} store
+			 * @param {RecentModelActionParams['recentModel/setChat']} payload
+			 */
 			setChat: async (store, payload) => {
 				const { itemList } = ModelUtils.normalizeItemListPayload(payload);
 				const itemIds = itemList.map((item) => String(item.id || item.dialogId));
 
-				store.commit('setChatIdCollection', {
+				store.commit('setNestedIdCollection', {
 					actionName: 'setChat',
 					data: {
+						recentSection: RecentTab.chat,
 						itemIds,
+						parentChatId: payload.parentChatId ?? ROOT_PARENT_CHAT_ID,
 					},
 				});
 
 				await store.dispatch('set', payload);
 			},
 
-			/** @function recentModel/setCopilot */
+			/**
+			 * @function recentModel/setCopilot
+			 * @param {MessengerStore<RecentMessengerModel>} store
+			 * @param {RecentModelActionParams['recentModel/setCopilot']} payload
+			 */
 			setCopilot: async (store, payload) => {
 				const { itemList } = ModelUtils.normalizeItemListPayload(payload);
 				const itemIds = itemList.map((item) => String(item.id || item.dialogId));
-				store.commit('setCopilotIdCollection', {
+
+				store.commit('setNestedIdCollection', {
 					actionName: 'setCopilot',
 					data: {
+						recentSection: RecentTab.copilot,
 						itemIds,
+						parentChatId: payload.parentChatId ?? ROOT_PARENT_CHAT_ID,
 					},
 				});
 
 				await store.dispatch('set', payload);
 			},
 
-			/** @function recentModel/setChannel */
+			/**
+			 * @function recentModel/setChannel
+			 * @param {MessengerStore<RecentMessengerModel>} store
+			 * @param {RecentModelActionParams['recentModel/setChannel']} payload
+			 */
 			setChannel: async (store, payload) => {
 				const { itemList } = ModelUtils.normalizeItemListPayload(payload);
 				const itemIds = itemList.map((item) => String(item.id || item.dialogId));
-				store.commit('setChannelIdCollection', {
+
+				store.commit('setNestedIdCollection', {
 					actionName: 'setChannel',
 					data: {
+						recentSection: RecentTab.openChannel,
 						itemIds,
+						parentChatId: payload.parentChatId ?? ROOT_PARENT_CHAT_ID,
 					},
 				});
 
 				await store.dispatch('set', payload);
 			},
 
-			/** @function recentModel/setCollab */
+			/**
+			 * @function recentModel/setCollab
+			 * @param {MessengerStore<RecentMessengerModel>} store
+			 * @param {RecentModelActionParams['recentModel/setCollab']} payload
+			 */
 			setCollab: async (store, payload) => {
 				const { itemList } = ModelUtils.normalizeItemListPayload(payload);
 				const itemIds = itemList.map((item) => String(item.id || item.dialogId));
-				store.commit('setCollabIdCollection', {
+
+				store.commit('setNestedIdCollection', {
 					actionName: 'setCollab',
 					data: {
+						recentSection: RecentTab.collab,
 						itemIds,
+						parentChatId: payload.parentChatId ?? ROOT_PARENT_CHAT_ID,
 					},
 				});
 
 				await store.dispatch('set', payload);
 			},
 
-			/** @function recentModel/setTask */
+			/**
+			 * @function recentModel/setTask
+			 * @param {MessengerStore<RecentMessengerModel>} store
+			 * @param {RecentModelActionParams['recentModel/setTask']} payload
+			 */
 			setTask: async (store, payload) => {
 				const { itemList } = ModelUtils.normalizeItemListPayload(payload);
 				const itemIds = itemList.map((item) => String(item.id || item.dialogId));
+				const parentChatId = payload.parentChatId ?? ROOT_PARENT_CHAT_ID;
 
-				store.commit('setTaskIdCollection', {
+				store.commit('setNestedIdCollection', {
 					actionName: 'setTask',
 					data: {
+						recentSection: RecentTab.tasksTask,
 						itemIds,
+						parentChatId,
 					},
 				});
+
+				propagateToTopLevelIfNeeded(store, RecentTab.tasksTask, itemIds, parentChatId, 'setTask');
 
 				await store.dispatch('set', payload);
 			},
 
-			/** @function recentModel/setOpenline */
+			/**
+			 * @function recentModel/setOpenline
+			 * @param {MessengerStore<RecentMessengerModel>} store
+			 * @param {RecentModelActionParams['recentModel/setOpenline']} payload
+			 */
 			setOpenline: async (store, payload) => {
 				const { itemList } = ModelUtils.normalizeItemListPayload(payload);
 				const itemIds = itemList.map((item) => String(item.id || item.dialogId));
-				store.commit('setOpenlineIdCollection', {
+
+				store.commit('setNestedIdCollection', {
 					actionName: 'setOpenline',
 					data: {
+						recentSection: RecentTab.openlines,
 						itemIds,
+						parentChatId: payload.parentChatId ?? ROOT_PARENT_CHAT_ID,
 					},
 				});
 
 				await store.dispatch('set', payload);
 			},
 
-			/** @function recentModel/setFirstPageByTab */
-			setFirstPageByTab: async (store, payload) => {
-				const { tab, itemList } = payload;
-				const navTab = getNavigationTabId(tab);
+			/**
+			 * @function recentModel/setFirstPageByRecentSection
+			 * @param {MessengerStore<RecentMessengerModel>} store
+			 * @param {RecentModelActionParams['recentModel/setFirstPageByRecentSection']} payload
+			 */
+			setFirstPageByRecentSection: async (store, payload) => {
+				const { recentSection, itemList } = payload;
 				const itemIds = itemList.map((item) => String(item.id || item.dialogId));
-				if (!CollectionByTab[navTab])
+				if (!recentSection)
+				{
+					logger.error('RecentModel.setFirstPageByRecentSection unknown recentSection:', recentSection);
+
+					return;
+				}
+
+				const actionName = 'setFirstPageByTab';
+				const parentChatId = payload.parentChatId ?? ROOT_PARENT_CHAT_ID;
+				await store.dispatch('set', { itemList, actionName });
+
+				const navTab = NavigationTabByRecentTab[recentSection];
+				const hasActiveFilter = navTab
+					&& store.rootGetters['recentModel/recentFilteredModel/hasSelectedFilter'](navTab);
+				const commitName = hasActiveFilter ? 'setNestedIdCollection' : 'storeNestedIdCollection';
+
+				store.commit(commitName, {
+					actionName,
+					data: {
+						recentSection,
+						itemIds,
+						parentChatId,
+					},
+				});
+
+				propagateToTopLevelIfNeeded(store, recentSection, itemIds, parentChatId, actionName);
+			},
+
+			/**
+			 * @function recentModel/setByRecentSection
+			 * @param {MessengerStore<RecentMessengerModel>} store
+			 * @param {RecentModelActionParams['recentModel/setByRecentSection']} payload
+			 */
+			setByRecentSection: async (store, payload) => {
+				const { recentSection, itemList, parentChatId = ROOT_PARENT_CHAT_ID } = payload;
+				const itemIds = itemList.map((item) => String(item.id || item.dialogId));
+				if (!recentSection)
+				{
+					logger.error('RecentModel.setByRecentSection unknown recentSection:', recentSection);
+
+					return;
+				}
+
+				const actionName = 'setByRecentSection';
+
+				store.commit('setNestedIdCollection', {
+					actionName,
+					data: {
+						recentSection,
+						itemIds,
+						parentChatId,
+					},
+				});
+
+				propagateToTopLevelIfNeeded(store, recentSection, itemIds, parentChatId, actionName);
+
+				await store.dispatch('set', { itemList, actionName });
+			},
+
+			/**
+			 * @function recentModel/setFirstPageByTab
+			 * @param {MessengerStore<RecentMessengerModel>} store
+			 * @param {RecentModelActionParams['recentModel/setFirstPageByTab']} payload
+			 */
+			setFirstPageByTab: async (store, payload) => {
+				const { tab } = payload;
+				const navTab = getNavigationTabId(tab);
+				const recentSection = RecentTabByNavigationTab[navTab];
+				if (!recentSection)
 				{
 					logger.error('RecentModel.setFirstPageByTab unknown tab:', navTab);
 
 					return;
 				}
 
-				const actionName = 'setFirstPageByTab';
-				await store.dispatch('set', { itemList, actionName });
-
-				store.commit('storeIdCollection', {
-					actionName,
-					data: {
-						tab: navTab,
-						itemIds,
-					},
+				await store.dispatch('setFirstPageByRecentSection', {
+					...payload,
+					recentSection,
 				});
 			},
 
-			/** @function recentModel/setByNavigationTabs */
+			/**
+			 * @function recentModel/setByNavigationTabs
+			 * @param {MessengerStore<RecentMessengerModel>} store
+			 * @param {RecentModelActionParams['recentModel/setByNavigationTabs']} payload
+			 */
 			setByNavigationTabs: async (store, payload) => {
 				const {
 					tabs,
@@ -584,30 +685,40 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 				}
 				const itemIds = itemList.map((item) => String(item.id || item.dialogId));
 
+				const parentChatId = payload.parentChatId ?? ROOT_PARENT_CHAT_ID;
+
 				tabs.forEach((tab) => {
-					const mutation = MutationSetCollectionIdByTab[tab];
-					if (!mutation)
+					const recentSection = RecentTabByNavigationTab[tab];
+					if (!recentSection)
 					{
-						logger.error('RecentModel.setByRecentConfigTabs invalid tab:', tab);
+						logger.error('RecentModel.setByNavigationTabs invalid tab:', tab);
 
 						return;
 					}
 
-					store.commit(mutation, {
+					store.commit('setNestedIdCollection', {
 						actionName,
 						data: {
+							recentSection,
 							itemIds,
+							parentChatId,
 						},
 					});
+
+					propagateToTopLevelIfNeeded(store, recentSection, itemIds, parentChatId, actionName);
 				});
 
-				await store.dispatch('set', [...new Set(itemList)]);
+				await store.dispatch('set', uniqBy(itemList, 'id'));
 			},
 
-			/** @function recentModel/setByRecentConfigTabs */
+			/**
+			 * @function recentModel/setByRecentConfigTabs
+			 * @param {MessengerStore<RecentMessengerModel>} store
+			 * @param {RecentModelActionParams['recentModel/setByRecentConfigTabs']} payload
+			 */
 			setByRecentConfigTabs: async (store, payload) => {
-				const tabs = payload.tabs;
-				if (!Type.isArrayFilled(tabs))
+				const sections = payload.sections;
+				if (!Type.isArrayFilled(sections))
 				{
 					return;
 				}
@@ -618,14 +729,99 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 					itemList = [itemList];
 				}
 
-				await store.dispatch('setByNavigationTabs', {
-					tabs: tabs.map((tab) => getNavigationTabId(tab)),
-					itemList,
-					actionName: 'setByRecentConfigTabs',
+				const itemIds = itemList.map((item) => String(item.id || item.dialogId));
+				const parentChatId = payload.parentChatId ?? ROOT_PARENT_CHAT_ID;
+
+				sections.forEach((recentSection) => {
+					if (!RecentTabValues.has(recentSection))
+					{
+						logger.error('RecentModel.setByRecentConfigTabs invalid section:', recentSection);
+
+						return;
+					}
+
+					store.commit('setNestedIdCollection', {
+						actionName: 'setByRecentConfigTabs',
+						data: {
+							recentSection,
+							itemIds,
+							parentChatId,
+						},
+					});
+
+					propagateToTopLevelIfNeeded(store, recentSection, itemIds, parentChatId, 'setByRecentConfigTabs');
 				});
+
+				await store.dispatch('set', [...new Set(itemList)]);
 			},
 
-			/** @function recentModel/setGroupCollection */
+			/**
+			 * @function recentModel/setByRecentConfigTabsBatch
+			 * @param {MessengerStore<RecentMessengerModel>} store
+			 * @param {RecentModelActionParams['recentModel/setByRecentConfigTabsBatch']} payload
+			 */
+			setByRecentConfigTabsBatch: async (store, payload) => {
+				const { items } = payload;
+				if (!Type.isArrayFilled(items))
+				{
+					return;
+				}
+
+				const allItems = [];
+
+				for (const entry of items)
+				{
+					const { sections, parentChatId: rawParentChatId } = entry;
+					if (!Type.isArrayFilled(sections))
+					{
+						continue;
+					}
+
+					let itemList = entry.itemList;
+					if (!Type.isArray(itemList))
+					{
+						itemList = [itemList];
+					}
+
+					const itemIds = itemList.map((item) => String(item.id || item.dialogId));
+					const parentChatId = rawParentChatId ?? ROOT_PARENT_CHAT_ID;
+
+					sections.forEach((recentSection) => {
+						if (!RecentTabValues.has(recentSection))
+						{
+							logger.error('RecentModel.setByRecentConfigTabsBatch invalid section:', recentSection);
+
+							return;
+						}
+
+						store.commit('setNestedIdCollection', {
+							actionName: 'setByRecentConfigTabs',
+							data: {
+								recentSection,
+								itemIds,
+								parentChatId,
+							},
+						});
+
+						propagateToTopLevelIfNeeded(store, recentSection, itemIds, parentChatId, 'setByRecentConfigTabs');
+					});
+
+					allItems.push(...itemList);
+				}
+
+				if (!Type.isArrayFilled(allItems))
+				{
+					return;
+				}
+
+				await store.dispatch('set', [...new Set(allItems)]);
+			},
+
+			/**
+			 * @function recentModel/setGroupCollection
+			 * @param {MessengerStore<RecentMessengerModel>} store
+			 * @param {RecentModelActionParams['recentModel/setGroupCollection']} payload
+			 */
 			setGroupCollection: async (store, payload) => {
 				const groups = payload.groups;
 				const tabs = Object.keys(groups);
@@ -637,7 +833,6 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 				const itemList = [];
 				tabs.forEach((tab) => {
 					const navTab = getNavigationTabId(tab);
-					const mutation = MutationSetCollectionIdByTab[navTab];
 					const items = groups[tab];
 					if (!Type.isArrayFilled(items))
 					{
@@ -646,7 +841,8 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 						return;
 					}
 
-					if (!mutation)
+					const recentSection = RecentTabByNavigationTab[navTab];
+					if (!recentSection)
 					{
 						logger.error('RecentModel.setGroupCollection invalid tab:', tab);
 
@@ -655,13 +851,18 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 
 					itemList.push(...items);
 					const itemIds = items.map((item) => String(item.id || item.dialogId));
+					const parentChatId = payload.parentChatId ?? ROOT_PARENT_CHAT_ID;
 
-					store.commit(mutation, {
+					store.commit('setNestedIdCollection', {
 						actionName: 'setGroupCollection',
 						data: {
+							recentSection,
 							itemIds,
+							parentChatId,
 						},
 					});
+
+					propagateToTopLevelIfNeeded(store, recentSection, itemIds, parentChatId, 'setGroupCollection');
 				});
 
 				if (!Type.isArrayFilled(itemList))
@@ -669,10 +870,14 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 					return;
 				}
 
-				await store.dispatch('set', [...new Set(itemList)]);
+				await store.dispatch('set', uniqBy(itemList, 'id'));
 			},
 
-			/** @function recentModel/set */
+			/**
+			 * @function recentModel/set
+			 * @param {MessengerStore<RecentMessengerModel>} store
+			 * @param {RecentModelActionParams['recentModel/set']} payload
+			 */
 			set: (store, payload) => {
 				/**
 				 * @type {Array<RecentModelState>}
@@ -714,7 +919,11 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 				}
 			},
 
-			/** @function recentModel/delete */
+			/**
+			 * @function recentModel/delete
+			 * @param {MessengerStore<RecentMessengerModel>} store
+			 * @param {RecentModelActionParams['recentModel/delete']} payload
+			 */
 			delete: (store, payload) => {
 				const existingItem = store.state.collection[payload.id];
 				if (!existingItem)
@@ -723,12 +932,7 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 				}
 				const actionName = payload.actionName || 'delete';
 
-				store.commit('deleteFromChatIdCollection', { data: { id: existingItem.id }, actionName });
-				store.commit('deleteFromCopilotIdCollection', { data: { id: existingItem.id }, actionName });
-				store.commit('deleteFromChannelIdCollection', { data: { id: existingItem.id }, actionName });
-				store.commit('deleteFromCollabIdCollection', { data: { id: existingItem.id }, actionName });
-				store.commit('deleteFromTaskIdCollection', { data: { id: existingItem.id }, actionName });
-				store.commit('deleteOpenlineIdCollection', { data: { id: existingItem.id }, actionName });
+				store.commit('deleteIdFromNestedIdCollection', { data: { id: existingItem.id }, actionName });
 
 				store.commit('delete', {
 					actionName,
@@ -738,7 +942,11 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 				});
 			},
 
-			/** @function recentModel/deleteFromModel */
+			/**
+			 * @function recentModel/deleteFromModel
+			 * @param {MessengerStore<RecentMessengerModel>} store
+			 * @param {RecentModelActionParams['recentModel/deleteFromModel']} payload
+			 */
 			deleteFromModel: async (store, payload) => {
 				const existingItem = store.state.collection[payload.id];
 				if (!existingItem)
@@ -750,7 +958,11 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 				await store.dispatch('delete', { id: existingItem.id, actionName });
 			},
 
-			/** @function recentModel/deleteOpenChannel */
+			/**
+			 * @function recentModel/deleteOpenChannel
+			 * @param {MessengerStore<RecentMessengerModel>} store
+			 * @param {RecentModelActionParams['recentModel/deleteOpenChannel']} payload
+			 */
 			deleteOpenChannel: (store, payload) => {
 				const existingItem = store.state.collection[payload.id];
 				if (!existingItem)
@@ -759,14 +971,25 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 				}
 				const actionName = payload.actionName || 'deleteOpenChannel';
 
-				store.commit('deleteFromChatIdCollection', { data: { id: existingItem.id }, actionName });
+				store.commit('deleteFromNestedIdCollection', {
+					data: {
+						recentSection: RecentTab.chat,
+						id: existingItem.id,
+						parentChatId: payload.parentChatId ?? ROOT_PARENT_CHAT_ID,
+					},
+					actionName,
+				});
 			},
 
-			/** @function recentModel/hideByNavigationTabs */
+			/**
+			 * @function recentModel/hideByNavigationTabs
+			 * @param {MessengerStore<RecentMessengerModel>} store
+			 * @param {RecentModelActionParams['recentModel/hideByNavigationTabs']} payload
+			 */
 			hideByNavigationTabs: (store, payload) => {
 				const {
 					id,
-					fromTabs, // TODO fromTabs
+					fromTabs,
 					actionName = 'hideByNavigationTabs',
 				} = payload;
 				const existingItem = store.state.collection[id];
@@ -781,45 +1004,75 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 				}
 
 				fromTabs.forEach((tabId) => {
-					const mutation = MutationHideCollectionIdByTab[tabId];
-					if (!Type.isStringFilled(mutation))
+					const recentSection = RecentTabByNavigationTab[tabId];
+					if (!recentSection)
 					{
 						logger.log(`hide action. unknown tabId: ${tabId}. skip `, tabId);
 
 						return;
 					}
 
-					store.commit(mutation, {
+					const parentChatId = payload.parentChatId ?? ROOT_PARENT_CHAT_ID;
+
+					store.commit('deleteFromNestedIdCollection', {
 						actionName,
 						data: {
+							recentSection,
 							id,
+							parentChatId,
 						},
 					});
+
+					hideFromTopLevelIfNeeded(store, recentSection, id, parentChatId, actionName);
 				});
 			},
 
-			/** @function recentModel/hideByRecentConfigTabs */
-			hideByRecentConfigTabs: async (store, payload) => {
-				const { id, fromTabs } = payload;
+			/**
+			 * @function recentModel/hideByRecentConfigTabs
+			 * @param {MessengerStore<RecentMessengerModel>} store
+			 * @param {RecentModelActionParams['recentModel/hideByRecentConfigTabs']} payload
+			 */
+			hideByRecentConfigTabs: (store, payload) => {
+				const { id, fromSections } = payload;
 				const existingItem = store.state.collection[id];
 				if (!existingItem)
 				{
 					return;
 				}
 
-				if (!Type.isArrayFilled(fromTabs))
+				if (!Type.isArrayFilled(fromSections))
 				{
 					return;
 				}
 
-				await store.dispatch('hideByNavigationTabs', {
-					id,
-					actionName: 'hideByRecentConfigTabs',
-					fromCollections: fromTabs.map((tabId) => getNavigationTabId(tabId)),
+				const parentChatId = payload.parentChatId ?? ROOT_PARENT_CHAT_ID;
+
+				fromSections.forEach((recentSection) => {
+					if (!RecentTabValues.has(recentSection))
+					{
+						logger.error('RecentModel.hideByRecentConfigTabs invalid section:', recentSection);
+
+						return;
+					}
+
+					store.commit('deleteFromNestedIdCollection', {
+						actionName: 'hideByRecentConfigTabs',
+						data: {
+							recentSection,
+							id,
+							parentChatId,
+						},
+					});
+
+					hideFromTopLevelIfNeeded(store, recentSection, id, parentChatId, 'hideByRecentConfigTabs');
 				});
 			},
 
-			/** @function recentModel/update */
+			/**
+			 * @function recentModel/update
+			 * @param {MessengerStore<RecentMessengerModel>} store
+			 * @param {RecentModelActionParams['recentModel/update']} payload
+			 */
 			update: (store, payload) => {
 				/** @type {Array<Partial<RecentModelState>>} */
 				const result = [];
@@ -866,7 +1119,73 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 				});
 			},
 
-			/** @function recentModel/like */
+			/** @function recentModel/readAllChats */
+			readAllChats: (store) => {
+				const openlinesIdCollection = getSectionSet(store.state, RecentTab.openlines) ?? new Set();
+				const recentItemList = Object.values(store.state.collection)
+					.filter((recentItem) => {
+						return recentItem.unread === true && !openlinesIdCollection.has(recentItem.id);
+					})
+					.map((recentItem) => ({
+						fields: {
+							id: recentItem.id,
+							unread: false,
+						},
+					}))
+				;
+
+				if (!Type.isArrayFilled(recentItemList))
+				{
+					return;
+				}
+
+				store.commit('update', {
+					actionName: 'readAllChats',
+					data: {
+						recentItemList,
+					},
+				});
+			},
+
+			/** @function recentModel/readByRecentSection */
+			readByRecentSection: (store, payload) => {
+				const { recentSection } = payload;
+				const idCollection = getSectionSet(store.state, recentSection);
+				if (!idCollection)
+				{
+					return;
+				}
+
+				const recentItemList = Object.values(store.state.collection)
+					.filter((recentItem) => {
+						return recentItem.unread === true && idCollection.has(recentItem.id);
+					})
+					.map((recentItem) => ({
+						fields: {
+							id: recentItem.id,
+							unread: false,
+						},
+					}))
+				;
+
+				if (!Type.isArrayFilled(recentItemList))
+				{
+					return;
+				}
+
+				store.commit('update', {
+					actionName: 'readByRecentSection',
+					data: {
+						recentItemList,
+					},
+				});
+			},
+
+			/**
+			 * @function recentModel/like
+			 * @param {MessengerStore<RecentMessengerModel>} store
+			 * @param {RecentModelActionParams['recentModel/like']} payload
+			 */
 			like: (store, payload) => {
 				const { id, messageId, liked } = payload;
 
@@ -894,130 +1213,59 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 		},
 		mutations: {
 			/**
+			 * Accumulates dialogIds into nestedIdCollection for the given recentSection and parentChatId.
 			 * @param state
-			 * @param {MutationPayload<RecentSetIdCollectionData, RecentSetIdCollectionActions>} payload
+			 * @param {MutationPayload<{recentSection: string, itemIds: string[], parentChatId?: number}>} payload
 			 */
-			setChatIdCollection: (state, payload) => {
-				logger.warn('RecentModel.setChatIdCollection', payload);
-				const { data } = payload;
-				data.itemIds.forEach((dialogId) => {
-					state.chatIdCollection.add(dialogId);
-				});
-			},
-			/**
-			 * @param state
-			 * @param {MutationPayload<RecentSetIdCollectionData, RecentSetIdCollectionActions>} payload
-			 */
-			setCopilotIdCollection: (state, payload) => {
-				logger.warn('RecentModel.setCopilotIdCollection', payload);
-				const { data } = payload;
-				data.itemIds.forEach((dialogId) => {
-					state.copilotIdCollection.add(dialogId);
-				});
-			},
-			/**
-			 * @param state
-			 * @param {MutationPayload<RecentStoreIdCollectionData, RecentStoreIdCollectionActions>} payload
-			 */
-			storeIdCollection: (state, payload) => {
-				logger.warn('RecentModel.storeIdCollection', payload);
-
-				const { data } = payload;
-
-				state[CollectionByTab[data.tab]] = new Set(data.itemIds);
+			setNestedIdCollection: (state, payload) => {
+				logger.warn('RecentModel.setNestedIdCollection', payload);
+				const { recentSection, itemIds, parentChatId = ROOT_PARENT_CHAT_ID } = payload.data;
+				const set = ensureSectionSet(state, recentSection, parentChatId);
+				itemIds.forEach((id) => set.add(id));
 			},
 
 			/**
+			 * Replaces the Set for the given recentSection and parentChatId entirely.
 			 * @param state
-			 * @param {MutationPayload<RecentSetIdCollectionData, RecentSetIdCollectionActions>} payload
+			 * @param {MutationPayload<{recentSection: string, itemIds: string[], parentChatId?: number}>} payload
 			 */
-			setChannelIdCollection: (state, payload) => {
-				logger.warn('RecentModel.setChannelIdCollection', payload);
-				const { data } = payload;
-				data.itemIds.forEach((dialogId) => {
-					state.channelIdCollection.add(dialogId);
-				});
+			storeNestedIdCollection: (state, payload) => {
+				logger.warn('RecentModel.storeNestedIdCollection', payload);
+				const { recentSection, itemIds, parentChatId = ROOT_PARENT_CHAT_ID } = payload.data;
+				if (!state.nestedIdCollection[parentChatId])
+				{
+					state.nestedIdCollection[parentChatId] = {};
+				}
+
+				state.nestedIdCollection[parentChatId][recentSection] = new Set(itemIds);
 			},
+
 			/**
+			 * Removes a dialogId from the Set for the given recentSection and parentChatId.
 			 * @param state
-			 * @param {MutationPayload<RecentSetIdCollectionData, RecentSetIdCollectionActions>} payload
+			 * @param {MutationPayload<{recentSection: string, id: string, parentChatId?: number}>} payload
 			 */
-			setCollabIdCollection: (state, payload) => {
-				logger.warn('RecentModel.setCollabIdCollection', payload);
-				const { data } = payload;
-				data.itemIds.forEach((dialogId) => {
-					state.collabIdCollection.add(dialogId);
-				});
+			deleteFromNestedIdCollection: (state, payload) => {
+				logger.warn('RecentModel.deleteFromNestedIdCollection', payload);
+				const { recentSection, id, parentChatId = ROOT_PARENT_CHAT_ID } = payload.data;
+				getSectionSet(state, recentSection, parentChatId)?.delete(id);
 			},
+
 			/**
+			 * Removes a dialogId from all tabs across all parentChatId levels.
 			 * @param state
-			 * @param {MutationPayload<RecentSetIdCollectionData, RecentSetIdCollectionActions>} payload
+			 * @param {MutationPayload<{id: string}>} payload
 			 */
-			setTaskIdCollection: (state, payload) => {
-				logger.warn('RecentModel.setTaskIdCollection', payload);
-				const { data } = payload;
-				data.itemIds.forEach((dialogId) => {
-					state.taskIdCollection.add(dialogId);
-				});
-			},
-			/**
-			 * @param state
-			 * @param {MutationPayload<RecentSetIdCollectionData, RecentSetIdCollectionActions>} payload
-			 */
-			setOpenlineIdCollection: (state, payload) => {
-				logger.warn('RecentModel.setOpenlineIdCollection', payload);
-				const { data } = payload;
-				data.itemIds.forEach((dialogId) => {
-					state.openlineIdCollection.add(dialogId);
-				});
-			},
-			/**
-			 * @param state
-			 * @param {MutationPayload<RecentDeleteData, RecentDeleteActions>} payload
-			 */
-			deleteFromChatIdCollection: (state, payload) => {
-				logger.warn('RecentModel.deleteFromChatIdCollection', payload);
-				state.chatIdCollection.delete(payload.data.id);
-			},
-			/**
-			 * @param state
-			 * @param {MutationPayload<RecentDeleteData, RecentDeleteActions>} payload
-			 */
-			deleteFromCopilotIdCollection: (state, payload) => {
-				logger.warn('RecentModel.deleteFromCopilotIdCollection', payload);
-				state.copilotIdCollection.delete(payload.data.id);
-			},
-			/**
-			 * @param state
-			 * @param {MutationPayload<RecentDeleteData, RecentDeleteActions>} payload
-			 */
-			deleteFromChannelIdCollection: (state, payload) => {
-				logger.warn('RecentModel.deleteFromChannelIdCollection', payload);
-				state.channelIdCollection.delete(payload.data.id);
-			},
-			/**
-			 * @param state
-			 * @param {MutationPayload<RecentDeleteData, RecentDeleteActions>} payload
-			 */
-			deleteFromCollabIdCollection: (state, payload) => {
-				logger.warn('RecentModel.deleteFromCollabIdCollection', payload);
-				state.collabIdCollection.delete(payload.data.id);
-			},
-			/**
-			 * @param state
-			 * @param {MutationPayload<RecentDeleteData, RecentDeleteActions>} payload
-			 */
-			deleteFromTaskIdCollection: (state, payload) => {
-				logger.warn('RecentModel.deleteFromTaskIdCollection', payload);
-				state.taskIdCollection.delete(payload.data.id);
-			},
-			/**
-			 * @param state
-			 * @param {MutationPayload<RecentDeleteData, RecentDeleteActions>} payload
-			 */
-			deleteOpenlineIdCollection: (state, payload) => {
-				logger.warn('RecentModel.deleteOpenlineIdCollection', payload);
-				state.openlineIdCollection.delete(payload.data.id);
+			deleteIdFromNestedIdCollection: (state, payload) => {
+				logger.warn('RecentModel.deleteIdFromNestedIdCollection', payload);
+				const { id } = payload.data;
+				for (const level of Object.values(state.nestedIdCollection))
+				{
+					for (const set of Object.values(level))
+					{
+						set.delete(id);
+					}
+				}
 			},
 
 			/**
@@ -1075,6 +1323,88 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 	};
 
 	/**
+	 * @param {object} state
+	 * @param {string} recentSection
+	 * @param {number} [parentChatId]
+	 * @returns {Set<string>|undefined}
+	 */
+	function getSectionSet(state, recentSection, parentChatId = ROOT_PARENT_CHAT_ID)
+	{
+		return state.nestedIdCollection[parentChatId]?.[recentSection];
+	}
+
+	/**
+	 * @param {object} state
+	 * @param {string} recentSection
+	 * @param {number} [parentChatId]
+	 * @returns {Set<string>}
+	 */
+	function ensureSectionSet(state, recentSection, parentChatId = ROOT_PARENT_CHAT_ID)
+	{
+		if (!state.nestedIdCollection[parentChatId])
+		{
+			state.nestedIdCollection[parentChatId] = {};
+		}
+
+		if (!state.nestedIdCollection[parentChatId][recentSection])
+		{
+			state.nestedIdCollection[parentChatId][recentSection] = new Set();
+		}
+
+		return state.nestedIdCollection[parentChatId][recentSection];
+	}
+
+	/**
+	 * If the given section requires top-level propagation and parentChatId is nested,
+	 * commits an additional setNestedIdCollection for ROOT_PARENT_CHAT_ID.
+	 * @param {object} store
+	 * @param {string} recentSection
+	 * @param {string[]} itemIds
+	 * @param {number} parentChatId
+	 * @param {string} actionName
+	 */
+	function propagateToTopLevelIfNeeded(store, recentSection, itemIds, parentChatId, actionName)
+	{
+		if (parentChatId <= ROOT_PARENT_CHAT_ID || !SectionsWithTopLevelPropagation.has(recentSection))
+		{
+			return;
+		}
+
+		store.commit('setNestedIdCollection', {
+			actionName,
+			data: {
+				recentSection,
+				itemIds,
+				parentChatId: ROOT_PARENT_CHAT_ID,
+			},
+		});
+	}
+
+	/**
+	 * @param {object} store
+	 * @param {string} recentSection
+	 * @param {string} id
+	 * @param {number} parentChatId
+	 * @param {string} actionName
+	 */
+	function hideFromTopLevelIfNeeded(store, recentSection, id, parentChatId, actionName)
+	{
+		if (parentChatId <= ROOT_PARENT_CHAT_ID || !SectionsWithTopLevelPropagation.has(recentSection))
+		{
+			return;
+		}
+
+		store.commit('deleteFromNestedIdCollection', {
+			actionName,
+			data: {
+				recentSection,
+				id,
+				parentChatId: ROOT_PARENT_CHAT_ID,
+			},
+		});
+	}
+
+	/**
 	 * @param {string} tab
 	 * @returns {string}
 	 */
@@ -1111,7 +1441,7 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			const existingItem = store.state.collection[recentItem.id];
 			if (existingItem)
 			{
-				// if we already got chat, we should not upd ate it
+				// if we already got chat, we should not update it
 				// with default user chat (unless it's an accepted invitation)
 				const defaultUserElement = (
 					recentItem.options

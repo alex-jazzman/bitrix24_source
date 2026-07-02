@@ -78,7 +78,9 @@ export const SpecialBackgroundId = {
 	collab: 'collab',
 	martaAI: 'martaAI',
 	copilot: 'copilot',
+	aiAssistant: 'aiAssistant',
 	notifications: 'notifications',
+	transparent: 'transparent',
 };
 
 export const SpecialBackground = {
@@ -93,10 +95,19 @@ export const SpecialBackground = {
 		pattern: ThemePattern.aiAssistant,
 	},
 	[SpecialBackgroundId.copilot]: SelectableBackground[SelectableBackgroundId.slate],
+	[SpecialBackgroundId.aiAssistant]: {
+		color: '#9294D1',
+		type: ThemeType.dark,
+		pattern: ThemePattern.default,
+	},
 	[SpecialBackgroundId.notifications]: {
 		color: '#fafcfd',
 		type: ThemeType.light,
 		pattern: ThemePattern.default,
+	},
+	[SpecialBackgroundId.transparent]: {
+		color: 'transparent',
+		type: ThemeType.light,
 	},
 };
 
@@ -108,6 +119,7 @@ export const ImageFileByBackgroundId = {
 	[SpecialBackgroundId.collab]: 'collab-v2',
 	[SpecialBackgroundId.martaAI]: 'ai-assistant',
 	[SpecialBackgroundId.copilot]: '4',
+	[SpecialBackgroundId.aiAssistant]: 'ai-assistant-v2',
 	[SpecialBackgroundId.notifications]: '11',
 	[SelectableBackgroundId.azure]: '1',
 	[SelectableBackgroundId.mint]: '2',
@@ -123,5 +135,5 @@ export const ImageFileByBackgroundId = {
 export type BackgroundItem = {
 	color: string,
 	type: $Values<typeof ThemeType>,
-	pattern: $Values<typeof ThemePattern>,
+	pattern?: $Values<typeof ThemePattern>,
 };

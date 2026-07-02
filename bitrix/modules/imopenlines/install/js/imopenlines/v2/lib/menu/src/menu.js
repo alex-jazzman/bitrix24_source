@@ -1,6 +1,6 @@
 import { Loc } from 'main.core';
 
-import { Layout } from 'im.v2.const';
+import { Layout, ChatType } from 'im.v2.const';
 import { LayoutManager } from 'im.v2.lib.layout';
 import { BaseMenu } from 'im.v2.lib.menu';
 import { Utils } from 'im.v2.lib.utils';
@@ -11,6 +11,11 @@ const OPENLINES_PAGE_PATH = '/online/?IM_LINES=';
 
 export class RecentContextMenu extends BaseMenu
 {
+	static events = {
+		...BaseMenu.events,
+		openItem: 'openItem',
+	};
+
 	getMenuItems(): MenuItemOptions | null[]
 	{
 		return [
@@ -24,13 +29,21 @@ export class RecentContextMenu extends BaseMenu
 		return {
 			title: Loc.getMessage('IM_LIB_MENU_OPEN'),
 			onClick: () => {
+				this.emit(RecentContextMenu.events.openItem, { dialogId: this.context.dialogId });
 				void LayoutManager.getInstance().setLayout({
-					name: Layout.openlinesV2,
+					name: this.#getLayoutName(),
 					entityId: this.context.dialogId,
 				});
-				this.menuInstance.close();
 			},
 		};
+	}
+
+	#getLayoutName(): string
+	{
+		const chat = this.store.getters['chats/get'](this.context.dialogId);
+		const isOpenLinesChat = chat && chat.type === ChatType.lines;
+
+		return isOpenLinesChat ? Layout.openlinesV2 : Layout.chat;
 	}
 
 	#getOpenItemInNewTab(): MenuItemOptions

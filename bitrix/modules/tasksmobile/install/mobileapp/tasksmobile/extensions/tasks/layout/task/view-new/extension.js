@@ -67,12 +67,11 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 		setAttachedFiles,
 		updateDeadline,
 		updateAuditors,
-		follow,
-		unfollow,
 	} = require('tasks/statemanager/redux/slices/tasks');
 	const { groupsUpserted, groupsAddedFromEntitySelector, selectGroupById } = require(
 		'tasks/statemanager/redux/slices/groups',
 	);
+	const { requireLazy } = require('require-lazy');
 	const { reactionsUpserted } = require('statemanager/redux/slices/reactions');
 	const { reactionsVoteSignTokenUpserted } = require('statemanager/redux/slices/reactions-vote-key');
 	const { settingsUpserted } = require('statemanager/redux/slices/settings');
@@ -282,6 +281,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 			AppRatingClient.tryOpenAppRatingAfterTaskViewed({
 				parentWidget: this.props.parentWidget,
 			});
+			BX.postComponentEvent('tasks.view-new:onClosed');
 		};
 
 		componentDidMount()

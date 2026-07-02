@@ -1,0 +1,4 @@
+<?php
+
+$MESS['BIZPROC_INFRASTRUCTURE_CONTROLLER_DEBUG_SESSION_NOT_FOUND'] = 'Сессия отладки не найдена';
+$MESS['BIZPROC_INFRASTRUCTURE_CONTROLLER_DEBUG_SESSION_ERROR'] = 'Ошибка при работе с сессией отладки';

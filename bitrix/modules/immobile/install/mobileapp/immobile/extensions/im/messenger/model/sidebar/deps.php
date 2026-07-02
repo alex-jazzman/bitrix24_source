@@ -21,5 +21,8 @@ return [
 		'./src/common-chats/model',
 		'./src/common-chats/validator',
 		'./src/common-chats/default-element',
+		'./src/shared-link/model',
+		'./src/shared-link/normalizer',
+		'./src/shared-link/default-element',
 	],
 ];

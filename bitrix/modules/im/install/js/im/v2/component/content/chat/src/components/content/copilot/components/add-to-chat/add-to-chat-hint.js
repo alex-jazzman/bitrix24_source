@@ -1,4 +1,4 @@
-import { PopupOptions } from 'main.popup';
+import { type PopupOptions } from 'main.popup';
 
 import { CopilotManager } from 'im.v2.lib.copilot';
 import { MessengerPopup } from 'im.v2.component.elements.popup';

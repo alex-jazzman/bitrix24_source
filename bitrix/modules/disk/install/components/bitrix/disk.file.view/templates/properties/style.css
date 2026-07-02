@@ -1786,8 +1786,21 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 	height: auto;
 }
 
+.disk-air-message-box-fit-content .popup-window-content {
+	max-width: 500px;
+}
 
+.disk-air-message-box-file-name-wrapper {
+	display: inline-flex;
+	max-width: 100%;
+	vertical-align: bottom;
+	white-space: nowrap;
+}
 
-
-
-
+.disk-air-message-box-file-name {
+	display: block;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}

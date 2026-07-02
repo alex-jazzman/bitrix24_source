@@ -8,6 +8,7 @@ return [
 	'js' => 'dist/im.integration.viewer.bundle.js',
 	'rel' => [
 		'disk.viewer.onlyoffice-item',
+		'main.core',
 	],
 	'skip_core' => false,
 ];

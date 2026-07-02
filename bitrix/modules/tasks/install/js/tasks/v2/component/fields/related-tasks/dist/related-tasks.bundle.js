@@ -11,6 +11,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  icon: ui_iconSet_api_vue.Actions.CONNECTION,
 	  idsField: 'relatedTaskIds',
 	  containsField: 'containsRelatedTasks',
+	  showCompletedField: 'showCompletedRelatedTasks',
 	  getTitle: () => main_core.Loc.getMessage('TASKS_V2_RELATED_TASKS_TITLE'),
 	  getChipTitle: () => main_core.Loc.getMessage('TASKS_V2_RELATED_TASKS_TITLE_CHIP'),
 	  getCountLoc: () => 'TASKS_V2_RELATED_TASKS_TITLE_COUNT',
@@ -44,7 +45,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    }
 	  },
 	  template: `
-		<RelationTasks :meta="relatedTasksMeta" @add="handleAdd"/>
+		<RelationTasks
+			:meta="relatedTasksMeta"
+			:shouldShowSubTasksOption="false"
+			@add="handleAdd"
+		/>
 	`
 	};
 

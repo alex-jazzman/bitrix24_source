@@ -7,10 +7,13 @@ use Bitrix\Tasks\V2\Internal\Service\Task\Action\Add\Async\Receiver\AddDavSync;
 use Bitrix\Tasks\V2\Internal\Service\Task\Action\Add\Async\Receiver\AddLastActivity;
 use Bitrix\Tasks\V2\Internal\Service\Task\Action\Add\Async\Receiver\AddScenario;
 use Bitrix\Tasks\V2\Internal\Service\Task\Action\Add\Async\Receiver\AddSearchIndex;
+use Bitrix\Tasks\V2\Internal\Service\Task\Action\Add\Async\Receiver\AddSendNotification;
 use Bitrix\Tasks\V2\Internal\Service\Task\Action\Delete\Async\Receiver\RecountSort;
 use Bitrix\Tasks\V2\Internal\Service\Task\Action\Update\Async\Receiver\UpdateDavSync;
+use Bitrix\Tasks\V2\Internal\Service\Task\Action\Update\Async\Receiver\UpdateSendNotification;
 use Bitrix\Tasks\V2\Internal\Service\Task\Action\Update\Async\Receiver\UpdateSearchIndex;
 use Bitrix\Tasks\V2\Internal\Service\Task\Action\Update\Async\Receiver\UpdateTopic;
+use Bitrix\Tasks\V2\Internal\Service\Template\Recent\UpdateTemplateRecentReceiver;
 
 return  [
 	'value' => [
@@ -28,6 +31,9 @@ return  [
 			'add_task_scenario' => [
 				'handler' => AddScenario::class,
 			],
+			'add_task_send_notification' => [
+				'handler' => AddSendNotification::class,
+			],
 			'update_task_dav_sync' => [
 				'handler' => UpdateDavSync::class
 			],
@@ -37,6 +43,9 @@ return  [
 			// TODO: Remove when UpdateTopic queue is completely empty.
 			'update_task_topic' => [
 				'handler' => UpdateTopic::class
+			],
+			'update_task_send_notification' => [
+				'handler' => UpdateSendNotification::class
 			],
 			'recount_task_sort' => [
 				'handler' => RecountSort::class
@@ -49,6 +58,9 @@ return  [
 			],
 			'read_all_messages' => [
 				'handler' => ReadAllMessagesReceiver::class,
+			],
+			'update_template_recent' => [
+				'handler' => UpdateTemplateRecentReceiver::class,
 			],
 		],
 	],

@@ -1,68 +1,62 @@
 import { type JsonObject } from 'main.core';
 import { type EventEmitter } from 'main.core.events';
 
-import { ListLoadingState as LoadingState } from 'im.v2.component.elements.list-loading-state';
+import { BaseRecentList } from 'im.v2.component.list.items.base';
 import { RecentType } from 'im.v2.const';
 import { DraftManager } from 'im.v2.lib.draft';
-import { Utils } from 'im.v2.lib.utils';
 import { type ImModelRecentItem } from 'im.v2.model';
 
 import { CopilotRecentMenu } from './classes/context-menu-manager';
-import { CopilotRecentService } from './classes/copilot-service';
-import { CopilotItem } from './components/copilot-item';
-
-import './css/copilot-list.css';
+import { CopilotRecentService } from 'im.v2.provider.service.copilot';
+import { EmptyState } from './components/empty-state';
 
 // @vue/component
 export const CopilotList = {
 	name: 'CopilotList',
-	components: { CopilotItem, LoadingState },
-	emits: ['chatClick'],
+	components: { BaseRecentList, EmptyState },
+	emits: ['selectChat'],
 	data(): JsonObject
 	{
 		return {
 			isLoading: false,
 			isLoadingNextPage: false,
+			firstPageLoaded: false,
 		};
 	},
-	computed:
-	{
-		sortedItems(): ImModelRecentItem[]
+	computed: {
+		collection(): ImModelRecentItem[]
 		{
 			return this.$store.getters['recent/getSortedCollection']({ type: RecentType.copilot });
-		},
-		pinnedItems(): ImModelRecentItem[]
-		{
-			return this.sortedItems.filter((item) => item.pinned === true);
-		},
-		generalItems(): ImModelRecentItem[]
-		{
-			return this.sortedItems.filter((item) => item.pinned === false);
-		},
-		isEmptyCollection(): boolean
-		{
-			return this.sortedItems.length === 0;
 		},
 	},
 	async created()
 	{
 		this.contextMenuManager = new CopilotRecentMenu({ emitter: this.getEmitter() });
 
-		this.isLoading = true;
-		await this.getRecentService().loadFirstPage();
-		this.isLoading = false;
+		await this.loadInitialItems();
+
 		void DraftManager.getInstance().initDraftHistory();
 	},
 	beforeUnmount()
 	{
 		this.contextMenuManager.destroy();
 	},
-	methods:
-	{
-		async onScroll(event: Event)
+	methods: {
+		async loadInitialItems()
 		{
-			this.contextMenuManager.close();
-			if (!Utils.dom.isOneScreenRemaining(event.target) || !this.getRecentService().hasMoreItemsToLoad)
+			if (this.firstPageLoaded || this.isLoading)
+			{
+				return;
+			}
+
+			this.isLoading = true;
+			await this.getRecentService().loadFirstPage();
+			this.firstPageLoaded = true;
+			this.isLoading = false;
+		},
+		async onLoadNextPage()
+		{
+			if (this.isLoadingNextPage || !this.getRecentService().hasMoreItemsToLoad())
 			{
 				return;
 			}
@@ -71,19 +65,28 @@ export const CopilotList = {
 			await this.getRecentService().loadNextPage();
 			this.isLoadingNextPage = false;
 		},
-		onClick(item, event)
+		onSelectChat(dialogId: string)
 		{
-			this.$emit('chatClick', item.dialogId);
+			this.$emit('selectChat', dialogId);
 		},
-		onRightClick(item: ImModelRecentItem, event: PointerEvent)
+		onItemRightClick(payload: { item: ImModelRecentItem, event: PointerEvent })
 		{
+			const { item, event } = payload;
 			event.preventDefault();
 
 			const context = {
 				dialogId: item.dialogId,
 				recentItem: item,
 			};
-			this.contextMenuManager.openMenu(context, event.currentTarget);
+
+			this.contextMenuManager.openMenu(context, {
+				left: event.pageX,
+				top: event.pageY,
+			});
+		},
+		onCloseMenu()
+		{
+			this.contextMenuManager.close();
 		},
 		getRecentService(): CopilotRecentService
 		{
@@ -98,39 +101,20 @@ export const CopilotList = {
 		{
 			return this.$Bitrix.eventEmitter;
 		},
-		loc(phraseCode: string): string
-		{
-			return this.$Bitrix.Loc.getMessage(phraseCode);
-		},
 	},
 	template: `
-		<div class="bx-im-list-copilot__scope bx-im-list-copilot__container">
-			<LoadingState v-if="isLoading && isEmptyCollection" />
-			<div v-else @scroll="onScroll" class="bx-im-list-copilot__scroll-container">
-				<div v-if="isEmptyCollection" class="bx-im-list-copilot__empty">
-					<div class="bx-im-list-copilot__empty_icon"></div>
-					<div class="bx-im-list-copilot__empty_text">{{ loc('IM_LIST_COPILOT_EMPTY') }}</div>
-				</div>
-				<div v-if="pinnedItems.length > 0" class="bx-im-list-copilot__pinned_container">
-					<CopilotItem
-						v-for="item in pinnedItems"
-						:key="item.dialogId"
-						:item="item"
-						@click="onClick(item, $event)"
-						@click.right="onRightClick(item, $event)"
-					/>
-				</div>
-				<div class="bx-im-list-copilot__general_container">
-					<CopilotItem
-						v-for="item in generalItems"
-						:key="item.dialogId"
-						:item="item"
-						@click="onClick(item, $event)"
-						@click.right="onRightClick(item, $event)"
-					/>
-				</div>
-				<LoadingState v-if="isLoadingNextPage" />
-			</div>
-		</div>
+		<BaseRecentList
+			:collection="collection"
+			:showMainLoader="isLoading && !firstPageLoaded"
+			:showBottomLoader="isLoadingNextPage"
+			@selectChat="onSelectChat"
+			@itemRightClick="onItemRightClick"
+			@closeMenu="onCloseMenu"
+			@loadNextPage="onLoadNextPage"
+		>
+			<template #empty-state>
+				<EmptyState />
+			</template>
+		</BaseRecentList>
 	`,
 };

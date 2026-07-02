@@ -6,6 +6,7 @@ use Bitrix\Main\Text\HtmlFilter;
 
 /**
  * @var $component StringFormattedUfComponent
+ * @var array $arResult
  */
 
 $component = $this->getComponent();

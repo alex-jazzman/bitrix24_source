@@ -1,5 +1,5 @@
 import { Loc } from 'main.core';
-import { MenuItemOptions } from 'main.popup';
+import { type MenuItemOptions } from 'main.popup';
 
 import { CALL_DIRECTION_INCOMING, CALL_DIRECTION_OUTGOING, CHECKED_CLASS, NOT_CHECKED_CLASS } from '../constants';
 

@@ -31,6 +31,7 @@ Extension::load([
 	'ui.buttons',
 	'ui.icons',
 	'biconnector.apache-superset-dashboard-manager',
+	'biconnector.apache-superset-dashboard-skeleton',
 	'pull.client',
 	'ui.lottie',
 ]);
@@ -90,13 +91,17 @@ $templateMessages = Loc::loadLanguageFile($_SERVER['DOCUMENT_ROOT'] . $templateF
 				<div class="ui-icon-set --edit-l"></div>
 				<?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_EDIT') ?>
 			</button>
+			<button id="info-btn" disabled="disabled" class="ui-btn --air ui-btn-md --style-outline ui-btn-no-caps dashboard-header-buttons-info">
+				<div class="ui-icon-set --o-info-circle"></div>
+				<?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_INFO') ?>
+			</button>
 			<button id="download-btn" disabled="disabled" class="ui-btn --air ui-btn-md --style-outline ui-btn-no-caps ui-btn-dropdown dashboard-header-buttons-download">
 				<div class="ui-icon-set --o-download"></div>
 				<?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_DOWNLOAD') ?>
 			</button>
 			<button id="share-btn" disabled="disabled" class="ui-btn --air ui-btn-md --style-outline ui-btn-no-caps ui-btn-dropdown dashboard-header-buttons-share">
-				<div class="ui-icon-set --o-forward"></div>
-				<?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_SHARE') ?>
+				<div class="ui-icon-set --o-share"></div>
+				<?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_SHARE_LINK') ?>
 			</button>
 			<div id="more-btn" disabled="disabled" class="ui-icon-set --more-l dashboard-header-buttons-more disabled"></div>
 		</div>
@@ -109,7 +114,7 @@ $templateMessages = Loc::loadLanguageFile($_SERVER['DOCUMENT_ROOT'] . $templateF
 		BX.message(<?= Json::encode(Loc::loadLanguageFile(__FILE__)) ?>);
 		BX.message(<?= Json::encode($templateMessages) ?>);
 
-		new BX.BIConnector.ApacheSuperset.Dashboard.Detail.createSkeleton({
+		BX.BIConnector.ApacheSuperset.Dashboard.Detail.createSkeleton({
 			container: document.querySelector('.biconnector-dashboard__loader'),
 			dashboardId: <?= (int)$arResult['DASHBOARD_ID'] ?>,
 			status: '<?= \CUtil::JSEscape($arResult['DASHBOARD_STATUS']) ?>',

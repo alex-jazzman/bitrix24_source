@@ -4,11 +4,12 @@
 
 jn.define('mail/message-grid/navigation/src/group-actions-menu', (require, exports, module) => {
 	const { Loc } = require('loc');
-	const { qrauth } = require('qrauth/utils');
 	const { Indent, Color } = require('tokens');
 	const { Icon, IconView } = require('ui-system/blocks/icon');
 
 	const { DefaultFolderType } = require('mail/enum/default-folder-type');
+	const { changeFolder, changeReadStatus } = require('mail/message/actions');
+	const { Selector: FolderSelector } = require('mail/folder/selector');
 
 	const {
 		selectSelectedIds,
@@ -16,15 +17,10 @@ jn.define('mail/message-grid/navigation/src/group-actions-menu', (require, expor
 		selectSelectedUidIds,
 		selectIsMultiSelectMode,
 	} = require('mail/statemanager/redux/slices/messages/selector');
-	const {
-		selectFoldersByType,
-		selectById: selectFolderById,
-	} = require('mail/statemanager/redux/slices/folders/selector');
+	const { selectIsVirtualFolderMode } = require('mail/statemanager/redux/slices/folders/selector');
 	const { observeListChange } = require('mail/statemanager/redux/slices/messages/observers/stateful-list');
-	const { moveToFolder, changeReadStatus } = require('mail/statemanager/redux/slices/messages/thunk');
-	const { selectCurrentMailboxId } = require('mail/statemanager/redux/slices/mailboxes/selector');
+	const { remove, markAsSpam } = require('mail/statemanager/redux/slices/messages/thunk');
 	const { setMultiSelectMode } = require('mail/statemanager/redux/slices/messages');
-	const { Selector: FolderSelector } = require('mail/folder/selector');
 
 	const store = require('statemanager/redux/store');
 	const { dispatch } = store;
@@ -120,25 +116,23 @@ jn.define('mail/message-grid/navigation/src/group-actions-menu', (require, expor
 					messageCode: 'MAILMOBILE_ACTIONS_READ',
 					onClickCallback: this.changeReadObjectStatus.bind(this, 1),
 				}),
-				this.renderIcon({
-					icon: Icon.MOVE_TO,
-					messageCode: 'MAILMOBILE_ACTIONS_IN_FOLDER',
-					onClickCallback: this.openMover.bind(this),
-				}),
+				selectIsVirtualFolderMode(store.getState())
+					? null
+					: this.renderIcon({
+						icon: Icon.MOVE_TO,
+						messageCode: 'MAILMOBILE_ACTIONS_IN_FOLDER',
+						onClickCallback: this.openMover.bind(this),
+					}),
 				this.renderIcon({
 					icon: Icon.ALERT_ACCENT,
 					messageCode: 'MAILMOBILE_ACTIONS_IN_SPAM',
-					onClickCallback: this.changeObjectFolder.bind(this, {
-						folderSignature: DefaultFolderType.SPAM.value,
-					}),
+					onClickCallback: this.moveToSpam.bind(this),
 				}),
 				this.renderIcon({
 					icon: Icon.TRASHCAN,
 					messageCode: 'MAILMOBILE_ACTIONS_REMOVE',
 					color: Color.accentMainAlert,
-					onClickCallback: this.changeObjectFolder.bind(this, {
-						folderSignature: DefaultFolderType.TRASH.value,
-					}),
+					onClickCallback: this.removeObject.bind(this),
 				}),
 			);
 		}
@@ -194,7 +188,7 @@ jn.define('mail/message-grid/navigation/src/group-actions-menu', (require, expor
 				return;
 			}
 
-			dispatch(changeReadStatus({ objectIds, objectUidIds, isRead }));
+			changeReadStatus({ objectIds, objectUidIds, isRead });
 			this.#onToggleMultiSelectMode();
 		};
 
@@ -230,52 +224,42 @@ jn.define('mail/message-grid/navigation/src/group-actions-menu', (require, expor
 		}
 
 		changeObjectFolder = (props) => {
-			const {
-				folderSignature = null,
-				folder: folderToMove = null,
-			} = props;
-
-			if (folderToMove === null && DefaultFolderType.isDefined(folderSignature))
-			{
-				const defaultFolderToMove = selectFoldersByType(store.getState(), folderSignature, true);
-				if (defaultFolderToMove.length === 0)
-				{
-					this.#onToggleMultiSelectMode();
-					const mailboxId = selectCurrentMailboxId(store.getState());
-					const title = (DefaultFolderType.TRASH.getValue() === folderSignature)
-						? Loc.getMessage('MAILMOBILE_MESSAGE_GRID_GROUP_ACTIONS_FOLDERS_TRASH_BANNER_TITLE')
-						: Loc.getMessage('MAILMOBILE_MESSAGE_GRID_GROUP_ACTIONS_FOLDERS_SPAM_BANNER_TITLE')
-					;
-					qrauth.open({
-						title,
-						hintText: Loc.getMessage('MAILMOBILE_MESSAGE_GRID_GROUP_ACTIONS_FOLDERS_SETTINGS_BANNER_DESCRIPTION'),
-						redirectUrl: `/mail/config/dirs?mailboxId=${mailboxId}`,
-						showHint: true,
-					});
-
-					return;
-				}
-			}
-
+			const { folderSignature = null, folder = null } = props;
 			const objectIds = selectSelectedIds(store.getState());
 			const objectUidIds = selectSelectedUidIds(store.getState());
 
-			let resolvedFolderToMove = folderToMove;
-
-			if (resolvedFolderToMove === null)
-			{
-				resolvedFolderToMove = Object.values(DefaultFolderType).some((type) => type.value === folderSignature)
-					? selectFoldersByType(store.getState(), folderSignature, true)?.find(() => true)
-					: selectFolderById(store.getState(), folderSignature)
-				;
-			}
-
-			if (!resolvedFolderToMove || objectIds.length === 0)
+			if (objectIds.length === 0)
 			{
 				return;
 			}
 
-			dispatch(moveToFolder({ objectIds, objectUidIds, folderPath: resolvedFolderToMove.path }));
+			changeFolder({ objectIds, objectUidIds, folderSignature, folder });
+			this.#onToggleMultiSelectMode();
+		};
+
+		removeObject = () => {
+			const objectIds = selectSelectedIds(store.getState());
+			const objectUidIds = selectSelectedUidIds(store.getState());
+
+			if (objectIds.length === 0)
+			{
+				return;
+			}
+
+			dispatch(remove({ objectIds, objectUidIds }));
+			this.#onToggleMultiSelectMode();
+		};
+
+		moveToSpam = () => {
+			const objectIds = selectSelectedIds(store.getState());
+			const objectUidIds = selectSelectedUidIds(store.getState());
+
+			if (objectIds.length === 0)
+			{
+				return;
+			}
+
+			dispatch(markAsSpam({ objectIds, objectUidIds }));
 			this.#onToggleMultiSelectMode();
 		};
 

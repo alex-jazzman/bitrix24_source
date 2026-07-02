@@ -1,18 +1,18 @@
+import { type JsonObject } from 'main.core';
+
 import {
 	MessageList,
 	AuthorGroup,
 	MessageComponents,
 	CollectionManager,
 } from 'im.v2.component.message-list';
+import { type MessageComponent } from 'im.v2.const';
 import { MessageComponentManager } from 'im.v2.lib.message-component';
-import { MessageComponent } from 'im.v2.const';
+import { type ImModelChat, type ImModelMessage } from 'im.v2.model';
 
 import { CommentsDialogLoader } from './dialog-loader';
 
 import '../css/message-list.css';
-
-import type { JsonObject } from 'main.core';
-import type { ImModelChat, ImModelMessage } from 'im.v2.model';
 
 // @vue/component
 export const CommentsMessageList = {

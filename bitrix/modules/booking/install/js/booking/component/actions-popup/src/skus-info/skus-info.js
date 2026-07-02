@@ -29,7 +29,7 @@ export const SkusInfo = {
 		},
 	},
 	emits: ['freeze', 'unfreeze'],
-	data(): SkusInfoData
+	setup(): Object
 	{
 		return {
 			AirButtonStyle,
@@ -37,6 +37,11 @@ export const SkusInfo = {
 			ButtonSize,
 			ButtonStyle,
 			Outline,
+		};
+	},
+	data(): SkusInfoData
+	{
+		return {
 			shownSelector: false,
 			showDialogInfo: false,
 		};
@@ -196,11 +201,6 @@ export const SkusInfo = {
 };
 
 type SkusInfoData = {
-	AirButtonStyle: typeof AirButtonStyle,
-	ButtonColor: typeof ButtonColor,
-	ButtonSize: typeof ButtonSize,
-	ButtonStyle: typeof ButtonStyle,
-	Outline: typeof Outline,
 	shownSelector: Boolean,
 	showDialogInfo: Boolean,
 };

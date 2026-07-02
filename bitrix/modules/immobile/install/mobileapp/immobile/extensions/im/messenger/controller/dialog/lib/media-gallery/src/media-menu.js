@@ -12,6 +12,7 @@ jn.define('im/messenger/controller/dialog/lib/media-gallery/src/media-menu', (re
 	const { showDeleteGalleryAlert } = require('im/messenger/lib/ui/alert');
 	const { VisibilityManager } = require('im/messenger/lib/visibility-manager');
 	const { MenuActions, MessageMenuController } = require('im/messenger/controller/dialog/lib/message-menu');
+	const { Logger } = require('im/messenger/lib/logger');
 
 	/**
 	 * @class MediaMenu
@@ -218,11 +219,11 @@ jn.define('im/messenger/controller/dialog/lib/media-gallery/src/media-menu', (re
 		 */
 		onSelectedMessageMenuHandler({ actionType, messageId }, params = {})
 		{
-			return this.messageMenu.onMessageMenuActionTap?.(
-				actionType,
-				this.getMessageModel(messageId),
-				params,
-			);
+			return this.messageMenu.getActionHandlersByMessageId(messageId)
+				.then((handlers) => {
+					return handlers[actionType](this.messageMenu.getCurrentActionHelper(), params);
+				})
+				.catch((error) => Logger.error('onSelectedMessageMenuHandler catch:', error));
 		}
 
 		/**
@@ -245,14 +246,14 @@ jn.define('im/messenger/controller/dialog/lib/media-gallery/src/media-menu', (re
 			}
 
 			const messageHelper = MessageHelper.createById(messageId);
-			const messageMenuMessage = this.messageMenu.createMessageMenuMessage(messageId);
+			const actionHelper = this.messageMenu.createMessageMenuActionHelper(messageModel);
 			const isPossibleSaveToLibrary = this.isPossibleSaveToLibrary(messageHelper);
 
 			return [
-				messageMenuMessage.isPossibleReply() && this.createMenuItem({
+				actionHelper.isPossibleReply() && this.createMenuItem({
 					action: MenuActions.ReplyAction,
 				}),
-				messageMenuMessage.isPossibleForward() && this.createMenuItem({
+				actionHelper.isPossibleForward() && this.createMenuItem({
 					action: MenuActions.ForwardAction,
 				}),
 				this.createMenuItem({
@@ -264,7 +265,7 @@ jn.define('im/messenger/controller/dialog/lib/media-gallery/src/media-menu', (re
 				isPossibleSaveToLibrary && this.createMenuItem({
 					action: MenuActions.DownloadToDiskAction,
 				}),
-				messageMenuMessage.isPossibleDelete() && this.createMenuItem({
+				actionHelper.isPossibleDelete() && this.createMenuItem({
 					action: MenuActions.DeleteAction,
 					styles: {
 						icon: {
@@ -286,11 +287,10 @@ jn.define('im/messenger/controller/dialog/lib/media-gallery/src/media-menu', (re
 		 * @returns {{title, testId: string}}
 		 */
 		createMenuItem = ({ action, styles }) => {
-			const { text, type, style, iconFallbackUrl, ...actionParams } = action;
+			const { type, style, iconFallbackUrl, ...actionParams } = action;
 
 			const item = {
 				...actionParams,
-				title: text,
 				testId: `dialog-galleryMenuAction-${action.id}`,
 			};
 

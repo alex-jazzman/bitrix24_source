@@ -21,6 +21,15 @@ export const ReplicationSettingsWeek = {
 		replicateParams: {},
 	},
 	emits: ['update'],
+	created(): void
+	{
+		if (this.replicateParams.everyWeek > 0)
+		{
+			return;
+		}
+
+		this.$emit('update', { everyWeek: this.interval });
+	},
 	computed: {
 		period(): string
 		{
@@ -29,11 +38,16 @@ export const ReplicationSettingsWeek = {
 		useInterval: {
 			get(): boolean
 			{
-				return this.replicateParams.everyWeek > 0;
+				return true;
 			},
 			set(useInterval: boolean): void
 			{
-				this.$emit('update', { everyWeek: useInterval ? 1 : null });
+				if (!useInterval)
+				{
+					return;
+				}
+
+				this.$emit('update', { everyWeek: this.interval });
 			},
 		},
 		interval: {
@@ -70,11 +84,13 @@ export const ReplicationSettingsWeek = {
 	template: `
 		<div class="tasks-replication-sheet-replication-settings-week tasks-field-replication-sheet__stack">
 			<ReplicationSettingsWeekDaysList v-model:selectedDays="weekDays"/>
-			<ReplicationInterval
-				v-model:useInterval="useInterval"
-				v-model:interval="interval"
-				:period
-			>
+				<ReplicationInterval
+					v-model:useInterval="useInterval"
+					v-model:interval="interval"
+					:period
+					controlType="radio"
+					inputName="tasks-replication-sheet-weekly-interval-type"
+				>
 				<template #hint>
 					<QuestionMark
 						:hintText

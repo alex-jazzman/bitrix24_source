@@ -14,21 +14,6 @@ jn.define('im/messenger/provider/services/sync/loader', (require, exports, modul
 	 */
 	class SyncLoader
 	{
-		static instance = null;
-
-		/**
-		 * @return {SyncLoader}
-		 */
-		static getInstance()
-		{
-			if (!this.instance)
-			{
-				this.instance = new this();
-			}
-
-			return this.instance;
-		}
-
 		constructor()
 		{
 			this.logger = getLoggerWithContext('sync-service', this);

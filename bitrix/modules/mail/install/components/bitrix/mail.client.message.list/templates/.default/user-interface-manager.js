@@ -4,64 +4,29 @@
 	BX.Mail.Client.Message.List.UserInterfaceManager = function (options)
 	{
 		this.gridId = options.gridId;
-		this.mailboxId = options.mailboxId;
+		this.filterId = options.filterId || options.gridId;
 		this.spamDir = options.spamDir;
 		this.outcomeDir = options.outcomeDir;
 		this.inboxDir = options.inboxDir;
 		this.trashDir = options.trashDir;
-		this.PATH_TO_USER_TASKS_TASK = options.PATH_TO_USER_TASKS_TASK;
-		this.PATH_TO_USER_BLOG_POST = options.PATH_TO_USER_BLOG_POST;
-		this.ENTITY_TYPE_NO_BIND = options.ENTITY_TYPE_NO_BIND;
-		this.ENTITY_TYPE_CRM_ACTIVITY = options.ENTITY_TYPE_CRM_ACTIVITY;
-		this.ENTITY_TYPE_TASKS_TASK = options.ENTITY_TYPE_TASKS_TASK;
-		this.ENTITY_TYPE_BLOG_POST = options.ENTITY_TYPE_BLOG_POST;
-		this.ENTITY_TYPE_IM_CHAT = options.ENTITY_TYPE_IM_CHAT;
-		this.ENTITY_TYPE_CALENDAR_EVENT = options.ENTITY_TYPE_CALENDAR_EVENT;
 		this.MESSAGE_MAIL_HREF_LIST = options.MESSAGE_MAIL_HREF_LIST || [];
 		this.enableNextPage = options.enableNextPage || false;
 		this.settingsMenu = options.settingsMenu;
-		this.readActionBtnRole = 'read-action';
-		this.notReadActionBtnRole = 'not-read-action';
-		this.spamActionBtnRole = 'spam-action';
 		this.crmActionBtnRole = 'crm-action';
 		this.hideClassName = 'main-ui-hide';
-		this.mailboxMenuToggle = document.querySelector('[data-role="mailbox-current-title"]');
 		this.settingsToggle = document.getElementsByClassName('mail-list-settings-menu-popup-toggle')[0];
-		this.mailboxPopupMenuId = 'mail-msg-list-mailbox-menu';
 		this.isCurrentFolderSpam = false;
 		this.isCurrentFolderTrash = false;
 		this.isCurrentFolderOutcome = false;
 		this.setLastDir();
-		this.initMailboxes(options.mailboxMenu);
 		this.setCurrentFolderFlags(this.getFilterInstance());
 		this.addEventHandlers();
-		this.updateLeftMenuCounter();
 		this.setDefaultBtnTitles();
 	};
 
 	BX.Mail.Client.Message.List.UserInterfaceManager.prototype = {
-		initMailboxes: function (mailboxMenu)
-		{
-			this.mailboxMenu = mailboxMenu;
-
-			this.mailboxesUnseen = {};
-			for (var i = 0; i < this.mailboxMenu.length; i++)
-			{
-				if (!(this.mailboxMenu[i] && this.mailboxMenu[i].dataset))
-				{
-					continue;
-				}
-				this.mailboxesUnseen[this.mailboxMenu[i].dataset.mailboxId] = this.mailboxMenu[i].dataset.unseen;
-			}
-
-			BX.Main.MenuManager.destroy(this.mailboxPopupMenuId);
-		},
 		addEventHandlers: function ()
 		{
-			if (this.mailboxMenuToggle)
-			{
-				BX.bind(this.mailboxMenuToggle, 'click', BX.delegate(this.onMailboxMenuClick, this));
-			}
 			if (this.settingsToggle)
 			{
 				BX.bind(this.settingsToggle, 'click', BX.delegate(this.onSettingsToggleClick, this));
@@ -82,13 +47,11 @@
 			BX.addCustomEvent('mail:openMessageForView',
 				function(event)
 				{
-					var messageId = event['id']
+					var messageId = event['id'];
 					var row = BX.findParent(document.querySelector('.mail-msg-list-cell-' + messageId), {tagName: 'tr'});
 					if (row && row.dataset.id
 						&& row.getElementsByClassName('mail-msg-list-cell-unseen').length !== 0)
 					{
-						this.updateUnreadCounters();
-
 						if(this.getCurrentFolder() !== '')
 						{
 							BX.Mail.Home.Counters.updateCounters([
@@ -227,14 +190,6 @@
 
 			targetNode.insertBefore(container, targetNode.firstChild);
 
-		},
-		getGridHeaderCheckbox: function ()
-		{
-			if (this.gridHeaderCheckbox === undefined)
-			{
-				this.gridHeaderCheckbox = document.querySelector('#' + this.gridId + '_table .main-grid-cell-head.main-grid-cell-checkbox');
-			}
-			return this.gridHeaderCheckbox;
 		},
 		showElement: function (element, force)
 		{
@@ -385,84 +340,6 @@
 
 			popup.popupWindow.isShown() ? popup.close() : popup.show();
 		},
-		onMailboxMenuClick()
-		{
-			const popup = BX.Main.MenuManager.create(
-				this.mailboxPopupMenuId,
-				this.mailboxMenuToggle,
-				this.mailboxMenu,
-				{
-					events: {
-						onPopupFirstShow: () => {
-							popup.getMenuItems().forEach((menuItem) => {
-								if (menuItem.options.dataset?.isLocked !== true)
-								{
-									BX.Event.bind(menuItem.getContainer(), 'click', () => {
-										popup.close();
-									});
-								}
-							});
-						},
-						onPopupClose: this.onMailboxListClose.bind(this),
-						onPopupDestroy: this.onMailboxListClose.bind(this),
-					},
-				},
-			);
-
-			popup.popupWindow.isShown() ? popup.close() : popup.show();
-		},
-		closeMailboxMenu: function ()
-		{
-			var popup = BX.Main.MenuManager.getMenuById(this.mailboxPopupMenuId);
-
-			if (popup)
-			{
-				popup.close();
-			}
-		},
-		updateUnreadCounters: function ()
-		{
-			this.updateMailboxMenuUnseenCounter();
-		},
-		updateUnreadMessageMailboxesMarker: function(totalNumberOfUnreadLetters)
-		{
-			if(totalNumberOfUnreadLetters)
-				BX.Mail.Home.unreadMessageMailboxesMarker.classList.remove('mail-hidden-element');
-			else
-				BX.Mail.Home.unreadMessageMailboxesMarker.classList.add('mail-hidden-element');
-		}
-		,
-		updateTotalUnreadCounters: function (totalNumberOfUnreadMessagesInOtherMailboxes)
-		{
-			BX.onCustomEvent('BX.Mail.Home:updateAllCounters');
-
-			this.updateUnreadMessageMailboxesMarker(totalNumberOfUnreadMessagesInOtherMailboxes);
-			this.setTotalUnseenCounter(totalNumberOfUnreadMessagesInOtherMailboxes);
-			this.updateLeftMenuCounter();
-		},
-		updateLeftMenuCounter: function ()
-		{
-			var unseen = BX.Mail.Home.mailboxCounters.getTotalCounter();
-			if (typeof top.B24 === "object" && typeof top.B24.updateCounters === "function")
-			{
-				top.B24.updateCounters({mail_unseen: unseen});
-			}
-			if (typeof top.BXIM === "object" && typeof top.BXIM.notify === "object")
-			{
-				if (typeof top.BXIM.notify.counters === "object")
-				{
-					top.BXIM.notify.counters.mail_unseen = unseen;
-				}
-				if (typeof top.BXIM.notify.updateNotifyMailCount === "function")
-				{
-					top.BXIM.notify.updateNotifyMailCount(unseen);
-				}
-			}
-		},
-		updateMailboxUnseenCounter: function (seenNumber)
-		{
-			this.updateMailboxMenuUnseenCounter(seenNumber);
-		},
 		changeMessageRead: function (selectedIds, params)
 		{
 			if (params.action === 'markAsSeen')
@@ -511,10 +388,6 @@
 			var event = document.createEvent("Event");
 			event.initEvent("resize", true, true);
 			window.dispatchEvent(event);
-		},
-		disActivateBtn: function (btnRole)
-		{
-			this.activateBtn(btnRole, false);
 		},
 		activateBtn: function (activatingBtnRole, show)
 		{
@@ -691,24 +564,13 @@
 			event.initEvent("resize", true, true);
 			window.dispatchEvent(event);
 		},
-		getRowMenu: function ()
-		{
-			var selectedIds = this.getGridInstance().getRows().getSelectedIds();
-			id = selectedIds.length ? selectedIds[0] : null;
-			var row = id ? this.getGridInstance().getRows().getById(id) : null;
-			if (row)
-			{
-				return row.getActionsMenu();
-			}
-			return null;
-		},
 		getFilterInstance: function ()
 		{
-			return BX.Main.filterManager.getById(this.gridId);
+			return BX.Main.filterManager.getById(this.filterId);
 		},
 		onApplyFilter: function (id, data, filterInstance, promise, params)
 		{
-			if (id !== this.gridId)
+			if (id !== this.filterId)
 			{
 				return;
 			}
@@ -748,99 +610,6 @@
 			var filter = this.getFilterInstance();
 			return filter.getFilterFieldsValues()['DIR'];
 		},
-		getCurrentMailboxId: function ()
-		{
-			var currentMailbox = document.querySelector('[data-role="mailbox-current-title"]');
-			return currentMailbox && currentMailbox.dataset && currentMailbox.dataset.mailboxId ? currentMailbox.dataset.mailboxId : null;
-		},
-		setTotalUnseenCounter: function (count)
-		{
-			var currentMailboxId = this.getCurrentMailboxId();
-			this.mailboxesUnseen[currentMailboxId] = count;
-		},
-		updateMailboxMenuUnseenCounter: function ()
-		{
-			var currentMailboxId = this.getCurrentMailboxId();
-
-			if (!currentMailboxId)
-			{
-				return;
-			}
-
-			for (var i = 0; i < this.mailboxMenu.length; i++)
-			{
-				if (this.mailboxMenu[i] && this.mailboxMenu[i].html && this.mailboxMenu[i].dataset
-					&& this.mailboxMenu[i].dataset.mailboxId == currentMailboxId)
-				{
-					this.mailboxMenu[i] = this.updateMailboxMenuItemUnseenCounter(
-						this.mailboxMenu[i],
-						BX.Mail.Home.Counters.getTotalCounter()
-					);
-
-					BX.Main.MenuManager.destroy(this.mailboxPopupMenuId);
-					break;
-				}
-			}
-		},
-		updateMailboxMenuItemUnseenCounter: function (mailboxMenu, count)
-		{
-			mailboxMenu = this.setMailboxTitleMenuUnseenCounter(
-				mailboxMenu,
-				count
-			);
-
-			if (!mailboxMenu.items)
-			{
-				return mailboxMenu;
-			}
-
-			return mailboxMenu;
-		},
-		setMailboxTitleMenuUnseenCounter: function (mailboxMenu, count)
-		{
-			var className = this.hideClassName;
-			if (count > 0)
-			{
-				className = '';
-
-				if (typeof mailboxMenu.dataset.path != 'undefined')
-				{
-					if (mailboxMenu.unseen == 0)
-					{
-						className += ' mail-msg-list-menu-child-counter';
-					}
-
-					if (!mailboxMenu.dataset.isCounted)
-					{
-						className += ' mail-msg-list-menu-fake-counter';
-					}
-				}
-			}
-
-			var find = /<span class="(main-buttons-item-counter)[\w -]*">[0-9]+<\/span>/g;
-			var replace = '<span class="main-buttons-item-counter ' + className + '">' + count + '</span>';
-
-			if (mailboxMenu.html.match(find))
-			{
-				mailboxMenu.html = mailboxMenu.html.replace(
-					find,
-					replace
-				);
-			}
-			else
-			{
-				mailboxMenu.html += '&nbsp;' + replace;
-			}
-
-			mailboxMenu.dataset.unseen = count;
-
-			return mailboxMenu;
-		},
-		isVisible: function (element)
-		{
-			return element && !element.classList.contains(this.hideClassName);
-		},
-
 		updateMessageMailHrefList: function(messageHrefList, currentPage, enableNextPage)
 		{
 			const sliderData = BX.SidePanel.Instance.getTopSlider().getData();
@@ -867,23 +636,6 @@
 					sliderData.set('hrefList', this.MESSAGE_MAIL_HREF_LIST);
 					sliderData.set('enableNextPage', this.enableNextPage);
 				}
-			}
-		},
-
-		setActiveFeaturePromoter(activeFeaturePromoter)
-		{
-			this.activeFeaturePromoter = activeFeaturePromoter;
-		},
-
-		onMailboxListClose()
-		{
-			if (
-				this.activeFeaturePromoter
-				&& BX.Type.isFunction(this.activeFeaturePromoter.close)
-			)
-			{
-				this.activeFeaturePromoter.close();
-				this.activeFeaturePromoter = null;
 			}
 		}
 	};

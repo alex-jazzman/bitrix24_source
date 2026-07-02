@@ -1,16 +1,27 @@
-export const BLOCK_TYPES: { [string]: string } = {
+import type { PortTypes } from '../types';
+
+export const BLOCK_TYPES: { [string]: string } = Object.freeze({
+
 	SIMPLE: 'simple',
 	TRIGGER: 'trigger',
 	COMPLEX: 'complex',
 	TOOL: 'tool',
 	FRAME: 'frame',
-};
+	SERVICES: 'services',
+	OPERATORS: 'operators',
+});
 
-export const PORT_TYPES: { [string]: string } = Object.freeze({
+export const BLOCK_TYPES_WITHOUT_SETTINGS = [
+	BLOCK_TYPES.FRAME,
+];
+
+export const PORT_TYPES: Record<string, PortTypes> = Object.freeze({
 	input: 'input',
 	output: 'output',
 	aux: 'aux',
 	topAux: 'topAux',
+	inputRelation: 'inputRelation',
+	outputRelation: 'outputRelation',
 });
 
 export const ACTIVATION_STATUS = Object.freeze({
@@ -29,5 +40,9 @@ export const SHARED_TOAST_TYPES = Object.freeze({
 export const COMPLEX_NODE_PORT_LABELS: { [string]: string } = Object.freeze({
 	inputRule: 'G',
 	outputRule: 'E',
-	connection: 'NG',
+	relation: 'NG',
+	aux: 'T',
 });
+
+export const BX_FLAG_YES = 'Y';
+export const BX_FLAG_NO = 'N';

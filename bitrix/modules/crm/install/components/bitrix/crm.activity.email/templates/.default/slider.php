@@ -3,7 +3,10 @@
 use Bitrix\Main\Loader;
 use Bitrix\Mail\Helper;
 
-\Bitrix\Main\UI\Extension::load(['mail.message-body']);
+\Bitrix\Main\UI\Extension::load([
+	'mail.message-body',
+	'mail.client.action.discuss-in-chat',
+]);
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
 
 $renderLog = function($log) use ($arResult)
@@ -26,8 +29,8 @@ $renderLog = function($log) use ($arResult)
 				\CTimeZone::getOffset()
 			) : null;
 		?>
-		<div class="crm-task-list-mail-item crm-activity-email-logitem-<?=intval($item['ID']) ?>"
-			data-id="<?=intval($item['ID']) ?>" data-log="<?=htmlspecialcharsbx($log) ?>">
+		<button type="button" class="crm-task-list-mail-item crm-activity-email-logitem-<?=intval($item['ID']) ?>"
+			data-id="<?=intval($item['ID']) ?>" data-log="<?=htmlspecialcharsbx($log) ?>" aria-expanded="false">
 			<span class="crm-task-list-mail-item-icon-reply-<?=($item['DIRECTION'] == \CCrmActivityDirection::Incoming ? 'incoming' : 'coming') ?>"></span>
 			<span class="crm-task-list-mail-item-icon <? if ($item['COMPLETED'] != 'Y'): ?>active-mail<? endif ?>"></span>
 			<span class="crm-task-list-mail-item-user"
@@ -54,7 +57,7 @@ $renderLog = function($log) use ($arResult)
 					<? endif ?>
 				</span>
 			</span>
-		</div>
+		</button>
 		<div class="crm-task-list-mail-item-inner crm-task-list-mail-item-inner-slider crm-activity-email-details-<?=intval($item['ID']) ?>"
 			style="display: none; text-align: center; " data-id="<?=intval($item['ID']) ?>" data-empty="1">
 			<div class="crm-task-list-mail-item-loading crm-task-list-mail-border-bottom"></div>
@@ -84,11 +87,11 @@ BX.ready(function ()
 </script>
 
 <div class="crm-task-list-inner" style="margin: 0">
-	<div class="crm-task-list-mail crm-task-list-mail-slider">
+	<div class="crm-task-list-mail crm-task-list-mail-slider" tabindex="-1">
 
 		<div class="crm-task-list-mail-item-separator crm-task-list-mail-item-separator-slider"
 			style="margin-bottom: 1px; <? if (count($arResult['LOG']['A']) < $arParams['PAGE_SIZE']): ?> display: none; <? endif ?>">
-			<a class="crm-task-list-mail-more crm-task-list-mail-more-slider crm-task-list-mail-more-a" href="#"><?=getMessage('CRM_ACT_EMAIL_HISTORY_MORE') ?></a>
+			<button type="button" class="crm-task-list-mail-more crm-task-list-mail-more-slider crm-task-list-mail-more-a"><?=getMessage('CRM_ACT_EMAIL_HISTORY_MORE') ?></button>
 		</div>
 
 		<? $renderLog('A'); ?>
@@ -112,7 +115,7 @@ BX.ready(function ()
 
 		<div class="crm-task-list-mail-item-separator crm-task-list-mail-item-separator-slider"
 			style="margin-top: 1px; <? if (count($arResult['LOG']['B']) < $arParams['PAGE_SIZE']): ?> display: none; <? endif ?>">
-			<a class="crm-task-list-mail-more crm-task-list-mail-more-slider crm-task-list-mail-more-b" href="#"><?=getMessage('CRM_ACT_EMAIL_HISTORY_MORE') ?></a>
+			<button type="button" class="crm-task-list-mail-more crm-task-list-mail-more-slider crm-task-list-mail-more-b"><?=getMessage('CRM_ACT_EMAIL_HISTORY_MORE') ?></button>
 		</div>
 
 	</div>

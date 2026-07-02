@@ -3,11 +3,13 @@
  */
 
 jn.define('mail/mailbox/connector', (require, exports, module) => {
-	const { Wizard } = require('layout/ui/wizard');
+	const { MailWizard } = require('mail/mailbox/connector/wizard');
+	const { AjaxMethod } = require('mail/const');
 	const { ServicesListStep } = require('mail/mailbox/connector/steps/services-list');
 	const { LoginPassword } = require('mail/mailbox/connector/steps/login-password');
 	const { Imap } = require('mail/mailbox/connector/steps/imap');
 	const { OAuth } = require('mail/mailbox/connector/steps/oauth');
+	const { Settings } = require('mail/mailbox/connector/steps/settings');
 	const { NotifyManager } = require('notify-manager');
 	const { MailDialog } = require('mail/dialog');
 	const { AnalyticsEvent } = require('analytics');
@@ -29,6 +31,8 @@ jn.define('mail/mailbox/connector', (require, exports, module) => {
 			this.getStepForId = this.getStepForId.bind(this);
 			this.oauthMode = true;
 			this.connectFrom = connectFrom;
+			this.pendingCredentials = null;
+			this.settingsConfig = null;
 		}
 
 		validateFields(fieldRefs)
@@ -47,10 +51,10 @@ jn.define('mail/mailbox/connector', (require, exports, module) => {
 
 		loadConnectionUrl()
 		{
-			return BX.ajax.runAction('mail.mailboxconnecting.getConnectionUrl', {});
+			return BX.ajax.runAction(AjaxMethod.getMailboxConnectionUrl, {});
 		}
 
-		connectMailbox(props)
+		connectMailbox(props, settings = {})
 		{
 			const {
 				login = '',
@@ -68,7 +72,7 @@ jn.define('mail/mailbox/connector', (require, exports, module) => {
 				loginWithoutDomain = '',
 			} = props;
 
-			return BX.ajax.runAction('mail.mailboxconnecting.connectMailbox', {
+			return BX.ajax.runAction(AjaxMethod.connectMailbox, {
 				data: {
 					serviceId: this.getMailServiceId(),
 					login,
@@ -84,18 +88,24 @@ jn.define('mail/mailbox/connector', (require, exports, module) => {
 					loginSmtp,
 					passwordSMTP,
 					loginWithoutDomain,
+					...settings,
 				},
 			});
 		}
 
 		loadServices()
 		{
-			return BX.ajax.runAction('mail.mailboxconnecting.getServices', {});
+			return BX.ajax.runAction(AjaxMethod.getMailboxServices, {});
+		}
+
+		loadSettingsConfig()
+		{
+			return BX.ajax.runAction(AjaxMethod.getMailboxSettingsConfig, {});
 		}
 
 		renderWizard()
 		{
-			return new Wizard({
+			return new MailWizard({
 				parentLayout: this.currentLayout,
 				steps: this.getSteps().map((step) => step.id),
 				stepForId: this.getStepForId,
@@ -145,6 +155,16 @@ jn.define('mail/mailbox/connector', (require, exports, module) => {
 			return this.mailServices;
 		}
 
+		setSettingsConfig(config)
+		{
+			this.settingsConfig = config;
+		}
+
+		getSettingsConfig()
+		{
+			return this.settingsConfig;
+		}
+
 		nextStep()
 		{
 			this.wizard.moveToNextStep();
@@ -168,6 +188,19 @@ jn.define('mail/mailbox/connector', (require, exports, module) => {
 		async goToOauth()
 		{
 			this.currentLayout = await this.wizard.openStepWidget('oauth');
+		}
+
+		async goToSettings()
+		{
+			this.stepProps.settings = {
+				isNewMailbox: true,
+				settingsConfig: this.getSettingsConfig(),
+			};
+
+			const settingsStep = this.getStepForId('settings');
+			this.wizard.addStep('settings', settingsStep);
+
+			this.currentLayout = await this.wizard.openStepWidget('settings');
 		}
 
 		goToFinalStep()
@@ -201,13 +234,30 @@ jn.define('mail/mailbox/connector', (require, exports, module) => {
 			}
 		}
 
-		onConnectMailbox(id, email)
+		onAuthComplete(credentials)
 		{
-			this.sendSuccessAnalytics();
-			this.saveConnectedEmail(email);
-			this.saveConnectedMailboxId(id);
+			this.pendingCredentials = credentials;
 			NotifyManager.hideLoadingIndicatorWithoutFallback();
-			this.goToFinalStep();
+			this.goToSettings();
+		}
+
+		connectWithSettings(settingsPayload)
+		{
+			NotifyManager.showLoadingIndicator();
+
+			return this.connectMailbox(this.pendingCredentials, settingsPayload)
+				.then(({ data }) => {
+					this.sendSuccessAnalytics();
+					this.saveConnectedEmail(data.email);
+					this.saveConnectedMailboxId(data.id);
+					NotifyManager.hideLoadingIndicatorWithoutFallback();
+					this.goToFinalStep();
+				})
+				.catch(({ errors }) => {
+					NotifyManager.hideLoadingIndicatorWithoutFallback();
+					this.sendErrorAnalytics();
+					NotifyManager.showErrors(errors);
+				});
 		}
 
 		sendErrorAnalytics()
@@ -217,7 +267,7 @@ jn.define('mail/mailbox/connector', (require, exports, module) => {
 				category: 'mail_general_ops',
 				event: 'mailbox_connect',
 				c_section: this.connectFrom,
-				status: 'success',
+				status: 'error',
 			}).send();
 		}
 
@@ -228,7 +278,7 @@ jn.define('mail/mailbox/connector', (require, exports, module) => {
 				category: 'mail_general_ops',
 				event: 'mailbox_connect',
 				c_section: this.connectFrom,
-				status: 'error',
+				status: 'success',
 			}).send();
 		}
 
@@ -267,6 +317,10 @@ jn.define('mail/mailbox/connector', (require, exports, module) => {
 					id: 'loginPassword',
 					component: LoginPassword,
 				},
+				{
+					id: 'settings',
+					component: Settings,
+				},
 			);
 
 			return steps;
@@ -278,10 +332,7 @@ jn.define('mail/mailbox/connector', (require, exports, module) => {
 			this.wizard = wizard;
 
 			return View(
-				{
-					style: {
-					},
-				},
+				{},
 				wizard,
 			);
 		}
@@ -295,46 +346,58 @@ jn.define('mail/mailbox/connector', (require, exports, module) => {
 		{
 			if (!this.connectionUrl)
 			{
-				await this.loadConnectionUrl().then((response) => {
-					if (response.data)
-					{
-						this.setConnectionUrl(response.data);
-					}
-				});
+				const response = await this.loadConnectionUrl();
+
+				if (response.data)
+				{
+					this.setConnectionUrl(response.data);
+				}
 			}
 
 			return `${this.connectionUrl}?serviceName=${this.getMailServiceKey()}`;
 		}
 
-		show()
+		async show()
 		{
 			NotifyManager.showLoadingIndicator();
-			this.loadServices().then(
-				(response) => {
-					if (response.data)
-					{
-						this.mailServices = response.data;
-						NotifyManager.hideLoadingIndicatorWithoutFallback();
-						const parentWidget = this.parentWidget || PageManager;
-						parentWidget.openWidget('layout', {
-							modal: true,
-							backdrop: {
-								horizontalSwipeAllowed: false,
-								mediumPositionPercent: 90,
-							},
-						})
-							.then((widget) => {
-								this.currentLayout = widget;
-								widget.showComponent(this);
-							}).catch(console.error);
-					}
-				},
-				(response) => {
+
+			try
+			{
+				const [servicesResponse, settingsConfigResponse] = await Promise.all([
+					this.loadServices(),
+					this.loadSettingsConfig(),
+				]);
+
+				if (servicesResponse.data)
+				{
+					this.mailServices = servicesResponse.data;
+					this.setSettingsConfig(settingsConfigResponse?.data || null);
 					NotifyManager.hideLoadingIndicatorWithoutFallback();
-					NotifyManager.showErrors(response.errors);
-				},
-			);
+
+					const parentWidget = this.parentWidget || PageManager;
+					const widget = await parentWidget.openWidget('layout', {
+						modal: true,
+						backdrop: {
+							horizontalSwipeAllowed: false,
+							mediumPositionPercent: 90,
+						},
+					});
+
+					this.currentLayout = widget;
+					widget.showComponent(this);
+				}
+			}
+			catch (error)
+			{
+				NotifyManager.hideLoadingIndicatorWithoutFallback();
+
+				if (error?.errors)
+				{
+					NotifyManager.showErrors(error.errors);
+				}
+			}
 		}
+
 	}
 
 	module.exports = {

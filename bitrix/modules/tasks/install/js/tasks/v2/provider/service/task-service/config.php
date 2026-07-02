@@ -10,6 +10,7 @@ return [
 		'tasks.v2.component.fields.replication',
 		'main.core',
 		'main.core.events',
+		'tasks.v2.lib.analytics',
 		'tasks.v2.lib.id-utils',
 		'tasks.v2.lib.api-client',
 		'tasks.v2.provider.service.template-service',

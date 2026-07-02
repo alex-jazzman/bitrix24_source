@@ -1,5 +1,5 @@
 import { Loc } from 'main.core';
-import type { TabOptions } from 'ui.entity-selector';
+import { type TabOptions } from 'ui.entity-selector';
 import { EntityTypes } from 'humanresources.company-structure.utils';
 import CommunicationsStub from './communications-stub';
 import './style.css';
@@ -72,7 +72,13 @@ export const getChannelDialogEntity = function(): Object {
 	};
 };
 
-export const getCollabDialogEntity = function(): Object {
+export const getCollabDialogEntity = function(project: boolean = false): Object {
+	const subtitle = (
+		project
+			? Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_PROJECT_SUPERTITLE')
+			: Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_COLLAB_SUPERTITLE')
+	);
+
 	return {
 		id: 'project',
 		dynamicLoad: true,
@@ -85,7 +91,7 @@ export const getCollabDialogEntity = function(): Object {
 		itemOptions: {
 			collab: {
 				supertitle: null,
-				subtitle: Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_COLLAB_SUPERTITLE'),
+				subtitle,
 				textColor: '#535c69',
 			},
 		},
@@ -103,11 +109,15 @@ export const CommunicationsTypeDict: Record<string, string> = Object.freeze({
 	chat: 'chat',
 	channel: 'channel',
 	collab: 'collab',
+	project: 'project',
 });
 
 export const getCommunicationsRecentTabOptions = function(
 	entityType: string,
-	chatType: CommunicationsTypeDict.chat | CommunicationsTypeDict.channel | CommunicationsTypeDict.collab,
+	chatType: CommunicationsTypeDict.chat
+		| CommunicationsTypeDict.channel
+		| CommunicationsTypeDict.collab
+		| CommunicationsTypeDict.project,
 ): TabOptions {
 	let title = '';
 	let subtitle = '';
@@ -128,7 +138,15 @@ export const getCommunicationsRecentTabOptions = function(
 			: Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_CHANNEL_DEPARTMENT_STUB_SUBTITLE')
 		;
 	}
-	else
+	else if (chatType === CommunicationsTypeDict.project)
+	{
+		title = Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_PROJECT_STUB_TITLE');
+		subtitle = entityType === EntityTypes.team
+			? Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_PROJECT_TEAM_STUB_SUBTITLE')
+			: Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_PROJECT_DEPARTMENT_STUB_SUBTITLE')
+		;
+	}
+	else if (chatType === CommunicationsTypeDict.collab)
 	{
 		title = Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_COLLAB_STUB_TITLE');
 		subtitle = entityType === EntityTypes.team

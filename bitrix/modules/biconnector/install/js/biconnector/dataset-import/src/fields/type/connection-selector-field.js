@@ -1,7 +1,7 @@
 import { Dom, Event, Tag, Type, Text } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { EventEmitter } from 'main.core.events';
 import { BaseField } from './base-field';
-import { Dialog, Item, TagSelector } from 'ui.entity-selector';
+import { TagSelector } from 'ui.entity-selector';
 import '../../css/entity-selector-field.css';
 
 export const ConnectionSelectorField = {

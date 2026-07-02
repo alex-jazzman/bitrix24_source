@@ -5,5 +5,6 @@ export const DatePickerEvent = {
 	BEFORE_DESELECT: 'onBeforeDeselect',
 	BEFORE_DAY_SELECT: 'onBeforeDaySelect',
 	DESELECT: 'onDeselect',
+	PRESET_SELECT: 'onPresetSelect',
 	DESTROY: 'onDestroy',
 };

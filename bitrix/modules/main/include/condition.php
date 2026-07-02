@@ -137,9 +137,9 @@ function ConditionShow($arArgs = [])
 	$form = $arArgs['form'];
 	?>
 	<div style="display:<?= $arDisplay['empty'] ?>" id="type_empty<?= $i ?>"><?= GetMessage("TYPES_EMPTY_COND") ?></div>
-	<? if (isset($arConditionTypes['false'])):?>
+	<?php if (isset($arConditionTypes['false'])):?>
 	<div style="display:<?= $arDisplay['false'] ?>" id="type_false<?= $i ?>"><?= GetMessage("TYPES_FALSE_COND") ?></div>
-<?endif; ?>
+<?php endif; ?>
 	<div style="display:<?= $arDisplay['folder'] ?>" value="<?= htmlspecialcharsbx($strFolder) ?>"
 		 id="type_folder<?= $i ?>">
 		<?

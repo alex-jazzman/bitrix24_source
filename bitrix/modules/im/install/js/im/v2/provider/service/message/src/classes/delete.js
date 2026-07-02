@@ -1,5 +1,5 @@
 import { EventEmitter } from 'main.core.events';
-import { Store } from 'ui.vue3.vuex';
+import { type Store } from 'ui.vue3.vuex';
 
 import { Utils } from 'im.v2.lib.utils';
 import { Logger } from 'im.v2.lib.logger';
@@ -8,7 +8,7 @@ import { Core } from 'im.v2.application.core';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { ChatType, RestMethod, EventType, ActionByRole } from 'im.v2.const';
 
-import type { ImModelChat, ImModelMessage, ImModelRecentItem } from 'im.v2.model';
+import { type ImModelChat, type ImModelMessage, type ImModelRecentItem } from 'im.v2.model';
 
 export class DeleteService
 {

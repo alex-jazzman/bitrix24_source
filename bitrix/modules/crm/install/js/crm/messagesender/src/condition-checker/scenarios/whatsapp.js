@@ -3,6 +3,8 @@ import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { showNotify } from '../common/utilites';
 import type { Settings } from './base';
 import { Base } from './base';
+import 'ui.info-helper';
+import { SidePanel } from 'main.sidepanel';
 
 export class WhatsApp extends Base
 {
@@ -170,7 +172,7 @@ export class WhatsApp extends Base
 	{
 		const marketUrl = this.#getSettings().marketUrl;
 
-		BX.SidePanel.Instance.open(
+		SidePanel.Instance.open(
 			marketUrl,
 			{
 				cacheable: false,

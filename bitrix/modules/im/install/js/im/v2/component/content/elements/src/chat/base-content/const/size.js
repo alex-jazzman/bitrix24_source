@@ -3,4 +3,5 @@ export const Height = {
 	pinnedMessages: 53,
 	blockedTextarea: 64,
 	dropAreaOffset: 16,
+	afterTextarea: 24,
 };

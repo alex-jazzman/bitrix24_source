@@ -36,6 +36,8 @@ type SignLinkSliderOptions = {
 	events: Object,
 };
 
+const signLinkSliderUrl = 'sign:stub:sign-link';
+
 export class SignLink
 {
 	#container: HTMLElement = null;
@@ -53,6 +55,7 @@ export class SignLink
 
 	#slider: Object | null = null;
 	#frameEventHandler: (event: Object) => void = null;
+	#sliderCloseCompleteHandler: Function | null = null;
 
 	#cache = new Cache.MemoryCache();
 	static #signingFrameEventHandler: SigningFrameEventHandler = null;
@@ -94,7 +97,7 @@ export class SignLink
 
 		const signLink = this;
 
-		BX.SidePanel.Instance.open('sign:stub:sign-link', {
+		BX.SidePanel.Instance.open(signLinkSliderUrl, {
 			width: 900,
 			cacheable: false,
 			allowCrossOrigin: true,
@@ -118,7 +121,7 @@ export class SignLink
 			events: options?.events,
 		});
 
-		this.#slider = BX.SidePanel.Instance.getSlider('sign:stub:sign-link');
+		this.#slider = BX.SidePanel.Instance.getSlider(signLinkSliderUrl);
 	}
 
 	renderTo(node: HTMLElement): void
@@ -273,6 +276,7 @@ export class SignLink
 
 		this.#frameEventHandler = (event) => this.#handleIframeEvent(event);
 		Event.bind(top, 'message', this.#frameEventHandler);
+		this.#subscribeOnSliderCloseComplete();
 
 		const frameStyles = 'position: absolute; left: 0; top: 0; padding: 0;'
 			+ ' border: none; margin: 0; width: 100%; height: 100%;'
@@ -305,11 +309,23 @@ export class SignLink
 					href="${Text.encode(this.#uri)}"
 					target="_blank"
 					class="ui-btn ui-btn-primary ui-btn-round"
+					onclick="${this.#onContinueInBrowserClick.bind(this)}"
 				>
 					${Text.encode(Loc.getMessage('SIGN_V2_B2E_LINK_DESKTOP_BUTTON'))}
 				</a>
 			</div>
 		`, this.#container);
+	}
+
+	#onContinueInBrowserClick(event: PointerEvent): void
+	{
+		if (this.#isDesktopApp())
+		{
+			event?.preventDefault?.();
+			BXDesktopSystem.ExecuteCommand('browse', this.#uri);
+		}
+
+		this.#slider?.close();
 	}
 
 	#renderDownloadSignedDocForEmployee(): void
@@ -424,21 +440,108 @@ export class SignLink
 
 	#handleIframeEvent(event): void
 	{
-		if (this.#uri.indexOf(event.origin) !== 0)
+		if (new URL(this.#uri).origin !== event.origin)
 		{
 			return;
 		}
 
-		let message = { type: '', data: undefined };
 		if (Type.isString(event?.data))
 		{
-			message.type = event.data;
+			if (event.data === 'BX:SidePanel:close')
+			{
+				this.#closeSlider();
+			}
+
+			return;
 		}
+
+		if (!Type.isPlainObject(event?.data))
+		{
+			return;
+		}
+
+		const message = event.data;
 
 		if (message.type === 'BX:SidePanel:close')
 		{
-			this.#slider?.close();
-			Event.unbind(window, 'message', this.#frameEventHandler);
+			this.#closeSlider();
+		}
+		else if (message.type === 'BX:Sign:processDone')
+		{
+			this.#closeSlider();
+			this.#showProcessDoneNotification(message.role);
+		}
+	}
+
+	#closeSlider(): void
+	{
+		this.#slider?.close();
+		this.#unbindFrameEventHandler();
+	}
+
+	// 'onCloseComplete' instead of 'onClose': closing can be denied by the signing confirm popup,
+	// unsubscribing on 'onClose' would lose the 'BX:Sign:processDone' message after such a deny
+	#subscribeOnSliderCloseComplete(): void
+	{
+		if (this.#sliderCloseCompleteHandler)
+		{
+			return;
+		}
+
+		this.#sliderCloseCompleteHandler = (event) => {
+			const [sliderEvent] = event.getData();
+			if (sliderEvent?.getSlider()?.getUrl() !== signLinkSliderUrl)
+			{
+				return;
+			}
+
+			this.#unbindFrameEventHandler();
+		};
+
+		this.#getContext().BX.Event.EventEmitter.subscribe(
+			'SidePanel.Slider:onCloseComplete',
+			this.#sliderCloseCompleteHandler,
+		);
+	}
+
+	#unbindFrameEventHandler(): void
+	{
+		Event.unbind(top, 'message', this.#frameEventHandler);
+
+		if (this.#sliderCloseCompleteHandler)
+		{
+			this.#getContext().BX.Event.EventEmitter.unsubscribe(
+				'SidePanel.Slider:onCloseComplete',
+				this.#sliderCloseCompleteHandler,
+			);
+			this.#sliderCloseCompleteHandler = null;
+		}
+	}
+
+	#getContext(): Window
+	{
+		return window === top ? window : top;
+	}
+
+	#showProcessDoneNotification(role: string): void
+	{
+		const messageKeyMap = {
+			editor: 'SIGN_V2_B2E_LINK_PROCESS_DONE_EDITOR',
+			reviewer: 'SIGN_V2_B2E_LINK_PROCESS_DONE_REVIEWER',
+		};
+		const messageKey = messageKeyMap[role];
+		if (!messageKey)
+		{
+			return;
+		}
+
+		const content = Loc.getMessage(messageKey);
+		if (content)
+		{
+			window.top.BX.UI.Notification.Center.notify({
+				content,
+				autoHideDelay: 5000,
+			});
 		}
 	}
 }

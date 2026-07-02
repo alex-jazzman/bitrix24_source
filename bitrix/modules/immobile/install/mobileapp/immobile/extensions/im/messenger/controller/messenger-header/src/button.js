@@ -1,36 +1,27 @@
 /**
- * @module im/messenger/controller/messenger-header/button
+ * @module im/messenger/controller/messenger-header/src/button
  *
  * @description Warning! Button callbacks should only contain API calls or event emissions,
  * do not write complex logic in them and do not store state.
  */
-jn.define('im/messenger/controller/messenger-header/button', (require, exports, module) => {
+jn.define('im/messenger/controller/messenger-header/src/button', (require, exports, module) => {
 	const { Icon } = require('assets/icons');
-	const { Type } = require('type');
 
-	const { Loc } = require('im/messenger/loc');
-	const { NavigationTabId, RecentFilterId } = require('im/messenger/const');
+	const { Notification } = require('im/messenger/lib/ui/notification');
+	const { RecentFilterId, RecentMenuSection } = require('im/messenger/const');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { showNotificationList } = require('im/messenger/api/notifications-opener');
-	const { RecentManager } = require('im/messenger/controller/recent/manager');
-	const { readAllChatsByActiveRecentTab } = require('im/messenger/lib/read-all-chats');
-	const {
-		Button,
-		PopupCreateButton,
-		PopupButton,
-	} = require('im/messenger/lib/widget/header-button');
-
-	const HeaderButtonSection = Object.freeze({
-		general: 'general',
-		filter: 'filter',
-		developer: 'developer',
-	});
+	const { RecentActionsMenu, NestedRecentActionsMenu } = require('im/messenger/lib/popup-menu/recent-actions');
+	const { Button } = require('im/messenger/lib/widget/header-button');
 
 	const HeaderButtonId = Object.freeze({
 		search: 'search',
 		notification: 'notification',
 		more: 'more',
+		nestedSearch: 'nested-search',
+		nestedFilter: 'nested-filter',
+		nestedMore: 'nested-more',
 		filterAll: RecentFilterId.all,
 		filterUnread: RecentFilterId.unread,
 		readAll: 'read-all',
@@ -66,126 +57,141 @@ jn.define('im/messenger/controller/messenger-header/button', (require, exports, 
 		callback: async () => showNotificationList(),
 	});
 
-	const readAllPopupButton = PopupButton.create({
-		id: HeaderButtonId.readAll,
-		getTitle: () => {
-			const currentRecentId = serviceLocator.get('recent-manager').getActiveRecentId();
-			if (currentRecentId === NavigationTabId.task)
+	const developerItems = [
+		{
+			id: HeaderButtonId.developerConsole,
+			title: 'Developer console',
+			iconName: Icon.EDIT.getIconName(),
+			sectionCode: RecentMenuSection.developer,
+			shouldShow: async () => Feature.isDevModeEnabled,
+			callback: async () => {
+				const { Console } = await requireLazy('im:messenger/lib/dev/tools');
+				Console.open();
+			},
+		},
+		{
+			id: HeaderButtonId.developerMenu,
+			title: 'Developer menu',
+			iconName: Icon.MORE.getIconName(),
+			sectionCode: RecentMenuSection.developer,
+			shouldShow: async () => Feature.isDevelopmentEnvironment,
+			callback: async () => {
+				void window.messengerDebug.showDeveloperMenu();
+			},
+		},
+		{
+			id: HeaderButtonId.developerReload,
+			title: 'reload();',
+			iconName: Icon.REFRESH.getIconName(),
+			sectionCode: RecentMenuSection.developer,
+			shouldShow: async () => Feature.isDevelopmentEnvironment,
+			callback: async () => {
+				window.reload();
+			},
+		},
+	];
+
+	const nestedSearchButton = Button.create({
+		id: HeaderButtonId.nestedSearch,
+		type: ButtonType.search,
+		shouldShow: () => true,
+		callback: () => {
+			Notification.showComingSoon();
+		},
+	});
+
+	const nestedFilterButton = Button.create({
+		id: HeaderButtonId.nestedFilter,
+		type: ButtonType.filter,
+		shouldShow: () => NestedRecentActionsMenu.hasVisibleItems(),
+		callback: async () => {
+			const menu = new NestedRecentActionsMenu({
+				sections: [RecentMenuSection.filter, RecentMenuSection.general],
+				cacheId: 'im-messenger-nested-recent-actions-menu:filter',
+			});
+
+			await menu.show();
+		},
+	});
+
+	const nestedMoreButton = Button.create({
+		id: HeaderButtonId.nestedMore,
+		type: ButtonType.more,
+		shouldShow: async () => {
+			if (NestedRecentActionsMenu.hasVisibleItems())
 			{
-				return Loc.getMessage('IMMOBILE_MESSENGER_HEADER_BUTTON_READ_ALL_TASKS');
+				return true;
 			}
 
-			return Loc.getMessage('IMMOBILE_MESSENGER_HEADER_BUTTON_READ_ALL');
+			const visibility = await Promise.all(
+				developerItems.map((item) => item.shouldShow?.() ?? false),
+			);
+
+			return visibility.includes(true);
 		},
-		iconName: Icon.DOUBLE_CHECK.getIconName(),
-		shouldShow: async () => RecentManager.getInstance().getActiveRecentId() !== NavigationTabId.openlines,
 		callback: async () => {
-			void readAllChatsByActiveRecentTab();
+			const menu = new NestedRecentActionsMenu({
+				sections: [RecentMenuSection.project],
+				additionalItems: developerItems,
+				additionalSections: [{ id: RecentMenuSection.developer }],
+				cacheId: 'im-messenger-nested-recent-actions-menu:more',
+			});
+
+			await menu.show();
 		},
 	});
 
-	const filterAllPopupButton = PopupButton.create({
-		id: HeaderButtonId.filterAll,
-		title: Loc.getMessage('IMMOBILE_MESSENGER_HEADER_BUTTON_FILTER_ALL'),
-		sectionCode: HeaderButtonSection.filter,
-		checked: () => {
-			const activeRecent = serviceLocator.get('recent-manager').getActiveRecent();
-
-			return activeRecent?.getCurrentFilterId() === HeaderButtonId.filterAll;
-		},
-		callback: () => {
-			void serviceLocator.get('recent-manager').getActiveRecent().applyFilter(HeaderButtonId.filterAll);
-		},
-		shouldShow: () => (
-			Feature.isRecentFilterAvailable && serviceLocator.get('recent-manager').getActiveRecent().isSupportedFilter()
-		),
-	});
-
-	const filterUnreadPopupButton = PopupButton.create({
-		id: HeaderButtonId.filterUnread,
-		title: Loc.getMessage('IMMOBILE_MESSENGER_HEADER_BUTTON_FILTER_UNREAD'),
-		sectionCode: HeaderButtonSection.filter,
-		checked: () => {
-			const activeRecent = serviceLocator.get('recent-manager').getActiveRecent();
-
-			return activeRecent?.getCurrentFilterId() === HeaderButtonId.filterUnread;
-		},
-		callback: () => {
-			void serviceLocator.get('recent-manager').getActiveRecent().applyFilter(HeaderButtonId.filterUnread);
-		},
-		shouldShow: () => (
-			Feature.isRecentFilterAvailable && serviceLocator.get('recent-manager').getActiveRecent().isSupportedFilter()
-		),
-	});
-
-	const developerConsolePopupButton = PopupButton.create({
-		id: HeaderButtonId.developerConsole,
-		title: 'Developer console',
-		iconName: Icon.EDIT.getIconName(),
-		sectionCode: HeaderButtonSection.developer,
-		shouldShow: async () => Feature.isDevModeEnabled,
-		callback: async () => {
-			const { Console } = await requireLazy('im:messenger/lib/dev/tools');
-			Console.open();
-		},
-	});
-
-	const developerMenuPopupButton = PopupButton.create({
-		id: HeaderButtonId.developerMenu,
-		title: 'Developer menu',
-		iconName: Icon.MORE.getIconName(),
-		sectionCode: HeaderButtonSection.developer,
-		shouldShow: async () => Feature.isDevelopmentEnvironment,
-		callback: async () => {
-			void window.messengerDebug.showDeveloperMenu();
-		},
-	});
-
-	const developerReloadPopupButton = PopupButton.create({
-		id: HeaderButtonId.developerReload,
-		title: 'reload();',
-		iconName: Icon.REFRESH.getIconName(),
-		sectionCode: HeaderButtonSection.developer,
-		shouldShow: async () => Feature.isDevelopmentEnvironment,
-		callback: async () => {
-			window.reload();
-		},
-	});
-
-	const moreButton = PopupCreateButton.create({
+	const moreButton = Button.create({
 		id: HeaderButtonId.more,
 		type: ButtonType.filter,
-		isAccent: () => serviceLocator.get('recent-manager').getActiveRecent().hasSelectedFilter(),
-		getSections() {
-			const isSupportedFilter = serviceLocator.get('recent-manager').getActiveRecent().isSupportedFilter();
-			const isShowFilterSection = Feature.isRecentFilterAvailable && isSupportedFilter;
-			const isShowDeveloperSection = Feature.isDevModeEnabled || Feature.isDevelopmentEnvironment;
+		isAccent: () => serviceLocator.get('recent-manager').getActiveRecent()?.hasSelectedFilter() ?? false,
+		shouldShow: async () => {
+			const recent = serviceLocator.get('recent-manager').getActiveRecent();
+			const tabId = recent?.id;
+			if (!tabId)
+			{
+				return false;
+			}
 
-			return [
-				isShowFilterSection && { id: HeaderButtonSection.filter },
-				{ id: HeaderButtonSection.general },
-				isShowDeveloperSection && { id: HeaderButtonSection.developer },
-			].filter((item) => Type.isPlainObject(item));
+			if (RecentActionsMenu.hasVisibleItems(tabId))
+			{
+				return true;
+			}
+
+			const visibility = await Promise.all(
+				developerItems.map((item) => item.shouldShow?.() ?? false),
+			);
+
+			return visibility.includes(true);
 		},
-		buttons: [
-			filterAllPopupButton,
-			filterUnreadPopupButton,
-			readAllPopupButton,
-			developerConsolePopupButton,
-			developerMenuPopupButton,
-			developerReloadPopupButton,
-		],
+		callback: async () => {
+			const recentManager = serviceLocator.get('recent-manager');
+			const tabId = recentManager.getActiveRecentId();
+			const recent = recentManager.getActiveRecent();
+
+			if (recent?.hasSelectedFilter())
+			{
+				await recent.resetFilter();
+
+				return;
+			}
+
+			const menu = new RecentActionsMenu(tabId, {
+				additionalItems: developerItems,
+				additionalSections: [{ id: RecentMenuSection.developer }],
+				cacheId: 'im-messenger-recent-actions-menu:more-button',
+			});
+
+			await menu.show();
+		},
 	});
 
 	module.exports = {
 		searchButton,
 		notificationButton,
 		moreButton,
-		readAllPopupButton,
-		filterAllPopupButton,
-		filterUnreadPopupButton,
-		developerConsolePopupButton,
-		developerMenuPopupButton,
-		developerReloadPopupButton,
+		nestedSearchButton,
+		nestedFilterButton,
+		nestedMoreButton,
 	};
 });

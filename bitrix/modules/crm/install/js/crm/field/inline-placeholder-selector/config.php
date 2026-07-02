@@ -9,6 +9,7 @@ return [
 	'css' => 'dist/inline-placeholder-selector.bundle.css',
 	'js' => 'dist/inline-placeholder-selector.bundle.js',
 	'rel' => [
+		'crm_common',
 		'main.core',
 		'ui.entity-selector',
 		'ui.forms',

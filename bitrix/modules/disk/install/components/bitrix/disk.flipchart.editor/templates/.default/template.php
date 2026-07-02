@@ -28,6 +28,7 @@ Extension::load([
 	'disk.external-link',
 	'loader',
 	'socnetlogdest',
+	'intranet.sidepanel.bindings',
 ]);
 
 $APPLICATION->SetTitle($arResult['DOCUMENT_NAME']);
@@ -214,7 +215,12 @@ if ($isMobile)
 				scrollToElement: boardElementId,
 				features: {
 					elementLink: true,
+					shareInBitrix: true,
+					shareElementInSocials: true,
 				},
+				shareElementInBitrix: [
+					'createTask',
+				],
 			},
 			permissions: {
 				accessLevel: '<?= $arResult['ACCESS_LEVEL'] ?>',
@@ -238,7 +244,22 @@ if ($isMobile)
 						}
 					});
 
-				}
+				},
+				onShareElementWithBitrix(event) {
+
+					if (event.actionType === "createTask")
+					{
+						top.BX.Runtime.loadExtension('tasks.v2.application.task-card')
+							.then(({ TaskCard }) => TaskCard.showCompactCard({
+								title: '',
+								description: decodeURIComponent(event.elementLink),
+							}))
+							.catch(e => {
+								console.log('error creating task', e)
+							})
+					}
+
+				},
 			}
 		});
 		sdk.init();

@@ -7,6 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Bizproc\Activity\Enum\ActivityNodeType;
 use Bitrix\Bizproc\FieldType;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Bizproc\Activity\Enum\ActivityGroup;
@@ -20,6 +21,7 @@ $arActivityDescription =
 		[\Bitrix\Bizproc\Activity\Enum\ActivityType::NODE->value]
 	))
 		->setClass('CreateStorageNode')
+		->setNodeType(ActivityNodeType::SERVICE->value)
 		->setGroups([ ActivityGroup::STORAGE->value ])
 		->set('AI_DESCRIPTION', Loc::getMessage('BPCSN_DESCRIPTION_TEXT') ?? '')
 		->setColorIndex(ActivityColorIndex::CYAN->value)

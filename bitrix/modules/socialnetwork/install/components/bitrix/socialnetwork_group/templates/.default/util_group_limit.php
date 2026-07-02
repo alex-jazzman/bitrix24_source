@@ -1,7 +1,7 @@
 <?php
 
 use Bitrix\Socialnetwork\Helper\Feature;
-use Bitrix\Socialnetwork\Item\Workgroup;
+use Bitrix\Socialnetwork\Internals\Registry\GroupRegistry;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -16,13 +16,16 @@ $folderWorkgroups = (preg_match('#^/\w#', $folderWorkgroups) ? $folderWorkgroups
 
 $groupId = (int) ($arResult['VARIABLES']['group_id'] ?? null);
 
-$group = Workgroup::getById($groupId);
+$group = GroupRegistry::getInstance()->get($groupId);
+if ($group === null)
+{
+	return;
+}
 
-$isScrumProject = ($group && $group->isScrumProject());
-$isProject = ($group && !$group->isScrumProject());
+$isScrumProject = $group->isScrumProject();
 if (
 	($isScrumProject && Feature::isFeatureEnabled(Feature::SCRUM_CREATE))
-	|| ($isProject && Feature::isFeatureEnabled(Feature::PROJECTS_GROUPS, $groupId))
+	|| (!$isScrumProject && Feature::isFeatureEnabled(Feature::PROJECTS_GROUPS, $groupId))
 )
 {
 	return;

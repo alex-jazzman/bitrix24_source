@@ -54,7 +54,8 @@ do
 	}
 	
 	$strOK .= GetMessage("MAIN_WIZARD_LOAD_OK");
-} while (false);
+}
+while (false);
 
 $aTabs = Array(Array("DIV" => "edit1", "TAB" => GetMessage("MAIN_WIZARD_LOAD_TITLE"), "TITLE" => GetMessage("MAIN_WIZARD_LOAD_TITLE")));
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
@@ -81,24 +82,25 @@ $context->Show();
 <form method="post" action="<?=$APPLICATION->GetCurPage()?>?" enctype="multipart/form-data">
 <?=bitrix_sessid_post()?>
 <input type="hidden" name="lang" value="<?=LANGUAGE_ID?>">
-<?
+<?php
 $tabControl->Begin();
 
 $tabControl->BeginNextTab();
 ?>
 	<tr class="adm-detail-required-field">
-		<td width="40%"><?echo GetMessage("MAIN_WIZARD_LOAD_FILE")?>:</td>
+		<td width="40%"><?= GetMessage("MAIN_WIZARD_LOAD_FILE")?>:</td>
 		<td width="60%"><input type="file" size="35" name="wizardFile"></td>
 	</tr>
 
-<?
+<?php
 $tabControl->Buttons();
 ?>
 	<input type="hidden" name="action" value="import">
-	<input <?if(!$isAdmin) echo "disabled" ?> type="submit" name="import" value="<?echo GetMessage("MAIN_WIZARD_LOAD_SUBMIT")?>" class="adm-btn-save">
-<?
+	<input <?php if(!$isAdmin) echo "disabled" ?> type="submit" name="import" value="<?= GetMessage("MAIN_WIZARD_LOAD_SUBMIT")?>" class="adm-btn-save">
+<?php
 $tabControl->End();
 ?>
 </form>
 
-<?require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin.php");?>
+<?php
+require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin.php");

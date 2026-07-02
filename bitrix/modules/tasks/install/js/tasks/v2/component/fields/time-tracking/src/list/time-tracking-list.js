@@ -124,7 +124,7 @@ export const TimeTrackingList = {
 			</div>
 			<div class="tasks-time-tracking-list-content">
 				<template v-if="numbers === 0 && !adding">
-					<TimeTrackingListEmpty @add="handleAdd"/>
+					<TimeTrackingListEmpty :addBtnDisabled @add="handleAdd"/>
 				</template>
 				<template v-if="loading">
 					<TimeTrackingListItemSkeleton v-for="index in numbers" :key="index"/>

@@ -1,13 +1,14 @@
 import { getCurrentInstance, reactive, toRefs } from 'ui.vue3';
-import { State } from '../types';
+import { State, Getters } from '../types';
 import { useState } from './state';
+import { useInstances } from './instances';
 import { useActions, UseActions } from './actions';
-import { useGetters, UseGetters } from './getters';
+import { useGetters } from './getters';
 import { useHooks, UseHooks } from './hooks';
 
 export type UseBlockDiagran = {
 	...State,
-	...UseGetters,
+	...Getters,
 	...UseHooks,
 	...UseActions,
 };
@@ -27,6 +28,7 @@ export function useBlockDiagram(options): UseBlockDiagran
 	const getters = useGetters(reactiveState);
 	const hooks = useHooks();
 	const actions = useActions({ state: reactiveState, getters, hooks });
+	const instances = useInstances({ state: reactiveState, getters });
 
 	if (options)
 	{
@@ -37,6 +39,7 @@ export function useBlockDiagram(options): UseBlockDiagran
 		...toRefs(reactiveState),
 		...getters,
 		...actions,
+		...instances,
 		hooks,
 	};
 

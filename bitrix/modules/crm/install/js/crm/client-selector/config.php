@@ -8,6 +8,7 @@ return [
 	'css' => 'dist/client-selector.bundle.css',
 	'js' => 'dist/client-selector.bundle.js',
 	'rel' => [
+		'crm_common',
 		'main.core',
 		'ui.entity-selector',
 	],

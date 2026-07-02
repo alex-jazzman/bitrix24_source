@@ -1,7 +1,8 @@
 import { toValue } from 'ui.vue3';
 
 const SCROLL_THRESHOLD = 80;
-const MAX_SPEED = 4;
+const BASE_SPEED = 8;
+const HARD_CAP = 20;
 
 type AutoScrollCallback = (dx: number, dy: number) => void;
 
@@ -19,6 +20,18 @@ export function useAutoScroll(state: any, actions: any): UseAutoScroll
 	let rect = null;
 	let activeCallback = null;
 
+	const getAxisSpeed = (penetration: number): number => {
+		if (penetration <= 0)
+		{
+			return 0;
+		}
+
+		const t = penetration / SCROLL_THRESHOLD;
+		const speed = BASE_SPEED * t * t;
+
+		return Math.min(speed, HARD_CAP);
+	};
+
 	const scrollLoop = () => {
 		if (!rect || !activeCallback)
 		{
@@ -28,22 +41,27 @@ export function useAutoScroll(state: any, actions: any): UseAutoScroll
 		let dx = 0;
 		let dy = 0;
 
-		if (mouseX < rect.left + SCROLL_THRESHOLD)
+		const leftPenetration = (rect.left + SCROLL_THRESHOLD) - mouseX;
+		const rightPenetration = mouseX - (rect.right - SCROLL_THRESHOLD);
+		const topPenetration = (rect.top + SCROLL_THRESHOLD) - mouseY;
+		const bottomPenetration = mouseY - (rect.bottom - SCROLL_THRESHOLD);
+
+		if (leftPenetration > 0)
 		{
-			dx = -MAX_SPEED;
+			dx = -getAxisSpeed(leftPenetration);
 		}
-		else if (mouseX > rect.right - SCROLL_THRESHOLD)
+		else if (rightPenetration > 0)
 		{
-			dx = MAX_SPEED;
+			dx = getAxisSpeed(rightPenetration);
 		}
 
-		if (mouseY < rect.top + SCROLL_THRESHOLD)
+		if (topPenetration > 0)
 		{
-			dy = -MAX_SPEED;
+			dy = -getAxisSpeed(topPenetration);
 		}
-		else if (mouseY > rect.bottom - SCROLL_THRESHOLD)
+		else if (bottomPenetration > 0)
 		{
-			dy = MAX_SPEED;
+			dy = getAxisSpeed(bottomPenetration);
 		}
 
 		if (dx !== 0 || dy !== 0)

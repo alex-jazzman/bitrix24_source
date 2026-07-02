@@ -22,6 +22,15 @@ jn.define('mail/statemanager/redux/slices/mailboxes/thunk', (require, exports, m
 		{ condition },
 	);
 
+	const syncAllUserMailboxes = createAsyncThunk(
+		`${sliceName}/syncAllUserMailboxes`,
+		() => runActionPromise({
+			action: AjaxMethod.syncAllUserMailboxes,
+			options: {},
+		}),
+		{ condition },
+	);
+
 	const deleteMailbox = createAsyncThunk(
 		`${sliceName}/deleteMailbox`,
 		({ mailboxId }) => runActionPromise({
@@ -33,6 +42,7 @@ jn.define('mail/statemanager/redux/slices/mailboxes/thunk', (require, exports, m
 
 	module.exports = {
 		syncMailbox,
+		syncAllUserMailboxes,
 		deleteMailbox,
 	};
 });

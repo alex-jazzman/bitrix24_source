@@ -1,11 +1,11 @@
 import { Dom, Tag, Type, Loc } from 'main.core';
 import { Lottie } from 'ui.lottie';
-import SkeletonAnimation from './skeleton/biconnector-dashboard-skeleton.json';
 import DashboardLoadingAnimation from './skeleton/biconnector-dashboard-loading.json';
 import DotsAnimation from './skeleton/biconnector-dots-animation.json';
 import type { SkeletonConfig } from './type/skeleton-config';
 import { DashboardManager } from 'biconnector.apache-superset-dashboard-manager';
 import { BaseEvent, EventEmitter } from 'main.core.events';
+import { SkeletonRenderer } from 'biconnector.apache-superset-dashboard-skeleton';
 
 export class Skeleton
 {
@@ -29,7 +29,7 @@ export class Skeleton
 
 		if (Type.isDomNode(this.container))
 		{
-			Dom.append(this.#initAnimationContainer(), this.container);
+			SkeletonRenderer.render(this.container);
 			this.#changeContent(this.#getContent(this.status));
 		}
 
@@ -160,36 +160,6 @@ export class Skeleton
 			clearInterval(this.#reloadInterval);
 			this.#reloadInterval = null;
 		}
-	}
-
-	#initAnimationContainer(): HTMLElement
-	{
-		const animationBox = Tag.render`
-			<div class="biconnector-dashboard__animation_box"></div>
-		`;
-
-		const animation = Lottie.loadAnimation({
-			container: animationBox,
-			renderer: 'svg',
-			loop: true,
-			autoplay: false,
-			animationData: SkeletonAnimation,
-		});
-
-		animation.play();
-
-		return Tag.render`
-			<div class="biconnector-dashboard__animation">
-				<div class="biconnector-dashboard__hint_container"></div>
-				<div class="biconnector-dashboard__filter_box">
-					<div class="biconnector-dashboard__filter_box_top"></div>
-					<div class="biconnector-dashboard__filter_box_bottom"></div>
-				</div>
-				<div class="biconnector-dashboard__skeleton">
-					${animationBox}
-				</div>
-			</div>
-		`;
 	}
 
 	#changeContent(innerContent: HTMLElement): void

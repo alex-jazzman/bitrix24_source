@@ -28,3 +28,5 @@ $MESS['BOOKING_ACTIONS_POPUP_RECENT_EMPTY_STATE_SUBTITLE'] = 'Добавьте �
 
 $MESS['BOOKING_ACTIONS_POPUP_SEARCH_EMPTY_STATE_TITLE'] = 'Такой услуги у этого ресурса нет';
 $MESS['BOOKING_ACTIONS_POPUP_SEARCH_EMPTY_STATE_SUBTITLE'] = 'Попробуйте сформулировать иначе или добавьте новую услугу в настройках ресурса';
+
+$MESS['BOOKING_ACTIONS_POPUP_CLIENT_TIME_RANGE'] = '#FROM# – #TO#';

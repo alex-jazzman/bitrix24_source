@@ -11,9 +11,9 @@ jn.define('im/messenger/lib/element/dialog/message/custom/message', (require, ex
 	{
 		/**
 		 * @param {MessagesModelState} modelMessage
-		 * @param {CreateMessageOptions} options
+		 * @param {CreateMessageOptions|{}} options
 		 */
-		constructor(modelMessage = {}, options = {})
+		constructor(modelMessage, options = {})
 		{
 			super(modelMessage, options);
 		}

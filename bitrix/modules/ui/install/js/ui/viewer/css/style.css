@@ -567,6 +567,8 @@
 	transition: .3s;
 	align-items: center;
 	justify-content: center;
+	background: none;
+	border: none;
 }
 
 .ui-viewer-action-btn .ui-viewer-action-btn-icon {
@@ -807,11 +809,12 @@
     bottom: 0;
     overflow: hidden;
 	color: transparent;
+	text-align: initial;
     line-height: 1.0;
 	z-index: 99;
 }
 
-.ui-viewer-pdf-text-layer > div {
+.ui-viewer-pdf-text-layer :is(span, br) {
     color: transparent;
     position: absolute;
     white-space: pre;

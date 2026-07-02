@@ -642,7 +642,7 @@ class Grid
 			$expectedStickedColumns = ['USER_NAME',];
 			$this->headers[] = [
 				'id' => 'USER_NAME',
-				'name' => Loc::getMessage('TM_GRID_HEADER_USERS_LABEL'),
+				'name' => Loc::getMessage('TM_GRID_HEADER_USERS_DEPARTMENTS_LABEL'),
 				'default' => true,
 				'sticked' => true,
 				'class' => 'js-tm-fixed-columns',

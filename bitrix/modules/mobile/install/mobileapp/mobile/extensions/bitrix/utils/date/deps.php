@@ -2,15 +2,10 @@
 
 return [
 	'extensions' => [
-		'date',
-		'loc',
+		'utils/date/duration',
+		'utils/date/dynamic-date-formatter',
 		'utils/date/formats',
+		'utils/date/moment',
 		'utils/object',
-	],
-	'bundle' => [
-		'./moment',
-		'./configurable-date',
-		'./duration',
-		'./dynamic-date-formatter',
 	]
 ];

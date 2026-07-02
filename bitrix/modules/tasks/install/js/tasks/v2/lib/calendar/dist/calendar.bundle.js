@@ -5,7 +5,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 (function (exports,main_core,main_date,tasks_v2_lib_timezone) {
 	'use strict';
 
-	var _calculateRangeTs;
+	var _calculateRangeTs, _isSameCalendarDay, _getWeekStartDate, _getWeekDaysRange, _isDateInList, _resolveDurationUnitValue;
 	const settings = main_core.Extension.getSettings('tasks.v2.lib.calendar').calendarSettings;
 	const holidays = new Set(settings.HOLIDAYS.map(({
 	  M,
@@ -31,8 +31,23 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	const unitDurations = main_date.DurationFormat.getUnitDurations();
 	const workdayDuration = (endH * 60 + endM - (startH * 60 + startM)) * 60000;
 	const workWeekDuration = workdayDuration * (7 - weekends.size);
-	const calendar = new (_calculateRangeTs = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("calculateRangeTs"), class {
+	const calendar = new (_calculateRangeTs = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("calculateRangeTs"), _isSameCalendarDay = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isSameCalendarDay"), _getWeekStartDate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getWeekStartDate"), _getWeekDaysRange = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getWeekDaysRange"), _isDateInList = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isDateInList"), _resolveDurationUnitValue = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resolveDurationUnitValue"), class {
 	  constructor() {
+	    Object.defineProperty(this, _resolveDurationUnitValue, {
+	      value: _resolveDurationUnitValue2
+	    });
+	    Object.defineProperty(this, _isDateInList, {
+	      value: _isDateInList2
+	    });
+	    Object.defineProperty(this, _getWeekDaysRange, {
+	      value: _getWeekDaysRange2
+	    });
+	    Object.defineProperty(this, _getWeekStartDate, {
+	      value: _getWeekStartDate2
+	    });
+	    Object.defineProperty(this, _isSameCalendarDay, {
+	      value: _isSameCalendarDay2
+	    });
 	    Object.defineProperty(this, _calculateRangeTs, {
 	      value: _calculateRangeTs2
 	    });
@@ -78,19 +93,39 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    const offset = tasks_v2_lib_timezone.timezone.getOffset(timestamp);
 	    return main_date.DateTimeFormat.format(format, (timestamp + offset) / 1000);
 	  }
+	  formatTime(timestamp) {
+	    if (!timestamp) {
+	      return '';
+	    }
+	    const format = main_date.DateTimeFormat.getFormat('SHORT_TIME_FORMAT');
+	    const offset = tasks_v2_lib_timezone.timezone.getOffset(timestamp);
+	    return main_date.DateTimeFormat.format(format, (timestamp + offset) / 1000);
+	  }
 	  formatDuration(durationTs, matchWorkTime) {
 	    const dayDuration = matchWorkTime ? this.workdayDuration : unitDurations.d;
-	    const minutes = durationTs / unitDurations.i;
-	    const hours = durationTs / unitDurations.H;
-	    const days = durationTs / dayDuration;
-	    const [duration, format] = {
-	      [true]: [Math.floor(minutes) * unitDurations.i, 'i'],
-	      [Number.isInteger(hours)]: [hours * unitDurations.H, 'H'],
-	      [Number.isInteger(days)]: [days * unitDurations.d, 'd']
-	    }.true;
+	    const {
+	      format,
+	      value
+	    } = babelHelpers.classPrivateFieldLooseBase(this, _resolveDurationUnitValue)[_resolveDurationUnitValue](durationTs, dayDuration);
+	    const duration = value * unitDurations[format];
 	    return new main_date.DurationFormat(duration).format({
 	      format
 	    });
+	  }
+	  recalculateDurationByMatchWorkTime(durationTs, fromMatchesWorkTime, toMatchesWorkTime) {
+	    if (!durationTs || fromMatchesWorkTime === toMatchesWorkTime) {
+	      return durationTs;
+	    }
+	    const fromDayDuration = fromMatchesWorkTime ? this.workdayDuration : unitDurations.d;
+	    const toDayDuration = toMatchesWorkTime ? this.workdayDuration : unitDurations.d;
+	    const {
+	      format,
+	      value
+	    } = babelHelpers.classPrivateFieldLooseBase(this, _resolveDurationUnitValue)[_resolveDurationUnitValue](durationTs, fromDayDuration);
+	    if (format === 'd') {
+	      return value * toDayDuration;
+	    }
+	    return value * unitDurations[format];
 	  }
 	  calculateDuration(startTs, end) {
 	    const dayEnd = this.setHours(startTs, endH, endM);
@@ -164,6 +199,44 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  createDateFromUtc(date) {
 	    return new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), date.getUTCHours(), date.getUTCMinutes());
 	  }
+	  isToday(timestamp) {
+	    if (!timestamp) {
+	      return false;
+	    }
+	    const date = new Date(timestamp);
+	    const nowDate = new Date();
+	    return babelHelpers.classPrivateFieldLooseBase(this, _isSameCalendarDay)[_isSameCalendarDay](date, nowDate);
+	  }
+	  isTomorrow(timestamp) {
+	    if (!timestamp) {
+	      return false;
+	    }
+	    const date = new Date(timestamp);
+	    const tomorrowDate = new Date();
+	    tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+	    return babelHelpers.classPrivateFieldLooseBase(this, _isSameCalendarDay)[_isSameCalendarDay](date, tomorrowDate);
+	  }
+	  isThisWeek(timestamp) {
+	    if (!timestamp) {
+	      return false;
+	    }
+	    const date = new Date(timestamp);
+	    const today = new Date();
+	    const firstWeekDay = babelHelpers.classPrivateFieldLooseBase(this, _getWeekStartDate)[_getWeekStartDate](today);
+	    const thisWeekDays = babelHelpers.classPrivateFieldLooseBase(this, _getWeekDaysRange)[_getWeekDaysRange](firstWeekDay);
+	    return babelHelpers.classPrivateFieldLooseBase(this, _isDateInList)[_isDateInList](date, thisWeekDays);
+	  }
+	  isNextWeek(timestamp) {
+	    if (!timestamp) {
+	      return false;
+	    }
+	    const date = new Date(timestamp);
+	    const today = new Date();
+	    today.setDate(today.getDate() + 7);
+	    const firstWeekDay = babelHelpers.classPrivateFieldLooseBase(this, _getWeekStartDate)[_getWeekStartDate](today);
+	    const nextWeekDays = babelHelpers.classPrivateFieldLooseBase(this, _getWeekDaysRange)[_getWeekDaysRange](firstWeekDay);
+	    return babelHelpers.classPrivateFieldLooseBase(this, _isDateInList)[_isDateInList](date, nextWeekDays);
+	  }
 	})();
 	function _calculateRangeTs2(anchorTs, durationTs, backwards) {
 	  const direction = backwards ? -1 : 1;
@@ -183,6 +256,50 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    anchor = this.setHours(anchor + unitDurations.d * direction, anchorHours.H, anchorHours.M);
 	  }
 	  return anchorTs;
+	}
+	function _isSameCalendarDay2(firstDate, secondDate) {
+	  return firstDate.getFullYear() === secondDate.getFullYear() && firstDate.getMonth() === secondDate.getMonth() && firstDate.getDate() === secondDate.getDate();
+	}
+	function _getWeekStartDate2(referenceDate) {
+	  const date = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), referenceDate.getDate());
+	  const jsDay = date.getDay();
+	  const isoDay = jsDay === 0 ? 7 : jsDay;
+	  const diffToMonday = isoDay - 1;
+	  date.setDate(date.getDate() - diffToMonday);
+	  return date;
+	}
+	function _getWeekDaysRange2(firstDay) {
+	  const days = [];
+	  const current = new Date(firstDay.getFullYear(), firstDay.getMonth(), firstDay.getDate());
+	  for (let i = 0; i < 7; i++) {
+	    days.push(new Date(current.getFullYear(), current.getMonth(), current.getDate()));
+	    current.setDate(current.getDate() + 1);
+	  }
+	  return days;
+	}
+	function _isDateInList2(date, dates) {
+	  return dates.some(candidate => babelHelpers.classPrivateFieldLooseBase(this, _isSameCalendarDay)[_isSameCalendarDay](date, candidate));
+	}
+	function _resolveDurationUnitValue2(durationTs, dayDuration) {
+	  const days = durationTs / dayDuration;
+	  if (Number.isInteger(days)) {
+	    return {
+	      format: 'd',
+	      value: days
+	    };
+	  }
+	  const hours = durationTs / unitDurations.H;
+	  if (Number.isInteger(hours)) {
+	    return {
+	      format: 'H',
+	      value: hours
+	    };
+	  }
+	  const minutes = durationTs / unitDurations.i;
+	  return {
+	    format: 'i',
+	    value: Math.floor(minutes)
+	  };
 	}
 
 	exports.calendar = calendar;

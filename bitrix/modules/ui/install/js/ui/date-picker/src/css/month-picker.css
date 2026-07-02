@@ -10,6 +10,13 @@
 	background-color: #fff;
 }
 
+.ui-month-picker-content {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	justify-content: center;
+}
+
 .ui-month-picker-header-title {
 	cursor: pointer;
 	color: var(--ui-color-text-primary);
@@ -77,4 +84,11 @@
 .ui-month-picker-month.--selected {
 	background-color: var( --ui-color-primary);
 	color: var( --ui-color-on-primary);
+}
+
+.ui-month-picker-month.--disabled {
+	cursor: not-allowed;
+	opacity: 0.35;
+	pointer-events: none;
+	color: var(--ui-color-text-secondary);
 }

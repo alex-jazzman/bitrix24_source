@@ -12,7 +12,7 @@ jn.define('im/messenger/lib/element/dialog/message/banner/message', (require, ex
 	 */
 	class BannerMessage extends CustomMessage
 	{
-		constructor(modelMessage = {}, options = {})
+		constructor(modelMessage, options = {})
 		{
 			super(modelMessage, options);
 			/** @type {BannerProps} */

@@ -1,6 +1,7 @@
 import { DatetimeConverter } from 'crm.timeline.tools';
 import { Runtime, Type } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import type { BaseEvent } from 'main.core.events';
+import { EventEmitter } from 'main.core.events';
 import { DateTimeFormat } from 'main.date';
 import { TextEditor, TextEditorComponent } from 'ui.text-editor';
 import { ElementIds, EventIds } from '../analytics';
@@ -14,19 +15,13 @@ import {
 	TodoEditorBlocksLink,
 } from './block/index';
 import { TodoEditorColorSelector } from './color-selector/todo-editor-color-selector';
+import { Events } from './events';
 import { TodoEditorPingSelector } from './todo-editor-ping-selector';
 import { TodoEditorResponsibleUserSelector } from './todo-editor-responsible-user-selector';
 
 const ADD_MODE = 'add';
 
-export const Events = {
-	EVENT_RESPONSIBLE_USER_CHANGE: 'crm:timeline:todo:responsible-user-changed',
-	EVENT_DEADLINE_CHANGE: 'crm:timeline:todo:deadline-changed',
-	EVENT_CALENDAR_CHANGE: 'crm:timeline:todo:calendar-changed',
-	EVENT_ACTIONS_POPUP_ITEM_CLICK: 'crm:timeline:todo:actions-popup-item-click',
-	EVENT_UPDATE_CLICK: 'crm:timeline:todo:update',
-	EVENT_REPEAT_CLICK: 'crm:timeline:todo:repeat',
-};
+export { Events };
 
 const CALENDAR_BLOCK_ID = TodoEditorBlocksCalendar.methods.getId();
 

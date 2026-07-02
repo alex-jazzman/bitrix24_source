@@ -45,6 +45,16 @@ jn.define('im/messenger/controller/recent/service/empty-state/common', (require,
 			;
 		}
 
+		unsubscribeEvents()
+		{
+			this.recentLocator.get('emitter')
+				.off(
+					RecentEventType.render.itemCollectionSizeChanged,
+					this.itemCollectionSizeChangedHandler,
+				)
+			;
+		}
+
 		redraw()
 		{
 			this.itemCollectionSize = null;

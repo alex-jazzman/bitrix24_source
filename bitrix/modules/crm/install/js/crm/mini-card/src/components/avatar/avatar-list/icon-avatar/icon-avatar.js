@@ -1,10 +1,9 @@
-import { BitrixVueComponentProps } from 'ui.vue3';
 import { BIcon } from 'ui.icon-set.api.vue';
-
-import { Avatar } from '../../layout/avatar/avatar';
-
 import 'ui.icon-set.crm';
 import 'ui.icon-set.outline';
+import { type BitrixVueComponentProps } from 'ui.vue3';
+
+import { Avatar } from '../../layout/avatar/avatar';
 
 import './icon-avatar.css';
 

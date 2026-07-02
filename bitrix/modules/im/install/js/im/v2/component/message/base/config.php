@@ -8,7 +8,6 @@ return [
 	'css' => 'dist/base-message.bundle.css',
 	'js' => 'dist/base-message.bundle.js',
 	'rel' => [
-		'main.core',
 		'im.v2.application.core',
 		'im.v2.component.message.elements',
 		'im.v2.const',
@@ -17,6 +16,7 @@ return [
 		'im.v2.lib.parser',
 		'im.v2.lib.permission',
 		'im.v2.lib.utils',
+		'main.core',
 	],
 	'skip_core' => false,
 ];

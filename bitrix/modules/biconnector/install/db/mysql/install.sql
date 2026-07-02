@@ -331,3 +331,73 @@ CREATE TABLE IF NOT EXISTS b_biconnector_external_source_rest
 	PRIMARY KEY (ID),
 	UNIQUE INDEX IX_BICONNECTOR_EXTERNAL_SOURCE_CODE (SOURCE_ID, CONNECTOR_ID)
 );
+
+CREATE TABLE IF NOT EXISTS b_biconnector_superset_dashboard_share
+(
+	ID INT AUTO_INCREMENT NOT NULL,
+	DASHBOARD_ID INT NOT NULL,
+	TOKEN VARCHAR(64) NOT NULL,
+	PASSWORD VARCHAR(255) NOT NULL,
+	DATE_EXPIRE DATETIME NOT NULL,
+	ACTIVE CHAR(1) NOT NULL DEFAULT 'Y',
+	CREATED_BY_ID INT NOT NULL,
+	DATE_CREATE DATETIME NOT NULL,
+	DATE_MODIFY DATETIME NOT NULL,
+	EXTERNAL_FILTER_VALUES TEXT NULL,
+	URL_PARAMETER_VALUES TEXT NULL,
+	LOGIN_ATTEMPTS INT NOT NULL DEFAULT 0,
+	LOGIN_LOCKED_TILL DATETIME NULL,
+	PRIMARY KEY (ID),
+	UNIQUE INDEX IX_BICONNECTOR_SHARE_TOKEN (TOKEN),
+	UNIQUE INDEX IX_BICONNECTOR_SHARE_DASHBOARD_CREATOR (DASHBOARD_ID, CREATED_BY_ID)
+);
+
+CREATE TABLE IF NOT EXISTS b_biconnector_superset_dashboard_view
+(
+	ID INT AUTO_INCREMENT NOT NULL,
+	DASHBOARD_ID INT NOT NULL,
+	USER_ID INT NOT NULL,
+	VIEWED_AT DATETIME NOT NULL,
+	PRIMARY KEY pk_b_biconnector_superset_dashboard_view(ID),
+	INDEX ix_b_biconnector_superset_dashboard_view_dashboard_id(DASHBOARD_ID),
+	INDEX ix_b_biconnector_superset_dashboard_view_user_id(USER_ID)
+);
+
+CREATE TABLE IF NOT EXISTS b_biconnector_superset_dashboard_info
+(
+	ID INT AUTO_INCREMENT NOT NULL,
+	DASHBOARD_ID INT NOT NULL,
+	PUBLISHED_BY_ID INT NULL,
+	PUBLISHED_DATE DATETIME NULL,
+	UPDATED_BY_ID INT NULL,
+	UPDATED_DATE DATETIME NULL,
+	DESCRIPTION TEXT NULL,
+	IMAGE_ID INT NULL,
+	PRIMARY KEY pk_b_biconnector_superset_dashboard_info(ID),
+	UNIQUE INDEX ix_b_biconnector_superset_dashboard_info_dashboard_id(DASHBOARD_ID),
+	INDEX ix_b_biconnector_superset_dashboard_info_published_by_id(PUBLISHED_BY_ID),
+	INDEX ix_b_biconnector_superset_dashboard_info_updated_by_id(UPDATED_BY_ID)
+);
+
+CREATE TABLE IF NOT EXISTS b_biconnector_superset_dashboard_info_gallery
+(
+	ID INT AUTO_INCREMENT NOT NULL,
+	DASHBOARD_INFO_ID INT NOT NULL,
+	IMAGE_ID INT NOT NULL,
+	SORT INT NOT NULL DEFAULT 500,
+	PRIMARY KEY pk_b_biconnector_superset_dashboard_info_gallery(ID),
+	INDEX ix_b_biconnector_superset_dashboard_info_gallery_info(DASHBOARD_INFO_ID),
+	UNIQUE INDEX ix_b_biconnector_superset_dashboard_info_gallery_info_image (DASHBOARD_INFO_ID, IMAGE_ID)
+);
+
+CREATE TABLE IF NOT EXISTS b_biconnector_superset_dashboard_chat
+(
+	ID INT AUTO_INCREMENT NOT NULL,
+	DASHBOARD_ID INT NOT NULL,
+	CHAT_ID INT NOT NULL,
+	CREATED_BY_ID INT NOT NULL,
+	DATE_CREATE DATETIME NOT NULL,
+	PRIMARY KEY pk_b_biconnector_superset_dashboard_chat(ID),
+	UNIQUE INDEX ix_b_biconnector_superset_dashboard_chat_dashboard_id(DASHBOARD_ID),
+	UNIQUE INDEX ix_b_biconnector_superset_dashboard_chat_chat_id(CHAT_ID)
+);

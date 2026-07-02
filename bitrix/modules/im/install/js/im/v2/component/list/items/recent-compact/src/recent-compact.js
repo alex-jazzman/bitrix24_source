@@ -1,4 +1,3 @@
-import { type JsonObject } from 'main.core';
 import { type EventEmitter } from 'main.core.events';
 
 import { Messenger } from 'im.public';
@@ -8,7 +7,7 @@ import 'im.v2.css.tokens';
 import { RecentMenu } from 'im.v2.lib.menu';
 import { RecentManager } from 'im.v2.lib.recent';
 import { Utils } from 'im.v2.lib.utils';
-import { type ImModelRecentItem, ImModelCallItem } from 'im.v2.model';
+import { type ImModelRecentItem, type ImModelCallItem } from 'im.v2.model';
 import { LegacyRecentService } from 'im.v2.provider.service.recent';
 
 import { CompactActiveCallList } from './components/compact-active-call-list';
@@ -22,11 +21,6 @@ import './css/recent-list.css';
 export const RecentList = {
 	name: 'RecentList',
 	components: { RecentItem, EmptyState, CompactNavigation, CompactActiveCallList },
-	emits: ['chatClick'],
-	data(): JsonObject
-	{
-		return {};
-	},
 	computed:
 	{
 		preparedItems(): ImModelRecentItem[]
@@ -68,7 +62,7 @@ export const RecentList = {
 	{
 		onClick(item)
 		{
-			Messenger.openChat(item.dialogId);
+			void Messenger.openChat(item.dialogId);
 		},
 		onRightClick(item, event)
 		{
@@ -119,7 +113,7 @@ export const RecentList = {
 		<div class="bx-im-messenger__scope bx-im-list-recent-compact__container">
 			<CompactNavigation />
 			<CompactActiveCallList @click="onClick" />
-			<div class="bx-im-list-recent-compact__scroll-container">
+			<div class="bx-im-list-recent-compact__scroll-container --hidden-scroll">
 				<div v-if="pinnedItems.length > 0" class="bx-im-list-recent-compact__pinned_container">
 					<RecentItem
 						v-for="item in pinnedItems"

@@ -67,6 +67,7 @@ return [
 		'crm.client-selector',
 		'crm_common',
 		'crm_entity_editor_rel',
+		'crm.router',
 		'ui.forms',
 		'ui.entity-editor',
 		'ui.entity-selector',

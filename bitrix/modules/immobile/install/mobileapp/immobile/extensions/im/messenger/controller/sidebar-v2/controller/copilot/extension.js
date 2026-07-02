@@ -10,7 +10,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/copilot', (require, exp
 	const { Feature } = require('im/messenger/lib/feature');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { Promo } = require('im/messenger/const');
-	const { Promotion } = require('im/messenger/lib/promotion');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	const { SidebarBaseController } = require('im/messenger/controller/sidebar-v2/controller/base');
 	const { CopilotSidebarView } = require('im/messenger/controller/sidebar-v2/controller/copilot/src/view');
@@ -62,7 +62,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/copilot', (require, exp
 		 */
 		#checkPromoForAhaMoment(promoId)
 		{
-			if (Promotion.getInstance()?.shouldShowPromo(promoId))
+			if (serviceLocator.get('promotion')?.shouldShowPromo(promoId))
 			{
 				return promoId;
 			}

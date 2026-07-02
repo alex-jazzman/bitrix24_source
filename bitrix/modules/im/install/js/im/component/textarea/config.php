@@ -12,14 +12,14 @@ return [
 		'./dist/textarea.bundle.css',
 	],
 	'rel' => [
-		'ui.design-tokens',
-		'ui.vue',
+		'im.const',
 		'im.lib.localstorage',
 		'im.lib.utils',
 		'main.core',
-		'ui.vue.vuex',
 		'main.core.events',
-		'im.const',
+		'ui.design-tokens',
+		'ui.vue',
+		'ui.vue.vuex',
 	],
 	'skip_core' => false,
 ];

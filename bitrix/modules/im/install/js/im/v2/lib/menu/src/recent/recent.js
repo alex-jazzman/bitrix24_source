@@ -14,6 +14,7 @@ import {
 	ActionByUserType,
 	UserRole,
 	type ApplicationContext,
+	type RecentTypeItem,
 } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
 import { CallManager } from 'im.v2.lib.call';
@@ -31,7 +32,8 @@ import { BaseMenu } from '../base/base';
 type MenuItemContext = {
 	dialogId: string,
 	compactMode?: boolean,
-	recentItem?: ImModelRecentItem
+	recentItem?: ImModelRecentItem,
+	recentSection?: RecentTypeItem,
 }
 
 const MenuSectionCode = {
@@ -153,6 +155,7 @@ export class RecentMenu extends BaseMenu
 				if (showReadOption)
 				{
 					this.chatService.readDialog(dialogId);
+
 					Analytics.getInstance().recentContextMenu.onRead(dialogId);
 				}
 				else
@@ -216,6 +219,7 @@ export class RecentMenu extends BaseMenu
 				else
 				{
 					this.chatService.muteChat(dialogId);
+
 					Analytics.getInstance().recentContextMenu.onMute(dialogId);
 				}
 			},

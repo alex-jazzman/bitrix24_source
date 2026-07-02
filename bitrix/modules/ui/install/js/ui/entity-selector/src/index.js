@@ -29,6 +29,9 @@ import type { AvatarOptions } from './item/avatar-options';
 import type { CaptionOptions } from './item/caption-options';
 import type { SearchOptions } from './dialog/search-options';
 
+import 'ui.design-tokens';
+import 'ui.icon-set.solid';
+
 import './css/dialog.css';
 import './css/tab.css';
 import './css/item.css';

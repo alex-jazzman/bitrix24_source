@@ -114,7 +114,12 @@ if ($articleCode > 0)
 		)
 	);
 }
-if ($arParams['datasetId'])
+if ($arParams['sourceId'] === ExternalSource\Type::System->value)
+{
+	$tableName = $arResult['initialData']['config']['datasetProperties']['name'] ?? '';
+	$APPLICATION->SetTitle(Loc::getMessage('DATASET_IMPORT_SYSTEM_TITLE', ['#TABLE_NAME#' => htmlspecialcharsbx($tableName)]));
+}
+elseif ($arParams['datasetId'])
 {
 	$APPLICATION->SetTitle(Loc::getMessage('DATASET_IMPORT_EDIT_TITLE_MSGVER_1'));
 }

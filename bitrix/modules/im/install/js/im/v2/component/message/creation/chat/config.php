@@ -9,13 +9,13 @@ return [
 	'js' => 'dist/chat-creation.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'ui.vue3.directives.hint',
+		'call.lib.analytics',
 		'im.public',
 		'im.v2.component.elements.button',
 		'im.v2.component.entity-selector',
 		'im.v2.component.message.base',
 		'im.v2.lib.call',
-		'call.lib.analytics',
+		'ui.vue3.directives.hint',
 	],
 	'skip_core' => true,
 ];

@@ -1365,6 +1365,11 @@ export const Outline = Object.freeze({
 	LOWER_LEFT_ARROW: 'o-lower-left-arrow',
 	MAIL_PLUS: 'o-mail-plus',
 	MESSAGES_MULTI: 'o-messages-multi',
+	CRM_FORM: 'o-crm-form',
+	BITRIX_GPT: 'bitrix-gpt',
+	RECENT_ITEMS: 'o-recent-items',
+	TEMPLATE_PLUS: 'o-template-plus',
+	O_TEMPLATE_TASK: 'o-template-task',
 });
 
 export const Solid = Object.freeze({

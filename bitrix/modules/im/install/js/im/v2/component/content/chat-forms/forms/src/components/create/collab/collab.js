@@ -1,20 +1,17 @@
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { type JsonObject } from 'main.core';
+import { EventEmitter, type BaseEvent } from 'main.core.events';
 
-import { Core } from 'im.v2.application.core';
 import { Messenger } from 'im.public';
-import { ChatService } from 'im.v2.provider.service.chat';
-import { EmptyAvatarType } from 'im.v2.component.elements.avatar';
-import { ChatType, EventType, Layout, Color } from 'im.v2.const';
-import { CreateChatManager } from 'im.v2.lib.create-chat';
+import { Core } from 'im.v2.application.core';
 import { TitleInput, ChatAvatar, CreateChatHeading, TextareaInput, ButtonPanel, AutoDelete } from 'im.v2.component.content.chat-forms.elements';
+import { EmptyAvatarType } from 'im.v2.component.elements.avatar';
+import { type CustomColorScheme } from 'im.v2.component.elements.button';
+import { EventType, Layout, Color, type OnLayoutChangeEvent } from 'im.v2.const';
+import { CreateChatManager, CreatableChatType } from 'im.v2.lib.create-chat';
+import { ChatService } from 'im.v2.provider.service.chat';
 
 import { DescriptionBanner } from './components/description-banner/description-banner';
-import { RightsSection } from './components/rights-section';
-
-import type { JsonObject } from 'main.core';
-import type { CustomColorScheme } from 'im.v2.component.elements.button';
-import type { OnLayoutChangeEvent } from 'im.v2.const';
-import type { AccessRightsFormResult } from './components/rights-section';
+import { RightsSection, type AccessRightsFormResult } from './components/rights-section';
 
 export const CollabCreation = {
 	name: 'CollabCreation',
@@ -70,7 +67,7 @@ export const CollabCreation = {
 		EventEmitter.subscribe(EventType.layout.onLayoutChange, this.onLayoutChange);
 
 		this.restoreFields();
-		CreateChatManager.getInstance().setChatType(ChatType.collab);
+		CreateChatManager.getInstance().setChatType(CreatableChatType.collab);
 		CreateChatManager.getInstance().setCreationStatus(true);
 		CreateChatManager.getInstance().setChatAvatar(this.avatarFile);
 	},
@@ -112,7 +109,7 @@ export const CollabCreation = {
 		onLayoutChange(event: BaseEvent<OnLayoutChangeEvent>): void
 		{
 			const { to } = event.getData();
-			if (to.name === Layout.createChat && to.entityId !== ChatType.collab)
+			if (to.name === Layout.createChat && to.entityId !== CreatableChatType.collab)
 			{
 				this.exitByChatTypeSwitch = true;
 			}
@@ -131,7 +128,7 @@ export const CollabCreation = {
 					moderatorMembers: this.groupSettings.moderatorMembers,
 					options: this.groupSettings.options,
 					permissions: this.groupSettings.permissions,
-					autoDeleteDelay: this.autoDeleteDelay,
+					messagesAutoDeleteDelay: this.autoDeleteDelay,
 				});
 
 				this.isCreating = false;

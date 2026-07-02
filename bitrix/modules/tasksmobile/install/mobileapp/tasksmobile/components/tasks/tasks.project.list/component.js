@@ -8,8 +8,9 @@
 	const { PresetList } = require('tasks/layout/presetList');
 	const { Project } = require('tasks/project');
 	const { StorageCache } = require('storage-cache');
-	const { WorkgroupUtil } = require('project/utils');
+	const { ProjectOpener } = require('project/opener');
 	const { ProjectMemberList } = require('project/member-list');
+	const { ProjectCreateManager } = require('layout/socialnetwork/project-v2/create');
 	const { RequestExecutor } = require('rest');
 	const { RunActionExecutor } = require('rest/run-action-executor');
 	const { FloatingActionButton } = require('ui-system/form/buttons/floating-action-button');
@@ -1677,13 +1678,19 @@
 					currentUserId: parseInt(this.userId || 0, 10),
 				};
 
-				void WorkgroupUtil.openProject(projectItem, params);
+				void ProjectOpener.open({
+					item: projectItem,
+					...params,
+				});
 			}
 		}
 
 		addProject()
 		{
-			ProjectCreateManager.open(this.userId);
+			void ProjectCreateManager.open({
+				userId: this.userId,
+				onCreate: () => this.reload(0, true),
+			});
 		}
 
 		addItem(projectData)
@@ -1742,6 +1749,11 @@
 
 		onTabSelected(data)
 		{
+			if (!data.changed)
+			{
+				return;
+			}
+
 			if (data.tabId === this.getTabName())
 			{
 				this.onAppActive(data);

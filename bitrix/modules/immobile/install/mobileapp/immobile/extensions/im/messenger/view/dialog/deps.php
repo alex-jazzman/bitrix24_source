@@ -23,6 +23,7 @@ return [
 		'im:messenger/view/base',
 		'im:messenger/view/lib/proxy-view',
 		'im:messenger/view/lib/state-manager',
+		'im:messenger/controller/dialog/lib/suggests-manager',
 	],
 	'bundle' => [
 		'./src/action-panel',
@@ -35,6 +36,7 @@ return [
 		'./src/restrictions',
 		'./src/selector',
 		'./src/status-field',
+		'./src/suggests',
 		'./src/text-field',
 	],
 ];

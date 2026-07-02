@@ -11,6 +11,7 @@ $MESS['TASKS_V2_TASK_FULL_CARD_AHA_START_TIME_TRACKING_HINT_TEXT'] = 'В это�
 $MESS['TASKS_V2_TASK_FULL_CARD_AHA_START_TIME_TRACKING_HINT_MORE'] = 'Больше не показывать';
 //standalone
 $MESS['TASKS_V2_TASK_FULL_CARD_CANCEL'] = 'Отмена';
+$MESS['TASKS_V2_TASK_FULL_CARD_VIEWS'] = 'Просмотры';
 //standalone end
 //lifecycle actions menu
 $MESS['TASKS_V2_TASK_FULL_CARD_START'] = 'Начать';

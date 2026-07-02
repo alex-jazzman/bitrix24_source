@@ -40,6 +40,7 @@ export type RolesDialogItemData = ItemData | {
 		isInfoItem: boolean;
 		avatar?: string;
 		isNew: boolean;
+		isUniversal: boolean;
 		canBeFavourite?: boolean;
 		isFavourite?: boolean;
 		actions?: RolesDialogItemDataCustomActions;
@@ -86,6 +87,7 @@ export class RolesDialog extends EventEmitter
 	#moduleId: string;
 	#contextId: string;
 	#rolesLibraryAvailable: boolean;
+	#isBitrixGptV2Available: boolean;
 
 	constructor(options: RolesDialogOptions)
 	{
@@ -116,6 +118,7 @@ export class RolesDialog extends EventEmitter
 			cSection: `${this.#moduleId}_${this.#contextId}`,
 		});
 		this.#rolesLibraryAvailable = Extension.getSettings('ai.roles-dialog').get('isLibraryVisible');
+		this.#isBitrixGptV2Available = Extension.getSettings('ai.roles-dialog').get('isBitrixGptV2Available');
 	}
 
 	#validateOptions(options: RolesDialogOptions)
@@ -339,7 +342,7 @@ export class RolesDialog extends EventEmitter
 				RolesDialogRolesLibrary,
 			},
 			popupOptions: {
-				className: 'ai_roles-dialog_popup ui-entity-catalog__scope',
+				className: `ai_roles-dialog_popup ui-entity-catalog__scope${this.#isBitrixGptV2Available ? ' --bitrixgpt-redesign' : ''}`,
 				resizable: false,
 				width: 852,
 				height: 510,
@@ -378,7 +381,7 @@ export class RolesDialog extends EventEmitter
 
 		if (this.#rolesLibraryAvailable)
 		{
-			slots[EntityCatalog.SLOT_GROUP_LIST_FOOTER] = '<RolesDialogRolesLibrary />';
+			slots[EntityCatalog.SLOT_GROUP_LIST_FOOTER] = `<RolesDialogRolesLibrary :use-redesign="${this.#isBitrixGptV2Available}" />`;
 		}
 
 		return slots;
@@ -621,6 +624,7 @@ export class RolesDialog extends EventEmitter
 			selected: isSelected,
 			customData: {
 				isNew: industry.isNew,
+				isBitrixGptV2Available: this.#isBitrixGptV2Available,
 			},
 		};
 	}
@@ -707,6 +711,8 @@ export class RolesDialog extends EventEmitter
 				selected: role.code === this.#selectedRoleCode,
 				avatar: role.avatar.medium,
 				isNew: role.isNew,
+				isUniversal: this.#isBitrixGptV2Available && role.code === this.#universalRole.code,
+				isBitrixGptV2Available: this.#isBitrixGptV2Available,
 				isFavourite: isRoleInFavouriteList,
 				canBeFavourite: role.code !== this.#universalRole.code,
 				actions: {

@@ -6,26 +6,32 @@
 }
 
 .editor-chart-block-header__title {
-	display: block;
+	display: -webkit-box;
 	flex-shrink: 1;
+	max-height: 46px;
 	padding-right: 8px;
-	max-height: 20px;
-	font-size: 14px;
+	margin: 0;
+	font-size: var(--ui-font-size-xl);
 	font-weight: var(--ui-font-weight-medium);
 	color: var(--ui-color-palette-black-base);
-	white-space: nowrap;
 	text-overflow: ellipsis;
-	line-height: 20px;
+	-webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+	line-height: 21px;
 	overflow: hidden;
 	box-sizing: border-box;
+}
+
+.editor-chart-block-header.--deactivated .editor-chart-block-header__title {
+	color: var(--ui-color-palette-gray-70);
 }
 
 .editor-chart-block-header__icon-wrapper {
 	display: grid;
 	place-items: center;
 	flex-shrink: 0;
-	width: 38px;
-	height: 38px;
+	width: 46px;
+	height: 46px;
 	margin-right: 8px;
 	border-radius: 7px;
 	background-color: var(--ui-color-palette-blue-25);

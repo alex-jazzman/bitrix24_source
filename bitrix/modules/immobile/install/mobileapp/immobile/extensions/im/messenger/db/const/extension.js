@@ -34,10 +34,10 @@ jn.define('im/messenger/db/const', (require, exports, module) => {
 		falseBoolean: '0',
 		trueBoolean: '1',
 		null: null,
-		emptyObject: {}, // these types are a literal format because it will be a JSON.stringify()
-		emptyArray: [],
-		emptyMap: {},
-		emptySet: {},
+		get emptyObject() { return {}; },
+		get emptyArray() { return []; },
+		get emptyMap() { return new Map(); },
+		get emptySet() { return new Set(); },
 	});
 
 	module.exports = {

@@ -1,19 +1,22 @@
-import { ClientSelector, Communication, CommunicationItem } from 'crm.client-selector';
+import { Button } from 'ui.buttons';
+import { ClientSelector, type Communication, type CommunicationItem } from 'crm.client-selector';
+import { Builder, Dictionary } from 'crm.integration.analytics';
 import { ConditionChecker, Types as SenderTypes } from 'crm.messagesender';
 import { ajax, Dom, Event, Loc, Runtime, Tag, Text, Type } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { type BaseEvent, EventEmitter } from 'main.core.events';
 import { Loader } from 'main.loader';
-import { Menu, MenuItem, MenuItemOptions, MenuManager } from 'main.popup';
+import { type Menu, type MenuItem, type MenuItemOptions, MenuManager } from 'main.popup';
+import { sendData } from 'ui.analytics';
 import { Dialog } from 'ui.entity-selector';
 import 'ui.icon-set.actions';
-import { Icon } from 'ui.icon-set.api.core';
 import 'ui.icon-set.main';
 import 'ui.icon-set.social';
+
 import Context from '../../context';
 import Item from '../../item';
 import './gotochat.css';
 import ServicesConfig from './services-config';
-import { Channel, ChatService, Config, Entity, OpenLinesList } from './types';
+import type { Channel, ChatService, Config, Entity, OpenLinesList } from './types';
 
 const MENU_ITEM_STUB_ID = 'stub';
 const ACTIVE_MENU_ITEM_CLASS = 'menu-popup-item-accept';
@@ -43,7 +46,7 @@ export default class GoToChat extends Item
 	isFetchedConfig: boolean = false;
 	isSending: boolean = false;
 
-	#chatServiceButtons: Map<string, HTMLElement> = new Map();
+	#chatServiceButtons: Map<string, Button> = new Map();
 	#region: ?string = null;
 	#isBox: ?string = null;
 	#entityEditor: ?BX.Crm.EntityEditor = null;
@@ -62,7 +65,6 @@ export default class GoToChat extends Item
 		this.onSelectClientPhone = this.onSelectClientPhone.bind(this);
 		this.onSelectSender = this.onSelectSender.bind(this);
 		this.onSelectSenderPhone = this.onSelectSenderPhone.bind(this);
-		this.onSelectTelegramOpenLineId = this.onSelectTelegramOpenLineId.bind(this);
 	}
 
 	initializeLayout()
@@ -226,7 +228,7 @@ export default class GoToChat extends Item
 							${this.#getClientTitleHtmlElement()}
 						</div>
 						<div class="crm-entity-stream-content-gotochat-clients-selector-description">
-							${Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CLIENT_SELECTOR_DESCRIPTION')}
+							${Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CLIENT_SELECTOR_DESCRIPTION_MSGVER_2')}
 						</div>
 					</div>
 					<div class="${TOOLBAR_CONTAINER_CLASS}">
@@ -482,10 +484,24 @@ export default class GoToChat extends Item
 					disabled: !this.openLineItems.telegrambot?.selected,
 					events: {
 						onSubMenuShow: (event: BaseEvent) => {
-							this.#onSubMenuShow(event, this.getTelegramOpenLinesSubMenuItems());
+							this.#onSubMenuShow(event, this.getOpenLinesSubMenuItems('telegrambot'));
 						},
 					},
 				},
+				...(this.#isServiceSupportedInRegion(ServicesConfig.get('max'))
+					? [{
+						id: 'maxSubmenu',
+						text: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_MAX_OPENLINE_SELECTOR'),
+						items,
+						disabled: !this.openLineItems.max?.selected,
+						events: {
+							onSubMenuShow: (event: BaseEvent) => {
+								this.#onSubMenuShow(event, this.getOpenLinesSubMenuItems('max'));
+							},
+						},
+					}]
+					: []
+				),
 			],
 		});
 	}
@@ -635,7 +651,7 @@ export default class GoToChat extends Item
 		`;
 		const titleContainer = Tag.render`
 			<span>
-				${Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SELECTED_CLIENT_TITLE')}
+				${Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SELECTED_CLIENT_TITLE_MSGVER_2')}
 			</span>
 		`;
 		const titleElement = titleContainer.firstChild;
@@ -703,9 +719,16 @@ export default class GoToChat extends Item
 	{
 		this.#fillChatServiceButtons();
 
+		const wrappers = [...this.#chatServiceButtons.values()].map((button) => {
+			const wrapper = Tag.render`<div class="crm-entity-stream-content-gotochat-button"></div>`;
+			wrapper.appendChild(button.render());
+
+			return wrapper;
+		});
+
 		const buttonsContainer = Tag.render`
 			<div class="${BUTTONS_CONTAINER_CLASS}">
-				${[...this.#chatServiceButtons.values()]}
+				${wrappers}
 			</div>
 		`;
 
@@ -739,6 +762,11 @@ export default class GoToChat extends Item
 			return true;
 		}
 
+		if (Array.isArray(service.region))
+		{
+			return service.region.includes(this.#region);
+		}
+
 		if (service.region !== this.#region && service.region[0] !== '!')
 		{
 			return false;
@@ -747,84 +775,50 @@ export default class GoToChat extends Item
 		return (service.region !== `!${this.#region}`);
 	}
 
-	#createChatServiceButton(service: ChatService): HTMLElement
+	#createChatServiceButton(service: ChatService): Button
 	{
-		let className = service.commonClass;
-		let label = service.connectLabel;
-		let hint = null;
+		const isDisabled = !this.#isAvailableService(service.id);
+		const isReady = !isDisabled && this.#isServiceSelected(service);
 
-		if (!this.#isAvailableService(service.id))
+		let style;
+		let text;
+
+		if (isDisabled)
 		{
-			className += ' --disabled';
-			label = service.disabledLabel || service.soonLabel;
-			hint = service.disabledHint;
+			style = Button.AirStyle.OUTLINE;
+			text = service.disabledLabel || service.soonLabel;
 		}
-		else if (this.#isServiceSelected(service))
+		else if (isReady)
 		{
-			className += ' --ready';
-			label = service.inviteLabel;
+			style = Button.AirStyle.FILLED;
+			text = service.inviteLabel;
 		}
-
-		const button = Tag.render`
-			<div 
-				class="crm-entity-stream-content-gotochat-button"
-				onclick="${this.showRegistrarAndSend.bind(this, service.id)}"
-			>
-				<button 
-					class="crm-entity-stream-content-new-detail-gotochat_button ${className}"
-					data-code="${service.id}"
-				>
-					${this.#renderButtonIcon(service)}
-					<span class="crm-entity-stream-content-new-detail-gotochat_button-text">${label}</span>
-				</button>
-			</div>
-		`;
-
-		if (Type.isStringFilled(hint))
+		else
 		{
-			Dom.attr(button, {
-				'data-hint': hint,
-				'data-hint-no-icon': 'Y',
-				'data-hint-center': 'Y',
-			});
+			style = Button.AirStyle.OUTLINE_ACCENT_2;
+			text = service.connectLabel;
 		}
 
-		return button;
-	}
-
-	#renderButtonIcon(service: ChatService | undefined): HTMLElement
-	{
-		if (!service)
+		const dataset: { [key: string]: string } = { code: service.id };
+		if (isDisabled && Type.isStringFilled(service.disabledHint))
 		{
-			return '';
+			dataset.hint = service.disabledHint;
+			dataset.hintNoIcon = 'Y';
+			dataset.hintCenter = 'Y';
 		}
 
-		const icon = new Icon({
+		return new Button({
+			text,
+			size: Button.Size.EXTRA_LARGE,
+			useAirDesign: true,
+			style,
 			icon: service.iconClass,
-			size: 40,
-			color: this.#getButtonIconColor(service),
+			round: true,
+			wide: true,
+			disabled: isDisabled,
+			dataset,
+			onclick: () => this.showRegistrarAndSend(service.id),
 		});
-
-		return Tag.render`
-			<i class="crm-entity-stream-content-new-detail-gotochat_button-icon">
-				${icon.render()}
-			</i>
-		`;
-	}
-
-	#getButtonIconColor(service: ChatService): string
-	{
-		if (!this.#isAvailableService(service.id))
-		{
-			return getComputedStyle(document.body).getPropertyValue('--ui-color-base-40');
-		}
-
-		if (this.#isServiceSelected(service))
-		{
-			return getComputedStyle(document.body).getPropertyValue('--ui-color-background-primary');
-		}
-
-		return service.iconColor;
 	}
 
 	#isServiceSelected(service: ChatService): boolean
@@ -864,6 +858,7 @@ export default class GoToChat extends Item
 		this.showButtonLoader(code);
 
 		const service = this.#getServiceConfigByCode(code);
+		const isInvite = service ? this.#isServiceSelected(service) : false;
 		const { entityTypeId } = this.#getOwnerEntity();
 		const lineId = await ConditionChecker.checkAndGetLine({
 			openLineCode: service.connectorId,
@@ -879,6 +874,10 @@ export default class GoToChat extends Item
 		}
 		else
 		{
+			if (!isInvite && service)
+			{
+				this.#sendClickAnalytics(service, false);
+			}
 			this.send(lineId, code);
 		}
 	}
@@ -886,6 +885,24 @@ export default class GoToChat extends Item
 	#getServiceConfigByCode(code: string): ?ChatService
 	{
 		return ServicesConfig.get(code) || null;
+	}
+
+	#sendClickAnalytics(service: ChatService, isInvite: boolean): void
+	{
+		const EventBuilder = isInvite
+			? Builder.Communication.Channel.InviteEvent
+			: Builder.Communication.Channel.ConnectEvent
+		;
+
+		const analyticsData = (new EventBuilder())
+			.setChannelId(service.id)
+			.setSubSection(Dictionary.SUB_SECTION_DETAILS)
+			.setSection(this.getExtras()?.analytics?.c_section)
+			.setElement(Dictionary.ELEMENT_GOTOCHAT)
+			.buildData()
+		;
+
+		sendData(analyticsData);
 	}
 
 	#isAvailableService(code: string): boolean
@@ -902,9 +919,11 @@ export default class GoToChat extends Item
 	{
 		const { entityTypeId } = this.#getOwnerEntity();
 		const entityType = BX.CrmEntityType.resolveName(entityTypeId);
+		const dynamicKey = `CRM_TIMELINE_GOTOCHAT_EDITOR_HAVE_UNSAVED_CHANGES_TEXT_${entityType}`;
 		const message = (
-			Loc.getMessage(`CRM_TIMELINE_GOTOCHAT_EDITOR_HAVE_UNSAVED_CHANGES_TEXT_${entityType}`)
-			|| Loc.getMessage('CRM_TIMELINE_GOTOCHAT_EDITOR_HAVE_UNSAVED_CHANGES_TEXT')
+			Loc.hasMessage(dynamicKey)
+				? Loc.getMessage(dynamicKey)
+				: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_EDITOR_HAVE_UNSAVED_CHANGES_TEXT')
 		);
 
 		return new Promise((resolve) => {
@@ -963,7 +982,8 @@ export default class GoToChat extends Item
 		const senderId = this.currentChannelId;
 		const from = this.fromPhoneId;
 		const to = this.toPhoneId;
-		const connectorId = this.#getServiceConfigByCode(code).connectorId;
+		const service = this.#getServiceConfigByCode(code);
+		const connectorId = service.connectorId;
 
 		const ajaxParameters = {
 			ownerTypeId,
@@ -984,6 +1004,7 @@ export default class GoToChat extends Item
 
 				this.#setOpenLineItemIsSelected(code);
 				this.#restoreButton(code);
+				this.#sendClickAnalytics(service, true);
 
 				this.#showNotify(Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SEND_SUCCESS'));
 				this.emitFinishEditEvent();
@@ -1023,13 +1044,16 @@ export default class GoToChat extends Item
 
 		this.#chatServiceButtons.set(code, newButton);
 
-		Dom.replace(oldButton, newButton);
+		Dom.replace(oldButton.render(), newButton.render());
 	}
 
 	showButtonLoader(code: string): void
 	{
 		const button = this.#chatServiceButtons.get(code);
-		Dom.addClass(button?.firstElementChild, '--loading');
+		if (button)
+		{
+			button.setWaiting(true);
+		}
 	}
 
 	getSenderType(): string
@@ -1117,19 +1141,24 @@ export default class GoToChat extends Item
 		return items;
 	}
 
-	getTelegramOpenLinesSubMenuItems(): Array
+	getOpenLinesSubMenuItems(connectorCode: string): Array
 	{
-		const telegram = this.openLineItems?.telegrambot ?? {};
+		const openLineItem = this.openLineItems?.[connectorCode] ?? {};
 
 		const items = [];
-		telegram.list.forEach(({ id, name, selected }) => {
+		if (!openLineItem.list)
+		{
+			return items;
+		}
+
+		openLineItem.list.forEach(({ id, name, selected }) => {
 			const className = (selected ? ACTIVE_MENU_ITEM_CLASS : DEFAULT_MENU_ITEM_CLASS);
 
 			items.push({
 				id,
 				text: name,
 				className,
-				onclick: this.onSelectTelegramOpenLineId,
+				onclick: (event, menuItem) => this.onSelectOpenLineId(event, menuItem, connectorCode),
 			});
 		});
 
@@ -1148,9 +1177,9 @@ export default class GoToChat extends Item
 		this.#refreshSettingsMenu();
 	}
 
-	onSelectTelegramOpenLineId(event: BaseEvent, { id }): void
+	onSelectOpenLineId(event: BaseEvent, { id }, connectorCode: string): void
 	{
-		const list = this.openLineItems?.telegrambot?.list ?? null;
+		const list = this.openLineItems?.[connectorCode]?.list ?? null;
 		if (list === null)
 		{
 			return;
@@ -1171,7 +1200,7 @@ export default class GoToChat extends Item
 		list.forEach((item) => item.selected = false);
 		list.find((item) => item.id === id).selected = true;
 
-		BX.userOptions.save('crm', 'gotochat-selected-openline-ids', 'telegrambot', id);
+		BX.userOptions.save('crm', 'gotochat-selected-openline-ids', connectorCode, id);
 
 		this.#refreshSettingsMenu();
 	}

@@ -19,10 +19,10 @@ return [
 	'css' => 'dist/store-document-grid-manager.bundle.css',
 	'js' => 'dist/store-document-grid-manager.bundle.js',
 	'rel' => [
+		'main.core',
+		'main.core.events',
 		'main.popup',
 		'ui.buttons',
-		'main.core.events',
-		'main.core',
 		'ui.dialogs.messagebox',
 	],
 	'skip_core' => false,

@@ -71,6 +71,8 @@ jn.define('im/messenger/db/table/dialog', (require, exports, module) => {
 				{ name: 'backgroundId', type: FieldType.text, defaultValue: FieldDefaultValue.emptyText },
 				{ name: 'containsCollaber', type: FieldType.boolean, defaultValue: FieldDefaultValue.falseBoolean },
 				{ name: 'entityLink', type: FieldType.object, defaultValue: FieldDefaultValue.emptyObject },
+				{ name: 'parentChatId', type: FieldType.integer, defaultValue: FieldDefaultValue.zeroInteger },
+				{ name: 'parentMessageId', type: FieldType.integer, defaultValue: FieldDefaultValue.zeroInteger },
 			];
 		}
 

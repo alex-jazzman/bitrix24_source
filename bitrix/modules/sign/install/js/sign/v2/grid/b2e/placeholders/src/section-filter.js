@@ -4,7 +4,7 @@ export class SectionFilter
 {
 	filterBySearchQuery(sections: Array, searchQuery: string): Array
 	{
-		const normalizedQueryValue = searchQuery.toLowerCase().trim();
+		const normalizedQueryValue = searchQuery.toLowerCase().replaceAll('{', '').replaceAll('}', '').trim();
 		if (!normalizedQueryValue)
 		{
 			return sections;
@@ -70,6 +70,11 @@ export class SectionFilter
 
 	#filterItems(items: Array, query: string): Array
 	{
-		return items.filter((item) => item.name.toLowerCase().includes(query));
+		return items.filter((item) => {
+			const name = item.name?.toLowerCase() ?? '';
+			const value = item.value?.toLowerCase() ?? '';
+
+			return name.includes(query) || value.includes(query);
+		});
 	}
 }

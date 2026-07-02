@@ -1,8 +1,6 @@
 import BaseRepository from './baserepository';
 import LocationJsonConverter from '../entity/location/locationjsonconverter';
 import Location from '../entity/location';
-import Address from '../entity/address';
-import LocationObjectConverter from '../entity/location/locationobjectconverter';
 
 export default class LocationRepository extends BaseRepository
 {
@@ -10,22 +8,6 @@ export default class LocationRepository extends BaseRepository
 	{
 		props.path = props.path || 'location.api.location';
 		super(props);
-	}
-
-	findParents(location: Location): Promise
-	{
-		if(!(location instanceof Location))
-		{
-			throw new TypeError('location must be type of Location');
-		}
-
-		return this.actionRunner.run(
-			'findParents',
-			{
-				location: LocationObjectConverter.convertLocationToObject(location)
-			})
-			.then(this.processResponse.bind(this))
-			.then(this.#convertCollection.bind(this));
 	}
 
 	findByExternalId(externalId: string, sourceCode: string, languageId: string): Promise
@@ -61,24 +43,6 @@ export default class LocationRepository extends BaseRepository
 			})
 			.then(this.processResponse.bind(this))
 			.then(this.#convertLocation.bind(this));
-	}
-
-	#convertCollection(collectionJsonData: Array): Array<Location>
-	{
-		if(!Array.isArray(collectionJsonData))
-		{
-			throw new Error('Can\'t convert location collection data');
-		}
-
-		const result = [];
-
-		collectionJsonData.forEach((location) => {
-			result.push(
-				this.#convertLocation(location)
-			);
-		});
-
-		return result;
 	}
 
 	#convertLocation(locationData)

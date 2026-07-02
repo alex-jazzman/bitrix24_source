@@ -1,0 +1,4 @@
+<?php
+
+$MESS['BIZPROC_INFRASTRUCTURE_CONTROLLER_DEBUG_TRACE_NOT_FOUND'] = 'Трейс отладки не найден';
+$MESS['BIZPROC_INFRASTRUCTURE_CONTROLLER_DEBUG_TRACE_ERROR'] = 'Ошибка при работе с трейсом отладки';

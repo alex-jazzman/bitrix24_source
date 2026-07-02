@@ -1,4 +1,4 @@
-<?
+<?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\Localization\Loc;
@@ -45,7 +45,8 @@ $formAction = (new Uri($APPLICATION->getCurPageParam()))
 
 <div class="main-user-consent-errors">
 	<?php foreach ($arResult['ERRORS'] as $error): ?>
-		<? ShowError($error); ?>
+		<?php
+		ShowError($error); ?>
 	<?php endforeach; ?>
 </div>
 
@@ -66,7 +67,7 @@ $formAction = (new Uri($APPLICATION->getCurPageParam()))
 	<?=bitrix_sessid_post()?>
 <div class="main-user-consent-edit">
 <div class="main-user-consent-edit-menu">
-	<? $APPLICATION->ShowViewContent('left-panel-consent-edit'); ?>
+	<?php $APPLICATION->ShowViewContent('left-panel-consent-edit'); ?>
 </div>
 
 <div id="<?=$listDomIds['formContainerId']?>" class="main-user-consent-edit-content">
@@ -93,7 +94,7 @@ $formAction = (new Uri($APPLICATION->getCurPageParam()))
 				<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown uce-first-select-container ui-ctl-w100">
 					<div class="ui-ctl-after ui-ctl-icon-angle"></div>
 					<select class="ui-ctl-element" data-bx-type-selector="">
-						<?
+						<?php
 						$isCurrentSupportDataProvider = false;
 						foreach ($arResult['TYPE_LIST'] as $type):
 							$typeCode = htmlspecialcharsbx($type['TYPE']);
@@ -115,7 +116,7 @@ $formAction = (new Uri($APPLICATION->getCurPageParam()))
 								($type['SELECTED'] ? 'selected': '')?>>
 								<?=htmlspecialcharsbx($type['NAME'])?>
 							</option>
-						<?endforeach;?>
+						<?php endforeach;?>
 					</select>
 				</div>
 				<div class="uce-second-select-container">
@@ -144,7 +145,7 @@ $formAction = (new Uri($APPLICATION->getCurPageParam()))
 							<option value="">
 								<?=Loc::getMessage('MAIN_USER_CONSENT_EDIT_TMPL_DATA_PROVIDER_DEF')?>
 							</option>
-							<?foreach ($arResult['DATA_PROVIDER_LIST'] as $provider):
+							<?php foreach ($arResult['DATA_PROVIDER_LIST'] as $provider):
 								$data = htmlspecialcharsbx(Json::encode($provider['DATA']));
 								?>
 								<option value="<?=htmlspecialcharsbx($provider['CODE'])?>" data-bx-edit-url="<?=
@@ -152,7 +153,7 @@ $formAction = (new Uri($APPLICATION->getCurPageParam()))
 								($provider['SELECTED'] ? 'selected': '')?>>
 									<?=htmlspecialcharsbx($provider['NAME'])?>
 								</option>
-							<?endforeach;?>
+							<?php endforeach;?>
 						</select>
 					</div>
 					<div class="uce-second-select-container">
@@ -167,7 +168,7 @@ $formAction = (new Uri($APPLICATION->getCurPageParam()))
 
 		<div class="main-user-consent-edit-fields" style="">
 
-			<?foreach ($arResult['TYPE_LIST'] as $type):
+			<?php foreach ($arResult['TYPE_LIST'] as $type):
 				$typeCode = htmlspecialcharsbx($type['TYPE']);
 				$lang = htmlspecialcharsbx($type['LANGUAGE_ID']);
 
@@ -177,7 +178,7 @@ $formAction = (new Uri($APPLICATION->getCurPageParam()))
 				}
 				?>
 				<div data-bx-fields="" data-bx-type="<?=$typeCode?>" data-bx-lang="<?=$lang?>" style="<?=($type['SELECTED'] ? '' : 'display: none;')?>">
-				<?foreach ($type['FIELDS'] as $field):
+				<?php foreach ($type['FIELDS'] as $field):
 					$code = htmlspecialcharsbx($field['CODE']);
 					$tab = htmlspecialcharsbx($field['TAB']);
 					if (isset($field['INPUT_NAME']) && $field['INPUT_NAME'])
@@ -200,16 +201,16 @@ $formAction = (new Uri($APPLICATION->getCurPageParam()))
 					?>
 					<div data-bx-field="<?=$code?>" data-bx-tab="<?=$tab?>" style="<?=
 						($tab !== $activeTab ? 'display: none;' : '') ?>" class="main-user-consent-edit-fields-field">
-						<? if (!in_array($field['TYPE'], $typesWithoutLabel)):?>
+						<?php if (!in_array($field['TYPE'], $typesWithoutLabel)):?>
 							<div class="main-user-consent-edit-fields-field-label main-user-consent-edit-title">
-								<? if ($inputShowByCheckbox):?>
+								<?php if ($inputShowByCheckbox):?>
 									<input class="" id="<?=$inputId?>_TOGGLER" data-bx-toggler="" name="<?=$checkboxName?>" type="checkbox" <?=($inputValue ? 'checked' : '')?>>
-								<? endif; ?>
+								<?php endif; ?>
 								<label class="" for="<?=$inputId?>_TOGGLER">
 									<?=htmlspecialcharsbx($field['CAPTION'])?>
 								</label>
 							</div>
-						<? endif; ?>
+						<?php endif; ?>
 
 						<div data-bx-view="" class="main-user-consent-edit-fields-field-view" style="display: none;">
 							<span data-bx-view-name="" class="main-user-consent-edit-fields-field-view-name">Hkfdvfjhdvbhjfd</span>
@@ -217,7 +218,7 @@ $formAction = (new Uri($APPLICATION->getCurPageParam()))
 						</div>
 
 						<div data-bx-toggled="" <?=(($inputShowByCheckbox && !$inputValue) ? 'style="display: none;"' : '')?> class="main-user-consent-edit-fields-field-input">
-							<?
+							<?php
 							switch ($field['TYPE'])
 							{
 								case 'enum':
@@ -267,16 +268,16 @@ $formAction = (new Uri($APPLICATION->getCurPageParam()))
 							?>
 						</div>
 					</div>
-				<?endforeach;?>
+				<?php endforeach;?>
 				</div>
-			<?endforeach;?>
+			<?php endforeach;?>
 		</div>
 
-		<?if (!$arParams['CAN_EDIT']):?>
+		<?php if (!$arParams['CAN_EDIT']):?>
 			<div class="main-user-consent-edit-alert">
 				<?=Loc::getMessage('MAIN_USER_CONSENT_EDIT_TMPL_ERROR_ACCESS_EDIT')?>
 			</div>
-		<?endif;?>
+		<?php endif;?>
 </div>
 
 <?php if (!$arResult['ERRORS'] && $arParams['ID']): ?>
@@ -295,7 +296,7 @@ $formAction = (new Uri($APPLICATION->getCurPageParam()))
 	);
 	?>
 </div>
-<? endif; ?>
+<?php endif; ?>
 
 </div>
 

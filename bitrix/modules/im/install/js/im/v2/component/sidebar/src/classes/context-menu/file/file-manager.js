@@ -1,9 +1,8 @@
-import { Store } from 'ui.vue3.vuex';
+import { type Store } from 'ui.vue3.vuex';
 
 import { Core } from 'im.v2.application.core';
 import { DiskService } from 'im.v2.provider.service.disk';
-
-import type { ImModelSidebarFileItem } from 'im.v2.model';
+import { type ImModelSidebarFileItem } from 'im.v2.model';
 
 export class FileManager
 {

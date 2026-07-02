@@ -122,7 +122,7 @@ export type EmployeeSaveData = {
 
 export type ControllerError = {
 	message: string,
-	code: string,
+	code: string | number,
 	customData: {},
 }
 

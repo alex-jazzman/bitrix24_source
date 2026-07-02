@@ -1377,7 +1377,8 @@ this.BX.UI = this.BX.UI || {};
 	  }, {
 	    key: "renderContentField",
 	    value: function renderContentField() {
-	      var content = main_core.Tag.render(_templateObject2$8 || (_templateObject2$8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div id=\"", "\" class=\"ui-section__field-user_selector ", "\">\n\t\t\t\t<div class=\"ui-section__field\">\n\t\t\t\t\t<div class=\"ui-section__field-label\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t\t<div class=\"ui-section__input-box\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.getId(), babelHelpers.classPrivateFieldGet(this, _className), this.getLabel(), this.renderErrors(), babelHelpers.classPrivateFieldGet(this, _inputContainer));
+	      var moreElement = this.getHelpdeskCode() ? this.renderMoreElement(this.getHelpdeskCode()) : '';
+	      var content = main_core.Tag.render(_templateObject2$8 || (_templateObject2$8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div id=\"", "\" class=\"ui-section__field-user_selector ", "\">\n\t\t\t\t<div class=\"ui-section__field\">\n\t\t\t\t\t<div class=\"ui-section__field-label\">\n\t\t\t\t\t\t", " ", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t\t<div class=\"ui-section__input-box\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.getId(), babelHelpers.classPrivateFieldGet(this, _className), this.getLabel(), moreElement, this.renderErrors(), babelHelpers.classPrivateFieldGet(this, _inputContainer));
 	      babelHelpers.classPrivateFieldGet(this, _entitySelector).renderTo(content.querySelector('.ui-section__field'));
 	      return content;
 	    }

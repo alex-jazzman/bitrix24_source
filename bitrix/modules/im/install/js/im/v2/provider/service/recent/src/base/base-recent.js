@@ -1,19 +1,35 @@
 import { Core } from 'im.v2.application.core';
+import { RecentType, RestMethod, type RecentTypeItem } from 'im.v2.const';
 import { CopilotManager } from 'im.v2.lib.copilot';
 import { Logger } from 'im.v2.lib.logger';
 import { runAction } from 'im.v2.lib.rest';
 import { UserManager } from 'im.v2.lib.user';
+import { type RawChat, type RawMessage, type RawRecentItem } from 'im.v2.provider.service.types';
 
-import type { RawChat, RawMessage, RawRecentItem } from 'im.v2.provider.service.types';
-import type { BaseRecentQueryParams, RecentRestResult } from './types/base-recent-types';
+import { type BaseRecentQueryParams, type BaseRecentFilterParams, type RecentRestResult } from './types/base-recent-types';
+
+export const ParentChatScope = {
+	all: null,
+	topLevel: 0,
+};
 
 export class BaseRecentService
 {
+	#unreadMode: boolean = false;
+	#parentChatId: ?number = 0;
 	#itemsPerPage: number = 50;
 	#isLoading: boolean = false;
 	#pagesLoaded: number = 0;
 	#hasMoreItemsToLoad: boolean = true;
 	#lastMessageDate: number = 0;
+
+	constructor(params: { unreadMode: boolean, parentChatId: ?number } = {})
+	{
+		const { unreadMode = false, parentChatId = ParentChatScope.topLevel } = params;
+
+		this.#unreadMode = unreadMode;
+		this.#parentChatId = parentChatId;
+	}
 
 	loadFirstPage(): Promise
 	{
@@ -46,12 +62,28 @@ export class BaseRecentService
 
 	getRestMethodName(): string
 	{
-		throw new Error('BaseRecentList: you should implement "getRestMethodName" for child class');
+		return RestMethod.imV2RecentTail;
+	}
+
+	getRecentType(): RecentTypeItem
+	{
+		return RecentType.default;
 	}
 
 	saveRecentItems(recentItems: RawRecentItem[]): Promise
 	{
-		throw new Error('BaseRecentList: you should implement "saveRecentItems" for child class');
+		const setPayload = {
+			type: this.getRecentType(),
+			items: recentItems,
+			unread: this.#unreadMode,
+		};
+
+		if (this.#parentChatId !== null)
+		{
+			setPayload.parentChatId = this.#parentChatId;
+		}
+
+		return Core.getStore().dispatch('recent/setCollection', setPayload);
 	}
 
 	getQueryParams(firstPage: boolean = false): BaseRecentQueryParams
@@ -62,10 +94,13 @@ export class BaseRecentService
 		};
 	}
 
-	getRequestFilter(firstPage: boolean = false): Record
+	getRequestFilter(firstPage: boolean = false): BaseRecentFilterParams
 	{
 		return {
 			lastMessageDate: firstPage ? null : this.#lastMessageDate,
+			recentSection: this.getRecentType(),
+			parentId: this.#parentChatId,
+			unread: this.#unreadMode,
 		};
 	}
 
@@ -88,6 +123,7 @@ export class BaseRecentService
 		const result: RecentRestResult = await runAction(this.getRestMethodName(), queryParams)
 			.catch(([error]) => {
 				console.error('BaseRecentList: page request error', error);
+				throw error;
 			});
 
 		this.#pagesLoaded++;

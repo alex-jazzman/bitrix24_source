@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
-(function (exports,pull_queuemanager,tasks_v2_provider_service_resultService,ui_vue3_vuex,main_core_events,tasks_v2_core,tasks_v2_provider_service_relationService,tasks_v2_provider_service_groupService,tasks_v2_provider_service_flowService,tasks_v2_provider_service_userService,tasks_v2_provider_service_fileService,main_core,tasks_v2_const,tasks_v2_provider_service_taskService) {
+(function (exports,pull_queuemanager,tasks_v2_provider_service_resultService,ui_vue3_vuex,main_core_events,tasks_v2_core,tasks_v2_provider_service_relationService,tasks_v2_provider_service_groupService,tasks_v2_provider_service_flowService,tasks_v2_provider_service_userService,tasks_v2_provider_service_fileService,tasks_v2_provider_service_viewersService,main_core,tasks_v2_const,tasks_v2_provider_service_taskService) {
 	'use strict';
 
 	class BasePullHandler {
@@ -273,7 +273,6 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	};
 	const mapValue = (value, mapped) => main_core.Type.isUndefined(value) ? undefined : mapped;
 
-	var _handleTaskAdded = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleTaskAdded");
 	var _handleTaskUpdated = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleTaskUpdated");
 	var _pushedTasks = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("pushedTasks");
 	var _handleTaskUpdatedDelayed = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleTaskUpdatedDelayed");
@@ -288,6 +287,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	var _loadFlow = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loadFlow");
 	var _needToLoadFlow = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("needToLoadFlow");
 	var _getUsersIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getUsersIds");
+	var _loadViewersQuantity = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loadViewersQuantity");
 	var _currentUserId$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentUserId");
 	class TaskPullHandler extends BasePullHandler {
 	  constructor(...args) {
@@ -295,6 +295,9 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    Object.defineProperty(this, _currentUserId$2, {
 	      get: _get_currentUserId$2,
 	      set: void 0
+	    });
+	    Object.defineProperty(this, _loadViewersQuantity, {
+	      value: _loadViewersQuantity2
 	    });
 	    Object.defineProperty(this, _getUsersIds, {
 	      value: _getUsersIds2
@@ -316,32 +319,6 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    });
 	    Object.defineProperty(this, _upsertStage, {
 	      value: _upsertStage2
-	    });
-	    Object.defineProperty(this, _handleTaskAdded, {
-	      writable: true,
-	      value: data => {
-	        const features = tasks_v2_core.Core.getParams().features;
-
-	        // show task created balloon if miniform feature is enabled
-	        const showTaskAddedBalloon = data.AFTER.USER_ID === babelHelpers.classPrivateFieldLooseBase(this, _currentUserId$2)[_currentUserId$2] && features.isMiniformEnabled && !features.isV2Enabled;
-	        if (showTaskAddedBalloon) {
-	          var _data$AFTER$URL;
-	          const url = (_data$AFTER$URL = data.AFTER.URL) != null ? _data$AFTER$URL : '';
-	          BX.UI.Notification.Center.notify({
-	            id: main_core.Text.getRandom(),
-	            content: main_core.Loc.getMessage('TASKS_V2_NOTIFY_TASK_CREATED'),
-	            actions: [{
-	              title: main_core.Loc.getMessage('TASKS_V2_NOTIFY_TASK_DO_VIEW'),
-	              events: {
-	                click: (event, balloon) => {
-	                  balloon.close();
-	                  BX.SidePanel.Instance.open(url);
-	                }
-	              }
-	            }]
-	          });
-	        }
-	      }
 	    });
 	    Object.defineProperty(this, _handleTaskUpdated, {
 	      writable: true,
@@ -375,14 +352,14 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    Object.defineProperty(this, _handleTaskUpdatedDelayed, {
 	      writable: true,
 	      value: async data => {
+	        if (!tasks_v2_provider_service_taskService.taskService.hasStoreTask(data.TASK_ID)) {
+	          return;
+	        }
 	        const task = mapPushToModel(data.TASK_ID, data.AFTER);
 	        const {
 	          TaskFullCard
 	        } = await main_core.Runtime.loadExtension('tasks.v2.application.task-full-card');
 	        if (data.USER_ID === babelHelpers.classPrivateFieldLooseBase(this, _currentUserId$2)[_currentUserId$2] && TaskFullCard.isOpened(task.id)) {
-	          return;
-	        }
-	        if (!tasks_v2_provider_service_taskService.taskService.hasStoreTask(task.id)) {
 	          return;
 	        }
 	        babelHelpers.classPrivateFieldLooseBase(this, _pushedTasks)[_pushedTasks][task.id] = {
@@ -399,8 +376,9 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	        delete babelHelpers.classPrivateFieldLooseBase(this, _pushedTasks)[_pushedTasks][task.id];
 	        if (babelHelpers.classPrivateFieldLooseBase(this, _needToLoadTask)[_needToLoadTask](data)) {
 	          await tasks_v2_provider_service_taskService.taskService.get(task.id);
+	          await babelHelpers.classPrivateFieldLooseBase(this, _loadViewersQuantity)[_loadViewersQuantity](task);
 	        } else {
-	          await Promise.all([babelHelpers.classPrivateFieldLooseBase(this, _loadGroup)[_loadGroup](task), babelHelpers.classPrivateFieldLooseBase(this, _loadFlow)[_loadFlow](task), tasks_v2_provider_service_userService.userService.list(babelHelpers.classPrivateFieldLooseBase(this, _getUsersIds)[_getUsersIds](task)), tasks_v2_provider_service_taskService.taskService.getRights(task.id)]);
+	          await Promise.all([babelHelpers.classPrivateFieldLooseBase(this, _loadGroup)[_loadGroup](task), babelHelpers.classPrivateFieldLooseBase(this, _loadFlow)[_loadFlow](task), tasks_v2_provider_service_userService.userService.list(babelHelpers.classPrivateFieldLooseBase(this, _getUsersIds)[_getUsersIds](task)), tasks_v2_provider_service_taskService.taskService.getRights(task.id), babelHelpers.classPrivateFieldLooseBase(this, _loadViewersQuantity)[_loadViewersQuantity](task)]);
 	          const {
 	            id,
 	            ...fields
@@ -440,7 +418,6 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	  }
 	  getMap() {
 	    return {
-	      task_add: babelHelpers.classPrivateFieldLooseBase(this, _handleTaskAdded)[_handleTaskAdded],
 	      task_update: babelHelpers.classPrivateFieldLooseBase(this, _handleTaskUpdated)[_handleTaskUpdated],
 	      task_view: babelHelpers.classPrivateFieldLooseBase(this, _handleTaskViewed)[_handleTaskViewed],
 	      task_remove: babelHelpers.classPrivateFieldLooseBase(this, _handleTaskDeleted)[_handleTaskDeleted],
@@ -488,6 +465,9 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	function _getUsersIds2(task) {
 	  var _task$responsibleIds, _task$accomplicesIds, _task$auditorsIds;
 	  return [task.creatorId, ...((_task$responsibleIds = task.responsibleIds) != null ? _task$responsibleIds : []), ...((_task$accomplicesIds = task.accomplicesIds) != null ? _task$accomplicesIds : []), ...((_task$auditorsIds = task.auditorsIds) != null ? _task$auditorsIds : [])].filter(id => id);
+	}
+	async function _loadViewersQuantity2(task) {
+	  await tasks_v2_provider_service_viewersService.viewersService.count(task.id);
 	}
 	function _get_currentUserId$2() {
 	  return this.$store.getters[`${tasks_v2_const.Model.Interface}/currentUserId`];
@@ -627,5 +607,5 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 
 	exports.PullManager = PullManager;
 
-}((this.BX.Tasks.V2.Provider.Pull = this.BX.Tasks.V2.Provider.Pull || {}),BX.Pull,BX.Tasks.V2.Provider.Service,BX.Vue3.Vuex,BX.Event,BX.Tasks.V2,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Provider.Service));
+}((this.BX.Tasks.V2.Provider.Pull = this.BX.Tasks.V2.Provider.Pull || {}),BX.Pull,BX.Tasks.V2.Provider.Service,BX.Vue3.Vuex,BX.Event,BX.Tasks.V2,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Provider.Service));
 //# sourceMappingURL=pull-manager.bundle.js.map

@@ -9,9 +9,9 @@ return [
 	'css' => 'dist/role.bundle.css',
 	'js' => 'dist/role.bundle.js',
 	'rel' => [
-		'main.core',
 		'im.v2.application.core',
 		'im.v2.const',
+		'main.core',
 	],
 	'skip_core' => false,
 ];

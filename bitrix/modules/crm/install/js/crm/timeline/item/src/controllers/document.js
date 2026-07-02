@@ -9,6 +9,9 @@ import { DatetimeConverter } from "crm.timeline.tools";
 import { UI } from 'ui.notification';
 
 import 'ui.info-helper';
+import 'main.sidepanel';
+import 'ui.buttons';
+import 'main.popup';
 
 const ACTION_NAMESPACE = 'Document:';
 

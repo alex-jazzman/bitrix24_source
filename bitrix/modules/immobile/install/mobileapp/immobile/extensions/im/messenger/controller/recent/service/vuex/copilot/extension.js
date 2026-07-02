@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/controller/recent/service/vuex/copilot', (require, exports, module) => {
 	const { Type } = require('type');
-	const { NavigationTabId } = require('im/messenger/const');
+	const { RecentTab, ROOT_PARENT_CHAT_ID } = require('im/messenger/const');
 	const { BaseRecentService } = require('im/messenger/controller/recent/service/base');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { AnchorMutationHandler } = require('im/messenger/controller/recent/service/vuex/lib/handlers/anchor');
@@ -21,7 +21,7 @@ jn.define('im/messenger/controller/recent/service/vuex/copilot', (require, expor
 
 			this.anchor = new AnchorMutationHandler(this.recentLocator, this.logger);
 			this.counter = new CounterMutationHandler(this.recentLocator, this.logger);
-			this.#subscribeStoreMutation();
+			this.subscribeEvents();
 		}
 
 		/**
@@ -32,15 +32,24 @@ jn.define('im/messenger/controller/recent/service/vuex/copilot', (require, expor
 			return serviceLocator.get('core').getStoreManager();
 		}
 
+		subscribeEvents()
+		{
+			this.#subscribeStoreMutation();
+		}
+
+		unsubscribeEvents()
+		{
+			this.#unsubscribeStoreMutation();
+		}
+
 		#subscribeStoreMutation()
 		{
 			this.storeManager
 				.on('recentModel/add', this.recentAddHandler)
 				.on('recentModel/update', this.recentUpdateHandler)
 				.on('recentModel/delete', this.recentDeleteHandler)
-				.on('recentModel/storeIdCollection', this.recentFirstPageHandler)
-				.on('recentModel/deleteFromChatIdCollection', this.recentDeleteFromIdCollectionHandler)
-				.on('recentModel/deleteFromCopilotIdCollection', this.recentDeleteFromIdCollectionHandler)
+				.on('recentModel/storeNestedIdCollection', this.recentFirstPageHandler)
+				.on('recentModel/deleteFromNestedIdCollection', this.recentDeleteFromIdCollectionHandler)
 				.on('dialoguesModel/add', this.dialogUpdateHandler)
 				.on('dialoguesModel/update', this.dialogUpdateHandler)
 				.on('dialoguesModel/clearAllCounters', this.dialogReadAllCountersHandler)
@@ -49,6 +58,25 @@ jn.define('im/messenger/controller/recent/service/vuex/copilot', (require, expor
 				.on('anchorModel/add', this.anchor.addHandler)
 				.on('anchorModel/delete', this.anchor.deleteHandler)
 				.on('anchorModel/deleteMany', this.anchor.deleteManyHandler)
+			;
+		}
+
+		#unsubscribeStoreMutation()
+		{
+			this.storeManager
+				.off('recentModel/add', this.recentAddHandler)
+				.off('recentModel/update', this.recentUpdateHandler)
+				.off('recentModel/delete', this.recentDeleteHandler)
+				.off('recentModel/storeNestedIdCollection', this.recentFirstPageHandler)
+				.off('recentModel/deleteFromNestedIdCollection', this.recentDeleteFromIdCollectionHandler)
+				.off('dialoguesModel/add', this.dialogUpdateHandler)
+				.off('dialoguesModel/update', this.dialogUpdateHandler)
+				.off('dialoguesModel/clearAllCounters', this.dialogReadAllCountersHandler)
+				.off('counterModel/set', this.counter.setHandler)
+				.off('counterModel/delete', this.counter.deleteHandler)
+				.off('anchorModel/add', this.anchor.addHandler)
+				.off('anchorModel/delete', this.anchor.deleteHandler)
+				.off('anchorModel/deleteMany', this.anchor.deleteManyHandler)
 			;
 		}
 
@@ -139,15 +167,22 @@ jn.define('im/messenger/controller/recent/service/vuex/copilot', (require, expor
 		};
 
 		/**
-		 * @param {MutationPayload<RecentStoreIdCollectionData>} payload
+		 * @param {MutationPayload<RecentStoreNestedIdCollectionData>} payload
 		 * @void
 		 */
 		recentFirstPageHandler = ({ payload }) => {
 			this.logger.log('recentFirstPageHandler', payload);
 
-			if (payload?.data.tab !== NavigationTabId.copilot)
+			if ((payload?.data.parentChatId ?? ROOT_PARENT_CHAT_ID) !== ROOT_PARENT_CHAT_ID)
 			{
-				this.logger.log('recentFirstPageHandler: tab is not copilot, skipping');
+				this.logger.log('recentFirstPageHandler: skipping nested chat update');
+
+				return;
+			}
+
+			if (payload?.data.recentSection !== RecentTab.copilot)
+			{
+				this.logger.log('recentFirstPageHandler: recentSection is not copilot, skipping');
 
 				return;
 			}
@@ -180,14 +215,26 @@ jn.define('im/messenger/controller/recent/service/vuex/copilot', (require, expor
 		};
 
 		/**
-		 * @param {MutationPayload<RecentDeleteData>} payload
+		 * @param {MutationPayload<RecentDeleteFromNestedIdCollectionData>} payload
 		 */
 		recentDeleteFromIdCollectionHandler = ({ payload }) => {
 			this.logger.log('recentDeleteFromIdCollectionHandler', payload);
-			if (payload.actionName !== 'hideByNavigationTabs')
+
+			const hideActions = ['hideByNavigationTabs', 'hideByRecentConfigTabs'];
+			if (!hideActions.includes(payload.actionName))
 			{
 				return;
 			}
+
+			const relevantSections = [RecentTab.chat, RecentTab.copilot];
+			if (
+				(payload.data?.parentChatId ?? ROOT_PARENT_CHAT_ID) !== ROOT_PARENT_CHAT_ID
+				|| !relevantSections.includes(payload.data?.recentSection)
+			)
+			{
+				return;
+			}
+
 			const itemId = payload?.data?.id;
 			if (!itemId)
 			{

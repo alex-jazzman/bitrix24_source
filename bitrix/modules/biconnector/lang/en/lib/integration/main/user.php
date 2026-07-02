@@ -32,3 +32,4 @@ $MESS["MAIN_BIC_USER_FIELD_DEPARTMENT_NAME_FULL"] = "The name of the department 
 $MESS["MAIN_BIC_USER_FIELD_ID"] = "Unique key";
 $MESS["MAIN_BIC_USER_FIELD_NAME"] = "User name";
 $MESS["MAIN_BIC_USER_TABLE"] = "Employee";
+$MESS["MAIN_BIC_USER_TABLE_DESCRIPTION_FULL"] = "Provides information about employees, including their activity status, departments, and positions within the company.";

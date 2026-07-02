@@ -1,7 +1,11 @@
-<?
+<?php
 
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Web\Json;
+use Bitrix\Main\Web\Uri;
+use Bitrix\Socialservices\OAuth\OAuthErrorCode;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -20,6 +24,8 @@ class CSocServLiveIDOAuth extends CSocServAuth
 			$this->entityOAuth = new CLiveIDOAuthInterface();
 		}
 
+		$this->entityOAuth->setLogger($this->logger);
+
 		return $this->entityOAuth;
 	}
 
@@ -32,8 +38,8 @@ class CSocServLiveIDOAuth extends CSocServAuth
 				'note' => getMessage(
 					'socserv_liveid_form_note_3',
 					array(
-						'#URL#' => \CHttp::urn2uri('/bitrix/tools/oauth/liveid.php'),
-						'#MAIL_URL#' => \CHttp::urn2uri('/bitrix/tools/mail_oauth.php'),
+						'#URL#' => (string)(new Uri('/bitrix/tools/oauth/liveid.php'))->toAbsolute(),
+						'#MAIL_URL#' => (string)(new Uri('/bitrix/tools/mail_oauth.php'))->toAbsolute(),
 					)
 				),
 			),
@@ -56,7 +62,13 @@ class CSocServLiveIDOAuth extends CSocServAuth
 
 	public function getUrl($location = 'opener', $addScope = null, $arParams = array())
 	{
-		global $APPLICATION;
+		$stateFields = [
+			'site_id' => SITE_ID,
+			'check_key' => \CSocServAuthManager::getUniqueKey(),
+			'redirect_url' => $this->getRedirectUrl($arParams),
+			'mode' => $location,
+		];
+		$state = \Bitrix\Socialservices\OAuth\StateService::getInstance()->createState($stateFields);
 
 		if ($this->userId == null)
 		{
@@ -67,22 +79,19 @@ class CSocServLiveIDOAuth extends CSocServAuth
 			$this->getEntityOAuth()->addScope($addScope);
 		}
 
-		if (IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME'))
+		if ($this->isCloudPortal())
 		{
-			$redirect_uri = self::CONTROLLER_URL."/redirect.php";
-			$state = \CHTTP::URN2URI("/bitrix/tools/oauth/liveid.php")."?state=";
-			$backurl = urlencode($GLOBALS["APPLICATION"]->GetCurPageParam('check_key='.\CSocServAuthManager::getUniqueKey(), array("logout", "auth_service_error", "auth_service_id", "backurl"))).(isset($arParams['BACKURL']) ? '&redirect_url='.urlencode($arParams['BACKURL']) : '').'&mode='.$location;
-			$state .= urlencode(urlencode("backurl=".$backurl));
+			$portalRedirectUri = (new Uri('/bitrix/tools/oauth/liveid.php'))
+				->addParams(['state' => $state,])
+				->toAbsolute()
+			;
+
+			$state = (string)$portalRedirectUri;
+			$redirect_uri = self::CONTROLLER_URL . '/redirect.php';
 		}
 		else
 		{
-			$backurl = $APPLICATION->GetCurPageParam(
-				'check_key='.\CSocServAuthManager::getUniqueKey(),
-				array("logout", "auth_service_error", "auth_service_id", "backurl")
-			);
-
-			$redirect_uri = \CHTTP::URN2URI("/bitrix/tools/oauth/liveid.php");
-			$state = 'site_id='.SITE_ID.'&backurl='.urlencode($backurl).(isset($arParams['BACKURL']) ? '&redirect_url='.urlencode($arParams['BACKURL']) : '').'&mode='.$location;
+			$redirect_uri = (string)(new Uri("/bitrix/tools/oauth/liveid.php"))->toAbsolute();
 		}
 
 		return $this->getEntityOAuth()->GetAuthUrl($redirect_uri, $state);
@@ -123,18 +132,25 @@ class CSocServLiveIDOAuth extends CSocServAuth
 
 		$bProcessState = false;
 		$bSuccess = SOCSERV_AUTHORISATION_ERROR;
+		$this->logger->info('oauth.auth.start');
 
-		if(isset($_REQUEST["code"]) && $_REQUEST["code"] != '' && CSocServAuthManager::CheckUniqueKey())
+		if (empty($_REQUEST['code']))
 		{
-			if(IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME'))
+			$this->logger->error('oauth.request.invalid_code');
+			$this->sendOauthError(OAuthErrorCode::MissingCode);
+		}
+		elseif (CSocServAuthManager::CheckUniqueKey())
+		{
+			if ($this->isCloudPortal())
 				$redirect_uri = self::CONTROLLER_URL."/redirect.php";
 			else
-				$redirect_uri = \CHTTP::URN2URI("/bitrix/tools/oauth/liveid.php");
+				$redirect_uri = (string)(new Uri("/bitrix/tools/oauth/liveid.php"))->toAbsolute();
 
 			$appID = trim(self::GetOption("liveid_appid"));
 			$appSecret = trim(self::GetOption("liveid_appsecret"));
 
 			$gAuth = new CLiveIDOAuthInterface($appID, $appSecret, $_REQUEST["code"]);
+			$gAuth->setLogger($this->logger);
 
 			$bProcessState = true;
 
@@ -179,92 +195,48 @@ class CSocServLiveIDOAuth extends CSocServAuth
 					$bSuccess = $this->AuthorizeUser($arFields);
 
 				}
+				else
+				{
+					$this->logger->error('oauth.user.fetch_failed', [
+						'reason' => 'missing_user_id',
+					]);
+				}
+			}
+			else
+			{
+				$this->logger->error('oauth.token.exchange_failed', [
+					'reason' => 'get_access_token_failed',
+				]);
 			}
 		}
+		else
+		{
+			$this->logger->error('oauth.request.invalid_check_key', [
+				'reason' => 'check_key_validation_failed',
+			]);
+			$this->sendOauthError(OAuthErrorCode::InvalidCheckKey);
+		}
+
+		$this->logger->info('oauth.auth.finish', [
+			'success' => ($bSuccess === true),
+			'auth_result' => $bSuccess,
+		]);
 
 		if(!$bProcessState)
 		{
 			unset($_REQUEST["state"]);
 		}
 
-		$url = ($APPLICATION->GetCurDir() == "/login/") ? "" : $APPLICATION->GetCurDir();
-		$aRemove = array("logout", "auth_service_error", "auth_service_id", "code", "error_reason", "error", "error_description", "check_key", "current_fieldset");
-
 		$mode = 'opener';
-		$addParams = true;
-		if(isset($_REQUEST["state"]))
+		$arState = $this->getState();
+		if(isset($arState['mode']))
 		{
-			$arState = array();
-			parse_str($_REQUEST["state"], $arState);
-			if(isset($arState['backurl']) || isset($arState['redirect_url']))
-			{
-				$url = !empty($arState['redirect_url']) ? $arState['redirect_url'] : $arState['backurl'];
-				if(mb_substr($url, 0, 1) !== "#")
-				{
-					$parseUrl = parse_url($url);
-					$urlPath = $parseUrl["path"];
-					$arUrlQuery = explode('&', $parseUrl["query"]);
-
-					foreach($arUrlQuery as $key => $value)
-					{
-						foreach($aRemove as $param)
-						{
-							if(mb_strpos($value, $param."=") === 0)
-							{
-								unset($arUrlQuery[$key]);
-								break;
-							}
-						}
-					}
-
-					$url = (!empty($arUrlQuery)) ? $urlPath.'?'.implode("&", $arUrlQuery) : $urlPath;
-				}
-				else
-				{
-					$addParams = false;
-				}
-			}
-
-			if(isset($arState['mode']))
-			{
-				$mode = $arState['mode'];
-			}
+			$mode = $arState['mode'];
 		}
+		$url = $this->getRedirectUriAfterAuthorize($bSuccess, self::ID);
+		$addParams = !str_starts_with($url, '#');
 
-		if($bSuccess === SOCSERV_REGISTRATION_DENY)
-		{
-			$url = (preg_match("/\?/", $url)) ? $url.'&' : $url.'?';
-			$url .= 'auth_service_id='.self::ID.'&auth_service_error='.SOCSERV_REGISTRATION_DENY;
-		}
-		elseif($bSuccess !== true)
-		{
-			$url = (isset($parseUrl))
-				? $urlPath.'?auth_service_id='.self::ID.'&auth_service_error='.$bSuccess
-				: $APPLICATION->GetCurPageParam(('auth_service_id='.self::ID.'&auth_service_error='.$bSuccess), $aRemove);
-		}
-
-		if($addParams && CModule::IncludeModule("socialnetwork") && mb_strpos($url, "current_fieldset=") === false)
-			$url = (preg_match("/\?/", $url)) ? $url."&current_fieldset=SOCSERV" : $url."?current_fieldset=SOCSERV";
-
-		$url = CUtil::JSEscape($url);
-
-		if($addParams)
-		{
-			$location = ($mode == "opener") ? 'if(window.opener) window.opener.location = \''.$url.'\'; window.close();' : ' window.location = \''.$url.'\';';
-		}
-		else
-		{
-			//fix for chrome
-			$location = ($mode == "opener") ? 'if(window.opener) window.opener.location = window.opener.location.href + \''.$url.'\'; window.close();' : ' window.location = window.location.href + \''.$url.'\';';
-		}
-
-		$JSScript = '
-		<script>
-		'.$location.'
-		</script>
-		';
-
-		echo $JSScript;
+		$this->onAfterWebAuth($addParams, $mode, $url);
 
 		CMain::FinalActions();
 	}
@@ -272,14 +244,15 @@ class CSocServLiveIDOAuth extends CSocServAuth
 	public function getFriendsList($limit = 0, $offset = 0)
 	{
 		$li = new CLiveIDOAuthInterface();
+		$li->setLogger($this->logger);
 
-		if(IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME'))
+		if ($this->isCloudPortal())
 		{
 			$redirect_uri = self::CONTROLLER_URL."/redirect.php";
 		}
 		else
 		{
-			$redirect_uri = \CHTTP::URN2URI("/bitrix/tools/oauth/liveid.php");
+			$redirect_uri = (string)(new Uri("/bitrix/tools/oauth/liveid.php"))->toAbsolute();
 		}
 
 		if($li->GetAccessToken($redirect_uri) !== false)
@@ -328,6 +301,8 @@ class CLiveIDOAuthInterface
 		'wl.emails',
 	);
 
+	protected LoggerInterface $logger;
+
 	public function __construct($appID = false, $appSecret = false, $code=false)
 	{
 		if($appID === false)
@@ -344,6 +319,12 @@ class CLiveIDOAuthInterface
 		$this->appID = $appID;
 		$this->appSecret = $appSecret;
 		$this->code = $code;
+		$this->logger = new NullLogger();
+	}
+
+	public function setLogger(LoggerInterface $logger): void
+	{
+		$this->logger = $logger;
 	}
 
 	public function getAccessTokenExpires()
@@ -437,6 +418,10 @@ class CLiveIDOAuthInterface
 
 		if($this->code === false)
 		{
+			$this->logger->error('oauth.token.exchange_failed', [
+				'reason' => 'empty_code',
+			]);
+
 			return false;
 		}
 
@@ -461,13 +446,24 @@ class CLiveIDOAuthInterface
 			$_SESSION["OAUTH_DATA"] = array("OATOKEN" => $this->access_token);
 			return true;
 		}
+
+		$this->logger->error('oauth.token.exchange_failed', [
+			'reason' => 'token_not_found_in_response',
+		]);
+
 		return false;
 	}
 
 	public function GetCurrentUser()
 	{
 		if($this->access_token === false)
+		{
+			$this->logger->error('oauth.user.fetch_failed', [
+				'reason' => 'empty_access_token',
+			]);
+
 			return false;
+		}
 
 		$result = CHTTP::sGetHeader(self::CONTACTS_URL."?access_token=".urlencode($this->access_token), array(), $this->httpTimeout);
 
@@ -478,7 +474,14 @@ class CLiveIDOAuthInterface
 			$result["access_token"] = $this->access_token;
 			$result["refresh_token"] = $this->refresh_token;
 			$result["expires_in"] = $this->accessTokenExpires;
+
+			return $result;
 		}
+
+		$this->logger->error('oauth.user.fetch_failed', [
+			'reason' => 'invalid_response_payload',
+		]);
+
 		return $result;
 	}
 

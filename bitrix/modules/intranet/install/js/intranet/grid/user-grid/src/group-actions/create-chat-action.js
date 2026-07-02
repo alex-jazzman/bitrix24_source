@@ -10,7 +10,7 @@ export class CreateChatAction extends BaseAction
 
 	getAjaxMethod(): string
 	{
-		return 'intranet.controller.user.userlist.createChat';
+		return 'intranet.v2.UserList.createChat';
 	}
 
 	handleSuccess(result)

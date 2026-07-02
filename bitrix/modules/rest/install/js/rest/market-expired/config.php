@@ -1,4 +1,7 @@
 <?php
+
+use Bitrix\Rest\Internal\Integration\UI\CopilotService;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -10,18 +13,18 @@ return [
 	'css' => 'dist/market-expired.bundle.css',
 	'js' => 'dist/market-expired.bundle.js',
 	'rel' => [
-		'main.popup',
-		'main.polyfill.intersectionobserver',
-		'main.core.events',
-		'ui.notification',
-		'ui.info-helper',
-		'ui.banner-dispatcher',
-		'ui.notification-panel',
-		'ui.icon-set.api.core',
-		'ui.analytics',
-		'ui.icon-set.main',
-		'ui.buttons',
 		'main.core',
+		'main.core.events',
+		'main.polyfill.intersectionobserver',
+		'main.popup',
+		'ui.analytics',
+		'ui.banner-dispatcher',
+		'ui.buttons',
+		'ui.icon-set.api.core',
+		'ui.icon-set.main',
+		'ui.info-helper',
+		'ui.notification',
+		'ui.notification-panel',
 	],
 	'skip_core' => false,
 	'settings' => [
@@ -29,6 +32,7 @@ return [
 		'category' => $marketExpiredNotification->getCategory(),
 		'expireDate' => $marketExpiredNotification->getFormattedEndDate(),
 		'expireDays' => $marketExpiredNotification->getFormattedDaysLeft(),
+		'copilotName' => CopilotService::getName(),
 		'marketSubscriptionUrl' => $marketExpiredNotification->marketSubscription->getBuyUrl(),
 		'withDemo' => $marketExpiredNotification->marketSubscription->isDemoAvailable(),
 		'discount' => $marketExpiredNotification->marketSubscription->getDiscount()->toArray(),

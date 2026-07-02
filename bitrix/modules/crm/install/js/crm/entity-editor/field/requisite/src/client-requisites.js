@@ -5,6 +5,8 @@ import {RequisiteList, RequisiteListItem} from "./requisite-list";
 import {EntityEditorRequisiteTooltip} from "./requisite-tooltip";
 import {EventEmitter} from "main.core.events";
 import {EntityEditorRequisiteEditor} from "./requisite-editor";
+import 'crm_common';
+import 'crm.entity-editor';
 
 export class EntityEditorClientRequisites
 {

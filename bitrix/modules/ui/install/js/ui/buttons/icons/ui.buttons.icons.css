@@ -1829,3 +1829,267 @@
 .ui-btn-split.--air .ui-btn-main.ui-btn-icon-key {
 	--ui-btn-icon: var(--o-ui-icon-set__path_key);
 }
+
+/* region ui-btn-icon-mail-plus */
+.ui-btn-icon-mail-plus {
+	--ui-btn-icon: var(--o-ui-icon-set__path_mail-plus);
+}
+
+.ui-btn-split.ui-btn-icon-mail-plus .ui-btn-main::after,
+.ui-btn-icon-mail-plus::after {
+	background-image: none;
+	background-color: var(--ui-color-on-primary);
+	mask-image: var(--ui-btn-icon);
+	-webkit-mask-image: var(--ui-btn-icon);
+	-webkit-mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	-webkit-mask-size: contain;
+}
+
+.ui-btn-icon-mail-plus.ui-btn::after,
+.ui-btn-icon-mail-plus.ui-btn-split::after,
+.ui-btn-icon-mail-plus.ui-btn-danger::after,
+.ui-btn-icon-mail-plus.ui-btn-primary::after,
+.ui-btn-icon-mail-plus.ui-btn-default::after,
+.ui-btn-icon-mail-plus.ui-btn-danger-dark::after,
+.ui-btn-icon-mail-plus.ui-btn-success-dark::after,
+.ui-btn-icon-mail-plus.ui-btn-primary-dark::after,
+.bitrix24-light-theme .ui-btn-icon-mail-plus.ui-btn-themes::after {
+	background-color: #fff;
+}
+
+.ui-btn-icon-mail-plus.ui-btn-link::after,
+.ui-btn-icon-mail-plus.ui-btn-light::after,
+.ui-btn-icon-mail-plus.ui-btn-success::after,
+.ui-btn-icon-mail-plus.ui-btn-secondary::after,
+.ui-btn-icon-mail-plus.ui-btn-light-border::after,
+.bitrix24-dark-theme .ui-btn-icon-mail-plus.ui-btn-themes::after {
+	background-color: #525C69;
+}
+
+.ui-btn.ui-btn-icon-mail-plus.--air,
+.ui-btn-split.ui-btn-icon-mail-plus.--air .ui-btn-main,
+.ui-btn-split.--air .ui-btn-main.ui-btn-icon-mail-plus {
+	--ui-btn-icon: var(--o-ui-icon-set__path_mail-plus);
+}
+
+/* region ui-btn-icon-mail-plus */
+.ui-btn-icon-funnel-filter {
+	--ui-btn-icon: var(--o-ui-icon-set__path_mail-plus);
+}
+
+.ui-btn-split.ui-btn-icon-funnel-filter .ui-btn-main::after,
+.ui-btn-icon-funnel-filter::after {
+	background-image: none;
+	background-color: var(--ui-color-on-primary);
+	mask-image: var(--ui-btn-icon);
+	-webkit-mask-image: var(--ui-btn-icon);
+	-webkit-mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	-webkit-mask-size: contain;
+}
+
+.ui-btn-icon-funnel-filter.ui-btn::after,
+.ui-btn-icon-funnel-filter.ui-btn-split::after,
+.ui-btn-icon-funnel-filter.ui-btn-danger::after,
+.ui-btn-icon-funnel-filter.ui-btn-primary::after,
+.ui-btn-icon-funnel-filter.ui-btn-default::after,
+.ui-btn-icon-funnel-filter.ui-btn-danger-dark::after,
+.ui-btn-icon-funnel-filter.ui-btn-success-dark::after,
+.ui-btn-icon-funnel-filter.ui-btn-primary-dark::after,
+.bitrix24-light-theme .ui-btn-icon-funnel-filter.ui-btn-themes::after {
+	background-color: #fff;
+}
+
+.ui-btn-icon-funnel-filter.ui-btn-link::after,
+.ui-btn-icon-funnel-filter.ui-btn-light::after,
+.ui-btn-icon-funnel-filter.ui-btn-success::after,
+.ui-btn-icon-funnel-filter.ui-btn-secondary::after,
+.ui-btn-icon-funnel-filter.ui-btn-light-border::after,
+.bitrix24-dark-theme .ui-btn-icon-funnel-filter.ui-btn-themes::after {
+	background-color: #525C69;
+}
+
+.ui-btn.ui-btn-icon-funnel-filter.--air,
+.ui-btn-split.ui-btn-icon-funnel-filter.--air .ui-btn-main,
+.ui-btn-split.--air .ui-btn-main.ui-btn-icon-funnel-filter {
+	--ui-btn-icon: var(--o-ui-icon-set__path_filter-funnel);
+}
+/* endregion */
+
+/* region ui-btn-icon-mail-plus */
+.ui-btn-icon-calendar-with-slots {
+	--ui-btn-icon: var(--o-ui-icon-set__path_mail-plus);
+}
+
+.ui-btn-split.ui-btn-icon-calendar-with-slots .ui-btn-main::after,
+.ui-btn-icon-calendar-with-slots::after {
+	background-image: none;
+	background-color: var(--ui-color-on-primary);
+	mask-image: var(--ui-btn-icon);
+	-webkit-mask-image: var(--ui-btn-icon);
+	-webkit-mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	-webkit-mask-size: contain;
+}
+
+.ui-btn-icon-calendar-with-slots.ui-btn::after,
+.ui-btn-icon-calendar-with-slots.ui-btn-split::after,
+.ui-btn-icon-calendar-with-slots.ui-btn-danger::after,
+.ui-btn-icon-calendar-with-slots.ui-btn-primary::after,
+.ui-btn-icon-calendar-with-slots.ui-btn-default::after,
+.ui-btn-icon-calendar-with-slots.ui-btn-danger-dark::after,
+.ui-btn-icon-calendar-with-slots.ui-btn-success-dark::after,
+.ui-btn-icon-calendar-with-slots.ui-btn-primary-dark::after,
+.bitrix24-light-theme .ui-btn-icon-calendar-with-slots.ui-btn-themes::after {
+	background-color: #fff;
+}
+
+.ui-btn-icon-calendar-with-slots.ui-btn-link::after,
+.ui-btn-icon-calendar-with-slots.ui-btn-light::after,
+.ui-btn-icon-calendar-with-slots.ui-btn-success::after,
+.ui-btn-icon-calendar-with-slots.ui-btn-secondary::after,
+.ui-btn-icon-calendar-with-slots.ui-btn-light-border::after,
+.bitrix24-dark-theme .ui-btn-icon-calendar-with-slots.ui-btn-themes::after {
+	background-color: #525C69;
+}
+
+.ui-btn.ui-btn-icon-calendar-with-slots.--air,
+.ui-btn-split.ui-btn-icon-calendar-with-slots.--air .ui-btn-main,
+.ui-btn-split.--air .ui-btn-main.ui-btn-icon-calendar-with-slots {
+	--ui-btn-icon: var(--o-ui-icon-set__path_calendar-with-slots);
+}
+/* endregion */
+
+/* region ui-btn-icon-chats */
+.ui-btn-icon-chats {
+	--ui-btn-icon: var(--o-ui-icon-set__path_chats);
+}
+
+.ui-btn-split.ui-chats .ui-btn-main::after,
+.ui-btn-icon-chats::after {
+	background-image: none;
+	background-color: var(--ui-color-on-primary);
+	mask-image: var(--ui-btn-icon);
+	-webkit-mask-image: var(--ui-btn-icon);
+	-webkit-mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	-webkit-mask-size: contain;
+}
+
+.ui-btn-icon-chats.ui-btn::after,
+.ui-btn-icon-chats.ui-btn-split::after,
+.ui-btn-icon-chats.ui-btn-danger::after,
+.ui-btn-icon-chats.ui-btn-primary::after,
+.ui-btn-icon-chats.ui-btn-default::after,
+.ui-btn-icon-chats.ui-btn-danger-dark::after,
+.ui-btn-icon-chats.ui-btn-success-dark::after,
+.ui-btn-icon-chats.ui-btn-primary-dark::after,
+.bitrix24-light-theme .ui-btn-icon-chats.ui-btn-themes::after {
+	background-color: #fff;
+}
+
+.ui-btn-icon-chats.ui-btn-link::after,
+.ui-btn-icon-chats.ui-btn-light::after,
+.ui-btn-icon-chats.ui-btn-success::after,
+.ui-btn-icon-chats.ui-btn-secondary::after,
+.ui-btn-icon-chats.ui-btn-light-border::after,
+.bitrix24-dark-theme .ui-btn-icon-chats.ui-btn-themes::after {
+	background-color: #525C69;
+}
+
+.ui-btn.ui-btn-icon-chats.--air,
+.ui-btn-split.ui-btn-icon-chats.--air .ui-btn-main,
+.ui-btn-split.--air .ui-btn-main.ui-btn-icon-chats {
+	--ui-btn-icon: var(--o-ui-icon-set__path_chats);
+}
+/* endregion */
+
+/* region ui-btn-icon-calendar-with-checks */
+.ui-btn-icon-calendar-with-checks {
+	--ui-btn-icon: var(--o-ui-icon-set__path_calendar-with-checks);
+}
+
+.ui-btn-split.ui-btn-icon-calendar-with-checks .ui-btn-main::after,
+.ui-btn-icon-calendar-with-checks::after {
+	background-image: none;
+	background-color: var(--ui-color-on-primary);
+	mask-image: var(--ui-btn-icon);
+	-webkit-mask-image: var(--ui-btn-icon);
+	-webkit-mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	-webkit-mask-size: contain;
+}
+
+.ui-btn-icon-calendar-with-ccalendar-with-checks.ui-btn-link::after,
+.ui-btn-icon-calendar-with-checks.ui-btn-light::after,
+.ui-btn-icon-calendar-with-checks.ui-btn-success::after,
+.ui-btn-icon-calendar-with-checks.ui-btn-secondary::after,
+.ui-btn-icon-calendar-with-checks.ui-btn-light-border::after,
+.bitrix24-dark-theme .ui-btn-icon-calendar-with-checks.ui-btn-themes::after {
+	background-color: #525C69;
+}
+
+.ui-btn.ui-btn-icon-calendar-with-checks.--air,
+.ui-btn-split.ui-btn-icon-calendar-with-checks.--air .ui-btn-main,
+.ui-btn-split.--air .ui-btn-main.ui-btn-icon-calendar-with-checks {
+	--ui-btn-icon: var(--o-ui-icon-set__path_calendar-with-checks);
+}
+
+.ui-btn-icon-calendar-with-checks.ui-btn::after,
+.ui-btn-icon-calendar-with-checks.ui-btn-split::after,
+.ui-btn-icon-calendar-with-checks.ui-btn-danger::after,
+.ui-btn-icon-calendar-with-checks.ui-btn-primary::after,
+.ui-btn-icon-calendar-with-checks.ui-btn-default::after,
+.ui-btn-icon-calendar-with-checks.ui-btn-danger-dark::after,
+.ui-btn-icon-calendar-with-checks.ui-btn-success-dark::after,
+.ui-btn-icon-calendar-with-checks.ui-btn-primary-dark::after,
+.bitrix24-light-theme .ui-btn-icon-calendar-with-checks.ui-btn-themes::after {
+	background-color: #fff;
+}
+/* endregion */
+
+/* region ui-btn-icon-exclamation */
+.ui-btn-icon-exclamation {
+	--ui-btn-icon: var(--o-ui-icon-set__path_exclamation-m);
+}
+
+.ui-btn-split.ui-btn-icon-exclamation .ui-btn-main::after,
+.ui-btn-icon-exclamation::after {
+	background-image: none;
+	background-color: var(--ui-color-on-primary);
+	mask-image: var(--ui-btn-icon);
+	-webkit-mask-image: var(--ui-btn-icon);
+	-webkit-mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	-webkit-mask-size: contain;
+}
+
+.ui-btn-icon-exclamation.ui-btn-link::after,
+.ui-btn-icon-exclamation.ui-btn-light::after,
+.ui-btn-icon-exclamation.ui-btn-success::after,
+.ui-btn-icon-exclamation.ui-btn-secondary::after,
+.ui-btn-icon-exclamation.ui-btn-light-border::after,
+.bitrix24-dark-theme .ui-btn-icon-exclamation.ui-btn-themes::after {
+	background-color: #525C69;
+}
+
+.ui-btn.ui-btn-icon-exclamation.--air,
+.ui-btn-split.ui-btn-icon-exclamation.--air .ui-btn-main,
+.ui-btn-split.--air .ui-btn-main.ui-btn-icon-exclamation {
+	--ui-btn-icon: var(--o-ui-icon-set__path_exclamation-m);
+}
+
+.ui-btn-icon-exclamation.ui-btn::after,
+.ui-btn-icon-exclamation.ui-btn-split::after,
+.ui-btn-icon-exclamation.ui-btn-danger::after,
+.ui-btn-icon-exclamation.ui-btn-primary::after,
+.ui-btn-icon-exclamation.ui-btn-default::after,
+.ui-btn-icon-exclamation.ui-btn-danger-dark::after,
+.ui-btn-icon-exclamation.ui-btn-success-dark::after,
+.ui-btn-icon-exclamation.ui-btn-primary-dark::after,
+.bitrix24-light-theme .ui-btn-icon-exclamation.ui-btn-themes::after {
+	background-color: #fff;
+}
+/* endregion */
+

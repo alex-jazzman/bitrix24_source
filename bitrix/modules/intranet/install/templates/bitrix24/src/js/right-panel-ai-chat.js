@@ -49,7 +49,9 @@ export class RightPanelAiChat extends EventEmitter
 					return;
 				}
 
-				const chatBackground = ThemeManager.getBackgroundStyleById(SpecialBackground.martaAI);
+				const chatBackground = ThemeManager.getBackgroundStyleById(
+					SpecialBackground.aiAssistantWidget || SpecialBackground.aiAssistant,
+				);
 
 				if (!this.#container)
 				{
@@ -57,7 +59,9 @@ export class RightPanelAiChat extends EventEmitter
 				}
 
 				this.#showSidebar();
-				this.#mountVueApp(params.chatId);
+
+				const avatarBg = SpecialBackground.aiAssistantWidget ? '#4c40a8' : '#ffffff';
+				this.#mountVueApp(params.chatId, avatarBg);
 
 				this.emit('onExpand');
 
@@ -143,7 +147,7 @@ export class RightPanelAiChat extends EventEmitter
 		`;
 	}
 
-	async #mountVueApp(chatId: number): void
+	async #mountVueApp(chatId: number, avatarBg: string): void
 	{
 		try
 		{
@@ -162,7 +166,7 @@ export class RightPanelAiChat extends EventEmitter
 			});
 
 			this.#siteTemplate.setAvatarBlockBackground({
-				backgroundColor: '#fff',
+				backgroundColor: avatarBg,
 			});
 		}
 		catch (error)

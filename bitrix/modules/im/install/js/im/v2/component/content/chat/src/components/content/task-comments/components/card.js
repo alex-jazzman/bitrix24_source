@@ -1,7 +1,5 @@
 import { TaskCard } from 'tasks.v2.application.task-card';
 
-import { type ImModelChat } from 'im.v2.model';
-
 import '../css/task-comments.css';
 
 // @vue/component
@@ -12,15 +10,9 @@ export const TaskCommentsCard = {
 			type: String,
 			required: true,
 		},
-	},
-	computed: {
-		dialog(): ImModelChat
-		{
-			return this.$store.getters['chats/get'](this.dialogId, true);
-		},
-		taskId(): number
-		{
-			return Number(this.dialog.entityLink.id);
+		taskId: {
+			type: Number,
+			required: true,
 		},
 	},
 	watch: {

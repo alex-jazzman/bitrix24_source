@@ -1,5 +1,6 @@
 import { Dom, Loc, Tag, Type } from 'main.core';
-import { MenuItem, Popup } from 'main.popup';
+import type { MenuItem } from 'main.popup';
+import { Popup } from 'main.popup';
 import { Guide, Backend, type StepOption } from 'sign.tour';
 import { B2EOnboardingSignSettings } from 'sign.v2.b2e.sign-settings-onboarding';
 import { Api } from 'sign.v2.api';
@@ -96,7 +97,7 @@ export class Onboarding
 
 	showTestSigningBanner(options: BannerOptions): void
 	{
-		const header = document.querySelector('header.page__header');
+		const header = document.querySelector('.page__header');
 		if (header)
 		{
 			const signButton = new Button({

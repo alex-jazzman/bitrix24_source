@@ -35,3 +35,4 @@ $MESS["CRM_SITE_FORM_FIELD_DATE_MONTH_11"] = "Ноябрь";
 $MESS["CRM_SITE_FORM_FIELD_DATE_MONTH_12"] = "Декабрь";
 $MESS["CRM_SITE_FORM_FIELD_FILE_ERROR_TYPE"] = "Выбран файл неподходящего типа. Попробуйте файлы с расширениями %extensions%";
 $MESS["CRM_SITE_FORM_FIELD_FILE_ERROR_EMPTY_CONTENT"] = "Файл пустой. Попробуйте выбрать другой";
+$MESS["CRM_SITE_FORM_FIELD_FILE_REMOVE"] = "Удалить файл";

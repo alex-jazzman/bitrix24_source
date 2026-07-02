@@ -15,7 +15,7 @@ import { IconButton } from '../../../../shared/ui';
 
 // @vue/component
 export const EditNodeSettingsForm = {
-	name: 'edit-node-settings-form',
+	name: 'EditNodeSettingsForm',
 	components: {
 		BIcon,
 		IconButton,
@@ -59,15 +59,21 @@ export const EditNodeSettingsForm = {
 		rulePorts(): Array<TPort>
 		{
 			return this.ports
-				.filter((port) => port.type === PORT_TYPES.input && !port.isConnectionPort);
+				.filter((port) => port.type === PORT_TYPES.input)
+			;
+		},
+		relationPorts(): Array<TPort>
+		{
+			return this.ports.filter((port) => port.type === PORT_TYPES.inputRelation);
 		},
 		rulePortsLength(): number
 		{
 			return this.rulePorts.length;
 		},
-		areConnectionsAvailable(): boolean
+		isRelationFeatureAvailable(): boolean
 		{
-			return this.isFeatureAvailable(FeatureCode.complexNodeConnections);
+			return this.block.node?.shouldShowAuxPorts !== true
+				&& this.isFeatureAvailable(FeatureCode.complexNodeConnections);
 		},
 		isSubIcon(): boolean
 		{
@@ -96,6 +102,25 @@ export const EditNodeSettingsForm = {
 		colorIndex(): number
 		{
 			return this.block.node?.type === BLOCK_TYPES.TOOL ? 0 : this.block.node?.colorIndex;
+		},
+		previewTypes(): Array
+		{
+			return [
+				{
+					id: 'rule',
+					ports: this.rulePorts,
+					sectionTitle: this.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_RULE_SECTION_TITLE'),
+					caption: this.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_ITEM_RULE'),
+					isAvailable: true,
+				},
+				{
+					id: 'relation',
+					ports: this.relationPorts,
+					sectionTitle: this.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_CONNECTION_SECTION_TITLE'),
+					caption: this.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_ITEM_CONNECTION'),
+					isAvailable: this.isRelationFeatureAvailable,
+				},
+			];
 		},
 	},
 	watch:
@@ -145,8 +170,8 @@ export const EditNodeSettingsForm = {
 		},
 	},
 	template: `
-		<div class="node-settings-form">
-			<div class="node-settings-form__node-brief">
+		<div class="editor-chart-node-settings-form">
+			<div class="editor-chart-node-settings-form__node-brief">
 				<BlockHeader
 					:block="block"
 					:subIconExternal="isUrl(block.node?.icon)"
@@ -178,13 +203,13 @@ export const EditNodeSettingsForm = {
 					@click="toggleActivation"
 				/>
 			</div>
-			<div class="node-settings-form__section-delimeter"></div>
-			<div class="node-settings-form__section">
+			<div class="editor-chart-node-settings-form__section-delimeter"></div>
+			<div class="editor-chart-node-settings-form__section">
 				<div>
-					<span class="node-settings-form__label">
+					<span class="editor-chart-node-settings-form__label">
 						{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_NODE_NAME_LABEL') }}
 					</span>
-					<div class="ui-ctl ui-ctl-textbox node-settings-form__node-name-input">
+					<div class="ui-ctl ui-ctl-textbox editor-chart-node-settings-form__node-name-input">
 						<input type="text"
 							class="ui-ctl-element"
 							:placeholder="getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_NODE_NAME_PLACEHOLDER')"
@@ -194,11 +219,11 @@ export const EditNodeSettingsForm = {
 						/>
 					</div>
 				</div>
-				<div class="node-settings-form__node-description">
-					<span class="node-settings-form__label">
+				<div class="editor-chart-node-settings-form__node-description">
+					<span class="editor-chart-node-settings-form__label">
 						{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_NODE_DESCRIPTION_LABEL') }}
 					</span>
-					<div class="ui-ctl ui-ctl-textarea node-settings-form__node-description_textarea">
+					<div class="ui-ctl ui-ctl-textarea editor-chart-node-settings-form__node-description_textarea">
 						<textarea
 							rows="1"
 							class="ui-ctl-element"
@@ -208,53 +233,36 @@ export const EditNodeSettingsForm = {
 							@input="onChangeDescription"
 						></textarea>
 					</div>
-					<p class="node-settings-form__node-description_text">
+					<p class="editor-chart-node-settings-form__node-description_text">
 						{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_NODE_DESCRIPTION_TEXT') }}
 					</p>
 				</div>
 			</div>
-			<div class="node-settings-form__section-delimeter"></div>
-			<div
-				class="node-settings-form__section --data"
-				ref="node-settings-form-data-section"
+			<div class="editor-chart-node-settings-form__section-delimeter"></div>
+			<template
+				v-for="previewType in previewTypes"
+				:key="previewType.id"
 			>
-				<!--
-				<span
-					class="node-settings-form__section-title"
+				<div
+					v-if="previewType.isAvailable"
+					class="editor-chart-node-settings-form__section"
 				>
-					{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_DATA_SECTION_TITLE') }}
-				</span>
-				-->
-				<slot
-					v-for="[variableName, variableValue] in nodeSettings.variables"
-					:key="variableName"
-					:variableName="variableName"
-					:variableValue="variableValue"
-					name="variable"
-				/>
-				<slot name="addElement" itemType="element" />
-			</div>
-			<div class="node-settings-form__section">
-				<p class="node-settings-form__section-title">
-					{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_RULE_SECTION_TITLE') }}
-				</p>
-				<slot
-					v-for="port in rulePorts"
-					:key="port.id"
-					:port="port"
-					name="rule"
-				/>
-				<slot name="addRule" itemType="rule" />
-			</div>
-			<div
-				v-if="areConnectionsAvailable"
-				class="node-settings-form__section"
-			>
-				<p class="node-settings-form__section-title">
-					{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_CONNECTION_SECTION_TITLE') }}
-				</p>
-				<slot name="addConnection" itemType="connection" />
-			</div>
+					<p class="editor-chart-node-settings-form__section-title">
+						{{ previewType.sectionTitle }}
+					</p>
+					<slot
+						v-for="port in previewType.ports"
+						:key="port.id"
+						:port="port"
+						name="preview"
+					/>
+					<slot
+						:itemType="previewType.id"
+						:text="previewType.caption"
+						name="addSettingsItem"
+					/>
+				</div>
+			</template>
 		</div>
 	`,
 };

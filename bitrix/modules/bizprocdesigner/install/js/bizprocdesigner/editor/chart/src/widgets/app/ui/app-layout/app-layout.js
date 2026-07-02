@@ -3,6 +3,7 @@ import {
 	AppLayout as AppLayoutEntity,
 	useAppStore,
 } from '../../../../entities/app';
+import { useCatalogStore } from '../../../../entities/catalog';
 
 // @vue/component
 export const AppLayout = {
@@ -14,12 +15,18 @@ export const AppLayout = {
 		...mapState(useAppStore, [
 			'isShownRightPanel',
 			'isShownPreviewPanel',
+			'isShownDebugBar',
+		]),
+		...mapState(useCatalogStore, [
+			'isExpandedCatalog',
 		]),
 	},
 	template: `
 		<AppLayoutEntity
 			:showSettings="isShownRightPanel"
 			:showPreviewPanel="isShownPreviewPanel"
+			:showDebugBar="isShownDebugBar"
+			:catalogExpanded="isExpandedCatalog"
 		>
 			<template #header>
 				<slot name="header"/>
@@ -40,7 +47,11 @@ export const AppLayout = {
 			<template #bottom-right-toolbar>
 				<slot name="bottom-right-toolbar"/>
 			</template>
-			
+
+			<template #debug-bar-toolbar>
+				<slot name="debug-bar-toolbar"/>
+			</template>
+
 			<template #top-middle-anchor>
 				<slot name="top-middle-anchor"/>
 			</template>

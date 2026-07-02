@@ -306,7 +306,7 @@ export const Button: BitrixVueComponentProps | { button: ?UIButton } = {
 
 		if (this.rightIcon)
 		{
-			button.setIcon(this.leftIcon, 'right');
+			button.setIcon(this.rightIcon, 'right');
 		}
 
 		if (this.leftCounterValue)

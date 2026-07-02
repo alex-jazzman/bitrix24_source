@@ -126,6 +126,7 @@ class GoToChat extends Base
 				'telegrambot' => true,
 				'ru-whatsapp' => false,
 				'whatsapp' => !$isBox,
+				'max' => true,
 			],
 		];
 	}
@@ -310,7 +311,7 @@ class GoToChat extends Base
 
 	private function getAvailableChannels(ItemIdentifier $itemIdentifier): array
 	{
-		$repo = ChannelRepository::create($itemIdentifier);
+		$repo = ChannelRepository::createWithPermissions($itemIdentifier);
 		$channels = $repo->getAll();
 
 		return array_values($channels);

@@ -14,7 +14,6 @@ export type UsersModelState = {
 	network: boolean,
 	bot: boolean,
 	botData: {
-		appId?: string | null,
 		code?: string,
 		isHidden?: boolean,
 		isSupportOpenline?: boolean,

@@ -10,6 +10,9 @@ jn.define('im/messenger/controller/recent/service/empty-state/dummy', (require, 
 	 */
 	class DummyEmptyStateService extends BaseUiRecentService
 	{
+		hide;
+		show;
+
 		onInit()
 		{
 			this.logger.log('onInit');
@@ -28,6 +31,11 @@ jn.define('im/messenger/controller/recent/service/empty-state/dummy', (require, 
 		subscribeEvents()
 		{
 			this.logger.log('subscribeEvents');
+		}
+
+		unsubscribeEvents()
+		{
+			this.logger.log('unsubscribeEvents');
 		}
 
 		redraw()

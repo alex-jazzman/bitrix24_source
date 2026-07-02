@@ -199,7 +199,7 @@ export const Status = {
 						this.taskId,
 						{
 							context: this.analytics?.context ?? Analytics.Section.Tasks,
-							additionalContext: this.analytics?.additionalContext ?? Analytics.SubSection.TaskCard,
+							additionalContext: Analytics.SubSection.TaskCard,
 							element: Analytics.Element.ContextMenu,
 						},
 					);

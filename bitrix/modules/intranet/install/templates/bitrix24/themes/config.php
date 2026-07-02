@@ -8,7 +8,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-$new = time() < strtotime('21 January 2026');
+$new = time() < strtotime('21 July 2026');
 $videoDomain = (new ThemePickerVideo())->getDomain();
 
 return [
@@ -23,6 +23,40 @@ return [
 	],
 
 	"subThemes" => [
+		"light:vibecode" => [
+			"title" => Loc::getMessage("BITRIX24_THEME_VIBECODE"),
+			"previewImage" => "vibecode-preview.webp",
+			"prefetchImages" => ["vibecode.jpg", "vibecode-blurred.webp"],
+			"resizable" => true,
+			"width" => 1920,
+			"height" => 1080,
+			"new" => $new,
+		],
+
+		"light:vibecode-ultra" => [
+			"title" => Loc::getMessage("BITRIX24_THEME_VIBECODE_ULTRA"),
+			"previewImage" => "vibecode-ultra-preview.webp",
+			"prefetchImages" => ["vibecode-ultra.jpg", "vibecode-ultra-blurred.webp"],
+			"resizable" => true,
+			"width" => 1920,
+			"height" => 1080,
+			"new" => $new,
+		],
+
+		"light:video-vibecode" => [
+			"title" => Loc::getMessage("BITRIX24_THEME_VIDEO_VIBECODE"),
+			"previewImage" => "vibecode-preview.webp",
+			"prefetchImages" => ["vibecode-poster.webp"],
+			"video" => [
+				"sources" => [
+					"webm" => "https://$videoDomain/bitrix24/themes/video-vibecode/vibecode.webm",
+					"mp4" => "https://$videoDomain/bitrix24/themes/video-vibecode/vibecode.mp4"
+				]
+			],
+			"resizable" => true,
+			"new" => $new,
+		],
+
 		"light:space" => [
 			"title" => Loc::getMessage("BITRIX24_THEME_SPACE"),
 			"previewImage" => "space-preview.webp",
@@ -30,7 +64,6 @@ return [
 			"resizable" => true,
 			"width" => 1920,
 			"height" => 1080,
-			"new" => $new,
 		],
 
 		"light:lightness" => [
@@ -324,6 +357,42 @@ return [
 			"title" => Loc::getMessage("BITRIX24_THEME_PLUTO"),
 			"prefetchImages" => ["pluto.jpg", "pluto-blurred.webp"],
 			"previewImage" => "pluto-preview.jpg",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+		],
+
+		"light:prism" => [
+			"title" => Loc::getMessage("BITRIX24_THEME_PRISM"),
+			"prefetchImages" => ["prism.jpg", "prism-blurred.webp"],
+			"previewImage" => "prism-preview.webp",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+		],
+
+		"light:orbit" => [
+			"title" => Loc::getMessage("BITRIX24_THEME_ORBIT"),
+			"prefetchImages" => ["orbit.jpg", "orbit-blurred.webp"],
+			"previewImage" => "orbit-preview.webp",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+		],
+
+		"light:insight" => [
+			"title" => Loc::getMessage("BITRIX24_THEME_INSIGHT"),
+			"prefetchImages" => ["insight.jpg", "insight-blurred.webp"],
+			"previewImage" => "insight-preview.webp",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+		],
+
+		"dark:mirage" => [
+			"title" => Loc::getMessage("BITRIX24_THEME_MIRAGE"),
+			"prefetchImages" => ["mirage.jpg", "mirage-blurred.webp"],
+			"previewImage" => "mirage-preview.webp",
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,

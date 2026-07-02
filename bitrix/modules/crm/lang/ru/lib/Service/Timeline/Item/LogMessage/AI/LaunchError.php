@@ -9,5 +9,6 @@ $MESS['CRM_TIMELINE_LOG_LAUNCH_ERROR_TITLE_SUMMARIZE_CALl'] = 'Не удалос
 $MESS['CRM_TIMELINE_LOG_LAUNCH_ERROR_TITLE_FILL_FIELDS'] = 'Не удалось заполнить поля';
 $MESS['CRM_TIMELINE_LOG_LAUNCH_ERROR_TITLE_SCORE_CALl'] = 'Не удалось оценить разговор менеджера';
 $MESS['CRM_TIMELINE_LOG_LAUNCH_ERROR_TITLE_REPEAT_SALE'] = 'Не удалось подготовить рекомендации для менеджера';
+$MESS['CRM_TIMELINE_LOG_LAUNCH_ERROR_TITLE_ANALYZE_COMMUNICATION'] = 'Не удалось проанализировать разговор с клиентом';
 
 $MESS['CRM_TIMELINE_ITEM_REPEAT_SALE_SCENARIO'] = 'Сценарий повторных продаж';

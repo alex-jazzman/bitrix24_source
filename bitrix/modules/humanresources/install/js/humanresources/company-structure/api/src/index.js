@@ -1,5 +1,5 @@
 import { ajax } from 'main.core';
-import { Analytics as AnalyticsType, AnalyticsSourceType } from './analytics';
+import { type Analytics as AnalyticsType, AnalyticsSourceType } from './analytics';
 import { memberRoles, teamMemberRoles, memberRolesKeys, getMemberRoles, type MemberRolesType } from './member-roles';
 import { UI } from 'ui.notification';
 import { sendData as analyticsSendData } from 'ui.analytics';

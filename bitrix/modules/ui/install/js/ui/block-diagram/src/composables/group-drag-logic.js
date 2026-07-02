@@ -20,8 +20,6 @@ export function useGroupDragLogic(
 		startAutoScroll,
 		stopAutoScroll,
 		updateMousePosition,
-		updateBlockRectangle,
-		isBoxIntersection,
 	} = useBlockDiagram();
 
 	let currentZoom = 1;
@@ -115,13 +113,6 @@ export function useGroupDragLogic(
 
 			const newBlock = { ...block };
 			updateBlock(newBlock);
-			if (toValue(isBoxIntersection))
-			{
-				updateBlockRectangle(block.id, {
-					x: block.position.x,
-					y: block.position.y,
-				});
-			}
 		}
 
 		movingItems = [];

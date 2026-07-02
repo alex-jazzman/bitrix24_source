@@ -1,5 +1,9 @@
 <?php
 
+class_alias(
+	\Bitrix\Rest\Internal\Entity\Application\AppCollection::class,
+	\Bitrix\Rest\Entity\Collection\AppCollection::class,
+);
 CModule::AddAutoloadClasses(
 	'rest',
 	[

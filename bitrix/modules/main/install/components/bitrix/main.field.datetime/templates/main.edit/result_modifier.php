@@ -8,7 +8,10 @@ use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Text\HtmlFilter;
 
 /**
+ * @global CDatabase $DB
  * @var $component DateTimeUfComponent
+ * @var array $arResult
+ * @var array $arParams
  */
 
 $component = $this->getComponent();

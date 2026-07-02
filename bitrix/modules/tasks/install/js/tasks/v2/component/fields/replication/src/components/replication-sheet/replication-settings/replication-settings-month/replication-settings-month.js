@@ -57,16 +57,21 @@ export const ReplicationSettingsMonth = {
 				? this.replicateParams.monthlyMonthNum1
 				: this.replicateParams.monthlyMonthNum2;
 		},
-		useInterval: {
-			get(): boolean
-			{
-				return this.monthlyMonthNum > 0;
+			useInterval: {
+				get(): boolean
+				{
+					return true;
+				},
+				set(useInterval: boolean): void
+				{
+					if (!useInterval)
+					{
+						return;
+					}
+
+					this.updateMonthlyMonthNum(this.interval);
+				},
 			},
-			set(useInterval: boolean): void
-			{
-				this.updateMonthlyMonthNum(useInterval ? 1 : null);
-			},
-		},
 		interval: {
 			get(): number
 			{
@@ -185,11 +190,12 @@ export const ReplicationSettingsMonth = {
 				v-model:weekDay="monthlyWeekDay"
 				v-model:weekDayNumber="monthlyWeekDayNum"
 			/>
-			<ReplicationInterval
-				v-model:useInterval="useInterval"
-				v-model:interval="interval"
-				:period
-			>
+				<ReplicationInterval
+					v-model:useInterval="useInterval"
+					v-model:interval="interval"
+					:period
+					controlType="none"
+				>
 				<template #hint>
 					<QuestionMark
 						class="tasks-replication-sheet-action-row__hint"

@@ -119,6 +119,21 @@ export class BasePullHandler
 	{
 		this.#messageHandler.handlePinDelete(params);
 	}
+
+	handleBuilderBlockAppend(params)
+	{
+		this.#messageHandler.handleBuilderBlockAppend(params);
+	}
+
+	handleBuilderBlockUpdate(params)
+	{
+		this.#messageHandler.handleBuilderBlockUpdate(params);
+	}
+
+	handleBuilderBlockDelete(params)
+	{
+		this.#messageHandler.handleBuilderBlockDelete(params);
+	}
 	// endregion 'message'
 
 	// region 'chat'

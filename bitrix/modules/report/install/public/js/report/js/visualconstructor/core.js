@@ -31,13 +31,19 @@
 			}).then(function (result) {
 				this._successHandler(result, config)
 			}.bind(this)).catch(function(response) {
-				if(response.errors)
+				var errors = response.errors || [];
+
+				if (errors.length > 0)
 				{
-					console.error(response.errors.map(function(er){return er.message}).join("\n"));
+					console.error(errors.map(function(er){return er.message}).join("\n"));
 				}
 				else
 				{
 					console.error(response);
+				}
+				if (BX.type.isFunction(config.onfailure))
+				{
+					config.onfailure(response);
 				}
 			});
 		},
@@ -56,9 +62,20 @@
 			}).then(function (result) {
 				this._successHandler(result, config)
 			}.bind(this)).catch(function(response) {
-				var errors = response.errors;
+				var errors = response.errors || [];
 
-				console.error(errors.map(function(er){return er.message}).join("\n"));
+				if (errors.length > 0)
+				{
+					console.error(errors.map(function(er){return er.message}).join("\n"));
+				}
+				else
+				{
+					console.error(response);
+				}
+				if (BX.type.isFunction(config.onfailure))
+				{
+					config.onfailure(response);
+				}
 			});
 
 		},
@@ -71,9 +88,20 @@
 			}).then(function (result) {
 				config.onsuccess(result);
 			}).catch(function(response) {
-				var errors = response.errors;
+				const errors = response.errors || [];
 
-				console.error(errors.map(function(er){return er.message}).join("\n"));
+				if (errors.length > 0)
+				{
+					console.error(errors.map(function(er){return er.message}).join("\n"));
+				}
+				else
+				{
+					console.error(response);
+				}
+				if (BX.type.isFunction(config.onfailure))
+				{
+					config.onfailure(response);
+				}
 			});
 
 		},

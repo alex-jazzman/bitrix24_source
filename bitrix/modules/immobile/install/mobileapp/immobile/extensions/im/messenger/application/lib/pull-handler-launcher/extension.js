@@ -17,14 +17,15 @@ jn.define('im/messenger/application/lib/pull-handler-launcher', (require, export
 	const { DialogPullHandler } = require('im/messenger/provider/pull/dialog');
 	const { OpenlinesPullHandler } = require('im/messenger/provider/pull/openlines');
 	const { StickerPackPullHandler } = require('im/messenger/provider/pull/sticker-pack');
+	const { SharingLinkPullHandler } = require('im/messenger/provider/pull/sharing-link');
+	const { FolderPullHandler } = require('im/messenger/provider/pull/folder');
 
 	/**
+	 * @implements {Unsubscribable}
 	 * @class PullHandlerLauncher
 	 */
 	class PullHandlerLauncher
 	{
-		static #instance;
-
 		#handlerClassList = [
 			FeaturePullHandler,
 			PlanLimitsPullHandler,
@@ -42,23 +43,12 @@ jn.define('im/messenger/application/lib/pull-handler-launcher', (require, export
 			ChatFilePullHandler,
 			CollabInfoPullHandler,
 			SidebarPullHandler,
+			SharingLinkPullHandler,
 			StickerPackPullHandler,
+			FolderPullHandler,
 		];
 
 		#unsubscribeCallbackList = [];
-
-		/**
-		 * @return {PullHandlerLauncher}
-		 */
-		static getInstance()
-		{
-			if (!this.#instance)
-			{
-				this.#instance = new this();
-			}
-
-			return this.#instance;
-		}
 
 		constructor()
 		{
@@ -69,11 +59,6 @@ jn.define('im/messenger/application/lib/pull-handler-launcher', (require, export
 
 		subscribeEvents()
 		{
-			if (this.isLaunched)
-			{
-				return;
-			}
-
 			this.#handlerClassList.forEach((HandlerClass) => {
 				const unsubscribeCallback = BX.PULL.subscribe(new HandlerClass());
 				this.#unsubscribeCallbackList.push(unsubscribeCallback);
@@ -84,11 +69,6 @@ jn.define('im/messenger/application/lib/pull-handler-launcher', (require, export
 
 		unsubscribeEvents()
 		{
-			if (!this.isLaunched)
-			{
-				return;
-			}
-
 			this.#unsubscribeCallbackList.forEach((unsubscribeCallback) => unsubscribeCallback());
 		}
 	}

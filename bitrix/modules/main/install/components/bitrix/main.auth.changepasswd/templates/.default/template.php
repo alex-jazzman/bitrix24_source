@@ -4,6 +4,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 	die();
 }
 
+/**
+ * @var array $arResult
+ */
+
 use Bitrix\Main\Localization\Loc;
 Loc::loadMessages(__FILE__);
 
@@ -22,19 +26,19 @@ $fields = $arResult['FIELDS'];
 
 <div class="bx-authform">
 
-	<?if ($arResult['ERRORS']):?>
+	<?php if ($arResult['ERRORS']):?>
 	<div class="alert alert-danger">
-		<? foreach ($arResult['ERRORS'] as $error)
+		<?php foreach ($arResult['ERRORS'] as $error)
 		{
 			echo $error;
 		}
 		?>
 	</div>
-	<?elseif ($arResult['SUCCESS']):?>
+	<?php elseif ($arResult['SUCCESS']):?>
 	<div class="alert alert-success">
 		<?= $arResult['SUCCESS'];?>
 	</div>
-	<?endif;?>
+	<?php endif;?>
 
 	<h3 class="bx-title"><?= Loc::getMessage('MAIN_AUTH_CHD_HEADER');?></h3>
 
@@ -57,7 +61,7 @@ $fields = $arResult['FIELDS'];
 		<div class="bx-authform-formgroup-container">
 			<div class="bx-authform-label-container"><?= Loc::getMessage('MAIN_AUTH_CHD_FIELD_PASS');?></div>
 			<div class="bx-authform-input-container">
-				<?if ($arResult['SECURE_AUTH']):?>
+				<?php if ($arResult['SECURE_AUTH']):?>
 					<div class="bx-authform-psw-protected" id="bx_auth_secure" style="display:none">
 						<div class="bx-authform-psw-protected-desc"><span></span>
 							<?= Loc::getMessage('MAIN_AUTH_CHD_SECURE_NOTE');?>
@@ -66,7 +70,7 @@ $fields = $arResult['FIELDS'];
 					<script>
 						document.getElementById('bx_auth_secure').style.display = '';
 					</script>
-				<?endif;?>
+				<?php endif;?>
 				<input type="password" name="<?= $fields['password'];?>" value="<?= \htmlspecialcharsbx($arResult[$fields['password']]);?>" maxlength="255" autocomplete="off" />
 			</div>
 		</div>
@@ -74,7 +78,7 @@ $fields = $arResult['FIELDS'];
 		<div class="bx-authform-formgroup-container">
 			<div class="bx-authform-label-container"><?= Loc::getMessage('MAIN_AUTH_CHD_FIELD_PASS2');?></div>
 			<div class="bx-authform-input-container">
-				<?if ($arResult['SECURE_AUTH']):?>
+				<?php if ($arResult['SECURE_AUTH']):?>
 					<div class="bx-authform-psw-protected" id="bx_auth_secure2" style="display:none">
 						<div class="bx-authform-psw-protected-desc"><span></span>
 							<?= Loc::getMessage('MAIN_AUTH_CHD_SECURE_NOTE');?>
@@ -83,12 +87,12 @@ $fields = $arResult['FIELDS'];
 					<script>
 						document.getElementById('bx_auth_secure2').style.display = '';
 					</script>
-				<?endif;?>
+				<?php endif;?>
 				<input type="password" name="<?= $fields['confirm_password'];?>" value="<?= \htmlspecialcharsbx($arResult[$fields['confirm_password']]);?>" maxlength="255" autocomplete="off" />
 			</div>
 		</div>
 
-		<?if ($arResult['CAPTCHA_CODE']):?>
+		<?php if ($arResult['CAPTCHA_CODE']):?>
 			<input type="hidden" name="captcha_sid" value="<?= \htmlspecialcharsbx($arResult['CAPTCHA_CODE']);?>" />
 			<div class="bx-authform-formgroup-container dbg_captha">
 				<div class="bx-authform-label-container">
@@ -99,7 +103,7 @@ $fields = $arResult['FIELDS'];
 					<input type="text" name="captcha_word" maxlength="50" value="" autocomplete="off" />
 				</div>
 			</div>
-		<?endif;?>
+		<?php endif;?>
 
 		<div class="bx-authform-formgroup-container">
 			<input type="submit" class="btn btn-primary" name="<?= $fields['action'];?>" value="<?= Loc::getMessage('MAIN_AUTH_CHD_FIELD_SUBMIT');?>" />
@@ -109,25 +113,25 @@ $fields = $arResult['FIELDS'];
 			<?= $arResult['GROUP_POLICY']['PASSWORD_REQUIREMENTS'];?>
 		</div>
 
-		<?if ($arResult['AUTH_AUTH_URL'] || $arResult['AUTH_REGISTER_URL']):?>
+		<?php if ($arResult['AUTH_AUTH_URL'] || $arResult['AUTH_REGISTER_URL']):?>
 			<hr class="bxe-light">
 			<noindex>
-			<?if ($arResult['AUTH_AUTH_URL']):?>
+			<?php if ($arResult['AUTH_AUTH_URL']):?>
 				<div class="bx-authform-link-container">
 					<a href="<?= $arResult['AUTH_AUTH_URL'];?>" rel="nofollow">
 						<?= Loc::getMessage('MAIN_AUTH_CHD_URL_AUTH_URL');?>
 					</a>
 				</div>
-			<?endif;?>
-			<?if ($arResult['AUTH_REGISTER_URL']):?>
+			<?php endif;?>
+			<?php if ($arResult['AUTH_REGISTER_URL']):?>
 				<div class="bx-authform-link-container">
 					<a href="<?= $arResult['AUTH_REGISTER_URL'];?>" rel="nofollow">
 						<?= Loc::getMessage('MAIN_AUTH_CHD_URL_REGISTER_URL');?>
 					</a>
 				</div>
-			<?endif;?>
+			<?php endif;?>
 			</noindex>
-		<?endif;?>
+		<?php endif;?>
 
 	</form>
 </div>

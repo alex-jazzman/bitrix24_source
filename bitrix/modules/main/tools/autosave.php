@@ -1,4 +1,9 @@
-<?
+<?php
+
+/**
+ * @global CUser $USER
+ */
+
 define("STOP_STATISTICS", true);
 define("PUBLIC_AJAX_MODE", true);
 define('BX_SECURITY_SESSION_READONLY', true);
@@ -19,4 +24,3 @@ else
 	echo 'FAILED';
 
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_after.php");
-?>

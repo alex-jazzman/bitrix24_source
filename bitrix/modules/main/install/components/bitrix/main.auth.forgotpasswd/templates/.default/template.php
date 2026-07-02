@@ -4,6 +4,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 	die();
 }
 
+/**
+ * @var array $arResult
+ */
+
 use Bitrix\Main\Localization\Loc;
 Loc::loadMessages(__FILE__);
 
@@ -20,19 +24,19 @@ if ($arResult['AUTHORIZED'])
 
 <div class="bx-authform">
 
-	<?if ($arResult['ERRORS']):?>
+	<?php if ($arResult['ERRORS']):?>
 	<div class="alert alert-danger">
-		<? foreach ($arResult['ERRORS'] as $error)
+		<?php foreach ($arResult['ERRORS'] as $error)
 		{
 			echo $error;
 		}
 		?>
 	</div>
-	<?elseif ($arResult['SUCCESS']):?>
+	<?php elseif ($arResult['SUCCESS']):?>
 	<div class="alert alert-success">
 		<?= $arResult['SUCCESS'];?>
 	</div>
-	<?endif;?>
+	<?php endif;?>
 
 	<h3 class="bx-title"><?= Loc::getMessage('MAIN_AUTH_PWD_HEADER');?></h3>
 
@@ -55,7 +59,7 @@ if ($arResult['AUTHORIZED'])
 			</div>
 		</div>
 
-		<?if ($arResult['CAPTCHA_CODE']):?>
+		<?php if ($arResult['CAPTCHA_CODE']):?>
 			<input type="hidden" name="captcha_sid" value="<?= \htmlspecialcharsbx($arResult['CAPTCHA_CODE']);?>" />
 			<div class="bx-authform-formgroup-container dbg_captha">
 				<div class="bx-authform-label-container">
@@ -66,31 +70,31 @@ if ($arResult['AUTHORIZED'])
 					<input type="text" name="captcha_word" maxlength="50" value="" autocomplete="off" />
 				</div>
 			</div>
-		<?endif;?>
+		<?php endif;?>
 
 		<div class="bx-authform-formgroup-container">
 			<input type="submit" class="btn btn-primary" name="<?= $arResult['FIELDS']['action'];?>" value="<?= Loc::getMessage('MAIN_AUTH_PWD_FIELD_SUBMIT');?>" />
 		</div>
 
-		<?if ($arResult['AUTH_AUTH_URL'] || $arResult['AUTH_REGISTER_URL']):?>
+		<?php if ($arResult['AUTH_AUTH_URL'] || $arResult['AUTH_REGISTER_URL']):?>
 			<hr class="bxe-light">
 			<noindex>
-			<?if ($arResult['AUTH_AUTH_URL']):?>
+			<?php if ($arResult['AUTH_AUTH_URL']):?>
 				<div class="bx-authform-link-container">
 					<a href="<?= $arResult['AUTH_AUTH_URL'];?>" rel="nofollow">
 						<?= Loc::getMessage('MAIN_AUTH_PWD_URL_AUTH_URL');?>
 					</a>
 				</div>
-			<?endif;?>
-			<?if ($arResult['AUTH_REGISTER_URL']):?>
+			<?php endif;?>
+			<?php if ($arResult['AUTH_REGISTER_URL']):?>
 				<div class="bx-authform-link-container">
 					<a href="<?= $arResult['AUTH_REGISTER_URL'];?>" rel="nofollow">
 						<?= Loc::getMessage('MAIN_AUTH_PWD_URL_REGISTER_URL');?>
 					</a>
 				</div>
-			<?endif;?>
+			<?php endif;?>
 			</noindex>
-		<?endif;?>
+		<?php endif;?>
 
 	</form>
 </div>

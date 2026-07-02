@@ -2,6 +2,8 @@
  * @module im/messenger/lib/element/dialog/message/system-text
  */
 jn.define('im/messenger/lib/element/dialog/message/system-text', (require, exports, module) => {
+	const { Color } = require('tokens');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { Message } = require('im/messenger/lib/element/dialog/message/base');
 	const { MessageType } = require('im/messenger/const');
 
@@ -12,18 +14,17 @@ jn.define('im/messenger/lib/element/dialog/message/system-text', (require, expor
 	{
 		/**
 		 * @param {MessagesModelState} modelMessage
-		 * @param {CreateMessageOptions} options
+		 * @param {CreateMessageOptions|{}} options
 		 */
-		constructor(modelMessage = {}, options = {})
+		constructor(modelMessage, options = {})
 		{
 			super(modelMessage, options);
-
 			this.setMessage(modelMessage.text);
-			this.setIsBackgroundOn(true);
-			this.setBackgroundColor('#525C6966');
-			this.setFontColor('#FFFFFF');
-			this.setShowAvatarForce(false);
-			this.setAvatarUri(null);
+
+			if (!this.isSystemStyled)
+			{
+				this.setSystemStyle();
+			}
 		}
 
 		getType()
@@ -31,8 +32,19 @@ jn.define('im/messenger/lib/element/dialog/message/system-text', (require, expor
 			return MessageType.systemText;
 		}
 
-		setShowTail()
+		setSystemStyle()
 		{
+			if (Feature.isSystemMessageStyleSupported)
+			{
+				return super.setSystemStyle();
+			}
+
+			this.setIsBackgroundOn(true);
+			this.setBackgroundColor(Color.chatOverallTech.toHex());
+			this.setFontColor(Color.baseWhiteFixed.toHex());
+			this.setShowAvatarForce(false);
+			this.setAvatarUri(null);
+
 			return this;
 		}
 	}

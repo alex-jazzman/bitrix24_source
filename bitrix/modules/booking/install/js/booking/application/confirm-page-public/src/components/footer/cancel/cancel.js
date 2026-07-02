@@ -1,4 +1,3 @@
-import { PopupOptions } from 'main.popup';
 import { BIcon as Icon, Set as IconSet } from 'ui.icon-set.api.vue';
 import { ConfirmPopup } from './confirm-popup/confirm-popup';
 import { CancelPopup } from './cancel-popup/cancel-popup';

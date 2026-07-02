@@ -41,6 +41,7 @@ type CopilotTextControllerOptions = {
 	analytics: CopilotAnalytics;
 	showResultInCopilot: ?boolean;
 	menuForceTop: ?boolean;
+	responseFormat: string;
 }
 
 export class CopilotTextController extends EventEmitter
@@ -72,6 +73,7 @@ export class CopilotTextController extends EventEmitter
 	#rolesDialog: RolesDialogType;
 	#showResultInCopilot: ?boolean;
 	#menuForceTop: boolean = true;
+	#responseFormat: string;
 
 	#inputFieldContainerClickEventHandler: Function;
 	#inputFieldSubmitEventHandler: Function;
@@ -103,6 +105,7 @@ export class CopilotTextController extends EventEmitter
 		this.#analytics = options.analytics;
 		this.#showResultInCopilot = options.showResultInCopilot;
 		this.#menuForceTop = options.menuForceTop ?? true;
+		this.#responseFormat = options.responseFormat;
 
 		this.#inputFieldContainerClickEventHandler = this.#handleInputContainerClickEvent.bind(this);
 		this.#inputFieldSubmitEventHandler = this.#handleInputFieldSubmitEvent.bind(this);
@@ -896,6 +899,7 @@ export class CopilotTextController extends EventEmitter
 
 		try
 		{
+			this.#engine.addParameter('response_format', this.#responseFormat);
 			const res = await this.#engine.textCompletions();
 
 			const result = res.data.result || res.data.last.data;
@@ -916,7 +920,21 @@ export class CopilotTextController extends EventEmitter
 			)
 			{
 				this.#resultField?.clearResult();
-				this.#resultField?.addResult(this.#generationResultText);
+				if (this.#responseFormat === 'plaintext')
+				{
+					this.#resultField?.addResult(this.#generationResultText.replaceAll('\n', '<br/>'));
+				}
+				else if (this.#responseFormat === 'default')
+				{
+					this.#resultField?.addResult(
+						this.#generationResultText,
+						this.#generationResultText.replaceAll(/(\r\n|\r|\n)/g, '<br>'),
+					);
+				}
+				else
+				{
+					this.#resultField?.addResult(this.#generationResultText);
+				}
 			}
 			else
 			{

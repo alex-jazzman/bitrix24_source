@@ -1552,6 +1552,16 @@ export class Plan extends View
 										entity.removeItem(groupModeItem);
 										this.deactivateGroupMode(entity, groupModeItem);
 										groupModeItem.removeYourself();
+
+										sendData({
+											tool: 'tasks',
+											category: 'task_operations',
+											type: 'task',
+											event: 'task_delete',
+											c_section: 'scrum',
+											c_element: 'context_menu',
+											p1: `taskId_${groupModeItem.getSourceId()}`,
+										});
 									});
 									this.updateEntityCounters(entity);
 								});

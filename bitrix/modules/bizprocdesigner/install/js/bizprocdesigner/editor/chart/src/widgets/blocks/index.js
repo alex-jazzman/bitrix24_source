@@ -4,6 +4,8 @@ export * from './ui/block-trigger/block-trigger';
 export * from './ui/block-complex/block-complex';
 export * from './ui/block-tool/block-tool';
 export * from './ui/block-frame/block-frame';
+export * from './ui/block-operator/block-operator';
+export * from './ui/block-service/block-service';
 export * from './ui/diagram-menu/diagram-menu';
 export * from './ui/autosave-status/autosave-status';
 export * from './ui/template-name/template-name';

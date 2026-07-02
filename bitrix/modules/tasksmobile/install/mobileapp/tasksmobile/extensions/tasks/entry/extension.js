@@ -436,11 +436,14 @@ jn.define('tasks/entry', (require, exports, module) => {
 				return null;
 			}
 
-			const task = selectByTaskIdOrGuid(getState(), params?.taskId);
-
-			if (task)
+			if (!extra?.withChecklists)
 			{
-				return { task };
+				const task = selectByTaskIdOrGuid(getState(), params?.taskId);
+
+				if (task)
+				{
+					return { task };
+				}
 			}
 
 			const data = await Entry.#getTaskData(params?.taskId, params?.userId, extra);

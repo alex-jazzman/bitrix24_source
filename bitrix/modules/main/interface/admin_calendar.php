@@ -99,7 +99,7 @@ class CAdminCalendar
 		// component can't set 'size' param
 		return '
 	<div class="adm-input-wrap adm-input-wrap-calendar">
-		<input class="adm-input adm-input-calendar" type="text" name="'.$sFieldName.'" size="'.(intval($size)+3).'" value="'.htmlspecialcharsbx($sValue).'">
+		<input class="adm-input adm-input-calendar" type="text" name="'.$sFieldName.'" size="'.(intval($size)+3).'" value="'.htmlspecialcharsbx($sValue, ENT_COMPAT, false).'">
 		<button type="button" class="adm-calendar-icon" onclick="' . $onclick . '" title="'.GetMessage("admin_lib_calend_title").'"></button>
 	</div>';
 

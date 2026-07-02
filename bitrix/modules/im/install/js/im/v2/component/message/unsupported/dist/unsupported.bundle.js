@@ -3,40 +3,40 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,main_core,im_v2_component_message_base,im_v2_component_message_elements) {
+(function (exports, main_core, im_v2_component_message_base, im_v2_component_message_elements) {
 	'use strict';
 
 	// @vue/component
 	const UnsupportedMessage = {
-	  name: 'UnsupportedMessage',
-	  components: {
-	    BaseMessage: im_v2_component_message_base.BaseMessage,
-	    DefaultMessageContent: im_v2_component_message_elements.DefaultMessageContent
-	  },
-	  props: {
-	    item: {
-	      type: Object,
-	      required: true
-	    },
-	    dialogId: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  computed: {
-	    message() {
-	      return this.item;
-	    },
-	    canSetReactions() {
-	      return main_core.Type.isNumber(this.message.id);
-	    }
-	  },
-	  methods: {
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
-	    }
-	  },
-	  template: `
+		name: 'UnsupportedMessage',
+		components: {
+			BaseMessage: im_v2_component_message_base.BaseMessage,
+			DefaultMessageContent: im_v2_component_message_elements.DefaultMessageContent
+		},
+		props: {
+			item: {
+				type: Object,
+				required: true
+			},
+			dialogId: {
+				type: String,
+				required: true
+			}
+		},
+		computed: {
+			message() {
+				return this.item;
+			},
+			canSetReactions() {
+				return main_core.Type.isNumber(this.message.id);
+			}
+		},
+		methods: {
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
 		<BaseMessage :dialogId="dialogId" :item="item">
 			<div class="bx-im-message-unsupported__container bx-im-message-unsupported__scope">
 				<div class="bx-im-message-unsupported__content">
@@ -53,5 +53,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.UnsupportedMessage = UnsupportedMessage;
 
-}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message));
+})(this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}, BX, BX.Messenger.v2.Component.Message, BX.Messenger.v2.Component.Message);
 //# sourceMappingURL=unsupported.bundle.js.map

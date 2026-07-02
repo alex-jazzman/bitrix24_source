@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/controller/recent/service/vuex/lib/sync/filter', (require, exports, module) => {
 	const { Type } = require('type');
-	const { NavigationTabId, RecentFilterId } = require('im/messenger/const');
+	const { RecentFilterId, RecentTabByNavigationTab, ROOT_PARENT_CHAT_ID } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	/**
@@ -50,15 +50,30 @@ jn.define('im/messenger/controller/recent/service/vuex/lib/sync/filter', (requir
 		}
 
 		/**
+		 * @returns {string}
+		 */
+		get recentSection()
+		{
+			return this.recentLocator.get('recentSection');
+		}
+
+		/**
+		 * @returns {number}
+		 */
+		get parentChatId()
+		{
+			return this.recentLocator.get('parentChatId');
+		}
+
+		/**
 		 * @description Subscribes to mutations that affect the filtered collection.
 		 * @returns {void}
 		 */
 		subscribeStoreMutation()
 		{
 			this.storeManager
-				.on('recentModel/setChatIdCollection', this.setChatIdCollectionHandler)
-				.on('recentModel/setTaskIdCollection', this.setTaskIdCollectionHandler)
-				.on('recentModel/storeIdCollection', this.storeIdCollectionHandler)
+				.on('recentModel/setNestedIdCollection', this.setNestedIdCollectionHandler)
+				.on('recentModel/storeNestedIdCollection', this.storeNestedIdCollectionHandler)
 				.on('recentModel/delete', this.deleteHandler)
 				.on('recentModel/recentFilteredModel/setCurrentFilter', this.setCurrentFilterHandler)
 				.on('counterModel/set', this.counterSetHandler)
@@ -67,39 +82,53 @@ jn.define('im/messenger/controller/recent/service/vuex/lib/sync/filter', (requir
 		}
 
 		/**
-		 * @description Handles recentModel/setChatIdCollection mutation.
+		 * @description Unsubscribes from mutations that affect the filtered collection.
+		 * @returns {void}
 		 */
-		setChatIdCollectionHandler = async () => {
-			if (this.tabId === NavigationTabId.chats)
-			{
-				this.logger.log('recentFilteredSync: setChatIdCollectionHandler');
-				await this.#syncForTab(this.tabId);
-			}
-		};
+		unsubscribeStoreMutation()
+		{
+			this.storeManager
+				.off('recentModel/setNestedIdCollection', this.setNestedIdCollectionHandler)
+				.off('recentModel/storeNestedIdCollection', this.storeNestedIdCollectionHandler)
+				.off('recentModel/delete', this.deleteHandler)
+				.off('recentModel/recentFilteredModel/setCurrentFilter', this.setCurrentFilterHandler)
+				.off('counterModel/set', this.counterSetHandler)
+				.off('counterModel/delete', this.counterDeleteHandler)
+			;
+		}
 
 		/**
-		 * @description Handles recentModel/setTaskIdCollection mutation.
-		 */
-		setTaskIdCollectionHandler = async () => {
-			if (this.tabId === NavigationTabId.task)
-			{
-				this.logger.log('recentFilteredSync: setTaskIdCollectionHandler');
-				await this.#syncForTab(this.tabId);
-			}
-		};
-
-		/**
-		 * @description Handles recentModel/storeIdCollection mutation.
-		 * @param {MutationPayload<RecentStoreIdCollectionData, RecentStoreIdCollectionActions>} payload
+		 * @description Handles recentModel/setNestedIdCollection mutation.
+		 * Syncs filtered collection when items are accumulated into a tab at the top level.
+		 * @param {MutationPayload<RecentSetNestedIdCollectionData>} payload
 		 * @returns {Promise<void>}
 		 */
-		storeIdCollectionHandler = async ({ payload }) => {
-			const tab = payload?.data?.tab;
-			if (Type.isStringFilled(tab) && tab === this.tabId)
+		setNestedIdCollectionHandler = async ({ payload }) => {
+			const { recentSection, parentChatId = ROOT_PARENT_CHAT_ID } = payload?.data ?? {};
+			if (recentSection !== this.recentSection || parentChatId !== this.parentChatId)
 			{
-				this.logger.log('recentFilteredSync: storeIdCollectionHandler', { tab });
-				await this.#syncForTab(this.tabId);
+				return;
 			}
+
+			this.logger.log('recentFilteredSync: setNestedIdCollectionHandler', { recentSection, parentChatId });
+			await this.#syncForTab(this.tabId, parentChatId);
+		};
+
+		/**
+		 * @description Handles recentModel/storeNestedIdCollection mutation.
+		 * Syncs filtered collection when a tab's Set is fully replaced at the top level.
+		 * @param {MutationPayload<RecentStoreNestedIdCollectionData>} payload
+		 * @returns {Promise<void>}
+		 */
+		storeNestedIdCollectionHandler = async ({ payload }) => {
+			const { recentSection, parentChatId = ROOT_PARENT_CHAT_ID } = payload?.data ?? {};
+			if (!Type.isStringFilled(recentSection) || recentSection !== this.recentSection || parentChatId !== this.parentChatId)
+			{
+				return;
+			}
+
+			this.logger.log('recentFilteredSync: storeNestedIdCollectionHandler', { recentSection, parentChatId });
+			await this.#syncForTab(this.tabId, parentChatId);
 		};
 
 		/**
@@ -107,7 +136,7 @@ jn.define('im/messenger/controller/recent/service/vuex/lib/sync/filter', (requir
 		 */
 		deleteHandler = async () => {
 			this.logger.log('recentFilteredSync: deleteHandler');
-			await this.#syncForTab(this.tabId);
+			await this.#syncForTab(this.tabId, this.parentChatId);
 		};
 
 		/**
@@ -120,7 +149,7 @@ jn.define('im/messenger/controller/recent/service/vuex/lib/sync/filter', (requir
 		setCurrentFilterHandler = async ({ payload }) => {
 			const { tabId, filterId } = payload?.data || {};
 
-			if (!Type.isStringFilled(tabId) || tabId !== this.tabId)
+			if (!Type.isStringFilled(tabId) || RecentTabByNavigationTab[tabId] !== this.recentSection)
 			{
 				return;
 			}
@@ -133,7 +162,7 @@ jn.define('im/messenger/controller/recent/service/vuex/lib/sync/filter', (requir
 			}
 			else if (Type.isStringFilled(filterId))
 			{
-				await this.#syncForTab(this.tabId);
+				await this.#syncForTab(this.tabId, this.parentChatId);
 			}
 		};
 
@@ -142,7 +171,7 @@ jn.define('im/messenger/controller/recent/service/vuex/lib/sync/filter', (requir
 		 */
 		counterSetHandler = async () => {
 			this.logger.log('recentFilteredSync: counterSetHandler');
-			await this.#syncForTab(this.tabId);
+			await this.#syncForTab(this.tabId, this.parentChatId);
 		};
 
 		/**
@@ -150,16 +179,17 @@ jn.define('im/messenger/controller/recent/service/vuex/lib/sync/filter', (requir
 		 */
 		counterDeleteHandler = async () => {
 			this.logger.log('recentFilteredSync: counterDeleteHandler');
-			await this.#syncForTab(this.tabId);
+			await this.#syncForTab(this.tabId, this.parentChatId);
 		};
 
 		/**
 		 * @description Dispatches sync for given tab.
 		 * @param {string} tabId
+		 * @param {number} [parentChatId]
 		 */
-		#syncForTab(tabId)
+		#syncForTab(tabId, parentChatId = ROOT_PARENT_CHAT_ID)
 		{
-			return this.store.dispatch('recentModel/syncFilteredIdCollection', { tabId });
+			return this.store.dispatch('recentModel/syncFilteredIdCollection', { tabId, parentChatId });
 		}
 
 		/**

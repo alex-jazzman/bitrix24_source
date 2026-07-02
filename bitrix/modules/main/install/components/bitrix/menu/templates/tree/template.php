@@ -1,42 +1,42 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
+<?php if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
 
-<?if (!empty($arResult)):?>
+<?php if (!empty($arResult)):?>
 
 <div class="menu-sitemap-tree">
 <ul>
-<?
+	<?php
 $previousLevel = 0;
 foreach($arResult as $arItem):
 ?>
-	<?if ($previousLevel && $arItem["DEPTH_LEVEL"] < $previousLevel):?>
+	<?php if ($previousLevel && $arItem["DEPTH_LEVEL"] < $previousLevel):?>
 		<?=str_repeat("</ul></li>", ($previousLevel - $arItem["DEPTH_LEVEL"]));?>
-	<?endif?>
+	<?php endif?>
 
-	<?if ($arItem["IS_PARENT"]):?>
-			<li<?if(!isset($arItem["CHILD_SELECTED"]) || $arItem["CHILD_SELECTED"] !== true):?> class="menu-close"<?endif?>>
+	<?php if ($arItem["IS_PARENT"]):?>
+			<li<?php if(!isset($arItem["CHILD_SELECTED"]) || $arItem["CHILD_SELECTED"] !== true):?> class="menu-close"<?php endif?>>
 				<div class="folder" onClick="OpenMenuNode(this)"></div>
 				<div class="item-text"><a href="<?=$arItem["LINK"]?>"><?=$arItem["TEXT"]?></a></div>
 				<ul>
 
-	<?else:?>
+	<?php else:?>
 
-		<?if ($arItem["PERMISSION"] > "D"):?>
+		<?php if ($arItem["PERMISSION"] > "D"):?>
 				<li>
 					<div class="page"></div>
 					<div class="item-text"><a href="<?=$arItem["LINK"]?>"><?=$arItem["TEXT"]?></a></div>
 				</li>
-		<?endif?>
+		<?php endif?>
 
-	<?endif?>
+	<?php endif?>
 
-	<?$previousLevel = $arItem["DEPTH_LEVEL"];?>
+	<?php $previousLevel = $arItem["DEPTH_LEVEL"];?>
 
-<?endforeach?>
+<?php endforeach?>
 
-<?if ($previousLevel > 1)://close last item tags?>
+<?php if ($previousLevel > 1)://close last item tags?>
 	<?=str_repeat("</ul></li>", ($previousLevel-1) );?>
-<?endif?>
+<?php endif?>
 
 </ul>
 </div>
-<?endif?>
+<?php endif?>

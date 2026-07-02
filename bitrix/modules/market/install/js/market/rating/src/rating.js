@@ -1,14 +1,14 @@
-import {nextTick} from "ui.vue3";
 import { Ears } from 'ui.ears'
 import { RatingItem } from "./rating-item";
-import { PopupWrapper } from './popup-wrapper';
 import 'ui.design-tokens';
+import { BitrixVue } from 'ui.vue3';
+import { RatingReview } from 'market.rating-review';
 
-import "./rating.css"
+import './rating.css';
 
 export const Rating = {
 	components: {
-		RatingItem, PopupWrapper
+		RatingItem,
 	},
 	props: [
 		'appInfo', 'isSite', 'showNoAccessInstallButton',
@@ -18,14 +18,8 @@ export const Rating = {
 			application: {},
 			needInstallBeforeAdd: true,
 			ratingClickState: false, // клик по звёздам, когда не установлено
-			addingReview: false, // клик по кнопке "добавить отзыв"
-			policyChecked: false,
-			rulesChecked: false,
 			feedbackBlock: null, // блок с отзывами, чтобы прикрутить уши для прокрутки
-			reviewText: '', // текст отзыва для добавления
-			currentRating: 0,
-			starsError: false,
-			sendingReview: false,
+			reviewPopup: null,
 		};
 	},
 	beforeMount() {
@@ -36,20 +30,11 @@ export const Rating = {
 		canReview: function () {
 			return this.application.REVIEWS.CAN_REVIEW === 'Y';
 		},
-		showPolicy: function () {
-			return this.application.REVIEWS.SHOW_POLICY_CHECKBOX === 'Y';
-		},
-		showRules: function () {
-			return this.application.REVIEWS.SHOW_RULES_CHECKBOX === 'Y';
-		},
-		allChecked: function() {
-			return this.policyChecked && this.rulesChecked;
-		},
 		appWasInstalled: function () {
 			return this.application.WAS_INSTALLED && this.application.WAS_INSTALLED === 'Y';
 		},
 		showInstallState: function () {
-			return this.needInstallBeforeAdd && !this.appWasInstalled && (!this.countReviews || this.addingReview)
+			return this.needInstallBeforeAdd && !this.appWasInstalled && (!this.countReviews);
 		},
 		canRatingClick: function () {
 			return (this.canReview && !this.sendingReview);
@@ -75,20 +60,13 @@ export const Rating = {
 			})).init();
 		}
 
-		if (!this.canReview) {
-			this.currentRating = this.application.REVIEWS.USER_RATING;
-		}
-
-		if (!this.showPolicy) {
-			this.policyChecked = true;
-		}
-		if (!this.showRules) {
-			this.rulesChecked = true;
-		}
-
 		if (false) {
 			this.scrollToUserReview();
 		}
+	},
+	beforeUnmount()
+	{
+		this.cancelAddingReviewClick();
 	},
 	methods: {
 		scrollToUserReview: function () {
@@ -104,84 +82,33 @@ export const Rating = {
 		isActiveStar: function (currentStar, rating) {
 			return currentStar <= parseInt(rating, 10);
 		},
-		currentRatingClick: function (rating) {
-			if (!this.canRatingClick) {
+		addingReviewClick() {
+			if (this.reviewPopup)
+			{
 				return;
 			}
 
-			this.currentRating = (rating === this.currentRating) ? 0 : rating;
-		},
-		addingReviewClick: function () {
-			this.addingReview = true;
-
-			nextTick(() => {
-				if (this.$refs.marketFeedbackText) {
-					this.$refs.marketFeedbackText.focus();
-				}
+			const popupContainer = document.createElement('div');
+			this.reviewPopup = BitrixVue.createApp(RatingReview, {
+				appInfo: this.appInfo,
+				isSite: this.isSite,
+				onSuccess: (event) => {
+					this.successReviewHandler(event);
+				},
+				onClose: () => {
+					this.cancelAddingReviewClick();
+				},
 			});
+			this.reviewPopup.mount(popupContainer);
 		},
-		cancelAddingReviewClick: function () {
-			this.addingReview = false;
-			this.currentRating = 0;
-		},
-		backToReviews: function () {
-			if (!this.appWasInstalled && this.addingReview) {
-				this.addingReview = false;
+		cancelAddingReviewClick() {
+			if (this.reviewPopup)
+			{
+				this.reviewPopup.unmount();
+				this.reviewPopup = null;
 			}
 		},
-		addReview: function () {
-			if (!this.allChecked) {
-				return;
-			}
-
-			if (this.currentRating <= 0) {
-				this.starsError = true;
-				setTimeout(() => this.starsError = false, 200);
-				this.showNotify(this.$Bitrix.Loc.getMessage('MARKET_RATING_JS_ADD_REVIEW_STARS_ERROR'));
-				return;
-			}
-
-			this.sendingReview = true;
-			const isSiteTemplate = this.isSite === true ? 'Y' : 'N';
-
-			BX.ajax.runAction('market.Application.addReview', {
-				data: {
-					appCode: this.application.REVIEW_APP_CODE,
-					reviewText: this.reviewText,
-					currentRating: this.currentRating,
-					isSite: isSiteTemplate,
-				},
-				analyticsLabel: {
-					appCode: this.application.REVIEW_APP_CODE,
-					currentRating: this.currentRating,
-					isSite: isSiteTemplate,
-				},
-			}).then(
-				response => {
-					this.sendingReview = false;
-
-					if (response.data && response.data.success === 'Y') {
-						this.successReviewHandler(response.data);
-					} else if (response.data && response.data.error) {
-						const errors = response.data.error.slice(0);
-						const firstError = errors.shift();
-						if (firstError === 'NOT_FOUND_TEXT') {
-							this.showNotify(this.$Bitrix.Loc.getMessage('MARKET_RATING_JS_ADD_REVIEW_TEXT_ERROR'));
-							return;
-						}
-
-						this.showNotify(this.$Bitrix.Loc.getMessage('MARKET_RATING_JS_ADD_REVIEW_ERROR') + ' (' + response.data.error + ')');
-					} else {
-						this.showNotify(this.$Bitrix.Loc.getMessage('MARKET_RATING_JS_ADD_REVIEW_ERROR'));
-					}
-				},
-				response => {
-					this.sendingReview = false;
-					this.showNotify(this.$Bitrix.Loc.getMessage('MARKET_RATING_JS_ADD_REVIEW_ERROR'));
-				},
-			);
-		},
-		showNotify: function (text) {
+		showNotify(text) {
 			BX.UI.Notification.Center.notify({
 				content: text,
 				position: BX.UI.Notification.Position.BOTTOM_LEFT,
@@ -206,8 +133,6 @@ export const Rating = {
 			return (this.getCountStars(star) / this.countReviews) * 100 + '%';
 		},
 		successReviewHandler: function (data) {
-			this.showNotify(this.$Bitrix.Loc.getMessage('MARKET_RATING_JS_ADD_REVIEW_SUCCESS'));
-
 			if (data && data.hasOwnProperty('can_review')) {
 				this.application.REVIEWS.CAN_REVIEW = data.can_review
 			}
@@ -219,8 +144,6 @@ export const Rating = {
 			if (data && data.hasOwnProperty('rating') && data.rating.hasOwnProperty('RATING_DETAIL')) {
 				this.application.REVIEWS.RATING = data.rating;
 			}
-
-			this.addingReview = false;
 		},
 	},
 	template: `
@@ -357,10 +280,8 @@ export const Rating = {
 						</div>
 	
 						<div class="market-detail__app-rating_feedback-info"
-							 :class="{'market-detail__app-rating_feedback-info__back' : !appWasInstalled && addingReview}"
 							 v-if="countReviews"
-							 @click="backToReviews"
-						>{{ $Bitrix.Loc.getMessage('MARKET_RATING_JS_REVIEWS_TOTAL', {'#NUMBER#': countReviews}) }}
+						>{{ $Bitrix.Loc.getMessage('MARKET_RATING_JS_REVIEWS_TOTAL', { '#NUMBER#': countReviews }) }}
 						</div>
 					</div>
 					<div class="market-detail__app-rating_feedback-content">
@@ -421,99 +342,6 @@ export const Rating = {
 					</div>
 				</div>
 			</div>
-			<PopupWrapper 
-				v-if="addingReview && !showInstallState"
-				@close="cancelAddingReviewClick"
-			>
-				<div class="market-detail__app-rating_feedback-form">
-					<div class="market-detail__app-rating_feedback-img" v-if="isSite !== true">
-						<img :src="application.ICON" alt="icon">
-					</div>
-					<div class="market-detail__app-rating_feedback-subtitle"
-						 v-html="$Bitrix.Loc.getMessage('MARKET_RATING_JS_ADD_REVIEW_TITLE', {'#APP_NAME#' : application.NAME})"
-					></div>
-					<p class="market-detail__app-rating_feedback-text">{{ $Bitrix.Loc.getMessage('MARKET_RATING_JS_ADD_REVIEW_FEEDBACK_TEXT') }}</p>
-					<div class="market-rating__app-rating-info_stars-container">
-						<svg class="market-rating__app-rating_star"
-							 :class="{'--active': isActiveStar(1, currentRating), '--pointer': canRatingClick}"
-							 @click="currentRatingClick(1)"
-							 width="33" height="33" viewBox="0 0 33 33" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path xmlns="http://www.w3.org/2000/svg" d="M15.8607 5.74116C16.0899 5.16168 16.9101 5.16168 17.1393 5.74116L19.7849 12.4292C19.8809 12.6721 20.1062 12.8395 20.3664 12.8614L27.2929 13.4453C27.8928 13.4959 28.1426 14.2383 27.6953 14.6412L22.3683 19.4392C22.1833 19.6058 22.1029 19.8594 22.1579 20.1021L23.7765 27.2365C23.9126 27.8366 23.2522 28.2996 22.7345 27.9671L16.8715 24.2017C16.6452 24.0564 16.3548 24.0564 16.1285 24.2017L10.2655 27.9671C9.74776 28.2996 9.0874 27.8366 9.22354 27.2365L10.8421 20.1021C10.8971 19.8594 10.8167 19.6058 10.6317 19.4392L5.30471 14.6412C4.85741 14.2383 5.10721 13.4959 5.70707 13.4453L12.6336 12.8614C12.8938 12.8395 13.1191 12.6721 13.2151 12.4292L15.8607 5.74116Z"/>
-						</svg>
-						<svg class="market-rating__app-rating_star"
-							 :class="{'--active': isActiveStar(2, currentRating), '--pointer': canRatingClick}"
-							 @click="currentRatingClick(2)"
-							 width="33" height="33" viewBox="0 0 33 33" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path xmlns="http://www.w3.org/2000/svg" d="M15.8607 5.74116C16.0899 5.16168 16.9101 5.16168 17.1393 5.74116L19.7849 12.4292C19.8809 12.6721 20.1062 12.8395 20.3664 12.8614L27.2929 13.4453C27.8928 13.4959 28.1426 14.2383 27.6953 14.6412L22.3683 19.4392C22.1833 19.6058 22.1029 19.8594 22.1579 20.1021L23.7765 27.2365C23.9126 27.8366 23.2522 28.2996 22.7345 27.9671L16.8715 24.2017C16.6452 24.0564 16.3548 24.0564 16.1285 24.2017L10.2655 27.9671C9.74776 28.2996 9.0874 27.8366 9.22354 27.2365L10.8421 20.1021C10.8971 19.8594 10.8167 19.6058 10.6317 19.4392L5.30471 14.6412C4.85741 14.2383 5.10721 13.4959 5.70707 13.4453L12.6336 12.8614C12.8938 12.8395 13.1191 12.6721 13.2151 12.4292L15.8607 5.74116Z"/>
-						</svg>
-						<svg class="market-rating__app-rating_star"
-							 :class="{'--active': isActiveStar(3, currentRating), '--pointer': canRatingClick}"
-							 @click="currentRatingClick(3)"
-							 width="33" height="33" viewBox="0 0 33 33" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path xmlns="http://www.w3.org/2000/svg" d="M15.8607 5.74116C16.0899 5.16168 16.9101 5.16168 17.1393 5.74116L19.7849 12.4292C19.8809 12.6721 20.1062 12.8395 20.3664 12.8614L27.2929 13.4453C27.8928 13.4959 28.1426 14.2383 27.6953 14.6412L22.3683 19.4392C22.1833 19.6058 22.1029 19.8594 22.1579 20.1021L23.7765 27.2365C23.9126 27.8366 23.2522 28.2996 22.7345 27.9671L16.8715 24.2017C16.6452 24.0564 16.3548 24.0564 16.1285 24.2017L10.2655 27.9671C9.74776 28.2996 9.0874 27.8366 9.22354 27.2365L10.8421 20.1021C10.8971 19.8594 10.8167 19.6058 10.6317 19.4392L5.30471 14.6412C4.85741 14.2383 5.10721 13.4959 5.70707 13.4453L12.6336 12.8614C12.8938 12.8395 13.1191 12.6721 13.2151 12.4292L15.8607 5.74116Z"/>
-						</svg>
-						<svg class="market-rating__app-rating_star"
-							 :class="{'--active': isActiveStar(4, currentRating), '--pointer': canRatingClick}"
-							 @click="currentRatingClick(4)"
-							 width="33" height="33" viewBox="0 0 33 33" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path xmlns="http://www.w3.org/2000/svg" d="M15.8607 5.74116C16.0899 5.16168 16.9101 5.16168 17.1393 5.74116L19.7849 12.4292C19.8809 12.6721 20.1062 12.8395 20.3664 12.8614L27.2929 13.4453C27.8928 13.4959 28.1426 14.2383 27.6953 14.6412L22.3683 19.4392C22.1833 19.6058 22.1029 19.8594 22.1579 20.1021L23.7765 27.2365C23.9126 27.8366 23.2522 28.2996 22.7345 27.9671L16.8715 24.2017C16.6452 24.0564 16.3548 24.0564 16.1285 24.2017L10.2655 27.9671C9.74776 28.2996 9.0874 27.8366 9.22354 27.2365L10.8421 20.1021C10.8971 19.8594 10.8167 19.6058 10.6317 19.4392L5.30471 14.6412C4.85741 14.2383 5.10721 13.4959 5.70707 13.4453L12.6336 12.8614C12.8938 12.8395 13.1191 12.6721 13.2151 12.4292L15.8607 5.74116Z"/>
-						</svg>
-						<svg class="market-rating__app-rating_star"
-							 :class="{'--active': isActiveStar(5, currentRating), '--pointer': canRatingClick}"
-							 @click="currentRatingClick(5)"
-							 width="33" height="33" viewBox="0 0 33 33" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path xmlns="http://www.w3.org/2000/svg" d="M15.8607 5.74116C16.0899 5.16168 16.9101 5.16168 17.1393 5.74116L19.7849 12.4292C19.8809 12.6721 20.1062 12.8395 20.3664 12.8614L27.2929 13.4453C27.8928 13.4959 28.1426 14.2383 27.6953 14.6412L22.3683 19.4392C22.1833 19.6058 22.1029 19.8594 22.1579 20.1021L23.7765 27.2365C23.9126 27.8366 23.2522 28.2996 22.7345 27.9671L16.8715 24.2017C16.6452 24.0564 16.3548 24.0564 16.1285 24.2017L10.2655 27.9671C9.74776 28.2996 9.0874 27.8366 9.22354 27.2365L10.8421 20.1021C10.8971 19.8594 10.8167 19.6058 10.6317 19.4392L5.30471 14.6412C4.85741 14.2383 5.10721 13.4959 5.70707 13.4453L12.6336 12.8614C12.8938 12.8395 13.1191 12.6721 13.2151 12.4292L15.8607 5.74116Z"/>
-						</svg>
-					</div>
-					<div class="ui-ctl ui-ctl-textarea ui-ctl-no-resize ui-ctl-w100 ui-ctl-lg">
-							<textarea class="ui-ctl-element market-detail__app-rating_feedback-textarea"
-									  ref="marketFeedbackText"
-									  :disabled="sendingReview"
-									  v-model="reviewText"
-							></textarea>
-					</div>
-					<div class="market-detail__app-rating_feedback-checkbox-wrapper">
-						<label
-							class="ui-ctl ui-ctl-checkbox ui-ctl-wa market-detail__app-rating_feedback-checkbox"
-							v-if="showPolicy"
-						>
-							<input type="checkbox" class="ui-ctl-element"
-								   v-model="policyChecked"
-							>
-							<span class="ui-ctl-label-text market-detail__app-rating_feedback-label"
-								  v-html="$Bitrix.Loc.getMessage('MARKET_RATING_JS_ADD_REVIEW_POLICY', {'#POLICY_URL#': application.REVIEWS.POLICY_URL})"
-							>
-								</span>
-						</label>
-						<label
-							class="ui-ctl ui-ctl-checkbox ui-ctl-wa market-detail__app-rating_feedback-checkbox"
-							v-if="showRules"
-						>
-							<input type="checkbox" class="ui-ctl-element"
-								   v-model="rulesChecked"
-							>
-							<span class="ui-ctl-label-text market-detail__app-rating_feedback-label"
-								  v-html="$Bitrix.Loc.getMessage('MARKET_RATING_JS_ADD_REVIEW_POSTING_GUIDELINES', {'#RULES_URL#': application.REVIEWS.POSTING_GUIDELINES_URL})"
-							>
-								</span>
-						</label>
-					</div>
-					<div class="market-detail__app-rating_feedback-buttons">
-						<button class="ui-btn ui-btn-sm"
-								:class="{
-											'ui-btn-wait': sendingReview, 
-											'ui-btn-primary': allChecked,
-											'ui-btn-default': !allChecked,
-											'ui-btn-disabled': !allChecked,
-										}"
-								:disabled="sendingReview || !allChecked"
-								@click="addReview"
-						>
-							{{ $Bitrix.Loc.getMessage('MARKET_RATING_JS_ADD_REVIEW_SEND') }}
-						</button>
-					</div>
-				</div>
-			</PopupWrapper>
 		</div>
 	`,
-}
+};

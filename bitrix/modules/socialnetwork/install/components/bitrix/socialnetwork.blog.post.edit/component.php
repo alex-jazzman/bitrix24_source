@@ -330,48 +330,6 @@ $arResult['BLOG_POST_LISTS'] = (
 	&& (CListPermissions::CheckAccess($USER, COption::GetOptionString("lists", "livefeed_iblock_type_id"), false) > CListPermissions::ACCESS_DENIED)
 );
 
-$arResult['BLOG_POST_TASKS'] = (
-	ComponentHelper::checkLivefeedTasksAllowed()
-	&& Loader::includeModule("tasks")
-	&& !(class_exists(\Bitrix\Tasks\V2\FormV2Feature::class) && \Bitrix\Tasks\V2\FormV2Feature::isOn())
-);
-
-if (
-	$arResult['BLOG_POST_TASKS']
-	&& (
-		(
-			$arResult["bGroupMode"]
-			&& !CSocNetFeaturesPerms::CurrentUserCanPerformOperation(SONET_ENTITY_GROUP, $arParams["SOCNET_GROUP_ID"], "tasks", "create_tasks")
-		) || (
-			!$arResult["bGroupMode"]
-			&& !\Bitrix\Tasks\Access\TaskAccessController::can($USER->getId(), \Bitrix\Tasks\Access\ActionDictionary::ACTION_TASK_CREATE)
-		)
-	)
-)
-{
-	$arResult['BLOG_POST_TASKS'] = false;
-}
-
-if (
-	$arResult['BLOG_POST_TASKS']
-	&& Loader::includeModule('bitrix24')
-	&& !CBitrix24BusinessTools::isToolAvailable($USER->getId(), 'tasks')
-)
-{
-	$arResult['BLOG_POST_TASKS'] = false;
-}
-
-if (
-	$arResult['BLOG_POST_TASKS']
-	&& $arResult["bGroupMode"]
-	&& ($arUserActiveFeatures = CSocNetFeatures::GetActiveFeatures(SONET_ENTITY_GROUP, $arParams["SOCNET_GROUP_ID"]))
-	&& is_array($arUserActiveFeatures)
-	&& !in_array('tasks', $arUserActiveFeatures)
-)
-{
-	$arResult['BLOG_POST_TASKS'] = false;
-}
-
 $a = new CAccess;
 $a->UpdateCodes();
 
@@ -556,19 +514,42 @@ if (
 		$APPLICATION->SetTitle(Loc::getMessage('BLOG_POST_EDIT'));
 	}
 
+	// Security check: verify that the post belongs to the blog of the specified user
+	// This prevents IDOR vulnerability where user_id can be manipulated in URL
+	$postBlog = \CBlog::getByID($arPost['BLOG_ID']);
+	$postBelongsToUser = false;
+	if ($postBlog)
+	{
+		$postBelongsToUser = (
+			(int)$postBlog['OWNER_ID'] === (int)$arParams["USER_ID"]
+			|| (int)$arPost['AUTHOR_ID'] === (int)$arParams["USER_ID"]
+		);
+	}
+
 	if (
-		$arParams["USER_ID"] == $user_id
-		|| (
+		$postBelongsToUser
+		&& (
+			$arParams["USER_ID"] == $user_id
+			|| $blogModulePermissions >= 'W'
+		)
+	)
+	{
+		$arResult["perms"] = BLOG_PERMS_FULL;
+	}
+	elseif (
+		(
 			($_POST["apply"] ?? null)
 			&& CSocNetUser::IsCurrentUserModuleAdmin(SITE_ID, false)
 		)
 		|| $blogModulePermissions >= 'W'
 	)
 	{
+		// Admin or module admin can edit any post
 		$arResult["perms"] = BLOG_PERMS_FULL;
 	}
 	else
 	{
+		// Check permissions based on post ownership and social network permissions
 		$arResult["perms"] = CBlogPost::GetSocNetPostPerms($arPost["ID"], true, false, $arPost["AUTHOR_ID"]);
 	}
 

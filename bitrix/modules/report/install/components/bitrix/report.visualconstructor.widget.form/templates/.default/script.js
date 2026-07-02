@@ -30,6 +30,15 @@
 		submitConfigurationForm: function (e)
 		{
 			e.preventDefault();
+
+			if (this.saving)
+			{
+				return;
+			}
+			this.saving = true;
+			this.saveButton.disabled = true;
+			this.cancelButton.disabled = true;
+
 			if (this.mode === 'update')
 			{
 				BX.onCustomEvent('BX.Report.VisualConstructor.Widget.Form:beforeSave', [{
@@ -40,6 +49,10 @@
 			BX.Report.VC.Core.ajaxSubmit(this.widgetConfigForm, {
 					onsuccess: BX.delegate(function (response)
 					{
+						this.saving = false;
+						this.saveButton.disabled = false;
+						this.cancelButton.disabled = false;
+
 						if (this.mode === 'update')
 						{
 							BX.onCustomEvent('BX.Report.VisualConstructor.Widget.Form:afterSave', [{
@@ -51,6 +64,12 @@
 						{
 							BX.onCustomEvent("BX.Report.VisualConstructor.afterWidgetAdd", [response.data]);
 						}
+					}, this),
+					onfailure: BX.delegate(function (response)
+					{
+						this.saving = false;
+						this.saveButton.disabled = false;
+						this.cancelButton.disabled = false;
 					}, this)
 				}
 			);

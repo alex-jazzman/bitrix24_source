@@ -1,15 +1,10 @@
 import { Type } from 'main.core';
 import { BaseEvent } from 'main.core.events';
 
-export default class PositionEvent extends BaseEvent
+export class PositionEvent extends BaseEvent
 {
 	#left: number;
 	#top: number;
-
-	constructor()
-	{
-		super();
-	}
 
 	get left(): number
 	{

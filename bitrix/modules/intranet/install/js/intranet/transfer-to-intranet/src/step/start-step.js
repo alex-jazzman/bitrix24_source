@@ -1,6 +1,6 @@
 import { Type, Loc, Tag } from 'main.core';
 import { AirButtonStyle, Button } from 'ui.buttons';
-import DepartmentControl from 'intranet.department-control';
+import { DepartmentControl } from 'intranet.department-control';
 import { AvatarRound, AvatarRoundExtranet, AvatarRoundGuest, AvatarBase } from 'ui.avatar';
 import { TransferToIntranetPopup } from '../transfer-to-intranet-popup';
 import type { TransferToIntranetPopupType } from '../transfer-to-intranet-popup';

@@ -1,4 +1,10 @@
-(() => {
+/**
+ * @module selector/widget/entity/catalog/section
+ */
+jn.define('selector/widget/entity/catalog/section', (require, exports, module) => {
+	const { Loc } = require('loc');
+	const { BaseSelectorEntity } = require('selector/widget/entity');
+
 	/**
 	 * @class CatalogSectionSelector
 	 */
@@ -11,17 +17,17 @@
 
 		static getContext()
 		{
-			return 'catalog-sections'
+			return 'catalog-sections';
 		}
 
 		static getStartTypingText()
 		{
-			return BX.message('SELECTOR_COMPONENT_START_TYPING_TO_SEARCH_SECTION');
+			return Loc.getMessage('SELECTOR_COMPONENT_START_TYPING_TO_SEARCH_SECTION');
 		}
 
 		static getStartTypingWithCreationText()
 		{
-			return BX.message('SELECTOR_COMPONENT_START_TYPING_TO_CREATE_SECTION');
+			return Loc.getMessage('SELECTOR_COMPONENT_START_TYPING_TO_CREATE_SECTION');
 		}
 
 		static isCreationEnabled()
@@ -31,12 +37,12 @@
 
 		static getCreateText()
 		{
-			return BX.message('SELECTOR_COMPONENT_CREATE_SECTION');
+			return Loc.getMessage('SELECTOR_COMPONENT_CREATE_SECTION');
 		}
 
 		static getCreatingText()
 		{
-			return BX.message('SELECTOR_COMPONENT_CREATING_SECTION');
+			return Loc.getMessage('SELECTOR_COMPONENT_CREATING_SECTION');
 		}
 
 		static getCreateEntityHandler(providerOptions)
@@ -49,16 +55,16 @@
 						mode: 'ajax',
 						data: {
 							iblockId: providerOptions.iblockId,
-							name: text
-						}
-					}
+							name: text,
+						},
+					},
 				).then((response) => {
 					if (response.data && response.data.id)
 					{
 						return {
 							id: response.data.id,
 							entityId: this.getEntityId(),
-							title: text
+							title: text,
 						};
 					}
 
@@ -69,9 +75,18 @@
 
 		static getTitle()
 		{
-			return BX.message('SELECTOR_COMPONENT_PICK_SECTION_2');
+			return Loc.getMessage('SELECTOR_COMPONENT_PICK_SECTION_2');
 		}
 	}
+
+	module.exports = {
+		CatalogSectionSelector,
+	};
+});
+
+(() => {
+	const require = (ext) => jn.require(ext);
+	const { CatalogSectionSelector } = require('selector/widget/entity/catalog/section');
 
 	this.CatalogSectionSelector = CatalogSectionSelector;
 })();

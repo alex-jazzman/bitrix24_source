@@ -203,6 +203,23 @@ $checkReadPerms = function($documentId) use ($documentType, $curUser, $sendError
 	}
 };
 
+$filterTriggers = function(array $current, array $actual)
+{
+	$actualIds = array_flip(array_column($actual, 'ID'));
+
+	$result = [];
+	foreach ($current as $trigger)
+	{
+		if (isset($trigger['ID']) && !isset($actualIds[$trigger['ID']]))
+		{
+			continue;
+		}
+		$result[] = $trigger;
+	}
+
+	return $result;
+};
+
 switch ($action)
 {
 	case 'GET_ROBOT_DIALOG':
@@ -282,6 +299,8 @@ switch ($action)
 		//save Triggers
 		$updatedTriggers = [];
 		$triggers = isset($_REQUEST['triggers']) && is_array($_REQUEST['triggers']) ? $_REQUEST['triggers'] : [];
+		$statusList = array_keys($target->getDocumentStatusList($documentCategoryId));
+		$triggers = $filterTriggers($triggers, $target->getTriggers($statusList));
 
 		$target->prepareTriggersToSave($triggers);
 		$updatedTriggers = $target->setTriggers($triggers);

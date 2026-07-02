@@ -1,57 +1,47 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Intranet = this.BX.Intranet || {};
-(function (exports,main_popup,ui_buttons,ui_iconSet_api_core,main_loader,main_sidepanel,intranet_avatarWidget,timeman_workTimeStateIcon,ui_infoHelper,bitrix24_licenseWidget,intranet_licenseWidget,pull_client,main_core_cache,main_core_events,intranet_widgetLoader,intranet_invitationWidget,ui_cnt,main_core) {
+(function (exports, main_core, main_popup, ui_buttons, main_core_events, main_core_cache, pull_client, ui_cnt, ui_iconSet_api_core, main_loader, main_sidepanel, intranet_skipToContent, intranet_widgetLoader, intranet_avatarWidget, timeman_workTimeStateIcon, ui_infoHelper, bitrix24_licenseWidget, intranet_licenseWidget, intranet_invitationWidget) {
 	'use strict';
 
-	let _ = t => t,
-	  _t,
-	  _t2,
-	  _t3,
-	  _t4,
-	  _t5,
-	  _t6,
-	  _t7,
-	  _t8;
 	async function showPartnerConnectForm(params) {
-	  main_core.Loc.setMessage(params.messages);
-	  await showPartnerFormPopup({
-	    ...params,
-	    titleBar: main_core.Loc.getMessage('INTRANET_PARTNER_POPUP_TITLE'),
-	    sendButtonText: main_core.Loc.getMessage('INTRANET_PARTNER_POPUP_SEND_BUTTON')
-	  });
+		main_core.Loc.setMessage(params.messages);
+		await showPartnerFormPopup({
+			...params,
+			titleBar: main_core.Loc.getMessage('INTRANET_PARTNER_POPUP_TITLE'),
+			sendButtonText: main_core.Loc.getMessage('INTRANET_PARTNER_POPUP_SEND_BUTTON')
+		});
 	}
 	async function showPartnerFormPopup(options) {
-	  const partnerLogo = options.partnerLogo === '' || main_core.Type.isNil(options.partnerLogo) ? '/bitrix/modules/intranet/install/templates/bitrix24/dist/dist/images/b24-partner__icon.svg' : options.partnerLogo;
-	  const partnerCardUrl = `${options.publicDomain}partners/partner/${options.partnerId}/`;
-	  const clipboardButton = initCopyBtn();
-	  const email = initEmail(clipboardButton, options);
-	  const phone = initPhone(clipboardButton, options);
-	  const partnerAbout = initAboutPartner(partnerCardUrl);
-	  const popupOptions = {
-	    className: 'bitrix24-partner__popup',
-	    autoHide: true,
-	    cacheable: false,
-	    zIndex: 0,
-	    offsetLeft: 0,
-	    offsetTop: 0,
-	    width: 316,
-	    overlay: true,
-	    draggable: {
-	      restrict: true
-	    },
-	    closeByEsc: true,
-	    titleBar: main_core.Loc.getMessage('INTRANET_PARTNER_TITLE_FOR_NAME_MSGVER_2'),
-	    closeIcon: true,
-	    content: `
+		const partnerLogo = options.partnerLogo === '' || main_core.Type.isNil(options.partnerLogo) ? '/bitrix/modules/intranet/install/templates/bitrix24/dist/dist/images/b24-partner__icon.svg' : options.partnerLogo;
+		const clipboardButton = initCopyBtn();
+		const email = initEmail(clipboardButton, options);
+		const phone = initPhone(clipboardButton, options);
+		const partnerAbout = initAboutPartner(options.partnerCardUrl);
+		const popupOptions = {
+			className: 'bitrix24-partner__popup',
+			autoHide: true,
+			cacheable: false,
+			zIndex: 0,
+			offsetLeft: 0,
+			offsetTop: 0,
+			width: 316,
+			overlay: true,
+			draggable: {
+				restrict: true
+			},
+			closeByEsc: true,
+			titleBar: main_core.Loc.getMessage('INTRANET_PARTNER_TITLE_FOR_NAME_MSGVER_2'),
+			closeIcon: true,
+			content: `
 			<div class="bitrix24-partner__popup-content" id="b24-partner-popup-main">
 				<div class="bitrix24-partner__popup-content_main">
 					<div class="">
 						<div class="bitrix24-partner__popup-content_partner-preview">
-							<img class="bitrix24-partner__popup-content-logo" src="${main_core.Tag.safe(_t || (_t = _`${0}`), encodeURI(partnerLogo))}" alt="">
+							<img class="bitrix24-partner__popup-content-logo" src="${main_core.Tag.safe`${encodeURI(partnerLogo)}`}" alt="">
 							<div class="bitrix24-partner__popup-content_name-wrapper">
-								<div class="bitrix24-partner__popup-content_name">${main_core.Tag.safe(_t2 || (_t2 = _`${0}`), options.partnerName)}</div>
-								<div class="bitrix24-partner__popup-content_description">${main_core.Tag.safe(_t3 || (_t3 = _`${0}`), options.partnerCompany)}</div>
+								<div class="bitrix24-partner__popup-content_name">${main_core.Tag.safe`${options.partnerName}`}</div>
+								<div class="bitrix24-partner__popup-content_description">${main_core.Tag.safe`${options.partnerCompany}`}</div>
 							</div>
 						</div>
 		
@@ -65,71 +55,71 @@ this.BX.Intranet = this.BX.Intranet || {};
 				<div class="bitrix24-partner__popup-content_desc">${main_core.Loc.getMessage('INTRANET_PARTNER_POPUP_DESCRIPTION_BOTTOM_MSGVER_1')}</div>
 			</div>
 		`,
-	    buttons: [new ui_buttons.Button({
-	      style: ui_buttons.AirButtonStyle.FILLED,
-	      text: options.sendButtonText,
-	      useAirDesign: true,
-	      onclick: () => {
-	        showIntegratorApplicationForm();
-	      }
-	    }).setWide(true)]
-	  };
-	  const popup = new main_popup.Popup(popupOptions);
-	  popup.show();
-	  initCopyHandler();
+			buttons: [new ui_buttons.Button({
+				style: ui_buttons.AirButtonStyle.FILLED,
+				text: options.sendButtonText,
+				useAirDesign: true,
+				onclick: () => {
+					showIntegratorApplicationForm();
+				}
+			}).setWide(true)]
+		};
+		const popup = new main_popup.Popup(popupOptions);
+		popup.show();
+		initCopyHandler();
 	}
 	function initCopyBtn() {
-	  if (isNavigatorClipboardSupported()) {
-	    return dataCopy => {
-	      return `
-				<div class="copy-icon" type="button" data-copy="${main_core.Tag.safe(_t4 || (_t4 = _`${0}`), dataCopy)}">
+		if (isNavigatorClipboardSupported()) {
+			return dataCopy => {
+				return `
+				<div class="copy-icon" type="button" data-copy="${main_core.Tag.safe`${dataCopy}`}">
 					<div class="ui-icon-set --o-copy"></div>
 				</div>
 			`;
-	    };
-	  }
-	  return '';
+			};
+		}
+		return '';
 	}
 	function initEmail(clipboardButton, options) {
-	  if (!main_core.Type.isNil(options.partnerEmail) && options.partnerEmail !== '') {
-	    return `
+		if (!main_core.Type.isNil(options.partnerEmail) && options.partnerEmail !== '') {
+			return `
 			<div class="bitrix24-partner__popup-content_info-block">
 				<div class="bitrix24-partner__popup-content_info-block-icon-wrapper">
 					<div class="ui-icon-set --mail"></div>
 				</div>
 				<a
 					class="bitrix24-partner__popup-content_info-block-info-value"
-					href="mailto:${main_core.Tag.safe(_t5 || (_t5 = _`${0}`), options.partnerEmail)}"
+					href="mailto:${main_core.Tag.safe`${options.partnerEmail}`}"
 				>
-					${main_core.Tag.safe(_t6 || (_t6 = _`${0}`), options.partnerEmail)}
+					${main_core.Tag.safe`${options.partnerEmail}`}
 				</a>
 				${main_core.Type.isFunction(clipboardButton) ? clipboardButton(options.partnerEmail) : ''}
 			</div>
 		`;
-	  }
-	  return '';
+		}
+		return '';
 	}
 	function initPhone(clipboardButton, options) {
-	  if (!main_core.Type.isNil(options.partnerPhone) && options.partnerPhone !== '') {
-	    return `
+		if (!main_core.Type.isNil(options.partnerPhone) && options.partnerPhone !== '') {
+			return `
 			<div class="bitrix24-partner__popup-content_info-block">
 				<div class="bitrix24-partner__popup-content_info-block-icon-wrapper">
 					<div class="ui-icon-set --telephony-handset-5"></div>
 				</div>
 				<a
 					class="bitrix24-partner__popup-content_info-block-info-value"
-					href="tel:${main_core.Tag.safe(_t7 || (_t7 = _`${0}`), options.partnerPhone)}"
+					href="tel:${main_core.Tag.safe`${options.partnerPhone}`}"
 				>
-					${main_core.Tag.safe(_t8 || (_t8 = _`${0}`), options.partnerPhone)}
+					${main_core.Tag.safe`${options.partnerPhone}`}
 				</a>
 				${main_core.Type.isFunction(clipboardButton) ? clipboardButton(options.partnerPhone) : ''}
 			</div>
 		`;
-	  }
-	  return '';
+		}
+		return '';
 	}
 	function initAboutPartner(partnerCardUrl) {
-	  return `
+		return `
 		<div class="bitrix24-partner__popup-content_info-block">
 			<div class="bitrix24-partner__popup-content_info-block-icon-wrapper">
 				<div class="ui-icon-set --earth-language"></div>
@@ -144,287 +134,261 @@ this.BX.Intranet = this.BX.Intranet || {};
 	`;
 	}
 	function initCopyHandler() {
-	  setTimeout(() => {
-	    if (isNavigatorClipboardSupported()) {
-	      const popupContent = document.getElementById('b24-partner-popup-main');
-	      if (popupContent) {
-	        main_core.Event.bind(popupContent, 'click', async e => {
-	          const btn = e.target.closest('.copy-icon');
-	          if (btn && btn.dataset.copy) {
-	            try {
-	              await navigator.clipboard.writeText(btn.dataset.copy);
-	              main_core.Dom.addClass(btn, 'copied');
-	              BX.UI.Notification.Center.notify({
-	                content: main_core.Loc.getMessage('INTRANET_PARTNER_POPUP_COPIED'),
-	                autoHideDelay: 2500,
-	                useAirDesign: true
-	              });
-	              setTimeout(() => {
-	                main_core.Dom.removeClass(btn, 'copied');
-	              }, 1000);
-	            } catch (err) {
-	              top.console.error(err);
-	            }
-	          }
-	        });
-	      }
-	    }
-	  }, 200);
+		setTimeout(() => {
+			if (isNavigatorClipboardSupported()) {
+				const popupContent = document.getElementById('b24-partner-popup-main');
+				if (popupContent) {
+					main_core.Event.bind(popupContent, 'click', async e => {
+						const btn = e.target.closest('.copy-icon');
+						if (btn && btn.dataset.copy) {
+							try {
+								await navigator.clipboard.writeText(btn.dataset.copy);
+								main_core.Dom.addClass(btn, 'copied');
+								BX.UI.Notification.Center.notify({
+									content: main_core.Loc.getMessage('INTRANET_PARTNER_POPUP_COPIED'),
+									autoHideDelay: 2500,
+									useAirDesign: true
+								});
+								setTimeout(() => {
+									main_core.Dom.removeClass(btn, 'copied');
+								}, 1000);
+							} catch (err) {
+								top.console.error(err);
+							}
+						}
+					});
+				}
+			}
+		}, 200);
 	}
 	function isNavigatorClipboardSupported() {
-	  return window.isSecureContext && navigator.clipboard;
+		return window.isSecureContext && navigator.clipboard;
 	}
 	async function showIntegratorApplicationForm() {
-	  const {
-	    PartnerForm
-	  } = await main_core.Runtime.loadExtension('ui.feedback.partnerform');
-	  const formParams = {
-	    id: `intranet-license-partner-form-${parseInt(Math.random() * 1000, 10)}`,
-	    source: 'intranet.bitrix24.partner-connect-form'
-	  };
-	  PartnerForm.show(formParams);
+		const {
+			PartnerForm
+		} = await main_core.Runtime.loadExtension('ui.feedback.partnerform');
+		const formParams = {
+			id: `intranet-license-partner-form-${parseInt(Math.random() * 1000, 10)}`,
+			source: 'intranet.bitrix24.partner-connect-form'
+		};
+		PartnerForm.show(formParams);
 	}
 
 	async function showPartnerOrderForm(params) {
-	  if (main_core.Type.isObject(params) === false) {
-	    return;
-	  }
-	  const resultParams = {
-	    ...params,
-	    id: `intranet-license-partner-form-${main_core.Text.getRandom()}`
-	  };
-	  const {
-	    PartnerForm
-	  } = await main_core.Runtime.loadExtension('ui.feedback.partnerform');
-	  PartnerForm.show(resultParams);
+		if (main_core.Type.isObject(params) === false) {
+			return;
+		}
+		const resultParams = {
+			...params,
+			id: `intranet-license-partner-form-${main_core.Text.getRandom()}`
+		};
+		const {
+			PartnerForm
+		} = await main_core.Runtime.loadExtension('ui.feedback.partnerform');
+		PartnerForm.show(resultParams);
 	}
 
 	const showHelper = async () => {
-	  await main_core.Runtime.loadExtension('helper');
-	  const Helper = main_core.Reflection.getClass('BX.Helper');
-	  Helper.show('redirect=detail&code=20267044');
+		await main_core.Runtime.loadExtension('helper');
+		const Helper = main_core.Reflection.getClass('BX.Helper');
+		Helper.show('redirect=detail&code=20267044');
 	};
 
 	class PartnerForm {
-	  static async showConnectForm(params) {
-	    return showPartnerConnectForm(params);
-	  }
-	  static showIntegrationOrderForm(params) {
-	    return showPartnerOrderForm(params);
-	  }
-	  static async showHelper() {
-	    return showHelper();
-	  }
+		static async showConnectForm(params) {
+			return showPartnerConnectForm(params);
+		}
+		static showIntegrationOrderForm(params) {
+			return showPartnerOrderForm(params);
+		}
+		static async showHelper() {
+			return showHelper();
+		}
 	}
 
-	var _handleChatMenuSelect = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleChatMenuSelect");
-	var _handleImLayoutChange = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleImLayoutChange");
-	var _handleCounterUpdate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleCounterUpdate");
 	class ChatMenu {
-	  constructor() {
-	    Object.defineProperty(this, _handleCounterUpdate, {
-	      value: _handleCounterUpdate2
-	    });
-	    Object.defineProperty(this, _handleImLayoutChange, {
-	      value: _handleImLayoutChange2
-	    });
-	    Object.defineProperty(this, _handleChatMenuSelect, {
-	      value: _handleChatMenuSelect2
-	    });
-	    main_core_events.EventEmitter.subscribe('IM.Layout:onLayoutChange', babelHelpers.classPrivateFieldLooseBase(this, _handleImLayoutChange)[_handleImLayoutChange].bind(this));
-	    main_core_events.EventEmitter.subscribe('IM.Counters:onUpdate', babelHelpers.classPrivateFieldLooseBase(this, _handleCounterUpdate)[_handleCounterUpdate].bind(this));
-	    main_core_events.EventEmitter.subscribe('BX.Intranet.Bitrix24.ChatMenu:onSelect', babelHelpers.classPrivateFieldLooseBase(this, _handleChatMenuSelect)[_handleChatMenuSelect].bind(this));
-	  }
-	  getChatMenu() {
-	    /**
-	     *
-	     * @type {BX.Main.interfaceButtonsManager}
-	     */
-	    const menuManager = main_core.Reflection.getClass('BX.Main.interfaceButtonsManager');
-	    if (menuManager) {
-	      return menuManager.getById('chat-menu') || null;
-	    }
-	    return null;
-	  }
-	  getCollaborationMenu() {
-	    /**
-	     *
-	     * @type {BX.Main.interfaceButtonsManager}
-	     */
-	    const menuManager = main_core.Reflection.getClass('BX.Main.interfaceButtonsManager');
-	    if (menuManager) {
-	      return menuManager.getById('top_menu_id_collaboration') || null;
-	    }
-	    return null;
-	  }
-	}
-	function _handleChatMenuSelect2(event) {
-	  var _data$event;
-	  const data = event.getData();
-	  const {
-	    id,
-	    entityId
-	  } = data;
-	  let target = (_data$event = data.event) == null ? void 0 : _data$event.target;
-	  if (target) {
-	    target = target.closest('.main-buttons-item-link, .menu-popup-item');
-	  }
-	  const Public = main_core.Reflection.getClass('BX.Messenger.Public');
-	  Public == null ? void 0 : Public.openNavigationItem({
-	    id,
-	    entityId,
-	    target
-	  });
-	}
-	function _handleImLayoutChange2(event) {
-	  const data = event.getData();
-	  let fromItemId = data.from.name.toLowerCase();
-	  if (fromItemId === 'market' && data.from.entityId) {
-	    fromItemId = `${fromItemId}_${data.from.entityId}`;
-	  }
-	  let toItemId = data.to.name.toLowerCase();
-	  if (toItemId === 'market' && data.to.entityId) {
-	    toItemId = `${toItemId}_${data.to.entityId}`;
-	  }
-	  const chatMenu = this.getChatMenu();
-	  if (chatMenu !== null) {
-	    chatMenu.unsetActive(fromItemId);
-	    chatMenu.setActive(toItemId);
-	    chatMenu.reset();
-	  }
-	  const collaborationMenu = this.getCollaborationMenu();
-	  const siteDir = main_core.Loc.getMessage('SITE_DIR') || '/';
-	  const isMessengerEmbedded = window.location.pathname.toString().startsWith(`${siteDir}online/`);
-	  if (collaborationMenu !== null) {
-	    if (isMessengerEmbedded) {
-	      collaborationMenu.unsetActive(fromItemId);
-	      collaborationMenu.setActive(toItemId);
-	    }
-	    collaborationMenu.reset();
-	  }
-	}
-	function _handleCounterUpdate2(event) {
-	  const counters = event.getData();
-	  const menus = [this.getChatMenu(), this.getCollaborationMenu()];
-	  for (const menu of menus) {
-	    if (menu === null) {
-	      continue;
-	    }
-	    for (const [counterId, counterValue] of Object.entries(counters)) {
-	      menu.updateCounter(counterId, counterValue);
-	    }
-	  }
+		constructor() {
+			main_core_events.EventEmitter.subscribe('IM.Layout:onLayoutChange', this.#handleImLayoutChange.bind(this));
+			main_core_events.EventEmitter.subscribe('IM.Counters:onUpdate', this.#handleCounterUpdate.bind(this));
+			main_core_events.EventEmitter.subscribe('BX.Intranet.Bitrix24.ChatMenu:onSelect', this.#handleChatMenuSelect.bind(this));
+		}
+		getChatMenu() {
+			/**
+			 *
+			 * @type {BX.Main.interfaceButtonsManager}
+			 */
+			const menuManager = main_core.Reflection.getClass('BX.Main.interfaceButtonsManager');
+			if (menuManager) {
+				return menuManager.getById('chat-menu') || null;
+			}
+			return null;
+		}
+		getCollaborationMenu() {
+			/**
+			 *
+			 * @type {BX.Main.interfaceButtonsManager}
+			 */
+			const menuManager = main_core.Reflection.getClass('BX.Main.interfaceButtonsManager');
+			if (menuManager) {
+				return menuManager.getById('top_menu_id_collaboration') || null;
+			}
+			return null;
+		}
+		#handleChatMenuSelect(event) {
+			const data = event.getData();
+			const {
+				id,
+				entityId
+			} = data;
+			let target = data.event?.target;
+			if (target) {
+				target = target.closest('.main-buttons-item-link, .menu-popup-item');
+			}
+			const Public = main_core.Reflection.getClass('BX.Messenger.Public');
+			Public?.openNavigationItem({
+				id,
+				entityId,
+				target
+			});
+		}
+		#handleImLayoutChange(event) {
+			const data = event.getData();
+			let fromItemId = data.from.name.toLowerCase();
+			if (fromItemId === 'market' && data.from.entityId) {
+				fromItemId = `${fromItemId}_${data.from.entityId}`;
+			}
+			let toItemId = data.to.name.toLowerCase();
+			if (toItemId === 'market' && data.to.entityId) {
+				toItemId = `${toItemId}_${data.to.entityId}`;
+			}
+			const chatMenu = this.getChatMenu();
+			if (chatMenu !== null) {
+				chatMenu.unsetActive(fromItemId);
+				chatMenu.setActive(toItemId);
+				chatMenu.reset();
+			}
+			const collaborationMenu = this.getCollaborationMenu();
+			const siteDir = main_core.Loc.getMessage('SITE_DIR') || '/';
+			const isMessengerEmbedded = window.location.pathname.toString().startsWith(`${siteDir}online/`);
+			if (collaborationMenu !== null) {
+				if (isMessengerEmbedded) {
+					collaborationMenu.unsetActive(fromItemId);
+					collaborationMenu.setActive(toItemId);
+				}
+				collaborationMenu.reset();
+			}
+		}
+		#handleCounterUpdate(event) {
+			const counters = event.getData();
+			const menus = [this.getChatMenu(), this.getCollaborationMenu()];
+			for (const menu of menus) {
+				if (menu === null) {
+					continue;
+				}
+				for (const [counterId, counterValue] of Object.entries(counters)) {
+					menu.updateCounter(counterId, counterValue);
+				}
+			}
+		}
 	}
 
 	function getBackUrl() {
-	  const backUrl = window.location.pathname;
-	  const query = getQueryString(['logout', 'login', 'back_url_pub', 'user_lang']);
-	  return backUrl + (query.length > 0 ? `?${query}` : '');
+		const backUrl = window.location.pathname;
+		const query = getQueryString(['logout', 'login', 'back_url_pub', 'user_lang']);
+		return backUrl + (query.length > 0 ? `?${query}` : '');
 	}
 	function getQueryString(ignoredParams) {
-	  const query = window.location.search.slice(1);
-	  if (!main_core.Type.isStringFilled(query)) {
-	    return '';
-	  }
-	  const vars = query.split('&');
-	  const checkedIgnoredParams = main_core.Type.isArray(ignoredParams) ? ignoredParams : [];
-	  let result = '';
-	  for (const variable of vars) {
-	    const pair = variable.split('=');
-	    const equal = variable.indexOf('=');
-	    const key = pair[0];
-	    const value = main_core.Type.isStringFilled(pair[1]) ? pair[1] : false;
-	    if (!checkedIgnoredParams.includes(key)) {
-	      if (result !== '') {
-	        result += '&';
-	      }
-	      result += key + (equal === -1 ? '' : '=') + (value === false ? '' : value);
-	    }
-	  }
-	  return result;
+		const query = window.location.search.slice(1);
+		if (!main_core.Type.isStringFilled(query)) {
+			return '';
+		}
+		const vars = query.split('&');
+		const checkedIgnoredParams = main_core.Type.isArray(ignoredParams) ? ignoredParams : [];
+		let result = '';
+		for (const variable of vars) {
+			const pair = variable.split('=');
+			const equal = variable.indexOf('=');
+			const key = pair[0];
+			const value = main_core.Type.isStringFilled(pair[1]) ? pair[1] : false;
+			if (!checkedIgnoredParams.includes(key)) {
+				if (result !== '') {
+					result += '&';
+				}
+				result += key + (equal === -1 ? '' : '=') + (value === false ? '' : value);
+			}
+		}
+		return result;
 	}
 
-	let _$1 = t => t,
-	  _t$1,
-	  _t2$1;
 	const createToolbarSkeleton = (options = {}) => {
-	  const {
-	    showIconButton = false
-	  } = options;
-	  return main_core.Tag.render(_t$1 || (_t$1 = _$1`
+		const {
+			showIconButton = false
+		} = options;
+		return main_core.Tag.render`
 		<div class="toolbar-skeleton">
 			<span class="toolbar-skeleton__page-title"></span>
-			${0}
+			${showIconButton ? createIconButton() : null}
 		</div>
-	`), showIconButton ? createIconButton() : null);
+	`;
 	};
 	function createIconButton() {
-	  return main_core.Tag.render(_t2$1 || (_t2$1 = _$1`
+		return main_core.Tag.render`
 		<span class="toolbar-skeleton__icon-buttons">
 			<span class="toolbar-skeleton__icon-button">
 				<span class="toolbar-skeleton__icon-button-text"></span>
 			</span>
 		</span>
-	`));
+	`;
 	}
 
-	let _$2 = t => t,
-	  _t$2,
-	  _t2$2,
-	  _t3$1,
-	  _t4$1,
-	  _t5$1;
 	const createActionsBarSkeleton = (options = {}) => {
-	  const {
-	    showNavigationPanel = true,
-	    showCounterPanel = false,
-	    rightButtonsCount = 0
-	  } = options;
-	  return main_core.Tag.render(_t$2 || (_t$2 = _$2`
+		const {
+			showNavigationPanel = true,
+			showCounterPanel = false,
+			rightButtonsCount = 0
+		} = options;
+		return main_core.Tag.render`
 		<div class="actions-bar-skeleton">
-			${0}
-			${0}
-			${0}
+			${showNavigationPanel ? createNavigationPanelSkeleton() : null}
+			${showCounterPanel ? createCounterPanelSkeleton() : null}
+			${rightButtonsCount > 0 ? createRightButtons(rightButtonsCount) : null}
 		</div>
-	`), showNavigationPanel ? createNavigationPanelSkeleton() : null, showCounterPanel ? createCounterPanelSkeleton() : null, rightButtonsCount > 0 ? createRightButtons(rightButtonsCount) : null);
+	`;
 	};
 	function createNavigationPanelSkeleton() {
-	  return main_core.Tag.render(_t2$2 || (_t2$2 = _$2`
+		return main_core.Tag.render`
 		<div class="navigation-skeleton">
 				<div class="navigation-skeleton__item">
 					<div class="navigation-skeleton__item-text"></div>
 				</div>
 			</div>
-	`));
+	`;
 	}
 	function createCounterPanelSkeleton() {
-	  return main_core.Tag.render(_t3$1 || (_t3$1 = _$2`
+		return main_core.Tag.render`
 		<div class="counters-skeleton">
 			<div class="counters-skeleton__item">
 				<div class="counters-skeleton__item-text"></div>
 			</div>
 		</div>
-	`));
+	`;
 	}
 	function createRightButtons(count) {
-	  const wrapper = main_core.Tag.render(_t4$1 || (_t4$1 = _$2`<div class="actions-bar-skeleton__right-buttons"></div>`));
-	  for (let i = 0; i < count; i++) {
-	    const button = main_core.Tag.render(_t5$1 || (_t5$1 = _$2`
+		const wrapper = main_core.Tag.render`<div class="actions-bar-skeleton__right-buttons"></div>`;
+		for (let i = 0; i < count; i++) {
+			const button = main_core.Tag.render`
 			<div class="actions-bar-skeleton__right-button">
 				<div class="actions-bar-skeleton__right-button-text"></div>
 			</div>
-		`));
-	    main_core.Dom.append(button, wrapper);
-	  }
-	  return wrapper;
+		`;
+			main_core.Dom.append(button, wrapper);
+		}
+		return wrapper;
 	}
 
-	let _$3 = t => t,
-	  _t$3,
-	  _t2$3,
-	  _t3$2;
 	const createGridSkeleton = () => {
-	  return main_core.Tag.render(_t$3 || (_t$3 = _$3`
+		return main_core.Tag.render`
 		<div class="grid-skeleton-container --ui-context-content-light">
 			<table class="grid-skeleton">
 				<thead>
@@ -452,26 +416,26 @@ this.BX.Intranet = this.BX.Intranet || {};
 						</th>
 					</tr>
 				</thead>
-				${0}
+				${getGridSkeletonRows()}
 			</table>
 		</div>
-	`), getGridSkeletonRows());
+	`;
 	};
 	function getGridSkeletonRows() {
-	  return main_core.Tag.render(_t2$3 || (_t2$3 = _$3`
+		return main_core.Tag.render`
 		<tbody>
-			${0}
-			${0}
-			${0}
-			${0}
-			${0}
-			${0}
-			${0}
+			${createGridSkeletonRow()}
+			${createGridSkeletonRow()}
+			${createGridSkeletonRow()}
+			${createGridSkeletonRow()}
+			${createGridSkeletonRow()}
+			${createGridSkeletonRow()}
+			${createGridSkeletonRow()}
 		</tbody>
-	`), createGridSkeletonRow(), createGridSkeletonRow(), createGridSkeletonRow(), createGridSkeletonRow(), createGridSkeletonRow(), createGridSkeletonRow(), createGridSkeletonRow());
+	`;
 	}
 	function createGridSkeletonRow() {
-	  return main_core.Tag.render(_t3$2 || (_t3$2 = _$3`
+		return main_core.Tag.render`
 		<tr class="grid-skeleton__row">
 			<td class="grid-skeleton__cell">
 				<div class="grid-skeleton__checkbox"></div>
@@ -507,13 +471,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 				</div>
 			</td>
 		</tr>
-	`));
+	`;
 	}
 
-	let _$4 = t => t,
-	  _t$4;
 	const createKanbanSkeleton = () => {
-	  return main_core.Tag.render(_t$4 || (_t$4 = _$4`
+		return main_core.Tag.render`
 		<div class="kanban-skeleton --stage-right">
 			<div class="kanban-skeleton__col">
 				<div class="kanban-skeleton__col-stage"></div>
@@ -558,124 +520,236 @@ this.BX.Intranet = this.BX.Intranet || {};
 				</div>
 			</div>
 		</div>
-	`));
+	`;
 	};
 
-	let _$5 = t => t,
-	  _t$5;
 	const createRightSidebarSkeleton = () => {
-	  return main_core.Tag.render(_t$5 || (_t$5 = _$5`
+		return main_core.Tag.render`
 		<div class="right-sidebar-skeleton">
 			<div class="right-sidebar-skeleton__header"></div>
 			<div class="right-sidebar-skeleton__chat"></div>
 		</div>
-	`));
+	`;
 	};
 
-	let _$6 = t => t,
-	  _t$6,
-	  _t2$4,
-	  _t3$3,
-	  _t4$2,
-	  _t5$2,
-	  _t6$1;
-	var _refs = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("refs");
-	var _showLoader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showLoader");
-	var _getGridSkeletonOptions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getGridSkeletonOptions");
-	var _createKanbanSkeleton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createKanbanSkeleton");
-	var _getKanbanSkeletonOptions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getKanbanSkeletonOptions");
-	var _createGridSkeleton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createGridSkeleton");
-	var _bindEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindEvents");
 	class Composite {
-	  constructor() {
-	    Object.defineProperty(this, _bindEvents, {
-	      value: _bindEvents2
-	    });
-	    Object.defineProperty(this, _createGridSkeleton, {
-	      value: _createGridSkeleton2
-	    });
-	    Object.defineProperty(this, _getKanbanSkeletonOptions, {
-	      value: _getKanbanSkeletonOptions2
-	    });
-	    Object.defineProperty(this, _createKanbanSkeleton, {
-	      value: _createKanbanSkeleton2
-	    });
-	    Object.defineProperty(this, _getGridSkeletonOptions, {
-	      value: _getGridSkeletonOptions2
-	    });
-	    Object.defineProperty(this, _showLoader, {
-	      value: _showLoader2
-	    });
-	    Object.defineProperty(this, _refs, {
-	      writable: true,
-	      value: new main_core_cache.MemoryCache()
-	    });
-	    if (Composite.isEnabled()) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _bindEvents)[_bindEvents]();
-	    }
-	  }
-	  static isEnabled() {
-	    return !main_core.Type.isUndefined(window.frameRequestStart);
-	  }
-	  static isReady() {
-	    var _window$BX, _window$BX$frameCache;
-	    return ((_window$BX = window.BX) == null ? void 0 : (_window$BX$frameCache = _window$BX.frameCache) == null ? void 0 : _window$BX$frameCache.frameDataInserted) === true || !main_core.Type.isUndefined(window.frameRequestFail);
-	  }
-	  static ready(callback) {
-	    if (!main_core.Type.isFunction(callback)) {
-	      return;
-	    }
-	    if (this.isEnabled()) {
-	      if (this.isReady()) {
-	        callback();
-	      } else {
-	        main_core_events.EventEmitter.subscribe('onFrameDataProcessed', callback);
-	        main_core_events.EventEmitter.subscribe('onFrameDataRequestFail', callback);
-	      }
-	    } else if (document.readyState === 'loading') {
-	      main_core.Event.ready(() => {
-	        callback();
-	      });
-	    } else {
-	      callback();
-	    }
-	  }
-	  static clearCache() {
-	    void main_core.ajax.runAction('intranet.composite.clearCache');
-	  }
-	  showLoader() {
-	    if (Composite.isReady()) {
-	      return;
-	    }
-	    const page = window.location.pathname;
-	    if (page === '/stream/' || page === '/stream/index.php' || page === '/index.php') {
-	      babelHelpers.classPrivateFieldLooseBase(this, _showLoader)[_showLoader](this.getLiveFeedSkeleton());
-	      return;
-	    }
-	    const kanbanOptions = babelHelpers.classPrivateFieldLooseBase(this, _getKanbanSkeletonOptions)[_getKanbanSkeletonOptions](page);
-	    if (kanbanOptions !== null) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _showLoader)[_showLoader](babelHelpers.classPrivateFieldLooseBase(this, _createKanbanSkeleton)[_createKanbanSkeleton](kanbanOptions));
-	      return;
-	    }
-	    const gridOptions = babelHelpers.classPrivateFieldLooseBase(this, _getGridSkeletonOptions)[_getGridSkeletonOptions](page);
-	    if (gridOptions !== null) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _showLoader)[_showLoader](babelHelpers.classPrivateFieldLooseBase(this, _createGridSkeleton)[_createGridSkeleton](gridOptions));
-	      return;
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _showLoader)[_showLoader]();
-	  }
-	  showRightSidebarLoader() {
-	    const container = document.getElementById('app__right-panel');
-	    if (container) {
-	      main_core.Dom.append(createRightSidebarSkeleton(), container);
-	    }
-	  }
-	  getStubContainer() {
-	    return document.querySelector('#page-area');
-	  }
-	  getLoaderContainer() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _refs)[_refs].remember('loader', () => {
-	      return main_core.Tag.render(_t$6 || (_t$6 = _$6`
+		#refs = new main_core_cache.MemoryCache();
+		constructor() {
+			if (Composite.isEnabled()) {
+				this.#bindEvents();
+			}
+		}
+		static isEnabled() {
+			return !main_core.Type.isUndefined(window.frameRequestStart);
+		}
+		static isReady() {
+			return window.BX?.frameCache?.frameDataInserted === true || !main_core.Type.isUndefined(window.frameRequestFail);
+		}
+		static ready(callback) {
+			if (!main_core.Type.isFunction(callback)) {
+				return;
+			}
+			if (this.isEnabled()) {
+				if (this.isReady()) {
+					callback();
+				} else {
+					main_core_events.EventEmitter.subscribe('onFrameDataProcessed', callback);
+					main_core_events.EventEmitter.subscribe('onFrameDataRequestFail', callback);
+				}
+			} else if (document.readyState === 'loading') {
+				main_core.Event.ready(() => {
+					callback();
+				});
+			} else {
+				callback();
+			}
+		}
+		static clearCache() {
+			void main_core.ajax.runAction('intranet.composite.clearCache');
+		}
+		showLoader() {
+			if (Composite.isReady()) {
+				return;
+			}
+			const page = window.location.pathname;
+			if (page === '/stream/' || page === '/stream/index.php' || page === '/index.php') {
+				this.#showLoader(this.getLiveFeedSkeleton());
+				return;
+			}
+			const kanbanOptions = this.#getKanbanSkeletonOptions(page);
+			if (kanbanOptions !== null) {
+				this.#showLoader(this.#createKanbanSkeleton(kanbanOptions));
+				return;
+			}
+			const gridOptions = this.#getGridSkeletonOptions(page);
+			if (gridOptions !== null) {
+				this.#showLoader(this.#createGridSkeleton(gridOptions));
+				return;
+			}
+			this.#showLoader();
+		}
+		showRightSidebarLoader() {
+			const container = document.getElementById('app__right-panel');
+			if (container) {
+				main_core.Dom.append(createRightSidebarSkeleton(), container);
+			}
+		}
+		#showLoader(skeleton = null) {
+			const container = this.getStubContainer();
+			const stub = skeleton ?? this.getLoaderContainer();
+			if (!container || stub.parentNode) {
+				return;
+			}
+			main_core.Dom.append(stub, container);
+		}
+		#getGridSkeletonOptions(page) {
+			const patterns = [[/^\/workgroups\/$/, {}], [/^\/crm\/(lead|deal|quote)\/(list|category)\/.*?$/, {
+				toolbarOptions: {
+					showIconButton: true
+				},
+				actionsBarOptions: {
+					showCounterPanel: true,
+					rightButtonsCount: 2
+				}
+			}], [/^\/crm\/(contact|company)\/list\/.*?$/, {
+				toolbarOptions: {
+					showIconButton: true
+				},
+				actionsBarOptions: {
+					rightButtonsCount: 1
+				}
+			}], [/^\/crm\/type\/\d+\/list\/.*?$/, {
+				toolbarOptions: {
+					showIconButton: true
+				},
+				actionsBarOptions: {
+					rightButtonsCount: 1
+				}
+			}], [/^\/crm\/configs\/mycompany\/.*?$/, {
+				toolbarOptions: {
+					showIconButton: true
+				}
+			}], [/^\/crm\/(events|activity|webform|copilot-call-assessment|catalog)\/.*?$/, {}], [/^\/crm\/type\/$/, {}], [/^\/company\/$/, {
+				toolbarOptions: {
+					showIconButton: true
+				},
+				actionsBarOptions: {
+					rightButtonsCount: 1
+				}
+			}], [/^\/company\/personal\/user\/\d+\/tasks\/(projects|flow|scrum)\/.*?$/, {
+				actionsBarOptions: {
+					rightButtonsCount: 2
+				}
+			}], [/^\/company\/personal\/user\/\d+\/tasks\/(departments|templates)\/.*?$/, {}], [/^\/sign\/(list|contact)\/.*?$/, {
+				toolbarOptions: {
+					showIconButton: true
+				},
+				actionsBarOptions: {
+					rightButtonsCount: 1
+				}
+			}], [/^\/sign\/mysafe\/.*?$/, {}], [/^\/sign\/b2e\/list\/.*?$/, {
+				toolbarOptions: {
+					showIconButton: true
+				},
+				actionsBarOptions: {
+					rightButtonsCount: 1
+				}
+			}], [/^\/sign\/b2e\/my-documents\/.*?$/, {
+				actionsBarOptions: true
+			}], [/^\/sign\/b2e\/(settings|member_dynamic_settings|signers)\/.*?$/, {}], [/^\/shop\/documents\/(contractors|contractors_contacts)\/.*?$/, {
+				toolbarOptions: {
+					showIconButton: true
+				},
+				actionsBarOptions: {
+					rightButtonsCount: 1
+				}
+			}], [/^\/shop\/documents\/.*?$/, {
+				toolbarOptions: {
+					showIconButton: true
+				}
+			}], [/^\/shop\/catalog\/\d+\/.*?$/, {}], [/^\/shop\/documents-catalog\/.*?$/, {}], [/^\/shop\/orders\/.*?$/, {
+				toolbarOptions: {
+					showIconButton: true
+				},
+				actionsBarOptions: {
+					rightButtonsCount: 1
+				}
+			}], [/^\/shop\/settings\/(sale_location_type_list|sale_location_node_list|sale_person_type|sale_transact_admin|sale_basket)\/.*?$/, {}], [/^\/company\/lists\/\d+\/view\/\d+\/.*?$/, {
+				toolbarOptions: {
+					showIconButton: true
+				}
+			}], [/^\/company\/lists\/\d+\/fields\/.*?$/, {
+				toolbarOptions: {
+					showIconButton: true
+				}
+			}], [/^\/automation\/type\/.*?$/, {}], [/^\/bizproc\/userprocesses\/.*?$/, {
+				actionsBarOptions: true
+			}], [/^\/bizproc\/(start|bizproc)\/.*?$/, {}], [/^\/marketing\/(letter|ads|segment|template|blacklist|contact|rc|toloka)\/.*?$/, {}], [/^\/conference\/.*?$/, {}], [/^\/bi\/dashboard\/.*?$/, {}], [/^\/rpa\/tasks\/.*?$/, {}]];
+			for (const pattern of patterns) {
+				if (pattern[0].test(page)) {
+					return pattern[1];
+				}
+			}
+			return null;
+		}
+		#createKanbanSkeleton(options) {
+			const actionsBarOptions = options?.actionsBarOptions ?? {};
+			const showActionsBar = main_core.Type.isObject(options?.actionsBarOptions) || options?.actionsBarOptions === true;
+			return main_core.Tag.render`
+			<div class="grid-skeleton-wrapper">
+				${createToolbarSkeleton(options.toolbarOptions)}
+				${showActionsBar ? createActionsBarSkeleton(actionsBarOptions) : null}
+				${createKanbanSkeleton()}
+			</div>
+		`;
+		}
+		#getKanbanSkeletonOptions(page) {
+			const patterns = [[/^\/crm\/(lead|deal)\/(kanban|activity)\/.*?$/, {
+				toolbarOptions: {
+					showIconButton: true
+				},
+				actionsBarOptions: {
+					rightButtonsCount: 2
+				}
+			}], [/^\/crm\/type\/\d+\/kanban\/.*?$/, {}], [/^\/sign\/$/, {
+				toolbarOptions: {
+					showIconButton: true
+				},
+				actionsBarOptions: {
+					rightButtonsCount: 1
+				}
+			}], [/^\/sign\/b2e\/$/, {
+				toolbarOptions: {
+					showIconButton: true
+				},
+				actionsBarOptions: {
+					rightButtonsCount: 1
+				}
+			}]];
+			for (const pattern of patterns) {
+				if (pattern[0].test(page)) {
+					return pattern[1];
+				}
+			}
+			return null;
+		}
+		#createGridSkeleton(options) {
+			const actionsBarOptions = options?.actionsBarOptions ?? {};
+			const showActionsBar = main_core.Type.isObject(options?.actionsBarOptions) || options?.actionsBarOptions === true;
+			return main_core.Tag.render`
+			<div class="grid-skeleton-wrapper">
+				${createToolbarSkeleton(options.toolbarOptions)}
+				${showActionsBar ? createActionsBarSkeleton(actionsBarOptions) : null}
+				${createGridSkeleton()}
+			</div>
+		`;
+		}
+		getStubContainer() {
+			return document.querySelector('#page-area');
+		}
+		getLoaderContainer() {
+			return this.#refs.remember('loader', () => {
+				return main_core.Tag.render`
 				<div class="composite-skeleton-container">
 					<div class="composite-loader-container">
 						<svg class="composite-loader-circular" viewBox="25 25 50 50">
@@ -683,24 +757,59 @@ this.BX.Intranet = this.BX.Intranet || {};
 						</svg>
 					</div>
 				</div>
-			`));
-	    });
-	  }
-	  getLiveFeedSkeleton() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _refs)[_refs].remember('feed-skeleton', () => {
-	      return main_core.Tag.render(_t2$4 || (_t2$4 = _$6`
+			`;
+			});
+		}
+		#bindEvents() {
+			main_core_events.EventEmitter.subscribe('onFrameDataRequestFail', () => {
+				console.error('Composite ajax request failed');
+				top.location = `/auth/?backurl=${encodeURIComponent(getBackUrl())}`;
+			});
+			main_core_events.EventEmitter.subscribe('onAjaxFailure', event => {
+				const [reason, status] = event.getCompatData();
+				const redirectUrl = `/auth/?backurl=${getBackUrl()}`;
+				if (Composite.isEnabled() && (reason === 'auth' || reason === 'status' && status === 401)) {
+					console.error('Auth ajax request failed', reason, status);
+					top.location = redirectUrl;
+				}
+			});
+			if (pull_client.PULL) {
+				pull_client.PULL.subscribe({
+					moduleId: 'main',
+					command: 'composite-cache-up',
+					callback: () => {
+						setTimeout(() => {
+							const value = BX.localStorage.get('ajax-composite-cache-up-lock');
+							if (!value) {
+								BX.localStorage.set('ajax-composite-cache-up-lock', 'EXECUTE', 2);
+								main_core.ajax({
+									url: '/blank.php',
+									method: 'GET',
+									processData: false,
+									skipBxHeader: true,
+									emulateOnload: false
+								});
+							}
+						}, Math.floor(Math.random() * 500));
+					}
+				});
+			}
+		}
+		getLiveFeedSkeleton() {
+			return this.#refs.remember('feed-skeleton', () => {
+				return main_core.Tag.render`
 				<div class="page top-menu-mode start-page no-background no-all-paddings no-page-header">
 					<div class="page__workarea">
-						<div class="page__sidebar">${0}</div>
-						<main class="page__workarea-content">${0}</main>
+						<div class="page__sidebar">${this.getLiveFeedSidebar()}</div>
+						<main class="page__workarea-content">${this.getLiveFeedWorkArea()}</main>
 					</div>
 				</div>
-			`), this.getLiveFeedSidebar(), this.getLiveFeedWorkArea());
-	    });
-	  }
-	  getLiveFeedSidebar() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _refs)[_refs].remember('feed-sidebar', () => {
-	      return main_core.Tag.render(_t3$3 || (_t3$3 = _$6`
+			`;
+			});
+		}
+		getLiveFeedSidebar() {
+			return this.#refs.remember('feed-sidebar', () => {
+				return main_core.Tag.render`
 				<div class="skeleton__white-bg-element skeleton__sidebar skeleton__intranet-ustat">
 					<div class="skeleton__graph-circle"></div>
 					<div class="skeleton__graph-right">
@@ -812,12 +921,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 						</div>
 					</div>
 				</div>
-			`));
-	    });
-	  }
-	  getLiveFeedWorkArea() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _refs)[_refs].remember('feed-work-area', () => {
-	      return main_core.Tag.render(_t4$2 || (_t4$2 = _$6`
+			`;
+			});
+		}
+		getLiveFeedWorkArea() {
+			return this.#refs.remember('feed-work-area', () => {
+				return main_core.Tag.render`
 				<div class="skeleton__white-bg-element skeleton__feed-wrap">
 					<div class="skeleton__feed-wrap_header">
 						<div class="skeleton__feed-wrap_header-link --long"></div>
@@ -923,2468 +1032,1641 @@ this.BX.Intranet = this.BX.Intranet || {};
 						</div>
 					</div>
 				</div>
-			`));
-	    });
-	  }
-	}
-	function _showLoader2(skeleton = null) {
-	  const container = this.getStubContainer();
-	  const stub = skeleton != null ? skeleton : this.getLoaderContainer();
-	  if (!container || stub.parentNode) {
-	    return;
-	  }
-	  main_core.Dom.append(stub, container);
-	}
-	function _getGridSkeletonOptions2(page) {
-	  const patterns = [[/^\/workgroups\/$/, {
-	    actionsBarOptions: true
-	  }], [/^\/crm\/(lead|deal|quote)\/(list|category)\/.*?$/, {
-	    toolbarOptions: {
-	      showIconButton: true
-	    },
-	    actionsBarOptions: {
-	      showCounterPanel: true,
-	      rightButtonsCount: 2
-	    }
-	  }], [/^\/crm\/(contact|company)\/list\/.*?$/, {
-	    toolbarOptions: {
-	      showIconButton: true
-	    },
-	    actionsBarOptions: {
-	      rightButtonsCount: 1
-	    }
-	  }], [/^\/crm\/type\/\d+\/list\/.*?$/, {
-	    toolbarOptions: {
-	      showIconButton: true
-	    },
-	    actionsBarOptions: {
-	      rightButtonsCount: 1
-	    }
-	  }], [/^\/crm\/configs\/mycompany\/.*?$/, {
-	    toolbarOptions: {
-	      showIconButton: true
-	    }
-	  }], [/^\/crm\/(events|activity|webform|copilot-call-assessment|catalog)\/.*?$/, {}], [/^\/crm\/type\/$/, {}], [/^\/company\/$/, {
-	    toolbarOptions: {
-	      showIconButton: true
-	    },
-	    actionsBarOptions: {
-	      rightButtonsCount: 1
-	    }
-	  }], [/^\/company\/personal\/user\/\d+\/tasks\/(projects|flow|scrum)\/.*?$/, {
-	    actionsBarOptions: {
-	      rightButtonsCount: 2
-	    }
-	  }], [/^\/company\/personal\/user\/\d+\/tasks\/(departments|templates)\/.*?$/, {}], [/^\/sign\/(list|contact)\/.*?$/, {
-	    toolbarOptions: {
-	      showIconButton: true
-	    },
-	    actionsBarOptions: {
-	      rightButtonsCount: 1
-	    }
-	  }], [/^\/sign\/mysafe\/.*?$/, {}], [/^\/sign\/b2e\/list\/.*?$/, {
-	    toolbarOptions: {
-	      showIconButton: true
-	    },
-	    actionsBarOptions: {
-	      rightButtonsCount: 1
-	    }
-	  }], [/^\/sign\/b2e\/my-documents\/.*?$/, {
-	    actionsBarOptions: true
-	  }], [/^\/sign\/b2e\/(settings|member_dynamic_settings|signers)\/.*?$/, {}], [/^\/shop\/documents\/(contractors|contractors_contacts)\/.*?$/, {
-	    toolbarOptions: {
-	      showIconButton: true
-	    },
-	    actionsBarOptions: {
-	      rightButtonsCount: 1
-	    }
-	  }], [/^\/shop\/documents\/.*?$/, {
-	    toolbarOptions: {
-	      showIconButton: true
-	    }
-	  }], [/^\/shop\/catalog\/\d+\/.*?$/, {}], [/^\/shop\/documents-catalog\/.*?$/, {}], [/^\/shop\/orders\/.*?$/, {
-	    toolbarOptions: {
-	      showIconButton: true
-	    },
-	    actionsBarOptions: {
-	      rightButtonsCount: 1
-	    }
-	  }], [/^\/shop\/settings\/(sale_location_type_list|sale_location_node_list|sale_person_type|sale_transact_admin|sale_basket)\/.*?$/, {}], [/^\/company\/lists\/\d+\/view\/\d+\/.*?$/, {
-	    toolbarOptions: {
-	      showIconButton: true
-	    }
-	  }], [/^\/company\/lists\/\d+\/fields\/.*?$/, {
-	    toolbarOptions: {
-	      showIconButton: true
-	    }
-	  }], [/^\/automation\/type\/.*?$/, {}], [/^\/bizproc\/userprocesses\/.*?$/, {
-	    actionsBarOptions: true
-	  }], [/^\/bizproc\/(start|bizproc)\/.*?$/, {}], [/^\/marketing\/(letter|ads|segment|template|blacklist|contact|rc|toloka)\/.*?$/, {}], [/^\/conference\/.*?$/, {}], [/^\/bi\/dashboard\/.*?$/, {}], [/^\/rpa\/tasks\/.*?$/, {}]];
-	  for (const pattern of patterns) {
-	    if (pattern[0].test(page)) {
-	      return pattern[1];
-	    }
-	  }
-	  return null;
-	}
-	function _createKanbanSkeleton2(options) {
-	  var _options$actionsBarOp;
-	  const actionsBarOptions = (_options$actionsBarOp = options == null ? void 0 : options.actionsBarOptions) != null ? _options$actionsBarOp : {};
-	  const showActionsBar = main_core.Type.isObject(options == null ? void 0 : options.actionsBarOptions) || (options == null ? void 0 : options.actionsBarOptions) === true;
-	  return main_core.Tag.render(_t5$2 || (_t5$2 = _$6`
-			<div class="grid-skeleton-wrapper">
-				${0}
-				${0}
-				${0}
-			</div>
-		`), createToolbarSkeleton(options.toolbarOptions), showActionsBar ? createActionsBarSkeleton(actionsBarOptions) : null, createKanbanSkeleton());
-	}
-	function _getKanbanSkeletonOptions2(page) {
-	  const patterns = [[/^\/crm\/(lead|deal)\/(kanban|activity)\/.*?$/, {
-	    toolbarOptions: {
-	      showIconButton: true
-	    },
-	    actionsBarOptions: {
-	      rightButtonsCount: 2
-	    }
-	  }], [/^\/crm\/type\/\d+\/kanban\/.*?$/, {}], [/^\/sign\/$/, {
-	    toolbarOptions: {
-	      showIconButton: true
-	    },
-	    actionsBarOptions: {
-	      rightButtonsCount: 1
-	    }
-	  }], [/^\/sign\/b2e\/$/, {
-	    toolbarOptions: {
-	      showIconButton: true
-	    },
-	    actionsBarOptions: {
-	      rightButtonsCount: 1
-	    }
-	  }]];
-	  for (const pattern of patterns) {
-	    if (pattern[0].test(page)) {
-	      return pattern[1];
-	    }
-	  }
-	  return null;
-	}
-	function _createGridSkeleton2(options) {
-	  var _options$actionsBarOp2;
-	  const actionsBarOptions = (_options$actionsBarOp2 = options == null ? void 0 : options.actionsBarOptions) != null ? _options$actionsBarOp2 : {};
-	  const showActionsBar = main_core.Type.isObject(options == null ? void 0 : options.actionsBarOptions) || (options == null ? void 0 : options.actionsBarOptions) === true;
-	  return main_core.Tag.render(_t6$1 || (_t6$1 = _$6`
-			<div class="grid-skeleton-wrapper">
-				${0}
-				${0}
-				${0}
-			</div>
-		`), createToolbarSkeleton(options.toolbarOptions), showActionsBar ? createActionsBarSkeleton(actionsBarOptions) : null, createGridSkeleton());
-	}
-	function _bindEvents2() {
-	  main_core_events.EventEmitter.subscribe('onFrameDataRequestFail', () => {
-	    console.error('Composite ajax request failed');
-	    top.location = `/auth/?backurl=${encodeURIComponent(getBackUrl())}`;
-	  });
-	  main_core_events.EventEmitter.subscribe('onAjaxFailure', event => {
-	    const [reason, status] = event.getCompatData();
-	    const redirectUrl = `/auth/?backurl=${getBackUrl()}`;
-	    if (Composite.isEnabled() && (reason === 'auth' || reason === 'status' && status === 401)) {
-	      console.error('Auth ajax request failed', reason, status);
-	      top.location = redirectUrl;
-	    }
-	  });
-	  if (pull_client.PULL) {
-	    pull_client.PULL.subscribe({
-	      moduleId: 'main',
-	      command: 'composite-cache-up',
-	      callback: () => {
-	        setTimeout(() => {
-	          const value = BX.localStorage.get('ajax-composite-cache-up-lock');
-	          if (!value) {
-	            BX.localStorage.set('ajax-composite-cache-up-lock', 'EXECUTE', 2);
-	            main_core.ajax({
-	              url: '/blank.php',
-	              method: 'GET',
-	              processData: false,
-	              skipBxHeader: true,
-	              emulateOnload: false
-	            });
-	          }
-	        }, Math.floor(Math.random() * 500));
-	      }
-	    });
-	  }
+			`;
+			});
+		}
 	}
 
 	class LeftMenu {
-	  getContainer() {
-	    return document.querySelector('.js-app__left-menu');
-	  }
-	  show() {
-	    main_core.Dom.removeClass(this.getContainer(), '--hidden');
-	  }
-	  hide() {
-	    main_core.Dom.addClass(this.getContainer(), '--hidden');
-	  }
-	  isVisible() {
-	    return !main_core.Dom.hasClass(this.getContainer(), '--hidden');
-	  }
+		getContainer() {
+			return document.querySelector('.js-app__left-menu');
+		}
+		show() {
+			main_core.Dom.removeClass(this.getContainer(), '--hidden');
+		}
+		hide() {
+			main_core.Dom.addClass(this.getContainer(), '--hidden');
+		}
+		isVisible() {
+			return !main_core.Dom.hasClass(this.getContainer(), '--hidden');
+		}
 	}
 
-	var _isScrollMode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isScrollMode");
-	var _scrollModeThreshold = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("scrollModeThreshold");
-	var _goTopButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("goTopButton");
 	class RightBar {
-	  constructor(options) {
-	    Object.defineProperty(this, _isScrollMode, {
-	      writable: true,
-	      value: false
-	    });
-	    Object.defineProperty(this, _scrollModeThreshold, {
-	      writable: true,
-	      value: window.innerHeight
-	    });
-	    Object.defineProperty(this, _goTopButton, {
-	      writable: true,
-	      value: void 0
-	    });
-	    const redraw = this.redraw.bind(this);
-	    main_core.Event.bind(window, 'scroll', redraw, {
-	      passive: true
-	    });
-	    main_core.Event.bind(window, 'resize', redraw);
-	    babelHelpers.classPrivateFieldLooseBase(this, _scrollModeThreshold)[_scrollModeThreshold] = window.innerHeight;
-	    babelHelpers.classPrivateFieldLooseBase(this, _goTopButton)[_goTopButton] = options.goTopButton;
-	    babelHelpers.classPrivateFieldLooseBase(this, _goTopButton)[_goTopButton].subscribe('show', () => {
-	      main_core.Dom.addClass(this.getContainer(), '--show-scroll-btn');
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _goTopButton)[_goTopButton].subscribe('hide', () => {
-	      main_core.Dom.removeClass(this.getContainer(), '--show-scroll-btn');
-	    });
-	    main_core.Event.ready(() => {
-	      this.redraw();
-	    });
-	  }
-	  redraw() {
-	    const rightBar = this.getContainer();
-	    babelHelpers.classPrivateFieldLooseBase(this, _scrollModeThreshold)[_scrollModeThreshold] = window.innerHeight;
-	    if (window.pageYOffset > babelHelpers.classPrivateFieldLooseBase(this, _scrollModeThreshold)[_scrollModeThreshold]) {
-	      if (!babelHelpers.classPrivateFieldLooseBase(this, _isScrollMode)[_isScrollMode]) {
-	        main_core.Dom.addClass(rightBar, '--scroll-mode');
-	        babelHelpers.classPrivateFieldLooseBase(this, _isScrollMode)[_isScrollMode] = true;
-	      }
-	    } else if (babelHelpers.classPrivateFieldLooseBase(this, _isScrollMode)[_isScrollMode]) {
-	      main_core.Dom.removeClass(rightBar, '--scroll-mode');
-	      babelHelpers.classPrivateFieldLooseBase(this, _isScrollMode)[_isScrollMode] = false;
-	    }
-	  }
-	  getContainer() {
-	    return document.getElementById('right-bar');
-	  }
-	  show() {
-	    main_core.Dom.removeClass(this.getContainer(), '--hidden');
-	  }
-	  hide() {
-	    main_core.Dom.addClass(this.getContainer(), '--hidden');
-	  }
-	  isVisible() {
-	    return !main_core.Dom.hasClass(this.getContainer(), '--hidden');
-	  }
-	  setBackground(background) {
-	    var _background$backgroun, _background$backgroun2, _background$backgroun3, _background$backgroun4, _background$backgroun5;
-	    main_core.Dom.style(this.getContainer(), {
-	      backgroundImage: (_background$backgroun = background == null ? void 0 : background.backgroundImage) != null ? _background$backgroun : null,
-	      backgroundColor: (_background$backgroun2 = background == null ? void 0 : background.backgroundColor) != null ? _background$backgroun2 : null,
-	      backgroundPosition: (_background$backgroun3 = background == null ? void 0 : background.backgroundPosition) != null ? _background$backgroun3 : null,
-	      backgroundRepeat: (_background$backgroun4 = background == null ? void 0 : background.backgroundRepeat) != null ? _background$backgroun4 : null,
-	      backgroundSize: (_background$backgroun5 = background == null ? void 0 : background.backgroundSize) != null ? _background$backgroun5 : null
-	    });
-	  }
-	  resetBackground() {
-	    main_core.Dom.style(this.getContainer(), {
-	      backgroundImage: null,
-	      backgroundColor: null,
-	      backgroundRepeat: null,
-	      backgroundSize: null,
-	      backgroundPosition: null
-	    });
-	  }
+		#isScrollMode = false;
+		#scrollModeThreshold = window.innerHeight;
+		#goTopButton;
+		constructor(options) {
+			const redraw = this.redraw.bind(this);
+			main_core.Event.bind(window, 'scroll', redraw, {
+				passive: true
+			});
+			main_core.Event.bind(window, 'resize', redraw);
+			this.#scrollModeThreshold = window.innerHeight;
+			this.#goTopButton = options.goTopButton;
+			this.#goTopButton.subscribe('show', () => {
+				main_core.Dom.addClass(this.getContainer(), '--show-scroll-btn');
+			});
+			this.#goTopButton.subscribe('hide', () => {
+				main_core.Dom.removeClass(this.getContainer(), '--show-scroll-btn');
+			});
+			main_core.Event.ready(() => {
+				this.redraw();
+			});
+		}
+		redraw() {
+			const rightBar = this.getContainer();
+			this.#scrollModeThreshold = window.innerHeight;
+			if (window.pageYOffset > this.#scrollModeThreshold) {
+				if (!this.#isScrollMode) {
+					main_core.Dom.addClass(rightBar, '--scroll-mode');
+					this.#isScrollMode = true;
+				}
+			} else if (this.#isScrollMode) {
+				main_core.Dom.removeClass(rightBar, '--scroll-mode');
+				this.#isScrollMode = false;
+			}
+		}
+		getContainer() {
+			return document.getElementById('right-bar');
+		}
+		show() {
+			main_core.Dom.removeClass(this.getContainer(), '--hidden');
+		}
+		hide() {
+			main_core.Dom.addClass(this.getContainer(), '--hidden');
+		}
+		isVisible() {
+			return !main_core.Dom.hasClass(this.getContainer(), '--hidden');
+		}
+		setBackground(background) {
+			main_core.Dom.style(this.getContainer(), {
+				backgroundImage: background?.backgroundImage ?? null,
+				backgroundColor: background?.backgroundColor ?? null,
+				backgroundPosition: background?.backgroundPosition ?? null,
+				backgroundRepeat: background?.backgroundRepeat ?? null,
+				backgroundSize: background?.backgroundSize ?? null
+			});
+		}
+		resetBackground() {
+			main_core.Dom.style(this.getContainer(), {
+				backgroundImage: null,
+				backgroundColor: null,
+				backgroundRepeat: null,
+				backgroundSize: null,
+				backgroundPosition: null
+			});
+		}
 	}
 
-	var _burgerCounter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("burgerCounter");
-	var _initMobileBurger = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initMobileBurger");
-	var _initBurgerCounter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initBurgerCounter");
 	class Header {
-	  constructor() {
-	    Object.defineProperty(this, _initBurgerCounter, {
-	      value: _initBurgerCounter2
-	    });
-	    Object.defineProperty(this, _initMobileBurger, {
-	      value: _initMobileBurger2
-	    });
-	    Object.defineProperty(this, _burgerCounter, {
-	      writable: true,
-	      value: null
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _initMobileBurger)[_initMobileBurger]();
-	  }
-	  getContainer() {
-	    return document.getElementById('app-header');
-	  }
-	  show() {
-	    main_core.Dom.removeClass(this.getContainer(), '--hidden');
-	  }
-	  hide() {
-	    main_core.Dom.addClass(this.getContainer(), '--hidden');
-	  }
-	  isVisible() {
-	    return !main_core.Dom.hasClass(this.getContainer(), '--hidden');
-	  }
-	}
-	function _initMobileBurger2() {
-	  main_core.ready(() => {
-	    const burger = document.getElementById('air-header-burger');
-	    if (!burger) {
-	      return;
-	    }
-	    main_core.Event.bind(burger, 'click', () => {
-	      const menu = main_core.Reflection.getClass('BX.Intranet.LeftMenu');
-	      if (!menu) {
-	        return;
-	      }
-	      const root = document.querySelector('.js-app');
-	      if (!root) {
-	        return;
-	      }
-	      const isSliding = main_core.Dom.hasClass(root, 'menu-sliding-mode');
-	      menu.switchToSlidingMode(!isSliding);
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _initBurgerCounter)[_initBurgerCounter](burger);
-	  });
-	}
-	function _initBurgerCounter2(burger) {
-	  const counterWrapper = burger.querySelector('.air-header__burger-counter');
-	  if (!counterWrapper) {
-	    return;
-	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _burgerCounter)[_burgerCounter] = new ui_cnt.Counter({
-	    value: 0,
-	    size: ui_cnt.Counter.Size.SMALL,
-	    color: ui_cnt.Counter.Color.DANGER,
-	    useAirDesign: true,
-	    style: ui_cnt.CounterStyle.FILLED_ALERT,
-	    hideIfZero: true
-	  });
-	  babelHelpers.classPrivateFieldLooseBase(this, _burgerCounter)[_burgerCounter].renderTo(counterWrapper);
-	  main_core.addCustomEvent('BX.Intranet.LeftMenu:onTotalCounterUpdate', total => {
-	    babelHelpers.classPrivateFieldLooseBase(this, _burgerCounter)[_burgerCounter].update(total);
-	  });
+		#burgerCounter = null;
+		constructor() {
+			this.#initMobileBurger();
+		}
+		getContainer() {
+			return document.getElementById('app-header');
+		}
+		show() {
+			main_core.Dom.removeClass(this.getContainer(), '--hidden');
+		}
+		hide() {
+			main_core.Dom.addClass(this.getContainer(), '--hidden');
+		}
+		isVisible() {
+			return !main_core.Dom.hasClass(this.getContainer(), '--hidden');
+		}
+		#initMobileBurger() {
+			main_core.ready(() => {
+				const burger = document.getElementById('air-header-burger');
+				if (!burger) {
+					return;
+				}
+				main_core.Event.bind(burger, 'click', () => {
+					const menu = main_core.Reflection.getClass('BX.Intranet.LeftMenu');
+					if (!menu) {
+						return;
+					}
+					const root = document.querySelector('.js-app');
+					if (!root) {
+						return;
+					}
+					const isSliding = main_core.Dom.hasClass(root, 'menu-sliding-mode');
+					menu.switchToSlidingMode(!isSliding);
+				});
+				this.#initBurgerCounter(burger);
+			});
+		}
+		#initBurgerCounter(burger) {
+			const counterWrapper = burger.querySelector('.air-header__burger-counter');
+			if (!counterWrapper) {
+				return;
+			}
+			this.#burgerCounter = new ui_cnt.Counter({
+				value: 0,
+				size: ui_cnt.Counter.Size.SMALL,
+				color: ui_cnt.Counter.Color.DANGER,
+				useAirDesign: true,
+				style: ui_cnt.CounterStyle.FILLED_ALERT,
+				hideIfZero: true
+			});
+			this.#burgerCounter.renderTo(counterWrapper);
+			main_core.addCustomEvent('BX.Intranet.LeftMenu:onTotalCounterUpdate', total => {
+				this.#burgerCounter.update(total);
+			});
+		}
 	}
 
 	class Footer {
-	  constructor() {
-	    main_core_events.EventEmitter.subscribe('Kanban.Grid:onFixedModeStart', () => {
-	      this.hide();
-	    });
-	  }
-	  show() {
-	    main_core.Dom.removeClass(this.getContainer(), '--hidden');
-	  }
-	  hide() {
-	    main_core.Dom.addClass(this.getContainer(), '--hidden');
-	  }
-	  getContainer() {
-	    return document.getElementById('air-footer');
-	  }
+		constructor() {
+			main_core_events.EventEmitter.subscribe('Kanban.Grid:onFixedModeStart', () => {
+				this.hide();
+			});
+		}
+		show() {
+			main_core.Dom.removeClass(this.getContainer(), '--hidden');
+		}
+		hide() {
+			main_core.Dom.addClass(this.getContainer(), '--hidden');
+		}
+		getContainer() {
+			return document.getElementById('air-footer');
+		}
 	}
 
-	var _lastScrollOffset = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("lastScrollOffset");
-	var _isReversed = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isReversed");
-	var _button = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("button");
-	var _show = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("show");
-	var _hide = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hide");
-	var _getButtonWrapper = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getButtonWrapper");
-	var _bindEvents$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindEvents");
-	var _handleScroll = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleScroll");
-	var _handleButtonClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleButtonClick");
-	var _setReversed = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setReversed");
-	var _getButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getButton");
 	class GoTopButton extends main_core_events.EventEmitter {
-	  constructor() {
-	    super();
-	    Object.defineProperty(this, _getButton, {
-	      value: _getButton2
-	    });
-	    Object.defineProperty(this, _setReversed, {
-	      value: _setReversed2
-	    });
-	    Object.defineProperty(this, _handleButtonClick, {
-	      value: _handleButtonClick2
-	    });
-	    Object.defineProperty(this, _handleScroll, {
-	      value: _handleScroll2
-	    });
-	    Object.defineProperty(this, _bindEvents$1, {
-	      value: _bindEvents2$1
-	    });
-	    Object.defineProperty(this, _getButtonWrapper, {
-	      value: _getButtonWrapper2
-	    });
-	    Object.defineProperty(this, _hide, {
-	      value: _hide2
-	    });
-	    Object.defineProperty(this, _show, {
-	      value: _show2
-	    });
-	    Object.defineProperty(this, _lastScrollOffset, {
-	      writable: true,
-	      value: 0
-	    });
-	    Object.defineProperty(this, _isReversed, {
-	      writable: true,
-	      value: false
-	    });
-	    Object.defineProperty(this, _button, {
-	      writable: true,
-	      value: void 0
-	    });
-	    this.setEventNamespace('GoTopButton');
-	    babelHelpers.classPrivateFieldLooseBase(this, _bindEvents$1)[_bindEvents$1]();
-	  }
-	  isShown() {
-	    return main_core.Dom.hasClass(babelHelpers.classPrivateFieldLooseBase(this, _getButtonWrapper)[_getButtonWrapper](), '--show');
-	  }
-	}
-	function _show2() {
-	  this.emit('show');
-	  main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _getButtonWrapper)[_getButtonWrapper](), '--show');
-	}
-	function _hide2() {
-	  this.emit('hide');
-	  main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _getButtonWrapper)[_getButtonWrapper](), '--show');
-	}
-	function _getButtonWrapper2() {
-	  return document.getElementById('goTopButtonWrapper');
-	}
-	function _bindEvents2$1() {
-	  main_core.Event.ready(() => {
-	    babelHelpers.classPrivateFieldLooseBase(this, _handleScroll)[_handleScroll]();
-	    main_core.Event.bind(window, 'scroll', () => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _handleScroll)[_handleScroll]();
-	    });
-	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _getButtonWrapper)[_getButtonWrapper](), 'click', () => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _handleButtonClick)[_handleButtonClick]();
-	    });
-	  });
-	}
-	function _handleScroll2() {
-	  if (window.pageYOffset > document.documentElement.clientHeight) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _show)[_show]();
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _isReversed)[_isReversed]) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _setReversed)[_setReversed](false);
-	      babelHelpers.classPrivateFieldLooseBase(this, _lastScrollOffset)[_lastScrollOffset] = 0;
-	    }
-	  } else if (babelHelpers.classPrivateFieldLooseBase(this, _isReversed)[_isReversed] === false) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _hide)[_hide]();
-	  }
-	}
-	function _handleButtonClick2() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _isReversed)[_isReversed]) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _setReversed)[_setReversed](false);
-	    window.scrollTo({
-	      top: babelHelpers.classPrivateFieldLooseBase(this, _lastScrollOffset)[_lastScrollOffset],
-	      behavior: 'instant'
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _lastScrollOffset)[_lastScrollOffset] = 0;
-	  } else {
-	    babelHelpers.classPrivateFieldLooseBase(this, _setReversed)[_setReversed](true);
-	    babelHelpers.classPrivateFieldLooseBase(this, _lastScrollOffset)[_lastScrollOffset] = window.pageYOffset;
-	    window.scrollTo({
-	      top: 0,
-	      behavior: 'instant'
-	    });
-	  }
-	}
-	function _setReversed2(flag = true) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _isReversed)[_isReversed] = flag;
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _isReversed)[_isReversed]) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _getButton)[_getButton]().setIcon(ui_buttons.ButtonIcon.ANGLE_DOWN);
-	  } else {
-	    babelHelpers.classPrivateFieldLooseBase(this, _getButton)[_getButton]().setIcon(ui_buttons.ButtonIcon.ANGLE_UP);
-	  }
-	}
-	function _getButton2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _button)[_button] || ui_buttons.ButtonManager.createFromNode(document.getElementById('goTopButton'));
+		#lastScrollOffset = 0;
+		#isReversed = false;
+		#button;
+		constructor() {
+			super();
+			this.setEventNamespace('GoTopButton');
+			this.#bindEvents();
+		}
+		isShown() {
+			return main_core.Dom.hasClass(this.#getButtonWrapper(), '--show');
+		}
+		#show() {
+			this.emit('show');
+			main_core.Dom.addClass(this.#getButtonWrapper(), '--show');
+		}
+		#hide() {
+			this.emit('hide');
+			main_core.Dom.removeClass(this.#getButtonWrapper(), '--show');
+		}
+		#getButtonWrapper() {
+			return document.getElementById('goTopButtonWrapper');
+		}
+		#bindEvents() {
+			main_core.Event.ready(() => {
+				this.#handleScroll();
+				main_core.Event.bind(window, 'scroll', () => {
+					this.#handleScroll();
+				});
+				main_core.Event.bind(this.#getButtonWrapper(), 'click', () => {
+					this.#handleButtonClick();
+				});
+			});
+		}
+		#handleScroll() {
+			if (window.pageYOffset > document.documentElement.clientHeight) {
+				this.#show();
+				if (this.#isReversed) {
+					this.#setReversed(false);
+					this.#lastScrollOffset = 0;
+				}
+			} else if (this.#isReversed === false) {
+				this.#hide();
+			}
+		}
+		#handleButtonClick() {
+			if (this.#isReversed) {
+				this.#setReversed(false);
+				window.scrollTo({
+					top: this.#lastScrollOffset,
+					behavior: 'instant'
+				});
+				this.#lastScrollOffset = 0;
+			} else {
+				this.#setReversed(true);
+				this.#lastScrollOffset = window.pageYOffset;
+				window.scrollTo({
+					top: 0,
+					behavior: 'instant'
+				});
+			}
+		}
+		#setReversed(flag = true) {
+			this.#isReversed = flag;
+			if (this.#isReversed) {
+				this.#getButton().setIcon(ui_buttons.ButtonIcon.ANGLE_DOWN);
+			} else {
+				this.#getButton().setIcon(ui_buttons.ButtonIcon.ANGLE_UP);
+			}
+		}
+		#getButton() {
+			return this.#button || ui_buttons.ButtonManager.createFromNode(document.getElementById('goTopButton'));
+		}
 	}
 
-	var _handleCounterUpdate$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleCounterUpdate");
-	var _handleLiveFeedCounterDecrement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleLiveFeedCounterDecrement");
 	class CollaborationMenu {
-	  constructor() {
-	    Object.defineProperty(this, _handleLiveFeedCounterDecrement, {
-	      value: _handleLiveFeedCounterDecrement2
-	    });
-	    Object.defineProperty(this, _handleCounterUpdate$1, {
-	      value: _handleCounterUpdate2$1
-	    });
-	    main_core_events.EventEmitter.subscribe('onImUpdateCounterMessage', babelHelpers.classPrivateFieldLooseBase(this, _handleCounterUpdate$1)[_handleCounterUpdate$1].bind(this));
-	    main_core_events.EventEmitter.subscribe('onCounterDecrement', babelHelpers.classPrivateFieldLooseBase(this, _handleLiveFeedCounterDecrement)[_handleLiveFeedCounterDecrement].bind(this));
-	  }
-	  getMenu() {
-	    /**
-	     *
-	     * @type {BX.Main.interfaceButtonsManager}
-	     */
-	    const menuManager = main_core.Reflection.getClass('BX.Main.interfaceButtonsManager');
-	    if (menuManager) {
-	      return menuManager.getById('top_menu_id_collaboration');
-	    }
-	    return null;
-	  }
-	}
-	function _handleCounterUpdate2$1(event) {
-	  const menu = this.getMenu();
-	  const [counter] = event.getCompatData();
-	  menu == null ? void 0 : menu.updateCounter('im-message', counter);
-	}
-	function _handleLiveFeedCounterDecrement2(event) {
-	  const [decrement] = event.getCompatData();
-	  const menu = this.getMenu();
-	  if (menu) {
-	    const item = menu.getItemById('menu_live_feed');
-	    if (item) {
-	      const itemData = menu.getItemData(item);
-	      const {
-	        COUNTER,
-	        COUNTER_ID
-	      } = itemData;
-	      menu == null ? void 0 : menu.updateCounter(COUNTER_ID, Math.max(0, COUNTER - decrement));
-	    }
-	  }
+		constructor() {
+			main_core_events.EventEmitter.subscribe('onImUpdateCounterMessage', this.#handleCounterUpdate.bind(this));
+			main_core_events.EventEmitter.subscribe('onCounterDecrement', this.#handleLiveFeedCounterDecrement.bind(this));
+		}
+		getMenu() {
+			/**
+			 *
+			 * @type {BX.Main.interfaceButtonsManager}
+			 */
+			const menuManager = main_core.Reflection.getClass('BX.Main.interfaceButtonsManager');
+			if (menuManager) {
+				return menuManager.getById('top_menu_id_collaboration');
+			}
+			return null;
+		}
+		#handleCounterUpdate(event) {
+			const menu = this.getMenu();
+			const [counter] = event.getCompatData();
+			menu?.updateCounter('im-message', counter);
+		}
+		#handleLiveFeedCounterDecrement(event) {
+			const [decrement] = event.getCompatData();
+			const menu = this.getMenu();
+			if (menu) {
+				const item = menu.getItemById('menu_live_feed');
+				if (item) {
+					const itemData = menu.getItemData(item);
+					const {
+						COUNTER,
+						COUNTER_ID
+					} = itemData;
+					menu?.updateCounter(COUNTER_ID, Math.max(0, COUNTER - decrement));
+				}
+			}
+		}
 	}
 
-	let _$7 = t => t,
-	  _t$7,
-	  _t2$5;
-	var _EXPANDED_CLASS = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("EXPANDED_CLASS");
-	var _RESIZING_CLASS = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("RESIZING_CLASS");
-	var _DEFAULT_WIDTH = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("DEFAULT_WIDTH");
-	var _SS_WIDTH_KEY = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("SS_WIDTH_KEY");
-	var _SS_EXPANDED_KEY = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("SS_EXPANDED_KEY");
-	var _resizeObserver = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resizeObserver");
-	var _resizeHandleEl = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resizeHandleEl");
-	var _dragOverlayEl = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dragOverlayEl");
-	var _isDragging = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isDragging");
-	var _pendingTransitionEvent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("pendingTransitionEvent");
-	var _dragStartX = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dragStartX");
-	var _dragStartWidth = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dragStartWidth");
-	var _savedWidth = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("savedWidth");
-	var _boundOnPointerDown = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("boundOnPointerDown");
-	var _boundOnPointerMove = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("boundOnPointerMove");
-	var _boundOnPointerUp = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("boundOnPointerUp");
-	var _boundOnTransitionEnd = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("boundOnTransitionEnd");
-	var _getSavedWidth = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSavedWidth");
-	var _startTransition = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("startTransition");
-	var _cancelTransition = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cancelTransition");
-	var _onTransitionEnd = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onTransitionEnd");
-	var _applySavedWidth = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("applySavedWidth");
-	var _initResizeHandle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initResizeHandle");
-	var _onPointerDown = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onPointerDown");
-	var _onPointerMove = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onPointerMove");
-	var _onPointerUp = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onPointerUp");
-	var _showDragOverlay = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showDragOverlay");
-	var _hideDragOverlay = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hideDragOverlay");
-	var _saveWidth = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("saveWidth");
-	var _handleResizeObserver = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleResizeObserver");
-	var _saveExpandedToSessionStorage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("saveExpandedToSessionStorage");
-	var _saveWidthToSessionStorage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("saveWidthToSessionStorage");
-	var _subscribeToEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribeToEvents");
 	class RightPanel extends main_core_events.EventEmitter {
-	  constructor() {
-	    super();
-	    Object.defineProperty(this, _subscribeToEvents, {
-	      value: _subscribeToEvents2
-	    });
-	    Object.defineProperty(this, _saveWidthToSessionStorage, {
-	      value: _saveWidthToSessionStorage2
-	    });
-	    Object.defineProperty(this, _saveExpandedToSessionStorage, {
-	      value: _saveExpandedToSessionStorage2
-	    });
-	    Object.defineProperty(this, _handleResizeObserver, {
-	      value: _handleResizeObserver2
-	    });
-	    Object.defineProperty(this, _saveWidth, {
-	      value: _saveWidth2
-	    });
-	    Object.defineProperty(this, _hideDragOverlay, {
-	      value: _hideDragOverlay2
-	    });
-	    Object.defineProperty(this, _showDragOverlay, {
-	      value: _showDragOverlay2
-	    });
-	    Object.defineProperty(this, _onPointerUp, {
-	      value: _onPointerUp2
-	    });
-	    Object.defineProperty(this, _onPointerMove, {
-	      value: _onPointerMove2
-	    });
-	    Object.defineProperty(this, _onPointerDown, {
-	      value: _onPointerDown2
-	    });
-	    Object.defineProperty(this, _initResizeHandle, {
-	      value: _initResizeHandle2
-	    });
-	    Object.defineProperty(this, _applySavedWidth, {
-	      value: _applySavedWidth2
-	    });
-	    Object.defineProperty(this, _onTransitionEnd, {
-	      value: _onTransitionEnd2
-	    });
-	    Object.defineProperty(this, _cancelTransition, {
-	      value: _cancelTransition2
-	    });
-	    Object.defineProperty(this, _startTransition, {
-	      value: _startTransition2
-	    });
-	    Object.defineProperty(this, _getSavedWidth, {
-	      value: _getSavedWidth2
-	    });
-	    Object.defineProperty(this, _resizeObserver, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _resizeHandleEl, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _dragOverlayEl, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _isDragging, {
-	      writable: true,
-	      value: false
-	    });
-	    Object.defineProperty(this, _pendingTransitionEvent, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _dragStartX, {
-	      writable: true,
-	      value: 0
-	    });
-	    Object.defineProperty(this, _dragStartWidth, {
-	      writable: true,
-	      value: 0
-	    });
-	    Object.defineProperty(this, _savedWidth, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _boundOnPointerDown, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _boundOnPointerMove, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _boundOnPointerUp, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _boundOnTransitionEnd, {
-	      writable: true,
-	      value: void 0
-	    });
-	    this.setEventNamespace('BX.Intranet.Bitrix24.Template.RightPanel');
-	    babelHelpers.classPrivateFieldLooseBase(this, _boundOnPointerDown)[_boundOnPointerDown] = babelHelpers.classPrivateFieldLooseBase(this, _onPointerDown)[_onPointerDown].bind(this);
-	    babelHelpers.classPrivateFieldLooseBase(this, _boundOnPointerMove)[_boundOnPointerMove] = babelHelpers.classPrivateFieldLooseBase(this, _onPointerMove)[_onPointerMove].bind(this);
-	    babelHelpers.classPrivateFieldLooseBase(this, _boundOnPointerUp)[_boundOnPointerUp] = babelHelpers.classPrivateFieldLooseBase(this, _onPointerUp)[_onPointerUp].bind(this);
-	    babelHelpers.classPrivateFieldLooseBase(this, _boundOnTransitionEnd)[_boundOnTransitionEnd] = babelHelpers.classPrivateFieldLooseBase(this, _onTransitionEnd)[_onTransitionEnd].bind(this);
-	    babelHelpers.classPrivateFieldLooseBase(this, _subscribeToEvents)[_subscribeToEvents]();
-	  }
-	  getContainer() {
-	    const panel = document.getElementById('app__right-panel');
-	    if (panel !== null && babelHelpers.classPrivateFieldLooseBase(this, _resizeObserver)[_resizeObserver] === null) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _resizeObserver)[_resizeObserver] = new ResizeObserver(babelHelpers.classPrivateFieldLooseBase(this, _handleResizeObserver)[_handleResizeObserver].bind(this));
-	      babelHelpers.classPrivateFieldLooseBase(this, _resizeObserver)[_resizeObserver].observe(panel);
-	    }
-	    return panel;
-	  }
-	  isExpanded() {
-	    return main_core.Dom.hasClass(document.body, babelHelpers.classPrivateFieldLooseBase(RightPanel, _EXPANDED_CLASS)[_EXPANDED_CLASS]);
-	  }
-	  expand() {
-	    if (this.isExpanded()) {
-	      return;
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _cancelTransition)[_cancelTransition]();
-	    main_core.Dom.addClass(document.body, babelHelpers.classPrivateFieldLooseBase(RightPanel, _EXPANDED_CLASS)[_EXPANDED_CLASS]);
-	    babelHelpers.classPrivateFieldLooseBase(this, _applySavedWidth)[_applySavedWidth]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _initResizeHandle)[_initResizeHandle]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _saveExpandedToSessionStorage)[_saveExpandedToSessionStorage](true);
-	    babelHelpers.classPrivateFieldLooseBase(this, _saveWidthToSessionStorage)[_saveWidthToSessionStorage]();
-	    this.emit('onExpand');
-	    babelHelpers.classPrivateFieldLooseBase(this, _startTransition)[_startTransition]('onExpandComplete');
-	  }
-	  collapse() {
-	    if (!this.isExpanded()) {
-	      return;
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _cancelTransition)[_cancelTransition]();
-	    main_core.Dom.removeClass(document.body, [babelHelpers.classPrivateFieldLooseBase(RightPanel, _EXPANDED_CLASS)[_EXPANDED_CLASS], '--right-panel-no-transition', babelHelpers.classPrivateFieldLooseBase(RightPanel, _RESIZING_CLASS)[_RESIZING_CLASS]]);
-	    babelHelpers.classPrivateFieldLooseBase(this, _saveExpandedToSessionStorage)[_saveExpandedToSessionStorage](false);
-	    this.emit('onCollapse');
-	    babelHelpers.classPrivateFieldLooseBase(this, _startTransition)[_startTransition]('onCollapseComplete');
-	  }
-	}
-	function _getSavedWidth2() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _savedWidth)[_savedWidth] === null) {
-	    const parsed = parseInt(getComputedStyle(document.body).getPropertyValue('--air-right-panel-width'), 10);
-	    babelHelpers.classPrivateFieldLooseBase(this, _savedWidth)[_savedWidth] = parsed > 0 ? parsed : babelHelpers.classPrivateFieldLooseBase(RightPanel, _DEFAULT_WIDTH)[_DEFAULT_WIDTH];
-	  }
-	  return babelHelpers.classPrivateFieldLooseBase(this, _savedWidth)[_savedWidth];
-	}
-	function _startTransition2(eventName) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _pendingTransitionEvent)[_pendingTransitionEvent] = eventName;
-	  const container = this.getContainer();
-	  if (container) {
-	    main_core.Event.bind(container, 'transitionend', babelHelpers.classPrivateFieldLooseBase(this, _boundOnTransitionEnd)[_boundOnTransitionEnd]);
-	  }
-	}
-	function _cancelTransition2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _pendingTransitionEvent)[_pendingTransitionEvent] = null;
-	  const container = this.getContainer();
-	  if (container) {
-	    main_core.Event.unbind(container, 'transitionend', babelHelpers.classPrivateFieldLooseBase(this, _boundOnTransitionEnd)[_boundOnTransitionEnd]);
-	  }
-	}
-	function _onTransitionEnd2(event) {
-	  if (event.target !== this.getContainer() || event.propertyName !== 'width') {
-	    return;
-	  }
-	  const eventName = babelHelpers.classPrivateFieldLooseBase(this, _pendingTransitionEvent)[_pendingTransitionEvent];
-	  babelHelpers.classPrivateFieldLooseBase(this, _cancelTransition)[_cancelTransition]();
-	  if (eventName) {
-	    this.emit(eventName);
-	  }
-	  window.dispatchEvent(new window.Event('resize'));
-	}
-	function _applySavedWidth2() {
-	  main_core.Dom.style(document.body, '--air-right-panel-width', `${babelHelpers.classPrivateFieldLooseBase(this, _getSavedWidth)[_getSavedWidth]()}px`);
-	}
-	function _initResizeHandle2() {
-	  const container = this.getContainer();
-	  if (!container || babelHelpers.classPrivateFieldLooseBase(this, _resizeHandleEl)[_resizeHandleEl]) {
-	    return;
-	  }
-	  const grabberIcon = new ui_iconSet_api_core.Icon({
-	    icon: ui_iconSet_api_core.Outline.DRAG_L,
-	    size: 18
-	  });
-	  babelHelpers.classPrivateFieldLooseBase(this, _resizeHandleEl)[_resizeHandleEl] = main_core.Tag.render(_t$7 || (_t$7 = _$7`
+		static #EXPANDED_CLASS = '--right-panel-expanded';
+		static #RESIZING_CLASS = '--resizing';
+		static #DEFAULT_WIDTH = 380;
+		static #SS_WIDTH_KEY = 'b24_right_panel_width';
+		static #SS_EXPANDED_KEY = 'b24_right_panel_expanded';
+		#resizeObserver = null;
+		#resizeHandleEl = null;
+		#dragOverlayEl = null;
+		#isDragging = false;
+		#pendingTransitionEvent = null;
+		#dragStartX = 0;
+		#dragStartWidth = 0;
+		#savedWidth = null;
+		#boundOnPointerDown;
+		#boundOnPointerMove;
+		#boundOnPointerUp;
+		#boundOnTransitionEnd;
+		constructor() {
+			super();
+			this.setEventNamespace('BX.Intranet.Bitrix24.Template.RightPanel');
+			this.#boundOnPointerDown = this.#onPointerDown.bind(this);
+			this.#boundOnPointerMove = this.#onPointerMove.bind(this);
+			this.#boundOnPointerUp = this.#onPointerUp.bind(this);
+			this.#boundOnTransitionEnd = this.#onTransitionEnd.bind(this);
+			this.#subscribeToEvents();
+		}
+		getContainer() {
+			const panel = document.getElementById('app__right-panel');
+			if (panel !== null && this.#resizeObserver === null) {
+				this.#resizeObserver = new ResizeObserver(this.#handleResizeObserver.bind(this));
+				this.#resizeObserver.observe(panel);
+			}
+			return panel;
+		}
+		#getSavedWidth() {
+			if (this.#savedWidth === null) {
+				const parsed = parseInt(getComputedStyle(document.body).getPropertyValue('--air-right-panel-width'), 10);
+				this.#savedWidth = parsed > 0 ? parsed : RightPanel.#DEFAULT_WIDTH;
+			}
+			return this.#savedWidth;
+		}
+		isExpanded() {
+			return main_core.Dom.hasClass(document.body, RightPanel.#EXPANDED_CLASS);
+		}
+		expand() {
+			if (this.isExpanded()) {
+				return;
+			}
+			this.#cancelTransition();
+			main_core.Dom.addClass(document.body, RightPanel.#EXPANDED_CLASS);
+			this.#applySavedWidth();
+			this.#initResizeHandle();
+			this.#saveExpandedToSessionStorage(true);
+			this.#saveWidthToSessionStorage();
+			this.emit('onExpand');
+			this.#startTransition('onExpandComplete');
+		}
+		collapse() {
+			if (!this.isExpanded()) {
+				return;
+			}
+			this.#cancelTransition();
+			main_core.Dom.removeClass(document.body, [RightPanel.#EXPANDED_CLASS, '--right-panel-no-transition', RightPanel.#RESIZING_CLASS]);
+			this.#saveExpandedToSessionStorage(false);
+			this.emit('onCollapse');
+			this.#startTransition('onCollapseComplete');
+		}
+		#startTransition(eventName) {
+			this.#pendingTransitionEvent = eventName;
+			const container = this.getContainer();
+			if (container) {
+				main_core.Event.bind(container, 'transitionend', this.#boundOnTransitionEnd);
+			}
+		}
+		#cancelTransition() {
+			this.#pendingTransitionEvent = null;
+			const container = this.getContainer();
+			if (container) {
+				main_core.Event.unbind(container, 'transitionend', this.#boundOnTransitionEnd);
+			}
+		}
+		#onTransitionEnd(event) {
+			if (event.target !== this.getContainer() || event.propertyName !== 'width') {
+				return;
+			}
+			const eventName = this.#pendingTransitionEvent;
+			this.#cancelTransition();
+			if (eventName) {
+				this.emit(eventName);
+			}
+			window.dispatchEvent(new window.Event('resize'));
+		}
+		#applySavedWidth() {
+			main_core.Dom.style(document.body, '--air-right-panel-width', `${this.#getSavedWidth()}px`);
+		}
+		#initResizeHandle() {
+			const container = this.getContainer();
+			if (!container || this.#resizeHandleEl) {
+				return;
+			}
+			const grabberIcon = new ui_iconSet_api_core.Icon({
+				icon: ui_iconSet_api_core.Outline.DRAG_L,
+				size: 18
+			});
+			this.#resizeHandleEl = main_core.Tag.render`
 			<div class="right-panel-resize-handle --ui-context-content-dark">
 				<div class="right-panel-resize-handle__grabber">
 					<div class="right-panel-resize-handle__grabber-icon">
-						${0}
+						${grabberIcon.render()}
 					</div>
 				</div>
 			</div>
-		`), grabberIcon.render());
-	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _resizeHandleEl)[_resizeHandleEl], container);
-	  main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _resizeHandleEl)[_resizeHandleEl], 'pointerdown', babelHelpers.classPrivateFieldLooseBase(this, _boundOnPointerDown)[_boundOnPointerDown]);
-	}
-	function _onPointerDown2(event) {
-	  event.preventDefault();
-	  const container = this.getContainer();
-	  if (!container) {
-	    return;
-	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _isDragging)[_isDragging] = true;
-	  babelHelpers.classPrivateFieldLooseBase(this, _dragStartX)[_dragStartX] = event.clientX;
-	  babelHelpers.classPrivateFieldLooseBase(this, _dragStartWidth)[_dragStartWidth] = container.getBoundingClientRect().width;
-	  main_core.Dom.addClass(document.body, babelHelpers.classPrivateFieldLooseBase(RightPanel, _RESIZING_CLASS)[_RESIZING_CLASS]);
-	  babelHelpers.classPrivateFieldLooseBase(this, _showDragOverlay)[_showDragOverlay]();
-	  main_core.Event.bind(document, 'pointermove', babelHelpers.classPrivateFieldLooseBase(this, _boundOnPointerMove)[_boundOnPointerMove]);
-	  main_core.Event.bind(document, 'pointerup', babelHelpers.classPrivateFieldLooseBase(this, _boundOnPointerUp)[_boundOnPointerUp]);
-	}
-	function _onPointerMove2(event) {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isDragging)[_isDragging]) {
-	    return;
-	  }
-	  const delta = babelHelpers.classPrivateFieldLooseBase(this, _dragStartX)[_dragStartX] - event.clientX;
-	  const newWidth = babelHelpers.classPrivateFieldLooseBase(this, _dragStartWidth)[_dragStartWidth] + delta;
-	  main_core.Dom.style(document.body, '--air-right-panel-width', `${newWidth}px`);
-	  const container = this.getContainer();
-	  if (container) {
-	    const actualWidth = container.getBoundingClientRect().width;
-	    if (actualWidth !== newWidth) {
-	      main_core.Dom.style(document.body, '--air-right-panel-width', `${actualWidth}px`);
-	    }
-	  }
-	}
-	function _onPointerUp2(event) {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isDragging)[_isDragging]) {
-	    return;
-	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _isDragging)[_isDragging] = false;
-	  main_core.Dom.removeClass(document.body, babelHelpers.classPrivateFieldLooseBase(RightPanel, _RESIZING_CLASS)[_RESIZING_CLASS]);
-	  babelHelpers.classPrivateFieldLooseBase(this, _hideDragOverlay)[_hideDragOverlay]();
-	  main_core.Event.unbind(document, 'pointermove', babelHelpers.classPrivateFieldLooseBase(this, _boundOnPointerMove)[_boundOnPointerMove]);
-	  main_core.Event.unbind(document, 'pointerup', babelHelpers.classPrivateFieldLooseBase(this, _boundOnPointerUp)[_boundOnPointerUp]);
-	  const container = this.getContainer();
-	  if (container && babelHelpers.classPrivateFieldLooseBase(this, _getSavedWidth)[_getSavedWidth]() !== container.getBoundingClientRect().width) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _savedWidth)[_savedWidth] = container.getBoundingClientRect().width;
-	    babelHelpers.classPrivateFieldLooseBase(this, _saveWidth)[_saveWidth]();
-	    window.dispatchEvent(new window.Event('resize'));
-	  }
-	}
-	function _showDragOverlay2() {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _dragOverlayEl)[_dragOverlayEl]) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _dragOverlayEl)[_dragOverlayEl] = main_core.Tag.render(_t2$5 || (_t2$5 = _$7`
+		`;
+			main_core.Dom.append(this.#resizeHandleEl, container);
+			main_core.Event.bind(this.#resizeHandleEl, 'pointerdown', this.#boundOnPointerDown);
+		}
+		#onPointerDown(event) {
+			event.preventDefault();
+			const container = this.getContainer();
+			if (!container) {
+				return;
+			}
+			this.#isDragging = true;
+			this.#dragStartX = event.clientX;
+			this.#dragStartWidth = container.getBoundingClientRect().width;
+			main_core.Dom.addClass(document.body, RightPanel.#RESIZING_CLASS);
+			this.#showDragOverlay();
+			main_core.Event.bind(document, 'pointermove', this.#boundOnPointerMove);
+			main_core.Event.bind(document, 'pointerup', this.#boundOnPointerUp);
+		}
+		#onPointerMove(event) {
+			if (!this.#isDragging) {
+				return;
+			}
+			const delta = this.#dragStartX - event.clientX;
+			const newWidth = this.#dragStartWidth + delta;
+			main_core.Dom.style(document.body, '--air-right-panel-width', `${newWidth}px`);
+			const container = this.getContainer();
+			if (container) {
+				const actualWidth = container.getBoundingClientRect().width;
+				if (actualWidth !== newWidth) {
+					main_core.Dom.style(document.body, '--air-right-panel-width', `${actualWidth}px`);
+				}
+			}
+		}
+		#onPointerUp(event) {
+			if (!this.#isDragging) {
+				return;
+			}
+			this.#isDragging = false;
+			main_core.Dom.removeClass(document.body, RightPanel.#RESIZING_CLASS);
+			this.#hideDragOverlay();
+			main_core.Event.unbind(document, 'pointermove', this.#boundOnPointerMove);
+			main_core.Event.unbind(document, 'pointerup', this.#boundOnPointerUp);
+			const container = this.getContainer();
+			if (container && this.#getSavedWidth() !== container.getBoundingClientRect().width) {
+				this.#savedWidth = container.getBoundingClientRect().width;
+				this.#saveWidth();
+				window.dispatchEvent(new window.Event('resize'));
+			}
+		}
+		#showDragOverlay() {
+			if (!this.#dragOverlayEl) {
+				this.#dragOverlayEl = main_core.Tag.render`
 				<div class="right-panel-drag-overlay"></div>
-			`));
-	  }
-	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _dragOverlayEl)[_dragOverlayEl], document.body);
+			`;
+			}
+			main_core.Dom.append(this.#dragOverlayEl, document.body);
+		}
+		#hideDragOverlay() {
+			if (this.#dragOverlayEl) {
+				main_core.Dom.remove(this.#dragOverlayEl);
+			}
+		}
+		#saveWidth() {
+			BX.userOptions.save('intranet', 'right_panel_width', null, String(this.#getSavedWidth()));
+			this.#saveWidthToSessionStorage();
+			Composite.clearCache();
+		}
+		#handleResizeObserver() {
+			this.emit('onResize');
+		}
+		#saveExpandedToSessionStorage(expanded) {
+			try {
+				sessionStorage.setItem(RightPanel.#SS_EXPANDED_KEY, expanded ? 'Y' : 'N');
+			} catch {/* sessionStorage may be unavailable */}
+		}
+		#saveWidthToSessionStorage() {
+			try {
+				sessionStorage.setItem(RightPanel.#SS_WIDTH_KEY, String(this.#getSavedWidth()));
+			} catch {/* sessionStorage may be unavailable */}
+		}
+		#subscribeToEvents() {
+			const clearComposite = () => Composite.clearCache();
+			this.subscribe('onExpandComplete', clearComposite);
+			this.subscribe('onCollapseComplete', clearComposite);
+			Composite.ready(() => {
+				this.#initResizeHandle();
+			});
+		}
 	}
-	function _hideDragOverlay2() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _dragOverlayEl)[_dragOverlayEl]) {
-	    main_core.Dom.remove(babelHelpers.classPrivateFieldLooseBase(this, _dragOverlayEl)[_dragOverlayEl]);
-	  }
-	}
-	function _saveWidth2() {
-	  BX.userOptions.save('intranet', 'right_panel_width', null, String(babelHelpers.classPrivateFieldLooseBase(this, _getSavedWidth)[_getSavedWidth]()));
-	  babelHelpers.classPrivateFieldLooseBase(this, _saveWidthToSessionStorage)[_saveWidthToSessionStorage]();
-	  Composite.clearCache();
-	}
-	function _handleResizeObserver2() {
-	  this.emit('onResize');
-	}
-	function _saveExpandedToSessionStorage2(expanded) {
-	  try {
-	    sessionStorage.setItem(babelHelpers.classPrivateFieldLooseBase(RightPanel, _SS_EXPANDED_KEY)[_SS_EXPANDED_KEY], expanded ? 'Y' : 'N');
-	  } catch {/* sessionStorage may be unavailable */}
-	}
-	function _saveWidthToSessionStorage2() {
-	  try {
-	    sessionStorage.setItem(babelHelpers.classPrivateFieldLooseBase(RightPanel, _SS_WIDTH_KEY)[_SS_WIDTH_KEY], String(babelHelpers.classPrivateFieldLooseBase(this, _getSavedWidth)[_getSavedWidth]()));
-	  } catch {/* sessionStorage may be unavailable */}
-	}
-	function _subscribeToEvents2() {
-	  const clearComposite = () => Composite.clearCache();
-	  this.subscribe('onExpandComplete', clearComposite);
-	  this.subscribe('onCollapseComplete', clearComposite);
-	  Composite.ready(() => {
-	    babelHelpers.classPrivateFieldLooseBase(this, _initResizeHandle)[_initResizeHandle]();
-	  });
-	}
-	Object.defineProperty(RightPanel, _EXPANDED_CLASS, {
-	  writable: true,
-	  value: '--right-panel-expanded'
-	});
-	Object.defineProperty(RightPanel, _RESIZING_CLASS, {
-	  writable: true,
-	  value: '--resizing'
-	});
-	Object.defineProperty(RightPanel, _DEFAULT_WIDTH, {
-	  writable: true,
-	  value: 380
-	});
-	Object.defineProperty(RightPanel, _SS_WIDTH_KEY, {
-	  writable: true,
-	  value: 'b24_right_panel_width'
-	});
-	Object.defineProperty(RightPanel, _SS_EXPANDED_KEY, {
-	  writable: true,
-	  value: 'b24_right_panel_expanded'
-	});
 
-	let _$8 = t => t,
-	  _t$8,
-	  _t2$6;
-	var _rightPanel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rightPanel");
-	var _rightBar = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rightBar");
-	var _siteTemplate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("siteTemplate");
-	var _container = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
-	var _contentContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("contentContainer");
-	var _vueApp = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("vueApp");
-	var _isExpanded = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isExpanded");
-	var _chatExtensionPromise = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("chatExtensionPromise");
-	var _showSidebar = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showSidebar");
-	var _initContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initContainer");
-	var _mountVueApp = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("mountVueApp");
-	var _loadChatExtension = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loadChatExtension");
-	var _loadTheme = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loadTheme");
-	var _destroy = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("destroy");
 	class RightPanelAiChat extends main_core_events.EventEmitter {
-	  constructor(rightPanel, rightBar, siteTemplate) {
-	    super();
-	    Object.defineProperty(this, _destroy, {
-	      value: _destroy2
-	    });
-	    Object.defineProperty(this, _loadTheme, {
-	      value: _loadTheme2
-	    });
-	    Object.defineProperty(this, _loadChatExtension, {
-	      value: _loadChatExtension2
-	    });
-	    Object.defineProperty(this, _mountVueApp, {
-	      value: _mountVueApp2
-	    });
-	    Object.defineProperty(this, _initContainer, {
-	      value: _initContainer2
-	    });
-	    Object.defineProperty(this, _showSidebar, {
-	      value: _showSidebar2
-	    });
-	    Object.defineProperty(this, _rightPanel, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _rightBar, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _siteTemplate, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _container, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _contentContainer, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _vueApp, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _isExpanded, {
-	      writable: true,
-	      value: false
-	    });
-	    Object.defineProperty(this, _chatExtensionPromise, {
-	      writable: true,
-	      value: null
-	    });
-	    this.setEventNamespace('BX.Intranet.Bitrix24.Template.RightPanelAiChat');
-	    babelHelpers.classPrivateFieldLooseBase(this, _rightPanel)[_rightPanel] = rightPanel;
-	    babelHelpers.classPrivateFieldLooseBase(this, _rightBar)[_rightBar] = rightBar;
-	    babelHelpers.classPrivateFieldLooseBase(this, _siteTemplate)[_siteTemplate] = siteTemplate;
-	  }
-	  isExpanded() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _isExpanded)[_isExpanded];
-	  }
-	  expand(params) {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _isExpanded)[_isExpanded]) {
-	      return;
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _isExpanded)[_isExpanded] = true;
-	    babelHelpers.classPrivateFieldLooseBase(this, _loadTheme)[_loadTheme]().then(({
-	      ThemeManager,
-	      SpecialBackground
-	    }) => {
-	      if (!babelHelpers.classPrivateFieldLooseBase(this, _isExpanded)[_isExpanded]) {
-	        return;
-	      }
-	      const chatBackground = ThemeManager.getBackgroundStyleById(SpecialBackground.martaAI);
-	      if (!babelHelpers.classPrivateFieldLooseBase(this, _container)[_container]) {
-	        babelHelpers.classPrivateFieldLooseBase(this, _initContainer)[_initContainer](chatBackground);
-	      }
-	      babelHelpers.classPrivateFieldLooseBase(this, _showSidebar)[_showSidebar]();
-	      babelHelpers.classPrivateFieldLooseBase(this, _mountVueApp)[_mountVueApp](params.chatId);
-	      this.emit('onExpand');
-	      main_core_events.EventEmitter.subscribeOnce('IM.AiAssistantWidget:minimize', () => {
-	        this.collapse();
-	      });
-	    }).catch(error => {
-	      console.error('RightPanelAiChat: Failed to load theme:', error);
-	      babelHelpers.classPrivateFieldLooseBase(this, _isExpanded)[_isExpanded] = false;
-	    });
-	  }
-	  collapse() {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isExpanded)[_isExpanded]) {
-	      return;
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _isExpanded)[_isExpanded] = false;
-	    this.emit('onCollapse');
-	    babelHelpers.classPrivateFieldLooseBase(this, _rightPanel)[_rightPanel].subscribeOnce('onCollapseComplete', () => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _rightBar)[_rightBar].resetBackground();
-	      babelHelpers.classPrivateFieldLooseBase(this, _siteTemplate)[_siteTemplate].resetAvatarBlockBackground();
-	      babelHelpers.classPrivateFieldLooseBase(this, _destroy)[_destroy]();
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _rightPanel)[_rightPanel].collapse();
-	  }
-	  preload() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _loadChatExtension)[_loadChatExtension]();
-	  }
-	}
-	function _showSidebar2() {
-	  const sidebarContainer = babelHelpers.classPrivateFieldLooseBase(this, _rightPanel)[_rightPanel].getContainer();
-	  if (!sidebarContainer) {
-	    console.error('RightPanelAiChat: Sidebar container #app__right-panel not found');
-	    return;
-	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _rightPanel)[_rightPanel].expand();
-	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container], sidebarContainer);
-	}
-	function _initContainer2(chatBackground) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _contentContainer)[_contentContainer] = main_core.Tag.render(_t$8 || (_t$8 = _$8`
+		#rightPanel;
+		#rightBar;
+		#siteTemplate;
+		#container = null;
+		#contentContainer = null;
+		#vueApp = null;
+		#isExpanded = false;
+		#chatExtensionPromise = null;
+		constructor(rightPanel, rightBar, siteTemplate) {
+			super();
+			this.setEventNamespace('BX.Intranet.Bitrix24.Template.RightPanelAiChat');
+			this.#rightPanel = rightPanel;
+			this.#rightBar = rightBar;
+			this.#siteTemplate = siteTemplate;
+		}
+		isExpanded() {
+			return this.#isExpanded;
+		}
+		expand(params) {
+			if (this.#isExpanded) {
+				return;
+			}
+			this.#isExpanded = true;
+			this.#loadTheme().then(({
+				ThemeManager,
+				SpecialBackground
+			}) => {
+				if (!this.#isExpanded) {
+					return;
+				}
+				const chatBackground = ThemeManager.getBackgroundStyleById(SpecialBackground.aiAssistantWidget || SpecialBackground.aiAssistant);
+				if (!this.#container) {
+					this.#initContainer(chatBackground);
+				}
+				this.#showSidebar();
+				const avatarBg = SpecialBackground.aiAssistantWidget ? '#4c40a8' : '#ffffff';
+				this.#mountVueApp(params.chatId, avatarBg);
+				this.emit('onExpand');
+				main_core_events.EventEmitter.subscribeOnce('IM.AiAssistantWidget:minimize', () => {
+					this.collapse();
+				});
+			}).catch(error => {
+				console.error('RightPanelAiChat: Failed to load theme:', error);
+				this.#isExpanded = false;
+			});
+		}
+		collapse() {
+			if (!this.#isExpanded) {
+				return;
+			}
+			this.#isExpanded = false;
+			this.emit('onCollapse');
+			this.#rightPanel.subscribeOnce('onCollapseComplete', () => {
+				this.#rightBar.resetBackground();
+				this.#siteTemplate.resetAvatarBlockBackground();
+				this.#destroy();
+			});
+			this.#rightPanel.collapse();
+		}
+		preload() {
+			return this.#loadChatExtension();
+		}
+		#showSidebar() {
+			const sidebarContainer = this.#rightPanel.getContainer();
+			if (!sidebarContainer) {
+				console.error('RightPanelAiChat: Sidebar container #app__right-panel not found');
+				return;
+			}
+			this.#rightPanel.expand();
+			main_core.Dom.append(this.#container, sidebarContainer);
+		}
+		#initContainer(chatBackground) {
+			this.#contentContainer = main_core.Tag.render`
 			<div class="right-panel-ai-chat__content"></div>
-		`));
-	  const loader = new main_loader.Loader({
-	    size: 144,
-	    color: 'rgba(255, 255, 255, 0.6)',
-	    target: babelHelpers.classPrivateFieldLooseBase(this, _contentContainer)[_contentContainer],
-	    offset: {
-	      top: '-50px'
-	    }
-	  });
-	  loader.show();
-	  babelHelpers.classPrivateFieldLooseBase(this, _container)[_container] = main_core.Tag.render(_t2$6 || (_t2$6 = _$8`
+		`;
+			const loader = new main_loader.Loader({
+				size: 144,
+				color: 'rgba(255, 255, 255, 0.6)',
+				target: this.#contentContainer,
+				offset: {
+					top: '-50px'
+				}
+			});
+			loader.show();
+			this.#container = main_core.Tag.render`
 			<div class="right-panel-ai-chat --ui-context-content-light">
-				${0}
+				${this.#contentContainer}
 				<div class="right-panel-ai-chat__background"
 					style="
-						background-color: ${0};
-						background-image: ${0};
-						background-position: ${0};
-						background-repeat: ${0};
-						background-size: ${0};
+						background-color: ${chatBackground.backgroundColor};
+						background-image: ${chatBackground.backgroundImage};
+						background-position: ${chatBackground.backgroundPosition};
+						background-repeat: ${chatBackground.backgroundRepeat};
+						background-size: ${chatBackground.backgroundSize};
 					"
 				></div>
 			</div>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _contentContainer)[_contentContainer], chatBackground.backgroundColor, chatBackground.backgroundImage, chatBackground.backgroundPosition, chatBackground.backgroundRepeat, chatBackground.backgroundSize);
-	}
-	async function _mountVueApp2(chatId) {
-	  try {
-	    const application = await babelHelpers.classPrivateFieldLooseBase(this, _loadChatExtension)[_loadChatExtension]();
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isExpanded)[_isExpanded]) {
-	      return;
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _vueApp)[_vueApp] = application;
-	    application.mount({
-	      aiAssistantBotId: chatId,
-	      rootContainer: babelHelpers.classPrivateFieldLooseBase(this, _contentContainer)[_contentContainer]
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _siteTemplate)[_siteTemplate].setAvatarBlockBackground({
-	      backgroundColor: '#fff'
-	    });
-	  } catch (error) {
-	    console.error('RightPanelAiChat: Failed to mount chat widget:', error);
-	  }
-	}
-	function _loadChatExtension2() {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _chatExtensionPromise)[_chatExtensionPromise]) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _chatExtensionPromise)[_chatExtensionPromise] = main_core.Runtime.loadExtension('im.v2.application.integration.ai-assistant-widget').then(() => {
-	      const LaunchApplication = BX.Messenger.v2.Application.Launch;
-	      const ChatEmbeddedApplication = BX.Messenger.v2.Application.ChatEmbeddedApplication;
-	      return LaunchApplication(ChatEmbeddedApplication.aiAssistantWidget);
-	    }).catch(error => {
-	      console.error('RightPanelAiChat: Failed to preload chat extension:', error);
-	      babelHelpers.classPrivateFieldLooseBase(this, _chatExtensionPromise)[_chatExtensionPromise] = null;
-	      throw error;
-	    });
-	  }
-	  return babelHelpers.classPrivateFieldLooseBase(this, _chatExtensionPromise)[_chatExtensionPromise];
-	}
-	function _loadTheme2() {
-	  return main_core.Runtime.loadExtension('im.v2.lib.theme').then(exports => {
-	    return {
-	      ThemeManager: exports.ThemeManager,
-	      SpecialBackground: exports.SpecialBackground
-	    };
-	  });
-	}
-	function _destroy2() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _vueApp)[_vueApp]) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _vueApp)[_vueApp].bitrixVue.unmount();
-	    babelHelpers.classPrivateFieldLooseBase(this, _vueApp)[_vueApp] = null;
-	  }
-	  main_core.Dom.remove(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container]);
-	  babelHelpers.classPrivateFieldLooseBase(this, _container)[_container] = null;
-	  babelHelpers.classPrivateFieldLooseBase(this, _contentContainer)[_contentContainer] = null;
+		`;
+		}
+		async #mountVueApp(chatId, avatarBg) {
+			try {
+				const application = await this.#loadChatExtension();
+				if (!this.#isExpanded) {
+					return;
+				}
+				this.#vueApp = application;
+				application.mount({
+					aiAssistantBotId: chatId,
+					rootContainer: this.#contentContainer
+				});
+				this.#siteTemplate.setAvatarBlockBackground({
+					backgroundColor: avatarBg
+				});
+			} catch (error) {
+				console.error('RightPanelAiChat: Failed to mount chat widget:', error);
+			}
+		}
+		#loadChatExtension() {
+			if (!this.#chatExtensionPromise) {
+				this.#chatExtensionPromise = main_core.Runtime.loadExtension('im.v2.application.integration.ai-assistant-widget').then(() => {
+					const LaunchApplication = BX.Messenger.v2.Application.Launch;
+					const ChatEmbeddedApplication = BX.Messenger.v2.Application.ChatEmbeddedApplication;
+					return LaunchApplication(ChatEmbeddedApplication.aiAssistantWidget);
+				}).catch(error => {
+					console.error('RightPanelAiChat: Failed to preload chat extension:', error);
+					this.#chatExtensionPromise = null;
+					throw error;
+				});
+			}
+			return this.#chatExtensionPromise;
+		}
+		#loadTheme() {
+			return main_core.Runtime.loadExtension('im.v2.lib.theme').then(exports => {
+				return {
+					ThemeManager: exports.ThemeManager,
+					SpecialBackground: exports.SpecialBackground
+				};
+			});
+		}
+		#destroy() {
+			if (this.#vueApp) {
+				this.#vueApp.bitrixVue.unmount();
+				this.#vueApp = null;
+			}
+			main_core.Dom.remove(this.#container);
+			this.#container = null;
+			this.#contentContainer = null;
+		}
 	}
 
-	let _$9 = t => t,
-	  _t$9;
-	var _rightPanel$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rightPanel");
-	var _rightBar$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rightBar");
-	var _overlay = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("overlay");
 	class RightSidebar {
-	  constructor(panel, bar) {
-	    Object.defineProperty(this, _rightPanel$1, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _rightBar$1, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _overlay, {
-	      writable: true,
-	      value: null
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _rightPanel$1)[_rightPanel$1] = panel;
-	    babelHelpers.classPrivateFieldLooseBase(this, _rightBar$1)[_rightBar$1] = bar;
-	    panel.subscribe('onResize', () => {
-	      main_sidepanel.SidePanel.Instance.adjustLayout();
-	      this.adjustOverlay();
-	    });
-	    panel.subscribe('onExpand', () => {
-	      this.toggleContext();
-	    });
-	    panel.subscribe('onCollapse', () => {
-	      this.toggleContext();
-	    });
-	    panel.subscribe('onExpandComplete', () => {
-	      this.adjustOverlay();
-	    });
-	    panel.subscribe('onCollapseComplete', () => {
-	      this.adjustOverlay();
-	    });
-	    main_core_events.EventEmitter.subscribe('SidePanel.Slider:onOpening', () => {
-	      this.adjustOverlay();
-	      this.toggleContext();
-	    });
-	    const onClose = () => {
-	      if (main_sidepanel.SidePanel.Instance.getOpenSlidersCount() === 0) {
-	        this.adjustOverlay();
-	      }
-	      this.toggleContext();
-	    };
-	    main_core_events.EventEmitter.subscribe('SidePanel.Slider:onCloseComplete', onClose);
-	    main_core_events.EventEmitter.subscribe('SidePanel.Slider:onDestroy', onClose);
-	  }
-	  getOverlay() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _overlay)[_overlay] === null) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _overlay)[_overlay] = main_core.Tag.render(_t$9 || (_t$9 = _$9`<div class="right-bar-overlay"></div>`));
-	      main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _overlay)[_overlay], document.body);
-	    }
-	    return babelHelpers.classPrivateFieldLooseBase(this, _overlay)[_overlay];
-	  }
-	  setOverlayBackground(background) {
-	    main_core.Dom.style(this.getOverlay(), 'background', background);
-	  }
-	  adjustOverlay() {
-	    const rightPanel = babelHelpers.classPrivateFieldLooseBase(this, _rightPanel$1)[_rightPanel$1].getContainer() || babelHelpers.classPrivateFieldLooseBase(this, _rightBar$1)[_rightBar$1].getContainer();
-	    if (rightPanel === null) {
-	      return;
-	    }
-	    const windowWidth = main_core.Browser.isMobile() ? window.innerWidth : document.documentElement.clientWidth;
-	    const width = windowWidth - rightPanel.getBoundingClientRect().left;
-	    main_core.Dom.style(this.getOverlay(), 'width', `${width}px`);
-	  }
-	  toggleContext() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _rightBar$1)[_rightBar$1].getContainer() === null) {
-	      return;
-	    }
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _rightPanel$1)[_rightPanel$1].isExpanded()) {
-	      main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _rightBar$1)[_rightBar$1].getContainer(), '--ui-context-edge-dark');
-	      main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _rightBar$1)[_rightBar$1].getContainer(), '--ui-context-edge-light');
-	    } else if (main_sidepanel.SidePanel.Instance.getOpenSlidersCount() > 0) {
-	      main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _rightBar$1)[_rightBar$1].getContainer(), '--ui-context-edge-dark');
-	      main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _rightBar$1)[_rightBar$1].getContainer(), '--ui-context-edge-light');
-	    } else {
-	      main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _rightBar$1)[_rightBar$1].getContainer(), ['--ui-context-edge-light', '--ui-context-edge-dark']);
-	    }
-	  }
+		#rightPanel;
+		#rightBar;
+		#overlay = null;
+		constructor(panel, bar) {
+			this.#rightPanel = panel;
+			this.#rightBar = bar;
+			panel.subscribe('onResize', () => {
+				main_sidepanel.SidePanel.Instance.adjustLayout();
+				this.adjustOverlay();
+			});
+			panel.subscribe('onExpand', () => {
+				this.toggleContext();
+			});
+			panel.subscribe('onCollapse', () => {
+				this.toggleContext();
+			});
+			panel.subscribe('onExpandComplete', () => {
+				this.adjustOverlay();
+			});
+			panel.subscribe('onCollapseComplete', () => {
+				this.adjustOverlay();
+			});
+			main_core_events.EventEmitter.subscribe('SidePanel.Slider:onOpening', () => {
+				this.adjustOverlay();
+				this.toggleContext();
+			});
+			const onClose = () => {
+				if (main_sidepanel.SidePanel.Instance.getOpenSlidersCount() === 0) {
+					this.adjustOverlay();
+				}
+				this.toggleContext();
+			};
+			main_core_events.EventEmitter.subscribe('SidePanel.Slider:onCloseComplete', onClose);
+			main_core_events.EventEmitter.subscribe('SidePanel.Slider:onDestroy', onClose);
+		}
+		getOverlay() {
+			if (this.#overlay === null) {
+				this.#overlay = main_core.Tag.render`<div class="right-bar-overlay"></div>`;
+				main_core.Dom.append(this.#overlay, document.body);
+			}
+			return this.#overlay;
+		}
+		setOverlayBackground(background) {
+			main_core.Dom.style(this.getOverlay(), 'background', background);
+		}
+		adjustOverlay() {
+			const rightPanel = this.#rightPanel.getContainer() || this.#rightBar.getContainer();
+			if (rightPanel === null) {
+				return;
+			}
+			const windowWidth = main_core.Browser.isMobile() ? window.innerWidth : document.documentElement.clientWidth;
+			const width = windowWidth - rightPanel.getBoundingClientRect().left;
+			main_core.Dom.style(this.getOverlay(), 'width', `${width}px`);
+		}
+		toggleContext() {
+			if (this.#rightBar.getContainer() === null) {
+				return;
+			}
+			if (this.#rightPanel.isExpanded()) {
+				main_core.Dom.removeClass(this.#rightBar.getContainer(), '--ui-context-edge-light');
+				main_core.Dom.addClass(this.#rightBar.getContainer(), '--ui-context-edge-dark');
+			} else if (main_sidepanel.SidePanel.Instance.getOpenSlidersCount() > 0) {
+				main_core.Dom.addClass(this.#rightBar.getContainer(), '--ui-context-edge-dark');
+				main_core.Dom.removeClass(this.#rightBar.getContainer(), '--ui-context-edge-light');
+			} else {
+				main_core.Dom.removeClass(this.#rightBar.getContainer(), ['--ui-context-edge-light', '--ui-context-edge-dark']);
+			}
+		}
 	}
 
-	var _leftMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("leftMenu");
-	var _rightBar$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rightBar");
-	var _header = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("header");
-	var _footer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("footer");
-	var _composite = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("composite");
-	var _chatMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("chatMenu");
-	var _goTopButton$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("goTopButton");
-	var _collaborationMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("collaborationMenu");
-	var _rightPanel$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rightPanel");
-	var _rightPanelAiChat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rightPanelAiChat");
-	var _rightSidebar = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rightSidebar");
-	var _supportViewTransition = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("supportViewTransition");
-	var _enterFullscreen = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("enterFullscreen");
-	var _exitFullscreen = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("exitFullscreen");
-	var _dispatchResizeEvent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dispatchResizeEvent");
-	var _patchPopupMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("patchPopupMenu");
-	var _patchJSClock = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("patchJSClock");
-	var _preventFromIframe = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("preventFromIframe");
-	var _applyUserAgentRules = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("applyUserAgentRules");
-	var _patchRestAPI = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("patchRestAPI");
 	class SiteTemplate {
-	  constructor() {
-	    Object.defineProperty(this, _patchRestAPI, {
-	      value: _patchRestAPI2
-	    });
-	    Object.defineProperty(this, _applyUserAgentRules, {
-	      value: _applyUserAgentRules2
-	    });
-	    Object.defineProperty(this, _preventFromIframe, {
-	      value: _preventFromIframe2
-	    });
-	    Object.defineProperty(this, _patchJSClock, {
-	      value: _patchJSClock2
-	    });
-	    Object.defineProperty(this, _patchPopupMenu, {
-	      value: _patchPopupMenu2
-	    });
-	    Object.defineProperty(this, _dispatchResizeEvent, {
-	      value: _dispatchResizeEvent2
-	    });
-	    Object.defineProperty(this, _exitFullscreen, {
-	      value: _exitFullscreen2
-	    });
-	    Object.defineProperty(this, _enterFullscreen, {
-	      value: _enterFullscreen2
-	    });
-	    Object.defineProperty(this, _supportViewTransition, {
-	      value: _supportViewTransition2
-	    });
-	    Object.defineProperty(this, _leftMenu, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _rightBar$2, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _header, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _footer, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _composite, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _chatMenu, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _goTopButton$1, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _collaborationMenu, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _rightPanel$2, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _rightPanelAiChat, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _rightSidebar, {
-	      writable: true,
-	      value: null
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _preventFromIframe)[_preventFromIframe]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _patchPopupMenu)[_patchPopupMenu]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _patchRestAPI)[_patchRestAPI]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _patchJSClock)[_patchJSClock]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _goTopButton$1)[_goTopButton$1] = new GoTopButton();
-	    babelHelpers.classPrivateFieldLooseBase(this, _leftMenu)[_leftMenu] = new LeftMenu();
-	    babelHelpers.classPrivateFieldLooseBase(this, _rightBar$2)[_rightBar$2] = new RightBar({
-	      goTopButton: babelHelpers.classPrivateFieldLooseBase(this, _goTopButton$1)[_goTopButton$1]
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _header)[_header] = new Header();
-	    babelHelpers.classPrivateFieldLooseBase(this, _footer)[_footer] = new Footer();
-	    babelHelpers.classPrivateFieldLooseBase(this, _composite)[_composite] = new Composite();
-	    babelHelpers.classPrivateFieldLooseBase(this, _chatMenu)[_chatMenu] = new ChatMenu();
-	    babelHelpers.classPrivateFieldLooseBase(this, _collaborationMenu)[_collaborationMenu] = new CollaborationMenu();
-	    babelHelpers.classPrivateFieldLooseBase(this, _rightPanel$2)[_rightPanel$2] = new RightPanel();
-	    babelHelpers.classPrivateFieldLooseBase(this, _rightPanelAiChat)[_rightPanelAiChat] = new RightPanelAiChat(babelHelpers.classPrivateFieldLooseBase(this, _rightPanel$2)[_rightPanel$2], babelHelpers.classPrivateFieldLooseBase(this, _rightBar$2)[_rightBar$2], this);
-	    babelHelpers.classPrivateFieldLooseBase(this, _rightSidebar)[_rightSidebar] = new RightSidebar(babelHelpers.classPrivateFieldLooseBase(this, _rightPanel$2)[_rightPanel$2], babelHelpers.classPrivateFieldLooseBase(this, _rightBar$2)[_rightBar$2]);
-	    babelHelpers.classPrivateFieldLooseBase(this, _applyUserAgentRules)[_applyUserAgentRules]();
-	  }
-	  getLeftMenu() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _leftMenu)[_leftMenu];
-	  }
-	  getRightBar() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _rightBar$2)[_rightBar$2];
-	  }
-	  getHeader() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _header)[_header];
-	  }
-	  getFooter() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _footer)[_footer];
-	  }
-	  getComposite() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _composite)[_composite];
-	  }
-	  getChatMenu() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _chatMenu)[_chatMenu];
-	  }
-	  getCollaborationMenu() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _collaborationMenu)[_collaborationMenu];
-	  }
-	  getRightPanel() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _rightPanel$2)[_rightPanel$2];
-	  }
-	  getRightPanelAiChat() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _rightPanelAiChat)[_rightPanelAiChat];
-	  }
-	  getRightSidebar() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _rightSidebar)[_rightSidebar];
-	  }
-	  enterFullscreen() {
-	    if (this.isFullscreen()) {
-	      return;
-	    }
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _supportViewTransition)[_supportViewTransition]()) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _enterFullscreen)[_enterFullscreen]();
-	      babelHelpers.classPrivateFieldLooseBase(this, _dispatchResizeEvent)[_dispatchResizeEvent]();
-	      return;
-	    }
-	    const transition = document.startViewTransition(() => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _enterFullscreen)[_enterFullscreen]();
-	    });
-	    transition.finished.then(() => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _dispatchResizeEvent)[_dispatchResizeEvent]();
-	    }).catch(() => {
-	      // fail silently
-	    });
-	  }
-	  exitFullscreen() {
-	    if (!this.isFullscreen()) {
-	      return;
-	    }
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _supportViewTransition)[_supportViewTransition]()) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _exitFullscreen)[_exitFullscreen]();
-	      babelHelpers.classPrivateFieldLooseBase(this, _dispatchResizeEvent)[_dispatchResizeEvent]();
-	      return;
-	    }
-	    const transition = document.startViewTransition(() => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _exitFullscreen)[_exitFullscreen]();
-	    });
-	    transition.finished.then(() => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _dispatchResizeEvent)[_dispatchResizeEvent]();
-	    }).catch(() => {
-	      // fail silently
-	    });
-	  }
-	  toggleFullscreen() {
-	    if (this.isFullscreen()) {
-	      this.exitFullscreen();
-	    } else {
-	      this.enterFullscreen();
-	    }
-	  }
-	  isFullscreen() {
-	    return main_core.Dom.hasClass(document.body, 'air-fullscreen-mode');
-	  }
-	  setAvatarBlockBackground(background) {
-	    var _background$backgroun, _background$backgroun2, _background$backgroun3, _background$backgroun4, _background$backgroun5;
-	    // hack for chat.js #showSidebar()
-	    this.getRightSidebar().toggleContext();
-	    main_core.Dom.style(document.getElementById('avatar-area'), {
-	      backgroundImage: (_background$backgroun = background == null ? void 0 : background.backgroundImage) != null ? _background$backgroun : null,
-	      backgroundColor: (_background$backgroun2 = background == null ? void 0 : background.backgroundColor) != null ? _background$backgroun2 : null,
-	      backgroundPosition: (_background$backgroun3 = background == null ? void 0 : background.backgroundPosition) != null ? _background$backgroun3 : null,
-	      backgroundRepeat: (_background$backgroun4 = background == null ? void 0 : background.backgroundRepeat) != null ? _background$backgroun4 : null,
-	      backgroundSize: (_background$backgroun5 = background == null ? void 0 : background.backgroundSize) != null ? _background$backgroun5 : null
-	    });
-	  }
-	  resetAvatarBlockBackground() {
-	    main_core.Dom.style(document.getElementById('avatar-area'), {
-	      backgroundImage: null,
-	      backgroundColor: null,
-	      backgroundPosition: null,
-	      backgroundRepeat: null,
-	      backgroundSize: null
-	    });
-	  }
-	}
-	function _supportViewTransition2() {
-	  return main_core.Type.isFunction(document.startViewTransition) && !main_core.Browser.isSafari();
-	}
-	function _enterFullscreen2() {
-	  main_core.Dom.addClass(document.body, 'air-fullscreen-mode');
-	  this.getLeftMenu().hide();
-	  this.getHeader().hide();
-	  this.getFooter().hide();
-	  this.getRightBar().hide();
-	}
-	function _exitFullscreen2() {
-	  main_core.Dom.removeClass(document.body, 'air-fullscreen-mode');
-	  this.getLeftMenu().show();
-	  this.getHeader().show();
-	  this.getFooter().show();
-	  this.getRightBar().show();
-	}
-	function _dispatchResizeEvent2() {
-	  window.dispatchEvent(new Event('resize'));
-	}
-	function _patchPopupMenu2() {
-	  main_core_events.EventEmitter.subscribe('BX.Main.Menu:onInit', event => {
-	    const {
-	      params
-	    } = event.getData();
-	    if (params && main_core.Type.isNumber(params.maxWidth)) {
-	      // We increased menu-item's font-size that's why we increase max-width
-	      params.maxWidth += 10;
-	    }
-	  });
-	}
-	function _patchJSClock2() {
-	  main_core_events.EventEmitter.subscribe('onJCClockInit', config => {
-	    window.JCClock.setOptions({
-	      centerXInline: 83,
-	      centerX: 83,
-	      centerYInline: 67,
-	      centerY: 79,
-	      minuteLength: 31,
-	      hourLength: 26,
-	      popupHeight: 229,
-	      inaccuracy: 15,
-	      cancelCheckClick: true
-	    });
-	  });
-	}
-	function _preventFromIframe2() {
-	  const iframeMode = window !== window.top;
-	  if (iframeMode) {
-	    window.top.location = window.location.href;
-	  }
-	}
-	function _applyUserAgentRules2() {
-	  if (!main_core.Browser.isMobile() && document.referrer !== '' && document.referrer.startsWith(location.origin) === false) {
-	    main_core.Runtime.loadExtension('intranet.recognize-links');
-	  }
-	}
-	function _patchRestAPI2() {
-	  const AppLayout = main_core.Reflection.getClass('BX.rest.AppLayout');
-	  if (!AppLayout) {
-	    return;
-	  }
-	  const placementInterface = AppLayout.initializePlacement('DEFAULT');
-	  placementInterface.prototype.showHelper = async function (params, cb) {
-	    let query = '';
-	    if (main_core.Type.isNumber(params)) {
-	      query = `redirect=detail&code=${params}`;
-	    } else if (main_core.Type.isStringFilled(params)) {
-	      query = params;
-	    } else if (main_core.Type.isPlainObject(params)) {
-	      for (const param of Object.keys(params)) {
-	        if (query.length > 0) {
-	          query += '&';
-	        }
-	        query += `${param}=${params[param]}`;
-	      }
-	    }
-	    if (query.length > 0) {
-	      await main_core.Runtime.loadExtension('helper');
-	      const Helper = main_core.Reflection.getClass('BX.Helper');
-	      Helper.show(query);
-	    }
-	  };
+		#leftMenu = null;
+		#rightBar = null;
+		#header = null;
+		#footer = null;
+		#composite = null;
+		#chatMenu = null;
+		#goTopButton = null;
+		#collaborationMenu = null;
+		#rightPanel = null;
+		#rightPanelAiChat = null;
+		#rightSidebar = null;
+		#skipToContent = null;
+		constructor() {
+			this.#preventFromIframe();
+			this.#patchPopupMenu();
+			this.#patchRestAPI();
+			this.#patchJSClock();
+			this.#skipToContent = new intranet_skipToContent.SkipToContent();
+			this.#goTopButton = new GoTopButton();
+			this.#leftMenu = new LeftMenu();
+			this.#rightBar = new RightBar({
+				goTopButton: this.#goTopButton
+			});
+			this.#header = new Header();
+			this.#footer = new Footer();
+			this.#composite = new Composite();
+			this.#chatMenu = new ChatMenu();
+			this.#collaborationMenu = new CollaborationMenu();
+			this.#rightPanel = new RightPanel();
+			this.#rightPanelAiChat = new RightPanelAiChat(this.#rightPanel, this.#rightBar, this);
+			this.#rightSidebar = new RightSidebar(this.#rightPanel, this.#rightBar);
+			main_core.ready(() => this.#skipToContent.render());
+			this.#applyUserAgentRules();
+		}
+		getLeftMenu() {
+			return this.#leftMenu;
+		}
+		getRightBar() {
+			return this.#rightBar;
+		}
+		getHeader() {
+			return this.#header;
+		}
+		getFooter() {
+			return this.#footer;
+		}
+		getComposite() {
+			return this.#composite;
+		}
+		getChatMenu() {
+			return this.#chatMenu;
+		}
+		getCollaborationMenu() {
+			return this.#collaborationMenu;
+		}
+		getRightPanel() {
+			return this.#rightPanel;
+		}
+		getRightPanelAiChat() {
+			return this.#rightPanelAiChat;
+		}
+		getRightSidebar() {
+			return this.#rightSidebar;
+		}
+		enterFullscreen() {
+			if (this.isFullscreen()) {
+				return;
+			}
+			if (!this.#supportViewTransition()) {
+				this.#enterFullscreen();
+				this.#dispatchResizeEvent();
+				return;
+			}
+			const transition = document.startViewTransition(() => {
+				this.#enterFullscreen();
+			});
+			transition.finished.then(() => {
+				this.#dispatchResizeEvent();
+			}).catch(() => {
+				// fail silently
+			});
+		}
+		exitFullscreen() {
+			if (!this.isFullscreen()) {
+				return;
+			}
+			if (!this.#supportViewTransition()) {
+				this.#exitFullscreen();
+				this.#dispatchResizeEvent();
+				return;
+			}
+			const transition = document.startViewTransition(() => {
+				this.#exitFullscreen();
+			});
+			transition.finished.then(() => {
+				this.#dispatchResizeEvent();
+			}).catch(() => {
+				// fail silently
+			});
+		}
+		toggleFullscreen() {
+			if (this.isFullscreen()) {
+				this.exitFullscreen();
+			} else {
+				this.enterFullscreen();
+			}
+		}
+		isFullscreen() {
+			return main_core.Dom.hasClass(document.body, 'air-fullscreen-mode');
+		}
+		setAvatarBlockBackground(background) {
+			// hack for chat.js #showSidebar()
+			this.getRightSidebar().toggleContext();
+			main_core.Dom.style(document.getElementById('avatar-area'), {
+				backgroundImage: background?.backgroundImage ?? null,
+				backgroundColor: background?.backgroundColor ?? null,
+				backgroundPosition: background?.backgroundPosition ?? null,
+				backgroundRepeat: background?.backgroundRepeat ?? null,
+				backgroundSize: background?.backgroundSize ?? null
+			});
+		}
+		resetAvatarBlockBackground() {
+			main_core.Dom.style(document.getElementById('avatar-area'), {
+				backgroundImage: null,
+				backgroundColor: null,
+				backgroundPosition: null,
+				backgroundRepeat: null,
+				backgroundSize: null
+			});
+		}
+		#supportViewTransition() {
+			return main_core.Type.isFunction(document.startViewTransition) && !main_core.Browser.isSafari();
+		}
+		#enterFullscreen() {
+			main_core.Dom.addClass(document.body, 'air-fullscreen-mode');
+			this.getLeftMenu().hide();
+			this.getHeader().hide();
+			this.getFooter().hide();
+			this.getRightBar().hide();
+		}
+		#exitFullscreen() {
+			main_core.Dom.removeClass(document.body, 'air-fullscreen-mode');
+			this.getLeftMenu().show();
+			this.getHeader().show();
+			this.getFooter().show();
+			this.getRightBar().show();
+		}
+		#dispatchResizeEvent() {
+			window.dispatchEvent(new Event('resize'));
+		}
+		#patchPopupMenu() {
+			main_core_events.EventEmitter.subscribe('BX.Main.Menu:onInit', event => {
+				const {
+					params
+				} = event.getData();
+				if (params && main_core.Type.isNumber(params.maxWidth)) {
+					// We increased menu-item's font-size that's why we increase max-width
+					params.maxWidth += 10;
+				}
+			});
+		}
+		#patchJSClock() {
+			main_core_events.EventEmitter.subscribe('onJCClockInit', config => {
+				window.JCClock.setOptions({
+					centerXInline: 83,
+					centerX: 83,
+					centerYInline: 67,
+					centerY: 79,
+					minuteLength: 31,
+					hourLength: 26,
+					popupHeight: 229,
+					inaccuracy: 15,
+					cancelCheckClick: true
+				});
+			});
+		}
+		#preventFromIframe() {
+			const iframeMode = window !== window.top;
+			if (iframeMode) {
+				window.top.location = window.location.href;
+			}
+		}
+		#applyUserAgentRules() {
+			if (!main_core.Browser.isMobile() && document.referrer !== '' && document.referrer.startsWith(location.origin) === false) {
+				main_core.Runtime.loadExtension('intranet.recognize-links');
+			}
+		}
+		#patchRestAPI() {
+			const AppLayout = main_core.Reflection.getClass('BX.rest.AppLayout');
+			if (!AppLayout) {
+				return;
+			}
+			const placementInterface = AppLayout.initializePlacement('DEFAULT');
+			placementInterface.prototype.showHelper = async function (params, cb) {
+				let query = '';
+				if (main_core.Type.isNumber(params)) {
+					query = `redirect=detail&code=${params}`;
+				} else if (main_core.Type.isStringFilled(params)) {
+					query = params;
+				} else if (main_core.Type.isPlainObject(params)) {
+					for (const param of Object.keys(params)) {
+						if (query.length > 0) {
+							query += '&';
+						}
+						query += `${param}=${params[param]}`;
+					}
+				}
+				if (query.length > 0) {
+					await main_core.Runtime.loadExtension('helper');
+					const Helper = main_core.Reflection.getClass('BX.Helper');
+					Helper.show(query);
+				}
+			};
+		}
 	}
 
-	var _searchOptions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("searchOptions");
-	var _extensionLoaded = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("extensionLoaded");
-	var _container$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
-	var _button$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("button");
-	var _input = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("input");
-	var _searchTitleInstance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("searchTitleInstance");
-	var _searchButtonLabel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("searchButtonLabel");
-	var _closeButtonLabel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("closeButtonLabel");
-	var _boundHandleKeyDown = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("boundHandleKeyDown");
-	var _handleButtonClick$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleButtonClick");
-	var _handleInputFocusOut = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleInputFocusOut");
-	var _handleKeyDown = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleKeyDown");
 	class SearchTitle {
-	  constructor(options) {
-	    Object.defineProperty(this, _handleKeyDown, {
-	      value: _handleKeyDown2
-	    });
-	    Object.defineProperty(this, _handleInputFocusOut, {
-	      value: _handleInputFocusOut2
-	    });
-	    Object.defineProperty(this, _handleButtonClick$1, {
-	      value: _handleButtonClick2$1
-	    });
-	    Object.defineProperty(this, _searchOptions, {
-	      writable: true,
-	      value: {}
-	    });
-	    Object.defineProperty(this, _extensionLoaded, {
-	      writable: true,
-	      value: false
-	    });
-	    Object.defineProperty(this, _container$1, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _button$1, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _input, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _searchTitleInstance, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _searchButtonLabel, {
-	      writable: true,
-	      value: ''
-	    });
-	    Object.defineProperty(this, _closeButtonLabel, {
-	      writable: true,
-	      value: ''
-	    });
-	    Object.defineProperty(this, _boundHandleKeyDown, {
-	      writable: true,
-	      value: null
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _container$1)[_container$1] = document.getElementById(options.containerId);
-	    babelHelpers.classPrivateFieldLooseBase(this, _button$1)[_button$1] = document.getElementById(options.buttonId);
-	    babelHelpers.classPrivateFieldLooseBase(this, _input)[_input] = document.getElementById(options.inputId);
-	    babelHelpers.classPrivateFieldLooseBase(this, _searchOptions)[_searchOptions] = options.searchOptions;
-	    babelHelpers.classPrivateFieldLooseBase(this, _searchButtonLabel)[_searchButtonLabel] = options.searchButtonLabel || '';
-	    babelHelpers.classPrivateFieldLooseBase(this, _closeButtonLabel)[_closeButtonLabel] = options.closeButtonLabel || '';
-	    babelHelpers.classPrivateFieldLooseBase(this, _boundHandleKeyDown)[_boundHandleKeyDown] = babelHelpers.classPrivateFieldLooseBase(this, _handleKeyDown)[_handleKeyDown].bind(this);
-	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _button$1)[_button$1], 'click', babelHelpers.classPrivateFieldLooseBase(this, _handleButtonClick$1)[_handleButtonClick$1].bind(this));
-	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _input)[_input], 'focusout', babelHelpers.classPrivateFieldLooseBase(this, _handleInputFocusOut)[_handleInputFocusOut].bind(this));
-	  }
-	  open() {
-	    main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _container$1)[_container$1], '--active');
-	    babelHelpers.classPrivateFieldLooseBase(this, _input)[_input].disabled = false;
-	    main_core.Dom.attr(babelHelpers.classPrivateFieldLooseBase(this, _input)[_input], 'aria-hidden', null);
-	    main_core.Dom.attr(babelHelpers.classPrivateFieldLooseBase(this, _input)[_input], 'tabindex', null);
-	    main_core.Dom.attr(babelHelpers.classPrivateFieldLooseBase(this, _button$1)[_button$1], 'aria-label', babelHelpers.classPrivateFieldLooseBase(this, _closeButtonLabel)[_closeButtonLabel]);
-	    main_core.Dom.attr(babelHelpers.classPrivateFieldLooseBase(this, _button$1)[_button$1], 'aria-expanded', true);
-	    main_core.Event.bind(document, 'keydown', babelHelpers.classPrivateFieldLooseBase(this, _boundHandleKeyDown)[_boundHandleKeyDown]);
-	    setTimeout(() => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _input)[_input].focus();
-	    }, 200);
-	  }
-	  close() {
-	    main_core.Event.unbind(document, 'keydown', babelHelpers.classPrivateFieldLooseBase(this, _boundHandleKeyDown)[_boundHandleKeyDown]);
-	    main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _container$1)[_container$1], '--active');
-	    babelHelpers.classPrivateFieldLooseBase(this, _input)[_input].disabled = true;
-	    main_core.Dom.attr(babelHelpers.classPrivateFieldLooseBase(this, _input)[_input], 'aria-hidden', true);
-	    main_core.Dom.attr(babelHelpers.classPrivateFieldLooseBase(this, _input)[_input], 'tabindex', -1);
-	    main_core.Dom.attr(babelHelpers.classPrivateFieldLooseBase(this, _button$1)[_button$1], 'aria-label', babelHelpers.classPrivateFieldLooseBase(this, _searchButtonLabel)[_searchButtonLabel]);
-	    main_core.Dom.attr(babelHelpers.classPrivateFieldLooseBase(this, _button$1)[_button$1], 'aria-expanded', false);
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _searchTitleInstance)[_searchTitleInstance] !== null) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _searchTitleInstance)[_searchTitleInstance].clearSearch();
-	      babelHelpers.classPrivateFieldLooseBase(this, _searchTitleInstance)[_searchTitleInstance].closeResult();
-	    }
-	  }
-	}
-	function _handleButtonClick2$1() {
-	  if (main_core.Dom.hasClass(babelHelpers.classPrivateFieldLooseBase(this, _container$1)[_container$1], '--active')) {
-	    this.close();
-	  } else {
-	    this.open();
-	  }
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _extensionLoaded)[_extensionLoaded]) {
-	    return;
-	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _extensionLoaded)[_extensionLoaded] = true;
-	  main_core.Runtime.loadExtension('intranet.search_title').then(() => {
-	    const SearchTitleClass = main_core.Reflection.getClass('BX.Intranet.SearchTitle');
-	    babelHelpers.classPrivateFieldLooseBase(this, _searchTitleInstance)[_searchTitleInstance] = new SearchTitleClass(babelHelpers.classPrivateFieldLooseBase(this, _searchOptions)[_searchOptions]);
-	  }).catch(error => {
-	    console.error(error);
-	  });
-	}
-	function _handleInputFocusOut2(event) {
-	  if (!main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _input)[_input].value) && event.relatedTarget !== babelHelpers.classPrivateFieldLooseBase(this, _button$1)[_button$1]) {
-	    this.close();
-	  }
-	}
-	function _handleKeyDown2(event) {
-	  if (event.key !== 'Escape') {
-	    return;
-	  }
-	  this.close();
-	  babelHelpers.classPrivateFieldLooseBase(this, _button$1)[_button$1].focus();
+		#searchOptions = {};
+		#extensionLoaded = false;
+		#container = null;
+		#button = null;
+		#input = null;
+		#searchTitleInstance = null;
+		#searchButtonLabel = '';
+		#closeButtonLabel = '';
+		#boundHandleKeyDown = null;
+		constructor(options) {
+			this.#container = document.getElementById(options.containerId);
+			this.#button = document.getElementById(options.buttonId);
+			this.#input = document.getElementById(options.inputId);
+			this.#searchOptions = options.searchOptions;
+			this.#searchButtonLabel = options.searchButtonLabel || '';
+			this.#closeButtonLabel = options.closeButtonLabel || '';
+			this.#boundHandleKeyDown = this.#handleKeyDown.bind(this);
+			main_core.Event.bind(this.#button, 'click', this.#handleButtonClick.bind(this));
+			main_core.Event.bind(this.#input, 'focusout', this.#handleInputFocusOut.bind(this));
+		}
+		open() {
+			main_core.Dom.addClass(this.#container, '--active');
+			this.#input.disabled = false;
+			main_core.Dom.attr(this.#input, 'aria-hidden', null);
+			main_core.Dom.attr(this.#input, 'tabindex', null);
+			main_core.Dom.attr(this.#button, 'aria-label', this.#closeButtonLabel);
+			main_core.Dom.attr(this.#button, 'aria-expanded', true);
+			main_core.Event.bind(document, 'keydown', this.#boundHandleKeyDown);
+			setTimeout(() => {
+				this.#input.focus();
+			}, 200);
+		}
+		close() {
+			main_core.Event.unbind(document, 'keydown', this.#boundHandleKeyDown);
+			main_core.Dom.removeClass(this.#container, '--active');
+			this.#input.disabled = true;
+			main_core.Dom.attr(this.#input, 'aria-hidden', true);
+			main_core.Dom.attr(this.#input, 'tabindex', -1);
+			main_core.Dom.attr(this.#button, 'aria-label', this.#searchButtonLabel);
+			main_core.Dom.attr(this.#button, 'aria-expanded', false);
+			if (this.#searchTitleInstance !== null) {
+				this.#searchTitleInstance.clearSearch();
+				this.#searchTitleInstance.closeResult();
+			}
+		}
+		#handleButtonClick() {
+			if (main_core.Dom.hasClass(this.#container, '--active')) {
+				this.close();
+			} else {
+				this.open();
+			}
+			if (this.#extensionLoaded) {
+				return;
+			}
+			this.#extensionLoaded = true;
+			main_core.Runtime.loadExtension('intranet.search_title').then(() => {
+				const SearchTitleClass = main_core.Reflection.getClass('BX.Intranet.SearchTitle');
+				this.#searchTitleInstance = new SearchTitleClass(this.#searchOptions);
+			}).catch(error => {
+				console.error(error);
+			});
+		}
+		#handleInputFocusOut(event) {
+			if (!main_core.Type.isStringFilled(this.#input.value) && event.relatedTarget !== this.#button) {
+				this.close();
+			}
+		}
+		#handleKeyDown(event) {
+			if (event.key !== 'Escape') {
+				return;
+			}
+			this.close();
+			this.#button.focus();
+		}
 	}
 
-	var _avatarWrapper = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("avatarWrapper");
-	var _cache = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cache");
-	var _options = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("options");
-	var _showWidget = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showWidget");
-	var _getWidgetLoader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getWidgetLoader");
-	var _getContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getContent");
-	var _showCounter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showCounter");
-	var _setHiddenAvatar = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setHiddenAvatar");
-	var _setVisibleAvatar = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setVisibleAvatar");
-	var _showWorkTimeState = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showWorkTimeState");
-	var _updateStateButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateStateButton");
-	var _getCounterWrapper = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCounterWrapper");
-	var _getShortWorkTimeStateWrapper = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getShortWorkTimeStateWrapper");
-	var _getCounter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCounter");
-	var _calculateCounterValue = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("calculateCounterValue");
-	var _getWorkTimeState = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getWorkTimeState");
-	var _setEventHandlersForUpdateCounter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setEventHandlersForUpdateCounter");
-	var _setEventHandlerForChangeAvatar = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setEventHandlerForChangeAvatar");
 	class AvatarButton {
-	  static init(options) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _options)[_options] = options;
-	    babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper] = document.querySelector('[data-id="bx-avatar-widget"]');
-	    babelHelpers.classPrivateFieldLooseBase(this, _setEventHandlerForChangeAvatar)[_setEventHandlerForChangeAvatar]();
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].signDocumentsCounter > 0 || babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].verifyPhoneCounter) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _showCounter)[_showCounter]();
-	      babelHelpers.classPrivateFieldLooseBase(this, _setEventHandlersForUpdateCounter)[_setEventHandlersForUpdateCounter]();
-	    }
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].workTimeAvailable) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _showWorkTimeState)[_showWorkTimeState]();
-	    }
-	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper], 'click', () => {
-	      main_core.Event.unbindAll(babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper]);
-	      babelHelpers.classPrivateFieldLooseBase(this, _getWidgetLoader)[_getWidgetLoader]().getPopup().setFixed(true);
-	      babelHelpers.classPrivateFieldLooseBase(this, _getWidgetLoader)[_getWidgetLoader]().createSkeletonFromConfig(options.skeleton).show();
-	      babelHelpers.classPrivateFieldLooseBase(this, _setHiddenAvatar)[_setHiddenAvatar]();
-	      babelHelpers.classPrivateFieldLooseBase(this, _getWidgetLoader)[_getWidgetLoader]().getPopup().subscribe('onClose', () => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _setVisibleAvatar)[_setVisibleAvatar]();
-	      });
-	      babelHelpers.classPrivateFieldLooseBase(this, _getWidgetLoader)[_getWidgetLoader]().getPopup().subscribe('onShow', () => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _setHiddenAvatar)[_setHiddenAvatar]();
-	      });
-	      main_core.Runtime.loadExtension(['intranet.avatar-widget']).then(() => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _showWidget)[_showWidget]();
-	      }).catch(() => {});
-	    });
-	  }
+		static #avatarWrapper;
+		static #cache = new main_core_cache.MemoryCache();
+		static #options;
+		static init(options) {
+			this.#options = options;
+			this.#avatarWrapper = document.querySelector('[data-id="bx-avatar-widget"]');
+			this.#setEventHandlerForChangeAvatar();
+			if (this.#options.signDocumentsCounter > 0 || this.#options.verifyPhoneCounter) {
+				this.#showCounter();
+				this.#setEventHandlersForUpdateCounter();
+			}
+			if (this.#options.workTimeAvailable) {
+				this.#showWorkTimeState();
+			}
+			main_core.Event.bind(this.#avatarWrapper, 'click', () => {
+				main_core.Event.unbindAll(this.#avatarWrapper);
+				this.#getWidgetLoader().getPopup().setFixed(true);
+				this.#getWidgetLoader().createSkeletonFromConfig(options.skeleton).show();
+				this.#setHiddenAvatar();
+				this.#getWidgetLoader().getPopup().subscribe('onClose', () => {
+					this.#setVisibleAvatar();
+				});
+				this.#getWidgetLoader().getPopup().subscribe('onShow', () => {
+					this.#setHiddenAvatar();
+				});
+				main_core.Runtime.loadExtension(['intranet.avatar-widget']).then(() => {
+					this.#showWidget();
+				}).catch(() => {});
+			});
+		}
+		static #showWidget() {
+			this.#getContent().then(response => {
+				this.#getWidgetLoader().clearBeforeInsertContent();
+				intranet_avatarWidget.AvatarWidget.getInstance().setOptions({
+					buttonWrapper: this.#avatarWrapper,
+					loader: this.#getWidgetLoader().getPopup(),
+					data: response.data
+				}).show();
+				main_core.Event.bind(this.#avatarWrapper, 'click', () => {
+					intranet_avatarWidget.AvatarWidget.getInstance().show();
+				});
+			}).catch(error => {
+				console.error(error);
+			});
+		}
+		static #getWidgetLoader() {
+			return this.#cache.remember('widgetLoader', () => {
+				return new intranet_widgetLoader.WidgetLoader({
+					id: 'bx-avatar-header-popup',
+					bindElement: this.#avatarWrapper,
+					className: 'intranet-avatar-widget-base-popup',
+					width: 390,
+					useAngle: false,
+					fixed: true,
+					offsetTop: -50,
+					offsetLeft: 0
+				});
+			});
+		}
+		static #getContent() {
+			return this.#cache.remember('content', () => {
+				return new Promise((resolve, reject) => {
+					main_core.ajax.runAction('intranet.user.widget.getContent').then(response => resolve(response)).catch(response => reject(response));
+				});
+			});
+		}
+		static #showCounter() {
+			this.#getCounter().renderTo(this.#getCounterWrapper());
+		}
+		static #setHiddenAvatar() {
+			main_core.Dom.style(this.#avatarWrapper, 'opacity', '0');
+			main_core.Dom.attr(this.#avatarWrapper, 'aria-hidden', 'true');
+		}
+		static #setVisibleAvatar() {
+			main_core.Dom.style(this.#avatarWrapper, 'opacity', '1');
+			main_core.Dom.attr(this.#avatarWrapper, 'aria-hidden', 'false');
+		}
+		static #showWorkTimeState() {
+			this.#getWorkTimeState().renderTo(this.#getShortWorkTimeStateWrapper());
+			this.#getWorkTimeState().subscribe('onUpdateState', event => {
+				this.#updateStateButton(event.data);
+			});
+		}
+		static #updateStateButton(config) {
+			let className = '';
+			const stateClasses = ['--worktime-not-started', '--worktime-finished', '--worktime-not-finished', '--worktime-paused'];
+			stateClasses.forEach(stateClass => {
+				main_core.Dom.removeClass(this.#avatarWrapper, stateClass);
+			});
+			switch (config.state) {
+				case 'CLOSED':
+					className = config.action === 'OPEN' ? '--worktime-not-started' : '--worktime-finished';
+					break;
+				case 'EXPIRED':
+					className = '--worktime-not-finished';
+					break;
+				case 'PAUSED':
+					className = '--worktime-paused';
+					break;
+				default:
+					className = '';
+					break;
+			}
+			if (className) {
+				main_core.Dom.addClass(this.#avatarWrapper, className);
+			}
+		}
+		static #getCounterWrapper() {
+			return this.#cache.remember('counterWrapper', () => {
+				return this.#avatarWrapper.querySelector('.air-user-profile-avatar__counter');
+			});
+		}
+		static #getShortWorkTimeStateWrapper() {
+			return this.#cache.remember('workTimeStateWrapper', () => {
+				return this.#avatarWrapper.querySelector('.air-user-profile-avatar__work-time-state-short');
+			});
+		}
+		static #getCounter() {
+			return this.#cache.remember('counter', () => {
+				return new ui_cnt.Counter({
+					color: ui_cnt.Counter.Color.DANGER,
+					size: ui_cnt.Counter.Size.MEDIUM,
+					value: this.#calculateCounterValue(),
+					useAirDesign: true,
+					style: ui_cnt.CounterStyle.FILLED_ALERT
+				});
+			});
+		}
+		static #calculateCounterValue() {
+			return this.#options.signDocumentsCounter + (this.#options.verifyPhoneCounter ? 1 : 0);
+		}
+		static #getWorkTimeState() {
+			return this.#cache.remember('workTimeState', () => {
+				return new timeman_workTimeStateIcon.WorkTimeStateIcon({
+					state: this.#options.workTimeState,
+					action: this.#options.workTimeAction
+				});
+			});
+		}
+		static #setEventHandlersForUpdateCounter() {
+			if (this.#options.signDocumentsCounter > 0) {
+				pull_client.PULL.subscribe({
+					moduleId: 'sign',
+					command: this.#options.signDocumentsPullEventName,
+					callback: params => {
+						if (!main_core.Type.isNumber(params?.needActionCount)) {
+							return;
+						}
+						if (params?.needActionCount > 0) {
+							this.#options.signDocumentsCounter = params.needActionCount;
+							this.#getCounter().update(this.#calculateCounterValue());
+						} else if (!this.#options.verifyPhoneCounter) {
+							this.#options.signDocumentsCounter = 0;
+							this.#getCounter().destroy();
+						}
+					}
+				});
+			}
+			if (this.#options.verifyPhoneCounter) {
+				pull_client.PULL.subscribe({
+					moduleId: 'intranet',
+					command: this.#options.verifyPhonePullEventName,
+					callback: () => {
+						this.#options.verifyPhoneCounter = false;
+						if (this.#options.signDocumentsCounter <= 0) {
+							this.#getCounter().destroy();
+						} else {
+							this.#getCounter().update(this.#calculateCounterValue());
+						}
+					}
+				});
+			}
+		}
+		static #setEventHandlerForChangeAvatar() {
+			const avatar = this.#avatarWrapper.querySelector('.air-user-profile__avatar i');
+			main_core_events.EventEmitter.subscribe('BX.Intranet.UserProfile:Avatar:changed', event => {
+				const data = event.getData()[0];
+				const url = data && data.url ? data.url : '';
+				const eventUserId = data && data.userId ? data.userId : 0;
+				if (this.#options.userId === eventUserId && avatar) {
+					avatar.style = main_core.Type.isStringFilled(url) ? `background-size: cover; background-image: url('${encodeURI(url)}')` : '';
+				}
+			});
+		}
 	}
-	function _showWidget2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _getContent)[_getContent]().then(response => {
-	    babelHelpers.classPrivateFieldLooseBase(this, _getWidgetLoader)[_getWidgetLoader]().clearBeforeInsertContent();
-	    intranet_avatarWidget.AvatarWidget.getInstance().setOptions({
-	      buttonWrapper: babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper],
-	      loader: babelHelpers.classPrivateFieldLooseBase(this, _getWidgetLoader)[_getWidgetLoader]().getPopup(),
-	      data: response.data
-	    }).show();
-	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper], 'click', () => {
-	      intranet_avatarWidget.AvatarWidget.getInstance().show();
-	    });
-	  }).catch(error => {
-	    console.error(error);
-	  });
-	}
-	function _getWidgetLoader2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].remember('widgetLoader', () => {
-	    return new intranet_widgetLoader.WidgetLoader({
-	      id: 'bx-avatar-header-popup',
-	      bindElement: babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper],
-	      className: 'intranet-avatar-widget-base-popup',
-	      width: 390,
-	      useAngle: false,
-	      fixed: true,
-	      offsetTop: -50,
-	      offsetLeft: 0
-	    });
-	  });
-	}
-	function _getContent2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].remember('content', () => {
-	    return new Promise((resolve, reject) => {
-	      main_core.ajax.runAction('intranet.user.widget.getContent').then(response => resolve(response)).catch(response => reject(response));
-	    });
-	  });
-	}
-	function _showCounter2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _getCounter)[_getCounter]().renderTo(babelHelpers.classPrivateFieldLooseBase(this, _getCounterWrapper)[_getCounterWrapper]());
-	}
-	function _setHiddenAvatar2() {
-	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper], 'opacity', '0');
-	  main_core.Dom.attr(babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper], 'aria-hidden', 'true');
-	}
-	function _setVisibleAvatar2() {
-	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper], 'opacity', '1');
-	  main_core.Dom.attr(babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper], 'aria-hidden', 'false');
-	}
-	function _showWorkTimeState2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _getWorkTimeState)[_getWorkTimeState]().renderTo(babelHelpers.classPrivateFieldLooseBase(this, _getShortWorkTimeStateWrapper)[_getShortWorkTimeStateWrapper]());
-	  babelHelpers.classPrivateFieldLooseBase(this, _getWorkTimeState)[_getWorkTimeState]().subscribe('onUpdateState', event => {
-	    babelHelpers.classPrivateFieldLooseBase(this, _updateStateButton)[_updateStateButton](event.data);
-	  });
-	}
-	function _updateStateButton2(config) {
-	  let className = '';
-	  const stateClasses = ['--worktime-not-started', '--worktime-finished', '--worktime-not-finished', '--worktime-paused'];
-	  stateClasses.forEach(stateClass => {
-	    main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper], stateClass);
-	  });
-	  switch (config.state) {
-	    case 'CLOSED':
-	      className = config.action === 'OPEN' ? '--worktime-not-started' : '--worktime-finished';
-	      break;
-	    case 'EXPIRED':
-	      className = '--worktime-not-finished';
-	      break;
-	    case 'PAUSED':
-	      className = '--worktime-paused';
-	      break;
-	    default:
-	      className = '';
-	      break;
-	  }
-	  if (className) {
-	    main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper], className);
-	  }
-	}
-	function _getCounterWrapper2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].remember('counterWrapper', () => {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper].querySelector('.air-user-profile-avatar__counter');
-	  });
-	}
-	function _getShortWorkTimeStateWrapper2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].remember('workTimeStateWrapper', () => {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper].querySelector('.air-user-profile-avatar__work-time-state-short');
-	  });
-	}
-	function _getCounter2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].remember('counter', () => {
-	    return new ui_cnt.Counter({
-	      color: ui_cnt.Counter.Color.DANGER,
-	      size: ui_cnt.Counter.Size.MEDIUM,
-	      value: babelHelpers.classPrivateFieldLooseBase(this, _calculateCounterValue)[_calculateCounterValue](),
-	      useAirDesign: true,
-	      style: ui_cnt.CounterStyle.FILLED_ALERT
-	    });
-	  });
-	}
-	function _calculateCounterValue2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].signDocumentsCounter + (babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].verifyPhoneCounter ? 1 : 0);
-	}
-	function _getWorkTimeState2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].remember('workTimeState', () => {
-	    return new timeman_workTimeStateIcon.WorkTimeStateIcon({
-	      state: babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].workTimeState,
-	      action: babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].workTimeAction
-	    });
-	  });
-	}
-	function _setEventHandlersForUpdateCounter2() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].signDocumentsCounter > 0) {
-	    pull_client.PULL.subscribe({
-	      moduleId: 'sign',
-	      command: babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].signDocumentsPullEventName,
-	      callback: params => {
-	        if (!main_core.Type.isNumber(params == null ? void 0 : params.needActionCount)) {
-	          return;
-	        }
-	        if ((params == null ? void 0 : params.needActionCount) > 0) {
-	          babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].signDocumentsCounter = params.needActionCount;
-	          babelHelpers.classPrivateFieldLooseBase(this, _getCounter)[_getCounter]().update(babelHelpers.classPrivateFieldLooseBase(this, _calculateCounterValue)[_calculateCounterValue]());
-	        } else if (!babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].verifyPhoneCounter) {
-	          babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].signDocumentsCounter = 0;
-	          babelHelpers.classPrivateFieldLooseBase(this, _getCounter)[_getCounter]().destroy();
-	        }
-	      }
-	    });
-	  }
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].verifyPhoneCounter) {
-	    pull_client.PULL.subscribe({
-	      moduleId: 'intranet',
-	      command: babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].verifyPhonePullEventName,
-	      callback: () => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].verifyPhoneCounter = false;
-	        if (babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].signDocumentsCounter <= 0) {
-	          babelHelpers.classPrivateFieldLooseBase(this, _getCounter)[_getCounter]().destroy();
-	        } else {
-	          babelHelpers.classPrivateFieldLooseBase(this, _getCounter)[_getCounter]().update(babelHelpers.classPrivateFieldLooseBase(this, _calculateCounterValue)[_calculateCounterValue]());
-	        }
-	      }
-	    });
-	  }
-	}
-	function _setEventHandlerForChangeAvatar2() {
-	  const avatar = babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper].querySelector('.air-user-profile__avatar i');
-	  main_core_events.EventEmitter.subscribe('BX.Intranet.UserProfile:Avatar:changed', event => {
-	    const data = event.getData()[0];
-	    const url = data && data.url ? data.url : '';
-	    const eventUserId = data && data.userId ? data.userId : 0;
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].userId === eventUserId && avatar) {
-	      avatar.style = main_core.Type.isStringFilled(url) ? `background-size: cover; background-image: url('${encodeURI(url)}')` : '';
-	    }
-	  });
-	}
-	Object.defineProperty(AvatarButton, _setEventHandlerForChangeAvatar, {
-	  value: _setEventHandlerForChangeAvatar2
-	});
-	Object.defineProperty(AvatarButton, _setEventHandlersForUpdateCounter, {
-	  value: _setEventHandlersForUpdateCounter2
-	});
-	Object.defineProperty(AvatarButton, _getWorkTimeState, {
-	  value: _getWorkTimeState2
-	});
-	Object.defineProperty(AvatarButton, _calculateCounterValue, {
-	  value: _calculateCounterValue2
-	});
-	Object.defineProperty(AvatarButton, _getCounter, {
-	  value: _getCounter2
-	});
-	Object.defineProperty(AvatarButton, _getShortWorkTimeStateWrapper, {
-	  value: _getShortWorkTimeStateWrapper2
-	});
-	Object.defineProperty(AvatarButton, _getCounterWrapper, {
-	  value: _getCounterWrapper2
-	});
-	Object.defineProperty(AvatarButton, _updateStateButton, {
-	  value: _updateStateButton2
-	});
-	Object.defineProperty(AvatarButton, _showWorkTimeState, {
-	  value: _showWorkTimeState2
-	});
-	Object.defineProperty(AvatarButton, _setVisibleAvatar, {
-	  value: _setVisibleAvatar2
-	});
-	Object.defineProperty(AvatarButton, _setHiddenAvatar, {
-	  value: _setHiddenAvatar2
-	});
-	Object.defineProperty(AvatarButton, _showCounter, {
-	  value: _showCounter2
-	});
-	Object.defineProperty(AvatarButton, _getContent, {
-	  value: _getContent2
-	});
-	Object.defineProperty(AvatarButton, _getWidgetLoader, {
-	  value: _getWidgetLoader2
-	});
-	Object.defineProperty(AvatarButton, _showWidget, {
-	  value: _showWidget2
-	});
-	Object.defineProperty(AvatarButton, _avatarWrapper, {
-	  writable: true,
-	  value: void 0
-	});
-	Object.defineProperty(AvatarButton, _cache, {
-	  writable: true,
-	  value: new main_core_cache.MemoryCache()
-	});
-	Object.defineProperty(AvatarButton, _options, {
-	  writable: true,
-	  value: void 0
-	});
 
-	var _options$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("options");
-	var _buttonWrapper = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buttonWrapper");
-	var _button$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("button");
-	var _cache$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cache");
-	var _getExtensionWidgetName = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getExtensionWidgetName");
-	var _openWidget = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openWidget");
-	var _showWidget$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showWidget");
-	var _getWidget = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getWidget");
-	var _getWidgetLoader$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getWidgetLoader");
-	var _setAriaExpanded = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setAriaExpanded");
-	var _getContent$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getContent");
-	var _getCounter$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCounter");
-	var _getCounterWrapper$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCounterWrapper");
-	var _setCounterValue = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setCounterValue");
-	var _setEventHandlers = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setEventHandlers");
-	var _resetHighlightIntegrator = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resetHighlightIntegrator");
-	var _updateOptionsFromPull = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateOptionsFromPull");
-	var _emitOrdersUpdate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("emitOrdersUpdate");
-	var _showInfrastructureSlider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showInfrastructureSlider");
-	var _sendAnalytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendAnalytics");
 	class LicenseButton {
-	  static init(options) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1] = options;
-	    babelHelpers.classPrivateFieldLooseBase(this, _buttonWrapper)[_buttonWrapper] = document.querySelector('[data-id="licenseWidgetWrapper"]');
-	    babelHelpers.classPrivateFieldLooseBase(this, _button$2)[_button$2] = babelHelpers.classPrivateFieldLooseBase(this, _buttonWrapper)[_buttonWrapper].querySelector('button');
-	    babelHelpers.classPrivateFieldLooseBase(this, _setEventHandlers)[_setEventHandlers]();
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].isCloud) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _setCounterValue)[_setCounterValue](babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].personalTotalCount, babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].commonTotalCount, babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].counters.highlightIntegrator);
-	    }
-	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _buttonWrapper)[_buttonWrapper], 'click', () => {
-	      if (babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].isCloud) {
-	        babelHelpers.classPrivateFieldLooseBase(LicenseButton, _sendAnalytics)[_sendAnalytics]({
-	          tool: 'intranet',
-	          category: 'header_popup',
-	          event: 'show',
-	          c_section: 'top_menu'
-	        });
-	      }
-	      babelHelpers.classPrivateFieldLooseBase(this, _openWidget)[_openWidget]();
-	    });
-	  }
+		static #options;
+		static #buttonWrapper;
+		static #button;
+		static #cache = new main_core_cache.MemoryCache();
+		static init(options) {
+			this.#options = options;
+			this.#buttonWrapper = document.querySelector('[data-id="licenseWidgetWrapper"]');
+			this.#button = this.#buttonWrapper.querySelector('button');
+			this.#setEventHandlers();
+			if (this.#options.isCloud) {
+				this.#setCounterValue(this.#options.personalTotalCount, this.#options.commonTotalCount, this.#options.counters.highlightIntegrator);
+			}
+			main_core.Event.bind(this.#buttonWrapper, 'click', () => {
+				if (this.#options.isCloud) {
+					LicenseButton.#sendAnalytics({
+						tool: 'intranet',
+						category: 'header_popup',
+						event: 'show',
+						c_section: 'top_menu'
+					});
+				}
+				this.#openWidget();
+			});
+		}
+		static #getExtensionWidgetName() {
+			if (this.#options.isCloud) {
+				return 'bitrix24.license-widget';
+			}
+			return 'intranet.license-widget';
+		}
+		static #openWidget() {
+			main_core.Event.unbindAll(this.#button);
+			this.#setAriaExpanded(true);
+			this.#getWidgetLoader().createSkeletonFromConfig(this.#options.skeleton).show();
+			main_core.Runtime.loadExtension([this.#getExtensionWidgetName()]).then(() => {
+				this.#showWidget();
+			}).catch(() => {});
+		}
+		static #showWidget() {
+			this.#getContent().then(response => {
+				this.#getWidgetLoader().clearBeforeInsertContent();
+				let licenseData = null;
+				if (this.#options.isCloud) {
+					licenseData = {
+						...response.data
+					};
+					licenseData.loader = this.#getWidgetLoader().getPopup();
+					licenseData.wrapper = this.#buttonWrapper;
+				} else {
+					licenseData = {
+						loader: this.#getWidgetLoader().getPopup(),
+						buttonWrapper: this.#buttonWrapper,
+						data: response.data
+					};
+				}
+				this.#getWidget().setOptions(licenseData).show();
+				this.#getWidgetLoader().getPopup().adjustPosition();
+				main_core.Event.bind(this.#button, 'click', () => {
+					this.#getWidget().show();
+					if (this.#options.isCloud) {
+						LicenseButton.#sendAnalytics({
+							tool: 'intranet',
+							category: 'header_popup',
+							event: 'show',
+							c_section: 'top_menu'
+						});
+					}
+				});
+				main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Bitrix24.LicenseWidget:firstShow');
+			}).catch(() => {});
+		}
+		static #getWidget() {
+			return this.#cache.remember('widget', () => {
+				if (this.#options.isCloud) {
+					return bitrix24_licenseWidget.LicenseWidget.getInstance();
+				}
+				return intranet_licenseWidget.LicenseWidget.getInstance();
+			});
+		}
+		static #getWidgetLoader() {
+			return this.#cache.remember('widgetLoader', () => {
+				const loader = new intranet_widgetLoader.WidgetLoader({
+					bindElement: this.#buttonWrapper,
+					width: 385,
+					id: 'bx-license-header-popup'
+				});
+				const popup = loader.getPopup();
+				popup.subscribe('onShow', () => {
+					this.#setAriaExpanded(true);
+				});
+				popup.subscribe('onClose', () => {
+					this.#setAriaExpanded(false);
+				});
+				return loader;
+			});
+		}
+		static #setAriaExpanded(expanded) {
+			this.#button.setAttribute('aria-expanded', String(expanded));
+		}
+		static #getContent() {
+			return this.#cache.remember('content', () => {
+				return new Promise((resolve, reject) => {
+					if (this.#options.isCloud) {
+						main_core.ajax.runComponentAction('bitrix:bitrix24.license.widget', 'getData', {
+							mode: 'class'
+						}).then(response => resolve(response)).catch(response => reject(response));
+					} else {
+						main_core.ajax.runAction('intranet.license.widget.getContent').then(response => resolve(response)).catch(response => reject(response));
+					}
+				});
+			});
+		}
+		static #getCounter() {
+			return this.#cache.remember('counter', () => {
+				return new ui_cnt.Counter({
+					color: ui_cnt.CounterColor.DANGER,
+					useAirDesign: true,
+					style: ui_cnt.CounterStyle.FILLED_ALERT
+				});
+			});
+		}
+		static #getCounterWrapper() {
+			return this.#cache.remember('counter-wrapper', () => {
+				return this.#buttonWrapper.querySelector('.air-header-button__counter');
+			});
+		}
+		static #setCounterValue(personalTotalCount, commonTotalCount, highlightIntegrator = 0) {
+			const value = personalTotalCount + commonTotalCount + highlightIntegrator;
+			if (value < 1) {
+				this.#getCounter().destroy();
+				this.#cache.delete('counter');
+			}
+			if (value > 0 && this.#getCounterWrapper()) {
+				this.#getCounter().update(value);
+				this.#getCounter().renderTo(this.#getCounterWrapper());
+			}
+		}
+		static #setEventHandlers() {
+			if (this.#options.isCloud && this.#options.isSidePanelDemoLicense) {
+				BX.SidePanel.Instance.bindAnchors({
+					rules: [{
+						condition: [/\/settings\/license_demo.php/],
+						handler(event) {
+							ui_infoHelper.FeaturePromotersRegistry.getPromoter({
+								code: 'limit_demo'
+							}).show();
+							event.stopPropagation();
+							event.preventDefault();
+						}
+					}]
+				});
+			}
+			if (this.#options.isCloud) {
+				main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.LicenseButton:showWidget', event => {
+					LicenseButton.#sendAnalytics({
+						tool: 'intranet',
+						category: 'header_popup',
+						event: 'show',
+						c_section: event.getData()?.c_section ?? 'search'
+					});
+					this.#openWidget();
+				});
+			}
+			if (this.#options.isCloud) {
+				pull_client.PULL.subscribe({
+					moduleId: 'bitrix24',
+					command: 'updateCountOrdersAwaitingPayment',
+					callback: params => {
+						this.#updateOptionsFromPull(params);
+					}
+				});
+				main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'Bitrix24InfrastructureSlider:show', this.#showInfrastructureSlider.bind(this));
+				main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Bitrix24.LicenseWidget.InviteHintPopup:show', this.#resetHighlightIntegrator.bind(this));
+			}
+		}
+		static #resetHighlightIntegrator() {
+			this.#options.counters.highlightIntegrator = 0;
+			this.#setCounterValue(this.#options.personalTotalCount, this.#options.commonTotalCount, this.#options.counters.highlightIntegrator);
+			BX.userOptions.save('bitrix24', 'isIntegratorHighlighted', null, 'Y');
+		}
+		static #updateOptionsFromPull(params) {
+			if (!this.#options.isCloud) {
+				return;
+			}
+			if (params.scope === 'common') {
+				this.#options.commonTotalCount = params.commonTotalCount;
+				if (params.commonTotalCount !== 0 && !main_core.Type.isNil(params.commonTotalCount)) {
+					this.#options.ordersInfo = params.orders.ordersInfo;
+					this.#options.counters.awaitingInvoice = params.orders.awaitingInvoice;
+					this.#options.counters.awaitingPayment = params.orders.awaitingPayment;
+					this.#options.counters.failedPayment = params.orders.failedPayment;
+				}
+				this.#setCounterValue(this.#options.personalTotalCount, params.commonTotalCount);
+			} else if (params.scope === 'personal') {
+				this.#options.personalTotalCount = params.personalTotalCount;
+				if (params.personalTotalCount !== 0 && !main_core.Type.isNil(params.personalTotalCount)) {
+					this.#options.ordersInfo.checkoutPath = params.orders.checkoutPath;
+					this.#options.counters.inCheckout = params.orders.inCheckout;
+				}
+				this.#setCounterValue(params.personalTotalCount, this.#options.commonTotalCount);
+			}
+			this.#emitOrdersUpdate();
+		}
+		static #emitOrdersUpdate() {
+			main_core_events.EventEmitter.emit('BX.Bitrix24.Orders:updateOrdersAwaitingPayment', new main_core_events.BaseEvent({
+				data: {
+					orders: {
+						counters: this.#options.counters,
+						ordersInfo: this.#options.ordersInfo
+					},
+					commonTotalCount: this.#options.commonTotalCount,
+					personalTotalCount: this.#options.personalTotalCount
+				}
+			}));
+		}
+		static #showInfrastructureSlider() {
+			const params = this.#options.infrastructureForm;
+			BX.SidePanel.Instance.open('bx-infrastructure-slider', {
+				contentCallback: () => {
+					return `<script data-b24-form="inline/${params.id}/${params.secCode}" data-skip-moving="true"></script>`;
+				},
+				width: 664,
+				loader: 'default-loader',
+				cacheable: false,
+				closeByEsc: false,
+				data: {
+					rightBoundary: 0
+				},
+				events: {
+					onOpen: () => {
+						(function (w, d, u) {
+							const s = d.createElement('script');
+							s.async = true;
+							s.src = `${u}?${Date.now() / 180_000 | 0}`;
+							const h = d.getElementsByTagName('script')[0];
+							h.parentNode.insertBefore(s, h);
+						})(window, document, `https://bitrix24.team/upload/crm/form/loader_${params.id}_${params.secCode}.js`);
+					},
+					onOpenComplete: () => {
+						top.addEventListener('b24:form:send:success', event => {
+							if (event.detail.object.identification.id === params.id) {
+								main_core.ajax.runComponentAction('bitrix:bitrix24.license.widget', 'setOptionWaitingInfrastructure', {
+									mode: 'class',
+									data: {}
+								});
+							}
+						});
+					}
+				}
+			});
+		}
+		static #sendAnalytics(params) {
+			// eslint-disable-next-line promise/catch-or-return
+			main_core.Runtime.loadExtension('ui.analytics').then(({
+				sendData
+			}) => {
+				sendData(params);
+			});
+		}
 	}
-	function _getExtensionWidgetName2() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].isCloud) {
-	    return 'bitrix24.license-widget';
-	  }
-	  return 'intranet.license-widget';
-	}
-	function _openWidget2() {
-	  main_core.Event.unbindAll(babelHelpers.classPrivateFieldLooseBase(this, _button$2)[_button$2]);
-	  babelHelpers.classPrivateFieldLooseBase(this, _setAriaExpanded)[_setAriaExpanded](true);
-	  babelHelpers.classPrivateFieldLooseBase(this, _getWidgetLoader$1)[_getWidgetLoader$1]().createSkeletonFromConfig(babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].skeleton).show();
-	  main_core.Runtime.loadExtension([babelHelpers.classPrivateFieldLooseBase(this, _getExtensionWidgetName)[_getExtensionWidgetName]()]).then(() => {
-	    babelHelpers.classPrivateFieldLooseBase(this, _showWidget$1)[_showWidget$1]();
-	  }).catch(() => {});
-	}
-	function _showWidget2$1() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _getContent$1)[_getContent$1]().then(response => {
-	    babelHelpers.classPrivateFieldLooseBase(this, _getWidgetLoader$1)[_getWidgetLoader$1]().clearBeforeInsertContent();
-	    let licenseData = null;
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].isCloud) {
-	      licenseData = {
-	        ...response.data
-	      };
-	      licenseData.loader = babelHelpers.classPrivateFieldLooseBase(this, _getWidgetLoader$1)[_getWidgetLoader$1]().getPopup();
-	      licenseData.wrapper = babelHelpers.classPrivateFieldLooseBase(this, _buttonWrapper)[_buttonWrapper];
-	    } else {
-	      licenseData = {
-	        loader: babelHelpers.classPrivateFieldLooseBase(this, _getWidgetLoader$1)[_getWidgetLoader$1]().getPopup(),
-	        buttonWrapper: babelHelpers.classPrivateFieldLooseBase(this, _buttonWrapper)[_buttonWrapper],
-	        data: response.data
-	      };
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _getWidget)[_getWidget]().setOptions(licenseData).show();
-	    babelHelpers.classPrivateFieldLooseBase(this, _getWidgetLoader$1)[_getWidgetLoader$1]().getPopup().adjustPosition();
-	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _button$2)[_button$2], 'click', () => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _getWidget)[_getWidget]().show();
-	      if (babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].isCloud) {
-	        babelHelpers.classPrivateFieldLooseBase(LicenseButton, _sendAnalytics)[_sendAnalytics]({
-	          tool: 'intranet',
-	          category: 'header_popup',
-	          event: 'show',
-	          c_section: 'top_menu'
-	        });
-	      }
-	    });
-	    main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Bitrix24.LicenseWidget:firstShow');
-	  }).catch(() => {});
-	}
-	function _getWidget2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _cache$1)[_cache$1].remember('widget', () => {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].isCloud) {
-	      return bitrix24_licenseWidget.LicenseWidget.getInstance();
-	    }
-	    return intranet_licenseWidget.LicenseWidget.getInstance();
-	  });
-	}
-	function _getWidgetLoader2$1() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _cache$1)[_cache$1].remember('widgetLoader', () => {
-	    const loader = new intranet_widgetLoader.WidgetLoader({
-	      bindElement: babelHelpers.classPrivateFieldLooseBase(this, _buttonWrapper)[_buttonWrapper],
-	      width: 385,
-	      id: 'bx-license-header-popup'
-	    });
-	    const popup = loader.getPopup();
-	    popup.subscribe('onShow', () => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _setAriaExpanded)[_setAriaExpanded](true);
-	    });
-	    popup.subscribe('onClose', () => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _setAriaExpanded)[_setAriaExpanded](false);
-	    });
-	    return loader;
-	  });
-	}
-	function _setAriaExpanded2(expanded) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _button$2)[_button$2].setAttribute('aria-expanded', String(expanded));
-	}
-	function _getContent2$1() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _cache$1)[_cache$1].remember('content', () => {
-	    return new Promise((resolve, reject) => {
-	      if (babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].isCloud) {
-	        main_core.ajax.runComponentAction('bitrix:bitrix24.license.widget', 'getData', {
-	          mode: 'class'
-	        }).then(response => resolve(response)).catch(response => reject(response));
-	      } else {
-	        main_core.ajax.runAction('intranet.license.widget.getContent').then(response => resolve(response)).catch(response => reject(response));
-	      }
-	    });
-	  });
-	}
-	function _getCounter2$1() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _cache$1)[_cache$1].remember('counter', () => {
-	    return new ui_cnt.Counter({
-	      color: ui_cnt.CounterColor.DANGER,
-	      useAirDesign: true,
-	      style: ui_cnt.CounterStyle.FILLED_ALERT
-	    });
-	  });
-	}
-	function _getCounterWrapper2$1() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _cache$1)[_cache$1].remember('counter-wrapper', () => {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _buttonWrapper)[_buttonWrapper].querySelector('.air-header-button__counter');
-	  });
-	}
-	function _setCounterValue2(personalTotalCount, commonTotalCount, highlightIntegrator = 0) {
-	  const value = personalTotalCount + commonTotalCount + highlightIntegrator;
-	  if (value < 1) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _getCounter$1)[_getCounter$1]().destroy();
-	    babelHelpers.classPrivateFieldLooseBase(this, _cache$1)[_cache$1].delete('counter');
-	  }
-	  if (value > 0 && babelHelpers.classPrivateFieldLooseBase(this, _getCounterWrapper$1)[_getCounterWrapper$1]()) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _getCounter$1)[_getCounter$1]().update(value);
-	    babelHelpers.classPrivateFieldLooseBase(this, _getCounter$1)[_getCounter$1]().renderTo(babelHelpers.classPrivateFieldLooseBase(this, _getCounterWrapper$1)[_getCounterWrapper$1]());
-	  }
-	}
-	function _setEventHandlers2() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].isCloud && babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].isSidePanelDemoLicense) {
-	    BX.SidePanel.Instance.bindAnchors({
-	      rules: [{
-	        condition: [/\/settings\/license_demo.php/],
-	        handler(event) {
-	          ui_infoHelper.FeaturePromotersRegistry.getPromoter({
-	            code: 'limit_demo'
-	          }).show();
-	          event.stopPropagation();
-	          event.preventDefault();
-	        }
-	      }]
-	    });
-	  }
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].isCloud) {
-	    main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.LicenseButton:showWidget', event => {
-	      var _event$getData$c_sect, _event$getData;
-	      babelHelpers.classPrivateFieldLooseBase(LicenseButton, _sendAnalytics)[_sendAnalytics]({
-	        tool: 'intranet',
-	        category: 'header_popup',
-	        event: 'show',
-	        c_section: (_event$getData$c_sect = (_event$getData = event.getData()) == null ? void 0 : _event$getData.c_section) != null ? _event$getData$c_sect : 'search'
-	      });
-	      babelHelpers.classPrivateFieldLooseBase(this, _openWidget)[_openWidget]();
-	    });
-	  }
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].isCloud) {
-	    pull_client.PULL.subscribe({
-	      moduleId: 'bitrix24',
-	      command: 'updateCountOrdersAwaitingPayment',
-	      callback: params => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _updateOptionsFromPull)[_updateOptionsFromPull](params);
-	      }
-	    });
-	    main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'Bitrix24InfrastructureSlider:show', babelHelpers.classPrivateFieldLooseBase(this, _showInfrastructureSlider)[_showInfrastructureSlider].bind(this));
-	    main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Bitrix24.LicenseWidget.InviteHintPopup:show', babelHelpers.classPrivateFieldLooseBase(this, _resetHighlightIntegrator)[_resetHighlightIntegrator].bind(this));
-	  }
-	}
-	function _resetHighlightIntegrator2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].counters.highlightIntegrator = 0;
-	  babelHelpers.classPrivateFieldLooseBase(this, _setCounterValue)[_setCounterValue](babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].personalTotalCount, babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].commonTotalCount, babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].counters.highlightIntegrator);
-	  BX.userOptions.save('bitrix24', 'isIntegratorHighlighted', null, 'Y');
-	}
-	function _updateOptionsFromPull2(params) {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].isCloud) {
-	    return;
-	  }
-	  if (params.scope === 'common') {
-	    babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].commonTotalCount = params.commonTotalCount;
-	    if (params.commonTotalCount !== 0 && !main_core.Type.isNil(params.commonTotalCount)) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].ordersInfo = params.orders.ordersInfo;
-	      babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].counters.awaitingInvoice = params.orders.awaitingInvoice;
-	      babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].counters.awaitingPayment = params.orders.awaitingPayment;
-	      babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].counters.failedPayment = params.orders.failedPayment;
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _setCounterValue)[_setCounterValue](babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].personalTotalCount, params.commonTotalCount);
-	  } else if (params.scope === 'personal') {
-	    babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].personalTotalCount = params.personalTotalCount;
-	    if (params.personalTotalCount !== 0 && !main_core.Type.isNil(params.personalTotalCount)) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].ordersInfo.checkoutPath = params.orders.checkoutPath;
-	      babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].counters.inCheckout = params.orders.inCheckout;
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _setCounterValue)[_setCounterValue](params.personalTotalCount, babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].commonTotalCount);
-	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _emitOrdersUpdate)[_emitOrdersUpdate]();
-	}
-	function _emitOrdersUpdate2() {
-	  main_core_events.EventEmitter.emit('BX.Bitrix24.Orders:updateOrdersAwaitingPayment', new main_core_events.BaseEvent({
-	    data: {
-	      orders: {
-	        counters: babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].counters,
-	        ordersInfo: babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].ordersInfo
-	      },
-	      commonTotalCount: babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].commonTotalCount,
-	      personalTotalCount: babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].personalTotalCount
-	    }
-	  }));
-	}
-	function _showInfrastructureSlider2() {
-	  const params = babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].infrastructureForm;
-	  BX.SidePanel.Instance.open('bx-infrastructure-slider', {
-	    contentCallback: () => {
-	      return `<script data-b24-form="inline/${params.id}/${params.secCode}" data-skip-moving="true"></script>`;
-	    },
-	    width: 664,
-	    loader: 'default-loader',
-	    cacheable: false,
-	    closeByEsc: false,
-	    data: {
-	      rightBoundary: 0
-	    },
-	    events: {
-	      onOpen: () => {
-	        (function (w, d, u) {
-	          const s = d.createElement('script');
-	          s.async = true;
-	          s.src = `${u}?${Date.now() / 180000 | 0}`;
-	          const h = d.getElementsByTagName('script')[0];
-	          h.parentNode.insertBefore(s, h);
-	        })(window, document, `https://bitrix24.team/upload/crm/form/loader_${params.id}_${params.secCode}.js`);
-	      },
-	      onOpenComplete: () => {
-	        top.addEventListener('b24:form:send:success', event => {
-	          if (event.detail.object.identification.id === params.id) {
-	            main_core.ajax.runComponentAction('bitrix:bitrix24.license.widget', 'setOptionWaitingInfrastructure', {
-	              mode: 'class',
-	              data: {}
-	            });
-	          }
-	        });
-	      }
-	    }
-	  });
-	}
-	function _sendAnalytics2(params) {
-	  // eslint-disable-next-line promise/catch-or-return
-	  main_core.Runtime.loadExtension('ui.analytics').then(({
-	    sendData
-	  }) => {
-	    sendData(params);
-	  });
-	}
-	Object.defineProperty(LicenseButton, _sendAnalytics, {
-	  value: _sendAnalytics2
-	});
-	Object.defineProperty(LicenseButton, _showInfrastructureSlider, {
-	  value: _showInfrastructureSlider2
-	});
-	Object.defineProperty(LicenseButton, _emitOrdersUpdate, {
-	  value: _emitOrdersUpdate2
-	});
-	Object.defineProperty(LicenseButton, _updateOptionsFromPull, {
-	  value: _updateOptionsFromPull2
-	});
-	Object.defineProperty(LicenseButton, _resetHighlightIntegrator, {
-	  value: _resetHighlightIntegrator2
-	});
-	Object.defineProperty(LicenseButton, _setEventHandlers, {
-	  value: _setEventHandlers2
-	});
-	Object.defineProperty(LicenseButton, _setCounterValue, {
-	  value: _setCounterValue2
-	});
-	Object.defineProperty(LicenseButton, _getCounterWrapper$1, {
-	  value: _getCounterWrapper2$1
-	});
-	Object.defineProperty(LicenseButton, _getCounter$1, {
-	  value: _getCounter2$1
-	});
-	Object.defineProperty(LicenseButton, _getContent$1, {
-	  value: _getContent2$1
-	});
-	Object.defineProperty(LicenseButton, _setAriaExpanded, {
-	  value: _setAriaExpanded2
-	});
-	Object.defineProperty(LicenseButton, _getWidgetLoader$1, {
-	  value: _getWidgetLoader2$1
-	});
-	Object.defineProperty(LicenseButton, _getWidget, {
-	  value: _getWidget2
-	});
-	Object.defineProperty(LicenseButton, _showWidget$1, {
-	  value: _showWidget2$1
-	});
-	Object.defineProperty(LicenseButton, _openWidget, {
-	  value: _openWidget2
-	});
-	Object.defineProperty(LicenseButton, _getExtensionWidgetName, {
-	  value: _getExtensionWidgetName2
-	});
-	Object.defineProperty(LicenseButton, _options$1, {
-	  writable: true,
-	  value: void 0
-	});
-	Object.defineProperty(LicenseButton, _buttonWrapper, {
-	  writable: true,
-	  value: void 0
-	});
-	Object.defineProperty(LicenseButton, _button$2, {
-	  writable: true,
-	  value: void 0
-	});
-	Object.defineProperty(LicenseButton, _cache$1, {
-	  writable: true,
-	  value: new main_core_cache.MemoryCache()
-	});
 
-	var _buttonWrapper$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buttonWrapper");
-	var _button$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("button");
-	var _cache$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cache");
-	var _options$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("options");
-	var _showWidget$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showWidget");
-	var _getWidgetLoader$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getWidgetLoader");
-	var _setAriaExpanded$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setAriaExpanded");
-	var _getContent$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getContent");
-	var _setEventHandlers$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setEventHandlers");
-	var _onReceiveCounterValue = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onReceiveCounterValue");
-	var _getCounterWrapper$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCounterWrapper");
-	var _getCounter$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCounter");
-	var _getCounterValue = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCounterValue");
-	var _onFirstWatchNewStructure = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onFirstWatchNewStructure");
 	class InvitationButton {
-	  static init(options) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _options$2)[_options$2] = options;
-	    babelHelpers.classPrivateFieldLooseBase(this, _buttonWrapper$1)[_buttonWrapper$1] = document.querySelector('[data-id="invitationButton"]');
-	    babelHelpers.classPrivateFieldLooseBase(this, _button$3)[_button$3] = babelHelpers.classPrivateFieldLooseBase(this, _buttonWrapper$1)[_buttonWrapper$1].querySelector('button');
-	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _button$3)[_button$3], 'click', () => {
-	      main_core.Event.unbindAll(babelHelpers.classPrivateFieldLooseBase(this, _button$3)[_button$3]);
-	      babelHelpers.classPrivateFieldLooseBase(this, _setAriaExpanded$1)[_setAriaExpanded$1](true);
-	      babelHelpers.classPrivateFieldLooseBase(this, _getWidgetLoader$2)[_getWidgetLoader$2]().createSkeletonFromConfig(options.skeleton).show();
-	      main_core.Runtime.loadExtension(['intranet.invitation-widget']).then(() => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _showWidget$2)[_showWidget$2]();
-	      }).catch(() => {});
-	    });
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _options$2)[_options$2].invitationCounter > 0) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _getCounter$2)[_getCounter$2]().renderTo(babelHelpers.classPrivateFieldLooseBase(this, _getCounterWrapper$2)[_getCounterWrapper$2]());
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _setEventHandlers$1)[_setEventHandlers$1]();
-	  }
+		static #buttonWrapper;
+		static #button;
+		static #cache = new main_core_cache.MemoryCache();
+		static #options;
+		static init(options) {
+			this.#options = options;
+			this.#buttonWrapper = document.querySelector('[data-id="invitationButton"]');
+			this.#button = this.#buttonWrapper.querySelector('button');
+			main_core.Event.bind(this.#button, 'click', () => {
+				main_core.Event.unbindAll(this.#button);
+				this.#setAriaExpanded(true);
+				this.#getWidgetLoader().createSkeletonFromConfig(options.skeleton).show();
+				main_core.Runtime.loadExtension(['intranet.invitation-widget']).then(() => {
+					this.#showWidget();
+				}).catch(() => {});
+			});
+			if (this.#options.invitationCounter > 0) {
+				this.#getCounter().renderTo(this.#getCounterWrapper());
+			}
+			this.#setEventHandlers();
+		}
+		static #showWidget() {
+			this.#getContent().then(response => {
+				this.#getWidgetLoader().clearBeforeInsertContent();
+				intranet_invitationWidget.InvitationWidget.getInstance().setOptions({
+					buttonWrapper: this.#buttonWrapper,
+					loader: this.#getWidgetLoader().getPopup(),
+					...response.data
+				}).show();
+				main_core.Event.bind(this.#button, 'click', () => {
+					intranet_invitationWidget.InvitationWidget.getInstance().show();
+				});
+			}).catch(() => {});
+		}
+		static #getWidgetLoader() {
+			return this.#cache.remember('widgetLoader', () => {
+				const loader = new intranet_widgetLoader.WidgetLoader({
+					bindElement: this.#buttonWrapper,
+					width: 350,
+					id: 'bx-invitation-header-popup'
+				});
+				const popup = loader.getPopup();
+				popup.subscribe('onShow', () => {
+					this.#setAriaExpanded(true);
+				});
+				popup.subscribe('onClose', () => {
+					this.#setAriaExpanded(false);
+				});
+				return loader;
+			});
+		}
+		static #setAriaExpanded(expanded) {
+			main_core.Dom.attr(this.#button, 'aria-expanded', expanded);
+		}
+		static #getContent() {
+			return this.#cache.remember('content', () => {
+				return new Promise((resolve, reject) => {
+					main_core.ajax.runAction('intranet.invitationwidget.getData', {
+						data: {},
+						analyticsLabel: {
+							headerPopup: 'Y'
+						}
+					}).then(response => resolve(response)).catch(response => reject(response));
+				});
+			});
+		}
+		static #setEventHandlers() {
+			main_core_events.EventEmitter.subscribeOnce('HR.company-structure:first-popup-showed', this.#onFirstWatchNewStructure.bind(this));
+			main_core_events.EventEmitter.subscribe('onPullEvent-main', event => {
+				const [command, params] = event.getCompatData();
+				if (command === 'user_counter' && params[main_core.Loc.getMessage('SITE_ID')]) {
+					const value = params[main_core.Loc.getMessage('SITE_ID')][this.#options.counterId];
+					if (value > 0) {
+						this.#onReceiveCounterValue(value);
+					}
+				}
+			});
+		}
+		static #onReceiveCounterValue(value) {
+			if (this.#options.shouldShowStructureCounter) {
+				value++;
+			}
+			this.#getCounter().update(value);
+			this.#options.invitationCounter = value;
+			if (value > 0) {
+				this.#getCounter().renderTo(this.#getCounterWrapper());
+			} else {
+				this.#getCounter().destroy();
+				this.#cache.delete('counter');
+			}
+		}
+		static #getCounterWrapper() {
+			return this.#cache.remember('counter-wrapper', () => {
+				return this.#buttonWrapper.querySelector('.invitation-widget-counter');
+			});
+		}
+		static #getCounter() {
+			return this.#cache.remember('counter', () => {
+				return new ui_cnt.Counter({
+					value: this.#getCounterValue(),
+					color: ui_cnt.Counter.Color.DANGER,
+					useAirDesign: true,
+					style: ui_cnt.CounterStyle.FILLED_ALERT
+				});
+			});
+		}
+		static #getCounterValue() {
+			let counterValue = Number(this.#options.invitationCounter);
+			if (this.#options.shouldShowStructureCounter ?? false) {
+				counterValue++;
+			}
+			return counterValue;
+		}
+		static #onFirstWatchNewStructure() {
+			let value = this.#getCounter().value;
+			if (!main_core.Type.isNumber(value)) {
+				return;
+			}
+			if (!this.#options.shouldShowStructureCounter) {
+				return;
+			}
+			value--;
+			this.#options.shouldShowStructureCounter = false;
+			this.#getCounter().update(value);
+			this.#options.invitationCounter = value;
+			if (value > 0) {
+				this.#getCounter().renderTo(this.#getCounterWrapper());
+			} else {
+				this.#getCounter().destroy();
+				this.#cache.delete('counter');
+			}
+		}
 	}
-	function _showWidget2$2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _getContent$2)[_getContent$2]().then(response => {
-	    babelHelpers.classPrivateFieldLooseBase(this, _getWidgetLoader$2)[_getWidgetLoader$2]().clearBeforeInsertContent();
-	    intranet_invitationWidget.InvitationWidget.getInstance().setOptions({
-	      buttonWrapper: babelHelpers.classPrivateFieldLooseBase(this, _buttonWrapper$1)[_buttonWrapper$1],
-	      loader: babelHelpers.classPrivateFieldLooseBase(this, _getWidgetLoader$2)[_getWidgetLoader$2]().getPopup(),
-	      ...response.data
-	    }).show();
-	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _button$3)[_button$3], 'click', () => {
-	      intranet_invitationWidget.InvitationWidget.getInstance().show();
-	    });
-	  }).catch(() => {});
-	}
-	function _getWidgetLoader2$2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _cache$2)[_cache$2].remember('widgetLoader', () => {
-	    const loader = new intranet_widgetLoader.WidgetLoader({
-	      bindElement: babelHelpers.classPrivateFieldLooseBase(this, _buttonWrapper$1)[_buttonWrapper$1],
-	      width: 350,
-	      id: 'bx-invitation-header-popup'
-	    });
-	    const popup = loader.getPopup();
-	    popup.subscribe('onShow', () => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _setAriaExpanded$1)[_setAriaExpanded$1](true);
-	    });
-	    popup.subscribe('onClose', () => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _setAriaExpanded$1)[_setAriaExpanded$1](false);
-	    });
-	    return loader;
-	  });
-	}
-	function _setAriaExpanded2$1(expanded) {
-	  main_core.Dom.attr(babelHelpers.classPrivateFieldLooseBase(this, _button$3)[_button$3], 'aria-expanded', expanded);
-	}
-	function _getContent2$2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _cache$2)[_cache$2].remember('content', () => {
-	    return new Promise((resolve, reject) => {
-	      main_core.ajax.runAction('intranet.invitationwidget.getData', {
-	        data: {},
-	        analyticsLabel: {
-	          headerPopup: 'Y'
-	        }
-	      }).then(response => resolve(response)).catch(response => reject(response));
-	    });
-	  });
-	}
-	function _setEventHandlers2$1() {
-	  main_core_events.EventEmitter.subscribeOnce('HR.company-structure:first-popup-showed', babelHelpers.classPrivateFieldLooseBase(this, _onFirstWatchNewStructure)[_onFirstWatchNewStructure].bind(this));
-	  main_core_events.EventEmitter.subscribe('onPullEvent-main', event => {
-	    const [command, params] = event.getCompatData();
-	    if (command === 'user_counter' && params[main_core.Loc.getMessage('SITE_ID')]) {
-	      const value = params[main_core.Loc.getMessage('SITE_ID')][babelHelpers.classPrivateFieldLooseBase(this, _options$2)[_options$2].counterId];
-	      if (value > 0) {
-	        babelHelpers.classPrivateFieldLooseBase(this, _onReceiveCounterValue)[_onReceiveCounterValue](value);
-	      }
-	    }
-	  });
-	}
-	function _onReceiveCounterValue2(value) {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _options$2)[_options$2].shouldShowStructureCounter) {
-	    value++;
-	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _getCounter$2)[_getCounter$2]().update(value);
-	  babelHelpers.classPrivateFieldLooseBase(this, _options$2)[_options$2].invitationCounter = value;
-	  if (value > 0) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _getCounter$2)[_getCounter$2]().renderTo(babelHelpers.classPrivateFieldLooseBase(this, _getCounterWrapper$2)[_getCounterWrapper$2]());
-	  } else {
-	    babelHelpers.classPrivateFieldLooseBase(this, _getCounter$2)[_getCounter$2]().destroy();
-	    babelHelpers.classPrivateFieldLooseBase(this, _cache$2)[_cache$2].delete('counter');
-	  }
-	}
-	function _getCounterWrapper2$2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _cache$2)[_cache$2].remember('counter-wrapper', () => {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _buttonWrapper$1)[_buttonWrapper$1].querySelector('.invitation-widget-counter');
-	  });
-	}
-	function _getCounter2$2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _cache$2)[_cache$2].remember('counter', () => {
-	    return new ui_cnt.Counter({
-	      value: babelHelpers.classPrivateFieldLooseBase(this, _getCounterValue)[_getCounterValue](),
-	      color: ui_cnt.Counter.Color.DANGER,
-	      useAirDesign: true,
-	      style: ui_cnt.CounterStyle.FILLED_ALERT
-	    });
-	  });
-	}
-	function _getCounterValue2() {
-	  var _babelHelpers$classPr;
-	  let counterValue = Number(babelHelpers.classPrivateFieldLooseBase(this, _options$2)[_options$2].invitationCounter);
-	  if ((_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _options$2)[_options$2].shouldShowStructureCounter) != null ? _babelHelpers$classPr : false) {
-	    counterValue++;
-	  }
-	  return counterValue;
-	}
-	function _onFirstWatchNewStructure2() {
-	  let value = babelHelpers.classPrivateFieldLooseBase(this, _getCounter$2)[_getCounter$2]().value;
-	  if (!main_core.Type.isNumber(value)) {
-	    return;
-	  }
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _options$2)[_options$2].shouldShowStructureCounter) {
-	    return;
-	  }
-	  value--;
-	  babelHelpers.classPrivateFieldLooseBase(this, _options$2)[_options$2].shouldShowStructureCounter = false;
-	  babelHelpers.classPrivateFieldLooseBase(this, _getCounter$2)[_getCounter$2]().update(value);
-	  babelHelpers.classPrivateFieldLooseBase(this, _options$2)[_options$2].invitationCounter = value;
-	  if (value > 0) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _getCounter$2)[_getCounter$2]().renderTo(babelHelpers.classPrivateFieldLooseBase(this, _getCounterWrapper$2)[_getCounterWrapper$2]());
-	  } else {
-	    babelHelpers.classPrivateFieldLooseBase(this, _getCounter$2)[_getCounter$2]().destroy();
-	    babelHelpers.classPrivateFieldLooseBase(this, _cache$2)[_cache$2].delete('counter');
-	  }
-	}
-	Object.defineProperty(InvitationButton, _onFirstWatchNewStructure, {
-	  value: _onFirstWatchNewStructure2
-	});
-	Object.defineProperty(InvitationButton, _getCounterValue, {
-	  value: _getCounterValue2
-	});
-	Object.defineProperty(InvitationButton, _getCounter$2, {
-	  value: _getCounter2$2
-	});
-	Object.defineProperty(InvitationButton, _getCounterWrapper$2, {
-	  value: _getCounterWrapper2$2
-	});
-	Object.defineProperty(InvitationButton, _onReceiveCounterValue, {
-	  value: _onReceiveCounterValue2
-	});
-	Object.defineProperty(InvitationButton, _setEventHandlers$1, {
-	  value: _setEventHandlers2$1
-	});
-	Object.defineProperty(InvitationButton, _getContent$2, {
-	  value: _getContent2$2
-	});
-	Object.defineProperty(InvitationButton, _setAriaExpanded$1, {
-	  value: _setAriaExpanded2$1
-	});
-	Object.defineProperty(InvitationButton, _getWidgetLoader$2, {
-	  value: _getWidgetLoader2$2
-	});
-	Object.defineProperty(InvitationButton, _showWidget$2, {
-	  value: _showWidget2$2
-	});
-	Object.defineProperty(InvitationButton, _buttonWrapper$1, {
-	  writable: true,
-	  value: void 0
-	});
-	Object.defineProperty(InvitationButton, _button$3, {
-	  writable: true,
-	  value: void 0
-	});
-	Object.defineProperty(InvitationButton, _cache$2, {
-	  writable: true,
-	  value: new main_core_cache.MemoryCache()
-	});
-	Object.defineProperty(InvitationButton, _options$2, {
-	  writable: true,
-	  value: void 0
-	});
 
-	let _$a = t => t,
-	  _t$a,
-	  _t2$7;
-	var _popup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("popup");
-	var _initPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initPopup");
-	var _renderPopupContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderPopupContent");
 	class LanguageSwitcher {
-	  constructor() {
-	    Object.defineProperty(this, _renderPopupContent, {
-	      value: _renderPopupContent2
-	    });
-	    Object.defineProperty(this, _initPopup, {
-	      value: _initPopup2
-	    });
-	    Object.defineProperty(this, _popup, {
-	      writable: true,
-	      value: void 0
-	    });
-	  }
-	  async showLanguageListPopup(bindElement, languages) {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) {
-	      await babelHelpers.classPrivateFieldLooseBase(this, _initPopup)[_initPopup](bindElement, languages);
-	    }
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup].isShown()) {
-	      return;
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup].show();
-	  }
-	  hideLanguageListPopup() {
-	    var _babelHelpers$classPr;
-	    (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : _babelHelpers$classPr.close();
-	  }
-	  switchPortalLanguage(languageCode) {
-	    window.location.href = `/auth/?user_lang=${languageCode}&backurl=${getBackUrl()}`;
-	  }
-	}
-	async function _initPopup2(bindElement, languages) {
-	  const windowScrollHandler = () => {
-	    this.hideLanguageListPopup();
-	  };
-	  const {
-	    Popup
-	  } = await main_core.Runtime.loadExtension('main.popup');
-	  const popupOptions = {
-	    bindElement,
-	    autoHide: true,
-	    closeByEcs: true,
-	    cachable: false,
-	    content: babelHelpers.classPrivateFieldLooseBase(this, _renderPopupContent)[_renderPopupContent](languages),
-	    events: {
-	      onPopupClose: () => {
-	        main_core.Event.unbind(window, 'scroll', windowScrollHandler);
-	        babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup].destroy();
-	        babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup] = null;
-	      }
-	    }
-	  };
-	  babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup] = new Popup(popupOptions);
-	  main_core.Event.bind(window, 'scroll', windowScrollHandler);
-	}
-	function _renderPopupContent2(languages) {
-	  const container = main_core.Tag.render(_t$a || (_t$a = _$a`<div class="intranet__language-popup_list"></div>`));
-	  Object.entries(languages).forEach(([languageCode, languageItem]) => {
-	    const languageItemElement = main_core.Tag.render(_t2$7 || (_t2$7 = _$a`
+		#popup;
+		async showLanguageListPopup(bindElement, languages) {
+			if (!this.#popup) {
+				await this.#initPopup(bindElement, languages);
+			}
+			if (this.#popup.isShown()) {
+				return;
+			}
+			this.#popup.show();
+		}
+		async #initPopup(bindElement, languages) {
+			const windowScrollHandler = () => {
+				this.hideLanguageListPopup();
+			};
+			const {
+				Popup
+			} = await main_core.Runtime.loadExtension('main.popup');
+			const popupOptions = {
+				bindElement,
+				autoHide: true,
+				closeByEcs: true,
+				cachable: false,
+				content: this.#renderPopupContent(languages),
+				events: {
+					onPopupClose: () => {
+						main_core.Event.unbind(window, 'scroll', windowScrollHandler);
+						this.#popup.destroy();
+						this.#popup = null;
+					}
+				}
+			};
+			this.#popup = new Popup(popupOptions);
+			main_core.Event.bind(window, 'scroll', windowScrollHandler);
+		}
+		hideLanguageListPopup() {
+			this.#popup?.close();
+		}
+		switchPortalLanguage(languageCode) {
+			window.location.href = `/auth/?user_lang=${languageCode}&backurl=${getBackUrl()}`;
+		}
+		#renderPopupContent(languages) {
+			const container = main_core.Tag.render`<div class="intranet__language-popup_list"></div>`;
+			Object.entries(languages).forEach(([languageCode, languageItem]) => {
+				const languageItemElement = main_core.Tag.render`
 				<div class="intranet__language-popup_language-item">
-					<span class="intranet__language-popup_language-item-name">${0}</span>
-					<span class="intranet__language-popup_language-beta">${0}</span>
+					<span class="intranet__language-popup_language-item-name">${languageItem.NAME}</span>
+					<span class="intranet__language-popup_language-beta">${languageItem.IS_BETA ? ', beta' : ''}</span>
 				</div>
-			`), languageItem.NAME, languageItem.IS_BETA ? ', beta' : '');
-	    main_core.Event.bind(languageItemElement, 'click', () => {
-	      this.switchPortalLanguage(languageCode);
-	    });
-	    main_core.Dom.append(languageItemElement, container);
-	  });
-	  return container;
+			`;
+				main_core.Event.bind(languageItemElement, 'click', () => {
+					this.switchPortalLanguage(languageCode);
+				});
+				main_core.Dom.append(languageItemElement, container);
+			});
+			return container;
+		}
 	}
 	const languageSwitcher = new LanguageSwitcher();
 
@@ -3400,35 +2682,35 @@ this.BX.Intranet = this.BX.Intranet || {};
 	 * @deprecated
 	 */
 	window.B24 = {
-	  /**
-	   * @deprecated
-	   */
-	  licenseInfoPopup: {
-	    show(popupId, title, content, showDemoButton) {
-	      const LicenseInfoPopup = main_core.Reflection.getClass('BX.Bitrix24.LicenseInfoPopup');
-	      if (LicenseInfoPopup) {
-	        LicenseInfoPopup.show(popupId, title, content, showDemoButton);
-	      }
-	    }
-	  },
-	  /**
-	   * @deprecated
-	   */
-	  updateCounters(counters, send) {
-	    const LeftMenu = main_core.Reflection.getClass('BX.Intranet.LeftMenu');
-	    if (LeftMenu) {
-	      LeftMenu.updateCounters(counters, send);
-	    }
-	  }
+		/**
+		 * @deprecated
+		 */
+		licenseInfoPopup: {
+			show(popupId, title, content, showDemoButton) {
+				const LicenseInfoPopup = main_core.Reflection.getClass('BX.Bitrix24.LicenseInfoPopup');
+				if (LicenseInfoPopup) {
+					LicenseInfoPopup.show(popupId, title, content, showDemoButton);
+				}
+			}
+		},
+		/**
+		 * @deprecated
+		 */
+		updateCounters(counters, send) {
+			const LeftMenu = main_core.Reflection.getClass('BX.Intranet.LeftMenu');
+			if (LeftMenu) {
+				LeftMenu.updateCounters(counters, send);
+			}
+		}
 	};
 
-	exports.languageSwitcher = languageSwitcher;
-	exports.PartnerForm = PartnerForm;
-	exports.Template = Template;
-	exports.SearchTitle = SearchTitle;
+	exports.AvatarButton = AvatarButton;
 	exports.InvitationButton = InvitationButton;
 	exports.LicenseButton = LicenseButton;
-	exports.AvatarButton = AvatarButton;
+	exports.PartnerForm = PartnerForm;
+	exports.SearchTitle = SearchTitle;
+	exports.Template = Template;
+	exports.languageSwitcher = languageSwitcher;
 
-}((this.BX.Intranet.Bitrix24 = this.BX.Intranet.Bitrix24 || {}),BX.Main,BX.UI,BX.UI.IconSet,BX,BX.SidePanel,BX.Intranet,BX.Timeman,BX.UI,BX.Bitrix24,BX.Intranet,BX,BX.Cache,BX.Event,BX.Intranet,BX.Intranet,BX.UI,BX));
+})(this.BX.Intranet.Bitrix24 = this.BX.Intranet.Bitrix24 || {}, BX, BX.Main, BX.UI, BX.Event, BX.Cache, BX, BX.UI, BX.UI.IconSet, BX, BX.SidePanel, BX.Intranet, BX.Intranet, BX.Intranet, BX.Timeman, BX.UI, BX.Bitrix24, BX.Intranet, BX.Intranet);
 //# sourceMappingURL=bitrix24.bundle.js.map

@@ -1,4 +1,4 @@
-import { Store } from 'ui.vue3.vuex';
+import { type Store } from 'ui.vue3.vuex';
 
 import { Core } from 'im.v2.application.core';
 import { UserStatus, SoundType, Settings } from 'im.v2.const';

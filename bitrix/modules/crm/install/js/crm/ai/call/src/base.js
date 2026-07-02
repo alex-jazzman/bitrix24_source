@@ -6,7 +6,6 @@ import { Dom, Loc, Tag, Text, Type } from 'main.core';
 import { UI } from 'ui.notification';
 
 import 'ui.design-tokens';
-import './style.css';
 
 export const ActivityProvider: Object<string, string> = Object.freeze({
 	call: 'VOXIMPLANT_CALL',
@@ -239,7 +238,7 @@ export class Base
 		}
 		else if (this.activityProvider === ActivityProvider.openLine)
 		{
-			this.topElementNode = Tag.render`<div id="crm-textbox-top-container"></div>`;
+			this.topElementNode = Tag.render`<div id="crm-copilot-textbox__top-container"></div>`;
 		}
 
 		return this.topElementNode;
@@ -259,15 +258,15 @@ export class Base
 				}
 			};
 		};
-		const element = Tag.render`
-			<div onclick="${openMessengerSliderFn(openlineData.dialogId)}">
+
+		return Tag.render`
+			<a
+				style="cursor: pointer; word-break: break-all;"
+				onclick="${openMessengerSliderFn(openlineData.dialogId)}"
+			>
 				${openlineData.name}
-			</div>
+			</a>
 		`;
-
-		Dom.addClass(element, 'openline-element-container');
-
-		return element;
 	}
 
 	getNotAccuratePhraseCode(): string

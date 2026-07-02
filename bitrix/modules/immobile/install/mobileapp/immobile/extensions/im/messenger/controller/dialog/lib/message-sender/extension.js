@@ -7,14 +7,15 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 
 	const {
 		ErrorCode,
-		MessageParams,
+		MessageComponent,
 		OwnMessageStatus,
 		FileType,
 	} = require('im/messenger/const');
 	const { ObjectUtils } = require('im/messenger/lib/utils');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
-	const { DialogHelper } = require('im/messenger/lib/helper');
+	const { DialogHelper, MessageHelper } = require('im/messenger/lib/helper');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { Feature } = require('im/messenger/lib/feature');
 
 	const { MessageRest } = require('im/messenger/provider/rest');
 	const { SendingService } = require('im/messenger/provider/services/sending');
@@ -62,7 +63,7 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 		 */
 		get sendingService()
 		{
-			return SendingService.getInstance();
+			return serviceLocator.get('sending-service');
 		}
 
 		/**
@@ -346,19 +347,20 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 				return;
 			}
 
-			if (modelMessage.params.componentId === MessageParams.ComponentId.VoteMessage)
+			const messageHelper = MessageHelper.createById(message.id);
+			if (messageHelper.isVote)
 			{
 				return;
 			}
 
-			if (Type.isStringFilled(modelMessage.forward?.id))
+			if (messageHelper.isForward)
 			{
 				await this.#resendForwardMessage(index, modelMessage);
 
 				return;
 			}
 
-			if (Type.isArrayFilled(modelMessage.files))
+			if (messageHelper.isWithFile)
 			{
 				await this.#resendMessageWithFiles(modelMessage);
 
@@ -417,7 +419,11 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 		 */
 		async #sendMessage(sendMessageParams, options)
 		{
-			await this.contextManager.goToBottomMessageContext();
+			const isCopilotAnimatedScroll = Feature.isCopilotAnimatedScrollSupported && this.dialogHelper?.isCopilotDirect;
+			if (!isCopilotAnimatedScroll)
+			{
+				await this.contextManager.goToBottomMessageContext();
+			}
 
 			this.#sendMessageToModel(sendMessageParams)
 				.then(async () => {
@@ -427,7 +433,10 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 						this.draftManager.clearDraft();
 					}
 
-					await this.view.scrollToBottomSmoothly();
+					if (!isCopilotAnimatedScroll)
+					{
+						await this.view.scrollToBottomSmoothly();
+					}
 					await this.#sendMessageToServer(sendMessageParams);
 					AppRatingClient.increaseSendMessageCounter(this.dialogHelper?.isCopilot);
 				})
@@ -512,7 +521,7 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 				requestParams.copilot = { ...copilot, reasoning: isReasoningActive };
 			}
 
-			const mcpSelectedAuthId = this.store.getters['dialoguesModel/aiAssistantModel/getMCPSelectedAuthId']();
+			const mcpSelectedAuthId = this.assistantButtonManager?.mcpSelectedAuthId;
 			if (this.dialogHelper?.isAiAssistant && Type.isInteger(mcpSelectedAuthId))
 			{
 				requestParams.aiAssistant = { mcpAuthId: mcpSelectedAuthId };
@@ -787,7 +796,7 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 				messageToSend.copilot.reasoning = isReasoningActive;
 			}
 
-			const mcpSelectedAuthId = this.store.getters['dialoguesModel/aiAssistantModel/getMCPSelectedAuthId']();
+			const mcpSelectedAuthId = this.assistantButtonManager?.mcpSelectedAuthId;
 			if (this.dialogHelper?.isAiAssistant && Type.isInteger(mcpSelectedAuthId))
 			{
 				messageToSend.aiAssistant = { mcpAuthId: mcpSelectedAuthId };

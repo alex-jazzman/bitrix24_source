@@ -11,8 +11,6 @@ $MESS["MAIL_CLIENT_ELEMENT_NOT_FOUND"] = "Элемент не найден";
 $MESS["MAIL_CLIENT_ELEMENT_DENIED"] = "Доступ запрещен";
 $MESS["MAIL_CLIENT_DENIED"] = "Доступ запрещен";
 
-$MESS['MAIL_CLIENT_MAILBOX_ADD'] = "Подключить новый";
-
 $MESS['MAIL_CLIENT_MAILBOX_SYNC_BAR'] = "Синхронизация";
 $MESS['MAIL_CLIENT_MAILBOX_SYNC_BAR_INTERRUPTED'] = "Мы не можем выполнить синхронизацию.";
 $MESS['MAIL_CLIENT_MAILBOX_INDEX_BAR'] = "Индексация";
@@ -69,7 +67,10 @@ $MESS["MAIL_MESSAGE_CREATE_CRM_BTN"] = "В CRM";
 $MESS["MAIL_MESSAGE_CREATE_CRM_BTN_TITLE"] = "Создать сделку";
 $MESS["MAIL_MESSAGE_CREATE_FEED_POST"] = "Обсудить в ленте";
 $MESS["MAIL_MESSAGE_CREATE_FEED_POST_TITLE"] = "Обсудить в ленте";
-$MESS["MAIL_MESSAGE_CREATE_IM_BTN"] = "Обсудить в чате";
+$MESS["MAIL_MESSAGE_CREATE_IM_BTN"] = "Создать чат из письма";
+$MESS["MAIL_MESSAGE_CREATE_IM_BTN_TITLE"] = "Создать чат из письма";
+$MESS["MAIL_MESSAGE_DISCUSS_IN_CHAT_BTN"] = "Обсудить в чате";
+$MESS["MAIL_MESSAGE_DISCUSS_IN_CHAT_BTN_TITLE"] = "Обсудить в чате";
 $MESS["MAIL_MESSAGE_CREATE_EVENT_BTN"] = "Во встречу";
 $MESS["MAIL_MESSAGE_CREATE_EVENT_BTN_TITLE"] = "Создать встречу в календаре";
 $MESS["MAIL_MESSAGE_CREATE_CRM_EXCLUDE_BTN"] = "Исключить из CRM";
@@ -81,6 +82,12 @@ $MESS["MAIL_MESSAGE_TASK_TITLE"] = "Письмо: #SUBJECT#";
 $MESS["MAIL_MESSAGE_POST_TITLE"] = "Письмо: #SUBJECT#";
 
 $MESS["MAIL_MESSAGE_SYNC_BTN_HINT"] = "Синхронизация";
+$MESS["MAIL_FOLDER_SORT_BTN_HINT"] = "Сортировка папок";
+$MESS["MAIL_FOLDER_SORT_DEFAULT"] = "По умолчанию";
+$MESS["MAIL_FOLDER_SORT_ALPHA_ASC"] = "По названию (А-Я)";
+$MESS["MAIL_FOLDER_SORT_ALPHA_DESC"] = "По названию (Я-А)";
+$MESS["MAIL_FOLDER_SORT_GUIDE_TITLE"] = "Выберите порядок папок";
+$MESS["MAIL_FOLDER_SORT_GUIDE_DESCRIPTION"] = "Отсортируйте папки по алфавиту или оставьте порядок из вашей почты";
 $MESS["MAIL_MESSAGE_NEW_BTN"] = "Написать письмо";
 $MESS["MAIL_MESSAGE_MAILBOX_GRID_BTN"] = "Управление ящиками сотрудников";
 $MESS["MAIL_MESSAGE_MAILBOX_GRID_HINT_DESCRIPTION"] = "Вы можете посмотреть, какие ящики подключили <br> сотрудники, настроить или отключить их";

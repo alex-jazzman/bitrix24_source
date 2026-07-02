@@ -3,8 +3,303 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,main_core_events,ui_notificationManager,ui_vue3_directives_hint,tasks_v2_component_taskSettingsPopup,tasks_v2_component_elements_settingsLabel,tasks_v2_component_elements_hoverPill,tasks_v2_lib_heightTransition,tasks_v2_provider_service_deadlineService,ui_vue3_vuex,ui_datePicker,tasks_v2_core,tasks_v2_lib_idUtils,tasks_v2_lib_timezone,tasks_v2_lib_analytics,tasks_v2_component_elements_hint,ui_iconSet_api_vue,ui_system_input_vue,ui_iconSet_outline,ui_vue3_components_button,ui_forms,ui_vue3_components_popup,main_date,ui_system_typography_vue,ui_system_chip_vue,tasks_v2_component_elements_questionMark,tasks_v2_component_elements_duration,tasks_v2_lib_calendar,tasks_v2_provider_service_taskService,main_core,tasks_v2_const) {
+(function (exports,main_core_events,ui_notificationManager,ui_vue3_directives_hint,tasks_v2_component_taskSettingsPopup,tasks_v2_lib_heightTransition,tasks_v2_provider_service_deadlineService,tasks_v2_component_elements_hoverPill,tasks_v2_component_elements_settingsLabel,ui_vue3_vuex,ui_datePicker,tasks_v2_core,tasks_v2_lib_idUtils,tasks_v2_lib_timezone,tasks_v2_lib_analytics,tasks_v2_component_elements_hint,ui_iconSet_api_vue,ui_system_input_vue,ui_iconSet_outline,ui_vue3_components_button,ui_forms,ui_vue3_components_popup,main_date,ui_system_typography_vue,ui_system_chip_vue,tasks_v2_component_elements_questionMark,tasks_v2_component_elements_duration,tasks_v2_lib_calendar,tasks_v2_provider_service_taskService,main_core,tasks_v2_const) {
 	'use strict';
+
+	// @vue/component
+	const DeadlineDefaultView = {
+	  components: {
+	    TextMd: ui_system_typography_vue.TextMd,
+	    Text2Xs: ui_system_typography_vue.Text2Xs,
+	    BIcon: ui_iconSet_api_vue.BIcon,
+	    HoverPill: tasks_v2_component_elements_hoverPill.HoverPill,
+	    SettingsLabel: tasks_v2_component_elements_settingsLabel.SettingsLabel
+	  },
+	  props: {
+	    taskId: {
+	      type: [Number, String],
+	      required: true
+	    },
+	    deadlineFormatted: {
+	      type: String,
+	      required: true
+	    },
+	    deadlineFormattedForPrint: {
+	      type: String,
+	      required: true
+	    },
+	    isExpired: {
+	      type: Boolean,
+	      required: true
+	    },
+	    readonly: {
+	      type: Boolean,
+	      required: true
+	    },
+	    isPopupShown: {
+	      type: Boolean,
+	      required: true
+	    },
+	    deadlineTs: {
+	      type: Number,
+	      default: null
+	    },
+	    isFlowFilledOnAdd: {
+	      type: Boolean,
+	      required: true
+	    },
+	    isTemplate: {
+	      type: Boolean,
+	      required: true
+	    },
+	    isHovered: {
+	      type: Boolean,
+	      required: true
+	    },
+	    isFieldHovered: {
+	      type: Boolean,
+	      required: true
+	    },
+	    isSettingsPopupShown: {
+	      type: Boolean,
+	      required: true
+	    },
+	    expiredDuration: {
+	      type: Number,
+	      required: true
+	    }
+	  },
+	  emits: ['click', 'clear', 'keydown', 'settingsClick', 'update:isExceededHintShown'],
+	  computed: {
+	    task() {
+	      return tasks_v2_provider_service_taskService.taskService.getStoreTask(this.taskId);
+	    },
+	    canChangeSettings() {
+	      const features = tasks_v2_core.Core.getParams().features;
+	      if (!features.isV2Enabled) {
+	        return false;
+	      }
+	      return this.task.rights.edit;
+	    },
+	    iconName() {
+	      return this.isFlowFilledOnAdd ? ui_iconSet_api_vue.Outline.BOTTLENECK : ui_iconSet_api_vue.Outline.CALENDAR_WITH_SLOTS;
+	    },
+	    expiredFormatted() {
+	      return this.loc('TASKS_V2_DEADLINE_EXPIRED', {
+	        '#EXPIRED_DURATION#': new main_date.DurationFormat(this.expiredDuration).formatClosest()
+	      });
+	    },
+	    hintBindElement() {
+	      var _this$$refs$deadlineI, _this$$refs$deadlineI2, _this$$refs$deadline;
+	      return (_this$$refs$deadlineI = (_this$$refs$deadlineI2 = this.$refs.deadlineIcon) == null ? void 0 : _this$$refs$deadlineI2.$el) != null ? _this$$refs$deadlineI : (_this$$refs$deadline = this.$refs.deadline) == null ? void 0 : _this$$refs$deadline.$el;
+	    }
+	  },
+	  methods: {
+	    getHintBindElement() {
+	      return this.hintBindElement;
+	    },
+	    focusDeadline() {
+	      var _this$$refs$deadline2, _this$$refs$deadline3;
+	      (_this$$refs$deadline2 = this.$refs.deadline) == null ? void 0 : (_this$$refs$deadline3 = _this$$refs$deadline2.$el) == null ? void 0 : _this$$refs$deadline3.focus();
+	    }
+	  },
+	  template: `
+		<div
+			class="tasks-field-deadline"
+			:class="{ '--expired': isExpired }"
+		>
+			<div class="tasks-field-deadline-inner">
+				<HoverPill
+					:withClear="Boolean(deadlineTs)"
+					:readonly="readonly"
+					:textOnly="false"
+					:noOffset="false"
+					:active="isPopupShown"
+					:alert="isExpired"
+					@click="$emit('click')"
+					@clear="$emit('clear')"
+					@keydown="$emit('keydown', $event)"
+					@mouseover="$emit('update:isExceededHintShown', true)"
+					@mouseleave="$emit('update:isExceededHintShown', false)"
+					ref="deadline"
+				>
+					<BIcon
+						class="tasks-field-deadline-icon"
+						:name="iconName"
+						ref="deadlineIcon"
+					/>
+					<TextMd
+						class="tasks-field-deadline-text print-ignore"
+						:accent="isExpired"
+					>
+						{{ deadlineFormatted }}
+					</TextMd>
+					<TextMd
+						class="tasks-field-deadline-text --display-none print-display-block"
+						:accent="isExpired"
+					>
+						{{ deadlineFormattedForPrint }}
+					</TextMd>
+				</HoverPill>
+				<div
+					v-if="!isFlowFilledOnAdd"
+					class="tasks-field-deadline-settings-label"
+					ref="settings"
+				>
+					<SettingsLabel
+						v-if="canChangeSettings && (isHovered || isFieldHovered || isSettingsPopupShown)"
+						data-settings-label
+						@click="$emit('settingsClick')"
+					/>
+				</div>
+			</div>
+			<Text2Xs v-if="isExpired" class="tasks-field-deadline-expired print-ignore">{{ expiredFormatted }}</Text2Xs>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const DeadlineChipView = {
+	  components: {
+	    Chip: ui_system_chip_vue.Chip
+	  },
+	  props: {
+	    deadlineFormatted: {
+	      type: String,
+	      required: true
+	    },
+	    isExpired: {
+	      type: Boolean,
+	      required: true
+	    },
+	    readonly: {
+	      type: Boolean,
+	      required: true
+	    },
+	    taskStatus: {
+	      type: String,
+	      required: true
+	    },
+	    isFlowFilledOnAdd: {
+	      type: Boolean,
+	      required: true
+	    },
+	    isTemplate: {
+	      type: Boolean,
+	      required: true
+	    },
+	    deadlineTs: {
+	      type: Number,
+	      default: null
+	    }
+	  },
+	  emits: ['keydown', 'update:isExceededHintShown'],
+	  setup() {
+	    return {
+	      ChipSize: ui_system_chip_vue.ChipSize,
+	      ChipDesign: ui_system_chip_vue.ChipDesign,
+	      DeadlineState: tasks_v2_const.DeadlineState
+	    };
+	  },
+	  computed: {
+	    deadlineState() {
+	      if (this.taskStatus === tasks_v2_const.TaskStatus.Completed) {
+	        return tasks_v2_const.DeadlineState.Completed;
+	      }
+	      if (this.taskStatus === tasks_v2_const.TaskStatus.Deferred) {
+	        return tasks_v2_const.DeadlineState.Deferred;
+	      }
+	      if (this.taskStatus === tasks_v2_const.TaskStatus.SupposedlyCompleted) {
+	        return tasks_v2_const.DeadlineState.SupposedlyCompleted;
+	      }
+	      if (!this.deadlineTs) {
+	        return tasks_v2_const.DeadlineState.None;
+	      }
+	      if (this.isExpired) {
+	        return tasks_v2_const.DeadlineState.Expired;
+	      }
+	      if (tasks_v2_lib_calendar.calendar.isToday(this.deadlineTs)) {
+	        return tasks_v2_const.DeadlineState.Today;
+	      }
+	      if (tasks_v2_lib_calendar.calendar.isTomorrow(this.deadlineTs)) {
+	        return tasks_v2_const.DeadlineState.Tomorrow;
+	      }
+	      if (tasks_v2_lib_calendar.calendar.isThisWeek(this.deadlineTs)) {
+	        return tasks_v2_const.DeadlineState.ThisWeek;
+	      }
+	      if (tasks_v2_lib_calendar.calendar.isNextWeek(this.deadlineTs)) {
+	        return tasks_v2_const.DeadlineState.NextWeek;
+	      }
+	      return tasks_v2_const.DeadlineState.MoreThanTwoWeeks;
+	    },
+	    design() {
+	      const designMap = {
+	        [tasks_v2_const.DeadlineState.None]: ui_system_chip_vue.ChipDesign.Outline,
+	        [tasks_v2_const.DeadlineState.Completed]: ui_system_chip_vue.ChipDesign.OutlineNoAccent,
+	        [tasks_v2_const.DeadlineState.Deferred]: ui_system_chip_vue.ChipDesign.Outline,
+	        [tasks_v2_const.DeadlineState.SupposedlyCompleted]: ui_system_chip_vue.ChipDesign.OutlineWarning,
+	        [tasks_v2_const.DeadlineState.Expired]: ui_system_chip_vue.ChipDesign.TintedAlert,
+	        [tasks_v2_const.DeadlineState.Today]: ui_system_chip_vue.ChipDesign.TintedWarning,
+	        [tasks_v2_const.DeadlineState.Tomorrow]: ui_system_chip_vue.ChipDesign.TintedSuccess,
+	        [tasks_v2_const.DeadlineState.ThisWeek]: ui_system_chip_vue.ChipDesign.Tinted,
+	        [tasks_v2_const.DeadlineState.NextWeek]: ui_system_chip_vue.ChipDesign.OutlineAccent2,
+	        [tasks_v2_const.DeadlineState.MoreThanTwoWeeks]: ui_system_chip_vue.ChipDesign.TintedNoAccent
+	      };
+	      return designMap[this.deadlineState] || ui_system_chip_vue.ChipDesign.Outline;
+	    },
+	    text() {
+	      if (this.isFlowFilledOnAdd || this.isTemplate) {
+	        return this.deadlineFormatted;
+	      }
+	      if (this.deadlineState === tasks_v2_const.DeadlineState.Completed) {
+	        return this.loc('TASKS_V2_DEADLINE_COMPLETED');
+	      }
+	      if (this.deadlineState === tasks_v2_const.DeadlineState.Deferred) {
+	        return this.loc('TASKS_V2_DEADLINE_DEFERRED');
+	      }
+	      if (this.deadlineState === tasks_v2_const.DeadlineState.SupposedlyCompleted) {
+	        return this.loc('TASKS_V2_DEADLINE_SUPPOSEDLY_COMPLETED');
+	      }
+	      if (this.deadlineState === tasks_v2_const.DeadlineState.Today) {
+	        return this.loc('TASKS_V2_DEADLINE_TODAY_FORMATTED', {
+	          '#TIME#': tasks_v2_lib_calendar.calendar.formatTime(this.deadlineTs)
+	        });
+	      }
+	      if (this.deadlineState === tasks_v2_const.DeadlineState.Tomorrow) {
+	        return this.loc('TASKS_V2_DEADLINE_TOMORROW_FORMATTED', {
+	          '#TIME#': tasks_v2_lib_calendar.calendar.formatTime(this.deadlineTs)
+	        });
+	      }
+	      return this.deadlineFormatted;
+	    },
+	    hintBindElement() {
+	      return this.$refs.deadline;
+	    }
+	  },
+	  methods: {
+	    focusDeadline() {
+	      this.$refs.deadline.focus();
+	    },
+	    getHintBindElement() {
+	      return this.hintBindElement;
+	    }
+	  },
+	  template: `
+		<div
+			class="tasks-field-deadline-chip"
+			:class="{ '--read-only': readonly }"
+			@keydown="$emit('keydown', $event)"
+			ref="deadline"
+		>
+			<Chip
+				:size="ChipSize.Sm"
+				:text
+				:design
+				rounded
+			/>
+		</div>
+	`
+	};
 
 	// @vue/component
 	const DeadlinePopupContent = {
@@ -671,7 +966,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    DeadlineAfterPopup,
 	    DeadlineChangeReasonPopup,
 	    SettingsLabel: tasks_v2_component_elements_settingsLabel.SettingsLabel,
-	    TaskSettingsPopup: tasks_v2_component_taskSettingsPopup.TaskSettingsPopup
+	    TaskSettingsPopup: tasks_v2_component_taskSettingsPopup.TaskSettingsPopup,
+	    DeadlineDefaultView,
+	    DeadlineChipView
 	  },
 	  directives: {
 	    hint: ui_vue3_directives_hint.hint
@@ -701,7 +998,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  emits: ['isSettingsPopupShown'],
 	  setup() {
 	    return {
-	      deadlineMeta
+	      deadlineMeta,
+	      DeadlineState: tasks_v2_const.DeadlineState
 	    };
 	  },
 	  data() {
@@ -721,31 +1019,29 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    };
 	  },
 	  computed: {
-	    ...ui_vue3_vuex.mapGetters({
-	      deadlineChangeCount: `${tasks_v2_const.Model.Interface}/deadlineChangeCount`
-	    }),
 	    task() {
 	      return tasks_v2_provider_service_taskService.taskService.getStoreTask(this.taskId);
+	    },
+	    taskStatus() {
+	      return this.task.status;
 	    },
 	    isEdit() {
 	      return tasks_v2_lib_idUtils.idUtils.isReal(this.taskId);
 	    },
+	    taskDeadline() {
+	      return this.isTemplate ? this.task.deadlineAfter : this.task.deadlineTs;
+	    },
 	    deadlineTs() {
 	      var _this$dateTs;
-	      return (_this$dateTs = this.dateTs) != null ? _this$dateTs : this.isTemplate ? this.task.deadlineAfter : this.task.deadlineTs;
+	      return (_this$dateTs = this.dateTs) != null ? _this$dateTs : this.taskDeadline;
 	    },
 	    expiredDuration() {
-	      const isCompleted = this.task.status === tasks_v2_const.TaskStatus.Completed || this.task.status === tasks_v2_const.TaskStatus.SupposedlyCompleted;
+	      const isCompleted = this.taskStatus === tasks_v2_const.TaskStatus.Completed || this.taskStatus === tasks_v2_const.TaskStatus.SupposedlyCompleted;
 	      const cannotExpire = this.isTemplate || !this.deadlineTs || this.isFlowFilledOnAdd || isCompleted;
 	      return cannotExpire ? 0 : this.nowTs - this.deadlineTs;
 	    },
 	    isExpired() {
 	      return this.expiredDuration > 0;
-	    },
-	    expiredFormatted() {
-	      return this.loc('TASKS_V2_DEADLINE_EXPIRED', {
-	        '#EXPIRED_DURATION#': new main_date.DurationFormat(this.expiredDuration).formatClosest()
-	      });
 	    },
 	    deadlineFormatted() {
 	      if (this.isFlowFilledOnAdd) {
@@ -776,25 +1072,21 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      }
 	      return tasks_v2_lib_calendar.calendar.formatDateTime(this.deadlineTs);
 	    },
-	    iconName() {
-	      return this.isFlowFilledOnAdd ? ui_iconSet_api_vue.Outline.BOTTLENECK : ui_iconSet_api_vue.Outline.CALENDAR_WITH_SLOTS;
-	    },
 	    bindElement() {
 	      var _this$externalBindEle;
-	      return (_this$externalBindEle = this.externalBindElement) != null ? _this$externalBindEle : this.$refs.deadline.$el;
+	      return (_this$externalBindEle = this.externalBindElement) != null ? _this$externalBindEle : this.$refs.container;
 	    },
 	    isFlowFilledOnAdd() {
 	      return !this.isEdit && this.task.flowId > 0;
 	    },
-	    canChangeSettings() {
-	      const features = tasks_v2_core.Core.getParams().features;
-	      if (!features.isV2Enabled) {
-	        return false;
-	      }
-	      return this.task.rights.edit;
-	    },
 	    readonly() {
+	      if (this.isCompactReadonly) {
+	        return true;
+	      }
 	      return !this.task.rights.deadline || this.exceededChangeCount || this.isFlowFilledOnAdd;
+	    },
+	    isCompactReadonly() {
+	      return this.compact && [tasks_v2_const.TaskStatus.Completed, tasks_v2_const.TaskStatus.SupposedlyCompleted, tasks_v2_const.TaskStatus.Deferred].includes(this.taskStatus);
 	    },
 	    canChangeDeadlineWithoutLimitation() {
 	      const isCreator = tasks_v2_core.Core.getParams().currentUser.id === this.task.creatorId;
@@ -807,10 +1099,13 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      if (this.isTemplate || this.canChangeDeadlineWithoutLimitation || !this.task.maxDeadlineChanges) {
 	        return false;
 	      }
-	      return this.deadlineChangeCount >= this.task.maxDeadlineChanges;
+	      return this.task.deadlineChangeCount >= this.task.maxDeadlineChanges;
 	    },
 	    canChangeTooltip() {
-	      if (!this.isEdit || !this.readonly || this.exceededChangeCount) {
+	      if (this.isCompactReadonly) {
+	        return null;
+	      }
+	      if (!this.isEdit || !this.readonly || this.exceededChangeCount || this.task.allowsChangeDeadline) {
 	        return null;
 	      }
 	      return () => tasks_v2_component_elements_hint.tooltip({
@@ -822,8 +1117,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      });
 	    },
 	    hintBindElement() {
-	      var _this$$refs$deadlineI, _this$$refs$deadlineI2, _this$$refs$deadline;
-	      return (_this$$refs$deadlineI = (_this$$refs$deadlineI2 = this.$refs.deadlineIcon) == null ? void 0 : _this$$refs$deadlineI2.$el) != null ? _this$$refs$deadlineI : (_this$$refs$deadline = this.$refs.deadline) == null ? void 0 : _this$$refs$deadline.$el;
+	      var _this$$refs$deadlineV, _this$$refs$deadlineV2;
+	      return (_this$$refs$deadlineV = (_this$$refs$deadlineV2 = this.$refs.deadlineView) == null ? void 0 : _this$$refs$deadlineV2.getHintBindElement == null ? void 0 : _this$$refs$deadlineV2.getHintBindElement()) != null ? _this$$refs$deadlineV : this.$refs.container;
 	    },
 	    hintAngleOffset() {
 	      return this.hintBindElement.offsetWidth / 2;
@@ -893,15 +1188,17 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      }
 	    },
 	    handleClose() {
-	      var _this$$refs$deadline2, _this$$refs$deadline3;
-	      if (this.requireChangeReason && this.dateTs) {
+	      var _this$$refs;
+	      if (this.requireChangeReason && this.dateTs && this.dateTs !== this.taskDeadline) {
 	        this.isChangeReasonPopupShown = true;
 	        this.saveCallback = this.saveDeadline;
 	      } else {
 	        void this.saveDeadline();
 	      }
 	      this.isPopupShown = false;
-	      (_this$$refs$deadline2 = this.$refs.deadline) == null ? void 0 : (_this$$refs$deadline3 = _this$$refs$deadline2.$el) == null ? void 0 : _this$$refs$deadline3.focus();
+	      if ((_this$$refs = this.$refs) != null && _this$$refs.deadlineView) {
+	        this.$refs.deadlineView.focusDeadline();
+	      }
 	    },
 	    async handleChangeReasonPopupClose() {
 	      this.isChangeReasonPopupShown = false;
@@ -951,13 +1248,13 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      this.dateTs = null;
 	    },
 	    recalculateDeadlineAfterFromPresets() {
-	      var _this$$refs$deadline4, _this$$refs$deadline5;
+	      var _this$$refs$deadline, _this$$refs$deadline$;
 	      if (!this.selectedPreset) {
 	        return;
 	      }
 	      this.dateTs = this.calculateDayDuration() * this.selectedPreset.multiplier;
 	      void this.saveDeadline();
-	      (_this$$refs$deadline4 = this.$refs.deadline) == null ? void 0 : (_this$$refs$deadline5 = _this$$refs$deadline4.$el) == null ? void 0 : _this$$refs$deadline5.focus();
+	      (_this$$refs$deadline = this.$refs.deadline) == null ? void 0 : (_this$$refs$deadline$ = _this$$refs$deadline.$el) == null ? void 0 : _this$$refs$deadline$.focus();
 	    },
 	    calculateDayDuration() {
 	      var _this$task;
@@ -973,65 +1270,67 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        id: 'task-notify-deadline-update-error',
 	        text: error == null ? void 0 : error.message
 	      });
+	    },
+	    mouseover() {
+	      this.isFieldHovered = true;
+	      if (this.compact) {
+	        this.isExceededHintShown = true;
+	      }
+	    },
+	    mouseleave() {
+	      this.isFieldHovered = false;
+	      if (this.compact) {
+	        this.isExceededHintShown = false;
+	      }
 	    }
 	  },
 	  template: `
 		<div
-			v-hint="canChangeTooltip"
-			class="tasks-field-deadline"
-			:class="{ '--expired': isExpired }"
+			class="tasks-field-deadline-wrapper"
 			:data-task-id="taskId"
 			:data-task-field-id="deadlineMeta.id"
 			:data-task-field-value="task.deadlineTs"
-			@mouseover="isFieldHovered = true"
-			@mouseleave="isFieldHovered = false"
+			@mouseover="mouseover"
+			@mouseleave="mouseleave"
 			ref="container"
 		>
-			<div class="tasks-field-deadline-inner">
-				<HoverPill
-					:withClear="Boolean(deadlineTs)"
-					:readonly
-					:textOnly="compact"
-					:noOffset="compact"
-					:active="isPopupShown"
-					:alert="isExpired"
-					@click="handleClick"
-					@clear="handleCrossClick"
-					@keydown="handleKeydown"
-					@mouseover="isExceededHintShown = true"
-					@mouseleave="isExceededHintShown = false"
-					ref="deadline"
-				>
-					<BIcon
-						v-if="!compact"
-						class="tasks-field-deadline-icon" 
-						:name="iconName"
-						ref="deadlineIcon"
-					/>
-					<TextMd 
-						class="tasks-field-deadline-text print-ignore" 
-						:accent="isExpired"
-					>
-						{{ deadlineFormatted }}
-					</TextMd>
-					<TextMd
-						class="tasks-field-deadline-text --display-none print-display-block" 
-						:accent="isExpired">{{ deadlineFormattedForPrint }}
-					</TextMd>
-				</HoverPill>
-				<div
-					v-if="!isFlowFilledOnAdd && !compact"
-					class="tasks-field-deadline-settings-label"
-					ref="settings"
-				>
-					<SettingsLabel
-						v-if="canChangeSettings && (isHovered || isFieldHovered || isSettingsPopupShown)"
-						data-settings-label
-						@click="isSettingsPopupShown = true"
-					/>
-				</div>
-			</div>
-			<Text2Xs v-if="isExpired && !compact" class="tasks-field-deadline-expired print-ignore">{{ expiredFormatted }}</Text2Xs>
+			<DeadlineChipView
+				v-if="compact"
+				v-hint="canChangeTooltip"
+				:deadlineFormatted
+				:isExpired
+				:readonly
+				:taskStatus
+				:deadlineTs
+				:isFlowFilledOnAdd
+				:isTemplate
+				@click="handleClick"
+				@keydown="handleKeydown"
+				ref="deadlineView"
+			/>
+			<DeadlineDefaultView
+				v-else
+				v-hint="canChangeTooltip"
+				:taskId
+				:deadlineFormatted
+				:deadlineFormattedForPrint
+				:isExpired
+				:expiredDuration
+				:readonly
+				:isPopupShown
+				:deadlineTs
+				:isFlowFilledOnAdd
+				:isTemplate
+				:isHovered
+				:isFieldHovered
+				:isSettingsPopupShown
+				@click="handleClick"
+				@clear="handleCrossClick"
+				@keydown="handleKeydown"
+				@settingsClick="isSettingsPopupShown = true"
+				@update:isExceededHintShown="isExceededHintShown = $event"
+				ref="deadlineView"
+			/>
 		</div>
 		<DeadlinePopup
 			v-if="!isTemplate && isPopupShown"
@@ -1058,7 +1357,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		/>
 		<TaskSettingsPopup v-if="isSettingsPopupShown" @close="isSettingsPopupShown = false"/>
 		<Hint
-			v-if="exceededChangeCount && isExceededHintShown"
+			v-if="exceededChangeCount && isExceededHintShown && !isCompactReadonly"
 			:bindElement="hintBindElement"
 			:options="{
 				maxWidth: 330,
@@ -1081,5 +1380,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.DeadlineAfterPopup = DeadlineAfterPopup;
 	exports.deadlineMeta = deadlineMeta;
 
-}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Event,BX.UI.NotificationManager,BX.Vue3.Directives,BX.Tasks.V2.Component,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Vue3.Vuex,BX.UI.DatePicker,BX.Tasks.V2,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Component.Elements,BX.UI.IconSet,BX.UI.System.Input.Vue,BX,BX.Vue3.Components,BX,BX.UI.Vue3.Components,BX.Main,BX.UI.System.Typography.Vue,BX.UI.System.Chip.Vue,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX,BX.Tasks.V2.Const));
+}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Event,BX.UI.NotificationManager,BX.Vue3.Directives,BX.Tasks.V2.Component,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Vue3.Vuex,BX.UI.DatePicker,BX.Tasks.V2,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Component.Elements,BX.UI.IconSet,BX.UI.System.Input.Vue,BX,BX.Vue3.Components,BX,BX.UI.Vue3.Components,BX.Main,BX.UI.System.Typography.Vue,BX.UI.System.Chip.Vue,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX,BX.Tasks.V2.Const));
 //# sourceMappingURL=deadline.bundle.js.map

@@ -6,20 +6,14 @@ import { AddToChatContent } from '../../elements/add-to-chat-content/add-to-chat
 export const AddEmployeesTab = {
 	name: 'AddEmployeesTab',
 	components: { AddToChatContent },
-	props:
-	{
+	props: {
 		dialogId: {
 			type: String,
 			required: true,
 		},
-		height: {
-			type: Number,
-			required: true,
-		},
 	},
 	emits: ['close'],
-	methods:
-	{
+	methods: {
 		inviteMembers({ members })
 		{
 			(new CollabInvitationService()).addEmployees({ dialogId: this.dialogId, members });
@@ -30,7 +24,7 @@ export const AddEmployeesTab = {
 		<div class="bx-im-add-to-collab__employees-tab-container">
 			<AddToChatContent
 				:dialogId="dialogId"
-				:height="height"
+				class="bx-im-add-to-collab-guest-tab__scope"
 				@inviteMembers="inviteMembers"
 				@close="$emit('close')"
 			/>

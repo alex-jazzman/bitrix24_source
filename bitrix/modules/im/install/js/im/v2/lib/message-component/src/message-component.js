@@ -86,6 +86,11 @@ export class MessageComponentManager
 			return MessageComponent.sticker;
 		}
 
+		if (this.#hasBuilderBlocks())
+		{
+			return MessageComponent.builderMessage;
+		}
+
 		return MessageComponent.default;
 	}
 
@@ -114,6 +119,11 @@ export class MessageComponentManager
 		return this.#message.attach.length > 0;
 	}
 
+	#hasBuilderBlocks(): boolean
+	{
+		return this.#store.getters['messages/builder/hasBlocks'](this.#message.id);
+	}
+
 	#hasSticker(): boolean
 	{
 		return this.#store.getters['stickers/messages/isSticker'](this.#message.id);
@@ -121,7 +131,11 @@ export class MessageComponentManager
 
 	#isEmptyMessage(): boolean
 	{
-		return !this.#hasText() && !this.#hasFiles() && !this.#hasAttach() && !this.#hasSticker();
+		return !this.#hasText()
+			&& !this.#hasFiles()
+			&& !this.#hasAttach()
+			&& !this.#hasSticker()
+			&& !this.#hasBuilderBlocks();
 	}
 
 	#isDeletedMessage(): boolean

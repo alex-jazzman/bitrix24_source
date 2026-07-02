@@ -4,6 +4,8 @@ $module_id = 'rest';
 use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Rest\Public\Command;
+use Bitrix\Rest\Public\Provider;
 use Bitrix\Rest\Tools\Diagnostics\LoggerManager;
 
 if (!Loader::includeModule($module_id))
@@ -87,11 +89,99 @@ $filterOptions = [
 		'SIZE' => 6,
 	],
 ];
+$normalizeAccessCodes = static function (array $accessCodes): array {
+	$result = [];
+
+	foreach ($accessCodes as $accessCode)
+	{
+		if (!is_string($accessCode))
+		{
+			continue;
+		}
+
+		if ($accessCode === 'UA')
+		{
+			$accessCode = 'AU';
+		}
+
+		if (!in_array($accessCode, $result, true))
+		{
+			$result[] = $accessCode;
+		}
+	}
+
+	return $result;
+};
+$getAccessPolicyOptionHtml = static function (
+	array $accessCodes,
+	string $containerId,
+	string $inputName
+) use ($normalizeAccessCodes): string
+{
+	$accessCodes = $normalizeAccessCodes($accessCodes);
+	$accessNames = (new \CAccess())->GetNames($accessCodes);
+	$html = '<div id="' . \htmlspecialcharsbx($containerId) . '">';
+
+	foreach ($accessCodes as $accessCode)
+	{
+		$name = $accessNames[$accessCode]['name'] ?? $accessCode;
+		$provider = $accessNames[$accessCode]['provider'] ?? '';
+		$html .= '<div style="margin-bottom:4px">'
+			. '<input type="hidden" name="' . \htmlspecialcharsbx($inputName) . '" '
+			. 'value="' . \htmlspecialcharsbx($accessCode) . '">'
+			. ($provider !== '' ? \htmlspecialcharsbx($provider) . ': ' : '')
+			. \htmlspecialcharsbx($name)
+			. '&nbsp;<a href="javascript:void(0);" onclick="RestDeleteAccess(this)" class="access-delete"></a>'
+			. '</div>'
+		;
+	}
+
+	$html .= '</div><a href="javascript:void(0)" class="bx-action-href" onclick="RestAccessShowForm(\''
+		. \CUtil::JSEscape($containerId)
+		. '\', \''
+		. \CUtil::JSEscape($inputName)
+		. '\')">'
+		. Loc::getMessage('REST_OPT_ACCESS_POLICY_ADD_USERS')
+		. '</a>'
+	;
+
+	return $html;
+};
+
+$incomingWebhookAccessPolicyProvider = new Provider\IncomingWebhook\AccessPolicyProvider();
+$applicationAccessPolicyProvider = new Provider\Application\AccessPolicyProvider();
+$accessPolicyOptions = [
+	[
+		'CODE' => 'rest_incoming_webhook_create_own_rights',
+		'NAME' => Loc::getMessage('REST_OPT_ACCESS_POLICY_INCOMING_WEBHOOK'),
+		'VALUE' => $incomingWebhookAccessPolicyProvider->getAccessCodesAllowedToCreateOwn(),
+		'COMMAND' => Command\IncomingWebhook\AccessPolicy\SetOwnIncomingWebhookCreationAccessCommand::class,
+		'CONTAINER_ID' => 'rest_access_policy_incoming_webhook_create_own',
+	],
+	[
+		'CODE' => 'rest_local_app_create_rights',
+		'NAME' => Loc::getMessage('REST_OPT_ACCESS_POLICY_LOCAL_APP'),
+		'VALUE' => $applicationAccessPolicyProvider->getAccessCodesAllowedToCreateLocalApp(),
+		'COMMAND' => Command\Application\AccessPolicy\SetLocalApplicationCreationAccessCommand::class,
+		'CONTAINER_ID' => 'rest_access_policy_local_app_create',
+	],
+	[
+		'CODE' => 'rest_personal_app_create_rights',
+		'NAME' => Loc::getMessage('REST_OPT_ACCESS_POLICY_PERSONAL_APP'),
+		'VALUE' => $applicationAccessPolicyProvider->getAccessCodesAllowedToCreatePersonalApp(),
+		'COMMAND' => Command\Application\AccessPolicy\SetPersonalApplicationCreationAccessCommand::class,
+		'CONTAINER_ID' => 'rest_access_policy_personal_app_create',
+	],
+];
+
+\CJSCore::Init(['access']);
+
+$restoreDefaults = (string)$request->get('RestoreDefaults');
 
 // post save
-if ($Apply.$RestoreDefaults <> '' && \check_bitrix_sessid())
+if (($request->isPost() || $restoreDefaults !== '') && \check_bitrix_sessid())
 {
-	if ($RestoreDefaults <> '')
+	if ($restoreDefaults !== '')
 	{
 		include_once('default_option.php');
 		if (is_array($rest_default_option))
@@ -106,13 +196,13 @@ if ($Apply.$RestoreDefaults <> '' && \check_bitrix_sessid())
 	{
 		foreach ($allOptions as $option)
 		{
-			if ($option[0] == 'header')
+			if (($option[0] ?? '') == 'header')
 			{
 				continue;
 			}
 
 			$code = $option['CODE'];
-			$val = ${$code};
+			$val = (string)$request->getPost($code);
 			$val = trim($val);
 
 			switch ($option['PARAMS']['TYPE']):
@@ -128,7 +218,7 @@ if ($Apply.$RestoreDefaults <> '' && \check_bitrix_sessid())
 					break;
 			endswitch;
 
-			if($option['PARAMS']['ABS'] && $option['PARAMS']['ABS'] == 'Y')
+			if(!empty($option['PARAMS']['ABS']) && $option['PARAMS']['ABS'] == 'Y')
 			{
 				$val = abs($val);
 			}
@@ -136,7 +226,20 @@ if ($Apply.$RestoreDefaults <> '' && \check_bitrix_sessid())
 			\COption::setOptionString($module_id, $code, $val);
 		}
 
-		if ($_REQUEST["clear_data"] === "y")
+		foreach ($accessPolicyOptions as $option)
+		{
+			$commandClass = $option['COMMAND'];
+
+			$accessCodes = $request->getPost($option['CODE']);
+			if (!is_array($accessCodes))
+			{
+				$accessCodes = [];
+			}
+
+			(new $commandClass($normalizeAccessCodes($accessCodes)))->run();
+		}
+
+		if (($_REQUEST["clear_data"] ?? 'N') === "y")
 		{
 			\Bitrix\Rest\LogTable::clearAll();
 		}
@@ -237,7 +340,7 @@ $tabControl->Begin();
 				<? else: ?>
 					<input
 						type="text"
-						size="<?=$params['SIZE']?>"
+						size="<?=($params['SIZE'] ?? 30)?>"
 						maxlength="255"
 						value="<?=\htmlspecialcharsbx($val)?>"
 						name="<?=\htmlspecialcharsbx($option['CODE'])?>"
@@ -245,11 +348,28 @@ $tabControl->Begin();
 				<? endif;?>
 			</td>
 		</tr>
-	<?
-	endforeach;
-	$tabControl->BeginNextTab();
-	$ACTIVE = \COption::GetOptionInt('rest', 'log_end_time', 0) >= time();
-	?>
+		<?
+		endforeach;
+		?>
+			<tr class="heading">
+				<td colspan="2"><?=Loc::getMessage('REST_OPT_ACCESS_POLICY')?></td>
+			</tr>
+			<?foreach ($accessPolicyOptions as $option):?>
+				<tr>
+					<td valign="top" width="40%"><?=$option['NAME']?>:</td>
+					<td valign="middle" width="60%">
+						<?=$getAccessPolicyOptionHtml(
+							$option['VALUE'],
+							$option['CONTAINER_ID'],
+							$option['CODE'] . '[]',
+						)?>
+					</td>
+				</tr>
+			<?endforeach;?>
+		<?
+		$tabControl->BeginNextTab();
+		$ACTIVE = \COption::GetOptionInt('rest', 'log_end_time', 0) >= time();
+		?>
 	<tr>
 		<td valign="top" width="40%">
 			<? echo GetMessage("REST_OPT_ACTIVE") ?>:
@@ -344,9 +464,9 @@ $tabControl->Begin();
 					type="text"
 					size="<?=$option['SIZE']?>"
 					maxlength="255"
-					value="<?=\htmlspecialcharsbx($filters[$option["CODE"]])?>"
-					name="<?=\htmlspecialcharsbx("log_filters[".$option['CODE']."]")?>"
-					id="<?=\htmlspecialcharsbx($option['CODE'])?>"
+					value="<?=\htmlspecialcharsbx($filters[$option["CODE"]] ?? '')?>"
+					name="<?=\htmlspecialcharsbx("log_filters[".($option['CODE'] ?? '')."]")?>"
+					id="<?=\htmlspecialcharsbx($option['CODE'] ?? '')?>"
 				/>
 			</td>
 		</tr>
@@ -368,6 +488,47 @@ $tabControl->Begin();
 	<? $tabControl->End(); ?>
 </form>
 <script>
+	function RestInsertAccess(arRights, divId, hiddenName)
+	{
+		var div = BX(divId);
+		for (var provider in arRights)
+		{
+			for (var id in arRights[provider])
+			{
+				var providerPrefix = BX.Access.GetProviderPrefix(provider, id);
+				var newDiv = document.createElement('DIV');
+				var accessCode = id === 'UA' ? 'AU' : id;
+				accessCode = BX.util.htmlspecialchars(accessCode);
+				newDiv.style.marginBottom = '4px';
+				newDiv.innerHTML = '<input type="hidden" name="' + BX.util.htmlspecialchars(hiddenName)
+					+ '" value="' + accessCode + '">'
+					+ (providerPrefix ? providerPrefix + ': ' : '')
+					+ BX.util.htmlspecialchars(arRights[provider][id].name)
+					+ '&nbsp;<a href="javascript:void(0);" onclick="RestDeleteAccess(this)" '
+					+ 'class="access-delete"></a>';
+				div.appendChild(newDiv);
+			}
+		}
+	}
+
+	function RestDeleteAccess(ob)
+	{
+		var div = BX.findParent(ob, {'tag': 'div'});
+		div.parentNode.removeChild(div);
+	}
+
+	function RestAccessShowForm(divId, hiddenName)
+	{
+		BX.Access.Init();
+		BX.Access.SetSelected({});
+		BX.Access.ShowForm({
+			callback: function(obSelected)
+			{
+				RestInsertAccess(obSelected, divId, hiddenName);
+			}
+		});
+	}
+
 	function RestoreDefaults()
 	{
 		if(confirm('<?echo AddSlashes(GetMessage("MAIN_HINT_RESTORE_DEFAULTS_WARNING"))?>'))

@@ -5,6 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 /**
+ * @global CMain $APPLICATION
  * @var CBitrixComponentTemplate $this
  * @var CBitrixMenuComponent $component
  * @var array $arParams
@@ -17,7 +18,7 @@ if (!empty($arResult))
 	<div class="menu-main-container" id="mainMenu">
 		<div class="menu-main-items-container">
 			<div class="menu-main-items-scroll-block">
-				<?$APPLICATION->IncludeComponent(
+				<?php $APPLICATION->IncludeComponent(
 					"bitrix:catalog.section.list",
 					"store_v3_menu",
 					Array(

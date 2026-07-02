@@ -1,7 +1,7 @@
 import { Event, Loc, Tag } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { BaseSettingsPage, SettingsRow, SettingsSection } from 'ui.form-elements.field';
-import { Checker, InlineChecker, Selector, TextInput, TextInputInline } from 'ui.form-elements.view';
+import { Checker, InlineChecker, Selector, TextInput, TextInputInline, FieldFactory } from 'ui.form-elements.view';
 import { Row, Section, SeparatorRow } from 'ui.section';
 import { AnalyticSettingsEvent } from '../analytic';
 import { PortalDeleteSection } from  '../configuration/portal-delete-section';
@@ -161,6 +161,28 @@ export class ConfigurationPage extends BaseSettingsPage
 			let showQuitRow = new Row({});
 
 			ConfigurationPage.addToSectionHelper(defaultEmailFrom, settingsSection, showQuitRow);
+		}
+
+		if (this.hasValue('selectorMailConnectionResponsibleAdmin'))
+		{
+			const responsibleAdminField = FieldFactory.createUserSelector({
+				...this.getValue('selectorMailConnectionResponsibleAdmin'),
+				multiple: false,
+				enableAll: false,
+				enableUsers: false,
+				entities: [
+					{
+						id: 'user',
+						options: {
+							intranetUsersOnly: true,
+							userId: this.getValue('mailConnectionAdminIds') ?? [],
+						},
+					},
+				],
+			});
+
+			const responsibleAdminRow = new Row({});
+			ConfigurationPage.addToSectionHelper(responsibleAdminField, settingsSection, responsibleAdminRow);
 		}
 
 		return settingsSection;

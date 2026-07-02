@@ -5,6 +5,7 @@ jn.define('ui-system/typography/phone-field', (require, exports, module) => {
 	const { TextBase } = require('ui-system/typography/text-base');
 
 	module.exports = {
+		/** @param {TypographyPhoneNumberFieldProps} props */
 		PhoneNumberField: (props) => TextBase({ nativeElement: PhoneNumberField, ...props }),
 	};
 });

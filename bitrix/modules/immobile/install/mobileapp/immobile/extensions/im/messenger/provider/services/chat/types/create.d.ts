@@ -9,6 +9,7 @@ declare type CreateChatParams = {
 	description?: string,
 	avatar?: string,
 	messagesAutoDeleteDelay?: number,
+	parentChatId: number,
 }
 
 declare type CreateCopilotParams = {

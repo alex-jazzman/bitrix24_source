@@ -85,9 +85,9 @@ export class CopilotBanner extends EventEmitter
 					<div class="ai__copilot-banner_starlight"></div>
 					${this.#renderPlatesByZone()}
 					<div class="ai__copilot-banner_main">
-						<p class="ai__copilot-banner_text">${this.#getTextWithAccents('AI_COPILOT_BANNER_TEXT_1')}</p>
+						<p class="ai__copilot-banner_text">${this.#getTextWithAccents('AI_COPILOT_BANNER_TEXT_1_MSGVER_1')}</p>
 						<p class="ai__copilot-banner_text">${this.#getTextWithAccents('AI_COPILOT_BANNER_TEXT_2')}</p>
-						<p class="ai__copilot-banner_text">${this.#getTextWithAccents('AI_COPILOT_BANNER_TEXT_3')}</p>
+						<p class="ai__copilot-banner_text">${this.#getTextWithAccents('AI_COPILOT_BANNER_TEXT_3_MSGVER_1')}</p>
 					</div>
 					<footer class="ai__copilot-banner_footer">
 					<div class="ai__copilot-banner_footer-text">
@@ -143,6 +143,7 @@ export class CopilotBanner extends EventEmitter
 	#getTextWithAccents(phraseCode: string): string
 	{
 		return Loc.getMessage(phraseCode, {
+			'#COPILOT_NAME#': this.#getCopilotName(),
 			'#accent#': '<span class="--accent">',
 			'#/accent#': '</span>',
 		});
@@ -151,8 +152,9 @@ export class CopilotBanner extends EventEmitter
 	#renderTitle(): HTMLElement
 	{
 		const titleText = Loc.getMessage(
-			'AI_COPILOT_BANNER_TITLE',
+			'AI_COPILOT_BANNER_TITLE_MSGVER_1',
 			{
+				'#COPILOT_NAME#': this.#getCopilotName(),
 				'#hint-start#': '<span class="ai__copilot-banner_title-hint">',
 				'#hint-end#': '</span>',
 			},
@@ -166,7 +168,9 @@ export class CopilotBanner extends EventEmitter
 
 		const titlePartWithHint = title.querySelector('.ai__copilot-banner_title-hint');
 
-		const hintContent = `<div>${Loc.getMessage('AI_COPILOT_BANNER_TITLE_HINT')}</div>`;
+		const hintContent = `<div>${Loc.getMessage('AI_COPILOT_BANNER_TITLE_HINT_MSGVER_1', {
+			'#COPILOT_NAME#': this.#getCopilotName(),
+		})}</div>`;
 
 		const hint = BX.UI.Hint.createInstance({
 			popupParameters: {
@@ -197,6 +201,11 @@ export class CopilotBanner extends EventEmitter
 		bind(btn, 'click', this.#handleButtonClick.bind(this));
 
 		return btn;
+	}
+
+	#getCopilotName(): string
+	{
+		return Extension.getSettings('ai.copilot-banner').get('copilotName');
 	}
 
 	async #handleButtonClick(): void

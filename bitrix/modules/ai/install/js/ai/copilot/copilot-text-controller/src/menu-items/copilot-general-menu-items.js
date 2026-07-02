@@ -75,7 +75,9 @@ export class CopilotGeneralMenuItems extends CopilotMenuItems
 			...getSelectedEngineMenuItem(engines, selectedEngineCode, copilotTextController, canEditSettings),
 			{
 				code: 'about_open_copilot',
-				text: Loc.getMessage('AI_COPILOT_MENU_ITEM_ABOUT_COPILOT'),
+				text: Loc.getMessage('AI_COPILOT_MENU_ITEM_ABOUT_COPILOT_MSGVER_1', {
+					'#COPILOT_NAME#': Extension.getSettings('ai.copilot').get('copilotName'),
+				}),
 				icon: MainIconSet.INFO,
 				command: new OpenAboutCopilot(),
 			},
@@ -177,7 +179,9 @@ function getSelectedEngineMenuItem(
 		{
 			id: 'provider',
 			code: 'provider',
-			text: Loc.getMessage('AI_COPILOT_MENU_ITEM_OPEN_COPILOT'),
+			text: Loc.getMessage('AI_COPILOT_MENU_ITEM_OPEN_COPILOT_MSGVER_1', {
+				'#COPILOT_NAME#': Extension.getSettings('ai.copilot').get('copilotName'),
+			}),
 			children: CopilotProvidersMenuItems.getMenuItems({
 				engines,
 				selectedEngineCode,

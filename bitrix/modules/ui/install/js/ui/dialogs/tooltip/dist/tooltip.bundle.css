@@ -37,15 +37,22 @@
 }
 
 .ui-dialog-tooltip .popup-window-angly-top .popup-window-angly--arrow {
-	background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='36' height='13' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1.571 12C7.687 12 13.393 0 17.994 0c4.6 0 10.239 12 16.422 12H1.572z' fill='%23085DC1'/%3E%3C/svg%3E") center bottom no-repeat;
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='13' fill='none' viewBox='0 0 36 13'%3E%3Cpath fill='%23085dc1' d='M1.571 12C7.687 12 13.393 0 17.994 0s10.239 12 16.423 12z'/%3E%3C/svg%3E") center bottom no-repeat;
 }
 
+.ui-dialog-tooltip .popup-window-angly-bottom .popup-window-angly--arrow {
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='13' fill='none' viewBox='0 0 36 13'%3E%3Cpath fill='%23085dc1' d='M1.571 12C7.687 12 13.393 0 17.994 0s10.239 12 16.423 12z'/%3E%3C/svg%3E") center top no-repeat;
+	transform: rotate(180deg);
+	top: -1px;
+	bottom: unset;
+	left: unset;
+}
 .ui-dialog-tooltip .popup-window-angly--arrow {
 	width: 36px;
 	height: 13px;
 	left: -1px;
-	top: unset;
 	bottom: -1px;
+	top: unset;
 	transform: unset;
 	transform-origin: unset;
 }

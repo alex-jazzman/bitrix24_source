@@ -1,5 +1,11 @@
-<?
+<?php
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
+
+/**
+ * @global CMain $APPLICATION
+ * @global CDatabase $DB
+ * @global CUserTypeManager $USER_FIELD_MANAGER
+ */
 
 $blogModulePermissions = $APPLICATION->GetGroupRight("blog");
 if ($blogModulePermissions < "R")
@@ -18,38 +24,36 @@ $aTabs[] = $USER_FIELD_MANAGER->EditFormTab("BLOG_BLOG");
 
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
-$ID = intval($ID);
-if ($_SERVER['REQUEST_METHOD']=="POST" && $Update <> '' && $blogModulePermissions>="W" && check_bitrix_sessid())
+$ID = intval($_REQUEST["ID"] ?? 0);
+if ($_SERVER['REQUEST_METHOD']=="POST" && !empty($_POST['Update']) && $blogModulePermissions>="W" && check_bitrix_sessid())
 {
 	$arFields = array(
-		"NAME" => $NAME,
-		"DESCRIPTION" => $DESCRIPTION,
+		"NAME" => $_POST['NAME'],
+		"DESCRIPTION" => $_POST['DESCRIPTION'],
 		"=DATE_UPDATE" => $DB->CurrentTimeFunction(),
 		"URL" => $_POST["URL"],
-		//"REAL_URL" => $REAL_PATH,
-		"OWNER_ID" => $OWNER_ID,
-		"GROUP_ID" => $GROUP_ID,
-		"ACTIVE" => (($ACTIVE == "Y") ? "Y" : "N"),
-		"ENABLE_COMMENTS" => (($ENABLE_COMMENTS == "Y") ? "Y" : "N"),
-		"ENABLE_IMG_VERIF" => (($ENABLE_IMG_VERIF == "Y") ? "Y" : "N"),
-		"EMAIL_NOTIFY" => (($EMAIL_NOTIFY == "Y") ? "Y" : "N"),
-		"ENABLE_RSS" => (($ENABLE_RSS == "Y") ? "Y" : "N"),
-		"SEARCH_INDEX" => (($SEARCH_INDEX == "Y") ? "Y" : "N"),
-		"USE_SOCNET" => (($USE_SOCNET == "Y") ? "Y" : "N"),
-		"PERMS_POST" => $PERMS_P,
-		"PERMS_COMMENT" => $PERMS_C,
-		"EDITOR_USE_FONT" => (($EDITOR_USE_FONT == "Y") ? "Y" : "N"),
-		"EDITOR_USE_LINK" => (($EDITOR_USE_LINK == "Y") ? "Y" : "N"),
-		"EDITOR_USE_IMAGE" => (($EDITOR_USE_IMAGE == "Y") ? "Y" : "N"),
-		"EDITOR_USE_VIDEO" => (($EDITOR_USE_VIDEO == "Y") ? "Y" : "N"),
-		"EDITOR_USE_FORMAT" => (($EDITOR_USE_FORMAT == "Y") ? "Y" : "N"),
+		"GROUP_ID" => $_POST['GROUP_ID'],
+		"ACTIVE" => ((isset($_POST['ACTIVE']) && $_POST['ACTIVE'] == "Y") ? "Y" : "N"),
+		"ENABLE_COMMENTS" => ((isset($_POST['ENABLE_COMMENTS']) && $_POST['ENABLE_COMMENTS'] == "Y") ? "Y" : "N"),
+		"ENABLE_IMG_VERIF" => ((isset($_POST['ENABLE_IMG_VERIF']) && $_POST['ENABLE_IMG_VERIF'] == "Y") ? "Y" : "N"),
+		"EMAIL_NOTIFY" => ((isset($_POST['EMAIL_NOTIFY']) && $_POST['EMAIL_NOTIFY'] == "Y") ? "Y" : "N"),
+		"ENABLE_RSS" => ((isset($_POST['ENABLE_RSS']) && $_POST['ENABLE_RSS'] == "Y") ? "Y" : "N"),
+		"SEARCH_INDEX" => ((isset($_POST['SEARCH_INDEX']) && $_POST['SEARCH_INDEX'] == "Y") ? "Y" : "N"),
+		"USE_SOCNET" => ((isset($_POST['USE_SOCNET']) && $_POST['USE_SOCNET'] == "Y") ? "Y" : "N"),
+		"PERMS_POST" => $_POST['PERMS_P'],
+		"PERMS_COMMENT" => $_POST['PERMS_C'],
+		"EDITOR_USE_FONT" => ((isset($_POST['EDITOR_USE_FONT']) && $_POST['EDITOR_USE_FONT'] == "Y") ? "Y" : "N"),
+		"EDITOR_USE_LINK" => ((isset($_POST['EDITOR_USE_LINK']) && $_POST['EDITOR_USE_LINK'] == "Y") ? "Y" : "N"),
+		"EDITOR_USE_IMAGE" => ((isset($_POST['EDITOR_USE_IMAGE']) && $_POST['EDITOR_USE_IMAGE'] == "Y") ? "Y" : "N"),
+		"EDITOR_USE_VIDEO" => ((isset($_POST['EDITOR_USE_VIDEO']) && $_POST['EDITOR_USE_VIDEO'] == "Y") ? "Y" : "N"),
+		"EDITOR_USE_FORMAT" => ((isset($_POST['EDITOR_USE_FORMAT']) && $_POST['EDITOR_USE_FORMAT'] == "Y") ? "Y" : "N"),
 	);
 
 	if(!IsModuleInstalled("socialnetwork"))
 		unset($arFields["USE_SOCNET"]);
 
-	if(intval($OWNER_ID) > 0)
-		$arFields["OWNER_ID"] = intval($OWNER_ID);
+	if(intval($_POST['OWNER_ID']) > 0)
+		$arFields["OWNER_ID"] = intval($_POST['OWNER_ID']);
 	else
 		$arFields["OWNER_ID"] = false;	
 	
@@ -138,7 +142,7 @@ if ($_SERVER['REQUEST_METHOD']=="POST" && $Update <> '' && $blogModulePermission
 		}
 
 
-		if ($apply == '')
+		if (empty($_POST['apply']))
 			LocalRedirect("/bitrix/admin/blog_blog.php?lang=".LANG.GetFilterParams("filter_", false));
 		else
 			LocalRedirect("/bitrix/admin/blog_blog_edit.php?lang=".LANG."&ID=".$ID."&".$tabControl->ActiveTabParam());

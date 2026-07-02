@@ -8,8 +8,8 @@ return [
 	'js' => 'dist/binding.bundle.js',
 	'rel' => [
 		'main.core',
-		'ui.notification',
 		'main.core.events',
+		'ui.notification',
 	],
 	'skip_core' => false,
 ];

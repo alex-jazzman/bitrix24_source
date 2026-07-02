@@ -17,3 +17,4 @@ $MESS['CATALOG_STORE_DOCUMENT_FIELD_RESPONSIBLE_NAME'] = 'Имя ответст�
 $MESS['CATALOG_STORE_DOCUMENT_FIELD_RESPONSIBLE'] = 'ID и имя ответственного';
 $MESS['CATALOG_STORE_DOCUMENT_FIELD_WAS_CANCELLED'] = 'Документ отменён';
 $MESS['CATALOG_STORE_DOCUMENT_FIELD_WAS_CANCELLED_FULL'] = 'Был ли документ отменён: Y - да, N - нет';
+$MESS['CATALOG_STORE_DOCUMENT_TABLE_DESCRIPTION_FULL'] = 'Набор содержит данные о складских документах, которые фиксируют движение товаров.';

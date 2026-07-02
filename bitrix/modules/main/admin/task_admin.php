@@ -1,14 +1,12 @@
-<?
+<?php
 /**
  * Bitrix Framework
  * @package bitrix
  * @subpackage main
- * @copyright 2001-2014 Bitrix
+ * @copyright 2001-2026 Bitrix
  *
  * @global CMain $APPLICATION
  * @global CUser $USER
- * @global string $by
- * @global string $order
  */
 require_once(__DIR__."/../include/prolog_admin_before.php");
 define("HELP_FILE", "users/task_admin.php");
@@ -32,37 +30,19 @@ $arFilterFields = Array(
 	"find_binding"
 );
 
-$lAdmin->InitFilter($arFilterFields);
+$filter = $lAdmin->InitFilter($arFilterFields);
 
-function CheckFilter($arFields)
-{
-	global $strError;
-	$str = "";
-	$strError .= $str;
-	if($str <> '')
-	{
-		global $lAdmin;
-		$lAdmin->AddFilterError($str);
-		return false;
-	}
-
-	return true;
-}
-$arFilter = Array();
-if(CheckFilter($arFilterFields))
-{
-	$arFilter = Array(
-		"ID"			=> ($find!='' && $find_type == "id"? $find : $find_id),
-		"LETTER"		=> $find_letter,
-		"MODULE_ID"	=> $find_module_id,
-		"SYS"			=> $find_sys,
-		"BINDING"	=> $find_binding
-	);
-}
+$arFilter = Array(
+	"ID" => ($filter["find"] != "" && $filter["find_type"] == "id" ? $filter["find"] : $filter["find_id"]),
+	"LETTER" => $filter["find_letter"],
+	"MODULE_ID" => $filter["find_module_id"],
+	"SYS" => $filter["find_sys"],
+	"BINDING" => $filter["find_binding"],
+);
 
 if($lAdmin->EditAction() && $USER->CanDoOperation('edit_tasks'))
 {
-	foreach($FIELDS as $ID=>$arFields)
+	foreach($_POST['FIELDS'] as $ID=>$arFields)
 	{
 		$ID = intval($ID);
 
@@ -77,7 +57,7 @@ if(($arID = $lAdmin->GroupAction()) && $USER->CanDoOperation('edit_tasks'))
 	if (isset($_REQUEST['action_target']) && $_REQUEST['action_target']=='selected')
 	{
 		$arID = Array();
-		$rsData = CTask::GetList(Array($by=>$order), $arFilter);
+		$rsData = CTask::GetList(Array($oSort->getField() => $oSort->getOrder()), $arFilter);
 		while($arRes = $rsData->Fetch())
 			$arID[] = $arRes['ID'];
 	}
@@ -106,7 +86,7 @@ foreach($modules as $MID)
 	$arModuleRefId[$MID] = $MID;
 }
 
-$rsData = CTask::GetList(array($by=>$order), $arFilter);
+$rsData = CTask::GetList(array($oSort->getField() => $oSort->getOrder()), $arFilter);
 $rsData = new CAdminResult($rsData, $sTableID);
 $rsData->NavStart();
 
@@ -122,32 +102,38 @@ $lAdmin->AddHeaders(array(
 	array("id"=>"BINDING", "content"=>GetMessage("BINDING"), "sort"=>"binding", "default"=>true)
 ));
 
-while($arRes = $rsData->NavNext(true, "f_"))
+while($arRes = $rsData->Fetch())
 {
-	$row =& $lAdmin->AddRow($f_ID, $arRes, "task_edit.php?lang=".LANGUAGE_ID."&ID=".$f_ID, GetMessage("MAIN_EDIT_TITLE"));
-	$row->AddViewField("ID", "<a href='task_edit.php?lang=".LANGUAGE_ID."&ID=".$f_ID."' title='".GetMessage("MAIN_EDIT_TITLE")."'>".$f_ID."</a>");
+	$taskId = (int)$arRes["ID"];
+	$taskIdHtml = htmlspecialcharsbx($arRes["ID"]);
+	$taskTitleHtml = htmlspecialcharsbx($arRes["TITLE"]);
+	$taskDescHtml = htmlspecialcharsbx($arRes["DESC"]);
+	$taskLetterHtml = htmlspecialcharsbx($arRes["LETTER"]);
+	$moduleId = $arRes["MODULE_ID"];
+	$sys = (mb_strtoupper($arRes["SYS"]) == 'Y');
+	$row = $lAdmin->AddRow($taskId, $arRes, "task_edit.php?lang=".LANGUAGE_ID."&ID=".$taskId, GetMessage("MAIN_EDIT_TITLE"));
+	$row->AddViewField("ID", "<a href='task_edit.php?lang=".LANGUAGE_ID."&ID=".$taskIdHtml."' title='".GetMessage("MAIN_EDIT_TITLE")."'>".$taskIdHtml."</a>");
 
-	$sys = (mb_strtoupper($f_SYS) == 'Y');
-	$row->AddViewField("NAME", "<a href='task_edit.php?lang=".LANGUAGE_ID."&ID=".$f_ID."' title='".GetMessage("MAIN_EDIT_TITLE")."'>".$f_TITLE."</a>");
-	$row->AddViewField("DESCRIPTION", $f_DESC);
-	$row->AddViewField("MODULE_ID", htmlspecialcharsbx($arModuleRef[$f_MODULE_ID]));
-	$row->AddViewField("LETTER", $f_LETTER);
+	$row->AddViewField("NAME", "<a href='task_edit.php?lang=".LANGUAGE_ID."&ID=".$taskIdHtml."' title='".GetMessage("MAIN_EDIT_TITLE")."'>".$taskTitleHtml."</a>");
+	$row->AddViewField("DESCRIPTION", $taskDescHtml);
+	$row->AddViewField("MODULE_ID", htmlspecialcharsbx($arModuleRef[$moduleId]));
+	$row->AddViewField("LETTER", $taskLetterHtml);
 	$row->AddViewField("SYS", ($sys ? GetMessage("MAIN_YES") : GetMessage("MAIN_NO")));
-	$bindingTitle = CTask::GetLangTitle($f_BINDING, $f_MODULE_ID);
+	$bindingTitle = CTask::GetLangTitle($arRes["BINDING"], $moduleId);
 	if($bindingTitle == "module")
 	{
-		$bindingTitle = CTask::GetLangTitle($bindingTitle, "main");
+		$bindingTitle = CTask::GetLangTitle($bindingTitle);
 	}
-	$row->AddViewField("BINDING", $bindingTitle);
+	$row->AddViewField("BINDING", htmlspecialcharsbx($bindingTitle));
 
 	$arActions = array();
-	$arActions[] = array("ICON"=>"edit", "TEXT"=>(($sys) ? GetMessage("MENU_VIEW") : GetMessage("MAIN_ADMIN_MENU_EDIT")),"DEFAULT" => true, "ACTION"=>$lAdmin->ActionRedirect("task_edit.php?ID=".$f_ID));
-	$arActions[] = array("ICON"=>"copy", "TEXT"=>GetMessage("MAIN_ADMIN_MENU_COPY"), "ACTION"=>$lAdmin->ActionRedirect("task_edit.php?COPY_ID=".$f_ID));
+	$arActions[] = array("ICON"=>"edit", "TEXT"=>(($sys) ? GetMessage("MENU_VIEW") : GetMessage("MAIN_ADMIN_MENU_EDIT")),"DEFAULT" => true, "ACTION"=>$lAdmin->ActionRedirect("task_edit.php?ID=".$taskId));
+	$arActions[] = array("ICON"=>"copy", "TEXT"=>GetMessage("MAIN_ADMIN_MENU_COPY"), "ACTION"=>$lAdmin->ActionRedirect("task_edit.php?COPY_ID=".$taskId));
 
 	if($USER->CanDoOperation('edit_tasks') && (!$sys))
 	{
 		$arActions[] = array("SEPARATOR"=>true);
-		$arActions[] = array("ICON"=>"delete", "TEXT"=>GetMessage("MAIN_ADMIN_MENU_DELETE"), "ACTION"=>"if(confirm('".GetMessage('CONFIRM_DEL_TASK')."')) ".$lAdmin->ActionDoGroup($f_ID, "delete"));
+		$arActions[] = array("ICON"=>"delete", "TEXT"=>GetMessage("MAIN_ADMIN_MENU_DELETE"), "ACTION"=>"if(confirm('".GetMessage('CONFIRM_DEL_TASK')."')) ".$lAdmin->ActionDoGroup($taskId, "delete"));
 	}
 	$row->AddActions($arActions);
 }
@@ -170,14 +156,14 @@ $lAdmin->CheckListMode();
 $APPLICATION->SetTitle(GetMessage("TITLE"));
 require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_admin_after.php");
 ?>
-<form name="find_form" method="GET" action="<?echo $APPLICATION->GetCurPage()?>?">
-<?
+<form name="find_form" method="GET" action="<?= $APPLICATION->GetCurPage()?>?">
+<?php
 $arFilter = array(
-	"ID"			=> $find_id,
-	"LETTER"		=> $find_letter,
-	"MODULE_ID"	=> $find_module_id,
-	"SYS"			=> $find_sys,
-	"BINDING"	=> $find_binding
+	"ID"			=> $filter["find_id"],
+	"LETTER"		=> $filter["find_letter"],
+	"MODULE_ID"	=> $filter["find_module_id"],
+	"SYS"			=> $filter["find_sys"],
+	"BINDING"	=> $filter["find_binding"]
 );
 
 $oFilter = new CAdminFilter(
@@ -192,35 +178,35 @@ $oFilter = new CAdminFilter(
 $oFilter->Begin();
 ?>
 <tr>
-	<td nowrap><?echo GetMessage("TASK_FILTER_ID")?>:</td>
-	<td nowrap><input type="text" name="find_id" value="<?echo htmlspecialcharsbx($find_id)?>" size="35"></td>
+	<td nowrap><?= GetMessage("TASK_FILTER_ID")?>:</td>
+	<td nowrap><input type="text" name="find_id" value="<?= htmlspecialcharsbx($filter["find_id"])?>" size="35"></td>
 </tr>
 <tr>
-	<td nowrap><?echo GetMessage("TASK_FILTER_LETTER")?>:</td>
-	<td nowrap><input type="text" name="find_letter" value="<?echo htmlspecialcharsbx($find_letter)?>" size="10"></td>
+	<td nowrap><?= GetMessage("TASK_FILTER_LETTER")?>:</td>
+	<td nowrap><input type="text" name="find_letter" value="<?= htmlspecialcharsbx($filter["find_letter"])?>" size="10"></td>
 </tr>
 <tr>
-	<td nowrap><?echo GetMessage("TASK_FILTER_MODULE_ID")?>:</td>
+	<td nowrap><?= GetMessage("TASK_FILTER_MODULE_ID")?>:</td>
 	<td nowrap>
-	<?
+	<?php
 	$arr = array("reference" => $arModuleRef, "reference_id" => $arModuleRefId);
-	echo SelectBoxFromArray("find_module_id", $arr, htmlspecialcharsbx($find_module_id));
+	echo SelectBoxFromArray("find_module_id", $arr, htmlspecialcharsbx($filter["find_module_id"]));
 	?>
 	</td>
 </tr>
 <tr>
-	<td nowrap><?echo GetMessage("TASK_FILTER_SYS")?>:</td>
+	<td nowrap><?= GetMessage("TASK_FILTER_SYS")?>:</td>
 	<td nowrap>
-		<?
+		<?php
 		$arr = array("reference" => array(GetMessage("TASK_FILTER_ANY"), GetMessage("MAIN_YES"), GetMessage("MAIN_NO")), "reference_id" => array("", "Y", "N"));
-		echo SelectBoxFromArray("find_sys", $arr, htmlspecialcharsbx($find_sys));
+		echo SelectBoxFromArray("find_sys", $arr, htmlspecialcharsbx($filter["find_sys"]));
 		?>
 	</td>
 </tr>
 <tr>
-	<td nowrap><?echo GetMessage("TASK_FILTER_BINDING")?>:</td>
+	<td nowrap><?= GetMessage("TASK_FILTER_BINDING")?>:</td>
 	<td nowrap>
-		<?
+		<?php
 		$bindings = COperation::GetBindingList();
 		$arRef = array(GetMessage("TASK_FILTER_ANY"));
 		$arRefId = array('');
@@ -233,15 +219,16 @@ $oFilter->Begin();
 			}
 		}
 		$arr = array("reference" => $arRef, "reference_id" => $arRefId);
-		echo SelectBoxFromArray("find_binding", array("reference" => $arRef, "reference_id" => $arRefId), htmlspecialcharsbx($find_binding));
+		echo SelectBoxFromArray("find_binding", array("reference" => $arRef, "reference_id" => $arRefId), htmlspecialcharsbx($filter["find_binding"]));
 		?>
 	</td>
 </tr>
-<?
+<?php
 $oFilter->Buttons(array("table_id"=>htmlspecialcharsbx($sTableID), "url"=>$APPLICATION->GetCurPage(), "form"=>"find_form"));
 $oFilter->End();
 ?>
 </form>
-<?$lAdmin->DisplayList();?>
+<?php
+$lAdmin->DisplayList();
 
-<?require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin.php");?>
+require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin.php");

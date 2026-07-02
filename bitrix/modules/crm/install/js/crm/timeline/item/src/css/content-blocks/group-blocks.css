@@ -1,0 +1,25 @@
+.crm-timeline__group-blocks {
+	display: flex;
+	flex-direction: column;
+	flex-wrap: nowrap;
+	align-items: stretch;
+	margin-right: 20px;
+	border: var(--ui-border-width-thin) solid rgba(0, 0, 0, 0.1);
+	gap: var(--ui-space-inline-2xs);
+	padding: var(--ui-space-inset-md);
+	margin-top: var(--ui-space-stack-xs);
+	border-radius: var(--ui-border-radius-lg);
+}
+
+.crm-timeline__group-blocks.--border-warning {
+	border: var(--ui-border-width-thin) solid var(--ui-color-accent-soft-orange-1);
+}
+
+.crm-timeline__card-container > .crm-timeline__card-container_block:first-child .crm-timeline__group-blocks {
+	margin-top: 0;
+}
+
+.crm-timeline__group-blocks .crm-audio-player-container
+{
+	padding: 0 0 var(--ui-space-inset-2xs) 0;
+}

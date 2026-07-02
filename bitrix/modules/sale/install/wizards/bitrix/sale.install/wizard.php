@@ -525,7 +525,17 @@ class Step4 extends CWizardStep
 						$adit = Array();
 						$this->content .= "<b>".$arPaySystems[$v1]."</b> - ".$arPersons[$k]."<br />";
 
-						$arPSCorrespondence = LocalGetPSActionParams($_SERVER["DOCUMENT_ROOT"].$arPaySystemAction["ACTION_FILE"]."/.description.php");
+						try
+						{
+							$handlerFolder = \Bitrix\Sale\PaySystem\Manager::getPathToHandlerFolder($arPaySystemAction["ACTION_FILE"]);
+						}
+						catch (\Bitrix\Main\IO\InvalidPathException $e)
+						{
+							$handlerFolder = null;
+						}
+						$arPSCorrespondence = ($handlerFolder !== null)
+							? LocalGetPSActionParams($_SERVER["DOCUMENT_ROOT"] . $handlerFolder . "/.description.php")
+							: array();
 
 						$this->content .= "<div id=\"".$v1."-".$k."-set\"><a href=\"javascript:ShowSet('".$v1."-".$k."', 'show')\">".GetMessage("WW_STEP4_2")."</a></div>";
 						$this->content .= "<div id=\"".$v1."-".$k."-unset\" style=\"display:none;\"><a href=\"javascript:ShowSet('".$v1."-".$k."', 'hide')\">".GetMessage("WW_STEP4_3")."</a></div>";
@@ -1077,15 +1087,29 @@ class Install extends CWizardStep
 					$arFields = Array();
 					$arPaySysAction = "";
 					$dbPaySysAction = CSalePaySystemAction::GetList(Array(), Array("PAY_SYSTEM_ID" => $pID, "PERSON_TYPE_ID" => $personID));
+					$actionFileValue = '';
 					if($arPaySysAction = $dbPaySysAction->Fetch())
 					{
-						$pathToAction = $_SERVER["DOCUMENT_ROOT"].$arPaySysAction["ACTION_FILE"];
+						$actionFileValue = $arPaySysAction["ACTION_FILE"];
 					}
 					else
 					{
 						$dbPaySysAction = CSalePaySystemAction::GetList(Array(), Array("PAY_SYSTEM_ID" => $pID));
 						if($arPaySysActionTmp = $dbPaySysAction->Fetch())
-							$pathToAction = $_SERVER["DOCUMENT_ROOT"].$arPaySysActionTmp["ACTION_FILE"];
+							$actionFileValue = $arPaySysActionTmp["ACTION_FILE"];
+					}
+
+					try
+					{
+						$handlerFolder = \Bitrix\Sale\PaySystem\Manager::getPathToHandlerFolder($actionFileValue);
+					}
+					catch (\Bitrix\Main\IO\InvalidPathException $e)
+					{
+						$handlerFolder = null;
+					}
+					if ($handlerFolder !== null)
+					{
+						$pathToAction = $_SERVER["DOCUMENT_ROOT"] . $handlerFolder;
 					}
 
 					if($pathToAction <> '')

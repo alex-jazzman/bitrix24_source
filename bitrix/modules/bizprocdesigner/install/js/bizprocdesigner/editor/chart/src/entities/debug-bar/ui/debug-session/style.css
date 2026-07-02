@@ -1,0 +1,74 @@
+@import url('../debug-bar-variables.css');
+
+.debug-bar-sessions {
+	min-width: 100%;
+	width: max-content;
+}
+
+.debug-bar-session {
+	transition: background-color var(--debug-bar-transition-fast) var(--debug-bar-easing-default);
+	font-family: var(--debug-bar-font-mono), monospace;
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--debug-bar-font-size-base);
+}
+
+.debug-bar-session-header {
+	display: flex;
+	align-items: center;
+	gap: var(--debug-bar-spacing-sm);
+	margin-bottom: var(--debug-bar-spacing-xs);
+}
+
+.debug-bar-session-toggle {
+	flex-shrink: 0;
+	width: var(--debug-bar-icon-size);
+	height: var(--debug-bar-icon-size);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	border-radius: var(--debug-bar-border-radius-sm);
+	transition: background-color var(--debug-bar-transition-fast) var(--debug-bar-easing-default);
+	padding: 0;
+}
+
+.debug-bar-session-toggle:hover {
+	background: var(--debug-bar-bg-active);
+}
+
+.debug-bar-session-toggle:focus-visible {
+	outline: 2px solid var(--ui-color-primary, #3399FF);
+	outline-offset: 2px;
+	box-shadow: 0 0 0 4px rgba(51, 153, 255, 0.2);
+}
+
+.debug-bar-session-toggle:active {
+	transform: scale(0.95);
+}
+
+.debug-bar-session-toggle-icon {
+	font-size: var(--debug-bar-font-size-xs);
+	color: var(--debug-bar-text-secondary);
+	line-height: 1;
+	transition: transform var(--debug-bar-transition-fast) var(--debug-bar-easing-default);
+	transform: rotate(0deg);
+}
+
+.debug-bar-session-time {
+	font-family: var(--debug-bar-font-mono), monospace;
+	font-style: normal;
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--debug-bar-font-size-base);
+	color: var(--ui-color-base-3);
+}
+
+.debug-bar-session-message {
+	color: var(--ui-color-base-3);
+	font-family: var(--debug-bar-font-mono), monospace;
+	font-style: normal;
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--debug-bar-font-size-base);
+	flex: 1;
+}

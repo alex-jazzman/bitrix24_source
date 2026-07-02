@@ -18,11 +18,9 @@ export const Popup = {
 			default: '',
 		},
 	},
-	data()
+	created()
 	{
-		return {
-			popupInstance: null,
-		};
+		this.popupInstance = null;
 	},
 	computed: {
 		popupOptions()

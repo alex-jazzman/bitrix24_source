@@ -1,8 +1,13 @@
-<?
+<?php
 define('BX_PUBLIC_MODE', true);
 
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_js.php");
+
+/**
+ * @global CMain $APPLICATION
+ * @global CUser $USER
+ */
 
 // lpa is not allowed!
 if (!($USER->CanDoOperation('edit_php')))
@@ -19,6 +24,8 @@ $strWarning = "";
 $io = CBXVirtualIo::GetInstance();
 
 $bVarsFromForm = false;
+
+$filename = $_REQUEST['filename'] ?? '';
 if ($filename <> '' && ($mess = CFileMan::CheckFileName($filename)) !== true)
 {
 	$filename2 = $filename;
@@ -30,14 +37,16 @@ if ($filename <> '' && ($mess = CFileMan::CheckFileName($filename)) !== true)
 if (CAutoSave::Allowed())
 	$AUTOSAVE = new CAutoSave();
 
-$path = $io->CombinePath("/", urldecode($path));
-$site = CFileMan::__CheckSite($site);
+$path = $io->CombinePath("/", urldecode($_REQUEST['path'] ?? ''));
+
+$site = CFileMan::__CheckSite($_REQUEST['site'] ?? '');
 if(!$site)
 	$site = CSite::GetSiteByFullPath($_SERVER["DOCUMENT_ROOT"].$path);
 
 $DOC_ROOT = CSite::GetSiteDocRoot($site);
 $abs_path = $io->CombinePath($DOC_ROOT, $path);
 
+$new = $_REQUEST['new'] ?? '';
 if($new <> '' && $filename <> '')
 	$abs_path = $io->CombinePath($abs_path, $filename);
 
@@ -72,6 +81,8 @@ else
 		$bEdit = true;
 }
 
+$template = $_REQUEST['template'] ?? '';
+
 if($strWarning == '')
 {
 	if($bEdit)
@@ -95,7 +106,7 @@ if($strWarning == '')
 		$arTemplates = CFileman::GetFileTemplates(LANGUAGE_ID, array($site_template));
 		if($template <> '')
 		{
-			for ($i=0; $i<count($arTemplates); $i++)
+			for ($i=0, $n = count($arTemplates); $i < $n; $i++)
 			{
 				if($arTemplates[$i]["file"] == $template)
 				{
@@ -108,7 +119,7 @@ if($strWarning == '')
 			$filesrc_tmp = CFileman::GetTemplateContent($arTemplates[0]["file"], LANGUAGE_ID, array($site_template));
 	}
 
-	if($_SERVER['REQUEST_METHOD']=="POST" && $save <> '')
+	if ($_SERVER['REQUEST_METHOD'] == "POST" && !empty($_POST['save']))
 	{
 		if(!check_bitrix_sessid())
 		{
@@ -179,10 +190,10 @@ if($strWarning == '')
 ?>
 <script bxrunfirst="true">
 top.BX.showWait();
-top.BX.reload('<?=CUtil::JSEscape($_REQUEST["back_url"])?>', true);
+top.BX.reload('<?=CUtil::JSEscape($_REQUEST["back_url"] ?? '')?>', true);
 top.<?=$obJSPopup->jsPopup?>.Close();
 </script>
-<?
+				<?php
 				die();
 			}
 
@@ -217,36 +228,36 @@ if (CAutoSave::Allowed())
 {
 	echo CJSCore::Init(array('autosave'), true);
 	$AUTOSAVE->Init();
-?><script>BX.WindowManager.Get().setAutosave();</script><?
+?><script>BX.WindowManager.Get().setAutosave();</script><?php
 }
 ?>
 
 <input type="hidden" name="site" value="<?= htmlspecialcharsbx($site) ?>">
 <input type="hidden" name="path" value="<?= htmlspecialcharsbx(urlencode($path)) ?>">
 <input type="hidden" name="save" value="Y">
-<input type="hidden" name="lang" value="<?echo LANGUAGE_ID ?>">
+<input type="hidden" name="lang" value="<?= LANGUAGE_ID ?>">
 <input type="hidden" name="save" value="Y">
-<input type="hidden" name="template" value="<?echo htmlspecialcharsbx($template)?>">
-<input type="hidden" name="back_url" value="<?=htmlspecialcharsbx($back_url)?>">
-<input type="hidden" name="templateID" value="<?=htmlspecialcharsbx($_REQUEST["templateID"])?>">
+<input type="hidden" name="template" value="<?= htmlspecialcharsbx($template)?>">
+<input type="hidden" name="back_url" value="<?= htmlspecialcharsbx($_REQUEST['back_url'] ?? '')?>">
+<input type="hidden" name="templateID" value="<?= htmlspecialcharsbx($_REQUEST['templateID'] ?? '')?>">
 
 <?=bitrix_sessid_post()?>
 
-<?if(!$bEdit):?>
+<?php if(!$bEdit):?>
 <div id="bx_additional_params">
 	<input type="hidden" name="new" value="y">
-	<?echo GetMessage("FILEMAN_FILEEDIT_NAME")?><br>
-	<?
+	<?= GetMessage("FILEMAN_FILEEDIT_NAME")?><br>
+	<?php
 	if (isset($filename2))
 		$filename = $filename2;
 	?>
-	<input type="text" name="filename" style="width:100%" size="40" maxlength="255" value="<?echo htmlspecialcharsbx($filename)?>"><br><br>
+	<input type="text" name="filename" style="width:100%" size="40" maxlength="255" value="<?= htmlspecialcharsbx($filename)?>"><br><br>
 </div>
-<?endif;?>
+<?php endif;?>
 
 <textarea id="bx-filesrc" name="filesrc" style="height: 99%; width: 100%;"><?= htmlspecialcharsbx($filesrc)?></textarea>
 
-<?
+<?php
 $ceid = false;
 if(COption::GetOptionString('fileman', "use_code_editor", "Y") == "Y" && CModule::IncludeModule('fileman'))
 {
@@ -269,14 +280,14 @@ var border = null, ta = null, wnd = BX.WindowManager.Get();
 
 function TAResize(data)
 {
-	<?if ($ceid):?>
+	<?php if ($ceid):?>
 		var CE = window.BXCodeEditors['<?= $ceid?>'];
 		if (CE && CE.Resize)
 		{
 			CE.Resize(data.width - 10, data.height - 60);
 			return;
 		}
-	<?endif;?>
+	<?php endif;?>
 
 	if (null == ta)
 		ta = BX('bx-filesrc');
@@ -296,15 +307,14 @@ function TAResize(data)
 BX.addCustomEvent(wnd, 'onWindowResizeExt', TAResize);
 TAResize(wnd.GetInnerPos());
 
-<?if ($ceid):?>
+<?php if ($ceid):?>
 BX.addCustomEvent(window, 'OnCodeEditorReady', function(){TAResize(wnd.GetInnerPos());});
-<?endif;?>
+<?php endif;?>
 </script>
 
-<?
+<?php
 $obJSPopup->StartButtons();
 $obJSPopup->ShowStandardButtons(array('save', 'cancel'));
 $obJSPopup->EndButtons();
 
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin_js.php");
-?>

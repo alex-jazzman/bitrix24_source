@@ -4,7 +4,7 @@ import { UI } from 'ui.notification';
 import { EventEmitter } from 'main.core.events';
 import { mapState, mapWritableState } from 'ui.vue3.pinia';
 import { useChartStore } from 'humanresources.company-structure.chart-store';
-import { getMemberRoles, MemberRolesType, AnalyticsSourceType } from 'humanresources.company-structure.api';
+import { getMemberRoles, type MemberRolesType, AnalyticsSourceType } from 'humanresources.company-structure.api';
 import { UserManagementDialogAPI } from 'humanresources.company-structure.user-management-dialog';
 import { PermissionActions, PermissionChecker } from 'humanresources.company-structure.permission-checker';
 import { UsersTabActionMenu, events } from 'humanresources.company-structure.org-chart';

@@ -1,10 +1,9 @@
-import { Event, Type } from 'main.core';
+import { Event, Type, type JsonObject } from 'main.core';
 
-import { NotificationFilterSearchInput } from './elements/search/search-input';
-import { NotificationFilterPopup } from './elements/filter-popup';
 import { NotificationFilterCacheService } from '../classes/notification-filter-cache-service';
-
-import type { JsonObject } from 'main.core';
+import { NotificationFilterPopup } from './elements/filter-popup';
+import { NotificationFilterSearchInput } from './elements/search/search-input';
+import { NotificationFilterFieldTypes } from './const/const.js';
 
 type SearchAuthor = {
 	id: string,
@@ -28,12 +27,6 @@ type NotificationFilterData = {
 	searchTypes?: Array<SearchType>,
 	searchDate?: SearchDate,
 };
-
-export const NotificationFilterFieldTypes = Object.freeze({
-	searchAuthors: 'searchAuthors',
-	searchTypes: 'searchTypes',
-	searchDate: 'searchDate',
-});
 
 // @vue/component
 export const NotificationFilter = {

@@ -1,0 +1,98 @@
+
+.popup-window .crm-imopenlines-ai-agent-onboarding-popup {
+	background: url("images/image/background.png") center center no-repeat;
+	background-size: cover;
+	width: 905px;
+	height: 432px;
+	border-radius: 40px;
+}
+
+.crm-imopenlines-ai-agent-onboarding-popup__wrapper {
+	padding: 52px 55px 0 57px;
+	display: flex;
+	gap: 23px;
+}
+
+.crm-imopenlines-ai-agent-onboarding-popup__content {
+	min-width: 516px;
+}
+
+.crm-imopenlines-ai-agent-onboarding-popup__title {
+	font-weight: var(--ui-font-weight-semi-bold);
+	font-size: 30px;
+	color: var(--ui-color-white-base);
+	margin-bottom: 14px;
+}
+
+.crm-imopenlines-ai-agent-onboarding-popup__description {
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-lg);
+	color: var(--ui-color-white-base);
+	margin-bottom: 32px;
+	opacity: 0.7;
+}
+
+.crm-imopenlines-ai-agent-onboarding-popup__benefit-list {
+	display: flex;
+	flex-direction: column;
+	gap: 17px;
+	margin-bottom: 48px;
+}
+
+.crm-imopenlines-ai-agent-onboarding-popup__benefit-item {
+	display: flex;
+	gap: 3px;
+}
+
+.crm-imopenlines-ai-agent-onboarding-popup__benefit-item-text {
+	font-weight: var(--ui-font-weight-medium);
+	font-size: var(--ui-font-size-lg);
+	color: var(--ui-color-white-base);
+	display: flex;
+	align-items: center;
+}
+
+.crm-imopenlines-ai-agent-onboarding-popup__benefit-item-icon {
+	display: flex;
+	align-items: center;
+}
+
+.crm-imopenlines-ai-agent-onboarding-popup__video {
+	position: relative;
+	overflow: hidden;
+	width: 385px;
+	height: 241px;
+	border-radius: 16px;
+
+	box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, .13);
+	border: 2px solid rgba(0, 0, 0, 0);
+	background: linear-gradient(112.09deg, rgba(255, 255, 255, 0.3) 4.81%, rgba(255, 255, 255, 0.1) 34.16%, rgba(255, 255, 255, 0.1) 52.38%, rgba(255, 255, 255, 0.3) 100.44%);
+}
+
+.crm-imopenlines-ai-agent-onboarding-popup__preview-wrapper {
+	position: relative;
+}
+
+.crm-imopenlines-ai-agent-onboarding-popup__preview-wrapper::after {
+	content: "";
+	background: url("images/image/logo.webp") center center no-repeat;
+	background-size: cover;
+	position: absolute;
+	width: 164px;
+	height: 164px;
+	bottom: -125px;
+	left: 113px;
+}
+
+.crm-imopenlines-ai-agent-onboarding-popup__video video {
+	width: 401px;
+	height: 250px;
+	position: relative;
+	top: -8px;
+	left: -8px;
+}
+
+.crm-imopenlines-ai-agent-onboarding-popup__controls {
+	display: flex;
+	gap: 14px;
+}

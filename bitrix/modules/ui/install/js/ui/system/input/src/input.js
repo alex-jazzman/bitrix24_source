@@ -1,13 +1,11 @@
 import { Type, Tag, Dom, Event, Loc } from 'main.core';
-import { Icon, Outline } from 'ui.icon-set.api.core';
-import { ChipDesign, ChipSize, Chip } from 'ui.system.chip';
 import 'ui.hint';
+import { Icon, Outline } from 'ui.icon-set.api.core';
+import { ChipDesign, ChipSize, Chip, type ChipOptions } from 'ui.system.chip';
 
 import { InputSize, InputDesign } from './const';
 
 import './input.css';
-
-import type { ChipOptions } from 'ui.system.chip';
 
 export type InputOptions = {
 	value?: string,
@@ -29,8 +27,10 @@ export type InputOptions = {
 	clickable?: boolean,
 	stretched?: boolean,
 	active?: boolean,
+	readonly?: boolean,
 	dataTestId?: string,
 	copyable?: boolean,
+	required?: boolean,
 	onClick?: Function,
 	onFocus?: Function,
 	onBlur?: Function,
@@ -62,7 +62,9 @@ export class Input
 	#clickable: boolean = false;
 	#stretched: boolean = false;
 	#active: boolean = false;
+	#readonly: boolean = false;
 	#copyable: boolean = false;
+	#required: boolean = false;
 	#passwordVisible: boolean = false;
 	#dataTestId: string = '';
 
@@ -86,6 +88,7 @@ export class Input
 	#dropdownElement: ?HTMLElement = null;
 	#passwordToggleElement: ?HTMLElement = null;
 	#copyElement: ?HTMLElement = null;
+	#requiredElement: ?HTMLElement = null;
 	#chipsInstances: Chip[] = [];
 	#chipElements: HTMLElement[] = [];
 	#chipsContainer: ?HTMLElement = null;
@@ -117,7 +120,9 @@ export class Input
 		this.#clickable = options.clickable === true;
 		this.#stretched = options.stretched === true;
 		this.#active = options.active === true;
+		this.#readonly = options.readonly === true;
 		this.#copyable = options.copyable === true;
+		this.#required = options.required === true;
 		this.#dataTestId = options.dataTestId ?? '';
 
 		this.#onClick = options.onClick ?? null;
@@ -190,6 +195,11 @@ export class Input
 		if (this.#labelElement)
 		{
 			this.#labelElement.textContent = value;
+
+			if (this.#requiredElement)
+			{
+				Dom.append(this.#requiredElement, this.#labelElement);
+			}
 		}
 	}
 
@@ -357,6 +367,29 @@ export class Input
 		return this.#focused;
 	}
 
+	isReadonly(): boolean
+	{
+		return this.#readonly;
+	}
+
+	setReadonly(value: boolean): void
+	{
+		this.#readonly = value === true;
+		this.#updateClasses();
+
+		if (this.#inputElement)
+		{
+			if (this.#readonly)
+			{
+				Dom.attr(this.#inputElement, { readonly: '' });
+			}
+			else
+			{
+				this.#inputElement.removeAttribute('readonly');
+			}
+		}
+	}
+
 	setFocused(value: boolean): void
 	{
 		this.#focused = value === true;
@@ -379,6 +412,28 @@ export class Input
 		else
 		{
 			Dom.removeClass(this.#labelElement, '--inline');
+		}
+	}
+
+	isRequired(): boolean
+	{
+		return this.#required;
+	}
+
+	setRequired(value: boolean): void
+	{
+		this.#required = value === true;
+
+		if (this.#requiredElement)
+		{
+			if (this.#required)
+			{
+				this.#requiredElement.removeAttribute('hidden');
+			}
+			else
+			{
+				Dom.attr(this.#requiredElement, { hidden: '' });
+			}
 		}
 	}
 
@@ -417,9 +472,13 @@ export class Input
 
 	#renderLabel(): HTMLElement
 	{
+		this.#requiredElement = Tag.render`
+			<span class="ui-system-input-label-required" ${this.#required ? '' : 'hidden'}>*</span>
+		`;
+
 		this.#labelElement = Tag.render`
 			<div class="ui-system-input-label ${this.#labelInline ? '--inline' : ''}">
-				${this.#label ?? ''}
+				${this.#label ?? ''}${this.#requiredElement}
 			</div>
 		`;
 
@@ -577,6 +636,7 @@ export class Input
 			className: 'ui-system-input-value',
 			placeholder: this.#placeholder,
 			disabled: this.#isDisabled(),
+			readonly: this.#readonly,
 			type: this.#type,
 			value: this.#value,
 			dataTestId: this.#dataTestId,
@@ -590,6 +650,7 @@ export class Input
 					style="resize: ${this.#resize};"
 					placeholder="${commonAttrs.placeholder}"
 					${commonAttrs.disabled ? 'disabled' : ''}
+					${commonAttrs.readonly ? 'readonly' : ''}
 					rows="${this.#rows}"
 				>${commonAttrs.value}</textarea>
 			`;
@@ -602,6 +663,7 @@ export class Input
 					style="--placeholder-length: ${this.#placeholder.length}ch;"
 					placeholder="${commonAttrs.placeholder}"
 					${commonAttrs.disabled ? 'disabled' : ''}
+					${commonAttrs.readonly ? 'readonly' : ''}
 					type="${commonAttrs.type}"
 					value="${commonAttrs.value}"
 					${commonAttrs.dataTestId ? `data-test-id="${commonAttrs.dataTestId}"` : ''}
@@ -737,18 +799,30 @@ export class Input
 	{
 		event.stopPropagation();
 
-		if (this.#value && navigator.clipboard && window.isSecureContext)
+		if (!this.#value)
 		{
-			navigator.clipboard.writeText(this.#value);
+			this.#onCopy?.(event);
+
+			return;
 		}
 
-		if (this.#copyElement)
-		{
-			BX.UI.Hint.show(this.#copyElement, Loc.getMessage('UI_SYSTEM_INPUT_COPIED'));
+		const showHint = () => {
+			if (this.#copyElement)
+			{
+				BX.UI.Hint.show(this.#copyElement, Loc.getMessage('UI_SYSTEM_INPUT_COPIED'));
+				setTimeout(() => {
+					BX.UI.Hint.hide(this.#copyElement);
+				}, 1500);
+			}
+		};
 
-			setTimeout(() => {
-				BX.UI.Hint.hide(this.#copyElement);
-			}, 1500);
+		if (navigator.clipboard && window.isSecureContext)
+		{
+			navigator.clipboard.writeText(this.#value).then(() => showHint());
+		}
+		else if (BX.clipboard?.copy(this.#value))
+		{
+			showHint();
 		}
 
 		this.#onCopy?.(event);
@@ -764,6 +838,7 @@ export class Input
 			this.#clickable ? '--clickable' : '',
 			this.#stretched ? '--stretched' : '',
 			(this.#active || this.#focused) ? '--active' : '',
+			this.#readonly ? '--readonly' : '',
 			(this.#error && !this.#isDisabled()) ? '--error' : '',
 		].filter(Boolean).join(' ');
 	}
@@ -849,5 +924,6 @@ export class Input
 		this.#dropdownElement = null;
 		this.#passwordToggleElement = null;
 		this.#copyElement = null;
+		this.#requiredElement = null;
 	}
 }

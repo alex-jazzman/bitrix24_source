@@ -1,4 +1,4 @@
-<?
+<?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -17,24 +17,24 @@ $APPLICATION->SetAdditionalCSS("/bitrix/css/main/system.auth/flat/style.css");
 
 <div class="bx-authform">
 
-<?
+	<?php
 if(!empty($arParams["~AUTH_RESULT"]["MESSAGE"])):
 	$text = str_replace(array("<br>", "<br />"), "\n", $arParams["~AUTH_RESULT"]["MESSAGE"]);
 ?>
 	<div class="alert alert-danger"><?=nl2br(htmlspecialcharsbx($text))?></div>
-<?endif?>
+<?php endif?>
 
-<?
+	<?php
 if (!empty($arResult['ERROR_MESSAGE'])):
 	$text = str_replace(array("<br>", "<br />"), "\n", $arResult['ERROR_MESSAGE']);
 ?>
 	<div class="alert alert-danger"><?=nl2br(htmlspecialcharsbx($text))?></div>
-<?endif?>
+<?php endif?>
 
 	<h3 class="bx-title"><?=GetMessage("AUTH_PLEASE_AUTH")?></h3>
 
-<?if($arResult["AUTH_SERVICES"]):?>
-<?
+<?php if($arResult["AUTH_SERVICES"]):?>
+	<?php
 $APPLICATION->IncludeComponent("bitrix:socserv.auth.form",
 	"flat",
 	array(
@@ -48,19 +48,19 @@ $APPLICATION->IncludeComponent("bitrix:socserv.auth.form",
 ?>
 
 	<hr class="bxe-light">
-<?endif?>
+<?php endif?>
 
 	<form name="form_auth" method="post" target="_top" action="<?=$arResult["AUTH_URL"]?>">
 
 		<input type="hidden" name="AUTH_FORM" value="Y" />
 		<input type="hidden" name="TYPE" value="AUTH" />
 		<?= bitrix_sessid_post(); ?>
-<?if ($arResult["BACKURL"] <> ''):?>
+<?php if ($arResult["BACKURL"] <> ''):?>
 		<input type="hidden" name="backurl" value="<?=$arResult["BACKURL"]?>" />
-<?endif?>
-<?foreach ($arResult["POST"] as $key => $value):?>
+<?php endif?>
+<?php foreach ($arResult["POST"] as $key => $value):?>
 		<input type="hidden" name="<?=$key?>" value="<?=$value?>" />
-<?endforeach?>
+<?php endforeach?>
 
 		<div class="bx-authform-formgroup-container">
 			<div class="bx-authform-label-container"><?=GetMessage("AUTH_LOGIN")?></div>
@@ -71,32 +71,32 @@ $APPLICATION->IncludeComponent("bitrix:socserv.auth.form",
 		<div class="bx-authform-formgroup-container">
 			<div class="bx-authform-label-container"><?=GetMessage("AUTH_PASSWORD")?></div>
 			<div class="bx-authform-input-container">
-<?if($arResult["SECURE_AUTH"]):?>
-				<div class="bx-authform-psw-protected" id="bx_auth_secure" style="display:none"><div class="bx-authform-psw-protected-desc"><span></span><?echo GetMessage("AUTH_SECURE_NOTE")?></div></div>
+<?php if($arResult["SECURE_AUTH"]):?>
+				<div class="bx-authform-psw-protected" id="bx_auth_secure" style="display:none"><div class="bx-authform-psw-protected-desc"><span></span><?= GetMessage("AUTH_SECURE_NOTE")?></div></div>
 
 <script>
 document.getElementById('bx_auth_secure').style.display = '';
 </script>
-<?endif?>
+<?php endif?>
 				<input type="password" name="USER_PASSWORD" maxlength="255" autocomplete="off" />
 			</div>
 		</div>
 
-<?if($arResult["CAPTCHA_CODE"]):?>
-		<input type="hidden" name="captcha_sid" value="<?echo $arResult["CAPTCHA_CODE"]?>" />
+<?php if($arResult["CAPTCHA_CODE"]):?>
+		<input type="hidden" name="captcha_sid" value="<?= $arResult["CAPTCHA_CODE"]?>" />
 
 		<div class="bx-authform-formgroup-container dbg_captha">
 			<div class="bx-authform-label-container">
-				<?echo GetMessage("AUTH_CAPTCHA_PROMT")?>
+				<?= GetMessage("AUTH_CAPTCHA_PROMT")?>
 			</div>
-			<div class="bx-captcha"><img src="/bitrix/tools/captcha.php?captcha_sid=<?echo $arResult["CAPTCHA_CODE"]?>" width="180" height="40" alt="CAPTCHA" /></div>
+			<div class="bx-captcha"><img src="/bitrix/tools/captcha.php?captcha_sid=<?= $arResult["CAPTCHA_CODE"]?>" width="180" height="40" alt="CAPTCHA" /></div>
 			<div class="bx-authform-input-container">
 				<input type="text" name="captcha_word" maxlength="50" value="" autocomplete="off" />
 			</div>
 		</div>
-<?endif;?>
+<?php endif;?>
 
-<?if ($arResult["STORE_PASSWORD"] == "Y"):?>
+<?php if ($arResult["STORE_PASSWORD"] == "Y"):?>
 		<div class="bx-authform-formgroup-container">
 			<div class="checkbox">
 				<label class="bx-filter-param-label">
@@ -105,13 +105,13 @@ document.getElementById('bx_auth_secure').style.display = '';
 				</label>
 			</div>
 		</div>
-<?endif?>
+<?php endif?>
 		<div class="bx-authform-formgroup-container">
 			<input type="submit" class="btn btn-primary" name="Login" value="<?=GetMessage("AUTH_AUTHORIZE")?>" />
 		</div>
 	</form>
 
-<?if ($arParams["NOT_SHOW_LINKS"] != "Y"):?>
+<?php if ($arParams["NOT_SHOW_LINKS"] != "Y"):?>
 	<hr class="bxe-light">
 
 	<noindex>
@@ -119,24 +119,24 @@ document.getElementById('bx_auth_secure').style.display = '';
 			<a href="<?=$arResult["AUTH_FORGOT_PASSWORD_URL"]?>" rel="nofollow"><b><?=GetMessage("AUTH_FORGOT_PASSWORD_2")?></b></a>
 		</div>
 	</noindex>
-<?endif?>
+<?php endif?>
 
-<?if($arParams["NOT_SHOW_LINKS"] != "Y" && $arResult["NEW_USER_REGISTRATION"] == "Y"):?>
+<?php if($arParams["NOT_SHOW_LINKS"] != "Y" && $arResult["NEW_USER_REGISTRATION"] == "Y"):?>
 	<noindex>
 		<div class="bx-authform-link-container">
 			<?=GetMessage("AUTH_FIRST_ONE")?><br />
 			<a href="<?=$arResult["AUTH_REGISTER_URL"]?>" rel="nofollow"><b><?=GetMessage("AUTH_REGISTER")?></b></a>
 		</div>
 	</noindex>
-<?endif?>
+<?php endif?>
 
 </div>
 
 <script>
-<?if ($arResult["LAST_LOGIN"] <> ''):?>
+<?php if ($arResult["LAST_LOGIN"] <> ''):?>
 try{document.form_auth.USER_PASSWORD.focus();}catch(e){}
-<?else:?>
+<?php else:?>
 try{document.form_auth.USER_LOGIN.focus();}catch(e){}
-<?endif?>
+<?php endif?>
 </script>
 

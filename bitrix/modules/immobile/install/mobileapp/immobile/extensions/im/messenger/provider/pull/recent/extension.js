@@ -117,6 +117,14 @@ jn.define('im/messenger/provider/pull/recent', (require, exports, module) => {
 			}
 			this.logger.info('handleChatPin:', params, extra);
 
+			// Per-folder pin (folderId is a number) is owned by folder navigation,
+			// not the global recent model — skip it here.
+			if (Type.isNumber(params.folderId))
+			{
+				return;
+			}
+
+			// folderId === null/undefined → global (legacy) pin, fall through.
 			await this.store.dispatch('recentModel/update', [
 				{
 					id: params.dialogId,
@@ -223,7 +231,10 @@ jn.define('im/messenger/provider/pull/recent', (require, exports, module) => {
 			const messageManager = this.getNewMessageManager(params, extra);
 			const preparedRecentItem = messageManager.getPreparedRecentItemByUserInvite();
 
-			await this.store.dispatch('recentModel/setChat', [preparedRecentItem]);
+			await this.store.dispatch('recentModel/setChat', {
+				itemList: [preparedRecentItem],
+				parentChatId: messageManager.getParentChatId(),
+			});
 		}
 
 		/**
@@ -405,7 +416,10 @@ jn.define('im/messenger/provider/pull/recent', (require, exports, module) => {
 
 			const recentItem = manager.getPreparedRecentItem();
 
-			await this.store.dispatch('recentModel/setChat', [recentItem]);
+			await this.store.dispatch('recentModel/setChat', {
+				itemList: [recentItem],
+				parentChatId: manager.getParentChatId(),
+			});
 		}
 
 		/**
@@ -439,6 +453,54 @@ jn.define('im/messenger/provider/pull/recent', (require, exports, module) => {
 				};
 			});
 			await this.store.dispatch('recentModel/setChat', recentItems);
+		}
+
+		/**
+		 * @param {MessagePullHandlerBuilderBlockAppendParams} params
+		 * @param {PullExtraParams} extra
+		 */
+		async handleBuilderBlockAppend(params, extra)
+		{
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
+
+			this.logger.info('handleBuilderBlockAppend:', params);
+
+			await this.#updateRecentBuilderText(params);
+		}
+
+		/**
+		 * @param {MessagePullHandlerBuilderBlockUpdateParams} params
+		 * @param {PullExtraParams} extra
+		 */
+		async handleBuilderBlockUpdate(params, extra)
+		{
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
+
+			this.logger.info('handleBuilderBlockUpdate:', params);
+
+			await this.#updateRecentBuilderText(params);
+		}
+
+		/**
+		 * @param {MessagePullHandlerBuilderBlockDeleteParams} params
+		 * @param {PullExtraParams} extra
+		 */
+		async handleBuilderBlockDelete(params, extra)
+		{
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
+
+			this.logger.info('handleBuilderBlockDelete:', params);
+
+			await this.#updateRecentBuilderText(params);
 		}
 
 		/**
@@ -479,8 +541,12 @@ jn.define('im/messenger/provider/pull/recent', (require, exports, module) => {
 			}
 
 			const recentItem = messageManager.getPreparedRecentItem();
-			const tabs = messageManager.getRecentTabs();
-			await this.store.dispatch('recentModel/setByRecentConfigTabs', { tabs, itemList: recentItem });
+			const sections = messageManager.getRecentTabs();
+			await this.store.dispatch('recentModel/setByRecentConfigTabs', {
+				sections,
+				itemList: recentItem,
+				parentChatId: messageManager.getParentChatId(),
+			});
 		}
 
 		/**
@@ -592,6 +658,41 @@ jn.define('im/messenger/provider/pull/recent', (require, exports, module) => {
 
 			await this.store.dispatch('recentModel/update', [currentRecentItem]);
 			this.#saveShareDialogCache();
+		}
+
+		/**
+		 * @param {{ messageId: number, text: string }} params
+		 */
+		async #updateRecentBuilderText(params)
+		{
+			const { messageId, text } = params;
+
+			const message = this.store.getters['messagesModel/getById'](messageId);
+			if (Type.isNil(message.id))
+			{
+				return;
+			}
+
+			const dialog = this.store.getters['dialoguesModel/getByChatId'](message.chatId);
+			if (!dialog)
+			{
+				return;
+			}
+
+			const recentItem = this.getRecent(dialog.dialogId);
+			if (!recentItem || recentItem.message?.id !== messageId)
+			{
+				return;
+			}
+
+			await this.store.dispatch('recentModel/update', [{
+				id: dialog.dialogId,
+				message: {
+					...recentItem.message,
+					text,
+				},
+				lastActivityDate: recentItem.lastActivityDate,
+			}]);
 		}
 
 		/**

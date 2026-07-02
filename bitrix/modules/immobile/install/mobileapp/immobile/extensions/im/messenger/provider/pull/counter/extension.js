@@ -589,7 +589,6 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 			logger.log(`${this.constructor.name}.handleRecentUpdate`, params, extra, command);
 
 			const {
-				counter,
 				chat,
 				recentConfig,
 			} = params;
@@ -604,7 +603,6 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 
 			this.#setCounter({
 				chatId,
-				counter,
 				parentChatId,
 				isMuted,
 				recentSections: recentConfig.sections,

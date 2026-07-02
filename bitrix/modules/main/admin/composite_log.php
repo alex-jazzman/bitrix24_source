@@ -1,4 +1,4 @@
-<?
+<?php
 use Bitrix\Main\Composite;
 use Bitrix\Main\Composite\Debug\Logger;
 use Bitrix\Main\Composite\Debug\Model\LogTable;
@@ -9,9 +9,10 @@ use Bitrix\Main\UI\AdminPageNavigation;
 use Bitrix\Main\Type;
 
 /**
- * @global \CUser $USER
- * @global \CMain $APPLICATION
+ * @global CUser $USER
+ * @global CMain $APPLICATION
  */
+
 require_once(__DIR__."/../include/prolog_admin_before.php");
 define("HELP_FILE", "settings/composite_pages.php");
 
@@ -82,7 +83,7 @@ $filterFields = array(
 	"find_user_id",
 );
 
-$adminList->initFilter($filterFields);
+$filter = $adminList->initFilter($filterFields);
 
 function getFilterDate($date)
 {
@@ -95,23 +96,23 @@ function getFilterDate($date)
 	return Type\DateTime::isCorrect($date) ? new Type\DateTime($date) : null;
 }
 
-$filter = array(
-	"=ID" => $find_id,
-	"=HOST" => $find_host,
-	"?URI" => $find_uri,
-	"?TITLE" => $find_title,
-	">=CREATED" => getFilterDate($find_created_start),
-	"<=CREATED" => getFilterDate($find_created_end),
-	"=TYPE" => $find_type,
-	"=AJAX" => $find_ajax,
-	"=USER_ID" => $find_user_id,
+$queryFilter = array(
+	"=ID" => $filter["find_id"],
+	"=HOST" => $filter["find_host"],
+	"?URI" => $filter["find_uri"],
+	"?TITLE" => $filter["find_title"],
+	">=CREATED" => getFilterDate($filter["find_created_start"]),
+	"<=CREATED" => getFilterDate($filter["find_created_end"]),
+	"=TYPE" => $filter["find_type"],
+	"=AJAX" => $filter["find_ajax"],
+	"=USER_ID" => $filter["find_user_id"],
 );
 
-foreach ($filter as $key => $value)
+foreach ($queryFilter as $key => $value)
 {
 	if (!is_array($value) && !mb_strlen(trim($value)))
 	{
-		unset($filter[$key]);
+		unset($queryFilter[$key]);
 	}
 }
 
@@ -133,7 +134,7 @@ $logList = LogTable::getList(array(
 		"USER_SECOND_NAME" => "USER.SECOND_NAME",
 		"USER_LOGIN" => "USER.LOGIN"
 	),
-	"filter" => $filter,
+	"filter" => $queryFilter,
 	"order" => array($sortBy => $sortOrder),
 	"count_total" => true,
 	"offset" => $nav->getOffset(),
@@ -203,7 +204,7 @@ $adminList->addHeaders(array(
 
 while ($record = $logList->fetch())
 {
-	$row = &$adminList->addRow($record["ID"], $record);
+	$row = $adminList->addRow($record["ID"], $record);
 
 	$pageCell = '<div style="max-width:250px; word-wrap: break-word"><a href="//%s" target="_blank">%s</a><br>%s</div>';
 	$pageLink = htmlspecialcharsbx($record["HOST"].$record["URI"]);
@@ -294,14 +295,14 @@ require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_admin_af
 	<?=bitrix_sessid_post();?>
 	<input type="hidden" name="lang" value="<?=LANGUAGE_ID?>">
 	<input type="hidden" name="debug_form" value="Y">
-	<? if (Logger::isOn()):?>
+	<?php if (Logger::isOn()):?>
 		<div style="color:red; margin: 0 0 10px 1px;">
 			<b><?=Loc::getMessage("MAIN_COMPOSITE_LOG_DEBUG_ENABLED")?></b>
 		</div>
 		<input type="submit" name="disable_debug"
 			   value="<?=Loc::getMessage("MAIN_COMPOSITE_LOG_DISABLE_DEBUG")?>" class="adm-btn-save">&nbsp;&nbsp;
 
-		<?
+		<?php
 		$secondsLeft = Logger::getEndTime() - time();
 		if ($secondsLeft > 0):
 		?>
@@ -313,25 +314,25 @@ require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_admin_af
 					accuracy: 1
 				});
 			</script>
-		<? endif ?>
-	<? else: ?>
+		<?php endif ?>
+	<?php else: ?>
 		<div style="color:green; margin: 0 0 10px 1px;">
 			<b><?=Loc::getMessage("MAIN_COMPOSITE_LOG_DEBUG_DISABLED")?></b>
 		</div>
 		<input type="submit" name="enable_debug" value="<?=Loc::getMessage("MAIN_COMPOSITE_LOG_ENABLE_DEBUG")?>">
 		&nbsp;&nbsp;
 		<select name="duration">
-			<?
+			<?php
 			$currentDuration = Option::get("main", "composite_debug_duration", 300);
 			?>
-			<? foreach (array(300, 600, 1200, 1800, 3600) as $duration): ?>
+			<?php foreach (array(300, 600, 1200, 1800, 3600) as $duration): ?>
 				<option
 					value="<?=$duration?>"
 					<?=($currentDuration == $duration ? " selected" : "")?>
 				><?=Loc::getMessage("MAIN_COMPOSITE_LOG_INTERVAL_".$duration."_SEC")?></option>
-			<? endforeach ?>
+			<?php endforeach ?>
 		</select>
-	<? endif ?>
+	<?php endif ?>
 
 	<div style="margin: 10px 0 0 1px;">
 		<?=Loc::getMessage("MAIN_COMPOSITE_LOG_DEBUG_DESC")?><br>
@@ -347,7 +348,7 @@ require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_admin_af
 
 
 <form method="GET" action="<?=$APPLICATION->getCurPage()?>" name="find_form">
-<?
+<?php
 $filterControl = new CAdminFilter(
 	$tableID."_filter",
 	array(
@@ -365,28 +366,28 @@ $filterControl->begin();
 ?>
 	<tr>
 		<td>ID:</td>
-		<td><input type="text" name="find_id" value="<?=htmlspecialcharsbx($find_id)?>" size="40"></td>
+		<td><input type="text" name="find_id" value="<?=htmlspecialcharsbx($filter["find_id"])?>" size="40"></td>
 	</tr>
 
 	<tr>
 		<td><?=$logEntity->getField("HOST")->getTitle()?>:</td>
-		<td><input type="text" name="find_host" value="<?=htmlspecialcharsbx($find_host)?>" size="40"></td>
+		<td><input type="text" name="find_host" value="<?=htmlspecialcharsbx($filter["find_host"])?>" size="40"></td>
 	</tr>
 	<tr>
 		<td><?=$logEntity->getField("URI")->getTitle()?>:</td>
-		<td><input type="text" name="find_uri" value="<?=htmlspecialcharsbx($find_uri)?>" size="40"></td>
+		<td><input type="text" name="find_uri" value="<?=htmlspecialcharsbx($filter["find_uri"])?>" size="40"></td>
 	</tr>
 	<tr>
 		<td><?=$logEntity->getField("TITLE")->getTitle()?>:</td>
-		<td><input type="text" name="find_title" value="<?=htmlspecialcharsbx($find_title)?>" size="40"></td>
+		<td><input type="text" name="find_title" value="<?=htmlspecialcharsbx($filter["find_title"])?>" size="40"></td>
 	</tr>
 	<tr>
 		<td><?=$logEntity->getField("CREATED")->getTitle()?>:</td>
 		<td><?=calendarPeriod(
 			"find_created_start",
-			htmlspecialcharsbx($find_created_start),
+			htmlspecialcharsbx($filter["find_created_start"]),
 			"find_created_end",
-			htmlspecialcharsbx($find_created_end),
+			htmlspecialcharsbx($filter["find_created_end"]),
 			"find_form",
 			"Y",
 			"class=\"typeselect\"",
@@ -397,7 +398,7 @@ $filterControl->begin();
 	<tr>
 		<td><?=$logEntity->getField("TYPE")->getTitle()?>:</td>
 		<td>
-			<?
+			<?php
 			$types = array_map(
 				function($type) {
 					return Logger::getTypeName($type);
@@ -411,7 +412,7 @@ $filterControl->begin();
 					"reference" => $types,
 					"reference_id" => Logger::getTypes()
 				),
-				$find_type,
+				$filter["find_type"],
 				"",
 				false,
 				"5"
@@ -428,7 +429,7 @@ $filterControl->begin();
 					"reference" => array(Loc::getMessage("MAIN_YES"), Loc::getMessage("MAIN_NO")),
 					"reference_id" => array("Y", "N")
 				),
-				htmlspecialcharsbx($find_ajax),
+				htmlspecialcharsbx($filter["find_ajax"]),
 				Loc::getMessage("MAIN_ALL")
 			);
 			?>
@@ -437,10 +438,10 @@ $filterControl->begin();
 	</tr>
 	<tr>
 		<td><?=$logEntity->getField("USER_ID")->getTitle()?>:</td>
-		<td><input type="text" name="find_user_id" value="<?=htmlspecialcharsbx($find_user_id)?>" size="40"></td>
+		<td><input type="text" name="find_user_id" value="<?=htmlspecialcharsbx($filter["find_user_id"])?>" size="40"></td>
 	</tr>
 
-<?
+<?php
 $filterControl->buttons(array(
 	"table_id" => $tableID,
 	"url"=> $APPLICATION->getCurPage(),
@@ -452,7 +453,7 @@ $filterControl->end();
 </form>
 
 
-<?
+<?php
 
 $adminList->displayList();
 

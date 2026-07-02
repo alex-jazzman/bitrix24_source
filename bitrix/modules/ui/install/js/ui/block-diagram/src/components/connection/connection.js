@@ -15,7 +15,12 @@ type ConnectionSetup = {
 	onOpenContextMenu: () => void;
 }
 
-const TARGET_CONNECTION_CLASSES = {
+const CONNECTION_CLASS_NAME = {
+	base: 'ui-block-diagram-connection',
+	active: '--active',
+};
+
+const TARGET_CONNECTION_CLASS_NAMES = {
 	base: 'ui-block-diagram-connection__target',
 	active: '--active',
 };
@@ -62,7 +67,7 @@ export const Connection = {
 					id: 'deleteConnection',
 					text: loc.getMessage('UI_BLOCK_DIAGRAM_DELETE_CONNECTION_CONTEXT_MENU_ITEM'),
 					onclick: () => {
-						this.deleteConnectionById(this.connection.id);
+						deleteConnectionById(props.connection.id);
 					},
 				},
 			];
@@ -75,9 +80,16 @@ export const Connection = {
 			return defaultItems;
 		});
 
+		const connectionClassNames = computed((): { [string]: boolean } => {
+			return {
+				[CONNECTION_CLASS_NAME.base]: true,
+				[CONNECTION_CLASS_NAME.active]: toValue(isOpen),
+			};
+		});
+
 		const targetConnectionClasses = computed((): { [string]: boolean } => ({
-			[TARGET_CONNECTION_CLASSES.base]: true,
-			[TARGET_CONNECTION_CLASSES.active]: toValue(isOpen),
+			[TARGET_CONNECTION_CLASS_NAMES.base]: true,
+			[TARGET_CONNECTION_CLASS_NAMES.active]: toValue(isOpen),
 		}));
 
 		const barPosition = computed((): { [string]: number } => {
@@ -106,6 +118,7 @@ export const Connection = {
 		return {
 			isDisabled,
 			connectionPathInfo,
+			connectionClassNames,
 			targetConnectionClasses,
 			barPosition,
 			onOpenContextMenu,
@@ -114,7 +127,7 @@ export const Connection = {
 		};
 	},
 	template: `
-		<svg class="ui-block-diagram-connection">
+		<svg :class="connectionClassNames">
 			<g class="ui-block-diagram-connection__group">
 				<path
 					:d="connectionPathInfo.path"
@@ -127,7 +140,7 @@ export const Connection = {
 					class="ui-block-diagram-connection__hovered"
 					stroke="transparent"
 					fill="transparent"
-					@contextmenu="onOpenContextMenu"
+					@contextmenu.stop="onOpenContextMenu"
 				/>
 				<foreignObject
 					:x="barPosition.x"

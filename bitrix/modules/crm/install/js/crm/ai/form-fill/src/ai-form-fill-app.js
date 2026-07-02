@@ -1,18 +1,15 @@
 import { ActivityProvider, Call } from 'crm.ai.call';
 import { NameService } from 'crm.ai.name-service';
-import { Slider } from 'crm.ai.slider';
+import { type Slider } from 'crm.ai.slider';
 import { Setting, Settings } from 'crm.integration.ui.settings';
 import { addCustomEvent, Loc, removeAllCustomEvents, Type } from 'main.core';
 import { Button } from 'ui.buttons';
+
 import { AiFormFillApplication } from './app';
 import SliderButtonsAdapter from './services/slider-buttons-adapter';
+import { setCopilotSliderInstance, setSliderButtonsAdapter, sliderButtonsAdapter } from './shared-state';
 
-export let sliderButtonsAdapter: ?SliderButtonsAdapter = null;
-
-export let copilotSliderInstance: ?Slider = null;
-
-interface CreateOptions
-{
+type CreateOptions = {
 	mergeUuid: string;
 	label: string;
 	activityId: number;
@@ -38,7 +35,7 @@ class ConflictFieldsliderCreator
 	{
 		this.#options = options;
 		this.#copilotSliderClass = CopilotSliderWrapper;
-		sliderButtonsAdapter = new SliderButtonsAdapter();
+		setSliderButtonsAdapter(new SliderButtonsAdapter());
 	}
 
 	get #onLoadEventName(): string {
@@ -159,7 +156,7 @@ class ConflictFieldsliderCreator
 		{
 			return;
 		}
-		copilotSliderInstance = this.#sliderInstance;
+		setCopilotSliderInstance(this.#sliderInstance);
 
 		this.#app = new AiFormFillApplication(
 			this.#containerId,
@@ -211,8 +208,8 @@ class ConflictFieldsliderCreator
 			this.#app.stop();
 			this.#app = null;
 		}
-		sliderButtonsAdapter = null;
-		copilotSliderInstance = null;
+		setSliderButtonsAdapter(null);
+		setCopilotSliderInstance(null);
 	}
 
 	#onAiFormFillDownFn(event) {

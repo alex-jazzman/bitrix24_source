@@ -1,0 +1,15 @@
+.bx-im-nested-list-collab__title {
+	--im-nested-list-collab__color_title: var(--im-color-palette-black-base);
+
+	font-size: 18px;
+	font-weight: var(--im-font-weight-medium);
+	color: var(--im-nested-list-collab__color_title);
+}
+
+.bx-im-nested-list-collab__section_container {
+	display: flex;
+}
+
+.bx-im-nested-list-collab__section {
+	margin-right: 6px;
+}

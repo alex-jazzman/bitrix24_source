@@ -659,13 +659,16 @@ BX.Tasks.GridActions = {
 			function(response) {
 				if (action === 'complete')
 				{
-					this.sendAnalyticsOnTaskComplete(taskId);
+					this.sendAnalytics(taskId, 'task_complete');
 				}
 
 				if (action === 'delete')
 				{
 					BX.Tasks.Util.fireGlobalTaskEvent('DELETE', { ID: taskId });
+
 					BX.UI.Notification.Center.notify({ content: BX.message('TASKS_DELETE_SUCCESS') });
+
+					this.sendAnalytics(taskId, 'task_delete');
 				}
 				if (!this.gridId)
 				{
@@ -1357,29 +1360,45 @@ BX.Tasks.GridActions = {
 		};
 	},
 
-	sendAnalyticsOnTaskComplete: function (taskId)
+	sendAnalytics: function (taskId, event)
 	{
+		let section = 'tasks';
+
+		if (BX.Tasks.GridInstance)
+		{
+			const isCollab = BX.Tasks.GridInstance.arParams['CONTEXT'] === 'collab';
+
+			if (isCollab)
+			{
+				section = 'collab';
+			}
+			else if (BX.Tasks.GridInstance.groupId)
+			{
+				section = 'project';
+			}
+		}
+
 		const analyticsData = {
 			tool: 'tasks',
 			category: 'task_operations',
-			event: 'task_complete',
 			type: 'task',
-			c_section: BX.Tasks.Grid.groupId ? 'project' : 'tasks',
+			c_section: section,
 			c_element: 'context_menu',
 			c_sub_section: 'list',
 			p1: `taskId_${taskId}`,
+			event,
 		};
 
 		if (BX.UI.Analytics)
 		{
 			BX.UI.Analytics.sendData(analyticsData);
+
+			return;
 		}
-		else
-		{
-			BX.Runtime.loadExtension('ui.analytics').then(() => {
-				BX.UI.Analytics.sendData(analyticsData);
-			});
-		}
+
+		BX.Runtime.loadExtension('ui.analytics').then(() => {
+			BX.UI.Analytics.sendData(analyticsData);
+		});
 	},
 
 	onStageSwitch: function(taskId, stageId, color)

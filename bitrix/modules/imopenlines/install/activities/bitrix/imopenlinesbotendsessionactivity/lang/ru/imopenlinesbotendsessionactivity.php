@@ -1,0 +1,7 @@
+<?php
+
+$MESS['IMOL_BOT_END_SESSION_ACTIVITY_PARAM_CHAT_ID_NAME'] = 'Идентификатор чата';
+
+$MESS['IMOL_BOT_END_SESSION_ACTIVITY_ERROR_CHAT_NOT_EXISTS'] = 'Не удалось найти чат';
+$MESS['IMOL_BOT_END_SESSION_ACTIVITY_ERROR_CANNOT_END_SESSION'] = 'Не удалось завершить сессию с чат-ботом';
+$MESS['IMOL_BOT_END_SESSION_ACTIVITY_ERROR_MODULE_NOT_INCLUDED'] = 'Установите модуль #MODULE#';

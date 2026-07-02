@@ -85,12 +85,8 @@
 }
 
 .crm-type-ui-card-message .crm-type-ui-card-header {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
+	align-items: center;
 	margin-bottom: 16px;
 }
 
@@ -105,7 +101,7 @@
 }
 
 .crm-type-ui-card-message-icon--custom-fields {
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='17' height='19' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M16.3 0a.7.7 0 01.7.7v6.6a.7.7 0 01-.7.7H.7a.7.7 0 01-.7-.7V.7A.7.7 0 01.7 0h15.6zM15 2H2v4h13V2zm1.3 9a.7.7 0 01.7.7v6.6a.7.7 0 01-.7.7H.7a.7.7 0 01-.7-.7v-6.6a.7.7 0 01.7-.7h15.6zM15 13H2v4h13v-4z' fill='%23FFF' fill-rule='evenodd'/%3E%3C/svg%3E");
+	background-image: url("data:image/svg+xml,%3Csvg width='17' height='19' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23FFF' fill-rule='evenodd'%3E%3Cpath d='M16.3 0a.7.7 0 01.7.7v6.6a.7.7 0 01-.7.7H.7a.7.7 0 01-.7-.7V.7A.7.7 0 01.7 0h15.6zM15 2H2v4h13V2zM16.3 11a.7.7 0 01.7.7v6.6a.7.7 0 01-.7.7H.7a.7.7 0 01-.7-.7v-6.6a.7.7 0 01.7-.7h15.6zM15 13H2v4h13v-4z'/%3E%3C/g%3E%3C/svg%3E");
 }
 
 .crm-type-ui-card-message-title {
@@ -129,8 +125,6 @@
 	height: 20px;
 	width: 20px;
 	opacity: .3;
-	-webkit-transition: 250ms all ease;
-	-o-transition: 250ms all ease;
 	transition: 250ms all ease;
 }
 
@@ -148,11 +142,7 @@
 	left: 50%;
 	width: 10px;
 	height: 2px;
-	-webkit-transform: rotate(45deg) translate(-50%, -50%);
-	-ms-transform: rotate(45deg) translate(-50%, -50%);
 	transform: rotate(45deg) translate(-50%, -50%);
-	-webkit-transform-origin: 0 0;
-	-ms-transform-origin: 0 0;
 	transform-origin: 0 0;
 }
 

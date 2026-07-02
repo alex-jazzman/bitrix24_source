@@ -23,6 +23,9 @@ export class LeftMenu
 			dirsWithUnseenMailCounters: config['dirsWithUnseenMailCounters'],
 			filterId: config['filterId'],
 			systemDirs: config['systemDirs'],
+			sortMode: config['sortMode'],
+			collapsedFolders: config['collapsedFolders'],
+			mailboxId: config['mailboxId'],
 		});
 
 		leftDirectoryMenuWrapper.append(this.directoryMenu.getNode());

@@ -253,57 +253,52 @@ BX.Disk.FileViewClass = (function ()
 		var objectId = this.object.id;
 		var messageDescription = BX.message('DISK_FILE_TRASH_RESTORE_FILE_CONFIRM');
 
-		var buttons = [
-			new BX.PopupWindowButton({
-				text: BX.message('DISK_FILE_VIEW_FILE_RESTORE'),
-				className: "popup-window-button-accept",
-				events: {
-					click: function (e) {
-						this.addClassName('popup-window-button-wait');
-
-						BX.ajax.runAction('disk.api.file.restore', {
-							data: {
-								fileId: objectId
-							}
-						}).then(function (response) {
-							BX.PopupWindowManager.getCurrentPopup().close();
-
-							var sliderByWindow = BX.SidePanel.Instance.getSliderByWindow(window);
-							if (sliderByWindow)
-							{
-								sliderByWindow.close();
-								BX.SidePanel.Instance.postMessageAll(window, 'Disk.File:onRestore', {
-									objectId: objectId
-								});
-							}
-							else if(response.data.file.id)
-							{
-								document.location.href = BX.Disk.getUrlToShowObjectInGrid(response.data.ID);
-							}
-						});
-					}
-				}
-			}),
-			new BX.PopupWindowButton({
-				text: BX.message('DISK_FILE_VIEW_VERSION_CANCEL_BUTTON'),
-				events: {
-					click: function (e){
-						BX.PopupWindowManager.getCurrentPopup().close();
-					}
-				}
-			})
-		];
-
-		BX.Disk.modalWindow({
-			modalId: 'bx-link-unlink-confirm',
+		this.showAirMessageBox({
 			title: BX.message('DISK_FILE_TRASHCAN_TRASH_RESTORE_TITLE'),
-			contentClassName: 'tac',
-			contentStyle: {
-				paddingTop: '70px',
-				paddingBottom: '70px'
-			},
-			content: messageDescription.replace('#NAME#', name),
-			buttons: buttons
+			message: this.formatAirMessageBoxFileName(messageDescription, name),
+			buttonsFactory: function(messageBox) {
+				var cancelButton = messageBox.getCancelButton({
+					style: BX.UI.AirButtonStyle.PLAIN_NO_ACCENT
+				});
+				cancelButton.setText(BX.message('DISK_FILE_VIEW_VERSION_CANCEL_BUTTON'));
+				cancelButton.setWide(true);
+
+				return [
+					new BX.UI.Button({
+						text: BX.message('DISK_FILE_VIEW_FILE_RESTORE'),
+						useAirDesign: true,
+						style: BX.UI.AirButtonStyle.FILLED,
+						wide: true,
+						onclick: function(button) {
+							button.setWaiting(true);
+
+							BX.ajax.runAction('disk.api.file.restore', {
+								data: {
+									fileId: objectId
+								}
+							}).then(function (response) {
+								messageBox.close();
+
+								var sliderByWindow = BX.SidePanel.Instance.getSliderByWindow(window);
+								if (sliderByWindow)
+								{
+									sliderByWindow.close();
+									BX.SidePanel.Instance.postMessageAll(window, 'Disk.File:onRestore', {
+										objectId: objectId
+									});
+								}
+								else if(response.data.file.id)
+								{
+									document.location.href = BX.Disk.getUrlToShowObjectInGrid(response.data.ID);
+								}
+							}, function() {
+								button.setWaiting(false);
+							});
+						}
+					}),
+					cancelButton
+				];
+			}.bind(this)
 		});
 	};
 
@@ -313,59 +308,78 @@ BX.Disk.FileViewClass = (function ()
 		var objectId = parameters.object.id;
 		var versionId = parameters.version.id;
 		var messageDescription = BX.message('DISK_FILE_VIEW_VERSION_RESTORE_CONFIRM');
-		var buttons = [
-			new BX.PopupWindowButton({
-				text: BX.message('DISK_FILE_VIEW_VERSION_RESTORE_BUTTON'),
-				className: "popup-window-button-accept",
-				events: {
-					click: BX.delegate(function (e) {
-						BX.PopupWindowManager.getCurrentPopup().close();
-						BX.PreventDefault(e);
-
-						BX.Disk.ajax({
-							method: 'POST',
-							dataType: 'json',
-							url: BX.Disk.addToLinkParam(this.ajaxUrl, 'action', 'restoreFromVersion'),
-							data: {
-								objectId: objectId,
-								versionId: versionId
-							},
-							onsuccess: BX.delegate(function (data) {
-								if (!data) {
-									return;
-								}
-								this.grid.instance.reload();
-								BX.Disk.showModalWithStatusAction(data);
-							}, this)
-						});
-
-						return false;
-					}, this)
-				}
-			}),
-			new BX.PopupWindowButton({
-				text: BX.message('DISK_FILE_VIEW_VERSION_CANCEL_BUTTON'),
-				events: {
-					click: function (e) {
-						BX.PopupWindowManager.getCurrentPopup().close();
-						BX.PreventDefault(e);
-						return false;
-					}
-				}
-			})
-		];
-
-		BX.Disk.modalWindow({
-			modalId: 'bx-link-unlink-confirm',
+		this.showAirMessageBox({
 			title: BX.message('DISK_FILE_VIEW_VERSION_RESTORE_TITLE'),
-			contentClassName: 'tac',
-			contentStyle: {
-				paddingTop: '70px',
-				paddingBottom: '70px'
-			},
-			content: messageDescription.replace('#NAME#', name),
-			buttons: buttons
+			message: messageDescription.replace('#NAME#', BX.util.htmlspecialchars(name)),
+			buttonsFactory: function(messageBox) {
+				var cancelButton = messageBox.getCancelButton({
+					style: BX.UI.AirButtonStyle.PLAIN_NO_ACCENT
+				});
+				cancelButton.setText(BX.message('DISK_FILE_VIEW_VERSION_CANCEL_BUTTON'));
+				cancelButton.setWide(true);
+
+				return [
+					new BX.UI.Button({
+						text: BX.message('DISK_FILE_VIEW_VERSION_RESTORE_BUTTON'),
+						useAirDesign: true,
+						style: BX.UI.AirButtonStyle.FILLED,
+						wide: true,
+						onclick: BX.delegate(function(button) {
+							button.setWaiting(true);
+
+							BX.Disk.ajax({
+								method: 'POST',
+								dataType: 'json',
+								url: BX.Disk.addToLinkParam(this.ajaxUrl, 'action', 'restoreFromVersion'),
+								data: {
+									objectId: objectId,
+									versionId: versionId
+								},
+								onsuccess: BX.delegate(function (data) {
+									if (!data) {
+										button.setWaiting(false);
+										return;
+									}
+
+									messageBox.close();
+									this.grid.instance.reload();
+									BX.Disk.showModalWithStatusAction(data);
+								}, this)
+							});
+						}, this)
+					}),
+					cancelButton
+				];
+			}.bind(this)
 		});
+	};
+
+	FileViewClass.prototype.formatAirMessageBoxFileName = function(message, name)
+	{
+		var safeName = BX.util.htmlspecialchars(name);
+		var fileName = '<span class="disk-air-message-box-file-name">' + safeName + '</span>';
+		var fileNameWithTitle = '<span class="disk-air-message-box-file-name" title="' + safeName + '">' + safeName + '</span>';
+		var wrapFileName = function(leftPart, rightPart) {
+			return '<span class="disk-air-message-box-file-name-wrapper" title="' + safeName + '">'
+				+ leftPart
+				+ fileName
+				+ rightPart
+				+ '</span>'
+			;
+		};
+
+		return message
+			.replace(/(["'])#NAME#\1(\?)/g, function(match, quote, questionMark) {
+				return wrapFileName(quote, quote + '&nbsp;' + questionMark);
+			})
+			.replace(/(["'])#NAME#\1/g, function(match, quote) {
+				return wrapFileName(quote, quote);
+			})
+			.replace(/#NAME#(\?)/g, function(match, questionMark) {
+				return wrapFileName('', questionMark);
+			})
+			.replace(/#NAME#/g, fileNameWithTitle)
+		;
 	};
 
 	FileViewClass.prototype.openDeleteConfirm = function ()
@@ -383,23 +397,31 @@ BX.Disk.FileViewClass = (function ()
 			messageDescription = BX.message('DISK_FILE_VIEW_TRASH_DELETE_DESTROY_DELETED_FILE_CONFIRM');
 		}
 
-		var buttons = [];
+		this.showAirMessageBox({
+			title: BX.message('DISK_FILE_VIEW_VERSION_DELETE_TITLE'),
+			message: this.formatAirMessageBoxFileName(messageDescription, name),
+			buttonsFactory: function(messageBox) {
+				var buttons = [];
+				var cancelButton = messageBox.getCancelButton({
+					style: BX.UI.AirButtonStyle.PLAIN_NO_ACCENT
+				});
+				cancelButton.setText(BX.message('DISK_FILE_VIEW_VERSION_CANCEL_BUTTON'));
 
-		if (!this.object.isDeleted)
-		{
-			buttons.push(new BX.PopupWindowCustomButton({
-					text: BX.message('DISK_FILE_VIEW_TRASH_DELETE_BUTTON'),
-					className: "ui-btn ui-btn-success",
-					events: {
-						click: function (e) {
-							this.addClassName('ui-btn-clock');
+				if (!this.object.isDeleted)
+				{
+					buttons.push(new BX.UI.Button({
+						text: BX.message('DISK_FILE_VIEW_TRASH_DELETE_BUTTON'),
+						useAirDesign: true,
+						style: BX.UI.AirButtonStyle.FILLED,
+						onclick: function(button) {
+							button.setWaiting(true);
 
 							BX.ajax.runAction('disk.api.file.markDeleted', {
 								data: {
 									fileId: objectId
 								}
-							}).then(function (response) {
-								BX.PopupWindowManager.getCurrentPopup().close();
+							}).then(function () {
+								messageBox.close();
 
 								var sliderByWindow = BX.SidePanel.Instance.getSliderByWindow(window);
 								if (sliderByWindow)
@@ -409,29 +431,29 @@ BX.Disk.FileViewClass = (function ()
 										objectId: objectId
 									});
 								}
+							}, function() {
+								button.setWaiting(false);
 							});
 						}
-					}
-				})
-			);
-		}
+					}));
+				}
 
-		if (this.canDelete)
-		{
-			var self = this;
-			buttons.push(new BX.PopupWindowCustomButton({
-					text: BX.message('DISK_FILE_VIEW_TRASH_DESTROY_BUTTON'),
-					className: 'ui-btn ui-btn-light-border',
-					events: {
-						click: function (e) {
-							this.addClassName('ui-btn-clock');
+				if (this.canDelete)
+				{
+					var self = this;
+					buttons.push(new BX.UI.Button({
+						text: BX.message('DISK_FILE_VIEW_TRASH_DESTROY_BUTTON'),
+						useAirDesign: true,
+						style: BX.UI.AirButtonStyle.OUTLINE,
+						onclick: function(button) {
+							button.setWaiting(true);
 
 							BX.ajax.runAction('disk.api.file.delete', {
 								data: {
 									fileId: objectId
 								}
-							}).then(function (response) {
-								BX.PopupWindowManager.getCurrentPopup().close();
+							}).then(function () {
+								messageBox.close();
 
 								var sliderByWindow = BX.SidePanel.Instance.getSliderByWindow(window);
 								if (sliderByWindow)
@@ -445,29 +467,17 @@ BX.Disk.FileViewClass = (function ()
 								{
 									document.location.href = self.urls.trashcanList;
 								}
+							}, function() {
+								button.setWaiting(false);
 							});
 						}
-					}
-				})
-			)
-		}
-
-		buttons.push(new BX.PopupWindowCustomButton({
-			text: BX.message('DISK_FILE_VIEW_VERSION_CANCEL_BUTTON'),
-			className: 'ui-btn ui-btn-link',
-			events: {
-				click: function (e) {
-					BX.PopupWindowManager.getCurrentPopup().close();
+					}));
 				}
-			}})
-		);
 
-		BX.Disk.modalWindow({
-			modalId: 'bx-link-unlink-confirm',
-			title: BX.message('DISK_FILE_VIEW_VERSION_DELETE_TITLE'),
-			contentClassName: 'disk-popup-text-content',
-			content: messageDescription.replace('#NAME#', name),
-			buttons: buttons
+				buttons.push(cancelButton);
+
+				return buttons;
+			}.bind(this)
 		});
 	};
 
@@ -477,59 +487,75 @@ BX.Disk.FileViewClass = (function ()
 		var objectId = parameters.object.id;
 		var versionId = parameters.version.id;
 		var messageDescription = BX.message('DISK_FILE_VIEW_VERSION_DELETE_VERSION_CONFIRM');
-		var buttons = [
-			new BX.PopupWindowButton({
-				text: BX.message('DISK_FILE_VIEW_VERSION_DELETE_VERSION_BUTTON'),
-				className: "popup-window-button-accept",
-				events: {
-					click: BX.delegate(function (e) {
-						BX.PopupWindowManager.getCurrentPopup().close();
-						BX.PreventDefault(e);
-
-						BX.Disk.ajax({
-							method: 'POST',
-							dataType: 'json',
-							url: BX.Disk.addToLinkParam(this.ajaxUrl, 'action', 'deleteVersion'),
-							data: {
-								objectId: objectId,
-								versionId: versionId
-							},
-							onsuccess: BX.delegate(function (data) {
-								if (!data) {
-									return;
-								}
-								this.grid.instance.removeRow(versionId);
-
-								BX.Disk.showModalWithStatusAction(data);
-							}, this)
-						});
-
-						return false;
-					}, this)
-				}
-			}),
-			new BX.PopupWindowButton({
-				text: BX.message('DISK_FILE_VIEW_VERSION_CANCEL_BUTTON'),
-				events: {
-					click: function (e) {
-						BX.PopupWindowManager.getCurrentPopup().close();
-						BX.PreventDefault(e);
-						return false;
-					}
-				}
-			})
-		];
-
-		BX.Disk.modalWindow({
-			modalId: 'bx-link-unlink-confirm',
+		this.showAirMessageBox({
 			title: BX.message('DISK_FILE_VIEW_VERSION_DELETE_VERSION_TITLE'),
-			contentClassName: 'tac',
-			contentStyle: {
-				paddingTop: '70px',
-				paddingBottom: '70px'
-			},
-			content: messageDescription.replace('#NAME#', name),
-			buttons: buttons
+			message: messageDescription.replace('#NAME#', BX.util.htmlspecialchars(name)),
+			buttonsFactory: function(messageBox) {
+				var cancelButton = messageBox.getCancelButton({
+					style: BX.UI.AirButtonStyle.PLAIN_NO_ACCENT
+				});
+				cancelButton.setText(BX.message('DISK_FILE_VIEW_VERSION_CANCEL_BUTTON'));
+				cancelButton.setWide(true);
+
+				return [
+					new BX.UI.Button({
+						text: BX.message('DISK_FILE_VIEW_VERSION_DELETE_VERSION_BUTTON'),
+						useAirDesign: true,
+						style: BX.UI.AirButtonStyle.FILLED,
+						wide: true,
+						onclick: BX.delegate(function(button) {
+							button.setWaiting(true);
+
+							BX.Disk.ajax({
+								method: 'POST',
+								dataType: 'json',
+								url: BX.Disk.addToLinkParam(this.ajaxUrl, 'action', 'deleteVersion'),
+								data: {
+									objectId: objectId,
+									versionId: versionId
+								},
+								onsuccess: BX.delegate(function (data) {
+									if (!data) {
+										button.setWaiting(false);
+										return;
+									}
+
+									messageBox.close();
+									this.grid.instance.removeRow(versionId);
+
+									BX.Disk.showModalWithStatusAction(data);
+								}, this)
+							});
+						}, this)
+					}),
+					cancelButton
+				];
+			}.bind(this)
+		});
+	};
+
+	FileViewClass.prototype.showAirMessageBox = function (options)
+	{
+		BX.Runtime.loadExtension('ui.dialogs.messagebox').then(function () {
+			var maxWidth = options.maxWidth || 650;
+			var messageBox = BX.UI.Dialogs.MessageBox.create({
+				title: options.title,
+				message: options.message,
+				modal: true,
+				useAirDesign: true,
+				maxWidth: maxWidth,
+				popupOptions: options.popupOptions || {},
+			});
+
+			if (BX.type.isFunction(options.buttonsFactory))
+			{
+				messageBox.setButtons(options.buttonsFactory(messageBox));
+			}
+
+			var popupContainer = messageBox.getPopupWindow().getPopupContainer();
+			popupContainer.classList.add('disk-air-message-box-fit-content');
+
+			messageBox.show();
 		});
 	};
 

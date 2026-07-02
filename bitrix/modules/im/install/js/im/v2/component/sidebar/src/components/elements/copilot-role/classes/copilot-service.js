@@ -1,11 +1,10 @@
-import { Store } from 'ui.vue3.vuex';
+import { type Store } from 'ui.vue3.vuex';
 
 import { runAction } from 'im.v2.lib.rest';
 import { Core } from 'im.v2.application.core';
 import { Logger } from 'im.v2.lib.logger';
 import { RestMethod } from 'im.v2.const';
-
-import type { ImModelCopilotRole } from 'im.v2.model';
+import { type ImModelCopilotRole } from 'im.v2.model';
 
 export type RawRole = {
 	code: string,

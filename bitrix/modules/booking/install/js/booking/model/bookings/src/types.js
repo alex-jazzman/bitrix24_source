@@ -1,5 +1,5 @@
 import { ClientData } from 'booking.model.clients';
-import { EntityTypeId } from 'booking.const';
+import { EntityTypeId, BookingSource } from 'booking.const';
 
 export opaque type BookingId = number;
 
@@ -34,6 +34,7 @@ export type BookingModel = {
 	messages: MessageModel[],
 	skus: SkuModel[],
 	payment: PaymentModel,
+	source: $Values<typeof BookingSource>,
 };
 
 export type DealData = {

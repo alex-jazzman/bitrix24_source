@@ -52,5 +52,8 @@ type DataFormatTemplate = {
 export {
 	DataType,
 	DataTypeDescriptions,
+};
+
+export type {
 	DataFormatTemplate,
 };

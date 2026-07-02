@@ -1,3 +1,4 @@
+import { Runtime } from 'main.core';
 import { Outline, Main } from 'ui.icon-set.api.core';
 import { AirButtonStyle } from 'ui.vue3.components.button';
 import type { MenuOptions } from 'ui.vue3.components.menu';
@@ -20,10 +21,21 @@ export const DiagramMenu = {
 		{
 			return this.$bitrix.Loc.getMessage(locString);
 		},
+		openStorageList(): void
+		{
+			Runtime.loadExtension('bizproc.router').then(({ Router }) => {
+				Router.openStorageList();
+			}).catch((e) => console.error(e));
+		},
 		getDiagramMenu(): MenuOptions
 		{
 			return {
 				items: [
+					{
+						title: this.loc('BIZPROCDESIGNER_EDITOR_TOP_PANEL_MENU_ACTION_STORAGE_LIST'),
+						icon: Outline.DATABASE,
+						onClick: () => this.openStorageList(),
+					},
 					{
 						title: this.loc('BIZPROCDESIGNER_EDITOR_TOP_PANEL_MENU_ACTION_MARKET'),
 						icon: Outline.MARKET,

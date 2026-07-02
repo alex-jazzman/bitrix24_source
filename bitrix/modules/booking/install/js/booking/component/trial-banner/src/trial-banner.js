@@ -13,7 +13,7 @@ export const TrialBanner = {
 		Button,
 		Icon,
 	},
-	data(): Object
+	setup(): Object
 	{
 		return {
 			IconSet,

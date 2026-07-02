@@ -55,6 +55,11 @@ export class CopilotAgreement
 		return linksByZone[zone] || linksByZone.en;
 	}
 
+	#getCopilotName(): string
+	{
+		return Extension.getSettings('ai.copilot-agreement').copilotName;
+	}
+
 	async checkAgreement(): Promise<boolean>
 	{
 		if (CopilotAgreement.#checkAgreementResult !== null && CopilotAgreement.#checkAgreementResult !== undefined)
@@ -151,16 +156,21 @@ export class CopilotAgreement
 			>
 				<header class="ai__copilot-agreement-popup-content_header">
 					<h3 class="ai__copilot-agreement-popup-content_title">
-						${Loc.getMessage('COPILOT_AGREEMENT_POPUP_TITLE')}
+						${Loc.getMessage('COPILOT_AGREEMENT_POPUP_TITLE_MSGVER_1', {
+							'#COPILOT_NAME#': this.#getCopilotName(),
+						})}
 					</h3>
 				</header>
 				<main class="ai__copilot-agreement-popup-content_main">
 					<div class="ai__copilot-agreement-popup-content_img"></div>
 					<p class="ai__copilot-agreement-popup-content_text">
-						${Loc.getMessage('COPILOT_AGREEMENT_POPUP_PARAGRAPH_1')}
+						${Loc.getMessage('COPILOT_AGREEMENT_POPUP_PARAGRAPH_1_MSGVER_1', {
+							'#COPILOT_NAME#': this.#getCopilotName(),
+						})}
 					</p>
 					<p class="ai__copilot-agreement-popup-content_text">
-						${Loc.getMessage('COPILOT_AGREEMENT_POPUP_PARAGRAPH_2', {
+						${Loc.getMessage('COPILOT_AGREEMENT_POPUP_PARAGRAPH_2_MSGVER_1', {
+							'#COPILOT_NAME#': this.#getCopilotName(),
 							'#LINK#': `<a target="_blank" href="${CopilotAgreement.getFullAgreementLink()}">`,
 							'#/LINK#': '</a>',
 						})}

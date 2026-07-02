@@ -2,6 +2,10 @@
 
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
+/**
+ * @var array $arResult
+ */
+
 print CFile::ShowFile(
 	$arResult['additionalParameters']['VALUE'],
 	$arResult['userField']['SETTINGS']['MAX_SHOW_SIZE'],

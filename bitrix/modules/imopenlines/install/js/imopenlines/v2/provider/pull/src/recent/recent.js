@@ -1,17 +1,10 @@
-import { Type } from 'main.core';
-
 import { Messenger } from 'im.public';
+import { Core } from 'im.v2.application.core';
 import { Layout } from 'im.v2.const';
 import { LayoutManager } from 'im.v2.lib.layout';
-import { Core } from 'im.v2.application.core';
-import { Logger } from 'im.v2.lib.logger';
+import { type ChatHideParams, type MessageAddParams } from 'im.v2.provider.pull';
 
-import type {
-	ChatHideParams, MessageAddParams,
-	ReadMessageParams,
-	UnreadMessageParams,
-} from 'im.v2.provider.pull';
-import type { ChatUserLeaveParams } from 'imopenlines.v2.provider.pull';
+import { type ChatUserLeaveParams } from 'imopenlines.v2.provider.pull';
 
 export class LinesPullHandler
 {

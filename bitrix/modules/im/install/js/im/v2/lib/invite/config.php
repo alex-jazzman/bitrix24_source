@@ -9,10 +9,10 @@ return [
 		'./dist/invite.bundle.js',
 	],
 	'rel' => [
-		'main.sidepanel',
 		'im.v2.application.core',
-		'main.core',
 		'im.v2.lib.notifier',
+		'main.core',
+		'main.sidepanel',
 	],
 	'skip_core' => false,
 ];

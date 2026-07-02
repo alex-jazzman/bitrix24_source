@@ -1,6 +1,7 @@
 import { Type, ajax, Dom, Event } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { ValueSelector } from '../../../entities/common-node-settings';
+import { ref, inject } from 'ui.vue3';
 import { mapActions, mapState } from 'ui.vue3.pinia';
 import { diagramStore } from '../../../entities/blocks';
 
@@ -139,11 +140,12 @@ export const EditExtendedAction = {
 			default: null,
 		},
 	},
-	setup(): { store: diagramStore; }
+	setup(): { store: diagramStore; isActionFormLoading: { value: boolean }; }
 	{
 		const store: diagramStore = diagramStore();
+		const isActionFormLoading = inject('isActionFormLoading', ref(false));
 
-		return { store };
+		return { store, isActionFormLoading };
 	},
 	data(): {
 		status: StatusType,
@@ -164,7 +166,7 @@ export const EditExtendedAction = {
 		};
 	},
 	computed: {
-		...mapState(useNodeSettingsStore, ['block', 'currentRuleId', 'nodeSettings']),
+		...mapState(useNodeSettingsStore, ['block', 'currentRule', 'nodeSettings']),
 		Status: (): Status => Status,
 		action(): ?ActionDictEntry
 		{
@@ -176,7 +178,7 @@ export const EditExtendedAction = {
 		},
 		connectedBlocks(): Array<Block>
 		{
-			return this.store.getAllBlockAncestors(this.block, this.currentRuleId);
+			return this.store.getAllBlockAncestors(this.block, this.currentRule.id);
 		},
 		isPropertiesDialogDocumentTypeReady(): boolean
 		{
@@ -207,6 +209,10 @@ export const EditExtendedAction = {
 				this.init();
 			}
 		},
+		status(newVal: StatusType): void
+		{
+			this.isActionFormLoading = (newVal === Status.Loading);
+		},
 	},
 	mounted(): void
 	{
@@ -230,6 +236,7 @@ export const EditExtendedAction = {
 		{
 			if (!this.isPropertiesDialogDocumentTypeReady)
 			{
+				this.isActionFormLoading = false;
 				this.clearForm();
 				this.onChange();
 
@@ -293,7 +300,7 @@ export const EditExtendedAction = {
 			const compatibleTemplate = [{ Type: 'NodeWorkflowActivity', Children: [], Name: 'Template' }];
 			compatibleTemplate[0].Children.push(
 				activity,
-				...this.store.getAllBlockAncestors(this.block, this.currentRuleId).map((b) => b.activity),
+				...this.store.getAllBlockAncestors(this.block, this.currentRule.id).map((b) => b.activity),
 			);
 
 			try
@@ -644,7 +651,7 @@ export const EditExtendedAction = {
 			const selector = new ValueSelector(
 				this.store,
 				this.block,
-				this.currentRuleId,
+				this.currentRule.id,
 			);
 
 			try

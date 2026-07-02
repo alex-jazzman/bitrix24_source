@@ -17,6 +17,7 @@ export class Statistics extends Base
 {
 	#periodType: number = PeriodType.day30;
 	#showSettingsButton: boolean = true;
+	#isGlowingSettingsButton: boolean = false;
 	#hint: ?Manager = null;
 
 	constructor(params: WidgetParams)
@@ -24,6 +25,7 @@ export class Statistics extends Base
 		super(params);
 
 		this.#showSettingsButton = params.showSettingsButton ?? true;
+		this.#isGlowingSettingsButton = params.isGlowingSettingsButton ?? false;
 		this.#periodType = params.periodTypeId ?? PeriodType.day30;
 	}
 
@@ -232,10 +234,14 @@ export class Statistics extends Base
 
 	#getFooterContent(): HTMLElement
 	{
-		const footer = new Footer(this.#showSettingsButton, {
-			type: this.getAnalyticsType(),
-			subSection: this.getAnalyticsSubSection(),
-		});
+		const footer = new Footer(
+			this.#showSettingsButton,
+			{
+				type: this.getAnalyticsType(),
+				subSection: this.getAnalyticsSubSection(),
+			},
+			this.#isGlowingSettingsButton,
+		);
 
 		return footer.getFooterContent();
 	}
@@ -331,11 +337,6 @@ export class Statistics extends Base
 
 	#showHint(event: Event): void
 	{
-		if (this.#getHintInstance().popup?.isShown())
-		{
-			return;
-		}
-
 		this.#getHintInstance().show(
 			event.target,
 			Loc.getMessage('CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_CONVERSION_HINT'),
@@ -345,10 +346,7 @@ export class Statistics extends Base
 
 	#hideHint(): void
 	{
-		if (this.#getHintInstance().popup?.isShown())
-		{
-			this.#getHintInstance().hide();
-		}
+		this.#getHintInstance().hide();
 	}
 
 	#getHintInstance(): Manager
@@ -359,8 +357,8 @@ export class Statistics extends Base
 				popupParameters: {
 					autoHide: true,
 					events: {
-						onFirstShow: () => {
-							this.#hint.popup.setOffset({ offsetLeft: 9 });
+						onFirstShow: (event) => {
+							event.getCompatData()[0].setOffset({ offsetLeft: 9 });
 						},
 					},
 				},

@@ -1,23 +1,19 @@
+import { Event, type JsonObject } from 'main.core';
 import { EventEmitter } from 'main.core.events';
-import { Event } from 'main.core';
 
-import { Messenger } from 'im.public';
-import { PermissionManager } from 'im.v2.lib.permission';
-import { RecentList } from 'im.v2.component.list.items.recent';
-import { ChatSearchInput, RecentSectionSearch } from 'im.v2.component.search';
-import { Layout, EventType, ActionByUserType, RecentType } from 'im.v2.const';
-import { Logger } from 'im.v2.lib.logger';
+import { RecentList, RecentUnreadList } from 'im.v2.component.list.items.recent';
+import { ChatSearchInput, RecentSearch } from 'im.v2.component.search';
+import { Layout, EventType, ActionByUserType, RecentType, type LayoutType } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
+import { Logger } from 'im.v2.lib.logger';
+import { PermissionManager } from 'im.v2.lib.permission';
+import { type ImModelLayout } from 'im.v2.model';
+import { HeaderMenu } from 'im.v2.component.list.container.elements.header-menu';
+import { VibeCodeCatalogButton } from 'im.v2.component.list.container.elements.vibe-code-catalog-button';
 
-import { HeaderMenu } from './components/header-menu';
 import { CreateChatMenu } from './components/create-chat-menu/create-chat-menu';
-import { RecentUnreadListSlider } from './components/unread-slider/unread-slider';
 
 import './css/recent-container.css';
-
-import type { JsonObject } from 'main.core';
-import type { ImModelLayout } from 'im.v2.model';
-import type { LayoutType } from 'im.v2.const';
 
 // @vue/component
 export const RecentListContainer = {
@@ -27,21 +23,21 @@ export const RecentListContainer = {
 		CreateChatMenu,
 		ChatSearchInput,
 		RecentList,
-		RecentSectionSearch,
-		RecentUnreadListSlider,
+		RecentSearch,
+		RecentUnreadList,
+		VibeCodeCatalogButton,
 	},
-	emits: ['selectEntity'],
+	emits: ['selectChat'],
 	data(): JsonObject
 	{
 		return {
 			searchMode: false,
-			unreadOnlyMode: false,
+			unreadMode: false,
 			searchQuery: '',
 			isSearchLoading: false,
 		};
 	},
-	computed:
-	{
+	computed: {
 		RecentType: () => RecentType,
 		layout(): ImModelLayout
 		{
@@ -75,11 +71,10 @@ export const RecentListContainer = {
 		EventEmitter.unsubscribe(EventType.recent.openSearch, this.onOpenSearch);
 		Event.unbind(document, 'mousedown', this.onDocumentClick);
 	},
-	methods:
-	{
-		onChatClick(dialogId)
+	methods: {
+		onSelectChat(dialogId)
 		{
-			this.$emit('selectEntity', { layoutName: Layout.chat, entityId: dialogId });
+			this.$emit('selectChat', { layoutName: Layout.chat, dialogId });
 		},
 		onOpenSearch()
 		{
@@ -115,7 +110,7 @@ export const RecentListContainer = {
 				Analytics.getInstance().recentSearch.onClose(this.layoutName);
 			}
 		},
-		onLoading(value: boolean)
+		onSearchLoading(value: boolean)
 		{
 			this.isSearchLoading = value;
 		},
@@ -123,23 +118,23 @@ export const RecentListContainer = {
 		{
 			const { dialogId } = event;
 
-			this.onChatClick(dialogId);
+			this.onSelectChat(dialogId);
 		},
 		onToggleUnreadMode()
 		{
 			this.$store.dispatch('recent/clearUnreadCollection', { type: RecentType.default });
-			this.unreadOnlyMode = !this.unreadOnlyMode;
+			this.unreadMode = !this.unreadMode;
 		},
 	},
 	template: `
 		<div class="bx-im-list-container-recent__scope bx-im-list-container-recent__container" ref="recent-container">
-			<RecentUnreadListSlider 
-				:unreadOnlyMode="unreadOnlyMode" 
-				@chatClick="onChatClick" 
-				@toggleUnreadMode="onToggleUnreadMode"
-			/>
 			<div class="bx-im-list-container-recent__header_container">
-				<HeaderMenu :unreadOnlyMode="unreadOnlyMode" @toggleUnreadMode="onToggleUnreadMode" />
+				<VibeCodeCatalogButton />
+				<HeaderMenu
+					:unreadMode="unreadMode"
+					:recentSection="RecentType.default"
+					@toggleUnreadMode="onToggleUnreadMode"
+				/>
 				<div class="bx-im-list-container-recent__search-input_container">
 					<ChatSearchInput 
 						:searchMode="searchMode" 
@@ -153,16 +148,16 @@ export const RecentListContainer = {
 			</div>
 			<div class="bx-im-list-container-recent__elements_container">
 				<div class="bx-im-list-container-recent__elements">
-					<RecentSectionSearch 
+					<RecentSearch
 						v-show="searchMode" 
 						:searchMode="searchMode"
 						:query="searchQuery"
-						:recentSection="RecentType.default"
-						@loading="onLoading"
+						@loading="onSearchLoading"
 						@openItem="onOpenSearchItem"
 						@closeSearch="onCloseSearch"
 					/>
-					<RecentList v-show="!searchMode && !unreadOnlyMode" @chatClick="onChatClick" />
+					<RecentList v-if="!unreadMode" @selectChat="onSelectChat" />
+					<RecentUnreadList v-else @selectChat="onSelectChat" />
 				</div>
 			</div>
 		</div>

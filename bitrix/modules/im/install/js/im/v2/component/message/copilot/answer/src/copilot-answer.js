@@ -1,21 +1,20 @@
-import { Dom, Loc, Type } from 'main.core';
+import { Dom, Type } from 'main.core';
 
-import { Utils } from 'im.v2.lib.utils';
-import { Parser } from 'im.v2.lib.parser';
 import { BaseMessage } from 'im.v2.component.message.base';
-import { ReactionList, MessageStatus, AuthorTitle } from 'im.v2.component.message.elements';
+import { ReactionList, MessageStatus, AuthorTitle, TextContent } from 'im.v2.component.message.elements';
+import { CopilotManager } from 'im.v2.lib.copilot';
 import { openHelpdeskArticle } from 'im.v2.lib.helpdesk';
 import { Notifier } from 'im.v2.lib.notifier';
-import { CopilotManager } from 'im.v2.lib.copilot';
+import { Parser } from 'im.v2.lib.parser';
+import { Utils } from 'im.v2.lib.utils';
+import { type ImModelMessage } from 'im.v2.model';
 
 import './css/copilot-answer.css';
-
-import type { ImModelMessage } from 'im.v2.model';
 
 // @vue/component
 export const CopilotMessage = {
 	name: 'CopilotMessage',
-	components: { AuthorTitle, BaseMessage, ReactionList, MessageStatus },
+	components: { AuthorTitle, BaseMessage, ReactionList, MessageStatus, TextContent },
 	props:
 	{
 		item: {
@@ -31,8 +30,7 @@ export const CopilotMessage = {
 			default: true,
 		},
 	},
-	computed:
-	{
+	computed: {
 		message(): ImModelMessage
 		{
 			return this.item;
@@ -95,8 +93,8 @@ export const CopilotMessage = {
 		<BaseMessage :item="item" :dialogId="dialogId" class="bx-im-message-copilot-base-message__container">
 			<div class="bx-im-message-default__container bx-im-message-copilot-answer__container" :class="{'--error': isError}">
 				<AuthorTitle v-if="withTitle" :item="item" />
-				<div class="bx-im-message-default-content__container bx-im-message-default-content__scope">
-					<div class="bx-im-message-default-content__text" v-html="formattedText"></div>
+				<div class="bx-im-message-default-content__container">
+					<TextContent :text="formattedText" />
 					<ReactionList
 						v-if="canSetReactions"
 						:messageId="message.id"

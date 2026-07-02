@@ -1,7 +1,7 @@
 import { Core } from 'im.v2.application.core';
 import { Logger } from 'im.v2.lib.logger';
 
-import { CommentSubscribeParams, ReadAllChannelCommentsParams } from '../../types/comments';
+import { type CommentSubscribeParams } from '../../types/comments';
 
 export class CommentsPullHandler
 {

@@ -1,14 +1,19 @@
+import { toValue } from 'ui.vue3';
 import { Runtime, Browser } from 'main.core';
 import { useAppStore } from '../../../entities/app';
 import { useCommonNodeSettingsStore } from '../../../entities/common-node-settings';
 import { useNodeSettingsStore, generateNextInputPortId } from '../../../entities/node-settings';
 import {
 	diagramStore as useDiagramStore,
-	BLOCK_TYPES,
 	useBufferStore,
 } from '../../../entities/blocks';
 import { useLoc } from '../../../shared/composables';
-import { PORT_TYPES, COMPLEX_NODE_PORT_LABELS } from '../../../shared/constants';
+import {
+	PORT_TYPES,
+	COMPLEX_NODE_PORT_LABELS,
+	BLOCK_TYPES,
+	BLOCK_TYPES_WITHOUT_SETTINGS,
+} from '../../../shared/constants';
 import { useHistory, useHighlightedBlocks, useBlockDiagram } from 'ui.block-diagram';
 import type { MenuItemOptions } from 'ui.vue3.components.menu';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
@@ -24,6 +29,7 @@ export class BlockMediator
 	#appStore = null;
 	#commonNodeSettingsStore = null;
 	#complexNodeSettingsStore = null;
+	#blockDiagram = null;
 	#diagramStore = null;
 	#bufferStore = null;
 	#highlightedBlocks = null;
@@ -40,6 +46,7 @@ export class BlockMediator
 		this.#commonNodeSettingsStore = useCommonNodeSettingsStore();
 		this.#complexNodeSettingsStore = useNodeSettingsStore();
 		this.#diagramStore = useDiagramStore();
+		this.#blockDiagram = useBlockDiagram();
 		this.#bufferStore = useBufferStore();
 		const isMac = Browser.isMac();
 		this.#contextMenuItems = {
@@ -54,8 +61,7 @@ export class BlockMediator
 		};
 		this.#highlightedBlocks = useHighlightedBlocks();
 
-		const { hooks } = useBlockDiagram();
-		hooks.startDragBlock.on((block) => {
+		this.#blockDiagram.hooks.startDragBlock.on((block) => {
 			const settingsBlockId = this.#commonNodeSettingsStore.block?.id
 				?? this.#complexNodeSettingsStore.block?.id;
 
@@ -107,6 +113,13 @@ export class BlockMediator
 
 	async showNodeSettings(block: Block): void
 	{
+		if (BLOCK_TYPES_WITHOUT_SETTINGS.includes(toValue(block).type))
+		{
+			this.hideAllSettings();
+
+			return;
+		}
+
 		if (this.#isShowingSettings)
 		{
 			return;
@@ -134,7 +147,11 @@ export class BlockMediator
 				return;
 			}
 
-			const notReallyComplexBlock = ['ForEachActivity', 'WhileActivity', 'IfElseBranchActivity'];
+			const notReallyComplexBlock = [
+				'ForEachActivity',
+				'WhileActivity',
+				'IfElseBranchActivity',
+			];
 
 			if (block.type === BLOCK_TYPES.COMPLEX && !notReallyComplexBlock.includes(block.activity.Type))
 			{
@@ -221,7 +238,7 @@ export class BlockMediator
 					this.resetComplexBlockSettings();
 				}
 
-				this.#diagramStore.deleteBlockById(block.id);
+				this.#blockDiagram.deleteBlockById(block.id);
 				this.#history.makeSnapshot();
 			},
 		};
@@ -255,23 +272,27 @@ export class BlockMediator
 	addComplexBlockPort(block: Block, title: string): void
 	{
 		let portId = '';
-		const isConnectionPort = `${title[0]}${title[1]}` === COMPLEX_NODE_PORT_LABELS.connection;
+		const isRelationPort = `${title[0]}${title[1]}` === COMPLEX_NODE_PORT_LABELS.relation;
+		const portType = isRelationPort ? PORT_TYPES.inputRelation : PORT_TYPES.input;
 		if (this.isCurrentComplexBlock(block.id))
 		{
-			portId = this.#complexNodeSettingsStore.addRule();
-			if (isConnectionPort)
+			if (isRelationPort)
 			{
-				this.#complexNodeSettingsStore.addConnectionPort(portId, PORT_TYPES.input);
+				portId = this.#complexNodeSettingsStore.addRelation();
+				this.#complexNodeSettingsStore.addRelationPort(portId, portType);
 			}
 			else
 			{
-				this.#complexNodeSettingsStore.addRulePort(portId, PORT_TYPES.input, title);
+				portId = this.#complexNodeSettingsStore.addRule();
+				this.#complexNodeSettingsStore.addRulePort(portId, portType, title);
 			}
 		}
 		else
 		{
 			portId = generateNextInputPortId(
-				block.ports.filter((port) => port.type === PORT_TYPES.input),
+				block.ports.filter((port) => {
+					return port.type === PORT_TYPES.inputRelation || port.type === PORT_TYPES.input;
+				}),
 			);
 		}
 
@@ -286,9 +307,37 @@ export class BlockMediator
 			{
 				id: portId,
 				title,
-				type: PORT_TYPES.input,
+				type: portType,
 				position: 'left',
-				isConnectionPort,
+			},
+		]);
+	}
+
+	addAuxPort(block: Block, title: string): void
+	{
+		const isPortExists = block.ports.some((port) => port.title === title);
+		if (isPortExists)
+		{
+			return;
+		}
+
+		const auxPorts = block.ports.filter((port) => port.type === PORT_TYPES.aux);
+		const nextPortNumber = auxPorts.reduce(
+			(acc, port) => {
+				const num = parseInt(port.id.slice(1), 10);
+
+				return Math.max(acc, Number.isNaN(num) ? 0 : num);
+			},
+			-1,
+		) + 1;
+
+		this.#diagramStore.setPorts(block.id, [
+			...block.ports,
+			{
+				id: `a${nextPortNumber}`,
+				title,
+				type: PORT_TYPES.aux,
+				position: 'bottom',
 			},
 		]);
 	}
@@ -328,7 +377,7 @@ export class BlockMediator
 		}
 		else if (complexBlock)
 		{
-			this.#complexNodeSettingsStore.setCurrentRuleId('');
+			this.#complexNodeSettingsStore.setCurrentRule(null);
 		}
 	}
 

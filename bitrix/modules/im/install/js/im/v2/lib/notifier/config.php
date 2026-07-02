@@ -9,12 +9,11 @@ return [
 		'./dist/notifier.bundle.js',
 	],
 	'rel' => [
-		'ui.notification',
 		'im.public',
 		'im.v2.application.core',
 		'im.v2.const',
-		'im.v2.provider.service.settings',
 		'main.core',
+		'ui.notification',
 	],
 	'skip_core' => false,
 ];

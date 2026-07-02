@@ -74,9 +74,9 @@ export const BlocksAppComponent = {
 			type: [String, null],
 			required: true,
 		},
-		/** Record<string, string> */
-		fieldTypeNames: {
-			type: Object,
+		/** @type ConstantConfiguration[] */
+		constantConfigurationList: {
+			type: Array,
 			required: true,
 		},
 		globalConstants: {
@@ -387,7 +387,7 @@ export const BlocksAppComponent = {
 						<component
 							:is="getElementComponent(item.itemType)"
 							:item="item"
-							:fieldTypeNames="fieldTypeNames"
+							:constantConfigurationList="constantConfigurationList"
 							@delete="onDeleteItem(blockIndex, itemIndex)"
 							@updateItemProperty="onUpdateItemProperty(blockIndex, itemIndex, $event)"
 							@itemDragStart="onItemDragStart($event, blockIndex, itemIndex)"
@@ -433,7 +433,7 @@ export const BlocksAppComponent = {
 			<EditConstantPopupForm
 				v-if="createdConstant !== null"
 				:item="createdConstant"
-				:fieldTypeNames="fieldTypeNames"
+				:constantConfigurationList="constantConfigurationList"
 				@update:item="onSaveConstant(currentBlockIndex, $event)"
 				@cancel="onCancelConstant"
 				:isCreation="true"

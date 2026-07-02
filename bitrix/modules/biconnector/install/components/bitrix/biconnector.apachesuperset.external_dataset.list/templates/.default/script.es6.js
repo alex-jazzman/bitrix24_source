@@ -225,6 +225,35 @@ class ExternalDatasetManager
 		;
 	}
 
+	createExternalDatasetByName(tableName: string): void
+	{
+		this.#grid.tableFade();
+		Ajax.runAction(
+			'biconnector.externalsource.dataset.getCreateUrlByName',
+			{
+				data: {
+					tableName,
+				},
+			},
+		)
+			.then((response) => {
+				const link = response.data;
+				if (link)
+				{
+					window.open(link, '_blank').focus();
+				}
+				this.#grid.tableUnfade();
+			})
+			.catch((response) => {
+				this.#grid.tableUnfade();
+				if (response.errors)
+				{
+					this.#notifyErrors(response.errors);
+				}
+			})
+		;
+	}
+
 	showSupersetError(): void
 	{
 		BX.UI.Notification.Center.notify({

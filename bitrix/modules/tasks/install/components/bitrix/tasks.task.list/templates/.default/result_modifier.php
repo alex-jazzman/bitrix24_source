@@ -200,7 +200,7 @@ if (!empty($arResult['LIST']))
 
 		if ($arResult['GROUP_BY_PROJECT'] && $groupId !== $prevGroupId)
 		{
-			$groupName = htmlspecialcharsbx($groups[$groupId]['NAME']);
+			$groupName = htmlspecialcharsbx($groups[$groupId]['NAME'] ?? null);
 			$groupType = $groups[$groupId]['TYPE'] ?? null;
 			$groupChatId = $groups[$groupId]['CHAT_ID'] ?? 0;
 			$groupUrl = SocialNetwork\Collab\Url\UrlManager::getUrlByType($groupId, $groupType, ['chatId' => $groupChatId]);

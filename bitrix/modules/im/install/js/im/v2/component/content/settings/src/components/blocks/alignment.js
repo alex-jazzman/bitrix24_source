@@ -1,6 +1,6 @@
 import { Settings, DialogAlignment } from 'im.v2.const';
 import { SettingsService } from 'im.v2.provider.service.settings';
-import { ThemeManager, BackgroundStyle } from 'im.v2.lib.theme';
+import { ThemeManager, type BackgroundStyle } from 'im.v2.lib.theme';
 
 import './css/alignment.css';
 

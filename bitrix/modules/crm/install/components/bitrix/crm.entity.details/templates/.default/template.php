@@ -15,6 +15,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 /** @var CCrmEntityPopupComponent $component */
 
 \Bitrix\Main\UI\Extension::load([
+	'crm.router',
 	'ui.design-tokens',
 	'ui.fonts.opensans',
 	'clipboard',
@@ -486,6 +487,14 @@ $tabs = array_map(static function(array $tab) {
 					saveButton: "<?=GetMessageJS('CRM_ENT_DETAIL_BUTTON_SAVE')?>",
 					cancelButton: "<?=GetMessageJS('CRM_ENT_DETAIL_BUTTON_CANCEL')?>"
 				};
+
+			BX.Crm.Router.Instance.setUrlTemplates(<?= Json::encode($arResult['ROUTER']['URL_TEMPLATES']) ?>);
+			<?php if ((int)$entityTypeID > 0): ?>
+				BX.Crm.Router.Instance.setCurrentListView(
+					<?= (int)$entityTypeID ?>,
+					"<?= CUtil::JSEscape($arResult['ROUTER']['CURRENT_LIST_VIEW']) ?>"
+				);
+			<?php endif ?>
 
 			<? if ($arResult['TODO_CREATE_NOTIFICATION_PARAMS']) { ?>
 				new BX.Crm.Activity.TodoCreateNotification(<?=CUtil::PhpToJSObject($arResult['TODO_CREATE_NOTIFICATION_PARAMS'], false, true, true)?>);

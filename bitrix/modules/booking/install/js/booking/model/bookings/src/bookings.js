@@ -1,7 +1,7 @@
 import type { ActionTree, GetterTree, MutationTree } from 'ui.vue3.vuex';
-import { BuilderModel, Store } from 'ui.vue3.vuex';
+import { BuilderModel } from 'ui.vue3.vuex';
 
-import { Model } from 'booking.const';
+import { Model, BookingSource } from 'booking.const';
 
 import { dateToTsRange, createOverbookingMap } from './lib';
 import type { BookingModel, BookingsState } from './types';
@@ -36,6 +36,7 @@ export class Bookings extends BuilderModel
 			isConfirmed: false,
 			visitStatus: 'unknown',
 			overbooking: false,
+			source: BookingSource.Internal,
 		};
 	}
 
@@ -58,6 +59,16 @@ export class Bookings extends BuilderModel
 			getByDateAndResources: (state: BookingsState, getters) => {
 				return (dateTs: number, resourcesIds: number[]): BookingModel[] => {
 					return getters.getByDate(dateTs)
+						.filter((booking: BookingModel) => {
+							return resourcesIds
+								.some((resourceId: number) => booking.resourcesIds.includes(resourceId));
+						});
+				};
+			},
+			/** @function bookings/getByIntervalAndResources */
+			getByIntervalAndResources: (state: BookingsState, getters) => {
+				return (fromTs: number, toTs: number, resourcesIds: number[]): BookingModel[] => {
+					return getters.getByInterval(fromTs, toTs)
 						.filter((booking: BookingModel) => {
 							return resourcesIds
 								.some((resourceId: number) => booking.resourcesIds.includes(resourceId));

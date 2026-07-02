@@ -279,6 +279,18 @@
 		{
 			result.stopBlur = true;
 		}
+		else
+		{
+			const instance = BX.UI.SelectorManager.instances[this.control?.getId()];
+			if (instance && instance.popups?.main && event?.target)
+			{
+				const popupContainer = instance.popups.main.getPopupContainer();
+				if (event.target === popupContainer || popupContainer.contains(event.target))
+				{
+					result.stopBlur = true;
+				}
+			}
+		}
 	};
 
 	BX.Filter.DestinationSelector.prototype.onCustomEntityRemove = function(control)

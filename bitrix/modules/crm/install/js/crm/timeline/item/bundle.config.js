@@ -3,6 +3,4 @@ module.exports = {
 	output: 'dist/index.bundle.js',
 	namespace: 'BX.Crm.Timeline',
 	browserslist: true,
-	transformClasses: true,
-	adjustConfigPhp: false,
 };

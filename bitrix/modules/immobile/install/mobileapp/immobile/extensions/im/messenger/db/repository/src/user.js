@@ -223,7 +223,6 @@ jn.define('im/messenger/db/repository/user', (require, exports, module) => {
 			if (Type.isObject(user.bot_data))
 			{
 				result.botData = {
-					appId: user.bot_data.app_id,
 					code: user.bot_data.code,
 					isHidden: user.bot_data.is_hidden,
 					isSupportOpenline: user.bot_data.is_support_openline,

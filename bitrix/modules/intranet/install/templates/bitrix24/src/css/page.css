@@ -67,6 +67,11 @@
 	position: relative;
 }
 
+.page__workarea-content:focus,
+.page__workarea-content:focus-visible {
+	outline: none;
+}
+
 .page.no-background .page__workarea-content,
 .page.transparent-workarea .page__workarea-content {
 	background-color: var(--ui-color-background-transparent);

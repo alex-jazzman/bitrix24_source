@@ -44,4 +44,5 @@ export const EventName = Object.freeze({
 	OpenHistory: 'tasks:full-card:openHistory',
 	OpenTemplateHistory: 'tasks:template:openHistory',
 	UpdateReplicateParams: 'tasks:template:update-replicate-params',
+	ChatActionBeforeExecute: 'tasks:chat-action:before-execute',
 });

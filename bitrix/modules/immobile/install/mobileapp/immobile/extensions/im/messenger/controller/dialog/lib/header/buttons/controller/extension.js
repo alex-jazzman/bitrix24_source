@@ -171,6 +171,17 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons/controller', (requi
 			};
 		}
 
+		/**
+		 * @param {string} chatType
+		 * @return {Promise<Array<DialogHeaderButton>>}
+		 */
+		async getButtonsForOptimisticChat(chatType)
+		{
+			const controller = await this.getButtonsController();
+
+			return controller.getButtonsForOptimisticChat(chatType);
+		}
+
 		checkShouldRenderButtons(buttons)
 		{
 			const getButtonWithoutCallback = (button) => {

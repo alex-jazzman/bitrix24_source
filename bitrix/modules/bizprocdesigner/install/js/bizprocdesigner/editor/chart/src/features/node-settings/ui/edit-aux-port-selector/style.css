@@ -1,0 +1,76 @@
+.editor-chart-node-settings-edit-aux-port-selector-form .ui-ctl {
+	--ui-field-size: 34px;
+	width: 100%;
+}
+
+.editor-chart-node-settings-edit-aux-port-selector-form .ui-ctl .ui-ctl-element {
+	border-radius: var(--ui-border-radius-sm);
+}
+
+.editor-chart-node-settings-edit-aux-port-selector-form__dropdown.ui-ctl .ui-ctl-icon-angle.ui-ctl-after {
+	display: block !important;
+}
+
+.editor-chart-node-settings-edit-aux-port-selector-form__label {
+	color: var(--ui-color-palette-gray-70);
+	margin-bottom: 5px;
+	display: inline-block;
+}
+
+.editor-chart-node-settings-edit-aux-port-selector-form__item {
+	margin-bottom: 9px;
+}
+
+.editor-chart-node-settings-edit-aux-port-selector-form__item:last-of-type {
+	margin-bottom: 0;
+}
+
+.editor-chart-node-settings-edit-aux-port-selector-form__dropdown_popup {
+	display: flex;
+	flex-direction: column;
+	max-height: 100%;
+	min-height: 100px;
+}
+
+.editor-chart-node-settings-edit-aux-port-selector-form__dropdown_popup-content {
+	padding-top: 12px;
+	overflow: auto;
+	flex: 1;
+}
+
+.editor-chart-node-settings-edit-aux-port-selector-form__dropdown_popup-content::-webkit-scrollbar {
+	width: 0;
+}
+
+.editor-chart-node-settings-edit-aux-port-selector-form__dropdown_popup-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 8px 18px;
+}
+
+.editor-chart-node-settings-edit-aux-port-selector-form__dropdown_popup-item:hover {
+	background: var(--menu-popup-item-bg-color-hover);
+	background-clip: padding-box;
+}
+
+.editor-chart-node-settings-edit-aux-port-selector-form__dropdown_popup-footer {
+	background-color: var(--ui-color-accent-soft-blue-2);
+	padding: 14px 18px;
+	border-bottom-left-radius: 18px;
+	border-bottom-right-radius: 18px;
+}
+
+.editor-chart-node-settings-edit-aux-port-selector-form__dropdown_popup-footer-content {
+	cursor: pointer;
+}
+
+.editor-chart-node-settings-edit-aux-port-selector-form__dropdown_popup-footer-content span {
+	border-bottom: 1px dashed #b4bec6;
+}
+
+.editor-chart-node-settings-edit-aux-port-selector-form__dropdown_popup-footer-icon {
+	display: inline-block;
+	vertical-align: middle;
+	margin-right: 5px;
+}

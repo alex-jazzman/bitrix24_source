@@ -6,31 +6,31 @@ jn.define('mail/simple-list/items/message-redux/src/message-content', (require, 
 	const { Text } = require('ui-system/typography/text');
 	const { Moment } = require('utils/date');
 	const { Haptics } = require('haptics');
-	const AppTheme = require('apptheme');
 	const { Color } = require('tokens');
 	const { Loc } = require('loc');
-
-	const { selectIsMultiSelectMode } = require('mail/statemanager/redux/slices/messages/selector');
+	const { selectById, selectIsMultiSelectMode } = require('mail/statemanager/redux/slices/messages/selector');
 	const { selectStartEmailSender } = require('mail/statemanager/redux/slices/mailboxes/selector');
 	const { markAsSelected, unmarkAsSelected } = require('mail/statemanager/redux/slices/messages');
 	const { changeReadStatus } = require('mail/statemanager/redux/slices/messages/thunk');
-	const { connect } = require('statemanager/redux/connect');
+	const { connect } = require('mail/statemanager/redux/connect');
 	const store = require('statemanager/redux/store');
 	const { dispatch } = store;
 
+	const { Checkbox } = require('ui-system/form/checkbox');
 	const { ActionMenu } = require('mail/simple-list/items/message-redux/src/action-menu');
 	const { Avatar } = require('mail/message/elements/avatar');
+	const { MessageBindings } = require('mail/simple-list/items/message-redux/src/message-bindings');
 
 	class MessageContent extends PureComponent
 	{
 		get isSelected()
 		{
-			return this.props.item.isSelected;
+			return this.props.isSelected ?? false;
 		}
 
 		get isMultiSelectMode()
 		{
-			return selectIsMultiSelectMode(store.getState());
+			return this.props.isMultiSelectMode ?? false;
 		}
 
 		get itemId()
@@ -45,7 +45,7 @@ jn.define('mail/simple-list/items/message-redux/src/message-content', (require, 
 
 		get subject()
 		{
-			return this.props.item.subject;
+			return this.props.item.subject || Loc.getMessage('MAILMOBILE_GRID_MESSAGE_EMPTY_SUBJECT_PLACEHOLDER');
 		}
 
 		get isRead()
@@ -58,28 +58,23 @@ jn.define('mail/simple-list/items/message-redux/src/message-content', (require, 
 			return this.props.item.abbreviatedText;
 		}
 
+		get #primaryRecipient()
+		{
+			const recipients = this.props.item.direction === 2
+				? this.props.item.to
+				: this.props.item.from;
+
+			return recipients[0]?.customData ?? {};
+		}
+
 		get fullName()
 		{
-			let recipients = this.props.item.from;
-
-			if (this.props.item.direction === 2)
-			{
-				recipients = this.props.item.to;
-			}
-
-			return recipients[0]?.customData?.name ?? '';
+			return this.#primaryRecipient.name ?? '';
 		}
 
 		get email()
 		{
-			let recipients = this.props.item.from;
-
-			if (this.props.item.direction === 2)
-			{
-				recipients = this.props.item.to;
-			}
-
-			return recipients[0]?.customData?.email ?? '';
+			return this.#primaryRecipient.email ?? '';
 		}
 
 		get date()
@@ -92,32 +87,20 @@ jn.define('mail/simple-list/items/message-redux/src/message-content', (require, 
 			return this.props.item.withAttachments;
 		}
 
-		get crmBindId()
-		{
-			return this.props.item.crmBindId ?? 0;
-		}
-
-		get chatBindId()
-		{
-			return this.props.item.chatBindId ?? 0;
-		}
-
-		get taskBindId()
-		{
-			return this.props.item.taskBindId ?? 0;
-		}
-
-		get eventBindId()
-		{
-			return this.props.item.eventBindId ?? 0;
-		}
-
 		render()
 		{
+			if (!this.props.item)
+			{
+				return null;
+			}
+
 			return View(
 				{
 					style: {
-						backgroundColor: this.isSelected ? AppTheme.colors.accentSoftBlue2 : AppTheme.colors.bgContentPrimary,
+						backgroundColor: this.isMultiSelectMode && this.isSelected
+							? Color.accentSoftBlue2.toHex()
+							: Color.bgContentPrimary.toHex()
+						,
 					},
 				},
 				this.renderContent(),
@@ -153,12 +136,11 @@ jn.define('mail/simple-list/items/message-redux/src/message-content', (require, 
 							fullName: this.fullName,
 							email: this.email,
 							size: 40,
-							isSelected: this.isSelected,
 						}),
 						View(
 							{
 								style: {
-									width: '66%',
+									flex: 1,
 									marginLeft: 12,
 									flexDirection: 'column',
 									alignItems: 'flex-start',
@@ -167,21 +149,52 @@ jn.define('mail/simple-list/items/message-redux/src/message-content', (require, 
 							this.renderHeaderName(),
 							this.renderSubject(),
 							this.renderAbbreviatedText(),
-							this.renderBindings(),
+							MessageBindings({
+								itemId: this.itemId,
+								crmBindId: this.props.item.crmBindId ?? 0,
+								chatBindId: this.props.item.chatBindId ?? 0,
+								taskBindId: this.props.item.taskBindId ?? 0,
+								eventBindId: this.props.item.eventBindId ?? 0,
+							}),
 						),
 						View(
 							{
 								style: {
-									flex: 1,
 									alignItems: 'flex-end',
 								},
 							},
 							this.renderDate(),
 							this.attachmentsIcon(),
 						),
+						this.renderCheckbox(),
 					),
 				),
 				this.border(),
+			);
+		}
+
+		renderCheckbox()
+		{
+			if (!this.isMultiSelectMode)
+			{
+				return null;
+			}
+
+			return View(
+				{
+					style: {
+						justifyContent: 'center',
+						alignItems: 'center',
+						paddingRight: 14,
+						paddingLeft: 8,
+					},
+				},
+				new Checkbox({
+					testId: `mail-message-checkbox-${this.itemId}`,
+					checked: this.isSelected,
+					useState: false,
+					onClick: this.onMessageClick,
+				}),
 			);
 		}
 
@@ -245,7 +258,7 @@ jn.define('mail/simple-list/items/message-redux/src/message-content', (require, 
 						marginRight: 6,
 						width: 6,
 						height: 6,
-						backgroundColor: AppTheme.colors.accentMainPrimary,
+						backgroundColor: Color.accentMainPrimary.toHex(),
 						borderRadius: 100,
 					},
 					text: '',
@@ -261,7 +274,7 @@ jn.define('mail/simple-list/items/message-redux/src/message-content', (require, 
 				numberOfLines: 1,
 				ellipsize: 'end',
 				style: {
-					color: AppTheme.colors.base3,
+					color: Color.base3.toHex(),
 					fontWeight: 'regular',
 					fontSize: 15,
 				},
@@ -276,88 +289,12 @@ jn.define('mail/simple-list/items/message-redux/src/message-content', (require, 
 					width: '80%',
 					height: 1,
 					borderTopWidth: 1,
-					borderTopColor: AppTheme.colors.bgSeparatorSecondary,
+					borderTopColor: Color.bgSeparatorSecondary.toHex(),
 					marginLeft: 12,
 					marginRight: 12,
 					alignSelf: 'flex-end',
 				},
 			});
-		}
-
-		capsule(text, onClick)
-		{
-			return View(
-				{
-					style: {
-						borderWidth: 1,
-						borderColor: Color.accentSoftBorderBlue.toHex(),
-						borderRadius: 100,
-						paddingTop: 4,
-						paddingBottom: 4,
-						paddingLeft: 10,
-						paddingRight: 10,
-						marginRight: 6,
-					},
-					onClick,
-				},
-				Text({
-					style: {
-						alignSelf: 'center',
-						fontSize: 13,
-						color: AppTheme.colors.accentMainPrimary,
-						height: 16,
-						fontWeight: '400',
-					},
-					text,
-				}),
-			);
-		}
-
-		renderBindings()
-		{
-			const bindings = [];
-
-			if (this.crmBindId)
-			{
-				bindings.push(this.capsule(
-					Loc.getMessage('MAILMOBILE_GRID_MESSAGE_BINDING_CRM_TITLE'),
-					this.openBindingEntity.bind(this, 'crm'),
-				));
-			}
-
-			if (this.chatBindId)
-			{
-				bindings.push(this.capsule(
-					Loc.getMessage('MAILMOBILE_GRID_MESSAGE_BINDING_CHAT_TITLE'),
-					this.openBindingEntity.bind(this, 'chat'),
-				));
-			}
-
-			if (this.taskBindId)
-			{
-				bindings.push(this.capsule(
-					Loc.getMessage('MAILMOBILE_GRID_MESSAGE_BINDING_TASK_TITLE'),
-					this.openBindingEntity.bind(this, 'task'),
-				));
-			}
-
-			if (this.eventBindId)
-			{
-				bindings.push(this.capsule(
-					Loc.getMessage('MAILMOBILE_GRID_MESSAGE_BINDING_EVENT_TITLE'),
-					this.openBindingEntity.bind(this, 'event'),
-				));
-			}
-
-			return View(
-				{
-					style: {
-						marginTop: 6,
-						flexDirection: 'row',
-					},
-				},
-				...bindings,
-			);
 		}
 
 		renderDate()
@@ -379,7 +316,7 @@ jn.define('mail/simple-list/items/message-redux/src/message-content', (require, 
 					fontWeight: '400',
 					fontSize: 13,
 					alignSelf: 'flex-end',
-					color: AppTheme.colors.base4,
+					color: Color.base4.toHex(),
 				},
 				text,
 			});
@@ -410,28 +347,6 @@ jn.define('mail/simple-list/items/message-redux/src/message-content', (require, 
 
 			return null;
 		}
-
-		openBindingEntity = (type) => {
-			const actionMenu = new ActionMenu(this.props.item.id);
-
-			switch (type)
-			{
-				case 'crm':
-					actionMenu.openCrmEntity();
-					break;
-				case 'chat':
-					actionMenu.openChatEntity();
-					break;
-				case 'task':
-					actionMenu.openTaskEntity();
-					break;
-				case 'event':
-					actionMenu.openEventEntity();
-					break;
-				default:
-					break;
-			}
-		};
 
 		openActionMenu = () => {
 			if (!this.isMultiSelectMode)
@@ -469,7 +384,17 @@ jn.define('mail/simple-list/items/message-redux/src/message-content', (require, 
 		};
 	}
 
+	const mapStateToProps = (state, ownProps) => {
+		const message = selectById(state, ownProps.id);
+
+		return {
+			item: message,
+			isSelected: message?.isSelected ?? false,
+			isMultiSelectMode: selectIsMultiSelectMode(state),
+		};
+	};
+
 	module.exports = {
-		MessageContentView: connect()(MessageContent),
+		MessageContentView: connect(mapStateToProps)(MessageContent),
 	};
 });

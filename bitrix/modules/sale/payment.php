@@ -75,18 +75,24 @@ if (CModule::IncludeModule("sale"))
 
 				$GLOBALS["SALE_CORRESPONDENCE"] = CSalePaySystemAction::UnSerializeParams($arPaySysAction["PARAMS"]);
 
-				$pathToAction = $_SERVER["DOCUMENT_ROOT"].$arPaySysAction["ACTION_FILE"];
-
-				$pathToAction = str_replace("\\", "/", $pathToAction);
-				while (mb_substr($pathToAction, mb_strlen($pathToAction) - 1, 1) == "/")
-					$pathToAction = mb_substr($pathToAction, 0, mb_strlen($pathToAction) - 1);
-
-				if (file_exists($pathToAction))
+				try
 				{
+					$handlerFolder = \Bitrix\Sale\PaySystem\Manager::getPathToHandlerFolder($arPaySysAction["ACTION_FILE"]);
+				}
+				catch (\Bitrix\Main\IO\InvalidPathException $e)
+				{
+					$handlerFolder = null;
+				}
+				if ($handlerFolder !== null)
+				{
+					$pathToAction = $_SERVER["DOCUMENT_ROOT"] . $handlerFolder;
+
 					if (is_dir($pathToAction))
 					{
-						if (file_exists($pathToAction."/payment.php"))
-							include($pathToAction."/payment.php");
+						if (file_exists($pathToAction . "/payment.php"))
+						{
+							include($pathToAction . "/payment.php");
+						}
 					}
 					else
 					{

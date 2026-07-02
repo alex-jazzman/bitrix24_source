@@ -24,10 +24,11 @@ jn.define('im/messenger/lib/element/recent/item/user/bot', (require, exports, mo
 		createActions()
 		{
 			this.actions = [
+				this.getAddToFolderAction(),
 				this.getPinAction(),
 				this.getReadAction(),
 				this.getMuteAction(),
-			];
+			].filter(Boolean);
 
 			if (this.canHide())
 			{

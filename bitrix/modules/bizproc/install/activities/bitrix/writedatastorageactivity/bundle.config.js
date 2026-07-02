@@ -1,10 +1,8 @@
 module.exports = {
 	input: './src/index.js',
 	output: {
-		js: './script.js',
-		/* css: './style.css', */
+		js: './renderer.js',
 	},
-	namespace: 'BX.Bizproc.Activity',
-	browserslist: true,
 	adjustConfigPhp: false,
+	browserslist: true,
 };

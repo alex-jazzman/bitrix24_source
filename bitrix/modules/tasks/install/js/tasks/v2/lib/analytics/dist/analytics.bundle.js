@@ -140,6 +140,23 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      p5: tasks_v2_const.Analytics.Params.ChecklistCount(options.checklistCount, options.checklistItemsCount)
 	    });
 	  }
+	  sendDeleteTask(params, options) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _sendData)[_sendData]({
+	      event: tasks_v2_const.Analytics.Event.TaskDelete,
+	      type: tasks_v2_const.Analytics.Type.Task,
+	      ...(params.context ? {
+	        c_section: params.context
+	      } : {}),
+	      ...(params.additionalContext ? {
+	        c_sub_section: params.additionalContext
+	      } : {}),
+	      ...(params.element ? {
+	        c_element: params.element
+	      } : {}),
+	      status: tasks_v2_const.Analytics.Status.Success,
+	      p1: tasks_v2_const.Analytics.Params.TaskId(options.taskId)
+	    });
+	  }
 	  sendDescription(params, options) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _sendData)[_sendData]({
 	      event: tasks_v2_const.Analytics.Event.DescriptionTask,
@@ -151,6 +168,38 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      status: tasks_v2_const.Analytics.Status.Success,
 	      p2: tasks_v2_const.Analytics.Params.HasDescription(options.hasDescription),
 	      p3: tasks_v2_const.Analytics.Params.HasScroll(options.hasScroll)
+	    });
+	  }
+	  sendDescriptionEdit(params, options) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _sendData)[_sendData]({
+	      category: tasks_v2_const.Analytics.Category.TaskOperations,
+	      event: tasks_v2_const.Analytics.Event.DescriptionEdit,
+	      type: tasks_v2_const.Analytics.Type.Task,
+	      ...(params.context ? {
+	        c_section: params.context
+	      } : {}),
+	      ...(params.element ? {
+	        c_element: params.element
+	      } : {}),
+	      c_sub_section: tasks_v2_const.Analytics.SubSection.TaskCard,
+	      status: tasks_v2_const.Analytics.Status.Success,
+	      p1: tasks_v2_const.Analytics.Params.TaskId(options.taskId)
+	    });
+	  }
+	  sendDescriptionExpand(params, options) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _sendData)[_sendData]({
+	      category: tasks_v2_const.Analytics.Category.TaskOperations,
+	      event: tasks_v2_const.Analytics.Event.DescriptionExpand,
+	      type: tasks_v2_const.Analytics.Type.Task,
+	      ...(params.context ? {
+	        c_section: params.context
+	      } : {}),
+	      ...(params.element ? {
+	        c_element: params.element
+	      } : {}),
+	      c_sub_section: tasks_v2_const.Analytics.SubSection.TaskCard,
+	      status: tasks_v2_const.Analytics.Status.Success,
+	      p1: tasks_v2_const.Analytics.Params.TaskId(options.taskId)
 	    });
 	  }
 	  sendAddProject(params, options) {

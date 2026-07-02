@@ -1,4 +1,11 @@
-<?if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
+<?php if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
+
+/**
+ * @global CMain $APPLICATION
+ * @var array $arResult
+ * @var array $arParams
+ */
+
 if ($arParams["ALLOW_UPLOAD"] == "N" && empty($arResult['FILES']))
 	return "";
 
@@ -34,8 +41,9 @@ HTML;
 if ($arParams["ALLOW_UPLOAD"] != "N")
 {
 ?>
-<a href="javascript:void(0);" id="file-selectdialogswitcher-<?=$uid?>" class="file-selectdialog-switcher" <?
-	?>onclick="BX.onCustomEvent(this.parentNode, 'BFileDLoadFormController');return false;"><span><?
+<a href="javascript:void(0);" id="file-selectdialogswitcher-<?=$uid?>" class="file-selectdialog-switcher"
+   <?php
+	?>onclick="BX.onCustomEvent(this.parentNode, 'BFileDLoadFormController');return false;"><span><?php
 		?><?=($arParams["ALLOW_UPLOAD"] == "I" ? GetMessage("BFDND_UPLOAD_IMAGES") : GetMessage("BFDND_UPLOAD_FILES"))?></span></a>
 <div id="file-selectdialog-<?=$uid?>" class="file-selectdialog" style="display:none;">
 	<table id="file-file-template" style='display:none;'>
@@ -67,7 +75,7 @@ if ($arParams["ALLOW_UPLOAD"] != "N")
 		<div class="file-placeholder">
 			<table class="files-list" cellspacing="0">
 				<tbody class="file-placeholder-tbody">
-				<?if (is_array($arValue) && sizeof($arValue) > 0)
+				<?php if (is_array($arValue) && sizeof($arValue) > 0)
 				{
 					foreach ($arValue as $arElement)
 					{
@@ -92,7 +100,7 @@ if ($arParams["ALLOW_UPLOAD"] != "N")
 		<div class="file-placeholder">
 			<table class="files-list" cellspacing="0">
 				<tbody class="file-placeholder-tbody">
-					<tr style='display: none;'><td colspan='3'></td></tr><?
+					<tr style='display: none;'><td colspan='3'></td></tr><?php
 					if (is_array($arValue) && sizeof($arValue) > 0)
 					{
 						foreach ($arValue as $arElement)
@@ -134,12 +142,12 @@ if ($arParams["ALLOW_UPLOAD"] != "N")
 			handler(event && event['data'] === 'show' ? 'show' : 'hide');
 		});
 		BX.onCustomEvent(<?=$controller?>, "BFileDLoadFormControllerWasBound", [{id : "<?=$arParams['CONTROL_ID']?>"}]);
-		<?
+		<?php
 		if (sizeof($arValue) >= 1)
 		{
 			?>
 			BX.onCustomEvent(<?=$controller?>.parentNode, "BFileDLoadFormController", ['show']);
-			<?
+		<?php
 		}
 		else
 		{
@@ -149,13 +157,13 @@ if ($arParams["ALLOW_UPLOAD"] != "N")
 				window['bfDisp<?=$uid?>'] = new BlogBFileDialogDispatcher(<?=$controller?>);
 				window['BfileUnbindDispatcher<?=$uid?>'] = function(){ BX.onCustomEvent(<?=$controller?>.parentNode.parentNode, 'UnbindDndDispatcher'); }
 			}
-			<?
+		<?php
 		}
 		?>
 	});
 	</script>
 </div>
-<?
+	<?php
 }
 else if (!empty($arValue))
 {
@@ -166,7 +174,7 @@ else if (!empty($arValue))
 		<div class="file-placeholder">
 			<table class="files-list" cellspacing="0">
 				<tbody class="file-placeholder-tbody">
-					<?if (is_array($arValue) && sizeof($arValue) > 0)
+					<?php if (is_array($arValue) && sizeof($arValue) > 0)
 					{
 						foreach ($arValue as $arElement)
 						{
@@ -199,4 +207,5 @@ else if (!empty($arValue))
 	});
 	</script>
 </div>
-<? } ?>
+<?php
+} ?>

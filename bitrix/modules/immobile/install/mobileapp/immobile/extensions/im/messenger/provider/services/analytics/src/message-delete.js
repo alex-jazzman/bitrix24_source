@@ -18,7 +18,7 @@ jn.define('im/messenger/provider/services/analytics/message-delete', (require, e
 			this.store = serviceLocator.get('core').getStore();
 		}
 
-		sendMessageDeleteActionClicked({ messageId, dialogId })
+		sendMessageDeleteActionClicked({ messageId, dialogId, isNestedSection })
 		{
 			const messageHelper = MessageHelper.createById(messageId);
 			if (Type.isNull(messageHelper))
@@ -36,6 +36,11 @@ jn.define('im/messenger/provider/services/analytics/message-delete', (require, e
 				.setSubSection(Analytics.SubSection.contextMenu)
 				.setP1(AnalyticsHelper.getP1ByDialog(chatData))
 			;
+
+			if (isNestedSection)
+			{
+				analyticsEvent.setElement(Analytics.Element.more);
+			}
 
 			analyticsEvent.send();
 		}

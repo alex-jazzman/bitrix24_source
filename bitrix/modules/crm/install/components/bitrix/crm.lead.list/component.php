@@ -2366,55 +2366,6 @@ if (isset($arResult['LEAD_ID']) && !empty($arResult['LEAD_ID']))
 		}
 
 		$arResult['LEAD'][$iLeadId]['BIZPROC_LIST'] = [];
-
-		if ($isBizProcInstalled && !class_exists(\Bitrix\Bizproc\Controller\Workflow\Starter::class))
-		{
-			foreach ($arBPData as $arBP)
-			{
-				if (!CBPDocument::CanUserOperateDocument(
-					CBPCanUserOperateOperation::StartWorkflow,
-					$userID,
-					array('crm', 'CCrmDocumentLead', 'LEAD_'.$arResult['LEAD'][$iLeadId]['ID']),
-					array(
-						'UserGroups' => $CCrmBizProc->arCurrentUserGroups,
-						'DocumentStates' => $arDocumentStates,
-						'WorkflowTemplateId' => $arBP['ID'],
-						'CreatedBy' => $arResult['LEAD'][$iLeadId]['~ASSIGNED_BY_ID'],
-						'UserIsAdmin' => $isAdmin,
-						'CRMEntityAttr' => $arLeadAttr
-					)
-				))
-				{
-					continue;
-				}
-
-				$arBP['PATH_TO_BIZPROC_START'] = CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_LEAD_SHOW'],
-					array(
-						'lead_id' => $arResult['LEAD'][$iLeadId]['ID']
-					)),
-					array(
-						'workflow_template_id' => $arBP['ID'], 'bizproc_start' => 1,  'sessid' => $arResult['SESSION_ID'],
-						'CRM_LEAD_SHOW_V12_active_tab' => 'tab_bizproc', 'back_url' => $arParams['PATH_TO_LEAD_LIST'])
-				);
-
-				if (isset($arBP['HAS_PARAMETERS']))
-				{
-					$params = \Bitrix\Main\Web\Json::encode(array(
-						'moduleId' => 'crm',
-						'entity' => 'CCrmDocumentLead',
-						'documentType' => 'LEAD',
-						'documentId' => 'LEAD_'.$arResult['LEAD'][$iLeadId]['ID'],
-						'templateId' => $arBP['ID'],
-						'templateName' => $arBP['NAME'],
-						'hasParameters' => $arBP['HAS_PARAMETERS']
-					));
-					$arBP['ONCLICK'] = 'BX.Bizproc.Starter.singleStart('.$params
-						.', function(){BX.Main.gridManager.reload(\''.CUtil::JSEscape($arResult['GRID_ID']).'\');});';
-				}
-
-				$arResult['LEAD'][$iLeadId]['BIZPROC_LIST'][] = $arBP;
-			}
-		}
 	}
 
 	$entityBadges = new Bitrix\Crm\Kanban\EntityBadge(CCrmOwnerType::Lead, $arResult['LEAD_ID']);

@@ -12,18 +12,26 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 		EventType,
 		Analytics,
 		DialogType,
-		OpenDialogContextType,
-		ComponentCode,
 		CopilotRoleType,
+		ROOT_PARENT_CHAT_ID,
 	} = require('im/messenger/const');
+	const {
+		MenuVisibility,
+		getVisibleMenuItemsCount,
+	} = require('im/messenger/controller/dialog-creator/menu-visibility');
 	const { NavigationSelectorView } = require('im/messenger/controller/dialog-creator/navigation-selector/view');
 	const { CreateChannel, CreateGroupChat } = require('im/messenger/controller/chat-composer');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { ChatService } = require('im/messenger/provider/services/chat');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 	const { isModuleInstalled } = require('module');
+	const { FolderCreate } = require('im/messenger/controller/folder/create');
 
 	const CREATE_COPILOT_DEBOUNCE_DELAY = 1000;
+	const COMPACT_MODE_MENU_THRESHOLD = 4;
+	const COMPACT_BACKDROP_PERCENT = 65;
+	const DEFAULT_BACKDROP_PERCENT = 85;
 
 	class NavigationSelector
 	{
@@ -38,13 +46,27 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 			widget.show();
 		}
 
+		static isCompactMode()
+		{
+			// the first folder may contain no chats with users, and the recent list will be empty
+			if (MenuVisibility.canCreateFolder())
+			{
+				return true;
+			}
+
+			// there is no room to scroll the recent list when there are a lot of items
+			return getVisibleMenuItemsCount() > COMPACT_MODE_MENU_THRESHOLD;
+		}
+
 		constructor({ userList, parentLayout })
 		{
 			this.userList = userList || [];
 			this.layout = parentLayout || null;
+			this.compactMode = NavigationSelector.isCompactMode();
 
 			this.view = new NavigationSelectorView({
 				userList,
+				hideRecentBlock: this.compactMode,
 				onClose: () => {
 					this.layout.close();
 				},
@@ -55,20 +77,26 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 				onCreateChannel: () => {
 					this.sendAnalyticsStartCreate(Analytics.Category.channel, Analytics.Type.channel);
 
+					this.expandLayoutForSubScreen();
+
 					const createChannel = new CreateChannel();
 					createChannel.open({}, this.layout);
 				},
 				onCreatePrivateChat: () => {
 					this.sendAnalyticsStartCreate(Analytics.Category.chat, Analytics.Type.chat);
 
-					const createGroupChat = new CreateGroupChat();
-					createGroupChat.open({}, this.layout).catch((error) => {
+					this.expandLayoutForSubScreen();
+
+					const createGroupChat = new CreateGroupChat(ROOT_PARENT_CHAT_ID);
+					createGroupChat.open({ showLeftButtons: true }, this.layout).catch((error) => {
 						console.error(error);
 					});
 				},
 				onCreateCollab: async () => {
 					try
 					{
+						this.expandLayoutForSubScreen();
+
 						const { openCollabCreate } = await requireLazy('collab/create');
 
 						this.sendAnalyticsStartCreate(Analytics.Category.collab, Analytics.Type.collab);
@@ -81,38 +109,29 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 						console.error(error);
 					}
 				},
-				onCreateCopilot: debounce(async () => {
-					try
-					{
-						this.sendAnalyticsStartCreate(
-							Analytics.Category.copilot,
-							Analytics.Type.copilot,
-							Analytics.Section.chatTab,
-						);
+				onCreateFolder: () => {
+					new FolderCreate().open(this.layout);
+				},
+				onCreateCopilot: debounce(() => {
+					this.sendAnalyticsStartCreate(
+						Analytics.Category.copilot,
+						Analytics.Type.copilot,
+						Analytics.Section.chatTab,
+					);
 
-						const fields = {
-							type: DialogType.copilot.toUpperCase(),
-							copilotMainRole: CopilotRoleType.copilotUniversalRole,
-						};
+					const fields = {
+						type: DialogType.copilot.toUpperCase(),
+						copilotMainRole: CopilotRoleType.copilotUniversalRole,
+					};
 
-						const chatService = new ChatService();
-						const newChatWithCopilot = await chatService.createCopilot(fields);
-						const chatId = newChatWithCopilot.chatId;
+					void serviceLocator.get('dialog-manager').openOptimisticDialog({
+						chatType: DialogType.copilot,
+						dataLoader: () => {
+							const chatService = new ChatService();
 
-						MessengerEmitter.emit(
-							EventType.messenger.openDialog,
-							{
-								dialogId: `chat${chatId}`,
-								context: OpenDialogContextType.chatCreation,
-								chatType: DialogType.copilot,
-							},
-							ComponentCode.imMessenger,
-						);
-					}
-					catch (error)
-					{
-						console.error(error);
-					}
+							return chatService.createCopilot(fields);
+						},
+					});
 				}, CREATE_COPILOT_DEBOUNCE_DELAY, this, true),
 				onClickInviteButton: async () => {
 					if (isModuleInstalled('intranet'))
@@ -135,7 +154,7 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 				modal: true,
 				backgroundColor: Theme.colors.bgContentPrimary,
 				backdrop: {
-					mediumPositionPercent: 85,
+					mediumPositionPercent: this.compactMode ? COMPACT_BACKDROP_PERCENT : DEFAULT_BACKDROP_PERCENT,
 					horizontalSwipeAllowed: false,
 					// onlyMediumPosition: true,
 				},
@@ -180,6 +199,19 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 			AnalyticsService.getInstance()
 				.sendStartCreation({ category, type, section })
 			;
+		}
+
+		expandLayoutForSubScreen()
+		{
+			if (!this.compactMode)
+			{
+				return;
+			}
+
+			const expandedHeight = Math.round(device.screen.height * (DEFAULT_BACKDROP_PERCENT / 100));
+
+			this.layout?.setBottomSheetParams?.({ mediumPositionHeight: expandedHeight });
+			this.layout?.setBottomSheetHeight?.(expandedHeight);
 		}
 	}
 

@@ -792,6 +792,34 @@ $arResult = array_merge(
 	$arResult
 );
 
+// Security check: verify post ownership to prevent IDOR vulnerability
+// This prevents access to other users' posts by manipulating user_id in URL
+if (
+	!empty($arResult["VARIABLES"]["post_id"])
+	&& (int)$arResult["VARIABLES"]["post_id"] > 0
+	&& !empty($arResult["VARIABLES"]["user_id"])
+	&& (int)$arResult["VARIABLES"]["user_id"] > 0
+	&& CModule::IncludeModule("blog")
+)
+{
+	$arPost = \CBlogPost::GetByID($arResult["VARIABLES"]["post_id"]);
+	if ($arPost)
+	{
+		$postBlog = \CBlog::getByID($arPost['BLOG_ID']);
+		if (
+			!$postBlog
+			|| (
+				(int)$postBlog['OWNER_ID'] !== (int)$arResult["VARIABLES"]["user_id"]
+				&& (int)$arPost['AUTHOR_ID'] !== (int)$arResult["VARIABLES"]["user_id"]
+			)
+		)
+		{
+			// Post doesn't belong to specified user, remove post_id to prevent unauthorized access
+			unset($arResult["VARIABLES"]["post_id"]);
+		}
+	}
+}
+
 // set options for tooltip
 $tooltipPathToUser = COption::GetOptionString("main", "TOOLTIP_PATH_TO_USER", false, SITE_ID);
 if (!$tooltipPathToUser)
@@ -1370,8 +1398,13 @@ if (
 	}
 
 	if (
-		$this->request->get('IFRAME_TYPE') !== 'SIDE_SLIDER'
-		&& !CSocNetUser::CanProfileView($USER->getId(), (int)$arResult['VARIABLES']['user_id'], SITE_ID, $arContext))
+		!CSocNetUser::CanProfileView(
+			$USER->getId(),
+			(int)$arResult['VARIABLES']['user_id'],
+			SITE_ID,
+			$arContext
+		)
+	)
 	{
 		$bAccessFound = false;
 		if ($componentPage === 'user_blog_post')

@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Location = this.BX.Location || {};
 (function (exports,main_core,main_md5,location_core,main_core_events) {
@@ -2088,7 +2089,6 @@ this.BX.Location = this.BX.Location || {};
 	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$d(obj, privateSet); privateSet.add(obj); }
 	function _checkPrivateRedeclaration$d(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-	var _convertCollection = /*#__PURE__*/new WeakSet();
 	var _convertLocation = /*#__PURE__*/new WeakSet();
 	var LocationRepository = /*#__PURE__*/function (_BaseRepository) {
 	  babelHelpers.inherits(LocationRepository, _BaseRepository);
@@ -2099,20 +2099,9 @@ this.BX.Location = this.BX.Location || {};
 	    props.path = props.path || 'location.api.location';
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(LocationRepository).call(this, props));
 	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _convertLocation);
-	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _convertCollection);
 	    return _this;
 	  }
 	  babelHelpers.createClass(LocationRepository, [{
-	    key: "findParents",
-	    value: function findParents(location) {
-	      if (!(location instanceof Location)) {
-	        throw new TypeError('location must be type of Location');
-	      }
-	      return this.actionRunner.run('findParents', {
-	        location: LocationObjectConverter.convertLocationToObject(location)
-	      }).then(this.processResponse.bind(this)).then(_classPrivateMethodGet$1(this, _convertCollection, _convertCollection2).bind(this));
-	    }
-	  }, {
 	    key: "findByExternalId",
 	    value: function findByExternalId(externalId, sourceCode, languageId) {
 	      if (!externalId || !sourceCode || !languageId) {
@@ -2138,17 +2127,6 @@ this.BX.Location = this.BX.Location || {};
 	  }]);
 	  return LocationRepository;
 	}(BaseRepository);
-	function _convertCollection2(collectionJsonData) {
-	  var _this2 = this;
-	  if (!Array.isArray(collectionJsonData)) {
-	    throw new Error('Can\'t convert location collection data');
-	  }
-	  var result = [];
-	  collectionJsonData.forEach(function (location) {
-	    result.push(_classPrivateMethodGet$1(_this2, _convertLocation, _convertLocation2).call(_this2, location));
-	  });
-	  return result;
-	}
 	function _convertLocation2(locationData) {
 	  if (!locationData) {
 	    return null;
@@ -2787,6 +2765,233 @@ this.BX.Location = this.BX.Location || {};
 	  return DistanceCalculator;
 	}();
 
+	var CheckInMapEventType = {
+	  MAP_LOADED: 'mapLoaded',
+	  PAGE_WITH_MAP_LOADED: 'pageWithMapLoaded',
+	  MARKER_CLICKED: 'markerClicked',
+	  CLUSTER_CLICKED: 'clusterClicked'
+	};
+
+	var CheckInMapCommandType = {
+	  INIT_MAP: 'initMap',
+	  ADD_MARKERS: 'addMarkers',
+	  REMOVE_MARKERS: 'removeMarkers',
+	  CLEAR_MARKERS: 'clearMarkers',
+	  ADD_LAYERS: 'addLayers',
+	  REMOVE_LAYERS: 'removeLayers',
+	  CLEAR_LAYERS: 'clearLayers',
+	  FIT_BOUNDS: 'fitBounds',
+	  SET_ZOOM: 'setZoom',
+	  ZOOM_IN: 'zoomIn',
+	  ZOOM_OUT: 'zoomOut',
+	  FIT_TO_LAYERS: 'fitToLayers',
+	  ENABLE_CLUSTERING: 'enableClustering',
+	  DISABLE_CLUSTERING: 'disableClustering',
+	  UPDATE_CLUSTER_ICON: 'updateClusterIcon',
+	  UPDATE_SETTINGS: 'updateSettings'
+	};
+
+	/**
+	 * Base abstract class for map services.
+	 * All methods must be implemented in derived classes.
+	 */
+	var CheckInMapServiceBase = /*#__PURE__*/function () {
+	  function CheckInMapServiceBase() {
+	    babelHelpers.classCallCheck(this, CheckInMapServiceBase);
+	  }
+	  babelHelpers.createClass(CheckInMapServiceBase, [{
+	    key: "init",
+	    /**
+	     * Initialize the map with provided props.
+	     * @param {Object} props - Initialization properties
+	     * @param {String} [props.containerId] - Map container selector
+	     * @param {Array} [props.mapCenter] - Initial map center coordinates [lat, lng]
+	     * @param {Number} [props.mapZoom] - Initial zoom level
+	     * @param {String} [props.zoomControlPosition] - Position of zoom control
+	     * @param {Array} [props.fitBoundsPadding] - Default padding for fitBounds
+	     * @param {Number} [props.fitBoundsMaxZoom] - Default max zoom for fitBounds
+	     */
+	    value: function init(props) {
+	      throw new Error('Must be implemented');
+	    }
+	    /**
+	     * Destroy the map instance and clean up resources.
+	     * Removes all markers, layers, and the map instance itself.
+	     */
+	  }, {
+	    key: "destroy",
+	    value: function destroy() {
+	      throw new Error('Must be implemented');
+	    }
+	    /**
+	     * Add multiple markers to the map at once.
+	     * @param {Array<Object>} markers - Array of marker objects
+	     * @param {String|Number} markers[].id - Unique marker identifier
+	     * @param {Object} markers[].config - Marker configuration
+	     * @param {Array} markers[].config.coords - Marker coordinates [lat, lng]
+	     * @param {Object} markers[].config.icon - Icon configuration
+	     * @param {String} markers[].config.icon.html - HTML content for icon
+	     * @param {String} markers[].config.icon.className - CSS class for icon
+	     * @param {Array} markers[].config.icon.iconSize - Icon size [width, height]
+	     * @param {Array} markers[].config.icon.iconAnchor - Icon anchor point [x, y]
+	     */
+	  }, {
+	    key: "addMarkers",
+	    value: function addMarkers(markers) {
+	      throw new Error('Must be implemented');
+	    }
+	    /**
+	     * Remove markers from the map by their identifiers.
+	     * @param {Array<String|Number>} ids - Array of marker identifiers to remove
+	     */
+	  }, {
+	    key: "removeMarkers",
+	    value: function removeMarkers(ids) {
+	      throw new Error('Must be implemented');
+	    }
+	    /**
+	     * Remove all markers from the map.
+	     */
+	  }, {
+	    key: "clearMarkers",
+	    value: function clearMarkers() {
+	      throw new Error('Must be implemented');
+	    }
+	    /**
+	     * Add multiple layers to the map at once.
+	     * @param {Array<Object>} layers - Array of layer objects
+	     * @param {String|Number} layers[].id - Unique layer identifier
+	     * @param {Object} layers[].config - Layer configuration
+	     * @param {String} layers[].config.type - Layer type: 'polyline', 'polygon', or 'circle'
+	     * @param {Array<Array>} layers[].config.points - Array of coordinate points [[lat, lng], ...]
+	     * @param {Object} layers[].config.options - Layer styling options
+	     * @param {String} [layers[].config.options.color] - Line/fill color
+	     * @param {Number} [layers[].config.options.weight] - Line weight
+	     * @param {Number} [layers[].config.options.opacity] - Opacity (0-1)
+	     * @param {String} [layers[].config.options.dashArray] - Dash pattern for lines
+	     */
+	  }, {
+	    key: "addLayers",
+	    value: function addLayers(layers) {
+	      throw new Error('Must be implemented');
+	    }
+	    /**
+	     * Remove layers from the map by their identifiers.
+	     * @param {Array<String|Number>} ids - Array of layer identifiers to remove
+	     */
+	  }, {
+	    key: "removeLayers",
+	    value: function removeLayers(ids) {
+	      throw new Error('Must be implemented');
+	    }
+	    /**
+	     * Remove all layers from the map.
+	     */
+	  }, {
+	    key: "clearLayers",
+	    value: function clearLayers() {
+	      throw new Error('Must be implemented');
+	    }
+	    /**
+	     * Fit map view to contain all provided bounds.
+	     * @param {Array<Array>} bounds - Array of coordinate points [[lat, lng], ...]
+	     * @param {Object} [options={}] - Fit bounds options
+	     * @param {Array} [options.padding] - Padding around bounds [top/bottom, left/right]
+	     * @param {Number} [options.maxZoom] - Maximum zoom level to use
+	     */
+	  }, {
+	    key: "fitBounds",
+	    value: function fitBounds(bounds) {
+	      throw new Error('Must be implemented');
+	    }
+	    /**
+	     * Set the map zoom level.
+	     * @param {Number} zoom - Zoom level to set
+	     */
+	  }, {
+	    key: "setZoom",
+	    value: function setZoom(zoom) {
+	      throw new Error('Must be implemented');
+	    }
+	    /**
+	     * Increase map zoom by one level.
+	     */
+	  }, {
+	    key: "zoomIn",
+	    value: function zoomIn() {
+	      throw new Error('Must be implemented');
+	    }
+	    /**
+	     * Decrease map zoom by one level.
+	     */
+	  }, {
+	    key: "zoomOut",
+	    value: function zoomOut() {
+	      throw new Error('Must be implemented');
+	    }
+	    /**
+	     * Fit map view to contain all currently added layers.
+	     * @param {Number|null} [maxZoom=null] - Maximum zoom level to use
+	     */
+	  }, {
+	    key: "fitToLayers",
+	    value: function fitToLayers() {
+	      throw new Error('Must be implemented');
+	    }
+	    /**
+	     * Enable automatic marker clustering based on zoom level and pixel distance.
+	     * @param {Object} [options={}]
+	     * @param {Number} [options.maxClusterRadius=80] - Pixel radius for grouping markers into a cluster
+	     * @param {Function} [options.clusterIconFactory] - Custom factory: (count) => { html, className, iconSize, iconAnchor }
+	     */
+	  }, {
+	    key: "enableClustering",
+	    value: function enableClustering() {
+	      throw new Error('Must be implemented');
+	    }
+	    /**
+	     * Disable marker clustering and restore individual markers.
+	     */
+	  }, {
+	    key: "disableClustering",
+	    value: function disableClustering() {
+	      throw new Error('Must be implemented');
+	    }
+	    /**
+	     * Get the stored config for a marker by its ID.
+	     * @param {String|Number} id - Marker identifier
+	     * @returns {Object|null}
+	     */
+	  }, {
+	    key: "getMarkerConfig",
+	    value: function getMarkerConfig(id) {
+	      throw new Error('Must be implemented');
+	    }
+	    /**
+	     * Update the icon of a cluster identified by its member marker IDs.
+	     * @param {Array<String|Number>} markerIds - IDs of the markers in the cluster
+	     * @param {Object} iconConfig - Icon configuration { html, className, iconSize, iconAnchor }
+	     */
+	  }, {
+	    key: "setClusterIcon",
+	    value: function setClusterIcon(markerIds, iconConfig) {
+	      throw new Error('Must be implemented');
+	    }
+	    /**
+	     * Update map settings after initialization.
+	     * @param {Object} props
+	     * @param {Array<Number>} [props.fitBoundsPadding] - [vertical, horizontal] or [top, right, bottom, left]
+	     * @param {Number} [props.fitBoundsMaxZoom] - Range: 0..22
+	     */
+	  }, {
+	    key: "updateSettings",
+	    value: function updateSettings(props) {
+	      throw new Error('Must be implemented');
+	    }
+	  }]);
+	  return CheckInMapServiceBase;
+	}();
+
 	exports.Location = Location;
 	exports.Address = Address;
 	exports.Format = Format;
@@ -2815,6 +3020,9 @@ this.BX.Location = this.BX.Location || {};
 	exports.Storage = Storage;
 	exports.Point = Point;
 	exports.DistanceCalculator = DistanceCalculator;
+	exports.CheckInMapServiceBase = CheckInMapServiceBase;
+	exports.CheckInMapEventType = CheckInMapEventType;
+	exports.CheckinMapCommandType = CheckInMapCommandType;
 
 }((this.BX.Location.Core = this.BX.Location.Core || {}),BX,BX,BX.Location.Core,BX.Event));
 //# sourceMappingURL=core.bundle.js.map

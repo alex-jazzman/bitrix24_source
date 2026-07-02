@@ -408,6 +408,26 @@ export class SecurityPage extends BaseSettingsPage
 			SecurityPage.addToSectionHelper(webhookCreateOwnSelector, settingsSection);
 		}
 
+		if (this.hasValue('selectorLocalAppCreate'))
+		{
+			const localAppCreateSelector = FieldFactory.createUserSelector({
+				...this.getValue('selectorLocalAppCreate'),
+				enableDepartments: true,
+			});
+
+			SecurityPage.addToSectionHelper(localAppCreateSelector, settingsSection);
+		}
+
+		if (this.hasValue('selectorPersonalAppCreate'))
+		{
+			const personalAppCreateSelector = FieldFactory.createUserSelector({
+				...this.getValue('selectorPersonalAppCreate'),
+				enableDepartments: true,
+			});
+
+			SecurityPage.addToSectionHelper(personalAppCreateSelector, settingsSection);
+		}
+
 		return settingsSection;
 	}
 
@@ -501,11 +521,35 @@ export class SecurityPage extends BaseSettingsPage
 		return section;
 	}
 
-	#getEmptyUserSelectorRow(fieldNumber): SettingsRow
+	#decodeIpAccessUserSelectorValue(value: string): {type: ?string, id: ?string}
 	{
-		const userSelector = new UserSelector({
-			inputName: `SECURITY_IP_ACCESS_${fieldNumber}_USERS[]`,
-			label: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_SELECT_USER_ACCESS_IP'),
+		if (value === 'AU' || value === 'UA')
+		{
+			return {
+				type: 'AU',
+				id: '',
+			};
+		}
+
+		const arr = value.match(/^(U|DR|D)(\d+)/);
+
+		if (!Type.isArray(arr))
+		{
+			return {
+				type: null,
+				id: null,
+			};
+		}
+
+		return {
+			type: arr[1],
+			id: arr[2],
+		};
+	}
+
+	#createIpAccessUserSelector(params): UserSelector
+	{
+		return new UserSelector({
 			enableDepartments: true,
 			encodeValue: (value) => {
 				if (!Type.isNil(value.id))
@@ -515,6 +559,16 @@ export class SecurityPage extends BaseSettingsPage
 
 				return null;
 			},
+			decodeValue: this.#decodeIpAccessUserSelectorValue,
+			...params,
+		});
+	}
+
+	#getEmptyUserSelectorRow(fieldNumber): SettingsRow
+	{
+		const userSelector = this.#createIpAccessUserSelector({
+			inputName: `SECURITY_IP_ACCESS_${fieldNumber}_USERS[]`,
+			label: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_SELECT_USER_ACCESS_IP'),
 			isEnable: this.getValue('IP_ACCESS_RIGHTS_ENABLED'),
 			helpMessageProvider: this.helpMessageProviderFactory(Loc.getMessage('INTRANET_SETTINGS_FIELD_HELP_MESSAGE_PRO')),
 		});
@@ -541,11 +595,10 @@ export class SecurityPage extends BaseSettingsPage
 
 	#getUserSelectorRow(ipUsersList): SettingsRow
 	{
-		const userSelector = FieldFactory.createUserSelector({
+		const userSelector = this.#createIpAccessUserSelector({
 			inputName: `SECURITY_IP_ACCESS_${ipUsersList.fieldNumber}_USERS[]`,
 			label: this.getValue('IP_ACCESS_RIGHTS_ENABLED_LABEL') ?? Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_SELECT_USER_ACCESS_IP'),
 			values: Object.values(ipUsersList.users),
-			enableDepartments: true,
 		});
 
 		return new SettingsField({

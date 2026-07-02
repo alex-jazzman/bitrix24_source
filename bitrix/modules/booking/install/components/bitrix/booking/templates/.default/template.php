@@ -20,7 +20,7 @@ $APPLICATION->SetTitle(Loc::getMessage('BOOKING_BOOKING_TITLE'));
 
 $bodyClass = $APPLICATION->getPageProperty('BodyClass') || '';
 $bodyClasses = explode(' ', $bodyClass);
-$additionalBodyClasses = ['no-footer'];
+$additionalBodyClasses = ['no-footer', 'booking-page'];
 
 if ($arResult['IS_SLIDER'])
 {
@@ -41,7 +41,7 @@ $toolbar = new Toolbar(
 $toolbar->build();
 
 Extension::load('booking.core');
-Extension::load('booking.booking');
+Extension::load('booking.application.booking');
 
 if (!$arResult['IS_SLIDER'] && !empty($arResult['MENU_ITEMS']))
 {
@@ -73,7 +73,9 @@ if (!$arResult['IS_SLIDER'] && !empty($arResult['MENU_ITEMS']))
 		const features = <?= Json::encode($arResult['features']) ?>;
 		const canTurnOnTrial = <?= $arResult['canTurnOnTrial'] ? 'true' : 'false'?>;
 		const canTurnOnDemo = <?= $arResult['canTurnOnDemo'] ? 'true' : 'false'?>;
+		const isMultidayFeatureAvailable = <?= $arResult['isMultidayFeatureAvailable'] ? 'true' : 'false'?>;
 		const timezone = '<?= $arResult['timezone'] ?>' || Intl.DateTimeFormat().resolvedOptions().timeZone;
+		const firstWeekDay = <?= (int)$arResult['firstWeekDay'] ?>;
 		const filterId = '<?= $arResult['FILTER_ID'] ?>';
 		const editingBookingId = <?= (int)$arResult['editingBookingId'] ?>;
 		const editingWaitListItemId = <?= (int)$arResult['editingWaitListItemId'] ?>;
@@ -84,8 +86,9 @@ if (!$arResult['IS_SLIDER'] && !empty($arResult['MENU_ITEMS']))
 		const embedItems = <?= Json::encode($arResult['embedItems']) ?>;
 		const isCalendarExpanded = <?= $arResult['isCalendarExpanded'] ? 'true' : 'false'?>;
 		const isWaitListExpanded = <?= $arResult['isWaitListExpanded'] ? 'true' : 'false'?>;
+		const gridMode = <?= Json::encode($arResult['gridMode']) ?>;
 
-		new BX.Booking.Booking({
+		new BX.Booking.Application.Booking({
 			container,
 			afterTitleContainer,
 			counterPanelContainer,
@@ -96,7 +99,9 @@ if (!$arResult['IS_SLIDER'] && !empty($arResult['MENU_ITEMS']))
 			features,
 			canTurnOnTrial,
 			canTurnOnDemo,
+			isMultidayFeatureAvailable,
 			timezone,
+			firstWeekDay,
 			filterId,
 			editingBookingId,
 			editingWaitListItemId,
@@ -107,6 +112,7 @@ if (!$arResult['IS_SLIDER'] && !empty($arResult['MENU_ITEMS']))
 			embedItems,
 			isCalendarExpanded,
 			isWaitListExpanded,
+			gridMode,
 		});
 	});
 </script>

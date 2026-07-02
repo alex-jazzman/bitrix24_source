@@ -36,7 +36,7 @@
 		test('should handle empty props gracefully', () => {
 			expect(() => {
 				FormatterFactory.create(FormatterTypes.HUMAN_DATE, null);
-				FormatterFactory.create(FormatterTypes.DEFAULT, undefined);
+				FormatterFactory.create(FormatterTypes.DEFAULT);
 			}).not.toThrow();
 		});
 

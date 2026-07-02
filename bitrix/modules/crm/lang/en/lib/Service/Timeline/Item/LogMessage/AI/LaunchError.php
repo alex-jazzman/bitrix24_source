@@ -4,6 +4,7 @@ $MESS["CRM_TIMELINE_LOG_LAUNCH_ERROR_TAG"] = "Error";
 $MESS["CRM_TIMELINE_LOG_LAUNCH_ERROR_THIRDPARTY_TAG"] = "AI error";
 $MESS["CRM_TIMELINE_LOG_LAUNCH_ERROR_THIRDPARTY_TAG_TOOLTIP"] = "Please try again, or select a different AI provider in Bitrix24 settings";
 $MESS["CRM_TIMELINE_LOG_LAUNCH_ERROR_TITLE"] = "Error transcribing phone call";
+$MESS["CRM_TIMELINE_LOG_LAUNCH_ERROR_TITLE_ANALYZE_COMMUNICATION"] = "Could not analyze customer call.";
 $MESS["CRM_TIMELINE_LOG_LAUNCH_ERROR_TITLE_FILL_FIELDS"] = "Could not complete deal fields";
 $MESS["CRM_TIMELINE_LOG_LAUNCH_ERROR_TITLE_REPEAT_SALE"] = "Could not create recommendations";
 $MESS["CRM_TIMELINE_LOG_LAUNCH_ERROR_TITLE_SCORE_CALl"] = "Could not assess phone call";

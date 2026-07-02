@@ -34,6 +34,11 @@ export const BaseField = {
 			required: false,
 			default: false,
 		},
+		isReadonly: {
+			type: Boolean,
+			required: false,
+			default: false,
+		},
 		hintText: {
 			type: String,
 			required: false,

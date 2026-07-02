@@ -62,10 +62,13 @@ export const AlternativeMethods = {
 		},
 	},
 	template: `
-		<div class="intranet-island-otp-push-alternative__wrapper">
+	
 			<div @click="showPushOtp" class="intranet-back-button">
-				<i class="ui-icon-set --arrow-left-l intranet-back-button__arrow --alternative"></i>
+				<i class="ui-icon-set --arrow-left-l intranet-back-button__arrow"></i>
 			</div>
+
+		<div class="intranet-island-otp-push-alternative__wrapper">
+			
 			<Headline size='lg' class="intranet-form-title --padding">
 				{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_ALTERNATIVE_WAY_TITLE') }}
 			</Headline>

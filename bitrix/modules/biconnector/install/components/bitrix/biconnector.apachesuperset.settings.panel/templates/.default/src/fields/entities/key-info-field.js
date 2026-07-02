@@ -1,7 +1,7 @@
 /* eslint-disable no-underscore-dangle,@bitrix24/bitrix24-rules/no-pseudo-private */
 import { Text, Tag, Dom, Event, Type, Loc, ajax } from 'main.core';
 import { Button, ButtonSize, ButtonColor } from 'ui.buttons';
-import { UI } from 'ui.notification';
+import 'ui.notification';
 import 'ui.forms';
 import 'ui.buttons';
 
@@ -133,7 +133,7 @@ export class KeyInfoField extends BX.UI.EntityEditorCustom
 
 		BX.clipboard.copy(this.getValue());
 
-		UI.Notification.Center.notify({
+		BX.UI.Notification.Center.notify({
 			content: Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_COMMON_KEY_COPIED'),
 			autoHideDelay: 2000,
 		});
@@ -155,14 +155,14 @@ export class KeyInfoField extends BX.UI.EntityEditorCustom
 					if (Type.isStringFilled(generatedKey))
 					{
 						this.keyInput.value = Text.encode(generatedKey);
-						UI.Notification.Center.notify({
+						BX.UI.Notification.Center.notify({
 							content: Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_KEY_UPDATE_SUCCESS'),
 							autoHideDelay: 2000,
 						});
 					}
 					else
 					{
-						UI.Notification.Center.notify({
+						BX.UI.Notification.Center.notify({
 							content: Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_KEY_UPDATE_FAILED'),
 							autoHideDelay: 2000,
 						});

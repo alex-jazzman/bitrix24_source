@@ -1,7 +1,7 @@
 import { Core } from 'im.v2.application.core';
 import { Logger } from 'im.v2.lib.logger';
 
-import { UpdateCollabEntityCounterParams, UpdateCollabGuestCountParams } from '../../types/collab';
+import { type UpdateCollabEntityCounterParams, type UpdateCollabGuestCountParams } from '../../types/collab';
 
 export class CollabPullHandler
 {

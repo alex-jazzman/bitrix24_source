@@ -9,8 +9,8 @@ return [
 	'css' => 'dist/button.bundle.css',
 	'js' => 'dist/button.bundle.js',
 	'rel' => [
-		'ui.buttons',
 		'main.core',
+		'ui.buttons',
 	],
 	'skip_core' => false,
 ];

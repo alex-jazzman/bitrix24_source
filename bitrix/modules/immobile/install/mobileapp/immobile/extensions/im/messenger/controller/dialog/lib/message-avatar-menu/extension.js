@@ -16,6 +16,8 @@ jn.define('im/messenger/controller/dialog/lib/message-avatar-menu', (require, ex
 	const { Logger } = require('im/messenger/lib/logger');
 	const { ContextMenu } = require('layout/ui/context-menu');
 
+	const TITLE_TYPE_SECTION = 'section';
+
 	/**
 	 * @class MessageAvatarMenu
 	 */
@@ -32,8 +34,14 @@ jn.define('im/messenger/controller/dialog/lib/message-avatar-menu', (require, ex
 			this.options = options;
 			this.store = serviceLocator.get('core').getStore();
 
+			const user = this.store.getters['usersModel/getById'](this.authorId);
+
 			this.menu = new ContextMenu({
 				actions: this.createActions(),
+				params: {
+					title: user?.name || '',
+					titleType: TITLE_TYPE_SECTION,
+				},
 			});
 
 			Logger.log('MessageAvatarMenu: created for authorId: ', this.authorId);

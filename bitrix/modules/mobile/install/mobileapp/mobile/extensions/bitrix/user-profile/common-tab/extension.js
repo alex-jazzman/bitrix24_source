@@ -2,6 +2,7 @@
  * @module user-profile/common-tab
  */
 jn.define('user-profile/common-tab', (require, exports, module) => {
+	const { Feature } = require('feature');
 	const { Box } = require('ui-system/layout/box');
 	const { BoxFooter } = require('ui-system/layout/dialog-footer');
 	const { AreaList } = require('ui-system/layout/area-list');
@@ -228,7 +229,7 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 					scrollProps: {
 						ref: this.bindScrollViewRef,
 						style: {
-							backgroundColor: Color.bgContentSecondary.toHex(),
+							backgroundColor: Color.bgContentSecondary.toHex(Feature.canUseWidgetBackground() ? 0 : 1),
 						},
 					},
 					footer: isEditMode && BoxFooter(
@@ -276,7 +277,7 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 					{
 						testId: this.getTestId('area-list'),
 						style: {
-							backgroundColor: Color.bgContentSecondary.toHex(),
+							backgroundColor: Color.bgContentSecondary.toHex(Feature.canUseWidgetBackground() ? 0 : 1),
 							opacity: this.contentOpacity,
 						},
 						withScroll: false,

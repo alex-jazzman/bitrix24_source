@@ -1,6 +1,7 @@
 import { ajax, Loc, Reflection, Type } from 'main.core';
 import { showNotify } from '../common/utilites';
 import { Base } from './base';
+import 'ui.info-helper';
 
 export class RuWhatsApp extends Base
 {

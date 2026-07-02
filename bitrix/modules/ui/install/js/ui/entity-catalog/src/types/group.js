@@ -1,4 +1,4 @@
-import {ItemData} from './item';
+import { type ItemData} from './item';
 
 export type GroupData = {
 	id: GroupId,

@@ -12,6 +12,7 @@ use Bitrix\BIConnector\Access\Permission\PermissionDictionary;
 use Bitrix\BIConnector\Access\Service\DashboardGroupService;
 use Bitrix\BIConnector\Access\Service\RolePermissionService;
 use Bitrix\BIConnector\Analytics\AnalyticsManager;
+use Bitrix\BIConnector\Internal\Integration\Im\DashboardDiscussionChatAccessSyncScheduler;
 use Bitrix\BIConnector\Superset\ActionFilter\BIConstructorAccess;
 use Bitrix\Bitrix24\Feature;
 use Bitrix\Main\Loader;
@@ -101,8 +102,11 @@ class ApacheSupersetConfigPermissionsAjaxController extends \Bitrix\Main\Engine\
 			return null;
 		}
 
-		AnalyticsManager::sendSavePermissionsAnalytics(AnalyticsManager::GROUP_PERMISSION_SECTION);
 		PermissionDictionary::clearDashboardGroupPermissions();
+
+		(new DashboardDiscussionChatAccessSyncScheduler())->scheduleAll();
+
+		AnalyticsManager::sendSavePermissionsAnalytics(AnalyticsManager::GROUP_PERMISSION_SECTION);
 
 		return $this->loadData();
 	}

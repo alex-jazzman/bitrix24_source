@@ -35,6 +35,7 @@ foreach ($arResult['templates'] as $template)
 		'id' => (int)$template['ID'],
 		'name' => (string)$template['NAME'],
 		'description' => (string)$template['DESCRIPTION'],
+		'documentType' => $template['DOCUMENT_TYPE'] ?? [],
 		'parameters' => (
 			is_array($template['PARAMETERS'] ?? null)
 				? FieldType::normalizePropertyList($template['PARAMETERS'])
@@ -43,11 +44,30 @@ foreach ($arResult['templates'] as $template)
 	];
 }
 
+$documents = [];
+foreach (($arResult['documents'] ?? []) as $document)
+{
+	$documents[] = [
+		'documentType' => $document['documentType'] ?? [],
+		'documentId' => $document['documentId'] ?? null,
+	];
+}
+
+$hasSingleDocument = count($documents) === 1;
+$singleDocument = $hasSingleDocument ? $documents[0] : null;
+
 $autostartData = [
 	'templates' => $templates,
-	'documentType' => $arResult['documentType'],
-	'signedDocumentType' => $arResult['signedDocumentType'],
-	'signedDocumentId' => $arResult['signedDocumentId'],
+	'documents' => $documents,
+	'signedDocumentType' => $hasSingleDocument
+		? CBPDocument::signDocumentType($singleDocument['documentType'] ?? [])
+		: null,
+	'signedDocumentId' => (
+		$hasSingleDocument
+		&& is_array($singleDocument['documentId'] ?? null)
+	)
+		? CBPDocument::signDocumentType($singleDocument['documentId'])
+		: null,
 	'autoExecuteType' => (int)$arResult['autoExecuteType'],
 ];
 
@@ -88,4 +108,3 @@ $htmlId = 'bizproc-workflow-start-autostart';
 		BX.Bizproc.Component.WorkflowAutoStart.Instance.onAfterRender();
 	});
 </script>
-

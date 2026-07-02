@@ -30,6 +30,6 @@ BX.ready(function() {
 });
 </script>
 
-<?
+<?php
 endif;
 $frame->end();

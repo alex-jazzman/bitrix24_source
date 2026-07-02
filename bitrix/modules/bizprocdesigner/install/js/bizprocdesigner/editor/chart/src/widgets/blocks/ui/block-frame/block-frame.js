@@ -1,21 +1,25 @@
 import { ResizableBlock } from 'ui.block-diagram';
 import { Outline } from 'ui.icon-set.api.vue';
 import type { MenuItemOptions } from 'ui.vue3.components.menu';
-import { isBlockActivated } from '../../../../entities/blocks/utils';
 import { IconDivider, IconButton } from '../../../../shared/ui';
 import {
 	BlockContainer,
 	BlockLayout,
-	BlockTopTitle,
+	BLOCK_LAYOUT_SLOT_NAMES,
 	ColorMenuTopBtn,
+	ContentSeparator,
 	FRAME_BG_COLORS,
 	FRAME_BORDER_COLORS,
+	getContextMenuName,
 } from '../../../../entities/blocks';
 import {
 	DeleteBlockIconBtn,
 	UpdatePublishedStatusLabel,
 	ChangeFrameColorTopBtn,
+	ChangeFrameTextAlignTopBtn,
 } from '../../../../features/blocks';
+import { BlockLayoutWidget } from '../block-layout/block-layout';
+import { BlockTopTitleWidget } from '../block-top-title/block-top-title';
 
 import type { Block } from '../../../../shared/types';
 
@@ -36,13 +40,16 @@ export const BlockFrame = {
 		ResizableBlock,
 		BlockContainer,
 		BlockLayout,
-		BlockTopTitle,
+		BlockLayoutWidget,
+		BlockTopTitleWidget,
 		DeleteBlockIconBtn,
 		UpdatePublishedStatusLabel,
 		IconDivider,
 		IconButton,
 		ColorMenuTopBtn,
 		ChangeFrameColorTopBtn,
+		ChangeFrameTextAlignTopBtn,
+		ContentSeparator,
 	},
 	props: {
 		/** @type Block */
@@ -58,19 +65,11 @@ export const BlockFrame = {
 			blockMediator: new BlockMediator(),
 			frameBgColors: FRAME_BG_COLORS,
 			frameBorderColors: FRAME_BORDER_COLORS,
-		};
-	},
-	data(): { isOpenedTopMenu: boolean }
-	{
-		return {
-			isOpenedTopMenu: false,
+			getContextMenuName,
+			blockLayoutSlotNames: BLOCK_LAYOUT_SLOT_NAMES,
 		};
 	},
 	computed: {
-		isBlockActivated(): boolean
-		{
-			return isBlockActivated(this.block);
-		},
 		contextMenuItems(): Array<MenuItemOptions>
 		{
 			return [
@@ -81,50 +80,57 @@ export const BlockFrame = {
 	},
 	template: `
 		<ResizableBlock :block="block">
-			<template #default="{ isHighlighted, isResize, isDragged, isDisabled, isMakeNewConnection }">
+			<template #default="{ isHighlighted, isResize, isDragged, isDisabled, isMakeNewConnection, width, height }">
 				<BlockContainer
-					:highlighted="isHighlighted && !isDragged && !isResize"
+					:highlighted="(isHighlighted || isResize) && !isDragged"
 					:disabled="isDisabled"
-					:deactivated="!isBlockActivated"
 					:hoverable="!isMakeNewConnection"
 					:contextMenuItems="contextMenuItems"
 					:backgroundColor="frameBgColors[block.node.frameColorName]"
 					:borderColor="frameBorderColors[block.node.frameColorName]"
+					@mouseup="blockMediator.handleMouseUp($event, block)"
+					@mousedown="blockMediator.handleMouseDown($event)"
 				>
-					<BlockLayout
+					<BlockLayoutWidget
 						:block="block"
 						:moreMenuItems="contextMenuItems"
 						:dragged="isDragged"
 						:resized="isResize"
 						:disabled="isDisabled"
-						:isActivationVisible="false"
 						:hoverable="!isMakeNewConnection"
-						:topMenuOpened="isOpenedTopMenu"
 					>
-						<template #top-menu-title>
-							<BlockTopTitle :title="block.node.title"/>
+						<template #[blockLayoutSlotNames.TOP_MENU_TITLE]>
+							<BlockTopTitleWidget :block="block"/>
 						</template>
 
-						<template #top-menu>
+						<template #[blockLayoutSlotNames.TOP_MENU]>
 							<DeleteBlockIconBtn
 								:blockId="block.id"
 								:disabled="isDisabled"
 								@deletedBlock="blockMediator.hideCurrentBlockSettings($event)"
 							/>
 							<IconDivider/>
-							<ChangeFrameColorTopBtn
-								:block="block"
-								@update:open="isOpenedTopMenu = $event"
-							/>
+							<ChangeFrameTextAlignTopBtn :block="block"/>
+							<ChangeFrameColorTopBtn :block="block"/>
 						</template>
 
-						<template #default>
+						<template #[blockLayoutSlotNames.DEFAULT]>
+							<ContentSeparator
+								v-model:separatorPosition="block.node.frameSeparatorPosition"
+								:blockId="block.id"
+								:contentPosition="block.node.frameTextAlign"
+								:width="width"
+								:height="height"
+							>
+								<template #content>
+								</template>
+							</ContentSeparator>
 						</template>
 
-						<template #status>
+						<template #[blockLayoutSlotNames.STATUS]>
 							<UpdatePublishedStatusLabel :block="block"/>
 						</template>
-					</BlockLayout>
+					</BlockLayoutWidget>
 				</BlockContainer>
 			</template>
 		</ResizableBlock>

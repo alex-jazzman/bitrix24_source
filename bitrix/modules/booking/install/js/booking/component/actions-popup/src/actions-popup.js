@@ -1,4 +1,4 @@
-import { Popup, PopupManager } from 'main.popup';
+import { PopupManager } from 'main.popup';
 import type { PopupOptions } from 'main.popup';
 
 import { PopupMaker } from 'booking.component.popup-maker';

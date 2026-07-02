@@ -128,7 +128,7 @@
 	transform: translateY(-50%);
 	width: 24px;
 	height: 24px;
-	background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none'%3E%3Cpath d='M7 0a.7.7 0 01.7.7v5.6h5.6a.7.7 0 010 1.4H7.7v5.6a.7.7 0 01-1.4 0V7.7H.7a.7.7 0 010-1.4h5.6V.7A.7.7 0 017 0z' fill='%230075FF'/%3E%3C/svg%3E") no-repeat center center;
+	background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14' fill='none'%3E%3Cpath d='M7 0C7.38652 9.73932e-05 7.70019 0.313656 7.7002 0.700195V6.2998H13.2998C13.6864 6.2998 14 6.6134 14 7C13.9999 7.38651 13.6863 7.7002 13.2998 7.7002H7.7002V13.2998C7.7002 13.6863 7.38652 13.9999 7 14C6.6134 14 6.2998 13.6864 6.2998 13.2998V7.7002H0.700195C0.313662 7.7002 0.000106407 7.38651 0 7C0 6.6134 0.313596 6.2998 0.700195 6.2998H6.2998V0.700195C6.2998 0.313596 6.6134 0 7 0Z' fill='%230075FF'/%3E%3C/svg%3E") no-repeat center center;
 }
 
 .bizproc-setup-template__add-btn:focus-visible {

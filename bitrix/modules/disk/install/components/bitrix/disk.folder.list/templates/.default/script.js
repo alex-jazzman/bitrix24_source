@@ -1654,66 +1654,58 @@ BX.Disk.FolderListClass = (function() {
 			return;
 		}
 
-		const self = this;
 		const messageDescription = BX.message('DISK_TRASHCAN_TRASH_RESTORE_DESCR_MULTIPLE');
-		const buttons = [
-			new BX.PopupWindowCustomButton({
-				text: BX.message('DISK_TRASHCAN_ACT_RESTORE'),
-				className: 'ui-btn ui-btn-success',
-				events: {
-					click(e) {
-						this.addClassName('ui-btn-clock');
-
-						BX.ajax.runAction('disk.api.commonActions.restoreCollection', {
-							analyticsLabel: 'folder.list',
-							data: {
-								objectCollection: selectedRows,
-							},
-						}).then(function(response) {
-							if (response.status === 'success')
-							{
-								if (response.data.restoredObjectIds.length > 1)
-								{
-									BX.Disk.showModalWithStatusAction({
-										status: 'success',
-										message: BX.message('DISK_TRASHCAN_TRASH_RESTORE_SUCCESS'),
-									});
-									this.commonGrid.reload();
-								}
-								else
-								{
-									const firstObjectId = response.data.restoredObjectIds.pop();
-									window.document.location = BX.Disk.getUrlToShowObjectInGrid(firstObjectId);
-								}
-							}
-
-							BX.PopupWindowManager.getCurrentPopup().close();
-						}.bind(self));
-					},
-				},
-			}),
-			new BX.PopupWindowCustomButton({
-				text: BX.message('DISK_JS_BTN_CANCEL'),
-				className: 'ui-btn ui-btn-link',
-				events: {
-					click(e)
-					{
-						BX.PopupWindowManager.getCurrentPopup().destroy();
-					},
-				},
-			}),
-		];
-
-		BX.Disk.modalWindow({
-			modalId: 'bx-link-unlink-confirm',
+		this.showAirMessageBox({
 			title: BX.message('DISK_TRASHCAN_TRASH_RESTORE_TITLE'),
-			contentClassName: 'tac',
-			contentStyle: {
-				paddingTop: '70px',
-				paddingBottom: '70px',
+			message: messageDescription,
+			buttonsFactory: (messageBox) => {
+				const cancelButton = messageBox.getCancelButton({
+					style: BX.UI.AirButtonStyle.PLAIN_NO_ACCENT,
+				});
+				cancelButton.setText(BX.message('DISK_JS_BTN_CANCEL'));
+				cancelButton.setWide(true);
+
+				return [
+					new BX.UI.Button({
+						text: BX.message('DISK_TRASHCAN_ACT_RESTORE'),
+						useAirDesign: true,
+						style: BX.UI.AirButtonStyle.FILLED,
+						wide: true,
+						onclick: (button) => {
+							button.setWaiting(true);
+
+							BX.ajax.runAction('disk.api.commonActions.restoreCollection', {
+								analyticsLabel: 'folder.list',
+								data: {
+									objectCollection: selectedRows,
+								},
+							}).then((response) => {
+								if (response.status === 'success')
+								{
+									if (response.data.restoredObjectIds.length > 1)
+									{
+										BX.Disk.showModalWithStatusAction({
+											status: 'success',
+											message: BX.message('DISK_TRASHCAN_TRASH_RESTORE_SUCCESS'),
+										});
+										this.commonGrid.reload();
+									}
+									else
+									{
+										const firstObjectId = response.data.restoredObjectIds.pop();
+										window.document.location = BX.Disk.getUrlToShowObjectInGrid(firstObjectId);
+									}
+								}
+
+								messageBox.close();
+							}, () => {
+								button.setWaiting(false);
+							});
+						},
+					}),
+					cancelButton,
+				];
 			},
-			content: messageDescription.replace('#NAME#', name),
-			buttons,
 		});
 	};
 
@@ -1732,51 +1724,96 @@ BX.Disk.FolderListClass = (function() {
 			messageDescription = BX.message('DISK_TRASHCAN_TRASH_RESTORE_FILE_CONFIRM');
 		}
 
-		const self = this;
-		const buttons = [
-			new BX.PopupWindowCustomButton({
-				text: BX.message('DISK_TRASHCAN_ACT_RESTORE'),
-				className: 'ui-btn ui-btn-success',
-				events: {
-					click(e) {
-						this.addClassName('ui-btn-clock');
-
-						BX.ajax.runAction('disk.api.commonActions.restore', {
-							analyticsLabel: 'folder.list',
-							data: {
-								objectId,
-							},
-						}).then(function(response) {
-							BX.PopupWindowManager.getCurrentPopup().close();
-							this.commonGrid.selectItemById(objectId);
-
-							window.document.location = BX.Disk.getUrlToShowObjectInGrid(response.data.object.id);
-						}.bind(self));
-					},
-				},
-			}),
-			new BX.PopupWindowCustomButton({
-				text: BX.message('DISK_JS_BTN_CANCEL'),
-				className: 'ui-btn ui-btn-link',
-				events: {
-					click(e)
-					{
-						BX.PopupWindowManager.getCurrentPopup().destroy();
-					},
-				},
-			}),
-		];
-
-		BX.Disk.modalWindow({
-			modalId: 'bx-link-unlink-confirm',
+		this.showAirMessageBox({
 			title: BX.message('DISK_TRASHCAN_TRASH_RESTORE_TITLE'),
-			contentClassName: 'tac',
-			contentStyle: {
-				paddingTop: '70px',
-				paddingBottom: '70px',
+			message: this.formatAirMessageBoxFileName(messageDescription, name),
+			buttonsFactory: (messageBox) => {
+				const cancelButton = messageBox.getCancelButton({
+					style: BX.UI.AirButtonStyle.PLAIN_NO_ACCENT,
+				});
+				cancelButton.setText(BX.message('DISK_JS_BTN_CANCEL'));
+				cancelButton.setWide(true);
+
+				return [
+					new BX.UI.Button({
+						text: BX.message('DISK_TRASHCAN_ACT_RESTORE'),
+						useAirDesign: true,
+						style: BX.UI.AirButtonStyle.FILLED,
+						wide: true,
+						onclick: (button) => {
+							button.setWaiting(true);
+
+							BX.ajax.runAction('disk.api.commonActions.restore', {
+								analyticsLabel: 'folder.list',
+								data: {
+									objectId,
+								},
+							}).then((response) => {
+								messageBox.close();
+								this.commonGrid.selectItemById(objectId);
+
+								window.document.location = BX.Disk.getUrlToShowObjectInGrid(response.data.object.id);
+							}, () => {
+								button.setWaiting(false);
+							});
+						},
+					}),
+					cancelButton,
+				];
 			},
-			content: messageDescription.replace('#NAME#', name),
-			buttons,
+		});
+	};
+
+	FolderListClass.prototype.formatAirMessageBoxFileName = function(message, name)
+	{
+		const safeName = BX.util.htmlspecialchars(name);
+		const fileName = '<span class="disk-air-message-box-file-name">' + safeName + '</span>';
+		const fileNameWithTitle = '<span class="disk-air-message-box-file-name" title="' + safeName + '">' + safeName + '</span>';
+		const wrapFileName = (leftPart, rightPart) => {
+			return '<span class="disk-air-message-box-file-name-wrapper" title="' + safeName + '">'
+				+ leftPart
+				+ fileName
+				+ rightPart
+				+ '</span>'
+			;
+		};
+
+		return message
+			.replace(/(["'])#NAME#\1(\?)/g, (match, quote, questionMark) => {
+				return wrapFileName(quote, quote + '&nbsp;' + questionMark);
+			})
+			.replace(/(["'])#NAME#\1/g, (match, quote) => {
+				return wrapFileName(quote, quote);
+			})
+			.replace(/#NAME#(\?)/g, (match, questionMark) => {
+				return wrapFileName('', questionMark);
+			})
+			.replace(/#NAME#/g, fileNameWithTitle)
+		;
+	};
+
+	FolderListClass.prototype.showAirMessageBox = function(options)
+	{
+		BX.Runtime.loadExtension('ui.dialogs.messagebox').then(() => {
+			const maxWidth = options.maxWidth || 650;
+			const messageBox = BX.UI.Dialogs.MessageBox.create({
+				title: options.title,
+				message: options.message,
+				modal: true,
+				useAirDesign: true,
+				maxWidth,
+				popupOptions: options.popupOptions || {},
+			});
+
+			if (BX.type.isFunction(options.buttonsFactory))
+			{
+				messageBox.setButtons(options.buttonsFactory(messageBox));
+			}
+
+			const popupContainer = messageBox.getPopupWindow().getPopupContainer();
+			popupContainer.classList.add('disk-air-message-box-fit-content');
+
+			messageBox.show();
 		});
 	};
 
@@ -1819,72 +1856,68 @@ BX.Disk.FolderListClass = (function() {
 				: BX.message('DISK_FOLDER_LIST_TRASH_DELETE_DESTROY_DELETED_FILE_CONFIRM');
 		}
 
-		const self = this;
-		const buttons = [];
-		if (!isDeleted)
-		{
-			buttons.push(new BX.PopupWindowCustomButton({
-				text: BX.message('DISK_FOLDER_LIST_TRASH_DELETE_BUTTON'),
-				className: 'ui-btn ui-btn-success',
-				events: {
-					click(e) {
-						this.addClassName('ui-btn-clock');
-
-						BX.ajax.runAction('disk.api.commonActions.markDeleted', {
-							analyticsLabel: 'folder.list',
-							data: {
-								objectId,
-							},
-						}).then((response) => {
-							BX.PopupWindowManager.getCurrentPopup().close();
-							self.removeRow(objectId);
-						});
-					},
-				},
-			}));
-		}
-
-		if (canDelete)
-		{
-			buttons.push(new BX.PopupWindowCustomButton({
-				text: BX.message('DISK_FOLDER_LIST_TRASH_DESTROY_BUTTON'),
-				className: 'ui-btn ui-btn-light-border',
-				events: {
-					click(e)
-					{
-						this.addClassName('ui-btn-clock');
-
-						BX.ajax.runAction('disk.api.commonActions.delete', {
-							analyticsLabel: 'folder.list',
-							data: {
-								objectId,
-							},
-						}).then((response) => {
-							BX.PopupWindowManager.getCurrentPopup().close();
-							self.removeRow(objectId);
-						});
-					},
-				},
-			}));
-		}
-		buttons.push(
-			new BX.PopupWindowCustomButton({
-				text: BX.message('DISK_FOLDER_LIST_TRASH_CANCEL_DELETE_BUTTON'),
-				className: 'ui-btn ui-btn-link',
-				events: {
-					click(e) {
-						BX.PopupWindowManager.getCurrentPopup().destroy();
-					},
-				},
-			}),
-		);
-
-		BX.Disk.modalWindow({
-			modalId: 'bx-link-unlink-confirm',
+		this.showAirMessageBox({
 			title: BX.message('DISK_FOLDER_LIST_TRASH_DELETE_TITLE'),
-			contentClassName: 'disk-popup-text-content',
-			content: messageDescription.replace('#NAME#', name),
-			buttons,
+			message: this.formatAirMessageBoxFileName(messageDescription, name),
+			buttonsFactory: (messageBox) => {
+				const buttons = [];
+				const cancelButton = messageBox.getCancelButton({
+					style: BX.UI.AirButtonStyle.PLAIN_NO_ACCENT,
+				});
+				cancelButton.setText(BX.message('DISK_FOLDER_LIST_TRASH_CANCEL_DELETE_BUTTON'));
+
+				if (!isDeleted)
+				{
+					buttons.push(new BX.UI.Button({
+						text: BX.message('DISK_FOLDER_LIST_TRASH_DELETE_BUTTON'),
+						useAirDesign: true,
+						style: BX.UI.AirButtonStyle.FILLED,
+						onclick: (button) => {
+							button.setWaiting(true);
+
+							BX.ajax.runAction('disk.api.commonActions.markDeleted', {
+								analyticsLabel: 'folder.list',
+								data: {
+									objectId,
+								},
+							}).then(() => {
+								messageBox.close();
+								this.removeRow(objectId);
+							}, () => {
+								button.setWaiting(false);
+							});
+						},
+					}));
+				}
+
+				if (canDelete)
+				{
+					buttons.push(new BX.UI.Button({
+						text: BX.message('DISK_FOLDER_LIST_TRASH_DESTROY_BUTTON'),
+						useAirDesign: true,
+						style: BX.UI.AirButtonStyle.OUTLINE,
+						onclick: (button) => {
+							button.setWaiting(true);
+
+							BX.ajax.runAction('disk.api.commonActions.delete', {
+								analyticsLabel: 'folder.list',
+								data: {
+									objectId,
+								},
+							}).then(() => {
+								messageBox.close();
+								this.removeRow(objectId);
+							}, () => {
+								button.setWaiting(false);
+							});
+						},
+					}));
+				}
+
+				buttons.push(cancelButton);
+
+				return buttons;
+			},
 		});
 	};
 
@@ -1912,66 +1945,61 @@ BX.Disk.FolderListClass = (function() {
 	FolderListClass.prototype.openConfirmEmptyTrash = function()
 	{
 		const storageId = this.storage.id;
-		const buttons = [
-			new BX.PopupWindowCustomButton({
-				text: BX.message('DISK_FOLDER_LIST_TITLE_EMPTY_TRASH'),
-				className: 'ui-btn ui-btn-success',
-				events: {
-					click(e) {
-						this.addClassName('ui-btn-clock');
-
-						if (alreadyRunEmptyTrash)
-						{
-							BX.PopupWindowManager.getCurrentPopup().close();
-
-							return;
-						}
-
-						alreadyRunEmptyTrash = true;
-						BX.ajax.runAction('disk.api.trashcan.empty', {
-							analyticsLabel: 'folder.list',
-							data: {
-								storageId,
-							},
-						}).then((response) => {
-							BX.ajax.runComponentAction('bitrix:disk.folder.list', 'getSteppers', {
-								mode: 'class',
-							}).then((response) => {
-								if (response.data.html)
-								{
-									const place = BX('disk-folder-list-place-for-stepper');
-									if (place)
-									{
-										BX.html(place, response.data.html);
-									}
-								}
-							});
-
-							BX.PopupWindowManager.getCurrentPopup().close();
-						}, (response) => {
-							BX.Disk.showModalWithStatusAction(response);
-							BX.PopupWindowManager.getCurrentPopup().close();
-						});
-					},
-				},
-			}),
-			new BX.PopupWindowCustomButton({
-				text: BX.message('DISK_JS_BTN_CANCEL'),
-				className: 'ui-btn ui-btn-link',
-				events: {
-					click(e) {
-						BX.PopupWindowManager.getCurrentPopup().destroy();
-					},
-				},
-			}),
-		];
-
-		BX.Disk.modalWindow({
-			modalId: 'bx-link-empty-trash-confirm',
+		this.showAirMessageBox({
 			title: BX.message('DISK_FOLDER_LIST_TITLE_EMPTY_TRASH_TITLE'),
-			contentClassName: 'disk-popup-text-content',
-			content: BX.message('DISK_FOLDER_LIST_TRASH_EMPTY_TRASH_DESCRIPTION'),
-			buttons,
+			message: BX.message('DISK_FOLDER_LIST_TRASH_EMPTY_TRASH_DESCRIPTION'),
+			buttonsFactory: (messageBox) => {
+				const cancelButton = messageBox.getCancelButton({
+					style: BX.UI.AirButtonStyle.PLAIN_NO_ACCENT,
+				});
+				cancelButton.setText(BX.message('DISK_JS_BTN_CANCEL'));
+				cancelButton.setWide(true);
+
+				return [
+					new BX.UI.Button({
+						text: BX.message('DISK_FOLDER_LIST_TITLE_EMPTY_TRASH'),
+						useAirDesign: true,
+						style: BX.UI.AirButtonStyle.FILLED,
+						wide: true,
+						onclick: (button) => {
+							if (alreadyRunEmptyTrash)
+							{
+								messageBox.close();
+
+								return;
+							}
+
+							button.setWaiting(true);
+							alreadyRunEmptyTrash = true;
+							BX.ajax.runAction('disk.api.trashcan.empty', {
+								analyticsLabel: 'folder.list',
+								data: {
+									storageId,
+								},
+							}).then(() => {
+								BX.ajax.runComponentAction('bitrix:disk.folder.list', 'getSteppers', {
+									mode: 'class',
+								}).then((response) => {
+									if (response.data.html)
+									{
+										const place = BX('disk-folder-list-place-for-stepper');
+										if (place)
+										{
+											BX.html(place, response.data.html);
+										}
+									}
+								});
+
+								messageBox.close();
+							}, (response) => {
+								BX.Disk.showModalWithStatusAction(response);
+								messageBox.close();
+							});
+						},
+					}),
+					cancelButton,
+				];
+			},
 		});
 	};
 
@@ -1990,116 +2018,170 @@ BX.Disk.FolderListClass = (function() {
 		{
 			messageDescription = BX.message('DISK_FOLDER_LIST_DETACH_FILE_CONFIRM');
 		}
-		const buttons = [
-			new BX.PopupWindowCustomButton({
-				text: BX.message('DISK_FOLDER_LIST_DETACH_BUTTON'),
-				className: 'ui-btn ui-btn-success',
-				events: {
-					click: BX.delegate(function(e) {
-						BX.PopupWindowManager.getCurrentPopup().destroy();
-						BX.PreventDefault(e);
-
-						BX.Disk.ajax({
-							method: 'POST',
-							dataType: 'json',
-							url: BX.Disk.addToLinkParam(this.ajaxUrl, 'action', 'detach'),
-							data: {
-								objectId,
-							},
-							onsuccess: BX.delegate(function(data) {
-								if (!data)
-								{
-									return;
-								}
-
-								if (data.status == 'success')
-								{
-									if (BX.type.isFunction(onSuccess))
-									{
-										BX.delegate(onSuccess, this)(data);
-									}
-									else
-									{
-										this.removeRow(objectId);
-									}
-
-									return;
-								}
-								BX.Disk.showModalWithStatusAction(data);
-							}, this),
-						});
-
-						return false;
-					}, this),
-				},
-			}),
-			new BX.PopupWindowCustomButton({
-				text: BX.message('DISK_FOLDER_LIST_TRASH_CANCEL_DELETE_BUTTON'),
-				className: 'ui-btn ui-btn-link',
-				events: {
-					click(e) {
-						BX.PopupWindowManager.getCurrentPopup().destroy();
-					},
-				},
-			}),
-		];
-
-		BX.Disk.modalWindow({
-			modalId: 'bx-link-unlink-confirm',
+		this.showAirMessageBox({
 			title: isFolder ? BX.message('DISK_FOLDER_LIST_DETACH_FOLDER_TITLE') : BX.message('DISK_FOLDER_LIST_DETACH_FILE_TITLE'),
-			contentClassName: 'tac',
-			contentStyle: {
-				paddingTop: '70px',
-				paddingBottom: '70px',
+			message: messageDescription.replace('#NAME#', BX.util.htmlspecialchars(name)),
+			buttonsFactory: (messageBox) => {
+				const cancelButton = messageBox.getCancelButton({
+					style: BX.UI.AirButtonStyle.PLAIN_NO_ACCENT,
+				});
+				cancelButton.setText(BX.message('DISK_FOLDER_LIST_TRASH_CANCEL_DELETE_BUTTON'));
+				cancelButton.setWide(true);
+
+				return [
+					new BX.UI.Button({
+						text: BX.message('DISK_FOLDER_LIST_DETACH_BUTTON'),
+						useAirDesign: true,
+						style: BX.UI.AirButtonStyle.FILLED,
+						wide: true,
+						onclick: (button) => {
+							button.setWaiting(true);
+
+							BX.Disk.ajax({
+								method: 'POST',
+								dataType: 'json',
+								url: BX.Disk.addToLinkParam(this.ajaxUrl, 'action', 'detach'),
+								data: {
+									objectId,
+								},
+								onsuccess: BX.delegate(function(data) {
+									if (!data)
+									{
+										button.setWaiting(false);
+										return;
+									}
+
+									if (data.status == 'success')
+									{
+										messageBox.close();
+
+										if (BX.type.isFunction(onSuccess))
+										{
+											BX.delegate(onSuccess, this)(data);
+										}
+										else
+										{
+											this.removeRow(objectId);
+										}
+
+										return;
+									}
+
+									button.setWaiting(false);
+									BX.Disk.showModalWithStatusAction(data);
+								}, this),
+							});
+						},
+					}),
+					cancelButton,
+				];
 			},
-			content: messageDescription.replace('#NAME#', BX.util.htmlspecialchars(name)),
-			buttons,
 		});
 	};
 
 	FolderListClass.prototype.openConfirmDeleteGroup = function()
 	{
 		const messageDescription = BX.message('DISK_FOLDER_LIST_TRASH_DELETE_GROUP_CONFIRM');
-		const buttons = [
-			new BX.PopupWindowCustomButton({
-				text: BX.message('DISK_FOLDER_LIST_TRASH_DELETE_BUTTON'),
-				className: 'ui-btn ui-btn-success',
-				events: {
-					click: function(e) {
-						BX.PopupWindowManager.getCurrentPopup().destroy();
+		this.showAirMessageBox({
+			title: BX.message('DISK_FOLDER_LIST_TRASH_DELETE_TITLE'),
+			message: messageDescription,
+			buttonsFactory: (messageBox) => {
+				const cancelButton = messageBox.getCancelButton({
+					style: BX.UI.AirButtonStyle.PLAIN_NO_ACCENT,
+				});
+				cancelButton.setText(BX.message('DISK_FOLDER_LIST_TRASH_CANCEL_DELETE_BUTTON'));
+				cancelButton.setWide(true);
+				const buttons = [
+					new BX.UI.Button({
+						text: BX.message('DISK_FOLDER_LIST_TRASH_DELETE_BUTTON'),
+						useAirDesign: true,
+						style: BX.UI.AirButtonStyle.FILLED,
+						wide: true,
+						onclick: (button) => {
+							button.setWaiting(true);
 
-						const values = {};
-						values[this.commonGrid.getActionKey()] = 'delete';
+							const values = {};
+							values[this.commonGrid.getActionKey()] = 'delete';
 
-						const data = {
-							rows: this.commonGrid.getSelectedIds(),
-							controls: values,
-						};
+							const data = {
+								rows: this.commonGrid.getSelectedIds(),
+								controls: values,
+							};
 
-						this.commonGrid.reload(null, data).then(() => {
-							BX.PopupWindowManager.getCurrentPopup().destroy();
-						});
-					}.bind(this),
-				},
-			}),
-		];
+							this.commonGrid.reload(null, data).then(() => {
+								messageBox.close();
+							}, () => {
+								button.setWaiting(false);
+							});
+						},
+					}),
+				];
 
-		const canWeDestroyAll = false;
-		// this.commonGrid.instance.getRows().getSelected().forEach(function(row) {
-		// 	if (!row.node.dataset.canDestroy)
-		// 	{
-		// 		canWeDestroyAll = false;
-		// 	}
-		// });
+				const canWeDestroyAll = false;
+				// this.commonGrid.instance.getRows().getSelected().forEach(function(row) {
+				// 	if (!row.node.dataset.canDestroy)
+				// 	{
+				// 		canWeDestroyAll = false;
+				// 	}
+				// });
 
-		if (canWeDestroyAll)
-		{
-			buttons.push(
-				new BX.PopupWindowCustomButton({
-					text: BX.message('DISK_FOLDER_LIST_TRASH_DESTROY_BUTTON'),
-					events: {
-						click: function(e) {
-							BX.PopupWindowManager.getCurrentPopup().destroy();
+				if (canWeDestroyAll)
+				{
+					buttons.push(
+						new BX.UI.Button({
+							text: BX.message('DISK_FOLDER_LIST_TRASH_DESTROY_BUTTON'),
+							useAirDesign: true,
+							style: BX.UI.AirButtonStyle.OUTLINE,
+							wide: true,
+							onclick: (button) => {
+								button.setWaiting(true);
+
+								const values = {};
+								values[this.commonGrid.getActionKey()] = 'destroy';
+
+								const data = {
+									rows: this.commonGrid.getSelectedIds(),
+									controls: values,
+								};
+
+								this.commonGrid.reload(null, data).then(() => {
+									messageBox.close();
+								}, () => {
+									button.setWaiting(false);
+								});
+							},
+						}),
+					);
+				}
+
+				buttons.push(cancelButton);
+
+				return buttons;
+			},
+		});
+	};
+
+	FolderListClass.prototype.openConfirmDestroyGroup = function()
+	{
+		const messageDescription = BX.message('DISK_FOLDER_LIST_TRASH_DESTROY_GROUP_CONFIRM');
+		this.showAirMessageBox({
+			title: BX.message('DISK_FOLDER_LIST_TRASH_DELETE_TITLE'),
+			message: messageDescription,
+			buttonsFactory: (messageBox) => {
+				const cancelButton = messageBox.getCancelButton({
+					style: BX.UI.AirButtonStyle.PLAIN_NO_ACCENT,
+				});
+				cancelButton.setText(BX.message('DISK_JS_BTN_CANCEL'));
+				cancelButton.setWide(true);
+
+				return [
+					new BX.UI.Button({
+						text: BX.message('DISK_FOLDER_LIST_TRASH_DESTROY_BUTTON'),
+						useAirDesign: true,
+						style: BX.UI.AirButtonStyle.FILLED,
+						wide: true,
+						onclick: (button) => {
+							button.setWaiting(true);
 
 							const values = {};
 							values[this.commonGrid.getActionKey()] = 'destroy';
@@ -2110,79 +2192,15 @@ BX.Disk.FolderListClass = (function() {
 							};
 
 							this.commonGrid.reload(null, data).then(() => {
-								BX.PopupWindowManager.getCurrentPopup().destroy();
+								messageBox.close();
+							}, () => {
+								button.setWaiting(false);
 							});
-						}.bind(this),
-					},
-				}),
-			);
-		}
-
-		buttons.push(new BX.PopupWindowCustomButton({
-			className: 'ui-btn ui-btn-link',
-			text: BX.message('DISK_FOLDER_LIST_TRASH_CANCEL_DELETE_BUTTON'),
-			events: {
-				click(e) {
-					BX.PopupWindowManager.getCurrentPopup().destroy();
-				},
+						},
+					}),
+					cancelButton,
+				];
 			},
-		}));
-
-		BX.Disk.modalWindow({
-			modalId: 'bx-link-unlink-confirm',
-			title: BX.message('DISK_FOLDER_LIST_TRASH_DELETE_TITLE'),
-			contentClassName: 'tac',
-			contentStyle: {
-				paddingTop: '70px',
-				paddingBottom: '70px',
-			},
-			content: messageDescription,
-			buttons,
-		});
-	};
-
-	FolderListClass.prototype.openConfirmDestroyGroup = function()
-	{
-		const messageDescription = BX.message('DISK_FOLDER_LIST_TRASH_DESTROY_GROUP_CONFIRM');
-		const buttons = [
-			new BX.PopupWindowCustomButton({
-				text: BX.message('DISK_FOLDER_LIST_TRASH_DESTROY_BUTTON'),
-				className: 'ui-btn ui-btn-success',
-				events: {
-					click: function(e) {
-						BX.PopupWindowManager.getCurrentPopup().destroy();
-
-						const values = {};
-						values[this.commonGrid.getActionKey()] = 'destroy';
-
-						const data = {
-							rows: this.commonGrid.getSelectedIds(),
-							controls: values,
-						};
-
-						this.commonGrid.reload(null, data).then(() => {
-							BX.PopupWindowManager.getCurrentPopup().destroy();
-						});
-					}.bind(this),
-				},
-			}),
-			new BX.PopupWindowCustomButton({
-				className: 'ui-btn ui-btn-link',
-				text: BX.message('DISK_JS_BTN_CANCEL'),
-				events: {
-					click(e) {
-						BX.PopupWindowManager.getCurrentPopup().destroy();
-					},
-				},
-			}),
-		];
-
-		BX.Disk.modalWindow({
-			modalId: 'bx-link-unlink-confirm',
-			title: BX.message('DISK_FOLDER_LIST_TRASH_DELETE_TITLE'),
-			contentClassName: 'disk-popup-text-content',
-			content: messageDescription,
-			buttons,
 		});
 	};
 
@@ -4342,56 +4360,58 @@ BX.Disk.FolderListClass = (function() {
 		const hide = this.hide;
 		showHiddenContent(BX('bx-disk-network-drive-full'));
 
-		BX.Disk.modalWindow({
-			modalId: 'bx-disk-show-network-drive-connect',
+		this.showAirMessageBox({
 			title: BX.message('DISK_FOLDER_LIST_PAGE_TITLE_NETWORK_DRIVE'),
-			contentClassName: 'tac',
-			contentStyle: {},
-			events: {
-				onAfterPopupShow() {
-					const inputLink = BX('disk-get-network-drive-link');
-					BX.focus(inputLink);
-					inputLink.setSelectionRange(0, inputLink.value.length);
+			message: BX.create('div', {
+				style: {
+					padding: '0 24px 0',
 				},
-				onPopupClose() {
-					hide(BX('bx-disk-network-drive'));
-					hide(BX('bx-disk-network-drive-full'));
-					document.body.appendChild(BX('bx-disk-network-drive-full'));
-					this.destroy();
+				children: [
+					BX.create('label', {
+						text: `${BX.message('DISK_FOLDER_LIST_PAGE_TITLE_NETWORK_DRIVE_DESCR_MODAL')} :`,
+						props: {
+							className: 'bx-disk-popup-label',
+							for: 'disk-get-network-drive-link',
+						},
+					}),
+					BX.create('input', {
+						style: {
+							marginTop: '10px',
+						},
+						props: {
+							id: 'disk-get-network-drive-link',
+							className: 'bx-disk-popup-input',
+							type: 'text',
+							value: link,
+						},
+					}),
+					BX('bx-disk-network-drive-full'),
+				],
+			}),
+			popupOptions: {
+				events: {
+					onAfterPopupShow() {
+						const inputLink = BX('disk-get-network-drive-link');
+						BX.focus(inputLink);
+						inputLink.setSelectionRange(0, inputLink.value.length);
+					},
+					onPopupClose() {
+						hide(BX('bx-disk-network-drive'));
+						hide(BX('bx-disk-network-drive-full'));
+						document.body.appendChild(BX('bx-disk-network-drive-full'));
+						this.destroy();
+					},
 				},
 			},
-			content: [
-				BX.create('label', {
-					text: `${BX.message('DISK_FOLDER_LIST_PAGE_TITLE_NETWORK_DRIVE_DESCR_MODAL')} :`,
-					props: {
-						className: 'bx-disk-popup-label',
-						for: 'disk-get-network-drive-link',
-					},
-				}),
-				BX.create('input', {
-					style: {
-						marginTop: '10px',
-					},
-					props: {
-						id: 'disk-get-network-drive-link',
-						className: 'bx-disk-popup-input',
-						type: 'text',
-						value: link,
-					},
-				}),
-				BX('bx-disk-network-drive-full'),
-			],
-			buttons: [
-				new BX.PopupWindowCustomButton({
-					text: BX.message('DISK_JS_BTN_CLOSE'),
-					className: 'ui-btn ui-btn-link',
-					events: {
-						click() {
-							BX.PopupWindowManager.getCurrentPopup().close();
-						},
-					},
-				}),
-			],
+			buttonsFactory: (messageBox) => {
+				const cancelButton = messageBox.getCancelButton({
+					style: BX.UI.AirButtonStyle.PLAIN_NO_ACCENT,
+				});
+				cancelButton.setText(BX.message('DISK_JS_BTN_CLOSE'));
+				cancelButton.setWide(true);
+
+				return [cancelButton];
+			},
 		});
 		if (BX('bx-disk-network-drive-secure-label'))
 		{

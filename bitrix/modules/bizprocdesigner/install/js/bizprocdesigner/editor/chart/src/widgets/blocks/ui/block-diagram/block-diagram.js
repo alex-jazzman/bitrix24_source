@@ -2,7 +2,7 @@ import type { FeatureCodeType } from 'bizprocdesigner.feature';
 import { FeatureCode } from 'bizprocdesigner.feature';
 import type { MenuItemOptions } from 'main.popup';
 import type { Point } from 'ui.block-diagram';
-import { computed, toValue, inject, watch } from 'ui.vue3';
+import { computed, toValue, inject, watch, nextTick } from 'ui.vue3';
 import { storeToRefs } from 'ui.vue3.pinia';
 import { Runtime, Browser } from 'main.core';
 import { UI } from 'ui.notification';
@@ -17,16 +17,17 @@ import {
 } from 'ui.block-diagram';
 import { setUserSelectedBlock } from '../../../../entities/ai-assistant/api/api';
 import { useFeature, useLoc } from '../../../../shared/composables';
-import type { Block, Connection } from '../../../../shared/types';
+import { PORT_TYPES } from '../../../../shared/constants';
+import type { Block, Connection, Port } from '../../../../shared/types';
+import { BLOCK_TYPES } from '../../../../shared/constants';
 import {
 	BlockDiagram as BlockDiagramEntity,
 	diagramStore as useDiagramStore,
 	BLOCK_SLOT_NAMES,
 	CONNECTION_SLOT_NAMES,
-	BLOCK_TYPES,
 	useBufferStore,
 } from '../../../../entities/blocks';
-import { CopyPaste, BlockMediator } from '../../lib';
+import { useCopyPaste, BlockMediator } from '../../lib';
 
 import './block-diagram.css';
 
@@ -78,7 +79,7 @@ export const BlockDiagram = {
 		const history = useHistory();
 		const { isFeatureAvailable } = useFeature();
 		const { transformEventToPoint, transformX, transformY, currentSnapshot } = useBlockDiagram();
-		const copyPaste = new CopyPaste();
+		const copyPaste = useCopyPaste();
 		const mediator = new BlockMediator();
 
 		const selectionBoxConfig = computed(() => {
@@ -115,15 +116,18 @@ export const BlockDiagram = {
 				highlightedBlocks.clear();
 
 				const newBlocks = copyPaste.paste(point);
-				if (newBlocks.length > 0)
-				{
-					highlightedBlocks.set(newBlocks.map((block) => block.id));
-				}
 
-				if (newBlocks.length === 1)
-				{
-					mediator.showNodeSettings(newBlocks[0]);
-				}
+				nextTick(() => {
+					if (newBlocks.length > 0)
+					{
+						highlightedBlocks.set(newBlocks.map((block) => block.id));
+					}
+
+					if (newBlocks.length === 1)
+					{
+						mediator.showNodeSettings(newBlocks[0]);
+					}
+				});
 
 				history.makeSnapshot();
 			}
@@ -279,9 +283,6 @@ export const BlockDiagram = {
 		function onDropNewBlock(block: Block): void
 		{
 			diagramStore.updateBlockPublishStatus(block);
-			highlightedBlocks.clear();
-			highlightedBlocks.add(block.id);
-			mediator.showNodeSettings(block);
 		}
 
 		async function onBlockTransitionEnd(block: Block): Promise<void>
@@ -308,6 +309,67 @@ export const BlockDiagram = {
 		function onDeleteConnection(connectionId: string): void
 		{
 			diagramStore.setConnectionCurrentTimestamp(connectionId);
+			removeOrphanedAuxPorts();
+		}
+
+		function getConnectedPortIds(blockId: string): Set<string>
+		{
+			const ids = new Set();
+			for (const connection of diagramStore.connections)
+			{
+				if (connection.sourceBlockId === blockId)
+				{
+					ids.add(connection.sourcePortId);
+				}
+
+				if (connection.targetBlockId === blockId)
+				{
+					ids.add(connection.targetPortId);
+				}
+			}
+
+			return ids;
+		}
+
+		function getFirstAuxPort(auxPorts: Array<Port>): Port
+		{
+			return auxPorts.reduce((first, port) => {
+				const a = parseInt(first.title.replaceAll(/\D/g, ''), 10) || 0;
+				const b = parseInt(port.title.replaceAll(/\D/g, ''), 10) || 0;
+
+				return b < a ? port : first;
+			});
+		}
+
+		function removeOrphanedAuxPorts(): void
+		{
+			for (const block of diagramStore.blocks)
+			{
+				const auxPorts = block.ports.filter(
+					(port) => port.type === PORT_TYPES.aux && port.isActive !== false,
+				);
+				if (auxPorts.length <= 1)
+				{
+					continue;
+				}
+
+				const connectedPortIds = getConnectedPortIds(block.id);
+				const firstAuxPortId = getFirstAuxPort(auxPorts).id;
+
+				const orphanedIds = new Set(
+					auxPorts
+						.filter((port) => port.id !== firstAuxPortId && !connectedPortIds.has(port.id))
+						.map((port) => port.id),
+				);
+
+				if (orphanedIds.size > 0)
+				{
+					diagramStore.setPorts(
+						block.id,
+						block.ports.filter((port) => !orphanedIds.has(port.id)),
+					);
+				}
+			}
 		}
 
 		function onCreateConnection(connection: Connection): void
@@ -429,54 +491,26 @@ export const BlockDiagram = {
 			@createConnection="onCreateConnection"
 			@deleteConnection="onDeleteConnection"
 		>
-			<template #[blockSlotNames.SIMPLE]="{ block }">
+			<template
+				v-for="slotName in Object.values(blockSlotNames)"
+				#[slotName]="{ block }"
+			>
 				<slot
-					:name="blockSlotNames.SIMPLE"
+					:name="slotName"
 					:block="block"
 				/>
 			</template>
 
-			<template #[blockSlotNames.TRIGGER]="{ block }">
+			<template
+				v-for="slotName in Object.values(connectionSlotNames)"
+				#[slotName]="{ connection }"
+			>
 				<slot
-					:name="blockSlotNames.TRIGGER"
-					:block="block"
-				/>
-			</template>
-
-			<template #[blockSlotNames.COMPLEX]="{ block }">
-				<slot
-					:name="blockSlotNames.COMPLEX"
-					:block="block"
-				/>
-			</template>
-
-			<template #[blockSlotNames.COMPLEX]="{ block }">
-				<slot
-					:name="blockSlotNames.COMPLEX"
-					:block="block"
-				/>
-			</template>
-
-			<template #[blockSlotNames.TOOL]="{ block }">
-				<slot
-					:name="blockSlotNames.TOOL"
-					:block="block"
-				/>
-			</template>
-
-			<template #[blockSlotNames.FRAME]="{ block }">
-				<slot
-					:name="blockSlotNames.FRAME"
-					:block="block"
-				/>
-			</template>
-
-			<template #[connectionSlotNames.AUX]="{ connection }">
-				<slot
-					:name="connectionSlotNames.AUX"
+					:name="slotName"
 					:connection="connection"
 				/>
 			</template>
+
 			<template #group-selection-box>
 				<GroupSelectionBox
 					v-if="enableGrouping"

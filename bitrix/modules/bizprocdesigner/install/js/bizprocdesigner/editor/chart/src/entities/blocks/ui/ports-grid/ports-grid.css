@@ -1,0 +1,54 @@
+.editor-chart-ports-grid {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.editor-chart-ports-grid__column {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 8px;
+    flex: 1 1 0;
+}
+
+.editor-chart-ports-grid__line {
+    position: relative;
+    width: 100%;
+    min-height: 15px;
+    padding: 0 10px;
+    box-sizing: border-box;
+}
+
+.editor-chart-ports-grid__port-wrap {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 10px;
+    height: 10px;
+    margin: auto;
+}
+
+.editor-chart-ports-grid__port-wrap.--left {
+    left: -12px;
+}
+
+.editor-chart-ports-grid__port-wrap.--right {
+    right: -12px;
+}
+
+.editor-chart-ports-grid__port-title {
+    margin: 0;
+    padding: 0;
+    font-size: 12px;
+    line-height: 15px;
+    color: var(--ui-color-palette-gray-90);
+}
+
+.editor-chart-ports-grid__port-title.--left {
+    text-align: left;
+}
+
+.editor-chart-ports-grid__port-title.--right {
+    text-align: right;
+}

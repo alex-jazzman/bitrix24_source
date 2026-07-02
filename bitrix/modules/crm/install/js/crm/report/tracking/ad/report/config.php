@@ -8,12 +8,12 @@ return [
 	'css' => 'dist/report.bundle.css',
 	'js' => 'dist/report.bundle.js',
 	'rel' => [
-		'sidepanel',
-		'ui.progressbar',
-		'ui.fonts.opensans',
 		'main.core',
 		'main.core.events',
 		'main.popup',
+		'sidepanel',
+		'ui.fonts.opensans',
+		'ui.progressbar',
 	],
 	'skip_core' => false,
 ];

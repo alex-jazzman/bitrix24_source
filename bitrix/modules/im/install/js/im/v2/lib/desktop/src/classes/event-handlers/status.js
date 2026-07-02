@@ -3,8 +3,7 @@ import { Browser, Event } from 'main.core';
 import { Core } from 'im.v2.application.core';
 import { EventType, RestMethod, Settings } from 'im.v2.const';
 import { DesktopApi } from 'im.v2.lib.desktop-api';
-
-import { DesktopManager } from '../../desktop-manager';
+import { DesktopManager } from 'im.v2.lib.desktop';
 
 export class StatusHandler
 {

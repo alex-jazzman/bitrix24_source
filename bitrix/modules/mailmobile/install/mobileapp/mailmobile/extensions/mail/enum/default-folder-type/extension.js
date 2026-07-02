@@ -27,9 +27,9 @@ jn.define('mail/enum/default-folder-type', (require, exports, module) => {
 		static isFolderWithCounterStatus(value)
 		{
 			return value !== DefaultFolderType.OUTCOME.value
-				|| value === DefaultFolderType.DRAFTS.value
-				|| value === DefaultFolderType.TRASH.value
-				|| value === DefaultFolderType.SPAM.value
+				&& value !== DefaultFolderType.DRAFTS.value
+				&& value !== DefaultFolderType.TRASH.value
+				&& value !== DefaultFolderType.SPAM.value
 			;
 		}
 

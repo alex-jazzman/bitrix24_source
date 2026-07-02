@@ -9084,10 +9084,9 @@ if(typeof BX.Crm.EntityEditorEntityTag === "undefined")
 	{
 		if(!this._selectorDialog)
 		{
-			var parentEntityTypeId = this._schemeElement.getDataIntegerParam("parentEntityTypeId", null);
-
-			var entityId = (
-				BX.CrmEntityType.isDynamicTypeByTypeId(parentEntityTypeId)
+			this.parentEntityTypeId = this._schemeElement.getDataIntegerParam('parentEntityTypeId', null);
+			this.selectorDialogEntityType = (
+				BX.CrmEntityType.isDynamicTypeByTypeId(this.parentEntityTypeId)
 				? 'dynamic'
 				:  this._entityTypeName.toLowerCase()
 			);
@@ -9098,7 +9097,7 @@ if(typeof BX.Crm.EntityEditorEntityTag === "undefined")
 				multiple: false,
 				entities: [
 					{
-						id: entityId,
+						id: this.selectorDialogEntityType,
 						dynamicLoad: true,
 						dynamicSearch: this._schemeElement.getDataBooleanParam("enableSearch", true),
 						options: {
@@ -9119,10 +9118,11 @@ if(typeof BX.Crm.EntityEditorEntityTag === "undefined")
 				hideOnSelect: true,
 				hideOnDeselect: true,
 				showAvatars: false,
-				height: 200,
+				height: 300,
 				preselectedItems: [
-					this._entityInfo ? [entityId, this._entityInfo.getId()] : null
-				]
+					this._entityInfo ? [this.selectorDialogEntityType, this._entityInfo.getId()] : null,
+				],
+				footer: this.getFooter(this.parentEntityTypeId),
 			});
 		}
 
@@ -9151,6 +9151,125 @@ if(typeof BX.Crm.EntityEditorEntityTag === "undefined")
 	{
 		event.getData().item.getDialog().targetNode.value = '';
 		this.onItemDelete({});
+	};
+	BX.Crm.EntityEditorEntityTag.prototype.getFooter = function(entityTypeId)
+	{
+		const supportedEntities = [
+			BX.CrmEntityType.enumeration.lead,
+			BX.CrmEntityType.enumeration.deal,
+			BX.CrmEntityType.enumeration.quote,
+			BX.CrmEntityType.enumeration.smartinvoice,
+		];
+
+		if (!supportedEntities.includes(entityTypeId) && !BX.CrmEntityType.isDynamicTypeByTypeId(entityTypeId))
+		{
+			return null;
+		}
+
+		const dialogFooter = BX.Tag.render`
+			<a class="ui-selector-footer-link ui-selector-footer-link-add">
+				${this.getFooterCreateLabel(entityTypeId)}
+			</a>
+		`;
+
+		BX.Event.bind(
+			dialogFooter,
+			'click',
+			() => {
+				let createUrl = BX.Crm.Router.Instance.getItemDetailUrl(entityTypeId, 0);
+				createUrl.setQueryParams({
+					parentTypeId: this.getEditor().getEntityTypeId(),
+					parentId: this.getEditor().getEntityId(),
+				});
+
+				createUrl = createUrl.toString();
+
+				BX.SidePanel.Instance.open(
+					createUrl,
+					{
+						allowChangeHistory: false,
+						events: {
+							onOpen: ({ slider }) => {
+								BX.Crm.EntityEvent.subscribe(this.entityCreatedCallback.bind(this, slider));
+							},
+							onClose: () => {
+								BX.Crm.EntityEvent.unsubscribe(this.entityCreatedCallback);
+							},
+						},
+					},
+				);
+			},
+		);
+
+		return dialogFooter;
+	};
+	BX.Crm.EntityEditorEntityTag.prototype.getFooterCreateLabel = function(entityTypeId)
+	{
+		switch (entityTypeId)
+		{
+			case BX.CrmEntityType.enumeration.lead:
+				return this.getMessage('footerCreateLead');
+			case BX.CrmEntityType.enumeration.deal:
+				return this.getMessage('footerCreateDeal');
+			case BX.CrmEntityType.enumeration.smartinvoice:
+				return this.getMessage('footerCreateInvoice');
+			case BX.CrmEntityType.enumeration.quote:
+				return this.getMessage('footerCreateQuote');
+			default:
+				return this.getMessage('footerCreateDynamic');
+		}
+	};
+	BX.Crm.EntityEditorEntityTag.prototype.entityCreatedCallback = function(slider, eventName, eventData)
+	{
+		if (
+			eventName !== 'onCrmEntityCreate'
+			|| eventData.entityTypeId !== this.parentEntityTypeId
+		)
+		{
+			return;
+		}
+
+		const newItemEntityEditor = slider.getWindow()?.BX?.Crm?.EntityEditor?.getDefault();
+		if (
+			BX.Type.isNil(newItemEntityEditor)
+			|| newItemEntityEditor.getEntityId() !== eventData.entityId
+		)
+		{
+			return;
+		}
+
+		const newEntityId = Number(eventData.entityId);
+		if (!BX.Type.isInteger(newEntityId) || newEntityId <= 0)
+		{
+			return;
+		}
+
+		const dialog = this.getSelectorDialog();
+		dialog.hide();
+
+		dialog.subscribeOnce('onLoad', (event) => {
+			const selectedItemsArray = Array.from(dialog?.selectedItems ?? []);
+			if (selectedItemsArray.length !== 1)
+			{
+				return;
+			}
+
+			let item = selectedItemsArray.at(0);
+			item = item.toJSON();
+			item.tabs = ['recents'];
+			dialog.addItem(item);
+
+			let entityInfo = item.customData.entityInfo;
+			entityInfo = BX.CrmEntityInfo.create(entityInfo);
+			this.onEntitySelect(entityInfo);
+			this._selectorSearchNode.value = entityInfo.getTitle();
+		});
+
+		dialog.setPreselectedItems([[this.selectorDialogEntityType, newEntityId]]);
+		dialog.loadState = 'UNSENT';
+		dialog.load();
+
+		BX.Crm.EntityEvent.unsubscribe(this.entityCreatedCallback);
 	};
 	BX.Crm.EntityEditorEntityTag.prototype.getMessage = function(name)
 	{

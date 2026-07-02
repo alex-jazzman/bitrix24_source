@@ -1,5 +1,7 @@
+import { type JsonObject, Type } from 'main.core';
 import { Outline as OutlineIcons } from 'ui.icon-set.api.core';
 import { ChipDesign, ChipSize, Chip } from 'ui.system.chip.vue';
+
 import { McpSelector } from 'aiassistant.mcp-selector';
 
 import { Analytics } from 'im.v2.lib.analytics';
@@ -8,8 +10,6 @@ import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { McpHintService } from '../classes/mcp-hint-service';
 
 import './css/mcp-integration.css';
-
-import type { JsonObject } from 'main.core';
 
 const MAX_INTEGRATION_NAME_LENGTH = 20;
 const MARTA_ANALYTICS_CONTEXT = 'marta_chat';
@@ -22,11 +22,7 @@ export const McpIntegration = {
 	{
 		return {
 			isSelectorOpened: false,
-			mcpAuth: {
-				id: null,
-				name: null,
-				icon: null,
-			},
+			mcpAuth: null,
 		};
 	},
 	computed: {
@@ -35,7 +31,7 @@ export const McpIntegration = {
 		ChipSize: () => ChipSize,
 		hasSelectedMcpAuth(): boolean
 		{
-			return this.mcpAuth.id !== null;
+			return !Type.isNil(this.mcpAuth?.id);
 		},
 		chipDesign(): string
 		{
@@ -61,7 +57,7 @@ export const McpIntegration = {
 		},
 		mcpIcon(): ?{ src: string, alt: '' }
 		{
-			if (!this.mcpAuth.icon)
+			if (!this.mcpAuth?.icon)
 			{
 				return null;
 			}
@@ -73,7 +69,7 @@ export const McpIntegration = {
 		},
 		chipName(): string
 		{
-			if (!this.mcpAuth.name)
+			if (!this.mcpAuth?.name)
 			{
 				return this.loc('IM_CONTENT_AI_ASSISTANT_MCP_INTEGRATIONS');
 			}
@@ -159,11 +155,7 @@ export const McpIntegration = {
 		},
 		clear()
 		{
-			this.mcpAuth = {
-				id: null,
-				name: null,
-				icon: null,
-			};
+			this.mcpAuth = null;
 			this.$store.dispatch('aiAssistant/setMcpAuthId', null);
 		},
 		onChipClearClick()

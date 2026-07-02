@@ -32,7 +32,6 @@ export class BotsModel extends BuilderModel
 		return {
 			code: '',
 			type: BotType.bot,
-			appId: '',
 			isHidden: false,
 			isSupportOpenline: false,
 			isHuman: false,

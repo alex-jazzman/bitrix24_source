@@ -1,1 +1,98 @@
-.crm-kanban-item-badges{clear:both;display:block;overflow:hidden;padding-bottom:10px}.main-grid-wrapper .crm-kanban-item-badges{padding-bottom:0}.main-grid-cell-content:has(.crm-client-summary-wrapper) .crm-kanban-item-badges{margin-left:60px}.crm-kanban-item-badges-item{display:block;overflow:hidden;white-space:nowrap;-o-text-overflow:ellipsis;text-overflow:ellipsis;margin-bottom:8px}.main-grid-wrapper .crm-kanban-item-badges-item{margin-top:6px}.crm-kanban-item-badges-item:last-child{margin-bottom:0}.crm-kanban-item-badges-item-title,.crm-kanban-item-badges-item-value{display:block;overflow:hidden;white-space:nowrap;-o-text-overflow:ellipsis;text-overflow:ellipsis}.crm-kanban-item-badges-item-title{font-family:var(--ui-font-family-primary,var(--ui-font-family-helvetica));font-size:var(--ui-font-size-xs);color:var(--ui-color-palette-gray-50);margin-bottom:3px}.main-grid-wrapper .crm-kanban-item-badges-item-title{margin-top:10px;margin-left:1px;margin-bottom:0}.crm-kanban-item-badges-item-value{font-family:var(--ui-font-family-secondary,var(--ui-font-family-open-sans));font-weight:var(--ui-font-weight-bold);color:var(--ui-color-palette-gray-90);font-size:var(--ui-font-size-xs);white-space:normal;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;word-break:break-word}.crm-kanban-item-badges-item-value.--hint{cursor:help}.crm-kanban-item-badges-item-title-text{display:inline}.crm-kanban-item-badges-item-title-text,.crm-kanban-item-badges-status{overflow:hidden;white-space:nowrap;-o-text-overflow:ellipsis;text-overflow:ellipsis}.crm-kanban-item-badges-status{display:inline-block;max-width:100%;-webkit-box-sizing:border-box;box-sizing:border-box;margin-bottom:10px;padding:4px 8px 5px;border-radius:var(--ui-border-radius-md);text-transform:uppercase;-webkit-transition:all .25s ease;-o-transition:all .25s ease;transition:all .25s ease;margin-top:2px;font:10px/20px var(--ui-font-family-primary,var(--ui-font-family-helvetica));font-weight:var(--ui-font-weight-bold);line-height:11px}.main-grid-wrapper .crm-kanban-item-badges-status{margin-bottom:0;margin-top:0}
+.crm-kanban-item-badges {
+	clear: both;
+	display: block;
+	overflow: hidden;
+	padding-bottom: 10px;
+}
+
+.main-grid-wrapper .crm-kanban-item-badges {
+	padding-bottom: 0;
+}
+
+.main-grid-cell-content:has(.crm-client-summary-wrapper) .crm-kanban-item-badges {
+	margin-left: 60px;
+}
+
+.crm-kanban-item-badges-item {
+	display: block;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	margin-bottom: 8px;
+}
+
+.main-grid-wrapper .crm-kanban-item-badges-item {
+	margin-top: 6px;
+}
+
+.crm-kanban-item-badges-item:last-child {
+	margin-bottom: 0;
+}
+
+.crm-kanban-item-badges-item-title,
+.crm-kanban-item-badges-item-value {
+	display: block;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.crm-kanban-item-badges-item-title {
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-size: var(--ui-font-size-xs);
+	color: var(--ui-color-palette-gray-50);
+	margin-bottom: 3px;
+}
+
+.main-grid-wrapper .crm-kanban-item-badges-item-title {
+	margin-top: 10px;
+	margin-left: 1px;
+	margin-bottom: 0;
+}
+
+.crm-kanban-item-badges-item-value {
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold);
+	color: var(--ui-color-palette-gray-90);
+	font-size: var(--ui-font-size-xs);
+	white-space: normal;
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+	word-break: break-word;
+}
+
+.crm-kanban-item-badges-item-value.--hint {
+	cursor: help;
+}
+
+.crm-kanban-item-badges-item-title-text {
+	display: inline;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.crm-kanban-item-badges-status {
+	display: inline-block;
+	overflow: hidden;
+	max-width: 100%;
+	box-sizing: border-box;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	margin-bottom: 10px;
+	padding: 4px 8px 5px 8px;
+	border-radius: var(--ui-border-radius-md);
+	text-transform: uppercase;
+	transition: 250ms all ease;
+	margin-top: 2px;
+	font: 10px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-weight: var(--ui-font-weight-bold);
+	line-height: 11px;
+}
+
+.main-grid-wrapper .crm-kanban-item-badges-status {
+	margin-bottom: 0;
+	margin-top: 0;
+}
+/*# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3RtcC9RR1ZEbE0iXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IkFBQUEiLCJmaWxlIjoiLi4vLi4vLi4vdG1wL1FHVkRsTSIsInNvdXJjZXNDb250ZW50IjpbIi5jcm0ta2FuYmFuLWl0ZW0tYmFkZ2VzIHtcblx0Y2xlYXI6IGJvdGg7XG5cdGRpc3BsYXk6IGJsb2NrO1xuXHRvdmVyZmxvdzogaGlkZGVuO1xuXHRwYWRkaW5nLWJvdHRvbTogMTBweDtcbn1cblxuLm1haW4tZ3JpZC13cmFwcGVyIC5jcm0ta2FuYmFuLWl0ZW0tYmFkZ2VzIHtcblx0cGFkZGluZy1ib3R0b206IDA7XG59XG5cbi5tYWluLWdyaWQtY2VsbC1jb250ZW50OmhhcyguY3JtLWNsaWVudC1zdW1tYXJ5LXdyYXBwZXIpIC5jcm0ta2FuYmFuLWl0ZW0tYmFkZ2VzIHtcblx0bWFyZ2luLWxlZnQ6IDYwcHg7XG59XG5cbi5jcm0ta2FuYmFuLWl0ZW0tYmFkZ2VzLWl0ZW0ge1xuXHRkaXNwbGF5OiBibG9jaztcblx0b3ZlcmZsb3c6IGhpZGRlbjtcblx0d2hpdGUtc3BhY2U6IG5vd3JhcDtcblx0dGV4dC1vdmVyZmxvdzogZWxsaXBzaXM7XG5cdG1hcmdpbi1ib3R0b206IDhweDtcbn1cblxuLm1haW4tZ3JpZC13cmFwcGVyIC5jcm0ta2FuYmFuLWl0ZW0tYmFkZ2VzLWl0ZW0ge1xuXHRtYXJnaW4tdG9wOiA2cHg7XG59XG5cbi5jcm0ta2FuYmFuLWl0ZW0tYmFkZ2VzLWl0ZW06bGFzdC1jaGlsZCB7XG5cdG1hcmdpbi1ib3R0b206IDA7XG59XG5cbi5jcm0ta2FuYmFuLWl0ZW0tYmFkZ2VzLWl0ZW0tdGl0bGUsXG4uY3JtLWthbmJhbi1pdGVtLWJhZGdlcy1pdGVtLXZhbHVlIHtcblx0ZGlzcGxheTogYmxvY2s7XG5cdG92ZXJmbG93OiBoaWRkZW47XG5cdHdoaXRlLXNwYWNlOiBub3dyYXA7XG5cdHRleHQtb3ZlcmZsb3c6IGVsbGlwc2lzO1xufVxuXG4uY3JtLWthbmJhbi1pdGVtLWJhZGdlcy1pdGVtLXRpdGxlIHtcblx0Zm9udC1mYW1pbHk6IHZhcigtLXVpLWZvbnQtZmFtaWx5LXByaW1hcnksIHZhcigtLXVpLWZvbnQtZmFtaWx5LWhlbHZldGljYSkpO1xuXHRmb250LXNpemU6IHZhcigtLXVpLWZvbnQtc2l6ZS14cyk7XG5cdGNvbG9yOiB2YXIoLS11aS1jb2xvci1wYWxldHRlLWdyYXktNTApO1xuXHRtYXJnaW4tYm90dG9tOiAzcHg7XG59XG5cbi5tYWluLWdyaWQtd3JhcHBlciAuY3JtLWthbmJhbi1pdGVtLWJhZGdlcy1pdGVtLXRpdGxlIHtcblx0bWFyZ2luLXRvcDogMTBweDtcblx0bWFyZ2luLWxlZnQ6IDFweDtcblx0bWFyZ2luLWJvdHRvbTogMDtcbn1cblxuLmNybS1rYW5iYW4taXRlbS1iYWRnZXMtaXRlbS12YWx1ZSB7XG5cdGZvbnQtZmFtaWx5OiB2YXIoLS11aS1mb250LWZhbWlseS1zZWNvbmRhcnksIHZhcigtLXVpLWZvbnQtZmFtaWx5LW9wZW4tc2FucykpO1xuXHRmb250LXdlaWdodDogdmFyKC0tdWktZm9udC13ZWlnaHQtYm9sZCk7XG5cdGNvbG9yOiB2YXIoLS11aS1jb2xvci1wYWxldHRlLWdyYXktOTApO1xuXHRmb250LXNpemU6IHZhcigtLXVpLWZvbnQtc2l6ZS14cyk7XG5cdHdoaXRlLXNwYWNlOiBub3JtYWw7XG5cdGRpc3BsYXk6IC13ZWJraXQtYm94O1xuXHQtd2Via2l0LWxpbmUtY2xhbXA6IDM7XG5cdC13ZWJraXQtYm94LW9yaWVudDogdmVydGljYWw7XG5cdHdvcmQtYnJlYWs6IGJyZWFrLXdvcmQ7XG59XG5cbi5jcm0ta2FuYmFuLWl0ZW0tYmFkZ2VzLWl0ZW0tdmFsdWUuLS1oaW50IHtcblx0Y3Vyc29yOiBoZWxwO1xufVxuXG4uY3JtLWthbmJhbi1pdGVtLWJhZGdlcy1pdGVtLXRpdGxlLXRleHQge1xuXHRkaXNwbGF5OiBpbmxpbmU7XG5cdG92ZXJmbG93OiBoaWRkZW47XG5cdHdoaXRlLXNwYWNlOiBub3dyYXA7XG5cdHRleHQtb3ZlcmZsb3c6IGVsbGlwc2lzO1xufVxuXG4uY3JtLWthbmJhbi1pdGVtLWJhZGdlcy1zdGF0dXMge1xuXHRkaXNwbGF5OiBpbmxpbmUtYmxvY2s7XG5cdG92ZXJmbG93OiBoaWRkZW47XG5cdG1heC13aWR0aDogMTAwJTtcblx0Ym94LXNpemluZzogYm9yZGVyLWJveDtcblx0d2hpdGUtc3BhY2U6IG5vd3JhcDtcblx0dGV4dC1vdmVyZmxvdzogZWxsaXBzaXM7XG5cdG1hcmdpbi1ib3R0b206IDEwcHg7XG5cdHBhZGRpbmc6IDRweCA4cHggNXB4IDhweDtcblx0Ym9yZGVyLXJhZGl1czogdmFyKC0tdWktYm9yZGVyLXJhZGl1cy1tZCk7XG5cdHRleHQtdHJhbnNmb3JtOiB1cHBlcmNhc2U7XG5cdHRyYW5zaXRpb246IDI1MG1zIGFsbCBlYXNlO1xuXHRtYXJnaW4tdG9wOiAycHg7XG5cdGZvbnQ6IDEwcHgvMjBweCB2YXIoLS11aS1mb250LWZhbWlseS1wcmltYXJ5LCB2YXIoLS11aS1mb250LWZhbWlseS1oZWx2ZXRpY2EpKTtcblx0Zm9udC13ZWlnaHQ6IHZhcigtLXVpLWZvbnQtd2VpZ2h0LWJvbGQpO1xuXHRsaW5lLWhlaWdodDogMTFweDtcbn1cblxuLm1haW4tZ3JpZC13cmFwcGVyIC5jcm0ta2FuYmFuLWl0ZW0tYmFkZ2VzLXN0YXR1cyB7XG5cdG1hcmdpbi1ib3R0b206IDA7XG5cdG1hcmdpbi10b3A6IDA7XG59Il19 */

@@ -23,31 +23,31 @@ BX.Main.MenuManager.create();
 
  */
 
-import Popup from './popup/popup';
-import PopupManager from './popup/popup-manager';
-import CloseIconSize from './popup/popup-close-icon-size';
-import Menu from './menu/menu';
-import MenuManager from './menu/menu-manager';
-import MenuItem from './menu/menu-item';
-import type { PopupOptions, PopupTarget, PopupTargetOptions, PopupAnimationOptions } from './popup/popup-types';
-import { type MenuOptions, type MenuItemOptions } from './menu/menu-types';
-import type PositionEvent from './popup/position-event';
-
-import PopupWindow from './compatibility/popup-window';
-import PopupWindowButton from './compatibility/popup-window-button';
-import PopupWindowButtonLink from './compatibility/popup-window-button-link';
-import PopupWindowCustomButton from './compatibility/popup-window-custom-button';
-import PopupMenuWindow from './compatibility/popup-menu-window';
-import PopupMenuItem from './compatibility/popup-menu-item';
-import InputPopup from './compatibility/input-popup';
-import Button from './compatibility/button';
-import ButtonLink from './compatibility/buttonlink';
-import CustomButton from './compatibility/custombutton';
-
 import { Reflection } from 'main.core';
-
 import 'ui.design-tokens';
 import 'ui.fonts.opensans';
+
+import { Menu } from './menu/menu';
+import { MenuItem } from './menu/menu-item';
+import { MenuManager } from './menu/menu-manager';
+import { type MenuOptions, type MenuItemOptions } from './menu/menu-types';
+import { Popup } from './popup/popup';
+import { CloseIconSize } from './popup/popup-close-icon-size';
+import { PopupManager } from './popup/popup-manager';
+import { type PopupOptions, type PopupTarget, type PopupTargetOptions, type PopupAnimationOptions } from './popup/popup-types';
+import { type PositionEvent } from './popup/position-event';
+
+import { Button } from './compatibility/button';
+import { ButtonLink } from './compatibility/buttonlink';
+import { CustomButton } from './compatibility/custombutton';
+import { InputPopup } from './compatibility/input-popup';
+import { PopupMenuItem } from './compatibility/popup-menu-item';
+import { PopupMenuWindow } from './compatibility/popup-menu-window';
+import { PopupWindow } from './compatibility/popup-window';
+import { PopupWindowButton } from './compatibility/popup-window-button';
+import { PopupWindowButtonLink } from './compatibility/popup-window-button-link';
+import { PopupWindowCustomButton } from './compatibility/popup-window-custom-button';
+
 import './css/popup.css';
 
 export {
@@ -69,7 +69,7 @@ export type {
 	PositionEvent,
 };
 
-//Compatibility
+// Compatibility
 export {
 	PopupWindow,
 	PopupMenuWindow,
@@ -78,7 +78,7 @@ export {
 	MenuManager as PopupMenu,
 	PopupWindowButton,
 	PopupWindowButtonLink,
-	PopupWindowCustomButton
+	PopupWindowCustomButton,
 };
 
 const BX = Reflection.namespace('BX');

@@ -1,6 +1,9 @@
 <?php
 $MESS["JS_UI_VIEWER_DEFAULT_ERROR_TITLE"] = "Произошла ошибка";
 $MESS["JS_UI_VIEWER_IMAGE_VIEW_FULL_SIZE_MSGVER_1"] = "Открыть оригинал";
+$MESS["JS_UI_VIEWER_ITEM_ACTION_COPY_LINK"] = "Скопировать ссылку";
+$MESS["JS_UI_VIEWER_ITEM_ACTION_COPY_LINK_SUCCESS"] = "Ссылка скопирована";
+$MESS["JS_UI_VIEWER_ITEM_ACTION_COPY_LINK_ERROR"] = "Не удалось скопировать ссылку";
 $MESS["JS_UI_VIEWER_ITEM_ACTION_DOWNLOAD"] = "Скачать";
 $MESS["JS_UI_VIEWER_ITEM_ACTION_EDIT"] = "Редактировать";
 $MESS["JS_UI_VIEWER_ITEM_ACTION_SHARE"] = "Поделиться";

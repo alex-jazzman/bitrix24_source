@@ -1,30 +1,28 @@
 import { Extension } from 'main.core';
-import { EventEmitter, BaseEvent } from 'main.core.events';
+import { type SettingsCollection } from 'main.core.collections';
+import { EventEmitter, type BaseEvent } from 'main.core.events';
 
 import { Core } from 'im.v2.application.core';
-import { Analytics } from 'im.v2.lib.analytics';
-import { LocalStorageManager } from 'im.v2.lib.local-storage';
-import { ChatType, EventType, Layout, LocalStorageKey, ErrorCode } from 'im.v2.const';
-import { Logger } from 'im.v2.lib.logger';
-import { ChannelManager } from 'im.v2.lib.channel';
+import { ChatType, EventType, Layout, LocalStorageKey, ErrorCode, type ApplicationContext, type LayoutType, type ChatTypeItem } from 'im.v2.const';
 import { AccessManager } from 'im.v2.lib.access';
-import { FeatureManager } from 'im.v2.lib.feature';
+import { Analytics } from 'im.v2.lib.analytics';
 import { BulkActionsManager } from 'im.v2.lib.bulk-actions';
-
-import type { SettingsCollection } from 'main.core.collections';
-import type { ImModelLayout, ImModelChat } from 'im.v2.model';
-import type { ApplicationContext } from 'im.v2.const';
+import { ChannelManager } from 'im.v2.lib.channel';
+import { FeatureManager, Feature } from 'im.v2.lib.feature';
+import { LocalStorageManager } from 'im.v2.lib.local-storage';
+import { Logger } from 'im.v2.lib.logger';
+import { type ImModelLayout, type ImModelChat } from 'im.v2.model';
 
 type EntityId = string;
 
 const TypesWithoutContext: Set<string> = new Set([ChatType.comment]);
-const LayoutsWithoutLastOpenedElement: Set<string> = new Set([Layout.channel, Layout.market, Layout.taskComments]);
+const LayoutsWithoutLastOpenedElement: Set<LayoutType> = new Set([Layout.channel, Layout.market, Layout.taskComments]);
 
 export class LayoutManager
 {
 	static #instance: LayoutManager;
 	#emitter: EventEmitter;
-	#lastOpenedElement: { [layoutName: string]: EntityId } = {};
+	#lastOpenedElement: { [layoutName: LayoutType]: EntityId } = {};
 
 	static getInstance(): LayoutManager
 	{
@@ -105,14 +103,14 @@ export class LayoutManager
 		return this.setLayout(layoutConfig);
 	}
 
-	getLastOpenedElement(layoutName: string): null | string
+	getLastOpenedElement(layoutName: LayoutType): ?string
 	{
 		return this.#lastOpenedElement[layoutName] ?? null;
 	}
 
-	setLastOpenedElement(layoutName: string, entityId: string): void
+	setLastOpenedElement(layoutName: LayoutType, entityId: string): void
 	{
-		if (LayoutsWithoutLastOpenedElement.has(layoutName))
+		if (!this.#canSaveLastOpenedElement(layoutName, entityId))
 		{
 			return;
 		}
@@ -145,7 +143,7 @@ export class LayoutManager
 		EventEmitter.unsubscribe(EventType.desktop.onReload, this.#onDesktopReload.bind(this));
 	}
 
-	deleteLastOpenedElement(layoutName: string): void
+	deleteLastOpenedElement(layoutName: LayoutType): void
 	{
 		if (LayoutsWithoutLastOpenedElement.has(layoutName))
 		{
@@ -177,14 +175,14 @@ export class LayoutManager
 		return settings.get('isQuickAccessHidden', false);
 	}
 
-	isValidLayout(layoutName: string): boolean
+	isValidLayout(layoutName: LayoutType): boolean
 	{
 		return Object.values(Layout).includes(layoutName);
 	}
 
-	isChatLayout(layoutName: string): boolean
+	isChatLayout(layoutName: LayoutType): boolean
 	{
-		const chatLayouts = [
+		const chatLayouts = new Set([
 			Layout.chat,
 			Layout.channel,
 			Layout.copilot,
@@ -192,9 +190,16 @@ export class LayoutManager
 			Layout.openlinesV2,
 			Layout.collab,
 			Layout.taskComments,
-		];
+		]);
 
-		return chatLayouts.includes(layoutName);
+		return chatLayouts.has(layoutName);
+	}
+
+	isChatFormLayout(layoutName: LayoutType): boolean
+	{
+		const formLayouts = new Set([Layout.createChat, Layout.updateChat]);
+
+		return formLayouts.has(layoutName);
 	}
 
 	async #onGoToMessageContext(event: BaseEvent<{dialogId: string, messageId: number}>): void
@@ -313,8 +318,37 @@ export class LayoutManager
 		return Promise.resolve(true);
 	}
 
+	#canSaveLastOpenedElement(layoutName: LayoutType, entityId: string): boolean
+	{
+		if (LayoutsWithoutLastOpenedElement.has(layoutName))
+		{
+			return false;
+		}
+
+		const { type } = this.#getChat(entityId);
+		const isCollab = FeatureManager.isFeatureAvailable(Feature.isNestedListAvailable) && type === ChatType.collab;
+		if (isCollab)
+		{
+			return false;
+		}
+
+		return !this.#isNestedChat(layoutName, entityId);
+	}
+
 	#getChat(dialogId: string): ImModelChat
 	{
 		return Core.getStore().getters['chats/get'](dialogId, true);
+	}
+
+	#isNestedChat(layoutName: LayoutType, entityId: string): boolean
+	{
+		if (!this.isChatLayout(layoutName))
+		{
+			return false;
+		}
+
+		const { parentChatId } = this.#getChat(entityId);
+
+		return parentChatId > 0;
 	}
 }

@@ -3,7 +3,6 @@ import { Dom, Type } from 'main.core';
 import { DateTimeFormat, Timezone } from 'main.date';
 import ItemAnimation from './animations/item';
 import ItemNew from './animations/item-new';
-import Manager from './manager';
 
 /** @memberof BX.Crm.Timeline */
 export default class Steam
@@ -40,7 +39,7 @@ export default class Steam
 		}
 		this._editorContainer = BX(this.getSetting("editorContainer"));
 		this._manager = this.getSetting("manager");
-		if (!(this._manager instanceof Manager))
+		if (!Type.isObject(this._manager))
 		{
 			throw "Timeline. Manager instance is not found.";
 		}

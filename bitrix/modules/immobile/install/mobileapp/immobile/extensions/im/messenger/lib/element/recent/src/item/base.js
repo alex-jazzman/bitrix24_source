@@ -31,6 +31,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		UnmuteAction,
 		ProfileAction,
 		HideAction,
+		AddToFolderAction,
 	} = require('im/messenger/lib/element/recent/item/action/action');
 	const {
 		CounterPrefix,
@@ -134,6 +135,8 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		 */
 		toRecentWidgetItem()
 		{
+			const { model, ...paramsWithoutModel } = this.params;
+
 			return {
 				id: this.id,
 				title: this.title,
@@ -151,7 +154,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 				sortValues: this.sortValues,
 				menuMode: this.menuMode,
 				actions: this.actions,
-				params: this.params,
+				params: paramsWithoutModel,
 				styles: this.styles,
 				isSuperEllipseIcon: this.isSuperEllipseIcon,
 			};
@@ -843,21 +846,9 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 
 			const id = modelMessage?.id || modelMessage?.templateId;
 
-			let messageText = '';
-			if (id)
+			if (!id)
 			{
-				const messageFiles = serviceLocator.get('core').getStore().getters['messagesModel/getMessageFiles'](id);
-				messageText = parser.simplify({
-					text: modelMessage.text,
-					attach: modelMessage?.params?.ATTACH ?? false,
-					files: messageFiles,
-					showFilePrefix: false,
-					sticker: Type.isPlainObject(modelMessage?.stickerParams),
-				});
-			}
-			else
-			{
-				messageText = parser.simplify({
+				return parser.simplify({
 					text: message.text,
 					attach: message?.params?.withAttach ?? false,
 					files: message?.params?.withFile ?? false,
@@ -866,7 +857,23 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 				});
 			}
 
-			return messageText;
+			const isBuilderMessage = modelMessage.builder && modelMessage.builder.blocks;
+			if (isBuilderMessage && !Type.isStringFilled(modelMessage.text))
+			{
+				return parser.simplify({
+					text: modelMessage.builder?.description,
+				});
+			}
+
+			const messageFiles = serviceLocator.get('core').getStore().getters['messagesModel/getMessageFiles'](id);
+
+			return parser.simplify({
+				text: modelMessage.text,
+				attach: modelMessage?.params?.ATTACH ?? false,
+				files: messageFiles,
+				showFilePrefix: false,
+				sticker: Type.isPlainObject(modelMessage?.stickerParams),
+			});
 		}
 
 		/**
@@ -935,6 +942,24 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		getProfileAction()
 		{
 			return ProfileAction;
+		}
+
+		/**
+		 * @return {?RecentWidgetItemAction}
+		 */
+		getAddToFolderAction()
+		{
+			if (!Feature.isChatFoldersAvailable)
+			{
+				return null;
+			}
+
+			if (this.getDialogHelper()?.isNested === true)
+			{
+				return null;
+			}
+
+			return AddToFolderAction;
 		}
 
 		getImageUrlByFileName(fileName = '')

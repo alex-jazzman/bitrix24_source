@@ -9,8 +9,8 @@ return [
 	'js' => 'dist/popup.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'ui.vue',
 		'im.const',
+		'ui.vue',
 	],
 	'skip_core' => true,
 ];

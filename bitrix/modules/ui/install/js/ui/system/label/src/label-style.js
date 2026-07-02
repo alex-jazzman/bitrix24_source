@@ -13,7 +13,12 @@ export const LabelStyle = Object.freeze({
 	TINTED: 'tinted',
 	TINTED_SUCCESS: 'tintedSuccess',
 	TINTED_WARNING: 'tintedWarning',
+	TINTED_ALERT: 'tintedAlert',
+	TINTED_VIOLET: 'tintedViolet',
 	TINTED_NO_ACCENT: 'tintedNoAccent',
 	COLLAB: 'collab',
 	OUTLINE_NO_ACCENT: 'outlineNoAccent',
+	FILLED_BITRIX_GPT: 'filledBitrixGpt',
+	TINTED_BITRIX_GPT: 'tintedBitrixGpt',
+	OUTLINE_BITRIX_GPT: 'outlineBitrixGpt',
 });

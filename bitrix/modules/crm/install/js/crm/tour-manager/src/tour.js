@@ -1,7 +1,6 @@
-import { Guide } from 'ui.tour';
+import { type Guide } from 'ui.tour';
 
-export interface TourInterface
-{
+export type TourInterface = {
 	getGuide(): Guide;
 	canShow(): boolean;
 	show(): void;

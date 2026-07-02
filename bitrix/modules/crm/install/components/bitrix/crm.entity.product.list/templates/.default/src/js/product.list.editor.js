@@ -560,6 +560,16 @@ export class Editor
 		return this.getSettingValue('allowCatalogPriceEdit', false) === true;
 	}
 
+	isAllowReservation(): boolean
+	{
+		return this.getSettingValue('allowReservation', false) === true;
+	}
+
+	getDefaultDateReservation(): boolean
+	{
+		return this.getSettingValue('defaultDateReservation');
+	}
+
 	canSaveCatalogPrice(): boolean
 	{
 		return this.getSettingValue('allowCatalogPriceSave', false) === true;
@@ -1601,6 +1611,12 @@ export class Editor
 			)
 			{
 				product.changeBasePrice(fields.CATALOG_PRICE);
+			}
+			if (!this.isAllowReservation())
+			{
+				product.setField('DATE_RESERVE_END', this.getDefaultDateReservation());
+				product.setField('STORE_ID', null);
+				product.resetReserveFields();
 			}
 		}
 		else if (this.getSettingValue('newRowPosition') === 'bottom')

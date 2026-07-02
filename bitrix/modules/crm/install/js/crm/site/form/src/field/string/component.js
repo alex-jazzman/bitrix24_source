@@ -54,11 +54,15 @@ const FieldString = {
 	template: `
 		<div class="b24-form-control-container b24-form-control-icon-after">
 			<input class="b24-form-control"
+				:id="fieldId"
 				:type="field.getInputType()"
 				:name="field.getInputName()"
 				:class="inputClasses"
 				:readonly="readonly || field.isReadonly()"
 				:autocomplete="field.getInputAutocomplete()"
+				:aria-required="ariaRequired"
+				:aria-invalid="ariaInvalid"
+				:aria-describedby="ariaDescribedby"
 				v-model="value"
 				@blur="$emit('input-blur', $event)"
 				@focus="$emit('input-focus', $event)"
@@ -66,25 +70,37 @@ const FieldString = {
 				@input="onInput"
 				@keydown="$emit('input-key-down', $event)"
 			>
-			<div class="b24-form-control-label">
+			<label class="b24-form-control-label" :for="fieldId">
 				{{ label }} 
 				<span class="b24-form-control-required"
 					v-show="field.required"
-				>*</span>				
-			</div>
+					aria-hidden="true"
+				>*</span>
+			</label>
 			<div class="b24-form-icon-after b24-form-icon-remove"
 				:title="field.messages.get('fieldRemove')"
+				:aria-label="field.messages.get('fieldRemove')"
+				role="button"
+				tabindex="0"
 				v-if="itemIndex > 0"
 				@click="deleteItem"
+				@keydown.enter="deleteItem"
+				@keydown.space.prevent="deleteItem"
 			></div>
 			<div class="b24-form-icon-after b24-form-icon-remove"
 				:title="buttonClear"
+				:aria-label="buttonClear"
+				role="button"
+				tabindex="0"
 				v-if="buttonClear && itemIndex === 0 && value"
 				@click="clearItem"
+				@keydown.enter="clearItem"
+				@keydown.space.prevent="clearItem"
 			></div>
 			<field-item-alert
 				v-bind:field="field"
 				v-bind:item="item"
+				v-bind:itemIndex="itemIndex"
 			></field-item-alert>
 		</div>
 	`,
@@ -104,4 +120,4 @@ const FieldString = {
 export {
 	MixinString,
 	FieldString,
-}
+};

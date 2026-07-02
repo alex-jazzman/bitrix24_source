@@ -13,8 +13,8 @@ IncludeModuleLangFile(__FILE__);
 
 if(!$USER->IsAuthorized()):
 ?>
-<div class="access-container"><?echo GetMessage("acc_dialog_access_denied")?></div>
-<?
+<div class="access-container"><?= GetMessage("acc_dialog_access_denied")?></div>
+<?php
 	die();
 endif;
 
@@ -50,13 +50,13 @@ if(isset($_REQUEST["mode"]) && $_REQUEST["mode"] == "save_lru" && check_bitrix_s
 }
 ?>
 <div class="access-container">
-<?
+<?php
 $first = '';
 $arHtml = $access->GetFormHtml();
 if(!empty($arHtml)):
 ?>
 <div class="access-providers-container">
-<?
+<?php
 foreach($arHtml as $ID=>$provider)
 	if($provider["SELECTED"])
 		$first = $ID;
@@ -65,26 +65,26 @@ foreach($arHtml as $ID=>$provider):
 	if($first == '')
 		$first = $ID;
 ?>
-	<a href="javascript:void(0);" onclick="BX.Access.SelectProvider('<?=$ID?>')" id="access_btn_<?=$ID?>" class="access-provider-button<?if($first == $ID) echo " access-provider-button-selected"?>" hidefocus="true"><?=htmlspecialcharsbx($provider["NAME"])?></a>
+	<a href="javascript:void(0);" onclick="BX.Access.SelectProvider('<?=$ID?>')" id="access_btn_<?=$ID?>" class="access-provider-button<?php if($first == $ID) echo " access-provider-button-selected"?>" hidefocus="true"><?=htmlspecialcharsbx($provider["NAME"])?></a>
 	<div class="access-buttons-delimiter"></div>
-<?endforeach;?>
+<?php endforeach;?>
 </div>
 
 <div class="access-delimiter"></div>
 
 <div class="access-content-container" id="access_content_container">
-<?foreach($arHtml as $ID=>$provider):?>
-	<div id="access_provider_<?=$ID?>" class="access-content-provider-container"<?if($first <> $ID) echo ' style="display:none"'?>><?=$provider["HTML"]?></div>
-<?endforeach;?>
+<?php foreach($arHtml as $ID=>$provider):?>
+	<div id="access_provider_<?=$ID?>" class="access-content-provider-container"<?php if($first <> $ID) echo ' style="display:none"'?>><?=$provider["HTML"]?></div>
+<?php endforeach;?>
 </div>
-<?endif?>
+<?php endif?>
 
 <div class="access-selected-container">
 	<div class="bx-finder-box-selected-title bx-finder-box-selected-title-no-line" id="access_selected_title"><?=GetMessage("acc_dialog_sel")?>&nbsp;(0)</div>
-<?foreach($arHtml as $ID=>$provider):?>
+<?php foreach($arHtml as $ID=>$provider):?>
 	<div class="bx-finder-box-selected-title" id="access_selected_provider_<?=$ID?>" style="display:none"><?=htmlspecialcharsbx($provider["NAME"])?>&nbsp;<span id="access_sel_count_<?=$ID?>"></span></div>
 	<div class="bx-finder-box-selected-items" id="access_selected_items_<?=$ID?>"></div>
-<?endforeach?>
+<?php endforeach?>
 </div>
 
 </div>
@@ -94,5 +94,5 @@ BX.Finder(BX('access_content_container'), 'Access', <?= Json::encode(array_keys(
 BX.Access.SelectProvider('<?=$first?>');
 BX.Access.obProviderNames = <?= Json::encode($access->GetProviderNames()) ?>;
 </script>
-<?
+<?php
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin_js.php");

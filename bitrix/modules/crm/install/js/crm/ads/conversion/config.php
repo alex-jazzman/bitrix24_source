@@ -8,10 +8,10 @@ return [
 	'css' => 'dist/registry.bundle.css',
 	'js' => 'dist/registry.bundle.js',
 	'rel' => [
-		'ui.sidepanel.layout',
-		'seo.ads.login',
 		'main.core',
+		'seo.ads.login',
 		'ui.fonts.opensans',
+		'ui.sidepanel.layout',
 	],
 	'skip_core' => false,
 ];

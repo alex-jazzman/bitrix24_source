@@ -62,8 +62,8 @@ if ($arResult['ALLOW_QRCODE_AUTH'])
 										/>
 										<i
 											class="ui-icon-set --opened-eye intranet-text-input__eye-icon"
-											@mousedown="onEyeMouseDown"
-											@mouseup="onEyeMouseUp"
+											@pointerdown="onEyeMouseDown"
+											@pointerup="onEyeMouseUp"
 										></i>
 									</div>
 								</div>

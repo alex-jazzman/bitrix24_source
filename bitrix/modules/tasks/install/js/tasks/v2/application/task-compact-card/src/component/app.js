@@ -1,4 +1,4 @@
-import { Event, Type } from 'main.core';
+import { Event, Loc, Text, Type } from 'main.core';
 import { EventEmitter, BaseEvent } from 'main.core.events';
 import type { Popup } from 'main.popup';
 
@@ -11,6 +11,7 @@ import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
 import { Core } from 'tasks.v2.core';
+import { TaskCard } from 'tasks.v2.application.task-card';
 import { EventName, Model, CardType, GroupType, Analytics } from 'tasks.v2.const';
 import { AddTaskButton } from 'tasks.v2.component.add-task-button';
 import { Title as FieldTitle } from 'tasks.v2.component.fields.title';
@@ -28,6 +29,7 @@ import { idUtils } from 'tasks.v2.lib.id-utils';
 import { analytics } from 'tasks.v2.lib.analytics';
 import { fileService, EntityTypes } from 'tasks.v2.provider.service.file-service';
 import { taskService } from 'tasks.v2.provider.service.task-service';
+import { viewersService } from 'tasks.v2.provider.service.viewers-service';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 import type { GroupModel } from 'tasks.v2.model.groups';
 import type { CheckListModel } from 'tasks.v2.model.check-list';
@@ -267,7 +269,7 @@ export const App = {
 		{
 			const checklists = this.checklist;
 
-			const [id, error] = await taskService.add(this.task);
+			const [id, error] = await taskService.add({ task: this.task, view: true });
 
 			if (!id)
 			{
@@ -284,6 +286,8 @@ export const App = {
 			}
 
 			this.taskId = id;
+
+			this.showTaskAddedNotification();
 
 			this.sendAddTaskAnalytics(true, checklists);
 
@@ -306,6 +310,11 @@ export const App = {
 					},
 				],
 			}));
+
+			if (!this.isTemplate)
+			{
+				viewersService.count(this.taskId);
+			}
 
 			this.close();
 		},
@@ -365,6 +374,26 @@ export const App = {
 					taskId: this.taskId,
 				});
 			}
+		},
+		showTaskAddedNotification(): void
+		{
+			const url = TaskCard.getUrl(this.taskId);
+
+			BX.UI.Notification.Center.notify({
+				id: Text.getRandom(),
+				content: Loc.getMessage('TASKS_V2_TCC_NOTIFY_TASK_CREATED'),
+				actions: [
+					{
+						title: Loc.getMessage('TASKS_V2_TCC_NOTIFY_TASK_DO_VIEW'),
+						events: {
+							click: (event, balloon) => {
+								balloon.close();
+								BX.SidePanel.Instance.open(url);
+							},
+						},
+					},
+				],
+			});
 		},
 		handleShowingPopup(event: BaseEvent): void
 		{
@@ -441,7 +470,7 @@ export const App = {
 
 			if (event.key === 'Enter' && (event.ctrlKey || event.metaKey))
 			{
-				this.$refs.addTaskButton.handleClick();
+				void this.$refs.addTaskButton.handleClick();
 			}
 		},
 		destroy(): void

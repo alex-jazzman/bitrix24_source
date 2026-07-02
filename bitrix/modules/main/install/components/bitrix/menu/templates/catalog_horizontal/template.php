@@ -32,68 +32,68 @@ $menuBlockId = "catalog_menu_".$this->randString();
 <div class="bx-top-nav bx-<?=$arParams["MENU_THEME"]?>" id="<?=$menuBlockId?>">
 	<nav class="bx-top-nav-container" id="cont_<?=$menuBlockId?>">
 		<ul class="bx-nav-list-1-lvl" id="ul_<?=$menuBlockId?>">
-		<?foreach($arResult["MENU_STRUCTURE"] as $itemID => $arColumns):?>     <!-- first level-->
-			<?$existPictureDescColomn = ($arResult["ALL_ITEMS"][$itemID]["PARAMS"]["picture_src"] || $arResult["ALL_ITEMS"][$itemID]["PARAMS"]["description"]) ? true : false;?>
+		<?php foreach($arResult["MENU_STRUCTURE"] as $itemID => $arColumns):?>     <!-- first level-->
+			<?php $existPictureDescColomn = ($arResult["ALL_ITEMS"][$itemID]["PARAMS"]["picture_src"] || $arResult["ALL_ITEMS"][$itemID]["PARAMS"]["description"]) ? true : false;?>
 			<li
-				class="bx-nav-1-lvl bx-nav-list-<?=($existPictureDescColomn) ? count($arColumns)+1 : count($arColumns)?>-col <?if($arResult["ALL_ITEMS"][$itemID]["SELECTED"]):?>bx-active<?endif?><?if (is_array($arColumns) && !empty($arColumns)):?> bx-nav-parent<?endif?>"
+				class="bx-nav-1-lvl bx-nav-list-<?=($existPictureDescColomn) ? count($arColumns)+1 : count($arColumns)?>-col <?php if($arResult["ALL_ITEMS"][$itemID]["SELECTED"]):?>bx-active<?php endif?><?php if (is_array($arColumns) && !empty($arColumns)):?> bx-nav-parent<?php endif?>"
 				onmouseover="BX.CatalogMenu.itemOver(this);"
 				onmouseout="BX.CatalogMenu.itemOut(this)"
-				<?if (is_array($arColumns) && !empty($arColumns)):?>
+				<?php if (is_array($arColumns) && !empty($arColumns)):?>
 					data-role="bx-menu-item"
-				<?endif?>
+				<?php endif?>
 				onclick="if (BX.hasClass(document.documentElement, 'bx-touch')) obj_<?=$menuBlockId?>.clickInMobile(this, event);"
 			>
 				<a
 					href="<?=$arResult["ALL_ITEMS"][$itemID]["LINK"]?>"
-					<?if (is_array($arColumns) && !empty($arColumns) && $existPictureDescColomn):?>
+					<?php if (is_array($arColumns) && !empty($arColumns) && $existPictureDescColomn):?>
 						onmouseover="window.obj_<?=$menuBlockId?> && obj_<?=$menuBlockId?>.changeSectionPicure(this, '<?=$itemID?>');"
-					<?endif?>
+					<?php endif?>
 				>
 					<span>
 						<?=$arResult["ALL_ITEMS"][$itemID]["TEXT"]?>
-						<?if (is_array($arColumns) && !empty($arColumns)):?><i class="fa fa-angle-down"></i><?endif?>
+						<?php if (is_array($arColumns) && !empty($arColumns)):?><i class="fa fa-angle-down"></i><?php endif?>
 					</span>
 				</a>
-			<?if (is_array($arColumns) && !empty($arColumns)):?>
+			<?php if (is_array($arColumns) && !empty($arColumns)):?>
 				<span class="bx-nav-parent-arrow" onclick="obj_<?=$menuBlockId?>.toggleInMobile(this)"><i class="fa fa-angle-left"></i></span> <!-- for mobile -->
 				<div class="bx-nav-2-lvl-container">
-					<?foreach($arColumns as $key=>$arRow):?>
+					<?php foreach($arColumns as $key=>$arRow):?>
 						<ul class="bx-nav-list-2-lvl">
-						<?foreach($arRow as $itemIdLevel_2=>$arLevel_3):?>  <!-- second level-->
+						<?php foreach($arRow as $itemIdLevel_2=>$arLevel_3):?>  <!-- second level-->
 							<li class="bx-nav-2-lvl">
 								<a
 									href="<?=$arResult["ALL_ITEMS"][$itemIdLevel_2]["LINK"]?>"
-									<?if ($existPictureDescColomn):?>
+									<?php if ($existPictureDescColomn):?>
 										onmouseover="window.obj_<?=$menuBlockId?> && obj_<?=$menuBlockId?>.changeSectionPicure(this, '<?=$itemIdLevel_2?>');"
-									<?endif?>
+									<?php endif?>
 									data-picture="<?=$arResult["ALL_ITEMS"][$itemIdLevel_2]["PARAMS"]["picture_src"]?>"
-									<?if($arResult["ALL_ITEMS"][$itemIdLevel_2]["SELECTED"]):?>class="bx-active"<?endif?>
+									<?php if($arResult["ALL_ITEMS"][$itemIdLevel_2]["SELECTED"]):?>class="bx-active"<?php endif?>
 								>
 									<span><?=$arResult["ALL_ITEMS"][$itemIdLevel_2]["TEXT"]?></span>
 								</a>
-							<?if (is_array($arLevel_3) && !empty($arLevel_3)):?>
+							<?php if (is_array($arLevel_3) && !empty($arLevel_3)):?>
 								<ul class="bx-nav-list-3-lvl">
-								<?foreach($arLevel_3 as $itemIdLevel_3):?>	<!-- third level-->
+								<?php foreach($arLevel_3 as $itemIdLevel_3):?>	<!-- third level-->
 									<li class="bx-nav-3-lvl">
 										<a
 											href="<?=$arResult["ALL_ITEMS"][$itemIdLevel_3]["LINK"]?>"
-											<?if ($existPictureDescColomn):?>
+											<?php if ($existPictureDescColomn):?>
 												onmouseover="window.obj_<?=$menuBlockId?> && obj_<?=$menuBlockId?>.changeSectionPicure(this, '<?=$itemIdLevel_3?>');return false;"
-											<?endif?>
+											<?php endif?>
 											data-picture="<?=$arResult["ALL_ITEMS"][$itemIdLevel_3]["PARAMS"]["picture_src"]?>"
-											<?if($arResult["ALL_ITEMS"][$itemIdLevel_3]["SELECTED"]):?>class="bx-active"<?endif?>
+											<?php if($arResult["ALL_ITEMS"][$itemIdLevel_3]["SELECTED"]):?>class="bx-active"<?php endif?>
 										>
 											<span><?=$arResult["ALL_ITEMS"][$itemIdLevel_3]["TEXT"]?></span>
 										</a>
 									</li>
-								<?endforeach;?>
+								<?php endforeach;?>
 								</ul>
-							<?endif?>
+							<?php endif?>
 							</li>
-						<?endforeach;?>
+						<?php endforeach;?>
 						</ul>
-					<?endforeach;?>
-					<?if ($existPictureDescColomn):?>
+					<?php endforeach;?>
+					<?php if ($existPictureDescColomn):?>
 						<div class="bx-nav-list-2-lvl bx-nav-catinfo dbg" data-role="desc-img-block">
 							<a href="<?=$arResult["ALL_ITEMS"][$itemID]["LINK"]?>">
 								<img src="<?=$arResult["ALL_ITEMS"][$itemID]["PARAMS"]["picture_src"]?>" alt="">
@@ -101,11 +101,11 @@ $menuBlockId = "catalog_menu_".$this->randString();
 							<p><?=$arResult["ALL_ITEMS"][$itemID]["PARAMS"]["description"]?></p>
 						</div>
 						<div class="bx-nav-catinfo-back"></div>
-					<?endif?>
+					<?php endif?>
 				</div>
-			<?endif?>
+			<?php endif?>
 			</li>
-		<?endforeach;?>
+		<?php endforeach;?>
 		</ul>
 		<div style="clear: both;"></div>
 	</nav>

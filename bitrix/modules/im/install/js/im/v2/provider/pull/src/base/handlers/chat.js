@@ -312,6 +312,7 @@ export class ChatPullHandler
 		users?: {[userId: string]: RawUser},
 		dialogId: string,
 		userCount: number,
+		guestCount: number,
 		chatExtranet: boolean,
 		containsCollaber: boolean,
 	})
@@ -326,6 +327,7 @@ export class ChatPullHandler
 			dialogId: params.dialogId,
 			fields: {
 				userCounter: params.userCount,
+				guestCount: params.guestCount,
 				extranet: params.chatExtranet,
 				containsCollaber: params.containsCollaber,
 			},

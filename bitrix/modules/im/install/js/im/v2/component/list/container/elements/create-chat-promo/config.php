@@ -9,10 +9,10 @@ return [
 	'js' => 'dist/create-chat-promo.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'im.v2.const',
-		'im.v2.component.elements.popup',
-		'ui.lottie',
 		'im.v2.component.elements.button',
+		'im.v2.component.elements.popup',
+		'im.v2.const',
+		'ui.lottie',
 	],
 	'skip_core' => true,
 ];

@@ -69,6 +69,12 @@ export const FooterCreate = {
 			return Core.getParams().features.isTemplateEnabled;
 		},
 	},
+	methods: {
+		handleAddClick(): void
+		{
+			void this.$refs.addTaskButton.handleClick();
+		},
+	},
 	template: `
 		<div class="tasks-full-card-footer print-ignore">
 			<div class="tasks-full-card-footer-create">
@@ -78,6 +84,7 @@ export const FooterCreate = {
 						@addTask="$emit('addTask')"
 						@copyTask="$emit('copyTask', $event)"
 						@fromTemplate="$emit('fromTemplate', $event)"
+						ref="addTaskButton"
 					/>
 					<UiButton
 						:text="loc('TASKS_V2_TASK_FULL_CARD_CANCEL')"

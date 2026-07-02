@@ -1,2 +1,42 @@
-this.BX=this.BX||{},this.BX.Booking=this.BX.Booking||{},function(n){"use strict";const i={include:"none"},t=Object.freeze({all:"all",left:"left",right:"right",none:"none"});n.IncludeBoundaries=t,n.inInterval=function(n,e,r){if(!Array.isArray(e)&&e.length<2)throw new TypeError('"interval" must be an numeric array');const{include:o}={...i,...r};return o===t.all?e[0]<=n&&n<=e[1]:o===t.left?e[0]<=n&&n<e[1]:o===t.right?e[0]<n&&n<=e[1]:e[0]<n&&n<e[1]}}(this.BX.Booking.Lib=this.BX.Booking.Lib||{});
+/* eslint-disable */
+this.BX = this.BX || {};
+this.BX.Booking = this.BX.Booking || {};
+(function (exports) {
+	'use strict';
+
+	const defaultOptions = {
+		include: 'none'
+	};
+	const IncludeBoundaries = Object.freeze({
+		all: 'all',
+		left: 'left',
+		right: 'right',
+		none: 'none'
+	});
+	function inInterval(value, interval, options) {
+		if (!Array.isArray(interval) && interval.length < 2) {
+			throw new TypeError('"interval" must be an numeric array');
+		}
+		const {
+			include
+		} = {
+			...defaultOptions,
+			...options
+		};
+		if (include === IncludeBoundaries.all) {
+			return interval[0] <= value && value <= interval[1];
+		}
+		if (include === IncludeBoundaries.left) {
+			return interval[0] <= value && value < interval[1];
+		}
+		if (include === IncludeBoundaries.right) {
+			return interval[0] < value && value <= interval[1];
+		}
+		return interval[0] < value && value < interval[1];
+	}
+
+	exports.IncludeBoundaries = IncludeBoundaries;
+	exports.inInterval = inInterval;
+
+})(this.BX.Booking.Lib = this.BX.Booking.Lib || {});
 //# sourceMappingURL=in-interval.bundle.js.map

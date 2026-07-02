@@ -7,4 +7,6 @@ export const DRAG_ITEM_SLOT_NAMES: { [string]: string } = {
 	[BLOCK_TYPES.COMPLEX]: `drag-item:${BLOCK_TYPES.COMPLEX}`,
 	[BLOCK_TYPES.FRAME]: `drag-item:${BLOCK_TYPES.FRAME}`,
 	[BLOCK_TYPES.TOOL]: `drag-item:${BLOCK_TYPES.TOOL}`,
+	[BLOCK_TYPES.OPERATORS]: `drag-item:${BLOCK_TYPES.OPERATORS}`,
+	[BLOCK_TYPES.SERVICES]: `drag-item:${BLOCK_TYPES.SERVICES}`,
 };

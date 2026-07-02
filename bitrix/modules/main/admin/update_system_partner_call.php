@@ -46,7 +46,7 @@ else
 }
 
 $arUpdatedModulesList = array();
-$loadResult = CUpdateClientPartner::LoadModulesUpdates($errorMessage, $arUpdateDescription, LANG, $stableVersionsOnly, $arRequestedModules, array_key_exists("reqm", $_REQUEST));
+$loadResult = CUpdateClientPartner::LoadModulesUpdates($errorMessage, $arUpdateDescription, LANGUAGE_ID, $stableVersionsOnly, $arRequestedModules, array_key_exists("reqm", $_REQUEST));
 
 if ($loadResult == "S")
 {

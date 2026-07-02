@@ -1,18 +1,25 @@
 import { Type } from 'main.core';
+import ActionBar from '../components/content-blocks/action-bar/action-bar';
 import AddressBlock from '../components/content-blocks/address';
+import ClientCommunication from '../components/content-blocks/client-communication';
 import { ClientMark } from '../components/content-blocks/client-mark';
 import CommentContent from '../components/content-blocks/comment-content';
+import { CallScoringPill } from '../components/content-blocks/copilot/call-scoring-pill';
+import { CallScoringV2 } from '../components/content-blocks/copilot/call-scoring-v2.js';
+import { CallScoring } from '../components/content-blocks/copilot/call-scoring.js';
 import DateBlock from '../components/content-blocks/date';
 import DatePill from '../components/content-blocks/date-pill';
 import EditableDate from '../components/content-blocks/editable-date';
 import { EditableDescription } from '../components/content-blocks/editable-description';
 import EditableText from '../components/content-blocks/editable-text';
+import { ErrorBlock } from '../components/content-blocks/error-block';
 import { FileList } from '../components/content-blocks/file-list';
+import GroupBlocks from '../components/content-blocks/group-blocks';
 import { InfoGroup } from '../components/content-blocks/info-group';
 import ItemSelector from '../components/content-blocks/item-selector';
 import LineOfTextBlocks from '../components/content-blocks/line-of-text-blocks';
-import LinkBlock from '../components/content-blocks/link';
 import LineOfTextBlocksButton from '../components/content-blocks/line-of-text-blocks-button';
+import LinkBlock from '../components/content-blocks/link';
 import Money from '../components/content-blocks/money';
 import { MoneyPill } from '../components/content-blocks/money-pill';
 import { Note } from '../components/content-blocks/note';
@@ -21,13 +28,10 @@ import { RestAppLayoutBlocks } from '../components/content-blocks/rest-app-layou
 import { SmsMessage } from '../components/content-blocks/sms-message';
 import TextBlock from '../components/content-blocks/text';
 import { TimelineAudio } from '../components/content-blocks/timeline-audio';
-import { CallScoringPill } from '../components/content-blocks/copilot/call-scoring-pill';
-import { CallScoring } from '../components/content-blocks/copilot/call-scoring.js';
 import DeadlineAndPingSelector from '../components/content-blocks/todo/deadline-and-ping-selector';
 import PingSelector from '../components/content-blocks/todo/ping-selector';
 import WithTitle from '../components/content-blocks/with-title';
 import WorkflowEfficiency from '../components/content-blocks/workflow-efficiency';
-import { ErrorBlock } from '../components/content-blocks/error-block';
 import ConfigurableItem from '../configurable-item';
 import { Base } from './base';
 
@@ -36,6 +40,7 @@ export class CommonContentBlocks extends Base
 	getContentBlockComponents(Item: ConfigurableItem): Object
 	{
 		return {
+			ActionBar,
 			AddressBlock,
 			TextBlock,
 			LinkBlock,
@@ -44,6 +49,7 @@ export class CommonContentBlocks extends Base
 			WithTitle,
 			LineOfTextBlocks,
 			TimelineAudio,
+			ClientCommunication,
 			ClientMark,
 			Money,
 			EditableText,
@@ -64,7 +70,9 @@ export class CommonContentBlocks extends Base
 			WorkflowEfficiency,
 			CallScoringPill,
 			CallScoring,
+			CallScoringV2,
 			ErrorBlock,
+			GroupBlocks,
 		};
 	}
 

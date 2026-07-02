@@ -828,11 +828,16 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	          allowsTimeTracking: this.stateFlags.allowsTimeTracking
 	        });
 	      }
-	      this.$emit('close');
-	      await tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
+	      const updateFields = {
 	        ...this.pendingFlagsData,
 	        ...this.pendingDeadlineUserOption
-	      });
+	      };
+	      const isMatchesWorkTimeChanged = !main_core.Type.isNil(this.pendingFlagsData.matchesWorkTime) && this.task.matchesWorkTime !== this.pendingFlagsData.matchesWorkTime;
+	      if (this.isTemplate && this.task.deadlineAfter && isMatchesWorkTimeChanged) {
+	        updateFields.deadlineAfter = tasks_v2_lib_calendar.calendar.recalculateDurationByMatchWorkTime(this.task.deadlineAfter, this.task.matchesWorkTime, this.pendingFlagsData.matchesWorkTime);
+	      }
+	      this.$emit('close');
+	      await tasks_v2_provider_service_taskService.taskService.update(this.taskId, updateFields);
 	      this.saving = false;
 	    },
 	    handleFlagsUpdate(updatedData) {

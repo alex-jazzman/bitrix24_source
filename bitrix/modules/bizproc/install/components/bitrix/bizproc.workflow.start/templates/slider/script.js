@@ -1612,7 +1612,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	var _buttons$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buttons");
 	var _errorNotifier$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("errorNotifier");
 	var _templates = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("templates");
-	var _documentType$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("documentType");
+	var _documents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("documents");
 	var _signedDocumentType$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("signedDocumentType");
 	var _signedDocumentId$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("signedDocumentId");
 	var _autoExecute = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("autoExecute");
@@ -1622,11 +1622,15 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	var _renderForm = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderForm");
 	var _exit$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("exit");
 	var _save = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("save");
+	var _appendDocumentsToFormData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("appendDocumentsToFormData");
 	var _subscribeOnSliderClose$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribeOnSliderClose");
 	class Autostart {
 	  constructor(config) {
 	    Object.defineProperty(this, _subscribeOnSliderClose$1, {
 	      value: _subscribeOnSliderClose2$1
+	    });
+	    Object.defineProperty(this, _appendDocumentsToFormData, {
+	      value: _appendDocumentsToFormData2
 	    });
 	    Object.defineProperty(this, _save, {
 	      value: _save2
@@ -1655,19 +1659,19 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	    });
 	    Object.defineProperty(this, _templates, {
 	      writable: true,
-	      value: void 0
+	      value: []
 	    });
-	    Object.defineProperty(this, _documentType$2, {
+	    Object.defineProperty(this, _documents, {
 	      writable: true,
-	      value: void 0
+	      value: []
 	    });
 	    Object.defineProperty(this, _signedDocumentType$3, {
 	      writable: true,
-	      value: void 0
+	      value: null
 	    });
 	    Object.defineProperty(this, _signedDocumentId$3, {
 	      writable: true,
-	      value: void 0
+	      value: null
 	    });
 	    Object.defineProperty(this, _autoExecute, {
 	      writable: true,
@@ -1711,9 +1715,15 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	    if (main_core.Type.isArrayFilled(config.templates)) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _templates)[_templates] = config.templates;
 	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _documentType$2)[_documentType$2] = config.documentType;
-	    babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentType$3)[_signedDocumentType$3] = config.signedDocumentType;
-	    babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentId$3)[_signedDocumentId$3] = config.signedDocumentId || null;
+	    if (main_core.Type.isArrayFilled(config.documents)) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _documents)[_documents] = config.documents;
+	    }
+	    if (main_core.Type.isStringFilled(config.signedDocumentType)) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentType$3)[_signedDocumentType$3] = config.signedDocumentType;
+	    }
+	    if (main_core.Type.isStringFilled(config.signedDocumentId)) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentId$3)[_signedDocumentId$3] = config.signedDocumentId;
+	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _autoExecute)[_autoExecute] = main_core.Text.toInteger(config.autoExecuteType);
 	    babelHelpers.classPrivateFieldLooseBase(this, _subscribeOnSliderClose$1)[_subscribeOnSliderClose$1]();
 	  }
@@ -1740,7 +1750,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  }
 	}
 	function _renderForm2(template) {
-	  const form = renderBpForm(`${FORM_NAME$2}_${template.id}`, template.name, template.parameters, babelHelpers.classPrivateFieldLooseBase(this, _documentType$2)[_documentType$2], template.description);
+	  const form = renderBpForm(`${FORM_NAME$2}_${template.id}`, template.name, template.parameters, template.documentType, template.description);
 	  babelHelpers.classPrivateFieldLooseBase(this, _forms)[_forms].push(form);
 	  return main_core.Tag.render(_t2$7 || (_t2$7 = _$a`<div class="bizproc__ws_start__content-form">${0}</div>`), form);
 	}
@@ -1757,10 +1767,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _forms)[_forms].forEach(form => {
 	    addMissingFormDataValues(data, new FormData(form));
 	  });
-	  data.set('signedDocumentType', babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentType$3)[_signedDocumentType$3]);
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentId$3)[_signedDocumentId$3]) {
-	    data.set('signedDocumentId', babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentId$3)[_signedDocumentId$3]);
-	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _appendDocumentsToFormData)[_appendDocumentsToFormData](data);
 	  data.set('autoExecuteType', babelHelpers.classPrivateFieldLooseBase(this, _autoExecute)[_autoExecute]);
 	  main_core.ajax.runAction('bizproc.workflow.starter.checkParameters', {
 	    data
@@ -1772,6 +1779,10 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	        signedParameters: response.data.parameters
 	      });
 	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _errorNotifier$1)[_errorNotifier$1].clean();
+	    babelHelpers.classPrivateFieldLooseBase(this, _buttons$2)[_buttons$2].resolveWaitingState({
+	      save: false
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _canExit$1)[_canExit$1] = true;
 	    babelHelpers.classPrivateFieldLooseBase(this, _exit$1)[_exit$1]();
 	  }).catch(response => {
@@ -1781,6 +1792,24 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      save: false
 	    });
 	  });
+	}
+	function _appendDocumentsToFormData2(data) {
+	  babelHelpers.classPrivateFieldLooseBase(this, _documents)[_documents].forEach((document, index) => {
+	    document.documentType.forEach((value, documentTypeIndex) => {
+	      data.append(`documents[${index}][documentType][${documentTypeIndex}]`, value);
+	    });
+	    if (main_core.Type.isArray(document.documentId)) {
+	      document.documentId.forEach((value, documentIdIndex) => {
+	        data.append(`documents[${index}][documentId][${documentIdIndex}]`, value);
+	      });
+	    }
+	  });
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _documents)[_documents].length === 1 && main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentType$3)[_signedDocumentType$3])) {
+	    data.set('signedDocumentType', babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentType$3)[_signedDocumentType$3]);
+	  }
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _documents)[_documents].length === 1 && main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentId$3)[_signedDocumentId$3])) {
+	    data.set('signedDocumentId', babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentId$3)[_signedDocumentId$3]);
+	  }
 	}
 	function _subscribeOnSliderClose2$1() {
 	  const slider = BX.SidePanel.Instance.getSliderByWindow(window);
@@ -1822,7 +1851,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	var _buttons$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buttons");
 	var _errorNotifier$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("errorNotifier");
 	var _constants$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("constants");
-	var _documentType$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("documentType");
+	var _documentType$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("documentType");
 	var _signedDocumentType$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("signedDocumentType");
 	var _templateId$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("templateId");
 	var _templateName = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("templateName");
@@ -1884,7 +1913,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _documentType$3, {
+	    Object.defineProperty(this, _documentType$2, {
 	      writable: true,
 	      value: null
 	    });
@@ -1940,7 +1969,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _buttons$3)[_buttons$3].show();
 	    babelHelpers.classPrivateFieldLooseBase(this, _errorNotifier$2)[_errorNotifier$2] = new ErrorNotifier({});
-	    babelHelpers.classPrivateFieldLooseBase(this, _documentType$3)[_documentType$3] = config.documentType;
+	    babelHelpers.classPrivateFieldLooseBase(this, _documentType$2)[_documentType$2] = config.documentType;
 	    babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentType$4)[_signedDocumentType$4] = config.signedDocumentType;
 	    babelHelpers.classPrivateFieldLooseBase(this, _templateId$3)[_templateId$3] = main_core.Text.toInteger(config.templateId);
 	    babelHelpers.classPrivateFieldLooseBase(this, _templateName)[_templateName] = config.templateName;
@@ -1967,7 +1996,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  }
 	}
 	function _renderConstants2$1() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _form$2)[_form$2] = renderBpForm(FORM_NAME$3, babelHelpers.classPrivateFieldLooseBase(this, _templateName)[_templateName], babelHelpers.classPrivateFieldLooseBase(this, _constants$1)[_constants$1], babelHelpers.classPrivateFieldLooseBase(this, _documentType$3)[_documentType$3], null, null);
+	  babelHelpers.classPrivateFieldLooseBase(this, _form$2)[_form$2] = renderBpForm(FORM_NAME$3, babelHelpers.classPrivateFieldLooseBase(this, _templateName)[_templateName], babelHelpers.classPrivateFieldLooseBase(this, _constants$1)[_constants$1], babelHelpers.classPrivateFieldLooseBase(this, _documentType$2)[_documentType$2], null, null);
 	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _renderErrors$1)[_renderErrors$1](), babelHelpers.classPrivateFieldLooseBase(this, _form$2)[_form$2]);
 	  babelHelpers.classPrivateFieldLooseBase(this, _originalFormData$2)[_originalFormData$2] = new FormData(babelHelpers.classPrivateFieldLooseBase(this, _form$2)[_form$2]);
 	  babelHelpers.classPrivateFieldLooseBase(this, _subscribeOnRenderEvents$2)[_subscribeOnRenderEvents$2]();

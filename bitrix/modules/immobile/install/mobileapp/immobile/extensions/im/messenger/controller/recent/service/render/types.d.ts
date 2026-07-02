@@ -10,6 +10,7 @@ export interface IRenderService extends IBaseRecentService
 	showLoader(section?: string):void;
 	hideLoader(section?: string): void;
 	renderInstant(): Promise<void>;
+	getItemList(): Array<RecentItem>;
 	setItems(itemList: Array<RecentModelState | CallItemData>, options?: object): void;
 	upsertItems(itemList: Array<RecentModelState | CallItemData>, options?: UpsertOptions): void;
 	deleteItems(itemList: Array<RecentModelState | CallItemData | {id: string}>, options?: object): void;

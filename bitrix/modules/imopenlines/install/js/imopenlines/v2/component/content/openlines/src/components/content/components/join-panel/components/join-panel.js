@@ -1,15 +1,16 @@
+import { AirButtonStyle, Button as UiButton, ButtonSize } from 'ui.vue3.components.button';
+
 import { Messenger } from 'im.public';
-import { ChatButton, ButtonColor, ButtonSize } from 'im.v2.component.elements.button';
 import { Layout } from 'im.v2.const';
 import { LayoutManager } from 'im.v2.lib.layout';
+
 import { JoinService, StartService } from 'imopenlines.v2.provider.service';
 
 // @vue/component
 export const JoinPanel = {
 	name: 'JoinPanel',
-	components: { ChatButton },
-	props:
-	{
+	components: { UiButton },
+	props: {
 		dialogId: {
 			type: String,
 			required: true,
@@ -23,10 +24,9 @@ export const JoinPanel = {
 			required: true,
 		},
 	},
-	computed:
-	{
+	computed: {
 		ButtonSize: () => ButtonSize,
-		ButtonColor: () => ButtonColor,
+		AirButtonStyle: () => AirButtonStyle,
 		textStartJoinButtons(): string
 		{
 			return this.isClosed
@@ -34,8 +34,7 @@ export const JoinPanel = {
 				: this.loc('IMOL_CONTENT_TEXTAREA_JOIN_PANEL_JOIN_BUTTON');
 		},
 	},
-	methods:
-	{
+	methods: {
 		handleDialogAccess(): Promise
 		{
 			if (this.isClosed)
@@ -76,17 +75,17 @@ export const JoinPanel = {
 	template: `
 		<ul class="bx-imol-textarea_join-panel-list-button">
 			<li v-if="!isNewSession" class="bx-imol-textarea_join-panel-item-button">
-				<ChatButton
-					:size="ButtonSize.L"
-					:color="ButtonColor.Success"
+				<UiButton
+					:size="ButtonSize.LARGE"
+					:style="AirButtonStyle.FILLED"
 					:text=textStartJoinButtons
 					@click="handleDialogAccess"
 				/>
 			</li>
 			<li class="bx-imol-textarea_join-panel-item-button">
-				<ChatButton
-					:size="ButtonSize.L"
-					:color="ButtonColor.Danger"
+				<UiButton
+					:size="ButtonSize.LARGE"
+					:style="AirButtonStyle.FILLED_ALERT"
 					:text="loc('IMOL_CONTENT_TEXTAREA_JOIN_PANEL_CLOSE')"
 					@click="closeDialog"
 				/>

@@ -3,10 +3,12 @@
  */
 jn.define('im/messenger/lib/element/dialog/message/copilot', (require, exports, module) => {
 	const { Loc } = require('im/messenger/loc');
+	const { Feature } = require('im/messenger/lib/feature');
 
 	const {
 		MessageType,
 		CopilotButtonType,
+		Color,
 	} = require('im/messenger/const');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { TextMessage } = require('im/messenger/lib/element/dialog/message/text');
@@ -15,13 +17,13 @@ jn.define('im/messenger/lib/element/dialog/message/copilot', (require, exports, 
 	{
 		/**
 		 * @param {MessagesModelState} modelMessage
-		 * @param {CreateMessageOptions} options
+		 * @param {CreateMessageOptions|{}} options
 		 */
-		constructor(modelMessage = {}, options = {})
+		constructor(modelMessage, options = {})
 		{
 			super(modelMessage, options);
 
-			/** @type {CopilotMessageCopilotData} */
+			/** @type {CopilotMessageCopilotData|{}} */
 			this.copilot = {};
 			const dialogHelper = DialogHelper.createByDialogId(options.dialogId);
 			const canBeQuoted = Boolean(dialogHelper && !dialogHelper.isCopilot);
@@ -66,13 +68,28 @@ jn.define('im/messenger/lib/element/dialog/message/copilot', (require, exports, 
 
 		setFootNote()
 		{
-			this.copilot.footnote = `${Loc.getMessageWithCopilotBotName('IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_FOOT_NOTE_BASIC_MSGVER_1')} [U]${Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_FOOT_NOTE_UNDERLINE')}[/U]`;
+			this.copilot.footnote = `${Loc.getMessageWithCopilotBotName('IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_FOOT_NOTE_BASIC_MSGVER_2')} [U]${Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_FOOT_NOTE_UNDERLINE')}[/U]`;
 
 			return this;
 		}
 
 		setCommentInfo(modelMessage, showCommentInfo)
 		{
+			return this;
+		}
+
+		/**
+		 * @param {MessagesModelState} modelMessage
+		 */
+		setTitle(modelMessage)
+		{
+			super.setTitle(modelMessage);
+
+			if (Feature.isBitrixGptV2Enabled)
+			{
+				this.title.colorGradient = Color.copilotGradient;
+			}
+
 			return this;
 		}
 	}

@@ -1,10 +1,18 @@
 import { bind, Dom, unbind } from 'main.core';
-import { BitrixVueComponentProps } from 'ui.vue3';
+import { EventEmitter } from 'main.core.events';
+import { type BitrixVueComponentProps } from 'ui.vue3';
+
+import { TranscriptionButton, TranscriptionState } from './transcription-button.js';
+
+import '../css/audio-player.css';
 
 const defaultPlaybackRateValues = [0.5, 0.7, 1, 1.2, 1.5, 1.7, 2];
 
 // @vue/component
 export const AudioPlayerProps: BitrixVueComponentProps = {
+	components: {
+		TranscriptionButton,
+	},
 	props: {
 		playbackRateValues: {
 			type: Array,
@@ -26,6 +34,10 @@ export const AudioPlayerProps: BitrixVueComponentProps = {
 		context: {
 			default: window,
 		},
+		transcriptionState: {
+			type: [String, null],
+			default: null,
+		},
 	},
 	data(): Object
 	{
@@ -33,8 +45,10 @@ export const AudioPlayerProps: BitrixVueComponentProps = {
 			...this.parentData(),
 			playbackRate: defaultPlaybackRateValues[2],
 			isSeeking: true,
+			currentTranscriptionState: this.transcriptionState,
 		};
 	},
+
 	computed: {
 		containerClassname(): Array
 		{
@@ -46,6 +60,7 @@ export const AudioPlayerProps: BitrixVueComponentProps = {
 					'--mini': this.mini,
 				}];
 		},
+
 		controlClassname(): Array
 		{
 			return [
@@ -56,6 +71,7 @@ export const AudioPlayerProps: BitrixVueComponentProps = {
 					'ui-vue-audioplayer-control-pause': !this.loading && this.state === this.State.play,
 				}];
 		},
+
 		timeCurrentClassname(): Array
 		{
 			return [
@@ -106,7 +122,31 @@ export const AudioPlayerProps: BitrixVueComponentProps = {
 			});
 		},
 	},
+
+	watch: {
+		transcriptionState(newValue: String): void
+		{
+			this.currentTranscriptionState = newValue;
+		},
+	},
+
 	methods: {
+		onTranscriptionButtonClick(): void
+		{
+			if (
+				this.currentTranscriptionState === TranscriptionState.pending
+				|| this.currentTranscriptionState === TranscriptionState.failed
+			)
+			{
+				return;
+			}
+
+			const action = this.currentTranscriptionState === TranscriptionState.empty ? 'transcribe' : 'open';
+			const data = { initiator: this.id, action };
+			this.$Bitrix.eventEmitter.emit('crm:audioplayer:transcript', data);
+			EventEmitter.emit('crm:audioplayer:transcript', data);
+		},
+
 		changePlaybackRate(playbackRate: number): void
 		{
 			this.playbackRate = playbackRate;
@@ -260,7 +300,7 @@ export const AudioPlayerProps: BitrixVueComponentProps = {
 			}
 		},
 
-		setPosition(event): void
+		setPosition(): void
 		{
 			if (!this.loaded)
 			{
@@ -291,6 +331,30 @@ export const AudioPlayerProps: BitrixVueComponentProps = {
 		{
 			this.audioEventRouter(eventName, event);
 		},
+
+		/**
+		 * Get current transcription state.
+		 *
+		 * @return {string | *}
+		 *
+		 * @public
+		 */
+		getTranscriptionState(): String
+		{
+			return this.currentTranscriptionState;
+		},
+
+		/**
+		 * Set current transcription state.
+		 *
+		 * @param state
+		 *
+		 * @public
+		 */
+		setTranscriptionState(state: String): void
+		{
+			this.currentTranscriptionState = state;
+		},
 	},
 
 	// Language=Vue3
@@ -307,7 +371,6 @@ export const AudioPlayerProps: BitrixVueComponentProps = {
 						width="9"
 						height="12"
 						viewBox="0 0 9 12"
-						fill="none"
 						xmlns="http://www.w3.org/2000/svg"
 					>
 						<path fill-rule="evenodd" clip-rule="evenodd" d="M8.52196 5.40967L1.77268 0.637568C1.61355 0.523473 1.40621 0.510554 1.23498 0.604066C1.06375 0.697578 0.957151 0.881946 0.958524 1.0822V10.6259C0.956507 10.8265 1.06301 11.0114 1.23449 11.105C1.40597 11.1987 1.61368 11.1854 1.77268 11.0706L8.52196 6.29847C8.66466 6.19871 8.75016 6.0322 8.75016 5.85407C8.75016 5.67593 8.66466 5.50942 8.52196 5.40967Z"/>
@@ -333,7 +396,6 @@ export const AudioPlayerProps: BitrixVueComponentProps = {
 					<div @mousedown="startSeeking" class="ui-vue-audioplayer-track-seek" :style="seekPosition">
 						<div ref="seek" class="ui-vue-audioplayer-track-seek-icon"></div>
 					</div>
-	<!--					<div class="ui-vue-audioplayer-track-event" @mousemove="seeking"></div>-->
 				</div>
 				<div :class="totalTimeClassname">
 					<div
@@ -378,6 +440,16 @@ export const AudioPlayerProps: BitrixVueComponentProps = {
 				@playing="audioEventRouter('playing', $event)"
 				@pause="audioEventRouterWrapper('pause', $event)"
 			></audio>
+			<div
+				class="crm-audio-player-additional-buttons-container"
+				v-if="!mini && currentTranscriptionState"
+			>
+				<TranscriptionButton
+					:transcriptionState="currentTranscriptionState"
+					@click="onTranscriptionButtonClick"
+					ref="transcriptionButton"
+				/>
+			</div>
 		</div>
 	`,
 };

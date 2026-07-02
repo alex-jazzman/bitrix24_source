@@ -1,0 +1,66 @@
+.resource-notification-card-communication-box {
+	display: grid;
+	gap: 8px;
+	grid-auto-flow: column;
+}
+
+.resource-notification-card-communication-item {
+	display: flex;
+	gap:12px;
+	border-radius: var(--ui-border-radius-md);
+	border: var(--ui-border-width-thin) solid var(--ui-color-base-6);
+	background: var(--ui-color-base-8);
+	color: var(--ui-color-base-3);
+	font-size: var(--ui-font-size-xs);
+	line-height: var(--ui-font-line-height-3xs);
+	padding: 12px 11px;
+	cursor: pointer;
+}
+
+.resource-notification-card-communication-item.--ai-call {
+	order: -1;
+}
+
+.resource-notification-card-communication-item:hover {
+	background: url('../images/glow-ia.png') no-repeat center;
+	background-size: cover;
+	border-color: transparent;
+}
+
+.resource-notification-card-communication-item.--active {
+	background: url('../images/glow-ia.png') no-repeat center;
+	background-size: cover;
+	border-color: var(--ui-color-accent-main-primary);
+}
+
+.resource-notification-card-communication-item-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 34px;
+	height: 34px;
+	border-radius: var(--ui-border-radius-xs);
+}
+
+.resource-notification-card-communication-item-icon.--bitrix {
+	background: var(--ui-color-gray-04);
+}
+
+.resource-notification-card-communication-item-icon.--ai_call {
+	background: url("../../../../images/bitrixgpt.png") no-repeat center;
+	background-size: contain;
+}
+
+.resource-notification-card-communication-item-title {
+	color: var(--ui-color-base-1);
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-sm);
+}
+
+.resource-notification-card-communication-item.--active .resource-notification-card-communication-item-title {
+	color:  var(--ui-color-accent-main-primary);
+}
+
+.resource-notification-card-communication-item-img {
+	width: 100%;
+}

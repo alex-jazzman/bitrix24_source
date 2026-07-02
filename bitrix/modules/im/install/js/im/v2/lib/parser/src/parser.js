@@ -1,303 +1,40 @@
-import { Type, Text, Loc, Extension } from 'main.core';
+import { Text, Loc } from 'main.core';
 
-import { DesktopApi } from 'im.v2.lib.desktop-api';
+import { type ApplicationContext } from 'im.v2.const';
+import { type ImModelMessage } from 'im.v2.model';
 
-import { ParserSlashCommand } from './functions/slash-command';
-import { ParserQuote } from './functions/quote';
-import { ParserImage } from './functions/image';
-import { ParserSmile } from './functions/smile';
-import { ParserUrl } from './functions/url';
-import { ParserFont } from './functions/font';
-import { ParserLines } from './functions/lines';
+import { Purifier } from './classes/purifier';
+import { Decoder } from './classes/decoder';
 import { ParserAction } from './functions/action';
 import { ParserCall } from './functions/call';
-import { ParserMention } from './functions/mention';
 import { ParserCommon } from './functions/common';
-import { ParserIcon } from './functions/icon';
-import { ParserDisk } from './functions/disk';
-import { ParserDate } from './functions/date';
-import { NestedTagHandler } from './utils/nested-tag-handler';
+import { ParserLines } from './functions/lines';
+import { ParserMention } from './functions/mention';
+import { ParserQuote } from './functions/quote';
+import { ParserUrl } from './functions/url';
+import { getCore } from './utils/core-proxy';
 import { ParserUtils } from './utils/utils';
-
-import { getCore, getLogger } from './utils/core-proxy';
+import { ParserInlineSourceLink, type ParserInlineSourceLinkSegments } from './functions/inline-source-link.js';
 
 import './parser.css';
 
-import type { ImModelMessage, ImModelNotification, ImModelRecentItem } from 'im.v2.model';
-import type { ApplicationContext } from 'im.v2.const';
-import type { ParserConfig } from './types/parser-config';
-
-type ResultRecentConfig = {
-	files: boolean | Object[],
-	attach: boolean | string | Object[],
-	text: string,
-	sticker?: boolean,
-};
+export type { ParserInlineSourceLinkSegments } from './functions/inline-source-link.js';
 
 export const Parser = {
-	decodeMessage(message: ImModelMessage): string
-	{
-		const messageFiles = getCore().getStore().getters['messages/getMessageFiles'](message.id);
-		const contextDialogId = ParserUtils.getDialogIdByChatId(message.chatId);
+	purify: (config) => Purifier.purify(config),
+	purifyText: (text) => Purifier.purifyText(text),
+	purifyRecent: (recentMessage) => Purifier.purifyRecent(recentMessage),
+	purifyMessage: (message) => Purifier.purifyMessage(message),
+	purifyNotification: (notification) => Purifier.purifyNotification(notification),
 
-		return this.decode({
-			text: message.text,
-			attach: message.attach,
-			files: messageFiles,
-			showIconIfEmptyText: false,
-			contextDialogId,
-		});
-	},
-
-	decodeNotification(notification: ImModelNotification): string
-	{
-		return this.decode({
-			text: notification.text,
-			attach: notification.params.attach ?? false,
-			showIconIfEmptyText: false,
-			showImageFromLink: false,
-			urlTarget: DesktopApi.isDesktop() ? '_blank' : '_self',
-		});
-	},
-
-	decodeNotificationParam(text: string): string
-	{
-		return this.decode({
-			text,
-			urlTarget: DesktopApi.isDesktop() ? '_blank' : '_self',
-		});
-	},
-
-	decodeText(text: string): string
-	{
-		return this.decode({ text });
-	},
-
-	decodeHtml(text: string): string
-	{
-		return this.decode({ text });
-	},
-
-	decodeSmile(text: string, options: {}): string
-	{
-		return ParserSmile.decodeSmile(text, options);
-	},
-
-	decodeSmileForLegacyCore(text: string, options: {}): string
-	{
-		const legacyConfig = { ...options };
-		legacyConfig.ratioConfig = Object.freeze({
-			Default: 1,
-			Big: 1.6,
-		});
-
-		return ParserSmile.decodeSmile(text, legacyConfig);
-	},
-
-	decode(config: ParserConfig): string
-	{
-		if (!Type.isPlainObject(config))
-		{
-			getLogger().error('Parser.decode: the first parameter must be object', config);
-
-			return '<b style="color:red">Parser.decode: the first parameter must be a parameter object</b';
-		}
-
-		let { text } = config;
-		const {
-			attach = false,
-			files = false,
-			removeLinks = false,
-			showIconIfEmptyText = true,
-			showImageFromLink = true,
-			contextDialogId = '',
-			urlTarget = '_blank',
-		} = config;
-
-		if (!Type.isString(text))
-		{
-			if (Type.isNumber(text))
-			{
-				return text.toString();
-			}
-
-			return '';
-		}
-
-		if (!text)
-		{
-			if (showIconIfEmptyText)
-			{
-				text = ParserIcon.addIconToShortText({ text, attach, files });
-			}
-
-			return text.trim();
-		}
-
-		text = Text.encode(text.trim());
-
-		text = ParserCommon.decodeNewLine(text);
-		text = ParserCommon.decodeTabulation(text);
-
-		text = NestedTagHandler.cutPutTag(text);
-		text = NestedTagHandler.cutSendTag(text);
-		text = NestedTagHandler.cutCodeTag(text);
-
-		text = ParserSmile.decodeSmile(text);
-		text = ParserSlashCommand.decode(text);
-		text = ParserImage.decodeImageBbCode(text, { contextDialogId });
-		text = ParserUrl.decode(text, { urlTarget, removeLinks });
-		text = ParserFont.decode(text);
-		text = ParserLines.decode(text);
-		text = ParserMention.decode(text);
-		text = ParserCall.decode(text);
-		text = ParserImage.decodeIcon(text);
-		if (showImageFromLink)
-		{
-			text = ParserImage.decodeLink(text);
-		}
-		text = ParserDisk.decode(text);
-		text = ParserDate.decode(text);
-
-		text = ParserQuote.decodeArrowQuote(text);
-		text = ParserQuote.decodeQuote(text, { contextDialogId });
-
-		text = NestedTagHandler.recoverSendTag(text);
-		text = ParserAction.decodeSend(text);
-
-		text = NestedTagHandler.recoverPutTag(text);
-		text = ParserAction.decodePut(text);
-
-		text = NestedTagHandler.recoverCodeTag(text);
-		text = ParserQuote.decodeCode(text);
-
-		text = NestedTagHandler.recoverRecursionTag(text);
-
-		text = ParserCommon.removeDuplicateTags(text);
-
-		NestedTagHandler.clean();
-
-		return text;
-	},
-
-	purifyMessage(message: ImModelMessage): string
-	{
-		const messageFiles = getCore().getStore().getters['messages/getMessageFiles'](message.id);
-		const isSticker = getCore().getStore().getters['stickers/messages/isSticker'](message.id);
-
-		return this.purify({
-			text: message.text,
-			attach: message.attach,
-			files: messageFiles,
-			isSticker,
-		});
-	},
-
-	purifyNotification(notification: ImModelNotification): string
-	{
-		const messageFiles = getCore().getStore().getters['messages/getMessageFiles'](notification.id);
-
-		return this.purify({
-			text: notification.text,
-			attach: notification.params.attach ?? false,
-			files: messageFiles,
-		});
-	},
-
-	purifyRecent(recentMessage: ImModelRecentItem): string
-	{
-		const settings = Extension.getSettings('im.v2.lib.parser');
-		const v2 = settings.get('v2');
-		if (!v2)
-		{
-			const { files, attach, text } = this.prepareLegacyConfigForRecent(recentMessage);
-
-			return this.purify({
-				text,
-				attach,
-				files,
-				showPhraseMessageWasDeleted: recentMessage.message.id !== 0,
-			});
-		}
-
-		const { files, attach, text, isSticker } = this.prepareConfigForRecent(recentMessage);
-
-		return this.purify({
-			text,
-			attach,
-			files,
-			showPhraseMessageWasDeleted: recentMessage.messageId !== 0,
-			isSticker,
-		});
-	},
-
-	purifyText(text: string): string
-	{
-		return this.purify({ text });
-	},
-
-	purify(config: ParserConfig): string
-	{
-		if (!Type.isPlainObject(config))
-		{
-			getLogger().error('Parser.purify: the first parameter must be a object', config);
-
-			return 'Parser.purify: the first parameter must be a parameter object';
-		}
-
-		let { text } = config;
-		const {
-			attach = false,
-			files = false,
-			isSticker = false,
-			showPhraseMessageWasDeleted = true,
-		} = config;
-
-		if (!Type.isString(text))
-		{
-			text = Type.isNumber(text) ? text.toString() : '';
-		}
-
-		if (!text || isSticker)
-		{
-			text = ParserIcon.addIconToShortText({ text, attach, files, isSticker });
-
-			return text.trim();
-		}
-
-		text = Text.encode(text.trim());
-
-		text = ParserCommon.purifyNewLine(text, '\n');
-		text = ParserSlashCommand.purify(text);
-		text = ParserQuote.purifyArrowQuote(text);
-		text = ParserQuote.purifyQuote(text);
-		text = ParserQuote.purifyCode(text);
-		text = ParserAction.purifyPut(text);
-		text = ParserAction.purifySend(text);
-		text = ParserMention.purify(text);
-		text = ParserFont.purify(text);
-		text = ParserLines.purify(text);
-		text = ParserCall.purify(text);
-		text = ParserUrl.purify(text);
-		text = ParserImage.purifyLink(text);
-		text = ParserImage.purifyIcon(text);
-		text = ParserImage.purifyImageBbCode(text);
-		text = ParserDisk.purify(text);
-		text = ParserDate.purify(text);
-		text = ParserCommon.purifyNewLine(text);
-		text = ParserIcon.addIconToShortText({ text, attach, files });
-
-		if (text.length > 0)
-		{
-			text = Text.decode(text);
-		}
-		else if (showPhraseMessageWasDeleted)
-		{
-			text = Loc.getMessage('IM_PARSER_MESSAGE_DELETED');
-		}
-
-		return text.trim();
-	},
+	decode: (config) => Decoder.decode(config),
+	decodeText: (text) => Decoder.decodeText(text),
+	decodeMessage: (message) => Decoder.decodeMessage(message),
+	decodeNotification: (notification) => Decoder.decodeNotification(notification),
+	decodeNotificationParam: (text) => Decoder.decodeNotificationParam(text),
+	decodeHtml: (text) => Decoder.decodeHtml(text),
+	decodeSmile: (text, options) => Decoder.decodeSmile(text, options),
+	decodeSmileForLegacyCore: (text, options) => Decoder.decodeSmileForLegacyCore(text, options),
 
 	prepareQuote(message: ImModelMessage, quoteText: string = ''): string
 	{
@@ -319,14 +56,9 @@ export const Parser = {
 		text = ParserQuote.purifyCode(text, ' ');
 		text = ParserQuote.purifyQuote(text, ' ');
 		text = ParserQuote.purifyArrowQuote(text, ' ');
-		if (quoteText === '')
+		if (quoteText === '' || isSticker)
 		{
-			text = ParserIcon.addIconToShortText({ text, attach, files });
-		}
-
-		if (isSticker)
-		{
-			text = ParserIcon.addIconToShortText({ isSticker });
+			text = Purifier.addTextPrefix({ text, attach, files, isSticker });
 		}
 
 		text = text.length > 0 ? Text.decode(text) : Loc.getMessage('IM_PARSER_MESSAGE_DELETED');
@@ -364,65 +96,6 @@ export const Parser = {
 		return files.join('\n').trim();
 	},
 
-	prepareConfigForRecent(recentMessage: ImModelRecentItem): ResultRecentConfig
-	{
-		let files = getCore().getStore().getters['messages/getMessageFiles'](recentMessage.messageId);
-		if (files.length === 0)
-		{
-			files = false;
-		}
-
-		const message = getCore().getStore().getters['messages/getById'](recentMessage.messageId);
-
-		let attach = false;
-		if (
-			Type.isBoolean(message?.attach)
-			|| Type.isStringFilled(message?.attach)
-			|| Type.isArray(message?.attach)
-		)
-		{
-			attach = message.attach;
-		}
-		else if (Type.isPlainObject(message?.attach))
-		{
-			attach = [message.attach];
-		}
-		const isSticker = getCore().getStore().getters['stickers/messages/isSticker'](recentMessage.messageId);
-
-		return { files, attach, text: message.text, isSticker };
-	},
-
-	prepareLegacyConfigForRecent(recentMessage): ResultRecentConfig
-	{
-		let files = false;
-		const fileField = recentMessage.message.params.withFile;
-		if (Type.isBoolean(fileField))
-		{
-			files = fileField;
-		}
-		else if (Type.isPlainObject(fileField))
-		{
-			files = [fileField];
-		}
-
-		let attach = false;
-		const attachField = recentMessage.message.params.withAttach;
-		if (
-			Type.isBoolean(attachField)
-			|| Type.isStringFilled(attachField)
-			|| Type.isArray(attachField)
-		)
-		{
-			attach = attachField;
-		}
-		else if (Type.isPlainObject(attachField))
-		{
-			attach = [attachField];
-		}
-
-		return { files, attach, text: recentMessage.message.text };
-	},
-
 	executeClickEvent(event: PointerEvent, context: ApplicationContext)
 	{
 		ParserMention.executeClickEvent(event, context);
@@ -433,5 +106,10 @@ export const Parser = {
 	getContextCodeFromForwardId(forwardId: string): string
 	{
 		return ParserUtils.getFinalContextTag(forwardId);
+	},
+
+	getInlineSourceLinkSegments(text: string): ParserInlineSourceLinkSegments
+	{
+		return ParserInlineSourceLink.getSegments(text);
 	},
 };

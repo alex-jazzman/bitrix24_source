@@ -52,6 +52,11 @@ export class MessageBody
 		return `${this.#prefix}-quote-unfolded`;
 	}
 
+	getPrintMessageType(): string
+	{
+		return `${this.#prefix}-print`;
+	}
+
 	getIframe(): ?HTMLIFrameElement
 	{
 		return this.#iframe;
@@ -74,7 +79,7 @@ export class MessageBody
 		iframe.id = iframeId;
 		iframe.src = blobUrl;
 		iframe.width = '100%';
-		iframe.sandbox = 'allow-popups allow-popups-to-escape-sandbox allow-scripts';
+		iframe.sandbox = 'allow-popups allow-popups-to-escape-sandbox allow-scripts allow-modals';
 		iframe.referrerPolicy = 'no-referrer';
 		Dom.addClass(iframe, `${this.#prefix}-iframe`);
 
@@ -102,6 +107,20 @@ export class MessageBody
 			Dom.remove(this.#iframe);
 			this.#iframe = null;
 		}
+	}
+
+	print(headerHtml: string, headerStyles: string): void
+	{
+		if (!this.#iframe || !this.#iframe.contentWindow)
+		{
+			return;
+		}
+
+		this.#iframe.contentWindow.postMessage({
+			type: this.getPrintMessageType(),
+			headerHtml,
+			headerStyles,
+		}, '*');
 	}
 
 	#bindIframeEvents(iframe: HTMLIFrameElement): void
@@ -235,12 +254,14 @@ export class MessageBody
 	{
 		const messageType = this.getMessageType();
 		const stylesMessageType = this.getStylesMessageType();
+		const printMessageType = this.getPrintMessageType();
 		const quoteUnfoldedClass = this.getQuoteUnfoldedClass();
 
 		return `
 			const MESSAGE_ID = ${this.#messageId};
 			const MESSAGE_TYPE = "${messageType}";
 			const STYLES_MESSAGE_TYPE = "${stylesMessageType}";
+			const PRINT_MESSAGE_TYPE = "${printMessageType}";
 			const QUOTE_UNFOLDED_CLASS = "${quoteUnfoldedClass}";
 
 			let lastHeight = 0;
@@ -263,20 +284,59 @@ export class MessageBody
 				parent.postMessage({ type: MESSAGE_TYPE, height: height, id: MESSAGE_ID }, '*');
 			}
 
+			function handlePrint(data)
+			{
+				const oldHeader = document.querySelector('.print-header');
+				if (oldHeader)
+				{
+					oldHeader.remove();
+				}
+
+				const oldStyle = document.querySelector('.print-header-style');
+				if (oldStyle)
+				{
+					oldStyle.remove();
+				}
+
+				const headerDiv = document.createElement('div');
+				headerDiv.className = 'print-header';
+				headerDiv.innerHTML = data.headerHtml;
+
+				const styleEl = document.createElement('style');
+				styleEl.className = 'print-header-style';
+				styleEl.textContent = data.headerStyles;
+
+				document.body.insertBefore(styleEl, document.body.firstChild);
+				document.body.insertBefore(headerDiv, document.body.firstChild);
+
+				window.addEventListener('afterprint', function() {
+					headerDiv.remove();
+					styleEl.remove();
+				}, { once: true });
+
+				window.print();
+			}
+
 			window.addEventListener("message", function(event) {
-				if (event.data && event.data.type === STYLES_MESSAGE_TYPE)
+				if (!event.data || !event.data.type)
+				{
+					return;
+				}
+
+				if (event.data.type === STYLES_MESSAGE_TYPE)
 				{
 					const styles = event.data.styles;
 					const root = document.documentElement;
-					for (let key in styles)
-					{
-						if (styles.hasOwnProperty(key))
-						{
-							root.style.setProperty(key, styles[key]);
-						}
-					}
+					Object.keys(styles).forEach(function(key) {
+						root.style.setProperty(key, styles[key]);
+					});
 
 					window.requestAnimationFrame(sendHeight);
+				}
+
+				if (event.data.type === PRINT_MESSAGE_TYPE)
+				{
+					handlePrint(event.data);
 				}
 			});
 

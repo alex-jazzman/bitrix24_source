@@ -6,6 +6,8 @@ this.BX.AI.Integration = this.BX.AI.Integration || {};
 	'use strict';
 
 	var _templateObject;
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
 	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
@@ -17,9 +19,13 @@ this.BX.AI.Integration = this.BX.AI.Integration || {};
 	var _itemRelations = /*#__PURE__*/new WeakMap();
 	var _itemFields = /*#__PURE__*/new WeakMap();
 	var _onSaveCheckers = /*#__PURE__*/new WeakMap();
+	var _agreementCheckers = /*#__PURE__*/new WeakMap();
+	var _isAgreementAccepted = /*#__PURE__*/new WeakMap();
+	var _isSwitcherProgrammaticChange = /*#__PURE__*/new WeakMap();
 	var _buildGroup = /*#__PURE__*/new WeakSet();
 	var _buildItem = /*#__PURE__*/new WeakSet();
 	var _addField = /*#__PURE__*/new WeakSet();
+	var _setCheckerState = /*#__PURE__*/new WeakSet();
 	var _showBitrixGptAgreementPopup = /*#__PURE__*/new WeakSet();
 	var _bindEvents = /*#__PURE__*/new WeakSet();
 	var AiPage = /*#__PURE__*/function (_BaseSettingsPage) {
@@ -30,6 +36,7 @@ this.BX.AI.Integration = this.BX.AI.Integration || {};
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(AiPage).call(this));
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _bindEvents);
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _showBitrixGptAgreementPopup);
+	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _setCheckerState);
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _addField);
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _buildItem);
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _buildGroup);
@@ -47,8 +54,25 @@ this.BX.AI.Integration = this.BX.AI.Integration || {};
 	      writable: true,
 	      value: []
 	    });
-	    _this.titlePage = main_core.Loc.getMessage('INTRANET_SETTINGS_TITLE_PAGE_AI');
-	    _this.descriptionPage = main_core.Loc.getMessage('INTRANET_SETTINGS_TITLE_PAGE_AI_DESC');
+	    _classPrivateFieldInitSpec(babelHelpers.assertThisInitialized(_this), _agreementCheckers, {
+	      writable: true,
+	      value: []
+	    });
+	    _classPrivateFieldInitSpec(babelHelpers.assertThisInitialized(_this), _isAgreementAccepted, {
+	      writable: true,
+	      value: false
+	    });
+	    _classPrivateFieldInitSpec(babelHelpers.assertThisInitialized(_this), _isSwitcherProgrammaticChange, {
+	      writable: true,
+	      value: false
+	    });
+	    var copilotName = main_core.Extension.getSettings('ai.integration.intranet-settings').copilotName;
+	    _this.titlePage = main_core.Loc.getMessage('INTRANET_SETTINGS_TITLE_PAGE_AI_MSGVER_1', {
+	      '#COPILOT_NAME#': copilotName
+	    });
+	    _this.descriptionPage = main_core.Loc.getMessage('INTRANET_SETTINGS_TITLE_PAGE_AI_DESC_MSGVER_1', {
+	      '#COPILOT_NAME#': copilotName
+	    });
 	    return _this;
 	  }
 	  babelHelpers.createClass(AiPage, [{
@@ -165,6 +189,9 @@ this.BX.AI.Integration = this.BX.AI.Integration || {};
 	      checkerOptions.bannerCode = restriction.bannerCode;
 	    }
 	    field = new ui_formElements_view.Checker(checkerOptions);
+	    if (!restriction) {
+	      babelHelpers.classPrivateFieldGet(this, _agreementCheckers).push(field);
+	    }
 	  } else if (type === 'list' && options && value) {
 	    var items = [];
 	    var additionalItems = [];
@@ -217,39 +244,68 @@ this.BX.AI.Integration = this.BX.AI.Integration || {};
 	    row: row
 	  };
 	}
-	function _showBitrixGptAgreementPopup2() {
+	function _setCheckerState2(checker, isChecked) {
+	  var _checker$switcher;
+	  babelHelpers.classPrivateFieldSet(this, _isSwitcherProgrammaticChange, true);
+	  (_checker$switcher = checker.switcher) === null || _checker$switcher === void 0 ? void 0 : _checker$switcher.check(isChecked);
+	  babelHelpers.classPrivateFieldSet(this, _isSwitcherProgrammaticChange, false);
+	}
+	function _showBitrixGptAgreementPopup2(checker) {
+	  var _this4 = this;
 	  main_core.Runtime.loadExtension('ai.bitrixgpt-agreement-popup').then(function (_ref2) {
 	    var showBitrixGptAgreementPopup = _ref2.showBitrixGptAgreementPopup;
 	    return main_core.ajax.runAction('ai.bitrixgptagreement.getPopupData').then(function (response) {
 	      var data = response === null || response === void 0 ? void 0 : response.data;
 	      if (!main_core.Type.isPlainObject(data) || !main_core.Type.isNumber(data.attempt)) {
+	        babelHelpers.classPrivateFieldSet(_this4, _isAgreementAccepted, true);
 	        return;
 	      }
-	      showBitrixGptAgreementPopup(data);
+	      _classPrivateMethodGet(_this4, _setCheckerState, _setCheckerState2).call(_this4, checker, false);
+	      showBitrixGptAgreementPopup(_objectSpread(_objectSpread({}, data), {}, {
+	        useQueue: false,
+	        showSkip: false,
+	        messages: {
+	          accept: main_core.Loc.getMessage('INTRANET_SETTINGS_AI_ENABLE_BUTTON')
+	        },
+	        onAccept: function onAccept() {
+	          babelHelpers.classPrivateFieldSet(_this4, _isAgreementAccepted, true);
+	          _classPrivateMethodGet(_this4, _setCheckerState, _setCheckerState2).call(_this4, checker, true);
+	        },
+	        onDecline: function onDecline() {
+	          _classPrivateMethodGet(_this4, _setCheckerState, _setCheckerState2).call(_this4, checker, false);
+	        }
+	      }));
 	    });
-	  })["catch"](function (error) {
-	    console.error(error);
 	  });
 	}
 	function _bindEvents2() {
-	  var _this4 = this;
+	  var _this5 = this;
+	  if (babelHelpers.classPrivateFieldGet(this, _agreementCheckers).length > 0) {
+	    babelHelpers.classPrivateFieldGet(this, _agreementCheckers).forEach(function (checker) {
+	      main_core_events.EventEmitter.subscribe(checker, 'change', function (event) {
+	        if (babelHelpers.classPrivateFieldGet(_this5, _isSwitcherProgrammaticChange) || babelHelpers.classPrivateFieldGet(_this5, _isAgreementAccepted) || event.getData() !== true) {
+	          return;
+	        }
+	        _classPrivateMethodGet(_this5, _showBitrixGptAgreementPopup, _showBitrixGptAgreementPopup2).call(_this5, checker);
+	      });
+	    });
+	  }
 	  if (babelHelpers.classPrivateFieldGet(this, _onSaveCheckers).length > 0) {
 	    main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Settings:onBeforeSave', function () {
-	      babelHelpers.classPrivateFieldGet(_this4, _onSaveCheckers).forEach(function (field) {
+	      babelHelpers.classPrivateFieldGet(_this5, _onSaveCheckers).forEach(function (field) {
 	        var _field$switcher;
 	        (_field$switcher = field.switcher) === null || _field$switcher === void 0 ? void 0 : _field$switcher.check(false, false);
 	      });
-	      _classPrivateMethodGet(_this4, _showBitrixGptAgreementPopup, _showBitrixGptAgreementPopup2).call(_this4);
 	    });
 	  }
 	  if (babelHelpers.classPrivateFieldGet(this, _itemRelations).length > 0) {
 	    babelHelpers.classPrivateFieldGet(this, _itemRelations).forEach(function (relation) {
-	      var parent = babelHelpers.classPrivateFieldGet(_this4, _itemFields)[relation.parent];
+	      var parent = babelHelpers.classPrivateFieldGet(_this5, _itemFields)[relation.parent];
 	      if (parent && parent.field && parent.field instanceof ui_formElements_view.Checker) {
 	        if (!parent.field.isChecked()) {
 	          relation.children.forEach(function (child) {
 	            var _babelHelpers$classPr, _babelHelpers$classPr2;
-	            var node = (_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(_this4, _itemFields)[child]) === null || _babelHelpers$classPr === void 0 ? void 0 : (_babelHelpers$classPr2 = _babelHelpers$classPr.row) === null || _babelHelpers$classPr2 === void 0 ? void 0 : _babelHelpers$classPr2.getRowView();
+	            var node = (_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(_this5, _itemFields)[child]) === null || _babelHelpers$classPr === void 0 ? void 0 : (_babelHelpers$classPr2 = _babelHelpers$classPr.row) === null || _babelHelpers$classPr2 === void 0 ? void 0 : _babelHelpers$classPr2.getRowView();
 	            if (node) {
 	              node.hide();
 	            }
@@ -259,7 +315,7 @@ this.BX.AI.Integration = this.BX.AI.Integration || {};
 	          var isActive = event.getData();
 	          relation.children.forEach(function (child) {
 	            var _babelHelpers$classPr3, _babelHelpers$classPr4;
-	            var node = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldGet(_this4, _itemFields)[child]) === null || _babelHelpers$classPr3 === void 0 ? void 0 : (_babelHelpers$classPr4 = _babelHelpers$classPr3.row) === null || _babelHelpers$classPr4 === void 0 ? void 0 : _babelHelpers$classPr4.getRowView();
+	            var node = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldGet(_this5, _itemFields)[child]) === null || _babelHelpers$classPr3 === void 0 ? void 0 : (_babelHelpers$classPr4 = _babelHelpers$classPr3.row) === null || _babelHelpers$classPr4 === void 0 ? void 0 : _babelHelpers$classPr4.getRowView();
 	            if (node) {
 	              isActive ? node.show() : node.hide();
 	            }

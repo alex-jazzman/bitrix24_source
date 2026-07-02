@@ -7,20 +7,28 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 	const { Indent, Color, Corner } = require('tokens');
 	const { Loc } = require('loc');
 	const { inAppUrl } = require('in-app-url');
-
 	const { MoreMenuAnalytics } = require('more-menu/analytics');
-
 	const { formatHHMMSS, toMs, parseHmsToSec, parseDateToSec } = require('utils/time');
-
 	const { Text3, Text4 } = require('ui-system/typography/text');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const { Button, ButtonSize, ButtonDesign } = require('ui-system/form/buttons/button');
-
 	const { debounce } = require('utils/function');
 	const { createTestIdGenerator } = require('utils/test');
 	const { PropTypes } = require('utils/validation');
 	const { isEmpty } = require('utils/object');
 	const { Line } = require('utils/skeleton');
+	const { showErrorToast } = require('toast');
+	const { checkFeatureFlag, FeatureFlagType } = require('feature-flag');
+
+	let DailyReportBox = null;
+	try
+	{
+		DailyReportBox = require('timeman/work-reports/submit/daily').DailyReportBox;
+	}
+	catch (e)
+	{
+		console.warn(e);
+	}
 
 	const STATUS = {
 		OPENED: 'OPENED',
@@ -82,16 +90,22 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 			this.openWorkTime = this.openWorkTime.bind(this);
 			this.closeWorkTime = this.closeWorkTime.bind(this);
 			this.getStatus = this.getStatus.bind(this);
+
+			this.enabledDailyReportBox = false;
 		}
 
 		componentDidMount()
 		{
 			this.updateLiveTimer();
 			BX.addCustomEvent('onAppActive', this.getStatus);
-
 			BX.addCustomEvent('onPullEvent-timeman', this.debouncedSubscribeToPullEvent);
 
 			this.statusPoller = setInterval(this.getStatus, STATUS_POLL_INTERVAL);
+
+			checkFeatureFlag(FeatureFlagType.WORK_REPORTS)
+				.then((enabled) => {
+					this.enabledDailyReportBox = DailyReportBox && enabled;
+				}).catch(console.error);
 		}
 
 		componentWillReceiveProps(props)
@@ -608,13 +622,13 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 		isCompleted()
 		{
 			return this.state.status === STATUS.CLOSED
-			&& (this.state.canOpen === 'REOPEN' || !this.state.canOpen);
+				&& (this.state.canOpen === 'REOPEN' || !this.state.canOpen);
 		}
 
 		isStart()
 		{
 			return this.state.status === STATUS.CLOSED
-			&& (this.state.canOpen === 'OPEN');
+				&& (this.state.canOpen === 'OPEN');
 		}
 
 		renderActions()
@@ -658,88 +672,66 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 
 		renderStartButton()
 		{
+			const button = (params) => Button({
+				size: ButtonSize.M,
+				design: ButtonDesign.FILLED,
+				loading: this.state.isLoadingStart,
+				style: {
+					flexShrink: 2,
+				},
+				...params,
+			});
+
 			if (this.isExpired())
 			{
-				return Button({
+				return button({
 					testId: this.getTestId('stop-button'),
 					text: Loc.getMessage('MOBILE_MORE_MENU_WORKTIME_BUTTON_STOP'),
-					size: ButtonSize.M,
-					design: ButtonDesign.FILLED,
-					onClick: () => {
-						this.openWorkTime();
-					},
-					loading: this.state.isLoadingStart,
-					style: {
-						flexShrink: 2,
-					},
+					onClick: this.openWorkTime,
 				});
 			}
 
 			if (this.isCompleted())
 			{
-				return Button({
+				return button({
 					testId: this.getTestId('reopen-button'),
 					leftIcon: Icon.REFRESH,
 					text: Loc.getMessage('MOBILE_MORE_MENU_WORKTIME_BUTTON_REOPEN'),
-					size: ButtonSize.M,
-					design: ButtonDesign.FILLED,
 					onClick: () => {
 						this.reopenWorkTime();
-					},
-					loading: this.state.isLoadingStart,
-					style: {
-						flexShrink: 2,
 					},
 				});
 			}
 
 			if (this.isStart())
 			{
-				return Button({
+				return button({
 					testId: this.getTestId('start-button'),
 					leftIcon: Icon.PLAY,
 					text: Loc.getMessage('MOBILE_MORE_MENU_WORKTIME_BUTTON_START'),
-					size: ButtonSize.M,
-					design: ButtonDesign.FILLED,
 					onClick: () => {
 						this.reopenWorkTime();
 					},
 					disabled: !this.state.canOpen,
-					loading: this.state.isLoadingStart,
-					style: {
-						flexShrink: 2,
-					},
 				});
 			}
 
 			if (this.isPaused())
 			{
-				return Button({
+				return button({
 					testId: this.getTestId('resume-button'),
 					leftIcon: Icon.PLAY,
 					text: Loc.getMessage('MOBILE_MORE_MENU_WORKTIME_BUTTON_RESUME'),
-					size: ButtonSize.M,
-					design: ButtonDesign.FILLED,
 					onClick: () => {
 						this.reopenWorkTime();
-					},
-					loading: this.state.isLoadingStart,
-					style: {
-						flexShrink: 2,
 					},
 				});
 			}
 
-			return Button({
+			return button({
 				testId: this.getTestId('stop-button'),
 				text: Loc.getMessage('MOBILE_MORE_MENU_WORKTIME_BUTTON_STOP'),
-				size: ButtonSize.M,
-				design: ButtonDesign.FILLED,
 				onClick: this.closeWorkTime,
-				loading: this.state.isLoadingStart,
-				style: {
-					flexShrink: 2,
-				},
 			});
 		}
 
@@ -752,9 +744,7 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 
 			this.statusFetching = true;
 
-			BX.rest.callMethod('timeman.status', {
-				USER_ID: env.userId,
-			})
+			this.#callTimeman('timeman.status')
 				.then((response) => {
 					this.statusFetching = false;
 					if (response?.status === 200)
@@ -772,6 +762,26 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 				});
 		}
 
+		#callTimeman(method)
+		{
+			return BX.rest.callMethod(method, { USER_ID: env.userId });
+		}
+
+		callTimemanAction(method, loadingKey)
+		{
+			this.setState({ [loadingKey]: true }, () => {
+				this.#callTimeman(method)
+					.then((response) => {
+						this.handleTimeManResponse(response);
+					})
+					.catch((error) => {
+						this.setState({ [loadingKey]: false });
+						showErrorToast();
+						console.error(error);
+					});
+			});
+		}
+
 		pauseWorkTime()
 		{
 			if (!this.canChangeWorkTime())
@@ -780,19 +790,7 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 			}
 
 			MoreMenuAnalytics.sendPauseWorkDay();
-
-			this.setState({ isLoadingPause: true }, () => {
-				BX.rest.callMethod('timeman.pause', {
-					USER_ID: env.userId,
-				})
-					.then((response) => {
-						this.handleTimeManResponse(response);
-					})
-					.catch((error) => {
-						this.setState({ isLoadingPause: false });
-						console.error(error);
-					});
-			});
+			this.callTimemanAction('timeman.pause', 'isLoadingPause');
 		}
 
 		reopenWorkTime()
@@ -816,18 +814,7 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 				MoreMenuAnalytics.sendResumeWorkDay();
 			}
 
-			this.setState({ isLoadingStart: true }, () => {
-				BX.rest.callMethod('timeman.open', {
-					USER_ID: env.userId,
-				})
-					.then((response) => {
-						this.handleTimeManResponse(response);
-					})
-					.catch((error) => {
-						this.setState({ isLoadingStart: false });
-						console.error(error);
-					});
-			});
+			this.callTimemanAction('timeman.open', 'isLoadingStart');
 		}
 
 		closeWorkTime()
@@ -844,17 +831,45 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 
 			MoreMenuAnalytics.sendFinishWorkDay();
 
-			this.setState({ isLoadingStart: true }, () => {
-				BX.rest.callMethod('timeman.close', {
-					USER_ID: env.userId,
-				})
-					.then((response) => {
-						this.handleTimeManResponse(response);
-					})
-					.catch((error) => {
-						this.setState({ isLoadingStart: false });
-						console.error(error);
+			if (!this.enabledDailyReportBox)
+			{
+				this.callTimemanAction('timeman.close', 'isLoadingStart');
+
+				return;
+			}
+
+			this.setState({ isLoadingStart: true }, async () => {
+				try
+				{
+					await DailyReportBox.open({
+						prepareRequest: async () => {
+							const response = await this.#callTimeman('timeman.close');
+							this.handleTimeManResponse(response);
+							const { ID, TIME_START, TIME_FINISH } = response?.answer?.result ?? {};
+
+							if (ID)
+							{
+								return { recordId: Number(ID) };
+							}
+
+							return {
+								dateFilter: {
+									from: TIME_START,
+									to: TIME_FINISH,
+								},
+							};
+						},
 					});
+				}
+				catch (error)
+				{
+					showErrorToast();
+					console.error(error);
+				}
+				finally
+				{
+					this.setState({ isLoadingStart: false });
+				}
 			});
 		}
 
@@ -874,7 +889,8 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 				Alert.alert(
 					'',
 					Loc.getMessage('MOBILE_MORE_MENU_WORKTIME_FORBIDDEN_DEVICE_MOBILE'),
-					() => {},
+					() => {
+					},
 					Loc.getMessage('MOBILE_MORE_MENU_WORKTIME_FORBIDDEN_DEVICE_MOBILE_BUTTON_TEXT'),
 				);
 
@@ -927,12 +943,11 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 			return payload;
 		}
 
-		openWorkTime()
-		{
+		openWorkTime = () => {
 			inAppUrl.open('/timeman/work.time', {
 				title: Loc.getMessage('MOBILE_MORE_MENU_WORKTIME_TIME_PLACEHOLDER'),
 			});
-		}
+		};
 	}
 
 	WorkTime.propTypes = {

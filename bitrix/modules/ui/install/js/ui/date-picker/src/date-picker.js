@@ -1,8 +1,9 @@
-import { Dom, Extension, Tag, Type, Event } from 'main.core';
+import { Dom, Extension, Tag, Type, Loc, Event, Text } from 'main.core';
 import { type BaseCache, MemoryCache } from 'main.core.cache';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { DateTimeFormat } from 'main.date';
 import { Popup, type PopupOptions } from 'main.popup';
+import { FocusZone, type InputModality } from 'ui.a11y';
 
 import { type BasePicker } from './base-picker';
 
@@ -11,6 +12,7 @@ import {
 	type DayColorOptions,
 	type DateLike,
 	type DatePickerOptions,
+	type DatePickerPreset,
 	type DatePickerType,
 	type DayColor,
 	type DayMark,
@@ -31,8 +33,10 @@ import { createUtcDate } from './helpers/create-utc-date';
 import { floorDate } from './helpers/floor-date';
 import { getDate, type DateComponents } from './helpers/get-date';
 import { getFocusableBoundaryElements } from './helpers/get-focusable-boundary-elements';
+import { getPresetSubtitle } from './helpers/get-preset-subtitle';
 import { isDateLike } from './helpers/is-date-like';
 import { isDatesEqual } from './helpers/is-dates-equal';
+import { resolvePresetValue } from './helpers/resolve-preset-value';
 import { setTime } from './helpers/set-time';
 import { isDateMatch } from './helpers/is-date-match';
 import { KeyboardNavigation } from './keyboard-navigation';
@@ -50,10 +54,12 @@ let singleOpenDatePicker: DatePicker = null;
  */
 export class DatePicker extends EventEmitter
 {
+	#id: string = null;
 	#viewDate: Date = null;
 	#startDate: Date = null;
 	#selectedDates: Date[] = [];
 	#focusDate: Date = null;
+	#focusInputModality: InputModality | null = null;
 
 	#type: DatePickerType = 'date';
 	#currentView: 'day' | 'year' | 'month' | 'time' = null;
@@ -68,6 +74,9 @@ export class DatePicker extends EventEmitter
 
 	#maxDays: number = Infinity;
 	#minDays: number = 0;
+	#minDate: Date | null = null;
+	#maxDate: Date | null = null;
+	#restrictNavigation: boolean = true;
 	#fullYear: boolean = false;
 
 	#weekends: number[] = [0, 6];
@@ -111,6 +120,11 @@ export class DatePicker extends EventEmitter
 
 	#dayColors: DayColor[] = [];
 	#dayMarks: DayMark[] = [];
+	#disabledDateMatchers: DateMatcher[] = [];
+
+	#presets: DatePickerPreset[] = [];
+	#presetsContainer: HTMLElement | null = null;
+	#presetsFocusZone: FocusZone | null = null;
 
 	#keyboardNavigation: KeyboardNavigation = null;
 	#destroying: boolean = false;
@@ -123,6 +137,7 @@ export class DatePicker extends EventEmitter
 		const settings = Extension.getSettings('ui.date-picker');
 		const options: DatePickerOptions = Type.isPlainObject(pickerOptions) ? pickerOptions : {};
 
+		this.#id = Text.getRandom();
 		this.#setType(options.type);
 		this.#setSelectionMode(options.selectionMode);
 
@@ -209,6 +224,9 @@ export class DatePicker extends EventEmitter
 
 		this.setMinDays(options.minDays);
 		this.setMaxDays(options.maxDays);
+		this.setMinDate(options.minDate);
+		this.setMaxDate(options.maxDate);
+		this.setRestrictNavigation(options.restrictNavigation);
 		this.setHideOnSelect(options.hideOnSelect);
 		this.setTargetNode(options.targetNode);
 		this.setToggleSelected(options.toggleSelected);
@@ -218,10 +236,17 @@ export class DatePicker extends EventEmitter
 		this.setSingleOpening(options.singleOpening);
 		this.setDayColors(options.dayColors);
 		this.setDayMarks(options.dayMarks);
+		this.setDisabledDates(options.disabledDates);
 		this.setHideHeader(options.hideHeader);
+		this.setPresets(options.presets);
 
 		this.subscribeFromOptions(options.events);
 		this.#keyboardNavigation = new KeyboardNavigation(this);
+	}
+
+	getId(): string
+	{
+		return this.#id;
 	}
 
 	setViewDate(date: DateLike)
@@ -315,6 +340,11 @@ export class DatePicker extends EventEmitter
 			return false;
 		}
 
+		if (!this.isDateAllowed(selectedDate))
+		{
+			return false;
+		}
+
 		const updateTime = this.isDateSelected(selectedDate, 'day');
 		if (!updateTime && this.isMultipleMode() && this.#selectedDates.length >= this.getMaxDays())
 		{
@@ -390,6 +420,8 @@ export class DatePicker extends EventEmitter
 			this.getPicker().render();
 		}
 
+		this.#refreshPresetsActive();
+
 		if (updateInputs)
 		{
 			this.updateInputFields();
@@ -446,6 +478,16 @@ export class DatePicker extends EventEmitter
 		if (newStart !== null && newEnd !== null && newStart > newEnd)
 		{
 			[newStart, newEnd] = [newEnd, newStart];
+		}
+
+		if (newStart !== null && !this.isDateAllowed(newStart))
+		{
+			return false;
+		}
+
+		if (newEnd !== null && !this.isDateAllowed(newEnd))
+		{
+			return false;
 		}
 
 		const currentStart = this.#selectedDates[0] || null;
@@ -525,6 +567,8 @@ export class DatePicker extends EventEmitter
 			this.getPicker().render();
 		}
 
+		this.#refreshPresetsActive();
+
 		if (updateInputs)
 		{
 			this.updateInputFields();
@@ -594,6 +638,8 @@ export class DatePicker extends EventEmitter
 		{
 			this.getPicker().render();
 		}
+
+		this.#refreshPresetsActive();
 
 		if (updateInputs)
 		{
@@ -665,7 +711,14 @@ export class DatePicker extends EventEmitter
 
 		this.#focusDate = date === null ? null : this.createDate(date);
 
-		const { render, adjustViewDate } = { render: true, adjustViewDate: true, ...options };
+		const { render, adjustViewDate, inputModality } = {
+			render: true,
+			adjustViewDate: true,
+			inputModality: 'pointer',
+			...options,
+		};
+
+		this.setFocusInputModality(this.#focusDate === null ? null : inputModality);
 
 		if (adjustViewDate && this.isDateOutOfView(this.#focusDate))
 		{
@@ -719,6 +772,16 @@ export class DatePicker extends EventEmitter
 		}
 
 		return this.getViewDate();
+	}
+
+	getFocusInputModality(): InputModality | null
+	{
+		return this.#focusInputModality;
+	}
+
+	setFocusInputModality(modality: InputModality | null): void
+	{
+		this.#focusInputModality = modality;
 	}
 
 	isDateOutOfView(date: Date | null): boolean
@@ -786,13 +849,13 @@ export class DatePicker extends EventEmitter
 			picker.renderTo(this.getViewsContainer());
 		}
 
-		this.focus();
-
 		Dom.style(picker.getContainer(), 'display', null);
 		Dom.attr(picker.getContainer(), 'inert', null);
 
 		picker.onShow();
 		picker.render();
+
+		this.focus();
 	}
 
 	getCurrentView(): 'day' | 'year' | 'month' | 'time'
@@ -984,6 +1047,165 @@ export class DatePicker extends EventEmitter
 		return this.#minDays;
 	}
 
+	setMinDate(date: DateLike | null): void
+	{
+		if (date === null || Type.isUndefined(date))
+		{
+			this.#minDate = null;
+		}
+		else if (isDateLike(date))
+		{
+			this.#minDate = this.createDate(date);
+		}
+
+		if (this.isRendered())
+		{
+			this.getPicker()?.render();
+		}
+	}
+
+	getMinDate(): Date | null
+	{
+		return this.#minDate;
+	}
+
+	setMaxDate(date: DateLike | null): void
+	{
+		if (date === null || Type.isUndefined(date))
+		{
+			this.#maxDate = null;
+		}
+		else if (isDateLike(date))
+		{
+			this.#maxDate = this.createDate(date);
+		}
+
+		if (this.isRendered())
+		{
+			this.getPicker()?.render();
+		}
+	}
+
+	getMaxDate(): Date | null
+	{
+		return this.#maxDate;
+	}
+
+	setRestrictNavigation(flag: boolean): void
+	{
+		if (Type.isBoolean(flag))
+		{
+			this.#restrictNavigation = flag;
+			if (this.isRendered())
+			{
+				this.getPicker()?.render();
+			}
+		}
+	}
+
+	isNavigationRestricted(): boolean
+	{
+		return this.#restrictNavigation;
+	}
+
+	isDateAllowed(date: Date, precision: 'datetime' | 'day' | 'month' | 'year' = 'datetime'): boolean
+	{
+		if (
+			this.#minDate === null
+			&& this.#maxDate === null
+			&& this.#disabledDateMatchers.length === 0
+		)
+		{
+			return true;
+		}
+
+		const toComparable = (d: Date): number => {
+			switch (precision)
+			{
+				case 'year':
+					return d.getUTCFullYear();
+				case 'month':
+					return (d.getUTCFullYear() * 12) + d.getUTCMonth();
+				case 'day':
+					return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+				default:
+					return d.getTime();
+			}
+		};
+
+		const ref = toComparable(date);
+		if (this.#minDate !== null && ref < toComparable(this.#minDate))
+		{
+			return false;
+		}
+
+		if (this.#maxDate !== null && ref > toComparable(this.#maxDate))
+		{
+			return false;
+		}
+
+		if (
+			(precision === 'day' || precision === 'datetime')
+			&& this.isDateDisabled(date)
+		)
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	canNavigate(view: 'day' | 'month' | 'year', direction: 'prev' | 'next'): boolean
+	{
+		if (!this.#restrictNavigation)
+		{
+			return true;
+		}
+
+		const bound = direction === 'prev' ? this.#minDate : this.#maxDate;
+		if (bound === null)
+		{
+			return true;
+		}
+
+		if (view === 'day')
+		{
+			const { year, month } = this.getViewDateParts();
+			const numberOfMonths = this.getNumberOfMonths();
+			const firstDay = createUtcDate(year, month, 1);
+			const lastDay = addDate(createUtcDate(year, month + numberOfMonths, 1), 'day', -1);
+			const checkDate = direction === 'prev'
+				? addDate(firstDay, 'day', -1)
+				: addDate(lastDay, 'day', 1)
+			;
+
+			return this.isDateAllowed(checkDate, 'day');
+		}
+
+		if (view === 'month')
+		{
+			const viewYear = this.getViewDate().getUTCFullYear();
+
+			return direction === 'prev' ? bound.getUTCFullYear() < viewYear : bound.getUTCFullYear() > viewYear;
+		}
+
+		if (view === 'year')
+		{
+			const yearPicker = this.getPicker('year');
+			if (yearPicker === null)
+			{
+				return true;
+			}
+
+			return direction === 'prev'
+				? bound.getUTCFullYear() < yearPicker.getFirstYear()
+				: bound.getUTCFullYear() > yearPicker.getLastYear()
+			;
+		}
+
+		return true;
+	}
+
 	isFullYear(): boolean
 	{
 		return this.#fullYear;
@@ -1095,9 +1317,21 @@ export class DatePicker extends EventEmitter
 	{
 		if (this.isRendered())
 		{
-			this.getContainer().tabIndex = 0;
-			this.getContainer().focus({ preventScroll: true });
-			this.getContainer().tabIndex = -1;
+			const rootContainer = this.getRootContainer();
+			const [, next = null] = getFocusableBoundaryElements(
+				rootContainer,
+				(element: HTMLElement) => element.dataset.tabPriority === 'true',
+			);
+
+			if (next === null)
+			{
+				this.getRootContainer().focus({ preventScroll: true });
+			}
+			else
+			{
+				next.focus({ preventScroll: true, focusVisible: true });
+				this.#keyboardNavigation.setLastFocusElement(next);
+			}
 		}
 	}
 
@@ -1191,6 +1425,399 @@ export class DatePicker extends EventEmitter
 		return this.#dayMarks.filter((dayMark: DayMark): boolean => isDateMatch(day, dayMark.matchers));
 	}
 
+	setDisabledDates(matcher: DateLikeMatcher | DateLikeMatcher[]): void
+	{
+		if (Type.isUndefined(matcher) || matcher === null)
+		{
+			this.#disabledDateMatchers = [];
+		}
+		else
+		{
+			this.#disabledDateMatchers = this.#createDateMatchers(matcher);
+		}
+
+		if (this.isRendered())
+		{
+			this.getPicker()?.render();
+			this.#refreshPresetsActive();
+		}
+	}
+
+	getDisabledDates(): DateMatcher[]
+	{
+		return this.#disabledDateMatchers;
+	}
+
+	isDateDisabled(date: Date): boolean
+	{
+		if (this.#disabledDateMatchers.length === 0)
+		{
+			return false;
+		}
+
+		return isDateMatch(date, this.#disabledDateMatchers);
+	}
+
+	setPresets(presets: DatePickerPreset[]): void
+	{
+		if (!Type.isArray(presets))
+		{
+			return;
+		}
+
+		this.#presets = presets.filter((preset) => {
+			return (
+				Type.isPlainObject(preset)
+				&& Type.isStringFilled(preset.label)
+				&& !Type.isUndefined(preset.value)
+			);
+		});
+
+		if (!this.isRendered())
+		{
+			return;
+		}
+
+		const body = this.#refs.get('body');
+
+		if (this.#shouldRenderPresets())
+		{
+			const fresh = this.#createPresetsContainer();
+			if (this.#presetsContainer !== null)
+			{
+				Dom.replace(this.#presetsContainer, fresh);
+			}
+			else if (body)
+			{
+				Dom.append(fresh, body);
+			}
+			this.#presetsContainer = fresh;
+			this.#presetsFocusZone?.activate();
+		}
+		else if (this.#presetsContainer !== null)
+		{
+			this.#destroyPresetsFocusZone();
+			Dom.remove(this.#presetsContainer);
+			this.#presetsContainer = null;
+		}
+	}
+
+	getPresets(): DatePickerPreset[]
+	{
+		return this.#presets;
+	}
+
+	#shouldRenderPresets(): boolean
+	{
+		return (
+			this.#presets.length > 0
+			&& this.#selectionMode !== 'none'
+			&& this.getType() === 'date'
+		);
+	}
+
+	#createPresetsContainer(): HTMLElement
+	{
+		const container = Tag.render`
+			<div
+				class="ui-date-picker-presets"
+				role="listbox"
+				aria-label="${Loc.getMessage('UI_DATE_PICKER_PRESETS_LABEL')}"
+			></div>
+		`;
+		this.#presets.forEach((preset: DatePickerPreset, index: number): void => {
+			const button = this.#renderPreset(preset, index);
+			if (button !== null)
+			{
+				Dom.append(button, container);
+			}
+		});
+
+		this.#destroyPresetsFocusZone();
+		this.#presetsFocusZone = new FocusZone(container, {
+			focusOutBehavior: 'wrap',
+		});
+
+		return container;
+	}
+
+	#destroyPresetsFocusZone(): void
+	{
+		if (this.#presetsFocusZone !== null)
+		{
+			this.#presetsFocusZone.deactivate();
+			this.#presetsFocusZone = null;
+		}
+	}
+
+	#renderPreset(preset: DatePickerPreset, index: number): HTMLElement | null
+	{
+		const dates = this.#resolvePresetValue(preset);
+		const disabled = !this.#isPresetAllowed(preset, dates);
+		const isActive = !disabled && this.#isPresetActive(preset, dates);
+		const subtitle = this.#getPresetSubtitle(preset, dates);
+
+		const classes = ['ui-date-picker-preset'];
+		if (isActive)
+		{
+			classes.push('--active');
+		}
+
+		if (disabled)
+		{
+			classes.push('--disabled');
+		}
+
+		const subtitleNode = (
+			subtitle === null
+				? ''
+				: Tag.render`<span class="ui-date-picker-preset-subtitle">${subtitle}</span>`
+		);
+
+		const button = Tag.render`
+			<button
+				type="button"
+				class="${classes.join(' ')}"
+				data-index="${index}"
+				aria-pressed="${isActive ? 'true' : 'false'}"
+				onclick="${this.#handlePresetClick.bind(this, preset)}"
+				onmouseenter="${this.#handlePresetMouseEnter.bind(this, preset)}"
+				onmouseleave="${this.#handlePresetMouseLeave.bind(this)}"
+			>
+				<span class="ui-date-picker-preset-label">${preset.label}</span>
+				${subtitleNode}
+			</button>
+		`;
+		button.disabled = disabled;
+
+		return button;
+	}
+
+	#isPresetAllowed(preset: DatePickerPreset, resolvedDates: Date[] | null = null): boolean
+	{
+		if (this.#minDate === null && this.#maxDate === null)
+		{
+			return true;
+		}
+
+		const dates = resolvedDates === null ? this.#resolvePresetValue(preset) : resolvedDates;
+		if (dates === null)
+		{
+			return true;
+		}
+
+		return dates.every((date: Date): boolean => this.isDateAllowed(date));
+	}
+
+	#resolvePresetValue(preset: DatePickerPreset): Date[] | null
+	{
+		return resolvePresetValue(preset, this.#selectionMode, this.getDateFormat());
+	}
+
+	#isPresetActive(preset: DatePickerPreset, resolvedDates: Date[] | null = null): boolean
+	{
+		const dates = resolvedDates === null ? this.#resolvePresetValue(preset) : resolvedDates;
+		if (dates === null)
+		{
+			return false;
+		}
+
+		const precision = this.isTimeEnabled() || this.getType() === 'time' ? 'datetime' : 'day';
+
+		if (this.isSingleMode())
+		{
+			const selected = this.getSelectedDate();
+
+			return selected !== null && isDatesEqual(dates[0], selected, precision);
+		}
+
+		if (this.isRangeMode())
+		{
+			const rangeStart = this.getRangeStart();
+			const rangeEnd = this.getRangeEnd();
+
+			return rangeStart !== null
+				&& rangeEnd !== null
+				&& isDatesEqual(dates[0], rangeStart, precision)
+				&& isDatesEqual(dates[1], rangeEnd, precision)
+			;
+		}
+
+		if (this.isMultipleMode())
+		{
+			const selected = this.getSelectedDates();
+			if (selected.length !== dates.length)
+			{
+				return false;
+			}
+
+			return dates.every((presetDate: Date): boolean => {
+				return selected.some((selectedDate: Date): boolean => {
+					return isDatesEqual(presetDate, selectedDate, precision);
+				});
+			});
+		}
+
+		return false;
+	}
+
+	#getPresetSubtitle(preset: DatePickerPreset, dates: Date[] | null): string | null
+	{
+		return getPresetSubtitle(preset, dates, (resolved) => this.#buildAutoSubtitle(resolved));
+	}
+
+	#buildAutoSubtitle(dates: Date[]): string | null
+	{
+		const withTime = this.isTimeEnabled();
+		const timeFormat = this.getTimeFormat();
+
+		const formatBy = (date: Date, format: string): string => {
+			return DateTimeFormat.format(format, date, null, true);
+		};
+		const formatTime = (date: Date): string => formatBy(date, timeFormat);
+		const formatDate = (date: Date, formatName: string): string => {
+			const datePart = formatBy(date, DateTimeFormat.getFormat(formatName));
+
+			return withTime ? `${datePart} ${formatTime(date)}` : datePart;
+		};
+
+		if (this.isRangeMode())
+		{
+			const [start, end] = dates;
+			const sameYear = start.getUTCFullYear() === end.getUTCFullYear();
+
+			if (withTime && isDatesEqual(start, end, 'day'))
+			{
+				return `${formatDate(start, 'SHORT_DAY_OF_WEEK_SHORT_MONTH_FORMAT')} – ${formatTime(end)}`;
+			}
+
+			let formatName = null;
+			if (withTime)
+			{
+				formatName = sameYear ? 'SHORT_DAY_OF_WEEK_SHORT_MONTH_FORMAT' : 'MEDIUM_DATE_FORMAT';
+			}
+			else
+			{
+				formatName = sameYear ? 'DAY_MONTH_FORMAT' : 'MEDIUM_DATE_FORMAT';
+			}
+
+			return `${formatDate(start, formatName)} – ${formatDate(end, formatName)}`;
+		}
+
+		if (this.isMultipleMode())
+		{
+			if (dates.length === 1)
+			{
+				return formatDate(dates[0], 'DAY_OF_WEEK_MONTH_FORMAT');
+			}
+
+			if (dates.length === 2)
+			{
+				return `${formatDate(dates[0], 'DAY_MONTH_FORMAT')}, ${formatDate(dates[1], 'DAY_MONTH_FORMAT')}`;
+			}
+
+			return null;
+		}
+
+		return formatDate(dates[0], 'DAY_OF_WEEK_MONTH_FORMAT');
+	}
+
+	#handlePresetClick(preset: DatePickerPreset): void
+	{
+		const dates = this.#resolvePresetValue(preset);
+		if (dates === null || !this.#isPresetAllowed(preset, dates))
+		{
+			return;
+		}
+
+		if (this.isSingleMode())
+		{
+			this.selectDate(dates[0]);
+		}
+		else if (this.isRangeMode())
+		{
+			this.selectRange(dates[0], dates[1]);
+		}
+		else if (this.isMultipleMode())
+		{
+			this.deselectAll({ emitEvents: false });
+			this.selectDates(dates);
+		}
+
+		this.emit(DatePickerEvent.PRESET_SELECT, { preset, dates });
+
+		if (this.shouldHideOnSelect())
+		{
+			this.hide();
+		}
+	}
+
+	#handlePresetMouseEnter(preset: DatePickerPreset): void
+	{
+		if (!this.isSingleMode())
+		{
+			return;
+		}
+
+		const dates = this.#resolvePresetValue(preset);
+		if (dates === null || !this.#isPresetAllowed(preset, dates))
+		{
+			return;
+		}
+
+		const dayPicker: DayPicker = this.getPicker('day');
+		dayPicker?.clearMouseOutTimeout();
+
+		this.setFocusDate(dates[0]);
+	}
+
+	#handlePresetMouseLeave(): void
+	{
+		this.setFocusDate(null);
+	}
+
+	#refreshPresetsActive(): void
+	{
+		if (this.#presetsContainer === null)
+		{
+			return;
+		}
+
+		const buttons = this.#presetsContainer.querySelectorAll('.ui-date-picker-preset');
+		this.#presets.forEach((preset: DatePickerPreset, index: number): void => {
+			const button = buttons[index];
+			if (!button)
+			{
+				return;
+			}
+
+			const dates = this.#resolvePresetValue(preset);
+			const disabled = !this.#isPresetAllowed(preset, dates);
+			const isActive = !disabled && this.#isPresetActive(preset, dates);
+
+			button.disabled = disabled;
+			if (disabled)
+			{
+				Dom.addClass(button, '--disabled');
+			}
+			else
+			{
+				Dom.removeClass(button, '--disabled');
+			}
+
+			if (isActive)
+			{
+				Dom.addClass(button, '--active');
+			}
+			else
+			{
+				Dom.removeClass(button, '--active');
+			}
+
+			button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+		});
+	}
+
 	#createDateMatchers(matcher: DateLikeMatcher | DateLikeMatcher[]): DateMatcher[]
 	{
 		if (Type.isUndefined(matcher))
@@ -1210,7 +1837,7 @@ export class DatePicker extends EventEmitter
 						return;
 					}
 
-					const date = this.createDate(matcherValue);
+					const date = this.createDate(dateLike);
 					if (date !== null)
 					{
 						dates.push(date);
@@ -1231,9 +1858,49 @@ export class DatePicker extends EventEmitter
 			{
 				result.push(matcherValue);
 			}
+			else if (Type.isPlainObject(matcherValue))
+			{
+				const converted = this.#convertExtraMatcher(matcherValue);
+				if (converted !== null)
+				{
+					result.push(converted);
+				}
+			}
 		});
 
 		return result;
+	}
+
+	#convertExtraMatcher(matcher: Object): Object | null
+	{
+		if (Type.isArray(matcher.dayOfWeek))
+		{
+			return { dayOfWeek: matcher.dayOfWeek };
+		}
+
+		if (Type.isArray(matcher.dayOfMonth))
+		{
+			return { dayOfMonth: matcher.dayOfMonth };
+		}
+
+		const converted = {};
+		for (const key of ['from', 'to', 'before', 'after'])
+		{
+			if (!(key in matcher) || Type.isUndefined(matcher[key]) || Type.isNull(matcher[key]))
+			{
+				continue;
+			}
+
+			const date = this.createDate(matcher[key]);
+			if (date === null)
+			{
+				return null;
+			}
+
+			converted[key] = date;
+		}
+
+		return Object.keys(converted).length > 0 ? converted : null;
 	}
 
 	getPopup(): Popup
@@ -1247,6 +1914,15 @@ export class DatePicker extends EventEmitter
 		const userEvents = popupOptions.events;
 		delete popupOptions.events;
 
+		const defaultAriaLabel = this.getTitle();
+		const ariaLabel = (
+			Type.isStringFilled(popupOptions.ariaLabel) || Type.isStringFilled(popupOptions.title)
+				? popupOptions.ariaLabel
+				: defaultAriaLabel
+		);
+
+		delete popupOptions.ariaLabel;
+
 		this.#popup = new Popup({
 			contentPadding: 0,
 			padding: 0,
@@ -1259,6 +1935,10 @@ export class DatePicker extends EventEmitter
 			closeByEsc: this.shouldHideByEsc(),
 			cacheable: this.isCacheable(),
 			content: this.getContainer(),
+			ariaLabel,
+			focusTrap: {
+				initialFocus: false,
+			},
 			autoHideHandler: this.#handleAutoHide.bind(this),
 			events: {
 				onFirstShow: this.#handlePopupFirstShow.bind(this),
@@ -1324,6 +2004,7 @@ export class DatePicker extends EventEmitter
 		{
 			this.#inputField = input;
 			this.#bindInputEvents(input);
+			this.#applyInputAriaAttributes(input);
 		}
 	}
 
@@ -1334,6 +2015,7 @@ export class DatePicker extends EventEmitter
 		{
 			this.#rangeStartInput = input;
 			this.#bindInputEvents(input);
+			this.#applyInputAriaAttributes(input);
 		}
 	}
 
@@ -1344,7 +2026,30 @@ export class DatePicker extends EventEmitter
 		{
 			this.#rangeEndInput = input;
 			this.#bindInputEvents(input);
+			this.#applyInputAriaAttributes(input);
 		}
+	}
+
+	#applyInputAriaAttributes(input: HTMLElement): void
+	{
+		if (this.isInline())
+		{
+			return;
+		}
+
+		input.setAttribute('aria-haspopup', 'dialog');
+		input.setAttribute('aria-expanded', this.isOpen() ? 'true' : 'false');
+	}
+
+	#syncInputsAriaExpanded(open: boolean): void
+	{
+		const expanded = open ? 'true' : 'false';
+		[this.#inputField, this.#rangeStartInput, this.#rangeEndInput].forEach((input) => {
+			if (input !== null && input.hasAttribute('aria-haspopup'))
+			{
+				input.setAttribute('aria-expanded', expanded);
+			}
+		});
 	}
 
 	#getInputField(field: string | HTMLElement): HTMLElement | null
@@ -1417,7 +2122,7 @@ export class DatePicker extends EventEmitter
 
 	#handleInputFocusOut(event: MouseEvent): void
 	{
-		if (!this.getContainer().contains(event.relatedTarget))
+		if (!this.getRootContainer().contains(event.relatedTarget))
 		{
 			this.hide();
 		}
@@ -1428,22 +2133,7 @@ export class DatePicker extends EventEmitter
 		if (event.key === 'Tab' && !event.shiftKey && this.isOpen())
 		{
 			event.preventDefault();
-
-			const currentPickerContainer = this.getPicker().getContainer();
-			const [, next] = getFocusableBoundaryElements(
-				currentPickerContainer,
-				(element: HTMLElement) => element.dataset.tabPriority === 'true',
-			);
-
-			if (next === null)
-			{
-				this.focus();
-			}
-			else
-			{
-				next.focus({ preventScroll: true, focusVisible: true });
-				this.#keyboardNavigation.setLastFocusElement(next);
-			}
+			this.focus();
 		}
 	}
 
@@ -1651,19 +2341,82 @@ export class DatePicker extends EventEmitter
 
 			classes.push(`--${this.getType()}-picker`);
 
-			return Tag.render`
-				<div tabindex="-1" onkeyup="${this.#handleContainerKeyUp.bind(this)}" class="${classes.join(' ')}">
-					${this.getViewsContainer()}
+			const container = Tag.render`
+				<div
+					id="${this.getContainerId()}"
+					tabindex="-1"
+					onkeyup="${this.#handleContainerKeyUp.bind(this)}"
+					class="${classes.join(' ')}"
+				>
+					${this.getBodyContainer()}
 				</div>
 			`;
+
+			if (this.isInline())
+			{
+				container.setAttribute('role', 'group');
+				container.setAttribute('aria-label', this.getTitle());
+			}
+
+			return container;
+		});
+	}
+
+	getRootContainer(): HTMLElement
+	{
+		return this.isInline() ? this.getContainer() : this.getPopup().getPopupContainer();
+	}
+
+	getTitle(): string
+	{
+		if (this.getType() === 'time')
+		{
+			return Loc.getMessage('UI_DATE_PICKER_TIME_VIEW_LABEL');
+		}
+
+		if (this.getType() === 'month')
+		{
+			return Loc.getMessage('UI_DATE_PICKER_MONTH_VIEW_LABEL');
+		}
+
+		if (this.getType() === 'year')
+		{
+			return Loc.getMessage('UI_DATE_PICKER_YEAR_VIEW_LABEL');
+		}
+
+		return Loc.getMessage('UI_DATE_PICKER_DIALOG_LABEL');
+	}
+
+	getContainerId(): string
+	{
+		return `ui-date-picker-${this.#id}`;
+	}
+
+	getBodyContainer(): HTMLElement
+	{
+		return this.#refs.remember('body', () => {
+			const body = Tag.render`<div class="ui-date-picker-body" role="none">${this.getViewsContainer()}</div>`;
+
+			if (this.#shouldRenderPresets())
+			{
+				this.#presetsContainer = this.#createPresetsContainer();
+				Dom.append(this.#presetsContainer, body);
+			}
+
+			return body;
 		});
 	}
 
 	getViewsContainer(): HTMLElement
 	{
 		return this.#refs.remember('views', () => {
-			return Tag.render`<div class="ui-date-picker-views"></div>`;
+			return Tag.render`<div role="none" class="ui-date-picker-views" id="${this.getContainerId()}-views"></div>`;
 		});
+	}
+
+	getViewsContainerId(): string
+	{
+		return this.getViewsContainer().id;
 	}
 
 	isMultipleMode(): boolean
@@ -1688,7 +2441,7 @@ export class DatePicker extends EventEmitter
 
 	isFocused(): boolean
 	{
-		const rootContainer = this.getContainer();
+		const rootContainer = this.getRootContainer();
 		const activeElement = rootContainer.ownerDocument.activeElement;
 
 		return rootContainer.contains(activeElement) || rootContainer === activeElement;
@@ -1895,6 +2648,8 @@ export class DatePicker extends EventEmitter
 		{
 			this.#keyboardNavigation.init();
 		}
+
+		this.#presetsFocusZone?.activate();
 	}
 
 	#createPicker(pickerId: string): BasePicker
@@ -2380,6 +3135,7 @@ export class DatePicker extends EventEmitter
 			singleOpenDatePicker = this;
 		}
 
+		this.#syncInputsAriaExpanded(true);
 		this.emit('onShow');
 	}
 
@@ -2410,6 +3166,7 @@ export class DatePicker extends EventEmitter
 			this.#focusInputField();
 		}
 
+		this.#syncInputsAriaExpanded(false);
 		this.emit('onHide');
 	}
 
@@ -2428,6 +3185,8 @@ export class DatePicker extends EventEmitter
 		this.#destroying = true;
 		this.emit(DatePickerEvent.DESTROY);
 
+		this.#destroyPresetsFocusZone();
+
 		if (this.isRendered())
 		{
 			Dom.remove(this.getContainer());
@@ -2445,6 +3204,11 @@ export class DatePicker extends EventEmitter
 		this.#refs = null;
 		this.#views = null;
 		this.#selectedDates = null;
+
+		if (this.isSingleOpening())
+		{
+			singleOpenDatePicker = null;
+		}
 
 		Object.setPrototypeOf(this, null);
 	}

@@ -1,0 +1,108 @@
+/* Импорт переменных */
+@import url('../debug-bar-variables.css');
+
+.debug-bar-panel {
+	height: var(--debug-bar-height-default);
+	display: flex;
+	width: 100%;
+	flex-direction: column;
+	z-index: var(--debug-bar-z-index-normal);
+	animation: debug-bar-slide-up var(--debug-bar-transition-base) var(--debug-bar-easing-default);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-system)), serif;
+	overflow-x: hidden;
+	transition: height var(--debug-bar-transition-base) var(--debug-bar-easing-default);
+}
+
+.debug-bar-panel--maximized {
+	height: var(--debug-bar-height-maximized);
+	z-index: var(--debug-bar-z-index-maximized);
+}
+
+@keyframes debug-bar-slide-up {
+	from {
+		transform: translateY(100%);
+	}
+	to {
+		transform: translateY(0);
+	}
+}
+
+.debug-bar-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: stretch;
+	height: var(--debug-bar-header-height);
+	border-bottom: 1px solid var(--debug-bar-border-light);
+}
+
+.debug-bar-header-left {
+	display: flex;
+	align-items: stretch;
+	flex: 1;
+}
+
+.debug-bar-title-wrapper {
+	display: flex;
+	align-items: center;
+	gap: var(--debug-bar-spacing-sm);
+	padding: 0 var(--debug-bar-spacing-lg);
+}
+
+.debug-bar-title {
+	width: 100%;
+	height: 20px;
+	font-style: normal;
+	font-weight: 500;
+	font-size: var(--debug-bar-font-size-md);
+	line-height: 20px;
+	letter-spacing: -0.05px;
+	color: #333333;
+	flex: none;
+	order: 0;
+	flex-grow: 1;
+}
+
+.debug-bar-header-actions {
+	display: flex;
+	align-items: stretch;
+}
+
+.debug-bar-action {
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	transition: background-color var(--debug-bar-transition-fast) var(--debug-bar-easing-default),
+	color var(--debug-bar-transition-fast) var(--debug-bar-easing-default);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--debug-bar-spacing-xs);
+}
+
+.debug-bar-action:hover {
+	color: var(--ui-color-palette-black-base);
+	background: var(--debug-bar-bg-hover);
+}
+
+.debug-bar-action:focus-visible {
+	outline: 2px solid var(--ui-color-primary, #3399FF);
+	outline-offset: 2px;
+	border-radius: var(--debug-bar-border-radius-sm);
+}
+
+.debug-bar-action:active {
+	background: var(--debug-bar-bg-active);
+}
+
+.debug-bar-content {
+	flex: 1;
+	overflow-y: auto;
+	padding: var(--debug-bar-spacing-sm) var(--debug-bar-spacing-sm);
+}
+
+.debug-bar-loading,
+.debug-bar-empty {
+	padding: calc(var(--debug-bar-spacing-xl) * 2) var(--debug-bar-spacing-xl);
+	text-align: center;
+	font-size: calc(var(--debug-bar-font-size-base) - 1px);
+}

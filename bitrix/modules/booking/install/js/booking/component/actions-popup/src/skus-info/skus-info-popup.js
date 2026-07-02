@@ -1,5 +1,3 @@
-import { PopupOptions } from 'main.popup';
-
 import { Popup } from 'booking.component.popup';
 import { currencyFormat } from 'booking.lib.currency-format';
 

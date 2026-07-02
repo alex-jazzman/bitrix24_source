@@ -6,7 +6,7 @@ import { EntityTypes, getColorCode, ChatTypes } from 'humanresources.company-str
 import { mapState } from 'ui.vue3.pinia';
 import { CommunicationListItemActionButton } from './action-button';
 import { Hint, ResponsiveHint } from 'humanresources.company-structure.structure-components';
-import { ItemDictionary, ItemDictionaryType } from './dictionaries/item-dictionary';
+import { ItemDictionary, type ItemDictionaryType } from './dictionaries/item-dictionary';
 
 // @vue/component
 export const CommunicationListItem = {

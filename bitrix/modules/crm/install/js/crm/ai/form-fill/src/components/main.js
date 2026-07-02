@@ -1,15 +1,17 @@
-import '../css/main.css';
 import { Event, Runtime } from 'main.core';
-import { sliderButtonsAdapter } from '../ai-form-fill-app';
+import { mapActions, mapGetters, mapMutations } from 'ui.vue3.vuex';
+
 import { myScrollTo } from '../services/utils';
+import { sliderButtonsAdapter } from '../shared-state';
 import { CloseConfirm } from './close-confirm';
 import { EntityEditorWrapper } from './entity-editor-wrapper';
 import { FeedbackMessage } from './feedback-message';
 import { FloatingActionButton } from './floating-action-button';
 import { Loader } from './loader';
-import { mapActions, mapGetters, mapMutations } from 'ui.vue3.vuex';
-import { ToolBar } from './tool-bar';
 import { Merger } from './merger';
+import { ToolBar } from './tool-bar';
+
+import '../css/main.css';
 
 export const Main = {
 	name: 'Main',

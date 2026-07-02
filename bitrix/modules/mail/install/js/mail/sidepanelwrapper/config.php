@@ -10,8 +10,8 @@ return [
 	'rel' => [
 		'main.core',
 		'ui.buttons',
-		'ui.forms',
 		'ui.fonts.opensans',
+		'ui.forms',
 	],
 	'skip_core' => false,
 ];

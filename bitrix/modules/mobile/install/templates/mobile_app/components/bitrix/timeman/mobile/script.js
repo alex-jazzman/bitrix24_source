@@ -451,6 +451,8 @@
 						return false;
 					}
 					window["app"].onCustomEvent("onMobileTimeManDayHasBeenChanged", [this.id, action, data]);
+					BXMobileApp.onCustomEvent('OnTimemanDayHasBeenChanged', { id: this.id, action: action, data: data }, true);
+
 					return this.checkData(data, action);
 				},
 				checkData : function(data, action) {

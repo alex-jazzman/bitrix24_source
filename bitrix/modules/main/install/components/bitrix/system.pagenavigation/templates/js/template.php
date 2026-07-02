@@ -1,5 +1,10 @@
-<?
+<?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+
+/**
+ * @var array $arResult
+ * @var array $arParams
+ */
 
 if (!$arParams['HANDLER'])
 	return;
@@ -13,7 +18,7 @@ if(!$arResult["NavShowAlways"])
 }
 ?>
 <div class="navigation">
-<?
+<?php
 if($arResult["bDescPageNumbering"] === true)
 {
 	// to show always first and last pages
@@ -23,7 +28,7 @@ if($arResult["bDescPageNumbering"] === true)
 
 		<div class="navigation-pages">
 			<span class="navigation-title"><?=GetMessage("pages")?></span>
-	<?
+	<?php
 	$bFirst = true;
 	$bPoints = false;
 	do
@@ -35,11 +40,11 @@ if($arResult["bDescPageNumbering"] === true)
 			if ($arResult["nStartPage"] == $arResult["NavPageNomer"]):
 	?>
 			<span class="nav-current-page"><?=$NavRecordGroupPrint?></span>
-	<?
+	<?php
 			else:
 	?>
 			<a href="javascript:void(0)" onclick="<?=$arParams["HANDLER"]?>(<?=$arResult["nStartPage"]?>); return false;"><?=$NavRecordGroupPrint?></a>
-	<?
+	<?php
 			endif;
 			$bFirst = false;
 			$bPoints = true;
@@ -48,7 +53,7 @@ if($arResult["bDescPageNumbering"] === true)
 		{
 			if ($bPoints)
 			{
-	?>...<?
+	?>...<?php
 				$bPoints = false;
 			}
 		}
@@ -64,7 +69,7 @@ else
 
 		<div class="navigation-pages">
 			<span class="navigation-title"><?=GetMessage("pages")?></span>
-	<?
+	<?php
 	$bFirst = true;
 	$bPoints = false;
 	do
@@ -75,11 +80,11 @@ else
 			if ($arResult["nStartPage"] == $arResult["NavPageNomer"]):
 	?>
 			<span class="nav-current-page"><?=$arResult["nStartPage"]?></span>
-	<?
+	<?php
 			else:
 	?>
 			<a href="javascript:void(0)" onclick="<?=$arParams["HANDLER"]?>(<?=$arResult["nStartPage"]?>); return false;"><?=$arResult["nStartPage"]?></a>
-	<?
+	<?php
 			endif;
 			$bFirst = false;
 			$bPoints = true;
@@ -88,7 +93,7 @@ else
 		{
 			if ($bPoints)
 			{
-	?>...<?
+	?>...<?php
 				$bPoints = false;
 			}
 		}

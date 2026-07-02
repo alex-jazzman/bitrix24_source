@@ -29,11 +29,11 @@ $MESS['PROMPT_MASTER_BTN_SAVE'] = 'Сохранить';
 
 $MESS['PROMPT_MASTER_TYPE_ALERT'] = 'Промпт изменится у всех, кто им пользуется';
 $MESS['PROMPT_MASTER_TYPE_FIRST_TITLE'] = 'Обычный';
-$MESS['PROMPT_MASTER_TYPE_FIRST_DESCRIPTION'] = 'Отправится CoPilot таким, как есть, без дополнительных уточнений с вашей стороны';
+$MESS['PROMPT_MASTER_TYPE_FIRST_DESCRIPTION_MSGVER_1'] = 'Отправится #COPILOT_NAME# таким, как есть, без дополнительных уточнений с вашей стороны';
 $MESS['PROMPT_MASTER_TYPE_FIRST_EXAMPLE'] = 'Например: перепиши этот текст шутливым тоном';
 
 $MESS['PROMPT_MASTER_TYPE_SECOND_TITLE'] = 'С уточнениями';
-$MESS['PROMPT_MASTER_TYPE_SECOND_DESCRIPTION'] = 'Сначала появится в поле ввода запроса к CoPilot, где его нужно дополнить своими значениями, а потом отправится';
+$MESS['PROMPT_MASTER_TYPE_SECOND_DESCRIPTION_MSGVER_1'] = 'Сначала появится в поле ввода запроса к #COPILOT_NAME#, где его нужно дополнить своими значениями, а потом отправится';
 $MESS['PROMPT_MASTER_TYPE_SECOND_EXAMPLE'] = 'Например: напиши текст для вакансии #accent#[профессия]#/accent#';
 
 

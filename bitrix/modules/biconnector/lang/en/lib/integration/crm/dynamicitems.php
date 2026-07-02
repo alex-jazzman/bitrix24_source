@@ -61,3 +61,4 @@ $MESS["CRM_DYNAMIC_ITEMS_FIELD_WEBFORM_ID"] = "CRM form ID";
 $MESS["CRM_DYNAMIC_ITEMS_FIELD_WEBFORM_ID_FULL"] = "The ID of the source CRM form";
 $MESS["CRM_DYNAMIC_ITEMS_FIELD_XML_ID"] = "External ID";
 $MESS["CRM_DYNAMIC_ITEMS_TABLE_PREFIX"] = "SPA:";
+$MESS["CRM_DYNAMIC_ITEMS_TABLE_DESCRIPTION_FULL"] = "SPA: #TITLE#. Includes basic information from both standard and custom fields of the SPA.";

@@ -2,6 +2,7 @@
  * @module user-profile/common-tab/src/block/combine
  */
 jn.define('user-profile/common-tab/src/block/combine', (require, exports, module) => {
+	const { Feature } = require('feature');
 	const { ViewMode } = require('user-profile/common-tab/src/block/base-view');
 	const { Color, Indent, Component } = require('tokens');
 	const { Area } = require('ui-system/layout/area');
@@ -44,7 +45,7 @@ jn.define('user-profile/common-tab/src/block/combine', (require, exports, module
 				allBlocks.push(...blocks);
 			}
 			const processedBlocks = this.#processBlocks(allBlocks);
-			const areaStyles = {
+			const areaStyles = Feature.canUseWidgetBackground() ? {} : {
 				excludePaddingSide: {
 					horizontal: true,
 				},
@@ -180,7 +181,7 @@ jn.define('user-profile/common-tab/src/block/combine', (require, exports, module
 			return Area(
 				{
 					style: {
-						backgroundColor: Color.bgContentPrimary.toHex(),
+						backgroundColor: Color.bgContentPrimary.toHex(Feature.canUseWidgetBackground() ? 0 : 1),
 					},
 					isFirst,
 				},

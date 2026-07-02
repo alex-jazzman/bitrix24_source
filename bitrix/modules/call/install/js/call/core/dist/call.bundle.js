@@ -40405,6 +40405,7 @@ this.BX = this.BX || {};
 	            className: BX.Messenger.v2.Lib.CallManager.viewContainerClass
 	          }
 	        });
+	        externalContainer.setAttribute('data-a11y-ignore-inert', 'true');
 	        document.body.appendChild(externalContainer);
 	      }
 	      return externalContainer;
@@ -40415,6 +40416,11 @@ this.BX = this.BX || {};
 	      this.container = BX.create("div", {
 	        props: {
 	          className: "bx-messenger-call-overlay ".concat(Util.isChatMountInPage() ? '--fixed' : '')
+	        },
+	        events: {
+	          click: function click(event) {
+	            return event.stopPropagation();
+	          }
 	        }
 	      });
 	      var externalContainer = this.getExternalContainer();

@@ -1,16 +1,13 @@
-import { Type } from 'main.core';
-import { EventEmitter, BaseEvent } from 'main.core.events';
+import { Type, type JsonObject } from 'main.core';
+import { EventEmitter, type BaseEvent } from 'main.core.events';
 
-import { Logger } from 'im.v2.lib.logger';
 import { Core } from 'im.v2.application.core';
-import { ChatType, EventType, TextareaPanelType } from 'im.v2.const';
+import { ChatType, EventType, TextareaPanelType, type OnLayoutChangeEvent } from 'im.v2.const';
+import { Logger } from 'im.v2.lib.logger';
+import { type ImModelChat } from 'im.v2.model';
+import { type PanelContext } from 'im.v2.provider.service.sending';
 
 import { IndexedDbManager } from './indexed-db-manager';
-
-import type { JsonObject } from 'main.core';
-import type { OnLayoutChangeEvent } from 'im.v2.const';
-import type { PanelContext } from 'im.v2.provider.service.sending';
-import type { ImModelChat } from 'im.v2.model';
 
 type TextareaPanelTypeItem = $Values<typeof TextareaPanelType>;
 type Draft = {
@@ -26,7 +23,7 @@ const SHOW_DRAFT_IN_RECENT_TIMEOUT = 1500;
 const STORAGE_KEY = 'recentDraft';
 
 const NOT_AVAILABLE_CHAT_TYPES = new Set([ChatType.comment]);
-const STANDALONE_SECTION_CHAT_TYPES = new Set([ChatType.taskComments]);
+const STANDALONE_SECTION_CHAT_TYPES = new Set([ChatType.taskComments, ChatType.lines]);
 
 export class DraftManager
 {
@@ -146,6 +143,17 @@ export class DraftManager
 		this.#setRecentItemDraftText(dialogId, '');
 	}
 
+	async setRecentDraftText(dialogId: string): Promise<void>
+	{
+		if (!this.#isValidDialogId(dialogId))
+		{
+			return;
+		}
+
+		const { text = '' } = await this.getDraft(dialogId);
+		this.#setRecentItemDraftText(dialogId, text);
+	}
+
 	#fillDraftsFromStorage(draftHistory: { [dialogId: string]: Draft }): void
 	{
 		if (!Type.isPlainObject(draftHistory))
@@ -177,12 +185,10 @@ export class DraftManager
 			return;
 		}
 
-		const { type: chatType }: ImModelChat = this.#getChat(dialogId);
-
 		void Core.getStore().dispatch('recent/setDraft', {
 			dialogId,
 			text,
-			addFakeItems: !STANDALONE_SECTION_CHAT_TYPES.has(chatType),
+			addFakeItems: this.#canUseFakeItems(dialogId),
 		});
 	}
 
@@ -256,5 +262,15 @@ export class DraftManager
 	#isValidDialogId(dialogId: string): boolean
 	{
 		return Type.isStringFilled(dialogId) && dialogId !== '0';
+	}
+
+	#canUseFakeItems(dialogId: string): boolean
+	{
+		const { type: chatType, parentChatId }: ImModelChat = this.#getChat(dialogId);
+
+		const isStandaloneSection = STANDALONE_SECTION_CHAT_TYPES.has(chatType);
+		const isNestedChat = parentChatId > 0;
+
+		return !isStandaloneSection && !isNestedChat;
 	}
 }

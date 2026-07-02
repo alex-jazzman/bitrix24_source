@@ -109,6 +109,14 @@ jn.define('im/messenger/lib/element/recent/item/action/action', (require, export
 		color: Color.accentMainSuccess.toHex(),
 	};
 
+	const AddToFolderAction = {
+		title: Loc.getMessage('IMMOBILE_ELEMENT_RECENT_ACTION_ADD_TO_FOLDER'),
+		identifier: 'addToFolder',
+		iconName: Icon.FOLDER_PLUS.getIconName(),
+		color: Color.base3.toHex(),
+		direction: 'leftToRight',
+	};
+
 	module.exports = {
 		InviteResendAction,
 		InviteCancelAction,
@@ -124,5 +132,6 @@ jn.define('im/messenger/lib/element/recent/item/action/action', (require, export
 		OperatorSpamAction,
 		OperatorSkipAction,
 		OperatorFinishAction,
+		AddToFolderAction,
 	};
 });

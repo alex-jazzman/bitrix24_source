@@ -182,7 +182,7 @@ this.BX.Sign = this.BX.Sign || {};
 	  loadBlocks(uid) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].loadBlocksByDocument(uid);
 	  }
-	  async setup(uid, isTemplateMode = false, copyBlocksFromPreviousBlank = false, initiatedByType = null) {
+	  async setup(uid, isTemplateMode = false, initiatedByType = null) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _actionMode)[_actionMode] = main_core.Type.isStringFilled(uid) ? 'edit' : 'create';
 	    if (this.isSameBlankSelected()) {
 	      this.setupData = {
@@ -216,7 +216,6 @@ this.BX.Sign = this.BX.Sign || {};
 	      } else {
 	        var _this$setupData2;
 	        this.ready = false;
-	        const isBlankChanged = selectedBlankId || this.blankSelector.isFilesReadyForUpload();
 	        blankId = selectedBlankId || (await this.blankSelector.createBlank());
 	        if (!blankId) {
 	          this.blankIsNotSelected = true;
@@ -224,20 +223,13 @@ this.BX.Sign = this.BX.Sign || {};
 	        }
 	        let documentUid = (_this$setupData2 = this.setupData) == null ? void 0 : _this$setupData2.uid;
 	        let documentTemplateUid = null;
-	        if (isBlankChanged && isTemplateMode && documentUid) {
-	          const {
-	            templateUid
-	          } = await babelHelpers.classPrivateFieldLooseBase(this, _changeDocumentBlank)[_changeDocumentBlank](documentUid, blankId, copyBlocksFromPreviousBlank);
-	          documentTemplateUid = templateUid;
-	        } else {
-	          const isRegistered = babelHelpers.classPrivateFieldLooseBase(this, _uids)[_uids].has(blankId);
-	          const {
-	            uid,
-	            templateUid
-	          } = isRegistered ? await babelHelpers.classPrivateFieldLooseBase(this, _changeDocumentBlank)[_changeDocumentBlank](babelHelpers.classPrivateFieldLooseBase(this, _uids)[_uids].get(blankId), blankId, copyBlocksFromPreviousBlank) : await babelHelpers.classPrivateFieldLooseBase(this, _register)[_register](blankId, isTemplateMode, babelHelpers.classPrivateFieldLooseBase(this, _chatId)[_chatId], initiatedByType);
-	          documentUid = uid;
-	          documentTemplateUid = templateUid;
-	        }
+	        const isRegistered = babelHelpers.classPrivateFieldLooseBase(this, _uids)[_uids].has(blankId);
+	        const {
+	          uid,
+	          templateUid
+	        } = isRegistered ? await babelHelpers.classPrivateFieldLooseBase(this, _changeDocumentBlank)[_changeDocumentBlank](babelHelpers.classPrivateFieldLooseBase(this, _uids)[_uids].get(blankId), blankId) : await babelHelpers.classPrivateFieldLooseBase(this, _register)[_register](blankId, isTemplateMode, babelHelpers.classPrivateFieldLooseBase(this, _chatId)[_chatId], initiatedByType);
+	        documentUid = uid;
+	        documentTemplateUid = templateUid;
 	        babelHelpers.classPrivateFieldLooseBase(this, _uids)[_uids].set(blankId, documentUid);
 	        await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].upload(documentUid);
 	        const [loadedData, blocks] = await Promise.all([babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].loadDocument(documentUid), babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].loadBlocksByDocument(documentUid)]);
@@ -324,6 +316,9 @@ this.BX.Sign = this.BX.Sign || {};
 	      main_core.Dom.addClass(this.layout, '--pending');
 	    }
 	  }
+	  get isEditorFlowPending() {
+	    return false;
+	  }
 	  isTemplateMode() {
 	    return sign_v2_signSettings.isTemplateMode(babelHelpers.classPrivateFieldLooseBase(this, _documentMode)[_documentMode]);
 	  }
@@ -372,8 +367,8 @@ this.BX.Sign = this.BX.Sign || {};
 	  const data = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].register(blankId, babelHelpers.classPrivateFieldLooseBase(this, _scenarioType)[_scenarioType], isTemplateMode, chatId, babelHelpers.classPrivateFieldLooseBase(this, _templateFolderId)[_templateFolderId], initiatedByType);
 	  return data != null ? data : {};
 	}
-	async function _changeDocumentBlank2(uid, blankId, copyBlocksFromPreviousBlank = false) {
-	  const data = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].changeBlank(uid, blankId, copyBlocksFromPreviousBlank);
+	async function _changeDocumentBlank2(uid, blankId) {
+	  const data = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].changeBlank(uid, blankId);
 	  return data != null ? data : {};
 	}
 	async function _getPages2(uid) {

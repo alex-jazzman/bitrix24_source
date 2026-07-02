@@ -3,6 +3,7 @@
  */
 jn.define('in-app-url/routes/settings', (require, exports, module) => {
 	const { Feature } = require('feature');
+	const { requireLazy } = require('require-lazy');
 	const { checkFeatureFlag, FeatureFlagType } = require('feature-flag');
 
 	const openPresetManagementPage = (params, { context }) => {

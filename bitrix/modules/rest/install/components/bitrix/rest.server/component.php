@@ -124,6 +124,7 @@ else
 
 	$server = new CRestApiServer([
 		'RESPONSE_LANGUAGE' => \Bitrix\Main\Context::getCurrent()->getRequest()->getHeader('X-Bitrix-Rest-Response-Language'),
+		'METHOD' => $serverRequest->getMethod(),
 	]);
 
 	$result = $server->processServerRequest($serverRequest);

@@ -7,28 +7,42 @@ jn.define('ui-system/typography/text-base', (require, exports, module) => {
 	const { Typography, Color } = require('tokens');
 
 	/**
-	 * @typedef {Object} TextBaseProps
-	 * @property {number | string} [size]
-	 * @property {boolean} [accent]
-	 * @property {boolean} [header]
-	 * @property {TextInput | Text | TextField} [nativeElement]
-	 * @property {Typography} [typography]
-	 *
-	 * @param {TextBase} props
-	 * @return TextBase
+	 * @param {TextBaseProps} props
+	 * @return {object}
 	 */
 	const TextBase = (props) => {
-		const { nativeElement, size = 4, accent, header, typography, color, ...restProps } = props;
+		const {
+			nativeElement,
+			size = 4,
+			accent,
+			header,
+			typography,
+			color,
+			colorGradient,
+			...restProps
+		} = props;
 		const typographyToken = Typography.resolve(
 			Typography.getToken({ token: typography, accent }),
 			Typography.getTokenBySize({ size, header, accent }),
 		);
 
-		const typographyStyle = typographyToken.getStyle();
-		const style = Color.has(color) ? {
-			color: color.toHex(),
-			...typographyToken.getStyle(),
-		} : typographyStyle;
+		let style = typographyToken.getStyle();
+
+		if (Color.has(color))
+		{
+			style = { color: color.toHex(), ...style };
+		}
+
+		if (colorGradient?.colors)
+		{
+			style = {
+				...style,
+				colorGradient: {
+					colors: colorGradient.colors.map((gradient) => Color.has(gradient) ? gradient.toHex() : gradient),
+					angle: colorGradient.angle,
+				},
+			};
+		}
 
 		return nativeElement(mergeImmutable({ style }, restProps));
 	};
@@ -48,6 +62,10 @@ jn.define('ui-system/typography/text-base', (require, exports, module) => {
 		]),
 		accent: PropTypes.bool,
 		header: PropTypes.bool,
+		colorGradient: PropTypes.shape({
+			colors: PropTypes.array.isRequired,
+			angle: PropTypes.number,
+		}),
 	};
 
 	module.exports = { TextBase };

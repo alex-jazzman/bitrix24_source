@@ -1,30 +1,36 @@
 <?php
 
 /**
+ * Bitrix Framework
+ * @package bitrix
+ * @subpackage main
+ * @copyright 2001-2026 Bitrix
+ */
+
+/**
  * @global CMain $APPLICATION
  * @global CUser $USER
- * @global CDatabase $DB
  */
 
 use Bitrix\Main\Authentication\Policy;
 use Bitrix\Main\UserGroupTable;
+use Bitrix\Main\Page\Asset;
 
-require_once(__DIR__."/../include/prolog_admin_before.php");
-define("HELP_FILE", "users/group_edit.php");
-
-ClearVars();
+require_once __DIR__ . '/../include/prolog_admin_before.php';
+define('HELP_FILE', 'users/group_edit.php');
 
 if (!$USER->CanDoOperation('view_groups'))
 	$APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
 
 IncludeModuleLangFile(__FILE__);
 
-$asset = \Bitrix\Main\Page\Asset::getInstance();
+$asset = Asset::getInstance();
 $asset->addJs('/bitrix/js/main/gp.js');
 
-$strError = "";
-$ID = intval($_REQUEST['ID'] ?? 0);
-$COPY_ID = intval($_REQUEST["COPY_ID"] ?? 0);
+$strError = '';
+
+$ID = (int)($_REQUEST['ID'] ?? 0);
+$COPY_ID = (int)($_REQUEST['COPY_ID'] ?? 0);
 if($COPY_ID > 0)
 	$ID = $COPY_ID;
 
@@ -54,57 +60,58 @@ if($ID!=1 || $COPY_ID>0 || (COption::GetOptionString("main", "controller_member"
 }
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
-if($_SERVER["REQUEST_METHOD"] == "POST" && (!empty($_REQUEST["save"]) || !empty($_REQUEST["apply"])) && $USER->CanDoOperation('edit_groups') && check_bitrix_sessid())
+if($_SERVER["REQUEST_METHOD"] == "POST" && (!empty($_POST['save']) || !empty($_POST['apply'])) && $USER->CanDoOperation('edit_groups') && check_bitrix_sessid())
 {
+	$active = $_POST['ACTIVE'] ?? '';
 	if($ID <= 2 && $ID != 0)
-		$ACTIVE = "Y";
+		$active = 'Y';
 
 	$group = new CGroup;
 
-	$arGroupPolicy = array();
+	$arGroupPolicy = [];
 	foreach (new Policy\RulesCollection() as $key => $value)
 	{
-		$curVal = $_POST["gp_".$key] ?? '';
-		$curValParent = $_POST["gp_".$key."_parent"] ?? '';
+		$curVal = $_POST['gp_'.$key] ?? '';
+		$curValParent = $_POST['gp_'.$key.'_parent'] ?? '';
 
-		if ($curValParent != "Y")
+		if ($curValParent != 'Y')
 			$arGroupPolicy[$key] = $curVal;
 	}
 
-	$arFields = array(
-		"ACTIVE" => $_POST["ACTIVE"] ?? '',
-		"C_SORT" => $_POST["C_SORT"],
-		"NAME" => $_POST["NAME"],
-		"DESCRIPTION" => $_POST["DESCRIPTION"],
-		"STRING_ID" => $_POST["STRING_ID"],
-		"SECURITY_POLICY" => serialize($arGroupPolicy)
-	);
+	$arFields = [
+		'ACTIVE' => $active,
+		'C_SORT' => $_POST['C_SORT'] ?? '',
+		'NAME' => $_POST['NAME'] ?? '',
+		'DESCRIPTION' => $_POST['DESCRIPTION'] ?? '',
+		'STRING_ID' => $_POST['STRING_ID'] ?? '',
+		'SECURITY_POLICY' => serialize($arGroupPolicy)
+	];
 
 	if ($USER_COUNT <= $USER_COUNT_MAX)
 	{
-		$USER_ID_NUMBER = intval($_REQUEST["USER_ID_NUMBER"] ?? 0);
-		$USER_ID = array();
+		$USER_ID_NUMBER = (int)($_POST['USER_ID_NUMBER'] ?? 0);
+		$USER_ID = [];
 		$ind = -1;
 		for ($i = 0; $i <= $USER_ID_NUMBER; $i++)
 		{
-			if (isset($_POST["USER_ID_ACT_".$i]) && $_POST["USER_ID_ACT_".$i] == "Y")
+			if (isset($_POST['USER_ID_ACT_'.$i]) && $_POST['USER_ID_ACT_'.$i] == 'Y')
 			{
 				$ind++;
-				$USER_ID[$ind]["USER_ID"] = intval($_POST["USER_ID_".$i]);
-				$USER_ID[$ind]["DATE_ACTIVE_FROM"] = $_POST["USER_ID_FROM_".$i];
-				$USER_ID[$ind]["DATE_ACTIVE_TO"] = $_POST["USER_ID_TO_".$i];
+				$USER_ID[$ind]['USER_ID'] = (int)($_POST['USER_ID_'.$i] ?? 0);
+				$USER_ID[$ind]['DATE_ACTIVE_FROM'] = $_POST['USER_ID_FROM_'.$i] ?? '';
+				$USER_ID[$ind]['DATE_ACTIVE_TO'] = $_POST['USER_ID_TO_'.$i] ?? '';
 			}
 		}
 
 		if ($ID == 1 && $COPY_ID<=0)
 		{
 			$ind++;
-			$USER_ID[$ind]["USER_ID"] = 1;
-			$USER_ID[$ind]["DATE_ACTIVE_FROM"] = false;
-			$USER_ID[$ind]["DATE_ACTIVE_TO"] = false;
+			$USER_ID[$ind]['USER_ID'] = 1;
+			$USER_ID[$ind]['DATE_ACTIVE_FROM'] = false;
+			$USER_ID[$ind]['DATE_ACTIVE_TO'] = false;
 		}
 
-		$arFields["USER_ID"] = $USER_ID;
+		$arFields['USER_ID'] = $USER_ID;
 	}
 
 	if($ID>0 && $COPY_ID<=0)
@@ -126,28 +133,35 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && (!empty($_REQUEST["save"]) || !empty(
 		if (intval($ID) != 1 || (COption::GetOptionString("main", "controller_member", "N") == "Y" && COption::GetOptionString("main", "~controller_limited_admin", "N") == "Y"))
 		{
 			// set per module rights
-			$arTasks = array();
+			$arTasks = [];
 			foreach ($arModules as $MID)
 			{
 				$moduleName = str_replace(".", "_", $MID);
-				if(isset(${"TASKS_".$moduleName}))
+				$taskKey = 'TASKS_'.$moduleName;
+				$rightsKey = 'RIGHTS_'.$moduleName;
+				$sitesKey = 'SITES_'.$moduleName;
+				$st = [];
+				if (isset($_POST[$taskKey]))
 				{
-					$arTasks[$MID] = ${"TASKS_".$moduleName};
+					$arTasks[$MID] = $_POST[$taskKey];
 					$rt = CTask::GetLetter($arTasks[$MID]);
 				}
 				else
 				{
-					$rt = array();
-					if (isset(${"RIGHTS_".$moduleName}))
-						$rt = ${"RIGHTS_".$moduleName};
-					$st = array();
-					if (isset(${"SITES_".$moduleName}))
-						$st = ${"SITES_".$moduleName};
+					$rt = [];
+					if (isset($_POST[$rightsKey]))
+					{
+						$rt = $_POST[$rightsKey];
+					}
+					if (isset($_POST[$sitesKey]))
+					{
+						$st = $_POST[$sitesKey];
+					}
 
-					$APPLICATION->DelGroupRight($MID, array($ID));
+					$APPLICATION->DelGroupRight($MID, [$ID]);
 					foreach($arSites["reference_id"] as $site_id_tmp)
 					{
-						$APPLICATION->DelGroupRight($MID, array($ID), $site_id_tmp);
+						$APPLICATION->DelGroupRight($MID, [$ID], $site_id_tmp);
 					}
 				}
 
@@ -161,8 +175,10 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && (!empty($_REQUEST["save"]) || !empty(
 						}
 					}
 				}
-				elseif(!is_array($rt) && $rt <> '' && $rt != "NOT_REF")
+				elseif (!is_array($rt) && $rt <> '' && $rt != "NOT_REF")
+				{
 					$APPLICATION->SetGroupRight($MID, $ID, $rt);
+				}
 			}
 
 			$arTasksModules = CTask::GetTasksInModules(false, false, 'module');
@@ -173,7 +189,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && (!empty($_REQUEST["save"]) || !empty(
 			$l = count($arTaskIds);
 			for ($i = 0; $i < $l; $i++)
 			{
-				if ($arTaskIds[$i]['ID'] == $arTasks['main'])
+				if (isset($arTasks['main']) && $arTaskIds[$i]['ID'] == $arTasks['main'])
 				{
 					$arOpInTask = CTask::GetOperations($arTaskIds[$i]['ID']);
 					if (in_array($nID, $arOpInTask) || in_array($nID2, $arOpInTask))
@@ -183,7 +199,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && (!empty($_REQUEST["save"]) || !empty(
 			}
 			if ($handle_subord)
 			{
-				$arSubordinateGroups = (isset($_POST['subordinate_groups'])) ? $_POST['subordinate_groups'] : array();
+				$arSubordinateGroups = $_POST['subordinate_groups'] ?? [];
 				CGroup::SetSubordinateGroups($ID, $arSubordinateGroups);
 			}
 			else
@@ -196,20 +212,38 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && (!empty($_REQUEST["save"]) || !empty(
 				CGroup::SetTasks($ID, $arTasks);
 		}
 
-		if($USER->CanDoOperation('edit_groups') && !empty($_REQUEST["save"]))
+		if($USER->CanDoOperation('edit_groups') && !empty($_POST['save']))
 			LocalRedirect("group_admin.php?lang=".LANGUAGE_ID);
-		elseif($USER->CanDoOperation('edit_groups') && !empty($_REQUEST["apply"]))
+		elseif($USER->CanDoOperation('edit_groups') && !empty($_POST['apply']))
 			LocalRedirect($APPLICATION->GetCurPage()."?lang=".LANGUAGE_ID."&ID=".$ID."&".$tabControl->ActiveTabParam());
 		elseif($new)
 			LocalRedirect($APPLICATION->GetCurPage()."?lang=".LANGUAGE_ID."&ID=".$ID."&".$tabControl->ActiveTabParam());
 	}
 }
 
-$str_USER_ID = array();
+$groupData = [
+	'ACTIVE' => 'Y',
+	'C_SORT' => '100',
+	'TIMESTAMP_X' => '',
+	'NAME' => '',
+	'STRING_ID' => '',
+	'DESCRIPTION' => '',
+	'SECURITY_POLICY' => '',
+];
+$groupUserData = [];
+
+$checkboxes = [
+	'ACTIVE' => 1,
+];
 
 $z = CGroup::GetByID($ID);
-if($z->ExtractFields())
+if($group = $z->Fetch())
 {
+	foreach ($groupData as $key => $value)
+	{
+		$groupData[$key] = $group[$key] ?? $value;
+	}
+
 	if($USER_COUNT <= $USER_COUNT_MAX && $ID <> 2)
 	{
 		$users = UserGroupTable::getList([
@@ -217,35 +251,35 @@ if($z->ExtractFields())
 		]);
 		while ($arUserGroup = $users->fetch())
 		{
-			$str_USER_ID[(int)$arUserGroup["USER_ID"]]["DATE_ACTIVE_FROM"] = (string)$arUserGroup["DATE_ACTIVE_FROM"];
-			$str_USER_ID[(int)$arUserGroup["USER_ID"]]["DATE_ACTIVE_TO"] = (string)$arUserGroup["DATE_ACTIVE_TO"];
+			$groupUserData[(int)$arUserGroup["USER_ID"]]['DATE_ACTIVE_FROM'] = (string)$arUserGroup["DATE_ACTIVE_FROM"];
+			$groupUserData[(int)$arUserGroup["USER_ID"]]['DATE_ACTIVE_TO'] = (string)$arUserGroup["DATE_ACTIVE_TO"];
 		}
 	}
 }
 else
 {
 	$ID = 0;
-	$str_ACTIVE = "Y";
-	$str_C_SORT = 100;
-	$str_TIMESTAMP_X = '';
-	$str_NAME = '';
-	$str_STRING_ID = '';
-	$str_DESCRIPTION = '';
-	$str_SECURITY_POLICY = '';
 }
 
 if ($strError <> '')
 {
-	$DB->InitTableVarsForEdit("b_group", "");
+	foreach ($groupData as $key => $value)
+	{
+		if (isset($_POST[$key]) || isset($checkboxes[$key]))
+		{
+			$groupData[$key] = $_POST[$key] ?? '';
+		}
+	}
 
-	$USER_ID_NUMBER = intval($_REQUEST["USER_ID_NUMBER"]);
-	$str_USER_ID = array();
+	$USER_ID_NUMBER = (int)($_POST['USER_ID_NUMBER'] ?? 0);
+	$groupUserData = [];
 	for ($i = 0; $i <= $USER_ID_NUMBER; $i++)
 	{
-		if (${"USER_ID_ACT_".$i} == "Y")
+		if (($_POST['USER_ID_ACT_'.$i] ?? '') == 'Y')
 		{
-			$str_USER_ID[intval(${"USER_ID_".$i})]["DATE_ACTIVE_FROM"] = ${"USER_ID_FROM_".$i};
-			$str_USER_ID[intval(${"USER_ID_".$i})]["DATE_ACTIVE_TO"] = ${"USER_ID_TO_".$i};
+			$userId = (int)($_POST['USER_ID_'.$i] ?? 0);
+			$groupUserData[$userId]['DATE_ACTIVE_FROM'] = $_POST['USER_ID_FROM_'.$i] ?? '';
+			$groupUserData[$userId]['DATE_ACTIVE_TO'] = $_POST['USER_ID_TO_'.$i] ?? '';
 		}
 	}
 }
@@ -307,25 +341,25 @@ $context = new CAdminContextMenu($aMenu);
 $context->Show();
 ?>
 
-<?CAdminMessage::ShowMessage($strError);?>
+<?php CAdminMessage::ShowMessage($strError);?>
 
-<form method="POST" action="<?echo $APPLICATION->GetCurPage()?>?" name="form1">
+<form method="POST" action="<?= $APPLICATION->GetCurPage()?>?" name="form1">
 <?=bitrix_sessid_post()?>
-<input type="hidden" name="lang" value="<?echo LANG?>">
-<input type="hidden" name="ID" value="<?echo $ID?>">
-<?if($COPY_ID <> ''):?><input type="hidden" name="COPY_ID" value="<?echo htmlspecialcharsbx($COPY_ID)?>"><?endif?>
-<?
+<input type="hidden" name="lang" value="<?= LANGUAGE_ID?>">
+<input type="hidden" name="ID" value="<?= $ID?>">
+<?php if($COPY_ID <> ''):?><input type="hidden" name="COPY_ID" value="<?= htmlspecialcharsbx($COPY_ID)?>"><?php endif?>
+<?php
 $tabControl->Begin();
 
 $tabControl->BeginNextTab();
 ?>
-	<?if($str_TIMESTAMP_X <> ''):?>
+	<?php if($groupData['TIMESTAMP_X'] <> ''):?>
 	<tr>
-		<td><?echo GetMessage('LAST_UPDATE')?></td>
-		<td><?echo $str_TIMESTAMP_X?></td>
+		<td><?= GetMessage('LAST_UPDATE')?></td>
+		<td><?= htmlspecialcharsbx($groupData['TIMESTAMP_X'])?></td>
 	</tr>
-	<? endif; ?>
-	<?
+	<?php endif; ?>
+	<?php
 	if ($ID > 0 && $ID != 2 && $COPY_ID<=0)
 	{
 		$dbGroupTmp = CGroup::GetByID($ID, "Y");
@@ -333,45 +367,45 @@ $tabControl->BeginNextTab();
 		{
 			?>
 			<tr>
-				<td><?echo GetMessage('MAIN_TOTAL_USERS')?></td>
-				<td><a href="user_admin.php?lang=<?=LANG?>&GROUPS_ID[]=<?=$ID?>&apply_filter=Y" title="<?=GetMessage("MAIN_VIEW_USER_GROUPS")?>"><?= intval($arGroupTmp["USERS"]) ?></a></td>
+				<td><?= GetMessage('MAIN_TOTAL_USERS')?></td>
+				<td><a href="user_admin.php?lang=<?=LANGUAGE_ID?>&GROUPS_ID[]=<?=$ID?>&apply_filter=Y" title="<?=GetMessage("MAIN_VIEW_USER_GROUPS")?>"><?= intval($arGroupTmp["USERS"]) ?></a></td>
 			</tr>
-			<?
+			<?php
 		}
 	}
 	?>
-	<?if($ID>2 || $ID==0):?>
+	<?php if($ID>2 || $ID==0):?>
 	<tr>
-		<td><?echo GetMessage('ACTIVE')?></td>
-		<td><input type="checkbox" name="ACTIVE" value="Y"<?if($str_ACTIVE=="Y")echo " checked"?>></td>
+		<td><?= GetMessage('ACTIVE')?></td>
+		<td><input type="checkbox" name="ACTIVE" value="Y"<?php if($groupData['ACTIVE']=='Y')echo " checked"?>></td>
 	</tr>
-	<?endif;?>
+	<?php endif;?>
 	<tr>
 		<td width="40%"><?=GetMessage("MAIN_C_SORT")?></td>
-		<td width="60%"><input type="text" name="C_SORT" size="5" maxlength="18" value="<?echo $str_C_SORT?>"></td>
+		<td width="60%"><input type="text" name="C_SORT" size="5" maxlength="18" value="<?= htmlspecialcharsbx($groupData['C_SORT'])?>"></td>
 	</tr>
 	<tr class="adm-detail-required-field">
-		<td><?echo GetMessage('NAME')?></td>
-		<td><input type="text" name="NAME" size="40" maxlength="255" value="<?=$str_NAME?>"></td>
+		<td><?= GetMessage('NAME')?></td>
+		<td><input type="text" name="NAME" size="40" maxlength="255" value="<?= htmlspecialcharsbx($groupData['NAME'])?>"></td>
 	</tr>
 	<tr>
-		<td><?echo GetMessage('STRING_ID')?></td>
-		<td><input type="text" name="STRING_ID" size="40" maxlength="255" value="<?=$str_STRING_ID?>"></td>
+		<td><?= GetMessage('STRING_ID')?></td>
+		<td><input type="text" name="STRING_ID" size="40" maxlength="255" value="<?= htmlspecialcharsbx($groupData['STRING_ID'])?>"></td>
 	</tr>
 	<tr>
-		<td class="adm-detail-valign-top"><?echo GetMessage('DESCRIPTION')?></td>
-		<td><textarea name="DESCRIPTION" cols="30" rows="5"><?echo $str_DESCRIPTION?></textarea>
+		<td class="adm-detail-valign-top"><?= GetMessage('DESCRIPTION')?></td>
+		<td><textarea name="DESCRIPTION" cols="30" rows="5"><?= htmlspecialcharsbx($groupData['DESCRIPTION'])?></textarea>
 		</td>
 	</tr>
-	<?if($USER_COUNT<=$USER_COUNT_MAX && $ID!=2):?>
+	<?php if($USER_COUNT<=$USER_COUNT_MAX && $ID!=2):?>
 	<tr class="heading">
-		<td colspan="2"><?echo GetMessage('USERS');?></td>
+		<td colspan="2"><?= GetMessage('USERS');?></td>
 	<tr>
 		<td colspan="2" align="center">
 		<table border="0" cellpadding="0" cellspacing="0" class="internal">
 			<tr class="heading">
 				<td>&nbsp;</td>
-				<td><?echo GetMessage("USER_LIST")?></td>
+				<td><?= GetMessage("USER_LIST")?></td>
 				<td><?=GetMessage('TBL_GROUP_DATE')?></td>
 			</tr>
 			<script>
@@ -383,33 +417,33 @@ $tabControl->BeginNextTab();
 				ed1.disabled = !obj.checked;
 			}
 			</script>
-			<?
+			<?php
 			$ind = -1;
 			$dbUsers = CUser::GetList("id", "asc", array("ACTIVE" => "Y"));
 			while ($arUsers = $dbUsers->Fetch())
 			{
 				$ind++;
 				?>
-				<tr>
-					<td>
-						<input type="hidden" name="USER_ID_<?=$ind?>" value="<?=$arUsers["ID"] ?>">
-						<input type="checkbox" name="USER_ID_ACT_<?=$ind?>" id="USER_ID_ACT_ID_<?=$ind?>" value="Y" <?
-							if (array_key_exists($arUsers["ID"], $str_USER_ID))
-								echo " checked";
-							?> OnChange="CatGroupsActivate(this, <?=$ind?>)"></td>
-					<td align="left"><label for="USER_ID_ACT_ID_<?=$ind?>">[<a href="/bitrix/admin/user_edit.php?ID=<?=$arUsers["ID"]?>&lang=<?=LANGUAGE_ID?>" title="<?=GetMessage("MAIN_VIEW_USER")?>"><?=$arUsers["ID"]?></a>] (<?=htmlspecialcharsbx($arUsers["LOGIN"])?>) <?=htmlspecialcharsbx($arUsers["NAME"])?> <?=htmlspecialcharsbx($arUsers["LAST_NAME"])?></label></td>
-					<td>
-						<?=CalendarDate("USER_ID_FROM_".$ind, (array_key_exists($arUsers["ID"], $str_USER_ID) ? htmlspecialcharsbx($str_USER_ID[$arUsers["ID"]]["DATE_ACTIVE_FROM"]) : ""), "form1", "22", (array_key_exists($arUsers["ID"], $str_USER_ID) ? " " : " disabled"))?>
-						<?=CalendarDate("USER_ID_TO_".$ind, (array_key_exists($arUsers["ID"], $str_USER_ID) ? htmlspecialcharsbx($str_USER_ID[$arUsers["ID"]]["DATE_ACTIVE_TO"]) : ""), "form1", "22", (array_key_exists($arUsers["ID"], $str_USER_ID) ? " " : " disabled"))?>
-					</td>
-				</tr>
-				<?
+					<tr>
+						<td>
+							<input type="hidden" name="USER_ID_<?=$ind?>" value="<?=$arUsers["ID"] ?>">
+							<input type="checkbox" name="USER_ID_ACT_<?=$ind?>" id="USER_ID_ACT_ID_<?=$ind?>" value="Y" <?php
+								if (array_key_exists($arUsers["ID"], $groupUserData))
+									echo " checked";
+								?> OnChange="CatGroupsActivate(this, <?=$ind?>)"></td>
+						<td align="left"><label for="USER_ID_ACT_ID_<?=$ind?>">[<a href="/bitrix/admin/user_edit.php?ID=<?=$arUsers["ID"]?>&lang=<?=LANGUAGE_ID?>" title="<?=GetMessage("MAIN_VIEW_USER")?>"><?=$arUsers["ID"]?></a>] (<?=htmlspecialcharsbx($arUsers["LOGIN"])?>) <?=htmlspecialcharsbx($arUsers["NAME"])?> <?=htmlspecialcharsbx($arUsers["LAST_NAME"])?></label></td>
+						<td>
+							<?=CalendarDate("USER_ID_FROM_".$ind, (array_key_exists($arUsers["ID"], $groupUserData) ? htmlspecialcharsbx($groupUserData[$arUsers["ID"]]['DATE_ACTIVE_FROM']) : ""), "form1", "22", (array_key_exists($arUsers["ID"], $groupUserData) ? " " : " disabled"))?>
+							<?=CalendarDate("USER_ID_TO_".$ind, (array_key_exists($arUsers["ID"], $groupUserData) ? htmlspecialcharsbx($groupUserData[$arUsers["ID"]]['DATE_ACTIVE_TO']) : ""), "form1", "22", (array_key_exists($arUsers["ID"], $groupUserData) ? " " : " disabled"))?>
+						</td>
+					</tr>
+				<?php
 			}
 			?>
 		</table><input type="hidden" name="USER_ID_NUMBER" value="<?= $ind ?>"></td>
 	</tr>
-	<?endif?>
-<?
+	<?php endif?>
+<?php
 $tabControl->BeginNextTab();
 
 $arBXGroupPolicy = [
@@ -434,10 +468,10 @@ $arBXGroupPolicy = [
 			</select>
 		</td>
 	</tr>
-	<?
-	$arGroupPolicy = unserialize(htmlspecialcharsback($str_SECURITY_POLICY), ['allowed_classes' => false]);
+	<?php
+	$arGroupPolicy = unserialize($groupData['SECURITY_POLICY'], ['allowed_classes' => false]);
 	if (!is_array($arGroupPolicy))
-		$arGroupPolicy = array();
+		$arGroupPolicy = [];
 
 	foreach (new Policy\RulesCollection() as $key => $rule):
 
@@ -445,45 +479,45 @@ $arBXGroupPolicy = [
 		$curValParent = !array_key_exists($key, $arGroupPolicy);
 		if ($strError <> '')
 		{
-			$curVal = ${"gp_".$key};
-			$curValParent = (${"gp_".$key."_parent"} == "Y");
+			$curVal = $_POST['gp_'.$key] ?? '';
+			$curValParent = (($_POST['gp_'.$key.'_parent'] ?? '') == 'Y');
 		}
 		?>
 		<tr valign="top">
 			<td><label for="gp_<?= $key ?>"><?= htmlspecialcharsbx($rule->getTitle()) ?></label>:</td>
 			<td>
-				<input type="checkbox" name="gp_<?= $key ?>_parent" OnClick="gpChangeParent('<?= $key ?>'); gpSync();" id="id_gp_<?= $key ?>_parent" value="Y"<?if ($curValParent) echo "checked";?>><label for="id_gp_<?= $key ?>_parent"><?=GetMessage('MUG_GP_PARENT')?></label><br>
-				<?
+				<input type="checkbox" name="gp_<?= $key ?>_parent" OnClick="gpChangeParent('<?= $key ?>'); gpSync();" id="id_gp_<?= $key ?>_parent" value="Y"<?php if ($curValParent) echo "checked";?>><label for="id_gp_<?= $key ?>_parent"><?=GetMessage('MUG_GP_PARENT')?></label><br>
+				<?php
 				$arControl = $rule->getOptions();
 				if ($arControl['type'] == 'checkbox'):
 				?>
-					<input type="checkbox" onclick="gpSync();" id="gp_<?= $key ?>" name="gp_<?= $key ?>" value="Y" <?if($curVal === 'Y') echo "checked"?> <?if ($curValParent) echo "disabled";?>>
-				<?
+					<input type="checkbox" onclick="gpSync();" id="gp_<?= $key ?>" name="gp_<?= $key ?>" value="Y" <?php if($curVal === 'Y') echo "checked"?> <?php if ($curValParent) echo "disabled";?>>
+				<?php
 				else:
 				?>
-					<input type="text" onchange="gpSync();" name="gp_<?= $key ?>" value="<?= htmlspecialcharsbx($curVal) ?>" size="<?echo ($arControl['size'] ?? 30)?>" <?if ($curValParent) echo "disabled";?>>
-				<?
+					<input type="text" onchange="gpSync();" name="gp_<?= $key ?>" value="<?= htmlspecialcharsbx($curVal) ?>" size="<?= ($arControl['size'] ?? 30)?>" <?php if ($curValParent) echo "disabled";?>>
+				<?php
 				endif;
 				?>
 			</td>
 		</tr>
-	<?
+	<?php
 	endforeach;
 	?>
 
-	<?if (intval($ID)!=1 || $COPY_ID>0 || (COption::GetOptionString("main", "controller_member", "N") == "Y" && COption::GetOptionString("main", "~controller_limited_admin", "N") == "Y")) :?>
-	<?$tabControl->BeginNextTab();?>
+	<?php if (intval($ID)!=1 || $COPY_ID>0 || (COption::GetOptionString("main", "controller_member", "N") == "Y" && COption::GetOptionString("main", "~controller_limited_admin", "N") == "Y")) :?>
+	<?php $tabControl->BeginNextTab();?>
 	<tr>
 		<td width="40%"><?=GetMessage("KERNEL")?></td>
 		<td width="60%">
 			<script>var arSubordTasks = [];</script>
-			<?
+			<?php
 			$arTasksModules = CTask::GetTasksInModules(true,false,'module');
 			$arTasks = CGroup::GetTasks($ID);
 			$nID = COperation::GetIDByName('edit_subordinate_users');
 			$nID2 = COperation::GetIDByName('view_subordinate_users');
 			if($strError <> '')
-				$v = $_REQUEST["TASKS_main"];
+				$v = $_POST['TASKS_main'] ?? false;
 			else
 				$v = (isset($arTasks['main'])) ? $arTasks['main'] : false;
 			echo SelectBoxFromArray("TASKS_main", $arTasksModules['main'], $v, GetMessage("DEFAULT"));
@@ -498,7 +532,7 @@ $arBXGroupPolicy = [
 				{
 					?><script>
 					arSubordTasks.push(<?=$arTaskIds[$i]?>);
-					</script><?
+					</script><?php
 					if ($arTaskIds[$i] == $v)
 						$show_subord = true;
 				}
@@ -528,11 +562,11 @@ $arBXGroupPolicy = [
 			</script>
 		</td>
 	</tr>
-	<tr valign="top" id="__subordinate_groups_tr" <?echo $show_subord ? '' : 'style="display:none"';?>>
+	<tr valign="top" id="__subordinate_groups_tr" <?= $show_subord ? '' : 'style="display:none"';?>>
 		<td width="50%"><?=GetMessage('SUBORDINATE_GROUPS');?>:</td>
 		<td width="50%">
 			<select id="subordinate_groups" name="subordinate_groups[]" multiple size="6">
-			<?
+			<?php
 			$arSubordinateGroups = CGroup::GetSubordinateGroups($ID);
 			$rsData = CGroup::GetList('', '', array("ACTIVE"=>"Y", "ADMIN"=>"N", "ANONYMOUS"=>"N"));
 			while($arRes = $rsData->Fetch())
@@ -540,15 +574,15 @@ $arBXGroupPolicy = [
 				$arRes['ID'] = intval($arRes['ID']);
 				if ($arRes['ID'] == $ID)
 					continue;
-				if($strError <> '' && is_array($_REQUEST["subordinate_groups"] ?? null))
+				if($strError <> '' && is_array($_POST['subordinate_groups'] ?? null))
 				{
-					$bSel = (in_array($arRes['ID'], $_REQUEST["subordinate_groups"]));
+					$bSel = (in_array($arRes['ID'], $_POST['subordinate_groups']));
 				}
 				else
 				{
 					$bSel = (in_array($arRes['ID'], $arSubordinateGroups));
 				}
-				?><option value="<?=$arRes['ID']?>"<?echo ($bSel? ' selected' : '')?>><? echo htmlspecialcharsbx($arRes['NAME']).' ['.$arRes['ID'].']'?></option><?
+				?><option value="<?=$arRes['ID']?>"<?= ($bSel? ' selected' : '')?>><?= htmlspecialcharsbx($arRes['NAME']).' ['.$arRes['ID'].']'?></option><?php
 			}
 			?>
 			</select>
@@ -580,7 +614,7 @@ $arBXGroupPolicy = [
 
 		</td>
 	</tr>
-	<?
+	<?php
 	foreach($arModules as $MID):
 		if($MID == "main")
 			continue;
@@ -592,12 +626,12 @@ $arBXGroupPolicy = [
 	<tr>
 		<td><?=$module->MODULE_NAME.":"?></td>
 		<td>
-		<?
-			$ar = array();
+		<?php
+			$ar = [];
 			if (isset($arTasksModules[$MID]))
 			{
 				if($strError <> '')
-					$v = $_REQUEST["TASKS_".$moduleName];
+					$v = $_POST['TASKS_'.$moduleName] ?? false;
 				else
 					$v = (isset($arTasks[$MID])) ? $arTasks[$MID] : false;
 
@@ -605,7 +639,7 @@ $arBXGroupPolicy = [
 			}
 			else
 			{
-				?><table><tbody><?
+				?><table><tbody><?php
 
 				if (method_exists($module, "GetModuleRightList"))
 					$ar = call_user_func(array($module, "GetModuleRightList"));
@@ -615,29 +649,34 @@ $arBXGroupPolicy = [
 				if($strError <> '')
 				{
 					$k_site = 0;
-					if (array_key_exists("SITES_".$moduleName, $_REQUEST) && is_array($_REQUEST["SITES_".$moduleName]))
-						foreach($_REQUEST["SITES_".$moduleName] as $k => $site_id_k)
+					if (array_key_exists('SITES_'.$moduleName, $_POST) && is_array($_POST['SITES_'.$moduleName]))
+					{
+						foreach($_POST['SITES_'.$moduleName] as $k => $site_id_k)
+						{
 							if ($site_id_k == "")
 							{
 								$k_site = $k;
 								break;
 							}
+						}
+					}
 
-					$v = $_REQUEST["RIGHTS_".$moduleName][$k_site];
+					$v = $_POST['RIGHTS_'.$moduleName][$k_site] ?? false;
 				}
 				else
-					$v = $APPLICATION->GetGroupRight($MID, array($ID), "N", "N");
+				{
+					$v = $APPLICATION->GetGroupRight($MID, [$ID], "N", "N");
+				}
 
-				?><tr><?
+				?><tr><?php
 				$use_padding = false;
+				$arRightsUseSites = array("reference_id" => array(), "reference" => array());
 				if (
 					array_key_exists("use_site", $ar)
 					&& is_array($ar["use_site"])
 					&& !empty($ar["use_site"])
 				)
 				{
-
-					$arRightsUseSites = array("reference_id" => array(), "reference" => array());
 					foreach ($ar["reference_id"] as $i => $right_tmp)
 					{
 						if (in_array($right_tmp, $ar["use_site"]))
@@ -648,17 +687,17 @@ $arBXGroupPolicy = [
 					}
 
 					$use_padding = true;
-					?><td style="padding: 3px;"><input type="hidden" name="SITES_<?=$moduleName?>[]" value=""><?
+					?><td style="padding: 3px;"><input type="hidden" name="SITES_<?=$moduleName?>[]" value=""><?php
 						echo GetMessage("ALL_SITES");
-					?></td><?
+					?></td><?php
 				}
 
-				?><td <?if ($use_padding):?>style="padding: 3px;"<?endif;?>><?
+				?><td <?php if ($use_padding):?>style="padding: 3px;"<?php endif;?>><?php
 					echo SelectBoxFromArray("RIGHTS_".$moduleName."[]", $ar, htmlspecialcharsbx($v), GetMessage("DEFAULT"));
 				?></td>
-				<td></td><?
+				<td></td><?php
 
-				?></tr><?
+				?></tr><?php
 
 				if (
 					array_key_exists("use_site", $ar)
@@ -671,26 +710,28 @@ $arBXGroupPolicy = [
 						$site_selected = false;
 						if($strError <> '')
 						{
-							if (array_key_exists("SITES_".$moduleName, $_REQUEST) && is_array($_REQUEST["SITES_".$moduleName]))
+							if (array_key_exists('SITES_'.$moduleName, $_POST) && is_array($_POST['SITES_'.$moduleName]))
 							{
 								$k_site = false;
-								foreach($_REQUEST["SITES_".$moduleName] as $k => $site_id_k)
+								foreach($_POST['SITES_'.$moduleName] as $k => $site_id_k)
+								{
 									if ($site_id_k == $site_id_tmp)
 									{
 										$k_site = $k;
 										$site_selected = $site_id_k;
 										break;
 									}
+								}
 							}
 
 							if ($k_site === false)
 								$v = false;
 							else
-								$v = $_REQUEST["RIGHTS_".$moduleName][$k_site];
+								$v = $_POST['RIGHTS_'.$moduleName][$k_site] ?? false;
 						}
 						else
 						{
-							$v = $APPLICATION->GetGroupRight($MID, array($ID), "N", "N", $site_id_tmp);
+							$v = $APPLICATION->GetGroupRight($MID, [$ID], "N", "N", $site_id_tmp);
 							$site_selected = $site_id_tmp;
 						}
 
@@ -698,26 +739,25 @@ $arBXGroupPolicy = [
 						{
 							?><tr>
 								<td style="padding: 3px;">
-								<? echo SelectBoxFromArray("SITES_".$moduleName."[]", $arSites, $site_selected, GetMessage("SITE_SELECT")); ?>
-								</td><?
-								?><td style="padding: 3px;"><?
+								<?= SelectBoxFromArray("SITES_".$moduleName."[]", $arSites, $site_selected, GetMessage("SITE_SELECT")); ?>
+								</td><?php
+								?><td style="padding: 3px;"><?php
 									echo SelectBoxFromArray("RIGHTS_".$moduleName."[]", $arRightsUseSites, htmlspecialcharsbx($v), GetMessage("DEFAULT"));
 								?></td>
 								<td style="padding: 3px;"><a href="javascript:void(0)" onClick="settingsDeleteRow(this)"><img src="/bitrix/themes/.default/images/actions/delete_button.gif" border="0" width="20" height="20" alt=""></a></td>
-							</tr><?
+							</tr><?php
 						}
 					}
-
 					?>
 					<tr id="hidden-rights-row" style="display: none;">
-						<td style="padding: 3px;"><? echo SelectBoxFromArray("SITES_".$moduleName."[]", $arSites, "", GetMessage("SITE_SELECT")); ?></td>
-						<td style="padding: 3px;"><? echo SelectBoxFromArray("RIGHTS_".$moduleName."[]", $arRightsUseSites, "", GetMessage("DEFAULT"));?></td>
+						<td style="padding: 3px;"><?= SelectBoxFromArray("SITES_".$moduleName."[]", $arSites, "", GetMessage("SITE_SELECT")); ?></td>
+						<td style="padding: 3px;"><?= SelectBoxFromArray("RIGHTS_".$moduleName."[]", $arRightsUseSites, "", GetMessage("DEFAULT"));?></td>
 						<td><a href="javascript:void(0)" onClick="settingsDeleteRow(this)"><img src="/bitrix/themes/.default/images/actions/delete_button.gif" border="0" width="20" height="20" alt=""></a></td>
 					</tr>
-					<?
+					<?php
 				}
 
-				?></tbody></table><?
+				?></tbody></table><?php
 
 			}
 
@@ -727,17 +767,17 @@ $arBXGroupPolicy = [
 			&& !empty($ar["use_site"])
 		)
 		{
-			?><a href="javascript:void(0)" onclick="settingsAddRights(this)" class="bx-action-href"><?echo GetMessage("RIGHTS_ADD")?></a><?
+			?><a href="javascript:void(0)" onclick="settingsAddRights(this)" class="bx-action-href"><?= GetMessage("RIGHTS_ADD")?></a><?php
 		}
 		?></td>
 	</tr>
-	<?
+	<?php
 			endif;
 		endif;
 	endforeach;
 	?>
-	<?endif;?>
-<?
+	<?php endif;?>
+<?php
 $tabControl->Buttons(array("disabled" => !$USER->CanDoOperation('edit_groups'), "back_url"=>"group_admin.php?lang=".LANGUAGE_ID));
 $tabControl->End();
 ?>
@@ -747,4 +787,5 @@ $tabControl->End();
 	gpSync();
 </script>
 
-<?require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin.php");?>
+<?php
+require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin.php");

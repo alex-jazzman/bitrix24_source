@@ -12,7 +12,11 @@ use Bitrix\Main\Localization\Loc;
 $arActivityDescription = [
 	'NAME' => Loc::getMessage('CRM_BP_CREATE_TODO_NAME'),
 	'DESCRIPTION' => Loc::getMessage('CRM_BP_CREATE_TODO_DESC_1'),
-	'TYPE' => ['activity', 'robot_activity'],
+	'TYPE' => [
+		'activity',
+		'robot_activity',
+		'node_action',
+	],
 	'CLASS' => 'CrmCreateToDoActivity',
 	'JSCLASS' => 'BizProcActivity',
 	'CATEGORY' => [
@@ -44,5 +48,8 @@ $arActivityDescription = [
 		'RESPONSIBLE_PROPERTY' => 'Responsible',
 		'GROUP' => ['repeatSales', 'other', 'employeeControl'],
 		'SORT' => 3500,
+	],
+	'NODE_ACTION_SETTINGS' => [
+		'HANDLES_DOCUMENT' => true,
 	],
 ];

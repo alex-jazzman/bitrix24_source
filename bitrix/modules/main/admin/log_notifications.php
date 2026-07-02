@@ -116,7 +116,7 @@ while($notification = $notifyList->fetch())
 {
 	$id = htmlspecialcharsbx($notification["ID"]);
 
-	$row = &$adminList->AddRow($id, $notification, "log_notification_edit.php?ID=".$id."&lang=".LANGUAGE_ID, Loc::getMessage("log_notifications_edit"));
+	$row = $adminList->AddRow($id, $notification, "log_notification_edit.php?ID=".$id."&lang=".LANGUAGE_ID, Loc::getMessage("log_notifications_edit"));
 	$row->AddViewField("ID", $id);
 	$row->AddCheckField("ACTIVE");
 	$row->AddInputField("NAME");

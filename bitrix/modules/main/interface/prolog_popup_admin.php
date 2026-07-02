@@ -1,13 +1,18 @@
-<?
+<?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+
+/**
+ * @global CMain $APPLICATION
+ * @global CAdminPage $adminPage
+ */
 ?>
 <!DOCTYPE html>
 <html id="bx-admin-prefix">
 <head>
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<title><?echo $APPLICATION->GetTitle()?></title>
-<meta http-equiv="Content-Type" content="text/html; charset=<?echo LANG_CHARSET?>">
-<?
+<title><?= $APPLICATION->GetTitle()?></title>
+<meta http-equiv="Content-Type" content="text/html; charset=<?= LANG_CHARSET?>">
+<?php
 if(!is_object($adminPage))
 	$adminPage = new CAdminPage();
 

@@ -7,3 +7,4 @@ $MESS['CRM_BIC_PRODUCT_PROPERTY_VALUE_FIELD_VALUE_MSGVER_1'] = 'Код знач�
 $MESS['CRM_BIC_PRODUCT_PROPERTY_VALUE_FIELD_VALUE_FULL'] = 'Для свойств типа Список и Да/Нет содержатся коды значений, для всех остальных типов сами значения';
 $MESS['CRM_BIC_PRODUCT_PROPERTY_VALUE_FIELD_VALUE_NAME'] = 'Значение';
 $MESS['CRM_BIC_PRODUCT_PROPERTY_VALUE_FIELD_VALUE_NAME_FULL'] = 'Содержатся значения свойств';
+$MESS['CRM_BIC_PRODUCT_PROPERTY_VALUE_TABLE_DESCRIPTION_FULL'] = "Набор содержит значения свойств товаров из каталога.";

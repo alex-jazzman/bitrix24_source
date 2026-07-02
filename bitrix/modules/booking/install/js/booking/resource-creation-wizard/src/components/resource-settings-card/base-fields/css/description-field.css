@@ -20,6 +20,8 @@
 	overflow-y: auto;
 	white-space: pre-wrap;
 
+	/* @chef-ignore */
 	scrollbar-width: thin;
+	/* @chef-ignore */
 	scrollbar-color: var(--ui-color-palette-gray-40) transparent;
 }

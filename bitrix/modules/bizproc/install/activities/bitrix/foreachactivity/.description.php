@@ -23,6 +23,7 @@ $arActivityDescription = (new ActivityDescription(
 	])
 	->setClass('ForEachActivity')
 	->setJsClass('ForEachActivity')
+	->setNodeType(ActivityNodeType::OPERATORS->value)
 	->setReturn([
 		'Key' => [
 			'NAME' => Loc::getMessage('BPFEA_DESCR_RETURN_KEY'),
@@ -33,7 +34,6 @@ $arActivityDescription = (new ActivityDescription(
 			'TYPE' => 'mixed',
 		],
 	])
-	->setNodeType(ActivityNodeType::COMPLEX->value)
 	->setNodeSettings(new \Bitrix\Bizproc\Activity\Dto\NodeSettings(
 		width: 230,
 		height: 46,

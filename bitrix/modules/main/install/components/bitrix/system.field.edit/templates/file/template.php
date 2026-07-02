@@ -1,4 +1,4 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 /**
  * @var array $arParams
@@ -13,7 +13,7 @@ foreach (GetModuleEvents("main", "system.field.edit.file", true) as $arEvent)
 
 ?>
 <div id="main_<?=$arParams["arUserField"]["FIELD_NAME"]?>">
-<?
+	<?php
 $postFix = ($arParams["arUserField"]["MULTIPLE"] == "Y" ? "[]" : "");
 
 if($arParams["arUserField"]["MULTIPLE"] == "Y" && $arParams["SHOW_BUTTON"] != "N" && $arParams["bVarsFromForm"])
@@ -28,7 +28,7 @@ foreach ($arResult["VALUE"] as $res):
 		<input type="hidden" name="<?=$arParams["arUserField"]["~FIELD_NAME"]?>_old_id<?=$postFix?>" value="<?=$res?>" />
 		<?=CFile::InputFile($arParams["arUserField"]["FIELD_NAME"], 0, $res, false, 0, "", "", 0, "", ' value="'.$res.'"', true, $arParams['SHOW_FILE_PATH'] ?? true);?>
 		<br>
-<?
+		<?php
 $arFile = CFile::GetFileArray($res);
 if($arFile)
 {
@@ -62,14 +62,14 @@ if($arFile)
 }
 ?>
 	</div>
-	<?
+<?php
 endforeach;
 ?>
 </div>
-<?if ($arParams["arUserField"]["MULTIPLE"] == "Y" && $arParams["SHOW_BUTTON"] != "N"):?>
+<?php if ($arParams["arUserField"]["MULTIPLE"] == "Y" && $arParams["SHOW_BUTTON"] != "N"):?>
 <div style="display:none" id="main_add_<?=$arParams["arUserField"]["FIELD_NAME"]?>" class="fields files">
 	<input type="hidden" name="<?=$arParams["arUserField"]["~FIELD_NAME"]?>_old_id[]" value="" />
 	<?=CFile::InputFile($arParams["arUserField"]["FIELD_NAME"], 0, "")?>
 </div>
 <input type="button" value="<?=GetMessage("USER_TYPE_PROP_ADD")?>" onClick="addElementFile('<?=$arParams["arUserField"]["FIELD_NAME"]?>', this)">
-<?endif;?>
+<?php endif;?>

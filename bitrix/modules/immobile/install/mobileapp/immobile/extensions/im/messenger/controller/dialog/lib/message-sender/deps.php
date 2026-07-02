@@ -9,6 +9,7 @@ return [
 		'im:messenger/controller/dialog/lib/app-rating-client',
 		'im:messenger/lib/converter/data/recent',
 		'im:messenger/lib/di/service-locator',
+		'im:messenger/lib/feature',
 		'im:messenger/lib/helper',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/params',

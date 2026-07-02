@@ -1,6 +1,4 @@
 (() => {
-	const pathToImages = `${currentDomain}/bitrix/mobileapp/mobile/extensions/bitrix/layout/socialnetwork/project/images/`;
-
 	const require = (ext) => jn.require(ext);
 	const AppTheme = require('apptheme');
 	const { Loc } = require('loc');
@@ -15,11 +13,30 @@
 	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
 	const { getFeatureRestriction, tariffPlanRestrictionsReady } = require('tariff-plan-restriction');
 	const { CollabAccessService } = require('collab/service/access');
+	const { checkFeatureFlag, FeatureFlagType } = require('feature-flag');
 	const { ProjectTagsField } = require('layout/socialnetwork/project/fields/tags');
+	const { ProjectCreateManager, ProjectCreateMode } = require('layout/socialnetwork/project-v2/create');
 	const { ProjectMemberList } = require('project/member-list');
+	const { ProjectOpener } = require('project/opener');
+	const { requireLazy } = require('require-lazy');
+	const { withCurrentDomain } = require('utils/url');
+
+	const pathToImages = withCurrentDomain('/bitrix/mobileapp/mobile/extensions/bitrix/layout/socialnetwork/project/images/');
 
 	class ProjectView extends LayoutComponent
 	{
+		getProjectImage()
+		{
+			if (!this.state.avatar)
+			{
+				return null;
+			}
+
+			return {
+				previewUrl: withCurrentDomain(this.state.avatar),
+			};
+		}
+
 		static get projectTypes()
 		{
 			return {
@@ -253,17 +270,17 @@
 					const extension = imageUrl.split('.').pop().toLowerCase();
 					if (extension === 'svg')
 					{
-						themeImageStyle.backgroundImageSvgUrl = `${currentDomain}${this.state.themeData.previewImage}`;
+						themeImageStyle.backgroundImageSvgUrl = withCurrentDomain(this.state.themeData.previewImage);
 						themeImageStyle.backgroundColor = this.state.themeData.previewColor;
 					}
 					else
 					{
-						themeImageStyle.backgroundImage = `${currentDomain}${imageUrl}`;
+						themeImageStyle.backgroundImage = withCurrentDomain(imageUrl);
 					}
 				}
 				else
 				{
-					themeImageStyle.backgroundImageSvgUrl = `${currentDomain}${this.state.themeData.previewImage}`;
+					themeImageStyle.backgroundImageSvgUrl = withCurrentDomain(this.state.themeData.previewImage);
 					themeImageStyle.backgroundColor = this.state.themeData.previewColor;
 				}
 			}
@@ -395,32 +412,7 @@
 						icon: Icon.EDIT,
 						onClickCallback: () => new Promise((resolve) => {
 							contextMenu.close(() => {
-								ProjectEditManager.open(
-									{
-										userId: this.state.userId,
-										userUploadedFilesFolder: this.state.userUploadedFilesFolder,
-										id: this.state.id,
-										name: this.state.name,
-										description: this.state.description,
-										avatar: this.state.avatar,
-										avatarId: this.state.avatarId,
-										avatarType: this.state.avatarType,
-										avatarTypes: this.state.avatarTypes,
-										isProject: this.state.isProject,
-										isOpened: this.state.isOpened,
-										isVisible: this.state.isVisible,
-										type: this.state.type,
-										ownerData: this.state.ownerData,
-										moderatorsData: this.state.moderatorsData,
-										dateStart: this.state.dateStart,
-										dateFinish: this.state.dateFinish,
-										subject: this.state.subjectData.ID,
-										subjects: this.state.subjects,
-										tags: this.state.tags,
-										initiatePerms: this.state.initiatePerms,
-									},
-									this.layoutWidget,
-								);
+								void this.openProjectEdit();
 							});
 							resolve({ closeMenu: false });
 						}),
@@ -533,13 +525,11 @@
 			let uri = `${pathToImages}mobile-layout-project-default-avatar.png`;
 			if (this.state.avatar)
 			{
-				uri = this.state.avatar;
-				uri = (uri.indexOf('http') === 0 ? uri : `${currentDomain}${uri}`);
+				uri = withCurrentDomain(this.state.avatar);
 			}
 			else if (this.state.avatarType)
 			{
-				uri = this.state.avatarTypes[this.state.avatarType].mobileUrl;
-				uri = `${currentDomain}${uri}`;
+				uri = withCurrentDomain(this.state.avatarTypes[this.state.avatarType].mobileUrl);
 			}
 
 			return Image({
@@ -550,6 +540,69 @@
 				},
 				uri: encodeURI(uri),
 			});
+		}
+
+		async openProjectEdit()
+		{
+			let isProjectsV2Enabled = false;
+
+			try
+			{
+				isProjectsV2Enabled = await checkFeatureFlag(FeatureFlagType.PROJECTS_V2);
+			}
+			catch (error)
+			{
+				console.error(error);
+			}
+
+			if (isProjectsV2Enabled)
+			{
+				return ProjectCreateManager.open(
+					{
+						mode: ProjectCreateMode.EDIT,
+						projectId: this.state.id,
+						userId: this.state.userId,
+						settings: {
+							name: this.state.name,
+							description: this.state.description,
+							image: this.getProjectImage(),
+							type: this.state.type,
+							ownerData: this.state.ownerData,
+							moderatorsData: this.state.moderatorsData,
+							dateStart: this.state.dateStart,
+							dateFinish: this.state.dateFinish,
+							tags: this.state.tags,
+							initiatePerms: this.state.initiatePerms,
+						},
+						settingsLoaded: false,
+					},
+					this.layoutWidget,
+				);
+			}
+
+			return window.ProjectEditManager.open({
+				userId: this.state.userId,
+				userUploadedFilesFolder: this.state.userUploadedFilesFolder,
+				id: this.state.id,
+				name: this.state.name,
+				description: this.state.description,
+				avatar: this.state.avatar,
+				avatarId: this.state.avatarId,
+				avatarType: this.state.avatarType,
+				avatarTypes: this.state.avatarTypes,
+				isProject: this.state.isProject,
+				isOpened: this.state.isOpened,
+				isVisible: this.state.isVisible,
+				ownerData: this.state.ownerData,
+				moderatorsData: this.state.moderatorsData,
+				type: this.state.type,
+				dateStart: this.state.dateStart,
+				dateFinish: this.state.dateFinish,
+				subject: this.state.subjectData?.ID,
+				subjects: this.state.subjects,
+				tags: this.state.tags,
+				initiatePerms: this.state.initiatePerms,
+			}, this.layoutWidget);
 		}
 
 		renderTitle()
@@ -828,9 +881,26 @@
 				{
 					if (dialogId)
 					{
-						void requireLazy('im:messenger/api/dialog-opener')
-							.then(({ DialogOpener }) => DialogOpener.open({ dialogId }));
+						try
+						{
+							const { DialogOpener } = await requireLazy('im:messenger/api/dialog-opener');
+
+							void DialogOpener.open({ dialogId });
+
+							return;
+						}
+						catch (error)
+						{
+							console.error(error);
+						}
 					}
+
+					void ProjectOpener.open({
+						projectId,
+						siteId: env.siteId,
+						siteDir: env.siteDir,
+						currentUserId: userId,
+					});
 				}
 				else
 				{

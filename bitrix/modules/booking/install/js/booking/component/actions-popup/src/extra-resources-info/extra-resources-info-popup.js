@@ -1,5 +1,4 @@
 import { mapGetters } from 'ui.vue3.vuex';
-import { PopupOptions } from 'main.popup';
 
 import { Model } from 'booking.const';
 import { Popup } from 'booking.component.popup';

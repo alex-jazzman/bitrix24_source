@@ -7,6 +7,8 @@ return [
 		'loc',
 		'require-lazy',
 		'tokens',
+		'user/theme',
+		'in-app-url',
 
 		'files/const',
 		'files/converter',
@@ -24,11 +26,10 @@ return [
 		'ui-system/typography/text',
 
 		'utils/color',
+		'utils/object',
 		'utils/skeleton',
 		'utils/test',
 		'utils/url',
 		'utils/validation',
-
-		'in-app-url',
 	],
 ];

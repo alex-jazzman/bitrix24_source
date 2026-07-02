@@ -1,6 +1,6 @@
 <?php
 
-require_once 'autoload.php';
+require_once __DIR__ . '/autoload.php';
 
 if (file_exists(__DIR__ . '/dev/Env/Include.php'))
 {

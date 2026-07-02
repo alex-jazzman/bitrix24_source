@@ -1,6 +1,6 @@
 import { Type, Dom, Event, Tag } from 'main.core';
 import { BannerDispatcher } from 'ui.banner-dispatcher';
-import { Popup, PopupManager } from 'main.popup';
+import { type Popup, PopupManager } from 'main.popup';
 import './style.css';
 
 export type MailGuideOptions = {
@@ -11,9 +11,21 @@ export type MailGuideOptions = {
 	bindElement: HTMLElement;
 	addHighlighter: boolean;
 	highlighterBorderRadius: number,
+	showImage: boolean,
+	width: ?number,
 }
 
 const defaultHighlighterBorderRadius = 8;
+
+const imageClassMap = {
+	'connection_request_guide_shown': 'mail-notification-container__image--connection-request',
+	'all_mail_mode_guide_shown': 'mail-notification-container__image--all-mail-mode',
+};
+
+const modifierClassMap = {
+	'connection_request_guide_shown': 'mail-notification-container--connection-request',
+	'all_mail_mode_guide_shown': 'mail-notification-container--all-mail-mode',
+};
 
 export class MailGuide
 {
@@ -24,8 +36,10 @@ export class MailGuide
 	#title: ?string = null;
 	#description: ?string = null;
 	#addHighlighter: boolean = false;
+	#showImage: boolean = true;
 	#highlighterBorderRadius: ?number = null;
 	#highlighter: ?HTMLElement;
+	#width: ?number = null;
 
 	constructor(options: MailGuideOptions)
 	{
@@ -37,6 +51,8 @@ export class MailGuide
 			this.#title = options.title;
 			this.#description = options.description;
 			this.#addHighlighter = options.addHighlighter;
+			this.#showImage = options.showImage !== false;
+			this.#width = options.width ?? null;
 			if (this.#addHighlighter)
 			{
 				this.#highlighter = Tag.render`<span class="ui-highlighter"></span>`;
@@ -47,6 +63,8 @@ export class MailGuide
 
 	createGuidePopup(onDone: Function): Popup
 	{
+		const compactMode = !this.#showImage;
+
 		return PopupManager.create({
 			id: this.#id,
 			className: 'popup-window-dark',
@@ -58,16 +76,16 @@ export class MailGuide
 			borderRadius: 20,
 			contentPadding: 0,
 			offsetTop: 10,
-			offsetLeft: -78,
+			offsetLeft: compactMode ? 0 : -78,
 			angle: {
-				offset: 205,
+				offset: compactMode ? 40 : 205,
 				position: 'top',
 			},
 			bindElement: this.#bindElement,
 			bindOptions: {
 				forceBindPosition: false,
 			},
-			width: 372,
+			width: this.#width ?? (compactMode ? 300 : 372),
 			content: this.getContent(),
 			events: {
 				onShow: () => {
@@ -89,36 +107,47 @@ export class MailGuide
 
 	getContent(): HTMLElement
 	{
-		return Dom.create('div', {
+		const modifier = modifierClassMap[this.#userOptionName] ?? '';
+		const containerClass = `mail-notification-container ${modifier}`.trim();
+
+		const children = [];
+
+		if (this.#showImage)
+		{
+			children.push(Dom.create('div', {
+				props: {
+					className: 'mail-notification-container__image-wrapper',
+				},
+				children: [
+					this.#renderImage(),
+				],
+			}));
+		}
+
+		children.push(Dom.create('div', {
 			props: {
-				className: 'mail-notification-container',
+				className: 'mail-notification-content',
 			},
 			children: [
-				Dom.create('div', {
-					props: {
-						className: 'mail-notification-container__image-wrapper',
-					},
-					children: [
-						this.#renderImage(),
-					],
-				}),
-				Dom.create('div', {
-					props: {
-						className: 'mail-notification-content',
-					},
-					children: [
-						this.#getMessageContainer(this.#title, this.#description),
-					],
-				}),
+				this.#getMessageContainer(this.#title, this.#description),
 			],
+		}));
+
+		return Dom.create('div', {
+			props: {
+				className: containerClass,
+			},
+			children,
 		});
 	}
 
 	#renderImage(): HTMLElement
 	{
+		const className = imageClassMap[this.#userOptionName] ?? 'mail-notification-container__image';
+
 		return Dom.create('div', {
 			props: {
-				className: 'mail-notification-container__image',
+				className,
 			},
 		});
 	}

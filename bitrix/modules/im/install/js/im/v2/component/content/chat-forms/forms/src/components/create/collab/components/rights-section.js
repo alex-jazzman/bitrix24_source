@@ -1,9 +1,9 @@
-import { EventEmitter, BaseEvent } from 'main.core.events';
+import { type JsonObject } from 'main.core';
+import { EventEmitter, type BaseEvent } from 'main.core.events';
+
 import { AccessRights } from 'socialnetwork.collab.access-rights';
 
 import { CreateChatExternalSection } from 'im.v2.component.content.chat-forms.elements';
-
-import type { JsonObject } from 'main.core';
 
 export type AccessRightsFormResult = {
 	moderators: number[],

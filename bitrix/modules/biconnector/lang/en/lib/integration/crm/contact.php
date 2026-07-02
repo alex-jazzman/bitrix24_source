@@ -57,3 +57,4 @@ $MESS["CRM_BIC_CONTACT_FIELD_UTM_SOURCE"] = "Ad source (utm_source)";
 $MESS["CRM_BIC_CONTACT_FIELD_UTM_TERM"] = "Ad term (utm_term)";
 $MESS["CRM_BIC_CONTACT_FIELD_WEB"] = "URL (multiple)";
 $MESS["CRM_BIC_CONTACT_TABLE"] = "Contact";
+$MESS["CRM_BIC_CONTACT_TABLE_DESCRIPTION_FULL"] = "Includes basic information from standard contact fields.";

@@ -16,8 +16,8 @@ class PlacementDataExtractor extends Extractor
 {
 	public function __construct(protected array $params, protected Main\HttpRequest $request)
 	{
-		$this->enabled = !empty($params['PLACEMENT'])
-			&& $params['PLACEMENT'] !== Rest\PlacementTable::PLACEMENT_DEFAULT
+		$this->enabled = ($params['PLACEMENT'] ?? Rest\PlacementTable::PLACEMENT_DEFAULT) === Rest\PlacementTable::PLACEMENT_DEFAULT
+			&& empty($params['PLACEMENT_OPTIONS'])
 		;
 	}
 
@@ -25,15 +25,20 @@ class PlacementDataExtractor extends Extractor
 	{
 		$result = [];
 
-		$requestOptions = $this->request->getQueryList()->toArrayRaw() ?? [];
+		$requestOptions = $this->request->getQueryList()->toArrayRaw()
+			?? $this->request->getQueryList()->toArray()
+		;
+
 		if (!empty($this->params['POPUP']) && $this->params['POPUP'] !== 'N')
 		{
-			$requestOptions = array_merge($requestOptions, $this->request->getPost('param') ?? []);
+			$postParam = $this->request->getPost('param') ?? [];
+			$requestOptions = array_merge($requestOptions, is_array($postParam) ? $postParam : []);
 
 			$result['PARENT_SID'] = $this->request->get('parentsid');
 		}
 
-		$deniedParam = $this->request::getSystemParameters() + ['_r'];
+		$deniedParam = $this->request::getSystemParameters();
+		$deniedParam[] = '_r';
 
 		$result['PLACEMENT_OPTIONS'] = array_diff_key($requestOptions, array_flip($deniedParam));
 		$result['~PLACEMENT_OPTIONS'] = $result['PLACEMENT_OPTIONS'];

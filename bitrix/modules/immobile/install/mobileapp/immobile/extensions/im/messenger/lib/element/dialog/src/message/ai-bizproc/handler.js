@@ -2,7 +2,7 @@
  * @module im/messenger/lib/element/dialog/message/ai-bizproc/handler
  */
 jn.define('im/messenger/lib/element/dialog/message/ai-bizproc/handler', (require, exports, module) => {
-	const { EventType, MessageParams } = require('im/messenger/const');
+	const { EventType, MessageComponent } = require('im/messenger/const');
 	const { CustomMessageHandler } = require('im/messenger/lib/element/dialog/message/custom/handler');
 
 	/**
@@ -33,7 +33,7 @@ jn.define('im/messenger/lib/element/dialog/message/ai-bizproc/handler', (require
 		{
 			const store = this.serviceLocator.get('core').getStore();
 			const modelMessage = store.getters['messagesModel/getById'](messageId);
-			if (!modelMessage.id || modelMessage.params?.componentId !== MessageParams.ComponentId.AiBizprocMessage)
+			if (!modelMessage.id || modelMessage.params?.componentId !== MessageComponent.aiBizprocMessage)
 			{
 				return;
 			}

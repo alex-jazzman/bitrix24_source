@@ -9,6 +9,7 @@ jn.define('mail/dialog/banners/connectingmailfinal', (require, exports, module) 
 		Button,
 	} = require('ui-system/form/buttons/button');
 	const { BannerTemplate } = require('mail/dialog/banners/template');
+	const { MailboxFoldersSettingsDialog } = require('mail/mailbox/folders-settings');
 	const {
 		syncMailbox,
 	} = require('mail/statemanager/redux/slices/mailboxes/thunk');
@@ -33,14 +34,15 @@ jn.define('mail/dialog/banners/connectingmailfinal', (require, exports, module) 
 			this.parentWidget = parentWidget;
 			this.layoutWidget = layoutWidget;
 			this.successCallback = successCallback;
+			this.mailboxId = Number(mailboxId);
 
 			this.state = {
 				waitingForLoading: true,
 			};
 
-			if (mailboxId > 0)
+			if (this.mailboxId > 0)
 			{
-				dispatch(syncMailbox({ mailboxId }));
+				dispatch(syncMailbox({ mailboxId: this.mailboxId }));
 			}
 		}
 
@@ -56,6 +58,17 @@ jn.define('mail/dialog/banners/connectingmailfinal', (require, exports, module) 
 		closeLayout(callback)
 		{
 			this.layoutWidget.close(callback);
+		}
+
+		openFoldersSettings()
+		{
+			this.closeLayout(() => {
+				MailboxFoldersSettingsDialog.open({
+					mailboxId: this.mailboxId,
+					titleText: Loc.getMessage('MAIL_CONNECTING_FINAL_FOLDERS_SETTINGS_DIALOG_TITLE'),
+					onClose: this.successCallback,
+				});
+			});
 		}
 
 		get getSuccessAnimationSize()
@@ -138,19 +151,40 @@ jn.define('mail/dialog/banners/connectingmailfinal', (require, exports, module) 
 				title: Loc.getMessage('MAIL_CONNECTING_FINAL_MAIL_BANNER_TITLE'),
 				description: Loc.getMessage('MAIL_CONNECTING_FINAL_MAIL_BANNER_DESCRIPTION'),
 				buttonsView: View(
-					{},
+					{
+						style: {
+							width: '100%',
+						},
+					},
 					Button({
-						testId: 'mailbox-connection-final-button-confirm',
-						text: Loc.getMessage('MAIL_CONNECTING_FINAL_MAIL_BANNER_BUTTON_1'),
+						testId: 'mailbox-connection-final-button-settings',
+						text: Loc.getMessage('MAIL_CONNECTING_FINAL_MAIL_BANNER_BUTTON_2'),
 						size: ButtonSize.XL,
 						design: ButtonDesign.FILLED,
 						disabled: false,
 						badge: false,
 						stretched: true,
-						onClick: () => {
-							this.closeLayout(this.successCallback);
-						},
+						onClick: this.openFoldersSettings.bind(this),
 					}),
+					View(
+						{
+							style: {
+								marginTop: 12,
+							},
+						},
+						Button({
+							testId: 'mailbox-connection-final-button-confirm',
+							text: Loc.getMessage('MAIL_CONNECTING_FINAL_MAIL_BANNER_BUTTON_1'),
+							size: ButtonSize.XL,
+							design: ButtonDesign.OUTLINE_ACCENT_2,
+							disabled: false,
+							badge: false,
+							stretched: true,
+							onClick: () => {
+								this.closeLayout(this.successCallback);
+							},
+						}),
+					),
 				),
 			});
 		}

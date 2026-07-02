@@ -7,7 +7,7 @@ import type { TRuleCard } from '../../types';
 
 // @vue/component
 export const RuleCard = {
-	name: 'rule-card',
+	name: 'RuleCard',
 	components: { BIcon },
 	props:
 	{
@@ -25,19 +25,19 @@ export const RuleCard = {
 	template: `
 		<div
 			data-name="rule-card"
-			class="rule-card"
+			class="editor-chart-node-settings-rule-card"
 			:data-id="ruleCard.id"
 		>
-			<div class="rule-card__top">
+			<div class="editor-chart-node-settings-rule-card__top">
 				<BIcon
 					name="drag-s"
-					class="rule-card__dnd-icon"
+					class="editor-chart-node-settings-rule-card__dnd-icon"
 					draggable="true"
 					:color="iconColor"
 				/>
 				<slot name="deleteRuleCard" />
 				<!--
-				<div class="rule-card__top_delimeter"></div>
+				<div class="editor-chart-node-settings-rule-card__top_delimeter"></div>
 				<BIcon
 					:size="20"
 					name="o-question"

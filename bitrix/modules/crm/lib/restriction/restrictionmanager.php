@@ -65,8 +65,8 @@ class RestrictionManager
 	private static $quotesRestriction;
 	/** @var OrderRestriction|null  */
 	private static $orderRestriction;
-	/** @var ClientFieldsRestriction  */
-	private static $clientFieldsRestriction;
+	/** @var ClientFieldsRestriction[]  */
+	private static array $clientFieldsRestrictionList = [];
 	/** @var ObserversFieldRestriction[]  */
 	private static $observersFieldRestrictionList;
 	/** @var ActivityFieldRestriction  */
@@ -94,6 +94,7 @@ class RestrictionManager
 	/** @var Bitrix24AccessRestriction */
 	private static $taskRestriction;
 	private static ?AccessRestriction $repeatSaleRestriction = null;
+	private static ?Bitrix24AccessRestriction $automatedSolutionRestriction = null;
 	private static ?Bitrix24AccessRestriction $automatedSolutionExportImportRestriction = null;
 
 	/**
@@ -904,14 +905,23 @@ class RestrictionManager
 		return self::$inventoryControl1cRestriction;
 	}
 
+	/**
+	 * @deprecated
+	 * @see static::getClientFieldsRestriction()
+	 */
 	public static function getDealClientFieldsRestriction(): ClientFieldsRestriction
 	{
-		if (!static::$clientFieldsRestriction)
+		return static::getClientFieldsRestriction(\CCrmOwnerType::Deal);
+	}
+
+	public static function getClientFieldsRestriction(int $entityTypeId): ClientFieldsRestriction
+	{
+		if (!isset(static::$clientFieldsRestrictionList[$entityTypeId]))
 		{
-			static::$clientFieldsRestriction = new ClientFieldsRestriction(\CCrmOwnerType::Deal);
+			static::$clientFieldsRestrictionList[$entityTypeId] = new ClientFieldsRestriction($entityTypeId);
 		}
 
-		return static::$clientFieldsRestriction;
+		return static::$clientFieldsRestrictionList[$entityTypeId];
 	}
 
 	public static function getObserversFieldRestriction(int $entityTypeId): ObserversFieldRestriction
@@ -1424,6 +1434,30 @@ class RestrictionManager
 		}
 
 		return static::$taskRestriction;
+	}
+
+	public static function getAutomatedSolutionRestriction(): Bitrix24AccessRestriction
+	{
+		if (is_null(static::$automatedSolutionRestriction))
+		{
+			static::$automatedSolutionRestriction = new Bitrix24AccessRestriction(
+				'crm_automated_solution',
+				false,
+				null,
+				[
+					'ID' => 'limit_automated_solution',
+				],
+			);
+
+			if (!static::$automatedSolutionRestriction->load())
+			{
+				static::$automatedSolutionRestriction->permit(
+					Bitrix24Manager::isFeatureEnabled('crm_smart_processes'),
+				);
+			}
+		}
+
+		return static::$automatedSolutionRestriction;
 	}
 
 	public static function getAutomatedSolutionExportImportRestriction(): Bitrix24AccessRestriction

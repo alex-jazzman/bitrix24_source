@@ -10,14 +10,15 @@ return [
 	],
 	'rel' => [
 		'main.polyfill.core',
-		'ui.info-helper',
 		'im.v2.const',
 		'im.v2.lib.analytics',
 		'im.v2.lib.feature',
 		'im.v2.lib.layout',
+		'im.v2.lib.market',
 		'im.v2.lib.phone',
 		'im.v2.lib.utils',
-		'im.v2.lib.market',
+		'main.core.events',
+		'ui.info-helper',
 	],
 	'skip_core' => true,
 ];

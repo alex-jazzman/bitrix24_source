@@ -1,0 +1,64 @@
+.ai__roles-dialog_label-new {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 2px 8px;
+	border-radius: 20px;
+	border: 1px solid transparent;
+	background:
+		linear-gradient(var(--ui-color-background-primary, #fff), var(--ui-color-background-primary, #fff)) padding-box,
+		var(--Bitrix-GPT-tinted, linear-gradient(264deg, #F89ECB 1.67%, #ED99E0 21.82%, #CC9AFD 52.44%, #92AEFE 76.41%, #73C6F3 97.21%)) border-box;
+	line-height: 1;
+}
+
+.ai__roles-dialog_label-new.--inverted {
+	background:
+		linear-gradient(rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2)) padding-box,
+		linear-gradient(90deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.8) 50%, rgba(255, 255, 255, 0.5) 100%) border-box;
+}
+
+.ai__roles-dialog_label-new-text {
+	font-family: var(--ui-font-family-primary, 'Inter', sans-serif);
+	font-size: 12px;
+	font-weight: 500;
+	line-height: 15px;
+	letter-spacing: 0;
+	background: var(--Bitrix-GPT-filled, linear-gradient(264deg, #F96269 1.67%, #F046B7 21.82%, #9D48FF 52.44%, #3F68FF 76.41%, #0098EA 97.21%));
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+}
+
+.ai__roles-dialog_label-new.--inverted .ai__roles-dialog_label-new-text {
+	background: none;
+	-webkit-background-clip: unset;
+	-webkit-text-fill-color: var(--ui-color-on-primary);
+	background-clip: unset;
+}
+
+/* BitrixGPT Redesign: keep tinted bg + filled text even when selected (inverted) */
+.popup-window.--bitrixgpt-redesign .ai__roles-dialog_label-new {
+	background: linear-gradient(270deg,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-1, #FEF5F4) 1.77%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-2, #FCEFF8) 14.06%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-3, #F1F0FF) 48.82%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-4, #F0F7FF) 98.35%
+	);
+	border: none;
+}
+
+.popup-window.--bitrixgpt-redesign .ai__roles-dialog_label-new.--inverted {
+	background: linear-gradient(270deg,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-1, #FEF5F4) 1.77%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-2, #FCEFF8) 14.06%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-3, #F1F0FF) 48.82%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-4, #F0F7FF) 98.35%
+	);
+}
+
+.popup-window.--bitrixgpt-redesign .ai__roles-dialog_label-new.--inverted .ai__roles-dialog_label-new-text {
+	background: var(--Bitrix-GPT-filled, linear-gradient(264deg, #F96269 1.67%, #F046B7 21.82%, #9D48FF 52.44%, #3F68FF 76.41%, #0098EA 97.21%));
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+}

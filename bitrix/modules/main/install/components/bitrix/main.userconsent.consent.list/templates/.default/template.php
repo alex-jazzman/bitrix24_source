@@ -1,4 +1,4 @@
-<?
+<?php
 
 use Bitrix\UI\Toolbar\Facade\Toolbar;
 

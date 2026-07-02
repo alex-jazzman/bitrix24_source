@@ -3,5 +3,4 @@ module.exports = {
 	output: 'dist/todo-create-notification.bundle.js',
 	namespace: 'BX.Crm.Activity',
 	browserslist: true,
-	adjustConfigPhp: false,
 };

@@ -154,19 +154,18 @@ export class SigningFrameEventHandler
 			return;
 		}
 
-		const message = { type: '', data: undefined };
-		if (Type.isString(event?.data))
+		if (!Type.isString(event?.data))
 		{
-			message.type = event.data;
+			return;
 		}
 
-		if (message.type === 'BX:Sign:signingStart')
+		if (event.data === 'BX:Sign:signingStart')
 		{
 			this.#signingStart = true;
 			this.#emitEvent('signingStart');
 		}
 
-		if (message.type === 'BX:Sign:signingEnd')
+		if (event.data === 'BX:Sign:signingEnd')
 		{
 			this.#signingStart = false;
 			this.#emitEvent('signingEnd');

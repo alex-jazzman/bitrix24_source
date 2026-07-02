@@ -1,6 +1,6 @@
-import { Type, Dom, addCustomEvent } from 'main.core';
-import { EditorControlsParams } from '../store/types';
-import type { UserFieldModel } from '../store/types';
+import { addCustomEvent, Dom, Type } from 'main.core';
+
+import { type EditorControlsParams, type UserFieldModel } from '../store/types';
 import { timeout } from './utils';
 
 const controlOutlineClassName = 'bx-crm-ai-merge-fields-ee-control-outline';
@@ -205,7 +205,7 @@ export class EntityEditorProxy
 	}
 }
 
-export interface ControlValue {
+export type ControlValue = {
 	model: ?UserFieldModel,
 	value: string | number | null
 }

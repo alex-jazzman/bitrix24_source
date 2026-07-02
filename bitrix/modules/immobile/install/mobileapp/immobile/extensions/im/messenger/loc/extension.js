@@ -19,6 +19,7 @@ jn.define('im/messenger/loc', (require, exports, module) => {
 		{
 			Loc.setAiAssistantStatusMessages();
 			Loc.setCopilotBotNameMessage();
+			Loc.setNavigationTabTitles();
 		}
 
 		/**
@@ -41,6 +42,28 @@ jn.define('im/messenger/loc', (require, exports, module) => {
 		static setCopilotBotNameMessage()
 		{
 			Loc.setMessage(IMMOBILE_COPILOT_BOT_NAME_KEY, MessengerParams.getCopilotBotName());
+		}
+
+		/**
+		 * @private
+		 */
+		static setNavigationTabTitles()
+		{
+			/** @type {Object<string, string>} */
+			const { NAVIGATION_TAB_TITLES: titles = {} } = MessengerParams.get('MESSAGES', {});
+			for (const [tabId, title] of Object.entries(titles))
+			{
+				Loc.setMessage(`IMMOBILE_NAVIGATION_TAB_TITLE_${tabId.toUpperCase()}`, title);
+			}
+		}
+
+		/**
+		 * @param {string} tabId
+		 * @return {?string}
+		 */
+		static getNavigationTabTitle(tabId)
+		{
+			return Loc.getMessage(`IMMOBILE_NAVIGATION_TAB_TITLE_${tabId.toUpperCase()}`);
 		}
 
 		/**

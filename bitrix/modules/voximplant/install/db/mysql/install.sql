@@ -151,6 +151,15 @@ CREATE TABLE IF NOT EXISTS b_voximplant_call_crm_entity
 	INDEX IX_VI_CALL_CRM_1(ENTITY_ID, ENTITY_TYPE)
 );
 
+CREATE TABLE IF NOT EXISTS b_voximplant_callhistory_ack
+(
+	ID int(11) NOT NULL auto_increment,
+	CALL_ID varchar(255) NOT NULL,
+	APPLIED_AT datetime NOT NULL,
+	PRIMARY KEY (ID),
+	UNIQUE KEY UX_VCHA_CALL_ID (CALL_ID)
+);
+
 CREATE TABLE IF NOT EXISTS b_voximplant_sip
 (
 	ID int(11) NOT NULL auto_increment,

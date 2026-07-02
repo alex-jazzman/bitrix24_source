@@ -1,5 +1,7 @@
 import { Dialog, Item, type DialogOptions } from 'ui.entity-selector';
 
+import './entity-selector-dialog.css';
+
 export { Item };
 export type ItemId = [string, number];
 

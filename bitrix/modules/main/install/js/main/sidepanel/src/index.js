@@ -19,6 +19,11 @@ import { type ToolbarOptions } from './types/toolbar-options';
 import { type ToolbarItemOptions } from './types/toolbar-item-options';
 import { type OuterBoundary } from './types/outer-boundary';
 
+import 'ui.design-tokens.air';
+import 'ui.icon-set.actions';
+import 'ui.icon-set.main';
+import 'ui.icon-set.outline';
+
 import './css/sidepanel.css';
 
 const SidePanel = {};

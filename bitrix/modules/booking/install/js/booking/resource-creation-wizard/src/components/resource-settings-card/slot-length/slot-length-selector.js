@@ -5,7 +5,7 @@ import 'ui.buttons';
 
 import { Model } from 'booking.const';
 import { Duration } from 'booking.lib.duration';
-import type { SlotLengthId } from 'booking.model.resource-creation-wizard';
+import { type SlotLengthId } from 'booking.model.resource-creation-wizard';
 
 import { SlotLengthPrecisionSelection } from './slot-length-precision-selection';
 import './slot-length-selector.css';
@@ -14,8 +14,7 @@ const unitDurations = Duration.getUnitDurations();
 const units = Object.fromEntries(
 	Object.entries(unitDurations).map(([unit, value]) => [unit, value / unitDurations.i]),
 );
-
-const disabledLengths = new Set([units.H * 24, units.d * 7]);
+const multidayOnlyLengths = new Set([units.H * 24, units.d * 7]);
 
 export const SlotLengthSelector = {
 	name: 'ResourceSettingsCardSlotLengthSelector',
@@ -47,6 +46,10 @@ export const SlotLengthSelector = {
 			{
 				this.$store.dispatch(`${Model.ResourceCreationWizard}/setSlotLengthId`, { slotLengthId });
 			},
+		},
+		isMultidayFeatureAvailable(): boolean
+		{
+			return this.$store.getters[`${Model.Interface}/isMultidayFeatureAvailable`];
 		},
 		durations(): { label: string, value: number }[]
 		{
@@ -93,7 +96,7 @@ export const SlotLengthSelector = {
 	methods: {
 		select(value: number): void
 		{
-			if (disabledLengths.has(value))
+			if (this.isDurationDisabled(value))
 			{
 				return;
 			}
@@ -123,32 +126,31 @@ export const SlotLengthSelector = {
 
 			this.$emit('select', this.selectedPrecisionValue);
 		},
+		isDurationDisabled(value: number): boolean
+		{
+			return !this.isMultidayFeatureAvailable && multidayOnlyLengths.has(value);
+		},
 		getClass(value): Object
 		{
 			return {
 				'ui-btn-primary': this.selectedValue === value,
 				'ui-btn-light': this.selectedValue !== value,
-				'ui-btn-disabled': disabledLengths.has(value),
+				'ui-btn-disabled': this.isDurationDisabled(value),
 			};
 		},
 		getSoonHintContent(value: number): ?Object
 		{
-			if (disabledLengths.has(value))
+			if (!this.isDurationDisabled(value))
 			{
-				return {
-					text: this.loc('BRCW_SOON_HINT'),
-					popupOptions: {
-						targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper'),
-						bindOptions: {
-							position: 'bottom',
-						},
-						offsetLeft: 0,
-						offsetTop: 0,
-					},
-				};
+				return null;
 			}
 
-			return null;
+			return {
+				text: this.loc('BRCW_BOOKING_SOON_HINT'),
+				popupOptions: {
+					targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper'),
+				},
+			};
 		},
 	},
 	template: `

@@ -4,7 +4,7 @@ import {
 	type ConvertCallbackOptions,
 	type NodeFormatterOptions,
 } from 'ui.bbcode.formatter';
-import type { HtmlFormatterOptions } from '../../html-formatter';
+import { type HtmlFormatterOptions } from '../../html-formatter';
 
 export class UserNodeFormatter extends NodeFormatter
 {
@@ -17,7 +17,9 @@ export class UserNodeFormatter extends NodeFormatter
 				if (Type.isStringFilled(mentionSettings?.urlTemplate?.user))
 				{
 					const urlTemplate: string = mentionSettings.urlTemplate.user;
-					const userUrl: string = urlTemplate.replaceAll('#ID#', node.getValue());
+
+					const replacePattern = /(#id#|#user_id#)/gi;
+					const userUrl: string = urlTemplate.replaceAll(replacePattern, node.getValue());
 
 					return Dom.create({
 						tag: 'a',

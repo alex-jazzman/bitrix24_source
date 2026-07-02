@@ -1,10 +1,11 @@
-import Button from './button';
 import { Dom } from 'main.core';
+
+import { Button } from './button';
 
 /**
  * @deprecated use BX.UI.Button
  */
-export default class CustomButton extends Button
+export class CustomButton extends Button
 {
 	constructor(params)
 	{
@@ -15,11 +16,11 @@ export default class CustomButton extends Button
 			{
 				props: {
 					className: (this.className.length > 0 ? this.className : ''),
-					id: this.id
+					id: this.id,
 				},
 				events: this.contextEvents,
-				text: this.text
-			}
+				text: this.text,
+			},
 		);
 	}
 }

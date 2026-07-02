@@ -63,7 +63,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/tools/clock.php")
 			</tbody>
 		</table>
 		<div class="bx-tm-field">
-			<span class="bx-tm-report-caption"><?= htmlspecialcharsbx(Loc::getMessage('TIMEMAN_DURATION_TITLE')); ?>:</span>
+			<span class="bx-tm-report-caption">
+				<?= Loc::getMessage('TIMEMAN_DURATION_TITLE_NEW'); ?>
+			</span>
 			<span class="bx-tm-report-field"
 					data-role="timeman-work-time-start-end-delta"></span>
 		</div>

@@ -8,12 +8,11 @@ return [
 	'css' => 'dist/registry.bundle.css',
 	'js' => 'dist/registry.bundle.js',
 	'rel' => [
-		'main.core',
+		'main.polyfill.core',
 		'im.public',
+		'im.v2.application.core',
 		'im.v2.const',
 		'im.v2.lib.layout',
-		'im.v2.lib.logger',
-		'im.v2.application.core',
 	],
-	'skip_core' => false,
+	'skip_core' => true,
 ];

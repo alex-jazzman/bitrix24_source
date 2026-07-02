@@ -52,7 +52,9 @@ if ($allowEditPrices)
 		$arCatalogBasePrices = array();
 		$arCatalogPrices = array();
 
-		$CAT_ROW_COUNTER = (int)($_POST['CAT_ROW_COUNTER'] ?? 0);
+		$request = Main\Context::getCurrent()->getRequest();
+
+		$CAT_ROW_COUNTER = (int)($request->getPost('CAT_ROW_COUNTER') ?? 0);
 		if ($CAT_ROW_COUNTER < 0)
 			$strWarning .= Loc::getMessage("C2IT_INTERNAL_ERROR")."<br>";
 
@@ -61,7 +63,7 @@ if ($allowEditPrices)
 			$strWarning .= Loc::getMessage("C2IT_NO_BASE_TYPE")."<br>";
 
 		if ($enableQuantityRanges)
-			$bUseExtForm = (isset($_POST['price_useextform']) && $_POST['price_useextform'] == 'Y');
+			$bUseExtForm = ($request->getPost('price_useextform') === 'Y');
 		else
 			$bUseExtForm = false;
 
@@ -70,26 +72,32 @@ if ($allowEditPrices)
 
 		for ($i = 0; $i <= $CAT_ROW_COUNTER; $i++)
 		{
-			if (!isset(${"CAT_BASE_PRICE_".$i}))
+			if ($request->getPost("CAT_BASE_PRICE_".$i) === null)
 			{
 				continue;
 			}
-			${"CAT_BASE_PRICE_".$i} = str_replace([' ', ','], ['', '.'], ${"CAT_BASE_PRICE_".$i});
+			$basePrice = str_replace([' ', ','], ['', '.'], (string)$request->getPost("CAT_BASE_PRICE_".$i));
+			$baseQuantityFrom = $request->getPost("CAT_BASE_QUANTITY_FROM_".$i) ?? '';
+			$baseQuantityTo = $request->getPost("CAT_BASE_QUANTITY_TO_".$i) ?? '';
+			$baseCurrency = $request->getPost("CAT_BASE_CURRENCY_".$i) ?? '';
+			$basePriceExist = $request->getPost("CAT_PRICE_EXIST_".$i) ?? '';
+			$baseCatId = $request->getPost("CAT_BASE_ID");
+			$baseId = (is_array($baseCatId) ? ($baseCatId[$i] ?? 0) : 0);
 
-			if (intval(${"CAT_BASE_QUANTITY_FROM_".$i}) > 0
-				|| intval(${"CAT_BASE_QUANTITY_TO_".$i}) > 0
-				|| ${"CAT_BASE_PRICE_".$i} <> ''
-				|| ${"CAT_PRICE_EXIST_".$i} == 'Y'
+			if ((int)$baseQuantityFrom > 0
+				|| (int)$baseQuantityTo > 0
+				|| $basePrice <> ''
+				|| $basePriceExist == 'Y'
 			)
 			{
 				$arCatalogBasePrices[] = array(
-					"ID" => (int)($CAT_BASE_ID[$i] ?? 0),
+					"ID" => (int)$baseId,
 					"IND" => $i,
-					"QUANTITY_FROM" => $bUseExtForm ? intval(${"CAT_BASE_QUANTITY_FROM_".$i}) : '',
-					"QUANTITY_TO" => $bUseExtForm ? intval(${"CAT_BASE_QUANTITY_TO_".$i}) : '',
-					"PRICE" => ($bUseExtForm || $i == 0) ? ${"CAT_BASE_PRICE_".$i} : '',
-					"CURRENCY" => ${"CAT_BASE_CURRENCY_".$i},
-					"CAT_PRICE_EXIST" => (${"CAT_PRICE_EXIST_".$i} == 'Y' ? 'Y' : 'N'),
+					"QUANTITY_FROM" => $bUseExtForm ? (int)$baseQuantityFrom : '',
+					"QUANTITY_TO" => $bUseExtForm ? (int)$baseQuantityTo : '',
+					"PRICE" => ($bUseExtForm || $i == 0) ? $basePrice : '',
+					"CURRENCY" => $baseCurrency,
+					"CAT_PRICE_EXIST" => ($basePriceExist == 'Y' ? 'Y' : 'N'),
 				);
 			}
 		}

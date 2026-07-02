@@ -58,3 +58,4 @@ $MESS["CRM_BIC_COMPANY_FIELD_UTM_SOURCE"] = "Ad source (utm_source)";
 $MESS["CRM_BIC_COMPANY_FIELD_UTM_TERM"] = "Ad term (utm_term)";
 $MESS["CRM_BIC_COMPANY_FIELD_WEB"] = "URL (multiple)";
 $MESS["CRM_BIC_COMPANY_TABLE"] = "Company";
+$MESS["CRM_BIC_COMPANY_TABLE_DESCRIPTION_FULL"] = "Includes basic information about companies, such as their names, industry, details, and responsible users.";

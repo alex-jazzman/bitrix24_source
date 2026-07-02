@@ -100,3 +100,6 @@ $MESS['CRM_DOCUMENT_AUTOMATION_DEBUG_MESSAGE_INTERCEPTED'] = 'Элемент н�
 $MESS['CRM_DOCUMENT_AUTOMATION_DEBUG_MESSAGE_REMOVED'] = 'Элемент вернулся в обычный режим, можете продолжить работу с элементом';
 $MESS['CRM_DOCUMENT_AUTOMATION_DEBUG_MESSAGE_IN_DEBUG'] = 'Этот элемент выбран для отладки роботов. Приостановите работу с элементом, пока не завершится отладка';
 $MESS['CRM_DOCUMENT_AUTOMATION_DEBUG_MESSAGE_FINISHED'] = 'Отладка роботов завершена, можете продолжить работу с элементом';
+$MESS['CRM_DOCUMENT_FIELD_BADGE'] = 'Статус';
+$MESS['CRM_DOCUMENT_FIELD_BADGE_NAME'] = 'Название статуса';
+$MESS['CRM_DOCUMENT_FIELD_BADGE_VALUE'] = 'Значение статуса';

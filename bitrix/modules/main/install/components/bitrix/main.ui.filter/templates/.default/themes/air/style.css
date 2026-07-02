@@ -400,6 +400,7 @@
 
 .main-ui-filter-theme-air .main-ui-filter-inner-container {
 	padding-bottom: 80px;
+	max-width: 95vw;
 }
 
 .main-ui-filter-theme-air .main-ui-control-field.main-ui-filter-sidebar-item-ondrag::after {
@@ -525,6 +526,7 @@
 .main-ui-filter-theme-air .main-ui-filter-field-preset-button-container {
 	right: 24px;
 	left: 280px;
+	width: auto;
 	border-top: none;
 }
 
@@ -539,4 +541,141 @@
 .main-ui-filter-theme-air .main-ui-filter-sidebar-item.main-ui-filter-admin-preset .main-ui-delete {
 	opacity: .3;
 	pointer-events: none;
+}
+
+.main-ui-filter-search-wrap {
+	display: flex;
+	min-width: 351px;
+	width: 100%;
+	container-type: inline-size;
+	container-name: filter-search;
+}
+
+.main-ui-filter-search-wrap > .main-ui-filter-theme-air.main-ui-filter-search {
+	min-width: 0;
+	max-width: 100%;
+}
+
+.main-ui-filter-theme-air .main-ui-filter-search-collapsed-button {
+	display: none;
+}
+
+.main-ui-filter-search-collapsed-button .ui-counter[data-value="0"] {
+	display: none;
+}
+
+@container filter-search (max-width: 350px) {
+	.main-ui-filter-search-wrap > .main-ui-filter-theme-air.main-ui-filter-search,
+	.main-ui-filter-search-wrap > .main-ui-filter-theme-air.main-ui-filter-search.main-ui-filter-search--showed,
+	.bitrix24-dark-theme .ui-toolbar-filter-box .main-ui-filter-search-wrap > .main-ui-filter-theme-air.main-ui-filter-search {
+		height: auto;
+		margin: 0;
+		padding: 0;
+		border: 0;
+		border-radius: 0;
+		background: none;
+		-webkit-backdrop-filter: none;
+		backdrop-filter: none;
+		box-shadow: none;
+		outline: none;
+		overflow: visible;
+	}
+
+	.main-ui-filter-search-wrap > .main-ui-filter-theme-air.main-ui-filter-search {
+		flex: 0 0 auto;
+		width: auto;
+		max-width: none;
+	}
+
+	.main-ui-filter-search-wrap > .main-ui-filter-theme-air.main-ui-filter-search > .main-ui-filter-search-filter,
+	.main-ui-filter-search-wrap > .main-ui-filter-theme-air.main-ui-filter-search > .main-ui-item-icon-block,
+	.main-ui-filter-search-wrap > .main-ui-filter-theme-air.main-ui-filter-search > .main-ui-square {
+		display: none !important;
+	}
+
+	.main-ui-filter-theme-air .main-ui-filter-search-collapsed-button {
+		display: inline-flex;
+	}
+}
+
+@media (max-width: 768px) {
+	.main-ui-filter-theme-air .main-ui-filter-inner-container {
+		display: flex;
+		flex-direction: column;
+		padding-bottom: 0;
+	}
+
+	.main-ui-filter-theme-air .main-ui-filter-sidebar {
+		order: 1;
+		float: none;
+		width: 100%;
+		height: auto;
+		border-right: none;
+	}
+
+	.main-ui-filter-theme-air .main-ui-filter-sidebar::after {
+		display: none;
+	}
+
+	.main-ui-filter-theme-air .main-ui-filter-sidebar-item,
+	.main-ui-filter-theme-air .main-ui-filter-sidebar-item-text,
+	.main-ui-filter-theme-air .main-ui-filter-edit .main-ui-filter-sidebar-item-text {
+		max-width: none;
+	}
+
+	.main-ui-filter-theme-air .main-ui-filter-sidebar-edit-control {
+		width: 100%;
+	}
+
+	.main-ui-filter-theme-air .main-ui-filter-sidebar-item .main-ui-item-icon.main-ui-delete {
+		right: -8px;
+	}
+
+	.main-ui-filter-theme-air .main-ui-filter-sidebar-item .main-ui-item-icon.main-ui-filter-icon-edit {
+		right: 12px;
+	}
+
+	.main-ui-filter-theme-air .main-ui-filter-sidebar-item.main-ui-item-pin .main-ui-item-icon.main-ui-filter-icon-pin {
+		right: -8px;
+	}
+
+	.main-ui-filter-theme-air .main-ui-filter-sidebar-item.main-ui-filter-edit .main-ui-item-icon.main-ui-filter-icon-pin {
+		right: 32px;
+	}
+
+	.main-ui-filter-theme-air .main-ui-filter-field-container {
+		order: 3;
+		height: auto;
+		min-height: 0;
+	}
+
+	.main-ui-filter-theme-air .main-ui-filter-bottom-controls {
+		display: contents;
+	}
+
+	.main-ui-filter-theme-air .main-ui-filter-add-container {
+		order: 2;
+		position: static;
+		width: auto;
+		height: auto;
+		left: auto;
+		bottom: auto;
+		padding: 12px 6px 16px 2px;
+		background: #f8fafb;
+	}
+
+	.main-ui-filter-theme-air .main-ui-filter-add-container .main-ui-filter-reset-link {
+		left: 8px;
+	}
+
+	.main-ui-filter-theme-air .main-ui-filter-field-preset-button-container,
+	.main-ui-filter-theme-air .main-ui-filter-field-button-container {
+		order: 4;
+		position: static;
+		width: 100%;
+		right: auto;
+		left: auto;
+		bottom: auto;
+		padding: 12px 24px 16px;
+	}
 }

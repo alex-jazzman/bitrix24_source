@@ -101,7 +101,7 @@ if (isset($message['__type']))
 			$messageQuote = Message::wrapTheMessageWithAQuote(
 				$messageHtml,
 				$message['ORIGINAL_SUBJECT'] ?? $message['SUBJECT'],
-				$message['FIELD_DATE'],
+				$message['INTERNALDATE'] ?? $message['FIELD_DATE'],
 				$message['__from'],
 				$message['__to'],
 				$message['__cc'],

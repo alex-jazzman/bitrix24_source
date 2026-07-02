@@ -79,4 +79,10 @@ export default class ButtonIcon
 	static WORKFLOW_STOP = 'ui-btn-icon-workflow-stop';
 	static MARKET = 'ui-btn-icon-market';
 	static KEY = 'ui-btn-icon-key';
+	static MAIL_PLUS = 'ui-btn-icon-mail-plus';
+	static FUNNEL_FILTER = 'ui-btn-icon-funnel-filter';
+	static CALENDAR_WITH_SLOTS = 'ui-btn-icon-calendar-with-slots';
+	static CHATS = 'ui-btn-icon-chats';
+	static CALENDAR_WITH_CHECKS = 'ui-btn-icon-calendar-with-checks';
+	static EXCLAMATION = 'ui-btn-icon-exclamation';
 }

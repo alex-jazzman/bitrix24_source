@@ -1,22 +1,28 @@
 import { Dom, Event, Extension, Loc, Tag, Type } from 'main.core';
 import { MemoryCache } from 'main.core.cache';
-import { BaseEvent } from 'main.core.events';
+import { type BaseEvent } from 'main.core.events';
 import { Popup } from 'main.popup';
 import { FeatureStorage } from 'sign.feature-storage';
-import { DocumentInitiated, type DocumentInitiatedType } from 'sign.type';
+import { BlankScenario, DocumentInitiated, type DocumentInitiatedType } from 'sign.type';
 import { Api } from 'sign.v2.api';
+import { DocumentBlock, getAllowedReplaceExtensions } from 'sign.v2.b2e.document-block';
 import { DocumentCounters } from 'sign.v2.b2e.document-counters';
 import { SignDropdown } from 'sign.v2.b2e.sign-dropdown';
 import { type BlankSelectorConfig, type ToggleEvent } from 'sign.v2.blank-selector';
 import { type DocumentDetails, DocumentSetup as BaseDocumentSetup } from 'sign.v2.document-setup';
-import { Helpdesk, Hint } from 'sign.v2.helper';
-import { NewBlankForTemplatePopupManager } from './components/template/new-blank-for-template-popup-manager';
+import { Helpdesk, Hint, SignSettingsItemCounter } from 'sign.v2.helper';
+import { isTemplateMode } from 'sign.v2.sign-settings';
+import { Uploader, UploaderEvent } from 'ui.uploader.core';
+import { EditorIntegration } from './editor-integration';
+import placeholderCodeIcon from './images/sign-wizard-placeholder-code-icon.svg';
 import 'sign.v2.ui.notice';
 import './style.css';
 
 const HelpdeskCodes = Object.freeze({
 	HowToWorkWithTemplates: '23174934',
 });
+
+const disabledClass = '--disabled';
 
 export class DocumentSetup extends BaseDocumentSetup
 {
@@ -29,16 +35,20 @@ export class DocumentSetup extends BaseDocumentSetup
 	headerLayout: HTMLElement;
 	documentCounters: DocumentCounters | null = null;
 	#b2eDocumentLimitCount: number;
-	editMode: boolean;
-	#currentEditedId: number;
-	#currentEditButton: HTMLElement;
-	#currentEditBlock: HTMLElement;
 	#isOpenedFromRobot: boolean = false;
 	#isOpenedFromTemplateFolder: boolean = false;
 	#isOpenedAsFolder: boolean = false;
 	documentSectionLayout: HTMLElement;
 	documentSectionInnerLayout: HTMLElement;
 	#initiatedByType: DocumentInitiatedType;
+	#replaceUploader: Uploader | null = null;
+	#replaceDocumentData: DocumentDetails | null = null;
+	#blockByElement: WeakMap<HTMLElement, DocumentBlock> = new WeakMap();
+	#expectedAddFileCount: number = 0;
+	#loadingBlock: DocumentBlock | null = null;
+	#editorFlowPending: boolean = false;
+	#editorIntegration: EditorIntegration;
+	#blockEditorUnavailableHintPopup: Popup | null = null;
 
 	constructor(blankSelectorConfig: BlankSelectorConfig)
 	{
@@ -52,6 +62,15 @@ export class DocumentSetup extends BaseDocumentSetup
 			initiatedByType,
 		} = blankSelectorConfig;
 		this.#api = new Api();
+		this.#editorIntegration = new EditorIntegration(
+			this.#api,
+			this.#applyNewBlank.bind(this),
+			() => {
+				this.#editorFlowPending = false;
+				this.ready = true;
+				this.emit('editorUnlock');
+			},
+		);
 		this.#region = region;
 		this.#b2eDocumentLimitCount = b2eDocumentLimitCount;
 		this.editMode = false;
@@ -63,16 +82,15 @@ export class DocumentSetup extends BaseDocumentSetup
 
 		this.#documentTitleInput = Tag.render`
 			<input
-				type="text"
-				class="ui-ctl-element"
-				maxlength="255"
-				oninput="${({ target }) => this.setDocumentTitle(target.value)}"
+			    type="text"
+			    class="ui-ctl-element"
+			    maxlength="255"
+			    oninput="${({ target }) => this.setDocumentTitle(target.value)}"
 			/>
 		`;
 		this.#initiatedByType = initiatedByType;
 
 		this.#disableDocumentInputs();
-		this.disableAddButton();
 
 		this.#init();
 	}
@@ -80,31 +98,15 @@ export class DocumentSetup extends BaseDocumentSetup
 	#init(): void
 	{
 		this.#initDocumentSenderType();
-		const title = this.isTemplateMode()
-			? Loc.getMessage('SIGN_DOCUMENT_SETUP_TITLE_TEMPLATE_HEAD_LABEL')
-			: Loc.getMessage('SIGN_DOCUMENT_SETUP_TITLE_HEAD_LABEL');
-
-		const titleLayout = Tag.render`
-			<div class="sign-b2e-settings__item">
-				<p class="sign-b2e-settings__item_title">
-					${title}
-				</p>
-				${this.#getDocumentTitleLayout()}
-			</div>
-		`;
-
 		Dom.append(this.#getDocumentSenderTypeLayout(), this.layout);
-		Dom.append(titleLayout, this.layout);
 
 		if (!this.isTemplateMode() && FeatureStorage.isGroupSendingEnabled())
 		{
 			this.documentCounters = new DocumentCounters({
 				documentCountersLimit: this.#b2eDocumentLimitCount,
 			});
-			Dom.append(this.documentCounters.getLayout(), this.layout);
-
-			const addDocumentLayout = this.#getAddDocumentLayout();
-			Dom.append(addDocumentLayout, this.layout);
+			Dom.append(this.documentCounters.getLayout(), this.titleCounterSlot);
+			Dom.append(this.getAddDocumentNotice(), this.noticeSlot);
 		}
 		Hint.create(this.layout);
 
@@ -128,39 +130,115 @@ export class DocumentSetup extends BaseDocumentSetup
 		blankSelector.subscribe(blankSelector.events.addFile, this.#onBlankSelectorAddFile.bind(this));
 		blankSelector.subscribe(
 			blankSelector.events.beforeAddFileSuccessfully,
-			this.#onBlankSelectorBeforeAddFileSuccessfully.bind(this),
+			this.#onBlankSelectorBeforeAddFile.bind(this),
 		);
 		if (!this.isTemplateMode() && FeatureStorage.isGroupSendingEnabled())
 		{
-			this.documentCounters.subscribe('limitNotExceeded', () => {
-				this.enableAddButton();
-				this.#setAddDocumentNoticeText();
-				this.emit('documentsLimitNotExceeded');
-			});
-			this.documentCounters.subscribe('limitExceeded', () => {
-				this.disableAddButton();
-				this.#setDocumentLimitNoticeText();
-				this.emit('documentsLimitExceeded');
-			});
+			this.documentCounters.subscribe('limitNotExceeded', this.#refreshDocumentLimitState.bind(this));
+			this.documentCounters.subscribe('limitExceeded', this.#refreshDocumentLimitState.bind(this));
 		}
 	}
 
-	#onBlankSelectorAddFile(event: BaseEvent<{ title: string }>)
+	#onBlankSelectorBeforeAddFile(event: BaseEvent<{ files: Array<Object> }>): void
+	{
+		const { files = [] } = event.getData() ?? {};
+		this.#expectedAddFileCount = files.length;
+	}
+
+	#refreshDocumentLimitState(): void
+	{
+		if (!this.documentCounters)
+		{
+			return;
+		}
+
+		if (this.#isDocumentLimitExceeded())
+		{
+			this.#setDocumentLimitNoticeText();
+			this.emit('documentsLimitExceeded');
+
+			return;
+		}
+
+		this.#setAddDocumentNoticeText();
+		this.emit('documentsLimitNotExceeded');
+	}
+
+	#onBlankSelectorAddFile(event: BaseEvent<{
+		title: string,
+		isImage?: boolean,
+		isMixedB2eUpload?: boolean,
+		filesCount?: number,
+	}>)
 	{
 		const data = event.getData();
 		this.isFileAdded = true;
 		this.enableDocumentInputs();
-		this.enableAddButton();
+
+		const isCombinedImageDocument = Boolean(data.isImage) && (data.filesCount ?? 1) > 1;
+		const displayTitle = isCombinedImageDocument
+			? Loc.getMessage('SIGN_DOCUMENT_SETUP_COMBINED_IMAGE_DOCUMENT')
+			: data.title
+		;
+
 		if (!this.isTemplateMode() || !this.isEditActionMode())
 		{
-			this.setDocumentTitle(data.title);
+			this.setDocumentTitle(displayTitle);
 		}
-		const popupManager = NewBlankForTemplatePopupManager.getOrCreateForObject(this);
-		// Document title will update after popup confirmation
-		if (popupManager.isUploadPopupCompletedOnce())
+
+		const hasDocumentBlock = Boolean(this.layout?.querySelector('.sign-b2e-document-setup__document-block'));
+		if (this.isTemplateMode() && hasDocumentBlock)
 		{
-			this.setDocumentTitle(data.title);
+			return;
 		}
+
+		if (this.#expectedAddFileCount > 1)
+		{
+			this.#expectedAddFileCount -= 1;
+
+			return;
+		}
+
+		this.#expectedAddFileCount = 0;
+		this.#showLoadingDocumentBlock(displayTitle, { isPlaceholderDocument: !data.isMixedB2eUpload });
+
+		const completedHandler = () => {
+			this.unsubscribe('addDocumentCompleted', completedHandler);
+			this.#removeLoadingDocumentBlock();
+		};
+		this.subscribe('addDocumentCompleted', completedHandler);
+
+		this.emit('addDocument');
+	}
+
+	#showLoadingDocumentBlock(title: string, options: { isPlaceholderDocument?: boolean } = {}): void
+	{
+		if (!this.headerLayout)
+		{
+			return;
+		}
+
+		this.#removeLoadingDocumentBlock();
+
+		const block = new DocumentBlock({
+			documentData: { id: 'loadingDocumentId', title },
+			options: { isPlaceholderDocument: options.isPlaceholderDocument, isLoading: true },
+			api: this.#api,
+			isTemplateMode: this.isTemplateMode(),
+		});
+		this.#loadingBlock = block;
+		Dom.append(block.getLayout(), this.headerLayout);
+	}
+
+	#removeLoadingDocumentBlock(): void
+	{
+		if (!this.#loadingBlock)
+		{
+			return;
+		}
+
+		this.#loadingBlock.destroy();
+		this.#loadingBlock = null;
 	}
 
 	#onBlankSelectorToggleSelection(event: ToggleEvent): void
@@ -172,110 +250,22 @@ export class DocumentSetup extends BaseDocumentSetup
 
 		const data = event.getData();
 
-		const handleEvent = () => {
-			this.setDocumentTitle(data.title);
+		this.setDocumentTitle(data.title);
 
-			if (data.selected)
-			{
-				this.enableDocumentInputs();
-				this.enableAddButton();
-			}
-		};
-
-		if (!this.isEditActionMode() || !this.isTemplateMode())
+		if (data.selected)
 		{
-			handleEvent();
-
-			return;
+			this.enableDocumentInputs();
 		}
-
-		const popupManager = NewBlankForTemplatePopupManager.getOrCreateForObject(this);
-		if (popupManager.isSelectBlankPopupCompletedOnce())
-		{
-			handleEvent();
-
-			return;
-		}
-
-		const extra = data.extra;
-		if (!data.selected || extra?.isInitial || extra?.skipSelectPopupShow)
-		{
-			return;
-		}
-
-		const previousSelectedBlankId = data.previousSelectedBlankId;
-
-		popupManager.showSelectBlankPopup();
-		popupManager.subscribeOnce(popupManager.events.selectBlankPopup.onConfirm, handleEvent);
-		popupManager.subscribeOnce(
-			popupManager.events.selectBlankPopup.onCancel,
-			() => {
-				popupManager.unsubscribe(
-					popupManager.events.selectBlankPopup.onConfirm,
-					handleEvent,
-				);
-				if (Type.isNumber(previousSelectedBlankId) && previousSelectedBlankId > 0)
-				{
-					this.blankSelector.selectBlank(previousSelectedBlankId, { skipSelectPopupShow: true });
-				}
-			},
-		);
 	}
 
-	#onBlankSelectorBeforeAddFileSuccessfully(event: BaseEvent): void
+	#isDocumentLimitExceeded(): boolean
 	{
-		if (!this.isTemplateMode() || !this.isEditActionMode())
+		if (!this.documentCounters)
 		{
-			return;
+			return false;
 		}
 
-		const newBlankPopupManager = NewBlankForTemplatePopupManager.getOrCreateForObject(this);
-		const lastSelectedBlank = this.blankSelector.selectedBlankId;
-
-		if (newBlankPopupManager.isUploadPopupCompletedOnce())
-		{
-			return;
-		}
-
-		newBlankPopupManager.showUploadPopup();
-		const onCancelListener = () => {
-			this.blankSelector.clearFiles();
-			this.blankSelector.selectBlank(lastSelectedBlank, { skipSelectPopupShow: true });
-		};
-
-		const onConfirmListener = () => {
-			this.blankSelector.getBlank();
-			const title = this.blankSelector.getUploadedFileName(0);
-			if (Type.isStringFilled(title))
-			{
-				this.setDocumentTitle(title);
-			}
-		};
-
-		const unsubscribeAnotherListenerDecorator = (
-			listener: (event?: BaseEvent) => any,
-			unsubscribedListener: (event?: BaseEvent) => any,
-		) => {
-			return (event: BaseEvent) => {
-				listener(event);
-				newBlankPopupManager.unsubscribe(
-					newBlankPopupManager.events.uploadPopup.onCancel,
-					unsubscribedListener,
-				);
-				newBlankPopupManager.unsubscribe(
-					newBlankPopupManager.events.uploadPopup.onConfirm,
-					unsubscribedListener,
-				);
-			};
-		};
-		newBlankPopupManager.subscribeOnce(
-			newBlankPopupManager.events.uploadPopup.onCancel,
-			unsubscribeAnotherListenerDecorator(onCancelListener, onConfirmListener),
-		);
-		newBlankPopupManager.subscribeOnce(
-			newBlankPopupManager.events.uploadPopup.onConfirm,
-			unsubscribeAnotherListenerDecorator(onConfirmListener, onCancelListener),
-		);
+		return this.documentCounters.getCount() >= this.#b2eDocumentLimitCount;
 	}
 
 	isRuRegion(): boolean
@@ -298,7 +288,7 @@ export class DocumentSetup extends BaseDocumentSetup
 			className: 'sign-b2e-document-setup__sender-type-selector',
 			withCaption: true,
 			isEnableSearch: false,
-			height: 110,
+			height: 120,
 			width: 350,
 		});
 		this.#senderDocumentTypes.forEach((item) => {
@@ -361,47 +351,6 @@ export class DocumentSetup extends BaseDocumentSetup
 		);
 	}
 
-	#getDocumentTitleLayout(): HTMLElement
-	{
-		return Tag.render`
-			<div>
-				<div class="sign-b2e-document-setup__title-item --full">
-					<div class="ui-ctl ui-ctl-textbox">
-						${this.#documentTitleInput}
-					</div>
-				</div>
-				${this.#getDocumentHintLayout()}
-			</div>
-		`;
-	}
-
-	#getAddDocumentLayout(): HTMLElement
-	{
-		return this.#cache.remember('addDocumentLayout', () => {
-			return Tag.render`
-				<div class="sign-b2e-settings__item --add">
-					<div class="sign-b2e-settings__item_title">
-						<span>${Loc.getMessage('SIGN_DOCUMENT_SETUP_ADD_DOCUMENT')}</span>
-						${this.documentCounters.getLayout()}
-					</div>
-					${this.getAddDocumentButton()}
-					${this.getAddDocumentNotice()}
-				</div>
-			`;
-		});
-	}
-
-	getAddDocumentButton(): HTMLElement
-	{
-		return this.#cache.remember('addDocumentButton', () => {
-			return Tag.render`
-				<button type="button" class="sign-b2e-document-setup__add-button" onclick="${this.#onClickAddDocument.bind(this)}">
-					${this.#getAddDocumentButtonText()}
-				</button>
-			`;
-		});
-	}
-
 	getAddDocumentNotice(): HTMLElement
 	{
 		return this.#cache.remember('addDocumentNotice', () => {
@@ -409,37 +358,6 @@ export class DocumentSetup extends BaseDocumentSetup
 				<p class="sign-wizard__notice">${Loc.getMessage('SIGN_DOCUMENT_SETUP_ADD_DOCUMENT_NOTICE')}</p>
 			`;
 		});
-	}
-
-	#getAddDocumentButtonText(): HTMLElement
-	{
-		return this.#cache.remember('addDocumentButtonText', () => {
-			return Tag.render`
-				<span class="sign-b2e-document-setup__add-button_text">${Loc.getMessage('SIGN_DOCUMENT_SETUP_ADD_ANOTHER_DOCUMENT')}</span>
-			`;
-		});
-	}
-
-	switchAddDocumentButtonLoadingState(loading: boolean): void
-	{
-		if (loading)
-		{
-			Dom.addClass(this.getAddDocumentButton(), 'ui-btn-wait');
-		}
-		else
-		{
-			Dom.removeClass(this.getAddDocumentButton(), 'ui-btn-wait');
-		}
-	}
-
-	disableAddButton(): void
-	{
-		Dom.addClass(this.getAddDocumentButton(), '--disabled');
-	}
-
-	enableAddButton(): void
-	{
-		Dom.removeClass(this.getAddDocumentButton(), '--disabled');
 	}
 
 	#setDocumentLimitNoticeText(): void
@@ -462,11 +380,6 @@ export class DocumentSetup extends BaseDocumentSetup
 		Dom.toggleClass(deleteButton, 'ui-btn-wait');
 	}
 
-	#onClickAddDocument(): void
-	{
-		this.emit('addDocument');
-	}
-
 	renderDocumentBlock(documentData: Object): void
 	{
 		if (!documentData)
@@ -474,133 +387,281 @@ export class DocumentSetup extends BaseDocumentSetup
 			return;
 		}
 
-		Dom.append(this.#createDocumentBlock(documentData), this.headerLayout);
+		const existingBlock = this.layout?.querySelector(`[data-id="document-id-${documentData.id}"]`);
+		if (existingBlock)
+		{
+			this.#removeLoadingDocumentBlock();
+
+			return;
+		}
+
+		const block = this.#createDocumentBlock(documentData);
+		if (this.#loadingBlock)
+		{
+			Dom.replace(this.#loadingBlock.getLayout(), block.getLayout());
+			this.#loadingBlock.destroy();
+			this.#loadingBlock = null;
+
+			return;
+		}
+
+		Dom.append(block.getLayout(), this.headerLayout);
 	}
 
-	#createDocumentBlock(documentData: Object): HTMLElement
+	#isPlaceholderDocumentByBlankId(blankId: ?number): boolean
 	{
-		const deleteButton = Tag.render`
-			<button class="sign-b2e-document-setup__document-block_delete" type="button"></button>
-		`;
-		const editButton = Tag.render`
-			<button class="ui-btn ui-btn-round ui-btn-sm ui-btn-light-border" type="button">
-				${Loc.getMessage('SIGN_DOCUMENT_SETUP_DOCUMENT_EDIT_BUTTON')}
-			</button>
-		`;
+		if (!Type.isNumber(blankId))
+		{
+			return false;
+		}
 
-		Event.bind(deleteButton, 'click', (event) => {
-			this.#onClickDeleteDocument(documentData, event);
-		});
-		Event.bind(editButton, 'click', (event) => {
-			this.#onClickEditDocument(documentData, event);
-		});
+		const blank = this.blankSelector.getBlank(blankId);
+		if (!blank?.getLayout)
+		{
+			return false;
+		}
 
-		return Tag.render`
-			<div class="sign-b2e-document-setup__document-block" data-id="document-id-${documentData.id}">
-				<div class="sign-b2e-document-setup__document-block_inner">
-					<div class="sign-b2e-document-setup__document-block_title">${documentData.title}</div>
-				</div>
-				<div class="sign-b2e-document-setup__document-block_btn">
-					${editButton}
-					${deleteButton}
-				</div>
-				<div class="sign-b2e-document-setup__document-block_hint">
-					${Loc.getMessage('SIGN_DOCUMENT_SETUP_ADD_DOCUMENT_HINT')}
-				</div>
-			</div>
-		`;
+		const layout = blank.getLayout();
+
+		return layout?.dataset?.hasPlaceholders;
 	}
 
-	updateDocumentBlock(id: number): void
+	#isPlaceholderDocument(
+		documentData: Object,
+		options: { isPlaceholderDocument?: boolean } = {},
+	): boolean
+	{
+		return options.isPlaceholderDocument
+			|| documentData?.hasPlaceholders
+			|| this.#isPlaceholderDocumentByBlankId(documentData?.blankId)
+		;
+	}
+
+	#createDocumentBlock(
+		documentData: Object,
+		options: { isPlaceholderDocument?: boolean } = {},
+	): DocumentBlock
+	{
+		const isPlaceholderDocument = this.#isPlaceholderDocument(documentData, options);
+		const block = new DocumentBlock({
+			documentData,
+			options: { ...options, isPlaceholderDocument },
+			api: this.#api,
+			isTemplateMode: this.isTemplateMode(),
+		});
+
+		this.#subscribeOnDocumentBlockEvents(block);
+		this.#blockByElement.set(block.getLayout(), block);
+
+		return block;
+	}
+
+	#subscribeOnDocumentBlockEvents(block: DocumentBlock): void
+	{
+		block.subscribe('delete', this.#onDocumentBlockDelete.bind(this));
+		block.subscribe('replaceConfirmed', this.#onDocumentBlockReplaceConfirmed.bind(this));
+		block.subscribe('titleChange', this.#onDocumentBlockTitleChange.bind(this));
+		block.subscribe('edit', this.#onDocumentBlockEdit.bind(this));
+	}
+
+	updateDocumentBlock(id: number, title: ?string = null): void
 	{
 		const editedBlock = this.layout.querySelector(`[data-id="document-id-${id}"]`);
+		if (!editedBlock)
+		{
+			return;
+		}
+
+		if (Type.isStringFilled(title))
+		{
+			const block = this.#blockByElement.get(editedBlock);
+			if (block)
+			{
+				block.setTitle(title);
+
+				return;
+			}
+		}
+
 		const titleNode = editedBlock.querySelector('.sign-b2e-document-setup__document-block_title');
-		titleNode.textContent = this.#documentTitleInput.title;
+		if (titleNode)
+		{
+			titleNode.textContent = this.#documentTitleInput.title;
+		}
 	}
 
 	replaceDocumentBlock(oldDocument, newDocument): void
 	{
 		const editedBlock = this.layout.querySelector(`[data-id="document-id-${oldDocument.id}"]`);
-		Dom.replace(editedBlock, this.#createDocumentBlock(newDocument));
+		const block = this.#createDocumentBlock(newDocument);
+		Dom.replace(editedBlock, block.getLayout());
 	}
 
-	#getDocumentHintLayout(): HTMLElement | null
-	{
-		if (this.isTemplateMode())
-		{
-			return null;
-		}
-
-		return this.#cache.remember('documentHintLayout', () => {
-			return Tag.render`
-				<p class="sign-b2e-document-setup__title-text">
-					${Loc.getMessage('SIGN_DOCUMENT_SETUP_TITLE_HINT')}
-				</p>
-			`;
-		});
-	}
-
-	#onClickDeleteDocument(documentData: DocumentDetails, event: PointerEvent): void
+	#onClickDeleteDocument(documentData: DocumentDetails): void
 	{
 		this.setupData = null;
 		const { id, uid, blankId } = documentData;
-		const deleteButton = event.target;
-		this.toggleDeleteBtnLoadingState(deleteButton);
-		this.emit('deleteDocument', { id, uid, blankId, deleteButton });
+		this.emit('deleteDocument', { id, uid, blankId });
 	}
 
-	#onClickEditDocument(documentData: DocumentDetails, event: PointerEvent): void
+	#onDocumentBlockDelete(event: BaseEvent): void
 	{
-		const { id, uid } = documentData;
-		this.toggleEditMode(id, event.target);
-		this.emit('editDocument', { uid });
+		this.#onClickDeleteDocument(event.getData());
 	}
 
-	toggleEditMode(id: number, editButton: HTMLElement): void
+	#onDocumentBlockReplaceConfirmed(event: BaseEvent): void
 	{
-		if (this.#currentEditedId !== id)
-		{
-			this.resetEditMode();
-		}
-
-		const documentBlock = editButton.closest(`[data-id="document-id-${id}"]`);
-		Dom.toggleClass(documentBlock, '--edit');
-
-		if (this.editMode)
-		{
-			// eslint-disable-next-line no-param-reassign
-			editButton.textContent = Loc.getMessage('SIGN_DOCUMENT_SETUP_DOCUMENT_EDIT_BUTTON');
-			this.#disableDocumentInputs();
-			this.disableAddButton();
-			this.editMode = false;
-		}
-		else
-		{
-			// eslint-disable-next-line no-param-reassign
-			editButton.textContent = Loc.getMessage('SIGN_DOCUMENT_SETUP_DOCUMENT_CANCEL_BUTTON');
-			this.editMode = true;
-			this.enableDocumentInputs();
-			this.enableAddButton();
-			this.#currentEditedId = id;
-			this.#currentEditButton = editButton;
-			this.#currentEditBlock = documentBlock;
-		}
+		const { documentData, isPlaceholderDocument, files } = event.getData();
+		this.#handleReplaceConfirmed(documentData, { isPlaceholderDocument }, files);
 	}
 
-	resetEditMode(): void
+	#onDocumentBlockTitleChange(event: BaseEvent): void
 	{
-		if (!this.#currentEditedId)
+		const data = event.getData();
+		this.setDocumentTitle(data.title);
+		this.emit('changeDocumentTitle', data);
+	}
+
+	#onDocumentBlockEdit(event: BaseEvent): void
+	{
+		const { documentData, bindElement, closeMenu } = event.getData();
+		this.#handleEditDocumentClick(documentData, bindElement, closeMenu);
+	}
+
+	async #handleEditDocumentClick(
+		documentData: Object,
+		bindElement: ?HTMLElement = null,
+		closeMenu: ?() => void = null,
+	): Promise<void>
+	{
+		if (this.#isPlaceholderDocument(documentData))
+		{
+			closeMenu?.();
+			await this.openOnlineEditor(documentData);
+
+			return;
+		}
+
+		this.#showBlockEditorUnavailableHint(documentData, bindElement);
+	}
+
+	#showBlockEditorUnavailableHint(documentData: Object, bindElement: ?HTMLElement = null): void
+	{
+		const anchor = bindElement
+			?? this.layout?.querySelector(`[data-id="document-id-${documentData.id}"]`);
+		if (!anchor)
 		{
 			return;
 		}
 
-		this.#currentEditButton.textContent = Loc.getMessage('SIGN_DOCUMENT_SETUP_DOCUMENT_EDIT_BUTTON');
-		Dom.removeClass(this.#currentEditBlock, '--edit');
-		this.editMode = false;
+		this.#blockEditorUnavailableHintPopup?.destroy();
+		this.#blockEditorUnavailableHintPopup = new Popup({
+			bindElement: anchor,
+			bindOptions: { position: 'top', forceBindPosition: true },
+			offsetTop: -10,
+			darkMode: true,
+			angle: { position: 'bottom', offset: anchor.offsetWidth / 2 },
+			autoHide: true,
+			closeByEsc: true,
+			minWidth: 340,
+			content: Loc.getMessage('SIGN_V2_B2E_DOCUMENT_SETUP_BLOCK_EDITOR_UNAVAILABLE_HINT'),
+		});
+		this.#blockEditorUnavailableHintPopup.show();
+	}
 
-		this.#currentEditButton = null;
-		this.#currentEditBlock = null;
-		this.#currentEditedId = null;
+	async openOnlineEditor(documentData: Object): Promise<void>
+	{
+		this.#editorFlowPending = true;
+		this.emit('editorLock');
+
+		this.ready = false;
+
+		try
+		{
+			const result = await this.#editorIntegration.openEditor(documentData);
+			if (!result)
+			{
+				this.#editorFlowPending = false;
+				this.ready = true;
+				this.emit('editorUnlock');
+			}
+		}
+		catch (error)
+		{
+			console.error(error);
+			this.#editorFlowPending = false;
+			this.ready = true;
+			this.emit('editorUnlock');
+		}
+	}
+
+	get isEditorFlowPending(): boolean
+	{
+		return this.#editorFlowPending;
+	}
+
+	cancelEditorFlow(): void
+	{
+		if (!this.#editorFlowPending)
+		{
+			return;
+		}
+
+		this.#editorFlowPending = false;
+		this.ready = true;
+		this.emit('editorUnlock');
+	}
+
+	async #applyNewBlank(documentData: Object, newBlankId: number): Promise<void>
+	{
+		const previousBlankId = documentData.blankId;
+
+		await this.blankSelector.loadBlankById(newBlankId);
+		this.blankSelector.enableSelectedBlank(previousBlankId);
+		this.blankSelector.disableSelectedBlank(newBlankId);
+
+		const updatedDocumentData = {
+			...documentData,
+			blankId: newBlankId,
+			previewUrl: null,
+			templateUid: this.setupData?.templateUid ?? documentData?.templateUid,
+		};
+
+		if (this.setupData?.uid === updatedDocumentData.uid)
+		{
+			this.setupData = updatedDocumentData;
+			if (this.blankSelector.selectedBlankId !== newBlankId)
+			{
+				await this.blankSelector.selectBlank(newBlankId, { isInitial: true });
+			}
+		}
+
+		this.emit('replaceDocument', { documentData: updatedDocumentData });
+	}
+
+	#handleReplaceConfirmed(
+		documentData: DocumentDetails,
+		options: { isPlaceholderDocument?: boolean },
+		files: File[],
+	): void
+	{
+		this.emit('replaceDocumentStart', { documentData });
+		this.emit('editorLock');
+		this.ready = false;
+		try
+		{
+			this.#replaceDocumentData = documentData;
+			this.#initReplaceUploader(options);
+			this.#replaceUploader.addFiles(files);
+		}
+		catch (error)
+		{
+			console.error(error);
+			this.ready = true;
+			this.emit('editorUnlock');
+			this.emit('replaceDocumentFinish', { isSuccess: false });
+			this.#replaceDocumentData = null;
+		}
 	}
 
 	getHeaderLayout(): HTMLElement
@@ -610,8 +671,25 @@ export class DocumentSetup extends BaseDocumentSetup
 			: Loc.getMessage('SIGN_DOCUMENT_SETUP_HEADER')
 		;
 
+		const placeholdersInfoButton = Tag.render`
+			<button
+				type="button"
+				class="sign-b2e-document-setup__placeholders-info-btn"
+				data-hint="${Loc.getMessage('SIGN_DOCUMENT_SETUP_PLACEHOLDERS_BUTTON')}"
+				data-hint-no-icon
+				onclick="${() => this.#onPlaceholdersInfoClick()}"
+			>
+				<img src="${placeholderCodeIcon}" alt="">
+			</button>
+		`;
+
 		this.headerLayout = Tag.render`
-			<h1 class="sign-b2e-settings__header">${headerText}</h1>
+			<div class="sign-b2e-settings__header-container">
+				<div class="sign-b2e-settings__header-row">
+					<h1 class="sign-b2e-settings__header">${headerText}</h1>
+					${placeholdersInfoButton}
+				</div>
+			</div>
 		`;
 
 		return this.headerLayout;
@@ -690,19 +768,31 @@ export class DocumentSetup extends BaseDocumentSetup
 	{
 		const itemTitleText = this.isTemplateMode()
 			? Loc.getMessage('SIGN_DOCUMENT_SETUP_ADD_TEMPLATE_TITLE')
-			: Loc.getMessage('SIGN_DOCUMENT_SETUP_ADD_TITLE')
+			: Loc.getMessage('SIGN_DOCUMENT_SETUP_DOWNLOAD_TITLE')
 		;
+
+		this.titleCounterSlot = Tag.render`<span class="sign-b2e-document-setup__title-counter-slot"></span>`;
+		this.noticeSlot = Tag.render`<div class="sign-b2e-document-setup__notice-slot"></div>`;
 
 		this.documentSectionInnerLayout = Tag.render`
 			<div class="sign-b2e-settings__item-inner">
-				<p class="sign-b2e-settings__item_title">
-					${itemTitleText}
-				</p>
+				<div class="sign-b2e-settings__item_title --with-counter">
+					<span>${itemTitleText}</span>
+					${this.titleCounterSlot}
+				</div>
 				${this.blankSelector.getLayout()}
+				${this.noticeSlot}
 			</div>
 		`;
 
 		return this.documentSectionInnerLayout;
+	}
+
+	#onPlaceholdersInfoClick(): void
+	{
+		void top.BX.Runtime.loadExtension('sign.v2.grid.b2e.placeholders').then(() => {
+			new top.BX.Sign.V2.Grid.B2e.Placeholders().show();
+		});
 	}
 
 	createHintPopup(): void
@@ -716,16 +806,29 @@ export class DocumentSetup extends BaseDocumentSetup
 
 	setAvailabilityDocumentSection(isAvailable: boolean): void
 	{
+		if (!this.hintPopup)
+		{
+			return;
+		}
+
+		const uploadArea = this.documentSectionInnerLayout?.querySelector('.sign-blank-selector__list.--with-buttons');
+
 		if (isAvailable)
 		{
-			Dom.removeClass(this.documentSectionInnerLayout, '--disabled');
+			if (uploadArea)
+			{
+				Dom.removeClass(uploadArea, disabledClass);
+			}
 			Event.unbind(this.documentSectionLayout, 'click', this.onClickShowHintPopup);
 			this.hintPopup.close();
 
 			return;
 		}
 
-		Dom.addClass(this.documentSectionInnerLayout, '--disabled');
+		if (uploadArea)
+		{
+			Dom.addClass(uploadArea, disabledClass);
+		}
 		Event.bind(this.documentSectionLayout, 'click', this.onClickShowHintPopup);
 	}
 
@@ -735,12 +838,16 @@ export class DocumentSetup extends BaseDocumentSetup
 		this.hintPopup.show();
 	}
 
-	#canCopyBlocksFromPreviousBlank(): boolean
+	#removeDocumentSection(): void
 	{
-		return this.isEditActionMode()
-			&& this.isTemplateMode()
-			&& this.blankSelector.isFilesReadyForUpload()
-			&& !this.blankSelector.hasPlaceholderFilesForUpload();
+		Event.unbind(this.documentSectionLayout, 'click', this.onClickShowHintPopup);
+		this.hintPopup?.destroy();
+		this.hintPopup = null;
+		Dom.remove(this.documentSectionLayout);
+		this.layout.querySelectorAll('.sign-b2e-settings__counter').forEach((counter) => {
+			Dom.remove(counter);
+		});
+		SignSettingsItemCounter.numerate(this.layout);
 	}
 
 	async setup(uid: ?string): Promise<void>
@@ -750,7 +857,6 @@ export class DocumentSetup extends BaseDocumentSetup
 			await super.setup(
 				uid,
 				this.isTemplateMode(),
-				this.#canCopyBlocksFromPreviousBlank(),
 				this.#getDocumentSenderType(),
 			);
 			if (!this.setupData || this.blankIsNotSelected)
@@ -765,12 +871,24 @@ export class DocumentSetup extends BaseDocumentSetup
 				const { title, initiatedByType } = this.setupData;
 				this.setDocumentTitle(title);
 				this.setDocumentSenderType(initiatedByType);
+				if (this.isTemplateMode())
+				{
+					this.#removeDocumentSection();
+				}
 
 				return;
 			}
+
+			const shouldRemoveDocumentSection = this.isTemplateMode() && this.setupData?.uid;
+
 			this.ready = false;
 
 			this.setupData = await this.updateDocumentData(this.setupData);
+
+			if (shouldRemoveDocumentSection)
+			{
+				this.#removeDocumentSection();
+			}
 		}
 		catch
 		{
@@ -845,7 +963,6 @@ export class DocumentSetup extends BaseDocumentSetup
 
 		this.isFileAdded = false;
 		this.#disableDocumentInputs();
-		this.disableAddButton();
 	}
 
 	enableDocumentInputs(): void
@@ -858,5 +975,120 @@ export class DocumentSetup extends BaseDocumentSetup
 	{
 		this.#documentTitleInput.disabled = true;
 		this.blankIsNotSelected = true;
+	}
+
+	#initReplaceUploader(options: { isPlaceholderDocument?: boolean }): void
+	{
+		const acceptedFileTypes = getAllowedReplaceExtensions(options.isPlaceholderDocument)
+			.map((extension) => `.${extension}`)
+		;
+		this.#replaceUploader = new Uploader({
+			id: 'sign-replace-document-uploader',
+			controller: 'sign.upload.blankUploadController',
+			acceptedFileTypes,
+			multiple: false,
+			autoUpload: true,
+			maxFileSize: 50 * 1024 * 1024,
+			events: {
+				[UploaderEvent.UPLOAD_COMPLETE]: (event) => {
+					this.#onReplaceUploadComplete(options, event);
+				},
+			},
+		});
+	}
+
+	async #onReplaceUploadComplete(options: { isPlaceholderDocument?: boolean }): Promise<void>
+	{
+		const files = this.#replaceUploader.getFiles();
+		if (files.length === 0 || !this.#replaceDocumentData)
+		{
+			return;
+		}
+
+		let isSuccess = false;
+
+		try
+		{
+			const previousBlankId = this.#replaceDocumentData.blankId;
+			const documentUid = this.#replaceDocumentData.uid;
+			const filesIds = files.map((file) => file.getServerFileId());
+			const hasPlaceholders = this.#replaceDocumentData?.hasPlaceholders
+				|| this.#isPlaceholderDocumentByBlankId(this.#replaceDocumentData?.blankId)
+			;
+			const createBlankResult = await this.#api.createBlank(
+				filesIds,
+				BlankScenario.b2e,
+				isTemplateMode(),
+				hasPlaceholders,
+			);
+
+			await this.#api.changeBlank(
+				documentUid,
+				createBlankResult.id,
+				!options.isPlaceholderDocument,
+			);
+
+			await this.blankSelector.loadBlankById(createBlankResult.id);
+			this.blankSelector.enableSelectedBlank(previousBlankId);
+			this.blankSelector.disableSelectedBlank(createBlankResult.id);
+
+			const newFile = files[0];
+			const newTitle = newFile
+				? newFile.getName().replace(/\.[^.]+$/, '')
+				: this.#replaceDocumentData.title
+			;
+
+			const titleData = await this.#api.modifyTitle(documentUid, newTitle);
+			const [loadedData, blocks] = await Promise.all([
+				this.#api.loadDocument(documentUid),
+				this.#api.loadBlocksByDocument(documentUid),
+			]);
+
+			const updatedDocumentData = {
+				...this.#replaceDocumentData,
+				...loadedData,
+				blocks,
+				blankId: createBlankResult.id,
+				previewUrl: null,
+				hasPlaceholders,
+				title: newTitle,
+				templateUid: this.setupData?.templateUid ?? this.#replaceDocumentData?.templateUid,
+			};
+
+			if (titleData?.blankTitle)
+			{
+				this.blankSelector.modifyBlankTitle(updatedDocumentData.blankId, titleData.blankTitle);
+			}
+
+			if (this.setupData?.uid === updatedDocumentData.uid)
+			{
+				this.setupData = updatedDocumentData;
+				if (this.blankSelector.selectedBlankId !== createBlankResult.id)
+				{
+					await this.blankSelector.selectBlank(createBlankResult.id, { isInitial: true });
+				}
+			}
+
+			this.replaceDocumentBlock(this.#replaceDocumentData, updatedDocumentData);
+			this.emit('replaceDocument', { documentData: updatedDocumentData });
+			this.emit('changeDocumentTitle', {
+				uid: updatedDocumentData.uid,
+				title: newTitle,
+				blankTitle: titleData?.blankTitle,
+			});
+			this.#replaceUploader.removeFiles();
+			isSuccess = true;
+		}
+		catch (e)
+		{
+			console.error(e);
+		}
+		finally
+		{
+			this.ready = true;
+			this.emit('editorUnlock');
+			this.emit('replaceDocumentFinish', { isSuccess });
+			this.#replaceDocumentData = null;
+		}
 	}
 }

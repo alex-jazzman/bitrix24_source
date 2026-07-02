@@ -1,0 +1,8 @@
+.bx-im-add-to-chat-guest-tab__scope .bx-im-add-guest-content__description_icon {
+	background: url('images/add-guests-to-chat-icon.png') center / cover no-repeat;
+}
+
+.bx-im-add-to-chat-guest-tab__scope.bx-im-entity-selector-add-to-chat__container,
+.bx-im-add-to-chat-guest-tab__scope.bx-im-add-guest-content__container {
+	height: 438px;
+}

@@ -34,7 +34,6 @@ export type User = {
 export type Bot = {
 	code: string,
 	type: $Values<typeof BotType>,
-	appId: string,
 	isHidden: boolean,
 	isSupportOpenline: boolean,
 	isHuman: boolean,

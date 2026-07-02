@@ -3,28 +3,31 @@ import { Builder, Dictionary } from 'crm.integration.analytics';
 import { Loc, onCustomEvent } from 'main.core';
 import { sendData } from 'ui.analytics';
 import { UI } from 'ui.notification';
-import { copilotSliderInstance, sliderButtonsAdapter } from '../ai-form-fill-app';
-import { entityEditorProxy } from '../app';
-import { ControlValue } from '../services/entity-editor-proxy';
+
+import { type ControlValue } from '../services/entity-editor-proxy';
 import { EntityEditorRender } from '../services/entity-editor-render';
 import { timeout } from '../services/utils';
-import type { EntityInfo } from './types';
+import { copilotSliderInstance, entityEditorProxy, sliderButtonsAdapter } from '../shared-state';
 import {
-	ConflictField,
-	EditorControlsParams,
+	type ConflictField,
+	type EditorControlsParams,
+	type EntityInfo,
 	FEEDBACK_TRIGGER_APP_CLOSE,
 	FEEDBACK_TRIGGER_CONTROL,
-	FormFieldsToMergeResult,
+	type FormFieldsToMergeResult,
 } from './types';
 
 export default {
-	async initialize({ dispatch, getters }) {
+	async initialize({ dispatch, getters })
+	{
 		await dispatch('fetchFormFieldsToMerge');
 		await dispatch('createEntityEditor');
 		await dispatch('collectFieldDataFromEntityEditor');
 		await dispatch('updateControlPositionInfo');
 	},
-	async fetchFormFieldsToMerge({ commit, getters }) {
+
+	async fetchFormFieldsToMerge({ commit, getters })
+	{
 		const data: FormFieldsToMergeResult = await fetchMergeFields(getters.mergeUuid);
 
 		const fields: ConflictField[] = data.fields.map((field): ConflictField => {
@@ -48,7 +51,9 @@ export default {
 		commit('setAiFeedbackWasSent', data.target.feedbackWasSent);
 		commit('setAiFeedbackShowBeforeClose', !data.target.feedbackWasSent);
 	},
-	async saveFormFieldsToMerge({ getters, commit, dispatch }) {
+
+	async saveFormFieldsToMerge({ getters, commit, dispatch })
+	{
 		const fieldNamesToApply = getters.conflictFields
 			.filter((field: ConflictField) => field.isAiValuesUsed)
 			.map((field: ConflictField) => field.name);
@@ -73,11 +78,15 @@ export default {
 			});
 		}
 	},
-	showFeedbackMessageBeforeClose({ getters, commit }) {
+
+	showFeedbackMessageBeforeClose({ getters, commit })
+	{
 		commit('showFeedbackMessageIfNeeded', FEEDBACK_TRIGGER_APP_CLOSE);
 		commit('setAiFeedbackShowBeforeClose', false);
 	},
-	closeFeedbackMessage({ getters, commit, dispatch }, sendFeedback: boolean = false) {
+
+	closeFeedbackMessage({ getters, commit, dispatch }, sendFeedback: boolean = false)
+	{
 		if (sendFeedback)
 		{
 			dispatch('sendFeedBack');
@@ -89,12 +98,15 @@ export default {
 			dispatch('closeFormWithoutConfirm');
 		}
 	},
-	closeFormWithoutConfirm({ getters, commit }) {
+
+	closeFormWithoutConfirm({ getters, commit })
+	{
 		commit('setNeededShowCloseConfirm', false);
 		commit('setIsConfirmPopupShow', false);
 		const mergeUuid = getters.mergeUuid;
 		onCustomEvent(window, 'BX.Crm.AiFormFill:CloseSlider', { mergeUuid });
 	},
+
 	async setEditorFieldValue({ dispatch, getters, commit }, conflictField)
 	{
 		const fieldName = conflictField.name;
@@ -123,7 +135,9 @@ export default {
 			},
 		});
 	},
-	async createEntityEditor({ getters, commit, dispatch }) {
+	
+	async createEntityEditor({ getters, commit, dispatch })
+	{
 		const getEntityInfo: EntityInfo = getters.getEntityInfo;
 		const entityEditorRender = new EntityEditorRender({
 			entityId: getEntityInfo.entityId,
@@ -156,7 +170,8 @@ export default {
 		});
 	},
 
-	async collectFieldDataFromEntityEditor({ getters, commit, dispatch }) {
+	async collectFieldDataFromEntityEditor({ getters, commit, dispatch })
+	{
 		const conflictFields = getters.conflictFields;
 
 		const fieldsIds: Set<string> = new Set(conflictFields.map((field) => field.name));
@@ -186,7 +201,8 @@ export default {
 		commit('setIsEntityEditorLoaded', true);
 	},
 
-	async updateControlPositionInfo({ getters, commit }, { updateOnlyFrom } = {}) {
+	async updateControlPositionInfo({ getters, commit }, { updateOnlyFrom } = {})
+	{
 		const conflictFields: ConflictField[] = getters.conflictFields;
 
 		if (conflictFields.length === 0)
@@ -225,7 +241,8 @@ export default {
 		}
 	},
 
-	async applyAllAiFields({ dispatch, getters }) {
+	async applyAllAiFields({ dispatch, getters })
+	{
 		for (const field: ConflictField of getters.conflictFields)
 		{
 			if (field.isAiValuesUsed)
@@ -236,7 +253,8 @@ export default {
 		}
 	},
 
-	revertAllAiFields({ dispatch, getters }) {
+	revertAllAiFields({ dispatch, getters })
+	{
 		for (const field: ConflictField of getters.conflictFields)
 		{
 			if (!field.isAiValuesUsed)
@@ -246,16 +264,22 @@ export default {
 			dispatch('setEditorFieldValue', field);
 		}
 	},
-	showEntityEditorControlOutline(store, { fieldName, isShow }) {
+
+	showEntityEditorControlOutline(store, { fieldName, isShow })
+	{
 		entityEditorProxy.setControlOutline(fieldName, isShow);
 	},
-	updateSliderFooter({ getters }) {
+
+	updateSliderFooter({ getters })
+	{
 		const disable = getters.isFooterHiddenAndSaveDisabled;
 		sliderButtonsAdapter.saveButton.setDisabled(disable);
 
 		copilotSliderInstance?.footerDisplay(!disable);
 	},
-	async sendFeedBack({ commit, getters }) {
+
+	async sendFeedBack({ commit, getters })
+	{
 		const mergeUuid = getters.mergeUuid;
 
 		if (getters.aiFeedback.checkFeedbackBeforeSend)

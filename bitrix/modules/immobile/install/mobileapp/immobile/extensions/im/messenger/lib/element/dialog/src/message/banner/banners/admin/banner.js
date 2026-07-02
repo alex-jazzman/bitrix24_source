@@ -4,15 +4,16 @@
 jn.define('im/messenger/lib/element/dialog/src/message/banner/banners/admin/banner', (require, exports, module) => {
 	const { BannerMessage } = require('im/messenger/lib/element/dialog/message/banner/message');
 	const { BannerMessageConfiguration } = require('im/messenger/lib/element/dialog/message/banner/configuration');
-	const { MessageParams } = require('im/messenger/const');
+	const { MessageComponent } = require('im/messenger/const');
 	const { transparent } = require('utils/color');
 	const { Color } = require('tokens');
+	const { parser } = require('im/messenger/lib/parser');
 
 	class AdminMessage extends BannerMessage
 	{
 		static getComponentId()
 		{
-			return MessageParams.ComponentId.AdminMessage;
+			return MessageComponent.admin;
 		}
 
 		get metaData()
@@ -27,8 +28,20 @@ jn.define('im/messenger/lib/element/dialog/src/message/banner/banners/admin/bann
 		prepareTextMessage()
 		{
 			const description = this.replacePhrase(this.metaData?.description);
+			const colorHex = Color.base3.toHex();
 
-			this.message[0].text = `[color=${Color.base3.toHex()}]${description}[/color]`;
+			this.message[0].text = parser
+				.splitByUrlTag(description)
+				.map((part) => {
+					if (parser.isUrlTag(part))
+					{
+						return part;
+					}
+
+					return part ? `[color=${colorHex}]${part}[/color]` : '';
+				})
+				.join('')
+			;
 		}
 
 		setBannerProp()

@@ -1,6 +1,11 @@
 <?
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
+/**
+ * @global CMain $APPLICATION
+ * @var array $arGadgetParams
+ */
+
 $APPLICATION->SetAdditionalCSS('/bitrix/gadgets/bitrix/weather/styles.css');
 
 if($arGadgetParams["CITY"]!='')
@@ -31,48 +36,48 @@ $t = intval($node->content);
 <table width="90%">
 <tr>
 <td nowrap="yes" width="20%"><span class="t<?=intval($t/10)?>"><?=$node->content?></span></td>
-<td width="20%"><?$node = $xml->SelectNodes('/info/weather/day/day_part/image-v3');?><img src="<?=$node->content?>" class="gdwico"></td>
+<td width="20%"><?php $node = $xml->SelectNodes('/info/weather/day/day_part/image-v3');?><img src="<?=$node->content?>" class="gdwico"></td>
 <td width="60%" nowrap>
-<?$node = $xml->SelectNodes('/info/weather/day/day_part/weather_type');?>
+<?php $node = $xml->SelectNodes('/info/weather/day/day_part/weather_type');?>
 <span class="gdweather"><?=$node->content?></span><br>
 <span class="gdwinfo">
-<?$node = $xml->SelectNodes('/info/weather/day/day_part/wind_direction');?>
-Ветер: <?=$node->content?>, <?$node = $xml->SelectNodes('/info/weather/day/day_part/wind_speed');?><?=$node->content?> м/сек. <br>
-<?$node = $xml->SelectNodes('/info/weather/day/day_part/pressure');?>
+<?php $node = $xml->SelectNodes('/info/weather/day/day_part/wind_direction');?>
+Ветер: <?=$node->content?>, <?php $node = $xml->SelectNodes('/info/weather/day/day_part/wind_speed');?><?=$node->content?> м/сек. <br>
+<?php $node = $xml->SelectNodes('/info/weather/day/day_part/pressure');?>
 Давление: <?=$node->content?> мм.рт.ст.<br>
-<?$node = $xml->SelectNodes('/info/weather/day/day_part/dampness');?>
+<?php $node = $xml->SelectNodes('/info/weather/day/day_part/dampness');?>
 Влажность: <?=$node->content?>%<br>
 
-<?$node = $xml->SelectNodes('/info/weather/day/sun_rise');?>
+<?php $node = $xml->SelectNodes('/info/weather/day/sun_rise');?>
 Восход: <?=$node->content?><br>
-<?$node = $xml->SelectNodes('/info/weather/day/sunset');?>
+<?php $node = $xml->SelectNodes('/info/weather/day/sunset');?>
 Заход: <?=$node->content?>
 
 </span>
 </td>
 </tr>
 
-<?$node = $xml->SelectNodes('/info/weather/tonight/temperature');?>
-<?if($node):?>
+<?php $node = $xml->SelectNodes('/info/weather/tonight/temperature');?>
+<?php if($node):?>
 <tr>
 <td>Ночью:</td>
 <td colspan="2"><?=$node->content?>°C</td>
 </tr>
-<?endif?>
+<?php endif?>
 
-<?$node = $xml->SelectNodes('/info/weather/tomorrow/temperature');?>
-<?if($node):?>
+<?php $node = $xml->SelectNodes('/info/weather/tomorrow/temperature');?>
+<?php if($node):?>
 <tr>
 <td>Завтра:</td>
 <td colspan="2"><?=$node->content?>°C</td>
 </tr>
-<?endif?>
+<?php endif?>
 </table>
-<?if($arGadgetParams["SHOW_URL"]=="Y"):?>
+<?php if($arGadgetParams["SHOW_URL"]=="Y"):?>
 <br />
-<?$node = $xml->SelectNodes('/info/weather/url');?>
+<?php $node = $xml->SelectNodes('/info/weather/url');?>
 <a href="<?=htmlspecialcharsbx($node->content)?>">Подробнее</a> <a href="<?=htmlspecialcharsbx($node->content)?>"><img width="7" height="7" border="0" src="/bitrix/components/bitrix/desktop/images/arrows.gif" /></a>
 <br />
-<?endif?>
+<?php endif?>
 
-<?$cache->EndDataCache();?>
+<?php $cache->EndDataCache();?>

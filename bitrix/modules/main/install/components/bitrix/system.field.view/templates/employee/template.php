@@ -1,4 +1,10 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+
+/**
+ * @var array $arResult
+ * @var array $arParams
+ */
 
 $bFirst = true;
 
@@ -10,10 +16,10 @@ foreach ($arResult["VALUE"] as $ID => $res):
 		$res = '<a href="'.str_replace('#VALUE#', urlencode($ID), $arParams['arUserField']['PROPERTY_VALUE_LINK']).'">'.$res.'</a>';
 
 	if (!$bFirst):
-		?>, <?
+		?>, <?php
 	else:
 		$bFirst = false;
 	endif;
-	?><span class="fields enumeration"><?=$res?></span><?
+	?><span class="fields enumeration"><?=$res?></span><?php
 endforeach;
 ?>

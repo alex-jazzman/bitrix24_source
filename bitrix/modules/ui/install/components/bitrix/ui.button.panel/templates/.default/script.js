@@ -84,6 +84,14 @@
 			{
 				e.preventDefault();
 				top.BX.SidePanel.Instance.close();
+
+				return;
+			}
+
+			const link = button.node && button.node.dataset.link;
+			if (link)
+			{
+				location.href = link;
 			}
 		}
 	};

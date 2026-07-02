@@ -4,7 +4,7 @@
 jn.define('im/messenger/controller/recent/service/vuex/openlines', (require, exports, module) => {
 	const { Type } = require('type');
 
-	const { NavigationTabId } = require('im/messenger/const');
+	const { RecentTab, ROOT_PARENT_CHAT_ID } = require('im/messenger/const');
 	const { BaseRecentService } = require('im/messenger/controller/recent/service/base');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { CounterMutationHandler } = require('im/messenger/controller/recent/service/vuex/lib/handlers/counter');
@@ -20,7 +20,7 @@ jn.define('im/messenger/controller/recent/service/vuex/openlines', (require, exp
 			this.logger.log('onInit');
 
 			this.counter = new CounterMutationHandler(this.recentLocator, this.logger);
-			this.#subscribeStoreMutation();
+			this.subscribeEvents();
 		}
 
 		/**
@@ -39,6 +39,16 @@ jn.define('im/messenger/controller/recent/service/vuex/openlines', (require, exp
 			return serviceLocator.get('core').getStore();
 		}
 
+		subscribeEvents()
+		{
+			this.#subscribeStoreMutation();
+		}
+
+		unsubscribeEvents()
+		{
+			this.#unsubscribeStoreMutation();
+		}
+
 		#subscribeStoreMutation()
 		{
 			this.storeManager
@@ -46,11 +56,26 @@ jn.define('im/messenger/controller/recent/service/vuex/openlines', (require, exp
 				.on('recentModel/update', this.recentUpdateHandler)
 				.on('dialoguesModel/openlinesModel/update', this.sessionUpdateHandler)
 				.on('recentModel/delete', this.recentDeleteHandler)
-				.on('recentModel/storeIdCollection', this.recentFirstPageHandler)
+				.on('recentModel/storeNestedIdCollection', this.recentFirstPageHandler)
 				.on('dialoguesModel/add', this.dialogUpdateHandler)
 				.on('dialoguesModel/update', this.dialogUpdateHandler)
 				.on('counterModel/set', this.counter.setHandler)
 				.on('counterModel/delete', this.counter.deleteHandler)
+			;
+		}
+
+		#unsubscribeStoreMutation()
+		{
+			this.storeManager
+				.off('recentModel/add', this.recentAddHandler)
+				.off('recentModel/update', this.recentUpdateHandler)
+				.off('dialoguesModel/openlinesModel/update', this.sessionUpdateHandler)
+				.off('recentModel/delete', this.recentDeleteHandler)
+				.off('recentModel/storeNestedIdCollection', this.recentFirstPageHandler)
+				.off('dialoguesModel/add', this.dialogUpdateHandler)
+				.off('dialoguesModel/update', this.dialogUpdateHandler)
+				.off('counterModel/set', this.counter.setHandler)
+				.off('counterModel/delete', this.counter.deleteHandler)
 			;
 		}
 
@@ -61,9 +86,16 @@ jn.define('im/messenger/controller/recent/service/vuex/openlines', (require, exp
 		recentFirstPageHandler = ({ payload }) => {
 			this.logger.log('recentFirstPageHandler', payload);
 
-			if (payload.data?.tab !== NavigationTabId.openlines)
+			if ((payload.data?.parentChatId ?? ROOT_PARENT_CHAT_ID) !== ROOT_PARENT_CHAT_ID)
 			{
-				this.logger.log('recentFirstPageHandler: tab is not openlines, skipping');
+				this.logger.log('recentFirstPageHandler: skipping nested chat update');
+
+				return;
+			}
+
+			if (payload.data?.recentSection !== RecentTab.openlines)
+			{
+				this.logger.log('recentFirstPageHandler: recentSection is not openlines, skipping');
 
 				return;
 			}

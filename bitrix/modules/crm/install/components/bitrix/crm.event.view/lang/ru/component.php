@@ -26,3 +26,4 @@ $MESS["CRM_PRESET_CREATE_YESTERDAY"] = "Созданные вчера";
 $MESS["CRM_PRESET_CREATE_MY"] = "Созданные мной";
 $MESS["CRM_PERMISSION_DENIED"] = "Доступ запрещен";
 $MESS["CRM_COLUMN_ENTITY"] = "Элемент CRM";
+$MESS["CRM_EVENT_MAIN_TITLE"] = "История";

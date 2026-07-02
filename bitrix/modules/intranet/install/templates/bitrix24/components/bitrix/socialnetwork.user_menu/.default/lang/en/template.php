@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["SONET_TELEPHONY_HISTORY"] = "Call log";
 $MESS["SONET_UM_ABSENT"] = "(out of office)";
 $MESS["SONET_UM_BIRTHDAY"] = "Today is a user's birthday";
@@ -13,6 +13,7 @@ $MESS["SONET_UM_FORUM"] = "Forum";
 $MESS["SONET_UM_FRIENDS"] = "Friends";
 $MESS["SONET_UM_GENERAL"] = "General";
 $MESS["SONET_UM_GROUPS"] = "Groups";
+$MESS["SONET_UM_GROUPS_V2"] = "Projects";
 $MESS["SONET_UM_HONOUR"] = "The user is on the Board Of Honor";
 $MESS["SONET_UM_LOG"] = "Activity Stream";
 $MESS["SONET_UM_MESSAGES"] = "Messages";
@@ -26,4 +27,3 @@ $MESS["SONET_UM_SUBSCRIBE"] = "Subscription";
 $MESS["SONET_UM_TASKS"] = "Tasks";
 $MESS["SONET_UM_TIME"] = "Worktime";
 $MESS["SONET_UM_VIDEO_CALL"] = "Video Call";
-?>

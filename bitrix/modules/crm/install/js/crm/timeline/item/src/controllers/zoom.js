@@ -1,8 +1,8 @@
 import { Loc, Text, Type } from 'main.core';
 import { UI } from 'ui.notification';
 
-import { ActionParams, Base } from './base';
 import ConfigurableItem from '../configurable-item';
+import { type ActionParams, Base } from './base';
 
 const DOWNLOAD_DELAY = 300;
 

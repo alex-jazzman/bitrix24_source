@@ -6,5 +6,6 @@ export type LoaderOption = {
 	mountPoint: HTMLElement,
 	fetchGuestToken: string,
 	dashboardUiConfig: UiConfig,
-	debug: boolean
+	debug: boolean,
+	onTokenExpired?: () => Promise<string>,
 }

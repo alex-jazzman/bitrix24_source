@@ -1,7 +1,7 @@
 import { Dom, Tag, Type, Event } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Icon, Outline as OutlineIconSet } from 'ui.icon-set.api.core';
-import { Menu, type MenuItemOptions } from 'main.popup';
+import { Menu, type MenuItemOptions } from 'ui.system.menu';
 
 import 'ui.icon-set.outline';
 
@@ -13,13 +13,26 @@ export type NavigationItemOptions = {
 	locked?: boolean;
 	active?: boolean;
 	menuItems?: MenuItemOptions[];
+	onActivate?: (item: NavigationItem) => void;
 }
 export default class NavigationItem
 {
 	#isDropdown = false;
 	#menuItems: MenuItemOptions = [];
+	#onActivate: ?(item: NavigationItem) => void = null;
+	#menu: ?Menu = null;
 
-	constructor({ id, title, active, events, link, locked, dropdown = false, menuItems = [] }: NavigationItemOptions)
+	constructor({
+		id,
+		title,
+		active,
+		events,
+		link,
+		locked,
+		dropdown = false,
+		menuItems = [],
+		onActivate,
+	}: NavigationItemOptions)
 	{
 		this.id = id ?? null;
 		this.title = Type.isString(title) ? title : null;
@@ -29,10 +42,9 @@ export default class NavigationItem
 		this.locked = Type.isBoolean(locked) ? locked : false;
 		this.#isDropdown = dropdown === true;
 		this.#menuItems = menuItems ?? [];
+		this.#onActivate = Type.isFunction(onActivate) ? onActivate : null;
 
 		this.linkContainer = null;
-
-		this.bindEvents();
 	}
 
 	getTitle(): string
@@ -93,16 +105,6 @@ export default class NavigationItem
 		return this.linkContainer;
 	}
 
-	bindEvents()
-	{
-		EventEmitter.subscribe('BX.UI.NavigationPanel.Item:active', (item) => {
-			if (item.data !== this)
-			{
-				this.inactivate();
-			}
-		});
-	}
-
 	isLocked(): boolean
 	{
 		return this.locked;
@@ -161,6 +163,8 @@ export default class NavigationItem
 		{
 			Dom.addClass(this.getContainer(), '--active');
 		}
+
+		this.#onActivate?.(this);
 		EventEmitter.emit('BX.UI.NavigationPanel.Item:active', this);
 	}
 
@@ -190,23 +194,42 @@ export default class NavigationItem
 
 	#showMenu(): void
 	{
-		this.#getMenu().show();
+		this.#getMenu().show(this.getContainer());
+	}
+
+	closeMenu(): void
+	{
+		if (this.#menu && this.#menu.getPopup()?.isShown())
+		{
+			this.#menu.close();
+		}
 	}
 
 	#getMenu(): Menu
 	{
-		return new Menu({
+		if (this.#menu)
+		{
+			return this.#menu;
+		}
+
+		this.#menu = new Menu({
 			items: this.#menuItems,
-			bindElement: this.getContainer(),
-			cacheable: false,
+			bindOptions: {
+				forceBindPosition: true,
+				forceTop: true,
+			},
+			offsetTop: 8,
+			offsetLeft: 0,
 			events: {
-				onPopupShow: () => {
+				onShow: () => {
 					Dom.addClass(this.linkContainer, '--active');
 				},
-				onPopupClose: () => {
+				onClose: () => {
 					Dom.removeClass(this.linkContainer, '--active');
 				},
 			},
 		});
+
+		return this.#menu;
 	}
 }

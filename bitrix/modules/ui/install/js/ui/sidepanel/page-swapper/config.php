@@ -10,9 +10,9 @@ return [
 	'rel' => [
 		'main.core',
 		'main.core.events',
-		'ui.icon-set.api.core',
-		'ui.icon-set.actions',
 		'main.loader',
+		'ui.icon-set.actions',
+		'ui.icon-set.api.core',
 	],
 	'skip_core' => false,
 ];

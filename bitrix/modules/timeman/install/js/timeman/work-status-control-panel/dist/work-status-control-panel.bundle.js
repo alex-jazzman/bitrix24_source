@@ -673,6 +673,8 @@ this.BX = this.BX || {};
 	  },
 	  watch: {},
 	  mounted() {
+	    // prevent timeman init without bindOptions for new users on OpenDay event
+	    this.checkBindOptions();
 	    this.updateDayState();
 	    this.updateWorkingDayTimer();
 	    setInterval(() => {
@@ -719,6 +721,36 @@ this.BX = this.BX || {};
 	    },
 	    getCanEdit() {
 	      return window.BXTIMEMAN.DATA.CAN_EDIT || '';
+	    },
+	    setBindOptions() {
+	      window.BXTIMEMAN.setBindOptions({
+	        node: this.$refs.reportOpener,
+	        mode: 'popup',
+	        popupOptions: {
+	          autoHide: true,
+	          angle: false,
+	          offsetTop: -40,
+	          closeByEsc: true,
+	          bindOptions: {
+	            forceBindPosition: true,
+	            forceTop: true,
+	            forceLeft: false
+	          },
+	          events: {
+	            onShow: () => {
+	              this.reportOpening = false;
+	            },
+	            onClose: () => {},
+	            onDestroy: () => {}
+	          },
+	          fixed: true
+	        }
+	      });
+	    },
+	    checkBindOptions() {
+	      if (window.BXTIMEMAN.WND.bindOptions.mode !== 'popup') {
+	        this.setBindOptions();
+	      }
 	    },
 	    updateDayState() {
 	      this.dataId = this.getDataId();
@@ -791,29 +823,6 @@ this.BX = this.BX || {};
 	        return;
 	      } else {
 	        this.reportOpening = true;
-	        window.BXTIMEMAN.setBindOptions({
-	          node: this.$refs.reportOpener,
-	          mode: 'popup',
-	          popupOptions: {
-	            autoHide: true,
-	            angle: false,
-	            offsetTop: -40,
-	            closeByEsc: true,
-	            bindOptions: {
-	              forceBindPosition: true,
-	              forceTop: true,
-	              forceLeft: false
-	            },
-	            events: {
-	              onShow: () => {
-	                this.reportOpening = false;
-	              },
-	              onClose: () => {},
-	              onDestroy: () => {}
-	            },
-	            fixed: true
-	          }
-	        });
 	        window.BXTIMEMAN.Open();
 	      }
 	    },

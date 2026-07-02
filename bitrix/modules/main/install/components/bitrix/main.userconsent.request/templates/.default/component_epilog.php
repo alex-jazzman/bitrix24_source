@@ -1,6 +1,10 @@
 <?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
+/**
+ * @var string $templateFolder
+ */
+
 $path = $templateFolder;
 \CJSCore::RegisterExt('main_user_consent', Array(
 	'js' => $path . '/user_consent.js',

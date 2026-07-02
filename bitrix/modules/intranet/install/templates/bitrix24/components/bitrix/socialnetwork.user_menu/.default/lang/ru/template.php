@@ -1,8 +1,9 @@
-<?
+<?php
 $MESS["SONET_UM_GENERAL"] = "Профиль";
 $MESS["SONET_UM_LOG"] = "Живая лента";
 $MESS["SONET_UM_FRIENDS"] = "Друзья";
 $MESS["SONET_UM_GROUPS"] = "Группы";
+$MESS["SONET_UM_GROUPS_V2"] = "Проекты";
 $MESS["SONET_UM_PHOTO"] = "Фото";
 $MESS["SONET_UM_FORUM"] = "Форум";
 $MESS["SONET_UM_CALENDAR"] = "Календарь";
@@ -26,4 +27,3 @@ $MESS["SONET_UM_EDIT_FEATURES"] = "Изменить настройки";
 $MESS["SONET_UM_SUBSCRIBE"] = "Подписка";
 $MESS["SONET_UM_REQUESTS"] = "Приглашения и запросы";
 $MESS["SONET_TELEPHONY_HISTORY"] = "История звонков";
-?>

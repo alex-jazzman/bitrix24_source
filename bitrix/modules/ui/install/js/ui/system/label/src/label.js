@@ -35,14 +35,14 @@ export class Label
 	render(): HTMLElement
 	{
 		this.#wrapper = Tag.render`
-			<div class="${this.#getClassname()}" title="${this.#value}">
+			<div class="${this.#getClassname()}">
 				<div class="ui-system-label__inner">
-					<div class="ui-system-label__value">
-						${this.#value}
-					</div>
+					<div class="ui-system-label__value"></div>
 				</div>
 			</div>
 		`;
+
+		this.setValue(this.#value);
 
 		return this.#wrapper;
 	}
@@ -60,19 +60,17 @@ export class Label
 		// eslint-disable-next-line no-param-reassign
 		node.className = this.#getClassname();
 
-		Dom.attr(node, 'title', this.#value);
-
 		const nodeInner = Tag.render`
 			<div class="ui-system-label__inner">
-				<div class="ui-system-label__value">
-					${this.#value}
-				</div>
+				<div class="ui-system-label__value"></div>
 			</div>
 		`;
 
 		Dom.append(nodeInner, node);
 
 		this.#wrapper = node;
+
+		this.setValue(this.#value);
 	}
 
 	getStyle(): string

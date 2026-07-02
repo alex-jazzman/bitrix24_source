@@ -50,9 +50,11 @@ while($arIBType = $rsIBTypes->GetNext())
 
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
-$Update ??= '';
-$Apply ??= '';
-$RestoreDefaults ??= '';
+$Update = (string)($_REQUEST['Update'] ?? '');
+$Apply = (string)($_REQUEST['Apply'] ?? '');
+$RestoreDefaults = (string)($_REQUEST['RestoreDefaults'] ?? '');
+$mid = (string)($_REQUEST['mid'] ?? 'lists');
+$backUrlSettings = (string)($_REQUEST['back_url_settings'] ?? '');
 
 if($_SERVER['REQUEST_METHOD'] === "POST" && $Update.$Apply.$RestoreDefaults <> '' && check_bitrix_sessid())
 {
@@ -97,13 +99,13 @@ if($_SERVER['REQUEST_METHOD'] === "POST" && $Update.$Apply.$RestoreDefaults <> '
 		}
 	}
 
-	if($Update <> '' && $_REQUEST["back_url_settings"] <> '')
+	if($Update <> '' && $backUrlSettings <> '')
 	{
-		LocalRedirect($_REQUEST["back_url_settings"]);
+		LocalRedirect($backUrlSettings);
 	}
 	else
 	{
-		LocalRedirect($APPLICATION->GetCurPage()."?mid=".urlencode($mid ?? 'lists')."&lang=".urlencode(LANGUAGE_ID)."&back_url_settings=".urlencode($_REQUEST["back_url_settings"])."&".$tabControl->ActiveTabParam());
+		LocalRedirect($APPLICATION->GetCurPage()."?mid=".urlencode($mid)."&lang=".urlencode(LANGUAGE_ID)."&back_url_settings=".urlencode($backUrlSettings)."&".$tabControl->ActiveTabParam());
 	}
 }
 
@@ -130,7 +132,7 @@ function addNewTableRow(tableID, regexp, rindex)
 	}
 }
 </script>
-<form method="post" action="<?= $APPLICATION->GetCurPage() ?>?mid=<?=urlencode($mid ?? 'lists')?>&amp;lang=<?=LANGUAGE_ID?>">
+<form method="post" action="<?= $APPLICATION->GetCurPage() ?>?mid=<?=urlencode($mid)?>&amp;lang=<?=LANGUAGE_ID?>">
 <?php
 
 $tabControl->BeginNextTab();
@@ -209,9 +211,9 @@ if(IsModuleInstalled('socialnetwork'))
 $tabControl->Buttons();?>
 	<input type="submit" name="Update" value="<?=GetMessage("MAIN_SAVE")?>" title="<?=GetMessage("MAIN_OPT_SAVE_TITLE")?>" class="adm-btn-save">
 	<input type="submit" name="Apply" value="<?=GetMessage("MAIN_OPT_APPLY")?>" title="<?=GetMessage("MAIN_OPT_APPLY_TITLE")?>">
-	<?if($_REQUEST["back_url_settings"] <> ''):?>
-		<input type="button" name="Cancel" value="<?=GetMessage("MAIN_OPT_CANCEL")?>" title="<?=GetMessage("MAIN_OPT_CANCEL_TITLE")?>" onclick="window.location='<?echo htmlspecialcharsbx(CUtil::addslashes($_REQUEST["back_url_settings"]))?>'">
-		<input type="hidden" name="back_url_settings" value="<?=htmlspecialcharsbx($_REQUEST["back_url_settings"])?>">
+	<?if($backUrlSettings <> ''):?>
+		<input type="button" name="Cancel" value="<?=GetMessage("MAIN_OPT_CANCEL")?>" title="<?=GetMessage("MAIN_OPT_CANCEL_TITLE")?>" onclick="window.location='<?echo htmlspecialcharsbx(CUtil::addslashes($backUrlSettings))?>'">
+		<input type="hidden" name="back_url_settings" value="<?=htmlspecialcharsbx($backUrlSettings)?>">
 	<?endif?>
 	<input type="submit" name="RestoreDefaults" title="<?echo GetMessage("MAIN_HINT_RESTORE_DEFAULTS")?>" OnClick="return confirm('<?echo AddSlashes(GetMessage("MAIN_HINT_RESTORE_DEFAULTS_WARNING"))?>')" value="<?echo GetMessage("MAIN_RESTORE_DEFAULTS")?>">
 	<?=bitrix_sessid_post();?>

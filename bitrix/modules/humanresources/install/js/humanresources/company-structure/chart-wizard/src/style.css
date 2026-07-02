@@ -693,10 +693,14 @@
 	border-color: var(--ui-field-color-warning);
 }
 
-.chart-wizard__bind-chat__item-checkbox_container {
+.chart-wizard__bind-chat__item-checkbox_container,
+.chart-wizard__settings__report-exceptions-toggle {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
+}
+
+.chart-wizard__bind-chat__item-checkbox_container {
 	margin-top: 12px;
 }
 
@@ -857,7 +861,8 @@
 	margin: 3px 2px 3px 0;
 }
 
-.chart-wizard__bind-chat__item-create {
+.chart-wizard__bind-chat__item-create,
+.chart-wizard__settings__report-exceptions-add {
 	color: var(--ui-color-link-primary-base);
 	font: var(--ui-font-weight-normal) var(--ui-font-size-lg) var(--ui-font-family-primary, var(--ui-font-family-system));
 	border-bottom: 1px dashed rgba(32, 102, 176, .4);

@@ -2,8 +2,10 @@
  * @module in-app-url/routes
  */
 jn.define('in-app-url/routes', (require, exports, module) => {
-	const { WorkgroupUtil } = require('project/utils');
+	const { ProjectOpener } = require('project/opener');
 	const { requireLazy } = require('require-lazy');
+	const { FeatureFlagType, checkFeatureFlag } = require('feature-flag');
+	const { RunActionExecutor } = require('rest/run-action-executor');
 
 	/**
 	 * @param {InAppUrl} inAppUrl
@@ -15,6 +17,7 @@ jn.define('in-app-url/routes', (require, exports, module) => {
 					void UserProfile.open({
 						ownerId: userId,
 						analyticsSection: context.analyticsSection ?? '',
+						openInComponent: Boolean(context.deeplink),
 					});
 				})
 				.catch(console.error);
@@ -41,8 +44,35 @@ jn.define('in-app-url/routes', (require, exports, module) => {
 			});
 		}).name('log:entry');
 
-		inAppUrl.register('/workgroups/group/:groupId/', ({ groupId }) => {
-			void WorkgroupUtil.openProject(null, {
+		inAppUrl.register('/workgroups/group/:groupId/', async ({ groupId }) => {
+			const isProjectV2enabled = await checkFeatureFlag(FeatureFlagType.PROJECTS_V2);
+
+			if (isProjectV2enabled)
+			{
+				try
+				{
+					const response = await (new RunActionExecutor('mobile.Project.getChatId', {
+						projectId: groupId,
+					}))
+						.enableJson()
+						.call(false);
+					const chatId = Number(response.data?.chatId || 0);
+
+					if (chatId > 0)
+					{
+						const { openNestedNavigation } = await requireLazy('im:messenger/api/navigation');
+						await openNestedNavigation(chatId);
+					}
+
+					return;
+				}
+				catch(e)
+				{
+					console.error(e);
+				}
+			}
+
+			void ProjectOpener.open({
 				projectId: groupId,
 				siteId: env.siteId,
 				siteDir: env.siteDir,

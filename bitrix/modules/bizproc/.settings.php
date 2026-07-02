@@ -1,23 +1,26 @@
 <?php
 
-use Bitrix\Bizproc\Integration\UI\EntitySelector\DocumentTypeProvider;
-use Bitrix\Bizproc\Integration\UI\EntitySelector\TemplateProvider;
-use Bitrix\Bizproc\Integration\UI\EntitySelector\ScriptTemplateProvider;
 use Bitrix\Bizproc\Integration\UI\EntitySelector\AutomationTemplateProvider;
 use Bitrix\Bizproc\Integration\UI\EntitySelector\DocumentProvider;
-use Bitrix\Bizproc\Integration\UI\EntitySelector\SystemProvider;
+use Bitrix\Bizproc\Integration\UI\EntitySelector\DocumentTypeProvider;
+use Bitrix\Bizproc\Integration\UI\EntitySelector\ScriptTemplateProvider;
 use Bitrix\Bizproc\Integration\UI\EntitySelector\StorageProvider;
+use Bitrix\Bizproc\Integration\UI\EntitySelector\SystemProvider;
+use Bitrix\Bizproc\Integration\UI\EntitySelector\TemplateProvider;
 use Bitrix\Bizproc\Internal\Service\Scheduler\Messenger\Model\WorkflowStartMessageTable;
 use Bitrix\Bizproc\Internal\Service\Scheduler\Messenger\Model\WorkflowResumeMessageTable;
 use Bitrix\Bizproc\Internal\Service\Scheduler\Messenger\Receiver\WorkflowStartReceiver;
 use Bitrix\Bizproc\Internal\Service\Scheduler\Messenger\Receiver\WorkflowResumeReceiver;
 use Bitrix\Main\Messenger\Internals\Broker\DbBroker;
+use Bitrix\Main\DI\ServiceLocator;
 
 return [
 	'console' => [
 		'value' => [
 			'commands' => [
 				\Bitrix\Bizproc\Cli\NodesExport::class,
+				\Bitrix\Bizproc\Cli\AiAgentGenerate::class,
+				\Bitrix\Bizproc\Cli\AiAgentActivities::class,
 			],
 		],
 		'readonly' => true,
@@ -160,10 +163,12 @@ return [
 				'className' => '\\Bitrix\\Bizproc\\Internal\\Repository\\Mapper\\StorageFieldMapper',
 			],
 			'bizproc.storage.item.repository' => [
-				'className' => '\\Bitrix\\Bizproc\\Internal\\Repository\\StorageItemRepository\\SqlStorageItemRepository',
+				'className' => '\\Bitrix\\Bizproc\\Internal\\Repository\\StorageItemRepository\\StorageItemRepository',
 				'constructorParams' => static function() {
 					return [
 						\Bitrix\Bizproc\Internal\Container::getStorageItemRepositoryMapper(),
+						\Bitrix\Bizproc\Internal\Container::getStorageFieldValueRepository(),
+						\Bitrix\Bizproc\Internal\Container::getStorageFieldValidatorService(),
 					];
 				},
 			],
@@ -201,7 +206,76 @@ return [
 			'bizproc.manager.trigger.scheduledTriggerAgent' => [
 				'className' => \Bitrix\Bizproc\Infrastructure\Agent\Trigger\ScheduledTriggerAgent::class,
 			],
-		]
+			'bizproc.debugger.debug_session.repository.mapper' => [
+				'className' => \Bitrix\Bizproc\Internal\Repository\Mapper\DebugSessionOrmMapper::class,
+			],
+			'bizproc.debugger.debug_session.repository' => [
+				'className' => \Bitrix\Bizproc\Internal\Repository\Debugger\DebugSessionRepository::class,
+				'constructorParams' => static function() {
+					return [
+						ServiceLocator::getInstance()->get('bizproc.debugger.debug_session.repository.mapper'),
+					];
+				},
+			],
+			'bizproc.debugger.debug_trace.repository.mapper' => [
+				'className' => \Bitrix\Bizproc\Internal\Repository\Mapper\DebugTraceOrmMapper::class,
+			],
+			'bizproc.debugger.debug_trace.repository' => [
+				'className' => \Bitrix\Bizproc\Internal\Repository\Debugger\DebugTraceRepository::class,
+				'constructorParams' => static function() {
+					return [
+						ServiceLocator::getInstance()->get('bizproc.debugger.debug_trace.repository.mapper'),
+					];
+				},
+			],
+			'bizproc.debugger.debug_session.service' => [
+				'className' => \Bitrix\Bizproc\Internal\Service\Debugger\DebugSessionService::class,
+				'constructorParams' => static function() {
+					return [
+						'debugSessionRepository' => ServiceLocator::getInstance()->get('bizproc.debugger.debug_session.repository'),
+						'debugTraceRepository' => ServiceLocator::getInstance()->get('bizproc.debugger.debug_trace.repository'),
+					];
+				},
+			],
+			'bizproc.debugger.debug.repository.mapper' => [
+				'className' => \Bitrix\Bizproc\Internal\Repository\Mapper\DebugOrmMapper::class,
+			],
+			'bizproc.debugger.debug.repository' => [
+				'className' => \Bitrix\Bizproc\Internal\Repository\Debugger\DebugRepository::class,
+				'constructorParams' => static function() {
+					return [
+						ServiceLocator::getInstance()->get('bizproc.debugger.debug.repository.mapper'),
+					];
+				},
+			],
+			'bizproc.debugger.debug.service' => [
+				'className' => \Bitrix\Bizproc\Internal\Service\Debugger\DebugService::class,
+				'constructorParams' => static function() {
+					return [
+						'debugRepository' => ServiceLocator::getInstance()->get('bizproc.debugger.debug.repository'),
+					];
+				},
+			],
+			'bizproc.storage.field.value.repository' => [
+				'className' => '\\Bitrix\\Bizproc\\Internal\\Repository\\StorageItemRepository\\StorageFieldValueRepository',
+				'constructorParams' => static function() {
+					return [
+						\Bitrix\Bizproc\Internal\Container::getStorageFieldRepository(),
+					];
+				},
+			],
+			'bizproc.storage.field.validator' => [
+				'className' => '\\Bitrix\\Bizproc\\Internal\\Service\\StorageField\\StorageFieldValidatorService',
+				'constructorParams' => static function() {
+					return [
+						\Bitrix\Bizproc\Internal\Container::getStorageFieldRepository(),
+					];
+				},
+			],
+			'bizproc.storage.item.model' => [
+				'className' => '\\Bitrix\\Bizproc\\Internal\\Model\\StorageRecordDataTable',
+			],
+		],
 	],
 	'ui.entity-selector' => [
 		'value' => [
@@ -290,6 +364,7 @@ return [
 				'resume_workflow_queue' => [
 					'broker' => 'workflow_resume_db',
 					'handler' => WorkflowResumeReceiver::class,
+					'limit' => 5,
 				],
 				'scheduled_trigger_queue' => [
 					'broker' => 'workflow_db',

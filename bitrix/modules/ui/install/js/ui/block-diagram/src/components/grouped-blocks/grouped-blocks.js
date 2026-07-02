@@ -1,41 +1,42 @@
-import './grouped-blocks.css';
 import { useBlockDiagram } from '../../composables';
 import { getGroupBlockSlotName } from '../../utils';
 import { BlocksQueueTransition } from '../blocks-queue-transition/blocks-queue-transition';
 import type {
-	GroupedBlocks as TGroupedBlocks,
-	BlockGroupNames,
+	DiagramBlockGroupNames,
+	DiagramGroupedBlocks,
 } from '../../types';
 
+import './grouped-blocks.css';
+
 type GroupedBlocksSetup = {
-	blockGroupNames: BlockGroupNames;
-	groupedBlocks: TGroupedBlocks;
+	visibleBlockGroupNames: DiagramBlockGroupNames;
+	groupedVisibleBlocks: DiagramGroupedBlocks;
 	getGroupBlockSlotName: typeof getGroupBlockSlotName;
 };
 
 // @vue/component
 export const GroupedBlocks = {
-	name: 'grouped-blocks',
+	name: 'GroupedBlocks',
 	components: {
 		BlocksQueueTransition,
 	},
 	setup(): GroupedBlocksSetup
 	{
-		const { groupedBlocks, blockGroupNames } = useBlockDiagram();
+		const { blockIntersections } = useBlockDiagram();
 
 		return {
-			blockGroupNames,
-			groupedBlocks,
 			getGroupBlockSlotName,
+			visibleBlockGroupNames: blockIntersections.visibleBlockGroupNames,
+			groupedVisibleBlocks: blockIntersections.groupedVisibleBlocks,
 		};
 	},
 	template: `
 		<BlocksQueueTransition>
 			<slot
-				v-for="group in blockGroupNames"
+				v-for="group in visibleBlockGroupNames"
 				:key="group"
 				:name="getGroupBlockSlotName(group)"
-				:blocks="groupedBlocks[group]"
+				:blocks="groupedVisibleBlocks[group]"
 			/>
 		</BlocksQueueTransition>
 	`,

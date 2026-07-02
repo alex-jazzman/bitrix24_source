@@ -73,14 +73,63 @@ jn.define('ui-system/blocks/badges/counter/src/design-enum', (require, exports, 
 			backgroundColor: Color.accentMainCopilot,
 		});
 
+		static BITRIX_GPT_SOLID = new BadgeCounterDesign('BITRIX_GPT_SOLID', {
+			color: Color.baseWhiteFixed,
+			backgroundColor: Color.accentMainCopilot,
+			backgroundColorGradient: {
+				colors: [
+					Color.bgBitrixGptGradient1.toHex(),
+					Color.bgBitrixGptGradient2.toHex(),
+					Color.bgBitrixGptGradient3.toHex(),
+					Color.bgBitrixGptGradient4.toHex(),
+					Color.bgBitrixGptGradient5.toHex(),
+				],
+				angle: 90,
+			},
+		});
+
+		static BITRIX_GPT_TINTED = new BadgeCounterDesign('BITRIX_GPT_TINTED', {
+			color: Color.accentMainCopilot,
+			colorGradient: {
+				colors: [
+					Color.bgBitrixGptGradient1.toHex(),
+					Color.bgBitrixGptGradient2.toHex(),
+					Color.bgBitrixGptGradient3.toHex(),
+					Color.bgBitrixGptGradient4.toHex(),
+					Color.bgBitrixGptGradient5.toHex(),
+				],
+				angle: 90,
+			},
+			backgroundColor: Color.bgBitrixGptLightGradient1,
+			backgroundColorGradient: {
+				colors: [
+					Color.bgBitrixGptLightGradient1.toHex(),
+					Color.bgBitrixGptLightGradient2.toHex(),
+					Color.bgBitrixGptLightGradient3.toHex(),
+					Color.bgBitrixGptLightGradient4.toHex(),
+				],
+				angle: 90,
+			},
+		});
+
 		getColor()
 		{
 			return this.getValue().color;
 		}
 
+		getColorGradient()
+		{
+			return this.getValue().colorGradient;
+		}
+
 		getBackgroundColor()
 		{
 			return this.getValue().backgroundColor;
+		}
+
+		getBackgroundColorGradient()
+		{
+			return this.getValue().backgroundColorGradient;
 		}
 	}
 

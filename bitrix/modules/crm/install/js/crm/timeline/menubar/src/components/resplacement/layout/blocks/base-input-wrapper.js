@@ -1,5 +1,4 @@
 import EventType from '../../enums/event-type';
-import { ITEM_ACTION_EVENT } from '../../layout';
 import Input from './inputs/input-text';
 import Select from './inputs/select';
 import Textarea from './inputs/textarea';
@@ -67,7 +66,7 @@ export default {
 		},
 		onChange(newValue): void
 		{
-			this.$Bitrix.eventEmitter.emit(ITEM_ACTION_EVENT, {
+			this.$Bitrix.eventEmitter.emit(EventType.ITEM_ACTION, {
 				event: EventType.VALUE_CHANGED_EVENT,
 				value: {
 					id: this.id,

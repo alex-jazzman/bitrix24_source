@@ -17,6 +17,7 @@ return [
 		'tasks.v2.provider.service.flow-service',
 		'tasks.v2.provider.service.user-service',
 		'tasks.v2.provider.service.file-service',
+		'tasks.v2.provider.service.viewers-service',
 		'main.core',
 		'tasks.v2.const',
 		'tasks.v2.provider.service.task-service',

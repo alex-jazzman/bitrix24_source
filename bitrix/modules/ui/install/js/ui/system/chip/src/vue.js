@@ -47,6 +47,10 @@ export const Chip = {
 			type: Boolean,
 			default: false,
 		},
+		collapsed: {
+			type: Boolean,
+			default: false,
+		},
 		withClear: {
 			type: Boolean,
 			default: false,
@@ -92,6 +96,7 @@ export const Chip = {
 				'--' + size,
 				{
 					'--rounded': rounded,
+					'--collapsed': collapsed,
 					'--compact': compact,
 					'--trimmable': trimmable,
 					'--with-right-icon': withClear || dropdown,

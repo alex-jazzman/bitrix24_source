@@ -1,0 +1,1 @@
+{"version":3,"file":"eslint.config.map.js","names":["rootConfig","files","rules"],"sources":["eslint.config.js"],"mappings":"OAAOA,eAAgB,gDAER,IACXA,WACH,CACCC,MAAO,CAAC,WACRC,MAAO,CACN,qCAAsC,MACtC,oDAAqD,MACrD,wCAAyC,MACzC,oCAAqC,MACrC,iDAAkD,MAClD,yCAA0C,MAC1C,2BAA4B,MAC5B,wBAAyB,MACzB,oBAAqB,MACrB,aAAc","ignoreList":[]}

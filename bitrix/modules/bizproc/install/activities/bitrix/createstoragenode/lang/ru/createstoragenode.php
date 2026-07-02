@@ -8,3 +8,4 @@ $MESS ['BPCSN_DESCRIPTION_SELECTED_FIELDS_NAME'] = "Добавить поле";
 $MESS ['BPCSN_DESCRIPTION_MODE_FIELD_NAME'] = "Обновить хранилище, если уже существует";
 $MESS ['BPCSN_DESCRIPTION_FIELD_CODE_CAPTION'] = "код";
 $MESS ['BPCSN_DESCRIPTION_FIELD_COPY_NOTIFICATION'] = "Символьный код поля скопирован в буфер";
+$MESS ['BPCSN_DESCRIPTION_EMPTY_FIELDS_ERROR'] = "Необходимо добавить хотя бы одно поле";

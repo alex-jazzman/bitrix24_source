@@ -8,9 +8,10 @@ return [
 	'js' => 'dist/mailer.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'mail.client.filtertoolbar',
-		'mail.client.errorbox',
 		'mail.client.binding',
+		'mail.client.errorbox',
+		'mail.client.filtertoolbar',
+		'mail.client.mailboxselector',
 		'main.core.events',
 	],
 	'skip_core' => true,

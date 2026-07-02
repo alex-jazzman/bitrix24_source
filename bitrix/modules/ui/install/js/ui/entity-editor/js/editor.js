@@ -4333,6 +4333,7 @@ if(typeof(BX.UI.EntityEditorScopeConfig) === "undefined")
 								id: this.useHumanResourcesModule === true ? 'structure-node' : 'department',
 								options: {
 									selectMode: 'usersAndDepartments',
+									allowSelectRootDepartment: true,
 								},
 							},
 						],

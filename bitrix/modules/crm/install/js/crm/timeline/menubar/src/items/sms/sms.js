@@ -1,8 +1,9 @@
 /* eslint-disable */
 
-import { Editor, FilledPlaceholder } from 'crm.template.editor';
+import { Editor, type FilledPlaceholder } from 'crm.template.editor';
 import { ajax as Ajax, Dom, Loc, Tag, Text, Type } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { type BaseEvent, EventEmitter } from 'main.core.events';
+
 import WithEditor from './../witheditor';
 
 /** @memberof BX.Crm.Timeline.MenuBar */

@@ -4,6 +4,8 @@ import type { ActionParams } from './base';
 import { ajax, Loc } from 'main.core';
 import { UI } from 'ui.notification';
 import { MessageBox } from 'ui.dialogs.messagebox';
+import 'main.sidepanel';
+import 'crm_common';
 
 export class Task extends Base
 {
@@ -55,7 +57,7 @@ export class Task extends Base
 				break
 
 			case 'Task:Delete':
-				this.delete(actionData);
+				this.delete(item, actionData);
 				break;
 
 			case 'Task:ResultView':
@@ -142,21 +144,32 @@ export class Task extends Base
 		})
 	}
 
-	delete(actionData): void
+	delete(item: ConfigurableItem, actionData: Object): void
 	{
 		if (!actionData.taskId)
 		{
 			return;
 		}
 
+		const entityTypeName = this.#getEntityTypeName(item);
+
 		const messageBox = new MessageBox(
 			{
 				message: Loc.getMessage('CRM_TIMELINE_ITEM_TASK_CONFIRM_DELETE'),
 				buttons: BX.UI.Dialogs.MessageBoxButtons.YES_NO,
 				onYes: () => {
-					ajax.runAction('tasks.task.delete', {
-							data: {
+					ajax.runAction('tasks.V2.Task.delete', {
+							json: {
 								taskId: actionData.taskId,
+							},
+							analytics: {
+								tool: 'tasks',
+								category: 'task_operations',
+								event: 'task_delete',
+								type: 'task',
+								c_section: 'crm',
+								c_sub_section: entityTypeName,
+								c_element: 'context_menu',
 							},
 						},
 					)
@@ -178,6 +191,23 @@ export class Task extends Base
 		);
 
 		messageBox.show();
+	}
+
+	#getEntityTypeName(item: ConfigurableItem): ?string
+	{
+		const ownerTypeId = item.getOwnerTypeId();
+		if (!ownerTypeId)
+		{
+			return null;
+		}
+
+		const entityTypeName = BX.CrmEntityType.resolveName(ownerTypeId);
+		if (!entityTypeName)
+		{
+			return null;
+		}
+
+		return entityTypeName.toLowerCase();
 	}
 
 	viewResult(actionData): void

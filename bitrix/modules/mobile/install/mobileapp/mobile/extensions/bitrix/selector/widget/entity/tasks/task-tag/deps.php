@@ -1,6 +1,9 @@
 <?php
 
 return [
-	'notify',
-	'selector/widget/entity',
+	'extensions' => [
+		'loc',
+		'notify',
+		'selector/widget/entity',
+	],
 ];

@@ -1,26 +1,26 @@
-.rule-card {
+.editor-chart-node-settings-rule-card {
 	border: 1px solid var(--ui-color-palette-gray-30);
 	border-radius: 12px;
 	padding: 18px;
 	margin: 18px 0;
 }
 
-.rule-card__top {
+.editor-chart-node-settings-rule-card__top {
 	display: flex;
 	align-items: center;
 }
 
-.rule-card__top_delimeter {
+.editor-chart-node-settings-rule-card__top_delimeter {
 	width: 1px;
 	height: 11px;
 	margin: 0 4px;
 	background: var(--ui-color-palette-gray-50);
 }
 
-.rule-card__dnd-icon {
+.editor-chart-node-settings-rule-card__dnd-icon {
 	cursor: grab;
 }
 
-.rule-card__dnd-icon:active {
+.editor-chart-node-settings-rule-card__dnd-icon:active {
 	cursor: grabbing;
 }

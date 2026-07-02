@@ -10,6 +10,7 @@ jn.define('mail/statemanager/redux/slices/mailboxes/selector', (require, exports
 	} = mailboxesListAdapter.getSelectors((state) => state[sliceName]);
 
 	const selectCurrentMailboxId = (state) => state['mail:mailboxes'].currentMailboxId;
+	const selectMessageCounterInAllMailboxes = (state) => state['mail:mailboxes'].messageCounterInAllMailboxes;
 	const selectStartEmailSender = (state) => state['mail:mailboxes'].startEmailSender;
 
 	const selectCurrentMailbox = (state) => {
@@ -33,5 +34,6 @@ jn.define('mail/statemanager/redux/slices/mailboxes/selector', (require, exports
 		selectCurrentMailboxId,
 		selectMailboxesSortedById,
 		selectStartEmailSender,
+		selectMessageCounterInAllMailboxes,
 	};
 });

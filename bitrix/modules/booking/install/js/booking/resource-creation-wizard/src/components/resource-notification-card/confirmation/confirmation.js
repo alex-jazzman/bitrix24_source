@@ -24,6 +24,14 @@ export const Confirmation = {
 			type: Object,
 			required: true,
 		},
+		ordinal: {
+			type: Number,
+			required: true,
+		},
+		senderCanUse: {
+			type: Boolean,
+			required: true,
+		},
 	},
 	setup(): Object
 	{
@@ -36,12 +44,12 @@ export const Confirmation = {
 		...mapGetters({
 			/** @type {ResourceModel} */
 			resource: `${Model.ResourceCreationWizard}/getResource`,
-			isCurrentSenderAvailable: `${Model.Notifications}/isCurrentSenderAvailable`,
+			isAiCommunication: `${Model.ResourceCreationWizard}/isAiCommunication`,
 		}),
 		isConfirmationNotificationOn: {
 			get(): boolean
 			{
-				return this.isCurrentSenderAvailable && this.resource.isConfirmationNotificationOn;
+				return this.senderCanUse && this.resource.isConfirmationNotificationOn;
 			},
 			set(isConfirmationNotificationOn: boolean): void
 			{
@@ -94,16 +102,21 @@ export const Confirmation = {
 		},
 		locSendMessageBefore(): string
 		{
-			return this.loc('BRCW_NOTIFICATION_CARD_CONFIRMATION_HELPER_TEXT_SECOND')
-				.replace('#days_before#', '[delay/]')
-			;
+			return this.isAiCommunication
+				? this.loc('BRCW_NOTIFICATION_CARD_CONFIRMATION_AI_HELPER_TEXT_SECOND')
+					.replace('#days_before#', '[delay/]')
+				: this.loc('BRCW_NOTIFICATION_CARD_CONFIRMATION_HELPER_TEXT_SECOND')
+					.replace('#days_before#', '[delay/]');
 		},
 		locRetryMessage(): string
 		{
-			return this.loc('BRCW_NOTIFICATION_CARD_CONFIRMATION_HELPER_TEXT_THIRD')
-				.replace('#times#', '[repeat/]')
-				.replace('#time_delay#', '[repeatInterval/]')
-			;
+			return this.isAiCommunication
+				? this.loc('BRCW_NOTIFICATION_CARD_CONFIRMATION_AI_HELPER_TEXT_THIRD')
+					.replace('#times#', '[repeat/]')
+					.replace('#time_delay#', '[repeatInterval/]')
+				: this.loc('BRCW_NOTIFICATION_CARD_CONFIRMATION_HELPER_TEXT_THIRD')
+					.replace('#times#', '[repeat/]')
+					.replace('#time_delay#', '[repeatInterval/]');
 		},
 		locManagerRemindTime(): string
 		{
@@ -111,13 +124,21 @@ export const Confirmation = {
 				.replace('#time#', '[delay/]')
 			;
 		},
+		locDescription(): string
+		{
+			return this.isAiCommunication
+				? this.loc('BRCW_NOTIFICATION_CARD_CONFIRMATION_AI_HELPER_TEXT_FIRST')
+				: this.loc('BRCW_NOTIFICATION_CARD_CONFIRMATION_HELPER_TEXT_FIRST_MSGVER_2');
+		},
 	},
 	template: `
 		<ResourceNotification
 			v-model:checked="isConfirmationNotificationOn"
 			:type="model.type"
+			:ordinal
+			:senderCanUse
 			:title="loc('BRCW_NOTIFICATION_CARD_CONFIRMATION_TITLE_MSGVER_2')"
-			:description="loc('BRCW_NOTIFICATION_CARD_CONFIRMATION_HELPER_TEXT_FIRST_MSGVER_2')"
+			:description="locDescription"
 			:helpDesk="HelpDesk.ResourceNotificationConfirmation"
 			:managerDescription="loc('BRCW_NOTIFICATION_CARD_CONFIRMATION_MANAGER_HELPER')"
 			:scrollToCard="CardId.Unconfirmed"

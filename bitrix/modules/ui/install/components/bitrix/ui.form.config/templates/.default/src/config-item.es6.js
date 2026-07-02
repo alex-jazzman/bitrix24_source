@@ -79,6 +79,7 @@ export class ConfigItem extends EventEmitter
 					id: this.#useHumanResourcesModule ? 'structure-node' : 'department',
 					options: {
 						selectMode: 'usersAndDepartments',
+						allowSelectRootDepartment: true,
 					},
 				},
 			],

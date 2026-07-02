@@ -1,7 +1,7 @@
 import { Type } from 'main.core';
 
-import { ActionParams, Base } from '../base';
 import ConfigurableItem from '../../configurable-item';
+import { type ActionParams, Base } from '../base';
 
 export class TranscriptSummaryResult extends Base
 {

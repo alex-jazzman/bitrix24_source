@@ -1,10 +1,9 @@
 import { Loc, type AjaxResponse } from 'main.core';
 
-import { Limit } from 'tasks.v2.const';
+import { Limit, Endpoint } from 'tasks.v2.const';
 import { apiClient } from 'tasks.v2.lib.api-client';
 import { idUtils, type TaskId } from 'tasks.v2.lib.id-utils';
-import { taskService } from 'tasks.v2.provider.service.task-service';
-import type { TaskDto } from 'tasks.v2.provider.service.task-service';
+import { taskService, type TaskDto } from 'tasks.v2.provider.service.task-service';
 
 import { RelationService } from './relation-service';
 
@@ -31,20 +30,24 @@ export class RelatedTasksService extends RelationService
 	}
 
 	/** @protected */
-	async requestTasks(taskId: TaskId, withIds: boolean = false): Promise<{ tasks: TaskDto[], ids?: number[] }>
+	async requestTasks(
+		taskId: TaskId,
+		withIds: boolean = false,
+	): Promise<{ tasks: TaskDto[], ids?: number[], statuses?: Object }>
 	{
 		const task = taskService.getStoreTask(taskId);
 		if (withIds && !task.relatedTaskIds?.length && task.templateId)
 		{
-			const { tasks, ids } = await apiClient.post('Template.Relation.Related.list', {
+			const { tasks, ids, statuses } = await apiClient.post(Endpoint.TemplateRelationRelatedList, {
 				templateId: task.templateId,
 				withIds,
+				withCompleted: this.showCompletedTasks,
 				navigation: {
 					size: limit,
 				},
 			});
 
-			return { tasks, ids };
+			return { tasks, ids, statuses };
 		}
 
 		if (!idUtils.isTemplate(taskId) || !idUtils.isReal(taskId))
@@ -52,15 +55,16 @@ export class RelatedTasksService extends RelationService
 			return super.requestTasks(taskId, withIds);
 		}
 
-		const { tasks, ids } = await apiClient.post('Template.Relation.Related.list', {
+		const { tasks, ids, statuses } = await apiClient.post(Endpoint.TemplateRelationRelatedList, {
 			templateId: idUtils.unbox(taskId),
 			withIds,
+			withCompleted: this.showCompletedTasks,
 			navigation: {
 				size: limit,
 			},
 		});
 
-		return { tasks, ids };
+		return { tasks, ids, statuses };
 	}
 
 	/** @protected */
@@ -71,7 +75,7 @@ export class RelatedTasksService extends RelationService
 			return super.requestAdd(taskId, taskIds, noOverride);
 		}
 
-		return this.requestUpdate('Template.Relation.Related.add', {
+		return this.requestUpdate(Endpoint.TemplateRelationRelatedAdd, {
 			templateId: idUtils.unbox(taskId),
 			taskIds,
 			noOverride,
@@ -86,7 +90,7 @@ export class RelatedTasksService extends RelationService
 			return super.requestDelete(taskId, taskIds);
 		}
 
-		return this.requestUpdate('Template.Relation.Related.delete', {
+		return this.requestUpdate(Endpoint.TemplateRelationRelatedDelete, {
 			templateId: idUtils.unbox(taskId),
 			taskIds,
 		});

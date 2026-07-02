@@ -10,14 +10,12 @@ jn.define('im/messenger/lib/element/dialog/message/video-note-text', (require, e
 	{
 		/**
 		 * @param {MessagesModelState} modelMessage
-		 * @param {CreateMessageOptions} options
-		 * @param {FilesModelState} file
+		 * @param {CreateMessageOptions|{}} options
 		 */
-		constructor(messageModel = {}, options = {}, file = {})
+		constructor(modelMessage, options = {})
 		{
-			super(messageModel, options, file);
+			super(modelMessage, options);
 
-			this.file = file;
 			this.audio = this.getAudio();
 		}
 

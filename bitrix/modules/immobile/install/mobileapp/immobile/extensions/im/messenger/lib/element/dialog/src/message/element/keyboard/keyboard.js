@@ -4,6 +4,7 @@
 jn.define('im/messenger/lib/element/dialog/message/element/keyboard/keyboard', (require, exports, module) => {
 	const { Type } = require('type');
 	const { clone } = require('utils/object');
+	const { Color } = require('tokens');
 
 	const {
 		KeyboardButtonContext,
@@ -14,20 +15,48 @@ jn.define('im/messenger/lib/element/dialog/message/element/keyboard/keyboard', (
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('element--message-keyboard');
 
+	const SYSTEM_BUTTON_STYLES_MAP = {
+		[KeyboardButtonColorToken.primary]: {
+			bgColor: Color.accentMainPrimary.toHex(),
+			textColor: Color.baseWhiteFixed.toHex(),
+		},
+		[KeyboardButtonColorToken.secondary]: {
+			bgColor: Color.chatOtherMessage2.toHex(),
+			textColor: Color.accentMainPrimary.toHex(),
+		},
+		[KeyboardButtonColorToken.alert]: {
+			bgColor: Color.accentMainAlert.toHex(),
+			textColor: Color.baseWhiteFixed.toHex(),
+		},
+		[KeyboardButtonColorToken.base]: {
+			bgColor: Color.chatOtherMessage3.toHex(),
+			textColor: Color.base1.toHex(),
+		},
+	};
+
+	const DISABLED_BUTTON_STYLE = {
+		bgColor: Color.chatOtherMessage3.toHex(),
+		textColor: Color.chatOtherBase1_1.toHex(),
+	};
+
 	class Keyboard
 	{
 		/**
 		 * @param {KeyboardButtonConfig[]} modelKeyboard
+		 * @param {object} options
+		 * @param {boolean} [options.isSystemStyled]
 		 */
-		static createByMessagesModelKeyboard(modelKeyboard)
+		static createByMessagesModelKeyboard(modelKeyboard, options = {})
 		{
-			return new this(modelKeyboard);
+			return new this(modelKeyboard, options);
 		}
 
 		/**
 		 * @param {KeyboardButtonConfig[]} modelKeyboard
+		 * @param {object} options
+		 * @param {boolean} [options.isSystemStyled]
 		 */
-		constructor(modelKeyboard)
+		constructor(modelKeyboard, options = {})
 		{
 			/**
 			 * @type {KeyboardButtonConfig[]}
@@ -37,6 +66,8 @@ jn.define('im/messenger/lib/element/dialog/message/element/keyboard/keyboard', (
 			{
 				this.modelKeyboard = modelKeyboard;
 			}
+
+			this.isSystemStyled = options.isSystemStyled ?? false;
 		}
 
 		/**
@@ -68,6 +99,11 @@ jn.define('im/messenger/lib/element/dialog/message/element/keyboard/keyboard', (
 						button.bgColorToken = KeyboardButtonColorToken.base;
 					}
 
+					if (this.isSystemStyled)
+					{
+						button.style = this.#getButtonSystemStyle(button);
+					}
+
 					return button;
 				})
 			;
@@ -81,6 +117,20 @@ jn.define('im/messenger/lib/element/dialog/message/element/keyboard/keyboard', (
 			logger.log(`${this.constructor.name}.toMessageFormat: `, this.modelKeyboard, messageKeyboard);
 
 			return messageKeyboard;
+		}
+
+		/**
+		 * @param {KeyboardButtonConfig} button
+		 * @return {KeyboardButtonStyle}
+		 */
+		#getButtonSystemStyle(button)
+		{
+			if (button.disabled)
+			{
+				return DISABLED_BUTTON_STYLE;
+			}
+
+			return SYSTEM_BUTTON_STYLES_MAP[button.bgColorToken] ?? SYSTEM_BUTTON_STYLES_MAP[KeyboardButtonColorToken.base];
 		}
 	}
 

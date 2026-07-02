@@ -1,5 +1,5 @@
 import { Dom, Runtime, Text, Type } from 'main.core';
-import { BaseEvent } from 'main.core.events';
+import type { BaseEvent } from 'main.core.events';
 import { Loader } from 'main.loader';
 import { StreamType } from '../stream-type';
 import { Body } from './layout/body';
@@ -43,7 +43,6 @@ export const Item = {
 			layout: this.initialLayout,
 			color: this.initialColor,
 			isFaded: false,
-			loader: Object.freeze(null),
 		};
 	},
 	provide() {

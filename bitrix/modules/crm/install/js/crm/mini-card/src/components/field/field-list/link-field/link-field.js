@@ -1,5 +1,5 @@
-import { BitrixVueComponentProps } from 'ui.vue3';
 import { type MenuOptions } from 'main.popup';
+import { type BitrixVueComponentProps } from 'ui.vue3';
 
 import {
 	Field,
@@ -8,18 +8,17 @@ import {
 	FieldValueList,
 	ValueEllipsis,
 } from '../../layout/index';
-
 import { ShowMoreMenu } from '../../show-more/show-more-menu';
 
-declare type Link = {
+import './link-field.css';
+
+type Link = {
 	href: string,
 	title: string,
 	target: string,
 };
 
 const SHOWABLE_LINKS_LIMIT = 2;
-
-import './link-field.css';
 
 export const LinkField: BitrixVueComponentProps = {
 	name: 'LinkField',

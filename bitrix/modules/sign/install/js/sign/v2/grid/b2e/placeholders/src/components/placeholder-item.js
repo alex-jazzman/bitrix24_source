@@ -1,3 +1,4 @@
+import { Dom } from 'main.core';
 import { LocMixin } from 'sign.v2.b2e.vue-util';
 import { SectionType } from '../types';
 
@@ -50,17 +51,31 @@ export const PlaceholderItem = {
 	methods: {
 		copyToClipboard(): boolean
 		{
-			if (BX?.clipboard?.copy)
-			{
-				top.BX.clipboard.copy(this.placeholderValue);
-				this.isCopied = true;
-
-				setTimeout(() => {
-					this.isCopied = false;
-				}, 1000);
-			}
+			this.copyPlainText(this.placeholderValue);
+			this.isCopied = true;
+			setTimeout(() => {
+				this.isCopied = false;
+			}, 1000);
 
 			return false;
+		},
+		copyPlainText(text: string): void
+		{
+			const textarea = document.createElement('textarea');
+			textarea.value = text;
+			Dom.append(textarea, document.body);
+			textarea.select();
+
+			try
+			{
+				document.execCommand('copy');
+			}
+			catch (err)
+			{
+				console.error(err);
+			}
+
+			Dom.remove(textarea);
 		},
 	},
 	template: `

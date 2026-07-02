@@ -28,7 +28,11 @@ $arActivityDescription =
 		[ActivityType::TRIGGER->value],
 	))
 		->setClass('CrmSmartInvoiceManualStartTrigger')
-		->setGroups([ActivityGroup::STARTER->value])
+		->setGroups([
+			ActivityGroup::STARTER->value,
+			ActivityGroup::SALES_CRM->value,
+			ActivityGroup::PAYMENT->value,
+		])
 		->setColorIndex(ActivityColorIndex::ORANGE->value)
 		->setIcon(Outline::INVOICE->name)
 		->setReturn([

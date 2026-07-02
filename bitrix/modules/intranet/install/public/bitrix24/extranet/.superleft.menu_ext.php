@@ -133,14 +133,24 @@ if ($isCollaber)
 	];
 }
 
-if ($extEnabled && !$isCollaber && CModule::IncludeModule("socialnetwork"))
+$isNewProjectsOn = (
+	class_exists(\Bitrix\Socialnetwork\V2\Feature::class)
+	&& \Bitrix\Socialnetwork\V2\Feature::isNewProjectsOn()
+);
+if (
+	$extEnabled
+	&& (!$isCollaber || $isNewProjectsOn)
+	&& CModule::IncludeModule("socialnetwork")
+)
 {
+	$groupsMessageKey = ($isNewProjectsOn ? 'MENU_PROJECTS' : 'MENU_GROUPS');
+
 	$arMenu[] = array(
-		GetMessage("MENU_GROUPS"),
+		GetMessage($groupsMessageKey),
 		"/extranet/workgroups/",
 		array(),
 		array(
-			"class" => "menu-groups-extranet",
+			"class" => $isNewProjectsOn ? "menu-all-projects" : "menu-groups-extranet",
 			"real_link" => getLeftMenuItemLink(
 				"sonetgroups_panel_menu",
 				"/extranet/workgroups/"

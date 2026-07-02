@@ -8,7 +8,7 @@ export class ProductCalculator
 	#strategy: TaxForPriceStrategy = {};
 	#settings = {};
 
-	static DEFAULT_PRECISION: number = 2;
+	static DEFAULT_PRECISION: number = 8;
 
 	constructor(fields: FieldScheme = {}, settings = {})
 	{

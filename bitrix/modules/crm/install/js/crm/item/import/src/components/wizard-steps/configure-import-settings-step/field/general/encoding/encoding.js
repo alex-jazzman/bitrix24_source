@@ -140,6 +140,7 @@ export const Encoding: BitrixVueComponentProps = {
 			@close="isDetectEncodingPopupShow = false"
 			:options="{
 				titleBar: this.$Bitrix.Loc.getMessage('CRM_ITEM_IMPORT_FIELD_ENCODING_DETECT_ENCODING_POPUP_TITLE'),
+				closeIcon: true,
 				width: 700,
 				disableScroll: true,
 				overlay: {

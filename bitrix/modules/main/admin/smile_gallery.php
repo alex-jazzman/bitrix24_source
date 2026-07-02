@@ -1,5 +1,10 @@
-<?
+<?php
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
+
+/**
+ * @global CMain $APPLICATION
+ * @global CUser $USER
+ */
 
 if(!$USER->CanDoOperation('edit_other_settings'))
 	$APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
@@ -10,10 +15,6 @@ $sTableID = "tbl_smile_gallery";
 
 $oSort = new CAdminSorting($sTableID, "ID", "asc");
 $lAdmin = new CAdminList($sTableID, $oSort);
-
-$arFilterFields = array();
-
-$lAdmin->InitFilter($arFilterFields);
 
 $arFilter = array();
 if ($arID = $lAdmin->GroupAction())
@@ -35,7 +36,7 @@ if ($arID = $lAdmin->GroupAction())
 }
 if($lAdmin->EditAction())
 {
-	foreach($FIELDS as $ID=>$arFields)
+	foreach($_POST['FIELDS'] as $ID=>$arFields)
 	{
 		$ID = intval($ID);
 		if($ID <= 0)
@@ -54,7 +55,7 @@ if($lAdmin->EditAction())
 $dbResultList = CSmileGallery::getList(Array(
 	'SELECT' => Array('ID', 'STRING_ID', 'NAME', 'SORT', 'SMILE_COUNT'),
 	'FILTER' => $arFilter,
-	'ORDER' => array($by => $order),
+	'ORDER' => array($oSort->getField() => $oSort->getOrder()),
 	'NAV_PARAMS' => array("nPageSize"=>CAdminResult::GetNavSize($sTableID)),
 	'RETURN_RES' => 'Y'
 ));
@@ -74,33 +75,39 @@ $lAdmin->AddHeaders(array(
 
 $arVisibleColumns = $lAdmin->GetVisibleHeaderColumns();
 
-while ($arForum = $dbResultList->NavNext(true, "f_"))
+while ($arForum = $dbResultList->Fetch())
 {
-	$row =& $lAdmin->AddRow($f_ID, $arForum);
+	$galleryId = (int)$arForum["ID"];
+	$galleryIdHtml = htmlspecialcharsbx($arForum["ID"]);
+	$galleryNameHtml = htmlspecialcharsbx($arForum["NAME"]);
+	$stringIdHtml = htmlspecialcharsbx($arForum["STRING_ID"]);
+	$sortHtml = htmlspecialcharsbx($arForum["SORT"]);
+	$smileCountHtml = htmlspecialcharsbx($arForum["SMILE_COUNT"]);
+	$row = $lAdmin->AddRow($galleryId, $arForum);
 
-	$row->AddField("ID", $f_ID);
-	$row->AddField("SORT", $f_SORT);
-	$row->AddViewField("NAME", '<a href="'."smile_set.php?GALLERY_ID=".$f_ID."&lang=".LANG."&".GetFilterParams("filter_").'">'.($f_NAME <> ''?$f_NAME: GetMessage('SMILE_GALLERY_NAME', Array('#ID#' => $f_ID))).'</a>');
-	$row->AddField("SMILE_COUNT", $f_SMILE_COUNT);
+	$row->AddField("ID", $galleryIdHtml);
+	$row->AddField("SORT", $sortHtml);
+	$row->AddViewField("NAME", '<a href="'."smile_set.php?GALLERY_ID=".$galleryIdHtml."&lang=".LANGUAGE_ID."&".GetFilterParams("filter_").'">'.($arForum["NAME"] <> '' ? $galleryNameHtml : GetMessage('SMILE_GALLERY_NAME', Array('#ID#' => $galleryIdHtml))).'</a>');
+	$row->AddField("SMILE_COUNT", $smileCountHtml);
 
 
 	$row->AddInputField("NAME", array("size"=>20));
 	$row->AddInputField("SORT", array("size"=>5));
 
-	if ($f_STRING_ID == 'bitrix')
+	if ($arForum["STRING_ID"] == 'bitrix')
 	{
-		$row->AddField("STRING_ID", $f_STRING_ID);
+		$row->AddField("STRING_ID", $stringIdHtml);
 		$arActions = Array(
-			array("ICON"=>"edit", "TEXT"=>GetMessage("SMILE_EDIT_DESCR"), "ACTION"=>$lAdmin->ActionRedirect("smile_gallery_edit.php?ID=".$f_ID."&lang=".LANG."&".GetFilterParams("filter_").""), "DEFAULT"=>true),
+			array("ICON"=>"edit", "TEXT"=>GetMessage("SMILE_EDIT_DESCR"), "ACTION"=>$lAdmin->ActionRedirect("smile_gallery_edit.php?ID=".$galleryId."&lang=".LANGUAGE_ID."&".GetFilterParams("filter_").""), "DEFAULT"=>true),
 		);
 	}
 	else
 	{
 		$row->AddInputField("STRING_ID", array("size"=>20));
 		$arActions = Array(
-			array("ICON"=>"edit", "TEXT"=>GetMessage("SMILE_EDIT_DESCR"), "ACTION"=>$lAdmin->ActionRedirect("smile_gallery_edit.php?ID=".$f_ID."&lang=".LANG."&".GetFilterParams("filter_").""), "DEFAULT"=>true),
+			array("ICON"=>"edit", "TEXT"=>GetMessage("SMILE_EDIT_DESCR"), "ACTION"=>$lAdmin->ActionRedirect("smile_gallery_edit.php?ID=".$galleryId."&lang=".LANGUAGE_ID."&".GetFilterParams("filter_").""), "DEFAULT"=>true),
 			array("SEPARATOR" => true),
-			array("ICON"=>"delete", "TEXT"=>GetMessage("SMILE_DELETE_DESCR"), "ACTION"=>"if(confirm('".GetMessage('SMILE_DEL_CONF')."')) ".$lAdmin->ActionDoGroup($f_ID, "delete"))
+			array("ICON"=>"delete", "TEXT"=>GetMessage("SMILE_DELETE_DESCR"), "ACTION"=>"if(confirm('".GetMessage('SMILE_DEL_CONF')."')) ".$lAdmin->ActionDoGroup($galleryId, "delete"))
 		);
 	}
 	$row->AddActions($arActions);
@@ -110,7 +117,7 @@ while ($arForum = $dbResultList->NavNext(true, "f_"))
 $aContext = array(
 	array(
 		"TEXT" => GetMessage("SMILE_BTN_ADD_NEW"),
-		"LINK" => "smile_gallery_edit.php?lang=".LANG,
+		"LINK" => "smile_gallery_edit.php?lang=".LANGUAGE_ID,
 		"TITLE" => GetMessage("SMILE_BTN_ADD_NEW_ALT"),
 		"ICON" => "btn_new",
 	),
@@ -124,4 +131,3 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_aft
 $lAdmin->DisplayList();
 
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");
-?>

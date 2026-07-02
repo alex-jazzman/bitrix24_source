@@ -4,8 +4,8 @@ import { NameService } from 'crm.ai.name-service';
 import { Restriction } from 'crm.kanban.restriction';
 import { SettingsController, Type as SortType } from 'crm.kanban.sort';
 import { Extension, Loc, Reflection, Text, Type, userOptions as UserOptions } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
-import { Menu, MenuItemOptions } from 'main.popup';
+import { type BaseEvent, EventEmitter } from 'main.core.events';
+import { Menu, type MenuItem, type MenuItemOptions } from 'main.popup';
 import { Dialog } from 'ui.entity-selector';
 import { AISettingsService } from './ai-settings-service';
 import {

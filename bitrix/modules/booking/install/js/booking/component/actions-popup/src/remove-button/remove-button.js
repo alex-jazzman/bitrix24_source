@@ -20,7 +20,7 @@ export const RemoveButton = {
 		},
 		dataAttributes: {
 			type: Object,
-			default: () => ({}),
+			default: null,
 		},
 	},
 	emits: ['remove'],

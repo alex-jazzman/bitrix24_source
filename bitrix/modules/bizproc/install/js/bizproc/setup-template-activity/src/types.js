@@ -37,6 +37,7 @@ export type ConstantItem = Item & {
 	description: string;
 	required: boolean;
 	options: Record<string, string>;
+	settings: Object,
 };
 
 export type UpdateItemPropertyEventPayload = {
@@ -52,4 +53,20 @@ export type ConstantConvertedData = {
 	Multiple: boolean,
 	Options: Array,
 	Default: string,
+};
+
+export type ConstantConfiguration = {
+	title: string,
+	type: string,
+	options: Object,
+};
+
+export type EntitySelectorConstantConfiguration = ConstantConfiguration & {
+	options: {
+		selectors: Array<{
+			id: string | number,
+			title: string,
+			dialogOptions: Object,
+		}>,
+	},
 };

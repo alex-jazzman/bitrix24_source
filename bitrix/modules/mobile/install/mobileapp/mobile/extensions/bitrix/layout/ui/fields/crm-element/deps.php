@@ -2,12 +2,15 @@
 
 return [
 	'extensions' => [
-		'crm:in-app-url/open',
-		'crm:type',
+		'apptheme',
+		'assets/icons',
 		'layout/ui/fields/entity-selector',
+		'loc',
+		'selector/widget/factory',
 		'utils/object',
 		'utils/string',
-		'assets/icons',
 		'utils/type',
+		'crm:in-app-url/open',
+		'crm:type',
 	],
 ];

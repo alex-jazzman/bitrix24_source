@@ -5,63 +5,33 @@ jn.define('mail/statemanager/redux/slices/folders/extra-reducer', (require, expo
 	const { foldersListAdapter } = require('mail/statemanager/redux/slices/folders/meta');
 	const { DefaultFolderType } = require('mail/enum/default-folder-type');
 
-	const changeReadStatusFulfilled = (state, action) => {
-		const { errors, readDelta } = action.payload;
-
-		if (errors && errors.length > 0)
+	const adjustFolderUnreadCounters = (state, folderCounterDeltas) => {
+		if (!folderCounterDeltas)
 		{
 			return;
 		}
 
 		const entitiesArray = foldersListAdapter.getSelectors().selectAll(state);
-		const currentFolder = entitiesArray.find((item) => item.path === state.currentFolderPath);
 
-		if (currentFolder.unreadCount >= 0
-			&& readDelta !== 0
-			&& DefaultFolderType.isFolderWithCounterStatus(currentFolder.type)
-		)
+		for (const [folderId, delta] of Object.entries(folderCounterDeltas))
 		{
-			foldersListAdapter.upsertOne(state, {
-				...currentFolder,
-				unreadCount: currentFolder.unreadCount += readDelta,
-			});
-		}
-	};
-
-	const moveToFolderFulfilled = (state, action) => {
-		const { errors, movedCount, fromFolderPath, toFolderPath } = action.payload;
-
-		if (errors && errors.length > 0)
-		{
-			return;
-		}
-
-		const entitiesArray = foldersListAdapter.getSelectors().selectAll(state);
-		const fromFolder = entitiesArray.find((item) => item.path === fromFolderPath);
-		const toFolder = entitiesArray.find((item) => item.path === toFolderPath);
-		if (movedCount > 0
-		)
-		{
-			if (DefaultFolderType.isFolderWithCounterStatus(fromFolder.type))
+			const numericId = Number(folderId);
+			if (!Number.isFinite(numericId))
 			{
-				foldersListAdapter.upsertOne(state, {
-					...fromFolder,
-					unreadCount: fromFolder.unreadCount -= movedCount,
-				});
+				continue;
 			}
 
-			if (DefaultFolderType.isFolderWithCounterStatus(toFolder.type))
+			const folder = entitiesArray.find((item) => item.id === numericId);
+
+			if (folder && DefaultFolderType.isFolderWithCounterStatus(folder.type))
 			{
 				foldersListAdapter.upsertOne(state, {
-					...toFolder,
-					unreadCount: toFolder.unreadCount += movedCount,
+					...folder,
+					unreadCount: Math.max(0, folder.unreadCount + delta),
 				});
 			}
 		}
 	};
 
-	module.exports = {
-		moveToFolderFulfilled,
-		changeReadStatusFulfilled,
-	};
+	module.exports = { adjustFolderUnreadCounters };
 });

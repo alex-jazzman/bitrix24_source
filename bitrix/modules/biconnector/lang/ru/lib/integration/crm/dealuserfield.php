@@ -3,3 +3,4 @@ $MESS['CRM_BIC_DEAL_UF_TABLE'] = "Сделка: пользовательские
 $MESS['CRM_BIC_DEAL_UF_FIELD_DEAL_ID'] = "Идентификатор сделки";
 $MESS['CRM_BIC_DEAL_UF_FIELD_DATE_CREATE'] = "Время создания";
 $MESS['CRM_BIC_DEAL_UF_FIELD_CLOSEDATE'] = "Время закрытия";
+$MESS['CRM_BIC_DEAL_UF_TABLE_DESCRIPTION_FULL'] = "Набор содержит данные из пользовательских полей, которые вы создали самостоятельно: срок доставки, номер заказа и другие.";

@@ -152,8 +152,10 @@ export const PushOtp = {
 				<div v-if="errorMessage" class="intranet-otp-error-block" v-html="errorMessage"></div>
 				<div class="intranet-island-otp-push__main-content">
 					<div class="intranet-island-otp-push__description">
-						<span>{{ this.$Bitrix.Loc.getMessage("INTRANET_AUTH_OTP_PUSH_SENDED") }}</span>
-						<span>{{ this.$Bitrix.Loc.getMessage("INTRANET_AUTH_OTP_CONFIRM_TEXT") }}</span>
+						<span class="intranet-island-otp-push__description_text">
+							<span>{{ this.$Bitrix.Loc.getMessage("INTRANET_AUTH_OTP_PUSH_SENDED") }}&nbsp;</span>
+							<span>{{ this.$Bitrix.Loc.getMessage("INTRANET_AUTH_OTP_CONFIRM_TEXT") }}</span>
+						</span>
 						<div class="intranet-island-otp-push__arrow"
 							 :class="{ '--low': !isUserDeviceVisible }"
 						>

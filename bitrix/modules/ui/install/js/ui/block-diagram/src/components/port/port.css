@@ -1,19 +1,30 @@
 .ui-block-diagram-port {
-	position: absolute;
-	background-color: var(--ui-color-palette-white-base);
-	border: 1px solid #B1BBC7;
-	width: 1px;
-	height: 1px;
-	padding: 3px;
-	border-radius: 7px;
-	box-sizing: content-box;
+	position: relative;
 	z-index: 1;
+	width: 10px;
+	height: 10px;
+	border: 1px solid #B1BBC7;
+	border-radius: 10px;
+	background-color: var(--ui-color-palette-white-base);
+	box-sizing: border-box;
+}
+
+.ui-block-diagram-port__wrap {
+	position: relative;
+}
+
+.ui-block-diagram-port.--has-view {
+	background-color: transparent;
+	border-radius: 0;
+	border: none;
 }
 
 .ui-block-diagram-port:after {
 	content: '';
 	display: block;
 	position: absolute;
+	top: 50%;
+	left: 50%;
 	width: 27px;
 	height: 27px;
 	background-color: transparent;
@@ -24,8 +35,16 @@
 	border: 1px solid var(--ui-color-blue-57);
 }
 
+.ui-block-diagram-port.--has-view.--active {
+	border: none;
+}
+
 .ui-block-diagram-port.--error {
 	border: 1px solid var(--ui-color-palette-red-70);
+}
+
+.ui-block-diagram-port.--has-view.--error {
+	border: none;
 }
 
 .ui-block-diagram-port:hover.ui-block-diagram-port.--disabled {
@@ -36,6 +55,16 @@
 	border: 1px solid var(--ui-color-blue-57);
 }
 
-.ui-block-diagram-port.--error:hover {
-	border: 1px solid var(--ui-color-palette-red-70);
+.ui-block-diagram-port__stub {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	z-index: 2;
+	width: 8px;
+	height: 8px;
+	margin: auto;
+	border-radius: 50%;
+	background-color: var(--ui-color-palette-white-base);
 }

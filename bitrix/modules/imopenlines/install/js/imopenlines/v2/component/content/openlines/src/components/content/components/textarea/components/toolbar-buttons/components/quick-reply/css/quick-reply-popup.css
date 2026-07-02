@@ -1,0 +1,32 @@
+.bx-imol-quick-reply-popup__container {
+	padding: 0;
+	overflow: hidden;
+}
+
+.bx-imol-quick-reply-popup__container .popup-window-content {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	padding-bottom: 12px;
+	overflow: hidden;
+}
+
+.bx-imol-quick-reply-popup__header {
+	display: flex;
+	flex-shrink: 0;
+	justify-content: space-between;
+	align-items: center;
+	padding: 16px 20px 12px 24px;
+	color: var(--ui-color-palette-black-base);
+	font-size: var(--ui-font-size-xl);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-2xl);
+}
+
+.bx-imol-quick-reply-popup__close {
+	--ui-icon-set__icon-color: var(--ui-color-palette-gray-40);
+	--ui-icon-set__icon-size: 24px;
+
+	cursor: pointer;
+}

@@ -2,6 +2,12 @@
  * @module selector/widget/entity/tasks/task-tag
  */
 jn.define('selector/widget/entity/tasks/task-tag', (require, exports, module) => {
+	const { Loc } = require('loc');
+	const { BaseSelectorEntity } = require('selector/widget/entity');
+
+	/**
+	 * @class TaskTagSelector
+	 */
 	class TaskTagSelector extends BaseSelectorEntity
 	{
 		static getEntityId()
@@ -16,7 +22,7 @@ jn.define('selector/widget/entity/tasks/task-tag', (require, exports, module) =>
 
 		static getStartTypingText()
 		{
-			return BX.message('SELECTOR_COMPONENT_START_TYPING_TO_SEARCH_TASK_TAG');
+			return Loc.getMessage('SELECTOR_COMPONENT_START_TYPING_TO_SEARCH_TASK_TAG');
 		}
 
 		static isCreationEnabled()
@@ -26,12 +32,12 @@ jn.define('selector/widget/entity/tasks/task-tag', (require, exports, module) =>
 
 		static getCreateText()
 		{
-			return BX.message('SELECTOR_COMPONENT_CREATE_TASK_TAG');
+			return Loc.getMessage('SELECTOR_COMPONENT_CREATE_TASK_TAG');
 		}
 
 		static getCreatingText()
 		{
-			return BX.message('SELECTOR_COMPONENT_CREATING_TASK_TAG');
+			return Loc.getMessage('SELECTOR_COMPONENT_CREATING_TASK_TAG');
 		}
 
 		static getCreateEntityHandler(providerOptions)
@@ -54,16 +60,25 @@ jn.define('selector/widget/entity/tasks/task-tag', (require, exports, module) =>
 					(response) => {
 						console.error(response);
 						Notify.showMessage(response.errors[0].message);
-					}
-				).catch(response => console.error(response));
+					},
+				).catch((response) => console.error(response));
 			};
 		}
 
 		static getTitle()
 		{
-			return BX.message('SELECTOR_COMPONENT_PICK_TASK_TAG_2');
+			return Loc.getMessage('SELECTOR_COMPONENT_PICK_TASK_TAG_2');
 		}
 	}
 
-	module.exports = {TaskTagSelector};
+	module.exports = {
+		TaskTagSelector,
+	};
 });
+
+(() => {
+	const require = (ext) => jn.require(ext);
+	const { TaskTagSelector } = require('selector/widget/entity/tasks/task-tag');
+
+	this.TaskTagSelector = TaskTagSelector;
+})();

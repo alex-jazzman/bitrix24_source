@@ -36,9 +36,6 @@ jn.define('mail/mailbox/selector', (require, exports, module) => {
 			super(props);
 
 			this.parentWidget = props.parentWidget;
-
-			const data = selectMailboxesSortedById(store.getState());
-			this.mailboxes = Object.values(data).map((item) => ({ ...item, key: `mailbox_${item.id}` }));
 		}
 
 		componentDidMount()
@@ -100,7 +97,16 @@ jn.define('mail/mailbox/selector', (require, exports, module) => {
 			this.setState({});
 		};
 
+		getMailboxesFromStore()
+		{
+			const data = selectMailboxesSortedById(store.getState());
+
+			return Object.values(data).map((item) => ({ ...item, key: `mailbox_${item.id}` }));
+		}
+
 		openMailboxMenu() {
+			const mailboxes = this.getMailboxesFromStore();
+
 			this.parentWidget.openWidget(
 				'layout',
 				{
@@ -117,7 +123,7 @@ jn.define('mail/mailbox/selector', (require, exports, module) => {
 						hideNavigationBar: false,
 						horizontalSwipeAllowed: false,
 						mediumPositionPercent: 65,
-						mediumPositionHeight: (this.mailboxes.length * 73) + (8 + 66 + 46),
+						mediumPositionHeight: (mailboxes.length * 73) + (8 + 66 + 46),
 						onlyMediumPosition: true,
 						shouldResizeContent: true,
 						swipeAllowed: true,
@@ -125,7 +131,7 @@ jn.define('mail/mailbox/selector', (require, exports, module) => {
 					},
 					onReady: (layoutWidget) => {
 						layoutWidget.showComponent(new MailboxList({
-							mailboxes: this.mailboxes,
+							mailboxes,
 							parentWidget: this.parentWidget,
 							layoutWidget,
 						}));
@@ -188,7 +194,11 @@ jn.define('mail/mailbox/selector', (require, exports, module) => {
 						onClick: (ref) => {
 							if (isSelected && !isLastMailbox)
 							{
-								new MoreMenu({ mailboxId: mailbox.id, parentWidget: this.parentWidget }).openMoreMenu(ref);
+								new MoreMenu({
+									mailboxId: mailbox.id,
+									canEditSettings: mailbox.canEditSettings,
+									parentWidget: this.parentWidget,
+								}).openMoreMenu(ref);
 							}
 							else
 							{
@@ -262,7 +272,18 @@ jn.define('mail/mailbox/selector', (require, exports, module) => {
 
 	function updateMailboxList(action = () => {}, mailboxes = [])
 	{
-		if (mailboxes.length > 0)
+		const hasSettingsPermissionsData = mailboxes.length > 0 && mailboxes.every((mailbox) => {
+			if (!mailbox || typeof mailbox !== 'object')
+			{
+				return false;
+			}
+
+			return Object.prototype.hasOwnProperty.call(mailbox, 'CAN_EDIT_SETTINGS')
+				|| Object.prototype.hasOwnProperty.call(mailbox, 'canEditSettings')
+			;
+		});
+
+		if (hasSettingsPermissionsData)
 		{
 			dispatch(mailboxesAdded(mailboxes));
 			action();
@@ -293,6 +314,7 @@ jn.define('mail/mailbox/selector', (require, exports, module) => {
 			}),
 		);
 	}
+
 	function MailboxButton(props)
 	{
 		const {

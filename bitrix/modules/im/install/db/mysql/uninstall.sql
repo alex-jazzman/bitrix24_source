@@ -63,3 +63,6 @@ DROP TABLE IF EXISTS `b_im_sticker_recent`;
 DROP TABLE IF EXISTS `b_im_sticker`;
 DROP TABLE IF EXISTS `b_im_sticker_pack`;
 DROP TABLE IF EXISTS `b_im_sticker_user_pack`;
+DROP TABLE IF EXISTS `b_im_folder_pin`;
+DROP TABLE IF EXISTS `b_im_folder_chat`;
+DROP TABLE IF EXISTS `b_im_folder`;

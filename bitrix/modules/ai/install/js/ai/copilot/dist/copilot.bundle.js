@@ -1486,9 +1486,9 @@ this.BX = this.BX || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _rawResult)[_rawResult] = '';
 	    return babelHelpers.classPrivateFieldLooseBase(this, _container)[_container];
 	  }
-	  addResult(result) {
+	  addResult(result, resultPreview) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _rawResult)[_rawResult] = result;
-	    babelHelpers.classPrivateFieldLooseBase(this, _container)[_container].innerHTML += String(main_core.Text.encode(result).replaceAll(/(\r\n|\r|\n)/g, '<br>'));
+	    babelHelpers.classPrivateFieldLooseBase(this, _container)[_container].innerHTML += resultPreview != null ? resultPreview : result;
 	  }
 	  clearResult() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _rawResult)[_rawResult] = '';
@@ -3343,12 +3343,16 @@ this.BX = this.BX || {};
 	var _handleSpeechConverterResultEvent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleSpeechConverterResultEvent");
 	var _handleSpeechConverterStopEvent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleSpeechConverterStopEvent");
 	var _setTextareaValue = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setTextareaValue");
+	var _getCopilotMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCopilotMessage");
 	var _adjustTextareaHeight = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("adjustTextareaHeight");
 	class CopilotInput extends main_core_events.EventEmitter {
 	  constructor(options = {}) {
 	    super(options);
 	    Object.defineProperty(this, _adjustTextareaHeight, {
 	      value: _adjustTextareaHeight2
+	    });
+	    Object.defineProperty(this, _getCopilotMessage, {
+	      value: _getCopilotMessage2
 	    });
 	    Object.defineProperty(this, _setTextareaValue, {
 	      value: _setTextareaValue2
@@ -3651,10 +3655,10 @@ this.BX = this.BX || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _placeholder)[_placeholder].setUseForImages(useForImages);
 	    if (useForImages) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _isGoOutFromBottomEnabled)[_isGoOutFromBottomEnabled] = false;
-	      babelHelpers.classPrivateFieldLooseBase(this, _loaderTextContainer)[_loaderTextContainer].innerText = main_core.Loc.getMessage('AI_COPILOT_INPUT_IMAGE_LOADER_TEXT');
+	      babelHelpers.classPrivateFieldLooseBase(this, _loaderTextContainer)[_loaderTextContainer].innerText = babelHelpers.classPrivateFieldLooseBase(this, _getCopilotMessage)[_getCopilotMessage]('AI_COPILOT_INPUT_IMAGE_LOADER_TEXT_MSGVER_1');
 	    } else {
 	      babelHelpers.classPrivateFieldLooseBase(this, _isGoOutFromBottomEnabled)[_isGoOutFromBottomEnabled] = true;
-	      babelHelpers.classPrivateFieldLooseBase(this, _loaderTextContainer)[_loaderTextContainer].innerText = main_core.Loc.getMessage('AI_COPILOT_INPUT_LOADER_TEXT');
+	      babelHelpers.classPrivateFieldLooseBase(this, _loaderTextContainer)[_loaderTextContainer].innerText = babelHelpers.classPrivateFieldLooseBase(this, _getCopilotMessage)[_getCopilotMessage]('AI_COPILOT_INPUT_LOADER_TEXT_MSGVER_1');
 	    }
 	  }
 	  setHtmlContent(html) {
@@ -3702,7 +3706,7 @@ this.BX = this.BX || {};
 				</div>
 				${0}
 			</div>
-		`), main_core.Loc.getMessage('AI_COPILOT_INPUT_LOADER_TEXT'), cancelBtn);
+		`), babelHelpers.classPrivateFieldLooseBase(this, _getCopilotMessage)[_getCopilotMessage]('AI_COPILOT_INPUT_LOADER_TEXT_MSGVER_1'), cancelBtn);
 	  babelHelpers.classPrivateFieldLooseBase(this, _loaderTextContainer)[_loaderTextContainer] = loader.loaderText;
 	  return loader.root;
 	}
@@ -3950,6 +3954,11 @@ this.BX = this.BX || {};
 	    }));
 	  }
 	}
+	function _getCopilotMessage2(code) {
+	  return main_core.Loc.getMessage(code, {
+	    '#COPILOT_NAME#': main_core.Extension.getSettings('ai.copilot').get('copilotName')
+	  });
+	}
 	function _adjustTextareaHeight2() {
 	  babelHelpers.classPrivateFieldLooseBase(this, _textarea)[_textarea].setStyle('height', 'auto');
 	  const textAreaPaddingBottom = parseInt(babelHelpers.classPrivateFieldLooseBase(this, _textarea)[_textarea].getComputedStyle().getPropertyValue('padding-bottom'), 10);
@@ -4006,7 +4015,9 @@ this.BX = this.BX || {};
 				</span>
 				${0}
 			</div>
-		`), expanded ? '--expanded' : '', warningIcon.render(), main_core.Loc.getMessage('AI_COPILOT_RESULT_WARNING'), babelHelpers.classPrivateFieldLooseBase(this, _renderReadMoreLink)[_renderReadMoreLink]());
+		`), expanded ? '--expanded' : '', warningIcon.render(), main_core.Loc.getMessage('AI_COPILOT_RESULT_WARNING_MSGVER_1', {
+	      '#COPILOT_NAME#': main_core.Extension.getSettings('ai.copilot').get('copilotName')
+	    }), babelHelpers.classPrivateFieldLooseBase(this, _renderReadMoreLink)[_renderReadMoreLink]());
 	    return babelHelpers.classPrivateFieldLooseBase(this, _container$6)[_container$6];
 	  }
 	  getInfoSliderContainer() {
@@ -4083,6 +4094,7 @@ this.BX = this.BX || {};
 	var _useImage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("useImage");
 	var _showResultInCopilot = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showResultInCopilot");
 	var _menuForceTop = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("menuForceTop");
+	var _responseFormat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("responseFormat");
 	var _windowResizeHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("windowResizeHandler");
 	var _staticEulaRestrictCallback = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("staticEulaRestrictCallback");
 	var _getBaasPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getBaasPopup");
@@ -4261,6 +4273,10 @@ this.BX = this.BX || {};
 	      writable: true,
 	      value: true
 	    });
+	    Object.defineProperty(this, _responseFormat, {
+	      writable: true,
+	      value: void 0
+	    });
 	    Object.defineProperty(this, _windowResizeHandler, {
 	      writable: true,
 	      value: void 0
@@ -4273,6 +4289,7 @@ this.BX = this.BX || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _useText)[_useText] = main_core.Type.isBoolean(_options.useText) ? _options.useText : true;
 	    babelHelpers.classPrivateFieldLooseBase(this, _useImage)[_useImage] = _options.useImage === true;
 	    babelHelpers.classPrivateFieldLooseBase(this, _showResultInCopilot)[_showResultInCopilot] = _options.showResultInCopilot;
+	    babelHelpers.classPrivateFieldLooseBase(this, _responseFormat)[_responseFormat] = _options.responseFormat || 'default';
 	    babelHelpers.classPrivateFieldLooseBase(this, _initEngine)[_initEngine]({
 	      category: _options.category,
 	      contextId: _options.contextId,
@@ -4311,7 +4328,8 @@ this.BX = this.BX || {};
 	          category: babelHelpers.classPrivateFieldLooseBase(this, _category$1)[_category$1],
 	          selectedText: babelHelpers.classPrivateFieldLooseBase(this, _selectedText)[_selectedText],
 	          context: babelHelpers.classPrivateFieldLooseBase(this, _context)[_context],
-	          addImageMenuItem: babelHelpers.classPrivateFieldLooseBase(this, _useImage)[_useImage]
+	          addImageMenuItem: babelHelpers.classPrivateFieldLooseBase(this, _useImage)[_useImage],
+	          responseFormat: babelHelpers.classPrivateFieldLooseBase(this, _responseFormat)[_responseFormat]
 	        });
 	        await babelHelpers.classPrivateFieldLooseBase(this, _initCopilotTextControllerMenu)[_initCopilotTextControllerMenu]();
 	      } else {
@@ -4567,7 +4585,8 @@ this.BX = this.BX || {};
 	    copilotMenuEvents: CopilotMenuEvents$$1,
 	    analytics: babelHelpers.classPrivateFieldLooseBase(this, _getAnalytics)[_getAnalytics](),
 	    showResultInCopilot: babelHelpers.classPrivateFieldLooseBase(this, _showResultInCopilot)[_showResultInCopilot],
-	    menuForceTop: babelHelpers.classPrivateFieldLooseBase(this, _menuForceTop)[_menuForceTop]
+	    menuForceTop: babelHelpers.classPrivateFieldLooseBase(this, _menuForceTop)[_menuForceTop],
+	    responseFormat: options.responseFormat
 	  });
 	  babelHelpers.classPrivateFieldLooseBase(this, _copilotTextController)[_copilotTextController].subscribe('aiResult', event => {
 	    this.emit('aiResult', {
@@ -5136,7 +5155,9 @@ this.BX = this.BX || {};
 				</div>
 				${0}
 			</div>
-		`), loaderIcon, main_core.Loc.getMessage('AI_COPILOT_INPUT_LOADER_TEXT'), cancelBtn);
+		`), loaderIcon, main_core.Loc.getMessage('AI_COPILOT_INPUT_LOADER_TEXT_MSGVER_1', {
+	    '#COPILOT_NAME#': main_core.Extension.getSettings('ai.copilot').get('copilotName')
+	  }), cancelBtn);
 	}
 
 	let _$d = t => t,

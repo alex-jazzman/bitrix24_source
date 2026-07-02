@@ -8,6 +8,7 @@ jn.define('im/messenger/controller/sidebar-v2/const', (require, exports, module)
 		LEAVE: 'leave',
 		DELETE: 'delete',
 		COPY_LINK: 'copy_link',
+		COPY_CHAT_ID: 'copy_chat_id',
 		PIN: 'pin',
 		UNPIN: 'unpin',
 		ADD_PARTICIPANTS: 'add_participants',

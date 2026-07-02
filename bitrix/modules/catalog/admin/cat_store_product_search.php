@@ -745,10 +745,16 @@ if(!$bBadBlock)
 	{
 		foreach($arPrices as $price)
 		{
-			$dbPrice = CPrice::GetList(array(), array('PRODUCT_ID' => $arCatalogProduct, 'CATALOG_GROUP_ID' => $price['ID']), false, false, array('PRODUCT_ID', 'PRICE'));
+			$dbPrice = \Bitrix\Catalog\PriceTable::getList([
+				'select' => ['PRODUCT_ID', 'PRICE', 'CURRENCY'],
+				'filter' => [
+					'=PRODUCT_ID' => $arCatalogProduct,
+					'=CATALOG_GROUP_ID' => $price['ID'],
+				],
+			]);
 			while($arPrice = $dbPrice->fetch())
 			{
-				$arPricesResult[$price['ID']][$arPrice["PRODUCT_ID"]] = $arPrice["PRICE"];
+				$arPricesResult[$price['ID']][$arPrice["PRODUCT_ID"]] = CCurrencyLang::CurrencyFormat($arPrice["PRICE"], $arPrice["CURRENCY"], true);
 			}
 		}
 
@@ -790,12 +796,21 @@ if(!$bBadBlock)
 					$arSKUId[] = $sku["ID"];
 			}
 
-			foreach($arPrices as $price)
+			if (!empty($arSKUId))
 			{
-				$dbPrice = CPrice::getList(array(), array('PRODUCT_ID' => $arSKUId, 'CATALOG_GROUP_ID' => $price['ID']), false, false, array('PRODUCT_ID', 'PRICE'));
-				while($arPrice = $dbPrice->fetch())
+				foreach($arPrices as $price)
 				{
-					$arSKUPricesResult[$price['ID']][$arPrice["PRODUCT_ID"]] = $arPrice["PRICE"];
+					$dbPrice = \Bitrix\Catalog\PriceTable::getList([
+						'select' => ['PRODUCT_ID', 'PRICE', 'CURRENCY'],
+						'filter' => [
+							'=PRODUCT_ID' => $arSKUId,
+							'=CATALOG_GROUP_ID' => $price['ID'],
+						],
+					]);
+					while($arPrice = $dbPrice->fetch())
+					{
+						$arSKUPricesResult[$price['ID']][$arPrice["PRODUCT_ID"]] = CCurrencyLang::CurrencyFormat($arPrice["PRICE"], $arPrice["CURRENCY"], true);
+					}
 				}
 			}
 

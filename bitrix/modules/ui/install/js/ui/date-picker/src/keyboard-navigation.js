@@ -51,13 +51,18 @@ export class KeyboardNavigation
 
 	init(): void
 	{
-		Event.bind(this.#datePicker.getContainer(), 'keydown', this.#handleKeyDown.bind(this));
-		Event.bind(this.#datePicker.getContainer(), 'focusin', this.#handleFocusIn.bind(this));
-		Event.bind(this.#datePicker.getContainer(), 'focusout', this.#handleFocusOut.bind(this));
+		Event.bind(this.#datePicker.getRootContainer(), 'keydown', this.#handleKeyDown.bind(this));
+		Event.bind(this.#datePicker.getRootContainer(), 'focusin', this.#handleFocusIn.bind(this));
+		Event.bind(this.#datePicker.getRootContainer(), 'focusout', this.#handleFocusOut.bind(this));
 	}
 
 	#handleKeyDown(event: KeyboardEvent): void
 	{
+		if (event.defaultPrevented)
+		{
+			return;
+		}
+
 		const picker = this.#datePicker;
 
 		if (
@@ -91,6 +96,8 @@ export class KeyboardNavigation
 			event.preventDefault();
 			this.resetLastFocusElement();
 			event.target.click();
+
+			this.#adjustLastFocusElement();
 		}
 		else if (!Type.isUndefined(keyMap[event.key]))
 		{
@@ -106,7 +113,7 @@ export class KeyboardNavigation
 
 				if (initialFocus)
 				{
-					picker.setFocusDate(currentFocusDate);
+					picker.setFocusDate(currentFocusDate, { inputModality: 'keyboard' });
 					this.#adjustLastFocusElement();
 				}
 				else if (timePicker.getFocusColumn() === 'hours')
@@ -123,7 +130,7 @@ export class KeyboardNavigation
 					}
 
 					currentFocusDate = setTime(currentFocusDate, hours, null, null);
-					picker.setFocusDate(currentFocusDate);
+					picker.setFocusDate(currentFocusDate, { inputModality: 'keyboard' });
 					this.#adjustLastFocusElement();
 				}
 				else if (timePicker.getFocusColumn() === 'minutes')
@@ -140,7 +147,7 @@ export class KeyboardNavigation
 					}
 
 					currentFocusDate = setTime(currentFocusDate, null, minutes, null);
-					picker.setFocusDate(currentFocusDate);
+					picker.setFocusDate(currentFocusDate, { inputModality: 'keyboard' });
 					timePicker.adjustMinuteFocusPosition();
 					this.#adjustLastFocusElement();
 				}
@@ -150,13 +157,13 @@ export class KeyboardNavigation
 				const currentFocusDate = cloneDate(picker.getInitialFocusDate());
 				if (initialFocus)
 				{
-					picker.setFocusDate(currentFocusDate);
+					picker.setFocusDate(currentFocusDate, { inputModality: 'keyboard' });
 				}
 				else
 				{
 					const increment = keyMap[event.key][view];
 					const focusDate = addDate(currentFocusDate, view, increment);
-					picker.setFocusDate(focusDate);
+					picker.setFocusDate(focusDate, { inputModality: 'keyboard' });
 				}
 
 				this.#adjustLastFocusElement();
@@ -166,7 +173,7 @@ export class KeyboardNavigation
 
 	#isRootContainerFocused(): boolean
 	{
-		const rootContainer = this.#datePicker.getContainer();
+		const rootContainer = this.#datePicker.getRootContainer();
 
 		return rootContainer.ownerDocument.activeElement === rootContainer;
 	}
@@ -175,18 +182,18 @@ export class KeyboardNavigation
 	{
 		let prev: HTMLElement = null;
 		let next: HTMLElement = null;
-		const currentPickerContainer = this.#datePicker.getPicker().getContainer();
+		const rootContainer = this.#datePicker.getRootContainer();
 		if (this.#isRootContainerFocused())
 		{
 			[prev = null, next = null] = getFocusableBoundaryElements(
-				currentPickerContainer,
+				rootContainer,
 				(element: HTMLElement) => element.dataset.tabPriority === 'true',
 			);
 		}
 
 		if (prev === null && next === null)
 		{
-			[prev, next] = getFocusableBoundaryElements(currentPickerContainer);
+			[prev, next] = getFocusableBoundaryElements(rootContainer);
 		}
 
 		if (event.shiftKey)
@@ -219,7 +226,7 @@ export class KeyboardNavigation
 
 	#adjustLastFocusElement(): void
 	{
-		const rootContainer = this.#datePicker.getContainer();
+		const rootContainer = this.#datePicker.getRootContainer();
 		const activeElement = rootContainer.ownerDocument.activeElement;
 		if (rootContainer.contains(activeElement))
 		{

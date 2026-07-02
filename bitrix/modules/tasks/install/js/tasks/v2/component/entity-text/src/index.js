@@ -12,4 +12,6 @@ export { MentionButton } from './editor-actions/mention-button';
 export { NumberListButton } from './editor-actions/number-list-button';
 export { BulletListButton } from './editor-actions/bullet-list-button';
 
+export { EntityCollapsibleTextEvent } from './const';
+
 export type { EntityTextEditor } from './entity-text-editor';

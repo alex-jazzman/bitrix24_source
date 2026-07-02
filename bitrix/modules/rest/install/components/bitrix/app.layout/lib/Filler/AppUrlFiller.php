@@ -16,7 +16,6 @@ use Bitrix\Rest\Component\AppLayout\Exception;
 class AppUrlFiller extends FillerBase
 {
 	protected array $app;
-	protected ?string $placement = null;
 	protected ?array $placementData = null;
 
 	public function __construct(
@@ -27,9 +26,7 @@ class AppUrlFiller extends FillerBase
 	{
 		parent::__construct($params, $result, $request);
 
-		$this->enabled = true;
 		$this->app = $result['APPLICATION'];
-		$this->placement = (string)$this->params['PLACEMENT'] ?? null;
 		$this->placementData = $this->result['PLACEMENT_DATA'] ?? null;
 	}
 
@@ -69,7 +66,7 @@ class AppUrlFiller extends FillerBase
 
 		return [
 			'APP_URL' => $url,
-			'APP_IS_IN_INSTALLATION_MODE' => $installationMode,
+			'INSTALL' => $installationMode,
 		];
 	}
 

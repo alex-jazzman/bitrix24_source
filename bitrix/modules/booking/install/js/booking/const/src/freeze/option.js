@@ -2,6 +2,7 @@ export const Option = Object.freeze({
 	BookingEnabled: 'aha_banner',
 	IntersectionForAll: 'IntersectionForAll',
 	WaitListExpanded: 'wait_list_expanded',
+	GridMode: 'grid_mode',
 	CalendarExpanded: 'calendar_expanded',
 	NotificationsExpanded: 'notificationsExpanded',
 	whatsAppEmergencyNotified: 'whatsapp_emergency_notified',

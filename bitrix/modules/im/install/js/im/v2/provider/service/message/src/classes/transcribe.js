@@ -1,11 +1,11 @@
-import { Store } from 'ui.vue3.vuex';
+import { type Store } from 'ui.vue3.vuex';
 
 import { Core } from 'im.v2.application.core';
 import { RestMethod, TranscriptionStatus } from 'im.v2.const';
 import { Logger } from 'im.v2.lib.logger';
 import { runAction, type RunActionError } from 'im.v2.lib.rest';
 
-import type { TranscriptionResponse } from '../types/message';
+import { type TranscriptionResponse } from '../types/message';
 
 export class TranscribeService
 {

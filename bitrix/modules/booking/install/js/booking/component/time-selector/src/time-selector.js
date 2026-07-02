@@ -1,5 +1,5 @@
 import { Event } from 'main.core';
-import { Menu, MenuManager, MenuItem, type MenuItemOptions } from 'main.popup';
+import { MenuManager, type MenuItemOptions } from 'main.popup';
 import { mapGetters } from 'ui.vue3.vuex';
 
 import { Duration } from 'booking.lib.duration';

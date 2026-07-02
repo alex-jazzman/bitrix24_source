@@ -125,11 +125,15 @@ export const GroupChip = {
 			return !this.settings.restrictions.project.available;
 		},
 	},
-	created(): void
+	async created(): Promise<void>
 	{
-		if (this.task.groupId && !this.group)
+		if (this.task.groupId && !this.group && !this.task.flowId)
 		{
-			void groupService.getGroup(this.task.groupId);
+			const group = await groupService.getGroup(this.task.groupId);
+			if (!group)
+			{
+				taskService.updateStoreTask(this.taskId, { groupId: 0, stageId: 0 });
+			}
 		}
 	},
 	methods: {

@@ -1,36 +1,37 @@
+/* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,main_popup,market_marketLinks,ui_vue3) {
+(function (exports, main_popup, market_marketLinks, ui_vue3) {
 	'use strict';
 
 	const Stars = {
-	  emits: ['changeRating'],
-	  props: ['rating', 'editable'],
-	  data() {
-	    return {
-	      editedRating: 0
-	    };
-	  },
-	  computed: {
-	    getAppRating: function () {
-	      return this.editable ? this.editedRating : this.rating;
-	    }
-	  },
-	  mounted: function () {
-	    this.editedRating = this.rating;
-	  },
-	  methods: {
-	    isActiveStar: function (currentStar, rating) {
-	      return currentStar <= parseInt(rating, 10);
-	    },
-	    ratingClick: function (rating) {
-	      if (!this.editable) {
-	        return;
-	      }
-	      this.editedRating = rating;
-	      this.$emit('changeRating', rating);
-	    }
-	  },
-	  template: `
+		emits: ['changeRating'],
+		props: ['rating', 'editable'],
+		data() {
+			return {
+				editedRating: 0
+			};
+		},
+		computed: {
+			getAppRating: function () {
+				return this.editable ? this.editedRating : this.rating;
+			}
+		},
+		mounted: function () {
+			this.editedRating = this.rating;
+		},
+		methods: {
+			isActiveStar: function (currentStar, rating) {
+				return currentStar <= parseInt(rating, 10);
+			},
+			ratingClick: function (rating) {
+				if (!this.editable) {
+					return;
+				}
+				this.editedRating = rating;
+				this.$emit('changeRating', rating);
+			}
+		},
+		template: `
 		<div class="market-detail__feedback-item_stars-container --popup-feedback">
 			<svg class="market-rating__app-rating_star"
 				 :class="{'--active': isActiveStar(1, getAppRating), '--pointer': editable}"
@@ -67,147 +68,150 @@ this.BX = this.BX || {};
 	};
 
 	const ReviewItem = {
-	  components: {
-	    Stars
-	  },
-	  emits: ['editedReview'],
-	  props: ['review', 'reviewIndex'],
-	  data() {
-	    return {
-	      contextMenu: false,
-	      editing: false,
-	      savingReview: false,
-	      newReviewText: '',
-	      newReviewRating: 0,
-	      MarketLinks: market_marketLinks.MarketLinks
-	    };
-	  },
-	  computed: {
-	    getReviewId: function () {
-	      return this.review.ID;
-	    },
-	    canEditReview: function () {
-	      return this.review.CAN_EDIT_REVIEW === 'Y';
-	    },
-	    editReviewNotAllowedText: function () {
-	      var _this$review$EDIT_REV;
-	      return (_this$review$EDIT_REV = this.review.EDIT_REVIEW_NOT_ALLOWED_TEXT) != null ? _this$review$EDIT_REV : '';
-	    },
-	    isSiteTemplate: function () {
-	      return this.review.IS_SITE_TEMPLATE === 'Y';
-	    },
-	    getBackgroundPath: function () {
-	      if (this.isSiteTemplate) {
-	        return this.review.SITE_PREVIEW;
-	      }
-	      return "/bitrix/js/market/images/backgrounds/" + this.getIndex + ".png";
-	    },
-	    getIndex: function () {
-	      return parseInt(this.reviewIndex, 10) % 30 + 1;
-	    }
-	  },
-	  mounted: function () {
-	    this.newReviewText = this.review.REVIEW_FULL_TEXT_EDITING_EDIT;
-	    this.newReviewRating = this.review.RATING;
-	  },
-	  methods: {
-	    getDetailLink: function (reviewItem) {
-	      const params = {
-	        from: 'reviews'
-	      };
-	      return market_marketLinks.MarketLinks.appDetail(reviewItem, params);
-	    },
-	    showMenu: function () {
-	      let menu = [];
-	      menu.push({
-	        text: this.$Bitrix.Loc.getMessage('MARKET_REVIEWS_MENU_ITEM_EDITING'),
-	        onclick: this.showEditing
-	      });
-	      if (menu.length > 0) {
-	        const menuId = 'review-item-menu-' + this.getReviewId;
-	        main_popup.MenuManager.destroy(menuId);
-	        this.contextMenu = main_popup.MenuManager.create(menuId, this.$refs.marketReviewsMenu, menu, {
-	          closeByEsc: true,
-	          autoHide: true,
-	          angle: true,
-	          offsetLeft: 20
-	        });
-	      }
-	      this.contextMenu.show();
-	    },
-	    showEditing: function () {
-	      if (this.contextMenu) {
-	        this.contextMenu.close();
-	      }
-	      if (!this.canEditReview) {
-	        if (this.editReviewNotAllowedText.length) {
-	          this.showNotify(this.editReviewNotAllowedText);
-	          return;
-	        }
-	        this.showNotify(this.$Bitrix.Loc.getMessage('MARKET_REVIEW_EDIT_REVIEW_NOT_ALLOWED'));
-	        return;
-	      }
-	      this.editing = true;
-	      ui_vue3.nextTick(() => {
-	        if (this.$refs.marketReviewEditingText) {
-	          this.$refs.marketReviewEditingText.focus();
-	        }
-	      });
-	    },
-	    saveReview: function () {
-	      this.savingReview = true;
-	      const isSiteTemplate = this.isSiteTemplate === true ? 'Y' : 'N';
-	      BX.ajax.runAction('market.Application.editReview', {
-	        data: {
-	          reviewId: this.review.ID,
-	          appCode: this.review.APP_CODE,
-	          reviewText: this.newReviewText,
-	          currentRating: this.newReviewRating,
-	          isSite: isSiteTemplate
-	        },
-	        analyticsLabel: {
-	          appCode: this.review.APP_CODE,
-	          currentRating: this.newReviewRating,
-	          isSite: isSiteTemplate
-	        }
-	      }).then(response => {
-	        this.savingReview = false;
-	        if (response.data && response.data.success === 'Y') {
-	          this.successReviewHandler(response.data);
-	        } else if (response.data && response.data.error) {
-	          const errors = response.data.error.slice(0);
-	          const firstError = errors.shift();
-	          if (firstError === 'NOT_FOUND_TEXT') {
-	            this.showNotify(this.$Bitrix.Loc.getMessage('MARKET_REVIEW_EDIT_REVIEW_TEXT_ERROR'));
-	            return;
-	          }
-	          this.showNotify(this.$Bitrix.Loc.getMessage('MARKET_REVIEW_EDIT_REVIEW_ERROR') + ' (' + response.data.error + ')');
-	        } else {
-	          this.showNotify(this.$Bitrix.Loc.getMessage('MARKET_REVIEW_EDIT_REVIEW_ERROR'));
-	        }
-	      }, response => {
-	        this.savingReview = false;
-	        this.showNotify(this.$Bitrix.Loc.getMessage('MARKET_REVIEW_EDIT_REVIEW_ERROR'));
-	      });
-	    },
-	    successReviewHandler: function (data) {
-	      this.showNotify(this.$Bitrix.Loc.getMessage('MARKET_REVIEW_EDIT_REVIEW_SUCCESS'));
-	      if (data && data.review_info) {
-	        this.$emit('editedReview', this.reviewIndex, data.review_info);
-	      }
-	      this.editing = false;
-	    },
-	    showNotify: function (text) {
-	      BX.UI.Notification.Center.notify({
-	        content: text,
-	        position: BX.UI.Notification.Position.TOP_CENTER
-	      });
-	    },
-	    cancelEditing: function () {
-	      this.editing = false;
-	    }
-	  },
-	  template: `
+		components: {
+			Stars
+		},
+		emits: ['editedReview'],
+		props: ['review', 'reviewIndex'],
+		setup: function () {
+			return {
+				contextMenu: false
+			};
+		},
+		data() {
+			return {
+				editing: false,
+				savingReview: false,
+				newReviewText: '',
+				newReviewRating: 0,
+				MarketLinks: market_marketLinks.MarketLinks
+			};
+		},
+		computed: {
+			getReviewId: function () {
+				return this.review.ID;
+			},
+			canEditReview: function () {
+				return this.review.CAN_EDIT_REVIEW === 'Y';
+			},
+			editReviewNotAllowedText: function () {
+				return this.review.EDIT_REVIEW_NOT_ALLOWED_TEXT ?? '';
+			},
+			isSiteTemplate: function () {
+				return this.review.IS_SITE_TEMPLATE === 'Y';
+			},
+			getBackgroundPath: function () {
+				if (this.isSiteTemplate) {
+					return this.review.SITE_PREVIEW;
+				}
+				return "/bitrix/js/market/images/backgrounds/" + this.getIndex + ".png";
+			},
+			getIndex: function () {
+				return parseInt(this.reviewIndex, 10) % 30 + 1;
+			}
+		},
+		mounted: function () {
+			this.newReviewText = this.review.REVIEW_FULL_TEXT_EDITING_EDIT;
+			this.newReviewRating = this.review.RATING;
+		},
+		methods: {
+			getDetailLink: function (reviewItem) {
+				const params = {
+					from: 'reviews'
+				};
+				return market_marketLinks.MarketLinks.appDetail(reviewItem, params);
+			},
+			showMenu: function () {
+				let menu = [];
+				menu.push({
+					text: this.$Bitrix.Loc.getMessage('MARKET_REVIEWS_MENU_ITEM_EDITING'),
+					onclick: this.showEditing
+				});
+				if (menu.length > 0) {
+					const menuId = 'review-item-menu-' + this.getReviewId;
+					main_popup.MenuManager.destroy(menuId);
+					this.contextMenu = main_popup.MenuManager.create(menuId, this.$refs.marketReviewsMenu, menu, {
+						closeByEsc: true,
+						autoHide: true,
+						angle: true,
+						offsetLeft: 20
+					});
+				}
+				this.contextMenu.show();
+			},
+			showEditing: function () {
+				if (this.contextMenu) {
+					this.contextMenu.close();
+				}
+				if (!this.canEditReview) {
+					if (this.editReviewNotAllowedText.length) {
+						this.showNotify(this.editReviewNotAllowedText);
+						return;
+					}
+					this.showNotify(this.$Bitrix.Loc.getMessage('MARKET_REVIEW_EDIT_REVIEW_NOT_ALLOWED'));
+					return;
+				}
+				this.editing = true;
+				ui_vue3.nextTick(() => {
+					if (this.$refs.marketReviewEditingText) {
+						this.$refs.marketReviewEditingText.focus();
+					}
+				});
+			},
+			saveReview: function () {
+				this.savingReview = true;
+				const isSiteTemplate = this.isSiteTemplate === true ? 'Y' : 'N';
+				BX.ajax.runAction('market.Application.editReview', {
+					data: {
+						reviewId: this.review.ID,
+						appCode: this.review.APP_CODE,
+						reviewText: this.newReviewText,
+						currentRating: this.newReviewRating,
+						isSite: isSiteTemplate
+					},
+					analyticsLabel: {
+						appCode: this.review.APP_CODE,
+						currentRating: this.newReviewRating,
+						isSite: isSiteTemplate
+					}
+				}).then(response => {
+					this.savingReview = false;
+					if (response.data && response.data.success === 'Y') {
+						this.successReviewHandler(response.data);
+					} else if (response.data && response.data.error) {
+						const errors = response.data.error.slice(0);
+						const firstError = errors.shift();
+						if (firstError === 'NOT_FOUND_TEXT') {
+							this.showNotify(this.$Bitrix.Loc.getMessage('MARKET_REVIEW_EDIT_REVIEW_TEXT_ERROR'));
+							return;
+						}
+						this.showNotify(this.$Bitrix.Loc.getMessage('MARKET_REVIEW_EDIT_REVIEW_ERROR') + ' (' + response.data.error + ')');
+					} else {
+						this.showNotify(this.$Bitrix.Loc.getMessage('MARKET_REVIEW_EDIT_REVIEW_ERROR'));
+					}
+				}, response => {
+					this.savingReview = false;
+					this.showNotify(this.$Bitrix.Loc.getMessage('MARKET_REVIEW_EDIT_REVIEW_ERROR'));
+				});
+			},
+			successReviewHandler: function (data) {
+				this.showNotify(this.$Bitrix.Loc.getMessage('MARKET_REVIEW_EDIT_REVIEW_SUCCESS'));
+				if (data && data.review_info) {
+					this.$emit('editedReview', this.reviewIndex, data.review_info);
+				}
+				this.editing = false;
+			},
+			showNotify: function (text) {
+				BX.UI.Notification.Center.notify({
+					content: text,
+					position: BX.UI.Notification.Position.TOP_CENTER
+				});
+			},
+			cancelEditing: function () {
+				this.editing = false;
+			}
+		},
+		template: `
 		<div class="market-reviews__item">
 			<div class="market-reviews__item-label"
 				 :class="{'--checked': review.BLOCKED !== 'Y' && review.PUBLISHED === 'Y'}"
@@ -222,8 +226,8 @@ this.BX = this.BX || {};
 							{{ $Bitrix.Loc.getMessage('MARKET_REVIEW_SENT_TO_DEVELOPER') }}
 						</span>
 						<span class="market-reviews__item-menu ui-icon-set --more-information"
-							  ref="marketReviewsMenu"
-							  @click="showMenu"
+								ref="marketReviewsMenu"
+								@click="showMenu"
 						></span>
 					</template>
 					<template v-if="review.PUBLISHED === 'Y'">
@@ -234,8 +238,8 @@ this.BX = this.BX || {};
 							{{ $Bitrix.Loc.getMessage('MARKET_REVIEW_PUBLISHED') }}
 						</span>
 						<span class="market-reviews__item-menu ui-icon-set --more-information"
-							  ref="marketReviewsMenu"
-							  @click="showMenu"
+								ref="marketReviewsMenu"
+								@click="showMenu"
 						></span>
 					</template>
 				</template>
@@ -253,9 +257,9 @@ this.BX = this.BX || {};
 			<div class="market-reviews__item-content">
 				<div class="market-reviews__item-content-logo">
 					<a class="market-reviews__item-content-logo-link"
-					   :style="{'background-image': 'url(\\'' + getBackgroundPath + '\\')'}"
-					   :href="getDetailLink(review)"
-					   @click="MarketLinks.openSiteTemplate($event, this.isSiteTemplate)"
+						 :style="{'background-image': 'url(\\'' + getBackgroundPath + '\\')'}"
+						 :href="getDetailLink(review)"
+						 @click="MarketLinks.openSiteTemplate($event, this.isSiteTemplate)"
 					>
 						<img class="market-reviews__item-content-logo-img"
 							 :src="review.APP_LOGO"
@@ -267,11 +271,11 @@ this.BX = this.BX || {};
 				<div class="market-reviews__item-main-content">
 					<div class="market-reviews__item-title-wrapper">
 						<a class="market-reviews__item-title"
-						   :href="getDetailLink(review)"
+							 :href="getDetailLink(review)"
 						>{{ review.APP_NAME }}</a>
 						<div class="market-reviews__item-rating">
 							<Stars :rating="review.RATING"
-								   :editable="false"
+									 :editable="false"
 							/>
 							<div class="market-reviews__item-date">
 								{{ review.DATE_CREATE }}
@@ -288,16 +292,16 @@ this.BX = this.BX || {};
 							</span>
 							
 							<Stars :rating="review.RATING"
-								   :editable="true"
-								   @change-rating="(rating) => this.newReviewRating = rating"
+									 :editable="true"
+									 @change-rating="(rating) => this.newReviewRating = rating"
 							/>
 						</div>
 						<div class="market-reviews__item-editing-content">
 							<div class="ui-ctl ui-ctl-textarea">
 								<textarea class="ui-ctl-element"
-										  ref="marketReviewEditingText"
-										  :disabled="savingReview"
-										  v-model="newReviewText"
+											ref="marketReviewEditingText"
+											:disabled="savingReview"
+											v-model="newReviewText"
 								></textarea>
 							</div>
 							<div class="market-reviews__item-editing-notice">
@@ -331,14 +335,14 @@ this.BX = this.BX || {};
 							<div class="market-reviews__item-answer-content_date">
 								{{ $Bitrix.Loc.getMessage('MARKET_REVIEW_ANSWER') }}
 								<a class="market-reviews__item-answer-content_team --link"
-								   v-if="review.PARTNER_URL"
-								   :href="review.PARTNER_URL"
-								   target="_blank"
+									 v-if="review.PARTNER_URL"
+									 :href="review.PARTNER_URL"
+									 target="_blank"
 								>
 									{{ review.PARTNER_NAME }}
 								</a>
 								<span class="market-reviews__item-answer-content_team"
-									  v-else
+										v-else
 								>
 									{{ review.PARTNER_NAME }}
 								</span>
@@ -356,161 +360,165 @@ this.BX = this.BX || {};
 	};
 
 	const MyReviewsComponent = {
-	  components: {
-	    ReviewItem
-	  },
-	  props: ['params', 'result'],
-	  data() {
-	    return {
-	      filterMenu: null,
-	      page: 1,
-	      bottomLoader: null,
-	      nextPageLoadWait: false,
-	      filterName: '',
-	      filterValue: '',
-	      filterLoader: null
-	    };
-	  },
-	  computed: {
-	    isEmpty: function () {
-	      return !this.result.REVIEWS.ALL_ITEMS || this.result.REVIEWS.ALL_ITEMS.length <= 0;
-	    },
-	    isFilterEmpty: function () {
-	      return !this.result.REVIEWS.ITEMS || this.result.REVIEWS.ITEMS.length <= 0;
-	    },
-	    showNextPageButton: function () {
-	      if (this.result.REVIEWS.CUR_PAGE && this.result.REVIEWS.PAGES) {
-	        if (this.result.REVIEWS.CUR_PAGE < this.result.REVIEWS.PAGES) {
-	          return true;
-	        }
-	      }
-	      return false;
-	    }
-	  },
-	  mounted() {
-	    this.bindNextPageEvent();
-	    this.initLoaders();
-	    this.initMenu();
-	    this.initFilter();
-	  },
-	  methods: {
-	    initFilter: function () {
-	      if (this.result.REVIEWS.FILTER_CURRENT) {
-	        this.filterName = this.result.REVIEWS.FILTER_CURRENT.NAME;
-	        this.filterValue = this.result.REVIEWS.FILTER_CURRENT.VALUE;
-	      }
-	    },
-	    initMenu: function () {
-	      let menu = [];
-	      for (let filterValue in this.result.REVIEWS.FILTER) {
-	        menu.push({
-	          text: this.result.REVIEWS.FILTER[filterValue],
-	          onclick: event => {
-	            this.filterValue = filterValue;
-	            this.page = 1;
-	            this.moreReviews();
-	          }
-	        });
-	      }
-	      this.filterMenu = main_popup.MenuManager.create('reviews-popup-menu', this.$refs.myReviewsMenu, menu, {
-	        closeByEsc: true,
-	        autoHide: true,
-	        angle: false,
-	        offsetTop: 10
-	      });
-	    },
-	    showMenu: function () {
-	      this.filterMenu.show();
-	    },
-	    initLoaders: function () {
-	      this.bottomLoader = new BX.Loader({
-	        target: this.$refs.marketReviewsBottomLoader,
-	        mode: 'inline',
-	        size: 100
-	      });
-	      this.filterLoader = new BX.Loader({
-	        target: this.$refs.marketReviewsLoader,
-	        size: 100
-	      });
-	    },
-	    bindNextPageEvent: function () {
-	      BX.bind(document, 'scroll', event => {
-	        if (this.needLoadNextPage(event.currentTarget)) {
-	          this.nextPage();
-	        }
-	      });
-	    },
-	    needLoadNextPage: function (document) {
-	      if (!document || !document.scrollingElement || !document.scrollingElement.scrollHeight || !this.showNextPageButton || this.nextPageLoadWait) {
-	        return false;
-	      }
-	      const doc = document.scrollingElement;
-	      return doc.scrollTop >= doc.scrollHeight - doc.offsetHeight * 1.5;
-	    },
-	    nextPage: function () {
-	      if (this.nextPageLoadWait) {
-	        return;
-	      }
-	      this.nextPageLoadWait = true;
-	      this.page = parseInt(this.result.REVIEWS.CUR_PAGE, 10) + 1;
-	      this.bottomLoader.show();
-	      this.moreReviews(true);
-	    },
-	    moreReviews: function (append) {
-	      append = append || false;
-	      const isFilter = !append;
-	      if (isFilter) {
-	        this.filterMenu.close();
-	        if (this.filterValue === this.result.REVIEWS.FILTER_CURRENT.VALUE) {
-	          return;
-	        }
-	        this.filterLoader.show();
-	      }
-	      BX.ajax.runComponentAction(this.params.COMPONENT_NAME, 'getReviewPage', {
-	        mode: 'class',
-	        signedParameters: [],
-	        data: {
-	          page: this.page,
-	          filter: this.filterValue
-	        },
-	        analyticsLabel: {
-	          page: this.page,
-	          filter: this.filterValue
-	        }
-	      }).then(response => {
-	        this.nextPageLoadWait = false;
-	        this.bottomLoader.hide();
-	        this.filterLoader.hide();
-	        if (response.data && response.data.reviews && BX.type.isArray(response.data.reviews.ITEMS)) {
-	          if (isFilter) {
-	            this.result.REVIEWS.ITEMS = response.data.reviews.ITEMS;
-	          } else {
-	            this.result.REVIEWS.ITEMS = this.result.REVIEWS.ITEMS.concat(response.data.reviews.ITEMS);
-	          }
-	          this.result.REVIEWS.CUR_PAGE = response.data.reviews.CUR_PAGE;
-	          this.result.REVIEWS.PAGES = response.data.reviews.PAGES;
-	          this.result.REVIEWS.FILTER_CURRENT = response.data.reviews.FILTER_CURRENT;
-	          this.filterName = response.data.reviews.FILTER_CURRENT.NAME;
-	        }
-	      }, response => {
-	        this.nextPageLoadWait = false;
-	        this.bottomLoader.hide();
-	      });
-	    },
-	    editedReviewHandler: function (index, reviewInfo) {
-	      if (!this.result.REVIEWS.ITEMS[index] || !reviewInfo || !reviewInfo['RATING']) {
-	        return;
-	      }
-	      this.result.REVIEWS.ITEMS[index]['REVIEW_FULL_TEXT_EDITING_SHOW'] = reviewInfo['REVIEW_FULL_TEXT_EDITING_SHOW'];
-	      this.result.REVIEWS.ITEMS[index]['RATING'] = reviewInfo['RATING'];
-	      this.result.REVIEWS.ITEMS[index]['REVIEW_FULL_ANSWER_TEXT_EDITING_SHOW'] = reviewInfo['REVIEW_FULL_ANSWER_TEXT_EDITING_SHOW'];
-	      this.result.REVIEWS.ITEMS[index]['BLOCKED'] = reviewInfo['BLOCKED'];
-	      this.result.REVIEWS.ITEMS[index]['PUBLISHED'] = reviewInfo['PUBLISHED'];
-	      this.result.REVIEWS.ITEMS[index]['CAN_EDIT_REVIEW'] = reviewInfo['CAN_EDIT_REVIEW'];
-	      this.result.REVIEWS.ITEMS[index]['EDIT_REVIEW_NOT_ALLOWED_TEXT'] = reviewInfo['EDIT_REVIEW_NOT_ALLOWED_TEXT'];
-	    }
-	  },
-	  template: `
+		components: {
+			ReviewItem
+		},
+		props: ['params', 'result'],
+		setup: function () {
+			return {
+				filterMenu: null
+			};
+		},
+		data() {
+			return {
+				page: 1,
+				bottomLoader: null,
+				nextPageLoadWait: false,
+				filterName: '',
+				filterValue: '',
+				filterLoader: null
+			};
+		},
+		computed: {
+			isEmpty: function () {
+				return !this.result.REVIEWS.ALL_ITEMS || this.result.REVIEWS.ALL_ITEMS.length <= 0;
+			},
+			isFilterEmpty: function () {
+				return !this.result.REVIEWS.ITEMS || this.result.REVIEWS.ITEMS.length <= 0;
+			},
+			showNextPageButton: function () {
+				if (this.result.REVIEWS.CUR_PAGE && this.result.REVIEWS.PAGES) {
+					if (this.result.REVIEWS.CUR_PAGE < this.result.REVIEWS.PAGES) {
+						return true;
+					}
+				}
+				return false;
+			}
+		},
+		mounted() {
+			this.bindNextPageEvent();
+			this.initLoaders();
+			this.initMenu();
+			this.initFilter();
+		},
+		methods: {
+			initFilter: function () {
+				if (this.result.REVIEWS.FILTER_CURRENT) {
+					this.filterName = this.result.REVIEWS.FILTER_CURRENT.NAME;
+					this.filterValue = this.result.REVIEWS.FILTER_CURRENT.VALUE;
+				}
+			},
+			initMenu: function () {
+				let menu = [];
+				for (let filterValue in this.result.REVIEWS.FILTER) {
+					menu.push({
+						text: this.result.REVIEWS.FILTER[filterValue],
+						onclick: event => {
+							this.filterValue = filterValue;
+							this.page = 1;
+							this.moreReviews();
+						}
+					});
+				}
+				this.filterMenu = main_popup.MenuManager.create('reviews-popup-menu', this.$refs.myReviewsMenu, menu, {
+					closeByEsc: true,
+					autoHide: true,
+					angle: false,
+					offsetTop: 10
+				});
+			},
+			showMenu: function () {
+				this.filterMenu.show();
+			},
+			initLoaders: function () {
+				this.bottomLoader = new BX.Loader({
+					target: this.$refs.marketReviewsBottomLoader,
+					mode: 'inline',
+					size: 100
+				});
+				this.filterLoader = new BX.Loader({
+					target: this.$refs.marketReviewsLoader,
+					size: 100
+				});
+			},
+			bindNextPageEvent: function () {
+				BX.bind(document, 'scroll', event => {
+					if (this.needLoadNextPage(event.currentTarget)) {
+						this.nextPage();
+					}
+				});
+			},
+			needLoadNextPage: function (document) {
+				if (!document || !document.scrollingElement || !document.scrollingElement.scrollHeight || !this.showNextPageButton || this.nextPageLoadWait) {
+					return false;
+				}
+				const doc = document.scrollingElement;
+				return doc.scrollTop >= doc.scrollHeight - doc.offsetHeight * 1.5;
+			},
+			nextPage: function () {
+				if (this.nextPageLoadWait) {
+					return;
+				}
+				this.nextPageLoadWait = true;
+				this.page = parseInt(this.result.REVIEWS.CUR_PAGE, 10) + 1;
+				this.bottomLoader.show();
+				this.moreReviews(true);
+			},
+			moreReviews: function (append) {
+				append = append || false;
+				const isFilter = !append;
+				if (isFilter) {
+					this.filterMenu.close();
+					if (this.filterValue === this.result.REVIEWS.FILTER_CURRENT.VALUE) {
+						return;
+					}
+					this.filterLoader.show();
+				}
+				BX.ajax.runComponentAction(this.params.COMPONENT_NAME, 'getReviewPage', {
+					mode: 'class',
+					signedParameters: [],
+					data: {
+						page: this.page,
+						filter: this.filterValue
+					},
+					analyticsLabel: {
+						page: this.page,
+						filter: this.filterValue
+					}
+				}).then(response => {
+					this.nextPageLoadWait = false;
+					this.bottomLoader.hide();
+					this.filterLoader.hide();
+					if (response.data && response.data.reviews && BX.type.isArray(response.data.reviews.ITEMS)) {
+						if (isFilter) {
+							this.result.REVIEWS.ITEMS = response.data.reviews.ITEMS;
+						} else {
+							this.result.REVIEWS.ITEMS = this.result.REVIEWS.ITEMS.concat(response.data.reviews.ITEMS);
+						}
+						this.result.REVIEWS.CUR_PAGE = response.data.reviews.CUR_PAGE;
+						this.result.REVIEWS.PAGES = response.data.reviews.PAGES;
+						this.result.REVIEWS.FILTER_CURRENT = response.data.reviews.FILTER_CURRENT;
+						this.filterName = response.data.reviews.FILTER_CURRENT.NAME;
+					}
+				}, response => {
+					this.nextPageLoadWait = false;
+					this.bottomLoader.hide();
+				});
+			},
+			editedReviewHandler: function (index, reviewInfo) {
+				if (!this.result.REVIEWS.ITEMS[index] || !reviewInfo || !reviewInfo['RATING']) {
+					return;
+				}
+				this.result.REVIEWS.ITEMS[index]['REVIEW_FULL_TEXT_EDITING_SHOW'] = reviewInfo['REVIEW_FULL_TEXT_EDITING_SHOW'];
+				this.result.REVIEWS.ITEMS[index]['RATING'] = reviewInfo['RATING'];
+				this.result.REVIEWS.ITEMS[index]['REVIEW_FULL_ANSWER_TEXT_EDITING_SHOW'] = reviewInfo['REVIEW_FULL_ANSWER_TEXT_EDITING_SHOW'];
+				this.result.REVIEWS.ITEMS[index]['BLOCKED'] = reviewInfo['BLOCKED'];
+				this.result.REVIEWS.ITEMS[index]['PUBLISHED'] = reviewInfo['PUBLISHED'];
+				this.result.REVIEWS.ITEMS[index]['CAN_EDIT_REVIEW'] = reviewInfo['CAN_EDIT_REVIEW'];
+				this.result.REVIEWS.ITEMS[index]['EDIT_REVIEW_NOT_ALLOWED_TEXT'] = reviewInfo['EDIT_REVIEW_NOT_ALLOWED_TEXT'];
+			}
+		},
+		template: `
 		<div class="market-reviews__wrapper">
 			<div class="market-reviews__title">
 				{{ $Bitrix.Loc.getMessage('MARKET_MY_REVIEWS') }}
@@ -610,4 +618,4 @@ this.BX = this.BX || {};
 
 	exports.MyReviewsComponent = MyReviewsComponent;
 
-}((this.BX.Market = this.BX.Market || {}),BX.Main,BX.Market,BX.Vue3));
+})(this.BX.Market = this.BX.Market || {}, BX.Main, BX.Market, BX.Vue3);

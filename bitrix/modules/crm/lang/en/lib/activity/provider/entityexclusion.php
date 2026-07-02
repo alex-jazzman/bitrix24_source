@@ -1,0 +1,3 @@
+<?php
+$MESS["CRM_ACTIVITY_PROVIDER_ENTITY_EXCLUSION_NAME"] = "Add to Exceptions";
+$MESS["CRM_ACTIVITY_PROVIDER_ENTITY_EXCLUSION_SUBJECT"] = "#COPILOT_NAME# suggests to add the contact to Exceptions";

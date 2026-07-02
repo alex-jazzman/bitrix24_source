@@ -23,6 +23,7 @@ jn.define('im/messenger/controller/selector/dialog/opener', (require, exports, m
 		allowMultipleSelection = false,
 		integrateSelectorToParentLayout = false,
 		closeOnSelect = true,
+		sendButtonName,
 		onItemSelected,
 		onClose,
 		initSelectedIds,
@@ -39,6 +40,7 @@ jn.define('im/messenger/controller/selector/dialog/opener', (require, exports, m
 					horizontalSwipeAllowed: false,
 					onlyMediumPosition: true,
 				},
+				sendButtonName,
 			},
 			events: {
 				onItemSelected,

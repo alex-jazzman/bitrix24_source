@@ -1,0 +1,22 @@
+.bx-im-message-block-ordered-list__container {
+	display: flex;
+	flex-direction: column;
+	padding: 2px 0;
+	margin: 0;
+	gap: 10px;
+	list-style: none;
+}
+
+.bx-im-message-block-ordered-list__item {
+	display: flex;
+	align-items: flex-start;
+	gap: 2px;
+}
+
+.bx-im-message-block-ordered-list__marker {
+	display: inline-block;
+	width: 20px;
+	flex-shrink: 0;
+	line-height: 20px;
+	text-align: center;
+}

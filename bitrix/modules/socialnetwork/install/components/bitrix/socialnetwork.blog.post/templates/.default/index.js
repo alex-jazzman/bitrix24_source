@@ -96,7 +96,7 @@ this.BX.Socialnetwork.Blog = this.BX.Socialnetwork.Blog || {};
 			<span class="feed-inform-item feed-inform-comments feed-copilot-readonly">
 				<a>${0}</a>
 			</span>
-		`), main_core.Loc.getMessage('BLOG_POST_BUTTON_COPILOT'));
+		`), babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].copilotName);
 	  main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].button, 'mousedown', babelHelpers.classPrivateFieldLooseBase(this, _onButtonMouseDown)[_onButtonMouseDown].bind(this));
 	  main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].button, 'click', babelHelpers.classPrivateFieldLooseBase(this, _onButtonClick)[_onButtonClick].bind(this));
 	  return babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].button;

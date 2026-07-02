@@ -1,5 +1,6 @@
+import { BuilderModel, type ActionTree, type MutationTree, type GetterTree } from 'ui.vue3.vuex';
+
 import { Core } from 'im.v2.application.core';
-import { ActionTree, BuilderModel, MutationTree, GetterTree } from 'ui.vue3.vuex';
 
 type SelectState = {
 	collection: {

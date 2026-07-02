@@ -10,21 +10,6 @@ jn.define('im/messenger/provider/services/sync/filler', (require, exports, modul
 	 */
 	class SyncFiller
 	{
-		static instance = null;
-
-		/**
-		 * @return {SyncFiller}
-		 */
-		static getInstance()
-		{
-			if (!this.instance)
-			{
-				this.instance = new this();
-			}
-
-			return this.instance;
-		}
-
 		constructor()
 		{
 			this.storeFiller = new SyncFillerStore();
@@ -47,6 +32,12 @@ jn.define('im/messenger/provider/services/sync/filler', (require, exports, modul
 				this.storeFiller.fillDataWithoutEmit(result),
 				this.databaseFiller.fillDataWithoutEmit(result),
 			]);
+		}
+
+		unsubscribeEvents()
+		{
+			this.storeFiller.unsubscribeEvents();
+			this.databaseFiller.unsubscribeEvents();
 		}
 	}
 

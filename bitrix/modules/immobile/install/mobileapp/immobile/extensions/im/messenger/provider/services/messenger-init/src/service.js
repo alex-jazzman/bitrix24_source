@@ -11,6 +11,7 @@ jn.define('im/messenger/provider/services/messenger-init/service', (require, exp
 	const { runAction } = require('im/messenger/lib/rest');
 
 	/**
+	 * @implements {Unsubscribable}
 	 * @class MessengerInitService
 	 */
 	class MessengerInitService
@@ -82,6 +83,11 @@ jn.define('im/messenger/provider/services/messenger-init/service', (require, exp
 		onInit(eventHandler)
 		{
 			this.#on(EventType.messenger.init, eventHandler);
+		}
+
+		unsubscribeEvents()
+		{
+			this.eventEmitter.removeAll();
 		}
 
 		/**

@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_component_list_items_collab,im_v2_component_list_container_elements_createChatPromo,im_v2_const,im_v2_lib_analytics,im_v2_lib_feature,im_v2_lib_logger,im_v2_lib_createChat,im_v2_lib_permission) {
+(function (exports,im_v2_component_list_container_elements_createChatPromo,im_v2_component_list_items_collab,im_v2_const,im_v2_lib_analytics,im_v2_lib_createChat,im_v2_lib_feature,im_v2_lib_logger,im_v2_lib_permission) {
 	'use strict';
 
 	// @vue/component
@@ -13,7 +13,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    CollabList: im_v2_component_list_items_collab.CollabList,
 	    CreateChatPromo: im_v2_component_list_container_elements_createChatPromo.CreateChatPromo
 	  },
-	  emits: ['selectEntity'],
+	  emits: ['selectChat'],
 	  computed: {
 	    ChatType: () => im_v2_const.ChatType,
 	    canCreate() {
@@ -26,8 +26,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    im_v2_lib_logger.Logger.warn('List: Collab container created');
 	  },
 	  methods: {
-	    onChatClick(dialogId) {
-	      this.$emit('selectEntity', {
+	    onSelectChat(dialogId) {
+	      this.$emit('selectChat', {
 	        layoutName: im_v2_const.Layout.collab,
 	        entityId: dialogId
 	      });
@@ -57,7 +57,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			</div>
 			<div class="bx-im-list-container-collab__elements_container">
 				<div class="bx-im-list-container-collab__elements">
-					<CollabList @chatClick="onChatClick" />
+					<CollabList @selectChat="onSelectChat" />
 				</div>
 			</div>
 		</div>

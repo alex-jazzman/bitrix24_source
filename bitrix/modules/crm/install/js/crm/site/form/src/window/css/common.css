@@ -30,6 +30,12 @@
 
 .b24-window-close:hover { opacity: 1; }
 
+.b24-window-close:focus-visible {
+	outline: 1px solid var(--b24-primary-color);
+	outline-offset: 2px;
+	opacity: 1;
+}
+
 .b24-window-close:after,
 .b24-window-close:before {
 	content: '';

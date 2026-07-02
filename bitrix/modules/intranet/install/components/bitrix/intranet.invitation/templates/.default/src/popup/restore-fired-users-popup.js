@@ -9,6 +9,8 @@ export type RestoreFiredUsersPopupOptionsType = {
 	userList: Array,
 	isRestoreUsersAccessAvailable: Boolean,
 	transport: Transport,
+	departmentIds: Array;
+	workgroupIds: Array;
 }
 
 export class RestoreFiredUsersPopup
@@ -16,6 +18,8 @@ export class RestoreFiredUsersPopup
 	#popup: Popup;
 	#sendButton: Button;
 	#userList: Array;
+	#departmentIds: Array;
+	#workgroupIds: Array;
 	#selectedUserIds: Array;
 	#transport: Transport;
 	#popupContainer: ?HTMLElement;
@@ -27,6 +31,8 @@ export class RestoreFiredUsersPopup
 		this.#userList = options.userList;
 		this.#isRestoreUsersAccessAvailable = options.isRestoreUsersAccessAvailable;
 		this.#transport = options.transport;
+		this.#departmentIds = options.departmentIds;
+		this.#workgroupIds = options.workgroupIds;
 		this.#isMultipleMode = this.#userList.length > 1;
 		this.#selectedUserIds = this.#userList.map((user) => user.id);
 	}
@@ -296,6 +302,8 @@ export class RestoreFiredUsersPopup
 						action: 'restoreFiredUsers',
 						data: {
 							userIds: this.#isMultipleMode ? this.#selectedUserIds : [this.#userList[0].id],
+							departmentIds: this.#departmentIds,
+							workgroupIds: this.#workgroupIds,
 						},
 					},
 					{ showSuccessPopup: false },

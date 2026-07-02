@@ -376,6 +376,11 @@ class CrmUpdateDynamicActivity
 
 	addCondition(fieldId: string): void
 	{
+		if (Type.isNil(this.fieldsMap.get(this.currentEntityTypeId)[fieldId]))
+		{
+			return;
+		}
+
 		if (this.isRobot)
 		{
 			this.addRobotCondition(fieldId);

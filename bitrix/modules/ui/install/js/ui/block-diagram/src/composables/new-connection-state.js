@@ -1,57 +1,98 @@
 import { computed, toValue } from 'ui.vue3';
-import { getBeziePath, BEZIER_DIR } from '../utils';
-import { PORT_POSITION } from '../constants';
-import type { PathInfo } from '../utils';
 import { useBlockDiagram } from './block-diagram';
+import { getLinePath } from '../utils';
+import type { PathInfo, Rect, DiagramNewConnection } from '../utils';
 
 export type UseNewConnectionState = {
 	hasNewConnection: boolean;
+	hasSourcePort: boolean;
+	hasTargetPort: boolean;
+	sourcePortLayoutRect: Rect;
+	targetPortLayoutRect: Rect;
 	newConnectionPathInfo: PathInfo;
-	isValid: boolean;
+	newTmpConnectionPathInfo: PathInfo;
+	newConnection: DiagramNewConnection;
+};
+
+const DEFAULT_PATH_INFO: PathInfo = {
+	path: '',
+	center: {
+		x: 0,
+		y: 0,
+	},
 };
 
 export function useNewConnectionState(): UseNewConnectionState
 {
-	const { newConnection, isValidNewConnection } = useBlockDiagram();
+	const {
+		newConnection,
+		portsRectMap,
+	} = useBlockDiagram();
 
 	const hasNewConnection = computed((): boolean => {
 		return toValue(newConnection) !== null;
 	});
 
+	const hasSourcePort = computed((): boolean => {
+		return toValue(hasNewConnection)
+            && toValue(newConnection).sourceBlockId !== null
+            && toValue(newConnection).sourcePortId !== null;
+	});
+
+	const hasTargetPort = computed((): boolean => {
+		return toValue(hasNewConnection)
+            && toValue(newConnection).targetBlockId !== null
+            && toValue(newConnection).targetPortId !== null;
+	});
+
+	const sourcePortLayoutRect = computed((): Rect => {
+		const { x = 0, y = 0, width = 0, height = 0 } = toValue(portsRectMap)
+			?.[toValue(newConnection)?.sourceBlockId]
+			?.[toValue(newConnection)?.sourcePortId] ?? {};
+
+		return { x, y, width, height };
+	});
+
+	const targetPortLayoutRect = computed((): Rect => {
+		const { x = 0, y = 0, width = 0, height = 0 } = toValue(portsRectMap)
+			?.[toValue(newConnection)?.targetBlockId]
+			?.[toValue(newConnection)?.targetPortId] ?? {};
+
+		return { x, y, width, height };
+	});
+
 	const newConnectionPathInfo = computed((): PathInfo => {
 		if (!toValue(hasNewConnection))
 		{
-			return {
-				path: '',
-				center: {
-					x: 0,
-					y: 0,
-				},
-			};
+			return DEFAULT_PATH_INFO;
 		}
 
-		const isHorizontalBezier = ([PORT_POSITION.LEFT, PORT_POSITION.RIGHT])
-			.includes(toValue(newConnection).sourcePortPosition);
-
-		return getBeziePath(
+		return getLinePath(
 			toValue(newConnection).start,
-			toValue(newConnection).end,
-			isHorizontalBezier ? BEZIER_DIR.HORIZONTAL : BEZIER_DIR.VERTICAL,
+			toValue(newConnection).center,
 		);
 	});
 
-	const isValid = computed((): boolean => {
-		if (toValue(newConnection) === null)
+	const newTmpConnectionPathInfo = computed((): PathInfo => {
+		if (toValue(newConnection) === null || toValue(newConnection).end === null)
 		{
-			return true;
+			return DEFAULT_PATH_INFO;
 		}
 
-		return toValue(isValidNewConnection);
+		return getLinePath(
+			toValue(newConnection).center,
+			toValue(newConnection).end,
+		);
 	});
 
 	return {
 		hasNewConnection,
+		hasSourcePort,
+		hasTargetPort,
+		sourcePortLayoutRect,
+		targetPortLayoutRect,
 		newConnectionPathInfo,
-		isValid,
+		newTmpConnectionPathInfo,
+		newConnection,
 	};
 }

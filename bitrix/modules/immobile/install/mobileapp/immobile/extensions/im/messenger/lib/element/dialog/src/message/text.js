@@ -12,14 +12,13 @@ jn.define('im/messenger/lib/element/dialog/message/text', (require, exports, mod
 	{
 		/**
 		 * @param {MessagesModelState} modelMessage
-		 * @param {CreateMessageOptions} options
+		 * @param {CreateMessageOptions|{}} options
 		 */
-		constructor(modelMessage = {}, options = {})
+		constructor(modelMessage, options = {})
 		{
 			super(modelMessage, options);
 
 			this.setMessage(modelMessage.text, { dialogId: options.dialogId });
-			this.setShowTail(true);
 		}
 
 		getType()

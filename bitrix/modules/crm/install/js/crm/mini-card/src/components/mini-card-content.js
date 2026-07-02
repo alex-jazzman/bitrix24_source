@@ -1,4 +1,4 @@
-import { BitrixVueComponentProps } from 'ui.vue3';
+import { type BitrixVueComponentProps } from 'ui.vue3';
 import { MiniCardItem } from '../lib/model/mini-card-item';
 
 import { ImageAvatar } from './avatar/avatar-list/image-avatar/image-avatar';
@@ -71,20 +71,20 @@ export const MiniCardContent: BitrixVueComponentProps = {
 	},
 
 	template: `
-		<div class="crm-mini-card-content" :id="miniCard.id()">
+		<div class="crm-mini-card-content" :id="miniCard.id">
 			<div class="crm-mini-card-content__header">
 				<div class="crm-mini-card-content__header-info">
 					<div class="crm-mini-card-content__header-icon">
-						<component :is="miniCard.avatar().componentName()" v-bind="miniCard.avatar().componentProps()" />
+						<component :is="miniCard.avatar.componentName" v-bind="miniCard.avatar.componentProps" />
 					</div>
 					<div class="crm-mini-card-content__header-title">
-						{{ miniCard.title() }}
+						{{ miniCard.title }}
 					</div>
 				</div>
 				<div class="crm-mini-card-content__header-control-container">
 					<div class="crm-mini-card-content__header-control-list">
-						<div class="crm-mini-card-content__header-control-item" v-for="control in miniCard.controls()">
-							<component :is="control.componentName()" v-bind="control.componentProps()" />
+						<div class="crm-mini-card-content__header-control-item" v-for="control in miniCard.controls">
+							<component :is="control.componentName" v-bind="control.componentProps" />
 						</div>
 					</div>
 				</div>
@@ -92,16 +92,16 @@ export const MiniCardContent: BitrixVueComponentProps = {
 			<div class="crm-mini-card-content__body">
 				<div class="crm-mini-card-content__body-field-container">
 					<div class="crm-mini-card-content__body-field-list">
-						<div class="crm-mini-card-content__body-field-item" v-for="field in miniCard.fields()">
-							<component :is="field.componentName()" v-bind="field.componentProps()" />
+						<div class="crm-mini-card-content__body-field-item" v-for="field in miniCard.fields">
+							<component :is="field.componentName" v-bind="field.componentProps" />
 						</div>
 					</div>
 				</div>
 			</div>
 			<div class="crm-mini-card-content__footer">
 				<div class="crm-mini-card-content__footer-notes-list">
-					<div v-for="footerNote in miniCard.footerNotes()" class="crm-mini-card-content__footer-note-item">
-						<component :is="footerNote.componentName()" v-bind="footerNote.componentProps()" />
+					<div v-for="footerNote in miniCard.footerNotes" class="crm-mini-card-content__footer-note-item">
+						<component :is="footerNote.componentName" v-bind="footerNote.componentProps" />
 					</div>
 				</div>
 			</div>

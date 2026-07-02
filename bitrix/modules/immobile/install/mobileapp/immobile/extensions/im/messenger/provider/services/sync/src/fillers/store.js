@@ -3,6 +3,7 @@
  */
 jn.define('im/messenger/provider/services/sync/fillers/store', (require, exports, module) => {
 	const { Type } = require('type');
+	const { clone } = require('utils/object');
 
 	const { DialogType, RecentTab } = require('im/messenger/const');
 	const { DialogHelper } = require('im/messenger/lib/helper');
@@ -18,6 +19,17 @@ jn.define('im/messenger/provider/services/sync/fillers/store', (require, exports
 	 */
 	class SyncFillerStore extends SyncFillerBase
 	{
+		/**
+		 * @param {SyncListResult} result
+		 * @return {SyncListResult}
+		 */
+		prepareResult(result)
+		{
+			const cloneResult = clone(result);
+
+			return this.filterChildChats(this.filterUsers(cloneResult));
+		}
+
 		/**
 		 * @param {SyncListResult} result
 		 */

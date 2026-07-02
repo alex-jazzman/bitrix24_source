@@ -13,12 +13,12 @@ return [
 	],
 	'rel' => [
 		'main.polyfill.core',
+		'im.lib.utils',
+		'im.model',
 		'ui.design-tokens',
 		'ui.icons.disk',
-		'ui.vue.directives.lazyload',
-		'im.model',
-		'im.lib.utils',
 		'ui.vue',
+		'ui.vue.directives.lazyload',
 	],
 	'skip_core' => true,
 ];

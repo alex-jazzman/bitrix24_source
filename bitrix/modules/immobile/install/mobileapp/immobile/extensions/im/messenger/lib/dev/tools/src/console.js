@@ -20,7 +20,7 @@ jn.define('im/messenger/lib/dev/tools/console', (require, exports, module) => {
 	} = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('dev--console');
 
-	/** @type MessageContextMenuButton */
+	/** @type MessageContextMenuActionItem */
 	const CopyAction = {
 		id: 'copy',
 		type: 'button',

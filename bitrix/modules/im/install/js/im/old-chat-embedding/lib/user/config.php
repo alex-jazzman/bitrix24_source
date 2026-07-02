@@ -9,9 +9,9 @@ return [
 		'./dist/user.bundle.js',
 	],
 	'rel' => [
-		'main.core',
 		'im.old-chat-embedding.application.core',
 		'im.old-chat-embedding.const',
+		'main.core',
 	],
 	'skip_core' => false,
 ];

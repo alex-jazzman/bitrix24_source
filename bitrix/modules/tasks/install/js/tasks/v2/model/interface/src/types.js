@@ -1,5 +1,5 @@
-import type { UserDto } from 'tasks.v2.provider.service.user-service';
-import type { TaskModel } from 'tasks.v2.model.tasks';
+import { type UserDto } from 'tasks.v2.provider.service.user-service';
+import { type TaskModel } from 'tasks.v2.model.tasks';
 
 export type InterfaceModelParams = {
 	currentUser: UserDto,
@@ -15,7 +15,6 @@ export type InterfaceModelParams = {
 
 export type InterfaceModelState = {
 	currentUserId: number,
-	deadlineChangeCount: number,
 	titleFieldOffsetHeight: ?number,
 	stateFlags: StateFlags,
 	templateStateFlags: StateFlags,
@@ -27,6 +26,8 @@ export type InterfaceModelState = {
 	taskUserFieldScheme: UserFieldScheme[],
 	templateUserFieldScheme: UserFieldScheme[],
 	taskWithActiveTimer: ?TaskModel,
+	fullCardWidth: ?number,
+	taskListOptions: TaskListOptions,
 };
 
 export type DeadlineUserOption = {
@@ -43,6 +44,7 @@ export type DeadlineUserOption = {
 
 type FullCardOptions = {
 	cardWidth?: number,
+	taskListOptions?: TaskListOptions,
 }
 
 export type CheckListCompletionCallbacks = { [id: string]: CheckListCompletionCallback };
@@ -54,6 +56,14 @@ export type StateFlags = {
 	matchesWorkTime: boolean,
 	allowsTimeTracking: boolean,
 	defaultRequireResult: boolean,
+};
+
+export type TaskListOptions = {
+	showCompletedSubTasks: boolean,
+	showCompletedRelatedTasks: boolean,
+	showCompletedGantt: boolean,
+	showSubTasks: boolean,
+	showSubTemplates: boolean,
 };
 
 export type UserFieldScheme = {

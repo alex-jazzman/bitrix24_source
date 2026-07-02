@@ -1,9 +1,9 @@
 import { AudioPlayerComponent } from 'crm.audio-player';
 import { DatetimeConverter } from 'crm.timeline.tools';
 import { ajax as Ajax, Loc, Text, Type } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { type BaseEvent, EventEmitter } from 'main.core.events';
 import { Pull } from '../pull';
-import { ViewMode, ViewModeType } from './common/view-mode';
+import { ViewMode, type ViewModeType } from './common/view-mode';
 import { Compliance as ComplianceComponent } from './compliance';
 import { AssessmentSettingsPendingBlock } from './explanation/assessment-settings-pending-block';
 import { EmptyScriptListBlock } from './explanation/empty-script-list-block';

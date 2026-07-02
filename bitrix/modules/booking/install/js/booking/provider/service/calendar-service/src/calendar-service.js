@@ -7,7 +7,7 @@ import { bookingFilter, bookingDateCountFilter } from 'booking.lib.booking-filte
 import type { BookingListFilter, BookingUIFilter } from 'booking.lib.booking-filter';
 
 import { requestNextBookingDatesGenerator } from './lib';
-import { CalendarGetBookingsDatesResponse, CalendarGetBookingsDatesCountResponse } from './types';
+import type { CalendarGetBookingsDatesResponse, CalendarGetBookingsDatesCountResponse } from './types';
 
 export class CalendarService
 {
@@ -17,6 +17,7 @@ export class CalendarService
 	#freeMarksRequests: { [key: string]: Promise } = {};
 	#lastFreeMarksRequest: Promise;
 	#counterMarksRequests: { [key: string]: Promise } = {};
+	#freeDatesForResourceRequests: { [key: string]: Promise<string[]> } = {};
 
 	clearCache(timestamp: number, resourceId: number): void
 	{
@@ -190,6 +191,26 @@ export class CalendarService
 		finally
 		{
 			$store.dispatch(`${Model.Filter}/setFetchingNextDate`, false);
+		}
+	}
+
+	async getFreeDatesForResource(
+		resourceId: number,
+		dateTs: number,
+	): Promise<string[]>
+	{
+		try
+		{
+			const key = JSON.stringify({ resourceId, dateTs });
+			this.#freeDatesForResourceRequests[key] ??= this.#requestLoadMarks(dateTs, [[resourceId]]);
+
+			return await this.#freeDatesForResourceRequests[key];
+		}
+		catch (error)
+		{
+			console.error('CalendarService: getFreeDatesForResource error', error);
+
+			return [];
 		}
 	}
 

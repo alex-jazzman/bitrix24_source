@@ -29,7 +29,7 @@ class AppNameFiller extends FillerBase
 		parent::__construct($params, $result, $request);
 
 		$this->app = $result['APPLICATION'];
-		$this->placement = (string)$this->params['PLACEMENT'] ?? null;
+		$this->placement = (string)($this->params['PLACEMENT'] ?? '');
 		$this->placementData = $this->result['PLACEMENT_DATA'] ?? null;
 	}
 

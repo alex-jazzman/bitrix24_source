@@ -13,8 +13,8 @@ return [
 		'main.popup',
 		'ui.buttons',
 		'ui.design-tokens',
-		'ui.tooltip',
 		'ui.hint',
+		'ui.tooltip',
 	],
 	'skip_core' => false,
 ];

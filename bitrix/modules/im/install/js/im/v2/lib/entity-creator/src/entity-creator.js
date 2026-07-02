@@ -1,13 +1,12 @@
-import { Runtime } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
-import 'calendar.sliderloader';
+import { Runtime, type JsonObject } from 'main.core';
+import { type BaseEvent, EventEmitter } from 'main.core.events';
 
-import { runAction } from 'im.v2.lib.rest';
+import 'calendar.sliderloader';
+import { type RestClient } from 'rest.client';
+
 import { Core } from 'im.v2.application.core';
 import { RestMethod } from 'im.v2.const';
-
-import type { RestClient } from 'rest.client';
-import type { JsonObject } from 'main.core';
+import { runAction } from 'im.v2.lib.rest';
 
 export type TaskV2Params = {
 	groupId?: number,

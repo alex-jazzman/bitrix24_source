@@ -1,0 +1,56 @@
+.bx-im-list-container-create-chat__container {
+	--im-list-container-create-chat__background-color_container: rgba(var(--im-color-palette-blue-60-rgb), 0.12);
+	--im-list-container-create-chat__background-color_container-hover: rgba(var(--im-color-palette-blue-60-rgb), 0.22);
+	--im-list-container-create-chat__background-color_icon: var(--im-color-accent-blue);
+	--im-list-container-create-chat__background-color_spinner: var(--im-color-accent-blue);
+
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 44px;
+	height: 34px;
+	border-radius: 80px;
+	background-color: var(--im-list-container-create-chat__background-color_container);
+	cursor: pointer;
+	transition: background-color 0.2ms ease;
+}
+
+.bx-im-list-container-create-chat__container:hover {
+	background-color: var(--im-list-container-create-chat__background-color_container-hover);
+}
+
+.bx-im-list-container-create-chat__icon {
+	content: '';
+	position: absolute;
+	width: 24px;
+	height: 24px;
+	background-color: var(--im-list-container-create-chat__background-color_icon);
+	mask-image: url('./images/plus.svg');
+	mask-position: center;
+	mask-repeat: no-repeat;
+}
+
+.bx-im-list-container-create-chat__spinner {
+	width: 20px;
+	height: 20px;
+	border-width: 2px;
+	border-radius: 50%;
+	border-style: solid;
+	border-color:
+		var(--im-list-container-create-chat__background-color_icon)
+		var(--im-list-container-create-chat__background-color_icon)
+		var(--im-list-container-create-chat__background-color_icon)
+		transparent;
+	animation: imRotate360 .8s linear infinite;
+}
+
+@keyframes imRotate360 {
+	0% {
+		transform: rotate(0deg);
+	}
+	100% {
+		transform: rotate(360deg);
+	}
+}

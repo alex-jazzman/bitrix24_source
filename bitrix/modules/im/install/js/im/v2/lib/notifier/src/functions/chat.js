@@ -1,6 +1,6 @@
 import { Loc } from 'main.core';
 
-import { ErrorCode } from 'im.v2.const';
+import { ChatType, ErrorCode, type ChatTypeItem } from 'im.v2.const';
 
 import { showNotification } from '../utils/notification';
 import { extractRestErrorCode, type RestError } from '../utils/error';
@@ -64,9 +64,16 @@ export const ChatNotifier = {
 		showNotification(Loc.getMessage('IM_NOTIFIER_CONTEXT_MESSAGE_NOT_FOUND_ERROR'));
 	},
 
-	onCreateError(): void
+	handleCreateError(error: RestError): void
 	{
-		showNotification(Loc.getMessage('IM_NOTIFIER_CHAT_CREATE_ERROR'));
+		const errorCode = extractRestErrorCode(error);
+		const NotificationTextByErrorCode = {
+			CALL_MODULE_NOT_INSTALLED: Loc.getMessage('IM_NOTIFIER_CONFERENCE_MODULE_NOT_INSTALLED_ERROR'),
+			default: Loc.getMessage('IM_NOTIFIER_CHAT_CREATE_ERROR'),
+		};
+
+		const notificationText = NotificationTextByErrorCode[errorCode] ?? NotificationTextByErrorCode.default;
+		showNotification(notificationText);
 	},
 
 	onUpdateError(): void
@@ -91,14 +98,26 @@ export const ChatNotifier = {
 		}));
 	},
 
-	onUserAddComplete(): void
+	handleUserAddComplete(chatType: ChatTypeItem)
 	{
-		showNotification(Loc.getMessage('IM_NOTIFIER_CHAT_USER_ADD_COMPLETE'));
+		const NotificationTextByChatType = {
+			[ChatType.taskComments]: Loc.getMessage('IM_NOTIFIER_TASK_COMMENTS_USER_ADD_COMPLETE'),
+			default: Loc.getMessage('IM_NOTIFIER_CHAT_USER_ADD_COMPLETE'),
+		};
+
+		const notificationText = NotificationTextByChatType[chatType] ?? NotificationTextByChatType.default;
+		showNotification(notificationText);
 	},
 
-	onUserAddError(): void
+	handleUserAddError(chatType: ChatTypeItem)
 	{
-		showNotification(Loc.getMessage('IM_NOTIFIER_CHAT_USER_ADD_ERROR'));
+		const NotificationTextByChatType = {
+			[ChatType.taskComments]: Loc.getMessage('IM_NOTIFIER_TASK_COMMENTS_USER_ADD_ERROR'),
+			default: Loc.getMessage('IM_NOTIFIER_CHAT_USER_ADD_ERROR'),
+		};
+
+		const notificationText = NotificationTextByChatType[chatType] ?? NotificationTextByChatType.default;
+		showNotification(notificationText);
 	},
 
 	onCopyIdComplete()

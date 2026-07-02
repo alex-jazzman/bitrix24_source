@@ -7,7 +7,7 @@ jn.define('im/messenger/lib/element/dialog/message/banner/handler', (require, ex
 	const { CustomMessageHandler } = require('im/messenger/lib/element/dialog/message/custom/handler');
 	const { BannerMessageConfiguration } = require('im/messenger/lib/element/dialog/message/banner/configuration');
 	const { ButtonId } = require('im/messenger/lib/element/dialog/message/banner/const/type');
-	const { MessageParams } = require('im/messenger/const');
+	const { MessageComponent } = require('im/messenger/const');
 
 	/**
 	 * @class BannerMessageHandler
@@ -87,7 +87,7 @@ jn.define('im/messenger/lib/element/dialog/message/banner/handler', (require, ex
 		{
 			if (this.isPlanLimitsBanner(buttonId))
 			{
-				return configuration.getMetaData(MessageParams.ComponentId.PlanLimitsMessage).banner;
+				return configuration.getMetaData(MessageComponent.planLimits).banner;
 			}
 
 			const componentId = configuration.getMetaDataKey();

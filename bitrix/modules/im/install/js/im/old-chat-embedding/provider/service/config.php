@@ -10,11 +10,11 @@ return [
 	],
 	'rel' => [
 		'main.polyfill.core',
-		'main.core.events',
-		'rest.client',
 		'im.old-chat-embedding.application.core',
 		'im.old-chat-embedding.const',
 		'im.old-chat-embedding.lib.logger',
+		'main.core.events',
+		'rest.client',
 	],
 	'skip_core' => true,
 ];

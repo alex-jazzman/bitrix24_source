@@ -1,12 +1,13 @@
-<?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+<?php
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
 return [
-	'js' => [
-		'/bitrix/js/ui/pdfjs/pdf.js',
-//		'/bitrix/js/ui/pdfjs/pdf.worker.js',
+	'js' => 'dist/pdfjs.bundle.js',
+	'rel' => [
+		'main.polyfill.core',
 	],
+	'skip_core' => true,
 ];

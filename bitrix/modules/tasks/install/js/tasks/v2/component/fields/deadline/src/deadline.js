@@ -2,15 +2,14 @@ import { Runtime } from 'main.core';
 import { DurationFormat } from 'main.date';
 import { EventEmitter, type BaseEvent } from 'main.core.events';
 
-import { mapGetters } from 'ui.vue3.vuex';
 import { Notifier } from 'ui.notification-manager';
 import { hint, type HintParams } from 'ui.vue3.directives.hint';
 import { TextMd, Text2Xs } from 'ui.system.typography.vue';
-import { BIcon, Outline } from 'ui.icon-set.api.vue';
+import { BIcon } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
 import { Core } from 'tasks.v2.core';
-import { Model, EventName, TaskStatus, Endpoint } from 'tasks.v2.const';
+import { EventName, TaskStatus, Endpoint, DeadlineState } from 'tasks.v2.const';
 import { TaskSettingsPopup } from 'tasks.v2.component.task-settings-popup';
 import { SettingsLabel } from 'tasks.v2.component.elements.settings-label';
 import { Hint, tooltip } from 'tasks.v2.component.elements.hint';
@@ -20,13 +19,16 @@ import { calendar } from 'tasks.v2.lib.calendar';
 import { heightTransition } from 'tasks.v2.lib.height-transition';
 import { deadlineService } from 'tasks.v2.provider.service.deadline-service';
 import { taskService } from 'tasks.v2.provider.service.task-service';
-import type { TaskModel } from 'tasks.v2.model.tasks';
+import { type TaskModel } from 'tasks.v2.model.tasks';
 
+import { DeadlineDefaultView } from './deadline-default-view';
+import { DeadlineChipView } from './deadline-chip-view';
 import { DeadlinePopup } from './deadline-popup/deadline-popup';
 import { DeadlineChangeReasonPopup } from './deadline-change-reason-popup/deadline-change-reason-popup';
 import { DeadlineAfterPopup } from './deadline-after-popup/deadline-after-popup';
 import { Presets } from './deadline-after-popup/deadline-after-popup-content';
 import { deadlineMeta } from './deadline-meta';
+
 import './deadline.css';
 
 const unitDurations = DurationFormat.getUnitDurations();
@@ -44,6 +46,8 @@ export const Deadline = {
 		DeadlineChangeReasonPopup,
 		SettingsLabel,
 		TaskSettingsPopup,
+		DeadlineDefaultView,
+		DeadlineChipView,
 	},
 	directives: { hint },
 	props: {
@@ -73,6 +77,7 @@ export const Deadline = {
 	{
 		return {
 			deadlineMeta,
+			DeadlineState,
 		};
 	},
 	data(): Object
@@ -93,25 +98,30 @@ export const Deadline = {
 		};
 	},
 	computed: {
-		...mapGetters({
-			deadlineChangeCount: `${Model.Interface}/deadlineChangeCount`,
-		}),
 		task(): TaskModel
 		{
 			return taskService.getStoreTask(this.taskId);
+		},
+		taskStatus(): string
+		{
+			return this.task.status;
 		},
 		isEdit(): boolean
 		{
 			return idUtils.isReal(this.taskId);
 		},
+		taskDeadline(): number
+		{
+			return this.isTemplate ? this.task.deadlineAfter : this.task.deadlineTs;
+		},
 		deadlineTs(): number
 		{
-			return this.dateTs ?? (this.isTemplate ? this.task.deadlineAfter : this.task.deadlineTs);
+			return this.dateTs ?? this.taskDeadline;
 		},
 		expiredDuration(): number
 		{
-			const isCompleted = this.task.status === TaskStatus.Completed
-				|| this.task.status === TaskStatus.SupposedlyCompleted
+			const isCompleted = this.taskStatus === TaskStatus.Completed
+				|| this.taskStatus === TaskStatus.SupposedlyCompleted
 			;
 			const cannotExpire = this.isTemplate
 				|| !this.deadlineTs
@@ -124,12 +134,6 @@ export const Deadline = {
 		isExpired(): boolean
 		{
 			return this.expiredDuration > 0;
-		},
-		expiredFormatted(): string
-		{
-			return this.loc('TASKS_V2_DEADLINE_EXPIRED', {
-				'#EXPIRED_DURATION#': new DurationFormat(this.expiredDuration).formatClosest(),
-			});
 		},
 		deadlineFormatted(): string
 		{
@@ -176,31 +180,30 @@ export const Deadline = {
 
 			return calendar.formatDateTime(this.deadlineTs);
 		},
-		iconName(): string
-		{
-			return this.isFlowFilledOnAdd ? Outline.BOTTLENECK : Outline.CALENDAR_WITH_SLOTS;
-		},
 		bindElement(): HTMLElement
 		{
-			return this.externalBindElement ?? this.$refs.deadline.$el;
+			return this.externalBindElement ?? this.$refs.container;
 		},
 		isFlowFilledOnAdd(): boolean
 		{
 			return !this.isEdit && this.task.flowId > 0;
 		},
-		canChangeSettings(): boolean
-		{
-			const features = Core.getParams().features;
-			if (!features.isV2Enabled)
-			{
-				return false;
-			}
-
-			return this.task.rights.edit;
-		},
 		readonly(): boolean
 		{
+			if (this.isCompactReadonly)
+			{
+				return true;
+			}
+
 			return !this.task.rights.deadline || this.exceededChangeCount || this.isFlowFilledOnAdd;
+		},
+		isCompactReadonly(): string[]
+		{
+			return this.compact && [
+				TaskStatus.Completed,
+				TaskStatus.SupposedlyCompleted,
+				TaskStatus.Deferred,
+			].includes(this.taskStatus);
 		},
 		canChangeDeadlineWithoutLimitation(): boolean
 		{
@@ -219,11 +222,16 @@ export const Deadline = {
 				return false;
 			}
 
-			return this.deadlineChangeCount >= this.task.maxDeadlineChanges;
+			return this.task.deadlineChangeCount >= this.task.maxDeadlineChanges;
 		},
 		canChangeTooltip(): ?Function
 		{
-			if (!this.isEdit || !this.readonly || this.exceededChangeCount)
+			if (this.isCompactReadonly)
+			{
+				return null;
+			}
+
+			if (!this.isEdit || !this.readonly || this.exceededChangeCount || this.task.allowsChangeDeadline)
 			{
 				return null;
 			}
@@ -238,7 +246,9 @@ export const Deadline = {
 		},
 		hintBindElement(): HTMLElement
 		{
-			return this.$refs.deadlineIcon?.$el ?? this.$refs.deadline?.$el;
+			return this.$refs.deadlineView?.getHintBindElement?.()
+				?? this.$refs.container
+			;
 		},
 		hintAngleOffset(): number
 		{
@@ -329,7 +339,7 @@ export const Deadline = {
 		},
 		handleClose(): void
 		{
-			if (this.requireChangeReason && this.dateTs)
+			if (this.requireChangeReason && this.dateTs && this.dateTs !== this.taskDeadline)
 			{
 				this.isChangeReasonPopupShown = true;
 
@@ -341,7 +351,11 @@ export const Deadline = {
 			}
 
 			this.isPopupShown = false;
-			this.$refs.deadline?.$el?.focus();
+
+			if (this.$refs?.deadlineView)
+			{
+				this.$refs.deadlineView.focusDeadline();
+			}
 		},
 		async handleChangeReasonPopupClose(): void
 		{
@@ -443,64 +457,72 @@ export const Deadline = {
 				text: error?.message,
 			});
 		},
+		mouseover(): void
+		{
+			this.isFieldHovered = true;
+
+			if (this.compact)
+			{
+				this.isExceededHintShown = true;
+			}
+		},
+		mouseleave(): void
+		{
+			this.isFieldHovered = false;
+
+			if (this.compact)
+			{
+				this.isExceededHintShown = false;
+			}
+		},
 	},
 	template: `
 		<div
-			v-hint="canChangeTooltip"
-			class="tasks-field-deadline"
-			:class="{ '--expired': isExpired }"
+			class="tasks-field-deadline-wrapper"
 			:data-task-id="taskId"
 			:data-task-field-id="deadlineMeta.id"
 			:data-task-field-value="task.deadlineTs"
-			@mouseover="isFieldHovered = true"
-			@mouseleave="isFieldHovered = false"
+			@mouseover="mouseover"
+			@mouseleave="mouseleave"
 			ref="container"
 		>
-			<div class="tasks-field-deadline-inner">
-				<HoverPill
-					:withClear="Boolean(deadlineTs)"
-					:readonly
-					:textOnly="compact"
-					:noOffset="compact"
-					:active="isPopupShown"
-					:alert="isExpired"
-					@click="handleClick"
-					@clear="handleCrossClick"
-					@keydown="handleKeydown"
-					@mouseover="isExceededHintShown = true"
-					@mouseleave="isExceededHintShown = false"
-					ref="deadline"
-				>
-					<BIcon
-						v-if="!compact"
-						class="tasks-field-deadline-icon" 
-						:name="iconName"
-						ref="deadlineIcon"
-					/>
-					<TextMd 
-						class="tasks-field-deadline-text print-ignore" 
-						:accent="isExpired"
-					>
-						{{ deadlineFormatted }}
-					</TextMd>
-					<TextMd
-						class="tasks-field-deadline-text --display-none print-display-block" 
-						:accent="isExpired">{{ deadlineFormattedForPrint }}
-					</TextMd>
-				</HoverPill>
-				<div
-					v-if="!isFlowFilledOnAdd && !compact"
-					class="tasks-field-deadline-settings-label"
-					ref="settings"
-				>
-					<SettingsLabel
-						v-if="canChangeSettings && (isHovered || isFieldHovered || isSettingsPopupShown)"
-						data-settings-label
-						@click="isSettingsPopupShown = true"
-					/>
-				</div>
-			</div>
-			<Text2Xs v-if="isExpired && !compact" class="tasks-field-deadline-expired print-ignore">{{ expiredFormatted }}</Text2Xs>
+			<DeadlineChipView
+				v-if="compact"
+				v-hint="canChangeTooltip"
+				:deadlineFormatted
+				:isExpired
+				:readonly
+				:taskStatus
+				:deadlineTs
+				:isFlowFilledOnAdd
+				:isTemplate
+				@click="handleClick"
+				@keydown="handleKeydown"
+				ref="deadlineView"
+			/>
+			<DeadlineDefaultView
+				v-else
+				v-hint="canChangeTooltip"
+				:taskId
+				:deadlineFormatted
+				:deadlineFormattedForPrint
+				:isExpired
+				:expiredDuration
+				:readonly
+				:isPopupShown
+				:deadlineTs
+				:isFlowFilledOnAdd
+				:isTemplate
+				:isHovered
+				:isFieldHovered
+				:isSettingsPopupShown
+				@click="handleClick"
+				@clear="handleCrossClick"
+				@keydown="handleKeydown"
+				@settingsClick="isSettingsPopupShown = true"
+				@update:isExceededHintShown="isExceededHintShown = $event"
+				ref="deadlineView"
+			/>
 		</div>
 		<DeadlinePopup
 			v-if="!isTemplate && isPopupShown"
@@ -527,7 +549,7 @@ export const Deadline = {
 		/>
 		<TaskSettingsPopup v-if="isSettingsPopupShown" @close="isSettingsPopupShown = false"/>
 		<Hint
-			v-if="exceededChangeCount && isExceededHintShown"
+			v-if="exceededChangeCount && isExceededHintShown && !isCompactReadonly"
 			:bindElement="hintBindElement"
 			:options="{
 				maxWidth: 330,

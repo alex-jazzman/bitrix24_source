@@ -6,14 +6,8 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/menu/sticker', (req
 	const { Icon } = require('assets/icons');
 
 	const { Loc } = require('im/messenger/loc');
-	const { StickerEventType } = require('im/messenger/controller/dialog/lib/sticker/src/const');
+	const { StickerEventType, MenuActionType } = require('im/messenger/controller/dialog/lib/sticker/src/const');
 	const { emitter } = require('im/messenger/controller/dialog/lib/sticker/src/utils/emitter');
-
-	const ActionType = {
-		send: 'send',
-		deleteFromRecent: 'deleteFromRecent',
-		delete: 'delete',
-	};
 
 	/**
 	 * @class StickerMenu
@@ -34,13 +28,13 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/menu/sticker', (req
 		}
 
 		/**
-		 * @return {Record<string, Partial<UIMenuActionProps>>}
+		 * @return {Record<string, Partial<PopupMenuActionItem>>}
 		 */
 		get #actionCollection()
 		{
 			return {
-				[ActionType.send]: {
-					id: 'send',
+				[MenuActionType.send]: {
+					id: MenuActionType.send,
 					testId: 'send',
 					title: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_STICKER_MENU_STICKER_SEND_ACTION'),
 					icon: Icon.SEND,
@@ -48,8 +42,8 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/menu/sticker', (req
 						this.#sendStickerEvent(StickerEventType.action.send);
 					},
 				},
-				[ActionType.deleteFromRecent]: {
-					id: 'deleteFromRecent',
+				[MenuActionType.deleteFromRecent]: {
+					id: MenuActionType.deleteFromRecent,
 					testId: 'deleteFromRecent',
 					title: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_STICKER_MENU_STICKER_DELETE_FROM_RECENT_ACTION'),
 					icon: Icon.CIRCLE_CROSS,
@@ -57,8 +51,8 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/menu/sticker', (req
 						this.#sendStickerEvent(StickerEventType.action.deleteRecentSticker);
 					},
 				},
-				[ActionType.delete]: {
-					id: 'delete',
+				[MenuActionType.delete]: {
+					id: MenuActionType.delete,
 					testId: 'delete',
 					title: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_STICKER_MENU_STICKER_DELETE_ACTION'),
 					icon: Icon.TRASHCAN,
@@ -79,7 +73,7 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/menu/sticker', (req
 		}
 
 		/**
-		 * @return {Array<UIMenuActionProps>}
+		 * @return {Array<PopupMenuActionItem>}
 		 */
 		#getActions()
 		{
@@ -99,5 +93,5 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/menu/sticker', (req
 		}
 	}
 
-	module.exports = { StickerMenu, ActionType };
+	module.exports = { StickerMenu };
 });

@@ -1,4 +1,4 @@
-import { Communication } from 'crm.client-selector';
+import { type Communication } from 'crm.client-selector';
 
 declare type Config = {
 	channels: Channel[],
@@ -62,16 +62,12 @@ declare type ChatService = {
 	disabledHint?: string,
 	region?: ChatServiceRegion,
 	title: string,
-	commonClass: string,
 	iconClass: string,
-	iconColor: string,
 	checkServiceId?: string,
 	hideOnBox?: boolean,
 }
 
-declare type ChatServiceRegion = {
-	region: 'ru' | '!ru',
-}
+declare type ChatServiceRegion = 'ru' | '!ru' | Array<string>;
 
 export {
 	Channel,

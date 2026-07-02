@@ -14,4 +14,11 @@ export const RestMethod = Object.freeze({
 	linesV2MessageAddSession: 'imopenlines.v2.Message.addSession',
 	linesV2SessionSetSilentMode: 'imopenlines.v2.Session.setSilentMode',
 	linesV2SessionGetSilentMode: 'imopenlines.v2.Session.isSilentMode',
+	linesV2CrmFormList: 'imopenlines.v2.Crm.Form.list',
+	linesV2CrmFormSend: 'imopenlines.v2.Crm.Form.send',
+	linesV2QuickReplyList: 'imopenlines.v2.QuickReply.list',
+	linesV2QuickReplySave: 'imopenlines.v2.QuickReply.save',
+	linesV2QuickReplySaveFromMessage: 'imopenlines.v2.QuickReply.saveFromMessage',
+	linesV2QuickReplyIncrementRating: 'imopenlines.v2.QuickReply.incrementRating',
+	linesV2QuickReplyDelete: 'imopenlines.v2.QuickReply.delete',
 });

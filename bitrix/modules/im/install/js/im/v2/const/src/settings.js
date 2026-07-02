@@ -1,4 +1,4 @@
-import { DialogAlignment, NotificationSettingsMode } from 'im.v2.const';
+import { type DialogAlignment, type NotificationSettingsMode } from 'im.v2.const';
 
 export const Settings = Object.freeze({
 	appearance: {

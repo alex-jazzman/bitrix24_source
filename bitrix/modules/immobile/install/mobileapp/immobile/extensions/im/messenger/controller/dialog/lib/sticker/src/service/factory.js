@@ -22,6 +22,8 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/service/factory', (req
 				status: UploadStatus.progress,
 				serverFileId: null,
 				localUrl: file.url,
+				width: file.width,
+				height: file.height,
 				progress: 0,
 			};
 		}

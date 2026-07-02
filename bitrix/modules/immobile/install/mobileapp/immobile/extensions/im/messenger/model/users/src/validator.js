@@ -118,7 +118,6 @@ jn.define('im/messenger/model/users/src/validator', (require, exports, module) =
 		if (Type.isObject(fields.bot_data))
 		{
 			result.botData = {
-				appId: fields.bot_data.app_id,
 				code: fields.bot_data.code,
 				isHidden: fields.bot_data.is_hidden,
 				isSupportOpenline: fields.bot_data.is_support_openline,

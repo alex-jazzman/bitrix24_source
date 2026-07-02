@@ -36,6 +36,13 @@ return [
 					],
 				],
 			],
+			[
+				'id' => 'biconnector-superset-dashboard',
+				'options' => [
+					'dynamicLoad' => true,
+					'dynamicSearch' => true,
+				],
+			],
 		],
 	],
 ];

@@ -8,12 +8,12 @@ return [
 	'css' => 'dist/note-popup.bundle.css',
 	'js' => 'dist/note-popup.bundle.js',
 	'rel' => [
+		'booking.component.button',
+		'booking.component.popup',
+		'booking.lib.resolvable',
 		'main.core',
 		'main.popup',
 		'ui.vue3',
-		'booking.lib.resolvable',
-		'booking.component.popup',
-		'booking.component.button',
 	],
 	'skip_core' => false,
 ];

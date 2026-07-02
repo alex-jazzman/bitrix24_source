@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Bitrix Framework
  * @package bitrix
@@ -9,6 +9,7 @@
 /**
  * Bitrix vars
  * @global CMain $APPLICATION
+ * @global CUser $USER
  * @global CUserTypeManager $USER_FIELD_MANAGER
  * @var array $arParams
  * @var array $arResult

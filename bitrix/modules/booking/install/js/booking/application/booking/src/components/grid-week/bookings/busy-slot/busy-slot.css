@@ -1,0 +1,5 @@
+.booking-booking__base-component.--week-mode .booking-booking-busy-slot {
+	width: var(--width);
+	min-height: var(--height);
+	height: var(--height);
+}

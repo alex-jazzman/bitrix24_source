@@ -1,18 +1,17 @@
-import { Core } from 'im.v2.application.core';
 import { Text } from 'main.core';
-import { Utils } from 'im.v2.lib.utils';
 
-import { BaseMessage } from 'im.v2.component.message.base';
+import { Core } from 'im.v2.application.core';
 import { ChatButton, ButtonSize } from 'im.v2.component.elements.button';
-import { MessageStatus } from 'im.v2.component.message.elements';
+import { BaseMessage } from 'im.v2.component.message.base';
 import { DefaultMessage } from 'im.v2.component.message.default';
+import { MessageStatus } from 'im.v2.component.message.elements';
+import { Utils } from 'im.v2.lib.utils';
+import { type ImModelMessage } from 'im.v2.model';
+
+import { metaData } from './const/configurations';
+import { Await, Failure, Success, type SignButtonParams, type SignMessageComponentParams } from './const/sign';
 
 import './css/sign.css';
-import { Await, Failure, Success, SignButtonParams } from './const/sign';
-import { metaData } from './const/configurations';
-
-import type { ImModelMessage } from 'im.v2.model';
-import type { SignMessageComponentParams } from './const/sign';
 
 const PARAMS_KEY = {
 	STAGE_ID: 'stageId',

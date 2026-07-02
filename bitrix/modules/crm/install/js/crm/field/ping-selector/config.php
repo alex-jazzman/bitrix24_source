@@ -14,8 +14,8 @@ return [
 		'main.core.events',
 		'main.date',
 		'main.popup',
-		'ui.notification',
 		'ui.design-tokens',
+		'ui.notification',
 	],
 	'skip_core' => false,
 ];

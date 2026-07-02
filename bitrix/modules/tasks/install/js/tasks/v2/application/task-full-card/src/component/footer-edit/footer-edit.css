@@ -27,3 +27,30 @@
 	width: max-content;
 	border-bottom: 1px dashed #BAD7FF;
 }
+
+/* hover-pills in footer */
+.tasks-user-actions-demonstrator__opener.b24-hover-pill {
+	--color-opener: var(--ui-color-design-plain-na-content);
+	--color-opener-active: var(--ui-color-design-plain-na-content);
+	--size-icon-opener: 20px;
+}
+
+.tasks-full-card-footer-edit .b24-hover-pill-content {
+	gap: 4px;
+	padding: 2px 6px 2px 6px;
+	min-height: 28px;
+	color: var(--ui-color-design-plain-na-content);
+	font-weight: var(--ui-font-weight-normal);
+}
+
+.tasks-full-card-footer-edit .mark-task-button__text:first-child,
+.tasks-full-card-footer-edit .tasks-user-actions-demonstrator__opener-text:first-child,
+.tasks-full-card-footer-edit .tasks-user-actions-demonstrator__opener-count:first-child {
+	padding-left: 6px;
+}
+.tasks-full-card-footer-edit .mark-task-button__text:last-child,
+.tasks-full-card-footer-edit .tasks-user-actions-demonstrator__opener-text:last-child,
+.tasks-full-card-footer-edit .tasks-user-actions-demonstrator__opener-count:last-child {
+	padding-right: 6px;
+}
+/* hover-pills in footer end */

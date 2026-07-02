@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_ALL"] = "Всего";
 $MESS["CRM_DEAL_SHOW_TITLE"] = "Просмотреть сделку";
 $MESS["CRM_DEAL_SHOW"] = "Просмотреть";
@@ -81,10 +81,10 @@ $MESS["CRM_DEAL_BUILD_TIMELINE_DLG_TITLE"] = "Подготовка истори�
 $MESS["CRM_DEAL_BUILD_TIMELINE_STATE"] = "#processed# из #total#";
 $MESS["CRM_DEAL_REFRESH_ACCOUNTING_DLG_TITLE"] = "Обновление данных для отчётов";
 $MESS["CRM_DEAL_STEPWISE_STATE_TEMPLATE"] = "#processed# из #total#";
-$MESS["CRM_DEAL_EXCLUDE_TITLE"] = "Добавить сделку в список исключений";
-$MESS["CRM_DEAL_EXCLUDE"] = "Добавить в список исключений";
-$MESS["CRM_DEAL_EXCLUDE_CONFIRM"] = "Вы уверены, что хотите добавить в список исключений?";
-$MESS["CRM_DEAL_EXCLUDE_CONFIRM_HELP"] = "Подробнее о списке исключений";
+$MESS["CRM_DEAL_EXCLUDE_TITLE"] = "Добавить сделку в стоп-лист";
+$MESS["CRM_DEAL_EXCLUDE"] = "Добавить в стоп-лист";
+$MESS["CRM_DEAL_EXCLUDE_CONFIRM"] = "Вы уверены, что хотите добавить в стоп-лист?";
+$MESS["CRM_DEAL_EXCLUDE_CONFIRM_HELP"] = "Подробнее о стоп-листе";
 $MESS["CRM_DEAL_CATEGORY_DLG_TITLE"] = "Настройка сделки";
 $MESS["CRM_DEAL_CATEGORY_DLG_FIELD"] = "Воронка";
 $MESS["CRM_DEAL_BUTTON_SAVE"] = "Сохранить";

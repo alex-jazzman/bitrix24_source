@@ -1,8 +1,9 @@
-import Menu from './menu';
 import { Type } from 'main.core';
-import { MenuOptions } from './menu-types';
 
-export default class MenuManager
+import { Menu } from './menu';
+import { type MenuOptions } from './menu-types';
+
+export class MenuManager
 {
 	/**
 	 * @private
@@ -34,7 +35,7 @@ export default class MenuManager
 	{
 		let menuId = null;
 
-		//Compatibility
+		// Compatibility
 		const bindElement = arguments[1];
 		const menuItems = arguments[2];
 		const params = arguments[3];

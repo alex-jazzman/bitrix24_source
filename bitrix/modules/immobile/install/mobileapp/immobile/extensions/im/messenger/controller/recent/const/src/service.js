@@ -1,7 +1,7 @@
 /**
- * @module im/messenger/controller/recent/const/service
+ * @module im/messenger/controller/recent/const/src/service
  */
-jn.define('im/messenger/controller/recent/const/service', (require, exports, module) => {
+jn.define('im/messenger/controller/recent/const/src/service', (require, exports, module) => {
 	const RecentServiceName = {
 		quickRecent: 'quick-recent',
 		databaseLoad: 'database-load',
@@ -16,6 +16,7 @@ jn.define('im/messenger/controller/recent/const/service', (require, exports, mod
 		action: 'action',
 		select: 'select',
 		external: 'external',
+		inviteBanner: 'invite-banner',
 	};
 
 	module.exports = { RecentServiceName };

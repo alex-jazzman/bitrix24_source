@@ -1,8 +1,12 @@
-<?
+<?php
 define("NO_KEEP_STATISTIC", true);
 define("NO_AGENT_STATISTIC", true);
 define("NOT_CHECK_PERMISSIONS", true);
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
+
+/**
+ * @global CUser $USER
+ */
 
 $res = false;
 
@@ -92,4 +96,3 @@ if($USER->IsAuthorized() && check_bitrix_sessid())
 }
 
 echo $res;
-?>

@@ -28,6 +28,11 @@ jn.define('im/messenger/controller/recent/service/server-load/task', (require, e
 		onInit()
 		{
 			this.logger.log('onInit');
+
+			/** @type {IFilterService} */
+			this.filterService = this.recentLocator.has('filter')
+				? this.recentLocator.get('filter')
+				: null;
 		}
 
 		/**
@@ -39,6 +44,15 @@ jn.define('im/messenger/controller/recent/service/server-load/task', (require, e
 			this.logger.log(`getInitRequestMethod mode:${mode} methods:`, MessengerInitRestMethod.taskList);
 
 			return MessengerInitRestMethod.taskList;
+		}
+
+		/**
+		 * @param {RefreshModeType} mode
+		 * @return {object}
+		 */
+		getInitRequestOptions(mode)
+		{
+			return {};
 		}
 
 		/**
@@ -121,11 +135,18 @@ jn.define('im/messenger/controller/recent/service/server-load/task', (require, e
 		getRestListOptions(lastItem)
 		{
 			const lastMessageDate = lastItem.lastMessageDate;
+			const enabledFilter = {};
+
+			if (this.filterService?.hasSelectedFilter())
+			{
+				enabledFilter[this.filterService.getCurrentFilterId()] = true;
+			}
 
 			return {
 				type: DialogType.tasksTask,
 				limit: REST_PAGE_TAIL_LIMIT,
 				filter: { lastMessageDate },
+				...enabledFilter,
 			};
 		}
 
@@ -198,7 +219,7 @@ jn.define('im/messenger/controller/recent/service/server-load/task', (require, e
 
 			try
 			{
-				const recentAction = firstPage ? 'recentModel/setFirstPageByTab' : 'recentModel/setTask';
+				const recentAction = firstPage ? 'recentModel/setFirstPageByRecentSection' : 'recentModel/setTask';
 				await Promise.all([
 					this.store.dispatch('usersModel/set', modelData.users),
 					this.store.dispatch('messagesModel/store', modelData.messages),
@@ -207,8 +228,9 @@ jn.define('im/messenger/controller/recent/service/server-load/task', (require, e
 					this.store.dispatch(
 						recentAction,
 						{
-							tab: this.recentLocator.get('id') ?? NavigationTabId.task,
+							recentSection: this.recentLocator.get('recentSection'),
 							itemList: modelData.recent,
+							parentChatId: this.recentLocator.get('parentChatId'),
 						},
 					),
 				]);
@@ -376,6 +398,16 @@ jn.define('im/messenger/controller/recent/service/server-load/task', (require, e
 
 				return recentItem.pinned === false;
 			});
+		}
+
+		subscribeEvents()
+		{
+			this.logger.log('subscribeEvents');
+		}
+
+		unsubscribeEvents()
+		{
+			this.logger.log('unsubscribeEvents');
 		}
 	}
 

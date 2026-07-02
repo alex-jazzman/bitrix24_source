@@ -20,33 +20,7 @@ jn.define('im/messenger/model/dialogues/ai-assistant/validator', (require, expor
 		return result;
 	}
 
-	/**
-	 * @param {AiAssistantMCPModelState} fields
-	 */
-	function validateMCP(fields)
-	{
-		const result = {};
-
-		if (Type.isInteger(fields.selectedAuthId))
-		{
-			result.selectedAuthId = fields.selectedAuthId;
-		}
-
-		if (Type.isStringFilled(fields.name))
-		{
-			result.name = fields.name;
-		}
-
-		if (Type.isStringFilled(fields.iconUrl))
-		{
-			result.iconUrl = fields.iconUrl;
-		}
-
-		return result;
-	}
-
 	module.exports = {
 		validateNotifyPanel,
-		validateMCP,
 	};
 });

@@ -30,3 +30,4 @@ $MESS["CRM_BIC_LEAD_PRODUCT_ROW_FIELD_TAX_INCLUDED"] = "Include tax in price";
 $MESS["CRM_BIC_LEAD_PRODUCT_ROW_FIELD_TAX_INCLUDED_FULL"] = "Y - yes, N - no";
 $MESS["CRM_BIC_LEAD_PRODUCT_ROW_FIELD_TAX_RATE"] = "Tax";
 $MESS["CRM_BIC_LEAD_PRODUCT_ROW_TABLE"] = "Lead: products";
+$MESS["CRM_BIC_LEAD_PRODUCT_ROW_TABLE_DESCRIPTION_FULL"] = "Provides information on products in leads from standard fields.";

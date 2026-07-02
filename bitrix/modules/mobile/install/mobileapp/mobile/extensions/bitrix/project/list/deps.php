@@ -5,7 +5,7 @@ return [
 		'rest',
 		'apptheme',
 		'helpers/holder',
-		'project/utils',
+		'project/opener',
 		'utils/object',
 	],
 ];

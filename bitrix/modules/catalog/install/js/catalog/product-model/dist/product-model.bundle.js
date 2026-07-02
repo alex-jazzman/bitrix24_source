@@ -445,8 +445,8 @@ this.BX = this.BX || {};
 	    if (main_core.Type.isObject(options.imageInfo)) ;
 	    babelHelpers.classPrivateFieldSet(this, _calculator, new catalog_productCalculator.ProductCalculator(_classPrivateMethodGet$1(this, _getDefaultCalculationFields, _getDefaultCalculationFields2).call(this), {
 	      currencyId: this.options.currency,
-	      pricePrecision: this.options.pricePrecision || 2,
-	      commonPrecision: this.options.pricePrecision || 2
+	      pricePrecision: this.options.pricePrecision || catalog_productCalculator.ProductCalculator.DEFAULT_PRECISION,
+	      commonPrecision: this.options.pricePrecision || catalog_productCalculator.ProductCalculator.DEFAULT_PRECISION
 	    }));
 	    babelHelpers.classPrivateFieldGet(this, _calculator).setCalculationStrategy(new catalog_productCalculator.TaxForPriceStrategy(babelHelpers.classPrivateFieldGet(this, _calculator)));
 	    instances.set(this.id, this);

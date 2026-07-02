@@ -34,16 +34,25 @@ if (defined('CUSTOM_HEADER_TITLE') && is_string(CUSTOM_HEADER_TITLE))
 	$customTitle = htmlspecialcharsbx(CUSTOM_HEADER_TITLE);
 }
 
+$skipTemplateWrapper = defined('SKIP_TEMPLATE_WRAPPER') && SKIP_TEMPLATE_WRAPPER === true;
+
+if ($skipTemplateWrapper)
+{
+	$APPLICATION->SetPageProperty('BodyStyle', 'background: none;');
+}
+
 ?>
 <title><?php $APPLICATION->showTitle(); ?></title>
 </head>
 
-<body class="<?php $APPLICATION->showProperty("BodyClass")?>">
+<body class="<?php $APPLICATION->showProperty("BodyClass")?>"<?php if ($bodyStyle = $APPLICATION->getProperty("BodyStyle")): ?> style="<?=$bodyStyle?>"<?php endif; ?>>
 <?php
 /*
 This is commented to avoid Project Quality Control warning
 $APPLICATION->ShowPanel();
 */
+
+if (!$skipTemplateWrapper):
 ?>
 <table class="main-wrapper">
 	<tr>
@@ -68,3 +77,4 @@ $APPLICATION->ShowPanel();
 							<?php endif ?>
 						<?php endif; ?>
 					</h1>
+<?php endif; ?>

@@ -1,0 +1,42 @@
+.bx-im-ai-assistant-chat-header__container {
+	display: flex;
+	align-items: center;
+	height: 58px;
+	padding: 11px 15px;
+	background-color: var(--im-color-palette-white-base);
+}
+
+.bx-im-ai-assistant-chat-header__back {
+	--ui-icon-set__icon-color: var(--ui-color-base-40);
+	flex-shrink: 0;
+	margin-right: 12px;
+	cursor: pointer;
+}
+
+.bx-im-ai-assistant-chat-header__avatar {
+	flex-shrink: 0;
+	margin-right: 10px;
+}
+
+.bx-im-ai-assistant-chat-header__info {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.bx-im-ai-assistant-chat-header__subtitle {
+	font: var(--im-font-size-md) var(--im-font-family-system);
+	font-weight: var(--im-font-weight-normal);
+	color: var(--im-color-palette-gray-60);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.bx-im-ai-assistant-chat-header__icon {
+	--ui-icon-set__icon-color: var(--ui-color-base-40);
+	flex-shrink: 0;
+	margin-left: 12px;
+	cursor: pointer;
+}

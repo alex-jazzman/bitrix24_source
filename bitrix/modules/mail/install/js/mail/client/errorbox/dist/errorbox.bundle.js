@@ -1,2 +1,82 @@
-this.BX=this.BX||{},this.BX.Mail=this.BX.Mail||{},function(e,a){"use strict";var t;function l(e,a,t){!function(e,a){if(a.has(e))throw new TypeError("Cannot initialize the same private elements twice on an object")}(e,a),a.set(e,t)}var i=new WeakMap,s=new WeakMap,r=new WeakMap,n=new WeakMap,b=new WeakMap,o=function(){function e(a){var t=this;babelHelpers.classCallCheck(this,e),l(this,i,{writable:!0,value:void 0}),l(this,s,{writable:!0,value:void 0}),l(this,r,{writable:!0,value:!1}),l(this,n,{writable:!0,value:null}),l(this,b,{writable:!0,value:void 0});var o=a.wrapper,c=void 0===o?[]:o,d=a.errorLink,v=void 0===d?"":d,u=a.currentMailboxId,p=void 0===u?null:u;null!==p&&babelHelpers.classPrivateFieldSet(this,b,Number(p)),babelHelpers.classPrivateFieldSet(this,i,c),babelHelpers.classPrivateFieldSet(this,s,v),top.BX.addCustomEvent("MailClient:syncWasSuccessful",(function(e){var a=e.mailboxId;void 0!==a&&babelHelpers.classPrivateFieldGet(t,b)===Number(a)&&t.destroy()})),top.BX.addCustomEvent("MailClient:syncFailedWithErrors",(function(e){var a=e.mailboxId;void 0!==a&&babelHelpers.classPrivateFieldGet(t,b)===Number(a)&&BX.ajax.runComponentAction("bitrix:mail.client.message.list","getMailboxCachedConnectionStatus",{mode:"class",data:{mailboxId:a}}).then((function(e){var a=e.data;!1===a&&t.build(),!0===a&&t.destroy()}))}))}return babelHelpers.createClass(e,[{key:"destroy",value:function(){!0===babelHelpers.classPrivateFieldGet(this,r)&&void 0!==babelHelpers.classPrivateFieldGet(this,n)&&(babelHelpers.classPrivateFieldGet(this,n).remove(),babelHelpers.classPrivateFieldSet(this,r,!1),babelHelpers.classPrivateFieldSet(this,n,null))}},{key:"build",value:function(){if(!1===babelHelpers.classPrivateFieldGet(this,r)){var e=a.Loc.getMessage("MAIL_ERROR_BOX_MAILBOX_CONNECTION_ERROR");e=(e=e.replace("[link]","<a href='".concat(babelHelpers.classPrivateFieldGet(this,s),"' target='_blank'>"))).replace("[/link]","</a>");var l=a.Tag.render(t||(t=babelHelpers.taggedTemplateLiteral(['\n\t\t\t<div class="ui-alert ui-alert-danger ui-alert-icon-danger ui-alert-mail-error-box">\n\t\t\t\t<span class="ui-alert-message">',"</span>\n\t\t\t</div>"])),e);babelHelpers.classPrivateFieldGet(this,i).prepend(l),babelHelpers.classPrivateFieldSet(this,n,l),babelHelpers.classPrivateFieldSet(this,r,!0)}}}]),e}();e.ErrorBox=o}(this.BX.Mail.Client=this.BX.Mail.Client||{},BX);
+/* eslint-disable */
+this.BX = this.BX || {};
+this.BX.Mail = this.BX.Mail || {};
+(function (exports, main_core) {
+	'use strict';
+
+	class ErrorBox {
+		#wrapper;
+		#errorLink;
+		#errorBoxWasRendered = false;
+		#errorBoxNode = null;
+		#mailboxId;
+		constructor(config) {
+			const {
+				wrapper = [],
+				errorLink = '',
+				currentMailboxId = null
+			} = config;
+			if (currentMailboxId !== null) {
+				this.#mailboxId = Number(currentMailboxId);
+			}
+			this.#wrapper = wrapper;
+			this.#errorLink = errorLink;
+			top.BX.addCustomEvent("MailClient:syncWasSuccessful", data => {
+				const {
+					mailboxId
+				} = data;
+				if (mailboxId !== undefined && this.#mailboxId === Number(mailboxId)) {
+					this.destroy();
+				}
+			});
+			top.BX.addCustomEvent("MailClient:syncFailedWithErrors", data => {
+				const {
+					mailboxId
+				} = data;
+				if (mailboxId !== undefined && this.#mailboxId === Number(mailboxId)) {
+					BX.ajax.runComponentAction('bitrix:mail.client.message.list', 'getMailboxCachedConnectionStatus', {
+						mode: 'class',
+						data: {
+							mailboxId
+						}
+					}).then(response => {
+						const {
+							data
+						} = response;
+						if (data === false) {
+							this.build();
+						}
+						if (data === true) {
+							this.destroy();
+						}
+					});
+				}
+			});
+		}
+		destroy() {
+			if (this.#errorBoxWasRendered === true && this.#errorBoxNode !== undefined) {
+				this.#errorBoxNode.remove();
+				this.#errorBoxWasRendered = false;
+				this.#errorBoxNode = null;
+			}
+		}
+		build() {
+			if (this.#errorBoxWasRendered === false) {
+				let message = main_core.Loc.getMessage("MAIL_ERROR_BOX_MAILBOX_CONNECTION_ERROR");
+				message = message.replace('[link]', `<a href='${this.#errorLink}' target='_blank'>`);
+				message = message.replace('[/link]', '</a>');
+				const errorBox = main_core.Tag.render`
+			<div class="ui-alert ui-alert-danger ui-alert-icon-danger ui-alert-mail-error-box">
+				<span class="ui-alert-message">${message}</span>
+			</div>`;
+				this.#wrapper.prepend(errorBox);
+				this.#errorBoxNode = errorBox;
+				this.#errorBoxWasRendered = true;
+			}
+		}
+	}
+
+	exports.ErrorBox = ErrorBox;
+
+})(this.BX.Mail.Client = this.BX.Mail.Client || {}, BX);
 //# sourceMappingURL=errorbox.bundle.js.map

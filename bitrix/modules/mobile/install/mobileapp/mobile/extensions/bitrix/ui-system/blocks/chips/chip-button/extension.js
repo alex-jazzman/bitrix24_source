@@ -27,6 +27,7 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 	 * @property {Icon} [icon]
 	 * @property {boolean} [loading=false]
 	 * @property {boolean} [dropdown=false]
+	 * @property {boolean} [clearable=false]
 	 * @property {boolean} [compact=false]
 	 * @property {boolean} [rounded=true]
 	 * @property {boolean} [disabled=false]
@@ -43,6 +44,7 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 	 * @property {SpinnerDesign} [loaderDesign]
 	 * @property {Function} [onClick]
 	 * @property {Function} [onLongClick]
+	 * @property {Function} [onClear]
 	 * @property {Function} [onLayout]
 	 * @property {string} [testId]
 	 *
@@ -86,6 +88,7 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 				text,
 				testId: this.getTestId('value'),
 				color: this.getColor(),
+				colorGradient: this.getColorGradient(),
 				ellipsize: this.#getEllipsize(),
 				numberOfLines: 1,
 				style: {
@@ -165,6 +168,28 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 			});
 		}
 
+		#renderClearIcon()
+		{
+			if (!this.isClearable())
+			{
+				return null;
+			}
+
+			const { onClear } = this.props;
+
+			return View(
+				{
+					testId: this.getTestId('clear'),
+					onClick: this.isDisabled() ? () => {} : onClear,
+				},
+				IconView({
+					icon: Icon.CROSS,
+					color: this.getIconColor(),
+					size: this.getImageSize(),
+				}),
+			);
+		}
+
 		#renderIcon({ style, icon, testId })
 		{
 			return IconView({
@@ -226,6 +251,7 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 				this.#renderContent(),
 				this.#renderBadge(),
 				this.#renderDropdown(),
+				this.#renderClearIcon(),
 			];
 
 			if (this.isLoading() && this.getLoaderPosition().isCenter())
@@ -305,6 +331,11 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 			if (this.#isOnlyAvatar())
 			{
 				return this.size.getIndent(direction, 'avatar');
+			}
+
+			if (this.isClearable() && direction === Direction.RIGHT)
+			{
+				return this.size.getIndent(direction, 'clear');
 			}
 
 			if (this.isDropdown() && direction === Direction.RIGHT)
@@ -433,6 +464,11 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 			return this.design?.color;
 		}
 
+		getColorGradient()
+		{
+			return this.design?.colorGradient;
+		}
+
 		getIconColor()
 		{
 			const { iconColor } = this.props;
@@ -519,6 +555,13 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 			return Boolean(dropdown);
 		}
 
+		isClearable()
+		{
+			const { clearable } = this.props;
+
+			return Boolean(clearable);
+		}
+
 		hasAvatar()
 		{
 			return Boolean(this.getAvatar());
@@ -560,6 +603,7 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 		disabled: false,
 		withPressed: false,
 		dropdown: false,
+		clearable: false,
 		loading: false,
 		content: null,
 	};
@@ -576,9 +620,11 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 		avatar: PropTypes.object,
 		rounded: PropTypes.bool,
 		dropdown: PropTypes.bool,
+		clearable: PropTypes.bool,
 		forwardRef: PropTypes.func,
 		onClick: PropTypes.func,
 		onLongClick: PropTypes.func,
+		onClear: PropTypes.func,
 		onLayout: PropTypes.func,
 		icon: PropTypes.instanceOf(Icon),
 		size: PropTypes.instanceOf(ChipButtonSize),

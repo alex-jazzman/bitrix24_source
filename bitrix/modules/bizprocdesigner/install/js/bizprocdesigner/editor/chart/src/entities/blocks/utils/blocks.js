@@ -1,5 +1,6 @@
 import type { Block, BlockId } from '../../../shared/types';
 import { deepEqual } from '../../../shared/utils';
+import { BLOCK_TOP_CONTEXT_MENU_PREFIX_NAME } from '../constants';
 
 export function isBlockPropertiesDifferent(currentBlock: Block, newBlock: Block): boolean
 {
@@ -59,4 +60,9 @@ export function getBlockUserTitle(block: Block): ?string
 	const defaultNodeTitle = block.node?.title;
 
 	return activityTitle === defaultNodeTitle ? null : activityTitle;
+}
+
+export function getContextMenuName(blockId: BlockId): string
+{
+	return `${BLOCK_TOP_CONTEXT_MENU_PREFIX_NAME}_${blockId}`;
 }

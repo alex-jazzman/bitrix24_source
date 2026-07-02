@@ -100,7 +100,7 @@
 
 .tasks-full-card-footer {
 	box-sizing: border-box;
-	z-index: 1;
+	z-index: 6;
 	display: flex;
 	flex-direction: column;
 	justify-content: center;

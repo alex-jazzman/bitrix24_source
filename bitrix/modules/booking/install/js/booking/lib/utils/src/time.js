@@ -11,6 +11,32 @@ const TimeUtil = {
 
 		return `(UTC ${offset}) ${timezoneId || Intl.DateTimeFormat().resolvedOptions().timeZone}`;
 	},
+	getWeekStartTs(dateTs: number, firstWeekDay: number): number
+	{
+		const firstWeekDate = new Date(dateTs);
+		const diff = (firstWeekDate.getDay() - firstWeekDay + 7) % 7;
+
+		firstWeekDate.setHours(0, 0, 0, 0);
+		firstWeekDate.setDate(firstWeekDate.getDate() - diff);
+
+		return firstWeekDate.getTime();
+	},
+	getMonthStartTs(dateTs: number): number
+	{
+		const date = new Date(dateTs);
+
+		return new Date(date.getFullYear(), date.getMonth(), 1).getTime();
+	},
+	isSameDay(fromTs: number, toTs: number, offset: number = 0): boolean
+	{
+		const from = new Date(fromTs + offset);
+		const to = new Date(toTs + offset);
+
+		from.setHours(0, 0, 0, 0);
+		to.setHours(0, 0, 0, 0);
+
+		return from.getTime() === to.getTime();
+	},
 };
 
 export const timeUtil = Object.seal(TimeUtil);

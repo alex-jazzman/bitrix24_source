@@ -55,7 +55,7 @@ export class Transport
 			mode: Type.isStringFilled(request.mode) ? request.mode : 'ajax',
 			method: Type.isStringFilled(request.method) ? request.method : 'post',
 			data: request.data,
-			analytics: request.analytics,
+			analytics: request.data.analyticsData,
 		})
 			.then((response) => {
 				this.#onSuccess(response);

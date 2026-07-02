@@ -27,6 +27,12 @@ type KeyboardButtonContextValues = typeof KeyboardButtonContext[keyof typeof Key
 type KeyboardButtonDisplayValues = typeof KeyboardButtonDisplay[keyof typeof KeyboardButtonDisplay];
 type KeyboardButtonActionValues = typeof KeyboardButtonAction[keyof typeof KeyboardButtonAction];
 
+export type KeyboardButtonStyle = {
+	borderColor: string,
+	bgColor?: string,
+	textColor: string,
+};
+
 export type RawKeyboardButtonConfig = {
 	TEXT: string,
 	TYPE?: KeyboardButtonTypeValues,
@@ -71,4 +77,5 @@ export type KeyboardButtonConfig = {
 	botId: number,
 	action: KeyboardButtonActionValues,
 	actionValue: string, // PUT - text, SEND - text, COPY - text, CALL - number, DIALOG - dialogId
+	style?: KeyboardButtonStyle,
 };

@@ -33,20 +33,21 @@ $APPLICATION->restartBuffer();
 	<div class="crm-activity-planner-slider-wrap" data-activity-id="<?=(int)$activity['ID']?>" data-role="options" data-options="<?=htmlspecialcharsbx($optionsJson)?>">
 		<div class="crm-activity-planner-slider-container">
 			<div class="crm-activity-planner-slider-header crm-activity-planner-slider-header-icon crm-activity-planner-slider-header-icon-<?=$arResult['TYPE_ICON']?>">
-				<div class="crm-activity-planner-slider-header-title"><?=htmlspecialcharsbx($activity['SUBJECT'] ? $activity['SUBJECT'] : $provider::getTypeName($activity['PROVIDER_TYPE_ID'], $activity['DIRECTION']))?></div>
+				<h1 class="crm-activity-planner-slider-header-title"><?=htmlspecialcharsbx($activity['SUBJECT'] ? $activity['SUBJECT'] : $provider::getTypeName($activity['PROVIDER_TYPE_ID'], $activity['DIRECTION']))?></h1>
+				<? if (empty($arResult['IS_READ_ONLY'])): ?>
 				<div class="crm-activity-planner-slider-header-control-block">
 					<div class="crm-activity-planner-slider-header-control-item">
 						<input class="crm-activity-planner-slider-header-control-checkbox" type="checkbox" id="<?=($inputId = uniqid('inp_')) ?>" data-role="field-completed" <? if ($activity['COMPLETED'] == 'Y'): ?> checked<? endif ?>>
 						<label class="crm-activity-planner-slider-header-control-text crm-activity-planner-slider-header-control-label" for="<?= $inputId ?>" style="margin: 0;"><?= getMessage('CRM_ACTIVITY_PLANNER_COMPLETED_SLIDER') ?></label>
 					</div>
-					<div class="crm-activity-planner-slider-header-control-item crm-activity-planner-slider-header-control-important crm-activity-planner-slider-header-control-select crm-activity-planner-slider-header-icon-flame<? if ($options['important']): ?>-active<? endif ?>" data-role="field-important">
-						<div class="crm-activity-planner-slider-header-control-text"><?=getMessage('CRM_ACTIVITY_PLANNER_IMPORTANT_SLIDER') ?></div>
-						<div class="crm-activity-planner-slider-header-control-icon"></div>
-					</div>
-					<div class="crm-activity-planner-slider-header-control-item crm-activity-planner-slider-header-control-select" data-role="additional-switcher">
-						<div class="crm-activity-planner-slider-header-control-text"><?=getMessage('CRM_ACTIVITY_PLANNER_MORE_SLIDER') ?></div>
-						<div class="crm-activity-planner-slider-header-control-triangle"></div>
-					</div>
+					<button type="button" class="crm-activity-planner-slider-header-control-item crm-activity-planner-slider-header-control-important crm-activity-planner-slider-header-control-select crm-activity-planner-slider-header-icon-flame<? if ($options['important']): ?>-active<? endif ?>" data-role="field-important" aria-pressed="<?= $options['important'] ? 'true' : 'false' ?>">
+						<span class="crm-activity-planner-slider-header-control-text"><?=getMessage('CRM_ACTIVITY_PLANNER_IMPORTANT_SLIDER') ?></span>
+						<span class="crm-activity-planner-slider-header-control-icon"></span>
+					</button>
+					<button type="button" class="crm-activity-planner-slider-header-control-item crm-activity-planner-slider-header-control-select" data-role="additional-switcher" aria-expanded="false">
+						<span class="crm-activity-planner-slider-header-control-text"><?=getMessage('CRM_ACTIVITY_PLANNER_MORE_SLIDER') ?></span>
+						<span class="crm-activity-planner-slider-header-control-triangle"></span>
+					</button>
 					<? if (\CCrmActivityType::Email == $activity['TYPE_ID']): ?>
 						<div id="crm-activity-planner-slider-header-page-swapper" style="padding: 0 8px"></div>
 						<? $APPLICATION->includeComponent(
@@ -59,6 +60,7 @@ $APPLICATION->restartBuffer();
 						<?=\Bitrix\UI\Toolbar\Facade\Toolbar::renderRightButtons()?>
 					<? endif ?>
 				</div>
+			<? endif ?>
 			</div><!--crm-task-list-header-->
 			<div class="crm-activity-slider-container"
 				<? if (\CCrmActivityType::Email == $activity['TYPE_ID']): ?>
@@ -72,12 +74,14 @@ $APPLICATION->restartBuffer();
 						<? if (!empty($arResult['RESPONSIBLE_NAME'])): ?>
 							<tr class="crm-task-list-mail-table-row">
 								<td class="crm-task-list-mail-table-item">
-									<div class="crm-task-list-mail-additionally-info-name"><?=getMessage('CRM_ACTIVITY_PLANNER_RESPONSIBLE_USER') ?>:</div>
+									<div class="crm-task-list-mail-additionally-info-name" id="crm-act-planner-responsible-label"><?=getMessage('CRM_ACTIVITY_PLANNER_RESPONSIBLE_USER') ?>:</div>
 								</td>
 								<td class="crm-task-list-mail-table-item">
 									<div class="crm-task-list-mail-additionally-info-content">
 										<a class="crm-task-list-mail-additionally-info-text-bold" target="_blank"
-											href="<?=htmlspecialcharsbx($arResult['RESPONSIBLE_URL']) ?>">
+											href="<?=htmlspecialcharsbx($arResult['RESPONSIBLE_URL']) ?>"
+											id="crm-act-planner-responsible-value"
+											aria-labelledby="crm-act-planner-responsible-label crm-act-planner-responsible-value">
 											<?=htmlspecialcharsbx($arResult['RESPONSIBLE_NAME']) ?></a>
 									</div>
 								</td>

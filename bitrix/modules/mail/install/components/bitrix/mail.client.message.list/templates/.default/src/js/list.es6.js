@@ -5,11 +5,12 @@ export class List
 {
 	constructor(options)
 	{
-		this.mailReadAllButton = options.mailReadAllButton;
 		this.gridId = options.gridId;
 		this.mailboxId = options.mailboxId;
 		this.canMarkSpam = options.canMarkSpam;
 		this.canDelete = options.canDelete;
+		this.mailboxCanDelete = options.mailboxCanDelete ?? {};
+		this.mailboxCanMarkSpam = options.mailboxCanMarkSpam ?? {};
 		this.ERROR_CODE_CAN_NOT_DELETE = options.ERROR_CODE_CAN_NOT_DELETE;
 		this.ERROR_CODE_CAN_NOT_MARK_SPAM = options.ERROR_CODE_CAN_NOT_MARK_SPAM;
 		this.disabledClassName = 'js-disabled';
@@ -63,15 +64,12 @@ export class List
 				BX.Mail.Home.LeftMenuNode.directoryMenu.setCounters(counters);
 
 				BX.Mail.Home.mailboxCounters.setCounters([
-					{
-						path: 'unseenCountInCurrentMailbox',
-						count: BX.Mail.Home.Counters.getTotalCounter(),
-					},
+					{ path: 'unseenCountInCurrentMailbox', count: BX.Mail.Home.Counters.getTotalCounter() }
 				]);
 			}
-			else
+			else if (BX.Mail.Home.MailboxSelector)
 			{
-				this.userInterfaceManager.updateLeftMenuCounter();
+				BX.Mail.Home.MailboxSelector.syncTopLevelCounter();
 			}
 		});
 
@@ -361,11 +359,14 @@ export class List
 		{
 			return;
 		}
-		if (!this.canDelete)
+
+		const isAllMailMode = this.isAllMailMode();
+		if (!isAllMailMode && !this.canDelete)
 		{
 			this.showDirsSlider();
 			return;
 		}
+
 		let options = {
 			params: (additionalOptions !== undefined) ? additionalOptions : {},
 			keepRows: true,
@@ -386,6 +387,22 @@ export class List
 		}
 
 		selectedIds = this.filterRowsByClassName(this.disabledClassName, selectedIds, true);
+
+		if (isAllMailMode)
+		{
+			if (selectedIds.length === 0)
+			{
+				return;
+			}
+			const deletable = selectedIds.filter((rowId) => this.canRowDelete(rowId));
+			if (deletable.length === 0)
+			{
+				this.showDirsSlider(this.getRowMailboxId(selectedIds[0]));
+				return;
+			}
+			selectedIds = deletable;
+		}
+
 		options.ids = selectedIds;
 
 		if (this.userInterfaceManager.isCurrentFolderTrash || (additionalOptions !== undefined && additionalOptions['deleteImmediately']) )
@@ -592,12 +609,24 @@ export class List
 				this.resetGridSelection();
 			}
 
-			if ('all' == id)
+			const isAllMailMode = !!(BX.Mail.Home.MailboxSelector && BX.Mail.Home.MailboxSelector.isAllMailMode);
+			if ('all' === id)
 			{
-				resultIds['for_all'] = this.mailboxId + '-' + this.userInterfaceManager.getCurrentFolder();
+				if (isAllMailMode)
+				{
+					resultIds['for_all_user_mailboxes'] = true;
+				}
+				else
+				{
+					resultIds['for_all'] = this.mailboxId + '-' + this.userInterfaceManager.getCurrentFolder();
+				}
 			}
 
-			this.userInterfaceManager.updateUnreadCounters();
+			if (BX.Mail.Home.MailboxSelector)
+			{
+				BX.Mail.Home.MailboxSelector.handleMessagesAction(resultIds, actionName);
+			}
+			this.suppressNextCountersPull();
 
 			this.runAction(actionName, {
 				ids: resultIds,
@@ -607,14 +636,20 @@ export class List
 					'groupCount': selected.length,
 					'bindings': this.getRowsBindings(id ? [this.getGridInstance().getRows().getById(id)] : selected),
 				},
-				onSuccess: function(){
-					this.updateCountersFromBackend();
-				}.bind(this),
 			});
 
 			return true;
 		};
 		handler.apply(this);
+	}
+
+	suppressNextCountersPull()
+	{
+		this.pendingCountersAction = true;
+		clearTimeout(this.pendingCountersTimeout);
+		this.pendingCountersTimeout = setTimeout(() => {
+			this.pendingCountersAction = false;
+		}, 5000);
 	}
 
 	onSpamClick(id)
@@ -624,11 +659,14 @@ export class List
 		{
 			return;
 		}
-		if (!this.canMarkSpam)
+
+		const isAllMailMode = this.isAllMailMode();
+		if (!isAllMailMode && !this.canMarkSpam)
 		{
 			this.showDirsSlider();
 			return;
 		}
+
 		const actionName = this.isSelectedRowsHaveClass('js-spam', id) ? 'restoreFromSpam' : 'markAsSpam';
 		let resultIds = this.filterRowsByClassName('js-spam', id, actionName !== 'restoreFromSpam');
 		resultIds = this.filterRowsByClassName(this.disabledClassName, resultIds, true);
@@ -636,6 +674,7 @@ export class List
 		{
 			return;
 		}
+
 		const options = {
 			keepRows: true,
 			analyticsLabel: {
@@ -655,14 +694,31 @@ export class List
 			selectedIds = [id];
 		}
 
+		if (isAllMailMode && actionName === 'markAsSpam')
+		{
+			if (selectedIds.length === 0)
+			{
+				return;
+			}
+			const spammable = selectedIds.filter((rowId) => this.canRowMarkSpam(rowId));
+			if (spammable.length === 0)
+			{
+				this.showDirsSlider(this.getRowMailboxId(selectedIds[0]));
+				return;
+			}
+			selectedIds = spammable;
+		}
+
 		options.ids = selectedIds;
 
 		BX.Mail.Home.Grid.hideRowByIds(selectedIds);
 
 		const unseenRowsIdsCount = this.filterRowsByClassName('mail-msg-list-cell-unseen', selectedIds).length;
 
-		if(this.getCurrentFolder() !== '') {
-			if (actionName === 'markAsSpam') {
+		if (this.getCurrentFolder() !== '')
+		{
+			if (actionName === 'markAsSpam')
+			{
 				BX.Mail.Home.Counters.updateCounters([
 					{
 						name: this.userInterfaceManager.spamDir,
@@ -675,7 +731,9 @@ export class List
 						count: unseenRowsIdsCount,
 					},
 				]);
-			} else {
+			}
+			else
+			{
 				BX.Mail.Home.Counters.updateCounters([
 					{
 						name: this.userInterfaceManager.spamDir,
@@ -825,19 +883,41 @@ export class List
 
 	updateCountersFromBackend()
 	{
-		if(this.getCurrentFolder() === '')
-		{
-			BX.ajax.runComponentAction('bitrix:mail.client.message.list', 'getDirsWithUnseenMailCounters', {
-				mode: 'class',
-				data: {
-					mailboxId: this.mailboxId
-				},
-			}).then(
-				function(response) {
-					BX.Mail.Home.Counters.setCounters(response.data);
+		const selector = BX.Mail.Home.MailboxSelector;
+		const isAllMailMode = !!(selector && selector.isAllMailMode);
+
+		BX.ajax.runComponentAction('bitrix:mail.client.message.list', 'getMailCounters', {
+			mode: 'class',
+			data: isAllMailMode ? {} : { mailboxId: this.mailboxId },
+		}).then(
+			function(response) {
+				const result = response.data || {};
+				const total = Number(result.total || 0);
+
+				if (selector)
+				{
+					selector.updateAllMailBadge(total);
+					if (result.mailboxes)
+					{
+						selector.updatePerMailboxBadges(result.mailboxes);
+					}
 				}
-			);
-		}
+
+				if (isAllMailMode)
+				{
+					BX.Mail.Home.Counters.setCounters([
+						{ path: Loc.getMessage('MAIL_VIRTUAL_FOLDER_KEY'), count: total }
+					]);
+					BX.Mail.Home.mailboxCounters.setCounters([
+						{ path: 'unseenCountInAllMailboxes', count: total },
+					]);
+				}
+				else if (result.folders && this.getCurrentFolder() === '')
+				{
+					BX.Mail.Home.Counters.setCounters(result.folders);
+				}
+			}.bind(this)
+		);
 	}
 
 	runAction(actionName, options, actionOnSuccess)
@@ -890,11 +970,7 @@ export class List
 					options.onSuccess.bind(this, selectedIds, options.successParams)();
 					return;
 				}
-				if(actionOnSuccess === undefined)
-				{
-					this.notify();
-				}
-				else
+				if (actionOnSuccess)
 				{
 					actionOnSuccess();
 				}
@@ -902,6 +978,7 @@ export class List
 			function(response) {
 				BX.Mail.Home.Counters.restoreFromCache();
 				BX.Mail.Home.Grid.reloadTable();
+				this.updateCountersFromBackend();
 				options.onError && typeof (options.onError) === "function" ?
 					options.onError().bind(this, response) :
 					this.onErrorRequest(response);
@@ -919,6 +996,10 @@ export class List
 
 	checkErrorRights(errors)
 	{
+		if (this.isAllMailMode())
+		{
+			return;
+		}
 		for (let i = 0; i < errors.length; i++)
 		{
 			if (errors[i].code === this.ERROR_CODE_CAN_NOT_DELETE)
@@ -932,10 +1013,33 @@ export class List
 		}
 	}
 
-	showDirsSlider()
+	isAllMailMode()
 	{
+		return !!(BX.Mail.Home.MailboxSelector && BX.Mail.Home.MailboxSelector.isAllMailMode);
+	}
+
+	getRowMailboxId(rowId)
+	{
+		const row = this.getGridInstance().getRows().getById(rowId);
+
+		return parseInt(row?.getData()?.MAILBOX_ID, 10);
+	}
+
+	canRowDelete(rowId)
+	{
+		return !!this.mailboxCanDelete[this.getRowMailboxId(rowId)];
+	}
+
+	canRowMarkSpam(rowId)
+	{
+		return !!this.mailboxCanMarkSpam[this.getRowMailboxId(rowId)];
+	}
+
+	showDirsSlider(mailboxId)
+	{
+		const targetMailboxId = mailboxId ?? this.mailboxId;
 		const url = BX.util.add_url_param("/mail/config/dirs", {
-			mailboxId: this.mailboxId,
+			mailboxId: targetMailboxId,
 		});
 		BX.SidePanel.Instance.open(url, {
 			width: 640,

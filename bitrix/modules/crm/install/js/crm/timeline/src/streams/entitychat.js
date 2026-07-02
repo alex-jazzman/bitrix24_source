@@ -68,6 +68,7 @@ export default class EntityChat extends Stream
 		const lockScript = BX.prop.getString(this._data, "LOCK_SCRIPT", null);
 		if (BX.Type.isString(lockScript) && lockScript !== '')
 		{
+			// eslint-disable-next-line no-eval -- intentional: executes server-provided lock script for entity chat
 			eval(lockScript);
 		}
 	}

@@ -6,13 +6,6 @@ jn.define('tasks/onboarding/src/condition', (require, exports, module) => {
 
 	class Condition extends ConditionBase
 	{
-		static isEmptyTaskList()
-		{
-			return (context) => {
-				return context?.itemQuantity === 0;
-			};
-		}
-
 		static hasTasksMoreThan(quantity)
 		{
 			return async (context) => {

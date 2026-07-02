@@ -2,7 +2,7 @@
  * @module im/messenger/api/dialog-integration/message/context-menu
  */
 jn.define('im/messenger/api/dialog-integration/message/context-menu', (require, exports, module) => {
-	const { MessageMenuActionType } = require('im/messenger/const');
+	const { MessageMenuActionType, MessageMenuSectionId } = require('im/messenger/const');
 
 	/**
 	 * @abstract
@@ -35,7 +35,7 @@ jn.define('im/messenger/api/dialog-integration/message/context-menu', (require, 
 
 		/**
 		 * @abstract
-		 * @return {Record<string, (MessageMenuView, MessageMenuMessage) => void>}
+		 * @return {Record<string, (MessageMenuView, MessageMenuActionHelper, object) => void>}
 		 */
 		getActions()
 		{
@@ -44,7 +44,7 @@ jn.define('im/messenger/api/dialog-integration/message/context-menu', (require, 
 
 		/**
 		 * @abstract
-		 * @return {Record<string, (message: IMessageMenuMessage) => void>}
+		 * @return {Record<string, (message: IMessageMenuActionHelper) => void>}
 		 */
 		getActionHandlers()
 		{
@@ -52,10 +52,33 @@ jn.define('im/messenger/api/dialog-integration/message/context-menu', (require, 
 		}
 
 		/**
-		 * @param message
+		 * @abstract
+		 * @return {Record<string, MessageContextMenuSectionItem>}
+		 */
+		getSection()
+		{
+			throw new Error(`${this.constructor.name}: getSection() must be override in subclass.`);
+		}
+
+		/**
+		 * @abstract
+		 * @return {Record<string, MessageContextMenuSectionItem>}
+		 */
+		getErrorMenuSection()
+		{}
+
+		/**
+		 * @abstract
+		 * @return {Record<string, MessageContextMenuSectionItem>}
+		 */
+		getSendingMenuSection()
+		{}
+
+		/**
+		 * @param actionHelper
 		 * @return {Promise<string[]>}
 		 */
-		async getOrderedActions(message)
+		async getOrderedActions(actionHelper)
 		{
 			return [
 				MessageMenuActionType.reply,
@@ -63,6 +86,7 @@ jn.define('im/messenger/api/dialog-integration/message/context-menu', (require, 
 				MessageMenuActionType.revote,
 				MessageMenuActionType.copy,
 				MessageMenuActionType.copyLink,
+				MessageMenuActionType.mark,
 				MessageMenuActionType.edit,
 				MessageMenuActionType.subscribe,
 				MessageMenuActionType.unsubscribe,
@@ -80,6 +104,36 @@ jn.define('im/messenger/api/dialog-integration/message/context-menu', (require, 
 				MessageMenuActionType.multiselect,
 			];
 		}
+
+		/**
+		 * @returns {Array<string|object>}
+		 */
+		getOrderedActionTree(actionHelper)
+		{
+			return [
+				{
+					sectionId: MessageMenuSectionId.dialogMain,
+					children: [
+						MessageMenuActionType.reply,
+						MessageMenuActionType.copy,
+					],
+				},
+			];
+		}
+
+		/**
+		 * @abstract
+		 * @returns {Array<string|object>}
+		 */
+		getOrderedErrorActionTree()
+		{}
+
+		/**
+		 * @abstract
+		 * @returns {Array<string|object>}
+		 */
+		getOrderedSendingActionTree()
+		{}
 	}
 
 	module.exports = {

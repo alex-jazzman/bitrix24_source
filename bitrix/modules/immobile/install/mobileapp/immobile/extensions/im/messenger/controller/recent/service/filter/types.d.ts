@@ -5,6 +5,7 @@ declare type FilterId = 'filter-all' | 'filter-unread';
 export interface IFilterService extends IBaseRecentService
 {
 	applyFilter(filterId: FilterId): void;
+	resetFilter(): void;
 	getCurrentFilterId(): string | null;
 	hasSelectedFilter(): boolean;
 }

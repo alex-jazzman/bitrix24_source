@@ -485,10 +485,17 @@ div.ui-access-rights-v2-members-item-new:last-of-type {
 	font-size: var(--ui-font-size-sm);
 }
 
-.ui-access-rights-v2-text-center {
+.ui-access-rights-del-role {
 	text-align: center;
 }
-
+.ui-access-rights-del-role .popup-window-buttons {
+	display: flex;
+	justify-content: center;
+	gap: 12px;
+	margin: 0;
+	border: none;
+	padding: var(--padding-outter) var(--padding-outter) var(--padding-outter) var(--padding-outter);
+}
 .ui-access-rights-v2-column-item .ui-access-rights-v2-text-ellipsis {
 	max-width: calc(100% - 40px); /* 20px for width paddings */
 }

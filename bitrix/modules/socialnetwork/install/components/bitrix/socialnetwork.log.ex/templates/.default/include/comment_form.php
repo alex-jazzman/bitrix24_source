@@ -37,24 +37,6 @@ else
 	$smiles = (int)$arResult["Smiles"];
 }
 
-if (
-	\Bitrix\Main\ModuleManager::isModuleInstalled('tasks')
-	&& class_exists("Bitrix\\Tasks\\Internals\\Task\\Result\\ResultManager")
-)
-{
-	$APPLICATION->IncludeComponent(
-		'bitrix:tasks.widget.result.field',
-		'',
-		[
-			'HIDDEN' => 'Y',
-		],
-		$this->getComponent(),
-		[
-			'HIDE_ICONS' => 'Y',
-		]
-	);
-}
-
 $formParams = [
 	"FORM_ID" => $arParams["FORM_ID"],
 	"SHOW_MORE" => "Y",

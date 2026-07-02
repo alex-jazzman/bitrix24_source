@@ -3,6 +3,8 @@
 namespace Bitrix\BIConnector\Controller;
 
 use Bitrix\BIConnector\Access\Install\AccessInstaller;
+use Bitrix\BIConnector\Integration\Superset\Agent;
+use Bitrix\BIConnector\Integration\Superset\Registrar;
 use Bitrix\BIConnector\Integration\Superset\SupersetInitializer;
 use Bitrix\BIConnector\Superset\ActionFilter\ProxyAuth;
 use Bitrix\BIConnector\Superset\Logger\SupersetInitializerLogger;
@@ -49,6 +51,30 @@ class Callback extends Controller
 		SupersetInitializerLogger::logInfo('Portal got freeze action', ['current_status' => SupersetInitializer::getSupersetStatus()]);
 	}
 
+	public function suspendAction(): void
+	{
+		$currentStatus = SupersetInitializer::getSupersetStatus();
+		SupersetInitializerLogger::logInfo('Portal got suspend action', ['current_status' => $currentStatus]);
+
+		SupersetInitializer::markSupersetInstanceSuspended(true);
+
+		// suspend finished. Promote status so cancelPendingDelete() knows
+		// it is safe to call resume immediately if the user re-enables BI later.
+		if ($currentStatus === SupersetInitializer::SUPERSET_STATUS_PENDING_DELETE)
+		{
+			SupersetInitializer::setSupersetStatus(SupersetInitializer::SUPERSET_STATUS_PENDING_DELETE_SUSPENDED);
+
+			return;
+		}
+
+		// User already re-enabled BI — cancelPendingDelete() set status to LOAD and
+		// deferred resume. suspend is done now, so trigger resume.
+		if ($currentStatus === SupersetInitializer::SUPERSET_STATUS_LOAD)
+		{
+			SupersetInitializer::resumeSuperset(['reason' => SupersetInitializer::FREEZE_REASON_PENDING_DELETE]);
+		}
+	}
+
 	/**
 	 * @see \Bitrix\BIConnector\Integration\Superset\Agent::deleteInstance()
 	 * @return void
@@ -65,7 +91,7 @@ class Callback extends Controller
 			if (Option::get('biconnector', SupersetInitializer::ERROR_DELETE_INSTANCE_OPTION, 'N') === 'N')
 			{
 				\CAgent::addAgent(
-					name: '\\Bitrix\\BIConnector\\Integration\\Superset\\Agent::deleteInstance();',
+					name: 'Bitrix\\BIConnector\\Integration\\Superset\\Agent::deleteInstance();',
 					module: 'biconnector',
 					next_exec: convertTimeStamp(time() + \CTimeZone::getOffset() + 86400, 'FULL'),
 				);
@@ -74,6 +100,16 @@ class Callback extends Controller
 
 			return;
 		}
+
+		if (SupersetInitializer::isSupersetPendingDelete())
+		{
+			Agent::notifyPendingDeleteCompleted();
+		}
+
+		Registrar::getRegistrar()->clear(__CLASS__ . '::' . __FUNCTION__);
+		\CAgent::RemoveAgent(Agent::class . '::recoverDeletedAfterRebindTimeout();', 'biconnector');
+		SupersetInitializer::fixDeleteTimestamp();
+		SupersetInitializer::markSupersetInstanceExists(false);
 
 		// When deleting from proxy
 		if (SupersetInitializer::getSupersetStatus() !== SupersetInitializer::SUPERSET_STATUS_DELETED)

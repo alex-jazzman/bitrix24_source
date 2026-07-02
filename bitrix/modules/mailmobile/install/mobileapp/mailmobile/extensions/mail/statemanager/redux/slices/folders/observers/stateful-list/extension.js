@@ -5,17 +5,21 @@ jn.define('mail/statemanager/redux/slices/folders/observers/stateful-list', (req
 	const {
 		selectEntities,
 		selectCurrentFolder,
+		selectCurrentVirtualFolderKey,
 	} = require('mail/statemanager/redux/slices/folders/selector');
 	const { isEqual } = require('utils/object');
 
 	const observeFoldersChange = (store, onChange) => {
 		let prevFolders = selectEntities(store.getState());
 		let prevCurrentFolder = selectCurrentFolder(store.getState());
+		let prevVirtualFolderKey = selectCurrentVirtualFolderKey(store.getState());
 
 		return store.subscribe(() => {
 			let selected = null;
+			let virtualFolderKey = null;
 			const nextFolders = selectEntities(store.getState());
 			const nextCurrentFolder = selectCurrentFolder(store.getState());
+			const nextVirtualFolderKey = selectCurrentVirtualFolderKey(store.getState());
 			const {
 				moved,
 				removed,
@@ -24,16 +28,23 @@ jn.define('mail/statemanager/redux/slices/folders/observers/stateful-list', (req
 			} = getDiffForFoldersObserver(prevFolders, nextFolders);
 			const isCurrentFolderChanged = (prevCurrentFolder !== null && nextCurrentFolder !== null)
 				&& (prevCurrentFolder.id !== nextCurrentFolder.id);
+			const isVirtualFolderKeyChanged = prevVirtualFolderKey !== nextVirtualFolderKey;
 
-			if (isCurrentFolderChanged)
+			if (isCurrentFolderChanged || (isVirtualFolderKeyChanged && nextVirtualFolderKey === null))
 			{
 				selected = nextCurrentFolder;
+			}
+
+			if (isVirtualFolderKeyChanged && nextVirtualFolderKey !== null)
+			{
+				virtualFolderKey = nextVirtualFolderKey;
 			}
 
 			if (
 				moved.length > 0 || removed.length > 0
 				|| added.length > 0 || created.length > 0
 				|| isCurrentFolderChanged
+				|| isVirtualFolderKeyChanged
 			)
 			{
 				onChange({
@@ -42,11 +53,13 @@ jn.define('mail/statemanager/redux/slices/folders/observers/stateful-list', (req
 					added,
 					created,
 					selected,
+					virtualFolderKey,
 				});
 			}
 
 			prevFolders = nextFolders;
 			prevCurrentFolder = nextCurrentFolder;
+			prevVirtualFolderKey = nextVirtualFolderKey;
 		});
 	};
 

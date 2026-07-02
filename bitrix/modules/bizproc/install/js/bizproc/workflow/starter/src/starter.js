@@ -1,16 +1,22 @@
-import { Type, Loc, Text, Uri, Runtime } from 'main.core';
+import { Type, Loc, Text, Uri } from 'main.core';
 import { EventEmitter } from 'main.core.events';
+import 'sidepanel';
 import { Dialog } from 'ui.entity-selector';
 import 'ui.notification';
-import 'sidepanel';
-import type { Action } from './call-action-helper';
 
+import { Router } from 'bizproc.router';
+
+import { CallActionHelper, type Action } from './call-action-helper';
 import { ComplexDocumentId } from './data/complex-document-id';
 import { ComplexDocumentType } from './data/complex-document-type';
-import { CallActionHelper } from './call-action-helper';
+import {
+	StarterDocument,
+	type StarterComplexDocumentTypeInput,
+	type StarterDocumentInit,
+} from './data/starter-document';
 import { ErrorNotifier } from './error-notifier';
 import { managerInstance } from './index';
-import type { StarterData } from './types/starter-data';
+import { type StarterData } from './types/starter-data';
 
 export type SignedDocumentType = string;
 export type SignedDocumentId = string;
@@ -138,6 +144,209 @@ export class Starter extends EventEmitter
 		;
 	}
 
+	static showTemplatesListByDocuments(
+		documents: StarterDocumentInit[],
+		config: { callback: ?Function } = {},
+	): void
+	{
+		const preparedDocuments = this.#normalizeDocuments(documents);
+		if (!Type.isArrayFilled(preparedDocuments))
+		{
+			throw new TypeError('documents are empty');
+		}
+
+		Router.openWorkflowStartList({
+			requestMethod: 'get',
+			requestParams: this.#createDocumentsRequestParams(preparedDocuments),
+			events: {
+				onCloseComplete: Type.isFunction(config.callback) ? config.callback : () => {},
+			},
+		});
+	}
+
+	static showAutoStartParametersPopupByDocumentTypes(
+		documentTypes: StarterComplexDocumentTypeInput[],
+		autoExecuteType: number,
+		config: { callback: ?Function } = {},
+	): void
+	{
+		const preparedDocumentTypes = this.#normalizeDocumentTypes(documentTypes);
+		const preparedAutoExecuteType = Text.toInteger(autoExecuteType);
+
+		this.#assertAutoStartParameters(preparedDocumentTypes, preparedAutoExecuteType);
+
+		Router.openWorkflowAutoStartParameters({
+			requestMethod: 'post',
+			requestParams: this.#createAutoStartRequestParams(
+				preparedDocumentTypes,
+				preparedAutoExecuteType,
+			),
+			events: {
+				onCloseComplete: this.#createAutoStartOnCloseCompleteHandler(config.callback),
+			},
+		});
+	}
+
+	static #assertAutoStartParameters(
+		documentTypes: ComplexDocumentType[],
+		autoExecuteType: number,
+	): void
+	{
+		if (!Type.isArrayFilled(documentTypes))
+		{
+			throw new TypeError('document types are empty');
+		}
+
+		if (autoExecuteType < 0)
+		{
+			throw new TypeError('auto execute type is incorrect');
+		}
+	}
+
+	static #normalizeDocuments(documents: StarterDocumentInit[]): StarterDocument[]
+	{
+		if (!Type.isArrayFilled(documents))
+		{
+			return [];
+		}
+
+		const uniqueDocuments = new Map();
+		documents.forEach((document) => {
+			const normalizedDocument = StarterDocument.tryCreate(document);
+			if (!normalizedDocument)
+			{
+				return;
+			}
+
+			uniqueDocuments.set(normalizedDocument.key, normalizedDocument);
+		});
+
+		return [...uniqueDocuments.values()];
+	}
+
+	static #normalizeDocumentTypes(documentTypes: StarterComplexDocumentTypeInput[]): ComplexDocumentType[]
+	{
+		if (!Type.isArrayFilled(documentTypes))
+		{
+			return [];
+		}
+
+		const uniqueDocumentTypes = new Map();
+		documentTypes.forEach((documentType) => {
+			const normalizedDocumentType = this.#normalizeDocumentType(documentType);
+			if (!normalizedDocumentType)
+			{
+				return;
+			}
+
+			uniqueDocumentTypes.set(
+				[
+					normalizedDocumentType.moduleId,
+					normalizedDocumentType.entity,
+					normalizedDocumentType.documentType,
+				].join('@'),
+				normalizedDocumentType,
+			);
+		});
+
+		return [...uniqueDocumentTypes.values()];
+	}
+
+	static #normalizeDocumentType(documentType: mixed): ?ComplexDocumentType
+	{
+		return ComplexDocumentType.tryCreate(documentType);
+	}
+
+	static #createDocumentPayload(document: StarterDocument): {
+		documentType: [string, string, string],
+		documentId: [string, string, string | number],
+	}
+	{
+		return {
+			documentType: [
+				document.documentType.moduleId,
+				document.documentType.entity,
+				document.documentType.documentType,
+			],
+			documentId: [
+				document.documentId.moduleId,
+				document.documentId.entity,
+				document.documentId.documentId,
+			],
+		};
+	}
+
+	static #createDocumentTypePayload(documentType: ComplexDocumentType): [string, string, string]
+	{
+		return [
+			documentType.moduleId,
+			documentType.entity,
+			documentType.documentType,
+		];
+	}
+
+	static #createDocumentsRequestParams(documents: StarterDocument[]): { [string]: string | number }
+	{
+		const requestParams = {};
+
+		documents.forEach((document, documentIndex) => {
+			const payload = this.#createDocumentPayload(document);
+
+			payload.documentType.forEach((value, valueIndex) => {
+				requestParams[`documents[${documentIndex}][documentType][${valueIndex}]`] = value;
+			});
+
+			payload.documentId.forEach((value, valueIndex) => {
+				requestParams[`documents[${documentIndex}][documentId][${valueIndex}]`] = value;
+			});
+		});
+
+		return requestParams;
+	}
+
+	static #createAutoStartRequestParams(
+		documentTypes: ComplexDocumentType[],
+		autoExecuteType: number,
+	): {
+		autoExecuteType: number,
+		documents: Array<{ documentType: [string, string, string] }>,
+	}
+	{
+		return {
+			autoExecuteType,
+			documents: documentTypes.map((documentType) => ({
+				documentType: this.#createDocumentTypePayload(documentType),
+			})),
+		};
+	}
+
+	static #createAutoStartOnCloseCompleteHandler(callback: ?Function): (event: BX.SidePanel.Event) => void
+	{
+		return (event: BX.SidePanel.Event) => {
+			if (!Type.isFunction(callback))
+			{
+				return;
+			}
+
+			callback({
+				parameters: this.#extractSignedParameters(event),
+			});
+		};
+	}
+
+	static #extractSignedParameters(event: BX.SidePanel.Event): ?string
+	{
+		const slider = event.getSlider();
+		const dictionary: ?BX.SidePanel.Dictionary = slider ? slider.getData() : null;
+
+		if (!dictionary?.has('data'))
+		{
+			return null;
+		}
+
+		return dictionary.get('data').signedParameters || null;
+	}
+
 	static showTemplates(
 		starterData: { signedDocumentType: string, signedDocumentId: string },
 		config: { targetNode: ?HTMLElement, callback: ?Function },
@@ -179,23 +388,18 @@ export class Starter extends EventEmitter
 
 	#showTemplatesSlider(callback: ?Function = null): void
 	{
-		Runtime
-			.loadExtension('bizproc.router')
-			.then(({ Router }) => {
-				const options = {
-					requestMethod: 'get',
-					requestParams: {
-						signedDocumentType: this.#signedDocumentType,
-						signedDocumentId: this.#signedDocumentId,
-					},
-					events: {
-						onCloseComplete: Type.isFunction(callback) ? callback : () => {},
-					},
-				};
+		const options = {
+			requestMethod: 'get',
+			requestParams: {
+				signedDocumentType: this.#signedDocumentType,
+				signedDocumentId: this.#signedDocumentId,
+			},
+			events: {
+				onCloseComplete: Type.isFunction(callback) ? callback : () => {},
+			},
+		};
 
-				Router.openWorkflowStartList(options);
-			})
-			.catch((e) => console.error(e));
+		Router.openWorkflowStartList(options);
 	}
 
 	// compatibility

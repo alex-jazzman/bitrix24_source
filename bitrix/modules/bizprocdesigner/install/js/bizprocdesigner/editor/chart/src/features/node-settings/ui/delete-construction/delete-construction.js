@@ -9,7 +9,7 @@ import { useNodeSettingsStore, type TRuleCard, type Construction } from '../../.
 
 // @vue/component
 export const DeleteConstruction = {
-	name: 'delete-construction',
+	name: 'DeleteConstruction',
 	components: { BIcon },
 	props:
 	{
@@ -39,7 +39,7 @@ export const DeleteConstruction = {
 		<BIcon
 			:color="iconColor"
 			:data-test-id="$testId('complexNodeRuleSettingsDeleteConstruction', construction.id)"
-			class="delete-construction"
+			class="editor-chart-node-settings-delete-construction"
 			name="cross-s"
 			@click="deleteConstruction(ruleCard, construction)"
 		/>

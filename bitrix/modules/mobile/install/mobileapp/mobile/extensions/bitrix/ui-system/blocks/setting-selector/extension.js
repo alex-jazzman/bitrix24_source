@@ -58,7 +58,7 @@ jn.define('ui-system/blocks/setting-selector', (require, exports, module) => {
 
 		render()
 		{
-			const { testId, additionalContent, ...restProps } = this.props;
+			const { testId, additionalContent = null, ...restProps } = this.props;
 
 			const renderProps = mergeImmutable(
 				{
@@ -81,7 +81,7 @@ jn.define('ui-system/blocks/setting-selector', (require, exports, module) => {
 					},
 					this.#renderTopContainer(),
 					this.renderSubtitle(),
-					this.state.checked ? additionalContent : null,
+					additionalContent,
 				),
 			);
 		}

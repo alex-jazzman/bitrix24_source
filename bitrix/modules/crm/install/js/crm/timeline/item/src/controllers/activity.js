@@ -1,18 +1,16 @@
-import { ajax as Ajax, Loc, Text, Type } from 'main.core';
-import { BaseEvent } from 'main.core.events';
 import { Router } from 'crm.router';
-import {
-	ApplyButton,
-	ButtonSize,
-	CancelButton,
-	CreateButton,
-	AirButtonStyle,
-} from 'ui.buttons';
+import { ajax as Ajax, Loc, Text, Type } from 'main.core';
+import type { BaseEvent } from 'main.core.events';
+import { AirButtonStyle, ApplyButton, ButtonSize, CancelButton, CreateButton } from 'ui.buttons';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { Dialog, Item } from 'ui.entity-selector';
 import { UI } from 'ui.notification';
-import { ActionParams, Base } from './base';
+
+import 'crm_common';
+import 'crm.timeline';
+
 import ConfigurableItem from '../configurable-item';
+import { type ActionParams, Base } from './base';
 
 const ALLOWED_MOVE_TO_ITEM_TYPES = [
 	'Activity:Call',

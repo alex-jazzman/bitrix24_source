@@ -5,15 +5,14 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Main\Analytics\AnalyticsEvent;
 use Bitrix\Main\Localization\Loc;
-
 use \Bitrix\Bizproc\Activity\PropertiesDialog;
-
 use Bitrix\Crm\Activity\Provider\Tasks\Task;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;
 use Bitrix\Crm\Order\OrderStatus;
-use Bitrix\Crm\Integration\Analytics\Dictionary;
+use Bitrix\Crm\Integration\Analytics;
 
 class CBPCrmCompleteTaskActivity extends CBPActivity
 {
@@ -65,7 +64,7 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 
 		$documentType = $this->getDocumentType();
 		\CCrmBizProcHelper::sendOperationsAnalytics(
-			Dictionary::EVENT_ENTITY_DELETE,
+			Analytics\Dictionary::EVENT_ENTITY_DELETE,
 			$this,
 			$documentType[2] ?? '',
 		);
@@ -191,15 +190,26 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 			['ID', 'ASSOCIATED_ENTITY_ID', 'SETTINGS']
 		);
 
+		$analyticsEvent = $this->getAnalyticsEvent();
+
 		$completedTasks = [];
 		for ($activity = $dbResult->Fetch(); $activity; $activity = $dbResult->Fetch())
 		{
 			if (is_array($activity['SETTINGS']) && $activity['SETTINGS']['OWNER_STAGE'] === $ownerStage)
 			{
-				$isCompleted = CCrmActivity::Update($activity['ID'], ['COMPLETED' => true], false, true);
+				$isCompleted = CCrmActivity::Update(
+					$activity['ID'],
+					['COMPLETED' => true],
+					false,
+					true,
+					['ANALYTICS_EVENT' => $analyticsEvent],
+				);
+
 				if ($isCompleted)
 				{
-					$completedTasks[] = $activity['ASSOCIATED_ENTITY_ID'];
+					$taskId = $activity['ASSOCIATED_ENTITY_ID'];
+
+					$completedTasks[] = $taskId;
 				}
 			}
 		}
@@ -224,10 +234,19 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 		{
 			if (is_array($activity['SETTINGS']) && $activity['SETTINGS']['OWNER_STAGE'] === $ownerStage)
 			{
-				$isCompleted = CCrmActivity::Update($activity['ID'], ['COMPLETED' => true], false, true);
+				$isCompleted = CCrmActivity::Update(
+					$activity['ID'],
+					['COMPLETED' => true],
+					false,
+					true,
+					['ANALYTICS_EVENT' => $analyticsEvent],
+				);
+
 				if ($isCompleted)
 				{
-					$completedTasks[] = $activity['ASSOCIATED_ENTITY_ID'];
+					$taskId = $activity['ASSOCIATED_ENTITY_ID'];
+
+					$completedTasks[] = $taskId;
 				}
 			}
 		}
@@ -236,6 +255,22 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 		{
 			$this->logCompletedTasks($completedTasks);
 		}
+	}
+
+	private function getAnalyticsEvent(): AnalyticsEvent
+	{
+		$event = new AnalyticsEvent(
+			event: Analytics\Tasks\Event::TaskComplete->value,
+			tool: Analytics\Dictionary::TOOL_TASKS,
+			category: Analytics\Tasks\Category::TaskOperations->value,
+		);
+
+		return
+			$event
+				->setSection(Analytics\Tasks\Section::Crm->value)
+				->setSubSection(Analytics\Tasks\SubSection::Automation->value)
+				->setElement(Analytics\Tasks\Element::Auto->value)
+		;
 	}
 
 	private function logCompletedTasks(array $completedTaskIds): void

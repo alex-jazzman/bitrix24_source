@@ -42,6 +42,7 @@ Loader::includeModule('intranet');
 
 \Bitrix\Main\UI\Extension::load([
 	'intranet.sidepanel.air',
+	'intranet.skip-to-content',
 	'socialnetwork.slider',
 	'calendar.sliderloader',
 	'ui.counter',
@@ -191,11 +192,11 @@ $layoutMode = \Bitrix\Intranet\UI\LeftMenu\Menu::isCollapsed() ? ' menu-collapse
 					'CATEGORY_0' => [
 						0 => 'custom_users',
 					],
-					'CATEGORY_1_TITLE' => Loc::getMessage('BITRIX24_SEARCH_GROUP'),
+					'CATEGORY_1_TITLE' => Loc::getMessage('BITRIX24_SEARCH_PROJECT'),
 					'CATEGORY_1' => [
 						0 => 'custom_sonetgroups',
 					],
-					'CATEGORY_2_TITLE' => Loc::getMessage('BITRIX24_SEARCH_COLLAB'),
+					'CATEGORY_2_TITLE' => Loc::getMessage('BITRIX24_SEARCH_PROJECT'),
 					'CATEGORY_2' => [
 						0 => 'custom_collabs',
 					],
@@ -238,7 +239,7 @@ $layoutMode = \Bitrix\Intranet\UI\LeftMenu\Menu::isCollapsed() ? ' menu-collapse
 	<div class="app__avatar" id="avatar-area">
 		<?php $APPLICATION->includeComponent('bitrix:intranet.avatar.widget', '', [], false, ['HIDE_ICONS' => 'Y']) ?>
 	</div>
-	<div class="app__page" id="page-area"><?
+	<main tabindex="-1" class="app__page" id="page-area"><?
 		$dynamicArea = new StaticArea("page-area");
 		$dynamicArea->setContainerId('page-area');
 		$dynamicArea->setAssetMode(AssetMode::STANDARD);
@@ -246,11 +247,11 @@ $layoutMode = \Bitrix\Intranet\UI\LeftMenu\Menu::isCollapsed() ? ' menu-collapse
 		$dynamicArea->startDynamicArea();
 		?>
 		<div class="page <?$APPLICATION->showProperty('BodyClass');?>">
-			<header class="page__header">
+			<div class="page__header">
 				<div class="page__menu"><? $APPLICATION->showViewContent('page_menu') ?></div>
 				<div class="page__toolbar"><? $APPLICATION->includeComponent('bitrix:ui.toolbar', '', []) ?></div>
 				<div class="page__actions"><? $APPLICATION->showViewContent('below_pagetitle') ?></div>
-			</header>
+			</div>
 			<div class="page__workarea">
-				<main id="air-workarea-content" class="page__workarea-content<?
+				<div tabindex="-1" id="air-workarea-content" class="page__workarea-content<?
 					$GLOBALS['APPLICATION']->addBufferContent([AirTemplate::class, 'getWorkAreaContent'])?>"><?

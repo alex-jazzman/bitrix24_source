@@ -3,14 +3,20 @@
  */
 jn.define('im/messenger/controller/dialog/lib/message-menu', (require, exports, module) => {
 	const { MessageMenuController } = require('im/messenger/controller/dialog/lib/message-menu/controller');
-	const { MessageMenu } = require('im/messenger/controller/dialog/lib/message-menu/menu');
-	const MenuActions = require('im/messenger/controller/dialog/lib/message-menu/action');
-	const { MessageMenuMessage } = require('im/messenger/controller/dialog/lib/message-menu/message');
+	const { DialogMessageContextMenu } = require('im/messenger/controller/dialog/lib/message-menu/src/context/default');
+	const { CopilotMessageContextMenu } = require('im/messenger/controller/dialog/lib/message-menu/src/context/copilot');
+	const { AiAssistantMessageContextMenu } = require('im/messenger/controller/dialog/lib/message-menu/src/context/ai-assistant');
+	const MenuActions = require('im/messenger/controller/dialog/lib/message-menu/src/action');
+	const MenuSection = require('im/messenger/controller/dialog/lib/message-menu/src/section');
+	const { MessageMenuActionHelper } = require('im/messenger/controller/dialog/lib/message-menu/src/message-action-helper');
 
 	module.exports = {
 		MessageMenuController,
-		MessageMenuMessage,
-		MessageMenu,
+		MessageMenuActionHelper,
+		DialogMessageContextMenu,
+		CopilotMessageContextMenu,
+		AiAssistantMessageContextMenu,
 		MenuActions,
+		MenuSection,
 	};
 });

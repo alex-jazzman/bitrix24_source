@@ -1506,7 +1506,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 		}
 
 		/**
-		 * @private
+		 * @protected
 		 * @return {string}
 		 */
 		getEditableEmptyValue()

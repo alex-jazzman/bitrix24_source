@@ -10,10 +10,10 @@ return [
 	'js' => 'dist/message-component.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'im.v2.lib.utils',
 		'im.v2.application.core',
 		'im.v2.const',
 		'im.v2.lib.smile-manager',
+		'im.v2.lib.utils',
 		'imopenlines.v2.lib.openlines',
 	],
 	'skip_core' => true,

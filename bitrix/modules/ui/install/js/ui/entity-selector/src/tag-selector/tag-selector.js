@@ -707,9 +707,12 @@ export default class TagSelector extends EventEmitter
 			const caption = Text.encode(this.getActualButtonCaption());
 
 			return Tag.render`
-				<span 
+				<button
+					type="button"
+					tabindex="0"
 					class="ui-tag-selector-add-button-caption" 
-					onclick="${this.handleAddButtonClick.bind(this)}">${caption}</span>
+					onclick="${this.handleAddButtonClick.bind(this)}"
+				>${caption}</button>
 			`;
 		});
 	}
@@ -798,10 +801,12 @@ export default class TagSelector extends EventEmitter
 
 			return Tag.render`
 				<div class="ui-tag-selector-create-button${className}">
-					<span 
+					<button
+						type="button"
+						tabindex="0"
 						class="ui-tag-selector-create-button-caption"
 						onclick="${this.handleCreateButtonClick.bind(this)}"
-					>${Text.encode(this.getCreateButtonCaption())}</span>
+					>${Text.encode(this.getCreateButtonCaption())}</button>
 				</div>
 			`;
 		});

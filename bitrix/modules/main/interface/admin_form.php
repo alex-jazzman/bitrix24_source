@@ -736,15 +736,23 @@ class CAdminForm extends CAdminTabControl
 		);
 	}
 
-	function AddEditField($id, $content, $required, $arParams = array(), $value = false)
+	function AddEditField($id, $content, $required, $arParams = array(), $value = false, bool $rawValue = false)
 	{
 		$arParams['id'] = (string)($arParams['id'] ?? '');
 		$arParams['size'] = (int)($arParams['size'] ?? 0);
 		$arParams['maxlength'] = (int)($arParams['maxlength'] ?? 0);
 		if($value === false)
+		{
 			$value = htmlspecialcharsbx($this->arFieldValues[$id]);
+		}
 		else
-			$value = htmlspecialcharsbx(htmlspecialcharsback($value));
+		{
+			if ($rawValue === false)
+			{
+				$value = htmlspecialcharsback($value);
+			}
+			$value = htmlspecialcharsbx($value);
+		}
 
 		$html = '<input type="text" name="'.$id.'" value="'.$value.'"';
 		if ($arParams['size'] > 0)
@@ -770,9 +778,13 @@ class CAdminForm extends CAdminTabControl
 		);
 	}
 
-	function AddTextField($id, $label, $value, $arParams=array(), $required=false)
+	function AddTextField($id, $label, $value, $arParams=array(), $required=false, bool $rawValue = false)
 	{
-		$value = htmlspecialcharsbx(htmlspecialcharsback($value));
+		if ($rawValue === false)
+		{
+			$value = htmlspecialcharsback($value);
+		}
+		$value = htmlspecialcharsbx($value);
 
 		$html = '<textarea name="'.$id.'"';
 		if(intval($arParams["cols"]) > 0)
@@ -795,7 +807,7 @@ class CAdminForm extends CAdminTabControl
 	{
 		$html = CalendarDate($id, $value, $this->GetFormName());
 
-		$value = htmlspecialcharsbx(htmlspecialcharsback($value));
+		$value = htmlspecialcharsbx($value, ENT_COMPAT, false);
 
 		$this->tabs[$this->tabIndex]["FIELDS"][$id] = array(
 			"id" => $id,
@@ -896,7 +908,7 @@ class CAdminForm extends CAdminTabControl
 			?>
 				<tr>
 					<td colspan="2" align="left">
-						<a href="/bitrix/admin/userfield_edit.php?lang=<?echo LANGUAGE_ID?>&amp;ENTITY_ID=<?echo urlencode($PROPERTY_ID)?>&amp;back_url=<?echo urlencode($APPLICATION->GetCurPageParam($this->name.'_active_tab=user_fields_tab', array($this->name.'_active_tab')))?>"><?echo $this->GetCustomLabelHTML()?></a>
+						<a href="/bitrix/admin/userfield_edit.php?lang=<?= LANGUAGE_ID?>&amp;ENTITY_ID=<?= urlencode($PROPERTY_ID)?>&amp;back_url=<?= urlencode($APPLICATION->GetCurPageParam($this->name.'_active_tab=user_fields_tab', array($this->name.'_active_tab')))?>"><?= $this->GetCustomLabelHTML()?></a>
 					</td>
 				</tr>
 			<?
@@ -954,7 +966,7 @@ class CAdminForm extends CAdminTabControl
 			?>
 			<tr>
 				<td colspan="2" align="left">
-					<a href="/bitrix/admin/userfield_edit.php?lang=<?echo LANGUAGE_ID?>&amp;ENTITY_ID=<?echo urlencode($PROPERTY_ID)?>&amp;back_url=<?echo urlencode($APPLICATION->GetCurPageParam($this->name.'_active_tab=user_fields_tab', array($this->name.'_active_tab')))?>"><?echo $this->GetCustomLabelHTML()?></a>
+					<a href="/bitrix/admin/userfield_edit.php?lang=<?= LANGUAGE_ID?>&amp;ENTITY_ID=<?= urlencode($PROPERTY_ID)?>&amp;back_url=<?= urlencode($APPLICATION->GetCurPageParam($this->name.'_active_tab=user_fields_tab', array($this->name.'_active_tab')))?>"><?= $this->GetCustomLabelHTML()?></a>
 				</td>
 			</tr>
 			<?

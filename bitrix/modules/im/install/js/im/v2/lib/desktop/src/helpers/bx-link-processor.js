@@ -2,10 +2,11 @@ import { Messenger } from 'im.public';
 import { DesktopApi } from 'im.v2.lib.desktop-api';
 import { DesktopBxLink, LegacyDesktopBxLink } from 'im.v2.const';
 import { DesktopManager } from 'im.v2.lib.desktop';
+import { Utils } from 'im.v2.lib.utils';
 
 import { Encoder } from '../classes/encoder';
 
-import type { DesktopBxLinkKey, LegacyDesktopBxLinkKey, RawParams } from '../classes/event-handlers/bx-link';
+import { type DesktopBxLinkKey, type LegacyDesktopBxLinkKey, type RawParams } from '../classes/event-handlers/bx-link';
 
 export const BxLinkProcessor = {
 	handleCommand(command: DesktopBxLinkKey, rawParams: ?RawParams): void
@@ -128,7 +129,8 @@ export const BxLinkProcessor = {
 			}
 			else if (params.chat)
 			{
-				void Messenger.openChat(`chat${params.chat}`);
+				const dialogId = Utils.dialog.buildChatDialogId(params.chat);
+				void Messenger.openChat(dialogId);
 			}
 			else
 			{
@@ -137,7 +139,8 @@ export const BxLinkProcessor = {
 		}
 		else if (command === LegacyDesktopBxLink.chat && params.id)
 		{
-			void Messenger.openChat(`chat${params.id}`);
+			const dialogId = Utils.dialog.buildChatDialogId(params.id);
+			void Messenger.openChat(dialogId);
 		}
 		else if (command === LegacyDesktopBxLink.notify)
 		{

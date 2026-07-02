@@ -1,4 +1,10 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?><?
+<?php if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?><?php
+
+/**
+ * @global CUser $USER
+ * @var array $arParams
+ * @var string $componentName
+ */
 
 if (!is_array($arParams["SITE_LIST"]) || empty($arParams["SITE_LIST"]) || $arParams["SITE_LIST"][0] == "*all*")
 {

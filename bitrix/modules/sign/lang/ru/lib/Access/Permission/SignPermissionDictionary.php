@@ -6,7 +6,6 @@ $MESS["SIGN_TEMPLATES"] = "Доступ к шаблонам документа";
 $MESS["SIGN_B2E_MY_SAFE"] = "Доступ к разделу \"Сейф компании\"";
 $MESS["SIGN_B2E_MY_SAFE_FIRED"] = "Показывать уволенных сотрудников в фильтре сейфа";
 $MESS["SIGN_B2E_MY_SAFE_DOCUMENTS"] = "Доступ к документам сейфа";
-$MESS["SIGN_B2E_TEMPLATES_1"] = "Доступ к недавним документам";
 $MESS["SIGN_B2E_TEMPLATE_READ"] = "Право на просмотр шаблонов";
 $MESS["SIGN_B2E_TEMPLATE_CREATE"] = "Право на создание шаблонов";
 $MESS["SIGN_B2E_TEMPLATE_EDIT"] = "Право на изменение шаблонов";

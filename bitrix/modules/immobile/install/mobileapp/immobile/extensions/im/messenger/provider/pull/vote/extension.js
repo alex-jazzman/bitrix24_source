@@ -7,7 +7,11 @@ jn.define('im/messenger/provider/pull/vote', (require, exports, module) => {
 	const { UuidManager } = require('im/messenger/lib/uuid-manager');
 	const { MessageHelper } = require('im/messenger/lib/helper');
 	const { MessengerParams } = require('im/messenger/lib/params');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
+	/**
+	 * @implements {Unsubscribable}
+	 */
 	class VotePullHandler extends BasePullHandler
 	{
 		constructor(options = {})
@@ -20,12 +24,19 @@ jn.define('im/messenger/provider/pull/vote', (require, exports, module) => {
 			this.onVoteResultPullUnsubscribed = this.onVoteResultPullUnsubscribed.bind(this);
 
 			this.#subscribeEvents();
+			serviceLocator.get('subscription-manager').register(this);
 		}
 
 		#subscribeEvents()
 		{
 			BX.addCustomEvent(EventType.messenger.voteResultPullSubscribed, this.onVoteResultPullSubscribed);
 			BX.addCustomEvent(EventType.messenger.voteResultPullUnsubscribed, this.onVoteResultPullUnsubscribed);
+		}
+
+		unsubscribeEvents()
+		{
+			BX.removeCustomEvent(EventType.messenger.voteResultPullSubscribed, this.onVoteResultPullSubscribed);
+			BX.removeCustomEvent(EventType.messenger.voteResultPullUnsubscribed, this.onVoteResultPullUnsubscribed);
 		}
 
 		onVoteResultPullSubscribed({ voteMessageId })

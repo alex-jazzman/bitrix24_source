@@ -2,7 +2,7 @@
 $MESS["BI_GROUP_ADD_DASHBOARD"] = "Add dashboards";
 $MESS["BI_GROUP_DASHBOARD_SCOPES_EMPTY"] = "Select scope";
 $MESS["BI_GROUP_EMPTY_SUBTITLE"] = "Click \"Add dashboards\" to add dashboards to this group.";
-$MESS["BI_GROUP_EMPTY_TITLE"] = "There are no dashboards in this group";
+$MESS["BI_GROUP_EMPTY_TITLE"] = "There are no dashboards in this group.";
 $MESS["BI_GROUP_NAME_NEW"] = "New group";
 $MESS["BI_GROUP_SAVE"] = "Save";
 $MESS["BI_GROUP_SAVE_CANCEL_MSGVER_1"] = "Cancel";

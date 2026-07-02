@@ -2492,6 +2492,7 @@ BX.namespace('BX.Crm.Activity');
 					{
 						if (additionalFields.offsetHeight > 0 && !BX.hasClass(additionalFields, 'crm-activity-email-close-animation'))
 						{
+							additionalSwitcher.setAttribute('aria-expanded', 'false');
 							additionalFields.style.maxHeight = (additionalFields.offsetHeight*1.5)+'px';
 							additionalFields.style.transition = 'max-height .12s ease-in';
 
@@ -2506,6 +2507,7 @@ BX.namespace('BX.Crm.Activity');
 						}
 						else
 						{
+							additionalSwitcher.setAttribute('aria-expanded', 'true');
 							BX.removeClass(additionalFields, 'crm-activity-email-close-animation');
 							BX.addClass(additionalFields, 'crm-activity-email-show-animation');
 
@@ -2531,11 +2533,13 @@ BX.namespace('BX.Crm.Activity');
 							{
 								BX.addClass(fieldImportant, 'crm-activity-planner-slider-header-icon-flame');
 								BX.removeClass(fieldImportant, 'crm-activity-planner-slider-header-icon-flame-active');
+								fieldImportant.setAttribute('aria-pressed', 'false');
 							}
 							else
 							{
 								BX.addClass(fieldImportant, 'crm-activity-planner-slider-header-icon-flame-active');
 								BX.removeClass(fieldImportant, 'crm-activity-planner-slider-header-icon-flame');
+								fieldImportant.setAttribute('aria-pressed', 'true');
 							}
 						};
 

@@ -1,7 +1,8 @@
 import { CompactIcons, PingSelector, PingSelectorEvents } from 'crm.field.ping-selector';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import type { BaseEvent } from 'main.core.events';
+import { EventEmitter } from 'main.core.events';
 import { hint } from 'ui.vue3.directives.hint';
-import { Events } from './todo-editor';
+import { Events } from './events';
 
 export const TodoEditorPingSelector = {
 	directives: { hint },

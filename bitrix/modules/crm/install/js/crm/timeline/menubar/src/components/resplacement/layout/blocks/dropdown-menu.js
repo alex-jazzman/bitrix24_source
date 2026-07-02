@@ -2,9 +2,9 @@ const MenuId = 'restapp-dropdown-menu';
 
 import { Type } from 'main.core';
 import { MenuManager } from 'main.popup';
+
 import EventType from '../../enums/event-type';
 import TextSize from '../../enums/text-size';
-import { ITEM_ACTION_EVENT } from '../../layout';
 
 export default {
 	inheritAttrs: false,
@@ -81,7 +81,7 @@ export default {
 		{
 			this.currentSelectedValue = valueId;
 			MenuManager.getCurrentMenu()?.close();
-			this.$Bitrix.eventEmitter.emit(ITEM_ACTION_EVENT, {
+			this.$Bitrix.eventEmitter.emit(EventType.ITEM_ACTION, {
 				event: EventType.VALUE_CHANGED_EVENT,
 				value: {
 					id: this.id,

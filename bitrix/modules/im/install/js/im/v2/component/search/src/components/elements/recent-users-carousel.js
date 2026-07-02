@@ -1,3 +1,4 @@
+import { DialogIdChatPrefix } from 'im.v2.const';
 import { getUsersFromRecentItems } from 'im.v2.lib.search';
 
 import { SelfChat } from './self-chat';
@@ -27,7 +28,7 @@ export const RecentUsersCarousel = {
 	{
 		isChat(dialogId: string): boolean
 		{
-			return dialogId.startsWith('chat');
+			return dialogId.startsWith(DialogIdChatPrefix);
 		},
 		loc(key: string): string
 		{

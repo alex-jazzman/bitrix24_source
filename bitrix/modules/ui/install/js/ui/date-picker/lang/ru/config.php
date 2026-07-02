@@ -1,3 +1,19 @@
 <?php
 $MESS["UI_DATE_PICKER_HOURS"] = "Часы";
 $MESS["UI_DATE_PICKER_MINUTES"] = "Минуты";
+$MESS["UI_DATE_PICKER_DIALOG_LABEL"] = "Календарь";
+$MESS["UI_DATE_PICKER_TIME_VIEW_LABEL"] = "Выбор времени";
+$MESS["UI_DATE_PICKER_PREV_MONTH"] = "Предыдущий месяц";
+$MESS["UI_DATE_PICKER_NEXT_MONTH"] = "Следующий месяц";
+$MESS["UI_DATE_PICKER_PREV_YEAR"] = "Предыдущий год";
+$MESS["UI_DATE_PICKER_NEXT_YEAR"] = "Следующий год";
+$MESS["UI_DATE_PICKER_PREV_DECADE"] = "Предыдущие 12 лет";
+$MESS["UI_DATE_PICKER_NEXT_DECADE"] = "Следующие 12 лет";
+$MESS["UI_DATE_PICKER_BACK_TO_DAYS"] = "Назад к выбору даты";
+$MESS["UI_DATE_PICKER_TIME_LABEL"] = "Выбрать время";
+$MESS["UI_DATE_PICKER_RANGE_TIME"] = "Время диапазона";
+$MESS["UI_DATE_PICKER_RANGE_TIME_START"] = "Время начала";
+$MESS["UI_DATE_PICKER_RANGE_TIME_END"] = "Время окончания";
+$MESS["UI_DATE_PICKER_MONTH_VIEW_LABEL"] = "Выбор месяца";
+$MESS["UI_DATE_PICKER_YEAR_VIEW_LABEL"] = "Выбор года";
+$MESS["UI_DATE_PICKER_PRESETS_LABEL"] = "Быстрый выбор даты";

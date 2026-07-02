@@ -1,0 +1,36 @@
+.bx-im-message-block-table__container {
+	--im-message-builder-table-cols: 1;
+
+	width: 100%;
+	min-width: 0;
+	max-width: 100%;
+}
+
+.bx-im-message-block-table__table {
+	display: block;
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.bx-im-message-block-table__table tbody {
+	display: grid;
+	grid-template-columns: repeat(var(--im-message-builder-table-cols), max-content);
+	column-gap: 10px;
+	row-gap: 4px;
+}
+
+.bx-im-message-block-table__table tr {
+	display: contents;
+}
+
+.bx-im-message-block-table__table td {
+	max-width: 332px;
+}
+
+.bx-im-message-block-table__container.--narrow .bx-im-message-block-table__table tbody {
+	grid-template-columns: 1fr;
+}
+
+.bx-im-message-block-table__container.--narrow .bx-im-message-block-table__table td {
+	max-width: 100%;
+}

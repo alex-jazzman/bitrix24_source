@@ -197,13 +197,11 @@ this.BX.Sign = this.BX.Sign || {};
 	}
 	function _createEditDocumentBtn2(item) {
 	  var _this5 = this;
-	  if (item.hasPlaceholders) {
-	    return null;
-	  }
 	  var id = item.id;
 	  var uid = item.uid;
+	  var eventName = item.hasPlaceholders ? 'showPlaceholderEditor' : 'showEditor';
 	  return main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span\n\t\t\t\tclass=\"", "\" data-id=\"", "\"\n\t\t\t\tonclick=\"", "\"\n\t\t\t>\n\t\t\t\t", "\n\t\t\t</span>\n\t\t"])), buttonClassList.join(' '), id, function () {
-	    return _this5.emit('showEditor', {
+	    return _this5.emit(eventName, {
 	      uid: uid
 	    });
 	  }, main_core.Loc.getMessage('SIGN_DOCUMENT_SUMMARY_EDIT'));

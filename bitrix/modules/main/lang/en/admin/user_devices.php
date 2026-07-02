@@ -1,6 +1,9 @@
 <?php
 $MESS["main_user_devices_agent"] = "Agent";
+$MESS["main_user_devices_app_password"] = "App password";
 $MESS["main_user_devices_browser"] = "Browser";
+$MESS["main_user_devices_delete"] = "Delete";
+$MESS["main_user_devices_delete_confirm"] = "Are you sure you want to delete this device?";
 $MESS["main_user_devices_device_type"] = "Device type";
 $MESS["main_user_devices_device_uid"] = "Device UID";
 $MESS["main_user_devices_menu_history"] = "Device login history";

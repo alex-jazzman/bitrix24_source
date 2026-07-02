@@ -124,7 +124,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Import"]=="Y")
 		{
 			$obCatalog = new CIBlockCMLImport;
 			$obCatalog->Init($NS, $WORK_DIR_NAME, true, $NS["PREVIEW"], false, true);
-			$result = $obCatalog->ImportMetaData(array(1, 2), $NS["IBLOCK_TYPE"], $NS["LID"]);
+			$result = $obCatalog->ImportMetaData($obCatalog->GetRoot(), $NS["IBLOCK_TYPE"], $NS["LID"]);
 			if($result === true)
 			{
 				$result = $obCatalog->ImportSections();

@@ -1,2 +1,328 @@
-this.BX=this.BX||{},this.BX.Crm=this.BX.Crm||{},function(e,s,l,a,t){"use strict";const i="CRM_COPILOT_CALL_ASSESSMENT_SCRIPT_SELECTOR";var o=babelHelpers.classPrivateFieldLooseKey("unsubscribeUpdate"),r=babelHelpers.classPrivateFieldLooseKey("unsubscribeSelect"),b=babelHelpers.classPrivateFieldLooseKey("subscribe"),c=babelHelpers.classPrivateFieldLooseKey("extendsWatch"),d=babelHelpers.classPrivateFieldLooseKey("clearWatch");class n{constructor(e){Object.defineProperty(this,d,{value:P}),Object.defineProperty(this,c,{value:v}),Object.defineProperty(this,b,{value:p}),Object.defineProperty(this,o,{writable:!0,value:void 0}),Object.defineProperty(this,r,{writable:!0,value:void 0}),babelHelpers.classPrivateFieldLooseBase(this,o)[o]=babelHelpers.classPrivateFieldLooseBase(this,b)[b]("update_call_assessment",e.onUpdate),babelHelpers.classPrivateFieldLooseBase(this,r)[r]=babelHelpers.classPrivateFieldLooseBase(this,b)[b]("select_call_assessment",e.onSelect),babelHelpers.classPrivateFieldLooseBase(this,c)[c]()}unsubscribe(){babelHelpers.classPrivateFieldLooseBase(this,o)[o](),babelHelpers.classPrivateFieldLooseBase(this,r)[r](),babelHelpers.classPrivateFieldLooseBase(this,d)[d]()}}function p(e,s){return t.PULL?t.PULL.subscribe({moduleId:"crm",command:e,callback:s}):()=>{}}function v(){t.PULL&&t.PULL.extendWatch(i)}function P(){t.PULL&&t.PULL.clearWatch(i)}const u="copilot_call_script";var h=babelHelpers.classPrivateFieldLooseKey("id"),L=babelHelpers.classPrivateFieldLooseKey("currentCallAssessmentId"),F=babelHelpers.classPrivateFieldLooseKey("additionalSelectorOptions"),H=babelHelpers.classPrivateFieldLooseKey("displayStrategy"),B=babelHelpers.classPrivateFieldLooseKey("emptyScriptListTitle"),y=babelHelpers.classPrivateFieldLooseKey("container"),f=babelHelpers.classPrivateFieldLooseKey("currentSelectorItem"),m=babelHelpers.classPrivateFieldLooseKey("dialog"),g=babelHelpers.classPrivateFieldLooseKey("eventEmitter"),O=babelHelpers.classPrivateFieldLooseKey("pull"),j=babelHelpers.classPrivateFieldLooseKey("isDisplayLoadingState"),S=babelHelpers.classPrivateFieldLooseKey("isDisabled"),K=babelHelpers.classPrivateFieldLooseKey("changesByPullQueue"),C=babelHelpers.classPrivateFieldLooseKey("toggleDialog"),I=babelHelpers.classPrivateFieldLooseKey("loading"),D=babelHelpers.classPrivateFieldLooseKey("onLoadDialog"),w=babelHelpers.classPrivateFieldLooseKey("onItemBeforeSelect"),T=babelHelpers.classPrivateFieldLooseKey("onItemBeforeDeselect"),E=babelHelpers.classPrivateFieldLooseKey("callAdditionalEvent"),A=babelHelpers.classPrivateFieldLooseKey("preventDeselectCurrentSelectorItem"),U=babelHelpers.classPrivateFieldLooseKey("updateCurrentSelectorItem"),_=babelHelpers.classPrivateFieldLooseKey("adjustTitle"),X=babelHelpers.classPrivateFieldLooseKey("onPopupContainerClick"),N=babelHelpers.classPrivateFieldLooseKey("subscribePull"),k=babelHelpers.classPrivateFieldLooseKey("bindEvents"),M=babelHelpers.classPrivateFieldLooseKey("onSelectItemByPull"),R=babelHelpers.classPrivateFieldLooseKey("onUpdateItemByPull"),W=babelHelpers.classPrivateFieldLooseKey("updateItem"),x=babelHelpers.classPrivateFieldLooseKey("addChangeByPull"),q=babelHelpers.classPrivateFieldLooseKey("applyChangesByPull"),Q=babelHelpers.classPrivateFieldLooseKey("isDialogLoaded"),z=babelHelpers.classPrivateFieldLooseKey("getDialogItem");function G(){if(babelHelpers.classPrivateFieldLooseBase(this,S)[S])return;const e=this.getDialog();e.isOpen()?e.hide():e.show()}function J(e){babelHelpers.classPrivateFieldLooseBase(this,j)[j]&&babelHelpers.classPrivateFieldLooseBase(this,H)[H].setLoading(e)}function V(e){babelHelpers.classPrivateFieldLooseBase(this,q)[q]();const s=babelHelpers.classPrivateFieldLooseBase(this,z)[z](babelHelpers.classPrivateFieldLooseBase(this,L)[L]);null!==s&&(babelHelpers.classPrivateFieldLooseBase(this,U)[U](s),babelHelpers.classPrivateFieldLooseBase(this,E)[E](e,"onLoad"))}function Y(e){const s=e.getData().item;null!==s&&(babelHelpers.classPrivateFieldLooseBase(this,U)[U](s),babelHelpers.classPrivateFieldLooseBase(this,E)[E](e,"Item:onBeforeSelect"))}function Z(e){babelHelpers.classPrivateFieldLooseBase(this,A)[A](e),babelHelpers.classPrivateFieldLooseBase(this,E)[E](e,"Item:onBeforeDeselect")}function $(e,l){var a,t,i;const o=null==(a=babelHelpers.classPrivateFieldLooseBase(this,F)[F])||null==(t=a.dialog)||null==(i=t.events)?void 0:i[l];s.Type.isFunction(o)&&o(e)}function ee(e){const s=e.getData().item;null!==s&&(s.id===babelHelpers.classPrivateFieldLooseBase(this,L)[L]&&e.preventDefault(),e.getTarget().hide())}function se(e){var s;babelHelpers.classPrivateFieldLooseBase(this,f)[f]=null!=e?e:null,babelHelpers.classPrivateFieldLooseBase(this,L)[L]=null!=(s=null==e?void 0:e.getId())?s:null,babelHelpers.classPrivateFieldLooseBase(this,_)[_]()}function le(){var e,s;const l=null!=(e=null==(s=babelHelpers.classPrivateFieldLooseBase(this,f)[f])?void 0:s.getTitle())?e:babelHelpers.classPrivateFieldLooseBase(this,B)[B];babelHelpers.classPrivateFieldLooseBase(this,H)[H].updateTitle(l)}function ae(e){const{target:s}=e;null===(null==s?void 0:s.closest(".call-quality__script-selector"))&&null===(null==s?void 0:s.closest(".ui-selector-dialog"))&&babelHelpers.classPrivateFieldLooseBase(this,H)[H].getTargetNode()!==s&&this.close()}function te(){babelHelpers.classPrivateFieldLooseBase(this,O)[O]=new n({onUpdate:babelHelpers.classPrivateFieldLooseBase(this,R)[R].bind(this),onSelect:e=>{this.isSelectsByPull=!0,babelHelpers.classPrivateFieldLooseBase(this,M)[M](e),this.isSelectsByPull=!1}})}function ie(e){babelHelpers.classPrivateFieldLooseBase(this,g)[g]=new l.EventEmitter,babelHelpers.classPrivateFieldLooseBase(this,g)[g].setEventNamespace("Crm.Copilot.CallAssessmentSelector"),s.Type.isObject(e)&&Object.entries(e).forEach(([e,s])=>{babelHelpers.classPrivateFieldLooseBase(this,g)[g].subscribe(e,s)})}function oe(e){var s;const{selectorId:t,itemOptions:i}=e;if(t===this.getId()){if(!babelHelpers.classPrivateFieldLooseBase(this,Q)[Q]()){const e=new a.Item(i),s=new l.BaseEvent({data:{item:e}});return babelHelpers.classPrivateFieldLooseBase(this,U)[U](e),void babelHelpers.classPrivateFieldLooseBase(this,E)[E](s,"Item:onBeforeSelect")}if(!i.id)return babelHelpers.classPrivateFieldLooseBase(this,L)[L]=null,this.getDialog().deselectAll(),void babelHelpers.classPrivateFieldLooseBase(this,_)[_]();null==(s=babelHelpers.classPrivateFieldLooseBase(this,z)[z](i.id))||s.select()}}function re(e){const{itemOptions:s}=e;var l;s.id===babelHelpers.classPrivateFieldLooseBase(this,L)[L]&&babelHelpers.classPrivateFieldLooseBase(this,H)[H].updateTitle(null!=(l=s.title)?l:babelHelpers.classPrivateFieldLooseBase(this,B)[B]);babelHelpers.classPrivateFieldLooseBase(this,Q)[Q]()?babelHelpers.classPrivateFieldLooseBase(this,W)[W](s):(babelHelpers.classPrivateFieldLooseBase(this,x)[x](s),babelHelpers.classPrivateFieldLooseBase(this,g)[g].emit("onCallAssessmentUpdate",{callAssessment:null==s?void 0:s.customData}))}function be(e,s=!0){const l=babelHelpers.classPrivateFieldLooseBase(this,z)[z](String(e.id));null!==l&&(l.setTitle(e.title),l.setSupertitle(e.supertitle),l.setBadges(e.badgesOptions),l.customData=new Map(Object.entries(e.customData)),s&&babelHelpers.classPrivateFieldLooseBase(this,g)[g].emit("onCallAssessmentUpdate",{callAssessment:e.customData}))}function ce(e){babelHelpers.classPrivateFieldLooseBase(this,K)[K].push(e)}function de(){babelHelpers.classPrivateFieldLooseBase(this,K)[K].forEach(e=>babelHelpers.classPrivateFieldLooseBase(this,W)[W](e,!1)),babelHelpers.classPrivateFieldLooseBase(this,K)[K]=[]}function ne(){return null!==babelHelpers.classPrivateFieldLooseBase(this,m)[m]&&!this.getDialog().isLoading()}function pe(e){return null===e?null:this.getDialog().getItem([u,e])}e.CallAssessmentSelector=class{constructor(e){var l,a,t;Object.defineProperty(this,z,{value:pe}),Object.defineProperty(this,Q,{value:ne}),Object.defineProperty(this,q,{value:de}),Object.defineProperty(this,x,{value:ce}),Object.defineProperty(this,W,{value:be}),Object.defineProperty(this,R,{value:re}),Object.defineProperty(this,M,{value:oe}),Object.defineProperty(this,k,{value:ie}),Object.defineProperty(this,N,{value:te}),Object.defineProperty(this,X,{value:ae}),Object.defineProperty(this,_,{value:le}),Object.defineProperty(this,U,{value:se}),Object.defineProperty(this,A,{value:ee}),Object.defineProperty(this,E,{value:$}),Object.defineProperty(this,T,{value:Z}),Object.defineProperty(this,w,{value:Y}),Object.defineProperty(this,D,{value:V}),Object.defineProperty(this,I,{value:J}),Object.defineProperty(this,C,{value:G}),Object.defineProperty(this,h,{writable:!0,value:void 0}),Object.defineProperty(this,L,{writable:!0,value:null}),Object.defineProperty(this,F,{writable:!0,value:void 0}),Object.defineProperty(this,H,{writable:!0,value:void 0}),Object.defineProperty(this,B,{writable:!0,value:void 0}),Object.defineProperty(this,y,{writable:!0,value:void 0}),Object.defineProperty(this,f,{writable:!0,value:null}),Object.defineProperty(this,m,{writable:!0,value:null}),Object.defineProperty(this,g,{writable:!0,value:void 0}),Object.defineProperty(this,O,{writable:!0,value:void 0}),Object.defineProperty(this,j,{writable:!0,value:!0}),Object.defineProperty(this,S,{writable:!0,value:!1}),this.isSelectsByPull=!1,Object.defineProperty(this,K,{writable:!0,value:[]}),babelHelpers.classPrivateFieldLooseBase(this,h)[h]=s.Type.isStringFilled(e.id)?e.id:s.Text.getRandom(16);const i=e.currentCallAssessment;s.Type.isNumber(i.id)&&i.id>0&&(babelHelpers.classPrivateFieldLooseBase(this,L)[L]=i.id),babelHelpers.classPrivateFieldLooseBase(this,F)[F]=null!=(l=e.additionalSelectorOptions)?l:{},babelHelpers.classPrivateFieldLooseBase(this,B)[B]=null!=(a=e.emptyScriptListTitle)?a:null,babelHelpers.classPrivateFieldLooseBase(this,H)[H]=e.displayStrategy,babelHelpers.classPrivateFieldLooseBase(this,H)[H].updateTitle(null!=(t=i.title)?t:babelHelpers.classPrivateFieldLooseBase(this,B)[B]),babelHelpers.classPrivateFieldLooseBase(this,y)[y]=babelHelpers.classPrivateFieldLooseBase(this,H)[H].getTargetNode(),s.Event.bind(babelHelpers.classPrivateFieldLooseBase(this,y)[y],"click",babelHelpers.classPrivateFieldLooseBase(this,C)[C].bind(this)),babelHelpers.classPrivateFieldLooseBase(this,k)[k](e.events),babelHelpers.classPrivateFieldLooseBase(this,N)[N]()}getId(){return babelHelpers.classPrivateFieldLooseBase(this,h)[h]}isSelectByPull(){return this.isSelectsByPull}getCurrentCallAssessmentId(){return babelHelpers.classPrivateFieldLooseBase(this,L)[L]}getCurrentCallAssessmentItem(){var e,s;const l=null!=(e=null==(s=babelHelpers.classPrivateFieldLooseBase(this,f)[f])?void 0:s.getCustomData())?e:null;return null===l?null:Object.fromEntries(l)}getCurrentSelectorItem(){return babelHelpers.classPrivateFieldLooseBase(this,f)[f]}getContainer(){return babelHelpers.classPrivateFieldLooseBase(this,y)[y]}getDialog(){if(null===babelHelpers.classPrivateFieldLooseBase(this,m)[m]){var e,l;const t=babelHelpers.classPrivateFieldLooseBase(this,y)[y].closest("body"),i={...babelHelpers.classPrivateFieldLooseBase(this,F)[F].dialog,targetNode:babelHelpers.classPrivateFieldLooseBase(this,y)[y],multiple:!1,dropdownMode:!0,enableSearch:!0,showAvatars:!1,preselectedItems:[[u,babelHelpers.classPrivateFieldLooseBase(this,L)[L]]],entities:[{id:u,dynamicLoad:!0,dynamicSearch:!0}],popupOptions:null!=(e=babelHelpers.classPrivateFieldLooseBase(this,F)[F].popup)?e:{},events:{...null==(l=babelHelpers.classPrivateFieldLooseBase(this,F)[F].dialog)?void 0:l.events,onLoad:babelHelpers.classPrivateFieldLooseBase(this,D)[D].bind(this),"Item:onBeforeSelect":babelHelpers.classPrivateFieldLooseBase(this,w)[w].bind(this),"Item:onBeforeDeselect":babelHelpers.classPrivateFieldLooseBase(this,T)[T].bind(this),onShow:e=>{s.Event.bindOnce(t,"click",babelHelpers.classPrivateFieldLooseBase(this,X)[X].bind(this))},onHide:()=>{s.Event.unbind(t,babelHelpers.classPrivateFieldLooseBase(this,X)[X])}}};babelHelpers.classPrivateFieldLooseBase(this,m)[m]=new a.Dialog(i)}return babelHelpers.classPrivateFieldLooseBase(this,m)[m]}destroy(){var e;null==(e=babelHelpers.classPrivateFieldLooseBase(this,m)[m])||e.destroy(),babelHelpers.classPrivateFieldLooseBase(this,O)[O].unsubscribe()}close(){var e;null==(e=babelHelpers.classPrivateFieldLooseBase(this,m)[m])||e.hide()}disable(){var e;babelHelpers.classPrivateFieldLooseBase(this,S)[S]=!0;const l=null==(e=babelHelpers.classPrivateFieldLooseBase(this,H)[H])?void 0:e.getTargetNode();s.Dom.addClass(l,"--disabled"),s.Dom.style(l,{cursor:"not-allowed",opacity:".6"})}enable(){var e;babelHelpers.classPrivateFieldLooseBase(this,S)[S]=!1;const l=null==(e=babelHelpers.classPrivateFieldLooseBase(this,H)[H])?void 0:e.getTargetNode();s.Dom.removeClass(l,"--disabled"),s.Dom.style(l,{cursor:"inherit",opacity:"1"})}}}(this.BX.Crm.Copilot=this.BX.Crm.Copilot||{},BX,BX.Event,BX.UI.EntitySelector,BX);
+/* eslint-disable */
+this.BX = this.BX || {};
+this.BX.Crm = this.BX.Crm || {};
+(function (exports, main_core, main_core_events, ui_entitySelector, pull_client) {
+	'use strict';
+
+	const TAG = 'CRM_COPILOT_CALL_ASSESSMENT_SCRIPT_SELECTOR';
+	const COMMAND_UPDATE = 'update_call_assessment';
+	const COMMAND_SELECT = 'select_call_assessment';
+	class PullManager {
+		#unsubscribeUpdate;
+		#unsubscribeSelect;
+		constructor(options) {
+			this.#unsubscribeUpdate = this.#subscribe(COMMAND_UPDATE, options.onUpdate);
+			this.#unsubscribeSelect = this.#subscribe(COMMAND_SELECT, options.onSelect);
+			this.#extendsWatch();
+		}
+		#subscribe(command, callback) {
+			if (!pull_client.PULL) {
+				return () => {};
+			}
+			return pull_client.PULL.subscribe({
+				moduleId: 'crm',
+				command,
+				callback
+			});
+		}
+		#extendsWatch() {
+			if (pull_client.PULL) {
+				pull_client.PULL.extendWatch(TAG);
+			}
+		}
+		#clearWatch() {
+			if (pull_client.PULL) {
+				pull_client.PULL.clearWatch(TAG);
+			}
+		}
+		unsubscribe() {
+			this.#unsubscribeUpdate();
+			this.#unsubscribeSelect();
+			this.#clearWatch();
+		}
+	}
+
+	const ENTITY_ID = 'copilot_call_script'; /** @php \Bitrix\Crm\Copilot\CallAssessment\EntitySelector\CallScriptProvider */
+
+	// todo: maybe put it in a separate model class?
+
+	class CallAssessmentSelector {
+		#id;
+		#currentCallAssessmentId = null;
+		#additionalSelectorOptions;
+		#displayStrategy;
+		#emptyScriptListTitle;
+		#container;
+		#currentSelectorItem = null;
+		#dialog = null;
+		#eventEmitter;
+		#pull;
+		#isDisplayLoadingState = true;
+		#isDisabled = false;
+		isSelectsByPull = false;
+		#changesByPullQueue = [];
+		constructor(options) {
+			this.#id = main_core.Type.isStringFilled(options.id) ? options.id : main_core.Text.getRandom(16);
+			const currentCallAssessment = options.currentCallAssessment;
+			if (main_core.Type.isNumber(currentCallAssessment.id) && currentCallAssessment.id > 0) {
+				this.#currentCallAssessmentId = currentCallAssessment.id;
+			}
+			this.#additionalSelectorOptions = options.additionalSelectorOptions ?? {};
+			this.#emptyScriptListTitle = options.emptyScriptListTitle ?? null;
+			this.#displayStrategy = options.displayStrategy;
+			this.#displayStrategy.updateTitle(currentCallAssessment.title ?? this.#emptyScriptListTitle);
+			this.#container = this.#displayStrategy.getTargetNode();
+			main_core.Event.bind(this.#container, 'click', this.#toggleDialog.bind(this));
+			this.#bindEvents(options.events);
+			this.#subscribePull();
+		}
+		getId() {
+			return this.#id;
+		}
+		isSelectByPull() {
+			return this.isSelectsByPull;
+		}
+		getCurrentCallAssessmentId() {
+			return this.#currentCallAssessmentId;
+		}
+		getCurrentCallAssessmentItem() {
+			const customData = this.#currentSelectorItem?.getCustomData() ?? null;
+			if (customData === null) {
+				return null;
+			}
+			return Object.fromEntries(customData);
+		}
+		getCurrentSelectorItem() {
+			return this.#currentSelectorItem;
+		}
+		#toggleDialog() {
+			if (this.#isDisabled) {
+				return;
+			}
+			const dialog = this.getDialog();
+			if (dialog.isOpen()) {
+				dialog.hide();
+			} else {
+				dialog.show();
+			}
+		}
+		getContainer() {
+			return this.#container;
+		}
+		#loading(isLoading) {
+			if (this.#isDisplayLoadingState) {
+				this.#displayStrategy.setLoading(isLoading);
+			}
+		}
+		getDialog() {
+			if (this.#dialog === null) {
+				const parentPopupContainer = this.#container.closest('body');
+				const dialogOptions = {
+					...this.#additionalSelectorOptions.dialog,
+					targetNode: this.#container,
+					multiple: false,
+					dropdownMode: true,
+					enableSearch: true,
+					showAvatars: false,
+					preselectedItems: [[ENTITY_ID, this.#currentCallAssessmentId]],
+					entities: [{
+						id: ENTITY_ID,
+						dynamicLoad: true,
+						dynamicSearch: true
+					}],
+					popupOptions: this.#additionalSelectorOptions.popup ?? {},
+					events: {
+						...this.#additionalSelectorOptions.dialog?.events,
+						onLoad: this.#onLoadDialog.bind(this),
+						'Item:onBeforeSelect': this.#onItemBeforeSelect.bind(this),
+						'Item:onBeforeDeselect': this.#onItemBeforeDeselect.bind(this),
+						onShow: event => {
+							main_core.Event.bindOnce(parentPopupContainer, 'click', this.#onPopupContainerClick.bind(this));
+						},
+						onHide: () => {
+							main_core.Event.unbind(parentPopupContainer, this.#onPopupContainerClick);
+						}
+					}
+				};
+				this.#dialog = new ui_entitySelector.Dialog(dialogOptions);
+			}
+			return this.#dialog;
+		}
+		#onLoadDialog(event) {
+			this.#applyChangesByPull();
+			const item = this.#getDialogItem(this.#currentCallAssessmentId);
+			if (item === null) {
+				return;
+			}
+			this.#updateCurrentSelectorItem(item);
+			this.#callAdditionalEvent(event, 'onLoad');
+		}
+		#onItemBeforeSelect(event) {
+			const targetItem = event.getData().item;
+			if (targetItem === null) {
+				return;
+			}
+			this.#updateCurrentSelectorItem(targetItem);
+			this.#callAdditionalEvent(event, 'Item:onBeforeSelect');
+		}
+		#onItemBeforeDeselect(event) {
+			this.#preventDeselectCurrentSelectorItem(event);
+			this.#callAdditionalEvent(event, 'Item:onBeforeDeselect');
+		}
+		#callAdditionalEvent(event, eventName) {
+			const eventCallback = this.#additionalSelectorOptions?.dialog?.events?.[eventName];
+			if (main_core.Type.isFunction(eventCallback)) {
+				eventCallback(event);
+			}
+		}
+		#preventDeselectCurrentSelectorItem(event) {
+			const targetItem = event.getData().item;
+			if (targetItem === null) {
+				return;
+			}
+			if (targetItem.id === this.#currentCallAssessmentId) {
+				event.preventDefault();
+			}
+			event.getTarget().hide();
+		}
+		#updateCurrentSelectorItem(item) {
+			this.#currentSelectorItem = item ?? null;
+			this.#currentCallAssessmentId = item?.getId() ?? null;
+			this.#adjustTitle();
+		}
+		#adjustTitle() {
+			const title = this.#currentSelectorItem?.getTitle() ?? this.#emptyScriptListTitle;
+			this.#displayStrategy.updateTitle(title);
+		}
+		#onPopupContainerClick(clickEvent) {
+			const {
+				target
+			} = clickEvent;
+			if (target?.closest('.call-quality__script-selector') === null && target?.closest('.ui-selector-dialog') === null && this.#displayStrategy.getTargetNode() !== target) {
+				this.close();
+			}
+		}
+		destroy() {
+			this.#dialog?.destroy();
+			this.#pull.unsubscribe();
+		}
+		close() {
+			this.#dialog?.hide();
+		}
+		disable() {
+			this.#isDisabled = true;
+			const node = this.#displayStrategy?.getTargetNode();
+			main_core.Dom.addClass(node, '--disabled');
+			main_core.Dom.style(node, {
+				cursor: 'not-allowed',
+				opacity: '.6'
+			});
+		}
+		enable() {
+			this.#isDisabled = false;
+			const node = this.#displayStrategy?.getTargetNode();
+			main_core.Dom.removeClass(node, '--disabled');
+			main_core.Dom.style(node, {
+				cursor: 'inherit',
+				opacity: '1'
+			});
+		}
+		#subscribePull() {
+			this.#pull = new PullManager({
+				onUpdate: this.#onUpdateItemByPull.bind(this),
+				onSelect: eventData => {
+					this.isSelectsByPull = true;
+					this.#onSelectItemByPull(eventData);
+					this.isSelectsByPull = false;
+				}
+			});
+		}
+		#bindEvents(events) {
+			this.#eventEmitter = new main_core_events.EventEmitter();
+			this.#eventEmitter.setEventNamespace('Crm.Copilot.CallAssessmentSelector');
+			if (main_core.Type.isObject(events)) {
+				Object.entries(events).forEach(([eventName, listener]) => {
+					this.#eventEmitter.subscribe(eventName, listener);
+				});
+			}
+		}
+		#onSelectItemByPull(eventData) {
+			const {
+				selectorId,
+				itemOptions
+			} = eventData;
+			if (selectorId !== this.getId()) {
+				return;
+			}
+			if (!this.#isDialogLoaded()) {
+				const item = new ui_entitySelector.Item(itemOptions);
+				const event = new main_core_events.BaseEvent({
+					data: {
+						item
+					}
+				});
+				this.#updateCurrentSelectorItem(item);
+				this.#callAdditionalEvent(event, 'Item:onBeforeSelect');
+				return;
+			}
+			if (!itemOptions.id) {
+				this.#currentCallAssessmentId = null;
+				this.getDialog().deselectAll();
+				this.#adjustTitle();
+				return;
+			}
+			this.#getDialogItem(itemOptions.id)?.select();
+		}
+		#onUpdateItemByPull(eventData) {
+			const {
+				itemOptions
+			} = eventData;
+			if (itemOptions.id === this.#currentCallAssessmentId) {
+				this.#displayStrategy.updateTitle(itemOptions.title ?? this.#emptyScriptListTitle);
+			}
+			if (this.#isDialogLoaded()) {
+				this.#updateItem(itemOptions);
+				return;
+			}
+			this.#addChangeByPull(itemOptions);
+			this.#eventEmitter.emit('onCallAssessmentUpdate', {
+				callAssessment: itemOptions?.customData
+			});
+		}
+		#updateItem(itemOptions, isEmit = true) {
+			const item = this.#getDialogItem(String(itemOptions.id));
+			if (item === null) {
+				return;
+			}
+			item.setTitle(itemOptions.title);
+			item.setSupertitle(itemOptions.supertitle);
+			item.setBadges(itemOptions.badgesOptions);
+			item.customData = new Map(Object.entries(itemOptions.customData));
+			if (isEmit) {
+				this.#eventEmitter.emit('onCallAssessmentUpdate', {
+					callAssessment: itemOptions.customData
+				});
+			}
+		}
+		#addChangeByPull(callAssessment) {
+			this.#changesByPullQueue.push(callAssessment);
+		}
+		#applyChangesByPull() {
+			this.#changesByPullQueue.forEach(itemOptions => this.#updateItem(itemOptions, false));
+			this.#changesByPullQueue = [];
+		}
+		#isDialogLoaded() {
+			return this.#dialog !== null && !this.getDialog().isLoading();
+		}
+		#getDialogItem(id) {
+			if (id === null) {
+				return null;
+			}
+			return this.getDialog().getItem([ENTITY_ID, id]);
+		}
+	}
+
+	exports.CallAssessmentSelector = CallAssessmentSelector;
+
+})(this.BX.Crm.Copilot = this.BX.Crm.Copilot || {}, BX, BX.Event, BX.UI.EntitySelector, BX);
 //# sourceMappingURL=call-assessment-selector.bundle.js.map

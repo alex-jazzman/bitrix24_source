@@ -8,10 +8,10 @@ return [
 	'js' => 'dist/resources.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'booking.core',
 		'booking.const',
-		'booking.provider.service.main-page-service',
+		'booking.core',
 		'booking.provider.service.favorites-service',
+		'booking.provider.service.main-page-service',
 	],
 	'skip_core' => true,
 ];

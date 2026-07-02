@@ -10,13 +10,14 @@ return [
 	'rel' => [
 		'main.polyfill.core',
 		'im.public',
+		'im.v2.component.list.container.elements.create-chat-button',
 		'im.v2.component.list.items.copilot',
 		'im.v2.const',
 		'im.v2.lib.analytics',
-		'im.v2.lib.logger',
-		'im.v2.provider.service.copilot',
-		'im.v2.lib.permission',
 		'im.v2.lib.copilot',
+		'im.v2.lib.logger',
+		'im.v2.lib.permission',
+		'im.v2.provider.service.copilot',
 	],
 	'skip_core' => true,
 ];

@@ -241,7 +241,7 @@
 	top: calc(50% - 16px);
 	height: 32px;
 	border: var(--ui-border-width-thin) solid var(--ui-color-palette-white-base);
-	text-transform: lowercase;
+	text-transform: none;
 	color: var(--ui-color-palette-gray-80);
 	font-weight: var(--ui-font-weight-normal);
 	background: none;

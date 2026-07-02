@@ -54,41 +54,50 @@ $spam = isset($arResult['SPAM']) ? $arResult['SPAM'] : null;
 					<div class="mail-connect-option-email mail-connect-form-check-hidden">
 						<?php echo \CUtil::jsEscape(Loc::getMessage('MAIL_CLIENT_CONFIG_DIRS_OUTCOME_SAVE')) ?>
 
-						<label
-								class="mail-config-dirs-singleselect"
-								data-type="<?php echo MailboxDirectoryTable::TYPE_OUTCOME ?>"
-								data-id="mail-client-config-dirs-outcome"
+						<button
+							type="button"
+							class="mail-config-dirs-singleselect"
+							tabindex="0"
+							aria-expanded="false"
+							data-type="<?php echo MailboxDirectoryTable::TYPE_OUTCOME ?>"
+							data-id="mail-client-config-dirs-outcome"
 						>
 							<?php echo ($outcome instanceof MailboxDirectory) ? $outcome->getFormattedName() : sprintf('<span>%s</span>',
 								Loc::getMessage('MAIL_CLIENT_CONFIG_DIRS_NOT_SPECIFIED')
 							) ?>
-						</label>
+						</button>
 					</div>
 					<div class="mail-connect-option-email mail-connect-form-check-hidden">
 						<?php echo \CUtil::jsEscape(Loc::getMessage('MAIL_CLIENT_CONFIG_DIRS_TRASH_SAVE')) ?>
 
-						<label
-								class="mail-config-dirs-singleselect"
-								data-type="<?php echo MailboxDirectoryTable::TYPE_TRASH ?>"
-								data-id="mail-client-config-dirs-trash"
+						<button
+							type="button"
+							class="mail-config-dirs-singleselect"
+							tabindex="0"
+							aria-expanded="false"
+							data-type="<?php echo MailboxDirectoryTable::TYPE_TRASH ?>"
+							data-id="mail-client-config-dirs-trash"
 						>
 							<?php echo ($trash instanceof MailboxDirectory) ? $trash->getFormattedName() : sprintf('<span>%s</span>',
 								Loc::getMessage('MAIL_CLIENT_CONFIG_DIRS_NOT_SPECIFIED')
 							) ?>
-						</label>
+						</button>
 					</div>
 					<div class="mail-connect-option-email mail-connect-form-check-hidden">
 						<?php echo \CUtil::jsEscape(Loc::getMessage('MAIL_CLIENT_CONFIG_DIRS_SPAM_SAVE')) ?>
 
-						<label
-								class="mail-config-dirs-singleselect"
-								data-type="<?php echo MailboxDirectoryTable::TYPE_SPAM ?>"
-								data-id="mail-client-config-dirs-spam"
+						<button
+							type="button"
+							class="mail-config-dirs-singleselect"
+							tabindex="0"
+							aria-expanded="false"
+							data-type="<?php echo MailboxDirectoryTable::TYPE_SPAM ?>"
+							data-id="mail-client-config-dirs-spam"
 						>
 							<?php echo ($spam instanceof MailboxDirectory) ? $spam->getFormattedName() : sprintf('<span>%s</span>',
 								Loc::getMessage('MAIL_CLIENT_CONFIG_DIRS_NOT_SPECIFIED')
 							) ?>
-						</label>
+						</button>
 					</div>
 				</div>
 			</div>
@@ -127,6 +136,17 @@ $spam = isset($arResult['SPAM']) ? $arResult['SPAM'] : null;
 			"MAIL_CLIENT_AJAX_ERROR": "<?=\CUtil::JSEscape(Loc::getMessage("MAIL_CLIENT_AJAX_ERROR"))?>",
 			"MAIL_CLIENT_BUTTON_LOADING": "<?=\CUtil::JSEscape(Loc::getMessage("MAIL_CLIENT_BUTTON_LOADING"))?>",
 			"MAIL_CLIENT_CONFIG_DIRS_NO_NESTED_FOLDERS": "<?=\CUtil::JSEscape(Loc::getMessage("MAIL_CLIENT_CONFIG_DIRS_NO_NESTED_FOLDERS"))?>",
+			"MAIL_CLIENT_CONFIG_DIRS_EXPAND_FOLDER": "<?=\CUtil::JSEscape(Loc::getMessage("MAIL_CLIENT_CONFIG_DIRS_EXPAND_FOLDER"))?>",
+			"MAIL_CLIENT_CONFIG_DIRS_COLLAPSE_FOLDER": "<?=\CUtil::JSEscape(Loc::getMessage("MAIL_CLIENT_CONFIG_DIRS_COLLAPSE_FOLDER"))?>",
+		});
+
+		document.querySelectorAll('.mail-config-dirs-item-input-check').forEach(function (checkbox) {
+			checkbox.addEventListener('keydown', function (e) {
+				if (e.key === 'Enter')
+				{
+					e.preventDefault();
+				}
+			});
 		});
 
 		new BX.Mail.Client.Config.Dirs.Form({

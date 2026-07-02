@@ -1,6 +1,8 @@
 import { type BaseEvent } from 'main.core.events';
-import { ZIndexComponentOptions } from 'main.core.z-index-manager';
-import type CloseIconSize from './popup-close-icon-size';
+import { type ZIndexComponentOptions } from 'main.core.z-index-manager';
+import { type FocusTrapOptions } from 'ui.a11y';
+
+import { type CloseIconSize } from './popup-close-icon-size';
 
 export type PopupOptions = {
 	id?: string,
@@ -45,6 +47,12 @@ export type PopupOptions = {
 	targetContainer?: HTMLElement,
 	disableScroll?: boolean,
 
+	focusTrap?: boolean | FocusTrapOptions,
+	ariaLabel?: string;
+	ariaLabelledBy?: string;
+	ariaDescribedBy?: string;
+	role?: string,
+
 	// Compatibility
 	noAllPaddings?: boolean,
 	contentNoPaddings?: boolean,
@@ -73,3 +81,4 @@ export type PopupAnimationOptions =
 	string
 	| boolean
 	| { showClassName?: string, closeClassName?: string, closeAnimationType: ? string }
+;

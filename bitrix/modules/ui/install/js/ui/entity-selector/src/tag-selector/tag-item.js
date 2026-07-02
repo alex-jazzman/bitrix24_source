@@ -1,4 +1,4 @@
-import { Cache, Tag, Type, Dom } from 'main.core';
+import { Cache, Tag, Type, Dom, Text } from 'main.core';
 import { Icon } from 'ui.icon-set.api.core';
 import Entity from '../entity/entity';
 import TextNode from '../common/text-node';
@@ -513,8 +513,8 @@ export default class TagItem
 					class="ui-tag-selector-tag-remove ui-icon-set__scope"
 					onclick="${this.handleRemoveIconClick.bind(this)}"
 					data-testid="ui-tag-selector-remove-item-button"
-					data-item-entity-id="${this.getEntityId()}"
-					data-item-id="${this.getId()}"
+					data-item-entity-id="${Text.encode(this.getEntityId())}"
+					data-item-id="${Text.encode(this.getId())}"
 				></div>
 			`;
 		});

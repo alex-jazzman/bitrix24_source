@@ -9,8 +9,8 @@ return [
 	'js' => 'dist/captcha.bundle.js',
 	'rel' => [
 		'main.core',
-		'ui.sidepanel.layout',
 		'ui.notification',
+		'ui.sidepanel.layout',
 	],
 	'skip_core' => false,
 ];

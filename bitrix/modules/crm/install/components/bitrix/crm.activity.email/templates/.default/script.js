@@ -264,6 +264,10 @@
 		var opened  = BX.hasClass(logItem, 'crm-task-list-mail-item-open');
 
 		BX.toggleClass(logItem, 'crm-task-list-mail-item-open');
+		logItem.setAttribute('aria-expanded', opened ? 'false' : 'true');
+
+		var collapseBtn = BX.findChildByClassName(details, 'crm-task-list-mail-item-collapse-btn', true);
+		collapseBtn?.setAttribute('aria-expanded', opened ? 'false' : 'true');
 
 		if (opened)
 		{
@@ -315,6 +319,15 @@
 
 							var button = BX.findChildByClassName(details, 'crm-task-list-mail-item-inner-header', true);
 							BX.bind(button, 'click', ctrl.handleLogItemClick.bind(ctrl, activityId));
+
+							var collapseBtn = BX.findChildByClassName(details, 'crm-task-list-mail-item-collapse-btn', true);
+							if (collapseBtn)
+							{
+								BX.bind(collapseBtn, 'click', function (e) {
+									e.stopPropagation();
+									ctrl.toggleLogItem(activityId);
+								});
+							}
 
 							ctrl.scrollTo(details);
 						}, 10);
@@ -487,6 +500,8 @@
 			BX.bind(skipLink, 'click', this.delete.bind(this, 'skip'));
 			BX.bind(spamLink, 'click', this.delete.bind(this, 'spam'));
 			BX.bind(deleteLink, 'click', this.delete.bind(this));
+
+			this.bindDiscussInChat();
 
 			if (options.isAjaxBody && options.bodyElementId)
 			{
@@ -752,6 +767,27 @@
 		BX.onCustomEvent(mailForm, 'MailForm:hide', []);
 
 		this.__dummyNode.appendChild(this.htmlForm);
+	};
+
+	BXCrmActivityEmail.prototype.bindDiscussInChat = function ()
+	{
+		const button = BX.findChildByClassName(this.__wrapper, 'js-crm-discuss-in-chat', true);
+		if (!button)
+		{
+			return;
+		}
+
+		const activityId = parseInt(button.getAttribute('data-activity-id'), 10);
+		if (!activityId)
+		{
+			return;
+		}
+
+		BX.bind(button, 'click', function (event)
+		{
+			event.preventDefault();
+			BX.Mail.Client.Action.DiscussInChat.open(activityId, button, 'crm');
+		});
 	};
 
 	BXCrmActivityEmail.prototype.delete = function (act)

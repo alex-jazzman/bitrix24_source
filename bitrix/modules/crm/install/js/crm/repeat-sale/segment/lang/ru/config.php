@@ -5,6 +5,8 @@ $MESS['CRM_REPEAT_SALE_SEGMENT_TITLE_READ_ONLY'] = 'Сценарий повто�
 $MESS['CRM_REPEAT_SALE_SEGMENT_MANUAL_TEXTAREA_TITLE'] = 'Текст дела CRM для менеджера';
 $MESS['CRM_REPEAT_SALE_SEGMENT_MANUAL_SECTION_TITLE'] = 'Воронка для новых сделок';
 $MESS['CRM_REPEAT_SALE_SEGMENT_MANUAL_STAGE_TITLE'] = 'Стадия';
+$MESS['CRM_REPEAT_SALE_SEGMENT_MANUAL_MIN_DAYS_AFTER_LAST_CLOSED_ENTITY_TITLE'] = 'Интервал между закрытыми и новыми сделками';
+$MESS['CRM_REPEAT_SALE_SEGMENT_MANUAL_MIN_DAYS_AFTER_LAST_CLOSED_ENTITY_UNIT_LABEL'] = '#INPUT# дней';
 
 $MESS['CRM_REPEAT_SALE_SEGMENT_PLACEHOLDER_WITH_COPILOT'] = 'Подробно опишите, что нужно сделать менеджеру, или нажмите пробел для запуска #COPILOT_NAME#';
 $MESS['CRM_REPEAT_SALE_SEGMENT_PLACEHOLDER'] = 'Подробно опишите, что нужно сделать менеджеру';
@@ -34,3 +36,4 @@ $MESS['CRM_REPEAT_SALE_SEGMENT_NAVIGATION_BUTTON_CLOSE'] = 'Закрыть';
 $MESS['CRM_REPEAT_SALE_SEGMENT_SAVE_ERROR'] = 'Не удалось сохранить сценарий. Попробуйте ещё раз';
 $MESS['CRM_REPEAT_SALE_SEGMENT_VALIDATE_ASSIGNMENT_USERS_ERROR'] = 'В сценарии должен быть хотя бы один ответственный';
 $MESS['CRM_REPEAT_SALE_SEGMENT_VALIDATE_TEXT_ERROR'] = 'В сценарии должен быть заполнен текст дела&nbsp;CRM';
+$MESS['CRM_REPEAT_SALE_SEGMENT_VALIDATE_MIN_DAYS_AFTER_LAST_CLOSED_ENTITY_ERROR'] = 'Интервал между закрытыми и новыми сделками должен быть не меньше #MIN_DAYS#';

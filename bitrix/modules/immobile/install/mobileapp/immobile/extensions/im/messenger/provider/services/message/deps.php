@@ -32,6 +32,7 @@ return [
 		'./src/rich',
 		'./src/service',
 		'./src/status',
+		'./src/mark',
 		'../../../cache/src/native/share-dialog',
 	],
 ];

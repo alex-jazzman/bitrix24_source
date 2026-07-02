@@ -1,6 +1,6 @@
 import { Event, Runtime } from 'main.core';
 import { DateTimeFormat } from 'main.date';
-import { Menu, MenuManager } from 'main.popup';
+import { MenuManager } from 'main.popup';
 import type { MenuItemOptions } from 'main.popup';
 
 import { mapGetters } from 'ui.vue3.vuex';
@@ -12,7 +12,7 @@ import { EntitySelectorEntity, HelpDesk, Model } from 'booking.const';
 import { limit } from 'booking.lib.limit';
 import { helpDesk } from 'booking.lib.help-desk';
 import { DealHelper } from 'booking.lib.deal-helper';
-import { Button, ButtonSize, ButtonColor, ButtonIcon } from 'booking.component.button';
+import { Button, ButtonSize, ButtonColor } from 'booking.component.button';
 import { Loader } from 'booking.component.loader';
 import { currencyFormat } from 'booking.lib.currency-format';
 import type { DealData } from 'booking.model.bookings';
@@ -57,16 +57,23 @@ export const Deal = {
 		},
 	},
 	emits: ['freeze', 'unfreeze'],
-	data(): Object
+	setup(): Object
 	{
 		return {
 			IconSet,
 			ButtonSize,
 			ButtonColor,
-			ButtonIcon,
-			isLoading: false,
-			saveDealDebounce: Runtime.debounce(this.saveDeal, 10, this),
 		};
+	},
+	data(): Object
+	{
+		return {
+			isLoading: false,
+		};
+	},
+	created(): void
+	{
+		this.saveDealDebounce = Runtime.debounce(this.saveDeal, 10, this);
 	},
 	computed: {
 		...mapGetters({

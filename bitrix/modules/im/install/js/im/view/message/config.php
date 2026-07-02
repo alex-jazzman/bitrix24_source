@@ -13,13 +13,13 @@ return [
 	],
 	'rel' => [
 		'main.polyfill.core',
-		'im.view.message.body',
-		'im.model',
-		'ui.vue',
 		'im.const',
-		'im.lib.utils',
 		'im.lib.animation',
+		'im.lib.utils',
+		'im.model',
+		'im.view.message.body',
 		'main.core.events',
+		'ui.vue',
 	],
 	'skip_core' => true,
 ];

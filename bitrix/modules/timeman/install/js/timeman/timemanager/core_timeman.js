@@ -1055,29 +1055,29 @@ BX.CTimeManWindow.prototype.Create = function(DATA)
 	{
 		if (!this.POPUP)
 		{
-			var p = this.bindOptions.popupOptions || {
+			const optionsPopup = this.bindOptions.popupOptions || {
 				autoHide: true,
 				lightShadow: true,
-				bindOptions : {
-					forceBindPosition : true,
-					forceTop : true
+				bindOptions: {
+					forceBindPosition: true,
+					forceTop: true,
 				},
-				angle : {
-					position: "top",
-					offset : 50
-				}
+				angle: {
+					position: 'top',
+					offset: 50,
+				},
 			};
 
-			p.lightShadow = true;
+			optionsPopup.lightShadow = true;
 
 			const settings = BX.Extension.getSettings('timeman');
 			const isAirTemplate = settings.get('isAirTemplate');
 			if (isAirTemplate)
 			{
-				p.className = 'template-air-popup';
+				optionsPopup.className = 'template-air-popup';
 			}
 
-			this.POPUP = new BX.PopupWindow('timeman_main', this.bindOptions.node, p);
+			this.POPUP = new BX.PopupWindow('timeman_main', this.bindOptions.node, optionsPopup);
 		}
 
 		this.POPUP.setContent(this.CreateLayoutTable(DATA));
@@ -1093,7 +1093,7 @@ BX.CTimeManWindow.prototype.Create = function(DATA)
 		if (null == this.DIV)
 		{
 			this.DIV = document.body.appendChild(BX.create('DIV', {
-				props: {id: 'tm-popup'},
+				props: { id: 'tm-popup' },
 				events: {
 					click: BX.eventCancelBubble
 				},
@@ -2646,6 +2646,95 @@ BX.CTimeManWindow.prototype.clearTempData = function()
 {
 	this.TIMESTAMP = 0;
 	this.ERROR_REPORT = '';
+	this.resetSelectedDateValues();
+}
+
+BX.CTimeManWindow.prototype.getSelectedDateValue = function(type)
+{
+	if (type === 'start')
+	{
+		return this.startUserDate;
+	}
+
+	if (type === 'end')
+	{
+		return this.endUserDate;
+	}
+
+	if (type === 'single' && this.CLOCKWND)
+	{
+		return this.CLOCKWND.customUserDate;
+	}
+
+	return undefined;
+}
+
+BX.CTimeManWindow.prototype.setSelectedDateValue = function(type, value)
+{
+	if (type === 'start')
+	{
+		this.startUserDate = value;
+		return;
+	}
+
+	if (type === 'end')
+	{
+		this.endUserDate = value;
+		return;
+	}
+
+	if (type === 'single' && this.CLOCKWND)
+	{
+		this.CLOCKWND.customUserDate = value;
+	}
+}
+
+BX.CTimeManWindow.prototype.resetSelectedDateValues = function()
+{
+	delete this.startUserDate;
+	delete this.endUserDate;
+
+	if (this.CLOCKWND)
+	{
+		delete this.CLOCKWND.customUserDate;
+	}
+}
+
+BX.CTimeManWindow.prototype.resolveDefaultDateForType = function(type)
+{
+	const currentValue = this.getSelectedDateValue(type);
+	if (currentValue)
+	{
+		return currentValue;
+	}
+
+	const info = this.PARENT && this.PARENT.DATA ? this.PARENT.DATA.INFO : null;
+	let defaultTimestamp = null;
+
+	if (info)
+	{
+		if (type === 'start')
+		{
+			defaultTimestamp = info.DATE_START || info.DATE_FINISH || null;
+		}
+		else if (type === 'end')
+		{
+			defaultTimestamp = info.DATE_FINISH || info.RECOMMENDED_CLOSE_TIMESTAMP || info.DATE_START || null;
+		}
+		else if (type === 'single')
+		{
+			defaultTimestamp = info.RECOMMENDED_CLOSE_TIMESTAMP || info.DATE_FINISH || info.DATE_START || null;
+		}
+	}
+
+	const defaultDate = defaultTimestamp
+		? new Date(defaultTimestamp * 1000)
+		: new Date();
+
+	return BX.date.format(
+		BX.date.convertBitrixFormat(BX.message("FORMAT_DATE")),
+		defaultDate
+	);
 }
 
 BX.CTimeManWindow.prototype.showReportField = function(error_string)
@@ -3021,23 +3110,10 @@ BX.CTimeManWindow.prototype.onSelectDateLinkClick = function (event)
 		const { node, field } = props;
 		BX.calendar({ node, field, bTime: false, fixed: true });
 	};
-	var defaultDate = new Date();
-	if (this.parent && this.parent.DATA && this.parent.DATA.INFO && this.parent.DATA.INFO.DATE_START
-		&& this.parent.DATA.INFO.CURRENT_STATUS && this.parent.DATA.INFO.CURRENT_STATUS !== 'CLOSED')
-	{
-		if (this.parent.DATA.INFO.RECOMMENDED_CLOSE_TIMESTAMP && this.parent.DATA.INFO.RECOMMENDED_CLOSE_TIMESTAMP > 0)
-		{
-			defaultDate = new Date(this.parent.DATA.INFO.RECOMMENDED_CLOSE_TIMESTAMP * 1000);
-		}
-		else
-		{
-			defaultDate = new Date(this.parent.DATA.INFO.DATE_START * 1000);
-		}
-	}
-	var defaultDateValue = BX.date.format(
-		BX.date.convertBitrixFormat(BX.message("FORMAT_DATE")),
-		defaultDate
-	);
+	const fieldType = event.currentTarget.dataset.type;
+	var defaultDateValue = window.BXTIMEMAN && window.BXTIMEMAN.WND
+		? window.BXTIMEMAN.WND.resolveDefaultDateForType(fieldType)
+		: BX.date.format(BX.date.convertBitrixFormat(BX.message("FORMAT_DATE")), new Date());
 	var title = BX.create('INPUT', {
 		props: {
 			type: 'text',
@@ -3053,18 +3129,10 @@ BX.CTimeManWindow.prototype.onSelectDateLinkClick = function (event)
 				{
 					if (window.BXTIMEMAN && window.BXTIMEMAN.WND)
 					{
-						if (event.currentTarget.dataset.type === 'start')
-						{
-							window.BXTIMEMAN.WND.startUserDate = event.currentTarget.value
-						}
-						else if (event.currentTarget.dataset.type === 'end')
-						{
-							window.BXTIMEMAN.WND.endUserDate = event.currentTarget.value
-						}
-						else if (window.BXTIMEMAN.WND.CLOCKWND && event.currentTarget.dataset.type === 'single')
-						{
-							window.BXTIMEMAN.WND.CLOCKWND.customUserDate = event.currentTarget.value
-						}
+						window.BXTIMEMAN.WND.setSelectedDateValue(
+							event.currentTarget.dataset.type,
+							event.currentTarget.value
+						);
 					}
 				}, this
 			)
@@ -3072,31 +3140,18 @@ BX.CTimeManWindow.prototype.onSelectDateLinkClick = function (event)
 	});
 	if (window.BXTIMEMAN && window.BXTIMEMAN.WND)
 	{
-		if (event.currentTarget.dataset.type === 'start')
+		window.BXTIMEMAN.WND.setSelectedDateValue(fieldType, defaultDateValue);
+		if (fieldType === 'start' || fieldType === 'end')
 		{
-			window.BXTIMEMAN.WND.startUserDate = event.currentTarget.value;
 			this.bChanged = true;
 			if (this.SetSaveButton)
 			{
 				this.SetSaveButton({className: "popup-window-button-create"});
 			}
-		}
-		else if (event.currentTarget.dataset.type === 'end')
-		{
-			window.BXTIMEMAN.WND.endUserDate = event.currentTarget.value;
-			this.bChanged = true;
-			if (this.SetSaveButton)
-			{
-				this.SetSaveButton({className: "popup-window-button-create"});
-			}
-		}
-		else if (window.BXTIMEMAN.WND.CLOCKWND && event.currentTarget.dataset.type === 'single')
-		{
-			window.BXTIMEMAN.WND.CLOCKWND.customUserDate = event.currentTarget.value
 		}
 	}
 	title.dataset.role = event.currentTarget.dataset.role;
-	title.dataset.type = event.currentTarget.dataset.type;
+	title.dataset.type = fieldType;
 
 	event.currentTarget.parentNode.appendChild(title);
 	title.style.width = title.value.length.toString() + 'px!important';
@@ -3680,6 +3735,11 @@ BX.CTimeManEditPopup.prototype.Clear = function()
 {
 	window.bxClock_timeman_edit_from = null;
 	window.bxClock_timeman_edit_to = null;
+
+	if (window.BXTIMEMAN && window.BXTIMEMAN.WND)
+	{
+		window.BXTIMEMAN.WND.resetSelectedDateValues();
+	}
 
 	if (this.WND)
 	{

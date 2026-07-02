@@ -36,9 +36,14 @@ export const OpenLinesContent = {
 		queueType(): ?QueueTypeName
 		{
 			const session = this.getSessionByDialogId(this.dialogId);
-			const queueType = this.$store.getters['openLines/queue/getTypeById'](session?.queueId, true);
+			if (!session)
+			{
+				return null;
+			}
 
-			return session ? queueType : null;
+			const queue = this.$store.getters['openLines/queue/getById'](session.queueId);
+
+			return queue?.type ?? null;
 		},
 		isQueueTypeAll(): boolean
 		{

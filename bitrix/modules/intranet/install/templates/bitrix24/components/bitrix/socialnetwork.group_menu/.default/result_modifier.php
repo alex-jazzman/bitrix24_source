@@ -241,6 +241,11 @@ elseif (
 )
 {
 	$redirectUrl = $arResult['Urls']['view'];
+	if ($arResult['Group']['ProjectTypeCode'] === 'scrum')
+	{
+		$redirectUrl = $urlGeneralSpecific;
+	}
+
 	if ($arResult['inIframe'])
 	{
 		$redirectUrl = (new Uri($redirectUrl))->addParams([ 'IFRAME' => 'Y' ])->getUri();
@@ -451,7 +456,7 @@ $sliderPages = [
 	],
 //	'General' => [],
 //	'view' => [],
-	'group_lists' => [],
+//	'group_lists' => [],
 //	'forum' => [],
 	'wiki' => [],
 	'photo' => [],

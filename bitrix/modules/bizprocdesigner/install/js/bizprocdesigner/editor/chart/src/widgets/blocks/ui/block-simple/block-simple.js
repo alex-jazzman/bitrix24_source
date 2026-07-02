@@ -1,20 +1,23 @@
-import { MoveableBlock } from 'ui.block-diagram';
+import { MoveableBlock, PORT_POSITION } from 'ui.block-diagram';
 import { Outline } from 'ui.icon-set.api.vue';
 import type { MenuItemOptions } from 'ui.vue3.components.menu';
-import { isBlockActivated, getBlockUserTitle } from '../../../../entities/blocks/utils';
 import { IconDivider, IconButton } from '../../../../shared/ui';
+import { PORT_TYPES } from '../../../../shared/constants';
 import {
-	BlockLayout,
+	BlockContainer,
 	BlockHeader,
 	BlockIcon,
-	PortsInOutCenter,
-	BlockTopTitle,
+	PortsLayout,
+	PortInout,
+	PortAux,
 } from '../../../../entities/blocks';
 import {
-	AutosizeBlockContainer,
 	DeleteBlockIconBtn,
 	UpdatePublishedStatusLabel,
+	ChangeActivationTopBtn,
 } from '../../../../features/blocks';
+import { BlockLayoutWidget } from '../block-layout/block-layout';
+import { BlockTopTitleWidget } from '../block-top-title/block-top-title';
 
 import type { Block } from '../../../../shared/types';
 
@@ -27,7 +30,6 @@ type BlockSimpleSetup = {
 
 type Props = {
 	block: Block,
-	autosize: boolean,
 };
 
 // @vue/component
@@ -35,16 +37,19 @@ export const BlockSimple = {
 	name: 'BlockSimple',
 	components: {
 		MoveableBlock,
-		AutosizeBlockContainer,
-		BlockLayout,
+		BlockContainer,
+		BlockLayoutWidget,
 		BlockHeader,
 		BlockIcon,
 		DeleteBlockIconBtn,
 		UpdatePublishedStatusLabel,
 		IconDivider,
 		IconButton,
-		PortsInOutCenter,
-		BlockTopTitle,
+		PortsLayout,
+		PortInout,
+		PortAux,
+		BlockTopTitleWidget,
+		ChangeActivationTopBtn,
 	},
 	props: {
 		/** @type Block */
@@ -52,27 +57,17 @@ export const BlockSimple = {
 			type: Object,
 			required: true,
 		},
-		autosize: {
-			type: Boolean,
-			default: false,
-		},
 	},
 	setup(props: Props): BlockSimpleSetup
 	{
 		return {
 			iconSet: Outline,
 			blockMediator: new BlockMediator(),
+			portTypes: PORT_TYPES,
+			portPosition: PORT_POSITION,
 		};
 	},
 	computed: {
-		isBlockActivated(): boolean
-		{
-			return isBlockActivated(this.block);
-		},
-		userTitle(): ?string
-		{
-			return getBlockUserTitle(this.block);
-		},
 		contextMenuItems(): Array<MenuItemOptions>
 		{
 			return this.blockMediator.getCommonBlockMenuOptions(this.block);
@@ -81,62 +76,98 @@ export const BlockSimple = {
 	template: `
 		<MoveableBlock :block="block">
 			<template #default="{ isHighlighted, isDragged, isDisabled, isActivated, isMakeNewConnection }">
-				<AutosizeBlockContainer
-					:blockId="block.id"
-					:autosize="autosize"
-					:width="block.dimensions.width"
-					:height="block.dimensions.height"
+				<BlockContainer
+					:block="block"
+					:width="300"
+					:height="58"
 					:highlighted="isHighlighted && !isDragged"
 					:disabled="isDisabled"
-					:deactivated="!isBlockActivated"
 					:hoverable="!isMakeNewConnection"
 					:contextMenuItems="contextMenuItems"
 					@mouseup="blockMediator.handleMouseUp($event, block)"
 					@mousedown="blockMediator.handleMouseDown($event)"
 				>
-					<BlockLayout
-						:block="block"
-						:moreMenuItems="contextMenuItems"
-						:dragged="isDragged"
-						:disabled="isDisabled"
-						:hoverable="!isMakeNewConnection"
-					>
-						<template #top-menu-title>
-							<BlockTopTitle
-								:title="userTitle"
-								:description="block.activity.Properties.EditorComment"
-							/>
-						</template>
-						<template #top-menu>
-							<DeleteBlockIconBtn
-								:blockId="block.id"
-								:disabled="isDisabled"
-								@deletedBlock="blockMediator.hideCurrentBlockSettings($event)"
-							/>
-							<IconDivider/>
-						</template>
+					<template #default="{ isBlockActivated }">
+						<BlockLayoutWidget
+							:block="block"
+							:moreMenuItems="contextMenuItems"
+							:dragged="isDragged"
+							:disabled="isDisabled"
+							:hoverable="!isMakeNewConnection"
+						>
+							<template #top-menu-title>
+								<BlockTopTitleWidget :block="block"/>
+							</template>
 
-						<template #default>
-							<PortsInOutCenter
-								:block="block"
-								:disabled="isDisabled"
-							>
-								<BlockHeader :block="block">
-									<template #icon>
-										<BlockIcon
-											:iconName="block.node.icon"
-											:iconColorIndex="block.node.colorIndex"
+							<template #top-menu>
+								<DeleteBlockIconBtn
+									:blockId="block.id"
+									:disabled="isDisabled"
+									@deletedBlock="blockMediator.hideCurrentBlockSettings($event)"
+								/>
+								<IconDivider/>
+								<ChangeActivationTopBtn :block="block"/>
+							</template>
+
+							<template #default>
+								<PortsLayout
+									:block="block"
+									:leftPortTypes="portTypes.input"
+									:rightPortTypes="portTypes.output"
+									:bottomPortTypes="portTypes.aux"
+									:disabled="isDisabled"
+								>
+									<template #left="{ port, index }">
+										<PortInout
+											:block="block"
+											:port="port"
+											:index="index"
+											:position="portPosition.LEFT"
 										/>
 									</template>
-								</BlockHeader>
-							</PortsInOutCenter>
-						</template>
 
-						<template #status>
-							<UpdatePublishedStatusLabel :block="block"/>
-						</template>
-					</BlockLayout>
-				</AutosizeBlockContainer>
+									<template #right="{ port, index }">
+										<PortInout
+											:block="block"
+											:port="port"
+											:index="index"
+											:position="portPosition.RIGHT"
+										/>
+									</template>
+
+									<template #bottom="{ port, index }">
+										<PortAux
+											:block="block"
+											:port="port"
+											:index="index"
+											:position="portPosition.BOTTOM"
+											:inactive="port.isActive === false"
+										/>
+									</template>
+
+									<template #default>
+										<BlockHeader
+											:block="block"
+											:deactivated="!isBlockActivated"
+										>
+											<template #icon>
+												<BlockIcon
+													:iconName="block.node.icon"
+													:iconColorIndex="block.node.colorIndex"
+													:deactivated="!isBlockActivated"
+												/>
+											</template>
+										</BlockHeader>
+									</template>
+								</PortsLayout>
+							</template>
+
+							<template #status>
+								<UpdatePublishedStatusLabel :block="block"/>
+							</template>
+						</BlockLayoutWidget>
+					</template>
+				</BlockContainer>
 			</template>
 		</MoveableBlock>
 	`,

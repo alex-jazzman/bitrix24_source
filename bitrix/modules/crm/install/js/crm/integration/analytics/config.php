@@ -17,8 +17,8 @@ return [
 	'css' => 'dist/analytics.bundle.css',
 	'js' => 'dist/analytics.bundle.js',
 	'rel' => [
-		'main.core',
 		'crm.integration.analytics',
+		'main.core',
 	],
 	'skip_core' => false,
 	'settings' => $settings,

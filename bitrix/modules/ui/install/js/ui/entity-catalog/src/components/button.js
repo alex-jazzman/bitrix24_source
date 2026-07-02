@@ -1,6 +1,5 @@
 import { Loc, Type } from 'main.core';
 import { BaseEvent } from 'main.core.events';
-import { ButtonData } from '@/types/button';
 
 import '../css/button.css';
 
@@ -8,7 +7,6 @@ export const Button = {
 	name: 'ui-entity-catalog-button',
 	props: {
 		buttonData: {
-			type: ButtonData,
 			required: true,
 		},
 		eventData: {

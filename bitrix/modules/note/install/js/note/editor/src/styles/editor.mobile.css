@@ -1,0 +1,55 @@
+/* Mobile adaptation for note.editor. Scoped via html.note-mobile.
+ *
+ * Tokens come from note.app's mobile.css (--note-* custom properties).
+ * note.editor in the current product setup is always loaded together with
+ * note.app, so tokens are guaranteed to be defined at :root level. If
+ * note.editor ever ships standalone, tokens block must be duplicated here.
+ */
+
+/* ===== P10: iOS auto-zoom backup =====
+ * Generic rule in mobile.css covers input/textarea/select. note.editor's
+ * title input is .note-editor-input -- duplicate explicit cap here in
+ * case note.editor is ever loaded without note.app.
+ */
+html.note-mobile .note-editor-input {
+	font-size: 16px;
+}
+
+/* ===== Editor content: typography ===== */
+html.note-mobile .note-editor-title-block {
+	padding: 1rem 12px 0 12px;
+}
+
+html.note-mobile .note-editor-title {
+	font-size: 28px;
+	line-height: 34px;
+}
+
+/* ===== Editor content: ProseMirror =====
+ * - overflow-wrap/word-break: long URLs/words don't overflow viewport.
+ * - padding: 12px instead of desktop 1rem.
+ * - media: contained to 100% width.
+ */
+html.note-mobile .ProseMirror.note-editor-prose {
+	padding: 12px;
+	overflow-wrap: anywhere;
+	word-break: break-word;
+}
+
+html.note-mobile .ProseMirror.note-editor-prose img,
+html.note-mobile .ProseMirror.note-editor-prose video {
+	max-width: 100%;
+	height: auto;
+}
+
+html.note-mobile .ProseMirror.note-editor-prose pre {
+	max-width: 100%;
+}
+
+/* Wide tables scroll horizontally within their wrapper, not the page. */
+html.note-mobile .ProseMirror.note-editor-prose .tableWrapper,
+html.note-mobile .ProseMirror.note-editor-prose .note-table-wrapper {
+	max-width: 100%;
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+}

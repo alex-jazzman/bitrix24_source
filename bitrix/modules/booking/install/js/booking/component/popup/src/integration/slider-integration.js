@@ -1,6 +1,6 @@
 import { Popup as MainPopup } from 'main.popup';
 import type { BaseEvent } from 'main.core.events';
-import { Popup } from '../popup';
+import type { Popup } from '../popup';
 
 export class SliderIntegration
 {

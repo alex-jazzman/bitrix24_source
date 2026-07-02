@@ -6,13 +6,7 @@
 	padding: 0 0 0 12px;
 	overflow-x: auto;
 	overflow-y: hidden;
-	scrollbar-gutter: stable;
 	position: relative;
-	scrollbar-width: none;
-}
-
-.bx-im-sticker-header-tabs__container::-webkit-scrollbar {
-	display: none;
 }
 
 .bx-im-sticker-header-tabs__item {

@@ -13,8 +13,9 @@ return [
 		'main.core',
 		'main.core.events',
 		'main.popup',
-		'ui.notification',
+		'ui.design-tokens',
 		'ui.dialogs.messagebox',
+		'ui.notification',
 	],
 	'skip_core' => false,
 ];

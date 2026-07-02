@@ -44,7 +44,7 @@ if (!function_exists("__GetVisibleJS"))
 }
 
 
-if ($arResult["NEED_AUTH"] == "Y")
+if (($arResult["NEED_AUTH"] ?? null) == "Y")
 {
 	$APPLICATION->AuthForm("");
 }
@@ -285,7 +285,7 @@ else
 			<br />
 			<input type="submit" name="save" value="<?= GetMessage("SONET_C4_SUBMIT") ?>">
 			<?
-			if ($_REQUEST['backurl'] && mb_strpos($_REQUEST['backurl'], "/") === 0)
+			if (($_REQUEST['backurl'] ?? null) && mb_strpos($_REQUEST['backurl'], "/") === 0)
 				$backurl = htmlspecialcharsbx(CUtil::addslashes($_REQUEST['backurl']));
 			elseif ($arParams["PAGE_ID"] == "group_subscribe") 
 				$backurl = $arResult["Urls"]["Group"];

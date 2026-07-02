@@ -1,5 +1,10 @@
-<?
+<?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+
+/**
+ * @var array $arResult
+ * @var array $arParams
+ */
 
 CJSCore::Init(array('window'));
 
@@ -40,7 +45,7 @@ if (!empty($arDiff))
 	{
 		foreach($arUserOptions["GADGETS"] as $key => $arGadgetDefault)
 		{
-			list($gadget_id, $id) = explode("@", $key, 2);
+			[$gadget_id, $id] = explode("@", $key, 2);
 			if (
 				!in_array($gadget_id, $arParams["GADGETS_FIXED"])
 				|| !array_key_exists($gadget_id, $arResult["ALL_GADGETS"])

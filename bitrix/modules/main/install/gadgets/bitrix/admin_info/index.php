@@ -1,4 +1,4 @@
-<?
+<?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 $bxProductConfig = array();
@@ -15,11 +15,11 @@ $sProduct = str_replace("#VERSION#", $sVer, $sProduct);
 	<div class="bx-gadgets-content-padding-rl">
 		<table class="bx-gadgets-info-site-table">
 		<tr>
-			<td align="left" valign="top" style="padding-bottom: 20px; line-height: 28px;"><span><?
+			<td align="left" valign="top" style="padding-bottom: 20px; line-height: 28px;"><span><?php
 				if ($GLOBALS['USER']->CanDoOperation('view_other_settings'))
 				{
 					$last_updated = COption::GetOptionInt("main", "update_system_update_time");
-					?><div><?=str_replace("#VALUE#", $last_updated ? \Bitrix\Main\Type\DateTime::createFromTimestamp($last_updated) : '-', GetMessage("GD_INFO_LASTUPDATE"));?></div><?
+					?><div><?=str_replace("#VALUE#", $last_updated ? \Bitrix\Main\Type\DateTime::createFromTimestamp($last_updated) : '-', GetMessage("GD_INFO_LASTUPDATE"));?></div><?php
 				}
 
 				if(IsModuleInstalled("perfmon") && $GLOBALS["APPLICATION"]->GetGroupRight("perfmon") != "D")
@@ -27,12 +27,12 @@ $sProduct = str_replace("#VERSION#", $sVer, $sProduct);
 					$mark_value = (double)COption::GetOptionString("perfmon", "mark_php_page_rate", "");
 					if($mark_value < 5)
 						$mark_value = GetMessage("GD_INFO_PERFMON_NO_RESULT");
-					?><div><?=str_replace("#VALUE#", $mark_value, GetMessage("GD_INFO_PERFMON"));?></div><?
+					?><div><?=str_replace("#VALUE#", $mark_value, GetMessage("GD_INFO_PERFMON"));?></div><?php
 				}
 
 				if ($GLOBALS["USER"]->CanDoOperation('view_all_users'))
 				{
-					?><div><?=str_replace("#VALUE#", CUser::GetCount(), GetMessage("GD_INFO_USERS"));?></div><?
+					?><div><?=str_replace("#VALUE#", CUser::GetCount(), GetMessage("GD_INFO_USERS"));?></div><?php
 				}
 			?></span></td>
 			<td align="right" valign="bottom"><span style="display: inline-block; vertical-align: bottom; align: right;"><img src="/bitrix/gadgets/bitrix/admin_info/images/<?=(in_array(LANGUAGE_ID, array("ru", "en", "de"))?LANGUAGE_ID:"en")?>/logo.gif"></span></td>

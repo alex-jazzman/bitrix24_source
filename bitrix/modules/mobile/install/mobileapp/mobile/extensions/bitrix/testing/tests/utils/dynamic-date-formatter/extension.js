@@ -70,10 +70,10 @@
 		test('Format a date in the past', () => {
 			const expectedResults = {
 				'30SecsAgo': 'just now',
-				'45SecsAgo': '11:59:15',
+				'45SecsAgo': pastMoments['45SecsAgo'].format(longTime()),
 				'5MinsAgo': '5 minutes ago',
 				'1HourAgo': '60 minutes ago',
-				'3HoursAgo': '09:00',
+				'3HoursAgo': pastMoments['3HoursAgo'].format(shortTime()),
 			};
 
 			const getMinutesDelta = (m1, m2) => Math.round(Math.abs(m1.timestamp - m2.timestamp) / 60);
@@ -97,9 +97,9 @@
 			const expectedResults = {
 				'30SecsAgo': 'just now',
 				'45SecsAgo': 'just now',
-				'1MinAgo': '11:59:00',
+				'1MinAgo': pastMoments['1MinAgo'].format(longTime()),
 				in30Secs: 'very soon',
-				in45Secs: '12:00:45',
+				in45Secs: futureMoments.in45Secs.format(longTime()),
 			};
 
 			const formatter = new DynamicDateFormatter({
@@ -192,8 +192,8 @@
 			const expectedResults = {
 				in5Mins: 'через 5 минут',
 				in30Mins: 'через 30 минут',
-				in31Mins: 'сегодня в 12:31',
-				in1Hour: 'сегодня в 13:00',
+				in31Mins: `сегодня в ${futureMoments.in31Mins.format(shortTime())}`,
+				in1Hour: `сегодня в ${futureMoments.in1Hour.format(shortTime())}`,
 			};
 
 			const formatter = new DynamicDateFormatter({

@@ -1,13 +1,13 @@
-<?
+<?php
 /**
- * @global \CUser $USER
- * @global \CMain $APPLICATION
- * @global \CDatabase $DB
+ * @global CUser $USER
+ * @global CMain $APPLICATION
+ * @global CDatabase $DB
+ * @var string $module_id Defined in module/options.php
  */
 
 IncludeModuleLangFile(__FILE__);
 
-$module_id = $module_id ?? '';
 $MODULE_RIGHT = $APPLICATION->GetGroupRight($module_id);
 
 $md = CModule::CreateModuleObject($module_id);
@@ -94,6 +94,8 @@ if (!function_exists("__GroupRightsShowRow"))
 
 	function __GroupRightsShowRowGroup($module_id, $ar, $value, $arSites, $arRightsUseSites, $site_id_tmp, $arGROUPS)
 	{
+		global $md;
+
 		$v = __GetGroupRight($module_id, $value["ID"], $site_id_tmp, $arSites, $arGROUPS);
 
 		if($v == '')
@@ -110,7 +112,7 @@ if (!function_exists("__GroupRightsShowRow"))
 	{
 		?><tr>
 			<td width="40%"><?=$titleCol?></td>
-			<td width="40%"><?
+			<td width="40%"><?php
 			echo '<input type="hidden" name="GROUPS[]" value="'.$group_id.'">';
 
 			$strReturnBox = '<select class="typeselect" name="RIGHTS[]" onchange="__GroupRightsChangeSite(this)" >';
@@ -134,15 +136,14 @@ if (!function_exists("__GroupRightsShowRow"))
 			}
 
 			echo $strReturnBox.'</select>';
-			?></td><td width="20%"><span style="display: <?=(in_array($v, $arRightsUseSites) ? "inline-block" : "none")?>;"><?
+			?></td><td width="20%"><span style="display: <?=(in_array($v, $arRightsUseSites) ? "inline-block" : "none")?>;"><?php
 				echo SelectBoxFromArray("SITES[]", $arSites, htmlspecialcharsbx($site_id_tmp), GetMessage("group_rights_sites_all"), "class='typeselect' style='width: 150px;'");
 			?></span></td>
-			<td width="0%"><a href="javascript:void(0)" onClick="__GroupRightsDeleteRow(this)"><img src="/bitrix/themes/.default/images/actions/delete_button.gif" border="0" width="20" height="20"></a></td>
-		</tr><?
+			<td width="0%"><a href="javascript:void(0)" onClick="__GroupRightsDeleteRow(this)"><img src="/bitrix/themes/.default/images/actions/delete_button.gif" border="0" width="20" height="20" alt=""></a></td>
+		</tr><?php
 	}
 
 }
-
 
 if ($MODULE_RIGHT!="D") :
 
@@ -203,9 +204,9 @@ echo "<script>\n".
 	"}\n".
 	"</script>\n";
 
-if($_SERVER['REQUEST_METHOD']=="POST" && $Update <> '' && $MODULE_RIGHT=="W" && check_bitrix_sessid())
+if ($_SERVER['REQUEST_METHOD'] == "POST" && !empty($_POST['Update']) && $MODULE_RIGHT=="W" && check_bitrix_sessid())
 {
-	if (!empty($GROUPS))
+	if (!empty($_POST['GROUPS']) && is_array($_POST['GROUPS']))
 	{
 // echo "Remove all options<br>";
 		COption::RemoveOption($module_id, "GROUP_DEFAULT_RIGHT");
@@ -217,7 +218,10 @@ if($_SERVER['REQUEST_METHOD']=="POST" && $Update <> '' && $MODULE_RIGHT=="W" && 
 			$APPLICATION->DelGroupRight($module_id, array(), $site_id_tmp);
 		}
 
-		foreach($GROUPS as $i => $group_id)
+		$RIGHTS = $_POST['RIGHTS'] ?? [];
+		$SITES = $_POST['SITES'] ?? [];
+
+		foreach($_POST['GROUPS'] as $i => $group_id)
 		{
 			if ($group_id == '')
 				continue;
@@ -282,17 +286,17 @@ foreach($arGROUPS as $value)
 }
 ?><tr>
 	<td><select style="width:300px" onchange="settingsSetGroupID(this)" name="GROUPS[]">
-		<option value=""><?echo GetMessage("group_rights_select")?></option>
-		<option value="0"><?echo GetMessage("group_rights_default")?></option>
-		<?
+		<option value=""><?= GetMessage("group_rights_select")?></option>
+		<option value="0"><?= GetMessage("group_rights_default")?></option>
+		<?php
 		foreach($arGROUPS as $group):
 			?>
 			<option value="<?=$group["ID"]?>"><?=$group["NAME"]." [".$group["ID"]."]"?></option>
-			<?
+			<?php
 		endforeach;
 		?>
 	</select></td>
-	<td><?
+	<td><?php
 		$strReturnBox = '<select class="typeselect" name="RIGHTS[]">';
 
 		$ref = $ar["reference"];
@@ -312,7 +316,7 @@ foreach($arGROUPS as $value)
 
 		echo $strReturnBox.'</select>';
 	?></td>
-	<td width="20%"><span style="display: none;"><?
+	<td width="20%"><span style="display: none;"><?php
 		echo SelectBoxFromArray("SITES[]", $arSites, "", GetMessage("group_rights_sites_all"), "class='typeselect' style='width: 150px;'");
 	?></span></td>
 	<td width="0%"></td>
@@ -388,10 +392,10 @@ BX.CRightsRowNew.prototype.ChangeSite = function()
 }
 
 </script>
-		<a href="javascript:void(0)" onclick="settingsAddRights(this)" hidefocus="true" class="adm-btn"><?echo GetMessage("group_rights_add")?></a>
+		<a href="javascript:void(0)" onclick="settingsAddRights(this)" hidefocus="true" class="adm-btn"><?= GetMessage("group_rights_add")?></a>
 	</td>
 	<td></td>
 	<td></td>
 </tr>
 
-<?endif;?>
+<?php endif;?>

@@ -125,10 +125,13 @@ export class InviteEmailPopup
 					return;
 				}
 
+				const departmentIds = this.#departmentControl.getValues();
+				const workgroupIds = this.#departmentControl.getGroupValues();
+
 				this.#sendButton.setState(ButtonState.WAITING);
 				this.#getInput().inviteToDepartmentGroup(
-					this.#departmentControl.getValues(),
-					this.#departmentControl.getGroupValues(),
+					departmentIds,
+					workgroupIds,
 					this.#analytics.getDataForAction('mass'),
 				)
 					.then((response) => {
@@ -146,6 +149,8 @@ export class InviteEmailPopup
 								userList: response.data.firedUserList,
 								isRestoreUsersAccessAvailable: response.data.isRestoreUsersAccessAvailable,
 								transport: this.#transport,
+								departmentIds,
+								workgroupIds,
 							})).show();
 						}
 					})

@@ -32,6 +32,9 @@
 			next: null,
 			prev: null,
 			close: null,
+			copyLinkIcon: null,
+			copyLinkButton: null,
+			copyLinkHint: null,
 			downloadBtn: null,
 			moreBtn: null,
 			error: null,
@@ -189,6 +192,21 @@
 			}
 
 			event.preventDefault();
+
+			try
+			{
+				if (!BX.UI.Accessibility.InteractivityChecker.isFocusable(target))
+				{
+					target.setAttribute('tabindex', '-1');
+				}
+
+				target.focus({ preventScroll: true });
+			}
+			catch
+			{
+				// silently failed
+			}
+
 			this.buildItemListByNode(target).then(function(items){
 				if (items.length === 0)
 				{
@@ -234,6 +252,7 @@
 			this.handlers.showNext = this.showNext.bind(this);
 			this.handlers.showPrev = this.showPrev.bind(this);
 			this.handlers.close = this.close.bind(this);
+			this.handlers.copyLink = this.copyLink.bind(this);
 			this.handlers.handleClickOnItemContainer = this.handleClickOnItemContainer.bind(this);
 			this.handlers.handleSliderCloseByEsc = this.handleSliderCloseByEsc.bind(this);
 
@@ -246,6 +265,7 @@
 			BX.bind(this.getNextButton(), 'click', this.handlers.showNext);
 			BX.bind(this.getPrevButton(), 'click', this.handlers.showPrev);
 			BX.bind(this.getCloseButton(), 'click', this.handlers.close);
+			BX.bind(this.getCopyLinkButton(), 'click', this.handlers.copyLink);
 
 			BX.addCustomEvent('SidePanel.Slider:onCloseByEsc', this.handlers.handleSliderCloseByEsc);
 		},
@@ -402,6 +422,7 @@
 			BX.unbind(this.getNextButton(), 'click', this.handlers.showNext);
 			BX.unbind(this.getPrevButton(), 'click', this.handlers.showPrev);
 			BX.unbind(this.getCloseButton(), 'click', this.handlers.close);
+			BX.unbind(this.getCopyLinkButton(), 'click', this.handlers.copyLink);
 		},
 
 		init: function ()
@@ -1218,6 +1239,49 @@
 			return this.layout.close;
 		},
 
+		getCopyLinkIcon: function ()
+		{
+			if (!this.layout.copyLinkIcon)
+			{
+				this.layout.copyLinkIcon = new BX.UI.IconSet.Icon({
+					icon: BX.UI.IconSet.Outline.LINK,
+				}).render();
+
+				BX.Dom.addClass(this.layout.copyLinkIcon, 'ui-viewer-action-btn-icon');
+			}
+
+			return this.layout.copyLinkIcon;
+		},
+
+		getCopyLinkButton: function ()
+		{
+			if (!this.layout.copyLinkButton)
+			{
+				const copyLinkIconHtml = this.getCopyLinkIcon();
+
+				this.layout.copyLinkButton = BX.Tag.render`
+					<button 
+						class="ui-viewer-action-btn" 
+						title="${BX.Text.encode(BX.Loc.getMessage('JS_UI_VIEWER_ITEM_ACTION_COPY_LINK'))}"
+					>
+						${copyLinkIconHtml}
+					</button>
+				`;
+			}
+
+			return this.layout.copyLinkButton;
+		},
+
+		getCopyLinkHint: function ()
+		{
+			if (!this.layout.copyLinkHint)
+			{
+				this.layout.copyLinkHint = BX.UI.Hint.createInstance();
+			}
+
+			return this.layout.copyLinkHint;
+		},
+
 		getDownloadButton: function()
 		{
 			if (!this.layout.downloadBtn)
@@ -1399,6 +1463,7 @@
 			{
 				this.layout.defaultActions = BX.Tag.render`
 					<div class="ui-viewer-default-actions">
+						${this.getCopyLinkButton()}
 						${this.getDownloadButton()}
 						${this.getMoreButton()}
 					</div>
@@ -1459,6 +1524,22 @@
 			if (!item.isLoaded)
 			{
 				this.lockExtraActions();
+			}
+
+			const copyLinkButton = this.getCopyLinkButton();
+			const linkUrl = item.getLinkUrl();
+
+			if (BX.Type.isStringFilled(linkUrl))
+			{
+				copyLinkButton.style.display = 'flex';
+
+				copyLinkButton.dataset.url = linkUrl;
+			}
+			else
+			{
+				copyLinkButton.style.display = 'none';
+
+				delete copyLinkButton.dataset.url;
 			}
 		},
 
@@ -1882,6 +1963,45 @@
 			// this.currentIndex = null;
 			// this.layout.container = null;
 			// this.layout.close = null;
+		},
+
+		copyLink: async function ()
+		{
+			const url = this.getCopyLinkButton().dataset.url;
+
+			if (!BX.Type.isStringFilled(url))
+			{
+				return;
+			}
+
+			let isSuccess = false;
+
+			if (navigator.clipboard && window.isSecureContext)
+			{
+				try {
+					await navigator.clipboard.writeText(url)
+
+					isSuccess = true;
+				} catch (error) {}
+			}
+
+			if (!isSuccess)
+			{
+				isSuccess = Boolean(BX.clipboard?.copy(url));
+			}
+
+			const copyLinkHint = this.getCopyLinkHint();
+			const copyLinkIcon = this.getCopyLinkIcon();
+
+			const hintText =
+				isSuccess
+					? BX.Loc.getMessage('JS_UI_VIEWER_ITEM_ACTION_COPY_LINK_SUCCESS')
+					: BX.Loc.getMessage('JS_UI_VIEWER_ITEM_ACTION_COPY_LINK_ERROR')
+			;
+
+			copyLinkHint.show(copyLinkIcon, hintText);
+
+			setTimeout(() => copyLinkHint.hide(copyLinkIcon), 500);
 		},
 
 		showLoading: function (options)

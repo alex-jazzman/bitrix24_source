@@ -6,45 +6,55 @@ jn.define('tasks/layout/fields/time-tracking/ui/settings-widget', (require, expo
 	const { SettingSelector } = require('ui-system/blocks/setting-selector');
 	const { SwitcherSize } = require('ui-system/blocks/switcher');
 	const { Card } = require('ui-system/layout/card');
-
+	const { CardList } = require('ui-system/layout/card-list');
 	const { StringInput, InputDesign } = require('ui-system/form/inputs/string');
-	const { Component, Indent } = require('tokens');
-	const { TimeTrackingSettingsWidgetSaveButton } = require('tasks/layout/fields/time-tracking/ui/save-button');
+	const { Indent, Color } = require('tokens');
+	const { Box, BoxFooter } = require('ui-system/layout/box');
+	const { Button, ButtonSize } = require('ui-system/form/buttons/button');
+	const { BottomSheet } = require('bottom-sheet');
 	const { toHours, toMinutes, sumSeconds } = require('tasks/layout/fields/time-tracking/time-utils');
+	const { InputSize } = require('ui-system/form/inputs/input');
+	const { toNumber } = require('utils/number');
+	const { createTestIdGenerator } = require('utils/test');
 
-	const toNumber = (val) => {
-		const num = Number(val);
-
-		return Number.isNaN(num) ? 0 : num;
-	};
+	const BOTTOM_HEIGHT = 422;
 
 	class TimeTrackingSettingsWidget extends LayoutComponent
 	{
-		static open(props = {})
+		static show({ layout, ...props } = {})
 		{
-			const parentWidget = (props.parentWidget || PageManager);
-
-			parentWidget.openWidget('layout', {
-				titleParams: {
-					text: Loc.getMessage('M_TASKS_FIELDS_TIME_TRACKING'),
-					type: 'dialog',
-				},
-				backdrop: {
-					onlyMediumPosition: false,
-					mediumPositionHeight: 450,
-					bounceEnable: true,
-					swipeAllowed: true,
-					horizontalSwipeAllowed: false,
-					shouldResizeContent: true,
-					adoptHeightByKeyboard: true,
-				},
-			}).then((layoutWidget) => {
-				layoutWidget.showComponent(new TimeTrackingSettingsWidget({
+			return new Promise((resolve, reject) => {
+				const widget = new TimeTrackingSettingsWidget({
 					...props,
-					layoutWidget,
-					parentWidget,
-				}));
-			}).catch(() => {});
+					resolvePromise: resolve,
+					rejectPromise: reject,
+				});
+
+				const bottomSheet = new BottomSheet({
+					titleParams: {
+						text: Loc.getMessage('M_TASKS_FIELDS_TIME_TRACKING'),
+						type: 'dialog',
+						useLargeTitleMode: true,
+					},
+					component: widget,
+				});
+
+				bottomSheet
+					.setParentWidget(layout)
+					.disableShowOnTop()
+					.disableOnlyMediumPosition()
+					.setMediumPositionHeight(BOTTOM_HEIGHT)
+					.enableBounce()
+					.enableSwipe()
+					.disableHorizontalSwipe()
+					.enableResizeContent()
+					.enableAdoptHeightByKeyboard()
+					.open()
+					.then((layoutWidget) => {
+						widget.setLayoutWidget(layoutWidget);
+					})
+					.catch(reject);
+			});
 		}
 
 		constructor(props)
@@ -59,18 +69,21 @@ jn.define('tasks/layout/fields/time-tracking/ui/settings-widget', (require, expo
 				hasChanges: false,
 			};
 
-			this.onHoursChanged = this.onHoursChanged.bind(this);
-			this.onMinutesChanged = this.onMinutesChanged.bind(this);
-
-			/** @type {TimeTrackingSettingsWidgetSaveButton} */
-			this.saveButtonRef = null;
+			this.getTestId = createTestIdGenerator({
+				prefix: 'time-tracking-settings-widget',
+			});
 
 			/** @type {StringInput} */
 			this.hoursRef = null;
+			this.scrollRef = null;
 		}
 
-		#toggleTimeTracking()
+		setLayoutWidget(layoutWidget)
 		{
+			this.layoutWidget = layoutWidget;
+		}
+
+		#toggleTimeTracking = () => {
 			const allowTimeTracking = !this.state.allowTimeTracking;
 			const useTimeLimit = allowTimeTracking === false ? false : this.state.useTimeLimit;
 
@@ -79,10 +92,9 @@ jn.define('tasks/layout/fields/time-tracking/ui/settings-widget', (require, expo
 				useTimeLimit,
 				hasChanges: true,
 			});
-		}
+		};
 
-		#toggleTimeLimit()
-		{
+		#toggleTimeLimit = () => {
 			const useTimeLimit = !this.state.useTimeLimit;
 			const allowTimeTracking = useTimeLimit === true ? true : this.state.allowTimeTracking;
 
@@ -93,29 +105,30 @@ jn.define('tasks/layout/fields/time-tracking/ui/settings-widget', (require, expo
 			}, () => {
 				if (useTimeLimit)
 				{
-					void this.hoursRef?.setFocused(true);
+					void this.hoursRef?.focus(true);
+				}
+				else
+				{
+					Keyboard.dismiss();
 				}
 			});
-		}
+		};
 
-		onHoursChanged(val)
-		{
+		onHoursChanged = (val) => {
 			this.setState({
 				timeEstimateHours: toNumber(val),
 				hasChanges: true,
 			});
-		}
+		};
 
-		onMinutesChanged(val)
-		{
+		onMinutesChanged = (val) => {
 			this.setState({
 				timeEstimateMinutes: toNumber(val),
 				hasChanges: true,
 			});
-		}
+		};
 
-		#save()
-		{
+		onSave = () => {
 			const { allowTimeTracking, useTimeLimit, timeEstimateHours, timeEstimateMinutes } = this.state;
 
 			const timeEstimate = sumSeconds(timeEstimateHours, timeEstimateMinutes);
@@ -125,131 +138,177 @@ jn.define('tasks/layout/fields/time-tracking/ui/settings-widget', (require, expo
 				timeEstimate: useTimeLimit ? timeEstimate : 0,
 			});
 
-			this.props.layoutWidget?.close(() => {
-				this.props.onClose?.();
-			});
-		}
+			this.layoutWidget?.close();
+
+			this.props.onClose?.();
+			this.props.resolvePromise?.();
+		};
 
 		render()
 		{
-			return View(
+			return Box(
 				{
-					style: {
-						paddingHorizontal: Component.areaPaddingLr.getValue(),
-						paddingVertical: Component.cardListPaddingTb.getValue(),
-					},
-					safeArea: { bottom: true },
+					testId: this.getTestId('box'),
 					resizableByKeyboard: true,
-					onClick: () => Keyboard.dismiss(),
+					backgroundColor: Color.bgSecondary,
+					safeArea: {
+						bottom: true,
+					},
+					withScroll: true,
+					withPaddingHorizontal: true,
+					footer: this.renderFooter(),
+					scrollProps: {
+						ref: (ref) => {
+							this.scrollRef = ref;
+						},
+						onLayout: () => {
+							const { useTimeLimit } = this.state;
+							if (useTimeLimit)
+							{
+								this.scrollRef?.scrollToEnd({ animated: true });
+							}
+						},
+					},
 				},
-				this.#renderTimeTrackingOption(),
-				this.#renderTimeLimitOption(),
-				this.#renderSaveButton(),
+				this.renderBody(),
 			);
 		}
 
-		#renderTimeTrackingOption()
+		renderBody()
+		{
+			return CardList(
+				{
+					withScroll: false,
+					testId: this.getTestId('card-list'),
+				},
+				this.renderTimeTrackingOption(),
+				this.renderTimeLimitOption(),
+			);
+		}
+
+		renderTimeTrackingOption()
 		{
 			return Card(
 				{
 					border: true,
-					testId: 'TimeTrackingSettingsWidget_EnableTimeTrackingCard',
+					testId: this.getTestId('enable-time-tracking-card'),
 				},
 				SettingSelector({
-					testId: 'TimeTrackingSettingsWidget_EnableTimeTracking',
+					testId: this.getTestId('enable-time-tracking'),
 					checked: this.state.allowTimeTracking,
 					title: Loc.getMessage('M_TASKS_TIME_TRACKING_WIDGET_ENABLE_TIME_TRACKING'),
 					subtitle: Loc.getMessage('M_TASKS_TIME_TRACKING_WIDGET_ENABLE_TIME_TRACKING_HINT'),
 					switcherSize: SwitcherSize.L,
-					onClick: () => this.#toggleTimeTracking(),
+					onClick: this.#toggleTimeTracking,
 				}),
 			);
 		}
 
-		#renderTimeLimitOption()
+		renderTimeLimitOption()
 		{
+			const { useTimeLimit } = this.state;
+
 			return Card(
 				{
 					border: true,
-					testId: '',
-					style: {
-						marginTop: Component.cardListGap.toNumber(),
-					},
+					testId: this.getTestId('time-limit-card'),
 				},
 				SettingSelector({
-					testId: 'TimeTrackingSettingsWidget_SetTimeLimit',
-					checked: this.state.useTimeLimit,
+					testId: this.getTestId('set-time-limit'),
+					checked: useTimeLimit,
 					title: Loc.getMessage('M_TASKS_TIME_TRACKING_WIDGET_ENABLE_TIME_LIMIT'),
 					subtitle: Loc.getMessage('M_TASKS_TIME_TRACKING_WIDGET_ENABLE_TIME_LIMIT_HINT'),
 					switcherSize: SwitcherSize.L,
-					onClick: () => this.#toggleTimeLimit(),
-					additionalContent: this.state.useTimeLimit ? this.#renderTimeEditForm() : null,
+					onClick: this.#toggleTimeLimit,
+					additionalContent: useTimeLimit ? this.renderTimeEditForm() : null,
 				}),
 			);
 		}
 
-		#renderTimeEditForm()
+		renderTimeEditForm()
 		{
-			const { timeEstimateHours: hours, timeEstimateMinutes: minutes } = this.state;
+			const {
+				timeEstimateHours: hours,
+				timeEstimateMinutes: minutes,
+			} = this.state;
 
-			return Form(
-				Field({
-					ref: (ref) => {
-						this.hoursRef = ref;
+			return View(
+				{
+					style: {
+						flexDirection: 'row',
+						justifyContent: 'space-between',
+						marginTop: Indent.XL.toNumber(),
 					},
-					testId: 'TimeTrackingSettingsWidget_Hours',
-					keyboardType: 'number-pad',
-					value: hours === 0 ? '' : String(hours),
-					placeholder: '0',
-					label: Loc.getMessage('M_TASKS_TIME_TRACKING_WIDGET_HOURS'),
-					onChange: this.onHoursChanged,
-					design: InputDesign.GREY,
-				}),
-				Spacer(),
-				Field({
-					testId: 'TimeTrackingSettingsWidget_Minutes',
-					keyboardType: 'number-pad',
-					value: minutes === 0 ? '' : String(minutes),
-					placeholder: '0',
-					label: Loc.getMessage('M_TASKS_TIME_TRACKING_WIDGET_MINUTES'),
-					onChange: this.onMinutesChanged,
-					design: InputDesign.GREY,
-				}),
+				},
+				this.renderHoursField(hours),
+				this.renderMinutesField(minutes),
 			);
 		}
 
-		#renderSaveButton()
+		renderHoursField(hours)
 		{
-			return new TimeTrackingSettingsWidgetSaveButton({
+			return StringInput({
 				ref: (ref) => {
-					this.saveButtonRef = ref;
+					this.hoursRef = ref;
 				},
-				testId: 'TimeTrackingSettingsWidget_SaveBtn',
-				disabled: !this.state.hasChanges,
-				text: Loc.getMessage('M_TASKS_SAVE'),
-				onClick: () => this.#save(),
+				style: {
+					flexGrow: 1,
+					paddingRight: Indent.XL.toNumber(),
+					width: null,
+				},
+				testId: this.getTestId('hours'),
+				size: InputSize.M,
+				keyboardType: 'number-pad',
+				value: hours === 0 ? '' : String(hours),
+				placeholder: '0',
+				label: Loc.getMessage('M_TASKS_TIME_TRACKING_WIDGET_HOURS'),
+				onChange: this.onHoursChanged,
+				design: InputDesign.GREY,
 			});
 		}
-	}
 
-	const Form = (...children) => View({
-		style: {
-			flexDirection: 'row',
-			justifyContent: 'space-between',
-			marginTop: Indent.XL.getValue(),
-		},
-	}, ...children);
-
-	const Field = (props) => View(
+		renderMinutesField(minutes)
 		{
-			style: {
-				flexGrow: 1,
-			},
-		},
-		StringInput(props),
-	);
+			return StringInput({
+				style: {
+					flexGrow: 1,
+					width: null,
+				},
+				testId: 'time-tracking-settings-widget-minutes',
+				size: InputSize.M,
+				keyboardType: 'number-pad',
+				value: minutes === 0 ? '' : String(minutes),
+				placeholder: '0',
+				label: Loc.getMessage('M_TASKS_TIME_TRACKING_WIDGET_MINUTES'),
+				onChange: this.onMinutesChanged,
+				design: InputDesign.GREY,
+			});
+		}
 
-	const Spacer = () => View({ style: { width: Indent.XL.getValue() } });
+		renderFooter()
+		{
+			return BoxFooter(
+				{
+					testId: this.getTestId('footer'),
+					safeArea: false,
+					isShowKeyboard: false,
+					keyboardButton: {
+						text: Loc.getMessage('M_TASKS_SAVE'),
+						color: Color.baseWhiteFixed,
+						onClick: this.onSave,
+					},
+				},
+				Button({
+					testId: this.getTestId('footer-save-button'),
+					text: Loc.getMessage('M_TASKS_SAVE'),
+					stretched: true,
+					size: ButtonSize.L,
+					onClick: this.onSave,
+					disabled: !this.state.hasChanges,
+				}),
+			);
+		}
+	}
 
 	module.exports = { TimeTrackingSettingsWidget };
 });

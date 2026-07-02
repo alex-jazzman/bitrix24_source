@@ -111,11 +111,27 @@ class CBPDelayActivity extends CBPActivity implements
 		}
 
 		$schedulerService = $this->workflow->getSchedulerService();
-		$schedulerService->sendResumeWorkflowMessage(
-			$this->workflow->getInstanceId(),
-			$this->name,
-			(int)$timeoutDurationValue
-		);
+		if ($schedulerService->useMessengerTransport())
+		{
+			$schedulerService->sendResumeWorkflowMessage(
+				$this->workflow->getInstanceId(),
+				$this->name,
+				(int)$timeoutDurationValue
+			);
+		}
+		else
+		{
+			$this->subscriptionId = $schedulerService->subscribeOnTime(
+				$this->workflow->getInstanceId(),
+				$this->name,
+				$expiresAt
+			);
+
+			if (!$this->subscriptionId)
+			{
+				throw new Exception(GetMessage('BPDA_SUBSCRIBE_ERROR_MSGVER_1'));
+			}
+		}
 
 		$this->workflow->addEventHandler($this->name, $eventHandler);
 
@@ -136,8 +152,9 @@ class CBPDelayActivity extends CBPActivity implements
 
 	public function Unsubscribe(IBPActivityExternalEventListener $eventHandler)
 	{
-		if ($this->subscriptionId > 0) {
-			$schedulerService = $this->workflow->getService('SchedulerService');
+		$schedulerService = $this->workflow->getService('SchedulerService');
+		if ($this->subscriptionId > 0)
+		{
 			$schedulerService->unSubscribeOnTime($this->subscriptionId);
 			$this->subscriptionId = 0;
 		}

@@ -22,6 +22,7 @@
 }
 
 .booking-event-popup .popup-window-content {
+	/* @chef-ignore */
 	scrollbar-width: none
 }
 

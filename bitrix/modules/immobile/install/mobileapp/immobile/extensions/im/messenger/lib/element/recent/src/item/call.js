@@ -37,6 +37,7 @@ jn.define('im/messenger/lib/element/recent/item/call', (require, exports, module
 					break;
 
 				case 'none':
+				case 'remote':
 					itemConfig = {
 						text: Loc.getMessage('IMMOBILE_ELEMENT_RECENT_CALL_STATUS_JOIN'),
 						color: Theme.colors.baseWhiteFixed,

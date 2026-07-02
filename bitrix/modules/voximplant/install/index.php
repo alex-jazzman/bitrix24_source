@@ -149,6 +149,11 @@ class voximplant extends \CModule
 		$eventManager->registerEventHandlerCompatible("crm", "OnAfterExternalCrmContactAdd", "voximplant", "CVoxImplantCrmHelper", "RegisterEntity");
 		$eventManager->registerEventHandlerCompatible("crm", "OnCrmCallbackFormSubmitted", "voximplant", "CVoxImplantCrmHelper", "OnCrmCallbackFormSubmitted");
 
+		$eventManager->registerEventHandler('crm', 'OnAfterCrmLeadUpdate', 'voximplant', '\\Bitrix\\Voximplant\\Integration\\Crm\\EventHandler', 'onAfterLeadUpdate');
+		$eventManager->registerEventHandler('crm', 'OnAfterCrmContactUpdate', 'voximplant', '\\Bitrix\\Voximplant\\Integration\\Crm\\EventHandler', 'onAfterContactUpdate');
+		$eventManager->registerEventHandler('crm', 'OnAfterCrmCompanyUpdate', 'voximplant', '\\Bitrix\\Voximplant\\Integration\\Crm\\EventHandler', 'onAfterCompanyUpdate');
+		$eventManager->registerEventHandler('crm', 'OnAfterCrmDealUpdate', 'voximplant', '\\Bitrix\\Voximplant\\Integration\\Crm\\EventHandler', 'onAfterDealUpdate');
+
 		$eventManager->registerEventHandlerCompatible("pull", "OnGetDependentModule", "voximplant", "CVoxImplantEvent", "PullOnGetDependentModule");
 		$eventManager->registerEventHandlerCompatible('rest', 'OnRestServiceBuildDescription', 'voximplant', 'CVoxImplantRestService', 'OnRestServiceBuildDescription');
 		$eventManager->registerEventHandlerCompatible('rest', 'OnRestAppInstall', 'voximplant', '\Bitrix\Voximplant\Rest\Helper', 'onRestAppInstall');
@@ -172,11 +177,17 @@ class voximplant extends \CModule
 
 		if (!\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24'))
 		{
+			/** @see CVoxImplantPhone::SynchronizeUserPhones() */
 			\CAgent::AddAgent("CVoxImplantPhone::SynchronizeUserPhones();", "voximplant", "N", 300);
 		}
+		/** @see \Bitrix\Voximplant\Agent\CallCleaner::finishStaleCalls() */
 		\CAgent::AddAgent("\\Bitrix\\Voximplant\\Agent\\CallCleaner::finishStaleCalls();", "voximplant", "N", 86400);
+		/** @see \Bitrix\Voximplant\Agent\CallCleaner::deleteOldCalls() */
 		\CAgent::AddAgent("\\Bitrix\\Voximplant\\Agent\\CallCleaner::deleteOldCalls();", "voximplant", "N", 864000);
+		/** @see \Bitrix\Voximplant\Agent\VerificationChecker::checkInternodWarning() */
 		\CAgent::AddAgent('\\Bitrix\\Voximplant\\Agent\\VerificationChecker::checkInternodWarning();', 'voximplant', 'N', 86400);
+		/** @see \Bitrix\Voximplant\Agent\CallHistoryPuller::pull() */
+		\CAgent::AddAgent('\\Bitrix\\Voximplant\\Agent\\CallHistoryPuller::pull();', 'voximplant', 'N', 86400);
 
 		$this->InstallDefaultData();
 		$this->InstallUserFields();

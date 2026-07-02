@@ -8,12 +8,13 @@ return [
 	'css' => 'dist/starter.bundle.css',
 	'js' => 'dist/starter.bundle.js',
 	'rel' => [
+		'bizproc.router',
+		'main.core',
+		'main.core.events',
+		'sidepanel',
+		'ui.dialogs.messagebox',
 		'ui.entity-selector',
 		'ui.notification',
-		'sidepanel',
-		'main.core',
-		'ui.dialogs.messagebox',
-		'main.core.events',
 	],
 	'skip_core' => false,
 ];

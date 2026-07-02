@@ -63,6 +63,10 @@
 	margin-left: 50px;
 }
 
+.sign-settings.--b2e .sign-wizard:not(:has(.sign-b2e-settings__counter)) .sign-wizard__footer {
+	margin-left: 0;
+}
+
 .sign-settings.--b2e .sign-wizard__footer:before {
 	display: none;
 }

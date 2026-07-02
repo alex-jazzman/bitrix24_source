@@ -29,7 +29,7 @@ $arActivityDescription = (new ActivityDescription(
 	])
 	->setClass('WhileActivity')
 	->setJsClass('WhileActivity')
-	->setNodeType(ActivityNodeType::COMPLEX->value)
+	->setNodeType(ActivityNodeType::OPERATORS->value)
 	->setNodeSettings(new \Bitrix\Bizproc\Activity\Dto\NodeSettings(
 		ports: new \Bitrix\Bizproc\Activity\Dto\NodePorts(
 			input: new \Bitrix\Bizproc\Activity\Dto\PortCollection(

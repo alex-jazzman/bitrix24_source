@@ -1,10 +1,10 @@
-import { NotificationSettingsBlock } from 'im.v2.const';
+import { type JsonObject } from 'main.core';
+
+import { type NotificationSettingsBlock } from 'im.v2.const';
 
 import { NotificationBlock } from './components/notification-block';
 
 import './css/expert-notification-list.css';
-
-import type { JsonObject } from 'main.core';
 
 // @vue/component
 export const ExpertNotificationList = {

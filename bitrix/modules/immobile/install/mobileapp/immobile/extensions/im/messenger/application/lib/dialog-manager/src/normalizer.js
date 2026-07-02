@@ -1,7 +1,7 @@
 /**
- * @module im/messenger/application/lib/dialog-manager/normalizer
+ * @module im/messenger/application/lib/dialog-manager/src/normalizer
  */
-jn.define('im/messenger/application/lib/dialog-manager/normalizer', (require, exports, module) => {
+jn.define('im/messenger/application/lib/dialog-manager/src/normalizer', (require, exports, module) => {
 	const { Type } = require('type');
 	const { clone } = require('utils/object');
 

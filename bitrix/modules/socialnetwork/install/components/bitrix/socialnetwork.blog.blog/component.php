@@ -377,7 +377,8 @@ $arResult["POST"] = Array();
 $arResult["IDS"] = Array();
 $arResult["userCache"] = array();
 $arParams["FILTER"] = array_merge($arParams["FILTER"], $arFilter);
-$PAGEN=(($GLOBALS["PAGEN_".($GLOBALS["NavNum"]+1)] ?? '') || ($arParams["PAGE_SETTINGS"]["iNumPage"] ?? ''));
+$navNum = ($GLOBALS["NavNum"] ?? 0) + 1;
+$PAGEN = ($GLOBALS["PAGEN_".$navNum] ?? '') ?: ($arParams["PAGE_SETTINGS"]["iNumPage"] ?? '');
 $arCacheID = array(
 	"filter" => array_merge($arParams["FILTER"], ($dfc === true ? array("<=DATE_PUBLISH" => "") : array())),
 	$arParams["SORT"],

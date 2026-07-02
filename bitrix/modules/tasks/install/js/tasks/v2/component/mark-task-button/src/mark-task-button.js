@@ -41,7 +41,7 @@ export const MarkTaskButton = {
 		{
 			return (): MenuOptions => ({
 				id: 'tasks-full-card-mark-task-menu',
-				bindElement: this.$refs.container,
+				bindElement: this.$refs.container?.$el || this.$refs.container,
 				sections: this.menuSections,
 				items: this.menuItems,
 			});
@@ -184,28 +184,23 @@ export const MarkTaskButton = {
 		},
 	},
 	template: `
-		<div
-			class="tasks-full-card-mark-task-button-container"
+		<HoverPill
+			:readonly="!isAllowed"
 			ref="container"
+			class="mark-task-button"
+			@click="handleClick"
 		>
-			<HoverPill
-				:readonly="!isAllowed"
-				@click="handleClick"
-			>
-				<div class="tasks-full-card-mark-task-mark-container">
-					<div class="tasks-full-card-mark-task-mark-text">{{ formattedText }}</div>
-					<BIcon
-						v-if="formattedIcon"
-						class="tasks-full-card-mark-task-mark-icon"
-						:name="formattedIcon"
-					/>
-				</div>
-			</HoverPill>
-		</div>
+			<div class="mark-task-button__text">{{ formattedText }}</div>
+			<BIcon
+				v-if="formattedIcon"
+				:name="formattedIcon"
+				class="mark-task-button__icon"
+			/>
+		</HoverPill>
 		<BMenu
 			v-if="isMenuShown"
-			@close="isMenuShown = false"
 			:options="menuOptions()"
+			@close="isMenuShown = false"
 		/>
 	`,
 };

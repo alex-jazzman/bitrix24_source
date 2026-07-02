@@ -44,5 +44,6 @@ return [
 		'./src/vote',
 		'./src/search',
 		'./src/recent',
+		'./src/message-menu',
 	],
 ];

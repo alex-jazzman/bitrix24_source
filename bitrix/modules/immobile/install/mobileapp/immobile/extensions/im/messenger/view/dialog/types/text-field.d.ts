@@ -33,7 +33,7 @@ declare interface JNChatTextField extends JNChatBaseClassInterface<DialogTextFie
 	clear(): void;
 	showAssistantButtons(buttons: AssistantButton[], animated: boolean): Promise<any>;
 	hideAssistantButtons(animated: boolean): Promise<any>;
-	updateAssistantButton(id: AssistantButton['id'], button:AssistantButton): Promise<any>;
+	updateAssistantButton(id: AssistantButton['id'], button:AssistantButton, animated?: boolean): Promise<any>;
 	removeAssistantButton(id: AssistantButton['id']): Promise<any>;
 	setTextActions(actions: TextAction[]): void;
 	setSelectionRange(startIndex: number, endIndex: number): void;

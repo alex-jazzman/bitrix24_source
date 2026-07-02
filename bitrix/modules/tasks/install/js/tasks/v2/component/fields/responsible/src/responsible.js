@@ -13,7 +13,7 @@ import { fieldHighlighter } from 'tasks.v2.lib.field-highlighter';
 import { analytics } from 'tasks.v2.lib.analytics';
 import { idUtils } from 'tasks.v2.lib.id-utils';
 import { taskService } from 'tasks.v2.provider.service.task-service';
-import type { TaskModel } from 'tasks.v2.model.tasks';
+import { type TaskModel } from 'tasks.v2.model.tasks';
 
 import { responsibleMeta } from './responsible-meta';
 import { ForNewUserSwitcher } from './for-new-user-switcher/for-new-user-switcher';
@@ -91,6 +91,10 @@ export const Responsible = {
 		isTemplate(): boolean
 		{
 			return idUtils.isTemplate(this.taskId);
+		},
+		canEdit(): boolean
+		{
+			return Boolean(this.task.rights.delegate || this.task.rights.changeResponsible);
 		},
 		isFlowFilledOnAdd(): boolean
 		{
@@ -177,8 +181,8 @@ export const Responsible = {
 				:taskId
 				:context="responsibleMeta.id"
 				:userIds="task.responsibleIds"
-				:canAdd="task.rights.delegate || task.rights.changeResponsible"
-				:canRemove="task.rights.delegate || task.rights.changeResponsible"
+				:canAdd="canEdit"
+				:canRemove="canEdit"
 				:forceEdit="!isEdit"
 				:withHint="!isAdmin && !isEdit && task.creatorId !== currentUserId"
 				:hintText="loc('TASKS_V2_RESPONSIBLE_CANT_CHANGE')"

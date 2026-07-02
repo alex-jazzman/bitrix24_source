@@ -13,9 +13,9 @@
 	<span v-bx-hint="{text: 'Custom position top and light mode', position: 'top', popupOptions: {darkMode: false}}">Text top on light panel</span>
 */
 
-import {BitrixVue} from 'ui.vue';
-import {Text, Tag, Event, Type} from 'main.core';
-import {Popup, PopupOptions} from "main.popup";
+import { BitrixVue } from 'ui.vue';
+import { Text, Tag, Event, Type } from 'main.core';
+import { Popup, type PopupOptions } from 'main.popup';
 import 'ui.hint';
 
 BitrixVue.directive('bx-hint',
@@ -117,6 +117,7 @@ class Tooltip
 		}
 
 		popupOptions.cacheable = false;
+		popupOptions.focusTrap = false;
 
 		this.popup = new Popup(popupOptions);
 		this.popup.show();

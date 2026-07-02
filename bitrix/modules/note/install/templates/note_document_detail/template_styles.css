@@ -1,0 +1,20 @@
+/* Opt in to cross-document view transitions so the bitrix24-template parent page (e.g. /stream/)
+   doesn't get its CDVT speculatively skipped on entering /note/. */
+@view-transition {
+	navigation: auto;
+}
+
+body {
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	margin: 0;
+}
+
+body.bx-ui-info-error {
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+}
+
+a {
+	text-decoration: none;
+}

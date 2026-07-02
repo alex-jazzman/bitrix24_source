@@ -2,19 +2,20 @@ import { Loc, Type, Text } from 'main.core';
 import type { AnalyticsParams } from 'tasks.v2.application.task-card';
 import type { Source } from 'tasks.v2.model.tasks';
 
-import { EntityType, Analytics } from './const';
+import { Analytics } from './const';
 import type { CardParams, CreateParams, TaskLinkData } from './types';
 
 export class CardBuilder
 {
 	static buildCardParams(createParams: CreateParams, requestData: TaskLinkData): CardParams
 	{
-		const isFromComment = createParams.entityType === EntityType.BlogComment;
+		const isFromComment = Type.isStringFilled(createParams.postEntityType);
 
 		return {
 			taskId: `${createParams.entityType}_${Date.now()}`,
 			createParams,
 			requestData,
+			title: requestData.TITLE,
 			description: this.#formatTaskDescription(createParams.entityType, requestData),
 			groupId: Number(requestData.GROUP_ID) || null,
 			parentId: Number(requestData.PARENT_ID) || null,
@@ -45,7 +46,6 @@ export class CardBuilder
 	static #formatTaskDescription(entityType: string, requestData: TaskLinkData): string
 	{
 		const text = Text.decode(requestData.DESCRIPTION);
-		const title = requestData.TITLE;
 
 		const url = new URL(requestData.URL, location).toString();
 		const suffix = (Type.isStringFilled(requestData.SUFFIX) ? `_${requestData.SUFFIX}` : '');
@@ -54,11 +54,6 @@ export class CardBuilder
 			.replace('#A_BEGIN#', `[URL=${url}]`)
 			.replace('#A_END#', '[/URL]')
 		;
-
-		if (entityType === EntityType.BlogPost && Type.isStringFilled(title))
-		{
-			return `[QUOTE]${headerText}\n\n[B]${title}[/B]\n\n${text}[/QUOTE]`;
-		}
 
 		return `[QUOTE]${headerText}\n\n${text}[/QUOTE]`;
 	}

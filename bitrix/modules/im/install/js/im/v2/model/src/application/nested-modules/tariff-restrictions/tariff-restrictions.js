@@ -1,9 +1,8 @@
-import { BuilderModel, GetterTree, ActionTree, MutationTree } from 'ui.vue3.vuex';
+import { type JsonObject } from 'main.core';
+import { BuilderModel, type GetterTree, type ActionTree, type MutationTree } from 'ui.vue3.vuex';
 
-import { tariffRestrictionsFieldsConfig } from './format/field-config';
 import { formatFieldsWithConfig } from '../../../utils/validate';
-
-import type { JsonObject } from 'main.core';
+import { tariffRestrictionsFieldsConfig } from './format/field-config';
 
 export type TariffRestrictions = {
 	fullChatHistory: {

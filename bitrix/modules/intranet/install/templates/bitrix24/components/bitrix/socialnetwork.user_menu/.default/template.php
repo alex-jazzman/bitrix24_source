@@ -11,6 +11,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @global CUser $USER */
 /** @global CMain $APPLICATION */
 
+use Bitrix\Intranet\Internal\Integration\Socialnetwork\FeatureProvider;
 use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
@@ -351,6 +352,8 @@ if (
 	&& ToolsManager::getInstance()->checkAvailabilityByToolId('workgroups')
 )
 {
+	$isNewProjectsOn = (new FeatureProvider())->isNewProjectsAvailable();
+
 	$uri = new Uri($arResult["Urls"]['groups']);
 	$uri->addParams(array("IFRAME" => "Y"));
 	$redirect = $uri->getUri();
@@ -359,7 +362,7 @@ if (
 		array
 		(
 			"ID" => "groups",
-			"TEXT" => GetMessage("SONET_UM_GROUPS"),
+			"TEXT" => GetMessage("SONET_UM_GROUPS" . ($isNewProjectsOn ? '_V2' : '')),
 			"ON_CLICK" => "BX.SidePanel.Instance.open('".$arResult["Urls"]['groups']."', { width: 1000 })"
 		)
 	));

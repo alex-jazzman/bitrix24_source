@@ -2191,54 +2191,6 @@ if (isset($arResult['CONTACT_ID']) && !empty($arResult['CONTACT_ID']))
 		$arResult['CONTACT'][$iContactId]['DELETE'] = $userPermissionsService->item()->canDelete(CCrmOwnerType::Contact, $iContactId);
 
 		$arResult['CONTACT'][$iContactId]['BIZPROC_LIST'] = [];
-
-		if ($isBizProcInstalled && !class_exists(\Bitrix\Bizproc\Controller\Workflow\Starter::class))
-		{
-			foreach ($arBPData as $arBP)
-			{
-				if (!CBPDocument::CanUserOperateDocument(
-					CBPCanUserOperateOperation::StartWorkflow,
-					$userID,
-					array('crm', 'CCrmDocumentContact', 'CONTACT_'.$arResult['CONTACT'][$iContactId]['ID']),
-					array(
-						'UserGroups' => $CCrmBizProc->arCurrentUserGroups,
-						'DocumentStates' => $arDocumentStates,
-						'WorkflowTemplateId' => $arBP['ID'],
-						'CreatedBy' => $arResult['CONTACT'][$iContactId]['~ASSIGNED_BY_ID'],
-						'UserIsAdmin' => $isAdmin,
-					)
-				))
-				{
-					continue;
-				}
-
-				$arBP['PATH_TO_BIZPROC_START'] = CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CONTACT_SHOW'],
-					array(
-						'contact_id' => $arResult['CONTACT'][$iContactId]['ID']
-					)),
-					array(
-						'workflow_template_id' => $arBP['ID'], 'bizproc_start' => 1,  'sessid' => $arResult['SESSION_ID'],
-						'CRM_CONTACT_SHOW_V12_active_tab' => 'tab_bizproc', 'back_url' => $arParams['PATH_TO_CONTACT_LIST'])
-				);
-
-				if (isset($arBP['HAS_PARAMETERS']))
-				{
-					$params = \Bitrix\Main\Web\Json::encode(array(
-						'moduleId' => 'crm',
-						'entity' => 'CCrmDocumentContact',
-						'documentType' => 'CONTACT',
-						'documentId' => 'CONTACT_'.$arResult['CONTACT'][$iContactId]['ID'],
-						'templateId' => $arBP['ID'],
-						'templateName' => $arBP['NAME'],
-						'hasParameters' => $arBP['HAS_PARAMETERS']
-					));
-					$arBP['ONCLICK'] = 'BX.Bizproc.Starter.singleStart('.$params
-						.', function(){BX.Main.gridManager.reload(\''.CUtil::JSEscape($arResult['GRID_ID']).'\');});';
-				}
-
-				$arResult['CONTACT'][$iContactId]['BIZPROC_LIST'][] = $arBP;
-			}
-		}
 	}
 }
 

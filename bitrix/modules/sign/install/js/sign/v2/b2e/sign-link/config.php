@@ -8,13 +8,13 @@ return [
 	'css' => 'dist/sign-link.bundle.css',
 	'js' => 'dist/sign-link.bundle.js',
 	'rel' => [
-		'ui.buttons',
-		'ui.sidepanel-content',
-		'ui.design-tokens',
-		'main.date',
 		'main.core',
+		'main.date',
 		'sign.v2.api',
 		'sign.v2.b2e.signing-frame-event-handler',
+		'ui.buttons',
+		'ui.design-tokens',
+		'ui.sidepanel-content',
 	],
 	'skip_core' => false,
 ];

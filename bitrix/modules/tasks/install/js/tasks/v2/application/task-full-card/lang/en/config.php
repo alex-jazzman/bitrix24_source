@@ -64,6 +64,7 @@ $MESS["TASKS_V2_TASK_FULL_CARD_UNMUTE_ACTION"] = "Unmute";
 $MESS["TASKS_V2_TASK_FULL_CARD_UNMUTE_NOTIF_FAIL"] = "Could not unmute task.";
 $MESS["TASKS_V2_TASK_FULL_CARD_UNMUTE_NOTIF_SUCC_DESCR"] = "Task counters are active. They will be added to the global task counter.";
 $MESS["TASKS_V2_TASK_FULL_CARD_UNMUTE_NOTIF_SUCC_TITLE"] = "Task has been unmuted.";
+$MESS["TASKS_V2_TASK_FULL_CARD_VIEWS"] = "Viewed by";
 $MESS["TASKS_V2_TASK_TEMPLATE_COPY"] = "Clone template";
 $MESS["TASKS_V2_TASK_TEMPLATE_CREATE_SUBTASK"] = "Create subtask for template";
 $MESS["TASKS_V2_TASK_TEMPLATE_CREATE_TASK"] = "Create task";

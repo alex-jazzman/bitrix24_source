@@ -1,0 +1,10 @@
+
+.booking-booking__booking__week-grid_row {
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	box-sizing: border-box;
+	min-height: var(--booking-resource-item-height);
+	width: max-content;
+	padding-right: 260px;
+}

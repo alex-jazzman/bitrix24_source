@@ -402,11 +402,11 @@ export const ChartWizard = {
 			if (this.nodeId)
 			{
 				this.departmentData.parentId = this.nodeId;
-
-				return;
 			}
-
-			this.departmentData.parentId = 0;
+			else
+			{
+				this.departmentData.parentId = 0;
+			}
 
 			analyticsSendData({
 				tool: 'structure',
@@ -414,6 +414,11 @@ export const ChartWizard = {
 				event: 'create_wizard',
 				c_element: this.source,
 			});
+
+			if (!this.showEntitySelector)
+			{
+				this.pickStepsAnalytics();
+			}
 		},
 		getMemberRoles(entityType): void
 		{
@@ -429,7 +434,10 @@ export const ChartWizard = {
 			}
 
 			this.stepIndex = buttonId === 'back' ? this.stepIndex - 1 : this.stepIndex + 1;
-			this.pickStepsAnalytics();
+			if (!this.isEditMode)
+			{
+				this.pickStepsAnalytics();
+			}
 		},
 		moveToStep(stepId: string): void
 		{
@@ -441,7 +449,10 @@ export const ChartWizard = {
 			}
 
 			this.stepIndex = this.steps.indexOf(this.getStepById(stepId, true));
-			this.pickStepsAnalytics();
+			if (!this.isEditMode)
+			{
+				this.pickStepsAnalytics();
+			}
 		},
 		getStepById(stepId: string, force: false): Step
 		{
@@ -980,7 +991,12 @@ export const ChartWizard = {
 				: Promise.resolve()
 			;
 
-			this.pickEditAnalytics(id, parentId);
+			analyticsSendData({
+				tool: 'structure',
+				category: 'structure',
+				event: `edit_${this.entityAnalyticsCategory}`,
+				c_element: this.source,
+			});
 
 			let usersResponse = null;
 			try
@@ -1136,39 +1152,6 @@ export const ChartWizard = {
 				this.departmentSettings[NodeSettingsTypes.reportsAuthority] = new Set(
 					[AuthorityTypes.departmentHead],
 				);
-			}
-		},
-		pickEditAnalytics(departmentId: number, parentId: number): void
-		{
-			const currentNode = this.departments.get(departmentId);
-			switch (this.entity)
-			{
-				case StepIds.department:
-					analyticsSendData({
-						tool: 'structure',
-						category: 'structure',
-						event: 'edit_dept_name',
-						c_element: this.source,
-						p1: currentNode?.parentId === parentId ? 'editHead_N' : 'editHeadDept_Y',
-						p2: currentNode?.name === name ? 'editName_N' : 'editName_Y',
-					});
-					break;
-				case StepIds.employees:
-				{
-					const { headsIds, deputiesIds, employeesIds } = this.calculateEmployeeIds();
-					analyticsSendData({
-						tool: 'structure',
-						category: 'structure',
-						event: 'edit_dept_employee',
-						c_element: this.source,
-						p2: `headAmount_${headsIds.length}`,
-						p3: `secondHeadAmount_${deputiesIds.length}`,
-						p4: `employeeAmount_${employeesIds.length}`,
-					});
-					break;
-				}
-				default:
-					break;
 			}
 		},
 		pickStepsAnalytics(): void

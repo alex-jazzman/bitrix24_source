@@ -94,7 +94,7 @@
 
 .bx-im-chat-header__subtitle_container {
 	display: flex;
-	align-items: flex-end;
+	align-items: flex-start;
 	max-width: 100%;
 }
 
@@ -110,6 +110,10 @@
 
 .bx-im-chat-header__subtitle_content.--click {
 	cursor: pointer;
+}
+
+.bx-im-chat-header__guest-counter {
+	color: var(--ui-color-collab-accent-primary-alt);
 }
 
 .bx-im-chat-header__icon {
@@ -155,12 +159,4 @@
 .bx-im-chat-header__icon.--panel.--active {
 	background-image: url('./images/panel-active.svg');
 	opacity: 1;
-}
-
-.bx-im-chat-header__separator {
-	margin-right: var(--im-space-inline-sm);
-	width: 1px;
-	height: 16px;
-	background-color: var(--ui-color-gray-90);
-	opacity: 0.2;
 }

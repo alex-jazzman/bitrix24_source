@@ -89,7 +89,8 @@ jn.define('im/messenger/controller/dialog/lib/configurator/configurator', (requi
 		 */
 		async getMessageContextMenuControllerClassByMessageId(messageId)
 		{
-			const contextMenuController = this.getMessageContextMenuControllerClass();
+			const contextMenuController = await this.getMessageContextMenuControllerClass();
+
 			const messageHelper = MessageHelper.createById(messageId);
 			if (!messageHelper)
 			{
@@ -108,7 +109,6 @@ jn.define('im/messenger/controller/dialog/lib/configurator/configurator', (requi
 				dialogHelper.isChannel
 				|| dialogHelper.isComment
 				|| isInitialPostForComment
-				|| dialogHelper.isCopilot
 			);
 			if (isMessageFromCustomizableDialog)
 			{

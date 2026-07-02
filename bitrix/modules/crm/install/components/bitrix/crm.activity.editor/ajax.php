@@ -1186,23 +1186,24 @@ elseif($action == 'SAVE_ACTIVITY')
 	{
 		__CrmActivityEditorEndResponse(array('ERROR'=>'OWNER ID IS NOT DEFINED!'));
 	}
-
-	if(!CCrmActivity::CheckUpdatePermission($ownerTypeID, $ownerID))
+	$userPermissionsService = Container::getInstance()->getUserPermissions();
+	if(!$userPermissionsService->item()->canUpdate($ownerTypeID, $ownerID))
 	{
 		$entityTitle = CCrmOwnerType::GetCaption($ownerTypeID, $ownerID, false);
-		if($ownerTypeID === CCrmOwnerType::Contact)
+		$canRead = $userPermissionsService->item()->canRead($ownerTypeID, $ownerID);
+		if($canRead && $ownerTypeID === CCrmOwnerType::Contact)
 		{
 			$errorMsg = GetMessage('CRM_CONTACT_UPDATE_PERMISSION_DENIED', array('#TITLE#' => $entityTitle));
 		}
-		elseif($ownerTypeID === CCrmOwnerType::Company)
+		elseif($canRead && $ownerTypeID === CCrmOwnerType::Company)
 		{
 			$errorMsg = GetMessage('CRM_COMPANY_UPDATE_PERMISSION_DENIED', array('#TITLE#' => $entityTitle));
 		}
-		elseif($ownerTypeID === CCrmOwnerType::Lead)
+		elseif($canRead && $ownerTypeID === CCrmOwnerType::Lead)
 		{
 			$errorMsg = GetMessage('CRM_LEAD_UPDATE_PERMISSION_DENIED', array('#TITLE#' => $entityTitle));
 		}
-		elseif($ownerTypeID === CCrmOwnerType::Deal)
+		elseif($canRead && $ownerTypeID === CCrmOwnerType::Deal)
 		{
 			$errorMsg = GetMessage('CRM_DEAL_UPDATE_PERMISSION_DENIED', array('#TITLE#' => $entityTitle));
 		}
@@ -1626,9 +1627,11 @@ elseif($action == 'SAVE_EMAIL')
 
 	$now = ConvertTimeStamp(time() + \CTimeZone::GetOffset(), 'FULL', $siteID);
 
-	$subject = isset($data['subject']) ? strval($data['subject']) : '';
-	if ($subject == '')
-		$subject = GetMessage('CRM_EMAIL_ACTION_DEFAULT_SUBJECT', ['#DATE#'=> $now]);
+	$subject = Helper\Message::getOutgoingSubject(
+		isset($data['subject']) ? (string)$data['subject'] : '',
+		(string)($data['message'] ?? ''),
+		(string)GetMessage('CRM_EMAIL_ACTION_DEFAULT_SUBJECT', ['#DATE#'=> $now]),
+	);
 
 	$arErrors = [];
 
@@ -2041,24 +2044,27 @@ elseif($action == 'SAVE_EMAIL')
 		{
 			$checkedOwnerType = CCrmOwnerType::Deal;
 		}
-		if (!CCrmActivity::checkUpdatePermission($checkedOwnerType, $ownerID))
+		$userPermissionsService = Container::getInstance()->getUserPermissions();
+		if (!$userPermissionsService->item()->canUpdate($checkedOwnerType, $ownerID))
 		{
+			$canRead = $userPermissionsService->item()->canRead($checkedOwnerType, $ownerID);
+
 			$errorMsg = getMessage('CRM_PERMISSION_DENIED');
 			$entityTitle = CCrmOwnerType::getCaption($ownerTypeID, $ownerID, false);
 
-			if (CCrmOwnerType::Contact == $ownerTypeID)
+			if ($canRead && CCrmOwnerType::Contact == $ownerTypeID)
 			{
 				$errorMsg = getMessage('CRM_CONTACT_UPDATE_PERMISSION_DENIED', ['#TITLE#' => $entityTitle]);
 			}
-			else if (CCrmOwnerType::Company == $ownerTypeID)
+			elseif ($canRead && CCrmOwnerType::Company == $ownerTypeID)
 			{
 				$errorMsg = getMessage('CRM_COMPANY_UPDATE_PERMISSION_DENIED', ['#TITLE#' => $entityTitle]);
 			}
-			else if (CCrmOwnerType::Lead == $ownerTypeID)
+			elseif ($canRead && CCrmOwnerType::Lead == $ownerTypeID)
 			{
 				$errorMsg = getMessage('CRM_LEAD_UPDATE_PERMISSION_DENIED', ['#TITLE#' => $entityTitle]);
 			}
-			else if (CCrmOwnerType::Deal == $ownerTypeID || CCrmOwnerType::DealRecurring == $ownerTypeID)
+			elseif ($canRead && (CCrmOwnerType::Deal == $ownerTypeID || CCrmOwnerType::DealRecurring == $ownerTypeID))
 			{
 				$errorMsg = getMessage('CRM_DEAL_UPDATE_PERMISSION_DENIED', ['#TITLE#' => $entityTitle]);
 			}
@@ -2635,117 +2641,27 @@ elseif($action == 'SAVE_EMAIL')
 		__CrmActivityEditorEndResponse(['ERROR' => $arErrors]);
 	}
 
-	// sending email
-	$rcpt    = [];
-	$rcptCc  = [];
-	$rcptBcc = [];
-	foreach ($to as $item)
-	{
-		$rcpt[] = Mail\Mail::encodeHeaderFrom($item, SITE_CHARSET);
-	}
-	foreach ($cc as $item)
-	{
-		$rcptCc[] = Mail\Mail::encodeHeaderFrom($item, SITE_CHARSET);
-	}
-	foreach ($bcc as $item)
-	{
-		$rcptBcc[] = Mail\Mail::encodeHeaderFrom($item, SITE_CHARSET);
-	}
-
-	$outgoingSubject = $subject;
-	$outgoingBody = $messageHtml ?: getMessage('CRM_EMAIL_ACTION_DEFAULT_DESCRIPTION');
-
-	if (!empty($injectUrn)/* && $dealBinded*/)
-	{
-		switch (\CCrmEMailCodeAllocation::getCurrent())
-		{
-			case \CCrmEMailCodeAllocation::Subject:
-				$outgoingSubject = CCrmActivity::injectUrnInSubject($urn, $outgoingSubject);
-				break;
-			case \CCrmEMailCodeAllocation::Body:
-				$outgoingBody = CCrmActivity::injectUrnInBody($urn, $outgoingBody, 'html');
-				break;
-		}
-	}
-
-	$attachments = [];
-	foreach ($arRawFiles as $key => $item)
-	{
-		$contentId = sprintf(
-			'bxacid.%s@%s.crm',
-			hash('crc32b', $item['external_id'].$item['size'].$item['name']),
-			hash('crc32b', $hostname)
-		);
-
-		$attachments[] = [
-			'ID'           => $contentId,
-			'NAME'         => $item['ORIGINAL_NAME'] ?: $item['name'],
-			'PATH'         => $item['tmp_name'],
-			'CONTENT_TYPE' => $item['type'],
-		];
-
-		if (array_key_exists($key, $attachToFileIds))
-		{
-			$outgoingBody = preg_replace(
-				sprintf('/(https?:\/\/)?bxacid:n?%u/i', $attachToFileIds[$key]),
-				sprintf('cid:%s', $contentId),
-				$outgoingBody
-			);
-		}
-		else
-		{
-			$outgoingBody = preg_replace(
-				sprintf('/(https?:\/\/)?bxacid:n?%u/i', $key),
-				sprintf('cid:%s', $contentId),
-				$outgoingBody
-			);
-		}
-	}
-
-	$outgoingParams = [
-		'CHARSET'      => SITE_CHARSET,
-		'CONTENT_TYPE' => 'html',
-		'ATTACHMENT'   => $attachments,
-		'TO'           => join(', ', $rcpt),
-		'SUBJECT'      => $outgoingSubject,
-		'BODY'         => $outgoingBody,
-		'HEADER'       => [
-			'From'       => $fromEncoded ?: $fromEmail,
-			'Reply-To'   => $reply ?: $fromEmail,
-			//'To'         => join(', ', $rcpt),
-			'Cc'         => join(', ', $rcptCc),
-			'Bcc'        => join(', ', $rcptBcc),
-			//'Subject'    => $outgoingSubject,
-			'Message-Id' => $messageId,
-		],
-	];
-
-	$context = new Mail\Context();
-	$context->setCategory(Mail\Context::CAT_EXTERNAL);
-	$context->setPriority(count($commData) > 2 ? Mail\Context::PRIORITY_LOW : Mail\Context::PRIORITY_NORMAL);
-	$context->setCallback(
-		(new Mail\Callback\Config())
-			->setModuleId('crm')
-			->setEntityType('act')
-			->setEntityId($urn)
-	);
-
-	$sendResult = Mail\Mail::send(array_merge(
-		$outgoingParams,
+	$sendResult = \Bitrix\Crm\Integration\Mail\MessageSender::send(
 		[
-			'TRACK_READ' => [
-				'MODULE_ID' => 'crm',
-				'FIELDS'    => ['urn' => $urn],
-				'URL_PAGE' => '/pub/mail/read.php',
-			],
-			'TRACK_CLICK' => [
-				'MODULE_ID' => 'crm',
-				'FIELDS'    => ['urn' => $urn],
-				'URL_PAGE' => '/pub/mail/click.php',
-			],
-			'CONTEXT' => $context,
-		]
-	));
+			'subject'         => $subject,
+			'body'            => $messageHtml ?: getMessage('CRM_EMAIL_ACTION_DEFAULT_DESCRIPTION'),
+			'to'              => $to,
+			'cc'              => $cc,
+			'bcc'             => $bcc,
+			'fromEmail'       => $fromEmail,
+			'fromEncoded'     => $fromEncoded,
+			'reply'           => $reply,
+			'rawFiles'        => $arRawFiles,
+			'attachToFileIds' => $attachToFileIds,
+			'urn'             => $urn,
+			'injectUrn'       => !empty($injectUrn),
+			'hostname'        => $hostname,
+			'messageId'       => $messageId,
+			'priorityCount'   => count($commData),
+		],
+		(string)GetMessage('CRM_EMAIL_ACTION_DEFAULT_SUBJECT', ['#DATE#'=> $now]),
+		$mailboxHelper,
+	);
 
 	if (!$sendResult)
 	{
@@ -2787,33 +2703,6 @@ elseif($action == 'SAVE_EMAIL')
 	}
 
 	addEventToStatFile('crm', 'send_email_message', $_REQUEST['context'], trim(trim($messageId), '<>'));
-
-	$needUpload = !empty($mailboxHelper);
-
-	if ($context->getSmtp() && in_array(mb_strtolower($context->getSmtp()->getHost()), array('smtp.gmail.com', 'smtp.office365.com')))
-	{
-		$needUpload = false;
-	}
-
-	if ($needUpload)
-	{
-		class_exists('Bitrix\Mail\Helper');
-
-		$outgoing = new \Bitrix\Mail\DummyMail(array_merge(
-			$outgoingParams,
-			[
-				'HEADER' => array_merge(
-					$outgoingParams['HEADER'],
-					[
-						'To'      => $outgoingParams['TO'],
-						'Subject' => $outgoingParams['SUBJECT'],
-					]
-				),
-			]
-		));
-
-		$mailboxHelper->uploadMessage($outgoing);
-	}
 
 	// Try add event to entity
 	$CCrmEvent = new \CCrmEvent();

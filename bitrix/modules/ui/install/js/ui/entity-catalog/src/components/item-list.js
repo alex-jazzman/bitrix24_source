@@ -1,5 +1,5 @@
 import { Item } from './item';
-import type { ItemData } from '@/type/item';
+import { type ItemData } from '../types/item';
 
 import '../css/item-list.css';
 
@@ -13,7 +13,7 @@ export const ItemList = {
 			/** @type Array<ItemData> */
 			Type: Array,
 			required: true,
-		}
+		},
 	},
 	template: `
 		<div class="ui-entity-catalog__content">

@@ -5,6 +5,7 @@ export interface IServerLoadService extends IBaseRecentService
 {
 	handleInitResult(mode: RefreshModeType, initResult: any): Promise<void>;
 	getInitRequestMethod(mode: RefreshModeType): string | null;
+	getInitRequestOptions(mode: RefreshModeType): object;
 	loadNextPage(): Promise<LoadNextPageResult>;
 	setLastItem(lastItem: object | null): void;
 }

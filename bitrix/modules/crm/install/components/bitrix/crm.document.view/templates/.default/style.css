@@ -812,12 +812,7 @@
 	font-weight: var(--ui-font-weight-bold, 700);
 }
 
-.crm__document-view--pdf .ui-viewer-item-document-content {
-	background: none;
-}
-
 .crm__document-view--pdf .ui-viewer-document-page-canvas {
-	margin: 0;
 	border: none;
 }
 

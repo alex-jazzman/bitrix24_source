@@ -6,6 +6,7 @@ jn.define('im/messenger/controller/recent/service/base/base', (require, exports,
 	const { RecentEventType } = require('im/messenger/controller/recent/const');
 
 	/**
+	 * @implements Unsubscribable
 	 * @template Tprops
 	 * @abstract
 	 * @class BaseRecentService
@@ -25,7 +26,7 @@ jn.define('im/messenger/controller/recent/service/base/base', (require, exports,
 			this.recentLocator = recentLocator;
 			/** @type {Tprops} */
 			this.props = props;
-			this.logger = getLoggerWithContext(`recent-service--${serviceId}`, `${recentLocator.get('id')} ${this.constructor.name}`);
+			this.logger = getLoggerWithContext(`recent-service--${serviceId}`, `${recentLocator.get('id')}-${recentLocator.get('parentChatId')} ${this.constructor.name}`);
 
 			recentLocator.get('emitter')
 				.once(RecentEventType.onInit, () => {
@@ -34,6 +35,18 @@ jn.define('im/messenger/controller/recent/service/base/base', (require, exports,
 				})
 			;
 		}
+
+		/**
+		 * @abstract
+		 */
+		unsubscribeEvents()
+		{}
+
+		/**
+		 * @abstract
+		 */
+		subscribeEvents()
+		{}
 
 		/**
 		 * @abstract

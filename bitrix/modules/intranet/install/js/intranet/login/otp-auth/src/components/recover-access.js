@@ -98,10 +98,10 @@ export const RecoverAccess = {
 		},
 	},
 	template: `
+		<div @click="showAlternatives" class="intranet-back-button">
+			<i class="ui-icon-set --arrow-left-l intranet-back-button__arrow"></i>
+		</div>
 		<div class="intranet-island-otp-recover-access__wrapper">
-			<div @click="showAlternatives" class="intranet-back-button">
-				<i class="ui-icon-set --arrow-left-l intranet-back-button__arrow --alternative"></i>
-			</div>
 			<template v-if="isRequestSent || !canSendRequestRecoverAccess">
 				<div class="intranet-island-otp-recover-access__icon --request-sent"></div>
 				<Headline size='lg' class="intranet-form-title">

@@ -6,7 +6,7 @@ jn.define('mail/mailbox/connector/steps/imap', (require, exports, module) => {
 	const { Haptics } = require('haptics');
 	const { WizardStep } = require('layout/ui/wizard/step');
 	const { Loc } = require('loc');
-	const { ProgressBarNumber } = require('crm/salescenter/progress-bar-number');
+	const { ProgressBarNumber } = require('mail/mailbox/connector/progress-bar-number');
 	const { EmailInput } = require('ui-system/form/inputs/email');
 	const { StringInput, InputDesign, InputMode, InputSize } = require('ui-system/form/inputs/string');
 	const { NumberInput } = require('ui-system/form/inputs/number');
@@ -26,6 +26,8 @@ jn.define('mail/mailbox/connector/steps/imap', (require, exports, module) => {
 		ButtonDesign,
 		Button,
 	} = require('ui-system/form/buttons/button');
+	const ACTIVE_STEP_COLOR = Color.accentMainPrimary.toHex();
+	const NEXT_STEP_COLOR = Color.base6.toHex();
 	/**
 	 * @class FieldsLayout
 	 */
@@ -516,8 +518,7 @@ jn.define('mail/mailbox/connector/steps/imap', (require, exports, module) => {
 
 			if (login !== '' && email !== '' && password !== '' && imapPort !== '' && smtpPort !== '' && server !== '' && addressSmtp !== '')
 			{
-				NotifyManager.showLoadingIndicator();
-				await this.props.parent.connectMailbox({
+				this.props.parent.onAuthComplete({
 					useSmtp: 1,
 					login: email.value,
 					password: password.value,
@@ -530,13 +531,6 @@ jn.define('mail/mailbox/connector/steps/imap', (require, exports, module) => {
 					loginSmtp: login.value,
 					passwordSMTP: password.value,
 					loginWithoutDomain: login.value,
-				}).then(
-					({ data }) => {
-						this.props.parent.onConnectMailbox(data.id, data.email);
-					},
-				).catch(({ errors }) => {
-					this.props.parent.sendErrorAnalytics();
-					NotifyManager.showErrors(errors);
 				});
 			}
 
@@ -552,7 +546,10 @@ jn.define('mail/mailbox/connector/steps/imap', (require, exports, module) => {
 					text: Loc.getMessage('MAILBOX_CONNECTOR_IMAP_TITLE_1'),
 				},
 				number: 2,
-				count: 2,
+				count: 3,
+				previousLineColor: ACTIVE_STEP_COLOR,
+				currentLineColor: ACTIVE_STEP_COLOR,
+				nextLineColor: NEXT_STEP_COLOR,
 			};
 		}
 
@@ -563,8 +560,12 @@ jn.define('mail/mailbox/connector/steps/imap', (require, exports, module) => {
 
 		renderNumberBlock()
 		{
+			const progressBarSettings = this.getProgressBarSettings();
+
 			return new ProgressBarNumber({
-				number: '2',
+				number: progressBarSettings.number.toString(),
+				backgroundColor: ACTIVE_STEP_COLOR,
+				showOuterDecoration: false,
 			});
 		}
 

@@ -1,5 +1,6 @@
 import {Dom, Loc, Reflection, Tag, Type} from 'main.core';
 import {Dialog, Item} from 'crm.entity-selector';
+import 'phone_number';
 
 import type {PhoneNumberInputOptions} from './phone-number-input-options';
 
@@ -14,7 +15,7 @@ const PLUS_CHAR = '+';
 const GLOBAL_COUNTRY_CODE = 'XX';
 const LAST_RECENT_ITEMS_TITLE_COLOR = '#00789E';
 
-export default class PhoneNumberInput extends BX.PhoneNumber.Input
+export class PhoneNumberInput extends BX.PhoneNumber.Input
 {
 	#searchDialogContextCode: String;
 	#isSelectionIndicatorEnabled: Boolean;

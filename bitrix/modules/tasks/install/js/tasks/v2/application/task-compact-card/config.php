@@ -9,7 +9,6 @@ return [
 	'js' => 'dist/task-compact-card.bundle.js',
 	'rel' => [
 		'ui.vue3.mixins.loc-mixin',
-		'tasks.v2.application.task-card',
 		'tasks.v2.model.users',
 		'main.core.events',
 		'ui.vue3',
@@ -18,6 +17,7 @@ return [
 		'ui.uploader.tile-widget',
 		'ui.icon-set.api.vue',
 		'ui.icon-set.outline',
+		'tasks.v2.application.task-card',
 		'tasks.v2.component.add-task-button',
 		'tasks.v2.component.fields.title',
 		'tasks.v2.component.fields.importance',
@@ -31,6 +31,7 @@ return [
 		'tasks.v2.component.fields.group',
 		'tasks.v2.lib.id-utils',
 		'tasks.v2.provider.service.task-service',
+		'tasks.v2.provider.service.viewers-service',
 		'main.core',
 		'ui.vue3.components.button',
 		'tasks.v2.core',

@@ -1,49 +1,46 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,ui_vue3,booking_component_mixin_locMixin,booking_model_notifications,booking_model_resourceCreationWizard,main_loader,booking_core,ui_notificationManager,crm_messagesender,booking_provider_service_resourcesService,booking_lib_analytics,ui_uploader_core,ui_notification,booking_model_resourceTypes,booking_provider_service_resourcesTypeService,booking_provider_service_catalogServiceSkuService,booking_lib_sidePanelInstance,booking_component_reminder,booking_component_uiErrorMessage,ui_entitySelector,main_core_events,booking_lib_timezone,ui_buttons,booking_lib_duration,ui_forms,ui_layoutForm,booking_lib_ahaMoments,ui_vue3_components_menu,ui_iconSet_outline,booking_lib_limit,ui_vue3_directives_hint,ui_iconSet_actions,ui_iconSet_crm,ui_hint,booking_component_switcher,booking_provider_service_resourceCreationWizardService,main_popup,main_core,main_date,booking_component_popup,booking_component_button,booking_component_helpDeskLoc,ui_iconSet_api_vue,ui_vue3_components_richLoc,ui_iconSet_main,booking_const,booking_component_cyclePopup,ui_vue3_vuex,ui_iconSet_api_core,booking_component_uiAlerts,booking_component_uiResourceWizardItem) {
+(function (exports, main_core, ui_vue3, booking_core, booking_const, booking_component_mixin_locMixin, booking_model_resourceCreationWizard, booking_model_aiAgent, booking_lib_sidePanelInstance, ui_vue3_vuex, booking_provider_service_resourceCreationWizardService, main_loader, booking_component_button, ui_notificationManager, crm_messagesender, booking_provider_service_resourcesService, booking_provider_service_resourcesTypeService, booking_provider_service_aiAgentLauncherService, booking_lib_analytics, booking_component_helpDeskLoc, ui_iconSet_api_vue, ui_iconSet_actions, ui_forms, ui_iconSet_main, ui_layoutForm, booking_lib_duration, ui_iconSet_api_core, ui_uploader_core, ui_vue3_components_richLoc, ui_notification, booking_component_uiErrorMessage, ui_entitySelector, booking_component_switcher, booking_component_reminder, booking_lib_limit, booking_provider_service_catalogServiceSkuService, ui_vue3_directives_hint, ui_buttons, booking_lib_timezone, main_date, main_popup, booking_component_popup, booking_lib_ahaMoments, ui_vue3_components_menu, ui_iconSet_outline, ui_iconSet_crm, ui_hint, booking_component_cyclePopup, booking_component_uiAlerts, booking_component_uiResourceWizardItem, ui_vue3_components_button) {
 	'use strict';
 
 	const UiLoader = {
-	  name: 'UiLoader',
-	  props: {
-	    show: Boolean
-	  },
-	  data() {
-	    return {
-	      loader: new main_loader.Loader()
-	    };
-	  },
-	  mounted() {
-	    void this.loader.show(this.$refs.loader);
-	  },
-	  template: `
+		name: 'UiLoader',
+		props: {
+			show: Boolean
+		},
+		created() {
+			this.loader = new main_loader.Loader();
+		},
+		mounted() {
+			void this.loader.show(this.$refs.loader);
+		},
+		template: `
 		<div ref="loader"></div>
 	`
 	};
 
 	const ResourceCreationWizardLayout = {
-	  name: 'ResourceCreationWizardLayout',
-	  props: {
-	    step: {
-	      type: Number,
-	      required: true
-	    },
-	    title: {
-	      type: String,
-	      default: ''
-	    },
-	    loading: Boolean
-	  },
-	  watch: {
-	    step() {
-	      var _this$$refs$wrapper;
-	      (_this$$refs$wrapper = this.$refs.wrapper) == null ? void 0 : _this$$refs$wrapper.scrollTo(0, 0);
-	    }
-	  },
-	  components: {
-	    UiLoader
-	  },
-	  template: `
+		name: 'ResourceCreationWizardLayout',
+		props: {
+			step: {
+				type: Number,
+				required: true
+			},
+			title: {
+				type: String,
+				default: ''
+			},
+			loading: Boolean
+		},
+		watch: {
+			step() {
+				this.$refs.wrapper?.scrollTo(0, 0);
+			}
+		},
+		components: {
+			UiLoader
+		},
+		template: `
 		<div class="resource-creation-wizard-layout">
 			<div ref="wrapper" class="resource-creation-wizard__wrapper">
 				<div class="resource-creation-wizard__header">
@@ -64,13 +61,13 @@ this.BX = this.BX || {};
 	};
 
 	const ResourceCreationWizardHeader = {
-	  name: 'ResourceCreationWizardHeader',
-	  computed: {
-	    title() {
-	      return this.$store.state['resource-creation-wizard'].resourceName;
-	    }
-	  },
-	  template: `
+		name: 'ResourceCreationWizardHeader',
+		computed: {
+			title() {
+				return this.$store.state['resource-creation-wizard'].resourceName;
+			}
+		},
+		template: `
 		<span class="resource-creation-wizard__header-title">
 			{{ title }}
 		</span>
@@ -78,34 +75,34 @@ this.BX = this.BX || {};
 	};
 
 	const NextButton = {
-	  name: 'NextButton',
-	  components: {
-	    UiButton: booking_component_button.Button
-	  },
-	  props: {
-	    step: {
-	      type: Number,
-	      required: true
-	    },
-	    steps: {
-	      type: Array,
-	      required: true
-	    },
-	    disabled: Boolean,
-	    waiting: Boolean
-	  },
-	  computed: {
-	    currentStep() {
-	      return this.steps[this.step - 1];
-	    },
-	    size() {
-	      return booking_component_button.ButtonSize.SMALL;
-	    },
-	    color() {
-	      return booking_component_button.ButtonColor.SUCCESS;
-	    }
-	  },
-	  template: `
+		name: 'NextButton',
+		components: {
+			UiButton: booking_component_button.Button
+		},
+		props: {
+			step: {
+				type: Number,
+				required: true
+			},
+			steps: {
+				type: Array,
+				required: true
+			},
+			disabled: Boolean,
+			waiting: Boolean
+		},
+		computed: {
+			currentStep() {
+				return this.steps[this.step - 1];
+			},
+			size() {
+				return booking_component_button.ButtonSize.SMALL;
+			},
+			color() {
+				return booking_component_button.ButtonColor.SUCCESS;
+			}
+		},
+		template: `
 		<UiButton
 			:text="currentStep.labelNext"
 			:title="currentStep.labelNext"
@@ -119,32 +116,32 @@ this.BX = this.BX || {};
 	};
 
 	const BackButton = {
-	  name: 'BackButton',
-	  props: {
-	    step: {
-	      type: Number,
-	      required: true
-	    },
-	    steps: {
-	      type: Array,
-	      required: true
-	    }
-	  },
-	  computed: {
-	    buttonSize() {
-	      return booking_component_button.ButtonSize.SMALL;
-	    },
-	    buttonColor() {
-	      return booking_component_button.ButtonColor.LINK;
-	    },
-	    currentStep() {
-	      return this.steps[this.step - 1];
-	    }
-	  },
-	  components: {
-	    UiButton: booking_component_button.Button
-	  },
-	  template: `
+		name: 'BackButton',
+		props: {
+			step: {
+				type: Number,
+				required: true
+			},
+			steps: {
+				type: Array,
+				required: true
+			}
+		},
+		computed: {
+			buttonSize() {
+				return booking_component_button.ButtonSize.SMALL;
+			},
+			buttonColor() {
+				return booking_component_button.ButtonColor.LINK;
+			},
+			currentStep() {
+				return this.steps[this.step - 1];
+			}
+		},
+		components: {
+			UiButton: booking_component_button.Button
+		},
+		template: `
 		<UiButton
 			class="resource-creation-wizard__back-button"
 			:text="currentStep.labelBack"
@@ -160,322 +157,264 @@ this.BX = this.BX || {};
 	 * @abstract
 	 */
 	class Step {
-	  constructor(hidden = false) {
-	    this.hidden = false;
-	    this.hidden = hidden;
-	  }
-	  get store() {
-	    return booking_core.Core.getStore();
-	  }
-	  get labelNext() {
-	    return main_core.Loc.getMessage('BRCW_BUTTON_CONTINUE');
-	  }
-	  get labelBack() {
-	    return main_core.Loc.getMessage('BRCW_BUTTON_CANCEL');
-	  }
-	  async next() {
-	    await this.store.dispatch('resource-creation-wizard/nextStep');
-	  }
-	  async back() {
-	    await this.store.dispatch('resource-creation-wizard/prevStep');
-	  }
+		hidden = false;
+		constructor(hidden = false) {
+			this.hidden = hidden;
+		}
+		get store() {
+			return booking_core.Core.getStore();
+		}
+		get labelNext() {
+			return main_core.Loc.getMessage('BRCW_BUTTON_CONTINUE');
+		}
+		get labelBack() {
+			return main_core.Loc.getMessage('BRCW_BUTTON_CANCEL');
+		}
+		async next() {
+			await this.store.dispatch('resource-creation-wizard/nextStep');
+		}
+		async back() {
+			await this.store.dispatch('resource-creation-wizard/prevStep');
+		}
 	}
 
 	class ChooseResourceStep extends Step {
-	  constructor() {
-	    super(true);
-	  }
-	  get labelBack() {
-	    return main_core.Loc.getMessage('BRCW_BUTTON_CANCEL');
-	  }
-	  async next() {
-	    await super.next();
-	  }
-	  back() {
-	    main_core.Event.EventEmitter.emit(booking_const.EventName.CloseWizard);
-	  }
+		constructor() {
+			super(true);
+		}
+		get labelBack() {
+			return main_core.Loc.getMessage('BRCW_BUTTON_CANCEL');
+		}
+		async next() {
+			await super.next();
+		}
+		back() {
+			main_core.Event.EventEmitter.emit(booking_const.EventName.CloseWizard);
+		}
 	}
 
-	var _resource = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resource");
-	var _entityCalendar = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityCalendar");
-	var _resourceAvatarFile = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resourceAvatarFile");
-	var _isBitrix24Approved = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isBitrix24Approved");
-	var _isBitrix24SenderAvailable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isBitrix24SenderAvailable");
-	var _prepareCompanySlotRanges = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareCompanySlotRanges");
-	var _prepareResourceTypeNotifications = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareResourceTypeNotifications");
-	var _upsertResource = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("upsertResource");
-	var _prepareResourceToProcess = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareResourceToProcess");
-	var _prepareNotificationOptions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareNotificationOptions");
-	var _checkEntityCalendar = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("checkEntityCalendar");
-	var _disabledCalendarIntegration = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("disabledCalendarIntegration");
 	class ResourceNotificationStep extends Step {
-	  constructor() {
-	    super();
-	    Object.defineProperty(this, _disabledCalendarIntegration, {
-	      value: _disabledCalendarIntegration2
-	    });
-	    Object.defineProperty(this, _checkEntityCalendar, {
-	      value: _checkEntityCalendar2
-	    });
-	    Object.defineProperty(this, _prepareNotificationOptions, {
-	      value: _prepareNotificationOptions2
-	    });
-	    Object.defineProperty(this, _prepareResourceToProcess, {
-	      value: _prepareResourceToProcess2
-	    });
-	    Object.defineProperty(this, _upsertResource, {
-	      value: _upsertResource2
-	    });
-	    Object.defineProperty(this, _prepareResourceTypeNotifications, {
-	      value: _prepareResourceTypeNotifications2
-	    });
-	    Object.defineProperty(this, _prepareCompanySlotRanges, {
-	      value: _prepareCompanySlotRanges2
-	    });
-	    Object.defineProperty(this, _isBitrix24SenderAvailable, {
-	      value: _isBitrix24SenderAvailable2
-	    });
-	    Object.defineProperty(this, _isBitrix24Approved, {
-	      value: _isBitrix24Approved2
-	    });
-	    Object.defineProperty(this, _resourceAvatarFile, {
-	      get: _get_resourceAvatarFile,
-	      set: void 0
-	    });
-	    Object.defineProperty(this, _entityCalendar, {
-	      get: _get_entityCalendar,
-	      set: void 0
-	    });
-	    Object.defineProperty(this, _resource, {
-	      get: _get_resource,
-	      set: void 0
-	    });
-	    this.step = 3;
-	  }
-	  get labelNext() {
-	    var _babelHelpers$classPr;
-	    return main_core.Type.isNull((_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _resource)[_resource].id) != null ? _babelHelpers$classPr : null) ? main_core.Loc.getMessage('BRCW_BUTTON_CREATE_RESOURCE') : main_core.Loc.getMessage('BRCW_BUTTON_UPDATE_RESOURCE');
-	  }
-	  async next() {
-	    this.store.commit(`${booking_const.Model.ResourceCreationWizard}/setSaving`, true);
-	    booking_lib_analytics.RcwAnalytics.sendAddResourceFinish();
-	    const isApproved = await babelHelpers.classPrivateFieldLooseBase(this, _isBitrix24Approved)[_isBitrix24Approved]();
-	    if (!isApproved) {
-	      this.store.commit(`${booking_const.Model.ResourceCreationWizard}/setSaving`, false);
-	      return;
-	    }
-	    if (this.store.getters[`${booking_const.Model.ResourceCreationWizard}/isGlobalSchedule`]) {
-	      await this.store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResource`, {
-	        slotRanges: babelHelpers.classPrivateFieldLooseBase(this, _prepareCompanySlotRanges)[_prepareCompanySlotRanges](babelHelpers.classPrivateFieldLooseBase(this, _resource)[_resource])
-	      });
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _checkEntityCalendar)[_checkEntityCalendar]();
-	    const isSuccess = await babelHelpers.classPrivateFieldLooseBase(this, _upsertResource)[_upsertResource](babelHelpers.classPrivateFieldLooseBase(this, _resource)[_resource]);
-	    if (!isSuccess) {
-	      this.store.commit(`${booking_const.Model.ResourceCreationWizard}/setSaving`, false);
-	      return;
-	    }
-	    await booking_provider_service_resourcesTypeService.resourceTypeService.update({
-	      id: babelHelpers.classPrivateFieldLooseBase(this, _resource)[_resource].typeId,
-	      ...babelHelpers.classPrivateFieldLooseBase(this, _prepareResourceTypeNotifications)[_prepareResourceTypeNotifications](babelHelpers.classPrivateFieldLooseBase(this, _resource)[_resource])
-	    });
-	    main_core.Event.EventEmitter.emit(booking_const.EventName.CloseWizard);
-	  }
-	}
-	function _get_resource() {
-	  return this.store.getters[`${booking_const.Model.ResourceCreationWizard}/getResource`];
-	}
-	function _get_entityCalendar() {
-	  return this.store.getters[`${booking_const.Model.ResourceCreationWizard}/entityCalendar`];
-	}
-	function _get_resourceAvatarFile() {
-	  return this.store.getters[`${booking_const.Model.ResourceCreationWizard}/getResourceAvatarFile`];
-	}
-	function _isBitrix24Approved2() {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isBitrix24SenderAvailable)[_isBitrix24SenderAvailable]()) {
-	    return Promise.resolve(true);
-	  }
-	  return crm_messagesender.ConditionChecker.checkIsApproved({
-	    senderType: crm_messagesender.Types.bitrix24
-	  });
-	}
-	function _isBitrix24SenderAvailable2() {
-	  const bitrix24Sender = this.store.getters[`${booking_const.Model.Notifications}/getSenders`].find(sender => sender.code === crm_messagesender.Types.bitrix24);
-	  if (!bitrix24Sender) {
-	    return false;
-	  }
-	  return bitrix24Sender.canUse;
-	}
-	function _prepareCompanySlotRanges2(resource) {
-	  var _resource$slotRanges$, _resource$slotRanges$2;
-	  const slotSize = (_resource$slotRanges$ = (_resource$slotRanges$2 = resource.slotRanges[0]) == null ? void 0 : _resource$slotRanges$2.slotSize) != null ? _resource$slotRanges$ : 60;
-	  const scheduleSlots = this.store.getters[`${booking_const.Model.ResourceCreationWizard}/getCompanyScheduleSlots`];
-	  const timezone = this.store.getters[`${booking_const.Model.Interface}/timezone`];
-	  return scheduleSlots.map(slotRange => ({
-	    ...slotRange,
-	    slotSize,
-	    timezone
-	  }));
-	}
-	function _prepareResourceTypeNotifications2(resource) {
-	  const resourceType = this.store.getters[`${booking_const.Model.ResourceTypes}/getById`](resource.typeId);
-	  const reduceResult = Object.values(this.store.getters[`${booking_const.Model.Dictionary}/getNotifications`]).map(({
-	    value
-	  }) => value).reduce((acc, type) => {
-	    const notificationOnField = booking_const.NotificationFieldsMap.NotificationOn[type];
-	    const templateTypeField = booking_const.NotificationFieldsMap.TemplateType[type];
-	    const settingsFields = booking_const.NotificationFieldsMap.Settings[type];
-	    const isCheckedForAll = this.store.getters[`${booking_const.Model.ResourceCreationWizard}/isCheckedForAll`](type);
-	    return {
-	      ...acc,
-	      [notificationOnField]: isCheckedForAll ? resource[notificationOnField] : resourceType[notificationOnField],
-	      [templateTypeField]: isCheckedForAll ? resource[templateTypeField] : resourceType[templateTypeField],
-	      ...settingsFields.reduce((fields, field) => ({
-	        ...fields,
-	        [field]: isCheckedForAll ? resource[field] : resourceType[field]
-	      }), {})
-	    };
-	  }, {});
-	  return {
-	    ...reduceResult,
-	    senderCode: resource.senderCode
-	  };
-	}
-	async function _upsertResource2(resource) {
-	  const isUpdate = Boolean(resource.id);
-	  const resourceToProcess = babelHelpers.classPrivateFieldLooseBase(this, _prepareResourceToProcess)[_prepareResourceToProcess](resource);
-	  const result = await (isUpdate ? booking_provider_service_resourcesService.resourceService.update(resourceToProcess) : booking_provider_service_resourcesService.resourceService.add(resourceToProcess));
-	  let text = main_core.Loc.getMessage(isUpdate ? 'BRCW_UPDATE_SUCCESS_MESSAGE' : 'BRCW_CREATE_SUCCESS_MESSAGE');
-	  if (main_core.Type.isArrayFilled(result.errors)) {
-	    text = result.errors[0].message;
-	  }
-	  ui_notificationManager.Notifier.notify(babelHelpers.classPrivateFieldLooseBase(this, _prepareNotificationOptions)[_prepareNotificationOptions](text));
-	  return !main_core.Type.isArrayFilled(result.errors);
-	}
-	function _prepareResourceToProcess2(resource) {
-	  const uploadedAvatar = babelHelpers.classPrivateFieldLooseBase(this, _resourceAvatarFile)[_resourceAvatarFile];
-	  if (!uploadedAvatar) {
-	    return {
-	      ...resource
-	    };
-	  }
-	  return {
-	    ...resource,
-	    avatar: {
-	      id: null,
-	      url: null,
-	      file: uploadedAvatar
-	    }
-	  };
-	}
-	function _prepareNotificationOptions2(text) {
-	  return {
-	    id: main_core.Text.getRandom(),
-	    text
-	  };
-	}
-	async function _checkEntityCalendar2() {
-	  var _babelHelpers$classPr2, _babelHelpers$classPr3;
-	  if (!this.store.getters[`${booking_const.Model.ResourceCreationWizard}/isIntegrationCalendarEnabled`] || ((_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _entityCalendar)[_entityCalendar].data) == null ? void 0 : (_babelHelpers$classPr3 = _babelHelpers$classPr2.userIds) == null ? void 0 : _babelHelpers$classPr3.length) === 0) {
-	    await babelHelpers.classPrivateFieldLooseBase(this, _disabledCalendarIntegration)[_disabledCalendarIntegration]();
-	  }
-	}
-	async function _disabledCalendarIntegration2() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _entityCalendar)[_entityCalendar] === null) {
-	    return;
-	  }
-	  await this.store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResourceEntityCalendar`, {
-	    userIds: [],
-	    locationId: null,
-	    checkAvailability: false,
-	    reminders: []
-	  });
+		constructor() {
+			super();
+			this.step = 3;
+		}
+		get #resource() {
+			return this.store.getters[`${booking_const.Model.ResourceCreationWizard}/getResource`];
+		}
+		get #entityCalendar() {
+			return this.store.getters[`${booking_const.Model.ResourceCreationWizard}/entityCalendar`];
+		}
+		get labelNext() {
+			return main_core.Type.isNull(this.#resource.id ?? null) ? main_core.Loc.getMessage('BRCW_BUTTON_CREATE_RESOURCE') : main_core.Loc.getMessage('BRCW_BUTTON_UPDATE_RESOURCE');
+		}
+		get #resourceAvatarFile() {
+			return this.store.getters[`${booking_const.Model.ResourceCreationWizard}/getResourceAvatarFile`];
+		}
+		async next() {
+			this.store.commit(`${booking_const.Model.ResourceCreationWizard}/setSaving`, true);
+			booking_lib_analytics.RcwAnalytics.sendAddResourceFinish();
+			const isApproved = await this.#isBitrix24Approved();
+			if (!isApproved) {
+				this.store.commit(`${booking_const.Model.ResourceCreationWizard}/setSaving`, false);
+				return;
+			}
+			if (this.store.getters[`${booking_const.Model.ResourceCreationWizard}/isGlobalSchedule`]) {
+				await this.store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResource`, {
+					slotRanges: this.#prepareCompanySlotRanges(this.#resource)
+				});
+			}
+			this.#checkEntityCalendar();
+			const isSuccess = await this.#upsertResource(this.#resource);
+			if (!isSuccess) {
+				this.store.commit(`${booking_const.Model.ResourceCreationWizard}/setSaving`, false);
+				return;
+			}
+			await booking_provider_service_resourcesTypeService.resourceTypeService.update({
+				id: this.#resource.typeId,
+				...this.#prepareResourceTypeNotifications(this.#resource)
+			});
+			const aiAgent = this.store.getters[`${booking_const.Model.AiAgent}/aiAgent`];
+			if (aiAgent?.action === 'copyAndStart' && this.#resource.senderCode === booking_const.Communication.AiCall) {
+				void booking_provider_service_aiAgentLauncherService.aiAgentLauncherService.launchInBackground();
+			}
+			main_core.Event.EventEmitter.emit(booking_const.EventName.CloseWizard);
+		}
+		#isBitrix24Approved() {
+			if (this.#resource.senderCode !== booking_const.Communication.Bitrix24) {
+				return Promise.resolve(true);
+			}
+			if (!this.#isBitrix24SenderAvailable()) {
+				return Promise.resolve(true);
+			}
+			return crm_messagesender.ConditionChecker.checkIsApproved({
+				senderType: crm_messagesender.Types.bitrix24
+			});
+		}
+		#isBitrix24SenderAvailable() {
+			const bitrix24Sender = this.store.getters[`${booking_const.Model.Notifications}/getSenders`].find(sender => sender.code === crm_messagesender.Types.bitrix24);
+			if (!bitrix24Sender) {
+				return false;
+			}
+			return bitrix24Sender.canUse;
+		}
+		#prepareCompanySlotRanges(resource) {
+			const slotSize = resource.slotRanges[0]?.slotSize ?? 60;
+			const scheduleSlots = this.store.getters[`${booking_const.Model.ResourceCreationWizard}/getCompanyScheduleSlots`];
+			const timezone = this.store.getters[`${booking_const.Model.Interface}/timezone`];
+			return scheduleSlots.map(slotRange => ({
+				...slotRange,
+				slotSize,
+				timezone
+			}));
+		}
+		#prepareResourceTypeNotifications(resource) {
+			const resourceType = this.store.getters[`${booking_const.Model.ResourceTypes}/getById`](resource.typeId);
+			const reduceResult = Object.values(this.store.getters[`${booking_const.Model.Dictionary}/getNotifications`]).map(({
+				value
+			}) => value).reduce((acc, type) => {
+				const notificationOnField = booking_const.NotificationFieldsMap.NotificationOn[type];
+				const templateTypeField = booking_const.NotificationFieldsMap.TemplateType[type];
+				const settingsFields = booking_const.NotificationFieldsMap.Settings[type];
+				const isCheckedForAll = this.store.getters[`${booking_const.Model.ResourceCreationWizard}/isCheckedForAll`](type);
+				return {
+					...acc,
+					[notificationOnField]: isCheckedForAll ? resource[notificationOnField] : resourceType[notificationOnField],
+					[templateTypeField]: isCheckedForAll ? resource[templateTypeField] : resourceType[templateTypeField],
+					...settingsFields.reduce((fields, field) => ({
+						...fields,
+						[field]: isCheckedForAll ? resource[field] : resourceType[field]
+					}), {})
+				};
+			}, {});
+			return {
+				...reduceResult,
+				senderCode: resource.senderCode
+			};
+		}
+		async #upsertResource(resource) {
+			const isUpdate = Boolean(resource.id);
+			const resourceToProcess = this.#prepareResourceToProcess(resource);
+			const result = await (isUpdate ? booking_provider_service_resourcesService.resourceService.update(resourceToProcess) : booking_provider_service_resourcesService.resourceService.add(resourceToProcess));
+			let text = main_core.Loc.getMessage(isUpdate ? 'BRCW_UPDATE_SUCCESS_MESSAGE' : 'BRCW_CREATE_SUCCESS_MESSAGE');
+			if (main_core.Type.isArrayFilled(result.errors)) {
+				text = result.errors[0].message;
+			}
+			ui_notificationManager.Notifier.notify(this.#prepareNotificationOptions(text));
+			return !main_core.Type.isArrayFilled(result.errors);
+		}
+		#prepareResourceToProcess(resource) {
+			const uploadedAvatar = this.#resourceAvatarFile;
+			if (!uploadedAvatar) {
+				return {
+					...resource
+				};
+			}
+			return {
+				...resource,
+				avatar: {
+					id: null,
+					url: null,
+					file: uploadedAvatar
+				}
+			};
+		}
+		#prepareNotificationOptions(text) {
+			return {
+				id: main_core.Text.getRandom(),
+				text
+			};
+		}
+		async #checkEntityCalendar() {
+			if (!this.store.getters[`${booking_const.Model.ResourceCreationWizard}/isIntegrationCalendarEnabled`] || this.#entityCalendar.data?.userIds?.length === 0) {
+				await this.#disabledCalendarIntegration();
+			}
+		}
+		async #disabledCalendarIntegration() {
+			if (this.#entityCalendar === null) {
+				return;
+			}
+			await this.store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResourceEntityCalendar`, {
+				userIds: [],
+				locationId: null,
+				checkAvailability: false,
+				reminders: []
+			});
+		}
 	}
 
-	var _isFirstStep = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isFirstStep");
-	var _validateIntegrationCalendarUser = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("validateIntegrationCalendarUser");
 	class ResourceSettingsStep extends Step {
-	  constructor() {
-	    super();
-	    Object.defineProperty(this, _validateIntegrationCalendarUser, {
-	      value: _validateIntegrationCalendarUser2
-	    });
-	    Object.defineProperty(this, _isFirstStep, {
-	      get: _get_isFirstStep,
-	      set: void 0
-	    });
-	    this.step = 2;
-	  }
-	  get labelBack() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _isFirstStep)[_isFirstStep] ? super.labelBack : main_core.Loc.getMessage('BRCW_BUTTON_BACK');
-	  }
-	  async next() {
-	    const store = this.store;
-	    if (!store.state[booking_const.Model.ResourceCreationWizard].resource.name) {
-	      if (!main_core.Type.isNull(store.state[booking_const.Model.ResourceCreationWizard].resourceId)) {
-	        await store.dispatch(`${booking_const.Model.ResourceCreationWizard}/setInvalidResourceName`, true);
-	        return;
-	      }
-	      await store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResource`, {
-	        name: main_core.Loc.getMessage('BRCW_DEFAULT_RESOURCE_NAME')
-	      });
-	    }
-	    if (!store.state[booking_const.Model.ResourceCreationWizard].resource.typeId) {
-	      await store.dispatch(`${booking_const.Model.ResourceCreationWizard}/setInvalidResourceType`, true);
-	      return;
-	    }
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _validateIntegrationCalendarUser)[_validateIntegrationCalendarUser]()) {
-	      return;
-	    }
-	    await super.next();
-	    booking_lib_analytics.RcwAnalytics.sendAddResourceStep2();
-	  }
-	  async back() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _isFirstStep)[_isFirstStep]) {
-	      main_core.Event.EventEmitter.emit(booking_const.EventName.CloseWizard);
-	    } else {
-	      await super.back();
-	    }
-	  }
-	}
-	function _get_isFirstStep() {
-	  return this.store.getters[`${booking_const.Model.ResourceCreationWizard}/startStep`] === this.step;
-	}
-	function _validateIntegrationCalendarUser2() {
-	  const isIntegrationCalendarEnabled = this.store.getters[`${booking_const.Model.ResourceCreationWizard}/isIntegrationCalendarEnabled`];
-	  const calendarEntity = this.store.getters[`${booking_const.Model.ResourceCreationWizard}/entityCalendar`];
-	  if (!isIntegrationCalendarEnabled || !calendarEntity || calendarEntity.data.userIds.length > 0) {
-	    return true;
-	  }
-	  if (!calendarEntity.data.locationId && calendarEntity.data.reminders.length === 0) {
-	    return true;
-	  }
-	  void this.store.dispatch(`${booking_const.Model.ResourceCreationWizard}/setInvalidIntegrationCalendarUser`, true);
-	  return false;
+		constructor() {
+			super();
+			this.step = 2;
+		}
+		get #isFirstStep() {
+			return this.store.getters[`${booking_const.Model.ResourceCreationWizard}/startStep`] === this.step;
+		}
+		get labelBack() {
+			return this.#isFirstStep ? super.labelBack : main_core.Loc.getMessage('BRCW_BUTTON_BACK');
+		}
+		async next() {
+			const store = this.store;
+			if (!store.state[booking_const.Model.ResourceCreationWizard].resource.name) {
+				if (!main_core.Type.isNull(store.state[booking_const.Model.ResourceCreationWizard].resourceId)) {
+					await store.dispatch(`${booking_const.Model.ResourceCreationWizard}/setInvalidResourceName`, true);
+					return;
+				}
+				await store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResource`, {
+					name: main_core.Loc.getMessage('BRCW_DEFAULT_RESOURCE_NAME')
+				});
+			}
+			if (!store.state[booking_const.Model.ResourceCreationWizard].resource.typeId) {
+				await store.dispatch(`${booking_const.Model.ResourceCreationWizard}/setInvalidResourceType`, true);
+				return;
+			}
+			if (!this.#validateIntegrationCalendarUser()) {
+				return;
+			}
+			await super.next();
+			booking_lib_analytics.RcwAnalytics.sendAddResourceStep2();
+		}
+		async back() {
+			if (this.#isFirstStep) {
+				main_core.Event.EventEmitter.emit(booking_const.EventName.CloseWizard);
+			} else {
+				await super.back();
+			}
+		}
+		#validateIntegrationCalendarUser() {
+			const isIntegrationCalendarEnabled = this.store.getters[`${booking_const.Model.ResourceCreationWizard}/isIntegrationCalendarEnabled`];
+			const calendarEntity = this.store.getters[`${booking_const.Model.ResourceCreationWizard}/entityCalendar`];
+			if (!isIntegrationCalendarEnabled || !calendarEntity || calendarEntity.data.userIds.length > 0) {
+				return true;
+			}
+			if (!calendarEntity.data.locationId && calendarEntity.data.reminders.length === 0) {
+				return true;
+			}
+			void this.store.dispatch(`${booking_const.Model.ResourceCreationWizard}/setInvalidIntegrationCalendarUser`, true);
+			return false;
+		}
 	}
 
 	const ResourceCreationWizardFooter = {
-	  name: 'ResourceCreationWizardFooter',
-	  props: {
-	    step: {
-	      type: Number,
-	      required: true
-	    },
-	    disabled: Boolean
-	  },
-	  data() {
-	    return {
-	      steps: [new ChooseResourceStep(), new ResourceSettingsStep(), new ResourceNotificationStep()]
-	    };
-	  },
-	  computed: ui_vue3_vuex.mapGetters({
-	    isSaving: `${booking_const.Model.ResourceCreationWizard}/isSaving`
-	  }),
-	  components: {
-	    BackButton,
-	    NextButton
-	  },
-	  template: `
+		name: 'ResourceCreationWizardFooter',
+		props: {
+			step: {
+				type: Number,
+				required: true
+			},
+			disabled: Boolean
+		},
+		created() {
+			this.steps = [new ChooseResourceStep(), new ResourceSettingsStep(), new ResourceNotificationStep()];
+		},
+		computed: ui_vue3_vuex.mapGetters({
+			isSaving: `${booking_const.Model.ResourceCreationWizard}/isSaving`
+		}),
+		components: {
+			BackButton,
+			NextButton
+		},
+		template: `
 		<div v-if="!steps[step - 1].hidden" class="resource-creation-wizard__footer">
 			<NextButton :step :steps :disabled :waiting="isSaving"/>
 			<BackButton :step :steps :disabled="isSaving"/>
@@ -484,23 +423,23 @@ this.BX = this.BX || {};
 	};
 
 	const ResourceType = {
-	  name: 'ResourceType',
-	  emits: ['selected'],
-	  props: {
-	    resourceType: {
-	      type: Object,
-	      required: true
-	    }
-	  },
-	  data() {
-	    return {
-	      IconSet: ui_iconSet_api_vue.Set
-	    };
-	  },
-	  components: {
-	    Icon: ui_iconSet_api_vue.BIcon
-	  },
-	  template: `
+		name: 'ResourceType',
+		emits: ['selected'],
+		props: {
+			resourceType: {
+				type: Object,
+				required: true
+			}
+		},
+		setup() {
+			return {
+				IconSet: ui_iconSet_api_vue.Set
+			};
+		},
+		components: {
+			Icon: ui_iconSet_api_vue.BIcon
+		},
+		template: `
 		<div class="booking--rcw--resource-type-item" @click="$emit('selected', resourceType)">
 			<div class="rcw__resource-type">
 				<div :class="['booking--rcw--resource-type__icon', 'booking--rcw--resource-type__icon--' + resourceType.code]">
@@ -518,34 +457,34 @@ this.BX = this.BX || {};
 	};
 
 	const ResourceCategoryCard = {
-	  name: 'ResourceCategoryCard',
-	  setup() {
-	    return {
-	      code: booking_const.HelpDesk.ResourceType.code,
-	      anchorCode: booking_const.HelpDesk.ResourceType.anchorCode
-	    };
-	  },
-	  computed: {
-	    resourceTypes() {
-	      return this.$store.state[booking_const.Model.ResourceCreationWizard].advertisingResourceTypes;
-	    }
-	  },
-	  methods: {
-	    async selectResourceType({
-	      relatedResourceTypeId
-	    }) {
-	      await this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResource`, {
-	        typeId: relatedResourceTypeId
-	      });
-	      await this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/nextStep`);
-	      booking_lib_analytics.RcwAnalytics.sendAddResourceStep1();
-	    }
-	  },
-	  components: {
-	    HelpDeskLoc: booking_component_helpDeskLoc.HelpDeskLoc,
-	    ResourceType
-	  },
-	  template: `
+		name: 'ResourceCategoryCard',
+		setup() {
+			return {
+				code: booking_const.HelpDesk.ResourceType.code,
+				anchorCode: booking_const.HelpDesk.ResourceType.anchorCode
+			};
+		},
+		computed: {
+			resourceTypes() {
+				return this.$store.state[booking_const.Model.ResourceCreationWizard].advertisingResourceTypes;
+			}
+		},
+		methods: {
+			async selectResourceType({
+				relatedResourceTypeId
+			}) {
+				await this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResource`, {
+					typeId: relatedResourceTypeId
+				});
+				await this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/nextStep`);
+				booking_lib_analytics.RcwAnalytics.sendAddResourceStep1();
+			}
+		},
+		components: {
+			HelpDeskLoc: booking_component_helpDeskLoc.HelpDeskLoc,
+			ResourceType
+		},
+		template: `
 		<div class="resource-category-card">
 			<div class="resource-category-card__header">
 				<div class="resource-category-card__header__title">
@@ -570,60 +509,69 @@ this.BX = this.BX || {};
 	`
 	};
 
+	const unitDurations$1 = booking_lib_duration.Duration.getUnitDurations();
+	const SlotLengthLimitWithoutMultiday = unitDurations$1.H * 12 / unitDurations$1.i;
+	function normalizeSlotLength(slotLength, isMultidayFeatureAvailable) {
+		if (isMultidayFeatureAvailable || slotLength <= SlotLengthLimitWithoutMultiday) {
+			return slotLength;
+		}
+		return SlotLengthLimitWithoutMultiday;
+	}
+
 	// @vue/component
 	const AvatarField = {
-	  name: 'ResourceAvatarField',
-	  components: {
-	    RichLoc: ui_vue3_components_richLoc.RichLoc,
-	    BIcon: ui_iconSet_api_vue.BIcon
-	  },
-	  props: {
-	    avatarUrl: {
-	      type: String,
-	      default: ''
-	    }
-	  },
-	  emits: ['avatarFileUpdate'],
-	  setup() {
-	    return {
-	      IconSet: ui_iconSet_api_vue.Set
-	    };
-	  },
-	  computed: {
-	    hasAvatar() {
-	      return this.avatarUrl.trim().length > 0;
-	    }
-	  },
-	  mounted() {
-	    this.uploader = new ui_uploader_core.Uploader({
-	      browseElement: this.$refs.uploaderContainer,
-	      assignServerFile: false,
-	      acceptedFileTypes: ['.jpg', '.jpeg', '.png'],
-	      maxFileSize: 1024 * 1024 * 5,
-	      // 5 MB
+		name: 'ResourceAvatarField',
+		components: {
+			RichLoc: ui_vue3_components_richLoc.RichLoc,
+			BIcon: ui_iconSet_api_vue.BIcon
+		},
+		props: {
+			avatarUrl: {
+				type: String,
+				default: ''
+			}
+		},
+		emits: ['avatarFileUpdate'],
+		setup() {
+			return {
+				IconSet: ui_iconSet_api_vue.Set
+			};
+		},
+		computed: {
+			hasAvatar() {
+				return this.avatarUrl.trim().length > 0;
+			}
+		},
+		mounted() {
+			this.uploader = new ui_uploader_core.Uploader({
+				browseElement: this.$refs.uploaderContainer,
+				assignServerFile: false,
+				acceptedFileTypes: ['.jpg', '.jpeg', '.png'],
+				maxFileSize: 1024 * 1024 * 5,
+				// 5 MB
 
-	      events: {
-	        [ui_uploader_core.UploaderEvent.FILE_LOAD_COMPLETE]: event => {
-	          const file = event.getData().file;
-	          this.$emit('avatarFileUpdate', file);
-	        },
-	        [ui_uploader_core.UploaderEvent.FILE_ERROR]: event => {
-	          const error = event.getData().error;
-	          const errorMessage = error.getMessage();
-	          BX.UI.Notification.Center.notify({
-	            content: errorMessage
-	          });
-	        }
-	      }
-	    });
-	  },
-	  methods: {
-	    removeCurrentAvatar() {
-	      this.uploader.removeFiles();
-	      this.$emit('avatarFileUpdate', null);
-	    }
-	  },
-	  template: `
+				events: {
+					[ui_uploader_core.UploaderEvent.FILE_LOAD_COMPLETE]: event => {
+						const file = event.getData().file;
+						this.$emit('avatarFileUpdate', file);
+					},
+					[ui_uploader_core.UploaderEvent.FILE_ERROR]: event => {
+						const error = event.getData().error;
+						const errorMessage = error.getMessage();
+						BX.UI.Notification.Center.notify({
+							content: errorMessage
+						});
+					}
+				}
+			});
+		},
+		methods: {
+			removeCurrentAvatar() {
+				this.uploader.removeFiles();
+				this.$emit('avatarFileUpdate', null);
+			}
+		},
+		template: `
 		<div class="ui-form-row booking--rcw--avatar-field">
 			<div class="ui-form-label">
 				{{ loc('BRCW_SETTINGS_CARD_AVATAR_UPLOAD_LABEL') }}
@@ -659,33 +607,33 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const NameField = {
-	  name: 'ResourceNameField',
-	  components: {
-	    UiErrorMessage: booking_component_uiErrorMessage.UiErrorMessage,
-	    EmptyRichLoc: booking_component_helpDeskLoc.EmptyRichLoc
-	  },
-	  props: {
-	    resourceName: {
-	      type: String,
-	      default: ''
-	    },
-	    invalid: {
-	      type: Boolean,
-	      default: false
-	    }
-	  },
-	  emits: ['nameUpdate'],
-	  computed: {
-	    localName: {
-	      get() {
-	        return this.resourceName;
-	      },
-	      set(value) {
-	        this.$emit('nameUpdate', value);
-	      }
-	    }
-	  },
-	  template: `
+		name: 'ResourceNameField',
+		components: {
+			UiErrorMessage: booking_component_uiErrorMessage.UiErrorMessage,
+			EmptyRichLoc: booking_component_helpDeskLoc.EmptyRichLoc
+		},
+		props: {
+			resourceName: {
+				type: String,
+				default: ''
+			},
+			invalid: {
+				type: Boolean,
+				default: false
+			}
+		},
+		emits: ['nameUpdate'],
+		computed: {
+			localName: {
+				get() {
+					return this.resourceName;
+				},
+				set(value) {
+					this.$emit('nameUpdate', value);
+				}
+			}
+		},
+		template: `
 		<div class="ui-form-row booking--rcw--name-field">
 			<div class="ui-form-label">
 				<label class="ui-ctl-label-text" for="brcw-settings-resource-name">
@@ -715,111 +663,111 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const TypeField = {
-	  name: 'ResourceTypeField',
-	  components: {
-	    UiErrorMessage: booking_component_uiErrorMessage.UiErrorMessage
-	  },
-	  props: {
-	    initialTypeId: {
-	      type: [Number, String],
-	      default: null
-	    },
-	    initialTypeName: {
-	      type: String,
-	      default: ''
-	    },
-	    invalid: {
-	      type: Boolean,
-	      default: false
-	    }
-	  },
-	  emits: ['typeUpdate'],
-	  data() {
-	    return {
-	      entityId: booking_const.EntitySelectorEntity.ResourceType,
-	      typeSelectorId: `booking-resource-creation-types${main_core.Text.getRandom()}`,
-	      typeName: this.initialTypeName
-	    };
-	  },
-	  methods: {
-	    showTypeSelector() {
-	      const dialog = this.getTypeSelectorDialog(this.$refs.typeSelectorAngle);
-	      dialog.show();
-	    },
-	    getTypeSelectorDialog(bindElement) {
-	      const existing = ui_entitySelector.Dialog.getById(this.typeSelectorId);
-	      if (existing) {
-	        existing.setTargetNode(bindElement);
-	        return existing;
-	      }
-	      return new ui_entitySelector.Dialog({
-	        id: this.typeSelectorId,
-	        targetNode: bindElement,
-	        width: 300,
-	        height: 400,
-	        enableSearch: true,
-	        dropdownMode: true,
-	        context: 'bookingResourceCreationType',
-	        multiple: false,
-	        cacheable: true,
-	        preselectedItems: [[this.entityId, this.initialTypeId]],
-	        entities: [{
-	          id: this.entityId,
-	          dynamicLoad: true,
-	          dynamicSearch: true
-	        }],
-	        popupOptions: {
-	          targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper')
-	        },
-	        searchOptions: {
-	          allowCreateItem: true,
-	          footerOptions: {
-	            label: this.loc('BRCW_SETTINGS_CARD_TYPE_SELECTOR_CREATE_BTN')
-	          }
-	        },
-	        events: {
-	          'Search:onItemCreateAsync': event => {
-	            return new Promise(resolve => {
-	              const query = event.getData().searchQuery.getQuery();
-	              this.createType(query).then(type => {
-	                this.updateResourceType(type.id, type.name);
-	                event.getTarget().addItem(this.prepareTypeToDialog(type));
-	                event.getTarget().hide();
-	                resolve();
-	              }).catch(() => resolve());
-	            });
-	          },
-	          'Item:onSelect': event => {
-	            const item = event.getData().item;
-	            this.updateResourceType(item.getId(), item.getTitle());
-	          }
-	        }
-	      });
-	    },
-	    async createType(name) {
-	      return booking_provider_service_resourcesTypeService.resourceTypeService.add({
-	        moduleId: 'booking',
-	        name
-	      });
-	    },
-	    prepareTypeToDialog(type) {
-	      return {
-	        id: type.id,
-	        entityId: this.entityId,
-	        title: type.name,
-	        sort: 1,
-	        selected: true,
-	        tabs: 'recents',
-	        supertitle: this.loc('BRCW_SETTINGS_CARD_TYPE_SELECTOR_SUPER_TITLE'),
-	        avatar: '/bitrix/js/booking/images/entity-selector/resource-type.svg'
-	      };
-	    },
-	    updateResourceType(typeId, typeName) {
-	      this.typeName = typeName;
-	      this.$emit('typeUpdate', typeId);
-	    }
-	  },
-	  template: `
+		name: 'ResourceTypeField',
+		components: {
+			UiErrorMessage: booking_component_uiErrorMessage.UiErrorMessage
+		},
+		props: {
+			initialTypeId: {
+				type: [Number, String],
+				default: null
+			},
+			initialTypeName: {
+				type: String,
+				default: ''
+			},
+			invalid: {
+				type: Boolean,
+				default: false
+			}
+		},
+		emits: ['typeUpdate'],
+		data() {
+			return {
+				entityId: booking_const.EntitySelectorEntity.ResourceType,
+				typeSelectorId: `booking-resource-creation-types${main_core.Text.getRandom()}`,
+				typeName: this.initialTypeName
+			};
+		},
+		methods: {
+			showTypeSelector() {
+				const dialog = this.getTypeSelectorDialog(this.$refs.typeSelectorAngle);
+				dialog.show();
+			},
+			getTypeSelectorDialog(bindElement) {
+				const existing = ui_entitySelector.Dialog.getById(this.typeSelectorId);
+				if (existing) {
+					existing.setTargetNode(bindElement);
+					return existing;
+				}
+				return new ui_entitySelector.Dialog({
+					id: this.typeSelectorId,
+					targetNode: bindElement,
+					width: 300,
+					height: 400,
+					enableSearch: true,
+					dropdownMode: true,
+					context: 'bookingResourceCreationType',
+					multiple: false,
+					cacheable: true,
+					preselectedItems: [[this.entityId, this.initialTypeId]],
+					entities: [{
+						id: this.entityId,
+						dynamicLoad: true,
+						dynamicSearch: true
+					}],
+					popupOptions: {
+						targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper')
+					},
+					searchOptions: {
+						allowCreateItem: true,
+						footerOptions: {
+							label: this.loc('BRCW_SETTINGS_CARD_TYPE_SELECTOR_CREATE_BTN')
+						}
+					},
+					events: {
+						'Search:onItemCreateAsync': event => {
+							return new Promise(resolve => {
+								const query = event.getData().searchQuery.getQuery();
+								this.createType(query).then(type => {
+									this.updateResourceType(type.id, type.name);
+									event.getTarget().addItem(this.prepareTypeToDialog(type));
+									event.getTarget().hide();
+									resolve();
+								}).catch(() => resolve());
+							});
+						},
+						'Item:onSelect': event => {
+							const item = event.getData().item;
+							this.updateResourceType(item.getId(), item.getTitle());
+						}
+					}
+				});
+			},
+			async createType(name) {
+				return booking_provider_service_resourcesTypeService.resourceTypeService.add({
+					moduleId: 'booking',
+					name
+				});
+			},
+			prepareTypeToDialog(type) {
+				return {
+					id: type.id,
+					entityId: this.entityId,
+					title: type.name,
+					sort: 1,
+					selected: true,
+					tabs: 'recents',
+					supertitle: this.loc('BRCW_SETTINGS_CARD_TYPE_SELECTOR_SUPER_TITLE'),
+					avatar: '/bitrix/js/booking/images/entity-selector/resource-type.svg'
+				};
+			},
+			updateResourceType(typeId, typeName) {
+				this.typeName = typeName;
+				this.$emit('typeUpdate', typeId);
+			}
+		},
+		template: `
 		<div class="ui-form-row booking--rcw--type-field">
 			<div class="ui-form-label">
 				<div class="ui-ctl-label-text">
@@ -849,28 +797,28 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const DescriptionField = {
-	  name: 'ResourceDescriptionField',
-	  components: {
-	    EmptyRichLoc: booking_component_helpDeskLoc.EmptyRichLoc
-	  },
-	  props: {
-	    description: {
-	      type: String,
-	      default: ''
-	    }
-	  },
-	  emits: ['descriptionUpdate'],
-	  computed: {
-	    localDescription: {
-	      get() {
-	        return this.description;
-	      },
-	      set(value) {
-	        this.$emit('descriptionUpdate', value);
-	      }
-	    }
-	  },
-	  template: `
+		name: 'ResourceDescriptionField',
+		components: {
+			EmptyRichLoc: booking_component_helpDeskLoc.EmptyRichLoc
+		},
+		props: {
+			description: {
+				type: String,
+				default: ''
+			}
+		},
+		emits: ['descriptionUpdate'],
+		computed: {
+			localDescription: {
+				get() {
+					return this.description;
+				},
+				set(value) {
+					this.$emit('descriptionUpdate', value);
+				}
+			}
+		},
+		template: `
 		<div class="ui-form-row booking--rcw--description-field">
 			<div class="ui-form-label">
 				<label class="ui-ctl-label-text" for="brcw-settings-resource-description">
@@ -893,21 +841,21 @@ this.BX = this.BX || {};
 	};
 
 	const TitleLayout = {
-	  name: 'ResourceSettingsCardTitleLayout',
-	  props: {
-	    title: {
-	      type: String,
-	      required: true
-	    },
-	    iconType: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  components: {
-	    Icon: ui_iconSet_api_vue.BIcon
-	  },
-	  template: `
+		name: 'ResourceSettingsCardTitleLayout',
+		props: {
+			title: {
+				type: String,
+				required: true
+			},
+			iconType: {
+				type: String,
+				required: true
+			}
+		},
+		components: {
+			Icon: ui_iconSet_api_vue.BIcon
+		},
+		template: `
 		<div class="resource-creation-wizard__form-settings-title-row">
 			<Icon
 				:name="iconType"
@@ -922,27 +870,27 @@ this.BX = this.BX || {};
 	};
 
 	const TextLayout = {
-	  name: 'ResourceSettingsCardTextLayout',
-	  props: {
-	    type: {
-	      type: String,
-	      required: true
-	    },
-	    text: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  setup(props) {
-	    return {
-	      code: booking_const.HelpDesk[`Resource${props.type}`].code,
-	      anchorCode: booking_const.HelpDesk[`Resource${props.type}`].anchorCode
-	    };
-	  },
-	  components: {
-	    HelpDeskLoc: booking_component_helpDeskLoc.HelpDeskLoc
-	  },
-	  template: `
+		name: 'ResourceSettingsCardTextLayout',
+		props: {
+			type: {
+				type: String,
+				required: true
+			},
+			text: {
+				type: String,
+				required: true
+			}
+		},
+		setup(props) {
+			return {
+				code: booking_const.HelpDesk[`Resource${props.type}`].code,
+				anchorCode: booking_const.HelpDesk[`Resource${props.type}`].anchorCode
+			};
+		},
+		components: {
+			HelpDeskLoc: booking_component_helpDeskLoc.HelpDeskLoc
+		},
+		template: `
 		<div class="resource-creation-wizard__form-settings-text-row">
 			<HelpDeskLoc
 				:message="text"
@@ -956,82 +904,81 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const BaseFields = {
-	  name: 'ResourceSettingsCardBaseFields',
-	  components: {
-	    TitleLayout,
-	    TextLayout,
-	    NameField,
-	    TypeField,
-	    DescriptionField,
-	    AvatarField,
-	    BIcon: ui_iconSet_api_vue.BIcon
-	  },
-	  props: {
-	    initialResourceName: {
-	      type: String,
-	      default: ''
-	    },
-	    initialResourceDescription: {
-	      type: String,
-	      default: ''
-	    },
-	    initialResourceType: {
-	      type: Object,
-	      required: true
-	    },
-	    initialResourceAvatarUrl: {
-	      type: String,
-	      default: ''
-	    }
-	  },
-	  emits: ['nameUpdate', 'descriptionUpdate', 'typeUpdate', 'avatarFileUpdate'],
-	  setup() {
-	    return {
-	      IconSet: ui_iconSet_api_vue.Set
-	    };
-	  },
-	  data() {
-	    return {
-	      additionalInfoExpanded: this.initialAdditionalInfoExpanded(),
-	      Actions: ui_iconSet_api_core.Actions
-	    };
-	  },
-	  computed: {
-	    invalidResourceName() {
-	      return this.$store.state[booking_const.Model.ResourceCreationWizard].invalidResourceName;
-	    },
-	    invalidResourceType() {
-	      return this.$store.state[booking_const.Model.ResourceCreationWizard].invalidResourceType;
-	    }
-	  },
-	  watch: {
-	    invalidResourceName(invalid) {
-	      if (invalid) {
-	        this.scrollToBaseFieldsForm();
-	      }
-	    },
-	    invalidResourceType(invalid) {
-	      if (invalid) {
-	        this.scrollToBaseFieldsForm();
-	      }
-	    }
-	  },
-	  methods: {
-	    scrollToBaseFieldsForm() {
-	      var _this$$refs$baseField;
-	      (_this$$refs$baseField = this.$refs.baseFieldsForm) == null ? void 0 : _this$$refs$baseField.scrollIntoView(true, {
-	        behavior: 'smooth',
-	        block: 'center'
-	      });
-	    },
-	    initialAdditionalInfoExpanded() {
-	      return this.initialResourceAvatarUrl.length > 0 || this.initialResourceDescription.length > 0;
-	    },
-	    toggleAdditionalInfo() {
-	      this.additionalInfoExpanded = !this.additionalInfoExpanded;
-	    }
-	  },
-	  template: `
+		name: 'ResourceSettingsCardBaseFields',
+		components: {
+			TitleLayout,
+			TextLayout,
+			NameField,
+			TypeField,
+			DescriptionField,
+			AvatarField,
+			BIcon: ui_iconSet_api_vue.BIcon
+		},
+		props: {
+			initialResourceName: {
+				type: String,
+				default: ''
+			},
+			initialResourceDescription: {
+				type: String,
+				default: ''
+			},
+			initialResourceType: {
+				type: Object,
+				required: true
+			},
+			initialResourceAvatarUrl: {
+				type: String,
+				default: ''
+			}
+		},
+		emits: ['nameUpdate', 'descriptionUpdate', 'typeUpdate', 'avatarFileUpdate'],
+		setup() {
+			return {
+				IconSet: ui_iconSet_api_vue.Set,
+				Actions: ui_iconSet_api_core.Actions
+			};
+		},
+		data() {
+			return {
+				additionalInfoExpanded: this.initialAdditionalInfoExpanded()
+			};
+		},
+		computed: {
+			invalidResourceName() {
+				return this.$store.state[booking_const.Model.ResourceCreationWizard].invalidResourceName;
+			},
+			invalidResourceType() {
+				return this.$store.state[booking_const.Model.ResourceCreationWizard].invalidResourceType;
+			}
+		},
+		watch: {
+			invalidResourceName(invalid) {
+				if (invalid) {
+					this.scrollToBaseFieldsForm();
+				}
+			},
+			invalidResourceType(invalid) {
+				if (invalid) {
+					this.scrollToBaseFieldsForm();
+				}
+			}
+		},
+		methods: {
+			scrollToBaseFieldsForm() {
+				this.$refs.baseFieldsForm?.scrollIntoView(true, {
+					behavior: 'smooth',
+					block: 'center'
+				});
+			},
+			initialAdditionalInfoExpanded() {
+				return this.initialResourceAvatarUrl.length > 0 || this.initialResourceDescription.length > 0;
+			},
+			toggleAdditionalInfo() {
+				this.additionalInfoExpanded = !this.additionalInfoExpanded;
+			}
+		},
+		template: `
 		<div ref="baseFieldsForm" class="ui-form resource-creation-wizard__form-settings --base">
 			<TitleLayout
 				:title="loc('BRCW_SETTINGS_CARD_BASE_TITLE')"
@@ -1078,340 +1025,27 @@ this.BX = this.BX || {};
 	`
 	};
 
-	const {
-	  mapGetters: mapResourceGetters,
-	  mapActions
-	} = ui_vue3_vuex.createNamespacedHelpers(booking_const.Model.ResourceCreationWizard);
-
-	// @vue/component
-	const ServicesSkus = {
-	  name: 'ResourceSettingsCardServicesSkus',
-	  components: {
-	    TitleLayout,
-	    TextLayout
-	  },
-	  computed: {
-	    ...mapResourceGetters({
-	      skus: 'skus'
-	    }),
-	    title() {
-	      return this.loc('BRCW_SETTINGS_CARD_SERVICES_SKUS_TITLE');
-	    },
-	    text() {
-	      return this.loc('BRCW_SETTINGS_CARD_SERVICES_SKUS_TEXT');
-	    },
-	    titleIconType() {
-	      return ui_iconSet_api_vue.Set.PERSONS_3;
-	    },
-	    catalogSkuEntityOptions() {
-	      return this.$store.state[booking_const.Model.Sku].catalogSkuEntityOptions;
-	    },
-	    disabled() {
-	      return this.catalogSkuEntityOptions.length === 0;
-	    }
-	  },
-	  created() {
-	    this.selector = this.createSelector();
-	  },
-	  mounted() {
-	    this.mountSelector();
-	  },
-	  beforeUnmount() {
-	    this.destroySelector();
-	  },
-	  methods: {
-	    ...mapActions(['addSku', 'deleteSku']),
-	    createSelector() {
-	      var _this$catalogSkuEntit;
-	      const dialogOptions = this.disabled ? null : {
-	        context: 'bookingResourceServices',
-	        width: 390,
-	        height: 340,
-	        dropdownMode: true,
-	        compactView: true,
-	        enableSearch: true,
-	        cacheable: true,
-	        showAvatars: false,
-	        popupOptions: {
-	          targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper')
-	        },
-	        searchOptions: {
-	          allowCreateItem: (_this$catalogSkuEntit = this.catalogSkuEntityOptions) == null ? void 0 : _this$catalogSkuEntit.canCreate
-	        },
-	        entities: [{
-	          id: booking_const.EntitySelectorEntity.Product,
-	          dynamicLoad: true,
-	          dynamicSearch: true,
-	          options: this.catalogSkuEntityOptions
-	        }],
-	        preselectedItems: this.skus.map(sku => [booking_const.EntitySelectorEntity.Product, sku.id]),
-	        events: {
-	          'Item:onSelect': event => {
-	            this.select(event.getData().item.id);
-	          },
-	          'Item:onDeselect': event => {
-	            this.deselect(event.getData().item.id);
-	          },
-	          'Search:onItemCreateAsync': event => {
-	            return this.createService(event);
-	          }
-	        },
-	        recentTabOptions: {
-	          stub: true,
-	          stubOptions: {
-	            title: this.loc('BRCW_SETTINGS_CARD_SERVICES_SKUS_RECENT_EMPTY_STATE_TITLE_MSGVER_1'),
-	            subtitle: this.loc('BRCW_SETTINGS_CARD_SERVICES_SKUS_RECENT_EMPTY_STATE_SUBTITLE_MSGVER_1')
-	          }
-	        }
-	      };
-	      const items = [{
-	        id: '0',
-	        entityId: booking_const.EntitySelectorEntity.Product,
-	        title: this.loc('BRCW_SETTINGS_CARD_SERVICES_SKUS_HIDDEN_ITEM'),
-	        hidden: true,
-	        deselectable: false
-	      }];
-	      const tagSelectionOptions = {
-	        showAddButton: !this.disabled,
-	        multiple: true,
-	        textBoxWidth: 190,
-	        placeholder: this.loc('BRCW_SETTINGS_CARD_SERVICES_SKUS_PLACEHOLDER'),
-	        addButtonCaption: this.loc('BRCW_SETTINGS_CARD_SERVICES_SKUS_PLACEHOLDER'),
-	        showCreateButton: false,
-	        dialogOptions,
-	        items: this.disabled ? items : null,
-	        tagBgColor: this.disabled ? 'var(--ui-color-gray-20)' : null,
-	        tagTextColor: this.disabled ? 'var(--ui-color-gray-70)' : null,
-	        tagClickable: !this.disabled
-	      };
-	      return new ui_entitySelector.TagSelector(tagSelectionOptions);
-	    },
-	    async select(id) {
-	      await this.addSku(id);
-	    },
-	    async deselect(id) {
-	      await this.deleteSku(id);
-	    },
-	    mountSelector() {
-	      this.selector.renderTo(this.$refs.servicesSelector);
-	      if (this.disabled) {
-	        this.selector.setLocked(this.disabled);
-	      }
-	    },
-	    destroySelector() {
-	      var _this$selector$getDia;
-	      (_this$selector$getDia = this.selector.getDialog()) == null ? void 0 : _this$selector$getDia.destroy();
-	      this.selector = null;
-	      this.$refs.servicesSelector.innerHTML = '';
-	    },
-	    async createService(event) {
-	      var _this$catalogSkuEntit2;
-	      const serviceName = event.getData().searchQuery.getQuery();
-	      const iblockId = (_this$catalogSkuEntit2 = this.catalogSkuEntityOptions) == null ? void 0 : _this$catalogSkuEntit2.iblockId;
-	      const serviceId = await booking_provider_service_catalogServiceSkuService.catalogServiceSkuService.create(iblockId, serviceName);
-	      const dialog = event.getTarget();
-	      if (!main_core.Type.isNumber(serviceId)) {
-	        return;
-	      }
-	      const blockId = this.catalogSkuEntityOptions.iblockId;
-	      const url = new main_core.Uri(`/crm/catalog/${blockId}/product/${serviceId}/`).toString();
-	      const item = dialog.addItem({
-	        id: serviceId,
-	        entityId: booking_const.EntitySelectorEntity.Product,
-	        title: serviceName,
-	        tabs: dialog.getRecentTab().getId(),
-	        sort: 2,
-	        link: url
-	      });
-	      if (item) {
-	        item.select();
-	        booking_lib_sidePanelInstance.SidePanelInstance.open(url);
-	      }
-	      dialog.hide();
-	    }
-	  },
-	  template: `
-		<div class="ui-form resource-creation-wizard__form-settings" data-id="brcw-resource-settings-services-skus">
-			<TitleLayout
-				:title="title"
-				:iconType="titleIconType"
-			/>
-			<TextLayout
-				type="WorkTime"
-				:text="text"
-			/>
-			<div
-				ref="servicesSelector"
-				class="resource-creation-wizard__services_services-selector"
-			></div>
-			<div
-				v-if="this.catalogSkuEntityOptions.length === 0"
-				class="resource-creation-wizard__services_warning"
-			>
-				{{ loc('BRCW_SETTINGS_CARD_SERVICES_SKUS_WARNING') }}
-			</div>
-		</div>
-	`
-	};
-
-	const ScheduleItem = {
-	  name: 'ScheduleItem',
-	  emits: ['update:model-value'],
-	  props: {
-	    modelValue: {
-	      type: Boolean,
-	      required: true
-	    },
-	    itemClass: {
-	      type: String,
-	      required: true
-	    },
-	    title: {
-	      type: String,
-	      required: true
-	    },
-	    description: {
-	      type: String,
-	      required: true
-	    },
-	    value: {
-	      type: Boolean,
-	      required: true
-	    }
-	  },
-	  setup() {
-	    return {
-	      code: booking_const.HelpDesk.ResourceSchedule.code,
-	      anchorCode: booking_const.HelpDesk.ResourceSchedule.anchorCode
-	    };
-	  },
-	  computed: {
-	    isSelected() {
-	      return this.modelValue.toString() === this.value.toString();
-	    }
-	  },
-	  methods: {
-	    selectOption() {
-	      this.$emit('update:model-value', this.value);
-	    }
-	  },
-	  components: {
-	    HelpDeskLoc: booking_component_helpDeskLoc.HelpDeskLoc
-	  },
-	  template: `
-		<div
-			:class="['booking--rcw--schedule-item', { '--selected': isSelected }]"
-			@click="selectOption"
-		>
-			<div class="booking--rcw--schedule-item-radio ui-ctl-radio">
-				<input
-					:id="itemClass"
-					:checked="isSelected"
-					:value="value.toString()"
-					type="radio"
-					class="ui-ctl-element"
-					@input="$emit('update:model-value', $event.target.value === 'true')"
-				/>
-			</div>
-			<div class="booking--rcw--schedule-item-text">
-				<label
-					:for="itemClass"
-					class="booking--rcw--schedule-item-text-title">
-					{{ title }}
-				</label>
-				<HelpDeskLoc
-					:message="description"
-					:code="code"
-					:anchor="anchorCode"
-					:rules="['nowrap']"
-					class="booking--rcw--schedule-item-text-description"
-					link-class="booking--rcw--more booking--rcw--schedule-item-text-description-more"
-				/>
-			</div>
-			<div class="booking--rcw--schedule-item-view" :class="itemClass"></div>
-		</div>
-	`
-	};
-
-	const ScheduleTypes = {
-	  name: 'ResourceSettingsCardScheduleTypes',
-	  emits: ['update:model-value'],
-	  props: {
-	    modelValue: {
-	      type: Boolean,
-	      default: true
-	    }
-	  },
-	  setup() {
-	    const title = main_core.Loc.getMessage('BRCW_SETTINGS_CARD_SCHEDULE_TITLE_MSGVER_1');
-	    const titleIconType = ui_iconSet_api_vue.Set.OPENED_EYE;
-	    const items = [{
-	      id: 'common',
-	      itemClass: 'resource-creation-wizard__form-settings-schedule-view-common',
-	      title: main_core.Loc.getMessage('BRCW_SETTINGS_CARD_SCHEDULE_COLUMNS_TITLE_MSGVER_1'),
-	      description: main_core.Loc.getMessage('BRCW_SETTINGS_CARD_SCHEDULE_COLUMNS_DESCRIPTION_MSGVER_2'),
-	      value: true
-	    }, {
-	      id: 'extra',
-	      itemClass: 'resource-creation-wizard__form-settings-schedule-view-extra',
-	      title: main_core.Loc.getMessage('BRCW_SETTINGS_CARD_SCHEDULE_CROSS_RESOURCING_TITLE_MSGVER_1'),
-	      description: main_core.Loc.getMessage('BRCW_SETTINGS_CARD_SCHEDULE_CROSS_RESOURCING_DESCRIPTION_MSGVER_2'),
-	      value: false
-	    }];
-	    return {
-	      items,
-	      title,
-	      titleIconType
-	    };
-	  },
-	  components: {
-	    ScheduleItem,
-	    TitleLayout
-	  },
-	  template: `
-		<div class="ui-form resource-creation-wizard__form-settings --schedule">
-			<TitleLayout
-				:title="title"
-				:iconType="titleIconType"
-			/>
-			<div class="resource-creation-wizard__form-settings-schedule-view">
-				<ScheduleItem
-					v-for="item in items"
-					:key="item.id"
-					:data-id="'brcw-resource-schedule-view-' + item.id"
-					:model-value="modelValue"
-					:item-class="item.itemClass"
-					:title="item.title"
-					:description="item.description"
-					:value="item.value"
-					@update:model-value="$emit('update:model-value', $event)"
-				/>
-			</div>
-		</div>
-	`
-	};
-
 	// @vue/component
 	const SettingsItem = {
-	  name: 'IntegrationSettingsItem',
-	  components: {
-	    UiErrorMessage: booking_component_uiErrorMessage.UiErrorMessage
-	  },
-	  props: {
-	    title: {
-	      type: String,
-	      required: true
-	    },
-	    description: {
-	      type: String,
-	      required: true
-	    },
-	    errorMessage: {
-	      type: String,
-	      default: null
-	    }
-	  },
-	  template: `
+		name: 'IntegrationSettingsItem',
+		components: {
+			UiErrorMessage: booking_component_uiErrorMessage.UiErrorMessage
+		},
+		props: {
+			title: {
+				type: String,
+				required: true
+			},
+			description: {
+				type: String,
+				required: true
+			},
+			errorMessage: {
+				type: String,
+				default: null
+			}
+		},
+		template: `
 		<div class="resource-creation-wizard__integration-block-settings-item">
 			<div class="resource-creation-wizard__integration-block-settings-item-info">
 				<div class="resource-creation-wizard__integration-block-settings-item-info-title">
@@ -1429,142 +1063,140 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const SettingsSelector = {
-	  name: 'SettingsSelector',
-	  props: {
-	    values: {
-	      type: Array,
-	      required: true
-	    },
-	    entitiesId: {
-	      type: String,
-	      required: true
-	    },
-	    multiple: {
-	      type: Boolean,
-	      default: true
-	    },
-	    disabled: {
-	      type: Boolean,
-	      default: false
-	    },
-	    emptyTitle: {
-	      type: String,
-	      default: ''
-	    },
-	    emptySubtitle: {
-	      type: String,
-	      default: ''
-	    }
-	  },
-	  emits: ['change'],
-	  watch: {
-	    disabled: {
-	      handler(disabled) {
-	        var _this$selector;
-	        (_this$selector = this.selector) == null ? void 0 : _this$selector.setLocked(disabled);
-	      },
-	      immediate: true
-	    }
-	  },
-	  created() {
-	    this.selector = this.createSelector();
-	  },
-	  mounted() {
-	    this.mountSelector();
-	  },
-	  beforeUnmount() {
-	    this.destroySelector();
-	  },
-	  methods: {
-	    createSelector() {
-	      const showEmptyState = this.emptyTitle && this.emptySubtitle;
-	      const emptyState = showEmptyState ? {
-	        recentTabOptions: {
-	          visible: false
-	        },
-	        searchTabOptions: {
-	          stub: true,
-	          stubOptions: {
-	            title: this.emptyTitle,
-	            subtitle: this.emptySubtitle
-	          }
-	        },
-	        tabs: [{
-	          id: this.entitiesId,
-	          stub: true,
-	          stubOptions: {
-	            title: this.emptyTitle,
-	            subtitle: this.emptySubtitle
-	          }
-	        }]
-	      } : {};
-	      const tagSelectionOptions = {
-	        multiple: this.multiple,
-	        addButtonCaption: this.loc('BRCW_SETTINGS_CARD_INTEGRATION_SELECTOR_BTN'),
-	        showCreateButton: false,
-	        maxHeight: 40,
-	        dialogOptions: {
-	          context: 'bookingResourceIntersection',
-	          width: 290,
-	          height: 340,
-	          dropdownMode: true,
-	          compactView: true,
-	          enableSearch: true,
-	          cacheable: true,
-	          showAvatars: false,
-	          popupOptions: {
-	            targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper')
-	          },
-	          entities: [{
-	            id: this.entitiesId,
-	            dynamicLoad: true,
-	            dynamicSearch: true
-	          }],
-	          preselectedItems: this.values.map(id => [this.entitiesId, id]),
-	          events: {
-	            'Item:onSelect': event => {
-	              this.select(event.getData().item.id);
-	            },
-	            'Item:onDeselect': event => {
-	              this.deselect(event.getData().item.id);
-	            },
-	            onLoad: () => {
-	              if (!showEmptyState) {
-	                return;
-	              }
-	              const tab = this.selector.dialog.tabs.get(this.entitiesId);
-	              if ((tab == null ? void 0 : tab.dialog.items.size) === 0) {
-	                var _tab$getStub;
-	                (_tab$getStub = tab.getStub()) == null ? void 0 : _tab$getStub.show();
-	              }
-	            }
-	          },
-	          ...emptyState
-	        }
-	      };
-	      return new ui_entitySelector.TagSelector(tagSelectionOptions);
-	    },
-	    select(itemId) {
-	      const itemsSet = new Set(this.values);
-	      itemsSet.add(itemId);
-	      this.$emit('change', [...itemsSet]);
-	    },
-	    deselect(itemId) {
-	      this.$emit('change', this.values.filter(id => id !== itemId));
-	    },
-	    mountSelector() {
-	      this.selector.renderTo(this.$refs.settingsSelector);
-	      if (this.disabled) {
-	        this.selector.setLocked(this.disabled);
-	      }
-	    },
-	    destroySelector() {
-	      this.selector.getDialog().destroy();
-	      this.selector = null;
-	      this.$refs.settingsSelector.innerHTML = '';
-	    }
-	  },
-	  template: `
+		name: 'SettingsSelector',
+		props: {
+			values: {
+				type: Array,
+				required: true
+			},
+			entitiesId: {
+				type: String,
+				required: true
+			},
+			multiple: {
+				type: Boolean,
+				default: true
+			},
+			disabled: {
+				type: Boolean,
+				default: false
+			},
+			emptyTitle: {
+				type: String,
+				default: ''
+			},
+			emptySubtitle: {
+				type: String,
+				default: ''
+			}
+		},
+		emits: ['change'],
+		watch: {
+			disabled: {
+				handler(disabled) {
+					this.selector?.setLocked(disabled);
+				},
+				immediate: true
+			}
+		},
+		created() {
+			this.selector = this.createSelector();
+		},
+		mounted() {
+			this.mountSelector();
+		},
+		beforeUnmount() {
+			this.destroySelector();
+		},
+		methods: {
+			createSelector() {
+				const showEmptyState = this.emptyTitle && this.emptySubtitle;
+				const emptyState = showEmptyState ? {
+					recentTabOptions: {
+						visible: false
+					},
+					searchTabOptions: {
+						stub: true,
+						stubOptions: {
+							title: this.emptyTitle,
+							subtitle: this.emptySubtitle
+						}
+					},
+					tabs: [{
+						id: this.entitiesId,
+						stub: true,
+						stubOptions: {
+							title: this.emptyTitle,
+							subtitle: this.emptySubtitle
+						}
+					}]
+				} : {};
+				const tagSelectionOptions = {
+					multiple: this.multiple,
+					addButtonCaption: this.loc('BRCW_SETTINGS_CARD_INTEGRATION_SELECTOR_BTN'),
+					showCreateButton: false,
+					maxHeight: 40,
+					dialogOptions: {
+						context: 'bookingResourceIntersection',
+						width: 290,
+						height: 340,
+						dropdownMode: true,
+						compactView: true,
+						enableSearch: true,
+						cacheable: true,
+						showAvatars: false,
+						popupOptions: {
+							targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper')
+						},
+						entities: [{
+							id: this.entitiesId,
+							dynamicLoad: true,
+							dynamicSearch: true
+						}],
+						preselectedItems: this.values.map(id => [this.entitiesId, id]),
+						events: {
+							'Item:onSelect': event => {
+								this.select(event.getData().item.id);
+							},
+							'Item:onDeselect': event => {
+								this.deselect(event.getData().item.id);
+							},
+							onLoad: () => {
+								if (!showEmptyState) {
+									return;
+								}
+								const tab = this.selector.dialog.tabs.get(this.entitiesId);
+								if (tab?.dialog.items.size === 0) {
+									tab.getStub()?.show();
+								}
+							}
+						},
+						...emptyState
+					}
+				};
+				return new ui_entitySelector.TagSelector(tagSelectionOptions);
+			},
+			select(itemId) {
+				const itemsSet = new Set(this.values);
+				itemsSet.add(itemId);
+				this.$emit('change', [...itemsSet]);
+			},
+			deselect(itemId) {
+				this.$emit('change', this.values.filter(id => id !== itemId));
+			},
+			mountSelector() {
+				this.selector.renderTo(this.$refs.settingsSelector);
+				if (this.disabled) {
+					this.selector.setLocked(this.disabled);
+				}
+			},
+			destroySelector() {
+				this.selector.getDialog().destroy();
+				this.selector = null;
+				this.$refs.settingsSelector.innerHTML = '';
+			}
+		},
+		template: `
 		<div
 			ref="settingsSelector"
 			class="resource-creation-wizard__integration-block-settings-selector"
@@ -1573,133 +1205,129 @@ this.BX = this.BX || {};
 	};
 
 	const {
-	  mapGetters: mapResourceGetters$1,
-	  mapActions: mapActions$1
+		mapGetters: mapResourceGetters$4,
+		mapActions: mapActions$2
 	} = ui_vue3_vuex.createNamespacedHelpers(booking_const.Model.ResourceCreationWizard);
 
 	// @vue/component
 	const IntegrationCalendar = {
-	  name: 'IntegrationCalendar',
-	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon,
-	    Switcher: booking_component_switcher.Switcher,
-	    SettingsItem,
-	    SettingsSelector,
-	    UiReminder: booking_component_reminder.Reminder
-	  },
-	  setup() {
-	    const entityRoomId = booking_const.EntitySelectorEntity.Room;
-	    const entityUserId = booking_const.EntitySelectorEntity.User;
-	    return {
-	      entityRoomId,
-	      entityUserId,
-	      Main: ui_iconSet_api_vue.Main
-	    };
-	  },
-	  data() {
-	    return {
-	      isVisible: null
-	    };
-	  },
-	  computed: {
-	    ...mapResourceGetters$1({
-	      entityCalendar: 'entityCalendar',
-	      isIntegrationCalendarEnabled: 'isIntegrationCalendarEnabled',
-	      invalidIntegrationCalendarUser: 'invalidIntegrationCalendarUser'
-	    }),
-	    featureEnabled() {
-	      return this.$store.state[booking_const.Model.Interface].enabledFeature.bookingCalendar;
-	    },
-	    isEnabled: {
-	      get() {
-	        return this.featureEnabled && this.$store.getters[`${booking_const.Model.ResourceCreationWizard}/isIntegrationCalendarEnabled`];
-	      },
-	      set(isIntegrationCalendarEnabled) {
-	        this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/setIsIntegrationCalendarEnabled`, isIntegrationCalendarEnabled);
-	      }
-	    },
-	    reminders: {
-	      get() {
-	        var _this$entityCalendar, _this$entityCalendar$;
-	        return (((_this$entityCalendar = this.entityCalendar) == null ? void 0 : (_this$entityCalendar$ = _this$entityCalendar.data) == null ? void 0 : _this$entityCalendar$.reminders) || []).map(r => r.count);
-	      },
-	      set(reminders) {
-	        this.updateResourceEntityCalendar({
-	          reminders: reminders.map(r => {
-	            return {
-	              type: 'min',
-	              count: r
-	            };
-	          })
-	        });
-	      }
-	    },
-	    isDisabled() {
-	      var _this$entityCalendar2;
-	      if (!this.isEnabled) {
-	        return true;
-	      }
-	      return !this.isEnabled || !this.entityCalendar || ((_this$entityCalendar2 = this.entityCalendar) == null ? void 0 : _this$entityCalendar2.data.userIds.length) === 0;
-	    },
-	    userErrorMessage() {
-	      if (!this.isEnabled || !this.invalidIntegrationCalendarUser) {
-	        return null;
-	      }
-	      return this.loc('BRCW_SETTINGS_CARD_INTEGRATION_CALENDAR_SETTING_USER_ERROR_MESSAGE');
-	    }
-	  },
-	  watch: {
-	    invalidIntegrationCalendarUser(invalid) {
-	      if (invalid) {
-	        this.scrollToUserField();
-	      }
-	    }
-	  },
-	  beforeMount() {
-	    this.isVisible = this.featureEnabled && this.$store.getters[`${booking_const.Model.ResourceCreationWizard}/isIntegrationCalendarEnabled`];
-	  },
-	  methods: {
-	    ...mapActions$1(['updateResource', 'updateResourceEntityCalendar', 'createResourceEntityCalendar', 'setInvalidIntegrationCalendarUser']),
-	    async toggleEnabled() {
-	      if (!this.entityCalendar) {
-	        await this.createResourceEntityCalendar();
-	      }
-	      this.isEnabled = !this.isEnabled;
-	      if (this.isEnabled && !this.isVisible) {
-	        this.isVisible = true;
-	      }
-	      if (!this.isEnabled) {
-	        await this.setInvalidIntegrationCalendarUser(false);
-	      }
-	    },
-	    async updateUsers(userIds) {
-	      await this.updateResourceEntityCalendar({
-	        userIds: userIds.map(id => parseInt(id, 10))
-	      });
-	      if (userIds.length > 0) {
-	        await this.setInvalidIntegrationCalendarUser(false);
-	      }
-	    },
-	    async updateLocationId(locationIds) {
-	      var _parseInt;
-	      await this.updateResourceEntityCalendar({
-	        locationId: locationIds.length > 0 ? (_parseInt = parseInt(locationIds[0], 10)) != null ? _parseInt : null : null
-	      });
-	    },
-	    scrollToUserField() {
-	      var _this$$refs$user$$el;
-	      (_this$$refs$user$$el = this.$refs.user.$el) == null ? void 0 : _this$$refs$user$$el.scrollIntoView(true, {
-	        behavior: 'smooth',
-	        block: 'center'
-	      });
-	    },
-	    switcherClick() {
-	      if (!this.featureEnabled) {
-	        void booking_lib_limit.limit.show(booking_const.LimitFeatureId.CalendarIntegration);
-	      }
-	    }
-	  },
-	  template: `
+		name: 'IntegrationCalendar',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon,
+			Switcher: booking_component_switcher.Switcher,
+			SettingsItem,
+			SettingsSelector,
+			UiReminder: booking_component_reminder.Reminder
+		},
+		setup() {
+			const entityRoomId = booking_const.EntitySelectorEntity.Room;
+			const entityUserId = booking_const.EntitySelectorEntity.User;
+			return {
+				entityRoomId,
+				entityUserId,
+				Main: ui_iconSet_api_vue.Main
+			};
+		},
+		data() {
+			return {
+				isVisible: null
+			};
+		},
+		computed: {
+			...mapResourceGetters$4({
+				entityCalendar: 'entityCalendar',
+				isIntegrationCalendarEnabled: 'isIntegrationCalendarEnabled',
+				invalidIntegrationCalendarUser: 'invalidIntegrationCalendarUser'
+			}),
+			featureEnabled() {
+				return this.$store.state[booking_const.Model.Interface].enabledFeature.bookingCalendar;
+			},
+			isEnabled: {
+				get() {
+					return this.featureEnabled && this.$store.getters[`${booking_const.Model.ResourceCreationWizard}/isIntegrationCalendarEnabled`];
+				},
+				set(isIntegrationCalendarEnabled) {
+					this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/setIsIntegrationCalendarEnabled`, isIntegrationCalendarEnabled);
+				}
+			},
+			reminders: {
+				get() {
+					return (this.entityCalendar?.data?.reminders || []).map(r => r.count);
+				},
+				set(reminders) {
+					this.updateResourceEntityCalendar({
+						reminders: reminders.map(r => {
+							return {
+								type: 'min',
+								count: r
+							};
+						})
+					});
+				}
+			},
+			isDisabled() {
+				if (!this.isEnabled) {
+					return true;
+				}
+				return !this.isEnabled || !this.entityCalendar || this.entityCalendar?.data.userIds.length === 0;
+			},
+			userErrorMessage() {
+				if (!this.isEnabled || !this.invalidIntegrationCalendarUser) {
+					return null;
+				}
+				return this.loc('BRCW_SETTINGS_CARD_INTEGRATION_CALENDAR_SETTING_USER_ERROR_MESSAGE');
+			}
+		},
+		watch: {
+			invalidIntegrationCalendarUser(invalid) {
+				if (invalid) {
+					this.scrollToUserField();
+				}
+			}
+		},
+		beforeMount() {
+			this.isVisible = this.featureEnabled && this.$store.getters[`${booking_const.Model.ResourceCreationWizard}/isIntegrationCalendarEnabled`];
+		},
+		methods: {
+			...mapActions$2(['updateResource', 'updateResourceEntityCalendar', 'createResourceEntityCalendar', 'setInvalidIntegrationCalendarUser']),
+			async toggleEnabled() {
+				if (!this.entityCalendar) {
+					await this.createResourceEntityCalendar();
+				}
+				this.isEnabled = !this.isEnabled;
+				if (this.isEnabled && !this.isVisible) {
+					this.isVisible = true;
+				}
+				if (!this.isEnabled) {
+					await this.setInvalidIntegrationCalendarUser(false);
+				}
+			},
+			async updateUsers(userIds) {
+				await this.updateResourceEntityCalendar({
+					userIds: userIds.map(id => parseInt(id, 10))
+				});
+				if (userIds.length > 0) {
+					await this.setInvalidIntegrationCalendarUser(false);
+				}
+			},
+			async updateLocationId(locationIds) {
+				await this.updateResourceEntityCalendar({
+					locationId: locationIds.length > 0 ? parseInt(locationIds[0], 10) ?? null : null
+				});
+			},
+			scrollToUserField() {
+				this.$refs.user.$el?.scrollIntoView(true, {
+					behavior: 'smooth',
+					block: 'center'
+				});
+			},
+			switcherClick() {
+				if (!this.featureEnabled) {
+					void booking_lib_limit.limit.show(booking_const.LimitFeatureId.CalendarIntegration);
+				}
+			}
+		},
+		template: `
 		<div
 			class="resource-creation-wizard__integration-block booking--rcw--integration-calendar"
 			:class="{'--disabled': !featureEnabled}"
@@ -1779,21 +1407,21 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const Integration = {
-	  name: 'ResourceIntegration',
-	  components: {
-	    TitleLayout,
-	    TextLayout,
-	    IntegrationCalendar
-	  },
-	  setup() {
-	    const title = main_core.Loc.getMessage('BRCW_SETTINGS_CARD_INTEGRATION_TITLE');
-	    const titleIconType = ui_iconSet_api_vue.Set.COLLABORATION;
-	    return {
-	      title,
-	      titleIconType
-	    };
-	  },
-	  template: `
+		name: 'ResourceIntegration',
+		components: {
+			TitleLayout,
+			TextLayout,
+			IntegrationCalendar
+		},
+		setup() {
+			const title = main_core.Loc.getMessage('BRCW_SETTINGS_CARD_INTEGRATION_TITLE');
+			const titleIconType = ui_iconSet_api_vue.Set.COLLABORATION;
+			return {
+				title,
+				titleIconType
+			};
+		},
+		template: `
 		<div class="ui-form resource-creation-wizard__form-settings" data-id="brcw-resource-settings-integrations">
 			<TitleLayout
 				:title="title"
@@ -1808,145 +1436,841 @@ this.BX = this.BX || {};
 	`
 	};
 
+	const ScheduleItem = {
+		name: 'ScheduleItem',
+		emits: ['update:model-value'],
+		props: {
+			modelValue: {
+				type: Boolean,
+				required: true
+			},
+			itemClass: {
+				type: String,
+				required: true
+			},
+			title: {
+				type: String,
+				required: true
+			},
+			description: {
+				type: String,
+				required: true
+			},
+			value: {
+				type: Boolean,
+				required: true
+			}
+		},
+		setup() {
+			return {
+				code: booking_const.HelpDesk.ResourceSchedule.code,
+				anchorCode: booking_const.HelpDesk.ResourceSchedule.anchorCode
+			};
+		},
+		computed: {
+			isSelected() {
+				return this.modelValue.toString() === this.value.toString();
+			}
+		},
+		methods: {
+			selectOption() {
+				this.$emit('update:model-value', this.value);
+			}
+		},
+		components: {
+			HelpDeskLoc: booking_component_helpDeskLoc.HelpDeskLoc
+		},
+		template: `
+		<div
+			:class="['booking--rcw--schedule-item', { '--selected': isSelected }]"
+			@click="selectOption"
+		>
+			<div class="booking--rcw--schedule-item-radio ui-ctl-radio">
+				<input
+					:id="itemClass"
+					:checked="isSelected"
+					:value="value.toString()"
+					type="radio"
+					class="ui-ctl-element"
+					@input="$emit('update:model-value', $event.target.value === 'true')"
+				/>
+			</div>
+			<div class="booking--rcw--schedule-item-text">
+				<label
+					:for="itemClass"
+					class="booking--rcw--schedule-item-text-title">
+					{{ title }}
+				</label>
+				<HelpDeskLoc
+					:message="description"
+					:code="code"
+					:anchor="anchorCode"
+					:rules="['nowrap']"
+					class="booking--rcw--schedule-item-text-description"
+					link-class="booking--rcw--more booking--rcw--schedule-item-text-description-more"
+				/>
+			</div>
+			<div class="booking--rcw--schedule-item-view" :class="itemClass"></div>
+		</div>
+	`
+	};
+
+	const ScheduleTypes = {
+		name: 'ResourceSettingsCardScheduleTypes',
+		emits: ['update:model-value'],
+		props: {
+			modelValue: {
+				type: Boolean,
+				default: true
+			}
+		},
+		setup() {
+			const title = main_core.Loc.getMessage('BRCW_SETTINGS_CARD_SCHEDULE_TITLE_MSGVER_1');
+			const titleIconType = ui_iconSet_api_vue.Set.OPENED_EYE;
+			const items = [{
+				id: 'common',
+				itemClass: 'resource-creation-wizard__form-settings-schedule-view-common',
+				title: main_core.Loc.getMessage('BRCW_SETTINGS_CARD_SCHEDULE_COLUMNS_TITLE_MSGVER_1'),
+				description: main_core.Loc.getMessage('BRCW_SETTINGS_CARD_SCHEDULE_COLUMNS_DESCRIPTION_MSGVER_2'),
+				value: true
+			}, {
+				id: 'extra',
+				itemClass: 'resource-creation-wizard__form-settings-schedule-view-extra',
+				title: main_core.Loc.getMessage('BRCW_SETTINGS_CARD_SCHEDULE_CROSS_RESOURCING_TITLE_MSGVER_1'),
+				description: main_core.Loc.getMessage('BRCW_SETTINGS_CARD_SCHEDULE_CROSS_RESOURCING_DESCRIPTION_MSGVER_2'),
+				value: false
+			}];
+			return {
+				items,
+				title,
+				titleIconType
+			};
+		},
+		components: {
+			ScheduleItem,
+			TitleLayout
+		},
+		template: `
+		<div class="ui-form resource-creation-wizard__form-settings --schedule">
+			<TitleLayout
+				:title="title"
+				:iconType="titleIconType"
+			/>
+			<div class="resource-creation-wizard__form-settings-schedule-view">
+				<ScheduleItem
+					v-for="item in items"
+					:key="item.id"
+					:data-id="'brcw-resource-schedule-view-' + item.id"
+					:model-value="modelValue"
+					:item-class="item.itemClass"
+					:title="item.title"
+					:description="item.description"
+					:value="item.value"
+					@update:model-value="$emit('update:model-value', $event)"
+				/>
+			</div>
+		</div>
+	`
+	};
+
 	const {
-	  mapGetters: mapResourceGetters$2
+		mapGetters: mapResourceGetters$3,
+		mapActions: mapActions$1
+	} = ui_vue3_vuex.createNamespacedHelpers(booking_const.Model.ResourceCreationWizard);
+
+	// @vue/component
+	const ServicesSkus = {
+		name: 'ResourceSettingsCardServicesSkus',
+		components: {
+			TitleLayout,
+			TextLayout
+		},
+		computed: {
+			...mapResourceGetters$3({
+				skus: 'skus'
+			}),
+			title() {
+				return this.loc('BRCW_SETTINGS_CARD_SERVICES_SKUS_TITLE');
+			},
+			text() {
+				return this.loc('BRCW_SETTINGS_CARD_SERVICES_SKUS_TEXT');
+			},
+			titleIconType() {
+				return ui_iconSet_api_vue.Set.PERSONS_3;
+			},
+			catalogSkuEntityOptions() {
+				return this.$store.state[booking_const.Model.Sku].catalogSkuEntityOptions;
+			},
+			disabled() {
+				return this.catalogSkuEntityOptions.length === 0;
+			}
+		},
+		created() {
+			this.selector = this.createSelector();
+		},
+		mounted() {
+			this.mountSelector();
+		},
+		beforeUnmount() {
+			this.destroySelector();
+		},
+		methods: {
+			...mapActions$1(['addSku', 'deleteSku']),
+			createSelector() {
+				const dialogOptions = this.disabled ? null : {
+					context: 'bookingResourceServices',
+					width: 390,
+					height: 340,
+					dropdownMode: true,
+					compactView: true,
+					enableSearch: true,
+					cacheable: true,
+					showAvatars: false,
+					popupOptions: {
+						targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper')
+					},
+					searchOptions: {
+						allowCreateItem: this.catalogSkuEntityOptions?.canCreate
+					},
+					entities: [{
+						id: booking_const.EntitySelectorEntity.Product,
+						dynamicLoad: true,
+						dynamicSearch: true,
+						options: this.catalogSkuEntityOptions
+					}],
+					preselectedItems: this.skus.map(sku => [booking_const.EntitySelectorEntity.Product, sku.id]),
+					events: {
+						'Item:onSelect': event => {
+							this.select(event.getData().item.id);
+						},
+						'Item:onDeselect': event => {
+							this.deselect(event.getData().item.id);
+						},
+						'Search:onItemCreateAsync': event => {
+							return this.createService(event);
+						}
+					},
+					recentTabOptions: {
+						stub: true,
+						stubOptions: {
+							title: this.loc('BRCW_SETTINGS_CARD_SERVICES_SKUS_RECENT_EMPTY_STATE_TITLE_MSGVER_1'),
+							subtitle: this.loc('BRCW_SETTINGS_CARD_SERVICES_SKUS_RECENT_EMPTY_STATE_SUBTITLE_MSGVER_1')
+						}
+					}
+				};
+				const items = [{
+					id: '0',
+					entityId: booking_const.EntitySelectorEntity.Product,
+					title: this.loc('BRCW_SETTINGS_CARD_SERVICES_SKUS_HIDDEN_ITEM'),
+					hidden: true,
+					deselectable: false
+				}];
+				const tagSelectionOptions = {
+					showAddButton: !this.disabled,
+					multiple: true,
+					textBoxWidth: 190,
+					placeholder: this.loc('BRCW_SETTINGS_CARD_SERVICES_SKUS_PLACEHOLDER'),
+					addButtonCaption: this.loc('BRCW_SETTINGS_CARD_SERVICES_SKUS_PLACEHOLDER'),
+					showCreateButton: false,
+					dialogOptions,
+					items: this.disabled ? items : null,
+					tagBgColor: this.disabled ? 'var(--ui-color-gray-20)' : null,
+					tagTextColor: this.disabled ? 'var(--ui-color-gray-70)' : null,
+					tagClickable: !this.disabled
+				};
+				return new ui_entitySelector.TagSelector(tagSelectionOptions);
+			},
+			async select(id) {
+				await this.addSku(id);
+			},
+			async deselect(id) {
+				await this.deleteSku(id);
+			},
+			mountSelector() {
+				this.selector.renderTo(this.$refs.servicesSelector);
+				if (this.disabled) {
+					this.selector.setLocked(this.disabled);
+				}
+			},
+			destroySelector() {
+				this.selector.getDialog()?.destroy();
+				this.selector = null;
+				this.$refs.servicesSelector.innerHTML = '';
+			},
+			async createService(event) {
+				const serviceName = event.getData().searchQuery.getQuery();
+				const iblockId = this.catalogSkuEntityOptions?.iblockId;
+				const serviceId = await booking_provider_service_catalogServiceSkuService.catalogServiceSkuService.create(iblockId, serviceName);
+				const dialog = event.getTarget();
+				if (!main_core.Type.isNumber(serviceId)) {
+					return;
+				}
+				const blockId = this.catalogSkuEntityOptions.iblockId;
+				const url = new main_core.Uri(`/crm/catalog/${blockId}/product/${serviceId}/`).toString();
+				const item = dialog.addItem({
+					id: serviceId,
+					entityId: booking_const.EntitySelectorEntity.Product,
+					title: serviceName,
+					tabs: dialog.getRecentTab().getId(),
+					sort: 2,
+					link: url
+				});
+				if (item) {
+					item.select();
+					booking_lib_sidePanelInstance.SidePanelInstance.open(url);
+				}
+				dialog.hide();
+			}
+		},
+		template: `
+		<div class="ui-form resource-creation-wizard__form-settings" data-id="brcw-resource-settings-services-skus">
+			<TitleLayout
+				:title="title"
+				:iconType="titleIconType"
+			/>
+			<TextLayout
+				type="WorkTime"
+				:text="text"
+			/>
+			<div
+				ref="servicesSelector"
+				class="resource-creation-wizard__services_services-selector"
+			></div>
+			<div
+				v-if="this.catalogSkuEntityOptions.length === 0"
+				class="resource-creation-wizard__services_warning"
+			>
+				{{ loc('BRCW_SETTINGS_CARD_SERVICES_SKUS_WARNING') }}
+			</div>
+		</div>
+	`
+	};
+
+	const SlotLengthPrecisionSelection = {
+		name: 'ResourceSettingsCardSlotLengthSlotLengthPrecisionSelection',
+		directives: {
+			hint: ui_vue3_directives_hint.hint
+		},
+		emits: ['input'],
+		components: {},
+		props: {
+			initialValue: {
+				type: Number,
+				default: 0
+			}
+		},
+		data() {
+			return {
+				days: 0,
+				hours: 0,
+				minutes: 0,
+				minutesFocused: false
+			};
+		},
+		created() {
+			this.distributeInitialValue();
+		},
+		methods: {
+			distributeInitialValue() {
+				let remainingMinutes = normalizeSlotLength(this.initialValue, this.isMultidayFeatureAvailable);
+				this.days = Math.floor(remainingMinutes / (24 * 60));
+				remainingMinutes %= 24 * 60;
+				this.hours = Math.floor(remainingMinutes / 60);
+				remainingMinutes %= 60;
+				this.minutes = remainingMinutes;
+			},
+			calculateTotalMinutes() {
+				const totalMinutes = normalizeSlotLength(this.days * 24 * 60 + this.hours * 60 + this.minutes, this.isMultidayFeatureAvailable);
+				this.applyTotalMinutes(totalMinutes);
+				this.$emit('input', totalMinutes);
+			},
+			applyTotalMinutes(totalMinutes) {
+				let remainingMinutes = totalMinutes;
+				this.days = Math.floor(remainingMinutes / (24 * 60));
+				remainingMinutes %= 24 * 60;
+				this.hours = Math.floor(remainingMinutes / 60);
+				remainingMinutes %= 60;
+				this.minutes = remainingMinutes;
+			},
+			validateDays() {
+				this.days = parseInt(this.days, 10);
+				if (!main_core.Type.isNumber(this.days) || this.days < 0) {
+					this.days = 0;
+				}
+				this.calculateTotalMinutes();
+			},
+			validateHours() {
+				this.hours = parseInt(this.hours, 10);
+				if (!main_core.Type.isNumber(this.hours) || this.hours < 0) {
+					this.hours = 0;
+				}
+				if (this.hours > 23) {
+					this.hours = 23;
+				}
+				if (this.hours === 0) {
+					// delay calculation to let time to determine if minutes focused before
+					setTimeout(() => {
+						if (!this.minutesFocused) {
+							this.calculateTotalMinutes();
+						}
+					}, 0);
+				} else {
+					this.calculateTotalMinutes();
+				}
+			},
+			validateMinutes() {
+				this.minutesFocused = false;
+				this.minutes = parseInt(this.minutes, 10);
+				if (!main_core.Type.isNumber(this.minutes) || this.minutes < 0) {
+					this.minutes = 0;
+				}
+				if (this.minutes > 59) {
+					this.minutes = 59;
+				}
+				this.calculateTotalMinutes();
+			},
+			handleEnterKey(event) {
+				if (event.key === 'Enter') {
+					event.target.blur();
+				}
+			}
+		},
+		computed: {
+			isMultidayFeatureAvailable() {
+				return this.$store.getters[`${booking_const.Model.Interface}/isMultidayFeatureAvailable`];
+			},
+			hourHint() {
+				if (this.isMultidayFeatureAvailable) {
+					return null;
+				}
+				return {
+					text: this.loc('BRCW_SETTINGS_CARD_SLOT_LENGTH_PRECISION_LIMIT_HOUR'),
+					popupOptions: {
+						targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper')
+					}
+				};
+			},
+			minutesHint() {
+				return {
+					text: this.loc('BRCW_SETTINGS_CARD_SLOT_LENGTH_PRECISION_LIMIT_MINUTES'),
+					popupOptions: {
+						targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper')
+					}
+				};
+			}
+		},
+		template: `
+		<div class="ui-form resource-creation-wizard__form-slot-length-precision-selection">
+			<div class="ui-form-row-inline">
+				<div
+					class="ui-form-row"
+					:class="{ '--disabled': !isMultidayFeatureAvailable }"
+				>
+					<div class="ui-form-content">
+						<div class="ui-form-row">
+							<div class="ui-ctl ui-ctl-time ui-ctl-sm ui-ctl-round">
+								<input
+									:data-id="'brcw-resource-slot-length-precision-days'"
+									v-model="days"
+									type="text"
+									class="ui-ctl-element"
+									:disabled="!isMultidayFeatureAvailable"
+									@blur="validateDays"
+									@keydown="handleEnterKey"
+								>
+							</div>
+						</div>
+						<div class="ui-form-row">
+							<div>
+								{{ loc('BRCW_SETTINGS_CARD_SLOT_LENGTH_PRECISION_1') }}
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="ui-form-row">
+					<div class="ui-form-content">
+						<div class="ui-form-row">
+							<div 
+								class="ui-ctl ui-ctl-time ui-ctl-sm ui-ctl-round"
+								v-hint="hourHint"
+							>
+								<input
+									:data-id="'brcw-resource-slot-length-precision-hours'"
+									v-model="hours"
+									type="text"
+									class="ui-ctl-element"
+									@blur="validateHours"
+									@keydown="handleEnterKey"
+								>
+							</div>
+						</div>
+						<div class="ui-form-row">
+							<div>
+								{{ loc('BRCW_SETTINGS_CARD_SLOT_LENGTH_PRECISION_2') }}
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="ui-form-row">
+					<div class="ui-form-content">
+						<div class="ui-form-row">
+							<div 
+								class="ui-ctl ui-ctl-time ui-ctl-sm ui-ctl-round"
+								v-hint="minutesHint"
+							>
+								<input
+									:data-id="'brcw-resource-slot-length-precision-minutes'"
+									v-model="minutes"
+									type="text"
+									class="ui-ctl-element"
+									@focus="minutesFocused = true"
+									@blur="validateMinutes"
+									@keydown="handleEnterKey"
+								>
+							</div>
+						</div>
+						<div class="ui-form-row">
+							<div>
+								{{ loc('BRCW_SETTINGS_CARD_SLOT_LENGTH_PRECISION_3') }}
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	`
+	};
+
+	// @vue/component
+
+	const unitDurations = booking_lib_duration.Duration.getUnitDurations();
+	const units = Object.fromEntries(Object.entries(unitDurations).map(([unit, value]) => [unit, value / unitDurations.i]));
+	const multidayOnlyLengths = new Set([units.H * 24, units.d * 7]);
+	const SlotLengthSelector = {
+		name: 'ResourceSettingsCardSlotLengthSelector',
+		directives: {
+			hint: ui_vue3_directives_hint.hint
+		},
+		emits: ['select'],
+		components: {
+			SlotLengthPrecisionSelection
+		},
+		props: {
+			initialSelectedValue: {
+				type: Number,
+				required: true
+			}
+		},
+		data() {
+			return {
+				selectedPrecisionValue: this.initialSelectedValue,
+				precisionMode: false
+			};
+		},
+		computed: {
+			selectedValue: {
+				get() {
+					return this.$store.state[booking_const.Model.ResourceCreationWizard].slotLengthId;
+				},
+				set(slotLengthId) {
+					this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/setSlotLengthId`, {
+						slotLengthId
+					});
+				}
+			},
+			isMultidayFeatureAvailable() {
+				return this.$store.getters[`${booking_const.Model.Interface}/isMultidayFeatureAvailable`];
+			},
+			durations() {
+				return [{
+					label: new booking_lib_duration.Duration(unitDurations.H).format('H'),
+					value: units.H
+				}, {
+					label: new booking_lib_duration.Duration(unitDurations.H * 2).format('H'),
+					value: units.H * 2
+				}, {
+					label: new booking_lib_duration.Duration(unitDurations.H * 24).format('H'),
+					value: units.H * 24
+				}, {
+					label: new booking_lib_duration.Duration(unitDurations.d * 7).format('d'),
+					value: units.d * 7
+				}, {
+					label: this.loc('BRCW_SETTINGS_CARD_SLOT_LENGTH_SELECTOR_CUSTOM'),
+					value: 0
+				}];
+			}
+		},
+		created() {
+			const templateValues = new Set([units.H, units.H * 2, units.H * 24, units.d * 7]);
+			this.selectedValue = this.initialSelectedValue;
+			if (!templateValues.has(this.selectedValue)) {
+				this.selectedValue = 0;
+				this.precisionMode = true;
+			}
+		},
+		methods: {
+			select(value) {
+				if (this.isDurationDisabled(value)) {
+					return;
+				}
+				this.selectedValue = parseInt(value, 10);
+				if (value === 0) {
+					this.precisionMode = true;
+				} else {
+					this.precisionMode = false;
+					this.$emit('select', this.selectedValue);
+				}
+			},
+			selectPrecision(value) {
+				this.selectedPrecisionValue = value === 0 ? units.H : parseInt(value, 10);
+				if (value === 0) {
+					this.selectedValue = units.H;
+					this.precisionMode = false;
+				}
+				this.$emit('select', this.selectedPrecisionValue);
+			},
+			isDurationDisabled(value) {
+				return !this.isMultidayFeatureAvailable && multidayOnlyLengths.has(value);
+			},
+			getClass(value) {
+				return {
+					'ui-btn-primary': this.selectedValue === value,
+					'ui-btn-light': this.selectedValue !== value,
+					'ui-btn-disabled': this.isDurationDisabled(value)
+				};
+			},
+			getSoonHintContent(value) {
+				if (!this.isDurationDisabled(value)) {
+					return null;
+				}
+				return {
+					text: this.loc('BRCW_BOOKING_SOON_HINT'),
+					popupOptions: {
+						targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper')
+					}
+				};
+			}
+		},
+		template: `
+		<div class="resource-creation-wizard__form-slot-length-selector">
+			<div
+				v-for="(duration, index) in durations"
+				:key="index"
+				:data-id="'brcw-resource-slot-length-selector-size-' + index"
+				class="ui-btn ui-btn-xs"
+				:class="getClass(duration.value)"
+				@click="select(duration.value)"
+				v-hint="getSoonHintContent(duration.value)"
+			>
+				{{ duration.label }}
+			</div>
+		</div>
+		<transition name="fade">
+			<div
+				v-if="precisionMode"
+				class="resource-creation-wizard__form-slot-length-precision"
+			>
+				<SlotLengthPrecisionSelection
+					:initialValue="selectedPrecisionValue"
+					@input="selectPrecision"
+				/>
+			</div>
+		</transition>
+	`
+	};
+
+	const SlotLength = {
+		name: 'ResourceSettingsCardSlotLength',
+		emits: ['select'],
+		components: {
+			TitleLayout,
+			TextLayout,
+			SlotLengthSelector
+		},
+		props: {
+			initialSelectedValue: {
+				type: Number,
+				default: 60
+			}
+		},
+		data() {
+			return {
+				selectedSlotLength: this.initialSelectedValue
+			};
+		},
+		methods: {
+			updateSelectedValue(value) {
+				this.selectedSlotLength = value;
+				this.$emit('select', value);
+			}
+		},
+		computed: {
+			title() {
+				return this.loc('BRCW_SETTINGS_CARD_SLOT_LENGTH_TITLE_MSGVER_1');
+			},
+			titleIconType() {
+				return ui_iconSet_api_vue.Set.GANTT_GRAPHS;
+			}
+		},
+		template: `
+		<div class="ui-form resource-creation-wizard__form-settings">
+			<TitleLayout
+				:title="title"
+				:iconType="titleIconType"
+			/>
+			<TextLayout
+				type="SlotLength"
+				:text="loc('BRCW_SETTINGS_CARD_SLOT_LENGTH_TEXT_MSGVER_2')"
+			/>
+			<div>
+				<SlotLengthSelector
+					:initialSelectedValue="initialSelectedValue"
+					@select="updateSelectedValue"
+				/>
+			</div>
+		</div>
+	`
+	};
+
+	const {
+		mapGetters: mapResourceGetters$2
 	} = ui_vue3_vuex.createNamespacedHelpers('resource-creation-wizard');
 	const WorkTimeMixin = {
-	  data() {
-	    return {
-	      selected: {
-	        Mon: false,
-	        Tue: false,
-	        Wed: false,
-	        Thu: false,
-	        Fri: false,
-	        Sat: false,
-	        Sun: false
-	      },
-	      daysLabel: ''
-	    };
-	  },
-	  created() {
-	    this.initialDays.forEach(day => {
-	      if (Object.prototype.hasOwnProperty.call(this.selected, day)) {
-	        this.selected[day] = true;
-	      }
-	    });
-	    this.daysLabel = this.formatDaysLabel();
-	  },
-	  methods: {
-	    formatDaysLabel() {
-	      const defaultString = this.loc('BRCW_SETTINGS_CARD_WORK_TIME_DAYS');
-	      const weekDays = this.companyScheduleSlots[0].weekDays;
-	      if (this.isArraysEqual(this.selectedDays, weekDays)) {
-	        return defaultString;
-	      }
-	      const orderedDays = Object.keys(this.daysLabelMap);
-	      const sortedSelectedDays = this.selectedDays.sort((a, b) => {
-	        return orderedDays.indexOf(a) - orderedDays.indexOf(b);
-	      });
-	      const formattedDays = sortedSelectedDays.map(day => this.daysLabelMap[day]);
-	      return String(formattedDays.join(', '));
-	    },
-	    getDayDefaultIndex(dayKey) {
-	      const dayIndices = {
-	        Sun: 0,
-	        Mon: 1,
-	        Tue: 2,
-	        Wed: 3,
-	        Thu: 4,
-	        Fri: 5,
-	        Sat: 6
-	      };
-	      return dayIndices[dayKey];
-	    },
-	    isArraysEqual(first, second) {
-	      return first.length === second.length && first.every((value, index) => value === second[index]);
-	    }
-	  },
-	  computed: {
-	    ...mapResourceGetters$2({
-	      companyScheduleSlots: 'getCompanyScheduleSlots',
-	      weekStart: 'weekStart'
-	    }),
-	    selectedDays() {
-	      return Object.keys(this.selected).filter(day => this.selected[day]);
-	    },
-	    daysLabelMap() {
-	      const weekdays = [];
-	      const format = 'D';
-	      const allDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-	      const startIndex = allDays.indexOf(this.weekStart);
-	      const orderedDays = [...allDays.slice(startIndex), ...allDays.slice(0, startIndex)];
-	      orderedDays.forEach((dayKey, index) => {
-	        const currentDayIndex = new Date().getDay();
-	        const targetDayIndex = this.getDayDefaultIndex(dayKey);
-	        const dayDifference = (targetDayIndex - currentDayIndex + 7) % 7;
-	        const dayDate = new Date();
-	        dayDate.setDate(dayDate.getDate() + dayDifference);
-	        weekdays[index] = main_date.DateTimeFormat.format(format, dayDate);
-	      });
-	      return orderedDays.reduce((result, dayKey, index) => {
-	        // eslint-disable-next-line no-param-reassign
-	        result[dayKey] = weekdays[index];
-	        return result;
-	      }, {});
-	    }
-	  }
+		data() {
+			return {
+				selected: {
+					Mon: false,
+					Tue: false,
+					Wed: false,
+					Thu: false,
+					Fri: false,
+					Sat: false,
+					Sun: false
+				},
+				daysLabel: ''
+			};
+		},
+		created() {
+			this.initialDays.forEach(day => {
+				if (Object.prototype.hasOwnProperty.call(this.selected, day)) {
+					this.selected[day] = true;
+				}
+			});
+			this.daysLabel = this.formatDaysLabel();
+		},
+		methods: {
+			formatDaysLabel() {
+				const defaultString = this.loc('BRCW_SETTINGS_CARD_WORK_TIME_DAYS');
+				const weekDays = this.companyScheduleSlots[0].weekDays;
+				if (this.isArraysEqual(this.selectedDays, weekDays)) {
+					return defaultString;
+				}
+				const orderedDays = Object.keys(this.daysLabelMap);
+				const sortedSelectedDays = this.selectedDays.sort((a, b) => {
+					return orderedDays.indexOf(a) - orderedDays.indexOf(b);
+				});
+				const formattedDays = sortedSelectedDays.map(day => this.daysLabelMap[day]);
+				return String(formattedDays.join(', '));
+			},
+			getDayDefaultIndex(dayKey) {
+				const dayIndices = {
+					Sun: 0,
+					Mon: 1,
+					Tue: 2,
+					Wed: 3,
+					Thu: 4,
+					Fri: 5,
+					Sat: 6
+				};
+				return dayIndices[dayKey];
+			},
+			isArraysEqual(first, second) {
+				return first.length === second.length && first.every((value, index) => value === second[index]);
+			}
+		},
+		computed: {
+			...mapResourceGetters$2({
+				companyScheduleSlots: 'getCompanyScheduleSlots',
+				weekStart: 'weekStart'
+			}),
+			selectedDays() {
+				return Object.keys(this.selected).filter(day => this.selected[day]);
+			},
+			daysLabelMap() {
+				const weekdays = [];
+				const format = 'D';
+				const allDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+				const startIndex = allDays.indexOf(this.weekStart);
+				const orderedDays = [...allDays.slice(startIndex), ...allDays.slice(0, startIndex)];
+				orderedDays.forEach((dayKey, index) => {
+					const currentDayIndex = new Date().getDay();
+					const targetDayIndex = this.getDayDefaultIndex(dayKey);
+					const dayDifference = (targetDayIndex - currentDayIndex + 7) % 7;
+					const dayDate = new Date();
+					dayDate.setDate(dayDate.getDate() + dayDifference);
+					weekdays[index] = main_date.DateTimeFormat.format(format, dayDate);
+				});
+				return orderedDays.reduce((result, dayKey, index) => {
+					// eslint-disable-next-line no-param-reassign
+					result[dayKey] = weekdays[index];
+					return result;
+				}, {});
+			}
+		}
 	};
 
 	const WeekDaysPopup = {
-	  name: 'ResourceSettingsCardWeekDaysPopup',
-	  emits: ['select', 'close'],
-	  props: {
-	    id: {
-	      type: String,
-	      required: true
-	    },
-	    bindElement: {
-	      type: HTMLElement,
-	      required: true
-	    },
-	    initialDays: {
-	      type: Array,
-	      required: true
-	    }
-	  },
-	  components: {
-	    Popup: booking_component_popup.Popup
-	  },
-	  mixins: [WorkTimeMixin],
-	  methods: {
-	    close() {
-	      this.$emit('close');
-	    },
-	    click(day) {
-	      const trueKeys = Object.keys(this.selected).filter(key => this.selected[key] === true);
-	      if (trueKeys.length === 1 && trueKeys[0] === day) {
-	        return;
-	      }
-	      this.selected[day] = !this.selected[day];
-	      this.$emit('select', this.selectedDays, this.formatDaysLabel());
-	    }
-	  },
-	  computed: {
-	    popupId() {
-	      return `booking-work-time-popup-${this.id}`;
-	    },
-	    config() {
-	      return {
-	        bindElement: this.bindElement,
-	        targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper'),
-	        offsetRight: this.bindElement.offsetWidth,
-	        angle: false,
-	        bindOptions: {
-	          forceBindPosition: true,
-	          forceLeft: true
-	        }
-	      };
-	    }
-	  },
-	  template: `
+		name: 'ResourceSettingsCardWeekDaysPopup',
+		emits: ['select', 'close'],
+		props: {
+			id: {
+				type: String,
+				required: true
+			},
+			bindElement: {
+				type: HTMLElement,
+				required: true
+			},
+			initialDays: {
+				type: Array,
+				required: true
+			}
+		},
+		components: {
+			Popup: booking_component_popup.Popup
+		},
+		mixins: [WorkTimeMixin],
+		methods: {
+			close() {
+				this.$emit('close');
+			},
+			click(day) {
+				const trueKeys = Object.keys(this.selected).filter(key => this.selected[key] === true);
+				if (trueKeys.length === 1 && trueKeys[0] === day) {
+					return;
+				}
+				this.selected[day] = !this.selected[day];
+				this.$emit('select', this.selectedDays, this.formatDaysLabel());
+			}
+		},
+		computed: {
+			popupId() {
+				return `booking-work-time-popup-${this.id}`;
+			},
+			config() {
+				return {
+					bindElement: this.bindElement,
+					targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper'),
+					offsetRight: this.bindElement.offsetWidth,
+					angle: false,
+					bindOptions: {
+						forceBindPosition: true,
+						forceLeft: true
+					}
+				};
+			}
+		},
+		template: `
 		<Popup
 			:id="popupId"
 			:config="config"
@@ -1973,180 +2297,180 @@ this.BX = this.BX || {};
 	};
 
 	const WorkTimeSlotRange = {
-	  name: 'ResourceSettingsCardWorkTimeSlotRange',
-	  emits: ['add', 'update', 'remove'],
-	  props: {
-	    id: {
-	      type: Number,
-	      required: true
-	    },
-	    isLastRange: {
-	      type: Boolean,
-	      required: true
-	    },
-	    initialSlotRange: {
-	      type: Object,
-	      required: true
-	    }
-	  },
-	  components: {
-	    WeekDaysPopup
-	  },
-	  mixins: [WorkTimeMixin],
-	  data() {
-	    return {
-	      fromId: 'from',
-	      toId: 'to',
-	      fromTs: 0,
-	      toTs: 0,
-	      duration: 0,
-	      isShownDays: false,
-	      arrow: {
-	        days: false,
-	        from: false,
-	        to: false
-	      },
-	      removeSlot: !this.isLastRange,
-	      localSlotRange: {
-	        ...this.initialSlotRange
-	      },
-	      initialDays: [...this.initialSlotRange.weekDays]
-	    };
-	  },
-	  created() {
-	    this.fromTs = this.slotRange.from;
-	    this.toTs = this.slotRange.to;
-	    this.duration = this.toTs - this.fromTs;
-	  },
-	  watch: {
-	    'slotRange.from': function (value) {
-	      this.fromTs = value;
-	      this.toTs = this.fromTs + this.duration;
-	      this.update();
-	    },
-	    'slotRange.to': function (value) {
-	      this.toTs = value;
-	      if (this.toTs <= this.fromTs) {
-	        this.fromTs = this.toTs - this.duration;
-	      }
-	      this.duration = this.toTs - this.fromTs;
-	      this.update();
-	    }
-	  },
-	  methods: {
-	    showDays() {
-	      this.isShownDays = true;
-	      this.arrow.days = true;
-	    },
-	    hideDays() {
-	      this.isShownDays = false;
-	      this.arrow.days = false;
-	    },
-	    selectDays(weekDays, daysLabel) {
-	      this.slotRange.weekDays = weekDays;
-	      this.daysLabel = daysLabel;
-	      this.update();
-	    },
-	    show(bindElement, id) {
-	      if (this.arrow[id] === true) {
-	        return;
-	      }
-	      const menuId = `booking-work-time-popup-${this.id}-${id}`;
-	      main_popup.MenuManager.destroy(menuId);
-	      const timeList = main_popup.MenuManager.create({
-	        id: menuId,
-	        className: 'resource-creation-wizard__form-work-time-menu',
-	        bindElement,
-	        targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper'),
-	        autoHide: true,
-	        closeByEsc: true,
-	        events: {
-	          onShow: () => {
-	            this.arrow[id] = true;
-	            const selectedItem = timeList.getMenuItems().find(item => main_core.Dom.hasClass(item.getLayout().item, '--selected'));
-	            const itemHeight = 36;
-	            const offset = 2 * itemHeight;
-	            const scrollContainer = timeList.getPopupWindow().getContentContainer();
-	            const topPosition = main_core.Dom.getRelativePosition(selectedItem.getContainer(), scrollContainer).top;
-	            scrollContainer.scrollTo({
-	              top: scrollContainer.scrollTop + topPosition - offset,
-	              behavior: 'instant'
-	            });
-	          },
-	          onClose: () => {
-	            this.arrow[id] = false;
-	          }
-	        },
-	        maxHeight: 200,
-	        minWidth: bindElement.offsetWidth
-	      });
-	      for (const [key, value] of Object.entries(this.generateTimeMap(id))) {
-	        const minutes = parseInt(key, 10);
-	        const defaultClass = 'menu-popup-item menu-popup-no-icon';
-	        timeList.addMenuItem({
-	          text: value,
-	          className: this.slotRange[id] === minutes ? `${defaultClass} --selected` : defaultClass,
-	          dataset: {
-	            id,
-	            minutes
-	          },
-	          onclick: () => {
-	            this.slotRange[id] = parseInt(minutes, 10);
-	            timeList.close();
-	          }
-	        });
-	      }
-	      timeList.show();
-	    },
-	    generateTimeMap(id) {
-	      const timeMap = {};
-	      const timeFormat = main_date.DateTimeFormat.getFormat('SHORT_TIME_FORMAT');
-	      const interval = 30;
-	      const from = id === this.toId ? this.fromTs + interval : 0;
-	      const to = id === this.fromId ? this.toTs : 1440;
-	      for (let minutes = from; minutes < to; minutes += interval) {
-	        const timestamp = new Date().setHours(0, minutes, 0, 0) / 1000;
-	        timeMap[minutes] = main_date.DateTimeFormat.format(timeFormat, timestamp);
-	      }
-	      if (id === this.toId) {
-	        const midnightTimestamp = new Date().setHours(0, 0, 0, 0) / 1000;
-	        timeMap[to] = main_date.DateTimeFormat.format(timeFormat, midnightTimestamp);
-	      }
-	      return timeMap;
-	    },
-	    clickBtn() {
-	      if (this.removeSlot === false) {
-	        this.removeSlot = true;
-	        this.$emit('add');
-	      } else {
-	        this.removeSlot = false;
-	        this.$emit('remove', this.id);
-	      }
-	    },
-	    update() {
-	      this.$emit('update', this.id, this.slotRange);
-	    }
-	  },
-	  computed: {
-	    daysId() {
-	      return `days-${this.id}`;
-	    },
-	    days() {
-	      return this.$refs.days;
-	    },
-	    slotRange() {
-	      return this.localSlotRange;
-	    },
-	    fromLabel() {
-	      const timeMap = this.generateTimeMap(this.fromId);
-	      return timeMap[this.slotRange.from];
-	    },
-	    toLabel() {
-	      const timeMap = this.generateTimeMap(this.toId);
-	      return timeMap[this.slotRange.to];
-	    }
-	  },
-	  template: `
+		name: 'ResourceSettingsCardWorkTimeSlotRange',
+		emits: ['add', 'update', 'remove'],
+		props: {
+			id: {
+				type: Number,
+				required: true
+			},
+			isLastRange: {
+				type: Boolean,
+				required: true
+			},
+			initialSlotRange: {
+				type: Object,
+				required: true
+			}
+		},
+		components: {
+			WeekDaysPopup
+		},
+		mixins: [WorkTimeMixin],
+		data() {
+			return {
+				fromId: 'from',
+				toId: 'to',
+				fromTs: 0,
+				toTs: 0,
+				duration: 0,
+				isShownDays: false,
+				arrow: {
+					days: false,
+					from: false,
+					to: false
+				},
+				removeSlot: !this.isLastRange,
+				localSlotRange: {
+					...this.initialSlotRange
+				},
+				initialDays: [...this.initialSlotRange.weekDays]
+			};
+		},
+		created() {
+			this.fromTs = this.slotRange.from;
+			this.toTs = this.slotRange.to;
+			this.duration = this.toTs - this.fromTs;
+		},
+		watch: {
+			'slotRange.from': function (value) {
+				this.fromTs = value;
+				this.toTs = this.fromTs + this.duration;
+				this.update();
+			},
+			'slotRange.to': function (value) {
+				this.toTs = value;
+				if (this.toTs <= this.fromTs) {
+					this.fromTs = this.toTs - this.duration;
+				}
+				this.duration = this.toTs - this.fromTs;
+				this.update();
+			}
+		},
+		methods: {
+			showDays() {
+				this.isShownDays = true;
+				this.arrow.days = true;
+			},
+			hideDays() {
+				this.isShownDays = false;
+				this.arrow.days = false;
+			},
+			selectDays(weekDays, daysLabel) {
+				this.slotRange.weekDays = weekDays;
+				this.daysLabel = daysLabel;
+				this.update();
+			},
+			show(bindElement, id) {
+				if (this.arrow[id] === true) {
+					return;
+				}
+				const menuId = `booking-work-time-popup-${this.id}-${id}`;
+				main_popup.MenuManager.destroy(menuId);
+				const timeList = main_popup.MenuManager.create({
+					id: menuId,
+					className: 'resource-creation-wizard__form-work-time-menu',
+					bindElement,
+					targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper'),
+					autoHide: true,
+					closeByEsc: true,
+					events: {
+						onShow: () => {
+							this.arrow[id] = true;
+							const selectedItem = timeList.getMenuItems().find(item => main_core.Dom.hasClass(item.getLayout().item, '--selected'));
+							const itemHeight = 36;
+							const offset = 2 * itemHeight;
+							const scrollContainer = timeList.getPopupWindow().getContentContainer();
+							const topPosition = main_core.Dom.getRelativePosition(selectedItem.getContainer(), scrollContainer).top;
+							scrollContainer.scrollTo({
+								top: scrollContainer.scrollTop + topPosition - offset,
+								behavior: 'instant'
+							});
+						},
+						onClose: () => {
+							this.arrow[id] = false;
+						}
+					},
+					maxHeight: 200,
+					minWidth: bindElement.offsetWidth
+				});
+				for (const [key, value] of Object.entries(this.generateTimeMap(id))) {
+					const minutes = parseInt(key, 10);
+					const defaultClass = 'menu-popup-item menu-popup-no-icon';
+					timeList.addMenuItem({
+						text: value,
+						className: this.slotRange[id] === minutes ? `${defaultClass} --selected` : defaultClass,
+						dataset: {
+							id,
+							minutes
+						},
+						onclick: () => {
+							this.slotRange[id] = parseInt(minutes, 10);
+							timeList.close();
+						}
+					});
+				}
+				timeList.show();
+			},
+			generateTimeMap(id) {
+				const timeMap = {};
+				const timeFormat = main_date.DateTimeFormat.getFormat('SHORT_TIME_FORMAT');
+				const interval = 30;
+				const from = id === this.toId ? this.fromTs + interval : 0;
+				const to = id === this.fromId ? this.toTs : 1440;
+				for (let minutes = from; minutes < to; minutes += interval) {
+					const timestamp = new Date().setHours(0, minutes, 0, 0) / 1000;
+					timeMap[minutes] = main_date.DateTimeFormat.format(timeFormat, timestamp);
+				}
+				if (id === this.toId) {
+					const midnightTimestamp = new Date().setHours(0, 0, 0, 0) / 1000;
+					timeMap[to] = main_date.DateTimeFormat.format(timeFormat, midnightTimestamp);
+				}
+				return timeMap;
+			},
+			clickBtn() {
+				if (this.removeSlot === false) {
+					this.removeSlot = true;
+					this.$emit('add');
+				} else {
+					this.removeSlot = false;
+					this.$emit('remove', this.id);
+				}
+			},
+			update() {
+				this.$emit('update', this.id, this.slotRange);
+			}
+		},
+		computed: {
+			daysId() {
+				return `days-${this.id}`;
+			},
+			days() {
+				return this.$refs.days;
+			},
+			slotRange() {
+				return this.localSlotRange;
+			},
+			fromLabel() {
+				const timeMap = this.generateTimeMap(this.fromId);
+				return timeMap[this.slotRange.from];
+			},
+			toLabel() {
+				const timeMap = this.generateTimeMap(this.toId);
+				return timeMap[this.slotRange.to];
+			}
+		},
+		template: `
 		<div class="ui-form-content resource-creation-wizard__form-work-time-selector-widget">
 			<div class="ui-form-row resource-creation-wizard__form-work-time-selector-widget-days">
 				<div
@@ -2220,147 +2544,147 @@ this.BX = this.BX || {};
 	};
 
 	const WorkTimeSelector = {
-	  name: 'ResourceSettingsCardWorkTimeSelector',
-	  emits: ['update', 'updateGlobalSchedule', 'getGlobalSchedule'],
-	  props: {
-	    initialSlotRanges: {
-	      type: Array,
-	      required: true
-	    },
-	    isGlobalSchedule: {
-	      type: Boolean,
-	      required: true
-	    },
-	    defaultSlotRange: {
-	      type: Object,
-	      required: true
-	    },
-	    initialTimezone: {
-	      type: String,
-	      required: true
-	    },
-	    currentTimezone: {
-	      type: String,
-	      required: true
-	    },
-	    isCompanyScheduleAccess: {
-	      type: Boolean,
-	      required: true
-	    },
-	    companyScheduleUrl: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  components: {
-	    WorkTimeSlotRange,
-	    Icon: ui_iconSet_api_vue.BIcon
-	  },
-	  data() {
-	    return {
-	      localSlotRanges: this.processSlotRanges(this.initialSlotRanges),
-	      isChecked: this.isGlobalSchedule,
-	      hasTimezonesDifference: false,
-	      formattedInitialOffset: '',
-	      formattedCurrentOffset: ''
-	    };
-	  },
-	  created() {
-	    this.calculateDifferenceBetweenTimezones(this.initialTimezone, this.currentTimezone);
-	  },
-	  watch: {
-	    initialSlotRanges: {
-	      handler(newSlotRanges) {
-	        this.localSlotRanges = this.processSlotRanges(newSlotRanges);
-	      },
-	      deep: true
-	    },
-	    isChecked(checked) {
-	      this.$emit('updateGlobalSchedule', checked);
-	    }
-	  },
-	  methods: {
-	    openCompanyWorkTime(event) {
-	      const isTextClick = event.target === event.currentTarget;
-	      if (!isTextClick && this.isCompanyScheduleAccess && this.companyScheduleUrl !== '') {
-	        top.BX.Event.EventEmitter.subscribeOnce(top.BX.Event.EventEmitter.GLOBAL_TARGET, 'SidePanel.Slider:onLoad', baseEvent => {
-	          const slider = baseEvent.getTarget();
-	          slider.getWindow().BX.Event.EventEmitter.subscribeOnce(slider.getWindow().BX.Event.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Settings:onSuccessSave', innerBaseEvent => {
-	            const extraSettings = innerBaseEvent.getData();
-	            extraSettings.reloadAfterClose = false;
-	            this.$emit('getGlobalSchedule');
-	          });
-	        });
-	        BX.SidePanel.Instance.open(this.companyScheduleUrl, {
-	          cacheable: false
-	        });
-	        event.preventDefault();
-	      }
-	    },
-	    updateSlotRange(index, slotRange) {
-	      this.slotRanges[index] = slotRange;
-	      this.$emit('update', this.slotRanges);
-	    },
-	    addSlotRange() {
-	      this.slotRanges.push(this.defaultSlotRange);
-	      this.$emit('update', this.slotRanges);
-	    },
-	    removeSlotRange(index) {
-	      this.slotRanges.splice(index, 1);
-	      this.$emit('update', this.slotRanges);
-	    },
-	    processSlotRanges(slotRanges) {
-	      return slotRanges.map(slotRange => {
-	        if (slotRange.id === null) {
-	          return {
-	            ...slotRange,
-	            id: main_core.Text.getRandom()
-	          };
-	        }
-	        return slotRange;
-	      });
-	    },
-	    getTimezoneOffset(timeZone) {
-	      return booking_lib_timezone.Timezone.getOffset(Date.now(), timeZone) / -60;
-	    },
-	    calculateDifferenceBetweenTimezones(initialTimezone, currentTimezone) {
-	      const initialOffset = this.getTimezoneOffset(initialTimezone);
-	      const currentOffset = this.getTimezoneOffset(currentTimezone);
-	      this.hasTimezonesDifference = initialOffset !== currentOffset;
-	      if (this.hasTimezonesDifference) {
-	        const formatOffset = offset => {
-	          const sign = offset >= 0 ? '+' : '-';
-	          const hours = Math.floor(Math.abs(offset) / 60);
-	          const minutes = Math.abs(offset) % 60;
-	          return `${sign}${hours}:${minutes.toString().padStart(2, '0')}`;
-	        };
-	        this.formattedInitialOffset = `UTC ${formatOffset(-initialOffset)} ${initialTimezone}`;
-	        const totalDifferenceMinutes = currentOffset - initialOffset;
-	        this.formattedCurrentOffset = formatOffset(totalDifferenceMinutes);
-	      }
-	    },
-	    onSlotClick() {
-	      this.isChecked = false;
-	    }
-	  },
-	  computed: {
-	    companyWorkTimeOptionLabel() {
-	      return this.loc('BRCW_SETTINGS_CARD_WORK_TIME_COMPANY_OPTION');
-	    },
-	    slotRanges() {
-	      return this.localSlotRanges;
-	    },
-	    isSlotsDisabled() {
-	      return this.isChecked;
-	    },
-	    timezoneIconType() {
-	      return ui_iconSet_api_vue.Set.EARTH_TIME;
-	    },
-	    formattedTimezonesText() {
-	      return this.loc('BRCW_SETTINGS_CARD_WORK_TIME_TIMEZONES').replace('#utc#', this.formattedInitialOffset).replace('#difference#', this.formattedCurrentOffset);
-	    }
-	  },
-	  template: `
+		name: 'ResourceSettingsCardWorkTimeSelector',
+		emits: ['update', 'updateGlobalSchedule', 'getGlobalSchedule'],
+		props: {
+			initialSlotRanges: {
+				type: Array,
+				required: true
+			},
+			isGlobalSchedule: {
+				type: Boolean,
+				required: true
+			},
+			defaultSlotRange: {
+				type: Object,
+				required: true
+			},
+			initialTimezone: {
+				type: String,
+				required: true
+			},
+			currentTimezone: {
+				type: String,
+				required: true
+			},
+			isCompanyScheduleAccess: {
+				type: Boolean,
+				required: true
+			},
+			companyScheduleUrl: {
+				type: String,
+				required: true
+			}
+		},
+		components: {
+			WorkTimeSlotRange,
+			Icon: ui_iconSet_api_vue.BIcon
+		},
+		data() {
+			return {
+				localSlotRanges: this.processSlotRanges(this.initialSlotRanges),
+				isChecked: this.isGlobalSchedule,
+				hasTimezonesDifference: false,
+				formattedInitialOffset: '',
+				formattedCurrentOffset: ''
+			};
+		},
+		created() {
+			this.calculateDifferenceBetweenTimezones(this.initialTimezone, this.currentTimezone);
+		},
+		watch: {
+			initialSlotRanges: {
+				handler(newSlotRanges) {
+					this.localSlotRanges = this.processSlotRanges(newSlotRanges);
+				},
+				deep: true
+			},
+			isChecked(checked) {
+				this.$emit('updateGlobalSchedule', checked);
+			}
+		},
+		methods: {
+			openCompanyWorkTime(event) {
+				const isTextClick = event.target === event.currentTarget;
+				if (!isTextClick && this.isCompanyScheduleAccess && this.companyScheduleUrl !== '') {
+					top.BX.Event.EventEmitter.subscribeOnce(top.BX.Event.EventEmitter.GLOBAL_TARGET, 'SidePanel.Slider:onLoad', baseEvent => {
+						const slider = baseEvent.getTarget();
+						slider.getWindow().BX.Event.EventEmitter.subscribeOnce(slider.getWindow().BX.Event.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Settings:onSuccessSave', innerBaseEvent => {
+							const extraSettings = innerBaseEvent.getData();
+							extraSettings.reloadAfterClose = false;
+							this.$emit('getGlobalSchedule');
+						});
+					});
+					BX.SidePanel.Instance.open(this.companyScheduleUrl, {
+						cacheable: false
+					});
+					event.preventDefault();
+				}
+			},
+			updateSlotRange(index, slotRange) {
+				this.slotRanges[index] = slotRange;
+				this.$emit('update', this.slotRanges);
+			},
+			addSlotRange() {
+				this.slotRanges.push(this.defaultSlotRange);
+				this.$emit('update', this.slotRanges);
+			},
+			removeSlotRange(index) {
+				this.slotRanges.splice(index, 1);
+				this.$emit('update', this.slotRanges);
+			},
+			processSlotRanges(slotRanges) {
+				return slotRanges.map(slotRange => {
+					if (slotRange.id === null) {
+						return {
+							...slotRange,
+							id: main_core.Text.getRandom()
+						};
+					}
+					return slotRange;
+				});
+			},
+			getTimezoneOffset(timeZone) {
+				return booking_lib_timezone.Timezone.getOffsetFromUtc(Date.now(), timeZone) / -60;
+			},
+			calculateDifferenceBetweenTimezones(initialTimezone, currentTimezone) {
+				const initialOffset = this.getTimezoneOffset(initialTimezone);
+				const currentOffset = this.getTimezoneOffset(currentTimezone);
+				this.hasTimezonesDifference = initialOffset !== currentOffset;
+				if (this.hasTimezonesDifference) {
+					const formatOffset = offset => {
+						const sign = offset >= 0 ? '+' : '-';
+						const hours = Math.floor(Math.abs(offset) / 60);
+						const minutes = Math.abs(offset) % 60;
+						return `${sign}${hours}:${minutes.toString().padStart(2, '0')}`;
+					};
+					this.formattedInitialOffset = `UTC ${formatOffset(-initialOffset)} ${initialTimezone}`;
+					const totalDifferenceMinutes = currentOffset - initialOffset;
+					this.formattedCurrentOffset = formatOffset(totalDifferenceMinutes);
+				}
+			},
+			onSlotClick() {
+				this.isChecked = false;
+			}
+		},
+		computed: {
+			companyWorkTimeOptionLabel() {
+				return this.loc('BRCW_SETTINGS_CARD_WORK_TIME_COMPANY_OPTION');
+			},
+			slotRanges() {
+				return this.localSlotRanges;
+			},
+			isSlotsDisabled() {
+				return this.isChecked;
+			},
+			timezoneIconType() {
+				return ui_iconSet_api_vue.Set.EARTH_TIME;
+			},
+			formattedTimezonesText() {
+				return this.loc('BRCW_SETTINGS_CARD_WORK_TIME_TIMEZONES').replace('#utc#', this.formattedInitialOffset).replace('#difference#', this.formattedCurrentOffset);
+			}
+		},
+		template: `
 		<div class="ui-form resource-creation-wizard__form-work-time-selector">
 			<div class="ui-form-row-inline">
 				<div class="ui-form-row">
@@ -2426,63 +2750,63 @@ this.BX = this.BX || {};
 	};
 
 	const WorkTime = {
-	  name: 'ResourceSettingsCardWorkTime',
-	  emits: ['update', 'updateGlobalSchedule', 'getGlobalSchedule'],
-	  props: {
-	    initialSlotRanges: {
-	      type: Array,
-	      required: true
-	    },
-	    isGlobalSchedule: {
-	      type: Boolean,
-	      required: true
-	    },
-	    defaultSlotRange: {
-	      type: Object,
-	      required: true
-	    },
-	    initialTimezone: {
-	      type: String,
-	      required: true
-	    },
-	    currentTimezone: {
-	      type: String,
-	      required: true
-	    },
-	    isCompanyScheduleAccess: {
-	      type: Boolean,
-	      required: true
-	    },
-	    companyScheduleUrl: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  components: {
-	    TitleLayout,
-	    TextLayout,
-	    WorkTimeSelector
-	  },
-	  methods: {
-	    update(slotRanges) {
-	      this.$emit('update', slotRanges);
-	    },
-	    updateGlobalSchedule(checked) {
-	      this.$emit('updateGlobalSchedule', checked);
-	    },
-	    getGlobalSchedule() {
-	      this.$emit('getGlobalSchedule');
-	    }
-	  },
-	  computed: {
-	    title() {
-	      return this.loc('BRCW_SETTINGS_CARD_WORK_TIME_TITLE_MSGVER_1');
-	    },
-	    titleIconType() {
-	      return ui_iconSet_api_vue.Set.CLOCK_2;
-	    }
-	  },
-	  template: `
+		name: 'ResourceSettingsCardWorkTime',
+		emits: ['update', 'updateGlobalSchedule', 'getGlobalSchedule'],
+		props: {
+			initialSlotRanges: {
+				type: Array,
+				required: true
+			},
+			isGlobalSchedule: {
+				type: Boolean,
+				required: true
+			},
+			defaultSlotRange: {
+				type: Object,
+				required: true
+			},
+			initialTimezone: {
+				type: String,
+				required: true
+			},
+			currentTimezone: {
+				type: String,
+				required: true
+			},
+			isCompanyScheduleAccess: {
+				type: Boolean,
+				required: true
+			},
+			companyScheduleUrl: {
+				type: String,
+				required: true
+			}
+		},
+		components: {
+			TitleLayout,
+			TextLayout,
+			WorkTimeSelector
+		},
+		methods: {
+			update(slotRanges) {
+				this.$emit('update', slotRanges);
+			},
+			updateGlobalSchedule(checked) {
+				this.$emit('updateGlobalSchedule', checked);
+			},
+			getGlobalSchedule() {
+				this.$emit('getGlobalSchedule');
+			}
+		},
+		computed: {
+			title() {
+				return this.loc('BRCW_SETTINGS_CARD_WORK_TIME_TITLE_MSGVER_1');
+			},
+			titleIconType() {
+				return ui_iconSet_api_vue.Set.CLOCK_2;
+			}
+		},
+		template: `
 		<div class="ui-form resource-creation-wizard__form-settings">
 			<TitleLayout
 				:title="title"
@@ -2508,525 +2832,164 @@ this.BX = this.BX || {};
 	`
 	};
 
-	const SlotLengthPrecisionSelection = {
-	  name: 'ResourceSettingsCardSlotLengthSlotLengthPrecisionSelection',
-	  directives: {
-	    hint: ui_vue3_directives_hint.hint
-	  },
-	  emits: ['input'],
-	  components: {},
-	  props: {
-	    initialValue: {
-	      type: Number,
-	      default: 0
-	    }
-	  },
-	  data() {
-	    return {
-	      days: 0,
-	      hours: 0,
-	      minutes: 0,
-	      minutesFocused: false
-	    };
-	  },
-	  created() {
-	    this.distributeInitialValue();
-	  },
-	  methods: {
-	    distributeInitialValue() {
-	      let remainingMinutes = this.initialValue;
-	      this.days = Math.floor(remainingMinutes / (24 * 60));
-	      remainingMinutes %= 24 * 60;
-	      this.hours = Math.floor(remainingMinutes / 60);
-	      remainingMinutes %= 60;
-	      this.minutes = remainingMinutes;
-	    },
-	    calculateTotalMinutes() {
-	      const totalMinutes = this.days * 24 * 60 + this.hours * 60 + this.minutes;
-	      this.$emit('input', totalMinutes);
-	    },
-	    validateHours() {
-	      this.hours = parseInt(this.hours, 10);
-	      if (!main_core.Type.isNumber(this.hours)) {
-	        this.hours = 0;
-	      }
-	      if (this.hours > 12) {
-	        this.hours = 12;
-	      }
-	      if (this.hours === 0) {
-	        // delay calculation to let time to determine if minutes focused before
-	        setTimeout(() => {
-	          if (!this.minutesFocused) {
-	            this.calculateTotalMinutes();
-	          }
-	        }, 0);
-	      } else {
-	        this.calculateTotalMinutes();
-	      }
-	    },
-	    validateMinutes() {
-	      this.minutesFocused = false;
-	      this.minutes = parseInt(this.minutes, 10);
-	      if (!main_core.Type.isNumber(this.minutes)) {
-	        this.minutes = 0;
-	      }
-	      if (this.minutes > 59) {
-	        this.minutes = 59;
-	      }
-	      this.calculateTotalMinutes();
-	    },
-	    handleEnterKey(event) {
-	      if (event.key === 'Enter') {
-	        event.target.blur();
-	      }
-	    }
-	  },
-	  computed: {
-	    hourHint() {
-	      return {
-	        text: this.loc('BRCW_SETTINGS_CARD_SLOT_LENGTH_PRECISION_LIMIT_HOUR'),
-	        popupOptions: {
-	          targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper')
-	        }
-	      };
-	    },
-	    minutesHint() {
-	      return {
-	        text: this.loc('BRCW_SETTINGS_CARD_SLOT_LENGTH_PRECISION_LIMIT_MINUTES'),
-	        popupOptions: {
-	          targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper')
-	        }
-	      };
-	    }
-	  },
-	  template: `
-		<div class="ui-form resource-creation-wizard__form-slot-length-precision-selection">
-			<div class="ui-form-row-inline">
-				<div class="ui-form-row --disabled">
-					<div class="ui-form-content">
-						<div class="ui-form-row">
-							<div class="ui-ctl ui-ctl-time ui-ctl-sm ui-ctl-round">
-								<input
-									:data-id="'brcw-resource-slot-length-precision-days'"
-									v-model="days"
-									type="text"
-									class="ui-ctl-element"
-									disabled
-								>
-							</div>
-						</div>
-						<div class="ui-form-row">
-							<div>
-								{{ loc('BRCW_SETTINGS_CARD_SLOT_LENGTH_PRECISION_1') }}
-							</div>
-						</div>
-					</div>
-				</div>
-				<div class="ui-form-row">
-					<div class="ui-form-content">
-						<div class="ui-form-row">
-							<div 
-								class="ui-ctl ui-ctl-time ui-ctl-sm ui-ctl-round"
-								v-hint="hourHint"
-							>
-								<input
-									:data-id="'brcw-resource-slot-length-precision-hours'"
-									v-model="hours"
-									type="text"
-									class="ui-ctl-element"
-									@blur="validateHours"
-									@keydown="handleEnterKey"
-								>
-							</div>
-						</div>
-						<div class="ui-form-row">
-							<div>
-								{{ loc('BRCW_SETTINGS_CARD_SLOT_LENGTH_PRECISION_2') }}
-							</div>
-						</div>
-					</div>
-				</div>
-				<div class="ui-form-row">
-					<div class="ui-form-content">
-						<div class="ui-form-row">
-							<div 
-								class="ui-ctl ui-ctl-time ui-ctl-sm ui-ctl-round"
-								v-hint="minutesHint"
-							>
-								<input
-									:data-id="'brcw-resource-slot-length-precision-minutes'"
-									v-model="minutes"
-									type="text"
-									class="ui-ctl-element"
-									@focus="minutesFocused = true"
-									@blur="validateMinutes"
-									@keydown="handleEnterKey"
-								>
-							</div>
-						</div>
-						<div class="ui-form-row">
-							<div>
-								{{ loc('BRCW_SETTINGS_CARD_SLOT_LENGTH_PRECISION_3') }}
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	`
-	};
-
-	// @vue/component
-	const unitDurations = booking_lib_duration.Duration.getUnitDurations();
-	const units = Object.fromEntries(Object.entries(unitDurations).map(([unit, value]) => [unit, value / unitDurations.i]));
-	const disabledLengths = new Set([units.H * 24, units.d * 7]);
-	const SlotLengthSelector = {
-	  name: 'ResourceSettingsCardSlotLengthSelector',
-	  directives: {
-	    hint: ui_vue3_directives_hint.hint
-	  },
-	  emits: ['select'],
-	  components: {
-	    SlotLengthPrecisionSelection
-	  },
-	  props: {
-	    initialSelectedValue: {
-	      type: Number,
-	      required: true
-	    }
-	  },
-	  data() {
-	    return {
-	      selectedPrecisionValue: this.initialSelectedValue,
-	      precisionMode: false
-	    };
-	  },
-	  computed: {
-	    selectedValue: {
-	      get() {
-	        return this.$store.state[booking_const.Model.ResourceCreationWizard].slotLengthId;
-	      },
-	      set(slotLengthId) {
-	        this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/setSlotLengthId`, {
-	          slotLengthId
-	        });
-	      }
-	    },
-	    durations() {
-	      return [{
-	        label: new booking_lib_duration.Duration(unitDurations.H).format('H'),
-	        value: units.H
-	      }, {
-	        label: new booking_lib_duration.Duration(unitDurations.H * 2).format('H'),
-	        value: units.H * 2
-	      }, {
-	        label: new booking_lib_duration.Duration(unitDurations.H * 24).format('H'),
-	        value: units.H * 24
-	      }, {
-	        label: new booking_lib_duration.Duration(unitDurations.d * 7).format('d'),
-	        value: units.d * 7
-	      }, {
-	        label: this.loc('BRCW_SETTINGS_CARD_SLOT_LENGTH_SELECTOR_CUSTOM'),
-	        value: 0
-	      }];
-	    }
-	  },
-	  created() {
-	    const templateValues = new Set([units.H, units.H * 2, units.H * 24, units.d * 7]);
-	    this.selectedValue = this.initialSelectedValue;
-	    if (!templateValues.has(this.selectedValue)) {
-	      this.selectedValue = 0;
-	      this.precisionMode = true;
-	    }
-	  },
-	  methods: {
-	    select(value) {
-	      if (disabledLengths.has(value)) {
-	        return;
-	      }
-	      this.selectedValue = parseInt(value, 10);
-	      if (value === 0) {
-	        this.precisionMode = true;
-	      } else {
-	        this.precisionMode = false;
-	        this.$emit('select', this.selectedValue);
-	      }
-	    },
-	    selectPrecision(value) {
-	      this.selectedPrecisionValue = value === 0 ? units.H : parseInt(value, 10);
-	      if (value === 0) {
-	        this.selectedValue = units.H;
-	        this.precisionMode = false;
-	      }
-	      this.$emit('select', this.selectedPrecisionValue);
-	    },
-	    getClass(value) {
-	      return {
-	        'ui-btn-primary': this.selectedValue === value,
-	        'ui-btn-light': this.selectedValue !== value,
-	        'ui-btn-disabled': disabledLengths.has(value)
-	      };
-	    },
-	    getSoonHintContent(value) {
-	      if (disabledLengths.has(value)) {
-	        return {
-	          text: this.loc('BRCW_SOON_HINT'),
-	          popupOptions: {
-	            targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper'),
-	            bindOptions: {
-	              position: 'bottom'
-	            },
-	            offsetLeft: 0,
-	            offsetTop: 0
-	          }
-	        };
-	      }
-	      return null;
-	    }
-	  },
-	  template: `
-		<div class="resource-creation-wizard__form-slot-length-selector">
-			<div
-				v-for="(duration, index) in durations"
-				:key="index"
-				:data-id="'brcw-resource-slot-length-selector-size-' + index"
-				class="ui-btn ui-btn-xs"
-				:class="getClass(duration.value)"
-				@click="select(duration.value)"
-				v-hint="getSoonHintContent(duration.value)"
-			>
-				{{ duration.label }}
-			</div>
-		</div>
-		<transition name="fade">
-			<div
-				v-if="precisionMode"
-				class="resource-creation-wizard__form-slot-length-precision"
-			>
-				<SlotLengthPrecisionSelection
-					:initialValue="selectedPrecisionValue"
-					@input="selectPrecision"
-				/>
-			</div>
-		</transition>
-	`
-	};
-
-	const SlotLength = {
-	  name: 'ResourceSettingsCardSlotLength',
-	  emits: ['select'],
-	  components: {
-	    TitleLayout,
-	    TextLayout,
-	    SlotLengthSelector
-	  },
-	  props: {
-	    initialSelectedValue: {
-	      type: Number,
-	      default: 60
-	    }
-	  },
-	  data() {
-	    return {
-	      selectedSlotLength: this.initialSelectedValue
-	    };
-	  },
-	  methods: {
-	    updateSelectedValue(value) {
-	      this.selectedSlotLength = value;
-	      this.$emit('select', value);
-	    }
-	  },
-	  computed: {
-	    title() {
-	      return this.loc('BRCW_SETTINGS_CARD_SLOT_LENGTH_TITLE_MSGVER_1');
-	    },
-	    titleIconType() {
-	      return ui_iconSet_api_vue.Set.GANTT_GRAPHS;
-	    }
-	  },
-	  template: `
-		<div class="ui-form resource-creation-wizard__form-settings">
-			<TitleLayout
-				:title="title"
-				:iconType="titleIconType"
-			/>
-			<TextLayout
-				type="SlotLength"
-				:text="loc('BRCW_SETTINGS_CARD_SLOT_LENGTH_TEXT_MSGVER_2')"
-			/>
-			<div>
-				<SlotLengthSelector
-					:initialSelectedValue="initialSelectedValue"
-					@select="updateSelectedValue"
-				/>
-			</div>
-		</div>
-	`
-	};
-
 	const {
-	  mapGetters: mapResourceGetters$3,
-	  mapActions: mapActions$2,
-	  mapMutations
+		mapGetters: mapResourceGetters$1,
+		mapActions,
+		mapMutations
 	} = ui_vue3_vuex.createNamespacedHelpers('resource-creation-wizard');
 
 	// @vue/component
 	const ResourceSettingsCard = {
-	  name: 'ResourceSettingsCard',
-	  components: {
-	    BaseFields,
-	    ScheduleTypes,
-	    WorkTime,
-	    SlotLength,
-	    ServicesSkus,
-	    Integration
-	  },
-	  data() {
-	    return {
-	      selectedSlotLength: 60,
-	      initialTimezone: ''
-	    };
-	  },
-	  computed: {
-	    ...ui_vue3_vuex.mapGetters({
-	      timezone: `${booking_const.Model.Interface}/timezone`
-	    }),
-	    ...mapResourceGetters$3({
-	      resource: 'getResource',
-	      companyScheduleSlots: 'getCompanyScheduleSlots',
-	      isCompanyScheduleAccess: 'isCompanyScheduleAccess',
-	      companyScheduleUrl: 'companyScheduleUrl',
-	      isGlobalSchedule: 'isGlobalSchedule'
-	    }),
-	    resourceName() {
-	      return this.resource.name;
-	    },
-	    resourceType() {
-	      const resourceType = this.$store.getters[`${booking_const.Model.ResourceTypes}/getById`](this.resource.typeId);
-	      return {
-	        typeId: this.resource.typeId,
-	        typeName: resourceType == null ? void 0 : resourceType.name
-	      };
-	    },
-	    resourceDescription() {
-	      var _this$resource$descri;
-	      return (_this$resource$descri = this.resource.description) != null ? _this$resource$descri : '';
-	    },
-	    resourceAvatarUrl() {
-	      var _this$resource$avatar, _this$resource$avatar2;
-	      return (_this$resource$avatar = (_this$resource$avatar2 = this.resource.avatar) == null ? void 0 : _this$resource$avatar2.url) != null ? _this$resource$avatar : '';
-	    },
-	    slotRanges() {
-	      return this.resource.slotRanges;
-	    },
-	    defaultSlotRange() {
-	      return this.companyScheduleSlots[0];
-	    },
-	    slotSize() {
-	      var _this$resource$slotRa, _slotRange$slotSize;
-	      const slotRange = (_this$resource$slotRa = this.resource.slotRanges) == null ? void 0 : _this$resource$slotRa[0];
-	      return (_slotRange$slotSize = slotRange == null ? void 0 : slotRange.slotSize) != null ? _slotRange$slotSize : 60;
-	    },
-	    isMain: {
-	      get() {
-	        return this.resource.isMain;
-	      },
-	      set(isMain) {
-	        this.updateResource({
-	          isMain
-	        });
-	      }
-	    },
-	    isEditForm() {
-	      return this.resource.id !== null;
-	    }
-	  },
-	  created() {
-	    var _this$resource$slotRa2, _this$resource$slotRa3, _this$resource$slotRa4;
-	    this.initialTimezone = this.getInitialSlotTimeZone();
-	    this.selectedSlotLength = (_this$resource$slotRa2 = (_this$resource$slotRa3 = this.resource.slotRanges) == null ? void 0 : (_this$resource$slotRa4 = _this$resource$slotRa3[0]) == null ? void 0 : _this$resource$slotRa4.slotSize) != null ? _this$resource$slotRa2 : 60;
-	    const slotRanges = main_core.Type.isArrayFilled(this.resource.slotRanges) ? this.resource.slotRanges : this.companyScheduleSlots;
-	    this.updateSlotRanges(slotRanges);
-	  },
-	  methods: {
-	    ...mapActions$2(['updateResource', 'setResourceAvatarFile', 'setInvalidResourceName', 'setInvalidResourceType']),
-	    ...mapMutations(['setGlobalSchedule']),
-	    updateResourceName(name) {
-	      this.updateResource({
-	        name
-	      });
-	      if (name) {
-	        this.setInvalidResourceName(false);
-	      }
-	    },
-	    updateResourceType(typeId) {
-	      this.updateResource({
-	        typeId
-	      });
-	      if (typeId) {
-	        this.setInvalidResourceType(false);
-	      }
-	    },
-	    updateResourceDescription(description) {
-	      this.updateResource({
-	        description
-	      });
-	    },
-	    updateResourceAvatarFile(avatarFile) {
-	      if (avatarFile) {
-	        this.setResourceAvatarFile(avatarFile.getBinary());
-	        this.updateResource({
-	          avatar: {
-	            id: null,
-	            url: avatarFile.getPreviewUrl()
-	          }
-	        });
-	      } else {
-	        this.setResourceAvatarFile(null);
-	        this.updateResource({
-	          avatar: null
-	        });
-	      }
-	    },
-	    updateSlotRanges(slotRanges) {
-	      this.updateResource({
-	        slotRanges: this.updateSlotDataForAllRanges(slotRanges)
-	      });
-	    },
-	    updateSlotLength(value) {
-	      this.selectedSlotLength = value;
-	      if (this.resource.slotRanges.length === 0) {
-	        return;
-	      }
-	      this.updateSlotRanges(this.resource.slotRanges);
-	    },
-	    updateSlotDataForAllRanges(inputSlotRanges) {
-	      const slotRanges = inputSlotRanges || this.resource.slotRanges;
-	      return slotRanges.map(slotRange => {
-	        return {
-	          ...slotRange,
-	          slotSize: this.selectedSlotLength,
-	          timezone: this.timezone
-	        };
-	      });
-	    },
-	    updateGlobalSchedule(checked) {
-	      this.setGlobalSchedule(checked);
-	    },
-	    async fetchData() {
-	      await booking_provider_service_resourceCreationWizardService.resourceCreationWizardService.fetchData();
-	      if (!this.isEditForm) {
-	        this.updateSlotRanges(this.companyScheduleSlots);
-	      }
-	    },
-	    getInitialSlotTimeZone() {
-	      var _slotRanges$;
-	      const slotRanges = this.isEditForm ? this.resource.slotRanges : this.companyScheduleSlots;
-	      return (_slotRanges$ = slotRanges[0]) == null ? void 0 : _slotRanges$.timezone;
-	    }
-	  },
-	  template: `
+		name: 'ResourceSettingsCard',
+		components: {
+			BaseFields,
+			ScheduleTypes,
+			WorkTime,
+			SlotLength,
+			ServicesSkus,
+			Integration
+		},
+		data() {
+			return {
+				selectedSlotLength: 60,
+				initialTimezone: ''
+			};
+		},
+		computed: {
+			...ui_vue3_vuex.mapGetters({
+				timezone: `${booking_const.Model.Interface}/timezone`,
+				isMultidayFeatureAvailable: `${booking_const.Model.Interface}/isMultidayFeatureAvailable`
+			}),
+			...mapResourceGetters$1({
+				resource: 'getResource',
+				companyScheduleSlots: 'getCompanyScheduleSlots',
+				isCompanyScheduleAccess: 'isCompanyScheduleAccess',
+				companyScheduleUrl: 'companyScheduleUrl',
+				isGlobalSchedule: 'isGlobalSchedule'
+			}),
+			resourceName() {
+				return this.resource.name;
+			},
+			resourceType() {
+				const resourceType = this.$store.getters[`${booking_const.Model.ResourceTypes}/getById`](this.resource.typeId);
+				return {
+					typeId: this.resource.typeId,
+					typeName: resourceType?.name
+				};
+			},
+			resourceDescription() {
+				return this.resource.description ?? '';
+			},
+			resourceAvatarUrl() {
+				return this.resource.avatar?.url ?? '';
+			},
+			slotRanges() {
+				return this.resource.slotRanges;
+			},
+			defaultSlotRange() {
+				return this.companyScheduleSlots[0];
+			},
+			slotSize() {
+				const slotRange = this.resource.slotRanges?.[0];
+				return normalizeSlotLength(slotRange?.slotSize ?? 60, this.isMultidayFeatureAvailable);
+			},
+			isMain: {
+				get() {
+					return this.resource.isMain;
+				},
+				set(isMain) {
+					this.updateResource({
+						isMain
+					});
+				}
+			},
+			isEditForm() {
+				return this.resource.id !== null;
+			}
+		},
+		created() {
+			this.initialTimezone = this.getInitialSlotTimeZone();
+			this.selectedSlotLength = this.slotSize;
+			const slotRanges = main_core.Type.isArrayFilled(this.resource.slotRanges) ? this.resource.slotRanges : this.companyScheduleSlots;
+			this.updateSlotRanges(slotRanges);
+		},
+		methods: {
+			...mapActions(['updateResource', 'setResourceAvatarFile', 'setInvalidResourceName', 'setInvalidResourceType']),
+			...mapMutations(['setGlobalSchedule']),
+			updateResourceName(name) {
+				this.updateResource({
+					name
+				});
+				if (name) {
+					this.setInvalidResourceName(false);
+				}
+			},
+			updateResourceType(typeId) {
+				this.updateResource({
+					typeId
+				});
+				if (typeId) {
+					this.setInvalidResourceType(false);
+				}
+			},
+			updateResourceDescription(description) {
+				this.updateResource({
+					description
+				});
+			},
+			updateResourceAvatarFile(avatarFile) {
+				if (avatarFile) {
+					this.setResourceAvatarFile(avatarFile.getBinary());
+					this.updateResource({
+						avatar: {
+							id: null,
+							url: avatarFile.getPreviewUrl()
+						}
+					});
+				} else {
+					this.setResourceAvatarFile(null);
+					this.updateResource({
+						avatar: null
+					});
+				}
+			},
+			updateSlotRanges(slotRanges) {
+				this.updateResource({
+					slotRanges: this.updateSlotDataForAllRanges(slotRanges)
+				});
+			},
+			updateSlotLength(value) {
+				this.selectedSlotLength = normalizeSlotLength(value, this.isMultidayFeatureAvailable);
+				if (this.resource.slotRanges.length === 0) {
+					return;
+				}
+				this.updateSlotRanges(this.resource.slotRanges);
+			},
+			updateSlotDataForAllRanges(inputSlotRanges) {
+				const slotRanges = inputSlotRanges || this.resource.slotRanges;
+				return slotRanges.map(slotRange => {
+					return {
+						...slotRange,
+						slotSize: normalizeSlotLength(this.selectedSlotLength, this.isMultidayFeatureAvailable),
+						timezone: this.timezone
+					};
+				});
+			},
+			updateGlobalSchedule(checked) {
+				this.setGlobalSchedule(checked);
+			},
+			async fetchData() {
+				await booking_provider_service_resourceCreationWizardService.resourceCreationWizardService.fetchData();
+				if (!this.isEditForm) {
+					this.updateSlotRanges(this.companyScheduleSlots);
+				}
+			},
+			getInitialSlotTimeZone() {
+				const slotRanges = this.isEditForm ? this.resource.slotRanges : this.companyScheduleSlots;
+				return slotRanges[0]?.timezone;
+			}
+		},
+		template: `
 		<div class="resource-settings-card">
 			<BaseFields
 				data-id="brcw-resource-settings-base"
@@ -3069,67 +3032,70 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const LabelDropdown = {
-	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon,
-	    BMenu: ui_vue3_components_menu.BMenu
-	  },
-	  props: {
-	    value: {
-	      type: Number,
-	      required: true
-	    },
-	    /** @type Item[] */
-	    items: {
-	      type: Array,
-	      required: true
-	    }
-	  },
-	  setup() {
-	    return {
-	      Actions: ui_iconSet_api_core.Actions,
-	      Outline: ui_iconSet_api_vue.Outline
-	    };
-	  },
-	  data() {
-	    return {
-	      isMenuShown: false
-	    };
-	  },
-	  computed: {
-	    locked() {
-	      return !this.$store.state[booking_const.Model.Interface].enabledFeature.bookingNotificationsSettings;
-	    },
-	    text() {
-	      return this.items.find(({
-	        value
-	      }) => value === this.value).name;
-	    },
-	    menuOptions() {
-	      return {
-	        id: 'booking-resource-creation-wizard-label-dropdown-menu',
-	        bindElement: this.$refs.container,
-	        offsetTop: 8,
-	        items: this.items.map(({
-	          name,
-	          value
-	        }) => ({
-	          title: name,
-	          onClick: () => this.$emit('update:value', value)
-	        })),
-	        targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper')
-	      };
-	    }
-	  },
-	  methods: {
-	    handleClick() {
-	      if (this.locked) {
-	        void booking_lib_limit.limit.show(booking_const.LimitFeatureId.NotificationsSettings);
-	        return;
-	      }
-	      this.isMenuShown = true;
-	    }
-	  },
-	  template: `
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon,
+			BMenu: ui_vue3_components_menu.BMenu
+		},
+		props: {
+			value: {
+				type: Number,
+				required: true
+			},
+			/** @type Item[] */
+			items: {
+				type: Array,
+				required: true
+			}
+		},
+		setup() {
+			return {
+				Actions: ui_iconSet_api_core.Actions,
+				Outline: ui_iconSet_api_vue.Outline
+			};
+		},
+		data() {
+			return {
+				isMenuShown: false
+			};
+		},
+		computed: {
+			locked() {
+				return !this.$store.state[booking_const.Model.Interface].enabledFeature.bookingNotificationsSettings;
+			},
+			text() {
+				return this.items.find(({
+					value
+				}) => value === this.value)?.name ?? '';
+			},
+			menuOptions() {
+				return {
+					id: this.menuId,
+					bindElement: this.$refs.container,
+					offsetTop: 8,
+					items: this.items.map(({
+						name,
+						value
+					}) => ({
+						title: name,
+						onClick: () => this.$emit('update:value', value)
+					})),
+					targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper')
+				};
+			}
+		},
+		created() {
+			this.menuId = `booking-resource-creation-wizard-label-dropdown-menu-${main_core.Text.getRandom(4)}`;
+		},
+		methods: {
+			handleClick() {
+				if (this.locked) {
+					void booking_lib_limit.limit.show(booking_const.LimitFeatureId.NotificationsSettings);
+					return;
+				}
+				this.isMenuShown = true;
+			}
+		},
+		template: `
 		<div class="booking-resource-creation-wizard-label-dropdown" ref="container" @click="handleClick">
 			<span>{{ text }}</span>
 			<BIcon
@@ -3140,119 +3106,227 @@ this.BX = this.BX || {};
 	`
 	};
 
+	const ResourceNotificationCheckBoxRow = {
+		name: 'ResourceNotificationCheckBoxRow',
+		emits: ['update:checked'],
+		props: {
+			checked: {
+				type: Boolean,
+				required: true
+			},
+			disabled: {
+				type: Boolean,
+				required: false,
+				default: false
+			}
+		},
+		template: `
+		<label class="resource-creation-wizard__form-notification-text-row">
+			<span class="resource-creation-wizard__form-notification-text-row-checkbox">
+				<input
+					type="checkbox"
+					:disabled="disabled"
+					:checked="checked"
+					@input="$emit('update:checked', $event.target.checked)"
+				/>
+			</span>
+			<slot/>
+		</label>
+	`
+	};
+
+	const CheckedForAll = {
+		props: {
+			type: {
+				type: String,
+				required: true
+			},
+			disabled: {
+				type: Boolean,
+				required: true
+			}
+		},
+		computed: {
+			isCheckedForAll: {
+				get() {
+					return this.$store.getters[`${booking_const.Model.ResourceCreationWizard}/isCheckedForAll`](this.type);
+				},
+				set(isChecked) {
+					this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/setCheckedForAll`, {
+						type: this.type,
+						isChecked
+					});
+				}
+			}
+		},
+		components: {
+			ResourceNotificationCheckBoxRow
+		},
+		template: `
+		<ResourceNotificationCheckBoxRow
+			v-model:checked="isCheckedForAll"
+			:disabled="disabled"
+		>
+			<div class="resource-creation-wizard__form-notification-text">
+				{{ loc('BRCW_NOTIFICATION_CARD_HELPER_TEXT_APPLY_FOR_ALL') }}
+			</div>
+		</ResourceNotificationCheckBoxRow>
+	`
+	};
+
+	const ResourceNotificationTextRow = {
+		name: 'ResourceNotificationTextRow',
+		props: {
+			icon: {
+				type: String,
+				required: true
+			}
+		},
+		template: `
+		<div class="resource-creation-wizard__form-notification-text-row">
+			<div :class="[icon, 'ui-icon-set', 'resource-creation-wizard__form-notification-text-row-icon']"></div>
+			<div class="resource-creation-wizard__form-notification-text">
+				<slot/>
+			</div>
+		</div>
+	`
+	};
+
+	const Description = {
+		props: {
+			description: {
+				type: String,
+				required: true
+			},
+			helpDesk: {
+				type: Object,
+				required: true
+			}
+		},
+		components: {
+			HelpDeskLoc: booking_component_helpDeskLoc.HelpDeskLoc,
+			ResourceNotificationTextRow
+		},
+		template: `
+		<ResourceNotificationTextRow icon="--info-1">
+			<HelpDeskLoc 
+				:message="description"
+				:code="helpDesk.code"
+				:anchor="helpDesk.anchorCode"
+			/>
+		</ResourceNotificationTextRow>
+	`
+	};
+
 	const ChannelMenu = {
-	  name: 'ChannelMenu',
-	  emits: ['popupShown', 'popupClosed', 'updateChannel'],
-	  props: {
-	    currentChannel: {
-	      type: String,
-	      default: null
-	    }
-	  },
-	  data() {
-	    return {
-	      ButtonSize: booking_component_button.ButtonSize,
-	      ButtonColor: booking_component_button.ButtonColor,
-	      ButtonIcon: booking_component_button.ButtonIcon,
-	      menuPopup: null,
-	      channel: this.loc('BRCW_NOTIFICATION_CARD_MESSAGE_SELECT_WHA')
-	    };
-	  },
-	  computed: {
-	    ...ui_vue3_vuex.mapGetters({
-	      isChannelChoiceAvailable: `${booking_const.Model.ResourceCreationWizard}/isChannelChoiceAvailable`
-	    }),
-	    popupId() {
-	      return 'booking-choose-channel-menu';
-	    },
-	    notificationChannelOptions() {
-	      return [{
-	        label: this.loc('BRCW_NOTIFICATION_CARD_MESSAGE_SELECT_WHA'),
-	        value: booking_const.NotificationChannel.WhatsApp
-	      }, {
-	        label: this.loc('BRCW_NOTIFICATION_CARD_TEMPLATE_POPUP_SELECT_SMS_MSGVER_1'),
-	        value: booking_const.NotificationChannel.Sms
-	      }];
-	    }
-	  },
-	  mounted() {
-	    var _this$notificationCha;
-	    this.channel = ((_this$notificationCha = this.notificationChannelOptions.find(({
-	      value
-	    }) => value === this.currentChannel)) == null ? void 0 : _this$notificationCha.label) || this.loc('BRCW_NOTIFICATION_CARD_MESSAGE_SELECT_WHA');
-	  },
-	  unmounted() {
-	    if (this.menuPopup) {
-	      this.destroy();
-	    }
-	  },
-	  methods: {
-	    openMenu() {
-	      var _this$menuPopup, _this$menuPopup$popup;
-	      if ((_this$menuPopup = this.menuPopup) != null && (_this$menuPopup$popup = _this$menuPopup.popupWindow) != null && _this$menuPopup$popup.isShown()) {
-	        this.destroy();
-	        return;
-	      }
-	      const menuButton = this.$refs['menu-button'];
-	      this.menuPopup = main_popup.MenuManager.create(this.popupId, menuButton, this.getMenuItems(), {
-	        className: 'booking-choose-channel-menu',
-	        closeByEsc: true,
-	        autoHide: true,
-	        offsetTop: 0,
-	        offsetLeft: menuButton.offsetWidth - menuButton.offsetWidth / 2,
-	        angle: true,
-	        cacheable: true,
-	        targetContainer: document.querySelector('div.resource-creation-wizard__wrapper'),
-	        events: {
-	          onClose: () => this.destroy(),
-	          onDestroy: () => this.destroy()
-	        }
-	      });
-	      this.menuPopup.show();
-	      this.bindScrollEvent();
-	      this.$emit('popupShown');
-	    },
-	    getMenuItems() {
-	      return [{
-	        text: this.loc('BRCW_NOTIFICATION_CARD_MESSAGE_SELECT_WHA'),
-	        onclick: () => {
-	          this.channel = this.loc('BRCW_NOTIFICATION_CARD_MESSAGE_SELECT_WHA');
-	          this.$emit('updateChannel', booking_const.NotificationChannel.WhatsApp);
-	          this.destroy();
-	        }
-	      }, {
-	        text: this.loc('BRCW_NOTIFICATION_CARD_TEMPLATE_POPUP_SELECT_SMS_MSGVER_1'),
-	        onclick: () => {
-	          this.channel = this.loc('BRCW_NOTIFICATION_CARD_TEMPLATE_POPUP_SELECT_SMS_MSGVER_1');
-	          this.$emit('updateChannel', booking_const.NotificationChannel.Sms);
-	          this.destroy();
-	        }
-	      }];
-	    },
-	    destroy() {
-	      main_popup.MenuManager.destroy(this.popupId);
-	      this.unbindScrollEvent();
-	      this.$emit('popupClosed');
-	    },
-	    bindScrollEvent() {
-	      main_core.Event.bind(document, 'scroll', this.adjustPosition, {
-	        capture: true
-	      });
-	    },
-	    unbindScrollEvent() {
-	      main_core.Event.unbind(document, 'scroll', this.adjustPosition, {
-	        capture: true
-	      });
-	    },
-	    adjustPosition() {
-	      var _this$menuPopup2, _this$menuPopup2$popu;
-	      (_this$menuPopup2 = this.menuPopup) == null ? void 0 : (_this$menuPopup2$popu = _this$menuPopup2.popupWindow) == null ? void 0 : _this$menuPopup2$popu.adjustPosition();
-	    }
-	  },
-	  components: {
-	    Icon: ui_iconSet_api_vue.BIcon
-	  },
-	  template: `
+		name: 'ChannelMenu',
+		emits: ['popupShown', 'popupClosed', 'updateChannel'],
+		props: {
+			currentChannel: {
+				type: String,
+				default: null
+			}
+		},
+		data() {
+			return {
+				channel: this.loc('BRCW_NOTIFICATION_CARD_MESSAGE_SELECT_WHA')
+			};
+		},
+		created() {
+			this.menuPopup = null;
+		},
+		computed: {
+			...ui_vue3_vuex.mapGetters({
+				isChannelChoiceAvailable: `${booking_const.Model.ResourceCreationWizard}/isChannelChoiceAvailable`
+			}),
+			popupId() {
+				return 'booking-choose-channel-menu';
+			},
+			notificationChannelOptions() {
+				return [{
+					label: this.loc('BRCW_NOTIFICATION_CARD_MESSAGE_SELECT_WHA'),
+					value: booking_const.NotificationChannel.WhatsApp
+				}, {
+					label: this.loc('BRCW_NOTIFICATION_CARD_TEMPLATE_POPUP_SELECT_SMS_MSGVER_1'),
+					value: booking_const.NotificationChannel.Sms
+				}];
+			}
+		},
+		mounted() {
+			this.channel = this.notificationChannelOptions.find(({
+				value
+			}) => value === this.currentChannel)?.label || this.loc('BRCW_NOTIFICATION_CARD_MESSAGE_SELECT_WHA');
+		},
+		unmounted() {
+			if (this.menuPopup) {
+				this.destroy();
+			}
+		},
+		methods: {
+			openMenu() {
+				if (this.menuPopup?.popupWindow?.isShown()) {
+					this.destroy();
+					return;
+				}
+				const menuButton = this.$refs['menu-button'];
+				this.menuPopup = main_popup.MenuManager.create(this.popupId, menuButton, this.getMenuItems(), {
+					className: 'booking-choose-channel-menu',
+					closeByEsc: true,
+					autoHide: true,
+					offsetTop: 0,
+					offsetLeft: menuButton.offsetWidth - menuButton.offsetWidth / 2,
+					angle: true,
+					cacheable: true,
+					targetContainer: document.querySelector('div.resource-creation-wizard__wrapper'),
+					events: {
+						onClose: () => this.destroy(),
+						onDestroy: () => this.destroy()
+					}
+				});
+				this.menuPopup.show();
+				this.bindScrollEvent();
+				this.$emit('popupShown');
+			},
+			getMenuItems() {
+				return [{
+					text: this.loc('BRCW_NOTIFICATION_CARD_MESSAGE_SELECT_WHA'),
+					onclick: () => {
+						this.channel = this.loc('BRCW_NOTIFICATION_CARD_MESSAGE_SELECT_WHA');
+						this.$emit('updateChannel', booking_const.NotificationChannel.WhatsApp);
+						this.destroy();
+					}
+				}, {
+					text: this.loc('BRCW_NOTIFICATION_CARD_TEMPLATE_POPUP_SELECT_SMS_MSGVER_1'),
+					onclick: () => {
+						this.channel = this.loc('BRCW_NOTIFICATION_CARD_TEMPLATE_POPUP_SELECT_SMS_MSGVER_1');
+						this.$emit('updateChannel', booking_const.NotificationChannel.Sms);
+						this.destroy();
+					}
+				}];
+			},
+			destroy() {
+				main_popup.MenuManager.destroy(this.popupId);
+				this.unbindScrollEvent();
+				this.$emit('popupClosed');
+			},
+			bindScrollEvent() {
+				main_core.Event.bind(document, 'scroll', this.adjustPosition, {
+					capture: true
+				});
+			},
+			unbindScrollEvent() {
+				main_core.Event.unbind(document, 'scroll', this.adjustPosition, {
+					capture: true
+				});
+			},
+			adjustPosition() {
+				this.menuPopup?.popupWindow?.adjustPosition();
+			}
+		},
+		components: {
+			Icon: ui_iconSet_api_vue.BIcon
+		},
+		template: `
 		<span
 			class="booking-resource-creation-wizard-channel-menu-button"
 			:class="{'--disabled': !isChannelChoiceAvailable}"
@@ -3264,141 +3338,145 @@ this.BX = this.BX || {};
 	`
 	};
 
+	// @vue/component
 	const ChooseTemplatePopup = {
-	  name: 'ResourceNotificationChooseTemplatePopup',
-	  emits: ['close', 'templateTypeSelected'],
-	  props: {
-	    bindElement: {
-	      type: HTMLElement,
-	      required: true
-	    },
-	    model: {
-	      type: Object,
-	      required: true
-	    },
-	    currentChannel: {
-	      type: String,
-	      required: true
-	    },
-	    currentTemplateType: {
-	      type: String,
-	      required: true
-	    },
-	    buttonSize: {
-	      type: String,
-	      default: booking_component_button.ButtonSize.EXTRA_SMALL
-	    },
-	    buttonColors: {
-	      type: Object,
-	      default: () => ({
-	        selected: booking_component_button.ButtonColor.BASE_LIGHT,
-	        default: booking_component_button.ButtonColor.PRIMARY
-	      })
-	    }
-	  },
-	  data() {
-	    return {
-	      IconSet: ui_iconSet_api_vue.Set,
-	      messenger: booking_const.NotificationChannel.WhatsApp,
-	      selectedTemplateType: this.currentTemplateType
-	    };
-	  },
-	  components: {
-	    Popup: booking_component_popup.Popup,
-	    ChannelMenu,
-	    Icon: ui_iconSet_api_vue.BIcon
-	  },
-	  beforeMount() {
-	    this.messenger = this.currentChannel;
-	  },
-	  mounted() {
-	    this.adjustPosition();
-	    main_core.Event.bind(document, 'scroll', this.adjustPosition, {
-	      capture: true
-	    });
-	  },
-	  beforeUnmount() {
-	    main_core.Event.unbind(document, 'scroll', this.adjustPosition, {
-	      capture: true
-	    });
-	  },
-	  computed: {
-	    ...ui_vue3_vuex.mapGetters({
-	      templateTypes: `${booking_const.Model.Dictionary}/getNotificationTemplates`
-	    }),
-	    popupId() {
-	      return `booking-resource-wizard-choose-template-popup-${main_core.Text.getRandom(4)}`;
-	    },
-	    config() {
-	      var _this$bindElement$chi, _this$bindElement$chi2;
-	      return {
-	        className: 'booking-resource-wizard-choose-template-popup',
-	        bindElement: this.bindElement,
-	        bindOptions: {
-	          forceBindPosition: true,
-	          forceTop: true
-	        },
-	        width: 350,
-	        offsetLeft: ((_this$bindElement$chi = (_this$bindElement$chi2 = this.bindElement.childNodes[0]) == null ? void 0 : _this$bindElement$chi2.offsetWidth) != null ? _this$bindElement$chi : 146) + 10,
-	        offsetTop: -149,
-	        animation: 'fading-slide',
-	        angle: {
-	          offset: 120,
-	          position: 'left'
-	        },
-	        angleBorderRadius: '4px 0',
-	        padding: 15,
-	        targetContainer: document.querySelector('div.resource-creation-wizard__wrapper')
-	      };
-	    },
-	    getFormattedTime() {
-	      return main_date.DateTimeFormat.format(main_date.DateTimeFormat.getFormat('SHORT_TIME_FORMAT'), Date.now() / 1000);
-	    }
-	  },
-	  methods: {
-	    getMessageTemplate(messenger, templateType) {
-	      const templateModel = this.model.templates.find(template => {
-	        return template.type === templateType;
-	      });
-	      if (!templateModel) {
-	        return '';
-	      }
-	      switch (messenger) {
-	        case booking_const.NotificationChannel.WhatsApp:
-	          return templateModel.text;
-	        case booking_const.NotificationChannel.Sms:
-	          return templateModel.textSms;
-	        default:
-	          return '';
-	      }
-	    },
-	    handleChannelChange(selectedChannel) {
-	      this.messenger = selectedChannel;
-	    },
-	    chooseType(selectedType) {
-	      this.selectedTemplateType = selectedType;
-	      this.$emit('templateTypeSelected', this.selectedTemplateType);
-	    },
-	    adjustPosition() {
-	      this.$refs.popup.adjustPosition({
-	        forceBindPosition: true,
-	        forceTop: true
-	      });
-	    },
-	    getButtonText(templateType) {
-	      return this.selectedTemplateType === templateType ? this.loc('BRCW_NOTIFICATION_CARD_TEMPLATE_POPUP_BTN_SELECTED') : this.loc('BRCW_NOTIFICATION_CARD_TEMPLATE_POPUP_BTN_SELECT_TYPE');
-	    },
-	    getButtonColor(templateType) {
-	      return this.selectedTemplateType === templateType ? this.buttonColors.selected : this.buttonColors.default;
-	    },
-	    getTemplateTitle(templateType) {
-	      const typeDictionary = Object.values(this.templateTypes).find(templateDictionary => {
-	        return templateDictionary.value === templateType;
-	      });
-	      return typeDictionary ? typeDictionary.name : '';
-	    }
-	  },
-	  template: `
+		name: 'ResourceNotificationChooseTemplatePopup',
+		props: {
+			bindElement: {
+				type: HTMLElement,
+				required: true
+			},
+			model: {
+				type: Object,
+				required: true
+			},
+			currentChannel: {
+				type: String,
+				required: true
+			},
+			currentTemplateType: {
+				type: String,
+				required: true
+			},
+			buttonSize: {
+				type: String,
+				default: booking_component_button.ButtonSize.EXTRA_SMALL
+			},
+			buttonColors: {
+				type: Object,
+				default: () => ({
+					selected: booking_component_button.ButtonColor.BASE_LIGHT,
+					default: booking_component_button.ButtonColor.PRIMARY
+				})
+			}
+		},
+		emits: ['close', 'templateTypeSelected'],
+		setup() {
+			return {
+				IconSet: ui_iconSet_api_vue.Set
+			};
+		},
+		data() {
+			return {
+				messenger: booking_const.NotificationChannel.WhatsApp,
+				selectedTemplateType: this.currentTemplateType
+			};
+		},
+		components: {
+			Popup: booking_component_popup.Popup,
+			ChannelMenu,
+			Icon: ui_iconSet_api_vue.BIcon
+		},
+		beforeMount() {
+			this.messenger = this.currentChannel;
+		},
+		mounted() {
+			this.adjustPosition();
+			main_core.Event.bind(document, 'scroll', this.adjustPosition, {
+				capture: true
+			});
+		},
+		beforeUnmount() {
+			main_core.Event.unbind(document, 'scroll', this.adjustPosition, {
+				capture: true
+			});
+		},
+		computed: {
+			...ui_vue3_vuex.mapGetters({
+				templateTypes: `${booking_const.Model.Dictionary}/getNotificationTemplates`
+			}),
+			popupId() {
+				return `booking-resource-wizard-choose-template-popup-${main_core.Text.getRandom(4)}`;
+			},
+			config() {
+				return {
+					className: 'booking-resource-wizard-choose-template-popup',
+					bindElement: this.bindElement,
+					bindOptions: {
+						forceBindPosition: true,
+						forceTop: true
+					},
+					width: 350,
+					offsetLeft: (this.bindElement.childNodes[0]?.offsetWidth ?? 146) + 10,
+					offsetTop: -149,
+					animation: 'fading-slide',
+					angle: {
+						offset: 120,
+						position: 'left'
+					},
+					angleBorderRadius: '4px 0',
+					padding: 15,
+					targetContainer: document.querySelector('div.resource-creation-wizard__wrapper')
+				};
+			},
+			getFormattedTime() {
+				return main_date.DateTimeFormat.format(main_date.DateTimeFormat.getFormat('SHORT_TIME_FORMAT'), Date.now() / 1000);
+			}
+		},
+		methods: {
+			getMessageTemplate(messenger, templateType) {
+				const templateModel = this.model.templates.find(template => {
+					return template.type === templateType;
+				});
+				if (!templateModel) {
+					return '';
+				}
+				switch (messenger) {
+					case booking_const.NotificationChannel.WhatsApp:
+						return templateModel.text;
+					case booking_const.NotificationChannel.Sms:
+						return templateModel.textSms;
+					default:
+						return '';
+				}
+			},
+			handleChannelChange(selectedChannel) {
+				this.messenger = selectedChannel;
+			},
+			chooseType(selectedType) {
+				this.selectedTemplateType = selectedType;
+				this.$emit('templateTypeSelected', this.selectedTemplateType);
+			},
+			adjustPosition() {
+				this.$refs.popup.adjustPosition({
+					forceBindPosition: true,
+					forceTop: true
+				});
+			},
+			getButtonText(templateType) {
+				return this.selectedTemplateType === templateType ? this.loc('BRCW_NOTIFICATION_CARD_TEMPLATE_POPUP_BTN_SELECTED') : this.loc('BRCW_NOTIFICATION_CARD_TEMPLATE_POPUP_BTN_SELECT_TYPE');
+			},
+			getButtonColor(templateType) {
+				return this.selectedTemplateType === templateType ? this.buttonColors.selected : this.buttonColors.default;
+			},
+			getTemplateTitle(templateType) {
+				const typeDictionary = Object.values(this.templateTypes).find(templateDictionary => {
+					return templateDictionary.value === templateType;
+				});
+				return typeDictionary ? typeDictionary.name : '';
+			}
+		},
+		template: `
 		<Popup
 			v-slot="{freeze, unfreeze}"
 			:id="popupId"
@@ -3470,7 +3548,7 @@ this.BX = this.BX || {};
 	};
 
 	const TemplateEmpty = {
-	  template: `
+		template: `
 		<div class="booking-resource-creation-wizard-message-template-empty">
 			<div class="booking-resource-creation-wizard-message-template-empty-icon"></div>
 			<div class="booking-resource-creation-wizard-message-template-empty-text">
@@ -3480,135 +3558,23 @@ this.BX = this.BX || {};
 	`
 	};
 
-	const ResourceNotificationCheckBoxRow = {
-	  name: 'ResourceNotificationCheckBoxRow',
-	  emits: ['update:checked'],
-	  props: {
-	    checked: {
-	      type: Boolean,
-	      required: true
-	    },
-	    disabled: {
-	      type: Boolean,
-	      required: false,
-	      default: false
-	    }
-	  },
-	  template: `
-		<label class="resource-creation-wizard__form-notification-text-row">
-			<span class="resource-creation-wizard__form-notification-text-row-checkbox">
-				<input
-					type="checkbox"
-					:disabled="disabled"
-					:checked="checked"
-					@input="$emit('update:checked', $event.target.checked)"
-				/>
-			</span>
-			<slot/>
-		</label>
-	`
-	};
-
-	const CheckedForAll = {
-	  props: {
-	    type: {
-	      type: String,
-	      required: true
-	    },
-	    disabled: {
-	      type: Boolean,
-	      required: true
-	    }
-	  },
-	  computed: {
-	    isCheckedForAll: {
-	      get() {
-	        return this.$store.getters[`${booking_const.Model.ResourceCreationWizard}/isCheckedForAll`](this.type);
-	      },
-	      set(isChecked) {
-	        this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/setCheckedForAll`, {
-	          type: this.type,
-	          isChecked
-	        });
-	      }
-	    }
-	  },
-	  components: {
-	    ResourceNotificationCheckBoxRow
-	  },
-	  template: `
-		<ResourceNotificationCheckBoxRow
-			v-model:checked="isCheckedForAll"
-			:disabled="disabled"
-		>
-			<div class="resource-creation-wizard__form-notification-text">
-				{{ loc('BRCW_NOTIFICATION_CARD_HELPER_TEXT_APPLY_FOR_ALL') }}
-			</div>
-		</ResourceNotificationCheckBoxRow>
-	`
-	};
-
-	const ResourceNotificationTextRow = {
-	  name: 'ResourceNotificationTextRow',
-	  props: {
-	    icon: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  template: `
-		<div class="resource-creation-wizard__form-notification-text-row">
-			<div :class="[icon, 'ui-icon-set', 'resource-creation-wizard__form-notification-text-row-icon']"></div>
-			<div class="resource-creation-wizard__form-notification-text">
-				<slot/>
-			</div>
-		</div>
-	`
-	};
-
-	const Description = {
-	  props: {
-	    description: {
-	      type: String,
-	      required: true
-	    },
-	    helpDesk: {
-	      type: Object,
-	      required: true
-	    }
-	  },
-	  components: {
-	    HelpDeskLoc: booking_component_helpDeskLoc.HelpDeskLoc,
-	    ResourceNotificationTextRow
-	  },
-	  template: `
-		<ResourceNotificationTextRow icon="--info-1">
-			<HelpDeskLoc 
-				:message="description"
-				:code="helpDesk.code"
-				:anchor="helpDesk.anchorCode"
-			/>
-		</ResourceNotificationTextRow>
-	`
-	};
-
 	// @vue/component
 	const MessageTemplate = {
-	  components: {
-	    RichLoc: ui_vue3_components_richLoc.RichLoc
-	  },
-	  props: {
-	    text: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  computed: {
-	    preparedTemplate() {
-	      return this.text.replaceAll('\n', '[br/]').replaceAll(/#(.+?)#/g, '[accent][[bold]$1[/bold]][/accent]');
-	    }
-	  },
-	  template: `
+		components: {
+			RichLoc: ui_vue3_components_richLoc.RichLoc
+		},
+		props: {
+			text: {
+				type: String,
+				required: true
+			}
+		},
+		computed: {
+			preparedTemplate() {
+				return this.text.replaceAll('\n', '[br/]').replaceAll(/#(.+?)#/g, '[accent][[bold]$1[/bold]][/accent]');
+			}
+		},
+		template: `
 		<RichLoc
 			class="resource-creation-wizard__form-notification-info-template"
 			:placeholder="['[accent]', '[br/]']"
@@ -3626,47 +3592,183 @@ this.BX = this.BX || {};
 	`
 	};
 
+	// @vue/component
+	const MessageBlock = {
+		name: 'MessageBlock',
+		components: {
+			UiButton: booking_component_button.Button,
+			ChannelMenu,
+			ChooseTemplatePopup,
+			TemplateEmpty,
+			MessageTemplate
+		},
+		props: {
+			messenger: {
+				type: String,
+				required: true
+			},
+			messageTemplate: {
+				type: String,
+				required: true
+			},
+			hasTemplate: {
+				type: Boolean,
+				required: true
+			},
+			checked: {
+				type: Boolean,
+				required: true
+			},
+			model: {
+				type: Object,
+				required: true
+			},
+			currentTemplateType: {
+				type: String,
+				required: true
+			}
+		},
+		emits: ['updateChannel', 'templateTypeSelected'],
+		setup() {
+			return {
+				ButtonSize: booking_component_button.ButtonSize,
+				ButtonColor: booking_component_button.ButtonColor
+			};
+		},
+		data() {
+			return {
+				showTemplatePopup: false
+			};
+		},
+		methods: {
+			getChooseTemplateButton() {
+				return this.$refs.chooseTemplateBtn || null;
+			}
+		},
+		template: `
+		<div class="resource-creation-wizard__form-notification-info --message">
+			<div class="resource-creation-wizard__form-notification-info-text-row">
+				{{ loc('BRCW_NOTIFICATION_CARD_MESSAGE_TEXT') }}
+				<ChannelMenu
+					:current-channel="messenger"
+					@updateChannel="$emit('updateChannel', $event)"
+				/>
+			</div>
+			<template v-if="hasTemplate">
+				<MessageTemplate :text="messageTemplate"/>
+				<div class="resource-creation-wizard__form-notification-info-template-choose-buttons">
+					<div class="booking-resource-creation-wizard-choose-template-button" ref="chooseTemplateBtn">
+						<UiButton
+							:disabled="!checked"
+							:text="loc('BRCW_NOTIFICATION_CARD_CHOOSE_TEMPLATE_TYPE')"
+							:size="ButtonSize.EXTRA_SMALL"
+							:color="ButtonColor.LIGHT_BORDER"
+							:round
+							@click="showTemplatePopup = true"
+						/>
+					</div>
+				</div>
+			</template>
+			<TemplateEmpty v-else/>
+			<ChooseTemplatePopup
+				v-if="showTemplatePopup"
+				:bindElement="$refs.chooseTemplateBtn"
+				:model="model"
+				:current-channel="messenger"
+				:currentTemplateType="currentTemplateType"
+				@templateTypeSelected="$emit('templateTypeSelected', $event)"
+				@close="showTemplatePopup = false"
+			/>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const AiBlock = {
+		name: 'AiBlock',
+		components: {
+			MessageTemplate
+		},
+		props: {
+			checked: {
+				type: Boolean,
+				required: true
+			},
+			ordinal: {
+				type: Number,
+				required: true
+			}
+		},
+		computed: {
+			description() {
+				switch (this.ordinal) {
+					case 1:
+						return this.loc('BRCW_NOTIFICATION_CARD_MESSAGE_AI_DESCRIPTION_FIRST');
+					case 2:
+						return this.loc('BRCW_NOTIFICATION_CARD_MESSAGE_AI_DESCRIPTION_SECOND');
+					case 3:
+						return this.loc('BRCW_NOTIFICATION_CARD_MESSAGE_AI_DESCRIPTION_THIRD');
+					default:
+						return this.loc('BRCW_NOTIFICATION_CARD_MESSAGE_AI_DESCRIPTION_FOURTH');
+				}
+			}
+		},
+		methods: {
+			getChooseTemplateButton() {
+				return this.$refs.chooseTemplateBtn || null;
+			}
+		},
+		template: `
+		<div class="resource-creation-wizard__form-notification-info --ai">
+			<div class="resource-creation-wizard__form-notification-info-text-row">
+				{{ loc('BRCW_NOTIFICATION_CARD_MESSAGE_AI_TEXT') }}
+			</div>
+			<MessageTemplate :text="description"/>
+		</div>
+	`
+	};
+
 	const ManagerNotification = {
-	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon,
-	    Description,
-	    CyclePopup: booking_component_cyclePopup.CyclePopup,
-	    RichLoc: ui_vue3_components_richLoc.RichLoc
-	  },
-	  props: {
-	    text: {
-	      type: String,
-	      required: true
-	    },
-	    description: {
-	      type: String,
-	      required: true
-	    },
-	    helpDesk: {
-	      type: Object,
-	      required: true
-	    },
-	    scrollToCard: {
-	      type: String,
-	      default: null
-	    }
-	  },
-	  setup() {
-	    return {
-	      Main: ui_iconSet_api_core.Main
-	    };
-	  },
-	  data() {
-	    return {
-	      isPopupShown: false
-	    };
-	  },
-	  computed: {
-	    notificationText() {
-	      return this.text.replaceAll('\n', '[br/]');
-	    }
-	  },
-	  template: `
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon,
+			Description,
+			CyclePopup: booking_component_cyclePopup.CyclePopup,
+			RichLoc: ui_vue3_components_richLoc.RichLoc
+		},
+		props: {
+			text: {
+				type: String,
+				required: true
+			},
+			description: {
+				type: String,
+				required: true
+			},
+			helpDesk: {
+				type: Object,
+				required: true
+			},
+			scrollToCard: {
+				type: String,
+				default: null
+			}
+		},
+		setup() {
+			return {
+				Main: ui_iconSet_api_core.Main
+			};
+		},
+		data() {
+			return {
+				isPopupShown: false
+			};
+		},
+		computed: {
+			notificationText() {
+				return this.text.replaceAll('\n', '[br/]');
+			}
+		},
+		template: `
 		<div class="booking-resource-creation-wizard-notification --manager">
 			<div class="booking-resource-creation-wizard-notification-main">
 				<div class="resource-creation-wizard__form-notification-info-title-row">
@@ -3703,173 +3805,180 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const ResourceNotification = {
-	  name: 'ResourceNotification',
-	  components: {
-	    Switcher: booking_component_switcher.Switcher,
-	    BIcon: ui_iconSet_api_vue.BIcon,
-	    UiButton: booking_component_button.Button,
-	    Description,
-	    ChannelMenu,
-	    ChooseTemplatePopup,
-	    TemplateEmpty,
-	    CheckedForAll,
-	    MessageTemplate,
-	    ManagerNotification
-	  },
-	  directives: {
-	    hint: ui_vue3_directives_hint.hint
-	  },
-	  props: {
-	    type: {
-	      type: String,
-	      required: true
-	    },
-	    title: {
-	      type: String,
-	      required: true
-	    },
-	    description: {
-	      type: String,
-	      required: true
-	    },
-	    helpDesk: {
-	      type: Object,
-	      required: true
-	    },
-	    checked: {
-	      type: Boolean,
-	      default: false
-	    },
-	    disabled: {
-	      type: Boolean,
-	      default: false
-	    },
-	    managerDescription: {
-	      type: String,
-	      default: ''
-	    },
-	    scrollToCard: {
-	      type: String,
-	      default: null
-	    }
-	  },
-	  emits: ['update:checked'],
-	  setup() {
-	    return {
-	      ButtonSize: booking_component_button.ButtonSize,
-	      ButtonColor: booking_component_button.ButtonColor,
-	      Actions: ui_iconSet_api_core.Actions,
-	      CRM: ui_iconSet_api_core.CRM
-	    };
-	  },
-	  data() {
-	    return {
-	      messenger: booking_const.NotificationChannel.WhatsApp,
-	      showTemplatePopup: false
-	    };
-	  },
-	  computed: {
-	    ...ui_vue3_vuex.mapGetters({
-	      resource: `${booking_const.Model.ResourceCreationWizard}/getResource`,
-	      isCurrentSenderAvailable: `${booking_const.Model.Notifications}/isCurrentSenderAvailable`
-	    }),
-	    model() {
-	      return this.$store.getters[`${booking_const.Model.Notifications}/getByType`](this.type);
-	    },
-	    template() {
-	      const templateName = this.resource[this.templateTypeField];
-	      return this.model.templates.find(template => template.type === templateName);
-	    },
-	    messageTemplate() {
-	      var _NotificationChannel$, _this$template$text, _this$template, _this$template$textSm, _this$template2;
-	      return (_NotificationChannel$ = {
-	        [booking_const.NotificationChannel.WhatsApp]: (_this$template$text = (_this$template = this.template) == null ? void 0 : _this$template.text) != null ? _this$template$text : '',
-	        [booking_const.NotificationChannel.Sms]: (_this$template$textSm = (_this$template2 = this.template) == null ? void 0 : _this$template2.textSms) != null ? _this$template$textSm : ''
-	      }[this.messenger]) != null ? _NotificationChannel$ : '';
-	    },
-	    hasTemplate() {
-	      return Boolean(this.messageTemplate);
-	    },
-	    disableSwitcher() {
-	      return this.disabled || !this.isCurrentSenderAvailable || !this.template;
-	    },
-	    templateTypeField() {
-	      return booking_const.NotificationFieldsMap.TemplateType[this.type];
-	    },
-	    ordinal() {
-	      return booking_const.NotificationFieldsMap.Ordinal[this.type];
-	    },
-	    soonHint() {
-	      return {
-	        text: this.loc('BRCW_BOOKING_SOON_HINT'),
-	        popupOptions: {
-	          offsetLeft: 60,
-	          targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper')
-	        }
-	      };
-	    },
-	    isNotificationSettingsFeatureEnabled() {
-	      return this.$store.state[booking_const.Model.Interface].enabledFeature.bookingNotificationsSettings;
-	    }
-	  },
-	  created() {
-	    this.hintManager = BX.UI.Hint.createInstance({
-	      id: `brwc-notification-hint-${main_core.Text.getRandom(5)}`,
-	      popupParameters: {
-	        targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper')
-	      }
-	    });
-	  },
-	  mounted() {
-	    this.hintManager.init(this.$el);
-	    void this.animateHeight(false);
-	  },
-	  updated() {
-	    this.hintManager.init(this.$el);
-	    void this.animateHeight(true);
-	  },
-	  methods: {
-	    handleChannelChange(selectedChannel) {
-	      this.messenger = selectedChannel;
-	    },
-	    handleTemplateTypeSelected(selectedType) {
-	      void this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResource`, {
-	        [this.templateTypeField]: selectedType
-	      });
-	    },
-	    getChooseTemplateButton() {
-	      return this.$refs.chooseTemplateBtn || null;
-	    },
-	    expand() {
-	      void booking_provider_service_resourceCreationWizardService.resourceCreationWizardService.updateNotificationExpanded(this.type, !this.model.isExpanded);
-	    },
-	    async animateHeight(withAnimation) {
-	      var _this$$refs$manager2;
-	      main_core.Dom.style(this.$el, 'transition', null);
-	      if (withAnimation) {
-	        await sleep(10);
-	      }
-	      const prevHeight = this.$el.offsetHeight;
-	      main_core.Dom.style(this.$el, 'height', null);
-	      if (!this.model.isExpanded) {
-	        var _this$$refs$manager;
-	        main_core.Dom.style(this.$refs.main, 'display', 'none');
-	        main_core.Dom.style((_this$$refs$manager = this.$refs.manager) == null ? void 0 : _this$$refs$manager.$el, 'display', 'none');
-	      }
-	      const height = this.$el.offsetHeight;
-	      main_core.Dom.style(this.$refs.main, 'display', null);
-	      main_core.Dom.style((_this$$refs$manager2 = this.$refs.manager) == null ? void 0 : _this$$refs$manager2.$el, 'display', null);
-	      main_core.Dom.style(this.$el, 'height', `${prevHeight}px`);
-	      if (withAnimation) {
-	        main_core.Dom.style(this.$el, 'transition', 'height 0.2s');
-	        await sleep(10);
-	        main_core.Dom.style(this.$el, 'height', `${height}px`);
-	      } else {
-	        main_core.Dom.style(this.$el, 'height', `${height}px`);
-	      }
-	    }
-	  },
-	  template: `
+		name: 'ResourceNotification',
+		components: {
+			Switcher: booking_component_switcher.Switcher,
+			BIcon: ui_iconSet_api_vue.BIcon,
+			UiButton: booking_component_button.Button,
+			Description,
+			CheckedForAll,
+			MessageBlock,
+			AiBlock,
+			ManagerNotification
+		},
+		directives: {
+			hint: ui_vue3_directives_hint.hint
+		},
+		props: {
+			type: {
+				type: String,
+				required: true
+			},
+			title: {
+				type: String,
+				required: true
+			},
+			description: {
+				type: String,
+				required: true
+			},
+			helpDesk: {
+				type: Object,
+				required: true
+			},
+			checked: {
+				type: Boolean,
+				default: false
+			},
+			disabled: {
+				type: Boolean,
+				default: false
+			},
+			managerDescription: {
+				type: String,
+				default: ''
+			},
+			scrollToCard: {
+				type: String,
+				default: null
+			},
+			ordinal: {
+				type: Number,
+				required: true
+			},
+			senderCanUse: {
+				type: Boolean,
+				required: true
+			}
+		},
+		emits: ['update:checked'],
+		setup() {
+			return {
+				ButtonSize: booking_component_button.ButtonSize,
+				ButtonColor: booking_component_button.ButtonColor,
+				Actions: ui_iconSet_api_core.Actions,
+				CRM: ui_iconSet_api_core.CRM,
+				Outline: ui_iconSet_api_core.Outline,
+				Communication: booking_const.Communication
+			};
+		},
+		data() {
+			return {
+				messenger: booking_const.NotificationChannel.WhatsApp
+			};
+		},
+		computed: {
+			...ui_vue3_vuex.mapGetters({
+				resource: `${booking_const.Model.ResourceCreationWizard}/getResource`,
+				isAiCommunication: `${booking_const.Model.ResourceCreationWizard}/isAiCommunication`
+			}),
+			model() {
+				return this.$store.getters[`${booking_const.Model.Notifications}/getByType`](this.type);
+			},
+			template() {
+				const templateName = this.resource[this.templateTypeField];
+				return this.model.templates.find(template => template.type === templateName);
+			},
+			messageTemplate() {
+				return {
+					[booking_const.NotificationChannel.WhatsApp]: this.template?.text ?? '',
+					[booking_const.NotificationChannel.Sms]: this.template?.textSms ?? ''
+				}[this.messenger] ?? '';
+			},
+			hasTemplate() {
+				return Boolean(this.messageTemplate);
+			},
+			disableSwitcher() {
+				return this.disabled || !this.senderCanUse;
+			},
+			templateTypeField() {
+				return booking_const.NotificationFieldsMap.TemplateType[this.type];
+			},
+			soonHint() {
+				return {
+					text: this.loc('BRCW_BOOKING_SOON_HINT'),
+					popupOptions: {
+						offsetLeft: 60,
+						targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper')
+					}
+				};
+			},
+			isNotificationSettingsFeatureEnabled() {
+				return this.$store.state[booking_const.Model.Interface].enabledFeature.bookingNotificationsSettings;
+			},
+			infoIcon() {
+				return this.isAiCommunication ? ui_iconSet_api_core.Outline.CALL_BACK : ui_iconSet_api_core.CRM.CHAT_LINE;
+			},
+			infoTitle() {
+				return this.isAiCommunication ? this.loc('BRCW_NOTIFICATION_CARD_MESSAGE_AI') : this.loc('BRCW_NOTIFICATION_CARD_MESSAGE');
+			}
+		},
+		created() {
+			this.hintManager = BX.UI.Hint.createInstance({
+				id: `brwc-notification-hint-${main_core.Text.getRandom(5)}`,
+				popupParameters: {
+					targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper')
+				}
+			});
+		},
+		mounted() {
+			this.hintManager.init(this.$el);
+			void this.animateHeight(false);
+		},
+		updated() {
+			this.hintManager.init(this.$el);
+			void this.animateHeight(true);
+		},
+		methods: {
+			handleChannelChange(selectedChannel) {
+				this.messenger = selectedChannel;
+			},
+			handleTemplateTypeSelected(selectedType) {
+				void this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResource`, {
+					[this.templateTypeField]: selectedType
+				});
+			},
+			getChooseTemplateButton() {
+				return this.$refs.messageBlock?.getChooseTemplateButton() || null;
+			},
+			expand() {
+				void booking_provider_service_resourceCreationWizardService.resourceCreationWizardService.updateNotificationExpanded(this.type, !this.model.isExpanded);
+			},
+			async animateHeight(withAnimation) {
+				main_core.Dom.style(this.$el, 'transition', null);
+				if (withAnimation) {
+					await sleep(10);
+				}
+				const prevHeight = this.$el.offsetHeight;
+				main_core.Dom.style(this.$el, 'height', null);
+				if (!this.model.isExpanded) {
+					main_core.Dom.style(this.$refs.main, 'display', 'none');
+					main_core.Dom.style(this.$refs.manager?.$el, 'display', 'none');
+				}
+				const height = this.$el.offsetHeight;
+				main_core.Dom.style(this.$refs.main, 'display', null);
+				main_core.Dom.style(this.$refs.manager?.$el, 'display', null);
+				main_core.Dom.style(this.$el, 'height', `${prevHeight}px`);
+				if (withAnimation) {
+					main_core.Dom.style(this.$el, 'transition', 'height 0.2s');
+					await sleep(10);
+					main_core.Dom.style(this.$el, 'height', `${height}px`);
+				} else {
+					main_core.Dom.style(this.$el, 'height', `${height}px`);
+				}
+			}
+		},
+		template: `
 		<div
 			class="booking-resource-creation-wizard-notification-container"
 			:class="{
@@ -3885,9 +3994,9 @@ this.BX = this.BX || {};
 				</div>
 				<div class="booking-resource-creation-wizard-notification-main" ref="main">
 					<div class="resource-creation-wizard__form-notification-info-title-row --main">
-						<BIcon :name="CRM.CHAT_LINE"/>
+						<BIcon :name="infoIcon"/>
 						<div class="resource-creation-wizard__form-notification-info-title">
-							{{ loc('BRCW_NOTIFICATION_CARD_MESSAGE') }}
+							{{ infoTitle }}
 						</div>
 						<Switcher
 							v-hint="disableSwitcher && soonHint"
@@ -3898,40 +4007,23 @@ this.BX = this.BX || {};
 							@update:model-value="$emit('update:checked', $event)"
 						/>
 					</div>
-					<div class="resource-creation-wizard__form-notification-info --message">
-						<div class="resource-creation-wizard__form-notification-info-text-row">
-							{{ loc('BRCW_NOTIFICATION_CARD_MESSAGE_TEXT') }}
-							<ChannelMenu
-								:current-channel="messenger"
-								@updateChannel="handleChannelChange"
-							/>
-						</div>
-						<template v-if="hasTemplate">
-							<MessageTemplate :text="messageTemplate"/>
-							<div class="resource-creation-wizard__form-notification-info-template-choose-buttons">
-								<div class="booking-resource-creation-wizard-choose-template-button" ref="chooseTemplateBtn">
-									<UiButton
-										:disabled="!checked"
-										:text="loc('BRCW_NOTIFICATION_CARD_CHOOSE_TEMPLATE_TYPE')"
-										:size="ButtonSize.EXTRA_SMALL"
-										:color="ButtonColor.LIGHT_BORDER"
-										:round="true"
-										@click="showTemplatePopup = true"
-									/>
-								</div>
-							</div>
-						</template>
-						<TemplateEmpty v-else/>
-						<ChooseTemplatePopup
-							v-if="showTemplatePopup"
-							:bindElement="$refs.chooseTemplateBtn"
-							:model="model"
-							:current-channel="messenger"
-							:currentTemplateType="resource[templateTypeField]"
-							@templateTypeSelected="handleTemplateTypeSelected"
-							@close="showTemplatePopup = false"
-						/>
-					</div>
+					<AiBlock
+						v-if="isAiCommunication"
+						:checked="checked"
+						:ordinal
+					/>
+					<MessageBlock
+						v-else
+						ref="messageBlock"
+						:messenger="messenger"
+						:messageTemplate="messageTemplate"
+						:hasTemplate="hasTemplate"
+						:checked="checked"
+						:model="model"
+						:currentTemplateType="resource[templateTypeField]"
+						@updateChannel="handleChannelChange"
+						@templateTypeSelected="handleTemplateTypeSelected"
+					/>
 					<Description :description="description" :helpDesk="helpDesk"/>
 					<slot name="client"/>
 					<CheckedForAll :type="type" :disabled="!checked"/>
@@ -3953,81 +4045,93 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const BaseInfo = {
-	  name: 'ResourceNotificationCardBaseInfo',
-	  components: {
-	    ResourceNotification,
-	    ResourceNotificationTextRow,
-	    LabelDropdown,
-	    RichLoc: ui_vue3_components_richLoc.RichLoc
-	  },
-	  props: {
-	    /** @type {NotificationsModel} */
-	    model: {
-	      type: Object,
-	      required: true
-	    }
-	  },
-	  computed: {
-	    ...ui_vue3_vuex.mapGetters({
-	      /** @type {ResourceModel} */
-	      resource: `${booking_const.Model.ResourceCreationWizard}/getResource`,
-	      isCurrentSenderAvailable: `${booking_const.Model.Notifications}/isCurrentSenderAvailable`
-	    }),
-	    isInfoNotificationOn: {
-	      get() {
-	        return this.isCurrentSenderAvailable && this.resource.isInfoNotificationOn;
-	      },
-	      set(isInfoNotificationOn) {
-	        void this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResource`, {
-	          isInfoNotificationOn
-	        });
-	      }
-	    },
-	    infoNotificationDelay: {
-	      get() {
-	        return this.resource.infoNotificationDelay;
-	      },
-	      set(infoNotificationDelay) {
-	        void this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResource`, {
-	          infoNotificationDelay
-	        });
-	        this.$refs.card.$forceUpdate();
-	      }
-	    },
-	    locInfoTimeSend() {
-	      return this.loc('BRCW_NOTIFICATION_CARD_BASE_INFO_HELPER_TEXT_SECOND').replace('#time#', '[delay/]');
-	    },
-	    helpDesk() {
-	      return booking_const.HelpDesk.ResourceNotificationInfo;
-	    }
-	  },
-	  mounted() {
-	    if (booking_lib_ahaMoments.ahaMoments.shouldShow(booking_const.AhaMoment.MessageTemplate)) {
-	      setTimeout(() => this.showAhaMoment(), 500);
-	    }
-	  },
-	  methods: {
-	    async showAhaMoment() {
-	      const target = this.$refs.card.getChooseTemplateButton();
-	      if (main_core.Type.isNull(target)) {
-	        return;
-	      }
-	      await booking_lib_ahaMoments.ahaMoments.showGuide({
-	        id: 'booking-message-template',
-	        title: this.loc('BOOKING_AHA_MESSAGE_TEMPLATE_TITLE'),
-	        text: this.loc('BOOKING_AHA_MESSAGE_TEMPLATE_TEXT'),
-	        article: booking_const.HelpDesk.AhaMessageTemplate,
-	        target: this.$refs.card.getChooseTemplateButton(),
-	        targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper'),
-	        isPulsarTransparent: true
-	      });
-	      booking_lib_ahaMoments.ahaMoments.setShown(booking_const.AhaMoment.MessageTemplate);
-	    }
-	  },
-	  template: `
+		name: 'ResourceNotificationCardBaseInfo',
+		components: {
+			ResourceNotification,
+			ResourceNotificationTextRow,
+			LabelDropdown,
+			RichLoc: ui_vue3_components_richLoc.RichLoc
+		},
+		props: {
+			/** @type {NotificationsModel} */
+			model: {
+				type: Object,
+				required: true
+			},
+			ordinal: {
+				type: Number,
+				required: true
+			},
+			senderCanUse: {
+				type: Boolean,
+				required: true
+			}
+		},
+		computed: {
+			...ui_vue3_vuex.mapGetters({
+				/** @type {ResourceModel} */
+				resource: `${booking_const.Model.ResourceCreationWizard}/getResource`
+			}),
+			isInfoNotificationOn: {
+				get() {
+					return this.senderCanUse && this.resource.isInfoNotificationOn;
+				},
+				set(isInfoNotificationOn) {
+					void this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResource`, {
+						isInfoNotificationOn
+					});
+				}
+			},
+			infoNotificationDelay: {
+				get() {
+					return this.resource.infoNotificationDelay;
+				},
+				set(infoNotificationDelay) {
+					void this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResource`, {
+						infoNotificationDelay
+					});
+					this.$refs.card.$forceUpdate();
+				}
+			},
+			locInfoTimeSend() {
+				return this.loc('BRCW_NOTIFICATION_CARD_BASE_INFO_HELPER_TEXT_SECOND').replace('#time#', '[delay/]');
+			},
+			helpDesk() {
+				return booking_const.HelpDesk.ResourceNotificationInfo;
+			}
+		},
+		mounted() {
+			if (booking_lib_ahaMoments.ahaMoments.shouldShow(booking_const.AhaMoment.MessageTemplate)) {
+				setTimeout(() => this.showAhaMoment(), 500);
+			}
+		},
+		methods: {
+			async showAhaMoment() {
+				if (!this.$refs.card) {
+					return;
+				}
+				const target = this.$refs.card.getChooseTemplateButton();
+				if (main_core.Type.isNull(target)) {
+					return;
+				}
+				await booking_lib_ahaMoments.ahaMoments.showGuide({
+					id: 'booking-message-template',
+					title: this.loc('BOOKING_AHA_MESSAGE_TEMPLATE_TITLE'),
+					text: this.loc('BOOKING_AHA_MESSAGE_TEMPLATE_TEXT'),
+					article: booking_const.HelpDesk.AhaMessageTemplate,
+					target: this.$refs.card.getChooseTemplateButton(),
+					targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper'),
+					isPulsarTransparent: true
+				});
+				booking_lib_ahaMoments.ahaMoments.setShown(booking_const.AhaMoment.MessageTemplate);
+			}
+		},
+		template: `
 		<ResourceNotification
 			v-model:checked="isInfoNotificationOn"
 			:type="model.type"
+			:ordinal
+			:senderCanUse
 			:title="loc('BRCW_NOTIFICATION_CARD_BASE_INFO_TITLE_MSGVER_1')"
 			:description="loc('BRCW_NOTIFICATION_CARD_BASE_INFO_HELPER_TEXT_FIRST_MSGVER_2')"
 			:helpDesk="helpDesk"
@@ -4048,102 +4152,115 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const Confirmation = {
-	  name: 'ResourceNotificationCardConfirmation',
-	  components: {
-	    ResourceNotification,
-	    ResourceNotificationTextRow,
-	    LabelDropdown,
-	    RichLoc: ui_vue3_components_richLoc.RichLoc
-	  },
-	  props: {
-	    /** @type {NotificationsModel} */
-	    model: {
-	      type: Object,
-	      required: true
-	    }
-	  },
-	  setup() {
-	    return {
-	      HelpDesk: booking_const.HelpDesk,
-	      CardId: booking_component_cyclePopup.CardId
-	    };
-	  },
-	  computed: {
-	    ...ui_vue3_vuex.mapGetters({
-	      /** @type {ResourceModel} */
-	      resource: `${booking_const.Model.ResourceCreationWizard}/getResource`,
-	      isCurrentSenderAvailable: `${booking_const.Model.Notifications}/isCurrentSenderAvailable`
-	    }),
-	    isConfirmationNotificationOn: {
-	      get() {
-	        return this.isCurrentSenderAvailable && this.resource.isConfirmationNotificationOn;
-	      },
-	      set(isConfirmationNotificationOn) {
-	        void this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResource`, {
-	          isConfirmationNotificationOn
-	        });
-	      }
-	    },
-	    confirmationNotificationDelay: {
-	      get() {
-	        return this.resource.confirmationNotificationDelay;
-	      },
-	      set(confirmationNotificationDelay) {
-	        void this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResource`, {
-	          confirmationNotificationDelay
-	        });
-	        this.$refs.card.$forceUpdate();
-	      }
-	    },
-	    confirmationNotificationRepetitions: {
-	      get() {
-	        return this.resource.confirmationNotificationRepetitions;
-	      },
-	      set(confirmationNotificationRepetitions) {
-	        void this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResource`, {
-	          confirmationNotificationRepetitions
-	        });
-	        this.$refs.card.$forceUpdate();
-	      }
-	    },
-	    confirmationNotificationRepetitionsInterval: {
-	      get() {
-	        return this.resource.confirmationNotificationRepetitionsInterval;
-	      },
-	      set(confirmationNotificationRepetitionsInterval) {
-	        void this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResource`, {
-	          confirmationNotificationRepetitionsInterval
-	        });
-	        this.$refs.card.$forceUpdate();
-	      }
-	    },
-	    confirmationCounterDelay: {
-	      get() {
-	        return this.resource.confirmationCounterDelay;
-	      },
-	      set(confirmationCounterDelay) {
-	        void this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResource`, {
-	          confirmationCounterDelay
-	        });
-	        this.$refs.card.$forceUpdate();
-	      }
-	    },
-	    locSendMessageBefore() {
-	      return this.loc('BRCW_NOTIFICATION_CARD_CONFIRMATION_HELPER_TEXT_SECOND').replace('#days_before#', '[delay/]');
-	    },
-	    locRetryMessage() {
-	      return this.loc('BRCW_NOTIFICATION_CARD_CONFIRMATION_HELPER_TEXT_THIRD').replace('#times#', '[repeat/]').replace('#time_delay#', '[repeatInterval/]');
-	    },
-	    locManagerRemindTime() {
-	      return this.loc('BRCW_NOTIFICATION_CARD_CONFIRMATION_MANAGER_REMIND_TIME').replace('#time#', '[delay/]');
-	    }
-	  },
-	  template: `
+		name: 'ResourceNotificationCardConfirmation',
+		components: {
+			ResourceNotification,
+			ResourceNotificationTextRow,
+			LabelDropdown,
+			RichLoc: ui_vue3_components_richLoc.RichLoc
+		},
+		props: {
+			/** @type {NotificationsModel} */
+			model: {
+				type: Object,
+				required: true
+			},
+			ordinal: {
+				type: Number,
+				required: true
+			},
+			senderCanUse: {
+				type: Boolean,
+				required: true
+			}
+		},
+		setup() {
+			return {
+				HelpDesk: booking_const.HelpDesk,
+				CardId: booking_component_cyclePopup.CardId
+			};
+		},
+		computed: {
+			...ui_vue3_vuex.mapGetters({
+				/** @type {ResourceModel} */
+				resource: `${booking_const.Model.ResourceCreationWizard}/getResource`,
+				isAiCommunication: `${booking_const.Model.ResourceCreationWizard}/isAiCommunication`
+			}),
+			isConfirmationNotificationOn: {
+				get() {
+					return this.senderCanUse && this.resource.isConfirmationNotificationOn;
+				},
+				set(isConfirmationNotificationOn) {
+					void this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResource`, {
+						isConfirmationNotificationOn
+					});
+				}
+			},
+			confirmationNotificationDelay: {
+				get() {
+					return this.resource.confirmationNotificationDelay;
+				},
+				set(confirmationNotificationDelay) {
+					void this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResource`, {
+						confirmationNotificationDelay
+					});
+					this.$refs.card.$forceUpdate();
+				}
+			},
+			confirmationNotificationRepetitions: {
+				get() {
+					return this.resource.confirmationNotificationRepetitions;
+				},
+				set(confirmationNotificationRepetitions) {
+					void this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResource`, {
+						confirmationNotificationRepetitions
+					});
+					this.$refs.card.$forceUpdate();
+				}
+			},
+			confirmationNotificationRepetitionsInterval: {
+				get() {
+					return this.resource.confirmationNotificationRepetitionsInterval;
+				},
+				set(confirmationNotificationRepetitionsInterval) {
+					void this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResource`, {
+						confirmationNotificationRepetitionsInterval
+					});
+					this.$refs.card.$forceUpdate();
+				}
+			},
+			confirmationCounterDelay: {
+				get() {
+					return this.resource.confirmationCounterDelay;
+				},
+				set(confirmationCounterDelay) {
+					void this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResource`, {
+						confirmationCounterDelay
+					});
+					this.$refs.card.$forceUpdate();
+				}
+			},
+			locSendMessageBefore() {
+				return this.isAiCommunication ? this.loc('BRCW_NOTIFICATION_CARD_CONFIRMATION_AI_HELPER_TEXT_SECOND').replace('#days_before#', '[delay/]') : this.loc('BRCW_NOTIFICATION_CARD_CONFIRMATION_HELPER_TEXT_SECOND').replace('#days_before#', '[delay/]');
+			},
+			locRetryMessage() {
+				return this.isAiCommunication ? this.loc('BRCW_NOTIFICATION_CARD_CONFIRMATION_AI_HELPER_TEXT_THIRD').replace('#times#', '[repeat/]').replace('#time_delay#', '[repeatInterval/]') : this.loc('BRCW_NOTIFICATION_CARD_CONFIRMATION_HELPER_TEXT_THIRD').replace('#times#', '[repeat/]').replace('#time_delay#', '[repeatInterval/]');
+			},
+			locManagerRemindTime() {
+				return this.loc('BRCW_NOTIFICATION_CARD_CONFIRMATION_MANAGER_REMIND_TIME').replace('#time#', '[delay/]');
+			},
+			locDescription() {
+				return this.isAiCommunication ? this.loc('BRCW_NOTIFICATION_CARD_CONFIRMATION_AI_HELPER_TEXT_FIRST') : this.loc('BRCW_NOTIFICATION_CARD_CONFIRMATION_HELPER_TEXT_FIRST_MSGVER_2');
+			}
+		},
+		template: `
 		<ResourceNotification
 			v-model:checked="isConfirmationNotificationOn"
 			:type="model.type"
+			:ordinal
+			:senderCanUse
 			:title="loc('BRCW_NOTIFICATION_CARD_CONFIRMATION_TITLE_MSGVER_2')"
-			:description="loc('BRCW_NOTIFICATION_CARD_CONFIRMATION_HELPER_TEXT_FIRST_MSGVER_2')"
+			:description="locDescription"
 			:helpDesk="HelpDesk.ResourceNotificationConfirmation"
 			:managerDescription="loc('BRCW_NOTIFICATION_CARD_CONFIRMATION_MANAGER_HELPER')"
 			:scrollToCard="CardId.Unconfirmed"
@@ -4183,60 +4300,73 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const Reminder = {
-	  name: 'ResourceNotificationCardReminder',
-	  components: {
-	    ResourceNotification,
-	    ResourceNotificationTextRow,
-	    LabelDropdown,
-	    RichLoc: ui_vue3_components_richLoc.RichLoc
-	  },
-	  props: {
-	    /** @type {NotificationsModel} */
-	    model: {
-	      type: Object,
-	      required: true
-	    }
-	  },
-	  computed: {
-	    ...ui_vue3_vuex.mapGetters({
-	      /** @type {ResourceModel} */
-	      resource: `${booking_const.Model.ResourceCreationWizard}/getResource`,
-	      isCurrentSenderAvailable: `${booking_const.Model.Notifications}/isCurrentSenderAvailable`
-	    }),
-	    isReminderNotificationOn: {
-	      get() {
-	        return this.isCurrentSenderAvailable && this.resource.isReminderNotificationOn;
-	      },
-	      set(isReminderNotificationOn) {
-	        void this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResource`, {
-	          isReminderNotificationOn
-	        });
-	      }
-	    },
-	    reminderNotificationDelay: {
-	      get() {
-	        return this.resource.reminderNotificationDelay;
-	      },
-	      set(reminderNotificationDelay) {
-	        void this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResource`, {
-	          reminderNotificationDelay
-	        });
-	        this.$refs.card.$forceUpdate();
-	      }
-	    },
-	    locSendReminderTime() {
-	      return this.loc('BRCW_NOTIFICATION_CARD_REMINDER_HELPER_TEXT_SECOND').replace('#time#', '[delay/]');
-	    },
-	    helpDesk() {
-	      return booking_const.HelpDesk.ResourceNotificationReminder;
-	    }
-	  },
-	  template: `
+		name: 'ResourceNotificationCardReminder',
+		components: {
+			ResourceNotification,
+			ResourceNotificationTextRow,
+			LabelDropdown,
+			RichLoc: ui_vue3_components_richLoc.RichLoc
+		},
+		props: {
+			/** @type {NotificationsModel} */
+			model: {
+				type: Object,
+				required: true
+			},
+			ordinal: {
+				type: Number,
+				required: true
+			},
+			senderCanUse: {
+				type: Boolean,
+				required: true
+			}
+		},
+		computed: {
+			...ui_vue3_vuex.mapGetters({
+				/** @type {ResourceModel} */
+				resource: `${booking_const.Model.ResourceCreationWizard}/getResource`,
+				isAiCommunication: `${booking_const.Model.ResourceCreationWizard}/isAiCommunication`
+			}),
+			isReminderNotificationOn: {
+				get() {
+					return this.senderCanUse && this.resource.isReminderNotificationOn;
+				},
+				set(isReminderNotificationOn) {
+					void this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResource`, {
+						isReminderNotificationOn
+					});
+				}
+			},
+			reminderNotificationDelay: {
+				get() {
+					return this.resource.reminderNotificationDelay;
+				},
+				set(reminderNotificationDelay) {
+					void this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResource`, {
+						reminderNotificationDelay
+					});
+					this.$refs.card.$forceUpdate();
+				}
+			},
+			locSendReminderTime() {
+				return this.isAiCommunication ? this.loc('BRCW_NOTIFICATION_CARD_REMINDER_AI_HELPER_TEXT_SECOND').replace('#time#', '[delay/]') : this.loc('BRCW_NOTIFICATION_CARD_REMINDER_HELPER_TEXT_SECOND').replace('#time#', '[delay/]');
+			},
+			helpDesk() {
+				return booking_const.HelpDesk.ResourceNotificationReminder;
+			},
+			locDescription() {
+				return this.isAiCommunication ? this.loc('BRCW_NOTIFICATION_CARD_REMINDER_AI_HELPER_TEXT_FIRST') : this.loc('BRCW_NOTIFICATION_CARD_REMINDER_HELPER_TEXT_FIRST_MSGVER_1');
+			}
+		},
+		template: `
 		<ResourceNotification
 			v-model:checked="isReminderNotificationOn"
 			:type="model.type"
+			:ordinal
+			:senderCanUse
 			:title="loc('BRCW_NOTIFICATION_CARD_REMINDER_TITLE')"
-			:description="loc('BRCW_NOTIFICATION_CARD_REMINDER_HELPER_TEXT_FIRST_MSGVER_1')"
+			:description="locDescription"
 			:helpDesk="helpDesk"
 			ref="card"
 		>
@@ -4258,52 +4388,61 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const Feedback = {
-	  name: 'ResourceNotificationCardFeedback',
-	  components: {
-	    ResourceNotification,
-	    ResourceNotificationTextRow,
-	    LabelDropdown,
-	    RichLoc: ui_vue3_components_richLoc.RichLoc
-	  },
-	  props: {
-	    /** @type {NotificationsModel} */
-	    model: {
-	      type: Object,
-	      required: true
-	    }
-	  },
-	  data() {
-	    return {
-	      labelValue: this.model.settings.notification.delayValues[0].value
-	    };
-	  },
-	  computed: {
-	    ...ui_vue3_vuex.mapGetters({
-	      /** @type {ResourceModel} */
-	      resource: `${booking_const.Model.ResourceCreationWizard}/getResource`,
-	      isCurrentSenderAvailable: `${booking_const.Model.Notifications}/isCurrentSenderAvailable`
-	    }),
-	    isFeedbackNotificationOn: {
-	      get() {
-	        return false;
-	      },
-	      set(isFeedbackNotificationOn) {
-	        void this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResource`, {
-	          isFeedbackNotificationOn
-	        });
-	      }
-	    },
-	    locSendFeedbackTime() {
-	      return this.loc('BRCW_NOTIFICATION_CARD_FEEDBACK_HELPER_TEXT_SECOND').replace('#time#', '[delay/]');
-	    },
-	    helpDesk() {
-	      return booking_const.HelpDesk.ResourceNotificationFeedback;
-	    }
-	  },
-	  template: `
+		name: 'ResourceNotificationCardFeedback',
+		components: {
+			ResourceNotification,
+			ResourceNotificationTextRow,
+			LabelDropdown,
+			RichLoc: ui_vue3_components_richLoc.RichLoc
+		},
+		props: {
+			/** @type {NotificationsModel} */
+			model: {
+				type: Object,
+				required: true
+			},
+			ordinal: {
+				type: Number,
+				required: true
+			},
+			senderCanUse: {
+				type: Boolean,
+				required: true
+			}
+		},
+		data() {
+			return {
+				labelValue: this.model.settings.notification.delayValues[0].value
+			};
+		},
+		computed: {
+			...ui_vue3_vuex.mapGetters({
+				/** @type {ResourceModel} */
+				resource: `${booking_const.Model.ResourceCreationWizard}/getResource`
+			}),
+			isFeedbackNotificationOn: {
+				get() {
+					return false;
+				},
+				set(isFeedbackNotificationOn) {
+					void this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResource`, {
+						isFeedbackNotificationOn
+					});
+				}
+			},
+			locSendFeedbackTime() {
+				return this.loc('BRCW_NOTIFICATION_CARD_FEEDBACK_HELPER_TEXT_SECOND').replace('#time#', '[delay/]');
+			},
+			helpDesk() {
+				return booking_const.HelpDesk.ResourceNotificationFeedback;
+			}
+		},
+		template: `
 		<ResourceNotification
 			v-model:checked="isFeedbackNotificationOn"
 			:type="model.type"
+			:ordinal
+			:senderCanUse
 			:title="loc('BRCW_NOTIFICATION_CARD_FEEDBACK_TITLE')"
 			:description="loc('BRCW_NOTIFICATION_CARD_FEEDBACK_HELPER_TEXT_FIRST_MSGVER_2')"
 			:helpDesk="helpDesk"
@@ -4324,77 +4463,90 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const Late = {
-	  name: 'ResourceNotificationCardLate',
-	  components: {
-	    ResourceNotification,
-	    ResourceNotificationTextRow,
-	    LabelDropdown,
-	    RichLoc: ui_vue3_components_richLoc.RichLoc
-	  },
-	  props: {
-	    /** @type {NotificationsModel} */
-	    model: {
-	      type: Object,
-	      required: true
-	    }
-	  },
-	  setup() {
-	    return {
-	      HelpDesk: booking_const.HelpDesk,
-	      CardId: booking_component_cyclePopup.CardId
-	    };
-	  },
-	  computed: {
-	    ...ui_vue3_vuex.mapGetters({
-	      /** @type {ResourceModel} */
-	      resource: `${booking_const.Model.ResourceCreationWizard}/getResource`,
-	      isCurrentSenderAvailable: `${booking_const.Model.Notifications}/isCurrentSenderAvailable`
-	    }),
-	    isDelayedNotificationOn: {
-	      get() {
-	        return this.isCurrentSenderAvailable && this.resource.isDelayedNotificationOn;
-	      },
-	      set(isDelayedNotificationOn) {
-	        void this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResource`, {
-	          isDelayedNotificationOn
-	        });
-	      }
-	    },
-	    delayedNotificationDelay: {
-	      get() {
-	        return this.resource.delayedNotificationDelay;
-	      },
-	      set(delayedNotificationDelay) {
-	        void this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResource`, {
-	          delayedNotificationDelay
-	        });
-	        this.$refs.card.$forceUpdate();
-	      }
-	    },
-	    delayedCounterDelay: {
-	      get() {
-	        return this.resource.delayedCounterDelay;
-	      },
-	      set(delayedCounterDelay) {
-	        void this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResource`, {
-	          delayedCounterDelay
-	        });
-	        this.$refs.card.$forceUpdate();
-	      }
-	    },
-	    locSendMessageAfter() {
-	      return this.loc('BRCW_NOTIFICATION_CARD_LATE_HELPER_TEXT_SECOND_MSGVER_1').replace('#time#', '[delay/]');
-	    },
-	    locNotifyManagerIn() {
-	      return this.loc('BRCW_NOTIFICATION_CARD_LATE_MANAGER_NOTIFY_IN').replace('#time#', '[delay/]');
-	    }
-	  },
-	  template: `
+		name: 'ResourceNotificationCardLate',
+		components: {
+			ResourceNotification,
+			ResourceNotificationTextRow,
+			LabelDropdown,
+			RichLoc: ui_vue3_components_richLoc.RichLoc
+		},
+		props: {
+			/** @type {NotificationsModel} */
+			model: {
+				type: Object,
+				required: true
+			},
+			ordinal: {
+				type: Number,
+				required: true
+			},
+			senderCanUse: {
+				type: Boolean,
+				required: true
+			}
+		},
+		setup() {
+			return {
+				HelpDesk: booking_const.HelpDesk,
+				CardId: booking_component_cyclePopup.CardId
+			};
+		},
+		computed: {
+			...ui_vue3_vuex.mapGetters({
+				/** @type {ResourceModel} */
+				resource: `${booking_const.Model.ResourceCreationWizard}/getResource`,
+				isAiCommunication: `${booking_const.Model.ResourceCreationWizard}/isAiCommunication`
+			}),
+			isDelayedNotificationOn: {
+				get() {
+					return this.senderCanUse && this.resource.isDelayedNotificationOn;
+				},
+				set(isDelayedNotificationOn) {
+					void this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResource`, {
+						isDelayedNotificationOn
+					});
+				}
+			},
+			delayedNotificationDelay: {
+				get() {
+					return this.resource.delayedNotificationDelay;
+				},
+				set(delayedNotificationDelay) {
+					void this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResource`, {
+						delayedNotificationDelay
+					});
+					this.$refs.card.$forceUpdate();
+				}
+			},
+			delayedCounterDelay: {
+				get() {
+					return this.resource.delayedCounterDelay;
+				},
+				set(delayedCounterDelay) {
+					void this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResource`, {
+						delayedCounterDelay
+					});
+					this.$refs.card.$forceUpdate();
+				}
+			},
+			locSendMessageAfter() {
+				return this.isAiCommunication ? this.loc('BRCW_NOTIFICATION_CARD_LATE_AI_HELPER_TEXT_SECOND').replace('#time#', '[delay/]') : this.loc('BRCW_NOTIFICATION_CARD_LATE_HELPER_TEXT_SECOND_MSGVER_1').replace('#time#', '[delay/]');
+			},
+			locNotifyManagerIn() {
+				return this.loc('BRCW_NOTIFICATION_CARD_LATE_MANAGER_NOTIFY_IN').replace('#time#', '[delay/]');
+			},
+			locDescription() {
+				return this.isAiCommunication ? this.loc('BRCW_NOTIFICATION_CARD_LATE_AI_HELPER_TEXT_FIRST') : this.loc('BRCW_NOTIFICATION_CARD_LATE_HELPER_TEXT_FIRST_MSGVER_2');
+			}
+		},
+		template: `
 		<ResourceNotification
 			v-model:checked="isDelayedNotificationOn"
 			:type="model.type"
+			:ordinal
+			:senderCanUse
 			:title="loc('BRCW_NOTIFICATION_CARD_LATE_TITLE_MSGVER_1')"
-			:description="loc('BRCW_NOTIFICATION_CARD_LATE_HELPER_TEXT_FIRST_MSGVER_2')"
+			:description="locDescription"
 			:helpDesk="HelpDesk.ResourceNotificationLate"
 			:managerDescription="loc('BRCW_NOTIFICATION_CARD_LATE_MANAGER_HELPER')"
 			:scrollToCard="CardId.Late"
@@ -4422,34 +4574,122 @@ this.BX = this.BX || {};
 	`
 	};
 
+	// @vue/component
+	const Cancellation = {
+		name: 'ResourceNotificationCardCancellation',
+		components: {
+			ResourceNotification,
+			ResourceNotificationTextRow,
+			LabelDropdown,
+			RichLoc: ui_vue3_components_richLoc.RichLoc
+		},
+		props: {
+			/** @type {NotificationsModel} */
+			model: {
+				type: Object,
+				required: true
+			},
+			ordinal: {
+				type: Number,
+				required: true
+			},
+			senderCanUse: {
+				type: Boolean,
+				required: true
+			}
+		},
+		computed: {
+			...ui_vue3_vuex.mapGetters({
+				/** @type {ResourceModel} */
+				resource: `${booking_const.Model.ResourceCreationWizard}/getResource`,
+				isAiCommunication: `${booking_const.Model.ResourceCreationWizard}/isAiCommunication`
+			}),
+			isCancellationNotificationOn: {
+				get() {
+					return this.senderCanUse && this.resource.isCancellationNotificationOn;
+				},
+				set(isCancellationNotificationOn) {
+					void this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResource`, {
+						isCancellationNotificationOn
+					});
+				}
+			},
+			cancellationNotificationDelay: {
+				get() {
+					return this.resource.cancellationNotificationDelay;
+				},
+				set(cancellationNotificationDelay) {
+					void this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResource`, {
+						cancellationNotificationDelay
+					});
+					this.$refs.card.$forceUpdate();
+				}
+			},
+			locSendCancellationTime() {
+				return this.isAiCommunication ? this.loc('BRCW_NOTIFICATION_CARD_CANCELLATION_AI_HELPER_TEXT_SECOND').replace('#time#', '[delay/]') : this.loc('BRCW_NOTIFICATION_CARD_CANCELLATION_HELPER_TEXT_SECOND').replace('#time#', '[delay/]');
+			},
+			helpDesk() {
+				return booking_const.HelpDesk.ResourceNotificationCancellation;
+			},
+			locDescription() {
+				return this.isAiCommunication ? this.loc('BRCW_NOTIFICATION_CARD_CANCELLATION_AI_HELPER_TEXT_FIRST') : this.loc('BRCW_NOTIFICATION_CARD_CANCELLATION_HELPER_TEXT_FIRST');
+			}
+		},
+		template: `
+		<ResourceNotification
+			v-model:checked="isCancellationNotificationOn"
+			:type="model.type"
+			:ordinal
+			:senderCanUse
+			:title="loc('BRCW_NOTIFICATION_CARD_CANCELLATION_TITLE')"
+			:description="locDescription"
+			:helpDesk="helpDesk"
+			ref="card"
+		>
+			<template #client>
+				<ResourceNotificationTextRow icon="--clock-2">
+					<RichLoc :text="locSendCancellationTime" :placeholder="'[delay/]'">
+						<template #delay>
+							<LabelDropdown
+								v-model:value="cancellationNotificationDelay"
+								:items="model.settings.notification.delayValues"
+							/>
+						</template>
+					</RichLoc>
+				</ResourceNotificationTextRow>
+			</template>
+		</ResourceNotification>
+	`
+	};
+
 	const {
-	  mapGetters: mapResourceGetters$4
+		mapGetters: mapResourceGetters
 	} = ui_vue3_vuex.createNamespacedHelpers('resource-creation-wizard');
 
 	// @vue/component
 	const TariffInfo = {
-	  name: 'TariffInfo',
-	  components: {
-	    UiResourceWizardItem: booking_component_uiResourceWizardItem.UiResourceWizardItem,
-	    UiAlerts: booking_component_uiAlerts.UiAlerts
-	  },
-	  data() {
-	    return {
-	      IconSet: ui_iconSet_api_core.Set,
-	      AlertColor: booking_component_uiAlerts.AlertColor,
-	      AlertIcon: booking_component_uiAlerts.AlertIcon,
-	      AlertSize: booking_component_uiAlerts.AlertSize
-	    };
-	  },
-	  computed: {
-	    ...mapResourceGetters$4({
-	      showLicenseWarning: 'showLicenseWarning'
-	    })
-	  },
-	  template: `
+		name: 'TariffInfo',
+		components: {
+			UiResourceWizardItem: booking_component_uiResourceWizardItem.UiResourceWizardItem,
+			UiAlerts: booking_component_uiAlerts.UiAlerts
+		},
+		setup() {
+			return {
+				AlertColor: booking_component_uiAlerts.AlertColor,
+				AlertIcon: booking_component_uiAlerts.AlertIcon,
+				AlertSize: booking_component_uiAlerts.AlertSize,
+				Outline: ui_iconSet_api_core.Outline
+			};
+		},
+		computed: {
+			...mapResourceGetters({
+				showLicenseWarning: 'showLicenseWarning'
+			})
+		},
+		template: `
 		<UiResourceWizardItem
 			:title="loc('BRCW_NOTIFICATION_CARD_TARIFF_INFO_TITLE')"
-			:iconType="IconSet.BELL_1"
+			:iconType="Outline.NOTIFICATION"
 			:description="loc('BRCW_NOTIFICATION_CARD_TARIFF_INFO_DESCRIPTION')"
 			helpDeskType="TariffInfo"
 		>
@@ -4465,51 +4705,256 @@ this.BX = this.BX || {};
 	};
 
 	// @vue/component
+	const IconBlock = {
+		name: 'IconBlock',
+		components: {
+			Icon: ui_iconSet_api_core.BIcon
+		},
+		props: {
+			senderCode: {
+				type: String,
+				required: true
+			},
+			isActive: {
+				type: Boolean,
+				required: true
+			}
+		},
+		setup() {
+			return {
+				Communication: booking_const.Communication,
+				Outline: ui_iconSet_api_core.Outline
+			};
+		},
+		computed: {
+			iconColor() {
+				return this.isActive ? 'var(--ui-color-accent-main-primary)' : 'var(--ui-color-base-4)';
+			}
+		},
+		template: `
+		<div v-if="senderCode ===  Communication.AiCall"
+			class="resource-notification-card-communication-item-icon --ai_call"
+		>
+		</div>
+		<div v-else class="resource-notification-card-communication-item-icon --bitrix" >
+			<Icon
+				:name="Outline.CHATS"
+				:color="iconColor"
+			/>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const MethodsCommunication = {
+		name: 'MethodsCommunication',
+		components: {
+			UiResourceWizardItem: booking_component_uiResourceWizardItem.UiResourceWizardItem,
+			Icon: ui_iconSet_api_core.BIcon,
+			IconBlock
+		},
+		props: {
+			senders: {
+				type: Array,
+				required: true
+			}
+		},
+		setup() {
+			return {
+				Outline: ui_iconSet_api_core.Outline,
+				Communication: booking_const.Communication
+			};
+		},
+		computed: {
+			...ui_vue3_vuex.mapGetters({
+				resource: `${booking_const.Model.ResourceCreationWizard}/getResource`
+			})
+		},
+		methods: {
+			selectSender(code) {
+				void this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResource`, {
+					senderCode: code
+				});
+			},
+			getTitle(code) {
+				return code === booking_const.Communication.AiCall ? this.loc('BRCW_METHODS_COMMUNICATION_AI_TITLE') : this.loc('BRCW_METHODS_COMMUNICATION_TEXT_CHANNEL_TITLE');
+			},
+			getDescription(code) {
+				return code === booking_const.Communication.AiCall ? this.loc('BRCW_METHODS_COMMUNICATION_AI_DESCRIPTION') : this.loc('BRCW_METHODS_COMMUNICATION_TEXT_CHANNEL_DESCRIPTION');
+			}
+		},
+		template: `
+		<UiResourceWizardItem
+			:title="loc('BRCW_METHODS_COMMUNICATION_TITLE')"
+			:iconType="Outline.SPEAKER"
+			:description="loc('BRCW_METHODS_COMMUNICATION_DESCRIPTION')"
+		>
+			<div class="resource-notification-card-communication-box" >
+				<div
+					v-for="sender in senders"
+					:key="sender.code"
+					class="resource-notification-card-communication-item"
+					:class="{ '--active': sender.code === resource.senderCode, '--ai-call': sender.code === Communication.AiCall }"
+					@click="selectSender(sender.code)"
+				>
+					<IconBlock
+						:senderCode="sender.code"
+						:isActive="sender.code === resource.senderCode"
+					/>
+					<div class="resource-notification-card-communication-item-content">
+						<div class="resource-notification-card-communication-item-title">
+							{{ getTitle(sender.code) }}
+						</div>
+						<div class="resource-notification-card-communication-item-description">
+							{{ getDescription(sender.code) }}
+						</div>
+					</div>
+				</div>
+			</div>
+		</UiResourceWizardItem>
+	`
+	};
+
+	// @vue/component
+	const AiSettings = {
+		name: 'AiSettings',
+		components: {
+			UiResourceWizardItem: booking_component_uiResourceWizardItem.UiResourceWizardItem,
+			UiButton: ui_vue3_components_button.Button
+		},
+		setup() {
+			return {
+				ButtonSize: ui_vue3_components_button.ButtonSize,
+				ButtonColor: ui_vue3_components_button.ButtonColor,
+				Outline: ui_iconSet_api_core.Outline
+			};
+		},
+		data() {
+			return {
+				isLoading: false
+			};
+		},
+		methods: {
+			async launchAiAgent() {
+				this.isLoading = true;
+				try {
+					await booking_provider_service_aiAgentLauncherService.aiAgentLauncherService.launch();
+				} finally {
+					this.isLoading = false;
+				}
+			}
+		},
+		template: `
+		<UiResourceWizardItem
+			:title="loc('BRCW_METHODS_COMMUNICATION_AI_SETTINGS_TITLE')"
+			:iconType="Outline.BITRIX_GPT"
+		>
+			<div class="resource-notification-card-ai-settings-card" >
+				<div class="resource-notification-card-ai-settings-card-title">
+					{{ loc('BRCW_METHODS_COMMUNICATION_AI_SETTINGS_SUBTITLE') }}
+				</div>
+				<div class="resource-notification-card-ai-settings-card-description">
+					{{ loc('BRCW_METHODS_COMMUNICATION_AI_SETTINGS_DESCRIPTION') }}
+				</div>
+				<UiButton
+					:text="loc('BRCW_METHODS_COMMUNICATION_AI_SETTINGS_BTN')"
+					:size="ButtonSize.SMALL"
+					:color="ButtonColor.PRIMARY"
+					:loading="isLoading"
+					@click="launchAiAgent"
+				/>
+			</div>
+		</UiResourceWizardItem>
+	`
+	};
+
+	// @vue/component
 	const ResourceNotificationCard = {
-	  name: 'ResourceNotificationCard',
-	  components: {
-	    TariffInfo
-	  },
-	  computed: {
-	    notificationViews() {
-	      return this.notifications.map(model => {
-	        var _this$dictionary$Info;
-	        return (_this$dictionary$Info = {
-	          [this.dictionary.Info.value]: {
-	            view: BaseInfo,
-	            model
-	          },
-	          [this.dictionary.Confirmation.value]: {
-	            view: Confirmation,
-	            model
-	          },
-	          [this.dictionary.Reminder.value]: {
-	            view: Reminder,
-	            model
-	          },
-	          [this.dictionary.Delayed.value]: {
-	            view: Late,
-	            model
-	          },
-	          [this.dictionary.Feedback.value]: {
-	            view: Feedback,
-	            model
-	          }
-	        }[model.type]) != null ? _this$dictionary$Info : {};
-	      });
-	    },
-	    ...ui_vue3_vuex.mapGetters({
-	      notifications: `${booking_const.Model.Notifications}/get`,
-	      dictionary: `${booking_const.Model.Dictionary}/getNotifications`
-	    })
-	  },
-	  template: `
+		name: 'ResourceNotificationCard',
+		components: {
+			TariffInfo,
+			MethodsCommunication,
+			AiSettings
+		},
+		computed: {
+			...ui_vue3_vuex.mapGetters({
+				notifications: `${booking_const.Model.Notifications}/get`,
+				dictionary: `${booking_const.Model.Dictionary}/getNotifications`,
+				senders: `${booking_const.Model.Notifications}/getSenders`,
+				resource: `${booking_const.Model.ResourceCreationWizard}/getResource`,
+				isAiCommunication: `${booking_const.Model.ResourceCreationWizard}/isAiCommunication`
+			}),
+			availableSenders() {
+				return this.senders.filter(s => s.code !== booking_const.Communication.AiCall || s.canUse || s.code === this.resource.senderCode);
+			},
+			needShowSenderSelector() {
+				return this.availableSenders.length > 1;
+			},
+			activeSender() {
+				return this.senders.find(s => s.code === this.resource.senderCode) ?? this.senders[0] ?? null;
+			},
+			activeSenderCanUse() {
+				return this.activeSender?.canUse ?? false;
+			},
+			supportedNotificationTypes() {
+				if (!this.activeSender?.notifications) {
+					return [];
+				}
+				return Object.values(this.activeSender.notifications).map(n => n.value);
+			},
+			notificationViews() {
+				return this.notifications.filter(model => this.supportedNotificationTypes.includes(model.type)).map((model, index) => {
+					const ordinal = index + 1;
+					return {
+						[this.dictionary.Info.value]: {
+							view: BaseInfo,
+							model,
+							ordinal
+						},
+						[this.dictionary.Confirmation.value]: {
+							view: Confirmation,
+							model,
+							ordinal
+						},
+						[this.dictionary.Reminder.value]: {
+							view: Reminder,
+							model,
+							ordinal
+						},
+						[this.dictionary.Delayed.value]: {
+							view: Late,
+							model,
+							ordinal
+						},
+						[this.dictionary.Feedback.value]: {
+							view: Feedback,
+							model,
+							ordinal
+						},
+						[this.dictionary.Cancellation.value]: {
+							view: Cancellation,
+							model,
+							ordinal
+						}
+					}[model.type] ?? {};
+				});
+			}
+		},
+		template: `
 		<div class="resource-notification-card">
 			<TariffInfo/>
+			<template v-if="needShowSenderSelector" >
+				<MethodsCommunication :senders="availableSenders"/>
+				<template v-if="isAiCommunication">
+					<AiSettings/>
+				</template>
+			</template>
 			<slot v-for="notification of notificationViews" :key="notification.view">
 				<component
 					:is="notification.view"
 					:model="notification.model"
+					:ordinal="notification.ordinal"
+					:senderCanUse="activeSenderCanUse"
 					:data-id="'brcw-resource-notification-view-' + notification.view"
 				/>
 			</slot>
@@ -4518,67 +4963,67 @@ this.BX = this.BX || {};
 	};
 
 	const App = {
-	  name: 'ResourceCreationWizardApp',
-	  components: {
-	    ResourceCreationWizardLayout,
-	    ResourceCreationWizardHeader,
-	    ResourceCreationWizardFooter,
-	    ResourceCategoryCard,
-	    ResourceSettingsCard,
-	    ResourceNotificationCard
-	  },
-	  data() {
-	    return {
-	      init: true
-	    };
-	  },
-	  computed: {
-	    ...ui_vue3_vuex.mapState({
-	      step: state => state['resource-creation-wizard'].step,
-	      fetching: state => state['resource-creation-wizard'].fetching
-	    }),
-	    ...ui_vue3_vuex.mapGetters('resource-creation-wizard', ['invalidCurrentCard', 'resourceId']),
-	    currentView() {
-	      const step = this.step || 1;
-	      switch (step) {
-	        case 2:
-	          return 'ResourceSettingsCard';
-	        case 3:
-	          return 'ResourceNotificationCard';
-	        default:
-	          return 'ResourceCategoryCard';
-	      }
-	    },
-	    isEditForm() {
-	      return this.resourceId !== null;
-	    }
-	  },
-	  async beforeMount() {
-	    await this.initApp();
-	  },
-	  methods: {
-	    ...ui_vue3_vuex.mapActions('resource-creation-wizard', ['initState']),
-	    ...ui_vue3_vuex.mapMutations('resource-creation-wizard', ['prevStep', 'updateFetching', 'setGlobalSchedule']),
-	    async initApp() {
-	      await this.initState();
-	      await this.loadWizardData();
-	      this.init = false;
-	    },
-	    async loadWizardData() {
-	      try {
-	        this.updateFetching(true);
-	        await booking_provider_service_resourceCreationWizardService.resourceCreationWizardService.fetchData();
-	      } catch (error) {
-	        console.error('Loading wizard data error', error);
-	      } finally {
-	        this.updateFetching(false);
-	        if (!this.isEditForm) {
-	          this.setGlobalSchedule(true);
-	        }
-	      }
-	    }
-	  },
-	  template: `
+		name: 'ResourceCreationWizardApp',
+		components: {
+			ResourceCreationWizardLayout,
+			ResourceCreationWizardHeader,
+			ResourceCreationWizardFooter,
+			ResourceCategoryCard,
+			ResourceSettingsCard,
+			ResourceNotificationCard
+		},
+		data() {
+			return {
+				init: true
+			};
+		},
+		computed: {
+			...ui_vue3_vuex.mapState({
+				step: state => state['resource-creation-wizard'].step,
+				fetching: state => state['resource-creation-wizard'].fetching
+			}),
+			...ui_vue3_vuex.mapGetters('resource-creation-wizard', ['invalidCurrentCard', 'resourceId']),
+			currentView() {
+				const step = this.step || 1;
+				switch (step) {
+					case 2:
+						return 'ResourceSettingsCard';
+					case 3:
+						return 'ResourceNotificationCard';
+					default:
+						return 'ResourceCategoryCard';
+				}
+			},
+			isEditForm() {
+				return this.resourceId !== null;
+			}
+		},
+		async beforeMount() {
+			await this.initApp();
+		},
+		methods: {
+			...ui_vue3_vuex.mapActions('resource-creation-wizard', ['initState']),
+			...ui_vue3_vuex.mapMutations('resource-creation-wizard', ['prevStep', 'updateFetching', 'setGlobalSchedule']),
+			async initApp() {
+				await this.initState();
+				await this.loadWizardData();
+				this.init = false;
+			},
+			async loadWizardData() {
+				try {
+					this.updateFetching(true);
+					await booking_provider_service_resourceCreationWizardService.resourceCreationWizardService.fetchData();
+				} catch (error) {
+					console.error('Loading wizard data error', error);
+				} finally {
+					this.updateFetching(false);
+					if (!this.isEditForm) {
+						this.setGlobalSchedule(true);
+					}
+				}
+			}
+		},
+		template: `
 		<div id="booking-resource-creation-wizard" class="booking-resource-creation-wizard">
 			<ResourceCreationWizardLayout :loading="fetching" :step>
 				<template #header>
@@ -4595,94 +5040,68 @@ this.BX = this.BX || {};
 	`
 	};
 
-	let _ = t => t,
-	  _t;
-	var _width = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("width");
-	var _application = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("application");
-	var _mountContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("mountContent");
-	var _initCore = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initCore");
-	var _makeContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("makeContainer");
 	class ResourceCreationWizard {
-	  constructor() {
-	    Object.defineProperty(this, _makeContainer, {
-	      value: _makeContainer2
-	    });
-	    Object.defineProperty(this, _initCore, {
-	      value: _initCore2
-	    });
-	    Object.defineProperty(this, _mountContent, {
-	      value: _mountContent2
-	    });
-	    Object.defineProperty(this, _application, {
-	      writable: true,
-	      value: null
-	    });
-	  }
-	  static makeName(resourceId = 'new') {
-	    return `booking:resource-creation-wizard:${resourceId || 'new'}`;
-	  }
-	  open(resourceId = null) {
-	    booking_lib_sidePanelInstance.SidePanelInstance.open(ResourceCreationWizard.makeName(resourceId), {
-	      width: babelHelpers.classPrivateFieldLooseBase(ResourceCreationWizard, _width)[_width],
-	      cacheable: false,
-	      events: {
-	        onClose: this.closeSidePanel.bind(this)
-	      },
-	      contentCallback: async () => {
-	        await babelHelpers.classPrivateFieldLooseBase(this, _initCore)[_initCore](resourceId);
-	        this.subscribe();
-	        const container = babelHelpers.classPrivateFieldLooseBase(this, _makeContainer)[_makeContainer]();
-	        babelHelpers.classPrivateFieldLooseBase(this, _mountContent)[_mountContent](container);
-	        return container;
-	      }
-	    });
-	  }
-	  async closeSidePanel() {
-	    this.unsubscribe();
-	    babelHelpers.classPrivateFieldLooseBase(this, _application)[_application].unmount();
-	    babelHelpers.classPrivateFieldLooseBase(this, _application)[_application] = null;
-	    await booking_core.Core.removeDynamicModule(booking_const.Model.ResourceCreationWizard);
-	    await booking_core.Core.removeDynamicModule(booking_const.Model.Notifications);
-	  }
-	  subscribe() {
-	    main_core.Event.EventEmitter.subscribe(booking_const.EventName.CloseWizard, this.close);
-	  }
-	  unsubscribe() {
-	    main_core.Event.EventEmitter.unsubscribe(booking_const.EventName.CloseWizard, this.close);
-	  }
-	  close() {
-	    booking_lib_sidePanelInstance.SidePanelInstance.close();
-	  }
-	}
-	function _mountContent2(container) {
-	  const application = ui_vue3.BitrixVue.createApp(App, booking_core.Core.getParams());
-	  application.mixin(booking_component_mixin_locMixin.locMixin);
-	  application.use(booking_core.Core.getStore());
-	  application.mount(container);
-	  babelHelpers.classPrivateFieldLooseBase(this, _application)[_application] = application;
-	}
-	async function _initCore2(resourceId) {
-	  try {
-	    await booking_core.Core.init();
-	    await booking_core.Core.addDynamicModule(booking_model_resourceCreationWizard.ResourceCreationWizardModel.create().setVariables({
-	      resourceId
-	    }));
-	    await booking_core.Core.addDynamicModule(booking_model_notifications.Notifications.create());
-	  } catch (error) {
-	    console.error('Init Resource creation wizard error', error);
-	  }
-	}
-	function _makeContainer2() {
-	  return main_core.Tag.render(_t || (_t = _`
+		static #width = 600;
+		#application = null;
+		static makeName(resourceId = 'new') {
+			return `booking:resource-creation-wizard:${resourceId || 'new'}`;
+		}
+		#mountContent(container) {
+			const application = ui_vue3.BitrixVue.createApp(App, booking_core.Core.getParams());
+			application.mixin(booking_component_mixin_locMixin.locMixin);
+			application.use(booking_core.Core.getStore());
+			application.mount(container);
+			this.#application = application;
+		}
+		async #initCore(resourceId) {
+			try {
+				await booking_core.Core.init();
+				await Promise.all([booking_core.Core.addDynamicModule(booking_model_resourceCreationWizard.ResourceCreationWizardModel.create().setVariables({
+					resourceId
+				})), booking_core.Core.addDynamicModule(booking_model_aiAgent.AiAgentModel.create())]);
+			} catch (error) {
+				console.error('Init Resource creation wizard error', error);
+			}
+		}
+		#makeContainer() {
+			return main_core.Tag.render`
 			<div id="booking-resource-creation-wizard-app" class="booking-resource-creation-wizard-app"></div>
-		`));
+		`;
+		}
+		open(resourceId = null) {
+			booking_lib_sidePanelInstance.SidePanelInstance.open(ResourceCreationWizard.makeName(resourceId), {
+				width: ResourceCreationWizard.#width,
+				cacheable: false,
+				events: {
+					onClose: this.closeSidePanel.bind(this)
+				},
+				contentCallback: async () => {
+					await this.#initCore(resourceId);
+					this.subscribe();
+					const container = this.#makeContainer();
+					this.#mountContent(container);
+					return container;
+				}
+			});
+		}
+		async closeSidePanel() {
+			this.unsubscribe();
+			this.#application.unmount();
+			this.#application = null;
+			await Promise.all([booking_core.Core.removeDynamicModule(booking_const.Model.ResourceCreationWizard), booking_core.Core.removeDynamicModule(booking_const.Model.AiAgent)]);
+		}
+		subscribe() {
+			main_core.Event.EventEmitter.subscribe(booking_const.EventName.CloseWizard, this.close);
+		}
+		unsubscribe() {
+			main_core.Event.EventEmitter.unsubscribe(booking_const.EventName.CloseWizard, this.close);
+		}
+		close() {
+			booking_lib_sidePanelInstance.SidePanelInstance.close();
+		}
 	}
-	Object.defineProperty(ResourceCreationWizard, _width, {
-	  writable: true,
-	  value: 600
-	});
 
 	exports.ResourceCreationWizard = ResourceCreationWizard;
 
-}((this.BX.Booking = this.BX.Booking || {}),BX.Vue3,BX.Booking.Component.Mixin,BX.Booking.Model,BX.Booking.Model,BX,BX.Booking,BX.UI.NotificationManager,BX.Crm.MessageSender,BX.Booking.Provider.Service,BX.Booking.Lib,BX.UI.Uploader,BX,BX.Booking.Model,BX.Booking.Provider.Service,BX.Booking.Provider.Service,BX.Booking.Lib,BX.Booking.Component,BX.Booking.Component,BX.UI.EntitySelector,BX.Event,BX.Booking.Lib,BX.UI,BX.Booking.Lib,BX,BX.UI,BX.Booking.Lib,BX.UI.Vue3.Components,BX,BX.Booking.Lib,BX.Vue3.Directives,BX,BX,BX,BX.Booking.Component,BX.Booking.Provider.Service,BX.Main,BX,BX.Main,BX.Booking.Component,BX.Booking.Component,BX.Booking.Component,BX.UI.IconSet,BX.UI.Vue3.Components,BX,BX.Booking.Const,BX.Booking.Component,BX.Vue3.Vuex,BX.UI.IconSet,BX.Booking.Component,BX.Booking.Component));
+})(this.BX.Booking = this.BX.Booking || {}, BX, BX.Vue3, BX.Booking, BX.Booking.Const, BX.Booking.Component.Mixin, BX.Booking.Model, BX.Booking.Model, BX.Booking.Lib, BX.Vue3.Vuex, BX.Booking.Provider.Service, BX, BX.Booking.Component, BX.UI.NotificationManager, BX.Crm.MessageSender, BX.Booking.Provider.Service, BX.Booking.Provider.Service, BX.Booking.Provider.Service, BX.Booking.Lib, BX.Booking.Component, BX.UI.IconSet, window, BX, window, BX.UI, BX.Booking.Lib, BX.UI.IconSet, BX.UI.Uploader, BX.UI.Vue3.Components, BX, BX.Booking.Component, BX.UI.EntitySelector, BX.Booking.Component, BX.Booking.Component, BX.Booking.Lib, BX.Booking.Provider.Service, BX.Vue3.Directives, BX.UI, BX.Booking.Lib, BX.Main, BX.Main, BX.Booking.Component, BX.Booking.Lib, BX.UI.Vue3.Components, window, window, BX.UI, BX.Booking.Component, BX.Booking.Component, BX.Booking.Component, BX.Vue3.Components);
 //# sourceMappingURL=resource-creation-wizard.bundle.js.map

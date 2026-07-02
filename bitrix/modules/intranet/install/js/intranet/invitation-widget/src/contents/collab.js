@@ -1,31 +1,46 @@
-import { Content } from './content';
-import { Tag, Loc } from 'main.core';
-import type { ConfigContent } from '../types/content';
-import type { CollabContentOptions } from '../types/options';
+import { Tag, Loc, Extension } from 'main.core';
+
 import { Analytics } from '../analytics';
+import { type ConfigContent } from '../types/content';
+import { type CollabContentOptions } from '../types/options';
+import { Content } from './content';
 
 export class CollabContent extends Content
 {
 	articleCode: string = '22706764';
-	#openChat: ?func;
+	#openChat: ?function;
 
-	constructor(options: CollabContentOptions) {
+	constructor(options: CollabContentOptions)
+	{
 		super(options);
 		this.setEventNamespace('BX.Intranet.InvitationWidget.CollabContent');
+
+		const settings = Extension.getSettings('intranet.invitation-widget');
+
+		this.isNewProjectsAvailable = settings?.isNewProjectsAvailable;
+		this.canCreateProjects = settings?.canCreateProjects;
 	}
 
 	getConfig(): ConfigContent
 	{
-		return {
-			html: this.getOptions().awaitData.then((response) => {
-				const { Messenger } = response;
-				this.#openChat = () => {
-					Messenger.openChatCreation('collab');
-					Analytics.sendCreateCollab();
-				};
+		const defaultHtml = this.getOptions().awaitData.then((response) => {
+			const { Messenger } = response;
+			this.#openChat = () => {
+				Messenger.openChatCreation('collab');
+				Analytics.sendCreateCollab();
+			};
 
-				return this.getLayout();
-			}),
+			return this.getLayout();
+		});
+
+		const html = (
+			this.canCreateProjects
+				? defaultHtml
+				: (this.isNewProjectsAvailable ? '' : defaultHtml)
+		);
+
+		return {
+			html,
 			minHeight: '55px',
 			sizeLoader: 37,
 			marginBottom: 24,
@@ -46,6 +61,12 @@ export class CollabContent extends Content
 				this.sendAnalytics(this.articleCode);
 			};
 
+			const itemNameMessage = (
+				this.isNewProjectsAvailable
+					? Loc.getMessage('INTRANET_INVITATION_WIDGET_PROJECT')
+					: Loc.getMessage('INTRANET_INVITATION_WIDGET_COLLAB')
+			);
+
 			return Tag.render`
 				<div data-id="bx-invitation-widget-content-collab" class="${this.getWrapperClass()}">
 					<div class="intranet-invitation-widget-content">
@@ -55,7 +76,7 @@ export class CollabContent extends Content
 						<div class="intranet-invitation-widget-item-content">
 							<div class="intranet-invitation-widget-item-name">
 								<span>
-									${Loc.getMessage('INTRANET_INVITATION_WIDGET_COLLAB')}
+									${itemNameMessage}
 								</span>
 							</div>
 							<div class="intranet-invitation-widget-item-link">

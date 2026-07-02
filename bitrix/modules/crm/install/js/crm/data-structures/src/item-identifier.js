@@ -1,5 +1,6 @@
 import type { JsonObject } from 'main.core';
 import { Text } from 'main.core';
+import 'crm_common';
 
 export class ItemIdentifier
 {

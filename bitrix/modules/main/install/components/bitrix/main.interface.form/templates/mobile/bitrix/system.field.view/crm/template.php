@@ -1,4 +1,4 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 /** @var array $arParams */
 /** @var array $arResult */
 /** @global CMain $APPLICATION */
@@ -14,10 +14,10 @@ if (!empty($arResult["VALUE"]))
 		}
 		if (!empty($r))
 		{
-			?><dl class="mobile-grid-field-crm-view"><?
-				?><dt><?= GetMessage('CRM_ENTITY_TYPE_' . $entityType) ?>:</dt><?
-				?><dd><?=implode(", ", $r)?></dd><?
-			?></dl><?
+			?><dl class="mobile-grid-field-crm-view"><?php
+				?><dt><?= GetMessage('CRM_ENTITY_TYPE_' . $entityType) ?>:</dt><?php
+				?><dd><?=implode(", ", $r)?></dd><?php
+			?></dl><?php
 		}
 	}
 }

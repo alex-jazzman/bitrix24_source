@@ -25,14 +25,6 @@ CREATE TABLE b_location_name (
 );
 CREATE INDEX ix_b_location_name_name_normalized_language_id ON b_location_name (name_normalized, language_id);
 
-CREATE TABLE b_location_hierarchy (
-  ANCESTOR_ID int NOT NULL,
-  DESCENDANT_ID int NOT NULL,
-  LEVEL int NOT NULL,
-  PRIMARY KEY (ANCESTOR_ID, DESCENDANT_ID)
-);
-CREATE INDEX ix_b_location_hierarchy_descendant_id ON b_location_hierarchy (descendant_id);
-
 CREATE TABLE b_location_field (
   LOCATION_ID int NOT NULL,
   TYPE int NOT NULL,

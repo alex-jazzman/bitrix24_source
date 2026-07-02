@@ -24,6 +24,14 @@ export const Late = {
 			type: Object,
 			required: true,
 		},
+		ordinal: {
+			type: Number,
+			required: true,
+		},
+		senderCanUse: {
+			type: Boolean,
+			required: true,
+		},
 	},
 	setup(): Object
 	{
@@ -36,12 +44,12 @@ export const Late = {
 		...mapGetters({
 			/** @type {ResourceModel} */
 			resource: `${Model.ResourceCreationWizard}/getResource`,
-			isCurrentSenderAvailable: `${Model.Notifications}/isCurrentSenderAvailable`,
+			isAiCommunication: `${Model.ResourceCreationWizard}/isAiCommunication`,
 		}),
 		isDelayedNotificationOn: {
 			get(): boolean
 			{
-				return this.isCurrentSenderAvailable && this.resource.isDelayedNotificationOn;
+				return this.senderCanUse && this.resource.isDelayedNotificationOn;
 			},
 			set(isDelayedNotificationOn: boolean): void
 			{
@@ -72,9 +80,9 @@ export const Late = {
 		},
 		locSendMessageAfter(): string
 		{
-			return this.loc('BRCW_NOTIFICATION_CARD_LATE_HELPER_TEXT_SECOND_MSGVER_1')
-				.replace('#time#', '[delay/]')
-			;
+			return this.isAiCommunication
+				? this.loc('BRCW_NOTIFICATION_CARD_LATE_AI_HELPER_TEXT_SECOND').replace('#time#', '[delay/]')
+				: this.loc('BRCW_NOTIFICATION_CARD_LATE_HELPER_TEXT_SECOND_MSGVER_1').replace('#time#', '[delay/]');
 		},
 		locNotifyManagerIn(): string
 		{
@@ -82,13 +90,21 @@ export const Late = {
 				.replace('#time#', '[delay/]')
 			;
 		},
+		locDescription(): string
+		{
+			return this.isAiCommunication
+				? this.loc('BRCW_NOTIFICATION_CARD_LATE_AI_HELPER_TEXT_FIRST')
+				: this.loc('BRCW_NOTIFICATION_CARD_LATE_HELPER_TEXT_FIRST_MSGVER_2');
+		},
 	},
 	template: `
 		<ResourceNotification
 			v-model:checked="isDelayedNotificationOn"
 			:type="model.type"
+			:ordinal
+			:senderCanUse
 			:title="loc('BRCW_NOTIFICATION_CARD_LATE_TITLE_MSGVER_1')"
-			:description="loc('BRCW_NOTIFICATION_CARD_LATE_HELPER_TEXT_FIRST_MSGVER_2')"
+			:description="locDescription"
 			:helpDesk="HelpDesk.ResourceNotificationLate"
 			:managerDescription="loc('BRCW_NOTIFICATION_CARD_LATE_MANAGER_HELPER')"
 			:scrollToCard="CardId.Late"

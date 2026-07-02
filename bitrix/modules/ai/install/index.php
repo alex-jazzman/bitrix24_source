@@ -54,7 +54,7 @@ class AI extends \CModule
 
 	public function getDocumentRoot(): string
 	{
-		$context = \Bitrix\Main\Application::getInstance()->getContext();
+		$context = Application::getInstance()->getContext();
 
 		return $context->getServer()->getDocumentRoot();
 	}
@@ -65,14 +65,16 @@ class AI extends \CModule
 	 */
 	public function doInstall(): void
 	{
-		global $APPLICATION, $step, $USER;
-		$step = (int)$step;
+		global $APPLICATION, $USER;
+
+		$request = Application::getInstance()->getContext()->getRequest();
+		$step = (int)$request->get('step');
 
 		if ($USER->IsAdmin())
 		{
 			if ($step < 2)
 			{
-				$APPLICATION->IncludeAdminFile(Loc::getMessage('B24C_INSTALL_TITLE'), $_SERVER['DOCUMENT_ROOT']. '/bitrix/modules/ai/install/step1.php');
+				$APPLICATION->IncludeAdminFile(Loc::getMessage('B24C_INSTALL_TITLE'), $this->getDocumentRoot() . '/bitrix/modules/ai/install/step1.php');
 			}
 			elseif ($step === 2)
 			{
@@ -83,7 +85,7 @@ class AI extends \CModule
 					$this->InstallFiles();
 					$GLOBALS['errors'] = $this->errors ?? [];
 
-					$GLOBALS['APPLICATION']->includeAdminFile(
+					$APPLICATION->includeAdminFile(
 						Loc::getMessage('AI_INSTALL_INSTALL_TITLE'),
 						$this->getDocumentRoot() . '/bitrix/modules/ai/install/step2.php'
 					);
@@ -100,7 +102,8 @@ class AI extends \CModule
 	{
 		global $APPLICATION;
 
-		$step = isset($_GET['step']) ? intval($_GET['step']) : 1;
+		$request = Application::getInstance()->getContext()->getRequest();
+		$step = (int)($request->get('step') ?? 1);
 
 		if ($step < 2)
 		{
@@ -112,9 +115,10 @@ class AI extends \CModule
 		elseif ($step === 2)
 		{
 			$params = [];
-			if (isset($_GET['savedata']))
+			$savedata = $request->get('savedata');
+			if ($savedata !== null)
 			{
-				$params['savedata'] = $_GET['savedata'] === 'Y';
+				$params['savedata'] = $savedata === 'Y';
 			}
 
 			$this->uninstallDB($params);
@@ -133,17 +137,18 @@ class AI extends \CModule
 	 */
 	public function installDB(): bool
 	{
-		global $DB, $APPLICATION;
+		global $APPLICATION;
 
 		// db
-		if (File::isFileExists($this->getDocumentRoot() . "/bitrix/modules/ai/install/db/{$this->getConnectionType()}/install.sql"))
+		$sqlFile = $this->getDocumentRoot() . "/bitrix/modules/ai/install/db/{$this->getConnectionType()}/install.sql";
+		if (File::isFileExists($sqlFile))
 		{
-			$errors = $DB->runSQLBatch(
-				$this->getDocumentRoot() . "/bitrix/modules/ai/install/db/{$this->getConnectionType()}/install.sql"
-			);
-			if ($errors !== false)
+			$connection = Application::getConnection();
+			$errors = $connection->executeSqlBatch(file_get_contents($sqlFile));
+			if (!empty($errors))
 			{
 				$APPLICATION->throwException(implode('', $errors));
+				$this->errors = $errors;
 				return false;
 			}
 		}
@@ -267,9 +272,10 @@ class AI extends \CModule
 	 */
 	public function installFiles(): bool
 	{
-		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/ai/install/components", $_SERVER["DOCUMENT_ROOT"]."/bitrix/components", true, true);
-		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/ai/install/js", $_SERVER["DOCUMENT_ROOT"]."/bitrix/js", true, true);
-		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/ai/install/activities", $_SERVER["DOCUMENT_ROOT"]."/bitrix/activities", true, true);
+		$docRoot = $this->getDocumentRoot();
+		CopyDirFiles($docRoot . "/bitrix/modules/ai/install/components", $docRoot . "/bitrix/components", true, true);
+		CopyDirFiles($docRoot . "/bitrix/modules/ai/install/js", $docRoot . "/bitrix/js", true, true);
+		CopyDirFiles($docRoot . "/bitrix/modules/ai/install/activities", $docRoot . "/bitrix/activities", true, true);
 
 		return true;
 	}
@@ -281,24 +287,25 @@ class AI extends \CModule
 	 */
 	public function uninstallDB(array $arParams = []): bool
 	{
-		global $APPLICATION, $DB;
+		global $APPLICATION;
 
-		$errors = false;
+		$errors = [];
 
 		// delete DB
-		if (File::isFileExists($this->getDocumentRoot() . "/bitrix/modules/ai/install/db/{$this->getConnectionType()}/uninstall.sql"))
+		$sqlFile = $this->getDocumentRoot() . "/bitrix/modules/ai/install/db/{$this->getConnectionType()}/uninstall.sql";
+		if (File::isFileExists($sqlFile))
 		{
 			if (isset($arParams['savedata']) && !$arParams['savedata'])
 			{
-				$errors = $DB->runSQLBatch(
-					$this->getDocumentRoot() . "/bitrix/modules/ai/install/db/{$this->getConnectionType()}/uninstall.sql"
-				);
+				$connection = Application::getConnection();
+				$errors = $connection->executeSqlBatch(file_get_contents($sqlFile));
 			}
 		}
 
-		if ($errors !== false)
+		if (!empty($errors))
 		{
 			$APPLICATION->throwException(implode('', $errors));
+			$this->errors = $errors;
 			return false;
 		}
 
@@ -318,6 +325,8 @@ class AI extends \CModule
 
 		// uninstall event handlers
 		$eventManager = EventManager::getInstance();
+		/** @see \Bitrix\AI\Handler\Main */
+		$eventManager->unRegisterEventHandler('main', 'onProlog', 'ai', '\\Bitrix\\AI\\Handler\\Main', 'onProlog');
 		/** @see \Bitrix\AI\Handler\Main */
 		$eventManager->unRegisterEventHandler('main', 'onAfterUserDelete', 'ai', '\\Bitrix\\AI\\Handler\\Main', 'onAfterUserDelete');
 		/** @see \Bitrix\AI\Handler\PublicAgreement */
@@ -448,7 +457,7 @@ class AI extends \CModule
 
 	private function getConnectionType(): string
 	{
-		return \Bitrix\Main\Application::getConnection()->getType();
+		return Application::getConnection()->getType();
 	}
 
 	private function isCloudInstallation(): bool

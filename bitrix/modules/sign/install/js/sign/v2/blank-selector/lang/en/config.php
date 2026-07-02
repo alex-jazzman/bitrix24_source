@@ -19,4 +19,7 @@ $MESS["SIGN_BLANK_SELECTOR_RECENT_TEMPLATES_TITLE"] = "Recent documents";
 $MESS["SIGN_BLANK_SELECTOR_SLIDER_SELECT_BLANK_BUTTON_LABEL"] = "Select";
 $MESS["SIGN_BLANK_SELECTOR_UPLOADER_ERROR_INCOMPLETE"] = "Could not upload file. Please try again.";
 $MESS["SIGN_BLANK_SELECTOR_UPLOAD_HINT"] = "You can submit for signing one PDF, DOC, DOCX, RTF or ODT document at a time, or up to %imageCountLimit% JPG / PNG images.";
+$MESS["SIGN_BLANK_SELECTOR_UPLOAD_IMAGE_SIZE_GROUP_HINT"] = "Each of the image files must not exceed 10 MB.";
+$MESS["SIGN_BLANK_SELECTOR_UPLOAD_IMAGE_SIZE_HINT"] = "Image file size must not exceed 10 MB.";
+$MESS["SIGN_BLANK_SELECTOR_UPLOAD_LIMIT_HINT"] = "The template can have only one document. To replace or delete the uploaded document, use the document menu in the area above.";
 $MESS["SIGN_BLANK_SELECTOR_UPLOAD_PLACEHOLDERS_HINT"] = "Only DOCX files with editable symbolic fields are supported.";

@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Bitrix Framework
  * @package bitrix
@@ -37,7 +37,7 @@ if(is_dir($_SERVER["DOCUMENT_ROOT"].$path))
 	if(!$tres)
 	{
 		$strError = "Archiver error";
-		$arErrors = &$oArchiver->GetErrors();
+		$arErrors = $oArchiver->GetErrors();
 		if(!empty($arErrors))
 		{
 			$strError .= ":<br>";

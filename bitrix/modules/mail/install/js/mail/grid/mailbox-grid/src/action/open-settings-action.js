@@ -3,6 +3,7 @@ import { BaseAction } from './base-action';
 export class OpenSettingsAction extends BaseAction
 {
 	mailboxId: number;
+	url: ?string;
 
 	static getActionId(): string
 	{
@@ -12,13 +13,14 @@ export class OpenSettingsAction extends BaseAction
 	setActionParams(params: Object): void
 	{
 		this.mailboxId = params.mailboxId;
+		this.url = params.url ?? null;
 	}
 
 	async execute(): void
 	{
 		this.sendAnalytics();
 
-		const url = `/mail/config/edit?id=${this.mailboxId}`;
+		const url = this.url ?? `/mail/config/edit?id=${this.mailboxId}`;
 		BX.SidePanel.Instance.open(url);
 	}
 

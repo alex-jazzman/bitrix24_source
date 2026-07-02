@@ -29,6 +29,10 @@ $permissions = [
 	'canEditCrmIntegration' => (bool)MailAccess::getPermissionValue(PermissionDictionary::MAIL_MAILBOX_CRM_INTEGRATION_EDIT),
 ];
 
+$features = [
+	'isPasswordlessConnectAvailable' => (bool)$arResult['IS_PASSWORDLESS_CONNECT_AVAILABLE'],
+];
+
 ?>
 <div id="<?= $massconnectContainerId ?>" class="--ui-context-content-light"></div>
 <script>
@@ -44,11 +48,15 @@ $permissions = [
 
 		const appContainerId = '<?= $massconnectContainerId ?>';
 		const permissions = <?= Json::encode($permissions) ?>;
+		const features = <?= Json::encode($features) ?>;
+		const settingsConfig = <?= Json::encode($arResult['SETTINGS_CONFIG']) ?>;
 		const isSmtpAvailable = '<?= $arResult['IS_SMTP_AVAILABLE'] ?>';
 
 		const massConnectApp = new BX.Mail.Massconnect.MassconnectForm({
 			appContainerId,
 			permissions,
+			features,
+			settingsConfig,
 			source,
 			isSmtpAvailable,
 		});

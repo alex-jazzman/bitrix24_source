@@ -134,6 +134,7 @@
 	background: conic-gradient(#1BCE7B, #7CFFC2, #1BCE7B);
 	padding: 2px;
 	mask: linear-gradient(white, white) content-box, linear-gradient(white, white);
+	/* @chef-ignore */
 	mask-composite: exclude;
 	pointer-events: none;
 }

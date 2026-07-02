@@ -1,7 +1,13 @@
-<?
+<?php
+
 @set_time_limit(0);
 ini_set("track_errors", "1");
 ignore_user_abort(true);
+
+/**
+ * @global CMain $APPLICATION
+ * @global CUser $USER
+ */
 
 IncludeModuleLangFile("/bitrix/modules/main/admin/update_system_market.php");
 
@@ -22,7 +28,7 @@ if ($_REQUEST["action"] == "load" && $_REQUEST["id"] <> '' && check_bitrix_sessi
 	}
 	else
 	{
-		LocalRedirect("/bitrix/admin/module_admin.php?lang=".LANG."&id=".urlencode($_REQUEST["id"])."&".bitrix_sessid_get()."&install=Y");
+		LocalRedirect("/bitrix/admin/module_admin.php?lang=".LANGUAGE_ID."&id=".urlencode($_REQUEST["id"])."&".bitrix_sessid_get()."&install=Y");
 	}
 }
 
@@ -37,18 +43,18 @@ $arFilterFields = array(
 	"filter_name",
 );
 
-$lAdmin->InitFilter($arFilterFields);
+$filter = $lAdmin->InitFilter($arFilterFields);
 
 $arFilter = array();
-if ($filter_category <> '')
-	$arFilter["CATEGORY"] = $filter_category;
-if ($filter_type <> '')
-	$arFilter["TYPE"] = $filter_type;
-if ($filter_name <> '')
-	$arFilter["NAME"] = $filter_name;
+if ($filter['filter_category'] <> '')
+	$arFilter["CATEGORY"] = $filter['filter_category'];
+if ($filter['filter_type'] <> '')
+	$arFilter["TYPE"] = $filter['filter_type'];
+if ($filter['filter_name'] <> '')
+	$arFilter["NAME"] = $filter['filter_name'];
 
 $errorMessage = "";
-$arModules = CUpdateClientPartner::SearchModulesEx(array($by => $order), $arFilter, (intval($_REQUEST["PAGEN_1"]) > 0 ? intval($_REQUEST["PAGEN_1"]) : 1), LANG, $errorMessage);
+$arModules = CUpdateClientPartner::SearchModulesEx(array($oSort->getField() => $oSort->getOrder()), $arFilter, (intval($_REQUEST["PAGEN_1"]) > 0 ? intval($_REQUEST["PAGEN_1"]) : 1), LANGUAGE_ID, $errorMessage);
 if ($errorMessage <> '')
 	$lAdmin->AddGroupError($errorMessage, 0);
 
@@ -60,8 +66,6 @@ if (is_array($arModules["MODULE"]))
 }
 $dbResultList = new CDBResult();
 $dbResultList->InitFromArray($arResultListTmp);
-
-//echo "<pre>!1!<br>";print_r($arModules);echo "</pre>";
 
 $dbResultList = new CAdminResult($dbResultList, $sTableID);
 $dbResultList->NavStart(array("bShowAll" => false, "nPageSize" => 20));
@@ -85,7 +89,7 @@ $arVisibleColumns = $lAdmin->GetVisibleHeaderColumns();
 
 while ($arResultItem = $dbResultList->Fetch())
 {
-	$row =& $lAdmin->AddRow($arResultItem["ID"], $arResultItem);
+	$row = $lAdmin->AddRow($arResultItem["ID"], $arResultItem);
 
 	$row->AddField(
 		"ID",
@@ -136,9 +140,9 @@ $lAdmin->CheckListMode();
 /****************************************************************************/
 
 ?>
-<form name="find_form" method="GET" action="<?echo $APPLICATION->GetCurPage()?>?">
+<form name="find_form" method="GET" action="<?= $APPLICATION->GetCurPage()?>?">
 
-<?
+<?php
 $oFilter = new CAdminFilter(
 	$sTableID."_filter",
 	array(
@@ -152,34 +156,34 @@ $oFilter->Begin();
 ?>
 	<tr>
 		<td><?= GetMessage("USMP_F_NAME") ?>:</td>
-		<td><input type="text" name="filter_name" value="<?echo htmlspecialcharsex($filter_name)?>" size="30">
+		<td><input type="text" name="filter_name" value="<?= htmlspecialcharsex($filter['filter_name'])?>" size="30">
 		</td>
 	</tr>
 	<tr>
 		<td><?= GetMessage("USMP_H_CAT") ?>:</td>
 		<td><select name="filter_category">
 			<option value="0"><?= GetMessage("USMP_CAT_0") ?></option>
-			<?
+			<?php
 			foreach ($arModules['MODULES_CATEGORIES'][0]["#"]["CATEGORY"] as $ct)
-				echo '<option value="'.$ct["@"]["ID"].'"'.(($filter_category == $ct["@"]["ID"]) ? ' selected' : '').'>'.$ct["@"]["NAME"].'</option>';
+				echo '<option value="'.$ct["@"]["ID"].'"'.(($filter['filter_category'] == $ct["@"]["ID"]) ? ' selected' : '').'>'.$ct["@"]["NAME"].'</option>';
 			?></select></td>
 	</tr>
 	<tr>
 		<td><?= GetMessage("USMP_H_TYPE") ?>:</td>
 		<td><select name="filter_type">
 			<option value="0"><?= GetMessage("USMP_TYPE_0") ?></option>
-			<?
+			<?php
 			if (isset($arModules['MODULES_TYPES'][0]["#"]["TYPE"]) && is_array($arModules['MODULES_TYPES'][0]["#"]["TYPE"]))
 			{
 				foreach ($arModules['MODULES_TYPES'][0]["#"]["TYPE"] as $ct)
 				{
-					echo '<option value="'.$ct["@"]["ID"].'"'.(($filter_type == $ct["@"]["ID"]) ? ' selected' : '').'>'.$ct["@"]["NAME"].'</option>';
+					echo '<option value="'.$ct["@"]["ID"].'"'.(($filter['filter_type'] == $ct["@"]["ID"]) ? ' selected' : '').'>'.$ct["@"]["NAME"].'</option>';
 				}
 			}
 			?></select></td>
 	</tr>
 
-<?
+<?php
 $oFilter->Buttons(
 	array(
 		"table_id" => $sTableID,
@@ -191,6 +195,6 @@ $oFilter->End();
 ?>
 </form>
 
-<?
+<?php
 $lAdmin->DisplayList();
 ?>

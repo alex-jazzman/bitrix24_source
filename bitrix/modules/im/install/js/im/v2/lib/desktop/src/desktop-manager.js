@@ -7,6 +7,7 @@ import { Logger } from 'im.v2.lib.logger';
 import { DesktopApi, DesktopFeature } from 'im.v2.lib.desktop-api';
 import { LayoutManager } from 'im.v2.lib.layout';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
+import { type CreatableChatTypeItem } from 'im.v2.lib.create-chat';
 
 import { CheckUtils } from './classes/check-utils';
 import { Conference } from './classes/conference';
@@ -14,8 +15,6 @@ import { DesktopChatWindow } from './classes/chat-window';
 import { DesktopBrowserWindow } from './classes/browser-window';
 import { Encoder } from './classes/encoder';
 import { DesktopBroadcastManager } from './classes/broadcast-manager';
-
-import type { CreatableChatType } from 'im.v2.component.content.chat-forms.forms';
 
 export { DesktopBroadcastManager } from './classes/broadcast-manager';
 
@@ -241,7 +240,7 @@ export class DesktopManager
 		Conference.toggleConference();
 	}
 
-	redirectToChatCreation(chatType: CreatableChatType): Promise
+	redirectToChatCreation(chatType: CreatableChatTypeItem): Promise
 	{
 		Logger.warn('Desktop: redirectToChatCreation', chatType);
 		this.openBxLink(`bx://${DesktopBxLink.chatCreation}/chatType/${chatType}/`);

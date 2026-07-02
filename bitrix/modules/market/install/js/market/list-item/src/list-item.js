@@ -18,11 +18,16 @@ export const ListItem = {
 	props: [
 		'item', 'params', 'index',
 	],
+	setup: function ()
+	{
+		return {
+			contextMenu: false,
+		};
+	},
 	data() {
 		return {
 			favoriteProcess: false,
 			favoriteProcessStart: false,
-			contextMenu: false,
 			MarketLinks: MarketLinks,
 		}
 	},

@@ -25,7 +25,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Objectify\EntityObject;
 use CCrmSaleHelper;
 
-final class Deal extends Factory
+class Deal extends Factory
 {
 	protected $itemClassName = Item\Deal::class;
 
@@ -45,6 +45,16 @@ final class Deal extends Factory
 	}
 
 	public function isClientEnabled(): bool
+	{
+		return true;
+	}
+
+	public function isClientContactEnabled(): bool
+	{
+		return true;
+	}
+
+	public function isClientCompanyEnabled(): bool
 	{
 		return true;
 	}
@@ -325,6 +335,16 @@ final class Deal extends Factory
 				'TYPE' => Field::TYPE_CRM_CONTACT,
 				'ATTRIBUTES' => [\CCrmFieldInfoAttr::NotDisplayed, \CCrmFieldInfoAttr::Multiple]
 			],
+			Item::FIELD_NAME_MYCOMPANY_ID => [
+				'TYPE' => Field::TYPE_CRM_COMPANY,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::HasDefaultValue],
+				'SETTINGS' => [
+					'isMyCompany' => true,
+					'parentEntityTypeId' => \CCrmOwnerType::Company,
+					'isEmbeddedEditorEnabled' => true,
+				],
+				'CLASS' => Field\MyCompanyId::class,
+			],
 			Item\Deal::FIELD_NAME_QUOTE_ID => [
 				'TYPE' => Field::TYPE_CRM_QUOTE,
 				'SETTINGS' => [
@@ -434,6 +454,13 @@ final class Deal extends Factory
 				'TYPE' => Field::TYPE_USER,
 				'ATTRIBUTES' => [\CCrmFieldInfoAttr::Multiple],
 				'CLASS' => Field\Observers::class,
+			],
+			Item::FIELD_NAME_WEBFORM_ID => [
+				'TYPE' => Field::TYPE_CRM_WEBFORM,
+				'ATTRIBUTES' => [
+					\CCrmFieldInfoAttr::NotDisplayed,
+					\CCrmFieldInfoAttr::Immutable,
+				],
 			],
 			Item::FIELD_LAST_COMMUNICATION_TIME => [
 				'TYPE' => Field::TYPE_STRING,
@@ -815,6 +842,11 @@ final class Deal extends Factory
 	}
 
 	public function isRecurringSupported(): bool
+	{
+		return true;
+	}
+
+	public function isMyCompanyEnabled(): bool
 	{
 		return true;
 	}

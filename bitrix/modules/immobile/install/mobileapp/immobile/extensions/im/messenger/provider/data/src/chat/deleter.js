@@ -124,7 +124,7 @@ jn.define('im/messenger/provider/data/chat/deleter', (require, exports, module) 
 
 			await this.store.dispatch('messagesModel/deleteByChatId', { chatId });
 			await this.store.dispatch('sidebarModel/delete', { dialogId, chatId });
-			await this.store.dispatch('counterModel/delete', { chatIdList: chatId });
+			await this.store.dispatch('counterModel/delete', { chatIdList: [chatId] });
 		}
 
 		/**

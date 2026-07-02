@@ -1,11 +1,13 @@
 import { ChatTextarea } from 'im.v2.component.textarea';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 
-import { ReasoningButton } from './reasoning-button';
+import { ReasoningButton } from './textarea-toolbar/components/reasoning-button';
+import { ToolbarButtons } from './textarea-toolbar/toolbar-buttons';
 
 // @vue/component
 export const CopilotTextarea = {
 	name: 'CopilotTextarea',
-	components: { ChatTextarea, ReasoningButton },
+	components: { ChatTextarea, ToolbarButtons, ReasoningButton },
 	props: {
 		dialogId: {
 			type: String,
@@ -14,6 +16,12 @@ export const CopilotTextarea = {
 		isFileUploadEnabled: {
 			type: Boolean,
 			required: true,
+		},
+	},
+	computed: {
+		isToolbarButtonsEnabled(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.isBitrixGptV2Available);
 		},
 	},
 	methods: {
@@ -32,7 +40,14 @@ export const CopilotTextarea = {
 			:withSmileSelector="false"
 		>
 			<template #bottom-panel-buttons>
-				<ReasoningButton :dialogId="dialogId" />
+				<ToolbarButtons 
+					v-if="isToolbarButtonsEnabled"
+					:dialogId="dialogId"
+				/>
+				<ReasoningButton
+					v-else
+					:dialogId="dialogId" 
+				/>
 			</template>
 		</ChatTextarea>
 	`,

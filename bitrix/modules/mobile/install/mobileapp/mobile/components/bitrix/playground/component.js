@@ -10,11 +10,10 @@
 
 		render()
 		{
-			return View(
-				{},
-			);
 		}
 	}
 
-	layout.showComponent(new PlaygroundComponent());
+	layout.showComponent(
+		new PlaygroundComponent(),
+	);
 })();

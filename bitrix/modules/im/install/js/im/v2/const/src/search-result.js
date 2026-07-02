@@ -6,4 +6,5 @@ export const SearchEntityIdTypes = {
 	chatUser: 'im-chat-user',
 	department: 'department',
 	network: 'imbot-network',
+	openLines: 'LINES',
 };

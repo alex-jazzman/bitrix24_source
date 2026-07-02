@@ -730,7 +730,8 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	        const mentionSettings = formatter.getMentionSettings();
 	        if (main_core.Type.isStringFilled(mentionSettings == null ? void 0 : (_mentionSettings$urlT = mentionSettings.urlTemplate) == null ? void 0 : _mentionSettings$urlT.user)) {
 	          const urlTemplate = mentionSettings.urlTemplate.user;
-	          const userUrl = urlTemplate.replaceAll('#ID#', node.getValue());
+	          const replacePattern = /(#id#|#user_id#)/gi;
+	          const userUrl = urlTemplate.replaceAll(replacePattern, node.getValue());
 	          return main_core.Dom.create({
 	            tag: 'a',
 	            attrs: {

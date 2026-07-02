@@ -16,3 +16,4 @@ $MESS["CATALOG_STORE_DOCUMENT_FIELD_TOTAL"] = "Inventory object total";
 $MESS["CATALOG_STORE_DOCUMENT_FIELD_WAS_CANCELLED"] = "Inventory object canceled";
 $MESS["CATALOG_STORE_DOCUMENT_FIELD_WAS_CANCELLED_FULL"] = "Inventory object canceled, Y/N";
 $MESS["CATALOG_STORE_DOCUMENT_TABLE"] = "Inventory objects";
+$MESS["CATALOG_STORE_DOCUMENT_TABLE_DESCRIPTION_FULL"] = "Contains information about inventory objects (stock receipt, transfer, adjustment etc.)";

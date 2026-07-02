@@ -14,7 +14,7 @@ export class MarketSubscriptionPopup extends MarketExpiredPopup
 
 	getTitle(): string
 	{
-		const replacements = { '#DAYS#': this.expireDays };
+		const replacements = { ...this.getCopilotReplacements(), '#DAYS#': this.expireDays };
 
 		if (this.type === PopupType.FINAL)
 		{
@@ -41,12 +41,12 @@ export class MarketSubscriptionPopup extends MarketExpiredPopup
 
 	#getDescription(): string
 	{
-		const replacements = { '#DATE#': this.expireDate };
+		const replacements = { ...this.getCopilotReplacements(), '#DATE#': this.expireDate };
 
 		if (this.type === PopupType.FINAL)
 		{
 			return this.isRenamedMarket
-				? Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DESCRIPTION_SUBSCRIPTION_FINAL_BITRIX_GPT', replacements)
+				? Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DESCRIPTION_SUBSCRIPTION_FINAL_BITRIX_GPT_MSGVER_1', replacements)
 				: Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DESCRIPTION_SUBSCRIPTION_FINAL_MARKET_PLUS', replacements);
 		}
 

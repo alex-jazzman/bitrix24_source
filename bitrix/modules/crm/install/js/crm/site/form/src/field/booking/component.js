@@ -26,6 +26,12 @@ const BookingField = {
 			return;
 		}
 
+		const formLanguage = this.$root?.form?.language;
+		if (formLanguage)
+		{
+			b24form.common.language = formLanguage;
+		}
+
 		await new Promise((resolve) => {
 			const node = document.createElement('script');
 			node.src = `${scriptLink}?${Math.trunc(Date.now() / 60000)}`;

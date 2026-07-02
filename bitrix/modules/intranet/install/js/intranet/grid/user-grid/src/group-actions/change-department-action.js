@@ -11,7 +11,7 @@ export class ChangeDepartmentAction extends BaseAction
 
 	getAjaxMethod(): string
 	{
-		return 'intranet.controller.user.userlist.groupChangeDepartment';
+		return 'intranet.v2.UserList.changeDepartment';
 	}
 
 	execute(): void
@@ -50,7 +50,7 @@ export class ChangeDepartmentAction extends BaseAction
 			footer,
 			entities: [
 				{
-					id: 'department',
+					id: 'structure-node',
 					options: {
 						selectMode: 'departmentsOnly',
 						allowSelectRootDepartment: true,
@@ -74,8 +74,8 @@ export class ChangeDepartmentAction extends BaseAction
 					userIds: selectedRows,
 					isSelectedAllRows,
 					filter: this.userFilter,
-					departmentIds,
 				},
+				departmentIds,
 			},
 		})
 			.then((result) => this.handleSuccess(result))

@@ -6,7 +6,7 @@ import { useLoc } from '../../../../shared/composables';
 
 // @vue/component
 export const NodeSettingsLayout = {
-	name: 'node-settings-layout',
+	name: 'NodeSettingsLayout',
 	components: { BIcon },
 	props:
 	{
@@ -36,14 +36,14 @@ export const NodeSettingsLayout = {
 	template: `
 		<div
 			v-if="isShown"
-			class="node-settings"
+			class="editor-chart-node-settings"
 			:class="{ '--saving': isSaving, '--loading': isLoading }"
 		>
 			<template v-if="!isLoading">
-				<div class="node-settings__header">
+				<div class="editor-chart-node-settings__header">
 					<span>{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_TITLE') }}</span>
 					<BIcon
-						class="node-settings__header_close-icon"
+						class="editor-chart-node-settings__header_close-icon"
 						name="cross-m"
 						:size="20"
 						:data-test-id="$testId('complexNodeSettingsClose')"
@@ -53,7 +53,7 @@ export const NodeSettingsLayout = {
 				</div>
 				<slot />
 			</template>
-			<div class="node-settings__footer">
+			<div class="editor-chart-node-settings__footer">
 				<slot
 					v-if="!isLoading"
 					name="actions"

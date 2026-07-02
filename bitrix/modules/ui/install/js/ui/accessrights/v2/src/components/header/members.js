@@ -1,4 +1,3 @@
-import { Extension } from 'main.core';
 import type { MemberCollection } from '../../store/model/user-groups-model';
 import { Selector } from './members/selector';
 import { SingleMember } from './members/single-member';

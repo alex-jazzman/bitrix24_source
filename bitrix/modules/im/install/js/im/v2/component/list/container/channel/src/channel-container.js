@@ -1,20 +1,21 @@
-import { ChannelList } from 'im.v2.component.list.items.channel';
+import { type JsonObject } from 'main.core';
+
 import { CreateChatPromo } from 'im.v2.component.list.container.elements.create-chat-promo';
+import { CreateChatButton } from 'im.v2.component.list.container.elements.create-chat-button';
+import { ChannelList } from 'im.v2.component.list.items.channel';
 import { Layout, ChatType, PromoId } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
+import { CreateChatManager } from 'im.v2.lib.create-chat';
 import { Logger } from 'im.v2.lib.logger';
 import { PromoManager } from 'im.v2.lib.promo';
-import { CreateChatManager } from 'im.v2.lib.create-chat';
 
 import './css/channel-container.css';
-
-import type { JsonObject } from 'main.core';
 
 // @vue/component
 export const ChannelListContainer = {
 	name: 'ChannelListContainer',
-	components: { ChannelList, CreateChatPromo },
-	emits: ['selectEntity'],
+	components: { ChannelList, CreateChatPromo, CreateChatButton },
+	emits: ['selectChat'],
 	data(): JsonObject
 	{
 		return {
@@ -31,9 +32,9 @@ export const ChannelListContainer = {
 	},
 	methods:
 	{
-		onChatClick(dialogId): void
+		onSelectChat(dialogId): void
 		{
-			this.$emit('selectEntity', { layoutName: Layout.channel, entityId: dialogId });
+			this.$emit('selectChat', { layoutName: Layout.channel, dialogId });
 		},
 		onCreateClick(): void
 		{
@@ -56,7 +57,7 @@ export const ChannelListContainer = {
 		},
 		startChannelCreation()
 		{
-			CreateChatManager.getInstance().startChatCreation(ChatType.channel);
+			void CreateChatManager.getInstance().startChatCreation(ChatType.channel);
 		},
 		loc(phraseCode: string): string
 		{
@@ -67,11 +68,11 @@ export const ChannelListContainer = {
 		<div class="bx-im-list-container-channel__container">
 			<div class="bx-im-list-container-channel__header_container">
 				<div class="bx-im-list-container-channel__header_title">{{ loc('IM_LIST_CONTAINER_CHANNEL_HEADER_TITLE') }}</div>
-				<div @click="onCreateClick" class="bx-im-list-container-channel__header_create-channel"></div>
+				<CreateChatButton @click="onCreateClick" class="bx-im-list-container-channel__header_create-channel" />
 			</div>
 			<div class="bx-im-list-container-channel__elements_container">
 				<div class="bx-im-list-container-channel__elements">
-					<ChannelList @chatClick="onChatClick" />
+					<ChannelList @selectChat="onSelectChat" />
 				</div>
 			</div>
 		</div>

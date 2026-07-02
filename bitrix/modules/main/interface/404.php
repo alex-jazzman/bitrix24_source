@@ -1,4 +1,9 @@
-<?
+<?php
+
+/**
+ * @global CMain $APPLICATION
+ */
+
 if($_SERVER["REDIRECT_STATUS"]=="404")
 	define("ERROR_404","Y");
 
@@ -26,12 +31,11 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admi
 
 <div class="adm-404-block">
 	<div class="adm-404-text1">
-		<?echo GetMessage("404_header")?>
+		<?= GetMessage("404_header")?>
 	</div>
-	<div class="adm-404-text2"><?echo GetMessage("404_message")?></div>
+	<div class="adm-404-text2"><?= GetMessage("404_message")?></div>
 	<div class="adm-404-footer"></div>
 </div>
 
-<?
+<?php
 require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin.php");
-?>

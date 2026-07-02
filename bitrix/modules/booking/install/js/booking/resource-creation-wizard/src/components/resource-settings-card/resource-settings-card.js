@@ -1,21 +1,23 @@
-import { createNamespacedHelpers, mapGetters } from 'ui.vue3.vuex';
-import { Type } from 'main.core';
-import { Model } from 'booking.const';
-import { resourceCreationWizardService } from 'booking.provider.service.resource-creation-wizard-service';
-import { BaseFields } from './base-fields/base-fields';
-import { ServicesSkus } from './services-skus/services-skus';
-import { ScheduleTypes } from './schedule-types/schedule-types';
-import { Integration } from './integration/integration';
-import { WorkTime } from './work-time/work-time';
-import { SlotLength } from './slot-length/slot-length';
-
-import type { SlotRange } from 'booking.model.resources';
-import type { ResourceTypeModel } from 'booking.model.resource-types';
-import type { UploaderFile } from 'ui.uploader.core';
-
 import 'ui.forms';
-import 'ui.layout-form';
 import 'ui.icon-set.main';
+import 'ui.layout-form';
+import { Type } from 'main.core';
+import { type UploaderFile } from 'ui.uploader.core';
+import { createNamespacedHelpers, mapGetters } from 'ui.vue3.vuex';
+
+import { Model } from 'booking.const';
+import { type ResourceTypeModel } from 'booking.model.resource-types';
+import { type SlotRange } from 'booking.model.resources';
+import { resourceCreationWizardService } from 'booking.provider.service.resource-creation-wizard-service';
+
+import { normalizeSlotLength } from '../../lib/slot-length';
+
+import { BaseFields } from './base-fields/base-fields';
+import { Integration } from './integration/integration';
+import { ScheduleTypes } from './schedule-types/schedule-types';
+import { ServicesSkus } from './services-skus/services-skus';
+import { SlotLength } from './slot-length/slot-length';
+import { WorkTime } from './work-time/work-time';
 
 import './resource-settings-card.css';
 
@@ -42,6 +44,7 @@ export const ResourceSettingsCard = {
 	computed: {
 		...mapGetters({
 			timezone: `${Model.Interface}/timezone`,
+			isMultidayFeatureAvailable: `${Model.Interface}/isMultidayFeatureAvailable`,
 		}),
 		...mapResourceGetters({
 			resource: 'getResource',
@@ -85,7 +88,7 @@ export const ResourceSettingsCard = {
 		{
 			const slotRange: SlotRange = this.resource.slotRanges?.[0];
 
-			return slotRange?.slotSize ?? 60;
+			return normalizeSlotLength(slotRange?.slotSize ?? 60, this.isMultidayFeatureAvailable);
 		},
 		isMain: {
 			get(): boolean
@@ -105,7 +108,7 @@ export const ResourceSettingsCard = {
 	created(): void
 	{
 		this.initialTimezone = this.getInitialSlotTimeZone();
-		this.selectedSlotLength = this.resource.slotRanges?.[0]?.slotSize ?? 60;
+		this.selectedSlotLength = this.slotSize;
 
 		const slotRanges = (
 			Type.isArrayFilled(this.resource.slotRanges)
@@ -169,7 +172,7 @@ export const ResourceSettingsCard = {
 		},
 		updateSlotLength(value): void
 		{
-			this.selectedSlotLength = value;
+			this.selectedSlotLength = normalizeSlotLength(value, this.isMultidayFeatureAvailable);
 
 			if (this.resource.slotRanges.length === 0)
 			{
@@ -185,7 +188,7 @@ export const ResourceSettingsCard = {
 			return slotRanges.map((slotRange: SlotRange) => {
 				return {
 					...slotRange,
-					slotSize: this.selectedSlotLength,
+					slotSize: normalizeSlotLength(this.selectedSlotLength, this.isMultidayFeatureAvailable),
 					timezone: this.timezone,
 				};
 			});

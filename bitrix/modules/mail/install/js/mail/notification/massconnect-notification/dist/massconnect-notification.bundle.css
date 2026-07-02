@@ -3,7 +3,7 @@
 	position: relative;
 	width: 748px;
 	height: 428px;
-	background: url('images/bg.png') no-repeat center center;
+	background: url("images/bg.png") no-repeat center center;
 	background-size: auto;
 	border-radius: 32px;
 	padding: 32px 48px 48px;
@@ -108,7 +108,7 @@
 	left: -53px;
 	width: 156px;
 	height: 156px;
-	background-image: url('images/mascot.png');
+	background-image: url("images/mascot.png");
 	background-size: contain;
 	background-repeat: no-repeat;
 	background-position: center;

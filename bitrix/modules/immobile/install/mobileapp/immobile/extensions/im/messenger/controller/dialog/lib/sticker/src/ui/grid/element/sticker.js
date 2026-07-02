@@ -96,6 +96,9 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/grid/element/sticke
 				id: this.props.id,
 				packId: this.props.packId,
 				packType: this.props.packType,
+				uri: this.props.uri,
+				width: this.props.width,
+				height: this.props.height,
 			};
 		}
 	}

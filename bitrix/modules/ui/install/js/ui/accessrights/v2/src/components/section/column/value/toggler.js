@@ -33,8 +33,9 @@ export const Toggler = {
 			@check="setValue('1')"
 			@uncheck="setValue('0')"
 			:options="{
-				size: 'extra-small',
-				color: 'green',
+				size: 'small',
+				color: 'primary',
+				useAirDesign: true,
 			}"
 		/>
 	`,

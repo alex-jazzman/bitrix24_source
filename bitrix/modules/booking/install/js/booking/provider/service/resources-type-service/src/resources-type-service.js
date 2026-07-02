@@ -1,6 +1,6 @@
 import { Core } from 'booking.core';
 import { ApiClient } from 'booking.lib.api-client';
-import { ResourceTypeModel } from 'booking.model.resource-types';
+import type { ResourceTypeModel } from 'booking.model.resource-types';
 import { mapModelToDto, mapDtoToModel } from './mappers';
 import type { ResourceTypeDto } from './types';
 

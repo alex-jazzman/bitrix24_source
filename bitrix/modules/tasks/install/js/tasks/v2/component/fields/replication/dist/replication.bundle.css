@@ -163,16 +163,30 @@
 	margin: 0 0 0 auto;
 }
 
-.tasks-field-replication-sheet-header {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	margin-bottom: var(--ui-space-stack-md2);
+
+.tasks-field-replication-row-grow {
+	flex-grow: 1;
 }
 
-.tasks-field-replication-sheet-close {
-	--ui-icon-set__icon-color: var(--ui-color-base-4);
+.tasks-replication-sheet-replication-settings-week {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+}
+
+.tasks-field-replication-weekday {
+	display: flex;
+	align-items: start;
+	gap: var(--ui-space-inline-xs);
 	cursor: pointer;
+}
+
+.tasks-replication-sheet-action-row.--weekdays {
+	justify-content: space-between;
+}
+
+.tasks-field-replication-weekday-text:not(.--checked) {
+	color: var(--ui-color-base-3);
 }
 
 
@@ -186,6 +200,44 @@
 	padding-right: 4px;
 	padding-top: var(--ui-space-inline-xl);
 	border-top: var(--ui-border-width-thin) solid var(--ui-color-divider-default);
+}
+
+.tasks-field-replication-sheet-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: var(--ui-space-stack-md2);
+}
+
+.tasks-field-replication-sheet-close {
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+	cursor: pointer;
+}
+
+.tasks-field-replication-error-icon {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-alert);
+}
+
+.tasks-field-replication-message {
+	display: flex;
+	justify-content: space-between;
+}
+
+.tasks-field-replication-hint {
+	display: grid;
+	font-weight: var(--ui-font-weight-light);
+}
+
+.tasks-field-replication-hint a {
+	margin-top: 12px;
+	border-bottom: 1px dashed;
+	color: inherit;
+	max-width: -webkit-max-content;
+	max-width: max-content;
+}
+
+.tasks-field-replication-hint a:not(:hover) {
+	opacity: 0.8;
 }
 
 .tasks-template-history-grid-loader-spinner-container {
@@ -213,56 +265,4 @@
 	100% {
 		transform: rotate(360deg);
 	}
-}
-
-.tasks-replication-sheet-replication-settings-week {
-	display: flex;
-	flex-direction: column;
-	gap: var(--ui-space-stack-xs);
-}
-
-
-.tasks-field-replication-error-icon {
-	--ui-icon-set__icon-color: var(--ui-color-accent-main-alert);
-}
-
-.tasks-field-replication-message {
-	display: flex;
-	justify-content: space-between;
-}
-
-.tasks-field-replication-row-grow {
-	flex-grow: 1;
-}
-
-.tasks-field-replication-weekday {
-	display: flex;
-	align-items: start;
-	gap: var(--ui-space-inline-xs);
-	cursor: pointer;
-}
-
-.tasks-replication-sheet-action-row.--weekdays {
-	justify-content: space-between;
-}
-
-.tasks-field-replication-weekday-text:not(.--checked) {
-	color: var(--ui-color-base-3);
-}
-
-.tasks-field-replication-hint {
-	display: grid;
-	font-weight: var(--ui-font-weight-light);
-}
-
-.tasks-field-replication-hint a {
-	margin-top: 12px;
-	border-bottom: 1px dashed;
-	color: inherit;
-	max-width: -webkit-max-content;
-	max-width: max-content;
-}
-
-.tasks-field-replication-hint a:not(:hover) {
-	opacity: 0.8;
 }

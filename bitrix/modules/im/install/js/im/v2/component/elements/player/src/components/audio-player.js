@@ -1,21 +1,20 @@
-import 'ui.fonts.opensans';
+import { type JsonObject } from 'main.core';
+import { type BaseEvent, type EventEmitter } from 'main.core.events';
 import 'main.polyfill.intersectionobserver';
-import { Feature, FeatureManager } from 'im.v2.lib.feature';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import 'ui.fonts.opensans';
 
+import { MessageAvatar, AvatarSize } from 'im.v2.component.elements.avatar';
 import { LocalStorageKey, AudioPlaybackRate, AudioPlaybackState as State, EventType } from 'im.v2.const';
+import { Analytics } from 'im.v2.lib.analytics';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { LocalStorageManager } from 'im.v2.lib.local-storage';
 import { Utils } from 'im.v2.lib.utils';
-import { MessageAvatar, AvatarSize } from 'im.v2.component.elements.avatar';
-import { Analytics } from 'im.v2.lib.analytics';
 
 import { Timeline } from './elements/timeline/timeline';
 import { TranscriptionButton } from './elements/transcription-button/transcription-button';
 import { TranscriptionText } from './elements/transcription-text/transcription-text';
 
 import './css/audio-player.css';
-
-import type { JsonObject } from 'main.core';
 
 const ID_KEY = 'im:audioplayer:id';
 

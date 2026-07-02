@@ -9,7 +9,7 @@ import { RestMethod } from 'imopenlines.v2.const';
 
 export class TransferService
 {
-	chatTransfer(dialogId: string, transferId: string): Promise
+	chatTransfer(dialogId: string, transferId: string): Promise<void>
 	{
 		void Messenger.openLines();
 

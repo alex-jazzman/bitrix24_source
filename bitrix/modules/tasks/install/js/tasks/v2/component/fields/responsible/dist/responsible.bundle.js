@@ -152,6 +152,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    isTemplate() {
 	      return tasks_v2_lib_idUtils.idUtils.isTemplate(this.taskId);
 	    },
+	    canEdit() {
+	      return Boolean(this.task.rights.delegate || this.task.rights.changeResponsible);
+	    },
 	    isFlowFilledOnAdd() {
 	      return this.task.flowId > 0 && !this.isEdit;
 	    },
@@ -225,8 +228,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				:taskId
 				:context="responsibleMeta.id"
 				:userIds="task.responsibleIds"
-				:canAdd="task.rights.delegate || task.rights.changeResponsible"
-				:canRemove="task.rights.delegate || task.rights.changeResponsible"
+				:canAdd="canEdit"
+				:canRemove="canEdit"
 				:forceEdit="!isEdit"
 				:withHint="!isAdmin && !isEdit && task.creatorId !== currentUserId"
 				:hintText="loc('TASKS_V2_RESPONSIBLE_CANT_CHANGE')"

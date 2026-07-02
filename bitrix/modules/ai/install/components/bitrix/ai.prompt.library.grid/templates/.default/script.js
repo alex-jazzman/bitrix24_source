@@ -364,6 +364,7 @@ this.BX.AI.SharePrompt = this.BX.AI.SharePrompt || {};
 	  }, {
 	    key: "handleClickOnDeletePromptSwitcher",
 	    value: function handleClickOnDeletePromptSwitcher(event, promptCode, promptTitle) {
+	      var _this = this;
 	      event.preventDefault();
 	      event.stopPropagation();
 	      _classStaticPrivateMethodGet(this, Controller, _sendRowAction).call(this, 'toggle-deleted', {
@@ -371,14 +372,16 @@ this.BX.AI.SharePrompt = this.BX.AI.SharePrompt || {};
 	        needDeleted: 1,
 	        page: _classStaticPrivateMethodGet(this, Controller, _getCurrentPage).call(this)
 	      }, function () {
-	        showNotification(main_core.Loc.getMessage('PROMPT_LIBRARY_GRID_NOTIFICATION_HIDE', {
-	          '#NAME#': "<b>".concat(main_core.Text.encode(promptTitle), "</b>")
+	        showNotification(main_core.Loc.getMessage('PROMPT_LIBRARY_GRID_NOTIFICATION_HIDE_MSGVER_1', {
+	          '#NAME#': "<b>".concat(main_core.Text.encode(promptTitle), "</b>"),
+	          '#COPILOT_NAME#': _classStaticPrivateMethodGet(_this, Controller, _getCopilotName).call(_this)
 	        }));
 	      });
 	    }
 	  }, {
 	    key: "handleClickOnUndoDeletePromptSwitcher",
 	    value: function handleClickOnUndoDeletePromptSwitcher(event, promptCode, promptTitle) {
+	      var _this2 = this;
 	      event.preventDefault();
 	      event.stopPropagation();
 	      _classStaticPrivateMethodGet(this, Controller, _sendRowAction).call(this, 'toggle-deleted', {
@@ -386,8 +389,9 @@ this.BX.AI.SharePrompt = this.BX.AI.SharePrompt || {};
 	        needDeleted: 0,
 	        page: _classStaticPrivateMethodGet(this, Controller, _getCurrentPage).call(this)
 	      }, function () {
-	        showNotification(main_core.Loc.getMessage('PROMPT_LIBRARY_GRID_NOTIFICATION_SHOW', {
-	          '#NAME#': "<b>".concat(main_core.Text.encode(promptTitle), "</b>")
+	        showNotification(main_core.Loc.getMessage('PROMPT_LIBRARY_GRID_NOTIFICATION_SHOW_MSGVER_1', {
+	          '#NAME#': "<b>".concat(main_core.Text.encode(promptTitle), "</b>"),
+	          '#COPILOT_NAME#': _classStaticPrivateMethodGet(_this2, Controller, _getCopilotName).call(_this2)
 	        }));
 	      });
 	    }
@@ -425,7 +429,7 @@ this.BX.AI.SharePrompt = this.BX.AI.SharePrompt || {};
 	    key: "handleClickOnSharesCell",
 	    value: function () {
 	      var _handleClickOnSharesCell = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee2(sharePromptCode, event) {
-	        var _this = this;
+	        var _this3 = this;
 	        var formData, res, list;
 	        return _regeneratorRuntime$1().wrap(function _callee2$(_context2) {
 	          while (1) switch (_context2.prev = _context2.next) {
@@ -444,7 +448,7 @@ this.BX.AI.SharePrompt = this.BX.AI.SharePrompt || {};
 	                listRenderer: new SharesListRenderer(),
 	                events: {
 	                  onPopupDestroy: function onPopupDestroy() {
-	                    _classStaticPrivateFieldSpecSet(_this, Controller, _allSharesListPopup, null);
+	                    _classStaticPrivateFieldSpecSet(_this3, Controller, _allSharesListPopup, null);
 	                  }
 	                },
 	                filter: function filter(item, searchValue) {
@@ -723,7 +727,7 @@ this.BX.AI.SharePrompt = this.BX.AI.SharePrompt || {};
 	    key: "init",
 	    value: function init(gridId) {
 	      var _BX$Main$gridManager$,
-	        _this2 = this;
+	        _this4 = this;
 	      var isShowTour = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 	      if (isShowTour) {
 	        _classStaticPrivateMethodGet(this, Controller, _showSimpleTour).call(this);
@@ -731,8 +735,8 @@ this.BX.AI.SharePrompt = this.BX.AI.SharePrompt || {};
 	      _classStaticPrivateFieldSpecSet(this, Controller, _grid, (_BX$Main$gridManager$ = BX.Main.gridManager.getById(gridId)) === null || _BX$Main$gridManager$ === void 0 ? void 0 : _BX$Main$gridManager$.instance);
 	      main_core.bind(_classStaticPrivateFieldSpecGet(this, Controller, _grid).getScrollContainer(), 'scroll', function () {
 	        var _classStaticPrivateFi, _classStaticPrivateFi2;
-	        (_classStaticPrivateFi = _classStaticPrivateFieldSpecGet(_this2, Controller, _categoriesListPopup)) === null || _classStaticPrivateFi === void 0 ? void 0 : _classStaticPrivateFi.hide();
-	        (_classStaticPrivateFi2 = _classStaticPrivateFieldSpecGet(_this2, Controller, _allSharesListPopup)) === null || _classStaticPrivateFi2 === void 0 ? void 0 : _classStaticPrivateFi2.hide();
+	        (_classStaticPrivateFi = _classStaticPrivateFieldSpecGet(_this4, Controller, _categoriesListPopup)) === null || _classStaticPrivateFi === void 0 ? void 0 : _classStaticPrivateFi.hide();
+	        (_classStaticPrivateFi2 = _classStaticPrivateFieldSpecGet(_this4, Controller, _allSharesListPopup)) === null || _classStaticPrivateFi2 === void 0 ? void 0 : _classStaticPrivateFi2.hide();
 	      });
 	      _classStaticPrivateMethodGet(Controller, Controller, _updateApplyButtonClassname).call(Controller);
 	      _classStaticPrivateMethodGet(Controller, Controller, _observeSelectActionButtonValue).call(Controller);
@@ -767,11 +771,15 @@ this.BX.AI.SharePrompt = this.BX.AI.SharePrompt || {};
 	      }
 	    case 'multiple-show-for-me':
 	      {
-	        return main_core.Loc.getMessage('PROMPT_LIBRARY_GRID_NOTIFICATION_MASS_SHOW');
+	        return main_core.Loc.getMessage('PROMPT_LIBRARY_GRID_NOTIFICATION_MASS_SHOW_MSGVER_1', {
+	          '#COPILOT_NAME#': _classStaticPrivateMethodGet(this, Controller, _getCopilotName).call(this)
+	        });
 	      }
 	    case 'multiple-hide-from-me':
 	      {
-	        return main_core.Loc.getMessage('PROMPT_LIBRARY_GRID_NOTIFICATION_MASS_HIDE');
+	        return main_core.Loc.getMessage('PROMPT_LIBRARY_GRID_NOTIFICATION_MASS_HIDE_MSGVER_1', {
+	          '#COPILOT_NAME#': _classStaticPrivateMethodGet(this, Controller, _getCopilotName).call(this)
+	        });
 	      }
 	    default:
 	      {
@@ -874,6 +882,9 @@ this.BX.AI.SharePrompt = this.BX.AI.SharePrompt || {};
 	function _sendRowAction(action, data, callback) {
 	  var dataWithAction = _objectSpread$1(babelHelpers.defineProperty({}, _classStaticPrivateFieldSpecGet(this, Controller, _grid).getActionKey(), action), data);
 	  _classStaticPrivateFieldSpecGet(this, Controller, _grid).reloadTable('POST', dataWithAction, callback);
+	}
+	function _getCopilotName() {
+	  return BX.message('COPILOT_NAME');
 	}
 	var _grid = {
 	  writable: true,

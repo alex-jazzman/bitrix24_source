@@ -36,6 +36,7 @@ export const ResultsChip = {
 		analytics: {},
 		cardType: {},
 		isTemplate: {},
+		embedded: {},
 	},
 	props: {
 		isSheetShown: {
@@ -291,6 +292,19 @@ export const ResultsChip = {
 
 			if (this.taskId !== taskId || event.isDefaultPrevented())
 			{
+				return;
+			}
+
+			if (this.embedded)
+			{
+				queueMicrotask(() => {
+					if (!event.isDefaultPrevented())
+					{
+						event.preventDefault();
+						this.openAddResultSheet(text);
+					}
+				});
+
 				return;
 			}
 

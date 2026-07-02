@@ -7,11 +7,19 @@ jn.define('mail/simple-list/items/message-redux', (require, exports, module) => 
 
 	class Message extends Base
 	{
+		getStyles()
+		{
+			const styles = super.getStyles();
+
+			styles.wrapper.paddingBottom = 0;
+
+			return styles;
+		}
+
 		renderItemContent()
 		{
 			return MessageContentView({
 				id: this.props.item.id,
-				item: this.props.item,
 				itemDetailOpenHandler: this.props.itemDetailOpenHandler,
 			});
 		}

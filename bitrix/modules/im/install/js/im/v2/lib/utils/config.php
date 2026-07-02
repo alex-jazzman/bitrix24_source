@@ -18,11 +18,11 @@ $pathToUserCalendar = \Bitrix\Main\Config\Option::get(
 return [
 	'js' => './dist/utils.bundle.js',
 	'rel' => [
-		'im.v2.lib.desktop-api',
-		'main.date',
-		'im.v2.lib.date-formatter',
 		'im.v2.const',
+		'im.v2.lib.date-formatter',
+		'im.v2.lib.desktop-api',
 		'main.core',
+		'main.date',
 	],
 	'skip_core' => false,
 	'settings' => [

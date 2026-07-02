@@ -42,9 +42,12 @@ export const SearchResultsLayout = {
 			[TITLE_CLASS_NAMES.collapsed]: props.collapsed,
 		}));
 
+		const makeUniqueItemKey = ({ presetId, id }: CatalogMenuItem) => (presetId ? `${id}_${presetId}` : id);
+
 		return {
 			getMessage,
 			titleClassNames,
+			makeUniqueItemKey,
 		};
 	},
 	template: `
@@ -77,7 +80,7 @@ export const SearchResultsLayout = {
 					</h2>
 					<slot
 						v-for="item in items"
-						:key="item.id"
+						:key="makeUniqueItemKey(item)"
 						:item="item"
 						name="item"
 					/>

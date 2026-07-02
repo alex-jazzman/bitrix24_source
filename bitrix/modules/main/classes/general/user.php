@@ -3728,9 +3728,17 @@ class CUser extends CDBResult
 			$resultError .= GetMessage("LOGIN_WHITESPACE") . "<br>";
 		}
 
-		if (is_set($arFields, "LOGIN") && mb_strlen($arFields["LOGIN"]) < 3)
+		if (is_set($arFields, "LOGIN"))
 		{
-			$resultError .= GetMessage("MIN_LOGIN") . "<br>";
+			$length = mb_strlen($arFields["LOGIN"]);
+			if ($length < 3)
+			{
+				$resultError .= GetMessage("MIN_LOGIN") . "<br>";
+			}
+			elseif ($length > 50)
+			{
+				$resultError .= GetMessage("USER_MAX_LOGIN") . "<br>";
+			}
 		}
 
 		if (is_set($arFields, "PASSWORD"))
@@ -4847,18 +4855,14 @@ class CUser extends CDBResult
 	{
 		if ($user_id > 0)
 		{
-			$arGroups = [];
-			$rsGroups = $this->GetUserGroupEx($user_id);
-			while ($group = $rsGroups->Fetch())
-			{
-				$arGroups[] = $group["GROUP_ID"];
-			}
-			if (!$arGroups)
+			$arGroups = static::GetUserGroup($user_id);
+			if (empty($arGroups))
 			{
 				return false;
 			}
 
 			$op = $this->GetAllOperations($arGroups);
+
 			return isset($op[$op_name]);
 		}
 		else

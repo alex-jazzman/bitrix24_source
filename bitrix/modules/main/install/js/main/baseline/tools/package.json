@@ -1,0 +1,16 @@
+{
+	"private": true,
+	"scripts": {
+		"update": "tsx scripts/update-features.ts",
+		"compute": "tsx scripts/compute-versions.ts",
+		"plan": "tsx scripts/update-plan.ts",
+		"apply": "tsx scripts/apply-browserslist.ts",
+		"top": "tsx scripts/top-features.ts"
+	},
+	"dependencies": {
+		"web-features": "^3.22.1"
+	},
+	"devDependencies": {
+		"tsx": "^4"
+	}
+}

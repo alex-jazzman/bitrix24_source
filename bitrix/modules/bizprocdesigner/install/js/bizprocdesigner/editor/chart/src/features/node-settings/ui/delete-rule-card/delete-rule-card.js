@@ -9,7 +9,7 @@ import { useNodeSettingsStore, type TRuleCard } from '../../../../entities/node-
 
 // @vue/component
 export const DeleteRuleCard = {
-	name: 'delete-rule-card',
+	name: 'DeleteRuleCard',
 	components: { BIcon },
 	props:
 	{
@@ -26,7 +26,7 @@ export const DeleteRuleCard = {
 	},
 	template: `
 		<BIcon
-			class="delete-rule-card"
+			class="editor-chart-node-settings-delete-rule-card"
 			name="cross-m"
 			:size="20"
 			:data-test-id="$testId('complexNodeRuleSettingsDeleteRuleCard', ruleCard.id)"

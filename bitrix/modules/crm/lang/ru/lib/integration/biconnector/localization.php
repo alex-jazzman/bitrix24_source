@@ -1,6 +1,7 @@
 <?php
 //CRM_DYNAMIC_TYPE table descriptions
 $MESS['CRM_SMART_PROC_TABLE'] = "Смарт-процессы";
+$MESS['CRM_SMART_PROC_TABLE_DESCRIPTION_FULL'] = "Набор содержит список всех смарт-процессов и цифровых рабочих мест: идентификаторы и названия каждого процесса и рабочего места.";
 $MESS['CRM_SMART_PROC_FIELD_ENTITY_TYPE_ID'] = "Идентификатор типа";
 $MESS['CRM_SMART_PROC_FIELD_ENTITY_TYPE_ID_FULL'] = "Идентификатор типа (EntityTypeId) смарт-процесса";
 $MESS['CRM_SMART_PROC_FIELD_TITLE'] = "Название";
@@ -17,6 +18,7 @@ $MESS['CRM_SMART_PROC_FIELD_USER_FIELDS'] = "ID пользовательских
 
 //CRM_STAGES fields description
 $MESS['CRM_STAGES_TABLE'] = "Стадии CRM";
+$MESS['CRM_STAGES_TABLE_DESCRIPTION_FULL'] = "Набор содержит сведения о стадиях элементов CRM: текущие стадии сделок или смарт-процессов, их названия и последовательность.";
 $MESS['CRM_STAGES_FIELD_ID'] = "Уникальный ключ";
 $MESS['CRM_STAGES_FIELD_ENTITY_TYPE_ID'] = "Идентификатор типа";
 $MESS['CRM_STAGES_FIELD_STATUS_ID'] = "Идентификатор стадии";
@@ -28,6 +30,7 @@ $MESS['CRM_STAGES_FIELD_SEMANTICS'] = "Тип стадии";
 
 //CRM_ENTITY_RELATION table/field descriptions
 $MESS['CRM_ENTITY_RELATION_TABLE'] = "Связи между элементами crm";
+$MESS['CRM_ENTITY_RELATION_TABLE_DESCRIPTION_FULL'] = "Набор содержит информацию о связях между смарт-процессами, новыми счетами и другими элементами CRM.";
 $MESS['CRM_ENTITY_RELATION_FIELD_SRC_ENTITY_TYPE_ID'] = "Идентификатор типа элемента, который связан";
 $MESS['CRM_ENTITY_RELATION_FIELD_SRC_ENTITY_ID'] = "Идентификатор элемента, который связан";
 $MESS['CRM_ENTITY_RELATION_FIELD_SRC_ENTITY_DATASET_NAME'] = "Название датасета элемента, который связан";
@@ -39,9 +42,11 @@ $MESS['CRM_ENTITY_RELATION_FIELD_DST_ENTITY_CREATED_AT'] = "Дата созда�
 
 //CRM_AUTOMATED_SOLUTION table/field descriptions
 $MESS['CRM_AUTOMATED_SOLUTION_TABLE'] = "Цифровое рабочее место: #TITLE#";
+$MESS['CRM_AUTOMATED_SOLUTION_TABLE_DESCRIPTION_FULL'] = "Цифровое рабочее место: #TITLE#. Набор содержит информацию о цифровом рабочем месте и связанных с ним смарт-процессах, включая их названия и идентификаторы.";
 
 //CRM_PRODUCT_ROW table/field for smart processes descriptions
 $MESS['CRM_DYNAMIC_ITEMS_PROD_TABLE'] = "Смарт-процесс #TITLE#: товары";
+$MESS['CRM_DYNAMIC_ITEMS_PROD_TABLE_DESCRIPTION_FULL'] = "Смарт-процесс #TITLE#: товары. Набор содержит данные о товарах: названия, количество и цены в выбранном смарт-процессе.";
 $MESS['CRM_DYNAMIC_ITEMS_PROD_FIELD_ID'] = "Уникальный идентификатор";
 $MESS['CRM_DYNAMIC_ITEMS_PROD_FIELD_ITEM_ID'] = "Идентификатор элемента смарт-процесса";
 $MESS['CRM_DYNAMIC_ITEMS_PROD_FIELD_PRODUCT'] = "Товар";
@@ -71,6 +76,7 @@ $MESS['CRM_DYNAMIC_ITEMS_PROD_FIELD_SUPERSUPERPARENT'] = "Раздел това�
 
 //CRM_QUOTE table/field for quote descriptions
 $MESS['CRM_QUOTE_TABLE'] = "Предложения";
+$MESS['CRM_QUOTE_TABLE_DESCRIPTION_FULL'] = "Набор содержит данные о коммерческих предложениях: суммы, статусы, сроки и ответственных сотрудников. Включает информацию о компаниях, сделках и контактах, связанных с предложением.";
 $MESS['CRM_QUOTE_FIELD_ID'] = "ID предложения";
 $MESS['CRM_QUOTE_FIELD_DATE_CREATE'] = "Дата создания";
 $MESS['CRM_QUOTE_FIELD_DATE_MODIFY'] = "Дата изменения";
@@ -140,6 +146,7 @@ $MESS['CRM_QUOTE_FIELD_UTM_TERM'] = "Рекламный термин (utm_term)"
 
 //CRM_QUOTE_PRODUCT_ROW table/field for quote product descriptions
 $MESS['CRM_QUOTE_PRODUCT_ROW_TABLE'] = "Предложение: товары";
+$MESS['CRM_QUOTE_PRODUCT_ROW_TABLE_DESCRIPTION_FULL'] = "Набор содержит данные о товарах в коммерческих предложениях: названия, цены, скидки, налоги и количество.";
 $MESS['CRM_QUOTE_PRODUCT_ROW_FIELD_ID'] = "Уникальный ID";
 $MESS['CRM_QUOTE_PRODUCT_ROW_FIELD_QUOTE_ID'] = "ID предложения";
 $MESS['CRM_QUOTE_PRODUCT_ROW_FIELD_QUOTE_DATE_CREATE'] = "Дата создания предложения";
@@ -175,6 +182,7 @@ $MESS['CRM_QUOTE_PRODUCT_ROW_FIELD_SUPERSUPERPARENT'] = "Раздел товар
 
 //CRM_ACT_BIND table/field for quote product descriptions
 $MESS['CRM_ACTIVITY_RELATION_TABLE'] = "Связи дел crm";
+$MESS['CRM_ACTIVITY_RELATION_TABLE_DESCRIPTION_FULL'] = "Набор содержит информацию о связях дел с лидами, сделками, контактами и компаниями.";
 $MESS['CRM_ACTIVITY_RELATION_FIELD_ACTIVITY_ID'] = "Идентификатор дела";
 $MESS['CRM_ACTIVITY_RELATION_FIELD_OWNER_ID'] = "Идентификатор элемента, к которому привязано дело";
 $MESS['CRM_ACTIVITY_RELATION_FIELD_OWNER_TYPE_ID'] = "Идентификатор типа элемента, к которому привязано дело";
@@ -182,6 +190,7 @@ $MESS['CRM_ACTIVITY_RELATION_FIELD_CREATED_AT'] = "Дата создания д�
 
 // CRM_AI_QUALITY_ASSESSMENT table/field for AI quality assessment descriptions
 $MESS['CRM_AI_QUALITY_ASSESSMENT_TABLE'] = "Оценки разговоров по скриптам";
+$MESS['CRM_AI_QUALITY_ASSESSMENT_TABLE_DESCRIPTION_FULL'] = "Набор содержит данные об оценках разговоров менеджеров по скриптам продаж: идентификаторы звонков, оценки качества и информацию о сотрудниках.";
 $MESS['CRM_AI_QUALITY_ASSESSMENT_FIELD_ID'] = "ID оценки качества";
 $MESS['CRM_AI_QUALITY_ASSESSMENT_FIELD_CREATED_AT'] = "Дата создания";
 $MESS['CRM_AI_QUALITY_ASSESSMENT_FIELD_ACTIVITY_ID'] = "ID дела звонка";
@@ -193,6 +202,7 @@ $MESS['CRM_AI_QUALITY_ASSESSMENT_FIELD_RATED_USER_ID'] = "ID сотрудник�
 
 //CRM_COPILOT_CALL_ASSESSMENT table/field
 $MESS['CRM_COPILOT_CALL_ASSESSMENT_TABLE'] = "Скрипты продаж";
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_TABLE_DESCRIPTION_FULL'] = "Набор содержит данные о скриптах продаж, которые BitrixGPT использует для оценки разговоров менеджеров: названия, тексты скриптов, статус и пороговые значения оценок.";
 $MESS['CRM_COPILOT_CALL_ASSESSMENT_FIELD_ID'] = "ID скрипта продажи";
 $MESS['CRM_COPILOT_CALL_ASSESSMENT_FIELD_TITLE'] = "Название скрипта продаж";
 $MESS['CRM_COPILOT_CALL_ASSESSMENT_FIELD_PROMPT'] = "Скрипт продажи";
@@ -213,6 +223,7 @@ $MESS['CRM_QUOTE_UF_FIELD_CLOSEDATE'] = "Дата завершения";
 
 //CRM_ENTITY_STAGE_HISTORY table/field for smart process stage history descriptions
 $MESS['CRM_ENTITY_STAGE_HISTORY_TABLE'] = 'Движение смарт-процессов по стадиям';
+$MESS['CRM_ENTITY_STAGE_HISTORY_TABLE_DESCRIPTION_FULL'] = "Набор содержит данные о движении элементов смарт-процессов по стадиям: даты, стадии, ответственных сотрудников и воронки.";
 $MESS['CRM_ENTITY_STAGE_HISTORY_FIELD_ID'] = 'Уникальный ключ';
 $MESS['CRM_ENTITY_STAGE_HISTORY_FIELD_TYPE_ID'] = 'Тип записи';
 $MESS['CRM_ENTITY_STAGE_HISTORY_FIELD_OWNER_TYPE_ID'] = 'ID смарт-процесса';
@@ -234,3 +245,10 @@ $MESS['CRM_ENTITY_STAGE_HISTORY_FIELD_STAGE_SEMANTIC'] = 'Тип стадии';
 $MESS['CRM_ENTITY_STAGE_HISTORY_FIELD_STAGE_ID'] = 'ID стадии';
 $MESS['CRM_ENTITY_STAGE_HISTORY_FIELD_STAGE_NAME'] = 'Название стадии';
 $MESS['CRM_ENTITY_STAGE_HISTORY_FIELD_STAGE'] = 'Стадия';
+
+$MESS['CRM_LAST_COMMUNICATION_TABLE'] = 'Данные последних коммуникаций';
+$MESS['CRM_LAST_COMMUNICATION_FIELD_ENTITY_TYPE_ID'] = 'Идентификатор типа элемента';
+$MESS['CRM_LAST_COMMUNICATION_FIELD_ENTITY_ID'] = 'Идентификатор элемента';
+$MESS['CRM_LAST_COMMUNICATION_FIELD_LAST_COMMUNICATION_TIME'] = 'Дата последней коммуникации';
+$MESS['CRM_LAST_COMMUNICATION_FIELD_TYPE'] = 'Тип коммуникации';
+$MESS['CRM_LAST_COMMUNICATION_FIELD_ACTIVITY_ID'] = 'Идентификатор дела коммуникации';

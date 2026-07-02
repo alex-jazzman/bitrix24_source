@@ -8,7 +8,7 @@ jn.define('im/messenger/lib/element/dialog/message/banner/const/configuration', 
 	const { Theme } = require('im/lib/theme');
 
 	const { Loc } = require('im/messenger/loc');
-	const { MessageParams, Analytics } = require('im/messenger/const');
+	const { MessageComponent, Analytics } = require('im/messenger/const');
 	const { openPlanLimitsWidget } = require('im/messenger/lib/plan-limit');
 	const { DialogTextHelper } = require('im/messenger/controller/dialog/lib/helper/text');
 
@@ -20,7 +20,7 @@ jn.define('im/messenger/lib/element/dialog/message/banner/const/configuration', 
 	 * @type {BannerMetaData}
 	 */
 	const metaData = {
-		[MessageParams.ComponentId.ChatCreationMessage]: {
+		[MessageComponent.chatCreation]: {
 			banner: {
 				title: Loc.getMessage('IMMOBILE_MESSENGER_COMMON_CHAT_TITLE_GROUP_MSGVER_1'),
 				imageName: ImageNameType.chat,
@@ -28,7 +28,7 @@ jn.define('im/messenger/lib/element/dialog/message/banner/const/configuration', 
 				picBackgroundColor: transparent(Theme.colors.accentMainPrimaryalt, 0.2),
 				buttons: [
 					{
-						id: MessageParams.ComponentId.ChatCreationMessage,
+						id: MessageComponent.chatCreation,
 						text: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_CHAT_CREATE_BANNER_ADD_USERS'),
 						height: ButtonSize.S.getName(),
 						callback: ({ dialogLocator }) => {
@@ -50,7 +50,7 @@ jn.define('im/messenger/lib/element/dialog/message/banner/const/configuration', 
 				],
 			},
 		},
-		[MessageParams.ComponentId.OwnChatCreationMessage]: {
+		[MessageComponent.ownChatCreation]: {
 			banner: {
 				title: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_CHAT_NOTES_BANNER_TITLE'),
 				imageName: ImageNameType.notes,
@@ -59,7 +59,7 @@ jn.define('im/messenger/lib/element/dialog/message/banner/const/configuration', 
 				buttons: [],
 			},
 		},
-		[MessageParams.ComponentId.GeneralChatCreationMessage]: {
+		[MessageComponent.generalChatCreation]: {
 			banner: {
 				title: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_CHAT_GENERAL_CREATE_BANNER_TITLE'),
 				imageName: ImageNameType.generalChat,
@@ -68,7 +68,7 @@ jn.define('im/messenger/lib/element/dialog/message/banner/const/configuration', 
 				buttons: [],
 			},
 		},
-		[MessageParams.ComponentId.ChannelCreationMessage]: {
+		[MessageComponent.channelCreation]: {
 			banner: {
 				title: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_CHANNEL_CREATE_BANNER_TITLE'),
 				imageName: ImageNameType.channel,
@@ -77,7 +77,7 @@ jn.define('im/messenger/lib/element/dialog/message/banner/const/configuration', 
 				buttons: [],
 			},
 		},
-		[MessageParams.ComponentId.OpenChannelCreationMessage]: {
+		[MessageComponent.openChannelCreation]: {
 			banner: {
 				title: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_CHANNEL_CREATE_BANNER_TITLE'),
 				imageName: ImageNameType.channel,
@@ -86,7 +86,7 @@ jn.define('im/messenger/lib/element/dialog/message/banner/const/configuration', 
 				buttons: [],
 			},
 		},
-		[MessageParams.ComponentId.GeneralChannelCreationMessage]: {
+		[MessageComponent.generalChannelCreation]: {
 			banner: {
 				title: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_CHANNEL_GENERAL_CREATE_BANNER_TITLE'),
 				imageName: ImageNameType.channel,
@@ -95,7 +95,7 @@ jn.define('im/messenger/lib/element/dialog/message/banner/const/configuration', 
 				buttons: [],
 			},
 		},
-		[MessageParams.ComponentId.ConferenceCreationMessage]: {
+		[MessageComponent.conferenceCreation]: {
 			banner: {
 				title: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_CHAT_CONFERENCE_CREATE_BANNER_TITLE'),
 				imageName: ImageNameType.videoconf,
@@ -103,7 +103,7 @@ jn.define('im/messenger/lib/element/dialog/message/banner/const/configuration', 
 				picBackgroundColor: transparent(Theme.colors.accentMainPrimaryalt, 0.2),
 				buttons: [
 					{
-						id: MessageParams.ComponentId.ConferenceCreationMessage,
+						id: MessageComponent.conferenceCreation,
 						text: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_CHAT_CONFERENCE_CREATE_BANNER_COPY_LINK'),
 						height: ButtonSize.S.getName(),
 						callback: ({ dialogLocator }) => {
@@ -124,7 +124,7 @@ jn.define('im/messenger/lib/element/dialog/message/banner/const/configuration', 
 				],
 			},
 		},
-		[MessageParams.ComponentId.ChatCopilotAddedUsersMessage]: {
+		[MessageComponent.copilotAddedUsers]: {
 			banner: {
 				title: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_BANNER_TITLE_ADD_USERS'),
 				description: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_BANNER_DESC_ADD_USERS'),
@@ -134,7 +134,7 @@ jn.define('im/messenger/lib/element/dialog/message/banner/const/configuration', 
 				buttons: [],
 			},
 		},
-		[MessageParams.ComponentId.PlanLimitsMessage]: {
+		[MessageComponent.planLimits]: {
 			banner: {
 				title: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_PLAN_LIMITS_BANNER_TITTLE'),
 				imageName: ImageNameType.planLimits,
@@ -157,8 +157,8 @@ jn.define('im/messenger/lib/element/dialog/message/banner/const/configuration', 
 				],
 			},
 		},
-		[MessageParams.ComponentId.SignMessage]: SignMetaData,
-		[MessageParams.ComponentId.AdminMessage]: AdminMetaData,
+		[MessageComponent.sign]: SignMetaData,
+		[MessageComponent.admin]: AdminMetaData,
 	};
 
 	/**

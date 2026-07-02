@@ -6,7 +6,7 @@ import { Page } from './page';
 import { AirButtonStyle, Button, ButtonState } from 'ui.buttons';
 import { InputRow } from '../elements/input-row';
 import { Transport } from '../transport';
-import DepartmentControl, { EntityType } from 'intranet.department-control';
+import { DepartmentControl, EntityType } from 'intranet.department-control';
 import { EventEmitter } from 'main.core.events';
 
 export class ExtranetPage extends Page

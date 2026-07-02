@@ -2,6 +2,8 @@ import * as Mixins from '../base/components/mixins';
 import {MixinString, FieldString} from '../string/component';
 import {VueDatePick} from './vue-date-pick/vueDatePick.js';
 
+const KEY_SPACE = ' ';
+
 const FieldDateTime = {
 	mixins: [MixinString, Mixins.MixinDropDown],
 	components: {
@@ -22,6 +24,8 @@ const FieldDateTime = {
 				:readonly="true"
 				:buttonClear="field.messages.get('fieldListUnselect')"
 				@input-click="toggleDropDown()"
+				@input-key-down="onInputKeyDown"
+				@input-blur="onInputBlur"
 			></field-string>
 			<field-item-dropdown 
 				:marginTop="'-14px'" 
@@ -29,7 +33,9 @@ const FieldDateTime = {
 				:width="'auto'" 
 				:visible="dropDownOpened"
 				:title="field.label"
+				:messages="field.messages"
 				@close="closeDropDown()"
+				@mousedown.native="onDropdownMousedown"
 			>
 				<date-pick 
 					:value="item.value"
@@ -50,6 +56,34 @@ const FieldDateTime = {
 		</div>
 	`,
 	methods: {
+		onDropdownMousedown(): void
+		{
+			this.isInteractingWithDropdown = true;
+		},
+		onInputBlur(): void
+		{
+			if (this.isInteractingWithDropdown)
+			{
+				this.isInteractingWithDropdown = false;
+
+				return;
+			}
+
+			this.closeDropDown();
+		},
+		onInputKeyDown(event): void
+		{
+			if (event.key === 'Enter' || event.key === KEY_SPACE)
+			{
+				event.preventDefault();
+				this.toggleDropDown();
+			}
+			else if ((event.key === 'Escape' || event.key === 'Esc') && this.dropDownOpened)
+			{
+				event.preventDefault();
+				this.closeDropDown();
+			}
+		},
 		setDate(value, stopClose)
 		{
 			this.value = value;

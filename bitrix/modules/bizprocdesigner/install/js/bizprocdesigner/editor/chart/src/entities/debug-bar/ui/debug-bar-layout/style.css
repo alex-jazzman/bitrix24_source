@@ -1,0 +1,52 @@
+/* Импорт переменных */
+@import url('../debug-bar-variables.css');
+
+.debug-bar-loading-indicator {
+	height: 0;
+}
+
+.debug-bar-loading-progress {
+	height: 3px;
+	background: linear-gradient(90deg,
+	rgba(var(--debug-bar-loading-color-rgb), 0.8) 0%,
+	rgba(var(--debug-bar-loading-color-rgb), 1) 50%,
+	rgba(var(--debug-bar-loading-color-rgb), 0.8) 100%
+	);
+	animation: loading-progress var(--debug-bar-loading-duration) var(--debug-bar-easing-in-out) infinite;
+	width: 40%;
+	will-change: transform;
+}
+
+@keyframes loading-progress {
+	0% {
+		transform: translateX(-100%);
+	}
+	100% {
+		transform: translateX(250%);
+	}
+}
+
+.loading-fade-enter-active {
+	transition: opacity var(--debug-bar-transition-base) var(--debug-bar-easing-default);
+}
+
+.loading-fade-leave-active {
+	transition: opacity var(--debug-bar-transition-slow) var(--debug-bar-easing-default);
+}
+
+.loading-fade-enter-from,
+.loading-fade-leave-to {
+	opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.debug-bar-loading-progress {
+		animation: none;
+		opacity: 0.8;
+	}
+
+	.loading-fade-enter-active,
+	.loading-fade-leave-active {
+		transition: none;
+	}
+}

@@ -7,6 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Mail\Helper\MailboxDirectoryHelper;
 use Bitrix\Mail\Internals\Entity\MailboxDirectory;
+use Bitrix\Main\Localization\Loc;
 
 $dirs = isset($arResult['DIRS']) ? $arResult['DIRS'] : [];
 $maxLevel = isset($arResult['MAX_LEVEL']) ? $arResult['MAX_LEVEL'] : 0;
@@ -34,9 +35,12 @@ $getTree = function ($dirs, $currentLevel = 1) use (&$getTree, $maxLevel)
 		$flags = $dir->getFlags();
 		$hasChild = MailboxDirectoryHelper::hasChildren($flags);
 
-		$button = '<span class="mail-config-dirs-level-box">
-			<span class="mail-config-dirs-plus-icon mail-config-dirs-level-button"></span>
-		</span>';
+		$button = sprintf(
+			'<span class="mail-config-dirs-level-box">
+				<button type="button" class="mail-config-dirs-plus-icon mail-config-dirs-level-button" tabindex="0" aria-expanded="false" aria-label="%s"></button>
+			</span>',
+			Loc::getMessage('MAIL_CLIENT_CONFIG_DIRS_EXPAND_FOLDER')
+		);
 
 		$isContainer = $dir->isVirtualFolder();
 

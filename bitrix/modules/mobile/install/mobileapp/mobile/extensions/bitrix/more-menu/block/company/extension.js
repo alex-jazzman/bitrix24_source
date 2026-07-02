@@ -10,6 +10,7 @@ jn.define('more-menu/block/company', (require, exports, module) => {
 	const { WhatsNewButton } = require('more-menu/block/company/whats-new');
 	const { MoreMenuUsers } = require('more-menu/block/company/users');
 	const { SupportButton } = require('more-menu/block/company/support');
+	const { SupportBanners } = require('more-menu/block/company/support-banners');
 
 	const { PropTypes } = require('utils/validation');
 	const { createTestIdGenerator } = require('utils/test');
@@ -36,16 +37,22 @@ jn.define('more-menu/block/company', (require, exports, module) => {
 	 */
 
 	/**
+	 * @typedef {Object} SupportBannersInfo
+	 * @property {boolean} shouldShow
+	 * @property {string} formCode
+	 */
+
+	/**
 	 * @class MoreMenuCompany
 	 */
 	class MoreMenuCompany extends PureComponent
 	{
 		/**
-		 *
 		 * @param props
 		 * @param {CompanyInfo} props.company
 		 * @param {LicenseInfo} props.license
 		 * @param {number} props.supportBotId
+		 * @param {SupportBannersInfo|null} props.supportBanners
 		 * @param {object} props.layout
 		 * @param {boolean} props.canUseSupport
 		 * @param {boolean} props.canInvite
@@ -109,8 +116,23 @@ jn.define('more-menu/block/company', (require, exports, module) => {
 							supportBotId,
 						}),
 					),
+					this.#renderSupportBanners(),
 				),
 			);
+		}
+
+		#renderSupportBanners()
+		{
+			const { shouldShow, formCode } = this.props.supportBanners || {};
+
+			if (!shouldShow)
+			{
+				return null;
+			}
+
+			return new SupportBanners({
+				formCode,
+			});
 		}
 
 		#renderMoreMenuUsers()

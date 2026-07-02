@@ -1,0 +1,4 @@
+<?php
+
+$MESS['CRM_BADGE_ENTITY_EXCLUSION_STATUS_FIELD_NAME'] = 'Добавление в стоп-лист';
+$MESS['CRM_BADGE_ENTITY_EXCLUSION_STATUS_VALUE'] = 'Нужна реакция';

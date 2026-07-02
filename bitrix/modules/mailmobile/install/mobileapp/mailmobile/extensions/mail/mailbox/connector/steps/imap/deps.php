@@ -9,7 +9,7 @@ return [
 		'haptics',
 		'layout/ui/wizard/step',
 		'loc',
-		'crm:salescenter/progress-bar-number',
+		'mail:mailbox/connector/progress-bar-number',
 		'notify-manager',
 		'apptheme',
         'ui-system/form/inputs/email',

@@ -1,7 +1,7 @@
 import { ajax as Ajax, Type } from 'main.core';
 import { UI } from 'ui.notification';
 
-import ConfigurableItem from '../configurable-item';
+import type ConfigurableItem from '../configurable-item';
 
 export type ActionParams =
 {

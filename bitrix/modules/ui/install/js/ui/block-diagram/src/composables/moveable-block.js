@@ -29,7 +29,6 @@ export function useMoveableBlock(blockRef: HTMLElement, block: DiagramBlock): Us
 		updateBlock,
 		hooks,
 		setMovingBlock,
-		updateMovingBlockPosition,
 		resetMovingBlock,
 		setPortOffsetByBlockId,
 		updateBlockRectById,
@@ -38,8 +37,6 @@ export function useMoveableBlock(blockRef: HTMLElement, block: DiagramBlock): Us
 		startAutoScroll,
 		stopAutoScroll,
 		updateMousePosition,
-		updateBlockRectangle,
-		isBoxIntersection,
 	} = useBlockDiagram();
 
 	let prevValueBlockX = 0;
@@ -88,7 +85,6 @@ export function useMoveableBlock(blockRef: HTMLElement, block: DiagramBlock): Us
 			}
 		}
 
-		updateMovingBlockPosition(x.value, y.value);
 		setPortOffsetByBlockId(toValue(block).id, {
 			x: prevValueBlockX - x.value,
 			y: prevValueBlockY - y.value,
@@ -125,7 +121,7 @@ export function useMoveableBlock(blockRef: HTMLElement, block: DiagramBlock): Us
 			highlitedBlockIds.value = [blockId];
 		}
 
-		setMovingBlock(toValue(block));
+		setMovingBlock(toValue(block).id);
 		hooks.startDragBlock.trigger(block);
 
 		prevValueBlockX = toValue(block).position.x;
@@ -187,7 +183,6 @@ export function useMoveableBlock(blockRef: HTMLElement, block: DiagramBlock): Us
 			}
 		}
 
-		updateMovingBlockPosition(x.value, y.value);
 		updateBlockRectById(
 			toValue(block).id,
 			{
@@ -255,14 +250,6 @@ export function useMoveableBlock(blockRef: HTMLElement, block: DiagramBlock): Us
 
 			updateBlock(currentBlockState);
 			hooks.endDragBlock.trigger(currentBlockState);
-		}
-
-		if (toValue(isBoxIntersection))
-		{
-			updateBlockRectangle(toValue(block).id, {
-				x: positionX,
-				y: positionY,
-			});
 		}
 
 		resetMovingBlock();

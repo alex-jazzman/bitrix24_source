@@ -7,3 +7,6 @@ export * from './ui/publish-user-dropdown-option/publish-user-dropdown-option';
 export * from './ui/publish-full-dropdown-option/publish-full-dropdown-option';
 export * from './ui/autosize-block-container/autosize-block-container';
 export * from './ui/change-frame-color-top-btn/change-frame-color-top-btn';
+export * from './ui/change-frame-text-align-top-btn/change-frame-text-align-top-btn';
+export * from './ui/change-activation-top-btn/change-activation-top-btn';
+export * from './ui/change-activation-block-switcher/change-activation-block-switcher';

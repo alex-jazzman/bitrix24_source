@@ -33,7 +33,7 @@ jn.define('im/messenger/lib/ui/avatar/src/chat-avatar-adapter', (require, export
 		 */
 		#customParams()
 		{
-			const { isNotes, placeholderSvgSize } = this.props;
+			const { isNotes, placeholderSvgSize, size = 32 } = this.props;
 
 			const params = {
 				testId: this.getTestId(),
@@ -43,12 +43,10 @@ jn.define('im/messenger/lib/ui/avatar/src/chat-avatar-adapter', (require, export
 
 			if (isNotes)
 			{
-				const notesParams = this.chatAvatar.getAvatarNotesProps();
-
-				if (placeholderSvgSize > 0)
-				{
-					notesParams.placeholder.svg.size = placeholderSvgSize;
-				}
+				const svgSize = placeholderSvgSize > 0
+					? placeholderSvgSize
+					: Math.round(size * 0.65);
+				const notesParams = this.chatAvatar.getAvatarNotesProps(svgSize);
 
 				return mergeImmutable(params, notesParams);
 			}

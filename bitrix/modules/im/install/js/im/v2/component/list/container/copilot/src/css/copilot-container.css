@@ -32,32 +32,9 @@
 }
 
 .bx-im-list-container-copilot__create-chat {
-	flex-shrink: 0;
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	width: 44px;
-	height: 34px;
-	border-radius: 80px;
-	background-color: var(--im-list-container-copilot__background-color_create-chat);
-	cursor: pointer;
-}
-
-.bx-im-list-container-copilot__create-chat:hover {
-	background-color: var(--im-list-container-copilot__background-color_create-chat-hover);
-}
-
-.bx-im-list-container-copilot__create-chat_icon {
-	width: 24px;
-	height: 24px;
-	background-image: url('./images/plus.svg');
-}
-
-.bx-im-list-container-copilot__create-chat.--loading .bx-im-list-container-copilot__create-chat_icon {
-	width: 22px;
-	height: 22px;
-	background-image: url('./images/spinner.svg');
-	animation: imRotate360 .8s linear infinite;
+	--im-list-container-create-chat__background-color_container: var(--im-list-container-copilot__background-color_create-chat);
+	--im-list-container-create-chat__background-color_container-hover: var(--im-list-container-copilot__background-color_create-chat-hover);
+	--im-list-container-create-chat__background-color_icon: var(--im-color-palette-copilot-primary);
 }
 /* End Header */
 
@@ -75,12 +52,3 @@
 	background-color: var(--im-list-container-copilot__background-color);
 }
 /* End Recent list */
-
-@keyframes imRotate360 {
-	0% {
-		transform: rotate(0deg);
-	}
-	100% {
-		transform: rotate(360deg);
-	}
-}

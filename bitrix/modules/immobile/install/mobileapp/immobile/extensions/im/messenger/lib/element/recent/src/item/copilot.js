@@ -97,9 +97,10 @@ jn.define('im/messenger/lib/element/recent/item/copilot', (require, exports, mod
 			this.actions = [
 				this.getMuteAction(),
 				this.getHideAction(),
+				this.getAddToFolderAction(),
 				this.getPinAction(),
 				this.getReadAction(),
-			];
+			].filter(Boolean);
 
 			return this;
 		}

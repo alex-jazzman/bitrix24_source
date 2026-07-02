@@ -1,4 +1,8 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+
+/**
+ * @var array $arParams
+ */
 
 ob_start();
 ?>
@@ -15,7 +19,7 @@ ob_start();
 			#AFTER#
 		</td>
 	</tr>
-<?
+<?php
 $template = preg_replace("/[\t\n]/", "", ob_get_clean());
 
 if (!empty($arParams["RECORDS"]))
@@ -24,12 +28,12 @@ if (!empty($arParams["RECORDS"]))
 		<td valign="top" align="left" style="border-collapse: collapse;border-spacing: 0;padding: 0 0 36px;">
 			<table cellspacing="0" cellpadding="0" border="0" align="left" style="border-collapse: collapse;mso-table-lspace: 0pt;font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;background-color: #f5f7f8;width: 100%;">
 				<tr>
-					<td border="0" valign="top" align="center" bgcolor="#ffffff" style="border-collapse: collapse;border-spacing: 0;border-bottom: 2px solid #FFFFFF;line-height: 10px;padding: 0;vertical-align: top;width: 39px;border: none;background-color: #ffffff;height: 10px;text-align: center;"><?
+					<td border="0" valign="top" align="center" bgcolor="#ffffff" style="border-collapse: collapse;border-spacing: 0;border-bottom: 2px solid #FFFFFF;line-height: 10px;padding: 0;vertical-align: top;width: 39px;border: none;background-color: #ffffff;height: 10px;text-align: center;"><?php
 						$src = $this->getFolder()."/images/comments-corner.gif";
 						?><img src="<?=$src?>" alt="" style="outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;display: inline-block;vertical-align: top;">
 					</td>
 					<td border="0" bgcolor="#ffffff" style="border-collapse: collapse;border-spacing: 0;border-bottom: 2px solid #FFFFFF;color: #000000;font-size: 13px;line-height: 20px;padding: 0;border: none;background-color: #ffffff;height: 10px;"></td>
-				</tr><?
+				</tr><?php
 
 				if (
 					$arParams["COMMENTS_COUNT"] > 0
@@ -40,7 +44,7 @@ if (!empty($arParams["RECORDS"]))
 						<td valign="middle" colspan="2" style="border-collapse: collapse;border-spacing: 0;border-bottom: 2px solid #FFFFFF;line-height: 0;padding: 0 0 0 16px;vertical-align: middle;width: 39px;color: #2067b0;height: 38px;font-size: 12px;">
 							<a href="<?=$arParams["POST_URL"]?>" style="color: #146cc5;"><?=GetMessage('MPL_MAIL_MORE_COMMENTS1', array("#NUM#" => ($arParams["COMMENTS_ALL_COUNT"] - $arParams["COMMENTS_COUNT"])))?></a>
 						</td>
-					</tr><?
+					</tr><?php
 				}
 
 				$arParams["AVATAR_DEFAULT"] = $this->getFolder()."/images/userpic.gif";
@@ -56,13 +60,13 @@ if (!empty($arParams["RECORDS"]))
 							: ''
 					);
 
-					?><?=$this->__component->parseTemplate($res, $arParams, $template)?><?
+					?><?=$this->__component->parseTemplate($res, $arParams, $template)?><?php
 					$i++;
 				}
 
 				?>
 				<tr>
-					<td valign="top" align="center" style="border-collapse: collapse;border-spacing: 0;border-bottom: 2px solid #FFFFFF;line-height: 0;padding: 12px 15px 12px 19px;vertical-align: top;width: 39px;height: 39px;"><?
+					<td valign="top" align="center" style="border-collapse: collapse;border-spacing: 0;border-bottom: 2px solid #FFFFFF;line-height: 0;padding: 12px 15px 12px 19px;vertical-align: top;width: 39px;height: 39px;"><?php
 						$src = $this->getFolder()."/images/userpic.gif";
 						?><img height="39" width="39" src="<?=$src?>" alt="" style="outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;border-radius: 50%;height: 39px;width: 39px;">
 					</td>
@@ -72,6 +76,6 @@ if (!empty($arParams["RECORDS"]))
 				</tr>
 			</table>
 		</td>
-	</tr><?
+	</tr><?php
 }
 ?>

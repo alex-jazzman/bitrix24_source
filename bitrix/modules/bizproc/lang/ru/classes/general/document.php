@@ -33,3 +33,6 @@ $MESS["BPCGDOC_DELEGATE_NOTIFY_TEXT_MSGVER_1"] = "Вам делегирован�
 $MESS["BPCGDOC_DELEGATE_NOTIFY_TEXT_DEFAULT"] = "#AUTHOR# делегировал вам задание бизнес-процесса";
 $MESS["BPCGDOC_DELEGATE_NOTIFY_TEXT_SIMPLE"] = "Делегировал вам задание бизнес-процесса #PROCESS_NAME#: #TASK_NAME#";
 $MESS["BPCGDOC_WI_B24_LIMITS_MESSAGE"] = "На вашем портале на некоторых документах выполняется более двух бизнес-процессов одновременно. Через некоторое время будет введено ограничение в максимум два одновременно запущенных бизнес-процесса на один документ. Рекомендуем вам в ближайшее время скорректировать логику работы ваших бизнес-процессов. [URL=https://helpdesk.bitrix24.ru/open/4662427/]Подробнее[/URL]";
+$MESS["BPCGDOC_DEBUG_TRACE_WORKFLOW_INIT"] = "Инициализация бизнес-процесса";
+$MESS["BPCGDOC_DEBUG_TRACE_WORKFLOW_STARTING"] = "Запуск бизнес-процесса";
+$MESS["BPCGDOC_DEBUG_TRACE_WORKFLOW_AFTER_START"] = "Завершение выполнения бизнес-процесса";

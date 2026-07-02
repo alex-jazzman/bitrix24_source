@@ -1,11 +1,9 @@
-import { BaseEvent } from 'main.core.events';
 import { mapGetters } from 'ui.vue3.vuex';
 import { Dialog } from 'ui.entity-selector';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
 
 import { EntitySelectorEntity, Model } from 'booking.const';
-import type { SkuInfo } from 'booking.model.sku-resources-editor';
-import type { Skus } from 'booking.model.resources';
+import { type SkuInfo } from 'booking.model.sku-resources-editor';
 
 import './add-skus-button.css';
 
@@ -29,13 +27,15 @@ export const AddSkusButton = {
 			Outline,
 		};
 	},
-	data(): { shown: boolean, selectedSkus: Map<number, Skus>, initialSkuIds: Set<number> }
+	data(): { shown: boolean }
 	{
 		return {
 			shown: false,
-			selectedSkus: new Map(),
-			initialSkuIds: new Set(),
 		};
+	},
+	created(): void
+	{
+		this.selectedSkus = new Map();
 	},
 	computed: {
 		...mapGetters({

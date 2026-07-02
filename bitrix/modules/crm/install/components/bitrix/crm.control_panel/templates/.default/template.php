@@ -24,3 +24,4 @@ $this->EndViewTarget();
 Bitrix\Main\UI\Extension::load(['crm.restriction.bitrix24']);
 
 print (\Bitrix\Crm\Tour\CopilotCallAssessment::getInstance())->build();
+echo Bitrix\Crm\Tour\RepeatSale\ConfigureSegment::getInstance()->build();

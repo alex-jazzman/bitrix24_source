@@ -2,6 +2,7 @@ import { Type } from 'main.core';
 import { BitrixVue, VueCreateAppResult } from 'ui.vue3';
 import { CommunicationRule as CommunicationRuleComponent } from './components/communication-rule';
 import './communication-rule.css';
+import 'ui.layout-form';
 
 type CommunicationRuleParams = {
 	rule: Object,

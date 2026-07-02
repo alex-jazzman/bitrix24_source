@@ -19,8 +19,7 @@
 	color: #525C69;
 	padding-left: 11px;
 	overflow: hidden;
-	-o-text-overflow: ellipsis;
-	   text-overflow: ellipsis;
+	text-overflow: ellipsis;
 	text-decoration: none;
 }
 
@@ -32,12 +31,8 @@
 .crm-grid-username,
 .crm-grid-username--disabled {
 	max-width: 100%;
-	display: -webkit-inline-box;
-	display: -ms-inline-flexbox;
 	display: inline-flex;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
+	align-items: center;
 	overflow: hidden;
 	vertical-align: middle;
 	color: #525c69;
@@ -45,11 +40,8 @@
 	white-space: nowrap;
 	padding: 4px 13px 4px 4px;
 	margin: -4px 0;
-	-webkit-transition: 250ms linear all;
-	-o-transition: 250ms linear all;
 	transition: 250ms linear all;
-	-webkit-box-sizing: border-box;
-	        box-sizing: border-box;
+	box-sizing: border-box;
 	height: 29px;
 	background: transparent;
 	border-radius: 15px;
@@ -70,8 +62,6 @@
 	margin-right: -8px;
 	opacity: .3;
 	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2210%22%20height%3D%2210%22%20viewBox%3D%220%200%2010%2010%22%3E%3Cpath%20fill%3D%22%23535C69%22%20fill-rule%3D%22evenodd%22%20d%3D%22M5.065%203.682L2.377.994%201.01%202.362%203.696%205.05.99%207.757l1.368%201.37%202.708-2.71%202.7%202.703%201.37-1.368-2.702-2.7%202.682-2.684L7.748%201%205.065%203.682z%22/%3E%3C/svg%3E') center no-repeat;
-	-webkit-transition: .2s;
-	-o-transition: .2s;
 	transition: .2s;
 	cursor: pointer;
 }

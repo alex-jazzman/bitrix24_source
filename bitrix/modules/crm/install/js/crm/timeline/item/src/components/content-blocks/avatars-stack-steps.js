@@ -25,12 +25,6 @@ export default {
 			required: false,
 		},
 	},
-	data(): {}
-	{
-		return {
-			stack: null,
-		};
-	},
 	mounted()
 	{
 		if (this.$refs.controlWrapper)

@@ -2,6 +2,7 @@ import {
 	ChatsMenuLinkChat,
 	ChatsMenuLinkChannel,
 	ChatsMenuLinkCollab,
+	ChatsMenuLinkProject,
 } from '../consts';
 
 export const ListDictionary: Record<string, ListDictionaryItem> = Object.freeze({
@@ -37,6 +38,17 @@ export const ListDictionary: Record<string, ListDictionaryItem> = Object.freeze(
 		moreHiddenText: 'HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_COLLAB_LIST_ITEM_MORE_HIDDEN_TEXT',
 		emptyHiddenText: 'HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_COLLAB_LIST_ITEM_EMPTY_HIDDEN_TEXT',
 		menuItems: [ChatsMenuLinkCollab],
+	},
+	project: {
+		tabListId: 'hr-department-detail-content_chats-tab__collab-list',
+		footerDataTestId: 'hr-department-content_chats-tab__list_collab-hidden-text',
+		listTitle: 'HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_PROJECT_LIST_TITLE',
+		emptyItemTitle: 'HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_PROJECT_LIST_ITEM_TEXT',
+		noTeamText: 'HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_PROJECT_LIST_ITEM_NO_TEAM_TEXT',
+		noDepartmentText: 'HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_PROJECT_LIST_ITEM_NO_DEPARTMENT_TEXT',
+		moreHiddenText: 'HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_PROJECT_LIST_ITEM_MORE_HIDDEN_TEXT',
+		emptyHiddenText: 'HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_PROJECT_LIST_ITEM_EMPTY_HIDDEN_TEXT',
+		menuItems: [ChatsMenuLinkProject],
 	},
 });
 

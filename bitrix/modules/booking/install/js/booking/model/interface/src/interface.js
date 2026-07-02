@@ -4,8 +4,9 @@ import { Type } from 'main.core';
 import { BuilderModel } from 'ui.vue3.vuex';
 import type { GetterTree, ActionTree, MutationTree } from 'ui.vue3.vuex';
 
-import { BusySlot, DraggedElementKind, Model } from 'booking.const';
+import { BusySlot, DraggedElementKind, Grid, Model } from 'booking.const';
 import { Timezone } from 'booking.lib.timezone';
+import { Utils } from 'booking.lib.utils';
 import type { BusySlotDto } from 'booking.lib.busy-slots';
 import type { BookingModel, DealData } from 'booking.model.bookings';
 
@@ -17,6 +18,9 @@ import type {
 	MoneyStatistics,
 	Occupancy,
 	DraggedDataTransfer,
+	Cell,
+	CellStats,
+	HoveredPlacementSlot,
 } from './types';
 
 export class Interface extends BuilderModel
@@ -30,11 +34,28 @@ export class Interface extends BuilderModel
 	{
 		const today = new Date();
 		const schedule = this.getVariable('schedule', {});
+		const isMultidayFeatureAvailable = this.getVariable('isMultidayFeatureAvailable', false);
+		const gridMode = isMultidayFeatureAvailable
+			? this.getVariable('gridMode', Grid.Mode.Day)
+			: Grid.Mode.Day
+		;
+
+		const timezone = this.getVariable('timezone', Intl.DateTimeFormat().resolvedOptions().timeZone);
+		const firstWeekDay = this.getVariable('firstWeekDay', 1);
+
+		const selectedDateTs = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+
+		let selectedFirstDayPeriodTs = null;
+		if (gridMode !== Grid.Mode.Day)
+		{
+			selectedFirstDayPeriodTs = Utils.time.getWeekStartTs(selectedDateTs, firstWeekDay);
+		}
 
 		return {
 			isFeatureEnabled: this.getVariable('isFeatureEnabled', false),
 			canTurnOnTrial: this.getVariable('canTurnOnTrial', false),
 			canTurnOnDemo: this.getVariable('canTurnOnDemo', false),
+			isMultidayFeatureAvailable,
 			editingBookingId: this.getVariable('editingBookingId', 0),
 			editingWaitListItemId: this.getVariable('editingWaitListItemId', 0),
 			draggedBookingId: 0,
@@ -46,22 +67,27 @@ export class Interface extends BuilderModel
 			},
 			resizedBookingId: 0,
 			isLoaded: false,
+			saleChannelsLoaded: false,
+			gridMode,
 			zoom: 1,
 			expanded: false,
 			scroll: 0,
 			offHoursHover: false,
 			offHoursExpanded: false,
+			intersectionExpanded: gridMode === Grid.Mode.Day,
 			waitListExpanded: this.getVariable('waitListExpanded', true),
 			calendarExpanded: this.getVariable('calendarExpanded', true),
+			firstWeekDay,
 			fromHour: schedule.fromHour ?? 9,
 			toHour: schedule.toHour ?? 19,
-			selectedDateTs: new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime(),
+			selectedDateTs,
+			selectedFirstDayPeriodTs,
 			viewDateTs: new Date(today.getFullYear(), today.getMonth()).getTime(),
 			deletingBookings: {},
 			deletingResources: {},
 			deletingWaitListItemIds: {},
-			selectedCells: {},
-			hoveredCell: null,
+			selectedPlacementSlots: {},
+			hoveredPlacementSlot: null,
 			busySlots: {},
 			disabledBusySlots: {},
 			resourcesIds: [],
@@ -73,12 +99,11 @@ export class Interface extends BuilderModel
 			totalNewClientsToday: this.getVariable('totalNewClientsToday', 0),
 			moneyStatistics: this.getVariable('moneyStatistics', null),
 			intersections: {},
-			timezone: this.getVariable('timezone', Intl.DateTimeFormat().resolvedOptions().timeZone),
+			timezone,
 			mousePosition: {
 				top: 0,
 				left: 0,
 			},
-			isCurrentSenderAvailable: false,
 			isShownTrialPopup: false,
 			embedItems: this.getVariable('embedItems', []),
 			animationPause: false,
@@ -102,6 +127,8 @@ export class Interface extends BuilderModel
 			canTurnOnTrial: (state): boolean => state.canTurnOnTrial,
 			/** @function interface/canTurnOnDemo */
 			canTurnOnDemo: (state): boolean => state.canTurnOnDemo,
+			/** @function interface/isMultidayFeatureAvailable */
+			isMultidayFeatureAvailable: (state): boolean => state.isMultidayFeatureAvailable,
 			/** @function interface/isShownTrialPopup */
 			isShownTrialPopup: (state): boolean => state.isShownTrialPopup,
 			/** @function interface/editingBookingId */
@@ -132,6 +159,10 @@ export class Interface extends BuilderModel
 			isDragMode: (state): boolean => state.draggedDataTransfer.id > 0 || state.resizedBookingId,
 			/** @function interface/isLoaded */
 			isLoaded: (state): boolean => state.isLoaded,
+			/** @function interface/gridMode */
+			gridMode: (state): $Values<typeof Grid.Mode> => state.gridMode,
+			/** @function interface/isWeekMode */
+			isWeekMode: (state): boolean => state.gridMode === Grid.Mode.Week,
 			/** @function interface/zoom */
 			zoom: (state): number => state.zoom,
 			/** @function interface/scroll */
@@ -144,12 +175,18 @@ export class Interface extends BuilderModel
 			waitListExpanded: (state): boolean => state.waitListExpanded,
 			/** @function interface/calendarExpanded */
 			calendarExpanded: (state): boolean => state.calendarExpanded,
+			/** @function interface/intersectionExpanded */
+			intersectionExpanded: (state): boolean => state.intersectionExpanded,
+			/** @function interface/firstWeekDay */
+			firstWeekDay: (state): number => state.firstWeekDay,
 			/** @function interface/fromHour */
 			fromHour: (state): number => state.fromHour,
 			/** @function interface/toHour */
 			toHour: (state): number => state.toHour,
 			/** @function interface/selectedDateTs */
 			selectedDateTs: (state, getters): number => state.selectedDateTs - getters.offset,
+			/** @function interface/selectedFirstDayPeriodTs */
+			selectedFirstDayPeriodTs: (state, getters): number => state.selectedFirstDayPeriodTs - getters.offset,
 			/** @function interface/viewDateTs */
 			viewDateTs: (state, getters): number => state.viewDateTs - getters.offset,
 			/** @function interface/deletingBookings */
@@ -158,10 +195,12 @@ export class Interface extends BuilderModel
 			deletingResources: (state): { [id: number]: number } => state.deletingResources,
 			/** @function interface/deletingWaitListItems */
 			deletingWaitListItems: (state): { [id: number]: number } => state.deletingWaitListItemIds,
-			/** @function interface/selectedCells */
-			selectedCells: (state): { [id: string]: CellDto } => state.selectedCells,
-			/** @function interface/hoveredCell */
-			hoveredCell: (state): CellDto | null => state.hoveredCell,
+			/** @function interface/selectedPlacementSlots */
+			selectedPlacementSlots: (state): { [id: string]: Cell } => state.selectedPlacementSlots,
+			/** @function interface/hoveredPlacementSlot */
+			hoveredPlacementSlot: (state): HoveredPlacementSlot | null => state.hoveredPlacementSlot,
+			/** @function interface/isHoveredPlacementSlotFixed */
+			isHoveredPlacementSlotFixed: (state): boolean => state.hoveredPlacementSlot?.isFixed,
 			/** @function interface/busySlots */
 			busySlots: (state): BusySlotDto[] => Object.values(state.busySlots),
 			/** @function interface/disabledBusySlots */
@@ -214,18 +253,18 @@ export class Interface extends BuilderModel
 			},
 			/** @function interface/intersections */
 			intersections: (state): Intersections => state.intersections,
+			/** @function interface/hasIntersectionByResourceId */
+			hasIntersectionByResourceId: (state) => (resourceId: number): boolean => {
+				return (resourceId in state.intersections) && (state.intersections[resourceId].length > 0);
+			},
 			/** @function interface/timezone */
 			timezone: (state): string => state.timezone,
 			/** @function interface/offset */
 			offset: (state): number => {
-				const timezoneOffset = Timezone.getOffset(state.selectedDateTs, state.timezone);
-
-				return (timezoneOffset + new Date(state.selectedDateTs).getTimezoneOffset() * 60) * 1000;
+				return Timezone.getOffsetFromClientTimezone(state.selectedDateTs, state.timezone);
 			},
 			/** @function interface/mousePosition */
 			mousePosition: (state): MousePosition => state.mousePosition,
-			/** @function interface/isCurrentSenderAvailable */
-			isCurrentSenderAvailable: (state): boolean => state.isCurrentSenderAvailable,
 			/** @function interface/shouldShowWhatsAppEmergency */
 			shouldShowWhatsAppEmergency: (state): boolean => state.shouldShowWhatsAppEmergency,
 			/** @function interface/getColliding */
@@ -238,9 +277,9 @@ export class Interface extends BuilderModel
 
 					return [
 						...getters.getOccupancy(resourcesIds, excludedBookingIds),
-						...Object.values(state.selectedCells)
-							.filter((cell: CellDto) => resourcesIds.includes(cell.resourceId))
-							.map((cell: CellDto) => ({
+						...Object.values(state.selectedPlacementSlots)
+							.filter((cell: Cell) => resourcesIds.includes(cell.resourceId))
+							.map((cell: Cell) => ({
 								fromTs: cell.fromTs,
 								toTs: cell.toTs,
 								resourcesIds: [cell.resourceId],
@@ -368,6 +407,33 @@ export class Interface extends BuilderModel
 			setIsLoaded: (store, isLoaded: boolean) => {
 				store.commit('setIsLoaded', isLoaded);
 			},
+			/** @function interface/setSaleChannelsLoaded */
+			setSaleChannelsLoaded: (store, saleChannelsLoaded: boolean) => {
+				store.commit('setSaleChannelsLoaded', saleChannelsLoaded);
+			},
+			/** @function interface/setGridMode */
+			setGridMode: (store, gridMode: $Values<typeof Grid.Mode>) => {
+				if (!store.state.isMultidayFeatureAvailable)
+				{
+					return;
+				}
+
+				store.commit('setGridMode', gridMode);
+				store.commit('setHoveredPlacementSlot', null);
+				store.commit('setHoveredPlacementSlotStats', null);
+				store.commit('setZoom', 1);
+				store.commit('setScroll', 0);
+				store.commit('clearDisabledBusySlots');
+				store.commit('clearBusySlots');
+
+				const isWeekMode = store.getters.isWeekMode;
+				store.commit('setIntersectionExpanded', !isWeekMode);
+
+				if (!isWeekMode)
+				{
+					store.commit('setOffHoursExpanded', true);
+				}
+			},
 			/** @function interface/setZoom */
 			setZoom: (store, zoom: number) => {
 				store.commit('setZoom', zoom);
@@ -396,9 +462,17 @@ export class Interface extends BuilderModel
 			setCalendarExpanded: (store, calendarExpanded: boolean) => {
 				store.commit('setCalendarExpanded', calendarExpanded);
 			},
+			/** @function interface/setIntersectionExpanded */
+			setIntersectionExpanded: (store, intersectionExpanded: boolean) => {
+				store.commit('setIntersectionExpanded', intersectionExpanded);
+			},
 			/** @function interface/setSelectedDateTs */
 			setSelectedDateTs: (store, selectedDateTs: number) => {
 				store.commit('setSelectedDateTs', selectedDateTs);
+			},
+			/** @function interface/setSelectedFirstDayPeriodTs */
+			setSelectedFirstDayPeriodTs: (store, selectedFirstDayPeriodTs: number | null) => {
+				store.commit('setSelectedFirstDayPeriodTs', selectedFirstDayPeriodTs);
 			},
 			/** @function interface/setViewDateTs */
 			setViewDateTs: (store, viewDateTs: number) => {
@@ -417,20 +491,38 @@ export class Interface extends BuilderModel
 			/** @function interface/removeDeletingWaitListItemId */
 			removeDeletingWaitListItemId: createBatchableAction('removeDeletingWaitListItemId'),
 			/** @function interface/addSelectedCell */
-			addSelectedCell: (store, cell: CellDto) => {
+			addSelectedCell: (store, cell: Cell) => {
 				store.commit('addSelectedCell', cell);
 			},
 			/** @function interface/removeSelectedCell */
-			removeSelectedCell: (store, cell: CellDto) => {
+			removeSelectedCell: (store, cell: Cell) => {
 				store.commit('removeSelectedCell', cell);
 			},
 			/** @function interface/clearSelectedCells */
 			clearSelectedCells: (store) => {
 				store.commit('clearSelectedCells');
 			},
-			/** @function interface/setHoveredCell */
-			setHoveredCell: (store, cell: CellDto | null) => {
-				store.commit('setHoveredCell', cell);
+			/** @function interface/setHoveredPlacementSlot */
+			setHoveredPlacementSlot: (store, cell: Cell | null) => {
+				store.commit('setHoveredPlacementSlot', cell);
+			},
+			/** @function interface/fixHoveredPlacementSlot */
+			fixHoveredPlacementSlot: (store) => {
+				store.commit('setHoveredPlacementSlotFixed', true);
+			},
+			/** @function interface/unfixHoveredPlacementSlot */
+			unfixHoveredPlacementSlot: (store) => {
+				store.commit('setHoveredPlacementSlotFixed', false);
+			},
+			/** @function interface/setHoveredPlacementSlotStats */
+			setHoveredPlacementSlotStats: (store, stats: CellStats | null) => {
+				store.commit('setHoveredPlacementSlotStats', stats);
+			},
+			/** @function interface/goToDay */
+			goToDay: (store, selectedDateTs: number) => {
+				void store.dispatch('setGridMode', Grid.Mode.Day);
+				store.commit('setSelectedDateTs', selectedDateTs);
+				store.commit('setViewDateTs', Utils.time.getMonthStartTs(selectedDateTs));
 			},
 			/** @function interface/upsertBusySlotMany */
 			upsertBusySlotMany: (store: Store, busySlots: BusySlotDto[]): void => {
@@ -489,10 +581,6 @@ export class Interface extends BuilderModel
 			/** @function interface/setMousePosition */
 			setMousePosition: (store, mousePosition: MousePosition) => {
 				store.commit('setMousePosition', mousePosition);
-			},
-			/** @function interface/setIsCurrentSenderAvailable */
-			setIsCurrentSenderAvailable: (store, isCurrentSenderAvailable: boolean) => {
-				store.commit('setIsCurrentSenderAvailable', isCurrentSenderAvailable);
 			},
 			/** @function interface/setShouldShowWhatsAppEmergency */
 			setShouldShowWhatsAppEmergency: (store, shouldShowWhatsAppEmergency: boolean) => {
@@ -570,6 +658,12 @@ export class Interface extends BuilderModel
 			setIsLoaded: (state, isLoaded: boolean) => {
 				state.isLoaded = isLoaded;
 			},
+			setSaleChannelsLoaded: (state, saleChannelsLoaded: boolean) => {
+				state.saleChannelsLoaded = saleChannelsLoaded;
+			},
+			setGridMode: (state, gridMode: $Values<typeof Grid.Mode>) => {
+				state.gridMode = gridMode;
+			},
 			setZoom: (state, zoom: number) => {
 				state.zoom = zoom;
 			},
@@ -591,8 +685,14 @@ export class Interface extends BuilderModel
 			setCalendarExpanded: (state, calendarExpanded: boolean) => {
 				state.calendarExpanded = calendarExpanded;
 			},
+			setIntersectionExpanded: (state, intersectionExpanded: boolean) => {
+				state.intersectionExpanded = intersectionExpanded;
+			},
 			setSelectedDateTs: (state, selectedDateTs: number) => {
 				state.selectedDateTs = selectedDateTs;
+			},
+			setSelectedFirstDayPeriodTs: (state, selectedFirstDayPeriodTs: number | null) => {
+				state.selectedFirstDayPeriodTs = selectedFirstDayPeriodTs;
 			},
 			setViewDateTs: (state, viewDateTs: number) => {
 				state.viewDateTs = viewDateTs;
@@ -615,17 +715,33 @@ export class Interface extends BuilderModel
 			removeDeletingWaitListItemId: (state, waitListItemId: number) => {
 				delete state.deletingWaitListItemIds[waitListItemId];
 			},
-			addSelectedCell: (state, cell: CellDto) => {
-				state.selectedCells[cell.id] = cell;
+			addSelectedCell: (state, cell: Cell) => {
+				state.selectedPlacementSlots[cell.id] = cell;
 			},
-			removeSelectedCell: (state, cell: CellDto) => {
-				delete state.selectedCells[cell.id];
+			removeSelectedCell: (state, cell: Cell) => {
+				delete state.selectedPlacementSlots[cell.id];
 			},
 			clearSelectedCells: (state) => {
-				state.selectedCells = {};
+				state.selectedPlacementSlots = {};
 			},
-			setHoveredCell: (state, cell: CellDto | null) => {
-				state.hoveredCell = cell;
+			setHoveredPlacementSlot: (state, cell: Cell | null) => {
+				state.hoveredPlacementSlot = cell ? {
+					...cell,
+					isFixed: false,
+					stats: null,
+				} : null;
+			},
+			setHoveredPlacementSlotStats: (state, stats: CellStats | null) => {
+				if (state.hoveredPlacementSlot)
+				{
+					state.hoveredPlacementSlot.stats = stats;
+				}
+			},
+			setHoveredPlacementSlotFixed: (state, isFixed: boolean) => {
+				if (state.hoveredPlacementSlot)
+				{
+					state.hoveredPlacementSlot.isFixed = isFixed;
+				}
 			},
 			upsertBusySlot: (state, busySlot: BusySlotDto): void => {
 				state.busySlots[busySlot.id] ??= busySlot;
@@ -672,9 +788,6 @@ export class Interface extends BuilderModel
 			},
 			setMousePosition: (state, mousePosition: MousePosition) => {
 				state.mousePosition = mousePosition;
-			},
-			setIsCurrentSenderAvailable: (state, isCurrentSenderAvailable: boolean) => {
-				state.isCurrentSenderAvailable = isCurrentSenderAvailable;
 			},
 			setShouldShowWhatsAppEmergency: (state, shouldShowWhatsAppEmergency: boolean) => {
 				state.shouldShowWhatsAppEmergency = shouldShowWhatsAppEmergency;

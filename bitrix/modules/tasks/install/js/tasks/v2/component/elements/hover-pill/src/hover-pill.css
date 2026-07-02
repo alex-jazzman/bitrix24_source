@@ -1,3 +1,7 @@
+/* normalize */
+.b24-hover-pill-content  { box-sizing: border-box; }
+/* normalize end */
+
 .b24-hover-pill {
 	--b24-hover-pill-content-pl: 2px;
 	--b24-hover-pill-content-pr: 10px;

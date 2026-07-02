@@ -1,6 +1,7 @@
 import * as ScrollLock from './scroll-lock/scroll-lock';
-import {MoveObserver} from './moveobserver';
-import {ViewObserver} from './viewobserver';
+import { MoveObserver } from './moveobserver';
+import { ViewObserver } from './viewobserver';
+import { Aria } from './aria';
 
 const Scroll = {
 	items: [],
@@ -273,4 +274,5 @@ export {
 	MoveObserver,
 	ViewObserver,
 	Font,
-}
+	Aria,
+};

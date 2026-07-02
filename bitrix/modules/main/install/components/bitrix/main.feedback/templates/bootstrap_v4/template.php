@@ -1,4 +1,4 @@
-<?
+<?php
 if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
 
 \Bitrix\Main\UI\Extension::load("ui.bootstrap4");
@@ -13,52 +13,52 @@ if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
  */
 ?>
 <div class="mb-4">
-	<?if(!empty($arResult["ERROR_MESSAGE"]))
+	<?php if(!empty($arResult["ERROR_MESSAGE"]))
 	{
 		foreach($arResult["ERROR_MESSAGE"] as $v)
 			ShowError($v);
 	}
 	if($arResult["OK_MESSAGE"] <> '')
 	{
-		?><div class="alert alert-success"><?=$arResult["OK_MESSAGE"]?></div><?
+		?><div class="alert alert-success"><?=$arResult["OK_MESSAGE"]?></div><?php
 	}
 	?>
 	<form action="<?=POST_FORM_ACTION_URI?>" method="POST">
 		<?=bitrix_sessid_post()?>
 		<div class="form-group">
-			<label for="mainFeedback_name"><?=GetMessage("MFT_NAME");?><?
-				if(empty($arParams["REQUIRED_FIELDS"]) || in_array("NAME", $arParams["REQUIRED_FIELDS"])):?><span class="mf-control-required">*</span><?endif;?></label>
+			<label for="mainFeedback_name"><?=GetMessage("MFT_NAME");?><?php
+				if(empty($arParams["REQUIRED_FIELDS"]) || in_array("NAME", $arParams["REQUIRED_FIELDS"])):?><span class="mf-control-required">*</span><?php endif;?></label>
 			<input
 				type="text"
 				id="mainFeedback_name"
 				name="user_name"
 				class="form-control"
 				value="<?=$arResult["AUTHOR_NAME"]?>"
-				<?if(empty($arParams["REQUIRED_FIELDS"]) || in_array("NAME", $arParams["REQUIRED_FIELDS"])): ?>required<?endif?>
+				<?php if(empty($arParams["REQUIRED_FIELDS"]) || in_array("NAME", $arParams["REQUIRED_FIELDS"])): ?>required<?php endif?>
 			/>
 		</div>
 
 		<div class="form-group">
-			<label for="mainFeedback_email"><?=GetMessage("MFT_EMAIL")?><?
-				if(empty($arParams["REQUIRED_FIELDS"]) || in_array("EMAIL", $arParams["REQUIRED_FIELDS"])):?><span class="mf-control-required">*</span><?endif?></label>
+			<label for="mainFeedback_email"><?=GetMessage("MFT_EMAIL")?><?php
+				if(empty($arParams["REQUIRED_FIELDS"]) || in_array("EMAIL", $arParams["REQUIRED_FIELDS"])):?><span class="mf-control-required">*</span><?php endif?></label>
 			<input
 				type="text"
 				name="user_email"
 				id="mainFeedback_email"
 				class="form-control"
 				value="<?=$arResult["AUTHOR_EMAIL"]?>"
-				<?if(empty($arParams["REQUIRED_FIELDS"]) || in_array("EMAIL", $arParams["REQUIRED_FIELDS"])):?>required<?endif?>
+				<?php if(empty($arParams["REQUIRED_FIELDS"]) || in_array("EMAIL", $arParams["REQUIRED_FIELDS"])):?>required<?php endif?>
 			/>
 		</div>
 
 
 		<div class="form-group">
-			<label for="mainFeedback_message"><?=GetMessage("MFT_MESSAGE")?><?
-				if(empty($arParams["REQUIRED_FIELDS"]) || in_array("MESSAGE", $arParams["REQUIRED_FIELDS"])):?><span class="mf-control-required">*</span><?endif?></label>
+			<label for="mainFeedback_message"><?=GetMessage("MFT_MESSAGE")?><?php
+				if(empty($arParams["REQUIRED_FIELDS"]) || in_array("MESSAGE", $arParams["REQUIRED_FIELDS"])):?><span class="mf-control-required">*</span><?php endif?></label>
 			<textarea class="form-control" id="mainFeedback_message" name="MESSAGE" rows="5"><?=$arResult["MESSAGE"]?></textarea>
 		</div>
 
-		<?if($arParams["USE_CAPTCHA"] == "Y"):?>
+		<?php if($arParams["USE_CAPTCHA"] == "Y"):?>
 		<div class="form-row">
 			<div class="form-group col-auto">
 				<label><?=GetMessage("MFT_CAPTCHA_CODE")?><span class="mf-control-required">*</span></label><br/>
@@ -70,7 +70,7 @@ if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
 				<img src="/bitrix/tools/captcha.php?captcha_sid=<?=$arResult["capCode"]?>" width="180" height="38" alt="CAPTCHA">
 			</div>
 		</div>
-		<?endif;?>
+		<?php endif;?>
 
 		<input type="hidden" name="PARAMS_HASH" value="<?=$arResult["PARAMS_HASH"]?>">
 		<input type="submit" name="submit"  value="<?=GetMessage("MFT_SUBMIT")?>" class="btn btn-primary">

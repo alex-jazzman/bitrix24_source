@@ -1,4 +1,6 @@
-import { Event, Type } from 'main.core';
+import { Event, Type, type JsonObject } from 'main.core';
+import { type EventEmitter } from 'main.core.events';
+import { type BitrixVueComponentProps } from 'ui.vue3';
 import { PopupManager } from 'main.popup';
 
 import { EventType, PopupType, SpecialMentionDialogId } from 'im.v2.const';
@@ -6,20 +8,15 @@ import { ScrollWithGradient } from 'im.v2.component.elements.scroll-with-gradien
 import { Utils } from 'im.v2.lib.utils';
 import { Core } from 'im.v2.application.core';
 
+import { MentionInsertManager } from './classes/insert-manager';
+import { getMarginTop, getNewScrollPosition } from '../helpers/helpers';
 import { AllParticipantsItem } from './mention-item/components/all-participants-item';
 import { CopilotItem } from './mention-item/components/copilot-item';
 import { DefaultItem } from './mention-item/components/default-item';
-import { MentionInsertManager } from '../classes/insert-manager';
-import { getMarginTop, getNewScrollPosition } from '../helpers/helpers';
 
 import '../css/mention-item.css';
 
-import type { BitrixVueComponentProps } from 'ui.vue3';
-import type { JsonObject } from 'main.core';
-import type { EventEmitter } from 'main.core.events';
-
 const GRADIENT_HEIGHT = 13;
-const CONTAINER_MAX_HEIGHT = 200;
 
 // @vue/component
 export const MentionItemsContainer = {
@@ -52,7 +49,6 @@ export const MentionItemsContainer = {
 	},
 	computed: {
 		GRADIENT_HEIGHT: () => GRADIENT_HEIGHT,
-		CONTAINER_MAX_HEIGHT: () => CONTAINER_MAX_HEIGHT,
 		preparedQuery(): string
 		{
 			return this.query.trim().toLowerCase();
@@ -166,7 +162,7 @@ export const MentionItemsContainer = {
 			const { id } = this.items[this.selectedIndex];
 
 			const insertManager = new MentionInsertManager({ emitter: this.getEmitter() });
-			insertManager.emit({ id, dialogId: this.dialogId, query: this.query });
+			insertManager.insert({ id, dialogId: this.dialogId, query: this.query });
 		},
 		getEmitter(): EventEmitter
 		{
@@ -177,9 +173,7 @@ export const MentionItemsContainer = {
 		<ScrollWithGradient
 			v-if="items.length > 0"
 			ref="scroll-gradient"
-			:gradientHeight="GRADIENT_HEIGHT"
-			:containerMaxHeight="CONTAINER_MAX_HEIGHT"
-			:withShadow="false"
+			:gradientSize="GRADIENT_HEIGHT"
 			@scroll="onScroll"
 		>
 			<div class="bx-im-mention-popup-content__items" ref="popup-items">

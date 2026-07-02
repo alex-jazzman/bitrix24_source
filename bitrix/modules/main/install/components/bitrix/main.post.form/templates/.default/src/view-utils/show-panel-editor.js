@@ -15,6 +15,8 @@ export default function showPanelEditor(editor: Editor, htmlEditor, editorParams
 	editor.exec(() => {
 		const buttonNode = editor.getContainer().querySelector('[data-bx-role="button-show-panel-editor"]');
 
+		buttonNode?.setAttribute('aria-pressed', editorParams.showPanelEditor ? 'true' : 'false');
+
 		if (editorParams.showPanelEditor)
 		{
 			htmlEditor.dom.toolbarCont.style.opacity = 'inherit';

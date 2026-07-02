@@ -57,6 +57,7 @@ class Task implements Tabable
 		];
 
 		$data = $this->getDataInternal();
+
 		if (!empty($data['component']))
 		{
 			$result['params']['onclick'] = Utils::getComponentJSCode($data['component']);
@@ -113,7 +114,7 @@ class Task implements Tabable
 	{
 		$enabledTools = [];
 
-		$tools = ['projects', 'tasks', 'scrum', 'effective', 'flows'];
+		$tools = ['projects', 'tasks', 'templates', 'scrum', 'crm_bi', 'flows'];
 		foreach ($tools as $toolId)
 		{
 			if ($this->isToolAvailable($toolId))
@@ -154,7 +155,7 @@ class Task implements Tabable
 				'name' => 'tabs',
 				'settings' => [
 					'objectName' => 'tabs',
-					'grabTitle' => true,
+					'grabTitle' => false,
 					'grabButtons' => true,
 					'grabSearch' => true,
 					'useLargeTitleMode' => true,
@@ -164,8 +165,9 @@ class Task implements Tabable
 								$this->getTaskListTab(),
 								$this->getProjectListTab(),
 								$this->getFlowListTab(),
+								$this->getTemplateListTab(),
 								$this->getScrumListTab(),
-								$this->getEfficiencyTab(),
+								$this->getAnalyticsTab(),
 							]),
 						),
 					],
@@ -179,9 +181,10 @@ class Task implements Tabable
 				'TAB_CODES' => [
 					'TASKS' => 'tasks.dashboard',
 					'FLOW' => 'tasks.flow.list',
+					'TEMPLATES' => 'tasks.template.list',
 					'PROJECTS' => 'tasks.project.list',
 					'SCRUM' => 'tasks.scrum.list',
-					'EFFICIENCY' => 'tasks.efficiency',
+					'ANALYTICS' => 'tasks.analytics',
 				],
 			],
 		];
@@ -325,6 +328,40 @@ class Task implements Tabable
 		];
 	}
 
+	private function getTemplateListTab(): ?array
+	{
+		if (
+			!$this->isToolAvailable('templates')
+			|| !Manager::getAvailableComponents()['tasks:tasks.template.list']
+		)
+		{
+			return null;
+		}
+
+		return [
+			'id' => 'tasks.template.list',
+			'testId' => 'tasks_template',
+			'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_TAB_TEMPLATES'),
+			'component' => [
+				'name' => 'JSStackComponent',
+				'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_HEADER'),
+				'componentCode' => 'tasks.template.list',
+				'scriptPath' => Manager::getComponentPath('tasks:tasks.template.list'),
+				'rootWidget' => [
+					'name' => 'layout',
+					'settings' => [
+						'objectName' => 'layout',
+						'useSearch' => true,
+						'useLargeTitleMode' => true,
+					],
+				],
+				'params' => [
+					'COMPONENT_CODE' => 'tasks.template.list',
+				],
+			],
+		];
+	}
+
 	private function getScrumListTab(): ?array
 	{
 		if (!$this->isToolAvailable('scrum'))
@@ -338,50 +375,50 @@ class Task implements Tabable
 			'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_TAB_SCRUM'),
 			'component' => [
 				'name' => 'JSStackComponent',
-				'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_HEADER'),
-				'componentCode' => 'tasks.project.list',
-				'scriptPath' => Manager::getComponentPath('tasks:tasks.project.list'),
+				'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_TAB_SCRUM'),
+				'componentCode' => 'tasks.scrum.empty-state',
+				'scriptPath' => Manager::getComponentPath('tasks:tasks.scrum.empty-state'),
 				'rootWidget' => [
-					'name' => 'tasks.list',
+					'name' => 'layout',
 					'settings' => [
-						'objectName' => 'list',
-						'useSearch' => true,
+						'objectName' => 'layout',
 						'useLargeTitleMode' => true,
-						'emptyListMode' => true,
 					],
 				],
 				'params' => [
-					'COMPONENT_CODE' => 'tasks.project.list',
-					'SITE_ID' => $this->context->siteId,
-					'SITE_DIR' => $this->context->siteDir,
-					'USER_ID' => $this->context->userId,
-					'PROJECT_NEWS_PATH_TEMPLATE' => Helper::getProjectNewsPathTemplate([
-						'siteDir' => $this->context->siteDir,
-					]),
-					'PROJECT_CALENDAR_WEB_PATH_TEMPLATE' => Helper::getProjectCalendarWebPathTemplate([
-						'siteId' => $this->context->siteId,
-						'siteDir' => $this->context->siteDir,
-					]),
-					'MODE' => WorkgroupList::MODE_TASKS_SCRUM,
+					'COMPONENT_CODE' => 'tasks.scrum.empty-state',
 				],
 			],
-			'selectable' => Option::get('tasksmobile', 'showScrumList', 'N') === 'Y',
 		];
 	}
 
-	private function getEfficiencyTab(): ?array
+	private function getAnalyticsTab(): ?array
 	{
-		if (!$this->isToolAvailable('effective'))
+		if (!$this->isToolAvailable('crm_bi'))
 		{
 			return null;
 		}
 
 		return [
-			'id' => 'tasks.efficiency',
-			'testId' => 'tasks_efficiency',
-			'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_TAB_EFFICIENCY'),
-			'icon' => (TariffPlanRestrictionProvider::isEfficiencyRestricted() ? 'lock' : null),
-			'selectable' => false,
+			'id' => 'tasks.analytics',
+			'testId' => 'tasks_analytics',
+			'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_TAB_ANALYTICS'),
+			'component' => [
+				'name' => 'JSStackComponent',
+				'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_TAB_ANALYTICS'),
+				'componentCode' => 'tasks.analytics.empty-state',
+				'scriptPath' => Manager::getComponentPath('tasks:tasks.analytics.empty-state'),
+				'rootWidget' => [
+					'name' => 'layout',
+					'settings' => [
+						'objectName' => 'layout',
+						'useLargeTitleMode' => true,
+					],
+				],
+				'params' => [
+					'COMPONENT_CODE' => 'tasks.analytics.empty-state',
+				],
+			],
 		];
 	}
 

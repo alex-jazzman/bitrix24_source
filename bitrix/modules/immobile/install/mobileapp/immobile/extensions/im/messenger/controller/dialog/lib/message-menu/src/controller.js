@@ -10,19 +10,18 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 	const {
 		EventType,
 		OwnMessageStatus,
-		MessageParams,
-		MessageMenuActionType,
+		MessageComponent,
 		AiTasksStatusType,
+		MessageType,
 	} = require('im/messenger/const');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
-	const { ReactionAssetsManager } = require('im/messenger/lib/reaction-assets-manager');
 
-	const { MessageMenuMessage } = require('im/messenger/controller/dialog/lib/message-menu/message');
-	const { MessageMenuView } = require('im/messenger/controller/dialog/lib/message-menu/view');
-	const { MessageMenu } = require('im/messenger/controller/dialog/lib/message-menu/menu');
+	const { MessageMenuActionHelper } = require('im/messenger/controller/dialog/lib/message-menu/src/message-action-helper');
+	const { OneLevelMessageMenuManager } = require('im/messenger/controller/dialog/lib/message-menu/src/one-level/manager');
+	const { MultiLevelMessageMenuManager } = require('im/messenger/controller/dialog/lib/message-menu/src/multi-level/manager');
 
 	const logger = getLogger('dialog--message-menu');
 
@@ -39,13 +38,10 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 			/** @type {DialogLocator} */
 			this.dialogLocator = dialogLocator;
 			this.getDialog = getDialog;
-			/** @type {DialogConfigurator} */
-			this.configurator = this.dialogLocator.get('configurator');
 			this.store = dialogLocator.get('store');
-			/** @type {Record<string, function(Message): void>} */
-			this.handlers = {};
 
-			this.actions = {};
+			/** @type {IOneLevelMessageMenuManager|IMultiLevelMessageMenuManager} */
+			this.menuManager = null;
 
 			this.messageLongTapHandler = this.onMessageLongTap.bind(this);
 			this.messageMenuActionTapHandler = this.onMessageMenuActionTap.bind(this);
@@ -68,6 +64,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 
 		unsubscribeEvents()
 		{
+			this.menuManager = null;
 			this.dialogLocator.get('view')
 				.off(EventType.dialog.messageMenuActionTap, this.messageMenuActionTapHandler)
 				.off(EventType.dialog.messageMenuReactionTap, this.messageMenuReactionTapHandler)
@@ -76,74 +73,16 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 		}
 
 		/**
-		 * @param {number} messageId
-		 * @return {IMessageContextMenu}
+		 * @return {boolean}
 		 */
-		createBaseMessageContextMenuControllerByMessageId(messageId)
+		isMultiLevelMenuSupported()
 		{
-			const baseContextMenuController = new MessageMenu({
-				getDialog: this.getDialog,
-				relatedEntity: this.configurator.getRelatedEntity(),
-			});
-
-			baseContextMenuController.setDialogLocator(this.dialogLocator);
-
-			return baseContextMenuController;
-		}
-
-		/**
-		 * @param {number} messageId
-		 * @return {Promise<IMessageContextMenu>}
-		 */
-		async createMessageContextMenuControllerByMessageId(messageId)
-		{
-			const MessageContextMenuControllerClass = await this.configurator
-				.getMessageContextMenuControllerClassByMessageId(messageId)
-			;
-
-			const contextMenuController = new MessageContextMenuControllerClass({
-				getDialog: this.getDialog,
-				relatedEntity: this.configurator.getRelatedEntity(),
-			});
-
-			if (contextMenuController instanceof MessageMenu)
-			{
-				contextMenuController.setDialogLocator(this.dialogLocator);
-			}
-
-			return contextMenuController;
-		}
-
-		/**
-		 * @param {MessageMenuMessage} message
-		 * @return {Promise<string[]>}
-		 */
-		async getOrderedActions(message)
-		{
-			const controller = await this.createMessageContextMenuControllerByMessageId(message.messageModel.id);
-			const orderedActions = await controller.getOrderedActions();
-
-			return [
-				MessageMenuActionType.reaction,
-				...orderedActions,
-			];
-		}
-
-		/**
-		 * @param {MessageMenuMessage} message
-		 * @return {Promise<string[]>}
-		 */
-		async getOrderedActionsForErrorMessage(message)
-		{
-			return [
-				MessageMenuActionType.resend,
-				MessageMenuActionType.delete,
-			];
+			return Feature.isMultilevelMessageMenuSupported && Feature.isReactionsV2Enabled;
 		}
 
 		/**
 		 * @param index
-		 * @param {Message} message
+		 * @param {DialogWidgetItem} message
 		 */
 		async onMessageLongTap(index, message)
 		{
@@ -152,7 +91,8 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 			const isRealMessage = Type.isNumber(messageId);
 			if (!isRealMessage)
 			{
-				this.#processFileErrorMessage(message);
+				await this.#processFileErrorMessage(message);
+				await this.#processSendingMessage(message);
 
 				return;
 			}
@@ -165,8 +105,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 			}
 
 			const messageModel = this.#getMessageModel(messageId);
-
-			if (!messageModel || !('id' in messageModel))
+			if (Type.isNil(messageModel?.id))
 			{
 				Haptics.notifyFailure();
 
@@ -180,21 +119,9 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 				return;
 			}
 
-			const contextMenuMessage = this.createMessageMenuMessage(messageId);
+			this.createMenuManager(messageModel);
 
-			await this.registerActions(contextMenuMessage.messageModel.id);
-			await this.registerActionHandlers(contextMenuMessage.messageModel.id);
-
-			const menu = new MessageMenuView();
-			const orderedActions = await this.getOrderedActions(contextMenuMessage);
-			orderedActions
-				.forEach((actionId) => this.actions[actionId](menu, contextMenuMessage))
-			;
-			menu.clearUnnecessarySeparators();
-
-			this.dialogLocator.get('view')
-				.showMenuForMessage(message, menu)
-			;
+			await this.showMenu(message);
 
 			this.#interruptMessageAnimation(messageId);
 
@@ -217,53 +144,17 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 		}
 
 		/**
-		 * @param messageId
-		 * @returns {MessageMenuMessage}
-		 */
-		createMessageMenuMessage(messageId)
-		{
-			const messageModel = clone(this.#getMessageModel(messageId));
-			const fileModel = clone(this.store.getters['filesModel/getById'](messageModel.files[0]));
-			const dialogModel = clone(this.store.getters['dialoguesModel/getById'](this.dialogId));
-			const userModel = clone(this.store.getters['usersModel/getById'](messageModel.authorId));
-			const commentInfo = clone(this.store.getters['commentModel/getByMessageId'](messageModel.id));
-
-			let isUserSubscribed = false;
-
-			if (commentInfo)
-			{
-				isUserSubscribed = commentInfo.isUserSubscribed;
-			}
-
-			if (!commentInfo && messageModel.authorId === serviceLocator.get('core').getUserId())
-			{
-				isUserSubscribed = true;
-			}
-
-			return new MessageMenuMessage({
-				messageModel,
-				fileModel,
-				dialogModel,
-				userModel,
-				isPinned: this.store.getters['messagesModel/pinModel/isPinned'](messageModel.id),
-				isUserSubscribed,
-			});
-		}
-
-		/**
-		 * @param {Message} message
+		 * @param {DialogWidgetItem} message
 		 */
 		async #processFileErrorMessage(message)
 		{
 			if (message.status !== OwnMessageStatus.error)
 			{
-				Haptics.notifyFailure();
-
 				return;
 			}
 
 			const messageModel = this.#getMessageModel(message.id);
-			if (!messageModel || !('id' in messageModel))
+			if (Type.isNil(messageModel))
 			{
 				Haptics.notifyFailure();
 
@@ -277,38 +168,64 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 				return;
 			}
 
-			const dialogModel = this.store.getters['dialoguesModel/getById'](this.dialogId);
-			const contextMenuMessage = new MessageMenuMessage({
-				messageModel,
-				dialogModel,
-			});
+			this.createMenuManager(messageModel);
 
-			const menu = new MessageMenuView();
-			const orderedActions = await this.getOrderedActionsForErrorMessage(contextMenuMessage);
-			orderedActions.forEach((actionId) => this.actions[actionId](menu, contextMenuMessage));
+			await this.showErrorMenu(message);
 
-			this.dialogLocator.get('view').showMenuForMessage(message, menu);
+			Haptics.impactMedium();
+		}
+
+		/**
+		 * @param {DialogWidgetItem} message
+		 */
+		async #processSendingMessage(message)
+		{
+			if (
+				message.status !== OwnMessageStatus.sending
+				|| message.type !== MessageType.text
+			)
+			{
+				return;
+			}
+
+			const messageModel = this.#getMessageModel(message.id);
+			if (Type.isNil(messageModel))
+			{
+				Haptics.notifyFailure();
+
+				return;
+			}
+
+			if (this.isMenuNotAvailableByComponentId(messageModel))
+			{
+				Haptics.notifyFailure();
+
+				return;
+			}
+
+			this.createMenuManager(messageModel);
+
+			await this.showSendingMenu(message);
+
 			Haptics.impactMedium();
 		}
 
 		/**
 		 * @param {string} actionId
 		 * @param {Message} message
-		 * @param {Object} params
+		 * @param {MessageMenuActionTapParams} params
 		 */
 		async onMessageMenuActionTap(actionId, message, params)
 		{
-			await this.registerActionHandlers(message.id);
-
-			logger.log('MessageMenuController onMessageMenuActionTap', actionId, message);
-			if (!(actionId in this.handlers))
+			logger.log('MessageMenuController onMessageMenuActionTap', actionId, message, params);
+			if (!(actionId in this.menuManager.handlers))
 			{
 				logger.error('Message Menu: unknown action', actionId, message);
+
+				return false;
 			}
 
-			const messageMenuMessage = this.createMessageMenuMessage(message.id);
-
-			return this.handlers[actionId](messageMenuMessage, params);
+			return this.menuManager.invokeActionHandler(actionId, { ...params });
 		}
 
 		onMessageMenuReactionTap(reactionId, message)
@@ -319,77 +236,69 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 		}
 
 		/**
-		 * @param messageId
-		 * @return {Promise<void>}
+		 * @param {DialogWidgetItem} message
 		 */
-		async registerActions(messageId)
+		async showMenu(message)
 		{
-			const baseController = this.createBaseMessageContextMenuControllerByMessageId(messageId);
-			const controller = await this.createMessageContextMenuControllerByMessageId(messageId);
-			const reactionAssets = await this.getReactionsAssets();
-
-			this.actions = {
-				[MessageMenuActionType.reaction]: (menu, message) => {
-					this.addReactionAction(menu, message, reactionAssets);
-				},
-				...controller.getActions(),
-				...baseController.getActions(),
-			};
+			const dialogWidgetMessageMenu = await this.menuManager.createMenu();
+			this.show(message, dialogWidgetMessageMenu);
 		}
 
 		/**
-		 * @param messageId
-		 * @return {Promise<void>}
+		 * @param {DialogWidgetItem} message
 		 */
-		async registerActionHandlers(messageId)
+		async showErrorMenu(message)
 		{
-			const baseController = this.createBaseMessageContextMenuControllerByMessageId(messageId);
-			const controller = await this.createMessageContextMenuControllerByMessageId(messageId);
-			this.handlers = {
-				...controller.getActionHandlers(),
-				...baseController.getActionHandlers(),
-			};
+			const dialogWidgetMessageMenu = await this.menuManager.createErrorMenu();
+			this.show(message, dialogWidgetMessageMenu);
 		}
 
 		/**
-		 * @param {MessageMenuView} menu
-		 * @param {MessageMenuMessage} message
-		 * @param {Array<object>} reactions
+		 * @param {DialogWidgetItem} message
 		 */
-		async addReactionAction(menu, message, reactions)
+		async showSendingMenu(message)
 		{
-			if (!message.isPossibleReact())
-			{
-				return;
-			}
-
-			if (Feature.isReactionsV2Enabled)
-			{
-				menu.setReactionVersion(2);
-				menu.setMoreReactionsSetting(true);
-			}
-
-			reactions.forEach((reaction) => {
-				menu.addReaction(reaction);
-			});
+			const dialogWidgetMessageMenu = await this.menuManager.createSendingMenu();
+			this.show(message, dialogWidgetMessageMenu);
 		}
 
 		/**
-		 * @return {Promise<Array<ReactionData>>|Array<ReactionData>}
+		 * @param {DialogWidgetItem} message
+		 * @param {DialogWidgetMessageMenu} dialogWidgetMessageMenu
 		 */
-		async getReactionsAssets()
+		show(message, dialogWidgetMessageMenu)
 		{
-			let reactions = [];
-			if (Feature.isReactionsV2Enabled)
+			if (this.isMultiLevelMenuSupported())
 			{
-				reactions = await ReactionAssetsManager.getInstance().getTopReactions();
+				this.dialogLocator.get('view').showMultiLevelMenuForMessage(message, dialogWidgetMessageMenu);
 			}
 			else
 			{
-				reactions = ReactionAssetsManager.getInstance().getLegacyReactions();
+				this.dialogLocator.get('view').showMenuForMessage(message, dialogWidgetMessageMenu);
 			}
+		}
 
-			return reactions;
+		/**
+		 * @param {MessagesModelState} messageModel
+		 */
+		createMenuManager(messageModel)
+		{
+			if (this.isMultiLevelMenuSupported())
+			{
+				this.menuManager = new MultiLevelMessageMenuManager(
+					this.createMessageMenuActionHelper(messageModel),
+					this.dialogLocator,
+					this.getDialog,
+				);
+			}
+			else
+			{
+				this.menuManager = new OneLevelMessageMenuManager(
+					this.createMessageMenuActionHelper(messageModel),
+					this.dialogLocator,
+					this.getDialog,
+				);
+			}
 		}
 
 		#getMessageModel(messageId)
@@ -410,22 +319,69 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 			}
 
 			const componentIdsNotAvailableMenu = [
-				MessageParams.ComponentId.SignMessage,
-				MessageParams.ComponentId.CallMessage,
-				MessageParams.ComponentId.AdminMessage,
+				MessageComponent.sign,
+				MessageComponent.call,
+				MessageComponent.admin,
 			];
 			if (componentIdsNotAvailableMenu.includes(componentId))
 			{
 				return true;
 			}
 
-			const isCreateBannerMessage = componentId?.includes('CreationMessage');
-			if (isCreateBannerMessage)
+			return componentId?.includes('CreationMessage');
+		}
+
+		/**
+		 * @returns {MessageMenuActionHelper}
+		 */
+		createMessageMenuActionHelper(messageModel)
+		{
+			const fileModel = clone(this.store.getters['filesModel/getById'](messageModel.files[0]));
+			const dialogModel = clone(this.store.getters['dialoguesModel/getById'](this.dialogId));
+			const userModel = clone(this.store.getters['usersModel/getById'](messageModel.authorId));
+			const commentInfo = clone(this.store.getters['commentModel/getByMessageId'](messageModel.id));
+
+			let isUserSubscribed = false;
+
+			if (commentInfo)
 			{
-				return true;
+				isUserSubscribed = commentInfo.isUserSubscribed;
 			}
 
-			return false;
+			if (!commentInfo && messageModel.authorId === serviceLocator.get('core').getUserId())
+			{
+				isUserSubscribed = true;
+			}
+
+			return new MessageMenuActionHelper({
+				messageModel,
+				fileModel,
+				dialogModel,
+				userModel,
+				isPinned: this.store.getters['messagesModel/pinModel/isPinned'](messageModel.id),
+				isUserSubscribed,
+			});
+		}
+
+		/* region internal api  */
+		/**
+		 * @param {?number} [messageId]
+		 * @returns {Promise<object>}
+		 */
+		getActionHandlersByMessageId(messageId)
+		{
+			const messageModel = this.#getMessageModel(messageId);
+			this.createMenuManager(messageModel);
+
+			return this.menuManager?.getActionHandlers(messageId);
+		}
+
+		/**
+		 * @returns {?IMessageMenuActionHelper}
+		 */
+		getCurrentActionHelper()
+		{
+			return this.menuManager?.actionHelper;
 		}
 	}
 

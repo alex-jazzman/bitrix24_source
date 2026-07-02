@@ -5,10 +5,10 @@ this.BX.Booking = this.BX.Booking || {};
 	'use strict';
 
 	function isRealId(id) {
-	  return Number.isInteger(id) || /^[1-9]\d*$/.test(id);
+		return /^[1-9]\d*$/.test(String(id));
 	}
 
 	exports.isRealId = isRealId;
 
-}((this.BX.Booking.Lib = this.BX.Booking.Lib || {})));
+})(this.BX.Booking.Lib = this.BX.Booking.Lib || {});
 //# sourceMappingURL=is-real-id.bundle.js.map

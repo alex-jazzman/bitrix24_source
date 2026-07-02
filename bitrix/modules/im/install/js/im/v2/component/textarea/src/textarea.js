@@ -1,48 +1,47 @@
-import 'ui.icon-set.outline';
-import { Extension, Type, Event } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { Extension, Type, Event, type JsonObject } from 'main.core';
+import { type BaseEvent, EventEmitter } from 'main.core.events';
 import { BIcon, Outline as OutlineIcons } from 'ui.icon-set.api.vue';
 import { getFilesFromDataTransfer, isFilePasted } from 'ui.uploader.core';
+import 'ui.icon-set.outline';
 
-import { EventType, LocalStorageKey, SoundType, TextareaPanelType as PanelType, Color } from 'im.v2.const';
-import { Analytics } from 'im.v2.lib.analytics';
-import { Logger } from 'im.v2.lib.logger';
-import { DraftManager } from 'im.v2.lib.draft';
-import { Utils } from 'im.v2.lib.utils';
-import { Parser } from 'im.v2.lib.parser';
-import { LocalStorageManager } from 'im.v2.lib.local-storage';
-import { SendingService } from 'im.v2.provider.service.sending';
-import { MessageService } from 'im.v2.provider.service.message';
-import { UploadingService, MultiUploadingService, type MultiUploadingResult } from 'im.v2.provider.service.uploading';
-import { SoundNotificationManager } from 'im.v2.lib.sound-notification';
-import { isSendMessageCombination, isNewLineCombination } from 'im.v2.lib.hotkey';
-import { Textarea } from 'im.v2.lib.textarea';
-import { InputAction } from 'im.v2.lib.input-action';
 import { SendButton } from 'im.v2.component.elements.send-button';
+import { EventType, LocalStorageKey, SoundType, TextareaPanelType as PanelType, Color, type InsertTextEvent, type InsertMentionEvent } from 'im.v2.const';
+import { Analytics } from 'im.v2.lib.analytics';
+import { DraftManager } from 'im.v2.lib.draft';
 import { EscEventAction } from 'im.v2.lib.esc-manager';
-import { MessageManager } from 'im.v2.lib.message';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
+import { isSendMessageCombination, isNewLineCombination } from 'im.v2.lib.hotkey';
+import { InputAction } from 'im.v2.lib.input-action';
+import { LocalStorageManager } from 'im.v2.lib.local-storage';
+import { Logger } from 'im.v2.lib.logger';
+import { MessageManager } from 'im.v2.lib.message';
+import { Parser } from 'im.v2.lib.parser';
+import { SoundNotificationManager } from 'im.v2.lib.sound-notification';
+import { Textarea } from 'im.v2.lib.textarea';
+import { Utils } from 'im.v2.lib.utils';
+import { type ImModelChat, type ImModelMessage } from 'im.v2.model';
+import { MessageService } from 'im.v2.provider.service.message';
+import { SendingService, type PanelContextWithMultipleIds } from 'im.v2.provider.service.sending';
+import { UploadingService, MultiUploadingService, type MultiUploadingResult } from 'im.v2.provider.service.uploading';
 
-import { MentionManager, MentionManagerEvents } from './classes/mention-manager';
-import { InputSenderService } from './classes/input-sender-service';
-import { ResizeDirection, ResizeManager } from './classes/resize-manager';
 import { FormatToolbarManager, type BindPosition } from './classes/format-toolbar-manager';
+import { InputSenderService } from './classes/input-sender-service';
+import { MentionManager, MentionManagerEvents } from './classes/mention-manager';
+import { ResizeDirection, ResizeManager } from './classes/resize-manager';
 import { AudioInput } from './components/audio-input/audio-input';
+import { AutoDeleteSelector } from './components/auto-delete-selector/auto-delete-selector';
 import { EmoteSelector } from './components/emote-selector/emote-selector';
-import { UploadMenu } from './components/upload-menu/upload-menu';
-import { UploadPreviewPopup } from './components/upload-preview/upload-preview-popup';
+import { FormatToolbar } from './components/format-toolbar/format-toolbar';
 import { MentionPopup } from './components/mention/mention-popup';
 import { TextareaPanel } from './components/panel/panel';
-import { AutoDeleteSelector } from './components/auto-delete-selector/auto-delete-selector';
-import { FormatToolbar } from './components/format-toolbar/format-toolbar';
+import { UploadMenu } from './components/upload-menu/upload-menu';
+import { UploadPreviewPopup } from './components/upload-preview/upload-preview-popup';
 
 import './css/textarea.css';
 
-import type { JsonObject } from 'main.core';
-import type { ImModelChat, ImModelMessage } from 'im.v2.model';
-import type { InsertTextEvent, InsertMentionEvent } from 'im.v2.const';
-import type { PanelContextWithMultipleIds } from 'im.v2.provider.service.sending';
-
+export const BeforeSendMessageAction = {
+	cancel: 'cancel',
+};
 const MESSAGE_ACTION_PANELS = new Set([PanelType.edit, PanelType.reply, PanelType.forward]);
 const TextareaHeight = {
 	max: 400,
@@ -299,6 +298,14 @@ export const ChatTextarea = {
 				return;
 			}
 
+			const eventResult = EventEmitter.emit(EventType.textarea.onBeforeSendMessage);
+			if (eventResult.includes(BeforeSendMessageAction.cancel))
+			{
+				this.resetTextarea();
+
+				return;
+			}
+
 			const text = this.mentionManager.replaceMentions(this.text);
 
 			if (this.hasActiveMessageAction())
@@ -312,11 +319,15 @@ export const ChatTextarea = {
 				SoundNotificationManager.getInstance().playOnce(SoundType.send);
 			}
 
+			this.resetTextarea();
+			this.getEmitter().emit(EventType.textarea.onAfterSendMessage);
+		},
+		resetTextarea()
+		{
 			this.getInputActionService().stopAction(InputAction.writing);
 			this.clear();
 			this.getDraftManager().clearDraft(this.dialogId);
 			this.focus();
-			this.getEmitter().emit(EventType.textarea.onAfterSendMessage);
 		},
 		handlePanelAction(text: string)
 		{

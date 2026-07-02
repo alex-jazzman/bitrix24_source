@@ -129,44 +129,46 @@ export const Sms = {
 			<input type="hidden" name="CURRENT_STEP" value="sms"/>
 			<input type="hidden" name="sessid" :value="this.$Bitrix.Loc.getMessage('bitrix_sessid')"/>
 
-			<div v-show="isSmsBlockVisible" class="intranet-island-otp-push-sms__wrapper">
+			<div v-show="isSmsBlockVisible">
 				<div @click="showAlternativeMethods" class="intranet-back-button">
-					<i class="ui-icon-set --arrow-left-l intranet-back-button__arrow --smscode"></i>
+					<i class="ui-icon-set --arrow-left-l intranet-back-button__arrow"></i>
 				</div>
-				<Headline size='lg' class="intranet-form-title --padding">
-					{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_CONFIRM_LOGIN') }}
-				</Headline>
-				<span class="intranet-island-otp-push-sms__description">
-					<div v-html="phoneMessage"></div>
-				</span>
-				<VerificationCode
-					:code="code"
-					:isPhoneCode=true
-					:error="errorMessage"
-					@code-change="onCodeChange"
-					@code-complete="onCodeComplete"
-				></VerificationCode>
-
-				<div class="intranet-island-otp-push-sms__resend">
-					<span v-if="isResendSmsAvailable" class="intranet-island-otp-push__link" @click="resendSendSmsCode">
-						{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_SMS_RESEND') }}
+				<div class="intranet-island-otp-push-sms__wrapper">
+					<Headline size='lg' class="intranet-form-title --padding">
+						{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_CONFIRM_LOGIN') }}
+					</Headline>
+					<span class="intranet-island-otp-push-sms__description">
+						<div v-html="phoneMessage"></div>
 					</span>
-					<span v-if="isCountdownVisible" class="intranet-island-otp-push-sms__countdown">
-						{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_SMS_COUNTDOWN', {'#SEC#': this.countdown}) }}
-					</span>
-				</div>
-
-				<button
-					class="intranet-text-btn intranet-text-btn__reg ui-btn ui-btn-lg ui-btn-success --wide"
-					type="submit"
-					@click="onSubmitForm($event)"
-				>
-						<span class="intranet-text-btn__content-wrapper">
-							{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_CONTINUE_BUTTON') }}
+					<VerificationCode
+						:code="code"
+						:isPhoneCode=true
+						:error="errorMessage"
+						@code-change="onCodeChange"
+						@code-complete="onCodeComplete"
+					></VerificationCode>
+	
+					<div class="intranet-island-otp-push-sms__resend">
+						<span v-if="isResendSmsAvailable" class="intranet-island-otp-push__link" @click="resendSendSmsCode">
+							{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_SMS_RESEND') }}
 						</span>
-					<span class="intranet-text-btn__spinner" v-show="isWaiting"></span>
-				</button>
-			</div>
+						<span v-if="isCountdownVisible" class="intranet-island-otp-push-sms__countdown">
+							{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_SMS_COUNTDOWN', {'#SEC#': this.countdown}) }}
+						</span>
+					</div>
+	
+					<button
+						class="intranet-text-btn intranet-text-btn__reg ui-btn ui-btn-lg ui-btn-success --wide"
+						type="submit"
+						@click="onSubmitForm($event)"
+					>
+							<span class="intranet-text-btn__content-wrapper">
+								{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_CONTINUE_BUTTON') }}
+							</span>
+						<span class="intranet-text-btn__spinner" v-show="isWaiting"></span>
+					</button>
+				</div>
+			</div>	
 
 			<template v-if="captchaCode">
 				<captcha

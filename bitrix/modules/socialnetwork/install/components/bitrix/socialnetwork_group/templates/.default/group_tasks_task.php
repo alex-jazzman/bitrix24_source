@@ -86,7 +86,7 @@ if (
 	$showPersonalTasks = true;
 }
 
-if (Context::getCurrent()->getRequest()->get('IFRAME'))
+if (!$formFeatureEnabled && Context::getCurrent()->getRequest()->get('IFRAME'))
 {
 	if (
 		CSocNetFeatures::IsActiveFeature(

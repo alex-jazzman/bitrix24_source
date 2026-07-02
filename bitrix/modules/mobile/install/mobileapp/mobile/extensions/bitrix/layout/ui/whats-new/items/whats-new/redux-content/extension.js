@@ -12,9 +12,8 @@ jn.define('layout/ui/whats-new/items/whats-new/redux-content', (require, exports
 
 	const { ChipStatus, ChipStatusDesign, ChipStatusMode } = require('ui-system/blocks/chips/chip-status');
 	const { CollapsibleText } = require('layout/ui/collapsible-text');
-	const { Moment } = require('utils/date/moment');
+	const { Moment, DynamicDateFormatter } = require('utils/date');
 	const { TimeAgoFormat } = require('layout/ui/friendly-date/time-ago-format');
-	const { DynamicDateFormatter } = require('utils/date/dynamic-date-formatter');
 	const { WhatsNewReaction } = require('layout/ui/whats-new/items/whats-new/reaction');
 	const { ChipButton, ChipButtonMode, ChipButtonDesign } = require('ui-system/blocks/chips/chip-button');
 

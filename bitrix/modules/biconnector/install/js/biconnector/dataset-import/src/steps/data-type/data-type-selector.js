@@ -25,9 +25,12 @@ export const DataTypeSelector = {
 	data()
 	{
 		return {
-			typeMenu: null,
 			isFocused: false,
 		};
+	},
+	created()
+	{
+		this.typeMenu = null;
 	},
 	computed: {
 		iconClass()

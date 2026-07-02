@@ -73,17 +73,17 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	  async pauseTimer(id) {
 	    await babelHelpers.classPrivateFieldLooseBase(this, _updateStatus)[_updateStatus](id, tasks_v2_const.Endpoint.TaskTrackingTimerStop, tasks_v2_const.TaskStatus.Pending);
 	  }
-	  async complete(id, analyticsParams = {}) {
+	  async complete(id, analyticsParams = {}, handleRequireResult = true) {
 	    const task = tasks_v2_provider_service_taskService.taskService.getStoreTask(id);
 	    if (!task) {
-	      return;
+	      return null;
 	    }
 	    const currentUserId = tasks_v2_core.Core.getStore().getters[`${tasks_v2_const.Model.Interface}/currentUserId`];
-	    if (task.requireResult && !tasks_v2_core.Core.getParams().rights.user.admin && currentUserId !== task.creatorId && !tasks_v2_provider_service_resultService.resultService.hasOpenedResults(id)) {
+	    if (handleRequireResult && task.requireResult && !tasks_v2_core.Core.getParams().rights.user.admin && currentUserId !== task.creatorId && !tasks_v2_provider_service_resultService.resultService.hasOpenedResults(id)) {
 	      main_core.Event.EventEmitter.emit(tasks_v2_const.EventName.RequiredResultsMissing, {
 	        taskId: id
 	      });
-	      return;
+	      return null;
 	    }
 	    const group = tasks_v2_core.Core.getStore().getters[`${tasks_v2_const.Model.Groups}/getById`](task.groupId);
 	    const scrumManager = new tasks_v2_lib_scrumManager.ScrumManager({
@@ -96,10 +96,13 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	      canComplete = await scrumManager.handleDodDisplay();
 	    }
 	    if (!canComplete) {
-	      return;
+	      return null;
 	    }
 	    const status = task.needsControl ? tasks_v2_const.TaskStatus.SupposedlyCompleted : tasks_v2_const.TaskStatus.Completed;
-	    await babelHelpers.classPrivateFieldLooseBase(this, _updateStatus)[_updateStatus](id, tasks_v2_const.Endpoint.TaskStatusComplete, status);
+	    const error = await babelHelpers.classPrivateFieldLooseBase(this, _updateStatus)[_updateStatus](id, tasks_v2_const.Endpoint.TaskStatusComplete, status, true);
+	    if (error) {
+	      return error;
+	    }
 	    if (scrumManager.isScrum(group == null ? void 0 : group.type)) {
 	      void (scrumManager == null ? void 0 : scrumManager.handleParentState());
 	    }
@@ -107,6 +110,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	      taskId: task.id
 	    });
 	    void tasks_v2_provider_service_resultService.resultService.closeResults(id);
+	    return null;
 	  }
 	  async renew(id) {
 	    await babelHelpers.classPrivateFieldLooseBase(this, _updateStatus)[_updateStatus](id, tasks_v2_const.Endpoint.TaskStatusRenew, tasks_v2_const.TaskStatus.Pending);
@@ -118,13 +122,13 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    taskId: id
 	  });
 	}
-	async function _updateStatus2(id, action, status) {
+	async function _updateStatus2(id, action, status, silent = false) {
 	  const taskBeforeUpdate = tasks_v2_provider_service_taskService.taskService.getStoreTask(id);
 	  if (!tasks_v2_lib_idUtils.idUtils.isReal(id)) {
 	    tasks_v2_provider_service_taskService.taskService.updateStoreTask(id, {
 	      status
 	    });
-	    return;
+	    return null;
 	  }
 	  try {
 	    const data = await tasks_v2_lib_apiClient.apiClient.post(action, {
@@ -136,9 +140,14 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	      status
 	    });
 	    tasks_v2_provider_service_taskService.taskService.extractTask(data);
+	    return null;
 	  } catch (error) {
+	    var _error$errors, _error$errors$;
 	    tasks_v2_provider_service_taskService.taskService.updateStoreTask(id, taskBeforeUpdate);
-	    console.error(`StatusService: ${action} error`, error);
+	    if (!silent) {
+	      console.error(`StatusService: ${action} error`, error);
+	    }
+	    return new Error((_error$errors = error.errors) == null ? void 0 : (_error$errors$ = _error$errors[0]) == null ? void 0 : _error$errors$.message);
 	  }
 	}
 

@@ -2,9 +2,11 @@ import { DatetimeConverter } from 'crm.timeline.tools';
 import { ajax as Ajax, Dom, Type } from 'main.core';
 import { DateTimeFormat } from 'main.date';
 import { rest as Rest } from 'rest.client';
-import { UI } from 'ui.notification';
-import { Menu } from './components/layout/menu';
 import { sendData } from 'ui.analytics';
+import { UI } from 'ui.notification';
+import 'ui.info-helper';
+
+import { SystemMenu } from './components/layout/system-menu';
 
 declare type AnimationParams = {
 	target: string,
@@ -89,7 +91,10 @@ export class Action
 			else if (this.isJsCode())
 			{
 				this.#startAnimation(vueComponent);
+
+				// eslint-disable-next-line no-eval -- intentional: executes jsCode action type from server-side timeline layout
 				eval(this.#value);
+
 				this.#stopAnimation(vueComponent);
 				this.#sendAnalytics();
 				resolve(true);
@@ -214,14 +219,21 @@ export class Action
 			}
 			else if (this.isShowMenu())
 			{
-				Menu.showMenu(
+				SystemMenu.showMenu(
 					vueComponent,
-					this.#prepareMenuItems(this.#value.items, vueComponent),
 					{
-						id: 'actionMenu',
+						items: this.#prepareMenuItems(this.#value.items ?? [], vueComponent),
+						sections: this.#value.sections ?? [],
+					},
+					{
 						bindElement: vueComponent.$el,
 						minWidth: vueComponent.$el.offsetWidth,
-					}
+						cacheable: false,
+					},
+					(actionData: Object): void => {
+						const action = new Action(actionData);
+						void action.execute(vueComponent);
+					},
 				);
 
 				this.#sendAnalytics();

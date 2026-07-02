@@ -1,1 +1,2 @@
-<?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/interface/admin_notify.php");?>
+<?php 
+require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/interface/admin_notify.php");

@@ -88,9 +88,16 @@ class ApacheSupersetDashboardController extends CBitrixComponent
 			return;
 		}
 
-		if (SupersetInitializer::getSupersetStatus() === SupersetInitializer::SUPERSET_STATUS_DELETED)
+		if (SupersetInitializer::isSupersetDeleted())
 		{
 			$this->includeComponentTemplate('create_superset');
+
+			return;
+		}
+
+		if (SupersetInitializer::isSupersetPendingDelete())
+		{
+			$this->includeComponentTemplate('tool_disabled');
 
 			return;
 		}
@@ -99,6 +106,25 @@ class ApacheSupersetDashboardController extends CBitrixComponent
 		{
 			$this->arResult['IS_ADMIN'] = \Bitrix\BIConnector\Manager::isAdmin();
 			$this->includeComponentTemplate('link_superset');
+
+			return;
+		}
+
+		if (SupersetInitializer::isRebindRequired())
+		{
+			$this->arResult['IS_ADMIN'] = AccessController::getCurrent()->getUser()->isAdmin();
+			$this->includeComponentTemplate('rebind_superset');
+
+			return;
+		}
+
+		$superset = new SupersetController(Integrator::getInstance());
+		$superset->initializeOrCheckSupersetStatus();
+
+		if (SupersetInitializer::isRebindRequired())
+		{
+			$this->arResult['IS_ADMIN'] = AccessController::getCurrent()->getUser()->isAdmin();
+			$this->includeComponentTemplate('rebind_superset');
 
 			return;
 		}
@@ -113,9 +139,6 @@ class ApacheSupersetDashboardController extends CBitrixComponent
 			DashboardOwner::bind(60);
 		}
 		Application::getInstance()->addBackgroundJob(fn() => Superset\Updater\ClientUpdater::update());
-
-		$superset = new SupersetController(Integrator::getInstance());
-		$superset->initializeOrCheckSupersetStatus();
 
 		$this->includeComponentTemplate($template);
 	}

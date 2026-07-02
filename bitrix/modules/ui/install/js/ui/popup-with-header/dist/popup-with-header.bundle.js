@@ -406,8 +406,8 @@ this.BX = this.BX || {};
 	          ui_infoHelper.FeaturePromotersRegistry.getPromoter({
 	            code: descriptionOptions.code
 	          }).show();
-	        } else if (descriptionOptions.moreHelperCode) {
-	          BX.UI.InfoHelper.show(descriptionOptions.moreHelperCode);
+	        } else if (descriptionOptions.moreHelperCode && top.BX && top.BX.Helper) {
+	          top.BX.Helper.show(`redirect=detail&code=${descriptionOptions.moreHelperCode}`);
 	        }
 	      };
 	      moreLink = main_core.Tag.render(_t8 || (_t8 = _$1`<a onclick="${0}" target="_blank" class="ui-popupcomponentsmaker-header-tariff__more">${0}</a>`), onclick, descriptionOptions.moreLabel);

@@ -87,6 +87,7 @@
 			BX.bind(input, 'keydown', BX.delegate(this._onKeyDown, this));
 			BX.bind(input, 'input', BX.delegate(this._onInput, this));
 			BX.bind(popupContainer, 'click', BX.delegate(this._onPopupClick, this));
+			BX.bind(popupContainer, 'mousedown', BX.delegate(this._onPopupMouseDown, this));
 			BX.bind(node, 'click', BX.delegate(this._onControlClick, this));
 			this.controlValueDeleteButton();
 		},
@@ -624,6 +625,14 @@
 
 		_onPopupClick: function()
 		{
+			this.inputFocus();
+		},
+
+		_onPopupMouseDown: function(event)
+		{
+			event.stopPropagation();
+			event.preventDefault();
+
 			this.inputFocus();
 		},
 

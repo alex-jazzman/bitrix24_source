@@ -124,6 +124,12 @@ if (CSocNetFeatures::IsActiveFeature(SONET_ENTITY_GROUP, $groupId, "tasks"))
 		"CONTEXT" => $isCollab ? Context::getCollab() : '',
 	];
 
+	$favoritesTitleTemplate = (
+		($arParams['HIDE_OWNER_IN_TITLE'] ?? null) === 'Y'
+			? ''
+			: $arResult['PAGES_TITLE_TEMPLATE']
+	);
+
 	$APPLICATION->IncludeComponent(
 		"bitrix:ui.sidepanel.wrapper",
 		"",
@@ -137,9 +143,9 @@ if (CSocNetFeatures::IsActiveFeature(SONET_ENTITY_GROUP, $groupId, "tasks"))
 			'POPUP_COMPONENT_BITRIX24_THEME_ENTITY_ID' => $groupId,
 			'USE_PADDING' => !($group && $group->isScrumProject()),
 			'USE_UI_TOOLBAR' => 'Y',
-			'UI_TOOLBAR_FAVORITES_TITLE_TEMPLATE' => $arResult['PAGES_TITLE_TEMPLATE'],
+			'UI_TOOLBAR_FAVORITES_TITLE_TEMPLATE' => $favoritesTitleTemplate,
 		]
 	);
 
-	$APPLICATION->SetPageProperty('FavoriteTitleTemplate', $arResult['PAGES_TITLE_TEMPLATE']);
+	$APPLICATION->SetPageProperty('FavoriteTitleTemplate', $favoritesTitleTemplate);
 }

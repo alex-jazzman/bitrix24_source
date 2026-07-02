@@ -1,7 +1,7 @@
 import { Core } from 'im.v2.application.core';
 import { Logger } from 'im.v2.lib.logger';
 
-import { SettingsUpdateParams } from '../../types/settings';
+import { type SettingsUpdateParams } from '../../types/settings';
 
 export class SettingsPullHandler
 {

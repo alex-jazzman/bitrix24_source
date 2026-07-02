@@ -1,8 +1,8 @@
-<?
+<?php
 /**
- * @global \CUser $USER
- * @global \CMain $APPLICATION
- * @global \CDatabase $DB
+ * @global CUser $USER
+ * @global CMain $APPLICATION
+ * @global CDatabase $DB
  */
 
 require_once(__DIR__."/../include/prolog_admin_before.php");
@@ -22,7 +22,7 @@ $lAdmin = new CAdminList($sTableID, $oSort);
 
 if ($lAdmin->EditAction() && $isAdmin)
 {
-	foreach ($FIELDS as $ID=>$arFields)
+	foreach ($_POST['FIELDS'] as $ID=>$arFields)
 	{
 		if (!$lAdmin->IsUpdated($ID))
 		{
@@ -62,7 +62,6 @@ if(($arID = $lAdmin->GroupAction()) && $isAdmin)
 		switch($_REQUEST['action'])
 		{
 		case "delete":
-			@set_time_limit(0);
 			$ob = new CLang;
 			$DB->StartTransaction();
 			if (!$ob->Delete($ID))
@@ -93,9 +92,7 @@ if(($arID = $lAdmin->GroupAction()) && $isAdmin)
 
 $APPLICATION->SetTitle(GetMessage("TITLE"));
 
-global $by, $order;
-
-$langs = CLang::GetList($by, $order, Array());
+$langs = CLang::GetList($oSort->getField(), $oSort->getOrder(), Array());
 $rsData = new CAdminResult($langs, $sTableID);
 $rsData->NavStart();
 
@@ -109,10 +106,13 @@ $lAdmin->AddHeaders(array(
 	array("id"=>"DIR",	"content"=>GetMessage("DIR"), "sort"=>"dir",	"default"=>true),
 	array("id"=>"DEF", "content"=>GetMessage("DEF"), "sort"=>"def", "default"=>true),
 ));
-while($arRes = $rsData->NavNext(true, "f_"))
+while($arRes = $rsData->Fetch())
 {
-	$row =& $lAdmin->AddRow($f_ID, $arRes, "site_edit.php?LID=".urlencode($arRes['ID'])."&lang=".LANGUAGE_ID, GetMessage("SITE_EDIT"));
-	$row->AddViewField("ID", '<a href="site_edit.php?lang='.LANGUAGE_ID.'&amp;LID='.urlencode($arRes['ID']).'" title="'.GetMessage("SITE_EDIT_TITLE").'">'.$f_ID.'</a>');
+	$siteId = $arRes["ID"];
+	$siteIdHtml = htmlspecialcharsbx($arRes["ID"]);
+	$siteIdUrl = urlencode($arRes["ID"]);
+	$row = $lAdmin->AddRow($siteId, $arRes, "site_edit.php?LID=".$siteIdUrl."&lang=".LANGUAGE_ID, GetMessage("SITE_EDIT"));
+	$row->AddViewField("ID", '<a href="site_edit.php?lang='.LANGUAGE_ID.'&amp;LID='.$siteIdUrl.'" title="'.GetMessage("SITE_EDIT_TITLE").'">'.$siteIdHtml.'</a>');
 	$row->AddCheckField("ACTIVE");
 	$row->AddInputField("SORT");
 	$row->AddInputField("NAME");
@@ -120,13 +120,13 @@ while($arRes = $rsData->NavNext(true, "f_"))
 	$row->AddCheckField("DEF");
 	$arActions = Array();
 
-	$arActions[] = array("ICON"=>"edit", "TEXT"=>GetMessage("CHANGE"), "ACTION"=>$lAdmin->ActionRedirect("site_edit.php?LID=".urlencode($arRes['ID'])), "DEFAULT"=>true);
+	$arActions[] = array("ICON"=>"edit", "TEXT"=>GetMessage("CHANGE"), "ACTION"=>$lAdmin->ActionRedirect("site_edit.php?LID=".$siteIdUrl), "DEFAULT"=>true);
 
 	if($isAdmin)
 	{
-		$arActions[] = array("ICON"=>"copy", "TEXT"=>GetMessage("COPY"), "ACTION"=>$lAdmin->ActionRedirect("site_edit.php?COPY_ID=".urlencode($arRes['ID'])));
+		$arActions[] = array("ICON"=>"copy", "TEXT"=>GetMessage("COPY"), "ACTION"=>$lAdmin->ActionRedirect("site_edit.php?COPY_ID=".$siteIdUrl));
 		$arActions[] = array("SEPARATOR"=>true);
-		$arActions[] = array("ICON"=>"delete", "TEXT"=>GetMessage("DELETE"), "ACTION"=>"if(confirm('".CUtil::JSEscape(GetMessage('CONFIRM_DEL'))."')) ".$lAdmin->ActionDoGroup(urlencode($arRes['ID']), "delete"));
+		$arActions[] = array("ICON"=>"delete", "TEXT"=>GetMessage("DELETE"), "ACTION"=>"if(confirm('".CUtil::JSEscape(GetMessage('CONFIRM_DEL'))."')) ".$lAdmin->ActionDoGroup($siteIdUrl, "delete"));
 	}
 
 	$row->AddActions($arActions);
@@ -152,5 +152,5 @@ $lAdmin->CheckListMode();
 require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_admin_after.php");
 
 $lAdmin->DisplayList();
-?>
-<?require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin.php");?>
+
+require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin.php");

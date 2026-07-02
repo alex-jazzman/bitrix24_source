@@ -1,6 +1,9 @@
-import { BaseEmptyState, IconClass, EmptyStateListItemName } from './base/base';
-
-import type { EmptyStateListItem } from './base/base';
+import {
+	BaseEmptyState,
+	IconClass,
+	EmptyStateListItemName,
+	type EmptyStateListItem,
+} from 'im.v2.component.content.elements';
 
 // @vue/component
 export const TaskEmptyState = {

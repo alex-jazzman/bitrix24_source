@@ -2,23 +2,21 @@ import { Dom, Text } from 'main.core';
 import { mapGetters } from 'ui.vue3.vuex';
 import { hint } from 'ui.vue3.directives.hint';
 import { BIcon } from 'ui.icon-set.api.vue';
-import { Actions, CRM } from 'ui.icon-set.api.core';
+import { Actions, CRM, Outline } from 'ui.icon-set.api.core';
 import 'ui.icon-set.actions';
 import 'ui.icon-set.crm';
 import 'ui.hint';
 
 import { Button as UiButton, ButtonSize, ButtonColor } from 'booking.component.button';
 import { Switcher } from 'booking.component.switcher';
-import { Model, NotificationChannel, NotificationFieldsMap } from 'booking.const';
+import { Model, NotificationChannel, NotificationFieldsMap, Communication } from 'booking.const';
 import { resourceCreationWizardService } from 'booking.provider.service.resource-creation-wizard-service';
 import type { NotificationsModel, NotificationsTemplateModel } from 'booking.model.notifications';
 
-import { ChannelMenu } from '../channel-menu/channel-menu';
-import { ChooseTemplatePopup } from '../choose-template-popup/choose-template-popup';
-import { TemplateEmpty } from '../template-empty/template-empty';
 import { CheckedForAll } from './components/checked-for-all';
 import { Description } from './components/description';
-import { MessageTemplate } from './components/message-tempalte';
+import { MessageBlock } from './components/message-block';
+import { AiBlock } from './components/ai-block';
 import { ManagerNotification } from './components/manager-notification';
 
 // eslint-disable-next-line no-promise-executor-return
@@ -32,11 +30,9 @@ export const ResourceNotification = {
 		BIcon,
 		UiButton,
 		Description,
-		ChannelMenu,
-		ChooseTemplatePopup,
-		TemplateEmpty,
 		CheckedForAll,
-		MessageTemplate,
+		MessageBlock,
+		AiBlock,
 		ManagerNotification,
 	},
 	directives: { hint },
@@ -73,6 +69,14 @@ export const ResourceNotification = {
 			type: String,
 			default: null,
 		},
+		ordinal: {
+			type: Number,
+			required: true,
+		},
+		senderCanUse: {
+			type: Boolean,
+			required: true,
+		},
 	},
 	emits: ['update:checked'],
 	setup(): Object
@@ -82,19 +86,20 @@ export const ResourceNotification = {
 			ButtonColor,
 			Actions,
 			CRM,
+			Outline,
+			Communication,
 		};
 	},
 	data(): Object
 	{
 		return {
 			messenger: NotificationChannel.WhatsApp,
-			showTemplatePopup: false,
 		};
 	},
 	computed: {
 		...mapGetters({
 			resource: `${Model.ResourceCreationWizard}/getResource`,
-			isCurrentSenderAvailable: `${Model.Notifications}/isCurrentSenderAvailable`,
+			isAiCommunication: `${Model.ResourceCreationWizard}/isAiCommunication`,
 		}),
 		model(): NotificationsModel
 		{
@@ -119,15 +124,11 @@ export const ResourceNotification = {
 		},
 		disableSwitcher(): boolean
 		{
-			return this.disabled || !this.isCurrentSenderAvailable || !this.template;
+			return this.disabled || !this.senderCanUse;
 		},
 		templateTypeField(): string
 		{
 			return NotificationFieldsMap.TemplateType[this.type];
-		},
-		ordinal(): string
-		{
-			return NotificationFieldsMap.Ordinal[this.type];
 		},
 		soonHint(): Object
 		{
@@ -142,6 +143,16 @@ export const ResourceNotification = {
 		isNotificationSettingsFeatureEnabled(): boolean
 		{
 			return this.$store.state[Model.Interface].enabledFeature.bookingNotificationsSettings;
+		},
+		infoIcon(): string
+		{
+			return this.isAiCommunication ? Outline.CALL_BACK : CRM.CHAT_LINE;
+		},
+		infoTitle(): string
+		{
+			return this.isAiCommunication
+				? this.loc('BRCW_NOTIFICATION_CARD_MESSAGE_AI')
+				: this.loc('BRCW_NOTIFICATION_CARD_MESSAGE');
 		},
 	},
 	created(): void
@@ -174,9 +185,9 @@ export const ResourceNotification = {
 		{
 			void this.$store.dispatch(`${Model.ResourceCreationWizard}/updateResource`, { [this.templateTypeField]: selectedType });
 		},
-		getChooseTemplateButton(): HTMLElement
+		getChooseTemplateButton(): HTMLElement | null
 		{
-			return this.$refs.chooseTemplateBtn || null;
+			return this.$refs.messageBlock?.getChooseTemplateButton() || null;
 		},
 		expand(): void
 		{
@@ -231,9 +242,9 @@ export const ResourceNotification = {
 				</div>
 				<div class="booking-resource-creation-wizard-notification-main" ref="main">
 					<div class="resource-creation-wizard__form-notification-info-title-row --main">
-						<BIcon :name="CRM.CHAT_LINE"/>
+						<BIcon :name="infoIcon"/>
 						<div class="resource-creation-wizard__form-notification-info-title">
-							{{ loc('BRCW_NOTIFICATION_CARD_MESSAGE') }}
+							{{ infoTitle }}
 						</div>
 						<Switcher
 							v-hint="disableSwitcher && soonHint"
@@ -244,40 +255,23 @@ export const ResourceNotification = {
 							@update:model-value="$emit('update:checked', $event)"
 						/>
 					</div>
-					<div class="resource-creation-wizard__form-notification-info --message">
-						<div class="resource-creation-wizard__form-notification-info-text-row">
-							{{ loc('BRCW_NOTIFICATION_CARD_MESSAGE_TEXT') }}
-							<ChannelMenu
-								:current-channel="messenger"
-								@updateChannel="handleChannelChange"
-							/>
-						</div>
-						<template v-if="hasTemplate">
-							<MessageTemplate :text="messageTemplate"/>
-							<div class="resource-creation-wizard__form-notification-info-template-choose-buttons">
-								<div class="booking-resource-creation-wizard-choose-template-button" ref="chooseTemplateBtn">
-									<UiButton
-										:disabled="!checked"
-										:text="loc('BRCW_NOTIFICATION_CARD_CHOOSE_TEMPLATE_TYPE')"
-										:size="ButtonSize.EXTRA_SMALL"
-										:color="ButtonColor.LIGHT_BORDER"
-										:round="true"
-										@click="showTemplatePopup = true"
-									/>
-								</div>
-							</div>
-						</template>
-						<TemplateEmpty v-else/>
-						<ChooseTemplatePopup
-							v-if="showTemplatePopup"
-							:bindElement="$refs.chooseTemplateBtn"
-							:model="model"
-							:current-channel="messenger"
-							:currentTemplateType="resource[templateTypeField]"
-							@templateTypeSelected="handleTemplateTypeSelected"
-							@close="showTemplatePopup = false"
-						/>
-					</div>
+					<AiBlock
+						v-if="isAiCommunication"
+						:checked="checked"
+						:ordinal
+					/>
+					<MessageBlock
+						v-else
+						ref="messageBlock"
+						:messenger="messenger"
+						:messageTemplate="messageTemplate"
+						:hasTemplate="hasTemplate"
+						:checked="checked"
+						:model="model"
+						:currentTemplateType="resource[templateTypeField]"
+						@updateChannel="handleChannelChange"
+						@templateTypeSelected="handleTemplateTypeSelected"
+					/>
 					<Description :description="description" :helpDesk="helpDesk"/>
 					<slot name="client"/>
 					<CheckedForAll :type="type" :disabled="!checked"/>

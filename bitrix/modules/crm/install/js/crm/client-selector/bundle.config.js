@@ -3,5 +3,4 @@ module.exports = {
 	output: 'dist/client-selector.bundle.js',
 	namespace: 'BX.Crm',
 	browserslist: true,
-	adjustConfigPhp: false,
 };

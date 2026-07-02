@@ -19,6 +19,7 @@ const DescriptionByChatType = {
 	[ChatType.openChannel]: Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_CHANNEL'),
 	[ChatType.generalChannel]: Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_CHANNEL'),
 	[ChatType.comment]: Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_COMMENTS'),
+	[ChatType.taskComments]: Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_TASK_COMMENTS'),
 	default: Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_GROUP_V2'),
 };
 

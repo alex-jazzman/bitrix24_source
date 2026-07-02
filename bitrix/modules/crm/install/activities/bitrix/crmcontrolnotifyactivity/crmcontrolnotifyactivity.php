@@ -235,11 +235,19 @@ class CBPCrmControlNotifyActivity extends CBPActivity
 			"MessageText" => $arCurrentValues["message_text"],
 		];
 
-		$toUsers = CBPHelper::UsersStringToArray(
-			$arCurrentValues["to_users"],
-			$documentType,
-			$errors,
-		);
+		if ($arCurrentValues['to_users'] === 'responsible_head')
+		{
+			$toUsers = [$arCurrentValues['to_users']];
+		}
+		else
+		{
+			$toUsers = CBPHelper::UsersStringToArray(
+				$arCurrentValues["to_users"],
+				$documentType,
+				$errors,
+			);
+		}
+
 
 		if ($errors)
 		{

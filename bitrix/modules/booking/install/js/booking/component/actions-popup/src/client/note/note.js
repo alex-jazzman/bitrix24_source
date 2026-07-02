@@ -1,9 +1,9 @@
-import { mapGetters } from 'ui.vue3.vuex';
 import { BIcon as Icon, Set as IconSet } from 'ui.icon-set.api.vue';
+import { mapGetters } from 'ui.vue3.vuex';
 
+import { NotePopup, type NotePopupSavePayload } from 'booking.component.note-popup';
 import { Model } from 'booking.const';
-import { NotePopup } from 'booking.component.note-popup';
-import type { NotePopupSavePayload } from 'booking.component.note-popup';
+import { limit } from 'booking.lib.limit';
 
 import './note.css';
 
@@ -11,6 +11,10 @@ export type { NotePopupSavePayload as UpdateNotePayload };
 
 // @vue/component
 export const Note = {
+	components: {
+		NotePopup,
+		Icon,
+	},
 	props: {
 		id: {
 			type: [Number, String],
@@ -34,10 +38,15 @@ export const Note = {
 		},
 	},
 	emits: ['popupShown', 'popupClosed', 'updateNote'],
-	data(): Object
+	setup(): Object
 	{
 		return {
 			IconSet,
+		};
+	},
+	data(): Object
+	{
+		return {
 			isPopupShown: false,
 			isEditMode: false,
 		};
@@ -80,8 +89,15 @@ export const Note = {
 
 			this.closePopup();
 		},
-		showEditPopup(): void
+		async showEditPopup(): Promise<void>
 		{
+			if (!this.isFeatureEnabled)
+			{
+				await limit.show();
+
+				return;
+			}
+
 			this.isEditMode = true;
 			this.showPopup();
 		},
@@ -112,10 +128,6 @@ export const Note = {
 			});
 		},
 	},
-	components: {
-		NotePopup,
-		Icon,
-	},
 	template: `
 		<div
 			class="booking-actions-popup__item-client-note"
@@ -142,13 +154,13 @@ export const Note = {
 						{{ note }}
 					</div>
 					<div
-						v-if="isFeatureEnabled"
 						class="booking-actions-popup__item-client-note-edit"
 						:data-element="dataElementPrefix + '-menu-note-edit'"
 						v-bind="dataAttributes"
 						@click="showEditPopup"
 					>
-						<Icon :name="IconSet.PENCIL_40"/>
+						<Icon v-if="isFeatureEnabled" :name="IconSet.PENCIL_40"/>
+						<Icon v-else :name="IconSet.LOCK"/>
 					</div>
 				</template>
 				<template v-else>

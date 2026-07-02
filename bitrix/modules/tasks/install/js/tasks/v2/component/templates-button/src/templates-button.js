@@ -32,20 +32,27 @@ export const TemplatesButton = {
 	methods: {
 		showDialog(): void
 		{
+			const popupWidth = 385;
+			const popupHeight = 385;
+
 			this.dialog ??= new EntitySelectorDialog({
 				context: 'tasks-card',
+				width: popupWidth,
+				height: popupHeight,
 				multiple: false,
 				enableSearch: true,
+				dropdownMode: true,
 				entities: [
 					{
-						id: EntitySelectorEntity.Template,
+						id: EntitySelectorEntity.TemplateCommon,
 						options: {
-							withFooter: false,
+							isFullListOpenable: true,
 						},
 					},
 				],
-				preselectedItems: this.task.templateId ? [[EntitySelectorEntity.Template, this.task.templateId]] : [],
+				preselectedItems: this.task.templateId ? [[EntitySelectorEntity.TemplateCommon, this.task.templateId]] : [],
 				popupOptions: {
+					className: 'popup-window_entity-picker-no-check',
 					events: {
 						onClose: (): void => {
 							const templateId = this.dialog.getSelectedItems()[0]?.getId();

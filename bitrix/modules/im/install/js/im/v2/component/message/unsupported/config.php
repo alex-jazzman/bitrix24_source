@@ -8,9 +8,9 @@ return [
 	'css' => 'dist/unsupported.bundle.css',
 	'js' => 'dist/unsupported.bundle.js',
 	'rel' => [
-		'main.core',
 		'im.v2.component.message.base',
 		'im.v2.component.message.elements',
+		'main.core',
 	],
 	'skip_core' => false,
 ];

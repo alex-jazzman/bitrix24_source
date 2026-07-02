@@ -7,9 +7,9 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 return [
 	'js' => 'dist/hint.bundle.js',
 	'rel' => [
-		'ui.hint',
 		'main.core',
 		'main.popup',
+		'ui.hint',
 	],
 	'skip_core' => false,
 ];

@@ -3,6 +3,7 @@ import { Dialog } from 'ui.entity-selector';
 import './inline-placeholder-selector.css';
 import 'ui.forms';
 import { InlinePlaceholderSelectorOptions } from './inline-placeholder-selector-options';
+import 'crm_common';
 
 export const InlinePlaceholderSelectorMode = {
 	INPUT: 'input',
@@ -17,9 +18,10 @@ export class InlinePlaceholderSelector
 	#multiple: boolean;
 	#menuButton: HTMLElement;
 	#dialog: Dialog;
-	#inputElement: HTMLElement;
+	#inputElement: HTMLInputElement | HTMLTextAreaElement;
 	#entityTypeIds: Array<number>;
 	#onBeforeMenuOpen: ?Function;
+	#isReadOnly: boolean;
 
 	constructor(params: InlinePlaceholderSelectorOptions)
 	{
@@ -40,6 +42,7 @@ export class InlinePlaceholderSelector
 		this.#value = params.value ?? '';
 		this.#multiple = params.multiple ?? false;
 		this.#onBeforeMenuOpen = Type.isFunction(params.onBeforeMenuOpen) ? params.onBeforeMenuOpen : null;
+		this.#isReadOnly = params.isReadOnly ?? false;
 	}
 
 	setEntityTypeIds(entityTypeIds: Array<number>): void
@@ -55,6 +58,11 @@ export class InlinePlaceholderSelector
 	getValue(): string
 	{
 		return this.#inputElement.value ?? '';
+	}
+
+	getInputElement(): HTMLInputElement | HTMLTextAreaElement
+	{
+		return this.#inputElement;
 	}
 
 	#getDialog(): Dialog
@@ -108,12 +116,15 @@ export class InlinePlaceholderSelector
 
 	#render(): HTMLElement
 	{
-		this.#menuButton = Tag.render`
-			<span 
-			onclick="${this.#openMenu.bind(this)}"
-			class="crm-inline-placeholder-selector-dotted"
-			></span>
-		`;
+		this.#menuButton = this.#isReadOnly
+			? null
+			: Tag.render`
+				<span 
+					onclick="${this.#openMenu.bind(this)}"
+					class="crm-inline-placeholder-selector-dotted"
+				></span>
+			`
+		;
 
 		return Tag.render`
 			<div class="crm-inline-placeholder-selector">
@@ -140,6 +151,8 @@ export class InlinePlaceholderSelector
 		this.#inputElement = Tag.render`<input type="text" class="ui-ctl-element" name="subject">`;
 		this.#inputElement.value = this.#value;
 
+		this.#inputElement.disabled = this.#isReadOnly;
+
 		return Tag.render`
 			<div class="ui-ctl ui-ctl-textbox ui-ctl-w100">
 				${this.#inputElement}
@@ -163,16 +176,34 @@ export class InlinePlaceholderSelector
 
 		const cursorPosition = this.#inputElement.selectionStart;
 		const currentValue = this.#inputElement.value;
+		const mustAddSpace = this.#isSpaceRequired(currentValue, cursorPosition);
 
-		this.#inputElement.value = currentValue.slice(0, cursorPosition) + placeholder + currentValue.slice(
-			cursorPosition,
-		);
+		this.#inputElement.value = currentValue.slice(0, cursorPosition)
+			+ (mustAddSpace ? ' ' : '')
+			+ placeholder
+			+ currentValue.slice(
+				cursorPosition,
+			)
+		;
+		this.#inputElement.dispatchEvent(new Event('input'));
 
-		const newCursorPosition = cursorPosition + placeholder.length;
+		const newCursorPosition = cursorPosition + placeholder.length + (mustAddSpace ? 1 : 0);
 		this.#inputElement.setSelectionRange(newCursorPosition, newCursorPosition);
 
 		this.#inputElement.focus();
 
 		this.#getDialog().deselectAll();
+	}
+
+	#isSpaceRequired(value: string, position: number): boolean
+	{
+		if (position === 0)
+		{
+			return false;
+		}
+
+		return value[position - 1] !== ' '
+			&& value[position - 1] !== '\n'
+		;
 	}
 }

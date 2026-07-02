@@ -172,8 +172,6 @@
 			console.error('MenuService init error:', error);
 		});
 
-	qrauth.listenUniversalLink();
-
 	BX.onViewLoaded(() => {
 		layout.showComponent(new MoreMenu({
 			layout,

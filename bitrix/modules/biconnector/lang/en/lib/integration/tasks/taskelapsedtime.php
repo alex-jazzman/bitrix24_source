@@ -11,3 +11,4 @@ $MESS["TASK_ELAPSED_TIME_FIELD_USER_FULL"] = "Log entry created by user ID and n
 $MESS["TASK_ELAPSED_TIME_FIELD_USER_ID"] = "Entry created by user ID";
 $MESS["TASK_ELAPSED_TIME_FIELD_USER_NAME"] = "Entry created by user name";
 $MESS["TASK_ELAPSED_TIME_TABLE"] = "Task duration until completed";
+$MESS["TASK_ELAPSED_TIME_TABLE_DESCRIPTION_FULL"] = "Contains data on time spent on tasks, including start dates, duration in seconds, and entry creators.";

@@ -16,8 +16,16 @@ const commandExecMap = {
 		return [...payload];
 	},
 	[ARRAY_COMMANDS.PUSH]: ({ source, payload }) => {
-		const result = [...source];
-		result.push(payload);
+		let result = [...source];
+
+		if (Array.isArray(payload))
+		{
+			result = [...result, ...payload];
+		}
+		else
+		{
+			result.push(payload);
+		}
 
 		return result;
 	},

@@ -42,3 +42,4 @@ $MESS["BP_BIC_TASK_TYPE_ALL"] = "All employees";
 $MESS["BP_BIC_TASK_TYPE_ANY"] = "Any employee";
 $MESS["BP_BIC_TASK_TYPE_QUEUE"] = "Queue";
 $MESS["BP_BIC_TASK_TYPE_VOTE"] = "Voting";
+$MESS["BP_BIC_TASK_TABLE_DESCRIPTION_FULL"] = "Provides information on workflow assignments, such as their names, types, statuses, and execution times.";

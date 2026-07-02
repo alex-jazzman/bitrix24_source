@@ -1,4 +1,5 @@
 <?php
+$MESS["FIELDS_CLIENT_ACCESS_DENIED"] = "Insufficient permission to complete the field. Please contact your supervisor.";
 $MESS["FIELDS_CLIENT_CONFIRM_CLEAR_CONTACTS"] = "The company you selected does not specify contacts.";
 $MESS["FIELDS_CLIENT_CONFIRM_CLEAR_CONTACTS_TITLE"] = "Clear existing contacts?";
 $MESS["FIELDS_CLIENT_CONFIRM_CLEAR_NO"] = "Leave as is";

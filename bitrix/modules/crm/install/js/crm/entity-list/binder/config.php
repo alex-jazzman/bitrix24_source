@@ -9,9 +9,9 @@ return [
 	'js' => 'dist/binder.bundle.js',
 	'skip_core' => false,
 	'rel' => [
+		'main.core',
 		'ui.buttons',
 		'ui.entity-selector',
 		'ui.notification',
-		'main.core',
 	],
 ];

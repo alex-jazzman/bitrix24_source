@@ -4,6 +4,8 @@ export const BLOCK_TYPES: { [string]: string } = {
 	COMPLEX: 'complex',
 	FRAME: 'frame',
 	TOOL: 'tool',
+	SERVICES: 'services',
+	OPERATORS: 'operators',
 };
 
 export const BLOCK_SLOT_NAMES: { [string]: string } = {
@@ -12,6 +14,8 @@ export const BLOCK_SLOT_NAMES: { [string]: string } = {
 	COMPLEX: `block:${BLOCK_TYPES.COMPLEX}`,
 	FRAME: `block:${BLOCK_TYPES.FRAME}`,
 	TOOL: `block:${BLOCK_TYPES.TOOL}`,
+	SERVICES: `block:${BLOCK_TYPES.SERVICES}`,
+	OPERATORS: `block:${BLOCK_TYPES.OPERATORS}`,
 };
 
 export const CONNECTION_SLOT_NAMES: { [string]: string } = {
@@ -28,6 +32,14 @@ export const BLOCK_COLOR_NAMES = {
 	WHITE: 'white',
 	ORANGE: 'orange',
 	BLUE: 'blue',
+};
+
+export const FRAME_TEXT_ALIGN_OPTIONS = {
+	NONE: 'none',
+	LEFT: 'left',
+	TOP: 'top',
+	BOTTOM: 'bottom',
+	RIGHT: 'right',
 };
 
 export const FRAME_COLOR_NAMES = {
@@ -72,3 +84,5 @@ export const ICON_BG_COLORS: { [number]: string } = {
 	7: 'var(--designer-bp-ai-bg)',
 	8: 'var(--designer-bp-ai-bg)',
 };
+
+export const BLOCK_TOP_CONTEXT_MENU_PREFIX_NAME = 'block_top_menu_';

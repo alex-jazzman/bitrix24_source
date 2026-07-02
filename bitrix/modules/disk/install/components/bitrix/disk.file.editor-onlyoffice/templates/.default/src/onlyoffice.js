@@ -321,6 +321,7 @@ export default class OnlyOffice
 				documentSession: this.documentSession,
 				object: this.context.object,
 				process: process,
+				documentWasChanged: this.documentWasChanged,
 			});
 		}
 
@@ -328,6 +329,7 @@ export default class OnlyOffice
 			documentSession: this.documentSession,
 			object: this.context.object,
 			process: process,
+			documentWasChanged: this.documentWasChanged,
 		});
 	}
 

@@ -10,3 +10,4 @@ $MESS["CRM_CDA_NEW_DEAL_TITLE"] = "#SOURCE_TITLE# (Копия)";
 $MESS["CRM_CDA_CYCLING_ERROR"] = "Сделка не скопирована. Подозрение на зацикливание действия";
 $MESS["CRM_CDA_STAGE_SELECTION_ERROR"] = "Выбранная начальная стадия относится к другой воронке";
 $MESS['CRM_CDA_CYCLING_EXCEPTION_MESSAGE'] = 'Выполнение робота пропущено';
+$MESS['CRM_CDA_COPY_TIMELINE'] = 'Копировать таймлайн';

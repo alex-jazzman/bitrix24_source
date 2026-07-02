@@ -25,12 +25,15 @@ jn.define('im/messenger/const/message', (require, exports, module) => {
 		videoNote: 'video-note',
 		videoNoteText: 'video-note-text',
 		sticker: 'sticker',
+		call: 'call',
+		builder: 'builder',
 	});
 
 	const MessageIdType = {
 		statusMessage: 'status-message',
 		templateSeparatorUnread: 'template-separator-unread',
 		templateSeparatorDate: 'template-separator',
+		templateSeparatorMarked: 'template-separator-marked',
 		planLimitBanner: 'plan-limit-banner',
 	};
 
@@ -41,70 +44,44 @@ jn.define('im/messenger/const/message', (require, exports, module) => {
 		error: 'error',
 	});
 
-	const MessageParams = Object.freeze({
-		ComponentId: {
-			ChatCopilotCreationMessage: 'ChatCopilotCreationMessage',
-			ChatCopilotAddedUsersMessage: 'ChatCopilotAddedUsersMessage',
-			CopilotMessage: 'CopilotMessage',
-
-			ConferenceCreationMessage: 'ConferenceCreationMessage',
-
-			OwnChatCreationMessage: 'OwnChatCreationMessage',
-			ChatCreationMessage: 'ChatCreationMessage',
-			GeneralChatCreationMessage: 'GeneralChatCreationMessage',
-			SignMessage: 'SignMessage',
-
-			ChannelCreationMessage: 'ChannelCreationMessage',
-			OpenChannelCreationMessage: 'OpenChannelCreationMessage',
-			GeneralChannelCreationMessage: 'GeneralChannelCreationMessage',
-
-			PlanLimitsMessage: 'PlanLimitsMessage',
-
-			CheckInMessage: 'CheckInMessage',
-
-			CallMessage: 'CallMessage',
-
-			ErrorMessage: 'ErrorMessage',
-			VoteMessage: 'VoteMessage',
-
-			ConvertToCollabMessage: 'ConvertToCollabMessage',
-
-			AiAssistantMessage: 'AiAssistantMessage',
-			AdminMessage: 'AdminMessage',
-			AiBizprocMessage: 'AiBizprocMessage',
-		},
-	});
-
 	const MessageComponent = Object.freeze({
 		default: 'DefaultMessage',
 		file: 'FileMessage',
 		smile: 'SmileMessage',
+		sticker: 'StickerMessage',
 		unsupported: 'UnsupportedMessage',
 		deleted: 'DeletedMessage',
+		error: 'ErrorMessage',
 		callInvite: 'CallInviteMessage',
 		zoomInvite: 'ZoomInviteMessage',
 		chatCreation: 'ChatCreationMessage',
 		ownChatCreation: 'OwnChatCreationMessage',
 		copilotCreation: 'ChatCopilotCreationMessage',
-		copilotMessage: 'CopilotMessage',
+		copilot: 'CopilotMessage',
 		copilotAddedUsers: 'ChatCopilotAddedUsersMessage',
 		conferenceCreation: 'ConferenceCreationMessage',
 		supervisorUpdateFeature: 'SupervisorUpdateFeatureMessage',
 		supervisorEnableFeature: 'SupervisorEnableFeatureMessage',
 		sign: 'SignMessage',
+		admin: 'AdminMessage',
 		checkIn: 'CheckInMessage',
 		supportVote: 'SupportVoteMessage',
 		supportSessionNumber: 'SupportSessionNumberMessage',
 		supportChatCreation: 'SupportChatCreationMessage',
 		system: 'SystemMessage',
 		channelPost: 'ChannelPost',
-		generalChatCreationMessage: 'GeneralChatCreationMessage',
-		generalChannelCreationMessage: 'GeneralChannelCreationMessage',
-		channelCreationMessage: 'ChannelCreationMessage',
+		generalChatCreation: 'GeneralChatCreationMessage',
+		generalChannelCreation: 'GeneralChannelCreationMessage',
+		channelCreation: 'ChannelCreationMessage',
+		openChannelCreation: 'OpenChannelCreationMessage',
+		call: 'CallMessage',
 		vote: 'VoteMessage',
-		sticker: 'StickerMessage',
-		admin: 'AdminMessage',
+		taskChatCreation: 'TaskChatCreationMessage',
+		convertToCollab: 'ConvertToCollabMessage',
+		aiAssistant: 'AiAssistantMessage',
+		planLimits: 'PlanLimitsMessage',
 		aiBizprocMessage: 'AiBizprocMessage',
+		builderMessage: 'BuilderMessage',
 	});
 
 	module.exports = {
@@ -112,6 +89,5 @@ jn.define('im/messenger/const/message', (require, exports, module) => {
 		MessageIdType,
 		MessageComponent,
 		OwnMessageStatus,
-		MessageParams,
 	};
 });

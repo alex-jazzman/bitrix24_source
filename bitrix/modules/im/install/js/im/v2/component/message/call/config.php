@@ -9,8 +9,8 @@ return [
 	'js' => 'dist/call-message.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'im.v2.component.message.default',
 		'call.component.call-message',
+		'im.v2.component.message.default',
 	],
 	'skip_core' => true,
 ];

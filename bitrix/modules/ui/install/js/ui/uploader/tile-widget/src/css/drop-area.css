@@ -1,4 +1,4 @@
-.ui-tile-uploader-drop-area {
+.ui-tile-uploader-items ~ .ui-tile-uploader-drop-area {
 	margin-top: 24px;
 }
 

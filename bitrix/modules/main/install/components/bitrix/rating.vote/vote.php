@@ -1,9 +1,14 @@
-<?
+<?php
 define("NO_KEEP_STATISTIC", "Y");
 define("NO_AGENT_STATISTIC","Y");
 define("PUBLIC_AJAX_MODE", true); 
 
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
+
+/**
+ * @global CUser $USER
+ * @var array $MESS
+ */
 
 $entityTypeId 	= $_REQUEST['ENTITY_TYPE_ID'];
 $entityId 		= intval($_REQUEST['ENTITY_ID']);
@@ -29,4 +34,3 @@ $resultTitle  = sprintf($MESS["RATING_COMPONENT_DESC"], $arRatingResult['TOTAL_V
 echo '{"result" : "true", "resultValue" : "'.$resultValue.'", "resultStatus" : "'.$resultStatus.'", "resultTitle" : "'.$resultTitle.'"}';
 
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_after.php");
-?>

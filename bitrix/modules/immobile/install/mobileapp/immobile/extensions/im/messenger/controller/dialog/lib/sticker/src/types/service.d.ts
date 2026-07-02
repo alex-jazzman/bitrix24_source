@@ -5,6 +5,8 @@ export type UploadingStickerData = {
 	status: 'progress' | 'complete' | 'error',
 	serverFileId: string | null,
 	localUrl: string,
+	width: number,
+	height: number,
 	progress: number,
 }
 

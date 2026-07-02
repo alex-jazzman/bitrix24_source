@@ -22,9 +22,10 @@ jn.define('im/messenger/lib/element/recent/item/chat/announcement', (require, ex
 		{
 			this.actions = [
 				this.getHideAction(),
+				this.getAddToFolderAction(),
 				this.getPinAction(),
 				this.getReadAction(),
-			];
+			].filter(Boolean);
 
 			return this;
 		}

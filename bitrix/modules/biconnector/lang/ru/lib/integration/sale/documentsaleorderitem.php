@@ -13,3 +13,4 @@ $MESS['SALE_DOCUMENT_SALEORDER_ITEM_FIELD_STORE_ID'] = 'Идентификато
 $MESS['SALE_DOCUMENT_SALEORDER_ITEM_FIELD_AMOUNT'] = 'Количество товара';
 $MESS['SALE_DOCUMENT_SALEORDER_ITEM_FIELD_COST_PRICE'] = 'Себестоимость товара';
 $MESS['SALE_DOCUMENT_SALEORDER_ITEM_FIELD_COST_CURRENCY'] = 'Валюта себестоимости';
+$MESS['SALE_DOCUMENT_SALEORDER_ITEM_TABLE_DESCRIPTION_FULL'] = 'Набор содержит данные о товарах в документах реализации.';

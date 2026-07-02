@@ -1,5 +1,6 @@
 import { MessengerModel, PayloadData } from '../../base';
 import { DialogId } from '../../../types/common';
+import { SectionRecentValue } from '../../../provider/pull/base/types/recent';
 
 export enum MessageStatus
 {
@@ -45,12 +46,7 @@ export type RecentModelState = {
 
 export type RecentModelCollection = {
 	collection: Record<DialogId, RecentModelState>,
-	chatIdCollection: Set<string>,
-	copilotIdCollection: Set<string>,
-	channelIdCollection: Set<string>,
-	collabIdCollection: Set<string>,
-	taskIdCollection: Set<string>,
-	openlineIdCollection: Set<string>,
+	nestedIdCollection: Record<number, Partial<Record<string, Set<DialogId>>>>,
 }
 
 export type RecentMessengerModel = MessengerModel<RecentModelCollection>;
@@ -62,52 +58,171 @@ export type RecentModelActions =
 	| 'recentModel/setCopilot'
 	| 'recentModel/setChannel'
 	| 'recentModel/setCollab'
+	| 'recentModel/setTask'
+	| 'recentModel/setOpenline'
+	| 'recentModel/setFirstPageByRecentSection'
+	| 'recentModel/setByRecentSection'
 	| 'recentModel/setFirstPageByTab'
 	| 'recentModel/setByRecentConfigTabs'
+	| 'recentModel/setByRecentConfigTabsBatch'
 	| 'recentModel/setByNavigationTabs'
 	| 'recentModel/setGroupCollection'
 	| 'recentModel/hideByRecentConfigTabs'
 	| 'recentModel/hideByNavigationTabs'
 	| 'recentModel/delete'
+	| 'recentModel/deleteFromModel'
 	| 'recentModel/deleteOpenChannel'
 	| 'recentModel/update'
 	| 'recentModel/like'
 
+type RecentItemListPayload = {
+	itemList: RecentModelState | Array<RecentModelState>;
+	parentChatId?: number;
+}
+
+export type RecentModelActionParams = {
+	'recentModel/set': Array<RecentModelState>;
+	'recentModel/syncFilteredIdCollection': { tabId: string };
+	'recentModel/setChat': RecentItemListPayload;
+	'recentModel/setCopilot': RecentItemListPayload;
+	'recentModel/setChannel': RecentItemListPayload;
+	'recentModel/setCollab': RecentItemListPayload;
+	'recentModel/setTask': RecentItemListPayload & { parentChatId: number };
+	'recentModel/setOpenline': RecentItemListPayload;
+	'recentModel/setFirstPageByRecentSection': {
+		recentSection: SectionRecentValue;
+		itemList: Array<RecentModelState>;
+		parentChatId?: number;
+	};
+	'recentModel/setByRecentSection': {
+		recentSection: SectionRecentValue;
+		itemList: Array<RecentModelState>;
+		parentChatId?: number;
+	};
+	'recentModel/setFirstPageByTab': {
+		tab: string;
+		itemList: Array<RecentModelState>;
+		parentChatId?: number;
+	};
+	'recentModel/setByRecentConfigTabs': SetByRecentConfigTabsPayload;
+	'recentModel/setByRecentConfigTabsBatch': {
+		items: Array<SetByRecentConfigTabsPayload>;
+	};
+	'recentModel/setByNavigationTabs': {
+		tabs: Array<string>;
+		itemList: RecentModelState | Array<RecentModelState>;
+		actionName?: string;
+		parentChatId?: number;
+	};
+	'recentModel/setGroupCollection': {
+		groups: Record<string, Array<RecentModelState>>;
+		parentChatId?: number;
+	};
+	'recentModel/hideByRecentConfigTabs': {
+		id: string;
+		fromSections: Array<SectionRecentValue>;
+		parentChatId?: number;
+	};
+	'recentModel/hideByNavigationTabs': {
+		id: string;
+		fromTabs: Array<string>;
+		actionName?: string;
+		parentChatId?: number;
+	};
+	'recentModel/delete': { id: string; actionName?: string };
+	'recentModel/deleteFromModel': { id: string; actionName?: string };
+	'recentModel/deleteOpenChannel': { id: string; parentChatId?: number; actionName?: string };
+	'recentModel/update': Array<Partial<RecentModelState>>;
+	'recentModel/like': { id: string; messageId: number; liked: boolean };
+}
+
 export type RecentModelMutation =
-	'recentModel/setChatIdCollection'
-	| 'recentModel/setCopilotIdCollection'
-	| 'recentModel/setChannelIdCollection'
-	| 'recentModel/setCollabIdCollection'
-	| 'recentModel/storeIdCollection'
-	| 'recentModel/deleteFromChatIdCollection'
-	| 'recentModel/deleteFromCopilotIdCollection'
-	| 'recentModel/deleteFromChannelIdCollection'
-	| 'recentModel/deleteFromCollabIdCollection'
-	| 'recentModel/deleteFromTaskIdCollection'
+	'recentModel/setNestedIdCollection'
+	| 'recentModel/storeNestedIdCollection'
+	| 'recentModel/deleteFromNestedIdCollection'
+	| 'recentModel/deleteIdFromNestedIdCollection'
 	| 'recentModel/add'
 	| 'recentModel/update'
 	| 'recentModel/delete'
 ;
 
-export type RecentSetIdCollectionActions =
+// region Mutation: setNestedIdCollection
+export type RecentSetNestedIdCollectionActions =
 	'setChat'
-	| 'setCollab'
 	| 'setCopilot'
 	| 'setChannel'
+	| 'setCollab'
+	| 'setTask'
+	| 'setOpenline'
+	| 'setByNavigationTabs'
+	| 'setByRecentConfigTabs'
+	| 'setByRecentSection'
+	| 'setGroupCollection'
 	;
-export type RecentStoreIdCollectionActions = 'setFirstPageByTab';
 
-export interface RecentSetIdCollectionData extends PayloadData
+export interface RecentSetNestedIdCollectionData extends PayloadData
 {
+	recentSection: SectionRecentValue;
 	itemIds: Array<string>;
+	parentChatId?: number;
 }
+// endregion
 
-export interface RecentStoreIdCollectionData extends PayloadData
+// region Mutation: storeNestedIdCollection
+export type RecentStoreNestedIdCollectionActions =
+	'setFirstPageByTab'
+	| 'setFirstPageByRecentSection'
+	;
+
+export interface RecentStoreNestedIdCollectionData extends PayloadData
 {
-	tab: string;
+	recentSection: SectionRecentValue;
 	itemIds: Array<string>;
+	parentChatId?: number;
 }
+// endregion
 
+// region Mutation: deleteFromNestedIdCollection
+export type RecentDeleteFromNestedIdCollectionActions =
+	'deleteOpenChannel'
+	| 'hideByNavigationTabs'
+	| 'hideByRecentConfigTabs'
+	;
+
+export interface RecentDeleteFromNestedIdCollectionData extends PayloadData
+{
+	recentSection: SectionRecentValue;
+	id: string;
+	parentChatId?: number;
+}
+// endregion
+
+// region Mutation: deleteIdFromNestedIdCollection
+export type RecentDeleteIdFromNestedIdCollectionActions = 'delete';
+
+export interface RecentDeleteIdFromNestedIdCollectionData extends PayloadData
+{
+	id: string;
+}
+// endregion
+
+// region Action: setByRecentConfigTabs
+export type SetByRecentConfigTabsPayload = {
+	sections: Array<SectionRecentValue>;
+	itemList: RecentModelState | Array<RecentModelState>;
+	parentChatId?: number;
+}
+// endregion
+
+// region Mutation: add
+export type RecentAddActions = 'set' | 'setFirstPageByTab' | 'setFromPush' | 'setFromSync';
+export interface RecentAddData extends PayloadData
+{
+	recentItemList: Array<{ fields: RecentModelState }>;
+}
+// endregion
+
+// region Mutation: update
 export type RecentUpdateActions =
 	'set'
 	| 'update'
@@ -119,7 +234,10 @@ export interface RecentUpdateData extends PayloadData
 {
 	recentItemList: Array<{ fields: Partial<RecentModelState> }>;
 }
+// endregion
 
+// region Mutation: delete
+export type RecentDeleteActions = 'delete' | 'deleteFromModel';
 export interface RecentDeleteData extends PayloadData
 {
 	id: string;

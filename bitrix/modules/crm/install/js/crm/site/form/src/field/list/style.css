@@ -25,6 +25,14 @@
 
 .b24-form-control-list:hover .b24-form-control-container:after { opacity: 1; }
 
+.b24-form-control-container[role="combobox"]:focus {
+	outline: none;
+}
+
+.b24-form-control-container[role="combobox"]:focus .b24-form-control {
+	border-color: var(--b24-primary-color);
+}
+
 /*region dropdown*/
 
 .b24-form-control-list-selector-item {
@@ -46,8 +54,10 @@
 	transition: 250ms linear all;
 }
 
-/*.b24-form-control-list-selector-item:hover{ background-color: #ebebeb; }*/
-.b24-form-control-list-selector-item:hover { opacity: .7; }
+.b24-form-control-list-selector-item:hover,
+.b24-form-control-list-selector-item-focused {
+	background-color: rgba(0, 0, 0, 0.04);
+}
 
 .b24-form-control-list-selector-item-image {
 	width: 52px;

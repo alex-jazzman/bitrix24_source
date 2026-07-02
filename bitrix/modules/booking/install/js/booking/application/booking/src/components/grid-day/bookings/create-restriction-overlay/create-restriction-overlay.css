@@ -1,0 +1,13 @@
+.booking-booking-create-restriction-overlay {
+	position: absolute;
+	z-index: 2;
+	width: calc(279px * var(--zoom));
+	left: var(--left);
+	top: max(var(--top), calc(-1 * var(--top-cells-height)));
+	bottom: max(calc(100% - var(--top) - var(--height)), 1px);
+	pointer-events: auto;
+
+	--left: 0;
+	--top: 0;
+	--height: 0;
+}

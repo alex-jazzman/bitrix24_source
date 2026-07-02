@@ -1,1 +1,2 @@
-<?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/admin/user_settings.php");?>
+<?php 
+require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/admin/user_settings.php");

@@ -17,6 +17,7 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 		makeSubTasksFieldConfig,
 		makeRelatedTasksFieldConfig,
 	} = require('tasks/layout/task/form-utils');
+	const { TagType, mapTagsToSelectorItems } = require('tasks/layout/task/tag-utils');
 	const { TaskField: Field, TaskFieldActionAccess, FeatureId, ViewMode } = require('tasks/enum');
 	const {
 		getFieldRestrictionPolicy,
@@ -553,11 +554,7 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 						useState: false,
 						onContentClick: onFieldContentClick,
 						config: makeTagsFieldConfig({
-							items: Object.values(task.tags).map((item) => ({
-								id: item.id,
-								title: item.name,
-								type: 'task-tag',
-							})),
+							items: mapTagsToSelectorItems(Object.values(task.tags), TagType.TASK),
 							provider: {
 								options: {
 									// todo: taskId should work correctly when its guid string

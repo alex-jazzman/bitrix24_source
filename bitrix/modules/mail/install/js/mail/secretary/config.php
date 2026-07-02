@@ -9,7 +9,6 @@ return [
 	'js' => 'dist/secretary.bundle.js',
 	'rel' => [
 		'main.core',
-		'ui.analytics',
 	],
 	'skip_core' => false,
 ];

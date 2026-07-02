@@ -3,12 +3,20 @@
  */
 jn.define('im/messenger/controller/recent/config', (require, exports, module) => {
 	const { NavigationTabId } = require('im/messenger/const');
-	const { ChannelConfig } = require('im/messenger/controller/recent/config/channel');
-	const { ChatsConfig } = require('im/messenger/controller/recent/config/chats');
-	const { CopilotConfig } = require('im/messenger/controller/recent/config/copilot');
-	const { CollabConfig } = require('im/messenger/controller/recent/config/collab');
-	const { OpenlinesConfig } = require('im/messenger/controller/recent/config/openlines');
-	const { TaskConfig } = require('im/messenger/controller/recent/config/task');
+	// global navigation configs
+	const { ChannelConfig } = require('im/messenger/controller/recent/config/src/global/channel');
+	const { ChatsConfig } = require('im/messenger/controller/recent/config/src/global/chats');
+	const { CopilotConfig } = require('im/messenger/controller/recent/config/src/global/copilot');
+	const { CollabConfig } = require('im/messenger/controller/recent/config/src/global/collab');
+	const { OpenlinesConfig } = require('im/messenger/controller/recent/config/src/global/openlines');
+	const { TaskConfig } = require('im/messenger/controller/recent/config/src/global/task');
+	const { resolveFolderConfig } = require('im/messenger/controller/recent/config/src/global/folder');
+
+	// nested navigation configs
+	const { CollabDefaultConfig } = require('im/messenger/controller/recent/config/src/nested/collab-default');
+	const { TasksTasksConfig } = require('im/messenger/controller/recent/config/src/nested/tasks-tasks');
+	const { CollabChatConfig } = require('im/messenger/controller/recent/config/src/nested/collab-chat');
+	const { CalendarConfig } = require('im/messenger/controller/recent/config/src/nested/calendar');
 
 	const RecentConfig = {
 		[NavigationTabId.chats]: ChatsConfig,
@@ -19,5 +27,12 @@ jn.define('im/messenger/controller/recent/config', (require, exports, module) =>
 		[NavigationTabId.task]: TaskConfig,
 	};
 
-	module.exports = { RecentConfig };
+	const NestedRecentConfig = {
+		[NavigationTabId.collabDefault]: CollabDefaultConfig,
+		[NavigationTabId.task]: TasksTasksConfig,
+		[NavigationTabId.collabChat]: CollabChatConfig,
+		[NavigationTabId.calendar]: CalendarConfig,
+	};
+
+	module.exports = { RecentConfig, NestedRecentConfig, resolveFolderConfig };
 });

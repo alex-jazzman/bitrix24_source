@@ -131,12 +131,12 @@ export class DocumentSetup extends EventEmitter
 		return data ?? {};
 	}
 
-	async #changeDocumentBlank(uid: string, blankId: number, copyBlocksFromPreviousBlank: boolean = false): Promise<{
+	async #changeDocumentBlank(uid: string, blankId: number): Promise<{
 		uid: string,
 		templateUid: string | null,
 	}>
 	{
-		const data = await this.#api.changeBlank(uid, blankId, copyBlocksFromPreviousBlank);
+		const data = await this.#api.changeBlank(uid, blankId);
 
 		return data ?? {};
 	}
@@ -273,7 +273,6 @@ export class DocumentSetup extends EventEmitter
 	async setup(
 		uid: ?string,
 		isTemplateMode: boolean = false,
-		copyBlocksFromPreviousBlank: boolean = false,
 		initiatedByType: ?DocumentInitiatedType = null,
 	): Promise<void>
 	{
@@ -311,7 +310,6 @@ export class DocumentSetup extends EventEmitter
 			else
 			{
 				this.ready = false;
-				const isBlankChanged = selectedBlankId || this.blankSelector.isFilesReadyForUpload();
 				blankId = selectedBlankId || await this.blankSelector.createBlank();
 				if (!blankId)
 				{
@@ -322,26 +320,15 @@ export class DocumentSetup extends EventEmitter
 				let documentUid = this.setupData?.uid;
 
 				let documentTemplateUid = null;
-				if (
-					isBlankChanged
-					&& isTemplateMode
-					&& documentUid
-				)
-				{
-					const { templateUid } = await this.#changeDocumentBlank(documentUid, blankId, copyBlocksFromPreviousBlank);
-					documentTemplateUid = templateUid;
-				}
-				else
-				{
-					const isRegistered = this.#uids.has(blankId);
+				const isRegistered = this.#uids.has(blankId);
 
-					const { uid, templateUid } = isRegistered
-						? await this.#changeDocumentBlank(this.#uids.get(blankId), blankId, copyBlocksFromPreviousBlank)
-						: await this.#register(blankId, isTemplateMode, this.#chatId, initiatedByType);
+				const { uid, templateUid } = isRegistered
+					? await this.#changeDocumentBlank(this.#uids.get(blankId), blankId)
+					: await this.#register(blankId, isTemplateMode, this.#chatId, initiatedByType);
 
-					documentUid = uid;
-					documentTemplateUid = templateUid;
-				}
+				documentUid = uid;
+				documentTemplateUid = templateUid;
+
 				this.#uids.set(blankId, documentUid);
 				await this.#api.upload(documentUid);
 				const [loadedData, blocks] = await Promise.all([
@@ -455,6 +442,11 @@ export class DocumentSetup extends EventEmitter
 		{
 			Dom.addClass(this.layout, '--pending');
 		}
+	}
+
+	get isEditorFlowPending(): boolean
+	{
+		return false;
 	}
 
 	isTemplateMode(): boolean

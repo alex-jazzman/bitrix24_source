@@ -1,4 +1,4 @@
-<?
+<?php
 
 /**
  * @var $arParams
@@ -88,7 +88,7 @@ if (\Bitrix\Main\Context::getCurrent()->getRequest()->isAjaxRequest())
 
 <script>
 	BX(function() {
-		<? if(isset($arParams['TOP_ACTION_PANEL_RENDER_TO'])): ?>
+		<?php if(isset($arParams['TOP_ACTION_PANEL_RENDER_TO'])): ?>
 			var actionPanel = new BX.UI.ActionPanel({
 				params: {
 					tileGridId: '<?=$arParams["GRID_ID"]?>'
@@ -98,7 +98,7 @@ if (\Bitrix\Main\Context::getCurrent()->getRequest()->isAjaxRequest())
 				maxHeight: <?= (int)($arParams['ACTION_PANEL_OPTIONS']['MAX_HEIGHT'] ?? null)?>
 			});
 			actionPanel.draw();
-		<? endif; ?>
+		<?php endif; ?>
 
 		var gridTile = new BX.Main.TileGrid(
 			{

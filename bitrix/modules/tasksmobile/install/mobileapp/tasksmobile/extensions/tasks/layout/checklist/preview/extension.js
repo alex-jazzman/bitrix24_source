@@ -408,6 +408,9 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 				},
 				...checklists.map((checklist, index) => {
 					const rootItem = checklist.getRootItem();
+					const onClick = this.isReadOnly()
+						? this.getContentClickHandler()
+						: () => this.openPageManager(checklist);
 
 					return Item({
 						testId: this.testId,
@@ -416,7 +419,7 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 						title: rootItem.getTitle(),
 						isComplete: rootItem.getIsComplete(),
 						showBorder: index < (checklists.length - 1),
-						onClick: () => this.openPageManager(checklist),
+						onClick,
 					});
 				}),
 			);

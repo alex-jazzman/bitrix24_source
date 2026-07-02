@@ -136,8 +136,7 @@
 }
 
 .resource-category-card__header a {
-	-webkit-text-decoration-color: var(--ui-color-link-primary-base, #2066b0);
-	        text-decoration-color: var(--ui-color-link-primary-base, #2066b0);
+	text-decoration-color: var(--ui-color-link-primary-base, #2066b0);
 	mix-blend-mode: normal;
 }
 
@@ -148,252 +147,6 @@
 
 .resource-category-card__content {
 	padding: 14px 10px;
-}
-
-.resource-creation-wizard__form-settings {
-	display: flex;
-	flex-direction: column;
-	gap: 18px;
-	padding: 24px 20px 24px 20px;
-	border-radius: 18px;
-	background: var(--ui-color-palette-white-base);
-}
-
-.resource-creation-wizard__form-settings .ui-ctl-element {
-	border-radius: var(--ui-border-radius-xs);
-}
-
-.resource-creation-wizard__form-settings-element.--placeholder {
-	color: var(--ui-color-palette-gray-50);
-	cursor: pointer;
-}
-
-.resource-creation-wizard__services_warning {
-	margin-top: -15px;
-	font-size: var(--ui-font-size-sm);
-	color: var(--ui-color-gray-90);
-}
-
-.resource-notification-card {
-	display: flex;
-	flex-direction: column;
-	gap: 20px;
-}
-
-.resource-notification-card select {
-	-webkit-appearance: none;
-	appearance: none;
-	background-color: unset;
-}
-
-.booking-resource-creation-wizard-notification-container {
-	--border-radius: 18px;
-	overflow: hidden;
-	border-radius: var(--border-radius);
-}
-
-.booking-resource-creation-wizard-notification {
-	overflow: hidden;
-	box-sizing: border-box;
-	padding: 18px;
-	border-radius: var(--border-radius);
-	background: rgba(var(--ui-color-palette-white-base-rgb), 0.7);
-}
-
-.booking-resource-creation-wizard-notification.--manager {
-	margin-top: 12px;
-}
-
-.booking-resource-creation-wizard-notification-main {
-	overflow: hidden;
-	display: flex;
-	flex-direction: column;
-	gap: 10px;
-}
-
-.resource-creation-wizard__form-notification-info {
-	position: relative;
-	padding: 14px 18px;
-	border-radius: 12px;
-	border: solid 1px rgba(var(--ui-color-palette-black-solid-rgb), 0.11);
-	background: var(--ui-color-palette-white-base);
-}
-
-.resource-creation-wizard__form-notification-info.--message {
-	margin-bottom: 8px;
-}
-
-.resource-creation-wizard__form-notification-info.--message:after {
-	content: '';
-	position: absolute;
-	bottom: -15px;
-	left: 18px;
-	width: 16px;
-	height: 15px;
-	background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='16' height='15' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg clip-path='url(%23clip0_583_241781)'%3E%3Cpath d='M0-2h19L3.414 13.586C2.154 14.846 0 13.953 0 12.172V-2z' fill='%23fff'/%3E%3Cpath d='M.5-1.5h17.293L3.06 13.232c-.945.945-2.561.276-2.561-1.06V-1.5z' stroke='%23000' stroke-opacity='.11'/%3E%3C/g%3E%3Cdefs%3E%3CclipPath id='clip0_583_241781'%3E%3Cpath fill='%23fff' d='M0 0h16v15H0z'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E");
-}
-
-.resource-creation-wizard__form-notification-info-switcher {
-	margin-left: auto;
-}
-
-.resource-creation-wizard__form-notification-info-title-row {
-	display: flex;
-	align-items: center;
-	gap: 7px;
-}
-
-.resource-creation-wizard__form-notification-info-title-row.--main {
-	margin-top: 16px;
-}
-
-.resource-creation-wizard__form-notification-info-title {
-	color: var(--ui-color-palette-black-solid);
-	font-size: var(--ui-font-size-2xl);
-	transition: color 200ms;
-}
-
-.booking-resource-creation-wizard-notification-container.--disabled .resource-creation-wizard__form-notification-info-title {
-	color: var(--ui-color-palette-gray-90);
-}
-
-.resource-creation-wizard__form-notification-info-title-row .ui-icon-set {
-	--ui-icon-set__icon-size: 28px;
-	--ui-icon-set__icon-color: var(--ui-color-primary);
-}
-
-.booking-resource-creation-wizard-notification-container.--disabled .resource-creation-wizard__form-notification-info-title-row .ui-icon-set {
-	--ui-icon-set__icon-color: var(--ui-color-palette-gray-30);
-}
-
-.resource-creation-wizard__form-notification-info-text-row {
-	display: flex;
-	flex-direction: row;
-	margin-bottom: 10px;
-	font-size: var(--ui-font-size-sm);
-	color: var(--ui-color-palette-gray-60);
-}
-
-.resource-creation-wizard__form-notification-text-row {
-	display: flex;
-	padding: 0 11px;
-}
-
-.resource-creation-wizard__form-notification-text-row-icon {
-	width: 18px;
-	height: 18px;
-	background: var(--ui-color-palette-gray-50);
-	margin-right: 5px;
-}
-
-.resource-creation-wizard__form-notification-text-row-checkbox {
-	margin-right: 5px;
-}
-
-.resource-creation-wizard__form-notification-info-text-row-template-edit-btn.--dotted {
-	border-bottom: 1px dotted;
-	border-top: 0;
-	border-left: 0;
-	border-right: 0;
-	cursor: pointer;
-}
-
-.resource-creation-wizard__form-notification-info-text-row-template-edit-btn {
-	font-size: 13px;
-	color: var(--ui-color-palette-gray-60);
-	margin-left: auto;
-}
-
-.resource-creation-wizard__form-notification-text {
-	padding-top: 1px;
-	color: var(--ui-color-palette-gray-90);
-	font-size: var(--ui-font-size-sm);
-}
-
-.resource-creation-wizard__form-notification-info-template {
-	color: var(--ui-color-palette-black-solid);
-	font-size: var(--ui-font-size-sm);
-	transition: opacity 200ms, filter 200ms;
-}
-
-.resource-creation-wizard__form-notification-info-template span.--accent {
-	color: var(--ui-color-palette-blue-40);
-	cursor: pointer;
-}
-
-.resource-creation-wizard__form-notification-info-template span.--bold {
-	color: var(--ui-color-palette-blue-70);
-	font-weight: var(--ui-font-weight-medium);
-}
-
-.booking-resource-creation-wizard-notification-container.--disabled .resource-creation-wizard__form-notification-info-template {
-	opacity: 0.5;
-	filter: grayscale(1);
-}
-
-.notification-label {
-	margin-right: 0;
-}
-
-.notification-label:hover {
-	cursor: pointer;
-}
-
-.notification-label.--active {
-	border: 1px solid var(--ui-color-palette-blue-40);
-	background: var(--ui-color-palette-blue-15);
-}
-
-.resource-creation-wizard__form-notification-info-template-choose-buttons {
-	margin-top: 20px;
-}
-
-.booking-resource-creation-wizard-choose-template-button {
-	max-width: -webkit-max-content;
-	max-width: max-content;
-}
-
-.resource-creation-wizard__form-notification-info-template-choose-buttons button {
-	text-transform: initial;
-	font-size: var(--ui-font-size-md);
-	font-weight: var(--ui-font-weight-regular);
-}
-
-.booking-resource-creation-wizard-notification-header {
-	display: flex;
-	align-items: center;
-	cursor: pointer;
-}
-
-.booking-resource-creation-wizard-notification-number {
-	margin-right: 10px;
-	color: var(--ui-color-accent-light-blue);
-	background: var(--ui-color-palette-blue-20);
-	font-size: var(--ui-font-size-lg);
-	--size: 28px;
-	width: var(--size);
-	height: var(--size);
-	line-height: var(--size);
-	text-align: center;
-	border-radius: 1in;
-}
-
-.booking-resource-creation-wizard-notification-title {
-	font-size: 21px;
-	margin-right: auto;
-}
-
-.booking-resource-creation-wizard-notification-header .ui-icon-set {
-	--ui-icon-set__icon-color: var(--ui-color-palette-gray-50);
-}
-
-.booking-resource-creation-wizard-manager-see {
-	margin-left: auto;
-	padding-bottom: 1px;
-	border-bottom: var(--ui-border-width-thin) dashed rgba(var(--ui-color-link-primary-base-rgb), 0.4);
-	color: var(--ui-color-link-primary-base);
-	font-size: var(--ui-font-size-lg);
-	cursor: pointer;
 }
 
 .rcw__resource-type {
@@ -477,6 +230,30 @@
 	--ui-icon-set__icon-color: var(--ui-color-palette-blue-50);
 }
 
+.resource-creation-wizard__form-settings {
+	display: flex;
+	flex-direction: column;
+	gap: 18px;
+	padding: 24px 20px 24px 20px;
+	border-radius: 18px;
+	background: var(--ui-color-palette-white-base);
+}
+
+.resource-creation-wizard__form-settings .ui-ctl-element {
+	border-radius: var(--ui-border-radius-xs);
+}
+
+.resource-creation-wizard__form-settings-element.--placeholder {
+	color: var(--ui-color-palette-gray-50);
+	cursor: pointer;
+}
+
+.resource-creation-wizard__services_warning {
+	margin-top: -15px;
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-gray-90);
+}
+
 .booking--rcw--name-field {
 	flex: 2 1 0;
 	width: auto;
@@ -554,150 +331,6 @@
 
 .booking--rcw--form-row-align {
 	align-items: start;
-}
-
-.resource-creation-wizard__form-settings-schedule-view {
-	display: flex;
-	flex-direction: column;
-	gap: 12px;
-}
-
-.booking--rcw--schedule-item {
-	display: flex;
-	gap: 12px;
-	background-color: var(--ui-color-palette-gray-04);
-	border: 1px solid var(--ui-color-palette-gray-04);
-	padding: 16px;
-	border-radius: 8px;
-	cursor: pointer;
-}
-
-.booking--rcw--schedule-item.--selected {
-	background-color: var(--ui-color-palette-blue-20);
-	border: 1px solid var(--ui-color-palette-blue-20);
-	transition: 0.2s;
-}
-
-.booking--rcw--schedule-item:hover {
-	border: 1px solid var(--ui-color-palette-blue-40);
-	transition: 0.2s;
-}
-
-.booking--rcw--schedule-item-radio {
-	display: flex;
-	align-items: start;
-}
-
-.booking--rcw--schedule-item-text {
-	display: flex;
-	flex-direction: column;
-	gap: 6px;
-}
-
-.booking--rcw--schedule-item-text-title {
-	font-size: var(--ui-font-size-lg);
-	font-weight: var(--ui-font-weight-normal);
-	margin-bottom: 2px;
-	cursor: pointer;
-}
-
-.booking--rcw--schedule-item-text-description {
-	display: flex;
-	flex-direction: column;
-	gap: 6px;
-	font-size: var(--ui-font-size-sm);
-}
-
-.booking--rcw--schedule-item-view {
-	min-width: 134px;
-	width: 134px;
-	height: 83px;
-	aspect-ratio: 2;
-	background-size: cover;
-	background-position: center;
-	border: 1px solid var(--ui-color-palette-gray-20);
-	border-radius: 8px;
-}
-
-.booking--rcw--schedule-item:hover .booking--rcw--schedule-item-view {
-	border: 1px solid var(--ui-color-palette-gray-40);
-}
-
-.booking--rcw--schedule-item.--selected .booking--rcw--schedule-item-view {
-	border: 1.4px solid var(--ui-color-palette-blue-40);
-	box-shadow: 0 6px 12px 0 rgba(0, 0, 0, 0.06);
-}
-
-.resource-creation-wizard__form-settings-schedule-view-common {
-	background-image: url(../images/schedule-common.svg?5);
-}
-
-.resource-creation-wizard__form-settings-schedule-view-extra {
-	background-image: url(../images/schedule-extra.svg?5);
-}
-
-.resource-creation-wizard__form-settings-schedule-view input {
-	cursor: pointer;
-}
-
-.booking--rcw--schedule-item-text-description-more {
-	font-size: var(--ui-font-size-xs);
-}
-
-.resource-creation-wizard__integration-block {
-	padding: 19px 24px;
-	border: 1px solid rgba(var(--ui-color-base-solid-rgb), var(--ui-opacity-10));
-	border-radius: var(--ui-border-radius-sm);
-}
-
-.resource-creation-wizard__integration-block-header {
-	display: flex;
-	align-items: center;
-	column-gap: 3px;
-	margin-left: -4px;
-	margin-bottom: 8px;
-}
-
-.resource-creation-wizard__integration-block-title {
-	font-weight: var(--ui-font-weight-medium);
-	font-size: var(--ui-font-size-xl);
-	color: var(--ui-color-text-primary);
-}
-
-.resource-creation-wizard__integration-block-description {
-	font-size: var(--ui-font-size-sm);
-	color: var(--ui-color-text-secondary);
-}
-
-.resource-creation-wizard__integration-block-switcher {
-	margin-left: auto;
-}
-
-.resource-creation-wizard__integration-block-settings {
-	margin-top: 20px;
-	padding-top: 13px;
-	border-top: 1px solid var(--ui-color-divider-default);
-}
-
-.resource-creation-wizard__integration-block-settings-item-info-title {
-	margin-bottom: 2px;
-}
-
-.resource-creation-wizard__integration-block-settings-item-info-description {
-	color: var(--ui-color-gray-70, #828B95);
-	font-size: var(--ui-font-size-sm);
-}
-
-.resource-creation-wizard__integration-block-settings-item-info {
-	margin-bottom: 14px;
-}
-
-.resource-creation-wizard__integration-block-settings-item {
-	margin-bottom: 25px;
-}
-
-.resource-creation-wizard__integration-block-settings-selector.--warning .ui-tag-selector-outer-container {
-	border-color: var(--ui-color-accent-soft-border-red);
 }
 
 .booking--rcw--avatar-field {
@@ -837,7 +470,9 @@
 	overflow-y: auto;
 	white-space: pre-wrap;
 
+	/* @chef-ignore */
 	scrollbar-width: thin;
+	/* @chef-ignore */
 	scrollbar-color: var(--ui-color-palette-gray-40) transparent;
 }
 
@@ -856,6 +491,62 @@
 	font-size: var(--ui-font-size-sm);
 }
 
+.resource-creation-wizard__integration-block {
+	padding: 19px 24px;
+	border: 1px solid rgba(var(--ui-color-base-solid-rgb), var(--ui-opacity-10));
+	border-radius: var(--ui-border-radius-sm);
+}
+
+.resource-creation-wizard__integration-block-header {
+	display: flex;
+	align-items: center;
+	column-gap: 3px;
+	margin-left: -4px;
+	margin-bottom: 8px;
+}
+
+.resource-creation-wizard__integration-block-title {
+	font-weight: var(--ui-font-weight-medium);
+	font-size: var(--ui-font-size-xl);
+	color: var(--ui-color-text-primary);
+}
+
+.resource-creation-wizard__integration-block-description {
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-text-secondary);
+}
+
+.resource-creation-wizard__integration-block-switcher {
+	margin-left: auto;
+}
+
+.resource-creation-wizard__integration-block-settings {
+	margin-top: 20px;
+	padding-top: 13px;
+	border-top: 1px solid var(--ui-color-divider-default);
+}
+
+.resource-creation-wizard__integration-block-settings-item-info-title {
+	margin-bottom: 2px;
+}
+
+.resource-creation-wizard__integration-block-settings-item-info-description {
+	color: var(--ui-color-gray-70, #828B95);
+	font-size: var(--ui-font-size-sm);
+}
+
+.resource-creation-wizard__integration-block-settings-item-info {
+	margin-bottom: 14px;
+}
+
+.resource-creation-wizard__integration-block-settings-item {
+	margin-bottom: 25px;
+}
+
+.resource-creation-wizard__integration-block-settings-selector.--warning .ui-tag-selector-outer-container {
+	border-color: var(--ui-color-accent-soft-border-red);
+}
+
 .booking--rcw--integration-calendar.--disabled .resource-creation-wizard__integration-block-title {
 	color: var(--ui-color-gray-50);
 }
@@ -864,6 +555,146 @@
 	color: var(--ui-color-gray-40);
 }
 
+.resource-creation-wizard__form-settings-schedule-view {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.booking--rcw--schedule-item {
+	display: flex;
+	gap: 12px;
+	background-color: var(--ui-color-palette-gray-04);
+	border: 1px solid var(--ui-color-palette-gray-04);
+	padding: 16px;
+	border-radius: 8px;
+	cursor: pointer;
+}
+
+.booking--rcw--schedule-item.--selected {
+	background-color: var(--ui-color-palette-blue-20);
+	border: 1px solid var(--ui-color-palette-blue-20);
+	transition: 0.2s;
+}
+
+.booking--rcw--schedule-item:hover {
+	border: 1px solid var(--ui-color-palette-blue-40);
+	transition: 0.2s;
+}
+
+.booking--rcw--schedule-item-radio {
+	display: flex;
+	align-items: start;
+}
+
+.booking--rcw--schedule-item-text {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.booking--rcw--schedule-item-text-title {
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-normal);
+	margin-bottom: 2px;
+	cursor: pointer;
+}
+
+.booking--rcw--schedule-item-text-description {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	font-size: var(--ui-font-size-sm);
+}
+
+.booking--rcw--schedule-item-view {
+	min-width: 134px;
+	width: 134px;
+	height: 83px;
+	aspect-ratio: 2;
+	background-size: cover;
+	background-position: center;
+	border: 1px solid var(--ui-color-palette-gray-20);
+	border-radius: 8px;
+}
+
+.booking--rcw--schedule-item:hover .booking--rcw--schedule-item-view {
+	border: 1px solid var(--ui-color-palette-gray-40);
+}
+
+.booking--rcw--schedule-item.--selected .booking--rcw--schedule-item-view {
+	border: 1.4px solid var(--ui-color-palette-blue-40);
+	box-shadow: 0 6px 12px 0 rgba(0, 0, 0, 0.06);
+}
+
+.resource-creation-wizard__form-settings-schedule-view-common {
+	background-image: url(../images/schedule-common.svg?5);
+}
+
+.resource-creation-wizard__form-settings-schedule-view-extra {
+	background-image: url(../images/schedule-extra.svg?5);
+}
+
+.resource-creation-wizard__form-settings-schedule-view input {
+	cursor: pointer;
+}
+
+.booking--rcw--schedule-item-text-description-more {
+	font-size: var(--ui-font-size-xs);
+}
+
+.resource-creation-wizard__form-slot-length-selector {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 4px;
+	background-color: white;
+	border: 1px solid var(--ui-color-palette-gray-10);
+	border-radius: var(--ui-border-radius-xs);
+	box-shadow: 0 2px 4px var(--ui-color-palette-gray-20);
+	padding: 6px 8px 6px 8px;
+	height: 24px;
+}
+
+.resource-creation-wizard__form-slot-length-selector .ui-btn + .ui-btn {
+	margin-top: 0;
+}
+
+.resource-creation-wizard__form-slot-length-selector .ui-btn {
+	width: 100%;
+	text-transform: var(--ui-text-transform-none);
+	font-size: 14px;
+	font-weight: 400;
+	text-align: center;
+}
+
+.resource-creation-wizard__form-slot-length-precision {
+	margin-top: 14px;
+}
+
+.resource-creation-wizard__form-slot-length-precision-selection {
+	display: flex;
+	justify-content: right;
+	padding: 0;
+}
+
+.resource-creation-wizard__form-slot-length-precision-selection .ui-form-row, .ui-form-row-inline {
+	margin-bottom: 0;
+}
+
+.resource-creation-wizard__form-slot-length-precision-selection .ui-ctl-time {
+	width: 50px;
+}
+
+.resource-creation-wizard__form-slot-length-precision-selection .ui-ctl-element {
+	text-align: center;
+	padding: 2px;
+}
+
+.resource-creation-wizard__form-slot-length-precision-selection .ui-form-row.--disabled {
+	opacity: .4;
+	pointer-events: none;
+}
 .resource-creation-wizard__form-work-time-selector {
 	display: flex;
 	flex-direction: column;
@@ -919,76 +750,6 @@
 	-webkit-text-decoration: underline dashed;
 	        text-decoration: underline dashed;
 	text-underline-offset: 3px;
-}
-
-.resource-creation-wizard__form-slot-length-selector {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 4px;
-	background-color: white;
-	border: 1px solid var(--ui-color-palette-gray-10);
-	border-radius: var(--ui-border-radius-xs);
-	box-shadow: 0 2px 4px var(--ui-color-palette-gray-20);
-	padding: 6px 8px 6px 8px;
-	height: 24px;
-}
-
-.resource-creation-wizard__form-slot-length-selector .ui-btn + .ui-btn {
-	margin-top: 0;
-}
-
-.resource-creation-wizard__form-slot-length-selector .ui-btn {
-	width: 100%;
-	text-transform: var(--ui-text-transform-none);
-	font-size: 14px;
-	font-weight: 400;
-	text-align: center;
-}
-
-.resource-creation-wizard__form-slot-length-precision {
-	margin-top: 14px;
-}
-
-.booking-resource-creation-wizard-label-dropdown {
-	--border-color: var(--ui-color-palette-blue-40);
-	--background-color: var(--ui-color-palette-blue-15);
-	--text-color: var(--ui-color-palette-black-base);
-}
-
-:where(
-.booking-resource-creation-wizard-notification-container.--disabled,
-.booking-resource-creation-wizard-notification-container.--locked
-) .booking-resource-creation-wizard-label-dropdown {
-	--border-color: var(--ui-color-base-10);
-	--background-color: var(--ui-color-base-03);
-	--text-color: var(--ui-color-base-40);
-}
-
-.booking-resource-creation-wizard-notification-container.--disabled:not(.--locked) .booking-resource-creation-wizard-label-dropdown {
-	pointer-events: none;
-}
-
-.booking-resource-creation-wizard-label-dropdown {
-	position: relative;
-	display: inline-block;
-	padding: 1px 16px 2px 7px;
-	border-radius: var(--ui-border-radius-pill);
-	border: var(--ui-border-width-thin) solid var(--border-color);
-	background: var(--background-color);
-	color: var(--text-color);
-	white-space: nowrap;
-	cursor: pointer;
-	transition: border-color 200ms, background 200ms, color 200ms;
-}
-
-.booking-resource-creation-wizard-label-dropdown .ui-icon-set {
-	position: absolute;
-	right: 3px;
-	top: 50%;
-	transform: translateY(-45%);
-	--ui-icon-set__icon-size: 12px;
-	--ui-icon-set__icon-color: var(--ui-color-base-40);
 }
 
 .resource-creation-wizard__form-work-time-selector-widget {
@@ -1104,31 +865,329 @@
 	font-weight: 400;
 }
 
-.resource-creation-wizard__form-slot-length-precision-selection {
+.resource-creation-wizard__form-week-days-popup {
 	display: flex;
-	justify-content: right;
-	padding: 0;
+	gap: 2px;
+	-webkit-user-select: none;
+	        user-select: none;
 }
 
-.resource-creation-wizard__form-slot-length-precision-selection .ui-form-row, .ui-form-row-inline {
-	margin-bottom: 0;
+.resource-creation-wizard__form-week-days-popup-weekday {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 60px;
+	border-radius: 8px;
+	background: #EEF2F4;
+	cursor: pointer;
 }
 
-.resource-creation-wizard__form-slot-length-precision-selection .ui-ctl-time {
-	width: 50px;
+.resource-creation-wizard__form-week-days-popup-weekday-text {
+	font-size: 14px;
+	color: #333333;
+	margin-bottom: 6px;
 }
 
-.resource-creation-wizard__form-slot-length-precision-selection .ui-ctl-element {
+.resource-creation-wizard__form-week-days-popup-weekday-icon {
+	box-sizing: border-box;
+	width: 20px;
+	height: 20px;
+	background: #fff;
+	border: 1px solid #C9CCD0;
+	border-radius: 50%;
+}
+
+.resource-creation-wizard__form-week-days-popup-weekday.--selected {
+	background: #D3F4FF;
+}
+
+.resource-creation-wizard__form-week-days-popup-weekday.--selected .resource-creation-wizard__form-week-days-popup-weekday-icon {
+	border: none;
+	background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='10' cy='10' r='10' fill='%2300B0E8'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M9.0054 11.1358L14.2868 5.92188L15.8851 7.52902L9.03037 14.325L9.0054 14.2999L8.98043 14.325L4.78711 10.2664L6.38539 8.65924L9.0054 11.1358Z' fill='white'/%3E%3C/svg%3E");
+}
+.resource-notification-card {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+.resource-notification-card .booking-resource-wizard-item + .booking-resource-wizard-item {
+	margin-top: 0;
+}
+
+.resource-notification-card select {
+	appearance: none;
+	background-color: unset;
+}
+
+.booking-resource-creation-wizard-notification-container {
+	--border-radius: 18px;
+	overflow: hidden;
+	border-radius: var(--border-radius);
+}
+
+.booking-resource-creation-wizard-notification {
+	overflow: hidden;
+	box-sizing: border-box;
+	padding: 18px;
+	border-radius: var(--border-radius);
+	background: rgba(var(--ui-color-palette-white-base-rgb), 0.7);
+}
+
+.booking-resource-creation-wizard-notification.--manager {
+	margin-top: 12px;
+}
+
+.booking-resource-creation-wizard-notification-main {
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.resource-creation-wizard__form-notification-info {
+	position: relative;
+	padding: 14px 18px;
+	border-radius: 12px;
+	border: solid 1px rgba(var(--ui-color-palette-black-solid-rgb), 0.11);
+	background: var(--ui-color-palette-white-base);
+}
+
+.resource-creation-wizard__form-notification-info.--message {
+	margin-bottom: 8px;
+}
+
+.resource-creation-wizard__form-notification-info.--message:after {
+	content: '';
+	position: absolute;
+	bottom: -15px;
+	left: 18px;
+	width: 16px;
+	height: 15px;
+	background: url("data:image/svg+xml,%3Csvg width='16' height='15' viewBox='0 0 16 15' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg clip-path='url(%23clip0_583_241781)'%3E%3Cpath d='M0 -2H19L3.41421 13.5858C2.15428 14.8457 0 13.9534 0 12.1716V-2Z' fill='white'/%3E%3Cpath d='M0.5 -1.5H17.7929L3.06066 13.2322C2.11571 14.1772 0.5 13.5079 0.5 12.1716V-1.5Z' stroke='black' stroke-opacity='0.11'/%3E%3C/g%3E%3Cdefs%3E%3CclipPath id='clip0_583_241781'%3E%3Crect width='16' height='15' fill='white'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E%0A");
+}
+
+.resource-creation-wizard__form-notification-info.--ai {
+	padding-left: 25px;
+}
+
+.resource-creation-wizard__form-notification-info.--ai:after {
+	content: '';
+	position: absolute;
+	left: 11px;
+	top: 50%;
+	transform: translate(0, -50%);
+	width: 2px;
+	height: calc(100% - 26px);
+	background: linear-gradient(6deg, var(--ui-color-design-filled-bitrix-gpt-bg-gradient-5, #F96269) 10.13%, var(--ui-color-design-filled-bitrix-gpt-bg-gradient-4, #F046B7) 39.93%, var(--ui-color-design-filled-bitrix-gpt-bg-gradient-3, #9D48FF) 69.74%, var(--ui-color-design-filled-bitrix-gpt-bg-gradient-2, #3F68FF) 105.5%, var(--ui-color-design-filled-bitrix-gpt-bg-gradient-1, #0098EA) 117.42%);
+}
+
+.resource-creation-wizard__form-notification-info-switcher {
+	margin-left: auto;
+}
+
+.resource-creation-wizard__form-notification-info-title-row {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+}
+
+.resource-creation-wizard__form-notification-info-title-row.--main {
+	margin-top: 16px;
+}
+
+.resource-creation-wizard__form-notification-info-title {
+	color: var(--ui-color-palette-black-solid);
+	font-size: var(--ui-font-size-2xl);
+	transition: color 200ms;
+}
+
+.booking-resource-creation-wizard-notification-container.--disabled .resource-creation-wizard__form-notification-info-title {
+	color: var(--ui-color-palette-gray-90);
+}
+
+.resource-creation-wizard__form-notification-info-title-row .ui-icon-set {
+	--ui-icon-set__icon-size: 28px;
+	--ui-icon-set__icon-color: var(--ui-color-primary);
+}
+
+.booking-resource-creation-wizard-notification-container.--disabled .resource-creation-wizard__form-notification-info-title-row .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-palette-gray-30);
+}
+
+.resource-creation-wizard__form-notification-info-text-row {
+	display: flex;
+	flex-direction: row;
+	margin-bottom: 10px;
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-palette-gray-60);
+}
+
+.resource-creation-wizard__form-notification-text-row {
+	display: flex;
+	padding: 0 11px;
+}
+
+.resource-creation-wizard__form-notification-text-row-icon {
+	width: 18px;
+	height: 18px;
+	background: var(--ui-color-palette-gray-50);
+	margin-right: 5px;
+}
+
+.resource-creation-wizard__form-notification-text-row-checkbox {
+	margin-right: 5px;
+}
+
+.resource-creation-wizard__form-notification-info-text-row-template-edit-btn.--dotted {
+	border-bottom: 1px dotted;
+	border-top: 0;
+	border-left: 0;
+	border-right: 0;
+	cursor: pointer;
+}
+
+.resource-creation-wizard__form-notification-info-text-row-template-edit-btn {
+	font-size: 13px;
+	color: var(--ui-color-palette-gray-60);
+	margin-left: auto;
+}
+
+.resource-creation-wizard__form-notification-text {
+	padding-top: 1px;
+	color: var(--ui-color-palette-gray-90);
+	font-size: var(--ui-font-size-sm);
+}
+
+.resource-creation-wizard__form-notification-info-template {
+	color: var(--ui-color-palette-black-solid);
+	font-size: var(--ui-font-size-sm);
+	transition: opacity 200ms, filter 200ms;
+}
+
+.resource-creation-wizard__form-notification-info-template span.--accent {
+	color: var(--ui-color-palette-blue-40);
+	cursor: pointer;
+}
+
+.resource-creation-wizard__form-notification-info-template span.--bold {
+	color: var(--ui-color-palette-blue-70);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.booking-resource-creation-wizard-notification-container.--disabled .resource-creation-wizard__form-notification-info-template {
+	opacity: 0.5;
+	filter: grayscale(1);
+}
+
+.notification-label {
+	margin-right: 0;
+}
+
+.notification-label:hover {
+	cursor: pointer;
+}
+
+.notification-label.--active {
+	border: 1px solid var(--ui-color-palette-blue-40);
+	background: var(--ui-color-palette-blue-15);
+}
+
+.resource-creation-wizard__form-notification-info-template-choose-buttons {
+	margin-top: 20px;
+}
+
+.booking-resource-creation-wizard-choose-template-button {
+	max-width: max-content;
+}
+
+.resource-creation-wizard__form-notification-info-template-choose-buttons button {
+	text-transform: initial;
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-regular);
+}
+
+.booking-resource-creation-wizard-notification-header {
+	display: flex;
+	align-items: center;
+	cursor: pointer;
+}
+
+.booking-resource-creation-wizard-notification-number {
+	margin-right: 10px;
+	color: var(--ui-color-accent-light-blue);
+	background: var(--ui-color-palette-blue-20);
+	font-size: var(--ui-font-size-lg);
+	--size: 28px;
+	width: var(--size);
+	height: var(--size);
+	line-height: var(--size);
 	text-align: center;
-	padding: 2px;
+	border-radius: 1in;
 }
 
-.resource-creation-wizard__form-slot-length-precision-selection .ui-form-row.--disabled {
-	opacity: .4;
+.booking-resource-creation-wizard-notification-title {
+	font-size: 21px;
+	margin-right: auto;
+}
+
+.booking-resource-creation-wizard-notification-header .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-palette-gray-50);
+}
+
+.booking-resource-creation-wizard-manager-see {
+	margin-left: auto;
+	padding-bottom: 1px;
+	border-bottom: var(--ui-border-width-thin) dashed rgba(var(--ui-color-link-primary-base-rgb), 0.4);
+	color: var(--ui-color-link-primary-base);
+	font-size: var(--ui-font-size-lg);
+	cursor: pointer;
+}
+
+.booking-resource-creation-wizard-label-dropdown {
+	--border-color: var(--ui-color-palette-blue-40);
+	--background-color: var(--ui-color-palette-blue-15);
+	--text-color: var(--ui-color-palette-black-base);
+}
+
+:where(
+.booking-resource-creation-wizard-notification-container.--disabled,
+.booking-resource-creation-wizard-notification-container.--locked
+) .booking-resource-creation-wizard-label-dropdown {
+	--border-color: var(--ui-color-base-10);
+	--background-color: var(--ui-color-base-03);
+	--text-color: var(--ui-color-base-40);
+}
+
+.booking-resource-creation-wizard-notification-container.--disabled:not(.--locked) .booking-resource-creation-wizard-label-dropdown {
 	pointer-events: none;
 }
+
+.booking-resource-creation-wizard-label-dropdown {
+	position: relative;
+	display: inline-block;
+	padding: 1px 16px 2px 7px;
+	border-radius: var(--ui-border-radius-pill);
+	border: var(--ui-border-width-thin) solid var(--border-color);
+	background: var(--background-color);
+	color: var(--text-color);
+	white-space: nowrap;
+	cursor: pointer;
+	transition: border-color 200ms, background 200ms, color 200ms;
+}
+
+.booking-resource-creation-wizard-label-dropdown .ui-icon-set {
+	position: absolute;
+	right: 3px;
+	top: 50%;
+	transform: translateY(-45%);
+	--ui-icon-set__icon-size: 12px;
+	--ui-icon-set__icon-color: var(--ui-color-base-40);
+}
+
 .booking-resource-creation-wizard-channel-menu-button {
-	height: -webkit-max-content;
 	height: max-content;
 	margin-left: 3px;
 	border-bottom: 1px dashed var(--ui-color-base-30);
@@ -1279,7 +1338,7 @@
 .booking-resource-creation-wizard-message-template-empty-icon {
 	width: 110px;
 	height: 93px;
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg viewBox='0 0 110 93' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg filter='url(%23filter0_d_2685_137577)'%3E%3Cmask id='a' fill='%23fff'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M27.123 13.423c-6.627 0-12 5.372-12 12v28.883c0 6.628 5.373 12 12 12h4.312v10.096c0 2.554 2.987 3.94 4.937 2.29l14.641-12.386h32.105c6.627 0 12-5.372 12-12V25.423c0-6.628-5.373-12-12-12H27.123z'/%3E%3C/mask%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M27.123 13.423c-6.627 0-12 5.372-12 12v28.883c0 6.628 5.373 12 12 12h4.312v10.096c0 2.554 2.987 3.94 4.937 2.29l14.641-12.386h32.105c6.627 0 12-5.372 12-12V25.423c0-6.628-5.373-12-12-12H27.123z' fill='%23fff'/%3E%3Cpath d='M31.435 66.306h1v-1h-1v1zm4.937 12.386l.646.764-.646-.764zm14.641-12.386v-1h-.366l-.28.237.646.763zm-34.89-40.883c0-6.075 4.925-11 11-11v-2c-7.18 0-13 5.82-13 13h2zm0 28.883V25.423h-2v28.883h2zm11 11c-6.075 0-11-4.925-11-11h-2c0 7.18 5.82 13 13 13v-2zm4.312 0h-4.312v2h4.312v-2zm1 11.096V66.306h-2v10.096h2zm3.291 1.527c-1.3 1.1-3.291.175-3.291-1.527h-2c0 3.405 3.983 5.253 6.583 3.053l-1.292-1.526zm14.641-12.386l-14.64 12.386 1.291 1.526L51.659 67.07l-1.292-1.527zm32.75-.237H51.014v2h32.105v-2zm11-11c0 6.075-4.924 11-11 11v2c7.18 0 13-5.82 13-13h-2zm0-28.883v28.883h2V25.423h-2zm-11-11c6.076 0 11 4.925 11 11h2c0-7.18-5.82-13-13-13v2zm-55.994 0h55.995v-2H27.123v2z' fill='%231EC6FA' fill-opacity='.5' mask='url(%23a)'/%3E%3C/g%3E%3Crect opacity='.33' x='26' y='24' width='47.467' height='4.989' rx='2.495' fill='%232FC6F6'/%3E%3Crect opacity='.33' x='26' y='34.977' width='44.155' height='4.989' rx='2.495' fill='%232FC6F6'/%3E%3Crect opacity='.33' x='26' y='45.953' width='26.493' height='4.989' rx='2.495' fill='%232FC6F6'/%3E%3Cdefs%3E%3Cfilter id='filter0_d_2685_137577' x='11.286' y='12.783' width='87.669' height='73.659' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0' result='hardAlpha'/%3E%3CfeOffset dy='3.198'/%3E%3CfeGaussianBlur stdDeviation='1.919'/%3E%3CfeComposite in2='hardAlpha' operator='out'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0.294033 0 0 0 0 0.3875 0 0 0 0.06 0'/%3E%3CfeBlend in2='BackgroundImageFix' result='effect1_dropShadow_2685_137577'/%3E%3CfeBlend in='SourceGraphic' in2='effect1_dropShadow_2685_137577' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E");
+	background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 110 93' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg filter='url(%23filter0_d_2685_137577)'%3E%3Cmask id='path-1-inside-1_2685_137577' fill='white'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M27.123 13.4229C20.4956 13.4229 15.123 18.7954 15.123 25.4228V54.3062C15.123 60.9336 20.4956 66.3062 27.123 66.3062H31.4346V76.4017C31.4346 78.9556 34.4223 80.3416 36.3721 78.6921L51.0132 66.3062H83.1177C89.7451 66.3062 95.1177 60.9336 95.1177 54.3062V25.4229C95.1177 18.7954 89.7451 13.4229 83.1177 13.4229H27.123Z'/%3E%3C/mask%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M27.123 13.4229C20.4956 13.4229 15.123 18.7954 15.123 25.4228V54.3062C15.123 60.9336 20.4956 66.3062 27.123 66.3062H31.4346V76.4017C31.4346 78.9556 34.4223 80.3416 36.3721 78.6921L51.0132 66.3062H83.1177C89.7451 66.3062 95.1177 60.9336 95.1177 54.3062V25.4229C95.1177 18.7954 89.7451 13.4229 83.1177 13.4229H27.123Z' fill='white'/%3E%3Cpath d='M31.4346 66.3062H32.4346V65.3062H31.4346V66.3062ZM36.3721 78.6921L37.018 79.4555L37.018 79.4555L36.3721 78.6921ZM51.0132 66.3062V65.3062H50.6469L50.3673 65.5427L51.0132 66.3062ZM16.123 25.4228C16.123 19.3477 21.0479 14.4229 27.123 14.4229V12.4229C19.9433 12.4229 14.123 18.2431 14.123 25.4228H16.123ZM16.123 54.3062V25.4228H14.123V54.3062H16.123ZM27.123 65.3062C21.0479 65.3062 16.123 60.3813 16.123 54.3062H14.123C14.123 61.4859 19.9433 67.3062 27.123 67.3062V65.3062ZM31.4346 65.3062H27.123V67.3062H31.4346V65.3062ZM32.4346 76.4017V66.3062H30.4346V76.4017H32.4346ZM35.7263 77.9286C34.4264 79.0283 32.4346 78.1043 32.4346 76.4017H30.4346C30.4346 79.8069 34.4183 81.6549 37.018 79.4555L35.7263 77.9286ZM50.3673 65.5427L35.7263 77.9286L37.018 79.4555L51.659 67.0696L50.3673 65.5427ZM83.1177 65.3062H51.0132V67.3062H83.1177V65.3062ZM94.1177 54.3062C94.1177 60.3813 89.1928 65.3062 83.1177 65.3062V67.3062C90.2974 67.3062 96.1177 61.4859 96.1177 54.3062H94.1177ZM94.1177 25.4229V54.3062H96.1177V25.4229H94.1177ZM83.1177 14.4229C89.1928 14.4229 94.1177 19.3477 94.1177 25.4229H96.1177C96.1177 18.2432 90.2974 12.4229 83.1177 12.4229V14.4229ZM27.123 14.4229H83.1177V12.4229H27.123V14.4229Z' fill='%231EC6FA' fill-opacity='0.5' mask='url(%23path-1-inside-1_2685_137577)'/%3E%3C/g%3E%3Crect opacity='0.33' x='26' y='24' width='47.4668' height='4.98927' rx='2.49463' fill='%232FC6F6'/%3E%3Crect opacity='0.33' x='26' y='34.9766' width='44.1552' height='4.98927' rx='2.49463' fill='%232FC6F6'/%3E%3Crect opacity='0.33' x='26' y='45.9531' width='26.4931' height='4.98927' rx='2.49463' fill='%232FC6F6'/%3E%3Cdefs%3E%3Cfilter id='filter0_d_2685_137577' x='11.2858' y='12.7833' width='87.669' height='73.659' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0' result='hardAlpha'/%3E%3CfeOffset dy='3.19767'/%3E%3CfeGaussianBlur stdDeviation='1.9186'/%3E%3CfeComposite in2='hardAlpha' operator='out'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0.294033 0 0 0 0 0.3875 0 0 0 0.06 0'/%3E%3CfeBlend mode='normal' in2='BackgroundImageFix' result='effect1_dropShadow_2685_137577'/%3E%3CfeBlend mode='normal' in='SourceGraphic' in2='effect1_dropShadow_2685_137577' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E%0A");
 }
 
 .booking-resource-creation-wizard-message-template-empty-text {
@@ -1287,45 +1346,97 @@
 	font-size: var(--ui-font-size-lg);
 }
 
-.resource-creation-wizard__form-week-days-popup {
-	display: flex;
-	gap: 2px;
-	-webkit-user-select: none;
-	        user-select: none;
+.resource-notification-card-communication-box {
+	display: grid;
+	gap: 8px;
+	grid-auto-flow: column;
 }
 
-.resource-creation-wizard__form-week-days-popup-weekday {
+.resource-notification-card-communication-item {
 	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	width: 30px;
-	height: 60px;
-	border-radius: 8px;
-	background: #EEF2F4;
+	gap:12px;
+	border-radius: var(--ui-border-radius-md);
+	border: var(--ui-border-width-thin) solid var(--ui-color-base-6);
+	background: var(--ui-color-base-8);
+	color: var(--ui-color-base-3);
+	font-size: var(--ui-font-size-xs);
+	line-height: var(--ui-font-line-height-3xs);
+	padding: 12px 11px;
 	cursor: pointer;
 }
 
-.resource-creation-wizard__form-week-days-popup-weekday-text {
-	font-size: 14px;
-	color: #333333;
-	margin-bottom: 6px;
+.resource-notification-card-communication-item.--ai-call {
+	order: -1;
 }
 
-.resource-creation-wizard__form-week-days-popup-weekday-icon {
+.resource-notification-card-communication-item:hover {
+	background: url('../images/glow-ia.png') no-repeat center;
+	background-size: cover;
+	border-color: transparent;
+}
+
+.resource-notification-card-communication-item.--active {
+	background: url('../images/glow-ia.png') no-repeat center;
+	background-size: cover;
+	border-color: var(--ui-color-accent-main-primary);
+}
+
+.resource-notification-card-communication-item-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 34px;
+	height: 34px;
+	border-radius: var(--ui-border-radius-xs);
+}
+
+.resource-notification-card-communication-item-icon.--bitrix {
+	background: var(--ui-color-gray-04);
+}
+
+.resource-notification-card-communication-item-icon.--ai_call {
+	background: url("data:image/png;base64,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") no-repeat center;
+	background-size: contain;
+}
+
+.resource-notification-card-communication-item-title {
+	color: var(--ui-color-base-1);
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-sm);
+}
+
+.resource-notification-card-communication-item.--active .resource-notification-card-communication-item-title {
+	color:  var(--ui-color-accent-main-primary);
+}
+
+.resource-notification-card-communication-item-img {
+	width: 100%;
+}
+
+.resource-notification-card-ai-settings-card {
+	border-radius: var(--ui-border-radius-lg);
+	background: var(--ui-color-accent-soft-blue-3);
+	padding: 18px 20px 20px 122px;
 	box-sizing: border-box;
-	width: 20px;
-	height: 20px;
-	background: #fff;
-	border: 1px solid #C9CCD0;
-	border-radius: 50%;
+	background-image: url(../images/ai-calls.png);
+	background-size: 106px;
+	background-position: left, bottom;
+	background-repeat: no-repeat;
 }
 
-.resource-creation-wizard__form-week-days-popup-weekday.--selected {
-	background: #D3F4FF;
+.resource-notification-card-ai-settings-card-title {
+	margin-bottom: 4px;
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-2xs);
+	letter-spacing: var(--ui-text-letter-spacing-neg-1);
 }
 
-.resource-creation-wizard__form-week-days-popup-weekday.--selected .resource-creation-wizard__form-week-days-popup-weekday-icon {
-	border: none;
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='10' cy='10' r='10' fill='%2300B0E8'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M9.005 11.136l5.282-5.214 1.598 1.607-6.855 6.796-.025-.025-.025.025-4.193-4.059L6.385 8.66l2.62 2.477z' fill='%23fff'/%3E%3C/svg%3E");
+.resource-notification-card-ai-settings-card-description {
+	margin-bottom: 14px;
+	color: var(--ui-color-base-2);
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var(--ui-font-line-height-2xs);
+	letter-spacing: var(--ui-letter-spacing-l);
 }

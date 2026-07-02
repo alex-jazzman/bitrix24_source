@@ -6,7 +6,7 @@
 
 /* size */
 .ui-chip {
-	--min-height: 32px;
+	--min-height: 34px;
 	--padding: 0 12px;
 	--font-size: var(--ui-font-size-md);
 	--line-height: var(--ui-font-line-height-sm);
@@ -86,6 +86,52 @@
 	--text-color: var(--ui-color-design-filled-na-content);
 	--background: var(--ui-color-design-filled-na-bg);
 	--border-color: var(--ui-color-design-filled-na-stroke);
+}
+
+.ui-chip.--filled-bitrix-gpt {
+	--text-color: var(--ui-color-base-white-fixed);
+	--clear-color: var(--ui-color-base-white-fixed);
+	--background: linear-gradient(
+		256.63deg,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-5, rgb(249, 98, 105)) 2.92%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-4, rgb(240, 70, 183)) 26%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-3, rgb(157, 72, 255)) 49.07%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-2, rgb(63, 104, 255)) 76.77%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-1, rgb(0, 152, 234)) 86%
+	) padding-box,
+		linear-gradient(transparent, transparent) border-box;
+	--background-hover: linear-gradient(
+		256.63deg,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-5, rgb(249, 98, 105)) 2.92%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-4, rgb(240, 70, 183)) 26%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-3, rgb(157, 72, 255)) 49.07%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-2, rgb(63, 104, 255)) 76.77%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-1, rgb(0, 152, 234)) 86%
+	) padding-box,
+		linear-gradient(transparent, transparent) border-box;
+	--border-color: transparent;
+	position: relative;
+}
+
+.ui-chip.--filled-bitrix-gpt::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	border-radius: inherit;
+	background: var(--ui-color-bg-state-hover-default, rgba(0, 0, 0, 0.03));
+	opacity: 0;
+	transition: opacity var(--transition-duration);
+	pointer-events: none;
+}
+
+.ui-chip.--filled-bitrix-gpt:hover::after {
+	opacity: 1;
+}
+
+.ui-chip.--filled-bitrix-gpt:active::after,
+.ui-chip.--filled-bitrix-gpt:focus-visible::after {
+	opacity: 1;
+	background: var(--ui-color-bg-state-click-default, rgba(0, 0, 0, 0.05));
 }
 
 .ui-chip.--filled-inverted {
@@ -191,6 +237,70 @@
 	--border-color: var(--ui-color-design-outline-copilot-stroke);
 }
 
+.ui-chip.--outline-bitrix-gpt {
+	--background: linear-gradient(var(--ui-color-design-outline-bitrix-gpt-bg, white), var(--ui-color-design-outline-bitrix-gpt-bg, white)) padding-box,
+		linear-gradient(
+			257.74deg,
+			var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-5, #f89ecb) 1.67%,
+			var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-4, #ed99e0) 21.82%,
+			var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-3, #cc9afd) 52.44%,
+			var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-2, #92aefe) 76.41%,
+			var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-1, #73c6f3) 97.21%
+		) border-box;
+	--background-hover: linear-gradient(var(--ui-color-design-outline-bitrix-gpt-bg, white), var(--ui-color-design-outline-bitrix-gpt-bg, white)) padding-box,
+		linear-gradient(
+			257.74deg,
+			var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-5, #f89ecb) 1.67%,
+			var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-4, #ed99e0) 21.82%,
+			var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-3, #cc9afd) 52.44%,
+			var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-2, #92aefe) 76.41%,
+			var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-1, #73c6f3) 97.21%
+		) border-box;
+	--border-color: transparent;
+	--border-color-hover: transparent;
+	--icon-color: var(--ui-color-design-outline-bitrix-gpt-content-icon, #0098ea);
+	--icon-color-hover: var(--ui-color-design-outline-bitrix-gpt-content-icon, #0098ea);
+	--clear-color: var(--ui-color-design-outline-bitrix-gpt-content-gradient-4, rgb(240, 70, 183));
+	--box-shadow: 0 1px 1px rgba(0, 0, 0, 0.02);
+	position: relative;
+}
+
+.ui-chip.--outline-bitrix-gpt .ui-chip-text,
+.ui-chip.--outline-bitrix-gpt:hover .ui-chip-text {
+	background-image: linear-gradient(
+		257.74deg,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-5, rgb(249, 98, 105)) 1.67%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-4, rgb(240, 70, 183)) 21.82%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-3, rgb(157, 72, 255)) 52.44%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-2, rgb(63, 104, 255)) 76.41%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-1, rgb(0, 152, 234)) 97.21%
+	);
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+}
+
+.ui-chip.--outline-bitrix-gpt::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	border-radius: inherit;
+	background: var(--ui-color-bg-state-hover-default, rgba(0, 0, 0, 0.03));
+	opacity: 0;
+	transition: opacity var(--transition-duration);
+	pointer-events: none;
+}
+
+.ui-chip.--outline-bitrix-gpt:hover::after {
+	opacity: 1;
+}
+
+.ui-chip.--outline-bitrix-gpt:active::after,
+.ui-chip.--outline-bitrix-gpt:focus-visible::after {
+	opacity: 1;
+	background: var(--ui-color-bg-state-click-default, rgba(0, 0, 0, 0.05));
+}
+
 .ui-chip.--shadow-no-accent {
 	--text-color: var(--ui-color-base-3);
 	--text-color-hover: var(--ui-color-base-1);
@@ -236,6 +346,7 @@
 	--text-color: var(--ui-color-base-5);
 	--background: var(--ui-color-base-7);
 	--border-color: var(--ui-color-base-7);
+	--cursor: default;
 }
 
 
@@ -357,3 +468,29 @@
 .ui-chip:hover .ui-chip-lock {
 	opacity: var(--ui-opacity-70);
 }
+
+.ui-chip.--collapsed .ui-chip-text {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+.ui-chip.--collapsed:not(.--with-right-icon):not(:has(.ui-chip-lock)),
+.ui-chip.--no-text:not(.--with-right-icon):has(.ui-chip-text:empty) {
+	width: var(--min-height);
+	min-width: var(--min-height);
+	padding: 0;
+	justify-content: center;
+}
+
+.ui-chip.--collapsed:not(.--with-right-icon):not(:has(.ui-chip-lock)) .ui-chip-icon,
+.ui-chip.--no-text:not(.--with-right-icon):has(.ui-chip-text:empty) .ui-chip-icon {
+	margin: 0;
+}
+

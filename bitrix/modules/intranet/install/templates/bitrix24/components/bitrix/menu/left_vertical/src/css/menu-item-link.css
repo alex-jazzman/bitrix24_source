@@ -59,6 +59,11 @@
 	mask-image: none;
 }
 
+html[data-input-modality="pointer"] .menu-items-view-mode .menu-item-link:focus-visible,
+html[data-input-modality="pointer"] .menu-items-view-mode .menu-item-block:not(.menu-item-group):not(.menu-item-draggable) .menu-item-link:focus-visible {
+	outline: none;
+}
+
 .menu-items-view-mode .menu-item-block.menu-all-groups:not(.menu-item-draggable) .menu-item-link {
 	clip-path: inset(0 0 0 0);
 	mask-image: linear-gradient(to left, rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 1) 0px);

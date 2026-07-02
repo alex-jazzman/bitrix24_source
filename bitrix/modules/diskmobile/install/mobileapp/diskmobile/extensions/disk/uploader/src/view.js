@@ -338,6 +338,8 @@ jn.define('disk/uploader/src/view', (require, exports, module) => {
 
 		render()
 		{
+			const { shouldOpenNativeViewer } = this.props;
+
 			return Box(
 				{
 					withScroll: true,
@@ -348,6 +350,7 @@ jn.define('disk/uploader/src/view', (require, exports, module) => {
 					{},
 					...this.tasks.map((task) => new DiskUploaderFileRow({
 						...task,
+						shouldOpenNativeViewer,
 						ref: (ref) => {
 							this.fileRowRefs.set(task.taskId, ref);
 						},

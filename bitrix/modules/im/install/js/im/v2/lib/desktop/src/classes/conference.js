@@ -1,6 +1,7 @@
+import { Loc } from 'main.core';
+
 import { DesktopApi } from 'im.v2.lib.desktop-api';
 import { Utils } from 'im.v2.lib.utils';
-import { Loc, Reflection } from 'main.core';
 
 let conferenceList = [];
 let conferenceIndex = 0;

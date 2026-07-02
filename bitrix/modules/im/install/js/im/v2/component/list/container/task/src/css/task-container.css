@@ -1,8 +1,6 @@
 .bx-im-list-container-task__container {
 	--im-list-container-task__background-color: var(--im-color-palette-white-base);
 	--im-list-container-task__background-color_separator: rgba(var(--im-color-palette-gray-90-rgb), 0.08);
-	--im-list-container-task__background-color_create-button: rgba(var(--im-color-palette-blue-60-rgb), 0.12);;
-	--im-list-container-task__background-color_create-button-hover: rgba(var(--im-color-palette-blue-60-rgb), 0.22);
 	--im-list-container-task__font-color_header-title: var(--im-color-palette-black-base);
 
 	width: 100%;
@@ -25,22 +23,6 @@
 .bx-im-list-container-task__search-input_container {
 	flex-grow: 1;
 	margin-right: 16px;
-}
-
-.bx-im-list-container-task__header_create-task {
-	width: 44px;
-	height: 34px;
-	border-radius: 80px;
-	background-color: var(--im-list-container-task__background-color_create-button);
-	background-image: url('./images/plus.svg');
-	background-position: center;
-	background-repeat: no-repeat;
-	cursor: pointer;
-	transition: background-color 0.2ms ease;
-}
-
-.bx-im-list-container-task__header_create-task:hover {
-	background-color: var(--im-list-container-task__background-color_create-button-hover);
 }
 
 .bx-im-list-container-task__elements_container {

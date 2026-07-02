@@ -15,40 +15,6 @@ use Bitrix\Main\ModuleManager;
 use Bitrix\Main\UI\EntitySelector;
 
 if (
-	$arResult["SHOW_FULL_FORM"]
-	&& $arResult["BLOG_POST_TASKS"]
-)
-{
-	$userPage = Option::get('socialnetwork', 'user_page', SITE_DIR.'company/personal/');
-	$workgroupPage = Option::get('socialnetwork', 'workgroups_page', SITE_DIR.'workgroups/');
-
-	$arParams['PATH_TO_USER_PROFILE'] = (!empty($arParams['PATH_TO_USER_PROFILE']) ? $arParams['PATH_TO_USER_PROFILE'] : $workgroupPage.'user/#user_id#/');
-	$arParams['PATH_TO_GROUP'] = (!empty($arParams['PATH_TO_GROUP']) ? $arParams['PATH_TO_GROUP'] : $workgroupPage.'group/#group_id#/');
-	$arParams['PATH_TO_USER_TASKS'] = (!empty($arParams['PATH_TO_USER_TASKS']) ? $arParams['PATH_TO_USER_TASKS'] : $userPage.'user/#user_id#/tasks/');
-	$arParams['PATH_TO_USER_TASKS_TASK'] = (!empty($arParams['PATH_TO_USER_TASKS_TASK']) ? $arParams['PATH_TO_USER_TASKS_TASK'] : $userPage.'user/#user_id#/tasks/task/#action#/#task_id#/');
-	$arParams['PATH_TO_GROUP_TASKS'] = (!empty($arParams['PATH_TO_GROUP_TASKS']) ? $arParams['PATH_TO_GROUP_TASKS'] : $workgroupPage.'group/#group_id#/tasks/');
-	$arParams['PATH_TO_GROUP_TASKS_TASK'] = (!empty($arParams['PATH_TO_GROUP_TASKS_TASK']) ? $arParams['PATH_TO_GROUP_TASKS_TASK'] : $workgroupPage.'group/#group_id#/tasks/task/#action#/#task_id#/');
-	$arParams['PATH_TO_USER_TASKS_PROJECTS_OVERVIEW'] = (!empty($arParams['PATH_TO_USER_TASKS_PROJECTS_OVERVIEW']) ? $arParams['PATH_TO_USER_TASKS_PROJECTS_OVERVIEW'] : $userPage.'user/#user_id#/tasks/projects/');
-	$arParams['PATH_TO_USER_TASKS_SCRUM_OVERVIEW'] = (!empty($arParams['PATH_TO_USER_TASKS_SCRUM_OVERVIEW']) ? $arParams['PATH_TO_USER_TASKS_SCRUM_OVERVIEW'] : $userPage.'user/#user_id#/tasks/scrum/');
-	$arParams['PATH_TO_USER_TASKS_TEMPLATES'] = (!empty($arParams['PATH_TO_USER_TASKS_TEMPLATES']) ? $arParams['PATH_TO_USER_TASKS_TEMPLATES'] : $userPage.'user/#user_id#/tasks/templates/');
-	$arParams['PATH_TO_USER_TEMPLATES_TEMPLATE'] = (!empty($arParams['PATH_TO_USER_TEMPLATES_TEMPLATE']) ? $arParams['PATH_TO_USER_TEMPLATES_TEMPLATE'] : $userPage.'user/#user_id#/tasks/templates/template/#action#/#template_id#/');
-	$arParams['TASK_SUBMIT_BACKURL'] = $APPLICATION->GetCurPageParam(isset($arParams["LOG_EXPERT_MODE"]) && $arParams["LOG_EXPERT_MODE"] === 'Y' ? "taskIdCreated=#task_id#" : "", [
-		"flt_created_by_id",
-		"flt_group_id",
-		"flt_to_user_id",
-		"flt_date_datesel",
-		"flt_date_days",
-		"flt_date_from",
-		"flt_date_to",
-		"flt_date_to",
-		"preset_filter_id",
-		"sessid",
-		"bxajaxid",
-		"logajax"
-	]);
-}
-
-if (
 	isset($_GET["taskIdCreated"])
 	&& (int)$_GET["taskIdCreated"] > 0
 )
@@ -153,11 +119,6 @@ if (
 	}
 
 	$arResult['selectedGratitudeEntities'] = EntitySelector\Converter::sortEntities(EntitySelector\Converter::convertFromFinderCodes(array_keys($gratCurrentUsersList)));
-}
-
-if ($arResult["BLOG_POST_TASKS"])
-{
-	$arResult['tabs'][] = 'tasks';
 }
 
 if (

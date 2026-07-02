@@ -12,5 +12,10 @@ export var SDKEvents;
     SDKEvents["userIsKicked"] = "userIsKicked";
     SDKEvents["userConfirmKickFromBoard"] = "userConfirmKickFromBoard";
     SDKEvents["shareElementWithSocials"] = "shareElementWithSocials";
+    SDKEvents["shareElementWithBitrix"] = "shareElementWithBitrix";
+    SDKEvents["aiTextRequest"] = "aiTextRequest";
+    SDKEvents["aiTextResponse"] = "aiTextResponse";
+    SDKEvents["aiTextError"] = "aiTextError";
+    SDKEvents["aiTextCancel"] = "aiTextCancel";
 })(SDKEvents || (SDKEvents = {}));
 //# sourceMappingURL=events.js.map

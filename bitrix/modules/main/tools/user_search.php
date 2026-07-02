@@ -13,8 +13,8 @@ if(!($USER->CanDoOperation('view_subordinate_users') || $USER->CanDoOperation('v
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/admin/user_admin.php");
 IncludeModuleLangFile(__FILE__);
 
-$FN = preg_replace("/[^a-z0-9_\\[\\]:]/i", "", $_REQUEST["FN"]);
-$FC = preg_replace("/[^a-z0-9_\\[\\]:]/i", "", $_REQUEST["FC"]);
+$FN = preg_replace("/[^a-z0-9_\\[\\]:]/i", "", $_REQUEST["FN"] ?? '');
+$FC = preg_replace("/[^a-z0-9_\\[\\]:]/i", "", $_REQUEST["FC"] ?? '');
 if($FN == "")
 	$FN = "find_form";
 if($FC == "")
@@ -53,40 +53,38 @@ $arFilterFields = Array(
 	"find_group_id"
 );
 
-$lAdmin->InitFilter($arFilterFields);
+$filter = $lAdmin->InitFilter($arFilterFields);
 
 //инициализация массива фильтра для GetList
-function CheckFilter($FilterArr) // проверка введенных полей
+function CheckFilter($filter) // проверка введенных полей
 {
 	global $strError;
-	foreach($FilterArr as $f)
-		global $$f;
 
 	$str = "";
-	if(trim($find_timestamp_1) <> '' || trim($find_timestamp_2) <> '')
+	if(trim($filter['find_timestamp_1']) <> '' || trim($filter['find_timestamp_2']) <> '')
 	{
 		$date_1_ok = false;
-		$date1_stm = MkDateTime(FmtDate($find_timestamp_1,"D.M.Y"),"d.m.Y");
-		$date2_stm = MkDateTime(FmtDate($find_timestamp_2,"D.M.Y")." 23:59","d.m.Y H:i");
-		if (!$date1_stm && trim($find_timestamp_1) <> '')
+		$date1_stm = MkDateTime(FmtDate($filter['find_timestamp_1'],"D.M.Y"),"d.m.Y");
+		$date2_stm = MkDateTime(FmtDate($filter['find_timestamp_2'],"D.M.Y")." 23:59","d.m.Y H:i");
+		if (!$date1_stm && trim($filter['find_timestamp_1']) <> '')
 			$str.= GetMessage("MAIN_WRONG_TIMESTAMP_FROM")."<br>";
 		else $date_1_ok = true;
-		if (!$date2_stm && trim($find_timestamp_2) <> '')
+		if (!$date2_stm && trim($filter['find_timestamp_2']) <> '')
 			$str.= GetMessage("MAIN_WRONG_TIMESTAMP_TILL")."<br>";
 		elseif ($date_1_ok && $date2_stm <= $date1_stm && $date2_stm <> '')
 			$str.= GetMessage("MAIN_FROM_TILL_TIMESTAMP")."<br>";
 	}
 
-	if(trim($find_last_login_1) <> '' || trim($find_last_login_2) <> '')
+	if(trim($filter['find_last_login_1']) <> '' || trim($filter['find_last_login_2']) <> '')
 	{
 		$date_1_ok = false;
-		$date1_stm = MkDateTime(FmtDate($find_last_login_1,"D.M.Y"),"d.m.Y");
-		$date2_stm = MkDateTime(FmtDate($find_last_login_2,"D.M.Y")." 23:59","d.m.Y H:i");
-		if(!$date1_stm && trim($find_last_login_1) <> '')
+		$date1_stm = MkDateTime(FmtDate($filter['find_last_login_1'],"D.M.Y"),"d.m.Y");
+		$date2_stm = MkDateTime(FmtDate($filter['find_last_login_2'],"D.M.Y")." 23:59","d.m.Y H:i");
+		if(!$date1_stm && trim($filter['find_last_login_1']) <> '')
 			$str.= GetMessage("MAIN_WRONG_LAST_LOGIN_FROM")."<br>";
 		else
 			$date_1_ok = true;
-		if(!$date2_stm && trim($find_last_login_2) <> '')
+		if(!$date2_stm && trim($filter['find_last_login_2']) <> '')
 			$str.= GetMessage("MAIN_WRONG_LAST_LOGIN_TILL")."<br>";
 		elseif($date_1_ok && $date2_stm <= $date1_stm && $date2_stm <> '')
 			$str.= GetMessage("MAIN_FROM_TILL_LAST_LOGIN")."<br>";
@@ -104,20 +102,20 @@ function CheckFilter($FilterArr) // проверка введенных поле
 }
 
 $arFilter = Array();
-if(CheckFilter($arFilterFields))
+if(CheckFilter($filter))
 {
 	$arFilter = Array(
-		"ID"			=> $find_id,
-		"TIMESTAMP_1"	=> $find_timestamp_1,
-		"TIMESTAMP_2"	=> $find_timestamp_2,
-		"LAST_LOGIN_1"	=> $find_last_login_1,
-		"LAST_LOGIN_2"	=> $find_last_login_2,
-		"ACTIVE"		=> $find_active,
-		"LOGIN"			=>	($find!='' && $find_type == "login"? $find: $find_login),
-		"NAME"			=>	($find!='' && $find_type == "name"? $find: $find_name),
-		"EMAIL"			=>	($find!='' && $find_type == "email"? $find: $find_email),
-		"KEYWORDS"		=> $find_keywords,
-		"GROUPS_ID"		=> $find_group_id
+		"ID"			=> $filter['find_id'],
+		"TIMESTAMP_1"	=> $filter['find_timestamp_1'],
+		"TIMESTAMP_2"	=> $filter['find_timestamp_2'],
+		"LAST_LOGIN_1"	=> $filter['find_last_login_1'],
+		"LAST_LOGIN_2"	=> $filter['find_last_login_2'],
+		"ACTIVE"		=> $filter['find_active'],
+		"LOGIN"			=>	($filter['find'] != "" && $filter['find_type'] == "login" ? $filter['find'] : $filter['find_login']),
+		"NAME"			=>	($filter['find'] != "" && $filter['find_type'] == "name" ? $filter['find'] : $filter['find_name']),
+		"EMAIL"			=>	($filter['find'] != "" && $filter['find_type'] == "email" ? $filter['find'] : $filter['find_email']),
+		"KEYWORDS"		=> $filter['find_keywords'],
+		"GROUPS_ID"		=> $filter['find_group_id']
 	);
 }
 
@@ -172,11 +170,11 @@ $lAdmin->AddHeaders(array(
 // построение списка
 while($arRes = $rsData->GetNext())
 {
-	$f_ID = $arRes['ID'];
-	$row =& $lAdmin->AddRow($f_ID, $arRes);
-	$row->AddViewField("ID", $f_ID);
+	$userId = $arRes['ID'];
+	$row = $lAdmin->AddRow($userId, $arRes);
+	$row->AddViewField("ID", $userId);
 	$row->AddCheckField("ACTIVE", false);
-	$row->AddViewField("LOGIN", "<a href=\"javascript:SetValue('".$f_ID."');\" title=\"".GetMessage("MAIN_CHANGE")."\">".$arRes["LOGIN"]."</a>");
+	$row->AddViewField("LOGIN", "<a href=\"javascript:SetValue('".$userId."');\" title=\"".GetMessage("MAIN_CHANGE")."\">".$arRes["LOGIN"]."</a>");
 	$row->AddViewField("NAME", $arRes["NAME"]);
 	$row->AddViewField("LAST_NAME", $arRes["LAST_NAME"]);
 	$row->AddViewField("EMAIL", TxtToHtml($arRes["EMAIL"]));
@@ -201,7 +199,7 @@ while($arRes = $rsData->GetNext())
 		"ICON"=>"",
 		"TEXT"=>GetMessage("MAIN_CHANGE"),
 		"DEFAULT"=>true,
-		"ACTION"=>"SetValue('".$f_ID."');"
+		"ACTION"=>"SetValue('".$userId."');"
 	);
 	$row->AddActions($arActions);
 }
@@ -217,18 +215,18 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_popup_adm
 <script>
 function SetValue(id)
 {
-	<?if ($JSFUNC <> ''){?>
+	<?php if ($JSFUNC <> ''){?>
 	window.opener.SUV<?=$JSFUNC?>(id);
-	<?}else{?>
-	window.opener.document.<?echo $FN;?>["<?echo $FC;?>"].value=id;
+	<?php } else {?>
+	window.opener.document.<?= $FN;?>["<?= $FC;?>"].value=id;
 	if (window.opener.BX)
-		window.opener.BX.fireEvent(window.opener.document.<?echo $FN;?>["<?echo $FC;?>"], 'change');
+		window.opener.BX.fireEvent(window.opener.document.<?= $FN;?>["<?= $FC;?>"], 'change');
 	window.close();
-	<?}?>
+	<?php }?>
 }
 </script>
-<form name="find_form" method="GET" action="<?echo $APPLICATION->GetCurPage()?>?">
-<?
+<form name="find_form" method="GET" action="<?= $APPLICATION->GetCurPage()?>?">
+<?php
 $oFilter = new CAdminFilter(
 	$sTableID."_filter",
 	array(
@@ -249,66 +247,66 @@ $oFilter->Begin();
 <tr>
 	<td><b><?=GetMessage("MAIN_FLT_SEARCH")?></b></td>
 	<td nowrap>
-		<input type="text" size="25" name="find" value="<?echo htmlspecialcharsbx($find)?>" title="<?=GetMessage("MAIN_FLT_SEARCH_TITLE")?>">
+		<input type="text" size="25" name="find" value="<?= htmlspecialcharsbx($filter['find'])?>" title="<?=GetMessage("MAIN_FLT_SEARCH_TITLE")?>">
 		<select name="find_type">
-			<option value="login"<?if($find_type=="login") echo " selected"?>><?=GetMessage('MAIN_FLT_LOGIN')?></option>
-			<option value="email"<?if($find_type=="email") echo " selected"?>><?=GetMessage('MAIN_FLT_EMAIL')?></option>
-			<option value="name"<?if($find_type=="name") echo " selected"?>><?=GetMessage('MAIN_FLT_FIO')?></option>
+			<option value="login"<?php if($filter['find_type'] == "login") echo " selected"?>><?=GetMessage('MAIN_FLT_LOGIN')?></option>
+			<option value="email"<?php if($filter['find_type'] == "email") echo " selected"?>><?=GetMessage('MAIN_FLT_EMAIL')?></option>
+			<option value="name"<?php if($filter['find_type'] == "name") echo " selected"?>><?=GetMessage('MAIN_FLT_FIO')?></option>
 		</select>
 	</td>
 </tr>
 <tr>
-	<td><?echo GetMessage("MAIN_F_ID")?></td>
-	<td><input type="text" name="find_id" size="47" value="<?echo htmlspecialcharsbx($find_id)?>"><?=ShowFilterLogicHelp()?></td>
+	<td><?= GetMessage("MAIN_F_ID")?></td>
+	<td><input type="text" name="find_id" size="47" value="<?= htmlspecialcharsbx($filter['find_id'])?>"><?=ShowFilterLogicHelp()?></td>
 </tr>
 <tr>
-	<td><?echo GetMessage("MAIN_F_TIMESTAMP").":"?></td>
-	<td><?echo CalendarPeriod("find_timestamp_1", htmlspecialcharsbx($find_timestamp_1), "find_timestamp_2", htmlspecialcharsbx($find_timestamp_2), "find_form","Y")?></td>
+	<td><?= GetMessage("MAIN_F_TIMESTAMP").":"?></td>
+	<td><?= CalendarPeriod("find_timestamp_1", htmlspecialcharsbx($filter['find_timestamp_1']), "find_timestamp_2", htmlspecialcharsbx($filter['find_timestamp_2']), "find_form","Y")?></td>
 </tr>
 <tr>
-	<td><?echo GetMessage("MAIN_F_LAST_LOGIN").":"?></td>
-	<td><?echo CalendarPeriod("find_last_login_1", htmlspecialcharsbx($find_last_login_1), "find_last_login_2", htmlspecialcharsbx($find_last_login_2), "find_form","Y")?></td>
+	<td><?= GetMessage("MAIN_F_LAST_LOGIN").":"?></td>
+	<td><?= CalendarPeriod("find_last_login_1", htmlspecialcharsbx($filter['find_last_login_1']), "find_last_login_2", htmlspecialcharsbx($filter['find_last_login_2']), "find_form","Y")?></td>
 </tr>
 <tr>
-	<td><?echo GetMessage("F_ACTIVE")?></td>
-	<td><?
+	<td><?= GetMessage("F_ACTIVE")?></td>
+	<td><?php
 		$arr = array("reference"=>array(GetMessage("MAIN_YES"), GetMessage("MAIN_NO")), "reference_id"=>array("Y","N"));
-		echo SelectBoxFromArray("find_active", $arr, htmlspecialcharsbx($find_active), GetMessage('MAIN_ALL'));
+		echo SelectBoxFromArray("find_active", $arr, htmlspecialcharsbx($filter['find_active']), GetMessage('MAIN_ALL'));
 		?>
 	</td>
 </tr>
 <tr>
-	<td><?echo GetMessage("F_LOGIN")?></td>
-	<td><input type="text" name="find_login" size="47" value="<?echo htmlspecialcharsbx($find_login)?>"><?=ShowFilterLogicHelp()?></td>
+	<td><?= GetMessage("F_LOGIN")?></td>
+	<td><input type="text" name="find_login" size="47" value="<?= htmlspecialcharsbx($filter['find_login'])?>"><?=ShowFilterLogicHelp()?></td>
 </tr>
 <tr>
-	<td><?echo GetMessage("MAIN_F_EMAIL")?></td>
-	<td><input type="text" name="find_email" value="<?echo htmlspecialcharsbx($find_email)?>" size="47"><?=ShowFilterLogicHelp()?></td>
+	<td><?= GetMessage("MAIN_F_EMAIL")?></td>
+	<td><input type="text" name="find_email" value="<?= htmlspecialcharsbx($filter['find_email'])?>" size="47"><?=ShowFilterLogicHelp()?></td>
 </tr>
 <tr>
-	<td><?echo GetMessage("F_NAME")?></td>
-	<td><input type="text" name="find_name" value="<?echo htmlspecialcharsbx($find_name)?>" size="47"><?=ShowFilterLogicHelp()?></td>
+	<td><?= GetMessage("F_NAME")?></td>
+	<td><input type="text" name="find_name" value="<?= htmlspecialcharsbx($filter['find_name'])?>" size="47"><?=ShowFilterLogicHelp()?></td>
 </tr>
 <tr>
-	<td><?echo GetMessage("MAIN_F_KEYWORDS")?></td>
-	<td><input type="text" name="find_keywords" value="<?echo htmlspecialcharsbx($find_keywords)?>" size="47"><?=ShowFilterLogicHelp()?></td>
+	<td><?= GetMessage("MAIN_F_KEYWORDS")?></td>
+	<td><input type="text" name="find_keywords" value="<?= htmlspecialcharsbx($filter['find_keywords'])?>" size="47"><?=ShowFilterLogicHelp()?></td>
 </tr>
 <tr valign="top">
-	<td><?echo GetMessage("F_GROUP")?><br><img src="/bitrix/images/main/mouse.gif" width="44" height="21" border="0" alt=""></td>
-	<td><?
+	<td><?= GetMessage("F_GROUP")?><br><img src="/bitrix/images/main/mouse.gif" width="44" height="21" border="0" alt=""></td>
+	<td><?php
 	$z = CGroup::GetDropDownList("AND ID!=2");
-	echo SelectBoxM("find_group_id[]", $z, $find_group_id, "", false, 10);
+	echo SelectBoxM("find_group_id[]", $z, $filter['find_group_id'], "", false, 10);
 	?></td>
 </tr>
-<input type="hidden" name="FN" value="<?echo htmlspecialcharsbx($FN)?>">
-<input type="hidden" name="FC" value="<?echo htmlspecialcharsbx($FC)?>">
-<input type="hidden" name="JSFUNC" value="<?echo htmlspecialcharsbx($JSFUNC)?>">
-<?
+<input type="hidden" name="FN" value="<?= htmlspecialcharsbx($FN)?>">
+<input type="hidden" name="FC" value="<?= htmlspecialcharsbx($FC)?>">
+<input type="hidden" name="JSFUNC" value="<?= htmlspecialcharsbx($JSFUNC)?>">
+<?php
 $oFilter->Buttons(array("table_id"=>$sTableID, "url"=>$APPLICATION->GetCurPage(), "form"=>"find_form"));
 $oFilter->End();
 ?>
 </form>
-<?
+<?php
 // место для вывода списка
 $lAdmin->DisplayList();
 

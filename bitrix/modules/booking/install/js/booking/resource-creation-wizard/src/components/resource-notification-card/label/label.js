@@ -1,3 +1,4 @@
+import { Text } from 'main.core';
 import { BMenu, type MenuOptions } from 'ui.vue3.components.menu';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import { Actions } from 'ui.icon-set.api.core';
@@ -51,12 +52,12 @@ export const LabelDropdown = {
 		},
 		text(): string
 		{
-			return this.items.find(({ value }) => value === this.value).name;
+			return this.items.find(({ value }) => value === this.value)?.name ?? '';
 		},
 		menuOptions(): MenuOptions
 		{
 			return {
-				id: 'booking-resource-creation-wizard-label-dropdown-menu',
+				id: this.menuId,
 				bindElement: this.$refs.container,
 				offsetTop: 8,
 				items: this.items.map(({ name, value }) => ({
@@ -66,6 +67,10 @@ export const LabelDropdown = {
 				targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper'),
 			};
 		},
+	},
+	created(): void
+	{
+		this.menuId = `booking-resource-creation-wizard-label-dropdown-menu-${Text.getRandom(4)}`;
 	},
 	methods: {
 		handleClick(): void

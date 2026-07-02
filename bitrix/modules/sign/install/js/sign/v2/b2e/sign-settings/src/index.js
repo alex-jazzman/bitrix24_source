@@ -2,7 +2,7 @@ import { Dom, Loc, Tag, Text, Type } from 'main.core';
 import { MemoryCache } from 'main.core.cache';
 import { type BaseEvent } from 'main.core.events';
 import { FeatureStorage } from 'sign.feature-storage';
-import { DocumentInitiated, type DocumentInitiatedType, MemberRole, ProviderCode, ProviderCodeType } from 'sign.type';
+import { DocumentInitiated, type DocumentInitiatedType, MemberRole, ProviderCode, type ProviderCodeType } from 'sign.type';
 import { Api, type SetupMember } from 'sign.v2.api';
 import type { ProviderSelectedEvent, CompanySelectedEvent } from 'sign.v2.b2e.company-selector';
 import { DocumentSend } from 'sign.v2.b2e.document-send';
@@ -22,9 +22,9 @@ import {
 } from 'sign.v2.sign-settings';
 import { type SaveButton } from 'ui.buttons';
 import { Layout } from 'ui.sidepanel.layout';
-import { Uploader, UploaderEvent, UploaderFile } from 'ui.uploader.core';
+import { Uploader, UploaderEvent, type UploaderFile } from 'ui.uploader.core';
 import type { Metadata } from 'ui.wizard';
-import { B2EFeatureConfig } from './type';
+import type { B2EFeatureConfig } from './type';
 import { EntityType } from 'sign.type';
 import { SignDropdown } from 'sign.v2.b2e.sign-dropdown';
 
@@ -70,7 +70,9 @@ export class B2ESignSettings extends SignSettings
 	#saveButton: SaveButton;
 	#isMultiDocumentSaveProcessGone: boolean = false;
 	#needSkipEditorStep: boolean;
-	#previewDocumentDropdown: HTMLElement | null = null;
+	#previewDocumentDropdown: SignDropdown | null = null;
+	#preventPreviewReady: boolean = false;
+	#waitingForPreviewAfterReplace: boolean = false;
 
 	constructor(containerId: string, signOptions: SignOptions)
 	{
@@ -134,7 +136,6 @@ export class B2ESignSettings extends SignSettings
 			templateFolderId,
 			isOpenedAsFolder,
 			initiatedByType,
-			isPlaceholderDocumentEnabled,
 			type,
 		} = signOptions;
 
@@ -147,7 +148,6 @@ export class B2ESignSettings extends SignSettings
 		blankSelectorConfig.isOpenedAsFolder = isOpenedAsFolder;
 		blankSelectorConfig.initiatedByType = initiatedByType;
 		blankSelectorConfig.type = type;
-		blankSelectorConfig.isPlaceholderDocumentEnabled = isPlaceholderDocumentEnabled;
 
 		documentSendConfig.documentMode = documentMode;
 		documentSendConfig.isOpenedFromRobot = fromRobot;
@@ -175,10 +175,6 @@ export class B2ESignSettings extends SignSettings
 			const encodedTitle = Text.encode(title);
 
 			this.documentSetup.setDocumentTitle(encodedTitle);
-			if (!this.isGroupDocuments())
-			{
-				return;
-			}
 
 			if (this.documentsGroup.has(uid) === false)
 			{
@@ -189,9 +185,15 @@ export class B2ESignSettings extends SignSettings
 			documentDetails.title = encodedTitle;
 			this.documentsGroup.set(uid, documentDetails);
 
-			this.documentSetup.updateDocumentBlock(documentDetails.id);
-			this.addInDocumentsGroupUids(documentDetails.uid);
+			this.documentSetup.updateDocumentBlock(documentDetails.id, title);
 			this.#regionalSettings.documentsGroup = this.documentsGroup;
+
+			if (!this.isGroupDocuments())
+			{
+				return;
+			}
+
+			this.addInDocumentsGroupUids(documentDetails.uid);
 			const selectedItemUid = this.#previewDocumentDropdown.getSelectedId();
 			this.#setPreviewDocumentDropdownItems();
 			if (!selectedItemUid)
@@ -207,15 +209,26 @@ export class B2ESignSettings extends SignSettings
 		this.documentSend.subscribe('enableBack', () => {
 			this.wizard.toggleBtnActiveState('back', false);
 		});
-		this.documentSetup.subscribe('addDocument', () => {
-			this.setDocumentsGroup();
+		this.documentSetup.subscribe('addDocument', async () => {
+			try
+			{
+				await this.setDocumentsGroup();
+			}
+			finally
+			{
+				this.documentSetup.emit('addDocumentCompleted');
+			}
 		});
+		this.documentSetup.subscribe('changeDocumentTitle', this.#onChangeDocumentTitle.bind(this));
 		this.documentSetup.subscribe('deleteDocument', ({ data }) => {
 			this.#deleteDocument(data);
 		});
 		this.documentSetup.subscribe('editDocument', ({ data }) => {
 			this.#editDocumentData(data.uid);
 		});
+		this.documentSetup.subscribe('replaceDocumentStart', this.#onReplaceDocumentStart.bind(this));
+		this.documentSetup.subscribe('replaceDocumentFinish', this.#onReplaceDocumentFinish.bind(this));
+		this.documentSetup.subscribe('replaceDocument', this.#onReplaceDocument.bind(this));
 		this.documentSend.subscribe('enableComplete', () => {
 			this.wizard.toggleBtnActiveState('complete', false);
 		});
@@ -228,6 +241,7 @@ export class B2ESignSettings extends SignSettings
 		this.documentSetup.subscribe('documentsLimitNotExceeded', () => {
 			this.documentSetup.setAvailabilityDocumentSection(true);
 		});
+		this.documentSetup.subscribe('clearFiles', this.#onDocumentSetupClearFiles.bind(this));
 		this.documentSend.subscribe(
 			this.documentSend.events.onTemplateComplete,
 			(event: BaseEvent<{ templateId: number }>) => {
@@ -259,6 +273,215 @@ export class B2ESignSettings extends SignSettings
 
 			this.#previewDocumentDropdown.selectItem(uid);
 		});
+		const showBlockEditorHandler = async ({ data }) => {
+			const { uid } = data;
+			if (!uid || !this.documentsGroup.has(uid))
+			{
+				return;
+			}
+
+			const documentData = this.documentsGroup.get(uid);
+
+			this.documentSetup.ready = false;
+			this.#preventPreviewReady = true;
+			this.disablePreviewReady();
+			try
+			{
+				if (this.isGroupDocuments())
+				{
+					if (!documentData.urls)
+					{
+						await this.getPagesUrls(documentData, true);
+					}
+
+					this.editor.setUrls([], 0);
+					this.editor.setUrls(documentData.urls, documentData.urls.length);
+					await this.editor.waitForPagesUrls();
+				}
+				else if (this.pagesLoadingPromise)
+				{
+					await this.pagesLoadingPromise;
+				}
+			}
+			finally
+			{
+				this.#preventPreviewReady = false;
+				this.documentSetup.ready = true;
+				this.enablePreviewReady();
+			}
+
+			this.editor.documentData = documentData;
+			const editorPromise = this.editor.show();
+			await this.editor.renderDocument();
+			await editorPromise;
+		};
+		const showPlaceholderEditorHandler = async ({ data }) => {
+			const { uid } = data;
+			if (!uid || !this.documentsGroup.has(uid))
+			{
+				return;
+			}
+
+			const documentData = this.documentsGroup.get(uid);
+			await this.documentSetup.openOnlineEditor(documentData);
+		};
+		this.documentSetup.subscribe('editorLock', () => {
+			this.wizard.toggleBtnActiveState('back', true);
+			this.wizard.toggleBtnActiveState('next', true);
+			this.wizard.toggleBtnActiveState('complete', true);
+		});
+		this.documentSetup.subscribe('editorUnlock', () => {
+			this.wizard.toggleBtnActiveState('back', false);
+			this.wizard.toggleBtnActiveState('next', false);
+			this.wizard.toggleBtnActiveState('complete', false);
+		});
+		this.documentSetup.subscribe('showBlockEditor', showBlockEditorHandler);
+		this.documentSend.subscribe('showPlaceholderEditor', showPlaceholderEditorHandler);
+	}
+
+	async #onReplaceDocument(event: BaseEvent<{ documentData: DocumentDetails }>): Promise<void>
+	{
+		const documentData = event?.getData?.()?.documentData;
+		if (!documentData)
+		{
+			return;
+		}
+
+		if (this.documentsGroup.has(documentData.uid))
+		{
+			this.documentsGroup.set(documentData.uid, documentData);
+		}
+
+		if (this.editedDocument?.uid === documentData.uid)
+		{
+			this.editedDocument = documentData;
+		}
+
+		this.documentSend.setDocumentsBlock(this.documentsGroup);
+		this.#regionalSettings.documentsGroup = this.documentsGroup;
+
+		if (this.isGroupDocuments())
+		{
+			this.#previewDocumentDropdown.setItemSelected(documentData.uid);
+		}
+
+		this.#waitingForPreviewAfterReplace = true;
+		try
+		{
+			// The replaced document keeps the same uid, so prepared pages may still belong to the previous file.
+			await this.renderPages(documentData, false, false);
+			await this.pagesLoadingPromise;
+		}
+		finally
+		{
+			this.#waitingForPreviewAfterReplace = false;
+		}
+	}
+
+	#blockNextWhilePreviewLoading(): void
+	{
+		if (!this.#waitingForPreviewAfterReplace || !this.pagesLoadingPromise)
+		{
+			return;
+		}
+
+		this.wizard.toggleBtnActiveState('next', true);
+		this.pagesLoadingPromise.finally(() => {
+			this.wizard.toggleBtnActiveState('next', false);
+		});
+	}
+
+	#enableNextWhenPreviewReady(): void
+	{
+		if (this.documentSetup.isEditorFlowPending)
+		{
+			return;
+		}
+
+		if (!this.pagesLoadingPromise)
+		{
+			this.wizard.toggleBtnActiveState('next', false);
+
+			return;
+		}
+
+		this.wizard.toggleBtnActiveState('next', true);
+		this.pagesLoadingPromise.finally(() => {
+			if (!this.documentSetup.isEditorFlowPending)
+			{
+				this.wizard.toggleBtnActiveState('next', false);
+			}
+		});
+	}
+
+	#onReplaceDocumentStart(): void
+	{
+		this.wizard.toggleBtnActiveState('next', true);
+	}
+
+	#onReplaceDocumentFinish(event: BaseEvent<{ isSuccess: boolean }>): void
+	{
+		const data = event?.getData?.() ?? event?.data ?? {};
+		if (data?.isSuccess !== false)
+		{
+			return;
+		}
+
+		this.wizard.toggleBtnActiveState('next', false);
+	}
+
+	#onDocumentSetupClearFiles(): void
+	{
+		if (this.documentSetup.isEditorFlowPending)
+		{
+			return;
+		}
+
+		if (this.documentsGroup.size > 0)
+		{
+			this.wizard.toggleBtnActiveState('next', false);
+		}
+	}
+
+	#onChangeDocumentTitle(event: BaseEvent<{ uid: string, title: string, blankTitle?: string }>): void
+	{
+		const data = event?.getData?.() ?? event?.data ?? {};
+		const title = data?.title;
+		if (!title)
+		{
+			return;
+		}
+
+		const uid = data?.uid;
+		if (!uid)
+		{
+			return;
+		}
+
+		if (!this.documentsGroup.has(uid))
+		{
+			return;
+		}
+
+		const documentDetails = this.documentsGroup.get(uid);
+		documentDetails.title = Text.encode(title);
+		this.documentsGroup.set(uid, documentDetails);
+
+		this.#regionalSettings.documentsGroup = this.documentsGroup;
+
+		if (!this.isGroupDocuments())
+		{
+			return;
+		}
+
+		const selectedItemUid = this.#previewDocumentDropdown.getSelectedId();
+		this.#setPreviewDocumentDropdownItems();
+		if (!selectedItemUid)
+		{
+			return;
+		}
+
+		this.#previewDocumentDropdown.setItemSelected(selectedItemUid);
 	}
 
 	async #editDocumentData(uid: string): Promise<void>
@@ -293,6 +516,28 @@ export class B2ESignSettings extends SignSettings
 
 		await this.renderPages(this.editedDocument, true, false);
 		this.#previewDocumentDropdown.setItemSelected(uid);
+	}
+
+	enablePreviewReady(): void
+	{
+		if (this.#preventPreviewReady)
+		{
+			return;
+		}
+
+		super.enablePreviewReady();
+	}
+
+	async renderPages(
+		documentData: DocumentDetails,
+		preparedPages: boolean = false,
+		isSelectBlank: boolean = true,
+	): Promise<void>
+	{
+		// Reset until the new pages finish loading, otherwise #processSetupData() re-enables "next"
+		// on the stale flag and the user can advance past a still-loading document.
+		this.hasPreviewUrls = false;
+		await super.renderPages(documentData, preparedPages, isSelectBlank);
 	}
 
 	getLayoutTemplate(header: HTMLElement, wizard: HTMLElement, preview: HTMLElement): HTMLElement
@@ -342,7 +587,6 @@ export class B2ESignSettings extends SignSettings
 					return;
 				}
 				const documentDetails = this.documentsGroup.get(uidFromEvent);
-				this.documentSetup.resetEditMode();
 				this.#resetDocument();
 				this.documentSetup.setDocumentTitle(documentDetails.title);
 
@@ -387,7 +631,7 @@ export class B2ESignSettings extends SignSettings
 			return;
 		}
 
-		this.documentSetup.switchAddDocumentButtonLoadingState(true);
+		this.wizard.toggleBtnActiveState('next', true);
 		try
 		{
 			const documentData = await this.setupDocument();
@@ -397,7 +641,6 @@ export class B2ESignSettings extends SignSettings
 			this.documentSetup.blankSelector.disableSelectedBlank(documentData.blankId);
 
 			await this.#attachGroupToDocument(documentData);
-			this.documentSetup.switchAddDocumentButtonLoadingState(false);
 
 			if (this.editedDocument)
 			{
@@ -423,16 +666,18 @@ export class B2ESignSettings extends SignSettings
 
 				this.#togglePreviewDocumentDropdown();
 			}
+
+			this.documentSetup.blankSelector.clearFiles({ removeFromServer: false });
 		}
 		catch
 		{
-			this.documentSetup.switchAddDocumentButtonLoadingState(false);
+			this.documentSetup.cancelEditorFlow();
 		}
 
 		this.#scrollToTop();
-		this.documentSetup.documentCounters.update(this.documentsGroup.size);
+		this.documentSetup.documentCounters?.update(this.documentsGroup.size);
 		this.#resetDocument();
-		this.wizard.toggleBtnActiveState('next', false);
+		this.#enableNextWhenPreviewReady();
 	}
 
 	addInDocumentsGroupUids(uid: string): void
@@ -450,7 +695,6 @@ export class B2ESignSettings extends SignSettings
 			&& !this.documentSetup.isFileAdded
 		)
 		{
-			this.documentSetup.resetEditMode();
 			await this.#saveUpdatedDocumentData(this.editedDocument.uid);
 			if (this.isGroupDocuments())
 			{
@@ -498,6 +742,11 @@ export class B2ESignSettings extends SignSettings
 
 	async #attachGroupToDocument(documentData): Promise<void>
 	{
+		if (this.isTemplateMode())
+		{
+			return;
+		}
+
 		if (!this.groupId)
 		{
 			const { groupId } = await this.#api.createDocumentsGroup();
@@ -573,7 +822,6 @@ export class B2ESignSettings extends SignSettings
 			this.documentSetup.blankSelector.enableSelectedBlank(blankId);
 			this.documentSetup.deleteDocumentFromList(blankId);
 			this.documentSetup.documentCounters?.update(this.documentsGroup.size);
-			this.documentSetup.resetEditMode();
 
 			if (this.documentsGroup.size === 0)
 			{
@@ -793,6 +1041,10 @@ export class B2ESignSettings extends SignSettings
 		{
 			this.documentsGroup.set(setupData.uid, setupData);
 			this.addInDocumentsGroupUids(setupData.uid);
+			if (this.isTemplateMode())
+			{
+				this.documentSetup.renderDocumentBlock(setupData);
+			}
 		}
 
 		const firstDocument = this.getFirstDocumentDataFromGroup();
@@ -884,10 +1136,17 @@ export class B2ESignSettings extends SignSettings
 					}
 				}
 
+				const hadStagedFiles = blankIsSelected || this.documentSetup.isFileAdded;
 				const setupData = await this.setupDocument();
 				if (!setupData)
 				{
-					return false;
+					if (this.documentsGroup.size === 0 || hadStagedFiles)
+					{
+						return false;
+					}
+					this.documentSetup.setupData = this.getFirstDocumentDataFromGroup();
+
+					return true;
 				}
 
 				await this.#setDocumentInGroup(setupData).then(() => {
@@ -959,6 +1218,8 @@ export class B2ESignSettings extends SignSettings
 						signSettings.#companyParty.loadFirstCompany();
 					}
 				}
+
+				signSettings.#blockNextWhilePreviewLoading();
 
 				return layout;
 			},
@@ -1109,10 +1370,13 @@ export class B2ESignSettings extends SignSettings
 		if (this.isSingleDocument())
 		{
 			this.editor.documentData = editorData;
-			await this.editor.renderDocument();
-			if ((!this.#needSkipEditorStep || this.isTemplateMode()) && !editorData.hasPlaceholders)
+			if (!editorData.hasPlaceholders)
 			{
-				await this.editor.show();
+				await this.editor.renderDocument();
+				if (!this.#needSkipEditorStep || this.isTemplateMode())
+				{
+					await this.editor.show();
+				}
 			}
 		}
 	}
@@ -1379,7 +1643,7 @@ export class B2ESignSettings extends SignSettings
 		}
 		this.editedDocument = null;
 
-		if (this.hasPreviewUrls)
+		if (this.hasPreviewUrls && !this.documentSetup.isEditorFlowPending)
 		{
 			this.wizard.toggleBtnActiveState('next', false);
 		}
@@ -1392,9 +1656,17 @@ export class B2ESignSettings extends SignSettings
 			return;
 		}
 
-		if (this.isTemplateMode() || !FeatureStorage.isGroupSendingEnabled())
+		if (!FeatureStorage.isGroupSendingEnabled())
 		{
 			this.setSingleDocument(setupData);
+
+			return;
+		}
+
+		if (this.isTemplateMode())
+		{
+			this.setSingleDocument(setupData);
+			this.documentSetup.renderDocumentBlock(setupData);
 
 			return;
 		}
@@ -1410,7 +1682,7 @@ export class B2ESignSettings extends SignSettings
 
 		if (!this.isTemplateMode())
 		{
-			this.documentSetup.documentCounters.update(this.documentsGroup.size);
+			this.documentSetup.documentCounters?.update(this.documentsGroup.size);
 		}
 
 		if (!this.editedDocument)

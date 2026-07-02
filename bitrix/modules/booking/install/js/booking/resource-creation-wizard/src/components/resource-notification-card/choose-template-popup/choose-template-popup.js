@@ -12,9 +12,9 @@ import { ChannelMenu } from '../channel-menu/channel-menu';
 
 import './choose-template-popup.css';
 
+// @vue/component
 export const ChooseTemplatePopup = {
 	name: 'ResourceNotificationChooseTemplatePopup',
-	emits: ['close', 'templateTypeSelected'],
 	props: {
 		bindElement: {
 			type: HTMLElement,
@@ -44,10 +44,16 @@ export const ChooseTemplatePopup = {
 			}),
 		},
 	},
-	data(): Object
+	emits: ['close', 'templateTypeSelected'],
+	setup(): Object
 	{
 		return {
 			IconSet,
+		};
+	},
+	data(): Object
+	{
+		return {
 			messenger: NotificationChannel.WhatsApp,
 			selectedTemplateType: this.currentTemplateType,
 		};

@@ -61,3 +61,4 @@ $MESS['CRM_DYNAMIC_ITEMS_FIELD_ASSIGNED_BY'] = "Ответственный";
 $MESS['CRM_DYNAMIC_ITEMS_FIELD_ASSIGNED_BY_FULL'] = "Идентификатор и имя пользователя, назначенного ответственным за процесс";
 $MESS['CRM_DYNAMIC_ITEMS_FIELD_WEBFORM_ID'] = "Идентификатор CRM-формы";
 $MESS['CRM_DYNAMIC_ITEMS_FIELD_WEBFORM_ID_FULL'] = "Идентификатор CRM-формы, из которой был создан элемент";
+$MESS['CRM_DYNAMIC_ITEMS_TABLE_DESCRIPTION_FULL'] = "Смарт-процесс: #TITLE#. Набор включает основные сведения из системных и пользовательских полей смарт-процесса.";

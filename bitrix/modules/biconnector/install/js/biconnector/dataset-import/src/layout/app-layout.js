@@ -15,6 +15,11 @@ export const AppLayout = {
 			required: false,
 			default: false,
 		},
+		hideButtons: {
+			type: Boolean,
+			required: false,
+			default: false,
+		},
 	},
 	computed: {
 		saveButtonClass()
@@ -69,7 +74,7 @@ export const AppLayout = {
 				<slot name="right-panel"></slot>
 			</div>
 	
-			<div class="ui-button-panel-wrapper" ref="buttonsPanel">
+			<div v-if="!hideButtons" class="ui-button-panel-wrapper" ref="buttonsPanel">
 				<div class="ui-button-panel">
 					<div class="app-root__button-wrapper" :class="saveLocked ? 'app-root__button-wrapper--blocked' : ''">
 						<button class="ui-btn ui-btn-no-caps ui-btn-lg --air --style-filled app-root__button" :class="saveButtonClass" @click="onCreateButtonClick" ref="saveButton">

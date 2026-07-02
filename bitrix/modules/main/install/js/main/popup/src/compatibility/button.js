@@ -11,7 +11,7 @@ declare type ButtonOptions = {
  * @memberOf BX.Main.Popup
  * @deprecated use BX.UI.Button
  */
-export default class Button
+export class Button
 {
 	constructor(params: ButtonOptions)
 	{
@@ -34,15 +34,19 @@ export default class Button
 		}
 
 		this.buttonNode = Dom.create(
-			'span',
+			'button',
 			{
 				props: {
 					className: 'popup-window-button' + (this.className.length > 0 ? ' ' + this.className : ''),
 					id: this.id
 				},
+				attrs: {
+					tabindex: '0',
+					type: 'button',
+				},
 				events: this.contextEvents,
-				text: this.text
-			}
+				text: this.text,
+			},
 		);
 	}
 

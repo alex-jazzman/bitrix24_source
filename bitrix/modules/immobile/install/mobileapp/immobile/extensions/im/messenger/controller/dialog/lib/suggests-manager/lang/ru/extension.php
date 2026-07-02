@@ -1,0 +1,6 @@
+<?php
+
+$MESS['IMMOBILE_MESSENGER_DIALOG_SUGGESTS_COPILOT_TITLE'] = 'Что вы хотите узнать?';
+$MESS['IMMOBILE_MESSENGER_DIALOG_SUGGESTS_COPILOT_ITEM_1'] = 'Как бороться с прокрастинацией?';
+$MESS['IMMOBILE_MESSENGER_DIALOG_SUGGESTS_COPILOT_ITEM_2'] = 'Идеи для совещаний';
+$MESS['IMMOBILE_MESSENGER_DIALOG_SUGGESTS_COPILOT_ITEM_3'] = 'Как правильно составить деловое письмо?';

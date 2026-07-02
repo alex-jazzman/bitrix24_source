@@ -8,6 +8,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 use Bitrix\Lists\Copy\Integration\Group;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Socialnetwork\V2\Public\Provider\ProjectProvider;
 
 /** @var CBitrixComponentTemplate $this */
 /** @var CBitrixComponent $component */
@@ -18,34 +19,47 @@ use Bitrix\Main\Localization\Loc;
 /** @global CMain $APPLICATION */
 
 $pageId = 'group_group_lists';
+$groupId = (int)$arResult['VARIABLES']['group_id'];
 
-include($_SERVER['DOCUMENT_ROOT'] . '/bitrix/components/bitrix/socialnetwork_group/templates/.default/util_group_menu.php');
-include($_SERVER['DOCUMENT_ROOT'] . '/bitrix/components/bitrix/socialnetwork_group/templates/.default/util_group_profile.php');
+$projectProvider = (class_exists(ProjectProvider::class) ?  new ProjectProvider() : null);
+if (!$projectProvider || !$projectProvider->isProject($groupId))
+{
+	$templatePath = '/bitrix/components/bitrix/socialnetwork_group/templates/';
+
+	include($_SERVER['DOCUMENT_ROOT'] . $templatePath . '.default/util_group_menu.php');
+	include($_SERVER['DOCUMENT_ROOT'] . $templatePath . '.default/util_group_profile.php');
+}
 
 $iblockTypeId = Option::get('lists', 'socnet_iblock_type_id');
 
-$navChainComponentParams = [
+$APPLICATION->IncludeComponent('bitrix:lists.element.navchain', '.default', [
 	'IBLOCK_TYPE_ID' => $iblockTypeId,
-	'SOCNET_GROUP_ID' => $arResult['VARIABLES']['group_id'],
+	'SOCNET_GROUP_ID' => $groupId,
 	'ADD_NAVCHAIN_GROUP' => 'Y',
 	'PATH_TO_GROUP' => $arResult['PATH_TO_GROUP'],
 	'LISTS_URL' => $arResult['PATH_TO_GROUP_LISTS'],
 	'ADD_NAVCHAIN_LIST' => 'N',
 	'ADD_NAVCHAIN_SECTIONS' => 'N',
 	'ADD_NAVCHAIN_ELEMENT' => 'N',
-];
+], $component);
 
-$copyCheckerComponentParams = [
-	'moduleId' => Group::MODULE_ID,
-	'queueId' => $arResult['VARIABLES']['group_id'],
-	'stepperClassName' => Group::STEPPER_CLASS,
-	'checkerOption' => Group::CHECKER_OPTION,
-	'errorOption' => Group::ERROR_OPTION,
-	'titleMessage' => Loc::getMessage('LISTS_STEPPER_PROGRESS_TITLE'),
-	'errorMessage' => Loc::getMessage('LISTS_STEPPER_PROGRESS_ERROR'),
-];
+$APPLICATION->includeComponent(
+	'bitrix:socialnetwork.copy.checker',
+	'',
+	[
+		'moduleId' => Group::MODULE_ID,
+		'queueId' => $groupId,
+		'stepperClassName' => Group::STEPPER_CLASS,
+		'checkerOption' => Group::CHECKER_OPTION,
+		'errorOption' => Group::ERROR_OPTION,
+		'titleMessage' => Loc::getMessage('LISTS_STEPPER_PROGRESS_TITLE'),
+		'errorMessage' => Loc::getMessage('LISTS_STEPPER_PROGRESS_ERROR'),
+	],
+	$component,
+	['HIDE_ICONS' => 'Y']
+);
 
-$listsComponentParams = [
+$APPLICATION->IncludeComponent('bitrix:lists.lists', '.default', [
 	'IBLOCK_TYPE_ID' => $iblockTypeId,
 	'LISTS_URL' => $arResult['PATH_TO_GROUP_LISTS'],
 	'LIST_URL' => $arResult['PATH_TO_GROUP_LIST_VIEW'],
@@ -53,34 +67,6 @@ $listsComponentParams = [
 	'CACHE_TYPE' => $arParams['CACHE_TYPE'],
 	'CACHE_TIME' => $arParams['CACHE_TIME'],
 	'LINE_ELEMENT_COUNT' => 3,
-	'SOCNET_GROUP_ID' => $arResult['VARIABLES']['group_id'],
+	'SOCNET_GROUP_ID' => $groupId,
 	'TITLE_TEXT' => Loc::getMessage('LISTS_SOCNET_TAB'),
-];
-
-$APPLICATION->IncludeComponent(
-	'bitrix:ui.sidepanel.wrapper',
-	'',
-	[
-		'POPUP_COMPONENT_NAME' => [
-			'bitrix:lists.element.navchain',
-			'bitrix:socialnetwork.copy.checker',
-			'bitrix:lists.lists',
-		],
-		'POPUP_COMPONENT_TEMPLATE_NAME' => [
-			'.default',
-			'',
-			'.default',
-		],
-		'POPUP_COMPONENT_PARAMS' => [
-			$navChainComponentParams,
-			$copyCheckerComponentParams,
-			$listsComponentParams,
-		],
-		'POPUP_COMPONENT_PARENT' => $component,
-		'POPUP_COMPONENT_USE_BITRIX24_THEME' => 'Y',
-		'POPUP_COMPONENT_BITRIX24_THEME_ENTITY_TYPE' => 'SONET_GROUP',
-		'POPUP_COMPONENT_BITRIX24_THEME_ENTITY_ID' => $arResult['VARIABLES']['group_id'],
-		'USE_UI_TOOLBAR' => 'Y',
-		'UI_TOOLBAR_FAVORITES_TITLE_TEMPLATE' => $arResult['PAGES_TITLE_TEMPLATE'],
-	]
-);
+], $component);

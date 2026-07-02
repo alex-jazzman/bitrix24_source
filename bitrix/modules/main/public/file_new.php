@@ -88,8 +88,6 @@ $path = "/";
 if(isset($_REQUEST["path"]) && $_REQUEST["path"] <> '')
 	$path = $io->CombinePath("/", $_REQUEST["path"]);
 
-$documentRoot = CSite::GetSiteDocRoot($site);
-
 //Site ID
 $site = SITE_ID;
 if(isset($_REQUEST["site"]) && $_REQUEST["site"] <> '')
@@ -98,6 +96,8 @@ if(isset($_REQUEST["site"]) && $_REQUEST["site"] <> '')
 	if($arSite = $obSite->Fetch())
 		$site = $arSite["ID"];
 }
+
+$documentRoot = CSite::GetSiteDocRoot($site);
 
 //Check permissions
 if($createNewFolder && (!$USER->CanDoFileOperation("fm_create_new_folder", Array($site, $path)) || !$USER->CanDoFileOperation("fm_create_new_file", Array($site, $path))) )
@@ -476,7 +476,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_REQUEST["save"]) && $strWarn
 	}
 
 	(new BX.CEditorDialog({
-		content_url: "/bitrix/admin/public_file_edit.php?<?=$_GET['subdialog'] == 'Y' ? "subdialog=Y" : ""?>&bxpublic=Y&lang=<?=CUtil::JSEscape($lang)?>" + "&path=<?=urlencode($pathToEdit)?>&site=<?=urlencode($site)?>&templateID=<?=urlencode($_REQUEST['templateID'])?>&back_url=<?=urlencode($relativePath)?>&edit_new_file_undo=<?= $ID?>",
+		content_url: "/bitrix/admin/public_file_edit.php?<?= ($_GET['subdialog'] ?? '') == 'Y' ? "subdialog=Y" : ""?>&bxpublic=Y&lang=<?=CUtil::JSEscape($lang)?>" + "&path=<?=urlencode($pathToEdit)?>&site=<?=urlencode($site)?>&templateID=<?=urlencode($_REQUEST['templateID'])?>&back_url=<?=urlencode($relativePath)?>&edit_new_file_undo=<?= $ID?>",
 		height: 470,
 		width: 780,
 		resizable: true,
@@ -484,7 +484,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_REQUEST["save"]) && $strWarn
 		min_height: 400
 	})).Show();
 </script>
-		<?
+		<?php
 		else:
 			if (isset($_GET['subdialog']) && $_GET['subdialog'] == 'Y')
 			{
@@ -566,15 +566,15 @@ if (isset($strWarning) && $strWarning != "")
 
 <p><?=GetMessage("PAGE_NEW_SUB_TITLE")?> <b><?=htmlspecialcharsbx($path)?></b></p>
 
-<?if (IsModuleInstalled("fileman")):?>
-	<?if ($createNewFolder):?>
+<?php if (IsModuleInstalled("fileman")):?>
+	<?php if ($createNewFolder):?>
 		<p><a href="/bitrix/admin/fileman_newfolder.php?lang=<?=urlencode($lang)?>&site=<?=urlencode($site)?>&path=<?=urlencode($path)?>&back_url=<?=urlencode($back_url)?>"><?=GetMessage("PAGE_NEW_EDIT_IN_ADMIN")?></a></p>
-	<?else:?>
+	<?php else:?>
 		<p><a href="/bitrix/admin/fileman_html_edit.php?lang=<?=urlencode($lang)?>&site=<?=urlencode($site)?>&path=<?=urlencode($path)?>&new=Y&back_url=<?=urlencode($back_url)?>"><?=GetMessage("PAGE_NEW_EDIT_IN_ADMIN")?></a></p>
-	<?endif?>
-<?endif?>
+	<?php endif?>
+<?php endif?>
 
-<?
+<?php
 $popupWindow->EndDescription();
 $popupWindow->StartContent();
 ?>
@@ -588,7 +588,7 @@ $popupWindow->StartContent();
 		<td class="bx-popup-label bx-width30"><?=GetMessage("PAGE_NEW_FILENAME")?>:</td>
 		<td><input type="text" style="width:90%;" id="bx_new_page_name" name="fileName" value="<?=htmlspecialcharsEx($fileName)?>" onblur="BXCheckFileName(this, <?=($createNewFolder ? "true" : "false")?>);" onkeypress="BXCheckFileName(this, <?=($createNewFolder ? "true" : "false")?>);" onkeyup="BXCheckFileName(this, <?=($createNewFolder ? "true" : "false")?>);"><font id="bx_error_text"></font>
 
-		<?if (CModule::IncludeModule("fileman") && COption::GetOptionString("fileman", "use_translit", true))
+		<?php if (CModule::IncludeModule("fileman") && COption::GetOptionString("fileman", "use_translit", true))
 		{
 			include_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/fileman/classes/general/fileman_utils.php");
 			CFilemanTransliterate::Init(array(
@@ -604,22 +604,22 @@ $popupWindow->StartContent();
 		</td>
 	</tr>
 
-	<?if (IsModuleInstalled("fileman") && $canEditNewPage):?>
+	<?php if (IsModuleInstalled("fileman") && $canEditNewPage):?>
 	<tr>
 		<td class="bx-popup-label bx-width30"></td>
 		<td><input type="checkbox" id="bx_edit_after_save" name="editAfterSave" value="Y" <?=($editAfterSave ? "checked": "")?>> <label for="bx_edit_after_save"><?=GetMessage("PAGE_NEW_EDIT_PAGE")?></label></td>
 	</tr>
-	<?endif?>
+	<?php endif?>
 
-	<?if (!empty($arMenu)):?>
+	<?php if (!empty($arMenu)):?>
 	<tr>
 		<td class="bx-popup-label bx-width30"></td>
 		<td><input type="checkbox" id="bx_add_to_menu" name="addToMenu" value="Y" onclick="BXAddMenuStep(this.checked)" <?=($addToMenu ? "checked" : "")?>> <label for="bx_add_to_menu"><?=GetMessage("PAGE_NEW_ADD_MENU")?></label>
 		</td>
 	</tr>
-	<?endif?>
+	<?php endif?>
 
-<?
+<?php
 $aUserGroups = $GLOBALS["USER"]->GetUserGroupArray();
 $arr = array_intersect($aUserGroups, $arEditGroups);
 $bInEditGroups = !empty($arr);
@@ -629,44 +629,44 @@ if($bInEditGroups || $bAdmin):
 		<td class="bx-popup-label bx-width30"></td>
 		<td><input type="checkbox" id="bx_access_limit" name="limitAccess" value="Y" onclick="BXLimitAccess(this.checked)"> <label for="bx_access_limit"><?= GetMessage($createNewFolder ? "PAGE_NEW_LIMIT_ACCESS_SEC" : "PAGE_NEW_LIMIT_ACCESS_PAGE")?></label>
 			<div id="bx_access_limit_row" style="display:none; margin: 4px 0 0 24px">
-<?if($bAdmin):?>
+<?php if($bAdmin):?>
 				<?= GetMessage("PAGE_NEW_LIMIT_ACCESS_LABLE_EX")?><br>
 
-<?if(!empty($arEditGroups)):?>
+<?php if(!empty($arEditGroups)):?>
 				<div style="margin-top:4px">
 					<input type="radio" name="limitAccessWho" value="editors" checked="checked" id="bx_acc_lim_who_editors" onclick="BXLimitAccessWho(this.checked);"/>
-					<label for="bx_acc_lim_who_editors"><?= GetMessage("PAGE_NEW_LIMIT_ACCESS_EDITORS")?> (<a href="/bitrix/admin/settings.php?lang=<?=LANGUAGE_ID?>&amp;mid=fileman&amp;tabControl_active_tab=edit3#limitaccess" target="_blank"><?echo GetMessage("page_new_limit_settings")?></a>)</label>
+					<label for="bx_acc_lim_who_editors"><?= GetMessage("PAGE_NEW_LIMIT_ACCESS_EDITORS")?> (<a href="/bitrix/admin/settings.php?lang=<?=LANGUAGE_ID?>&amp;mid=fileman&amp;tabControl_active_tab=edit3#limitaccess" target="_blank"><?= GetMessage("page_new_limit_settings")?></a>)</label>
 				</div>
 
 				<div style="margin-top:2px">
 					<input type="radio" name="limitAccessWho" value="extended" id="bx_acc_lim_who_extended" onclick="BXLimitAccessWho(!this.checked);"/>
 					<label for="bx_acc_lim_who_extended"><?= GetMessage("PAGE_NEW_LIMIT_ACCESS_EXTENDED")?></label>
 				</div>
-<?else:?>
+<?php else:?>
 				<input type="hidden" name="limitAccessWho" value="extended" />
-<?endif?>
+<?php endif?>
 				<div id="bx_acc_lim_group_list_row" style="display:<?=(!empty($arEditGroups)? "none":"block")?>; margin:4px 0 0 24px;">
 					<select id="bx_acc_lim_group_list" name="limitGroupList[]" size="7" multiple="multiple">
-<?foreach($arGroupList as $group):?>
-						<option value="<?= $group['ID']?>"<?if(isset($arEditGroups[$group["ID"]])) echo " selected"?>><?= htmlspecialcharsEx($group['NAME'])?></option>
-<?endforeach?>
+<?php foreach($arGroupList as $group):?>
+						<option value="<?= $group['ID']?>"<?php if(isset($arEditGroups[$group["ID"]])) echo " selected"?>><?= htmlspecialcharsEx($group['NAME'])?></option>
+<?php endforeach?>
 					</select>
 				</div>
-<?if(empty($arEditGroups)):?>
+<?php if(empty($arEditGroups)):?>
 <div style="margin-top:8px">
-	<a href="/bitrix/admin/settings.php?lang=<?=LANGUAGE_ID?>&amp;mid=fileman&amp;tabControl_active_tab=edit3#limitaccess" target="_blank"><?echo GetMessage("PAGE_NEW_EDITORS_DEF")?></a>
+	<a href="/bitrix/admin/settings.php?lang=<?=LANGUAGE_ID?>&amp;mid=fileman&amp;tabControl_active_tab=edit3#limitaccess" target="_blank"><?= GetMessage("PAGE_NEW_EDITORS_DEF")?></a>
 </div>
-<?endif?>
-<?
+<?php endif?>
+<?php
 else: //$bAdmin
 ?>
-<?echo GetMessage("page_new_limit_note")?>
-<?endif?>
+<?= GetMessage("page_new_limit_note")?>
+<?php endif?>
 			</div>
 
 		</td>
 	</tr>
-<?
+<?php
 endif; //!empty($arEditGroups) || $bAdmin
 ?>
 </table>
@@ -680,9 +680,9 @@ endif; //!empty($arEditGroups) || $bAdmin
 		<td class="bx-popup-label bx-width30"><?=GetMessage("PAGE_NEW_MENU_TYPE")?>:</td>
 		<td>
 			<select id="bx_menu_type" id="menuType" name="menuType" style="width:50%" onchange="BXChangeMenuType(this.options[this.selectedIndex].value, true)">
-			<?foreach ($arMenu as $type => $arMenuProp):?>
+			<?php foreach ($arMenu as $type => $arMenuProp):?>
 				<option value="<?=htmlspecialcharsbx($type)?>" <?=($menuType == $type ? "selected" : "")?>><?=htmlspecialcharsEx($arMenuProp["NAME"])?></option>
-			<?endforeach?>
+			<?php endforeach?>
 			</select>
 		</td>
 	</tr>
@@ -694,21 +694,21 @@ endif; //!empty($arEditGroups) || $bAdmin
 	</tr>
 </table>
 
-<?
+<?php
 if($obPageTemplate !== false)
 	$wiz_template_html = $obPageTemplate->GetFormHtml();
 else
 	$wiz_template_html = '';
 ?>
 <table id="bx_new_page_template" class="bx-width100" style="display:none;">
-	<?echo $wiz_template_html?>
+	<?= $wiz_template_html?>
 </table>
 
-<?
+<?php
 $jsInheritPropIds = "var jsInheritProps = [";
 ?>
 <table class="bx-width100" id="bx_new_page_prop" style="display:none;">
-<?if ($bPropertyExists):?>
+<?php if ($bPropertyExists):?>
 	<tr class="section">
 		<td colspan="2">
 			<table cellspacing="0">
@@ -719,9 +719,9 @@ $jsInheritPropIds = "var jsInheritProps = [";
 			</table>
 		</td>
 	</tr>
-<?endif?>
+<?php endif?>
 
-<?
+	<?php
 $propertyIndex = 0;
 
 foreach ($arGlobalProperties as $propertyCode => $propertyValue):?>
@@ -734,9 +734,10 @@ foreach ($arGlobalProperties as $propertyCode => $propertyValue):?>
 		?>:</td>
 		<td>
 
-		<?$inheritValue = $APPLICATION->GetDirProperty($propertyCode, Array($site, $path));?>
+			<?php
+			$inheritValue = $APPLICATION->GetDirProperty($propertyCode, Array($site, $path));?>
 
-		<?if ($inheritValue <> '' && $propertyValue == ''):
+		<?php if ($inheritValue <> '' && $propertyValue == ''):
 			$jsInheritPropIds .= ",".$propertyIndex;
 		?>
 
@@ -746,17 +747,18 @@ foreach ($arGlobalProperties as $propertyCode => $propertyValue):?>
 
 			<div id="bx_edit_property_<?=$propertyIndex?>" style="display:none;"></div>
 
-		<?else:?>
+		<?php else:?>
 
 			<input type="text" name="PROPERTY[<?=$propertyIndex?>][VALUE]" value="<?=htmlspecialcharsEx($propertyValue)?>" style="width:90%;"><input type="hidden" name="PROPERTY[<?=$propertyIndex?>][CODE]" value="<?=htmlspecialcharsEx($propertyCode)?>" />
 
-		<?endif?>
+		<?php endif?>
 		</td>
 	</tr>
 
-<?$propertyIndex++; endforeach;?>
+	<?php
+	$propertyIndex++; endforeach;?>
 
-<?foreach ($arInheritProperties as $propertyCode => $propertyValue): $jsInheritPropIds .= ",".$propertyIndex;?>
+<?php foreach ($arInheritProperties as $propertyCode => $propertyValue): $jsInheritPropIds .= ",".$propertyIndex;?>
 
 	<tr style="height:30px;">
 		<td class="bx-popup-label bx-width30"><?=htmlspecialcharsEx($propertyCode)?>:</td>
@@ -771,21 +773,22 @@ foreach ($arGlobalProperties as $propertyCode => $propertyValue):?>
 		</td>
 	</tr>
 
-<?$propertyIndex++; endforeach; ?>
+	<?php
+	$propertyIndex++; endforeach; ?>
 
-<?foreach ($arDirProperties as $propertyCode => $propertyValue):?>
+<?php foreach ($arDirProperties as $propertyCode => $propertyValue):?>
 
 		<tr id="bx_user_property_<?=$propertyIndex?>">
 			<td class="bx-popup-label bx-width30"><?=htmlspecialcharsEx(mb_strtoupper($propertyCode))?><input type="hidden" name="PROPERTY[<?=$propertyIndex?>][CODE]" value="<?=htmlspecialcharsEx(mb_strtoupper($propertyCode))?>" />:</td>
 			<td><input type="text" name="PROPERTY[<?=$propertyIndex?>][VALUE]" value="<?=htmlspecialcharsEx($propertyValue)?>" style="width:90%;"></td>
 		</tr>
 
-<?
+<?php
 $propertyIndex++;
 endforeach;
 ?>
 
-<?if ($bSearchExists):?>
+<?php if ($bSearchExists):?>
 	<tr class="empty">
 		<td colspan="2"><div class="empty"></div></td>
 	</tr>
@@ -803,15 +806,15 @@ endforeach;
 		<td class="bx-popup-label bx-width30"><?=GetMessage("PAGE_NEW_TAGS")?>:</td>
 		<td><?=InputTags("pageTags", $pageTags, array($site), 'style="width:90%;"');?></td>
 	</tr>
-<?endif?>
+<?php endif?>
 
 </table>
 
-<?
+<?php
 $jsInheritPropIds .= "];";
 ?>
 <input type="hidden" name="save" value="Y" />
-<?
+<?php
 $popupWindow->EndContent();
 $popupWindow->StartButtons();
 ?>
@@ -820,7 +823,8 @@ $popupWindow->StartButtons();
 <input name="btn_popup_finish" id="btn_popup_finish" type="button" value="<?=GetMessage("PAGE_NEW_BUTTON_FINISH")?>" title="<?=GetMessage("PAGE_NEW_BUTTON_FINISH")?>" />
 &nbsp;&nbsp;&nbsp;&nbsp;<input name="btn_popup_close" type="button" value="<?=GetMessage("PAGE_NEW_BUTTON_CANCEL")?>" onclick="<?=$popupWindow->jsPopup?>.CloseDialog()" title="<?=GetMessage("PAGE_NEW_BUTTON_CANCEL")?>" />
 
-<?$popupWindow->EndButtons();?>
+<?php
+$popupWindow->EndButtons();?>
 
 <script>
 
@@ -1017,13 +1021,13 @@ window.BXCheckFileName = function(input, createNewFolder)
 		SetError("<?=GetMessage("PAGE_NEW_FILE_NAME_EMPTY")?>");
 		return false;
 	}
-<?if(!$createNewFolder):?>
+<?php if(!$createNewFolder):?>
 	else if (!createNewFolder && fileName != "" && fileName.substr(0,1) == ".")
 	{
 		SetError("<?=GetMessage("PAGE_NEW_FILE_NAME_DOT_FIRST")?>");
 		return false;
 	}
-<?endif?>
+<?php endif?>
 	else if (fileName != "" && validSymbols.test(fileName))
 	{
 		SetError("<?=GetMessage("PAGE_NEW_FILE_NAME_VALID_SYMBOLS")?>");
@@ -1116,14 +1120,14 @@ window.BXFolderEditHint = function()
 		td.appendChild(oBXHint.oIcon);
 	}
 
-<?if(!$createNewFolder):?>
+<?php if(!$createNewFolder):?>
 	td = BX("bx_page_tags");
 	if (td)
 	{
 		oBXHint = new BXHint("<?=GetMessage("PAGE_NEW_TAGS_DESCIPTION")?>");
 		td.appendChild(oBXHint.oIcon);
 	}
-<?endif?>
+<?php endif?>
 
 	<?=$jsInheritPropIds?>
 
@@ -1176,6 +1180,5 @@ window.bxNewPageWizard.AddStep("bx_new_page_prop", {
 window.bxNewPageWizard.Display();
 </script>
 
-<?
+<?php
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin_js.php");
-?>

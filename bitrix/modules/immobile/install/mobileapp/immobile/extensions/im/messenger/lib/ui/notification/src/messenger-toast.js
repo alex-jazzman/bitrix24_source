@@ -6,6 +6,7 @@ jn.define('im/messenger/lib/ui/notification/messenger-toast', (require, exports,
 	const { Loc } = require('im/messenger/loc');
 	const { Icon } = require('assets/icons');
 	const { showSafeToast, showOfflineToast, showErrorToast, Position } = require('toast');
+	const { Color } = require('tokens');
 	const { mergeImmutable } = require('utils/object');
 
 	const { getLogger } = require('im/messenger/lib/logger');
@@ -31,6 +32,16 @@ jn.define('im/messenger/lib/ui/notification/messenger-toast', (require, exports,
 		copilotEngineChanged: 'copilotEngineChanged',
 		forwardMessage: 'forwardMessage',
 		forwardMessages: 'forwardMessages',
+		sharingLinkCopied: 'sharingLinkCopied',
+		sharingLinkRegenerated: 'sharingLinkRegenerated',
+		sharingLinkRegenerateError: 'sharingLinkRegenerateError',
+		sharingLinkInvalid: 'sharingLinkInvalid',
+		sharingLinkChatNotFound: 'sharingLinkChatNotFound',
+		folderUpdated: 'folderUpdated',
+		folderCreated: 'folderCreated',
+		folderDeleted: 'folderDeleted',
+		folderSorted: 'folderSorted',
+		folderSetChat: 'folderSetChat',
 	};
 
 	const ToastIconName = {
@@ -38,6 +49,15 @@ jn.define('im/messenger/lib/ui/notification/messenger-toast', (require, exports,
 		[ToastType.unsubscribeFromComments]: Icon.CROSSED_EYE.getIconName(),
 		[ToastType.autoDeleteActive]: Icon.TIMER.getIconName(),
 		[ToastType.autoDeleteNotActive]: Icon.TIMER.getIconName(),
+		[ToastType.sharingLinkCopied]: Icon.CHECK.getIconName(),
+		[ToastType.sharingLinkRegenerated]: Icon.CHECK.getIconName(),
+		[ToastType.sharingLinkInvalid]: Icon.LOCK.getIconName(),
+		[ToastType.sharingLinkChatNotFound]: Icon.LOCK.getIconName(),
+		[ToastType.folderUpdated]: Icon.CIRCLE_CHECK.getIconName(),
+		[ToastType.folderCreated]: Icon.CIRCLE_CHECK.getIconName(),
+		[ToastType.folderDeleted]: Icon.CIRCLE_CHECK.getIconName(),
+		[ToastType.folderSorted]: Icon.CIRCLE_CHECK.getIconName(),
+		[ToastType.folderSetChat]: Icon.CIRCLE_CHECK.getIconName(),
 	};
 
 	const ToastPhrase = {
@@ -113,6 +133,46 @@ jn.define('im/messenger/lib/ui/notification/messenger-toast', (require, exports,
 		{
 			return Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_FORWARD_MESSAGES');
 		},
+		get sharingLinkCopied()
+		{
+			return Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_SHARING_LINK_COPIED');
+		},
+		get sharingLinkRegenerated()
+		{
+			return Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_SHARING_LINK_REGENERATED');
+		},
+		get sharingLinkRegenerateError()
+		{
+			return Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_SHARING_LINK_REGENERATE_ERROR');
+		},
+		get sharingLinkInvalid()
+		{
+			return Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_SHARING_LINK_INVALID');
+		},
+		get sharingLinkChatNotFound()
+		{
+			return Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_SHARING_LINK_CHAT_NOT_FOUND');
+		},
+		get folderUpdated()
+		{
+			return Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_FOLDER_UPDATED');
+		},
+		get folderCreated()
+		{
+			return Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_FOLDER_CREATED');
+		},
+		get folderDeleted()
+		{
+			return Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_FOLDER_DELETED');
+		},
+		get folderSorted()
+		{
+			return Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_FOLDER_SORTED');
+		},
+		get folderSetChat()
+		{
+			return Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_FOLDER_SET_CHAT');
+		},
 	};
 
 	const ToastButtonText = {
@@ -158,6 +218,29 @@ jn.define('im/messenger/lib/ui/notification/messenger-toast', (require, exports,
 		copilotEngineChanged: {
 			iconName: Icon.COPILOT.getIconName(),
 			offset: 30,
+		},
+		sharingLinkCopied: {
+			position: Position.TOP,
+			offset: 0,
+		},
+		sharingLinkRegenerated: {
+			position: Position.TOP,
+			offset: 0,
+		},
+		sharingLinkRegenerateError: {
+			position: Position.TOP,
+			offset: 0,
+			backgroundColor: Color.accentMainAlert.toHex(),
+		},
+		sharingLinkInvalid: {
+			position: Position.TOP,
+			offset: 50,
+			backgroundColor: Color.accentMainAlert.toHex(),
+		},
+		sharingLinkChatNotFound: {
+			position: Position.TOP,
+			offset: 50,
+			backgroundColor: Color.accentMainAlert.toHex(),
 		},
 	};
 

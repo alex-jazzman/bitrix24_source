@@ -620,6 +620,13 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 		getListViewContainer()
 		{
 			const items = this.getItems();
+			const isLoadMoreSuppressedByLimit = (
+				!this.props.forceLoadMoreEnabled
+				&& this.currentIdsOrder.length < this.props.itemsLoadLimit
+			);
+			const onLoadMore = (this.state.allItemsLoaded || isLoadMoreSuppressedByLimit)
+				? null
+				: this.onLoadMoreDummy; // need for show the loader at the bottom of the list
 
 			return OptimizedListView({
 				testId: `${this.testId}_LIST_VIEW`,
@@ -681,13 +688,9 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 						analyticsLabel: this.props.analyticsLabel,
 					});
 				},
-				onRefresh: this.props.onRefresh !== undefined ? this.props.onRefresh : this.onRefresh,
+				onRefresh: this.props.onRefresh === undefined ? this.onRefresh : this.props.onRefresh,
 				isRefreshing: this.props.isRefreshing,
-				onLoadMore: (
-					this.state.allItemsLoaded || (this.currentIdsOrder.length < this.props.itemsLoadLimit)
-						? null
-						: this.onLoadMoreDummy // need for show the loader at the bottom of the list
-				),
+				onLoadMore,
 				onViewableItemsChanged: (viewableItems) => {
 					this.visibleIndexes = (viewableItems[0].items || null);
 					this.handleViewableItemsChanged(this.visibleIndexes);

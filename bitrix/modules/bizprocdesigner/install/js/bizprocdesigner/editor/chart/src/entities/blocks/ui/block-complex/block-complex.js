@@ -1,8 +1,10 @@
+import { Text } from 'ui.system.typography.vue';
 import { useBlockDiagram } from 'ui.block-diagram';
 import { FeatureCode } from 'bizprocdesigner.feature';
 import { useLoc, useFeature } from '../../../../shared/composables';
 import { PORT_TYPES, COMPLEX_NODE_PORT_LABELS } from '../../../../shared/constants';
 import { createUniqueId, parsePortTitle } from '../../../../shared/utils';
+import { normalyzeAuxConnection } from '../../utils';
 
 import './style.css';
 
@@ -17,6 +19,7 @@ const NOT_REALLY_COMPLEX_BLOCK = new Set([
 	'RequestInformationOptionalActivity',
 	'ListenActivity',
 ]);
+const MAX_AUX_COUNT = 5;
 const MIN_RULE_ITEMS_COUNT = 5;
 const RESERVED_INPUT_RULES_TITLES = Array.from({ length: MIN_RULE_ITEMS_COUNT }, (_, i) => {
 	return `${COMPLEX_NODE_PORT_LABELS.inputRule}${i + 1}`;
@@ -43,9 +46,17 @@ type RuleType = {
 	classList: Array<string>;
 };
 
+const BLOCK_COMPLEX_CLASS_NAMES = {
+	base: 'block-complex',
+	deactivated: '--deactivated',
+};
+
 // @vue/component
 export const BlockComplexContent = {
 	name: 'BlockComplexContent',
+	components: {
+		BxText: Text,
+	},
 	props:
 	{
 		/** @type Block */
@@ -69,6 +80,10 @@ export const BlockComplexContent = {
 			type: Boolean,
 			default: false,
 		},
+		deactivated: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	setup(): BlockComplexSetup
 	{
@@ -86,10 +101,17 @@ export const BlockComplexContent = {
 	},
 	computed:
 	{
+		blockComplexClassNames(): { [string]: boolean }
+		{
+			return {
+				[BLOCK_COMPLEX_CLASS_NAMES.base]: true,
+				[BLOCK_COMPLEX_CLASS_NAMES.deactivated]: this.deactivated,
+			};
+		},
 		inputPorts(): Array<TPort>
 		{
 			return this.ports
-				.filter((port) => port.type === PORT_TYPES.input);
+				.filter((port) => port.type === PORT_TYPES.input || port.type === PORT_TYPES.inputRelation);
 		},
 		outputPorts(): Array<TPort>
 		{
@@ -98,11 +120,11 @@ export const BlockComplexContent = {
 		},
 		rulePorts(): Array<TPort>
 		{
-			return this.inputPorts.filter((port) => !port.isConnectionPort);
+			return this.ports.filter((port) => port.type === PORT_TYPES.input);
 		},
-		connectionPorts(): Array<TPort>
+		relationPorts(): Array<TPort>
 		{
-			return this.inputPorts.filter((port) => port.isConnectionPort);
+			return this.ports.filter((port) => port.type === PORT_TYPES.inputRelation);
 		},
 		inputPortsLength(): number
 		{
@@ -112,10 +134,46 @@ export const BlockComplexContent = {
 		{
 			return this.outputPorts.length;
 		},
-		areConnectionsAvailable(): boolean
+		auxPorts(): Array<TPort>
+		{
+			return this.block.ports.filter((port) => port.type === PORT_TYPES.aux);
+		},
+		auxPortsLength(): number
+		{
+			return this.auxPorts.length;
+		},
+		auxPortItems(): Array<TPort | Placeholder>
+		{
+			if (this.block.node?.shouldShowAuxPorts !== true)
+			{
+				return [];
+			}
+
+			const realPorts = this.auxPorts;
+			const items = [];
+			for (let i = 1; i <= MAX_AUX_COUNT; i++)
+			{
+				const title = `${COMPLEX_NODE_PORT_LABELS.aux}${i}`;
+				const port = realPorts.find((p) => p.title === title);
+				items.push(port ?? { id: createUniqueId(), title });
+			}
+
+			return items;
+		},
+		showRelationSection(): boolean
+		{
+			return this.isRelationFeatureAvailable
+				&& this.block.node?.shouldShowAuxPorts !== true;
+		},
+		showAuxSection(): boolean
+		{
+			return this.block.node?.shouldShowAuxPorts === true;
+		},
+		isRelationFeatureAvailable(): boolean
 		{
 			return this.isFeatureAvailable(FeatureCode.complexNodeConnections)
-				&& this.isReallyComplexBlock;
+				&& this.isReallyComplexBlock
+			;
 		},
 		isReallyComplexBlock(): boolean
 		{
@@ -178,10 +236,11 @@ export const BlockComplexContent = {
 				? [...this.reservedInputRules, ...this.restInputRules, this.lastInputRulePlaceholder]
 				: [...this.reservedInputRules, ...this.restInputRules];
 		},
-		connectionPlaceholder(): Placeholder
+		relationPlaceholder(): Placeholder
 		{
-			const connection = this.connectionPorts[this.connectionPorts.length - 1];
-			const { label, id } = parsePortTitle(connection?.title) ?? { label: COMPLEX_NODE_PORT_LABELS.connection, id: 0 };
+			const lastRelationPort = this.relationPorts[this.relationPorts.length - 1];
+			const { label, id } = parsePortTitle(lastRelationPort?.title)
+				?? { label: COMPLEX_NODE_PORT_LABELS.relation, id: 0 };
 			const title = `${label}${id + 1}`;
 
 			return {
@@ -304,9 +363,36 @@ export const BlockComplexContent = {
 				targetPortId: addedPort.id,
 			});
 		},
+		auxPortsLength(): void
+		{
+			this.$nextTick(() => {
+				this.auxPorts.forEach((port, index) => {
+					this.updatePort(this.block.id, port.id, index);
+				});
+			});
+		},
+		auxPorts(newAuxPorts: Array<TPort>, oldAuxPorts: Array<TPort>): void
+		{
+			if (!this.newConnection)
+			{
+				return;
+			}
+
+			const oldPortsIds = new Set(oldAuxPorts.map((port) => port.id));
+			const addedPort = newAuxPorts.find((port) => !oldPortsIds.has(port.id));
+			if (addedPort)
+			{
+				this.addConnection(normalyzeAuxConnection({
+					...this.newConnection,
+					targetBlockId: this.block.id,
+					targetPort: addedPort,
+					targetPortId: addedPort.id,
+				}));
+			}
+		},
 	},
 	template: `
-		<div class="block-complex">
+		<div :class="blockComplexClassNames">
 			<slot
 				name="header"
 				:title="title"
@@ -339,7 +425,7 @@ export const BlockComplexContent = {
 					</div>
 				</div>
 				<div
-					v-if="areConnectionsAvailable"
+					v-if="showRelationSection"
 					class="block-complex__content_connections"
 				>
 					<span class="block-complex__content_label">
@@ -348,7 +434,7 @@ export const BlockComplexContent = {
 					<div class="block-complex__content_row">
 						<div class="block-complex__content_col">
 							<div
-								v-for="(port, index) in connectionPorts"
+								v-for="(port, index) in relationPorts"
 								:key="port.id"
 								class="block-complex__content_col-value"
 							>
@@ -362,11 +448,41 @@ export const BlockComplexContent = {
 							</div>
 							<div
 								class="block-complex__content_col-value"
-								:key="connectionPlaceholder.id"
+								:key="relationPlaceholder.id"
 							>
 								<slot
 									name="portPlaceholder"
-									:item="connectionPlaceholder"
+									:item="relationPlaceholder"
+								/>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div
+					v-if="showAuxSection"
+					class="block-complex__aux-section"
+				>
+					<slot name="auxSectionLabel" />
+					<div class="block-complex__aux-ports">
+						<div
+							v-for="(item, index) in auxPortItems"
+							:key="item.id"
+							class="block-complex__aux-port-item"
+							:class="{ '--inactive': !item.type || item.isActive === false }"
+						>
+							<BxText
+								size='sm'
+								class="block-complex__aux-port-title"
+							>
+								{{ item.title }}
+							</BxText>
+							<div class="block-complex__aux-port-point">
+								<slot
+									:name="item.type ? 'auxPort' : 'auxPortPlaceholder'"
+									:item="item"
+									:index="index"
+									:disabled="disabled"
+									:isActive="item.isActive !== false"
 								/>
 							</div>
 						</div>

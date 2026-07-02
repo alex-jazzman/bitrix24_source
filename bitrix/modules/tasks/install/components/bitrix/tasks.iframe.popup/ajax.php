@@ -341,61 +341,6 @@ try
 			break;
 
 
-			case 'CUser::FormatName()':
-				CTaskAssert::assert(
-					isset($arAction['userData'], $arAction['userData']['ID'])
-				);
-
-				// Resolve user id if it is the result of previous operation in batch
-				$userId = BXTasksResolveDynaParamValue(
-					$arAction['userData']['ID'],
-					array('$arOperationsResults' => $arOperationsResults)
-				);
-
-				CTaskAssert::assertLaxIntegers($userId);
-
-				$nt = $nameTemplate;
-				if (isset($arAction['params'], $arAction['params']['nameTemplate']))
-				{
-					preg_match_all(
-						"/(#NAME#)|(#NOBR#)|(#\/NOBR#)|(#LAST_NAME#)|(#SECOND_NAME#)|(#NAME_SHORT#)|(#SECOND_NAME_SHORT#)|\s|\,/",
-						$arAction['params']['nameTemplate'],
-						$matches
-					);
-
-					$nt = implode('', $matches[0]);
-				}
-
-				$rsUser = CUser::GetList(
-					'ID', 'ASC',
-					array('ID' => $userId),
-					array('FIELDS' => array('NAME', 'LAST_NAME', 'SECOND_NAME', 'LOGIN'))
-				);
-
-				$returnValue = null;
-
-				if ($arUser = $rsUser->Fetch())
-				{
-					$returnValue = CUser::FormatName(
-						$nt,
-						array(
-							'NAME'        => $arUser['NAME'],
-							'LAST_NAME'   => $arUser['LAST_NAME'],
-							'SECOND_NAME' => $arUser['SECOND_NAME'],
-							'LOGIN'       => $arUser['LOGIN']
-						),
-						$bUseLogin = true,
-						$bHtmlSpecialChars = false
-					);
-				}
-
-				$arCurOperationResult = array(
-					'returnValue'     => $returnValue,
-					'requestedUserId' => $userId
-				);
-			break;
-
-
 			case 'tasksRenderJSON() && tasksRenderListItem()':
 				CTaskAssert::assert(
 					isset($arAction['taskData'], $arAction['taskData']['ID'])
@@ -516,41 +461,6 @@ try
 					'requestedTaskId' => $taskId
 				);
 			break;
-
-
-			case 'CSocNetGroup::GetByID()':
-				CTaskAssert::assert(
-					isset($arAction['groupData'], $arAction['groupData']['ID'])
-				);
-				$groupId = $arAction['groupData']['ID'];
-				CTaskAssert::assertLaxIntegers($groupId);
-
-				$arGroupData = array(
-					'ID'             => (int) $groupId,
-					'~ID'            => (int) $groupId,
-					'NAME'           => '',
-					'~NAME'          => '',
-					'SUBJECT_NAME'   => '',
-					'~SUBJECT_NAME'  => '',
-					'NAME_FORMATTED' => ''
-				);
-
-				$arGroup = CSocNetGroup::GetByID($groupId, $bCheckPermissions = false);
-
-				if (
-					is_array($arGroup)
-					&& ( ! empty($arGroup) )
-				)
-				{
-					$arGroupData = $arGroup;
-				}
-
-				$arCurOperationResult = array(
-					'returnValue'      => $arGroupData,
-					'requestedGroupId' => $groupId
-				);
-			break;
-
 
 			case 'CTaskItem::addElapsedTime()':
 				CTaskAssert::assert(

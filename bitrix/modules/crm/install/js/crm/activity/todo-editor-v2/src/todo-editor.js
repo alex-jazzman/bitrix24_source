@@ -1,7 +1,10 @@
+import './location-guard';
+
 import { NameService } from 'crm.ai.name-service';
 import { DatetimeConverter } from 'crm.timeline.tools';
 import { ajax as Ajax, Dom, Extension, Loc, Runtime, Type } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import type { BaseEvent } from 'main.core.events';
+import { EventEmitter } from 'main.core.events';
 import { DateTimeFormat } from 'main.date';
 import { UI } from 'ui.notification';
 import { BasicEditor } from 'ui.text-editor';

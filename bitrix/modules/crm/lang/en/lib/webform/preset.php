@@ -1,10 +1,13 @@
 <?php
 $MESS["CRM_WEBFORM_PRESET_ITEM_BOOKING_ANY_RESOURCE_NAME"] = "Select from available resources";
+$MESS["CRM_WEBFORM_PRESET_ITEM_BOOKING_ANY_RESOURCE_SERVICES_NAME"] = "Select first available resource for service";
 $MESS["CRM_WEBFORM_PRESET_ITEM_BOOKING_AUTO_SELECTION_NAME"] = "Auto select resource";
+$MESS["CRM_WEBFORM_PRESET_ITEM_BOOKING_AUTO_SELECTION_SERVICES_NAME"] = "Auto select resource for service";
 $MESS["CRM_WEBFORM_PRESET_ITEM_BOOKING_BUTTON_CAPTION"] = "Submit";
 $MESS["CRM_WEBFORM_PRESET_ITEM_BOOKING_CONTACT_SECTION_CAPTION"] = "Contact information";
 $MESS["CRM_WEBFORM_PRESET_ITEM_BOOKING_FAILURE_TEXT"] = "Could not create your booking. Please try again.";
 $MESS["CRM_WEBFORM_PRESET_ITEM_BOOKING_MANUAL_SETTING_NAME"] = "Select from all resources";
+$MESS["CRM_WEBFORM_PRESET_ITEM_BOOKING_MANUAL_SETTING_SERVICES_NAME"] = "Select resource for service";
 $MESS["CRM_WEBFORM_PRESET_ITEM_BOOKING_SUCCESS_TEXT"] = "Done!";
 $MESS["CRM_WEBFORM_PRESET_ITEM_CB_BUTTON_CAPTION"] = "Call me back";
 $MESS["CRM_WEBFORM_PRESET_ITEM_CB_CALL_TEXT"] = "A call back has been requested; connecting you with the client now.";
@@ -28,4 +31,6 @@ $MESS["CRM_WEBFORM_PRESET_ITEM_FB_DESCRIPTION"] = "Please share your feedback in
 $MESS["CRM_WEBFORM_PRESET_ITEM_FB_NAME"] = "Feedback form";
 $MESS["CRM_WEBFORM_PRESET_ITEM_IMOL_REG_DESCRIPTION"] = "Please introduce yourself";
 $MESS["CRM_WEBFORM_PRESET_ITEM_IMOL_REG_NAME"] = "Contact information form for use with Open Channels";
+$MESS["CRM_WEBFORM_PRESET_ITEM_WA_CAPTION"] = "WhatsApp auto reply message";
 $MESS["CRM_WEBFORM_PRESET_ITEM_WA_DESCRIPTION"] = "Enter your phone number and our manager will contact you in WhatsApp";
+$MESS["CRM_WEBFORM_PRESET_ITEM_WA_NAME"] = "WhatsApp auto reply message";

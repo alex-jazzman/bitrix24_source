@@ -1,7 +1,7 @@
 import { Loc } from 'main.core';
-import { Social } from 'ui.icon-set.api.core';
+import { Outline, Social } from 'ui.icon-set.api.core';
 
-import { ChatService } from './types';
+import { type ChatService } from './types';
 
 const ServicesConfig: ReadonlyMap<string, ChatService> = new Map([
 	[
@@ -14,8 +14,7 @@ const ServicesConfig: ReadonlyMap<string, ChatService> = new Map([
 			soonLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SOON_WHATSAPP'),
 			title: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SERVICE_WHATSAPP'),
 			region: '!ru',
-			commonClass: '--whatsapp',
-			iconClass: Social.WHATSAPP,
+			iconClass: Outline.WHATSAPP,
 			checkServiceId: 'virtual_whatsapp',
 		},
 	],
@@ -27,9 +26,19 @@ const ServicesConfig: ReadonlyMap<string, ChatService> = new Map([
 			connectLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONNECT_TELEGRAM'),
 			inviteLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_INVITE_TELEGRAM'),
 			title: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SERVICE_TELEGRAM'),
-			commonClass: '--telegram',
-			iconClass: Social.TELEGRAM_IN_CIRCLE,
-			iconColor: '#2FC6F6',
+			iconClass: Outline.TELEGRAM,
+		},
+	],
+	[
+		'max',
+		{
+			id: 'max',
+			connectorId: 'max',
+			connectLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONNECT_MAX'),
+			inviteLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_INVITE_MAX'),
+			title: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SERVICE_MAX'),
+			region: ['ru', 'by', 'az', 'am', 'kz', 'kg', 'md', 'tj', 'uz'],
+			iconClass: Outline.MAX,
 		},
 	],
 	[
@@ -44,8 +53,7 @@ const ServicesConfig: ReadonlyMap<string, ChatService> = new Map([
 			disabledHint: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_WHATSAPP_DISABLED_HINT'),
 			title: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SERVICE_WHATSAPP'),
 			region: 'ru',
-			commonClass: '--whatsapp',
-			iconClass: Social.WHATSAPP,
+			iconClass: Outline.WHATSAPP,
 			checkServiceId: 'virtual_whatsapp',
 			hideOnBox: true,
 		},
@@ -60,7 +68,6 @@ const ServicesConfig: ReadonlyMap<string, ChatService> = new Map([
 	// 		soonLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SOON_VK'),
 	// 		title: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SERVICE_VK'),
 	// 		region: 'ru',
-	// 		commonClass: '--vk',
 	// 		iconClass: Social.VK,
 	// 	},
 	// ],
@@ -74,7 +81,6 @@ const ServicesConfig: ReadonlyMap<string, ChatService> = new Map([
 			soonLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SOON_FACEBOOK'),
 			title: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SERVICE_FACEBOOK'),
 			region: '!ru',
-			commonClass: '--facebook',
 			iconClass: Social.FACEBOOK,
 		},
 	],

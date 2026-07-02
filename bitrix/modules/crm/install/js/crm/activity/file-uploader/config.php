@@ -10,8 +10,8 @@ return [
 	'js' => 'dist/file-uploader.bundle.js',
 	'rel' => [
 		'main.core',
-		'ui.uploader.tile-widget',
 		'ui.design-tokens',
+		'ui.uploader.tile-widget',
 	],
 	'skip_core' => false,
 ];

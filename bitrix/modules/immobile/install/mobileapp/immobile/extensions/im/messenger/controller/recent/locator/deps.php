@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'im:messenger/const',
 		'im:messenger/lib/di/service-locator',
 	],
 ];

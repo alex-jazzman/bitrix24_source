@@ -17,11 +17,11 @@ return [
 		'./dist/desktop-api.bundle.js',
 	],
 	'rel' => [
-		'im.v2.lib.utils',
-		'im.v2.lib.logger',
 		'im.v2.const',
-		'main.core.events',
+		'im.v2.lib.logger',
+		'im.v2.lib.utils',
 		'main.core',
+		'main.core.events',
 	],
 	'skip_core' => false,
 	'settings' => [

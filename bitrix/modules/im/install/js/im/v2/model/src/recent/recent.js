@@ -184,7 +184,14 @@ export class RecentModel extends BuilderModel
 
 				const itemIds = await Core.getStore().dispatch('recent/set', items);
 
-				store.commit('setIndex', { parentChatId, type, itemIds, unread });
+				const setPayload = { parentChatId, type, itemIds, unread };
+				store.commit('setIndex', setPayload);
+
+				const needToAddRootItem = RecentManager.isTypeWithNestedChats(type) && parentChatId > 0;
+				if (needToAddRootItem)
+				{
+					store.commit('setIndex', { ...setPayload, parentChatId: RecentModel.ROOT_PARENT_ID });
+				}
 			},
 			/** @function recent/setUnreadCollection */
 			setUnreadCollection: async (store: RecentStore, payload: RawSetPayload) => {
@@ -199,6 +206,15 @@ export class RecentModel extends BuilderModel
 			/** @function recent/clearUnreadCollection */
 			clearUnreadCollection: async (store: RecentStore, payload: RawClearPayload) => {
 				void Core.getStore().dispatch('recent/clearCollection', { ...payload, unread: true });
+			},
+			/** @function recent/clearByDialogId */
+			clearByDialogId: async (
+				store: RecentStore,
+				payload: RawClearPayload & { dialogId: string, unread?: boolean },
+			) => {
+				const { dialogId, type, unread = false, parentChatId = RecentModel.ROOT_PARENT_ID } = payload;
+
+				store.commit('clearByDialogId', { dialogId, type, unread, parentChatId });
 			},
 			/** @function recent/set */
 			set: (store: RecentStore, payload: RawRecentItemsPayload): string[] => {
@@ -367,6 +383,13 @@ export class RecentModel extends BuilderModel
 				const index = unread ? state.unreadIndex : state.recentIndex;
 
 				delete index[parentChatId]?.[type];
+			},
+			clearByDialogId: (state: RecentState, payload: ClearPayload & { dialogId: string }) => {
+				const { parentChatId, type, dialogId, unread } = payload;
+
+				const index = unread ? state.unreadIndex : state.recentIndex;
+
+				index[parentChatId]?.[type]?.delete(dialogId);
 			},
 			add: (state: RecentState, payload: ImModelRecentItem[] | ImModelRecentItem) => {
 				if (!Type.isArray(payload) && Type.isPlainObject(payload))

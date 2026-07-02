@@ -6,7 +6,7 @@ jn.define('im/messenger/lib/element/dialog/message/check-in/message', (require, 
 
 	const {
 		MessageType,
-		MessageParams,
+		MessageComponent,
 	} = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { CustomMessage } = require('im/messenger/lib/element/dialog/message/custom/message');
@@ -19,7 +19,7 @@ jn.define('im/messenger/lib/element/dialog/message/check-in/message', (require, 
 	{
 		/**
 		 * @param {MessagesModelState} modelMessage
-		 * @param {CreateMessageOptions} options
+		 * @param {CreateMessageOptions|{}} options
 		 */
 		constructor(modelMessage, options = {})
 		{
@@ -43,7 +43,7 @@ jn.define('im/messenger/lib/element/dialog/message/check-in/message', (require, 
 
 		static getComponentId()
 		{
-			return MessageParams.ComponentId.CheckInMessage;
+			return MessageComponent.checkIn;
 		}
 
 		/**

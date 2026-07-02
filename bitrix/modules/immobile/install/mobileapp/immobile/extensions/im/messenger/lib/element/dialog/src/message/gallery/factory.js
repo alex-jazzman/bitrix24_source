@@ -20,6 +20,7 @@ jn.define('im/messenger/lib/element/dialog/message/gallery/factory', (require, e
 	} = require('im/messenger/lib/helper');
 
 	/**
+	 * @deprecated - use MediaGalleryMessage
 	 * @class GalleryMessageFactory
 	 */
 	class GalleryMessageFactory extends CustomMessageFactory
@@ -27,7 +28,7 @@ jn.define('im/messenger/lib/element/dialog/message/gallery/factory', (require, e
 		/**
 		 * @abstract
 		 * @param {MessagesModelState} modelMessage
-		 * @param {CreateMessageOptions} options
+		 * @param {CreateMessageOptions|{}} options
 		 * @param {FilesModelState} file
 		 * @return {Message}
 		 */

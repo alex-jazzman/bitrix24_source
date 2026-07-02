@@ -58,3 +58,133 @@
 	border: none;
 	display: block;
 }
+
+.crm-task-list-mail-more,
+.crm-task-list-mail-item-to-list-more,
+.crm-task-list-mail-item-collapse-btn {
+	background: none;
+	border: none;
+	padding: 0;
+	margin: 0;
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
+	text-align: inherit;
+}
+
+.crm-task-list-mail-message-panel {
+	font: inherit;
+	color: inherit;
+	text-align: inherit;
+	border: none;
+	border-bottom: 1px solid rgba(198, 205, 211, 0.35);
+}
+
+.crm-task-list-mail-item-control {
+	background: none;
+	border: none;
+	padding: 0;
+	font: inherit;
+	color: inherit;
+	text-transform: inherit;
+	white-space: inherit;
+	letter-spacing: inherit;
+	cursor: pointer;
+	text-align: inherit;
+}
+
+.crm-task-list-mail-item {
+	display: flex;
+	width: 100%;
+	align-items: center;
+}
+
+.crm-task-list-mail-message-panel {
+	display: flex;
+	width: 100%;
+}
+
+.crm-task-list-mail-item-to-list-more {
+	display: inline;
+}
+
+.crm-task-list-mail-item-inner-header-clickable .crm-activity-email-item-date::after {
+	display: none;
+}
+
+.crm-task-list-mail-item-collapse-btn {
+	position: relative;
+	flex-shrink: 0;
+	width: 16px;
+	height: 16px;
+	margin-left: 8px;
+}
+
+.crm-task-list-mail-item-collapse-btn::after {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 3px;
+	right: 0;
+	width: 9px;
+	height: 9px;
+	background: url(/bitrix/js/crm/images/task-list-sprite.svg) -54px -31px;
+	transition: opacity .3s ease, transform .3s ease;
+	opacity: .5;
+	transform: rotate(-180deg);
+}
+
+.crm-task-list-mail-item-collapse-btn:hover::after {
+	opacity: 1;
+}
+
+.crm-task-list-mail-item-collapse-btn[aria-expanded="false"]::after {
+	transform: rotate(0deg);
+}
+
+.crm-activity-planner-slider-header-control-item {
+	background: none;
+	border: none;
+	border-right: 1px solid rgba(82, 92, 105, .1);
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
+	text-align: inherit;
+}
+
+.crm-task-list-mail-more:focus-visible,
+.crm-task-list-mail-item-control:focus-visible,
+.crm-task-list-mail-item-to-list-more:focus-visible,
+.crm-task-list-mail-item-collapse-btn:focus-visible,
+.crm-activity-email-create-template:focus-visible,
+.crm-activity-planner-slider-header-control-checkbox:focus-visible,
+.crm-activity-planner-slider-header-control-item:focus-visible {
+	outline: 1px solid var(--ui-color-primary, #2fc6f6);
+	outline-offset: 1px;
+	border-radius: 4px;
+}
+
+.crm-task-list-mail-message-panel:focus-visible,
+.crm-task-list-mail-item:focus-visible {
+	outline: 1px solid var(--ui-color-primary, #2fc6f6);
+	outline-offset: -2px;
+	border-radius: 10px;
+}
+
+.crm-activity-email-create-template {
+	background: none;
+	border: none;
+	font: inherit;
+	color: inherit;
+}
+
+.crm-activity-email-create-template:focus-visible {
+	outline: 1px solid var(--ui-color-primary, #2fc6f6);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
+.crm-activity-planner-slider-header-control-checkbox:focus-visible {
+	outline: 1px solid var(--ui-color-primary, #2fc6f6);
+	outline-offset: 2px;
+}

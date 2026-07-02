@@ -47,6 +47,7 @@ if (Loader::includeModule('crm'))
 				'PROPERTIES' => ['TriggerClass' => $triggerClass],
 				'NODE_ICON' => $triggerClass::getNodeIcon(),
 				'COLOR_INDEX' => $triggerClass::getNodeColor(),
+				'GROUPS' => [ActivityGroup::STARTER->value, ...$triggerClass::getNodeGroups()],
 			];
 		}
 	}

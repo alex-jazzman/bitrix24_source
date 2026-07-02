@@ -22,7 +22,8 @@ export type RawMessage = {
 	unread: boolean,
 	uuid: string | null,
 	viewed: boolean,
-	viewedByOthers: boolean
+	viewedByOthers: boolean,
+	builder: RawBuilder | null,
 };
 
 export type RawCommentInfo = {
@@ -315,15 +316,15 @@ export type RawStickerPack = {
 	isAdded: boolean,
 };
 
-export type RawStickerParams = {
-	id: number,
-	packId: number,
-	packType: RawPackType,
-};
-
 export type RawStickerMessage = {
 	messageId: number,
 	id: number,
 	packId: number,
 	packType: RawPackType,
 };
+
+export type RawBuilder = {
+	blocks: JsonObject[],
+};
+
+export type RawBuilderMessage = RawBuilder & { messageId: number };

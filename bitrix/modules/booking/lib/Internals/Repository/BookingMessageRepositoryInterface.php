@@ -9,8 +9,11 @@ use Bitrix\Booking\Internals\Service\Notifications\Entity\BookingMessageCollecti
 
 interface BookingMessageRepositoryInterface
 {
-	public function save(BookingMessage $bookingMessage): int;
+	public function save(BookingMessage $bookingMessage): void;
+	public function delete(int $id): void;
+	public function getById(int $id): BookingMessage|null;
 	public function getByExternalId(string $senderCode, string $externalId): BookingMessage|null;
 	public function getLastByBookingId(int $bookingId): BookingMessage|null;
 	public function getByBookingIds(array $bookingIds): BookingMessageCollection;
+	public function getFailedForRetry(int $maxRetries, int $limit): BookingMessageCollection;
 }

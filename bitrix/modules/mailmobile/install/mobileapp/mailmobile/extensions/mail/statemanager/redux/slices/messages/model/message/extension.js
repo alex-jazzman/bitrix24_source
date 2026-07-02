@@ -26,9 +26,12 @@ jn.define('mail/statemanager/redux/slices/messages/model/message', (require, exp
 				eventBindId: sourceServerMessage.eventBindId,
 				crmBindTypeId: sourceServerMessage.crmBindTypeId,
 				chatBindId: sourceServerMessage.chatBindId,
-				subject: sourceServerMessage.subject,
-				abbreviatedText: sourceServerMessage.abbreviatedText,
+				subject: String(sourceServerMessage.subject ?? ''),
+				abbreviatedText: String(sourceServerMessage.abbreviatedText ?? ''),
 				withAttachments: sourceServerMessage.withAttachments,
+				isMultiSelectMode: sourceServerMessage.isMultiSelectMode ?? false,
+				mailboxId: sourceServerMessage.mailboxId,
+				folderId: sourceServerMessage.folderId ? Number(sourceServerMessage.folderId) : null,
 			};
 		}
 	}

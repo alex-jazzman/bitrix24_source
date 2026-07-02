@@ -38,7 +38,15 @@ while ($lang = $langs->Fetch())
 		"DESCRIPTION" => GetMessage("IM_NEW_MESSAGE_GROUP_DESC"),
 	));
 
-	
+	$et = new CEventType;
+	$et->Add(array(
+		"LID" => $lid,
+		"EVENT_NAME" => "IM_GUEST_INVITATION",
+		"NAME" => GetMessage("IM_GUEST_INVITATION_NAME"),
+		"DESCRIPTION" => GetMessage("IM_GUEST_INVITATION_DESC"),
+	));
+
+
 	$arSites = array();
 	$sites = CSite::GetList('', '', Array("LANGUAGE_ID"=>$lid));
 	while ($site = $sites->Fetch())
@@ -137,6 +145,24 @@ while ($lang = $langs->Fetch())
 			"SUBJECT" => GetMessage("IM_NEW_MESSAGE_GROUP_SUBJECT"),
 			"MESSAGE" => $newGroupMessage,
 			"BODY_TYPE" => $isIntranet ? "html" : "text",
+		));
+
+		$guestInvitationMessage = GetMessage("IM_GUEST_INVITATION_MESSAGE");
+		if (defined('BX24_HOST_NAME') || \Bitrix\Main\Context::getCurrent()->getRequest()->isHttps())
+		{
+			$guestInvitationMessage = str_replace('http://#SERVER_NAME#/', 'https://#SERVER_NAME#/', $guestInvitationMessage);
+		}
+
+		$emess = new CEventMessage;
+		$emess->Add(array(
+			"ACTIVE" => "Y",
+			"EVENT_NAME" => "IM_GUEST_INVITATION",
+			"LID" => $arSites,
+			"EMAIL_FROM" => "#DEFAULT_EMAIL_FROM#",
+			"EMAIL_TO" => "#EMAIL_TO#",
+			"SUBJECT" => GetMessage("IM_GUEST_INVITATION_SUBJECT"),
+			"MESSAGE" => $guestInvitationMessage,
+			"BODY_TYPE" => "text",
 		));
 	}
 }

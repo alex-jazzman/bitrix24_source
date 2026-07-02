@@ -1004,6 +1004,7 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 	$component->enableSearchHistory($enableSearchHistory);
 
 	$component->setEntityID($ID);
+	$component->initializeData();
 
 	$context['SKIP_PRODUCT_DATA'] = 'Y';
 	if(!isset($context['PARAMS']))

@@ -60,6 +60,7 @@
 	font: 24px/33px var(--b24-font-family);
 	font-weight: var(--ui-font-weight-bold);
 	word-break: break-word;
+	margin-top: 0;
 }
 
 .b24-form-header-description {

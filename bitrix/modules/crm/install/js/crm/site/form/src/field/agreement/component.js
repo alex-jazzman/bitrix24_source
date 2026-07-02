@@ -1,27 +1,34 @@
-import "./style.css"
-import * as Mixins from "../base/components/mixins";
+import './style.css';
+import * as Mixins from '../base/components/mixins';
 
 const FieldAgreement = {
 	mixins: [Mixins.MixinField],
-	template: `	
-		<label class="b24-form-control-container">
-			<input type="checkbox" 
-				v-model="field.item().selected"
-				@blur="$emit('input-blur', this)"
-				@focus="$emit('input-focus', this)"
-				@click.capture="requestConsent"
-				onclick="this.blur()"
-			>
-			<span v-if="field.isLink()" class="b24-form-control-desc"
-				@click.capture="onLinkClick"
-				v-html="link"
-			></span>
-			<span v-else class="b24-form-control-desc">
-				<span class="b24-form-field-agreement-link">{{ field.label }}</span>
-			</span>
-			<span v-show="field.required" class="b24-form-control-required">*</span>
-			<field-item-alert v-bind:field="field"></field-item-alert>	
-		</label>
+	template: `
+		<div class="b24-form-control-container">
+			<label>
+				<input type="checkbox" 
+					:id="fieldId"
+					:aria-required="ariaRequired"
+					:aria-invalid="ariaInvalid"
+					:aria-describedby="ariaDescribedby"
+					v-model="field.item().selected"
+					@blur="$emit('input-blur', this)"
+					@focus="$emit('input-focus', this)"
+					@click.capture="requestConsent"
+					onclick="this.blur()"
+				>
+				<span v-if="field.isLink()" 
+					class="b24-form-control-desc"
+					@click.capture="onLinkClick"
+					v-html="link"
+				></span>
+				<span v-else class="b24-form-control-desc">
+					<span class="b24-form-field-agreement-link">{{ field.label }}</span>
+				</span>
+				<span v-show="field.required" class="b24-form-control-required" aria-hidden="true">*</span>
+			</label>
+			<field-item-alert v-bind:field="field"></field-item-alert>
+		</div>
 	`,
 	computed: {
 		link()
@@ -67,9 +74,9 @@ const FieldAgreement = {
 			this.$root.$emit('consent:request', this.field);
 			return false;
 		},
-	}
+	},
 };
 
 export {
 	FieldAgreement,
-}
+};

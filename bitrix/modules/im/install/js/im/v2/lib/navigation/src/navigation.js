@@ -1,6 +1,7 @@
 import { FeaturePromoter } from 'ui.info-helper';
+import { EventEmitter } from 'main.core.events';
 
-import { Layout, SliderCode, NavigationMenuItem, Path, GetParameter } from 'im.v2.const';
+import { Layout, SliderCode, NavigationMenuItem, Path, GetParameter, EventType } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { LayoutManager } from 'im.v2.lib.layout';
@@ -202,6 +203,8 @@ function changeLayout({ layoutName, layoutEntityId }: LayoutParams)
 	{
 		entityId = lastOpenedElement;
 	}
+
+	EventEmitter.emit(EventType.recent.closeListSlider);
 
 	void layoutManager.setLayout({ name: layoutName, entityId });
 }

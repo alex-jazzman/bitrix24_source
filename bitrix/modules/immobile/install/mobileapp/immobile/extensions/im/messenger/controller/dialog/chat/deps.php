@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'bottom-sheet',
 		'type',
 		'tokens',
 		'haptics',
@@ -20,7 +21,7 @@ return [
 		'collab/service/access',
 		'communication/phone-menu',
 		'im:lib/theme',
-		'im:messenger/loc',
+		'im:messenger/controller/dialog/lib/loc',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/visibility-manager',
 		'im:messenger/const',
@@ -102,6 +103,9 @@ return [
 		'im:messenger/controller/dialog/lib/input-action',
 		'im:messenger/controller/dialog/lib/message-sender',
 		'im:messenger/controller/dialog/lib/clipboard-image',
+		'im:messenger/controller/dialog/lib/suggests-manager',
+		'im:messenger/controller/dialog/lib/optimistic-chat-manager',
+		'im:messenger/controller/dialog/lib/markdown-table',
 	],
 	'bundle' => [
 		'./src/dialog',

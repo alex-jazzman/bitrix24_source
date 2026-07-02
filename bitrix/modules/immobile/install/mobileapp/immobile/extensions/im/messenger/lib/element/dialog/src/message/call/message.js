@@ -4,7 +4,7 @@
 jn.define('im/messenger/lib/element/dialog/message/call/message', (require, exports, module) => {
 	const { CustomMessage } = require('im/messenger/lib/element/dialog/message/custom/message');
 	const { CallMessageConfiguration } = require('im/messenger/lib/element/dialog/message/call/configuration');
-	const { MessageParams } = require('im/messenger/const');
+	const { MessageComponent, MessageType } = require('im/messenger/const');
 
 	/**
 	 * @class CallMessage
@@ -13,7 +13,7 @@ jn.define('im/messenger/lib/element/dialog/message/call/message', (require, expo
 	{
 		/**
 		 * @param {MessagesModelState} modelMessage
-		 * @param {CreateMessageOptions} options
+		 * @param {CreateMessageOptions|{}} options
 		 */
 		constructor(modelMessage, options = {})
 		{
@@ -37,7 +37,7 @@ jn.define('im/messenger/lib/element/dialog/message/call/message', (require, expo
 
 		static getComponentId()
 		{
-			return MessageParams.ComponentId.CallMessage;
+			return MessageComponent.call;
 		}
 
 		/**
@@ -53,7 +53,7 @@ jn.define('im/messenger/lib/element/dialog/message/call/message', (require, expo
 
 		getType()
 		{
-			return 'call';
+			return MessageType.call;
 		}
 
 		get metaData()

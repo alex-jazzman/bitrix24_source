@@ -340,3 +340,22 @@
 	0% { transform: rotate(0deg); }
 	100% { transform: rotate(360deg); }
 }
+
+.dashboard-share-link {
+	font-size: 14px;
+	line-height: 19px;
+	font-weight: 400;
+}
+
+.dashboard-share-link--active {
+	color: var(--ui-color-accent-main-link, #0154C8);
+	border-bottom: 1px dashed color-mix(in srgb, var(--ui-color-accent-main-link, #0154C8) 50%, transparent);
+	cursor: pointer;
+}
+
+.dashboard-share-link--inactive {
+	color: var(--ui-color-base-3, #828B95);
+	border-bottom: 1px dashed color-mix(in srgb, var(--ui-color-base-3, #828B95) 50%, transparent);
+	cursor: pointer;
+}
+

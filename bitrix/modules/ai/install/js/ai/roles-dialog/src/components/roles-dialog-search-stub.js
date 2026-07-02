@@ -1,4 +1,4 @@
-import { Loc } from 'main.core';
+import { Loc, Extension } from 'main.core';
 
 import '../css/roles-dialog-search-stub.css';
 import { EventEmitter } from 'main.core.events';
@@ -7,9 +7,10 @@ export const RolesDialogSearchStubEvents = {
 	CHOOSE_STANDARD_ROLE: 'AI.RolesDialog.RolesDialogSearchStub:ChooseStandardRole',
 };
 
-const textWithLink = Loc.getMessage('AI_COPILOT_ROLES_SEARCH_NO_RESULT_3', {
+const textWithLink = Loc.getMessage('AI_COPILOT_ROLES_SEARCH_NO_RESULT_3_MSGVER_1', {
 	'#LINK#': '<span @click.prevent="selectUniversalRole">',
 	'#/LINK#': '</span>',
+	'#COPILOT_NAME#': Extension.getSettings('ai.roles-dialog').get('copilotName'),
 });
 
 export const RolesDialogSearchStub = {

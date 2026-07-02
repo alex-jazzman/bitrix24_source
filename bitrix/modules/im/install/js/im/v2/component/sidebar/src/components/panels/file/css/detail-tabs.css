@@ -75,8 +75,6 @@
 	overflow-y: hidden;
 	position: relative;
 	gap: 15px;
-	-ms-overflow-style: none;
-	scrollbar-width: none;
 }
 
 .bx-sidebar-tabs-highlight {
@@ -88,9 +86,4 @@
 	bottom: 0;
 	background-color: var(--im-sidebar-detail-tabs__background-color_selected-tab);
 	transition: .3s cubic-bezier(.25,.8,.5,1);
-}
-
-.bx-im-sidebar-ears__elements::-webkit-scrollbar {
-	width: 0;
-	height: 0;
 }

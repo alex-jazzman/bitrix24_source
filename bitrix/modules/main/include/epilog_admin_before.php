@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Bitrix vars
  * @global CUser $USER
@@ -40,4 +40,4 @@ if (!defined('BX_PUBLIC_MODE') || BX_PUBLIC_MODE != 1)
 else
 	require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/interface/epilog_jspopup_admin.php");
 
-?>
+

@@ -1,4 +1,4 @@
-import { Store, BuilderModel } from 'ui.vue3.vuex';
+import { BuilderModel } from 'ui.vue3.vuex';
 import type { GetterTree, ActionTree, MutationTree } from 'ui.vue3.vuex';
 
 import { Model } from 'booking.const';

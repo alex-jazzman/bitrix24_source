@@ -30,3 +30,4 @@ $MESS['CRM_BIC_LEAD_PRODUCT_ROW_FIELD_MEASURE_FULL'] = "Идентификато
 $MESS['CRM_BIC_LEAD_PRODUCT_ROW_FIELD_MEASURE_CODE'] = "Идентификатор единицы измерения";
 $MESS['CRM_BIC_LEAD_PRODUCT_ROW_FIELD_MEASURE_NAME'] = "Название единицы измерения";
 $MESS['CRM_BIC_LEAD_PRODUCT_ROW_FIELD_SORT'] = "Порядок сортировки";
+$MESS['CRM_BIC_LEAD_PRODUCT_ROW_TABLE_DESCRIPTION_FULL'] = "Набор содержит сведения о товарах.";

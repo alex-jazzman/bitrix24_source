@@ -5,11 +5,13 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/items/user',
 	const { Color } = require('tokens');
 	const { isEmpty } = require('utils/object');
 	const { UserProfile } = require('user-profile');
+	const { Icon } = require('assets/icons');
 
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Loc } = require('im/messenger/loc');
 	const { UserHelper } = require('im/messenger/lib/helper');
-	const { UserStatus } = require('im/messenger/lib/element/user-status');
 	const { ParticipantBaseItem } = require('im/messenger/controller/sidebar-v2/tabs/participants/src/items/base');
+	const { PositionEnum } = require('im/messenger/controller/sidebar-v2/ui/sidebar-avatar');
 
 	/**
 	 * @class ParticipantUserItem
@@ -58,7 +60,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/items/user',
 		renderStatusIcons()
 		{
 			const userStatus = this.getUserStatusIcon();
-			const crownStatus = this.isAdmin() || this.isManager() ? this.getStatusCrownIcon() : null;
+			const crownStatus = this.getCrownStatusIcon();
 			const statuses = [userStatus, crownStatus].filter(Boolean);
 
 			if (isEmpty(statuses))
@@ -66,27 +68,75 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/items/user',
 				return null;
 			}
 
-			return statuses.map((statusIcon) => ({
+			return statuses.map(({ tintColor, named, position }) => ({
 				statusIcon: Image({
 					style: {
 						width: 18,
 						height: 18,
+						backgroundColor: Color.bgContentPrimary.toHex(),
+						borderRadius: 9,
+						overflow: 'hidden',
 					},
-					svg: {
-						content: statusIcon,
-					},
-					onFailure: console.error,
+					tintColor,
+					named,
 				}),
+				position,
 			}));
 		}
 
 		/**
-		 * @desc Get svg string for content image by dialog/user id
-		 * @return {string}
+		 * @return {{
+		 * named: string,
+		 * tintColor: string,
+		 * position: PositionEnum
+		 * } | null}
 		 */
 		getUserStatusIcon()
 		{
-			return UserStatus.getStatusByUserId(this.getUserId(), false);
+			const store = serviceLocator.get('core').getStore();
+
+			const hasVacation = store.getters['usersModel/hasVacation'](this.getUserId());
+			if (hasVacation)
+			{
+				return {
+					named: Icon.SMALL_VACATION.getIconName(),
+					tintColor: Color.accentSoftElementGreen.toHex(),
+					position: PositionEnum.BOTTOM_RIGHT,
+				};
+			}
+
+			const hasBirthday = store.getters['usersModel/hasBirthday'](this.getUserId());
+			if (hasBirthday)
+			{
+				return {
+					named: Icon.SMALL_GIFT.getIconName(),
+					tintColor: Color.accentSoftElementGreen.toHex(),
+					position: PositionEnum.BOTTOM_RIGHT,
+				};
+			}
+
+			return null;
+		}
+
+		/**
+		 * @return {{
+		 * named: string,
+		 * tintColor: string,
+		 * position: PositionEnum
+		 * } | null}
+		 */
+		getCrownStatusIcon()
+		{
+			if (this.isAdmin() || this.isManager())
+			{
+				return {
+					named: Icon.SMALL_CROWN.getIconName(),
+					tintColor: Color.accentMainWarningSolid.toHex(),
+					position: PositionEnum.TOP_RIGHT,
+				};
+			}
+
+			return null;
 		}
 
 		getTestId()

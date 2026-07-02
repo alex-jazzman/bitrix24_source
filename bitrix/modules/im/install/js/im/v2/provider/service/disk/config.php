@@ -10,10 +10,9 @@ return [
 	],
 	'rel' => [
 		'main.polyfill.core',
-		'rest.client',
-		'im.v2.lib.rest',
 		'im.v2.application.core',
 		'im.v2.const',
+		'im.v2.lib.rest',
 	],
 	'skip_core' => true,
 ];

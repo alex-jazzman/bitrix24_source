@@ -5,7 +5,6 @@ jn.define('tasks/onboarding', (require, exports, module) => {
 	const { ActionBase } = require('onboarding/action');
 	const { BadgeCode, Preset } = require('onboarding/const');
 	const { Case } = require('onboarding/case');
-	const { ConditionBase } = require('onboarding/condition');
 	const { Loc } = require('loc');
 	const { OnboardingBase } = require('onboarding');
 
@@ -17,18 +16,6 @@ jn.define('tasks/onboarding', (require, exports, module) => {
 		static getCases()
 		{
 			return [
-				new Case({
-					id: CaseName.ON_EMPTY_TASK_LIST,
-					presets: [Preset.TASKS],
-					activeTab: BadgeCode.TASKS,
-					conditions: [Condition.isEmptyTaskList(), ConditionBase.hasAppVisitsAtLeast(2)],
-					action: async (context, onComplete) => {
-						if (context?.onShow)
-						{
-							await context.onShow(context, onComplete);
-						}
-					},
-				}),
 				new Case({
 					id: CaseName.MORE_THAN_THREE_TASKS,
 					presets: [Preset.ANY],

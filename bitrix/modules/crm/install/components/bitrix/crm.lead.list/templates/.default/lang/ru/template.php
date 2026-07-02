@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_ALL"] = "Всего";
 $MESS["CRM_LEAD_SHOW_TITLE"] = "Просмотреть лид";
 $MESS["CRM_LEAD_SHOW"] = "Просмотреть лид";
@@ -97,10 +97,10 @@ $MESS["CRM_LEAD_BUILD_TIMELINE_DLG_TITLE"] = "Подготовка истори�
 $MESS["CRM_LEAD_BUILD_TIMELINE_STATE"] = "#processed# из #total#";
 $MESS["CRM_LEAD_REFRESH_ACCOUNTING_DLG_TITLE"] = "Обновление данных для отчётов";
 $MESS["CRM_LEAD_STEPWISE_STATE_TEMPLATE"] = "#processed# из #total#";
-$MESS["CRM_LEAD_EXCLUDE_TITLE"] = "Добавить лид в список исключений";
-$MESS["CRM_LEAD_EXCLUDE"] = "Добавить в список исключений";
-$MESS["CRM_LEAD_EXCLUDE_CONFIRM"] = "Вы уверены, что хотите добавить в список исключений?";
-$MESS["CRM_LEAD_EXCLUDE_CONFIRM_HELP"] = "Подробнее о списке исключений";
+$MESS["CRM_LEAD_EXCLUDE_TITLE"] = "Добавить лид в стоп-лист";
+$MESS["CRM_LEAD_EXCLUDE"] = "Добавить в стоп-лист";
+$MESS["CRM_LEAD_EXCLUDE_CONFIRM"] = "Вы уверены, что хотите добавить в стоп-лист?";
+$MESS["CRM_LEAD_EXCLUDE_CONFIRM_HELP"] = "Подробнее о стоп-листе";
 $MESS["CRM_LEAD_CONVERT"] = "Создать на основании";
 $MESS["CRM_LEAD_BATCH_CONVERSION_TITLE"] = "Конвертация лидов";
 $MESS["CRM_LEAD_BATCH_CONVERSION_COMPLETED"] = "Конвертация лидов завершена.";

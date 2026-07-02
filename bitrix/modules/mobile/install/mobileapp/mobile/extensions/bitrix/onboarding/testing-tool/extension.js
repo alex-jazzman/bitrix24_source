@@ -36,7 +36,6 @@ jn.define('onboarding/testing-tool', (require, exports, module) => {
 			RegisteredCaseId.ON_MORE_THAN_TWO_TUNNELS,
 			RegisteredCaseId.ON_DEAL_CONTACT_FILLED,
 			RegisteredCaseId.ON_PAYMENT_ON_DEAL,
-			RegisteredCaseId.ON_DETAIL_CARD_TELEGRAM_BOT,
 			RegisteredCaseId.ON_CUSTOM_PRESET_APPEARED,
 		],
 	};
@@ -263,10 +262,6 @@ jn.define('onboarding/testing-tool', (require, exports, module) => {
 				{
 					id: RegisteredCaseId.ON_PAYMENT_ON_DEAL,
 					title: `[CRM]: ${RegisteredCaseId.ON_PAYMENT_ON_DEAL}`,
-				},
-				{
-					id: RegisteredCaseId.ON_DETAIL_CARD_TELEGRAM_BOT,
-					title: `[CRM]: ${RegisteredCaseId.ON_DETAIL_CARD_TELEGRAM_BOT}`,
 				},
 				{
 					id: RegisteredCaseId.ON_CUSTOM_PRESET_APPEARED,

@@ -15,6 +15,7 @@ import {
 
 import { EventEmitter } from 'main.core.events';
 import { MenuManager, PopupManager, Popup, type Menu } from 'main.popup';
+import { LiveAnnouncer } from 'ui.a11y';
 
 import { ToolbarItem } from './toolbar-item';
 import { getInstance } from './get-instance';
@@ -80,6 +81,7 @@ export class Toolbar extends EventEmitter
 	show(): void
 	{
 		Dom.addClass(this.getContainer(), '--show');
+		Dom.style(document.body, '--side-panel-toolbar-shown', 1);
 	}
 
 	isShown(): boolean
@@ -90,6 +92,7 @@ export class Toolbar extends EventEmitter
 	hide(): void
 	{
 		Dom.removeClass(this.getContainer(), '--show');
+		Dom.style(document.body, '--side-panel-toolbar-shown', null);
 	}
 
 	mute(): boolean
@@ -198,10 +201,15 @@ export class Toolbar extends EventEmitter
 			return;
 		}
 
-		if (immediately === true)
-		{
+		const finalize = () => {
 			Dom.addClass(this.getContainer(), '--collapsed');
 			Dom.style(this.getContentContainer(), 'width', null);
+			Dom.attr(this.getToggleButton(), 'aria-expanded', 'false');
+		};
+
+		if (immediately === true)
+		{
+			finalize();
 		}
 		else
 		{
@@ -214,8 +222,7 @@ export class Toolbar extends EventEmitter
 				requestAnimationFrame(() => {
 					Dom.style(this.getContentContainer(), 'width', 0);
 					Event.bindOnce(this.getContentContainer(), 'transitionend', () => {
-						Dom.addClass(this.getContainer(), '--collapsed');
-						Dom.style(this.getContentContainer(), 'width', null);
+						finalize();
 					});
 				});
 			});
@@ -234,11 +241,13 @@ export class Toolbar extends EventEmitter
 		if (immediately === true)
 		{
 			Dom.removeClass(this.getContainer(), '--collapsed');
+			Dom.attr(this.getToggleButton(), 'aria-expanded', 'true');
 			Dom.style(this.getContentContainer(), 'width', null);
 		}
 		else
 		{
 			Dom.removeClass(this.getContainer(), '--collapsed');
+			Dom.attr(this.getToggleButton(), 'aria-expanded', 'true');
 			const width = this.getContentContainer().scrollWidth;
 			Dom.style(this.getContentContainer(), 'width', 0);
 
@@ -520,6 +529,12 @@ export class Toolbar extends EventEmitter
 			{
 				this.hide();
 			}
+			else
+			{
+				this.items[0].getTitleContainer().focus({ preventScroll: true });
+			}
+
+			LiveAnnouncer.announce(Loc.getMessage('MAIN_SIDEPANEL_TOOLBAR_REMOVED_ARIA'));
 		}
 	}
 
@@ -597,8 +612,8 @@ export class Toolbar extends EventEmitter
 
 			const container = Tag.render`
 				<div class="side-panel-toolbar ${classes.join(' ')}">
+					${this.getToggleButton()}
 					${this.getContentContainer()}
-					<div class="side-panel-toolbar-toggle" onclick="${this.handleToggleClick.bind(this)}"></div>
 				</div>
 			`;
 
@@ -667,14 +682,36 @@ export class Toolbar extends EventEmitter
 		});
 	}
 
+	getToggleButton(): HTMLButtonElement
+	{
+		return this.refs.remember('toggle-button', () => {
+			return Tag.render`
+				<button 
+					type="button" 
+					tabindex="0" 
+					class="side-panel-toolbar-toggle"
+					aria-label="${Loc.getMessage('MAIN_SIDEPANEL_TOOLBAR_TITLE')}"
+					aria-expanded="${!this.collapsed}"
+					onclick="${this.handleToggleClick.bind(this)}"
+				></button>
+			`;
+		});
+	}
+
 	getContentContainer(): HTMLElement
 	{
 		return this.refs.remember('content-container', () => {
 			return Tag.render`
 				<div class="side-panel-toolbar-content">
-					<div class="side-panel-toolbar-collapse-btn" onclick="${this.handleToggleClick.bind(this)}">
-						<div class="ui-icon-set --chevron-right"></div>
-					</div>
+					<button
+						type="button"
+						tabindex="0"
+						class="side-panel-toolbar-collapse-btn"
+						aria-label="${Loc.getMessage('MAIN_SIDEPANEL_TOOLBAR_COLLAPSE')}"
+						onclick="${this.handleToggleClick.bind(this)}"
+					>
+						<span class="ui-icon-set --chevron-right"></span>
+					</button>
 					${this.getItemsContainer()}
 					${this.getMoreButton()}
 				</div>
@@ -698,9 +735,15 @@ export class Toolbar extends EventEmitter
 	{
 		return this.refs.remember('more-button', () => {
 			return Tag.render`
-				<div class="side-panel-toolbar-more-btn" onclick="${this.handleMoreBtnClick.bind(this)}">
-					<div class="ui-icon-set --more"></div>
-				</div>
+				<button 
+					class="side-panel-toolbar-more-btn" 
+					onclick="${this.handleMoreBtnClick.bind(this)}"
+					type="button"
+					tabindex="0"
+					aria-label="${Loc.getMessage('MAIN_SIDEPANEL_TOOLBAR_MORE_ARIA')}"
+				>
+					<span class="ui-icon-set --more"></span>
+				</button>
 			`;
 		});
 	}
@@ -761,6 +804,7 @@ export class Toolbar extends EventEmitter
 			offsetTop: 0,
 			maxHeight: 305,
 			items,
+			focusTrap: true,
 			events: {
 				onShow: (event) => {
 					const popup = event.getTarget();
@@ -860,5 +904,6 @@ export class Toolbar extends EventEmitter
 	handleToggleClick(): void
 	{
 		this.toggle();
+		this.getToggleButton().focus({ preventScroll: true });
 	}
 }

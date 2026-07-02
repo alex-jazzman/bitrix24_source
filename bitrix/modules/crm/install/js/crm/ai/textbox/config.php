@@ -10,9 +10,9 @@ return [
 	'js' => 'dist/textbox.bundle.js',
 	'rel' => [
 		'main.core',
-		'ui.icon-set.api.core',
 		'ui.design-tokens',
 		'ui.fonts.opensans',
+		'ui.icon-set.api.core',
 	],
 	'skip_core' => false,
 ];

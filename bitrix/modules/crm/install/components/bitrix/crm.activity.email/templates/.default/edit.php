@@ -165,11 +165,12 @@ foreach ($arParams['DOCS_BINDINGS'] as $item)
 	$this->setViewTarget('planner_slider_header');
 
 	?>
-	<div class="crm-activity-planner-slider-header-control-item crm-activity-planner-slider-header-control-select crm-activity-email-create-template">
-		<div class="crm-activity-planner-slider-header-control-description"><?=getMessage('CRM_ACT_EMAIL_CREATE_TEMPLATE') ?>:</div>
-		<div class="crm-activity-planner-slider-header-control-text"><?=htmlspecialcharsbx($arParams['LAST_USED_TEMPLATE_TITLE'] ?? \Bitrix\Main\Localization\Loc::getMessage('CRM_ACT_EMAIL_CREATE_NOTEMPLATE'))?></div>
-		<div class="crm-activity-planner-slider-header-control-triangle"></div>
-	</div>
+	<button type="button" class="crm-activity-planner-slider-header-control-item crm-activity-planner-slider-header-control-select crm-activity-email-create-template"
+		aria-haspopup="true">
+		<span class="crm-activity-planner-slider-header-control-description"><?=getMessage('CRM_ACT_EMAIL_CREATE_TEMPLATE') ?>:</span>
+		<span class="crm-activity-planner-slider-header-control-text"><?=htmlspecialcharsbx($arParams['LAST_USED_TEMPLATE_TITLE'] ?? \Bitrix\Main\Localization\Loc::getMessage('CRM_ACT_EMAIL_CREATE_NOTEMPLATE'))?></span>
+		<span class="crm-activity-planner-slider-header-control-triangle"></span>
+	</button>
 	<?
 
 	$this->endViewTarget();

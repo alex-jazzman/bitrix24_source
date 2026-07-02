@@ -18,9 +18,9 @@ $pathToUserCalendar = \Bitrix\Main\Config\Option::get(
 return [
 	'js' => './dist/utils.bundle.js',
 	'rel' => [
-		'main.date',
 		'im.old-chat-embedding.const',
 		'main.core',
+		'main.date',
 	],
 	'skip_core' => false,
 	'settings' => [

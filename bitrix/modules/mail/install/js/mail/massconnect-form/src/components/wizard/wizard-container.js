@@ -1,16 +1,22 @@
+import { Type } from 'main.core';
 import { markRaw } from 'ui.vue3';
 import { mapState } from 'ui.vue3.pinia';
-import { Type } from 'main.core';
+import { sendData as analyticsSendData } from 'ui.analytics';
 import { WizardProgressBar } from './wizard-progress-bar';
 import { WizardNavigation } from './wizard-navigation';
 import { ConnectionData } from './steps/connection-data/connection-data';
 import { SelectEmployees } from './steps/select-employees/select-employees';
 import { MailboxSettings } from './steps/mailbox-settings/mailbox-settings';
+import { ConnectionStatus } from './connection-status/connection-status';
+import { WizardHint } from './wizard-hint';
 import { useWizardStore } from '../../store/wizard';
 import { LocalizationMixin } from '../../mixins/localization-mixin';
-import { ConnectionStatus } from './connection-status/connection-status';
-import { sendData as analyticsSendData } from 'ui.analytics';
-import { WizardHint } from './wizard-hint';
+import {
+	ERROR_TYPE_IMAP_CONNECTION,
+	ERROR_TYPE_AUTH,
+	ERROR_TYPE_SMTP_CONNECTION,
+	ALLOWED_CONNECTION_ERROR_TYPES,
+} from '../../utils/const/connection-error';
 import './wizard-style.css';
 
 /**
@@ -137,33 +143,77 @@ export default {
 				this.$refs.activeComponent.onStepComplete();
 			}
 		},
-		handleFixErrors(errorsFromBackend, successfulCount): void
+		handleFixErrors(errorsFromBackend: Array<any>, successfulCount: number, errorType: string): void
 		{
 			this.successfulCount = successfulCount;
 
 			const wizardStore = useWizardStore();
 
-			wizardStore.enableErrorState(errorsFromBackend.length);
+			if (!ALLOWED_CONNECTION_ERROR_TYPES.includes(errorType))
+			{
+				return;
+			}
+
+			switch (errorType)
+			{
+				case ERROR_TYPE_IMAP_CONNECTION:
+					this.handleImapConnectionError(wizardStore);
+					break;
+				case ERROR_TYPE_SMTP_CONNECTION:
+					this.handleSmtpConnectionError(wizardStore);
+					break;
+				case ERROR_TYPE_AUTH:
+					this.handleAuthError(wizardStore, errorsFromBackend);
+					break;
+				default:
+					break;
+			}
+		},
+		handleImapConnectionError(wizardStore): void
+		{
+			wizardStore.enableErrorState(ERROR_TYPE_IMAP_CONNECTION);
+
+			this.isSubmitting = false;
+			this.currentStepIndex = 0;
+		},
+		handleSmtpConnectionError(wizardStore): void
+		{
+			wizardStore.enableErrorState(ERROR_TYPE_SMTP_CONNECTION);
+
+			this.isSubmitting = false;
+			this.currentStepIndex = 0;
+		},
+		handleAuthError(wizardStore, errorsFromBackend: Array<any>): void
+		{
+			wizardStore.enableErrorState(ERROR_TYPE_AUTH);
 
 			const userIdsWithErrors = new Set(
-				errorsFromBackend.map((error) => error.customData?.userIdToConnect),
+				errorsFromBackend
+					.map((error) => error.customData?.userIdToConnect)
+					.filter(Boolean),
 			);
 
-			const employeesWithErrors = wizardStore.employees
-				.filter((employee) => userIdsWithErrors.has(employee.id))
-				.map((employee) => ({
-					...employee,
-					password: '',
-				}))
-			;
+			const employeesWithErrors = [];
+			const successfulEmployees = [];
 
-			const addedEmployees = [...wizardStore.addedEmployees, ...wizardStore.employees
-				.filter((employee) => !userIdsWithErrors.has(employee.id))
-				.map((employee) => ({
+			for (const employee of wizardStore.employees)
+			{
+				const cleanedEmployee = {
 					...employee,
 					password: '',
-				}))]
-			;
+				};
+
+				if (userIdsWithErrors.has(employee.id))
+				{
+					employeesWithErrors.push(cleanedEmployee);
+				}
+				else
+				{
+					successfulEmployees.push(cleanedEmployee);
+				}
+			}
+
+			const addedEmployees = [...wizardStore.addedEmployees, ...successfulEmployees];
 
 			wizardStore.setAddedEmployees(addedEmployees);
 			wizardStore.setEmployees(employeesWithErrors);
@@ -213,7 +263,7 @@ export default {
 						<ConnectionStatus
 							:mailboxes="mailboxesToConnect"
 							:massConnectData="massConnectData"
-							@fixErrors="handleFixErrors"
+							@fix-errors="handleFixErrors"
 						/>
 					</div>
 				</div>

@@ -9,12 +9,11 @@ jn.define('im/messenger/lib/dev/menu/menu', (require, exports, module) => {
 
 	const { DeveloperSettingsMenu } = require('im/messenger/lib/dev/menu/developer-settings');
 	const { LoggingSettingsSearch } = require('im/messenger/lib/dev/menu/logging/settings-search');
-	const { LoggingSettings } = require('im/messenger/lib/dev/menu/logging/settings');
 	const { ChatDialog } = require('im/messenger/lib/dev/menu/chat-dialog');
 	const { ChatDialogBenchmark } = require('im/messenger/lib/dev/menu/chat-dialog-benchmark');
 	const { VuexManagerPlayground } = require('im/messenger/lib/dev/menu/vuex-manager');
 	const { Playground } = require('im/messenger/lib/dev/menu/playground');
-	const { DialogSnippets } = require('im/messenger/lib/dev/menu/dialog-snippets');
+	const { DialogSnippets } = require('im/messenger/lib/dev/menu/dialog/dialog-snippets');
 	const { RecentSnippets } = require('im/messenger/lib/dev/menu/src/recent-snippets');
 
 	class DeveloperMenu extends LayoutComponent
@@ -63,18 +62,6 @@ jn.define('im/messenger/lib/dev/menu/menu', (require, exports, module) => {
 					loggingSettingsSearch.open();
 
 					window.messengerDev.playground.loggingSettingsSearch = loggingSettingsSearch;
-				},
-			});
-
-			const logSettingsButton = BannerButton({
-				title: 'LoggerManager form',
-				description: '',
-				backgroundColor: AppTheme.colors.accentSoftBlue2,
-				onClick: () => {
-					const loggingSettings = new LoggingSettings();
-					loggingSettings.open();
-
-					window.messengerDev.playground.loggingSettings = loggingSettings;
 				},
 			});
 
@@ -139,7 +126,7 @@ jn.define('im/messenger/lib/dev/menu/menu', (require, exports, module) => {
 					PageManager.openWidget(
 						'layout',
 						{
-							title: 'Messenger Playground',
+							title: 'Dialog Snippets',
 							onReady: (layoutWidget) => {
 								layoutWidget.showComponent(new DialogSnippets({}));
 							},
@@ -199,7 +186,7 @@ jn.define('im/messenger/lib/dev/menu/menu', (require, exports, module) => {
 
 			return [
 				developerSettingsButton,
-				this.renderButtonSection([logSettingsSearchButton, logSettingsButton], 'Logging'),
+				this.renderLoggingSection([logSettingsSearchButton], 'Logging'),
 				consoleButton,
 				// chatDialogVisualTest,
 				// chatDialogBenchmark,
@@ -220,6 +207,43 @@ jn.define('im/messenger/lib/dev/menu/menu', (require, exports, module) => {
 					},
 				},
 				item,
+			);
+		}
+
+		/**
+		 * Render section for Logging
+		 */
+		renderLoggingSection(buttons, sectionName, nestingLevel = '4%')
+		{
+			return View(
+				{
+					style: {
+						backgroundColor: AppTheme.colors.accentSoftBlue1,
+						paddingLeft: nestingLevel,
+						borderRadius: 12,
+						padding: 16,
+					},
+				},
+				Text({
+					style: {
+						fontSize: 20,
+						fontWeight: 'bold',
+						marginTop: 4,
+						marginBottom: 16,
+					},
+					text: sectionName,
+					value: sectionName,
+				}),
+				...buttons.map((button, index) => {
+					return View(
+						{
+							style: {
+								marginBottom: index < buttons.length - 1 ? 12 : 0,
+							},
+						},
+						button,
+					);
+				}),
 			);
 		}
 

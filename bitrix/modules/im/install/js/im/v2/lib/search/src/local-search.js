@@ -1,14 +1,13 @@
-import { Store } from 'ui.vue3.vuex';
+import { type Store } from 'ui.vue3.vuex';
 
 import { Core } from 'im.v2.application.core';
 import { ChatType } from 'im.v2.const';
-import { Utils } from 'im.v2.lib.utils';
 import { EntitySearch } from 'im.v2.lib.search';
+import { Utils } from 'im.v2.lib.utils';
+import { type ImModelChat } from 'im.v2.model';
 
 import { getRecentListItems } from './helpers/get-recent-items';
-
-import type { SearchResultItem, LocalSearchItem, SearchConfig } from './types/types';
-import type { ImModelChat } from 'im.v2.model';
+import { type SearchResultItem, type LocalSearchItem, type SearchConfig } from './types/types';
 
 const collator = new Intl.Collator(undefined, { sensitivity: 'base' });
 

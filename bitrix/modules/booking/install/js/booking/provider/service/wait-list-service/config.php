@@ -9,12 +9,12 @@ return [
 	'css' => 'dist/wait-list-service.bundle.css',
 	'js' => 'dist/wait-list-service.bundle.js',
 	'rel' => [
-		'main.core',
-		'booking.core',
 		'booking.const',
+		'booking.core',
 		'booking.lib.api-client',
-		'booking.provider.service.main-page-service',
 		'booking.provider.service.client-service',
+		'booking.provider.service.main-page-service',
+		'main.core',
 	],
 	'skip_core' => false,
 ];

@@ -23,6 +23,7 @@ jn.define('im/messenger/lib/element/dialog', (require, exports, module) => {
 	const { UnsupportedMessage } = require('im/messenger/lib/element/dialog/message/unsupported');
 	const { DateSeparatorMessage } = require('im/messenger/lib/element/dialog/message/date-separator');
 	const { UnreadSeparatorMessage } = require('im/messenger/lib/element/dialog/message/unread-separator');
+	const { MarkedSeparatorMessage } = require('im/messenger/lib/element/dialog/message/marked-separator');
 	const { CopilotMessage } = require('im/messenger/lib/element/dialog/message/copilot');
 	const { CopilotPromptMessage } = require('im/messenger/lib/element/dialog/message/copilot-prompt');
 	const { ErrorMessage } = require('im/messenger/lib/element/dialog/message/error');
@@ -38,9 +39,12 @@ jn.define('im/messenger/lib/element/dialog', (require, exports, module) => {
 	const { VoteMessageHandler } = require('im/messenger/lib/element/dialog/message/vote/handler');
 	const { AiAssistantMessage } = require('im/messenger/lib/element/dialog/message/ai-assistant');
 	const { StickerMessage } = require('im/messenger/lib/element/dialog/message/sticker');
+	const { EmptyMessage } = require('im/messenger/lib/element/dialog/message/empty');
 	const { DeletedStickerMessage } = require('im/messenger/lib/element/dialog/message/deleted-sticker');
 	const { AiBizprocMessage } = require('im/messenger/lib/element/dialog/message/ai-bizproc/message');
 	const { AiBizprocMessageHandler } = require('im/messenger/lib/element/dialog/message/ai-bizproc/handler');
+	const { BuilderMessageFactory } = require('im/messenger/lib/element/dialog/message/builder/factory');
+	const { BuilderMessageHandler } = require('im/messenger/lib/element/dialog/message/builder/handler');
 
 	module.exports = {
 		Message,
@@ -60,6 +64,7 @@ jn.define('im/messenger/lib/element/dialog', (require, exports, module) => {
 		UnsupportedMessage,
 		DateSeparatorMessage,
 		UnreadSeparatorMessage,
+		MarkedSeparatorMessage,
 		CopilotMessage,
 		CopilotPromptMessage,
 		ErrorMessage,
@@ -80,5 +85,8 @@ jn.define('im/messenger/lib/element/dialog', (require, exports, module) => {
 		DeletedStickerMessage,
 		AiBizprocMessage,
 		AiBizprocMessageHandler,
+		BuilderMessageFactory,
+		BuilderMessageHandler,
+		EmptyMessage,
 	};
 });

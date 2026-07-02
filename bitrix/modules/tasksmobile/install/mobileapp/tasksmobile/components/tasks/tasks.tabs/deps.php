@@ -4,7 +4,6 @@ return [
 	'extensions' => [
 		'entity-ready',
 		'pull/client/events',
-		'qrauth/utils',
 		'reload/listeners',
 		'rest/run-action-executor',
 		'storage-cache',

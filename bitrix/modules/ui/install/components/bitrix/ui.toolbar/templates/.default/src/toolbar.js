@@ -1,7 +1,8 @@
-import { bind, Dom, Event, Text, Type, Uri } from 'main.core';
+import { bind, unbindAll, Dom, Event, Reflection, Text, Type, Uri, Loc } from 'main.core';
 import { type BaseEvent } from 'main.core.events';
 import { Popup } from 'main.popup';
 import { ButtonColor, ButtonIcon, ButtonManager } from 'ui.buttons';
+import 'ui.hint';
 
 import { TitleEditor, TitleEditorEvents, type TitleEditorOptions } from './title-editor';
 import { ToolbarStar } from './toolbar-star';
@@ -15,6 +16,7 @@ export type ToolbarOptions = {
 	target: HTMLElement;
 	buttonIds?: string[];
 	titleEditor: TitleEditorOptions;
+	fullscreenButton?: boolean;
 };
 
 export const ToolbarEvents = {
@@ -35,6 +37,7 @@ export class Toolbar extends Event.EventEmitter
 	buttonIds: string[];
 	windowWidth: number;
 	#copyLinkButton: HTMLElement;
+	#fullscreenButton: HTMLElement | null;
 	#titleEditor: ?TitleEditor;
 
 	static TitleEditor = TitleEditor;
@@ -69,6 +72,12 @@ export class Toolbar extends Event.EventEmitter
 		if (this.#copyLinkButton)
 		{
 			Event.bind(this.#copyLinkButton, 'click', this.#getClickOnCopyLinkButtonHandler());
+		}
+
+		this.#fullscreenButton = this.toolbarContainer.querySelector('#uiToolbarFullscreen');
+		if (this.#fullscreenButton)
+		{
+			Event.bind(this.#fullscreenButton, 'click', this.#handleFullscreenToggle);
 		}
 
 		if (!this.filterContainer)
@@ -133,6 +142,8 @@ export class Toolbar extends Event.EventEmitter
 		{
 			this.#titleEditor = this.#initTitleEditor(options.titleEditor);
 		}
+
+		BX.UI.Hint.init(this.getContainer());
 	}
 
 	getButtons(): Object
@@ -263,6 +274,40 @@ export class Toolbar extends Event.EventEmitter
 	{
 		return this.#titleEditor;
 	}
+
+	#handleFullscreenToggle = (): void => {
+		const siteTemplate = Reflection.getClass('BX.Intranet.Bitrix24.Template');
+		if (!siteTemplate)
+		{
+			return;
+		}
+
+		const willBeFullscreen = !siteTemplate.isFullscreen();
+		siteTemplate.toggleFullscreen();
+
+		Dom.attr(this.#fullscreenButton, 'aria-pressed', willBeFullscreen ? 'true' : 'false');
+
+		Dom.toggleClass(this.#fullscreenButton, 'ui-toolbar-fullscreen-active', willBeFullscreen);
+
+		BX.UI.Hint.hide(this.#fullscreenButton);
+		unbindAll(this.#fullscreenButton, 'mouseenter');
+		unbindAll(this.#fullscreenButton, 'mouseleave');
+		this.#fullscreenButton.removeAttribute('data-hint-init');
+
+		if (willBeFullscreen)
+		{
+			this.#fullscreenButton.removeAttribute('data-hint');
+
+			return;
+		}
+
+		const hintText = Loc.getMessage('UI_TOOLBAR_FOCUS_MODE_HINT');
+		if (Type.isStringFilled(hintText))
+		{
+			Dom.attr(this.#fullscreenButton, 'data-hint', hintText);
+			BX.UI.Hint.initNode(this.#fullscreenButton);
+		}
+	};
 
 	#getClickOnCopyLinkButtonHandler(): Function
 	{

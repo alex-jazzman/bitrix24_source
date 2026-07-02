@@ -1,0 +1,68 @@
+.bx-im-add-guests-tab__invite-language-section {
+	--im-add-guests-tab__color_invite-language-block: var(--ui-color-base-4);
+	--im-add-guests-tab__border-color_selected-language-title: rgba(var(--im-color-palette-gray-50-rgb), 0.28);
+
+	display: flex;
+	align-items: center;
+	gap: 6px;
+
+	margin: 0 8px 16px 8px;
+
+	font-weight: var(--im-font-weight-normal);
+	font-size: var(--im-font-size-md);
+	color: var(--im-add-guests-tab__color_invite-language-block);
+}
+
+.bx-im-add-guests-tab__invite-language-section_title {
+	height: 19px;
+}
+
+.bx-im-add-guests-tab__invite-language-section_language-selector {
+	border-radius: var(--ui-border-radius-xs);
+	padding-right: 2px !important;
+	margin-top: 7px;
+}
+
+.bx-im-add-guests-tab__invite-language-section_language-selector .popup-window-content::-webkit-scrollbar {
+	width: 4px;
+	height: 191px;
+}
+
+.bx-im-add-guests-tab__invite-language-section_language-selector .popup-window-content::-webkit-scrollbar-button {
+	display: none;
+}
+
+.bx-im-add-guests-tab__invite-language-section_language-selector .popup-window-content::-webkit-scrollbar-track {
+	background: rgba(var(--im-color-palette-gray-50-rgb), 0.1);
+	border-radius: 32px;
+}
+
+.bx-im-add-guests-tab__invite-language-section_language-selector .popup-window-content::-webkit-scrollbar-thumb {
+	background: var(--im-add-guests-tab__color_invite-language-block);
+	border-radius: 32px;
+}
+
+.bx-im-add-guests-tab__invite-language-section_selected-language-block {
+	display: flex;
+	align-items: center;
+	cursor: pointer;
+}
+
+.bx-im-add-guests-tab__selected-language-block_title {
+	height: 19px;
+	padding-bottom: 1px;
+	border-bottom: 1px dashed var(--im-add-guests-tab__border-color_selected-language-title);
+}
+
+.bx-im-add-guests-tab__selected-language-block_arrow {
+	display: inline-block;
+	width: 20px;
+	height: 20px;
+	background: url('./images/arrow.svg') no-repeat center;
+	transition: transform 0.2s ease;
+	transform: rotate(0deg);
+}
+
+.bx-im-add-guests-tab__selected-language-block_arrow.--open {
+	transform: rotate(180deg);
+}

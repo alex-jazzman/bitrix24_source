@@ -6,6 +6,34 @@ export class ComplexDocumentId
 	#entity: string;
 	#documentId: string | number;
 
+	static tryCreate(documentId: mixed): ?ComplexDocumentId
+	{
+		if (documentId instanceof ComplexDocumentId)
+		{
+			return documentId;
+		}
+
+		if (!Type.isPlainObject(documentId))
+		{
+			return null;
+		}
+
+		if (
+			!Type.isStringFilled(documentId.moduleId)
+			|| !Type.isStringFilled(documentId.entity)
+			|| !(Type.isStringFilled(documentId.documentId) || Type.isNumber(documentId.documentId))
+		)
+		{
+			return null;
+		}
+
+		return new ComplexDocumentId(
+			documentId.moduleId,
+			documentId.entity,
+			documentId.documentId,
+		);
+	}
+
 	constructor(moduleId: string, entity: string, documentId: string | number)
 	{
 		if (

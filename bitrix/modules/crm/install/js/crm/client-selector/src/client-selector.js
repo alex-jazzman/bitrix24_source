@@ -1,6 +1,7 @@
 import { Loc, Text, Type } from 'main.core';
 import type { ItemOptions } from 'ui.entity-selector';
 import { Dialog } from 'ui.entity-selector';
+import 'crm_common';
 
 export type Communication = {
 	caption: string,

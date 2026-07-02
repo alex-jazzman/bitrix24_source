@@ -1,7 +1,8 @@
 import { Text } from 'main.core';
 import { TagSelector } from 'ui.entity-selector';
 import { getMemberRoles, teamMemberRoles } from 'humanresources.company-structure.api';
-import { PermissionChecker, PermissionCheckerClass } from 'humanresources.company-structure.permission-checker';
+import { PermissionChecker, type PermissionCheckerClass } from 'humanresources.company-structure.permission-checker';
+import { DefaultHint } from 'humanresources.company-structure.structure-components';
 import {
 	WizardApiEntityChangedDict,
 	NodeSettingsTypes,
@@ -16,6 +17,10 @@ const USER_TYPE_ENTITY_ID = 'user';
 // @vue/component
 export const Settings = {
 	name: 'NodeSettings',
+
+	components: {
+		DefaultHint,
+	},
 
 	props: {
 		name: {
@@ -59,6 +64,7 @@ export const Settings = {
 	{
 		return {
 			permissionChecker: null,
+			showExceptions: false,
 			settings: {
 				[NodeSettingsTypes.businessProcAuthority]: new Set(),
 				[NodeSettingsTypes.reportsAuthority]: new Set(),
@@ -375,6 +381,11 @@ export const Settings = {
 				this.settings[NodeSettingsTypes.teamReportExceptions],
 			);
 			this.reportExceptionsSelector = this.getUserSelector([...this.employeesIds, ...deputyIds]);
+
+			if (this.settings[NodeSettingsTypes.teamReportExceptions].size > 0)
+			{
+				this.showExceptions = true;
+			}
 		},
 		getWarningText(settingsType: string, phrasePrefix: string): string | null
 		{
@@ -800,16 +811,30 @@ export const Settings = {
 					</div>
 				</div>
 				<div class="chart-wizard__settings__item-options" v-if="areTeamReportExceptionsAvailable">
-					<div class="chart-wizard__settings__item-description-container">
-						<span class="chart-wizard__settings__item-description-text">
-							{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_REPORT_EXCEPTIONS_DESCRIPTION') }}
-						</span>
-					</div>
 					<div
-						class="chart-wizard__settings__report-exceptions-selector"
-						ref="report-exceptions-selector"
-						data-test-id="hr-company-structure__settings__report-exceptions-selector"
-					/>
+						v-if="!showExceptions"
+						class="chart-wizard__settings__report-exceptions-toggle"
+					>
+						<div
+							class="chart-wizard__settings__report-exceptions-add"
+							data-test-id="hr-company-structure__settings__report-exceptions-add"
+							@click="showExceptions = true"
+							v-html="loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_REPORT_EXCEPTIONS_ADD')"
+						></div>
+						<DefaultHint :content="loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_REPORT_EXCEPTIONS_HINT')" />
+					</div>
+					<div v-show="showExceptions">
+						<div class="chart-wizard__settings__item-description-container">
+							<span class="chart-wizard__settings__item-description-text">
+								{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_REPORT_EXCEPTIONS_DESCRIPTION') }}
+							</span>
+						</div>
+						<div
+							class="chart-wizard__settings__report-exceptions-selector"
+							ref="report-exceptions-selector"
+							data-test-id="hr-company-structure__settings__report-exceptions-selector"
+						/>
+					</div>
 				</div>
 			</div>
 		</div>

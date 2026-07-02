@@ -99,6 +99,12 @@ $componentParams = [
 	"LOG_NEW_TEMPLATE" => $arParams["LOG_NEW_TEMPLATE"] ?? null,
 ];
 
+$favoritesTitleTemplate = (
+	($arParams['HIDE_OWNER_IN_TITLE'] ?? null) === 'Y'
+		? ''
+		: $arResult['PAGES_TITLE_TEMPLATE']
+);
+
 $APPLICATION->IncludeComponent(
 	'bitrix:ui.sidepanel.wrapper',
 	'',
@@ -113,8 +119,8 @@ $APPLICATION->IncludeComponent(
 		"POPUP_COMPONENT_PARENT" => $this->getComponent(),
 		'USE_UI_TOOLBAR' => 'Y',
 		'USE_FAST_WAY_CLOSE_LOADER' => true,
-		'UI_TOOLBAR_FAVORITES_TITLE_TEMPLATE' => $arResult['PAGES_TITLE_TEMPLATE'],
+		'UI_TOOLBAR_FAVORITES_TITLE_TEMPLATE' => $favoritesTitleTemplate,
 	]
 );
 
-$APPLICATION->SetPageProperty('FavoriteTitleTemplate', $arResult['PAGES_TITLE_TEMPLATE']);
+$APPLICATION->SetPageProperty('FavoriteTitleTemplate', $favoritesTitleTemplate);

@@ -38,7 +38,7 @@ jn.define('intranet/qualification/fields-triggers-handler', (require, exports, m
 				this.fields.map(({ id, type, triggers: rawTriggers = [] }) => {
 					const triggers = rawTriggers.filter((trigger) => Object.values(TriggerType).includes(trigger.type));
 
-					if (type === FieldType.PHONE_INPUT)
+					if (type === FieldType.PHONE_INPUT || type === FieldType.BALLOON_ONE_SELECT)
 					{
 						triggers.push({ type: TriggerType.SAVE_VALUE });
 					}
@@ -199,7 +199,7 @@ jn.define('intranet/qualification/fields-triggers-handler', (require, exports, m
 				return Promise.resolve();
 			}
 
-			if (fieldType === FieldType.PHONE_INPUT)
+			if (fieldType === FieldType.PHONE_INPUT || fieldType === FieldType.BALLOON_ONE_SELECT)
 			{
 				return saveFieldValue(this.fieldsValues.get(fieldId), fieldId, fieldType);
 			}

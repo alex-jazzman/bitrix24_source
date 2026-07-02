@@ -136,7 +136,7 @@ export class Composite
 	#getGridSkeletonOptions(page: string): GridSkeletonOptions | null
 	{
 		const patterns: Array<[RegExp, GridSkeletonOptions]> = [
-			[/^\/workgroups\/$/, { actionsBarOptions: true }],
+			[/^\/workgroups\/$/, {}],
 
 			[/^\/crm\/(lead|deal|quote)\/(list|category)\/.*?$/, { toolbarOptions: { showIconButton: true }, actionsBarOptions: { showCounterPanel: true, rightButtonsCount: 2 } }],
 			[/^\/crm\/(contact|company)\/list\/.*?$/, { toolbarOptions: { showIconButton: true }, actionsBarOptions: { rightButtonsCount: 1 } }],

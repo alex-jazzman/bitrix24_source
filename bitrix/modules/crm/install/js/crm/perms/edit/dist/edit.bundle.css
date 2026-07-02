@@ -10,25 +10,17 @@
 
 .bx-crm-perms-desk-footer {
 	margin-top: 20px;
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
 }
 
 .bx-crm-perms-desk-footer-colleft {
 	text-align: left;
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-flex: 1;
-	    -ms-flex-positive: 1;
-	        flex-grow: 1;
+	flex-grow: 1;
 }
 
 .bx-crm-perms-desk-footer-colright {
 	text-align: right;
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
 }
 
@@ -112,24 +104,6 @@
 .bx-crm-perms-desk-row-item > .stage-row {
 	padding-left: 30px;
 }
-.bx-crm-perms-edit-loader {
-	position: absolute;
-	top: -15px;
-	left: -15px;
-	right: -15px;
-	bottom: -20px;
-	opacity: 0.1;
-	border-radius: 15px;
-	background-color: #ccc;
-}
-
-.bx-crm-perms-edit-loader-progress {
-	position: fixed;
-	top: 45%;
-	left: 50%;
-	width: 200px;
-	height: 200px;
-}
 
 .bx-crm-perms-edit-permission_control {
 
@@ -165,15 +139,9 @@
 }
 
 .bx-crm-perms-edit-entity-permissions-item {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-orient: horizontal;
-	-webkit-box-direction: normal;
-	    -ms-flex-direction: row;
-	        flex-direction: row;
-	-ms-flex-wrap: wrap;
-	    flex-wrap: wrap;
+	flex-direction: row;
+	flex-wrap: wrap;
 	width: 100%;
 	border-top: 1px solid #e3e3e3;
 	padding: 15px 0;
@@ -189,15 +157,9 @@
 }
 
 .bx-crm-perms-edit-entity-permissions-item__column {
-	-webkit-box-orient: vertical;
-	-webkit-box-direction: normal;
-	    -ms-flex-direction: column;
-	        flex-direction: column;
-	-ms-flex-preferred-size: 100%;
-	    flex-basis: 100%;
-	-webkit-box-flex: 1;
-	    -ms-flex: 1;
-	        flex: 1;
+	flex-direction: column;
+	flex-basis: 100%;
+	flex: 1;
 }
 
 .bx-crm-perms-edit-entity-permissions-item__name {
@@ -258,4 +220,22 @@
 
 .bx-crm-perms-edit-entity_control-text.--inherited {
 	color: var(--ui-color-palette-gray-70);
+}
+.bx-crm-perms-edit-loader {
+	position: absolute;
+	top: -15px;
+	left: -15px;
+	right: -15px;
+	bottom: -20px;
+	opacity: 0.1;
+	border-radius: 15px;
+	background-color: #ccc;
+}
+
+.bx-crm-perms-edit-loader-progress {
+	position: fixed;
+	top: 45%;
+	left: 50%;
+	width: 200px;
+	height: 200px;
 }

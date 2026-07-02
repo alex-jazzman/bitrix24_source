@@ -19,65 +19,65 @@ use Bitrix\Main\Localization\Loc;
 ?>
 <div id="main-mail-unsubscribe-container" class="main-mail-unsubscribe-box">
 	<div class="main-mail-unsubscribe-main">
-		<?if ($arResult['SITE_NAME']):?>
+		<?php if ($arResult['SITE_NAME']):?>
 			<div class="main-mail-unsubscribe-subtitle">
 				<?=htmlspecialcharsbx($arResult['SITE_NAME'])?>
 			</div>
-		<?endif;?>
+		<?php endif;?>
 		<div class="main-mail-unsubscribe-title"><?=Loc::getMessage('MAIN_MAIL_UNSUBSCRIBE_TEMPL_DEFAULT_TITLE')?></div>
 		<form method="POST" action="<?=$arResult['FORM_URL']?>">
 			<div class="main-mail-unsubscribe-inner">
-				<?if($arResult["DATA_SAVED"] == 'Y'):?>
+				<?php if($arResult["DATA_SAVED"] == 'Y'):?>
 					<div class="main-mail-unsubscribe-content">
 						<div class="main-mail-unsubscribe-content-item">
 							<?=Loc::getMessage('MAIN_MAIL_UNSUBSCRIBE_SUCCESS')?>
 						</div>
 					</div>
-				<?elseif(empty($arResult["ERROR"]) && !empty($arResult['LIST'])):?>
+				<?php elseif(empty($arResult["ERROR"]) && !empty($arResult['LIST'])):?>
 					<div class="main-mail-unsubscribe-content">
 						<div class="main-mail-unsubscribe-content-item"><?=Loc::getMessage('MAIN_MAIL_UNSUBSCRIBE_TEMPL_DEFAULT_DISCLAIMER')?></div>
-						<?if (count($arResult['LIST']) > 1):?>
+						<?php if (count($arResult['LIST']) > 1):?>
 							<div class="main-mail-unsubscribe-content-item"><?=Loc::getMessage('MAIN_MAIL_UNSUBSCRIBE_TEMPL_DEFAULT_SELECT')?></div>
-						<?endif;?>
+						<?php endif;?>
 					</div>
-				<?endif;?>
+				<?php endif;?>
 
-				<?if(empty($arResult["ERROR"]) && !empty($arResult['LIST'])):?>
-					<?if (count($arResult['LIST']) > 1):?>
+				<?php if(empty($arResult["ERROR"]) && !empty($arResult['LIST'])):?>
+					<?php if (count($arResult['LIST']) > 1):?>
 						<div class="main-mail-unsubscribe-check-list">
-							<?foreach($arResult['LIST'] as $item):?>
+							<?php foreach($arResult['LIST'] as $item):?>
 								<label class="main-mail-unsubscribe-check-list-item">
 									<input type="checkbox" name="MAIN_MAIL_UNSUB[]" value="<?=$item['ID']?>" <?=($item['SELECTED'] ? 'checked' : '')?> class="main-mail-unsubscribe-checkbox">
 									<span class="main-mail-unsubscribe-name" title="<?=htmlspecialcharsbx($item['DESC'])?>">
 										<?=htmlspecialcharsbx($item['NAME'])?>
 									</span>
 								</label>
-							<?endforeach;?>
+							<?php endforeach;?>
 						</div>
-					<?else:?>
-						<?foreach($arResult['LIST'] as $item):?>
+					<?php else:?>
+						<?php foreach($arResult['LIST'] as $item):?>
 							<input type="hidden" name="MAIN_MAIL_UNSUB[]" value="<?=$item['ID']?>">
-						<?endforeach;?>
-					<?endif;?>
-				<?elseif(!empty($arResult["ERROR"])):?>
+						<?php endforeach;?>
+					<?php endif;?>
+				<?php elseif(!empty($arResult["ERROR"])):?>
 					<div class="main-mail-unsubscribe-content">
 						<div class="main-mail-unsubscribe-content-item">
 							<?=htmlspecialcharsbx($arResult["ERROR"])?>
 						</div>
 					</div>
-				<?else:?>
+				<?php else:?>
 					<div class="main-mail-unsubscribe-content">
 						<div class="main-mail-unsubscribe-content-item">
 							<?=Loc::getMessage('MAIN_MAIL_UNSUBSCRIBE_TEMPL_DEFAULT_EMPTY')?>
 						</div>
 					</div>
-				<?endif;?>
+				<?php endif;?>
 			</div>
-			<?if(empty($arResult["ERROR"]) && !empty($arResult['LIST'])):?>
+			<?php if(empty($arResult["ERROR"]) && !empty($arResult['LIST'])):?>
 				<input type="hidden" value="Y" name="MAIN_MAIL_UNSUB_BUTTON">
 				<?=bitrix_sessid_post()?>
 
-				<?if ($arParams['ABUSE']):?>
+				<?php if ($arParams['ABUSE']):?>
 					<div data-role="spam-block" class="main-mail-unsubscribe-spam">
 						<div class="main-mail-unsubscribe-spam-text">
 							<textarea name="ABUSE_TEXT" placeholder="<?=Loc::getMessage('MAIN_MAIL_UNSUBSCRIBE_TEMPL_ABUSE_PLACEHOLDER')?>"></textarea>
@@ -90,23 +90,23 @@ use Bitrix\Main\Localization\Loc;
 							<?=Loc::getMessage('MAIN_MAIL_UNSUBSCRIBE_TEMPL_CANCEL')?>
 						</span>
 					</div>
-				<?endif;?>
+				<?php endif;?>
 
 				<div data-role="unsub-block" class="main-mail-unsubscribe-unsub">
 					<button class="ui-btn ui-btn-primary">
 						<?=Loc::getMessage('MAIN_MAIL_UNSUBSCRIBE_TEMPL_DEFAULT_BUTTON')?>
 					</button>
 
-					<?if ($arParams['ABUSE']):?>
+					<?php if ($arParams['ABUSE']):?>
 						<span data-role="spam-block-btn" class="ui-btn ui-btn-light">
 							<?=Loc::getMessage('MAIN_MAIL_UNSUBSCRIBE_TEMPL_SPAM_BUTTON')?>
 						</span>
-					<?endif;?>
+					<?php endif;?>
 				</div>
 
 				<br><br>
 				<?=htmlspecialcharsbx($arResult['WARNING'])?>
-			<?endif;?>
+			<?php endif;?>
 		</form>
 	</div>
 	<script>

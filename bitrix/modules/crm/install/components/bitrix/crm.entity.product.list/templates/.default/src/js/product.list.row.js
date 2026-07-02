@@ -414,6 +414,11 @@ export class Row
 
 	#initStoreSelector()
 	{
+		if (!this.editor.isAllowReservation())
+		{
+			return;
+		}
+
 		this.storeSelector = new StoreSelector(
 			this.getId(),
 			{
@@ -2208,7 +2213,7 @@ export class Row
 
 	isRestrictedStoreInfo(): boolean
 	{
-		if (!this.editor.getSettingValue('allowReservation', true))
+		if (!this.editor.isAllowReservation())
 		{
 			return false;
 		}

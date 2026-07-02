@@ -1,4 +1,4 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+<?php if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 /** @var array $arParams */
 /** @var array $arResult */
 /** @global CMain $APPLICATION */
@@ -15,23 +15,23 @@ $id = $arParams["formId"]."_".$arParams["~arUserField"]["ENTITY_ID"]."_".$arPara
 CUtil::InitJSCore(array('ajax'));
 $empty = true;
 $fieldName = $arParams['arUserField']['~FIELD_NAME'].($arParams['arUserField']['MULTIPLE'] == "Y" ? "[]" : "");
-?><div id="<?=$id?>Container"><?
+?><div id="<?=$id?>Container"><?php
 foreach ($arResult["VALUE"] as $entityType => $arEntity)
 {
-	?><dl class="mobile-grid-field-crm-edit" data-bx-type="<?=$entityType?>"><?
-		?><dt><?= GetMessage('CRM_ENTITY_TYPE_' . $entityType) ?></dt><?
+	?><dl class="mobile-grid-field-crm-edit" data-bx-type="<?=$entityType?>"><?php
+		?><dt><?= GetMessage('CRM_ENTITY_TYPE_' . $entityType) ?></dt><?php
 	foreach($arEntity as $entityId => $entity)
 	{
 		$empty = false;
-		?><dd id="<?=$entity["id"]?>"><?
-			?><?= htmlspecialcharsbx($entity['title'])?><?
-			?><del></del><?
-			?><input type="hidden" name="<?=$fieldName?>" value="<?=$entityId?>" /><?
-		?></dd><?
+		?><dd id="<?=$entity["id"]?>"><?php
+			?><?= htmlspecialcharsbx($entity['title'])?><?php
+			?><del></del><?php
+			?><input type="hidden" name="<?=$fieldName?>" value="<?=$entityId?>" /><?php
+		?></dd><?php
 	}
-	?></dl><?
+	?></dl><?php
 }
-?></div><?
+?></div><?php
 ?><a class="mobile-grid-button crm-button" href="#" id="<?=$id?>Add"><?=GetMessage("MPF_ADD")?></a>
 <script>
 BX.ready(function(){

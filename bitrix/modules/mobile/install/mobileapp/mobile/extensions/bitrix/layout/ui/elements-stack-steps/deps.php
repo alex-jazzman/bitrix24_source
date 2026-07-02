@@ -2,17 +2,12 @@
 
 return [
 	'extensions' => [
-		'type',
-		'tokens',
 		'elements-stack',
-
-		'ui-system/typography/text',
+		'tokens',
 		'ui-system/blocks/avatar',
-
+		'ui-system/typography/text',
 		'utils/date/duration',
 		'utils/object',
-
-		'layout/pure-component',
 	],
 	'bundle' => [
 		'./src/constants',

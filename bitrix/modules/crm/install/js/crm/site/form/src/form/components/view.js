@@ -186,6 +186,7 @@ const Popup = {
 				:position="form.view.position"  
 				:scrollDown="!this.form.isOnState()"  
 				:scrollDownText="scrollDownText"
+				:messages="form.messages"
 				@hide="form.hide()"
 				:hideOnOverlayClick="form.view.hideOnOverlayClick"
 			>
@@ -208,6 +209,7 @@ const Panel = {
 				:vertical="form.view.vertical"
 				:scrollDown="!this.form.isOnState()"
 				:scrollDownText="scrollDownText"
+				:messages="form.messages"
 				@hide="form.hide()"
 			>
 				<div v-if="form.view.title" class="b24-window-header">
@@ -226,7 +228,8 @@ const Widget = {
 			<b24-widget v-bind:key="form.id" 
 				v-bind:show="form.visible" 
 				v-bind:position="form.view.position" 
-				v-bind:vertical="form.view.vertical" 
+				v-bind:vertical="form.view.vertical"
+				:messages="form.messages"
 				@hide="form.hide()"
 			>
 				<slot></slot>

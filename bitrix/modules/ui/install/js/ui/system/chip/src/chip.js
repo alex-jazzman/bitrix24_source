@@ -15,6 +15,7 @@ export type ChipOptions = {
 	image?: ChipImage,
 	text?: string,
 	rounded?: boolean,
+	collapsed?: boolean,
 	withClear?: boolean,
 	dropdown?: boolean,
 	dropdownActive?: boolean,
@@ -27,6 +28,8 @@ export type ChipOptions = {
 
 export class Chip
 {
+	static #instances: WeakMap<HTMLElement, Chip> = new WeakMap();
+
 	#size: string;
 	#design: string;
 	#icon: ?string = null;
@@ -35,6 +38,7 @@ export class Chip
 	#image: ?ChipImage = null;
 	#text: string;
 	#rounded: boolean;
+	#collapsed: boolean;
 	#withClear: boolean;
 	#dropdown: boolean;
 	#dropdownActive: boolean;
@@ -65,6 +69,7 @@ export class Chip
 		this.#image = options.image ?? null;
 		this.#text = options.text ?? '';
 		this.#rounded = options.rounded === true;
+		this.#collapsed = options.collapsed === true;
 		this.#withClear = options.withClear === true;
 		this.#dropdown = options.dropdown === true;
 		this.#dropdownActive = options.dropdownActive === true;
@@ -73,6 +78,18 @@ export class Chip
 		this.#trimmable = options.trimmable === true;
 		this.#onClick = options.onClick ?? null;
 		this.#onClear = options.onClear ?? null;
+	}
+
+	static getByNode(node: HTMLElement): ?Chip
+	{
+		if (!Type.isDomNode(node))
+		{
+			return null;
+		}
+
+		const chipNode = node.closest('.ui-chip');
+
+		return chipNode ? (Chip.#instances.get(chipNode) ?? null) : null;
 	}
 
 	render(): HTMLElement
@@ -94,6 +111,8 @@ export class Chip
 
 		Dom.attr(this.#wrapper, 'tabindex', '0');
 
+		Chip.#instances.set(this.#wrapper, this);
+
 		this.#bindEvents();
 
 		return this.#wrapper;
@@ -109,6 +128,11 @@ export class Chip
 		if (this.#rounded)
 		{
 			classes.push('--rounded');
+		}
+
+		if (this.#collapsed)
+		{
+			classes.push('--collapsed');
 		}
 
 		if (this.#compact)
@@ -406,6 +430,17 @@ export class Chip
 		return this.#rounded;
 	}
 
+	setCollapsed(collapsed: boolean): void
+	{
+		this.#collapsed = collapsed === true;
+		this.#updateClasses();
+	}
+
+	isCollapsed(): boolean
+	{
+		return this.#collapsed;
+	}
+
 	setWithClear(withClear: boolean): void
 	{
 		this.#withClear = withClear === true;
@@ -630,6 +665,8 @@ export class Chip
 	{
 		if (this.#wrapper)
 		{
+			Chip.#instances.delete(this.#wrapper);
+
 			Event.unbindAll(this.#wrapper);
 
 			if (this.#withClear)

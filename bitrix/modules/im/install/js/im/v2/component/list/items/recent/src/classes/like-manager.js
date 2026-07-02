@@ -1,9 +1,7 @@
-import {EventEmitter, BaseEvent} from 'main.core.events';
+import { EventEmitter, type BaseEvent } from 'main.core.events';
 
-import {Core} from 'im.v2.application.core';
-import {EventType} from 'im.v2.const';
-
-import type {OnDialogInitedEvent} from 'im.v2.const';
+import { Core } from 'im.v2.application.core';
+import { EventType, type OnDialogInitedEvent } from 'im.v2.const';
 
 export class LikeManager
 {

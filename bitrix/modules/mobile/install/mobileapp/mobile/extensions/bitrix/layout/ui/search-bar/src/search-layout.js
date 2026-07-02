@@ -64,11 +64,14 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 
 			search.mode = this.props.disablePresets ? 'bar' : 'layout';
 
-			search.removeAllListeners('cancel');
+			search.removeAllListeners('show');
 			search.removeAllListeners('hide');
 			search.removeAllListeners('textChanged');
+			search.removeAllListeners('cancel');
 			search.removeAllListeners(ENTER_PRESSED_EVENT);
 
+			search.on('show', () => this.#onShow());
+			search.on('hide', () => this.#onHide());
 			search.on('textChanged', (params) => this.onTextChanged(params));
 			search.on('cancel', () => this.onCancel());
 			search.on(ENTER_PRESSED_EVENT, () => this.close());
@@ -96,7 +99,7 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 			}
 			else
 			{
-				search.show(this.searchLayoutView, 44);
+				search.show(this.searchLayoutView, 54);
 				this.fetchPresets();
 			}
 		}
@@ -112,6 +115,7 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 				search: this.search,
 				text: this.text,
 				onPresetClick: this.onPresetClick,
+				isActivePresetRequired: Boolean(this.props.isActivePresetRequired),
 			};
 			this.searchLayoutView = new SearchLayoutView(params);
 		}
@@ -173,6 +177,25 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 
 		/**
 		 * @public
+		 * @param {string|null} presetId
+		 */
+		setActivePreset(presetId)
+		{
+			this.presetId = presetId;
+			this.searchLayoutView?.setPresetId(this.presetId, this.counterId);
+			this.search();
+		}
+
+		/**
+		 * @public
+		 */
+		resetActivePreset()
+		{
+			this.setActivePreset(this.getDefaultPresetId());
+		}
+
+		/**
+		 * @public
 		 * @param {Object.<string, number>} counters
 		 */
 		updateCounters(counters)
@@ -210,6 +233,19 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 		 */
 		fetchPresets(force = false)
 		{
+			const { presets } = this.props;
+			if (Array.isArray(presets))
+			{
+				if (!this.presetsLoaded)
+				{
+					this.onLoadPresets({
+						data: { presets },
+					});
+				}
+
+				return;
+			}
+
 			const executor = this.getRunActionExecutor();
 			const cacheExpired = executor.getCache().getData() === null;
 			if (this.presetsLoaded && !force && !cacheExpired)
@@ -271,6 +307,16 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 		// endregion
 
 		// region searching
+
+		#onShow()
+		{
+			this.props.onShow?.();
+		}
+
+		#onHide()
+		{
+			this.props.onHide?.();
+		}
 
 		/**
 		 * @private
@@ -391,13 +437,17 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 		id: PropTypes.string.isRequired,
 		cacheId: PropTypes.string,
 		layout: PropTypes.object.isRequired,
-		searchDataAction: PropTypes.string.isRequired,
+		presets: PropTypes.arrayOf(PropTypes.object),
+		searchDataAction: PropTypes.string,
 		searchDataActionParams: PropTypes.object,
 		onCheckRestrictions: PropTypes.func,
 		onMoreButtonClick: PropTypes.func,
 		presetId: PropTypes.string,
+		isActivePresetRequired: PropTypes.bool,
 		counterId: PropTypes.string,
 		disablePresets: PropTypes.bool,
+		onShow: PropTypes.func,
+		onHide: PropTypes.func,
 	};
 
 	module.exports = { SearchLayout };

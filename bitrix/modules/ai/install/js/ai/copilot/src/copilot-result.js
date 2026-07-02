@@ -1,4 +1,4 @@
-import { Tag, Text } from 'main.core';
+import { Tag } from 'main.core';
 
 export class CopilotResult
 {
@@ -13,10 +13,10 @@ export class CopilotResult
 		return this.#container;
 	}
 
-	addResult(result: string): void
+	addResult(result: string, resultPreview: ?string): void
 	{
 		this.#rawResult = result;
-		this.#container.innerHTML += String(Text.encode(result).replaceAll(/(\r\n|\r|\n)/g, '<br>'));
+		this.#container.innerHTML += resultPreview ?? result;
 	}
 
 	clearResult(): void

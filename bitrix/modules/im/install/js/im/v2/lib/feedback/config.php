@@ -9,8 +9,8 @@ return [
 		'./dist/feedback.bundle.js',
 	],
 	'rel' => [
-		'main.core',
 		'im.v2.application.core',
+		'main.core',
 	],
 	'skip_core' => false,
 ];

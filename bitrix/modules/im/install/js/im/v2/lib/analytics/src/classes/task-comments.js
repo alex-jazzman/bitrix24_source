@@ -30,4 +30,19 @@ export class TaskComments
 			p1: `chatType_${chatType}`,
 		});
 	}
+
+	onOpenCardFromMessage(dialogId: string)
+	{
+		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId);
+		const chatType = getChatType(chat);
+
+		sendData({
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.chat,
+			event: AnalyticsEvent.openTaskCard,
+			c_section: AnalyticsSection.taskCommentsLayout,
+			c_sub_section: AnalyticsSubSection.message,
+			p1: `chatType_${chatType}`,
+		});
+	}
 }

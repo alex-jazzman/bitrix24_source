@@ -42,9 +42,9 @@ export class Notifications extends BuilderModel
 			getByType: (state: NotificationsState) => (type: string): NotificationsModel => state.notifications[type],
 			/** @function notifications/getSenders */
 			getSenders: (state: NotificationsState): NotificationsSenderModel[] => Object.values(state.senders),
-			/** @function notifications/isCurrentSenderAvailable */
-			isCurrentSenderAvailable: (state: NotificationsState): boolean => {
-				return Object.values(state.senders).some((sender: NotificationsSenderModel) => sender.canUse);
+			/** @function notifications/getSenderByCode */
+			getSenderByCode: (state: NotificationsState) => (code: string): NotificationsSenderModel | null => {
+				return state.senders[code] ?? null;
 			},
 		};
 	}

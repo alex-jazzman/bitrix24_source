@@ -4,6 +4,7 @@
 jn.define('layout/ui/stateful-list/pull/src/push-processor', (require, exports, module) => {
 	const { debounce } = require('utils/function');
 	const { command } = require('layout/ui/stateful-list/pull/src/command');
+	const { Type } = require('type');
 
 	const queueItemsStatus = {
 		WAITING: 'WAITING',
@@ -15,8 +16,28 @@ jn.define('layout/ui/stateful-list/pull/src/push-processor', (require, exports, 
 		constructor(data)
 		{
 			this.eventCallbacks = data.eventCallbacks;
+			this.onQueueStarted = data.onQueueStarted;
+			this.onQueueFinished = data.onQueueFinished;
+
+			if (Type.isFunction(data.setListActiveListener))
+			{
+				data.setListActiveListener(this.setIsActive.bind(this));
+			}
+
 			this.queue = [];
+			this.isActive = true;
+			this.isProcessing = false;
 			this.debounceExecuteNextInQueue = debounce(this.executeNextInQueue, 200, this);
+		}
+
+		setIsActive(isActive)
+		{
+			this.isActive = isActive;
+
+			if (isActive && this.queue.length > 0)
+			{
+				this.executeNextInQueue();
+			}
 		}
 
 		addToQueue(eventName, items)
@@ -48,8 +69,22 @@ jn.define('layout/ui/stateful-list/pull/src/push-processor', (require, exports, 
 
 		executeNextInQueue()
 		{
+			if (!this.isActive)
+			{
+				return;
+			}
+
 			if (this.queue.length > 0 && this.queue[0].status === queueItemsStatus.WAITING)
 			{
+				if (!this.isProcessing)
+				{
+					this.isProcessing = true;
+					if (Type.isFunction(this.onQueueStarted))
+					{
+						this.onQueueStarted();
+					}
+				}
+
 				this.optimizeQueue();
 				const firstInQueue = this.queue[0];
 				firstInQueue.status = queueItemsStatus.EXECUTED;
@@ -67,6 +102,14 @@ jn.define('layout/ui/stateful-list/pull/src/push-processor', (require, exports, 
 				else
 				{
 					this.removeFirstAndExecNext();
+				}
+			}
+			else if (this.queue.length === 0 && this.isProcessing)
+			{
+				this.isProcessing = false;
+				if (Type.isFunction(this.onQueueFinished))
+				{
+					this.onQueueFinished();
 				}
 			}
 		}

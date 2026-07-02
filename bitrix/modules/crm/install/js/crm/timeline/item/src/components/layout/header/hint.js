@@ -1,14 +1,21 @@
-import { Popup, PopupOptions } from 'main.popup';
-import {Event, Runtime, Dom} from 'main.core';
+import { Dom, Event, Runtime, Tag } from 'main.core';
+import { Popup, type PopupOptions } from 'main.popup';
+import { Icon } from 'ui.icon-set.api.core';
+import { markRaw } from 'ui.vue3';
+
+import 'ui.design-tokens';
+
 import { Action } from '../../../action';
 
 export const Hint = {
-	data(): Object {
+	data(): Object
+	{
 		return {
 			isMouseOnHintArea: false,
 			hintPopup: null,
 		}
 	},
+
 	props: {
 		icon: {
 			type: String,
@@ -21,24 +28,30 @@ export const Hint = {
 			default: [],
 		},
 	},
+
 	computed: {
-		hintContentIcon(): ?HTMLElement {
+		hintContentIcon(): ?HTMLElement
+		{
 			if (this.icon === '')
 			{
 				return null;
 			}
 
-			const iconElement = Dom.create('i');
-
-			return Dom.create('div', {
-				attrs: {
-					classname: this.hintContentIconClassname,
-				},
-				children: [iconElement],
+			const icon = new Icon({
+				icon: this.icon,
+				size: 24,
+				color: 'var(--ui-color-palette-white-base)',
 			});
+
+			return Tag.render`
+				<i class="crm-timeline__hint_popup-content-icon">
+					${icon.render()}
+				</i>
+			`;
 		},
 
-		hintContentText(): HTMLElement {
+		hintContentText(): HTMLElement
+		{
 			return Dom.create('div', {
 				attrs: {
 					classname: 'crm-timeline__hint_popup-content-text',
@@ -47,16 +60,13 @@ export const Hint = {
 			});
 		},
 
-		hintContentTextBlocks(): HTMLElement[] {
+		hintContentTextBlocks(): HTMLElement[]
+		{
 			return this.textBlocks.map(this.getContentBlockNode);
 		},
 
-		hintContentIconClassname(): string {
-			const baseClassname = 'crm-timeline__hint_popup-content-icon';
-			return `${baseClassname} --${this.icon}`;
-		},
-
-		hintIconClassname(): Array {
+		hintIconClassname(): Array
+		{
 			return [
 				'ui-hint',
 				'crm-timeline__header-hint', {
@@ -65,12 +75,15 @@ export const Hint = {
 			]
 		},
 
-		hasContent(): boolean {
+		hasContent(): boolean
+		{
 			return this.textBlocks.length > 0;
 		},
 	},
+
 	methods: {
-		getHintContent(): HTMLElement {
+		getHintContent(): HTMLElement
+		{
 			return Dom.create('div', {
 				attrs: {
 					classname: 'crm-timeline__hint_popup-content'
@@ -82,7 +95,8 @@ export const Hint = {
 			});
 		},
 
-		getPopupOptions(): PopupOptions {
+		getPopupOptions(): PopupOptions
+		{
 			return {
 				darkMode: true,
 				autoHide: false,
@@ -95,28 +109,40 @@ export const Hint = {
 			}
 		},
 
-		getPopupPosition(): {left: number, right: number} {
+		getPopupPosition(): {left: number, right: number}
+		{
 			const hintElem = this.$refs.hint;
 			const defaultAngleLeftOffset = Popup.getOption('angleLeftOffset');
-			const { width: hintWidth, left: hintLeftOffset, top: hintTopOffset } = Dom.getPosition(hintElem);
-			const { width: popupWidth } = Dom.getPosition(this.hintPopup?.getPopupContainer());
+			const {
+				width: hintWidth,
+				left: hintLeftOffset,
+				top: hintTopOffset
+			} = Dom.getPosition(hintElem);
+			const {
+				width: popupWidth
+			} = Dom.getPosition(this.hintPopup?.getPopupContainer());
+
 			return {
 				left: hintLeftOffset + defaultAngleLeftOffset - (popupWidth - hintWidth) / 2,
 				top: hintTopOffset + 15,
 			}
 		},
 
-		getPopupAngleOffset(popupContainer: HTMLElement): number {
+		getPopupAngleOffset(popupContainer: HTMLElement): number
+		{
 			const angleWidth = 33;
 			const { width: popupWidth } = Dom.getPosition(popupContainer);
+
 			return (popupWidth - angleWidth) / 2;
 		},
 
-		onMouseEnterToPopup(): void {
+		onMouseEnterToPopup(): void
+		{
 			this.isMouseOnHintArea = true;
 		},
 
-		onHintAreaMouseLeave(): void {
+		onHintAreaMouseLeave(): void
+		{
 			this.isMouseOnHintArea = false;
 			setTimeout(() => {
 				if (!this.isMouseOnHintArea)
@@ -126,20 +152,26 @@ export const Hint = {
 			}, 400);
 		},
 
-		onMouseEnterToHint(): void {
+		onMouseEnterToHint(): void
+		{
 			this.isMouseOnHintArea = true;
 			this.showHintPopupWithDebounce();
 		},
 
-		showHintPopup(): void {
+		showHintPopup(): void
+		{
 			if (!this.isMouseOnHintArea || this.hintPopup && this.hintPopup.isShown())
 			{
 				return;
 			}
-			this.hintPopup = new Popup(this.getPopupOptions());
+
+			this.hintPopup = markRaw(new Popup(this.getPopupOptions()));
+
 			const popupContainer = this.hintPopup.getPopupContainer();
+
 			Event.bind(popupContainer, 'mouseenter', this.onMouseEnterToPopup);
 			Event.bind(popupContainer, 'mouseleave', this.onHintAreaMouseLeave);
+
 			this.hintPopup.show();
 			this.hintPopup.setBindElement(this.getPopupPosition());
 			this.hintPopup.setAngle(false);
@@ -148,28 +180,36 @@ export const Hint = {
 			this.hintPopup.show();
 		},
 
-		showHintPopupWithDebounce() {
+		showHintPopupWithDebounce()
+		{
 			Runtime.debounce(this.showHintPopup, 300, this)();
 		},
 
-		hideHintPopup(): void {
+		hideHintPopupWithDebounce(): void
+		{
+			return Runtime.debounce(this.hideHintPopup, 300, this);
+		},
+
+		hideHintPopup(): void
+		{
 			if (!this.hintPopup)
 			{
 				return;
 			}
+
 			this.hintPopup.close();
+
 			const popupContainer = this.hintPopup.getPopupContainer();
+
 			Event.unbind(popupContainer, 'mouseenter', this.onMouseEnterToPopup);
 			Event.unbind(popupContainer, 'mouseleave', this.onHintAreaMouseLeave);
+
 			this.hintPopup.destroy();
 			this.hintPopup = null;
 		},
 
-		hideHintPopupWithDebounce(): void {
-			return Runtime.debounce(this.hideHintPopup, 300, this);
-		},
-
-		getContentBlockNode(contentBlock): HTMLElement | null {
+		getContentBlockNode(contentBlock): HTMLElement | null
+		{
 			if (contentBlock.type === 'text')
 			{
 				return this.getTextNode(contentBlock.options);
@@ -182,11 +222,13 @@ export const Hint = {
 			return null;
 		},
 
-		getTextNode(textOptions = {}): HTMLElement {
+		getTextNode(textOptions = {}): HTMLElement
+		{
 			return Dom.create('span', {text: textOptions.text});
 		},
 
-		getLinkNode(linkOptions = {}): HTMLElement {
+		getLinkNode(linkOptions = {}): HTMLElement
+		{
 			const link = Dom.create('span', {text: linkOptions.text});
 			Dom.addClass(link, 'crm-timeline__hint_popup-content-link');
 			link.onclick = () => {
@@ -196,7 +238,8 @@ export const Hint = {
 			return link;
 		},
 
-		executeAction(actionObj): void {
+		executeAction(actionObj): void
+		{
 			if (actionObj)
 			{
 				const action = new Action(actionObj);
@@ -206,15 +249,15 @@ export const Hint = {
 	},
 
 	template: `
-		<span
-			ref="hint"
-			@click.stop.prevent
-			@mouseenter="onMouseEnterToHint"
-			@mouseleave="onHintAreaMouseLeave"
-			v-if="hasContent"
-			:class="hintIconClassname"
-		>
-			<span class="ui-hint-icon" />
-		</span>
-	`
-}
+			<span
+				ref="hint"
+				@click.stop.prevent
+				@mouseenter="onMouseEnterToHint"
+				@mouseleave="onHintAreaMouseLeave"
+				v-if="hasContent"
+				:class="hintIconClassname"
+			>
+				<span class="ui-hint-icon ui-icon-set --help"></span>
+			</span>
+		`
+	}

@@ -94,3 +94,14 @@ $MESS["IM_NEW_MESSAGE_GROUP_MESSAGE"] = "Здравствуйте, #USER_NAME#!
 Вы можете изменить настройки уведомлений: http://#SERVER_NAME#/?IM_SETTINGS=NOTIFY
 
 Это письмо сформировано автоматически.";
+$MESS["IM_GUEST_INVITATION_NAME"] = "Приглашение гостя в чат";
+$MESS["IM_GUEST_INVITATION_DESC"] = "#EMAIL_TO# - E-mail получателя
+#GUEST_NAME# - Имя гостя
+#CHAT_TITLE# - Название чата
+#INVITATION_LINK# - Ссылка-приглашение
+#SERVER_NAME# - Адрес сервера";
+$MESS["IM_GUEST_INVITATION_SUBJECT"] = "#SITE_NAME#: Приглашение в чат «#CHAT_TITLE#»";
+$MESS["IM_GUEST_INVITATION_MESSAGE"] = "Давайте общаться в Битрикс24. Там можно переписываться в рабочем чате, созваниваться и отправлять файлы. Присоединяйтесь по ссылке:
+#INVITATION_LINK#
+
+Это письмо сформировано автоматически, не отвечайте на него.";

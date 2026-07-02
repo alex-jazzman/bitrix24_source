@@ -323,7 +323,7 @@ jn.define('im/messenger/provider/push/message-handler/base', (require, exports, 
 
 				counterCollection[chatId] = {
 					chatId,
-					parentChatId: 0,
+					parentChatId: helper.getParentChatId(),
 					counter: params.counter,
 					recentSections: helper.getRecentSections(),
 					isMuted: false,

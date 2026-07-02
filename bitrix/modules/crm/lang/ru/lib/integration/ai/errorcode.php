@@ -1,6 +1,7 @@
 <?php
 $MESS['CRM_INTEGRATION_AI_ERROR_NOT_AVAILABLE'] = 'Не установлен модуль AI';
 $MESS['CRM_INTEGRATION_AI_ERROR_DISABLED'] = 'Модуль AI отключён в настройках портала';
+$MESS['CRM_INTEGRATION_AI_ERROR_SCENARIO_DISABLED'] = 'Эта возможность отключена в настройках вашего Битрикс24';
 $MESS['CRM_INTEGRATION_AI_ERROR_FILE_NOT_FOUND'] = '#COPILOT_NAME# не может найти запись звонка. Обновите страницу и попробуйте ещё раз';
 $MESS['CRM_INTEGRATION_AI_ERROR_ENGINE_FAILED'] = '#COPILOT_NAME# не может выполнить запрос. Обновите страницу и попробуйте ещё раз';
 $MESS['CRM_INTEGRATION_AI_ERROR_ENGINE_LIMIT_EXCEEDED'] = 'Превышено количество запросов к модулю AI';

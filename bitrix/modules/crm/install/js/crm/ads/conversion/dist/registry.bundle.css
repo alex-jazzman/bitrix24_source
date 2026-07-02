@@ -24,15 +24,10 @@
 }
 
 .crm-ads-conversion-block-desc {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
+	align-items: center;
 	width: 100%;
-	-webkit-box-sizing: border-box;
-	        box-sizing: border-box;
+	box-sizing: border-box;
 }
 
 .crm-ads-conversion-icon {
@@ -42,8 +37,7 @@
 	width: 95px;
 	height: 95px;
 	margin-right: 24px;
-	-ms-flex-negative: 0;
-	    flex-shrink: 0;
+	flex-shrink: 0;
 }
 
 .crm-ads-conversion-empty-text {
@@ -63,34 +57,17 @@
 
 .crm-ads-conversion-empty {
 	height: 265px;
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-orient: vertical;
-	-webkit-box-direction: normal;
-	    -ms-flex-direction: column;
-	        flex-direction: column;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
-	-webkit-box-pack: center;
-	    -ms-flex-pack: center;
-	        justify-content: center;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
 }
 
 .crm-ads-conversion-settings-block {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
 
-	-webkit-box-align: center;
-
-	    -ms-flex-align: center;
-
-	        align-items: center;
-	-webkit-box-pack: justify;
-	    -ms-flex-pack: justify;
-	        justify-content: space-between;
+	align-items: center;
+	justify-content: space-between;
 	padding: 23px 0;
 }
 
@@ -103,13 +80,8 @@
 }
 
 .crm-ads-conversion-settings-name-block {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-orient: vertical;
-	-webkit-box-direction: normal;
-	    -ms-flex-direction: column;
-	        flex-direction: column;
+	flex-direction: column;
 }
 
 .crm-ads-conversion-settings-name {
@@ -117,8 +89,7 @@
 	font-size: 15px;
 	line-height: 21px;
 	overflow: hidden;
-	-o-text-overflow: ellipsis;
-	   text-overflow: ellipsis;
+	text-overflow: ellipsis;
 	white-space: nowrap;
 	max-width: 350px;
 }
@@ -128,8 +99,7 @@
 	font-size: 13px;
 	line-height: 17px;
 	overflow: hidden;
-	-o-text-overflow: ellipsis;
-	   text-overflow: ellipsis;
+	text-overflow: ellipsis;
 	max-width: 300px;
 }
 
@@ -145,12 +115,8 @@
 }
 
 .crm-ads-conversion-settings-control {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
+	align-items: center;
 }
 
 .crm-ads-conversion-social-avatar {
@@ -175,15 +141,9 @@
 	background-repeat: no-repeat;
 }
 .crm-ads-conversion-social-user {
-	-webkit-box-flex: 0.935;
-	    -ms-flex: 0.935;
-	        flex: 0.935;
-	display: -webkit-box;
-	display: -ms-flexbox;
+	flex: 0.935;
 	display: flex;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
+	align-items: center;
 	padding: 0 8px;
 }
 
@@ -198,8 +158,7 @@
 	overflow: hidden;
 	max-width: 100%;
 	white-space: nowrap;
-	-o-text-overflow: ellipsis;
-	   text-overflow: ellipsis;
+	text-overflow: ellipsis;
 	font-size: 14px;
 	color: #0b66c3;
 	font-weight: var(--ui-font-weight-bold);
@@ -214,11 +173,7 @@
 .crm-ads-conversion-social-shutoff {
 	float: right;
 	overflow: hidden;
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: center;
-	-ms-flex-align: center;
 	align-items: center;
 	cursor: pointer;
 }
@@ -235,11 +190,7 @@
 	text-decoration: underline;
 }
 .crm-ads-conversion-social {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: center;
-	-ms-flex-align: center;
 	align-items: center;
 	overflow: hidden;
 	height: 70px;
@@ -247,8 +198,6 @@
 }
 
 .crm-ads-conversion-title-section{
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
 }
 
@@ -259,11 +208,7 @@
 	padding: 9px;
 }
 .crm-ads-conversion-login-wrapper{
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
 	margin: 19px 0 19px 0;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
+	align-items: center;
 }

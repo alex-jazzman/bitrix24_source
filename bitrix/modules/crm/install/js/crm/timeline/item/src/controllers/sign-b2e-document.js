@@ -1,12 +1,12 @@
 import { Router } from 'crm.router';
-import { Messenger } from 'im.public';
-import { ajax, Dom, Loc, Text, Runtime } from 'main.core';
+import { ajax, Dom, Loc, Runtime, Text } from 'main.core';
+import type { FeatureResolver } from 'sign.feature-resolver';
+import type { Api } from 'sign.v2.api';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { UI } from 'ui.notification';
 import ConfigurableItem from '../configurable-item';
 import { Base } from './base';
-import type { Api } from 'sign.v2.api';
-import type { FeatureResolver } from 'sign.feature-resolver';
+import 'ui.buttons';
 
 let featureResolver: FeatureResolver | null = null;
 let api: Api | null = null;
@@ -207,7 +207,12 @@ export class SignB2eDocument extends Base
 		if (api && featureResolver && featureResolver.released('createDocumentChat'))
 		{
 			const chatId = (await api.createDocumentChat(chatType, documentId, false)).chatId;
-			Messenger.openChat(`chat${chatId}`);
+
+			Runtime.loadExtension('im.public.iframe').then((exports: Object) => {
+				exports.Messenger.openChat(`chat${chatId}`);
+			}).catch((exception) => {
+				console.error('Error loading "im.public.iframe":', exception);
+			});
 		}
 	}
 

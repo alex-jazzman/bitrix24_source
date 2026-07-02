@@ -1,5 +1,8 @@
 import {Loc, Tag, Dom, Type, Runtime} from "main.core";
 import {EventEmitter, BaseEvent} from "main.core.events";
+import 'crm_common';
+import 'crm.entity-editor.field-attr';
+import 'ui.entity-editor';
 import './fieldset.css';
 
 export class EntityEditorFieldsetField extends BX.UI.EntityEditorField

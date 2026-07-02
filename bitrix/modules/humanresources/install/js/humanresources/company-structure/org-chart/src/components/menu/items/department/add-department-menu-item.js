@@ -1,7 +1,7 @@
 import {
 	PermissionActions,
 	PermissionChecker,
-	PermissionCheckerClass,
+	type PermissionCheckerClass,
 } from 'humanresources.company-structure.permission-checker';
 import { EntityTypes, getColorCode } from 'humanresources.company-structure.utils';
 import { Loc } from 'main.core';

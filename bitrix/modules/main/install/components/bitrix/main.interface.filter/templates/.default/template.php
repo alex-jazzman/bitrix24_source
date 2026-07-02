@@ -1,4 +1,4 @@
-<?
+<?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 
@@ -9,10 +9,10 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
  */
 ?>
 
-<?if(!empty($arParams["FILTER"])):?>
+<?php if(!empty($arParams["FILTER"])):?>
 <div class="bx-interface-filter">
 <form name="filter_<?=$arParams["GRID_ID"]?>" action="" method="GET">
-<?
+	<?php
 foreach($arResult["GET_VARS"] as $var=>$value):
 	if(is_array($value)):
 		foreach($value as $k=>$v):
@@ -20,48 +20,48 @@ foreach($arResult["GET_VARS"] as $var=>$value):
 				continue;
 ?>
 <input type="hidden" name="<?=htmlspecialcharsbx($var)?>[<?=htmlspecialcharsbx($k)?>]" value="<?=htmlspecialcharsbx($v)?>">
-<?
+		<?php
 		endforeach;
 	else:
 ?>
 <input type="hidden" name="<?=htmlspecialcharsbx($var)?>" value="<?=htmlspecialcharsbx($value)?>">
-<?
+	<?php
 	endif;
 endforeach;
 ?>
 <table cellspacing="0" class="bx-interface-filter">
 	<tr class="bx-filter-header" id="flt_header_<?=$arParams["GRID_ID"]?>" oncontextmenu="return bxGrid_<?=$arParams["GRID_ID"]?>.filterMenu">
 		<td>
-<?if(!empty($arResult["FILTER"])):?>
-			<div class="bx-filter-btn bx-filter-on" title="<?echo GetMessage("interface_grid_used")?>"></div>
-<?else:?>
-			<div class="bx-filter-btn bx-filter-off" title="<?echo GetMessage("interface_grid_not_used")?>"></div>
-<?endif?>
-			<div class="bx-filter-text"><?echo GetMessage("interface_grid_search")?></div>
+<?php if(!empty($arResult["FILTER"])):?>
+			<div class="bx-filter-btn bx-filter-on" title="<?= GetMessage("interface_grid_used")?>"></div>
+<?php else:?>
+			<div class="bx-filter-btn bx-filter-off" title="<?= GetMessage("interface_grid_not_used")?>"></div>
+<?php endif?>
+			<div class="bx-filter-text"><?= GetMessage("interface_grid_search")?></div>
 			<div class="bx-filter-sep"></div>
-			<a href="javascript:void(0)" onclick="bxGrid_<?=$arParams["GRID_ID"]?>.SwitchFilterRows(true)" class="bx-filter-btn bx-filter-show" title="<?echo GetMessage("interface_grid_show_all")?>"></a>
-			<a href="javascript:void(0)" onclick="bxGrid_<?=$arParams["GRID_ID"]?>.SwitchFilterRows(false)" class="bx-filter-btn bx-filter-hide" title="<?echo GetMessage("interface_grid_hide_all")?>"></a>
+			<a href="javascript:void(0)" onclick="bxGrid_<?=$arParams["GRID_ID"]?>.SwitchFilterRows(true)" class="bx-filter-btn bx-filter-show" title="<?= GetMessage("interface_grid_show_all")?>"></a>
+			<a href="javascript:void(0)" onclick="bxGrid_<?=$arParams["GRID_ID"]?>.SwitchFilterRows(false)" class="bx-filter-btn bx-filter-hide" title="<?= GetMessage("interface_grid_hide_all")?>"></a>
 			<div class="bx-filter-sep"></div>
-			<a href="javascript:void(0)" onclick="bxGrid_<?=$arParams["GRID_ID"]?>.menu.ShowMenu(this, bxGrid_<?=$arParams["GRID_ID"]?>.filterMenu);" class="bx-filter-btn bx-filter-menu" title="<?echo GetMessage("interface_grid_additional")?>"></a>
+			<a href="javascript:void(0)" onclick="bxGrid_<?=$arParams["GRID_ID"]?>.menu.ShowMenu(this, bxGrid_<?=$arParams["GRID_ID"]?>.filterMenu);" class="bx-filter-btn bx-filter-menu" title="<?= GetMessage("interface_grid_additional")?>"></a>
 			<div class="empty" style="width:50px; float:left;"></div>
-<?if($arResult["OPTIONS"]["filter_shown"] <> "N"):?>
-			<a href="javascript:void(0)" id="a_minmax_<?=$arParams["GRID_ID"]?>" onclick="bxGrid_<?=$arParams["GRID_ID"]?>.SwitchFilter(this)" class="bx-filter-btn bx-filter-min" title="<?echo GetMessage("interface_grid_to_head")?>"></a>
-<?else:?>
-			<a href="javascript:void(0)" id="a_minmax_<?=$arParams["GRID_ID"]?>" onclick="bxGrid_<?=$arParams["GRID_ID"]?>.SwitchFilter(this)" class="bx-filter-btn bx-filter-max" title="<?echo GetMessage("interface_grid_from_head")?>"></a>
-<?endif?>
+<?php if($arResult["OPTIONS"]["filter_shown"] <> "N"):?>
+			<a href="javascript:void(0)" id="a_minmax_<?=$arParams["GRID_ID"]?>" onclick="bxGrid_<?=$arParams["GRID_ID"]?>.SwitchFilter(this)" class="bx-filter-btn bx-filter-min" title="<?= GetMessage("interface_grid_to_head")?>"></a>
+<?php else:?>
+			<a href="javascript:void(0)" id="a_minmax_<?=$arParams["GRID_ID"]?>" onclick="bxGrid_<?=$arParams["GRID_ID"]?>.SwitchFilter(this)" class="bx-filter-btn bx-filter-max" title="<?= GetMessage("interface_grid_from_head")?>"></a>
+<?php endif?>
 		</td>
 	</tr>
-	<tr class="bx-filter-content" id="flt_content_<?=$arParams["GRID_ID"]?>"<?if($arResult["OPTIONS"]["filter_shown"] == "N"):?> style="display:none"<?endif?>>
+	<tr class="bx-filter-content" id="flt_content_<?=$arParams["GRID_ID"]?>"<?php if($arResult["OPTIONS"]["filter_shown"] == "N"):?> style="display:none"<?php endif?>>
 		<td>
 			<table cellspacing="0" class="bx-filter-rows">
-<?
+				<?php
 foreach($arParams["FILTER"] as $field):
 	$bShow = $arResult["FILTER_ROWS"][$field["id"]];
 ?>
-				<tr id="flt_row_<?=$arParams["GRID_ID"]?>_<?=$field["id"]?>"<?if($field["valign"] <> '') echo ' valign="'.$field["valign"].'"';?><?if(!$bShow) echo ' style="display:none"'?>>
+				<tr id="flt_row_<?=$arParams["GRID_ID"]?>_<?=$field["id"]?>"<?php if($field["valign"] <> '') echo ' valign="'.$field["valign"].'"';?><?php if(!$bShow) echo ' style="display:none"'?>>
 					<td><?=$field["name"]?>:</td>
 					<td>
-<?
+						<?php
 	//default attributes
 	if(!is_array($field["params"]))
 		$field["params"] = array();
@@ -95,30 +95,30 @@ foreach($arParams["FILTER"] as $field):
 ?>
 <input type="hidden" name="<?=$field["id"]?>" value="N">
 <input type="checkbox" name="<?=$field["id"]?>" value="Y"<?=($value == "Y"? ' checked':'')?><?=$params?>>
-<?
+	<?php
 			break;
 		case 'list':
 			$bMulti = isset($field["params"]["multiple"]);
 ?>
 <select name="<?=$field["id"].($bMulti? '[]':'')?>"<?=$params?>>
-<?
+		<?php
 			if(is_array($field["items"])):
 				if(!is_array($value))
 					$value = array($value);
 				$bSel = false;
 				if($bMulti):
 ?>
-	<option value=""<?=($value[0] == ''? ' selected':'')?>><?echo GetMessage("interface_grid_no_no_no")?></option>
-<?
+	<option value=""<?=($value[0] == ''? ' selected':'')?>><?= GetMessage("interface_grid_no_no_no")?></option>
+				<?php
 				endif;
 				foreach($field["items"] as $k=>$v):
 ?>
-	<option value="<?=htmlspecialcharsbx($k)?>"<?if(in_array($k, $value) && (!$bSel || $bMulti)) {$bSel = true; echo ' selected';}?>><?=htmlspecialcharsbx($v)?></option>
-<?
+	<option value="<?=htmlspecialcharsbx($k)?>"<?php if(in_array($k, $value) && (!$bSel || $bMulti)) {$bSel = true; echo ' selected';}?>><?=htmlspecialcharsbx($v)?></option>
+				<?php
 				endforeach;
 ?>
 </select>
-<?
+	<?php
 			endif;
 			break;
 		case 'date':
@@ -144,43 +144,43 @@ foreach($arParams["FILTER"] as $field):
 <script>
 BX.ready(function(){bxCalendarInterval.OnDateChange(document.forms['filter_<?=$arParams["GRID_ID"]?>'].<?=$field["id"]?>_datesel)});
 </script>
-<?
+	<?php
 			break;
 		case 'quick':
 ?>
 <input type="text" name="<?=$field["id"]?>" value="<?=htmlspecialcharsbx($value)?>"<?=$params?>>
-<?
+		<?php
 			if(is_array($field["items"])):
 ?>
 <select name="<?=$field["id"]?>_list">
-<?foreach($field["items"] as $key=>$item):?>
+<?php foreach($field["items"] as $key=>$item):?>
 	<option value="<?=htmlspecialcharsbx($key)?>"<?=($arResult["FILTER"][$field["id"]."_list"] == $key? ' selected':'')?>><?=htmlspecialcharsbx($item)?></option>
-<?endforeach?>
+<?php endforeach?>
 </select>
-<?
+	<?php
 			endif;
 			break;
 		case 'number':
 ?>
 <input type="text" name="<?=$field["id"]?>_from" value="<?=htmlspecialcharsbx($arResult["FILTER"][$field["id"]."_from"])?>"<?=$params?>> ... 
 <input type="text" name="<?=$field["id"]?>_to" value="<?=htmlspecialcharsbx($arResult["FILTER"][$field["id"]."_to"])?>"<?=$params?>>
-<?
+	<?php
 			break;
 		default:
 ?>
 <input type="text" name="<?=$field["id"]?>" value="<?=htmlspecialcharsbx($value)?>"<?=$params?>>
-<?
+		<?php
 			break;
 	endswitch;
 ?>
 					</td>
-					<td class="bx-filter-minus"><a href="javascript:void(0)" onclick="bxGrid_<?=$arParams["GRID_ID"]?>.SwitchFilterRow('<?=CUtil::addslashes($field["id"])?>')" class="bx-filter-minus" title="<?echo GetMessage("interface_grid_hide")?>"></a></td>
+					<td class="bx-filter-minus"><a href="javascript:void(0)" onclick="bxGrid_<?=$arParams["GRID_ID"]?>.SwitchFilterRow('<?=CUtil::addslashes($field["id"])?>')" class="bx-filter-minus" title="<?= GetMessage("interface_grid_hide")?>"></a></td>
 				</tr>
-<?endforeach?>
+<?php endforeach?>
 			</table>
 			<div class="bx-filter-buttons">
-				<input type="submit" name="filter" value="<?echo GetMessage("interface_grid_find")?>" title="<?echo GetMessage("interface_grid_find_title")?>">
-				<input type="button" name="" value="<?echo GetMessage("interface_grid_flt_cancel")?>" title="<?echo GetMessage("interface_grid_flt_cancel_title")?>" onclick="bxGrid_<?=$arParams["GRID_ID"]?>.ClearFilter(this.form)">
+				<input type="submit" name="filter" value="<?= GetMessage("interface_grid_find")?>" title="<?= GetMessage("interface_grid_find_title")?>">
+				<input type="button" name="" value="<?= GetMessage("interface_grid_flt_cancel")?>" title="<?= GetMessage("interface_grid_flt_cancel_title")?>" onclick="bxGrid_<?=$arParams["GRID_ID"]?>.ClearFilter(this.form)">
 				<input type="hidden" name="clear_filter" value="">
 			</div>
 		</td>
@@ -189,4 +189,4 @@ BX.ready(function(){bxCalendarInterval.OnDateChange(document.forms['filter_<?=$a
 
 </form>
 </div>
-<?endif;?>
+<?php endif;?>

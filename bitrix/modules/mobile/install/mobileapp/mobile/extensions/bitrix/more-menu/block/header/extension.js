@@ -2,6 +2,7 @@
  * @module more-menu/block/header
  */
 jn.define('more-menu/block/header', (require, exports, module) => {
+	const { Feature } = require('feature');
 	const { Color, Indent } = require('tokens');
 	const { isModuleInstalled } = require('module');
 	const { PureComponent } = require('layout/pure-component');
@@ -11,7 +12,7 @@ jn.define('more-menu/block/header', (require, exports, module) => {
 
 	const { WorkTime } = require('more-menu/block/header/worktime');
 	const { CheckIn } = require('more-menu/block/header/check-in');
-	const { UserCard } = require('layout/ui/user/card');
+	const { UserCard } = require('more-menu/block/header/user-card');
 
 	/**
 	 * @class MoreMenuHeader
@@ -49,6 +50,8 @@ jn.define('more-menu/block/header', (require, exports, module) => {
 				workTime,
 				currentTheme,
 				canManageWorkTimeOnMobile,
+				isNewCheckInEnabled,
+				checkInAmount,
 			} = this.props;
 
 			return View(
@@ -56,7 +59,7 @@ jn.define('more-menu/block/header', (require, exports, module) => {
 					style: {
 						padding: Indent.XL3.toNumber(),
 						paddingTop: Indent.L.toNumber(),
-						backgroundColor: Color.bgContentPrimary.toHex(),
+						backgroundColor: Color.bgContentPrimary.toHex(Feature.canUseWidgetBackground() ? 0 : 1),
 					},
 				},
 				UserCard({
@@ -86,6 +89,8 @@ jn.define('more-menu/block/header', (require, exports, module) => {
 					this.shouldShowCheckIn() && new CheckIn({
 						testId: this.getTestId('check-in'),
 						currentShift,
+						isNewCheckInEnabled,
+						checkInAmount,
 					}),
 				),
 			);

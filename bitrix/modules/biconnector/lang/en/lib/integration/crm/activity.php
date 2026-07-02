@@ -47,3 +47,4 @@ $MESS["CRM_BIC_ACTIVITY_FIELD_SUBJECT_FULL"] = "Activity name";
 $MESS["CRM_BIC_ACTIVITY_FIELD_TYPE_ID"] = "Type ID";
 $MESS["CRM_BIC_ACTIVITY_FIELD_TYPE_NAME"] = "Type name";
 $MESS["CRM_BIC_ACTIVITY_TABLE"] = "Activity";
+$MESS["CRM_BIC_ACTIVITY_TABLE_DESCRIPTION_FULL"] = "Contains details about activities in CRM items.";

@@ -17,8 +17,7 @@
 	display: block;
 	overflow: hidden;
 	white-space: nowrap;
-	-o-text-overflow: ellipsis;
-	   text-overflow: ellipsis;
+	text-overflow: ellipsis;
 	margin-bottom: 8px;
 }
 
@@ -35,8 +34,7 @@
 	display: block;
 	overflow: hidden;
 	white-space: nowrap;
-	-o-text-overflow: ellipsis;
-	   text-overflow: ellipsis;
+	text-overflow: ellipsis;
 }
 
 .crm-kanban-item-badges-item-title {
@@ -72,25 +70,20 @@
 	display: inline;
 	overflow: hidden;
 	white-space: nowrap;
-	-o-text-overflow: ellipsis;
-	   text-overflow: ellipsis;
+	text-overflow: ellipsis;
 }
 
 .crm-kanban-item-badges-status {
 	display: inline-block;
 	overflow: hidden;
 	max-width: 100%;
-	-webkit-box-sizing: border-box;
-	        box-sizing: border-box;
+	box-sizing: border-box;
 	white-space: nowrap;
-	-o-text-overflow: ellipsis;
-	   text-overflow: ellipsis;
+	text-overflow: ellipsis;
 	margin-bottom: 10px;
 	padding: 4px 8px 5px 8px;
 	border-radius: var(--ui-border-radius-md);
 	text-transform: uppercase;
-	-webkit-transition: 250ms all ease;
-	-o-transition: 250ms all ease;
 	transition: 250ms all ease;
 	margin-top: 2px;
 	font: 10px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));

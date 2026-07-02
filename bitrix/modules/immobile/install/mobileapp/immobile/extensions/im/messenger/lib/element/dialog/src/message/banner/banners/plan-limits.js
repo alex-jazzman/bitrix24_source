@@ -4,7 +4,7 @@
 jn.define('im/messenger/lib/element/dialog/message/banner/banners/plan-limits', (require, exports, module) => {
 	const { BannerMessage } = require('im/messenger/lib/element/dialog/message/banner/message');
 	const { BannerMessageConfiguration } = require('im/messenger/lib/element/dialog/message/banner/configuration');
-	const { MessageParams } = require('im/messenger/const');
+	const { MessageComponent } = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { Loc } = require('im/messenger/loc');
 
@@ -25,7 +25,7 @@ jn.define('im/messenger/lib/element/dialog/message/banner/banners/plan-limits', 
 
 		static getComponentId()
 		{
-			return MessageParams.ComponentId.PlanLimitsMessage;
+			return MessageComponent.planLimits;
 		}
 
 		get metaData()

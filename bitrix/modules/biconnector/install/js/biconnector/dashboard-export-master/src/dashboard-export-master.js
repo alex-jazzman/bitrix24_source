@@ -293,7 +293,7 @@ export class DashboardExportMaster
 	#openSettingsSlider(dashboardId: number): void
 	{
 		EventEmitter.subscribe('BX.BIConnector.Settings:onAfterSave', this.#onSettingsChanged.bind(this));
-		DashboardManager.openSettingsSlider(dashboardId);
+		DashboardManager.openSettingsSlider(dashboardId, this.#dashboardData?.type ?? null);
 	}
 
 	#onSettingsChanged(): void

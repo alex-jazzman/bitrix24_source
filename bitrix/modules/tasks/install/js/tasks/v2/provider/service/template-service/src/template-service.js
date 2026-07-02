@@ -28,11 +28,16 @@ export const templateService = new class
 		});
 	}
 
-	async get(id: number): Promise<TaskModel>
+	async get(id: number): Promise<?TaskModel>
 	{
 		try
 		{
 			const data = await apiClient.post(Endpoint.TemplateGet, { templateId: idUtils.unbox(id) });
+
+			if (!data)
+			{
+				return null;
+			}
 
 			data.id = id;
 
@@ -257,7 +262,7 @@ export const templateService = new class
 		}
 	}
 
-	async addTask(templateId: number, task: TaskModel, withSubTasks: boolean): Promise<[number, ?Error]>
+	async addTask(templateId: number, task: TaskModel, withSubTasks: boolean, view: boolean): Promise<[number, ?Error]>
 	{
 		try
 		{
@@ -265,6 +270,7 @@ export const templateService = new class
 				template: { id: templateId },
 				task: TaskMappers.mapModelToDto(task),
 				withSubTasks,
+				view,
 			});
 
 			data.templateId = 0;

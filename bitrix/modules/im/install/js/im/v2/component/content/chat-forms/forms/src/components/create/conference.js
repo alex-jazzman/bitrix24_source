@@ -1,14 +1,9 @@
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { type JsonObject } from 'main.core';
+import { EventEmitter, type BaseEvent } from 'main.core.events';
 import { MenuManager } from 'main.popup';
 
 import { Messenger } from 'im.public';
 import { Core } from 'im.v2.application.core';
-import { EmptyAvatarType } from 'im.v2.component.elements.avatar';
-import { CreateChatManager } from 'im.v2.lib.create-chat';
-import { PermissionManager } from 'im.v2.lib.permission';
-import { Notifier } from 'im.v2.lib.notifier';
-import { ChatService } from 'im.v2.provider.service.chat';
-import { UserRole, PopupType, ChatType, EventType, Layout } from 'im.v2.const';
 import {
 	TitleInput,
 	ChatAvatar,
@@ -20,9 +15,12 @@ import {
 	AppearanceSection,
 	ConferenceSection,
 } from 'im.v2.component.content.chat-forms.elements';
-
-import type { JsonObject } from 'main.core';
-import type { OnLayoutChangeEvent } from 'im.v2.const';
+import { EmptyAvatarType } from 'im.v2.component.elements.avatar';
+import { PopupType, ChatType, EventType, Layout, type UserRole, type OnLayoutChangeEvent } from 'im.v2.const';
+import { CreateChatManager, CreatableChatType } from 'im.v2.lib.create-chat';
+import { Notifier } from 'im.v2.lib.notifier';
+import { PermissionManager } from 'im.v2.lib.permission';
+import { ChatService } from 'im.v2.provider.service.chat';
 
 type UserRoleItem = $Keys<typeof UserRole>;
 
@@ -83,7 +81,7 @@ export const ConferenceCreation = {
 		this.initDefaultRolesForRights();
 
 		this.restoreFields();
-		CreateChatManager.getInstance().setChatType(ChatType.videoconf);
+		CreateChatManager.getInstance().setChatType(CreatableChatType.videoconf);
 		CreateChatManager.getInstance().setCreationStatus(true);
 		CreateChatManager.getInstance().setChatAvatar(this.avatarFile);
 	},
@@ -153,7 +151,7 @@ export const ConferenceCreation = {
 
 			this.isCreating = true;
 
-			const { newDialogId } = await this.getChatService().createChat({
+			const result = await this.getChatService().createChat({
 				entityType: ChatType.videoconf,
 				title: this.chatTitle,
 				avatar: this.avatarFile,
@@ -170,6 +168,12 @@ export const ConferenceCreation = {
 				this.isCreating = false;
 			});
 
+			if (!result)
+			{
+				return;
+			}
+
+			const { newDialogId } = result;
 			this.isCreating = false;
 			CreateChatManager.getInstance().setCreationStatus(false);
 			void Messenger.openChat(newDialogId);
@@ -190,7 +194,7 @@ export const ConferenceCreation = {
 		onLayoutChange(event: BaseEvent<OnLayoutChangeEvent>)
 		{
 			const { to } = event.getData();
-			if (to.name === Layout.createChat && to.entityId !== ChatType.videoconf)
+			if (to.name === Layout.createChat && to.entityId !== CreatableChatType.videoconf)
 			{
 				this.exitByChatTypeSwitch = true;
 			}

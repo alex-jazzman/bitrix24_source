@@ -1,0 +1,3 @@
+<?php
+
+$MESS['IMMOBILE_MESSENGER_DIALOG_SOURCE_VIEWER_TITLE'] = 'Источники';

@@ -1,16 +1,25 @@
 import type { Property } from '../../types/property';
 
+export type ComplexDocumentType = [string, string, string];
+export type ComplexDocumentId = [string, string, string | number];
+
 export type TemplateData = {
 	id: number,
 	name: string,
 	description: string,
-	parameters: Array<Property>,
+	documentType: ComplexDocumentType,
+	parameters: Property[],
+};
+
+export type DocumentData = {
+	documentType: ComplexDocumentType,
+	documentId: ?ComplexDocumentId,
 };
 
 export type AutostartData = {
-	templates: Array<TemplateData>,
-	documentType: [],
-	signedDocumentType: string,
+	templates: TemplateData[],
+	documents: DocumentData[],
+	signedDocumentType: ?string,
 	signedDocumentId: ?string,
 	autoExecuteType: number,
 };

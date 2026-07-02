@@ -1,6 +1,6 @@
 /**
  * Do not edit directly
- * Generated on Wed, 04 Mar 2026 14:01:14 GMT
+ * Generated on Mon, 01 Jun 2026 13:22:15 GMT
  */
 
 :root, .--ui-context-content-light {
@@ -242,7 +242,7 @@
   --ui-color-design-outline-alert-content-divider: #FFD2D0;
   --ui-color-design-outline-bg-alt: var(--ui-color-bg-content-primary);
   --ui-color-design-outline-stroke: var(--ui-color-base-7);
-  --ui-color-design-outline-stroke-alt1: var(--ui-color-base-6);
+  --ui-color-design-outline-stroke-alt1: var(--ui-color-base-5);
   --ui-color-design-outline-stroke-alt2: var(--ui-color-accent-soft-border-blue);
   --ui-design-outline-stroke-weight: var(--ui-border-width-medium);
   --ui-design-outline-stroke-weight-alt: var(--ui-border-width-thin);
@@ -311,13 +311,13 @@
   --ui-color-design-selection-stroke: var(--ui-color-accent-soft-blue-1);
   --ui-design-selection-stroke-weight: var(--ui-border-width-medium);
   --ui-design-selection-stroke-weight-alt: var(--ui-border-width-thin);
-  --ui-color-design-plain-na-focused-stroke: var(--ui-color-divider-default);
   --ui-color-design-selection-content: var(--ui-color-accent-main-primary);
+  --ui-color-design-plain-na-focused-stroke: var(--ui-color-divider-default);
   --ui-design-plain-na-focused-stroke-weight: var(--ui-border-width-medium);
   --ui-color-design-selection-content-icon: var(--ui-color-accent-main-primary);
   --ui-color-design-selection-content-icon-secondary: var(--ui-color-accent-main-primary-alt-2);
-  --ui-color-design-plain-na-focused-content: var(--ui-color-base-1);
   --ui-color-design-selection-content-chevron: var(--ui-color-accent-main-primary);
+  --ui-color-design-plain-na-focused-content: var(--ui-color-base-1);
   --ui-color-design-selection-content-divider: var(--ui-color-accent-soft-blue-1);
   --ui-color-design-selection-focused-bg: var(--ui-color-bg-content-primary);
   --ui-color-accent-main-primary-alt: #1F86FF;
@@ -407,29 +407,35 @@
   --ui-color-designer-bp-pointer-accent: #4A9DFF;
   --ui-color-designer-bp-background: #ECF0F2;
   --ui-color-designer-bp-rules-blue-stroke: #B7D7FF;
+  --ui-color-designer-bp-rules-blue-text: #3391FF;
   --ui-color-designer-bp-rules-blue-bg: #F8FBFF;
   --ui-color-designer-bp-rules-green-stroke: #6EF1B4;
+  --ui-color-designer-bp-rules-green-text: #1BCE7B;
   --ui-color-designer-bp-rules-green-bg: #F4FFFA;
   --ui-color-designer-bp-rules-grey-stroke: #D5D7DB;
+  --ui-color-designer-bp-rules-grey-text: #828B95;
   --ui-color-designer-bp-rules-grey-bg: #F8FAFB;
+  --ui-color-designer-bp-rules-orange-stroke: #FFE1A6;
+  --ui-color-designer-bp-rules-orange-text: #FFA900;
+  --ui-color-designer-bp-rules-orange-bg: #FFFAF0;
   --ui-color-helper-bg-default: #FFFFFF99;
   --ui-color-chat-my-base-0_2: #000000B3;
   --ui-color-chat-my-base-0_3: #00000033;
   --ui-color-chat-my-base-0_4: #00000033;
   --ui-color-chat-my-base-1_1: #3333334D;
   --ui-color-chat-my-base-1_2: #33333380;
-  --ui-color-chat-my-primary-1: #1F86FF;
-  --ui-color-chat-my-primary-2: #1F86FF;
-  --ui-color-chat-my-primary-3: #1F86FF;
+  --ui-color-chat-my-primary-1: var(--ui-color-accent-main-primary-alt);
+  --ui-color-chat-my-primary-2: var(--ui-color-accent-main-primary-alt);
+  --ui-color-chat-my-primary-3: var(--ui-color-accent-main-primary-alt);
   --ui-color-chat-my-message-1: #E9FECB;
   --ui-color-chat-my-message-2: #E9FECBB3;
   --ui-color-chat-my-channel-cmnt: #E0F5C3;
   --ui-color-chat-my-channel-border: #AEFDB4;
-  --ui-color-chat-my-channel-alert: #FF5752;
-  --ui-color-chat-my-channel-success: #1BCE7B;
+  --ui-color-chat-my-channel-alert: var(--ui-color-design-filled-alert-bg);
+  --ui-color-chat-my-channel-success: var(--ui-color-design-filled-success-bg);
   --ui-color-chat-my-base-black: #00000033;
   --ui-color-chat-my-fixed-black: #00000033;
-  --ui-color-chat-my-color-white: #FFFFFF;
+  --ui-color-chat-my-color-white: var(--ui-color-base-white-fixed);
   --ui-color-chat-my-color-shade: #8E987F;
   --ui-color-chat-my-color-green: #9DCF00;
   --ui-color-chat-my-poll-1: #DAFDA8;
@@ -442,24 +448,25 @@
   --ui-color-chat-overall-pattern-1_2: #FFFFFF26;
   --ui-color-chat-overall-banner-bg: #FFFFFF8C;
   --ui-color-chat-overall-tech: #00000033;
+  --ui-color-chat-overall-message-tech: #FFFFFF33;
   --ui-color-chat-overall-tech-2: #00000033;
   --ui-color-chat-overall-tech-3: #00000029;
   --ui-color-chat-overall-fixed-black: #00000080;
-  --ui-color-chat-overall-base-white-1: #FFFFFF;
+  --ui-color-chat-overall-base-white-1: var(--ui-color-base-white-fixed);
   --ui-color-chat-overall-base-white-2: #FFFFFFB3;
   --ui-color-chat-overall-color-gray: #F0F0F0;
-  --ui-color-chat-overall-invert-alert: #FFFFFF;
+  --ui-color-chat-overall-invert-alert: var(--ui-color-base-white-fixed);
   --ui-color-chat-overall-fixed-white: #EBEBEB;
   --ui-color-chat-other-base-0_1: #00000033;
   --ui-color-chat-other-base-1_1: #33333380;
   --ui-color-chat-other-base-1_2: #3333334D;
-  --ui-color-chat-other-message-1: #FFFFFF;
+  --ui-color-chat-other-message-1: var(--ui-color-bg-content-primary);
   --ui-color-chat-other-message-2: #FFFFFFB3;
   --ui-color-chat-other-message-3: #FFFFFF33;
   --ui-color-chat-other-citation: #F3F7FB;
   --ui-color-chat-other-channel-cmnt: #F5FCDE;
   --ui-color-chat-other-channel-border: #E2F1B3;
-  --ui-color-chat-other-invert-1: #FFFFFF;
+  --ui-color-chat-other-invert-1: var(--ui-color-base-white-fixed);
   --ui-color-chat-other-copilot-1: #F5EEFF;
   --ui-color-chat-other-copilot-2: #B6AAC8;
   --ui-color-chat-other-poll-1: #EDF7FF;
@@ -481,8 +488,8 @@
   --ui-color-leftmenu-bg: var(--ui-color-bg-content-secondary);
   --ui-color-marta-stroke-gradient-1: #FFFFFF;
   --ui-color-marta-stroke-gradient-2: #10B96A;
-  --ui-color-marta-bg-gradient-1: #58D7D5;
   --ui-color-leftmenu-bg-expanded: var(--ui-color-bg-content-secondary);
+  --ui-color-marta-bg-gradient-1: #58D7D5;
   --ui-color-marta-bg-gradient-2: #0277FF;
   --ui-color-marta-avatar-gradient-1: #30B5F7;
   --ui-color-marta-avatar-gradient-2: #7CFFC2;
@@ -543,8 +550,8 @@
   --ui-color-tech-bg-picture-tint: #00000000;
   --ui-color-tech-dark-fixes: #FFFFFF00;
   --ui-color-blue-02: #F9FCFF;
-  --ui-color-black-base: #333333;
   --ui-color-blue-04: #F8FBFF;
+  --ui-color-black-base: #333333;
   --ui-color-blue-06: #F7FBFF;
   --ui-color-blue-08: #F5FAFF;
   --ui-color-g-content-glass-1: #FFFFFFE6;
@@ -593,8 +600,8 @@
   --ui-color-g-glass-orange-bg-2: #DB7600D1;
   --ui-color-g-glass-orange-bg-3: #FFD685BD;
   --ui-color-g-glass-orange-stroke: #FFFFFF2E;
-  --ui-color-blue-09: #F3F8FF;
   --ui-color-white-base: #FFFFFF;
+  --ui-color-blue-09: #F3F8FF;
   --ui-color-blue-10: #F3FAFF;
   --ui-color-blue-15: #F0F7FF;
   --ui-color-blue-20: #E7F4FF;
@@ -771,6 +778,9 @@
   --ui-color-design-tinted-bitrix-gpt-content-gradient-7: #FF7438;
   --ui-color-design-tinted-bitrix-gpt-content-divider: #F2DAD0;
   --ui-color-focus-outline: var(--ui-color-blue-57);
+  --ui-focus-outline-offset: 2px;
+  --ui-focus-outline-offset-inset: -2px;
+  --ui-focus-outline-width: 2px;
 }
 
 .--ui-context-content-dark {
@@ -1012,7 +1022,7 @@
   --ui-color-design-outline-alert-content-divider: #7E0400;
   --ui-color-design-outline-bg-alt: var(--ui-color-bg-content-primary);
   --ui-color-design-outline-stroke: var(--ui-color-base-7);
-  --ui-color-design-outline-stroke-alt1: var(--ui-color-base-6);
+  --ui-color-design-outline-stroke-alt1: var(--ui-color-base-5);
   --ui-color-design-outline-stroke-alt2: var(--ui-color-accent-soft-blue-1);
   --ui-design-outline-stroke-weight: var(--ui-border-width-medium);
   --ui-design-outline-stroke-weight-alt: var(--ui-border-width-thin);
@@ -1081,13 +1091,13 @@
   --ui-color-design-selection-stroke: #294162;
   --ui-design-selection-stroke-weight: var(--ui-border-width-medium);
   --ui-design-selection-stroke-weight-alt: var(--ui-border-width-thin);
-  --ui-color-design-plain-na-focused-stroke: var(--ui-color-divider-default);
   --ui-color-design-selection-content: #2A94FF;
+  --ui-color-design-plain-na-focused-stroke: var(--ui-color-divider-default);
   --ui-design-plain-na-focused-stroke-weight: var(--ui-border-width-medium);
   --ui-color-design-selection-content-icon: #2A94FF;
   --ui-color-design-selection-content-icon-secondary: #5EAEFF;
-  --ui-color-design-plain-na-focused-content: var(--ui-color-base-1);
   --ui-color-design-selection-content-chevron: #2A94FF;
+  --ui-color-design-plain-na-focused-content: var(--ui-color-base-1);
   --ui-color-design-selection-content-divider: var(--ui-color-accent-soft-blue-1);
   --ui-color-design-selection-focused-bg: #1F3048;
   --ui-color-accent-main-primary-alt: #1B79E6;
@@ -1177,11 +1187,17 @@
   --ui-color-designer-bp-pointer-accent: #4A9DFF;
   --ui-color-designer-bp-background: #ECF0F2;
   --ui-color-designer-bp-rules-blue-stroke: #B7D7FF;
+  --ui-color-designer-bp-rules-blue-text: #3391FF;
   --ui-color-designer-bp-rules-blue-bg: #F8FBFF;
   --ui-color-designer-bp-rules-green-stroke: #6EF1B4;
+  --ui-color-designer-bp-rules-green-text: #1BCE7B;
   --ui-color-designer-bp-rules-green-bg: #F4FFFA;
   --ui-color-designer-bp-rules-grey-stroke: #D5D7DB;
+  --ui-color-designer-bp-rules-grey-text: #828B95;
   --ui-color-designer-bp-rules-grey-bg: #F8FAFB;
+  --ui-color-designer-bp-rules-orange-stroke: #FFE1A6;
+  --ui-color-designer-bp-rules-orange-text: #FFA900;
+  --ui-color-designer-bp-rules-orange-bg: #FFFAF0;
   --ui-color-helper-bg-default: #FFFFFF99;
   --ui-color-chat-my-base-0_2: #FFFFFFB3;
   --ui-color-chat-my-base-0_3: #FFFFFF80;
@@ -1201,7 +1217,7 @@
   --ui-color-chat-my-fixed-black: #00000033;
   --ui-color-chat-my-color-white: #0067E0;
   --ui-color-chat-my-color-shade: #AED7ED;
-  --ui-color-chat-my-color-green: #FFFFFF;
+  --ui-color-chat-my-color-green: var(--ui-color-base-white-fixed);
   --ui-color-chat-my-poll-1: #3385E6;
   --ui-color-chat-my-poll-2: #438FE8;
   --ui-color-chat-my-poll-3: #5C9DEB;
@@ -1212,6 +1228,7 @@
   --ui-color-chat-overall-pattern-1_2: #412043;
   --ui-color-chat-overall-banner-bg: #07070799;
   --ui-color-chat-overall-tech: #2B2E3266;
+  --ui-color-chat-overall-message-tech: #2B2E3266;
   --ui-color-chat-overall-tech-2: #07070799;
   --ui-color-chat-overall-tech-3: #FFFFFF29;
   --ui-color-chat-overall-fixed-black: #00000080;
@@ -1251,8 +1268,8 @@
   --ui-color-leftmenu-bg: #262626;
   --ui-color-marta-stroke-gradient-1: #FFFFFF;
   --ui-color-marta-stroke-gradient-2: #10B96A;
-  --ui-color-marta-bg-gradient-1: #58D7D5;
   --ui-color-leftmenu-bg-expanded: #262626;
+  --ui-color-marta-bg-gradient-1: #58D7D5;
   --ui-color-marta-bg-gradient-2: #0277FF;
   --ui-color-marta-avatar-gradient-1: #30B5F7;
   --ui-color-marta-avatar-gradient-2: #7CFFC2;
@@ -1313,8 +1330,8 @@
   --ui-color-tech-bg-picture-tint: #0000003D;
   --ui-color-tech-dark-fixes: #383838;
   --ui-color-blue-02: #FFFFFF;
-  --ui-color-black-base: #333333;
   --ui-color-blue-04: #FFFFFF;
+  --ui-color-black-base: #333333;
   --ui-color-blue-06: #FFFFFF;
   --ui-color-blue-08: #FFFFFF;
   --ui-color-g-content-glass-1: #FFFFFFE6;
@@ -1363,8 +1380,8 @@
   --ui-color-g-glass-orange-bg-2: #D06A0CD1;
   --ui-color-g-glass-orange-bg-3: #FFD27CBD;
   --ui-color-g-glass-orange-stroke: #00000029;
-  --ui-color-blue-09: #FFFFFF;
   --ui-color-white-base: #FFFFFF;
+  --ui-color-blue-09: #FFFFFF;
   --ui-color-blue-10: #F4FCFE;
   --ui-color-blue-15: #ECFAFE;
   --ui-color-blue-20: #E5F9FF;
@@ -1505,13 +1522,13 @@
   --ui-color-design-filled-bitrix-gpt-content-icon: var(--ui-color-base-white-fixed);
   --ui-color-design-filled-bitrix-gpt-content-chevron: var(--ui-color-base-white-fixed);
   --ui-color-design-filled-bitrix-gpt-content-divider: #FFFFFF3D;
-  --ui-color-design-outline-bitrix-gpt-content-gradient-1: #0E618E;
-  --ui-color-design-outline-bitrix-gpt-content-gradient-2: #2E4A99;
-  --ui-color-design-outline-bitrix-gpt-content-gradient-3: #62369A;
-  --ui-color-design-outline-bitrix-gpt-content-gradient-4: #913670;
-  --ui-color-design-outline-bitrix-gpt-content-gradient-5: #96424A;
-  --ui-color-design-outline-bitrix-gpt-content-gradient-6: #BA8D2E;
-  --ui-color-design-outline-bitrix-gpt-content-gradient-7: #B6552B;
+  --ui-color-design-outline-bitrix-gpt-content-gradient-1: #28B4FF;
+  --ui-color-design-outline-bitrix-gpt-content-gradient-2: #7D98FF;
+  --ui-color-design-outline-bitrix-gpt-content-gradient-3: #BD82FF;
+  --ui-color-design-outline-bitrix-gpt-content-gradient-4: #FF67CC;
+  --ui-color-design-outline-bitrix-gpt-content-gradient-5: #FF8A90;
+  --ui-color-design-outline-bitrix-gpt-content-gradient-6: #F6BC41;
+  --ui-color-design-outline-bitrix-gpt-content-gradient-7: #FD8552;
   --ui-color-design-outline-bitrix-gpt-stroke-gradient-1: #0F618E;
   --ui-color-design-outline-bitrix-gpt-stroke-gradient-2: #2E4999;
   --ui-color-design-outline-bitrix-gpt-stroke-gradient-3: #62369A;
@@ -1532,15 +1549,18 @@
   --ui-color-design-tinted-bitrix-gpt-content-icon: #0E618E;
   --ui-color-design-tinted-bitrix-gpt-content-icon-secondary: #96424A;
   --ui-color-design-tinted-bitrix-gpt-content-chevron: #96424A;
-  --ui-color-design-tinted-bitrix-gpt-content-gradient-1: #0E618E;
-  --ui-color-design-tinted-bitrix-gpt-content-gradient-2: #2E4A99;
-  --ui-color-design-tinted-bitrix-gpt-content-gradient-3: #62369A;
-  --ui-color-design-tinted-bitrix-gpt-content-gradient-4: #913670;
-  --ui-color-design-tinted-bitrix-gpt-content-gradient-5: #96424A;
-  --ui-color-design-tinted-bitrix-gpt-content-gradient-6: #BA8D2E;
-  --ui-color-design-tinted-bitrix-gpt-content-gradient-7: #B6552B;
+  --ui-color-design-tinted-bitrix-gpt-content-gradient-1: #28B4FF;
+  --ui-color-design-tinted-bitrix-gpt-content-gradient-2: #7D98FF;
+  --ui-color-design-tinted-bitrix-gpt-content-gradient-3: #BD82FF;
+  --ui-color-design-tinted-bitrix-gpt-content-gradient-4: #FF67CC;
+  --ui-color-design-tinted-bitrix-gpt-content-gradient-5: #FF8A90;
+  --ui-color-design-tinted-bitrix-gpt-content-gradient-6: #F6BC41;
+  --ui-color-design-tinted-bitrix-gpt-content-gradient-7: #FD8552;
   --ui-color-design-tinted-bitrix-gpt-content-divider: #D6B4A5;
   --ui-color-focus-outline: var(--ui-color-blue-57);
+  --ui-focus-outline-offset: 2px;
+  --ui-focus-outline-offset-inset: -2px;
+  --ui-focus-outline-width: 2px;
 }
 
 .--ui-context-edge-light {
@@ -1851,13 +1871,13 @@
   --ui-color-design-selection-stroke: #00000000;
   --ui-design-selection-stroke-weight: 0px;
   --ui-design-selection-stroke-weight-alt: 0px;
-  --ui-color-design-plain-na-focused-stroke: #00000014;
   --ui-color-design-selection-content: var(--ui-color-base-1);
+  --ui-color-design-plain-na-focused-stroke: #00000014;
   --ui-design-plain-na-focused-stroke-weight: var(--ui-border-width-medium);
   --ui-color-design-selection-content-icon: var(--ui-color-base-1);
   --ui-color-design-selection-content-icon-secondary: var(--ui-color-base-2);
-  --ui-color-design-plain-na-focused-content: var(--ui-color-base-1);
   --ui-color-design-selection-content-chevron: var(--ui-color-base-0);
+  --ui-color-design-plain-na-focused-content: var(--ui-color-base-1);
   --ui-color-design-selection-content-divider: var(--ui-color-base-7);
   --ui-color-design-selection-focused-bg: #00000026;
   --ui-color-accent-main-primary-alt: #1B79E6;
@@ -1947,31 +1967,37 @@
   --ui-color-designer-bp-pointer-accent: #4A9DFF;
   --ui-color-designer-bp-background: #ECF0F2;
   --ui-color-designer-bp-rules-blue-stroke: #B7D7FF;
+  --ui-color-designer-bp-rules-blue-text: #3391FF;
   --ui-color-designer-bp-rules-blue-bg: #F8FBFF;
   --ui-color-designer-bp-rules-green-stroke: #6EF1B4;
+  --ui-color-designer-bp-rules-green-text: #1BCE7B;
   --ui-color-designer-bp-rules-green-bg: #F4FFFA;
   --ui-color-designer-bp-rules-grey-stroke: #D5D7DB;
+  --ui-color-designer-bp-rules-grey-text: #828B95;
   --ui-color-designer-bp-rules-grey-bg: #F8FAFB;
+  --ui-color-designer-bp-rules-orange-stroke: #FFE1A6;
+  --ui-color-designer-bp-rules-orange-text: #FFA900;
+  --ui-color-designer-bp-rules-orange-bg: #FFFAF0;
   --ui-color-helper-bg-default: #FFFFFF99;
   --ui-color-chat-my-base-0_2: #FFFFFFB3;
   --ui-color-chat-my-base-0_3: #FFFFFF80;
   --ui-color-chat-my-base-0_4: #FFFFFF33;
   --ui-color-chat-my-base-1_1: #3333334D;
   --ui-color-chat-my-base-1_2: #F8F8F8B3;
-  --ui-color-chat-my-primary-1: #1F86FF;
-  --ui-color-chat-my-primary-2: #1F86FF;
-  --ui-color-chat-my-primary-3: #1F86FF;
+  --ui-color-chat-my-primary-1: var(--ui-color-accent-main-primary-alt);
+  --ui-color-chat-my-primary-2: var(--ui-color-accent-main-primary-alt);
+  --ui-color-chat-my-primary-3: var(--ui-color-accent-main-primary-alt);
   --ui-color-chat-my-message-1: #E9FECBE6;
   --ui-color-chat-my-message-2: #E9FECBB3;
   --ui-color-chat-my-channel-cmnt: #E0F5C3E6;
   --ui-color-chat-my-channel-border: #AEFDB4E6;
   --ui-color-chat-my-channel-alert: #FFFFFFE6;
-  --ui-color-chat-my-channel-success: #1BCE7B;
+  --ui-color-chat-my-channel-success: var(--ui-color-design-filled-success-bg);
   --ui-color-chat-my-base-black: #00000080;
   --ui-color-chat-my-fixed-black: #00000033;
   --ui-color-chat-my-color-white: #0067E0;
   --ui-color-chat-my-color-shade: #AED7ED;
-  --ui-color-chat-my-color-green: #FFFFFF;
+  --ui-color-chat-my-color-green: var(--ui-color-base-white-fixed);
   --ui-color-chat-my-poll-1: #3385E6;
   --ui-color-chat-my-poll-2: #438FE8;
   --ui-color-chat-my-poll-3: #5C9DEB;
@@ -1982,10 +2008,11 @@
   --ui-color-chat-overall-pattern-1_2: #412043;
   --ui-color-chat-overall-banner-bg: #07070799;
   --ui-color-chat-overall-tech: #2B2E3266;
+  --ui-color-chat-overall-message-tech: #2B2E3266;
   --ui-color-chat-overall-tech-2: #07070799;
   --ui-color-chat-overall-tech-3: #FFFFFF29;
   --ui-color-chat-overall-fixed-black: #00000080;
-  --ui-color-chat-overall-base-white-1: #FFFFFFB3;
+  --ui-color-chat-overall-base-white-1: var(--ui-color-base-white-fixed);
   --ui-color-chat-overall-base-white-2: #FFFFFF99;
   --ui-color-chat-overall-color-gray: #A7ABAF;
   --ui-color-chat-overall-invert-alert: #FF5752;
@@ -2021,8 +2048,8 @@
   --ui-color-leftmenu-bg: #00000008;
   --ui-color-marta-stroke-gradient-1: #FFFFFF;
   --ui-color-marta-stroke-gradient-2: #10B96A;
-  --ui-color-marta-bg-gradient-1: #58D7D5;
   --ui-color-leftmenu-bg-expanded: #00000005;
+  --ui-color-marta-bg-gradient-1: #58D7D5;
   --ui-color-marta-bg-gradient-2: #0277FF;
   --ui-color-marta-avatar-gradient-1: #30B5F7;
   --ui-color-marta-avatar-gradient-2: #7CFFC2;
@@ -2083,8 +2110,8 @@
   --ui-color-tech-bg-picture-tint: #0000003D;
   --ui-color-tech-dark-fixes: #383838;
   --ui-color-blue-02: #FFFFFF;
-  --ui-color-black-base: #333333;
   --ui-color-blue-04: #FFFFFF;
+  --ui-color-black-base: #333333;
   --ui-color-blue-06: #FFFFFF;
   --ui-color-blue-08: #FFFFFF;
   --ui-color-g-content-glass-1: #FFFFFFE6;
@@ -2133,8 +2160,8 @@
   --ui-color-g-glass-orange-bg-2: #D06A0CD1;
   --ui-color-g-glass-orange-bg-3: #FFD27CBD;
   --ui-color-g-glass-orange-stroke: #FFFFFF24;
-  --ui-color-blue-09: #FFFFFF;
   --ui-color-white-base: #FFFFFF;
+  --ui-color-blue-09: #FFFFFF;
   --ui-color-blue-10: #F4FCFE;
   --ui-color-blue-15: #ECFAFE;
   --ui-color-blue-20: #E5F9FF;
@@ -2311,6 +2338,9 @@
   --ui-color-design-tinted-bitrix-gpt-content-gradient-7: #FF7438;
   --ui-color-design-tinted-bitrix-gpt-content-divider: #F2DAD0;
   --ui-color-focus-outline: var(--ui-color-blue-57);
+  --ui-focus-outline-offset: 2px;
+  --ui-focus-outline-offset-inset: -2px;
+  --ui-focus-outline-width: 2px;
 }
 
 .--ui-context-edge-dark {
@@ -2621,13 +2651,13 @@
   --ui-color-design-selection-stroke: #FFFFFF00;
   --ui-design-selection-stroke-weight: 0px;
   --ui-design-selection-stroke-weight-alt: 0px;
-  --ui-color-design-plain-na-focused-stroke: #FFFFFF1F;
   --ui-color-design-selection-content: var(--ui-color-base-0);
+  --ui-color-design-plain-na-focused-stroke: #FFFFFF1F;
   --ui-design-plain-na-focused-stroke-weight: var(--ui-border-width-medium);
   --ui-color-design-selection-content-icon: var(--ui-color-base-0);
   --ui-color-design-selection-content-icon-secondary: var(--ui-color-base-2);
-  --ui-color-design-plain-na-focused-content: var(--ui-color-base-1);
   --ui-color-design-selection-content-chevron: var(--ui-color-base-0);
+  --ui-color-design-plain-na-focused-content: var(--ui-color-base-1);
   --ui-color-design-selection-content-divider: var(--ui-color-base-7);
   --ui-color-design-selection-focused-bg: #FFFFFF57;
   --ui-color-accent-main-primary-alt: #1B79E6;
@@ -2717,11 +2747,17 @@
   --ui-color-designer-bp-pointer-accent: #4A9DFF;
   --ui-color-designer-bp-background: #ECF0F2;
   --ui-color-designer-bp-rules-blue-stroke: #B7D7FF;
+  --ui-color-designer-bp-rules-blue-text: #3391FF;
   --ui-color-designer-bp-rules-blue-bg: #F8FBFF;
   --ui-color-designer-bp-rules-green-stroke: #6EF1B4;
+  --ui-color-designer-bp-rules-green-text: #1BCE7B;
   --ui-color-designer-bp-rules-green-bg: #F4FFFA;
   --ui-color-designer-bp-rules-grey-stroke: #D5D7DB;
+  --ui-color-designer-bp-rules-grey-text: #828B95;
   --ui-color-designer-bp-rules-grey-bg: #F8FAFB;
+  --ui-color-designer-bp-rules-orange-stroke: #FFE1A6;
+  --ui-color-designer-bp-rules-orange-text: #FFA900;
+  --ui-color-designer-bp-rules-orange-bg: #FFFAF0;
   --ui-color-helper-bg-default: #FFFFFF99;
   --ui-color-chat-my-base-0_2: #FFFFFFB3;
   --ui-color-chat-my-base-0_3: #FFFFFF80;
@@ -2741,7 +2777,7 @@
   --ui-color-chat-my-fixed-black: #00000033;
   --ui-color-chat-my-color-white: #0067E0;
   --ui-color-chat-my-color-shade: #AED7ED;
-  --ui-color-chat-my-color-green: #FFFFFF;
+  --ui-color-chat-my-color-green: var(--ui-color-base-white-fixed);
   --ui-color-chat-my-poll-1: #3385E6;
   --ui-color-chat-my-poll-2: #438FE8;
   --ui-color-chat-my-poll-3: #5C9DEB;
@@ -2752,6 +2788,7 @@
   --ui-color-chat-overall-pattern-1_2: #412043;
   --ui-color-chat-overall-banner-bg: #07070799;
   --ui-color-chat-overall-tech: #2B2E3266;
+  --ui-color-chat-overall-message-tech: #2B2E3266;
   --ui-color-chat-overall-tech-2: #07070799;
   --ui-color-chat-overall-tech-3: #FFFFFF29;
   --ui-color-chat-overall-fixed-black: #00000080;
@@ -2791,8 +2828,8 @@
   --ui-color-leftmenu-bg: #FFFFFF0F;
   --ui-color-marta-stroke-gradient-1: #FFFFFF;
   --ui-color-marta-stroke-gradient-2: #10B96A;
-  --ui-color-marta-bg-gradient-1: #58D7D5;
   --ui-color-leftmenu-bg-expanded: #FFFFFF0A;
+  --ui-color-marta-bg-gradient-1: #58D7D5;
   --ui-color-marta-bg-gradient-2: #0277FF;
   --ui-color-marta-avatar-gradient-1: #30B5F7;
   --ui-color-marta-avatar-gradient-2: #7CFFC2;
@@ -2853,8 +2890,8 @@
   --ui-color-tech-bg-picture-tint: #0000003D;
   --ui-color-tech-dark-fixes: #383838;
   --ui-color-blue-02: #FFFFFF;
-  --ui-color-black-base: #333333;
   --ui-color-blue-04: #FFFFFF;
+  --ui-color-black-base: #333333;
   --ui-color-blue-06: #FFFFFF;
   --ui-color-blue-08: #FFFFFF;
   --ui-color-g-content-glass-1: #FFFFFFE6;
@@ -2903,8 +2940,8 @@
   --ui-color-g-glass-orange-bg-2: #D06A0CD1;
   --ui-color-g-glass-orange-bg-3: #FFD27CBD;
   --ui-color-g-glass-orange-stroke: #FFFFFF24;
-  --ui-color-blue-09: #FFFFFF;
   --ui-color-white-base: #FFFFFF;
+  --ui-color-blue-09: #FFFFFF;
   --ui-color-blue-10: #F4FCFE;
   --ui-color-blue-15: #ECFAFE;
   --ui-color-blue-20: #E5F9FF;
@@ -3045,11 +3082,11 @@
   --ui-color-design-filled-bitrix-gpt-content-icon: var(--ui-color-base-white-fixed);
   --ui-color-design-filled-bitrix-gpt-content-chevron: var(--ui-color-base-white-fixed);
   --ui-color-design-filled-bitrix-gpt-content-divider: #FFFFFF1A;
-  --ui-color-design-outline-bitrix-gpt-content-gradient-1: #0E618E;
-  --ui-color-design-outline-bitrix-gpt-content-gradient-2: #2E4A99;
-  --ui-color-design-outline-bitrix-gpt-content-gradient-3: #62369A;
-  --ui-color-design-outline-bitrix-gpt-content-gradient-4: #913670;
-  --ui-color-design-outline-bitrix-gpt-content-gradient-5: #96424A;
+  --ui-color-design-outline-bitrix-gpt-content-gradient-1: #73C6F3;
+  --ui-color-design-outline-bitrix-gpt-content-gradient-2: #92AEFE;
+  --ui-color-design-outline-bitrix-gpt-content-gradient-3: #CC9AFD;
+  --ui-color-design-outline-bitrix-gpt-content-gradient-4: #ED99E0;
+  --ui-color-design-outline-bitrix-gpt-content-gradient-5: #F89ECB;
   --ui-color-design-outline-bitrix-gpt-content-gradient-6: #BA8D2E;
   --ui-color-design-outline-bitrix-gpt-content-gradient-7: #B6552B;
   --ui-color-design-outline-bitrix-gpt-stroke-gradient-1: #0F618E;
@@ -3072,15 +3109,18 @@
   --ui-color-design-tinted-bitrix-gpt-content-icon: #0E618E;
   --ui-color-design-tinted-bitrix-gpt-content-icon-secondary: #96424A;
   --ui-color-design-tinted-bitrix-gpt-content-chevron: #96424A;
-  --ui-color-design-tinted-bitrix-gpt-content-gradient-1: #0E618E;
-  --ui-color-design-tinted-bitrix-gpt-content-gradient-2: #2E4A99;
-  --ui-color-design-tinted-bitrix-gpt-content-gradient-3: #62369A;
-  --ui-color-design-tinted-bitrix-gpt-content-gradient-4: #913670;
-  --ui-color-design-tinted-bitrix-gpt-content-gradient-5: #96424A;
-  --ui-color-design-tinted-bitrix-gpt-content-gradient-6: #BA8D2E;
-  --ui-color-design-tinted-bitrix-gpt-content-gradient-7: #B6552B;
+  --ui-color-design-tinted-bitrix-gpt-content-gradient-1: #28B4FF;
+  --ui-color-design-tinted-bitrix-gpt-content-gradient-2: #7D98FF;
+  --ui-color-design-tinted-bitrix-gpt-content-gradient-3: #BD82FF;
+  --ui-color-design-tinted-bitrix-gpt-content-gradient-4: #FF67CC;
+  --ui-color-design-tinted-bitrix-gpt-content-gradient-5: #FF8A90;
+  --ui-color-design-tinted-bitrix-gpt-content-gradient-6: #F6BC41;
+  --ui-color-design-tinted-bitrix-gpt-content-gradient-7: #FD8552;
   --ui-color-design-tinted-bitrix-gpt-content-divider: #D6B4A5;
   --ui-color-focus-outline: var(--ui-color-blue-57);
+  --ui-focus-outline-offset: 2px;
+  --ui-focus-outline-offset-inset: -2px;
+  --ui-focus-outline-width: 2px;
 }
 
 :root {

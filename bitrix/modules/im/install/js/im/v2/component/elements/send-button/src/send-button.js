@@ -1,9 +1,9 @@
-import { Settings } from 'im.v2.const';
+import { Settings, ChatType } from 'im.v2.const';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { Utils } from 'im.v2.lib.utils';
+import { type ImModelChat } from 'im.v2.model';
 
 import './css/send-button.css';
-
-import type { ImModelChat } from 'im.v2.model';
 
 // @vue/component
 export const SendButton = {
@@ -32,6 +32,11 @@ export const SendButton = {
 			{
 				return `--${this.dialog.type}`;
 			},
+			hasCopilot2026Styles(): boolean
+			{
+				return this.dialog.type === ChatType.copilot
+					&& FeatureManager.isFeatureAvailable(Feature.isBitrixGptV2Available);
+			},
 			buttonHint(): string
 			{
 				const sendByEnter = this.$store.getters['application/settings/get'](Settings.hotkey.sendByEnter);
@@ -54,7 +59,7 @@ export const SendButton = {
 		<div
 			:title="buttonHint"
 			class="bx-im-elements-send-button"
-			:class="[{'--edit': editMode, '--disabled': isDisabled, }, dialogTypeClass]"
+			:class="[{'--edit': editMode, '--disabled': isDisabled, '--copilot-2026': hasCopilot2026Styles}, dialogTypeClass]"
 		></div>
 	`,
 };

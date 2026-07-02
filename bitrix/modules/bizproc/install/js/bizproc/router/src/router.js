@@ -1,6 +1,6 @@
 import 'sidepanel';
 import { Loc, Text, Uri } from 'main.core';
-import { EditConstantParams } from './types/edit-constant-params';
+import type { EditConstantParams } from './types/edit-constant-params';
 
 export class Router
 {
@@ -10,9 +10,9 @@ export class Router
 	{
 		if (top !== window)
 		{
-			top.BX.Runtime.loadExtension('bizproc.router').then(({ Router }) => {
-				Router.init();
-			}).catch(e => console.error(e));
+			top.BX.Runtime.loadExtension('bizproc.router').then(({ Router: BizprocRouter }) => {
+				BizprocRouter.init();
+			}).catch((e) => console.error(e));
 
 			return;
 		}
@@ -47,7 +47,17 @@ export class Router
 					},
 					{
 						condition: [
-							'/bitrix/components/bitrix/bizproc.storage.item.list/'
+							'/bitrix/components/bitrix/bizproc.storage.item.list/',
+						],
+						options: {
+							width: this.#detectSliderWidth(),
+							cacheable: false,
+							allowChangeHistory: false,
+						},
+					},
+					{
+						condition: [
+							'/bitrix/components/bitrix/bizproc.storage.list/',
 						],
 						options: {
 							width: this.#detectSliderWidth(),
@@ -151,6 +161,24 @@ export class Router
 		this.#openSlider(url, sliderOptions);
 	}
 
+	static openWorkflowAutoStartParameters(options: Object): void
+	{
+		const sliderOptions = {
+			width: 900,
+			cacheable: false,
+			allowChangeHistory: false,
+			...options,
+		};
+
+		let url = '/bitrix/components/bitrix/bizproc.workflow.start/';
+		if (options && options.requestMethod === 'get' && options.requestParams)
+		{
+			url = BX.Uri.addParam(url, options.requestParams);
+		}
+
+		this.#openSlider(url, sliderOptions);
+	}
+
 	static openWorkflowChangeConstants(params: EditConstantParams): void
 	{
 		const url = Router.#createEditConstantSlider(params);
@@ -232,6 +260,18 @@ export class Router
 			url = BX.Uri.addParam(url, options.requestParams);
 		}
 
+		this.#openSlider(url, sliderOptions);
+	}
+
+	static openStorageList(options: Object): void
+	{
+		const sliderOptions = {
+			width: this.#detectSliderWidth(),
+			cacheable: false,
+			...options,
+		};
+
+		const url = '/bitrix/components/bitrix/bizproc.storage.list/';
 		this.#openSlider(url, sliderOptions);
 	}
 

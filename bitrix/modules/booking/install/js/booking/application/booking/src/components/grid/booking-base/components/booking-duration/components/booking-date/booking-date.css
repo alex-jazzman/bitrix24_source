@@ -1,0 +1,14 @@
+.booking-booking-booking__date {
+	cursor: pointer;
+	pointer-events: all;
+}
+
+.booking-booking-booking__date.--lock {
+	cursor: default;
+}
+
+.booking-booking__base-component.--week-mode .booking-booking-booking.--drop-area.--long:not(.--short) .booking-booking-booking__date,
+.booking-booking__base-component.--week-mode .booking-booking-booking.--overbooking.--long:not(.--short) .booking-booking-booking__date {
+	display: flex;
+	gap: 7px;
+}

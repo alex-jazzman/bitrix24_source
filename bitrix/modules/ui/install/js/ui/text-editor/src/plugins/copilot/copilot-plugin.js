@@ -12,6 +12,7 @@ import {
 	$isRangeSelection,
 	$isRootNode,
 	$isTextNode,
+	$insertNodes,
 	createCommand,
 	$getRoot,
 	$isParagraphNode,
@@ -24,6 +25,8 @@ import {
 	type ElementNode,
 	type RangeSelection,
 } from 'ui.lexical.core';
+
+import { $generateNodesFromDOM } from 'ui.lexical.html';
 
 import { $restoreSelection } from '../../helpers/restore-selection';
 
@@ -457,7 +460,16 @@ export class CopilotPlugin extends BasePlugin
 			const selection: RangeSelection = $getSelection();
 			if ($isRangeSelection(selection))
 			{
-				selection.insertRawText(result);
+				if (this.#isHtmlResponseFormat())
+				{
+					selection.removeText();
+					const nodes = this.#createNodesFromHtml(result);
+					$insertNodes(nodes);
+				}
+				else
+				{
+					selection.insertRawText(result);
+				}
 			}
 
 			this.#hide();
@@ -483,14 +495,32 @@ export class CopilotPlugin extends BasePlugin
 				const parentNode: ElementNode = focusNode.getParent();
 				if ($isParagraphNode(parentNode))
 				{
-					const paragraph = $createParagraphNode();
-					paragraph.append(...$createNodesFromText(result));
-					parentNode.insertAfter(paragraph);
+					if (this.#isHtmlResponseFormat())
+					{
+						const nodes = this.#createNodesFromHtml(result);
+						const wrapper = $createParagraphNode();
+						wrapper.append(...nodes);
+						parentNode.insertAfter(wrapper);
+					}
+					else
+					{
+						const paragraph = $createParagraphNode();
+						paragraph.append(...$createNodesFromText(result));
+						parentNode.insertAfter(paragraph);
+					}
 				}
 				else
 				{
 					selection.insertLineBreak();
-					selection.insertRawText(result);
+					if (this.#isHtmlResponseFormat())
+					{
+						const nodes = this.#createNodesFromHtml(result);
+						$insertNodes(nodes);
+					}
+					else
+					{
+						selection.insertRawText(result);
+					}
 				}
 			}
 
@@ -506,6 +536,19 @@ export class CopilotPlugin extends BasePlugin
 			this.#restoreSelection();
 			// this.getEditor().focus();
 		});
+	}
+
+	#isHtmlResponseFormat(): boolean
+	{
+		return this.#copilotOptions?.responseFormat === 'html';
+	}
+
+	#createNodesFromHtml(html: string): Array<LexicalNode>
+	{
+		const parser = new DOMParser();
+		const dom = parser.parseFromString(html, 'text/html');
+
+		return $generateNodesFromDOM(this.getLexicalEditor(), dom);
 	}
 
 	destroy(): void

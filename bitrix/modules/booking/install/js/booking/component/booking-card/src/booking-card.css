@@ -1,0 +1,74 @@
+.booking-booking-card__container {
+	--booking-padding: 3px;
+
+	display: flex;
+	white-space: nowrap;
+	pointer-events: all;
+	box-shadow: none !important;
+}
+
+.booking-booking-booking.--not-real .booking-booking-card__container {
+	pointer-events: none;
+}
+
+.booking-booking-card__padding {
+	position: relative;
+	box-sizing: border-box;
+	max-width: 100%;
+	flex: 1;
+	display: flex;
+}
+
+.booking-booking-card__container .booking-booking-card__inner {
+	position: relative;
+	display: flex;
+	flex: 1;
+	border-radius: 6px;
+	box-sizing: border-box;
+	outline-offset: -1px;
+	max-width: 100%;
+	cursor: default;
+	user-select: none;
+}
+
+.booking-booking-card__content {
+	overflow: hidden;
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	color: var(--ui-color-palette-white-base);
+	padding: 4px 8px;
+}
+
+.booking-booking-card__upper-row {
+	display: flex;
+	align-items: center;
+}
+
+.booking-booking-card__lower-row {
+	flex: 1;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+}
+
+.booking-booking-card__container.--compact-mode .booking-booking-card__lower-row {
+	display: none;
+}
+
+.booking-booking-card__buttons {
+	align-self: flex-end;
+	display: flex;
+	align-items: center;
+	pointer-events: all;
+}
+
+.ui-draggable--draggable div.booking-booking-card__container.booking-wait-list-item {
+	cursor: grabbing;
+	pointer-events: none;
+}
+
+.booking-booking-card__container.--disabled {
+	opacity: 0.5;
+	filter: grayscale(1);
+}

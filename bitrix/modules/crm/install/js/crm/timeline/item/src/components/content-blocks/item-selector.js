@@ -1,6 +1,6 @@
 import { Events, ItemSelector } from 'crm.field.item-selector';
 import { Runtime, Type } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { type BaseEvent, EventEmitter } from 'main.core.events';
 
 import { Action } from '../../action';
 

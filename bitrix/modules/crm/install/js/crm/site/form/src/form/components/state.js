@@ -15,7 +15,7 @@ const StateBlock = {
 	template: `
 		<div class="b24-form-state-container" :class="{'b24-form-state--sticky': isSmallHeight}">
 				<transition name="b24-a-fade">
-					<div v-show="form.loading" class="b24-form-loader">
+					<div v-show="form.loading" class="b24-form-loader" role="status" :aria-label="form.messages.get('stateLoading')">
 						<ProgressBar
 							v-if="form.loading && form.uploader.running"
 							:uploadingProgress="form.uploader.progressToShow"
@@ -36,7 +36,7 @@ const StateBlock = {
 					</div>
 				</transition>
 				
-				<div v-show="form.sent" class="b24-form-state b24-form-success">
+				<div v-show="form.sent" class="b24-form-state b24-form-success" role="status">
 					<div class="b24-form-state-inner">
 						<div class="b24-form-state-icon b24-form-success-icon"></div>
 						<div class="b24-form-state-text">
@@ -45,6 +45,7 @@ const StateBlock = {
 						</div>
 						<button class="b24-form-btn b24-form-btn-border b24-form-btn-tight"
 							v-if="form.stateButton.text" 
+							:aria-label="form.stateButton.text"
 							@click="form.stateButton.handler" 
 						>
 							{{ form.stateButton.text }}						
@@ -53,14 +54,15 @@ const StateBlock = {
 					<div class="b24-form-inner-box"></div>
 				</div>
 			
-				<div v-show="form.error" class="b24-form-state b24-form-error">
+				<div v-show="form.error" class="b24-form-state b24-form-error" role="alert">
 					<div class="b24-form-state-inner">
-						<div class="b24-form-state-icon b24-form-error-icon"></div>
+						<div class="b24-form-state-icon b24-form-error-icon" aria-hidden="true"></div>
 						<div class="b24-form-state-text">
 							<p>{{ form.stateText }}</p>
 						</div>
 						
 						<button class="b24-form-btn b24-form-btn-border b24-form-btn-tight"
+							:aria-label="form.messages.get('stateButtonResend')"
 							@click="form.submit()" 
 						>
 							{{ form.messages.get('stateButtonResend') }}						
@@ -69,7 +71,7 @@ const StateBlock = {
 					<div class="b24-form-inner-box"></div>
 				</div>
 				
-				<div v-show="form.disabled" class="b24-form-state b24-form-warning">
+				<div v-show="form.disabled" class="b24-form-state b24-form-warning" role="status">
 					<div class="b24-form-state-inner">
 						<div class="b24-form-state-icon b24-form-warning-icon">
 							<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 169 169"><defs><circle id="a" cx="84.5" cy="84.5" r="65.5"/><filter x="-.8%" y="-.8%" width="101.5%" height="101.5%" filterUnits="objectBoundingBox" id="b"><feGaussianBlur stdDeviation=".5" in="SourceAlpha" result="shadowBlurInner1"/><feOffset dx="-1" dy="-1" in="shadowBlurInner1" result="shadowOffsetInner1"/><feComposite in="shadowOffsetInner1" in2="SourceAlpha" operator="arithmetic" k2="-1" k3="1" result="shadowInnerInner1"/><feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.0886691434 0" in="shadowInnerInner1" result="shadowMatrixInner1"/><feGaussianBlur stdDeviation=".5" in="SourceAlpha" result="shadowBlurInner2"/><feOffset dx="1" dy="1" in="shadowBlurInner2" result="shadowOffsetInner2"/><feComposite in="shadowOffsetInner2" in2="SourceAlpha" operator="arithmetic" k2="-1" k3="1" result="shadowInnerInner2"/><feColorMatrix values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.292285839 0" in="shadowInnerInner2" result="shadowMatrixInner2"/><feMerge><feMergeNode in="shadowMatrixInner1"/><feMergeNode in="shadowMatrixInner2"/></feMerge></filter></defs><g fill="none" fill-rule="evenodd"><circle stroke-opacity=".05" stroke="#000" fill-opacity=".07" fill="#000" cx="84.5" cy="84.5" r="84"/><use fill="#FFF" xlink:href="#a"/><use fill="#000" filter="url(#b)" xlink:href="#a"/><path d="M114.29 99.648L89.214 58.376c-1.932-3.168-6.536-3.168-8.427 0L55.709 99.648c-1.974 3.25.41 7.352 4.234 7.352h50.155c3.782 0 6.166-4.103 4.193-7.352zM81.404 72.756c0-1.828 1.48-3.29 3.33-3.29h.452c1.85 0 3.33 1.462 3.33 3.29v12.309c0 1.827-1.48 3.29-3.33 3.29h-.453c-1.85 0-3.33-1.463-3.33-3.29V72.756zm7.77 23.886c0 2.274-1.892 4.143-4.194 4.143s-4.193-1.869-4.193-4.143c0-2.275 1.891-4.144 4.193-4.144 2.302 0 4.193 1.869 4.193 4.144z" fill="#000" opacity=".4"/></g></svg>

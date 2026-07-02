@@ -9,10 +9,10 @@ return [
 	'js' => 'dist/rating.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'ui.vue3',
 		'ui.ears',
-		'main.popup',
 		'ui.design-tokens',
+		'ui.vue3',
+		'market.rating-review',
 	],
 	'skip_core' => true,
 ];

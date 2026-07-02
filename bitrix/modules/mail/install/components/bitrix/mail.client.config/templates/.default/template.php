@@ -3,14 +3,22 @@
 use Bitrix\Mail\MailboxTable;
 use Bitrix\Main\Localization\Loc;
 
-\Bitrix\Main\UI\Extension::load([
+$extensions = [
 	'ui.design-tokens',
 	'ui.fonts.opensans',
 	'ui.info-helper',
 	'ui.mail.provider-showcase',
 	'ui.system.highlighter',
 	'mail.notification.mail-guide',
-]);
+	'mail.client.dialog.passwordless-connect',
+];
+
+if ($arParams['IS_CONNECTION_REQUEST_BUTTON'] ?? false)
+{
+	$extensions[] = 'mail.client.dialog.mailbox-connection-request';
+}
+
+\Bitrix\Main\UI\Extension::load($extensions);
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
@@ -50,6 +58,8 @@ $hasUserMailbox = empty(MailboxTable::getUserMailboxes($USER->getId(), onlyIds: 
 		`;
 	<?php endif; ?>
 
+	const connectionRequest = slider ? (slider.getRequestParams() || {}).connectionRequest || null : null;
+
 	if (slider)
 	{
 		const loader = new BX.Loader({
@@ -59,7 +69,18 @@ $hasUserMailbox = empty(MailboxTable::getUserMailboxes($USER->getId(), onlyIds: 
 		});
 
 		loader.show();
-		BX.UI.Mail.ProviderShowcase.renderTo(providerContainer, {})
+
+		const showcaseOptions = {};
+		if (connectionRequest)
+		{
+			showcaseOptions.sliderOptions = {
+				requestParams: {
+					connectionRequest: connectionRequest,
+				},
+			};
+		}
+
+		BX.UI.Mail.ProviderShowcase.renderTo(providerContainer, showcaseOptions)
 			.then(() => {
 				if (!BX.Type.isNull(titleNode))
 				{
@@ -93,6 +114,20 @@ $hasUserMailbox = empty(MailboxTable::getUserMailboxes($USER->getId(), onlyIds: 
 				urlParams.IFRAME = 'Y';
 			}
 
+			if (event.getEventId() === 'mail-mailbox-connection-request-completed')
+			{
+				top.BX.SidePanel.Instance.postMessage(window, event.getEventId(), event.data);
+
+				var currentSlider = top.BX.SidePanel.Instance.getSliderByWindow(window);
+				if (currentSlider)
+				{
+					currentSlider.setCacheable(false);
+					currentSlider.close();
+				}
+
+				return;
+			}
+
 			if (event.getEventId() === 'mail-mailbox-config-success')
 			{
 				event.data.handled = false;
@@ -119,23 +154,56 @@ $hasUserMailbox = empty(MailboxTable::getUserMailboxes($USER->getId(), onlyIds: 
 		}
 	);
 
+	BX.addCustomEvent('onPullEvent-mail', function(command, params) {
+		if (command !== 'connection_request_count_changed')
+		{
+			return;
+		}
+
+		const count = params?.pendingCount ?? 0;
+		const node = document.querySelector('[data-id="mail-provider-showcase-mailbox-grid-button"]');
+		if (!node)
+		{
+			return;
+		}
+
+		const button = BX.UI.ButtonManager.createFromNode(node);
+		if (count <= 0)
+		{
+			button.setRightCounter(null);
+
+			return;
+		}
+
+		const counter = button.getRightCounter();
+		if (counter)
+		{
+			counter.setValue(count);
+		}
+	});
+
 	BX.ready(function()
 	{
-		<?php if (
-			($arParams['IS_SEEN_MAILBOX_GRID_BUTTON'] ?? false)
-			&& ($arParams['NEED_SHOW_MAILBOX_GRID_GUIDE'] ?? false)
-		): ?>
+		<?php if ($arParams['NEED_SHOW_TOOLBAR_GUIDE'] ?? false): ?>
 		const button = document.querySelector('[data-id="mail-provider-showcase-mailbox-grid-button"]');
 		if (button)
 		{
 			(new BX.Mail.MailGuide({
 				id: 'mail-provider-showcase-mailbox-grid-guide',
-				description: '<?= GetMessageJS("MAIL_CLIENT_CONFIG_MAILBOX_GRID_GUIDE_TEXT") ?>',
+				title: '<?= \CUtil::jsEscape($arParams['TOOLBAR_GUIDE_TITLE'] ?? '') ?>',
+				description: '<?= \CUtil::jsEscape($arParams['TOOLBAR_GUIDE_TEXT'] ?? '') ?>',
 				bindElement: button,
 				addHighlighter: true,
-				userOptionName: '<?= \CUtil::jsEscape($arParams['MAILBOX_GRID_GUIDE_NAME'] ?? null) ?>',
+				userOptionName: '<?= \CUtil::jsEscape($arParams['TOOLBAR_GUIDE_OPTION_NAME'] ?? null) ?>',
+				<?php if (!empty($arParams['TOOLBAR_GUIDE_WIDTH'])): ?>
+				width: <?= (int)$arParams['TOOLBAR_GUIDE_WIDTH'] ?>,
+				<?php endif; ?>
 			})).show();
 		}
 		<?php endif; ?>
+
+		BX.Mail.Client.Dialog.PasswordlessConnect.checkAndShow({
+			messageListUrl: '<?= \CUtil::jsEscape($arParams['PATH_TO_MAIL_MSG_LIST']) ?>',
+		});
 	});
 </script>

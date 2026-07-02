@@ -36,7 +36,7 @@ foreach ($arDocumentFields as $fieldKey => $fieldValue)
 	?>
 	<tr>
 		<td align="right" width="40%" valign="top"><?= ($fieldValue["Required"]) ? "<span class=\"adm-required-field\">".htmlspecialcharsbx($fieldValue["Name"])."</span>:" : htmlspecialcharsbx($fieldValue["Name"]) .":" ?></td>
-		<td width="60%" id="td_<?= htmlspecialcharsbx($fieldKey) ?>" valign="top">
+		<td width="60%" id="td_<?= htmlspecialcharsbx($fieldKey) ?>" valign="top" class="createworkgroup-user-field">
 			<?
 			if ($fieldValue["UserField"])
 			{
@@ -84,6 +84,18 @@ foreach ($arDocumentFields as $fieldKey => $fieldValue)
 			?>
 		</select><br>
 		<?=CBPDocument::ShowParameterField("string", 'group_site_x', $expression, Array('size'=> 30))?>
+		<script>
+			BX.ready(() => {
+				document
+					.querySelectorAll('.createworkgroup-user-field select[multiple="multiple"] option')
+					.forEach(opt => {
+						if (opt.value === '')
+						{
+							opt.remove();
+						}
+					});
+			});
+		</script>
 	</td>
 </tr>
 <? echo $APPLICATION->GetCSS();?>

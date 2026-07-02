@@ -39,6 +39,26 @@ export const Table: BitrixVueComponentProps = {
 		Value,
 	},
 
+	data(): Object
+	{
+		return {
+			stickyScrollWidth: 0,
+			isSyncingScroll: false,
+		};
+	},
+
+	mounted(): void
+	{
+		this.updateStickyScrollWidth();
+		this.resizeObserver = new ResizeObserver(() => this.updateStickyScrollWidth());
+		this.resizeObserver.observe(this.$refs.tableContainer);
+	},
+
+	beforeUnmount(): void
+	{
+		this.resizeObserver?.disconnect();
+	},
+
 	computed: {
 		rowsByHeaders(): Row[]
 		{
@@ -88,10 +108,44 @@ export const Table: BitrixVueComponentProps = {
 
 			return error.split('<br>');
 		},
+
+		updateStickyScrollWidth(): void
+		{
+			const container = this.$refs.tableContainer;
+			if (container)
+			{
+				this.stickyScrollWidth = container.scrollWidth;
+			}
+		},
+
+		onStickyScroll(event: Event): void
+		{
+			if (this.isSyncingScroll)
+			{
+				return;
+			}
+
+			this.isSyncingScroll = true;
+			this.$refs.tableContainer.scrollLeft = event.target.scrollLeft;
+			this.isSyncingScroll = false;
+		},
+
+		onTableScroll(event: Event): void
+		{
+			if (this.isSyncingScroll)
+			{
+				return;
+			}
+
+			this.isSyncingScroll = true;
+			this.$refs.stickyScroll.scrollLeft = event.target.scrollLeft;
+			this.isSyncingScroll = false;
+		},
 	},
 
 	template: `
-		<div class="crm-item-import__table-container">
+		<div class="crm-item-import__table-wrapper">
+		<div class="crm-item-import__table-container" ref="tableContainer" @scroll="onTableScroll">
 			<table class="crm-item-import__table">
 				<thead>
 					<tr>
@@ -119,6 +173,10 @@ export const Table: BitrixVueComponentProps = {
 					</template>
 				</tbody>
 			</table>
+		</div>
+		<div class="crm-item-import__table-sticky-scroll" ref="stickyScroll" @scroll="onStickyScroll">
+			<div :style="{ width: stickyScrollWidth + 'px', height: '1px' }"></div>
+		</div>
 		</div>
 	`,
 };

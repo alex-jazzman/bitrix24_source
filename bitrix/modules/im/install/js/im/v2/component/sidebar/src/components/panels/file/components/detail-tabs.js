@@ -1,9 +1,8 @@
-import { Dom } from 'main.core';
+import { Dom, type JsonObject } from 'main.core';
+
+import { type ImModelSidebarFileTab } from 'im.v2.model';
 
 import '../css/detail-tabs.css';
-
-import type { JsonObject } from 'main.core';
-import type { ImModelSidebarFileTab } from 'im.v2.model';
 
 const ARROW_CONTROL_SIZE = 50;
 
@@ -127,7 +126,7 @@ export const DetailTabs = {
 			<div v-if="hasRightControl" @click.stop="onRightClick" class="bx-im-sidebar-ears__control --right">
 				<div class="bx-im-sidebar__forward-icon"></div>
 			</div>
-			<div class="bx-im-sidebar-ears__elements" ref="tabs" @scroll.passive="updateControlsVisibility">
+			<div class="bx-im-sidebar-ears__elements --hidden-scroll" ref="tabs" @scroll.passive="updateControlsVisibility">
 				<div class="bx-sidebar-tabs-highlight" :style="highlightStyle"></div>
 				<div
 					v-for="(tab, index) in tabs"

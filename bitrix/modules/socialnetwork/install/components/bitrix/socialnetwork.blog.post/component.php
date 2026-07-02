@@ -366,14 +366,14 @@ if (
 	}
 }
 
-$arParams["ID"] = trim($arParams["ID"]);
+$arParams["ID"] = trim($arParams["ID"] ?? '');
 if(preg_match("/^[1-9][0-9]*\$/", $arParams["ID"]))
 {
 	$arParams["ID"] = (int)$arParams["ID"];
 }
 else
 {
-	$arParams["ID"] = preg_replace("/[^a-zA-Z0-9_-]/is", "", Trim($arParams["~ID"]));
+	$arParams["ID"] = preg_replace("/[^a-zA-Z0-9_-]/is", "", trim($arParams["~ID"] ?? ''));
 	$arParams["ID"] = CBlogPost::GetID($arParams["ID"], $arBlog["ID"]);
 }
 

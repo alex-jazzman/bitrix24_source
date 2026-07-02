@@ -9,8 +9,8 @@ return [
 	'css' => 'dist/text-highlighter.bundle.css',
 	'js' => 'dist/text-highlighter.bundle.js',
 	'rel' => [
-		'main.core',
 		'im.v2.lib.utils',
+		'main.core',
 	],
 	'skip_core' => false,
 ];

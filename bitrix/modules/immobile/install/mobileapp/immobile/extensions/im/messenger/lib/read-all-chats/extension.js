@@ -21,9 +21,13 @@ jn.define('im/messenger/lib/read-all-chats', (require, exports, module) => {
 
 	async function readAllChatsByActiveRecentTab()
 	{
-		const { RecentManager } = await requireLazy('im:messenger/controller/recent/manager');
-		const tabId = RecentManager.getInstance().getActiveRecentId();
+		const tabId = serviceLocator.get('recent-manager').getActiveRecentId();
 
+		return readAllChatsByRecentTab(tabId);
+	}
+
+	async function readAllChatsByRecentTab(tabId)
+	{
 		AnalyticsService.getInstance().recentAnalytics.sendTapReadAll(tabId);
 
 		if (readAllChatsCollection[tabId])
@@ -60,5 +64,6 @@ jn.define('im/messenger/lib/read-all-chats', (require, exports, module) => {
 
 	module.exports = {
 		readAllChatsByActiveRecentTab,
+		readAllChatsByRecentTab,
 	};
 });

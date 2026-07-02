@@ -21,7 +21,6 @@ $MESS['BICONNECTOR_SUPERSET_SETTINGS_COMMON_RANGE_TO_TITLE'] = 'Конец пе�
 $MESS['BICONNECTOR_SUPERSET_SETTINGS_GROUP_FIELD_HINT'] = 'Вы можете потерять доступ к отчёту, если удалите его из групп, к которым у вас есть доступ. #HINT_LINK#';
 $MESS['BICONNECTOR_SUPERSET_SETTINGS_GROUP_FIELD_HINT_CLEARABLE'] = 'Если удалить отчёт из всех групп, его не увидят сотрудники вашего Битрикс24';
 $MESS['BICONNECTOR_SUPERSET_SETTINGS_GROUP_HINT'] = 'При добавлении в группу отчёты появляются в верхнем меню соответствующего раздела Битрикс24 #HINT_LINK#';
-$MESS['BICONNECTOR_SUPERSET_SETTINGS_CURRENT_DASHBOARD_LANGUAGE'] = '[div]Текущий язык[/div] #LANGUAGE#';
 $MESS['BICONNECTOR_SUPERSET_SETTINGS_DATASET_TYPING_TOGGLE'] = 'Передавать оригинальные типы пользовательских полей';
 $MESS['BICONNECTOR_SUPERSET_SETTINGS_DATASET_TYPING_HINT'] = 'После включения датасеты, в которых использовались функции CAST, перестанут корректно работать в ваших графиках';
 $MESS['BICONNECTOR_SUPERSET_SETTINGS_CURRENT_DASHBOARD_LANGUAGE_MSGVER_1'] = '[div]Язык отчётов[/div] #LANGUAGE#';

@@ -12,6 +12,8 @@ jn.define('im/messenger/view/base', (require, exports, module) => {
 		#eventHandlerCollection = {};
 		/** @type {EventWrappedHandlerCollection} */
 		#eventWrappedHandlerCollection = {};
+		/** @type {JNBaseClassInterface} */
+		#ui;
 
 		constructor(options = {})
 		{
@@ -20,10 +22,18 @@ jn.define('im/messenger/view/base', (require, exports, module) => {
 				throw new Error('View: options.ui is required');
 			}
 
-			this.ui = options.ui;
+			this.#ui = options.ui;
 			this.customUiEventEmitter = new JNEventEmitter();
 			this.customUiEventList = new Set();
 			this.eventFilter = new EventFilter();
+		}
+
+		/**
+		 * @return {JNBaseClassInterface|ChatWidgetViewInterface}
+		 */
+		get ui()
+		{
+			return this.#ui;
 		}
 
 		setCustomEvents(eventList = [])

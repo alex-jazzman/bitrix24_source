@@ -1,20 +1,14 @@
-import { ChatButton, ButtonColor, ButtonSize, type CustomColorScheme } from 'im.v2.component.elements.button';
+import { AirButtonStyle, Button as UiButton, ButtonSize } from 'ui.vue3.components.button';
 import { AnswerService, SkipService } from 'imopenlines.v2.provider.service';
+import { type JsonObject } from 'main.core';
 
 import { ChatTransfer } from '../../entity-selector/chat-transfer/chat-transfer';
-
-import type { JsonObject } from 'main.core';
-
-const BUTTON_COLOR = '#eef0f2';
-const BUTTON_COLOR_TEXT = '#535658';
-const BUTTON_COLOR_HOVER = '#dfe0e3';
 
 // @vue/component
 export const ChatControlPanel = {
 	name: 'ChatControlPanel',
-	components: { ChatButton, ChatTransfer },
-	props:
-	{
+	components: { UiButton, ChatTransfer },
+	props: {
 		dialogId: {
 			type: String,
 			required: true,
@@ -30,23 +24,11 @@ export const ChatControlPanel = {
 			showChatTransferPopup: false,
 		};
 	},
-	computed:
-	{
+	computed: {
 		ButtonSize: () => ButtonSize,
-		ButtonColor: () => ButtonColor,
-		buttonColorScheme(): CustomColorScheme
-		{
-			return {
-				backgroundColor: BUTTON_COLOR,
-				borderColor: 'transparent',
-				iconColor: BUTTON_COLOR,
-				textColor: BUTTON_COLOR_TEXT,
-				hoverColor: BUTTON_COLOR_HOVER,
-			};
-		},
+		AirButtonStyle: () => AirButtonStyle,
 	},
-	methods:
-	{
+	methods: {
 		replyDialog(): Promise
 		{
 			return this.getAnswerService().requestAnswer(this.dialogId);
@@ -85,25 +67,25 @@ export const ChatControlPanel = {
 	template: `
 		<ul class="bx-imol-textarea_join-panel-list-button">
 			<li class="bx-imol-textarea_join-panel-item-button">
-				<ChatButton
-					:size="ButtonSize.L"
-					:color="ButtonColor.Success"
+				<UiButton
+					:size="ButtonSize.LARGE"
+					:style="AirButtonStyle.FILLED"
 					:text="loc('IMOL_CONTENT_TEXTAREA_JOIN_PANEL_ANSWER')"
 					@click="replyDialog"
 				/>
 			</li>
 			<li v-if="!isQueueTypeAll" class="bx-imol-textarea_join-panel-item-button">
-				<ChatButton
-					:size="ButtonSize.L"
-					:color="ButtonColor.Danger"
+				<UiButton
+					:size="ButtonSize.LARGE"
+					:style="AirButtonStyle.FILLED_ALERT"
 					:text="loc('IMOL_CONTENT_TEXTAREA_JOIN_PANEL_SKIP')"
 					@click="skipDialog"
 				/>
 			</li>
 			<li class="bx-imol-textarea_join-panel-item-button" ref="transfer-chat">
-				<ChatButton
-					:size="ButtonSize.L"
-					:customColorScheme="buttonColorScheme"
+				<UiButton
+					:size="ButtonSize.LARGE"
+					:style="AirButtonStyle.OUTLINE"
 					:text="loc('IMOL_CONTENT_BUTTON_TRANSFER')"
 					@click="openChatTransferPopup"
 				/>

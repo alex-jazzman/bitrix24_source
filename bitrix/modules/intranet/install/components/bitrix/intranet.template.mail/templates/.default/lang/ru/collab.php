@@ -14,3 +14,9 @@ $MESS['INTRANET_INVITATION_COLLAB_LINK_TASKS_NAME'] = "Задачи";
 $MESS['INTRANET_INVITATION_COLLAB_LINK_CRM_NAME'] = "CRM";
 $MESS['INTRANET_INVITATION_COLLAB_LINK_WF_NAME'] = "Автоматизация";
 $MESS['INTRANET_INVITATION_COLLAB_LINK_COPILOT_NAME'] = "CoPilot";
+
+$MESS['INTRANET_INVITATION_PROJECT_TITLE'] = "Вас приглашают в проект";
+$MESS['INTRANET_INVITATION_PROJECT_INVITE_YOU'] = "приглашает вас в проект";
+$MESS['INTRANET_INVITATION_PROJECT_JOIN_US'] = "Присоединяйтесь к проекту #COLLAB_NAME# в нашем рабочем пространстве Битрикс24. Здесь мы общаемся в чате, созваниваемся и ставим задачи";
+$MESS['INTRANET_INVITATION_PROJECT_JOIN_US_WITHOUT_NAME'] = "Присоединяйтесь к проекту в нашем рабочем пространстве Битрикс24. Здесь мы общаемся в чате, созваниваемся и ставим задачи";
+$MESS['INTRANET_INVITATION_PROJECT_SECTION_IM'] = "Это не только чат. В проекте обсуждения ведут к результату, а не остаются словами";

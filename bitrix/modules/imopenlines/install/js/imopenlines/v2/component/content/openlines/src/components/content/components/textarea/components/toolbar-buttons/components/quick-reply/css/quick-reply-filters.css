@@ -1,0 +1,14 @@
+.bx-imol-quick-reply-popup__filters {
+	display: flex;
+	gap: 6px;
+	padding: 0 24px 16px;
+	overflow-x: auto;
+}
+
+.bx-imol-quick-reply-popup__filters::-webkit-scrollbar {
+	display: none;
+}
+
+.bx-imol-quick-reply-popup__filters > * {
+	flex-shrink: 0;
+}

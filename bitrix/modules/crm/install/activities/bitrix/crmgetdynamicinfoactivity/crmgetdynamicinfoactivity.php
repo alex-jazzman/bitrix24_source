@@ -278,6 +278,7 @@ class CBPCrmGetDynamicInfoActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 				'Getter' => function($dialog, $property, $currentActivity, $compatible) {
 					return $currentActivity['Properties']['ReturnFields'];
 				},
+				'AllowSelection' => false,
 			],
 			'DynamicFilterFields' => [
 				'Name' => Loc::getMessage('CRM_GDIA_FILTERING_FIELDS_PROPERTY'),

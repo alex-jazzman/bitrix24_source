@@ -1,0 +1,3 @@
+<?php
+
+$MESS['MORE_MENU_COMPANY_SUPPORT_BANNERS_FREE_INTEGRATION_CONSULT'] = 'Консультация по настройке';

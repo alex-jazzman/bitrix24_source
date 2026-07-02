@@ -1463,7 +1463,7 @@ if(typeof(BX.UI.UserFieldTypeMenu) === "undefined")
 
 			BX.bind(this._innerWrapper, "scroll", this._scrollHandler);
 
-			window.setTimeout(this.adjust.bind(this), 100);
+			window.setTimeout(this.adjust.bind(this), 200);
 		},
 		onPopupClose: function()
 		{

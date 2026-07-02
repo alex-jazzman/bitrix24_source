@@ -9,7 +9,6 @@
 }
 
 .booking-booking-sticky-popup-content {
-	position: -webkit-sticky;
 	position: sticky;
 	padding: 12px;
 	pointer-events: all;

@@ -1,6 +1,6 @@
 <?php
 $MESS["CPAD_DP_SORT"] = "Pause resume priority:";
-$MESS["CPAD_DP_TIME"] = "Pause Time";
+$MESS["CPAD_DP_TIME"] = "Pause time";
 $MESS["CPAD_DP_TIME1"] = "Date";
 $MESS["CPAD_DP_TIME_D"] = "days";
 $MESS["CPAD_DP_TIME_H"] = "hours";

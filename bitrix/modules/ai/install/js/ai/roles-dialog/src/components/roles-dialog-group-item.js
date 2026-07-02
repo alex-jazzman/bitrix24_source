@@ -73,6 +73,7 @@ export const RolesDialogGroupItem = {
 						<RolesDialogLabelNew
 							v-if="isNew"
 							:inverted="isSelected"
+							:use-redesign="group.customData.isBitrixGptV2Available"
 						/>
 					</div>
 				</div>

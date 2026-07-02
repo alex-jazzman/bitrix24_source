@@ -14,3 +14,4 @@ $MESS["SALE_DOCUMENT_SALEORDER_FIELD_RESPONSIBLE_NAME"] = "Responsible person na
 $MESS["SALE_DOCUMENT_SALEORDER_FIELD_WAS_CANCELLED"] = "Sales inventory object canceled";
 $MESS["SALE_DOCUMENT_SALEORDER_FIELD_WAS_CANCELLED_FULL"] = "Sales inventory object canceled, Y/N";
 $MESS["SALE_DOCUMENT_SALEORDER_TABLE"] = "Sales inventory objects";
+$MESS["SALE_DOCUMENT_SALEORDER_TABLE_DESCRIPTION_FULL"] = "Contains information about sales inventory objects.";

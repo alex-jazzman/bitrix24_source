@@ -6,12 +6,10 @@ import 'ui.hint';
 
 export const StringField = {
 	extends: BaseField,
-	data()
+	created()
 	{
-		return {
-			errorPopup: null,
-			errorPopupTimeout: null,
-		};
+		this.errorPopup = null;
+		this.errorPopupTimeout = null;
 	},
 	methods: {
 		onInput(event)
@@ -73,7 +71,8 @@ export const StringField = {
 					{{ title }}
 				</div>
 			</div>
-			<div class="ui-ctl ui-ctl-after-icon ui-ctl-textbox ui-ctl-w100 dataset-import-control">
+			<div v-if="isReadonly">{{ value }}</div>
+			<div v-else class="ui-ctl ui-ctl-after-icon ui-ctl-textbox ui-ctl-w100 dataset-import-control">
 				<input
 					class="ui-ctl-element dataset-import-field"
 					type="text"

@@ -10,12 +10,6 @@ import { mapGetters, mapMutations } from 'ui.vue3.vuex';
 
 export const SmsSettingsSection = {
 
-	data() {
-		return {
-			popup: null,
-		};
-	},
-
 	components: {
 		SettingsSection,
 		Sms,
@@ -129,7 +123,7 @@ export const SmsSettingsSection = {
 
 		onSmsMouseleave(): void
 		{
-			this.popup.destroy();
+			this.popup?.destroy();
 		},
 
 		onNotificationsConnectLinkClick(): void

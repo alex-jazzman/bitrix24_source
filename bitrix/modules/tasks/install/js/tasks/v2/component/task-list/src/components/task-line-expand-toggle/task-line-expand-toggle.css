@@ -1,0 +1,17 @@
+.tasks-task-line-expand-toggle {
+	grid-column: 1 / -1;
+	display: flex;
+	align-items: center;
+	padding: 1px 0;
+	cursor: pointer;
+	--ui-icon-set__icon-size: 16px;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+.tasks-task-line-expand-toggle.--extra-padding {
+	padding: var(--ui-space-stack-2xs2) 0 1px;
+}
+
+.tasks-task-line-expand-toggle-text {
+	color: var(--ui-color-base-4);
+}

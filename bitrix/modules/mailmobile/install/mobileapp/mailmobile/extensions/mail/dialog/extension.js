@@ -2,13 +2,14 @@
  * @module mail/dialog
  */
 jn.define('mail/dialog', (require, exports, module) => {
-	const { AjaxMethod } = require('mail/const');
+	const { requireLazy } = require('require-lazy');
 
 	const CONNECTING_MAIL_TYPE = 'CONNECTING_MAIL';
 	const CONNECTING_MAIL_TYPE_FINAL = 'CONNECTING_MAIL_FINAL';
 	const CONNECTING_MAIL_CRM_TYPE = 'CONNECTING_MAIL_CRM';
 	const CONNECTION_MAIL_TYPE_FORBIDDEN = 'CONNECTION_MAIL_TYPE_FORBIDDEN';
 	const MAIL_TYPE_LOST_MESSAGE_TYPE = 'MAIL_TYPE_LOST_MESSAGE';
+	const MAIL_TYPE_QUANTITY_LIMIT_EXCEEDED = 'QUANTITY_LIMIT_EXCEEDED';
 
 	/**
 	 * @class MailDialog
@@ -16,11 +17,22 @@ jn.define('mail/dialog', (require, exports, module) => {
 	class MailDialog
 	{
 		/**
+		 * @function MAIL_TYPE_QUANTITY_LIMIT_EXCEEDED
+		 * @returns {string}
+		 * @constructor
+		 */
+		static get MAIL_TYPE_QUANTITY_LIMIT_EXCEEDED()
+		{
+			return MAIL_TYPE_QUANTITY_LIMIT_EXCEEDED;
+		}
+
+		/**
 		 * @function MAIL_TYPE_LOST_MESSAGE_TYPE
 		 * @returns {string}
 		 * @constructor
 		 */
-		static get MAIL_TYPE_LOST_MESSAGE_TYPE() {
+		static get MAIL_TYPE_LOST_MESSAGE_TYPE()
+		{
 			return MAIL_TYPE_LOST_MESSAGE_TYPE;
 		}
 
@@ -29,7 +41,8 @@ jn.define('mail/dialog', (require, exports, module) => {
 		 * @returns {string}
 		 * @constructor
 		 */
-		static get CONNECTION_MAIL_TYPE_FORBIDDEN() {
+		static get CONNECTION_MAIL_TYPE_FORBIDDEN()
+		{
 			return CONNECTION_MAIL_TYPE_FORBIDDEN;
 		}
 
@@ -38,7 +51,8 @@ jn.define('mail/dialog', (require, exports, module) => {
 		 * @returns {string}
 		 * @constructor
 		 */
-		static get CONNECTING_MAIL_TYPE_FINAL() {
+		static get CONNECTING_MAIL_TYPE_FINAL()
+		{
 			return CONNECTING_MAIL_TYPE_FINAL;
 		}
 
@@ -47,7 +61,8 @@ jn.define('mail/dialog', (require, exports, module) => {
 		 * @returns {string}
 		 * @constructor
 		 */
-		static get CONNECTING_MAIL_TYPE() {
+		static get CONNECTING_MAIL_TYPE()
+		{
 			return CONNECTING_MAIL_TYPE;
 		}
 
@@ -56,7 +71,8 @@ jn.define('mail/dialog', (require, exports, module) => {
 		 * @returns {string}
 		 * @constructor
 		 */
-		static get CONNECTING_MAIL_CRM_TYPE() {
+		static get CONNECTING_MAIL_CRM_TYPE()
+		{
 			return CONNECTING_MAIL_CRM_TYPE;
 		}
 
@@ -73,46 +89,30 @@ jn.define('mail/dialog', (require, exports, module) => {
 			};
 		}
 
-		static checkMailboxConnectingAvailable()
+		static async openPlanRestriction(type, parentWidget = PageManager)
 		{
-			return BX.ajax.runAction(
-				AjaxMethod.isMailboxConnectingAvailable,
-				{
-					data: {},
+			const bannerConfig = {
+				[MailDialog.MAIL_TYPE_QUANTITY_LIMIT_EXCEEDED]: {
+					title: BX.message('MAIL_CONNECTING_MAIL_BANNER_QUANTITY_LIMIT_EXCEEDED_TITLE'),
 				},
-			).then(({ data }) => {
-				if (data === true)
-				{
-					return;
-				}
+			};
 
-				throw new Error('Mailbox connecting not available');
-			});
+			const config = bannerConfig[type];
+
+			if (config)
+			{
+				const { PlanRestriction } = await requireLazy('layout/ui/plan-restriction');
+
+				PlanRestriction.open(
+					config,
+					parentWidget,
+				);
+			}
 		}
 
 		static executeBeforeOpening(type)
 		{
-			const actionsBeforeOpening = {
-				[MailDialog.CONNECTING_MAIL_TYPE]: async () => {
-					try
-					{
-						await this.checkMailboxConnectingAvailable();
-
-						return type;
-					}
-					catch
-					{
-						return MailDialog.CONNECTION_MAIL_TYPE_FORBIDDEN;
-					}
-				},
-			};
-
-			if (actionsBeforeOpening[type] === undefined)
-			{
-				return Promise.resolve(type);
-			}
-
-			return actionsBeforeOpening[type]();
+			return Promise.resolve(type);
 		}
 
 		/**
@@ -120,7 +120,8 @@ jn.define('mail/dialog', (require, exports, module) => {
 		 *
 		 * @param props
 		 */
-		static async show(props) {
+		static async show(props)
+		{
 			const {
 				type,
 				parentWidget,
@@ -159,10 +160,15 @@ jn.define('mail/dialog', (require, exports, module) => {
 			if (config)
 			{
 				jn.import(`mail:${config.path}`)
-					.then(() => {
+					.then(async () => {
 						const {
 							[config.component]: BannerComponent,
 						} = require(`mail/${config.path}`);
+
+						const preFetched = typeof BannerComponent.preFetch === 'function'
+							? await BannerComponent.preFetch(props)
+							: {}
+						;
 
 						if (parentWidget)
 						{
@@ -173,6 +179,7 @@ jn.define('mail/dialog', (require, exports, module) => {
 										needsToCloseLayout,
 										layoutWidget: widget,
 										successCallback,
+										...preFetched,
 									});
 									widget.showComponent(component);
 								})
@@ -184,6 +191,7 @@ jn.define('mail/dialog', (require, exports, module) => {
 								...props,
 								needsToCloseLayout,
 								successCallback,
+								...preFetched,
 							});
 
 							layoutWidget.setTitle({ text: '' });
@@ -192,6 +200,10 @@ jn.define('mail/dialog', (require, exports, module) => {
 						}
 					})
 					.catch(console.error);
+			}
+			else
+			{
+				await this.openPlanRestriction(redefinedType, parentWidget);
 			}
 		}
 	}

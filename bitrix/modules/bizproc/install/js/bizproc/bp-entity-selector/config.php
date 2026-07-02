@@ -9,8 +9,8 @@ return [
 	'css' => 'dist/bp-entity-selector.bundle.css',
 	'js' => 'dist/bp-entity-selector.bundle.js',
 	'rel' => [
-		'ui.entity-selector',
 		'main.core',
+		'ui.entity-selector',
 	],
 	'skip_core' => false,
 ];

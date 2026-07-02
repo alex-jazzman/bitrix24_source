@@ -12,8 +12,10 @@ use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Helper\RestrictionUrl;
 use Bitrix\Tasks\Integration\Recyclebin\Task;
 use Bitrix\Tasks\Integration\Socialnetwork\Context\Context;
+use Bitrix\Tasks\Integration\SocialNetwork\GroupProvider;
 use Bitrix\Tasks\Onboarding\DI\OnboardingContainer;
 use Bitrix\Tasks\UI\ScopeDictionary;
+use Bitrix\Tasks\V2\Internal\Entity\Analytics;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 $isIFrame = isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y';
@@ -141,6 +143,14 @@ if (Loader::IncludeModule('bitrix24'))
 }
 
 $currentGroupId = $arParams['GROUP_ID'];
+
+$analyticsSection = Analytics\Section::Tasks->value;
+if (!empty($currentGroupId))
+{
+	$isCollab = GroupProvider::isCollab((int)$currentGroupId);
+
+	$analyticsSection = $isCollab ? Analytics\Section::Collab->value : Analytics\Section::Project->value;
+}
 
 $calendarId = 'TaskCalendarList'.rand();
 $taskColor = '#FFA900';
@@ -297,7 +307,7 @@ BX.ready(function(){
 		if (params && params.entry && params.entry.data && BX.type.isString(params.entry.data.OPEN_URL))
 		{
 			const openUrl = BX.Uri.addParam(params.entry.data.OPEN_URL, {
-				ta_sec: '<?= !empty($currentGroupId) ? 'project' : 'tasks' ?>',
+				ta_sec: '<?= $analyticsSection ?>',
 				ta_sub: 'calendar',
 				ta_el: 'title_click',
 			});
@@ -325,7 +335,7 @@ BX.ready(function(){
 				deadlineTs,
 				groupId,
 				analytics: {
-					context: '<?= !empty($currentGroupId) ? 'project' : 'tasks' ?>',
+					context: '<?= $analyticsSection ?>',
 					additionalContext: 'calendar',
 					element: 'quick_button',
 				},
@@ -349,7 +359,7 @@ BX.ready(function(){
 			}
 
 			const createUrl = BX.Uri.addParam(url, {
-				ta_sec: '<?= !empty($currentGroupId) ? 'project' : 'tasks' ?>',
+				ta_sec: '<?= $analyticsSection ?>',
 				ta_sub: 'calendar',
 				ta_el: 'quick_button',
 			});

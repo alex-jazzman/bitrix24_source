@@ -23,12 +23,12 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 	const { TaskFlowField } = require('tasks/layout/fields/flow/theme/air-compact');
 	const { TagField } = require('layout/ui/fields/tag/theme/air-compact');
 	const { DatePlanField } = require('tasks/layout/fields/date-plan/theme/air-compact');
+	const { TemplateField } = require('tasks/layout/fields/template/theme/air-compact');
 	const { CrmElementField } = require('layout/ui/fields/crm-element/theme/air-compact');
 	const { TimeTrackingField } = require('tasks/layout/fields/time-tracking/theme/air-compact');
 	const { UserFieldsField } = require('tasks/layout/fields/user-fields/theme/air-compact');
 	const { isFieldValid } = require('tasks/layout/fields/user-fields/validator');
 	const { Onboarding, CaseName } = require('tasks/onboarding');
-	const { CaseHistory } = require('onboarding');
 
 	const store = require('statemanager/redux/store');
 	const { batchActions } = require('statemanager/redux/batched-actions');
@@ -51,6 +51,12 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 		makeTagsFieldConfig,
 		makeCrmFieldConfig,
 	} = require('tasks/layout/task/form-utils');
+	const {
+		TagType,
+		hasTagType,
+		mapTagsToSelectorItems,
+		mapSelectorItemsToTags,
+	} = require('tasks/layout/task/tag-utils');
 	const { CalendarSettings } = require('tasks/task/calendar');
 	const { ChecklistController } = require('tasks/checklist');
 	const { Entry } = require('tasks/entry');
@@ -70,6 +76,11 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 	const { Loc } = require('tasks/loc');
 	const { RunActionExecutor } = require('rest/run-action-executor');
 	const { showToast, showErrorToast, Position } = require('toast');
+	const { applyTemplate, applyTemplateFromStore } = require('tasks/layout/task/create-new/src/apply-template');
+	const {
+		convertGroupToEntitySelectorFormat,
+		convertUsersCollectionToEntitySelectorFormat,
+	} = require('tasks/layout/task/create-new/src/converters');
 	const { ParentTask } = require('tasks/layout/task/parent-task');
 	const {
 		getFieldRestrictionPolicy,
@@ -239,14 +250,22 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 
 		#preloadUserFields()
 		{
+			const userFieldsLoadedHandler = (response) => {
+				this.userFields = (response?.status === 'success' ? response.data : []);
+				this.userFieldNames = this.userFields.map(({ fieldName }) => fieldName);
+			};
+
 			return new Promise((resolve) => {
 				(new RunActionExecutor('tasksmobile.UserField.getUserFields'))
 					.setHandler((response) => {
-						this.userFields = (response?.status === 'success' ? response.data : []);
-						this.userFieldNames = this.userFields.map(({ fieldName }) => fieldName);
+						userFieldsLoadedHandler(response);
 						resolve();
 					})
-					.call(false)
+					.setCacheHandler((response) => {
+						userFieldsLoadedHandler(response);
+						resolve();
+					})
+					.call(true)
 				;
 			});
 		}
@@ -403,6 +422,22 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 
 			this.init();
 
+			const templateId = Number(this.task?.templateId || 0);
+			if (templateId > 0)
+			{
+				const { task, template } = await applyTemplate({
+					templateId,
+					currentTask: this.task,
+					checklistController: this.checklistController,
+				});
+
+				if (template)
+				{
+					this.task = task;
+					this.task.templateTitle = this.task.templateTitle || template?.name || '';
+				}
+			}
+
 			await getDiskFolderId(this.task?.group?.id)
 				.then(({ diskFolderId }) => {
 					this.diskFolderId = diskFolderId;
@@ -449,7 +484,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 				title: (initialTaskData?.title || this.sourceTaskData?.name || ''),
 				description: (initialTaskData?.description || this.sourceTaskData?.description || ''),
 				deadline: initialTaskData?.deadline,
-				group: this.convertGroupToEntitySelectorFormat(
+				group: convertGroupToEntitySelectorFormat(
 					this.task?.group
 					|| initialTaskData?.group
 					|| this.sourceTaskData?.group
@@ -460,10 +495,10 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 
 				creator: this.currentUserData,
 				responsible: (this.task?.responsible || initialTaskData?.responsible || this.currentUserData),
-				accomplices: this.convertUsersCollectionToEntitySelectorFormat(
+				accomplices: convertUsersCollectionToEntitySelectorFormat(
 					initialTaskData?.accomplices || this.sourceTaskData?.accomplices,
 				),
-				auditors: this.convertUsersCollectionToEntitySelectorFormat(
+				auditors: convertUsersCollectionToEntitySelectorFormat(
 					initialTaskData?.auditors || this.sourceTaskData?.auditors,
 				),
 				uploadedFiles: initialTaskData?.uploadedFiles || [],
@@ -481,10 +516,13 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 				imMessageId: initialTaskData?.IM_MESSAGE_ID,
 
 				mailMessageId: initialTaskData?.mailMessageId,
+
+				templateId: initialTaskData?.templateId ?? null,
+				templateTitle: initialTaskData?.templateTitle ?? null,
 			};
 			this.initialTaskData = {
 				...this.task,
-				group: this.convertGroupToEntitySelectorFormat(initialTaskData?.group),
+				group: convertGroupToEntitySelectorFormat(initialTaskData?.group),
 				responsible: (initialTaskData?.responsible || this.currentUserData),
 			};
 
@@ -527,35 +565,6 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 				checklistsFlatTree: initialTaskData?.checklistFlatTree,
 				clear: true,
 			});
-		}
-
-		convertUsersCollectionToEntitySelectorFormat(users)
-		{
-			if (!Array.isArray(users))
-			{
-				return [];
-			}
-
-			return users.map((user) => ({
-				id: user.id,
-				title: user.name,
-				imageUrl: user.image,
-			}));
-		}
-
-		convertGroupToEntitySelectorFormat(group)
-		{
-			return group ? {
-				id: group.id,
-				title: group.name,
-				imageUrl: group.image,
-				customData: {
-					datePlan: {
-						dateStart: group.dateStart,
-						dateFinish: group.dateFinish,
-					},
-				},
-			} : undefined;
 		}
 
 		refreshBottomPanel()
@@ -635,11 +644,16 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 		{
 			if (this.state.isLoading)
 			{
-				return View({}, new LoadingScreenComponent({ showAirStyle: true }));
+				return View(
+					{
+						testId: this.#getTestId('Root-loading'),
+					},
+					new LoadingScreenComponent({ showAirStyle: true }));
 			}
 
 			return View(
 				{
+					testId: this.#getTestId('Root-ready'),
 					resizableByKeyboard: true,
 					style: {
 						backgroundColor: Color.bgContentPrimary.toHex(),
@@ -747,6 +761,8 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 		renderCompactFields()
 		{
 			const hasFlow = Boolean(this.state.flowId);
+			const tagItems = Object.values(this.task.tags ?? []);
+			const hasTemplateTags = hasTagType(tagItems, TagType.TEMPLATE);
 
 			return new Form({
 				forceUpdate: this.state.forceUpdate,
@@ -923,20 +939,16 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 						props: {
 							id: Fields.TAGS,
 							title: Loc.getMessage('M_TASKS_FIELDS_TAGS'),
-							value: Object.values(this.task.tags).map((item) => item.id),
+							value: tagItems.map((item) => item.id),
 							readOnly: false,
 							multiple: true,
 							config: makeTagsFieldConfig({
-								items: Object.values(this.task.tags).map((item) => ({
-									id: item.id,
-									title: item.name,
-									type: 'task-tag',
-								})),
+								items: mapTagsToSelectorItems(tagItems, TagType.TASK),
 								castType: 'string',
 								provider: {
 									options: {
 										groupId: this.task.group?.id || 0,
-										canPreselectTemplateTags: hasFlow,
+										canPreselectTemplateTags: hasTemplateTags,
 									},
 								},
 							}),
@@ -1015,6 +1027,21 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 						},
 						compact: DatePlanField,
 					},
+					{
+						factory: TemplateField,
+						props: {
+							id: Fields.TEMPLATE,
+							taskId: this.task.id,
+							readOnly: false,
+							templateId: this.task.templateId,
+							templateTitle: this.task.templateTitle,
+							onChange: this.onChangeTemplate,
+							parentWidget: this.layoutWidget,
+							mode: 'create',
+							onHidden: this.focusTitle,
+						},
+						compact: TemplateField,
+					},
 				].filter(Boolean),
 			});
 		}
@@ -1078,6 +1105,51 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 			this.task.startDatePlan = startDatePlan ?? null;
 			this.task.endDatePlan = endDatePlan ?? null;
 			this.#forceUpdate();
+		};
+
+		onChangeTemplate = ({ id, title }) => {
+			this.task.templateId = id;
+			this.task.templateTitle = title;
+
+			const templateFromStore = applyTemplateFromStore({
+				templateId: id,
+				currentTask: this.task,
+				checklistController: this.checklistController,
+			});
+			if (templateFromStore)
+			{
+				const { template, task } = templateFromStore;
+
+				this.task = task;
+				this.task.templateTitle = this.task.templateTitle || template?.name || '';
+				this.refreshBottomPanel();
+				this.#forceUpdate();
+
+				return;
+			}
+
+			this.setState({ isLoading: true }, () => {
+				applyTemplate({
+					templateId: id,
+					currentTask: this.task,
+					checklistController: this.checklistController,
+				})
+					.then(({ template, task }) => {
+						if (!template || !task)
+						{
+							this.setState({ isLoading: false });
+
+							return;
+						}
+
+						this.task = task;
+						this.task.templateTitle = this.task.templateTitle || template?.name || '';
+						this.setState({ isLoading: false }, () => {
+							this.refreshBottomPanel();
+						});
+					})
+					.catch(() => this.setState({ isLoading: false }));
+			});
 		};
 
 		onChangeProject(_, groups = [])
@@ -1233,7 +1305,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 
 								if (template.accomplices.length > 0)
 								{
-									this.task.accomplices = this.convertUsersCollectionToEntitySelectorFormat(
+									this.task.accomplices = convertUsersCollectionToEntitySelectorFormat(
 										template.accomplices.map((userId) => {
 											return usersSelector.selectById(store.getState(), userId);
 										}),
@@ -1242,7 +1314,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 
 								if (template.auditors.length > 0)
 								{
-									this.task.auditors = this.convertUsersCollectionToEntitySelectorFormat(
+									this.task.auditors = convertUsersCollectionToEntitySelectorFormat(
 										template.auditors.map((userId) => {
 											return usersSelector.selectById(store.getState(), userId);
 										}),
@@ -1255,7 +1327,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 								}
 							}
 
-							this.task.group = this.convertGroupToEntitySelectorFormat(response.data.groups[0]);
+							this.task.group = convertGroupToEntitySelectorFormat(response.data.groups[0]);
 							this.checklistController.setGroupId(this.task.group?.id || 0);
 							this.flow = flows[0];
 							this.setState({ flowId, flowLoading: false });
@@ -1353,10 +1425,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 
 		onChangeTags(_, tags = [])
 		{
-			this.task.tags = tags.map((item) => ({
-				id: item.id,
-				name: item.title,
-			}));
+			this.task.tags = mapSelectorItemsToTags(tags, TagType.TASK);
 
 			this.handlePreventBottomSheetDismiss();
 		}
@@ -1540,8 +1609,6 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 							{ id: CaseName.MORE_THAN_SIX_TASKS },
 						]);
 
-						void new CaseHistory().markAsShown(CaseName.ON_EMPTY_TASK_LIST);
-
 						if (Number.isNaN(this.state.flowId) || this.state.flowId === 0)
 						{
 							await AppRatingClient.increaseTaskCreatedCounter();
@@ -1556,6 +1623,8 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 								parentWidget,
 							});
 						}
+
+						BX.postComponentEvent('tasks.create-new:onClosedAfterSave');
 					});
 				}
 			};

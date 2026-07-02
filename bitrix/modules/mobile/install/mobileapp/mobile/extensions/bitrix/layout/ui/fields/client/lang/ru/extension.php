@@ -15,3 +15,5 @@ $MESS["FIELDS_CLIENT_CONFIRM_CLEAR_CONTACTS_TITLE"] = "Очистить теку
 $MESS["FIELDS_CLIENT_CONFIRM_CLEAR_CONTACTS"] = "У выбранной компании нет привязанных контактов";
 $MESS["FIELDS_CLIENT_CONFIRM_CLEAR_OK"] = "Очистить контакты";
 $MESS["FIELDS_CLIENT_CONFIRM_CLEAR_NO"] = "Оставить как есть";
+
+$MESS["FIELDS_CLIENT_ACCESS_DENIED"] = "Недостаточно прав на заполнение поля, обратитесь к своему руководителю";

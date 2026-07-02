@@ -1,3 +1,2 @@
-<?
-$MESS ['BPIEBA_CONDITION'] = "Condition Type";
-?>
+<?php
+$MESS["BPIEBA_CONDITION"] = "Condition type";

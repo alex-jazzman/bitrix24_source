@@ -1314,6 +1314,7 @@ ChatDataConverter.preparePushFormat = function(element)
 		12: 'notify',
 		13: 'type',
 		14: 'extranet',
+		15: 'recentConfig',
 
 		20: 'date_create',
 		21: 'owner',
@@ -1324,6 +1325,7 @@ ChatDataConverter.preparePushFormat = function(element)
 		205: 'entity_data_3',
 		201: 'call',
 		202: 'call_number',
+		220: 'parent_chat_id',
 
 		40: 'first_name',
 		41: 'last_name',
@@ -1359,6 +1361,8 @@ ChatDataConverter.preparePushFormat = function(element)
 		88: 'width',
 		89: 'height',
 		801: 'isVideoNote',
+
+		90: 'sections',
 	};
 
 	const result = ChatDataConverter.changeKeysRecursive(element, indexToNameMap);
@@ -1387,6 +1391,7 @@ ChatDataConverter.preparePushFormat = function(element)
 		chat.name = ChatUtils.htmlspecialcharsback(result.chat.name);
 		chat.owner = result.chat.owner;
 		chat.type = result.chat.type;
+		chat.parent_chat_id = Number(result.chat.parent_chat_id) || 0;
 
 		result.chat = { [chat.id]: chat };
 	}

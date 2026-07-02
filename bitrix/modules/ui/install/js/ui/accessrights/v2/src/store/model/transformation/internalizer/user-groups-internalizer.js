@@ -1,7 +1,6 @@
 import { Type } from 'main.core';
 import { SelectorService } from '../../../../service/selector-service';
-import type { AccessRightValue, UserGroupsCollection } from '../../user-groups-model';
-import { Member, UserGroup } from '../../user-groups-model';
+import type { AccessRightValue, Member, UserGroup, UserGroupsCollection } from '../../user-groups-model';
 import type { Transformer } from '../transformer';
 
 export type ExternalUserGroup = {

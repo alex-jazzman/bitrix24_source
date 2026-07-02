@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Bitrix Framework
  * @package bitrix
@@ -8,8 +8,8 @@
 
 /**
  * Bitrix vars
- * @param array $arParams
- * @param array $arResult
+ * @var array $arParams
+ * @var array $arResult
  */
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
@@ -23,11 +23,11 @@ foreach(GetModuleEvents("main", "system.field.view.file", true) as $arEvent)
 $first = true;
 foreach ($arResult["VALUE"] as $res):
 	if (!$first):
-		?><span class="bx-br-separator"><br /></span><?
+		?><span class="bx-br-separator"><br /></span><?php
 	else:
 		$first = false;
 	endif;
-?><span class="fields files"><?
+?><span class="fields files"><?php
 $arFile = CFile::GetFileArray($res);
 if($arFile)
 {
@@ -50,6 +50,6 @@ if($arFile)
 	}
 }
 
-?></span><?
+?></span><?php
 endforeach;
 ?>

@@ -54,8 +54,8 @@
 .preview__menu-switcher__icon {
 	width: 16px;
 	height: 16px;
-	-webkit-mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='24' height='24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.3 7.2a.7.7 0 01.7-.7h14a.7.7 0 110 1.4H5a.7.7 0 01-.7-.7zm0 4.8a.7.7 0 01.7-.7h14a.7.7 0 110 1.4H5a.7.7 0 01-.7-.7zm.7 4.1a.7.7 0 000 1.4h14a.7.7 0 100-1.4H5z' fill='%23333'/%3E%3C/svg%3E");
-	        mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='24' height='24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.3 7.2a.7.7 0 01.7-.7h14a.7.7 0 110 1.4H5a.7.7 0 01-.7-.7zm0 4.8a.7.7 0 01.7-.7h14a.7.7 0 110 1.4H5a.7.7 0 01-.7-.7zm.7 4.1a.7.7 0 000 1.4h14a.7.7 0 100-1.4H5z' fill='%23333'/%3E%3C/svg%3E");
+	-webkit-mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='24' height='24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.3 7.2a.7.7 0 01.7-.7h14a.7.7 0 110 1.4H5a.7.7 0 01-.7-.7zM4.3 12a.7.7 0 01.7-.7h14a.7.7 0 110 1.4H5a.7.7 0 01-.7-.7zM5 16.1a.7.7 0 000 1.4h14a.7.7 0 100-1.4H5z' fill='%23333'/%3E%3C/svg%3E");
+	        mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='24' height='24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.3 7.2a.7.7 0 01.7-.7h14a.7.7 0 110 1.4H5a.7.7 0 01-.7-.7zM4.3 12a.7.7 0 01.7-.7h14a.7.7 0 110 1.4H5a.7.7 0 01-.7-.7zM5 16.1a.7.7 0 000 1.4h14a.7.7 0 100-1.4H5z' fill='%23333'/%3E%3C/svg%3E");
 	-webkit-mask-size: contain;
 	        mask-size: contain;
 	-webkit-mask-position: center;

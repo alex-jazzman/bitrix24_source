@@ -9,7 +9,7 @@ import type { ClientDto } from 'booking.provider.service.client-service';
 import type { ResourceModel } from 'booking.model.resources';
 import type { ResourceDto } from 'booking.provider.service.resources-service';
 
-import { ResourceDialogResponse } from './types';
+import type { ResourceDialogResponse } from './types';
 
 export class ResourceDialogDataExtractor
 {

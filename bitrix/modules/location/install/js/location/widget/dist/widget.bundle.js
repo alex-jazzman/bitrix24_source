@@ -667,12 +667,9 @@ this.BX.Location = this.BX.Location || {};
 	var _destroyed = /*#__PURE__*/new WeakMap();
 	var _isAddressChangedByFeature = /*#__PURE__*/new WeakMap();
 	var _isInputNodeValueUpdated = /*#__PURE__*/new WeakMap();
-	var _needWarmBackendAfterAddressChanged = /*#__PURE__*/new WeakMap();
-	var _locationRepository = /*#__PURE__*/new WeakMap();
 	var _addFeature = /*#__PURE__*/new WeakSet();
 	var _executeFeatureMethod = /*#__PURE__*/new WeakSet();
 	var _emitOnAddressChanged = /*#__PURE__*/new WeakSet();
-	var _warmBackendAfterAddressChanged = /*#__PURE__*/new WeakSet();
 	var _onInputFocus = /*#__PURE__*/new WeakSet();
 	var _convertAddressToString$1 = /*#__PURE__*/new WeakSet();
 	var _setInputValue = /*#__PURE__*/new WeakSet();
@@ -704,7 +701,6 @@ this.BX.Location = this.BX.Location || {};
 	    _classPrivateMethodInitSpec$3(babelHelpers.assertThisInitialized(_this), _setInputValue);
 	    _classPrivateMethodInitSpec$3(babelHelpers.assertThisInitialized(_this), _convertAddressToString$1);
 	    _classPrivateMethodInitSpec$3(babelHelpers.assertThisInitialized(_this), _onInputFocus);
-	    _classPrivateMethodInitSpec$3(babelHelpers.assertThisInitialized(_this), _warmBackendAfterAddressChanged);
 	    _classPrivateMethodInitSpec$3(babelHelpers.assertThisInitialized(_this), _emitOnAddressChanged);
 	    _classPrivateMethodInitSpec$3(babelHelpers.assertThisInitialized(_this), _executeFeatureMethod);
 	    _classPrivateMethodInitSpec$3(babelHelpers.assertThisInitialized(_this), _addFeature);
@@ -752,14 +748,6 @@ this.BX.Location = this.BX.Location || {};
 	      writable: true,
 	      value: false
 	    });
-	    _classPrivateFieldInitSpec$2(babelHelpers.assertThisInitialized(_this), _needWarmBackendAfterAddressChanged, {
-	      writable: true,
-	      value: true
-	    });
-	    _classPrivateFieldInitSpec$2(babelHelpers.assertThisInitialized(_this), _locationRepository, {
-	      writable: true,
-	      value: void 0
-	    });
 	    _this.setEventNamespace('BX.Location.Widget.Address');
 	    if (!(props.addressFormat instanceof location_core.Format)) {
 	      BX.debug('addressFormat must be instance of Format');
@@ -784,14 +772,6 @@ this.BX.Location = this.BX.Location || {};
 	      props.features.forEach(function (feature) {
 	        _classPrivateMethodGet$3(babelHelpers.assertThisInitialized(_this), _addFeature, _addFeature2).call(babelHelpers.assertThisInitialized(_this), feature);
 	      });
-	    }
-	    if (main_core.Type.isBoolean(props.needWarmBackendAfterAddressChanged)) {
-	      babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _needWarmBackendAfterAddressChanged, props.needWarmBackendAfterAddressChanged);
-	    }
-	    if (props.locationRepository instanceof location_core.LocationRepository) {
-	      babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _locationRepository, props.locationRepository);
-	    } else if (babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _needWarmBackendAfterAddressChanged)) {
-	      babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _locationRepository, new location_core.LocationRepository());
 	    }
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _state, State.INITIAL);
 	    return _this;
@@ -1039,14 +1019,6 @@ this.BX.Location = this.BX.Location || {};
 	  this.emit(Address.onAddressChangedEvent, {
 	    address: babelHelpers.classPrivateFieldGet(this, _address$2)
 	  });
-	  if (babelHelpers.classPrivateFieldGet(this, _address$2) && babelHelpers.classPrivateFieldGet(this, _needWarmBackendAfterAddressChanged)) {
-	    _classPrivateMethodGet$3(this, _warmBackendAfterAddressChanged, _warmBackendAfterAddressChanged2).call(this, babelHelpers.classPrivateFieldGet(this, _address$2));
-	  }
-	}
-	function _warmBackendAfterAddressChanged2(address) {
-	  if (address.location !== null && address.location.id <= 0) {
-	    babelHelpers.classPrivateFieldGet(this, _locationRepository).findParents(address.location);
-	  }
 	}
 	function _onInputFocus2(e) {
 	  var value = babelHelpers.classPrivateFieldGet(this, _inputNode).value;
@@ -1725,7 +1697,7 @@ this.BX.Location = this.BX.Location || {};
 	var _languageId$1 = /*#__PURE__*/new WeakMap();
 	var _addressFormat$4 = /*#__PURE__*/new WeakMap();
 	var _sourceCode = /*#__PURE__*/new WeakMap();
-	var _locationRepository$1 = /*#__PURE__*/new WeakMap();
+	var _locationRepository = /*#__PURE__*/new WeakMap();
 	var _userLocationPoint$1 = /*#__PURE__*/new WeakMap();
 	var _presetLocationsProvider = /*#__PURE__*/new WeakMap();
 	var _prompt = /*#__PURE__*/new WeakMap();
@@ -1837,7 +1809,7 @@ this.BX.Location = this.BX.Location || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$7(babelHelpers.assertThisInitialized(_this), _locationRepository$1, {
+	    _classPrivateFieldInitSpec$7(babelHelpers.assertThisInitialized(_this), _locationRepository, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -1913,7 +1885,7 @@ this.BX.Location = this.BX.Location || {};
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _sourceCode, props.sourceCode);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _address$3, props.address);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _presetLocationsProvider, props.presetLocationsProvider);
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _locationRepository$1, props.locationRepository || new location_core.LocationRepository());
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _locationRepository, props.locationRepository || new location_core.LocationRepository());
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _userLocationPoint$1, props.userLocationPoint);
 	    _classPrivateMethodGet$6(babelHelpers.assertThisInitialized(_this), _setState, _setState2).call(babelHelpers.assertThisInitialized(_this), State.INITIAL);
 	    return _this;
@@ -2285,7 +2257,7 @@ this.BX.Location = this.BX.Location || {};
 	function _getLocationDetails2(location) {
 	  var _this6 = this;
 	  _classPrivateMethodGet$6(this, _setState, _setState2).call(this, State.DATA_LOADING);
-	  return babelHelpers.classPrivateFieldGet(this, _locationRepository$1).findByExternalId(location.externalId, location.sourceCode, location.languageId).then(function (detailedLocation) {
+	  return babelHelpers.classPrivateFieldGet(this, _locationRepository).findByExternalId(location.externalId, location.sourceCode, location.languageId).then(function (detailedLocation) {
 	    _classPrivateMethodGet$6(_this6, _setState, _setState2).call(_this6, State.DATA_LOADED);
 	    var result;
 	    /*

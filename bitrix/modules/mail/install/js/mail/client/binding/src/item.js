@@ -1,5 +1,26 @@
-import { Loc, Tag } from 'main.core';
-import {UI} from 'ui.notification';
+import { Loc, Tag, Type, Event } from 'main.core';
+import { UI } from 'ui.notification';
+
+type ItemConfig = {
+	type?: string,
+	id?: string | number,
+	messageId?: string | number,
+	messageSimpleId?: string | number,
+	href?: string,
+	createHref?: string,
+	errorType?: string,
+};
+
+type RenderButtonOptions = {
+	text?: string,
+	title?: string,
+	className?: string,
+	messageSimpleId?: string | number,
+	useBindClass?: boolean,
+	data?: { [string]: mixed },
+	attrs?: { [string]: mixed },
+	onClick?: ?Function,
+};
 
 export class Item
 {
@@ -83,10 +104,7 @@ export class Item
 		}
 	}
 
-	constructor(config = {
-		type: '',
-		id: '',
-	})
+	constructor(config: ItemConfig = {})
 	{
 		this.#errorType = config['errorType'];
 		this.#messageId = config['messageId'];
@@ -123,7 +141,85 @@ export class Item
 		});
 	}
 
-	onClick(event)
+	static isErrorKey(key: string): boolean
+	{
+		return Item.#errorPhrases[key] !== undefined;
+	}
+
+	static renderButton(options: RenderButtonOptions = {}): HTMLAnchorElement
+	{
+		const text = Type.isString(options.text) ? options.text : '';
+		const title = Type.isString(options.title) ? options.title : '';
+		const className = Type.isString(options.className) ? options.className : '';
+		const messageSimpleId = options.messageSimpleId;
+		const useBindClass = options.useBindClass !== false;
+		const data = Type.isObject(options.data) ? options.data : {};
+		const attrs = Type.isObject(options.attrs) ? options.attrs : {};
+		const onClick = Type.isFunction(options.onClick) ? options.onClick : null;
+
+		const baseClass = 'mail-ui-binding ui-btn-light-border ui-btn ui-btn-xs ui-btn-round ui-btn-no-caps';
+		const jsBindClass = useBindClass && (Type.isNumber(messageSimpleId) || Type.isStringFilled(messageSimpleId))
+			? `js-bind-${messageSimpleId}`
+			: '';
+
+		const item = Tag.render`
+			<a class="${baseClass} ${className} ${jsBindClass}">${text}</a>
+		`;
+
+		Item.applyTitle(item, title);
+		Item.applyDataset(item, data);
+		Item.applyAttributes(item, attrs);
+		Item.bindClick(item, onClick);
+
+		Event.bind(item, 'dblclick', (event: MouseEvent) => {
+			event.stopPropagation();
+		});
+
+		return item;
+	}
+
+	static applyTitle(item: HTMLElement, title: string): void
+	{
+		if (Type.isStringFilled(title))
+		{
+			item.setAttribute('title', title);
+		}
+	}
+
+	static applyDataset(item: HTMLElement, data: { [string]: mixed }): void
+	{
+		const dataset = item.dataset;
+		Object.entries(data).forEach(([key, value]) => {
+			if (value === undefined || value === null)
+			{
+				return;
+			}
+
+			dataset[key] = String(value);
+		});
+	}
+
+	static applyAttributes(item: HTMLElement, attrs: { [string]: mixed }): void
+	{
+		Object.entries(attrs).forEach(([key, value]) => {
+			if (value === undefined || value === null)
+			{
+				return;
+			}
+
+			item.setAttribute(key, String(value));
+		});
+	}
+
+	static bindClick(item: HTMLElement, onClick: ?Function): void
+	{
+		if (onClick)
+		{
+			Event.bind(item, 'click', onClick);
+		}
+	}
+
+	onClick(event: ?MouseEvent): void
 	{
 		if (this.isError(this.#errorType))
 		{
@@ -232,24 +328,24 @@ export class Item
 	render()
 	{
 		const activeClass = this.isActive() ? 'mail-ui-active' : 'mail-ui-not-active';
-		const item = Tag.render`
-			<a class="mail-ui-binding ui-btn-light-border ui-btn ui-btn-xs ui-btn-round ui-btn-no-caps ${this.#classes[this.getType()]} ${activeClass} js-bind-${this.getMessageId(true)}">
-				${this.#text}
-			</a>`
+		const item = Item.renderButton({
+			text: this.#text,
+			title: '',
+			className: `${this.#classes[this.getType()]} ${activeClass}`,
+			messageSimpleId: this.getMessageId(true),
+			data: {
+				entityType: 'binding',
+				entityId: this.getType(),
+			},
+			onClick: (event: MouseEvent) => {
+				this.onClick(event);
+			},
+		});
 
 		this.#node = item;
 		this.#node.object = this;
 
 		this.updateTitle();
-
-		item.onclick = function()
-		{
-			this.object.onClick();
-		};
-
-		item.ondblclick = event => {
-			event.stopPropagation();
-		};
 
 		item.setActive = function(href)
 		{

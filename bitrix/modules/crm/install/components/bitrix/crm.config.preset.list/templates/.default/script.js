@@ -540,6 +540,7 @@ BX.Crm.PresetListComponent.ChangeCurrentCountryManager = function()
 	this._okButton = null;
 	this._cancelButton = null;
 	this._closeButton = null;
+	this._alert = null;
 
 	this._isEventsEnabled = false;
 	this._okButtonHandler = BX.delegate(this.onOkClick, this);
@@ -597,50 +598,37 @@ BX.Crm.PresetListComponent.ChangeCurrentCountryManager.prototype = {
 	{
 		if (this._container)
 		{
-			this._container.innerHTML =
-				"<div class=\"crm-type-ui-card crm-type-ui-card-message\">"
-				+   "<div class=\"crm-type-ui-card-header\">"
-				+     "<div class=\"crm-type-ui-card-message-icon crm-type-ui-card-message-icon--directions\"></div>"
-				+     "<div class=\"crm-type-ui-card-message-title\">"
-				+       BX.util.htmlspecialchars(this.getMessage("messageTitle"))
-				+     "</div>"
-				+   "</div>"
-				+   "<div class=\"crm-type-ui-card-body\">"
-				+     "<div class=\"crm-type-ui-card-message-description\">"
-				+     "<div style=\"margin-bottom: 20px;\">"
-				+       BX.util.htmlspecialchars(this.getMessage("messageText")).replace(/\n/g, "<br />\n")
-				+     "</div>"
-				+     "<div>"
-				+     "<div style=\"display: inline-block; width: 50%; text-align: left;\">"
-				+       "<a style=\"cursor: pointer;\">"
-				+         BX.util.htmlspecialchars(this.getMessage("okText"))
-				+       "</a>"
-				+     "</div>"
-				+     "<div style=\"display: inline-block; width: 50%; text-align: right;\">"
-				+       "<a style=\"cursor: pointer;\">"
-				+         BX.util.htmlspecialchars(this.getMessage("cancelText"))
-				+       "</a>"
-				+     "</div>"
-				+     "</div>"
-				+     "</div>"
-				+   "</div>"
-				+   "<div class=\"crm-type-ui-card-message-close-button\" title=\""
-				+      BX.util.htmlspecialchars(this.getMessage("hideMessageText")) + "\">"
-				+   "</div>"
-				+ "</div>"
+			this._okButton =
+				BX.Tag.render`<a class="crm-preset-country-msg-button">${this.getMessage("okText")}</a>`
 			;
+			this._cancelButton =
+				BX.Tag.render`<a class="crm-preset-country-msg-button">${this.getMessage("cancelText")}</a>`
+			;
+
+			const messageText = BX.util.nl2br(BX.util.htmlspecialchars(this.getMessage("messageText")));
+			const content = BX.Tag.render`
+				<div class="crm-preset-country-msg">
+					<div class="crm-preset-country-msg-title">${this.getMessage("messageTitle")}</div>
+					<div class="crm-preset-country-msg-text">${messageText}</div>
+					<div class="crm-preset-country-msg-actions">
+						<div class="crm-preset-country-msg-action-ok">${this._okButton}</div>
+						<div class="crm-preset-country-msg-action-cancel">${this._cancelButton}</div>
+					</div>
+				</div>
+			`;
+
+			this._alert = new BX.UI.System.Alert.Alert({
+				design: BX.UI.System.Alert.AlertDesign.tinted,
+				hasCloseButton: true,
+				leftImage: "/bitrix/components/bitrix/crm.config.preset.list/templates/.default/images/documents.png",
+				content: content,
+				events: {
+					closeButtonClick: this._closeButtonHandler
+				}
+			});
+
+			this._container.appendChild(this._alert.render());
 			this._container.style.display = "inline-block";
-			var buttons = this._container.querySelectorAll("div > a");
-			if (buttons.length > 1)
-			{
-				this._okButton = buttons[0];
-				this._cancelButton = buttons[1];
-			}
-			var closeButton = this._container.querySelector("div.crm-type-ui-card-message-close-button");
-			if (closeButton)
-			{
-				this._closeButton = closeButton;
-			}
 
 			this.enableEvents();
 		}
@@ -686,8 +674,12 @@ BX.Crm.PresetListComponent.ChangeCurrentCountryManager.prototype = {
 	close: function ()
 	{
 		this.disableEvents();
+		if (this._alert)
+		{
+			this._alert.destroy();
+			this._alert = null;
+		}
 		this._container.style.display = "none";
-		this._container.innerHTML = "";
 	},
 	onOkClick: function ()
 	{

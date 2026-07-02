@@ -1,4 +1,3 @@
-import { BaseEvent } from 'main.core.events';
 import { Dialog } from 'ui.entity-selector';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
 
@@ -27,12 +26,15 @@ export const AddResourcesButton = {
 			Outline,
 		};
 	},
-	data(): { shown: boolean, resourceIds: Set<number> }
+	data(): { shown: boolean }
 	{
 		return {
 			shown: false,
-			resourceIds: new Set(),
 		};
+	},
+	created(): void
+	{
+		this.resourceIds = new Set();
 	},
 	computed: {
 		resourcesList(): ResourceModel[]

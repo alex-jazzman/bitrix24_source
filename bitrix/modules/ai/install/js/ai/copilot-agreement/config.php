@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Main\Application;
+use Bitrix\Ui\Public\Services\Copilot\CopilotNameService;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -8,6 +9,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 $zone = Application::getInstance()->getLicense()->getRegion() ?? 'en';
+$copilotName = (new CopilotNameService())->getCopilotName();
 
 return [
 	'css' => 'dist/copilot-agreement.bundle.css',
@@ -22,5 +24,6 @@ return [
 	'skip_core' => false,
 	'settings' => [
 		'zone' => $zone,
+		'copilotName' => $copilotName,
 	]
 ];

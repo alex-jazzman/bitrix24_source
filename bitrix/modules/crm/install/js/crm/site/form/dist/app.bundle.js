@@ -1810,6 +1810,78 @@ var Vue = exports.Vue;
       babelHelpers.classPrivateFieldGet(this, _observer).observe(babelHelpers.classPrivateFieldGet(this, _element));
     }
 
+    var ElementType = {
+      FIELD: 'field',
+      LABEL: 'label',
+      HINT: 'hint',
+      ERROR: 'error'
+    };
+    var ARIA_ID_PREFIX = 'b24-form';
+    var idIndexMap = new Map();
+    var idCounter = 0;
+    var Aria = {
+      ElementType: ElementType,
+      generateElementId: function generateElementId(prefix, fieldId) {
+        var itemIndex = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+        if (!idIndexMap.has(fieldId)) {
+          idIndexMap.set(fieldId, ++idCounter);
+        }
+        var shortId = idIndexMap.get(fieldId);
+        var base = "".concat(ARIA_ID_PREFIX, "-").concat(prefix, "-").concat(shortId);
+        return itemIndex !== null && itemIndex > 0 ? "".concat(base, "-").concat(itemIndex) : base;
+      },
+      getFormElementId: function getFormElementId(formId, suffix) {
+        if (!idIndexMap.has(formId)) {
+          idIndexMap.set(formId, ++idCounter);
+        }
+        var shortFormId = idIndexMap.get(formId);
+        return "".concat(ARIA_ID_PREFIX, "-form-").concat(shortFormId, "-").concat(suffix);
+      },
+      generateDescribedBy: function generateDescribedBy(ids) {
+        var filtered = ids.filter(function (id) {
+          return id;
+        });
+        return filtered.length > 0 ? filtered.join(' ') : null;
+      },
+      getFieldId: function getFieldId(field) {
+        var itemIndex = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+        return this.generateElementId(ElementType.FIELD, field.id, itemIndex);
+      },
+      getLabelId: function getLabelId(field) {
+        var itemIndex = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+        return this.generateElementId(ElementType.LABEL, field.id, itemIndex);
+      },
+      getHintId: function getHintId(field) {
+        var itemIndex = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+        return this.generateElementId(ElementType.HINT, field.id, itemIndex);
+      },
+      getErrorId: function getErrorId(field) {
+        var itemIndex = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+        return this.generateElementId(ElementType.ERROR, field.id, itemIndex);
+      },
+      getAriaRequired: function getAriaRequired(field) {
+        return field.required ? 'true' : null;
+      },
+      getAriaInvalid: function getAriaInvalid(field) {
+        return this.hasErrors(field) ? 'true' : null;
+      },
+      getAriaDescribedBy: function getAriaDescribedBy(field) {
+        var itemIndex = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+        var hasHint = Boolean(field.hint);
+        var ids = [];
+        if (hasHint) {
+          ids.push(this.getHintId(field, itemIndex));
+        }
+        if (this.hasErrors(field)) {
+          ids.push(this.getErrorId(field, itemIndex));
+        }
+        return this.generateDescribedBy(ids);
+      },
+      hasErrors: function hasErrors(field) {
+        return field.validated && !field.focused && !field.valid();
+      }
+    };
+
     var Scroll = {
       items: [],
       toggle: function toggle(element, mode) {
@@ -2131,11 +2203,16 @@ var Vue = exports.Vue;
           required: true
         }
       },
-      components: {},
-      template: "\n\t\t<transition name=\"b24-form-field-a-slide\">\n\t\t\t<div class=\"b24-form-field\"\n\t\t\t\t:class=\"classes\"\n\t\t\t\tv-show=\"field.visible\"\n\t\t\t>\n\t\t\t\t<div v-if=\"field.isComponentDuplicable\">\n\t\t\t\t<transition-group name=\"b24-form-field-a-slide\" tag=\"div\">\n\t\t\t\t\t<component v-bind:is=\"field.getComponentName()\"\n\t\t\t\t\t\tv-for=\"(item, itemIndex) in field.items\"\n\t\t\t\t\t\tv-bind:key=\"field.id\"\n\t\t\t\t\t\tv-bind:field=\"field\"\n\t\t\t\t\t\tv-bind:itemIndex=\"itemIndex\"\n\t\t\t\t\t\tv-bind:item=\"item\"\n\t\t\t\t\t\t@input-blur=\"onBlur\"\n\t\t\t\t\t\t@input-focus=\"onFocus\"\n\t\t\t\t\t\t@input-key-down=\"onKeyDown\"\n\t\t\t\t\t></component>\n\t\t\t\t</transition-group>\n\t\t\t\t\t<a class=\"b24-form-control-add-btn\"\n\t\t\t\t\t\tv-if=\"field.multiple\"\n\t\t\t\t\t\t@click=\"addItem\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ field.messages.get('fieldAdd') }}\n\t\t\t\t\t</a>\n\t\t\t\t\t<div\n\t\t\t\t\t\tclass=\"b24-form-control-comment\"\n\t\t\t\t\t\tv-if=\"field.hint && !field.hintOnFocus || field.hint && field.hintOnFocus && field.focused\"\n\t\t\t\t\t\t>{{field.hint}}</div>\n\t\t\t\t</div>\n\t\t\t\t<div v-if=\"!field.isComponentDuplicable\">\n\t\t\t\t\t<component v-bind:is=\"field.getComponentName()\"\n\t\t\t\t\t\tv-bind:key=\"field.id\"\n\t\t\t\t\t\tv-bind:field=\"field\"\n\t\t\t\t\t\t@input-blur=\"onBlur\"\n\t\t\t\t\t\t@input-focus=\"onFocus\"\n\t\t\t\t\t\t@input-key-down=\"onKeyDown\"\n\t\t\t\t\t></component>\n\t\t\t\t\t<div\n\t\t\t\t\t\tclass=\"b24-form-control-comment\"\n\t\t\t\t\t\tv-if=\"field.hint && !field.hintOnFocus || field.hint && field.hintOnFocus && field.focused\"\n\t\t\t\t\t\t>{{field.hint}}</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</transition>\n\t",
+      template: "\n\t\t<transition name=\"b24-form-field-a-slide\">\n\t\t\t<div class=\"b24-form-field\"\n\t\t\t\t:class=\"classes\"\n\t\t\t\tv-show=\"field.visible\"\n\t\t\t>\n\t\t\t\t<div v-if=\"field.isComponentDuplicable\">\n\t\t\t\t<transition-group name=\"b24-form-field-a-slide\" tag=\"div\">\n\t\t\t\t\t<component v-bind:is=\"field.getComponentName()\"\n\t\t\t\t\t\tv-for=\"(item, itemIndex) in field.items\"\n\t\t\t\t\t\tv-bind:key=\"field.id\"\n\t\t\t\t\t\tv-bind:field=\"field\"\n\t\t\t\t\t\tv-bind:itemIndex=\"itemIndex\"\n\t\t\t\t\t\tv-bind:item=\"item\"\n\t\t\t\t\t\t@input-blur=\"onBlur\"\n\t\t\t\t\t\t@input-focus=\"onFocus\"\n\t\t\t\t\t\t@input-key-down=\"onKeyDown\"\n\t\t\t\t\t></component>\n\t\t\t\t</transition-group>\n\t\t\t\t\t<button \n\t\t\t\t\t\ttype=\"button\"\n\t\t\t\t\t\tclass=\"b24-form-control-add-btn\"\n\t\t\t\t\t\tv-if=\"field.multiple\"\n\t\t\t\t\t\t@click=\"addItem\"\n\t\t\t\t\t\t:aria-label=\"field.messages.get('fieldAdd')\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ field.messages.get('fieldAdd') }}\n\t\t\t\t\t</button>\n\t\t\t\t\t<div\n\t\t\t\t\t\tclass=\"b24-form-control-comment\"\n\t\t\t\t\t\t:id=\"hintId\"\n\t\t\t\t\t\tv-if=\"field.hint && !field.hintOnFocus || field.hint && field.hintOnFocus && field.focused\"\n\t\t\t\t\t\t>{{field.hint}}</div>\n\t\t\t\t</div>\n\t\t\t\t<div v-if=\"!field.isComponentDuplicable\">\n\t\t\t\t\t<component v-bind:is=\"field.getComponentName()\"\n\t\t\t\t\t\tv-bind:key=\"field.id\"\n\t\t\t\t\t\tv-bind:field=\"field\"\n\t\t\t\t\t\t@input-blur=\"onBlur\"\n\t\t\t\t\t\t@input-focus=\"onFocus\"\n\t\t\t\t\t\t@input-key-down=\"onKeyDown\"\n\t\t\t\t\t></component>\n\t\t\t\t\t<div\n\t\t\t\t\t\tclass=\"b24-form-control-comment\"\n\t\t\t\t\t\t:id=\"hintId\"\n\t\t\t\t\t\tv-if=\"field.hint && !field.hintOnFocus || field.hint && field.hintOnFocus && field.focused\"\n\t\t\t\t\t\t>{{field.hint}}</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</transition>\n\t",
       computed: {
+        hintId: function hintId() {
+          return Aria.getHintId(this.field);
+        },
+        hasErrors: function hasErrors() {
+          return Aria.hasErrors(this.field);
+        },
         classes: function classes() {
-          var list = ['b24-form-field-' + this.field.type, 'b24-form-control-' + this.field.getOriginalType()];
+          var list = ["b24-form-field-".concat(this.field.type), "b24-form-control-".concat(this.field.getOriginalType())];
           /*
           if (this.field.design.dark)
           {
@@ -2149,12 +2226,6 @@ var Vue = exports.Vue;
             list.push('b24-form-control-alert');
           }
           return list;
-        },
-        hasErrors: function hasErrors() {
-          if (!this.field.validated || this.field.focused) {
-            return false;
-          }
-          return !this.field.valid();
         }
       },
       methods: {
@@ -2174,17 +2245,21 @@ var Vue = exports.Vue;
           }, 350);
         },
         onKeyDown: function onKeyDown(e) {
-          var value = e.key;
-          if (this.field.filter(value)) {
-            return;
-          }
-          if (['Esc', 'Delete', 'Backspace', 'Tab'].indexOf(e.key) >= 0) {
-            return;
-          }
+          var key = e.key;
           if (e.ctrlKey || e.metaKey) {
             return;
           }
-          e.preventDefault();
+          if (key.length === 1) {
+            // eslint-disable-next-line unicorn/no-array-callback-reference
+            var filteredValue = this.field.filter(key);
+            if (filteredValue !== key) {
+              e.preventDefault();
+              return;
+            }
+          }
+          if (['Escape', 'Esc', 'Delete', 'Backspace', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key)) {
+            return;
+          }
         }
       }
     };
@@ -2970,8 +3045,8 @@ var Vue = exports.Vue;
     }
 
     var Dropdown = {
-      props: ['marginTop', 'maxHeight', 'width', 'visible', 'title'],
-      template: "\n\t\t<div class=\"b24-form-dropdown\">\n\t\t\t<transition name=\"b24-form-dropdown-slide\" appear>\n\t\t\t<div class=\"b24-form-dropdown-container\" \n\t\t\t\t:style=\"{marginTop: marginTop, maxHeight: maxHeight, width: width, minWidth: width}\"\n\t\t\t\tv-if=\"visible\"\n\t\t\t>\n\t\t\t\t<div class=\"b24-form-dropdown-header\" ref=\"header\">\n\t\t\t\t\t<button @click=\"close()\" type=\"button\" class=\"b24-window-close\"></button>\n\t\t\t\t\t<div class=\"b24-form-dropdown-title\">{{ title }}</div>\n\t\t\t\t</div>\t\t\t\n\t\t\t\t<slot></slot>\n\t\t\t</div>\n\t\t\t</transition>\n\t\t</div>\n\t",
+      props: ['marginTop', 'maxHeight', 'width', 'visible', 'title', 'messages'],
+      template: "\n\t\t<div class=\"b24-form-dropdown\">\n\t\t\t<transition name=\"b24-form-dropdown-slide\" appear>\n\t\t\t<div class=\"b24-form-dropdown-container\" \n\t\t\t\t:style=\"{marginTop: marginTop, maxHeight: maxHeight, width: width, minWidth: width}\"\n\t\t\t\tv-if=\"visible\"\n\t\t\t>\n\t\t\t\t<div class=\"b24-form-dropdown-header\" ref=\"header\">\n\t\t\t\t\t<button @click=\"close()\" type=\"button\" class=\"b24-window-close\" :aria-label=\"closeButtonLabel\"></button>\n\t\t\t\t\t<div class=\"b24-form-dropdown-title\">{{ title }}</div>\n\t\t\t\t</div>\t\t\t\n\t\t\t\t<slot></slot>\n\t\t\t</div>\n\t\t\t</transition>\n\t\t</div>\n\t",
       data: function data() {
         return {
           listenerBind: null,
@@ -3008,6 +3083,12 @@ var Vue = exports.Vue;
           if (this.$root.flags) {
             this.$root.flags.hideEars = val;
           }
+        }
+      },
+      computed: {
+        closeButtonLabel: function closeButtonLabel() {
+          var _this$messages;
+          return (_this$messages = this.messages) === null || _this$messages === void 0 ? void 0 : _this$messages.get('fieldDateClose');
         }
       },
       methods: {
@@ -3054,20 +3135,26 @@ var Vue = exports.Vue;
       }
     };
     var Alert = {
-      props: ['field', 'item'],
-      template: "\n\t\t<div class=\"b24-form-control-alert-message\"\n\t\t\tv-show=\"hasErrors\"\n\t\t>\n\t\t\t{{ message }}\n\t\t</div>\n\t",
+      props: ['field', 'item', 'itemIndex'],
+      template: "\n\t\t<div class=\"b24-form-control-alert-message\"\n\t\t\t:id=\"errorId\"\n\t\t\trole=\"alert\"\n\t\t\tv-show=\"hasErrors\"\n\t\t>\n\t\t\t<span class=\"b24-form-sr-only\">{{ field.label }}: </span>{{ message }}\n\t\t</div>\n\t",
       computed: {
+        errorId: function errorId() {
+          var index = this.itemIndex === undefined ? null : this.itemIndex;
+          return Aria.getErrorId(this.field, index);
+        },
         hasErrors: function hasErrors() {
-          return this.field.validated && !this.field.focused && !this.field.valid();
+          return Aria.hasErrors(this.field);
         },
         message: function message() {
           if (this.field.isEmptyRequired()) {
             return this.field.messages.get('fieldErrorRequired');
-          } else if (this.field.validated && !this.field.valid()) {
+          }
+          if (this.field.validated && !this.field.valid()) {
             var type = this.field.type;
             type = type.charAt(0).toUpperCase() + type.slice(1);
             return this.field.messages.get('fieldErrorInvalid' + type) || this.field.messages.get('fieldErrorInvalid');
           }
+          return '';
         }
       }
     };
@@ -3088,7 +3175,7 @@ var Vue = exports.Vue;
           }
         };
       },
-      template: "\n\t\t<div v-if=\"hasPics\" class=\"b24-from-slider\">\n\t\t\t<div class=\"b24-form-slider-wrapper\">\n\t\t\t\t<div class=\"b24-form-slider-container\" \n\t\t\t\t\t:style=\"{ height: height + 'px', width: width + '%', left: left + '%'}\"\n\t\t\t\t\tv-swipe=\"move\"\n\t\t\t\t>\n\t\t\t\t\t<div class=\"b24-form-slider-item\"\n\t\t\t\t\t\tv-for=\"(pic, picIndex) in getItem().pics\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<img class=\"b24-form-slider-item-image\" \n\t\t\t\t\t\t\t:src=\"pic\"\n\t\t\t\t\t\t\t@load=\"saveHeight($event, picIndex)\"\n\t\t\t\t\t\t>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t\t<div class=\"b24-form-slider-control-prev\"\n\t\t\t\t\t\t@click=\"prev\"\n\t\t\t\t\t\t:style=\"{ visibility: prevable() ? 'visible' : 'hidden'}\"\n\t\t\t\t\t><div class=\"b24-form-slider-control-prev-icon\"></div></div>\n\t\t\t\t\t<div class=\"b24-form-slider-control-next\"\n\t\t\t\t\t\t@click=\"next\"\n\t\t\t\t\t\t:style=\"{ visibility: nextable() ? 'visible' : 'hidden'}\"\n\t\t\t\t\t><div class=\"b24-form-slider-control-next-icon\"></div></div>\n\t\t\t</div>\n\t\t</div>\n\t",
+      template: "\n\t\t<div v-if=\"hasPics\" class=\"b24-from-slider\">\n\t\t\t<div class=\"b24-form-slider-wrapper\">\n\t\t\t\t<div class=\"b24-form-slider-container\" \n\t\t\t\t\t:style=\"{ height: height + 'px', width: width + '%', left: left + '%'}\"\n\t\t\t\t\tv-swipe=\"move\"\n\t\t\t\t>\n\t\t\t\t\t<div class=\"b24-form-slider-item\"\n\t\t\t\t\t\tv-for=\"(pic, picIndex) in getItem().pics\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<img class=\"b24-form-slider-item-image\" \n\t\t\t\t\t\t\t:src=\"pic\"\n\t\t\t\t\t\t\t@load=\"saveHeight($event, picIndex)\"\n\t\t\t\t\t\t>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t\t<div class=\"b24-form-slider-control-prev\"\n\t\t\t\t\t\t@click.stop=\"prev\"\n\t\t\t\t\t\t:style=\"{ visibility: prevable() ? 'visible' : 'hidden'}\"\n\t\t\t\t\t><div class=\"b24-form-slider-control-prev-icon\"></div></div>\n\t\t\t\t\t<div class=\"b24-form-slider-control-next\"\n\t\t\t\t\t\t@click.stop=\"next\"\n\t\t\t\t\t\t:style=\"{ visibility: nextable() ? 'visible' : 'hidden'}\"\n\t\t\t\t\t><div class=\"b24-form-slider-control-next-icon\"></div></div>\n\t\t\t</div>\n\t\t</div>\n\t",
       directives: {
         swipe: {
           inserted: function inserted(el, binding) {
@@ -3221,9 +3308,38 @@ var Vue = exports.Vue;
     };
 
     var MixinField = {
-      props: ['field'],
+      props: {
+        field: {},
+        itemIndex: {
+          "default": null
+        }
+      },
       components: Object.assign({}, Definition),
       computed: {
+        fieldId: function fieldId() {
+          return Aria.getFieldId(this.field, this.itemIndex);
+        },
+        labelId: function labelId() {
+          return Aria.getLabelId(this.field, this.itemIndex);
+        },
+        hintId: function hintId() {
+          return Aria.getHintId(this.field, this.itemIndex);
+        },
+        errorId: function errorId() {
+          return Aria.getErrorId(this.field, this.itemIndex);
+        },
+        ariaRequired: function ariaRequired() {
+          return Aria.getAriaRequired(this.field);
+        },
+        ariaInvalid: function ariaInvalid() {
+          return Aria.getAriaInvalid(this.field);
+        },
+        ariaDescribedby: function ariaDescribedby() {
+          return Aria.getAriaDescribedBy(this.field, this.itemIndex);
+        },
+        hasErrors: function hasErrors() {
+          return Aria.hasErrors(this.field);
+        },
         selected: {
           get: function get() {
             return this.field.multiple ? this.field.values() : this.field.values()[0];
@@ -3303,7 +3419,7 @@ var Vue = exports.Vue;
     };
     var FieldString = {
       mixins: [MixinString],
-      template: "\n\t\t<div class=\"b24-form-control-container b24-form-control-icon-after\">\n\t\t\t<input class=\"b24-form-control\"\n\t\t\t\t:type=\"field.getInputType()\"\n\t\t\t\t:name=\"field.getInputName()\"\n\t\t\t\t:class=\"inputClasses\"\n\t\t\t\t:readonly=\"readonly || field.isReadonly()\"\n\t\t\t\t:autocomplete=\"field.getInputAutocomplete()\"\n\t\t\t\tv-model=\"value\"\n\t\t\t\t@blur=\"$emit('input-blur', $event)\"\n\t\t\t\t@focus=\"$emit('input-focus', $event)\"\n\t\t\t\t@click=\"$emit('input-click', $event)\"\n\t\t\t\t@input=\"onInput\"\n\t\t\t\t@keydown=\"$emit('input-key-down', $event)\"\n\t\t\t>\n\t\t\t<div class=\"b24-form-control-label\">\n\t\t\t\t{{ label }} \n\t\t\t\t<span class=\"b24-form-control-required\"\n\t\t\t\t\tv-show=\"field.required\"\n\t\t\t\t>*</span>\t\t\t\t\n\t\t\t</div>\n\t\t\t<div class=\"b24-form-icon-after b24-form-icon-remove\"\n\t\t\t\t:title=\"field.messages.get('fieldRemove')\"\n\t\t\t\tv-if=\"itemIndex > 0\"\n\t\t\t\t@click=\"deleteItem\"\n\t\t\t></div>\n\t\t\t<div class=\"b24-form-icon-after b24-form-icon-remove\"\n\t\t\t\t:title=\"buttonClear\"\n\t\t\t\tv-if=\"buttonClear && itemIndex === 0 && value\"\n\t\t\t\t@click=\"clearItem\"\n\t\t\t></div>\n\t\t\t<field-item-alert\n\t\t\t\tv-bind:field=\"field\"\n\t\t\t\tv-bind:item=\"item\"\n\t\t\t></field-item-alert>\n\t\t</div>\n\t",
+      template: "\n\t\t<div class=\"b24-form-control-container b24-form-control-icon-after\">\n\t\t\t<input class=\"b24-form-control\"\n\t\t\t\t:id=\"fieldId\"\n\t\t\t\t:type=\"field.getInputType()\"\n\t\t\t\t:name=\"field.getInputName()\"\n\t\t\t\t:class=\"inputClasses\"\n\t\t\t\t:readonly=\"readonly || field.isReadonly()\"\n\t\t\t\t:autocomplete=\"field.getInputAutocomplete()\"\n\t\t\t\t:aria-required=\"ariaRequired\"\n\t\t\t\t:aria-invalid=\"ariaInvalid\"\n\t\t\t\t:aria-describedby=\"ariaDescribedby\"\n\t\t\t\tv-model=\"value\"\n\t\t\t\t@blur=\"$emit('input-blur', $event)\"\n\t\t\t\t@focus=\"$emit('input-focus', $event)\"\n\t\t\t\t@click=\"$emit('input-click', $event)\"\n\t\t\t\t@input=\"onInput\"\n\t\t\t\t@keydown=\"$emit('input-key-down', $event)\"\n\t\t\t>\n\t\t\t<label class=\"b24-form-control-label\" :for=\"fieldId\">\n\t\t\t\t{{ label }} \n\t\t\t\t<span class=\"b24-form-control-required\"\n\t\t\t\t\tv-show=\"field.required\"\n\t\t\t\t\taria-hidden=\"true\"\n\t\t\t\t>*</span>\n\t\t\t</label>\n\t\t\t<div class=\"b24-form-icon-after b24-form-icon-remove\"\n\t\t\t\t:title=\"field.messages.get('fieldRemove')\"\n\t\t\t\t:aria-label=\"field.messages.get('fieldRemove')\"\n\t\t\t\trole=\"button\"\n\t\t\t\ttabindex=\"0\"\n\t\t\t\tv-if=\"itemIndex > 0\"\n\t\t\t\t@click=\"deleteItem\"\n\t\t\t\t@keydown.enter=\"deleteItem\"\n\t\t\t\t@keydown.space.prevent=\"deleteItem\"\n\t\t\t></div>\n\t\t\t<div class=\"b24-form-icon-after b24-form-icon-remove\"\n\t\t\t\t:title=\"buttonClear\"\n\t\t\t\t:aria-label=\"buttonClear\"\n\t\t\t\trole=\"button\"\n\t\t\t\ttabindex=\"0\"\n\t\t\t\tv-if=\"buttonClear && itemIndex === 0 && value\"\n\t\t\t\t@click=\"clearItem\"\n\t\t\t\t@keydown.enter=\"clearItem\"\n\t\t\t\t@keydown.space.prevent=\"clearItem\"\n\t\t\t></div>\n\t\t\t<field-item-alert\n\t\t\t\tv-bind:field=\"field\"\n\t\t\t\tv-bind:item=\"item\"\n\t\t\t\tv-bind:itemIndex=\"itemIndex\"\n\t\t\t></field-item-alert>\n\t\t</div>\n\t",
       methods: {
         onInput: function onInput() {
           var value = this.field.normalize(this.value);
@@ -3649,7 +3765,7 @@ var Vue = exports.Vue;
 
     var FieldText = {
       mixins: [MixinString],
-      template: "\n\t\t<div class=\"b24-form-control-container b24-form-control-icon-after\">\n\t\t\t<textarea class=\"b24-form-control\"\n\t\t\t\t:class=\"inputClasses\"\n\t\t\t\tv-model=\"value\"\n\t\t\t\t@blur=\"$emit('input-blur', this)\"\n\t\t\t\t@focus=\"$emit('input-focus', this)\"\n\t\t\t></textarea>\n\t\t\t<div class=\"b24-form-control-label\">\n\t\t\t\t{{ label }} \n\t\t\t\t<span v-show=\"field.required\" class=\"b24-form-control-required\">*</span>\t\t\t\n\t\t\t</div>\n\t\t\t<div class=\"b24-form-icon-after b24-form-icon-remove\"\n\t\t\t\t:title=\"field.messages.get('fieldRemove')\"\n\t\t\t\tv-if=\"itemIndex > 0\"\n\t\t\t\t@click=\"deleteItem\"\n\t\t\t></div>\n\t\t\t<field-item-alert\n\t\t\t\tv-bind:field=\"field\"\n\t\t\t\tv-bind:item=\"item\"\n\t\t\t></field-item-alert>\n\t\t</div>\n\t"
+      template: "\n\t\t<div class=\"b24-form-control-container b24-form-control-icon-after\">\n\t\t\t<textarea class=\"b24-form-control\"\n\t\t\t\t:id=\"fieldId\"\n\t\t\t\t:class=\"inputClasses\"\n\t\t\t\t:aria-required=\"ariaRequired\"\n\t\t\t\t:aria-invalid=\"ariaInvalid\"\n\t\t\t\t:aria-describedby=\"ariaDescribedby\"\n\t\t\t\tv-model=\"value\"\n\t\t\t\t@blur=\"$emit('input-blur', this)\"\n\t\t\t\t@focus=\"$emit('input-focus', this)\"\n\t\t\t></textarea>\n\t\t\t<label class=\"b24-form-control-label\" :for=\"fieldId\">\n\t\t\t\t{{ label }} \n\t\t\t\t<span v-show=\"field.required\" class=\"b24-form-control-required\" aria-hidden=\"true\">*</span>\t\t\t\n\t\t\t</label>\n\t\t\t<div class=\"b24-form-icon-after b24-form-icon-remove\"\n\t\t\t\t:title=\"field.messages.get('fieldRemove')\"\n\t\t\t\t:aria-label=\"field.messages.get('fieldRemove')\"\n\t\t\t\trole=\"button\"\n\t\t\t\ttabindex=\"0\"\n\t\t\t\tv-if=\"itemIndex > 0\"\n\t\t\t\t@click=\"deleteItem\"\n\t\t\t\t@keydown.enter=\"deleteItem\"\n\t\t\t\t@keydown.space.prevent=\"deleteItem\"\n\t\t\t></div>\n\t\t\t<field-item-alert\n\t\t\t\tv-bind:field=\"field\"\n\t\t\t\tv-bind:item=\"item\"\n\t\t\t\tv-bind:itemIndex=\"itemIndex\"\n\t\t\t></field-item-alert>\n\t\t</div>\n\t"
     };
 
     var Controller$7 = /*#__PURE__*/function (_BaseField$Controller) {
@@ -3679,7 +3795,7 @@ var Vue = exports.Vue;
 
     var FieldBool = {
       mixins: [MixinField],
-      template: "\t\n\t\t<label class=\"b24-form-control-container\"\n\t\t\t@click.capture=\"$emit('input-click', $event)\"\n\t\t>\n\t\t\t<input type=\"checkbox\" \n\t\t\t\tv-model=\"field.item().selected\"\n\t\t\t\t@blur=\"$emit('input-blur')\"\n\t\t\t\t@focus=\"$emit('input-focus')\"\n\t\t\t>\n\t\t\t<span class=\"b24-form-control-desc\">{{ field.label }}</span>\n\t\t\t<span v-show=\"field.required\" class=\"b24-form-control-required\">*</span>\n\t\t\t<field-item-alert v-bind:field=\"field\"></field-item-alert>\n\t\t</label>\n\t"
+      template: "\t\n\t\t<div class=\"b24-form-control-container\">\n\t\t\t<label @click.capture=\"$emit('input-click', $event)\">\n\t\t\t\t<input type=\"checkbox\" \n\t\t\t\t\t:id=\"fieldId\"\n\t\t\t\t\t:aria-required=\"ariaRequired\"\n\t\t\t\t\t:aria-invalid=\"ariaInvalid\"\n\t\t\t\t\t:aria-describedby=\"ariaDescribedby\"\n\t\t\t\t\tv-model=\"field.item().selected\"\n\t\t\t\t\t@blur=\"$emit('input-blur')\"\n\t\t\t\t\t@focus=\"$emit('input-focus')\"\n\t\t\t\t\t@keydown.enter.prevent\n\t\t\t\t>\n\t\t\t\t<span class=\"b24-form-control-desc\">{{ field.label }}</span>\n\t\t\t\t<span v-show=\"field.required\" class=\"b24-form-control-required\" aria-hidden=\"true\">*</span>\n\t\t\t</label>\n\t\t\t<field-item-alert v-bind:field=\"field\"></field-item-alert>\n\t\t</div>\n\t"
     };
 
     var Controller$8 = /*#__PURE__*/function (_BaseField$Controller) {
@@ -3705,7 +3821,7 @@ var Vue = exports.Vue;
 
     var FieldCheckbox = {
       mixins: [MixinField],
-      template: "\n\t\t<div class=\"b24-form-control-container\">\n\t\t\t<span class=\"b24-form-control-label\">\n\t\t\t\t{{ field.label }} \n\t\t\t\t<span v-show=\"field.required\" class=\"b24-form-control-required\">*</span>\n\t\t\t</span>\n\n\t\t\t<label class=\"b24-form-control\"\n\t\t\t\tv-for=\"item in field.items\"\n\t\t\t\t:class=\"{'b24-form-control-checked': item.selected}\"\n\t\t\t>\n\t\t\t\t<input :type=\"field.type\" \n\t\t\t\t\t:value=\"item.value\"\n\t\t\t\t\tv-model=\"selected\"\n\t\t\t\t\t@blur=\"$emit('input-blur')\"\n\t\t\t\t\t@focus=\"$emit('input-focus')\"\n\t\t\t\t>\n\t\t\t\t<span class=\"b24-form-control-desc\">{{ item.label }}</span>\n\t\t\t</label>\n\t\t\t<field-item-image-slider v-bind:field=\"field\"></field-item-image-slider>\n\t\t\t<field-item-alert v-bind:field=\"field\"></field-item-alert>\n\t\t</div>\n\t"
+      template: "\n\t\t<div class=\"b24-form-control-container\">\n\t\t\t<fieldset :aria-describedby=\"ariaDescribedby\">\n\t\t\t\t<legend class=\"b24-form-control-label\">\n\t\t\t\t\t{{ field.label }} \n\t\t\t\t\t<span v-show=\"field.required\" class=\"b24-form-control-required\" aria-hidden=\"true\">*</span>\n\t\t\t\t</legend>\n\n\t\t\t\t<label class=\"b24-form-control\"\n\t\t\t\t\tv-for=\"(item, index) in field.items\"\n\t\t\t\t\t:class=\"{'b24-form-control-checked': item.selected}\"\n\t\t\t\t>\n\t\t\t\t\t<input :type=\"field.type\" \n\t\t\t\t\t\t:id=\"fieldId + '-' + index\"\n\t\t\t\t\t\t:value=\"item.value\"\n\t\t\t\t\t\t:aria-required=\"ariaRequired\"\n\t\t\t\t\t\t:aria-invalid=\"ariaInvalid\"\n\t\t\t\t\t\tv-model=\"selected\"\n\t\t\t\t\t\t@blur=\"$emit('input-blur')\"\n\t\t\t\t\t\t@focus=\"$emit('input-focus')\"\n\t\t\t\t\t\t@keydown.enter.prevent\n\t\t\t\t\t>\n\t\t\t\t\t<span class=\"b24-form-control-desc\">{{ item.label }}</span>\n\t\t\t\t</label>\n\t\t\t</fieldset>\n\t\t\t<field-item-image-slider v-bind:field=\"field\"></field-item-image-slider>\n\t\t\t<field-item-alert v-bind:field=\"field\"></field-item-alert>\n\t\t</div>\n\t"
     };
 
     var Controller$9 = /*#__PURE__*/function (_BaseField$Controller) {
@@ -3752,7 +3868,7 @@ var Vue = exports.Vue;
 
     var FieldSelect = {
       mixins: [MixinField],
-      template: "\n\t\t<div class=\"field-item\">\n\t\t\t<label>\n\t\t\t\t<div class=\"b24-form-control-select-label\">\n\t\t\t\t\t{{ field.label }} \n\t\t\t\t\t<span v-show=\"field.required\" class=\"b24-form-control-required\">*</span>\n\t\t\t\t</div>\n\t\t\t\t<div>\n\t\t\t\t\t<select \n\t\t\t\t\t\tv-model=\"selected\"\n\t\t\t\t\t\tv-bind:multiple=\"field.multiple\"\n\t\t\t\t\t\t@blur=\"$emit('input-blur', this)\"\n\t\t\t\t\t\t@focus=\"$emit('input-focus', this)\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<option v-for=\"item in field.items\" \n\t\t\t\t\t\t\tv-bind:value=\"item.value\"\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ item.label }}\n\t\t\t\t\t\t</option>\n\t\t\t\t\t</select>\n\t\t\t\t</div>\n\t\t\t</label>\n\t\t\t<field-item-image-slider v-bind:field=\"field\"></field-item-image-slider>\n\t\t\t<field-item-alert v-bind:field=\"field\"></field-item-alert>\n\t\t</div>\n\t"
+      template: "\n\t\t<div class=\"field-item\">\n\t\t\t<label class=\"b24-form-control-select-label\" :for=\"fieldId\">\n\t\t\t\t{{ field.label }} \n\t\t\t\t<span v-show=\"field.required\" class=\"b24-form-control-required\" aria-hidden=\"true\">*</span>\n\t\t\t</label>\n\t\t\t<div>\n\t\t\t\t<select \n\t\t\t\t\t:id=\"fieldId\"\n\t\t\t\t\tv-model=\"selected\"\n\t\t\t\t\tv-bind:multiple=\"field.multiple\"\n\t\t\t\t\t:aria-required=\"ariaRequired\"\n\t\t\t\t\t:aria-invalid=\"ariaInvalid\"\n\t\t\t\t\t:aria-describedby=\"ariaDescribedby\"\n\t\t\t\t\t@blur=\"$emit('input-blur', this)\"\n\t\t\t\t\t@focus=\"$emit('input-focus', this)\"\n\t\t\t\t>\n\t\t\t\t\t<option v-for=\"item in field.items\" \n\t\t\t\t\t\tv-bind:value=\"item.value\"\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ item.label }}\n\t\t\t\t\t</option>\n\t\t\t\t</select>\n\t\t\t</div>\n\t\t\t<field-item-image-slider v-bind:field=\"field\"></field-item-image-slider>\n\t\t\t<field-item-alert v-bind:field=\"field\"></field-item-alert>\n\t\t</div>\n\t"
     };
 
     var Controller$b = /*#__PURE__*/function (_BaseField$Controller) {
@@ -3822,7 +3938,7 @@ var Vue = exports.Vue;
           isLoading: false
         };
       },
-      template: "\n\t\t<div>\n\t\t\t<div v-if=\"file.content\" class=\"b24-form-control-file-item\">\n\t\t\t\t<div class=\"b24-form-control-file-item-preview\">\n\t\t\t\t\t<img class=\"b24-form-control-file-item-preview-image\" \n\t\t\t\t\t\t:src=\"fileIcon\"\n\t\t\t\t\t\tv-if=\"hasIcon\"\n\t\t\t\t\t>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"b24-form-control-file-item-name\">\n\t\t\t\t\t<span class=\"b24-form-control-file-item-name-text\">\n\t\t\t\t\t\t{{ file.name }}\n\t\t\t\t\t</span>\n\t\t\t\t\t<div style=\"display: none;\" class=\"b24-form-control-file-item-preview-image-popup\">\n\t\t\t\t\t\t<img>\n\t\t\t\t\t</div>\n\t\t\t\t\t<span hidden=\"hidden\" v-show=\"file.size\" :v-bind=\"file.size\" class=\"b24-form-control-file-item-size-text\">\n\t\t\t\t\t\t{{ fileSize }} {{ field.messages.get('fieldFileSizeUnitMb') }}\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t\t<div @click.prevent=\"removeFile\" class=\"b24-form-control-file-item-remove\"></div>\n\t\t\t</div>\n\t\t\t<div\n\t\t\t\tclass=\"b24-form-control-file-item-empty\"\n\t\t\t\tv-show=\"isLoading\"\n\t\t\t>\n\t\t\t\t<span class=\"b24-form-control-string\">{{ field.messages.get('fieldFileLoading') }}...</span>\n\t\t\t</div>\n\t\t\t<div \n\t\t\t\tclass=\"b24-form-control-file-item-empty\"\n\t\t\t\t:class=\"{'b24-form-control-alert': !!errorTextTypeFile}\"\n\t\t\t\tv-show=\"!file.content && !isLoading\" \n\t\t\t>\n\t\t\t\t<label class=\"b24-form-control\">\n\t\t\t\t\t{{ field.messages.get('fieldFileChoose') }}\n\t\t\t\t\t<input type=\"file\" style=\"display: none;\"\n\t\t\t\t\t\tref=\"inputFiles\"\n\t\t\t\t\t\t:accept=\"field.getAcceptTypes()\"\n\t\t\t\t\t\t@change=\"setFiles\"\n\t\t\t\t\t\t@blur=\"$emit('input-blur')\"\n\t\t\t\t\t\t@focus=\"$emit('input-focus')\"\n\t\t\t\t\t>\n\t\t\t\t</label>\n\t\t\t\t<div class=\"b24-form-control-alert-message\"\n\t\t\t\t\t@click=\"errorTextTypeFile = null\"\n\t\t\t\t>{{errorTextTypeFile}}</div>\n\t\t\t</div>\n\t\t</div>\n\t",
+      template: "\n\t\t<div>\n\t\t\t<div v-if=\"file.content\" class=\"b24-form-control-file-item\">\n\t\t\t\t<div class=\"b24-form-control-file-item-preview\">\n\t\t\t\t\t<img class=\"b24-form-control-file-item-preview-image\" \n\t\t\t\t\t\t:src=\"fileIcon\"\n\t\t\t\t\t\tv-if=\"hasIcon\"\n\t\t\t\t\t>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"b24-form-control-file-item-name\">\n\t\t\t\t\t<span class=\"b24-form-control-file-item-name-text\">\n\t\t\t\t\t\t{{ file.name }}\n\t\t\t\t\t</span>\n\t\t\t\t\t<div style=\"display: none;\" class=\"b24-form-control-file-item-preview-image-popup\">\n\t\t\t\t\t\t<img>\n\t\t\t\t\t</div>\n\t\t\t\t\t<span hidden=\"hidden\" v-show=\"file.size\" :v-bind=\"file.size\" class=\"b24-form-control-file-item-size-text\">\n\t\t\t\t\t\t{{ fileSize }} {{ field.messages.get('fieldFileSizeUnitMb') }}\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t\t<button \n\t\t\t\t\ttype=\"button\"\n\t\t\t\t\t@click=\"removeFile\"\n\t\t\t\t\tclass=\"b24-form-control-file-item-remove\"\n\t\t\t\t\t:aria-label=\"field.messages.get('fieldFileRemove')\"\n\t\t\t\t></button>\n\t\t\t</div>\n\t\t\t<div\n\t\t\t\tclass=\"b24-form-control-file-item-empty\"\n\t\t\t\tv-show=\"isLoading\"\n\t\t\t>\n\t\t\t\t<span class=\"b24-form-control-string\">{{ field.messages.get('fieldFileLoading') }}...</span>\n\t\t\t</div>\n\t\t\t<div \n\t\t\t\tclass=\"b24-form-control-file-item-empty\"\n\t\t\t\t:class=\"{'b24-form-control-alert': !!errorTextTypeFile}\"\n\t\t\t\tv-show=\"!file.content && !isLoading\" \n\t\t\t>\n\t\t\t\t<button\n\t\t\t\t\ttype=\"button\"\n\t\t\t\t\tclass=\"b24-form-control b24-form-control-file-button\"\n\t\t\t\t\t@click=\"openFileDialog\"\n\t\t\t\t\t:aria-label=\"field.messages.get('fieldFileChoose')\"\n\t\t\t\t>\n\t\t\t\t\t{{ field.messages.get('fieldFileChoose') }}\n\t\t\t\t</button>\n\t\t\t\t<input type=\"file\" style=\"display: none;\"\n\t\t\t\t\tref=\"inputFiles\"\n\t\t\t\t\t:accept=\"field.getAcceptTypes()\"\n\t\t\t\t\t@change=\"setFiles\"\n\t\t\t\t\t@blur=\"$emit('input-blur')\"\n\t\t\t\t\t@focus=\"$emit('input-focus')\"\n\t\t\t\t>\n\t\t\t\t<div class=\"b24-form-control-alert-message\"\n\t\t\t\t\t@click=\"errorTextTypeFile = null\"\n\t\t\t\t>{{errorTextTypeFile}}</div>\n\t\t\t</div>\n\t\t</div>\n\t",
       computed: {
         value: {
           get: function get() {
@@ -3858,6 +3974,11 @@ var Vue = exports.Vue;
         }
       },
       methods: {
+        openFileDialog: function openFileDialog() {
+          if (this.$refs.inputFiles) {
+            this.$refs.inputFiles.click();
+          }
+        },
         setFiles: function setFiles() {
           var _this = this;
           this.errorTextTypeFile = null;
@@ -3965,16 +4086,43 @@ var Vue = exports.Vue;
       methods: {}
     };
 
+    var KEY_SPACE = ' ';
     var ItemSelector = {
-      props: ['field'],
-      template: "\n\t\t<div>\n\t\t\t<div class=\"b24-form-control-list-selector-item\"\n\t\t\t\tv-for=\"(item, itemIndex) in field.unselectedItems()\"\n\t\t\t\t@click=\"selectItem(item)\"\n\t\t\t>\n\t\t\t\t<img class=\"b24-form-control-list-selector-item-image\"\n\t\t\t\t\tv-if=\"pic(item)\" \n\t\t\t\t\t:src=\"pic(item)\"\n\t\t\t\t>\n\t\t\t\t<div class=\"b24-form-control-list-selector-item-title\">\n\t\t\t\t\t<span >{{ item.label }}</span>\n\t\t\t\t</div>\n\t\n\t\t\t\t<div class=\"b24-form-control-list-selector-item-price\">\n\t\t\t\t\t<div class=\"b24-form-control-list-selector-item-price-old\"\n\t\t\t\t\t\tv-if=\"item.discount\"\n\t\t\t\t\t\tv-html=\"field.formatMoney(item.price + item.discount)\"\n\t\t\t\t\t></div>\n\t\t\t\t\t<div class=\"b24-form-control-list-selector-item-price-current\"\n\t\t\t\t\t\tv-if=\"item.price || item.price === 0\"\n\t\t\t\t\t\tv-html=\"field.formatMoney(item.price)\"\n\t\t\t\t\t></div> \n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t",
-      computed: {},
+      props: ['field', 'listboxId', 'focusedIndex'],
+      template: "\n\t\t<div \n\t\t\tref=\"container\"\n\t\t\t:id=\"listboxId\"\n\t\t\trole=\"listbox\"\n\t\t>\n\t\t\t<div class=\"b24-form-control-list-selector-item\"\n\t\t\t\tv-for=\"(item, itemIndex) in field.items\"\n\t\t\t\t:key=\"item.value\"\n\t\t\t\t:id=\"getItemId(itemIndex)\"\n\t\t\t\t:class=\"{'b24-form-control-list-selector-item-focused': itemIndex === focusedIndex}\"\n\t\t\t\trole=\"option\"\n\t\t\t\t@click=\"selectItem(item)\"\n\t\t\t>\n\t\t\t\t<img class=\"b24-form-control-list-selector-item-image\"\n\t\t\t\t\tv-if=\"pic(item)\" \n\t\t\t\t\t:src=\"pic(item)\"\n\t\t\t\t\talt=\"\"\n\t\t\t\t>\n\t\t\t\t<div class=\"b24-form-control-list-selector-item-title\">\n\t\t\t\t\t<span >{{ item.label }}</span>\n\t\t\t\t</div>\n\t\n\t\t\t\t<div class=\"b24-form-control-list-selector-item-price\"\n\t\t\t\t\tv-if=\"hasPrice(item)\"\n\t\t\t\t>\n\t\t\t\t\t<div class=\"b24-form-control-list-selector-item-price-old\"\n\t\t\t\t\t\tv-if=\"item.discount\"\n\t\t\t\t\t\tv-html=\"field.formatMoney(item.price + item.discount)\"\n\t\t\t\t\t\taria-hidden=\"true\"\n\t\t\t\t\t></div>\n\t\t\t\t\t<div class=\"b24-form-control-list-selector-item-price-current\"\n\t\t\t\t\t\tv-if=\"item.price || item.price === 0\"\n\t\t\t\t\t\tv-html=\"field.formatMoney(item.price)\"\n\t\t\t\t\t></div> \n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t",
+      watch: {
+        focusedIndex: function focusedIndex() {
+          this.scrollToFocused();
+        }
+      },
       methods: {
+        getItemId: function getItemId(index) {
+          return "".concat(this.field.id, "-option-").concat(index);
+        },
+        hasPrice: function hasPrice(item) {
+          return item.price || item.price === 0 || item.discount;
+        },
         pic: function pic(item) {
           return item && item.pics && item.pics.length > 0 ? item.pics[0] : '';
         },
         selectItem: function selectItem(item) {
           this.$emit('select', item);
+        },
+        scrollToFocused: function scrollToFocused() {
+          var _this = this;
+          this.$nextTick(function () {
+            var container = _this.$refs.container;
+            if (!container) {
+              return;
+            }
+            var focusedElement = container.children[_this.focusedIndex];
+            if (focusedElement) {
+              focusedElement.scrollIntoView({
+                block: 'nearest',
+                behavior: 'smooth'
+              });
+            }
+          });
         }
       }
     };
@@ -3984,20 +4132,23 @@ var Vue = exports.Vue;
       components: {
         'item-selector': ItemSelector
       },
+      data: function data() {
+        return {
+          focusedItemIndex: 0
+        };
+      },
       methods: {
         toggleSelector: function toggleSelector() {
-          if (this.field.unselectedItem()) {
-            this.toggleDropDown();
-          }
+          this.toggleDropDown();
         },
         select: function select(item) {
-          var _this = this;
+          var _this2 = this;
           var select = function select() {
-            if (_this.item) {
-              _this.item.selected = false;
+            if (_this2.item) {
+              _this2.item.selected = false;
             }
             item.selected = true;
-            _this.closeDropDown();
+            _this2.closeDropDown();
           };
           if (this.item && this.item.selected) {
             select();
@@ -4007,13 +4158,68 @@ var Vue = exports.Vue;
         },
         unselect: function unselect() {
           this.item.selected = false;
+        },
+        handleKeydown: function handleKeydown(event) {
+          var key = event.key;
+          if (this.dropDownOpened) {
+            var items = this.field.items;
+
+            // eslint-disable-next-line default-case
+            switch (key) {
+              case 'ArrowDown':
+                {
+                  event.preventDefault();
+                  this.focusedItemIndex = Math.min(this.focusedItemIndex + 1, items.length - 1);
+                  break;
+                }
+              case 'ArrowUp':
+                {
+                  event.preventDefault();
+                  this.focusedItemIndex = Math.max(this.focusedItemIndex - 1, 0);
+                  break;
+                }
+              case 'Enter':
+              case KEY_SPACE:
+                {
+                  event.preventDefault();
+                  if (items[this.focusedItemIndex]) {
+                    this.select(items[this.focusedItemIndex]);
+                  }
+                  break;
+                }
+              case 'Escape':
+              case 'Esc':
+                {
+                  event.preventDefault();
+                  this.closeDropDown();
+                  break;
+                }
+            }
+            return;
+          }
+          if (['Enter', KEY_SPACE, 'ArrowDown', 'ArrowUp'].includes(key)) {
+            event.preventDefault();
+            this.toggleDropDown();
+          }
+        },
+        onDropdownMousedown: function onDropdownMousedown() {
+          this.isInteractingWithDropdown = true;
+        },
+        handleBlur: function handleBlur() {
+          if (this.isInteractingWithDropdown) {
+            this.isInteractingWithDropdown = false;
+            return;
+          }
+          if (this.dropDownOpened) {
+            this.closeDropDown();
+          }
         }
       }
     };
     var FieldListItem = {
       mixins: [fieldListMixin],
-      props: ['field', 'item', 'itemSubComponent'],
-      template: "\n\t\t<div class=\"b24-form-control-container b24-form-control-icon-after\"\n\t\t\t@click.self=\"toggleSelector\"\n\t\t>\n\t\t\t<input readonly=\"\" type=\"text\" class=\"b24-form-control\"\n\t\t\t\t:value=\"itemLabel\"\n\t\t\t\t:class=\"classes\"\n\t\t\t\t@click.capture=\"toggleSelector\"\n\t\t\t\t@keydown.capture.space.stop.prevent=\"toggleSelector\"\n\t\t\t>\n\t\t\t<div class=\"b24-form-control-label\">\n\t\t\t\t{{ field.label }}\n\t\t\t\t<span v-show=\"field.required\" class=\"b24-form-control-required\">*</span>\n\t\t\t</div>\n\t\t\t<div class=\"b24-form-icon-after b24-form-icon-remove\"\n\t\t\t\tv-if=\"item.selected\"\n\t\t\t\t@click.capture=\"unselect\"\n\t\t\t\t:title=\"field.messages.get('fieldListUnselect')\"\n\t\t\t></div>\n\t\t\t<field-item-alert v-bind:field=\"field\"></field-item-alert>\n\t\t\t<field-item-dropdown \n\t\t\t\t:marginTop=\"0\" \n\t\t\t\t:visible=\"dropDownOpened\"\n\t\t\t\t:title=\"field.label\"\n\t\t\t\t@close=\"closeDropDown()\"\n\t\t\t\t@visible:on=\"$emit('visible:on')\"\n\t\t\t\t@visible:off=\"$emit('visible:off')\"\n\t\t\t>\n\t\t\t\t<item-selector\n\t\t\t\t\t:field=\"field\"\n\t\t\t\t\t@select=\"select\"\n\t\t\t\t></item-selector>\n\t\t\t</field-item-dropdown>\n\t\t\t<field-item-image-slider \n\t\t\t\tv-if=\"item.selected && field.bigPic\" \n\t\t\t\t:field=\"field\" \n\t\t\t\t:item=\"item\"\n\t\t\t></field-item-image-slider>\n\t\t\t<component v-if=\"item.selected && itemSubComponent\" :is=\"itemSubComponent\"\n\t\t\t\t:key=\"field.id\"\n\t\t\t\t:field=\"field\"\n\t\t\t\t:item=\"item\"\n\t\t\t></component>\n\t\t</div>\n\t",
+      props: ['field', 'item', 'itemIndex', 'itemSubComponent'],
+      template: "\n\t\t<div class=\"b24-form-control-container b24-form-control-icon-after\"\n\t\t\t:id=\"fieldId\"\n\t\t\ttabindex=\"0\"\n\t\t\t@click=\"toggleSelector\"\n\t\t\t@keydown=\"onKeydown\"\n\t\t\t@blur=\"onBlur\"\n\t\t\t:aria-label=\"field.label\"\n\t\t\t:aria-invalid=\"ariaInvalid\"\n\t\t\t:aria-describedby=\"ariaDescribedby\"\n\t\t\t:aria-expanded=\"dropDownOpened ? 'true' : 'false'\"\n\t\t\t:aria-controls=\"getDropdownId()\"\n\t\t\t:aria-activedescendant=\"dropDownOpened ? getActiveDescendantId() : ''\"\n\t\t\trole=\"combobox\"\n\t\t>\n\t\t\t<input readonly=\"\" type=\"text\" class=\"b24-form-control\"\n\t\t\t\t:value=\"itemLabel\"\n\t\t\t\t:class=\"classes\"\n\t\t\t\ttabindex=\"-1\"\n\t\t\t>\n\t\t\t<div class=\"b24-form-control-label\" aria-hidden=\"true\">\n\t\t\t\t{{ field.label }}\n\t\t\t\t<span v-show=\"field.required\" class=\"b24-form-control-required\">*</span>\n\t\t\t</div>\n\t\t\t<button\n\t\t\t\ttype=\"button\"\n\t\t\t\tclass=\"b24-form-icon-after b24-form-icon-remove\"\n\t\t\t\tv-if=\"item.selected\"\n\t\t\t\t@click.stop=\"unselect\"\n\t\t\t\t@keydown.stop=\"onRemoveKeydown\"\n\t\t\t\t:aria-label=\"field.messages.get('fieldListUnselect')\"\n\t\t\t></button>\n\t\t\t<field-item-alert \n\t\t\t\tv-bind:field=\"field\"\n\t\t\t\tv-bind:item=\"item\"\n\t\t\t\tv-bind:itemIndex=\"itemIndex\"\n\t\t\t></field-item-alert>\n\t\t\t<field-item-dropdown \n\t\t\t\t:marginTop=\"0\" \n\t\t\t\t:visible=\"dropDownOpened\"\n\t\t\t\t:title=\"field.label\"\n\t\t\t\t:messages=\"field.messages\"\n\t\t\t\t@close=\"closeDropDown()\"\n\t\t\t\t@visible:on=\"$emit('visible:on')\"\n\t\t\t\t@visible:off=\"$emit('visible:off')\"\n\t\t\t\t@mousedown.native=\"onDropdownMousedown\"\n\t\t\t>\n\t\t\t\t<item-selector\n\t\t\t\t\t:field=\"field\"\n\t\t\t\t\t:listboxId=\"getDropdownId()\"\n\t\t\t\t\t:focusedIndex=\"focusedItemIndex\"\n\t\t\t\t\t@select=\"select\"\n\t\t\t\t\t@close=\"closeDropDown\"\n\t\t\t\t></item-selector>\n\t\t\t</field-item-dropdown>\n\t\t\t<field-item-image-slider \n\t\t\t\tv-if=\"item.selected && field.bigPic\" \n\t\t\t\t:field=\"field\" \n\t\t\t\t:item=\"item\"\n\t\t\t></field-item-image-slider>\n\t\t\t<component v-if=\"item.selected && itemSubComponent\" :is=\"itemSubComponent\"\n\t\t\t\t:key=\"field.id\"\n\t\t\t\t:field=\"field\"\n\t\t\t\t:item=\"item\"\n\t\t\t></component>\n\t\t</div>\n\t",
       computed: {
         itemLabel: function itemLabel() {
           if (!this.item || !this.item.selected) {
@@ -4029,20 +4235,51 @@ var Vue = exports.Vue;
           return list;
         }
       },
-      methods: {}
+      methods: {
+        getDropdownId: function getDropdownId() {
+          return "".concat(this.fieldId, "-listbox");
+        },
+        getActiveDescendantId: function getActiveDescendantId() {
+          if (!this.dropDownOpened || this.field.items.length === 0) {
+            return '';
+          }
+          return "".concat(this.field.id, "-option-").concat(this.focusedItemIndex);
+        },
+        onKeydown: function onKeydown(event) {
+          this.handleKeydown(event);
+        },
+        onBlur: function onBlur() {
+          this.handleBlur();
+        },
+        onRemoveKeydown: function onRemoveKeydown(event) {
+          if (event.key === 'Enter' || event.key === KEY_SPACE) {
+            event.preventDefault();
+            this.unselect();
+          }
+        }
+      }
     };
     var FieldList = {
       mixins: [fieldListMixin],
       components: {
         'field-list-item': FieldListItem
       },
-      template: "\n\t\t<div>\n\t\t\t<field-list-item\n\t\t\t\tv-for=\"(item, itemIndex) in getItems()\"\n\t\t\t\t:key=\"itemIndex\"\n\t\t\t\t:field=\"field\"\n\t\t\t\t:item=\"item\"\n\t\t\t\t:itemSubComponent=\"itemSubComponent\"\n\t\t\t\t@visible:on=\"$emit('input-focus')\"\n\t\t\t\t@visible:off=\"$emit('input-blur')\"\n\t\t\t></field-list-item>\n\t\t\t\t\t\t\n\t\t\t<a class=\"b24-form-control-add-btn\"\n\t\t\t\tv-if=\"isAddVisible()\"\n\t\t\t\t@click=\"toggleSelector\"\n\t\t\t>\n\t\t\t\t{{ field.messages.get('fieldAdd') }}\n\t\t\t</a>\n\t\t\t<field-item-dropdown \n\t\t\t\t:marginTop=\"0\" \n\t\t\t\t:visible=\"dropDownOpened\"\n\t\t\t\t:title=\"field.label\"\n\t\t\t\t@close=\"closeDropDown()\"\n\t\t\t\t@visible:on=\"$emit('input-focus')\"\n\t\t\t\t@visible:off=\"$emit('input-blur')\"\n\t\t\t>\n\t\t\t\t<item-selector\n\t\t\t\t\t:field=\"field\"\n\t\t\t\t\t@select=\"select\"\n\t\t\t\t></item-selector>\n\t\t\t</field-item-dropdown>\n\t\t</div>\n\t",
+      template: "\n\t\t<div>\n\t\t\t<field-list-item\n\t\t\t\tv-for=\"(item, itemIndex) in getItems()\"\n\t\t\t\t:key=\"itemIndex\"\n\t\t\t\t:field=\"field\"\n\t\t\t\t:item=\"item\"\n\t\t\t\t:itemIndex=\"itemIndex\"\n\t\t\t\t:itemSubComponent=\"itemSubComponent\"\n\t\t\t\t@visible:on=\"$emit('input-focus')\"\n\t\t\t\t@visible:off=\"$emit('input-blur')\"\n\t\t\t></field-list-item>\n\t\t\t<button \n\t\t\t\ttype=\"button\"\n\t\t\t\tclass=\"b24-form-control-add-btn\"\n\t\t\t\tv-if=\"isAddVisible()\"\n\t\t\t\t@click=\"toggleSelector\"\n\t\t\t\t@keydown=\"handleKeydown\"\n\t\t\t\t@blur=\"handleBlur\"\n\t\t\t\t:aria-label=\"field.messages.get('fieldAdd')\"\n\t\t\t\t:aria-expanded=\"dropDownOpened ? 'true' : 'false'\"\n\t\t\t\t:aria-controls=\"getAddListboxId()\"\n\t\t\t\t:aria-activedescendant=\"dropDownOpened ? getActiveDescendantId() : ''\"\n\t\t\t>\n\t\t\t\t{{ field.messages.get('fieldAdd') }}\n\t\t\t</button>\n\t\t\t<field-item-dropdown \n\t\t\t\t:marginTop=\"0\" \n\t\t\t\t:visible=\"dropDownOpened\"\n\t\t\t\t:title=\"field.label\"\n\t\t\t\t:messages=\"field.messages\"\n\t\t\t\t@close=\"closeDropDown()\"\n\t\t\t\t@visible:on=\"$emit('input-focus')\"\n\t\t\t\t@visible:off=\"$emit('input-blur')\"\n\t\t\t\t@mousedown.native=\"onDropdownMousedown\"\n\t\t\t>\n\t\t\t\t<item-selector\n\t\t\t\t\t:field=\"field\"\n\t\t\t\t\t:listboxId=\"getAddListboxId()\"\n\t\t\t\t\t:focusedIndex=\"focusedItemIndex\"\n\t\t\t\t\t@select=\"select\"\n\t\t\t\t\t@close=\"closeDropDown\"\n\t\t\t\t></item-selector>\n\t\t\t</field-item-dropdown>\n\t\t</div>\n\t",
       computed: {
         itemSubComponent: function itemSubComponent() {
           return null;
         }
       },
       methods: {
+        getAddListboxId: function getAddListboxId() {
+          return "".concat(this.field.id, "-add-listbox");
+        },
+        getActiveDescendantId: function getActiveDescendantId() {
+          if (!this.dropDownOpened || this.field.items.length === 0) {
+            return '';
+          }
+          return "".concat(this.field.id, "-option-").concat(this.focusedItemIndex);
+        },
         getItems: function getItems() {
           return this.field.selectedItem() ? this.field.selectedItems() : this.field.item() ? [this.field.item()] : [];
         },
@@ -4276,7 +4513,7 @@ var Vue = exports.Vue;
 
     var FieldProductSubItem = {
       props: ['field', 'item'],
-      template: "\n\t\t<div class=\"b24-form-control-product-info\">\n\t\t\t<input type=\"hidden\" \n\t\t\t\tv-model=\"item.value.quantity\"\n\t\t\t>\n\t\t\t<div class=\"b24-form-control-product-icon\">\n\t\t\t\t<svg v-if=\"!pic\" width=\"28px\" height=\"24px\" viewBox=\"0 0 28 24\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">\n\t\t\t\t\t<g transform=\"translate(-14, -17)\" fill=\"#333\" stroke=\"none\" stroke-width=\"1\" fill-rule=\"evenodd\" opacity=\"0.2\">\n\t\t\t\t\t\t<path d=\"M29,38.5006415 C29,39.8807379 27.8807708,41 26.4993585,41 C25.1192621,41 24,39.8807708 24,38.5006415 C24,37.1192621 25.1192292,36 26.4993585,36 C27.8807379,36 29,37.1192292 29,38.5006415 Z M39,38.5006415 C39,39.8807379 37.8807708,41 36.4993585,41 C35.1192621,41 34,39.8807708 34,38.5006415 C34,37.1192621 35.1192292,36 36.4993585,36 C37.8807379,36 39,37.1192292 39,38.5006415 Z M20.9307332,21.110867 L40.9173504,21.0753348 C41.2504348,21.0766934 41.5636721,21.2250055 41.767768,21.4753856 C41.97328,21.7271418 42.046982,22.0537176 41.9704452,22.3639694 L39.9379768,33.1985049 C39.8217601,33.6666139 39.3866458,33.9972787 38.8863297,34 L22.7805131,34 C22.280197,33.9972828 21.8450864,33.6666243 21.728866,33.1985049 L18.2096362,19.0901297 L15,19.0901297 C14.4477153,19.0901297 14,18.6424144 14,18.0901297 L14,18 C14,17.4477153 14.4477153,17 15,17 L19.0797196,17 C19.5814508,17.0027172 20.0151428,17.3333757 20.1327818,17.8014951 L20.9307332,21.110867 Z\" id=\"Icon\"></path>\n\t\t\t\t\t</g>\n\t\t\t\t</svg>\n\t\t\t\t<img v-if=\"pic\" :src=\"pic\" style=\"height: 24px;\">\n\t\t\t</div>\n\t\t\t\n\t\t\t<div class=\"b24-form-control-product-quantity\"\n\t\t\t\tv-if=\"item.selected\"\n\t\t\t>\n\t\t\t\t<div class=\"b24-form-control-product-quantity-remove\"\n\t\t\t\t\t:style=\"{visibility: item.getNextDecQuantity() ? 'visible' : 'hidden'}\"\n\t\t\t\t\t@click=\"item.decQuantity()\"\n\t\t\t\t></div>\n\t\t\t\t<div class=\"b24-form-control-product-quantity-counter\">\n\t\t\t\t\t{{ item.value.quantity }}\n\t\t\t\t\t<span\n\t\t\t\t\t\tv-if=\"item.quantity.unit\"\n\t\t\t\t\t>{{ item.quantity.unit }}</span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"b24-form-control-product-quantity-add\"\n\t\t\t\t\t:style=\"{visibility: item.getNextIncQuantity() ? 'visible' : 'hidden'}\"\n\t\t\t\t\t@click=\"item.incQuantity()\"\n\t\t\t\t></div>\n\t\t\t</div>\n\t\t\t<div class=\"b24-form-control-product-price\">\n\t\t\t\t<div>\n\t\t\t\t\t<div class=\"b24-form-control-product-price-old\"\n\t\t\t\t\t\tv-if=\"item.discount\"\n\t\t\t\t\t\tv-html=\"field.formatMoney(item.getSummary())\"\n\t\t\t\t\t></div>\n\t\t\t\t\t<div class=\"b24-form-control-product-price-current\"\n\t\t\t\t\t\tv-html=\"field.formatMoney(item.getTotal())\"\n\t\t\t\t\t></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t",
+      template: "\n\t\t<div class=\"b24-form-control-product-info\" @click.stop>\n\t\t\t<input type=\"hidden\" \n\t\t\t\tv-model=\"item.value.quantity\"\n\t\t\t>\n\t\t\t<div class=\"b24-form-control-product-icon\">\n\t\t\t\t<svg v-if=\"!pic\" width=\"28px\" height=\"24px\" viewBox=\"0 0 28 24\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">\n\t\t\t\t\t<g transform=\"translate(-14, -17)\" fill=\"#333\" stroke=\"none\" stroke-width=\"1\" fill-rule=\"evenodd\" opacity=\"0.2\">\n\t\t\t\t\t\t<path d=\"M29,38.5006415 C29,39.8807379 27.8807708,41 26.4993585,41 C25.1192621,41 24,39.8807708 24,38.5006415 C24,37.1192621 25.1192292,36 26.4993585,36 C27.8807379,36 29,37.1192292 29,38.5006415 Z M39,38.5006415 C39,39.8807379 37.8807708,41 36.4993585,41 C35.1192621,41 34,39.8807708 34,38.5006415 C34,37.1192621 35.1192292,36 36.4993585,36 C37.8807379,36 39,37.1192292 39,38.5006415 Z M20.9307332,21.110867 L40.9173504,21.0753348 C41.2504348,21.0766934 41.5636721,21.2250055 41.767768,21.4753856 C41.97328,21.7271418 42.046982,22.0537176 41.9704452,22.3639694 L39.9379768,33.1985049 C39.8217601,33.6666139 39.3866458,33.9972787 38.8863297,34 L22.7805131,34 C22.280197,33.9972828 21.8450864,33.6666243 21.728866,33.1985049 L18.2096362,19.0901297 L15,19.0901297 C14.4477153,19.0901297 14,18.6424144 14,18.0901297 L14,18 C14,17.4477153 14.4477153,17 15,17 L19.0797196,17 C19.5814508,17.0027172 20.0151428,17.3333757 20.1327818,17.8014951 L20.9307332,21.110867 Z\" id=\"Icon\"></path>\n\t\t\t\t\t</g>\n\t\t\t\t</svg>\n\t\t\t\t<img v-if=\"pic\" :src=\"pic\" style=\"height: 24px;\">\n\t\t\t</div>\n\t\t\t\n\t\t\t<div class=\"b24-form-control-product-quantity\"\n\t\t\t\tv-if=\"item.selected\"\n\t\t\t>\n\t\t\t\t<div class=\"b24-form-control-product-quantity-remove\"\n\t\t\t\t\t:style=\"{visibility: item.getNextDecQuantity() ? 'visible' : 'hidden'}\"\n\t\t\t\t\t@click.stop=\"item.decQuantity()\"\n\t\t\t\t></div>\n\t\t\t\t<div class=\"b24-form-control-product-quantity-counter\">\n\t\t\t\t\t{{ item.value.quantity }}\n\t\t\t\t\t<span\n\t\t\t\t\t\tv-if=\"item.quantity.unit\"\n\t\t\t\t\t>{{ item.quantity.unit }}</span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"b24-form-control-product-quantity-add\"\n\t\t\t\t\t:style=\"{visibility: item.getNextIncQuantity() ? 'visible' : 'hidden'}\"\n\t\t\t\t\t@click.stop=\"item.incQuantity()\"\n\t\t\t\t></div>\n\t\t\t</div>\n\t\t\t<div class=\"b24-form-control-product-price\">\n\t\t\t\t<div>\n\t\t\t\t\t<div class=\"b24-form-control-product-price-old\"\n\t\t\t\t\t\tv-if=\"item.discount\"\n\t\t\t\t\t\tv-html=\"field.formatMoney(item.getSummary())\"\n\t\t\t\t\t></div>\n\t\t\t\t\t<div class=\"b24-form-control-product-price-current\"\n\t\t\t\t\t\tv-html=\"field.formatMoney(item.getTotal())\"\n\t\t\t\t\t></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t",
       computed: {
         pic: function pic() {
           return !this.field.bigPic && this.item && this.item.pics && this.item.pics.length > 0 ? this.item.pics[0] : '';
@@ -4338,6 +4575,9 @@ var Vue = exports.Vue;
           }
         },
         onKeyDown: function onKeyDown(e) {
+          if (e.ctrlKey || e.metaKey) {
+            return;
+          }
           var val = e.key;
           if (!/[^\d]/.test(val || '')) {
             return;
@@ -5002,6 +5242,7 @@ var Vue = exports.Vue;
       return date1.getDate() === date2.getDate() && date1.getMonth() === date2.getMonth() && date1.getFullYear() === date2.getFullYear();
     }
 
+    var KEY_SPACE$1 = ' ';
     var FieldDateTime = {
       mixins: [MixinString, MixinDropDown],
       components: {
@@ -5013,8 +5254,27 @@ var Vue = exports.Vue;
           format: null
         };
       },
-      template: "\n\t\t<div>\n\t\t\t<field-string\n\t\t\t\t:field=\"field\"\n\t\t\t\t:item=\"item\"\n\t\t\t\t:itemIndex=\"itemIndex\"\n\t\t\t\t:readonly=\"true\"\n\t\t\t\t:buttonClear=\"field.messages.get('fieldListUnselect')\"\n\t\t\t\t@input-click=\"toggleDropDown()\"\n\t\t\t></field-string>\n\t\t\t<field-item-dropdown \n\t\t\t\t:marginTop=\"'-14px'\" \n\t\t\t\t:maxHeight=\"'none'\" \n\t\t\t\t:width=\"'auto'\" \n\t\t\t\t:visible=\"dropDownOpened\"\n\t\t\t\t:title=\"field.label\"\n\t\t\t\t@close=\"closeDropDown()\"\n\t\t\t>\n\t\t\t\t<date-pick \n\t\t\t\t\t:value=\"item.value\"\n\t\t\t\t\t:show=\"true\"\n\t\t\t\t\t:hasInputElement=\"false\"\n\t\t\t\t\t:pickTime=\"field.hasTime\"\n\t\t\t\t\t:startWeekOnSunday=\"field.sundayFirstly\"\n\t\t\t\t\t:format=\"field.dateFormat\"\n\t\t\t\t\t:weekdays=\"getWeekdays()\"\n\t\t\t\t\t:months=\"getMonths()\"\n\t\t\t\t\t:setTimeCaption=\"field.messages.get('fieldDateTime')\"\n\t\t\t\t\t:closeButtonCaption=\"field.messages.get('fieldDateClose')\"\n\t\t\t\t\t:selectableYearRange=\"120\"\n\t\t\t\t\t@input=\"setDate\"\n\t\t\t\t\t@close=\"closeDropDown()\"\n\t\t\t\t></date-pick>\n\t\t\t</field-item-dropdown>\n\t\t</div>\n\t",
+      template: "\n\t\t<div>\n\t\t\t<field-string\n\t\t\t\t:field=\"field\"\n\t\t\t\t:item=\"item\"\n\t\t\t\t:itemIndex=\"itemIndex\"\n\t\t\t\t:readonly=\"true\"\n\t\t\t\t:buttonClear=\"field.messages.get('fieldListUnselect')\"\n\t\t\t\t@input-click=\"toggleDropDown()\"\n\t\t\t\t@input-key-down=\"onInputKeyDown\"\n\t\t\t\t@input-blur=\"onInputBlur\"\n\t\t\t></field-string>\n\t\t\t<field-item-dropdown \n\t\t\t\t:marginTop=\"'-14px'\" \n\t\t\t\t:maxHeight=\"'none'\" \n\t\t\t\t:width=\"'auto'\" \n\t\t\t\t:visible=\"dropDownOpened\"\n\t\t\t\t:title=\"field.label\"\n\t\t\t\t:messages=\"field.messages\"\n\t\t\t\t@close=\"closeDropDown()\"\n\t\t\t\t@mousedown.native=\"onDropdownMousedown\"\n\t\t\t>\n\t\t\t\t<date-pick \n\t\t\t\t\t:value=\"item.value\"\n\t\t\t\t\t:show=\"true\"\n\t\t\t\t\t:hasInputElement=\"false\"\n\t\t\t\t\t:pickTime=\"field.hasTime\"\n\t\t\t\t\t:startWeekOnSunday=\"field.sundayFirstly\"\n\t\t\t\t\t:format=\"field.dateFormat\"\n\t\t\t\t\t:weekdays=\"getWeekdays()\"\n\t\t\t\t\t:months=\"getMonths()\"\n\t\t\t\t\t:setTimeCaption=\"field.messages.get('fieldDateTime')\"\n\t\t\t\t\t:closeButtonCaption=\"field.messages.get('fieldDateClose')\"\n\t\t\t\t\t:selectableYearRange=\"120\"\n\t\t\t\t\t@input=\"setDate\"\n\t\t\t\t\t@close=\"closeDropDown()\"\n\t\t\t\t></date-pick>\n\t\t\t</field-item-dropdown>\n\t\t</div>\n\t",
       methods: {
+        onDropdownMousedown: function onDropdownMousedown() {
+          this.isInteractingWithDropdown = true;
+        },
+        onInputBlur: function onInputBlur() {
+          if (this.isInteractingWithDropdown) {
+            this.isInteractingWithDropdown = false;
+            return;
+          }
+          this.closeDropDown();
+        },
+        onInputKeyDown: function onInputKeyDown(event) {
+          if (event.key === 'Enter' || event.key === KEY_SPACE$1) {
+            event.preventDefault();
+            this.toggleDropDown();
+          } else if ((event.key === 'Escape' || event.key === 'Esc') && this.dropDownOpened) {
+            event.preventDefault();
+            this.closeDropDown();
+          }
+        },
         setDate: function setDate(value, stopClose) {
           this.value = value;
           if (!stopClose) {
@@ -5115,7 +5375,7 @@ var Vue = exports.Vue;
 
     var FieldAgreement = {
       mixins: [MixinField],
-      template: "\t\n\t\t<label class=\"b24-form-control-container\">\n\t\t\t<input type=\"checkbox\" \n\t\t\t\tv-model=\"field.item().selected\"\n\t\t\t\t@blur=\"$emit('input-blur', this)\"\n\t\t\t\t@focus=\"$emit('input-focus', this)\"\n\t\t\t\t@click.capture=\"requestConsent\"\n\t\t\t\tonclick=\"this.blur()\"\n\t\t\t>\n\t\t\t<span v-if=\"field.isLink()\" class=\"b24-form-control-desc\"\n\t\t\t\t@click.capture=\"onLinkClick\"\n\t\t\t\tv-html=\"link\"\n\t\t\t></span>\n\t\t\t<span v-else class=\"b24-form-control-desc\">\n\t\t\t\t<span class=\"b24-form-field-agreement-link\">{{ field.label }}</span>\n\t\t\t</span>\n\t\t\t<span v-show=\"field.required\" class=\"b24-form-control-required\">*</span>\n\t\t\t<field-item-alert v-bind:field=\"field\"></field-item-alert>\t\n\t\t</label>\n\t",
+      template: "\n\t\t<div class=\"b24-form-control-container\">\n\t\t\t<label>\n\t\t\t\t<input type=\"checkbox\" \n\t\t\t\t\t:id=\"fieldId\"\n\t\t\t\t\t:aria-required=\"ariaRequired\"\n\t\t\t\t\t:aria-invalid=\"ariaInvalid\"\n\t\t\t\t\t:aria-describedby=\"ariaDescribedby\"\n\t\t\t\t\tv-model=\"field.item().selected\"\n\t\t\t\t\t@blur=\"$emit('input-blur', this)\"\n\t\t\t\t\t@focus=\"$emit('input-focus', this)\"\n\t\t\t\t\t@click.capture=\"requestConsent\"\n\t\t\t\t\tonclick=\"this.blur()\"\n\t\t\t\t>\n\t\t\t\t<span v-if=\"field.isLink()\" \n\t\t\t\t\tclass=\"b24-form-control-desc\"\n\t\t\t\t\t@click.capture=\"onLinkClick\"\n\t\t\t\t\tv-html=\"link\"\n\t\t\t\t></span>\n\t\t\t\t<span v-else class=\"b24-form-control-desc\">\n\t\t\t\t\t<span class=\"b24-form-field-agreement-link\">{{ field.label }}</span>\n\t\t\t\t</span>\n\t\t\t\t<span v-show=\"field.required\" class=\"b24-form-control-required\" aria-hidden=\"true\">*</span>\n\t\t\t</label>\n\t\t\t<field-item-alert v-bind:field=\"field\"></field-item-alert>\n\t\t</div>\n\t",
       computed: {
         link: function link() {
           var url = this.field.options.content.url.trim();
@@ -5469,8 +5729,8 @@ var Vue = exports.Vue;
       mounted: function mounted() {
         var _this = this;
         return babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee() {
-          var _b24form$common, _b24form$common$prope, _b24form$common$prope2;
-          var scriptLink;
+          var _b24form$common, _b24form$common$prope, _b24form$common$prope2, _this$$root, _this$$root$form;
+          var scriptLink, formLanguage;
           return _regeneratorRuntime().wrap(function _callee$(_context) {
             while (1) switch (_context.prev = _context.next) {
               case 0:
@@ -5481,14 +5741,18 @@ var Vue = exports.Vue;
                 }
                 return _context.abrupt("return");
               case 3:
-                _context.next = 5;
+                formLanguage = (_this$$root = _this.$root) === null || _this$$root === void 0 ? void 0 : (_this$$root$form = _this$$root.form) === null || _this$$root$form === void 0 ? void 0 : _this$$root$form.language;
+                if (formLanguage) {
+                  b24form.common.language = formLanguage;
+                }
+                _context.next = 7;
                 return new Promise(function (resolve) {
                   var node = document.createElement('script');
                   node.src = "".concat(scriptLink, "?").concat(Math.trunc(Date.now() / 60000));
                   node.onload = resolve;
                   document.head.append(node);
                 });
-              case 5:
+              case 7:
                 _this.component = BX.Booking.CrmForms.Field;
                 _this.dependencies = {
                   mixinDropdown: MixinDropDown,
@@ -5498,7 +5762,7 @@ var Vue = exports.Vue;
                     Item: Item$2
                   }
                 };
-              case 7:
+              case 9:
               case "end":
                 return _context.stop();
             }
@@ -7322,7 +7586,7 @@ var Vue = exports.Vue;
       template: "\n\t\t<transition name=\"b24-a-fade\" appear>\n\t\t\t<div class=\"b24-window-overlay\"\n\t\t\t\t:style=\"{ backgroundColor: background }\" \n\t\t\t\t@click=\"$emit('click')\"\n\t\t\t\tv-show=\"show\"\n\t\t\t></div>\n\t\t</transition>\n\t"
     };
     var windowMixin = {
-      props: ['show', 'title', 'position', 'vertical', 'maxWidth', 'zIndex', 'scrollDown', 'scrollDownText', 'mountId', 'hideOnOverlayClick'],
+      props: ['show', 'title', 'position', 'vertical', 'maxWidth', 'zIndex', 'scrollDown', 'scrollDownText', 'mountId', 'hideOnOverlayClick', 'messages'],
       components: {
         'b24-overlay': Overlay,
         'b24-scrollable': Scrollable,
@@ -7330,7 +7594,8 @@ var Vue = exports.Vue;
       },
       data: function data() {
         return {
-          escHandler: null
+          escHandler: null,
+          previousActiveElement: null
         };
       },
       methods: {
@@ -7358,26 +7623,56 @@ var Vue = exports.Vue;
         },
         getMountTo: function getMountTo(mountId) {
           return getPortalSelector(mountId);
+        },
+        setFocusToPopup: function setFocusToPopup() {
+          var _this$$refs$closeButt;
+          if (!this.previousActiveElement && document.activeElement) {
+            this.previousActiveElement = document.activeElement;
+          }
+          (_this$$refs$closeButt = this.$refs.closeButton) === null || _this$$refs$closeButt === void 0 ? void 0 : _this$$refs$closeButt.focus();
+        },
+        restoreFocus: function restoreFocus() {
+          var _this$previousActiveE;
+          (_this$previousActiveE = this.previousActiveElement) === null || _this$previousActiveE === void 0 ? void 0 : _this$previousActiveE.focus();
+          this.previousActiveElement = null;
         }
       },
       mounted: function mounted() {
         this.listenEsc();
       },
+      updated: function updated() {
+        var _this2 = this;
+        if (this.show) {
+          this.$nextTick(function () {
+            _this2.setFocusToPopup();
+          });
+        }
+      },
       watch: {
         show: function show() {
+          var _this3 = this;
           this.listenEsc();
+          if (!this.show) {
+            this.$nextTick(function () {
+              _this3.restoreFocus();
+            });
+          }
         }
       },
       computed: {
         zIndexComputed: function zIndexComputed() {
           return this.zIndex || 200;
+        },
+        closeButtonLabel: function closeButtonLabel() {
+          var _this$messages;
+          return ((_this$messages = this.messages) === null || _this$messages === void 0 ? void 0 : _this$messages.get('fieldDateClose')) || '';
         }
       }
     };
     var Popup = {
       mixins: [windowMixin],
       props: ['isOnTop'],
-      template: "\n\t\t<MountingPortal\n\t\t\tappend\n\t\t\t:disabled=\"!mountId\"\n\t\t\t:mountTo=\"getMountTo(mountId)\"\n\t\t>\n\t\t\t<div class=\"b24-window\">\n\t\t\t\t<b24-overlay :show=\"show\" @click=\"onOverlayClick()\"></b24-overlay>\n\t\t\t\t<transition :name=\"getTransitionName()\" appear>\n\t\t\t\t\t<div class=\"b24-window-popup\" \n\t\t\t\t\t\t:class=\"classes()\"\n\t\t\t\t\t\t@click.self.prevent=\"onOverlayClick()\"\n\t\t\t\t\t\tv-show=\"show\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<div class=\"b24-window-popup-wrapper\" \n\t\t\t\t\t\t\t:style=\"{ maxWidth: maxWidth + 'px' }\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button @click=\"hide()\" type=\"button\" class=\"b24-window-close\" :style=\"{ zIndex: zIndexComputed + 20}\" ></button>\n\t\t\t\t\t\t\t<b24-scrollable\n\t\t\t\t\t\t\t\t:show=\"show\"\n\t\t\t\t\t\t\t\t:enabled=\"scrollDown\"\n\t\t\t\t\t\t\t\t:zIndex=\"zIndex\"\n\t\t\t\t\t\t\t\t:text=\"scrollDownText\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<div v-if=\"title\" class=\"b24-window-popup-head\">\n\t\t\t\t\t\t\t\t\t<div class=\"b24-window-popup-title\">{{ title }}</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"b24-window-popup-body\">\n\t\t\t\t\t\t\t\t\t<slot></slot>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</b24-scrollable>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</transition>\n\t\t\t</div>\n\t\t</MountingPortal>\n\t",
+      template: "\n\t\t<MountingPortal\n\t\t\tappend\n\t\t\t:disabled=\"!mountId\"\n\t\t\t:mountTo=\"getMountTo(mountId)\"\n\t\t>\n\t\t\t<div class=\"b24-window\">\n\t\t\t\t<b24-overlay :show=\"show\" @click=\"onOverlayClick()\"></b24-overlay>\n\t\t\t\t<transition :name=\"getTransitionName()\" appear>\n\t\t\t\t\t<div class=\"b24-window-popup\" \n\t\t\t\t\t\t:class=\"classes()\"\n\t\t\t\t\t\t@click.self.prevent=\"onOverlayClick()\"\n\t\t\t\t\t\tv-show=\"show\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<div class=\"b24-window-popup-wrapper\" \n\t\t\t\t\t\t\t:style=\"{ maxWidth: maxWidth + 'px' }\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button ref=\"closeButton\" @click=\"hide()\" type=\"button\" class=\"b24-window-close\" :style=\"{ zIndex: zIndexComputed + 20}\" :aria-label=\"closeButtonLabel\"></button>\n\t\t\t\t\t\t\t<b24-scrollable\n\t\t\t\t\t\t\t\t:show=\"show\"\n\t\t\t\t\t\t\t\t:enabled=\"scrollDown\"\n\t\t\t\t\t\t\t\t:zIndex=\"zIndex\"\n\t\t\t\t\t\t\t\t:text=\"scrollDownText\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<div v-if=\"title\" class=\"b24-window-popup-head\">\n\t\t\t\t\t\t\t\t\t<div class=\"b24-window-popup-title\">{{ title }}</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"b24-window-popup-body\">\n\t\t\t\t\t\t\t\t\t<slot></slot>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</b24-scrollable>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</transition>\n\t\t\t</div>\n\t\t</MountingPortal>\n\t",
       methods: {
         getTransitionName: function getTransitionName() {
           return "b24-a-slide-".concat(this.vertical || 'bottom');
@@ -7391,7 +7686,7 @@ var Vue = exports.Vue;
     };
     var Panel = {
       mixins: [windowMixin],
-      template: "\n\t\t<div class=\"b24-window\">\n\t\t\t<b24-overlay :show=\"show\" @click=\"hide()\"></b24-overlay>\n\t\t\t<transition :name=\"getTransitionName()\" appear>\n\t\t\t\t<div class=\"b24-window-panel\"\n\t\t\t\t\t:class=\"classes()\"\n\t\t\t\t\tv-show=\"show\"\n\t\t\t\t>\n\t\t\t\t\t<button @click=\"hide()\" type=\"button\" class=\"b24-window-close\" :style=\"{ zIndex: zIndexComputed + 20}\" ></button>\n\t\t\t\t\t<b24-scrollable\n\t\t\t\t\t\t:show=\"show\"\n\t\t\t\t\t\t:enabled=\"scrollDown\"\n\t\t\t\t\t\t:zIndex=\"zIndex\"\n\t\t\t\t\t\t:text=\"scrollDownText\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<slot></slot>\n\t\t\t\t\t</b24-scrollable>\n\t\t\t\t</div>\n\t\t\t</transition>\n\t\t</div>\n\t",
+      template: "\n\t\t<div class=\"b24-window\">\n\t\t\t<b24-overlay :show=\"show\" @click=\"hide()\"></b24-overlay>\n\t\t\t<transition :name=\"getTransitionName()\" appear>\n\t\t\t\t<div class=\"b24-window-panel\"\n\t\t\t\t\t:class=\"classes()\"\n\t\t\t\t\tv-show=\"show\"\n\t\t\t\t>\n\t\t\t\t\t<button ref=\"closeButton\" @click=\"hide()\" type=\"button\" class=\"b24-window-close\" :style=\"{ zIndex: zIndexComputed + 20}\" :aria-label=\"closeButtonLabel\"></button>\n\t\t\t\t\t<b24-scrollable\n\t\t\t\t\t\t:show=\"show\"\n\t\t\t\t\t\t:enabled=\"scrollDown\"\n\t\t\t\t\t\t:zIndex=\"zIndex\"\n\t\t\t\t\t\t:text=\"scrollDownText\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<slot></slot>\n\t\t\t\t\t</b24-scrollable>\n\t\t\t\t</div>\n\t\t\t</transition>\n\t\t</div>\n\t",
       methods: {
         getTransitionName: function getTransitionName() {
           return 'b24-a-slide-' + (this.vertical || 'bottom');
@@ -7403,7 +7698,7 @@ var Vue = exports.Vue;
     };
     var Widget = {
       mixins: [windowMixin],
-      template: "\n\t\t<div class=\"b24-window\">\n\t\t\t<b24-overlay :show=\"show\" @click=\"hide()\" :background=\"'transparent'\"></b24-overlay>\n\t\t\t<transition :name=\"getTransitionName()\" appear>\n\t\t\t\t<div class=\"b24-window-widget\" \n\t\t\t\t\t:class=\"classes()\" \n\t\t\t\t\tv-show=\"show\"\n\t\t\t\t>\n\t\t\t\t\t<button @click=\"hide()\" type=\"button\" class=\"b24-window-close\"></button>\n\t\t\t\t\t<div class=\"b24-window-widget-body\">\n\t\t\t\t\t\t<slot></slot>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</transition>\n\t\t</div>\n\t",
+      template: "\n\t\t<div class=\"b24-window\">\n\t\t\t<b24-overlay :show=\"show\" @click=\"hide()\" :background=\"'transparent'\"></b24-overlay>\n\t\t\t<transition :name=\"getTransitionName()\" appear>\n\t\t\t\t<div class=\"b24-window-widget\" \n\t\t\t\t\t:class=\"classes()\" \n\t\t\t\t\tv-show=\"show\"\n\t\t\t\t>\n\t\t\t\t\t<button ref=\"closeButton\" @click=\"hide()\" type=\"button\" class=\"b24-window-close\" :aria-label=\"closeButtonLabel\"></button>\n\t\t\t\t\t<div class=\"b24-window-widget-body\">\n\t\t\t\t\t\t<slot></slot>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</transition>\n\t\t</div>\n\t",
       methods: {
         getTransitionName: function getTransitionName() {
           return 'b24-a-slide-short-' + (this.vertical || 'bottom');
@@ -7564,7 +7859,7 @@ var Vue = exports.Vue;
       mounted: function mounted() {
         this.isSmallHeight = this.$el.parentElement.offsetHeight >= 1000;
       },
-      template: "\n\t\t<div class=\"b24-form-state-container\" :class=\"{'b24-form-state--sticky': isSmallHeight}\">\n\t\t\t\t<transition name=\"b24-a-fade\">\n\t\t\t\t\t<div v-show=\"form.loading\" class=\"b24-form-loader\">\n\t\t\t\t\t\t<ProgressBar\n\t\t\t\t\t\t\tv-if=\"form.loading && form.uploader.running\"\n\t\t\t\t\t\t\t:uploadingProgress=\"form.uploader.progressToShow\"\n\t\t\t\t\t\t\t:timeLeft=\"form.uploader.timeLeft\"\n\t\t\t\t\t\t\t:messages=\"form.messages\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<div class=\"b24-form-loader-icon\">\n\t\t\t\t\t\t\t<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 263 174\">\n\t\t\t\t\t\t\t\t<g transform=translate(52.5,7)>\n\t\t\t\t\t\t\t\t\t<path class=\"bx-sun-lines-animate\" id=\"bxSunLines\" d=\"M79,0 C80.6568542,0 82,1.34314575 82,3 L82,22 C82,23.6568542 80.6568542,25 79,25 C77.3431458,25 76,23.6568542 76,22 L76,3 C76,1.34314575 77.3431458,0 79,0 Z M134.861,23.139 C136.032146,24.3104996 136.032146,26.2095004 134.861,27.381 L121.426,40.816 C120.248863,41.9529166 118.377746,41.9366571 117.220544,40.7794557 C116.063343,39.6222543 116.047083,37.7511367 117.184,36.574 L130.619,23.139 C131.7905,21.9678542 133.6895,21.9678542 134.861,23.139 L134.861,23.139 Z M158,79 C158,80.6568542 156.656854,82 155,82 L136,82 C134.343146,82 133,80.6568542 133,79 C133,77.3431458 134.343146,76 136,76 L155,76 C156.656854,76 158,77.3431458 158,79 Z M134.861,134.861 C133.6895,136.032146 131.7905,136.032146 130.619,134.861 L117.184,121.426 C116.40413,120.672777 116.091362,119.557366 116.365909,118.508478 C116.640455,117.45959 117.45959,116.640455 118.508478,116.365909 C119.557366,116.091362 120.672777,116.40413 121.426,117.184 L134.861,130.619 C136.032146,131.7905 136.032146,133.6895 134.861,134.861 Z M79,158 C77.3431458,158 76,156.656854 76,155 L76,136 C76,134.343146 77.3431458,133 79,133 C80.6568542,133 82,134.343146 82,136 L82,155 C82,156.656854 80.6568542,158 79,158 Z M23.139,134.861 C21.9678542,133.6895 21.9678542,131.7905 23.139,130.619 L36.574,117.184 C37.3272234,116.40413 38.4426337,116.091362 39.491522,116.365909 C40.5404103,116.640455 41.3595451,117.45959 41.6340915,118.508478 C41.9086378,119.557366 41.5958698,120.672777 40.816,121.426 L27.381,134.861 C26.2095004,136.032146 24.3104996,136.032146 23.139,134.861 Z M0,79 C0,77.3431458 1.34314575,76 3,76 L22,76 C23.6568542,76 25,77.3431458 25,79 C25,80.6568542 23.6568542,82 22,82 L3,82 C1.34314575,82 0,80.6568542 0,79 L0,79 Z M23.139,23.139 C24.3104996,21.9678542 26.2095004,21.9678542 27.381,23.139 L40.816,36.574 C41.5958698,37.3272234 41.9086378,38.4426337 41.6340915,39.491522 C41.3595451,40.5404103 40.5404103,41.3595451 39.491522,41.6340915 C38.4426337,41.9086378 37.3272234,41.5958698 36.574,40.816 L23.139,27.381 C21.9678542,26.2095004 21.9678542,24.3104996 23.139,23.139 Z\" fill=\"#FFD110\"></path>\n\t\t\t\t\t\t\t\t</g>\n\t\t\t\t\t\t\t\t<g fill=\"none\" fill-rule=\"evenodd\">\n\t\t\t\t\t\t\t\t\t<path d=\"M65.745 160.5l.245-.005c13.047-.261 23.51-10.923 23.51-23.995 0-13.255-10.745-24-24-24-3.404 0-6.706.709-9.748 2.062l-.47.21-.196-.477A19.004 19.004 0 0 0 37.5 102.5c-10.493 0-19 8.507-19 19 0 1.154.103 2.295.306 3.413l.108.6-.609-.01A17.856 17.856 0 0 0 18 125.5C8.335 125.5.5 133.335.5 143s7.835 17.5 17.5 17.5h47.745zM166.5 85.5h69v-.316l.422-.066C251.14 82.73 262.5 69.564 262.5 54c0-17.397-14.103-31.5-31.5-31.5-.347 0-.694.006-1.04.017l-.395.013-.103-.382C226.025 9.455 214.63.5 201.5.5c-15.014 0-27.512 11.658-28.877 26.765l-.047.515-.512-.063a29.296 29.296 0 0 0-3.564-.217c-16.016 0-29 12.984-29 29 0 15.101 11.59 27.643 26.542 28.897l.458.039v.064z\" stroke-opacity=\".05\" stroke=\"#000\" fill=\"#000\"></path>\n\t\t\t\t\t\t\t\t\t<circle stroke=\"#FFD110\" stroke-width=\"6\" cx=\"131.5\" cy=\"86.5\" r=\"44.5\" class=\"b24-form-loader-icon-sun-ring\"></circle>\n\t\t\t\t\t\t\t\t</g>\n\t\t\t\t\t\t  </svg>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</transition>\n\t\t\t\t\n\t\t\t\t<div v-show=\"form.sent\" class=\"b24-form-state b24-form-success\">\n\t\t\t\t\t<div class=\"b24-form-state-inner\">\n\t\t\t\t\t\t<div class=\"b24-form-state-icon b24-form-success-icon\"></div>\n\t\t\t\t\t\t<div class=\"b24-form-state-text\">\n\t\t\t\t\t\t\t<p v-if=\"!form.stateText\">{{ form.messages.get('stateSuccessTitle') }}</p>\n\t\t\t\t\t\t\t<p>{{ form.stateText }}</p>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<button class=\"b24-form-btn b24-form-btn-border b24-form-btn-tight\"\n\t\t\t\t\t\t\tv-if=\"form.stateButton.text\" \n\t\t\t\t\t\t\t@click=\"form.stateButton.handler\" \n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ form.stateButton.text }}\t\t\t\t\t\t\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"b24-form-inner-box\"></div>\n\t\t\t\t</div>\n\t\t\t\n\t\t\t\t<div v-show=\"form.error\" class=\"b24-form-state b24-form-error\">\n\t\t\t\t\t<div class=\"b24-form-state-inner\">\n\t\t\t\t\t\t<div class=\"b24-form-state-icon b24-form-error-icon\"></div>\n\t\t\t\t\t\t<div class=\"b24-form-state-text\">\n\t\t\t\t\t\t\t<p>{{ form.stateText }}</p>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\n\t\t\t\t\t\t<button class=\"b24-form-btn b24-form-btn-border b24-form-btn-tight\"\n\t\t\t\t\t\t\t@click=\"form.submit()\" \n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ form.messages.get('stateButtonResend') }}\t\t\t\t\t\t\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"b24-form-inner-box\"></div>\n\t\t\t\t</div>\n\t\t\t\t\n\t\t\t\t<div v-show=\"form.disabled\" class=\"b24-form-state b24-form-warning\">\n\t\t\t\t\t<div class=\"b24-form-state-inner\">\n\t\t\t\t\t\t<div class=\"b24-form-state-icon b24-form-warning-icon\">\n\t\t\t\t\t\t\t<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" viewBox=\"0 0 169 169\"><defs><circle id=\"a\" cx=\"84.5\" cy=\"84.5\" r=\"65.5\"/><filter x=\"-.8%\" y=\"-.8%\" width=\"101.5%\" height=\"101.5%\" filterUnits=\"objectBoundingBox\" id=\"b\"><feGaussianBlur stdDeviation=\".5\" in=\"SourceAlpha\" result=\"shadowBlurInner1\"/><feOffset dx=\"-1\" dy=\"-1\" in=\"shadowBlurInner1\" result=\"shadowOffsetInner1\"/><feComposite in=\"shadowOffsetInner1\" in2=\"SourceAlpha\" operator=\"arithmetic\" k2=\"-1\" k3=\"1\" result=\"shadowInnerInner1\"/><feColorMatrix values=\"0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.0886691434 0\" in=\"shadowInnerInner1\" result=\"shadowMatrixInner1\"/><feGaussianBlur stdDeviation=\".5\" in=\"SourceAlpha\" result=\"shadowBlurInner2\"/><feOffset dx=\"1\" dy=\"1\" in=\"shadowBlurInner2\" result=\"shadowOffsetInner2\"/><feComposite in=\"shadowOffsetInner2\" in2=\"SourceAlpha\" operator=\"arithmetic\" k2=\"-1\" k3=\"1\" result=\"shadowInnerInner2\"/><feColorMatrix values=\"0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.292285839 0\" in=\"shadowInnerInner2\" result=\"shadowMatrixInner2\"/><feMerge><feMergeNode in=\"shadowMatrixInner1\"/><feMergeNode in=\"shadowMatrixInner2\"/></feMerge></filter></defs><g fill=\"none\" fill-rule=\"evenodd\"><circle stroke-opacity=\".05\" stroke=\"#000\" fill-opacity=\".07\" fill=\"#000\" cx=\"84.5\" cy=\"84.5\" r=\"84\"/><use fill=\"#FFF\" xlink:href=\"#a\"/><use fill=\"#000\" filter=\"url(#b)\" xlink:href=\"#a\"/><path d=\"M114.29 99.648L89.214 58.376c-1.932-3.168-6.536-3.168-8.427 0L55.709 99.648c-1.974 3.25.41 7.352 4.234 7.352h50.155c3.782 0 6.166-4.103 4.193-7.352zM81.404 72.756c0-1.828 1.48-3.29 3.33-3.29h.452c1.85 0 3.33 1.462 3.33 3.29v12.309c0 1.827-1.48 3.29-3.33 3.29h-.453c-1.85 0-3.33-1.463-3.33-3.29V72.756zm7.77 23.886c0 2.274-1.892 4.143-4.194 4.143s-4.193-1.869-4.193-4.143c0-2.275 1.891-4.144 4.193-4.144 2.302 0 4.193 1.869 4.193 4.144z\" fill=\"#000\" opacity=\".4\"/></g></svg>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"b24-form-state-text\">\n\t\t\t\t\t\t\t<p>{{ form.messages.get('stateDisabled') }}</p>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"b24-form-inner-box\"></div>\n\t\t\t\t</div>\n\t\t</div>\n\t",
+      template: "\n\t\t<div class=\"b24-form-state-container\" :class=\"{'b24-form-state--sticky': isSmallHeight}\">\n\t\t\t\t<transition name=\"b24-a-fade\">\n\t\t\t\t\t<div v-show=\"form.loading\" class=\"b24-form-loader\" role=\"status\" :aria-label=\"form.messages.get('stateLoading')\">\n\t\t\t\t\t\t<ProgressBar\n\t\t\t\t\t\t\tv-if=\"form.loading && form.uploader.running\"\n\t\t\t\t\t\t\t:uploadingProgress=\"form.uploader.progressToShow\"\n\t\t\t\t\t\t\t:timeLeft=\"form.uploader.timeLeft\"\n\t\t\t\t\t\t\t:messages=\"form.messages\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<div class=\"b24-form-loader-icon\">\n\t\t\t\t\t\t\t<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 263 174\">\n\t\t\t\t\t\t\t\t<g transform=translate(52.5,7)>\n\t\t\t\t\t\t\t\t\t<path class=\"bx-sun-lines-animate\" id=\"bxSunLines\" d=\"M79,0 C80.6568542,0 82,1.34314575 82,3 L82,22 C82,23.6568542 80.6568542,25 79,25 C77.3431458,25 76,23.6568542 76,22 L76,3 C76,1.34314575 77.3431458,0 79,0 Z M134.861,23.139 C136.032146,24.3104996 136.032146,26.2095004 134.861,27.381 L121.426,40.816 C120.248863,41.9529166 118.377746,41.9366571 117.220544,40.7794557 C116.063343,39.6222543 116.047083,37.7511367 117.184,36.574 L130.619,23.139 C131.7905,21.9678542 133.6895,21.9678542 134.861,23.139 L134.861,23.139 Z M158,79 C158,80.6568542 156.656854,82 155,82 L136,82 C134.343146,82 133,80.6568542 133,79 C133,77.3431458 134.343146,76 136,76 L155,76 C156.656854,76 158,77.3431458 158,79 Z M134.861,134.861 C133.6895,136.032146 131.7905,136.032146 130.619,134.861 L117.184,121.426 C116.40413,120.672777 116.091362,119.557366 116.365909,118.508478 C116.640455,117.45959 117.45959,116.640455 118.508478,116.365909 C119.557366,116.091362 120.672777,116.40413 121.426,117.184 L134.861,130.619 C136.032146,131.7905 136.032146,133.6895 134.861,134.861 Z M79,158 C77.3431458,158 76,156.656854 76,155 L76,136 C76,134.343146 77.3431458,133 79,133 C80.6568542,133 82,134.343146 82,136 L82,155 C82,156.656854 80.6568542,158 79,158 Z M23.139,134.861 C21.9678542,133.6895 21.9678542,131.7905 23.139,130.619 L36.574,117.184 C37.3272234,116.40413 38.4426337,116.091362 39.491522,116.365909 C40.5404103,116.640455 41.3595451,117.45959 41.6340915,118.508478 C41.9086378,119.557366 41.5958698,120.672777 40.816,121.426 L27.381,134.861 C26.2095004,136.032146 24.3104996,136.032146 23.139,134.861 Z M0,79 C0,77.3431458 1.34314575,76 3,76 L22,76 C23.6568542,76 25,77.3431458 25,79 C25,80.6568542 23.6568542,82 22,82 L3,82 C1.34314575,82 0,80.6568542 0,79 L0,79 Z M23.139,23.139 C24.3104996,21.9678542 26.2095004,21.9678542 27.381,23.139 L40.816,36.574 C41.5958698,37.3272234 41.9086378,38.4426337 41.6340915,39.491522 C41.3595451,40.5404103 40.5404103,41.3595451 39.491522,41.6340915 C38.4426337,41.9086378 37.3272234,41.5958698 36.574,40.816 L23.139,27.381 C21.9678542,26.2095004 21.9678542,24.3104996 23.139,23.139 Z\" fill=\"#FFD110\"></path>\n\t\t\t\t\t\t\t\t</g>\n\t\t\t\t\t\t\t\t<g fill=\"none\" fill-rule=\"evenodd\">\n\t\t\t\t\t\t\t\t\t<path d=\"M65.745 160.5l.245-.005c13.047-.261 23.51-10.923 23.51-23.995 0-13.255-10.745-24-24-24-3.404 0-6.706.709-9.748 2.062l-.47.21-.196-.477A19.004 19.004 0 0 0 37.5 102.5c-10.493 0-19 8.507-19 19 0 1.154.103 2.295.306 3.413l.108.6-.609-.01A17.856 17.856 0 0 0 18 125.5C8.335 125.5.5 133.335.5 143s7.835 17.5 17.5 17.5h47.745zM166.5 85.5h69v-.316l.422-.066C251.14 82.73 262.5 69.564 262.5 54c0-17.397-14.103-31.5-31.5-31.5-.347 0-.694.006-1.04.017l-.395.013-.103-.382C226.025 9.455 214.63.5 201.5.5c-15.014 0-27.512 11.658-28.877 26.765l-.047.515-.512-.063a29.296 29.296 0 0 0-3.564-.217c-16.016 0-29 12.984-29 29 0 15.101 11.59 27.643 26.542 28.897l.458.039v.064z\" stroke-opacity=\".05\" stroke=\"#000\" fill=\"#000\"></path>\n\t\t\t\t\t\t\t\t\t<circle stroke=\"#FFD110\" stroke-width=\"6\" cx=\"131.5\" cy=\"86.5\" r=\"44.5\" class=\"b24-form-loader-icon-sun-ring\"></circle>\n\t\t\t\t\t\t\t\t</g>\n\t\t\t\t\t\t  </svg>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</transition>\n\t\t\t\t\n\t\t\t\t<div v-show=\"form.sent\" class=\"b24-form-state b24-form-success\" role=\"status\">\n\t\t\t\t\t<div class=\"b24-form-state-inner\">\n\t\t\t\t\t\t<div class=\"b24-form-state-icon b24-form-success-icon\"></div>\n\t\t\t\t\t\t<div class=\"b24-form-state-text\">\n\t\t\t\t\t\t\t<p v-if=\"!form.stateText\">{{ form.messages.get('stateSuccessTitle') }}</p>\n\t\t\t\t\t\t\t<p>{{ form.stateText }}</p>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<button class=\"b24-form-btn b24-form-btn-border b24-form-btn-tight\"\n\t\t\t\t\t\t\tv-if=\"form.stateButton.text\" \n\t\t\t\t\t\t\t:aria-label=\"form.stateButton.text\"\n\t\t\t\t\t\t\t@click=\"form.stateButton.handler\" \n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ form.stateButton.text }}\t\t\t\t\t\t\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"b24-form-inner-box\"></div>\n\t\t\t\t</div>\n\t\t\t\n\t\t\t\t<div v-show=\"form.error\" class=\"b24-form-state b24-form-error\" role=\"alert\">\n\t\t\t\t\t<div class=\"b24-form-state-inner\">\n\t\t\t\t\t\t<div class=\"b24-form-state-icon b24-form-error-icon\" aria-hidden=\"true\"></div>\n\t\t\t\t\t\t<div class=\"b24-form-state-text\">\n\t\t\t\t\t\t\t<p>{{ form.stateText }}</p>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\n\t\t\t\t\t\t<button class=\"b24-form-btn b24-form-btn-border b24-form-btn-tight\"\n\t\t\t\t\t\t\t:aria-label=\"form.messages.get('stateButtonResend')\"\n\t\t\t\t\t\t\t@click=\"form.submit()\" \n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ form.messages.get('stateButtonResend') }}\t\t\t\t\t\t\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"b24-form-inner-box\"></div>\n\t\t\t\t</div>\n\t\t\t\t\n\t\t\t\t<div v-show=\"form.disabled\" class=\"b24-form-state b24-form-warning\" role=\"status\">\n\t\t\t\t\t<div class=\"b24-form-state-inner\">\n\t\t\t\t\t\t<div class=\"b24-form-state-icon b24-form-warning-icon\">\n\t\t\t\t\t\t\t<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" viewBox=\"0 0 169 169\"><defs><circle id=\"a\" cx=\"84.5\" cy=\"84.5\" r=\"65.5\"/><filter x=\"-.8%\" y=\"-.8%\" width=\"101.5%\" height=\"101.5%\" filterUnits=\"objectBoundingBox\" id=\"b\"><feGaussianBlur stdDeviation=\".5\" in=\"SourceAlpha\" result=\"shadowBlurInner1\"/><feOffset dx=\"-1\" dy=\"-1\" in=\"shadowBlurInner1\" result=\"shadowOffsetInner1\"/><feComposite in=\"shadowOffsetInner1\" in2=\"SourceAlpha\" operator=\"arithmetic\" k2=\"-1\" k3=\"1\" result=\"shadowInnerInner1\"/><feColorMatrix values=\"0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.0886691434 0\" in=\"shadowInnerInner1\" result=\"shadowMatrixInner1\"/><feGaussianBlur stdDeviation=\".5\" in=\"SourceAlpha\" result=\"shadowBlurInner2\"/><feOffset dx=\"1\" dy=\"1\" in=\"shadowBlurInner2\" result=\"shadowOffsetInner2\"/><feComposite in=\"shadowOffsetInner2\" in2=\"SourceAlpha\" operator=\"arithmetic\" k2=\"-1\" k3=\"1\" result=\"shadowInnerInner2\"/><feColorMatrix values=\"0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.292285839 0\" in=\"shadowInnerInner2\" result=\"shadowMatrixInner2\"/><feMerge><feMergeNode in=\"shadowMatrixInner1\"/><feMergeNode in=\"shadowMatrixInner2\"/></feMerge></filter></defs><g fill=\"none\" fill-rule=\"evenodd\"><circle stroke-opacity=\".05\" stroke=\"#000\" fill-opacity=\".07\" fill=\"#000\" cx=\"84.5\" cy=\"84.5\" r=\"84\"/><use fill=\"#FFF\" xlink:href=\"#a\"/><use fill=\"#000\" filter=\"url(#b)\" xlink:href=\"#a\"/><path d=\"M114.29 99.648L89.214 58.376c-1.932-3.168-6.536-3.168-8.427 0L55.709 99.648c-1.974 3.25.41 7.352 4.234 7.352h50.155c3.782 0 6.166-4.103 4.193-7.352zM81.404 72.756c0-1.828 1.48-3.29 3.33-3.29h.452c1.85 0 3.33 1.462 3.33 3.29v12.309c0 1.827-1.48 3.29-3.33 3.29h-.453c-1.85 0-3.33-1.463-3.33-3.29V72.756zm7.77 23.886c0 2.274-1.892 4.143-4.194 4.143s-4.193-1.869-4.193-4.143c0-2.275 1.891-4.144 4.193-4.144 2.302 0 4.193 1.869 4.193 4.144z\" fill=\"#000\" opacity=\".4\"/></g></svg>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"b24-form-state-text\">\n\t\t\t\t\t\t\t<p>{{ form.messages.get('stateDisabled') }}</p>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"b24-form-inner-box\"></div>\n\t\t\t\t</div>\n\t\t</div>\n\t",
       computed: {},
       methods: {},
       components: {
@@ -7734,6 +8029,12 @@ var Vue = exports.Vue;
         isDark: function isDark() {
           var _this$form2, _this$form2$design;
           return Boolean((_this$form2 = this.form) === null || _this$form2 === void 0 ? void 0 : (_this$form2$design = _this$form2.design) === null || _this$form2$design === void 0 ? void 0 : _this$form2$design.isDark());
+        },
+        titleId: function titleId() {
+          return Aria.getFormElementId(this.form.getId(), 'title');
+        },
+        descId: function descId() {
+          return Aria.getFormElementId(this.form.getId(), 'desc');
         }
       },
       methods: {
@@ -7791,7 +8092,7 @@ var Vue = exports.Vue;
           return list;
         }
       },
-      template: "\n\t\t<div class=\"b24-form-wrapper\"\n\t\t\t:class=\"classes()\"\n\t\t>\n\t\t\t<div v-if=\"form.title || form.desc\" class=\"b24-form-header b24-form-padding-side\">\n\t\t\t\t<div v-if=\"form.title\" class=\"b24-form-header-title\">{{ form.title }}</div>\n\t\t\t\t<div class=\"b24-form-header-description\"\n\t\t\t\t\tv-if=\"form.desc\"\n\t\t\t\t\tv-html=\"form.desc\"\n\t\t\t\t></div>\n\t\t\t</div>\n\t\t\t<div v-else class=\"b24-form-header-padding\"></div>\n\n\t\t\t<div class=\"b24-form-content b24-form-padding-side\">\n\t\t\t\t<form\n\t\t\t\t\tmethod=\"post\"\n\t\t\t\t\tnovalidate\n\t\t\t\t\t@submit=\"submit\"\n\t\t\t\t\tv-if=\"form.pager\"\n\t\t\t\t>\n\t\t\t\t\t<component\n\t\t\t\t\t\t:is=\"'pager-block'\"\n\t\t\t\t\t\t:pager=\"form.pager\"\n\t\t\t\t\t\tv-if=\"form.pager.iterable()\"\n\t\t\t\t\t></component>\n\n\t\t\t\t\t<div v-if=\"!form.disabled\">\n\t\t\t\t\t\t<component\n\t\t\t\t\t\t\t:is=\"'field'\"\n\t\t\t\t\t\t\tv-for=\"field in form.pager.current().fields\"\n\t\t\t\t\t\t\t:key=\"field.id\"\n\t\t\t\t\t\t\t:field=\"field\"\n\t\t\t\t\t\t></component>\n\t\t\t\t\t</div>\n\n\t\t\t\t\t<component\n\t\t\t\t\t\t:is=\"'agreement-block'\"\n\t\t\t\t\t\t:formId=\"form.getId()\"\n\t\t\t\t\t\t:fields=\"form.agreements\"\n\t\t\t\t\t\t:view=\"form.view\"\n\t\t\t\t\t\t:messages=\"form.messages\"\n\t\t\t\t\t\tv-if=\"form.pager.ended()\"\n\t\t\t\t\t></component>\n\n\t\t\t\t\t<component\n\t\t\t\t\t\t:is=\"'basket-block'\"\n\t\t\t\t\t\t:basket=\"form.basket\"\n\t\t\t\t\t\t:messages=\"form.messages\"\n\t\t\t\t\t></component>\n\n\t\t\t\t\t<div class=\"b24-form-btn-container\">\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"!form.pager.beginning()\"\n\t\t\t\t\t\t\t@click.prevent=\"prevPage()\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"button\" class=\"b24-form-btn b24-form-btn-white b24-form-btn-border\">\n\t\t\t\t\t\t\t\t{{ form.messages.get('navBack') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"!form.pager.ended()\"\n\t\t\t\t\t\t\t@click.prevent=\"nextPage()\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"button\" class=\"b24-form-btn\">\n\t\t\t\t\t\t\t\t{{ form.messages.get('navNext') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"form.pager.ended()\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"submit\" class=\"b24-form-btn\">\n\t\t\t\t\t\t\t\t{{ form.buttonCaption || form.messages.get('defButton') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\n\t\t\t\t\t<span style=\"color: red;\" v-show=\"false && hasErrors\">\n\t\t\t\t\t\tDebug: fill fields\n\t\t\t\t\t</span>\n\t\t\t\t</form>\n\t\t\t</div>\n\n\t\t\t<state-block :form=\"form\" />\n\n\t\t\t<recaptcha-block :form=\"form\" />\n\n\t\t\t<yandex-captcha-block :form=\"form\" />\n\n\t\t\t<div class=\"b24-form-sign\">\n\t\t\t\t<select v-show=\"false\" v-model=\"form.messages.language\">\n\t\t\t\t\t<option\n\t\t\t\t\t\tv-for=\"language in form.languages\"\n\t\t\t\t\t\t:value=\"language\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ language }}\n\t\t\t\t\t</option>\n\t\t\t\t</select>\n\n\t\t\t\t<component\n\t\t\t\t\tv-if=\"abuseEnabled\"\n\t\t\t\t\t:is=\"'abuse-block'\"\n\t\t\t\t\t:messages=\"form.messages\"\n\t\t\t\t\t:abuseLink=\"abuseLink\"\n\t\t\t\t></component>\n\n\t\t\t\t<div class=\"b24-form-sign-info\" v-if=\"form.useSign\">\n\t\t\t\t\t<span class=\"b24-form-sign-text\">{{ form.messages.get('sign') }}</span>\n\t\t\t\t\t<span class=\"b24-form-sign-bx\">{{ getSignBy() }}</span>\n\t\t\t\t\t<span class=\"b24-form-sign-24\">24</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
+      template: "\n\t\t<div class=\"b24-form-wrapper\"\n\t\t\t:class=\"classes()\"\n\t\t>\n\t\t\t<div v-if=\"form.title || form.desc\"\n\t\t\t\tclass=\"b24-form-header b24-form-padding-side\"\n\t\t\t\trole=\"region\"\n\t\t\t\t:aria-labelledby=\"form.title ? titleId : null\"\n\t\t\t\t:aria-describedby=\"form.desc ? descId : null\"\n\t\t\t>\n\t\t\t\t<h2 v-if=\"form.title\" :id=\"titleId\" class=\"b24-form-header-title\" v-text=\"form.title\"></h2>\n\t\t\t\t<p v-if=\"form.desc\" :id=\"descId\" class=\"b24-form-header-description\" v-html=\"form.desc\"></p>\n\t\t\t</div>\n\t\t\t<div v-else class=\"b24-form-header-padding\"></div>\n\n\t\t\t<div class=\"b24-form-content b24-form-padding-side\">\n\t\t\t\t<form\n\t\t\t\t\tmethod=\"post\"\n\t\t\t\t\tnovalidate\n\t\t\t\t\t@submit=\"submit\"\n\t\t\t\t\tv-if=\"form.pager\"\n\t\t\t\t>\n\t\t\t\t\t<component\n\t\t\t\t\t\t:is=\"'pager-block'\"\n\t\t\t\t\t\t:pager=\"form.pager\"\n\t\t\t\t\t\tv-if=\"form.pager.iterable()\"\n\t\t\t\t\t></component>\n\n\t\t\t\t\t<div v-if=\"!form.disabled\">\n\t\t\t\t\t\t<component\n\t\t\t\t\t\t\t:is=\"'field'\"\n\t\t\t\t\t\t\tv-for=\"field in form.pager.current().fields\"\n\t\t\t\t\t\t\t:key=\"field.id\"\n\t\t\t\t\t\t\t:field=\"field\"\n\t\t\t\t\t\t></component>\n\t\t\t\t\t</div>\n\n\t\t\t\t\t<component\n\t\t\t\t\t\t:is=\"'agreement-block'\"\n\t\t\t\t\t\t:formId=\"form.getId()\"\n\t\t\t\t\t\t:fields=\"form.agreements\"\n\t\t\t\t\t\t:view=\"form.view\"\n\t\t\t\t\t\t:messages=\"form.messages\"\n\t\t\t\t\t\tv-if=\"form.pager.ended()\"\n\t\t\t\t\t></component>\n\n\t\t\t\t\t<component\n\t\t\t\t\t\t:is=\"'basket-block'\"\n\t\t\t\t\t\t:basket=\"form.basket\"\n\t\t\t\t\t\t:messages=\"form.messages\"\n\t\t\t\t\t></component>\n\n\t\t\t\t\t<div class=\"b24-form-btn-container\">\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"!form.pager.beginning()\"\n\t\t\t\t\t\t\t@click.prevent=\"prevPage()\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"button\" \n\t\t\t\t\t\t\t\tclass=\"b24-form-btn b24-form-btn-white b24-form-btn-border\"\n\t\t\t\t\t\t\t\t:aria-label=\"form.messages.get('navBack')\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t{{ form.messages.get('navBack') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"!form.pager.ended()\"\n\t\t\t\t\t\t\t@click.prevent=\"nextPage()\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"button\" \n\t\t\t\t\t\t\t\tclass=\"b24-form-btn\"\n\t\t\t\t\t\t\t\t:aria-label=\"form.messages.get('navNext')\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t{{ form.messages.get('navNext') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"form.pager.ended()\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"submit\" \n\t\t\t\t\t\t\t\tclass=\"b24-form-btn\"\n\t\t\t\t\t\t\t\t:aria-label=\"form.buttonCaption || form.messages.get('defButton')\" \n\t\t\t\t\t\t\t\t:aria-disabled=\"(form.loading || form.disabled) ? 'true' : null\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t{{ form.buttonCaption || form.messages.get('defButton') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\n\t\t\t\t\t<span style=\"color: red;\" v-show=\"false && hasErrors\">\n\t\t\t\t\t\tDebug: fill fields\n\t\t\t\t\t</span>\n\t\t\t\t</form>\n\t\t\t</div>\n\n\t\t\t<state-block :form=\"form\" />\n\n\t\t\t<recaptcha-block :form=\"form\" />\n\n\t\t\t<yandex-captcha-block :form=\"form\" />\n\n\t\t\t<div class=\"b24-form-sign\">\n\t\t\t\t<select v-show=\"false\" v-model=\"form.messages.language\">\n\t\t\t\t\t<option\n\t\t\t\t\t\tv-for=\"language in form.languages\"\n\t\t\t\t\t\t:value=\"language\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ language }}\n\t\t\t\t\t</option>\n\t\t\t\t</select>\n\n\t\t\t\t<component\n\t\t\t\t\tv-if=\"abuseEnabled\"\n\t\t\t\t\t:is=\"'abuse-block'\"\n\t\t\t\t\t:messages=\"form.messages\"\n\t\t\t\t\t:abuseLink=\"abuseLink\"\n\t\t\t\t></component>\n\n\t\t\t\t<div class=\"b24-form-sign-info\" v-if=\"form.useSign\">\n\t\t\t\t\t<span class=\"b24-form-sign-text\">{{ form.messages.get('sign') }}</span>\n\t\t\t\t\t<span class=\"b24-form-sign-bx\">{{ getSignBy() }}</span>\n\t\t\t\t\t<span class=\"b24-form-sign-24\">24</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
     };
 
     var Wrapper = {
@@ -7913,15 +8214,15 @@ var Vue = exports.Vue;
     };
     var Popup$1 = {
       mixins: [viewMixin],
-      template: "\n\t\t<b24-form-container :form=\"form\">\n\t\t\t<b24-popup v-bind:key=\"form.id\" \n\t\t\t\t:show=\"form.visible\"\n\t\t\t\t:position=\"form.view.position\"  \n\t\t\t\t:scrollDown=\"!this.form.isOnState()\"  \n\t\t\t\t:scrollDownText=\"scrollDownText\"\n\t\t\t\t@hide=\"form.hide()\"\n\t\t\t\t:hideOnOverlayClick=\"form.view.hideOnOverlayClick\"\n\t\t\t>\n\t\t\t\t<div v-if=\"form.view.title\" class=\"b24-window-header\">\n\t\t\t\t\t<div class=\"b24-window-header-title\">{{ form.view.title }}</div>\n\t\t\t\t</div>\n\t\t\t\t<slot></slot>\n\t\t\t</b24-popup>\n\t\t</b24-form-container>\n\t"
+      template: "\n\t\t<b24-form-container :form=\"form\">\n\t\t\t<b24-popup v-bind:key=\"form.id\" \n\t\t\t\t:show=\"form.visible\"\n\t\t\t\t:position=\"form.view.position\"  \n\t\t\t\t:scrollDown=\"!this.form.isOnState()\"  \n\t\t\t\t:scrollDownText=\"scrollDownText\"\n\t\t\t\t:messages=\"form.messages\"\n\t\t\t\t@hide=\"form.hide()\"\n\t\t\t\t:hideOnOverlayClick=\"form.view.hideOnOverlayClick\"\n\t\t\t>\n\t\t\t\t<div v-if=\"form.view.title\" class=\"b24-window-header\">\n\t\t\t\t\t<div class=\"b24-window-header-title\">{{ form.view.title }}</div>\n\t\t\t\t</div>\n\t\t\t\t<slot></slot>\n\t\t\t</b24-popup>\n\t\t</b24-form-container>\n\t"
     };
     var Panel$1 = {
       mixins: [viewMixin],
-      template: "\n\t\t<b24-form-container :form=\"form\">\n\t\t\t<b24-panel v-bind:key=\"form.id\" \n\t\t\t\t:show=\"form.visible\"\n\t\t\t\t:position=\"form.view.position\"\n\t\t\t\t:vertical=\"form.view.vertical\"\n\t\t\t\t:scrollDown=\"!this.form.isOnState()\"\n\t\t\t\t:scrollDownText=\"scrollDownText\"\n\t\t\t\t@hide=\"form.hide()\"\n\t\t\t>\n\t\t\t\t<div v-if=\"form.view.title\" class=\"b24-window-header\">\n\t\t\t\t\t<div class=\"b24-window-header-title\">{{ form.view.title }}</div>\n\t\t\t\t</div>\n\t\t\t\t<slot></slot>\n\t\t\t</b24-panel>\n\t\t</b24-form-container>\n\t"
+      template: "\n\t\t<b24-form-container :form=\"form\">\n\t\t\t<b24-panel v-bind:key=\"form.id\" \n\t\t\t\t:show=\"form.visible\"\n\t\t\t\t:position=\"form.view.position\"\n\t\t\t\t:vertical=\"form.view.vertical\"\n\t\t\t\t:scrollDown=\"!this.form.isOnState()\"\n\t\t\t\t:scrollDownText=\"scrollDownText\"\n\t\t\t\t:messages=\"form.messages\"\n\t\t\t\t@hide=\"form.hide()\"\n\t\t\t>\n\t\t\t\t<div v-if=\"form.view.title\" class=\"b24-window-header\">\n\t\t\t\t\t<div class=\"b24-window-header-title\">{{ form.view.title }}</div>\n\t\t\t\t</div>\n\t\t\t\t<slot></slot>\n\t\t\t</b24-panel>\n\t\t</b24-form-container>\n\t"
     };
     var Widget$1 = {
       mixins: [viewMixin],
-      template: "\n\t\t<b24-form-container :form=\"form\">\n\t\t\t<b24-widget v-bind:key=\"form.id\" \n\t\t\t\tv-bind:show=\"form.visible\" \n\t\t\t\tv-bind:position=\"form.view.position\" \n\t\t\t\tv-bind:vertical=\"form.view.vertical\" \n\t\t\t\t@hide=\"form.hide()\"\n\t\t\t>\n\t\t\t\t<slot></slot>\n\t\t\t</b24-widget>\n\t\t</b24-form-container>\n\t"
+      template: "\n\t\t<b24-form-container :form=\"form\">\n\t\t\t<b24-widget v-bind:key=\"form.id\" \n\t\t\t\tv-bind:show=\"form.visible\" \n\t\t\t\tv-bind:position=\"form.view.position\" \n\t\t\t\tv-bind:vertical=\"form.view.vertical\"\n\t\t\t\t:messages=\"form.messages\"\n\t\t\t\t@hide=\"form.hide()\"\n\t\t\t>\n\t\t\t\t<slot></slot>\n\t\t\t</b24-widget>\n\t\t</b24-form-container>\n\t"
     };
     var Definition$2 = {
       'b24-form': Form,
@@ -8469,8 +8770,10 @@ var Vue = exports.Vue;
 
     function ownKeys$4(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
     function _objectSpread$4(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$4(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$4(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+    function _classPrivateMethodInitSpec$5(obj, privateSet) { _checkPrivateRedeclaration$d(obj, privateSet); privateSet.add(obj); }
     function _classPrivateFieldInitSpec$b(obj, privateMap, value) { _checkPrivateRedeclaration$d(obj, privateMap); privateMap.set(obj, value); }
     function _checkPrivateRedeclaration$d(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+    function _classPrivateMethodGet$5(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
     var DefaultOptions$4 = {
       view: 'inline'
     };
@@ -8480,6 +8783,7 @@ var Vue = exports.Vue;
     var _properties = /*#__PURE__*/new WeakMap();
     var _personalisation = /*#__PURE__*/new WeakMap();
     var _vue = /*#__PURE__*/new WeakMap();
+    var _focusFirstInvalidField = /*#__PURE__*/new WeakSet();
     var Controller$s = /*#__PURE__*/function (_Event) {
       babelHelpers.inherits(Controller$$1, _Event);
       function Controller$$1() {
@@ -8488,6 +8792,7 @@ var Vue = exports.Vue;
         var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : DefaultOptions$4;
         babelHelpers.classCallCheck(this, Controller$$1);
         _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller$$1).call(this, options));
+        _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _focusFirstInvalidField);
         _classPrivateFieldInitSpec$b(babelHelpers.assertThisInitialized(_this), _id$2, {
           writable: true,
           value: void 0
@@ -8642,6 +8947,12 @@ var Vue = exports.Vue;
           this.error = false;
           this.sent = false;
           if (!this.valid()) {
+            var firstInvalidField = babelHelpers.classPrivateFieldGet(this, _fields$1).find(function (field) {
+              return !field.valid();
+            });
+            if (firstInvalidField) {
+              _classPrivateMethodGet$5(this, _focusFirstInvalidField, _focusFirstInvalidField2).call(this, firstInvalidField);
+            }
             return false;
           }
           storeFieldValues(this.getFields());
@@ -9041,6 +9352,14 @@ var Vue = exports.Vue;
       }]);
       return Controller$$1;
     }(Event);
+    function _focusFirstInvalidField2(field) {
+      setTimeout(function () {
+        var fieldId = Aria.getFieldId(field);
+        var fieldElement = document.getElementById(fieldId);
+        var focusableElement = (fieldElement === null || fieldElement === void 0 ? void 0 : fieldElement.querySelector('input, textarea, select, [tabindex="0"]')) || fieldElement;
+        focusableElement === null || focusableElement === void 0 ? void 0 : focusableElement.focus();
+      }, 100);
+    }
 
     function _classStaticPrivateMethodGet(receiver, classConstructor, method) { _classCheckPrivateStaticAccess(receiver, classConstructor); return method; }
     function _classCheckPrivateStaticAccess(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }

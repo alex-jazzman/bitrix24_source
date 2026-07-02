@@ -20,10 +20,14 @@ jn.define('more-menu/block/header/check-in', (require, exports, module) => {
 	const { isEqual } = require('utils/object');
 
 	let StatusEnum = null;
+	let PullCommand = null;
+	let CheckInTypeEnum = null;
 
 	try
 	{
 		StatusEnum = require('stafftrack/model/shift').StatusEnum;
+		PullCommand = require('stafftrack/check-in-v2/enums').PullCommand;
+		CheckInTypeEnum = require('stafftrack/check-in-v2/enums').CheckInTypeEnum;
 	}
 	catch (error)
 	{
@@ -41,12 +45,16 @@ jn.define('more-menu/block/header/check-in', (require, exports, module) => {
 		 * @param {object} props
 		 * @param {string} props.testId
 		 * @param {object} props.currentShift
+		 * @param {boolean} props.isNewCheckInEnabled
+		 * @param {number} props.checkInAmount
 		 */
 		constructor(props)
 		{
 			super(props);
 			this.state = {
 				currentShift: props.currentShift,
+				isNewCheckInEnabled: props.isNewCheckInEnabled,
+				checkInAmount: props.checkInAmount,
 			};
 
 			this.subscribeToPullEvent = this.subscribeToPullEvent.bind(this);
@@ -65,11 +73,21 @@ jn.define('more-menu/block/header/check-in', (require, exports, module) => {
 
 		componentWillReceiveProps(props)
 		{
-			const currentShift = props?.currentShift;
+			const nextState = {};
 
-			if (!isEqual(currentShift, this.state.isEqual))
+			if (!isEqual(props?.currentShift, this.state.currentShift))
 			{
-				this.state.currentShift = currentShift;
+				nextState.currentShift = props?.currentShift;
+			}
+
+			if (props?.checkInAmount !== this.state.checkInAmount)
+			{
+				nextState.checkInAmount = props?.checkInAmount;
+			}
+
+			if (Object.keys(nextState).length > 0)
+			{
+				this.setState(nextState);
 			}
 		}
 
@@ -103,9 +121,22 @@ jn.define('more-menu/block/header/check-in', (require, exports, module) => {
 		 */
 		subscribeToPullEvent(command, params, extra, moduleId)
 		{
+			if (command === PullCommand?.CHECK_IN_ADD.getValue())
+			{
+				const checkIn = params?.checkIn;
+				if (checkIn?.userId === Number(env.userId) && CheckInTypeEnum?.isManual(checkIn?.entityType))
+				{
+					this.setState({
+						checkInAmount: (this.state.checkInAmount || 0) + 1,
+					});
+				}
+
+				return;
+			}
+
 			const shift = params?.shift;
 
-			if (shift.userId === Number(env.userId))
+			if (shift?.userId === Number(env.userId))
 			{
 				if (command === 'shift_delete')
 				{
@@ -124,6 +155,8 @@ jn.define('more-menu/block/header/check-in', (require, exports, module) => {
 
 		render()
 		{
+			const { isNewCheckInEnabled } = this.state;
+
 			return View(
 				{
 					style: {
@@ -154,7 +187,8 @@ jn.define('more-menu/block/header/check-in', (require, exports, module) => {
 							},
 						},
 						this.renderHeader(),
-						this.renderStatus(),
+						!isNewCheckInEnabled && this.renderStatus(),
+						isNewCheckInEnabled && this.renderAmount(),
 					),
 				),
 				View(
@@ -234,6 +268,36 @@ jn.define('more-menu/block/header/check-in', (require, exports, module) => {
 			);
 		}
 
+		renderAmount()
+		{
+			const { checkInAmount } = this.state;
+			const textProps = {
+				color: Color.base3,
+				numberOfLines: 1,
+				ellipsize: 'end',
+				style: {
+					flexShrink: 2,
+				},
+			};
+
+			if (!checkInAmount || checkInAmount <= 0)
+			{
+				return Text4({
+					testId: this.getTestId('no-check-in'),
+					text: Loc.getMessage('MORE_MENU_HEADER_CHECK_IN_CLOSED'),
+					...textProps,
+				});
+			}
+
+			return Text4({
+				testId: this.getTestId(`check-in-amount-${checkInAmount}`),
+				text: Loc.getMessage('MORE_MENU_HEADER_CHECK_IN_AMOUNT', {
+					'#AMOUNT#': checkInAmount,
+				}),
+				...textProps,
+			});
+		}
+
 		renderStatus()
 		{
 			const { currentShift } = this.state;
@@ -295,9 +359,9 @@ jn.define('more-menu/block/header/check-in', (require, exports, module) => {
 
 		renderActions()
 		{
-			const { currentShift } = this.state;
+			const { currentShift, isNewCheckInEnabled } = this.state;
 
-			if (currentShift)
+			if (currentShift && !isNewCheckInEnabled)
 			{
 				return Button({
 					testId: 'MORE_MENU_HEADER_CHECK_IN_BUTTON',
@@ -339,6 +403,8 @@ jn.define('more-menu/block/header/check-in', (require, exports, module) => {
 	CheckIn.propTypes = {
 		testId: PropTypes.string,
 		currentShift: PropTypes.object,
+		isNewCheckInEnabled: PropTypes.bool,
+		checkInAmount: PropTypes.number,
 	};
 
 	module.exports = {

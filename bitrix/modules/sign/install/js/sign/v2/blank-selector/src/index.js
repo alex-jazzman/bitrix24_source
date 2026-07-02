@@ -9,6 +9,7 @@ import { Layout } from 'ui.sidepanel.layout';
 import { TileWidget } from 'ui.uploader.tile-widget';
 import { UploaderEvent, FileStatus, type UploaderFile } from 'ui.uploader.core';
 import { Api } from 'sign.v2.api';
+import { getAllowedReplaceExtensions } from 'sign.v2.b2e.document-block';
 import { ListItem } from './list-item';
 import { Blank } from './blank';
 import { BlankField } from './blank-field';
@@ -44,6 +45,7 @@ const uploaderOptions = {
 	imageMaxFileSize: 10 * 1024 * 1024,
 	maxTotalFileSize: 50 * 1024 * 1024,
 };
+const imageExtensions = new Set(['jpg', 'jpeg', 'png']);
 const errorPopupOptions = {
 	id: 'qwerty',
 	padding: 20,
@@ -83,6 +85,7 @@ export class BlankSelector extends EventEmitter
 	#api: Api;
 	#config: BlankSelectorConfig;
 	#isPlaceholdersUpload: boolean = false;
+	#browseAcceptMap: WeakMap<HTMLElement, string[]> = new WeakMap();
 
 	constructor(config: BlankSelectorConfig)
 	{
@@ -136,6 +139,7 @@ export class BlankSelector extends EventEmitter
 			browseElement: [...uploadButtons, dragArea],
 			events: {
 				[UploaderEvent.BEFORE_FILES_ADD]: (event) => this.#onFileBeforeAdd(event),
+				[UploaderEvent.BEFORE_BROWSE]: (event) => this.#onBeforeBrowse(event),
 				[UploaderEvent.FILE_ADD]: (event) => this.#onFileAdd(event),
 				[UploaderEvent.FILE_REMOVE]: (event) => this.#onFileRemove(event),
 				[UploaderEvent.UPLOAD_START]: (event) => this.#onUploadStart(event),
@@ -181,11 +185,28 @@ export class BlankSelector extends EventEmitter
 		;
 	}
 
+	#isB2eBlankScenario(): boolean
+	{
+		return this.#config?.type === BlankScenario.b2e;
+	}
+
 	#checkForFilesValid(addedFiles: UploaderFile[]): boolean
 	{
 		const isImage = (file) => file.getType().includes('image/');
 		const allAddedImages = addedFiles.every((file) => isImage(file));
-		const acceptedFileTypes = this.#getAcceptedFileTypes();
+		const uploader = this.#tileWidget.getUploader();
+		const files = uploader.getFiles();
+		const filesLength = files.length;
+		const imagesLimit = this.#getImagesLimit();
+		const isB2eAutoCommit = this.#isB2eBlankScenario()
+			&& !isTemplateMode(this.#config.documentMode)
+			&& filesLength > 0
+			&& (addedFiles.length === 1 || allAddedImages)
+		;
+		const acceptedFileTypes = isB2eAutoCommit && !this.#isPlaceholdersUpload
+			? uploaderOptions.acceptedFileTypes
+			: this.#getAcceptedFileTypes()
+		;
 		const validExtension = addedFiles.every((file) => {
 			// TODO merge with this.#config.uploaderOptions.acceptedFileTypes
 			return acceptedFileTypes.includes(
@@ -197,13 +218,16 @@ export class BlankSelector extends EventEmitter
 			return false;
 		}
 
-		const uploader = this.#tileWidget.getUploader();
-		const files = uploader.getFiles();
-		const filesLength = files.length;
-		const imagesLimit = this.#getImagesLimit();
 		if (filesLength === 0 && addedFiles.length === 1)
 		{
 			return true;
+		}
+
+		if (isB2eAutoCommit)
+		{
+			const exceedsImagesLimit = addedFiles.length > 1 && addedFiles.length > imagesLimit;
+
+			return !exceedsImagesLimit;
 		}
 
 		const allExistImages = files.every((file) => isImage(file));
@@ -213,28 +237,79 @@ export class BlankSelector extends EventEmitter
 			&& imagesLimit - filesLength >= addedFiles.length;
 	}
 
+	#onBeforeBrowse(event: BaseEvent<{ input: HTMLInputElement, node: HTMLElement }>): void
+	{
+		const { input, node } = event.getData();
+		const acceptList = this.#browseAcceptMap.get(node);
+		if (Type.isArrayFilled(acceptList))
+		{
+			input.setAttribute('accept', acceptList.join(','));
+		}
+	}
+
 	#onFileBeforeAdd(uploaderEvent: BaseEvent<{ files: UploaderFile[] }>): void
 	{
 		const { files: addedFiles } = uploaderEvent.getData();
+		const hasOversizedImage = !this.#isPlaceholdersUpload && addedFiles.some((file) => {
+			return file.getType().includes('image/') && file.getSize() > uploaderOptions.imageMaxFileSize;
+		});
+		if (hasOversizedImage)
+		{
+			const messageCode = addedFiles.length > 1
+				? 'SIGN_BLANK_SELECTOR_UPLOAD_IMAGE_SIZE_GROUP_HINT'
+				: 'SIGN_BLANK_SELECTOR_UPLOAD_IMAGE_SIZE_HINT';
+			this.#showUploadErrorPopup(messageCode);
+			uploaderEvent.preventDefault();
+
+			return;
+		}
+
 		const valid = this.#checkForFilesValid(addedFiles);
 		if (valid)
 		{
-			const selfEvent = new BaseEvent({ data: { files: addedFiles } });
+			const selfEvent = new BaseEvent({
+				data: {
+					files: addedFiles,
+					isPlaceholdersUpload: this.#isPlaceholdersUpload,
+				},
+			});
 			this.emit(this.events.beforeAddFileSuccessfully, selfEvent);
 			if (selfEvent.isDefaultPrevented())
 			{
-				return;
+				uploaderEvent.preventDefault();
 			}
 
 			return;
 		}
 
-		let bindElement = this.#uploadButtonsContainer.firstElementChild;
 		let messageCode = 'SIGN_BLANK_SELECTOR_UPLOAD_HINT';
+		const hasExistingFiles = this.#tileWidget.getUploader().getFiles().length > 0;
+		const isLimitHint = hasExistingFiles && isTemplateMode(this.#config.documentMode);
 		if (this.#isPlaceholdersUpload)
 		{
-			bindElement = this.#uploadButtonsContainer.querySelector('.--placeholders');
-			messageCode = 'SIGN_BLANK_SELECTOR_UPLOAD_PLACEHOLDERS_HINT';
+			messageCode = isLimitHint
+				? 'SIGN_BLANK_SELECTOR_UPLOAD_LIMIT_HINT'
+				: 'SIGN_BLANK_SELECTOR_UPLOAD_PLACEHOLDERS_HINT';
+		}
+		else if (this.#isB2eBlankScenario() && isLimitHint)
+		{
+			messageCode = 'SIGN_BLANK_SELECTOR_UPLOAD_LIMIT_HINT';
+		}
+
+		this.#showUploadErrorPopup(messageCode);
+		uploaderEvent.preventDefault();
+	}
+
+	#showUploadErrorPopup(messageCode: string): void
+	{
+		let bindElement = this.#uploadButtonsContainer.firstElementChild;
+		if (this.#isPlaceholdersUpload)
+		{
+			bindElement = this.#uploadButtonsContainer.querySelector('.--placeholders') ?? bindElement;
+		}
+		else if (this.#isB2eBlankScenario())
+		{
+			bindElement = this.#uploadButtonsContainer.querySelector('.--mixed') ?? bindElement;
 		}
 
 		if (Dom.hasClass(this.#uploadButtonsContainer, '--hidden'))
@@ -258,8 +333,6 @@ export class BlankSelector extends EventEmitter
 			errorPopup.show();
 			setTimeout(() => errorPopup.close(), 7000);
 		}, 200);
-
-		uploaderEvent.preventDefault();
 	}
 
 	#getImagesLimit(): number
@@ -270,27 +343,70 @@ export class BlankSelector extends EventEmitter
 		;
 	}
 
-	#onFileAdd(event: BaseEvent)
+	#onFileAdd(event: BaseEvent): void
 	{
 		const file = event.data.file;
 		const title = file.getName();
+		const uploadType = this.#getUploadType();
+		const isImage = this.#isImageFile(file);
+		file.setCustomData('uploadType', uploadType);
 
-		if (this.#isPlaceholdersUpload)
+		if (this.#shouldShowTileUploader(isImage, uploadType))
 		{
-			file.setCustomData('uploadType', blankType.placeholders);
-		}
-		else
-		{
-			file.setCustomData('uploadType', blankType.default);
+			this.#toggleTileVisibility(true);
 		}
 
-		this.#toggleTileVisibility(true);
 		this.resetSelectedBlank();
-		this.emit(this.events.addFile, { title: this.#normalizeTitle(title) });
+		this.emit(this.events.addFile, {
+			title: this.#normalizeTitle(title),
+			isImage,
+			isMixedB2eUpload: this.#isMixedB2eUpload(uploadType),
+			filesCount: this.#tileWidget.getUploader().getFiles().length,
+		});
 	}
 
-	#onUploadComplete() {
+	#onUploadComplete(): void
+	{
 		this.#isPlaceholdersUpload = false;
+	}
+
+	#getUploadType(): string
+	{
+		return this.#isPlaceholdersUpload
+			? blankType.placeholders
+			: blankType.default
+		;
+	}
+
+	#isImageFile(file: UploaderFile): boolean
+	{
+		const mimeType = file.getType();
+		if (Type.isStringFilled(mimeType) && mimeType.startsWith('image/'))
+		{
+			return true;
+		}
+
+		const extension = file.getExtension().toLowerCase();
+
+		return imageExtensions.has(extension);
+	}
+
+	#isMixedB2eUpload(uploadType: string): boolean
+	{
+		return uploadType === blankType.default;
+	}
+
+	#shouldShowTileUploader(isImage: boolean, uploadType: string): boolean
+	{
+		if (!this.#isB2eBlankScenario())
+		{
+			return true;
+		}
+
+		const isTemplate = isTemplateMode(this.#config.documentMode);
+		const isMixedImage = isImage && this.#isMixedB2eUpload(uploadType);
+
+		return isTemplate && isMixedImage;
 	}
 
 	getUploadedFileName(fileIndex: number): string | null
@@ -310,7 +426,7 @@ export class BlankSelector extends EventEmitter
 		return this.#normalizeTitle(file.getName());
 	}
 
-	#onFileRemove(event: BaseEvent)
+	#onFileRemove(event: BaseEvent): void
 	{
 		this.emit('removeFile');
 		const uploader = this.#tileWidget.getUploader();
@@ -322,7 +438,7 @@ export class BlankSelector extends EventEmitter
 		}
 	}
 
-	#onUploadStart()
+	#onUploadStart(): void
 	{
 		const uploader = this.#tileWidget.getUploader();
 		const [firstFile] = uploader.getFiles();
@@ -363,36 +479,35 @@ export class BlankSelector extends EventEmitter
 				link: config.link ?? null,
 				onLinkClick: config.onLinkClick ?? null,
 				isNew: isPlaceholders,
-				isPlaceholderDocumentAvailable: this.#isPlaceholderDocumentAvailable(),
+				isB2eBlankScenario: this.#isB2eBlankScenario(),
 				dragDescriptionTextHTML: config.dragDescriptionTextHTML ?? null,
 				onDragEnter: () => {
 					this.#isPlaceholdersUpload = isPlaceholders;
 				},
 			});
 
-			Event.bind(listItem.getLayout(), 'click', () => {
+			const layout = listItem.getLayout();
+			Event.bind(layout, 'click', () => {
 				this.#isPlaceholdersUpload = isPlaceholders;
 			});
 
-			return listItem.getLayout();
+			if (Type.isArrayFilled(config.acceptedFileTypes))
+			{
+				this.#browseAcceptMap.set(layout, config.acceptedFileTypes);
+			}
+
+			return layout;
 		});
 	}
 
 	#getUploadButtonsConfig(): Record<string, ButtonConfig>
 	{
-		if (this.#isPlaceholderDocumentAvailable())
+		if (this.#isB2eBlankScenario())
 		{
 			return this.#getB2eButtonsConfig();
 		}
 
 		return this.#getB2bButtonsConfig();
-	}
-
-	#isPlaceholderDocumentAvailable(): boolean
-	{
-		return this.#config.type === BlankScenario.b2e
-			&& this.#config.isPlaceholderDocumentEnabled
-		;
 	}
 
 	#getB2bButtonsConfig(): Record<string, ButtonConfig>
@@ -415,20 +530,17 @@ export class BlankSelector extends EventEmitter
 
 	#getB2eButtonsConfig(): Record<string, ButtonConfig>
 	{
+		const toAcceptList = (extensions: string[]): string[] => extensions.map((ext) => `.${ext}`);
+
 		return {
 			placeholders: {
 				title: 'docx',
 				description: Loc.getMessage('SIGN_BLANK_SELECTOR_PLACEHOLDERS_DOCX_MSGVER_1'),
-				link: Loc.getMessage('SIGN_BLANK_SELECTOR_PLACEHOLDERS_LINK_MSGVER_1'),
-				onLinkClick: () => {
-					void top.BX.Runtime.loadExtension('sign.v2.grid.b2e.placeholders').then(() => {
-						new top.BX.Sign.V2.Grid.B2e.Placeholders().show();
-					});
-				},
 				dragDescriptionTextHTML: Loc.getMessage('SIGN_BLANK_SELECTOR_DROP_ZONE_PLACEHOLDERS', {
 					'[highlight]': '<span class="sign-blank-selector__list_item-drag-overlay-highlighting">',
 					'[/highlight]': '</span>',
 				}),
+				acceptedFileTypes: toAcceptList(getAllowedReplaceExtensions(true)),
 			},
 			mixed: {
 				title: 'pdf, png, doc, jpeg',
@@ -437,6 +549,7 @@ export class BlankSelector extends EventEmitter
 					'[highlight]': '<span class="sign-blank-selector__list_item-drag-overlay-highlighting">',
 					'[/highlight]': '</span>',
 				}),
+				acceptedFileTypes: toAcceptList(getAllowedReplaceExtensions(false)),
 			},
 		};
 	}
@@ -444,6 +557,10 @@ export class BlankSelector extends EventEmitter
 	async #resumeUploading()
 	{
 		const uploader = this.#tileWidget.getUploader();
+		if (uploader.getPendingFileCount() === 0)
+		{
+			return;
+		}
 		const pendingFiles = uploader.getFiles();
 		uploader.setMaxParallelUploads(pendingFiles.length);
 		const uploadPromise = new Promise((resolve) => {
@@ -513,8 +630,19 @@ export class BlankSelector extends EventEmitter
 		await this.#resumeUploading();
 		const blank = firstFile.getCustomData(firstFile.getId());
 
-		if (!this.#isAllFileUploadsComplete(files))
+		const failedFiles = files.filter((file) => {
+			return file.getStatus() !== FileStatus.COMPLETE || Type.isNull(file.getServerFileId());
+		});
+
+		if (failedFiles.length > 0)
 		{
+			failedFiles.forEach((file) => {
+				uploader.removeFile(file, { removeFromServer: false });
+			});
+			if (failedFiles.length === files.length)
+			{
+				blank?.remove?.();
+			}
 			const errorMessage = Loc.getMessage('SIGN_BLANK_SELECTOR_UPLOADER_ERROR_INCOMPLETE');
 			UI.Notification.Center.notify({ content: errorMessage });
 			throw new Error(errorMessage);
@@ -729,6 +857,16 @@ export class BlankSelector extends EventEmitter
 		uploader.removeFiles(options);
 	}
 
+	addFiles(files: File[], options: { isPlaceholdersUpload?: boolean } = {}): void
+	{
+		if (Type.isBoolean(options.isPlaceholdersUpload))
+		{
+			this.#isPlaceholdersUpload = options.isPlaceholdersUpload;
+		}
+		const uploader = this.#tileWidget.getUploader();
+		uploader.addFiles(files);
+	}
+
 	isFilesReadyForUpload(): boolean
 	{
 		if (this.#tileWidget.getUploader().getFiles().length === 0)
@@ -755,15 +893,20 @@ export class BlankSelector extends EventEmitter
 		this.#tileWidget.renderTo(this.#tileWidgetContainer);
 		this.#toggleTileVisibility(false);
 		const canUploadNewBlank = this.#config.canUploadNewBlank ?? true;
+		const titleBlock = this.#isB2eBlankScenario() ? ''
+			: Tag.render`
+				<p class="sign-blank-selector__templates_title">
+					${Loc.getMessage('SIGN_BLANK_SELECTOR_RECENT_TEMPLATES_TITLE')}
+				</p>
+			`
+		;
 		const selectorContainer = Tag.render`
 			<div class="sign-blank-selector">
 				${this.#tileWidgetContainer}
 				${canUploadNewBlank ? this.#uploadButtonsContainer : ''}
-				<p class="sign-blank-selector__templates_title">
-					${Loc.getMessage('SIGN_BLANK_SELECTOR_RECENT_TEMPLATES_TITLE')}
-				</p>
-				${this.#blanksContainer}
-				${this.#loadMoreButton}
+				${titleBlock}
+				${this.#isB2eBlankScenario() ? '' : this.#blanksContainer}
+				${this.#isB2eBlankScenario() ? '' : this.#loadMoreButton}
 			</div>
 		`;
 		if (this.#page === 0)

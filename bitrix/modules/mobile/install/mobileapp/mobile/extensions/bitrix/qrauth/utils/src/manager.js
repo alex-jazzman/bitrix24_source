@@ -3,6 +3,7 @@
  */
 jn.define('qrauth/utils/src/manager', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const { requireLazy } = require('require-lazy');
 	const { getMediumHeight } = require('utils/page-manager');
 
 	// eslint-disable-next-line no-undef

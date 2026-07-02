@@ -1,6 +1,11 @@
-<?
+<?php
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_js.php");
+
+/**
+ * @global CMain $APPLICATION
+ * @global CUser $USER
+ */
 
 if(!$USER->CanDoOperation('edit_php'))
 	die(GetMessage("ACCESS_DENIED"));
@@ -127,30 +132,30 @@ if($arTemplate["ICON"] == "" || !is_file($_SERVER["DOCUMENT_ROOT"].$arTemplate["
 
 $obJSPopup->StartDescription($arTemplate['ICON']);
 ?>
-<?if($arTemplate["NAME"] <> ""):?>
-<p title="<?echo GetMessage("comp_prop_name")?>"><b><?echo htmlspecialcharsbx($arTemplate["NAME"])?></b></p>
-<?endif;?>
-<?if($arTemplate["DESCRIPTION"] <> ""):?>
-<p title="<?echo GetMessage("comp_prop_desc")?>"><?echo htmlspecialcharsbx($arTemplate["DESCRIPTION"])?></p>
-<?endif;?>
-<p class="note" title="<?echo GetMessage("comp_prop_path")?>"><?echo htmlspecialcharsbx($arTemplate["REAL_PATH"]<>""? $arTemplate["REAL_PATH"]:$_GET["path"])?></p>
-<?
+<?php if($arTemplate["NAME"] <> ""):?>
+<p title="<?= GetMessage("comp_prop_name")?>"><b><?= htmlspecialcharsbx($arTemplate["NAME"])?></b></p>
+<?php endif;?>
+<?php if($arTemplate["DESCRIPTION"] <> ""):?>
+<p title="<?= GetMessage("comp_prop_desc")?>"><?= htmlspecialcharsbx($arTemplate["DESCRIPTION"])?></p>
+<?php endif;?>
+<p class="note" title="<?= GetMessage("comp_prop_path")?>"><?= htmlspecialcharsbx($arTemplate["REAL_PATH"]<>""? $arTemplate["REAL_PATH"]:$_GET["path"])?></p>
+<?php
 if($strWarning <> "")
 	//ShowError($strWarning);
 	$obJSPopup->ShowValidationError($strWarning);
 ?>
-<?
+<?php
 $obJSPopup->StartContent();
 if(!empty($arTemplate["PARAMS"])):
 ?>
 <table cellspacing="0" class="bx-width100">
-<?
+<?php
 foreach($arTemplate["PARAMS"] as $ID=>$prop):
 ?>
 	<tr>
-		<td><?echo htmlspecialcharsbx($prop["NAME"]).":"?></td>
+		<td><?= htmlspecialcharsbx($prop["NAME"]).":"?></td>
 		<td>
-<?
+			<?php
 if(!array_key_exists($ID, $arValues) && isset($prop["DEFAULT"]))
 	$arValues[$ID] = $prop["DEFAULT"];
 
@@ -362,9 +367,9 @@ echo $res;
 ?>
 		</td>
 	</tr>
-<?endforeach?>
+<?php endforeach?>
 </table>
-<?
+<?php
 	$obJSPopup->StartButtons();
 	echo '<input id="btn_popup_save" name="btn_popup_save" type="button" value="'.GetMessage("JSPOPUP_SAVE_CAPTION").'" onclick="'.$obJSPopup->jsPopup.'.PostParameters(\'action=save\');" title="'.GetMessage("JSPOPUP_SAVE_CAPTION").'" />'."\r\n";
 	$obJSPopup->ShowStandardButtons(array('close'));
@@ -373,4 +378,3 @@ else: //!empty($arTemplate["PARAMS"])
 endif; //!empty($arTemplate["PARAMS"])
 
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin_js.php");
-?>

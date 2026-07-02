@@ -4,7 +4,7 @@
 	display: flex;
 	flex-direction: row;
 	align-items: center;
-	flex-wrap: wrap;
+	flex-wrap: nowrap;
 	font-family: var(--ui-font-family-primary);
 	border: 1px solid var(--ui-color-palette-gray-10);
 	border-radius: 10px;
@@ -16,12 +16,17 @@
 	display: flex;
 	align-items: center;
 	flex-wrap: wrap;
+	min-width: 0;
 }
 
 .sign-document-b2e-company__hcmlink-select-text {
 	font: 16px/20px var(--ui-font-family-primary, var(--ui-font-family-system));
 	flex-grow: 1;
 	color: var(--ui-color-palette-gray-90);
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .sign-document-b2e-company__hcmlink-info-img {
@@ -32,6 +37,7 @@
 	width: 36px;
 	height: 36px;
 	margin-right: 7px;
+	flex-shrink: 0;
 }
 
 .sign-document-b2e-company__hcmlink-info-img.--active {
@@ -65,4 +71,5 @@
 	display: flex;
 	flex-direction: row;
 	align-items: center;
+	min-width: 0;
 }

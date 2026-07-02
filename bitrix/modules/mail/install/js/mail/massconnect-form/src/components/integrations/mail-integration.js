@@ -1,9 +1,9 @@
-import { PrepareOptionsPhrasesMixin } from '../../mixins/prepare-options-phrases-mixin';
+import { mapState } from 'ui.vue3.pinia';
 import { LocalizationMixin } from '../../mixins/localization-mixin';
 import { PreparedIndirectPhraseMixin } from '../../mixins/prepared-indirect-phrase-mixin';
-import { MailIntegrationSettingsType } from '../../utils/mail-integration-settings-type';
+import { type MailIntegrationSettingsType } from '../../utils/mail-integration-settings-type';
 import { BitrixSettingSelector } from '../tools/bitrix-setting-selector';
-import { MailIntegrationOptions } from '../../utils/options/mail-integration-options/component-options';
+import { useWizardStore } from '../../store/wizard';
 import './integrations.css';
 
 // @vue/component
@@ -14,7 +14,7 @@ export const MailIntegration = {
 		BitrixSettingSelector,
 	},
 
-	mixins: [LocalizationMixin, PrepareOptionsPhrasesMixin, PreparedIndirectPhraseMixin],
+	mixins: [LocalizationMixin, PreparedIndirectPhraseMixin],
 
 	props: {
 		/** @type MailIntegrationSettingsType */
@@ -29,6 +29,7 @@ export const MailIntegration = {
 	],
 
 	computed: {
+		...mapState(useWizardStore, ['mailSyncOptions']),
 		localModelValue: {
 			get(): MailIntegrationSettingsType
 			{
@@ -45,7 +46,7 @@ export const MailIntegration = {
 		},
 		syncPeriodOptions(): Object
 		{
-			return this.prepareOptionPhrases(MailIntegrationOptions.syncPeriodOptions);
+			return this.mailSyncOptions;
 		},
 	},
 

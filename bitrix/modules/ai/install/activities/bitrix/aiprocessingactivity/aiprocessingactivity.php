@@ -9,6 +9,7 @@ use Bitrix\AI\Payload;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\DI\ServiceLocator;
+use Bitrix\Main\Config;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -93,6 +94,13 @@ class CBPAiProcessingActivity extends CBPActivity implements IBPEventActivity, I
 
 	public function execute(): int
 	{
+		if (Config\Option::get('ai', 'bp_ai_processing_activity_disabled', 'N') === 'Y')
+		{
+			$this->logError(Loc::getMessage('AI_PROCESSING_ACTIVITY_DISABLED'));
+
+			return CBPActivityExecutionStatus::Closed;
+		}
+
 		if (empty($this->{self::PARAM_PROMPT}) || !CBPHelper::hasStringRepresentation($this->{self::PARAM_PROMPT}))
 		{
 			$this->logError(Loc::getMessage('AI_PROCESSING_ACTIVITY_EMPTY_PROMPT'));

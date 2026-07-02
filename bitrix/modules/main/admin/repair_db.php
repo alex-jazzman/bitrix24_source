@@ -52,8 +52,8 @@ elseif(isset($_REQUEST["table_name"]) && check_bitrix_sessid())
 				))."#PROGRESS_BAR#",
 			));
 			?>
-			<script>setTimeout("Optimize('<?echo CUtil::JSEscape($arTable["Name"])?>')", 100);</script>
-			<?
+			<script>setTimeout("Optimize('<?= CUtil::JSEscape($arTable["Name"])?>')", 100);</script>
+			<?php
 		}
 		else
 		{
@@ -133,7 +133,7 @@ elseif(isset($_REQUEST["table_name"]) && check_bitrix_sessid())
 								"#todo#" => $tables_count,
 							))."#PROGRESS_BAR#",
 						));
-						?><script>setTimeout("Optimize('<?echo CUtil::JSEscape($arTable["Name"])?>')", 100);</script><?
+						?><script>setTimeout("Optimize('<?= CUtil::JSEscape($arTable["Name"])?>')", 100);</script><?php
 					}
 					elseif($op == "check") //otherwise step optimize
 					{
@@ -148,7 +148,7 @@ elseif(isset($_REQUEST["table_name"]) && check_bitrix_sessid())
 								"#todo#" => $tables_count,
 							))."#PROGRESS_BAR#",
 						));
-						?><script>setTimeout("Optimize('o|<?echo CUtil::JSEscape($arTable["Name"])?>')", 100);</script><?
+						?><script>setTimeout("Optimize('o|<?= CUtil::JSEscape($arTable["Name"])?>')", 100);</script><?php
 					}
 					elseif($op == "optimize") //and step analyze
 					{
@@ -163,7 +163,7 @@ elseif(isset($_REQUEST["table_name"]) && check_bitrix_sessid())
 								"#todo#" => $tables_count,
 							))."#PROGRESS_BAR#",
 						));
-						?><script>setTimeout("Optimize('a|<?echo CUtil::JSEscape($arTable["Name"])?>')", 100);</script><?
+						?><script>setTimeout("Optimize('a|<?= CUtil::JSEscape($arTable["Name"])?>')", 100);</script><?php
 					}
 					else
 					{
@@ -179,7 +179,7 @@ elseif(isset($_REQUEST["table_name"]) && check_bitrix_sessid())
 								"#todo#" => $tables_count,
 							))."#PROGRESS_BAR#",
 						));
-						?><script>setTimeout("Optimize('<?echo CUtil::JSEscape($arTable["Name"])?>')", 100);</script><?
+						?><script>setTimeout("Optimize('<?= CUtil::JSEscape($arTable["Name"])?>')", 100);</script><?php
 					}
 				}
 				else
@@ -197,7 +197,7 @@ elseif(isset($_REQUEST["table_name"]) && check_bitrix_sessid())
 					document.getElementById('opt_pause').disabled = true;
 					document.getElementById('opt_continue').disabled = true;
 					</script>
-					<?
+					<?php
 				}
 			}
 			else
@@ -233,7 +233,7 @@ else
 					<td><?=GetMessage("RDB_REPAIR_RESULT")?></td>
 				</tr>
 
-			<?
+			<?php
 			while($arResult = $result->Fetch())
 			{
 				echo "<tr>";
@@ -320,25 +320,25 @@ else
 				echo "</tr>";
 			}
 			?>
-			<tr class="head"><td colspan="5"><?echo "<b>".GetMessage("RDB_EXEC_TIME")." </b>".round((microtime(true)-$start),5).GetMessage("RDB_SEC");?></td></tr>
+			<tr class="head"><td colspan="5"><?= "<b>".GetMessage("RDB_EXEC_TIME")." </b>".round((microtime(true)-$start),5).GetMessage("RDB_SEC");?></td></tr>
 			</table>
-			<?
+			<?php
 		}
 		elseif(isset($_REQUEST["optimize_tables"]) && $_REQUEST["optimize_tables"]=="Y")
 		{
 			?>
-			<?echo BeginNote(), GetMessage("RDB_OPTIMIZE_TIP"), EndNote();?>
+			<?= BeginNote(), GetMessage("RDB_OPTIMIZE_TIP"), EndNote();?>
 			<div id="optimize_result">
-			<?CAdminMessage::ShowMessage(array(
+			<?php CAdminMessage::ShowMessage(array(
 				"MESSAGE" => GetMessage("RDB_OPTIMIZE_WARNING_TITLE"),
 				"TYPE" => "ERROR",
 				"HTML" => true,
 				"DETAILS" => GetMessage("RDB_OPTIMIZE_WARNING_DETAILS"),
 			));?>
 			</div>
-			<input type="button" name="opt_start" id="opt_start" value="<?echo GetMessage("RDB_OPTIMIZE_BTN_START")?>" OnClick="Optimize('start|');">
-			<input type="button" name="opt_pause" id="opt_pause" value="<?echo GetMessage("RDB_OPTIMIZE_BTN_PAUSE")?>" OnClick="Pause(true);" disabled>
-			<input type="button" name="opt_continue" id="opt_continue" value="<?echo GetMessage("RDB_OPTIMIZE_BTN_CONTINUE")?>" OnClick="Pause(false);" disabled>
+			<input type="button" name="opt_start" id="opt_start" value="<?= GetMessage("RDB_OPTIMIZE_BTN_START")?>" OnClick="Optimize('start|');">
+			<input type="button" name="opt_pause" id="opt_pause" value="<?= GetMessage("RDB_OPTIMIZE_BTN_PAUSE")?>" OnClick="Pause(true);" disabled>
+			<input type="button" name="opt_continue" id="opt_continue" value="<?= GetMessage("RDB_OPTIMIZE_BTN_CONTINUE")?>" OnClick="Pause(false);" disabled>
 			<script>
 			var pause = false;
 			function Pause(flag)
@@ -379,18 +379,18 @@ else
 					}
 					table_name = encodeURIComponent(table_name);
 					table_name = table_name.replace('adv', '%61dv');
-					var url = 'repair_db.php?lang=<?echo LANGUAGE_ID?>&<?echo bitrix_sessid_get()?>&table_name='+table_name;
+					var url = 'repair_db.php?lang=<?= LANGUAGE_ID?>&<?= bitrix_sessid_get()?>&table_name='+table_name;
 					CHttpRequest.Send(url);
 				}
 			}
 			</script>
-			<?
+			<?php
 		}
 		else
 		{
 			?>
 			<p><?=GetMessage("RDB_TIP_1")?></p>
-			<?CAdminMessage::ShowMessage(array(
+			<?php CAdminMessage::ShowMessage(array(
 				"MESSAGE" => GetMessage("RDB_TIP_2"),
 				"TYPE" => "ERROR",
 				"HTML" => true,
@@ -400,7 +400,7 @@ else
 			<form name="check" action="">
 			<input type="submit" value="<?=GetMessage("RDB_CHECK_TABLES")?>" class="adm-btn-save">
 			<input type="hidden" value="Y" name="check_tables">
-			<?
+			<?php
 			if(!isset($_REQUEST["login"]) && !isset($_REQUEST["password"]))
 				echo bitrix_sessid_post();
 			if(isset($_REQUEST["login"]))

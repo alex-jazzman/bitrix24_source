@@ -1,25 +1,24 @@
+import { type JsonObject } from 'main.core';
+import { type MenuOptions } from 'main.popup';
 import { FeaturePromoter } from 'ui.info-helper';
 
 import { Messenger } from 'im.public';
-import { MessengerMenu, MenuItem, MenuItemIcon } from 'im.v2.component.elements.menu';
 import { CopilotRolesDialog } from 'im.v2.component.elements.copilot-roles-dialog';
+import { MessengerMenu, MenuItem, MenuItemIcon } from 'im.v2.component.elements.menu';
 import { CreateChatPromo } from 'im.v2.component.list.container.elements.create-chat-promo';
-import { Layout, PromoId, ChatType, ActionByUserType, SliderCode } from 'im.v2.const';
+import { PromoId, ChatType, ActionByUserType, SliderCode, type ChatTypeItem } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
-import { PermissionManager } from 'im.v2.lib.permission';
-import { PromoManager } from 'im.v2.lib.promo';
 import { CreateChatManager } from 'im.v2.lib.create-chat';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
-import { CopilotService } from 'im.v2.provider.service.copilot';
+import { PermissionManager } from 'im.v2.lib.permission';
+import { PromoManager } from 'im.v2.lib.promo';
+import { CopilotChatService } from 'im.v2.provider.service.copilot';
 import { CopilotManager } from 'im.v2.lib.copilot';
 
-import { CreateChatHelp } from './components/create-chat-help';
 import { DescriptionBanner } from './components/collab/description-banner';
 import { CopilotRoleSelectionButton } from './components/copilot-role-selection-button';
+import { CreateChatHelp } from './components/create-chat-help';
 import { InvitePromo } from './components/invite-promo';
-
-import type { JsonObject } from 'main.core';
-import type { MenuOptions } from 'main.popup';
 
 const PromoByChatType = {
 	[ChatType.chat]: PromoId.createGroupChat,
@@ -133,7 +132,7 @@ export const CreateChatMenu = {
 	},
 	methods:
 	{
-		onChatCreateClick(type: $Values<typeof ChatType>)
+		onChatCreateClick(type: ChatTypeItem)
 		{
 			Analytics.getInstance().chatCreate.onStartClick(type);
 			this.chatTypeToCreate = type;
@@ -177,7 +176,7 @@ export const CreateChatMenu = {
 			this.isLoading = true;
 			try
 			{
-				const newDialogId = await this.getCopilotService().createDefaultChat();
+				const newDialogId = await this.getCopilotChatService().createDefaultChat();
 
 				Analytics.getInstance().copilot.onCreateDefaultChatInRecent();
 
@@ -209,7 +208,7 @@ export const CreateChatMenu = {
 			this.isLoading = true;
 			try
 			{
-				const newDialogId = await this.getCopilotService().createChat({ roleCode });
+				const newDialogId = await this.getCopilotChatService().createChat({ roleCode });
 
 				this.isLoading = false;
 				void Messenger.openChat(newDialogId);
@@ -234,12 +233,12 @@ export const CreateChatMenu = {
 		},
 		startChatCreation()
 		{
-			const { name: currentLayoutName, entityId: currentLayoutChatType } = this.$store.getters['application/getLayout'];
-			if (currentLayoutName === Layout.createChat && currentLayoutChatType === this.chatTypeToCreate)
+			if (CreateChatManager.getInstance().isCreationLayoutActive(this.chatTypeToCreate))
 			{
 				return;
 			}
-			CreateChatManager.getInstance().startChatCreation(this.chatTypeToCreate);
+
+			void CreateChatManager.getInstance().startChatCreation(this.chatTypeToCreate);
 		},
 		getPromoType(): string
 		{
@@ -249,11 +248,11 @@ export const CreateChatMenu = {
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 		},
-		getCopilotService(): CopilotService
+		getCopilotChatService(): CopilotChatService
 		{
 			if (!this.copilotService)
 			{
-				this.copilotService = new CopilotService();
+				this.copilotService = new CopilotChatService();
 			}
 
 			return this.copilotService;

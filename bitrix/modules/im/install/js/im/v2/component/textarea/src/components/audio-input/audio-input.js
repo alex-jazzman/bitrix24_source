@@ -1,4 +1,5 @@
-import { BaseEvent } from 'main.core.events';
+import { type JsonObject } from 'main.core';
+import { type BaseEvent, type EventEmitter } from 'main.core.events';
 
 import { EventType } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
@@ -7,9 +8,6 @@ import { Notifier } from 'im.v2.lib.notifier';
 import { AudioManager } from './classes/audio-manager';
 
 import './css/audio-input.css';
-
-import type { JsonObject } from 'main.core';
-import type { EventEmitter } from 'main.core.events';
 
 // @vue/component
 export const AudioInput = {

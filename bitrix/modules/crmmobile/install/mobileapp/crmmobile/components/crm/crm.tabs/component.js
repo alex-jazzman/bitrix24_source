@@ -452,6 +452,8 @@
 
 		handleTabSelected(tab, changed)
 		{
+			BX.postComponentEvent('crm.tabs:onTabSelected', [{ tabId: tab.id, changed }]);
+
 			if (changed)
 			{
 				featureCounter = 0;

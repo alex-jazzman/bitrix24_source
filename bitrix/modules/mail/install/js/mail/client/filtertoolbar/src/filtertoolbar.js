@@ -1,7 +1,7 @@
 import { Tag } from 'main.core';
 import './css/style.css';
 import { Loc } from 'main.core';
-import { BaseEvent, EventEmitter } from "main.core.events";
+import { EventEmitter } from "main.core.events";
 import 'ui.fonts.opensans';
 
 export class FilterToolbar
@@ -180,22 +180,27 @@ export class FilterToolbar
 
 			if(event['data']['name'] === 'dirs')
 			{
+				const isAllMailMode = Loc.getMessage('MAIL_IS_ALL_MAIL_MODE') === 'Y';
 				const counters = event['data']['counters'];
 				const hidden = event['data']['hidden'];
 				const currentDir = event['data']['selectedDirectory'];
 				let currentFolderCount = counters[currentDir];
 
-				if(currentDir !== '')
+				if(isAllMailMode || currentDir !== '')
 				{
 					this.showReadAllBtn()
 				}
 				else
 				{
-					currentFolderCount = event['data']['total'];
 					this.hideReadAllBtn()
 				}
 
-				if(hidden[currentDir] && currentDir !== '')
+				if(currentDir === '')
+				{
+					currentFolderCount = event['data']['total'];
+				}
+
+				if(!isAllMailMode && hidden[currentDir] && currentDir !== '')
 				{
 					this.hideCounter();
 				}

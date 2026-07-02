@@ -243,4 +243,14 @@ return [
 		],
 		'readonly' => true,
 	],
+	'messenger' => [
+		'value' => [
+			'queues' => [
+				'download_board' => [
+					'handler' => \Bitrix\Disk\Document\Flipchart\Messenger\DownloadBoardReceiver::class,
+				],
+			],
+		],
+		'readonly' => true,
+	],
 ];

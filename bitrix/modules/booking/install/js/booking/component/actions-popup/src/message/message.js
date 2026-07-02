@@ -1,18 +1,19 @@
 import { Event } from 'main.core';
-import { Menu, MenuManager } from 'main.popup';
+import { MenuManager } from 'main.popup';
 import type { MenuItemOptions } from 'main.popup';
 
 import { mapGetters } from 'ui.vue3.vuex';
 import { BIcon as Icon, Set as IconSet } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.main';
 
-import { HelpDesk, Model } from 'booking.const';
+import { HelpDesk, Model, Communication } from 'booking.const';
 import { helpDesk } from 'booking.lib.help-desk';
 import { limit } from 'booking.lib.limit';
 import { Button, ButtonSize, ButtonColor, ButtonIcon } from 'booking.component.button';
 import { Loader } from 'booking.component.loader';
 import type { ClientData, ClientModel } from 'booking.model.clients';
 import type { MessageStatusModel } from 'booking.model.message-status';
+import type { NotificationsSenderModel } from 'booking.model.notifications';
 
 import './message.css';
 
@@ -27,6 +28,7 @@ type MessageData = {
 	buttonSize: OptionsDictionary,
 	buttonColor: OptionsDictionary,
 	buttonIcon: OptionsDictionary,
+	Communication: typeof Communication,
 }
 
 export const Message = {
@@ -60,6 +62,10 @@ export const Message = {
 			type: String,
 			default: '',
 		},
+		senderCode: {
+			type: String,
+			default: '',
+		},
 	},
 	components: {
 		Button,
@@ -78,14 +84,23 @@ export const Message = {
 			buttonSize,
 			buttonColor,
 			buttonIcon,
+			Communication,
 		};
 	},
 	computed: {
 		...mapGetters({
 			dictionary: `${Model.Dictionary}/getNotifications`,
-			isCurrentSenderAvailable: `${Model.Interface}/isCurrentSenderAvailable`,
 			isFeatureEnabled: `${Model.Interface}/isFeatureEnabled`,
+			getSenderByCode: `${Model.Notifications}/getSenderByCode`,
 		}),
+		sender(): NotificationsSenderModel | null
+		{
+			return this.senderCode ? this.getSenderByCode(this.senderCode) : null;
+		},
+		senderCanUse(): boolean
+		{
+			return this.sender?.canUse ?? false;
+		},
 		menuId(): string
 		{
 			return `booking-message-menu-${this.id}`;
@@ -129,7 +144,7 @@ export const Message = {
 				return;
 			}
 
-			if (this.disabled || (this.status.isDisabled && this.isCurrentSenderAvailable))
+			if (this.disabled || (this.status.isDisabled && this.senderCanUse))
 			{
 				return;
 			}
@@ -163,11 +178,15 @@ export const Message = {
 		},
 		getMenuItems(): MenuItemOptions[]
 		{
-			return Object.values(this.dictionary).map(({ name, value }) => ({
-				text: name,
-				onclick: () => this.sendMessage(value),
-				disabled: value === this.dictionary.Feedback.value,
-			}));
+			const notifications = this.sender?.notifications ?? {};
+
+			return Object.values(notifications)
+				.filter(({ value }) => value !== notifications.Cancellation?.value)
+				.map(({ name, value }) => ({
+					text: name,
+					onclick: () => this.sendMessage(value),
+					disabled: value === notifications.Feedback?.value,
+				}));
 		},
 		sendMessage(notificationType: string): void
 		{
@@ -202,11 +221,11 @@ export const Message = {
 	template: `
 		<div
 			class="booking-actions-popup__item booking-actions-popup__item-message-content"
-			:class="{'--disabled': disabled || !isCurrentSenderAvailable}"
+			:class="{'--disabled': disabled || !senderCanUse}"
 		>
 			<Loader v-if="loading" class="booking-actions-popup__item-message-loader"/>
 			<template v-else>
-				<div
+				<div v-if="senderCode === Communication.Bitrix24"
 					class="booking-actions-popup-item-icon"
 					:class="'--' + semantic || 'none'"
 				>
@@ -215,6 +234,7 @@ export const Message = {
 						:color="iconColor"
 					/>
 				</div>
+				<div v-else class="booking-actions-popup-item-icon --ai"></div>
 				<div class="booking-actions-popup-item-info">
 					<div class="booking-actions-popup-item-title">
 						<span :title="status?.title">{{ status?.title || '' }}</span>
@@ -231,11 +251,11 @@ export const Message = {
 					<Button
 						:data-element="dataElementPrefix + '-menu-message-button'"
 						:data-booking-id="dataId"
-						:disabled="disabled || (status?.isDisabled && isCurrentSenderAvailable)"
+						:disabled="disabled || (status?.isDisabled && senderCanUse)"
 						class="booking-actions-popup-button-with-chevron"
 						:class="{
 							'--lock': !isFeatureEnabled,
-							'--disabled': disabled || (status?.isDisabled && isCurrentSenderAvailable)
+							'--disabled': disabled || (status?.isDisabled && senderCanUse)
 						}"
 						buttonClass="ui-btn-shadow"
 						:text="loc('BB_ACTIONS_POPUP_MESSAGE_BUTTON_SEND')"
@@ -255,7 +275,7 @@ export const Message = {
 				</div>
 			</template>
 			<div
-				v-if="!isCurrentSenderAvailable"
+				v-if="!senderCanUse"
 				class="booking-booking-actions-popup-label"
 			>
 				{{ loc('BB_ACTIONS_POPUP_LABEL_SOON') }}

@@ -1,5 +1,55 @@
-<?
-$MESS["IM_NEW_NOTIFY_NAME"] = "New notification";
+<?php
+$MESS["IM_GUEST_INVITATION_DESC"] = "#EMAIL_TO#: recipient email
+#GUEST_NAME#: guest name
+#CHAT_TITLE#: chat title
+#INVITATION_LINK#: invitation link
+#SERVER_NAME#: server address";
+$MESS["IM_GUEST_INVITATION_MESSAGE"] = "Join our Bitrix24. We communicate in the chat, make calls and share files. Use this link to join:
+#INVITATION_LINK#
+
+This is an automated email. Please don't reply to it.";
+$MESS["IM_GUEST_INVITATION_NAME"] = "Guest invitation";
+$MESS["IM_GUEST_INVITATION_SUBJECT"] = "#SITE_NAME#: Your invitation to the chat \"#CHAT_TITLE#\"";
+$MESS["IM_NEW_MESSAGE_DESC"] = "#USER_ID# - user ID
+#USER_LOGIN# - user login
+#USER_NAME# - user first name
+#USER_LAST_NAME# - user last name
+#FROM_USER# - message sender name
+#MESSAGES# - messages
+#EMAIL_TO# - recipient E-mail address";
+$MESS["IM_NEW_MESSAGE_GROUP_DESC"] = "#USER_ID# - user ID
+#USER_LOGIN# - user login
+#USER_NAME# - user first name
+#USER_LAST_NAME# - user last name
+#FROM_USERS# - message senders names
+#MESSAGES# - messages
+#EMAIL_TO# - recipient E-mail address";
+$MESS["IM_NEW_MESSAGE_GROUP_MESSAGE"] = "Hello #USER_NAME#!
+
+You have new instant messages from #FROM_USERS#.
+
+#MESSAGES#
+
+Click to view conversations: http://#SERVER_NAME#/?IM_DIALOG=Y
+Edit notification preferences: http://#SERVER_NAME#/?IM_SETTINGS=NOTIFY
+
+This is an automated message, don't reply to it.";
+$MESS["IM_NEW_MESSAGE_GROUP_NAME"] = "New message (group)";
+$MESS["IM_NEW_MESSAGE_GROUP_SUBJECT"] = "#SITE_NAME#: Instant messages from #FROM_USERS#";
+$MESS["IM_NEW_MESSAGE_MESSAGE"] = "Hello #USER_NAME#!
+
+You have new instant messages from #FROM_USER#.
+
+------------------------------------------
+#MESSAGES#
+------------------------------------------
+
+Click to start conversation:  http://#SERVER_NAME#/?IM_DIALOG=#USER_ID#
+Edit notification preferences: http://#SERVER_NAME#/?IM_SETTINGS=NOTIFY
+
+This is an automated message, don't reply to it.";
+$MESS["IM_NEW_MESSAGE_NAME"] = "New message";
+$MESS["IM_NEW_MESSAGE_SUBJECT"] = "#SITE_NAME#: Instant messages from #FROM_USER#";
 $MESS["IM_NEW_NOTIFY_DESC"] = "#MESSAGE_ID# - message ID
 #USER_ID# - user ID
 #USER_LOGIN# - user Login
@@ -12,22 +62,6 @@ $MESS["IM_NEW_NOTIFY_DESC"] = "#MESSAGE_ID# - message ID
 #MESSAGE# - message body
 #MESSAGE_50# - first 50 characters of the message text
 #EMAIL_TO# - message recipient e-mail address";
-$MESS["IM_NEW_NOTIFY_SUBJECT"] = "#SITE_NAME#: Notification \"#MESSAGE_50#\"";
-$MESS["IM_NEW_NOTIFY_MESSAGE"] = "Hello #USER_NAME#!
-
-You have a new notification from #FROM_USER#
-
-------------------------------------------
-
-#MESSAGE#
-
-------------------------------------------
-
-View notifications: http://#SERVER_NAME#/?IM_NOTIFY=Y
-Edit notification preferences: http://#SERVER_NAME#/?IM_SETTINGS=NOTIFY
-
-This is an automated message, don't reply to it.";
-$MESS["IM_NEW_NOTIFY_GROUP_NAME"] = "New notification (group)";
 $MESS["IM_NEW_NOTIFY_GROUP_DESC"] = "#MESSAGE_ID# - message ID
 #USER_ID# - user ID
 #USER_LOGIN# - user Login
@@ -40,7 +74,6 @@ $MESS["IM_NEW_NOTIFY_GROUP_DESC"] = "#MESSAGE_ID# - message ID
 #MESSAGE_50# - first 50 characters of the message text
 #EMAIL_TO# - message recipient e-mail address
 ";
-$MESS["IM_NEW_NOTIFY_GROUP_SUBJECT"] = "#SITE_NAME#: Notification \"#MESSAGE_50#\"";
 $MESS["IM_NEW_NOTIFY_GROUP_MESSAGE"] = "Hello #USER_NAME#!
 
 You have a new notification from #FROM_USERS#
@@ -55,44 +88,21 @@ View notifications: http://#SERVER_NAME#/?IM_NOTIFY=Y
 Edit notification preferences: http://#SERVER_NAME#/?IM_SETTINGS=NOTIFY
 
 This is an automated message, don't reply to it.";
-$MESS["IM_NEW_MESSAGE_NAME"] = "New message";
-$MESS["IM_NEW_MESSAGE_DESC"] = "#USER_ID# - user ID
-#USER_LOGIN# - user login
-#USER_NAME# - user first name
-#USER_LAST_NAME# - user last name
-#FROM_USER# - message sender name
-#MESSAGES# - messages
-#EMAIL_TO# - recipient E-mail address";
-$MESS["IM_NEW_MESSAGE_SUBJECT"] = "#SITE_NAME#: Instant messages from #FROM_USER#";
-$MESS["IM_NEW_MESSAGE_MESSAGE"] = "Hello #USER_NAME#!
+$MESS["IM_NEW_NOTIFY_GROUP_NAME"] = "New notification (group)";
+$MESS["IM_NEW_NOTIFY_GROUP_SUBJECT"] = "#SITE_NAME#: Notification \"#MESSAGE_50#\"";
+$MESS["IM_NEW_NOTIFY_MESSAGE"] = "Hello #USER_NAME#!
 
-You have new instant messages from #FROM_USER#.
+You have a new notification from #FROM_USER#
 
 ------------------------------------------
-#MESSAGES#
+
+#MESSAGE#
+
 ------------------------------------------
 
-Click to start conversation:  http://#SERVER_NAME#/?IM_DIALOG=#USER_ID#
+View notifications: http://#SERVER_NAME#/?IM_NOTIFY=Y
 Edit notification preferences: http://#SERVER_NAME#/?IM_SETTINGS=NOTIFY
 
 This is an automated message, don't reply to it.";
-$MESS["IM_NEW_MESSAGE_GROUP_NAME"] = "New message (group)";
-$MESS["IM_NEW_MESSAGE_GROUP_DESC"] = "#USER_ID# - user ID
-#USER_LOGIN# - user login
-#USER_NAME# - user first name
-#USER_LAST_NAME# - user last name
-#FROM_USERS# - message senders names
-#MESSAGES# - messages
-#EMAIL_TO# - recipient E-mail address";
-$MESS["IM_NEW_MESSAGE_GROUP_SUBJECT"] = "#SITE_NAME#: Instant messages from #FROM_USERS#";
-$MESS["IM_NEW_MESSAGE_GROUP_MESSAGE"] = "Hello #USER_NAME#!
-
-You have new instant messages from #FROM_USERS#.
-
-#MESSAGES#
-
-Click to view conversations: http://#SERVER_NAME#/?IM_DIALOG=Y
-Edit notification preferences: http://#SERVER_NAME#/?IM_SETTINGS=NOTIFY
-
-This is an automated message, don't reply to it.";
-?>
+$MESS["IM_NEW_NOTIFY_NAME"] = "New notification";
+$MESS["IM_NEW_NOTIFY_SUBJECT"] = "#SITE_NAME#: Notification \"#MESSAGE_50#\"";

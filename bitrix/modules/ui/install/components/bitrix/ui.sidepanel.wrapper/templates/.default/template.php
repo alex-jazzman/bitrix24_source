@@ -220,6 +220,7 @@ if (defined('AIR_SITE_TEMPLATE'))
 			?>
 			<div class="ui-side-panel-toolbar<?if (!$arParams['USE_UI_TOOLBAR_MARGIN']):?> --no-margin<?endif?>">
 			<?php
+			Toolbar::removeFullscreenButton();
 			$APPLICATION->IncludeComponent('bitrix:ui.toolbar', '', [
 				'FAVORITES_TITLE_TEMPLATE' => (!empty($arParams['~UI_TOOLBAR_FAVORITES_TITLE_TEMPLATE']) ? $arParams['~UI_TOOLBAR_FAVORITES_TITLE_TEMPLATE'] : ''),
 				'FAVORITES_URL' => (!empty($arParams['UI_TOOLBAR_FAVORITES_URL']) ? $arParams['UI_TOOLBAR_FAVORITES_URL'] : ''),

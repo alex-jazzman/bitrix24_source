@@ -1,10 +1,12 @@
-import { ajax, Runtime, Text, Type, Loc } from 'main.core';
+import { ajax, Loc, Runtime, Text, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
+
 import { UI } from 'ui.notification';
+
 import AvatarsStackSteps from '../../components/content-blocks/avatars-stack-steps';
-import { ActionParams, Base } from '../base';
-import ConfigurableItem from '../../configurable-item';
 import { ButtonState } from '../../components/enums/button-state';
+import ConfigurableItem from '../../configurable-item';
+import { type ActionParams, Base } from '../base';
 import { TaskUserStatus } from './enums/task-user-status';
 
 export class Bizproc extends Base

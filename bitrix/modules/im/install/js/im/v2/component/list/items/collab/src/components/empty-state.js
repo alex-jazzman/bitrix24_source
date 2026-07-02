@@ -1,8 +1,9 @@
+import '../css/empty-state.css';
+
 // @vue/component
 export const EmptyState = {
 	name: 'EmptyState',
-	methods:
-	{
+	methods: {
 		loc(phraseCode: string): string
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode);

@@ -1,3 +1,5 @@
+import type { Communication } from 'booking.const';
+
 export type ResourceTypeDto = {
 	id: number | null,
 	moduleId: string,
@@ -5,7 +7,7 @@ export type ResourceTypeDto = {
 	code: string | null,
 	resourcesCnt: number | null,
 
-	senderCode: string,
+	senderCode: $Values<typeof Communication>;
 
 	// info
 	isInfoNotificationOn: boolean,

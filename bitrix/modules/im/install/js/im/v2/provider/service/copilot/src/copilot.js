@@ -2,7 +2,7 @@ import { ChatType } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
 import { ChatService } from 'im.v2.provider.service.chat';
 
-export class CopilotService
+export class CopilotChatService
 {
 	async createChat({ roleCode }: { roleCode: string }): Promise<string>
 	{
@@ -23,7 +23,7 @@ export class CopilotService
 		}
 		catch (error)
 		{
-			console.error('CopilotService: create chat error', error);
+			console.error('CopilotChatService: create chat error', error);
 			throw error;
 		}
 	}

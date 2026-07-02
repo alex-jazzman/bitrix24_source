@@ -848,7 +848,9 @@ this.BX = this.BX || {};
 	      isNew: true
 	    }, ...getGeneralMenuItemsFromPrompts(userPrompts, copilotTextController, false), promptLibraryItem] : []), ...getGeneralMenuItemsFromPrompts(systemPrompts, copilotTextController), ...getSelectedEngineMenuItem(engines, selectedEngineCode, copilotTextController, canEditSettings), {
 	      code: 'about_open_copilot',
-	      text: main_core.Loc.getMessage('AI_COPILOT_MENU_ITEM_ABOUT_COPILOT'),
+	      text: main_core.Loc.getMessage('AI_COPILOT_MENU_ITEM_ABOUT_COPILOT_MSGVER_1', {
+	        '#COPILOT_NAME#': main_core.Extension.getSettings('ai.copilot').get('copilotName')
+	      }),
 	      icon: ui_iconSet_api_core.Main.INFO,
 	      command: new OpenAboutCopilot()
 	    }, {
@@ -911,7 +913,9 @@ this.BX = this.BX || {};
 	  }, {
 	    id: 'provider',
 	    code: 'provider',
-	    text: main_core.Loc.getMessage('AI_COPILOT_MENU_ITEM_OPEN_COPILOT'),
+	    text: main_core.Loc.getMessage('AI_COPILOT_MENU_ITEM_OPEN_COPILOT_MSGVER_1', {
+	      '#COPILOT_NAME#': main_core.Extension.getSettings('ai.copilot').get('copilotName')
+	    }),
 	    children: CopilotProvidersMenuItems.getMenuItems({
 	      engines,
 	      selectedEngineCode,
@@ -994,7 +998,9 @@ this.BX = this.BX || {};
 	class AboutCopilotMenuItem extends BaseMenuItem {
 	  constructor(options) {
 	    super({
-	      text: main_core.Loc.getMessage('AI_COPILOT_MENU_ITEM_ABOUT_COPILOT'),
+	      text: main_core.Loc.getMessage('AI_COPILOT_MENU_ITEM_ABOUT_COPILOT_MSGVER_1', {
+	        '#COPILOT_NAME#': main_core.Extension.getSettings('ai.copilot').get('copilotName')
+	      }),
 	      icon: ui_iconSet_api_core.Main.INFO,
 	      onClick: () => {
 	        const articleCode = '19092894';
@@ -1146,7 +1152,9 @@ this.BX = this.BX || {};
 	      id: 'open-copilot',
 	      code: 'open-copilot',
 	      icon: ui_iconSet_api_core.Main.COPILOT_AI,
-	      text: main_core.Loc.getMessage('AI_COPILOT_MENU_ITEM_OPEN_COPILOT'),
+	      text: main_core.Loc.getMessage('AI_COPILOT_MENU_ITEM_OPEN_COPILOT_MSGVER_1', {
+	        '#COPILOT_NAME#': main_core.Extension.getSettings('ai.copilot').get('copilotName')
+	      }),
 	      ...options
 	    });
 	  }
@@ -1238,6 +1246,7 @@ this.BX = this.BX || {};
 	var _rolesDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rolesDialog");
 	var _showResultInCopilot = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showResultInCopilot");
 	var _menuForceTop = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("menuForceTop");
+	var _responseFormat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("responseFormat");
 	var _inputFieldContainerClickEventHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inputFieldContainerClickEventHandler");
 	var _inputFieldSubmitEventHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inputFieldSubmitEventHandler");
 	var _inputFieldInputEventHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inputFieldInputEventHandler");
@@ -1487,6 +1496,10 @@ this.BX = this.BX || {};
 	      writable: true,
 	      value: true
 	    });
+	    Object.defineProperty(this, _responseFormat, {
+	      writable: true,
+	      value: void 0
+	    });
 	    Object.defineProperty(this, _inputFieldContainerClickEventHandler, {
 	      writable: true,
 	      value: void 0
@@ -1534,6 +1547,7 @@ this.BX = this.BX || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics] = _options.analytics;
 	    babelHelpers.classPrivateFieldLooseBase(this, _showResultInCopilot)[_showResultInCopilot] = _options.showResultInCopilot;
 	    babelHelpers.classPrivateFieldLooseBase(this, _menuForceTop)[_menuForceTop] = (_options$menuForceTop = _options.menuForceTop) != null ? _options$menuForceTop : true;
+	    babelHelpers.classPrivateFieldLooseBase(this, _responseFormat)[_responseFormat] = _options.responseFormat;
 	    babelHelpers.classPrivateFieldLooseBase(this, _inputFieldContainerClickEventHandler)[_inputFieldContainerClickEventHandler] = babelHelpers.classPrivateFieldLooseBase(this, _handleInputContainerClickEvent)[_handleInputContainerClickEvent].bind(this);
 	    babelHelpers.classPrivateFieldLooseBase(this, _inputFieldSubmitEventHandler)[_inputFieldSubmitEventHandler] = babelHelpers.classPrivateFieldLooseBase(this, _handleInputFieldSubmitEvent)[_handleInputFieldSubmitEvent].bind(this);
 	    babelHelpers.classPrivateFieldLooseBase(this, _inputFieldInputEventHandler)[_inputFieldInputEventHandler] = babelHelpers.classPrivateFieldLooseBase(this, _handleInputFieldInputEvent)[_handleInputFieldInputEvent].bind(this);
@@ -1816,7 +1830,8 @@ this.BX = this.BX || {};
 	    const id = Math.round(Math.random() * 10000);
 	    babelHelpers.classPrivateFieldLooseBase(this, _currentGenerateRequestId$1)[_currentGenerateRequestId$1] = id;
 	    try {
-	      var _babelHelpers$classPr28;
+	      var _babelHelpers$classPr30;
+	      babelHelpers.classPrivateFieldLooseBase(this, _engine$2)[_engine$2].addParameter('response_format', babelHelpers.classPrivateFieldLooseBase(this, _responseFormat)[_responseFormat]);
 	      const res = await babelHelpers.classPrivateFieldLooseBase(this, _engine$2)[_engine$2].textCompletions();
 	      const result = res.data.result || res.data.last.data;
 	      if (babelHelpers.classPrivateFieldLooseBase(this, _currentGenerateRequestId$1)[_currentGenerateRequestId$1] !== id) {
@@ -1826,16 +1841,25 @@ this.BX = this.BX || {};
 	      babelHelpers.classPrivateFieldLooseBase(this, _inputField$2)[_inputField$2].disable();
 	      babelHelpers.classPrivateFieldLooseBase(this, _generationResultText)[_generationResultText] = res.data.result;
 	      if (babelHelpers.classPrivateFieldLooseBase(this, _showResultInCopilot)[_showResultInCopilot] === true || babelHelpers.classPrivateFieldLooseBase(this, _showResultInCopilot)[_showResultInCopilot] === undefined && babelHelpers.classPrivateFieldLooseBase(this, _selectedText$1)[_selectedText$1] || babelHelpers.classPrivateFieldLooseBase(this, _readonly)[_readonly]) {
-	        var _babelHelpers$classPr26, _babelHelpers$classPr27;
+	        var _babelHelpers$classPr26;
 	        (_babelHelpers$classPr26 = babelHelpers.classPrivateFieldLooseBase(this, _resultField)[_resultField]) == null ? void 0 : _babelHelpers$classPr26.clearResult();
-	        (_babelHelpers$classPr27 = babelHelpers.classPrivateFieldLooseBase(this, _resultField)[_resultField]) == null ? void 0 : _babelHelpers$classPr27.addResult(babelHelpers.classPrivateFieldLooseBase(this, _generationResultText)[_generationResultText]);
+	        if (babelHelpers.classPrivateFieldLooseBase(this, _responseFormat)[_responseFormat] === 'plaintext') {
+	          var _babelHelpers$classPr27;
+	          (_babelHelpers$classPr27 = babelHelpers.classPrivateFieldLooseBase(this, _resultField)[_resultField]) == null ? void 0 : _babelHelpers$classPr27.addResult(babelHelpers.classPrivateFieldLooseBase(this, _generationResultText)[_generationResultText].replaceAll('\n', '<br/>'));
+	        } else if (babelHelpers.classPrivateFieldLooseBase(this, _responseFormat)[_responseFormat] === 'default') {
+	          var _babelHelpers$classPr28;
+	          (_babelHelpers$classPr28 = babelHelpers.classPrivateFieldLooseBase(this, _resultField)[_resultField]) == null ? void 0 : _babelHelpers$classPr28.addResult(babelHelpers.classPrivateFieldLooseBase(this, _generationResultText)[_generationResultText], babelHelpers.classPrivateFieldLooseBase(this, _generationResultText)[_generationResultText].replaceAll(/(\r\n|\r|\n)/g, '<br>'));
+	        } else {
+	          var _babelHelpers$classPr29;
+	          (_babelHelpers$classPr29 = babelHelpers.classPrivateFieldLooseBase(this, _resultField)[_resultField]) == null ? void 0 : _babelHelpers$classPr29.addResult(babelHelpers.classPrivateFieldLooseBase(this, _generationResultText)[_generationResultText]);
+	        }
 	      } else {
 	        this.emit('aiResult', {
 	          result
 	        });
 	      }
 	      babelHelpers.classPrivateFieldLooseBase(this, _addResultToStack$1)[_addResultToStack$1](result);
-	      (_babelHelpers$classPr28 = babelHelpers.classPrivateFieldLooseBase(this, _warningField)[_warningField]) == null ? void 0 : _babelHelpers$classPr28.expand();
+	      (_babelHelpers$classPr30 = babelHelpers.classPrivateFieldLooseBase(this, _warningField)[_warningField]) == null ? void 0 : _babelHelpers$classPr30.expand();
 	      babelHelpers.classPrivateFieldLooseBase(this, _openResultMenu)[_openResultMenu]();
 	    } catch (res) {
 	      if (babelHelpers.classPrivateFieldLooseBase(this, _currentGenerateRequestId$1)[_currentGenerateRequestId$1] !== id) {
@@ -1846,10 +1870,10 @@ this.BX = this.BX || {};
 	    }
 	  }
 	  adjustMenusPosition() {
-	    var _babelHelpers$classPr29, _babelHelpers$classPr30, _babelHelpers$classPr31;
-	    (_babelHelpers$classPr29 = babelHelpers.classPrivateFieldLooseBase(this, _generalMenu)[_generalMenu]) == null ? void 0 : _babelHelpers$classPr29.adjustPosition();
-	    (_babelHelpers$classPr30 = babelHelpers.classPrivateFieldLooseBase(this, _errorMenu)[_errorMenu]) == null ? void 0 : _babelHelpers$classPr30.adjustPosition();
-	    (_babelHelpers$classPr31 = babelHelpers.classPrivateFieldLooseBase(this, _resultMenu)[_resultMenu]) == null ? void 0 : _babelHelpers$classPr31.adjustPosition();
+	    var _babelHelpers$classPr31, _babelHelpers$classPr32, _babelHelpers$classPr33;
+	    (_babelHelpers$classPr31 = babelHelpers.classPrivateFieldLooseBase(this, _generalMenu)[_generalMenu]) == null ? void 0 : _babelHelpers$classPr31.adjustPosition();
+	    (_babelHelpers$classPr32 = babelHelpers.classPrivateFieldLooseBase(this, _errorMenu)[_errorMenu]) == null ? void 0 : _babelHelpers$classPr32.adjustPosition();
+	    (_babelHelpers$classPr33 = babelHelpers.classPrivateFieldLooseBase(this, _resultMenu)[_resultMenu]) == null ? void 0 : _babelHelpers$classPr33.adjustPosition();
 	  }
 	  // eslint-disable-next-line sonarjs/cognitive-complexity
 	  getAnalytics() {
@@ -1936,8 +1960,8 @@ this.BX = this.BX || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _inputField$2)[_inputField$2].unsubscribe(babelHelpers.classPrivateFieldLooseBase(this, _copilotInputEvents)[_copilotInputEvents].adjustHeight, babelHelpers.classPrivateFieldLooseBase(this, _inputFieldAdjustHeightEventHandler)[_inputFieldAdjustHeightEventHandler]);
 	}
 	function _handleInputContainerClickEvent2() {
-	  var _babelHelpers$classPr32;
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _inputField$2)[_inputField$2].isDisabled() && (_babelHelpers$classPr32 = babelHelpers.classPrivateFieldLooseBase(this, _resultMenu)[_resultMenu]) != null && _babelHelpers$classPr32.isShown() && babelHelpers.classPrivateFieldLooseBase(this, _readonly)[_readonly] === false) {
+	  var _babelHelpers$classPr34;
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _inputField$2)[_inputField$2].isDisabled() && (_babelHelpers$classPr34 = babelHelpers.classPrivateFieldLooseBase(this, _resultMenu)[_resultMenu]) != null && _babelHelpers$classPr34.isShown() && babelHelpers.classPrivateFieldLooseBase(this, _readonly)[_readonly] === false) {
 	    const editCommand = new EditResultCommand({
 	      copilotTextController: this,
 	      inputField: babelHelpers.classPrivateFieldLooseBase(this, _inputField$2)[_inputField$2]
@@ -1949,23 +1973,23 @@ this.BX = this.BX || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _generalMenu)[_generalMenu].enableArrowsKey();
 	}
 	function _handleInputFieldInputEvent2(e) {
-	  var _babelHelpers$classPr33;
+	  var _babelHelpers$classPr35;
 	  const text = e.getData();
 	  if (!text) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _selectedPromptCodeWithSimpleTemplate)[_selectedPromptCodeWithSimpleTemplate] = null;
 	  }
-	  (_babelHelpers$classPr33 = babelHelpers.classPrivateFieldLooseBase(this, _generalMenu)[_generalMenu]) == null ? void 0 : _babelHelpers$classPr33.disableArrowsKey();
+	  (_babelHelpers$classPr35 = babelHelpers.classPrivateFieldLooseBase(this, _generalMenu)[_generalMenu]) == null ? void 0 : _babelHelpers$classPr35.disableArrowsKey();
 	  requestAnimationFrame(() => {
 	    babelHelpers.classPrivateFieldLooseBase(this, _adjustMenus)[_adjustMenus]();
 	  });
 	}
 	function _handleInputFieldStartRecordingEvent2() {
-	  var _babelHelpers$classPr34;
-	  (_babelHelpers$classPr34 = babelHelpers.classPrivateFieldLooseBase(this, _generalMenu)[_generalMenu]) == null ? void 0 : _babelHelpers$classPr34.hide();
+	  var _babelHelpers$classPr36;
+	  (_babelHelpers$classPr36 = babelHelpers.classPrivateFieldLooseBase(this, _generalMenu)[_generalMenu]) == null ? void 0 : _babelHelpers$classPr36.hide();
 	}
 	function _handleInputFieldStopRecordingEvent2() {
-	  var _babelHelpers$classPr35;
-	  (_babelHelpers$classPr35 = babelHelpers.classPrivateFieldLooseBase(this, _generalMenu)[_generalMenu]) == null ? void 0 : _babelHelpers$classPr35.show();
+	  var _babelHelpers$classPr37;
+	  (_babelHelpers$classPr37 = babelHelpers.classPrivateFieldLooseBase(this, _generalMenu)[_generalMenu]) == null ? void 0 : _babelHelpers$classPr37.show();
 	}
 	function _handleInputFieldCancelLoadingEvent2() {
 	  babelHelpers.classPrivateFieldLooseBase(this, _currentGenerateRequestId$1)[_currentGenerateRequestId$1] = -1;
@@ -1997,12 +2021,12 @@ this.BX = this.BX || {};
 	  this.generate();
 	}
 	function _adjustMenus2() {
-	  var _babelHelpers$classPr36;
-	  (_babelHelpers$classPr36 = babelHelpers.classPrivateFieldLooseBase(this, _generalMenu)[_generalMenu]) == null ? void 0 : _babelHelpers$classPr36.adjustPosition();
+	  var _babelHelpers$classPr38;
+	  (_babelHelpers$classPr38 = babelHelpers.classPrivateFieldLooseBase(this, _generalMenu)[_generalMenu]) == null ? void 0 : _babelHelpers$classPr38.adjustPosition();
 	}
 	function _getTooling2$1() {
-	  var _babelHelpers$classPr37;
-	  return (_babelHelpers$classPr37 = babelHelpers.classPrivateFieldLooseBase(CopilotTextController, _toolingDataByCategory$1)[_toolingDataByCategory$1][babelHelpers.classPrivateFieldLooseBase(this, _category$2)[_category$2]]) == null ? void 0 : _babelHelpers$classPr37.data;
+	  var _babelHelpers$classPr39;
+	  return (_babelHelpers$classPr39 = babelHelpers.classPrivateFieldLooseBase(CopilotTextController, _toolingDataByCategory$1)[_toolingDataByCategory$1][babelHelpers.classPrivateFieldLooseBase(this, _category$2)[_category$2]]) == null ? void 0 : _babelHelpers$classPr39.data;
 	}
 	function _getSelectedEngineCode2$1(engines) {
 	  var _engines$;
@@ -2046,13 +2070,13 @@ this.BX = this.BX || {};
 	    await this.setPromptIsFavourite(promptCode, isFavourite);
 	  });
 	  babelHelpers.classPrivateFieldLooseBase(this, _generalMenu)[_generalMenu].subscribe(babelHelpers.classPrivateFieldLooseBase(this, _copilotMenuEvents)[_copilotMenuEvents].clearHighlight, () => {
-	    var _babelHelpers$classPr38;
-	    (_babelHelpers$classPr38 = babelHelpers.classPrivateFieldLooseBase(this, _generalMenu)[_generalMenu]) == null ? void 0 : _babelHelpers$classPr38.disableArrowsKey();
+	    var _babelHelpers$classPr40;
+	    (_babelHelpers$classPr40 = babelHelpers.classPrivateFieldLooseBase(this, _generalMenu)[_generalMenu]) == null ? void 0 : _babelHelpers$classPr40.disableArrowsKey();
 	    babelHelpers.classPrivateFieldLooseBase(this, _inputField$2)[_inputField$2].enableEnterAndArrows();
 	  });
 	  babelHelpers.classPrivateFieldLooseBase(this, _generalMenu)[_generalMenu].subscribe(babelHelpers.classPrivateFieldLooseBase(this, _copilotMenuEvents)[_copilotMenuEvents].highlightMenuItem, () => {
-	    var _babelHelpers$classPr39;
-	    (_babelHelpers$classPr39 = babelHelpers.classPrivateFieldLooseBase(this, _generalMenu)[_generalMenu]) == null ? void 0 : _babelHelpers$classPr39.enableArrowsKey();
+	    var _babelHelpers$classPr41;
+	    (_babelHelpers$classPr41 = babelHelpers.classPrivateFieldLooseBase(this, _generalMenu)[_generalMenu]) == null ? void 0 : _babelHelpers$classPr41.enableArrowsKey();
 	    babelHelpers.classPrivateFieldLooseBase(this, _inputField$2)[_inputField$2].disableEnterAndArrows();
 	  });
 	}
@@ -2090,7 +2114,7 @@ this.BX = this.BX || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _generalMenu)[_generalMenu].setItemIsFavourite(this.getMenuItemCodeFromPrompt(promptCode), false);
 	}
 	async function _showRolesDialog2() {
-	  var _babelHelpers$classPr40;
+	  var _babelHelpers$classPr42;
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _rolesDialog)[_rolesDialog]) {
 	    return Promise.resolve();
 	  }
@@ -2102,16 +2126,16 @@ this.BX = this.BX || {};
 	  const dialogOptions = {
 	    moduleId: babelHelpers.classPrivateFieldLooseBase(this, _engine$2)[_engine$2].getModuleId(),
 	    contextId: babelHelpers.classPrivateFieldLooseBase(this, _engine$2)[_engine$2].getContextId(),
-	    selectedRoleCode: (_babelHelpers$classPr40 = babelHelpers.classPrivateFieldLooseBase(this, _currentRole)[_currentRole]) == null ? void 0 : _babelHelpers$classPr40.code,
+	    selectedRoleCode: (_babelHelpers$classPr42 = babelHelpers.classPrivateFieldLooseBase(this, _currentRole)[_currentRole]) == null ? void 0 : _babelHelpers$classPr42.code,
 	    title: main_core.Loc.getMessage('AI_COPILOT_ROLES_DIALOG_TITLE')
 	  };
 	  babelHelpers.classPrivateFieldLooseBase(this, _rolesDialog)[_rolesDialog] = new RolesDialog(dialogOptions);
 	  babelHelpers.classPrivateFieldLooseBase(this, _rolesDialog)[_rolesDialog].subscribe(RolesDialogEvents.SELECT_ROLE, e => {
-	    var _babelHelpers$classPr41, _babelHelpers$classPr42;
+	    var _babelHelpers$classPr43, _babelHelpers$classPr44;
 	    const role = e.getData().role;
 	    babelHelpers.classPrivateFieldLooseBase(this, _currentRole)[_currentRole] = role;
-	    (_babelHelpers$classPr41 = babelHelpers.classPrivateFieldLooseBase(this, _generalMenu)[_generalMenu]) == null ? void 0 : _babelHelpers$classPr41.updateRoleInfo(role);
-	    if ((_babelHelpers$classPr42 = babelHelpers.classPrivateFieldLooseBase(this, _rolesDialog)[_rolesDialog]) != null && _babelHelpers$classPr42.hide) {
+	    (_babelHelpers$classPr43 = babelHelpers.classPrivateFieldLooseBase(this, _generalMenu)[_generalMenu]) == null ? void 0 : _babelHelpers$classPr43.updateRoleInfo(role);
+	    if ((_babelHelpers$classPr44 = babelHelpers.classPrivateFieldLooseBase(this, _rolesDialog)[_rolesDialog]) != null && _babelHelpers$classPr44.hide) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _rolesDialog)[_rolesDialog].hide();
 	    }
 	  });
@@ -2139,7 +2163,7 @@ this.BX = this.BX || {};
 	  return result;
 	}
 	function _setEnginePayload2$1(options = {}) {
-	  var _babelHelpers$classPr43, _babelHelpers$classPr44, _babelHelpers$classPr45;
+	  var _babelHelpers$classPr45, _babelHelpers$classPr46, _babelHelpers$classPr47;
 	  const command = options.command || '';
 	  const markers = options.markers || {};
 	  const userMessage = markers.userMessage || undefined;
@@ -2149,9 +2173,9 @@ this.BX = this.BX || {};
 	      code: command
 	    },
 	    engineCode: babelHelpers.classPrivateFieldLooseBase(this, _selectedEngineCode$1)[_selectedEngineCode$1],
-	    roleCode: babelHelpers.classPrivateFieldLooseBase(this, _useRole)[_useRole]() ? (_babelHelpers$classPr43 = babelHelpers.classPrivateFieldLooseBase(this, _currentRole)[_currentRole]) == null ? void 0 : _babelHelpers$classPr43.code : undefined
+	    roleCode: babelHelpers.classPrivateFieldLooseBase(this, _useRole)[_useRole]() ? (_babelHelpers$classPr45 = babelHelpers.classPrivateFieldLooseBase(this, _currentRole)[_currentRole]) == null ? void 0 : _babelHelpers$classPr45.code : undefined
 	  });
-	  const oldPayloadMarkers = (_babelHelpers$classPr44 = (_babelHelpers$classPr45 = babelHelpers.classPrivateFieldLooseBase(this, _engine$2)[_engine$2].getPayload()) == null ? void 0 : _babelHelpers$classPr45.getMarkers()) != null ? _babelHelpers$classPr44 : {};
+	  const oldPayloadMarkers = (_babelHelpers$classPr46 = (_babelHelpers$classPr47 = babelHelpers.classPrivateFieldLooseBase(this, _engine$2)[_engine$2].getPayload()) == null ? void 0 : _babelHelpers$classPr47.getMarkers()) != null ? _babelHelpers$classPr46 : {};
 	  payload.setMarkers({
 	    ...oldPayloadMarkers,
 	    original_message: babelHelpers.classPrivateFieldLooseBase(this, _isCommandRequiredContextMessage$1)[_isCommandRequiredContextMessage$1](command) ? originalMessage : undefined,

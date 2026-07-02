@@ -1,9 +1,10 @@
-import { RestClient } from 'rest.client';
-import { Store } from 'ui.vue3.vuex';
+import { type Store } from 'ui.vue3.vuex';
+
+import { type RestClient } from 'rest.client';
 
 import { Core } from 'im.v2.application.core';
-import { Logger } from 'im.v2.lib.logger';
 import { RestMethod } from 'im.v2.const';
+import { Logger } from 'im.v2.lib.logger';
 
 export class PinService
 {

@@ -1,10 +1,9 @@
 import { Dom, Tag, Loc, Type } from 'main.core';
 
-import { ParserUtils } from '../utils/utils';
-import { getUtils, getConst } from '../utils/core-proxy';
-import { ParserIcon } from './icon';
+import { type ApplicationContext } from 'im.v2.const';
 
-import type { ApplicationContext } from 'im.v2.const';
+import { getUtils, getConst } from '../utils/core-proxy';
+import { ParserUtils } from '../utils/utils';
 
 const { EventType } = getConst();
 
@@ -76,7 +75,7 @@ export const ParserQuote = {
 	{
 		return text.replaceAll(
 			new RegExp(`^(${QUOTE_SIGN}(.*))`, 'gim'),
-			ParserIcon.getQuoteBlock() + spaceLetter,
+			getQuotePrefix() + spaceLetter,
 		);
 	},
 
@@ -110,7 +109,7 @@ export const ParserQuote = {
 	{
 		return text.replaceAll(
 			/-{54}(.*?)-{54}/gims,
-			ParserIcon.getQuoteBlock() + spaceLetter,
+			getQuotePrefix() + spaceLetter,
 		);
 	},
 
@@ -129,7 +128,7 @@ export const ParserQuote = {
 	{
 		return text.replaceAll(
 			/\[code](<br \/>)?([\0-\uFFFF]*?)\[\/code]/gis,
-			ParserIcon.getCodeBlock() + spaceLetter,
+			`[${Loc.getMessage('IM_PARSER_ICON_TYPE_CODE')}]${spaceLetter}`,
 		);
 	},
 
@@ -183,6 +182,10 @@ export const ParserQuote = {
 			dialogId: dialogId.toString(),
 		});
 	},
+};
+
+const getQuotePrefix = (): string => {
+	return `[${Loc.getMessage('IM_PARSER_ICON_TYPE_QUOTE')}]`;
 };
 
 const getQuoteText = (userName, timeTag, text): string => {

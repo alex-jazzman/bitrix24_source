@@ -1,6 +1,6 @@
 import { OneCPlanRestrictionSlider } from 'catalog.tool-availability-manager';
 import { ajax, Cache, Dom, Event, Reflection, Runtime, Text, Type, Loc } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { type BaseEvent, EventEmitter } from 'main.core.events';
 import { Row } from './product.list.row';
 import { PageEventsManager } from './page.events.manager';
 import SettingsPopup from './settings.button';
@@ -16,7 +16,7 @@ import { UI } from 'ui.notification';
 import 'ui.hint';
 
 const GRID_TEMPLATE_ROW = 'template_0';
-const DEFAULT_PRECISION: number = 2;
+const DEFAULT_PRECISION: number = 8;
 
 const isEmptyObject = function(obj): boolean
 {
@@ -817,6 +817,21 @@ export class Editor
 	getPricePrecision(): number
 	{
 		return this.getSettingValue('pricePrecision', DEFAULT_PRECISION);
+	}
+
+	getDisplayPrecision(): number
+	{
+		const currencyId = this.getCurrencyId();
+		if (currencyId)
+		{
+			const format = CurrencyCore.getCurrencyFormat(currencyId);
+			if (format && Type.isNumber(format.DECIMALS))
+			{
+				return format.DECIMALS;
+			}
+		}
+
+		return 2;
 	}
 
 	getQuantityPrecision(): number

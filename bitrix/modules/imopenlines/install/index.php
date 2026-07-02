@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\ImOpenLines\V2\Integration\AiAssistant\EventHandler\AiAssistantAgentActivity;
+use Bitrix\ImOpenLines\V2\Integration\Bizproc\EventHandler\SetupTemplateActivity;
 use \Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
@@ -261,6 +263,10 @@ final class imopenlines extends \CModule
 		$eventManager->registerEventHandler('humanresources', 'OnNodeDeleted', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onDepartmentDelete');
 		/** @see \Bitrix\ImOpenLines\Queue\Event::onDepartmentMemberUpdated */
 		$eventManager->registerEventHandler('humanresources', 'OnMemberUpdated', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onDepartmentMemberUpdated');
+		/** @see AiAssistantAgentActivity::onCollectCustomContext */
+		$eventManager->registerEventHandler('aiassistant', 'AiAssistantAgentActivity::onCollectCustomContext', 'imopenlines', AiAssistantAgentActivity::class, 'onCollectCustomContext');
+		/** @see SetupTemplateActivity::onProvideSelectors() */
+		$eventManager->registerEventHandler('bizproc', 'SetupTemplateActivitySelectorProvider::onProvideSelectors', 'imopenlines', SetupTemplateActivity::class, 'onProvideSelectors');
 
 
 		/** @see \Bitrix\ImOpenLines\Integrations\Report\Statistics\Manager::calculateStatisticsInQueue */
@@ -576,6 +582,10 @@ final class imopenlines extends \CModule
 		$eventManager->unRegisterEventHandler('imopenlines', '\Bitrix\Imopenlines\Model\Queue::OnAfterAdd', 'imopenlines', '\Bitrix\Imopenlines\Widget\Config', 'clearCache');
 		$eventManager->unRegisterEventHandler('imopenlines', '\Bitrix\Imopenlines\Model\Queue::OnAfterDelete', 'imopenlines', '\Bitrix\Imopenlines\Widget\Config', 'clearCache');
 		$eventManager->unRegisterEventHandler('imopenlines', '\Bitrix\Imopenlines\Model\Queue::OnAfterUpdate', 'imopenlines', '\Bitrix\Imopenlines\Widget\Config', 'clearCache');
+		/** @see AiAssistantAgentActivity::onCollectCustomContext() */
+		$eventManager->unRegisterEventHandler('aiassistant', 'AiAssistantAgentActivity::onCollectCustomContext', 'imopenlines', AiAssistantAgentActivity::class, 'onCollectCustomContext');
+		/** @see SetupTemplateActivity::onProvideSelectors() */
+		$eventManager->unRegisterEventHandler('bizproc', 'SetupTemplateActivitySelectorProvider::onProvideSelectors', 'imopenlines', SetupTemplateActivity::class, 'onProvideSelectors');
 
 		$this->UnInstallChatApps();
 

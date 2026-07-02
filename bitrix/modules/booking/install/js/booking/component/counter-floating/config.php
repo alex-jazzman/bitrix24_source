@@ -8,13 +8,13 @@ return [
 	'css' => 'dist/counter-floating.bundle.css',
 	'js' => 'dist/counter-floating.bundle.js',
 	'rel' => [
-		'ui.vue3.vuex',
-		'ui.icon-set.api.vue',
-		'booking.lib.filter-result-navigator',
-		'main.core',
+		'booking.component.popup',
 		'booking.const',
 		'booking.lib.aha-moments',
-		'booking.component.popup',
+		'booking.lib.filter-result-navigator',
+		'main.core',
+		'ui.icon-set.api.vue',
+		'ui.vue3.vuex',
 	],
 	'skip_core' => false,
 ];

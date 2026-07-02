@@ -1,12 +1,12 @@
 /**
- * @module im/messenger/controller/messenger-header/buttons-controller
+ * @module im/messenger/controller/messenger-header/src/buttons-controller
  */
-jn.define('im/messenger/controller/messenger-header/buttons-controller', (require, exports, module) => {
+jn.define('im/messenger/controller/messenger-header/src/buttons-controller', (require, exports, module) => {
 	const { isEqual } = require('utils/object');
 
+	const { resolveFolderHeaderConfig } = require('im/messenger/controller/messenger-header/src/config');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { PopupCreateButton } = require('im/messenger/lib/widget/header-button/popup-create-button');
-	const { headerControllerConfig } = require('im/messenger/controller/messenger-header/config');
+	const { PopupCreateButton } = require('im/messenger/lib/widget/header-button');
 
 	/**
 	 * @class HeaderButtonsController
@@ -14,14 +14,26 @@ jn.define('im/messenger/controller/messenger-header/buttons-controller', (requir
 	class HeaderButtonsController
 	{
 		#ui;
+		/** @type {Record<string, HeaderButtonsConfig>} */
+		#config;
 
-		constructor(widget)
+		/**
+		 * @param {object} widget
+		 * @param {Record<string, HeaderButtonsConfig>} config
+		 */
+		constructor(widget, config)
 		{
 			this.#ui = widget;
+			this.#config = config;
+
 			/** @private */
 			this.rightButtons = null;
 		}
 
+		/**
+		 * @param {string} tabId
+		 * @return {Promise<void>}
+		 */
 		async redrawRightButtonsIfNeeded(tabId)
 		{
 			const rightButtons = await this.getRightButtons(tabId);
@@ -35,21 +47,28 @@ jn.define('im/messenger/controller/messenger-header/buttons-controller', (requir
 
 		/**
 		 * @protected
+		 * @param {Array<object>} rightButtons
+		 */
+		redrawRightButtons(rightButtons)
+		{
+			const activeRecentId = serviceLocator.get('recent-manager').getActiveRecentId();
+
+			this.#ui.nestedWidgets()[activeRecentId]?.setRightButtons(rightButtons);
+		}
+
+		/**
+		 * @protected
 		 * @param {string} tabId
+		 * @return {Promise<Array<object>>}
 		 */
 		async getRightButtons(tabId)
 		{
-			const config = headerControllerConfig[tabId];
+			const config = this.#config[tabId] ?? resolveFolderHeaderConfig(tabId);
 			if (config)
 			{
-				const filterResults = await Promise.all(config.rightButtons.map(async (button) => {
-					if (button instanceof PopupCreateButton)
-					{
-						return button.shouldShow();
-					}
-
-					return true;
-				}));
+				const filterResults = await Promise.all(
+					config.rightButtons.map((button) => button.shouldShow()),
+				)
 
 				return config.rightButtons
 					.filter((button, index) => filterResults[index])
@@ -57,17 +76,6 @@ jn.define('im/messenger/controller/messenger-header/buttons-controller', (requir
 			}
 
 			return [];
-		}
-
-		/**
-		 * @protected
-		 * @param rightButtons
-		 */
-		redrawRightButtons(rightButtons)
-		{
-			const activeRecentId = serviceLocator.get('recent-manager').getActiveRecentId();
-
-			this.#ui.nestedWidgets()[activeRecentId]?.setRightButtons(rightButtons);
 		}
 	}
 

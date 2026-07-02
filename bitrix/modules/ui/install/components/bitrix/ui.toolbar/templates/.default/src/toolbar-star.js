@@ -69,18 +69,18 @@ export class ToolbarStar
 			Dom.addClass(this.starContNode, 'ui-toolbar-star-active');
 		}
 
-		this.starContNode.title = Loc.getMessage(
+		this.#setLabel(Loc.getMessage(
 			Dom.hasClass(this.starContNode, 'ui-toolbar-star-active')
 				? 'UI_TOOLBAR_DELETE_PAGE_FROM_LEFT_MENU'
 				: 'UI_TOOLBAR_ADD_PAGE_TO_LEFT_MENU',
-		);
+		));
 
 		// default page
 		if (Type.isDomNode(this.currentPageInMenu)
 			&& Dom.attr(this.currentPageInMenu, 'data-type') !== 'standard'
 		)
 		{
-			this.starContNode.title = Loc.getMessage('UI_TOOLBAR_STAR_TITLE_DEFAULT_PAGE');
+			this.#setLabel(Loc.getMessage('UI_TOOLBAR_STAR_TITLE_DEFAULT_PAGE'));
 			bind(this.starContNode, 'click', () => {
 				this.showMessage(Loc.getMessage('UI_TOOLBAR_STAR_TITLE_DEFAULT_PAGE_DELETE_ERROR'));
 			});
@@ -125,15 +125,21 @@ export class ToolbarStar
 		if (params.isActive)
 		{
 			this.showMessage(Loc.getMessage('UI_TOOLBAR_ITEM_WAS_ADDED_TO_LEFT'));
-			this.starContNode.title = Loc.getMessage('UI_TOOLBAR_DELETE_PAGE_FROM_LEFT_MENU');
+			this.#setLabel(Loc.getMessage('UI_TOOLBAR_DELETE_PAGE_FROM_LEFT_MENU'));
 			Dom.addClass(this.starContNode, 'ui-toolbar-star-active');
 		}
 		else
 		{
 			this.showMessage(Loc.getMessage('UI_TOOLBAR_ITEM_WAS_DELETED_FROM_LEFT'));
-			this.starContNode.title = Loc.getMessage('UI_TOOLBAR_ADD_PAGE_TO_LEFT_MENU');
+			this.#setLabel(Loc.getMessage('UI_TOOLBAR_ADD_PAGE_TO_LEFT_MENU'));
 			Dom.removeClass(this.starContNode, 'ui-toolbar-star-active');
 		}
+	}
+
+	#setLabel(text: string): void
+	{
+		this.starContNode.title = text;
+		Dom.attr(this.starContNode, 'aria-label', text);
 	}
 
 	showMessage(message) {

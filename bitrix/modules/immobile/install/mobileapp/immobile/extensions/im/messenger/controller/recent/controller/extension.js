@@ -11,7 +11,9 @@ jn.define('im/messenger/controller/recent/controller', (require, exports, module
 		RefreshMode,
 		RecentFilterId,
 	} = require('im/messenger/const');
+	const { isOnline } = require('device/connection');
 	const { RecentEventType } = require('im/messenger/controller/recent/const');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	/**
 	 * @class RecentController
@@ -32,6 +34,14 @@ jn.define('im/messenger/controller/recent/controller', (require, exports, module
 			this.initPromise = Promise.resolve(null);
 			this.isActived = false;
 			this.resumeMode = null;
+		}
+
+		/**
+		 * @return {number}
+		 */
+		getParentChatId()
+		{
+			return this.locator.get('parentChatId');
 		}
 
 		async init(applicationStartUp = false)
@@ -127,6 +137,20 @@ jn.define('im/messenger/controller/recent/controller', (require, exports, module
 			this.resumeMode = null;
 		}
 
+		destroy()
+		{
+			this.logger.log('destroy');
+
+			const subscriptionManager = serviceLocator.get('subscription-manager');
+			this.locator.forEach((service) => {
+				subscriptionManager.remove(service);
+			});
+
+			this.locator.clear();
+			this.isActived = false;
+			this.resumeMode = null;
+		}
+
 		openSearch()
 		{
 			if (this.locator.has('search'))
@@ -153,7 +177,10 @@ jn.define('im/messenger/controller/recent/controller', (require, exports, module
 			{
 				this.locator.get('filter').applyFilter(filterId);
 
-				await this.#loadFirstPageFromServer(RefreshMode.startUp);
+				if (isOnline())
+				{
+					await this.#loadFirstPageFromServer(RefreshMode.startUp);
+				}
 			}
 		}
 
@@ -168,6 +195,22 @@ jn.define('im/messenger/controller/recent/controller', (require, exports, module
 			}
 
 			return false;
+		}
+
+		/**
+		 * @returns {Promise<void>}
+		 */
+		async resetFilter()
+		{
+			if (this.isSupportedFilter())
+			{
+				await this.locator.get('filter').resetFilter();
+
+				if (isOnline())
+				{
+					await this.#loadFirstPageFromServer(RefreshMode.startUp);
+				}
+			}
 		}
 
 		/**
@@ -194,12 +237,38 @@ jn.define('im/messenger/controller/recent/controller', (require, exports, module
 
 		/**
 		 * @param {RefreshModeType} mode
+		 * @return {object}
+		 */
+		getRefreshOptions(mode)
+		{
+			if (!this.locator.has('server-load'))
+			{
+				return {};
+			}
+
+			return this.#getRequestOptions(mode);
+		}
+
+		/**
+		 * @param {RefreshModeType} mode
 		 * @return {(function(*): Promise<void>)}
 		 */
 		getRefreshHandler(mode)
 		{
 			return async (refreshResult) => {
 				await this.initPromise;
+
+				if (this.locator.has('database-load'))
+				{
+					try
+					{
+						await this.locator.get('database-load').loadFirstPage();
+					}
+					catch (error)
+					{
+						this.logger.error(`refresh database-load.loadFirstPage error`, error);
+					}
+				}
 
 				if (this.locator.has('server-load'))
 				{
@@ -217,6 +286,7 @@ jn.define('im/messenger/controller/recent/controller', (require, exports, module
 						this.logger.error(`refresh by mode ${mode} error`, error);
 					}
 				}
+
 				this.markAsActive();
 			};
 		}
@@ -229,10 +299,16 @@ jn.define('im/messenger/controller/recent/controller', (require, exports, module
 
 				if (Type.isNull(method))
 				{
+					await this.locator.get('server-load').loadFirstPage?.();
+					if (mode === RefreshMode.startUp)
+					{
+						this.#afterFirstServerPageLoad();
+					}
+
 					return;
 				}
 
-				const options = this.#getRequestOptions();
+				const options = this.#getRequestOptions(mode);
 				const result = await runAction(RestMethod.immobileMessengerLoad, {
 					data: {
 						methodList: [method],
@@ -259,18 +335,28 @@ jn.define('im/messenger/controller/recent/controller', (require, exports, module
 				const emptyState = this.locator.get('empty-state');
 				const floatingButton = this.locator.get('floating-button');
 
-				emptyState.subscribeEvents();
-				floatingButton.subscribeEvents();
+				emptyState?.subscribeEvents();
+				floatingButton?.subscribeEvents();
 
-				emptyState.redraw();
-				floatingButton.redraw();
+				emptyState?.redraw();
+				floatingButton?.redraw();
+
+				if (this.locator.has('invite-banner'))
+				{
+					const inviteBanner = this.locator.get('invite-banner');
+					inviteBanner.subscribeEvents();
+					inviteBanner.redraw();
+				}
 			});
 		}
 
-		#getRequestOptions()
+		#getRequestOptions(mode)
 		{
 			const currentFilterId = this.locator.get('filter')?.getCurrentFilterId();
-			const options = {};
+			const currentServerLoadOptions = this.locator.get('server-load').getInitRequestOptions(mode);
+			const options = {
+				...currentServerLoadOptions,
+			};
 
 			if (currentFilterId === RecentFilterId.unread)
 			{

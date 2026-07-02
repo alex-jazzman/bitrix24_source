@@ -26,7 +26,7 @@ export class ServiceLocator
 
 	getCommunicationService(): CommunicationService
 	{
-		this.#communicationService ??= new CommunicationService();
+		this.#communicationService ??= new CommunicationService(this);
 
 		return this.#communicationService;
 	}

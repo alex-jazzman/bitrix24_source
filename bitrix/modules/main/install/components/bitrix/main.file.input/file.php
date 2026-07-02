@@ -1,4 +1,4 @@
-<?
+<?php
 if (!defined("B_PROLOG_INCLUDED"))
 	require_once(__DIR__."/ajax.php");
 

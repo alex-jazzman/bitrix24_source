@@ -1,1 +1,525 @@
-.booking-sre-app{height:100%}.booking-sre-app__layout{display:flex;flex-direction:column;height:100%;box-sizing:border-box}.booking-sre-app__wrapper{display:flex;flex-direction:column;padding:18px 20px 18px 22px;gap:20px;position:relative;flex:1;overflow:hidden;overflow-y:scroll}.booking-sre-app__wrapper::-webkit-scrollbar{width:5px}.booking-sre-app__wrapper::-webkit-scrollbar-thumb{border-radius:4px;background:var(--ui-color-base-20)}.booking-sre-app__footer{position:relative;padding:13px 22px;background:var(--ui-color-palette-white-base);box-shadow:0 -2px 4px 0 #c6c9cb;display:flex;gap:29px;align-items:center}.booking-sre-app__header{color:var(--ui-color-base-black-fixed);font-size:var(--ui-font-size-4xl);font-weight:var(--ui-font-weight-medium);line-height:var(--ui-font-line-height-3xl)}.booking-sre-app__sku-settings{display:flex;flex-direction:column;gap:16px;padding:20px 24px;border-radius:var(--ui-border-radius-2xl);background:var(--ui-color-palette-white-base)}.booking-sre-app__sku-settings_description{color:var(--ui-color-base-3);font-size:var(--ui-font-size-sm);line-height:var(--ui-font-line-height-2xs);letter-spacing:var(--ui-letter-spacing-l)}.booking-sre-app__sku-settings-content{position:relative}.booking-sre-app__sku-settings-content .ui-form-row-inline{margin-bottom:0}.booking-services-settings-popup__services-view__services-list,.booking-sre-app__resources-view__resources-list{display:flex;flex-direction:column;gap:var(--ui-space-stack-lg)}.booking-services-settings-popup__search-input_wrapper{display:flex;align-items:center;gap:var(--ui-space-inline-2xs);background:var(--ui-color-on-primary-alt);border:1px solid var(--ui-color-base-10);border-radius:var(--ui-border-radius-sm);box-sizing:border-box;padding:12px 9px;width:100%}.booking-services-settings-popup__search-input{font-size:var(--ui-size-sm2);border:unset;width:100%}.booking-services-settings-popup__search-input::placeholder{color:#a8adb4}input.booking-services-settings-popup__search-input:focus-visible{outline:none}.booking-sre-app--skus-view--resource-selector .ui-tag-selector-outer-container{border:none}.booking-sre-app--sku-item--price{font-size:var(--ui-font-size-md);font-weight:var(--ui-font-weight-normal);line-height:var(--ui-font-line-height-sm);letter-spacing:var(--ui-letter-spacing-l);color:var(--ui-color-base-50);margin-right:var(--ui-space-inline-xs)}.booking-sre-app--skus-view_empty-state{display:flex;max-width:345px;margin:auto;flex-direction:column;align-items:center;gap:8px;padding:40px 0}.booking-sre-app--skus-view_empty-state-icon{display:block;width:231px;height:130px;background:url(../images/booking-sre-empty-state-icon.png) 50% no-repeat;background-size:contain}.booking-sre-app--skus-view_empty-state-title{font-size:var(--ui-font-size-xl);text-align:center;font-weight:var(--ui-font-weight-medium);line-height:var(--ui-font-line-height-2xs);letter-spacing:var(--ui-letter-spacing-m);color:var(--ui-color-base-1)}.booking-sre-app--skus-view_empty-state-description{text-align:center;font-size:var(--ui-font-size-sm);line-height:var(--ui-font-line-height-2xs);letter-spacing:var(--ui-letter-spacing-l);color:var(--ui-color-base-2);overflow-wrap:anywhere}.booking-sre-app--skus-view_empty-state-button{margin:15px 0}.booking-sre-app--services-bar{display:flex;gap:8px;align-items:center;padding-top:var(--ui-space-stack-sm);padding-bottom:var(--ui-space-stack-sm);flex-grow:1;background:var(--ui-color-base-8);z-index:999;position:-webkit-sticky;position:sticky;top:-20px}.booking-sre-app--services-bar__label{color:var(--ui-color-text-secondary);font-size:var(--ui-font-size-sm);font-weight:var(--ui-font-weight-normal);line-height:var( --ui-typography-heading-h3-line-height);letter-spacing:var(--ui-letter-spacing-l);flex-grow:1}.booking-sre-app--services-bar__grow{flex-grow:1}.booking-services-settings-popup__base-item{display:flex;padding:var(--ui-space-stack-md) var(--ui-space-inline-md) var(--ui-space-stack-sm2);flex-direction:column;justify-content:center;align-items:flex-start;gap:var(--ui-space-stack-md);border-radius:var(--ui-border-radius-xl);border:var(--ui-border-width-thin) solid rgba(var(--ui-color-palette-black-solid-rgb),.15);scroll-margin-top:65px}.booking-services-settings-popup__base-item__header{display:flex;gap:8px;align-items:center;width:100%}.booking-services-settings-popup__base-item__checkbox{margin:0}.booking-services-settings-popup__base-item__title{flex-grow:1;font-size:var(--ui-font-size-lg);font-weight:var(--ui-font-weight-medium);line-height:var(--ui-typography-text-xs-line-height);letter-spacing:var(--ui-letter-spacing-l);color:var(--ui-color-text-primary);margin:unset;overflow:hidden;text-overflow:ellipsis}.booking-services-settings-popup__base-item__content{position:relative;border-radius:var(--ui-border-radius-sm);border:var(--ui-border-width-thin) solid var(--ui-color-divider-accent);box-sizing:border-box;padding:10px 12px 10px 0;width:100%}.booking-services-settings-popup__base-item__content.--invalid{border-color:var(--ui-color-palette-red-50)}.booking-services-settings-popup__base-item__text-on-frame{position:absolute;left:9px;background:var(--ui-color-background-primary);font-size:var(--ui-font-size-xs);font-weight:var(--ui-font-weight-normal);line-height:var(--ui-font-line-height-3xs);letter-spacing:var(--ui-letter-spacing-l)}.booking-services-settings-popup__base-item__label{top:-9px;padding:var(--ui-space-stack-none) var(--ui-space-inline-3xs);color:var(--ui-color-base-70)}.booking-services-settings-popup__base-item__error-msg{padding:var(--ui-space-stack-3xs) var(--ui-space-inline-3xs);color:var(--ui-color-text-alert)}.booking-sre-app__base-item__close-icon{cursor:pointer;transition:.2s}.booking-sre-app__base-item__close-icon:hover{opacity:var(--ui-opacity-80)}.booking-sre__base-item__skeleton{background-color:var(--ui-color-base-05)}.booking-sre__base-item__skeleton.--circle{border-radius:var(--ui-border-radius-circle)}.booking-sre__base-item__skeleton.--rectangle{border-radius:var(--ui-border-radius-xs)}.booking-sre__base-item__skeleton.--rectangle-rounded{border-radius:var(--ui-border-radius-3xl)}.booking-sre__base-item__skeleton--row{display:flex;flex-direction:row;align-items:center}.booking-sre__base-item__skeleton--header{justify-content:space-between;margin-bottom:15px;width:100%}.booking-sre__base-item__skeleton--content-row{width:100%}.booking-sre__base-item__skeleton--content{display:flex;flex-direction:column;gap:10px;margin:10px}.booking-services-settings-popup__resources-view__sku-selector .ui-tag-selector-outer-container{border:none}.booking-resources-settings__resources-view_empty-state{display:flex;max-width:345px;margin:auto;flex-direction:column;align-items:center;gap:8px;padding:40px 0}.booking-resources-settings__resources-view_empty-state-icon{display:block;width:231px;height:130px;background:url(../images/booking-sre-empty-state-icon.png) 50% no-repeat;background-size:contain}.booking-resources-settings__resources-view_empty-state-title{font-size:var(--ui-font-size-xl);text-align:center;font-weight:var(--ui-font-weight-medium);line-height:var(--ui-font-line-height-2xs);letter-spacing:var(--ui-letter-spacing-m);color:var(--ui-color-base-1)}.booking-resources-settings__resources-view_empty-state-description{text-align:center;font-size:var(--ui-font-size-sm);line-height:var(--ui-font-line-height-2xs);letter-spacing:var(--ui-letter-spacing-l);color:var(--ui-color-base-2);overflow-wrap:anywhere}.booking-resources-settings__resources-view_empty-state-button{margin:15px 0}.booking-sre-app__resources-bar{display:flex;gap:8px;align-items:center;padding-top:var(--ui-space-stack-sm);padding-bottom:var(--ui-space-stack-sm);flex-grow:1;background:var(--ui-color-base-8);z-index:999;position:-webkit-sticky;position:sticky;top:-20px}.booking-sre-app__resources-bar__label{color:var(--ui-color-text-secondary);font-size:var(--ui-font-size-sm);font-weight:var(--ui-font-weight-normal);line-height:var( --ui-typography-heading-h3-line-height);letter-spacing:var(--ui-letter-spacing-l);flex-grow:1}.booking-sre-app__resources-bar__grow{flex-grow:1}.booking-sre-app__resources-group-header{justify-content:space-between;margin:var(--ui-space-stack-xs2) 0}.booking-sre-app__resources-group-header,.booking-sre-app__resources-group-header-title{display:flex;flex-direction:row;align-items:center}.booking-sre-app__resources_group-header--title{color:var(--ui-color-base-90);font-size:var(--ui-font-size-md);font-weight:var(--ui-font-weight-medium);line-height:var(--ui-font-line-height-sm);letter-spacing:var(--ui-letter-spacing-l)}.booking-sre-app__resources-group-header-actions{display:flex;flex-direction:row;align-items:center}.booking-sre-app__resources_group-header--collapse{cursor:pointer;display:flex;flex-direction:row;align-items:center;gap:6px}.booking-sre-app__resources_group-header--collapse-label{color:var(--ui-color-base-70);font-size:var(--ui-font-size-xs);font-weight:var(--ui-font-weight-normal);line-height:var(--ui-font-line-height-3xs);letter-spacing:var(--ui-letter-spacing-l)}.booking-sre-app__resources_group-header--collapse-icon.--expanded{transform:rotate(180deg)}.booking-sku-resources-editor__base-group-action-bar{position:absolute;top:0;width:100%;box-sizing:border-box;display:flex;flex-direction:row;gap:10px;padding:var(--ui-space-stack-xs2) 10px var(--ui-space-stack-xs2) 16px;align-items:center;border-radius:var(--ui-border-radius-lg);background:var(--ui-color-accent-main-primary);box-shadow:0 1px 2px 0 rgba(0,0,0,.13);z-index:2}.booking-sku-resources-editor__base-group-action-bar__title_wrapper{display:flex;flex-direction:row;gap:6px}.booking-sku-resources-editor__base-group-action-bar__title{color:var(--ui-color-on-primary);font-size:var(--ui-font-size-sm);font-weight:var(--ui-font-weight-normal);line-height:var(--ui-font-line-height-2xs);letter-spacing:var(--ui-letter-spacing-l)}.booking-sku-resources-editor__base-group-action-bar__close-icon{cursor:pointer;transition:.2s}.booking-sku-resources-editor__base-group-action-bar__close-icon:hover{opacity:var(--ui-opacity-60)}.booking-sku-resources-editor__divider-vertical{position:relative;min-height:20px;width:9px}.booking-sku-resources-editor__divider-vertical:before{position:absolute;display:block;top:0;left:50%;height:100%;content:"";border-left:1px solid rgba(238,242,244,.4)}.booking-sre-app--add-resources-button{display:flex;flex-direction:row;align-items:center;gap:4px;cursor:pointer}.booking-sre-app--add-resources-button:hover{opacity:var(--ui-opacity-80)}.booking-sre-app--add-resources-button__label{color:var(--ui-color-on-primary);text-align:center;font-size:var(--ui-font-size-sm);font-weight:var(--ui-font-weight-normal);line-height:var(--ui-font-line-height-2xs);letter-spacing:var(--ui-letter-spacing-l)}.booking-sre-app__add-skus-button{display:flex;flex-direction:row;align-items:center;gap:4px;cursor:pointer}.booking-sre-app__add-skus-button:hover{opacity:var(--ui-opacity-80)}.booking-sre-app__add-skus-button__label{color:var(--ui-color-on-primary);text-align:center;font-size:var(--ui-font-size-sm);font-weight:var(--ui-font-weight-normal);line-height:var(--ui-font-line-height-2xs);letter-spacing:var(--ui-letter-spacing-l)}
+.booking-sre-app {
+	height: 100%;
+}
+
+.booking-sre-app__layout {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	box-sizing: border-box;
+}
+
+.booking-sre-app__wrapper {
+	display: flex;
+	flex-direction: column;
+	padding: 18px 20px 18px 22px;
+	gap: 20px;
+	position: relative;
+	flex: 1;
+	overflow: hidden;
+	overflow-y: scroll;
+}
+
+.booking-sre-app__wrapper::-webkit-scrollbar {
+	width: 5px;
+}
+
+.booking-sre-app__wrapper::-webkit-scrollbar-thumb {
+	border-radius: 4px;
+	background: var(--ui-color-base-20);
+}
+
+.booking-sre-app__footer {
+	position: relative;
+	padding: 13px 22px;
+	background: var(--ui-color-palette-white-base);
+	box-shadow: 0 -2px 4px 0 #c6c9cb;
+	display: flex;
+	gap: 29px;
+	align-items: center;
+}
+
+.booking-sre-app__header {
+	color: var(--ui-color-base-black-fixed);
+	font-size: var(--ui-font-size-4xl);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-3xl);
+}
+
+.booking-sre-app__sku-settings {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding: 20px 24px;
+	border-radius: var(--ui-border-radius-2xl);
+	background: var(--ui-color-palette-white-base);
+}
+
+.booking-sre-app__sku-settings_description {
+	color: var(--ui-color-base-3);
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-2xs);
+	letter-spacing: var(--ui-letter-spacing-l);
+}
+
+.booking-sre-app__sku-settings-content {
+	position: relative;
+}
+
+.booking-sre-app__sku-settings-content .ui-form-row-inline {
+	margin-bottom: 0;
+}
+
+.booking-services-settings-popup__services-view__services-list {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-lg);
+}
+
+.booking-services-settings-popup__search-input_wrapper {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	background: var(--ui-color-on-primary-alt);
+	border: 1px solid var(--ui-color-base-10);
+	border-radius: var(--ui-border-radius-sm);
+	box-sizing: border-box;
+	padding: 12px 9px;
+	width: 100%;
+}
+
+.booking-services-settings-popup__search-input {
+	font-size: var(--ui-size-sm2);
+	border: unset;
+	width: 100%;
+}
+
+.booking-services-settings-popup__search-input::placeholder {
+	color: rgba(168, 173, 180, 1);
+}
+
+input.booking-services-settings-popup__search-input:focus-visible {
+	outline: none;
+}
+
+.booking-sre-app--skus-view--resource-selector .ui-tag-selector-outer-container {
+	border: none;
+}
+
+.booking-sre-app--sku-item--price {
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var(--ui-font-line-height-sm);
+	letter-spacing: var(--ui-letter-spacing-l);
+	color: var(--ui-color-base-50);
+	margin-right: var(--ui-space-inline-xs);
+}
+
+.booking-services-settings-popup__base-item {
+	display: flex;
+	padding: var(--ui-space-stack-md) var(--ui-space-inline-md) var(--ui-space-stack-sm2);
+	flex-direction: column;
+	justify-content: center;
+	align-items: flex-start;
+	gap: var(--ui-space-stack-md);
+	border-radius: var(--ui-border-radius-xl);
+	border: var(--ui-border-width-thin) solid rgba(var(--ui-color-palette-black-solid-rgb), 0.15);
+	scroll-margin-top: 65px;
+}
+
+.booking-services-settings-popup__base-item__header {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	width: 100%;
+}
+
+.booking-services-settings-popup__base-item__checkbox {
+	margin: 0;
+}
+
+.booking-services-settings-popup__base-item__title {
+	flex-grow: 1;
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-typography-text-xs-line-height);
+	letter-spacing: var(--ui-letter-spacing-l);
+	color: var(--ui-color-text-primary);
+	margin: unset;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.booking-services-settings-popup__base-item__content {
+	position: relative;
+	border-radius: var(--ui-border-radius-sm);
+	border: var(--ui-border-width-thin) solid var(--ui-color-divider-accent);
+	box-sizing: border-box;
+	padding: 10px 12px 10px 0;
+	width: 100%;
+}
+
+.booking-services-settings-popup__base-item__content.--invalid {
+	border-color: var(--ui-color-palette-red-50);
+}
+
+.booking-services-settings-popup__base-item__text-on-frame {
+	position: absolute;
+	left: 9px;
+	background: var(--ui-color-background-primary);
+	font-size: var(--ui-font-size-xs);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var(--ui-font-line-height-3xs);
+	letter-spacing: var(--ui-letter-spacing-l);
+}
+
+.booking-services-settings-popup__base-item__label {
+	top: -9px;
+	padding: var(--ui-space-stack-none) var(--ui-space-inline-3xs);
+	color: var(--ui-color-base-70);
+}
+
+.booking-services-settings-popup__base-item__error-msg {
+	padding: var(--ui-space-stack-3xs) var(--ui-space-inline-3xs);
+	color: var(--ui-color-text-alert);
+}
+
+.booking-sre-app__base-item__close-icon {
+	cursor: pointer;
+	transition: .2s;
+}
+
+.booking-sre-app__base-item__close-icon:hover {
+	opacity: var(--ui-opacity-80);
+}
+
+.booking-sre__base-item__skeleton {
+	background-color: var(--ui-color-base-05);
+}
+
+.booking-sre__base-item__skeleton.--circle {
+	border-radius: var(--ui-border-radius-circle);
+}
+
+.booking-sre__base-item__skeleton.--rectangle {
+	border-radius: var(--ui-border-radius-xs);
+}
+
+.booking-sre__base-item__skeleton.--rectangle-rounded {
+	border-radius: var(--ui-border-radius-3xl);
+}
+
+.booking-sre__base-item__skeleton--row {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+}
+
+.booking-sre__base-item__skeleton--header {
+	justify-content: space-between;
+	margin-bottom: 15px;
+	width: 100%;
+}
+
+.booking-sre__base-item__skeleton--content-row {
+	width: 100%;
+}
+
+.booking-sre__base-item__skeleton--content {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	margin: 10px;
+}
+
+.booking-sre-app--skus-view_empty-state {
+	display: flex;
+	max-width: 345px;
+	margin: auto;
+	flex-direction: column;
+	align-items: center;
+	gap: 8px;
+	padding: 40px 0;
+}
+
+.booking-sre-app--skus-view_empty-state-icon {
+	display: block;
+	width: 231px;
+	height: 130px;
+	background: url("../images/booking-sre-empty-state-icon.png") center center no-repeat;
+	background-size: contain;
+}
+
+.booking-sre-app--skus-view_empty-state-title {
+	font-size: var(--ui-font-size-xl);
+	text-align: center;
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-2xs);
+	letter-spacing: var(--ui-letter-spacing-m);
+	color: var(--ui-color-base-1);
+}
+
+.booking-sre-app--skus-view_empty-state-description {
+	text-align: center;
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-2xs);
+	letter-spacing: var(--ui-letter-spacing-l);
+	color: var(--ui-color-base-2);
+	overflow-wrap: anywhere;
+}
+
+.booking-sre-app--skus-view_empty-state-button {
+	margin: 15px 0;
+}
+
+.booking-sre-app--services-bar {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	padding-top: var(--ui-space-stack-sm);
+	padding-bottom: var(--ui-space-stack-sm);
+	flex-grow: 1;
+	background: var(--ui-color-base-8);
+	z-index: 999;
+	position: sticky;
+	top: -20px;
+}
+
+.booking-sre-app--services-bar__label {
+	color: var(--ui-color-text-secondary);
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var( --ui-typography-heading-h3-line-height);
+	letter-spacing: var(--ui-letter-spacing-l);
+	flex-grow: 1;
+}
+
+.booking-sre-app--services-bar__grow {
+	flex-grow: 1;
+}
+
+.booking-sku-resources-editor__base-group-action-bar {
+	position: absolute;
+	top: 0;
+	width: 100%;
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: row;
+	gap: 10px;
+	padding: var(--ui-space-stack-xs2) 10px var(--ui-space-stack-xs2) 16px;
+	align-items: center;
+	border-radius: var(--ui-border-radius-lg);
+	background: var(--ui-color-accent-main-primary);
+	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.13);
+	z-index: 2;
+}
+
+.booking-sku-resources-editor__base-group-action-bar__title_wrapper {
+	display: flex;
+	flex-direction: row;
+	gap: 6px;
+}
+
+.booking-sku-resources-editor__base-group-action-bar__title {
+	color: var(--ui-color-on-primary);
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var(--ui-font-line-height-2xs);
+	letter-spacing: var(--ui-letter-spacing-l);
+}
+
+.booking-sku-resources-editor__base-group-action-bar__close-icon {
+	cursor: pointer;
+	transition: .2s;
+}
+
+.booking-sku-resources-editor__base-group-action-bar__close-icon:hover {
+	opacity: var(--ui-opacity-60);
+}
+
+.booking-sku-resources-editor__divider-vertical {
+	position: relative;
+	min-height: 20px;
+	width: 9px;
+}
+
+.booking-sku-resources-editor__divider-vertical::before {
+	position: absolute;
+	display: block;
+	top: 0;
+	left: 50%;
+	height: 100%;
+	content: "";
+	border-left: 1px solid rgba(238, 242, 244, 0.4);
+}
+
+
+.booking-sre-app--add-resources-button {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 4px;
+	cursor: pointer;
+}
+
+.booking-sre-app--add-resources-button:hover {
+	opacity: var(--ui-opacity-80);
+}
+
+.booking-sre-app--add-resources-button__label {
+	color: var(--ui-color-on-primary);
+	text-align: center;
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var(--ui-font-line-height-2xs);
+	letter-spacing: var(--ui-letter-spacing-l);
+}
+
+.booking-sre-app__resources-view__resources-list {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-lg);
+}
+
+.booking-services-settings-popup__resources-view__sku-selector .ui-tag-selector-outer-container {
+	border: none;
+}
+
+.booking-resources-settings__resources-view_empty-state {
+	display: flex;
+	max-width: 345px;
+	margin: auto;
+	flex-direction: column;
+	align-items: center;
+	gap: 8px;
+	padding: 40px 0;
+}
+
+.booking-resources-settings__resources-view_empty-state-icon {
+	display: block;
+	width: 231px;
+	height: 130px;
+	background: url("../images/booking-sre-empty-state-icon.png") center center no-repeat;
+	background-size: contain;
+}
+
+.booking-resources-settings__resources-view_empty-state-title {
+	font-size: var(--ui-font-size-xl);
+	text-align: center;
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-2xs);
+	letter-spacing: var(--ui-letter-spacing-m);
+	color: var(--ui-color-base-1);
+}
+
+.booking-resources-settings__resources-view_empty-state-description {
+	text-align: center;
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-2xs);
+	letter-spacing: var(--ui-letter-spacing-l);
+	color: var(--ui-color-base-2);
+	overflow-wrap: anywhere;
+}
+
+.booking-resources-settings__resources-view_empty-state-button {
+	margin: 15px 0;
+}
+
+.booking-sre-app__resources-bar {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	padding-top: var(--ui-space-stack-sm);
+	padding-bottom: var(--ui-space-stack-sm);
+	flex-grow: 1;
+	background: var(--ui-color-base-8);
+	z-index: 999;
+	position: sticky;
+	top: -20px;
+}
+
+.booking-sre-app__resources-bar__label {
+	color: var(--ui-color-text-secondary);
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var( --ui-typography-heading-h3-line-height);
+	letter-spacing: var(--ui-letter-spacing-l);
+	flex-grow: 1;
+}
+
+.booking-sre-app__resources-bar__grow {
+	flex-grow: 1;
+}
+
+.booking-sre-app__add-skus-button {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 4px;
+	cursor: pointer;
+}
+
+.booking-sre-app__add-skus-button:hover {
+	opacity: var(--ui-opacity-80);
+}
+
+.booking-sre-app__add-skus-button__label {
+	color: var(--ui-color-on-primary);
+	text-align: center;
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var(--ui-font-line-height-2xs);
+	letter-spacing: var(--ui-letter-spacing-l);
+}
+
+
+.booking-sre-app__resources-group-header {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	margin: var(--ui-space-stack-xs2) 0;
+}
+
+.booking-sre-app__resources-group-header-title {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+}
+
+.booking-sre-app__resources_group-header--title {
+	color: var(--ui-color-base-90);
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-sm);
+	letter-spacing: var(--ui-letter-spacing-l);
+}
+
+.booking-sre-app__resources-group-header-actions {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+}
+
+.booking-sre-app__resources_group-header--collapse {
+	cursor: pointer;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 6px;
+}
+
+.booking-sre-app__resources_group-header--collapse-label {
+	color: var(--ui-color-base-70);
+	font-size: var(--ui-font-size-xs);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var(--ui-font-line-height-3xs);
+	letter-spacing: var(--ui-letter-spacing-l);
+}
+
+.booking-sre-app__resources_group-header--collapse-icon.--expanded {
+	transform: rotate(180deg);
+}
+
+
+/*# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3RtcC9icnFXRWIiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IkFBQUEiLCJmaWxlIjoiLi4vLi4vLi4vdG1wL2JycVdFYiIsInNvdXJjZXNDb250ZW50IjpbIi5ib29raW5nLXNyZS1hcHAge1xuXHRoZWlnaHQ6IDEwMCU7XG59XG5cbi5ib29raW5nLXNyZS1hcHBfX2xheW91dCB7XG5cdGRpc3BsYXk6IGZsZXg7XG5cdGZsZXgtZGlyZWN0aW9uOiBjb2x1bW47XG5cdGhlaWdodDogMTAwJTtcblx0Ym94LXNpemluZzogYm9yZGVyLWJveDtcbn1cblxuLmJvb2tpbmctc3JlLWFwcF9fd3JhcHBlciB7XG5cdGRpc3BsYXk6IGZsZXg7XG5cdGZsZXgtZGlyZWN0aW9uOiBjb2x1bW47XG5cdHBhZGRpbmc6IDE4cHggMjBweCAxOHB4IDIycHg7XG5cdGdhcDogMjBweDtcblx0cG9zaXRpb246IHJlbGF0aXZlO1xuXHRmbGV4OiAxO1xuXHRvdmVyZmxvdzogaGlkZGVuO1xuXHRvdmVyZmxvdy15OiBzY3JvbGw7XG59XG5cbi5ib29raW5nLXNyZS1hcHBfX3dyYXBwZXI6Oi13ZWJraXQtc2Nyb2xsYmFyIHtcblx0d2lkdGg6IDVweDtcbn1cblxuLmJvb2tpbmctc3JlLWFwcF9fd3JhcHBlcjo6LXdlYmtpdC1zY3JvbGxiYXItdGh1bWIge1xuXHRib3JkZXItcmFkaXVzOiA0cHg7XG5cdGJhY2tncm91bmQ6IHZhcigtLXVpLWNvbG9yLWJhc2UtMjApO1xufVxuXG4uYm9va2luZy1zcmUtYXBwX19mb290ZXIge1xuXHRwb3NpdGlvbjogcmVsYXRpdmU7XG5cdHBhZGRpbmc6IDEzcHggMjJweDtcblx0YmFja2dyb3VuZDogdmFyKC0tdWktY29sb3ItcGFsZXR0ZS13aGl0ZS1iYXNlKTtcblx0Ym94LXNoYWRvdzogMCAtMnB4IDRweCAwICNjNmM5Y2I7XG5cdGRpc3BsYXk6IGZsZXg7XG5cdGdhcDogMjlweDtcblx0YWxpZ24taXRlbXM6IGNlbnRlcjtcbn1cblxuLmJvb2tpbmctc3JlLWFwcF9faGVhZGVyIHtcblx0Y29sb3I6IHZhcigtLXVpLWNvbG9yLWJhc2UtYmxhY2stZml4ZWQpO1xuXHRmb250LXNpemU6IHZhcigtLXVpLWZvbnQtc2l6ZS00eGwpO1xuXHRmb250LXdlaWdodDogdmFyKC0tdWktZm9udC13ZWlnaHQtbWVkaXVtKTtcblx0bGluZS1oZWlnaHQ6IHZhcigtLXVpLWZvbnQtbGluZS1oZWlnaHQtM3hsKTtcbn1cblxuLmJvb2tpbmctc3JlLWFwcF9fc2t1LXNldHRpbmdzIHtcblx0ZGlzcGxheTogZmxleDtcblx0ZmxleC1kaXJlY3Rpb246IGNvbHVtbjtcblx0Z2FwOiAxNnB4O1xuXHRwYWRkaW5nOiAyMHB4IDI0cHg7XG5cdGJvcmRlci1yYWRpdXM6IHZhcigtLXVpLWJvcmRlci1yYWRpdXMtMnhsKTtcblx0YmFja2dyb3VuZDogdmFyKC0tdWktY29sb3ItcGFsZXR0ZS13aGl0ZS1iYXNlKTtcbn1cblxuLmJvb2tpbmctc3JlLWFwcF9fc2t1LXNldHRpbmdzX2Rlc2NyaXB0aW9uIHtcblx0Y29sb3I6IHZhcigtLXVpLWNvbG9yLWJhc2UtMyk7XG5cdGZvbnQtc2l6ZTogdmFyKC0tdWktZm9udC1zaXplLXNtKTtcblx0bGluZS1oZWlnaHQ6IHZhcigtLXVpLWZvbnQtbGluZS1oZWlnaHQtMnhzKTtcblx0bGV0dGVyLXNwYWNpbmc6IHZhcigtLXVpLWxldHRlci1zcGFjaW5nLWwpO1xufVxuXG4uYm9va2luZy1zcmUtYXBwX19za3Utc2V0dGluZ3MtY29udGVudCB7XG5cdHBvc2l0aW9uOiByZWxhdGl2ZTtcbn1cblxuLmJvb2tpbmctc3JlLWFwcF9fc2t1LXNldHRpbmdzLWNvbnRlbnQgLnVpLWZvcm0tcm93LWlubGluZSB7XG5cdG1hcmdpbi1ib3R0b206IDA7XG59XG5cbi5ib29raW5nLXNlcnZpY2VzLXNldHRpbmdzLXBvcHVwX19zZXJ2aWNlcy12aWV3X19zZXJ2aWNlcy1saXN0IHtcblx0ZGlzcGxheTogZmxleDtcblx0ZmxleC1kaXJlY3Rpb246IGNvbHVtbjtcblx0Z2FwOiB2YXIoLS11aS1zcGFjZS1zdGFjay1sZyk7XG59XG5cbi5ib29raW5nLXNlcnZpY2VzLXNldHRpbmdzLXBvcHVwX19zZWFyY2gtaW5wdXRfd3JhcHBlciB7XG5cdGRpc3BsYXk6IGZsZXg7XG5cdGFsaWduLWl0ZW1zOiBjZW50ZXI7XG5cdGdhcDogdmFyKC0tdWktc3BhY2UtaW5saW5lLTJ4cyk7XG5cdGJhY2tncm91bmQ6IHZhcigtLXVpLWNvbG9yLW9uLXByaW1hcnktYWx0KTtcblx0Ym9yZGVyOiAxcHggc29saWQgdmFyKC0tdWktY29sb3ItYmFzZS0xMCk7XG5cdGJvcmRlci1yYWRpdXM6IHZhcigtLXVpLWJvcmRlci1yYWRpdXMtc20pO1xuXHRib3gtc2l6aW5nOiBib3JkZXItYm94O1xuXHRwYWRkaW5nOiAxMnB4IDlweDtcblx0d2lkdGg6IDEwMCU7XG59XG5cbi5ib29raW5nLXNlcnZpY2VzLXNldHRpbmdzLXBvcHVwX19zZWFyY2gtaW5wdXQge1xuXHRmb250LXNpemU6IHZhcigtLXVpLXNpemUtc20yKTtcblx0Ym9yZGVyOiB1bnNldDtcblx0d2lkdGg6IDEwMCU7XG59XG5cbi5ib29raW5nLXNlcnZpY2VzLXNldHRpbmdzLXBvcHVwX19zZWFyY2gtaW5wdXQ6OnBsYWNlaG9sZGVyIHtcblx0Y29sb3I6IHJnYmEoMTY4LCAxNzMsIDE4MCwgMSk7XG59XG5cbmlucHV0LmJvb2tpbmctc2VydmljZXMtc2V0dGluZ3MtcG9wdXBfX3NlYXJjaC1pbnB1dDpmb2N1cy12aXNpYmxlIHtcblx0b3V0bGluZTogbm9uZTtcbn1cblxuLmJvb2tpbmctc3JlLWFwcC0tc2t1cy12aWV3LS1yZXNvdXJjZS1zZWxlY3RvciAudWktdGFnLXNlbGVjdG9yLW91dGVyLWNvbnRhaW5lciB7XG5cdGJvcmRlcjogbm9uZTtcbn1cblxuLmJvb2tpbmctc3JlLWFwcC0tc2t1LWl0ZW0tLXByaWNlIHtcblx0Zm9udC1zaXplOiB2YXIoLS11aS1mb250LXNpemUtbWQpO1xuXHRmb250LXdlaWdodDogdmFyKC0tdWktZm9udC13ZWlnaHQtbm9ybWFsKTtcblx0bGluZS1oZWlnaHQ6IHZhcigtLXVpLWZvbnQtbGluZS1oZWlnaHQtc20pO1xuXHRsZXR0ZXItc3BhY2luZzogdmFyKC0tdWktbGV0dGVyLXNwYWNpbmctbCk7XG5cdGNvbG9yOiB2YXIoLS11aS1jb2xvci1iYXNlLTUwKTtcblx0bWFyZ2luLXJpZ2h0OiB2YXIoLS11aS1zcGFjZS1pbmxpbmUteHMpO1xufVxuXG4uYm9va2luZy1zZXJ2aWNlcy1zZXR0aW5ncy1wb3B1cF9fYmFzZS1pdGVtIHtcblx0ZGlzcGxheTogZmxleDtcblx0cGFkZGluZzogdmFyKC0tdWktc3BhY2Utc3RhY2stbWQpIHZhcigtLXVpLXNwYWNlLWlubGluZS1tZCkgdmFyKC0tdWktc3BhY2Utc3RhY2stc20yKTtcblx0ZmxleC1kaXJlY3Rpb246IGNvbHVtbjtcblx0anVzdGlmeS1jb250ZW50OiBjZW50ZXI7XG5cdGFsaWduLWl0ZW1zOiBmbGV4LXN0YXJ0O1xuXHRnYXA6IHZhcigtLXVpLXNwYWNlLXN0YWNrLW1kKTtcblx0Ym9yZGVyLXJhZGl1czogdmFyKC0tdWktYm9yZGVyLXJhZGl1cy14bCk7XG5cdGJvcmRlcjogdmFyKC0tdWktYm9yZGVyLXdpZHRoLXRoaW4pIHNvbGlkIHJnYmEodmFyKC0tdWktY29sb3ItcGFsZXR0ZS1ibGFjay1zb2xpZC1yZ2IpLCAwLjE1KTtcblx0c2Nyb2xsLW1hcmdpbi10b3A6IDY1cHg7XG59XG5cbi5ib29raW5nLXNlcnZpY2VzLXNldHRpbmdzLXBvcHVwX19iYXNlLWl0ZW1fX2hlYWRlciB7XG5cdGRpc3BsYXk6IGZsZXg7XG5cdGdhcDogOHB4O1xuXHRhbGlnbi1pdGVtczogY2VudGVyO1xuXHR3aWR0aDogMTAwJTtcbn1cblxuLmJvb2tpbmctc2VydmljZXMtc2V0dGluZ3MtcG9wdXBfX2Jhc2UtaXRlbV9fY2hlY2tib3gge1xuXHRtYXJnaW46IDA7XG59XG5cbi5ib29raW5nLXNlcnZpY2VzLXNldHRpbmdzLXBvcHVwX19iYXNlLWl0ZW1fX3RpdGxlIHtcblx0ZmxleC1ncm93OiAxO1xuXHRmb250LXNpemU6IHZhcigtLXVpLWZvbnQtc2l6ZS1sZyk7XG5cdGZvbnQtd2VpZ2h0OiB2YXIoLS11aS1mb250LXdlaWdodC1tZWRpdW0pO1xuXHRsaW5lLWhlaWdodDogdmFyKC0tdWktdHlwb2dyYXBoeS10ZXh0LXhzLWxpbmUtaGVpZ2h0KTtcblx0bGV0dGVyLXNwYWNpbmc6IHZhcigtLXVpLWxldHRlci1zcGFjaW5nLWwpO1xuXHRjb2xvcjogdmFyKC0tdWktY29sb3ItdGV4dC1wcmltYXJ5KTtcblx0bWFyZ2luOiB1bnNldDtcblx0b3ZlcmZsb3c6IGhpZGRlbjtcblx0dGV4dC1vdmVyZmxvdzogZWxsaXBzaXM7XG59XG5cbi5ib29raW5nLXNlcnZpY2VzLXNldHRpbmdzLXBvcHVwX19iYXNlLWl0ZW1fX2NvbnRlbnQge1xuXHRwb3NpdGlvbjogcmVsYXRpdmU7XG5cdGJvcmRlci1yYWRpdXM6IHZhcigtLXVpLWJvcmRlci1yYWRpdXMtc20pO1xuXHRib3JkZXI6IHZhcigtLXVpLWJvcmRlci13aWR0aC10aGluKSBzb2xpZCB2YXIoLS11aS1jb2xvci1kaXZpZGVyLWFjY2VudCk7XG5cdGJveC1zaXppbmc6IGJvcmRlci1ib3g7XG5cdHBhZGRpbmc6IDEwcHggMTJweCAxMHB4IDA7XG5cdHdpZHRoOiAxMDAlO1xufVxuXG4uYm9va2luZy1zZXJ2aWNlcy1zZXR0aW5ncy1wb3B1cF9fYmFzZS1pdGVtX19jb250ZW50Li0taW52YWxpZCB7XG5cdGJvcmRlci1jb2xvcjogdmFyKC0tdWktY29sb3ItcGFsZXR0ZS1yZWQtNTApO1xufVxuXG4uYm9va2luZy1zZXJ2aWNlcy1zZXR0aW5ncy1wb3B1cF9fYmFzZS1pdGVtX190ZXh0LW9uLWZyYW1lIHtcblx0cG9zaXRpb246IGFic29sdXRlO1xuXHRsZWZ0OiA5cHg7XG5cdGJhY2tncm91bmQ6IHZhcigtLXVpLWNvbG9yLWJhY2tncm91bmQtcHJpbWFyeSk7XG5cdGZvbnQtc2l6ZTogdmFyKC0tdWktZm9udC1zaXplLXhzKTtcblx0Zm9udC13ZWlnaHQ6IHZhcigtLXVpLWZvbnQtd2VpZ2h0LW5vcm1hbCk7XG5cdGxpbmUtaGVpZ2h0OiB2YXIoLS11aS1mb250LWxpbmUtaGVpZ2h0LTN4cyk7XG5cdGxldHRlci1zcGFjaW5nOiB2YXIoLS11aS1sZXR0ZXItc3BhY2luZy1sKTtcbn1cblxuLmJvb2tpbmctc2VydmljZXMtc2V0dGluZ3MtcG9wdXBfX2Jhc2UtaXRlbV9fbGFiZWwge1xuXHR0b3A6IC05cHg7XG5cdHBhZGRpbmc6IHZhcigtLXVpLXNwYWNlLXN0YWNrLW5vbmUpIHZhcigtLXVpLXNwYWNlLWlubGluZS0zeHMpO1xuXHRjb2xvcjogdmFyKC0tdWktY29sb3ItYmFzZS03MCk7XG59XG5cbi5ib29raW5nLXNlcnZpY2VzLXNldHRpbmdzLXBvcHVwX19iYXNlLWl0ZW1fX2Vycm9yLW1zZyB7XG5cdHBhZGRpbmc6IHZhcigtLXVpLXNwYWNlLXN0YWNrLTN4cykgdmFyKC0tdWktc3BhY2UtaW5saW5lLTN4cyk7XG5cdGNvbG9yOiB2YXIoLS11aS1jb2xvci10ZXh0LWFsZXJ0KTtcbn1cblxuLmJvb2tpbmctc3JlLWFwcF9fYmFzZS1pdGVtX19jbG9zZS1pY29uIHtcblx0Y3Vyc29yOiBwb2ludGVyO1xuXHR0cmFuc2l0aW9uOiAuMnM7XG59XG5cbi5ib29raW5nLXNyZS1hcHBfX2Jhc2UtaXRlbV9fY2xvc2UtaWNvbjpob3ZlciB7XG5cdG9wYWNpdHk6IHZhcigtLXVpLW9wYWNpdHktODApO1xufVxuXG4uYm9va2luZy1zcmVfX2Jhc2UtaXRlbV9fc2tlbGV0b24ge1xuXHRiYWNrZ3JvdW5kLWNvbG9yOiB2YXIoLS11aS1jb2xvci1iYXNlLTA1KTtcbn1cblxuLmJvb2tpbmctc3JlX19iYXNlLWl0ZW1fX3NrZWxldG9uLi0tY2lyY2xlIHtcblx0Ym9yZGVyLXJhZGl1czogdmFyKC0tdWktYm9yZGVyLXJhZGl1cy1jaXJjbGUpO1xufVxuXG4uYm9va2luZy1zcmVfX2Jhc2UtaXRlbV9fc2tlbGV0b24uLS1yZWN0YW5nbGUge1xuXHRib3JkZXItcmFkaXVzOiB2YXIoLS11aS1ib3JkZXItcmFkaXVzLXhzKTtcbn1cblxuLmJvb2tpbmctc3JlX19iYXNlLWl0ZW1fX3NrZWxldG9uLi0tcmVjdGFuZ2xlLXJvdW5kZWQge1xuXHRib3JkZXItcmFkaXVzOiB2YXIoLS11aS1ib3JkZXItcmFkaXVzLTN4bCk7XG59XG5cbi5ib29raW5nLXNyZV9fYmFzZS1pdGVtX19za2VsZXRvbi0tcm93IHtcblx0ZGlzcGxheTogZmxleDtcblx0ZmxleC1kaXJlY3Rpb246IHJvdztcblx0YWxpZ24taXRlbXM6IGNlbnRlcjtcbn1cblxuLmJvb2tpbmctc3JlX19iYXNlLWl0ZW1fX3NrZWxldG9uLS1oZWFkZXIge1xuXHRqdXN0aWZ5LWNvbnRlbnQ6IHNwYWNlLWJldHdlZW47XG5cdG1hcmdpbi1ib3R0b206IDE1cHg7XG5cdHdpZHRoOiAxMDAlO1xufVxuXG4uYm9va2luZy1zcmVfX2Jhc2UtaXRlbV9fc2tlbGV0b24tLWNvbnRlbnQtcm93IHtcblx0d2lkdGg6IDEwMCU7XG59XG5cbi5ib29raW5nLXNyZV9fYmFzZS1pdGVtX19za2VsZXRvbi0tY29udGVudCB7XG5cdGRpc3BsYXk6IGZsZXg7XG5cdGZsZXgtZGlyZWN0aW9uOiBjb2x1bW47XG5cdGdhcDogMTBweDtcblx0bWFyZ2luOiAxMHB4O1xufVxuXG4uYm9va2luZy1zcmUtYXBwLS1za3VzLXZpZXdfZW1wdHktc3RhdGUge1xuXHRkaXNwbGF5OiBmbGV4O1xuXHRtYXgtd2lkdGg6IDM0NXB4O1xuXHRtYXJnaW46IGF1dG87XG5cdGZsZXgtZGlyZWN0aW9uOiBjb2x1bW47XG5cdGFsaWduLWl0ZW1zOiBjZW50ZXI7XG5cdGdhcDogOHB4O1xuXHRwYWRkaW5nOiA0MHB4IDA7XG59XG5cbi5ib29raW5nLXNyZS1hcHAtLXNrdXMtdmlld19lbXB0eS1zdGF0ZS1pY29uIHtcblx0ZGlzcGxheTogYmxvY2s7XG5cdHdpZHRoOiAyMzFweDtcblx0aGVpZ2h0OiAxMzBweDtcblx0YmFja2dyb3VuZDogdXJsKFwiLi4vaW1hZ2VzL2Jvb2tpbmctc3JlLWVtcHR5LXN0YXRlLWljb24ucG5nXCIpIGNlbnRlciBjZW50ZXIgbm8tcmVwZWF0O1xuXHRiYWNrZ3JvdW5kLXNpemU6IGNvbnRhaW47XG59XG5cbi5ib29raW5nLXNyZS1hcHAtLXNrdXMtdmlld19lbXB0eS1zdGF0ZS10aXRsZSB7XG5cdGZvbnQtc2l6ZTogdmFyKC0tdWktZm9udC1zaXplLXhsKTtcblx0dGV4dC1hbGlnbjogY2VudGVyO1xuXHRmb250LXdlaWdodDogdmFyKC0tdWktZm9udC13ZWlnaHQtbWVkaXVtKTtcblx0bGluZS1oZWlnaHQ6IHZhcigtLXVpLWZvbnQtbGluZS1oZWlnaHQtMnhzKTtcblx0bGV0dGVyLXNwYWNpbmc6IHZhcigtLXVpLWxldHRlci1zcGFjaW5nLW0pO1xuXHRjb2xvcjogdmFyKC0tdWktY29sb3ItYmFzZS0xKTtcbn1cblxuLmJvb2tpbmctc3JlLWFwcC0tc2t1cy12aWV3X2VtcHR5LXN0YXRlLWRlc2NyaXB0aW9uIHtcblx0dGV4dC1hbGlnbjogY2VudGVyO1xuXHRmb250LXNpemU6IHZhcigtLXVpLWZvbnQtc2l6ZS1zbSk7XG5cdGxpbmUtaGVpZ2h0OiB2YXIoLS11aS1mb250LWxpbmUtaGVpZ2h0LTJ4cyk7XG5cdGxldHRlci1zcGFjaW5nOiB2YXIoLS11aS1sZXR0ZXItc3BhY2luZy1sKTtcblx0Y29sb3I6IHZhcigtLXVpLWNvbG9yLWJhc2UtMik7XG5cdG92ZXJmbG93LXdyYXA6IGFueXdoZXJlO1xufVxuXG4uYm9va2luZy1zcmUtYXBwLS1za3VzLXZpZXdfZW1wdHktc3RhdGUtYnV0dG9uIHtcblx0bWFyZ2luOiAxNXB4IDA7XG59XG5cbi5ib29raW5nLXNyZS1hcHAtLXNlcnZpY2VzLWJhciB7XG5cdGRpc3BsYXk6IGZsZXg7XG5cdGdhcDogOHB4O1xuXHRhbGlnbi1pdGVtczogY2VudGVyO1xuXHRwYWRkaW5nLXRvcDogdmFyKC0tdWktc3BhY2Utc3RhY2stc20pO1xuXHRwYWRkaW5nLWJvdHRvbTogdmFyKC0tdWktc3BhY2Utc3RhY2stc20pO1xuXHRmbGV4LWdyb3c6IDE7XG5cdGJhY2tncm91bmQ6IHZhcigtLXVpLWNvbG9yLWJhc2UtOCk7XG5cdHotaW5kZXg6IDk5OTtcblx0cG9zaXRpb246IHN0aWNreTtcblx0dG9wOiAtMjBweDtcbn1cblxuLmJvb2tpbmctc3JlLWFwcC0tc2VydmljZXMtYmFyX19sYWJlbCB7XG5cdGNvbG9yOiB2YXIoLS11aS1jb2xvci10ZXh0LXNlY29uZGFyeSk7XG5cdGZvbnQtc2l6ZTogdmFyKC0tdWktZm9udC1zaXplLXNtKTtcblx0Zm9udC13ZWlnaHQ6IHZhcigtLXVpLWZvbnQtd2VpZ2h0LW5vcm1hbCk7XG5cdGxpbmUtaGVpZ2h0OiB2YXIoIC0tdWktdHlwb2dyYXBoeS1oZWFkaW5nLWgzLWxpbmUtaGVpZ2h0KTtcblx0bGV0dGVyLXNwYWNpbmc6IHZhcigtLXVpLWxldHRlci1zcGFjaW5nLWwpO1xuXHRmbGV4LWdyb3c6IDE7XG59XG5cbi5ib29raW5nLXNyZS1hcHAtLXNlcnZpY2VzLWJhcl9fZ3JvdyB7XG5cdGZsZXgtZ3JvdzogMTtcbn1cblxuLmJvb2tpbmctc2t1LXJlc291cmNlcy1lZGl0b3JfX2Jhc2UtZ3JvdXAtYWN0aW9uLWJhciB7XG5cdHBvc2l0aW9uOiBhYnNvbHV0ZTtcblx0dG9wOiAwO1xuXHR3aWR0aDogMTAwJTtcblx0Ym94LXNpemluZzogYm9yZGVyLWJveDtcblx0ZGlzcGxheTogZmxleDtcblx0ZmxleC1kaXJlY3Rpb246IHJvdztcblx0Z2FwOiAxMHB4O1xuXHRwYWRkaW5nOiB2YXIoLS11aS1zcGFjZS1zdGFjay14czIpIDEwcHggdmFyKC0tdWktc3BhY2Utc3RhY2steHMyKSAxNnB4O1xuXHRhbGlnbi1pdGVtczogY2VudGVyO1xuXHRib3JkZXItcmFkaXVzOiB2YXIoLS11aS1ib3JkZXItcmFkaXVzLWxnKTtcblx0YmFja2dyb3VuZDogdmFyKC0tdWktY29sb3ItYWNjZW50LW1haW4tcHJpbWFyeSk7XG5cdGJveC1zaGFkb3c6IDAgMXB4IDJweCAwIHJnYmEoMCwgMCwgMCwgMC4xMyk7XG5cdHotaW5kZXg6IDI7XG59XG5cbi5ib29raW5nLXNrdS1yZXNvdXJjZXMtZWRpdG9yX19iYXNlLWdyb3VwLWFjdGlvbi1iYXJfX3RpdGxlX3dyYXBwZXIge1xuXHRkaXNwbGF5OiBmbGV4O1xuXHRmbGV4LWRpcmVjdGlvbjogcm93O1xuXHRnYXA6IDZweDtcbn1cblxuLmJvb2tpbmctc2t1LXJlc291cmNlcy1lZGl0b3JfX2Jhc2UtZ3JvdXAtYWN0aW9uLWJhcl9fdGl0bGUge1xuXHRjb2xvcjogdmFyKC0tdWktY29sb3Itb24tcHJpbWFyeSk7XG5cdGZvbnQtc2l6ZTogdmFyKC0tdWktZm9udC1zaXplLXNtKTtcblx0Zm9udC13ZWlnaHQ6IHZhcigtLXVpLWZvbnQtd2VpZ2h0LW5vcm1hbCk7XG5cdGxpbmUtaGVpZ2h0OiB2YXIoLS11aS1mb250LWxpbmUtaGVpZ2h0LTJ4cyk7XG5cdGxldHRlci1zcGFjaW5nOiB2YXIoLS11aS1sZXR0ZXItc3BhY2luZy1sKTtcbn1cblxuLmJvb2tpbmctc2t1LXJlc291cmNlcy1lZGl0b3JfX2Jhc2UtZ3JvdXAtYWN0aW9uLWJhcl9fY2xvc2UtaWNvbiB7XG5cdGN1cnNvcjogcG9pbnRlcjtcblx0dHJhbnNpdGlvbjogLjJzO1xufVxuXG4uYm9va2luZy1za3UtcmVzb3VyY2VzLWVkaXRvcl9fYmFzZS1ncm91cC1hY3Rpb24tYmFyX19jbG9zZS1pY29uOmhvdmVyIHtcblx0b3BhY2l0eTogdmFyKC0tdWktb3BhY2l0eS02MCk7XG59XG5cbi5ib29raW5nLXNrdS1yZXNvdXJjZXMtZWRpdG9yX19kaXZpZGVyLXZlcnRpY2FsIHtcblx0cG9zaXRpb246IHJlbGF0aXZlO1xuXHRtaW4taGVpZ2h0OiAyMHB4O1xuXHR3aWR0aDogOXB4O1xufVxuXG4uYm9va2luZy1za3UtcmVzb3VyY2VzLWVkaXRvcl9fZGl2aWRlci12ZXJ0aWNhbDo6YmVmb3JlIHtcblx0cG9zaXRpb246IGFic29sdXRlO1xuXHRkaXNwbGF5OiBibG9jaztcblx0dG9wOiAwO1xuXHRsZWZ0OiA1MCU7XG5cdGhlaWdodDogMTAwJTtcblx0Y29udGVudDogXCJcIjtcblx0Ym9yZGVyLWxlZnQ6IDFweCBzb2xpZCByZ2JhKDIzOCwgMjQyLCAyNDQsIDAuNCk7XG59XG5cblxuLmJvb2tpbmctc3JlLWFwcC0tYWRkLXJlc291cmNlcy1idXR0b24ge1xuXHRkaXNwbGF5OiBmbGV4O1xuXHRmbGV4LWRpcmVjdGlvbjogcm93O1xuXHRhbGlnbi1pdGVtczogY2VudGVyO1xuXHRnYXA6IDRweDtcblx0Y3Vyc29yOiBwb2ludGVyO1xufVxuXG4uYm9va2luZy1zcmUtYXBwLS1hZGQtcmVzb3VyY2VzLWJ1dHRvbjpob3ZlciB7XG5cdG9wYWNpdHk6IHZhcigtLXVpLW9wYWNpdHktODApO1xufVxuXG4uYm9va2luZy1zcmUtYXBwLS1hZGQtcmVzb3VyY2VzLWJ1dHRvbl9fbGFiZWwge1xuXHRjb2xvcjogdmFyKC0tdWktY29sb3Itb24tcHJpbWFyeSk7XG5cdHRleHQtYWxpZ246IGNlbnRlcjtcblx0Zm9udC1zaXplOiB2YXIoLS11aS1mb250LXNpemUtc20pO1xuXHRmb250LXdlaWdodDogdmFyKC0tdWktZm9udC13ZWlnaHQtbm9ybWFsKTtcblx0bGluZS1oZWlnaHQ6IHZhcigtLXVpLWZvbnQtbGluZS1oZWlnaHQtMnhzKTtcblx0bGV0dGVyLXNwYWNpbmc6IHZhcigtLXVpLWxldHRlci1zcGFjaW5nLWwpO1xufVxuXG4uYm9va2luZy1zcmUtYXBwX19yZXNvdXJjZXMtdmlld19fcmVzb3VyY2VzLWxpc3Qge1xuXHRkaXNwbGF5OiBmbGV4O1xuXHRmbGV4LWRpcmVjdGlvbjogY29sdW1uO1xuXHRnYXA6IHZhcigtLXVpLXNwYWNlLXN0YWNrLWxnKTtcbn1cblxuLmJvb2tpbmctc2VydmljZXMtc2V0dGluZ3MtcG9wdXBfX3Jlc291cmNlcy12aWV3X19za3Utc2VsZWN0b3IgLnVpLXRhZy1zZWxlY3Rvci1vdXRlci1jb250YWluZXIge1xuXHRib3JkZXI6IG5vbmU7XG59XG5cbi5ib29raW5nLXJlc291cmNlcy1zZXR0aW5nc19fcmVzb3VyY2VzLXZpZXdfZW1wdHktc3RhdGUge1xuXHRkaXNwbGF5OiBmbGV4O1xuXHRtYXgtd2lkdGg6IDM0NXB4O1xuXHRtYXJnaW46IGF1dG87XG5cdGZsZXgtZGlyZWN0aW9uOiBjb2x1bW47XG5cdGFsaWduLWl0ZW1zOiBjZW50ZXI7XG5cdGdhcDogOHB4O1xuXHRwYWRkaW5nOiA0MHB4IDA7XG59XG5cbi5ib29raW5nLXJlc291cmNlcy1zZXR0aW5nc19fcmVzb3VyY2VzLXZpZXdfZW1wdHktc3RhdGUtaWNvbiB7XG5cdGRpc3BsYXk6IGJsb2NrO1xuXHR3aWR0aDogMjMxcHg7XG5cdGhlaWdodDogMTMwcHg7XG5cdGJhY2tncm91bmQ6IHVybChcIi4uL2ltYWdlcy9ib29raW5nLXNyZS1lbXB0eS1zdGF0ZS1pY29uLnBuZ1wiKSBjZW50ZXIgY2VudGVyIG5vLXJlcGVhdDtcblx0YmFja2dyb3VuZC1zaXplOiBjb250YWluO1xufVxuXG4uYm9va2luZy1yZXNvdXJjZXMtc2V0dGluZ3NfX3Jlc291cmNlcy12aWV3X2VtcHR5LXN0YXRlLXRpdGxlIHtcblx0Zm9udC1zaXplOiB2YXIoLS11aS1mb250LXNpemUteGwpO1xuXHR0ZXh0LWFsaWduOiBjZW50ZXI7XG5cdGZvbnQtd2VpZ2h0OiB2YXIoLS11aS1mb250LXdlaWdodC1tZWRpdW0pO1xuXHRsaW5lLWhlaWdodDogdmFyKC0tdWktZm9udC1saW5lLWhlaWdodC0yeHMpO1xuXHRsZXR0ZXItc3BhY2luZzogdmFyKC0tdWktbGV0dGVyLXNwYWNpbmctbSk7XG5cdGNvbG9yOiB2YXIoLS11aS1jb2xvci1iYXNlLTEpO1xufVxuXG4uYm9va2luZy1yZXNvdXJjZXMtc2V0dGluZ3NfX3Jlc291cmNlcy12aWV3X2VtcHR5LXN0YXRlLWRlc2NyaXB0aW9uIHtcblx0dGV4dC1hbGlnbjogY2VudGVyO1xuXHRmb250LXNpemU6IHZhcigtLXVpLWZvbnQtc2l6ZS1zbSk7XG5cdGxpbmUtaGVpZ2h0OiB2YXIoLS11aS1mb250LWxpbmUtaGVpZ2h0LTJ4cyk7XG5cdGxldHRlci1zcGFjaW5nOiB2YXIoLS11aS1sZXR0ZXItc3BhY2luZy1sKTtcblx0Y29sb3I6IHZhcigtLXVpLWNvbG9yLWJhc2UtMik7XG5cdG92ZXJmbG93LXdyYXA6IGFueXdoZXJlO1xufVxuXG4uYm9va2luZy1yZXNvdXJjZXMtc2V0dGluZ3NfX3Jlc291cmNlcy12aWV3X2VtcHR5LXN0YXRlLWJ1dHRvbiB7XG5cdG1hcmdpbjogMTVweCAwO1xufVxuXG4uYm9va2luZy1zcmUtYXBwX19yZXNvdXJjZXMtYmFyIHtcblx0ZGlzcGxheTogZmxleDtcblx0Z2FwOiA4cHg7XG5cdGFsaWduLWl0ZW1zOiBjZW50ZXI7XG5cdHBhZGRpbmctdG9wOiB2YXIoLS11aS1zcGFjZS1zdGFjay1zbSk7XG5cdHBhZGRpbmctYm90dG9tOiB2YXIoLS11aS1zcGFjZS1zdGFjay1zbSk7XG5cdGZsZXgtZ3JvdzogMTtcblx0YmFja2dyb3VuZDogdmFyKC0tdWktY29sb3ItYmFzZS04KTtcblx0ei1pbmRleDogOTk5O1xuXHRwb3NpdGlvbjogc3RpY2t5O1xuXHR0b3A6IC0yMHB4O1xufVxuXG4uYm9va2luZy1zcmUtYXBwX19yZXNvdXJjZXMtYmFyX19sYWJlbCB7XG5cdGNvbG9yOiB2YXIoLS11aS1jb2xvci10ZXh0LXNlY29uZGFyeSk7XG5cdGZvbnQtc2l6ZTogdmFyKC0tdWktZm9udC1zaXplLXNtKTtcblx0Zm9udC13ZWlnaHQ6IHZhcigtLXVpLWZvbnQtd2VpZ2h0LW5vcm1hbCk7XG5cdGxpbmUtaGVpZ2h0OiB2YXIoIC0tdWktdHlwb2dyYXBoeS1oZWFkaW5nLWgzLWxpbmUtaGVpZ2h0KTtcblx0bGV0dGVyLXNwYWNpbmc6IHZhcigtLXVpLWxldHRlci1zcGFjaW5nLWwpO1xuXHRmbGV4LWdyb3c6IDE7XG59XG5cbi5ib29raW5nLXNyZS1hcHBfX3Jlc291cmNlcy1iYXJfX2dyb3cge1xuXHRmbGV4LWdyb3c6IDE7XG59XG5cbi5ib29raW5nLXNyZS1hcHBfX2FkZC1za3VzLWJ1dHRvbiB7XG5cdGRpc3BsYXk6IGZsZXg7XG5cdGZsZXgtZGlyZWN0aW9uOiByb3c7XG5cdGFsaWduLWl0ZW1zOiBjZW50ZXI7XG5cdGdhcDogNHB4O1xuXHRjdXJzb3I6IHBvaW50ZXI7XG59XG5cbi5ib29raW5nLXNyZS1hcHBfX2FkZC1za3VzLWJ1dHRvbjpob3ZlciB7XG5cdG9wYWNpdHk6IHZhcigtLXVpLW9wYWNpdHktODApO1xufVxuXG4uYm9va2luZy1zcmUtYXBwX19hZGQtc2t1cy1idXR0b25fX2xhYmVsIHtcblx0Y29sb3I6IHZhcigtLXVpLWNvbG9yLW9uLXByaW1hcnkpO1xuXHR0ZXh0LWFsaWduOiBjZW50ZXI7XG5cdGZvbnQtc2l6ZTogdmFyKC0tdWktZm9udC1zaXplLXNtKTtcblx0Zm9udC13ZWlnaHQ6IHZhcigtLXVpLWZvbnQtd2VpZ2h0LW5vcm1hbCk7XG5cdGxpbmUtaGVpZ2h0OiB2YXIoLS11aS1mb250LWxpbmUtaGVpZ2h0LTJ4cyk7XG5cdGxldHRlci1zcGFjaW5nOiB2YXIoLS11aS1sZXR0ZXItc3BhY2luZy1sKTtcbn1cblxuXG4uYm9va2luZy1zcmUtYXBwX19yZXNvdXJjZXMtZ3JvdXAtaGVhZGVyIHtcblx0ZGlzcGxheTogZmxleDtcblx0ZmxleC1kaXJlY3Rpb246IHJvdztcblx0anVzdGlmeS1jb250ZW50OiBzcGFjZS1iZXR3ZWVuO1xuXHRhbGlnbi1pdGVtczogY2VudGVyO1xuXHRtYXJnaW46IHZhcigtLXVpLXNwYWNlLXN0YWNrLXhzMikgMDtcbn1cblxuLmJvb2tpbmctc3JlLWFwcF9fcmVzb3VyY2VzLWdyb3VwLWhlYWRlci10aXRsZSB7XG5cdGRpc3BsYXk6IGZsZXg7XG5cdGZsZXgtZGlyZWN0aW9uOiByb3c7XG5cdGFsaWduLWl0ZW1zOiBjZW50ZXI7XG59XG5cbi5ib29raW5nLXNyZS1hcHBfX3Jlc291cmNlc19ncm91cC1oZWFkZXItLXRpdGxlIHtcblx0Y29sb3I6IHZhcigtLXVpLWNvbG9yLWJhc2UtOTApO1xuXHRmb250LXNpemU6IHZhcigtLXVpLWZvbnQtc2l6ZS1tZCk7XG5cdGZvbnQtd2VpZ2h0OiB2YXIoLS11aS1mb250LXdlaWdodC1tZWRpdW0pO1xuXHRsaW5lLWhlaWdodDogdmFyKC0tdWktZm9udC1saW5lLWhlaWdodC1zbSk7XG5cdGxldHRlci1zcGFjaW5nOiB2YXIoLS11aS1sZXR0ZXItc3BhY2luZy1sKTtcbn1cblxuLmJvb2tpbmctc3JlLWFwcF9fcmVzb3VyY2VzLWdyb3VwLWhlYWRlci1hY3Rpb25zIHtcblx0ZGlzcGxheTogZmxleDtcblx0ZmxleC1kaXJlY3Rpb246IHJvdztcblx0YWxpZ24taXRlbXM6IGNlbnRlcjtcbn1cblxuLmJvb2tpbmctc3JlLWFwcF9fcmVzb3VyY2VzX2dyb3VwLWhlYWRlci0tY29sbGFwc2Uge1xuXHRjdXJzb3I6IHBvaW50ZXI7XG5cdGRpc3BsYXk6IGZsZXg7XG5cdGZsZXgtZGlyZWN0aW9uOiByb3c7XG5cdGFsaWduLWl0ZW1zOiBjZW50ZXI7XG5cdGdhcDogNnB4O1xufVxuXG4uYm9va2luZy1zcmUtYXBwX19yZXNvdXJjZXNfZ3JvdXAtaGVhZGVyLS1jb2xsYXBzZS1sYWJlbCB7XG5cdGNvbG9yOiB2YXIoLS11aS1jb2xvci1iYXNlLTcwKTtcblx0Zm9udC1zaXplOiB2YXIoLS11aS1mb250LXNpemUteHMpO1xuXHRmb250LXdlaWdodDogdmFyKC0tdWktZm9udC13ZWlnaHQtbm9ybWFsKTtcblx0bGluZS1oZWlnaHQ6IHZhcigtLXVpLWZvbnQtbGluZS1oZWlnaHQtM3hzKTtcblx0bGV0dGVyLXNwYWNpbmc6IHZhcigtLXVpLWxldHRlci1zcGFjaW5nLWwpO1xufVxuXG4uYm9va2luZy1zcmUtYXBwX19yZXNvdXJjZXNfZ3JvdXAtaGVhZGVyLS1jb2xsYXBzZS1pY29uLi0tZXhwYW5kZWQge1xuXHR0cmFuc2Zvcm06IHJvdGF0ZSgxODBkZWcpO1xufVxuXG4iXX0= */

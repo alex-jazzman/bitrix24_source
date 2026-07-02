@@ -1,4 +1,4 @@
-import { DefaultFooter, Dialog } from 'ui.entity-selector';
+import { DefaultFooter, type Dialog } from 'ui.entity-selector';
 import { Tag, Event, Text } from 'main.core';
 
 export default class Footer extends DefaultFooter

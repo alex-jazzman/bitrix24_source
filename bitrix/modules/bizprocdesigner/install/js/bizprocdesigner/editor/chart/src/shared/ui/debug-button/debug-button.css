@@ -1,0 +1,46 @@
+.bp-debug-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	background: var(--ui-color-palette-white-base, rgba(255, 255, 255, 1));
+	border-radius: 8px;
+	border-color: transparent;
+}
+
+.bp-debug-button:hover:not(:disabled) {
+	background-color: var(--ui-color-base-30);
+}
+
+.bp-debug-button:active:not(:disabled) {
+	background-color: var(--ui-color-base-40);
+}
+
+.bp-debug-button--active {
+	color: var(--designer-bp-entities-icons);
+}
+
+.bp-debug-button--active:hover:not(:disabled) {
+	background-color: var(--ui-color-primary);
+}
+
+.bp-debug-button--loading {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.bp-debug-button--active .bp-debug-button__icon {
+	animation: bp-debug-pulse 2s ease-in-out infinite;
+}
+
+@keyframes bp-debug-pulse {
+	0%, 100% {
+		transform: scale(1);
+	}
+	50% {
+		transform: scale(1.1);
+	}
+}

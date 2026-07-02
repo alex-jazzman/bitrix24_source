@@ -3006,23 +3006,18 @@ class CAllCrmInvoice
 		$errMsg = [];
 		$bError = false;
 
-
-		$repeatSaleAiSegmentCalcAgent = '~CRM_REPEAT_SALE_AI_SEGMENT_CALC_AGENT';
-		if ((string)COption::GetOptionString('crm', $repeatSaleAiSegmentCalcAgent, 'N') === 'N')
+		$restAppConfigurationManifest = '~CRM_REST_APP_CONFIGURATION_MANIFEST';
+		if ((string)COption::GetOptionString('crm', $restAppConfigurationManifest, 'N') === 'N')
 		{
-			COption::SetOptionString('crm', $repeatSaleAiSegmentCalcAgent, 'Y');
+			COption::SetOptionString('crm', $restAppConfigurationManifest, 'Y');
 
-			/**
-			 * @see Bitrix\Crm\Agent\RepeatSale\Hypothesis\AiSegmentAgent
-			 */
-			\CAgent::AddAgent(
-				'Bitrix\Crm\Agent\RepeatSale\Hypothesis\AiSegmentAgent::run();',
+			$eventManager = \Bitrix\Main\EventManager::getInstance();
+			$eventManager->registerEventHandler(
+				'rest',
+				'OnRestApplicationConfigurationGetManifestSetting',
 				'crm',
-				'N',
-				60,
-				'',
-				'Y',
-				\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 600, 'FULL'),
+				\Bitrix\Crm\Integration\Rest\Configuration\Controller::class,
+				'onManifestSetting'
 			);
 		}
 
@@ -3082,22 +3077,6 @@ class CAllCrmInvoice
 				'',
 				'Y',
 				\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 600, 'FULL'),
-			);
-		}
-
-		$recreateJobExecutorAgent = '~CRM_RECREATE_JOB_EXECUTOR_AGENT';
-		if ((string)COption::GetOptionString('crm', $recreateJobExecutorAgent, 'N') === 'N')
-		{
-			COption::SetOptionString('crm', $recreateJobExecutorAgent, 'Y');
-
-			\CAgent::AddAgent(
-				'Bitrix\Crm\Agent\RepeatSale\JobExecutorRecreatorAgent::run();',
-				'crm',
-				'N',
-				600,
-				'',
-				'Y',
-				\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 1200, 'FULL'),
 			);
 		}
 

@@ -107,7 +107,7 @@ class CostPriceCalculator
 	 * @return float
 	 * @throws \Bitrix\Main\LoaderException
 	 */
-	public function calculate(float $quantity, int $storeId, string $currency = null): float
+	public function calculate(float $quantity, int $storeId, ?string $currency = null): float
 	{
 		if ($quantity <= 0 || !self::isUsedInventoryManagement())
 		{
@@ -122,7 +122,9 @@ class CostPriceCalculator
 				return $catalogPrice;
 			}
 
-			return \CCurrencyRates::convertCurrency($catalogPrice, $this->getCatalogPurchasingCurrency(), $currency);
+			return $this->roundCalculation(
+				\CCurrencyRates::convertCurrency($catalogPrice, $this->getCatalogPurchasingCurrency(), $currency)
+			);
 		}
 
 		if (self::getMethod() === self::METHOD_FIFO)
@@ -133,7 +135,7 @@ class CostPriceCalculator
 		return $this->calculateAverage($storeId, $currency);
 	}
 
-	private function calculateFifo(float $quantity, int $storeId, string $currency = null): float
+	private function calculateFifo(float $quantity, int $storeId, ?string $currency = null): float
 	{
 		$commonAmount = 0;
 		$commonSum = 0;
@@ -171,7 +173,7 @@ class CostPriceCalculator
 		return $this->roundCalculation($commonSum / $commonAmount);
 	}
 
-	private function calculateAverage(int $storeId, string $currency = null): float
+	private function calculateAverage(int $storeId, ?string $currency = null): float
 	{
 		$batchCollection = $this->batchManager->getAvailableStoreCollection($storeId);
 		$batch = $batchCollection->current();
@@ -206,12 +208,7 @@ class CostPriceCalculator
 
 	private function roundCalculation(float $value): float
 	{
-		return round($value, $this->getRoundPrecision());
-	}
-
-	private function getRoundPrecision(): int
-	{
-		return (int)Option::get('sale', 'value_precision', 2);
+		return \Bitrix\Catalog\Product\Price\Calculation::roundPrecision($value);
 	}
 
 	public static function getMethodList(): array

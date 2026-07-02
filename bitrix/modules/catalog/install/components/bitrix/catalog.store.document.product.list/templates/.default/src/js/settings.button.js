@@ -1,7 +1,7 @@
 import {Popup} from 'main.popup';
 import {ajax, Cache, Event, Loc, Tag, Type} from 'main.core';
-import {BaseEvent} from 'main.core.events';
-import {Editor} from './product.list.editor';
+import type {BaseEvent} from 'main.core.events';
+import type {Editor} from './product.list.editor';
 
 export default class SettingsPopup
 {

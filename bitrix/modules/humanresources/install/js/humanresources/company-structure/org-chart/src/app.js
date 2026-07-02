@@ -216,16 +216,6 @@ export const Chart = {
 			refToFocus: any
 		} = {}): void
 		{
-			let analyticsType = null;
-			if (entityType === EntityTypes.team)
-			{
-				analyticsType = 'team';
-			}
-			else if (entityType === EntityTypes.department || entityType === EntityTypes.company)
-			{
-				analyticsType = 'dept';
-			}
-
 			this.wizard = {
 				...this.wizard,
 				shown: true,
@@ -237,79 +227,6 @@ export const Chart = {
 				entityType,
 				refToFocus,
 			};
-
-			if (!isEditMode && source !== AnalyticsSourceType.HEADER)
-			{
-				this.sendAnalyticsSequentially({
-					tool: 'structure',
-					category: 'structure',
-					event: 'create_wizard',
-					type: analyticsType,
-					c_element: source,
-				});
-
-				if (entityType === EntityTypes.team)
-				{
-					this.sendAnalyticsSequentially({
-						tool: 'structure',
-						category: 'structure',
-						event: 'create_team_step1',
-						type: analyticsType,
-						c_element: source,
-					});
-				}
-			}
-
-			if (isEditMode)
-			{
-				analyticsSendData({
-					tool: 'structure',
-					category: 'structure',
-					event: `edit_${analyticsType}`,
-					c_element: source,
-				});
-			}
-
-			// eslint-disable-next-line default-case
-			switch (type)
-			{
-				case 'department':
-					analyticsSendData({
-						tool: 'structure',
-						category: 'structure',
-						event: `create_${analyticsType}_step1`,
-						type: analyticsType,
-						c_element: source,
-					});
-					break;
-				case 'employees':
-					analyticsSendData({
-						tool: 'structure',
-						category: 'structure',
-						event: `create_${analyticsType}_step2`,
-						type: analyticsType,
-						c_element: source,
-					});
-					break;
-				case 'bindChat':
-					analyticsSendData({
-						tool: 'structure',
-						category: 'structure',
-						event: `create_${analyticsType}_step3`,
-						type: analyticsType,
-						c_element: source,
-					});
-					break;
-				case 'teamRights':
-					analyticsSendData({
-						tool: 'structure',
-						category: 'structure',
-						event: `create_${analyticsType}_step4`,
-						type: analyticsType,
-						c_element: source,
-					});
-					break;
-			}
 		},
 		onModifyTree({ id, showConfetti }): void
 		{

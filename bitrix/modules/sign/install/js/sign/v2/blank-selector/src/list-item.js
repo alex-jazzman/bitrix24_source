@@ -26,7 +26,7 @@ export class ListItem
 
 	#createListItem(): HTMLElement
 	{
-		const { title, description, modifier, link, onLinkClick, isNew, isPlaceholderDocumentAvailable } = this.getProps();
+		const { title, description, modifier, link, onLinkClick, isNew, isB2eBlankScenario } = this.getProps();
 		this.setTitle(title);
 		this.setDescription(description);
 
@@ -57,7 +57,7 @@ export class ListItem
 			children.push(badge);
 		}
 
-		if (isPlaceholderDocumentAvailable)
+		if (isB2eBlankScenario)
 		{
 			this.#contentNode = Tag.render`
 				<div class="sign-blank-selector__list_item-content">

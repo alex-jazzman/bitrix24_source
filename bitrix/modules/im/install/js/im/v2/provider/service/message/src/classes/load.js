@@ -1,4 +1,4 @@
-import { Store } from 'ui.vue3.vuex';
+import { type Store } from 'ui.vue3.vuex';
 
 import { Core } from 'im.v2.application.core';
 import { callBatch, runAction } from 'im.v2.lib.rest';
@@ -9,14 +9,14 @@ import { CopilotManager } from 'im.v2.lib.copilot';
 import { Analytics } from 'im.v2.lib.analytics';
 import { Notifier } from 'im.v2.lib.notifier';
 
-import type { ImModelChat, ImModelMessage } from 'im.v2.model';
-import type {
-	RawMessage,
-	RawCommentInfo,
-	RawTariffRestrictions,
-	RawStickerMessage,
+import { type ImModelChat, type ImModelMessage } from 'im.v2.model';
+import {
+	type RawMessage,
+	type RawCommentInfo,
+	type RawTariffRestrictions,
+	type RawStickerMessage,
 } from 'im.v2.provider.service.types';
-import type { PaginationRestResult } from '../types/message';
+import { type PaginationRestResult } from '../types/message';
 
 export class LoadService
 {
@@ -365,6 +365,7 @@ export class LoadService
 			copilot,
 			tariffRestrictions,
 			stickers,
+			messages,
 		} = rawData;
 
 		const dialogPromise = this.#store.dispatch('chats/update', {
@@ -391,6 +392,8 @@ export class LoadService
 			this.#store.dispatch('stickers/set', stickers),
 		]);
 
+		const builderPromise = this.#store.dispatch('messages/builder/set', messages);
+
 		return Promise.all([
 			dialogPromise,
 			filesPromise,
@@ -400,6 +403,7 @@ export class LoadService
 			commentInfoPromise,
 			copilotPromise,
 			stickersPromise,
+			builderPromise,
 		]);
 	}
 

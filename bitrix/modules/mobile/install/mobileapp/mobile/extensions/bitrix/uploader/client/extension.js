@@ -69,7 +69,7 @@ jn.define('uploader/client', (require, exports, module) => {
 
 		destroy()
 		{
-			BX.removeCustomEvent('onFileUploadTaskReceived', this.eventHandler);
+			BX.removeCustomEvent('onFileUploadStatusChanged', this.eventHandler);
 		}
 
 		addTaskFromCache(task)

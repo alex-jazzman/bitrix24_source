@@ -2,10 +2,11 @@
  * @module im/in-app-url/routes
  */
 jn.define('im/in-app-url/routes', (require, exports, module) => {
-	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
 	const { NotifyManager } = require('notify-manager');
 	const { Haptics } = require('haptics');
+	const { Loc } = require('im/messenger/loc');
+	const { joinBySharingLink } = require('im/in-app-url/routes/src/sharing-link-handler');
 
 	const {
 		EventType,
@@ -258,6 +259,12 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 	 * @param {InAppUrl} inAppUrl
 	 */
 	module.exports = (inAppUrl) => {
+		// invite link (sharing link)
+		inAppUrl.register(
+			'/online/\\?IM_CODE=:code$',
+			({ code }) => joinBySharingLink(code),
+		).name('im:dialog:joinBySharingLink');
+
 		// chat and channel
 		inAppUrl.register(
 			'/online/\\?IM_DIALOG=:dialogId$',

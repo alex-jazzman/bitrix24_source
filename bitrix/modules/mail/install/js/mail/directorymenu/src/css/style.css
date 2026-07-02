@@ -5,6 +5,11 @@
 	margin: 14px 0 23px -20px;
 }
 
+.ui-mail-left-directory-menu.mail-left-directory-menu--no-nesting {
+	margin-left: -34px;
+	width: calc(100% + 34px);
+}
+
 .mail-msg-list-grid .main-grid-header .main-grid-cell-checkbox .main-grid-cell-head-container {
 	visibility: hidden;
 }
@@ -452,6 +457,10 @@
 	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2018%2017%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M3.969.896l12.398%2012.398-1.43%201.43-4.374-4.375-1.312%201.723.806.806c.414.448.378%201.165-.08%201.623-.457.458-1.174.493-1.622.08l-1.97-1.966-5.074%203.821a.31.31%200%2001-.295.1.273.273%200%2001-.21-.21.31.31%200%2001.1-.295l3.766-5.132-1.93-1.93c-.422-.446-.39-1.17.07-1.631.463-.462%201.186-.493%201.633-.07l.806.806%201.722-1.315-4.434-4.434L3.97.896zm9.055-.599l4.012%204.01c.443.444.42%201.184-.051%201.655-.471.47-1.212.491-1.655.047l-.825-.826-1.812%202.375L9.765%204.63l2.376-1.81-.82-.82c-.422-.447-.39-1.171.071-1.632.462-.462%201.186-.493%201.632-.07z%22%20fill%3D%22%23767C87%22%20fill-rule%3D%22evenodd%22/%3E%3C/svg%3E') no-repeat;
 }
 
+.mail-menu-directory-item-container {
+	position: relative;
+}
+
 /*.mail-menu-directory-item-container .ui-sidepanel-menu-item .ui-sidepanel-menu-link-text-item*/
 
 .mail-menu-directory-item-container .ui-sidepanel-menu-link,
@@ -459,6 +468,7 @@
 	font-size: 14px;
 	display: flex;
 	justify-content: space-between;
+	padding-left: 5px;
 	padding-right: 25px;
 }
 
@@ -482,7 +492,7 @@
 }
 
 .mail-menu-directory-item-container .ui-sidepanel-submenu-active .ui-sidepanel-submenu-link .ui-sidepanel-menu-link-text,
-.mail-menu-directory-item-container .ui-sidepanel-menu-active .ui-sidepanel-menu-link .ui-sidepanel-menu-link-text,
+.mail-menu-directory-item--active .ui-sidepanel-menu-link .ui-sidepanel-menu-link-text,
 .mail-menu-directory-item-container .ui-sidepanel-menu-link .ui-sidepanel-menu-link-text {
 	font: 15px/25px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
 	font-weight: var(--ui-font-weight-regular, 400);
@@ -492,64 +502,75 @@
 }
 
 
-.bitrix24-dark-theme .mail-menu-directory-item-container .mail-menu-directory-item-inbox .ui-sidepanel-menu-link-text::before {
-	background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M11.9996 11.3165L6.08895 7.00096H17.9103L11.9996 11.3165ZM18.9849 8.22796V8.01859L18.985 8.22794L18.9849 8.22796ZM18.9849 8.22796L11.9996 13.3934L5.01428 8.22794V16.1221C5.01428 16.6096 5.46425 17.0036 6.01891 17.0036H17.9803C18.5363 17.0036 18.9849 16.609 18.9849 16.1221L18.9849 8.22796Z' fill='#525C69'/%3E%3C/svg%3E%0A");
+.mail-menu-directory-item-container .ui-sidepanel-menu-link-text::before {
+	display: none;
 }
 
-.bitrix24-dark-theme .mail-menu-directory-item-container .mail-menu-directory-item-default .ui-sidepanel-menu-link-text::before {
-	background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M13.2604 6.12856C13.0141 5.88221 12.6799 5.74381 12.3315 5.74381H5.86923C5.38553 5.74381 4.99341 6.13593 4.99341 6.61963V7.49545H14.6274L13.2604 6.12856Z' fill='#525C69'/%3E%3Cpath d='M19.0065 9.24709C19.0065 8.76339 18.6144 8.37127 18.1307 8.37127H4.99341V17.1295C4.99341 17.6132 5.38553 18.0053 5.86923 18.0053H18.1307C18.6144 18.0053 19.0065 17.6132 19.0065 17.1295V9.24709Z' fill='#525C69'/%3E%3C/svg%3E%0A");
+.mail-menu-directory-item-icon {
+	--ui-icon-set__icon-size: 24px;
+	--ui-icon-set__icon-color: var(--ui-color-base-white-fixed);
+	flex-shrink: 0;
+	margin: 1px 8px 0 0;
 }
 
-
-.bitrix24-dark-theme .mail-menu-directory-item-container .mail-menu-directory-item-spam .ui-sidepanel-menu-link-text::before {
-	background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M9.00173 16.9492C9.8759 17.4851 10.9042 17.794 12.0047 17.794C15.1826 17.794 17.7589 15.2178 17.7589 12.0398C17.7589 10.9394 17.45 9.91104 16.9141 9.03686L9.00173 16.9492ZM7.0953 15.0428L15.0077 7.13043C14.1335 6.59457 13.1052 6.28565 12.0047 6.28565C8.82675 6.28565 6.25052 8.86188 6.25052 12.0398C6.25052 13.1403 6.55944 14.1686 7.0953 15.0428ZM12.0047 20.0553C7.57789 20.0553 3.98926 16.4666 3.98926 12.0398C3.98926 7.61302 7.57789 4.02439 12.0047 4.02439C16.4315 4.02439 20.0201 7.61302 20.0201 12.0398C20.0201 16.4666 16.4315 20.0553 12.0047 20.0553Z' fill='#525C69'/%3E%3C/svg%3E%0A");
+.ui-sidepanel-menu-link.mail-menu-directory-link {
+	margin-right: 15px;
+	padding-right: 5px;
 }
 
-
-
-.bitrix24-dark-theme .mail-menu-directory-item-container .mail-menu-directory-item-outcome .ui-sidepanel-menu-link-text::before {
-	background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M11.9996 11.0748L5.95685 6.6629H18.0423L15.3328 8.64118C14.2241 9.07116 13.257 9.78526 12.521 10.6941L11.9996 11.0748ZM4.85815 7.91729L11.3842 12.7431C11.1467 13.433 11.0177 14.1734 11.0177 14.9439C11.0177 15.6201 11.117 16.273 11.3019 16.889H5.88522C5.31818 16.889 4.85815 16.4862 4.85815 15.9878V7.91729ZM18.6936 8.24809C18.8443 8.26857 18.9935 8.29402 19.1409 8.32426V7.91731L19.1409 7.91729L19.1409 7.70327V7.91731L18.6936 8.24809ZM22.6603 14.9434C22.6603 17.6415 20.4731 19.8288 17.775 19.8288C15.0768 19.8288 12.8896 17.6415 12.8896 14.9434C12.8896 12.2453 15.0768 10.058 17.775 10.058C20.4731 10.058 22.6603 12.2453 22.6603 14.9434ZM18.2705 12.2059C18.1927 12.1281 18.0596 12.1832 18.0596 12.2933V13.8888H14.6477C14.5794 13.8888 14.5241 13.9441 14.5241 14.0123V15.7686C14.5241 15.8368 14.5794 15.8921 14.6477 15.8921H18.0596V17.4876C18.0596 17.5977 18.1927 17.6528 18.2705 17.575L20.8677 14.9778C20.916 14.9296 20.916 14.8513 20.8677 14.8031L18.2705 12.2059Z' fill='#525C69'/%3E%3C/svg%3E%0A");
+.ui-sidepanel-menu-link.mail-menu-directory-link .ui-sidepanel-menu-link-text {
+	padding-right: 0;
 }
 
-.bitrix24-dark-theme .mail-menu-directory-item-container .mail-menu-directory-item-trash .ui-sidepanel-menu-link-text::before {
-	background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg opacity='0.99'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M12.4917 4.69728H10.3106V5.79431H7.44824C6.61982 5.79431 5.94824 6.46589 5.94824 7.29431V7.98838H16.854V7.29431C16.854 6.46589 16.1825 5.79431 15.354 5.79431H12.4917V4.69728ZM7.03882 9.08542H15.7635L14.9716 18.0467C14.926 18.5629 14.4936 18.9587 13.9755 18.9587H8.82682C8.30865 18.9587 7.87631 18.5629 7.8307 18.0467L7.03882 9.08542Z' fill='#525C69'/%3E%3C/g%3E%3C/svg%3E%0A");
+.ui-sidepanel-menu-link.mail-menu-directory-link:hover {
+	border-radius: 8px;
 }
 
-.bitrix24-dark-theme .mail-menu-directory-item-container .mail-menu-directory-item-drafts .ui-sidepanel-menu-link-text::before {
-	background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg opacity='0.99'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M7 4C6.44772 4 6 4.44772 6 5V18C6 18.5523 6.44772 19 7 19H17.0227C17.575 19 18.0227 18.5523 18.0227 18V9.00028C18.0227 8.49809 17.8338 8.01427 17.4935 7.64497L14.7287 4.6447C14.3501 4.23377 13.8168 4 13.258 4H7ZM8.81162 7.98241C8.37545 7.98241 8.02186 8.336 8.02186 8.77217C8.02186 9.20834 8.37545 9.56193 8.81162 9.56193H14.6293C15.0655 9.56193 15.4191 9.20834 15.4191 8.77217C15.4191 8.336 15.0655 7.98241 14.6293 7.98241H8.81162ZM8.81162 10.9824C8.37545 10.9824 8.02186 11.336 8.02186 11.7722C8.02186 12.2083 8.37545 12.5619 8.81162 12.5619H14.6293C15.0655 12.5619 15.4191 12.2083 15.4191 11.7722C15.4191 11.336 15.0655 10.9824 14.6293 10.9824H8.81162ZM8.02186 14.732C8.02186 14.2958 8.37545 13.9422 8.81162 13.9422H12.9252C13.3614 13.9422 13.715 14.2958 13.715 14.732C13.715 15.1681 13.3614 15.5217 12.9252 15.5217H8.81162C8.37545 15.5217 8.02186 15.1681 8.02186 14.732Z' fill='#525C69'/%3E%3C/g%3E%3C/svg%3E%0A");
+.mail-menu-directory-item--active .ui-sidepanel-menu-link {
+	border-radius: 8px;
+	background: var(--ui-color-base-7, rgba(255, 255, 255, 0.30));
 }
 
-.bitrix24-dark-theme .mail-menu-directory-item-container .mail-menu-directory-item-inbox.ui-sidepanel-menu-active .ui-sidepanel-menu-link-text::before,
-.mail-menu-directory-item-container .mail-menu-directory-item-inbox .ui-sidepanel-menu-link-text::before {
-	background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M11.9996 11.3165L6.08895 7.00096H17.9103L11.9996 11.3165ZM18.9849 8.22796V8.01859L18.985 8.22794L18.9849 8.22796ZM18.9849 8.22796L11.9996 13.3934L5.01428 8.22794V16.1221C5.01428 16.6096 5.46425 17.0036 6.01891 17.0036H17.9803C18.5363 17.0036 18.9849 16.609 18.9849 16.1221L18.9849 8.22796Z' fill='white'/%3E%3C/svg%3E%0A");
-}
-
-.bitrix24-dark-theme .mail-menu-directory-item-container .mail-menu-directory-item-default.ui-sidepanel-menu-active .ui-sidepanel-menu-link-text::before,
-.mail-menu-directory-item-container .mail-menu-directory-item-default .ui-sidepanel-menu-link-text::before {
-	background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M13.2604 6.12856C13.0141 5.88221 12.6799 5.74381 12.3315 5.74381H5.86923C5.38553 5.74381 4.99341 6.13593 4.99341 6.61963V7.49545H14.6274L13.2604 6.12856Z' fill='white'/%3E%3Cpath d='M19.0065 9.24709C19.0065 8.76339 18.6144 8.37127 18.1307 8.37127H4.99341V17.1295C4.99341 17.6132 5.38553 18.0053 5.86923 18.0053H18.1307C18.6144 18.0053 19.0065 17.6132 19.0065 17.1295V9.24709Z' fill='white'/%3E%3C/svg%3E%0A");
-}
-
-.bitrix24-dark-theme .mail-menu-directory-item-container .mail-menu-directory-item-spam.ui-sidepanel-menu-active .ui-sidepanel-menu-link-text::before,
-.mail-menu-directory-item-container .mail-menu-directory-item-spam .ui-sidepanel-menu-link-text::before {
-	background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M9.00173 16.9492C9.8759 17.4851 10.9042 17.794 12.0047 17.794C15.1826 17.794 17.7589 15.2178 17.7589 12.0398C17.7589 10.9394 17.45 9.91104 16.9141 9.03686L9.00173 16.9492ZM7.0953 15.0428L15.0077 7.13043C14.1335 6.59457 13.1052 6.28565 12.0047 6.28565C8.82675 6.28565 6.25052 8.86188 6.25052 12.0398C6.25052 13.1403 6.55944 14.1686 7.0953 15.0428ZM12.0047 20.0553C7.57789 20.0553 3.98926 16.4666 3.98926 12.0398C3.98926 7.61302 7.57789 4.02439 12.0047 4.02439C16.4315 4.02439 20.0201 7.61302 20.0201 12.0398C20.0201 16.4666 16.4315 20.0553 12.0047 20.0553Z' fill='white'/%3E%3C/svg%3E%0A");
-}
-
-.bitrix24-dark-theme .mail-menu-directory-item-container .mail-menu-directory-item-outcome.ui-sidepanel-menu-active .ui-sidepanel-menu-link-text::before,
-.mail-menu-directory-item-container .mail-menu-directory-item-outcome .ui-sidepanel-menu-link-text::before {
-	background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M11.9996 11.0748L5.95685 6.6629H18.0423L15.3328 8.64118C14.2241 9.07116 13.257 9.78526 12.521 10.6941L11.9996 11.0748ZM4.85815 7.91729L11.3842 12.7431C11.1467 13.433 11.0177 14.1734 11.0177 14.9439C11.0177 15.6201 11.117 16.273 11.3019 16.889H5.88522C5.31818 16.889 4.85815 16.4862 4.85815 15.9878V7.91729ZM18.6936 8.24809C18.8443 8.26857 18.9935 8.29402 19.1409 8.32426V7.91731L19.1409 7.91729L19.1409 7.70327V7.91731L18.6936 8.24809ZM22.6603 14.9434C22.6603 17.6415 20.4731 19.8288 17.775 19.8288C15.0768 19.8288 12.8896 17.6415 12.8896 14.9434C12.8896 12.2453 15.0768 10.058 17.775 10.058C20.4731 10.058 22.6603 12.2453 22.6603 14.9434ZM18.2705 12.2059C18.1927 12.1281 18.0596 12.1832 18.0596 12.2933V13.8888H14.6477C14.5794 13.8888 14.5241 13.9441 14.5241 14.0123V15.7686C14.5241 15.8368 14.5794 15.8921 14.6477 15.8921H18.0596V17.4876C18.0596 17.5977 18.1927 17.6528 18.2705 17.575L20.8677 14.9778C20.916 14.9296 20.916 14.8513 20.8677 14.8031L18.2705 12.2059Z' fill='white'/%3E%3C/svg%3E%0A");
-}
-
-.bitrix24-dark-theme .mail-menu-directory-item-container .mail-menu-directory-item-trash.ui-sidepanel-menu-active .ui-sidepanel-menu-link-text::before,
-.mail-menu-directory-item-container .mail-menu-directory-item-trash .ui-sidepanel-menu-link-text::before {
-	background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg opacity='0.99'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M12.4917 4.69728H10.3106V5.79431H7.44824C6.61982 5.79431 5.94824 6.46589 5.94824 7.29431V7.98838H16.854V7.29431C16.854 6.46589 16.1825 5.79431 15.354 5.79431H12.4917V4.69728ZM7.03882 9.08542H15.7635L14.9716 18.0467C14.926 18.5629 14.4936 18.9587 13.9755 18.9587H8.82682C8.30865 18.9587 7.87631 18.5629 7.8307 18.0467L7.03882 9.08542Z' fill='white'/%3E%3C/g%3E%3C/svg%3E%0A");
-}
-
-.bitrix24-dark-theme .mail-menu-directory-item-container .mail-menu-directory-item-drafts.ui-sidepanel-menu-active .ui-sidepanel-menu-link-text::before,
-.mail-menu-directory-item-container .mail-menu-directory-item-drafts .ui-sidepanel-menu-link-text::before {
-	background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg opacity='0.99'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M7 4C6.44772 4 6 4.44772 6 5V18C6 18.5523 6.44772 19 7 19H17.0227C17.575 19 18.0227 18.5523 18.0227 18V9.00028C18.0227 8.49809 17.8338 8.01427 17.4935 7.64497L14.7287 4.6447C14.3501 4.23377 13.8168 4 13.258 4H7ZM8.81162 7.98241C8.37545 7.98241 8.02186 8.336 8.02186 8.77217C8.02186 9.20834 8.37545 9.56193 8.81162 9.56193H14.6293C15.0655 9.56193 15.4191 9.20834 15.4191 8.77217C15.4191 8.336 15.0655 7.98241 14.6293 7.98241H8.81162ZM8.81162 10.9824C8.37545 10.9824 8.02186 11.336 8.02186 11.7722C8.02186 12.2083 8.37545 12.5619 8.81162 12.5619H14.6293C15.0655 12.5619 15.4191 12.2083 15.4191 11.7722C15.4191 11.336 15.0655 10.9824 14.6293 10.9824H8.81162ZM8.02186 14.732C8.02186 14.2958 8.37545 13.9422 8.81162 13.9422H12.9252C13.3614 13.9422 13.715 14.2958 13.715 14.732C13.715 15.1681 13.3614 15.5217 12.9252 15.5217H8.81162C8.37545 15.5217 8.02186 15.1681 8.02186 14.732Z' fill='white'/%3E%3C/g%3E%3C/svg%3E%0A");
+.mail-menu-directory-item--active .ui-sidepanel-menu-link .ui-sidepanel-menu-link-text {
+	background-color: transparent;
 }
 
 .mail-menu-directory-item-container .ui-sidepanel-menu-link-text-item {
 	text-overflow: ellipsis;
 	overflow: hidden;
 }
+
+.mail-menu-directory-toggle {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 36px;
+	padding: 0;
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	flex-shrink: 0;
+	position: absolute;
+	top: 0;
+}
+
+.mail-menu-directory-toggle-icon {
+	--ui-icon-set__icon-size: 18px;
+	--ui-icon-set__icon-color: var(--ui-color-base-5);
+}
+
+.mail-menu-directory-children {
+	position: relative;
+	overflow: hidden;
+	transition: max-height 0.3s ease;
+}
+
+.mail-menu-directory-tree-line {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	width: 1px;
+	background: var(--ui-color-base-8, rgba(255, 255, 255, 0.20));
+}
+

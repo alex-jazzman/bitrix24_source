@@ -24,3 +24,4 @@ $MESS['TRACKING_SOURCE_EXPENSES_FIELD_UTM_CAMPAIGN'] = "ID рекламной к
 $MESS['TRACKING_SOURCE_EXPENSES_FIELD_UTM_CAMPAIGN_FULL'] = "Идентификатор рекламной кампании. Этот параметр используется для обозначения конкретной маркетинговой кампании";
 $MESS['TRACKING_SOURCE_EXPENSES_FIELD_UTM_CONTENT'] = "ID элемента контента";
 $MESS['TRACKING_SOURCE_EXPENSES_FIELD_UTM_CONTENT_FULL'] = "Идентификатор элемента контента. Этот параметр позволяет различать разные версии контента или объявления в рамках одной кампании";
+$MESS['TRACKING_SOURCE_EXPENSES_TABLE_DESCRIPTION_FULL'] = 'Набор содержит данные о ежедневных затратах на рекламу, валюте, количестве кликов, показов и действий.';

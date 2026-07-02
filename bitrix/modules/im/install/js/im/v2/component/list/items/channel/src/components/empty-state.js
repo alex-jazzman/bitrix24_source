@@ -1,14 +1,9 @@
-import type { JsonObject } from 'main.core';
+import '../css/empty-state.css';
 
 // @vue/component
 export const EmptyState = {
 	name: 'EmptyState',
-	data(): JsonObject
-	{
-		return {};
-	},
-	methods:
-	{
+	methods: {
 		loc(phraseCode: string): string
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode);

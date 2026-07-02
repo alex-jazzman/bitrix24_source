@@ -3,7 +3,7 @@ import { ajax as Ajax, Tag, Dom, Event, Loc } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Button, ButtonState, ButtonSize, ButtonColor } from 'ui.buttons';
 import { Countdown } from 'ui.countdown';
-import { UI } from 'ui.notification';
+import 'ui.notification';
 import 'ui.forms';
 
 export class ClearCacheField extends BX.UI.EntityEditorCustom
@@ -72,7 +72,7 @@ export class ClearCacheField extends BX.UI.EntityEditorCustom
 
 		return Ajax.runAction('biconnector.superset.clearCache')
 			.then((response) => {
-				UI.Notification.Center.notify({
+				BX.UI.Notification.Center.notify({
 					content: Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_SUCCESS'),
 					autoHideDelay: 2000,
 				});
@@ -80,7 +80,7 @@ export class ClearCacheField extends BX.UI.EntityEditorCustom
 				this.#initCacheTimer();
 			})
 			.catch(() => {
-				UI.Notification.Center.notify({
+				BX.UI.Notification.Center.notify({
 					content: Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_ERROR'),
 					autoHideDelay: 2000,
 				});

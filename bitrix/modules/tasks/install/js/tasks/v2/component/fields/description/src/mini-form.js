@@ -16,6 +16,7 @@ import {
 	BulletListButton,
 	type EntityTextEditor,
 } from 'tasks.v2.component.entity-text';
+import { TasksAiPromo } from 'tasks.v2.lib.promotion';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 
 import { DescriptionCheckListMixin } from './description-check-list-mixin';
@@ -112,6 +113,8 @@ export const MiniForm = {
 		{
 			this.handleEditorFocus(100);
 		}
+
+		this.showTasksAiPromo();
 	},
 	methods: {
 		handleExpand(): void
@@ -142,6 +145,17 @@ export const MiniForm = {
 				this.editor.focus(null, { defaultSelection: 'rootEnd' });
 			}, timeout);
 		},
+		showTasksAiPromo(): void
+		{
+			if (this.isEdit || !this.isCopilotEnabled)
+			{
+				return;
+			}
+
+			const promo = new TasksAiPromo({ targetElement: this.$refs.copilotButton.$el });
+
+			promo.show();
+		},
 	},
 	template: `
 		<div class="tasks-card-change-description-mini-container">
@@ -169,7 +183,7 @@ export const MiniForm = {
 							<BulletListButton :editor/>
 							<NumberListButton :editor/>
 							<MoreButton :editor/>
-							<CopilotButton v-if="isCopilotEnabled" :editor/>
+							<CopilotButton v-if="isCopilotEnabled" ref="copilotButton" :editor/>
 							<CheckList
 								ref="checkListButton"
 								v-if="isCopilotEnabled"

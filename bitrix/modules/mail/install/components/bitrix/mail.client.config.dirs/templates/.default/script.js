@@ -47,8 +47,48 @@
 			this.loadData();
 			this.addEvents();
 
-			this.selectAll(true, { withSpinner: true, loadAllContainers: true });
+			this.loadContainers();
 		},
+
+		/**
+		 * Loads children for container folders (e.g. [Gmail]) without changing checkbox states.
+		 * @returns {Promise<void>}
+		 */
+		loadContainers: async function() {
+			const items = Object.values(this.items || {});
+			const loadPromises = [];
+
+			for (const item of items)
+			{
+				const isContainerWithChildren = item.isContainer
+					&& item.hasChild
+					&& item.hasChild !== 'false'
+					&& !item.subMenu;
+
+				if (isContainerWithChildren)
+				{
+					loadPromises.push(this.loadItemWithSpinner(item));
+				}
+			}
+
+			if (loadPromises.length > 0)
+			{
+				try
+				{
+					await Promise.all(loadPromises);
+				}
+				catch (error)
+				{
+					console.error('Error loading children:', error);
+				}
+			}
+
+			if (this.selectAllButton)
+			{
+				this.selectAllButton.setChecked(this.isSelectedAll());
+			}
+		},
+
 		/**
 		 * @param {boolean} val
 		 * @param {{ withSpinner?: boolean, loadAllContainers?: boolean }} [options]
@@ -426,6 +466,12 @@
 		addEvents: function ()
 		{
 			this.checkbox.addEventListener('change', this.onChangeCheckbox.bind(this));
+			this.checkbox.addEventListener('keydown', (e) => {
+				if (e.key === 'Enter')
+				{
+					e.preventDefault();
+				}
+			});
 
 			if (this.levelButton && this.levelButton.getButton())
 			{
@@ -475,6 +521,11 @@
 			{
 				this.selectAllButton.label.style.display = '';
 			}
+
+			if (this.selectAllButton?.getButton())
+			{
+				this.selectAllButton.getButton().removeAttribute('tabindex');
+			}
 		},
 
 		hideSubmenu: function ()
@@ -493,6 +544,11 @@
 			if (this.selectAllButton && this.selectAllButton.label)
 			{
 				this.selectAllButton.label.style.setProperty('display', 'none', 'important');
+			}
+
+			if (this.selectAllButton?.getButton())
+			{
+				this.selectAllButton.getButton().setAttribute('tabindex', '-1');
 			}
 		},
 
@@ -948,6 +1004,7 @@
 		this.mailboxId = options.mailboxId;
 		this.dataId = null;
 		this.dataType = null;
+		this.activeButton = null;
 
 		this.init();
 	};
@@ -1120,10 +1177,11 @@
 
 			this.dataId = e.currentTarget.getAttribute('data-id');
 			this.dataType = e.currentTarget.getAttribute('data-type');
+			this.activeButton = e.currentTarget;
 
 			var data = this.getDataDropdownMenu(this.dirs);
 
-			this.showMenuDropdown(data, e.target);
+			this.showMenuDropdown(data, e.currentTarget);
 		},
 
 		getDataDropdownMenu: function (dirs)
@@ -1197,23 +1255,31 @@
 
 		showMenuDropdown: function (data, node)
 		{
+			const self = this;
+
 			this.menuDropdown = BX.Main.MenuManager.create({
 				id: 'mail-client-config-dirs-dropdown-menu',
 				autoHide: true,
 				closeByEsc: true,
+				focusTrap: true,
 				items: data,
 				zIndex: 7001,
 				maxHeight: 400,
 				maxWidth: 200,
 				events: {
-					onPopupClose: function ()
+					onPopupClose()
 					{
-						this.removeMenuDropdown();
-					}.bind(this)
-				}
+						if (self.activeButton)
+						{
+							self.activeButton.setAttribute('aria-expanded', 'false');
+						}
+						self.removeMenuDropdown();
+					},
+				},
 			});
 			this.menuDropdown.popupWindow.setBindElement(node);
 			this.menuDropdown.show();
+			this.activeButton?.setAttribute('aria-expanded', 'true');
 		},
 
 		closeMenuDropdown: function ()
@@ -1256,6 +1322,12 @@
 				this.button.classList.remove('mail-config-dirs-minus-icon');
 				this.button.classList.add('mail-config-dirs-plus-icon');
 			}
+
+			this.button.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+			this.button.setAttribute(
+				'aria-label',
+				BX.message(isOpen ? 'MAIL_CLIENT_CONFIG_DIRS_COLLAPSE_FOLDER' : 'MAIL_CLIENT_CONFIG_DIRS_EXPAND_FOLDER'),
+			);
 		},
 
 		getButton: function ()
@@ -1327,6 +1399,12 @@
 			this.button.type = 'checkbox';
 			this.button.id = this.id;
 			this.button.className = this.className + '-input';
+			this.button.addEventListener('keydown', function(e) {
+				if (e.key === 'Enter')
+				{
+					e.preventDefault();
+				}
+			});
 
 			this.label = document.createElement('label');
 			this.label.htmlFor = this.id;

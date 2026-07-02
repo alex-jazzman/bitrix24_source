@@ -1,11 +1,12 @@
 import { Dom } from 'main.core';
-import Popup from '../popup/popup';
 import { EventEmitter, BaseEvent } from 'main.core.events';
+
+import { Popup } from '../popup/popup';
 
 /**
  * @deprecated
  */
-export default class InputPopup
+export class InputPopup
 {
 	constructor(params)
 	{

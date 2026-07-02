@@ -1,6 +1,9 @@
 import { ajax, Loc, Text } from 'main.core';
 import { UI } from 'ui.notification';
 import { StubLinkType, StubNotAvailable, StubType } from 'ui.sidepanel-content';
+import { getSortedErrors } from './error/sorted-errors';
+
+const SIGN_CLIENT_CONNECTION_ERROR_CODE = 'SIGN_CLIENT_CONNECTION_ERROR';
 
 export async function request(
 	method: string,
@@ -41,9 +44,10 @@ export async function request(
 		}
 
 		const { message = `Error in ${endpoint}`, errors = [] } = ex;
-		const errorCode = errors[0]?.code ?? '';
+		const sortedErrors = getSortedErrors(errors, SIGN_CLIENT_CONNECTION_ERROR_CODE);
+		const errorCode = sortedErrors[0]?.code ?? '';
 
-		if (errorCode === 'SIGN_CLIENT_CONNECTION_ERROR')
+		if (errorCode === SIGN_CLIENT_CONNECTION_ERROR_CODE)
 		{
 			const stub = new StubNotAvailable({
 				title: Loc.getMessage('SIGN_JS_V2_API_ERROR_CLIENT_CONNECTION_TITLE'),
@@ -114,7 +118,7 @@ export async function request(
 			throw ex;
 		}
 
-		const content = errors[0]?.message ?? message;
+		const content = sortedErrors[0]?.message ?? message;
 		UI.Notification.Center.notify({
 			content: Text.encode(content),
 			autoHideDelay: 4000,

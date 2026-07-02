@@ -1,4 +1,3 @@
-import { PopupOptions } from 'main.popup';
 import { Button, ButtonSize, ButtonColor } from 'booking.component.button';
 import { Popup } from 'booking.component.popup';
 import './statistics-popup.css';
@@ -31,7 +30,7 @@ export const StatisticsPopup = {
 			default: {},
 		},
 	},
-	data(): Object
+	setup(): Object
 	{
 		return {
 			ButtonSize,

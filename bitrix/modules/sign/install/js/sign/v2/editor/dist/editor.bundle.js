@@ -5900,7 +5900,12 @@ this.BX.Sign = this.BX.Sign || {};
 	    main_core.Dom.append(resizeArea.getLayout(), babelHelpers.classPrivateFieldLooseBase(this, _documentLayout$1)[_documentLayout$1]);
 	    await Promise.all(promises);
 	    main_core_events.EventEmitter.unsubscribe('SidePanel.Slider:onOpenComplete', babelHelpers.classPrivateFieldLooseBase(this, _onSliderOpenCompleteHandler)[_onSliderOpenCompleteHandler]);
-	    main_core_events.EventEmitter.subscribeOnce('SidePanel.Slider:onOpenComplete', babelHelpers.classPrivateFieldLooseBase(this, _onSliderOpenCompleteHandler)[_onSliderOpenCompleteHandler]);
+	    const editorSlider = babelHelpers.classPrivateFieldLooseBase(this, _sidePanel)[_sidePanel].getSlider('editor');
+	    if (editorSlider && editorSlider.isOpen() && babelHelpers.classPrivateFieldLooseBase(this, _dom)[_dom].isConnected) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _handleSliderOnOpenComplete)[_handleSliderOnOpenComplete]();
+	    } else {
+	      main_core_events.EventEmitter.subscribeOnce('SidePanel.Slider:onOpenComplete', babelHelpers.classPrivateFieldLooseBase(this, _onSliderOpenCompleteHandler)[_onSliderOpenCompleteHandler]);
+	    }
 	  }
 	  show() {
 	    return new Promise(resolve => {

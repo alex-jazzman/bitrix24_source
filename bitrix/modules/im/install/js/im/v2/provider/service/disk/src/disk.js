@@ -1,4 +1,4 @@
-import { RestClient } from 'rest.client';
+import { type RestClient } from 'rest.client';
 
 import { runAction } from 'im.v2.lib.rest';
 import { Core } from 'im.v2.application.core';

@@ -1,17 +1,18 @@
 import { Core } from 'im.v2.application.core';
-
 import { Messenger } from 'im.public';
 import { Color, ActionByUserType, UserType } from 'im.v2.const';
 import { ChatButton, ButtonSize, type CustomColorScheme } from 'im.v2.component.elements.button';
 import { Analytics } from 'im.v2.lib.analytics';
 import { PermissionManager } from 'im.v2.lib.permission';
-import { CreatableChat } from 'im.v2.component.content.chat-forms.forms';
+import { CreatableChatType } from 'im.v2.lib.create-chat';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { SpecialBackground } from 'im.v2.lib.theme';
-
-import { BaseEmptyState, IconClass, EmptyStateListItemName } from './base/base';
-
-import type { EmptyStateListItem } from './base/base';
+import {
+	BaseEmptyState,
+	IconClass,
+	EmptyStateListItemName,
+	type EmptyStateListItem,
+} from 'im.v2.component.content.elements';
 
 // @vue/component
 export const CollabEmptyState = {
@@ -101,7 +102,7 @@ export const CollabEmptyState = {
 		onCreateClick()
 		{
 			Analytics.getInstance().chatCreate.onCollabEmptyStateCreateClick();
-			Messenger.openChatCreation(CreatableChat.collab);
+			void Messenger.openChatCreation(CreatableChatType.collab);
 		},
 		loc(phraseCode: string): string
 		{

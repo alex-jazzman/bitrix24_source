@@ -27,6 +27,14 @@ function executeBeforeMessengerInit()
 {
 	const require = jn.require;
 	const { Loc } = require('im/messenger/loc');
+	const { SubscriptionManager } = require('im/messenger/global/subscription-manager');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+
+	/**
+	 * @type {SubscriptionManager}
+	 */
+	window.subscriptionManager ??= new SubscriptionManager();
+	serviceLocator.add('subscription-manager', window.subscriptionManager);
 
 	window.tabs?.setActiveItem(BX.componentParameters.get('FIRST_TAB_ID', 'chats'));
 
@@ -77,29 +85,33 @@ async function initMessenger()
  * @description component entry point
  * @return {Promise<void>}
  */
-async function launchComponent()
+function launchComponent()
 {
 	const require = jn.require;
 	const { ActionTimer } = require('im/messenger/lib/dev/action-timer');
+	const { AsyncQueue } = require('im/messenger/lib/utils');
 
-	try
-	{
-		const actionTimer = new ActionTimer();
-		actionTimer.start('launchComponent');
+	/** @type {AsyncQueue} */
+	window.launchComponentQueue ??= new AsyncQueue();
 
-		destructMessengerIfExist();
-		actionTimer.logDuration('launchComponent', '🗑️ 1. destructMessengerIfExist complete');
+	void window.launchComponentQueue.enqueue(
+		async () => {
+			const actionTimer = new ActionTimer();
+			actionTimer.start('launchComponent');
 
-		executeBeforeMessengerInit();
-		actionTimer.logDuration('launchComponent', '⚡️ 2. executeBeforeMessengerInit complete');
+			destructMessengerIfExist();
+			actionTimer.logDuration('launchComponent', '🗑️ 1. destructMessengerIfExist complete');
 
-		await initMessenger();
-		actionTimer.logDuration('launchComponent', '✅ 3. launchComponent complete');
-	}
-	catch (error)
-	{
-		console.error('🚨 launchComponent error', error);
-	}
+			executeBeforeMessengerInit();
+			actionTimer.logDuration('launchComponent', '⚡️ 2. executeBeforeMessengerInit complete');
+
+			await initMessenger();
+			actionTimer.logDuration('launchComponent', '✅ 3. launchComponent complete');
+		},
+		(error) => {
+			console.error('🚨 launchComponent error', error);
+		},
+	);
 }
 
-void launchComponent();
+launchComponent();

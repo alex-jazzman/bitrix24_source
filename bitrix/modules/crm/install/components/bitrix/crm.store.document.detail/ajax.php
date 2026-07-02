@@ -11,7 +11,7 @@ use Bitrix\Main;
 use Bitrix\Sale;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Crm\Order\Permissions;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Sale\Delivery;
 use Bitrix\Sale\Helpers\Order\Builder;
 use Bitrix\Catalog;
@@ -362,6 +362,30 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 		if (!$order || !$this->result->isSuccess())
 		{
 			return;
+		}
+
+		$entityBinding = $order->getEntityBinding();
+		if ($entityBinding)
+		{
+			if (!$isNew && $entityBinding->isChanged())
+			{
+				$this->addError(Loc::getMessage('CRM_STORE_DOCUMENT_SD_CHANGE_BINDING_ERROR'));
+
+				return;
+			}
+
+			if (
+				$isShipmentNew
+				&& !Container::getInstance()->getUserPermissions()->item()->canRead(
+					$entityBinding->getOwnerTypeId(),
+					$entityBinding->getOwnerId(),
+				)
+			)
+			{
+				$this->addError(Loc::getMessage('CRM_STORE_DOCUMENT_SD_INSUFFICIENT_RIGHTS'));
+
+				return;
+			}
 		}
 
 		$discount = $order->getDiscount();

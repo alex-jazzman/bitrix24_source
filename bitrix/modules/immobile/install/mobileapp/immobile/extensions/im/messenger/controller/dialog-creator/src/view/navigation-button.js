@@ -14,7 +14,34 @@ jn.define('im/messenger/controller/dialog-creator/navigation-button', (require, 
 	 */
 	function navigationButton(params)
 	{
-		const { iconSvg, text, subtitle, onClick, withSeparator, testId = '', isNew = false } = params;
+		const {
+			iconSvg,
+			pngIcon,
+			text,
+			subtitle,
+			onClick,
+			withSeparator,
+			testId = '',
+			textStyle = {},
+			isNew = false,
+			iconSize = 40,
+		} = params;
+		const imageIcon = iconSvg
+			? { svg: { content: iconSvg } }
+			: { uri: pngIcon, resizeMode: 'contain' };
+
+		const iconOffset = (iconSize - 40) / 2;
+		const imageProps = {
+			...imageIcon,
+			style: {
+				width: iconSize,
+				height: iconSize,
+				marginTop: -iconOffset,
+				marginBottom: -iconOffset,
+				marginLeft: -iconOffset,
+				marginRight: -iconOffset,
+			},
+		};
 
 		return View(
 			{
@@ -34,15 +61,7 @@ jn.define('im/messenger/controller/dialog-creator/navigation-button', (require, 
 						justifyContent: 'center',
 					},
 				},
-				Image({
-					style: {
-						width: 40,
-						height: 40,
-					},
-					svg: {
-						content: iconSvg,
-					},
-				}),
+				Image(imageProps),
 			),
 			View(
 				{
@@ -71,6 +90,7 @@ jn.define('im/messenger/controller/dialog-creator/navigation-button', (require, 
 						style: {
 							color: Theme.colors.base1,
 							fontSize: 18,
+							...textStyle,
 						},
 					}),
 					isNew && BadgeCounter({

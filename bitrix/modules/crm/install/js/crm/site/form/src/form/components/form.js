@@ -7,6 +7,7 @@ import { PagerBlock } from './pager';
 import { BasketBlock } from './basket';
 import ReCaptcha from './recaptcha';
 import YandexCaptcha from './yandexcaptcha';
+import { Aria } from '../../util/aria';
 
 const Form = {
 	props: {
@@ -42,6 +43,14 @@ const Form = {
 		isDark(): boolean
 		{
 			return Boolean(this.form?.design?.isDark());
+		},
+		titleId(): string
+		{
+			return Aria.getFormElementId(this.form.getId(), 'title');
+		},
+		descId(): string
+		{
+			return Aria.getFormElementId(this.form.getId(), 'desc');
 		},
 	},
 
@@ -123,12 +132,14 @@ const Form = {
 		<div class="b24-form-wrapper"
 			:class="classes()"
 		>
-			<div v-if="form.title || form.desc" class="b24-form-header b24-form-padding-side">
-				<div v-if="form.title" class="b24-form-header-title">{{ form.title }}</div>
-				<div class="b24-form-header-description"
-					v-if="form.desc"
-					v-html="form.desc"
-				></div>
+			<div v-if="form.title || form.desc"
+				class="b24-form-header b24-form-padding-side"
+				role="region"
+				:aria-labelledby="form.title ? titleId : null"
+				:aria-describedby="form.desc ? descId : null"
+			>
+				<h2 v-if="form.title" :id="titleId" class="b24-form-header-title" v-text="form.title"></h2>
+				<p v-if="form.desc" :id="descId" class="b24-form-header-description" v-html="form.desc"></p>
 			</div>
 			<div v-else class="b24-form-header-padding"></div>
 
@@ -174,7 +185,10 @@ const Form = {
 							v-if="!form.pager.beginning()"
 							@click.prevent="prevPage()"
 						>
-							<button type="button" class="b24-form-btn b24-form-btn-white b24-form-btn-border">
+							<button type="button" 
+								class="b24-form-btn b24-form-btn-white b24-form-btn-border"
+								:aria-label="form.messages.get('navBack')"
+							>
 								{{ form.messages.get('navBack') }}
 							</button>
 						</div>
@@ -183,14 +197,21 @@ const Form = {
 							v-if="!form.pager.ended()"
 							@click.prevent="nextPage()"
 						>
-							<button type="button" class="b24-form-btn">
+							<button type="button" 
+								class="b24-form-btn"
+								:aria-label="form.messages.get('navNext')"
+							>
 								{{ form.messages.get('navNext') }}
 							</button>
 						</div>
 						<div class="b24-form-btn-block"
 							v-if="form.pager.ended()"
 						>
-							<button type="submit" class="b24-form-btn">
+							<button type="submit" 
+								class="b24-form-btn"
+								:aria-label="form.buttonCaption || form.messages.get('defButton')" 
+								:aria-disabled="(form.loading || form.disabled) ? 'true' : null"
+							>
 								{{ form.buttonCaption || form.messages.get('defButton') }}
 							</button>
 						</div>

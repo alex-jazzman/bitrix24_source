@@ -22,7 +22,8 @@
 	border-bottom: none;
 }
 
-.bx-im-dialog-chat__pinned_item .bx-im-avatar__container {
+.bx-im-dialog-chat__pinned_item .bx-im-avatar__container,
+.bx-im-dialog-chat__pinned_item .bx-im-base-ui-avatar__container {
 	margin-right: 10px;
 }
 

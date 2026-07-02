@@ -1,4 +1,4 @@
-import type { Store } from 'ui.vue3.vuex';
+import { type Store } from 'ui.vue3.vuex';
 
 import { Model, Endpoint } from 'tasks.v2.const';
 import { Core } from 'tasks.v2.core';
@@ -13,14 +13,20 @@ export class DeadlineService
 			{ taskId },
 		);
 
-		void this.$store.dispatch(`${Model.Interface}/updateDeadlineChangeCount`, deadlineChangeCount);
+		void this.$store.dispatch(`${Model.Tasks}/update`, {
+			id: taskId,
+			fields: { deadlineChangeCount },
+		});
 	}
 
 	cleanChangeLog(taskId: number): void
 	{
-		apiClient.post(Endpoint.TaskDeadlineCleanChangeLog, { taskId });
+		void apiClient.post(Endpoint.TaskDeadlineCleanChangeLog, { taskId });
 
-		void this.$store.dispatch(`${Model.Interface}/updateDeadlineChangeCount`, 0);
+		void this.$store.dispatch(`${Model.Tasks}/update`, {
+			id: taskId,
+			fields: { deadlineChangeCount: 0 },
+		});
 	}
 
 	get $store(): Store

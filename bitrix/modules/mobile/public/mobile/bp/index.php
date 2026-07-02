@@ -1,6 +1,20 @@
-<?
+<?php
+
 require($_SERVER["DOCUMENT_ROOT"]."/mobile/headers.php");
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
+
 ?>
-<?$APPLICATION->IncludeComponent("bitrix:bizproc.task.list", "mobile", array())?>
-<?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php")?>
+<script>
+	(() => {
+
+		const openList = BX.MobileTools.getOpenFunction(`/bizproc/userprocesses/`);
+		if (openList)
+		{
+			openList();
+		}
+	})();
+
+	BXMobileApp.UI.Page.close({ drop: true });
+</script>
+<?php
+require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");

@@ -1,0 +1,1 @@
+.note-editor-app,.note-editor-page{min-height:100vh}.note-editor-app main.content{scrollbar-width:thin;scrollbar-color:var(--ui-color-base-50) transparent}.note-editor-app main.content::-webkit-scrollbar{width:5px;height:5px}.note-editor-app main.content::-webkit-scrollbar-thumb{background:var(--ui-color-base-50);border-radius:5px}

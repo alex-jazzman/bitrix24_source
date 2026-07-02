@@ -1,7 +1,6 @@
 import { Core } from 'im.v2.application.core';
-import { ChatType } from 'im.v2.const';
-
-import type { ImModelChat, ImModelMessage } from 'im.v2.model';
+import { ChatType, type ChatTypeItem } from 'im.v2.const';
+import { type ImModelChat, type ImModelMessage } from 'im.v2.model';
 
 export const ChannelManager = {
 	channelTypes: new Set([ChatType.generalChannel, ChatType.channel, ChatType.openChannel]),
@@ -13,7 +12,7 @@ export const ChannelManager = {
 		return ChannelManager.channelTypes.has(type);
 	},
 
-	getChannelTypes(): Array<$Values<typeof ChatType>>
+	getChannelTypes(): ChatTypeItem[]
 	{
 		return [...ChannelManager.channelTypes];
 	},

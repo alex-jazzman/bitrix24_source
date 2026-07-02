@@ -8,6 +8,7 @@ $MESS['IM_SEARCH_ITEM_USER_TYPE_GROUP_V2'] = "Пользователь";
 $MESS['IM_SEARCH_ITEM_OPEN_CHANNEL_TYPE_GROUP'] = "Открытый канал";
 $MESS['IM_SEARCH_ITEM_PRIVATE_CHANNEL_TYPE_GROUP'] = "Закрытый канал";
 $MESS['IM_SEARCH_ITEM_COLLAB_TYPE'] = "Коллаба";
+$MESS['IM_SEARCH_ITEM_TASK_COMMENTS_TYPE'] = "Чат задачи";
 $MESS['IM_SEARCH_RESULT_NOT_FOUND'] = "Ничего не найдено";
 $MESS['IM_SEARCH_RESULT_NOT_FOUND_DESCRIPTION'] = "Попробуйте изменить запрос";
 $MESS['IM_SEARCH_ITEM_FOUND_BY_USER'] = "Найдено по участникам чата";

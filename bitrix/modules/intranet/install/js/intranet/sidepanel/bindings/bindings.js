@@ -596,7 +596,11 @@
 				allowCrossDomain: true,
 				handler: function(event, link)
 				{
-					if (BX.desktop && !BX.desktop.enableInVersion(60))
+					if (
+						BX.desktop
+						&& !BX.desktop.enableInVersion(60)
+						&& Number(window.BXDesktopSystem?.GetProperty?.('versionParts')?.[3] ?? 0) < 60
+					)
 					{
 						return true;
 					}
@@ -851,6 +855,13 @@
 				options: {
 					cacheable: false,
 					width: 950,
+				},
+			},
+			{
+				condition: [new RegExp('/crm/activity/details/([0-9]+)/', 'i')],
+				options: {
+					cacheable: false,
+					width: 1080,
 				},
 			},
 			{

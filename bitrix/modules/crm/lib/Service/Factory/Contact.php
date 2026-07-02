@@ -113,6 +113,19 @@ class Contact extends Service\Factory
 		return parent::isFieldExists($commonFieldName);
 	}
 
+	public function getFieldCaption(string $commonFieldName): string
+	{
+		if (
+			$commonFieldName === Item\Contact::FIELD_NAME_COMPANIES
+			|| $commonFieldName === Item\Contact::FIELD_NAME_COMPANY_IDS
+		)
+		{
+			$commonFieldName = Item\Contact::FIELD_NAME_COMPANY_BINDINGS;
+		}
+
+		return parent::getFieldCaption($commonFieldName);
+	}
+
 	protected function prepareSelect(array $select): array
 	{
 		$select = parent::prepareSelect($select);
@@ -356,6 +369,13 @@ class Contact extends Service\Factory
 				'TYPE' => Field::TYPE_USER,
 				'ATTRIBUTES' => [\CCrmFieldInfoAttr::Multiple],
 				'CLASS' => Field\Observers::class,
+			],
+			Item::FIELD_NAME_WEBFORM_ID => [
+				'TYPE' => Field::TYPE_CRM_WEBFORM,
+				'ATTRIBUTES' => [
+					\CCrmFieldInfoAttr::NotDisplayed,
+					\CCrmFieldInfoAttr::Immutable,
+				],
 			],
 			Item::FIELD_LAST_COMMUNICATION_TIME => [
 				'TYPE' => Field::TYPE_STRING,

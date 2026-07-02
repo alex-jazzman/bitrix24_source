@@ -1,7 +1,7 @@
 import { Core } from 'im.v2.application.core';
 import { Logger } from 'im.v2.lib.logger';
 
-import { ChangeTariffParams } from '../../types/tariff';
+import { type ChangeTariffParams } from '../../types/tariff';
 
 export class TariffPullHandler
 {

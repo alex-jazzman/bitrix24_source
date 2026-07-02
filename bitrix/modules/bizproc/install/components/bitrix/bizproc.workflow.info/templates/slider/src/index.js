@@ -36,6 +36,7 @@ export class WorkflowInfo
 	#workflowResult: ?{} = null;
 	commentRequired: string = 'N';
 	#canUseHumanResources: boolean;
+	#uiButtons: Array<Button> = [];
 
 	constructor(options: {
 		currentUserId: number,
@@ -67,7 +68,7 @@ export class WorkflowInfo
 		this.buttonsPanel = options.buttonsPanel;
 		this.workflowContent = options.workflowContent;
 		this.canDelegateTask = options.canDelegateTask;
-		this.fastClose = options.fastClose;
+		this.fastClose = options.fastClose && !this.#hasFileFields();
 		this.saveVariables = options.saveVariables;
 		this.commentRequired = options.commentRequired;
 		this.#canUseHumanResources = Text.toBoolean(options.canUseHumanResources);
@@ -202,6 +203,7 @@ export class WorkflowInfo
 
 	#renderButtons(): void
 	{
+		this.#uiButtons = [];
 		if (this.taskButtons)
 		{
 			Dom.clean(this.buttonsPanel);
@@ -223,6 +225,7 @@ export class WorkflowInfo
 				Dom.style(button.getContainer(), 'maxWidth', '200px');
 				Dom.attr(button.getContainer(), 'title', taskButton.TEXT);
 				Dom.append(button.getContainer(), this.buttonsPanel);
+				this.#uiButtons.push(button);
 			});
 		}
 
@@ -239,7 +242,22 @@ export class WorkflowInfo
 			Dom.style(button.getContainer(), 'minWidth', '160px');
 			Dom.style(button.getContainer(), 'maxWidth', '200px');
 			Dom.append(button.getContainer(), this.buttonsPanel);
+			this.#uiButtons.push(button);
 		}
+	}
+
+	#setButtonsBusy(busy: boolean, clocking: ?Button = null): void
+	{
+		this.#uiButtons.forEach((button) => {
+			if (button === clocking)
+			{
+				button.setClocking(busy);
+			}
+			else
+			{
+				button.setDisabled(busy);
+			}
+		});
 	}
 
 	#handleTaskButtonClick(taskButton: TaskButton, uiButton: Button): void
@@ -260,7 +278,7 @@ export class WorkflowInfo
 		formData.append(taskButton.NAME, taskButton.VALUE);
 		const slider = BX.SidePanel.Instance.getSliderByWindow(window);
 
-		uiButton.setDisabled(true);
+		this.#setButtonsBusy(true, uiButton);
 		if (this.fastClose)
 		{
 			this.#canClose = true;
@@ -275,9 +293,9 @@ export class WorkflowInfo
 				this.#getNextTaskOrClose(formData);
 			})
 			.catch((response) => {
+				this.#setButtonsBusy(false, uiButton);
 				this.#showErrors(this.#prepareErrors(response.errors));
 			})
-			.finally(() => uiButton.setDisabled(false))
 		;
 	}
 
@@ -289,6 +307,14 @@ export class WorkflowInfo
 	#isCanceled(buttonName: string): boolean
 	{
 		return buttonName === 'cancel' || buttonName === 'nonapprove';
+	}
+
+	#hasFileFields(): boolean
+	{
+		return (
+			Type.isArrayFilled(this.taskFields)
+			&& this.taskFields.some((field) => field.Type === 'file')
+		);
 	}
 
 	#getRequiredFields(buttonName: string): Array<TaskField>
@@ -415,11 +441,13 @@ export class WorkflowInfo
 			toUserId,
 		};
 
+		this.#setButtonsBusy(true);
 		ajax.runAction('bizproc.task.delegate', { data: actionData })
 			.then((response) => {
 				this.#canClose = true;
 				BX.SidePanel.Instance.getSliderByWindow(window)?.close();
 			}).catch((response) => {
+				this.#setButtonsBusy(false);
 				MessageBox.alert(response.errors.pop().message);
 			});
 	}
@@ -500,10 +528,10 @@ export class WorkflowInfo
 		if (data.additionalParams)
 		{
 			this.taskId = data.additionalParams.ID;
-			this.fastClose = data.additionalParams.IS_LAST_TASK_FOR_USER;
 			this.saveVariables = data.additionalParams.saveVariables;
 			this.commentRequired = data.additionalParams.commentRequired;
 			this.taskFields = data.additionalParams.FIELDS;
+			this.fastClose = data.additionalParams.IS_LAST_TASK_FOR_USER && !this.#hasFileFields();
 			const subject = this.workflowContent.querySelector('.bp-workflow-info__subject');
 			if (subject)
 			{

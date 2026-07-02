@@ -8,13 +8,13 @@ return [
 	'css' => 'dist/stepprocessing.bundle.css',
 	'js' => 'dist/stepprocessing.bundle.js',
 	'rel' => [
-		'ui.design-tokens',
-		'ui.progressbar',
+		'main.core',
 		'main.core.events',
 		'main.popup',
 		'ui.alerts',
 		'ui.buttons',
-		'main.core',
+		'ui.design-tokens',
+		'ui.progressbar',
 	],
 	'skip_core' => false,
 ];

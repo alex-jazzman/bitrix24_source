@@ -945,24 +945,27 @@ if(IsModuleInstalled('report'))
 	}
 }
 
-$eventItem = array(
-	'ID' => 'EVENT',
-	'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('EVENT'), // 'menu_crm_event',
-	'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_EVENT_2'),
-	'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_EVENT_2'), //title
-	'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_EVENT_LIST']),
-	'ICON' => 'event',
-	'IS_DISABLED' => true
-);
-if (!RestrictionManager::isHistoryViewPermitted())
+if ($userPermissionsService->event()->canRead())
 {
-	unset($eventItem['URL']);
-	$eventItem['IS_LOCKED'] = true;
-	$eventItem['ON_CLICK'] = RestrictionManager::getHistoryViewRestriction()->prepareInfoHelperScript();
-}
+	$eventItem = array(
+		'ID' => 'EVENT',
+		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('EVENT'), // 'menu_crm_event',
+		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_EVENT_2'),
+		'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_EVENT_2'), //title
+		'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_EVENT_LIST']),
+		'ICON' => 'event',
+		'IS_DISABLED' => true
+	);
+	if (!RestrictionManager::isHistoryViewPermitted())
+	{
+		unset($eventItem['URL']);
+		$eventItem['IS_LOCKED'] = true;
+		$eventItem['ON_CLICK'] = RestrictionManager::getHistoryViewRestriction()->prepareInfoHelperScript();
+	}
 
-$stdItems['EVENT'] = $eventItem;
-unset($eventItem);
+	$stdItems['EVENT'] = $eventItem;
+	unset($eventItem);
+}
 
 if($isAdmin || $userPermissionsService->webForm()->canRead())
 {

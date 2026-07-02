@@ -27,4 +27,10 @@ export const queueFieldsConfig: FieldsConfig = [
 		targetFieldName: 'isActive',
 		checkFunction: Type.isBoolean,
 	},
+	{
+		fieldName: ['color'],
+		targetFieldName: 'color',
+		checkFunction: Type.isString,
+		formatFunction: convertToString,
+	},
 ];

@@ -51,6 +51,7 @@ Extension::load([
 	'ui.label',
 	'ui.migrationbar',
 	'ui.tour',
+	'ui.system.chip',
 	'tasks.task-model',
 	'pull.queuemanager',
 	'ui.stepprocessing',
@@ -240,62 +241,68 @@ $rowCountHtml = str_replace(
 		</svg>
 	</div>'
 );
+?>
 
-$APPLICATION->IncludeComponent(
-	'bitrix:main.ui.grid',
-	'',
-	array(
-		'GRID_ID'   => $arParams['GRID_ID'],
-		'HEADERS'   => ($arResult['HEADERS'] ?? []),
-		'SORT'      => ($arParams['SORT'] ?? []),
-		'SORT_VARS' => ($arParams['SORT_VARS'] ?? []),
-		'ROWS'      => $arResult['ROWS'],
-		'STUB'      => (count($arResult['ROWS']) > 0 ? null : $arResult['STUB']),
+<div class="--ui-context-content-light">
+	<?php
+	$APPLICATION->IncludeComponent(
+		'bitrix:main.ui.grid',
+		'',
+		array(
+			'GRID_ID'   => $arParams['GRID_ID'],
+			'HEADERS'   => ($arResult['HEADERS'] ?? []),
+			'SORT'      => ($arParams['SORT'] ?? []),
+			'SORT_VARS' => ($arParams['SORT_VARS'] ?? []),
+			'ROWS'      => $arResult['ROWS'],
+			'STUB'      => (count($arResult['ROWS']) > 0 ? null : $arResult['STUB']),
 
-		'AJAX_MODE'           => 'Y',
-		//Strongly required
-		"AJAX_OPTION_JUMP"    => "N",
-		"AJAX_OPTION_STYLE"   => "N",
-		"AJAX_OPTION_HISTORY" => "N",
+			'AJAX_MODE'           => 'Y',
+			//Strongly required
+			"AJAX_OPTION_JUMP"    => "N",
+			"AJAX_OPTION_STYLE"   => "N",
+			"AJAX_OPTION_HISTORY" => "N",
 
-		"ALLOW_COLUMNS_SORT"      => true,
-		"ALLOW_ROWS_SORT"         => $arResult['CAN']['SORT'],
-		"ALLOW_COLUMNS_RESIZE"    => true,
-		"ALLOW_HORIZONTAL_SCROLL" => true,
-		"ALLOW_SORT"              => true,
-		"ALLOW_PIN_HEADER"        => true,
-		'ALLOW_CONTEXT_MENU'      => true,
-		"ACTION_PANEL"            => $arResult['GROUP_ACTIONS'],
+			"ALLOW_COLUMNS_SORT"      => true,
+			"ALLOW_ROWS_SORT"         => $arResult['CAN']['SORT'],
+			"ALLOW_COLUMNS_RESIZE"    => true,
+			"ALLOW_HORIZONTAL_SCROLL" => true,
+			"ALLOW_SORT"              => true,
+			"ALLOW_PIN_HEADER"        => true,
+			'ALLOW_CONTEXT_MENU'      => true,
+			"ACTION_PANEL"            => $arResult['GROUP_ACTIONS'],
 
-		"SHOW_CHECK_ALL_CHECKBOXES" => true,
-		"SHOW_ROW_CHECKBOXES"       => true,
-		"SHOW_ROW_ACTIONS_MENU"     => true,
-		"SHOW_GRID_SETTINGS_MENU"   => true,
-		"SHOW_NAVIGATION_PANEL"     => true,
-		"SHOW_PAGINATION"           => true,
-		"SHOW_SELECTED_COUNTER"     => true,
-		"SHOW_TOTAL_COUNTER"        => true,
-		"SHOW_PAGESIZE"             => true,
-		"SHOW_ACTION_PANEL"         => true,
-		"SHOW_MORE_BUTTON"			=> true,
-		"ENABLE_NEXT_PAGE"			=> $arResult['ENABLE_NEXT_PAGE'],
-		"CURRENT_PAGE"				=> $arResult['CURRENT_PAGE'],
-		"NAV_PARAM_NAME" 			=> 'page',
+			"SHOW_CHECK_ALL_CHECKBOXES" => true,
+			"SHOW_ROW_CHECKBOXES"       => true,
+			"SHOW_ROW_ACTIONS_MENU"     => true,
+			"SHOW_GRID_SETTINGS_MENU"   => true,
+			"SHOW_NAVIGATION_PANEL"     => true,
+			"SHOW_PAGINATION"           => true,
+			"SHOW_SELECTED_COUNTER"     => true,
+			"SHOW_TOTAL_COUNTER"        => true,
+			"SHOW_PAGESIZE"             => true,
+			"SHOW_ACTION_PANEL"         => true,
+			"SHOW_MORE_BUTTON"			=> true,
+			"ENABLE_NEXT_PAGE"			=> $arResult['ENABLE_NEXT_PAGE'],
+			"CURRENT_PAGE"				=> $arResult['CURRENT_PAGE'],
+			"NAV_PARAM_NAME" 			=> 'page',
 
-		"MESSAGES" => $arResult['MESSAGES'],
+			"MESSAGES" => $arResult['MESSAGES'],
 
-		"ENABLE_COLLAPSIBLE_ROWS" => true,
-		'~NAV_PARAMS'       => $arResult['GET_LIST_PARAMS']['NAV_PARAMS'],
-		"PAGE_SIZES"        => $arResult['PAGE_SIZES'],
-		"DEFAULT_PAGE_SIZE" => 50,
+			"ENABLE_COLLAPSIBLE_ROWS" => true,
+			'~NAV_PARAMS'       => $arResult['GET_LIST_PARAMS']['NAV_PARAMS'],
+			"PAGE_SIZES"        => $arResult['PAGE_SIZES'],
+			"DEFAULT_PAGE_SIZE" => 50,
 
-		"TOTAL_ROWS_COUNT_HTML" => $rowCountHtml,
-		"NAV_STRING" => $navigationHtml,
-	),
-	$component,
-	array('HIDE_ICONS' => 'Y')
-);
+			"TOTAL_ROWS_COUNT_HTML" => $rowCountHtml,
+			"NAV_STRING" => $navigationHtml,
+		),
+		$component,
+		array('HIDE_ICONS' => 'Y')
+	);
+	?>
+</div>
 
+<?php
 $componentName = 'bitrix:tasks.task.list';
 $componentParams = [
 	'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'] ?? '',
@@ -440,7 +447,7 @@ if (ProjectLimit::canTurnOnTrial())
 				.create(<?= \CUtil::PhpToJSObject($arResult['EXPORT_EXCEL_PARAMS']) ?>)
 				.setHandler(BX.UI.StepProcessing.ProcessCallback.RequestStart)
 			;
-			
+
 			BX.TasksTimerManager.onDataRecieved(<?=Json::encode($timeManagerData)?>);
 		}
 	);

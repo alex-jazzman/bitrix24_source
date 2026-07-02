@@ -6,14 +6,18 @@ this.BX = this.BX || {};
 	const promptTypes = [{
 	  id: 'DEFAULT',
 	  title: main_core.Loc.getMessage('PROMPT_MASTER_TYPE_FIRST_TITLE'),
-	  description: main_core.Loc.getMessage('PROMPT_MASTER_TYPE_FIRST_DESCRIPTION'),
+	  description: main_core.Loc.getMessage('PROMPT_MASTER_TYPE_FIRST_DESCRIPTION_MSGVER_1', {
+	    '#COPILOT_NAME#': getCopilotName()
+	  }),
 	  example: main_core.Loc.getMessage('PROMPT_MASTER_TYPE_FIRST_EXAMPLE'),
 	  active: false,
 	  icon: 'stars'
 	}, {
 	  id: 'SIMPLE_TEMPLATE',
 	  title: main_core.Loc.getMessage('PROMPT_MASTER_TYPE_SECOND_TITLE'),
-	  description: main_core.Loc.getMessage('PROMPT_MASTER_TYPE_SECOND_DESCRIPTION'),
+	  description: main_core.Loc.getMessage('PROMPT_MASTER_TYPE_SECOND_DESCRIPTION_MSGVER_1', {
+	    '#COPILOT_NAME#': getCopilotName()
+	  }),
 	  example: main_core.Loc.getMessage('PROMPT_MASTER_TYPE_SECOND_EXAMPLE', {
 	    '#accent#': '<strong>',
 	    '#/accent#': '</strong>'
@@ -21,6 +25,9 @@ this.BX = this.BX || {};
 	  active: false,
 	  icon: 'stars-question'
 	}];
+	function getCopilotName() {
+	  return main_core.Extension.getSettings('ai.prompt-master').get('copilotName');
+	}
 	const PromptMasterPromptTypes = {
 	  components: {
 	    Hint: ui_vue3_components_hint.Hint

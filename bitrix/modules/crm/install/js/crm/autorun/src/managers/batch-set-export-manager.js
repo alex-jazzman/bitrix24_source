@@ -41,12 +41,10 @@ export class BatchSetExportManager extends BatchManager
 		/**
 		 * CRM_AUTORUN_BATCH_SET_EXPORT_TITLE_CONTACT
 		 */
-		const specificTitle = Loc.getMessage(
-			`CRM_AUTORUN_BATCH_SET_EXPORT_TITLE_${entityTypeName}`,
-		);
-		if (Type.isStringFilled(specificTitle))
+		const dynamicTitleKey = `CRM_AUTORUN_BATCH_SET_EXPORT_TITLE_${entityTypeName}`;
+		if (Loc.hasMessage(dynamicTitleKey))
 		{
-			messages.title = specificTitle;
+			messages.title = Loc.getMessage(dynamicTitleKey);
 		}
 
 		return messages;

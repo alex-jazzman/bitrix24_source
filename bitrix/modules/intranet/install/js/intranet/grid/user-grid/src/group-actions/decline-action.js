@@ -46,7 +46,7 @@ export class DeclineAction extends BaseAction
 
 	getAjaxMethod(): string
 	{
-		return 'intranet.controller.user.userlist.groupDecline';
+		return 'intranet.v2.UserList.deleteOrFire';
 	}
 
 	getSkippedUsersMessageCode(): string

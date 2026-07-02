@@ -4,15 +4,14 @@
 jn.define('im/messenger/controller/dialog-creator/navigation-selector/view', (require, exports, module) => {
 	const { Loc } = require('im/messenger/loc');
 	const { Feature } = require('im/messenger/lib/feature');
-	const {
-		ActionByUserType,
-	} = require('im/messenger/const');
-	const { UserPermission } = require('im/messenger/lib/permission-manager');
+	const { Color: MessengerColor } = require('im/messenger/const');
 
 	const { SingleSelector } = require('im/messenger/lib/ui/selector');
 	const { UserSearchController } = require('im/messenger/controller/search');
 	const { navigationButton } = require('im/messenger/controller/dialog-creator/navigation-button');
 	const { InviteBanner } = require('im/messenger/controller/dialog-creator/src/view/invite-banner');
+	const { MenuVisibility } = require('im/messenger/controller/dialog-creator/menu-visibility');
+	const { MessengerIcon, IconType } = require('im/messenger/assets/icon');
 
 	// TODO: not in the design system
 	const privateChatIcon = '<svg width="40" height="41" viewBox="0 0 40 41" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 8.5C0 4.08172 3.58172 0.5 8 0.5H32C36.4183 0.5 40 4.08172 40 8.5V32.5C40 36.9183 36.4183 40.5 32 40.5H8C3.58172 40.5 0 36.9183 0 32.5V8.5Z" fill="#0075FF" fill-opacity="0.78"/><path d="M0.5 8.5C0.5 4.35786 3.85786 1 8 1H32C36.1421 1 39.5 4.35786 39.5 8.5V32.5C39.5 36.6421 36.1421 40 32 40H8C3.85786 40 0.5 36.6421 0.5 32.5V8.5Z" stroke="white" stroke-opacity="0.18"/><path fill-rule="evenodd" clip-rule="evenodd" d="M9.52344 13.9761C9.52344 12.3192 10.8666 10.9761 12.5234 10.9761H22.2622C23.9191 10.9761 25.2622 12.3192 25.2622 13.9761V15.5296H18.7229C16.5137 15.5296 14.7229 17.3205 14.7229 19.5296V25.5987L13.8047 26.5169C12.9282 27.3933 11.4296 26.7726 11.4296 25.5331V23.3802C10.3137 22.943 9.52344 21.8567 9.52344 20.5858V13.9761Z" fill="white" fill-opacity="0.7"/><g filter="url(#filter0_d_4066_31599)"><path fill-rule="evenodd" clip-rule="evenodd" d="M27.6766 16.6904C29.223 16.6904 30.4766 17.944 30.4766 19.4904V25.2424C30.4766 26.3927 29.783 27.381 28.7912 27.8118V29.4931C28.7912 30.7196 27.3193 31.3461 26.4353 30.4958L23.8849 28.0424H18.9908C17.4445 28.0424 16.1908 26.7888 16.1908 25.2424V19.4904C16.1908 17.944 17.4445 16.6904 18.9908 16.6904H27.6766Z" fill="white" fill-opacity="0.9" shape-rendering="crispEdges"/></g><defs><filter id="filter0_d_4066_31599" x="12.1904" y="16.6904" width="22.2861" height="22.1968" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/><feOffset dy="4"/><feGaussianBlur stdDeviation="2"/><feComposite in2="hardAlpha" operator="out"/><feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.08 0"/><feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_4066_31599"/><feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_4066_31599" result="shape"/></filter></defs></svg>';
@@ -26,12 +25,14 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector/view', (re
 		 *
 		 * @param { Object } props
 		 * @param { Array } props.userList
+		 * @param { boolean } [props.hideRecentBlock]
 		 * @param { Function } props.onClose
 		 * @param { Function } props.onItemSelected
-		 * @param { Function } props.onCreateOpenChat
+		 * @param { Function } props.onCreateChannel
 		 * @param { Function } props.onCreatePrivateChat
 		 * @param { Function|undefined } props.onCreateCollab
 		 * @param { Function } props.onCreateCopilot
+		 * @param { Function|undefined } props.onCreateFolder
 		 * @param { Function } props.onClickInviteButton
 		 */
 		constructor(props)
@@ -46,9 +47,11 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector/view', (re
 
 		render()
 		{
+			const hideRecentBlock = this.props.hideRecentBlock === true;
+
 			return new SingleSelector({
-				recentText: Loc.getMessage('IMMOBILE_DIALOG_CREATOR_RECENT_TEXT'),
-				itemList: this.props.userList,
+				recentText: hideRecentBlock ? undefined : Loc.getMessage('IMMOBILE_DIALOG_CREATOR_RECENT_TEXT'),
+				itemList: hideRecentBlock ? [] : this.props.userList,
 				buttons: this.getButtons(),
 				additionalButtons: this.getAdditionalButtons(),
 				onItemSelected: (itemData) => {
@@ -71,6 +74,7 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector/view', (re
 				this.getNewCopilotButton(),
 				this.getNewChannelButton(),
 				this.getNewCollabButton(),
+				this.getNewFolderButton(),
 			];
 		}
 
@@ -83,7 +87,7 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector/view', (re
 
 		getNewChannelButton()
 		{
-			if (!UserPermission.canPerformActionByUserType(ActionByUserType.createChannel))
+			if (!MenuVisibility.canCreateChannel())
 			{
 				return null;
 			}
@@ -102,7 +106,7 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector/view', (re
 
 		getNewChatButton()
 		{
-			if (!UserPermission.canPerformActionByUserType(ActionByUserType.createChat))
+			if (!MenuVisibility.canCreateChat())
 			{
 				return null;
 			}
@@ -121,12 +125,7 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector/view', (re
 
 		getNewCollabButton()
 		{
-			if (
-				!this.props.onCreateCollab
-				|| !Feature.isCollabAvailable
-				|| !Feature.isCollabCreationAvailable
-				|| !UserPermission.canPerformActionByUserType(ActionByUserType.createCollab)
-			)
+			if (!this.props.onCreateCollab || !MenuVisibility.canCreateCollab())
 			{
 				return null;
 			}
@@ -145,29 +144,61 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector/view', (re
 
 		getNewCopilotButton()
 		{
-			if (
-				!Feature.isCopilotEnabled
-				|| !UserPermission.canPerformActionByUserType(ActionByUserType.createCopilot)
-			)
+			if (!MenuVisibility.canCreateCopilot())
 			{
 				return null;
+			}
+
+			const icon = {};
+			const textStyle = {};
+
+			if (Feature.isBitrixGptV2Available)
+			{
+				icon.pngIcon = MessengerIcon.getByType(IconType.copilot);
+				textStyle.colorGradient = MessengerColor.copilotGradient;
+			}
+			else
+			{
+				icon.iconSvg = copilotIcon;
 			}
 
 			return navigationButton({
 				testId: 'button-create-copilot',
 				text: Loc.getMessageWithCopilotBotName('IMMOBILE_DIALOG_CREATOR_NEW_COPILOT_MSGVER_1'),
 				subtitle: Loc.getMessage('IMMOBILE_DIALOG_CREATOR_NEW_COPILOT_SUBTITLE_MSGVER_1'),
-				iconSvg: copilotIcon,
 				onClick: () => {
 					this.props.onCreateCopilot();
 				},
 				withSeparator: true,
+				textStyle,
+				...icon,
+			});
+		}
+
+		getNewFolderButton()
+		{
+			if (!MenuVisibility.canCreateFolder())
+			{
+				return null;
+			}
+
+			return navigationButton({
+				testId: 'create_folder',
+				isNew: true,
+				text: Loc.getMessage('IMMOBILE_DIALOG_CREATOR_NEW_FOLDER'),
+				subtitle: Loc.getMessage('IMMOBILE_DIALOG_CREATOR_NEW_FOLDER_SUBTITLE'),
+				pngIcon: MessengerIcon.getByType(IconType.folder),
+				iconSize: 50,
+				onClick: () => {
+					this.props.onCreateFolder?.();
+				},
+				withSeparator: false,
 			});
 		}
 
 		getInviteBanner()
 		{
-			if (!Feature.isIntranetInvitationAvailable)
+			if (!MenuVisibility.showInviteBanner())
 			{
 				return null;
 			}

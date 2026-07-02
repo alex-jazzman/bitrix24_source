@@ -13,9 +13,9 @@ return [
 	],
 	'rel' => [
 		'main.polyfill.core',
+		'im.lib.utils',
 		'ui.design-tokens',
 		'ui.vue',
-		'im.lib.utils',
 	],
 	'skip_core' => true,
 ];

@@ -8,6 +8,7 @@ jn.define('im/messenger/provider/data', (require, exports, module) => {
 	const { MessageDataProvider } = require('im/messenger/provider/data/message');
 	const { ReactionDataProvider } = require('im/messenger/provider/data/reaction');
 	const { StickerDataProvider } = require('im/messenger/provider/data/sticker');
+	const { FolderDataProvider } = require('im/messenger/provider/data/folder');
 
 	module.exports = {
 		ChatDataProvider,
@@ -15,6 +16,7 @@ jn.define('im/messenger/provider/data', (require, exports, module) => {
 		MessageDataProvider,
 		ReactionDataProvider,
 		StickerDataProvider,
+		FolderDataProvider,
 
 		DataProviderResult,
 	};

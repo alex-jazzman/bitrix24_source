@@ -83,8 +83,7 @@ export function useCanvasTransfrom(options: UseCanvasTransformOptions): UseCanva
 		canvasWidth,
 		canvasHeight,
 		canvasInstance,
-		isBoxIntersection,
-		calculateIntersectedBlockIds,
+		blockIntersections,
 		waitForTransformEnd,
 	} = useBlockDiagram();
 
@@ -129,11 +128,8 @@ export function useCanvasTransfrom(options: UseCanvasTransformOptions): UseCanva
 			zoom.value = payload.zoom;
 			canvasWidth.value = payload.width;
 			canvasHeight.value = payload.height;
-			if (toValue(isBoxIntersection))
-			{
-				calculateIntersectedBlockIds();
-				waitTransformEnd();
-			}
+			blockIntersections.selectVisibleBlocks();
+			waitTransformEnd();
 		});
 
 		render();
@@ -152,7 +148,7 @@ export function useCanvasTransfrom(options: UseCanvasTransformOptions): UseCanva
 		}
 
 		transformEndTimer = setTimeout(() => {
-			waitForTransformEnd.value.resolve();
+			waitForTransformEnd.value?.resolve();
 			waitForTransformEnd.value = null;
 		}, 150);
 	}

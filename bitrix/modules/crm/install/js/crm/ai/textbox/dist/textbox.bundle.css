@@ -1,17 +1,11 @@
 /* root container */
 .crm-copilot-textbox {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-orient: vertical;
-	-webkit-box-direction: normal;
-	    -ms-flex-direction: column;
-	        flex-direction: column;
+	flex-direction: column;
 	padding: 0 24px 28px;
 	/* 100vh - header height - slider-content padding */
 	max-height: calc(100vh - 83px - 20px);
-	-webkit-box-sizing: border-box;
-	        box-sizing: border-box;
+	box-sizing: border-box;
 	border-radius: var(--ui-border-radius-md);
 	font-family: var(--ui-font-family-open-sans);
 	background: white;
@@ -21,21 +15,13 @@
 
 /* header */
 .crm-copilot-textbox__header {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-pack: justify;
-	    -ms-flex-pack: justify;
-	        justify-content: space-between;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
+	justify-content: space-between;
+	align-items: center;
 	padding: 11px 0 14px 0;
 	margin-inline: 0;
 	min-height: 35px;
 	color: var(--crm-copilot-font-color);
-	-webkit-transition: background-color .3s;
-	-o-transition: background-color .3s;
 	transition: background-color .3s;
 }
 
@@ -45,8 +31,7 @@
 	font-family: var(--ui-font-family-open-sans);
 	font-size: var(--ui-font-size-2xl);
 	font-weight: var(--ui-font-weight-regular);
-	-o-text-overflow: ellipsis;
-	   text-overflow: ellipsis;
+	text-overflow: ellipsis;
 	white-space: nowrap;
 	overflow: hidden;
 	color: var(--crm-copilot-font-color);
@@ -57,12 +42,8 @@
 }
 
 .crm-copilot-textbox__title-icon-container{
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
+	align-items: center;
 }
 
 /* search */
@@ -84,53 +65,8 @@
 	font-weight: var(--ui-font-weight-normal);
 	font-style: normal;
 	line-height: normal;
-	-o-text-overflow: ellipsis;
-	   text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
-.crm-copilot-textbox__search-input::-webkit-input-placeholder {
-	color: #C4C4C4;
-	font-size: var(--ui-font-size-md);
-	font-weight: var(--ui-font-weight-normal);
-	font-style: normal;
-	line-height: normal;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	opacity: 0.5;
-}
-
-.crm-copilot-textbox__search-input::-moz-placeholder {
-	color: #C4C4C4;
-	font-size: var(--ui-font-size-md);
-	font-weight: var(--ui-font-weight-normal);
-	font-style: normal;
-	line-height: normal;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	opacity: 0.5;
-}
-
-.crm-copilot-textbox__search-input:-ms-input-placeholder {
-	color: #C4C4C4;
-	font-size: var(--ui-font-size-md);
-	font-weight: var(--ui-font-weight-normal);
-	font-style: normal;
-	line-height: normal;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	opacity: 0.5;
-}
-
-.crm-copilot-textbox__search-input::-ms-input-placeholder {
-	color: #C4C4C4;
-	font-size: var(--ui-font-size-md);
-	font-weight: var(--ui-font-weight-normal);
-	font-style: normal;
-	line-height: normal;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	opacity: 0.5;
 }
 
 .crm-copilot-textbox__search-input::placeholder {
@@ -139,8 +75,7 @@
 	font-weight: var(--ui-font-weight-normal);
 	font-style: normal;
 	line-height: normal;
-	-o-text-overflow: ellipsis;
-	   text-overflow: ellipsis;
+	text-overflow: ellipsis;
 	white-space: nowrap;
 	opacity: 0.5;
 }
@@ -156,8 +91,6 @@
 
 /* todo: maybe this should be removed*/
 .ui-ctl-icon-search, .ui-ctl-icon-clear {
-	-webkit-transition: 0.2s ease !important;
-	-o-transition: 0.2s ease !important;
 	transition: 0.2s ease !important;
 }
 
@@ -187,19 +120,11 @@
 	padding: 0 10px;
 	border-left: 1px solid #DED0F4;
 	color: var(--crm-copilot-font-color);
-	-webkit-font-feature-settings: 'clig' off, 'liga' off;
-	        font-feature-settings: 'clig' off, 'liga' off;
+	font-feature-settings: 'clig' off, 'liga' off;
 	font-size: var(--ui-font-size-lg);
 	font-style: normal;
 	font-weight: var(--ui-font-weight-normal);
 	line-height: 22px;
-	caret-color: transparent;
-}
-
-.crm-copilot-textbox__text-container::-moz-selection,
-.search-item::-moz-selection,
-.crm-copilot-textbox__text-container br::-moz-selection {
-	background: #B4D7FF;
 	caret-color: transparent;
 }
 
@@ -228,25 +153,15 @@
 }
 
 .crm-textbox-attention {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
+	align-items: center;
 	gap: 3px;
 }
 
 .crm-textbox-attention__icon {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
-	-webkit-box-pack: center;
-	    -ms-flex-pack: center;
-	        justify-content: center;
+	align-items: center;
+	justify-content: center;
 }
 
 .crm-textbox-attention__content {
@@ -292,13 +207,8 @@
 .crm-copilot-textbox__wrapper {
 	background-color: var(--ui-color-background-primary);
 	max-height: 100%;
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-orient: vertical;
-	-webkit-box-direction: normal;
-	    -ms-flex-direction: column;
-	        flex-direction: column;
+	flex-direction: column;
 	padding: 0;
 }
 
@@ -309,20 +219,12 @@
 }
 
 .crm-copilot-textbox__body-container {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-orient: vertical;
-	-webkit-box-direction: normal;
-	    -ms-flex-direction: column;
-	        flex-direction: column;
+	flex-direction: column;
 }
 
 .crm-copilot-textbox__body.body-toggle-animation {
-	-webkit-transition: grid-template-rows 0.4s ease-out;
-	-o-transition: grid-template-rows 0.4s ease-out;
 	transition: grid-template-rows 0.4s ease-out;
-	transition: grid-template-rows 0.4s ease-out, -ms-grid-rows 0.4s ease-out;
 }
 
 .crm-copilot-textbox__body > * {

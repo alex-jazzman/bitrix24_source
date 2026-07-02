@@ -1,14 +1,14 @@
-import { ImModelFile } from 'im.v2.model';
-import { UploadingService } from 'im.v2.provider.service.uploading';
-import { PopupManager } from 'main.popup';
-import { MessengerPopup } from 'im.v2.component.elements.popup';
+import { PopupManager, type PopupOptions } from 'main.popup';
+import { type UploaderFile } from 'ui.uploader.core';
+
 import { Loader, Spinner } from 'im.v2.component.elements.loader';
+import { MessengerPopup } from 'im.v2.component.elements.popup';
+import { type ImModelFile } from 'im.v2.model';
+import { UploadingService } from 'im.v2.provider.service.uploading';
+
 import { UploadPreviewContent } from './upload-preview-content';
 
 import '../../css/upload-preview/upload-preview-popup.css';
-
-import type { UploaderFile } from 'ui.uploader.core';
-import type { PopupOptions } from 'main.popup';
 
 const POPUP_ID = 'im-chat-upload-preview-popup';
 

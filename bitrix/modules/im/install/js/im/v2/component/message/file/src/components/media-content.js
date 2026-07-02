@@ -1,13 +1,11 @@
 import { Type } from 'main.core';
-import { MessageStatus } from 'im.v2.component.message.elements';
-import { MediaGallery, MediaGalleryItem } from 'im.v2.component.elements.media-gallery';
-import { FileType } from 'im.v2.const';
 
-import { VideoItem } from './items/video';
+import { MediaGallery, MediaGalleryItem } from 'im.v2.component.elements.media-gallery';
+import { MessageStatus, VideoItem } from 'im.v2.component.message.elements';
+import { FileType } from 'im.v2.const';
+import { type ImModelMessage, type ImModelFile } from 'im.v2.model';
 
 import '../css/items/media-content.css';
-
-import type { ImModelMessage, ImModelFile } from 'im.v2.model';
 
 type Size = { width: number, height: number };
 type MaxSize = { maxWidth: number, maxHeight: number };

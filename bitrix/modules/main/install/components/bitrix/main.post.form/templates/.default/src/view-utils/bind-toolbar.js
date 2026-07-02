@@ -106,6 +106,7 @@ export default function bindToolbar(editor: Editor, htmlEditor)
 	const copilot = toolbar.querySelector('[data-id="copilot"]');
 	if (copilot)
 	{
+		let isFocusReturnBound = false;
 		copilot.addEventListener('click', () => {
 			if (!editor.isTextCopilotEnabledBySettings())
 			{
@@ -115,6 +116,22 @@ export default function bindToolbar(editor: Editor, htmlEditor)
 			}
 
 			editor.showCopilot();
+
+			if (isFocusReturnBound)
+			{
+				return;
+			}
+
+			const copilotInstance = htmlEditor.iframeView.copilot?.copilot;
+			if (!copilotInstance)
+			{
+				return;
+			}
+
+			copilotInstance.subscribe('hide', () => {
+				copilot.focus({ focusVisible: true });
+			});
+			isFocusReturnBound = true;
 		});
 	}
 }

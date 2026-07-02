@@ -10,6 +10,13 @@
 	background-color: #fff;
 }
 
+.ui-year-picker-content {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	justify-content: center;
+}
+
 .ui-year-picker-trio {
 	display: flex;
 	justify-content: space-between;
@@ -51,4 +58,11 @@
 .ui-year-picker-year.--selected {
 	background-color: var(--ui-color-primary);
 	color: var(--ui-color-on-primary);
+}
+
+.ui-year-picker-year.--disabled {
+	cursor: not-allowed;
+	opacity: 0.35;
+	pointer-events: none;
+	color: var(--ui-color-text-secondary);
 }

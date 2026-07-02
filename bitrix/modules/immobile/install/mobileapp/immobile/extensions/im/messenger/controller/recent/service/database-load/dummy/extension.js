@@ -34,6 +34,12 @@ jn.define('im/messenger/controller/recent/service/database-load/dummy', (require
 		{
 			this.logger.log('loadFirstPage');
 		}
+
+		subscribeEvents()
+		{}
+
+		unsubscribeEvents()
+		{}
 	}
 
 	module.exports = DummyDatabaseLoadService;

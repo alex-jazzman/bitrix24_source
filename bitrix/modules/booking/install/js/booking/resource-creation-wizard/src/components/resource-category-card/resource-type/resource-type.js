@@ -12,7 +12,7 @@ export const ResourceType = {
 			required: true,
 		},
 	},
-	data(): Object
+	setup(): Object
 	{
 		return {
 			IconSet,

@@ -3,7 +3,7 @@ import { Loc } from 'main.core';
 import { Core } from 'im.v2.application.core';
 import { MessageMenu } from 'im.v2.lib.menu';
 
-import { MessageService } from 'imopenlines.v2.provider.service';
+import { MessageService, QuickReplyService } from 'imopenlines.v2.provider.service';
 import { Connector } from 'imopenlines.v2.const';
 
 import type { MenuItemOptions, MenuSectionOptions } from 'ui.system.menu';
@@ -25,7 +25,9 @@ export class OpenLinesMessageMenu extends MessageMenu
 			this.getForwardItem(),
 			this.getFavoriteItem(),
 			this.getDownloadFileItem(),
+			this.getPinItem(),
 			this.getEditItem(),
+			this.getSaveAsQuickReplyItem(),
 			this.getMultiDialogItem(),
 		];
 
@@ -46,6 +48,35 @@ export class OpenLinesMessageMenu extends MessageMenu
 			{ code: MenuSectionCode.first },
 			{ code: MenuSectionCode.second },
 		];
+	}
+
+	getSaveAsQuickReplyItem(): ?MenuItemOptions
+	{
+		if (this.isDeletedMessage() || this.context.text.trim().length === 0)
+		{
+			return null;
+		}
+
+		return {
+			icon: OutlineIcons.STRESS,
+			title: Loc.getMessage('IMOL_DIALOG_CHAT_MENU_SAVE_QUICK_REPLY'),
+			onClick: () => {
+				const quickReplyService = new QuickReplyService();
+				quickReplyService.saveFromMessage({
+					dialogId: this.context.dialogId,
+					messageId: this.context.id,
+				}).then((reply) => {
+					if (!reply)
+					{
+						return;
+					}
+
+					BX.UI.Notification.Center.notify({
+						content: Loc.getMessage('IMOL_DIALOG_CHAT_MENU_SAVE_QUICK_REPLY_SUCCESS'),
+					});
+				});
+			},
+		};
 	}
 
 	getMultiDialogItem(): ?MenuItemOptions

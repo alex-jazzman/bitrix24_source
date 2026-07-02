@@ -2,6 +2,7 @@
 	--ui-system-label-size: unset;
 	--ui-system-label-bg-color: unset;
 	--ui-system-label-content-color: unset;
+	--ui-system-label-content-gradient: unset;
 	--ui-system-label-padding-x: unset;
 	--ui-system-label-border-color: transparent;
 	--ui-system-label-icon: unset;
@@ -33,6 +34,10 @@
 }
 
 .ui-system-label__value {
+	background: var(--ui-system-label-content-gradient, var(--ui-system-label-content-color));
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -127,6 +132,16 @@
 	--ui-system-label-content-color: var(--ui-color-design-tinted-success-content);
 }
 
+.ui-system-label.--style-tintedAlert {
+	--ui-system-label-bg-color: var(--ui-color-design-tinted-alert-bg);
+	--ui-system-label-content-color: var(--ui-color-design-tinted-alert-content);
+}
+
+.ui-system-label.--style-tintedViolet {
+	--ui-system-label-bg-color: var(--ui-color-design-tinted-violet-bg);
+	--ui-system-label-content-color: var(--ui-color-design-tinted-violet-content);
+}
+
 .ui-system-label.--style-tintedNoAccent {
 	--ui-system-label-bg-color: var(--ui-color-design-tinted-na-bg);
 	--ui-system-label-content-color: var(--ui-color-design-tinted-na-content);
@@ -140,6 +155,81 @@
 .ui-system-label.--style-collab {
 	--ui-system-label-bg-color: var(--ui-color-collab-bg-content-1);
 	--ui-system-label-content-color: var(--ui-color-collab-accent-primary-alt);
+}
+
+.ui-system-label.--style-filledBitrixGpt {
+	--ui-system-label-bg-color: linear-gradient(
+		256.63deg,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-5) 2.92%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-4) 26%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-3) 49.07%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-2) 76.77%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-1) 86%
+	);
+	--ui-system-label-content-color: var(--ui-color-design-filled-bitrix-gpt-content);
+}
+
+.ui-system-label.--style-tintedBitrixGpt {
+	--ui-system-label-bg-color: linear-gradient(
+		269.5deg,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-1) 1.77%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-2) 16.39%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-3) 50.5%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-4) 99.23%
+	);
+	--ui-system-label-content-color: var(--ui-color-design-tinted-bitrix-gpt-content-icon);
+	--ui-system-label-content-gradient: linear-gradient(
+		257deg,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-5) 1.67%,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-4) 20.78%,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-3) 54.22%,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-2) 78.1%,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-1) 97.21%
+	);
+}
+
+.ui-system-label.--style-tintedBitrixGpt.--bordered .ui-system-label__inner {
+	border-color: var(--ui-color-base-white-fixed);
+}
+
+.ui-system-label.--style-outlineBitrixGpt {
+	--ui-system-label-bg-color: var(--ui-color-design-outline-bitrix-gpt-bg);
+	--ui-system-label-content-color: var(--ui-color-design-outline-bitrix-gpt-content-icon);
+	--ui-system-label-content-gradient: linear-gradient(
+		257.74deg,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-5) 1.67%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-4) 21.82%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-3) 52.44%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-2) 76.41%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-1) 97.21%
+	);
+
+	position: relative;
+}
+
+.ui-system-label.--style-outlineBitrixGpt::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	padding: var(--ui-border-width-thin);
+	border-radius: inherit;
+	background: linear-gradient(
+		257.74deg,
+		var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-5) 1.67%,
+		var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-4) 21.82%,
+		var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-3) 52.44%,
+		var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-2) 76.41%,
+		var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-1) 97.21%
+	);
+	-webkit-mask:
+		linear-gradient(#fff 0 0) content-box,
+		linear-gradient(#fff 0 0);
+	-webkit-mask-composite: xor;
+	mask:
+		linear-gradient(#fff 0 0) content-box,
+		linear-gradient(#fff 0 0);
+	mask-composite: exclude;
+	pointer-events: none;
 }
 
 .ui-system-label.--size-md {

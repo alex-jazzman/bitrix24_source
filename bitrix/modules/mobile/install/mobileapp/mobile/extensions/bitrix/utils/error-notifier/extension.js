@@ -1,4 +1,9 @@
-(() => {
+/**
+ * @module utils/error-notifier
+ */
+jn.define('utils/error-notifier', (require, exports, module) => {
+	const { Loc } = require('loc');
+
 	/**
 	 * @class ErrorNotifier
 	 */
@@ -18,7 +23,7 @@
 			if (errors.length === 0 && addDefaultIfEmpty === true)
 			{
 				errors.push({
-					message: (defaultErrorText || BX.message('UTILS_ERROR_NOTIFIER_DEFAULT_ERROR')),
+					message: (defaultErrorText || Loc.getMessage('UTILS_ERROR_NOTIFIER_DEFAULT_ERROR')),
 				});
 			}
 
@@ -45,6 +50,15 @@
 			});
 		}
 	}
+
+	module.exports = {
+		ErrorNotifier,
+	};
+});
+
+(() => {
+	const require = (ext) => jn.require(ext);
+	const { ErrorNotifier } = require('utils/error-notifier');
 
 	this.ErrorNotifier = ErrorNotifier;
 })();

@@ -2,7 +2,7 @@
  * @module layout/ui/fields/crm-element
  */
 jn.define('layout/ui/fields/crm-element', (require, exports, module) => {
-	const { EntitySelectorFieldClass, EntitySelectorField, CastType } = require('layout/ui/fields/entity-selector');
+	const { EntitySelectorFieldClass, CastType } = require('layout/ui/fields/entity-selector');
 	const { get, clone, isEmpty } = require('utils/object');
 	const { stringify } = require('utils/string');
 	const { Loc } = require('loc');
@@ -16,8 +16,6 @@ jn.define('layout/ui/fields/crm-element', (require, exports, module) => {
 	let Type = null;
 	let TypeId = null;
 	let openCrmEntityInAppUrl = null;
-
-	const MAX_VISIBLE_ENTITY = 3;
 
 	try
 	{

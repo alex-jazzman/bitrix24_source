@@ -8,8 +8,8 @@ return [
 	'js' => 'dist/grid.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'booking.core',
 		'booking.const',
+		'booking.core',
 		'booking.lib.duration',
 	],
 	'skip_core' => true,

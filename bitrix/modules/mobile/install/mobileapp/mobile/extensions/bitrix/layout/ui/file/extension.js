@@ -127,13 +127,46 @@
 						alignItems: 'center',
 					},
 				},
-				ShimmedSafeImage({
-					testId: 'pinnedFileImage',
-					style: styles.imagePreview,
-					uri: imageUri,
-					resizeMode: 'cover',
-					clickable: false,
-				}),
+				View(
+					{
+						style: {
+							width: styles.imagePreview.width,
+							height: styles.imagePreview.height,
+						},
+					},
+					ShimmedSafeImage({
+						testId: 'pinnedFileImage',
+						style: styles.imagePreview,
+						uri: imageUri,
+						resizeMode: 'cover',
+						clickable: false,
+					}),
+					isLoading && View(
+						{
+							style: {
+								...styles.imageOutline(false),
+								backgroundColor: AppTheme.colors.bgContentPrimary,
+								borderColor: null,
+								opacity: 0.5,
+							},
+						},
+						Loader({
+							style: {
+								width: styles.imagePreview.width,
+								height: styles.imagePreview.height,
+							},
+							tintColor: AppTheme.colors.base0,
+							animating: true,
+							size: 'small',
+						}),
+					),
+					View(
+						{
+							testId: 'pinnedFileOutline',
+							style: styles.imageOutline(hasError),
+						},
+					),
+				),
 				name && View(
 					{
 						style: {
@@ -156,31 +189,6 @@
 						ellipsize,
 					}),
 				),
-			),
-			isLoading && View(
-				{
-					style: {
-						...styles.imageOutline(false),
-						backgroundColor: AppTheme.colors.bgContentPrimary,
-						borderColor: null,
-						opacity: 0.5,
-					},
-				},
-				Loader({
-					style: {
-						width: styles.imagePreview.width,
-						height: styles.imagePreview.height,
-					},
-					tintColor: AppTheme.colors.base0,
-					animating: true,
-					size: 'small',
-				}),
-			),
-			View(
-				{
-					testId: 'pinnedFileOutline',
-					style: styles.imageOutline(hasError),
-				},
 			),
 			onFilePreviewMenuClick && View(
 				{
@@ -289,6 +297,32 @@
 						testId: 'pinnedFileIcon',
 						size: styles.imagePreview.width ? styles.imagePreview.width / 2 : 20,
 					}),
+					isLoading && View(
+						{
+							testId: 'pinnedFileLoader',
+							style: {
+								...styles.imageOutline(false),
+								backgroundColor: AppTheme.colors.bgContentPrimary,
+								borderColor: null,
+								opacity: 0.5,
+							},
+						},
+						Loader({
+							style: {
+								width: styles.imagePreview.width,
+								height: styles.imagePreview.height,
+							},
+							tintColor: AppTheme.colors.base0,
+							animating: true,
+							size: 'small',
+						}),
+					),
+					View(
+						{
+							testId: 'pinnedFileOutline',
+							style: styles.imageOutline(hasError),
+						},
+					),
 				),
 				View(
 					{
@@ -312,32 +346,6 @@
 						ellipsize: Application.getPlatform() === 'android' ? 'end' : 'middle',
 					}),
 				),
-			),
-			isLoading && View(
-				{
-					testId: 'pinnedFileLoader',
-					style: {
-						...styles.imageOutline(false),
-						backgroundColor: AppTheme.colors.bgContentPrimary,
-						borderColor: null,
-						opacity: 0.5,
-					},
-				},
-				Loader({
-					style: {
-						width: styles.imagePreview.width,
-						height: styles.imagePreview.height,
-					},
-					tintColor: AppTheme.colors.base0,
-					animating: true,
-					size: 'small',
-				}),
-			),
-			View(
-				{
-					testId: 'pinnedFileOutline',
-					style: styles.imageOutline(hasError),
-				},
 			),
 			onFilePreviewMenuClick && View(
 				{
@@ -527,11 +535,11 @@
 				borderRadius: 6,
 			},
 			imageOutline: (hasError) => ({
-				width: 40,
-				height: 40,
 				position: 'absolute',
-				top: 8,
-				left: 9,
+				top: 0,
+				left: 0,
+				right: 0,
+				bottom: 0,
 				borderColor: hasError ? AppTheme.colors.accentMainAlert : AppTheme.colors.bgSeparatorPrimary,
 				backgroundColor: hasError ? AppTheme.colors.accentMainAlert : null,
 				borderWidth: 1,

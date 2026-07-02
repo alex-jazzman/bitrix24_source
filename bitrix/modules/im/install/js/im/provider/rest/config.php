@@ -10,10 +10,10 @@ return [
 	],
 	'rel' => [
 		'main.polyfill.core',
-		'ui.vue.vuex',
 		'im.const',
 		'im.lib.logger',
 		'main.core.events',
+		'ui.vue.vuex',
 	],
 	'skip_core' => true,
 ];

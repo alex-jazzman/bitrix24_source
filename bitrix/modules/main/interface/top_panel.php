@@ -515,7 +515,7 @@ class CAdminTopPanel
 							])->getUri();
 							?>
 								<span class="adm-header-help-btn" id="bx_top_panel_button_helper"
-									  <? if (!isset($helperHeroOption["show"])): ?>onclick="BX.userOptions.save('main', 'helper_hero_admin',  'show', 'Y');"<?endif ?>>
+									  <?php if (!isset($helperHeroOption["show"])): ?>onclick="BX.userOptions.save('main', 'helper_hero_admin',  'show', 'Y');"<?php endif ?>>
 						   <span class="adm-header-help-btn-icon"></span>
 						   <span class="adm-header-help-btn-text"><?= GetMessage("top_panel_help") ?></span>
 						</span>

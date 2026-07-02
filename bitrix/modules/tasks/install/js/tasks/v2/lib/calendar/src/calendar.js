@@ -19,7 +19,7 @@ export const calendar = new class
 		return settings.WEEK_START;
 	}
 
-	get workdayDuration(): void
+	get workdayDuration(): number
 	{
 		return workdayDuration;
 	}
@@ -70,20 +70,52 @@ export const calendar = new class
 		return DateTimeFormat.format(format, (timestamp + offset) / 1000);
 	}
 
+	formatTime(timestamp: number): string
+	{
+		if (!timestamp)
+		{
+			return '';
+		}
+
+		const format = DateTimeFormat.getFormat('SHORT_TIME_FORMAT');
+		const offset = timezone.getOffset(timestamp);
+
+		return DateTimeFormat.format(format, (timestamp + offset) / 1000);
+	}
+
 	formatDuration(durationTs: number, matchWorkTime: boolean): string
 	{
 		const dayDuration = matchWorkTime ? this.workdayDuration : unitDurations.d;
-		const minutes = durationTs / unitDurations.i;
-		const hours = durationTs / unitDurations.H;
-		const days = durationTs / dayDuration;
 
-		const [duration, format] = {
-			[true]: [Math.floor(minutes) * unitDurations.i, 'i'],
-			[Number.isInteger(hours)]: [hours * unitDurations.H, 'H'],
-			[Number.isInteger(days)]: [days * unitDurations.d, 'd'],
-		}.true;
+		const { format, value } = this.#resolveDurationUnitValue(durationTs, dayDuration);
+
+		const duration = value * unitDurations[format];
 
 		return new DurationFormat(duration).format({ format });
+	}
+
+	recalculateDurationByMatchWorkTime(
+		durationTs: number,
+		fromMatchesWorkTime: boolean,
+		toMatchesWorkTime: boolean,
+	): number
+	{
+		if (!durationTs || fromMatchesWorkTime === toMatchesWorkTime)
+		{
+			return durationTs;
+		}
+
+		const fromDayDuration = fromMatchesWorkTime ? this.workdayDuration : unitDurations.d;
+		const toDayDuration = toMatchesWorkTime ? this.workdayDuration : unitDurations.d;
+
+		const { format, value } = this.#resolveDurationUnitValue(durationTs, fromDayDuration);
+
+		if (format === 'd')
+		{
+			return value * toDayDuration;
+		}
+
+		return value * unitDurations[format];
 	}
 
 	calculateDuration(startTs: number, end: number): number
@@ -223,5 +255,135 @@ export const calendar = new class
 			date.getUTCHours(),
 			date.getUTCMinutes(),
 		);
+	}
+
+	isToday(timestamp: number): boolean
+	{
+		if (!timestamp)
+		{
+			return false;
+		}
+
+		const date = new Date(timestamp);
+		const nowDate = new Date();
+
+		return this.#isSameCalendarDay(date, nowDate);
+	}
+
+	isTomorrow(timestamp: number): boolean
+	{
+		if (!timestamp)
+		{
+			return false;
+		}
+
+		const date = new Date(timestamp);
+		const tomorrowDate = new Date();
+		tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+
+		return this.#isSameCalendarDay(date, tomorrowDate);
+	}
+
+	isThisWeek(timestamp: number): boolean
+	{
+		if (!timestamp)
+		{
+			return false;
+		}
+
+		const date = new Date(timestamp);
+		const today = new Date();
+
+		const firstWeekDay = this.#getWeekStartDate(today);
+		const thisWeekDays = this.#getWeekDaysRange(firstWeekDay);
+
+		return this.#isDateInList(date, thisWeekDays);
+	}
+
+	isNextWeek(timestamp: number): boolean
+	{
+		if (!timestamp)
+		{
+			return false;
+		}
+
+		const date = new Date(timestamp);
+		const today = new Date();
+		today.setDate(today.getDate() + 7);
+
+		const firstWeekDay = this.#getWeekStartDate(today);
+		const nextWeekDays = this.#getWeekDaysRange(firstWeekDay);
+
+		return this.#isDateInList(date, nextWeekDays);
+	}
+
+	#isSameCalendarDay(firstDate: Date, secondDate: Date): boolean
+	{
+		return firstDate.getFullYear() === secondDate.getFullYear()
+			&& firstDate.getMonth() === secondDate.getMonth()
+			&& firstDate.getDate() === secondDate.getDate()
+		;
+	}
+
+	#getWeekStartDate(referenceDate: Date): Date
+	{
+		const date = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), referenceDate.getDate());
+		const jsDay = date.getDay();
+
+		const isoDay = jsDay === 0 ? 7 : jsDay;
+		const diffToMonday = isoDay - 1;
+
+		date.setDate(date.getDate() - diffToMonday);
+
+		return date;
+	}
+
+	#getWeekDaysRange(firstDay: Date): Date[]
+	{
+		const days = [];
+		const current = new Date(firstDay.getFullYear(), firstDay.getMonth(), firstDay.getDate());
+
+		for (let i = 0; i < 7; i++)
+		{
+			days.push(new Date(current.getFullYear(), current.getMonth(), current.getDate()));
+			current.setDate(current.getDate() + 1);
+		}
+
+		return days;
+	}
+
+	#isDateInList(date: Date, dates: Date[]): boolean
+	{
+		return dates.some((candidate) => this.#isSameCalendarDay(date, candidate));
+	}
+
+	#resolveDurationUnitValue(durationTs: number, dayDuration: number): { format: string, value: number }
+	{
+		const days = durationTs / dayDuration;
+
+		if (Number.isInteger(days))
+		{
+			return {
+				format: 'd',
+				value: days,
+			};
+		}
+
+		const hours = durationTs / unitDurations.H;
+
+		if (Number.isInteger(hours))
+		{
+			return {
+				format: 'H',
+				value: hours,
+			};
+		}
+
+		const minutes = durationTs / unitDurations.i;
+
+		return {
+			format: 'i',
+			value: Math.floor(minutes),
+		};
 	}
 }();

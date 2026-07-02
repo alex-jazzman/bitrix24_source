@@ -100,5 +100,5 @@ input[type="text"][data-role="inline-selector-target"] {
 }
 
 .field-row .ui-tag-selector-tag-content {
-	display: block !important;
+	display: flex !important;
 }

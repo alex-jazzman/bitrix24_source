@@ -7,6 +7,7 @@ if (!CModule::IncludeModule("intranet"))
 	return;
 }
 
+use Bitrix\Intranet\Internal\Integration\Socialnetwork\FeatureProvider;
 use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Web\Uri;
@@ -92,6 +93,8 @@ if (!function_exists('getSiteHostName'))
 }
 
 $arResult['USER_LANG'] = LANGUAGE_ID;
+
+$arResult['isNewProjectsAvailable'] = (new FeatureProvider())->isNewProjectsAvailable();
 
 if (
 	$arParams["TEMPLATE_TYPE"] == "USER_INVITATION"

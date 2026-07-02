@@ -6,7 +6,6 @@ use Bitrix\Main\Loader;
 use Bitrix\Sign\Access\Permission\PermissionDictionary;
 use Bitrix\Sign\Access\Permission\SignPermissionDictionary;
 use Bitrix\Sign\Access\Service\RolePermissionService;
-use Bitrix\Sign\Debug\Logger;
 use Bitrix\Sign\Service\Container;
 use Bitrix\Crm\Service\UserPermissions;
 
@@ -20,7 +19,6 @@ final class UpdateDefaultPermissionsAgent
 		SignPermissionDictionary::SIGN_B2E_MY_SAFE_DOCUMENTS,
 		SignPermissionDictionary::SIGN_B2E_MY_SAFE,
 		SignPermissionDictionary::SIGN_B2E_MY_SAFE_FIRED,
-		SignPermissionDictionary::SIGN_B2E_TEMPLATES,
 	];
 	private const B2E_CRM_PERMISSION_IDS = [
 		PermissionDictionary::SIGN_CRM_SMART_B2E_DOC_ADD,
@@ -36,7 +34,7 @@ final class UpdateDefaultPermissionsAgent
 			return '';
 		}
 
-		$logger = Logger::getInstance();
+		$logger = Container::instance()->getLogger('Agent');
 		$rolePermissionService = Container::instance()->getRolePermissionService();
 		if ($rolePermissionService === null)
 		{
@@ -177,10 +175,6 @@ final class UpdateDefaultPermissionsAgent
 					'id' => SignPermissionDictionary::SIGN_B2E_MY_SAFE_FIRED,
 					'value' => UserPermissions::PERMISSION_NONE,
 				],
-				[
-					'id' => SignPermissionDictionary::SIGN_B2E_TEMPLATES,
-					'value' => UserPermissions::PERMISSION_SELF,
-				],
 			];
 			$existedChiefPermissions = $settings[$employeeRoleId];
 			$b2eUpdatedPermissionIds = array_column($employeeAccessRights, 'id');
@@ -231,10 +225,6 @@ final class UpdateDefaultPermissionsAgent
 				[
 					'id' => SignPermissionDictionary::SIGN_B2E_MY_SAFE_FIRED,
 					'value' => UserPermissions::PERMISSION_NONE,
-				],
-				[
-					'id' => SignPermissionDictionary::SIGN_B2E_TEMPLATES,
-					'value' => UserPermissions::PERMISSION_SUBDEPARTMENT,
 				],
 			];
 

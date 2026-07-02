@@ -22,7 +22,15 @@ type UseCanvasSelection = {
 
 export function useCanvasSelection(params: UseCanvasSelectionParams): UseCanvasSelection
 {
-	const { zoom, setSelectionWorldRect, setSelectionActive, isSelectionActive } = useBlockDiagram();
+	const {
+		zoom,
+		setSelectionWorldRect,
+		setSelectionActive,
+		isSelectionActive,
+		startAutoScroll,
+		stopAutoScroll,
+		updateMousePosition,
+	} = useBlockDiagram();
 	const { rootRef, transformLayoutRef } = params;
 	const selectionRect = ref({ x: 0, y: 0, width: 0, height: 0 });
 
@@ -30,6 +38,48 @@ export function useCanvasSelection(params: UseCanvasSelectionParams): UseCanvasS
 	let startClientY = 0;
 	let cachedRootRect = null;
 	let cachedLayerRect = null;
+	let scrollOffsetX = 0;
+	let scrollOffsetY = 0;
+	let lastClientX = 0;
+	let lastClientY = 0;
+
+	function updateRects(clientX: number, clientY: number): void
+	{
+		if (!cachedRootRect || !cachedLayerRect)
+		{
+			return;
+		}
+
+		const currentZoom = toValue(zoom);
+		if (!currentZoom)
+		{
+			return;
+		}
+
+		const visualStartX = (startClientX - cachedRootRect.left) - scrollOffsetX;
+		const visualStartY = (startClientY - cachedRootRect.top) - scrollOffsetY;
+		const currentVisualX = clientX - cachedRootRect.left;
+		const currentVisualY = clientY - cachedRootRect.top;
+
+		selectionRect.value = {
+			x: Math.min(visualStartX, currentVisualX),
+			y: Math.min(visualStartY, currentVisualY),
+			width: Math.abs(currentVisualX - visualStartX),
+			height: Math.abs(currentVisualY - visualStartY),
+		};
+
+		const startLayerX = startClientX - cachedLayerRect.left;
+		const startLayerY = startClientY - cachedLayerRect.top;
+		const currentLayerX = clientX - cachedLayerRect.left + scrollOffsetX;
+		const currentLayerY = clientY - cachedLayerRect.top + scrollOffsetY;
+
+		setSelectionWorldRect({
+			x: Math.min(startLayerX, currentLayerX) / currentZoom,
+			y: Math.min(startLayerY, currentLayerY) / currentZoom,
+			width: Math.abs(currentLayerX - startLayerX) / currentZoom,
+			height: Math.abs(currentLayerY - startLayerY) / currentZoom,
+		});
+	}
 
 	function start(event: MouseEvent): void
 	{
@@ -42,6 +92,10 @@ export function useCanvasSelection(params: UseCanvasSelectionParams): UseCanvasS
 
 		startClientX = event.clientX;
 		startClientY = event.clientY;
+		lastClientX = event.clientX;
+		lastClientY = event.clientY;
+		scrollOffsetX = 0;
+		scrollOffsetY = 0;
 
 		cachedRootRect = root.getBoundingClientRect();
 		cachedLayerRect = layer.getBoundingClientRect();
@@ -51,6 +105,12 @@ export function useCanvasSelection(params: UseCanvasSelectionParams): UseCanvasS
 
 		setSelectionActive(true);
 		selectionRect.value = { x: visualStartX, y: visualStartY, width: 0, height: 0 };
+
+		startAutoScroll(event, (dx: number, dy: number) => {
+			scrollOffsetX += dx;
+			scrollOffsetY += dy;
+			updateRects(lastClientX, lastClientY);
+		});
 	}
 
 	function move(event: MouseEvent): void
@@ -60,42 +120,16 @@ export function useCanvasSelection(params: UseCanvasSelectionParams): UseCanvasS
 			return;
 		}
 
-		const root = toValue(rootRef);
-		const layer = toValue(transformLayoutRef);
-		const currentZoom = toValue(zoom);
-
-		if (!root || !layer || !currentZoom)
-		{
-			return;
-		}
-
-		const visualStartX = startClientX - cachedRootRect.left;
-		const visualStartY = startClientY - cachedRootRect.top;
-		const currentVisualX = event.clientX - cachedRootRect.left;
-		const currentVisualY = event.clientY - cachedRootRect.top;
-
-		selectionRect.value = {
-			x: Math.min(visualStartX, currentVisualX),
-			y: Math.min(visualStartY, currentVisualY),
-			width: Math.abs(currentVisualX - visualStartX),
-			height: Math.abs(currentVisualY - visualStartY),
-		};
-
-		const startLayerX = startClientX - cachedLayerRect.left;
-		const startLayerY = startClientY - cachedLayerRect.top;
-		const currentLayerX = event.clientX - cachedLayerRect.left;
-		const currentLayerY = event.clientY - cachedLayerRect.top;
-
-		setSelectionWorldRect({
-			x: Math.min(startLayerX, currentLayerX) / currentZoom,
-			y: Math.min(startLayerY, currentLayerY) / currentZoom,
-			width: Math.abs(currentLayerX - startLayerX) / currentZoom,
-			height: Math.abs(currentLayerY - startLayerY) / currentZoom,
-		});
+		lastClientX = event.clientX;
+		lastClientY = event.clientY;
+		updateMousePosition(event);
+		updateRects(event.clientX, event.clientY);
 	}
 
 	function end(): void
 	{
+		stopAutoScroll();
+
 		if (toValue(isSelectionActive))
 		{
 			setSelectionActive(false);

@@ -3,16 +3,16 @@
 namespace Bitrix\Crm\Service\Timeline\Item;
 
 use Bitrix\Crm\Activity\Provider\ProviderManager;
+use Bitrix\Crm\Component\EntityDetails\Config\ScopeIdResolver;
 use Bitrix\Crm\Integration\StorageManager;
 use Bitrix\Crm\Service\Timeline\Config;
-use Bitrix\Crm\Service\Timeline\Item\AI\CopilotButton\BaseButton;
-use Bitrix\Crm\Service\Timeline\Item\AI\CopilotButton\ButtonFactory;
 use Bitrix\Crm\Service\Timeline\Item\Interfaces\Deadlinable;
 use Bitrix\Crm\Service\Timeline\Layout;
 use Bitrix\Crm\Service\Timeline\Layout\Action\JsEvent;
 use Bitrix\Crm\Service\Timeline\Layout\Footer\Button;
 use Bitrix\Crm\Service\Timeline\Layout\Menu\MenuItemFactory;
 use Bitrix\Crm\Settings\WorkTime;
+use Bitrix\Ui\Public\Enum\IconSet\Outline;
 use Bitrix\Crm\Timeline\Entity\NoteTable;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
@@ -248,14 +248,6 @@ abstract class Activity extends Configurable implements Deadlinable
 
 	public function getDeadline(): ?DateTime
 	{
-//		$model = $this->getAssociatedEntityModel();
-//		if (!$model)
-//		{
-//			return null;
-//		}
-//
-//		$deadline = $model->get('START_TIME') ?? $model->get('DEADLINE');
-
 		$deadline = $this->getAssociatedEntityModel()?->get('DEADLINE');
 
 		return ($deadline && !CCrmDateTimeHelper::IsMaxDatabaseDate($deadline))
@@ -324,6 +316,7 @@ abstract class Activity extends Configurable implements Deadlinable
 			))
 				->setSort(9950)
 				->setHideIfReadonly()
+				->setIcon(Outline::CLOCK_BACK)
 		;
 	}
 
@@ -527,8 +520,8 @@ abstract class Activity extends Configurable implements Deadlinable
 			{
 				$activityFields['COMPLETED'] = $this->isScheduled() ? 'N' : 'Y';
 			}
-			$provider = \CCrmActivity::GetActivityProvider($activityFields);
-			$title = $provider ? $provider::getActivityTitle($activityFields) : "ACTIVITY_{$activityId}";
+			$provider = CCrmActivity::GetActivityProvider($activityFields);
+			$title = $provider ? $provider::getActivityTitle($activityFields) : "ACTIVITY_$activityId";
 		}
 
 		return MenuItemFactory::createFilterRelatedMenuItem()
@@ -538,21 +531,10 @@ abstract class Activity extends Configurable implements Deadlinable
 					->addActionParamString('activityLabel', $title)
 					->addActionParamString(
 						'filterId',
-						(new \Bitrix\Crm\Component\EntityDetails\Config\ScopeIdResolver($this->getContext()->getEntityTypeId(), $this->getContext()->getIdentifier()->getCategoryId()))
+						(new ScopeIdResolver($this->getContext()->getEntityTypeId(), $this->getContext()->getIdentifier()->getCategoryId()))
 							->getScopeId('timeline_history')
 					)
 			)->setScopeWeb() // temporary disable action for mobile app
 		;
-	}
-
-	final protected function createCopilotButton(): ?BaseButton
-	{
-		$model = $this->getAssociatedEntityModel();
-		if (!$model)
-		{
-			return null;
-		}
-
-		return ButtonFactory::create($model, $this->getContext());
 	}
 }

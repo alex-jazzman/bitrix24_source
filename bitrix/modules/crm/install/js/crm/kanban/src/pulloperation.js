@@ -119,6 +119,10 @@ export default class PullOperation
 		item.setActivityExistInnerHtml();
 		item.useAnimation = true;
 		item.setChangedInPullRequest();
+		if (oldColumnId !== newColumnId)
+		{
+			item.setColumnChangedInPullRequest();
+		}
 
 		this.grid.resetMultiSelectMode();
 

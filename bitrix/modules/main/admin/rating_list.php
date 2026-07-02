@@ -1,8 +1,8 @@
-<?
+<?php
 /**
- * @global \CUser $USER
- * @global \CMain $APPLICATION
- * @global \CDatabase $DB
+ * @global CUser $USER
+ * @global CMain $APPLICATION
+ * @global CDatabase $DB
  */
 
 require_once(__DIR__."/../include/prolog_admin_before.php");
@@ -18,13 +18,6 @@ $sTableID = "tbl_rating";
 $oSort = new CAdminSorting($sTableID, "id", "desc");
 $lAdmin = new CAdminList($sTableID, $oSort);
 
-function CheckFilter()
-{
-	global $FilterArr, $lAdmin;
-	foreach ($FilterArr as $f) global $$f;
-	return empty($lAdmin->arFilterErrors);
-}
-
 $FilterArr = Array(
 	"find_name",
 	"find_active",
@@ -32,22 +25,18 @@ $FilterArr = Array(
 	"find_entity_id",
 );
 
-$lAdmin->InitFilter($FilterArr);
+$filter = $lAdmin->InitFilter($FilterArr);
 
-$arFilter = Array();
-if(CheckFilter())
-{
-	$arFilter = Array(
-		"NAME"		=> $find_name,
-		"ACTIVE"	=> $find_active,
-		"ID"		=> $find_id,
-		"ENTITY_ID"	=> $find_entity_id,
-	);
-}
+$arFilter = Array(
+	"NAME"		=> $filter["find_name"],
+	"ACTIVE"	=> $filter["find_active"],
+	"ID"		=> $filter["find_id"],
+	"ENTITY_ID"	=> $filter["find_entity_id"],
+);
 
 if($lAdmin->EditAction())
 {
-	foreach($FIELDS as $ID=>$arFields)
+	foreach($_POST['FIELDS'] as $ID=>$arFields)
 	{
 		$ID = intval($ID);
 		if($ID <= 0)
@@ -66,7 +55,7 @@ if(($arID = $lAdmin->GroupAction()))
 {
 	if (isset($_REQUEST['action_target']) && $_REQUEST['action_target']=='selected')
 	{
-		$rsData = CRatings::GetList(array($by=>$order), $arFilter);
+		$rsData = CRatings::GetList(array($oSort->getField() => $oSort->getOrder()), $arFilter);
 		while($arRes = $rsData->Fetch())
 			$arID[] = $arRes['ID'];
 	}
@@ -90,7 +79,7 @@ if(($arID = $lAdmin->GroupAction()))
 	}
 }
 
-$rsData = CRatings::GetList(array($by=>$order), $arFilter);
+$rsData = CRatings::GetList(array($oSort->getField() => $oSort->getOrder()), $arFilter);
 $rsData = new CAdminResult($rsData, $sTableID);
 $rsData->NavStart();
 $lAdmin->NavText($rsData->GetNavPrint(GetMessage("RATING_LIST_NAV")));
@@ -108,31 +97,32 @@ $aHeaders = array(
 
 $lAdmin->AddHeaders($aHeaders);
 
-while($arRes = $rsData->NavNext(true, "f_"))
+while($arRes = $rsData->Fetch())
 {
-	$row =& $lAdmin->AddRow($f_ID, $arRes);
+	$ratingId = (int)$arRes["ID"];
+	$row = $lAdmin->AddRow($ratingId, $arRes);
 	$row->AddInputField("NAME", array("size"=>20));
-	$row->AddViewField("NAME", $f_NAME);
-	$row->AddViewField("ACTIVE", $f_ACTIVE == "Y" ? GetMessage("RATING_ACTIVE_YES") : GetMessage("RATING_ACTIVE_NO"));
-	$row->AddViewField("LAST_CALCULATED", empty($f_LAST_CALCULATED) ? GetMessage("RATING_STATUS_WAITING") : $f_LAST_CALCULATED);
-	$row->AddViewField("CALCULATED", $f_CALCULATED != 'N' ? ($f_CALCULATED == 'C' ? GetMessage("RATING_STATUS_WORKING") : GetMessage("RATING_STATUS_DONE")) : GetMessage("RATING_STATUS_WAITING"));
+	$row->AddViewField("NAME", htmlspecialcharsbx($arRes["NAME"]));
+	$row->AddViewField("ACTIVE", $arRes["ACTIVE"] == "Y" ? GetMessage("RATING_ACTIVE_YES") : GetMessage("RATING_ACTIVE_NO"));
+	$row->AddViewField("LAST_CALCULATED", empty($arRes["LAST_CALCULATED"]) ? GetMessage("RATING_STATUS_WAITING") : htmlspecialcharsbx($arRes["LAST_CALCULATED"]));
+	$row->AddViewField("CALCULATED", $arRes["CALCULATED"] != 'N' ? ($arRes["CALCULATED"] == 'C' ? GetMessage("RATING_STATUS_WORKING") : GetMessage("RATING_STATUS_DONE")) : GetMessage("RATING_STATUS_WAITING"));
 
 	$arActions = Array(
 		array(
 			"ICON"=>"edit",
 			"DEFAULT"=>true,
 			"TEXT"=>GetMessage("RATING_LIST_EDIT"),
-			"ACTION"=>$lAdmin->ActionRedirect("rating_edit.php?ID=".$f_ID)
+			"ACTION"=>$lAdmin->ActionRedirect("rating_edit.php?ID=".$ratingId)
 		),
 		array(
 			"ICON"=>"edit",
 			"TEXT"=>GetMessage("RATING_LIST_RECALCULATE"),
-			"ACTION"=>$lAdmin->ActionDoGroup($f_ID, "recalculate")
+			"ACTION"=>$lAdmin->ActionDoGroup($ratingId, "recalculate")
 		),
 		array(
 			"ICON"=>"delete",
 			"TEXT"=>GetMessage("RATING_LIST_DEL"),
-			"ACTION"=>"if(confirm('".GetMessage("RATING_LIST_DEL_CONF")."')) ".$lAdmin->ActionDoGroup($f_ID, "delete")
+			"ACTION"=>"if(confirm('".GetMessage("RATING_LIST_DEL_CONF")."')) ".$lAdmin->ActionDoGroup($ratingId, "delete")
 		),
 	);
 	$row->AddActions($arActions);
@@ -145,7 +135,7 @@ $lAdmin->AddGroupActionTable(Array(
 $aContext = array(
 	array(
 		"TEXT"=>GetMessage("RATING_LIST_ADD"),
-		"LINK"=>"rating_edit.php?lang=".LANG,
+		"LINK"=>"rating_edit.php?lang=".LANGUAGE_ID,
 		"TITLE"=>GetMessage("RATING_LIST_ADD_TITLE"),
 		"ICON"=>"btn_new",
 	),
@@ -167,34 +157,33 @@ $oFilter = new CAdminFilter(
 ?>
 	<form name="form1" method="GET" action="<?=$APPLICATION->GetCurPage()?>">
 	<input type="hidden" name="lang" value="<?=LANGUAGE_ID?>">
-<?$oFilter->Begin();?>
+<?php $oFilter->Begin();?>
 	<tr>
-		<td><?echo GetMessage("RATING_LIST_FLT_NAME")?></td>
-		<td><input type="text" name="find_name" size="40" value="<?echo htmlspecialcharsbx($find_name)?>"><?=ShowFilterLogicHelp()?></td>
+		<td><?= GetMessage("RATING_LIST_FLT_NAME")?></td>
+		<td><input type="text" name="find_name" size="40" value="<?= htmlspecialcharsbx($filter["find_name"])?>"><?=ShowFilterLogicHelp()?></td>
 	</tr>
 	<tr>
-		<td><?echo GetMessage("RATING_LIST_FLT_ACTIVE")?></td>
+		<td><?= GetMessage("RATING_LIST_FLT_ACTIVE")?></td>
 		<td><select name="find_active">
-			<option value=""><?echo GetMessage("RATING_LIST_FLT_ALL")?></option>
-			<option value="Y"<?if($find_active == "Y") echo " selected"?>><?echo GetMessage("RATING_LIST_FLT_ACTIVE")?></option>
-			<option value="N"<?if($find_active == "N") echo " selected"?>><?echo GetMessage("RATING_LIST_FLT_INACTIVE")?></option>
+			<option value=""><?= GetMessage("RATING_LIST_FLT_ALL")?></option>
+			<option value="Y"<?php if($filter["find_active"] == "Y") echo " selected"?>><?= GetMessage("RATING_LIST_FLT_ACTIVE")?></option>
+			<option value="N"<?php if($filter["find_active"] == "N") echo " selected"?>><?= GetMessage("RATING_LIST_FLT_INACTIVE")?></option>
 			</select>
 		</td>
 	</tr>
 	<tr>
-		<td><?echo GetMessage("RATING_LIST_FLT_ID")?></td>
-		<td><input type="text" name="find_id" size="13" value="<?echo htmlspecialcharsbx($find_id)?>"></td>
+		<td><?= GetMessage("RATING_LIST_FLT_ID")?></td>
+		<td><input type="text" name="find_id" size="13" value="<?= htmlspecialcharsbx($filter["find_id"])?>"></td>
 	</tr>
 	<tr>
-		<td><?echo GetMessage("RATING_LIST_FLT_ENTITY_ID")?></td>
-		<td><input type="text" name="find_entity_id" value="<?echo htmlspecialcharsbx($find_entity_id)?>" size="40"><?=ShowFilterLogicHelp()?></td>
+		<td><?= GetMessage("RATING_LIST_FLT_ENTITY_ID")?></td>
+		<td><input type="text" name="find_entity_id" value="<?= htmlspecialcharsbx($filter["find_entity_id"])?>" size="40"><?=ShowFilterLogicHelp()?></td>
 	</tr>
-<?
+<?php
 $oFilter->Buttons(array("table_id"=>$sTableID,"url"=>$APPLICATION->GetCurPage(),"form"=>"form1"));
 $oFilter->End();
 ?>
 	</form>
-<?
+<?php
 $lAdmin->DisplayList();
 require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin.php");
-?>

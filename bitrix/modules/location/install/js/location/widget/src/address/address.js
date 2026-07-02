@@ -5,7 +5,6 @@ import {
 	ControlMode,
 	Format,
 	AddressStringConverter,
-	LocationRepository,
 	ErrorPublisher,
 	FormatTemplateType,
 	AddressType,
@@ -23,8 +22,6 @@ export type AddressConstructorProps = {
 	mode: string,
 	addressFormat: Format,
 	address?: AddressEntity,
-	needWarmBackendAfterAddressChanged?: boolean,
-	locationRepository?: LocationRepository,
 };
 
 /**
@@ -68,9 +65,6 @@ export default class Address extends EventEmitter
 
 	#isAddressChangedByFeature = false;
 	#isInputNodeValueUpdated = false;
-
-	#needWarmBackendAfterAddressChanged = true;
-	#locationRepository;
 
 	/**
 	 * Constructor
@@ -120,20 +114,6 @@ export default class Address extends EventEmitter
 			props.features.forEach((feature: BaseFeature) => {
 				this.#addFeature(feature);
 			});
-		}
-
-		if (Type.isBoolean(props.needWarmBackendAfterAddressChanged))
-		{
-			this.#needWarmBackendAfterAddressChanged = props.needWarmBackendAfterAddressChanged;
-		}
-
-		if (props.locationRepository instanceof LocationRepository)
-		{
-			this.#locationRepository = props.locationRepository;
-		}
-		else if (this.#needWarmBackendAfterAddressChanged)
-		{
-			this.#locationRepository = new LocationRepository();
 		}
 
 		this.#state = State.INITIAL;
@@ -263,19 +243,6 @@ export default class Address extends EventEmitter
 			Address.onAddressChangedEvent,
 			{address: this.#address}
 		);
-
-		if (this.#address && this.#needWarmBackendAfterAddressChanged)
-		{
-			this.#warmBackendAfterAddressChanged(this.#address);
-		}
-	}
-
-	#warmBackendAfterAddressChanged(address: AddressEntity): void
-	{
-		if (address.location !== null && address.location.id <= 0)
-		{
-			this.#locationRepository.findParents(address.location);
-		}
 	}
 
 	// eslint-disable-next-line no-unused-vars

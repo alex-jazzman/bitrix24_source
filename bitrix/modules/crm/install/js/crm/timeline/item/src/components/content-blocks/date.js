@@ -22,10 +22,8 @@ export default {
 	},
 	extends: Text,
 	methods: {
-		getFormattedDate(): string
+		getFormattedDate(datetimeConverter: DatetimeConverter): string
 		{
-			const datetimeConverter = this.getDatetimeConverter();
-
 			if (this.format)
 			{
 				return datetimeConverter.toFormatString(this.format);
@@ -54,16 +52,28 @@ export default {
 	computed: {
 		encodedText(): string
 		{
-			const formattedDate = this.getFormattedDate();
+			const converter = this.getDatetimeConverter();
+			const dateFrom = this.getFormattedDate(converter);
 
-			if (!Type.isNumber(this.duration))
+			if (!Type.isNumber(this.duration) || this.duration < 0)
 			{
-				return CoreTextHelper.encode(formattedDate);
+				return CoreTextHelper.encode(dateFrom);
 			}
 
 			const converterWithDuration = this.getDatetimeConverterWithDuration();
+			const isSameDay = converter.toDateString() === converterWithDuration.toDateString();
 
-			return CoreTextHelper.encode(`${formattedDate}-${converterWithDuration.toTimeString()}`);
+			if (isSameDay)
+			{
+				return CoreTextHelper.encode(dateFrom);
+			}
+
+			const dateTo = isSameDay
+				? converterWithDuration.toTimeString()
+				: this.getFormattedDate(converterWithDuration)
+			;
+
+			return CoreTextHelper.encode(`${dateFrom} - ${dateTo}`);
 		},
 	},
 	template: Text.template,

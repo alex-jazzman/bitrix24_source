@@ -1,4 +1,10 @@
-(() => {
+/**
+ * @module selector/widget/entity/socialnetwork/project-tag
+ */
+jn.define('selector/widget/entity/socialnetwork/project-tag', (require, exports, module) => {
+	const { Loc } = require('loc');
+	const { BaseSelectorEntity } = require('selector/widget/entity');
+
 	/**
 	 * @class ProjectTagSelector
 	 */
@@ -16,7 +22,7 @@
 
 		static getStartTypingText()
 		{
-			return BX.message('SELECTOR_COMPONENT_START_TYPING_TO_SEARCH_PROJECT_TAG_MSGVER_1');
+			return Loc.getMessage('SELECTOR_COMPONENT_START_TYPING_TO_SEARCH_PROJECT_TAG_MSGVER_1');
 		}
 
 		static isCreationEnabled()
@@ -26,12 +32,12 @@
 
 		static getCreateText()
 		{
-			return BX.message('SELECTOR_COMPONENT_CREATE_PROJECT_TAG');
+			return Loc.getMessage('SELECTOR_COMPONENT_CREATE_PROJECT_TAG');
 		}
 
 		static getCreatingText()
 		{
-			return BX.message('SELECTOR_COMPONENT_CREATING_PROJECT_TAG');
+			return Loc.getMessage('SELECTOR_COMPONENT_CREATING_PROJECT_TAG');
 		}
 
 		static getCreateEntityHandler(providerOptions)
@@ -49,9 +55,18 @@
 
 		static getTitle()
 		{
-			return BX.message('SELECTOR_COMPONENT_PICK_PROJECT_TAG_2');
+			return Loc.getMessage('SELECTOR_COMPONENT_PICK_PROJECT_TAG_2');
 		}
 	}
+
+	module.exports = {
+		ProjectTagSelector,
+	};
+});
+
+(() => {
+	const require = (ext) => jn.require(ext);
+	const { ProjectTagSelector } = require('selector/widget/entity/socialnetwork/project-tag');
 
 	this.ProjectTagSelector = ProjectTagSelector;
 })();

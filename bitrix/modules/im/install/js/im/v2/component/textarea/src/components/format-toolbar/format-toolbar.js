@@ -1,18 +1,16 @@
-import { Type } from 'main.core';
-import { PopupOptions } from 'main.popup';
+import { Type, type JsonObject } from 'main.core';
+import { type EventEmitter } from 'main.core.events';
+import { type PopupOptions } from 'main.popup';
 import { BIcon, Outline as OutlineIcons } from 'ui.icon-set.api.vue';
 
-import { Textarea } from 'im.v2.lib.textarea';
 import { MessengerPopup } from 'im.v2.component.elements.popup';
-import { Quote } from 'im.v2.lib.quote';
 import { Analytics } from 'im.v2.lib.analytics';
+import { Quote } from 'im.v2.lib.quote';
+import { Textarea } from 'im.v2.lib.textarea';
 
 import { LinkInput } from './components/link-input/link-input';
 
 import './css/format-toolbar.css';
-
-import type { JsonObject } from 'main.core';
-import type { EventEmitter } from 'main.core.events';
 
 type ActionItem = {
 	name: string,

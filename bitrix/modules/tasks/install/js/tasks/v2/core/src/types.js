@@ -55,6 +55,8 @@ type PathsParams = {
 	editPath: string,
 	userTaskPathTemplate: string,
 	groupTaskPathTemplate: string,
+	userListTaskPathTemplate: string,
+	userTemplateListPathTemplate: string,
 };
 
 export type RightsParams = {

@@ -1,38 +1,21 @@
 .crm-dups-popup-open,
 .crm-dups-popup-close {
-	-webkit-animation: 0.25s crm-dups-popup-open-animation ease-out;
-	        animation: 0.25s crm-dups-popup-open-animation ease-out;
+	animation: 0.25s crm-dups-popup-open-animation ease-out;
 }
 
 .crm-dups-popup-close {
 	animation-direction: reverse;
 }
 
-@-webkit-keyframes crm-dups-popup-open-animation {
-	0% {
-		opacity: 0;
-		-webkit-transform: translateX(20px);
-		        transform: translateX(20px);
-	}
-
-	100% {
-		opacity: 1;
-		-webkit-transform: translateX(0);
-		        transform: translateX(0);
-	}
-}
-
 @keyframes crm-dups-popup-open-animation {
 	0% {
 		opacity: 0;
-		-webkit-transform: translateX(20px);
-		        transform: translateX(20px);
+		transform: translateX(20px);
 	}
 
 	100% {
 		opacity: 1;
-		-webkit-transform: translateX(0);
-		        transform: translateX(0);
+		transform: translateX(0);
 	}
 }
 
@@ -78,8 +61,6 @@
 	padding: 8px 16px 16px 15px;
 	border-radius: var(--ui-border-radius-md, 2px);
 	margin-bottom: 12px;
-	-webkit-transition: 250ms linear all;
-	-o-transition: 250ms linear all;
 	transition: 250ms linear all;
 	position: relative;
 }
@@ -89,19 +70,10 @@
 }
 
 .crm-dups-item-top {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-orient: horizontal;
-	-webkit-box-direction: normal;
-	    -ms-flex-direction: row;
-	        flex-direction: row;
-	-webkit-box-align: start;
-	    -ms-flex-align: start;
-	        align-items: flex-start;
-	-webkit-box-pack: justify;
-	    -ms-flex-pack: justify;
-	        justify-content: space-between;
+	flex-direction: row;
+	align-items: flex-start;
+	justify-content: space-between;
 }
 
 .crm-dups-item-header {
@@ -116,8 +88,6 @@
 	top: -10px;
 	right: 10px;
 	opacity: 0;
-	-webkit-transition: 250ms linear transform;
-	-o-transition: 250ms linear transform;
 	transition: 250ms linear transform;
 }
 
@@ -127,21 +97,17 @@
 	height: 20px;
 	background-color: #9dcf00;
 	border-radius: 50%;
-	-webkit-box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.11);
-	        box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.11);
+	box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.11);
 	z-index: 10;
 }
 
 .crm-dups-item::before {
-	-webkit-box-sizing: border-box;
-	        box-sizing: border-box;
+	box-sizing: border-box;
 	background-color: transparent;
 	width: 7px;
 	height: 11px;
 	border: 2px solid #fff;
-	-webkit-transform: rotate(45deg) translate(-2px, 6px);
-	    -ms-transform: rotate(45deg) translate(-2px, 6px);
-	        transform: rotate(45deg) translate(-2px, 6px);
+	transform: rotate(45deg) translate(-2px, 6px);
 	z-index: 20;
 	border-top: none;
 	border-left: none;
@@ -170,14 +136,9 @@
 	font-weight: var(--ui-font-weight-normal);
 	word-break: break-word;
 	text-decoration: underline;
-	-webkit-text-decoration-color: rgba(var(--ui-color-link-primary-base-rgb), 0);
-	        text-decoration-color: rgba(var(--ui-color-link-primary-base-rgb), 0);
+	text-decoration-color: rgba(var(--ui-color-link-primary-base-rgb), 0);
 	text-underline-position: under;
-	-webkit-transition: -webkit-text-decoration-color 0.2s linear;
-	transition: -webkit-text-decoration-color 0.2s linear;
-	-o-transition: text-decoration-color 0.2s linear;
 	transition: text-decoration-color 0.2s linear;
-	transition: text-decoration-color 0.2s linear, -webkit-text-decoration-color 0.2s linear;
 }
 
 .crm-dups-item-title-hidden {
@@ -190,20 +151,16 @@
 
 .crm-dups-item-title:hover,
 .crm-dups-item-title:active {
-	-webkit-transition-duration: 0s;
-	     -o-transition-duration: 0s;
-	        transition-duration: 0s;
+	transition-duration: 0s;
 	text-decoration: underline;
 }
 
 .crm-dups-item-title:hover {
-	-webkit-text-decoration-color: rgba(var(--ui-color-link-primary-base-rgb), 0.4);
-	        text-decoration-color: rgba(var(--ui-color-link-primary-base-rgb), 0.4);
+	text-decoration-color: rgba(var(--ui-color-link-primary-base-rgb), 0.4);
 }
 
 .crm-dups-item-title:active {
-	-webkit-text-decoration-color: rgba(var(--ui-color-link-primary-base-rgb), 1);
-	        text-decoration-color: rgba(var(--ui-color-link-primary-base-rgb), 1);
+	text-decoration-color: rgba(var(--ui-color-link-primary-base-rgb), 1);
 }
 
 .crm-dups-item-details {

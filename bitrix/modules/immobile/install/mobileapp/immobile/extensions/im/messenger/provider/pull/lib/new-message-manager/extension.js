@@ -85,6 +85,14 @@ jn.define('im/messenger/provider/pull/lib/new-message-manager', (require, export
 		}
 
 		/**
+		 * @return {BuilderConfig|null}
+		 */
+		getBuilder()
+		{
+			return this.getMessage().builder;
+		}
+
+		/**
 		 * @return {string}
 		 */
 		getPurifyMessageText()

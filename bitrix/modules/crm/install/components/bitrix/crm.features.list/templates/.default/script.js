@@ -28,6 +28,9 @@ BX.ready(() => {
 									content: response.errors[0]?.message,
 								});
 								console.error(response);
+
+								// return init state
+								switcher.check(true, false);
 							}
 						}, (response) => {
 							switcher.setLoading(false);
@@ -37,6 +40,9 @@ BX.ready(() => {
 									content: response.errors[0]?.message,
 								});
 								console.error(response);
+
+								// return init state
+								switcher.check(false, false);
 							}
 						});
 					},

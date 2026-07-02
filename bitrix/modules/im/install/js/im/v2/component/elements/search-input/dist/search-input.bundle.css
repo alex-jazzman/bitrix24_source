@@ -28,7 +28,7 @@
 	width: 24px;
 	height: 24px;
 	margin-right: 4px;
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='24' height='25' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M14.05 15.897a6.37 6.37 0 111.836-1.836l3.311 3.31a1 1 0 010 1.414l-.422.422a1 1 0 01-1.414 0l-3.31-3.31zm1.058-5.328a4.55 4.55 0 11-9.098 0 4.55 4.55 0 019.098 0z' fill='%23A8ADB4'/%3E%3C/svg%3E");
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='25' fill='none' viewBox='0 0 24 25'%3E%3Cpath fill='%23a8adb4' fill-rule='evenodd' d='M14.05 15.897a6.37 6.37 0 1 1 1.836-1.836l3.311 3.31a1 1 0 0 1 0 1.414l-.422.422a1 1 0 0 1-1.414 0zm1.058-5.328a4.55 4.55 0 1 1-9.098 0 4.55 4.55 0 0 1 9.098 0' clip-rule='evenodd'/%3E%3C/svg%3E");
 	background-position: center;
 	background-repeat: no-repeat;
 	background-size: cover;
@@ -57,7 +57,7 @@
 .bx-im-search-input__close-icon {
 	width: 20px;
 	height: 20px;
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='20' height='20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M10 17.084a7.083 7.083 0 100-14.167 7.083 7.083 0 000 14.167zM9.941 8.87l1.823-1.823c.249-.248.746-.248 1.077 0 .332.332.332.746 0 1.077L11.02 9.948l1.822 1.823c.332.331.332.745 0 1.077-.331.331-.745.331-1.077 0l-1.822-1.823-1.823 1.823c-.331.331-.746.331-1.077 0-.331-.332-.331-.746 0-1.077l1.823-1.823-1.823-1.823c-.331-.331-.331-.745 0-1.077.331-.331.746-.331 1.077 0L9.94 8.871z' fill='%232FC6F6'/%3E%3C/svg%3E");
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' fill='none' viewBox='0 0 20 20'%3E%3Cpath fill='%232fc6f6' fill-rule='evenodd' d='M10 17.084a7.083 7.083 0 1 0 0-14.167 7.083 7.083 0 0 0 0 14.167M9.941 8.87l1.823-1.823c.249-.248.746-.248 1.077 0 .332.332.332.746 0 1.077L11.02 9.948l1.822 1.823c.332.331.332.745 0 1.077-.331.331-.745.331-1.077 0l-1.822-1.823-1.823 1.823c-.331.331-.746.331-1.077 0-.331-.332-.331-.746 0-1.077l1.823-1.823-1.823-1.823c-.331-.331-.331-.745 0-1.077s.746-.331 1.077 0z' clip-rule='evenodd'/%3E%3C/svg%3E");
 	background-position: center;
 	background-repeat: no-repeat;
 	background-size: cover;

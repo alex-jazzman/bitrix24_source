@@ -28,6 +28,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 		messenger: {
 			openDialog: 'ImMobile.Messenger.Dialog:open',
 			openDialogComplete: 'ImMobile.Messenger.Dialog:openComplete',
+			dialogClosed: 'ImMobile.Messenger.Dialog:closed',
 			getOpenDialogParams: 'ImMobile.Messenger.Dialog:getOpenParams',
 			openDialogParams: 'ImMobile.Messenger.Dialog:openParams',
 			openLine: 'ImMobile.Messenger.Openlines:open',
@@ -114,6 +115,9 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			messageAttachImageTap: 'attachImageTap',
 			messageAttachFileTap: 'attachFileTap',
 			messageKeyboardButtonTap: 'messageKeyboardButtonTap',
+			messageBuilderButtonTap: 'messageBuilderButtonTap',
+			bbcodeSourceTap: 'bbcodeSourceTap',
+			builderSourceTap: 'builderSourceTap',
 			voteAnswerTap: 'voteAnswerTap',
 			voteButtonTap: 'voteButtonTap',
 			copilotFootnoteTap: 'copilotFootnoteTap',
@@ -201,6 +205,9 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 				itemTap: 'itemTap',
 				buttonTap: 'buttonTap',
 			},
+			suggests: {
+				itemTap: 'itemTap',
+			},
 			multiSelect: {
 				disable: 'disable',
 				enable: 'enable',
@@ -241,6 +248,8 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			inactive: 'CallEvents::inactive',
 			join: 'CallEvents::joinCall',
 			leave: 'CallEvents::leaveCall',
+			viewOpened: 'CallEvents::viewOpened',
+			viewClosed: 'CallEvents::viewClosed',
 		},
 		notification: {
 			open: 'onNotificationsOpen',
@@ -259,9 +268,14 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			tabChanged: 'ImMobile.Navigation:tabChanged',
 			changeTab: 'ImMobile.Navigation:changeTab',
 			changeTabResult: 'ImMobile.Navigation:changeTabResult',
+			onTabSelected: 'onTabSelected',
+			tabLongPressed: 'tabLongPressed',
 			onRootTabsSelected: 'onTabsSelected',
 			closeAll: 'ImMobile.Navigation:closeAll',
 			closeAllComplete: 'ImMobile.Navigation:closeAllComplete',
+			openNestedNavigation: 'ImMobile.Navigation:openNestedNavigation',
+			openNestedNavigationComplete: 'ImMobile.Navigation:openNestedNavigationComplete',
+			tabRegistered: 'ImMobile.Navigation:tabRegistered',
 		},
 		sidebar: {
 			destroy: 'sidebarDestroy',

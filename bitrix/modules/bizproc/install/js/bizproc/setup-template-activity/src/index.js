@@ -2,18 +2,19 @@ import { EventEmitter } from 'main.core.events';
 import { BitrixVue } from 'ui.vue3';
 import { BlocksAppComponent } from './component/app/app';
 import { generateConstantId } from './utils';
+import type { ConstantConfiguration } from './types';
 
 export class SetupTemplateActivity extends EventEmitter
 {
 	#app: null;
 	#currentValues: Object;
 	#blocksElement: ?(HTMLDivElement | HTMLTableElement);
-	#fieldTypeNames: Record<string, string>;
+	#constantConfigurationList: ConstantConfiguration[];
 
 	constructor(parameters: {
 		currentValues: Object,
 		domElementId: string,
-		fieldTypeNames: Record<string, string>,
+		constantConfigurationList: ConstantConfiguration[],
 		previewComponent: {...},
 	})
 	{
@@ -21,7 +22,7 @@ export class SetupTemplateActivity extends EventEmitter
 		this.setEventNamespace('BX.Bizproc.Activity');
 		this.#currentValues = parameters.currentValues;
 		this.#blocksElement = document.getElementById(parameters.domElementId);
-		this.#fieldTypeNames = parameters.fieldTypeNames;
+		this.#constantConfigurationList = parameters.constantConfigurationList;
 	}
 
 	#getBlocks(): string
@@ -51,7 +52,7 @@ export class SetupTemplateActivity extends EventEmitter
 	{
 		this.#app = BitrixVue.createApp(BlocksAppComponent, {
 			serializedBlocks: this.#getBlocks(),
-			fieldTypeNames: this.#fieldTypeNames,
+			constantConfigurationList: this.#constantConfigurationList,
 			globalConstants: window.arWorkflowConstants || {},
 		});
 		this.#app.mount(this.#blocksElement);

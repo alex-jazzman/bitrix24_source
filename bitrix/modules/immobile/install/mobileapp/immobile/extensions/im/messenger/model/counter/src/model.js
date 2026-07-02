@@ -20,6 +20,8 @@ jn.define('im/messenger/model/counter/src/model', (require, exports, module) => 
 		namespaced: true,
 		state: () => ({
 			collection: {},
+			/** @type {Map<number, Set<number>>} parentChatId → Set<chatId> */
+			childrenIndex: new Map(),
 		}),
 		getters: {
 			/**
@@ -48,11 +50,18 @@ jn.define('im/messenger/model/counter/src/model', (require, exports, module) => 
 			 * @return {Array<CounterModelState>}
 			 */
 			getByParentChatId: (state) => (chatId) => {
-				return Object.values(state.collection)
-					.filter((counterState) => {
-						return counterState.parentChatId === chatId && counterState.counter > 0;
-					})
-				;
+				const descendantIds = getDescendantChatIds(state.childrenIndex, chatId);
+				const result = [];
+				for (const id of descendantIds)
+				{
+					const counterState = state.collection[id];
+					if (counterState && counterState.counter > 0)
+					{
+						result.push(counterState);
+					}
+				}
+
+				return result;
 			},
 
 			/**
@@ -68,14 +77,62 @@ jn.define('im/messenger/model/counter/src/model', (require, exports, module) => 
 			 * @return {number}
 			 */
 			getNumberChildCounters: (state) => (parentChatId) => {
+				const descendantIds = getDescendantChatIds(state.childrenIndex, parentChatId);
+
 				return Object.values(state.collection)
 					.filter((counterState) => {
-						return counterState.parentChatId === parentChatId;
+						return descendantIds.has(counterState.chatId) && !counterState.isMuted;
 					})
 					.reduce((counter, counterState) => {
-						return counter + (counterState.counter || 0);
+						if (counterState.counter > 0)
+						{
+							return counter + counterState.counter;
+						}
+
+						if (counterState.isMarkedAsUnread)
+						{
+							return counter + 1;
+						}
+
+						return counter;
 					}, 0)
 				;
+			},
+
+			/**
+			 * @function counterModel/getDescendantChatIds
+			 * @return {Set<number>}
+			 */
+			getDescendantChatIds: (state) => (rootChatId) => {
+				return getDescendantChatIds(state.childrenIndex, rootChatId);
+			},
+
+			/**
+			 * @function counterModel/getActiveDescendants
+			 * Returns all descendants of rootChatId that have a non-zero counter
+			 * or are marked as unread.
+			 * @return {Array<CounterModelState>}
+			 */
+			getActiveDescendants: (state) => (rootChatId) => {
+				const descendantIds = getDescendantChatIds(state.childrenIndex, rootChatId);
+
+				return Object.values(state.collection)
+					.filter((counterState) => {
+						return descendantIds.has(counterState.chatId)
+							&& (counterState.counter > 0 || counterState.isMarkedAsUnread)
+						;
+					})
+				;
+			},
+
+			/**
+			 * @function counterModel/belongsToRecentSection
+			 * Checks whether a counter belongs to a recentSection, either directly
+			 * or by inheriting the section from an ancestor in the parentChatId chain.
+			 * @return {boolean}
+			 */
+			belongsToRecentSection: (state) => (counterState, recentSection) => {
+				return belongsToRecentSection(state.collection, counterState, recentSection);
 			},
 
 			/**
@@ -144,14 +201,52 @@ jn.define('im/messenger/model/counter/src/model', (require, exports, module) => 
 				});
 			},
 
+			/** @function counterModel/setMarkedAsUnread */
+			setMarkedAsUnread: (store, payload) => {
+				const {
+					dialogId,
+					recentSection,
+					isMarkedAsUnread,
+				} = payload;
+
+				if (!Type.isBoolean(isMarkedAsUnread))
+				{
+					return;
+				}
+
+				const dialog = store.rootGetters?.['dialoguesModel/getById']?.(dialogId);
+				if (!Type.isNumber(dialog?.chatId))
+				{
+					return;
+				}
+
+				const existingCounterState = store.state.collection[dialog.chatId];
+				const counterState = {
+					...counterDefaultElement,
+					...existingCounterState,
+					chatId: dialog.chatId,
+					parentChatId: getParentChatId(existingCounterState, dialog),
+					recentSections: getRecentSections(existingCounterState, dialog, recentSection),
+					isMarkedAsUnread,
+				};
+
+				store.commit('set', {
+					actionName: 'setMarkedAsUnread',
+					data: {
+						counterList: [counterState],
+					},
+				});
+			},
+
 			/** @function counterModel/readChildChatsCounters */
 			readChildChatsCounters: (store, payload) => {
 				const { parentChatId } = payload;
+				const descendantIds = getDescendantChatIds(store.state.childrenIndex, parentChatId);
 
 				/** @type {Array<CounterModelState>} */
 				const counterStateList = [];
 				Object.values(store.state.collection).forEach((counterState) => {
-					if (counterState.parentChatId === parentChatId)
+					if (descendantIds.has(counterState.chatId))
 					{
 						counterStateList.push({
 							...counterState,
@@ -187,13 +282,18 @@ jn.define('im/messenger/model/counter/src/model', (require, exports, module) => 
 							isMarkedAsUnread: false,
 						});
 
-						if (counterState.parentChatId > 0) // need to update parent chat in recent
+						const ancestorIds = getAncestorChatIds(store.state.collection, counterState.chatId);
+						for (const ancestorId of ancestorIds)
 						{
-							counterStatesToUpdate.push({
-								...store.state.collection[counterState.parentChatId],
-								counter: 0,
-								isMarkedAsUnread: false,
-							});
+							const ancestorState = store.state.collection[ancestorId];
+							if (ancestorState)
+							{
+								counterStatesToUpdate.push({
+									...ancestorState,
+									counter: 0,
+									isMarkedAsUnread: false,
+								});
+							}
 						}
 					}
 				}
@@ -219,7 +319,7 @@ jn.define('im/messenger/model/counter/src/model', (require, exports, module) => 
 				const counterStatesToUpdate = [];
 				for (const counterState of Object.values(store.state.collection))
 				{
-					if (counterState.counter === 0 || !counterState.isMarkedAsUnread)
+					if (counterState.counter === 0 && !counterState.isMarkedAsUnread)
 					{
 						continue;
 					}
@@ -243,15 +343,20 @@ jn.define('im/messenger/model/counter/src/model', (require, exports, module) => 
 
 					if (!Type.isArrayFilled(counterState.recentSections))
 					{
-						const parentState = store.state.collection[counterState.parentChatId];
-
-						if (Type.isPlainObject(parentState) && parentState.recentSections.includes(recentSection))
+						const ancestorIds = getAncestorChatIds(store.state.collection, counterState.chatId);
+						for (const ancestorId of ancestorIds)
 						{
-							counterStatesToUpdate.push({
-								...counterState,
-								counter: 0,
-								isMarkedAsUnread: false,
-							});
+							const ancestorState = store.state.collection[ancestorId];
+							if (ancestorState?.recentSections.includes(recentSection))
+							{
+								counterStatesToUpdate.push({
+									...counterState,
+									counter: 0,
+									isMarkedAsUnread: false,
+								});
+
+								break;
+							}
 						}
 					}
 				}
@@ -274,7 +379,7 @@ jn.define('im/messenger/model/counter/src/model', (require, exports, module) => 
 			setMuted: (store, payload) => {
 				const { chatId, isMuted } = payload;
 
-				const counterState = store.state.collection[chatId]
+				const counterState = store.state.collection[chatId];
 
 				if (!Type.isPlainObject(counterState))
 				{
@@ -301,10 +406,21 @@ jn.define('im/messenger/model/counter/src/model', (require, exports, module) => 
 					return;
 				}
 
+				const parentChatIdList = [];
+				for (const chatId of chatIdList)
+				{
+					const existing = store.state.collection[chatId];
+					if (existing?.parentChatId > 0)
+					{
+						parentChatIdList.push(existing.parentChatId);
+					}
+				}
+
 				store.commit('delete', {
 					actionName: 'delete',
 					data: {
 						chatIdList,
+						parentChatIdList,
 					},
 				});
 			},
@@ -318,24 +434,36 @@ jn.define('im/messenger/model/counter/src/model', (require, exports, module) => 
 				logger.log('set mutation', payload);
 
 				payload.data.counterList.forEach((counter) => {
-					let newCounter = counterDefaultElement;
-					if (state.collection[counter.chatId])
+					const existing = state.collection[counter.chatId];
+					let newCounter = { ...counterDefaultElement, ...counter };
+
+					if (existing)
 					{
+						// If parentChatId changed, remove from old parent's children set
+						if (existing.parentChatId > 0 && existing.parentChatId !== counter.parentChatId)
+						{
+							state.childrenIndex.get(existing.parentChatId)?.delete(counter.chatId);
+						}
+
 						newCounter = {
-							...newCounter,
-							...state.collection[counter.chatId],
-							...counter,
-						};
-					}
-					else
-					{
-						newCounter = {
-							...newCounter,
+							...counterDefaultElement,
+							...existing,
 							...counter,
 						};
 					}
 
 					state.collection[counter.chatId] = newCounter;
+
+					// Add to new parent's children set
+					if (newCounter.parentChatId > 0)
+					{
+						if (!state.childrenIndex.has(newCounter.parentChatId))
+						{
+							state.childrenIndex.set(newCounter.parentChatId, new Set());
+						}
+
+						state.childrenIndex.get(newCounter.parentChatId).add(counter.chatId);
+					}
 				});
 			},
 
@@ -349,14 +477,177 @@ jn.define('im/messenger/model/counter/src/model', (require, exports, module) => 
 
 				for (const chatId of chatIdList)
 				{
-					if (state.collection[chatId])
+					const existing = state.collection[chatId];
+					if (!existing)
 					{
-						delete state.collection[chatId];
+						continue;
 					}
+
+					if (existing.parentChatId > 0)
+					{
+						const parentSet = state.childrenIndex.get(existing.parentChatId);
+						if (parentSet)
+						{
+							parentSet.delete(chatId);
+							if (parentSet.size === 0)
+							{
+								state.childrenIndex.delete(existing.parentChatId);
+							}
+						}
+					}
+
+					const descendants = getDescendantChatIds(state.childrenIndex, chatId);
+					for (const descendantId of descendants)
+					{
+						state.childrenIndex.delete(descendantId);
+					}
+					state.childrenIndex.delete(chatId);
+
+					delete state.collection[chatId];
 				}
 			},
 		},
 	};
+
+	/**
+	 * @param {?CounterModelState} counterState
+	 * @param {DialoguesModelState} dialog
+	 * @return {number}
+	 */
+	function getParentChatId(counterState, dialog)
+	{
+		if (Type.isNumber(counterState?.parentChatId))
+		{
+			return counterState.parentChatId;
+		}
+
+		return Type.isNumber(dialog.parentChatId) ? dialog.parentChatId : 0;
+	}
+
+	/**
+	 * @param {?CounterModelState} counterState
+	 * @param {DialoguesModelState} dialog
+	 * @param {?string} recentSection
+	 * @return {Array<string>}
+	 */
+	function getRecentSections(counterState, dialog, recentSection)
+	{
+		if (Type.isArrayFilled(counterState?.recentSections))
+		{
+			return counterState.recentSections;
+		}
+
+		if (Type.isArrayFilled(dialog?.recentConfig?.sections))
+		{
+			return dialog.recentConfig.sections;
+		}
+
+		if (Type.isStringFilled(recentSection))
+		{
+			return [recentSection];
+		}
+
+		return [];
+	}
+
+	/**
+	 * BFS: collects chatIds of all descendants of rootChatId at any depth.
+	 * Uses childrenIndex for O(D) traversal where D is the number of descendants.
+	 * @param {Map<number, Set<number>>} childrenIndex
+	 * @param {number} rootChatId
+	 * @returns {Set<number>}
+	 */
+	function getDescendantChatIds(childrenIndex, rootChatId)
+	{
+		const result = new Set();
+		const queue = [rootChatId];
+		let head = 0;
+
+		while (head < queue.length)
+		{
+			const currentId = queue[head++];
+			const children = childrenIndex.get(currentId);
+
+			if (!children)
+			{
+				continue;
+			}
+
+			for (const childId of children)
+			{
+				if (!result.has(childId))
+				{
+					result.add(childId);
+					queue.push(childId);
+				}
+			}
+		}
+
+		return result;
+	}
+
+	/**
+	 * Walks up the parentChatId chain from chatId to the root.
+	 * @param {Record<number, CounterModelState>} collection
+	 * @param {number} chatId
+	 * @returns {Set<number>}
+	 */
+	function getAncestorChatIds(collection, chatId)
+	{
+		const result = new Set();
+		let current = collection[chatId];
+
+		while (current && current.parentChatId > 0)
+		{
+			if (result.has(current.parentChatId))
+			{
+				break;
+			}
+
+			result.add(current.parentChatId);
+			current = collection[current.parentChatId];
+		}
+
+		return result;
+	}
+
+	/**
+	 * Checks whether a counter belongs to a recentSection, either directly
+	 * or by inheriting the section from an ancestor in the parentChatId chain.
+	 * @param {Record<number, CounterModelState>} collection
+	 * @param {CounterModelState} counterState
+	 * @param {string} recentSection
+	 * @returns {boolean}
+	 */
+	function belongsToRecentSection(collection, counterState, recentSection)
+	{
+		if (counterState.recentSections.includes(recentSection))
+		{
+			return true;
+		}
+
+		if (counterState.recentSections.length > 0)
+		{
+			return false;
+		}
+
+		const ancestorIds = getAncestorChatIds(collection, counterState.chatId);
+		for (const ancestorId of ancestorIds)
+		{
+			const ancestor = collection[ancestorId];
+			if (ancestor?.recentSections.includes(recentSection))
+			{
+				return true;
+			}
+
+			if (ancestor?.recentSections.length > 0)
+			{
+				return false;
+			}
+		}
+
+		return false;
+	}
 
 	module.exports = {
 		counterModel,

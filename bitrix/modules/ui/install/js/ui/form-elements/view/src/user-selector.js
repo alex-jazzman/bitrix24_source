@@ -160,11 +160,15 @@ export class UserSelector extends BaseField
 
 	renderContentField(): HTMLElement
 	{
+		const moreElement = this.getHelpdeskCode()
+			? this.renderMoreElement(this.getHelpdeskCode())
+			: '';
+
 		const content = Tag.render`
 			<div id="${this.getId()}" class="ui-section__field-user_selector ${this.#className}">
 				<div class="ui-section__field">
 					<div class="ui-section__field-label">
-						${this.getLabel()}
+						${this.getLabel()} ${moreElement}
 					</div>
 				</div>
 				${this.renderErrors()}

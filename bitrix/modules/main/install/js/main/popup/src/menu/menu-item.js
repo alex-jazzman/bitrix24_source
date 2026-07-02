@@ -1,14 +1,16 @@
-import Menu from './menu';
 import { Type, Text, Dom, Event, Tag } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
-import { MenuItemOptions } from './menu-types';
+import { FocusMonitor, RESTORE_FOCUS_EVENT, type InputModality } from 'ui.a11y';
+
+import { Menu } from './menu';
+import { type MenuItemOptions } from './menu-types';
 
 const aliases = {
 	onSubMenuShow: { namespace: 'BX.Main.Menu.Item', eventName: 'SubMenu:onShow' },
-	onSubMenuClose: { namespace: 'BX.Main.Menu.Item', eventName: 'SubMenu:onClose' }
+	onSubMenuClose: { namespace: 'BX.Main.Menu.Item', eventName: 'SubMenu:onClose' },
 };
 
-const reEscape = /[<>'"]/g;
+const reEscape = /["'<>]/g;
 const escapeEntities = {
 	'<': '&lt;',
 	'>': '&gt;',
@@ -20,7 +22,7 @@ function encodeSafe(value: string): string
 {
 	if (Type.isString(value))
 	{
-		return value.replace(reEscape, item => escapeEntities[item]);
+		return value.replaceAll(reEscape, (item: string) => escapeEntities[item]);
 	}
 
 	return value;
@@ -28,14 +30,17 @@ function encodeSafe(value: string): string
 
 EventEmitter.registerAliases(aliases);
 
-export default class MenuItem extends EventEmitter
+export class MenuItem extends EventEmitter
 {
-	constructor(options: MenuItemOptions)
+	#items: MenuItem[] = [];
+	#justFocused = false;
+
+	constructor(itemOptions: MenuItemOptions)
 	{
 		super();
 		this.setEventNamespace('BX.Main.Menu.Item');
 
-		options = options || {};
+		const options = itemOptions || {};
 		this.options = options;
 
 		this.id = options.id || Text.getRandom();
@@ -50,8 +55,9 @@ export default class MenuItem extends EventEmitter
 		else if (Type.isStringFilled(options.text))
 		{
 			this.text = options.text;
-			if (this.text.match(/<[^>]+>/))
+			if (/<[^>]+>/.test(this.text))
 			{
+				// eslint-disable-next-line no-console
 				console.warn('BX.Main.MenuItem: use "html" option for the html item content.', this.getText());
 			}
 		}
@@ -64,19 +70,21 @@ export default class MenuItem extends EventEmitter
 		this.className = Type.isStringFilled(options.className) ? options.className : null;
 		this.menuShowDelay = Type.isNumber(options.menuShowDelay) ? options.menuShowDelay : 300;
 		this.subMenuOffsetX = Type.isNumber(options.subMenuOffsetX) ? options.subMenuOffsetX : 4;
-		this._items = Type.isArray(options.items) ? options.items : [];
+		this.#items = Type.isArray(options.items) ? options.items : [];
 		this.disabled = options.disabled === true;
 		this.cacheable = options.cacheable === true;
+		this.focusable = this.delimiter !== true && options.focusable !== false;
+		this.attrs = Type.isPlainObject(options.attrs) ? options.attrs : null;
 
 		/**
 		 *
 		 * @type {function|string}
 		 */
-		this.onclick =
+		this.onclick = (
 			Type.isStringFilled(options.onclick) || Type.isFunction(options.onclick)
 				? options.onclick
 				: null
-		;
+		);
 
 		this.subscribeFromOptions(options.events, aliases);
 
@@ -98,25 +106,25 @@ export default class MenuItem extends EventEmitter
 		 */
 		this.layout = {
 			item: null,
-			text: null
+			text: null,
 		};
 
-		this.getLayout(); //compatibility
+		this.getLayout(); // compatibility
 
-		//compatibility
-		//now use this.options
+		// compatibility
+		// now use this.options
 		this.events = {};
 		this.items = [];
-		for (let property in options)
+		for (const property of Object.keys(options))
 		{
-			if (options.hasOwnProperty(property) && typeof (this[property]) === 'undefined')
+			if (!(property in this))
 			{
 				this[property] = options[property];
 			}
 		}
 	}
 
-	getLayout(): Element
+	getLayout(): { item: HTMLElement, text: HTMLElement }
 	{
 		if (this.layout.item)
 		{
@@ -131,21 +139,24 @@ export default class MenuItem extends EventEmitter
 					props: {
 						className: [
 							'popup-window-delimiter-section',
-							this.className ? this.className : '',
-						].join(' ')
+							this.className || '',
+						].join(' '),
+					},
+					attrs: {
+						'aria-hidden': 'true',
 					},
 					children: [
 						(this.layout.text = Tag.render`
 							<span class="popup-window-delimiter-text">${
 								this.allowHtml ? this.getText() : encodeSafe(this.getText())
 							}</span>
-						`)
-					]
+						`),
+					],
 				});
 			}
 			else
 			{
-				this.layout.item = Tag.render`<span class="popup-window-delimiter">`;
+				this.layout.item = Tag.render`<span class="popup-window-delimiter" aria-hidden="true"></span>`;
 			}
 		}
 		else
@@ -154,34 +165,48 @@ export default class MenuItem extends EventEmitter
 				props: {
 					className: [
 						'menu-popup-item',
-						(this.className ? this.className : 'menu-popup-no-icon'),
-						(this.hasSubMenu() ? 'menu-popup-item-submenu' : '')
-					].join(' ')
+						(this.className || 'menu-popup-no-icon'),
+						(this.hasSubMenu() ? 'menu-popup-item-submenu' : ''),
+					].join(' '),
 				},
-
 				attrs: {
 					title: this.title,
 					onclick: Type.isString(this.onclick) ? this.onclick : '', // compatibility
-					target: this.target ? this.target : ''
+					target: this.target || '',
 				},
 
 				dataset: this.dataset,
-
-				events:
-					Type.isFunction(this.onclick)
-						? { click: this.onItemClick.bind(this) }
-						: null
-				,
-
+				events: Type.isFunction(this.onclick) ? { click: this.onItemClick.bind(this) } : null,
 				children: [
 					Dom.create('span', { props: { className: 'menu-popup-item-icon' } }),
 					(this.layout.text = Tag.render`
 						<span class="menu-popup-item-text">${
 							this.allowHtml ? this.getText() : encodeSafe(this.getText())
 						}</span>
-					`)
-				]
+					`),
+				],
 			});
+
+			if (Type.isPlainObject(this.attrs))
+			{
+				Dom.attr(this.layout.item, this.attrs);
+			}
+
+			if (this.isFocusable())
+			{
+				Dom.attr(this.layout.item, 'tabindex', '-1');
+				Dom.attr(this.layout.item, 'role', 'menuitem');
+			}
+			else
+			{
+				Dom.attr(this.layout.item, 'aria-hidden', 'true');
+			}
+
+			if (this.hasSubMenu())
+			{
+				Dom.attr(this.layout.item, 'aria-haspopup', 'true');
+				Dom.attr(this.layout.item, 'aria-expanded', 'false');
+			}
 
 			if (this.href)
 			{
@@ -193,19 +218,22 @@ export default class MenuItem extends EventEmitter
 				this.disable();
 			}
 
-			Event.bind(this.layout.item, 'mouseenter', this.onItemMouseEnter.bind(this));
-			Event.bind(this.layout.item, 'mouseleave', this.onItemMouseLeave.bind(this));
+			Event.bind(this.layout.item, RESTORE_FOCUS_EVENT, this.#handleItemRestoreFocus.bind(this));
 		}
+
+		Event.bind(this.layout.item, 'mouseenter', this.#handleItemMouseEnter.bind(this));
+		Event.bind(this.layout.item, 'mouseleave', this.#handleItemMouseLeave.bind(this));
+		Event.bind(this.layout.item, 'focusin', this.#handleItemFocus.bind(this));
 
 		return this.layout;
 	}
 
-	getContainer(): Element
+	getContainer(): HTMLElement
 	{
 		return this.getLayout().item;
 	}
 
-	getTextContainer(): Element
+	getTextContainer(): HTMLElement
 	{
 		return this.getLayout().text;
 	}
@@ -213,6 +241,21 @@ export default class MenuItem extends EventEmitter
 	getText(): string | HTMLElement
 	{
 		return this.text;
+	}
+
+	getTextContent(): string
+	{
+		if (Type.isString(this.text))
+		{
+			return this.text;
+		}
+
+		if (Type.isElementNode(this.text))
+		{
+			return this.text.textContent || '';
+		}
+
+		return '';
 	}
 
 	setText(text: string | HTMLElement, allowHtml = false)
@@ -243,54 +286,54 @@ export default class MenuItem extends EventEmitter
 
 	hasSubMenu(): boolean
 	{
-		return this.subMenuWindow !== null || this._items.length;
+		return this.subMenuWindow !== null || this.#items.length > 0;
 	}
 
-	showSubMenu(): void
+	showSubMenu(trigger: InputModality = null): void
 	{
-		if (!this.getMenuWindow().getPopupWindow().isShown())
+		if (!this.getMenuWindow().isShown())
 		{
 			return;
 		}
 
-		this.addSubMenu(this._items);
+		this.addSubMenu(this.#items);
 
-		if (this.subMenuWindow)
+		if (this.getSubMenu() !== null)
 		{
-			Dom.addClass(this.layout.item, 'menu-popup-item-open');
+			this.closeSiblings(trigger);
+			this.closeChildren(trigger);
 
-			this.closeSiblings();
-			this.closeChildren();
-
-			const popupWindow = this.subMenuWindow.getPopupWindow();
-			if (!popupWindow.isShown())
+			if (!this.getSubMenu().isShown())
 			{
 				this.emit('SubMenu:onShow');
-				popupWindow.show();
+				this.getSubMenu().setLastInputModality(trigger);
+				this.getSubMenu().show();
 			}
+
+			Dom.attr(this.layout.item, 'aria-controls', this.getSubMenu().getId());
 
 			this.adjustSubMenu();
 		}
 	}
 
-	addSubMenu(items: []): Menu
+	addSubMenu(items: []): Menu | null
 	{
-		if (this.subMenuWindow !== null || !Type.isArray(items) || !items.length)
+		if (this.subMenuWindow !== null || !Type.isArray(items) || items.length === 0)
 		{
-			return;
+			return null;
 		}
 
 		const rootMenuWindow = this.getMenuWindow().getRootMenuWindow() || this.getMenuWindow();
-		const rootOptions = Object.assign({}, rootMenuWindow.params);
+		const rootOptions = { ...rootMenuWindow.params };
 		delete rootOptions.events;
 
-		const subMenuOptions =
+		const subMenuOptions = (
 			Type.isPlainObject(rootMenuWindow.params.subMenuOptions) ? rootMenuWindow.params.subMenuOptions : {}
-		;
+		);
 
-		const options = Object.assign({}, rootOptions, subMenuOptions);
+		const options = { ...rootOptions, ...subMenuOptions };
 
-		//Override root menu options
+		// Override root menu options
 		options.autoHide = false;
 		options.menuShowDelay = this.menuShowDelay;
 		options.cacheable = this.isCacheable();
@@ -298,99 +341,105 @@ export default class MenuItem extends EventEmitter
 		options.bindOptions = {
 			forceTop: true,
 			forceLeft: true,
-			forceBindPosition: true
+			forceBindPosition: true,
+		};
+
+		options.focusTrap = {
+			initialFocus: false,
 		};
 
 		delete options.angle;
 		delete options.overlay;
 
-		this.subMenuWindow = new Menu('popup-submenu-' + this.id, this.layout.item, items, options);
+		this.subMenuWindow = new Menu(`popup-submenu-${this.id}`, this.layout.item, items, options);
 		this.subMenuWindow.setParentMenuWindow(this.getMenuWindow());
 		this.subMenuWindow.setParentMenuItem(this);
 
-		this.subMenuWindow.getPopupWindow().subscribe('onDestroy', this.handleSubMenuDestroy.bind(this));
+		this.subMenuWindow.subscribe('onShow', this.#handleSubMenuShow.bind(this));
+		this.subMenuWindow.subscribe('onClose', this.#handleSubMenuClose.bind(this));
+		this.subMenuWindow.subscribe('onDestroy', this.#handleSubMenuDestroy.bind(this));
+
 		Dom.addClass(this.layout.item, 'menu-popup-item-submenu');
+		Dom.attr(this.layout.item, 'aria-haspopup', 'true');
 
 		return this.subMenuWindow;
 	}
 
-	closeSubMenu(): void
+	closeSubMenu(trigger: InputModality = null): void
 	{
-		this.clearSubMenuTimeout();
+		this.#clearSubMenuTimeout();
 
-		if (this.subMenuWindow)
+		if (this.getSubMenu() !== null)
 		{
-			Dom.removeClass(this.layout.item, 'menu-popup-item-open');
-
-			this.closeChildren();
-
-			const popup = this.subMenuWindow.getPopupWindow();
-			if (popup.isShown())
+			this.closeChildren(trigger);
+			if (this.getSubMenu().isShown())
 			{
 				this.emit('SubMenu:onClose');
 			}
 
-			this.subMenuWindow.close();
+			this.getSubMenu().setLastInputModality(trigger);
+			this.getSubMenu().close();
 		}
 	}
 
-	closeSiblings(): void
+	closeSiblings(trigger: InputModality = null): void
 	{
 		const siblings = this.menuWindow.getMenuItems();
-		for (let i = 0; i < siblings.length; i++)
+		for (const sibling of siblings)
 		{
-			if (siblings[i] !== this)
+			if (sibling !== this)
 			{
-				siblings[i].closeSubMenu();
+				sibling.closeSubMenu(trigger);
 			}
 		}
 	}
 
-	closeChildren(): void
+	closeChildren(trigger: InputModality = null): void
 	{
-		if (this.subMenuWindow)
+		if (this.getSubMenu() !== null)
 		{
-			const children = this.subMenuWindow.getMenuItems();
-			for (let i = 0; i < children.length; i++)
+			const children = this.getSubMenu().getMenuItems();
+			for (const child of children)
 			{
-				children[i].closeSubMenu();
+				child.closeSubMenu(trigger);
 			}
 		}
 	}
 
 	destroySubMenu(): void
 	{
-		if (this.subMenuWindow)
+		if (this.getSubMenu() !== null)
 		{
 			Dom.removeClass(this.layout.item, 'menu-popup-item-open menu-popup-item-submenu');
+			Dom.attr(this.layout.item, 'aria-haspopup', null);
 			this.destroyChildren();
-			this.subMenuWindow.destroy();
+			this.getSubMenu().destroy();
 
 			this.subMenuWindow = null;
-			this._items = [];
+			this.#items = [];
 		}
 	}
 
 	destroyChildren(): void
 	{
-		if (this.subMenuWindow)
+		if (this.getSubMenu() !== null)
 		{
-			const children = this.subMenuWindow.getMenuItems();
-			for (let i = 0; i < children.length; i++)
+			const children = this.getSubMenu().getMenuItems();
+			for (const child of children)
 			{
-				children[i].destroySubMenu();
+				child.destroySubMenu();
 			}
 		}
 	}
 
 	adjustSubMenu(): void
 	{
-		if (!this.subMenuWindow || !this.layout.item)
+		if (this.getSubMenu() === null || !this.layout.item)
 		{
 			return;
 		}
 
-		const popupWindow = this.subMenuWindow.getPopupWindow();
+		const popupWindow = this.getSubMenu().getPopupWindow();
 		const itemRect = this.getBoundingClientRect();
 
 		let offsetLeft = itemRect.width + this.subMenuOffsetX;
@@ -439,7 +488,7 @@ export default class MenuItem extends EventEmitter
 		}
 
 		popupWindow.setBindElement(this.layout.item);
-		popupWindow.setOffset({ offsetLeft: offsetLeft, offsetTop: -offsetTop });
+		popupWindow.setOffset({ offsetLeft, offsetTop: -offsetTop });
 		popupWindow.setAngle({ position: anglePosition, offset: angleOffset });
 		popupWindow.adjustPosition();
 	}
@@ -451,18 +500,16 @@ export default class MenuItem extends EventEmitter
 		{
 			return this.layout.item.getBoundingClientRect();
 		}
-		else
-		{
-			const rect = popup.getPositionRelativeToTarget(this.layout.item);
-			const targetContainer = this.getMenuWindow().getPopupWindow().getTargetContainer();
 
-			return new DOMRect(
-				rect.left - targetContainer.scrollLeft,
-				rect.top - targetContainer.scrollTop,
-				rect.width,
-				rect.height
-			);
-		}
+		const rect = popup.getPositionRelativeToTarget(this.layout.item);
+		const targetContainer = this.getMenuWindow().getPopupWindow().getTargetContainer();
+
+		return new DOMRect(
+			rect.left - targetContainer.scrollLeft,
+			rect.top - targetContainer.scrollTop,
+			rect.width,
+			rect.height,
+		);
 	}
 
 	getPopupPadding(): number
@@ -511,19 +558,26 @@ export default class MenuItem extends EventEmitter
 	enable(): void
 	{
 		this.disabled = false;
-		this.getContainer().classList.remove('menu-popup-item-disabled');
+		Dom.removeClass(this.getContainer(), 'menu-popup-item-disabled');
+		Dom.attr(this.getContainer(), 'aria-disabled', null);
 	}
 
 	disable(): void
 	{
 		this.disabled = true;
 		this.closeSubMenu();
-		this.getContainer().classList.add('menu-popup-item-disabled');
+		Dom.addClass(this.getContainer(), 'menu-popup-item-disabled');
+		Dom.attr(this.getContainer(), 'aria-disabled', 'true');
 	}
 
 	isDisabled(): boolean
 	{
 		return this.disabled;
+	}
+
+	isFocusable(): boolean
+	{
+		return this.focusable;
 	}
 
 	setCacheable(cacheable): void
@@ -536,20 +590,68 @@ export default class MenuItem extends EventEmitter
 		return this.cacheable;
 	}
 
-	/**
-	 * @private
-	 */
-	onItemClick(event): void
+	isDelimiter(): boolean
 	{
-		this.onclick.call(this.menuWindow, event, this); //compatibility
+		return this.delimiter;
+	}
+
+	focus(focusVisible = false): void
+	{
+		if (this.isFocused() || this.isDelimiter() || !this.isFocusable())
+		{
+			return;
+		}
+
+		this.focused = true;
+		Dom.addClass(this.getContainer(), `--focus${focusVisible ? ' --focus-visible' : ''}`);
+		Dom.attr(this.getContainer(), 'tabindex', '0');
+
+		if (this.getMenuWindow().getFocusTrap() !== null)
+		{
+			this.getContainer().focus({ preventScroll: !focusVisible });
+		}
+
+		this.getMenuWindow().emit('Item:onFocus', { item: this });
+	}
+
+	blur(): void
+	{
+		if (!this.isFocused() || this.isDelimiter() || !this.isFocusable())
+		{
+			return;
+		}
+
+		this.focused = false;
+		Dom.removeClass(this.getContainer(), '--focus --focus-visible');
+		Dom.attr(this.getContainer(), 'tabindex', '-1');
+
+		this.getMenuWindow().emit('Item:onBlur', { item: this });
+	}
+
+	isFocused(): boolean
+	{
+		return this.focused;
 	}
 
 	/**
 	 * @private
 	 */
-	onItemMouseEnter(mouseEvent: MouseEvent): void
+	onItemClick(event): void
 	{
-		if (this.isDisabled())
+		this.onclick.call(this.menuWindow, event, this); // compatibility
+	}
+
+	#handleItemFocus(): void
+	{
+		this.#justFocused = true;
+		setTimeout(() => {
+			this.#justFocused = false;
+		}, 100);
+	}
+
+	#handleItemMouseEnter(mouseEvent: MouseEvent): void
+	{
+		if (this.getMenuWindow()?.shouldIgnoreMouseEnter() || this.#justFocused)
 		{
 			return;
 		}
@@ -561,32 +663,26 @@ export default class MenuItem extends EventEmitter
 			return;
 		}
 
-		this.clearSubMenuTimeout();
+		this.focus();
+
+		this.#clearSubMenuTimeout();
 
 		if (this.hasSubMenu())
 		{
-			this.subMenuTimeout = setTimeout(function() {
-				this.showSubMenu();
-			}.bind(this), this.menuShowDelay);
+			this.subMenuTimeout = setTimeout(() => {
+				this.showSubMenu('pointer');
+			}, this.menuShowDelay);
 		}
 		else
 		{
-			this.subMenuTimeout = setTimeout(function() {
-				this.closeSiblings();
-			}.bind(this), this.menuShowDelay);
+			this.subMenuTimeout = setTimeout(() => {
+				this.closeSiblings('pointer');
+			}, this.menuShowDelay);
 		}
 	}
 
-	/**
-	 * @private
-	 */
-	onItemMouseLeave(mouseEvent: MouseEvent): void
+	#handleItemMouseLeave(mouseEvent: MouseEvent): void
 	{
-		if (this.isDisabled())
-		{
-			return;
-		}
-
 		const event = new BaseEvent({ data: { mouseEvent } });
 		EventEmitter.emit(this, 'onMouseLeave', event, { thisArg: this });
 		if (event.isDefaultPrevented())
@@ -594,13 +690,23 @@ export default class MenuItem extends EventEmitter
 			return;
 		}
 
-		this.clearSubMenuTimeout();
+		this.blur();
+
+		this.#clearSubMenuTimeout();
 	}
 
-	/**
-	 * @private
-	 */
-	clearSubMenuTimeout(): void
+	#handleItemRestoreFocus(event: typeof(window.Event)): void
+	{
+		event.preventDefault();
+
+		const hasFocus = this.getMenuWindow().getMenuItems().some((item) => item.isFocused());
+		if (!hasFocus)
+		{
+			this.focus(FocusMonitor.Instance.getLastInputModality() === 'keyboard');
+		}
+	}
+
+	#clearSubMenuTimeout(): void
 	{
 		if (this.subMenuTimeout)
 		{
@@ -610,11 +716,22 @@ export default class MenuItem extends EventEmitter
 		this.subMenuTimeout = null;
 	}
 
-	/**
-	 * @private
-	 */
-	handleSubMenuDestroy(): void
+	#handleSubMenuShow(): void
 	{
+		Dom.addClass(this.layout.item, 'menu-popup-item-open');
+		Dom.attr(this.layout.item, 'aria-expanded', 'true');
+	}
+
+	#handleSubMenuClose(): void
+	{
+		Dom.removeClass(this.layout.item, 'menu-popup-item-open');
+		Dom.attr(this.layout.item, 'aria-expanded', 'false');
+		Dom.attr(this.layout.item, 'aria-controls', null);
+	}
+
+	#handleSubMenuDestroy(): void
+	{
+		this.#handleSubMenuClose();
 		this.subMenuWindow = null;
 	}
 }

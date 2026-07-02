@@ -3,6 +3,12 @@
 use Bitrix\Main\Application;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Config\Configuration;
+use Bitrix\Main\Data\Cache;
+use Bitrix\Main\Loader;
+use Bitrix\Landing\Block;
+use Bitrix\Main\Composite\Helper;
+use Bitrix\Main\Composite\Page;
+use Bitrix\Main\ModuleManager;
 
 if(
 	isset($_SERVER["REQUEST_METHOD"]) && $_SERVER["REQUEST_METHOD"] == "POST"
@@ -28,7 +34,8 @@ $isAdmin = $USER->CanDoOperation('cache_control');
 $cachetype = $_REQUEST["cachetype"] ?? null;
 
 IncludeModuleLangFile(__FILE__);
-if(
+
+if (
 	$_SERVER["REQUEST_METHOD"] == "POST"
 	&& isset($_REQUEST["ajax"])
 	&& $_REQUEST["ajax"]=="y"
@@ -42,14 +49,14 @@ if(
 	{
 		?>
 		<script>
-			window.location = '/bitrix/admin/cache.php?lang=<?echo LANGUAGE_ID?>&tabControl_active_tab=fedit2';
+			window.location = '/bitrix/admin/cache.php?lang=<?= LANGUAGE_ID?>&tabControl_active_tab=fedit2';
 		</script>
-		<?
+		<?php
 		require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin_js.php");
 	}
 
 	$obCacheCleaner = null;
-	$filesEngine = (\Bitrix\Main\Data\Cache::getCacheEngineType() == "cacheenginefiles");
+	$filesEngine = (Cache::getCacheEngineType() == "cacheenginefiles");
 
 	$rootDir = $_SERVER["DOCUMENT_ROOT"];
 	if ($cachetype !== "html" && $filesEngine)
@@ -64,9 +71,9 @@ if(
 	$curentTime = time();
 	$endTime = $curentTime + 5;
 
-	if ($cachetype == "landing" && \Bitrix\Main\Loader::includeModule("landing"))
+	if ($cachetype == "landing" && Loader::includeModule("landing"))
 	{
-		\Bitrix\Landing\Block::clearRepositoryCache();
+		Block::clearRepositoryCache();
 		CAdminMessage::ShowMessage(array(
 			"MESSAGE" => GetMessage("main_cache_finished"),
 			"HTML" => true,
@@ -77,7 +84,7 @@ if(
 			CloseWaitWindow();
 			EndClearCache();
 		</script>
-		<?
+		<?php
 		require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin_js.php");
 	}
 	elseif ($cachetype === "html" || $filesEngine)
@@ -101,7 +108,7 @@ if(
 			<script>
 				CloseWaitWindow();
 			</script>
-			<?
+			<?php
 			require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin_js.php");
 		}
 	}
@@ -141,7 +148,7 @@ if(
 				}
 			}
 		}
-		\Bitrix\Main\Composite\Helper::updateCacheFileSize(-$space_freed);
+		Helper::updateCacheFileSize(-$space_freed);
 	}
 	elseif ($filesEngine)
 	{
@@ -212,7 +219,7 @@ if(
 			CloseWaitWindow();
 			DoNext(<?= Json::encode($currentFile) ?>);
 		</script>
-		<?
+		<?php
 	}
 	else
 	{
@@ -228,7 +235,7 @@ if(
 		}
 		elseif ($cachetype == "html")
 		{
-			$page = \Bitrix\Main\Composite\Page::getInstance();
+			$page = Page::getInstance();
 			$page->deleteAll();
 		}
 		elseif ($cachetype == "all")
@@ -241,7 +248,7 @@ if(
 			$CACHE_MANAGER->CleanAll();
 			$stackCacheManager->CleanAll();
 
-			$page = \Bitrix\Main\Composite\Page::getInstance();
+			$page = Page::getInstance();
 			$page->deleteAll();
 		}
 
@@ -274,7 +281,7 @@ if(
 			CloseWaitWindow();
 			EndClearCache();
 		</script>
-		<?
+		<?php
 	}
 
 	require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin_js.php");
@@ -331,7 +338,7 @@ $APPLICATION->SetTitle(GetMessage("MCACHE_TITLE"));
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_after.php");
 ?>
 
-<?
+<?php
 if($errorMessage <> '')
 	CAdminMessage::ShowMessage(Array("DETAILS"=>$errorMessage, "TYPE"=>"ERROR", "MESSAGE"=>GetMessage("SAE_ERROR"), "HTML"=>true));
 if($okMessage <> '')
@@ -359,8 +366,8 @@ function DoNext(path)
 {
 	var queryString = 'ajax=y'
 		+ '&clearcache=Y'
-		+ '&lang=<?echo htmlspecialcharsbx(LANG)?>'
-		+ '&<?echo bitrix_sessid_get()?>'
+		+ '&lang=<?= htmlspecialcharsbx(LANGUAGE_ID)?>'
+		+ '&<?= bitrix_sessid_get()?>'
 	;
 
 	var cachetype = '';
@@ -421,7 +428,7 @@ function EndClearCache()
 <div id="clear_result_div" style="margin:0">
 </div>
 
-<?
+<?php
 $aTabs = array(
 	array(
 		"DIV" => "fedit1",
@@ -448,92 +455,92 @@ $tabControl = new CAdminTabControl("tabControl", $aTabs, true, true);
 
 $tabControl->Begin();
 ?>
-<form method="POST" action="<?echo $APPLICATION->GetCurPage()?>?lang=<?echo LANG?>">
+<form method="POST" action="<?= $APPLICATION->GetCurPage()?>?lang=<?= LANGUAGE_ID?>">
 <?=bitrix_sessid_post()?>
-<?$tabControl->BeginNextTab();?>
+<?php $tabControl->BeginNextTab();?>
 <tr>
 	<td valign="top" colspan="2" align="left">
-		<?if(COption::GetOptionString("main", "component_cache_on", "Y")=="Y"):?>
-			<span style="color:green;"><b><?echo GetMessage("MAIN_OPTION_CACHE_ON")?>.</b></span>
-		<?else:?>
-			<span style="color:red;"><b><?echo GetMessage("MAIN_OPTION_CACHE_OFF")?>.</b></span>
-		<?endif?>
+		<?php if(COption::GetOptionString("main", "component_cache_on", "Y")=="Y"):?>
+			<span style="color:green;"><b><?= GetMessage("MAIN_OPTION_CACHE_ON")?>.</b></span>
+		<?php else:?>
+			<span style="color:red;"><b><?= GetMessage("MAIN_OPTION_CACHE_OFF")?>.</b></span>
+		<?php endif?>
 		<br><br>
 	</td>
 </tr>
 <tr>
 	<td valign="top" colspan="2" align="left">
-		<?if(COption::GetOptionString("main", "component_cache_on", "Y")=="Y"):?>
+		<?php if(COption::GetOptionString("main", "component_cache_on", "Y")=="Y"):?>
 			<input type="hidden" name="cache_on" value="N">
-			<input type="submit" name="cache_siteb" value="<?echo GetMessage("MAIN_OPTION_CACHE_BUTTON_OFF")?>"<?if(!$isAdmin) echo " disabled"?>>
-		<?else:?>
+			<input type="submit" name="cache_siteb" value="<?= GetMessage("MAIN_OPTION_CACHE_BUTTON_OFF")?>"<?php if(!$isAdmin) echo " disabled"?>>
+		<?php else:?>
 			<input type="hidden" name="cache_on" value="Y">
-			<input type="submit" name="cache_siteb" value="<?echo GetMessage("MAIN_OPTION_CACHE_BUTTON_ON")?>"<?if(!$isAdmin) echo " disabled"?> class="adm-btn-save">
-		<?endif?>
+			<input type="submit" name="cache_siteb" value="<?= GetMessage("MAIN_OPTION_CACHE_BUTTON_ON")?>"<?php if(!$isAdmin) echo " disabled"?> class="adm-btn-save">
+		<?php endif?>
 	</td>
 </tr>
 <tr>
 	<td colspan="2">
-		<?echo BeginNote();?><?echo GetMessage("cache_admin_note1")?>
-		<?echo EndNote(); ?>
+		<?= BeginNote();?><?= GetMessage("cache_admin_note1")?>
+		<?= EndNote(); ?>
 	</td>
 </tr>
 </form>
 
-<?$tabControl->EndTab()?>
-<?$tabControl->BeginNextTab()?>
+<?php $tabControl->EndTab()?>
+<?php $tabControl->BeginNextTab()?>
 
-<form method="POST" action="<?echo $APPLICATION->GetCurPage()?>?lang=<?echo LANG?>&amp;tabControl_active_tab=fedit4">
+<form method="POST" action="<?= $APPLICATION->GetCurPage()?>?lang=<?= LANGUAGE_ID?>&amp;tabControl_active_tab=fedit4">
 <?=bitrix_sessid_post()?>
 
-<?
+<?php
 	$component_managed_cache = COption::GetOptionString("main", "component_managed_cache_on", "Y");
 ?>
 <tr>
 	<td valign="top" colspan="2" align="left">
-		<?if($component_managed_cache <> "N" || defined("BX_COMP_MANAGED_CACHE")):?>
-			<span style="color:green;"><b><?echo GetMessage("main_cache_managed_on")?></b></span>
-		<?else:?>
-			<span style="color:red;"><b><?echo GetMessage("main_cache_managed_off")?></b></span>
-		<?endif?>
+		<?php if($component_managed_cache <> "N" || defined("BX_COMP_MANAGED_CACHE")):?>
+			<span style="color:green;"><b><?= GetMessage("main_cache_managed_on")?></b></span>
+		<?php else:?>
+			<span style="color:red;"><b><?= GetMessage("main_cache_managed_off")?></b></span>
+		<?php endif?>
 		<br><br>
 	</td>
 </tr>
 <tr>
 	<td valign="top" colspan="2" align="left">
-		<?if($component_managed_cache <> "N" || defined("BX_COMP_MANAGED_CACHE")):?>
+		<?php if($component_managed_cache <> "N" || defined("BX_COMP_MANAGED_CACHE")):?>
 			<input type="hidden" name="managed_cache_on" value="N">
-			<input type="submit" name="" value="<?echo GetMessage("main_cache_managed_turn_off")?>"<?if(!$isAdmin || $component_managed_cache == "N") echo " disabled"?>>
-			<?if($component_managed_cache == "N"):?><br><br><?echo GetMessage("main_cache_managed_const")?><?endif?>
-		<?else:?>
+			<input type="submit" name="" value="<?= GetMessage("main_cache_managed_turn_off")?>"<?php if(!$isAdmin || $component_managed_cache == "N") echo " disabled"?>>
+			<?php if($component_managed_cache == "N"):?><br><br><?= GetMessage("main_cache_managed_const")?><?php endif?>
+		<?php else:?>
 			<input type="hidden" name="managed_cache_on" value="Y">
-			<input type="submit" name="" value="<?echo GetMessage("main_cache_managed_turn_on")?>"<?if(!$isAdmin) echo " disabled"?> class="adm-btn-save">
-		<?endif?>
+			<input type="submit" name="" value="<?= GetMessage("main_cache_managed_turn_on")?>"<?php if(!$isAdmin) echo " disabled"?> class="adm-btn-save">
+		<?php endif?>
 	</td>
 </tr>
 <tr>
 	<td colspan="2">
-		<?echo BeginNote();?>
-		<?echo GetMessage("main_cache_managed_note")?>
-		<?echo EndNote(); ?>
+		<?= BeginNote();?>
+		<?= GetMessage("main_cache_managed_note")?>
+		<?= EndNote(); ?>
 	</td>
 </tr>
 </form>
-<?$tabControl->EndTab()?>
-<? $tabControl->BeginNextTab(); ?>
-<form method="POST" action="<?echo $APPLICATION->GetCurPage()?>?lang=<?echo LANG?>">
+<?php $tabControl->EndTab()?>
+<?php $tabControl->BeginNextTab(); ?>
+<form method="POST" action="<?= $APPLICATION->GetCurPage()?>?lang=<?= LANGUAGE_ID?>">
 <?=bitrix_sessid_post()?>
 <tr>
 	<td colspan="2" valign="top" align="left">
 		<input type="hidden" name="clearcache" value="Y">
-		<input type="radio" class="cache-types" name="cachetype" id="cachetype1" value="expired"<?if($cachetype!="all" && $cachetype!="menu" && $cachetype!="managed")echo " checked"?>> <label for="cachetype1"><?echo GetMessage("MAIN_OPTION_CLEAR_CACHE_OLD")?></label><br>
-		<input type="radio" class="cache-types" name="cachetype" id="cachetype2" value="all"<?if($cachetype=="all")echo " checked"?>> <label for="cachetype2"><?echo GetMessage("MAIN_OPTION_CLEAR_CACHE_ALL")?></label><br>
-		<input type="radio" class="cache-types" name="cachetype" id="cachetype3" value="menu"<?if($cachetype=="menu")echo " checked"?>> <label for="cachetype3"><?echo GetMessage("MAIN_OPTION_CLEAR_CACHE_MENU")?></label><br>
-		<input type="radio" class="cache-types" name="cachetype" id="cachetype4" value="managed"<?if($cachetype=="managed")echo " checked"?>> <label for="cachetype4"><?echo GetMessage("MAIN_OPTION_CLEAR_CACHE_MANAGED")?></label><br>
-		<input type="radio" class="cache-types" name="cachetype" id="cachetype5" value="html"<?if($cachetype=="html")echo " checked"?>> <label for="cachetype5"><?echo GetMessage("MAIN_OPTION_CLEAR_CACHE_STATIC")?></label><br>
-		<?if (\Bitrix\Main\ModuleManager::isModuleInstalled("landing")):?>
-		<input type="radio" class="cache-types" name="cachetype" id="cachetype6" value="landing"<?if($cachetype=="landing")echo " checked"?>> <label for="cachetype6"><?echo GetMessage("MAIN_OPTION_CLEAR_CACHE_LANDING")?></label><br>
-		<?endif;?>
+		<input type="radio" class="cache-types" name="cachetype" id="cachetype1" value="expired"<?php if($cachetype!="all" && $cachetype!="menu" && $cachetype!="managed")echo " checked"?>> <label for="cachetype1"><?= GetMessage("MAIN_OPTION_CLEAR_CACHE_OLD")?></label><br>
+		<input type="radio" class="cache-types" name="cachetype" id="cachetype2" value="all"<?php if($cachetype=="all")echo " checked"?>> <label for="cachetype2"><?= GetMessage("MAIN_OPTION_CLEAR_CACHE_ALL")?></label><br>
+		<input type="radio" class="cache-types" name="cachetype" id="cachetype3" value="menu"<?php if($cachetype=="menu")echo " checked"?>> <label for="cachetype3"><?= GetMessage("MAIN_OPTION_CLEAR_CACHE_MENU")?></label><br>
+		<input type="radio" class="cache-types" name="cachetype" id="cachetype4" value="managed"<?php if($cachetype=="managed")echo " checked"?>> <label for="cachetype4"><?= GetMessage("MAIN_OPTION_CLEAR_CACHE_MANAGED")?></label><br>
+		<input type="radio" class="cache-types" name="cachetype" id="cachetype5" value="html"<?php if($cachetype=="html")echo " checked"?>> <label for="cachetype5"><?= GetMessage("MAIN_OPTION_CLEAR_CACHE_STATIC")?></label><br>
+		<?php if (ModuleManager::isModuleInstalled("landing")):?>
+		<input type="radio" class="cache-types" name="cachetype" id="cachetype6" value="landing"<?php if($cachetype=="landing")echo " checked"?>> <label for="cachetype6"><?= GetMessage("MAIN_OPTION_CLEAR_CACHE_LANDING")?></label><br>
+		<?php endif;?>
 		<br>
 		<script>
 			cache_types_cnt = document.getElementsByClassName('cache-types').length;
@@ -542,20 +549,20 @@ $tabControl->Begin();
 </tr>
 <tr>
 	<td valign="top" colspan="2" align="left">
-		<input type="button" id="start_button" value="<?echo GetMessage("main_cache_files_start")?>" OnClick="StartClearCache();"<?if(!$isAdmin) echo " disabled"?> class="adm-btn-save">
-		<input type="button" id="stop_button" value="<?echo GetMessage("main_cache_files_stop")?>" OnClick="StopClearCache();" disabled>
-		<input type="button" id="continue_button" value="<?echo GetMessage("main_cache_files_continue")?>" OnClick="ContinueClearCache();" disabled>
+		<input type="button" id="start_button" value="<?= GetMessage("main_cache_files_start")?>" OnClick="StartClearCache();"<?php if(!$isAdmin) echo " disabled"?> class="adm-btn-save">
+		<input type="button" id="stop_button" value="<?= GetMessage("main_cache_files_stop")?>" OnClick="StopClearCache();" disabled>
+		<input type="button" id="continue_button" value="<?= GetMessage("main_cache_files_continue")?>" OnClick="ContinueClearCache();" disabled>
 	</td>
 </tr>
 <tr>
 	<td colspan="2">
-		<?echo BeginNote();?>
-		<?echo GetMessage("cache_admin_note2")?>
-		<?echo EndNote(); ?>
+		<?= BeginNote();?>
+		<?= GetMessage("cache_admin_note2")?>
+		<?= EndNote(); ?>
 	</td>
 </tr>
 </form>
-<?$tabControl->End();?>
-<?
+<?php $tabControl->End();?>
+<?php
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");
 }

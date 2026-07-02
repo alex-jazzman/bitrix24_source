@@ -9,7 +9,11 @@ jn.define('im/messenger/lib/element/dialog/message/ai-assistant', (require, expo
 
 	class AiAssistantMessage extends TextMessage
 	{
-		constructor(modelMessage = {}, options = {})
+		/**
+		 * @param {MessagesModelState} modelMessage
+		 * @param {CreateMessageOptions|{}} options
+		 */
+		constructor(modelMessage, options = {})
 		{
 			super(modelMessage, options);
 
@@ -21,7 +25,7 @@ jn.define('im/messenger/lib/element/dialog/message/ai-assistant', (require, expo
 		}
 
 		/**
-		 * @returns {AiAssistantDialogWidgetItem}
+		 * @return {AiAssistantDialogWidgetItem}
 		 */
 		toDialogWidgetItem()
 		{

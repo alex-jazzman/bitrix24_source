@@ -25,6 +25,7 @@
 		this.longPollingTimeoutId = null;
 		this.viewerGroupBy = null;
 		this.previewUrl = null;
+		this.linkUrl = null;
 		this.downloadUrl = null;
 		this.isSeparate = false;
 		this.transformationTimeout = options.transformationTimeout || 22000;
@@ -79,6 +80,7 @@
 			}
 
 			this.previewUrl = previewUrl === null || previewUrl.startsWith('data:image') ? null : previewUrl;
+			this.linkUrl = node.dataset.unifiedLink ?? null;
 		},
 
 		/**
@@ -325,6 +327,11 @@
 		getPreviewUrl()
 		{
 			return this.previewUrl;
+		},
+
+		getLinkUrl()
+		{
+			return this.linkUrl;
 		},
 
 		getDownloadUrl()

@@ -1,739 +1,456 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
-(function (exports,main_date,main_popup,sign_type,sign_v2_signSettings,ui_sidepanel_layout,ui_uploader_tileWidget,ui_uploader_core,main_loader,ui_icons,main_core,main_core_events,sign_v2_api,ui_entitySelector,ui_notification) {
+(function (exports, main_core, main_date, main_loader, main_popup, main_core_events, sign_type, sign_v2_signSettings, ui_sidepanel_layout, ui_uploader_tileWidget, ui_uploader_core, sign_v2_api, sign_v2_b2e_documentBlock, ui_icons, ui_entitySelector, ui_notification) {
 	'use strict';
 
-	var _layout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("layout");
-	var _isDragOver = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isDragOver");
-	var _onDragEnter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onDragEnter");
-	var _bindEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindEvents");
-	var _handleDragEnter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleDragEnter");
-	var _handleDragOver = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleDragOver");
-	var _handleDrop = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleDrop");
-	var _handleDragLeave = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleDragLeave");
-	var _resetDragState = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resetDragState");
-	var _setDragState = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setDragState");
 	class DragDropHandler {
-	  constructor(layout, options = {}) {
-	    Object.defineProperty(this, _setDragState, {
-	      value: _setDragState2
-	    });
-	    Object.defineProperty(this, _resetDragState, {
-	      value: _resetDragState2
-	    });
-	    Object.defineProperty(this, _handleDragLeave, {
-	      value: _handleDragLeave2
-	    });
-	    Object.defineProperty(this, _handleDrop, {
-	      value: _handleDrop2
-	    });
-	    Object.defineProperty(this, _handleDragOver, {
-	      value: _handleDragOver2
-	    });
-	    Object.defineProperty(this, _handleDragEnter, {
-	      value: _handleDragEnter2
-	    });
-	    Object.defineProperty(this, _bindEvents, {
-	      value: _bindEvents2
-	    });
-	    Object.defineProperty(this, _layout, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _isDragOver, {
-	      writable: true,
-	      value: false
-	    });
-	    Object.defineProperty(this, _onDragEnter, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout] = layout;
-	    babelHelpers.classPrivateFieldLooseBase(this, _onDragEnter)[_onDragEnter] = options.onDragEnter;
-	    babelHelpers.classPrivateFieldLooseBase(this, _bindEvents)[_bindEvents]();
-	  }
-	}
-	function _bindEvents2() {
-	  main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout], 'dragenter', babelHelpers.classPrivateFieldLooseBase(this, _handleDragEnter)[_handleDragEnter].bind(this));
-	  main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout], 'dragover', babelHelpers.classPrivateFieldLooseBase(this, _handleDragOver)[_handleDragOver].bind(this));
-	  main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout], 'drop', babelHelpers.classPrivateFieldLooseBase(this, _handleDrop)[_handleDrop].bind(this));
-	  main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout], 'dragleave', babelHelpers.classPrivateFieldLooseBase(this, _handleDragLeave)[_handleDragLeave].bind(this));
-	}
-	function _handleDragEnter2(event) {
-	  event.preventDefault();
-	  babelHelpers.classPrivateFieldLooseBase(this, _setDragState)[_setDragState]();
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _onDragEnter)[_onDragEnter]) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _onDragEnter)[_onDragEnter](event);
-	  }
-	}
-	function _handleDragOver2(event) {
-	  event.preventDefault();
-	}
-	function _handleDrop2(event) {
-	  event.preventDefault();
-	  babelHelpers.classPrivateFieldLooseBase(this, _resetDragState)[_resetDragState]();
-	}
-	function _handleDragLeave2(event) {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].contains(event.relatedTarget)) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _resetDragState)[_resetDragState]();
-	  }
-	}
-	function _resetDragState2() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _isDragOver)[_isDragOver]) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _isDragOver)[_isDragOver] = false;
-	    main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout], '--drag-over');
-	    main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout], '--dragging');
-	  }
-	}
-	function _setDragState2() {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isDragOver)[_isDragOver]) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _isDragOver)[_isDragOver] = true;
-	    main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout], '--drag-over');
-	    main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout], '--dragging');
-	  }
+		#layout;
+		#isDragOver = false;
+		#onDragEnter;
+		constructor(layout, options = {}) {
+			this.#layout = layout;
+			this.#onDragEnter = options.onDragEnter;
+			this.#bindEvents();
+		}
+		#bindEvents() {
+			main_core.Event.bind(this.#layout, 'dragenter', this.#handleDragEnter.bind(this));
+			main_core.Event.bind(this.#layout, 'dragover', this.#handleDragOver.bind(this));
+			main_core.Event.bind(this.#layout, 'drop', this.#handleDrop.bind(this));
+			main_core.Event.bind(this.#layout, 'dragleave', this.#handleDragLeave.bind(this));
+		}
+		#handleDragEnter(event) {
+			event.preventDefault();
+			this.#setDragState();
+			if (this.#onDragEnter) {
+				this.#onDragEnter(event);
+			}
+		}
+		#handleDragOver(event) {
+			event.preventDefault();
+		}
+		#handleDrop(event) {
+			event.preventDefault();
+			this.#resetDragState();
+		}
+		#handleDragLeave(event) {
+			if (!this.#layout.contains(event.relatedTarget)) {
+				this.#resetDragState();
+			}
+		}
+		#resetDragState() {
+			if (this.#isDragOver) {
+				this.#isDragOver = false;
+				main_core.Dom.removeClass(this.#layout, '--drag-over');
+				main_core.Dom.removeClass(this.#layout, '--dragging');
+			}
+		}
+		#setDragState() {
+			if (!this.#isDragOver) {
+				this.#isDragOver = true;
+				main_core.Dom.addClass(this.#layout, '--drag-over');
+				main_core.Dom.addClass(this.#layout, '--dragging');
+			}
+		}
 	}
 
-	let _ = t => t,
-	  _t,
-	  _t2,
-	  _t3,
-	  _t4,
-	  _t5,
-	  _t6,
-	  _t7,
-	  _t8;
-	var _layout$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("layout");
-	var _props = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("props");
-	var _titleNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("titleNode");
-	var _descriptionNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("descriptionNode");
-	var _linkNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("linkNode");
-	var _contentNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("contentNode");
-	var _dragOverlayNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dragOverlayNode");
-	var _createListItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createListItem");
-	var _bindDragEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindDragEvents");
 	class ListItem {
-	  constructor(props) {
-	    Object.defineProperty(this, _bindDragEvents, {
-	      value: _bindDragEvents2
-	    });
-	    Object.defineProperty(this, _createListItem, {
-	      value: _createListItem2
-	    });
-	    Object.defineProperty(this, _layout$1, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _props, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _titleNode, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _descriptionNode, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _linkNode, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _contentNode, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _dragOverlayNode, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _titleNode)[_titleNode] = main_core.Tag.render(_t || (_t = _`
+		#layout;
+		#props;
+		#titleNode;
+		#descriptionNode;
+		#linkNode;
+		#contentNode;
+		#dragOverlayNode;
+		constructor(props) {
+			this.#titleNode = main_core.Tag.render`
 			<span class="sign-blank-selector__list_item-title"></span>
-		`));
-	    babelHelpers.classPrivateFieldLooseBase(this, _descriptionNode)[_descriptionNode] = main_core.Tag.render(_t2 || (_t2 = _`
+		`;
+			this.#descriptionNode = main_core.Tag.render`
 			<span class="sign-blank-selector__list_item-info"></span>
-		`));
-	    babelHelpers.classPrivateFieldLooseBase(this, _linkNode)[_linkNode] = null;
-	    this.setProps(props);
-	  }
-	  getLayout() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1]) {
-	      return babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1];
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1] = babelHelpers.classPrivateFieldLooseBase(this, _createListItem)[_createListItem]();
-	    return babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1];
-	  }
-	  setTitle(title = '') {
-	    babelHelpers.classPrivateFieldLooseBase(this, _titleNode)[_titleNode].textContent = title;
-	    babelHelpers.classPrivateFieldLooseBase(this, _titleNode)[_titleNode].title = title;
-	    this.setProps({
-	      ...this.getProps(),
-	      title
-	    });
-	  }
-	  setDescription(description = '') {
-	    babelHelpers.classPrivateFieldLooseBase(this, _descriptionNode)[_descriptionNode].textContent = description;
-	    babelHelpers.classPrivateFieldLooseBase(this, _descriptionNode)[_descriptionNode].title = description;
-	    this.setProps({
-	      ...this.getProps(),
-	      description
-	    });
-	  }
-	  getProps() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _props)[_props];
-	  }
-	  setProps(props) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _props)[_props] = props;
-	  }
-	}
-	function _createListItem2() {
-	  const {
-	    title,
-	    description,
-	    modifier,
-	    link,
-	    onLinkClick,
-	    isNew,
-	    isPlaceholderDocumentAvailable
-	  } = this.getProps();
-	  this.setTitle(title);
-	  this.setDescription(description);
-	  const children = [babelHelpers.classPrivateFieldLooseBase(this, _titleNode)[_titleNode], babelHelpers.classPrivateFieldLooseBase(this, _descriptionNode)[_descriptionNode]];
-	  if (link && onLinkClick) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _linkNode)[_linkNode] = main_core.Tag.render(_t3 || (_t3 = _`
-				<a class="sign-blank-selector__list_item-link" onclick="${0}">
-					${0}
+		`;
+			this.#linkNode = null;
+			this.setProps(props);
+		}
+		#createListItem() {
+			const {
+				title,
+				description,
+				modifier,
+				link,
+				onLinkClick,
+				isNew,
+				isB2eBlankScenario
+			} = this.getProps();
+			this.setTitle(title);
+			this.setDescription(description);
+			const children = [this.#titleNode, this.#descriptionNode];
+			if (link && onLinkClick) {
+				this.#linkNode = main_core.Tag.render`
+				<a class="sign-blank-selector__list_item-link" onclick="${e => {
+				e.stopPropagation();
+				onLinkClick();
+			}}">
+					${main_core.Text.encode(link)}
 				</a>
-			`), e => {
-	      e.stopPropagation();
-	      onLinkClick();
-	    }, main_core.Text.encode(link));
-	    children.push(babelHelpers.classPrivateFieldLooseBase(this, _linkNode)[_linkNode]);
-	  }
-	  if (isNew) {
-	    const badgeText = main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_NEW_BADGE');
-	    const badge = main_core.Tag.render(_t4 || (_t4 = _`
-				<span class="sign-blank-selector__list_item-badge" title="${0}">
-					${0}
+			`;
+				children.push(this.#linkNode);
+			}
+			if (isNew) {
+				const badgeText = main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_NEW_BADGE');
+				const badge = main_core.Tag.render`
+				<span class="sign-blank-selector__list_item-badge" title="${main_core.Text.encode(badgeText)}">
+					${main_core.Text.encode(badgeText)}
 				</span>
-			`), main_core.Text.encode(badgeText), main_core.Text.encode(badgeText));
-	    children.push(badge);
-	  }
-	  if (isPlaceholderDocumentAvailable) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _contentNode)[_contentNode] = main_core.Tag.render(_t5 || (_t5 = _`
+			`;
+				children.push(badge);
+			}
+			if (isB2eBlankScenario) {
+				this.#contentNode = main_core.Tag.render`
 				<div class="sign-blank-selector__list_item-content">
-					${0}
+					${children}
 				</div>
-			`), children);
-	    const {
-	      dragDescriptionTextHTML
-	    } = this.getProps();
-	    babelHelpers.classPrivateFieldLooseBase(this, _dragOverlayNode)[_dragOverlayNode] = main_core.Tag.render(_t6 || (_t6 = _`
+			`;
+				const {
+					dragDescriptionTextHTML
+				} = this.getProps();
+				this.#dragOverlayNode = main_core.Tag.render`
 				<div class="sign-blank-selector__list_item-drag-overlay">
 					<div class="sign-blank-selector__list_item-drag-overlay-content">
 						<span class="sign-blank-selector__list_item-drag-overlay-title">
-							${0}
+							${main_core.Text.encode(title)}
 						</span>
 						<span>
-							${0}
+							${dragDescriptionTextHTML}
 						</span>
 					</div>
 				</div>
-			`), main_core.Text.encode(title), dragDescriptionTextHTML);
-	    const layout = main_core.Tag.render(_t7 || (_t7 = _`
-				<div class="sign-blank-selector__list_item --${0} --b2e">
-					${0}
-					${0}
+			`;
+				const layout = main_core.Tag.render`
+				<div class="sign-blank-selector__list_item --${main_core.Text.encode(modifier)} --b2e">
+					${this.#contentNode}
+					${this.#dragOverlayNode}
 				</div>
-			`), main_core.Text.encode(modifier), babelHelpers.classPrivateFieldLooseBase(this, _contentNode)[_contentNode], babelHelpers.classPrivateFieldLooseBase(this, _dragOverlayNode)[_dragOverlayNode]);
-	    babelHelpers.classPrivateFieldLooseBase(this, _bindDragEvents)[_bindDragEvents](layout);
-	    return layout;
-	  }
-	  return main_core.Tag.render(_t8 || (_t8 = _`
-			<div class="sign-blank-selector__list_item --${0} --b2b">
-				${0}
+			`;
+				this.#bindDragEvents(layout);
+				return layout;
+			}
+			return main_core.Tag.render`
+			<div class="sign-blank-selector__list_item --${main_core.Text.encode(modifier)} --b2b">
+				${children}
 			</div>
-		`), main_core.Text.encode(modifier), children);
-	}
-	function _bindDragEvents2(layout) {
-	  new DragDropHandler(layout, {
-	    onDragEnter: event => {
-	      const {
-	        onDragEnter
-	      } = this.getProps();
-	      if (onDragEnter) {
-	        onDragEnter(event);
-	      }
-	    }
-	  });
+		`;
+		}
+		#bindDragEvents(layout) {
+			new DragDropHandler(layout, {
+				onDragEnter: event => {
+					const {
+						onDragEnter
+					} = this.getProps();
+					if (onDragEnter) {
+						onDragEnter(event);
+					}
+				}
+			});
+		}
+		getLayout() {
+			if (this.#layout) {
+				return this.#layout;
+			}
+			this.#layout = this.#createListItem();
+			return this.#layout;
+		}
+		setTitle(title = '') {
+			this.#titleNode.textContent = title;
+			this.#titleNode.title = title;
+			this.setProps({
+				...this.getProps(),
+				title
+			});
+		}
+		setDescription(description = '') {
+			this.#descriptionNode.textContent = description;
+			this.#descriptionNode.title = description;
+			this.setProps({
+				...this.getProps(),
+				description
+			});
+		}
+		getProps() {
+			return this.#props;
+		}
+		setProps(props) {
+			this.#props = props;
+		}
 	}
 
-	let _$1 = t => t,
-	  _t$1,
-	  _t2$1,
-	  _t3$1,
-	  _t4$1;
-	var _placeholder = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("placeholder");
-	var _preview = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("preview");
-	var _loader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loader");
 	class Blank extends ListItem {
-	  constructor(props) {
-	    super({
-	      ...props,
-	      modifier: 'blank'
-	    });
-	    Object.defineProperty(this, _placeholder, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _preview, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _loader, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _placeholder)[_placeholder] = main_core.Tag.render(_t$1 || (_t$1 = _$1`<div class="sign-blank-selector__list_item-status"></div>`));
-	    babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview] = main_core.Tag.render(_t2$1 || (_t2$1 = _$1`
+		#placeholder;
+		#preview;
+		#loader;
+		constructor(props) {
+			super({
+				...props,
+				modifier: 'blank'
+			});
+			this.#placeholder = main_core.Tag.render`<div class="sign-blank-selector__list_item-status"></div>`;
+			this.#preview = main_core.Tag.render`
 			<div class="sign-blank-selector__list_item-preview" hidden>
 				<img
-					onload="${0}"
+					onload="${() => {
+			this.#preview.hidden = false;
+			this.#placeholder.hidden = true;
+		}}"
 				/>
 			</div>
-		`), () => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview].hidden = false;
-	      babelHelpers.classPrivateFieldLooseBase(this, _placeholder)[_placeholder].hidden = true;
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _loader)[_loader] = new main_loader.Loader({
-	      size: 30,
-	      target: babelHelpers.classPrivateFieldLooseBase(this, _placeholder)[_placeholder]
-	    });
-	    const layout = this.getLayout();
-	    main_core.Dom.prepend(babelHelpers.classPrivateFieldLooseBase(this, _placeholder)[_placeholder], layout);
-	    main_core.Dom.prepend(babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview], layout);
-	  }
-	  setAvatarWithDescription(description, userAvatarUrl) {
-	    this.setDescription(description);
-	    this.setProps({
-	      ...this.getProps(),
-	      userAvatarUrl
-	    });
-	    const avatarIcon = userAvatarUrl ? main_core.Tag.render(_t3$1 || (_t3$1 = _$1`
-				<img class="sign-blank-selector__list_item-info-avatar" src="${0}" />
-			`), userAvatarUrl) : main_core.Tag.render(_t4$1 || (_t4$1 = _$1`
+		`;
+			this.#loader = new main_loader.Loader({
+				size: 30,
+				target: this.#placeholder
+			});
+			const layout = this.getLayout();
+			main_core.Dom.prepend(this.#placeholder, layout);
+			main_core.Dom.prepend(this.#preview, layout);
+		}
+		setAvatarWithDescription(description, userAvatarUrl) {
+			this.setDescription(description);
+			this.setProps({
+				...this.getProps(),
+				userAvatarUrl
+			});
+			const avatarIcon = userAvatarUrl ? main_core.Tag.render`
+				<img class="sign-blank-selector__list_item-info-avatar" src="${userAvatarUrl}" />
+			` : main_core.Tag.render`
 				<span class="sign-blank-selector__list_item-info-avatar ui-icon ui-icon-common-user">
 					<i></i>
 				</span>
-			`));
-	    const {
-	      lastElementChild: descriptionNode
-	    } = this.getLayout();
-	    main_core.Dom.prepend(avatarIcon, descriptionNode);
-	  }
-	  select() {
-	    main_core.Dom.addClass(this.getLayout(), '--active');
-	  }
-	  deselect() {
-	    main_core.Dom.removeClass(this.getLayout(), '--active');
-	    this.getLayout().blur();
-	  }
-	  remove() {
-	    main_core.Dom.remove(this.getLayout());
-	  }
-	  setId(id) {
-	    this.getLayout().dataset.id = id;
-	  }
-	  setReady(isReady) {
-	    if (!isReady) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _loader)[_loader].show();
-	      return;
-	    }
-	    const layout = this.getLayout();
-	    layout.tabIndex = '0';
-	    babelHelpers.classPrivateFieldLooseBase(this, _loader)[_loader].hide();
-	    main_core.Dom.addClass(layout, '--loaded');
-	  }
-	  setPreview(previewUrl) {
-	    if (previewUrl) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview].firstElementChild.src = previewUrl;
-	    }
-	  }
+			`;
+			const {
+				lastElementChild: descriptionNode
+			} = this.getLayout();
+			main_core.Dom.prepend(avatarIcon, descriptionNode);
+		}
+		select() {
+			main_core.Dom.addClass(this.getLayout(), '--active');
+		}
+		deselect() {
+			main_core.Dom.removeClass(this.getLayout(), '--active');
+			this.getLayout().blur();
+		}
+		remove() {
+			main_core.Dom.remove(this.getLayout());
+		}
+		setId(id) {
+			this.getLayout().dataset.id = id;
+		}
+		setReady(isReady) {
+			if (!isReady) {
+				this.#loader.show();
+				return;
+			}
+			const layout = this.getLayout();
+			layout.tabIndex = '0';
+			this.#loader.hide();
+			main_core.Dom.addClass(layout, '--loaded');
+		}
+		setPreview(previewUrl) {
+			if (previewUrl) {
+				this.#preview.firstElementChild.src = previewUrl;
+			}
+		}
 	}
 
-	let _$2 = t => t,
-	  _t$2;
-	var _cache = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cache");
-	var _setOptions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setOptions");
-	var _getOptions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getOptions");
-	var _getApi = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getApi");
-	var _getBlankSelector = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getBlankSelector");
-	var _getTagSelector = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTagSelector");
-	var _resetBlankSelector = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resetBlankSelector");
 	/**
 	 * @namespace BX.Sign.V2
 	 */
-	class BlankField$$1 extends main_core_events.EventEmitter {
-	  constructor(_options) {
-	    var _options$data;
-	    super();
-	    Object.defineProperty(this, _resetBlankSelector, {
-	      value: _resetBlankSelector2
-	    });
-	    Object.defineProperty(this, _getTagSelector, {
-	      value: _getTagSelector2
-	    });
-	    Object.defineProperty(this, _getBlankSelector, {
-	      value: _getBlankSelector2
-	    });
-	    Object.defineProperty(this, _getApi, {
-	      value: _getApi2
-	    });
-	    Object.defineProperty(this, _getOptions, {
-	      value: _getOptions2
-	    });
-	    Object.defineProperty(this, _setOptions, {
-	      value: _setOptions2
-	    });
-	    Object.defineProperty(this, _cache, {
-	      writable: true,
-	      value: new main_core.Cache.MemoryCache()
-	    });
-	    this.setEventNamespace('BX.Sign.BlankSelector.BlankField');
-	    this.subscribeFromOptions(_options == null ? void 0 : _options.events);
-	    babelHelpers.classPrivateFieldLooseBase(this, _setOptions)[_setOptions](_options);
-	    const blankId = _options == null ? void 0 : (_options$data = _options.data) == null ? void 0 : _options$data.blankId;
-	    if (main_core.Type.isStringFilled(blankId) || main_core.Type.isNumber(blankId)) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _getApi)[_getApi]().getBlankById(_options.data.blankId).then(({
-	        id,
-	        title
-	      }) => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _getTagSelector)[_getTagSelector]().addTag({
-	          id,
-	          title,
-	          entityId: 'blank'
-	        });
-	      });
-	    }
-	  }
-	  getLayout() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].remember('layout', () => {
-	      const layout = main_core.Tag.render(_t$2 || (_t$2 = _$2`
+	class BlankField extends main_core_events.EventEmitter {
+		#cache = new main_core.Cache.MemoryCache();
+		constructor(options) {
+			super();
+			this.setEventNamespace('BX.Sign.BlankSelector.BlankField');
+			this.subscribeFromOptions(options?.events);
+			this.#setOptions(options);
+			const blankId = options?.data?.blankId;
+			if (main_core.Type.isStringFilled(blankId) || main_core.Type.isNumber(blankId)) {
+				this.#getApi().getBlankById(options.data.blankId).then(({
+					id,
+					title
+				}) => {
+					this.#getTagSelector().addTag({
+						id,
+						title,
+						entityId: 'blank'
+					});
+				});
+			}
+		}
+		#setOptions(options) {
+			this.#cache.set('options', options);
+		}
+		#getOptions() {
+			return this.#cache.get('options', {});
+		}
+		#getApi() {
+			return this.#cache.remember('api', () => new sign_v2_api.Api());
+		}
+		#getBlankSelector() {
+			return this.#cache.remember('blankSelector', () => {
+				return new BlankSelector({
+					...this.#getOptions().selectorOptions,
+					events: {
+						toggleSelection: event => {
+							const {
+								id,
+								title,
+								selected
+							} = event.getData();
+							const tagSelector = this.#getTagSelector();
+							if (selected) {
+								tagSelector.addTag({
+									id,
+									title,
+									entityId: 'blank'
+								});
+								tagSelector.showAddButton();
+								this.emit('onSelect', event);
+								return;
+							}
+							if (tagSelector.getTags().length === 0) {
+								tagSelector.showAddButton();
+							}
+							this.emit('onCancel');
+						},
+						onSliderClose: () => {
+							const tagSelector = this.#getTagSelector();
+							if (tagSelector.getTags().length === 0) {
+								tagSelector.showAddButton();
+							}
+							this.#resetBlankSelector();
+						}
+					}
+				});
+			});
+		}
+		#getTagSelector() {
+			return this.#cache.remember('tagSelector', () => {
+				return new ui_entitySelector.TagSelector({
+					id: main_core.Text.getRandom(),
+					multiple: false,
+					showTextBox: false,
+					addButtonCaption: main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_FIELD_ADD_BUTTON_LABEL'),
+					tagMaxWidth: 500,
+					events: {
+						onAddButtonClick: () => {
+							this.#getBlankSelector().openInSlider();
+							this.#getTagSelector().hideTextBox();
+						},
+						onAfterTagRemove: () => {
+							this.#getTagSelector().hideTextBox();
+							this.#getTagSelector().showAddButton();
+							this.emit('onRemove');
+						}
+					}
+				});
+			});
+		}
+		getLayout() {
+			return this.#cache.remember('layout', () => {
+				const layout = main_core.Tag.render`
 				<div class="sign-blank-selector-field">
 				</div>
-			`));
-	      babelHelpers.classPrivateFieldLooseBase(this, _getTagSelector)[_getTagSelector]().renderTo(layout);
-	      return layout;
-	    });
-	  }
-	  renderTo(targetContainer) {
-	    if (main_core.Type.isDomNode(targetContainer)) {
-	      main_core.Dom.append(this.getLayout(), targetContainer);
-	    }
-	  }
-	}
-	function _setOptions2(options) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].set('options', options);
-	}
-	function _getOptions2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].get('options', {});
-	}
-	function _getApi2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].remember('api', () => new sign_v2_api.Api());
-	}
-	function _getBlankSelector2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].remember('blankSelector', () => {
-	    return new BlankSelector({
-	      ...babelHelpers.classPrivateFieldLooseBase(this, _getOptions)[_getOptions]().selectorOptions,
-	      events: {
-	        toggleSelection: event => {
-	          const {
-	            id,
-	            title,
-	            selected
-	          } = event.getData();
-	          const tagSelector = babelHelpers.classPrivateFieldLooseBase(this, _getTagSelector)[_getTagSelector]();
-	          if (selected) {
-	            tagSelector.addTag({
-	              id,
-	              title,
-	              entityId: 'blank'
-	            });
-	            tagSelector.showAddButton();
-	            this.emit('onSelect', event);
-	            return;
-	          }
-	          if (tagSelector.getTags().length === 0) {
-	            tagSelector.showAddButton();
-	          }
-	          this.emit('onCancel');
-	        },
-	        onSliderClose: () => {
-	          const tagSelector = babelHelpers.classPrivateFieldLooseBase(this, _getTagSelector)[_getTagSelector]();
-	          if (tagSelector.getTags().length === 0) {
-	            tagSelector.showAddButton();
-	          }
-	          babelHelpers.classPrivateFieldLooseBase(this, _resetBlankSelector)[_resetBlankSelector]();
-	        }
-	      }
-	    });
-	  });
-	}
-	function _getTagSelector2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].remember('tagSelector', () => {
-	    return new ui_entitySelector.TagSelector({
-	      id: main_core.Text.getRandom(),
-	      multiple: false,
-	      showTextBox: false,
-	      addButtonCaption: main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_FIELD_ADD_BUTTON_LABEL'),
-	      tagMaxWidth: 500,
-	      events: {
-	        onAddButtonClick: () => {
-	          babelHelpers.classPrivateFieldLooseBase(this, _getBlankSelector)[_getBlankSelector]().openInSlider();
-	          babelHelpers.classPrivateFieldLooseBase(this, _getTagSelector)[_getTagSelector]().hideTextBox();
-	        },
-	        onAfterTagRemove: () => {
-	          babelHelpers.classPrivateFieldLooseBase(this, _getTagSelector)[_getTagSelector]().hideTextBox();
-	          babelHelpers.classPrivateFieldLooseBase(this, _getTagSelector)[_getTagSelector]().showAddButton();
-	          this.emit('onRemove');
-	        }
-	      }
-	    });
-	  });
-	}
-	function _resetBlankSelector2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].delete('blankSelector');
+			`;
+				this.#getTagSelector().renderTo(layout);
+				return layout;
+			});
+		}
+		renderTo(targetContainer) {
+			if (main_core.Type.isDomNode(targetContainer)) {
+				main_core.Dom.append(this.getLayout(), targetContainer);
+			}
+		}
+		#resetBlankSelector() {
+			this.#cache.delete('blankSelector');
+		}
 	}
 
-	let _$3 = t => t,
-	  _t$3,
-	  _t2$2,
-	  _t3$2,
-	  _t4$2,
-	  _t5$1,
-	  _t6$1;
 	const blankType = Object.freeze({
-	  default: 'default',
-	  placeholders: 'placeholders'
+		default: 'default',
+		placeholders: 'placeholders'
 	});
 	const uploaderOptions = {
-	  controller: 'sign.upload.blankUploadController',
-	  acceptedFileTypes: ['.jpg', '.jpeg', '.png', '.pdf', '.doc', '.docx', '.rtf', '.odt'],
-	  acceptedPlaceholdersFileTypes: ['.docx'],
-	  multiple: true,
-	  autoUpload: false,
-	  maxFileSize: 50 * 1024 * 1024,
-	  maxFileCount: 100,
-	  imageMaxFileSize: 10 * 1024 * 1024,
-	  maxTotalFileSize: 50 * 1024 * 1024
+		controller: 'sign.upload.blankUploadController',
+		acceptedFileTypes: ['.jpg', '.jpeg', '.png', '.pdf', '.doc', '.docx', '.rtf', '.odt'],
+		acceptedPlaceholdersFileTypes: ['.docx'],
+		multiple: true,
+		autoUpload: false,
+		maxFileSize: 50 * 1024 * 1024,
+		maxFileCount: 100,
+		imageMaxFileSize: 10 * 1024 * 1024,
+		maxTotalFileSize: 50 * 1024 * 1024
 	};
+	const imageExtensions = new Set(['jpg', 'jpeg', 'png']);
 	const errorPopupOptions = {
-	  id: 'qwerty',
-	  padding: 20,
-	  offsetLeft: 40,
-	  offsetTop: -12,
-	  angle: true,
-	  darkMode: true,
-	  width: 300,
-	  autoHide: true,
-	  cacheable: false,
-	  bindOptions: {
-	    position: 'bottom'
-	  }
+		id: 'qwerty',
+		padding: 20,
+		offsetLeft: 40,
+		offsetTop: -12,
+		angle: true,
+		darkMode: true,
+		width: 300,
+		autoHide: true,
+		cacheable: false,
+		bindOptions: {
+			position: 'bottom'
+		}
 	};
-	var _cache$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cache");
-	var _blanks = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("blanks");
-	var _tileWidget = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("tileWidget");
-	var _tileWidgetContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("tileWidgetContainer");
-	var _uploadButtonsContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("uploadButtonsContainer");
-	var _relatedTarget = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("relatedTarget");
-	var _blanksContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("blanksContainer");
-	var _page = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("page");
-	var _loadMoreButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loadMoreButton");
-	var _api = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("api");
-	var _config = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("config");
-	var _isPlaceholdersUpload = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isPlaceholdersUpload");
-	var _getAcceptedFileTypes = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAcceptedFileTypes");
-	var _checkForFilesValid = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("checkForFilesValid");
-	var _onFileBeforeAdd = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onFileBeforeAdd");
-	var _getImagesLimit = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getImagesLimit");
-	var _onFileAdd = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onFileAdd");
-	var _onUploadComplete = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onUploadComplete");
-	var _onFileRemove = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onFileRemove");
-	var _onUploadStart = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onUploadStart");
-	var _toggleTileVisibility = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("toggleTileVisibility");
-	var _createUploadButtons = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createUploadButtons");
-	var _getUploadButtonsConfig = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getUploadButtonsConfig");
-	var _isPlaceholderDocumentAvailable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isPlaceholderDocumentAvailable");
-	var _getB2bButtonsConfig = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getB2bButtonsConfig");
-	var _getB2eButtonsConfig = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getB2eButtonsConfig");
-	var _resumeUploading = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resumeUploading");
-	var _loadBlanks = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loadBlanks");
-	var _setupBlank = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setupBlank");
-	var _normalizeTitle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("normalizeTitle");
-	var _addBlank = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addBlank");
-	var _setSaveButtonIntoSlider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setSaveButtonIntoSlider");
-	var _disableSaveButtonIntoSlider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("disableSaveButtonIntoSlider");
-	var _enableSaveButtonIntoSlider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("enableSaveButtonIntoSlider");
-	var _getSaveButtonIntoSlider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSaveButtonIntoSlider");
-	var _isAllFileUploadsComplete = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isAllFileUploadsComplete");
 	class BlankSelector extends main_core_events.EventEmitter {
-	  constructor(_config2) {
-	    var _config2$events;
-	    super();
-	    Object.defineProperty(this, _isAllFileUploadsComplete, {
-	      value: _isAllFileUploadsComplete2
-	    });
-	    Object.defineProperty(this, _getSaveButtonIntoSlider, {
-	      value: _getSaveButtonIntoSlider2
-	    });
-	    Object.defineProperty(this, _enableSaveButtonIntoSlider, {
-	      value: _enableSaveButtonIntoSlider2
-	    });
-	    Object.defineProperty(this, _disableSaveButtonIntoSlider, {
-	      value: _disableSaveButtonIntoSlider2
-	    });
-	    Object.defineProperty(this, _setSaveButtonIntoSlider, {
-	      value: _setSaveButtonIntoSlider2
-	    });
-	    Object.defineProperty(this, _addBlank, {
-	      value: _addBlank2
-	    });
-	    Object.defineProperty(this, _normalizeTitle, {
-	      value: _normalizeTitle2
-	    });
-	    Object.defineProperty(this, _setupBlank, {
-	      value: _setupBlank2
-	    });
-	    Object.defineProperty(this, _loadBlanks, {
-	      value: _loadBlanks2
-	    });
-	    Object.defineProperty(this, _resumeUploading, {
-	      value: _resumeUploading2
-	    });
-	    Object.defineProperty(this, _getB2eButtonsConfig, {
-	      value: _getB2eButtonsConfig2
-	    });
-	    Object.defineProperty(this, _getB2bButtonsConfig, {
-	      value: _getB2bButtonsConfig2
-	    });
-	    Object.defineProperty(this, _isPlaceholderDocumentAvailable, {
-	      value: _isPlaceholderDocumentAvailable2
-	    });
-	    Object.defineProperty(this, _getUploadButtonsConfig, {
-	      value: _getUploadButtonsConfig2
-	    });
-	    Object.defineProperty(this, _createUploadButtons, {
-	      value: _createUploadButtons2
-	    });
-	    Object.defineProperty(this, _toggleTileVisibility, {
-	      value: _toggleTileVisibility2
-	    });
-	    Object.defineProperty(this, _onUploadStart, {
-	      value: _onUploadStart2
-	    });
-	    Object.defineProperty(this, _onFileRemove, {
-	      value: _onFileRemove2
-	    });
-	    Object.defineProperty(this, _onUploadComplete, {
-	      value: _onUploadComplete2
-	    });
-	    Object.defineProperty(this, _onFileAdd, {
-	      value: _onFileAdd2
-	    });
-	    Object.defineProperty(this, _getImagesLimit, {
-	      value: _getImagesLimit2
-	    });
-	    Object.defineProperty(this, _onFileBeforeAdd, {
-	      value: _onFileBeforeAdd2
-	    });
-	    Object.defineProperty(this, _checkForFilesValid, {
-	      value: _checkForFilesValid2
-	    });
-	    Object.defineProperty(this, _getAcceptedFileTypes, {
-	      value: _getAcceptedFileTypes2
-	    });
-	    this.events = Object.freeze({
-	      beforeAddFileSuccessfully: 'beforeAddFileSuccessfully',
-	      toggleSelection: 'toggleSelection',
-	      addFile: 'addFile'
-	    });
-	    Object.defineProperty(this, _cache$1, {
-	      writable: true,
-	      value: new main_core.Cache.MemoryCache()
-	    });
-	    Object.defineProperty(this, _blanks, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _tileWidget, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _tileWidgetContainer, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _uploadButtonsContainer, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _relatedTarget, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _blanksContainer, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _page, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _loadMoreButton, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _api, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _config, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _isPlaceholdersUpload, {
-	      writable: true,
-	      value: false
-	    });
-	    this.setEventNamespace('BX.Sign.V2.BlankSelector');
-	    this.subscribeFromOptions((_config2$events = _config2 == null ? void 0 : _config2.events) != null ? _config2$events : {});
-	    babelHelpers.classPrivateFieldLooseBase(this, _config)[_config] = _config2;
-	    this.selectedBlankId = 0;
-	    babelHelpers.classPrivateFieldLooseBase(this, _blanks)[_blanks] = new Map();
-	    babelHelpers.classPrivateFieldLooseBase(this, _page)[_page] = 0;
-	    babelHelpers.classPrivateFieldLooseBase(this, _isPlaceholdersUpload)[_isPlaceholdersUpload] = false;
-	    const uploadButtons = babelHelpers.classPrivateFieldLooseBase(this, _createUploadButtons)[_createUploadButtons]();
-	    const dragArea = main_core.Tag.render(_t$3 || (_t$3 = _$3`
+		events = Object.freeze({
+			beforeAddFileSuccessfully: 'beforeAddFileSuccessfully',
+			toggleSelection: 'toggleSelection',
+			addFile: 'addFile'
+		});
+		#cache = new main_core.Cache.MemoryCache();
+		#blanks;
+		#tileWidget;
+		#tileWidgetContainer;
+		#uploadButtonsContainer;
+		#relatedTarget;
+		#blanksContainer;
+		#page;
+		#loadMoreButton;
+		#api;
+		#config;
+		#isPlaceholdersUpload = false;
+		#browseAcceptMap = new WeakMap();
+		constructor(config) {
+			super();
+			this.setEventNamespace('BX.Sign.V2.BlankSelector');
+			this.subscribeFromOptions(config?.events ?? {});
+			this.#config = config;
+			this.selectedBlankId = 0;
+			this.#blanks = new Map();
+			this.#page = 0;
+			this.#isPlaceholdersUpload = false;
+			const uploadButtons = this.#createUploadButtons();
+			const dragArea = main_core.Tag.render`
 			<label class="sign-blank-selector__list_drag-area-label">
-				${0}
+				${main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_DRAG_AREA')}
 			</label>
-		`), main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_DRAG_AREA'));
-	    const widgetOptions = {
-	      slots: {
-	        afterDropArea: {
-	          computed: {
-	            title: () => main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_CLEAR_ALL')
-	          },
-	          methods: {
-	            clear: () => {
-	              this.clearFiles({
-	                removeFromServer: false
-	              });
-	            }
-	          },
-	          template: `
+		`;
+			const widgetOptions = {
+				slots: {
+					afterDropArea: {
+						computed: {
+							title: () => main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_CLEAR_ALL')
+						},
+						methods: {
+							clear: () => {
+								this.clearFiles({
+									removeFromServer: false
+								});
+							}
+						},
+						template: `
 						<span
 							class="sign-blank-selector__tile-widget_clear-btn"
 							:title="title"
@@ -741,594 +458,675 @@ this.BX.Sign = this.BX.Sign || {};
 						>
 						</span>
 					`
-	        }
-	      }
-	    };
-	    babelHelpers.classPrivateFieldLooseBase(this, _uploadButtonsContainer)[_uploadButtonsContainer] = main_core.Tag.render(_t2$2 || (_t2$2 = _$3`
+					}
+				}
+			};
+			this.#uploadButtonsContainer = main_core.Tag.render`
 			<div class="sign-blank-selector__list --with-buttons">
-				${0}
-				${0}
+				${uploadButtons}
+				${dragArea}
 			</div>
-		`), uploadButtons, dragArea);
-	    new DragDropHandler(babelHelpers.classPrivateFieldLooseBase(this, _uploadButtonsContainer)[_uploadButtonsContainer]);
-	    babelHelpers.classPrivateFieldLooseBase(this, _tileWidget)[_tileWidget] = new ui_uploader_tileWidget.TileWidget({
-	      ...uploaderOptions,
-	      ..._config2.uploaderOptions,
-	      dropElement: babelHelpers.classPrivateFieldLooseBase(this, _uploadButtonsContainer)[_uploadButtonsContainer],
-	      browseElement: [...uploadButtons, dragArea],
-	      events: {
-	        [ui_uploader_core.UploaderEvent.BEFORE_FILES_ADD]: event => babelHelpers.classPrivateFieldLooseBase(this, _onFileBeforeAdd)[_onFileBeforeAdd](event),
-	        [ui_uploader_core.UploaderEvent.FILE_ADD]: event => babelHelpers.classPrivateFieldLooseBase(this, _onFileAdd)[_onFileAdd](event),
-	        [ui_uploader_core.UploaderEvent.FILE_REMOVE]: event => babelHelpers.classPrivateFieldLooseBase(this, _onFileRemove)[_onFileRemove](event),
-	        [ui_uploader_core.UploaderEvent.UPLOAD_START]: event => babelHelpers.classPrivateFieldLooseBase(this, _onUploadStart)[_onUploadStart](event),
-	        [ui_uploader_core.UploaderEvent.UPLOAD_COMPLETE]: event => babelHelpers.classPrivateFieldLooseBase(this, _onUploadComplete)[_onUploadComplete](event)
-	      }
-	    }, widgetOptions);
-	    babelHelpers.classPrivateFieldLooseBase(this, _relatedTarget)[_relatedTarget] = null;
-	    main_core.Event.bind(document, 'mousedown', event => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _relatedTarget)[_relatedTarget] = event.target;
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _blanksContainer)[_blanksContainer] = main_core.Tag.render(_t3$2 || (_t3$2 = _$3`
+		`;
+			new DragDropHandler(this.#uploadButtonsContainer);
+			this.#tileWidget = new ui_uploader_tileWidget.TileWidget({
+				...uploaderOptions,
+				...config.uploaderOptions,
+				dropElement: this.#uploadButtonsContainer,
+				browseElement: [...uploadButtons, dragArea],
+				events: {
+					[ui_uploader_core.UploaderEvent.BEFORE_FILES_ADD]: event => this.#onFileBeforeAdd(event),
+					[ui_uploader_core.UploaderEvent.BEFORE_BROWSE]: event => this.#onBeforeBrowse(event),
+					[ui_uploader_core.UploaderEvent.FILE_ADD]: event => this.#onFileAdd(event),
+					[ui_uploader_core.UploaderEvent.FILE_REMOVE]: event => this.#onFileRemove(event),
+					[ui_uploader_core.UploaderEvent.UPLOAD_START]: event => this.#onUploadStart(event),
+					[ui_uploader_core.UploaderEvent.UPLOAD_COMPLETE]: event => this.#onUploadComplete(event)
+				}
+			}, widgetOptions);
+			this.#relatedTarget = null;
+			main_core.Event.bind(document, 'mousedown', event => {
+				this.#relatedTarget = event.target;
+			});
+			this.#blanksContainer = main_core.Tag.render`
 			<div
 				class="sign-blank-selector__list"
-				onfocusin="${0}"
-				onclick="${0}"
+				onfocusin="${({
+			target
+		}) => {
+			this.selectBlank(Number(target.dataset.id));
+		}}"
+				onclick="${({
+			target,
+			ctrlKey,
+			metaKey
+		}) => {
+			if (ctrlKey || metaKey) {
+				this.resetSelectedBlank(Number(target.dataset.id), this.#relatedTarget);
+			}
+		}}"
 			></div>
-		`), ({
-	      target
-	    }) => {
-	      this.selectBlank(Number(target.dataset.id));
-	    }, ({
-	      target,
-	      ctrlKey,
-	      metaKey
-	    }) => {
-	      if (ctrlKey || metaKey) {
-	        this.resetSelectedBlank(Number(target.dataset.id), babelHelpers.classPrivateFieldLooseBase(this, _relatedTarget)[_relatedTarget]);
-	      }
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _tileWidgetContainer)[_tileWidgetContainer] = main_core.Tag.render(_t4$2 || (_t4$2 = _$3`
+		`;
+			this.#tileWidgetContainer = main_core.Tag.render`
 			<div class="sign-blank-selector__tile-widget"></div>
-		`));
-	    babelHelpers.classPrivateFieldLooseBase(this, _loadMoreButton)[_loadMoreButton] = main_core.Tag.render(_t5$1 || (_t5$1 = _$3`
+		`;
+			this.#loadMoreButton = main_core.Tag.render`
 			<div class="sign-blank-selector__load-more --hidden">
-				<span onclick="${0}">
-					${0}
+				<span onclick="${() => this.#loadBlanks(this.#page + 1)}">
+					${main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_LOAD_MORE')}
 				</span>
 			</div>
-		`), () => babelHelpers.classPrivateFieldLooseBase(this, _loadBlanks)[_loadBlanks](babelHelpers.classPrivateFieldLooseBase(this, _page)[_page] + 1), main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_LOAD_MORE'));
-	    babelHelpers.classPrivateFieldLooseBase(this, _api)[_api] = new sign_v2_api.Api();
-	  }
-	  getUploadedFileName(fileIndex) {
-	    const uploader = babelHelpers.classPrivateFieldLooseBase(this, _tileWidget)[_tileWidget].getUploader();
-	    const files = uploader.getFiles();
-	    if (files.length === 0) {
-	      return null;
-	    }
-	    const file = files.at(fileIndex);
-	    if (!file) {
-	      return null;
-	    }
-	    return babelHelpers.classPrivateFieldLooseBase(this, _normalizeTitle)[_normalizeTitle](file.getName());
-	  }
-	  async createBlankFromOuterUploaderFiles(files) {
-	    if (files.length === 0) {
-	      return;
-	    }
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isAllFileUploadsComplete)[_isAllFileUploadsComplete](files)) {
-	      const errorMessage = main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_UPLOADER_ERROR_INCOMPLETE');
-	      ui_notification.UI.Notification.Center.notify({
-	        content: errorMessage
-	      });
-	      throw new Error(errorMessage);
-	    }
-	    const firstFile = files.at(0);
-	    const blank = new Blank({
-	      title: firstFile.getName()
-	    });
-	    blank.setReady(false);
-	    main_core.Dom.prepend(blank.getLayout(), babelHelpers.classPrivateFieldLooseBase(this, _blanksContainer)[_blanksContainer]);
-	    try {
-	      var _babelHelpers$classPr;
-	      const filesIds = files.map(file => file.getServerFileId());
-	      const hasPlaceholders = files.some(file => file.getCustomData('uploadType') === blankType.placeholders);
-	      const blankData = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].createBlank(filesIds, (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].type) != null ? _babelHelpers$classPr : null, sign_v2_signSettings.isTemplateMode(babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].documentMode), hasPlaceholders);
-	      babelHelpers.classPrivateFieldLooseBase(this, _setupBlank)[_setupBlank]({
-	        ...blankData,
-	        userName: main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_CREATED_MYSELF'),
-	        hasPlaceholders
-	      }, blank);
-	      return blankData.id;
-	    } catch (ex) {
-	      blank == null ? void 0 : blank.remove == null ? void 0 : blank.remove();
-	      console.log(ex);
-	      throw ex;
-	    }
-	  }
-	  async createBlank() {
-	    const uploader = babelHelpers.classPrivateFieldLooseBase(this, _tileWidget)[_tileWidget].getUploader();
-	    const files = uploader.getFiles();
-	    if (files.length === 0) {
-	      return;
-	    }
-	    const [firstFile] = files;
-	    await babelHelpers.classPrivateFieldLooseBase(this, _resumeUploading)[_resumeUploading]();
-	    const blank = firstFile.getCustomData(firstFile.getId());
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isAllFileUploadsComplete)[_isAllFileUploadsComplete](files)) {
-	      const errorMessage = main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_UPLOADER_ERROR_INCOMPLETE');
-	      ui_notification.UI.Notification.Center.notify({
-	        content: errorMessage
-	      });
-	      throw new Error(errorMessage);
-	    }
-	    try {
-	      var _babelHelpers$classPr2;
-	      const filesIds = files.map(file => file.getServerFileId());
-	      const hasPlaceholders = files.some(file => file.getCustomData('uploadType') === 'placeholders');
-	      const blankData = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].createBlank(filesIds, (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].type) != null ? _babelHelpers$classPr2 : null, sign_v2_signSettings.isTemplateMode(babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].documentMode), hasPlaceholders);
-	      babelHelpers.classPrivateFieldLooseBase(this, _setupBlank)[_setupBlank]({
-	        ...blankData,
-	        userName: main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_CREATED_MYSELF'),
-	        hasPlaceholders
-	      }, blank);
-	      return blankData.id;
-	    } catch (ex) {
-	      blank.remove();
-	      throw ex;
-	    }
-	  }
-	  resetSelectedBlank() {
-	    const previousSelectedBlankId = this.selectedBlankId;
-	    const blank = this.getBlank(this.selectedBlankId);
-	    blank == null ? void 0 : blank.deselect();
-	    this.selectedBlankId = 0;
-	    if (blank) {
-	      this.emit(this.events.toggleSelection, {
-	        selected: false,
-	        previousSelectedBlankId
-	      });
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _enableSaveButtonIntoSlider)[_enableSaveButtonIntoSlider]();
-	  }
-	  async modifyBlankTitle(blankId, blankTitle) {
-	    let blank = babelHelpers.classPrivateFieldLooseBase(this, _blanks)[_blanks].get(blankId);
-	    if (!blank) {
-	      await this.loadBlankById(blankId);
-	      blank = babelHelpers.classPrivateFieldLooseBase(this, _blanks)[_blanks].get(blankId);
-	    }
-	    blank.setTitle(blankTitle);
-	  }
-	  hasBlank(blankId) {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _blanks)[_blanks].has(blankId);
-	  }
-	  getBlank(blankId) {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _blanks)[_blanks].get(blankId);
-	  }
-	  async loadBlankById(blankId) {
-	    const blankData = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].getBlankById(blankId);
-	    if (!this.hasBlank(blankId)) {
-	      const blank = new Blank({
-	        title: blankData.title
-	      });
-	      babelHelpers.classPrivateFieldLooseBase(this, _addBlank)[_addBlank](blankData, blank);
-	    }
-	  }
-	  async selectBlank(blankId, eventExtraOptions = {}) {
-	    const previousSelectedBlankId = this.selectedBlankId;
-	    if (blankId !== this.selectedBlankId) {
-	      this.resetSelectedBlank();
-	    }
-	    this.selectedBlankId = blankId;
-	    babelHelpers.classPrivateFieldLooseBase(this, _toggleTileVisibility)[_toggleTileVisibility](false);
-	    let blank = this.getBlank(blankId);
-	    if (!blank) {
-	      await this.loadBlankById(blankId);
-	      blank = this.getBlank(blankId);
-	    }
-	    const {
-	      title
-	    } = blank.getProps();
-	    blank.select();
-	    this.emit(this.events.toggleSelection, {
-	      id: blankId,
-	      selected: true,
-	      title: babelHelpers.classPrivateFieldLooseBase(this, _normalizeTitle)[_normalizeTitle](title),
-	      extra: eventExtraOptions,
-	      previousSelectedBlankId
-	    });
-	  }
-	  deleteBlank(blankId) {
-	    const lastBlank = babelHelpers.classPrivateFieldLooseBase(this, _blanks)[_blanks].get(blankId);
-	    if (lastBlank) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _blanks)[_blanks].delete(blankId);
-	      lastBlank.remove();
-	    }
-	  }
-	  clearFiles(options) {
-	    const uploader = babelHelpers.classPrivateFieldLooseBase(this, _tileWidget)[_tileWidget].getUploader();
-	    uploader.removeFiles(options);
-	  }
-	  isFilesReadyForUpload() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _tileWidget)[_tileWidget].getUploader().getFiles().length === 0) {
-	      return false;
-	    }
-	    return babelHelpers.classPrivateFieldLooseBase(this, _tileWidget)[_tileWidget].getUploader().getFiles().every(file => file.getErrors().length <= 0);
-	  }
-	  hasPlaceholderFilesForUpload() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _tileWidget)[_tileWidget].getUploader().getFiles().some(file => file.getCustomData('uploadType') === blankType.placeholders);
-	  }
-	  getLayout() {
-	    var _babelHelpers$classPr3;
-	    babelHelpers.classPrivateFieldLooseBase(this, _tileWidget)[_tileWidget].renderTo(babelHelpers.classPrivateFieldLooseBase(this, _tileWidgetContainer)[_tileWidgetContainer]);
-	    babelHelpers.classPrivateFieldLooseBase(this, _toggleTileVisibility)[_toggleTileVisibility](false);
-	    const canUploadNewBlank = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].canUploadNewBlank) != null ? _babelHelpers$classPr3 : true;
-	    const selectorContainer = main_core.Tag.render(_t6$1 || (_t6$1 = _$3`
-			<div class="sign-blank-selector">
-				${0}
-				${0}
+		`;
+			this.#api = new sign_v2_api.Api();
+		}
+		#getAcceptedFileTypes() {
+			return this.#isPlaceholdersUpload ? uploaderOptions.acceptedPlaceholdersFileTypes : uploaderOptions.acceptedFileTypes;
+		}
+		#isB2eBlankScenario() {
+			return this.#config?.type === sign_type.BlankScenario.b2e;
+		}
+		#checkForFilesValid(addedFiles) {
+			const isImage = file => file.getType().includes('image/');
+			const allAddedImages = addedFiles.every(file => isImage(file));
+			const uploader = this.#tileWidget.getUploader();
+			const files = uploader.getFiles();
+			const filesLength = files.length;
+			const imagesLimit = this.#getImagesLimit();
+			const isB2eAutoCommit = this.#isB2eBlankScenario() && !sign_v2_signSettings.isTemplateMode(this.#config.documentMode) && filesLength > 0 && (addedFiles.length === 1 || allAddedImages);
+			const acceptedFileTypes = isB2eAutoCommit && !this.#isPlaceholdersUpload ? uploaderOptions.acceptedFileTypes : this.#getAcceptedFileTypes();
+			const validExtension = addedFiles.every(file => {
+				// TODO merge with this.#config.uploaderOptions.acceptedFileTypes
+				return acceptedFileTypes.includes(`.${file.getExtension()}`);
+			});
+			if (!validExtension || addedFiles.length > 1 && !allAddedImages) {
+				return false;
+			}
+			if (filesLength === 0 && addedFiles.length === 1) {
+				return true;
+			}
+			if (isB2eAutoCommit) {
+				const exceedsImagesLimit = addedFiles.length > 1 && addedFiles.length > imagesLimit;
+				return !exceedsImagesLimit;
+			}
+			const allExistImages = files.every(file => isImage(file));
+			return allAddedImages && allExistImages && imagesLimit - filesLength >= addedFiles.length;
+		}
+		#onBeforeBrowse(event) {
+			const {
+				input,
+				node
+			} = event.getData();
+			const acceptList = this.#browseAcceptMap.get(node);
+			if (main_core.Type.isArrayFilled(acceptList)) {
+				input.setAttribute('accept', acceptList.join(','));
+			}
+		}
+		#onFileBeforeAdd(uploaderEvent) {
+			const {
+				files: addedFiles
+			} = uploaderEvent.getData();
+			const hasOversizedImage = !this.#isPlaceholdersUpload && addedFiles.some(file => {
+				return file.getType().includes('image/') && file.getSize() > uploaderOptions.imageMaxFileSize;
+			});
+			if (hasOversizedImage) {
+				const messageCode = addedFiles.length > 1 ? 'SIGN_BLANK_SELECTOR_UPLOAD_IMAGE_SIZE_GROUP_HINT' : 'SIGN_BLANK_SELECTOR_UPLOAD_IMAGE_SIZE_HINT';
+				this.#showUploadErrorPopup(messageCode);
+				uploaderEvent.preventDefault();
+				return;
+			}
+			const valid = this.#checkForFilesValid(addedFiles);
+			if (valid) {
+				const selfEvent = new main_core_events.BaseEvent({
+					data: {
+						files: addedFiles,
+						isPlaceholdersUpload: this.#isPlaceholdersUpload
+					}
+				});
+				this.emit(this.events.beforeAddFileSuccessfully, selfEvent);
+				if (selfEvent.isDefaultPrevented()) {
+					uploaderEvent.preventDefault();
+				}
+				return;
+			}
+			let messageCode = 'SIGN_BLANK_SELECTOR_UPLOAD_HINT';
+			const hasExistingFiles = this.#tileWidget.getUploader().getFiles().length > 0;
+			const isLimitHint = hasExistingFiles && sign_v2_signSettings.isTemplateMode(this.#config.documentMode);
+			if (this.#isPlaceholdersUpload) {
+				messageCode = isLimitHint ? 'SIGN_BLANK_SELECTOR_UPLOAD_LIMIT_HINT' : 'SIGN_BLANK_SELECTOR_UPLOAD_PLACEHOLDERS_HINT';
+			} else if (this.#isB2eBlankScenario() && isLimitHint) {
+				messageCode = 'SIGN_BLANK_SELECTOR_UPLOAD_LIMIT_HINT';
+			}
+			this.#showUploadErrorPopup(messageCode);
+			uploaderEvent.preventDefault();
+		}
+		#showUploadErrorPopup(messageCode) {
+			let bindElement = this.#uploadButtonsContainer.firstElementChild;
+			if (this.#isPlaceholdersUpload) {
+				bindElement = this.#uploadButtonsContainer.querySelector('.--placeholders') ?? bindElement;
+			} else if (this.#isB2eBlankScenario()) {
+				bindElement = this.#uploadButtonsContainer.querySelector('.--mixed') ?? bindElement;
+			}
+			if (main_core.Dom.hasClass(this.#uploadButtonsContainer, '--hidden')) {
+				const {
+					$refs: {
+						container
+					}
+				} = this.#tileWidget.getRootComponent();
+				bindElement = container.firstElementChild;
+			}
+
+			// Wait for CSS transition to complete before showing popup
+			setTimeout(() => {
+				const errorPopup = new main_popup.Popup({
+					...errorPopupOptions,
+					bindElement,
+					content: main_core.Loc.getMessage(messageCode, {
+						'%imageCountLimit%': this.#getImagesLimit()
+					})
+				});
+				errorPopup.show();
+				setTimeout(() => errorPopup.close(), 7000);
+			}, 200);
+		}
+		#getImagesLimit() {
+			return main_core.Type.isInteger(parseInt(this.#config?.uploaderOptions?.maxFileCount, 10)) ? this.#config?.uploaderOptions?.maxFileCount : uploaderOptions.maxFileCount;
+		}
+		#onFileAdd(event) {
+			const file = event.data.file;
+			const title = file.getName();
+			const uploadType = this.#getUploadType();
+			const isImage = this.#isImageFile(file);
+			file.setCustomData('uploadType', uploadType);
+			if (this.#shouldShowTileUploader(isImage, uploadType)) {
+				this.#toggleTileVisibility(true);
+			}
+			this.resetSelectedBlank();
+			this.emit(this.events.addFile, {
+				title: this.#normalizeTitle(title),
+				isImage,
+				isMixedB2eUpload: this.#isMixedB2eUpload(uploadType),
+				filesCount: this.#tileWidget.getUploader().getFiles().length
+			});
+		}
+		#onUploadComplete() {
+			this.#isPlaceholdersUpload = false;
+		}
+		#getUploadType() {
+			return this.#isPlaceholdersUpload ? blankType.placeholders : blankType.default;
+		}
+		#isImageFile(file) {
+			const mimeType = file.getType();
+			if (main_core.Type.isStringFilled(mimeType) && mimeType.startsWith('image/')) {
+				return true;
+			}
+			const extension = file.getExtension().toLowerCase();
+			return imageExtensions.has(extension);
+		}
+		#isMixedB2eUpload(uploadType) {
+			return uploadType === blankType.default;
+		}
+		#shouldShowTileUploader(isImage, uploadType) {
+			if (!this.#isB2eBlankScenario()) {
+				return true;
+			}
+			const isTemplate = sign_v2_signSettings.isTemplateMode(this.#config.documentMode);
+			const isMixedImage = isImage && this.#isMixedB2eUpload(uploadType);
+			return isTemplate && isMixedImage;
+		}
+		getUploadedFileName(fileIndex) {
+			const uploader = this.#tileWidget.getUploader();
+			const files = uploader.getFiles();
+			if (files.length === 0) {
+				return null;
+			}
+			const file = files.at(fileIndex);
+			if (!file) {
+				return null;
+			}
+			return this.#normalizeTitle(file.getName());
+		}
+		#onFileRemove(event) {
+			this.emit('removeFile');
+			const uploader = this.#tileWidget.getUploader();
+			const files = uploader.getFiles();
+			if (files.length === 0) {
+				this.#toggleTileVisibility(false);
+				this.emit('clearFiles');
+			}
+		}
+		#onUploadStart() {
+			const uploader = this.#tileWidget.getUploader();
+			const [firstFile] = uploader.getFiles();
+			const title = firstFile.getName();
+			const fileId = firstFile.getId();
+			const uploadingBlank = new Blank({
+				title
+			});
+			uploadingBlank.setReady(false);
+			main_core.Dom.prepend(uploadingBlank.getLayout(), this.#blanksContainer);
+			firstFile.setCustomData(fileId, uploadingBlank);
+		}
+		#toggleTileVisibility(shouldShow) {
+			const hiddenClass = '--hidden';
+			if (shouldShow) {
+				main_core.Dom.removeClass(this.#tileWidgetContainer, hiddenClass);
+				main_core.Dom.addClass(this.#uploadButtonsContainer, hiddenClass);
+				return;
+			}
+			main_core.Dom.addClass(this.#tileWidgetContainer, hiddenClass);
+			main_core.Dom.removeClass(this.#uploadButtonsContainer, hiddenClass);
+			this.clearFiles({
+				removeFromServer: false
+			});
+		}
+		#createUploadButtons() {
+			const entries = Object.entries(this.#getUploadButtonsConfig());
+			return entries.map(([key, config]) => {
+				const isPlaceholders = key === blankType.placeholders;
+				const listItem = new ListItem({
+					title: config.title,
+					description: config.description,
+					modifier: key,
+					link: config.link ?? null,
+					onLinkClick: config.onLinkClick ?? null,
+					isNew: isPlaceholders,
+					isB2eBlankScenario: this.#isB2eBlankScenario(),
+					dragDescriptionTextHTML: config.dragDescriptionTextHTML ?? null,
+					onDragEnter: () => {
+						this.#isPlaceholdersUpload = isPlaceholders;
+					}
+				});
+				const layout = listItem.getLayout();
+				main_core.Event.bind(layout, 'click', () => {
+					this.#isPlaceholdersUpload = isPlaceholders;
+				});
+				if (main_core.Type.isArrayFilled(config.acceptedFileTypes)) {
+					this.#browseAcceptMap.set(layout, config.acceptedFileTypes);
+				}
+				return layout;
+			});
+		}
+		#getUploadButtonsConfig() {
+			if (this.#isB2eBlankScenario()) {
+				return this.#getB2eButtonsConfig();
+			}
+			return this.#getB2bButtonsConfig();
+		}
+		#getB2bButtonsConfig() {
+			return {
+				img: {
+					title: main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_CREATE_NEW_PIC'),
+					description: 'jpeg, png'
+				},
+				pdf: {
+					title: main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_NEW_PDF'),
+					description: 'Adobe Acrobat'
+				},
+				doc: {
+					title: main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_NEW_DOC'),
+					description: 'doc, docx'
+				}
+			};
+		}
+		#getB2eButtonsConfig() {
+			const toAcceptList = extensions => extensions.map(ext => `.${ext}`);
+			return {
+				placeholders: {
+					title: 'docx',
+					description: main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_PLACEHOLDERS_DOCX_MSGVER_1'),
+					dragDescriptionTextHTML: main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_DROP_ZONE_PLACEHOLDERS', {
+						'[highlight]': '<span class="sign-blank-selector__list_item-drag-overlay-highlighting">',
+						'[/highlight]': '</span>'
+					}),
+					acceptedFileTypes: toAcceptList(sign_v2_b2e_documentBlock.getAllowedReplaceExtensions(true))
+				},
+				mixed: {
+					title: 'pdf, png, doc, jpeg',
+					description: main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_MIXED'),
+					dragDescriptionTextHTML: main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_DROP_ZONE_MIXED', {
+						'[highlight]': '<span class="sign-blank-selector__list_item-drag-overlay-highlighting">',
+						'[/highlight]': '</span>'
+					}),
+					acceptedFileTypes: toAcceptList(sign_v2_b2e_documentBlock.getAllowedReplaceExtensions(false))
+				}
+			};
+		}
+		async #resumeUploading() {
+			const uploader = this.#tileWidget.getUploader();
+			if (uploader.getPendingFileCount() === 0) {
+				return;
+			}
+			const pendingFiles = uploader.getFiles();
+			uploader.setMaxParallelUploads(pendingFiles.length);
+			const uploadPromise = new Promise(resolve => {
+				uploader.subscribeOnce('onUploadComplete', resolve);
+			});
+			uploader.start();
+			await uploadPromise;
+		}
+		async createBlankFromOuterUploaderFiles(files) {
+			if (files.length === 0) {
+				return;
+			}
+			if (!this.#isAllFileUploadsComplete(files)) {
+				const errorMessage = main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_UPLOADER_ERROR_INCOMPLETE');
+				ui_notification.UI.Notification.Center.notify({
+					content: errorMessage
+				});
+				throw new Error(errorMessage);
+			}
+			const firstFile = files.at(0);
+			const blank = new Blank({
+				title: firstFile.getName()
+			});
+			blank.setReady(false);
+			main_core.Dom.prepend(blank.getLayout(), this.#blanksContainer);
+			try {
+				const filesIds = files.map(file => file.getServerFileId());
+				const hasPlaceholders = files.some(file => file.getCustomData('uploadType') === blankType.placeholders);
+				const blankData = await this.#api.createBlank(filesIds, this.#config.type ?? null, sign_v2_signSettings.isTemplateMode(this.#config.documentMode), hasPlaceholders);
+				this.#setupBlank({
+					...blankData,
+					userName: main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_CREATED_MYSELF'),
+					hasPlaceholders
+				}, blank);
+				return blankData.id;
+			} catch (ex) {
+				blank?.remove?.();
+				console.log(ex);
+				throw ex;
+			}
+		}
+		async createBlank() {
+			const uploader = this.#tileWidget.getUploader();
+			const files = uploader.getFiles();
+			if (files.length === 0) {
+				return;
+			}
+			const [firstFile] = files;
+			await this.#resumeUploading();
+			const blank = firstFile.getCustomData(firstFile.getId());
+			const failedFiles = files.filter(file => {
+				return file.getStatus() !== ui_uploader_core.FileStatus.COMPLETE || main_core.Type.isNull(file.getServerFileId());
+			});
+			if (failedFiles.length > 0) {
+				failedFiles.forEach(file => {
+					uploader.removeFile(file, {
+						removeFromServer: false
+					});
+				});
+				if (failedFiles.length === files.length) {
+					blank?.remove?.();
+				}
+				const errorMessage = main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_UPLOADER_ERROR_INCOMPLETE');
+				ui_notification.UI.Notification.Center.notify({
+					content: errorMessage
+				});
+				throw new Error(errorMessage);
+			}
+			try {
+				const filesIds = files.map(file => file.getServerFileId());
+				const hasPlaceholders = files.some(file => file.getCustomData('uploadType') === 'placeholders');
+				const blankData = await this.#api.createBlank(filesIds, this.#config.type ?? null, sign_v2_signSettings.isTemplateMode(this.#config.documentMode), hasPlaceholders);
+				this.#setupBlank({
+					...blankData,
+					userName: main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_CREATED_MYSELF'),
+					hasPlaceholders
+				}, blank);
+				return blankData.id;
+			} catch (ex) {
+				blank.remove();
+				throw ex;
+			}
+		}
+		async #loadBlanks(page) {
+			const loader = new main_loader.Loader({
+				target: this.#blanksContainer,
+				size: 80,
+				mode: 'custom'
+			});
+			loader.show();
+			try {
+				const blanksOnPage = 3;
+				const data = await this.#api.loadBlanks(page, this.#config.type ?? null, blanksOnPage);
+				if (data.length < blanksOnPage) {
+					main_core.Dom.addClass(this.#loadMoreButton, '--hidden');
+				} else {
+					main_core.Dom.removeClass(this.#loadMoreButton, '--hidden');
+				}
+				if (data.length > 0) {
+					data.forEach(blankData => {
+						if (this.hasBlank(blankData.id)) {
+							return;
+						}
+						const {
+							title
+						} = blankData;
+						const blank = new Blank({
+							title
+						});
+						this.#addBlank(blankData, blank);
+					});
+					this.#page = page;
+				}
+			} catch {
+				main_core.Dom.removeClass(this.#loadMoreButton, '--hidden');
+			}
+			loader.destroy();
+		}
+		#setupBlank(blankData, blank) {
+			const {
+				id: blankId,
+				previewUrl,
+				userAvatarUrl,
+				userName,
+				dateCreate,
+				hasPlaceholders = false
+			} = blankData;
+			const creationDate = dateCreate ? new Date(dateCreate) : new Date();
+			const descriptionText = `${userName}, ${main_date.DateTimeFormat.format('j M. Y', creationDate)}`;
+			blank.setId(blankId);
+			blank.setReady(true);
+			blank.setPreview(previewUrl);
+			blank.setAvatarWithDescription(descriptionText, userAvatarUrl);
+			if (hasPlaceholders) {
+				blank.getLayout().dataset.hasPlaceholders = 'true';
+			}
+			this.#blanks.set(blankId, blank);
+		}
+		#normalizeTitle(title) {
+			const acceptedType = uploaderOptions.acceptedFileTypes.find(fileType => {
+				return title.endsWith(fileType);
+			});
+			if (!acceptedType) {
+				return title;
+			}
+			const dotExtensionIndex = title.lastIndexOf(acceptedType);
+			return title.slice(0, dotExtensionIndex);
+		}
+		#addBlank(blankData, blank) {
+			this.#setupBlank(blankData, blank);
+			main_core.Dom.append(blank.getLayout(), this.#blanksContainer);
+		}
+		resetSelectedBlank() {
+			const previousSelectedBlankId = this.selectedBlankId;
+			const blank = this.getBlank(this.selectedBlankId);
+			blank?.deselect();
+			this.selectedBlankId = 0;
+			if (blank) {
+				this.emit(this.events.toggleSelection, {
+					selected: false,
+					previousSelectedBlankId
+				});
+			}
+			this.#enableSaveButtonIntoSlider();
+		}
+		async modifyBlankTitle(blankId, blankTitle) {
+			let blank = this.#blanks.get(blankId);
+			if (!blank) {
+				await this.loadBlankById(blankId);
+				blank = this.#blanks.get(blankId);
+			}
+			blank.setTitle(blankTitle);
+		}
+		hasBlank(blankId) {
+			return this.#blanks.has(blankId);
+		}
+		getBlank(blankId) {
+			return this.#blanks.get(blankId);
+		}
+		async loadBlankById(blankId) {
+			const blankData = await this.#api.getBlankById(blankId);
+			if (!this.hasBlank(blankId)) {
+				const blank = new Blank({
+					title: blankData.title
+				});
+				this.#addBlank(blankData, blank);
+			}
+		}
+		async selectBlank(blankId, eventExtraOptions = {}) {
+			const previousSelectedBlankId = this.selectedBlankId;
+			if (blankId !== this.selectedBlankId) {
+				this.resetSelectedBlank();
+			}
+			this.selectedBlankId = blankId;
+			this.#toggleTileVisibility(false);
+			let blank = this.getBlank(blankId);
+			if (!blank) {
+				await this.loadBlankById(blankId);
+				blank = this.getBlank(blankId);
+			}
+			const {
+				title
+			} = blank.getProps();
+			blank.select();
+			this.emit(this.events.toggleSelection, {
+				id: blankId,
+				selected: true,
+				title: this.#normalizeTitle(title),
+				extra: eventExtraOptions,
+				previousSelectedBlankId
+			});
+		}
+		deleteBlank(blankId) {
+			const lastBlank = this.#blanks.get(blankId);
+			if (lastBlank) {
+				this.#blanks.delete(blankId);
+				lastBlank.remove();
+			}
+		}
+		clearFiles(options) {
+			const uploader = this.#tileWidget.getUploader();
+			uploader.removeFiles(options);
+		}
+		addFiles(files, options = {}) {
+			if (main_core.Type.isBoolean(options.isPlaceholdersUpload)) {
+				this.#isPlaceholdersUpload = options.isPlaceholdersUpload;
+			}
+			const uploader = this.#tileWidget.getUploader();
+			uploader.addFiles(files);
+		}
+		isFilesReadyForUpload() {
+			if (this.#tileWidget.getUploader().getFiles().length === 0) {
+				return false;
+			}
+			return this.#tileWidget.getUploader().getFiles().every(file => file.getErrors().length <= 0);
+		}
+		hasPlaceholderFilesForUpload() {
+			return this.#tileWidget.getUploader().getFiles().some(file => file.getCustomData('uploadType') === blankType.placeholders);
+		}
+		getLayout() {
+			this.#tileWidget.renderTo(this.#tileWidgetContainer);
+			this.#toggleTileVisibility(false);
+			const canUploadNewBlank = this.#config.canUploadNewBlank ?? true;
+			const titleBlock = this.#isB2eBlankScenario() ? '' : main_core.Tag.render`
 				<p class="sign-blank-selector__templates_title">
-					${0}
+					${main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_RECENT_TEMPLATES_TITLE')}
 				</p>
-				${0}
-				${0}
+			`;
+			const selectorContainer = main_core.Tag.render`
+			<div class="sign-blank-selector">
+				${this.#tileWidgetContainer}
+				${canUploadNewBlank ? this.#uploadButtonsContainer : ''}
+				${titleBlock}
+				${this.#isB2eBlankScenario() ? '' : this.#blanksContainer}
+				${this.#isB2eBlankScenario() ? '' : this.#loadMoreButton}
 			</div>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _tileWidgetContainer)[_tileWidgetContainer], canUploadNewBlank ? babelHelpers.classPrivateFieldLooseBase(this, _uploadButtonsContainer)[_uploadButtonsContainer] : '', main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_RECENT_TEMPLATES_TITLE'), babelHelpers.classPrivateFieldLooseBase(this, _blanksContainer)[_blanksContainer], babelHelpers.classPrivateFieldLooseBase(this, _loadMoreButton)[_loadMoreButton]);
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _page)[_page] === 0) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _loadBlanks)[_loadBlanks](1);
-	    }
-	    return selectorContainer;
-	  }
-	  openInSlider() {
-	    const SidePanel = main_core.Reflection.getClass('BX.SidePanel');
-	    if (!main_core.Type.isNil(SidePanel)) {
-	      SidePanel.Instance.open('v2-blank-selector', {
-	        width: 628,
-	        cacheable: false,
-	        events: {
-	          onClose: () => {
-	            this.emit('onSliderClose');
-	          }
-	        },
-	        contentCallback: () => {
-	          return ui_sidepanel_layout.Layout.createContent({
-	            extensions: ['sign.v2.blank-selector'],
-	            title: main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_SLIDER_TITLE'),
-	            content: () => this.getLayout(),
-	            buttons: ({
-	              cancelButton,
-	              SaveButton
-	            }) => {
-	              babelHelpers.classPrivateFieldLooseBase(this, _setSaveButtonIntoSlider)[_setSaveButtonIntoSlider](new SaveButton({
-	                text: main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_SLIDER_SELECT_BLANK_BUTTON_LABEL'),
-	                onclick: () => {
-	                  SidePanel.Instance.close();
-	                }
-	              }));
-	              babelHelpers.classPrivateFieldLooseBase(this, _disableSaveButtonIntoSlider)[_disableSaveButtonIntoSlider]();
-	              return [babelHelpers.classPrivateFieldLooseBase(this, _getSaveButtonIntoSlider)[_getSaveButtonIntoSlider](), cancelButton];
-	            }
-	          });
-	        }
-	      });
-	    }
-	  }
-	  disableSelectedBlank(blankId) {
-	    const blank = babelHelpers.classPrivateFieldLooseBase(this, _blanks)[_blanks].get(blankId);
-	    if (blank) {
-	      main_core.Dom.addClass(blank.getLayout(), '--disabled');
-	    }
-	  }
-	  enableSelectedBlank(blankId) {
-	    const blank = babelHelpers.classPrivateFieldLooseBase(this, _blanks)[_blanks].get(blankId);
-	    if (blank) {
-	      main_core.Dom.removeClass(blank.getLayout(), '--disabled');
-	    }
-	  }
-	}
-	function _getAcceptedFileTypes2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _isPlaceholdersUpload)[_isPlaceholdersUpload] ? uploaderOptions.acceptedPlaceholdersFileTypes : uploaderOptions.acceptedFileTypes;
-	}
-	function _checkForFilesValid2(addedFiles) {
-	  const isImage = file => file.getType().includes('image/');
-	  const allAddedImages = addedFiles.every(file => isImage(file));
-	  const acceptedFileTypes = babelHelpers.classPrivateFieldLooseBase(this, _getAcceptedFileTypes)[_getAcceptedFileTypes]();
-	  const validExtension = addedFiles.every(file => {
-	    // TODO merge with this.#config.uploaderOptions.acceptedFileTypes
-	    return acceptedFileTypes.includes(`.${file.getExtension()}`);
-	  });
-	  if (!validExtension || addedFiles.length > 1 && !allAddedImages) {
-	    return false;
-	  }
-	  const uploader = babelHelpers.classPrivateFieldLooseBase(this, _tileWidget)[_tileWidget].getUploader();
-	  const files = uploader.getFiles();
-	  const filesLength = files.length;
-	  const imagesLimit = babelHelpers.classPrivateFieldLooseBase(this, _getImagesLimit)[_getImagesLimit]();
-	  if (filesLength === 0 && addedFiles.length === 1) {
-	    return true;
-	  }
-	  const allExistImages = files.every(file => isImage(file));
-	  return allAddedImages && allExistImages && imagesLimit - filesLength >= addedFiles.length;
-	}
-	function _onFileBeforeAdd2(uploaderEvent) {
-	  const {
-	    files: addedFiles
-	  } = uploaderEvent.getData();
-	  const valid = babelHelpers.classPrivateFieldLooseBase(this, _checkForFilesValid)[_checkForFilesValid](addedFiles);
-	  if (valid) {
-	    const selfEvent = new main_core_events.BaseEvent({
-	      data: {
-	        files: addedFiles
-	      }
-	    });
-	    this.emit(this.events.beforeAddFileSuccessfully, selfEvent);
-	    if (selfEvent.isDefaultPrevented()) {
-	      return;
-	    }
-	    return;
-	  }
-	  let bindElement = babelHelpers.classPrivateFieldLooseBase(this, _uploadButtonsContainer)[_uploadButtonsContainer].firstElementChild;
-	  let messageCode = 'SIGN_BLANK_SELECTOR_UPLOAD_HINT';
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _isPlaceholdersUpload)[_isPlaceholdersUpload]) {
-	    bindElement = babelHelpers.classPrivateFieldLooseBase(this, _uploadButtonsContainer)[_uploadButtonsContainer].querySelector('.--placeholders');
-	    messageCode = 'SIGN_BLANK_SELECTOR_UPLOAD_PLACEHOLDERS_HINT';
-	  }
-	  if (main_core.Dom.hasClass(babelHelpers.classPrivateFieldLooseBase(this, _uploadButtonsContainer)[_uploadButtonsContainer], '--hidden')) {
-	    const {
-	      $refs: {
-	        container
-	      }
-	    } = babelHelpers.classPrivateFieldLooseBase(this, _tileWidget)[_tileWidget].getRootComponent();
-	    bindElement = container.firstElementChild;
-	  }
-
-	  // Wait for CSS transition to complete before showing popup
-	  setTimeout(() => {
-	    const errorPopup = new main_popup.Popup({
-	      ...errorPopupOptions,
-	      bindElement,
-	      content: main_core.Loc.getMessage(messageCode, {
-	        '%imageCountLimit%': babelHelpers.classPrivateFieldLooseBase(this, _getImagesLimit)[_getImagesLimit]()
-	      })
-	    });
-	    errorPopup.show();
-	    setTimeout(() => errorPopup.close(), 7000);
-	  }, 200);
-	  uploaderEvent.preventDefault();
-	}
-	function _getImagesLimit2() {
-	  var _babelHelpers$classPr4, _babelHelpers$classPr5, _babelHelpers$classPr6, _babelHelpers$classPr7;
-	  return main_core.Type.isInteger(parseInt((_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _config)[_config]) == null ? void 0 : (_babelHelpers$classPr5 = _babelHelpers$classPr4.uploaderOptions) == null ? void 0 : _babelHelpers$classPr5.maxFileCount, 10)) ? (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _config)[_config]) == null ? void 0 : (_babelHelpers$classPr7 = _babelHelpers$classPr6.uploaderOptions) == null ? void 0 : _babelHelpers$classPr7.maxFileCount : uploaderOptions.maxFileCount;
-	}
-	function _onFileAdd2(event) {
-	  const file = event.data.file;
-	  const title = file.getName();
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _isPlaceholdersUpload)[_isPlaceholdersUpload]) {
-	    file.setCustomData('uploadType', blankType.placeholders);
-	  } else {
-	    file.setCustomData('uploadType', blankType.default);
-	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _toggleTileVisibility)[_toggleTileVisibility](true);
-	  this.resetSelectedBlank();
-	  this.emit(this.events.addFile, {
-	    title: babelHelpers.classPrivateFieldLooseBase(this, _normalizeTitle)[_normalizeTitle](title)
-	  });
-	}
-	function _onUploadComplete2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _isPlaceholdersUpload)[_isPlaceholdersUpload] = false;
-	}
-	function _onFileRemove2(event) {
-	  this.emit('removeFile');
-	  const uploader = babelHelpers.classPrivateFieldLooseBase(this, _tileWidget)[_tileWidget].getUploader();
-	  const files = uploader.getFiles();
-	  if (files.length === 0) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _toggleTileVisibility)[_toggleTileVisibility](false);
-	    this.emit('clearFiles');
-	  }
-	}
-	function _onUploadStart2() {
-	  const uploader = babelHelpers.classPrivateFieldLooseBase(this, _tileWidget)[_tileWidget].getUploader();
-	  const [firstFile] = uploader.getFiles();
-	  const title = firstFile.getName();
-	  const fileId = firstFile.getId();
-	  const uploadingBlank = new Blank({
-	    title
-	  });
-	  uploadingBlank.setReady(false);
-	  main_core.Dom.prepend(uploadingBlank.getLayout(), babelHelpers.classPrivateFieldLooseBase(this, _blanksContainer)[_blanksContainer]);
-	  firstFile.setCustomData(fileId, uploadingBlank);
-	}
-	function _toggleTileVisibility2(shouldShow) {
-	  const hiddenClass = '--hidden';
-	  if (shouldShow) {
-	    main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _tileWidgetContainer)[_tileWidgetContainer], hiddenClass);
-	    main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _uploadButtonsContainer)[_uploadButtonsContainer], hiddenClass);
-	    return;
-	  }
-	  main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _tileWidgetContainer)[_tileWidgetContainer], hiddenClass);
-	  main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _uploadButtonsContainer)[_uploadButtonsContainer], hiddenClass);
-	  this.clearFiles({
-	    removeFromServer: false
-	  });
-	}
-	function _createUploadButtons2() {
-	  const entries = Object.entries(babelHelpers.classPrivateFieldLooseBase(this, _getUploadButtonsConfig)[_getUploadButtonsConfig]());
-	  return entries.map(([key, config]) => {
-	    var _config$link, _config$onLinkClick, _config$dragDescripti;
-	    const isPlaceholders = key === blankType.placeholders;
-	    const listItem = new ListItem({
-	      title: config.title,
-	      description: config.description,
-	      modifier: key,
-	      link: (_config$link = config.link) != null ? _config$link : null,
-	      onLinkClick: (_config$onLinkClick = config.onLinkClick) != null ? _config$onLinkClick : null,
-	      isNew: isPlaceholders,
-	      isPlaceholderDocumentAvailable: babelHelpers.classPrivateFieldLooseBase(this, _isPlaceholderDocumentAvailable)[_isPlaceholderDocumentAvailable](),
-	      dragDescriptionTextHTML: (_config$dragDescripti = config.dragDescriptionTextHTML) != null ? _config$dragDescripti : null,
-	      onDragEnter: () => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _isPlaceholdersUpload)[_isPlaceholdersUpload] = isPlaceholders;
-	      }
-	    });
-	    main_core.Event.bind(listItem.getLayout(), 'click', () => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _isPlaceholdersUpload)[_isPlaceholdersUpload] = isPlaceholders;
-	    });
-	    return listItem.getLayout();
-	  });
-	}
-	function _getUploadButtonsConfig2() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _isPlaceholderDocumentAvailable)[_isPlaceholderDocumentAvailable]()) {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _getB2eButtonsConfig)[_getB2eButtonsConfig]();
-	  }
-	  return babelHelpers.classPrivateFieldLooseBase(this, _getB2bButtonsConfig)[_getB2bButtonsConfig]();
-	}
-	function _isPlaceholderDocumentAvailable2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].type === sign_type.BlankScenario.b2e && babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].isPlaceholderDocumentEnabled;
-	}
-	function _getB2bButtonsConfig2() {
-	  return {
-	    img: {
-	      title: main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_CREATE_NEW_PIC'),
-	      description: 'jpeg, png'
-	    },
-	    pdf: {
-	      title: main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_NEW_PDF'),
-	      description: 'Adobe Acrobat'
-	    },
-	    doc: {
-	      title: main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_NEW_DOC'),
-	      description: 'doc, docx'
-	    }
-	  };
-	}
-	function _getB2eButtonsConfig2() {
-	  return {
-	    placeholders: {
-	      title: 'docx',
-	      description: main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_PLACEHOLDERS_DOCX_MSGVER_1'),
-	      link: main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_PLACEHOLDERS_LINK_MSGVER_1'),
-	      onLinkClick: () => {
-	        void top.BX.Runtime.loadExtension('sign.v2.grid.b2e.placeholders').then(() => {
-	          new top.BX.Sign.V2.Grid.B2e.Placeholders().show();
-	        });
-	      },
-	      dragDescriptionTextHTML: main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_DROP_ZONE_PLACEHOLDERS', {
-	        '[highlight]': '<span class="sign-blank-selector__list_item-drag-overlay-highlighting">',
-	        '[/highlight]': '</span>'
-	      })
-	    },
-	    mixed: {
-	      title: 'pdf, png, doc, jpeg',
-	      description: main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_MIXED'),
-	      dragDescriptionTextHTML: main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_DROP_ZONE_MIXED', {
-	        '[highlight]': '<span class="sign-blank-selector__list_item-drag-overlay-highlighting">',
-	        '[/highlight]': '</span>'
-	      })
-	    }
-	  };
-	}
-	async function _resumeUploading2() {
-	  const uploader = babelHelpers.classPrivateFieldLooseBase(this, _tileWidget)[_tileWidget].getUploader();
-	  const pendingFiles = uploader.getFiles();
-	  uploader.setMaxParallelUploads(pendingFiles.length);
-	  const uploadPromise = new Promise(resolve => {
-	    uploader.subscribeOnce('onUploadComplete', resolve);
-	  });
-	  uploader.start();
-	  await uploadPromise;
-	}
-	async function _loadBlanks2(page) {
-	  const loader = new main_loader.Loader({
-	    target: babelHelpers.classPrivateFieldLooseBase(this, _blanksContainer)[_blanksContainer],
-	    size: 80,
-	    mode: 'custom'
-	  });
-	  loader.show();
-	  try {
-	    var _babelHelpers$classPr8;
-	    const blanksOnPage = 3;
-	    const data = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].loadBlanks(page, (_babelHelpers$classPr8 = babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].type) != null ? _babelHelpers$classPr8 : null, blanksOnPage);
-	    if (data.length < blanksOnPage) {
-	      main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _loadMoreButton)[_loadMoreButton], '--hidden');
-	    } else {
-	      main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _loadMoreButton)[_loadMoreButton], '--hidden');
-	    }
-	    if (data.length > 0) {
-	      data.forEach(blankData => {
-	        if (this.hasBlank(blankData.id)) {
-	          return;
-	        }
-	        const {
-	          title
-	        } = blankData;
-	        const blank = new Blank({
-	          title
-	        });
-	        babelHelpers.classPrivateFieldLooseBase(this, _addBlank)[_addBlank](blankData, blank);
-	      });
-	      babelHelpers.classPrivateFieldLooseBase(this, _page)[_page] = page;
-	    }
-	  } catch {
-	    main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _loadMoreButton)[_loadMoreButton], '--hidden');
-	  }
-	  loader.destroy();
-	}
-	function _setupBlank2(blankData, blank) {
-	  const {
-	    id: blankId,
-	    previewUrl,
-	    userAvatarUrl,
-	    userName,
-	    dateCreate,
-	    hasPlaceholders = false
-	  } = blankData;
-	  const creationDate = dateCreate ? new Date(dateCreate) : new Date();
-	  const descriptionText = `${userName}, ${main_date.DateTimeFormat.format('j M. Y', creationDate)}`;
-	  blank.setId(blankId);
-	  blank.setReady(true);
-	  blank.setPreview(previewUrl);
-	  blank.setAvatarWithDescription(descriptionText, userAvatarUrl);
-	  if (hasPlaceholders) {
-	    blank.getLayout().dataset.hasPlaceholders = 'true';
-	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _blanks)[_blanks].set(blankId, blank);
-	}
-	function _normalizeTitle2(title) {
-	  const acceptedType = uploaderOptions.acceptedFileTypes.find(fileType => {
-	    return title.endsWith(fileType);
-	  });
-	  if (!acceptedType) {
-	    return title;
-	  }
-	  const dotExtensionIndex = title.lastIndexOf(acceptedType);
-	  return title.slice(0, dotExtensionIndex);
-	}
-	function _addBlank2(blankData, blank) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _setupBlank)[_setupBlank](blankData, blank);
-	  main_core.Dom.append(blank.getLayout(), babelHelpers.classPrivateFieldLooseBase(this, _blanksContainer)[_blanksContainer]);
-	}
-	function _setSaveButtonIntoSlider2(button) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _cache$1)[_cache$1].set('saveButton', button);
-	}
-	function _disableSaveButtonIntoSlider2() {
-	  const saveButton = babelHelpers.classPrivateFieldLooseBase(this, _getSaveButtonIntoSlider)[_getSaveButtonIntoSlider]();
-	  saveButton == null ? void 0 : saveButton.setDisabled(true);
-	}
-	function _enableSaveButtonIntoSlider2() {
-	  const saveButton = babelHelpers.classPrivateFieldLooseBase(this, _getSaveButtonIntoSlider)[_getSaveButtonIntoSlider]();
-	  saveButton == null ? void 0 : saveButton.setDisabled(false);
-	}
-	function _getSaveButtonIntoSlider2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _cache$1)[_cache$1].get('saveButton');
-	}
-	function _isAllFileUploadsComplete2(files) {
-	  const notUploadedFiles = files.filter(file => {
-	    return file.getStatus() !== ui_uploader_core.FileStatus.COMPLETE || main_core.Type.isNull(file.getServerFileId());
-	  });
-	  return notUploadedFiles.length === 0;
+		`;
+			if (this.#page === 0) {
+				this.#loadBlanks(1);
+			}
+			return selectorContainer;
+		}
+		openInSlider() {
+			const SidePanel = main_core.Reflection.getClass('BX.SidePanel');
+			if (!main_core.Type.isNil(SidePanel)) {
+				SidePanel.Instance.open('v2-blank-selector', {
+					width: 628,
+					cacheable: false,
+					events: {
+						onClose: () => {
+							this.emit('onSliderClose');
+						}
+					},
+					contentCallback: () => {
+						return ui_sidepanel_layout.Layout.createContent({
+							extensions: ['sign.v2.blank-selector'],
+							title: main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_SLIDER_TITLE'),
+							content: () => this.getLayout(),
+							buttons: ({
+								cancelButton,
+								SaveButton
+							}) => {
+								this.#setSaveButtonIntoSlider(new SaveButton({
+									text: main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_SLIDER_SELECT_BLANK_BUTTON_LABEL'),
+									onclick: () => {
+										SidePanel.Instance.close();
+									}
+								}));
+								this.#disableSaveButtonIntoSlider();
+								return [this.#getSaveButtonIntoSlider(), cancelButton];
+							}
+						});
+					}
+				});
+			}
+		}
+		#setSaveButtonIntoSlider(button) {
+			this.#cache.set('saveButton', button);
+		}
+		#disableSaveButtonIntoSlider() {
+			const saveButton = this.#getSaveButtonIntoSlider();
+			saveButton?.setDisabled(true);
+		}
+		#enableSaveButtonIntoSlider() {
+			const saveButton = this.#getSaveButtonIntoSlider();
+			saveButton?.setDisabled(false);
+		}
+		#getSaveButtonIntoSlider() {
+			return this.#cache.get('saveButton');
+		}
+		disableSelectedBlank(blankId) {
+			const blank = this.#blanks.get(blankId);
+			if (blank) {
+				main_core.Dom.addClass(blank.getLayout(), '--disabled');
+			}
+		}
+		enableSelectedBlank(blankId) {
+			const blank = this.#blanks.get(blankId);
+			if (blank) {
+				main_core.Dom.removeClass(blank.getLayout(), '--disabled');
+			}
+		}
+		#isAllFileUploadsComplete(files) {
+			const notUploadedFiles = files.filter(file => {
+				return file.getStatus() !== ui_uploader_core.FileStatus.COMPLETE || main_core.Type.isNull(file.getServerFileId());
+			});
+			return notUploadedFiles.length === 0;
+		}
 	}
 
-	exports.BlankField = BlankField$$1;
-	exports.ListItem = ListItem;
+	exports.BlankField = BlankField;
 	exports.BlankSelector = BlankSelector;
+	exports.ListItem = ListItem;
 
-}((this.BX.Sign.V2 = this.BX.Sign.V2 || {}),BX.Main,BX.Main,BX.Sign,BX.Sign.V2,BX.UI.SidePanel,BX.UI.Uploader,BX.UI.Uploader,BX,BX,BX,BX.Event,BX.Sign.V2,BX.UI.EntitySelector,BX));
+})(this.BX.Sign.V2 = this.BX.Sign.V2 || {}, BX, BX.Main, BX, BX.Main, BX.Event, BX.Sign, BX.Sign.V2, BX.UI.SidePanel, BX.UI.Uploader, BX.UI.Uploader, BX.Sign.V2, BX.Sign.V2.B2e, BX, BX.UI.EntitySelector, BX.UI.Notification);
 //# sourceMappingURL=blank-selector.bundle.js.map

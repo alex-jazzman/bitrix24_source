@@ -1,9 +1,9 @@
-import CustomButton from './custombutton';
+import { CustomButton } from './custombutton';
 
 /**
  * @deprecated use BX.UI.Button
  */
-export default class PopupWindowCustomButton extends CustomButton
+export class PopupWindowCustomButton extends CustomButton
 {
-
+	// No additional functionality, just for compatibility
 }

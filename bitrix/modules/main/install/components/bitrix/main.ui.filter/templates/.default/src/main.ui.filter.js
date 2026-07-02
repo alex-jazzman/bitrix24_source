@@ -16,6 +16,7 @@ import './entity-selector';
 import './field-controller';
 import './main-ui-control-custom-entity';
 import './search';
+import './search-collapsed-button';
 import './settings';
 import './filter';
 

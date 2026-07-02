@@ -1,25 +1,34 @@
-import 'im.v2.test';
 import { Dom, Tag } from 'main.core';
 
-import { ParserIcon } from '../../src/functions/icon';
+import 'im.v2.test';
+
+import { FileUtil } from '../../../utils/src/file';
 import { ParserImage, ImageBbCodeSizes } from '../../src/functions/image';
 import { Parser } from '../../src/parser';
-import { FileUtil } from '../../../utils/src/file';
-import * as CoreProxy from '../../src/utils/core-proxy';
+import { CoreProxy } from '../../src/utils/core-proxy';
 
 describe('ParserImage', () => {
 	let getImageBlockStub = null;
 	let utilsStub = null;
 	let coreStub = null;
+	let constStub = null;
 
 	beforeEach(() => {
-		getImageBlockStub = sinon.stub(ParserIcon, 'getImageBlock').returns('[Photo]');
+		getImageBlockStub = sinon.stub(ParserImage, 'getImagePrefix').returns('[Photo]');
 		utilsStub = sinon.stub(CoreProxy, 'getUtils').returns({
 			text: { checkUrl: () => true },
 			file: { getViewerDataForImageSrc: () => imageBbCodeConfig },
 		});
 		coreStub = sinon.stub(CoreProxy, 'getCore').returns({
-			store: { getters: { 'chats/get': () => 1 } },
+			getStore: () => ({
+				getters: {
+					'chats/get': () => ({ chatId: 1 }),
+					'application/getOption': () => false,
+				},
+			}),
+		});
+		constStub = sinon.stub(CoreProxy, 'getConst').returns({
+			DataAttribute: { useNativeContextMenu: 'data-use-native-context-menu' },
 		});
 	});
 
@@ -27,6 +36,7 @@ describe('ParserImage', () => {
 		getImageBlockStub.restore();
 		utilsStub.restore();
 		coreStub.restore();
+		constStub.restore();
 	});
 
 	describe('purifyLink', () => {
@@ -155,7 +165,7 @@ describe('ParserImage', () => {
 
 		it('should not convert an image from [url] with non-image extension', () => {
 			const text = '[url]https://example.com/file.txt[/url]';
-			const expectedResult = '<a href="https://example.com/file.txt" target="_blank">https://example.com/file.txt</a>';
+			const expectedResult = '<a href="https://example.com/file.txt" target="_blank" data-use-native-context-menu="true">https://example.com/file.txt</a>';
 
 			const actualResult = Parser.decode({ text });
 
@@ -283,7 +293,7 @@ const getImageHTMLFromBbCode = (size: string, url: string): string => {
 
 const getImageHTMLFromUrl = (url: string): string => {
 	const messageNode = Tag.render`
-		<a href="${url}" target="_blank">
+		<a href="${url}" target="_blank" data-use-native-context-menu="true">
 			<span class="bx-im-message-image">
 				<img class="bx-im-message-image-source" src="${url}">
 			</span>

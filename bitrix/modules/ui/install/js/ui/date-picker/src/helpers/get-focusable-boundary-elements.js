@@ -1,7 +1,8 @@
 import { Type } from 'main.core';
+import { InteractivityChecker } from 'ui.a11y';
 
 export const FOCUSABLE_ELEMENTS_SELECTOR: string = [
-	'button:not([disabled])',
+	'button:not([disabled]):not([tabindex="-1"])',
 	'[tabindex]:not([tabindex="-1"]):not([disabled])',
 ].join(', ');
 
@@ -16,7 +17,7 @@ export function getFocusableBoundaryElements(element: HTMLElement, matcher: Func
 
 	const elements: HTMLElement[] = (
 		[...element.querySelectorAll(FOCUSABLE_ELEMENTS_SELECTOR)].filter((el: HTMLElement): boolean => {
-			return el.tabIndex !== -1 && matcherFn(el);
+			return InteractivityChecker.isTabbable(el) && matcherFn(el);
 		})
 	);
 

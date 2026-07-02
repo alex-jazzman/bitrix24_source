@@ -1,4 +1,4 @@
-<?if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+<?php if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 /** @var array $arParams */
 /** @var array $arResult */
 /** @global CMain $APPLICATION */
@@ -28,7 +28,7 @@ $uploadedFile = <<<HTML
 HTML;
 $uploadedFile =  preg_replace("/[\n\t]+/", "", $uploadedFile);
 
-?><div id="diskuf-placeholder-<?=$arResult['UID']?>"><?
+?><div id="diskuf-placeholder-<?=$arResult['UID']?>"><?php
 foreach ($arResult['FILES'] as $file)
 {
 	if (array_key_exists("IMAGE", $file))

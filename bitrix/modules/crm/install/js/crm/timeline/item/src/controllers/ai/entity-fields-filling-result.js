@@ -1,7 +1,7 @@
 import { ajax, Runtime, Text, Type } from 'main.core';
-import ConfigurableItem from '../../configurable-item';
 
-import { ActionAnimationCallbacks, ActionParams, Base } from '../base';
+import ConfigurableItem from '../../configurable-item';
+import { type ActionAnimationCallbacks, type ActionParams, Base } from '../base';
 
 export class EntityFieldsFillingResult extends Base
 {
@@ -112,6 +112,9 @@ export class EntityFieldsFillingResult extends Base
 
 	static isItemSupported(item: ConfigurableItem): boolean
 	{
-		return (item.getType() === 'AI:EntityFieldsFillingResult');
+		return item.getType() === 'AI:EntityFieldsFillingResult'
+			|| item.getType() === 'Activity:OpenLine'
+			|| item.getType() === 'Activity:Call'
+		;
 	}
 }

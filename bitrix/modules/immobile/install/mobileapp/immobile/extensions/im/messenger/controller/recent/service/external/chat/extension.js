@@ -18,13 +18,7 @@ jn.define('im/messenger/controller/recent/service/external/chat', (require, expo
 		{
 			this.logger.log('on init');
 
-			this.#subscribeEvents();
-		}
-
-		#subscribeEvents()
-		{
-			BX.addCustomEvent(EventType.call.active, this.callActiveHandler);
-			BX.addCustomEvent(EventType.call.inactive, this.callInactiveHandler);
+			this.subscribeEvents();
 		}
 
 		callActiveHandler = (call, callStatus) => {
@@ -111,6 +105,18 @@ jn.define('im/messenger/controller/recent/service/external/chat', (require, expo
 
 			renderService.deleteItems([{ id: callId }]);
 			renderService.renderInstant();
+		}
+
+		subscribeEvents()
+		{
+			BX.addCustomEvent(EventType.call.active, this.callActiveHandler);
+			BX.addCustomEvent(EventType.call.inactive, this.callInactiveHandler);
+		}
+
+		unsubscribeEvents()
+		{
+			BX.removeCustomEvent(EventType.call.active, this.callActiveHandler);
+			BX.removeCustomEvent(EventType.call.inactive, this.callInactiveHandler);
 		}
 	}
 

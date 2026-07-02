@@ -1,5 +1,10 @@
-<?
+<?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+
+/**
+ * @var string $last_login Defined in wrapper.php
+ * @var string $authUrl Defined in wrapper.php
+ */
 
 $bNeedCaptcha = (COption::GetOptionString("main", "captcha_restoring_password", "N") == "Y");
 ?>
@@ -14,7 +19,7 @@ $bNeedCaptcha = (COption::GetOptionString("main", "captcha_restoring_password", 
 				<div class="login-popup-field">
 					<div class="login-popup-field-title"><?=GetMessage("AUTH_LOGIN")?></div>
 					<div class="login-input-wrap">
-						<input type="text" onfocus="BX.addClass(this.parentNode, 'login-input-active')" onblur="BX.removeClass(this.parentNode, 'login-input-active')" class="login-input"  name="USER_LOGIN" value="<?echo htmlspecialcharsbx($last_login)?>">
+						<input type="text" onfocus="BX.addClass(this.parentNode, 'login-input-active')" onblur="BX.removeClass(this.parentNode, 'login-input-active')" class="login-input"  name="USER_LOGIN" value="<?= htmlspecialcharsbx($last_login)?>">
 						<div class="login-inp-border"></div>
 					</div>
 				</div>
@@ -46,7 +51,7 @@ $bNeedCaptcha = (COption::GetOptionString("main", "captcha_restoring_password", 
 <script>
 var obForgMsg = new BX.authFormForgotPasswordMessage('forgot_password_message', {url:''}),
 	obForg = new BX.authFormForgotPassword('forgot_password', {
-		url: '<?echo CUtil::JSEscape($authUrl."?forgot_password=yes".(($s=DeleteParam(array("forgot_password"))) == ""? "":"&".$s))?>',
+		url: '<?= CUtil::JSEscape($authUrl."?forgot_password=yes".(($s=DeleteParam(array("forgot_password"))) == ""? "":"&".$s))?>',
 		needCaptcha: <?=$bNeedCaptcha?'true':'false'?>,
 		message: obForgMsg
 });

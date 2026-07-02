@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/controller/recent/service/vuex/channel', (require, exports, module) => {
 	const { Type } = require('type');
-	const { NavigationTabId } = require('im/messenger/const');
+	const { RecentTab, ROOT_PARENT_CHAT_ID } = require('im/messenger/const');
 	const { BaseRecentService } = require('im/messenger/controller/recent/service/base');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { AnchorMutationHandler } = require('im/messenger/controller/recent/service/vuex/lib/handlers/anchor');
@@ -19,7 +19,7 @@ jn.define('im/messenger/controller/recent/service/vuex/channel', (require, expor
 			this.logger.log('onInit');
 
 			this.anchor = new AnchorMutationHandler(this.recentLocator, this.logger);
-			this.#subscribeStoreMutation();
+			this.subscribeEvents();
 		}
 
 		/**
@@ -38,13 +38,23 @@ jn.define('im/messenger/controller/recent/service/vuex/channel', (require, expor
 			return serviceLocator.get('core').getStore();
 		}
 
+		subscribeEvents()
+		{
+			this.#subscribeStoreMutation();
+		}
+
+		unsubscribeEvents()
+		{
+			this.#unsubscribeStoreMutation();
+		}
+
 		#subscribeStoreMutation()
 		{
 			this.storeManager
 				.on('recentModel/add', this.recentAddHandler)
 				.on('recentModel/update', this.recentUpdateHandler)
 				.on('recentModel/delete', this.recentDeleteHandler)
-				.on('recentModel/storeIdCollection', this.recentFirstPageHandler)
+				.on('recentModel/storeNestedIdCollection', this.recentFirstPageHandler)
 				.on('dialoguesModel/add', this.dialogUpdateHandler)
 				.on('dialoguesModel/update', this.dialogUpdateHandler)
 				.on('dialoguesModel/clearAllCounters', this.dialogReadAllCountersHandler)
@@ -54,16 +64,39 @@ jn.define('im/messenger/controller/recent/service/vuex/channel', (require, expor
 			;
 		}
 
+		#unsubscribeStoreMutation()
+		{
+			this.storeManager
+				.off('recentModel/add', this.recentAddHandler)
+				.off('recentModel/update', this.recentUpdateHandler)
+				.off('recentModel/delete', this.recentDeleteHandler)
+				.off('recentModel/storeNestedIdCollection', this.recentFirstPageHandler)
+				.off('dialoguesModel/add', this.dialogUpdateHandler)
+				.off('dialoguesModel/update', this.dialogUpdateHandler)
+				.off('dialoguesModel/clearAllCounters', this.dialogReadAllCountersHandler)
+				.off('anchorModel/add', this.anchor.addHandler)
+				.off('anchorModel/delete', this.anchor.deleteHandler)
+				.off('anchorModel/deleteMany', this.anchor.deleteManyHandler)
+			;
+		}
+
 		/**
-		 * @param {MutationPayload<RecentStoreIdCollectionData>} payload
+		 * @param {MutationPayload<RecentStoreNestedIdCollectionData>} payload
 		 * @void
 		 */
 		recentFirstPageHandler = ({ payload }) => {
 			this.logger.log('recentFirstPageHandler', payload);
 
-			if (payload.data?.tab !== NavigationTabId.channel)
+			if ((payload.data?.parentChatId ?? ROOT_PARENT_CHAT_ID) !== ROOT_PARENT_CHAT_ID)
 			{
-				this.logger.log('recentFirstPageHandler: tab is not channel, skipping');
+				this.logger.log('recentFirstPageHandler: skipping nested chat update');
+
+				return;
+			}
+
+			if (payload.data?.recentSection !== RecentTab.openChannel)
+			{
+				this.logger.log('recentFirstPageHandler: recentSection is not openChannel, skipping');
 
 				return;
 			}

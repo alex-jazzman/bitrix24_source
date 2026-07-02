@@ -1,8 +1,10 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
-if (IsModuleInstalled('socialnetwork'))
-	$bSocNet = true;
+/**
+ * @var array $arCurrentValues
+ */
 
+$bSocNet = IsModuleInstalled('socialnetwork');
 
 if ($bSocNet)
 {
@@ -112,7 +114,7 @@ $arComponentParameters = array(
 	)
 );
 
-if ($arCurrentValues["USE_THUMBNAIL_LIST"] == "Y"):
+if (isset($arCurrentValues["USE_THUMBNAIL_LIST"]) && $arCurrentValues["USE_THUMBNAIL_LIST"] == "Y"):
 	$arComponentParameters["PARAMETERS"]["THUMBNAIL_LIST_SIZE"] = array(
 		"PARENT" => "VISUAL",
 		"NAME" => GetMessage("MAIN_UL_P_THUMBNAIL_SIZE_SMALL"),

@@ -15,6 +15,7 @@ return [
 		'ajax',
 		'loader',
 		'main.popup',
+		'ui.a11y',
 		'ui.icon-set.actions',
 		'ui.icon-set.main',
 		'ui.icons.generator',

@@ -11,14 +11,12 @@ jn.define('im/messenger/controller/chat-composer/create/channel', (require, expo
 	const { NestedDepartmentSelector } = require('selector/widget/entity/tree-selectors/nested-department-selector');
 	const {
 		DialogType,
-		EventType,
 		WidgetTitleParamsType,
 		EntitySelectorElementType,
 		OpenDialogContextType,
 	} = require('im/messenger/const');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { EntitySelectorHelper } = require('im/messenger/lib/helper');
 	const { Notification } = require('im/messenger/lib/ui/notification');
 
@@ -92,6 +90,7 @@ jn.define('im/messenger/controller/chat-composer/create/channel', (require, expo
 			return layoutWidget;
 		}
 
+		/** @protected */
 		getTitleParams()
 		{
 			return {
@@ -101,6 +100,7 @@ jn.define('im/messenger/controller/chat-composer/create/channel', (require, expo
 		}
 
 		/**
+		 * @protected
 		 * @return {ChannelViewProps}
 		 */
 		getDialogInfoProps()
@@ -123,6 +123,10 @@ jn.define('im/messenger/controller/chat-composer/create/channel', (require, expo
 			};
 		}
 
+		/**
+		 * @protected
+		 * @param {{ titleType?: string }} [params]
+		 */
 		openDialogTypeView({ titleType = WidgetTitleParamsType.entity } = {})
 		{
 			this.layoutWidget.openWidget('layout', {
@@ -150,6 +154,10 @@ jn.define('im/messenger/controller/chat-composer/create/channel', (require, expo
 				});
 		}
 
+		/**
+		 * @protected
+		 * @param {{ titleType?: string }} [params]
+		 */
 		async onClickParticipantAction({ titleType = WidgetTitleParamsType.entity } = {})
 		{
 			this.selector = new NestedDepartmentSelector({
@@ -246,6 +254,7 @@ jn.define('im/messenger/controller/chat-composer/create/channel', (require, expo
 		}
 
 		/**
+		 * @protected
 		 * @desc update dialog type
 		 * @param {boolean} isSetOpenEntityType
 		 * @void
@@ -259,6 +268,7 @@ jn.define('im/messenger/controller/chat-composer/create/channel', (require, expo
 		}
 
 		/**
+		 * @protected
 		 * @param {Array<Object>} selectedEntity
 		 * @void
 		 */
@@ -268,6 +278,10 @@ jn.define('im/messenger/controller/chat-composer/create/channel', (require, expo
 			this.dialogInfo.members = EntitySelectorHelper.getMemberList(selectedEntity);
 		}
 
+		/**
+		 * @protected
+		 * @param {{ title: string, description: string }} params
+		 */
 		onClickCreate({ title, description })
 		{
 			this.dialogInfo.name = title;
@@ -287,11 +301,16 @@ jn.define('im/messenger/controller/chat-composer/create/channel', (require, expo
 			;
 		}
 
+		/**
+		 * @protected
+		 * @param {string} avatar
+		 */
 		onChangeAvatar(avatar)
 		{
 			this.dialogInfo.avatar = avatar;
 		}
 
+		/** @protected */
 		async create()
 		{
 			const config = {
@@ -315,6 +334,7 @@ jn.define('im/messenger/controller/chat-composer/create/channel', (require, expo
 			return chatService.createChat(config);
 		}
 
+		/** @protected */
 		getMemberEntities()
 		{
 			const currentUserId = serviceLocator.get('core').getUserId();
@@ -339,18 +359,11 @@ jn.define('im/messenger/controller/chat-composer/create/channel', (require, expo
 				context: OpenDialogContextType.chatCreation,
 			};
 
-			if (this.dialogInfo.type === DialogType.channel)
-			{
-				serviceLocator.get('dialog-manager').openDialog(openDialogParams)
-					.catch((error) => {
-						logger.error('openDialog error', error);
-					})
-				;
-			}
-			else
-			{
-				MessengerEmitter.emit(EventType.messenger.openDialog, openDialogParams);
-			}
+			serviceLocator.get('dialog-manager').openDialog(openDialogParams)
+				.catch((error) => {
+					logger.error('openDialog error', error);
+				})
+			;
 		}
 
 		#showSuccessfullyToast()

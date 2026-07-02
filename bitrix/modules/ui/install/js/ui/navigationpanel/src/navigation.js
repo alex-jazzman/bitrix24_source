@@ -1,8 +1,6 @@
-import { Dom, Tag, Type, Extension } from 'main.core';
-import { MenuItemOptions } from 'main.popup';
+import { Dom, Tag, Text, Type, Extension } from 'main.core';
+import { type MenuItemOptions } from 'ui.system.menu';
 import NavigationItem from './item';
-import { Icon, Outline as OutlineIconSet } from 'ui.icon-set.api.core';
-import 'ui.icon-set.outline';
 import 'ui.fonts.opensans';
 import './style.css';
 
@@ -12,15 +10,29 @@ export type NavigationPanelOptions = {
 	collapsed?: boolean;
 };
 
+const instanceMap: WeakMap<HTMLElement, NavigationPanel> = new WeakMap();
+
 export default class NavigationPanel
 {
 	keys: string[];
 	#isCollapsed: boolean = false;
 
+	static getInstanceByNode(node: HTMLElement): ?NavigationPanel
+	{
+		return instanceMap.get(node) ?? null;
+	}
+
+	#rawItems: Object[] = [];
+
 	constructor(options: NavigationPanelOptions)
 	{
 		this.target = Type.isDomNode(options.target) ? options.target : null;
-		this.items = Type.isArray(options.items) ? options.items : [];
+		const rawItems = Type.isArray(options.items) ? options.items : [];
+		this.#rawItems = rawItems.map((item) => ({
+			...item,
+			id: item.id ?? `nav-${Text.getRandom(8)}`,
+		}));
+		this.items = this.#rawItems;
 		this.container = null;
 		this.keys = [];
 		this.#isCollapsed = options.collapsed === true;
@@ -40,9 +52,19 @@ export default class NavigationPanel
 				locked: item.locked === true,
 				dropdown: item.active === true && this.#isCollapsed,
 				menuItems: item.active === true && this.#isCollapsed ? this.#getMenuItems() : [],
+				onActivate: this.#deactivateOthers,
 			});
 		});
 	}
+
+	#deactivateOthers = (activatedItem: NavigationItem): void => {
+		this.items.forEach((item) => {
+			if (item !== activatedItem && item.active)
+			{
+				item.inactivate();
+			}
+		});
+	};
 
 	getItemById(value: string): ?NavigationItem
 	{
@@ -63,6 +85,8 @@ export default class NavigationPanel
 			this.container = Tag.render`
 				<div class="ui-nav-panel ui-nav-panel__scope"></div>
 			`;
+
+			instanceMap.set(this.container, this);
 
 			if (this.hasAirDesign())
 			{
@@ -102,6 +126,84 @@ export default class NavigationPanel
 		this.render();
 	}
 
+	isCollapsed(): boolean
+	{
+		return this.#isCollapsed;
+	}
+
+	collapse(): void
+	{
+		if (this.#isCollapsed)
+		{
+			return;
+		}
+
+		this.#isCollapsed = true;
+		this.#rebuild();
+	}
+
+	expand(): void
+	{
+		if (!this.#isCollapsed)
+		{
+			return;
+		}
+
+		this.#isCollapsed = false;
+		this.#rebuild();
+	}
+
+	#rebuild(): void
+	{
+		this.items.forEach((item) => {
+			if (item instanceof NavigationItem)
+			{
+				item.closeMenu();
+			}
+		});
+
+		const currentActiveId = this.items.find((item) => item.active === true)?.id ?? null;
+
+		this.#rawItems = this.#rawItems.map((item) => ({
+			...item,
+			active: item.id === currentActiveId,
+		}));
+
+		this.keys = [];
+		this.items = this.#rawItems;
+
+		this.adjustItem();
+		this.#rerenderContent();
+	}
+
+	#rerenderContent(): void
+	{
+		const container = this.getContainer();
+
+		Dom.clean(container);
+
+		if (this.#isCollapsed)
+		{
+			Dom.addClass(container, '--collapsed');
+		}
+		else
+		{
+			Dom.removeClass(container, '--collapsed');
+		}
+
+		this.items.forEach((item) => {
+			if (this.#isCollapsed && item.active === false)
+			{
+				return;
+			}
+
+			if (item instanceof NavigationItem)
+			{
+				Dom.append(item.getContainer(), container);
+			}
+		});
+	}
+
 	hasAirDesign(): boolean
 	{
 		return Extension.getSettings('ui.navigationpanel').get('useAirDesign');
@@ -110,45 +212,26 @@ export default class NavigationPanel
 	#getMenuItems(): MenuItemOptions[]
 	{
 		return this.items.map((item: NavigationItem): MenuItemOptions => {
-			if (item.active)
-			{
-				return null;
-			}
-
 			return {
-				id: Math.random(),
-				text: item.title,
-				href: item.link?.href,
-				html: this.#renderMenuItem(item),
-				className: item.locked ? '--locked' : '',
-				onclick: () => {
-					item.events?.click();
+				id: item.id ?? Math.random(),
+				title: item.title,
+				isSelected: item.active === true,
+				isLocked: item.locked === true,
+				onClick: () => {
+					if (Type.isFunction(item.events?.click))
+					{
+						item.events.click();
+
+						return;
+					}
+
+					const href = item.link?.href;
+					if (Type.isStringFilled(href))
+					{
+						window.location.href = href;
+					}
 				},
 			};
-		}).filter((item) => Boolean(item));
-	}
-
-	#renderMenuItem(item: Object): HTMLElement
-	{
-		const airModifier = this.hasAirDesign() ? '--air' : '';
-
-		return Tag.render`
-			<div class="ui-nav-panel__menu-item ${item.locked ? '--locked' : ''} ${airModifier}">
-				${item.locked ? this.#renderMenuItemLockedIcon() : ''}
-				<span>${item.title}</span>
-			</div>
-		`;
-	}
-
-	#renderMenuItemLockedIcon(): HTMLElement
-	{
-		const icon = (new Icon({
-			icon: OutlineIconSet.LOCK_L,
-			size: 20,
-		})).render();
-
-		return Tag.render`
-			<span class="ui-nav-panel__menu-item-icon ui-icon-set__scope">${icon}</span>
-		`;
+		});
 	}
 }

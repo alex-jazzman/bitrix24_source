@@ -5,7 +5,7 @@ import { sendData } from 'ui.analytics';
 import 'ui.icon-set.main';
 import CurtainPage from '../type/curtain-page';
 import PopupType from '../type/popup-type';
-import { Tag } from 'main.core';
+import { Tag, Extension } from 'main.core';
 
 export type MarketExpiredCurtainOptions = {
 	marketSubscriptionUrl: string,
@@ -72,6 +72,13 @@ export class MarketExpiredCurtain
 	{
 		this.#getPanel().hide();
 		this.#sendAnalytics('click_button');
+	}
+
+	getCopilotReplacements(): Object
+	{
+		return {
+			'#COPILOT_NAME#': Extension.getSettings('rest.market-expired')?.copilotName ?? '',
+		};
 	}
 
 	onHide(): void

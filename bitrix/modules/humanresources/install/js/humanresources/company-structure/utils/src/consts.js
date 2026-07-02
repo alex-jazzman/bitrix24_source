@@ -28,4 +28,5 @@ export const ChatTypes: Record<string> = Object.freeze({
 	channel: 'CHANNEL',
 	chat: 'CHAT',
 	collab: 'COLLAB',
+	project: 'COLLAB',
 });

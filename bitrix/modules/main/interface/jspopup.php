@@ -104,7 +104,7 @@ class CJSPopup
 			var currentPopup = currentWindow.<?=$this->jsPopup; ?>;
 			if (currentPopup)
 			{
-				currentPopup.SetTitle('<?echo CUtil::JSEscape($title)?>');
+				currentPopup.SetTitle('<?= CUtil::JSEscape($title)?>');
 			}
 		</script>
 		<?
@@ -116,15 +116,15 @@ class CJSPopup
 
 		$this->bDescriptionStarted = true;
 ?>
-<script><?if ($icon):?>
-	<?if (!str_contains($icon, '/')):?>
+<script><?php if ($icon):?>
+	<?php if (!str_contains($icon, '/')):?>
 
-		<?=$this->jsPopup?>.SetIcon('<?echo CUtil::JSEscape($icon)?>');
-	<?else:?>
+		<?=$this->jsPopup?>.SetIcon('<?= CUtil::JSEscape($icon)?>');
+	<?php else:?>
 
-		<?=$this->jsPopup?>.SetIconFile('<?echo CUtil::JSEscape($icon)?>');
-	<?endif;?>
-<?endif;?>
+		<?=$this->jsPopup?>.SetIconFile('<?= CUtil::JSEscape($icon)?>');
+	<?php endif;?>
+<?php endif;?>
 <?
 			ob_start();
 	}
@@ -137,7 +137,7 @@ class CJSPopup
 			ob_end_clean();
 ?>
 
-<?=$this->jsPopup?>.SetHead('<?echo CUtil::JSEscape($descr)?>');</script>
+<?=$this->jsPopup?>.SetHead('<?= CUtil::JSEscape($descr)?>');</script>
 <?
 			//echo '</div></div>';
 			$this->bDescriptionStarted = false;
@@ -178,12 +178,12 @@ class CJSPopup
 
 			if ($this->bContentBuffered)
 			{
-?></div><script>BX.ready(function() {<?=$this->jsPopup?>.SwapContent(BX('<?echo $this->cont_id?>'))});</script><?
+?></div><script>BX.ready(function() {<?=$this->jsPopup?>.SwapContent(BX('<?= $this->cont_id?>'))});</script><?
 			}
 
 			if (!defined('BX_PUBLIC_MODE') || BX_PUBLIC_MODE == false)
 			{
-?><script><?echo "BX.adminFormTools.modifyFormElements(".$this->jsPopup.".DIV);"?></script><?
+?><script><?= "BX.adminFormTools.modifyFormElements(".$this->jsPopup.".DIV);"?></script><?
 			}
 
 			$this->bContentStarted = false;
@@ -209,7 +209,7 @@ class CJSPopup
 			$buttons = ob_get_contents();
 			ob_end_clean();
 ?>
-		<script><?=$this->jsPopup?>.SetButtons('<?echo CUtil::JSEscape($buttons)?>');</script>
+		<script><?=$this->jsPopup?>.SetButtons('<?= CUtil::JSEscape($buttons)?>');</script>
 <?
 			$this->bButtonsStarted = false;
 		}

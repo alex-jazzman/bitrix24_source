@@ -1,0 +1,2 @@
+<?php
+$MESS["TASKS_FIELDS_TEMPLATE_TITLE"] = "Template";

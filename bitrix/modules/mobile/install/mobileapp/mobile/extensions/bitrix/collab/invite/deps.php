@@ -7,6 +7,7 @@ return [
 		'assets/icons',
 		'error',
 		'feature',
+		'feature-flag',
 		'haptics',
 		'layout/ui/email-input-box',
 		'layout/ui/menu',

@@ -1,6 +1,6 @@
 import { Tag } from 'main.core';
 import { PULL } from 'pull.client';
-import { BitrixVue, VueCreateAppResult } from 'ui.vue3';
+import { BitrixVue, type VueCreateAppResult } from 'ui.vue3';
 import { ActivatorAppComponent } from './component/app';
 import type { SetupTemplateData } from './types';
 

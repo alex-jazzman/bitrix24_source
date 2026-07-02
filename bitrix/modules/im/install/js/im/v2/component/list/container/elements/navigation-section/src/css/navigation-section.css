@@ -1,0 +1,24 @@
+.bx-im-list-container-navigation-section__container {
+	position: relative;
+}
+
+.bx-im-list-container-navigation-section__counter {
+	position: absolute;
+	top: -6px;
+	right: -2px;
+	min-width: 14px;
+	height: 14px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0 4px;
+	border-radius: var(--ui-border-radius-xl);
+	background-color: var(--ui-color-design-filled-na-bg-secondary);
+	font: var(--im-font-size-4xs) var(--im-font-family-system);
+	font-weight: var(--im-font-weight-medium);
+	color: var(--ui-color-design-filled-content);
+}
+
+.bx-im-list-container-navigation-section__container.--selected .bx-im-list-container-navigation-section__counter {
+	background-color: var(--ui-color-design-filled-bg);
+}

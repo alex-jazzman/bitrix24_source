@@ -133,6 +133,27 @@ export class AnalyticsSender
 		});
 	}
 
+	sendDeleteTask(params: AnalyticsParams, options: {
+		isSuccess: boolean,
+		collabId: number,
+		viewersCount: number,
+		checklistCount: number,
+		checklistItemsCount: number,
+		taskId: number,
+		cardType: string,
+	}): void
+	{
+		this.#sendData({
+			event: Analytics.Event.TaskDelete,
+			type: Analytics.Type.Task,
+			...(params.context ? { c_section: params.context } : {}),
+			...(params.additionalContext ? { c_sub_section: params.additionalContext } : {}),
+			...(params.element ? { c_element: params.element } : {}),
+			status: Analytics.Status.Success,
+			p1: Analytics.Params.TaskId(options.taskId),
+		});
+	}
+
 	sendDescription(params: AnalyticsParams, options: {
 		hasDescription: boolean,
 		hasScroll: boolean,
@@ -147,6 +168,34 @@ export class AnalyticsSender
 			status: Analytics.Status.Success,
 			p2: Analytics.Params.HasDescription(options.hasDescription),
 			p3: Analytics.Params.HasScroll(options.hasScroll),
+		});
+	}
+
+	sendDescriptionEdit(params: AnalyticsParams, options: { taskId: number }): void
+	{
+		this.#sendData({
+			category: Analytics.Category.TaskOperations,
+			event: Analytics.Event.DescriptionEdit,
+			type: Analytics.Type.Task,
+			...(params.context ? { c_section: params.context } : {}),
+			...(params.element ? { c_element: params.element } : {}),
+			c_sub_section: Analytics.SubSection.TaskCard,
+			status: Analytics.Status.Success,
+			p1: Analytics.Params.TaskId(options.taskId),
+		});
+	}
+
+	sendDescriptionExpand(params: AnalyticsParams, options: { taskId: number }): void
+	{
+		this.#sendData({
+			category: Analytics.Category.TaskOperations,
+			event: Analytics.Event.DescriptionExpand,
+			type: Analytics.Type.Task,
+			...(params.context ? { c_section: params.context } : {}),
+			...(params.element ? { c_element: params.element } : {}),
+			c_sub_section: Analytics.SubSection.TaskCard,
+			status: Analytics.Status.Success,
+			p1: Analytics.Params.TaskId(options.taskId),
 		});
 	}
 

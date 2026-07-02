@@ -11,7 +11,7 @@ import { ResourceTypes } from 'booking.model.resource-types';
 import { SkuResourcesEditorModel } from 'booking.model.sku-resources-editor';
 
 import { App } from './components/app';
-import { SkuResourcesEditorParams } from './components/types';
+import type { SkuResourcesEditorParams } from './components/types';
 
 export class SkuResourcesEditor
 {

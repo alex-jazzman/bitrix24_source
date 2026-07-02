@@ -250,7 +250,7 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 		}
 
 		/**
-		 * @private
+		 * @protected
 		 * @return {string}
 		 */
 		getEditableEmptyValue()

@@ -1,13 +1,11 @@
-import { DefaultMessageContent, MessageHeader, MessageFooter } from 'im.v2.component.message.elements';
 import { BaseMessage } from 'im.v2.component.message.base';
+import { BaseFileItem, DefaultMessageContent, MessageHeader, MessageFooter } from 'im.v2.component.message.elements';
 import { FileType } from 'im.v2.const';
+import { type ImModelMessage } from 'im.v2.model';
 
 import { BaseFileContextMenu } from '../classes/base-file-context-menu';
-import { BaseFileItem } from './items/base-file';
 
 import '../css/file-collection-message.css';
-
-import type { ImModelMessage } from 'im.v2.model';
 
 const FILES_LIMIT = 10;
 

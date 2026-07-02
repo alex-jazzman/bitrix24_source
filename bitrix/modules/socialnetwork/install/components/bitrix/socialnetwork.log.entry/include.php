@@ -528,7 +528,7 @@ if (!function_exists('__SLEGetLogRecord'))
 					}
 				}
 
-				if (is_array($arEvent["FIELDS_FORMATTED"]))
+				if (is_array($arEvent["FIELDS_FORMATTED"] ?? null))
 				{
 					$dateFormated = FormatDate(
 						$DB->DateFormatToPHP(FORMAT_DATE),
@@ -639,6 +639,10 @@ if (!function_exists('__SLEGetLogRecord'))
 					}
 				}
 
+				if (!is_array($arEvent["FIELDS_FORMATTED"] ?? null))
+				{
+					$arEvent["FIELDS_FORMATTED"] = [];
+				}
 				$arEvent['FIELDS_FORMATTED']['closedWorkgroupsOnly'] = false;
 
 				if (\Bitrix\Main\Config\Option::get('socialnetwork', 'work_with_closed_groups', 'N') !== 'Y')
@@ -687,7 +691,10 @@ if (!function_exists('__SLEGetLogRecord'))
 			}
 		}
 
-		if (!is_array($arEvent["FIELDS_FORMATTED"]))
+		if (
+			!is_array($arEvent["FIELDS_FORMATTED"] ?? null)
+			|| !is_array($arEvent["FIELDS_FORMATTED"]["EVENT"] ?? null)
+		)
 		{
 			return false;
 		}

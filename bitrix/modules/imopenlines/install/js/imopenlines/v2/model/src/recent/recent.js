@@ -1,16 +1,14 @@
-import { Type } from 'main.core';
-import { BuilderModel, GetterTree } from 'ui.vue3.vuex';
+import { Type, type JsonObject } from 'main.core';
+import { BuilderModel, type GetterTree, type ActionTree, type MutationTree } from 'ui.vue3.vuex';
 
 import { Core } from 'im.v2.application.core';
 import { formatFieldsWithConfig } from 'im.v2.model';
 
-import { recentFieldsConfig } from './format/field-config';
+import { type RawRecentItem } from 'imopenlines.v2.provider.service';
 
-import type { JsonObject } from 'main.core';
-import type { ActionTree, MutationTree } from 'ui.vue3.vuex';
-import type { RawRecentItem } from 'imopenlines.v2.provider.service';
-import type { RecentItem as ImolModelRecentItem } from '../type/recent';
-import type { Session as ImolModelSession } from '../type/sessions';
+import { type RecentItem as ImolModelRecentItem } from '../type/recent';
+import { type Session as ImolModelSession } from '../type/sessions';
+import { recentFieldsConfig } from './format/field-config';
 
 type RecentState = {
 	collection: {[dialogId: string]: ImolModelRecentItem},
@@ -50,7 +48,7 @@ export class RecentModel extends BuilderModel
 	getGetters(): GetterTree<RecentState>
 	{
 		return {
-			/** @function openlines/recent/getOpenLinesCollection */
+			/** @function openLines/recent/getOpenLinesCollection */
 			getOpenLinesCollection: (state: RecentState): ImolModelRecentItem[] => {
 				const openLinesItems = [];
 
@@ -65,7 +63,7 @@ export class RecentModel extends BuilderModel
 
 				return openLinesItems;
 			},
-			/** @function openlines/recent/getSession */
+			/** @function openLines/recent/getSession */
 			getSession: (state: RecentState) => (dialogId: string, getBlank: boolean = false): ImolModelSession | null => {
 				const session = state.collection[dialogId];
 

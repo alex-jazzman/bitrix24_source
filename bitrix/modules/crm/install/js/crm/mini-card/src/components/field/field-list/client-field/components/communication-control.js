@@ -1,4 +1,4 @@
-import { BitrixVueComponentProps } from 'ui.vue3';
+import { type BitrixVueComponentProps } from 'ui.vue3';
 import { Text } from 'main.core';
 import { Button, ButtonSize, AirButtonStyle, type ButtonOptions } from 'ui.buttons';
 import { Outline } from 'ui.icon-set.api.core';
@@ -10,7 +10,7 @@ const CommunicationType = Object.freeze({
 	Im: 'IM',
 });
 
-declare type CommunicationTypeValue = $Values<typeof CommunicationType>;
+type CommunicationTypeValue = $Values<typeof CommunicationType>;
 
 export const BUTTON_CONFIGURATION: Object<CommunicationTypeValue, ButtonOptions> = Object.freeze({
 	[CommunicationType.Phone]: {

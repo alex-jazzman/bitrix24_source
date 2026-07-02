@@ -7,3 +7,5 @@ $MESS["UI_TOOLBAR_STAR_TITLE_DEFAULT_PAGE"] = "Страница уже нахо�
 $MESS["UI_TOOLBAR_STAR_TITLE_DEFAULT_PAGE_DELETE_ERROR"] = "Страницу нельзя удалить из левого меню";
 $MESS["UI_TOOLBAR_COPY_LINK_BUTTON_SUCCESS"] = "Ссылка скопирована";
 $MESS["UI_TOOLBAR_COPY_LINK_BUTTON_TITLE"] = "Скопировать ссылку";
+$MESS["UI_TOOLBAR_FULLSCREEN_MODE"] = "Полноэкранный режим";
+$MESS["UI_TOOLBAR_FOCUS_MODE_HINT"] = "Развернуть на весь экран";

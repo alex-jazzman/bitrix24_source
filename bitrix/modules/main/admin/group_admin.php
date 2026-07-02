@@ -1,8 +1,8 @@
-<?
+<?php
 /**
- * @global \CUser $USER
- * @global \CMain $APPLICATION
- * @global \CDatabase $DB
+ * @global CUser $USER
+ * @global CMain $APPLICATION
+ * @global CDatabase $DB
  */
 
 require_once(__DIR__."/../include/prolog_admin_before.php");
@@ -12,7 +12,6 @@ if (!$USER->CanDoOperation('view_groups'))
 	$APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
 
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/admin/group_admin.php");
-$err_mess = "File: ".__FILE__."<br>Line: ";
 
 // идентификатор таблицы
 $sTableID = "tbl_user_group";
@@ -37,22 +36,22 @@ $arFilterFields = Array(
 	"find_users_2"
 	);
 
-$lAdmin->InitFilter($arFilterFields);
+$filter = $lAdmin->InitFilter($arFilterFields);
 
-function CheckFilter() // проверка введенных полей
+function CheckFilter(array $filter) // проверка введенных полей
 {
-	global $strError, $find_timestamp_1, $find_timestamp_2;
+	global $strError;
 	$str = "";
 
-	if (trim($find_timestamp_1) <> '' || trim($find_timestamp_2) <> '')
+	if (trim($filter["find_timestamp_1"]) <> '' || trim($filter["find_timestamp_2"]) <> '')
 	{
 		$date_1_ok = false;
-		$date1_stm = MkDateTime(FmtDate($find_timestamp_1,"D.M.Y"),"d.m.Y");
-		$date2_stm = MkDateTime(FmtDate($find_timestamp_2,"D.M.Y")." 23:59","d.m.Y H:i");
-		if (!$date1_stm && trim($find_timestamp_1) <> '')
+		$date1_stm = MkDateTime(FmtDate($filter["find_timestamp_1"],"D.M.Y"),"d.m.Y");
+		$date2_stm = MkDateTime(FmtDate($filter["find_timestamp_2"],"D.M.Y")." 23:59","d.m.Y H:i");
+		if (!$date1_stm && trim($filter["find_timestamp_1"]) <> '')
 			$str.= GetMessage("MAIN_WRONG_DATE_FROM")."<br>";
 		else $date_1_ok = true;
-		if (!$date2_stm && trim($find_timestamp_2) <> '')
+		if (!$date2_stm && trim($filter["find_timestamp_2"]) <> '')
 			$str.= GetMessage("MAIN_WRONG_DATE_TILL")."<br>";
 		elseif ($date_1_ok && $date2_stm <= $date1_stm && $date2_stm <> '')
 			$str.= GetMessage("MAIN_FROM_TILL_DATE")."<br>";
@@ -70,24 +69,24 @@ function CheckFilter() // проверка введенных полей
 }
 
 $arFilter = Array();
-if(CheckFilter($arFilterFields))
+if(CheckFilter($filter))
 {
 	$arFilter = Array(
-		"ID"			=> ($find!='' && $find_type == "id"? $find: $find_id),
-		"TIMESTAMP_1"	=> $find_timestamp_1,
-		"TIMESTAMP_2"	=> $find_timestamp_2,
-		"ACTIVE"		=> $find_active,
-		"NAME"		=> ($find!='' && $find_type == "name"? $find: $find_name),
-		"DESCRIPTION"	=> $find_description,
-		"USERS_1"		=> $find_users_1,
-		"USERS_2"		=> $find_users_2
+		"ID"			=> ($filter["find"] != '' && $filter["find_type"] == "id" ? $filter["find"] : $filter["find_id"]),
+		"TIMESTAMP_1"	=> $filter["find_timestamp_1"],
+		"TIMESTAMP_2"	=> $filter["find_timestamp_2"],
+		"ACTIVE"		=> $filter["find_active"],
+		"NAME"		=> ($filter["find"] != '' && $filter["find_type"] == "name" ? $filter["find"] : $filter["find_name"]),
+		"DESCRIPTION"	=> $filter["find_description"],
+		"USERS_1"		=> $filter["find_users_1"],
+		"USERS_2"		=> $filter["find_users_2"]
 		);
 }
 
 // обработка редактирования (права доступа!)
 if($lAdmin->EditAction() && $USER->CanDoOperation('edit_groups'))
 {
-	foreach($FIELDS as $ID=>$arFields)
+	foreach($_POST['FIELDS'] as $ID=>$arFields)
 	{
 		$ID = intval($ID);
 
@@ -130,7 +129,6 @@ if(($arID = $lAdmin->GroupAction()) && $USER->CanDoOperation('edit_groups'))
 		case "delete":
 			if($ID>2)
 			{
-				@set_time_limit(0);
 				$DB->StartTransaction();
 				$group = new CGroup();
 				if(!$group -> Delete($ID))
@@ -178,9 +176,7 @@ $lAdmin->AddHeaders(array(
 $showUserCount = in_array("USERS", $lAdmin->GetVisibleHeaderColumns());
 
 // инициализация списка - выборка данных
-global $by, $order;
-
-$rsData = CGroup::GetList($by, $order, $arFilter, ($showUserCount? "Y" : "N"));
+$rsData = CGroup::GetList($oSort->getField(), $oSort->getOrder(), $arFilter, ($showUserCount? "Y" : "N"));
 $rsData = new CAdminResult($rsData, $sTableID);
 $rsData->NavStart();
 
@@ -188,15 +184,17 @@ $rsData->NavStart();
 $lAdmin->NavText($rsData->GetNavPrint(GetMessage("PAGES")));
 
 // построение списка
-while($arRes = $rsData->NavNext(true, "f_"))
+while($arRes = $rsData->Fetch())
 {
-	$row =& $lAdmin->AddRow($f_ID, $arRes, "group_edit.php?lang=".LANGUAGE_ID."&ID=".$f_ID, GetMessage("MAIN_EDIT_TITLE"));
-	$row->AddViewField("ID", "<a href='group_edit.php?lang=".LANGUAGE_ID."&ID=".$f_ID."' title='".GetMessage("MAIN_EDIT_TITLE")."'>".$f_ID."</a>");
+	$groupId = (int)$arRes["ID"];
+	$groupIdHtml = htmlspecialcharsbx($arRes["ID"]);
+	$row = $lAdmin->AddRow($groupId, $arRes, "group_edit.php?lang=".LANGUAGE_ID."&ID=".$groupId, GetMessage("MAIN_EDIT_TITLE"));
+	$row->AddViewField("ID", "<a href='group_edit.php?lang=".LANGUAGE_ID."&ID=".$groupIdHtml."' title='".GetMessage("MAIN_EDIT_TITLE")."'>".$groupIdHtml."</a>");
 
 
 	if ($USER->CanDoOperation('edit_groups'))
 	{
-		if($f_ID <= 2)
+		if($groupId <= 2)
 			$row->AddCheckField("ACTIVE", false);
 		else
 			$row->AddCheckField("ACTIVE");
@@ -208,26 +206,29 @@ while($arRes = $rsData->NavNext(true, "f_"))
 	else
 	{
 		$row->AddCheckField("ACTIVE", false);
-		$row->AddViewField("C_SORT", $f_C_SORT);
-		$row->AddViewField("NAME", $f_NAME);
-		$row->AddViewField("DESCRIPTION", $f_DESCRIPTION);
+		$row->AddViewField("C_SORT", htmlspecialcharsbx($arRes["C_SORT"]));
+		$row->AddViewField("NAME", htmlspecialcharsbx($arRes["NAME"]));
+		$row->AddViewField("DESCRIPTION", htmlspecialcharsbx($arRes["DESCRIPTION"]));
 	}
 
-	if ($f_ID!=2)
-		$row->AddViewField("USERS", "<a href='user_admin.php?lang=".LANGUAGE_ID."&GROUPS_ID[]=".$f_ID."&apply_filter=Y' title='".GetMessage("USERS_OF_GROUP")."'>".($f_USERS ?? '')."</a>");
+	if ($groupId != 2)
+	{
+		$userCount = isset($arRes["USERS"]) ? htmlspecialcharsbx($arRes["USERS"]) : "";
+		$row->AddViewField("USERS", "<a href='user_admin.php?lang=".LANGUAGE_ID."&GROUPS_ID[]=".$groupIdHtml."&apply_filter=Y' title='".GetMessage("USERS_OF_GROUP")."'>".$userCount."</a>");
+	}
 
 	$arActions = Array();
 
-	if(intval($f_ID)>2 && $USER->CanDoOperation('edit_groups'))
+	if($groupId > 2 && $USER->CanDoOperation('edit_groups'))
 	{
-		$arActions[] = array("ICON"=>"edit", "TEXT"=>GetMessage("MAIN_ADMIN_MENU_EDIT"), "ACTION"=>$lAdmin->ActionRedirect("group_edit.php?ID=".$f_ID));
-		$arActions[] = array("ICON"=>"copy", "TEXT"=>GetMessage("MAIN_ADMIN_MENU_COPY"), "ACTION"=>$lAdmin->ActionRedirect("group_edit.php?COPY_ID=".$f_ID));
+		$arActions[] = array("ICON"=>"edit", "TEXT"=>GetMessage("MAIN_ADMIN_MENU_EDIT"), "ACTION"=>$lAdmin->ActionRedirect("group_edit.php?ID=".$groupId));
+		$arActions[] = array("ICON"=>"copy", "TEXT"=>GetMessage("MAIN_ADMIN_MENU_COPY"), "ACTION"=>$lAdmin->ActionRedirect("group_edit.php?COPY_ID=".$groupId));
 		$arActions[] = array("SEPARATOR"=>true);
-		$arActions[] = array("ICON"=>"delete", "TEXT"=>GetMessage("MAIN_ADMIN_MENU_DELETE"), "ACTION"=>"if(confirm('".GetMessage('CONFIRM_DEL_GROUP')."')) ".$lAdmin->ActionDoGroup($f_ID, "delete"));
+		$arActions[] = array("ICON"=>"delete", "TEXT"=>GetMessage("MAIN_ADMIN_MENU_DELETE"), "ACTION"=>"if(confirm('".GetMessage('CONFIRM_DEL_GROUP')."')) ".$lAdmin->ActionDoGroup($groupId, "delete"));
 	}
 	else
 	{
-		$arActions[] = array("ICON" => "view", "TEXT" => GetMessage("VIEW"), "ACTION" => $lAdmin->ActionRedirect("group_edit.php?ID=".$f_ID));
+		$arActions[] = array("ICON" => "view", "TEXT" => GetMessage("VIEW"), "ACTION" => $lAdmin->ActionRedirect("group_edit.php?ID=".$groupId));
 	}
 
 	$row->AddActions($arActions);
@@ -259,8 +260,8 @@ $APPLICATION->SetTitle(GetMessage("TITLE"));
 
 require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_admin_after.php");
 ?>
-<form name="find_form" method="GET" action="<?echo $APPLICATION->GetCurPage()?>?">
-<?
+<form name="find_form" method="GET" action="<?= $APPLICATION->GetCurPage()?>?">
+<?php
 $oFilter = new CAdminFilter(
 	$sTableID."_filter",
 	array(
@@ -278,45 +279,45 @@ $oFilter->Begin();
 <tr>
 	<td><b><?=GetMessage("MAIN_FLT_SEARCH")?></b></td>
 	<td nowrap>
-		<input type="text" size="25" name="find" value="<?echo htmlspecialcharsbx($find)?>" title="<?=GetMessage("MAIN_FLT_SEARCH_TITLE")?>">
+		<input type="text" size="25" name="find" value="<?= htmlspecialcharsbx($filter["find"])?>" title="<?=GetMessage("MAIN_FLT_SEARCH_TITLE")?>">
 		<select name="find_type">
-			<option value="name"<?if($find_type=="name") echo " selected"?>><?=GetMessage('F_NAME')?></option>
-			<option value="id"<?if($find_type=="id") echo " selected"?>><?=GetMessage('MAIN_F_ID')?></option>
+			<option value="name"<?php if($filter["find_type"]=="name") echo " selected"?>><?=GetMessage('F_NAME')?></option>
+			<option value="id"<?php if($filter["find_type"]=="id") echo " selected"?>><?=GetMessage('MAIN_F_ID')?></option>
 		</select>
 	</td>
 </tr>
 <tr>
-	<td nowrap><?echo GetMessage("MAIN_F_ID")?>:</td>
-	<td nowrap><input type="text" name="find_id" value="<?echo htmlspecialcharsbx($find_id)?>" size="47"><?=ShowFilterLogicHelp()?></td>
+	<td nowrap><?= GetMessage("MAIN_F_ID")?>:</td>
+	<td nowrap><input type="text" name="find_id" value="<?= htmlspecialcharsbx($filter["find_id"])?>" size="47"><?=ShowFilterLogicHelp()?></td>
 </tr>
 <tr>
-	<td width="0%" nowrap><?echo GetMessage("MAIN_F_TIMESTAMP").":"?></td>
-	<td width="0%" nowrap><?echo CalendarPeriod("find_timestamp_1", htmlspecialcharsbx($find_timestamp_1), "find_timestamp_2", htmlspecialcharsbx($find_timestamp_2), "find_form","Y")?></td>
+	<td width="0%" nowrap><?= GetMessage("MAIN_F_TIMESTAMP").":"?></td>
+	<td width="0%" nowrap><?= CalendarPeriod("find_timestamp_1", htmlspecialcharsbx($filter["find_timestamp_1"]), "find_timestamp_2", htmlspecialcharsbx($filter["find_timestamp_2"]), "find_form","Y")?></td>
 </tr>
 <tr>
-	<td nowrap><?echo GetMessage("MAIN_F_ACTIVE")?>:</td>
-	<td nowrap><?
+	<td nowrap><?= GetMessage("MAIN_F_ACTIVE")?>:</td>
+	<td nowrap><?php
 		$arr = array("reference"=>array(GetMessage("MAIN_YES"), GetMessage("MAIN_NO")), "reference_id"=>array("Y","N"));
-		echo SelectBoxFromArray("find_active", $arr, htmlspecialcharsbx($find_active), GetMessage("MAIN_ALL"));
+		echo SelectBoxFromArray("find_active", $arr, htmlspecialcharsbx($filter["find_active"]), GetMessage("MAIN_ALL"));
 		?></td>
 </tr>
 <tr>
-	<td nowrap><?echo GetMessage("F_NAME")?>:</td>
-	<td nowrap><input type="text" name="find_name" value="<?echo htmlspecialcharsbx($find_name)?>" size="47"><?=ShowFilterLogicHelp()?></td>
+	<td nowrap><?= GetMessage("F_NAME")?>:</td>
+	<td nowrap><input type="text" name="find_name" value="<?= htmlspecialcharsbx($filter["find_name"])?>" size="47"><?=ShowFilterLogicHelp()?></td>
 </tr>
 <tr>
-	<td nowrap><?echo GetMessage("MAIN_F_DESCRIPTION")?>:</td>
-	<td nowrap><input type="text" name="find_description" value="<?echo htmlspecialcharsbx($find_description)?>" size="47"><?=ShowFilterLogicHelp()?></td>
+	<td nowrap><?= GetMessage("MAIN_F_DESCRIPTION")?>:</td>
+	<td nowrap><input type="text" name="find_description" value="<?= htmlspecialcharsbx($filter["find_description"])?>" size="47"><?=ShowFilterLogicHelp()?></td>
 </tr>
 <tr>
-	<td><?echo GetMessage("MAIN_F_USERS")?>:</td>
-	<td><input type="text" name="find_users_1" size="10" value="<?echo htmlspecialcharsbx($find_users_1)?>" placeholder="<?echo GetMessage("group_admin_flt_from")?>">&nbsp;<input type="text" name="find_users_2" size="10" value="<?echo htmlspecialcharsbx($find_users_2)?>" placeholder="<?echo GetMessage("group_admin_flt_to")?>"></td>
+	<td><?= GetMessage("MAIN_F_USERS")?>:</td>
+	<td><input type="text" name="find_users_1" size="10" value="<?= htmlspecialcharsbx($filter["find_users_1"])?>" placeholder="<?= GetMessage("group_admin_flt_from")?>">&nbsp;<input type="text" name="find_users_2" size="10" value="<?= htmlspecialcharsbx($filter["find_users_2"])?>" placeholder="<?= GetMessage("group_admin_flt_to")?>"></td>
 </tr>
-<?
+<?php
 $oFilter->Buttons(array("table_id"=>$sTableID, "url"=>$APPLICATION->GetCurPage(), "form"=>"find_form"));
 $oFilter->End();
 ?>
 </form>
-<?$lAdmin->DisplayList();?>
+<?php $lAdmin->DisplayList();?>
 
-<?require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin.php");?>
+<?php require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin.php");?>

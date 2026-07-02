@@ -1,11 +1,8 @@
-import { Logger } from 'im.v2.lib.logger';
-import { ImModelMessage } from 'im.v2.model';
+import { type ImModelMessage, type ImModelChat } from 'im.v2.model';
 
 import { ChatDialog, PinnedMessages } from 'im.v2.component.dialog.chat';
 
 import { CommentsMessageList } from './message-list';
-
-import type { ImModelChat } from 'im.v2.model';
 
 // @vue/component
 export const CommentsDialog = {

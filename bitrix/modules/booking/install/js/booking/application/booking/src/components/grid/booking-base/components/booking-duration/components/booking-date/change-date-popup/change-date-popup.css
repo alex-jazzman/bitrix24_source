@@ -1,0 +1,11 @@
+.booking-booking-date-popup__footer {
+	display: flex;
+	justify-content: center;
+	margin-top: 8px;
+}
+
+.booking-booking-date-popup__error {
+	margin-top: 6px;
+	max-width: 280px;
+	color: var(--ui-color-text-alert);
+}

@@ -24,10 +24,6 @@ $currentUserId = (int)$arResult['USER_ID'];
 $targetUserId = (int)$arParams['USER_ID'];
 $isV2Form = \Bitrix\Tasks\V2\FormV2Feature::isOn('miniform') || \Bitrix\Tasks\V2\FormV2Feature::isOn('', $groupId);
 
-$pathToTaskTemplatesList = CComponentEngine::makePathFromTemplate(
-	$arParams['PATH_TO_USER_TASKS_TEMPLATES'],
-	['user_id' => $currentUserId] // pass current user here because we need our templates list
-);
 $createButtonUri = new Uri(
 	CComponentEngine::makePathFromTemplate(
 		($groupId > 0 ? $arParams['PATH_TO_GROUP_TASKS_TASK'] : $arParams['PATH_TO_USER_TASKS_TASK']),
@@ -102,107 +98,184 @@ if (!$arResult['IS_SCRUM_PROJECT'])
 
 <script>
 	(function() {
-		function getMenuItems()
+		const TEMPLATE_SELECTOR_OPENER_ID = 'templateSelectorOpenerInFilterInterface';
+
+		let EntitySelectorDialog = null;
+		let EntitySelectorEntity = null;
+		let menu = null;
+		let dialogTemplate = null;
+		let intervalAutoHideWorkaround = null;
+
+
+		BX.Runtime.loadExtension('tasks.v2.lib.entity-selector-dialog').then(data => ({ EntitySelectorDialog } = data));
+		BX.Runtime.loadExtension('tasks.v2.const').then(data => ({ EntitySelectorEntity } = data));
+
+		function freezeMenu() {
+			menu.popupWindow.setAutoHide(false);
+			menu.popupWindow.setClosingByEsc(false);
+		}
+
+		function unfreezeMenu() {
+			setTimeout(() => {
+				menu.popupWindow.setAutoHide(true);
+				menu.popupWindow.setClosingByEsc(true);
+			}, 100);
+		}
+
+		async function createTaskFromTemplate(templateId) {
+			const { TaskCard } = await BX.Runtime.loadExtension('tasks.v2.application.task-card');
+			const { idUtils } = await BX.Runtime.loadExtension('tasks.v2.lib.id-utils');
+			const { Analytics } = await BX.Runtime.loadExtension('tasks.v2.const');
+
+			TaskCard.showFullCard({
+				templateId: idUtils.unbox(templateId),
+				analytics: {
+					context: Analytics.Section.Templates,
+					additionalContext: Analytics.SubSection.TemplatesCard,
+					element: Analytics.Element.CreateButton,
+				},
+			});
+		}
+
+		async function showTemplateSelector() {
+			const popupWidth = 385;
+			const popupHeight = 385;
+
+			const openerElement = document.querySelector(`[data-id-opener=${TEMPLATE_SELECTOR_OPENER_ID}]`);
+
+			dialogTemplate ??= new EntitySelectorDialog({
+				context: 'tasks-card',
+				width: popupWidth,
+				height: popupHeight,
+				multiple: false,
+				enableSearch: true,
+				dropdownMode: true,
+				entities: [
+					{
+						id: EntitySelectorEntity.TemplateCommon,
+						options: {
+							isFullListOpenable: true,
+						},
+					},
+				],
+				events: {
+					'Item:onSelect': (event) => {
+						const template = dialogTemplate.getSelectedItems()[0];
+						const templateId = template?.getId();
+
+						if (templateId > 0)
+						{
+							createTaskFromTemplate(templateId);
+						}
+
+						dialogTemplate.deselectAll();
+					},
+				},
+				popupOptions: {
+					className: 'popup-window_entity-picker-no-check',
+					events: {
+						onClose: () => {
+							if (intervalAutoHideWorkaround)
+							{
+								clearInterval(intervalAutoHideWorkaround);
+								unfreezeMenu();
+							}
+						},
+					},
+				},
+			});
+
+			dialogTemplate.showTo(openerElement);
+
+			// TODO: if maybe one day we get entity selector without restriction on
+			//  negative offsets, then get rid of this workaround
+			const openerWidth = openerElement.offsetWidth;
+			const openerHeight = openerElement.offsetHeight;
+			dialogTemplate.getPopup().setOffset({
+				offsetLeft: (openerWidth - 10),
+				offsetTop: (0 - openerHeight),
+			});
+			dialogTemplate.adjustPosition();
+			freezeMenu();
+			intervalAutoHideWorkaround = setInterval(() => {
+				freezeMenu();
+			}, 20);
+		}
+
+		function closeMenu() {
+			if (intervalAutoHideWorkaround)
+			{
+				clearInterval(intervalAutoHideWorkaround);
+				unfreezeMenu();
+			}
+			dialogTemplate && dialogTemplate.hide();
+			menu.popupWindow.close();
+		}
+
+		function handleClickTemplateSelectorOpener() {
+			if (EntitySelectorDialog && EntitySelectorEntity)
+			{
+				showTemplateSelector();
+			}
+			else
+			{
+				setTimeout(() => {
+					handleClickTemplateSelectorOpener();
+				}, 50);
+			}
+		}
+
+		function getItemCreateTaskWithFullCard()
 		{
-			const menuItems = [{
+			return {
 				tabId: 'popupMenuAdd',
 				text: '<?= GetMessageJS('TASKS_BTN_ADD_TASK_BY_TASK_MSGVER_1') ?>',
 				href: '<?= $createButtonUri->getUri() ?>',
 				onclick : function() {
-					this.close();
+					closeMenu();
 				},
-			}];
+			};
+		}
+
+		function getItemCreateTaskWithTemplate()
+		{
+			return {
+				dataset: {
+					idOpener: TEMPLATE_SELECTOR_OPENER_ID,
+				},
+				className: 'menu-popup-no-icon menu-popup-item-submenu',
+				href: '',
+				tabId: 'popupMenuAdd',
+				text: '<?= GetMessageJS('TASKS_BTN_CREATE_TASK_BY_TEMPLATE') ?>',
+				onclick : function() {
+					handleClickTemplateSelectorOpener();
+				},
+			};
+		}
+
+		function getMenuItems()
+		{
+			const menuItems = [];
 
 			const isTemplatesAvailable = <?=CUtil::PhpToJSObject($arResult['IS_TEMPLATES_AVAILABLE'])?>;
+
+			menuItems.push(getItemCreateTaskWithFullCard());
 			if (isTemplatesAvailable)
 			{
-				menuItems.push(
-					{
-						tabId: 'popupMenuAdd',
-						text: '<?= GetMessageJS('TASKS_BTN_CREATE_TASK_BY_TEMPLATE') ?>',
-						href: '',
-						className: 'menu-popup-no-icon menu-popup-item-submenu',
-						cacheable: true,
-						items: [
-							{
-								id: 'loading',
-								text: '<?= GetMessageJS('TASKS_AJAX_LOAD_TEMPLATES') ?>'
-							}
-						],
-						events: {
-							onSubMenuShow: function() {
-								if (this.isSubMenuLoaded)
-								{
-									return;
-								}
-
-								BX.ajax.runComponentAction('bitrix:tasks.templates.list', 'getList', {
-									mode: 'class',
-									data: {
-										select: ['ID', 'TITLE'],
-										order: {ID: 'DESC'},
-										filter: {ZOMBIE: 'N'}
-									}
-								}).then(
-									function(response)
-									{
-										this.isSubMenuLoaded = true;
-										if (response.data.length > 0)
-										{
-											BX.Tasks.each(response.data, function(item, k) {
-												this.getSubMenu().addMenuItem({
-													text: BX.util.htmlspecialchars(item.TITLE),
-													href: '<?= $createButtonUri->getUri() ?>' + '&TEMPLATE=' + item.ID,
-													onclick : function() {
-														this.getParentMenuWindow().close();
-													}
-												});
-											}.bind(this));
-										}
-										else
-										{
-											this.getSubMenu().addMenuItem({
-												text: '<?= GetMessageJS('TASKS_AJAX_EMPTY_TEMPLATES') ?>'
-											});
-										}
-										this.getSubMenu().removeMenuItem('loading');
-									}.bind(this),
-									function()
-									{
-										this.isSubMenuLoaded = true;
-										this.getSubMenu().addMenuItem({
-											text: '<?= GetMessageJS('TASKS_AJAX_ERROR_LOAD_TEMPLATES') ?>'
-										});
-										this.getSubMenu().removeMenuItem('loading');
-									}.bind(this)
-								);
-							}
-						}
-					},
-					{
-						tabId: 'popupMenuAdd',
-						delimiter: true
-					},
-					{
-						tabId: 'popupMenuAdd',
-						text: '<?= GetMessageJS('TASKS_BTN_LIST_TASK_TEMPLATE') ?>',
-						href: '<?= $pathToTaskTemplatesList ?>',
-						target: '_top'
-					},
-				);
+				menuItems.push(getItemCreateTaskWithTemplate());
 			}
 
 			return menuItems;
 		}
 
 		const createButtonExtra = BX('tasks-popupMenuAdd');
-		const menu = BX.Main.MenuManager.create({
+		menu ??= BX.Main.MenuManager.create({
 			id: 'popupMenuAdd',
 			bindElement: createButtonExtra,
 			items: getMenuItems(),
 			closeByEsc: true,
-			offsetLeft: createButtonExtra.getBoundingClientRect().width / 2,
-			angle: true
+			offsetLeft: -15,
+			offsetTop: 5,
 		});
 
 		BX.bind(createButtonExtra, 'click', () => {

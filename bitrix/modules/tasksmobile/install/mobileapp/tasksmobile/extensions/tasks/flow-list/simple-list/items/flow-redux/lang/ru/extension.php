@@ -21,6 +21,13 @@ $MESS['TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_HIGH'] = "Команда раб
 $MESS['TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_HIGH_V2'] = "CoPilot отметил #ANCHOR_START#несколько моментов#ANCHOR_END#, которые помогли команде работать эффективно";
 $MESS['TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_TOAST'] = "CoPilot ещё готовит рекомендации, подождите немного";
 
+$MESS['TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_RATE_LIMIT_EXCEEDED_TOAST'] = 'Достигнут лимит запросов к AI. Обратитесь в поддержку';
+$MESS['TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_LIMIT_EXCEEDED_BOX_DESCRIPTION'] = 'Бесплатные запросы закончились. Вы можете оформить подписку на Маркетплейс и работать с AI без ограничений!';
+$MESS['TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_LIMIT_EXCEEDED_BOX_TITLE'] = 'BitrixGPT + Маркетплейс';
+$MESS['TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_LIMIT_EXCEEDED_BOX_BUTTON'] = 'Оформить подписку';
+$MESS['TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_GOTO_WEB_TITLE'] = 'BitrixGPT + Маркетплейс';
+$MESS['TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_GOTO_WEB_HINT'] = 'Узнать подробнее о подписке можно в веб-версии Битрикс24';
+
 $MESS['TASKSMOBILE_FLOW_AI_ADVICE_WIDGET_TITLE'] = "Рекомендации CoPilot";
 $MESS['TASKSMOBILE_FLOW_AI_ADVICE_HEADER_TITLE'] = "Привет! Я — CoPilot";
 $MESS['TASKSMOBILE_FLOW_AI_ADVICE_HEADER_SUBTITLE_NO_DATA_PLURAL_0'] = "Я подготовлю рекомендации, когда в потоке будет больше #MIN_TASKS_COUNT_FOR_ADVICE# задачи";

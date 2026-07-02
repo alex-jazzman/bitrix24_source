@@ -1,8 +1,9 @@
-<?
+<?php
 $MESS["MENU_LIVE_FEED"] = "Живая лента";
 $MESS["MENU_LIVE_FEED2"] = "Новости";
 $MESS["MENU_LIVE_FEED3"] = "Лента";
 $MESS["MENU_TASKS"] = "Задачи и Проекты";
+$MESS["MENU_TASKS_NEW"] = "Задачи";
 $MESS["MENU_CALENDAR"] = "Календарь";
 $MESS["MENU_SITES"] = "Сайты";
 $MESS["MENU_KNOWLEDGE"] = "База знаний";
@@ -11,6 +12,7 @@ $MESS["MENU_DISK_FLIPCHARTS"] = "Доски";
 $MESS["MENU_PHOTO"] = "Фотографии";
 $MESS["MENU_MAIL"] = "Почта";
 $MESS["MENU_GROUP_SECTION"] = "Группы";
+$MESS["MENU_PROJECT_SECTION"] = "Проекты";
 $MESS["MENU_CRM"] = "CRM";
 $MESS["MENU_SHOP"] = "Магазины";
 $MESS["MENU_CRM_WEBFORM"] = "CRM-формы";
@@ -57,5 +59,5 @@ $MESS["MENU_SIGN_MSGVER_1"] = "Подпись";
 $MESS["MENU_SIGN_B2E"] = "КЭДО";
 $MESS["MENU_GROUP_SPACES"] = "Пространства";
 $MESS["MENU_BI_CONSTRUCTOR"] = "BI Конструктор";
-$MESS["MENU_NOTE_BASE"] = "База знаний";
+$MESS["MENU_NOTE_BASE"] = "База знаний 2.0";
 $MESS["MENU_BOOKING"] = "Онлайн-запись";

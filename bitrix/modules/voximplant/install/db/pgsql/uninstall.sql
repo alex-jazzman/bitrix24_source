@@ -5,6 +5,7 @@ DROP TABLE if exists b_voximplant_statistic_missed;
 DROP TABLE if exists b_voximplant_call;
 DROP TABLE if exists b_voximplant_call_user;
 DROP TABLE if exists b_voximplant_call_crm_entity;
+DROP TABLE if exists b_voximplant_callhistory_ack;
 DROP TABLE if exists b_voximplant_sip;
 DROP TABLE if exists b_voximplant_external_line;
 DROP TABLE if exists b_voximplant_number;

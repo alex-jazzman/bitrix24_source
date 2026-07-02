@@ -27,6 +27,5 @@ return [
 	"bundle" => [
 		"./src/auth",
 		"./src/scanner",
-
 	]
 ];

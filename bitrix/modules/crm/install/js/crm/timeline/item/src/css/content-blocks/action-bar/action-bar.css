@@ -1,0 +1,31 @@
+.crm-timeline__action-bar-container {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	animation: crm-timeline__action-bar-fade-in 400ms ease forwards;
+}
+
+@keyframes crm-timeline__action-bar-fade-in {
+	from {
+		opacity: var(--ui-opacity-none);
+		transform: translateY(4px);
+	}
+
+	to {
+		opacity: var(--ui-opacity-full);
+		transform: translateY(0);
+	}
+}
+
+.crm-timeline__action-bar-title {
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-palette-gray-70);
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	background-clip: text;
+}
+
+.crm-timeline__action-bar-title.--hidden {
+	display: none;
+}

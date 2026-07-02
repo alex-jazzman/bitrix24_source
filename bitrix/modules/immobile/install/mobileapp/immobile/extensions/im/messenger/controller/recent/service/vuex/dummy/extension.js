@@ -14,6 +14,16 @@ jn.define('im/messenger/controller/recent/service/vuex/dummy', (require, exports
 		{
 			this.logger.log('onInit');
 		}
+
+		subscribeEvents()
+		{
+			this.logger.log('subscribeEvents');
+		}
+
+		unsubscribeEvents()
+		{
+			this.logger.log('unsubscribeEvents');
+		}
 	}
 
 	module.exports = DummyVuexService;

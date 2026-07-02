@@ -5,9 +5,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 /**
  * Bitrix vars
  * @global CMain $APPLICATION
- * @param array $arParams
- * @param array $arResult
- * @param CBitrixComponentTemplate $this
+ * @var array $arParams
+ * @var array $arResult
+ * @var CBitrixComponentTemplate $this
+ * @var CBitrixComponent $component
  */
 
 use Bitrix\Main\Localization\Loc;

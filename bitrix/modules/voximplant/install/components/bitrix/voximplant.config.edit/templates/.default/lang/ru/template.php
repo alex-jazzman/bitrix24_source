@@ -245,5 +245,3 @@ $MESS["VOX_CONFIG_CANCEL_DELETE_NUMBER"] = "Отменить отключени�
 $MESS["VOX_CONFIG_NUMBER_SET_TO_DELETE"] = "Номер запланирован к отключению #DATE#";
 $MESS["VOX_CONFIG_NUMBER_DISCONNECTION"] = "Отключение номера";
 $MESS["VOX_CONFIG_TELEPHONY_24"] = "Телефония";
-
-?>

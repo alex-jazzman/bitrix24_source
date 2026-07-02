@@ -72,7 +72,8 @@
 }
 
 .intranet-release-logo.--ru,
-.intranet-release-logo.--kz {
+.intranet-release-logo.--kz,
+.intranet-release-logo.--uz {
 	width: 124px;
 	height: 42px;
 	margin-bottom: -3px;

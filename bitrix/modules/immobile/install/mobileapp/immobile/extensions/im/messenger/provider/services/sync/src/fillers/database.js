@@ -78,7 +78,9 @@ jn.define('im/messenger/provider/services/sync/fillers/database', (require, expo
 		 */
 		prepareResult(result)
 		{
-			return this.filterUsers(result);
+			const cloneResult = clone(result);
+
+			return this.filterChildChats(this.filterUsers(cloneResult));
 		}
 
 		getUuidPrefix()

@@ -1,7 +1,7 @@
 /**
- * @module im/messenger/application/lib/dialog-manager/resolver
+ * @module im/messenger/application/lib/dialog-manager/src/resolver
  */
-jn.define('im/messenger/application/lib/dialog-manager/resolver', (require, exports, module) => {
+jn.define('im/messenger/application/lib/dialog-manager/src/resolver', (require, exports, module) => {
 	const { Type } = require('type');
 	const { DialogType } = require('im/messenger/const');
 	const { DialogHelper } = require('im/messenger/lib/helper');

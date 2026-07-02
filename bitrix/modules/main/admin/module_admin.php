@@ -59,6 +59,10 @@ if ($isAdmin && !$fb && check_bitrix_sessid())
 		$id = str_replace("\\", "", str_replace("/", "", $id));
 		if ($Module = CModule::CreateModuleObject($id))
 		{
+			global $step;
+
+			$step = (int)($_REQUEST['step'] ?? 0);
+
 			if (!empty($_REQUEST["uninstall"]) && $Module->IsInstalled())
 			{
 				OnModuleInstalledEvent($id);
@@ -74,7 +78,7 @@ if ($isAdmin && !$fb && check_bitrix_sessid())
 
 				OnModuleInstalledEvent($id);
 				$Module->DoInstall();
-				LocalRedirect($APPLICATION->GetCurPage()."?lang=".LANG);
+				LocalRedirect($APPLICATION->GetCurPage()."?lang=".LANGUAGE_ID);
 			}
 		}
 	}
@@ -180,11 +184,11 @@ function DoAction(oEvent, action, module_id)
 	</tr>
 	<tr>
 		<td><b><?= Loc::getMessage("MOD_MAIN_MODULE") ?></b><br><?php
-		$str = str_replace("#A1#","<a  href='update_system.php?lang=".LANG."'>", Loc::getMessage("MOD_MAIN_DESCRIPTION"));
+		$str = str_replace("#A1#","<a  href='update_system.php?lang=".LANGUAGE_ID."'>", Loc::getMessage("MOD_MAIN_DESCRIPTION"));
 		$str = str_replace("#A2#", "</a>", $str);
 		echo $str;?></td>
 		<td>
-			<div ondblclick="<?= htmlspecialcharsbx("DoAction(event, 'version_down', 'main')") ?>" id="version_for_main"><?= SM_VERSION ?></div><?
+			<div ondblclick="<?= htmlspecialcharsbx("DoAction(event, 'version_down', 'main')") ?>" id="version_for_main"><?= SM_VERSION ?></div><?php
 			if (class_exists('\Dev\Main\Migrator\ModuleUpdater'))
 			{
 				$dbVersion = \Bitrix\Main\Config\Option::get('main', 'updates_main_version');
@@ -210,7 +214,7 @@ foreach($arModules as $info)
 	<tr>
 		<td><b><?= htmlspecialcharsex($info["name"]) ?></b> <?= htmlspecialcharsex("(".$info["id"].")") ?><br><?= $info["description"] ?></td>
 		<td>
-			<div ondblclick="<?= htmlspecialcharsbx("DoAction(event, 'version_down', '".CUtil::AddSlashes($info["id"])."')") ?>"><?= $info["version"] ?></div><?
+			<div ondblclick="<?= htmlspecialcharsbx("DoAction(event, 'version_down', '".CUtil::AddSlashes($info["id"])."')") ?>"><?= $info["version"] ?></div><?php
 			if (class_exists('\Dev\Main\Migrator\ModuleUpdater'))
 			{
 				$dbVersion = \Bitrix\Main\Config\Option::get('main', 'updates_' . $info["id"] . '_version');
@@ -235,7 +239,7 @@ foreach($arModules as $info)
 		<td>
 			<form action="<?= $APPLICATION->GetCurPage() ?>" method="GET" id="form_for_<?= htmlspecialcharsbx($info["id"]) ?>">
 				<input type="hidden" name="action" value="" id="action_for_<?= htmlspecialcharsbx($info["id"]) ?>">
-				<input type="hidden" name="lang" value="<?= LANG ?>">
+				<input type="hidden" name="lang" value="<?= LANGUAGE_ID ?>">
 				<input type="hidden" name="id" value="<?= htmlspecialcharsbx($info["id"]) ?>">
 				<?= bitrix_sessid_post() ?>
 				<?php

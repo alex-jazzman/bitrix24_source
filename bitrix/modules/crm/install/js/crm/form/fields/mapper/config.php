@@ -8,12 +8,12 @@ return [
 	'css' => 'dist/mapper.bundle.css',
 	'js' => 'dist/mapper.bundle.js',
 	'rel' => [
-		'ui.sidepanel-content',
-		'main.core',
-		'main.core.events',
 		'landing.ui.collection.buttoncollection',
 		'landing.ui.collection.formcollection',
 		'landing.ui.panel.fieldspanel',
+		'main.core',
+		'main.core.events',
+		'ui.sidepanel-content',
 	],
 	'skip_core' => false,
 ];

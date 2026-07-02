@@ -1,6 +1,6 @@
 import { toRaw } from 'ui.vue3';
 import { Core } from 'booking.core';
-import { ResourceModel } from './types';
+import type { ResourceModel } from './types';
 
 export function getResource(resourceId: number): ResourceModel
 {
@@ -24,8 +24,8 @@ export function getEmptyResource(): ResourceModel
 		isMain: true,
 		isPrimary: false,
 		isDeleted: false,
-		senderCode: 'bitrix24',
 		isConfirmationNotificationOn: false,
+		isCancellationNotificationOn: false,
 		isFeedbackNotificationOn: false,
 		isInfoNotificationOn: false,
 		isDelayedNotificationOn: false,

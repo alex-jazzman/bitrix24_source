@@ -1,19 +1,18 @@
-import { Type } from 'main.core';
-import { ActionTree, BuilderModel, MutationTree, GetterTree } from 'ui.vue3.vuex';
+import { Type, type JsonObject } from 'main.core';
+import { BuilderModel, type ActionTree, type MutationTree, type GetterTree } from 'ui.vue3.vuex';
 
 import { formatFieldsWithConfig } from 'im.v2.model';
-import { QueueTypeName } from 'imopenlines.v2.const';
+
+import { type ImolModelQueue } from 'imopenlines.v2.model';
+import { type RawQueue } from 'imopenlines.v2.provider.service';
 
 import { queueFieldsConfig } from './format/field-config';
-
-import type { JsonObject } from 'main.core';
-import type { ImolModelQueue } from 'imopenlines.v2.model';
-import type { RawQueue } from 'imopenlines.v2.provider.service';
 
 type QueueState = {
 	collection: {
 		[id: number]: ImolModelQueue
-	}
+	},
+	isLinesOperator: boolean,
 }
 
 /* eslint-disable no-param-reassign */
@@ -28,6 +27,7 @@ export class QueueModel extends BuilderModel
 	{
 		return {
 			collection: {},
+			isLinesOperator: false,
 		};
 	}
 
@@ -38,25 +38,28 @@ export class QueueModel extends BuilderModel
 			lineName: '',
 			type: '',
 			isActive: true,
+			color: '',
 		};
 	}
 
 	getGetters(): GetterTree<QueueState>
 	{
 		return {
-			/** @function queue/getTypeById */
-			getTypeById: (state: QueueState) => (id: number, getBlank: boolean = false): ?QueueTypeName => {
-				if (!state.collection[id] && getBlank)
-				{
-					return this.getElementState();
-				}
-
-				if (!state.collection[id] && !getBlank)
-				{
-					return null;
-				}
-
-				return state.collection[id].type;
+			/** @function openLines/queue/getList */
+			getList: (state: QueueState) => (): ImolModelQueue[] => {
+				return Object.values(state.collection);
+			},
+			/** @function openLines/queue/getListOfActive */
+			getListOfActive: (state: QueueState) => (): ImolModelQueue[] => {
+				return Object.values(state.collection).filter((queue) => queue.isActive);
+			},
+			/** @function openLines/queue/getById */
+			getById: (state: QueueState) => (id: number): ?ImolModelQueue => {
+				return state.collection[id] ?? null;
+			},
+			/** @function openLines/queue/isLinesOperator */
+			isLinesOperator: (state: QueueState): boolean => {
+				return state.isLinesOperator;
 			},
 		};
 	}
@@ -64,7 +67,7 @@ export class QueueModel extends BuilderModel
 	getActions(): ActionTree<QueueState>
 	{
 		return {
-			/** @function queue/set */
+			/** @function openLines/queue/set */
 			set: (store, payload: RawQueue | RawQueue[]) => {
 				let queues = payload;
 
@@ -95,7 +98,11 @@ export class QueueModel extends BuilderModel
 					store.commit('add', itemsToAdd);
 				}
 			},
-			/** @function queue/delete */
+			/** @function openLines/queue/setIsLinesOperator */
+			setIsLinesOperator: (store, payload: boolean) => {
+				store.commit('setIsLinesOperator', payload === true);
+			},
+			/** @function openLines/queue/delete */
 			delete: (store, payload: { id: number }) => {
 				const existingItem = store.state.collection[payload.id];
 				if (!existingItem)
@@ -130,6 +137,9 @@ export class QueueModel extends BuilderModel
 			},
 			delete: (state: QueueState, payload: { id: number }) => {
 				delete state.collection[payload.id];
+			},
+			setIsLinesOperator: (state: QueueState, payload: boolean) => {
+				state.isLinesOperator = payload;
 			},
 		};
 	}

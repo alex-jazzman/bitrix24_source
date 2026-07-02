@@ -51,7 +51,7 @@ $controlId = htmlspecialcharsbx($arParams["divId"]);
 		<?= $arParams["~HTML_BEFORE_TEXTAREA"] ?? ''?>
 		<div class="feed-add-post-text">
 <script>
-<?
+	<?php
 if (isset($GLOBALS["arExtranetGroupID"]) && is_array($GLOBALS["arExtranetGroupID"]))
 {
 	?>
@@ -59,13 +59,13 @@ if (isset($GLOBALS["arExtranetGroupID"]) && is_array($GLOBALS["arExtranetGroupID
 	{
 		window['arExtranetGroupID'] = <?= Json::encode($GLOBALS["arExtranetGroupID"])?>;
 	}
-	<?
+	<?php
 }
 ?>
 BX.ready(function()
 {
 	BX.message(<?= Json::encode(Main\Localization\Loc::loadLanguageFile(__DIR__."/editor.php")) ?>);
-	<?if ($arParams["JS_OBJECT_NAME"] !== ""): ?>window['<?=$arParams["JS_OBJECT_NAME"]?>'] = <? endif; ?>
+	<?php if ($arParams["JS_OBJECT_NAME"] !== ""): ?>window['<?=$arParams["JS_OBJECT_NAME"]?>'] = <?php endif; ?>
 	new BX.Main.PostForm(
 		{
 			id: '<?=CUtil::JSEscape($arParams["LHE"]["id"])?>',
@@ -97,37 +97,42 @@ $visibleButtons = include(__DIR__.'/lhe.php');
 		</div>
 		<div class="main-post-form-toolbar">
 			<div class="main-post-form-toolbar-buttons">
-				<div class="main-post-form-toolbar-buttons-container" data-bx-role="toolbar"><?php
+				<div class="main-post-form-toolbar-buttons-container" data-bx-role="toolbar" role="toolbar"><?php
 				foreach ($visibleButtons as $key => $item)
 				{
-					?><div class="main-post-form-toolbar-button"
+					$ariaLabel = '';
+					if (preg_match('/data-toolbar-aria-label="([^"]*)"/', $item["HTML"] ?? '', $m))
+					{
+						$ariaLabel = ' aria-label="' . htmlspecialcharsbx($m[1]) . '"';
+					}
+					?><button type="button" class="main-post-form-toolbar-button"
 					       data-bx-role="toolbar-item"
 					       id="mpf-<?=$item["ID"]?>-<?=$arParams["FORM_ID"]?>"
-					       data-id="<?=$item["ID"]?>">
+					       data-id="<?=$item["ID"]?>"<?=$ariaLabel ?>>
 						<?=$item["HTML"]?>
-					</div><?php
+					</button><?php
 				}
 					?>
 				</div>
-				<div class="main-post-form-toolbar-button main-post-form-toolbar-button-more" data-bx-role="toolbar-item-more" style="display: none;"></div>
+				<button type="button" class="main-post-form-toolbar-button main-post-form-toolbar-button-more" data-bx-role="toolbar-item-more" aria-label="<?=GetMessage('MPF_MORE') ?>" style="display: none;"></button>
 			</div>
-			<?
+			<?php
 
 			if(!empty($arParams["ADDITIONAL"]))
 			{
 				if ($arParams["ADDITIONAL_TYPE"] == "popup")
 				{
-					?><div class="feed-add-post-form-but-more" <?
-						?>onclick="BX.PopupMenu.show('menu-more<?=$arParams["FORM_ID"]?>', this, [<?=implode(", ", $arParams["ADDITIONAL"])?>], {offsetLeft: 42, offsetTop: 3, lightShadow: false, angle: top, events : {onPopupClose : function(popupWindow) {BX.removeClass(this.bindElement, 'feed-add-post-form-but-more-act');}}}); BX.addClass(this, 'feed-add-post-form-but-more-act');"><?
-						?><?=GetMessage("MPF_MORE")?><?
-						?><div class="feed-add-post-form-but-arrow"></div><?
-					?></div><?
+					?><div class="feed-add-post-form-but-more" <?php
+						?>onclick="BX.PopupMenu.show('menu-more<?=$arParams["FORM_ID"]?>', this, [<?=implode(", ", $arParams["ADDITIONAL"])?>], {offsetLeft: 42, offsetTop: 3, lightShadow: false, angle: top, events : {onPopupClose : function(popupWindow) {BX.removeClass(this.bindElement, 'feed-add-post-form-but-more-act');}}}); BX.addClass(this, 'feed-add-post-form-but-more-act');"><?php
+						?><?=GetMessage("MPF_MORE")?><?php
+						?><div class="feed-add-post-form-but-arrow"></div><?php
+					?></div><?php
 				}
 				else if (count($arParams["ADDITIONAL"]) < 5)
 				{
-					?><div class="feed-add-post-form-but-more-open"><?
+					?><div class="feed-add-post-form-but-more-open"><?php
 						?><?=implode("", $arParams["ADDITIONAL"])?>
-					</div><?
+					</div><?php
 				}
 				else
 				{
@@ -135,12 +140,13 @@ $visibleButtons = include(__DIR__.'/lhe.php');
 					{
 						$arParams["ADDITIONAL"][$key] = array("text" => $val, "onclick" => "BX.PopupMenu.Data['menu-more".$arParams["FORM_ID"]."'].popupWindow.close();");
 					}
-					?><script>window['more<?=$arParams["FORM_ID"]?>']=<?= Json::encode($arParams["ADDITIONAL"]) ?>;</script><?
-					?><div class="feed-add-post-form-but-more" <?
-						?>onclick="BX.PopupMenu.show('menu-more<?=$arParams["FORM_ID"]?>', this, window['more<?=$arParams["FORM_ID"]?>'], {offsetLeft: 42, offsetTop: 3, lightShadow: false, angle: top, events : {onPopupClose : function(popupWindow) {BX.removeClass(this.bindElement, 'feed-add-post-form-but-more-act');}}}); BX.addClass(this, 'feed-add-post-form-but-more-act');"><?
-						?><?=GetMessage("MPF_MORE")?><?
-						?><div class="feed-add-post-form-but-arrow"></div><?
-					?></div><?
+					?><script>window['more<?=$arParams["FORM_ID"]?>']=<?= Json::encode($arParams["ADDITIONAL"]) ?>;</script><?php
+					?><div class="feed-add-post-form-but-more"
+					       <?php
+						?>onclick="BX.PopupMenu.show('menu-more<?=$arParams["FORM_ID"]?>', this, window['more<?=$arParams["FORM_ID"]?>'], {offsetLeft: 42, offsetTop: 3, lightShadow: false, angle: top, events : {onPopupClose : function(popupWindow) {BX.removeClass(this.bindElement, 'feed-add-post-form-but-more-act');}}}); BX.addClass(this, 'feed-add-post-form-but-more-act');"><?php
+						?><?=GetMessage("MPF_MORE")?><?php
+						?><div class="feed-add-post-form-but-arrow"></div><?php
+					?></div><?php
 				}
 			}
 		?></div>
@@ -160,7 +166,7 @@ $visibleButtons = include(__DIR__.'/lhe.php');
 
 		$mentionSelectorId = 'mention_'.randString(6);
 
-		?><span id="bx-mention-<?=$arParams["FORM_ID"]?>-id" data-bx-selector-id="<?=htmlspecialcharsbx($mentionSelectorId)?>"></span><?
+		?><span id="bx-mention-<?=$arParams["FORM_ID"]?>-id" data-bx-selector-id="<?=htmlspecialcharsbx($mentionSelectorId)?>"></span><?php
 
 		?><script>
 			BX.ready(function(){
@@ -197,7 +203,7 @@ $visibleButtons = include(__DIR__.'/lhe.php');
 		}, $arParams["TAGS"]["VALUE"]);
 
 		?>
-		<div id="post-tags-block-<?=$arParams["FORM_ID"]?>" class="feed-add-post-strings-blocks feed-add-post-tags-block"<?if (sizeof($tagsInput) > 0):?> style="display:block"<?endif?>>
+		<div id="post-tags-block-<?=$arParams["FORM_ID"]?>" class="feed-add-post-strings-blocks feed-add-post-tags-block"<?php if (sizeof($tagsInput) > 0):?> style="display:block"<?php endif?>>
 			<div class="feed-add-post-tags-title"><?=GetMessage("MPF_TAGS")?></div>
 			<div class="feed-add-post-tags-wrap" id="post-tags-container-<?=$arParams["FORM_ID"]?>">
 				<?=implode('', $tags)?>
@@ -226,11 +232,11 @@ $visibleButtons = include(__DIR__.'/lhe.php');
 				}
 				else
 				{
-					?><input type="text" id="post-tags-popup-input-<?=$arParams["FORM_ID"]?>" tabindex="<?=($arParams["TEXT"]["TABINDEX"]++)?>" name="<?=$arParams["TAGS"]["NAME"]."_".$arParams["FORM_ID"]?>" size="30" value=""><?
+					?><input type="text" id="post-tags-popup-input-<?=$arParams["FORM_ID"]?>" tabindex="<?=($arParams["TEXT"]["TABINDEX"]++)?>" name="<?=$arParams["TAGS"]["NAME"]."_".$arParams["FORM_ID"]?>" size="30" value=""><?php
 				}?>
 			</div>
 		</div>
-		<?
+		<?php
 	}
 
 	if($arParams["DESTINATION_SHOW"] === "Y")
@@ -266,7 +272,7 @@ $visibleButtons = include(__DIR__.'/lhe.php');
 		});
 	});
 </script>
-		</div><?
+		</div><?php
 
 		echo $APPLICATION->GetViewContent("mpl_input_additional");
 	}

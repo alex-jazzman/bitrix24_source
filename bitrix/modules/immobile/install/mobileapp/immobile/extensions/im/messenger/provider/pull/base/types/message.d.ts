@@ -7,6 +7,7 @@ import {RecentConfigSections} from "./recent";
 import {RawFile, RawMessage, RawPin, RawUser} from "./common";
 import {DialogId} from "../../../../types/common";
 import {OpenlinesSessionModelState} from "../../../../model/dialogues/src/openlines/type";
+import {BuilderConfig, BaseBuilderBlockType} from "../../../../model/messages/src/types/builder";
 
 export type MessagesAutoDeleteDelayParams = {
 	delay: number,
@@ -167,6 +168,7 @@ declare type MessagePullHandlerUpdateParams = {
 	toUserId?: number, // only private chat
 	text: string,
 	textLegacy: string,
+	builder?: BuilderConfig,
 }
 
 declare type MessagePullHandlerMessageParamsUpdateParams = {
@@ -229,6 +231,25 @@ declare type MessageAddParams = {
 	users: {[userId: string]: RawUser} | null,
 };
 
+
+declare type MessagePullHandlerBuilderBlockAppendParams = {
+	messageId: number,
+	text: string,
+	block: BaseBuilderBlockType,
+}
+
+declare type MessagePullHandlerBuilderBlockUpdateParams = {
+	messageId: number,
+	text: string,
+	blockId: string,
+	block: BaseBuilderBlockType,
+}
+
+declare type MessagePullHandlerBuilderBlockDeleteParams = {
+	messageId: number,
+	text: string,
+	blockId: string,
+}
 
 export type MessageAddParamsRawChat = {
 	ai_provider: null | string,

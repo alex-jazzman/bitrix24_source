@@ -1,4 +1,4 @@
-.node-settings-add-item-button {
+.editor-chart-node-settings-add-item-button {
 	cursor: pointer;
 	font-size: 14px;
 	line-height: 19px;
@@ -8,6 +8,6 @@
 	margin-top: 16px;
 }
 
-.node-settings-add-item-button__plus {
+.editor-chart-node-settings-add-item-button__plus {
 	margin-right: 5px;
 }

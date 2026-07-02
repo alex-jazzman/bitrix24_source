@@ -1,11 +1,13 @@
-import { ajax as Ajax, Dom, Loc, Tag, Text, Type } from 'main.core';
-import { MenuManager, PopupManager, Menu } from 'main.popup';
-import { ActionParams, Base } from '../base';
-import ConfigurableItem from 'crm.timeline.item';
-import SharingSlotsList from '../../components/content-blocks/calendar/sharing-slots-list';
-import { Router } from 'crm.router';
 import { DialogQr } from 'calendar.sharing.interface';
+import { Router } from 'crm.router';
+import type ConfigurableItem from 'crm.timeline.item';
+import { ajax as Ajax, Dom, Loc, Tag, Text, Type } from 'main.core';
+import { type Menu, MenuManager, PopupManager } from 'main.popup';
+
 import { UI } from 'ui.notification';
+
+import SharingSlotsList from '../../components/content-blocks/calendar/sharing-slots-list';
+import { type ActionParams, Base } from '../base';
 
 export class Sharing extends Base
 {

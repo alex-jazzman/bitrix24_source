@@ -1,4 +1,4 @@
-import type { ButtonData } from './button';
+import { type ButtonData } from './button';
 
 export type ItemData = {
 	id: string | number,

@@ -156,6 +156,7 @@ export const Wizard: BitrixVueComponentProps = {
 		async complete(): void
 		{
 			const complete = () => {
+				this.unbindWindowOnBeforeUnload();
 				this.slider().close();
 
 				this.sendFinishAnalytics('crm_import_done');

@@ -593,8 +593,6 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					this.callView.setUserData(userData);
 					this.callView.updateTotalUsersCount(associatedDialogData.userCounter);
 
-					BX.postComponentEvent('CallEvents::viewOpened', []);
-					BX.postWebEvent('CallEvents::viewOpened', {});
 					this.bindViewEvents();
 					media.audioPlayer().playSound('call_start');
 
@@ -739,8 +737,6 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					copilotEnabled: false,
 				}, isVideoEnabled);
 			}).then(() => {
-				BX.postComponentEvent('CallEvents::viewOpened', []);
-				BX.postWebEvent('CallEvents::viewOpened', {});
 				this.bindViewEvents();
 				media.audioPlayer().playSound('call_start');
 
@@ -1703,6 +1699,9 @@ jn.define('call/calls/controller', (require, exports, module) => {
 							this.callView.setSoundOutputDevice(CallUtil.getSdkAudioManager().currentDevice);
 						}
 						this.startCheckOutputDevice();
+
+						BX.postComponentEvent('CallEvents::viewOpened', []);
+						BX.postWebEvent('CallEvents::viewOpened', {});
 
 						resolve();
 					})

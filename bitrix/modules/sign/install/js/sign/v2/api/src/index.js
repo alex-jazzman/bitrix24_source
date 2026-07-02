@@ -53,6 +53,21 @@ export class Api
 		return this.#post('sign.api_v1.document.upload', { uid });
 	}
 
+	getEditUrl(uid: string): Promise<{ editUrl: string, diskFileId: number }>
+	{
+		return this.#post('sign.api_v1.document.getEditUrl', { uid });
+	}
+
+	applyEditedFile(uid: string, diskFileId: number): Promise<{ blankId: number }>
+	{
+		return this.#post('sign.api_v1.document.applyEditedFile', { uid, diskFileId });
+	}
+
+	discardEditedFile(uid: string, diskFileId: number): Promise<[]>
+	{
+		return this.#post('sign.api_v1.document.discardEditedFile', { uid, diskFileId });
+	}
+
 	getPages(uid: string): Promise<Array<{ url: string; }>>
 	{
 		return this.#post('sign.api_v1.document.pages.list', { uid }, false);
@@ -91,9 +106,16 @@ export class Api
 		return this.#post('sign.api_v1.document.blank.block.loadData', { documentUid, blocks });
 	}
 
-	changeBlank(uid: string, blankId: number, copyBlocksFromPreviousBlank: boolean = false): Promise<{ uid: string; }>
+	changeBlank(
+		uid: string,
+		blankId: number,
+		copyBlocksFromPreviousBlank: boolean = false,
+	): Promise<{ uid: string; }>
 	{
-		return this.#post('sign.api_v1.document.changeBlank', { uid, blankId, copyBlocksFromPreviousBlank });
+		return this.#post(
+			'sign.api_v1.document.changeBlank',
+			{ uid, blankId, copyBlocksFromPreviousBlank },
+		);
 	}
 
 	changeDocumentLanguages(uid: string, lang: string): Promise
@@ -439,6 +461,11 @@ export class Api
 	getBlankById(id: number): Promise<{ id: number, title: string, scenario: string }>
 	{
 		return this.#post('sign.api_v1.document.blank.getById', { id });
+	}
+
+	getBlankDownloadUrlByDocument(documentId: number): string
+	{
+		return `/bitrix/services/main/ajax.php?action=sign.api_v1.document.blank.downloadByDocument&documentId=${documentId}`;
 	}
 
 	registerB2eCompany(

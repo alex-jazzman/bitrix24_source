@@ -1,60 +1,47 @@
 import { Type } from 'main.core';
-import { RestClient } from 'rest.client';
-import { Store } from 'ui.vue3.vuex';
 
 import { Core } from 'im.v2.application.core';
-import { Logger } from 'im.v2.lib.logger';
-import { RestMethod, UserRole, ChatType } from 'im.v2.const';
-import { Utils } from 'im.v2.lib.utils';
+import { RestMethod, ChatType } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
-import { runAction } from 'im.v2.lib.rest';
+import { Logger } from 'im.v2.lib.logger';
 import { Notifier } from 'im.v2.lib.notifier';
+import { runAction } from 'im.v2.lib.rest';
+import { Utils } from 'im.v2.lib.utils';
+import { getChatRoleForUser } from 'im.v2.lib.role-manager';
 
-import type { ChatConfig, RestChatConfig, RestCreateCollabConfig } from '../types/chat';
+import { type ChatCreateConfig, type CollabCreateConfig } from '../types/create-chat';
 
-type CreateCollabResult = {
-	CHAT_ID: number,
-};
-
-const PRIVATE_CHAT = 'CHAT';
-const OPEN_CHAT = 'OPEN';
+type CreateChatResult = { chatId: number };
 
 export class CreateService
 {
-	#restClient: RestClient;
-	#store: Store;
-
-	constructor()
-	{
-		this.#restClient = Core.getRestClient();
-		this.#store = Core.getStore();
-	}
-
-	async createChat(chatConfig: ChatConfig): Promise<{ newDialogId: string, newChatId: number }>
+	async createChat(chatConfig: ChatCreateConfig): Promise<{ newDialogId: string, newChatId: number }>
 	{
 		Logger.warn('ChatService: createChat', chatConfig);
 
 		const preparedFields = await this.#prepareFields(chatConfig);
+		const payload = {
+			data: { fields: preparedFields },
+		};
 
-		const createResult: RestResult = await this.#restClient.callMethod(RestMethod.imV2ChatAdd, {
-			fields: preparedFields,
-		}).catch((error) => {
-			console.error('ChatService: createChat error:', error);
-			Notifier.chat.onCreateError();
-			throw error;
-		});
+		const createResult: CreateChatResult = await runAction(RestMethod.imV2ChatAdd, payload)
+			.catch(([error]) => {
+				console.error('ChatService: createChat error:', error);
+				Notifier.chat.handleCreateError(error.error());
+				throw error;
+			});
 
-		const { chatId: newChatId } = createResult.data();
+		const { chatId: newChatId } = createResult;
 
 		Logger.warn('ChatService: createChat result', newChatId);
-		const newDialogId = `chat${newChatId}`;
-		this.#addChatToModel(newDialogId, preparedFields);
-		this.#sendAnalytics(newDialogId);
+		const newDialogId = Utils.dialog.buildChatDialogId(newChatId);
+		this.#addChatToModel(newDialogId, chatConfig);
+		Analytics.getInstance().ignoreNextChatOpen(newDialogId);
 
 		return { newDialogId, newChatId };
 	}
 
-	async createCollab(collabConfig: RestCreateCollabConfig): Promise<{ newDialogId: string, newChatId: number }>
+	async createCollab(collabConfig: CollabCreateConfig): Promise<{ newDialogId: string, newChatId: number }>
 	{
 		Logger.warn('ChatService: createCollab', collabConfig);
 
@@ -73,7 +60,7 @@ export class CreateService
 			},
 		};
 
-		const createResult: CreateCollabResult = await runAction(RestMethod.socialnetworkCollabCreate, {
+		const createResult: CreateChatResult = await runAction(RestMethod.socialnetworkCollabCreate, {
 			data: params,
 		}).catch(([error]) => {
 			console.error('ChatService: createCollab error:', error);
@@ -84,14 +71,14 @@ export class CreateService
 		const { chatId: newChatId } = createResult;
 
 		Logger.warn('ChatService: createCollab result', newChatId);
-		const newDialogId = `chat${newChatId}`;
+		const newDialogId = Utils.dialog.buildChatDialogId(newChatId);
 		this.#addCollabToModel(newDialogId, preparedFields);
-		this.#sendAnalytics(newDialogId);
+		Analytics.getInstance().ignoreNextChatOpen(newDialogId);
 
 		return { newDialogId, newChatId };
 	}
 
-	async #prepareFields(chatConfig: ChatConfig): RestChatConfig
+	async #prepareFields(chatConfig: ChatCreateConfig): ChatCreateConfig
 	{
 		const preparedConfig = { ...chatConfig };
 		if (preparedConfig.type)
@@ -109,74 +96,37 @@ export class CreateService
 			preparedConfig.avatar = await Utils.file.getBase64(chatConfig.avatar);
 		}
 
-		preparedConfig.managers = preparedConfig.managers ?? [];
-		preparedConfig.members = preparedConfig.members ?? [];
-		const allMembers = [...preparedConfig.members, ...preparedConfig.managers];
-		if (preparedConfig.ownerId)
-		{
-			allMembers.push(preparedConfig.ownerId);
-		}
-		preparedConfig.members = [...new Set(allMembers)];
-
-		const result = {
-			type: preparedConfig.type?.toUpperCase(),
-			entityType: preparedConfig.entityType?.toUpperCase(),
-			title: preparedConfig.title,
-			avatar: preparedConfig.avatar,
-			description: preparedConfig.description,
-			users: preparedConfig.members,
-			memberEntities: preparedConfig.memberEntities,
-			managers: preparedConfig.managers,
-			ownerId: preparedConfig.ownerId,
-			searchable: preparedConfig.isAvailableInSearch ? 'Y' : 'N',
-			manageUsersAdd: preparedConfig.manageUsersAdd,
-			manageUsersDelete: preparedConfig.manageUsersDelete,
-			manageUi: preparedConfig.manageUi,
-			manageSettings: preparedConfig.manageSettings,
-			manageMessages: preparedConfig.manageMessages,
-			conferencePassword: preparedConfig.conferencePassword,
-			copilotMainRole: preparedConfig.copilotMainRole,
-			messagesAutoDeleteDelay: preparedConfig.autoDeleteDelay,
-		};
-
-		Object.entries(result).forEach(([key, value]) => {
-			if (Type.isUndefined(value))
-			{
-				delete result[key];
-			}
-		});
-
-		return result;
+		return preparedConfig;
 	}
 
-	#addCollabToModel(newDialogId: string, collabConfig: RestCreateCollabConfig): void
+	#addCollabToModel(newDialogId: string, collabConfig: CollabCreateConfig): void
 	{
-		this.#store.dispatch('chats/set', {
+		void Core.getStore().dispatch('chats/set', {
 			dialogId: newDialogId,
 			type: ChatType.collab,
 			name: collabConfig.title,
 		});
 	}
 
-	#addChatToModel(newDialogId: string, chatConfig: RestChatConfig): void
+	#addChatToModel(newDialogId: string, chatConfig: ChatCreateConfig): void
 	{
-		let chatType = chatConfig.searchable === 'Y' ? OPEN_CHAT : PRIVATE_CHAT;
+		let chatType = chatConfig.searchable ? ChatType.open : ChatType.chat;
 		if (Type.isStringFilled(chatConfig.entityType))
 		{
-			chatType = chatConfig.entityType.toLowerCase();
+			chatType = chatConfig.entityType;
 		}
 
 		if (Type.isStringFilled(chatConfig.type))
 		{
-			chatType = chatConfig.type.toLowerCase();
+			chatType = chatConfig.type;
 		}
 
-		this.#store.dispatch('chats/set', {
+		void Core.getStore().dispatch('chats/set', {
 			dialogId: newDialogId,
-			type: chatType.toLowerCase(),
+			type: chatType,
 			name: chatConfig.title,
-			userCounter: chatConfig.users.length,
-			role: UserRole.owner,
+			role: getChatRoleForUser(chatConfig),
+			parentChatId: chatConfig.parentChatId ?? 0,
 			permissions: {
 				manageUi: chatConfig.manageUi,
 				manageSettings: chatConfig.manageSettings,
@@ -185,11 +135,6 @@ export class CreateService
 				manageMessages: chatConfig.manageMessages,
 			},
 		});
-	}
-
-	#sendAnalytics(dialogId)
-	{
-		Analytics.getInstance().ignoreNextChatOpen(dialogId);
 	}
 
 	#prepareType(type: string): string

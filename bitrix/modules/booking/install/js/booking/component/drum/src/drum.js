@@ -13,12 +13,11 @@ export const Drum = {
 			default: new Date(),
 		},
 	},
-	data(): Object
+	setup(): Object
 	{
 		return {
 			ButtonSize,
 			ButtonColor,
-			selectedTimeLocal: this.selectedTime,
 		};
 	},
 	mounted(): void

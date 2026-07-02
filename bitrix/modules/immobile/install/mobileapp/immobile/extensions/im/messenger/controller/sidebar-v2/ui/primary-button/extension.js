@@ -7,7 +7,8 @@ jn.define('im/messenger/controller/sidebar-v2/ui/primary-button', (require, expo
 	const { Card, CardDesign } = require('ui-system/layout/card');
 	const { IconView } = require('ui-system/blocks/icon');
 	const { BadgeCounter, BadgeCounterDesign, BadgeCounterSize } = require('ui-system/blocks/badges/counter');
-	const { Promotion } = require('im/messenger/lib/promotion');
+
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	/**
 	 * @param {object} props
@@ -161,7 +162,7 @@ jn.define('im/messenger/controller/sidebar-v2/ui/primary-button', (require, expo
 
 		#showAhaMoment()
 		{
-			const promotion = Promotion.getInstance();
+			const promotion = serviceLocator.get('promotion');
 			promotion.addToPromoQueue({
 				promoId: this.props.ahaMoment,
 				callback: () => promotion.showCopilotSidebarChangeEnginePromotion(this.cardRef),

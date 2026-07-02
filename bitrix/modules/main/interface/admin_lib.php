@@ -4,7 +4,7 @@
  * Bitrix Framework
  * @package bitrix
  * @subpackage main
- * @copyright 2001-2024 Bitrix
+ * @copyright 2001-2026 Bitrix
  */
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
@@ -13,6 +13,10 @@ use Bitrix\Main\HttpResponse;
 use Bitrix\Main\Application;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Main\Web\Json;
+use Bitrix\Main\Loader;
+use Bitrix\Socialservices\Network;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -170,7 +174,7 @@ class CAdminPage
 
 		if($time_fact !== $time_cached)
 		{
-			//parse css files to create summary modules css
+			//parse CSS files to create summary modules CSS
 			$sCss = '';
 			foreach($this->aModules as $module)
 			{
@@ -179,7 +183,7 @@ class CAdminPage
 					$sCss .= file_get_contents($fname)."\n";
 			}
 
-			//create summary modules css
+			//create summary modules CSS
 			file_put_contents($css_file, $sCss);
 
 			if($time_cached !== '')
@@ -343,7 +347,7 @@ var phpVars = {
 		else
 		{
 			$queryResult = false;
-			if(\Bitrix\Main\Loader::includeModule('socialservices'))
+			if(Loader::includeModule('socialservices'))
 			{
 				if(class_exists('CBitrix24NetTransport'))
 				{
@@ -366,15 +370,15 @@ var phpVars = {
 			{
 				if(
 					$queryResult['error'] == 'insufficient_scope'
-					&& \Bitrix\Main\Loader::includeModule('socialservices')
+					&& Loader::includeModule('socialservices')
 					&& class_exists("Bitrix\\Socialservices\\Network")
 					&& method_exists("Bitrix\\Socialservices\\Network", "getAuthUrl")
 				)
 				{
-					$n = new \Bitrix\Socialservices\Network();
+					$n = new Network();
 					$ssoMenu[] =  array(
-						"TEXT" => \Bitrix\Main\Localization\Loc::getMessage("admin_lib_sso_auth"),
-						"TITLE" => \Bitrix\Main\Localization\Loc::getMessage("admin_lib_sso_auth_title"),
+						"TEXT" => Loc::getMessage("admin_lib_sso_auth"),
+						"TITLE" => Loc::getMessage("admin_lib_sso_auth_title"),
 						"ONCLICK"=>"BX.util.popup('".CUtil::JSEscape($n->getAuthUrl("popup", array("admin")))."', 800, 600);",
 					);
 				}
@@ -1244,7 +1248,7 @@ class CAdminMenu
 			// Populate list with data
 			if(!$submenu)
 				continue;
-			$row = &$lAdmin->AddRow(0, null, $submenu["url"], GetMessage("admin_lib_index_go"));
+			$row = $lAdmin->AddRow(0, null, $submenu["url"], GetMessage("admin_lib_index_go"));
 			$row->AddField("NAME", '<a href="'.$submenu["url"].'" title="'.$submenu["title"].'">'.$submenu["text"].'</a>');
 			$row->AddField("DESCRIPTION", $submenu["title"]);
 		}
@@ -1824,12 +1828,12 @@ BX.Fix(right_bar, {type: 'right', limit_node: BX.previousSibling(right_bar)});
 
 			if ($icon == 'btn_list'/* || $icon == 'btn_up'*/):
 ?>
-	<a <?if ($this->isPublicFrame):?>target="_top"<?endif;?> href="<?=($onclick !== '' ? 'javascript:void(0)' : $link)?>" <?=$item["LINK_PARAM"]?> class="adm-detail-toolbar-btn" title="<?=$item["TITLE"].$hkInst->GetTitle($icon)?>"<?=($onclick !== '' ? ' onclick="'.htmlspecialcharsbx($onclick).'"':'')?><?=(!empty($item["ICON"])? ' id="'.$item["ICON"].'"':'')?>><span class="adm-detail-toolbar-btn-l"></span><span class="adm-detail-toolbar-btn-text"><?=$item["TEXT"]?></span><span class="adm-detail-toolbar-btn-r"></span></a>
+	<a <?php if ($this->isPublicFrame):?>target="_top"<?php endif;?> href="<?=($onclick !== '' ? 'javascript:void(0)' : $link)?>" <?=$item["LINK_PARAM"]?> class="adm-detail-toolbar-btn" title="<?=$item["TITLE"].$hkInst->GetTitle($icon)?>"<?=($onclick !== '' ? ' onclick="'.htmlspecialcharsbx($onclick).'"':'')?><?=(!empty($item["ICON"])? ' id="'.$item["ICON"].'"':'')?>><span class="adm-detail-toolbar-btn-l"></span><span class="adm-detail-toolbar-btn-text"><?=$item["TEXT"]?></span><span class="adm-detail-toolbar-btn-r"></span></a>
 <?
 			else:
 				$sClassName = $this->GetClassByID($icon);
 ?>
-	<a <?if ($this->isPublicFrame):?>target="_top"<?endif;?> href="<?=($onclick !== '' ? 'javascript:void(0)' : $link)?>" <?=$item["LINK_PARAM"]?> class="adm-btn<?=$sClassName != '' ? ' '.$sClassName : ''?>" title="<?=$item["TITLE"].$hkInst->GetTitle($icon)?>"<?=($onclick !== '' ? ' onclick="'.htmlspecialcharsbx($onclick).'"' : '')?><?=(!empty($item["ICON"])? ' id="'.$item["ICON"].'"':'')?>><?=$item["TEXT"]?></a>
+	<a <?php if ($this->isPublicFrame):?>target="_top"<?php endif;?> href="<?=($onclick !== '' ? 'javascript:void(0)' : $link)?>" <?=$item["LINK_PARAM"]?> class="adm-btn<?=$sClassName != '' ? ' '.$sClassName : ''?>" title="<?=$item["TITLE"].$hkInst->GetTitle($icon)?>"<?=($onclick !== '' ? ' onclick="'.htmlspecialcharsbx($onclick).'"' : '')?><?=(!empty($item["ICON"])? ' id="'.$item["ICON"].'"':'')?>><?=$item["TEXT"]?></a>
 <?
 			endif;
 
@@ -1906,6 +1910,8 @@ class CAdminSorting
 	 */
 	public function __construct($table_id, $by_initial=false, $order_initial=false, $by_name="by", $ord_name="order")
 	{
+		$session = Application::getInstance()->getSession();
+
 		$this->by_name = $by_name;
 		$this->ord_name = $ord_name;
 		$this->table_id = preg_replace('/[^a-z0-9_]/i', '', $table_id);
@@ -1914,26 +1920,28 @@ class CAdminSorting
 
 		$needUserByField = false;
 		$needUserOrder = false;
-		if(isset($GLOBALS[$this->by_name]))
+		if(isset($_REQUEST[$this->by_name]))
 		{
-			\Bitrix\Main\Application::getInstance()->getSession()["SESS_SORT_BY"][$this->table_id] = $GLOBALS[$this->by_name];
+			$GLOBALS[$this->by_name] = $_REQUEST[$this->by_name];
+			$session["SESS_SORT_BY"][$this->table_id] = $_REQUEST[$this->by_name];
 		}
-		elseif(isset(\Bitrix\Main\Application::getInstance()->getSession()["SESS_SORT_BY"][$this->table_id]))
+		elseif(isset($session["SESS_SORT_BY"][$this->table_id]))
 		{
-			$GLOBALS[$this->by_name] = \Bitrix\Main\Application::getInstance()->getSession()["SESS_SORT_BY"][$this->table_id];
+			$GLOBALS[$this->by_name] = $session["SESS_SORT_BY"][$this->table_id];
 		}
 		else
 		{
 			$needUserByField = true;
 		}
 
-		if(isset($GLOBALS[$this->ord_name]))
+		if(isset($_REQUEST[$this->ord_name]))
 		{
-			\Bitrix\Main\Application::getInstance()->getSession()["SESS_SORT_ORDER"][$this->table_id] = $GLOBALS[$this->ord_name];
+			$GLOBALS[$this->ord_name] = $_REQUEST[$this->ord_name];
+			$session["SESS_SORT_ORDER"][$this->table_id] = $_REQUEST[$this->ord_name];
 		}
-		elseif(isset(\Bitrix\Main\Application::getInstance()->getSession()["SESS_SORT_ORDER"][$this->table_id]))
+		elseif(isset($session["SESS_SORT_ORDER"][$this->table_id]))
 		{
-			$GLOBALS[$this->ord_name] = \Bitrix\Main\Application::getInstance()->getSession()["SESS_SORT_ORDER"][$this->table_id];
+			$GLOBALS[$this->ord_name] = $session["SESS_SORT_ORDER"][$this->table_id];
 		}
 		else
 		{
@@ -2189,7 +2197,7 @@ class CAdminMessage
 		if (defined('BX_PUBLIC_MODE') && BX_PUBLIC_MODE == 1 && $this->message["TYPE"] != "PROGRESS" && (!isset($this->message['SKIP_PUBLIC_MODE']) || $this->message['SKIP_PUBLIC_MODE'] !== true))
 		{
 			$alertMessage = ($this->message['DETAILS'] <> ''? $this->message['DETAILS'] : $this->message['MESSAGE']);
-			$alertMessage = htmlspecialcharsback($alertMessage); //we don't need html entities in an alert() box, see BX.CWindow.prototype.ShowError
+			$alertMessage = htmlspecialcharsback($alertMessage); //we don't need HTML entities in an alert() box, see BX.CWindow.prototype.ShowError
 			$alertMessage = str_replace(array('<br>', '<br />', '<BR>', '<BR />'), "\r\n", $alertMessage);
 
 			ob_end_clean();
@@ -2206,7 +2214,7 @@ class CAdminMessage
 		if (defined('PUBLIC_MODE') && PUBLIC_MODE == 1)
 		{
 			$publicMode = true;
-			\Bitrix\Main\UI\Extension::load("ui.alerts");
+			Extension::load("ui.alerts");
 		}
 
 		if (isset($this->message["MESSAGE"]) && $this->message["MESSAGE"])
@@ -2298,7 +2306,7 @@ class CAdminMessage
 		elseif ($p > 1)
 			$p = 1;
 
-		$innerText = number_format(100*$p, 0) .'%';
+		$innerText = number_format(100*$p) .'%';
 		if (!empty($this->message['PROGRESS_TEMPLATE']))
 		{
 			$innerText = str_replace(

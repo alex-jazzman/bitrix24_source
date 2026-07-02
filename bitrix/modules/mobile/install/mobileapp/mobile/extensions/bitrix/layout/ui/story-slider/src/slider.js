@@ -37,6 +37,7 @@ jn.define('layout/ui/story-slider/src/slider', (require, exports, module) => {
 	 * @property {ElementStyle} style
 	 * @property {number} [slideDuration]
 	 * @property {boolean} [swipeToClose]
+	 * @property {boolean} [closeOnComplete]
 	 * @property {Function} [forwardRef]
 	 * @property {Function} [onClose]
 	 * @property {Function} [onClick]
@@ -273,13 +274,23 @@ jn.define('layout/ui/story-slider/src/slider', (require, exports, module) => {
 
 			if (isLastSlide)
 			{
-				this.#closeSlider();
+				if (this.#isCloseOnCompleteEnabled())
+				{
+					this.#closeSlider();
+				}
 			}
 			else if (this.#swipeSliderRef)
 			{
 				this.#swipeSliderRef.nextSlide();
 			}
 		};
+
+		#isCloseOnCompleteEnabled()
+		{
+			const { closeOnComplete } = this.props;
+
+			return closeOnComplete ?? true;
+		}
 
 		#handleZoneClick = (type) => {
 			if (this.#wasTouchPaused())
@@ -419,6 +430,7 @@ jn.define('layout/ui/story-slider/src/slider', (require, exports, module) => {
 		slides: PropTypes.array.isRequired,
 		slideDuration: PropTypes.number,
 		swipeToClose: PropTypes.bool,
+		closeOnComplete: PropTypes.bool,
 		close: PropTypes.func,
 		onClick: PropTypes.func,
 		onSlideViewed: PropTypes.func,
@@ -429,6 +441,7 @@ jn.define('layout/ui/story-slider/src/slider', (require, exports, module) => {
 	Slider.defaultProps = {
 		slideDuration: 10,
 		swipeToClose: true,
+		closeOnComplete: true,
 	};
 
 	module.exports = {

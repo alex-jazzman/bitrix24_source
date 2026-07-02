@@ -20,9 +20,12 @@ jn.define('layout/ui/user/card', (require, exports, module) => {
 	const { BadgeCounter, BadgeCounterDesign, BadgeCounterSize } = require('ui-system/blocks/badges/counter');
 	const { Icon, IconView } = require('ui-system/blocks/icon');
 	const { Card, CardCorner } = require('ui-system/layout/card');
-	const { Text2, Text4 } = require('ui-system/typography/text');
+	const { Text, Text2 } = require('ui-system/typography/text');
+
+	const { getTextColorByTheme, isLightTheme } = require('user/theme');
 
 	const { transparent } = require('utils/color');
+	const { mergeImmutable } = require('utils/object');
 	const { Line, Circle } = require('utils/skeleton');
 	const { createTestIdGenerator } = require('utils/test');
 	const { withCurrentDomain } = require('utils/url');
@@ -114,32 +117,15 @@ jn.define('layout/ui/user/card', (require, exports, module) => {
 
 		render()
 		{
-			const {
-				currentTheme,
-				canEditProfile,
-				clickable,
-			} = this.props;
+			const { currentTheme } = this.props;
 
-			const isLightTheme = this.isLightTheme(currentTheme);
-			const colorByTheme = isLightTheme ? Color.baseBlackFixed : Color.baseWhiteFixed;
+			const lightTheme = isLightTheme(currentTheme);
+			const colorByTheme = lightTheme
+				? Color.baseBlackFixed
+				: Color.baseWhiteFixed;
 
-			return Card(
-				{
-					testId: this.getTestId('wrapper'),
-					style: {
-						borderColor: isLightTheme ? null : Color.cardStrokeGradient1.toHex(),
-						// fix height with border
-						paddingTop: Component.cardPaddingT.toNumber() - 1,
-						paddingBottom: CARD_PADDING_BOTTOM,
-					},
-					corner: CardCorner.XL,
-					border: true,
-					onClick: clickable ? () => {
-						inAppUrl.open('/bitrix24/profile', {
-							canEditProfile,
-						});
-					} : null,
-				},
+			return this.renderContainer(
+				{},
 				SafeImage({
 					withShimmer: true,
 					testId: this.getTestId('background'),
@@ -166,22 +152,48 @@ jn.define('layout/ui/user/card', (require, exports, module) => {
 					...this.getBackgoundImageContent(currentTheme?.previewImage),
 				}),
 				(this.state.imageLoaded) && this.renderGradientOverlay(colorByTheme.toHex()),
-				View(
-					{
-						style: {
-							flexDirection: 'row',
-							alignItems: 'center',
-						},
-						ref: (ref) => {
-							if (ref)
-							{
-								this.userInfoContainerRef = ref;
-							}
-						},
+				this.renderInnerContent(),
+			);
+		}
+
+		renderContainer(props, ...children)
+		{
+			const { currentTheme } = this.props;
+			const lightTheme = isLightTheme(currentTheme);
+
+			const defaultProps = {
+				testId: this.getTestId('wrapper'),
+				style: {
+					borderColor: lightTheme ? null : Color.cardStrokeGradient1.toHex(),
+					// fix height with border
+					paddingTop: Component.cardPaddingT.toNumber() - 1,
+					paddingBottom: CARD_PADDING_BOTTOM,
+				},
+				corner: CardCorner.XL,
+				border: true,
+				onClick: this.getOnCardClickHandler(),
+			};
+
+			return Card(mergeImmutable(defaultProps, props), ...children);
+		}
+
+		renderInnerContent()
+		{
+			return View(
+				{
+					style: {
+						flexDirection: 'row',
+						alignItems: 'center',
 					},
-					this.renderAvatar(),
-					this.renderDetails(),
-				),
+					ref: (ref) => {
+						if (ref)
+						{
+							this.userInfoContainerRef = ref;
+						}
+					},
+				},
+				this.renderAvatar(),
+				this.renderDetails(),
 			);
 		}
 
@@ -289,7 +301,7 @@ jn.define('layout/ui/user/card', (require, exports, module) => {
 						testId: this.getTestId('avatar-pen'),
 						size: BadgeButtonSize.S,
 						icon: Icon.EDIT,
-						design: BadgeButtonDesign.WHITE,
+						design: BadgeButtonDesign.LIGHT,
 						onClick: this.onAvatarClick,
 						style: {
 							backgroundColor: Color.base8.toHex(),
@@ -297,6 +309,20 @@ jn.define('layout/ui/user/card', (require, exports, module) => {
 					}),
 				),
 			);
+		}
+
+		getOnCardClickHandler()
+		{
+			const { canEditProfile, clickable } = this.props;
+
+			if (clickable)
+			{
+				return () => {
+					inAppUrl.open('/bitrix24/profile', { canEditProfile });
+				};
+			}
+
+			return null;
 		}
 
 		getEntityType(user)
@@ -474,7 +500,7 @@ jn.define('layout/ui/user/card', (require, exports, module) => {
 				);
 			}
 
-			const textColor = this.getTextColorByTheme(currentTheme);
+			const textColor = getTextColorByTheme(currentTheme);
 
 			return View(
 				{
@@ -520,7 +546,7 @@ jn.define('layout/ui/user/card', (require, exports, module) => {
 			);
 		}
 
-		renderStatus(textColor)
+		renderStatus(textColor, size = 4)
 		{
 			const { user } = this.props;
 			const status = this.getStatus(user);
@@ -556,7 +582,8 @@ jn.define('layout/ui/user/card', (require, exports, module) => {
 				});
 			}
 
-			return Text4({
+			return Text({
+				size,
 				text: status,
 				testId: this.getTestId('status'),
 				color: textColor,
@@ -586,41 +613,6 @@ jn.define('layout/ui/user/card', (require, exports, module) => {
 			}
 
 			return user?.workPosition || null;
-		}
-
-		/**
-		 * @param {CurrentTheme} theme
-		 * @return {boolean}
-		 */
-		isLightTheme(theme)
-		{
-			if (!theme || !theme.id)
-			{
-				return false;
-			}
-
-			const baseThemeId = theme.id.split(':')[0];
-
-			return baseThemeId === 'light';
-		}
-
-		/**
-		 * @param {CurrentTheme} theme
-		 * @return {Color}
-		 */
-		getTextColorByTheme(theme)
-		{
-			if (!theme)
-			{
-				return Color.base1;
-			}
-
-			if (this.isLightTheme(theme))
-			{
-				return Color.baseWhiteFixed;
-			}
-
-			return Color.baseBlackFixed;
 		}
 
 		renderGradientOverlay(color)
@@ -677,5 +669,7 @@ jn.define('layout/ui/user/card', (require, exports, module) => {
 	module.exports = {
 		UserCardClass: UserCard,
 		UserCard: connect(mapStateToProps, mapDispatchToProps)(UserCard),
+		mapStateToProps,
+		mapDispatchToProps,
 	};
 });

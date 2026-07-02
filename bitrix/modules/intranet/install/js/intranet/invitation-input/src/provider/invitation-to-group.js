@@ -1,4 +1,4 @@
-import { ajax, Loc, Type } from 'main.core';
+import { ajax, Extension, Loc, Type } from 'main.core';
 import { InvitationProvider } from './invitation-provider';
 
 export class InvitationToGroup extends InvitationProvider
@@ -11,6 +11,10 @@ export class InvitationToGroup extends InvitationProvider
 		super();
 		this.#groupId = groupId;
 		this.#users = users;
+
+		const settings = Extension.getSettings('intranet.invitation-input');
+
+		this.isNewProjectsAvailable = settings?.isNewProjectsAvailable;
 	}
 
 	invite(): Promise
@@ -33,14 +37,31 @@ export class InvitationToGroup extends InvitationProvider
 			}
 			else if (existingUsers.length === users.length)
 			{
-				messageKey = (existingUsers.length === 1)
-					? 'INTRANET_INVITATION_INPUT_ALREADY_IN_COLLAB_SINGLE'
-					: 'INTRANET_INVITATION_INPUT_ALREADY_IN_COLLAB_ALL'
-				;
+				if (this.isNewProjectsAvailable)
+				{
+					messageKey = (existingUsers.length === 1)
+						? 'INTRANET_INVITATION_INPUT_ALREADY_IN_PROJECT_SINGLE'
+						: 'INTRANET_INVITATION_INPUT_ALREADY_IN_PROJECT_ALL'
+					;
+				}
+				else
+				{
+					messageKey = (existingUsers.length === 1)
+						? 'INTRANET_INVITATION_INPUT_ALREADY_IN_COLLAB_SINGLE'
+						: 'INTRANET_INVITATION_INPUT_ALREADY_IN_COLLAB_ALL'
+					;
+				}
 			}
 			else if (newUsers.length !== users.length)
 			{
-				messageKey = 'INTRANET_INVITATION_INPUT_ALREADY_IN_COLLAB_PARTIAL';
+				if (this.isNewProjectsAvailable)
+				{
+					messageKey = 'INTRANET_INVITATION_INPUT_ALREADY_IN_PROJECT_PARTIAL';
+				}
+				else
+				{
+					messageKey = 'INTRANET_INVITATION_INPUT_ALREADY_IN_COLLAB_PARTIAL';
+				}
 			}
 
 			if (messageKey)

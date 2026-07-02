@@ -57,3 +57,4 @@ $MESS['CRM_BIC_CONTACT_FIELD_UTM_MEDIUM'] = "Рекламный носитель
 $MESS['CRM_BIC_CONTACT_FIELD_UTM_CAMPAIGN'] = "Рекламная кампания (utm_campaign)";
 $MESS['CRM_BIC_CONTACT_FIELD_UTM_CONTENT'] = "Рекламный контент (utm_content)";
 $MESS['CRM_BIC_CONTACT_FIELD_UTM_TERM'] = "Рекламный термин (utm_term)";
+$MESS['CRM_BIC_CONTACT_TABLE_DESCRIPTION_FULL'] = "Набор включает основные сведения из системных полей контактов.";

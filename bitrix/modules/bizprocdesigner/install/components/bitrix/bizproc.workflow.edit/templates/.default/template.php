@@ -349,39 +349,6 @@ if ($arParams['BACK_URL'])
 		});
 	}
 
-	function BCPSaveTemplateDraft()
-	{
-		arWorkflowTemplate = Array(rootActivity.Serialize());
-		const fields = {
-			NAME: workflowTemplateName,
-			DESCRIPTION: workflowTemplateDescription,
-			AUTO_EXECUTE: workflowTemplateAutostart,
-			IS_SYSTEM: workflowTemplateIsSystem ?? 'N',
-			SORT: workflowTemplateSort ?? 10,
-			TYPE: workflowTemplateType,
-			PARAMETERS: arWorkflowParameters ?? [],
-			VARIABLES: arWorkflowVariables ?? [],
-			CONSTANTS: arWorkflowConstants ?? [],
-			TEMPLATE_SETTINGS: workflowTemplateSettings ?? [],
-			TRACK_ON: null,
-			TEMPLATE: arWorkflowTemplate,
-		};
-
-		if (window.workflowTemplateTrackOn)
-		{
-			fields.TRACK_ON = workflowTemplateTrackOn ?? null;
-		}
-
-		return BX.ajax.runAction('bizprocdesigner.Template.saveDraft', {
-			json: {
-				templateId: BPTemplateId || 0,
-				fields: fields,
-				c: 'bitrix:bizproc.workflow.edit',
-				signedParameters: '<?=CUtil::JSEscape($this->getComponent()->getSignedParameters())?>',
-			},
-		});
-	}
-
 	function setActivityError(response)
 	{
 		var i, setFocus = true, activity, error, errors = [];
@@ -602,6 +569,7 @@ if ($arParams['BACK_URL'])
 				return;
 			}
 			BizProcRender(arWorkflowTemplate, document.getElementById('wf1'));
+			t.focus({preventScroll: true});
 
 			if (history.scrollRestoration)
 			{
@@ -659,7 +627,8 @@ if ($arParams['BACK_URL'])
 	<form>
 		<div
 			id="wf1"
-			style="width: 100%; border-bottom: 2px #efefef dotted; padding-bottom: 10px; position: relative; z-index: 1; overflow: scroll"
+			tabindex="-1"
+			style="width: 100%; border-bottom: 2px #efefef dotted; padding-bottom: 10px; position: relative; z-index: 1; overflow: scroll; outline: none"
 		></div>
 
 		<?php if (!$isAdminSection):

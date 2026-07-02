@@ -12,6 +12,12 @@ jn.define('im/messenger/lib/element/dialog/message/call/factory', (require, expo
 	 */
 	class CallMessageFactory extends CustomMessageFactory
 	{
+		/**
+		 * @override
+		 * @param {MessagesModelState} modelMessage
+		 * @param {CreateMessageOptions|{}} options
+		 * @return {Message}
+		 */
 		static create(modelMessage, options = {})
 		{
 			try
@@ -26,9 +32,9 @@ jn.define('im/messenger/lib/element/dialog/message/call/factory', (require, expo
 			}
 		}
 
-		static checkSuitableForDisplay(modelMessage)
+		static checkSuitableForDisplay(messageComponent)
 		{
-			return modelMessage.params?.componentId === CallMessageFactory.getComponentId();
+			return messageComponent === CallMessageFactory.getComponentId();
 		}
 
 		static getComponentId()

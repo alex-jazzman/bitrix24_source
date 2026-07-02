@@ -36,6 +36,7 @@ return [
 		'./src/item/openline',
 		'./src/item/call',
 		'./src/item/chat/collab',
+		'./src/item/chat/collab-parent',
 		'./src/item/chat/announcement',
 		'./src/item/chat/extranet',
 		'./src/item/chat/support-24-notifier',

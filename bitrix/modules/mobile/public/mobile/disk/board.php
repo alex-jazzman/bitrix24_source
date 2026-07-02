@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Context;
 use Bitrix\Disk\Public\Service\UnifiedLink\Render\MobileUnifiedLinkRenderer;
@@ -17,10 +18,11 @@ $request = Context::getCurrent()->getRequest();
 $uniqueCode = (string)$request->get('uniqueCode');
 $attachedId = (int)$request->get('attachedId');
 $versionId = (int)$request->get('version');
+$currentUser = CurrentUser::get();
 
 if ($uniqueCode !== '')
 {
-	echo MobileUnifiedLinkRenderer::renderByUniqueCode($uniqueCode, $attachedId, $versionId);
+	echo MobileUnifiedLinkRenderer::renderByUniqueCode($uniqueCode, $attachedId, $versionId, $currentUser)->getContent();
 
 	return;
 }
@@ -32,10 +34,10 @@ if ($boardId > 0)
 
 	if ($isAttached)
 	{
-		echo MobileUnifiedLinkRenderer::renderByAttachedObject($boardId, 0);
+		echo MobileUnifiedLinkRenderer::renderByAttachedObject($boardId, 0, $currentUser)->getContent();
 	}
 	else
 	{
-		echo MobileUnifiedLinkRenderer::renderByFileId($boardId, 0, 0);
+		echo MobileUnifiedLinkRenderer::renderByFileId($boardId, 0, 0, $currentUser)->getContent();
 	}
 }

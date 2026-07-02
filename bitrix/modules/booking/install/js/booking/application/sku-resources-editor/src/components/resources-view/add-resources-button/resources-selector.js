@@ -1,5 +1,4 @@
 import { Type } from 'main.core';
-import { BaseEvent } from 'main.core.events';
 import { Dialog } from 'ui.entity-selector';
 
 import { Model, EntitySelectorEntity } from 'booking.const';

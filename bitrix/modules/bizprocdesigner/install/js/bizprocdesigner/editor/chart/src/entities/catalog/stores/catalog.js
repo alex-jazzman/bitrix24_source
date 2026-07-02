@@ -23,6 +23,18 @@ export type SearchResults = {
 	items: Array<CatalogMenuItem>,
 }
 
+const REPLACE_TYPES_MAP = {
+	CreateStorageNode: 'services',
+	WriteDataStorageActivity: 'services',
+	ReadDataStorageActivity: 'services',
+	DeleteDataStorageActivity: 'services',
+	SetupTemplateActivity: 'services',
+
+	IfElseBranchActivity: 'operators',
+	ForEachActivity: 'operators',
+	WhileActivity: 'operators',
+};
+
 export const useCatalogStore = defineStore('bizprocdesigner-editor-catalog', {
 	state: (): CatalogState => ({
 		groups: [],
@@ -90,22 +102,7 @@ export const useCatalogStore = defineStore('bizprocdesigner-editor-catalog', {
 		{
 			const { groups = [] } = await editorAPI.getCatalogData();
 
-			groups.forEach((group, groupIdx) => {
-				group.items.forEach((item, itemIdx) => {
-					if (item.type === 'simple' || item.type === 'trigger')
-					{
-						groups[groupIdx].items[itemIdx].defaultSettings.width = 200;
-						groups[groupIdx].items[itemIdx].defaultSettings.height = 48;
-					}
-					else if (item.type === 'complex')
-					{
-						groups[groupIdx].items[itemIdx].defaultSettings.width = 200;
-						groups[groupIdx].items[itemIdx].defaultSettings.height = 176;
-					}
-				});
-			});
-
-			this.groups = groups;
+			this.groups = this.replaceTypes(groups);
 		},
 		toggleFixedCatalog(): void
 		{
@@ -188,8 +185,30 @@ export const useCatalogStore = defineStore('bizprocdesigner-editor-catalog', {
 					height: 200,
 					ports: [],
 					frameColorName: 'grey',
+					frameTextAlign: 'right',
+					frameSeparatorPosition: 100,
 				},
 			};
+		},
+		replaceTypes(groups: Array<CatalogMenuGroup>): Array<CatalogMenuGroup>
+		{
+			return groups.map((group) => {
+				const newGroup = { ...group };
+
+				newGroup.items = group.items.map((item) => {
+					if (REPLACE_TYPES_MAP[item.id])
+					{
+						const newItem = { ...item };
+						newItem.type = REPLACE_TYPES_MAP[item.id];
+
+						return newItem;
+					}
+
+					return item;
+				});
+
+				return newGroup;
+			});
 		},
 	},
 });

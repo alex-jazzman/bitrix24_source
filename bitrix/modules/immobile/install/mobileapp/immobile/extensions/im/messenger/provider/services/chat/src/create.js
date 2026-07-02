@@ -44,6 +44,11 @@ jn.define('im/messenger/provider/services/chat/create', (require, exports, modul
 				config.avatar = params.avatar;
 			}
 
+			if (Type.isNumber(params.parentChatId))
+			{
+				config.parentChatId = params.parentChatId;
+			}
+
 			return runAction(RestMethod.imV2ChatAdd, {
 				data: {
 					fields: config,

@@ -4,13 +4,14 @@ import 'ui.icon-set.outline';
 
 import { TaskField } from 'tasks.v2.const';
 import { subTasksService } from 'tasks.v2.provider.service.relation-service';
-import type { RelationFieldMeta } from 'tasks.v2.component.fields.relation-tasks';
+import { type RelationFieldMeta } from 'tasks.v2.component.fields.relation-tasks';
 
 export const subTasksMeta: RelationFieldMeta = Object.freeze({
 	id: TaskField.SubTasks,
 	icon: Outline.RELATED_TASKS,
 	idsField: 'subTaskIds',
 	containsField: 'containsSubTasks',
+	showCompletedField: 'showCompletedSubTasks',
 	getTitle: (isTemplate: boolean): string => {
 		if (isTemplate)
 		{

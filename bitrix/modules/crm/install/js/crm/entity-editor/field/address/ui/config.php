@@ -8,10 +8,10 @@ return array(
 	"css" => "dist/address.bundle.css",
 	"js" => "dist/address.bundle.js",
 	'rel' => [
-		'ui.entity-editor',
 		'crm.entity-editor.field.address.base',
 		'main.core',
 		'main.core.events',
+		'ui.entity-editor',
 	],
 	'skip_core' => false,
 );

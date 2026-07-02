@@ -25,6 +25,8 @@ declare type DialogRow = {
 	code: string,
 	diskFolderId: number,
 	aiProvider: string,
+	parentChatId: number,
+	parentMessageId: number,
 }
 
 declare type DialogInternalRow = {

@@ -29,7 +29,6 @@ if(($arID = $lAdmin->GroupAction()) && $isAdmin)
 		switch($_REQUEST['action'])
 		{
 		case "delete":
-			@set_time_limit(0);
 			if(!CWizardUtil::DeleteWizard($ID))
 				$lAdmin->AddGroupError(GetMessage("MAIN_WIZARD_DELETE_ERROR"), $ID);
 			break;
@@ -38,7 +37,7 @@ if(($arID = $lAdmin->GroupAction()) && $isAdmin)
 			<script>
 				exportWizard('<?=CUtil::JSEscape($ID)?>');
 			</script>
-			<?
+			<?php
 			break;
 		}
 	}
@@ -59,9 +58,10 @@ $lAdmin->AddHeaders(
 	)
 );
 
-while($arRes = $rsData->NavNext(true, "f_"))
+while ($arRes = $rsData->Fetch())
 {
-	/** @var string $f_ID */
+	$f_ID = htmlspecialcharsbx($arRes['ID']);
+
 	$row = $lAdmin->AddRow($f_ID, $arRes);
 
 	$idTmp = $f_ID;
@@ -74,7 +74,7 @@ while($arRes = $rsData->NavNext(true, "f_"))
 	$arActions = Array();
 	if ($isAdmin)
 	{
-		$startType = (array_key_exists("START_TYPE",$arRes) ? $arRes["START_TYPE"] : "POPUP");
+		$startType = (array_key_exists("START_TYPE", $arRes) ? $arRes["START_TYPE"] : "POPUP");
 		$startType = mb_strtoupper($startType);
 
 		if ($startType == "POPUP")
@@ -127,6 +127,7 @@ function exportWizard(val)
 }
 </script>
 
-<?$lAdmin->DisplayList();?>
+<?php
+$lAdmin->DisplayList();
 
-<?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");?>
+require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");

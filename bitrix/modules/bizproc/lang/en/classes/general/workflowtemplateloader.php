@@ -1,5 +1,6 @@
 <?php
 $MESS["BPCGWTL_CANT_DELETE"] = "Cannot delete the workflow template because one or more active workflow(-s) exist using this template.";
+$MESS["BPCGWTL_DUPLICATE_ACTIVITY_NAME"] = "The ID \"#NAME#\" has a duplicate.";
 $MESS["BPCGWTL_EMPTY_TEMPLATE"] = "The workflow template '#ID#' is empty.";
 $MESS["BPCGWTL_INVALID1"] = "The value of '#NAME#' is not an integer.";
 $MESS["BPCGWTL_INVALID2"] = "The value of '#NAME#' is not a real number.";

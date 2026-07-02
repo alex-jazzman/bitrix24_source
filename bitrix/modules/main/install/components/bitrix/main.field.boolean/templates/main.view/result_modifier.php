@@ -11,6 +11,7 @@ use Bitrix\Main\UserField\Types\BooleanType;
 
 /**
  * @var $component BooleanUfComponent
+ * @var array $arResult
  */
 
 $label = BooleanType::getLabels($arResult['userField']);

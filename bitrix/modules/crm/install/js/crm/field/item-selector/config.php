@@ -9,9 +9,9 @@ return [
 	'css' => 'dist/item-selector.bundle.css',
 	'js' => 'dist/item-selector.bundle.js',
 	'rel' => [
+		'main.core',
 		'main.core.events',
 		'main.popup',
-		'main.core',
 		'ui.buttons',
 		'ui.design-tokens',
 	],

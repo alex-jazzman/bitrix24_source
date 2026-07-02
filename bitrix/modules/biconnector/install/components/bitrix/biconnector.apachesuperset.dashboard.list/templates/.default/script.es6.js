@@ -10,19 +10,17 @@ import { Guide } from 'ui.tour';
 import { ApacheSupersetMarketManager } from 'biconnector.apache-superset-market-manager';
 import { TagFooter } from 'biconnector.entity-selector';
 import { AirButtonStyle, Button, CancelButton, ButtonSize } from 'ui.buttons';
-import {
-	DashboardRelatedEntitiesList,
-	Entity as DashboardRelatedEntity,
-	SubEntity,
-} from 'biconnector.dashboard-related-items-list';
 import 'ui.alerts';
 import 'ui.forms';
 import { Dialog as SystemDialog } from 'ui.system.dialog';
+import { AhaMoment } from 'biconnector.aha-moment';
 import { Text as TypographyText } from 'ui.system.typography';
+import { SharePopup } from 'biconnector.share-popup';
 
 type Props = {
 	gridId: ?string,
 	isNeedShowDraftGuide: boolean,
+	publishAhaMoment: ?Object,
 	isAvailableDashboardCreation: boolean,
 	isAvailableGroupCreation: boolean,
 	isMarketExists: boolean,
@@ -47,7 +45,9 @@ class SupersetDashboardGridManager
 	#filter: BX.Main.Filter;
 	#tagSelectorDialog: ?Dialog;
 	#lastPinnedRowId: ?number;
+	#publishAhaMoment: ?AhaMoment;
 	#properties: Props;
+	#sharePopups: Map<number, SharePopup> = new Map();
 	constructor(props: Props)
 	{
 		this.#dashboardManager = new DashboardManager();
@@ -281,6 +281,14 @@ class SupersetDashboardGridManager
 				);
 			},
 		);
+
+		EventEmitter.subscribe('BIConnector.SharePopup:onShareActivated', (event) => {
+			this.#updateShareLinkCell(event.getData().dashboardId, true);
+		});
+
+		EventEmitter.subscribe('BIConnector.SharePopup:onShareDeactivated', (event) => {
+			this.#updateShareLinkCell(event.getData().dashboardId, false);
+		});
 	}
 
 	#initHints(): void
@@ -358,6 +366,56 @@ class SupersetDashboardGridManager
 
 		guide.start();
 		this.#properties.isNeedShowDraftGuide = false;
+	}
+
+	#showPublishAhaMoment(dashboardId: number, dashboardType: string): void
+	{
+		const ahaMomentOptions = this.#properties.publishAhaMoment;
+		if (!Type.isPlainObject(ahaMomentOptions) || ahaMomentOptions.canShow !== true)
+		{
+			return;
+		}
+
+		const row = this.#grid.getRows().getById(dashboardId);
+		const bindElement = row?.node?.querySelector(
+			'.main-grid-cell.main-grid-cell-action .main-grid-row-action-button',
+		) ?? row?.node?.querySelector('.main-grid-cell.main-grid-cell-action');
+		if (!Type.isDomNode(bindElement))
+		{
+			return;
+		}
+
+		const actions = [
+			{
+				text: ahaMomentOptions.laterButtonText ?? '',
+				style: 'secondary',
+			},
+			{
+				text: ahaMomentOptions.addButtonText ?? '',
+				style: 'primary',
+				onclick: () => {
+					DashboardManager.openSettingsSlider(dashboardId, dashboardType);
+				},
+			},
+		];
+
+		if (!this.#publishAhaMoment)
+		{
+			this.#publishAhaMoment = new AhaMoment({
+				...ahaMomentOptions,
+				bindElement,
+				popupAlignment: 'start',
+				popupOffsetLeftAdjustment: -33,
+				actions,
+			});
+		}
+		else
+		{
+			this.#publishAhaMoment.setBindElement(bindElement);
+			this.#publishAhaMoment.setActions(actions);
+		}
+
+		this.#publishAhaMoment.show();
 	}
 
 	#colorPinnedRows(): void
@@ -448,6 +506,70 @@ class SupersetDashboardGridManager
 		);
 	}
 
+	showSharePopup(element: HTMLElement): void
+	{
+		const dashboardId = parseInt(element.dataset.dashboardId, 10);
+		const shareDataRaw = element.dataset.share;
+		let initialShareData = null;
+
+		if (shareDataRaw && shareDataRaw !== '' && shareDataRaw !== '""')
+		{
+			try
+			{
+				initialShareData = JSON.parse(shareDataRaw);
+			}
+			catch
+			{}
+		}
+
+		if (!this.#sharePopups.has(dashboardId))
+		{
+			this.#sharePopups.set(dashboardId, new SharePopup({
+				dashboardId,
+				dashboardTitle: element.dataset.title ?? '',
+				initialShareData,
+				type: (element.dataset.type ?? '').toLowerCase(),
+				analyticsElement: 'grid_menu',
+			}));
+		}
+
+		this.#sharePopups.get(dashboardId).show();
+	}
+
+	#updateShareLinkCell(dashboardId: number, isActive: boolean): void
+	{
+		const row = this.#grid.getRows().getById(dashboardId);
+		if (!row)
+		{
+			return;
+		}
+
+		const cell = row.getCellById('SHARE_LINK');
+		if (!cell)
+		{
+			return;
+		}
+
+		const link = cell.querySelector('.dashboard-share-link');
+		if (!link)
+		{
+			return;
+		}
+
+		if (isActive)
+		{
+			Dom.removeClass(link, 'dashboard-share-link--inactive');
+			Dom.addClass(link, 'dashboard-share-link--active');
+			link.textContent = Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_SHARE_LINK_ACTIVE');
+		}
+		else
+		{
+			Dom.removeClass(link, 'dashboard-share-link--active');
+			Dom.addClass(link, 'dashboard-share-link--inactive');
+			link.textContent = Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_SHARE_LINK_INACTIVE');
+		}
+	}
+
 	#isActiveGroupIdFilter(): boolean
 	{
 		const filterFieldsValues = this.getFilter().getFilterFieldsValues();
@@ -509,7 +631,7 @@ class SupersetDashboardGridManager
 			{
 				text: Loc.getMessage('BICONNECTOR_APACHE_SUPERSET_DASHBOARD_LIST_MENU_ITEM_ORDER_DASHBOARD'),
 				onclick: () => {
-					BX.Biconnector.ApacheSupersetFeedbackForm.requestIntegrationFormOpen();
+					BX.BIConnector.ApacheSupersetFeedbackForm.requestIntegrationFormOpen();
 					creationMenu.close();
 				},
 			},
@@ -752,12 +874,16 @@ class SupersetDashboardGridManager
 		return this.#dashboardManager.exportDashboard(dashboardId, 'grid_menu');
 	}
 
-	publish(dashboardId: number): void
+	publish(dashboardId: number, options: ?Object = null): void
 	{
+		const publishOptions = Type.isPlainObject(options) ? options : {};
+		const dashboardType = publishOptions.type ?? 'CUSTOM';
+
 		this.#dashboardManager.toggleDraft(dashboardId, true)
 			.then(() => {
-				this.updateDashboardStatus(dashboardId, DashboardManager.DASHBOARD_STATUS_READY);
-				this.#grid.updateRow(dashboardId);
+				this.#grid.updateRow(dashboardId, null, null, () => {
+					this.#showPublishAhaMoment(dashboardId, dashboardType);
+				});
 			})
 			.catch(() => {
 				BX.UI.Notification.Center.notify({
@@ -771,6 +897,7 @@ class SupersetDashboardGridManager
 	{
 		this.#dashboardManager.toggleDraft(dashboardId, false)
 			.then(() => {
+				this.#sharePopups.delete(dashboardId);
 				this.updateDashboardStatus(dashboardId, DashboardManager.DASHBOARD_STATUS_DRAFT);
 				this.#grid.updateRow(dashboardId, null, null, (result) => {
 					this.#showDraftGuide(this.#grid.getRows().getById(dashboardId).node);
@@ -784,197 +911,20 @@ class SupersetDashboardGridManager
 		;
 	}
 
-	deleteDashboard(dashboardId: number, dashboardType: boolean): void
+	deleteDashboard(dashboardId: number, dashboardType: string): void
 	{
-		const isCustom = (dashboardType === 'CUSTOM');
-
-		if (dashboardType !== 'MARKET')
-		{
-			this.#showDeleteConfirmationPopup(dashboardId, isCustom);
-
-			return;
-		}
-
-		const loaderText = TypographyText.render(Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_LOAD'), {size: 'sm'});
-		let isPopupClosedByUser = false;
-
-		const loadingPopup = new SystemDialog({
-			content: Tag.render`
-				<div class="dashboard-delete-loading-popup">
-					<div class="dashboard-delete-loading-popup-spinner-wrapper">
-						<img
-							class="dashboard-delete-loading-popup-spinner"
-							src="/bitrix/components/bitrix/biconnector.apachesuperset.dashboard.list/templates/.default/images/spinner.png" alt="Loading"
-						/>
-					</div>
-					<div class="dashboard-delete-loading-popup-text">
-						${loaderText}
-					</div>
-				</div>
-			`,
-			width: 400,
-			height: 176,
-			title: ' ', // popup without title has no close-button
-			hasCloseButton: true,
-			hasOverlay: true,
-			disableScrolling: true,
-			hasVerticalPadding: false,
-			hasHorizontalPadding: false,
-			events: {
-				onHide: (event) => {
-					isPopupClosedByUser = true;
-				}
-			}
-		});
-
-		loadingPopup.show();
-
-		this.#dashboardManager.getDashboardRelatedItems(dashboardId)
+		this.#dashboardManager.showDeleteDashboardDialog({
+			dashboardId,
+			dashboardType,
+		})
 			.then((result) => {
-				if (isPopupClosedByUser)
+				if (result.status === 'deleted')
 				{
-					return;
+					this.getGrid().reload();
 				}
-
-				loadingPopup.hide();
-
-				if (result.data && result.data.length > 0)
-				{
-					this.#showRelatedEntitiesToDelete(result.data);
-				}
-				else
-				{
-					this.#showDeleteConfirmationPopup(dashboardId, isCustom);
-				}
-			}).catch((response) => {
-				loadingPopup.hide();
-				BX.UI.Notification.Center.notify({
-					content: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_ERROR'),
-				});
-			});
-	}
-
-	#showDeleteConfirmationPopup(dashboardId: number, isCustom: boolean): void
-	{
-		const message = isCustom
-			? Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_MESSAGE_CUSTOM')
-			: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_MESSAGE_MARKET')
+			})
+			.catch(() => {})
 		;
-
-		const deletePopup = new SystemDialog({
-			title: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_TITLE_MSGVER_1'),
-			subtitle: message,
-			width: 400,
-			hasCloseButton: true,
-			hasOverlay: true,
-			closeByEsc: true,
-			disableScrolling: true,
-			hasOverlay: true,
-			centerButtons: [
-				new Button({
-					text: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_CAPTION_YES'),
-					useAirDesign: true,
-					size: ButtonSize.LARGE,
-					style: AirButtonStyle.FILLED_ALERT,
-					onclick: (button) => {
-						button.setWaiting();
-						this.#dashboardManager.deleteDashboard(dashboardId)
-							.then(() => {
-								this.getGrid().reload();
-								deletePopup.hide();
-							})
-							.catch((response) => {
-								deletePopup.hide();
-								if (response.errors)
-								{
-									this.#notifyErrors(response.errors);
-								}
-							});
-					},
-				}),
-				new CancelButton({
-					text: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_CAPTION_NO'),
-					size: ButtonSize.LARGE,
-					useAirDesign: true,
-					style: AirButtonStyle.PLAIN,
-					onclick: (button) => deletePopup.hide(),
-				}),
-			],
-		});
-
-		deletePopup.show();
-	}
-
-	#showRelatedEntitiesToDelete(entities: DashboardRelatedEntity[]): void
-	{
-		const list = new DashboardRelatedEntitiesList(entities, {
-			onOpen: (url, onDone) => {
-				const tab = window.open('about:blank', '_blank');
-				this.#dashboardManager.getSupersetEntityLoginUrl(url)
-					.then(
-						(result) => {
-							if (tab)
-							{
-								tab.location.href = result.data;
-							}
-							else
-							{
-								window.open(result.data, '_blank');
-							}
-
-							if (onDone)
-							{
-								onDone();
-							}
-						},
-						() => {
-							if (tab)
-							{
-								tab.location.href = url;
-							}
-							else
-							{
-								window.open(url, '_blank');
-							}
-
-							if (onDone)
-							{
-								onDone();
-							}
-						},
-					);
-			},
-		});
-
-		const popup = new SystemDialog({
-			content: Tag.render`<div class="market-dashboard-delete-popup">
-				<div class="market-dashboard-delete-popup-text">
-					${Loc.getMessage('SUPERSET_MARKET_DASHBOARD_DELETE_RELATED_OBJECTS_TEXT', {
-				'[link]': '<a class="biconnector-grid-scope-hint-more" onclick="top.BX.Helper.show(`redirect=detail&code=26703788`)">',
-				'[/link]': '</a>',
-			})}
-				</div>
-				${list.render()}
-			</div>`,
-			width: 540,
-			closeByEsc: true,
-			hasOverlay: true,
-			disableScrolling: true,
-			title: Loc.getMessage('SUPERSET_MARKET_DASHBOARD_DELETE_RELATED_OBJECTS_TITLE'),
-			centerButtons: [
-				new Button({
-					color: Button.Color.LIGHT,
-					text: Loc.getMessage('SUPERSET_MARKET_DASHBOARD_DELETE_RELATED_OBJECTS_OK_BTN'),
-					onclick: () => {
-						popup.hide();
-					},
-					useAirDesign: true,
-					style: AirButtonStyle.FILLED
-				}),
-			],
-		});
-
-		popup.show();
 	}
 
 	deleteGroup(groupId: number): void

@@ -30,7 +30,12 @@ const FieldFileItem = {
 						{{ fileSize }} {{ field.messages.get('fieldFileSizeUnitMb') }}
 					</span>
 				</div>
-				<div @click.prevent="removeFile" class="b24-form-control-file-item-remove"></div>
+				<button 
+					type="button"
+					@click="removeFile"
+					class="b24-form-control-file-item-remove"
+					:aria-label="field.messages.get('fieldFileRemove')"
+				></button>
 			</div>
 			<div
 				class="b24-form-control-file-item-empty"
@@ -43,16 +48,21 @@ const FieldFileItem = {
 				:class="{'b24-form-control-alert': !!errorTextTypeFile}"
 				v-show="!file.content && !isLoading" 
 			>
-				<label class="b24-form-control">
+				<button
+					type="button"
+					class="b24-form-control b24-form-control-file-button"
+					@click="openFileDialog"
+					:aria-label="field.messages.get('fieldFileChoose')"
+				>
 					{{ field.messages.get('fieldFileChoose') }}
-					<input type="file" style="display: none;"
-						ref="inputFiles"
-						:accept="field.getAcceptTypes()"
-						@change="setFiles"
-						@blur="$emit('input-blur')"
-						@focus="$emit('input-focus')"
-					>
-				</label>
+				</button>
+				<input type="file" style="display: none;"
+					ref="inputFiles"
+					:accept="field.getAcceptTypes()"
+					@change="setFiles"
+					@blur="$emit('input-blur')"
+					@focus="$emit('input-focus')"
+				>
 				<div class="b24-form-control-alert-message"
 					@click="errorTextTypeFile = null"
 				>{{errorTextTypeFile}}</div>
@@ -102,9 +112,16 @@ const FieldFileItem = {
 			const mb = kb / 1024;
 
 			return mb.toFixed(2);
-		}
+		},
 	},
 	methods: {
+		openFileDialog(): void
+		{
+			if (this.$refs.inputFiles)
+			{
+				this.$refs.inputFiles.click();
+			}
+		},
 		setFiles()
 		{
 			this.errorTextTypeFile = null;

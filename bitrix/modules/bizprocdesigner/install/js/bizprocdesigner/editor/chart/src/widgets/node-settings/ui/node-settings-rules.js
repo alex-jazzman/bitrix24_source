@@ -4,6 +4,7 @@ import { Text } from 'main.core';
 import { MessageBox } from 'ui.dialogs.messagebox';
 
 import { useLoc } from '../../../shared/composables';
+import { PORT_TYPES } from '../../../shared/constants';
 
 import { EditOutputExpression } from '../../../features/node-settings/ui/edit-output-expression/edit-output-expression';
 
@@ -29,7 +30,7 @@ import {
 
 // @vue/component
 export const NodeSettingsRules = {
-	name: 'node-settings-rules',
+	name: 'NodeSettingsRules',
 	components: {
 		CancelSettingsButton,
 		SaveSettingsButton,
@@ -54,17 +55,21 @@ export const NodeSettingsRules = {
 			getMessage,
 		};
 	},
-	data(): Object
+	data(): { isScrolling: boolean }
 	{
 		return {
-			scrolling: false,
+			isScrolling: false,
 		};
 	},
 	computed:
 	{
-		...mapState(useNodeSettingsStore, ['nodeSettings', 'currentRuleId', 'block', 'isRuleSettingsShown']),
+		...mapState(useNodeSettingsStore, ['nodeSettings', 'currentRule', 'block', 'isRuleSettingsShown', 'ports']),
 		...mapWritableState(useNodeSettingsStore, ['isSaving']),
-		...mapState(useDiagramStore, ['documentTypeSigned', 'documentType', 'template']),
+		...mapState(useDiagramStore, ['documentType', 'template']),
+		isShown(): boolean
+		{
+			return this.isRuleSettingsShown && this.currentRule.type === PORT_TYPES.input;
+		},
 	},
 	methods:
 	{
@@ -74,6 +79,7 @@ export const NodeSettingsRules = {
 			'saveRule',
 			'discardRuleSettings',
 		]),
+		...mapActions(useDiagramStore, ['setPorts']),
 		onRulesLayoutClose(): void
 		{
 			this.discardRuleSettings();
@@ -87,6 +93,7 @@ export const NodeSettingsRules = {
 
 				await EventEmitter.emitAsync(EVENT_NAMES.BEFORE_SUBMIT_EVENT);
 				await this.saveRule(this.documentType);
+				this.setPorts(this.block.id, this.ports);
 			}
 			catch (error)
 			{
@@ -102,17 +109,17 @@ export const NodeSettingsRules = {
 		},
 		onScroll(): void
 		{
-			this.scrolling = true;
+			this.isScrolling = true;
 			this.$nextTick(() => {
-				this.scrolling = false;
+				this.isScrolling = false;
 			});
 		},
 	},
 	template: `
 		<NodeSettingsRulesLayout
-			:isRuleSettingsShown="isRuleSettingsShown"
+			:isShown="isShown"
 			:nodeSettings="nodeSettings"
-			:currentRuleId="currentRuleId"
+			:currentRule="currentRule"
 			:isSaving="isSaving"
 			@close="onRulesLayoutClose"
 			@drop="reorder"
@@ -154,6 +161,7 @@ export const NodeSettingsRules = {
 								<EditActionExpression
 									:construction="construction"
 									:isExpertMode="isExpertMode"
+									:isScrolling="isScrolling"
 								>
 									<template #default="{ actionId, activityData, selectedDocument }">
 										<EditExtendedAction
@@ -180,7 +188,7 @@ export const NodeSettingsRules = {
 							<template #output>
 								<EditOutputExpression
 									:construction="construction"
-									:scrolling="scrolling"
+									:isScrolling="isScrolling"
 								/>
 							</template>
 						</RuleConstruction>
@@ -197,7 +205,7 @@ export const NodeSettingsRules = {
 
 			<template #addRuleCardButton>
 				<AddConstruction
-					class="add-rule-card"
+					class="editor-chart-node-settings-add-rule-card"
 					:data-test-id="$testId('complexNodeRuleSettingsAddRuleCard')"
 				>
 					{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_ADD_RULE_CARD_LABEL') }}

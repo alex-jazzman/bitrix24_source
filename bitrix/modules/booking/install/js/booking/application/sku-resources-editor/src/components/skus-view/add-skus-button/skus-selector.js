@@ -1,5 +1,4 @@
 import { Type, Uri } from 'main.core';
-import { BaseEvent } from 'main.core.events';
 import { Dialog } from 'ui.entity-selector';
 
 import { SidePanelInstance } from 'booking.lib.side-panel-instance';

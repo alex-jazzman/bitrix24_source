@@ -1,8 +1,8 @@
 /**
- * @module im/messenger/controller/recent/config/dummy
+ * @module im/messenger/controller/recent/config/src/dummy
  */
-jn.define('im/messenger/controller/recent/config/dummy', (require, exports, module) => {
-	const { RecentServiceName } = require('im/messenger/controller/recent/const/service');
+jn.define('im/messenger/controller/recent/config/src/dummy', (require, exports, module) => {
+	const { RecentServiceName } = require('im/messenger/controller/recent/const');
 
 	// TODO only developer example
 	const DummyConfig = {
@@ -53,6 +53,10 @@ jn.define('im/messenger/controller/recent/config/dummy', (require, exports, modu
 			},
 			[RecentServiceName.select]: {
 				extension: 'im/messenger/controller/recent/service/select/dummy',
+				props: {},
+			},
+			[RecentServiceName.inviteBanner]: {
+				extension: 'im/messenger/controller/recent/service/invite-banner/dummy',
 				props: {},
 			},
 		},

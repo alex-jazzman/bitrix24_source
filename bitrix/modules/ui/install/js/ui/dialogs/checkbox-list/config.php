@@ -9,13 +9,13 @@ return [
 	'js' => 'dist/bundle.js',
 	'rel' => [
 		'checkbox-list.css',
+		'main.core',
+		'main.core.events',
 		'main.popup',
 		'ui.design-tokens',
-		'ui.vue3',
 		'ui.forms',
 		'ui.switcher',
-		'main.core.events',
-		'main.core',
+		'ui.vue3',
 	],
 	'skip_core' => false,
 ];

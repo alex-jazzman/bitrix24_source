@@ -1,1 +1,270 @@
-.mail-config-dirs>.mail-config-dirs-item{padding-left:0}.mail-config-dirs-section-block{margin-bottom:0}.mail-config-dirs-title-block{padding-bottom:10px;margin-bottom:16px;border-bottom:1px solid #d8d8d8}.mail-config-dirs-title{font:16px/24px var(--ui-font-family-secondary,var(--ui-font-family-open-sans));font-weight:var(--ui-font-weight-regular,400);color:#333}.mail-config-dirs-item{padding-left:15px}.mail-config-dirs-item-input-check{vertical-align:middle;outline:0;border:1px solid #c6cdd3;border-radius:2px;margin-left:5px;margin-right:5px;color:#535c6a;font-size:13px}.child-counter-container{display:none}.child-counter-container.show{display:inline-block}.mail-config-dirs-button-select-all{margin-bottom:10px;align-items:center;flex-direction:row;display:flex;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}.mail-config-dirs-button-select{align-items:center;flex-direction:row;cursor:pointer;line-height:20px;font-size:11px;color:#a6a6a6;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;margin-left:10px;display:none}.mail-config-dirs-button-select label{cursor:pointer}.mail-config-dirs-item-content:hover .mail-config-dirs-button-select{display:flex}.mail-config-dirs-item-content .mail-config-dirs-button-select .mail-config-dirs-button-select-input{display:none}.mail-config-dirs-item-content{display:flex;flex-direction:row;align-items:center}.mail-config-dirs-item-content.hasChild{margin-left:0}.mail-config-dirs-item-content{margin-left:18px;margin-bottom:5px}.mail-config-dirs-item-content .mail-connect-form-input{padding:0}.mail-config-dirs-item-content label{display:inline-block;max-width:200px;white-space:nowrap;overflow:hidden !important;text-overflow:ellipsis}.mail-config-dirs-item{display:flex;flex-direction:column;color:#535c6a;font:13px/22px var(--ui-font-family-primary,var(--ui-font-family-helvetica))}.mail-config-dirs-item:last-child{margin-bottom:0}.mail-config-dirs-level-box{position:relative;width:18px;height:18px}.mail-config-dirs-level-button{top:0 !important;left:0 !important;cursor:pointer}.mail-config-dirs-plus-icon:hover,.mail-config-dirs-minus-icon:hover{opacity:1}.mail-config-dirs-plus-icon:not(.mail-config-dirs-loader-icon),.mail-config-dirs-minus-icon:not(.mail-config-dirs-loader-icon){position:absolute;left:0;top:0;border-radius:10px;height:16px;width:16px;border:1px solid #d5dbdf;opacity:.7}.mail-config-dirs-plus-icon:not(.mail-config-dirs-loader-icon):before{	background-image: url('images/plus.svg');}.mail-config-dirs-minus-icon:not(.mail-config-dirs-loader-icon):before{	background-image: url('images/minus.svg');}.mail-config-dirs-plus-icon:not(.mail-config-dirs-loader-icon):before,.mail-config-dirs-minus-icon:not(.mail-config-dirs-loader-icon):before{display:block;content:"";width:8px;height:8px;position:absolute;left:4px;top:4px}.mail-config-dirs-loader-icon{position:absolute;left:0;top:0;border-radius:0;height:18px;width:18px;border:0;opacity:1}.mail-config-dirs-loader-icon:before{display:block;content:"";width:18px;height:18px;position:absolute;left:0;top:0;right:0;	background-image: url('images/loader.svg'); background-repeat:no-repeat;background-origin:content-box;padding:0;margin:0}.mail-config-dirs-singleselect{display:inline-block;border:0;background:transparent;box-shadow:none;padding:0;width:auto;height:19px;margin:0 3px;vertical-align:middle;position:relative;line-height:17px;color:#1169c3;border-bottom:1px dashed #88b4e1;white-space:nowrap;cursor:pointer}.mail-dirs-menu-disabled{opacity:.4}
+.mail-config-dirs > .mail-config-dirs-item {
+	padding-left: 0;
+}
+
+.mail-config-dirs-section-block {
+	margin-bottom: 0;
+}
+
+.mail-config-dirs-title-block {
+	padding-bottom: 10px;
+	margin-bottom: 16px;
+	border-bottom: 1px solid #d8d8d8;
+}
+
+.mail-config-dirs-title {
+	font: 16px/24px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
+	color: #333;
+}
+
+.mail-config-dirs-item {
+	padding-left: 15px;
+}
+
+.mail-config-dirs-item-input-check {
+	vertical-align: middle;
+	border: 1px solid #c6cdd3;
+	border-radius: 2px;
+	margin-left: 5px;
+	margin-right: 5px;
+	color: #535c6a;
+	font-size: 13px;
+}
+
+.mail-config-dirs-item-input-check:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}
+
+.child-counter-container {
+	display: none;
+}
+
+.child-counter-container.show {
+	display: inline-block;
+}
+
+.mail-config-dirs-button-select-all {
+	margin-bottom: 10px;
+	align-items: center;
+	flex-direction: row;
+	display: flex;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+
+.mail-config-dirs-button-select {
+	align-items: center;
+	flex-direction: row;
+	cursor: pointer;
+	line-height: 20px;
+	font-size: 11px;
+	color: #a6a6a6;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	margin-left: 10px;
+	display: none;
+}
+
+.mail-config-dirs-button-select label {
+	cursor: pointer;
+}
+
+.mail-config-dirs-item-content:hover .mail-config-dirs-button-select,
+.mail-config-dirs-item-content:focus-within .mail-config-dirs-button-select {
+	display: flex;
+}
+
+.mail-config-dirs-item-content .mail-config-dirs-button-select .mail-config-dirs-button-select-input {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+.mail-config-dirs-item-content .mail-config-dirs-button-select .mail-config-dirs-button-select-input:focus-visible + .mail-config-dirs-button-select-label {
+	outline: 1px solid var(--ui-color-primary, #2fc6f6);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
+.mail-config-dirs-item-content {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+}
+
+.mail-config-dirs-item-content.hasChild {
+	margin-left: 0;
+}
+
+.mail-config-dirs-item-content {
+	margin-left: 18px;
+	margin-bottom: 5px;
+}
+
+.mail-config-dirs-item-content .mail-connect-form-input {
+	padding: 0;
+}
+
+.mail-config-dirs-item-content .mail-config-dirs-item-input-check {
+
+}
+
+.mail-config-dirs-item-content label {
+	display: inline-block;
+	max-width: 200px;
+	white-space: nowrap;
+	overflow: hidden !important;
+	text-overflow: ellipsis;
+}
+
+.mail-config-dirs-item {
+	display: flex;
+	flex-direction: column;
+	color: #535c6A;
+	font: 13px/22px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+}
+
+.mail-config-dirs-item:last-child {
+	margin-bottom: 0;
+}
+
+.mail-config-dirs-level-box {
+	position: relative;
+	width: 18px;
+	height: 18px;
+	/* margin-right: 5px; */
+}
+
+.mail-config-dirs-level-button {
+	background: none;
+	border: none;
+	padding: 0;
+	margin: 0;
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
+	text-align: inherit;
+	top: 0 !important;
+	left: 0 !important;
+}
+
+.mail-config-dirs-level-button:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 10px;
+}
+
+.mail-config-dirs-plus-icon:hover, .mail-config-dirs-minus-icon:hover {
+	opacity: 1;
+}
+
+.mail-config-dirs-plus-icon:not(.mail-config-dirs-loader-icon),
+.mail-config-dirs-minus-icon:not(.mail-config-dirs-loader-icon) {
+	position: absolute;
+	left: 0;
+	top: 0;
+	border-radius: 10px;
+	height: 16px;
+	/* padding: 0 9px; */
+	width: 16px;
+	border: 1px solid #d5dbdf;
+	opacity: 0.7;
+}
+
+.mail-config-dirs-plus-icon:not(.mail-config-dirs-loader-icon):before {
+	background-image: url('images/plus.svg');
+}
+
+.mail-config-dirs-minus-icon:not(.mail-config-dirs-loader-icon):before {
+	background-image: url('images/minus.svg');
+}
+
+.mail-config-dirs-plus-icon:not(.mail-config-dirs-loader-icon):before,
+.mail-config-dirs-minus-icon:not(.mail-config-dirs-loader-icon):before {
+	display: block;
+	content: "";
+	width: 8px;
+	height: 8px;
+	position: absolute;
+	left: 3px;
+	top: 3px;
+	/* transition: opacity .3s; */
+	/* background-color: green; */
+}
+
+.mail-config-dirs-loader-icon {
+	position: absolute;
+	left: 0;
+	top: 0;
+	border-radius: 0;
+	height: 18px;
+	width: 18px;
+	border: 0;
+	opacity: 1;
+}
+
+.mail-config-dirs-loader-icon:before {
+	display: block;
+	content: "";
+	width: 18px;
+	height: 18px;
+	position: absolute;
+	left: 0;
+	top: 0;
+	right: 0;
+	background-image: url('images/loader.svg');
+	background-repeat: no-repeat;
+	background-origin: content-box;
+	padding: 0;
+	margin: 0;
+}
+
+.mail-config-dirs-singleselect {
+	display: inline-block;
+	border: none;
+	background: transparent;
+	box-shadow: none;
+	padding: 0;
+	width: auto;
+	height: 19px;
+	margin: 0 3px;
+	vertical-align: middle;
+	position: relative;
+	line-height: 17px;
+	font: inherit;
+	color: #1169c3;
+	border-bottom: 1px dashed #88b4e1;
+	white-space: nowrap;
+	cursor: pointer;
+	text-align: inherit;
+}
+
+.mail-config-dirs-singleselect:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
+.mail-dirs-menu-disabled {
+	opacity: 0.4;
+}
+
+.mail-config-dirs-button-select-all-input:focus-visible,
+.mail-config-dirs-button-select-input:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}
+
+/*# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3RtcC9YZnYycnAiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IkFBQUEiLCJmaWxlIjoiLi4vLi4vLi4vdG1wL1hmdjJycCIsInNvdXJjZXNDb250ZW50IjpbIi5tYWlsLWNvbmZpZy1kaXJzID4gLm1haWwtY29uZmlnLWRpcnMtaXRlbSB7XG5cdHBhZGRpbmctbGVmdDogMDtcbn1cblxuLm1haWwtY29uZmlnLWRpcnMtc2VjdGlvbi1ibG9jayB7XG5cdG1hcmdpbi1ib3R0b206IDA7XG59XG5cbi5tYWlsLWNvbmZpZy1kaXJzLXRpdGxlLWJsb2NrIHtcblx0cGFkZGluZy1ib3R0b206IDEwcHg7XG5cdG1hcmdpbi1ib3R0b206IDE2cHg7XG5cdGJvcmRlci1ib3R0b206IDFweCBzb2xpZCAjZDhkOGQ4O1xufVxuXG4ubWFpbC1jb25maWctZGlycy10aXRsZSB7XG5cdGZvbnQ6IDE2cHgvMjRweCB2YXIoLS11aS1mb250LWZhbWlseS1zZWNvbmRhcnksIHZhcigtLXVpLWZvbnQtZmFtaWx5LW9wZW4tc2FucykpO1xuXHRmb250LXdlaWdodDogdmFyKC0tdWktZm9udC13ZWlnaHQtcmVndWxhciwgNDAwKTtcblx0Y29sb3I6ICMzMzM7XG59XG5cbi5tYWlsLWNvbmZpZy1kaXJzLWl0ZW0ge1xuXHRwYWRkaW5nLWxlZnQ6IDE1cHg7XG59XG5cbi5tYWlsLWNvbmZpZy1kaXJzLWl0ZW0taW5wdXQtY2hlY2sge1xuXHR2ZXJ0aWNhbC1hbGlnbjogbWlkZGxlO1xuXHRib3JkZXI6IDFweCBzb2xpZCAjYzZjZGQzO1xuXHRib3JkZXItcmFkaXVzOiAycHg7XG5cdG1hcmdpbi1sZWZ0OiA1cHg7XG5cdG1hcmdpbi1yaWdodDogNXB4O1xuXHRjb2xvcjogIzUzNWM2YTtcblx0Zm9udC1zaXplOiAxM3B4O1xufVxuXG4ubWFpbC1jb25maWctZGlycy1pdGVtLWlucHV0LWNoZWNrOmZvY3VzLXZpc2libGUge1xuXHRvdXRsaW5lOiAxcHggc29saWQgdmFyKC0tdWktY29sb3ItYWNjZW50LW1haW4tbGluayk7XG5cdG91dGxpbmUtb2Zmc2V0OiAycHg7XG59XG5cbi5jaGlsZC1jb3VudGVyLWNvbnRhaW5lciB7XG5cdGRpc3BsYXk6IG5vbmU7XG59XG5cbi5jaGlsZC1jb3VudGVyLWNvbnRhaW5lci5zaG93IHtcblx0ZGlzcGxheTogaW5saW5lLWJsb2NrO1xufVxuXG4ubWFpbC1jb25maWctZGlycy1idXR0b24tc2VsZWN0LWFsbCB7XG5cdG1hcmdpbi1ib3R0b206IDEwcHg7XG5cdGFsaWduLWl0ZW1zOiBjZW50ZXI7XG5cdGZsZXgtZGlyZWN0aW9uOiByb3c7XG5cdGRpc3BsYXk6IGZsZXg7XG5cdC13ZWJraXQtdXNlci1zZWxlY3Q6IG5vbmU7XG5cdC1tb3otdXNlci1zZWxlY3Q6IG5vbmU7XG5cdC1tcy11c2VyLXNlbGVjdDogbm9uZTtcblx0dXNlci1zZWxlY3Q6IG5vbmU7XG59XG5cbi5tYWlsLWNvbmZpZy1kaXJzLWJ1dHRvbi1zZWxlY3Qge1xuXHRhbGlnbi1pdGVtczogY2VudGVyO1xuXHRmbGV4LWRpcmVjdGlvbjogcm93O1xuXHRjdXJzb3I6IHBvaW50ZXI7XG5cdGxpbmUtaGVpZ2h0OiAyMHB4O1xuXHRmb250LXNpemU6IDExcHg7XG5cdGNvbG9yOiAjYTZhNmE2O1xuXHQtd2Via2l0LXVzZXItc2VsZWN0OiBub25lO1xuXHQtbW96LXVzZXItc2VsZWN0OiBub25lO1xuXHQtbXMtdXNlci1zZWxlY3Q6IG5vbmU7XG5cdHVzZXItc2VsZWN0OiBub25lO1xuXHRtYXJnaW4tbGVmdDogMTBweDtcblx0ZGlzcGxheTogbm9uZTtcbn1cblxuLm1haWwtY29uZmlnLWRpcnMtYnV0dG9uLXNlbGVjdCBsYWJlbCB7XG5cdGN1cnNvcjogcG9pbnRlcjtcbn1cblxuLm1haWwtY29uZmlnLWRpcnMtaXRlbS1jb250ZW50OmhvdmVyIC5tYWlsLWNvbmZpZy1kaXJzLWJ1dHRvbi1zZWxlY3QsXG4ubWFpbC1jb25maWctZGlycy1pdGVtLWNvbnRlbnQ6Zm9jdXMtd2l0aGluIC5tYWlsLWNvbmZpZy1kaXJzLWJ1dHRvbi1zZWxlY3Qge1xuXHRkaXNwbGF5OiBmbGV4O1xufVxuXG4ubWFpbC1jb25maWctZGlycy1pdGVtLWNvbnRlbnQgLm1haWwtY29uZmlnLWRpcnMtYnV0dG9uLXNlbGVjdCAubWFpbC1jb25maWctZGlycy1idXR0b24tc2VsZWN0LWlucHV0IHtcblx0cG9zaXRpb246IGFic29sdXRlO1xuXHR3aWR0aDogMXB4O1xuXHRoZWlnaHQ6IDFweDtcblx0cGFkZGluZzogMDtcblx0bWFyZ2luOiAtMXB4O1xuXHRvdmVyZmxvdzogaGlkZGVuO1xuXHRjbGlwOiByZWN0KDAsIDAsIDAsIDApO1xuXHR3aGl0ZS1zcGFjZTogbm93cmFwO1xuXHRib3JkZXI6IDA7XG59XG5cbi5tYWlsLWNvbmZpZy1kaXJzLWl0ZW0tY29udGVudCAubWFpbC1jb25maWctZGlycy1idXR0b24tc2VsZWN0IC5tYWlsLWNvbmZpZy1kaXJzLWJ1dHRvbi1zZWxlY3QtaW5wdXQ6Zm9jdXMtdmlzaWJsZSArIC5tYWlsLWNvbmZpZy1kaXJzLWJ1dHRvbi1zZWxlY3QtbGFiZWwge1xuXHRvdXRsaW5lOiAxcHggc29saWQgdmFyKC0tdWktY29sb3ItcHJpbWFyeSwgIzJmYzZmNik7XG5cdG91dGxpbmUtb2Zmc2V0OiAycHg7XG5cdGJvcmRlci1yYWRpdXM6IDRweDtcbn1cblxuLm1haWwtY29uZmlnLWRpcnMtaXRlbS1jb250ZW50IHtcblx0ZGlzcGxheTogZmxleDtcblx0ZmxleC1kaXJlY3Rpb246IHJvdztcblx0YWxpZ24taXRlbXM6IGNlbnRlcjtcbn1cblxuLm1haWwtY29uZmlnLWRpcnMtaXRlbS1jb250ZW50Lmhhc0NoaWxkIHtcblx0bWFyZ2luLWxlZnQ6IDA7XG59XG5cbi5tYWlsLWNvbmZpZy1kaXJzLWl0ZW0tY29udGVudCB7XG5cdG1hcmdpbi1sZWZ0OiAxOHB4O1xuXHRtYXJnaW4tYm90dG9tOiA1cHg7XG59XG5cbi5tYWlsLWNvbmZpZy1kaXJzLWl0ZW0tY29udGVudCAubWFpbC1jb25uZWN0LWZvcm0taW5wdXQge1xuXHRwYWRkaW5nOiAwO1xufVxuXG4ubWFpbC1jb25maWctZGlycy1pdGVtLWNvbnRlbnQgLm1haWwtY29uZmlnLWRpcnMtaXRlbS1pbnB1dC1jaGVjayB7XG5cbn1cblxuLm1haWwtY29uZmlnLWRpcnMtaXRlbS1jb250ZW50IGxhYmVsIHtcblx0ZGlzcGxheTogaW5saW5lLWJsb2NrO1xuXHRtYXgtd2lkdGg6IDIwMHB4O1xuXHR3aGl0ZS1zcGFjZTogbm93cmFwO1xuXHRvdmVyZmxvdzogaGlkZGVuICFpbXBvcnRhbnQ7XG5cdHRleHQtb3ZlcmZsb3c6IGVsbGlwc2lzO1xufVxuXG4ubWFpbC1jb25maWctZGlycy1pdGVtIHtcblx0ZGlzcGxheTogZmxleDtcblx0ZmxleC1kaXJlY3Rpb246IGNvbHVtbjtcblx0Y29sb3I6ICM1MzVjNkE7XG5cdGZvbnQ6IDEzcHgvMjJweCB2YXIoLS11aS1mb250LWZhbWlseS1wcmltYXJ5LCB2YXIoLS11aS1mb250LWZhbWlseS1oZWx2ZXRpY2EpKTtcbn1cblxuLm1haWwtY29uZmlnLWRpcnMtaXRlbTpsYXN0LWNoaWxkIHtcblx0bWFyZ2luLWJvdHRvbTogMDtcbn1cblxuLm1haWwtY29uZmlnLWRpcnMtbGV2ZWwtYm94IHtcblx0cG9zaXRpb246IHJlbGF0aXZlO1xuXHR3aWR0aDogMThweDtcblx0aGVpZ2h0OiAxOHB4O1xuXHQvKiBtYXJnaW4tcmlnaHQ6IDVweDsgKi9cbn1cblxuLm1haWwtY29uZmlnLWRpcnMtbGV2ZWwtYnV0dG9uIHtcblx0YmFja2dyb3VuZDogbm9uZTtcblx0Ym9yZGVyOiBub25lO1xuXHRwYWRkaW5nOiAwO1xuXHRtYXJnaW46IDA7XG5cdGZvbnQ6IGluaGVyaXQ7XG5cdGNvbG9yOiBpbmhlcml0O1xuXHRjdXJzb3I6IHBvaW50ZXI7XG5cdHRleHQtYWxpZ246IGluaGVyaXQ7XG5cdHRvcDogMCAhaW1wb3J0YW50O1xuXHRsZWZ0OiAwICFpbXBvcnRhbnQ7XG59XG5cbi5tYWlsLWNvbmZpZy1kaXJzLWxldmVsLWJ1dHRvbjpmb2N1cy12aXNpYmxlIHtcblx0b3V0bGluZTogMXB4IHNvbGlkIHZhcigtLXVpLWNvbG9yLWFjY2VudC1tYWluLWxpbmspO1xuXHRvdXRsaW5lLW9mZnNldDogMnB4O1xuXHRib3JkZXItcmFkaXVzOiAxMHB4O1xufVxuXG4ubWFpbC1jb25maWctZGlycy1wbHVzLWljb246aG92ZXIsIC5tYWlsLWNvbmZpZy1kaXJzLW1pbnVzLWljb246aG92ZXIge1xuXHRvcGFjaXR5OiAxO1xufVxuXG4ubWFpbC1jb25maWctZGlycy1wbHVzLWljb246bm90KC5tYWlsLWNvbmZpZy1kaXJzLWxvYWRlci1pY29uKSxcbi5tYWlsLWNvbmZpZy1kaXJzLW1pbnVzLWljb246bm90KC5tYWlsLWNvbmZpZy1kaXJzLWxvYWRlci1pY29uKSB7XG5cdHBvc2l0aW9uOiBhYnNvbHV0ZTtcblx0bGVmdDogMDtcblx0dG9wOiAwO1xuXHRib3JkZXItcmFkaXVzOiAxMHB4O1xuXHRoZWlnaHQ6IDE2cHg7XG5cdC8qIHBhZGRpbmc6IDAgOXB4OyAqL1xuXHR3aWR0aDogMTZweDtcblx0Ym9yZGVyOiAxcHggc29saWQgI2Q1ZGJkZjtcblx0b3BhY2l0eTogMC43O1xufVxuXG4ubWFpbC1jb25maWctZGlycy1wbHVzLWljb246bm90KC5tYWlsLWNvbmZpZy1kaXJzLWxvYWRlci1pY29uKTpiZWZvcmUge1xuXHRiYWNrZ3JvdW5kLWltYWdlOiB1cmwoJ2ltYWdlcy9wbHVzLnN2ZycpO1xufVxuXG4ubWFpbC1jb25maWctZGlycy1taW51cy1pY29uOm5vdCgubWFpbC1jb25maWctZGlycy1sb2FkZXItaWNvbik6YmVmb3JlIHtcblx0YmFja2dyb3VuZC1pbWFnZTogdXJsKCdpbWFnZXMvbWludXMuc3ZnJyk7XG59XG5cbi5tYWlsLWNvbmZpZy1kaXJzLXBsdXMtaWNvbjpub3QoLm1haWwtY29uZmlnLWRpcnMtbG9hZGVyLWljb24pOmJlZm9yZSxcbi5tYWlsLWNvbmZpZy1kaXJzLW1pbnVzLWljb246bm90KC5tYWlsLWNvbmZpZy1kaXJzLWxvYWRlci1pY29uKTpiZWZvcmUge1xuXHRkaXNwbGF5OiBibG9jaztcblx0Y29udGVudDogXCJcIjtcblx0d2lkdGg6IDhweDtcblx0aGVpZ2h0OiA4cHg7XG5cdHBvc2l0aW9uOiBhYnNvbHV0ZTtcblx0bGVmdDogM3B4O1xuXHR0b3A6IDNweDtcblx0LyogdHJhbnNpdGlvbjogb3BhY2l0eSAuM3M7ICovXG5cdC8qIGJhY2tncm91bmQtY29sb3I6IGdyZWVuOyAqL1xufVxuXG4ubWFpbC1jb25maWctZGlycy1sb2FkZXItaWNvbiB7XG5cdHBvc2l0aW9uOiBhYnNvbHV0ZTtcblx0bGVmdDogMDtcblx0dG9wOiAwO1xuXHRib3JkZXItcmFkaXVzOiAwO1xuXHRoZWlnaHQ6IDE4cHg7XG5cdHdpZHRoOiAxOHB4O1xuXHRib3JkZXI6IDA7XG5cdG9wYWNpdHk6IDE7XG59XG5cbi5tYWlsLWNvbmZpZy1kaXJzLWxvYWRlci1pY29uOmJlZm9yZSB7XG5cdGRpc3BsYXk6IGJsb2NrO1xuXHRjb250ZW50OiBcIlwiO1xuXHR3aWR0aDogMThweDtcblx0aGVpZ2h0OiAxOHB4O1xuXHRwb3NpdGlvbjogYWJzb2x1dGU7XG5cdGxlZnQ6IDA7XG5cdHRvcDogMDtcblx0cmlnaHQ6IDA7XG5cdGJhY2tncm91bmQtaW1hZ2U6IHVybCgnaW1hZ2VzL2xvYWRlci5zdmcnKTtcblx0YmFja2dyb3VuZC1yZXBlYXQ6IG5vLXJlcGVhdDtcblx0YmFja2dyb3VuZC1vcmlnaW46IGNvbnRlbnQtYm94O1xuXHRwYWRkaW5nOiAwO1xuXHRtYXJnaW46IDA7XG59XG5cbi5tYWlsLWNvbmZpZy1kaXJzLXNpbmdsZXNlbGVjdCB7XG5cdGRpc3BsYXk6IGlubGluZS1ibG9jaztcblx0Ym9yZGVyOiBub25lO1xuXHRiYWNrZ3JvdW5kOiB0cmFuc3BhcmVudDtcblx0Ym94LXNoYWRvdzogbm9uZTtcblx0cGFkZGluZzogMDtcblx0d2lkdGg6IGF1dG87XG5cdGhlaWdodDogMTlweDtcblx0bWFyZ2luOiAwIDNweDtcblx0dmVydGljYWwtYWxpZ246IG1pZGRsZTtcblx0cG9zaXRpb246IHJlbGF0aXZlO1xuXHRsaW5lLWhlaWdodDogMTdweDtcblx0Zm9udDogaW5oZXJpdDtcblx0Y29sb3I6ICMxMTY5YzM7XG5cdGJvcmRlci1ib3R0b206IDFweCBkYXNoZWQgIzg4YjRlMTtcblx0d2hpdGUtc3BhY2U6IG5vd3JhcDtcblx0Y3Vyc29yOiBwb2ludGVyO1xuXHR0ZXh0LWFsaWduOiBpbmhlcml0O1xufVxuXG4ubWFpbC1jb25maWctZGlycy1zaW5nbGVzZWxlY3Q6Zm9jdXMtdmlzaWJsZSB7XG5cdG91dGxpbmU6IDFweCBzb2xpZCB2YXIoLS11aS1jb2xvci1hY2NlbnQtbWFpbi1saW5rKTtcblx0b3V0bGluZS1vZmZzZXQ6IDJweDtcblx0Ym9yZGVyLXJhZGl1czogNHB4O1xufVxuXG4ubWFpbC1kaXJzLW1lbnUtZGlzYWJsZWQge1xuXHRvcGFjaXR5OiAwLjQ7XG59XG5cbi5tYWlsLWNvbmZpZy1kaXJzLWJ1dHRvbi1zZWxlY3QtYWxsLWlucHV0OmZvY3VzLXZpc2libGUsXG4ubWFpbC1jb25maWctZGlycy1idXR0b24tc2VsZWN0LWlucHV0OmZvY3VzLXZpc2libGUge1xuXHRvdXRsaW5lOiAxcHggc29saWQgdmFyKC0tdWktY29sb3ItYWNjZW50LW1haW4tbGluayk7XG5cdG91dGxpbmUtb2Zmc2V0OiAycHg7XG59XG4iXX0= */

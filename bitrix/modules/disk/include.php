@@ -17,6 +17,8 @@ use Bitrix\Main\UI\Extension;
 		"bitrix\\disk\\uf\\crmcontactconnector" => "lib/uf/crmconnector.php",
 		"bitrix\\disk\\uf\\crmmessageconnector" => "lib/uf/crmconnector.php",
 		"bitrix\\disk\\uf\\crmmessagecommentconnector" => "lib/uf/crmconnector.php",
+		"bitrix\\disk\\configuration" => "lib/configuration.php",
+		"bitrix\\disk\\userconfiguration" => "lib/configuration.php",
 		"bitrix\\disk\\folder" => "lib/folder.php",
 		"bitrix\\disk\\specificfolder" => "lib/folder.php",
 	)

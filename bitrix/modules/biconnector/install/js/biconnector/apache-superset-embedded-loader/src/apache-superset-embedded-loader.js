@@ -15,6 +15,7 @@ export class ApacheSupersetEmbeddedLoader
 
 	#options: LoaderOption;
 	#switchboard: ?Switchboard;
+	#embedAlive: boolean;
 	communicationsChannel: MessageChannel;
 
 	constructor(options: LoaderOption): void
@@ -22,6 +23,7 @@ export class ApacheSupersetEmbeddedLoader
 		this.#options = options;
 		this.communicationsChannel = new MessageChannel();
 		this.#switchboard = null;
+		this.#embedAlive = false;
 	}
 
 	async embedDashboard(): Promise
@@ -37,6 +39,15 @@ export class ApacheSupersetEmbeddedLoader
 
 		this.#switchboard.emit('guestToken', { guestToken });
 		this.log('sent guest token');
+
+		if (this.#options.onTokenExpired)
+		{
+			this.#switchboard.defineMethod('refreshGuestToken', async () => {
+				const newToken = await this.#options.onTokenExpired();
+
+				return { guestToken: newToken };
+			});
+		}
 
 		const getScrollSize = () => this.#switchboard.get('getScrollSize');
 		const getDashboardPermalink = (anchor: string) => this.#switchboard.get('getDashboardPermalink', { anchor });
@@ -83,7 +94,7 @@ export class ApacheSupersetEmbeddedLoader
 
 	async mountIframe(): Promise
 	{
-		return new Promise((resolve) => {
+		return new Promise((resolve, reject) => {
 			const iframe = Dom.create('iframe');
 			const id = this.#options.id;
 			const dashboardConfig = this.#options.dashboardUiConfig ? `?uiConfig=${this.calculateConfig()}` : '';
@@ -103,6 +114,24 @@ export class ApacheSupersetEmbeddedLoader
 			const supersetDomain = this.#options.supersetDomain;
 			const debug = this.#options.debug;
 
+			const onAlive = (event) => {
+				if (
+					event.source === iframe.contentWindow
+					&& typeof event.data === 'object'
+					&& event.data.type === ApacheSupersetEmbeddedLoader.IFRAME_COMMS_MESSAGE_TYPE
+					&& event.data.handshake === 'alive'
+				)
+				{
+					this.#embedAlive = true;
+					iframe.style.visibility = '';
+					this.log('received alive signal from embed');
+				}
+			};
+
+			Event.bind(window, 'message', onAlive);
+
+			iframe.style.visibility = 'hidden';
+
 			// set up the iframe's sandbox configuration
 			iframe.sandbox.add('allow-same-origin'); // needed for postMessage to work
 			iframe.sandbox.add('allow-scripts'); // obviously the iframe needs scripts
@@ -114,6 +143,17 @@ export class ApacheSupersetEmbeddedLoader
 			// iframe.sandbox.add("allow-top-navigation");
 
 			Event.bind(iframe, 'load', () => {
+				Event.unbind(window, 'message', onAlive);
+
+				if (!this.#embedAlive)
+				{
+					this.log('embed did not send alive signal, rejecting');
+					Dom.remove(iframe);
+					reject(new Error('Embedded dashboard is not available'));
+
+					return;
+				}
+
 				const commsChannel = this.communicationsChannel;
 				const ourPort = commsChannel.port1;
 				const theirPort = commsChannel.port2;
@@ -150,6 +190,23 @@ export class ApacheSupersetEmbeddedLoader
 		});
 	}
 
+	// Reserved for the BitrixGPT integration (see #onGptButtonClick in
+	// detail-instance.js). The legacy AI prototype consumed both helpers; the
+	// next iteration will go through the MCP tool set — kept here as
+	// scaffolding so the switchboard contract is documented next to the
+	// other passthrough methods.
+	/*
+	getDataMask(): Promise
+	{
+		return this.#switchboard.get('getDataMask');
+	}
+
+	getAppliedFilters(): Promise
+	{
+		return this.#switchboard.get('getAppliedFilters');
+	}
+	*/
+
 	// Need patched superset with getScreenshot and getPdf actions - superset-frontend/src/embedded/api.tsx:61
 	getScreenshot(): Promise
 	{
@@ -161,6 +218,39 @@ export class ApacheSupersetEmbeddedLoader
 		return this.#switchboard.get('getPdf', {
 			dashboardTitle,
 		});
+	}
+
+	/**
+	 * Sets locked external filter values for shared dashboards.
+	 * These filters will be displayed as read-only with locked values.
+	 *
+	 * @param lockedFilters Format: {filterId: {value: [...], label: '...'}, ...}
+	 * @returns Promise with result
+	 */
+	setLockedExternalFilters(lockedFilters: { [string]: { value: [], label: string } }): Promise
+	{
+		if (!this.#switchboard)
+		{
+			return Promise.reject(new Error('Switchboard not initialized'));
+		}
+
+		return this.#switchboard.get('setLockedExternalFilters', { lockedFilters });
+	}
+
+	/**
+	 * Gets current values of external filters (CompanyStructure, TasksFlow, BPWorkflowTemplate).
+	 * Use this to capture filter state when sharing a dashboard.
+	 *
+	 * @returns Promise with external filter values: {filterId: {value: [...], label: '...', filterType: '...'}, ...}
+	 */
+	getExternalFilterValues(): Promise
+	{
+		if (!this.#switchboard)
+		{
+			return Promise.reject(new Error('Switchboard not initialized'));
+		}
+
+		return this.#switchboard.get('getExternalFilterValues');
 	}
 
 	log(...info: []): void

@@ -211,15 +211,6 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 			const editMessage = this.dialogLocator.get('message-ui-converter').createMessage(modelMessage);
 			editMessage.username = Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_REPLY_MANAGER_MESSAGE_EDIT_FIELD');
 
-			const isAudioMessage = message.type === MessageType.audio;
-			const isEmptyText = !modelMessage.message || modelMessage.message === '';
-			// if (isAudioMessage && isEmptyText)
-			// {
-			// 	message.message = {
-			// 		type: 'text',
-			// 		text: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_REPLY_MANAGER_MESSAGE_FIELD_VOICE'),
-			// 	};
-			// }
 			editMessage.message = [
 				{
 					type: 'text',
@@ -248,7 +239,6 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 			const messageProps = Type.isObject(message)
 				? message
 				: this.dialogLocator.get('message-ui-converter').createMessage(messageModel);
-
 
 			const forwardMessage = {
 				id: messageModel.id,

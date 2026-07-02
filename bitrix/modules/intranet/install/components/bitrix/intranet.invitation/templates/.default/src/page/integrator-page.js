@@ -16,11 +16,13 @@ export class IntegratorPage extends Page
 	#transport: Transport;
 	#inviteButton: Button;
 	#confirmPopup: Popup;
+	#analytics: Analytics;
 
 	constructor(options)
 	{
 		super();
 		this.#transport = options.transport;
+		this.#analytics = options.analytics;
 	}
 
 	render(): HTMLElement
@@ -104,13 +106,14 @@ export class IntegratorPage extends Page
 						data: {
 							integratorEmail: this.#getEmailInput().getValue(),
 						},
-						analytics: {
-							INVITATION_TYPE: 'integrator',
-						},
 					},
 					(reject) => {
 						this.#inviteButton?.setState(null);
 						this.#transport.onError(reject);
+					},
+					{
+						...this.#analytics.getDataForAction('default'),
+						INVITATION_TYPE: 'integrator',
 					},
 				).then(() => {
 					EventEmitter.emit(EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:showSuccessPopup');

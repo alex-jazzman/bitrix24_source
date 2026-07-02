@@ -8,7 +8,7 @@ return [
 	'js' => '/bitrix/js/crm/category-list/dist/category-list.bundle.js',
 	'skip_core' => false,
 	'rel' => [
-		'main.core',
 		'crm.category-model',
+		'main.core',
 	],
 ];

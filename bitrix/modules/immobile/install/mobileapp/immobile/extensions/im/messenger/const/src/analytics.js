@@ -39,6 +39,7 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		openCalendar: 'open_calendar',
 		openTasks: 'open_tasks',
 		openFiles: 'open_files',
+		clickCreate: 'click_create',
 		clickCreateTask: 'click_create_task',
 		clickCreateEvent: 'click_create_event',
 		clickAttach: 'click_attach',
@@ -78,6 +79,14 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		useTextFormatting: 'use_text_formatting',
 		showUnread: 'show_unread',
 		readAll: 'read_all',
+
+		clickReply: 'click_reply',
+		copyMessage: 'copy_message',
+		copyLink: 'copy_link',
+		select: 'select',
+		clickShare: 'click_share',
+		askCopilot: 'ask_copilot',
+		addFeedback: 'add_feedback',
 	});
 
 	const Tool = Object.freeze({
@@ -246,11 +255,13 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		callMessage: 'call_message',
 		messenger: 'messenger',
 		stickerPackPopup: 'stickerpack_popup',
+		chatList: 'chat_list',
 	});
 
 	const SubSection = Object.freeze({
 		window: 'window',
 		contextMenu: 'context_menu',
+		fromContextMenu: 'from_context_menu',
 		chatList: 'chat_list',
 		chat: 'chat',
 		taskCard: 'task_card',
@@ -259,6 +270,7 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 	const Element = Object.freeze({
 		push: 'push',
 		main: 'main',
+		more: 'more',
 		videocall: 'videocall',
 		audiocall: 'audiocall',
 		startMessage: 'start_message',

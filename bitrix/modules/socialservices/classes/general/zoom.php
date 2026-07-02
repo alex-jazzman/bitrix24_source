@@ -3,14 +3,17 @@
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Error;
-use \Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\Result;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
-use \Bitrix\Main\Web\HttpClient;
-use \Bitrix\Main\Web\Json;
-use \Bitrix\Main\Web\JWT;
+use Bitrix\Main\Web\HttpClient;
+use Bitrix\Main\Web\Json;
+use Bitrix\Main\Web\JWT;
+use Bitrix\Main\Web\Uri;
+use Bitrix\Socialservices\OAuth\StateService;
+use Bitrix\Socialservices\OAuth\OAuthErrorCode;
 use Bitrix\Socialservices\UserTable;
 use Bitrix\Socialservices\ZoomMeetingTable;
 
@@ -25,13 +28,6 @@ class CSocServZoom extends CSocServAuth
 
 	protected $entityOAuth;
 
-	public function __construct($userId = null)
-	{
-		$this->getEntityOAuth();
-
-		parent::__construct($userId);
-	}
-
 	public function GetSettings()
 	{
 		return [
@@ -40,7 +36,7 @@ class CSocServZoom extends CSocServAuth
 			[
 				'note' => Loc::getMessage(
 						'SOCSERV_ZOOM_SETT_NOTE_2',
-						['#URL#'=>\CHTTP::URN2URI('/bitrix/tools/oauth/zoom.php')]
+						['#URL#'=>(string)(new Uri('/bitrix/tools/oauth/zoom.php'))->toAbsolute()]
 				)
 			],
 		];
@@ -62,6 +58,8 @@ class CSocServZoom extends CSocServAuth
 			$this->entityOAuth->setCode($code);
 		}
 
+		$this->entityOAuth->setLogger($this->logger);
+
 		return $this->entityOAuth;
 	}
 
@@ -69,11 +67,11 @@ class CSocServZoom extends CSocServAuth
 	{
 		$url = $this->getUrl($arParams);
 
-		$phrase = ($arParams['FOR_INTRANET'])
+		$phrase = isset($arParams['FOR_INTRANET']) && $arParams['FOR_INTRANET']
 			? GetMessage('SOCSERV_ZOOM_NOTE_INTRANET')
 			: GetMessage('SOCSERV_ZOOM_NOTE');
 
-		return $arParams['FOR_INTRANET']
+		return isset($arParams['FOR_INTRANET']) && $arParams['FOR_INTRANET']
 			? array('ON_CLICK' => 'onclick="BX.util.popup(\'' . htmlspecialcharsbx(CUtil::JSEscape($url)) . '\', 680, 800)"')
 			: '<a href="javascript:void(0)" onclick="BX.util.popup(\'' . htmlspecialcharsbx(CUtil::JSEscape($url)) . '\', 680, 800)" class="bx-ss-button zoom-button"></a><span class="bx-spacer"></span><span>' . $phrase . '</span>';
 	}
@@ -84,23 +82,37 @@ class CSocServZoom extends CSocServAuth
 		return "BX.util.popup('" . CUtil::JSEscape($url) . "', 680, 800)";
 	}
 
+	/**
+	 * @param array $arParams Non-array values are normalized to an empty array for backward compatibility.
+	 */
 	public function getUrl($arParams): string
 	{
-		global $APPLICATION;
-
-		if (defined('BX24_HOST_NAME') && IsModuleInstalled('bitrix24'))
+		if (!is_array($arParams))
 		{
+			$arParams = [];
+		}
+
+		$stateFields = [
+			'site_id' => SITE_ID,
+			'check_key' => \CSocServAuthManager::getUniqueKey(),
+			'redirect_url' => $this->getRedirectUrl($arParams),
+		];
+		$state = StateService::getInstance()->createState($stateFields);
+
+		if ($this->isCloudPortal())
+		{
+			$portalRedirectUri = new Uri(
+				$this->getEntityOAuth()->GetRedirectURI()
+			);
+			$portalRedirectUri->addParams([
+				'state' => $state,
+			]);
+
+			$state = (string)$portalRedirectUri;
 			$redirect_uri = static::CONTROLLER_URL . '/redirect.php';
-			$backurl = $APPLICATION->GetCurPageParam('', ['logout', 'auth_service_error', 'auth_service_id', 'backurl']);
-			$state = $this->getEntityOAuth()->GetRedirectURI() .
-				urlencode('?state=' . JWT::urlsafeB64Encode('backurl=' . $backurl . '&check_key=' . \CSocServAuthManager::getUniqueKey()));
 		}
 		else
 		{
-			$state = 'site_id=' . SITE_ID . '&backurl=' .
-				urlencode($APPLICATION->GetCurPageParam('check_key=' . \CSocServAuthManager::getUniqueKey(), ['logout', 'auth_service_error', 'auth_service_id', 'backurl'])) .
-				(isset($arParams['BACKURL']) ? '&redirect_url=' . urlencode($arParams['BACKURL']) : '');
-
 			$redirect_uri = $this->getEntityOAuth()->GetRedirectURI();
 		}
 
@@ -153,15 +165,15 @@ class CSocServZoom extends CSocServAuth
 
 	public static function CheckUniqueKey($bUnset = true): bool
 	{
-		$arState = array();
+		$arState = [];
 
 		if (isset($_REQUEST['state']))
 		{
-			parse_str(urldecode(JWT::urlsafeB64Decode($_REQUEST['state'])), $arState);
+			$arState = StateService::getInstance()->getPayload((string)$_REQUEST['state']) ?? [];
 
-			if (isset($arState['backurl']))
+			if (isset($arState['redirect_url']))
 			{
-				InitURLParam($arState['backurl']);
+				InitURLParam($arState['redirect_url']);
 			}
 		}
 
@@ -198,13 +210,16 @@ class CSocServZoom extends CSocServAuth
 		$APPLICATION->RestartBuffer();
 
 		$authError = SOCSERV_AUTHORISATION_ERROR;
+		$this->logger->info('oauth.auth.start');
 
-		if (
-			isset($_REQUEST['code']) && $_REQUEST['code'] <> ''
-			&& self::CheckUniqueKey()
-		)
+		if (empty($_REQUEST['code']))
 		{
-			if (defined('BX24_HOST_NAME') && IsModuleInstalled('bitrix24'))
+			$this->logger->error('oauth.request.invalid_code');
+			$this->sendOauthError(OAuthErrorCode::MissingCode);
+		}
+		elseif (self::CheckUniqueKey())
+		{
+			if ($this->isCloudPortal())
 			{
 				$redirect_uri = static::CONTROLLER_URL . '/redirect.php';
 			}
@@ -230,67 +245,42 @@ class CSocServZoom extends CSocServAuth
 					$zc = new \Bitrix\SocialServices\Integration\Zoom\ZoomController();
 					$zc->registerZoomUser($userData);
 				}
-			}
-		}
-
-		$bSuccess = $authError === true;
-
-		$url = ($APPLICATION->GetCurDir() == "/login/") ? "" : $APPLICATION->GetCurDir();
-		$aRemove = array("logout", "auth_service_error", "auth_service_id", "code", "error_reason", "error", "error_description", "check_key", "current_fieldset");
-
-		if (isset($_REQUEST["state"]))
-		{
-			$arState = array();
-
-			$decodedState = urldecode(JWT::urlsafeB64Decode($_REQUEST["state"]));
-			parse_str($decodedState, $arState);
-
-			if (isset($arState['backurl']) || isset($arState['redirect_url']))
-			{
-				$url = !empty($arState['redirect_url']) ? $arState['redirect_url'] : $arState['backurl'];
-				if (substr($url, 0, 1) !== "#")
+				else
 				{
-					$parseUrl = parse_url($url);
-
-					$urlPath = $parseUrl["path"];
-					$arUrlQuery = explode('&', $parseUrl["query"]);
-
-					foreach ($arUrlQuery as $key => $value)
-					{
-						foreach ($aRemove as $param)
-						{
-							if (strpos($value, $param . "=") === 0)
-							{
-								unset($arUrlQuery[$key]);
-								break;
-							}
-						}
-					}
-
-					$url = (!empty($arUrlQuery)) ? $urlPath . '?' . implode("&", $arUrlQuery) : $urlPath;
+					$this->logger->error('oauth.user.fetch_failed', [
+						'reason' => 'missing_user_email',
+					]);
 				}
 			}
+			else
+			{
+				$this->logger->error('oauth.token.exchange_failed', [
+					'reason' => 'get_access_token_failed',
+				]);
+			}
+		}
+		else
+		{
+			$this->logger->error('oauth.request.invalid_check_key', [
+				'reason' => 'check_key_validation_failed',
+			]);
+			$this->sendOauthError(OAuthErrorCode::InvalidCheckKey);
 		}
 
-		if ($authError === SOCSERV_REGISTRATION_DENY)
-		{
-			$url = (preg_match("/\?/", $url)) ? $url . '&' : $url . '?';
-			$url .= 'auth_service_id=' . self::ID . '&auth_service_error=' . $authError;
-		}
-		elseif ($bSuccess !== true)
-		{
-			$url = (isset($urlPath)) ? $urlPath . '?auth_service_id=' . self::ID . '&auth_service_error=' . $authError : $GLOBALS['APPLICATION']->GetCurPageParam(('auth_service_id=' . self::ID . '&auth_service_error=' . $authError), $aRemove);
-		}
+		$this->logger->info('oauth.auth.finish', [
+			'success' => ($authError === true),
+			'auth_result' => $authError,
+		]);
 
-		if (CModule::IncludeModule("socialnetwork") && strpos($url, "current_fieldset=") === false)
-		{
-			$url .= ((strpos($url, "?") === false) ? '?' : '&') . "current_fieldset=SOCSERV";
-		}
+		$url = $this->getRedirectUriAfterAuthorize($authError, self::ID);
 		?>
 		<script>
 			if (window.opener)
 				window.opener.location.reload();
-			window.close();
+			else
+				window.location = '<?=CUtil::JSEscape($url)?>';
+			if (window.opener)
+				window.close();
 		</script>
 		<?php
 		CMain::FinalActions();
@@ -523,7 +513,7 @@ class CSocServZoom extends CSocServAuth
 
 	private function attachPasswordToUrl(string $conferenceUrl, string $password): string
 	{
-		$url = new \Bitrix\Main\Web\Uri($conferenceUrl);
+		$url = new Uri($conferenceUrl);
 		$queryParams = $url->getQuery();
 		$parsedParams = [];
 		parse_str($queryParams, $parsedParams);
@@ -593,7 +583,7 @@ class CZoomInterface extends CSocServOAuthTransport
 
 	public function GetRedirectURI(): string
 	{
-		return \CHTTP::URN2URI('/bitrix/tools/oauth/zoom.php');
+		return (string)(new Uri('/bitrix/tools/oauth/zoom.php'))->toAbsolute();
 	}
 
 	public function GetAuthUrl($redirect_uri, $state = ''): string
@@ -637,6 +627,10 @@ class CZoomInterface extends CSocServOAuthTransport
 
 		if ($this->code === false)
 		{
+			$this->logger->error('oauth.token.exchange_failed', [
+				'reason' => 'empty_code',
+			]);
+
 			return false;
 		}
 
@@ -675,6 +669,10 @@ class CZoomInterface extends CSocServOAuthTransport
 			];
 			return true;
 		}
+
+		$this->logger->error('oauth.token.exchange_failed', [
+			'reason' => 'token_not_found_in_response',
+		]);
 
 		return false;
 	}
@@ -748,6 +746,10 @@ class CZoomInterface extends CSocServOAuthTransport
 	{
 		if ($this->access_token === false)
 		{
+			$this->logger->error('oauth.user.fetch_failed', [
+				'reason' => 'empty_access_token',
+			]);
+
 			return false;
 		}
 
@@ -756,10 +758,22 @@ class CZoomInterface extends CSocServOAuthTransport
 
 		if (!$requestResult->isSuccess())
 		{
+			$this->logger->error('oauth.user.fetch_failed', [
+				'reason' => 'api_request_failed',
+			]);
+
 			return null;
 		}
 
-		return $requestResult->getData();
+		$data = $requestResult->getData();
+		if (!is_array($data) || !isset($data['email']))
+		{
+			$this->logger->error('oauth.user.fetch_failed', [
+				'reason' => 'missing_user_email',
+			]);
+		}
+
+		return $data;
 	}
 
 	public function requestConference($params): Result

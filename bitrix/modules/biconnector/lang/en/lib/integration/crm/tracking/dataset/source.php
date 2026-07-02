@@ -3,3 +3,4 @@ $MESS["TRACKING_SOURCE_FIELD_ID"] = "Source ID";
 $MESS["TRACKING_SOURCE_FIELD_NAME"] = "Source name";
 $MESS["TRACKING_SOURCE_FIELD_UTM_SOURCE_LIST"] = "utm_source list";
 $MESS["TRACKING_SOURCE_TABLE"] = "Ad sources";
+$MESS["TRACKING_SOURCE_TABLE_DESCRIPTION_FULL"] = "This includes details about all connected ad sources, such as unique source IDs, names, and UTM parameters.";

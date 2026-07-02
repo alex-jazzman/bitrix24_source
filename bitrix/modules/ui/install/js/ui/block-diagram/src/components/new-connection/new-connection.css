@@ -2,10 +2,14 @@
 	position: absolute;
 	top: 0;
 	left: 0;
-	z-index: 0;
+	z-index: -3;
 	width: 100%;
 	height: 100%;
 	overflow: visible;
+}
+
+.ui-block-diagram-new-connection.--up {
+	z-index: 6;
 }
 
 .ui-block-diagram-new-connection__path {
@@ -14,6 +18,21 @@
 	fill: var(--ui-color-background-transparent, transparent);
 }
 
-.ui-block-diagram-new-connection__path.--error {
-	stroke: var(--ui-color-palette-red-70);
+.ui-block-diagram-new-connection__tmp-path {
+	stroke: var(--pallete-blue-blue-57, #4A9DFF);
+	stroke-width: 1;
+	stroke-dasharray: 1000;
+  	stroke-dashoffset: 1000;
 }
+
+.ui-block-diagram-new-connection__cursor {
+	fill: var(--pallete-blue-blue-57, #4A9DFF);
+}
+
+.ui-block-diagram-new-connection__port-stub-container {
+	position: relative;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+ 

@@ -15,7 +15,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { DialogHelper, UserHelper } = require('im/messenger/lib/helper');
 	const { MessengerParams } = require('im/messenger/lib/params');
-	const { DialogType, UserType, BotCode } = require('im/messenger/const');
+	const { DialogType, UserType, CopilotRoleType, } = require('im/messenger/const');
 	const { defaultGroupChatAvatar } = require('im/messenger/assets/common');
 	const { CopilotAsset } = require('im/messenger/assets/copilot');
 	const { AvatarShape } = require('ui-system/blocks/avatar');
@@ -144,6 +144,26 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 			};
 		}
 
+		static createOptimisticCopilotAvatar(title)
+		{
+			const defaultFields = ChatAvatar.#defaultAvatarFields;
+			const avatarPng = Feature.isBitrixGptV2Available ? 'avatar_copilot_v2.png' : 'avatar_copilot_assistant.png';
+			defaultFields.uri = `${ChatAvatar.getImagePath()}${avatarPng}`;
+			defaultFields.title = title;
+
+			defaultFields.radius = Theme.corner.S.toNumber();
+			defaultFields.placeholder.letters.fontSize = 12;
+
+			if (Feature.isChatAvatarAccentTypePurpleAvailable && !Feature.isBitrixGptV2Available)
+			{
+				defaultFields.accentType = AvatarDetailFields.accentType.purple;
+				defaultFields.hideOutline = false;
+				defaultFields.backBorderWidth = 2;
+			}
+
+			return defaultFields;
+		}
+
 		/**
 		 * @private
 		 * @param uri
@@ -214,7 +234,8 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 
 			if (this.type === DialogType.copilot)
 			{
-				this.avatar = this.getCopilotMainRoleAvatar(dialogModel.dialogId) || `${ChatAvatar.getImagePath()}avatar_copilot_assistant.png`;
+				const avatarPng = Feature.isBitrixGptV2Available ? 'avatar_copilot_v2.png' : 'avatar_copilot_assistant.png';
+				this.avatar = this.getCopilotMainRoleAvatar(dialogModel.dialogId) || `${ChatAvatar.getImagePath()}${avatarPng}`;
 			}
 		}
 
@@ -368,6 +389,18 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		/**
 		 * @return {AvatarDetail}
 		 */
+		getNavigationHeaderAvatarProps()
+		{
+			const avatarProps = this.#getAvatarProps();
+			avatarProps.radius = Theme.corner.S.toNumber();
+			avatarProps.placeholder.letters.fontSize = 12;
+
+			return avatarProps;
+		}
+
+		/**
+		 * @return {AvatarDetail}
+		 */
 		getDialogHeaderAvatarProps()
 		{
 			if (this.isCurrentUser)
@@ -458,7 +491,10 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 
 			if (useNotes && this.isCurrentUser)
 			{
-				return this.getAvatarNotesProps();
+				return {
+					...this.getAvatarNotesProps(26),
+					style: this.#getSizeStyle(40),
+				};
 			}
 
 			return this.#getAvatarProps({
@@ -744,6 +780,13 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		#getCopilotFields()
 		{
 			if (!Feature.isChatAvatarAccentTypePurpleAvailable)
+			{
+				return {};
+			}
+
+			const copilotMainRole = this.store.getters['dialoguesModel/copilotModel/getMainRoleByDialogId'](this.dialogId);
+			const isUniversalRole = copilotMainRole?.code === CopilotRoleType.copilotUniversalRole;
+			if (Feature.isBitrixGptV2Available && isUniversalRole)
 			{
 				return {};
 			}

@@ -9,11 +9,11 @@ return [
 	'js' => 'dist/conference-creation.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
+		'call.lib.analytics',
 		'im.public',
 		'im.v2.component.elements.button',
 		'im.v2.component.message.base',
 		'im.v2.lib.notifier',
-		'call.lib.analytics',
 	],
 	'skip_core' => true,
 ];

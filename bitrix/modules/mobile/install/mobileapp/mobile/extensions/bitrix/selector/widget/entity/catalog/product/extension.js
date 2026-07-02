@@ -1,6 +1,9 @@
-(() => {
-	const require = (ext) => jn.require(ext);
+/**
+ * @module selector/widget/entity/catalog/product
+ */
+jn.define('selector/widget/entity/catalog/product', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const { BaseSelectorEntity } = require('selector/widget/entity');
 
 	/**
 	 * @class CatalogProductSelector
@@ -107,6 +110,15 @@
 			];
 		}
 	}
+
+	module.exports = {
+		CatalogProductSelector,
+	};
+});
+
+(() => {
+	const require = (ext) => jn.require(ext);
+	const { CatalogProductSelector } = require('selector/widget/entity/catalog/product');
 
 	this.CatalogProductSelector = CatalogProductSelector;
 })();

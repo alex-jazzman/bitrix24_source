@@ -7,8 +7,8 @@ jn.define('mail/statemanager/redux/slices/folders', (require, exports, module) =
 	const { createSlice } = require('statemanager/redux/toolkit');
 	const { FolderModel } = require('mail/statemanager/redux/slices/folders/model/folder');
 	const { sliceName, foldersListAdapter } = require('mail/statemanager/redux/slices/folders/meta');
-	const { changeReadStatus, moveToFolder } = require('mail/statemanager/redux/slices/messages/thunk');
-	const { changeReadStatusFulfilled, moveToFolderFulfilled } = require('mail/statemanager/redux/slices/folders/extra-reducer');
+	const { adjustUnreadCounters } = require('mail/statemanager/redux/slices/messages/thunk');
+	const { adjustFolderUnreadCounters } = require('mail/statemanager/redux/slices/folders/extra-reducer');
 
 	const preparePayload = (folders) => {
 		return FolderModel.prepareReduxFoldersFromServer(folders);
@@ -17,6 +17,7 @@ jn.define('mail/statemanager/redux/slices/folders', (require, exports, module) =
 	const defaultState = {
 		...foldersListAdapter.getInitialState(),
 		currentFolderPath: null,
+		currentVirtualFolderKey: null,
 	};
 	const initialState = StateCache.getReducerState(sliceName, defaultState);
 
@@ -45,26 +46,20 @@ jn.define('mail/statemanager/redux/slices/folders', (require, exports, module) =
 			setCurrentFolder: (state, { payload }) => {
 				const { folderPath } = payload;
 				state.currentFolderPath = folderPath;
+				state.currentVirtualFolderKey = null;
 			},
-			updateFolderCounters: (state, { payload }) => {
-				const { folderId, unreadCount, messageCount } = payload;
-				const folder = state.entities[folderId];
-
-				if (folder)
-				{
-					foldersListAdapter.upsertOne(state, {
-						...folder,
-						unreadCount: Number(unreadCount || 0),
-						messageCount: Number(messageCount || 0),
-					});
-				}
+			setCurrentVirtualFolderKey: (state, { payload }) => {
+				const { key } = payload;
+				state.currentVirtualFolderKey = key;
 			},
 			clearFolders: foldersListAdapter.removeAll,
 		},
 		extraReducers: (builder) => {
 			builder
-				.addCase(changeReadStatus.fulfilled, changeReadStatusFulfilled)
-				.addCase(moveToFolder.fulfilled, moveToFolderFulfilled)
+				.addCase(adjustUnreadCounters, (state, action) => {
+					const { folderCounterDeltas } = action.payload;
+					adjustFolderUnreadCounters(state, folderCounterDeltas);
+				})
 			;
 		},
 	});
@@ -74,7 +69,7 @@ jn.define('mail/statemanager/redux/slices/folders', (require, exports, module) =
 		foldersAdded,
 		folderUpdated,
 		setCurrentFolder,
-		updateFolderCounters,
+		setCurrentVirtualFolderKey,
 		clearFolders,
 	} = foldersSlice.actions;
 
@@ -85,7 +80,7 @@ jn.define('mail/statemanager/redux/slices/folders', (require, exports, module) =
 		foldersAdded,
 		folderUpdated,
 		setCurrentFolder,
-		updateFolderCounters,
+		setCurrentVirtualFolderKey,
 		clearFolders,
 	};
 });

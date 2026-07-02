@@ -230,7 +230,7 @@
 	min-width: 40px;
 	font-size: var(--ui-font-size-md, 14px);
 	font-weight: var(--ui-font-weight-bold, 700);
-	color: var(--ui-color-base-40, #bdc1c6);
+	color: var(--ui-color-primary);
 	margin-left: var(--ui-space-inline-sm, 12px);
 	text-align: left;
 	cursor: pointer;
@@ -240,7 +240,7 @@
 
 .ui-vue-audioplayer_playback-speed-menu-container:hover {
 	transition-duration: unset;
-	color: var(--ui-color-base-60, #959ca4);
+	color: var(--ui-color-palette-blue-70);
 }
 
 .crm-audio-player-container .playback-speed-button:before {
@@ -268,4 +268,10 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 	max-width: 100%;
+}
+
+.crm-audio-player-container .crm-audio-player-additional-buttons-container {
+	height: auto;
+	margin-left: 0;
+	padding-left: 0;
 }

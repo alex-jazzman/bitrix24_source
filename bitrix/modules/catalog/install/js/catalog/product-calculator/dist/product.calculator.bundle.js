@@ -652,7 +652,7 @@ this.BX = this.BX || {};
 	function _getSetting2(name, defaultValue) {
 	  return babelHelpers.classPrivateFieldGet(this, _settings).hasOwnProperty(name) ? babelHelpers.classPrivateFieldGet(this, _settings)[name] : defaultValue;
 	}
-	babelHelpers.defineProperty(ProductCalculator, "DEFAULT_PRECISION", 2);
+	babelHelpers.defineProperty(ProductCalculator, "DEFAULT_PRECISION", 8);
 
 	var TaxForSumStrategy = /*#__PURE__*/function (_TaxForPriceStrategy) {
 	  babelHelpers.inherits(TaxForSumStrategy, _TaxForPriceStrategy);

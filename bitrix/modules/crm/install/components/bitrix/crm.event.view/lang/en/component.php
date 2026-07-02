@@ -17,6 +17,7 @@ $MESS["CRM_ENTITY_TYPE_QUOTE_MSGVER_1"] = "Estimate";
 $MESS["CRM_EVENT_DESC_AFTER"] = "After";
 $MESS["CRM_EVENT_DESC_BEFORE"] = "Before";
 $MESS["CRM_EVENT_DESC_MORE"] = "read more";
+$MESS["CRM_EVENT_MAIN_TITLE"] = "History";
 $MESS["CRM_EVENT_TYPE_CHANGE"] = "Changes";
 $MESS["CRM_EVENT_TYPE_RELATIONS"] = "Linked entities";
 $MESS["CRM_EVENT_TYPE_SNS"] = "E-mail Message";

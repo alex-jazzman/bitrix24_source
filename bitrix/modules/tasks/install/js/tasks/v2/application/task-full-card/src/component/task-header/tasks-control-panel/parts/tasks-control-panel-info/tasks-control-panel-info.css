@@ -1,0 +1,17 @@
+/* normalize */
+.tasks-control-panel-info { box-sizing: border-box; }
+/* normalize end */
+
+.tasks-control-panel-info {
+	position: relative;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: var(--whitespace);
+	padding: 0 var(--whitespace) var(--whitespace) var(--whitespace);
+	width: 100%;
+}
+.tasks-control-panel-info:first-of-type,
+.tasks-control-panel-section + .tasks-control-panel-info {
+	padding-top: var(--whitespace);
+}

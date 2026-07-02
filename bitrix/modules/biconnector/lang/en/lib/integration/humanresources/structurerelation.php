@@ -15,3 +15,4 @@ $MESS["HR_BIC_STRUCTURE_RELATION_FIELD_PARENT_NODE_FULL"] = "The ID and name of 
 $MESS["HR_BIC_STRUCTURE_RELATION_FIELD_PARENT_NODE_NAME"] = "Parent department name";
 $MESS["HR_BIC_STRUCTURE_RELATION_FIELD_PARENT_NODE_NAME_FULL"] = "Parent department name.";
 $MESS["HR_BIC_STRUCTURE_RELATION_TABLE"] = "Department structure";
+$MESS["HR_BIC_STRUCTURE_RELATION_TABLE_DESCRIPTION_FULL"] = "Department hierarchy in a company. The set includes data on relationships between company departments, such as identifiers of parent and subordinate divisions, their names, and nesting levels.";

@@ -10,5 +10,10 @@ export declare enum SDKEvents {
     errorBoardRenamed = "errorBoardRenamed",
     userIsKicked = "userIsKicked",
     userConfirmKickFromBoard = "userConfirmKickFromBoard",
-    shareElementWithSocials = "shareElementWithSocials"
+    shareElementWithSocials = "shareElementWithSocials",
+    shareElementWithBitrix = "shareElementWithBitrix",
+    aiTextRequest = "aiTextRequest",
+    aiTextResponse = "aiTextResponse",
+    aiTextError = "aiTextError",
+    aiTextCancel = "aiTextCancel"
 }

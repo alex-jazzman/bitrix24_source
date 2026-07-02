@@ -1,0 +1,23 @@
+.booking-preview-popup {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--ui-space-stack-2xs);
+	padding: 10px;
+	text-align: center;
+	white-space: nowrap;
+}
+
+.booking-preview-popup__client {
+	color: var(--ui-color-base-white-fixed);
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-regular);
+	text-align: center;
+}
+
+.booking-preview-popup__date {
+	color: var(--ui-color-base-white-fixed);
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-regular);
+	text-align: center;
+}

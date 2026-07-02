@@ -1,11 +1,13 @@
 import { Loc } from 'main.core';
+
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
 import { Limit } from 'tasks.v2.const';
 
-import { TaskLine } from './task-line';
-import { TaskLineSkeleton } from './task-line-skeleton';
+// eslint-disable-next-line import/namespace
+import { TaskLineGroup } from './components/task-line-group/task-line-group';
+import { TaskLineSkeleton } from './components/task-line/task-line-skeleton';
 import './task-list.css';
 
 const limit = Limit.RelationList;
@@ -14,8 +16,16 @@ const limit = Limit.RelationList;
 export const TaskList = {
 	components: {
 		BIcon,
-		TaskLine,
+		TaskLineGroup,
 		TaskLineSkeleton,
+	},
+	provide(): Object
+	{
+		return {
+			shouldShowSubTasksOption: this.shouldShowSubTasksOption,
+			isTemplateEntities: this.isTemplateEntities,
+			fields: this.fields,
+		};
 	},
 	props: {
 		ids: {
@@ -30,9 +40,21 @@ export const TaskList = {
 			type: Boolean,
 			default: true,
 		},
+		shouldShowSubTasksOption: {
+			type: Boolean,
+			default: true,
+		},
 		fields: {
 			type: Set,
 			default: new Set(['responsible', 'deadline']),
+		},
+		idsLoaded: {
+			type: Boolean,
+			default: false,
+		},
+		isTemplateEntities: {
+			type: Boolean,
+			default: false,
 		},
 	},
 	emits: ['openMore', 'removeTask'],
@@ -56,34 +78,48 @@ export const TaskList = {
 				'#COUNT#': count,
 			});
 		},
+		shouldShow(): boolean
+		{
+			if (!this.idsLoaded)
+			{
+				return true;
+			}
+
+			return this.ids.length > 0 || this.loadingIds.length > 0;
+		},
 	},
 	template: `
-		<div>
-			<div class="tasks-task-list print-no-box-shadow" :style="{ '--fields-count': fields.size }">
-				<template v-if="ids.length === 0">
-					<div class="tasks-task-line-separator print-background-white"/>
-					<TaskLineSkeleton :fields/>
-				</template>
-				<template v-for="taskId in limitedTasks" :key="taskId">
-					<div class="tasks-task-line-separator print-background-white"/>
-					<TaskLineSkeleton v-if="loadingIds.includes(taskId)" :fields/>
-					<TaskLine v-else :taskId :fields @remove="$emit('removeTask', taskId)"/>
-				</template>
-			</div>
-			<div
-				v-if="ids.length > limit"
-				class="tasks-task-list-more print-background-white"
-				:class="{ '--readonly': !canOpenMore }"
-				@click="$emit('openMore')"
-			>
-				<div class="tasks-task-list-more-text print-font-color-base-1">{{ moreText }}</div>
-				<BIcon
-					v-if="canOpenMore"
-					class="tasks-task-list-icon print-ignore"
-					:name="Outline.CHEVRON_RIGHT_L"
-					hoverable
+		<div
+			v-if="shouldShow"
+			class="tasks-task-list print-no-box-shadow"
+			:style="{ '--fields-count': fields.size }"
+		>
+			<template v-if="ids.length === 0 && !idsLoaded">
+				<div class="tasks-task-line-separator print-background-white"/>
+				<TaskLineSkeleton/>
+			</template>
+			<template v-for="taskId in limitedTasks" :key="taskId">
+				<div class="tasks-task-line-separator print-background-white"/>
+				<TaskLineGroup
+					:taskId
+					:isLoading="loadingIds.includes(taskId)"
+					@remove="$emit('removeTask', $event)"
 				/>
-			</div>
+			</template>
+		</div>
+		<div
+			v-if="ids.length > limit"
+			class="tasks-task-list-more print-background-white"
+			:class="{ '--readonly': !canOpenMore }"
+			@click="$emit('openMore')"
+		>
+			<div class="tasks-task-list-more-text print-font-color-base-1">{{ moreText }}</div>
+			<BIcon
+				v-if="canOpenMore"
+				class="tasks-task-list-icon print-ignore"
+				:name="Outline.CHEVRON_RIGHT_L"
+				hoverable
+			/>
 		</div>
 	`,
 };

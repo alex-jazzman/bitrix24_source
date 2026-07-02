@@ -1,16 +1,16 @@
-import { EventEmitter, BaseEvent } from 'main.core.events';
+import { type JsonObject } from 'main.core';
+import { EventEmitter, type BaseEvent } from 'main.core.events';
 
 import { EventType } from 'im.v2.const';
+import { type ImModelLayout } from 'im.v2.model';
 
 import { ChatOpener } from './components/openers/chat/chat';
 import { CommentsOpener } from './components/openers/comments/comments';
 
 import './css/chat-content.css';
 
-import type { JsonObject } from 'main.core';
-import type { ImModelLayout } from 'im.v2.model';
-
 export { AiAssistantBotContent } from './components/content/ai-assistant-bot/ai-assistant-bot';
+export { CopilotContent } from './components/content/copilot/copilot';
 
 // @vue/component
 export const ChatContent = {

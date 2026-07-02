@@ -19,6 +19,7 @@ jn.define('im/messenger/db/repository', (require, exports, module) => {
 	const { CopilotRepository } = require('im/messenger/db/repository/copilot');
 	const { SidebarFileRepository } = require('im/messenger/db/repository/sidebar/file');
 	const { DraftRepository } = require('im/messenger/db/repository/src/draft');
+	const { FolderRepository } = require('im/messenger/db/repository/folder');
 	const { VoteRepository } = require('im/messenger/db/repository/vote');
 	const { ReadMessageQueueRepository } = require('im/messenger/db/repository/read-message-queue');
 	const { TranscriptRepository } = require('im/messenger/db/repository/transcript');
@@ -42,6 +43,7 @@ jn.define('im/messenger/db/repository', (require, exports, module) => {
 		CopilotRepository,
 		SidebarFileRepository,
 		DraftRepository,
+		FolderRepository,
 		VoteRepository,
 		ReadMessageQueueRepository,
 		TranscriptRepository,

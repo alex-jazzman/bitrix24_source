@@ -2,25 +2,38 @@
  * @module ui-system/blocks/chips/chip-inner-tab
  */
 jn.define('ui-system/blocks/chips/chip-inner-tab', (require, exports, module) => {
-	const { Loc } = require('loc');
 	const { Type } = require('type');
 	const { Color, Component, Indent } = require('tokens');
 	const { mergeImmutable } = require('utils/object');
-	const { Text4, Text6 } = require('ui-system/typography/text');
-	const { BadgeCounter, BadgeCounterDesign } = require('ui-system/blocks/badges/counter');
+	const { Text4 } = require('ui-system/typography/text');
+	const { BadgeCounter, BadgeCounterDesign, BadgeCounterSize } = require('ui-system/blocks/badges/counter');
 	const { ReactionIconView, ReactionIcon } = require('ui-system/blocks/reaction/icon');
 	const { IconView } = require('ui-system/blocks/icon');
+	const { ChipInnerTabDesign } = require('ui-system/blocks/chips/chip-inner-tab/src/design-enum');
+	const { ChipInnerTabMode } = require('ui-system/blocks/chips/chip-inner-tab/src/mode-enum');
+	const { ChipInnerTabBadgeType } = require('ui-system/blocks/chips/chip-inner-tab/src/badge-type-enum');
+
+	const BADGE_OVERFLOW = Math.ceil(BadgeCounterSize.M.getHeight() / 2);
 
 	/**
 	 * @function ChipInnerTab
-	 * @params {object} props
-	 * @params {string} [props.text]
-	 * @params {number | string} [props.counterValue]
-	 * @params {BadgeCounterDesign} [props.counterDesign]
-	 * @params {boolean} [props.selected=false]
-	 * @params {boolean} [props.badgeNew=false]
-	 * @params {function} [props.forwardRef]
-	 * @return ChipInnerTab
+	 * @param {object} props
+	 * @param {string} props.testId
+	 * @param {string} props.text
+	 * @param {ChipInnerTabDesign} [props.design=ChipInnerTabDesign.OUTLINE]
+	 * @param {ChipInnerTabMode} [props.mode=ChipInnerTabMode.ACTIVE]
+	 * @param {ChipInnerTabBadgeType} [props.badgeType]
+	 * @param {boolean} [props.selected=false]
+	 * @param {number|string} [props.counterValue]
+	 * @param {BadgeCounterDesign} [props.counterDesign]
+	 * @param {Icon} [props.icon]
+	 * @param {number} [props.iconSize]
+	 * @param {Color} [props.accentBorderColor]
+	 * @param {Color} [props.accentTextColor]
+	 * @param {function} [props.onClick]
+	 * @param {function} [props.forwardRef]
+	 * @param {object} [props.style]
+	 * @param {object} [props.textStyles]
 	 */
 	class ChipInnerTab extends LayoutComponent
 	{
@@ -34,34 +47,63 @@ jn.define('ui-system/blocks/chips/chip-inner-tab', (require, exports, module) =>
 		render()
 		{
 			const {
-				forwardRef,
 				testId,
 				onClick,
-				icon,
-				iconSize,
-				accentBorderColor,
-				accentTextColor,
-				style = {},
+				forwardRef,
+				style,
 			} = this.props;
 
-			const viewProps = mergeImmutable({
-				testId,
-				icon,
-				iconSize,
-				accentBorderColor,
-				accentTextColor,
-				onClick,
-				ref: forwardRef,
-				style: {
-					flexShrink: 1,
-					alignItems: 'flex-start',
+			const viewProps = mergeImmutable(
+				{
+					testId,
+					onClick,
+					ref: forwardRef,
+					style: {
+						flexShrink: 1,
+						height: Component.itbChipHeight.toNumber() + BADGE_OVERFLOW,
+						justifyContent: 'flex-end',
+					},
 				},
-			}, { style });
+				{ style },
+			);
 
 			return View(
 				viewProps,
+				this.renderBadgeOverlay(),
 				this.renderContent(),
 			);
+		}
+
+		renderBadgeOverlay()
+		{
+			const { badgeType, counterValue } = this.props;
+
+			if (ChipInnerTabBadgeType.has(badgeType))
+			{
+				return this.renderBadge(badgeType.getText(), badgeType.getDesign());
+			}
+
+			if (this.shouldRenderBadgeCounter())
+			{
+				return this.renderBadge(counterValue, this.getBadgeCounterDesign());
+			}
+
+			return null;
+		}
+
+		renderBadge(value, design)
+		{
+			return BadgeCounter({
+				style: {
+					alignSelf: 'flex-end',
+					marginBottom: -BADGE_OVERFLOW,
+					zIndex: 1,
+				},
+				value,
+				design,
+				showRawValue: Type.isString(value),
+				testId: this.props.testId,
+			});
 		}
 
 		renderIcon()
@@ -76,6 +118,7 @@ jn.define('ui-system/blocks/chips/chip-inner-tab', (require, exports, module) =>
 			const iconStyle = {
 				marginRight: text ? Indent.XS.toNumber() : 0,
 			};
+			const testId = `${this.props.testId}-icon`;
 
 			if (icon instanceof ReactionIcon)
 			{
@@ -83,6 +126,7 @@ jn.define('ui-system/blocks/chips/chip-inner-tab', (require, exports, module) =>
 
 				return ReactionIconView({
 					icon,
+					testId,
 					size: iconSize,
 					style: iconStyle,
 					type,
@@ -91,6 +135,7 @@ jn.define('ui-system/blocks/chips/chip-inner-tab', (require, exports, module) =>
 
 			return IconView({
 				icon,
+				testId,
 				size: iconSize,
 				style: iconStyle,
 			});
@@ -102,7 +147,6 @@ jn.define('ui-system/blocks/chips/chip-inner-tab', (require, exports, module) =>
 				[
 					this.renderIcon(),
 					this.renderText(),
-					...this.renderBadge(),
 					this.renderAdditionalContent(),
 				],
 			);
@@ -123,57 +167,13 @@ jn.define('ui-system/blocks/chips/chip-inner-tab', (require, exports, module) =>
 			);
 		}
 
-		/**
-		 * @return {View[]}
-		 */
-		renderBadge()
-		{
-			const badges = [];
-
-			if (!this.shouldRenderBadge())
-			{
-				return badges;
-			}
-
-			const { testId, counterValue, badgeNew } = this.props;
-
-			if (this.shouldRenderBadgeCounter())
-			{
-				badges.push(BadgeCounter({
-					testId,
-					value: counterValue,
-					design: this.getBadgeCounterDesign(),
-					style: {
-						marginLeft: Indent.XS.toNumber(),
-					},
-				}));
-			}
-
-			if (badgeNew)
-			{
-				badges.push(this.renderBadgeNew());
-			}
-
-			return badges;
-		}
-
-		renderBadgeNew()
-		{
-			return Text6({
-				color: Color.accentMainSuccess,
-				text: Loc.getMessage('MOBILE_UI_SYSTEM_BLOCKS_CHIPS_CHIP_INNER_TAB_BADGE_NEW'),
-				style: {
-					marginLeft: Indent.XS.toNumber(),
-				},
-			});
-		}
-
 		renderText()
 		{
-			const { text, textStyles = {} } = this.props;
+			const { text, textStyles, testId } = this.props;
 
 			return Text4({
 				text,
+				testId: `${testId}-field`,
 				color: this.getTextColor(),
 				ellipsize: 'end',
 				numberOfLines: 1,
@@ -183,14 +183,20 @@ jn.define('ui-system/blocks/chips/chip-inner-tab', (require, exports, module) =>
 
 		renderAdditionalContent()
 		{
-			return null;
-		}
+			const mode = ChipInnerTabMode.resolve(this.props.mode, ChipInnerTabMode.ACTIVE);
+			const icon = mode.getIcon();
 
-		shouldRenderBadge()
-		{
-			const { badgeNew } = this.props;
+			if (!icon)
+			{
+				return null;
+			}
 
-			return this.shouldRenderBadgeCounter() || badgeNew;
+			return IconView({
+				icon,
+				size: 22,
+				color: Color.base0,
+				testId: `${this.props.testId}-icon-${mode.getName()}`,
+			});
 		}
 
 		shouldRenderBadgeCounter()
@@ -209,68 +215,73 @@ jn.define('ui-system/blocks/chips/chip-inner-tab', (require, exports, module) =>
 
 		getContentBaseStyle()
 		{
+			const design = ChipInnerTabDesign.resolve(this.props.design, ChipInnerTabDesign.OUTLINE);
+			const mode = ChipInnerTabMode.resolve(this.props.mode, ChipInnerTabMode.ACTIVE);
+
 			return {
 				flexDirection: 'row',
 				alignItems: 'center',
 				justifyContent: 'center',
 				height: Component.itbChipHeight.toNumber(),
 				borderRadius: Component.itbChipCorner.toNumber(),
-				borderWidth: Component.itbChipStroke.toNumber(),
+				borderWidth: design.getBorderWidth(),
 				paddingLeft: Component.itbChipPaddingLr.toNumber(),
-				paddingRight: Component.itbChipPaddingLr.toNumber(),
+				paddingRight: mode.getPaddingRight(),
 			};
 		}
 
 		getBadgeCounterDesign()
 		{
-			const { counterDesign } = this.props;
-
-			return this.selected ? counterDesign : BadgeCounterDesign.GREY;
+			return this.selected ? this.props.counterDesign : BadgeCounterDesign.GREY;
 		}
 
 		getBorderColor()
 		{
-			const { accentBorderColor } = this.props;
-
-			if (accentBorderColor)
-			{
-				return this.selected ? accentBorderColor : Color.bgSeparatorPrimary;
-			}
-
-			return this.selected ? Color.base4 : Color.bgSeparatorPrimary;
+			return this.selected ? this.props.accentBorderColor : Color.bgSeparatorPrimary;
 		}
 
 		getTextColor()
 		{
-			const { accentTextColor } = this.props;
-
-			if (accentTextColor)
-			{
-				return this.selected ? accentTextColor : Color.base3;
-			}
-
-			return this.selected ? Color.base1 : Color.base3;
+			return this.selected ? this.props.accentTextColor : Color.base3;
 		}
 	}
 
 	ChipInnerTab.defaultProps = {
+		design: ChipInnerTabDesign.OUTLINE,
+		mode: ChipInnerTabMode.ACTIVE,
 		selected: false,
-		badgeNew: false,
+		counterDesign: BadgeCounterDesign.GREY,
+		accentBorderColor: Color.base5,
+		accentTextColor: Color.base1,
+		style: {},
+		textStyles: {},
 	};
 
 	ChipInnerTab.propTypes = {
 		testId: PropTypes.string.isRequired,
 		text: PropTypes.string.isRequired,
+		design: PropTypes.instanceOf(ChipInnerTabDesign),
+		mode: PropTypes.instanceOf(ChipInnerTabMode),
+		badgeType: PropTypes.instanceOf(ChipInnerTabBadgeType),
 		selected: PropTypes.bool,
-		badgeNew: PropTypes.bool,
 		counterValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-		counterDesign: PropTypes.object,
+		counterDesign: PropTypes.instanceOf(BadgeCounterDesign),
+		icon: PropTypes.object,
+		iconSize: PropTypes.number,
+		accentBorderColor: PropTypes.instanceOf(Color),
+		accentTextColor: PropTypes.instanceOf(Color),
+		onClick: PropTypes.func,
 		forwardRef: PropTypes.func,
+		style: PropTypes.object,
+		textStyles: PropTypes.object,
 	};
 
 	module.exports = {
 		ChipInnerTab: (props) => new ChipInnerTab(props),
 		ChipInnerTabClass: ChipInnerTab,
+		ChipInnerTabDesign,
+		ChipInnerTabMode,
+		ChipInnerTabBadgeType,
 		BadgeCounterDesign,
 	};
 });

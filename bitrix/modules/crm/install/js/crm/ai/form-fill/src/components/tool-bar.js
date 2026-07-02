@@ -1,7 +1,9 @@
-import '../css/tool-bar.css';
-import { mapActions, mapGetters } from 'ui.vue3.vuex';
-import { ConflictField } from '../store/types';
 import { Loc } from 'main.core';
+import { mapActions, mapGetters } from 'ui.vue3.vuex';
+
+import { type ConflictField } from '../store/types';
+
+import '../css/tool-bar.css';
 
 export const ToolBar = {
 	name: 'ToolBar',

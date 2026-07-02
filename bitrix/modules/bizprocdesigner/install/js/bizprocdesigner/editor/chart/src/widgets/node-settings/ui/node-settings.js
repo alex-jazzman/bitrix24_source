@@ -1,14 +1,12 @@
 import { mapState, mapWritableState, mapActions } from 'ui.vue3.pinia';
 
-import { useLoc } from '../../../shared/composables';
 import { PORT_TYPES } from '../../../shared/constants';
 
 import { diagramStore as useDiagramStore } from '../../../entities/blocks';
 import {
 	NodeSettingsLayout,
 	useNodeSettingsStore,
-	NodeSettingsVariable,
-	NodeSettingsRule,
+	NodeSettingsPreview,
 } from '../../../entities/node-settings';
 import { useAppStore } from '../../../entities/app';
 import {
@@ -26,17 +24,8 @@ export const NodeSettings = {
 		EditNodeSettingsForm,
 		CancelSettingsButton,
 		SaveSettingsButton,
-		NodeSettingsVariable,
-		NodeSettingsRule,
+		NodeSettingsPreview,
 		AddSettingsItem,
-	},
-	setup(): { getMessage: () => string; }
-	{
-		const { getMessage } = useLoc();
-
-		return {
-			getMessage,
-		};
 	},
 	computed:
 	{
@@ -44,7 +33,6 @@ export const NodeSettings = {
 		...mapState(useNodeSettingsStore, [
 			'block',
 			'isShown',
-			'isRuleSettingsShown',
 			'nodeSettings',
 			'isLoading',
 			'isSaving',
@@ -58,7 +46,7 @@ export const NodeSettings = {
 			'toggleVisibility',
 			'toggleRuleSettingsVisibility',
 			'reset',
-			'setCurrentRuleId',
+			'setCurrentRule',
 			'deleteRuleSettings',
 			'saveForm',
 			'discardFormSettings',
@@ -76,20 +64,20 @@ export const NodeSettings = {
 		...mapActions(useAppStore, [
 			'hideRightPanel',
 		]),
-		onShowRuleConstructions(ruleId: string): void
+		onShowConstructions(port: Port): void
 		{
 			this.toggleRuleSettingsVisibility(true);
-			this.setCurrentRuleId(ruleId);
+			this.setCurrentRule(port);
 		},
-		async onDeleteRule(ruleId: string): Promise<void>
+		async deleteRule(ruleId: string): Promise<void>
 		{
 			const connections = [...this.connections];
 			this.deletePort(ruleId);
 			const { outputPortsToAdd, outputPortsToDelete } = this.deleteRuleSettings(ruleId);
-			outputPortsToAdd.values().forEach(({ portId, title }) => {
+			outputPortsToAdd.forEach(({ portId, title }) => {
 				this.addRulePort(portId, PORT_TYPES.output, title);
 			});
-			outputPortsToDelete.keys().forEach((portId) => {
+			outputPortsToDelete.forEach((portId) => {
 				this.deletePort(portId);
 				this.deleteConnectionByBlockIdAndPortId(this.block.id, portId);
 			});
@@ -98,6 +86,10 @@ export const NodeSettings = {
 			{
 				await this.publicDraft();
 			}
+		},
+		deleteRelation(relationId: string): void
+		{
+			this.deletePort(relationId);
 		},
 		async onSaveForm(): Promise<void>
 		{
@@ -144,27 +136,23 @@ export const NodeSettings = {
 					:block="block"
 					:ports="ports"
 				>
-					<template #rule="{ port }">
-						<NodeSettingsRule
+					<template #preview="{ port }">
+						<NodeSettingsPreview
 							:port="port"
 							:nodeSettings="nodeSettings"
-							:connectedBlocks="getBlockAncestorsByInputPortId(block, port.id)"
-							@showRuleConstructions="onShowRuleConstructions"
-							@deleteRule="onDeleteRule"
-						/>
+							:connectedBlocks="getBlockAncestorsByInputPortId(block, port)"
+							@showConstructions="onShowConstructions(port)"
+							@deletePreview="deleteRule(port.id)"
+						>
+							{{ port.title }}
+						</NodeSettingsPreview>
 					</template>
-					<template #addRule="{ itemType }">
+
+					<template #addSettingsItem="{ text, itemType }">
 						<AddSettingsItem
 							:itemType="itemType"
 						>
-							{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_ITEM_RULE') }}
-						</AddSettingsItem>
-					</template>
-					<template #addConnection="{ itemType }">
-						<AddSettingsItem
-							:itemType="itemType"
-						>
-							{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_ITEM_CONNECTION') }}
+							{{ text }}
 						</AddSettingsItem>
 					</template>
 				</EditNodeSettingsForm>
@@ -182,6 +170,8 @@ export const NodeSettings = {
 				/>
 			</template>
 		</NodeSettingsLayout>
-		<slot v-if="isShown" />
+		<slot
+			v-if="isShown"
+		/>
 	`,
 };

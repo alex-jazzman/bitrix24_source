@@ -351,6 +351,11 @@ export default class ConfigurableItem extends TimelineItem
 		return this.#currentUser;
 	}
 
+	getOwnerTypeId(): number
+	{
+		return this.#ownerTypeId;
+	}
+
 	clone(): ConfigurableItem
 	{
 		return ConfigurableItem.create(this.getId(), {

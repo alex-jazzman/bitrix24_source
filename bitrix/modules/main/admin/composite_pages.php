@@ -1,4 +1,4 @@
-<?
+<?php
 
 use Bitrix\Main\Composite;
 use Bitrix\Main\Composite\Internals\Model\PageTable;
@@ -9,9 +9,10 @@ use Bitrix\Main\UI\AdminPageNavigation;
 use Bitrix\Main\Type;
 
 /**
- * @global \CUser $USER
- * @global \CMain $APPLICATION
+ * @global CUser $USER
+ * @global CMain $APPLICATION
  */
+
 require_once(__DIR__."/../include/prolog_admin_before.php");
 define("HELP_FILE", "settings/composite_pages.php");
 
@@ -62,7 +63,7 @@ $filterFields = array(
 	"find_last_viewed_end",
 );
 
-$adminList->initFilter($filterFields);
+$filter = $adminList->InitFilter($filterFields);
 
 function getFilterDate($date)
 {
@@ -75,25 +76,25 @@ function getFilterDate($date)
 	return Type\DateTime::isCorrect($date) ? new Type\DateTime($date) : null;
 }
 
-$filter = array(
-	"=ID" => $find_id,
-	"?CACHE_KEY" => $find_cache_key,
-	"=HOST" => $find_host,
-	"?URI" => $find_uri,
-	"?TITLE" => $find_title,
-	">=CREATED" => getFilterDate($find_created_start),
-	"<=CREATED" => getFilterDate($find_created_end),
-	">=CHANGED" => getFilterDate($find_changed_start),
-	"<=CHANGED" => getFilterDate($find_changed_end),
-	">=LAST_VIEWED" => getFilterDate($find_last_viewed_start),
-	"<=LAST_VIEWED" => getFilterDate($find_last_viewed_end),
+$queryFilter = array(
+	"=ID" => $filter["find_id"],
+	"?CACHE_KEY" => $filter["find_cache_key"],
+	"=HOST" => $filter["find_host"],
+	"?URI" => $filter["find_uri"],
+	"?TITLE" => $filter["find_title"],
+	">=CREATED" => getFilterDate($filter["find_created_start"]),
+	"<=CREATED" => getFilterDate($filter["find_created_end"]),
+	">=CHANGED" => getFilterDate($filter["find_changed_start"]),
+	"<=CHANGED" => getFilterDate($filter["find_changed_end"]),
+	">=LAST_VIEWED" => getFilterDate($filter["find_last_viewed_start"]),
+	"<=LAST_VIEWED" => getFilterDate($filter["find_last_viewed_end"]),
 );
 
-foreach ($filter as $key => $value)
+foreach ($queryFilter as $key => $value)
 {
 	if (trim($value) == '')
 	{
-		unset($filter[$key]);
+		unset($queryFilter[$key]);
 	}
 }
 
@@ -109,7 +110,7 @@ $sortOrder = $sortOrder !== "DESC" ? "ASC" : "DESC";
 $nav = new AdminPageNavigation("nav");
 
 $pageList = PageTable::getList(array(
-	"filter" => $filter,
+	"filter" => $queryFilter,
 	"order" => array($sortBy => $sortOrder),
 	"count_total" => true,
 	"offset" => $nav->getOffset(),
@@ -192,7 +193,7 @@ $adminList->addHeaders(array(
 
 while ($record = $pageList->fetch())
 {
-	$row = &$adminList->addRow($record["ID"], $record);
+	$row = $adminList->addRow($record["ID"], $record);
 
 	$pageCell = '<a href="//%s" target="_blank">%s</a><br><span>%s</span>';
 	$pageLink = htmlspecialcharsbx($record["HOST"].$record["URI"]);
@@ -235,7 +236,7 @@ require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_admin_af
 
 
 <form method="GET" action="<?=$APPLICATION->getCurPage()?>" name="find_form">
-<?
+<?php
 $filterControl = new CAdminFilter(
 	$tableID."_filter",
 	array(
@@ -253,31 +254,31 @@ $filterControl->begin();
 ?>
 	<tr>
 		<td>ID:</td>
-		<td><input type="text" name="find_id" value="<?=htmlspecialcharsbx($find_id)?>" size="40"></td>
+		<td><input type="text" name="find_id" value="<?=htmlspecialcharsbx($filter["find_id"])?>" size="40"></td>
 	</tr>
 	<tr>
 		<td><?=$pageEntity->getField("CACHE_KEY")->getTitle()?>:</td>
-		<td><input type="text" name="find_cache_key" value="<?=htmlspecialcharsbx($find_cache_key)?>" size="40"></td>
+		<td><input type="text" name="find_cache_key" value="<?=htmlspecialcharsbx($filter["find_cache_key"])?>" size="40"></td>
 	</tr>
 	<tr>
 		<td><?=$pageEntity->getField("HOST")->getTitle()?>:</td>
-		<td><input type="text" name="find_host" value="<?=htmlspecialcharsbx($find_host)?>" size="40"></td>
+		<td><input type="text" name="find_host" value="<?=htmlspecialcharsbx($filter["find_host"])?>" size="40"></td>
 	</tr>
 	<tr>
 		<td><?=$pageEntity->getField("URI")->getTitle()?>:</td>
-		<td><input type="text" name="find_uri" value="<?=htmlspecialcharsbx($find_uri)?>" size="40"></td>
+		<td><input type="text" name="find_uri" value="<?=htmlspecialcharsbx($filter["find_uri"])?>" size="40"></td>
 	</tr>
 	<tr>
 		<td><?=$pageEntity->getField("TITLE")->getTitle()?>:</td>
-		<td><input type="text" name="find_title" value="<?=htmlspecialcharsbx($find_title)?>" size="40"></td>
+		<td><input type="text" name="find_title" value="<?=htmlspecialcharsbx($filter["find_title"])?>" size="40"></td>
 	</tr>
 	<tr>
 		<td><?=$pageEntity->getField("CREATED")->getTitle()?>:</td>
 		<td><?=calendarPeriod(
 			"find_created_start",
-			htmlspecialcharsbx($find_created_start),
+			htmlspecialcharsbx($filter["find_created_start"]),
 			"find_created_end",
-			htmlspecialcharsbx($find_created_end),
+			htmlspecialcharsbx($filter["find_created_end"]),
 			"find_form",
 			"Y",
 			"class=\"typeselect\"",
@@ -289,9 +290,9 @@ $filterControl->begin();
 		<td><?=$pageEntity->getField("CHANGED")->getTitle()?>:</td>
 		<td><?=calendarPeriod(
 			"find_changed_start",
-			htmlspecialcharsbx($find_changed_start),
+			htmlspecialcharsbx($filter["find_changed_start"]),
 			"find_changed_end",
-			htmlspecialcharsbx($find_changed_end),
+			htmlspecialcharsbx($filter["find_changed_end"]),
 			"find_form",
 			"Y",
 			"class=\"typeselect\"",
@@ -303,9 +304,9 @@ $filterControl->begin();
 		<td><?=$pageEntity->getField("LAST_VIEWED")->getTitle()?>:</td>
 		<td><?=calendarPeriod(
 			"find_last_viewed_start",
-			htmlspecialcharsbx($find_last_viewed_start),
+			htmlspecialcharsbx($filter["find_last_viewed_start"]),
 			"find_last_viewed_end",
-			htmlspecialcharsbx($find_last_viewed_end),
+			htmlspecialcharsbx($filter["find_last_viewed_end"]),
 			"find_form",
 			"Y",
 			"class=\"typeselect\"",
@@ -315,7 +316,7 @@ $filterControl->begin();
 
 	</tr>
 
-<?
+<?php
 $filterControl->buttons(array(
 	"table_id" => $tableID,
 	"url"=> $APPLICATION->getCurPage(),
@@ -327,7 +328,7 @@ $filterControl->end();
 </form>
 
 
-<?
+<?php
 $adminList->displayList();
 
 require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin.php");

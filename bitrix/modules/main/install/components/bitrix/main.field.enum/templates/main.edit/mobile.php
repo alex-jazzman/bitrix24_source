@@ -10,6 +10,7 @@ use Bitrix\Main\Web\Json;
 /**
  * @var EnumUfComponent $component
  * @var array $arResult
+ * @var array $arParams
  */
 
 $component = $this->getComponent();

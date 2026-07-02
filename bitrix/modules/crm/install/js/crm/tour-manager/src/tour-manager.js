@@ -1,6 +1,6 @@
 import { BannerDispatcher } from 'crm.integration.ui.banner-dispatcher';
 import Queue from './queue.js';
-import { TourInterface } from './tour.js';
+import { type TourInterface } from './tour.js';
 
 export class TourManager
 {

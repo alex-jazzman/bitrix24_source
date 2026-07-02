@@ -1,6 +1,4 @@
 <?php
-$MESS["IM_CONTENT_CHAT_NO_CHATS_START_MESSAGE"] = "Пригласите коллег и начните общение";
-$MESS["IM_CONTENT_CHAT_START_MESSAGE_V2"] = "Выберите чат и начните общение";
 $MESS["IM_CONTENT_EMBEDDED_CHAT_START_TITLE"] = "Битрикс[color]24[/color] — мультипространство для совместной работы";
 $MESS["IM_CONTENT_EMBEDDED_CHAT_START_TOOL_CHATS"] = "Чаты";
 $MESS["IM_CONTENT_EMBEDDED_CHAT_START_TOOL_CALLS"] = "Звонки";
@@ -24,7 +22,8 @@ $MESS["IM_CONTENT_TASK_START_FEATURE_LIST_BLOCK_TITLE_2"] = "Задачи мож
 $MESS["IM_CONTENT_TASK_START_FEATURE_LIST_BLOCK_SUBTITLE_2"] = "Читайте новые сообщения и отвечайте на них прямо в чате — быстро и привычно";
 $MESS["IM_CONTENT_TASK_START_FEATURE_LIST_BLOCK_TITLE_3"] = "Чат находится прямо в задаче";
 $MESS["IM_CONTENT_TASK_START_FEATURE_LIST_BLOCK_SUBTITLE_3"] = "В чате вы можете обсуждать детали, созваниваться, обмениваться файлами и отслеживать все изменения";
-$MESS["IM_CONTENT_TASK_HEADER_BUTTON_TITLE"] = "Задача";
+$MESS["IM_CONTENT_TASK_ENTITY_CONTROL_OPEN_CARD_TEXT"] = "Открыть задачу";
+$MESS["IM_CONTENT_TASK_ENTITY_CONTROL_CLOSE_CARD_TEXT"] = "Закрыть задачу";
 $MESS["IM_CONTENT_CHANNEL_START_MESSAGE_V3"] = "Здесь будут открытые каналы компании";
 $MESS["IM_CONTENT_CHANNEL_START_MESSAGE_SUBTITLE"] = "Когда вы подпишетесь на канал, он переместится в список ваших чатов";
 $MESS["IM_CONTENT_BLOCKED_TEXTAREA_JOIN_CHANNEL_V2"] = "Подписаться на канал";
@@ -70,3 +69,11 @@ $MESS["IM_CONTENT_AI_ASSISTANT_CHAT_HEADER_TITLE"] = "Ваш персональ�
 $MESS["IM_CONTENT_COPILOT_TEXTAREA_REASONING_BUTTON"] = "Размышление";
 $MESS["IM_CONTENT_COPILOT_TEXTAREA_REASONING_BUTTON_HINT_NOT_AVAILABLE"] = "Выбранная языковая модель не поддерживает функцию размышления";
 $MESS["IM_CONTENT_AI_ASSISTANT_MCP_INTEGRATIONS"] = "Подключения";
+
+$MESS["IM_CONTENT_COPILOT_DISCLAIMER"] = "Ответы #COPILOT_NAME# могут быть неточны. [link]Подробнее[/link]";
+$MESS["IM_CONTENT_COPILOT_MODE_MENU_REASONING"] = "Размышление";
+$MESS["IM_CONTENT_COPILOT_MODE_MENU_ROLE"] = "Выбор роли";
+$MESS["IM_CONTENT_COPILOT_MCP_INTEGRATIONS"] = "Подключения";
+$MESS["IM_CONTENT_COPILOT_SEARCH_BUTTON"] = "Поиск";
+$MESS["IM_CONTENT_COPILOT_SEARCH_DISABLED_BY_ADMIN"] = "Администратор вашего портала ограничил возможность включать поиск в интернете";
+$MESS["IM_CONTENT_COPILOT_MODE_BUTTON_HINT"] = "Режим";

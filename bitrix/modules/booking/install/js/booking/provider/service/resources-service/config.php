@@ -9,10 +9,10 @@ return [
 	'js' => 'dist/resources-service.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'booking.lib.utils',
-		'booking.core',
 		'booking.const',
+		'booking.core',
 		'booking.lib.api-client',
+		'booking.lib.utils',
 	],
 	'skip_core' => true,
 ];

@@ -18,12 +18,17 @@ export const PromoBanner = {
 			type: String,
 		},
 	},
-	data(): Object
+	setup(): Object
 	{
 		return {
 			IconSet,
 			ButtonSize,
 			ButtonColor,
+		};
+	},
+	data(): Object
+	{
+		return {
 			btnClocking: false,
 		};
 	},

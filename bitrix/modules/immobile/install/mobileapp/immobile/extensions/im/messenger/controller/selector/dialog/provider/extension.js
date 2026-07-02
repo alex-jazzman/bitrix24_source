@@ -30,6 +30,11 @@ jn.define('im/messenger/controller/selector/dialog/provider', (require, exports,
 		 * @param {Boolean} options.withFavorite=false
 		 * @param {Boolean} options.withCurrentUser=true
 		 * @param {Boolean} options.onlyUsers=false
+		 * @param {Boolean} options.useNotes=false
+		 * @param {Array<string|number>} [options.initialDialogIds] - dialogIds that must appear in
+		 *     the recent list even if they are not in recentModel (e.g. chats hidden from recent
+		 *     but already present in the folder being edited). Without this, the native widget
+		 *     drops them from the final selection on close.
 		 */
 		constructor(context, options = {})
 		{
@@ -42,6 +47,10 @@ jn.define('im/messenger/controller/selector/dialog/provider', (require, exports,
 
 			this.withCurrentUser = options?.withCurrentUser ?? true;
 			this.onlyUsers = options?.onlyUsers ?? false;
+			this.useNotes = options?.useNotes ?? false;
+			this.initialDialogIds = Type.isArray(options?.initialDialogIds)
+				? options.initialDialogIds.map((id) => String(id))
+				: [];
 
 			this.store = serviceLocator.get('core').getMessengerStore();
 
@@ -99,15 +108,16 @@ jn.define('im/messenger/controller/selector/dialog/provider', (require, exports,
 			const chatAvatar = ChatAvatar.createFromDialogId(item.dialogId);
 			const chatTitle = ChatTitle.createFromDialogId(item.dialogId);
 
-			const title = chatTitle.getTitle({ useNotes: false }) ?? item.name;
+			const useNotes = this.useNotes && UserHelper.isCurrentUser(item.dialogId);
+			const title = chatTitle.getTitle({ useNotes }) ?? item.name;
 
 			return {
 				id: item.dialogId,
 				title,
-				subtitle: chatTitle.getDescription(),
+				subtitle: chatTitle.getDescription({ useNotes }),
 				useLetterImage: false,
 				sectionCode: 'common',
-				avatar: chatAvatar.getListItemAvatarProps(),
+				avatar: chatAvatar.getListItemAvatarProps({ useNotes }),
 				type: this.isMultipleSelection ? null : 'info',
 				params: {
 					id: item.dialogId,
@@ -172,7 +182,16 @@ jn.define('im/messenger/controller/selector/dialog/provider', (require, exports,
 				.map(({ id }) => id)
 			;
 
-			return this.#getDialogsByIds(recentDialogIds);
+			if (this.initialDialogIds.length === 0)
+			{
+				return this.#getDialogsByIds(recentDialogIds);
+			}
+
+			const recentSet = new Set(recentDialogIds.map((id) => String(id)));
+			const extraIds = this.initialDialogIds.filter((id) => !recentSet.has(id));
+			const extraDialogs = this.#getDialogsByIds(extraIds);
+
+			return [...extraDialogs, ...this.#getDialogsByIds(recentDialogIds)];
 		}
 
 		#withFavoriteItem(items)

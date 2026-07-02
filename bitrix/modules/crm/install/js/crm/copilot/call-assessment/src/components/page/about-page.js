@@ -18,14 +18,20 @@ export const AboutPage = {
 		textEditor: TextEditor,
 	},
 
+	parser: null,
+	promptLengthValidator: null,
 	data(): Object
 	{
 		return {
 			id: 'about',
-			parser: new BBCodeParser(),
-			promptLengthValidator: new PromptLengthValidator(),
 			promptLengthError: null,
 		};
+	},
+
+	created(): void
+	{
+		this.parser = new BBCodeParser();
+		this.promptLengthValidator = new PromptLengthValidator();
 	},
 
 	methods: {

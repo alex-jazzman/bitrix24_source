@@ -40,24 +40,24 @@
 	align-items: center;
 }
 
-.mailbox-sync-btn .ui-btn {
-	border-radius: 20px;
-	--ui-btn-height: 34px;
-}
-
-.mailbox-sync-btn .ui-btn-icon-business.ui-btn {
-	--ui-btn-icon: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M5.38895 18.5991C5.31077 18.6773 5.18402 18.6773 5.10584 18.5991C5.0683 18.5616 5.04721 18.5107 5.04721 18.4576V14.2021C5.04721 14.0915 5.13683 14.0019 5.2474 14.0019H9.50292C9.61348 14.0019 9.70311 14.0915 9.70311 14.2021C9.70311 14.2552 9.68202 14.3061 9.64447 14.3436L8.28398 15.7041C9.23872 16.6693 10.5639 17.2672 12.0288 17.2672C14.3177 17.2672 16.2656 15.8073 16.992 13.7677L19.0621 14.6303C17.9963 17.479 15.2494 19.507 12.0288 19.507C9.9454 19.507 8.06026 18.6584 6.70018 17.2879L5.38895 18.5991ZM12.0288 6.73275C9.7548 6.73275 7.8174 8.17373 7.07987 10.1924L5.01038 9.33008C6.08675 6.50223 8.82311 4.49296 12.0288 4.49296C14.0469 4.49296 15.879 5.2893 17.228 6.5849L18.5528 5.2601C18.631 5.18192 18.7578 5.18192 18.8359 5.2601C18.8735 5.29764 18.8946 5.34856 18.8946 5.40165V9.65718C18.8946 9.76774 18.8049 9.85737 18.6944 9.85737H14.4389C14.3283 9.85737 14.2387 9.76774 14.2387 9.65718C14.2387 9.60408 14.2598 9.55317 14.2973 9.51562L15.6438 8.16914C14.7005 7.27865 13.4284 6.73275 12.0288 6.73275Z' fill='white'/%3E%3C/svg%3E%0A");
-}
-
-.bitrix24-dark-theme .mailbox-sync-btn .ui-btn-icon-business.ui-btn {
-	--ui-btn-icon: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M5.38895 18.5991C5.31077 18.6773 5.18402 18.6773 5.10584 18.5991C5.0683 18.5616 5.04721 18.5107 5.04721 18.4576V14.2021C5.04721 14.0915 5.13683 14.0019 5.2474 14.0019H9.50292C9.61348 14.0019 9.70311 14.0915 9.70311 14.2021C9.70311 14.2552 9.68202 14.3061 9.64447 14.3436L8.28398 15.7041C9.23872 16.6693 10.5639 17.2672 12.0288 17.2672C14.3177 17.2672 16.2656 15.8073 16.992 13.7677L19.0621 14.6303C17.9963 17.479 15.2494 19.507 12.0288 19.507C9.9454 19.507 8.06026 18.6584 6.70018 17.2879L5.38895 18.5991ZM12.0288 6.73275C9.7548 6.73275 7.8174 8.17372 7.07987 10.1924L5.01038 9.33007C6.08675 6.50222 8.82311 4.49295 12.0288 4.49295C14.0469 4.49295 15.879 5.28929 17.228 6.58489L18.5528 5.26009C18.631 5.18191 18.7578 5.18191 18.8359 5.26009C18.8735 5.29763 18.8946 5.34855 18.8946 5.40165V9.65717C18.8946 9.76773 18.8049 9.85736 18.6944 9.85736H14.4389C14.3283 9.85736 14.2387 9.76773 14.2387 9.65717C14.2387 9.60408 14.2598 9.55316 14.2973 9.51562L15.6438 8.16913C14.7005 7.27864 13.4284 6.73275 12.0288 6.73275Z' fill='%23525C69'/%3E%3C/svg%3E%0A");
-}
-
 .mailbox-sync-panel {
 	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	margin: 7px 25px 0 0;
+	gap: 6px;
+	margin-right: 25px;
+}
+
+.mailbox-sync-panel .ui-btn:focus-visible {
+	box-shadow: 0 5px 12px rgba(0, 0, 0, .2);
+	outline: 2px solid var(--ui-color-palette-blue-60);
+	outline-offset: -2px;
+}
+
+.mailbox-sort-btn[data-sort-mode="alpha_asc"] .ui-icon-set {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_letter-sort-up);
+}
+
+.mailbox-sort-btn[data-sort-mode="alpha_desc"] .ui-icon-set {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_letter-sort-down);
 }
 
 .mail-message-new-btn {
@@ -209,27 +209,13 @@
 	font-weight: var(--ui-font-weight-regular, 400);
 	text-transform: initial;
 	justify-content: space-between;
-	max-width: 240px;
-	width: calc(100% - 50px);
+	width: 100%;
 	--ui-btn-height: 34px;
-	margin-right: 11px;
 }
 
-.mail-btn-dropdown .ui-btn-light {
-	padding-left: 0;
-	background: transparent;
-	border-color: transparent;
-}
-
-.mail-btn-dropdown .ui-btn.ui-btn-dropdown:before {
-	width: 7px;
-	height: 7px;
-	top: 53%;
-	border-color: rgba(255,255,255,.5);
-}
-
-.bitrix24-dark-theme .mail-btn-dropdown .ui-btn.ui-btn-dropdown:before {
-	border-color: rgba(51, 51, 51, .8);
+.ui-btn .mail-btn-dropdown-arrow.ui-icon-set {
+	flex-shrink: 0;
+	margin-right: -5px;
 }
 
 .mail-btn-dropdown-icon {
@@ -252,7 +238,7 @@
 }
 
 .mail-btn-dropdown-title {
-	max-width: calc(100% - 28px);
+	max-width: calc(100% - 20px);
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -667,11 +653,16 @@
 
 .mailbox-sync-panel .ui-btn-wait.ui-btn-light-border {
 	background-image: var(--ui-btn-wait-white);
+	background-color: var(--ui-btn-background, var(--ui-color-design-outline-bg));
 	opacity: 1;
 }
 
+.mailbox-sync-panel .ui-btn-wait .ui-icon-set {
+	visibility: hidden;
+}
+
 .bitrix24-dark-theme .mailbox-sync-panel .ui-btn-wait.ui-btn-light-border {
-	background-image: var(    --ui-btn-wait-black);
+	background-image: var(--ui-btn-wait-black);
 }
 
 .main-grid-cell-content a.ui-btn.mail-ui-not-active {

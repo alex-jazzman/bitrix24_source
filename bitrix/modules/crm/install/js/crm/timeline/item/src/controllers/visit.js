@@ -1,5 +1,5 @@
-import { ActionParams, Base } from './base';
 import ConfigurableItem from '../configurable-item';
+import { type ActionParams, Base } from './base';
 
 export class Visit extends Base
 {
@@ -25,7 +25,10 @@ export class Visit extends Base
 
 	#changePlayerState(item: ConfigurableItem, recordId: Number): void
 	{
-		const player = item.getLayoutContentBlockById('audio');
+		const player = item
+			?.getLayoutContentBlockById('visitGroupOfBlocks')
+			?.getBlockById('audio')
+		;
 		if (!player)
 		{
 			return;

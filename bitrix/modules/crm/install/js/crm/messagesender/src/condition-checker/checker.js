@@ -2,6 +2,7 @@ import { Type } from 'main.core';
 import type { SenderType } from './common/consent-approver';
 import { ConsentApprover } from './common/consent-approver';
 import { Factory } from './factory';
+import 'crm_common';
 
 type OpenLineItems = {
 	[key: string]: OpenLineItem;

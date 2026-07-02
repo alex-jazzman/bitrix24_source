@@ -1,7 +1,6 @@
 import { Dom, Loc, Tag, Text, Type } from 'main.core';
 
 import { getBigSmileOption, getCore, getUtils } from '../utils/core-proxy';
-import { ParserIcon } from './icon';
 
 export const ImageBbCodeSizes = Object.freeze({
 	small: 'small',
@@ -63,7 +62,7 @@ export const ParserImage = {
 
 			const firstSymbol = symbolBeforeUrl || '';
 
-			return `${firstSymbol}${ParserIcon.getImageBlock()}`;
+			return `${firstSymbol}${this.getImagePrefix()}`;
 		});
 	},
 
@@ -230,7 +229,7 @@ export const ParserImage = {
 			'gi',
 		);
 
-		return text.replaceAll(imageTagRegex, () => ParserIcon.getImageBlock());
+		return text.replaceAll(imageTagRegex, () => this.getImagePrefix());
 	},
 
 	hideErrorImage(element: HTMLImageElement): void
@@ -286,6 +285,11 @@ export const ParserImage = {
 				return layout.outerHTML;
 			},
 		);
+	},
+
+	getImagePrefix(): string
+	{
+		return `[${Loc.getMessage('IM_PARSER_ICON_TYPE_IMAGE')}]`;
 	},
 };
 

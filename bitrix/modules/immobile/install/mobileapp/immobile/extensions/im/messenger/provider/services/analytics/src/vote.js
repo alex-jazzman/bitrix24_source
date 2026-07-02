@@ -162,17 +162,20 @@ jn.define('im/messenger/provider/services/analytics/vote', (require, exports, mo
 		/**
 		 * @param {DialogId} dialogId
 		 * @param {number} voteId
+		 * @param {object} voteData
 		 */
-		sendVoteFinished(dialogId, voteId)
+		sendVoteFinished(dialogId, voteId, voteData)
 		{
 			/** @type {DialoguesModelState} */
 			const dialog = this.store.getters['dialoguesModel/getById'](dialogId);
 
-			new AnalyticsEvent()
+			const analytics = new AnalyticsEvent()
 				.setTool(Analytics.Tool.im)
 				.setCategory(AnalyticsHelper.getCategoryByChatType(dialog.type))
 				.setEvent(Analytics.Event.finishPoll)
 				.setType(Analytics.Type.voteFinisherUser)
+				.setSection(Analytics.Section.chatWindow)
+				.setSubSection(Analytics.SubSection.contextMenu)
 				.setP1(AnalyticsHelper.getP1ByDialog(dialog))
 				.setP2(AnalyticsHelper.getP2ByUserType())
 				.setP3(this.#getP3ByVoteId(voteId))
@@ -183,28 +186,43 @@ jn.define('im/messenger/provider/services/analytics/vote', (require, exports, mo
 					,
 				)
 				.setP5(AnalyticsHelper.getFormattedChatId(dialog.chatId))
-				.send()
 			;
+
+			if (voteData.isNestedSection)
+			{
+				analytics.setElement(Analytics.Element.more);
+			}
+
+			analytics.send();
 		}
 
 		/**
 		 * @param {DialogId} dialogId
 		 * @param {number} voteId
+		 * @param {object} params
 		 */
-		sendVoteCancelled(dialogId, voteId)
+		sendVoteCancelled(dialogId, voteId, params)
 		{
 			/** @type {DialoguesModelState} */
 			const dialog = this.store.getters['dialoguesModel/getById'](dialogId);
 
-			new AnalyticsEvent()
+			const analytics = new AnalyticsEvent()
 				.setTool(Analytics.Tool.im)
 				.setCategory(AnalyticsHelper.getCategoryByChatType(dialog.type))
 				.setEvent(Analytics.Event.cancelVote)
+				.setSection(Analytics.Section.chatWindow)
+				.setSubSection(Analytics.SubSection.contextMenu)
 				.setP1(AnalyticsHelper.getP1ByDialog(dialog))
 				.setP2(AnalyticsHelper.getP2ByUserType())
 				.setP3(this.#getP3ByVoteId(voteId))
-				.send()
 			;
+
+			if (params.isNestedSection)
+			{
+				analytics.setElement(Analytics.Element.more);
+			}
+
+			analytics.send();
 		}
 
 		/**
@@ -222,10 +240,11 @@ jn.define('im/messenger/provider/services/analytics/vote', (require, exports, mo
 		/**
 		 * @param {DialogId} dialogId
 		 * @param {number} voteId
+		 * @param {boolean} isNestedSection
 		 */
-		sendVoteMessageLinkCopied(dialogId, voteId)
+		sendVoteMessageLinkCopied(dialogId, voteId, isNestedSection)
 		{
-			this.#getVoteLinkCopiedEvent(dialogId, voteId)
+			this.#getVoteLinkCopiedEvent(dialogId, voteId, isNestedSection)
 				.setType(Analytics.Type.voteLinkCopySourceMessage)
 				.send()
 			;
@@ -234,16 +253,23 @@ jn.define('im/messenger/provider/services/analytics/vote', (require, exports, mo
 		/**
 		 * @return {AnalyticsEvent}
 		 */
-		#getVoteLinkCopiedEvent(dialogId, voteId)
+		#getVoteLinkCopiedEvent(dialogId, voteId, isNestedSection)
 		{
 			const analyticsEvent = (
 				new AnalyticsEvent()
 					.setTool(Analytics.Tool.im)
 					.setCategory(Analytics.Category.chat)
 					.setEvent(Analytics.Event.copyPollLink)
+					.setSection(Analytics.Section.chatWindow)
+					.setSubSection(Analytics.SubSection.contextMenu)
 					.setP2(AnalyticsHelper.getP2ByUserType())
 					.setP3(this.#getP3ByVoteId(voteId))
 			);
+
+			if (isNestedSection)
+			{
+				analyticsEvent.setElement(Analytics.Element.more);
+			}
 
 			if (dialogId)
 			{

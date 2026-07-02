@@ -1,12 +1,14 @@
-import { Core } from 'im.v2.application.core';
-import { Feature, FeatureManager } from 'im.v2.lib.feature';
-import { BaseEvent } from 'main.core.events';
+import { type BaseEvent } from 'main.core.events';
 import {
 	type Dialog as SelectorDialog,
 	type EntityOptions,
 	type Item as SelectorItem,
 	TagSelector,
 } from 'ui.entity-selector';
+
+import { Core } from 'im.v2.application.core';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
+import { SelectorEntity } from 'im.v2.const';
 
 import './css/chat-members.css';
 
@@ -25,7 +27,7 @@ export const ChatMembersSelector = {
 		undeselectedItems: {
 			type: Array,
 			default(): [[string, number | string]] {
-				return [['user', Core.getUserId()]];
+				return [[SelectorEntity.user, Core.getUserId()]];
 			},
 		},
 		allowTeamsSelect: {
@@ -67,7 +69,7 @@ export const ChatMembersSelector = {
 	{
 		getEntitiesConfig(): EntityOptions[]
 		{
-			const entitiesConfig = [{ id: 'user' }];
+			const entitiesConfig = [{ id: SelectorEntity.user }];
 			const allowDepartments = FeatureManager.isFeatureAvailable(Feature.chatDepartments);
 			entitiesConfig.push(this.getDepartmentEntityConfig(allowDepartments));
 
@@ -83,7 +85,7 @@ export const ChatMembersSelector = {
 			if (allowDepartments)
 			{
 				return {
-					id: 'department',
+					id: SelectorEntity.department,
 					options: {
 						selectMode: 'usersAndDepartments',
 						allowFlatDepartments: true,
@@ -92,7 +94,7 @@ export const ChatMembersSelector = {
 				};
 			}
 
-			return { id: 'department' };
+			return { id: SelectorEntity.department };
 		},
 		getEntityTeamsConfig(allowDepartments: boolean): EntityOptions
 		{

@@ -79,6 +79,25 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/const', (require, expo
 		create: 'create',
 	};
 
+	const MenuActionEventType = {
+		menuItemClick: 'menuItemClick',
+		menuSectionClick: 'menuSectionClick',
+	};
+
+	const MenuSectionId = {
+		main: 'main',
+	};
+
+	const MenuActionType = {
+		send: 'send',
+		deleteFromRecent: 'deleteFromRecent',
+		delete: 'delete',
+		clearHistory: 'clearHistory',
+		rename: 'rename',
+		edit: 'edit',
+		unlink: 'unlink',
+	};
+
 	const MAX_STICKER_PACK_SIZE = 50;
 
 	const NAVIGATION_BUTTON_WIDTH = 52;
@@ -92,6 +111,9 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/const', (require, expo
 		NavigationButtonType,
 		UploadStatus,
 		EditableElementType,
+		MenuActionEventType,
+		MenuSectionId,
+		MenuActionType,
 		MAX_STICKER_PACK_SIZE,
 		NAVIGATION_BUTTON_WIDTH,
 		DEVICE_WIDTH,

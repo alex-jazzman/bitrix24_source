@@ -61,6 +61,13 @@ return [
 						'className' => \Bitrix\ImOpenLines\V2\Integration\UI\EntitySelector\RecentProvider::class,
 					],
 				],
+				[
+					'entityId' => 'imopenlines-queue',
+					'provider' => [
+						'moduleId' => 'imopenlines',
+						'className' => \Bitrix\ImOpenLines\V2\Integration\UI\EntitySelector\QueueProvider::class,
+					],
+				],
 			],
 			'extensions' => ['imopenlines.entity-selector']
 		],

@@ -21,6 +21,7 @@ declare type ImFeatures = {
 	zoomActive: boolean,
 	zoomAvailable: boolean,
 	intranetInviteAvailable: boolean,
+	isBitrixGptV2Available: boolean,
 	messagesAutoDeleteEnabled: boolean,
 	voteCreationAvailable: boolean,
 	aiFileTranscriptionAvailable: boolean,
@@ -30,8 +31,13 @@ declare type ImFeatures = {
 	isCopilotReasoningAvailable: boolean,
 	videoNoteTranscriptionAvailable: boolean,
 	stickersAvailable: boolean,
+	isBitrixGptV2Available: boolean,
 	aiAssistantMcpSelectorAvailable: boolean,
 	isAddingUserByMentionAvailable: boolean,
+	isMessageBuilderAvailable: boolean,
+	isNestedChatAvailable: boolean,
+	isExternalChatMessageForwardingAvailable: boolean,
+	isChatFoldersAvailable: boolean,
 }
 
 declare type UserInfo = {

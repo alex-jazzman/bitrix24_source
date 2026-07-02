@@ -55,7 +55,7 @@
 	margin-right: unset;
 }
 
-.crm-timeline__card-action-btn:has(.ui-btn-icon-ai) {
+.crm-timeline__card-action-btn.--has-ai-icon {
 	min-width: 100px;
 }
 
@@ -66,7 +66,6 @@
 	border-color: #c6cdd3;
 	color: #535b69;
 }
-
 
 .crm-timeline__card-action-btn .ui-btn-icon-ai.ui-btn-split.ui-btn-disabled .ui-btn-main::after,
 .crm-timeline__card-action-btn .ui-btn-icon-ai.ui-btn-split.ui-btn-disabled .ui-btn-menu::after,
@@ -156,7 +155,7 @@
 	opacity: 0;
 }
 
-.crm-timeline__card-action-btn:has(.ui-btn:empty) {
+.crm-timeline__card-action-btn.--has-icon-only {
 	min-width: 32px;
 }
 

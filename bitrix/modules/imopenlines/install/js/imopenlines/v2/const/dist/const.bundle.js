@@ -6,61 +6,68 @@ this.BX.OpenLines.v2 = this.BX.OpenLines.v2 || {};
 	'use strict';
 
 	const RestMethod = Object.freeze({
-	  linesV2RecentList: 'imopenlines.v2.Recent.list',
-	  linesV2SessionAnswer: 'imopenlines.v2.Session.answer',
-	  linesV2SessionSkip: 'imopenlines.v2.Session.skip',
-	  linesV2SessionMarkSpam: 'imopenlines.v2.Session.markSpam',
-	  linesV2SessionPin: 'imopenlines.v2.Session.pin',
-	  linesV2SessionUnpin: 'imopenlines.v2.Session.unpin',
-	  linesV2SessionIntercept: 'imopenlines.v2.Session.intercept',
-	  linesV2SessionFinish: 'imopenlines.v2.Session.finish',
-	  linesV2SessionStart: 'imopenlines.v2.Session.start',
-	  linesV2SessionJoin: 'imopenlines.v2.Session.join',
-	  linesV2SessionTransfer: 'imopenlines.v2.Session.transfer',
-	  linesV2ChatLoad: 'imopenlines.v2.Chat.Load',
-	  linesV2MessageAddSession: 'imopenlines.v2.Message.addSession',
-	  linesV2SessionSetSilentMode: 'imopenlines.v2.Session.setSilentMode',
-	  linesV2SessionGetSilentMode: 'imopenlines.v2.Session.isSilentMode'
+		linesV2RecentList: 'imopenlines.v2.Recent.list',
+		linesV2SessionAnswer: 'imopenlines.v2.Session.answer',
+		linesV2SessionSkip: 'imopenlines.v2.Session.skip',
+		linesV2SessionMarkSpam: 'imopenlines.v2.Session.markSpam',
+		linesV2SessionPin: 'imopenlines.v2.Session.pin',
+		linesV2SessionUnpin: 'imopenlines.v2.Session.unpin',
+		linesV2SessionIntercept: 'imopenlines.v2.Session.intercept',
+		linesV2SessionFinish: 'imopenlines.v2.Session.finish',
+		linesV2SessionStart: 'imopenlines.v2.Session.start',
+		linesV2SessionJoin: 'imopenlines.v2.Session.join',
+		linesV2SessionTransfer: 'imopenlines.v2.Session.transfer',
+		linesV2ChatLoad: 'imopenlines.v2.Chat.Load',
+		linesV2MessageAddSession: 'imopenlines.v2.Message.addSession',
+		linesV2SessionSetSilentMode: 'imopenlines.v2.Session.setSilentMode',
+		linesV2SessionGetSilentMode: 'imopenlines.v2.Session.isSilentMode',
+		linesV2CrmFormList: 'imopenlines.v2.Crm.Form.list',
+		linesV2CrmFormSend: 'imopenlines.v2.Crm.Form.send',
+		linesV2QuickReplyList: 'imopenlines.v2.QuickReply.list',
+		linesV2QuickReplySave: 'imopenlines.v2.QuickReply.save',
+		linesV2QuickReplySaveFromMessage: 'imopenlines.v2.QuickReply.saveFromMessage',
+		linesV2QuickReplyIncrementRating: 'imopenlines.v2.QuickReply.incrementRating',
+		linesV2QuickReplyDelete: 'imopenlines.v2.QuickReply.delete'
 	});
 
 	const StatusGroup = {
-	  answered: 'ANSWERED',
-	  new: 'NEW',
-	  work: 'WORK'
+		answered: 'ANSWERED',
+		new: 'NEW',
+		work: 'WORK'
 	};
 
 	const OpenLinesMessageComponent = Object.freeze({
-	  StartDialogMessage: 'StartDialogMessage',
-	  HiddenMessage: 'HiddenMessage',
-	  FeedbackFormMessage: 'FeedbackFormMessage',
-	  ImOpenLinesForm: 'bx-imopenlines-form',
-	  ImOpenLinesMessage: 'bx-imopenlines-message'
+		StartDialogMessage: 'StartDialogMessage',
+		HiddenMessage: 'HiddenMessage',
+		FeedbackFormMessage: 'FeedbackFormMessage',
+		ImOpenLinesForm: 'bx-imopenlines-form',
+		ImOpenLinesMessage: 'bx-imopenlines-message'
 	});
 	const FormType = Object.freeze({
-	  none: 'none',
-	  like: 'like',
-	  welcome: 'welcome',
-	  offline: 'offline',
-	  history: 'history'
+		none: 'none',
+		like: 'like',
+		welcome: 'welcome',
+		offline: 'offline',
+		history: 'history'
 	});
 
 	const QueueType = {
-	  all: 'all',
-	  strictly: 'strictly',
-	  evenly: 'evenly'
+		all: 'all',
+		strictly: 'strictly',
+		evenly: 'evenly'
 	};
 
 	const Connector = {
-	  network: 'network',
-	  livechat: 'livechat'
+		network: 'network',
+		livechat: 'livechat'
 	};
 
+	exports.Connector = Connector;
+	exports.FormType = FormType;
+	exports.OpenLinesMessageComponent = OpenLinesMessageComponent;
+	exports.QueueType = QueueType;
 	exports.RestMethod = RestMethod;
 	exports.StatusGroup = StatusGroup;
-	exports.OpenLinesMessageComponent = OpenLinesMessageComponent;
-	exports.FormType = FormType;
-	exports.QueueType = QueueType;
-	exports.Connector = Connector;
 
-}((this.BX.OpenLines.v2.Const = this.BX.OpenLines.v2.Const || {})));
+})(this.BX.OpenLines.v2.Const = this.BX.OpenLines.v2.Const || {});
 //# sourceMappingURL=const.bundle.js.map

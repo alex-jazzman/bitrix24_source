@@ -1,5 +1,6 @@
 <?php
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_NEW'] = 'Новые сообщения';
+$MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_READ_LATER'] = 'Посмотреть позже';
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_VIEWED_MSGVER_1'] = 'Просмотрено: #DATE#';
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_VIEWED_ONE'] = 'Просмотрено: #USERNAME#';
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_VIEWED_MORE'] = 'Просмотрено: #USERNAME# и еще #USERS_COUNT#';
@@ -31,7 +32,7 @@ $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_PROMT_ACTION_1'] = 'Что ты �
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_PROMT_ACTION_2'] = 'Напиши приветствие для сотрудника';
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_PROMT_ACTION_3'] = 'Напиши поздравление с днём рождения';
 
-$MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_FOOT_NOTE_BASIC_MSGVER_1'] = 'Oтветы #COPILOT_NAME# могут быть неточны, проверяйте важную информацию.';
+$MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_FOOT_NOTE_BASIC_MSGVER_2'] = '#COPILOT_NAME# может ошибаться.';
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_FOOT_NOTE_UNDERLINE'] = 'Подробнее';
 
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_BANNER_TITLE_ADD_USERS'] = 'Добавлены участники';
@@ -304,3 +305,6 @@ $MESS['IMMOBILE_ADMIN_MESSAGE_ADMIN_ACCEPTED_FIRE_TITLE'] = 'Вы — главн
 $MESS['IMMOBILE_ADMIN_MESSAGE_ADMIN_ACCEPTED_FIRE_DESCRIPTION'] = "[URL=#LINK#]#INITIATOR_NAME#[/URL] передаёт вам права главного администратора. Этот сотрудник уволен и больше не сможет войти в ваш Битрикс24.\n\nПерезапустите приложение, чтобы увидеть изменения";
 $MESS['IMMOBILE_ADMIN_MESSAGE_ADMIN_ACCEPTED_FIRE_M_DESCRIPTION'] = "[URL=#LINK#]#INITIATOR_NAME#[/URL] передал вам права главного администратора. Этот сотрудник уволен и больше не сможет войти в ваш Битрикс24.\n\nПерезапустите приложение, чтобы увидеть изменения";
 $MESS['IMMOBILE_ADMIN_MESSAGE_ADMIN_ACCEPTED_FIRE_F_DESCRIPTION'] = "[URL=#LINK#]#INITIATOR_NAME#[/URL] передала вам права главного администратора. Этот сотрудник уволен и больше не сможет войти в ваш Битрикс24.\n\nПерезапустите приложение, чтобы увидеть изменения";
+
+$MESS['IMMOBILE_BUILDER_MESSAGE_UNSUPPORTED_BLOCK_STUB_TEXT'] = "Часть сообщения недоступна.\nОбновите приложение";
+$MESS['IMMOBILE_BUILDER_MESSAGE_SOURCE_BUTTON_TEXT'] = "Источники";

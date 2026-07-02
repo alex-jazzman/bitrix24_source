@@ -2598,7 +2598,7 @@
 		ele.onload = ele.onreadystatechange = process;
 		ele.onerror = error;
 
-		ele.async = false;
+		ele.async = asset.async === true;
 		ele.defer = false;
 
 		asset.errorTimeout = window.setTimeout(function () {

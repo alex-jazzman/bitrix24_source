@@ -1,4 +1,4 @@
-<?
+<?php
 define("STOP_STATISTICS", true);
 define("PUBLIC_AJAX_MODE", true);
 define("NO_KEEP_STATISTIC", "Y");

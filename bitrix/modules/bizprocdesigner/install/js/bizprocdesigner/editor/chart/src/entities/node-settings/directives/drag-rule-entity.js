@@ -16,6 +16,8 @@ const createGhost = (el: HTMLElement): HTMLElement => {
 		position: 'fixed',
 		left: '-100%',
 		top: '-100%',
+		width: `${el.offsetWidth}px`,
+		height: `${el.offsetHeight}px`,
 	});
 	Dom.append(ghost, el.parentElement);
 

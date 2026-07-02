@@ -8,13 +8,13 @@ return [
 	"css" => 'dist/navigationpanel.bundle.css',
 	'js' => 'dist/navigationpanel.bundle.js',
 	'rel' => [
-		'ui.actions-bar',
 		'main.core',
 		'main.core.events',
-		'main.popup',
+		'ui.actions-bar',
+		'ui.fonts.opensans',
 		'ui.icon-set.api.core',
 		'ui.icon-set.outline',
-		'ui.fonts.opensans',
+		'ui.system.menu',
 	],
 	'skip_core' => false,
 	'settings' => [

@@ -20,6 +20,7 @@ IncludeModuleLangFile(__FILE__);
 
 $sTableID = "tbl_sql";
 $message = null;
+$query = $_REQUEST["query"] ?? '';
 
 CPageOption::SetOptionString("main", "nav_page_in_session", "N");
 $lAdmin = new CAdminList($sTableID);
@@ -143,8 +144,8 @@ if($message != null)
 
 $lAdmin->BeginEpilogContent();
 ?>
-	<input type="hidden" name="query" id="query" value="<?=htmlspecialcharsbx($query ?? '')?>">
-<?
+	<input type="hidden" name="query" id="query" value="<?=htmlspecialcharsbx($query)?>">
+<?php
 $lAdmin->EndEpilogContent();
 
 $lAdmin->CheckListMode();
@@ -156,7 +157,7 @@ require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_admin_af
 <script>
 function __FSQLSubmit()
 {
-	if(confirm('<?echo GetMessage("SQL_CONFIRM_EXECUTE")?>'))
+	if(confirm('<?= GetMessage("SQL_CONFIRM_EXECUTE")?>'))
 	{
 		document.getElementById('query').value = document.getElementById('sql').value;
 		window.scrollTo(0, 500);
@@ -165,7 +166,7 @@ function __FSQLSubmit()
 }
 function __FSQLSaveToFileSubmit()
 {
-	if(confirm('<?echo GetMessage("SQL_CONFIRM_EXECUTE_AND_DOWNLOAD")?>'))
+	if(confirm('<?= GetMessage("SQL_CONFIRM_EXECUTE_AND_DOWNLOAD")?>'))
 	{
 		document.getElementById('query').value = document.getElementById('sql').value;
 
@@ -177,34 +178,34 @@ function __FSQLSaveToFileSubmit()
 	}
 }
 </script>
-<?
+<?php
 $aTabs = array(
 	array("DIV"=>"tab1", "TAB"=>GetMessage("SQL_TAB"), "TITLE"=>GetMessage("SQL_TAB_TITLE")),
 );
 $editTab = new CAdminTabControl("editTab", $aTabs);
 
 ?>
-<form name="form1" action="<?echo $APPLICATION->GetCurPage()?>?lang=<?=LANG?>" method="POST">
+<form name="form1" action="<?= $APPLICATION->GetCurPage()?>?lang=<?=LANGUAGE_ID?>" method="POST">
 <?=bitrix_sessid_post()?>
-<?
+<?php
 $editTab->Begin();
 $editTab->BeginNextTab();
 ?>
 <tr valign="top">
 	<td width="100%" colspan="2">
-	<input type="hidden" name="lang" value="<?=LANG?>">
-	<textarea cols="60" name="sql" id="sql" rows="15" wrap="OFF" style="width:100%;"><? echo htmlspecialcharsbx($query ?? ''); ?></textarea><br />	</td>
+	<input type="hidden" name="lang" value="<?=LANGUAGE_ID?>">
+	<textarea cols="60" name="sql" id="sql" rows="15" wrap="OFF" style="width:100%;"><?= htmlspecialcharsbx($query); ?></textarea><br />	</td>
 </tr>
-<?$editTab->Buttons();?>
-<input <?if (!$isAdmin) echo "disabled"?> type="button" accesskey="x" name="execute" value="<?echo GetMessage("SQL_EXECUTE")?>" onclick="return __FSQLSubmit();" class="adm-btn-save">
-<input <?if (!$isAdmin) echo "disabled"?> type="button" value="<?echo GetMessage("SQL_EXECUTE_AND_DOWNLOAD")?>" onclick="return __FSQLSaveToFileSubmit();">
-<input type="reset" value="<?echo GetMessage("SQL_RESET")?>">
-<?
+<?php $editTab->Buttons();?>
+<input <?php if (!$isAdmin) echo "disabled"?> type="button" accesskey="x" name="execute" value="<?= GetMessage("SQL_EXECUTE")?>" onclick="return __FSQLSubmit();" class="adm-btn-save">
+<input <?php if (!$isAdmin) echo "disabled"?> type="button" value="<?= GetMessage("SQL_EXECUTE_AND_DOWNLOAD")?>" onclick="return __FSQLSaveToFileSubmit();">
+<input type="reset" value="<?= GetMessage("SQL_RESET")?>">
+<?php
 $editTab->End();
 ?>
 </form>
 
-<?
+<?php
 if(COption::GetOptionString('fileman', "use_code_editor", "Y") == "Y" && CModule::IncludeModule('fileman'))
 	CCodeEditor::Show(array('textareaId' => 'sql', 'height' => 350, 'forceSyntax' => 'sql'));
 

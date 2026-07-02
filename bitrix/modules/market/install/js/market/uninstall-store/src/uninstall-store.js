@@ -1,12 +1,13 @@
 import { defineStore } from 'ui.vue3.pinia';
-import {EventEmitter} from "main.core.events";
+import { EventEmitter } from 'main.core.events';
+
+let popupDelete = null;
 
 export const marketUninstallState = defineStore('market-uninstall', {
 	state: () => ({
 		uninstallConfirmShown: false,
 		appCode: '',
 		uninstallNodes: {},
-		popupDelete: null,
 		refreshUri: '',
 		action: '',
 	}),
@@ -37,7 +38,7 @@ export const marketUninstallState = defineStore('market-uninstall', {
 			this.showUninstallConfirmPopup();
 		},
 		showUninstallConfirmPopup: function () {
-			this.popupDelete = new BX.PopupWindow(
+			popupDelete = new BX.PopupWindow(
 				'market_delete_confirm_popup_' + this.appCode,
 				null,
 				{
@@ -47,7 +48,7 @@ export const marketUninstallState = defineStore('market-uninstall', {
 					events: {
 						onPopupClose: () => {
 							this.uninstallConfirmShown = false;
-							this.popupDelete.destroy();
+							this.destroyDeletePopup();
 						}
 					},
 					buttons: [
@@ -66,10 +67,7 @@ export const marketUninstallState = defineStore('market-uninstall', {
 								className: 'popup-window-button-link-cancel',
 								events: {
 									click: () => {
-										this.uninstallConfirmShown = false;
-										this.popupDelete.close();
-										this.popupDelete.destroy();
-										this.popupDelete = null;
+										this.closeDeletePopup();
 									}
 								}
 							}
@@ -77,7 +75,27 @@ export const marketUninstallState = defineStore('market-uninstall', {
 					]
 				}
 			);
-			this.popupDelete.show();
+			popupDelete.show();
+		},
+		closeDeletePopup: function () {
+			if (popupDelete)
+			{
+				popupDelete.close();
+			}
+			else
+			{
+				this.uninstallConfirmShown = false;
+			}
+		},
+		destroyDeletePopup: function () {
+			if (!popupDelete)
+			{
+				return;
+			}
+
+			const popup = popupDelete;
+			popupDelete = null;
+			popup.destroy();
 		},
 		uninstallApp: function () {
 			BX.ajax.runAction(
@@ -97,8 +115,15 @@ export const marketUninstallState = defineStore('market-uninstall', {
 				(response) => {
 					let result = response.data;
 					if (result.error) {
-						this.popupDelete.setContent('<div class="market_delete_confirm"><div class="market_delete_confirm_text">' + result.error + '</div></div>');
-						this.popupDelete.setButtons(
+						if (!popupDelete)
+						{
+							this.uninstallConfirmShown = false;
+
+							return;
+						}
+
+						popupDelete.setContent('<div class="market_delete_confirm"><div class="market_delete_confirm_text">' + result.error + '</div></div>');
+						popupDelete.setButtons(
 							[
 								new BX.PopupWindowButtonLink(
 									{
@@ -114,7 +139,7 @@ export const marketUninstallState = defineStore('market-uninstall', {
 								)
 							]
 						);
-						this.popupDelete.adjustPosition();
+						popupDelete.adjustPosition();
 					} else {
 						if (this.action.length > 0) {
 							try {
@@ -122,8 +147,7 @@ export const marketUninstallState = defineStore('market-uninstall', {
 							} catch (e) {}
 						}
 
-						this.popupDelete.close();
-						this.uninstallConfirmShown = false;
+						this.closeDeletePopup();
 
 						if (!!result.sliderUrl) {
 							BX.SidePanel.Instance.open(result.sliderUrl);

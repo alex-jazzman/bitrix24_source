@@ -5,3 +5,7 @@
 .bx-im-ai-assistant-chat-opener__container .bx-im-content-chat__textarea_container {
 	padding: 6px 10px 10px 10px;
 }
+
+.right-panel-ai-chat__content .bx-im-content-chat__textarea_container {
+	padding-bottom: 0;
+}

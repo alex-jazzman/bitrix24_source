@@ -1,7 +1,6 @@
 import { Extension } from 'main.core';
 import { markRaw } from 'ui.vue3';
 import { CONNECTION_OFFSET, CONNECTION_BEND_OFFSET, CONNECTION_BORDER_RADIUS } from '../constants';
-import { BoxIntersection } from '../utils';
 import type { State } from '../types';
 
 const isRenderOptimizationAvailable = Extension.getSettings('ui.block-diagram').get('isRenderOptimizationAvailable');
@@ -16,6 +15,8 @@ export function useState(): State
 		blockDiagramRef: null,
 		blockDiagramTop: 0,
 		blockDiagramLeft: 0,
+		blockDiagramWidth: 0,
+		blockDiagramHeight: 0,
 
 		cursorType: 'default',
 
@@ -28,6 +29,7 @@ export function useState(): State
 		waitAllPortsMounted: Promise.withResolvers(),
 		waitedBlockPortsIds: new Set(),
 
+		isRunUpdateBlocksCommand: false,
 		blocks: [],
 		connections: [],
 
@@ -42,12 +44,12 @@ export function useState(): State
 
 		portsElMap: markRaw(new Map()),
 		portsRectMap: {},
+		portsValidationsFnMap: new Map(),
+		validPortsMap: new Map(),
 
 		newConnection: null,
-		isValidNewConnection: true,
 
-		movingBlock: null,
-		movingConnections: [],
+		movingBlockId: null,
 
 		resizingBlock: null,
 
@@ -67,6 +69,7 @@ export function useState(): State
 		contextMenuLayerRef: null,
 		targetContainerRef: null,
 		isOpenContextMenu: false,
+		openedContextMenuName: null,
 		contextMenuInstance: null,
 		positionContextMenu: {
 			top: 0,
@@ -97,8 +100,7 @@ export function useState(): State
 		shortcuts: [],
 		mousePosition: { x: 0, y: 0 },
 		isKeyboardInitialized: false,
-		boxIntersection: isRenderOptimizationAvailable === RENDER_OPTIMIZATION.enabled
-			? markRaw(new BoxIntersection()) : null,
+		isRenderOptimizationAvailable: isRenderOptimizationAvailable === RENDER_OPTIMIZATION.enabled,
 		waitForTransformEnd: null,
 	};
 }

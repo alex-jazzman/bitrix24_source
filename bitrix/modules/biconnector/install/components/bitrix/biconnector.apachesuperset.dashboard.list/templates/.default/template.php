@@ -47,6 +47,7 @@ Extension::load([
 	'biconnector.apache-superset-dashboard-manager',
 	'biconnector.apache-superset-market-manager',
 	'biconnector.apache-superset-analytics',
+	'biconnector.aha-moment',
 	'biconnector.dashboard-export-master',
 	'biconnector.dashboard-related-items-list',
 	'ui.dialogs.messagebox',
@@ -63,6 +64,7 @@ Extension::load([
 	'spotlight',
 	'ui.system.dialog',
 	'ui.system.typography',
+	'biconnector.share-popup',
 ]);
 
 if ($arResult['SHOW_DELETE_INSTANCE_WARNING']):
@@ -153,6 +155,7 @@ if ($limitManager->isLimitByLicence() && !$limitManager->checkLimitWarning())
 		BX.BIConnector.SupersetDashboardGridManager.Instance = new BX.BIConnector.SupersetDashboardGridManager(<?= Json::encode([
 			'gridId' => $grid?->getId(),
 			'isNeedShowDraftGuide' => $arResult['NEED_SHOW_DRAFT_GUIDE'] ?? false,
+			'publishAhaMoment' => $arResult['PUBLISH_AHA_MOMENT'] ?? [],
 			'isAvailableDashboardCreation' => $arResult['IS_AVAILABLE_DASHBOARD_CREATION'] ?? false,
 			'isAvailableGroupCreation' => $arResult['IS_AVAILABLE_GROUP_CREATION'] ?? false,
 			'isMarketExists' => $arParams['IS_MARKET_EXISTS'] ?? false,

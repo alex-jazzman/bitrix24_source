@@ -1,14 +1,11 @@
 import { Type } from 'main.core';
-import { BuilderModel } from 'ui.vue3.vuex';
+import { BuilderModel, type GetterTree, type ActionTree, type MutationTree } from 'ui.vue3.vuex';
 
-import { RecentType } from 'im.v2.const';
+import { RecentType, type RecentTypeItem } from 'im.v2.const';
 import { formatFieldsWithConfig } from 'im.v2.model';
 
+import { type CounterItem as ImModelCounter } from '../type/counter';
 import { counterFieldsConfig } from './format/field-config';
-
-import type { GetterTree, ActionTree, MutationTree } from 'ui.vue3.vuex';
-import type { RecentTypeItem } from 'im.v2.const';
-import type { CounterItem as ImModelCounter } from '../type/counter';
 
 type CountersState = { collection: CountersCollection };
 type CountersCollection = { [chatId: string]: ImModelCounter };
@@ -72,12 +69,12 @@ export class CountersModel extends BuilderModel
 
 				for (const counterItem of Object.values(collection))
 				{
-					if (!this.#hasRecentType(collection, counterItem, recentType))
+					if (!this.#matchesRecentType(collection, counterItem, recentType))
 					{
 						continue;
 					}
 
-					if (this.#isMuted(collection, counterItem))
+					if (this.#isMuted(counterItem) || this.#isParentMuted(state.collection, counterItem))
 					{
 						continue;
 					}
@@ -98,7 +95,7 @@ export class CountersModel extends BuilderModel
 						continue;
 					}
 
-					if (this.#isMuted(state.collection, counterItem))
+					if (this.#isMuted(counterItem) || this.#isParentMuted(state.collection, counterItem))
 					{
 						continue;
 					}
@@ -109,7 +106,10 @@ export class CountersModel extends BuilderModel
 				return totalCount;
 			},
 			/** @function counters/getChildrenTotalCounter */
-			getChildrenTotalCounter: (state: CountersState) => (parentChatId: number): number => {
+			getChildrenTotalCounter: (state: CountersState) => (
+				parentChatId: number,
+				recentType?: RecentTypeItem,
+			): number => {
 				if (parentChatId === 0)
 				{
 					return 0;
@@ -118,13 +118,23 @@ export class CountersModel extends BuilderModel
 				let totalCount = 0;
 				for (const counterItem of Object.values(state.collection))
 				{
+					if (recentType && !this.#hasRecentType(counterItem, recentType))
+					{
+						continue;
+					}
+
 					const hasRequiredParent = counterItem.parentChatId === parentChatId;
 					if (!hasRequiredParent)
 					{
 						continue;
 					}
 
-					totalCount += counterItem.counter;
+					if (this.#isMuted(counterItem))
+					{
+						continue;
+					}
+
+					totalCount += this.#resolveCounter(counterItem);
 				}
 
 				return totalCount;
@@ -189,11 +199,14 @@ export class CountersModel extends BuilderModel
 
 				const preparedItems = payload.map((counterItem) => {
 					const preparedItem = this.#formatFields(counterItem);
+					const existingItem = store.state.collection[counterItem.chatId];
 
-					return {
-						...this.getElementState(),
-						...preparedItem,
-					};
+					if (existingItem)
+					{
+						return { ...existingItem, ...preparedItem };
+					}
+
+					return { ...this.getElementState(), ...preparedItem };
 				});
 
 				store.commit('setCounters', preparedItems);
@@ -236,19 +249,62 @@ export class CountersModel extends BuilderModel
 			},
 			/** @function counters/clearByRecentType */
 			clearByRecentType: (store, payload: { recentType: RecentTypeItem }) => {
-				store.commit('clearByRecentType', payload);
+				const { recentType } = payload;
+				const collection = store.state.collection;
+
+				const idsToDelete = [];
+				for (const counterItem of Object.values(collection))
+				{
+					if (!this.#matchesRecentType(collection, counterItem, recentType))
+					{
+						continue;
+					}
+
+					idsToDelete.push(counterItem.chatId);
+				}
+
+				for (const chatId of idsToDelete)
+				{
+					store.commit('delete', chatId);
+				}
 			},
 			/** @function counters/clearById */
 			clearById: (store, payload: { chatId: number }) => {
-				store.commit('clearById', payload);
+				const { chatId } = payload;
+				const collection = store.state.collection;
+
+				store.commit('delete', chatId);
+
+				for (const counterItem of Object.values(collection))
+				{
+					const hasRequiredParent = counterItem.parentChatId === chatId;
+					if (!hasRequiredParent)
+					{
+						continue;
+					}
+
+					store.commit('delete', counterItem.chatId);
+				}
 			},
 			/** @function counters/clearByParentId */
 			clearByParentId: (store, payload: { parentChatId: number }) => {
-				store.commit('clearByParentId', payload);
+				const { parentChatId } = payload;
+				const collection = store.state.collection;
+
+				for (const counterItem of Object.values(collection))
+				{
+					const hasRequiredParent = counterItem.parentChatId === parentChatId;
+					if (!hasRequiredParent)
+					{
+						continue;
+					}
+
+					store.commit('delete', counterItem.chatId);
+				}
 			},
 			/** @function counters/clear */
 			clear: (store) => {
-				store.commit('clear');
+				store.commit('clearCollection');
 			},
 		};
 	}
@@ -279,93 +335,60 @@ export class CountersModel extends BuilderModel
 				const existingItem = state.collection[chatId];
 				existingItem.isMuted = status;
 			},
-			clearByRecentType: (state: CountersState, payload: { recentType: RecentTypeItem }) => {
-				const { recentType } = payload;
-				const collection = state.collection;
-
-				const idsToDelete = [];
-				for (const counterItem of Object.values(collection))
-				{
-					if (!this.#hasRecentType(collection, counterItem, recentType))
-					{
-						continue;
-					}
-
-					idsToDelete.push(counterItem.chatId);
-				}
-
-				for (const chatId of idsToDelete)
-				{
-					delete collection[chatId];
-				}
+			delete: (state: CountersState, chatId: number) => {
+				delete state.collection[chatId];
 			},
-			clearById: (state: CountersState, payload: { chatId: number }) => {
-				const { chatId } = payload;
-				const collection = state.collection;
-
-				delete collection[chatId];
-
-				for (const counterItem of Object.values(collection))
-				{
-					const hasRequiredParent = counterItem.parentChatId === chatId;
-					if (!hasRequiredParent)
-					{
-						continue;
-					}
-
-					delete collection[counterItem.chatId];
-				}
-			},
-			clearByParentId: (state: CountersState, payload: { parentChatId: number }) => {
-				const { parentChatId } = payload;
-				const collection = state.collection;
-
-				for (const counterItem of Object.values(collection))
-				{
-					if (counterItem.parentChatId !== parentChatId)
-					{
-						continue;
-					}
-
-					delete collection[counterItem.chatId];
-				}
-			},
-			clear: (state: CountersState) => {
+			clearCollection: (state: CountersState) => {
 				state.collection = {};
 			},
 		};
 	}
 
-	#hasRecentType(
+	#matchesRecentType(
 		collection: CountersCollection,
 		counterItem: ImModelCounter,
 		recentType: RecentTypeItem,
 	): boolean
 	{
-		const hasRequiredType = counterItem.recentSections.includes(recentType);
-		if (hasRequiredType)
-		{
-			return true;
-		}
+		return this.#hasRecentType(counterItem, recentType)
+			|| this.#hasParentRecentType(collection, counterItem, recentType);
+	}
 
+	#hasRecentType(counterItem: ImModelCounter, recentType: RecentTypeItem): boolean
+	{
+		return counterItem.recentSections.includes(recentType);
+	}
+
+	#hasParentRecentType(
+		collection: CountersCollection,
+		counterItem: ImModelCounter,
+		recentType: RecentTypeItem,
+	): boolean
+	{
 		const parentChatId = counterItem.parentChatId;
 		const parentChat = collection[parentChatId];
-		const hasParentChat = parentChatId > 0 && parentChat;
-		if (!hasParentChat)
+		if (parentChatId === 0 || !parentChat)
 		{
 			return false;
 		}
 
-		const parentHasRequiredType = parentChat.recentSections.includes(recentType);
-
-		return parentHasRequiredType;
+		return parentChat.recentSections.includes(recentType);
 	}
 
-	#isMuted(collection: CountersCollection, counterItem: ImModelCounter): boolean
+	#isMuted(counterItem: ImModelCounter): boolean
+	{
+		return counterItem.isMuted;
+	}
+
+	#isParentMuted(collection: CountersCollection, counterItem: ImModelCounter): boolean
 	{
 		const parent = collection[counterItem.parentChatId];
+		if (!parent)
+		{
+			return false;
+		}
 
-		return counterItem.isMuted || parent?.isMuted;
+		return parent.isMuted;
 	}
 
 	#resolveCounter(counterItem: ImModelCounter): number

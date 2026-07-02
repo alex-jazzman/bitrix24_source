@@ -16,6 +16,7 @@ export const SettingsPage = {
 		TypeSelector,
 	},
 
+	timePeriodValidator: null,
 	data(): Object
 	{
 		let currentAutoCheckTypeId = 0;
@@ -30,9 +31,13 @@ export const SettingsPage = {
 			autoCheckTypeId: currentAutoCheckTypeId,
 			availabilityType: this.data.availabilityType ?? availabilityTypeList.always_active,
 			availabilityData: this.data.availabilityData ?? [],
-			timePeriodValidator: new TimePeriodValidator(),
 			timePeriodError: null,
 		};
+	},
+
+	created(): void
+	{
+		this.timePeriodValidator = new TimePeriodValidator();
 	},
 
 	methods: {
@@ -102,6 +107,11 @@ export const SettingsPage = {
 		{
 			this.timePeriodError = this.timePeriodValidator.getError();
 		},
+	},
+
+	created()
+	{
+		this.timePeriodValidator = new TimePeriodValidator();
 	},
 
 	mounted()

@@ -28,6 +28,7 @@ export type DayPickerDay = {
 	hidden: boolean,
 	current: boolean,
 	selected: boolean,
+	disabled: boolean,
 	dayOff: boolean,
 	rangeFrom: boolean,
 	rangeTo: boolean,
@@ -55,7 +56,7 @@ export class DayPicker extends BasePicker
 	{
 		return this.#refs.remember('container', () => {
 			return Tag.render`
-				<div class="ui-day-picker${this.getDatePicker().isFullYear() ? ' --full-year' : ''}">
+				<div class="ui-day-picker${this.getDatePicker().isFullYear() ? ' --full-year' : ''}" role="none">
 					${this.getHeader()}
 					${this.getContentContainer(this.getMonthContainer())}
 					${
@@ -77,7 +78,7 @@ export class DayPicker extends BasePicker
 			return this.getHeaderContainer(
 				this.getPrevBtn(),
 				Tag.render`
-					<div class="ui-date-picker-header-title">
+					<div class="ui-date-picker-header-title" aria-live="polite">
 						${this.getFullYearHeader()}
 					</div>
 				`,
@@ -89,7 +90,7 @@ export class DayPicker extends BasePicker
 			this.getPrevBtn(),
 			...Array.from({ length: numberOfMonths }).map((_, monthNumber: number) => {
 				return Tag.render`
-					<div class="ui-date-picker-header-title">
+					<div class="ui-date-picker-header-title" aria-live="polite">
 						${this.getHeaderMonth(monthNumber)}
 						${this.getHeaderYear(monthNumber)}
 					</div>
@@ -112,7 +113,12 @@ export class DayPicker extends BasePicker
 	{
 		return this.#refs.remember(`header-month-${monthNumber}`, () => {
 			return Tag.render`
-				<button type="button" class="ui-date-picker-header-month" onclick="${this.#handleMonthClick.bind(this)}"></button>
+				<button
+					type="button"
+					class="ui-date-picker-header-month"
+					aria-label="${Loc.getMessage('UI_DATE_PICKER_MONTH_VIEW_LABEL')}"
+					onclick="${this.#handleMonthClick.bind(this)}"
+				></button>
 			`;
 		});
 	}
@@ -121,7 +127,9 @@ export class DayPicker extends BasePicker
 	{
 		return this.#refs.remember('month-container', () => {
 			return Tag.render`
-				<div class="ui-day-picker-content" 
+				<div 
+					class="ui-day-picker-content"
+					role="none"
 					onclick="${this.#handleDayClick.bind(this)}"
 					onmouseover="${this.#handleDayMouseOver.bind(this)}"
 					onmouseout="${this.#handleDayMouseOut.bind(this)}"
@@ -134,7 +142,12 @@ export class DayPicker extends BasePicker
 	{
 		return this.#refs.remember(`header-year-${monthNumber}`, () => {
 			return Tag.render`
-				<button type="button" class="ui-date-picker-header-year" onclick="${this.#handleYearClick.bind(this)}"></button>
+				<button 
+					type="button" 
+					class="ui-date-picker-header-year"
+					aria-label="${Loc.getMessage('UI_DATE_PICKER_YEAR_VIEW_LABEL')}"
+					onclick="${this.#handleYearClick.bind(this)}"
+				></button>
 			`;
 		});
 	}
@@ -144,8 +157,15 @@ export class DayPicker extends BasePicker
 		return this.#refs.remember('date-time-container', () => {
 			return Tag.render`
 				<div class="ui-date-picker-time-container">
-					<button type="button" class="ui-date-picker-time-box" onclick="${this.#handleTimeClick.bind(this)}">
-						<span class="ui-date-picker-time-clock"></span>
+					<button 
+						type="button" 
+						class="ui-date-picker-time-box"
+						aria-label="${Loc.getMessage('UI_DATE_PICKER_TIME_LABEL')}"
+						aria-describedby="${this.getDatePicker().getId()}-date-time-value"
+						title="${Loc.getMessage('UI_DATE_PICKER_TIME_LABEL')}" 
+						onclick="${this.#handleTimeClick.bind(this)}"
+					>
+						<span class="ui-date-picker-time-clock" aria-hidden="true"></span>
 						${this.getTimeValueContainer()}
 					</button>
 				</div>
@@ -157,24 +177,34 @@ export class DayPicker extends BasePicker
 	{
 		return this.#refs.remember('range-time-container', () => {
 			return Tag.render`
-				<div class="ui-date-picker-time-container --range">
+				<div 
+					class="ui-date-picker-time-container --range" 
+					role="group" 
+					aria-label="${Loc.getMessage('UI_DATE_PICKER_RANGE_TIME')}"
+				>
 					<div class="ui-date-picker-time-range-slot">
 						<button 
 							type="button" 
-							class="ui-date-picker-time-box --range-start" 
+							class="ui-date-picker-time-box --range-start"
+							aria-label="${Loc.getMessage('UI_DATE_PICKER_RANGE_TIME_START')}"
+							aria-describedby="${this.getDatePicker().getId()}-time-start-value"
+							title="${Loc.getMessage('UI_DATE_PICKER_RANGE_TIME_START')}"
 							onclick="${this.#handleTimeRangeStartClick.bind(this)}"
 						>
-							<span class="ui-date-picker-time-clock"></span>
+							<span class="ui-date-picker-time-clock" aria-hidden="true"></span>
 							${this.getTimeRangeStartContainer()}
 						</button>
 					</div>
 					<div class="ui-date-picker-time-range-slot">
 						<button 
-							type="button" 
-							class="ui-date-picker-time-box --range-end" 
+							type="button"
+							class="ui-date-picker-time-box --range-end"
+							aria-label="${Loc.getMessage('UI_DATE_PICKER_RANGE_TIME_END')}"
+							aria-describedby="${this.getDatePicker().getId()}-time-end-value"
+							title="${Loc.getMessage('UI_DATE_PICKER_RANGE_TIME_END')}"
 							onclick="${this.#handleTimeRangeEndClick.bind(this)}"
 						>
-							<span class="ui-date-picker-time-clock"></span>
+							<span class="ui-date-picker-time-clock" aria-hidden="true"></span>
 							${this.getTimeRangeEndContainer()}
 						</button>
 					</div>
@@ -186,25 +216,25 @@ export class DayPicker extends BasePicker
 	getTimeValueContainer(): HTMLElement
 	{
 		return this.#refs.remember('time-value', () => {
-			return Tag.render`<div class="ui-date-picker-time-value"></div>`;
+			return Tag.render`<div class="ui-date-picker-time-value" id="${this.getDatePicker().getId()}-date-time-value"></div>`;
 		});
 	}
 
 	getTimeRangeStartContainer(): HTMLElement
 	{
 		return this.#refs.remember('time-range-start', () => {
-			return Tag.render`<div class="ui-date-picker-time-value"></div>`;
+			return Tag.render`<div class="ui-date-picker-time-value" id="${this.getDatePicker().getId()}-time-start-value"></div>`;
 		});
 	}
 
 	getTimeRangeEndContainer(): HTMLElement
 	{
 		return this.#refs.remember('time-range-end', () => {
-			return Tag.render`<div class="ui-date-picker-time-value"></div>`;
+			return Tag.render`<div class="ui-date-picker-time-value" id="${this.getDatePicker().getId()}-time-end-value"></div>`;
 		});
 	}
 
-	getWeekDays(): string[]
+	getWeekDays(): Array<[string, string]>
 	{
 		if (this.#weekdays !== null)
 		{
@@ -212,14 +242,14 @@ export class DayPicker extends BasePicker
 		}
 
 		const firstWeekDay: number = this.getDatePicker().getFirstWeekDay();
-		const weekDays: string[] = [
-			Loc.getMessage('DOW_0'),
-			Loc.getMessage('DOW_1'),
-			Loc.getMessage('DOW_2'),
-			Loc.getMessage('DOW_3'),
-			Loc.getMessage('DOW_4'),
-			Loc.getMessage('DOW_5'),
-			Loc.getMessage('DOW_6'),
+		const weekDays: Array<[string, string]> = [
+			[Loc.getMessage('DOW_0'), Loc.getMessage('DAY_OF_WEEK_0')],
+			[Loc.getMessage('DOW_1'), Loc.getMessage('DAY_OF_WEEK_1')],
+			[Loc.getMessage('DOW_2'), Loc.getMessage('DAY_OF_WEEK_2')],
+			[Loc.getMessage('DOW_3'), Loc.getMessage('DAY_OF_WEEK_3')],
+			[Loc.getMessage('DOW_4'), Loc.getMessage('DAY_OF_WEEK_4')],
+			[Loc.getMessage('DOW_5'), Loc.getMessage('DAY_OF_WEEK_5')],
+			[Loc.getMessage('DOW_6'), Loc.getMessage('DAY_OF_WEEK_6')],
 		];
 
 		this.#weekdays = [
@@ -235,7 +265,14 @@ export class DayPicker extends BasePicker
 		const cacheId = `month-${monthNumber}`;
 		if (!this.#refs.has(cacheId))
 		{
-			const monthContainer = Tag.render`<div class="ui-day-picker-month"></div>`;
+			const monthContainer = Tag.render`
+				<div 
+					class="ui-day-picker-month" 
+					role="grid"
+					aria-multiselectable="${this.getDatePicker().isSingleMode() ? 'false' : 'true'}"
+				></div>
+			`;
+
 			this.#refs.set(cacheId, monthContainer);
 
 			Dom.append(monthContainer, this.getMonthContainer());
@@ -258,7 +295,7 @@ export class DayPicker extends BasePicker
 	#renderWeekDays(monthNumber: number, monthContainer: HTMLElement): HTMLElement
 	{
 		return this.#refs.remember(`week-day-${monthNumber}`, () => {
-			const weekDayContainer = Tag.render`<div class="ui-day-picker-week --week-days"></div>`;
+			const weekDayContainer = Tag.render`<div class="ui-day-picker-week --week-days" role="row" aria-hidden="true"></div>`;
 			Dom.append(weekDayContainer, monthContainer);
 
 			if (this.getDatePicker().shouldShowWeekNumbers())
@@ -267,8 +304,15 @@ export class DayPicker extends BasePicker
 				Dom.append(dayContainer, weekDayContainer);
 			}
 
-			this.getWeekDays().forEach((weekDayName: string) => {
-				const dayContainer = Tag.render`<div class="ui-day-picker-week-day">${Text.encode(weekDayName)}</div>`;
+			this.getWeekDays().forEach((weekDay: [string, string]) => {
+				const [shortName, longName] = weekDay;
+				const dayContainer = Tag.render`
+					<div 
+						class="ui-day-picker-week-day"
+						aria-label="${longName}" 
+						role="columnheader"
+					>${Text.encode(shortName)}</div>
+				`;
 				Dom.append(dayContainer, weekDayContainer);
 			});
 
@@ -279,7 +323,7 @@ export class DayPicker extends BasePicker
 	#renderWeek(monthNumber: number, weekNumber: number, monthContainer: HTMLElement): HTMLElement
 	{
 		return this.#refs.remember(`week-${monthNumber}-${weekNumber}`, () => {
-			const weekContainer = Tag.render`<div class="ui-day-picker-week"></div>`;
+			const weekContainer = Tag.render`<div class="ui-day-picker-week" role="row"></div>`;
 			Dom.append(weekContainer, monthContainer);
 
 			return weekContainer;
@@ -306,7 +350,7 @@ export class DayPicker extends BasePicker
 	{
 		const button: HTMLElement = this.#refs.remember(id, () => {
 			const dayContainer = Tag.render`
-				<button 
+				<button
 					type="button"
 					class="ui-day-picker-day"
 					data-day="${day.day}"
@@ -316,7 +360,7 @@ export class DayPicker extends BasePicker
 					role="gridcell"
 				>
 					<span class="ui-day-picker-day-inner">${day.day}</span>
-					<span class="ui-day-picker-day-marks"></span>
+					<span class="ui-day-picker-day-marks" aria-hidden="true"></span>
 				</button>
 			`;
 
@@ -324,6 +368,30 @@ export class DayPicker extends BasePicker
 
 			return dayContainer;
 		});
+
+		const dayLabel = DateTimeFormat.format(DateTimeFormat.getFormat('FULL_DATE_FORMAT'), day.date, null, true);
+		if (button.getAttribute('aria-label') !== dayLabel)
+		{
+			button.setAttribute('aria-label', dayLabel);
+		}
+
+		const ariaSelected = day.selected || day.rangeIn ? 'true' : 'false';
+		if (button.getAttribute('aria-selected') !== ariaSelected)
+		{
+			button.setAttribute('aria-selected', ariaSelected);
+		}
+
+		if (day.current)
+		{
+			if (button.getAttribute('aria-current') !== 'date')
+			{
+				button.setAttribute('aria-current', 'date');
+			}
+		}
+		else if (button.hasAttribute('aria-current'))
+		{
+			button.removeAttribute('aria-current');
+		}
 
 		const currentDay: number = Number(button.dataset.day);
 		const currentMonth: number = Number(button.dataset.month);
@@ -340,6 +408,7 @@ export class DayPicker extends BasePicker
 			'--outside': day.outside,
 			'--current': !day.outside && day.current,
 			'--day-off': !day.outside && day.dayOff,
+			'--disabled': day.disabled,
 			'--selected': day.selected,
 			'--hidden': day.hidden,
 			'--range-from': day.rangeFrom,
@@ -365,6 +434,8 @@ export class DayPicker extends BasePicker
 		{
 			button.className = classNames;
 		}
+
+		button.disabled = Boolean(day.disabled);
 
 		// Day Colors
 		const currentBgColor: string | null = button.dataset.bgColor || null;
@@ -473,6 +544,8 @@ export class DayPicker extends BasePicker
 			}
 
 			const monthContainer = this.#renderMonthContainer(monthNumber);
+			monthContainer.ariaLabel = DateTimeFormat.format('f Y', month.date, null, true);
+
 			if (this.getDatePicker().isFullYear())
 			{
 				this.#renderMonthHeader(monthNumber, monthContainer);
@@ -501,7 +574,7 @@ export class DayPicker extends BasePicker
 			});
 		});
 
-		if (focusButton !== null && isFocused)
+		if (focusButton !== null && isFocused && this.getDatePicker().getFocusInputModality() === 'keyboard')
 		{
 			focusButton.focus({ preventScroll: true });
 		}
@@ -510,6 +583,9 @@ export class DayPicker extends BasePicker
 		{
 			this.#renderTime();
 		}
+
+		this.getPrevBtn().disabled = !this.getDatePicker().canNavigate('day', 'prev');
+		this.getNextBtn().disabled = !this.getDatePicker().canNavigate('day', 'next');
 	}
 
 	getMonths(): DayPickerMonth[]
@@ -558,6 +634,7 @@ export class DayPicker extends BasePicker
 						}
 					}
 
+					const disabled = available && !picker.isDateAllowed(date, 'day');
 					const selected = available && picker.isDateSelected(date, 'day');
 					const rangeFrom = available && from && to && isDatesEqual(date, from);
 					const rangeTo = available && from && to && isDatesEqual(date, to);
@@ -596,6 +673,7 @@ export class DayPicker extends BasePicker
 						outside,
 						current: isDatesEqual(date, today, 'day'),
 						selected,
+						disabled,
 						hidden: outside && !showOutsideDays,
 						dayOff: picker.isDayOff(date),
 						rangeSelected: selected && rangeSelected,
@@ -718,7 +796,7 @@ export class DayPicker extends BasePicker
 	#handleDayClick(event: MouseEvent): void
 	{
 		const dayElement = event.target.closest('.ui-day-picker-day');
-		if (dayElement === null)
+		if (dayElement === null || dayElement.disabled)
 		{
 			return;
 		}
@@ -760,6 +838,14 @@ export class DayPicker extends BasePicker
 		const month = Text.toInteger(dataset.month);
 		const day = Text.toInteger(dataset.day);
 		this.emit('onFocus', { year, month, day });
+	}
+
+	clearMouseOutTimeout(): void
+	{
+		if (this.#mouseOutTimeout !== null)
+		{
+			clearTimeout(this.#mouseOutTimeout);
+		}
 	}
 
 	#handleDayMouseOut(event: MouseEvent): void
@@ -810,5 +896,15 @@ export class DayPicker extends BasePicker
 		{
 			this.emit('onRangeEndClick');
 		}
+	}
+
+	getPrevBtnLabel(): string
+	{
+		return Loc.getMessage(this.getDatePicker().isFullYear() ? 'UI_DATE_PICKER_PREV_YEAR' : 'UI_DATE_PICKER_PREV_MONTH');
+	}
+
+	getNextBtnLabel(): string
+	{
+		return Loc.getMessage(this.getDatePicker().isFullYear() ? 'UI_DATE_PICKER_NEXT_YEAR' : 'UI_DATE_PICKER_NEXT_MONTH');
 	}
 }

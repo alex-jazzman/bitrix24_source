@@ -1,6 +1,6 @@
 import { Type } from 'main.core';
 import { BannerDispatcher } from 'ui.banner-dispatcher';
-import { Popup, CloseIconSize, PopupManager } from 'main.popup';
+import { type Popup, CloseIconSize, PopupManager } from 'main.popup';
 import './style.css';
 
 export type NotificationOptions = {
@@ -10,7 +10,7 @@ export type NotificationOptions = {
 	userOptionName: string;
 }
 
-// unused at the moment, but may be used in the future for other notifications
+// unused at the moment, but may be used in the future for other notifications, need export class to build
 class MassConnectNotification
 {
 	#popup: Popup = null;

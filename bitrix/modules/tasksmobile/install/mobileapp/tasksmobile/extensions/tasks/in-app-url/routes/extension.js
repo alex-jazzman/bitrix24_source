@@ -2,6 +2,8 @@
  * @module tasks/in-app-url/routes
  */
 jn.define('tasks/in-app-url/routes', (require, exports, module) => {
+	const { requireLazy } = require('require-lazy');
+
 	/**
 	 * @param {InAppUrl} inAppUrl
 	 */

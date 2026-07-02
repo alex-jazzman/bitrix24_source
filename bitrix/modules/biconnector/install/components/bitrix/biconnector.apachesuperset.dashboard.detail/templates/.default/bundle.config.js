@@ -5,4 +5,6 @@ module.exports = {
 	},
 	namespace: 'BX.BIConnector.ApacheSuperset.Dashboard',
 	adjustConfigPhp: false,
+	minification: false,
+	sourceMaps: false,
 };

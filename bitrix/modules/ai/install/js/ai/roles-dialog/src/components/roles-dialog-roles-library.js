@@ -1,5 +1,5 @@
 import { BIcon } from 'ui.icon-set.api.vue';
-import { Actions, Main } from 'ui.icon-set.api.core';
+import { Actions, Main, Outline } from 'ui.icon-set.api.core';
 import { Runtime, Event } from 'main.core';
 import type { AnalyticsOptions } from 'ui.analytics';
 import '../css/roles-dialog-roles-library.css';
@@ -8,6 +8,13 @@ export const RolesDialogRolesLibrary = {
 	components: {
 		BIcon,
 	},
+	props: {
+		useRedesign: {
+			type: Boolean,
+			required: false,
+			default: false,
+		},
+	},
 	computed: {
 		chevronRightIconName(): string
 		{
@@ -15,7 +22,11 @@ export const RolesDialogRolesLibrary = {
 		},
 		rolesLibraryIconName(): string
 		{
-			return Main.ROLES_LIBRARY;
+			return this.useRedesign ? Outline.ROLES_LIBRARY : Main.ROLES_LIBRARY;
+		},
+		rolesLibraryIconSize(): number
+		{
+			return this.useRedesign ? 24 : 32;
 		},
 	},
 	methods: {
@@ -69,7 +80,7 @@ export const RolesDialogRolesLibrary = {
 			<div class="ai__roles-dialog_roles-library">
 				<div class="ai__roles-dialog_roles-library-inner">
 				<div class="ai__roles-dialog_roles-library-title-wrapper">
-					<b-icon :size="32" :name="rolesLibraryIconName"></b-icon>
+					<b-icon :size="rolesLibraryIconSize" :name="rolesLibraryIconName"></b-icon>
 					<span class="ai__roles-dialog_roles-library-title">
 						{{ $Bitrix.Loc.getMessage('AI_COPILOT_ROLES_LIBRARY_TITLE') }}
 					</span>

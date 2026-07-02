@@ -1,8 +1,6 @@
 <?
-$MESS["IM_RECENT_HEADER_MENU_READ_ALL_MSGVER_1"] = "Прочитать всё";
 $MESS["IM_RECENT_HEADER_MENU_CHAT_GROUPS_TITLE"] = "Создать папки";
 $MESS["IM_RECENT_HEADER_MENU_CHAT_GROUPS_SUBTITLE"] = "Сгруппируйте чаты по папкам для быстрого доступа к нужному диалогу";
-$MESS["IM_RECENT_HEADER_MENU_SHOW_UNREAD_ONLY_MSGVER_2"] = "Непрочитанные";
 $MESS["IM_RECENT_CREATE_GROUP_CHAT_TITLE_V2"] = "Групповой чат";
 $MESS["IM_RECENT_CREATE_GROUP_CHAT_SUBTITLE_MSGVER_1"] = "Для обсуждения вопросов";
 $MESS["IM_RECENT_CREATE_CHANNEL_TITLE_V2"] = "Канал";

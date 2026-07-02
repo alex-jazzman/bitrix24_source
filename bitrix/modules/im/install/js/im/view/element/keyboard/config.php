@@ -13,10 +13,10 @@ return [
 	],
 	'rel' => [
 		'main.polyfill.core',
+		'im.lib.logger',
+		'im.lib.utils',
 		'ui.design-tokens',
 		'ui.vue',
-		'im.lib.utils',
-		'im.lib.logger',
 	],
 	'skip_core' => true,
 ];

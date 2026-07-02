@@ -94,6 +94,11 @@
 	--menu-item-icon-active: url("../images/icons/menu-items/solid/chats.svg");
 }
 
+.menu-im-copilot .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/copilot.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/copilot.svg");
+}
+
 .menu-im-collab .menu-item-icon {
 	--menu-item-icon-default: url("../images/icons/menu-items/outline/collabs.svg");
 	--menu-item-icon-active: url("../images/icons/menu-items/solid/collabs.svg");
@@ -102,6 +107,11 @@
 .menu-all-groups .menu-item-icon {
 	--menu-item-icon-default: url("../images/icons/menu-items/outline/groups.svg");
 	--menu-item-icon-active: url("../images/icons/menu-items/solid/groups.svg");
+}
+
+.menu-all-projects .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/collabs.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/collabs.svg");
 }
 
 .menu-files .menu-item-icon {
@@ -214,8 +224,8 @@
 }
 
 .menu-note-base .menu-item-icon {
-	--menu-item-icon-default: url("/bitrix/js/ui/icon-set/outline/images/document-sign.svg");
-	--menu-item-icon-active: url("/bitrix/js/ui/icon-set/outline/images/document-sign.svg");
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/note-base.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/note-base.svg");
 }
 
 .menu-boards .menu-item-icon {
@@ -267,4 +277,9 @@
 	transform: rotate(180deg);
 	--menu-item-icon-default: url("../images/icons/chevron-down.svg");
 	--menu-item-icon-active: url("../images/icons/chevron-down.svg");
+}
+
+.menu-performan-library .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/sign-b2e.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/sign-b2e.svg");
 }

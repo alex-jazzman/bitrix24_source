@@ -1,0 +1,26 @@
+<?php
+$MESS["NOTE_RECYCLEBIN_BREADCRUMB_ROOT"] = "Recycle bin";
+$MESS["NOTE_RECYCLEBIN_BULK_POPUP_ORPHAN_HINT"] = "These include articles (#COUNT#) whose original containing space was deleted. Select a new parent space for these articles.";
+$MESS["NOTE_RECYCLEBIN_BULK_POPUP_TEXT"] = "All #COUNT# articles will be restored from the Recycle Bin.";
+$MESS["NOTE_RECYCLEBIN_BULK_POPUP_TITLE"] = "Restore articles";
+$MESS["NOTE_RECYCLEBIN_ORPHAN_POPUP_PLACEHOLDER"] = "Start typing space name";
+$MESS["NOTE_RECYCLEBIN_ORPHAN_POPUP_TEXT"] = "The original containing space of the article \"#DOCUMENT#\" no longer exists. Select a new parent space for this article.";
+$MESS["NOTE_RECYCLEBIN_ORPHAN_POPUP_TITLE"] = "Restore article";
+$MESS["NOTE_RECYCLEBIN_PAGE_CONFIRM_CANCEL"] = "Cancel";
+$MESS["NOTE_RECYCLEBIN_PAGE_CONFIRM_EMPTY"] = "All articles in the Recycle Bin will be deleted permanently. This action cannot be undone. Are you sure you want to continue?";
+$MESS["NOTE_RECYCLEBIN_PAGE_CONFIRM_RESTORE_ALL"] = "Do you want to restore all articles from the Recycle Bin?";
+$MESS["NOTE_RECYCLEBIN_PAGE_EMPTY_ACTION"] = "Empty Recycle Bin";
+$MESS["NOTE_RECYCLEBIN_PAGE_EMPTY_ACTION_CONFIRM"] = "Yes";
+$MESS["NOTE_RECYCLEBIN_PAGE_EMPTY_ACTION_TITLE"] = "Empty Recycle Bin";
+$MESS["NOTE_RECYCLEBIN_PAGE_EMPTY_HINT"] = "The Recycle Bin is empty.";
+$MESS["NOTE_RECYCLEBIN_PAGE_EMPTY_SUCCESS"] = "The Recycle Bin has been wiped. Deleted articles: #COUNT#.";
+$MESS["NOTE_RECYCLEBIN_PAGE_ERROR_GENERIC"] = "Cannot complete action.";
+$MESS["NOTE_RECYCLEBIN_PAGE_HARD_DELETE_SUCCESS"] = "The article has gone forever.";
+$MESS["NOTE_RECYCLEBIN_PAGE_MORE_LABEL"] = "Actions";
+$MESS["NOTE_RECYCLEBIN_PAGE_RESTORE"] = "Restore";
+$MESS["NOTE_RECYCLEBIN_PAGE_RESTORE_ALL"] = "Restore all";
+$MESS["NOTE_RECYCLEBIN_PAGE_RESTORE_ALL_SUCCESS"] = "Articles restored: #COUNT#";
+$MESS["NOTE_RECYCLEBIN_PAGE_RESTORE_ALL_SUCCESS_WITH_SKIPPED"] = "Articles restored: #COUNT#. Skipped #SKIPPED# articles because they need a new space.";
+$MESS["NOTE_RECYCLEBIN_PAGE_RESTORE_SUCCESS"] = "Article has been restored.";
+$MESS["NOTE_RECYCLEBIN_PAGE_SUBTITLE"] = "Articles are kept in the Recycle Bin for 30 days. After the 30-day retention period, they will be wiped permanently.";
+$MESS["NOTE_RECYCLEBIN_PAGE_TITLE"] = "Recycle bin";

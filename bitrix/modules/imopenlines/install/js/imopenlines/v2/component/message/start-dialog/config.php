@@ -9,8 +9,8 @@ return [
 	'js' => 'dist/start-dialog.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'im.v2.lib.parser',
 		'im.v2.component.message.base',
+		'im.v2.lib.parser',
 	],
 	'skip_core' => true,
 ];

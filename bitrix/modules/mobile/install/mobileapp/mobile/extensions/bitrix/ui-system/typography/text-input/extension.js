@@ -5,6 +5,7 @@ jn.define('ui-system/typography/text-input', (require, exports, module) => {
 	const { TextBase } = require('ui-system/typography/text-base');
 
 	module.exports = {
+		/** @param {TypographyTextInputProps} props */
 		TextInput: (props) => TextBase({ nativeElement: TextInput, ...props }),
 	};
 });

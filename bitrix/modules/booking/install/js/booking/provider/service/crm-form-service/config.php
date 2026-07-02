@@ -8,13 +8,12 @@ return [
 	'css' => 'dist/crm-form-service.bundle.css',
 	'js' => 'dist/crm-form-service.bundle.js',
 	'rel' => [
-		'main.core',
-		'booking.core',
 		'booking.const',
+		'booking.core',
 		'booking.lib.api-client',
-		'booking.provider.service.resources-type-service',
 		'booking.provider.service.resources-service',
-		'booking.model.crm-form',
+		'booking.provider.service.resources-type-service',
+		'main.core',
 	],
 	'skip_core' => false,
 ];

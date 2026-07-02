@@ -1,0 +1,40 @@
+.crm-timeline__client-communication-wrapper {
+	display: inline-flex;
+	flex-direction: row;
+	vertical-align: bottom;
+	align-items: flex-start;
+	gap: var(--ui-space-inline-xs);
+	margin-left: var(--ui-space-stack-2xs);;
+}
+
+.crm-timeline__client-communication {
+	display: inline-block;
+	filter: grayscale(86%);
+	transition: 300ms all ease;
+	cursor: default;
+	width: var(--ui-size-lg);
+	height: var(--ui-size-md);;
+	opacity: var(--ui-opacity-40);
+}
+
+.crm-timeline__client-communication-available.crm-timeline__client-communication {
+	filter: grayscale(0);
+	cursor: pointer;
+	opacity: var(--ui-opacity-80);
+}
+
+.crm-timeline__client-communication-available.crm-timeline__client-communication:hover {
+	opacity: var(--ui-opacity-full);
+}
+
+.crm-timeline__client-communication.--phone {
+	background: url("../../images/common/crm-timeline__handset.svg") no-repeat center;
+}
+
+.crm-timeline__client-communication.--email {
+	background: url("../../images/common/crm-timeline__envelope.svg") no-repeat center;
+}
+
+.crm-timeline__client-communication.--im {
+	background: url("../../images/common/crm-timeline__messenger.svg") no-repeat center;
+}

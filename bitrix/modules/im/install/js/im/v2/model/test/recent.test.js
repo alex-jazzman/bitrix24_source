@@ -682,6 +682,70 @@ describe('RecentModel', () => {
 				assert.equal(Boolean(updatedStoreItem), false);
 			});
 		});
+		describe('clearByDialogId', () => {
+			it('should remove specific item from collection', async () => {
+				const recentItem1 = getRecentItem({ dialogId: 'chat1' });
+				const recentItem2 = getRecentItem({ dialogId: 'chat2' });
+
+				await store.dispatch('recent/setCollection', {
+					items: [recentItem1, recentItem2],
+					type: RecentType.default,
+				});
+
+				const { recentIndex } = store.state.recent;
+				const recentIdSet = recentIndex[RecentModel.ROOT_PARENT_ID][RecentType.default];
+
+				assert.equal(recentIdSet.has(recentItem1.dialogId), true);
+				assert.equal(recentIdSet.has(recentItem2.dialogId), true);
+
+				await store.dispatch('recent/clearByDialogId', {
+					dialogId: recentItem1.dialogId,
+					type: RecentType.default,
+				});
+
+				assert.equal(recentIdSet.has(recentItem1.dialogId), false);
+				assert.equal(recentIdSet.has(recentItem2.dialogId), true);
+			});
+			it('should remove item from unread collection', async () => {
+				const recentItem = getRecentItem({ dialogId: 'chat1' });
+
+				await store.dispatch('recent/setUnreadCollection', {
+					items: [recentItem],
+					type: RecentType.default,
+				});
+
+				const { unreadIndex } = store.state.recent;
+				const recentIdSet = unreadIndex[RecentModel.ROOT_PARENT_ID][RecentType.default];
+
+				assert.equal(recentIdSet.has(recentItem.dialogId), true);
+
+				await store.dispatch('recent/clearByDialogId', {
+					dialogId: recentItem.dialogId,
+					type: RecentType.default,
+					unread: true,
+				});
+
+				assert.equal(recentIdSet.has(recentItem.dialogId), false);
+			});
+			it('should handle clearing non-existent dialogId', async () => {
+				const recentItem = getRecentItem({ dialogId: 'chat1' });
+
+				await store.dispatch('recent/setCollection', {
+					items: [recentItem],
+					type: RecentType.default,
+				});
+
+				await store.dispatch('recent/clearByDialogId', {
+					dialogId: 'chat2',
+					type: RecentType.default,
+				});
+
+				const { recentIndex } = store.state.recent;
+				const recentIdSet = recentIndex[RecentModel.ROOT_PARENT_ID][RecentType.default];
+
+				assert.equal(recentIdSet.has(recentItem.dialogId), true);
+			});
+		});
 	});
 });
 

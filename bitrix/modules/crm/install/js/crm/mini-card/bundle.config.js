@@ -3,5 +3,4 @@ module.exports = {
 	output: 'dist/index.bundle.js',
 	namespace: 'BX.Crm',
 	browserslist: true,
-	minification: true,
 };

@@ -49,6 +49,14 @@ export const PopupContent = {
 				{
 					variablesWithoutMinAndSecondary.delete(variableId);
 				}
+
+				if (!Type.isNil(variable.dependant) && !this.notSavedValues.has(variableId))
+				{
+					for (const dependantId of variable.dependant)
+					{
+						variablesWithoutMinAndSecondary.delete(dependantId);
+					}
+				}
 			}
 
 			return variablesWithoutMinAndSecondary;
@@ -71,8 +79,9 @@ export const PopupContent = {
 		},
 		switcherOptions(): Object {
 			return {
-				size: 'small',
+				size: 'large',
 				color: 'primary',
+				useAirDesign: true,
 			};
 		},
 		secondarySwitcherOptions(): Object {
@@ -209,6 +218,23 @@ export const PopupContent = {
 				},
 			};
 		},
+		isDependantVariable(variableId: string): boolean {
+			for (const [, variable: Variable] of this.variablesShownInList)
+			{
+				if (!Type.isNil(variable.dependant) && variable.dependant.has(variableId))
+				{
+					return true;
+				}
+			}
+
+			return false;
+		},
+		className(variableId: string): boolean {
+			return this.isDependantVariable(variableId)
+				? '--dependant'
+				: ''
+			;
+		},
 	},
 	// data attributes are needed for e2e automated tests
 	template: `
@@ -221,23 +247,29 @@ export const PopupContent = {
 				<slot name="role-title"/>
 			</PopupHeader>
 			<div class="ui-access-rights-v2-dv-popup--line-container">
-				<div
-					v-for="[variableId, variable] in variablesShownInList"
-					:key="variableId"
-					class="ui-access-rights-v2-dv-popup--line"
+				<TransitionGroup
+					name="ui-access-rights-v2-dv-fade"
+					tag="div"
 				>
-					<div class="ui-access-rights-v2-dv-popup--line-title">
-						<span class="ui-access-rights-v2-text-ellipsis" :title="variable.title">{{ variable.title }}</span>
-						<Icon v-if="variable.hint" :name="iconSet.INFO_1" :color="'var(--ui-color-palette-gray-40)'" :size="20" v-hint="getVariableHintOptions(variable)"></Icon>
+					<div
+						v-for="[variableId, variable] in variablesShownInList"
+						:key="variableId"
+						class="ui-access-rights-v2-dv-popup--line"
+						:class="className(variableId)"
+					>
+						<div class="ui-access-rights-v2-dv-popup--line-title">
+							<span class="ui-access-rights-v2-text-ellipsis" :title="variable.title">{{ variable.title }}</span>
+							<Icon v-if="variable.hint" :name="iconSet.INFO_1" :color="'var(--ui-color-palette-gray-40)'" :size="20" v-hint="getVariableHintOptions(variable)"></Icon>
+						</div>
+						<Switcher
+							:is-checked="notSavedValues.has(variable.id)"
+							@check="addValue(variable.id)"
+							@uncheck="removeValue(variable.id)"
+							:options="switcherOptions"
+							:data-accessrights-variable-id="variable.id"
+						/>
 					</div>
-					<Switcher
-						:is-checked="notSavedValues.has(variable.id)"
-						@check="addValue(variable.id)"
-						@uncheck="removeValue(variable.id)"
-						:options="switcherOptions"
-						:data-accessrights-variable-id="variable.id"
-					/>
-				</div>
+				</TransitionGroup>
 				<div
 					v-for="[variableId, variable] in secondaryVariables"
 					:key="variableId"

@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * @global CMain $APPLICATION
  */

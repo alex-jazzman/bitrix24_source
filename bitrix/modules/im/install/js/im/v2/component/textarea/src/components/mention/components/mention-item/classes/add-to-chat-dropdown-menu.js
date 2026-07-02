@@ -3,7 +3,7 @@ import { type MenuItemOptions, type MenuOptions } from 'ui.system.menu';
 import { type EventEmitter } from 'main.core.events';
 import { Outline as OutlineIcons } from 'ui.icon-set.api.core';
 
-import { PopupType, EventType, ChatType, type ApplicationContext } from 'im.v2.const';
+import { PopupType, EventType, ChatType, type ApplicationContext, type ChatTypeItem } from 'im.v2.const';
 import { BaseMenu } from 'im.v2.lib.menu';
 import { ChatService } from 'im.v2.provider.service.chat';
 import { Notifier } from 'im.v2.lib.notifier';
@@ -12,11 +12,18 @@ import { Analytics } from 'im.v2.lib.analytics';
 import { CollabInvitationService } from 'im.v2.provider.service.collab-invitation';
 import { Messenger } from 'im.public';
 
+import { MentionInsertManager } from '../../classes/insert-manager';
+
+const AddToChatTitleByChatType = {
+	[ChatType.taskComments]: Loc.getMessage('IM_TEXTAREA_MENTION_ADD_TO_TASK_COMMENTS_DROPDOWN_MENU'),
+	default: Loc.getMessage('IM_TEXTAREA_MENTION_ADD_TO_CHAT_DROPDOWN_MENU'),
+};
+
 export class AddToChatDropdownMenu extends BaseMenu
 {
 	emitter: EventEmitter;
 	chatService: ChatService;
-	context: { chatId: number, dialogId: string, userId: string };
+	context: { chatId: number, dialogId: string, userId: string, searchQuery: string };
 
 	constructor(applicationContext: ApplicationContext)
 	{
@@ -38,29 +45,43 @@ export class AddToChatDropdownMenu extends BaseMenu
 		};
 	}
 
-	getMenuItems(): MenuItemOptions
+	getMenuItems(): MenuItemOptions[]
 	{
 		return [
-			this.#getAddToChatItems(),
+			this.#getAddToChatItem(),
 		];
 	}
 
-	#getAddToChatItems(): MenuItemOptions[]
+	#getAddToChatItem(): MenuItemOptions
 	{
 		return {
-			title: Loc.getMessage('IM_TEXTAREA_MENTION_ADD_TO_CHAT_DROPDOWN_MENU'),
+			title: AddToChatTitleByChatType[this.#getChatType()] ?? AddToChatTitleByChatType.default,
 			icon: OutlineIcons.ADD_PERSON,
 			onClick: async () => {
 				try
 				{
+					this.#insertMention();
+
 					await this.#handleAddToChat();
 				}
 				catch
 				{
-					Notifier.chat.onUserAddError();
+					Notifier.chat.handleUserAddError(this.#getChatType());
 				}
 			},
 		};
+	}
+
+	#insertMention()
+	{
+		const params = {
+			id: this.context.userId,
+			dialogId: this.context.dialogId,
+			query: this.context.searchQuery,
+		};
+
+		const insertManager = new MentionInsertManager({ emitter: this.emitter });
+		insertManager.insert(params);
 	}
 
 	async #handleAddToChat()
@@ -76,13 +97,13 @@ export class AddToChatDropdownMenu extends BaseMenu
 
 		await this.#addUserToChat();
 
-		Notifier.chat.onUserAddComplete();
+		Notifier.chat.handleUserAddComplete(this.#getChatType());
 	}
 
 	async #createChatFromUser()
 	{
 		const { newDialogId } = await this.chatService.extendToGroupChat({
-			members: [this.context.dialogId, this.context.userId, Core.getUserId()],
+			users: [this.context.dialogId, this.context.userId, Core.getUserId()],
 			ownerId: Core.getUserId(),
 		});
 
@@ -120,7 +141,7 @@ export class AddToChatDropdownMenu extends BaseMenu
 		});
 	}
 
-	#getChatType(): $Values<typeof ChatType>
+	#getChatType(): ChatTypeItem
 	{
 		const dialog = Core.getStore().getters['chats/get'](this.context.dialogId, true);
 

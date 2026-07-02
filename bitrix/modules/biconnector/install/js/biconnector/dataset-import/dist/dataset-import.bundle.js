@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.BIConnector = this.BX.BIConnector || {};
-(function (exports,biconnector_datasetImport_fileExport,ui_pinner,ui_section,ui_alerts,ui_hint,ui_sidepanel_layout,ui_iconSet_crm,ui_switcher,ui_uploader_stackWidget,main_loader,ui_ears,ui_analytics,ui_buttons,main_popup,ui_vue3,ui_entitySelector,ui_iconSet_api_vue,ui_vue3_directives_hint,main_core_events,ui_vue3_vuex,main_core,ui_sidepanel) {
+(function (exports, ui_vue3, biconnector_datasetImport_fileExport, main_core, main_popup, ui_buttons, main_loader, ui_section, ui_iconSet_api_vue, ui_vue3_directives_hint, ui_sidepanel_layout, ui_switcher, ui_uploader_stackWidget, ui_ears, ui_analytics, ui_sidepanel, main_core_events, ui_entitySelector, ui_vue3_vuex) {
 	'use strict';
 
 	const AppLayout = {
@@ -12,6 +12,11 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      default: false
 	    },
 	    isEditMode: {
+	      type: Boolean,
+	      required: false,
+	      default: false
+	    },
+	    hideButtons: {
 	      type: Boolean,
 	      required: false,
 	      default: false
@@ -58,7 +63,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 				<slot name="right-panel"></slot>
 			</div>
 	
-			<div class="ui-button-panel-wrapper" ref="buttonsPanel">
+			<div v-if="!hideButtons" class="ui-button-panel-wrapper" ref="buttonsPanel">
 				<div class="ui-button-panel">
 					<div class="app-root__button-wrapper" :class="saveLocked ? 'app-root__button-wrapper--blocked' : ''">
 						<button class="ui-btn ui-btn-no-caps ui-btn-lg --air --style-filled app-root__button" :class="saveButtonClass" @click="onCreateButtonClick" ref="saveButton">
@@ -101,10 +106,8 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      default: ''
 	    }
 	  },
-	  data() {
-	    return {
-	      popupInstance: null
-	    };
+	  created() {
+	    this.popupInstance = null;
 	  },
 	  computed: {
 	    popupOptions() {
@@ -123,8 +126,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	  },
 	  methods: {
 	    closePopup() {
-	      var _PopupManager$getPopu;
-	      (_PopupManager$getPopu = main_popup.PopupManager.getPopupById(this.id)) == null ? void 0 : _PopupManager$getPopu.destroy();
+	      main_popup.PopupManager.getPopupById(this.id)?.destroy();
 	      this.popupInstance = null;
 	      this.$emit('close');
 	    }
@@ -238,10 +240,9 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      });
 	    },
 	    downloadLog() {
-	      var _this$$store$state$co;
 	      const link = document.createElement('a');
 	      link.href = this.reportDownloadLink;
-	      link.download = `${(_this$$store$state$co = this.$store.state.config.datasetProperties.name) != null ? _this$$store$state$co : 'csv_table'}_errors.html`;
+	      link.download = `${this.$store.state.config.datasetProperties.name ?? 'csv_table'}_errors.html`;
 	      main_core.Dom.append(link, document.body);
 	      link.click();
 	      main_core.Dom.remove(link);
@@ -821,11 +822,10 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      this.section.toggle(open);
 	    },
 	    updateHeaderRightContent() {
-	      var _this$section$getCont;
 	      if (!this.section) {
 	        return;
 	      }
-	      const headerElement = (_this$section$getCont = this.section.getContent()) == null ? void 0 : _this$section$getCont.querySelector('.ui-section__header');
+	      const headerElement = this.section.getContent()?.querySelector('.ui-section__header');
 	      if (!headerElement) {
 	        return;
 	      }
@@ -920,12 +920,10 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	  },
 	  computed: {
 	    displayedTitle() {
-	      var _this$title;
-	      return (_this$title = this.title) != null ? _this$title : this.defaultTitle;
+	      return this.title ?? this.defaultTitle;
 	    },
 	    displayedHint() {
-	      var _this$hint;
-	      return (_this$hint = this.hint) != null ? _this$hint : this.defaultHint;
+	      return this.hint ?? this.defaultHint;
 	    },
 	    defaultTitle() {
 	      return '';
@@ -961,11 +959,9 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	  }
 	};
 
-	let _ = t => t,
-	  _t;
 	class ErrorPopup {
 	  static create(message, element) {
-	    const content = main_core.Tag.render(_t || (_t = _`<span class='ui-hint-content'></span>`));
+	    const content = main_core.Tag.render`<span class='ui-hint-content'></span>`;
 	    content.innerHTML = message;
 	    const popupOptions = {
 	      bindElement: element,
@@ -1021,6 +1017,11 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      required: false,
 	      default: false
 	    },
+	    isReadonly: {
+	      type: Boolean,
+	      required: false,
+	      default: false
+	    },
 	    hintText: {
 	      type: String,
 	      required: false
@@ -1053,11 +1054,9 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 
 	const StringField = {
 	  extends: BaseField,
-	  data() {
-	    return {
-	      errorPopup: null,
-	      errorPopupTimeout: null
-	    };
+	  created() {
+	    this.errorPopup = null;
+	    this.errorPopupTimeout = null;
 	  },
 	  methods: {
 	    onInput(event) {
@@ -1107,7 +1106,8 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 					{{ title }}
 				</div>
 			</div>
-			<div class="ui-ctl ui-ctl-after-icon ui-ctl-textbox ui-ctl-w100 dataset-import-control">
+			<div v-if="isReadonly">{{ value }}</div>
+			<div v-else class="ui-ctl ui-ctl-after-icon ui-ctl-textbox ui-ctl-w100 dataset-import-control">
 				<input
 					class="ui-ctl-element dataset-import-field"
 					type="text"
@@ -1139,10 +1139,12 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 			<div class="ui-form-label">
 				<div class="ui-ctl-label-text">{{ title }}</div>
 			</div>
-			<div class="ui-ctl ui-ctl-textarea dataset-import-textarea ui-ctl-w100 ui-ctl-no-resize">
-				<textarea 
-					class="ui-ctl-element dataset-import-textarea-element" 
-					:placeholder="placeholder" 
+			<div v-if="isReadonly">{{ value }}</div>
+			<div v-else class="ui-ctl ui-ctl-textarea dataset-import-textarea ui-ctl-w100 ui-ctl-no-resize">
+				<textarea
+					class="ui-ctl-element dataset-import-textarea-element"
+					:placeholder="placeholder"
+					:disabled="isDisabled"
 					@input="onInputChange($event.target.value)"
 					v-model="value"
 				></textarea>
@@ -1169,6 +1171,11 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      default: {}
 	    },
 	    disabledFields: {
+	      type: Object,
+	      required: false,
+	      default: {}
+	    },
+	    readonlyFields: {
 	      type: Object,
 	      required: false,
 	      default: {}
@@ -1203,6 +1210,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 				:placeholder="this.$Bitrix.Loc.getMessage('DATASET_IMPORT_DATASET_PROPERTIES_CODE_PLACEHOLDER_MSGVER_1', { '#CODE#': this.datasetSourceCode })"
 				:is-valid="unvalidatedFields.name?.result ?? true"
 				:is-disabled="disabledFields.name ?? false"
+				:is-readonly="readonlyFields.name ?? false"
 				:error-message="unvalidatedFields.name?.message ?? ''"
 			/>
 			<TextField
@@ -1210,6 +1218,8 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 				:defaultValue="defaultDescription"
 				@value-change="onValueChange"
 				:title="this.$Bitrix.Loc.getMessage('DATASET_IMPORT_DATASET_PROPERTIES_DESCRIPTION')"
+				:is-disabled="disabledFields.description ?? false"
+				:is-readonly="readonlyFields.description ?? false"
 			/>
 		</div>
 	`
@@ -1242,15 +1252,25 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PROPERTIES_HEADER_MSGVER_1');
 	    },
 	    defaultHint() {
-	      if (this.isEditMode) {
+	      if (this.isEditMode || this.isSystemDataset) {
 	        return '';
 	      }
 	      return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PROPERTIES_HINT_MSGVER_1');
 	    },
 	    disabledFields() {
 	      return {
-	        name: this.$store.getters.isEditMode
+	        name: this.$store.getters.isEditMode && !this.isSystemDataset,
+	        description: false
 	      };
+	    },
+	    readonlyFields() {
+	      return {
+	        name: this.isSystemDataset,
+	        description: this.isSystemDataset
+	      };
+	    },
+	    isSystemDataset() {
+	      return this.$store.state.config.datasetProperties?.isSystem === true;
 	    },
 	    unvalidatedFields() {
 	      const result = {};
@@ -1335,6 +1355,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 				:default-description="datasetProperties.description"
 				ref="datasetProperties"
 				:disabled-fields="disabledFields"
+				:readonly-fields="readonlyFields"
 				:unvalidated-fields="unvalidatedFields"
 				:dataset-source-code="datasetSourceCode"
 			/>
@@ -1342,7 +1363,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	`
 	};
 
-	const TableHeader = {
+	const TableHeader$1 = {
 	  props: {
 	    enabled: {
 	      type: Boolean,
@@ -1353,13 +1374,17 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      type: Boolean,
 	      required: false,
 	      default: false
+	    },
+	    sourceType: {
+	      type: String,
+	      required: false,
+	      default: ''
 	    }
 	  },
 	  emits: ['checkboxClick'],
 	  computed: {
 	    isNeedShowOriginalNameHint() {
-	      var _this$$store$state$co, _this$$store$state$co2;
-	      return (_this$$store$state$co = (_this$$store$state$co2 = this.$store.state.config.fileProperties) == null ? void 0 : _this$$store$state$co2.firstLineHeader) != null ? _this$$store$state$co : true;
+	      return this.$store.state.config.fileProperties?.firstLineHeader ?? true;
 	    }
 	  },
 	  methods: {
@@ -1371,7 +1396,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	  // language=Vue
 	  template: `
 		<tr>
-			<th class="format-table__header format-table__checkbox-header">
+			<th v-if="sourceType !== 'system'" class="format-table__header format-table__checkbox-header">
 				<input class="format-table__checkbox" type="checkbox" @change="onCheckboxClick" :checked="enabled" :indeterminate.prop="indeterminate">
 			</th>
 			<th class="format-table__header format-table__type-header format-table__type-subfield-header">{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_FIELD_SETTINGS_TYPE_HEADER') }}</th>
@@ -1417,32 +1442,16 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	  }
 	};
 
-	var _selectedType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectedType");
-	var _bindElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindElement");
-	var _onSelect = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onSelect");
-	var _onClose = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onClose");
 	class DataTypeMenu {
+	  #selectedType;
+	  #bindElement;
+	  #onSelect;
+	  #onClose;
 	  constructor(options) {
-	    Object.defineProperty(this, _selectedType, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _bindElement, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _onSelect, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _onClose, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _selectedType)[_selectedType] = options.selectedType;
-	    babelHelpers.classPrivateFieldLooseBase(this, _bindElement)[_bindElement] = options.bindElement;
-	    babelHelpers.classPrivateFieldLooseBase(this, _onSelect)[_onSelect] = options.onSelect;
-	    babelHelpers.classPrivateFieldLooseBase(this, _onClose)[_onClose] = options.onClose;
+	    this.#selectedType = options.selectedType;
+	    this.#bindElement = options.bindElement;
+	    this.#onSelect = options.onSelect;
+	    this.#onClose = options.onClose;
 	  }
 	  getMenu() {
 	    const items = [];
@@ -1451,21 +1460,21 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	        html: `
 					<div class="ui-icon-set ${value.icon}"></div>
 					<span class="format-table__dropdown-item-text">${value.title}</span>
-					${key === babelHelpers.classPrivateFieldLooseBase(this, _selectedType)[_selectedType] ? '<div class="format-table__dropdown-item-selected ui-icon-set --check"></div>' : ''}
+					${key === this.#selectedType ? '<div class="format-table__dropdown-item-selected ui-icon-set --check"></div>' : ''}
 				`,
 	        onclick: (event, item) => {
-	          babelHelpers.classPrivateFieldLooseBase(this, _onSelect)[_onSelect](key);
+	          this.#onSelect(key);
 	          item.getMenuWindow().close();
 	        },
-	        className: `format-table__dropdown-item${key === babelHelpers.classPrivateFieldLooseBase(this, _selectedType)[_selectedType] ? ' format-table__dropdown-item--active' : ''}`
+	        className: `format-table__dropdown-item${key === this.#selectedType ? ' format-table__dropdown-item--active' : ''}`
 	      });
 	    });
 	    return new main_popup.Menu({
 	      className: 'format-table__dropdown-popup',
-	      bindElement: babelHelpers.classPrivateFieldLooseBase(this, _bindElement)[_bindElement],
+	      bindElement: this.#bindElement,
 	      items,
 	      events: {
-	        onClose: babelHelpers.classPrivateFieldLooseBase(this, _onClose)[_onClose]
+	        onClose: this.#onClose
 	      }
 	    });
 	  }
@@ -1492,9 +1501,11 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	  emits: ['valueChange'],
 	  data() {
 	    return {
-	      typeMenu: null,
 	      isFocused: false
 	    };
+	  },
+	  created() {
+	    this.typeMenu = null;
 	  },
 	  computed: {
 	    iconClass() {
@@ -1534,8 +1545,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      }
 	    },
 	    destroyMenu() {
-	      var _this$typeMenu;
-	      (_this$typeMenu = this.typeMenu) == null ? void 0 : _this$typeMenu.destroy();
+	      this.typeMenu?.destroy();
 	    }
 	  },
 	  mounted() {
@@ -1582,7 +1592,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	`
 	};
 
-	const TableRow = {
+	const TableRow$1 = {
 	  directives: {
 	    hint: ui_vue3_directives_hint.hint
 	  },
@@ -1625,12 +1635,14 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	    return {
 	      displayedValidationErrors: {
 	        name: true
-	      },
-	      errorPopup: {
-	        name: null
-	      },
-	      errorPopupTimeout: null
+	      }
 	    };
+	  },
+	  created() {
+	    this.errorPopup = {
+	      name: null
+	    };
+	    this.errorPopupTimeout = null;
 	  },
 	  computed: {
 	    isNameValid() {
@@ -1645,6 +1657,9 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	    originalsHintText() {
 	      const originalType = this.fieldSettings.originalType;
 	      const originalName = this.fieldSettings.originalName;
+	      if (this.sourceType === 'system') {
+	        return originalName;
+	      }
 	      let typeText = '';
 	      if (originalType) {
 	        typeText = this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELD_SETTINGS_ORIG_TYPE_MSGVER_1', {
@@ -1664,25 +1679,17 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      return `${typeText}<br>${nameText}`;
 	    },
 	    isNeedShowOriginalNameHint() {
-	      var _this$$store$state$co;
 	      const {
 	        connectionType,
 	        connectionIsSupportMapping
 	      } = this.$store.state.config.connectionProperties || {};
-	      const firstLineHeader = (_this$$store$state$co = this.$store.state.config.fileProperties) == null ? void 0 : _this$$store$state$co.firstLineHeader;
-	      return (firstLineHeader != null ? firstLineHeader : true) && !(connectionType === 'rest' && connectionIsSupportMapping === false);
+	      const firstLineHeader = this.$store.state.config.fileProperties?.firstLineHeader;
+	      return (firstLineHeader ?? true) && !(connectionType === 'rest' && connectionIsSupportMapping === false);
 	    },
 	    hintOptions() {
 	      return {
 	        html: this.originalsHintText,
-	        popupOptions: {
-	          angle: {
-	            position: 'left'
-	          },
-	          offsetLeft: 30,
-	          offsetTop: -46,
-	          autoHide: false
-	        }
+	        icon: true
 	      };
 	    },
 	    sourceTypeCsv() {
@@ -1695,9 +1702,8 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      return !this.isEditMode && this.sourceTypeCsv;
 	    },
 	    canEditName() {
-	      var _this$fieldSettings, _this$fieldSettings2;
-	      const isNew = !(((_this$fieldSettings = this.fieldSettings) == null ? void 0 : _this$fieldSettings.id) > 0);
-	      return isNew || ((_this$fieldSettings2 = this.fieldSettings) == null ? void 0 : _this$fieldSettings2.visible) && this.sourceTypeExternal;
+	      const isNew = !(this.fieldSettings?.id > 0);
+	      return isNew || this.fieldSettings?.visible && this.sourceTypeExternal;
 	    }
 	  },
 	  emits: ['checkboxClick', 'fieldChange'],
@@ -1716,8 +1722,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      });
 	    },
 	    onFieldInput(event) {
-	      var _this$disabledElement;
-	      if (!this.canEditName || (_this$disabledElement = this.disabledElements) != null && _this$disabledElement.name) {
+	      if (!this.canEditName || this.disabledElements?.name) {
 	        const input = event.target;
 	        input.value = this.fieldSettings.name;
 	        return;
@@ -1776,7 +1781,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	  // language=Vue
 	  template: `
 		<tr class="format-table__row">
-			<td class="format-table__checkbox-cell">
+			<td v-if="sourceType !== 'system'" class="format-table__checkbox-cell">
 				<input class="format-table__checkbox" ref="visibilityCheckbox" type="checkbox" @change="onCheckboxClick" :checked="enabled">
 			</td>
 			<td class="format-table__cell">
@@ -1812,8 +1817,8 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 				</div>
 			</td>
 			<td class="format-table__cell" v-if="isNeedShowOriginalNameHint">
-				<div class="format-table__orig-type-hint-wrapper" v-hint="hintOptions" ref="originalsHint">
-					<div class="format-table__orig-type-hint">
+				<div class="format-table__orig-type-hint-wrapper" ref="originalsHint">
+					<div class="format-table__orig-type-hint" v-hint="hintOptions">
 						<BIcon
 							:name="set.INFO_1"
 							:size="20"
@@ -1883,14 +1888,14 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	    }
 	  },
 	  components: {
-	    TableHeader,
-	    TableRow
+	    TableHeader: TableHeader$1,
+	    TableRow: TableRow$1
 	  },
 	  // language=Vue
 	  template: `
 		<table class="format-table">
 			<thead>
-				<TableHeader :enabled="areAllRowsVisible" :indeterminate="areSomeRowsVisible" @checkbox-click="onHeaderCheckboxClicked" />
+				<TableHeader :enabled="areAllRowsVisible" :indeterminate="areSomeRowsVisible" :source-type="sourceType" @checkbox-click="onHeaderCheckboxClicked" />
 			</thead>
 			<tbody>
 				<template v-for="(field, index) in fieldsSettings" :key="index">
@@ -2093,25 +2098,13 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	`
 	};
 
-	let _$1 = t => t,
-	  _t$1,
-	  _t2,
-	  _t3,
-	  _t4,
-	  _t5,
-	  _t6,
-	  _t7;
 	const OptionType = {
 	  CUSTOM: 'custom',
 	  VALUE: 'value'
 	};
-	var _extractValues = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("extractValues");
-	var _getContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getContent");
-	var _getDropdownControl = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDropdownControl");
 	class FormatSelector {
 	  static openSlider(selected, dataFormatTemplates, onClose, options = {}) {
-	    var _options$isEditable;
-	    const isEditable = (_options$isEditable = options.isEditable) != null ? _options$isEditable : true;
+	    const isEditable = options.isEditable ?? true;
 	    BX.SidePanel.Instance.open('biconnector:import-field-formats', {
 	      width: 584,
 	      contentCallback: () => {
@@ -2119,7 +2112,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	          extensions: ['ui.forms', 'ui.layout-form', 'ui.alerts', 'biconnector.dataset-import'],
 	          title: main_core.Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_TITLE'),
 	          content() {
-	            return babelHelpers.classPrivateFieldLooseBase(FormatSelector, _getContent)[_getContent](selected, dataFormatTemplates, isEditable);
+	            return FormatSelector.#getContent(selected, dataFormatTemplates, isEditable);
 	          },
 	          buttons({
 	            cancelButton,
@@ -2132,7 +2125,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	              onclick: () => {
 	                // hack: using a singleton instance to store the form didn't work
 	                const form = BX.SidePanel.Instance.getTopSlider().getContainer().querySelector('#formatSelectorForm');
-	                onClose(babelHelpers.classPrivateFieldLooseBase(FormatSelector, _extractValues)[_extractValues](form));
+	                onClose(FormatSelector.#extractValues(form));
 	                BX.SidePanel.Instance.close();
 	              }
 	            }), cancelButton];
@@ -2142,161 +2135,151 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      cacheable: false
 	    });
 	  }
-	}
-	function _extractValues2(form) {
-	  const formData = new FormData(form);
-	  const result = Object.fromEntries(formData);
-	  const customFieldsToExtract = ['date', 'datetime'];
-	  customFieldsToExtract.forEach(field => {
-	    if (result[field] === 'custom') {
-	      result[field] = result[`${field}CustomValue`];
-	    }
-	    delete result[`${field}CustomValue`];
-	  });
-	  return result;
-	}
-	function _getContent2(selected, dataFormatTemplates, isEditable) {
-	  const formRoot = main_core.Tag.render(_t$1 || (_t$1 = _$1`
+	  static #extractValues(form) {
+	    const formData = new FormData(form);
+	    const result = Object.fromEntries(formData);
+	    const customFieldsToExtract = ['date', 'datetime'];
+	    customFieldsToExtract.forEach(field => {
+	      if (result[field] === 'custom') {
+	        result[field] = result[`${field}CustomValue`];
+	      }
+	      delete result[`${field}CustomValue`];
+	    });
+	    return result;
+	  }
+	  static #getContent(selected, dataFormatTemplates, isEditable) {
+	    const formRoot = main_core.Tag.render`
 			<form class="ui-form" id="formatSelectorForm">
 			</form>
-		`));
-	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(FormatSelector, _getDropdownControl)[_getDropdownControl]({
-	    title: main_core.Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_TIMEZONE'),
-	    subtitle: main_core.Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_TIMEZONE_HINT'),
-	    options: dataFormatTemplates[DataType.timezone],
-	    fieldType: DataType.timezone,
-	    selected: selected[DataType.timezone],
-	    isEditable
-	  }), formRoot);
-	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(FormatSelector, _getDropdownControl)[_getDropdownControl]({
-	    title: main_core.Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_DATE'),
-	    subtitle: main_core.Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_DATE_HINT'),
-	    options: dataFormatTemplates[DataType.date],
-	    fieldType: DataType.date,
-	    selected: selected[DataType.date],
-	    isEditable
-	  }), formRoot);
-	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(FormatSelector, _getDropdownControl)[_getDropdownControl]({
-	    title: main_core.Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_DATETIME'),
-	    subtitle: main_core.Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_DATETIME_HINT'),
-	    options: dataFormatTemplates[DataType.datetime],
-	    fieldType: DataType.datetime,
-	    selected: selected[DataType.datetime],
-	    isEditable
-	  }), formRoot);
-	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(FormatSelector, _getDropdownControl)[_getDropdownControl]({
-	    title: main_core.Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_MONEY'),
-	    subtitle: main_core.Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_MONEY_HINT'),
-	    options: dataFormatTemplates[DataType.money],
-	    fieldType: DataType.money,
-	    selected: selected[DataType.money],
-	    isEditable
-	  }), formRoot);
-	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(FormatSelector, _getDropdownControl)[_getDropdownControl]({
-	    title: main_core.Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_DOUBLE'),
-	    subtitle: main_core.Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_DOUBLE_HINT'),
-	    options: dataFormatTemplates[DataType.double],
-	    fieldType: DataType.double,
-	    selected: selected[DataType.double],
-	    isEditable
-	  }), formRoot);
-	  return main_core.Tag.render(_t2 || (_t2 = _$1`
+		`;
+	    main_core.Dom.append(FormatSelector.#getDropdownControl({
+	      title: main_core.Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_TIMEZONE'),
+	      subtitle: main_core.Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_TIMEZONE_HINT'),
+	      options: dataFormatTemplates[DataType.timezone],
+	      fieldType: DataType.timezone,
+	      selected: selected[DataType.timezone],
+	      isEditable
+	    }), formRoot);
+	    main_core.Dom.append(FormatSelector.#getDropdownControl({
+	      title: main_core.Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_DATE'),
+	      subtitle: main_core.Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_DATE_HINT'),
+	      options: dataFormatTemplates[DataType.date],
+	      fieldType: DataType.date,
+	      selected: selected[DataType.date],
+	      isEditable
+	    }), formRoot);
+	    main_core.Dom.append(FormatSelector.#getDropdownControl({
+	      title: main_core.Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_DATETIME'),
+	      subtitle: main_core.Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_DATETIME_HINT'),
+	      options: dataFormatTemplates[DataType.datetime],
+	      fieldType: DataType.datetime,
+	      selected: selected[DataType.datetime],
+	      isEditable
+	    }), formRoot);
+	    main_core.Dom.append(FormatSelector.#getDropdownControl({
+	      title: main_core.Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_MONEY'),
+	      subtitle: main_core.Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_MONEY_HINT'),
+	      options: dataFormatTemplates[DataType.money],
+	      fieldType: DataType.money,
+	      selected: selected[DataType.money],
+	      isEditable
+	    }), formRoot);
+	    main_core.Dom.append(FormatSelector.#getDropdownControl({
+	      title: main_core.Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_DOUBLE'),
+	      subtitle: main_core.Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_DOUBLE_HINT'),
+	      options: dataFormatTemplates[DataType.double],
+	      fieldType: DataType.double,
+	      selected: selected[DataType.double],
+	      isEditable
+	    }), formRoot);
+	    return main_core.Tag.render`
 			<div class="format-selector">
 				<div class="ui-alert ui-alert-primary format-selector__hint">
 					<span class="ui-alert-message">
-						${0}
+						${main_core.Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_HINT', {
+      '[link]': '<a onclick="top.BX.Helper.show(`redirect=detail&code=23378698`)">',
+      '[/link]': '</a>'
+    })}
 					</span>
 				</div>
-				${0}
+				${formRoot}
 			</div>
-		`), main_core.Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_HINT', {
-	    '[link]': '<a onclick="top.BX.Helper.show(`redirect=detail&code=23378698`)">',
-	    '[/link]': '</a>'
-	  }), formRoot);
-	}
-	function _getDropdownControl2(options) {
-	  const selectRoot = main_core.Tag.render(_t3 || (_t3 = _$1`
-			<select class="ui-ctl-element" name="${0}">
-			</select>
-		`), options.fieldType);
-	  if (!options.isEditable) {
-	    selectRoot.disabled = true;
+		`;
 	  }
-	  let isCustomSelected = true;
-	  let customElement = null;
-	  let customOptionInput = null;
-	  options.options.forEach(option => {
-	    let optionElement = '';
-	    const isSelected = option.value === options.selected;
-	    if (isSelected) {
-	      isCustomSelected = false;
+	  static #getDropdownControl(options) {
+	    const selectRoot = main_core.Tag.render`
+			<select class="ui-ctl-element" name="${options.fieldType}">
+			</select>
+		`;
+	    if (!options.isEditable) {
+	      selectRoot.disabled = true;
 	    }
-	    if (option.type === OptionType.VALUE) {
-	      optionElement = main_core.Tag.render(_t4 || (_t4 = _$1`
-					<option ${0} value="${0}">${0}</option>
-				`), option.value === options.selected ? 'selected' : '', option.value, option.title);
-	    } else if (option.type === OptionType.CUSTOM) {
-	      var _option$value;
-	      customElement = main_core.Tag.render(_t5 || (_t5 = _$1`
-					<option value="custom">${0}</option>
-				`), main_core.Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_CUSTOM_FORMAT'));
-	      optionElement = customElement;
-	      customOptionInput = main_core.Tag.render(_t6 || (_t6 = _$1`
+	    let isCustomSelected = true;
+	    let customElement = null;
+	    let customOptionInput = null;
+	    options.options.forEach(option => {
+	      let optionElement = '';
+	      const isSelected = option.value === options.selected;
+	      if (isSelected) {
+	        isCustomSelected = false;
+	      }
+	      if (option.type === OptionType.VALUE) {
+	        optionElement = main_core.Tag.render`
+					<option ${option.value === options.selected ? 'selected' : ''} value="${option.value}">${option.title}</option>
+				`;
+	      } else if (option.type === OptionType.CUSTOM) {
+	        customElement = main_core.Tag.render`
+					<option value="custom">${main_core.Loc.getMessage('DATASET_IMPORT_FIELD_FORMAT_SELECTOR_CUSTOM_FORMAT')}</option>
+				`;
+	        optionElement = customElement;
+	        customOptionInput = main_core.Tag.render`
 					<div class="ui-ctl ui-ctl-textbox ui-ctl-w100 format-selector__custom-value-input format-selector__custom-value-input--hidden">
-						<input class="ui-ctl-element" name="${0}CustomValue" type="text" placeholder="..." value="${0}">
+						<input class="ui-ctl-element" name="${options.fieldType}CustomValue" type="text" placeholder="..." value="${option.value ?? ''}">
 					</div>
-				`), options.fieldType, (_option$value = option.value) != null ? _option$value : '');
-	      if (!options.isEditable) {
-	        customOptionInput.querySelector('input').disabled = true;
-	      } else {
-	        main_core.Event.bind(selectRoot, 'change', event => {
-	          const value = event.target.value;
-	          if (value === 'custom') {
-	            main_core.Dom.removeClass(customOptionInput, 'format-selector__custom-value-input--hidden');
-	          } else {
-	            main_core.Dom.addClass(customOptionInput, 'format-selector__custom-value-input--hidden');
-	          }
-	        });
+				`;
+	        if (!options.isEditable) {
+	          customOptionInput.querySelector('input').disabled = true;
+	        } else {
+	          main_core.Event.bind(selectRoot, 'change', event => {
+	            const value = event.target.value;
+	            if (value === 'custom') {
+	              main_core.Dom.removeClass(customOptionInput, 'format-selector__custom-value-input--hidden');
+	            } else {
+	              main_core.Dom.addClass(customOptionInput, 'format-selector__custom-value-input--hidden');
+	            }
+	          });
+	        }
+	      }
+	      main_core.Dom.append(optionElement, selectRoot);
+	    });
+	    if (isCustomSelected) {
+	      if (customElement) {
+	        customElement.setAttribute('selected', true);
+	      }
+	      if (customOptionInput) {
+	        customOptionInput.querySelector('input').value = options.selected;
+	        main_core.Dom.removeClass(customOptionInput, 'format-selector__custom-value-input--hidden');
 	      }
 	    }
-	    main_core.Dom.append(optionElement, selectRoot);
-	  });
-	  if (isCustomSelected) {
-	    if (customElement) {
-	      customElement.setAttribute('selected', true);
-	    }
-	    if (customOptionInput) {
-	      customOptionInput.querySelector('input').value = options.selected;
-	      main_core.Dom.removeClass(customOptionInput, 'format-selector__custom-value-input--hidden');
-	    }
-	  }
-	  return main_core.Tag.render(_t7 || (_t7 = _$1`
+	    return main_core.Tag.render`
 			<div class="ui-form-row">
 				<div class="ui-form-label">
 					<div class="ui-ctl-label-text">
-						${0}
+						${options.title}
 					</div>
 					<div class="format-selector__type-subtitle">
-						${0}
+						${options.subtitle}
 					</div>
 				</div>
-				<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100 ${0}">
+				<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100 ${options.isEditable ? '' : 'ui-ctl-disabled'}">
 					<div class="ui-ctl-after ui-ctl-icon-angle"></div>
-					${0}
+					${selectRoot}
 				</div>
-				${0}
+				${customOptionInput}
 			</div>
-		`), options.title, options.subtitle, options.isEditable ? '' : 'ui-ctl-disabled', selectRoot, customOptionInput);
+		`;
+	  }
 	}
-	Object.defineProperty(FormatSelector, _getDropdownControl, {
-	  value: _getDropdownControl2
-	});
-	Object.defineProperty(FormatSelector, _getContent, {
-	  value: _getContent2
-	});
-	Object.defineProperty(FormatSelector, _extractValues, {
-	  value: _extractValues2
-	});
 
 	const SliderButton = {
 	  // language=Vue
@@ -2701,7 +2684,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	`
 	};
 
-	const TableHeader$1 = {
+	const TableHeader = {
 	  directives: {
 	    hint: ui_vue3_directives_hint.hint
 	  },
@@ -2735,16 +2718,9 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	    hintOptions() {
 	      return {
 	        text: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PREVIEW_COLUMN_DATETIME_HINT'),
+	        icon: true,
 	        popupOptions: {
-	          bindOptions: {
-	            position: 'bottom'
-	          },
-	          angle: {
-	            position: 'top'
-	          },
-	          width: 300,
-	          offsetLeft: 10,
-	          autoHide: false
+	          width: 300
 	        }
 	      };
 	    },
@@ -2788,7 +2764,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	`
 	};
 
-	const TableRow$1 = {
+	const TableRow = {
 	  props: {
 	    row: {
 	      type: Array,
@@ -2863,8 +2839,8 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	    }
 	  },
 	  components: {
-	    TableHeader: TableHeader$1,
-	    TableRow: TableRow$1
+	    TableHeader,
+	    TableRow
 	  },
 	  // language=Vue
 	  template: `
@@ -2936,8 +2912,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      return this.fields.length > 0;
 	    },
 	    displayedEmptyStateText() {
-	      var _this$emptyStateText;
-	      return (_this$emptyStateText = this.emptyStateText) != null ? _this$emptyStateText : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PREVIEW_EMPTY_STATE');
+	      return this.emptyStateText ?? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PREVIEW_EMPTY_STATE');
 	    },
 	    displayedEverythingHiddenText() {
 	      return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PREVIEW_EVERYTHING_HIDDEN');
@@ -2955,6 +2930,9 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      return this.isEditModeInitialDataDisplayed ? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_INITIAL_DATA_PREVIEW_TITLE_MSGVER_1') : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PREVIEW_TITLE');
 	    },
 	    hasDataDisplayedHint() {
+	      if (this.sourceType === 'system') {
+	        return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_SYSTEM_PREVIEW_HINT');
+	      }
 	      return this.isEditModeInitialDataDisplayed ? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_INITIAL_DATA_PREVIEW_HINT_MSGVER_1') : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PREVIEW_HINT_MSGVER_1');
 	    }
 	  },
@@ -3047,9 +3025,6 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 		</AppSection>
 	`
 	};
-
-	let _$2 = t => t,
-	  _t$2;
 
 	// language=Vue
 	const BaseApp = {
@@ -3161,18 +3136,18 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      const popupText = this.unsavedChangesPopupText;
 	      const popup = new main_popup.Popup({
 	        id: 'unsaved',
-	        content: main_core.Tag.render(_t$2 || (_t$2 = _$2`
+	        content: main_core.Tag.render`
 					<div class="generic-popup">
-						<h3 class="generic-popup__header">${0}</h3>
+						<h3 class="generic-popup__header">${popupHeader}</h3>
 						<div class="generic-popup__content">
-							${0}
+							${popupText}
 						</div>
 						<div class="generic-popup__buttons-wrapper">
-							${0}
-							${0}
+							${continueButton.render()}
+							${closeButton.render()}
 						</div>
 					</div>
-				`), popupHeader, popupText, continueButton.render(), closeButton.render()),
+				`,
 	        width: 440,
 	        noAllPaddings: true,
 	        autoHide: false,
@@ -3315,30 +3290,24 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      default: false
 	    }
 	  },
-	  data() {
-	    return {
-	      createDatasetsMenu: null
-	    };
+	  created() {
+	    this.createDatasetsMenu = null;
 	  },
 	  computed: {
 	    defaultTitle() {
 	      return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_RELATED_EXTERNAL_DATASETS_HEADER_MSGVER_1');
 	    },
 	    items() {
-	      var _this$$store$getters$, _this$$store$getters$2;
-	      return (_this$$store$getters$ = (_this$$store$getters$2 = this.$store.getters.datasetProperties) == null ? void 0 : _this$$store$getters$2.externalDatasets) != null ? _this$$store$getters$ : [];
+	      return this.$store.getters.datasetProperties?.externalDatasets ?? [];
 	    },
 	    hasItems() {
-	      var _this$items$length, _this$items;
-	      return ((_this$items$length = (_this$items = this.items) == null ? void 0 : _this$items.length) != null ? _this$items$length : 0) > 0;
+	      return (this.items?.length ?? 0) > 0;
 	    },
 	    createPhysicalDatasetUrl() {
-	      var _this$$store$getters$3, _this$$store$getters$4, _this$$store$getters$5;
-	      return (_this$$store$getters$3 = (_this$$store$getters$4 = this.$store.getters.connectionProperties) == null ? void 0 : _this$$store$getters$4.createPhysicalDatasetUrl) != null ? _this$$store$getters$3 : (_this$$store$getters$5 = this.$store.getters.datasetProperties) == null ? void 0 : _this$$store$getters$5.createPhysicalDatasetUrl;
+	      return this.$store.getters.connectionProperties?.createPhysicalDatasetUrl ?? this.$store.getters.datasetProperties?.createPhysicalDatasetUrl;
 	    },
 	    createVirtualDatasetUrl() {
-	      var _this$$store$getters$6, _this$$store$getters$7, _this$$store$getters$8;
-	      return (_this$$store$getters$6 = (_this$$store$getters$7 = this.$store.getters.connectionProperties) == null ? void 0 : _this$$store$getters$7.createVirtualDatasetUrl) != null ? _this$$store$getters$6 : (_this$$store$getters$8 = this.$store.getters.datasetProperties) == null ? void 0 : _this$$store$getters$8.createVirtualDatasetUrl;
+	      return this.$store.getters.connectionProperties?.createVirtualDatasetUrl ?? this.$store.getters.datasetProperties?.createVirtualDatasetUrl;
 	    },
 	    showCreateButton() {
 	      return this.isSupersetReady && Boolean(this.createPhysicalDatasetUrl || this.createVirtualDatasetUrl);
@@ -3387,6 +3356,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	              offsetTop: -50,
 	              autoHide: true,
 	              width: 270,
+	              className: 'ui-hint-popup related-external-datasets__create-physical-hint',
 	              angle: {
 	                position: 'left',
 	                offset: 15
@@ -3662,9 +3632,8 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      this.toggleCheckFileButton(false);
 	    },
 	    onLoadError(response) {
-	      var _response$errors$0$me, _response$errors$;
 	      this.stopPreviewLoadingAnimation();
-	      this.previewError = (_response$errors$0$me = (_response$errors$ = response.errors[0]) == null ? void 0 : _response$errors$.message) != null ? _response$errors$0$me : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PREVIEW_ERROR_FILE');
+	      this.previewError = response.errors[0]?.message ?? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PREVIEW_ERROR_FILE');
 	    },
 	    onSaveStart() {
 	      if (!this.isValidatedForSave) {
@@ -3693,9 +3662,8 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      });
 	    },
 	    onSaveEnd(response) {
-	      var _response$data$name, _response$data$id;
-	      const datasetName = (_response$data$name = response.data.name) != null ? _response$data$name : this.$store.state.config.datasetProperties.name;
-	      const datasetId = (_response$data$id = response.data.id) != null ? _response$data$id : this.$store.state.config.datasetProperties.id;
+	      const datasetName = response.data.name ?? this.$store.state.config.datasetProperties.name;
+	      const datasetId = response.data.id ?? this.$store.state.config.datasetProperties.id;
 	      this.popupParams.savingSuccess = {
 	        title: datasetName,
 	        datasetId,
@@ -3758,7 +3726,6 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      });
 	    },
 	    onExportFileClick() {
-	      var _this$$store$state$co;
 	      const button = document.querySelector('.biconnector-export-file-button');
 	      if (!button) {
 	        return;
@@ -3769,7 +3736,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      });
 	      biconnector_datasetImport_fileExport.FileExport.getInstance().download({
 	        id: this.datasetId,
-	        title: (_this$$store$state$co = this.$store.state.config.datasetProperties.name) != null ? _this$$store$state$co : 'dataset'
+	        title: this.$store.state.config.datasetProperties.name ?? 'dataset'
 	      }).then(() => {
 	        main_core.Dom.removeClass(button, 'ui-btn-wait');
 	        main_core.Dom.attr(button, {
@@ -4039,8 +4006,6 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	`
 	};
 
-	let _$3 = t => t,
-	  _t$3;
 	const ConnectionSelectorField = {
 	  extends: BaseField,
 	  props: {
@@ -4099,11 +4064,11 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	    });
 	    main_core.Dom.addClass(selector.getDialog().getContainer(), 'biconnector-dataset-entity-selector');
 	    selector.renderTo(node);
-	    const footer = main_core.Tag.render(_t$3 || (_t$3 = _$3`
+	    const footer = main_core.Tag.render`
 			<span class="ui-selector-footer-link ui-selector-footer-link-add">
-				${0}
+				${this.$Bitrix.Loc.getMessage('DATASET_IMPORT_NO_CONNECTIONS_FOOTER')}
 			</span>
-		`), this.$Bitrix.Loc.getMessage('DATASET_IMPORT_NO_CONNECTIONS_FOOTER'));
+		`;
 	    main_core.Event.bind(footer, 'click', () => {
 	      const link = '/bitrix/components/bitrix/biconnector.externalconnection/slider.php?closeAfterCreate=Y';
 	      BX.SidePanel.Instance.open(link, {
@@ -4125,7 +4090,6 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	    preparedItems() {
 	      const selectorItems = [];
 	      this.items.forEach(item => {
-	        var _item$IS_SUPPORT_MAPP;
 	        const itemOptions = {
 	          id: item.ID,
 	          title: item.TITLE,
@@ -4135,7 +4099,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	          linkTitle: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_CONNECTIONS_ABOUT'),
 	          customData: {
 	            connectionType: item.TYPE,
-	            isSupportMapping: (_item$IS_SUPPORT_MAPP = item.IS_SUPPORT_MAPPING) != null ? _item$IS_SUPPORT_MAPP : false
+	            isSupportMapping: item.IS_SUPPORT_MAPPING ?? false
 	          }
 	        };
 	        if (item.AVATAR) {
@@ -4152,7 +4116,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	  methods: {
 	    onConnectionSave(event) {
 	      const itemOptions = event.getData().connection;
-	      if (!main_core.Type.isStringFilled(itemOptions == null ? void 0 : itemOptions.avatar)) {
+	      if (!main_core.Type.isStringFilled(itemOptions?.avatar)) {
 	        itemOptions.avatar = `/bitrix/images/biconnector/database-connections/${itemOptions.type}.svg`;
 	      }
 	      const selector = this.selector;
@@ -4302,16 +4266,8 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      const hintCode = this.selectedConnectionType === '1c' ? 'DATASET_IMPORT_TABLES_HINT' : 'DATASET_IMPORT_REST_TABLES_HINT';
 	      return {
 	        text: this.$Bitrix.Loc.getMessage(hintCode),
-	        popupOptions: {
-	          bindOptions: {
-	            position: 'top'
-	          },
-	          offsetTop: -10,
-	          angle: {
-	            position: 'top',
-	            offset: 34
-	          }
-	        }
+	        position: 'top',
+	        icon: true
 	      };
 	    }
 	  },
@@ -4417,12 +4373,10 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      };
 	    },
 	    selectedConnectionType() {
-	      var _this$$store$getters$;
-	      return (_this$$store$getters$ = this.$store.getters.connectionProperties) == null ? void 0 : _this$$store$getters$.connectionType;
+	      return this.$store.getters.connectionProperties?.connectionType;
 	    },
 	    selectedConnectionIsSupportMapping() {
-	      var _this$$store$getters$2;
-	      return (_this$$store$getters$2 = this.$store.getters.connectionProperties) == null ? void 0 : _this$$store$getters$2.connectionIsSupportMapping;
+	      return this.$store.getters.connectionProperties?.connectionIsSupportMapping;
 	    },
 	    selectedConnectionAvatar() {
 	      const id = this.selectedConnectionId;
@@ -4435,16 +4389,13 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      return `/bitrix/images/biconnector/database-connections/${this.selectedConnectionType}.svg`;
 	    },
 	    selectedConnectionId() {
-	      var _this$$store$getters$3, _this$$store$getters$4;
-	      return (_this$$store$getters$3 = (_this$$store$getters$4 = this.$store.getters.connectionProperties) == null ? void 0 : _this$$store$getters$4.connectionId) != null ? _this$$store$getters$3 : 0;
+	      return this.$store.getters.connectionProperties?.connectionId ?? 0;
 	    },
 	    selectedConnectionName() {
-	      var _this$$store$getters$5;
-	      return (_this$$store$getters$5 = this.$store.getters.connectionProperties) == null ? void 0 : _this$$store$getters$5.connectionName;
+	      return this.$store.getters.connectionProperties?.connectionName;
 	    },
 	    selectedTableName() {
-	      var _this$$store$getters$6;
-	      return (_this$$store$getters$6 = this.$store.getters.connectionProperties) == null ? void 0 : _this$$store$getters$6.tableName;
+	      return this.$store.getters.connectionProperties?.tableName;
 	    },
 	    isEditMode() {
 	      return this.$store.getters.isEditMode;
@@ -4548,10 +4499,9 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	    handleSliderMessage(event) {
 	      const [messageEvent] = event.getData();
 	      if (messageEvent.getEventId() === 'BIConnector:ExternalConnection:onConnectionSave') {
-	        var _messageEvent$data$co;
 	        const connectionProperties = this.$store.getters.connectionProperties;
 	        connectionProperties.connectionName = main_core.Text.decode(messageEvent.data.connection.name);
-	        connectionProperties.connectionIsSupportMapping = Boolean((_messageEvent$data$co = messageEvent.data.connection.isSupportMapping) != null ? _messageEvent$data$co : null);
+	        connectionProperties.connectionIsSupportMapping = Boolean(messageEvent.data.connection.isSupportMapping ?? null);
 	        this.$store.commit('setConnectionProperties', connectionProperties);
 	      }
 	    }
@@ -4685,12 +4635,10 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      return this.sourceCode === 'rest';
 	    },
 	    connectionIsSupportMapping() {
-	      var _this$$store$getters$, _this$$store$getters$2;
-	      return (_this$$store$getters$ = (_this$$store$getters$2 = this.$store.getters.connectionProperties) == null ? void 0 : _this$$store$getters$2.connectionIsSupportMapping) != null ? _this$$store$getters$ : false;
+	      return this.$store.getters.connectionProperties?.connectionIsSupportMapping ?? false;
 	    },
 	    sourceCode() {
-	      var _this$$store$state$co, _this$$store$state$co2;
-	      return (_this$$store$state$co = (_this$$store$state$co2 = this.$store.state.config.connectionProperties) == null ? void 0 : _this$$store$state$co2.connectionType) != null ? _this$$store$state$co : '';
+	      return this.$store.state.config.connectionProperties?.connectionType ?? '';
 	    },
 	    isEditMode() {
 	      return this.$store.getters.isEditMode;
@@ -4777,8 +4725,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	    }
 	  },
 	  mounted() {
-	    var _this$$store$state$co3, _this$$store$state$co4;
-	    if (!this.$store.getters.hasData && (_this$$store$state$co3 = this.$store.state.config.connectionProperties) != null && _this$$store$state$co3.connectionId && (_this$$store$state$co4 = this.$store.state.config.connectionProperties) != null && _this$$store$state$co4.tableName) {
+	    if (!this.$store.getters.hasData && this.$store.state.config.connectionProperties?.connectionId && this.$store.state.config.connectionProperties?.tableName) {
 	      this.loadDataset();
 	    }
 	    main_core_events.EventEmitter.subscribe('SidePanel.Slider:onMessage', this.onSliderEvent);
@@ -4871,10 +4818,9 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	        this.steps.fields.disabledElements = null;
 	        this.onLoadSuccess(response);
 	      }).catch(response => {
-	        var _response$errors$0$me, _response$errors$;
 	        this.processLoadResponse(response);
 	        this.isLoading = false;
-	        this.previewError = (_response$errors$0$me = (_response$errors$ = response.errors[0]) == null ? void 0 : _response$errors$.message) != null ? _response$errors$0$me : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PREVIEW_ERROR_EXTERNAL');
+	        this.previewError = response.errors[0]?.message ?? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PREVIEW_ERROR_EXTERNAL');
 	      });
 	    },
 	    onLoadSuccess(response) {
@@ -4979,9 +4925,8 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      return Promise.resolve();
 	    },
 	    onSaveEnd(response) {
-	      var _response$data$name, _response$data$id;
-	      const datasetName = (_response$data$name = response.data.name) != null ? _response$data$name : this.$store.state.config.datasetProperties.name;
-	      const datasetId = (_response$data$id = response.data.id) != null ? _response$data$id : this.$store.state.config.datasetProperties.id;
+	      const datasetName = response.data.name ?? this.$store.state.config.datasetProperties.name;
+	      const datasetId = response.data.id ?? this.$store.state.config.datasetProperties.id;
 	      this.popupParams.savingSuccess = {
 	        title: datasetName,
 	        datasetId,
@@ -5025,10 +4970,9 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	        this.popupParams.syncFields.isChange = response.data.isChanged;
 	        this.togglePopup('syncFields', true);
 	      }).catch(response => {
-	        var _response$errors$0$me2, _response$errors$2;
 	        this.isLoading = false;
 	        this.processSyncResponse(response);
-	        this.previewError = (_response$errors$0$me2 = (_response$errors$2 = response.errors[0]) == null ? void 0 : _response$errors$2.message) != null ? _response$errors$0$me2 : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PREVIEW_ERROR_EXTERNAL');
+	        this.previewError = response.errors[0]?.message ?? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PREVIEW_ERROR_EXTERNAL');
 	      });
 	    },
 	    hasFieldsSettingsChanges() {
@@ -5205,6 +5149,113 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	`
 	};
 
+	const SystemDatasetApp = {
+	  extends: BaseApp,
+	  data() {
+	    return {
+	      steps: {
+	        properties: {
+	          disabled: false,
+	          valid: true
+	        },
+	        fields: {
+	          disabled: false,
+	          valid: true,
+	          disabledElements: {
+	            name: true,
+	            type: true
+	          }
+	        }
+	      },
+	      shownPopups: {}
+	    };
+	  },
+	  computed: {
+	    sourceCode() {
+	      return 'system';
+	    },
+	    sourceType() {
+	      return 'system';
+	    },
+	    isEditMode() {
+	      return true;
+	    },
+	    isSaveEnabled() {
+	      return false;
+	    },
+	    emptyStateText() {
+	      return main_core.Loc.getMessage('DATASET_IMPORT_SYSTEM_PREVIEW_EMPTY_TABLE', {
+	        '[br]': '\n'
+	      }) ?? '';
+	    }
+	  },
+	  methods: {
+	    onSliderClose() {
+	      // No unsaved changes check for system datasets — just close.
+	    }
+	  },
+	  components: {
+	    AppLayout,
+	    ImportConfig,
+	    ImportPreview,
+	    DatasetPropertiesStep,
+	    FieldsSettingsStep,
+	    RelatedExternalDatasetsStep
+	  },
+	  // language=Vue
+	  template: `
+		<AppLayout
+			ref="appLayout"
+			:save-locked="true"
+			:is-edit-mode="true"
+			:hide-buttons="true"
+		>
+			<template v-slot:left-panel>
+				<ImportConfig>
+					<div class="ui-alert ui-alert-default ui-alert-icon-info">
+						<span class="ui-alert-message dataset-import-system-hint__message">
+							<span class="dataset-import-system-hint__title">{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_SYSTEM_READONLY_HINT_TITLE') }}</span>
+							<span class="dataset-import-system-hint__description">{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_SYSTEM_READONLY_HINT') }}</span>
+						</span>
+					</div>
+					<DatasetPropertiesStep
+						:is-open-initially="true"
+						:disabled="false"
+						:reserved-names="[]"
+						:name-max-length="230"
+						ref="propertiesStep"
+						:dataset-source-code="'system'"
+						:source-type="sourceType"
+					/>
+					<FieldsSettingsStep
+						:is-open-initially="true"
+						:disabled="false"
+						:disabled-elements="steps.fields.disabledElements"
+						:source-type="sourceType"
+						:title="$Bitrix.Loc.getMessage('DATASET_IMPORT_SYSTEM_FIELDS_TITLE')"
+						:hint="''"
+						ref="fieldsStep"
+					/>
+					<RelatedExternalDatasetsStep
+						:is-open-initially="true"
+						:disabled="false"
+						:is-superset-ready="appParams.isSupersetReady"
+						:source-type="sourceType"
+						ref="externalDatasetsStep"
+					/>
+				</ImportConfig>
+			</template>
+			<template v-slot:right-panel>
+				<ImportPreview
+					:empty-state-text="emptyStateText"
+					:needShowHeadersWithEmptyRows="false"
+					:source-type="sourceType"
+				/>
+			</template>
+		</AppLayout>
+	`
+	};
+
 	/* eslint-disable no-param-reassign */
 	class Store {
 	  static buildStore(defaultValues) {
@@ -5280,20 +5331,16 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	          return state.config.fieldsSettings.map(item => item.name);
 	        },
 	        hasData(state) {
-	          var _state$previewData, _state$previewData$ro;
-	          return ((_state$previewData = state.previewData) == null ? void 0 : (_state$previewData$ro = _state$previewData.rows) == null ? void 0 : _state$previewData$ro.length) > 0;
+	          return state.previewData?.rows?.length > 0;
 	        },
 	        connectionProperties(state) {
-	          var _state$config;
-	          return (_state$config = state.config) == null ? void 0 : _state$config.connectionProperties;
+	          return state.config?.connectionProperties;
 	        },
 	        datasetProperties(state) {
-	          var _state$config2;
-	          return (_state$config2 = state.config) == null ? void 0 : _state$config2.datasetProperties;
+	          return state.config?.datasetProperties;
 	        },
 	        getSectionConfig: state => (sectionName, property) => {
-	          var _state$config3, _state$config3$sectio, _state$config3$sectio2;
-	          return (_state$config3 = state.config) == null ? void 0 : (_state$config3$sectio = _state$config3.sectionsConfig) == null ? void 0 : (_state$config3$sectio2 = _state$config3$sectio[sectionName]) == null ? void 0 : _state$config3$sectio2[property];
+	          return state.config?.sectionsConfig?.[sectionName]?.[property];
 	        }
 	      }
 	    });
@@ -5304,6 +5351,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	  csv: CsvApp,
 	  '1c': ExternalConnectionApp,
 	  rest: ExternalConnectionApp,
+	  system: SystemDatasetApp,
 	  mysql: ExternalConnectionApp,
 	  pgsql: ExternalConnectionApp
 	};
@@ -5353,12 +5401,15 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	}
 
 	class Slider {
-	  static open(sourceId, datasetId = 0, connection = {}, sectionsConfig = {}) {
+	  static open(sourceId, datasetId = 0, connection = {}, sectionsConfig = {}, extra = {}) {
 	    const componentLink = '/bitrix/components/bitrix/biconnector.dataset.import/slider.php';
 	    const sliderLink = new main_core.Uri(componentLink);
 	    sliderLink.setQueryParam('sourceId', sourceId);
 	    if (datasetId) {
 	      sliderLink.setQueryParam('datasetId', datasetId);
+	    }
+	    if (main_core.Type.isStringFilled(extra?.tableName)) {
+	      sliderLink.setQueryParam('tableName', extra.tableName);
 	    }
 	    if (Object.keys(connection).length > 0) {
 	      sliderLink.setQueryParam('connection', connection);
@@ -5391,5 +5442,5 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	exports.AppFactory = AppFactory;
 	exports.Slider = Slider;
 
-}((this.BX.BIConnector.DatasetImport = this.BX.BIConnector.DatasetImport || {}),BX.BIConnector.DatasetImport,BX,BX.UI,BX.UI,BX,BX.UI.SidePanel,BX,BX.UI,BX.UI.Uploader,BX,BX.UI,BX.UI.Analytics,BX.UI,BX.Main,BX.Vue3,BX.UI.EntitySelector,BX.UI.IconSet,BX.Vue3.Directives,BX.Event,BX.Vue3.Vuex,BX,BX));
+})(this.BX.BIConnector.DatasetImport = this.BX.BIConnector.DatasetImport || {}, BX.Vue3, BX.BIConnector.DatasetImport, BX, BX.Main, BX.UI, BX, BX.UI, BX.UI.IconSet, BX.Vue3.Directives, BX.UI.SidePanel, BX.UI, BX.UI.Uploader, BX.UI, BX.UI.Analytics, BX, BX.Event, BX.UI.EntitySelector, BX.Vue3.Vuex);
 //# sourceMappingURL=dataset-import.bundle.js.map

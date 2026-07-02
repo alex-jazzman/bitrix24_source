@@ -43,6 +43,10 @@ $arActivityDescription = (new ActivityDescription(
 					sort: 100,
 				),
 				new NodeAction(
+					activityCode: 'crmcreatetodoactivity',
+					sort: 125,
+				),
+				new NodeAction(
 					activityCode: 'setfieldactivity',
 					customName: Loc::getMessage('CRM_COMPLEX_ACTIVITY_COMPANY_DESCRIPTION_NODE_ACTION_CHANGE_COMPANY'),
 					sort: 200,
@@ -62,6 +66,11 @@ $arActivityDescription = (new ActivityDescription(
 				new NodeAction(
 					activityCode: 'crmgenerateentitydocumentactivity',
 					sort: 550,
+				),
+				new NodeAction(
+					activityCode: 'crmtimelinecommentadd',
+					customName: Loc::getMessage('CRM_COMPLEX_ACTIVITY_COMPANY_DESCRIPTION_NODE_ACTION_ADD_COMMENT'),
+					sort: 551,
 				),
 				new NodeAction(
 					activityCode: 'deletedocumentactivity',

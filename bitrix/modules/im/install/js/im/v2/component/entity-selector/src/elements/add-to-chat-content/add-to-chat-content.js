@@ -1,24 +1,22 @@
+import { type JsonObject } from 'main.core';
+import { type EventEmitter } from 'main.core.events';
 import { TagSelector } from 'ui.entity-selector';
+import { AirButtonStyle, Button as UiButton, ButtonColor, ButtonSize } from 'ui.vue3.components.button';
 
 import { Analytics } from 'im.v2.lib.analytics';
 import { ChatType, EventType, UserType } from 'im.v2.const';
-import { AddToChatSearch } from 'im.v2.component.search';
-import { ChatButton, ButtonSize, ButtonColor } from 'im.v2.component.elements.button';
+import { AddToChatSearch as AddToChat } from 'im.v2.component.search';
 import { ChannelManager } from 'im.v2.lib.channel';
+import { type ImModelChat, type ImModelUser } from 'im.v2.model';
 
 import './add-to-chat-content.css';
 
-import type { JsonObject } from 'main.core';
-import type { EventEmitter } from 'main.core.events';
-import type { ImModelChat, ImModelUser } from 'im.v2.model';
-
 const SEARCH_ENTITY_ID = 'user';
-const DEFAULT_CONTAINER_HEIGHT = 600;
 
 // @vue/component
 export const AddToChatContent = {
 	name: 'AddToChatContent',
-	components: { AddToChatSearch, ChatButton },
+	components: { AddToChat, UiButton },
 	props: {
 		dialogId: {
 			type: String,
@@ -27,10 +25,6 @@ export const AddToChatContent = {
 		isLoading: {
 			type: Boolean,
 			required: false,
-		},
-		height: {
-			type: Number,
-			default: DEFAULT_CONTAINER_HEIGHT,
 		},
 	},
 	emits: ['inviteMembers', 'close'],
@@ -42,10 +36,10 @@ export const AddToChatContent = {
 			selectedItems: new Set(),
 		};
 	},
-	computed:
-	{
+	computed: {
 		ButtonSize: () => ButtonSize,
 		ButtonColor: () => ButtonColor,
+		ButtonStyle: () => AirButtonStyle,
 		dialog(): ImModelChat
 		{
 			return this.$store.getters['chats/get'](this.dialogId, true);
@@ -70,12 +64,6 @@ export const AddToChatContent = {
 		{
 			return !this.isCollab && this.isChat && !this.isChannel && !this.isOpenLines;
 		},
-		containerStyles(): {height: string}
-		{
-			return {
-				height: `${this.height}px`,
-			};
-		},
 	},
 	created()
 	{
@@ -96,8 +84,7 @@ export const AddToChatContent = {
 		this.membersSelector.showTextBox();
 		this.membersSelector.focusTextBox();
 	},
-	methods:
-	{
+	methods: {
 		getTagSelector(): TagSelector
 		{
 			let timeoutId = null;
@@ -211,16 +198,16 @@ export const AddToChatContent = {
 		},
 	},
 	template: `
-		<div class="bx-im-entity-selector-add-to-chat__container" :style="containerStyles">
+		<div class="bx-im-entity-selector-add-to-chat__container">
 			<div class="bx-im-entity-selector-add-to-chat__input" ref="tag-selector"></div>
 			<div v-if="showHistoryOption" class="bx-im-entity-selector-add-to-chat__show-history">
 				<input type="checkbox" id="bx-im-entity-selector-add-to-chat-show-history" v-model="showHistory">
 				<label for="bx-im-entity-selector-add-to-chat-show-history">
-					{{ loc('IM_ENTITY_SELECTOR_ADD_TO_CHAT_SHOW_HISTORY')}}
+					{{ loc('IM_ENTITY_SELECTOR_ADD_TO_CHAT_SHOW_HISTORY_MSGVER_1')}}
 				</label>
 			</div>
 			<div class="bx-im-entity-selector-add-to-chat__search-result-container">
-				<AddToChatSearch
+				<AddToChat
 					:query="searchQuery"
 					:dialogId="dialogId"
 					:selectedItems="[...selectedItems]"
@@ -228,20 +215,18 @@ export const AddToChatContent = {
 				/>
 			</div>
 			<div class="bx-im-entity-selector-add-to-chat__buttons">
-				<ChatButton
-					:size="ButtonSize.L"
-					:color="ButtonColor.Primary"
-					:isRounded="true"
-					:isLoading="isLoading"
+				<UiButton
+					:size="ButtonSize.LARGE"
 					:text="loc('IM_ENTITY_SELECTOR_ADD_TO_CHAT_INVITE_BUTTON')"
-					:isDisabled="selectedItems.size === 0"
+					:loading="isLoading"
+					:disabled="selectedItems.size === 0"
 					@click="onInviteClick"
+					:style="ButtonStyle.FILLED"
 				/>
-				<ChatButton
-					:size="ButtonSize.L"
-					:color="ButtonColor.LightBorder"
-					:isRounded="true"
+				<UiButton
+					:size="ButtonSize.LARGE"
 					:text="loc('IM_ENTITY_SELECTOR_ADD_TO_CHAT_CANCEL_BUTTON')"
+					:style="ButtonStyle.PLAIN"
 					@click="$emit('close')"
 				/>
 			</div>

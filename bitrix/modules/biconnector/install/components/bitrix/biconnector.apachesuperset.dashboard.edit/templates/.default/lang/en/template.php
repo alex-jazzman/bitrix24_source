@@ -1,0 +1,21 @@
+<?php
+$MESS["DASHBOARD_EDIT_COVER"] = "Dashboard image:";
+$MESS["DASHBOARD_EDIT_COVER_CHANGE"] = "Change";
+$MESS["DASHBOARD_EDIT_COVER_HINT"] = "Recommended image aspect ratio: 16:9, maximum 10 MB.";
+$MESS["DASHBOARD_EDIT_COVER_REMOVE"] = "Delete image";
+$MESS["DASHBOARD_EDIT_COVER_UPLOAD_ERROR"] = "Could not upload dashboard image.";
+$MESS["DASHBOARD_EDIT_DESCRIPTION"] = "Description";
+$MESS["DASHBOARD_EDIT_DESCRIPTION_SECTION_HINT"] = "Add a comprehensive description for this dashboard.";
+$MESS["DASHBOARD_EDIT_DESCRIPTION_SECTION_TITLE"] = "Description";
+$MESS["DASHBOARD_EDIT_GALLERY_DROP_TEXT"] = "Drag images here, or #LINK_START#upload image from your computer#LINK_END#";
+$MESS["DASHBOARD_EDIT_GALLERY_SECTION_HINT"] = "Add any dashboard related images here. You can use them in the dashboard description.";
+$MESS["DASHBOARD_EDIT_GALLERY_SECTION_TITLE"] = "Image gallery";
+$MESS["DASHBOARD_EDIT_GALLERY_UPLOAD_ERROR"] = "Could not upload gallery image.";
+$MESS["DASHBOARD_EDIT_GALLERY_UPLOAD_IN_PROGRESS"] = "Images are being uploaded. Please wait...";
+$MESS["DASHBOARD_EDIT_MAIN_SECTION_TITLE"] = "General";
+$MESS["DASHBOARD_EDIT_NAME"] = "Dashboard name:";
+$MESS["DASHBOARD_EDIT_PERIOD"] = "Date range:";
+$MESS["DASHBOARD_EDIT_PERIOD_FROM"] = "Start date:";
+$MESS["DASHBOARD_EDIT_PERIOD_TO"] = "End date:";
+$MESS["DASHBOARD_EDIT_SAVE_RESPONSE_ERROR"] = "Could not get saved dashboard's data. Please try again.";
+$MESS["DASHBOARD_EDIT_TOP_BLOCK"] = "Provide the dashboard name and select a cover image.";

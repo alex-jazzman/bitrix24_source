@@ -1,4 +1,10 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+
+/**
+ * @global CMain $APPLICATION
+ * @var array $arResult
+ * @var array $arParams
+ */
 
 $arFieldsSorted = array(
 	"LOGIN",
@@ -93,7 +99,7 @@ if (!empty($arParams["SHOW_FIELDS"]))
 					break;
 
 				case 'EMAIL':
-					if ($bIntranet && $val <> ''):
+					if ($arResult['intranet'] && $val <> ''):
 						$val = '<a href="mailto:'.htmlspecialcharsbx($val).'">'.htmlspecialcharsbx($val).'</a>';
 					else:
 						$val = '';
@@ -150,8 +156,13 @@ if (!empty($arParams["SHOW_FIELDS"]))
 						$year = intval($arDateTmp["YYYY"]);
 
 						$val = $day.' '.mb_strtolower(GetMessage('MONTH_'.$month.'_S'));
-						if (($arParams['SHOW_YEAR'] == 'Y') || ($arParams['SHOW_YEAR'] == 'M' && $arResult["User"]['PERSONAL_GENDER'] == 'M'))
-							$val .= ' '.$year;
+						if (isset($arParams['SHOW_YEAR']))
+						{
+							if (($arParams['SHOW_YEAR'] == 'Y') || ($arParams['SHOW_YEAR'] == 'M' && $arResult["User"]['PERSONAL_GENDER'] == 'M'))
+							{
+								$val .= ' '.$year;
+							}
+						}
 
 						$arResult['IS_BIRTHDAY'] = (intval($arDateTmp['MM']) == date('n') && intval($arDateTmp['DD']) == date('j'));
 					}
@@ -209,6 +220,7 @@ if (!empty($arParams["SHOW_FIELDS"]))
 }
 
 // USER PROPERIES
+$arUserFields = null;
 if (!empty($arParams["USER_PROPERTY"]))
 {
 	$arUserFields = $GLOBALS["USER_FIELD_MANAGER"]->GetUserFields("USER", $arResult["User"]["ID"], LANGUAGE_ID);
@@ -218,7 +230,7 @@ if (!empty($arParams["USER_PROPERTY"]))
 		if (in_array($fieldName, $arParams["USER_PROPERTY"]))
 		{
 			if (
-				$bIntranet
+				$arResult['intranet']
 				&& $arUserField["FIELD_NAME"] == "UF_DEPARTMENT"
 				&& trim($arParams["PATH_TO_CONPANY_DEPARTMENT"]) <> ''
 			)
@@ -312,7 +324,7 @@ $strPosition = $strUserFields = '';
 foreach($arUserOutFields as $field)
 {
 	if (
-		$bIntranet
+		$arResult['intranet']
 		&& $arResult["VERSION"] >= 2
 		&& $field['code'] == 'WORK_POSITION'
 	)
@@ -411,7 +423,8 @@ else
 	$strPhoto = "";
 }
 
-if (IsModuleInstalled('extranet') || IsModuleInstalled('mail'))
+$extranet = IsModuleInstalled('extranet');
+if ($extranet || IsModuleInstalled('mail'))
 {
 	if (
 		!is_array($arUserFields)
@@ -421,7 +434,7 @@ if (IsModuleInstalled('extranet') || IsModuleInstalled('mail'))
 		$arUserFields = $GLOBALS["USER_FIELD_MANAGER"]->GetUserFields("USER", $arResult["User"]["ID"], LANGUAGE_ID);
 	}
 
-	$bExtranetUser = (
+	$bExtranetUser = $extranet && (
 		(is_array($arUserFields["UF_DEPARTMENT"]["VALUE"]) && empty($arUserFields["UF_DEPARTMENT"]["VALUE"]))
 		|| (!is_array($arUserFields["UF_DEPARTMENT"]["VALUE"]) && intval($arUserFields["UF_DEPARTMENT"]["VALUE"]) <= 0)
 	);
@@ -446,7 +459,7 @@ if (IsModuleInstalled('extranet') || IsModuleInstalled('mail'))
 	}
 }
 
-$strNameFormatted = CUser::FormatName($arParams['NAME_TEMPLATE'], $arTmpUser, $bUseLogin);
+$strNameFormatted = CUser::FormatName($arParams['NAME_TEMPLATE'], $arTmpUser, $arResult['useLogin']);
 
 $strPhoto = '<a href="'.$arTmpUser["DETAIL_URL"].'" class="'.$photoClass.'">'.$strPhoto.'</a>';
 
@@ -477,10 +490,10 @@ $strCard .= '<div class="'.$arResult["stylePrefix"].'-info-data-info">'.$strUser
 $strCard .= '</div>';
 
 static $includedOnce = false;
+$arScripts = [];
 if (!$includedOnce)
 {
-	$arScripts = array("BX.message({ MULSonetMessageChatTemplate: '".CUtil::JSEscape($arParams["~PATH_TO_SONET_MESSAGES_CHAT"])."', MULVideoCallTemplate: '".CUtil::JSEscape($arParams["~PATH_TO_VIDEO_CALL"])."' });");
+	$arScripts = array("BX.message({ MULSonetMessageChatTemplate: '".CUtil::JSEscape($arParams["~PATH_TO_SONET_MESSAGES_CHAT"] ?? '')."', MULVideoCallTemplate: '".CUtil::JSEscape($arParams["~PATH_TO_VIDEO_CALL"] ?? '')."' });");
 }
 
 $includedOnce = true;
-?>

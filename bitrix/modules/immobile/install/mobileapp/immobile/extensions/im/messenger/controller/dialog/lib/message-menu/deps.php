@@ -8,6 +8,7 @@ return [
 		'haptics',
 		'notify-manager',
 		'tokens',
+		'module',
 		'utils/url',
 		'utils/file',
 		'assets/icons',
@@ -37,11 +38,20 @@ return [
 		'im:messenger/controller/file-download-menu',
 	],
 	'bundle' => [
-		'./src/action',
-		'./src/menu',
+		'./src/one-level/manager',
+		'./src/one-level/view',
+
+		'./src/multi-level/manager',
+		'./src/multi-level/view',
+
+		'./src/message-action-helper',
 		'./src/controller',
-		'./src/message',
-		'./src/view',
+		'./src/section',
+		'./src/action',
+
+		'./src/context/default',
+		'./src/context/copilot',
+		'./src/context/ai-assistant',
 		'./src/saver/file-saver',
 		'./src/saver/save-toast',
 		'./src/saver/disk-saver',

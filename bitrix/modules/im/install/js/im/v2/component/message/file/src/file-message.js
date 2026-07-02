@@ -1,5 +1,5 @@
 import { Type } from 'main.core';
-import { UploaderFile } from 'ui.uploader.core';
+import { type UploaderFile } from 'ui.uploader.core';
 
 import { UnsupportedMessage } from 'im.v2.component.message.unsupported';
 import { FileType } from 'im.v2.const';

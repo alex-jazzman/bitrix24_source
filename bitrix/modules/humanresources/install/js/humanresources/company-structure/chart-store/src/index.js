@@ -3,8 +3,8 @@ import { defineStore } from 'ui.vue3.pinia';
 import { getData } from 'humanresources.company-structure.api';
 import {
 	EntityTypes,
-	WizardApiEntityChangedDict,
-	NodeSettingsTypes,
+	type WizardApiEntityChangedDict,
+	type NodeSettingsTypes,
 	type CommunicationDetailed,
 	type UserData,
 	type NodeColorSettingsType,

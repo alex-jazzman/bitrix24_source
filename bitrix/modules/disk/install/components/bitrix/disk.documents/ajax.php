@@ -40,6 +40,13 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 
 			return null;
 		}
+		$securityContext = $file->getStorage()->getCurrentUserSecurityContext();
+		if (!$file->canRead($securityContext))
+		{
+			$this->addError(new Error('Cannot obtain file'));
+
+			return null;
+		}
 
 		$newFile = $file->getRealObject()->copyTo($folder, $currentUserId, true);
 

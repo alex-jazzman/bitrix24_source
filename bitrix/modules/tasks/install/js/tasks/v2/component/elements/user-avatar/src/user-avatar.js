@@ -1,6 +1,12 @@
-import { AvatarBase, AvatarRoundGuest } from 'ui.avatar';
+import { AvatarBase, AvatarRoundGuest, AvatarRoundExtranet } from 'ui.avatar';
 import { UserAvatarSize, UserAvatarSizeMap } from './user-avatar-size';
 import './user-avatar.css';
+
+const USER_TYPES = {
+	EMPLOYEE: 'employee',
+	COLLABER: 'collaber',
+	EXTRANET: 'extranet',
+};
 
 // @vue/component
 export const UserAvatar = {
@@ -12,7 +18,7 @@ export const UserAvatar = {
 		},
 		type: {
 			type: String,
-			default: 'employee',
+			default: USER_TYPES.EMPLOYEE,
 		},
 		size: {
 			type: String,
@@ -28,6 +34,55 @@ export const UserAvatar = {
 		{
 			return this.src === null ? '' : this.src;
 		},
+		isCollaber(): string
+		{
+			return (this.type === USER_TYPES.COLLABER);
+		},
+		isExtranet(): string
+		{
+			return (this.type === USER_TYPES.EXTRANET);
+		},
+		colorAvatar(): string
+		{
+			let colorAvatarNew = '#858D95';
+
+			if (this.isCollaber)
+			{
+				colorAvatarNew = '#19CC45';
+			}
+
+			if (this.isExtranet)
+			{
+				colorAvatarNew = '#ca8600';
+			}
+
+			return colorAvatarNew;
+		},
+		ClassComponentAvatar(): string
+		{
+			let ClassComponentAvatarNew = AvatarBase;
+
+			if (this.isCollaber)
+			{
+				ClassComponentAvatarNew = AvatarRoundGuest;
+			}
+
+			if (this.isExtranet)
+			{
+				ClassComponentAvatarNew = AvatarRoundExtranet;
+			}
+
+			return ClassComponentAvatarNew;
+		},
+		optionsAvatar(): string
+		{
+			return {
+				size: UserAvatarSizeMap[this.size],
+				picPath: encodeURI(this.normalizedSrc),
+				baseColor: this.colorAvatar,
+				borderColor: this.borderColor,
+			};
+		},
 	},
 	watch: {
 		normalizedSrc(): void
@@ -42,16 +97,8 @@ export const UserAvatar = {
 	methods: {
 		render(): void
 		{
-			const isExternal = this.type === 'collaber' || this.type === 'extranet';
-
 			this.avatar?.getContainer()?.remove();
-			const AvatarClass = isExternal ? AvatarRoundGuest : AvatarBase;
-			this.avatar = new (AvatarClass)({
-				size: UserAvatarSizeMap[this.size],
-				picPath: encodeURI(this.normalizedSrc),
-				baseColor: isExternal ? null : '#858D95',
-				borderColor: this.borderColor,
-			});
+			this.avatar = new (this.ClassComponentAvatar)(this.optionsAvatar);
 			this.avatar.renderTo(this.$refs.container);
 		},
 	},

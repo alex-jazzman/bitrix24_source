@@ -3,7 +3,7 @@ import { sendData } from 'ui.analytics';
 import { AnalyticsTool, AnalyticsCategory } from 'booking.const';
 
 import { getCSection } from '../lib';
-import { AddBookingWaitListAnalyticsOptions } from './types';
+import type { AddBookingWaitListAnalyticsOptions } from './types';
 
 export class WaitListAnalytics
 {

@@ -10,7 +10,6 @@ return [
 		'main.polyfill.core',
 		'booking.core',
 		'booking.lib.api-client',
-		'booking.model.resource-types',
 	],
 	'skip_core' => true,
 ];

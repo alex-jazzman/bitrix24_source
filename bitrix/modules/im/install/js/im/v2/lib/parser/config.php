@@ -13,8 +13,8 @@ return [
 	'js' => './dist/parser.bundle.js',
 	'css' => './dist/parser.bundle.css',
 	'rel' => [
-		'im.v2.lib.desktop-api',
 		'im.public',
+		'im.v2.lib.desktop-api',
 		'main.core',
 	],
 	'skip_core' => false,

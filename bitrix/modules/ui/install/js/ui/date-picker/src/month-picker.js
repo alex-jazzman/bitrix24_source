@@ -1,4 +1,4 @@
-import { Dom, Tag, Text, Event } from 'main.core';
+import { Dom, Loc, Tag, Text, Event } from 'main.core';
 import { DateTimeFormat } from 'main.date';
 import { MemoryCache, type BaseCache } from 'main.core.cache';
 import { BasePicker } from './base-picker';
@@ -15,6 +15,7 @@ export type MonthPickerMonth = {
 	month: number,
 	current: boolean,
 	selected: boolean,
+	disabled: boolean,
 	focused: boolean,
 	tabIndex: number,
 };
@@ -29,13 +30,13 @@ export class MonthPicker extends BasePicker
 	{
 		return this.#refs.remember('container', () => {
 			return Tag.render`
-				<div class="ui-month-picker">
+				<div class="ui-month-picker" role="none">
 					${this.getHeaderContainer(
 						this.getPrevBtn(),
 						this.getHeaderTitle(),
 						this.getNextBtn(),
 					)}
-					${this.getContentContainer()}
+					${this.getContentContainer(this.getYearContainer())}
 				</div>
 			`;
 		});
@@ -45,7 +46,27 @@ export class MonthPicker extends BasePicker
 	{
 		return this.#refs.remember('header-title', () => {
 			return Tag.render`
-				<button type="button" class="ui-month-picker-header-title" onclick="${this.#handleTitleClick.bind(this)}"></button>
+				<button
+					type="button" 
+					class="ui-month-picker-header-title" 
+					onclick="${this.#handleTitleClick.bind(this)}"
+					aria-live="polite" 
+					aria-label="${Loc.getMessage('UI_DATE_PICKER_YEAR_VIEW_LABEL')}"
+				></button>
+			`;
+		});
+	}
+
+	getYearContainer(): HTMLElement
+	{
+		return this.#refs.remember('year-container', () => {
+			return Tag.render`
+				<div 
+					class="ui-month-picker-content"
+					role="grid"
+					aria-label="${Loc.getMessage('UI_DATE_PICKER_MONTH_VIEW_LABEL')}"
+					aria-multiselectable="${this.getDatePicker().isSingleMode() ? 'false' : 'true'}"
+				></div>
 			`;
 		});
 	}
@@ -78,6 +99,7 @@ export class MonthPicker extends BasePicker
 					month: currentMonthIndex,
 					current: isDatesEqual(date, today, 'month'),
 					selected: this.getDatePicker().isDateSelected(date, 'month'),
+					disabled: !this.getDatePicker().isDateAllowed(date, 'month'),
 					focused,
 					tabIndex: focused || isDatesEqual(date, initialFocusDate, 'month') ? 0 : -1,
 				};
@@ -114,20 +136,23 @@ export class MonthPicker extends BasePicker
 			});
 		});
 
-		if (focusButton !== null && isFocused)
+		if (focusButton !== null && isFocused && this.getDatePicker().getFocusInputModality() === 'keyboard')
 		{
 			focusButton.focus({ preventScroll: true });
 		}
 
 		const { year: currentYear } = getDate(this.getDatePicker().getViewDate());
 		this.getHeaderTitle().textContent = currentYear;
+
+		this.getPrevBtn().disabled = !this.getDatePicker().canNavigate('month', 'prev');
+		this.getNextBtn().disabled = !this.getDatePicker().canNavigate('month', 'next');
 	}
 
 	#renderQuarter(index: number): HTMLElement
 	{
 		return this.#refs.remember(`quarter-${index}`, () => {
-			const container: HTMLElement = Tag.render`<div class="ui-month-picker-quarter"></div>`;
-			Dom.append(container, this.getContentContainer());
+			const container: HTMLElement = Tag.render`<div class="ui-month-picker-quarter" role="row"></div>`;
+			Dom.append(container, this.getYearContainer());
 
 			return container;
 		});
@@ -140,6 +165,7 @@ export class MonthPicker extends BasePicker
 				<button
 					type="button"
 					class="ui-month-picker-month"
+					role="gridcell"
 					data-year="${month.year}"
 					data-month="${month.month}"
 					data-tab-priority="true"
@@ -159,13 +185,33 @@ export class MonthPicker extends BasePicker
 			button.dataset.year = month.year;
 		}
 
+		const ariaLabel = DateTimeFormat.format('f Y', month.date, null, true);
+		if (button.getAttribute('aria-label') !== ariaLabel)
+		{
+			button.setAttribute('aria-label', ariaLabel);
+		}
+
+		const ariaSelected = month.selected ? 'true' : 'false';
+		if (button.getAttribute('aria-selected') !== ariaSelected)
+		{
+			button.setAttribute('aria-selected', ariaSelected);
+		}
+
 		if (month.current)
 		{
 			Dom.addClass(button, '--current');
+			if (button.getAttribute('aria-current') !== 'date')
+			{
+				button.setAttribute('aria-current', 'date');
+			}
 		}
 		else
 		{
 			Dom.removeClass(button, '--current');
+			if (button.hasAttribute('aria-current'))
+			{
+				button.removeAttribute('aria-current');
+			}
 		}
 
 		if (month.selected)
@@ -186,6 +232,16 @@ export class MonthPicker extends BasePicker
 			Dom.removeClass(button, '--focused');
 		}
 
+		if (month.disabled)
+		{
+			Dom.addClass(button, '--disabled');
+		}
+		else
+		{
+			Dom.removeClass(button, '--disabled');
+		}
+
+		button.disabled = Boolean(month.disabled);
 		button.tabIndex = month.tabIndex;
 
 		return button;
@@ -206,7 +262,7 @@ export class MonthPicker extends BasePicker
 
 	#handleMonthClick(event: MouseEvent): void
 	{
-		if (!Dom.hasClass(event.target, 'ui-month-picker-month'))
+		if (!Dom.hasClass(event.target, 'ui-month-picker-month') || event.target.disabled)
 		{
 			return;
 		}
@@ -219,5 +275,15 @@ export class MonthPicker extends BasePicker
 	#handleTitleClick(event: MouseEvent): void
 	{
 		this.emit('onTitleClick');
+	}
+
+	getPrevBtnLabel(): string
+	{
+		return Loc.getMessage('UI_DATE_PICKER_PREV_YEAR');
+	}
+
+	getNextBtnLabel(): string
+	{
+		return Loc.getMessage('UI_DATE_PICKER_NEXT_YEAR');
 	}
 }

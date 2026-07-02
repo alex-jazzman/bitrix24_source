@@ -1,0 +1,42 @@
+.bx-im-invitation-input__container input {
+	--bx-im-invitation-input__primary-color: var(--ui-color-accent-main-primary);
+
+	width: 100%;
+	padding: 8px 12px;
+	border: 1px solid var(--ui-color-base-5);
+	border-radius: var(--ui-border-radius-sm);
+	font-size: var(--ui-font-size-lg);
+	color: var(--ui-color-base-1);
+	outline: none;
+	margin-top: 12px;
+	caret-color: var(--ui-color-accent-main-primary);
+}
+
+.bx-im-invitation-input__container input.--error {
+	border-color: var(--ui-color-red-50);
+}
+
+.bx-im-invitation-input__container input:focus {
+	border-color: var(--ui-color-accent-main-primary);
+}
+
+.bx-im-invitation-input__error {
+	display: flex;
+	align-items: center;
+}
+
+.bx-im-invitation-input__error-text {
+	font-size: var(--im-font-size-xs);
+	color: var(--ui-color-accent-main-alert);
+}
+
+.bx-im-invitation-input__error-icon.ui-icon-set {
+	background-color: var(--ui-color-red-60);
+	height: 18px;
+	width: 18px;
+}
+
+.bx-im-invitation-input__error-icon {
+	font-size: var(--im-font-size-2xl);
+	color: var(--ui-color-red-60);
+}

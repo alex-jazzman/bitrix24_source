@@ -1,14 +1,15 @@
 import { Core } from 'im.v2.application.core';
-import { UserStatus, LocalStorageKey, Settings, RawSettings, UserType } from 'im.v2.const';
+import { UserStatus, LocalStorageKey, Settings, UserType, type RawSettings } from 'im.v2.const';
 import { Logger } from 'im.v2.lib.logger';
 import { MessageNotifierManager } from 'im.v2.lib.message-notifier';
 import { DesktopManager } from 'im.v2.lib.desktop';
 import { CallManager } from 'im.v2.lib.call';
 import { LocalStorageManager } from 'im.v2.lib.local-storage';
 
-import type { ImModelChat } from 'im.v2.model';
-import type { MessageAddParams } from './types/message';
-import type { NotifyAddParams } from './types/notification';
+import { type ImModelChat } from 'im.v2.model';
+
+import { type MessageAddParams } from './types/message';
+import { type NotifyAddParams } from './types/notification';
 
 export class NotifierPullHandler
 {

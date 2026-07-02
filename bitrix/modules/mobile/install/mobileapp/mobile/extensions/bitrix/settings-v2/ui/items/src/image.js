@@ -6,6 +6,7 @@ jn.define('settings-v2/ui/items/src/image', (require, exports, module) => {
 	const { SafeImage } = require('layout/ui/safe-image');
 	const AppTheme = require('apptheme');
 	const { ASSET_PATH } = require('settings-v2/const');
+	const { Color } = require('tokens');
 
 	const IMAGE_ASSET_PATH = `${ASSET_PATH}image/${AppTheme.id}/`;
 
@@ -25,15 +26,22 @@ jn.define('settings-v2/ui/items/src/image', (require, exports, module) => {
 		{
 			const { name, id, externalStyle } = this.props;
 
-			return SafeImage({
-				testId: this.getTestId(id),
-				uri: `${IMAGE_ASSET_PATH}/${name}.png`,
-				resizeMode: 'stretch',
-				style: {
-					width: '100%',
-					...externalStyle,
+			return View(
+				{
+					style: {
+						width: '100%',
+						backgroundColor: Color.accentSoftBlue3.toHex(),
+					}
 				},
-			});
+				SafeImage({
+					testId: this.getTestId(id),
+					uri: `${IMAGE_ASSET_PATH}/${name}.png`,
+					resizeMode: 'contain',
+					style: {
+						...externalStyle,
+					},
+				}),
+			);
 		}
 	}
 

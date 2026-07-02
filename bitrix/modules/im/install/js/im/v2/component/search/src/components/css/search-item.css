@@ -90,6 +90,7 @@
 	background: url('./images/selected-mark-blue.svg') no-repeat center;
 }
 
+/* @chef-ignore */
 .bx-im-search-item__container.--selected:has(+ .--selected) {
 	border-bottom-left-radius: 0;
 	border-bottom-right-radius: 0;

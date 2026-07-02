@@ -4,12 +4,16 @@
 	border-radius: 7px;
 	overflow: hidden;
 	background-position: center center;
-	width: 38px;
-	height: 38px;
+	width: 46px;
+	height: 46px;
 	margin-right: 8px;
 	flex-shrink: 0;
 	display: grid;
 	place-items: center;
+}
+
+.editor-chart-block-icon.--deactivated {
+	background-color: var(--designer-bp-grey-bg);
 }
 
 .editor-chart-block-icon.--background-color-1 {
@@ -42,4 +46,8 @@
 
 .editor-chart-block-icon.--background-color-8 {
 	background-color: rgba(31, 134, 255, 1); /* token will be provided later */
+}
+
+.editor-chart-block-icon.--deactivated .editor-chart-block-icon__icon {
+	--ui-icon-set__icon-color: var(--ui-color-palette-gray-50) !important;
 }

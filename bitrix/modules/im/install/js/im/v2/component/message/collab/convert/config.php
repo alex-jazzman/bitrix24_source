@@ -8,9 +8,9 @@ return [
 	'css' => 'dist/convert.bundle.css',
 	'js' => 'dist/convert.bundle.js',
 	'rel' => [
+		'im.v2.component.message.base',
 		'main.core',
 		'ui.vue3.components.rich-loc',
-		'im.v2.component.message.base',
 	],
 	'skip_core' => false,
 ];

@@ -1,3 +1,5 @@
+import { Communication } from 'booking.const';
+
 export type ResourcesState = {
 	collection: { [resourceId: string]: ResourceModel },
 	resourcesSkuRelations: ResourceSkuRelationsModel[],
@@ -22,7 +24,7 @@ export type ResourceModel = {
 	updatedAt: number | null,
 	deletedAt: number | null,
 
-	senderCode: string,
+	senderCode: $Values<typeof Communication>;
 
 	// info
 	isInfoNotificationOn: boolean,
@@ -47,6 +49,10 @@ export type ResourceModel = {
 	templateTypeDelayed: string,
 	delayedNotificationDelay: number,
 	delayedCounterDelay: number,
+
+	// cancellation
+	isCancellationNotificationOn: boolean,
+	cancellationNotificationDelay: number,
 
 	// feedback
 	isFeedbackNotificationOn: boolean,

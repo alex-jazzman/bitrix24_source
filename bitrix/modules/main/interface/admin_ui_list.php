@@ -7,12 +7,18 @@ use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Main\Grid;
 use Bitrix\Main\Security;
 use Bitrix\Main\UI\Filter;
+use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Main\Web\Json;
 use Bitrix\UI\Toolbar\ButtonLocation;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields\ExpressionField;
+use Bitrix\UI\Buttons\SettingsButton;
+use Bitrix\UI\Buttons\JsCode;
+use Bitrix\UI\Buttons\Color;
+use Bitrix\UI\Buttons\Button;
 
 class CAdminUiList extends CAdminList
 {
@@ -113,7 +119,7 @@ class CAdminUiList extends CAdminList
 		$adminAjaxHelper->sendJsonResponse(["totalCountHtml" => GetMessage("admin_lib_list_all_title").": ".(int) $totalCount]);
 	}
 
-	public function SetNavigationParams(\CAdminUiResult $queryObject, $params = array())
+	public function SetNavigationParams(CAdminUiResult $queryObject, $params = array())
 	{
 		if ($this->isPublicMode)
 		{
@@ -125,7 +131,7 @@ class CAdminUiList extends CAdminList
 		$this->enableNextPage = $queryObject->PAGEN < $queryObject->NavPageCount;
 	}
 
-	public function setNavigation(\Bitrix\Main\UI\PageNavigation $nav, $title, $showAllways = true, $post = false)
+	public function setNavigation(PageNavigation $nav, $title, $showAllways = true, $post = false)
 	{
 		global $APPLICATION;
 
@@ -186,14 +192,14 @@ class CAdminUiList extends CAdminList
 			foreach ($arrays as $i => &$array)
 			{
 				$customFields = [];
-				foreach ($array["FIELDS"] as $id => &$fields)
+				foreach ($array["FIELDS"] as $id => $fields)
 				{
 					if (is_array($fields))
 					{
 						$keys = array_keys($fields);
 						foreach ($keys as $key)
 						{
-							if (preg_match("/_custom/i", $key, $match))
+							if (preg_match("/_custom/i", $key))
 							{
 								if (!is_array($arrays[$i]["FIELDS"][$id][$key]))
 								{
@@ -205,7 +211,7 @@ class CAdminUiList extends CAdminList
 									{
 										continue;
 									}
-									if (preg_match_all("/(.*?)\[(.*?)\]/", $value["name"], $listMatchKeys))
+									if (preg_match_all("/(.*?)\[(.*?)]/", $value["name"], $listMatchKeys))
 									{
 										$listPreparedKeys = [];
 										foreach ($listMatchKeys as $matchKeys)
@@ -503,7 +509,7 @@ class CAdminUiList extends CAdminList
 		return $actionPanelConstructor->getActionPanel();
 	}
 
-	public function &AddRow($id = false, $arRes = Array(), $link = false, $title = false)
+	public function AddRow($id = false, $arRes = Array(), $link = false, $title = false)
 	{
 		$row = new CAdminUiListRow($this->aHeaders, $this->table_id);
 		$row->id = ($id ?: Security\Random::getString(4));
@@ -520,11 +526,12 @@ class CAdminUiList extends CAdminList
 		}
 		$row->link = $link;
 		$row->title = $title;
-		$row->pList = &$this;
+		$row->pList = $this;
 		$row->bEditMode = true;
 		$row->setPublicModeState($publicMode);
 
-		$this->aRows[] = &$row;
+		$this->aRows[] = $row;
+
 		return $row;
 	}
 
@@ -600,14 +607,14 @@ class CAdminUiList extends CAdminList
 
 		if ($this->getPublicModeState())
 		{
-			\Bitrix\UI\Toolbar\Facade\Toolbar::addFilter($filterParams);
+			Toolbar::addFilter($filterParams);
 		}
 		else
 		{
-			\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
+			Extension::load('ui.fonts.opensans');
 			$APPLICATION->SetAdditionalCSS('/bitrix/css/main/grid/webform-button.css');
-			\Bitrix\UI\Toolbar\Facade\Toolbar::addFilter($filterParams);
-			\Bitrix\UI\Toolbar\Facade\Toolbar::hideTitle();
+			Toolbar::addFilter($filterParams);
+			Toolbar::hideTitle();
 			$APPLICATION->IncludeComponent('bitrix:ui.toolbar', 'admin');
 			$this->ShowContext();
 		}
@@ -653,7 +660,7 @@ class CAdminUiList extends CAdminList
 			{
 				continue;
 			}
-			if (isset($row['selector']) && isset($row['selector']['type']))
+			if (isset($row['selector']['type']))
 			{
 				if ($row['selector']['type'] === 'user')
 				{
@@ -691,7 +698,7 @@ class CAdminUiList extends CAdminList
 				continue;
 			}
 
-			if (isset($filterField["selector"]) && isset($filterField["selector"]["type"]))
+			if (isset($filterField["selector"]["type"]))
 			{
 				switch ($filterField["selector"]["type"])
 				{
@@ -840,7 +847,7 @@ class CAdminUiList extends CAdminList
 		}
 
 		global $APPLICATION;
-		\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
+		Extension::load('ui.fonts.opensans');
 		$APPLICATION->SetAdditionalCSS('/bitrix/css/main/grid/webform-button.css');
 
 		echo $this->sPrologContent;
@@ -922,7 +929,7 @@ class CAdminUiList extends CAdminList
 		);
 
 		$gridParameters["ROWS"] = array();
-		/** @var \CAdminUiListRow $row */
+		/** @var CAdminUiListRow $row */
 		foreach ($this->aRows as $row)
 		{
 			$gridRow = array(
@@ -1261,7 +1268,7 @@ class CAdminUiListActionPanel
 	 */
 	private $gridSnippets;
 
-	private $actionSections = [];
+	private $actionSections;
 	private $mapTypesAndSections = [
 		"edit" => "default",
 		"delete" => "default",
@@ -1894,7 +1901,7 @@ class CAdminUiResult extends CAdminResult
 				self::$navParams["pagen"] = $navyParams["PAGEN"];
 			}
 		}
-		catch (Exception $exception)
+		catch (Exception)
 		{
 			$getListParams["limit"] = $navyParams["SIZEN"];
 			$getListParams["offset"] = $navyParams["SIZEN"] * ($navyParams["PAGEN"] - 1);
@@ -1978,7 +1985,7 @@ class CAdminUiContextMenu extends CAdminContextMenu
 			return;
 		}
 
-		\Bitrix\Main\UI\Extension::load(["ui.buttons", "ui.buttons.icons"]);
+		Extension::load(["ui.buttons", "ui.buttons.icons"]);
 
 		if ($this->isPublicMode)
 		{
@@ -1992,7 +1999,7 @@ class CAdminUiContextMenu extends CAdminContextMenu
 			if (!$this->isShownFilterContext)
 			{
 				global $APPLICATION;
-				\Bitrix\UI\Toolbar\Facade\Toolbar::hideTitle();
+				Toolbar::hideTitle();
 				$APPLICATION->IncludeComponent('bitrix:ui.toolbar', 'admin');
 			}
 		}
@@ -2013,10 +2020,10 @@ class CAdminUiContextMenu extends CAdminContextMenu
 					CAdminPopup::PhpToJavaScript($this->additional_items) . ');';
 			}
 
-			$button = new \Bitrix\UI\Buttons\SettingsButton([
-				'click' => new \Bitrix\UI\Buttons\JsCode($menuUrl),
+			$button = new SettingsButton([
+				'click' => new JsCode($menuUrl),
 			]);
-			\Bitrix\UI\Toolbar\Facade\Toolbar::addButton($button);
+			Toolbar::addButton($button);
 		}
 	}
 
@@ -2042,7 +2049,7 @@ class CAdminUiContextMenu extends CAdminContextMenu
 			}
 
 			$buttonParams = [
-				'color' => \Bitrix\UI\Buttons\Color::PRIMARY,
+				'color' => Color::PRIMARY,
 				'id' => !empty($firstItem['ID']) ? $firstItem['ID'] : null,
 				'text' => $firstItem['TEXT'],
 			];
@@ -2050,35 +2057,35 @@ class CAdminUiContextMenu extends CAdminContextMenu
 			{
 				if (!empty($firstItem['ONCLICK']))
 				{
-					$buttonParams['mainButton']['click'] = new \Bitrix\UI\Buttons\JsCode($firstItem['ONCLICK']);
+					$buttonParams['mainButton']['click'] = new JsCode($firstItem['ONCLICK']);
 				}
 				else
 				{
 					if (isset($firstItem['DISABLE']))
 					{
-						$buttonParams['mainButton']['click'] = new \Bitrix\UI\Buttons\JsCode($menuUrl);
+						$buttonParams['mainButton']['click'] = new JsCode($menuUrl);
 					}
 					else
 					{
 						$buttonParams['mainButton']['link'] = $firstItem['LINK'];
 					}
 				}
-				$buttonParams['menuButton']['click'] = new \Bitrix\UI\Buttons\JsCode($menuUrl);
+				$buttonParams['menuButton']['click'] = new JsCode($menuUrl);
 				$button = new Bitrix\UI\Buttons\Split\Button($buttonParams);
 			}
 			else
 			{
 				if (!empty($firstItem['ONCLICK']))
 				{
-					$buttonParams['click'] = new \Bitrix\UI\Buttons\JsCode($firstItem['ONCLICK']);
+					$buttonParams['click'] = new JsCode($firstItem['ONCLICK']);
 				}
 				else
 				{
 					$buttonParams['link'] = $firstItem['LINK'];
 				}
-				$button = new \Bitrix\UI\Buttons\Button($buttonParams);
+				$button = new Button($buttonParams);
 			}
-			\Bitrix\UI\Toolbar\Facade\Toolbar::addButton($button, $location);
+			Toolbar::addButton($button, $location);
 		}
 	}
 }

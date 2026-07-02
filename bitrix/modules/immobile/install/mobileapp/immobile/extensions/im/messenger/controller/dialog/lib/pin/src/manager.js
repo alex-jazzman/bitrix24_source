@@ -13,7 +13,6 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { parser } = require('im/messenger/lib/parser');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
-	const { MessageHelper } = require('im/messenger/lib/helper');
 	const { Notification } = require('im/messenger/lib/ui/notification');
 
 	const { PinList } = require('im/messenger/controller/dialog/lib/pin/list');
@@ -451,8 +450,6 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 					: `${user.firstName}:`
 				;
 			}
-
-			const helper = MessageHelper.createByModel(modelMessage, messageFiles);
 
 			const simplifyMessage = parser.simplify({
 				text: modelMessage.text,

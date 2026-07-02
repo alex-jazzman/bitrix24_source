@@ -1,4 +1,5 @@
 import {TimelineSummaryDocuments} from 'crm.entity-editor.field.payment-documents';
+import 'crm_common';
 
 export const EcommerceDocumentsList = {
 	props: {

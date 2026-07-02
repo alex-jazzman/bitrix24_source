@@ -28,6 +28,10 @@
 	color: var(--ui-color-primary-alt, #9dcf00);
 }
 
+.crm-timeline__text-block.--color-base-0 {
+	color: var(--ui-color-base-solid);
+}
+
 .crm-timeline__text-block.--color-base-50 {
 	color: var(--ui-color-base-50, #a8adb4);
 }

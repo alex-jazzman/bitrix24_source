@@ -9,12 +9,12 @@ return [
 	'js' => 'dist/promo-banner.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
+		'booking.component.button',
+		'booking.component.popup',
+		'booking.provider.service.main-page-service',
+		'ui.icon-set.actions',
 		'ui.icon-set.api.vue',
 		'ui.icon-set.main',
-		'ui.icon-set.actions',
-		'booking.provider.service.main-page-service',
-		'booking.component.popup',
-		'booking.component.button',
 	],
 	'skip_core' => true,
 ];

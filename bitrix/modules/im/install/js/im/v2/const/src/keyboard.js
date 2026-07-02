@@ -1,4 +1,4 @@
-import { BotCommand, ColorToken } from 'im.v2.const';
+import { type BotCommand, type ColorToken } from 'im.v2.const';
 
 export type RawKeyboardButtonConfig = {
 	TEXT: string,

@@ -61,21 +61,21 @@ if (!defined('ADMIN_SECTION_LOAD_AUTH') || !ADMIN_SECTION_LOAD_AUTH):
 <meta http-equiv="Content-Type" content="text/html; charset=<?=htmlspecialcharsbx(LANG_CHARSET)?>">
 <meta name="viewport" content="initial-scale=1.0, width=device-width">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<title><?$adminPage->ShowTitle()?> - <?= htmlspecialcharsbx(COption::GetOptionString("main","site_name", $_SERVER["SERVER_NAME"])) ?></title>
-<?
+<title><?php $adminPage->ShowTitle()?> - <?= htmlspecialcharsbx(COption::GetOptionString("main","site_name", $_SERVER["SERVER_NAME"])) ?></title>
+<?php
 else:
 ?>
 <script>
-<?
+<?php
 	if (isset($aUserOpt['fix']) && $aUserOpt['fix'] == 'on'):
 ?>
 document.documentElement.className = 'adm-header-fixed';
-<?
+<?php
 	endif;
 ?>
-window.document.title = '<?$adminPage->ShowJsTitle()?> - <?echo CUtil::JSEscape(COption::GetOptionString("main","site_name", $_SERVER["SERVER_NAME"]));?>';
+window.document.title = '<?php $adminPage->ShowJsTitle()?> - <?= CUtil::JSEscape(COption::GetOptionString("main","site_name", $_SERVER["SERVER_NAME"]));?>';
 </script>
-<?
+<?php
 endif;
 
 $APPLICATION->AddBufferContent(array($adminPage, "ShowCSS"));
@@ -99,7 +99,7 @@ if (
 	topWindow.window["adminSidePanel"] = new topWindow.BX.adminSidePanel();
 }
 </script>
-<?
+<?php
 if (!defined('ADMIN_SECTION_LOAD_AUTH') || !ADMIN_SECTION_LOAD_AUTH):
 ?>
 </head>
@@ -110,9 +110,9 @@ if (!defined('ADMIN_SECTION_LOAD_AUTH') || !ADMIN_SECTION_LOAD_AUTH):
 .adm-main-wrap { display:none !important; }
 </style>
 <div id="bx-panel-error">
-<?echo GetMessage("admin_panel_browser")?>
+<?= GetMessage("admin_panel_browser")?>
 </div><![endif]-->
-<?
+<?php
 endif;
 
 if(($adminHeader = getLocalPath("php_interface/admin_header.php", BX_PERSONAL_ROOT)) !== false)
@@ -122,18 +122,18 @@ if(($adminHeader = getLocalPath("php_interface/admin_header.php", BX_PERSONAL_RO
 
 ?>
 	<table class="adm-main-wrap">
-		<?if (!$isSidePanel):?>
+		<?php if (!$isSidePanel):?>
 		<tr>
 			<td class="adm-header-wrap" colspan="2">
-<?
+<?php
 CAdminTopPanel::Show($adminPage, $adminMenu);
 echo CAdminPage::ShowSound();
 ?>
 			</td>
 		</tr>
-		<?endif;?>
+		<?php endif;?>
 		<tr>
-<?
+<?php
 
 	CJSCore::Init(array('admin_interface'));
 	$APPLICATION->AddHeadScript('/bitrix/js/main/dd.js');
@@ -152,7 +152,7 @@ echo CAdminPage::ShowSound();
 		CUserOptions::SetOption('favorite', 'favorite_menu', array('stick' => $stick));
 	}
 ?>
-			<?if (!$isSidePanel):?>
+			<?php if (!$isSidePanel):?>
 			<td class="adm-left-side-wrap" id="menu_mirrors_cont">
 
 <script>
@@ -160,9 +160,9 @@ BX.adminMenu.setMinimizedState(<?=$bOptMenuMinimized ? 'true' : 'false'?>);
 BX.adminMenu.setActiveSection('<?=$openedSection?>');
 BX.adminMenu.setOpenedSections('<?=CUtil::JSEscape($adminMenu->GetOpenedSections());?>');
 </script>
-				<div class="adm-left-side<?=$bOptMenuMinimized ? ' adm-left-side-wrap-close' : ''?>"<?if(isset($aOptMenuPos["width"]) && intval($aOptMenuPos["width"]) > 0) echo ' style="width:'.($bOptMenuMinimized ? 15 : intval($aOptMenuPos["width"])).'px" data-width="'.intval($aOptMenuPos["width"]).'"'?> id="bx_menu_panel"><div class="adm-menu-wrapper<?=$bOptMenuMinimized ? ' adm-main-menu-close' : ''?>" style="overflow:hidden; min-width:300px;">
+				<div class="adm-left-side<?=$bOptMenuMinimized ? ' adm-left-side-wrap-close' : ''?>"<?php if(isset($aOptMenuPos["width"]) && intval($aOptMenuPos["width"]) > 0) echo ' style="width:'.($bOptMenuMinimized ? 15 : intval($aOptMenuPos["width"])).'px" data-width="'.intval($aOptMenuPos["width"]).'"'?> id="bx_menu_panel"><div class="adm-menu-wrapper<?=$bOptMenuMinimized ? ' adm-main-menu-close' : ''?>" style="overflow:hidden; min-width:300px;">
 						<div class="adm-main-menu">
-<?
+<?php
 	$menuScripts = "";
 
 	foreach($adminMenu->aGlobalMenu as $menu):
@@ -174,26 +174,26 @@ BX.adminMenu.setOpenedSections('<?=CUtil::JSEscape($adminMenu->GetOpenedSections
 
 		if (isset($menu['url']) && $menu['url']):
 ?>
-						<a href="<?=htmlspecialcharsbx($menu["url"])?>" class="adm-default <?=$menuClass?>" onclick="BX.adminMenu.GlobalMenuClick('<?echo $menu["menu_id"]?>'); return false;" onfocus="this.blur();" id="global_menu_<?echo $menu["menu_id"]?>">
+						<a href="<?=htmlspecialcharsbx($menu["url"])?>" class="adm-default <?=$menuClass?>" onclick="BX.adminMenu.GlobalMenuClick('<?= $menu["menu_id"]?>'); return false;" onfocus="this.blur();" id="global_menu_<?= $menu["menu_id"]?>">
 							<div class="adm-main-menu-item-icon"></div>
-							<div class="adm-main-menu-item-text"><?echo htmlspecialcharsbx($menu["text"])?></div>
+							<div class="adm-main-menu-item-text"><?= htmlspecialcharsbx($menu["text"])?></div>
 							<div class="adm-main-menu-hover"></div>
 						</a>
-<?
+<?php
 		else:
 ?>
-						<span class="adm-default <?=$menuClass?>" onclick="BX.adminMenu.GlobalMenuClick('<?echo $menu["menu_id"]?>'); return false;" id="global_menu_<?echo $menu["menu_id"]?>">
+						<span class="adm-default <?=$menuClass?>" onclick="BX.adminMenu.GlobalMenuClick('<?= $menu["menu_id"]?>'); return false;" id="global_menu_<?= $menu["menu_id"]?>">
 							<div class="adm-main-menu-item-icon"></div>
-							<div class="adm-main-menu-item-text"><?echo htmlspecialcharsbx($menu["text"])?></div>
+							<div class="adm-main-menu-item-text"><?= htmlspecialcharsbx($menu["text"])?></div>
 							<div class="adm-main-menu-hover"></div>
 						</span>
-<?
+<?php
 		endif;
 	endforeach;
 ?>
 					</div>
 					<div class="adm-submenu" id="menucontainer">
-<?
+<?php
 		foreach($adminMenu->aGlobalMenu as $menu):
 
 			if(
@@ -213,8 +213,8 @@ BX.adminMenu.setOpenedSections('<?=CUtil::JSEscape($adminMenu->GetOpenedSections
 				$subMenuDisplay = "none";
 
 ?>
-						<div class="adm-global-submenu<?=($subMenuDisplay == "block" ? " adm-global-submenu-active" : "")?>" id="global_submenu_<?echo $menu["menu_id"]?>">
-<?
+						<div class="adm-global-submenu<?=($subMenuDisplay == "block" ? " adm-global-submenu-active" : "")?>" id="global_submenu_<?= $menu["menu_id"]?>">
+<?php
 		if ($menu['menu_id'] == 'desktop')
 		{
 			if ($USER->IsAuthorized())
@@ -225,7 +225,7 @@ BX.adminMenu.setOpenedSections('<?=CUtil::JSEscape($adminMenu->GetOpenedSections
 <script>
 	BX.addCustomEvent(BX.adminMenu, 'onMenuChange', BX.delegate(BX.adminFav.onMenuChange, this));
 </script>
-<?
+<?php
 			$favMenu = new CBXFavAdmMenu;
 			$menu["text"] = GetMessage("MAIN_PR_ADMIN_FAV");
 			$menu["items"] = $favMenu->GenerateItems();
@@ -239,7 +239,7 @@ BX.adminMenu.setOpenedSections('<?=CUtil::JSEscape($adminMenu->GetOpenedSections
 												<div class="adm-submenu-items-block">
 													<div class="adm-submenu-items-title adm-submenu-title-<?=$menu['menu_id']?>"><?=htmlspecialcharsbx($menu["text"])?></div>
 													<div id='<?="_".$menu['items_id']?>'>
-<?
+<?php
 		if(!empty($menu["items"]))
 		{
 			foreach($menu["items"] as $submenu)
@@ -266,15 +266,15 @@ BX.adminMenu.setOpenedSections('<?=CUtil::JSEscape($adminMenu->GetOpenedSections
 								</div>
 							</div>
 						</div>
-<?
+<?php
 	endforeach;
 ?>
 						<div class="adm-submenu-separator"></div>
-<?
+<?php
 	if ($menuScripts != ""):
 ?>
 <script><?=$menuScripts?></script>
-<?
+<?php
 	endif;
 
 	if(file_exists($_SERVER["DOCUMENT_ROOT"].BX_PERSONAL_ROOT."/php_interface/this_site_logo.php"))
@@ -285,10 +285,10 @@ BX.adminMenu.setOpenedSections('<?=CUtil::JSEscape($adminMenu->GetOpenedSections
 					</div>
 				</div></div>
 			</td>
-			<?endif;?>
+			<?php endif;?>
 			<td class="adm-workarea-wrap <?=defined('BX_ADMIN_SECTION_404') && BX_ADMIN_SECTION_404 == 'Y' ? 'adm-404-error' : 'adm-workarea-wrap-top'?>">
 				<div class="adm-workarea adm-workarea-page" id="adm-workarea">
-<?
+<?php
 //Title
 $curPage = $APPLICATION->GetCurPage(true);
 if ($curPage != "/bitrix/admin/index.php")
@@ -336,16 +336,16 @@ if ($curPage != "/bitrix/admin/index.php" && !$adminPage->isHideTitle())
 	}
 	?>
 		<h1 class="adm-title" id="adm-title">
-			<?$adminPage->ShowTitle()?>
-			<?if($isFavLink):?>
+			<?php $adminPage->ShowTitle()?>
+			<?php if($isFavLink):?>
 			<a href="javascript:void(0)" class="adm-fav-link<?=$currentFavId>0?' adm-fav-link-active':''?>" onclick="
 				BX.adminFav.titleLinkClick(this, <?=intval($currentFavId)?>, '')" title="
 				<?= $currentFavId ? GetMessage("MAIN_PR_ADMIN_FAV_DEL") : GetMessage("MAIN_PR_ADMIN_FAV_ADD")?>"></a>
-			<?endif;?>
-			<a id="navchain-link" href="<?echo htmlspecialcharsbx($_SERVER["REQUEST_URI"])?>" title="
-			<?echo GetMessage("MAIN_PR_ADMIN_CUR_LINK")?>"></a>
+			<?php endif;?>
+			<a id="navchain-link" href="<?= htmlspecialcharsbx($_SERVER["REQUEST_URI"])?>" title="
+			<?= GetMessage("MAIN_PR_ADMIN_CUR_LINK")?>"></a>
 		</h1>
-	<?
+	<?php
 }
 
 //Content
@@ -365,15 +365,15 @@ if($USER->IsAuthorized()):
 
 		echo BeginNote('style="position: relative; top: -15px;"');
 ?>
-	<span class="required"><?echo GetMessage("TRIAL_ATTENTION") ?></span>
-	<?echo GetMessage("TRIAL_ATTENTION_TEXT1_".$vendor) ?>
-	<?if ($daysToExpire >= 0):?>
-	<?echo GetMessage("TRIAL_ATTENTION_TEXT2") ?> <span class="required"><b><?echo $daysToExpire?></b></span> <?echo GetMessage("TRIAL_ATTENTION_TEXT3") ?>.
-	<?else:?>
-	<?echo GetMessage("TRIAL_ATTENTION_TEXT4_".$vendor) ?>
-	<?endif;?>
-	<?echo GetMessage("TRIAL_ATTENTION_TEXT5_".$vendor) ?>
-<?
+	<span class="required"><?= GetMessage("TRIAL_ATTENTION") ?></span>
+	<?= GetMessage("TRIAL_ATTENTION_TEXT1_".$vendor) ?>
+	<?php if ($daysToExpire >= 0):?>
+	<?= GetMessage("TRIAL_ATTENTION_TEXT2") ?> <span class="required"><b><?= $daysToExpire?></b></span> <?= GetMessage("TRIAL_ATTENTION_TEXT3") ?>.
+	<?php else:?>
+	<?= GetMessage("TRIAL_ATTENTION_TEXT4_".$vendor) ?>
+	<?php endif;?>
+	<?= GetMessage("TRIAL_ATTENTION_TEXT5_".$vendor) ?>
+<?php
 		echo EndNote();
 
 	elseif(defined("TIMELIMIT_EDITION") && TIMELIMIT_EDITION == "Y"):

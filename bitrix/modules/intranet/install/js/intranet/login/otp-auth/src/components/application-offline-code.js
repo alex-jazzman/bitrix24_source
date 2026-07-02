@@ -67,65 +67,67 @@ export const ApplicationOfflineCode = {
 			<input type="hidden" name="CURRENT_STEP" value="applicationOfflineCode"/>
 			<input type="hidden" name="sessid" :value="this.$Bitrix.Loc.getMessage('bitrix_sessid')"/>
 
-			<div v-show="isMainBlockVisible" class="intranet-island-otp-push__wrapper">
+			<div v-show="isMainBlockVisible">
 				<div @click="showAlternativeMethods" class="intranet-back-button">
-					<i class="ui-icon-set --arrow-left-l intranet-back-button__arrow --offline-code"></i>
+					<i class="ui-icon-set --arrow-left-l intranet-back-button__arrow"></i>
 				</div>
-				<Headline size='lg' class="intranet-form-title">
-					{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_CONFIRM_LOGIN') }}
-				</Headline>
-				<div class="intranet-island-otp-offline-code__main-content">
-					<div class="intranet-island-otp-offline-code__description">
-						<div class="intranet-island-otp-offline-code__steps">
-							<div class="intranet-island-otp-offline-code__step">
-								<div class="intranet-island-otp-offline-code-step__number">
-									1
+				<div class="intranet-island-otp-push-offline__wrapper">
+					<Headline size='lg' class="intranet-form-title">
+						{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_CONFIRM_LOGIN') }}
+					</Headline>
+					<div class="intranet-island-otp-offline-code__main-content">
+						<div class="intranet-island-otp-offline-code__description">
+							<div class="intranet-island-otp-offline-code__steps">
+								<div class="intranet-island-otp-offline-code__step">
+									<div class="intranet-island-otp-offline-code-step__number">
+										1
+									</div>
+									<div class="intranet-island-otp-offline-code-step__title">
+										{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_APPLICATION_OFFLINE_CODE_STEP_1') }}
+									</div>
 								</div>
-								<div class="intranet-island-otp-offline-code-step__title">
-									{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_APPLICATION_OFFLINE_CODE_STEP_1') }}
+								<div class="intranet-island-otp-offline-code__step">
+									<div class="intranet-island-otp-offline-code-step__number">
+										2
+									</div>
+									<div class="intranet-island-otp-offline-code-step__title">
+										{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_APPLICATION_OFFLINE_CODE_STEP_2') }}
+									</div>
+								</div>
+								<div class="intranet-island-otp-offline-code__step">
+									<div class="intranet-island-otp-offline-code-step__number">
+										3
+									</div>
+									<div v-html="getStep3Text()" class="intranet-island-otp-offline-code-step__title"></div>
 								</div>
 							</div>
-							<div class="intranet-island-otp-offline-code__step">
-								<div class="intranet-island-otp-offline-code-step__number">
-									2
-								</div>
-								<div class="intranet-island-otp-offline-code-step__title">
-									{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_APPLICATION_OFFLINE_CODE_STEP_2') }}
-								</div>
-							</div>
-							<div class="intranet-island-otp-offline-code__step">
-								<div class="intranet-island-otp-offline-code-step__number">
-									3
-								</div>
-								<div v-html="getStep3Text()" class="intranet-island-otp-offline-code-step__title"></div>
-							</div>
+							<VerificationCode
+								:code="code"
+								:label="this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_APPLICATION_OFFLINE_CODE_INPUT_LABEL')"
+								:isPhoneCode=true
+								:enableSpacing=false
+								:error="errorMessage"
+								@code-change="onCodeChange"
+								@code-complete="onCodeComplete"
+							></VerificationCode>
 						</div>
-						<VerificationCode
-							:code="code"
-							:label="this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_APPLICATION_OFFLINE_CODE_INPUT_LABEL')"
-							:isPhoneCode=true
-							:enableSpacing=false
-							:error="errorMessage"
-							@code-change="onCodeChange"
-							@code-complete="onCodeComplete"
-						></VerificationCode>
-					</div>
-					<div class='intranet-island-otp-push__arrow --offline-code'></div>
-					<div class="intranet-island-otp-offline-code__mobile"></div>
-					<div class="intranet-island-otp-offline-code__button-wrapper">
-						<button
-							class="intranet-text-btn intranet-text-btn__reg ui-btn ui-btn-lg ui-btn-success --wide"
-							type="submit"
-							@click="onSubmitForm($event)"
-						>
-							<span class="intranet-text-btn__content-wrapper">
-								{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_CONTINUE_BUTTON') }}
-							</span>
-							<span class="intranet-text-btn__spinner" v-show="isWaiting"></span>
-						</button>
+						<div class='intranet-island-otp-push__arrow --offline-code'></div>
+						<div class="intranet-island-otp-offline-code__mobile"></div>
+						<div class="intranet-island-otp-offline-code__button-wrapper">
+							<button
+								class="intranet-text-btn intranet-text-btn__reg ui-btn ui-btn-lg ui-btn-success --wide"
+								type="submit"
+								@click="onSubmitForm($event)"
+							>
+								<span class="intranet-text-btn__content-wrapper">
+									{{ this.$Bitrix.Loc.getMessage('INTRANET_AUTH_OTP_CONTINUE_BUTTON') }}
+								</span>
+								<span class="intranet-text-btn__spinner" v-show="isWaiting"></span>
+							</button>
+						</div>
 					</div>
 				</div>
-			</div>
+			</div>	
 
 			<template v-if="captchaCode">
 				<captcha

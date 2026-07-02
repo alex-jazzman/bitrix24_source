@@ -242,7 +242,7 @@ jn.define('user-profile/common-tab/src/block/gratitude/view', (require, exports,
 	}
 
 	const mapStateToProps = (state, ownProps) => {
-		const gratitudes = selectGratitudesByOwnerId(state, ownProps.ownerId);
+		const gratitudes = selectGratitudesByOwnerId(state, Number(ownProps.ownerId));
 
 		return {
 			gratitudes,

@@ -583,7 +583,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 									? CIntranetUtils::InitImage($arUser['PERSONAL_PHOTO'], 100, 100, BX_RESIZE_IMAGE_EXACT)
 									: [];
 
-							$arManagers = CTimeMan::GetUserManagers($USER_ID);
+							$arManagers = array_slice(CTimeMan::getUserManagers($USER_ID), 0, 1);
 							$arManagers[] = $USER_ID;
 							if (!is_array($arManagers) || count($arManagers) <= 0)
 							{
@@ -885,8 +885,6 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 									$arFields['FILES'] = $reportFiles;
 								}
 
-								$arManagers = CTimeMan::GetUserManagers($curUser);
-
 								$res = CTimeManReportFull::Add($arFields);
 								if ($res && $arFields["ACTIVE"] != "N" && !$bSameUser)
 								{
@@ -1058,7 +1056,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 								? CIntranetUtils::InitImage($arCurrentUser['PERSONAL_PHOTO'], 100, 100, BX_RESIZE_IMAGE_EXACT)
 								: [];
 
-						$arManagers = CTimeMan::GetUserManagers($USER->GetID());
+						$arManagers = array_slice(CTimeMan::getUserManagers($USER->GetID()), 0, 1);
 
 						if (!is_array($arManagers) || count($arManagers) <= 0)
 						{
@@ -2265,7 +2263,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 											? CIntranetUtils::InitImage($arCurrentUser['PERSONAL_PHOTO'], 100, 100, BX_RESIZE_IMAGE_EXACT)
 											: [];
 
-									$arManagers = CTimeMan::GetUserManagers($arRes['USER_ID']);
+									$arManagers = array_slice(CTimeMan::getUserManagers($arRes['USER_ID']), 0, 1);
 
 									if (!is_array($arManagers) || count($arManagers) <= 0)
 									{
@@ -2507,7 +2505,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 				}
 				elseif ($bReturnRes)
 				{
-					echo CUtil::PhpToJsObject($res);
+					echo CUtil::PhpToJsObject($res ?? null);
 				}
 				else
 				{

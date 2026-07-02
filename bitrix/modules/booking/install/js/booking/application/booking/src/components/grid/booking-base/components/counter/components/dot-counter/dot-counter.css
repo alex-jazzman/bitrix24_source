@@ -1,0 +1,14 @@
+.booking-booking-booking__counter-dot {
+	width: 5px;
+	height: 5px;
+	border-radius: var(--ui-border-radius-circle);
+	border: 1px solid var(--ui-color-base-8);
+}
+
+.booking-booking-booking__counter-dot.--confirmed {
+	background: var(--ui-color-green-60);
+}
+
+.booking-booking-booking__counter-dot.--danger {
+	background: var(--ui-color-palette-red-50);
+}

@@ -263,7 +263,7 @@ jn.define('im/messenger/controller/dialog/lib/web', (require, exports, module) =
 						resolve(response.data());
 					})
 					.catch((error) => {
-						console.error('WebDialog.getOpenlineDialogByUserCode error:', error, userCode);
+						logger.error('WebDialog.getOpenlineDialogByUserCode error:', error, userCode);
 
 						resolve({ dialog_id: 0 });
 					});
@@ -278,7 +278,7 @@ jn.define('im/messenger/controller/dialog/lib/web', (require, exports, module) =
 						resolve(response.data());
 					})
 					.catch((error) => {
-						console.error('WebDialog.getOpenlineDialogBySessionId error:', error, sessionId);
+						logger.error('WebDialog.getOpenlineDialogBySessionId error:', error, sessionId);
 
 						resolve({ dialog_id: 0 });
 					});
@@ -306,12 +306,12 @@ jn.define('im/messenger/controller/dialog/lib/web', (require, exports, module) =
 
 		static changeTabTo(tabId)
 		{
-			if (!serviceLocator.has('navigation-controller'))
+			if (!serviceLocator.has('navigation-manager'))
 			{
 				return;
 			}
 
-			serviceLocator.get('navigation-controller').setActiveTab(tabId)
+			serviceLocator.get('navigation-manager').setActiveTab(tabId)
 				.catch((error) => {
 					logger.error(`changeTabTo ${tabId} error`, error);
 				})

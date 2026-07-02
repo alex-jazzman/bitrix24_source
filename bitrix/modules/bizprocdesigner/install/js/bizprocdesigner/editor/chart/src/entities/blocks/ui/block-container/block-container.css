@@ -28,8 +28,7 @@
 .editor-chart-block-container.--highlighted,
 .editor-chart-block-container.--highlighted.--white,
 .editor-chart-block-container.--highlighted.--orange,
-.editor-chart-block-container.--highlighted.--blue,
-.editor-chart-block-container.--highlighted .ui-block-diagram-port {
+.editor-chart-block-container.--highlighted.--blue {
 	border: solid 1px var(--pallete-blue-blue-57, #4A9DFF);
 }
 
@@ -53,16 +52,8 @@
 	background-color: var(--ui-color-bg-content-secondary);
 }
 
-.editor-chart-block-container.--deactivated .editor-chart-block-icon {
-	background-color: var(--designer-bp-grey-bg);
-}
-
-.editor-chart-block-container.--deactivated .editor-chart-block-icon__icon {
-	--ui-icon-set__icon-color: var(--ui-color-palette-gray-50) !important;
-}
-
-.editor-chart-block-container.--deactivated .editor-chart-block-header__title {
-	color: var(--ui-color-palette-gray-70);
+.editor-chart-block-container.--highlighted.--deactivated {
+    border: solid 1px var(--pallete-blue-blue-57, #4A9DFF);
 }
 
 .editor-chart-block-container.--deactivated .ui-selector-item-avatar {
@@ -78,8 +69,4 @@
 	bottom: 0;
 	background: rgba(var(--ui-color-base-60-rgb), 0.5);
 	z-index: 1;
-}
-
-.editor-chart-block-container.--deactivated .block-complex__content{
-	background: var(--ui-color-gray-05);
 }

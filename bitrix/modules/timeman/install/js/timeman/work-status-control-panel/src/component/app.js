@@ -333,6 +333,8 @@ export const App = {
 	watch: {},
 	mounted(): void
 	{
+		// prevent timeman init without bindOptions for new users on OpenDay event
+		this.checkBindOptions();
 		this.updateDayState();
 		this.updateWorkingDayTimer();
 		setInterval(() => {
@@ -398,6 +400,41 @@ export const App = {
 		getCanEdit(): any
 		{
 			return window.BXTIMEMAN.DATA.CAN_EDIT || '';
+		},
+
+		setBindOptions(): any
+		{
+			window.BXTIMEMAN.setBindOptions({
+				node: this.$refs.reportOpener,
+				mode: 'popup',
+				popupOptions: {
+					autoHide: true,
+					angle: false,
+					offsetTop: -40,
+					closeByEsc: true,
+					bindOptions: {
+						forceBindPosition: true,
+						forceTop: true,
+						forceLeft: false,
+					},
+					events: {
+						onShow: () => {
+							this.reportOpening = false;
+						},
+						onClose: () => {},
+						onDestroy: () => {},
+					},
+					fixed: true,
+				},
+			});
+		},
+
+		checkBindOptions(): any
+		{
+			if (window.BXTIMEMAN.WND.bindOptions.mode !== 'popup')
+			{
+				this.setBindOptions();
+			}
 		},
 
 		updateDayState(): any
@@ -504,31 +541,6 @@ export const App = {
 			else
 			{
 				this.reportOpening = true;
-
-				window.BXTIMEMAN.setBindOptions({
-					node: this.$refs.reportOpener,
-					mode: 'popup',
-					popupOptions: {
-						autoHide: true,
-						angle: false,
-						offsetTop: -40,
-						closeByEsc: true,
-						bindOptions: {
-							forceBindPosition: true,
-							forceTop: true,
-							forceLeft: false,
-						},
-						events: {
-							onShow: () => {
-								this.reportOpening = false;
-							},
-							onClose: () => {},
-							onDestroy: () => {},
-						},
-						fixed: true,
-					},
-				});
-
 				window.BXTIMEMAN.Open();
 			}
 		},

@@ -1,0 +1,2 @@
+<?php
+$MESS["BOOKING_CARD_DATA_DEFAULT_BOOKING_NAME"] = "Booked";

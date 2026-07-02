@@ -10,7 +10,6 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 		FileAudioType,
 		UrlGetParameter,
 		MessageComponent,
-		MessageParams,
 		TranscriptStatus,
 		DialogType,
 	} = require('im/messenger/const');
@@ -23,42 +22,14 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 	const logger = getLogger('helpers--message');
 
 	/**
-	 * @desc It's Set should be sync with serverComponentList in the im module
-	 * @see im/install/js/im/v2/lib/message-component/src/message-component.js
-	 */
-	const serverComponentList = new Set([
-		MessageComponent.unsupported,
-		MessageComponent.chatCreation,
-		MessageComponent.ownChatCreation,
-		MessageComponent.conferenceCreation,
-		MessageComponent.callInvite,
-		MessageComponent.copilotCreation,
-		MessageComponent.copilotMessage,
-		MessageComponent.supportVote,
-		MessageComponent.supportSessionNumber,
-		MessageComponent.supportChatCreation,
-		MessageComponent.zoomInvite,
-		MessageComponent.copilotAddedUsers,
-		MessageComponent.supervisorUpdateFeature,
-		MessageComponent.supervisorEnableFeature,
-		MessageComponent.sign,
-		MessageComponent.admin,
-		MessageComponent.checkIn,
-		MessageComponent.generalChatCreationMessage,
-		MessageComponent.generalChannelCreationMessage,
-		MessageComponent.channelCreationMessage,
-		MessageComponent.vote,
-		MessageComponent.sticker,
-		MessageComponent.aiBizprocMessage,
-	]);
-
-	const customMessages = new Set([
-		MessageParams.ComponentId.CallMessage,
-		MessageParams.ComponentId.VoteMessage,
-		MessageParams.ComponentId.AiAssistantMessage,
-	]);
-
-	/**
+	 * MessageHelper is a utility class that encapsulates logic for analyzing a message model
+	 * and provides boolean methods to determine the presence of specific characteristics or types.
+	 *
+	 * Its sole responsibility is to offer boolean checks (e.g., isSystem(), hasAttachment(), isEdited(), etc.)
+	 * that help identify the type, status, or special properties of a message based on its model.
+	 *
+	 * MessageHelper does not mutate, create, or return message models
+	 *
 	 * @class MessageHelper
 	 */
 	class MessageHelper
@@ -72,10 +43,9 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 
 		/**
 		 * @param {MessagesModelState} messagesModel
-		 * @param {Array<FilesModelState> | FilesModelState} filesModel
 		 * @return {MessageHelper|null}
 		 */
-		static createByModel(messagesModel, filesModel)
+		static createByModel(messagesModel)
 		{
 			if (!Type.isPlainObject(messagesModel))
 			{
@@ -84,22 +54,7 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 				return null;
 			}
 
-			if (!Type.isArray(filesModel))
-			{
-				if (!Type.isPlainObject(filesModel))
-				{
-					logger.error(
-						'MessageHelper.getByModel error: filesModel must be an array of filesModel',
-						filesModel,
-					);
-
-					return null;
-				}
-				// eslint-disable-next-line no-param-reassign
-				filesModel = [filesModel];
-			}
-
-			return new MessageHelper(messagesModel, filesModel);
+			return new MessageHelper(messagesModel);
 		}
 
 		/**
@@ -116,33 +71,29 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 			}
 
 			const messagesModel = serviceLocator.get('core').getStore().getters['messagesModel/getById'](messageId);
-			if (!('id' in messagesModel))
+			if (Type.isNil(messagesModel.id))
 			{
 				logger.warn('MessageHelper.getById: message not found', messageId);
 
 				return null;
 			}
 
-			let filesModel = [];
-			if (Type.isArrayFilled(messagesModel.files))
-			{
-				filesModel = serviceLocator.get('core').getStore()
-					.getters['filesModel/getListByMessageId'](messageId)
-				;
-			}
-
-			return MessageHelper.createByModel(messagesModel, filesModel);
+			return MessageHelper.createByModel(messagesModel);
 		}
 
 		/**
 		 * @param {MessagesModelState} messageModel
-		 * @param {Array<FilesModelState>} filesModel
 		 */
-		constructor(messageModel, filesModel)
+		constructor(messageModel)
 		{
 			this.messageModel = messageModel;
-			this.filesModel = filesModel;
 			this.voteModel = messageModel.vote;
+			this.#setBuilder(messageModel);
+		}
+
+		#setBuilder(messageModel)
+		{
+			this.builderModel = messageModel.builder ?? serviceLocator.get('core').getStore().getters['messagesModel/builderModel/getByMessageId'](messageModel.id);
 		}
 
 		/**
@@ -158,9 +109,30 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 			return this.messageModel.id;
 		}
 
+		/**
+		 * @return {Array<FilesModelState>}
+		 */
 		get files()
 		{
+			this.filesModel ??= this.#store.getters['filesModel/getListByMessageId'](this.messageModel.id) || [];
+
 			return this.filesModel;
+		}
+
+		/**
+		 * @return {Array<FilesModelState>}
+		 */
+		get #files()
+		{
+			return this.files;
+		}
+
+		/**
+		 * @return {FilesModelState|null}
+		 */
+		get #firstFile()
+		{
+			return this.#files[0] || null;
 		}
 
 		get isSystem()
@@ -168,9 +140,19 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 			return this.messageModel.authorId === 0;
 		}
 
+		get isSystemText()
+		{
+			return this.isSystem && this.isText && !this.isWithFile;
+		}
+
 		get isText()
 		{
 			return this.messageModel.text !== '';
+		}
+
+		get isViewed()
+		{
+			return this.messageModel.viewed;
 		}
 
 		get isYour()
@@ -186,7 +168,7 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 		get isError()
 		{
 			return this.messageModel.params?.COMPONENT_PARAMS?.copilotError
-				|| this.messageModel.params?.componentId === MessageParams.ComponentId.ErrorMessage;
+				|| this.messageModel.params?.componentId === MessageComponent.error;
 		}
 
 		get isForward()
@@ -196,7 +178,7 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 
 		get isVideoNote()
 		{
-			return this.files.length === 1 && this.files[0].isVideoNote;
+			return this.#files.length === 1 && this.#firstFile?.isVideoNote;
 		}
 
 		get isVideoNoteText()
@@ -210,7 +192,7 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 				return false;
 			}
 
-			const transcriptModel = this.#store.getters['filesModel/transcriptModel/getById'](this.files[0].id);
+			const transcriptModel = this.#store.getters['filesModel/transcriptModel/getById'](this.#firstFile?.id);
 
 			return !Type.isNull(transcriptModel) && transcriptModel.status !== TranscriptStatus.ready;
 		}
@@ -250,7 +232,7 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 				return false;
 			}
 
-			return this.filesModel.every((file) => {
+			return this.#files.every((file) => {
 				return file?.type === FileType.image || file?.type === FileType.video;
 			});
 		}
@@ -265,7 +247,7 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 				return false;
 			}
 
-			return this.filesModel.every((file) => {
+			return this.#files.every((file) => {
 				return file.type === FileType.file
 					|| file.type === FileType.audio
 					|| file.type === FileType.image
@@ -280,12 +262,12 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 				return false;
 			}
 
-			if (this.filesModel.length === 0 || this.filesModel.length > 1)
+			if (this.#files.length === 0 || this.#files.length > 1)
 			{
 				return false;
 			}
 
-			return this.filesModel[0].type === FileType.video;
+			return this.#firstFile?.type === FileType.video;
 		}
 
 		get isImage()
@@ -295,12 +277,20 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 				return false;
 			}
 
-			if (this.filesModel.length === 0 || this.filesModel.length > 1)
+			if (this.#files.length === 0 || this.#files.length > 1)
 			{
 				return false;
 			}
 
-			return this.filesModel[0].type === FileType.image;
+			return this.#firstFile?.type === FileType.image && Type.isStringFilled(this.#firstFile?.urlPreview);
+		}
+
+		/**
+		 * @desc A message containing a single image without a preview (e.g. sent from the web app as a compressed file).
+		 */
+		get isImageWithoutPreview()
+		{
+			return this.isImage && !Type.isStringFilled(this.#firstFile?.urlPreview);
 		}
 
 		get isAudio()
@@ -310,17 +300,17 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 				return false;
 			}
 
-			if (this.filesModel.length === 0 || this.filesModel.length > 1)
+			if (this.#files.length === 0 || this.#files.length > 1)
 			{
 				return false;
 			}
 
-			if (this.filesModel[0].extension === FileAudioType.m4a && !Feature.isAudioRecordM4ASupported)
+			if (this.#firstFile?.extension === FileAudioType.m4a && !Feature.isAudioRecordM4ASupported)
 			{
 				return false;
 			}
 
-			return this.filesModel[0].type === FileType.audio;
+			return this.#firstFile?.type === FileType.audio;
 		}
 
 		get isFile()
@@ -330,12 +320,12 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 				return false;
 			}
 
-			if (this.filesModel.length === 0 || this.filesModel.length > 1)
+			if (this.#files.length === 0 || this.#files.length > 1)
 			{
 				return false;
 			}
 
-			return this.filesModel[0].type === FileType.file;
+			return this.#firstFile?.type === FileType.file;
 		}
 
 		get isVote()
@@ -355,13 +345,6 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 			return Type.isPlainObject(this.messageModel.stickerParams)
 				&& !Type.isPlainObject(this.#store.getters['stickerPackModel/getStickerData'](this.messageModel.stickerParams))
 			;
-		}
-
-		get isCustom()
-		{
-			const componentId = this.messageModel.params.componentId;
-
-			return customMessages.has(componentId);
 		}
 
 		get isVoteModelExist()
@@ -442,12 +425,28 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 
 		get isAiAssistant()
 		{
-			return this.messageModel.params?.componentId === MessageParams.ComponentId.AiAssistantMessage;
+			return this.getComponentId() === MessageComponent.aiAssistant && Feature.isAiAssistantMessageSupported;
 		}
 
 		get isCopilot()
 		{
-			return this.getComponentId() === MessageParams.ComponentId.CopilotMessage;
+			return this.getComponentId() === MessageComponent.copilot;
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		get isCopilotCreatePrompt()
+		{
+			return this.getComponentId() === MessageComponent.copilotCreation;
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		get isCopilotAddUsers()
+		{
+			return this.getComponentId() === MessageComponent.copilotAddedUsers;
 		}
 
 		/**
@@ -455,7 +454,7 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 		 */
 		get isAiBizproc()
 		{
-			return this.getComponentId() === MessageParams.ComponentId.AiBizprocMessage;
+			return this.getComponentId() === MessageComponent.aiBizprocMessage && Feature.isFootnoteMessageIdAvailable;
 		}
 
 		/**
@@ -469,6 +468,24 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 		}
 
 		/**
+		 * @returns {boolean}
+		 */
+		get isConvertCollab()
+		{
+			return this.getComponentId() === MessageComponent.convertToCollab;
+		}
+
+		/**
+		 * @returns {boolean}
+		 */
+		get isBuilder()
+		{
+			return Type.isPlainObject(this.builderModel)
+				&& Type.isArrayFilled(this.builderModel.blocks)
+				&& !this.isDeleted;
+		}
+
+		/**
 		 * @return {boolean}
 		 */
 		get isTemplateId()
@@ -476,16 +493,36 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 			return Type.isStringFilled(this.messageId) && Uuid.isV4(this.messageId);
 		}
 
+		/**
+		 * Returns true if the message has a componentId that is known to be unsupported as a text message.
+		 * Used to prevent fallback to text for certain message types.
+		 * @returns {boolean}
+		 */
+		get isUnsupportedByComponentId()
+		{
+			const unsupportedComponentIds = [
+				MessageComponent.call,
+				MessageComponent.vote,
+				MessageComponent.aiAssistant,
+				MessageComponent.builderMessage,
+			];
+
+			return unsupportedComponentIds.includes(this.getComponentId());
+		}
+
+		/**
+		 * @return {string}
+		 */
 		getComponentId()
 		{
+			if (Type.isStringFilled(this.messageModel.params.componentId))
+			{
+				return this.messageModel.params.componentId;
+			}
+
 			if (this.isDeleted)
 			{
 				return MessageComponent.deleted;
-			}
-
-			if (this.#isServerComponent())
-			{
-				return this.messageModel.params.componentId;
 			}
 
 			if (this.isSystem)
@@ -501,6 +538,11 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 			if (this.isEmojiOnly || this.isSmileOnly)
 			{
 				return MessageComponent.smile;
+			}
+
+			if (this.isBuilder)
+			{
+				return MessageComponent.builderMessage;
 			}
 
 			return MessageComponent.default;
@@ -535,11 +577,6 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 		{
 			return this.#store
 				.getters['dialoguesModel/getByChatId'](this.messageModel.chatId);
-		}
-
-		#isServerComponent()
-		{
-			return serverComponentList.has(this.messageModel?.params?.componentId);
 		}
 	}
 

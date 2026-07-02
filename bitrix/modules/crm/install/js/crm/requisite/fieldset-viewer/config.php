@@ -8,12 +8,12 @@ return [
 	'css' => 'dist/fieldset-viewer.bundle.css',
 	'js' => 'dist/fieldset-viewer.bundle.js',
 	'rel' => [
+		'crm.field.list-editor',
 		'main.core',
 		'main.core.events',
-		'main.popup',
 		'main.loader',
+		'main.popup',
 		'ui.buttons',
-		'crm.field.list-editor',
 	],
 	'skip_core' => false,
 ];

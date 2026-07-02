@@ -8,9 +8,9 @@ return [
 	'css' => 'dist/filter.bundle.css',
 	'js' => 'dist/filter.bundle.js',
 	'rel' => [
+		'booking.const',
 		'main.core',
 		'ui.vue3.vuex',
-		'booking.const',
 	],
 	'skip_core' => false,
 ];

@@ -50,19 +50,30 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 			/**  @type {debounce<onFileUploadProgress>} */
 			this.onFileUploadProgressDebounce = debounce(this.onFileUploadProgress, 100, this, true);
 
-			this.initUploadManager();
+			this.bindMethods();
+			this.uploadManager = new UploadManager(MessengerParams.getComponentCode());
+			this.subscribeEvents();
 		}
 
-		/**
-		 * @void
-		 */
-		initUploadManager()
+		bindMethods()
 		{
-			this.uploadManager = new UploadManager(MessengerParams.getComponentCode());
+			this.fileUploadDoneHandler = this.fileUploadDoneHandler.bind(this);
+			this.fileUploadErrorHandler = this.fileUploadErrorHandler.bind(this);
+		}
 
+		subscribeEvents()
+		{
 			this.uploadManager.on(UploaderManagerEvent.progress, this.onFileUploadProgressDebounce);
-			this.uploadManager.on(UploaderManagerEvent.done, this.fileUploadDoneHandler.bind(this));
-			this.uploadManager.on(UploaderManagerEvent.error, this.fileUploadErrorHandler.bind(this));
+			this.uploadManager.on(UploaderManagerEvent.done, this.fileUploadDoneHandler);
+			this.uploadManager.on(UploaderManagerEvent.error, this.fileUploadErrorHandler);
+		}
+
+		unsubscribeEvents()
+		{
+			this.uploadManager.off(UploaderManagerEvent.progress, this.onFileUploadProgressDebounce);
+			this.uploadManager.off(UploaderManagerEvent.done, this.fileUploadDoneHandler);
+			this.uploadManager.off(UploaderManagerEvent.error, this.fileUploadErrorHandler);
+			this.uploadManager.client.destroy();
 		}
 
 		/**

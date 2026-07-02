@@ -1,11 +1,9 @@
 .complex-block-port-placeholder-title {
 	font-size: 14px;
 	line-height: 19px;
-	margin-left: 10px;
 	color: #a4abb2;
 }
 
 .complex-block-port-placeholder-title.--output  {
 	margin-right: 10px;
-	margin-left: 0;
 }

@@ -1,0 +1,11 @@
+.booking-booking-card__title {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-medium);
+	margin-bottom: 2px;
+}
+
+.booking-booking__base-component.--week-mode .booking-booking-card__title {
+	line-height: 1;
+}

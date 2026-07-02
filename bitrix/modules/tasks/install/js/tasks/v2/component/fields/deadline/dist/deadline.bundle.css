@@ -1,3 +1,7 @@
+.tasks-field-deadline-wrapper {
+	display: flex;
+}
+
 .tasks-field-deadline {
 	display: flex;
 	flex-direction: column;
@@ -46,6 +50,10 @@
 	flex-direction: column;
 	gap: 16px;
 	padding-left: 12px;
+}
+
+.tasks-field-deadline-chip.--read-only {
+	pointer-events: none;
 }
 
 .tasks-deadline-change-reason-popup-header {

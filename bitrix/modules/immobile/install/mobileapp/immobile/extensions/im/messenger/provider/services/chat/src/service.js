@@ -13,6 +13,7 @@ jn.define('im/messenger/provider/services/chat/service', (require, exports, modu
 	const { InputActionNotifyService } = require('im/messenger/provider/services/chat/input-action-notify');
 	const { BotService } = require('im/messenger/provider/services/chat/bot');
 	const { HealthCheckService } = require('im/messenger/provider/services/chat/health-check');
+	const { ChatGetService } = require('im/messenger/provider/services/chat/get');
 
 	/**
 	 * @class ChatService
@@ -39,6 +40,8 @@ jn.define('im/messenger/provider/services/chat/service', (require, exports, modu
 		#botService;
 		/** @type {HealthCheckService} */
 		#healthCheckService;
+		/** @type {ChatGetService} */
+		#getService;
 
 		constructor()
 		{
@@ -113,6 +116,24 @@ jn.define('im/messenger/provider/services/chat/service', (require, exports, modu
 			this.#healthCheckService = this.#healthCheckService ?? new HealthCheckService();
 
 			return this.#healthCheckService;
+		}
+
+		get getService()
+		{
+			this.#getService = this.#getService ?? new ChatGetService();
+
+			return this.#getService;
+		}
+
+		/**
+		 * @param {string} dialogId
+		 * @param {object} [options]
+		 * @param {boolean} [options.skipCache=false] — bypass cache and fetch from server.
+		 * @return {Promise<DialoguesModelState|null>}
+		 */
+		getDialogByDialogId(dialogId, options = {})
+		{
+			return this.getService.getByDialogId(dialogId, options);
 		}
 
 		/**

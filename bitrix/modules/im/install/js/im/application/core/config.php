@@ -10,8 +10,8 @@ return [
 	],
 	'rel' => [
 		'main.polyfill.core',
-		'im.controller',
 		'im.application.launch',
+		'im.controller',
 	],
 	'skip_core' => true,
 ];

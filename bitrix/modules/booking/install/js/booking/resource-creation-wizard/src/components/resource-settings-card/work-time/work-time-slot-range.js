@@ -1,6 +1,6 @@
 import { Dom } from 'main.core';
 import { DateTimeFormat } from 'main.date';
-import { MenuManager, Menu, MenuItem } from 'main.popup';
+import { MenuManager } from 'main.popup';
 import type { SlotRange } from 'booking.model.resources';
 import { WorkTimeMixin } from './work-time-mixin';
 import { WeekDaysPopup } from './week-days-popup';

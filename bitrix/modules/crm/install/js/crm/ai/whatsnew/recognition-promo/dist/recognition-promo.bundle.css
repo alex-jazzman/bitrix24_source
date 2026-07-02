@@ -112,27 +112,23 @@
 	color: var(--ui-color-copilot-secondary);
 	text-decoration: underline;
 	text-underline-position: under;
-	-webkit-text-decoration-style: dashed;
-	        text-decoration-style: dashed;
+	text-decoration-style: dashed;
 	text-decoration-thickness: 1px;
 }
 .crm__ai-recognition-promo_content-description a {
 	cursor: pointer;
-	-webkit-text-decoration-color: rgba(var(--ui-color-copilot-secondary-rgb), 1);
-	        text-decoration-color: rgba(var(--ui-color-copilot-secondary-rgb), 1);
+	text-decoration-color: rgba(var(--ui-color-copilot-secondary-rgb), 1);
 }
 
 .crm__ai-recognition-promo_content-description a:hover,
 .crm__ai-recognition-promo_content-description a:focus {
 	color: rgba(var(--ui-color-copilot-secondary-rgb), 0.7);
-	-webkit-text-decoration-color: rgba(var(--ui-color-copilot-secondary-rgb), 0.7);
-	        text-decoration-color: rgba(var(--ui-color-copilot-secondary-rgb), 0.7);
+	text-decoration-color: rgba(var(--ui-color-copilot-secondary-rgb), 0.7);
 }
 
 .crm__ai-recognition-promo_content-description a:active {
 	color: rgba(var(--ui-color-copilot-secondary-rgb), 0.9);
-	-webkit-text-decoration-color: rgba(var(--ui-color-copilot-secondary-rgb), 0.9);
-	        text-decoration-color: rgba(var(--ui-color-copilot-secondary-rgb), 0.9);
+	text-decoration-color: rgba(var(--ui-color-copilot-secondary-rgb), 0.9);
 }
 
 .crm__ai-recognition-promo_checkbox_dont_show_again {

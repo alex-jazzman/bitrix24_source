@@ -23,6 +23,7 @@
 }
 
 .booking-yiw-timezone-menu .popup-window-content {
+	/* @chef-ignore */
 	scrollbar-width: auto;
 	margin-right: 1px;
 }

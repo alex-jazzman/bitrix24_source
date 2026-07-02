@@ -14,8 +14,13 @@ jn.define('navigator/more-tab/meta', (require, exports, module) => {
 		INVITE: 'PushNotifications::SubscribeToOpenInvite',
 	};
 
+	const NAVIGATION_EVENTS = {
+		SCROLL_TO_MENU_ITEM: 'MoreMenu::ScrollToMenuItem',
+	};
+
 	module.exports = {
 		NOTIFICATION_EVENTS,
 		SUBSCRIPTION_EVENTS,
+		NAVIGATION_EVENTS,
 	};
 });

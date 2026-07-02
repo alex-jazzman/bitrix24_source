@@ -34,29 +34,10 @@ export class ExecuteRestartAutomation extends BaseHandler
 
 	execute(grid: BX.Main.grid, selectedIds: number[], forAll: boolean): void
 	{
-		let restartAutomationManager = BatchRestartAutomationManager.getItem(grid.getId());
-		if (restartAutomationManager && restartAutomationManager.isRunning())
+		const restartAutomationManager = this.#getRestartAutomationManager(grid.getId());
+		if (restartAutomationManager === null)
 		{
 			return;
-		}
-
-		if (ProcessRegistry.isProcessRunning(grid.getId()))
-		{
-			showAnotherProcessRunningNotification();
-
-			return;
-		}
-
-		if (!restartAutomationManager)
-		{
-			restartAutomationManager = BatchRestartAutomationManager.create(
-				grid.getId(),
-				{
-					gridId: grid.getId(),
-					entityTypeId: this.#entityTypeId,
-					container: this.#progressBarRepo.getOrCreateProgressBarContainer('restartAutomation').id,
-				},
-			);
 		}
 
 		if (forAll)
@@ -69,5 +50,48 @@ export class ExecuteRestartAutomation extends BaseHandler
 		}
 
 		restartAutomationManager.execute();
+	}
+
+	executeForKanban(grid: BX.CRM.Kanban.Grid, selectedIds: number[]): void
+	{
+		const restartAutomationManager = this.#getRestartAutomationManager(grid.getData().gridId);
+		if (restartAutomationManager === null)
+		{
+			return;
+		}
+
+		restartAutomationManager.setEntityIds(selectedIds);
+
+		restartAutomationManager.execute();
+	}
+
+	#getRestartAutomationManager(gridId: string): ?BatchRestartAutomationManager
+	{
+		let restartAutomationManager = BatchRestartAutomationManager.getItem(gridId);
+		if (restartAutomationManager?.isRunning())
+		{
+			return null;
+		}
+
+		if (ProcessRegistry.isProcessRunning(gridId))
+		{
+			showAnotherProcessRunningNotification();
+
+			return null;
+		}
+
+		if (!restartAutomationManager)
+		{
+			restartAutomationManager = BatchRestartAutomationManager.create(
+				gridId,
+				{
+					gridId,
+					entityTypeId: this.#entityTypeId,
+					container: this.#progressBarRepo.getOrCreateProgressBarContainer('restartAutomation').id,
+				},
+			);
+		}
+
+		return restartAutomationManager;
 	}
 }

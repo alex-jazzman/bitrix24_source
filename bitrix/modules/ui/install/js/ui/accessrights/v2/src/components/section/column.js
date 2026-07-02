@@ -1,5 +1,5 @@
 import { computed } from 'ui.vue3';
-import { AccessRightItem } from '../../store/model/access-rights-model';
+import type { AccessRightItem } from '../../store/model/access-rights-model';
 import type { UserGroup } from '../../store/model/user-groups-model';
 import { shouldRowBeRendered } from '../../utils';
 import { ColumnLayout } from '../layout/column-layout';

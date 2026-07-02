@@ -1,0 +1,45 @@
+
+/* normalize */
+.tasks-button-copy {
+	border-radius: 0;
+	border: none;
+	padding: 0;
+	background-color: transparent;
+	text-align: inherit;
+	cursor: pointer;
+}
+/* normalize end */
+
+.tasks-button-copy {
+	--transition-button-copy: all 0.2s ease-in-out;
+	display: flex;
+	align-items: center;
+	cursor: pointer;
+}
+
+.tasks-button-copy__text {
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var(--ui-font-size-2xl);
+	color: var(--ui-color-base-3);
+	transition: var(--transition-button-copy);
+}
+.tasks-button-copy__text.tasks-button-copy__text_name {}
+.tasks-button-copy__text.tasks-button-copy__text_value {}
+.tasks-button-copy__text:not(:first-child)::before {
+	content: ': ';
+}
+.tasks-button-copy:hover .tasks-button-copy__text {
+	color: var(--ui-color-base-2);
+}
+
+.tasks-button-copy__icon {
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
+	--ui-icon-set__icon-size: 20px;
+	margin-left: var(--ui-space-inline-2xs2);
+	transition: var(--transition-button-copy);
+}
+.tasks-button-copy:hover .tasks-button-copy__icon {
+	--ui-icon-set__icon-color: var(--ui-color-base-2);
+	transition: var(--transition-button-copy);
+}

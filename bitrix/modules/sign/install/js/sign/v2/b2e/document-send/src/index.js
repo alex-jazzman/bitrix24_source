@@ -112,6 +112,9 @@ export class DocumentSend extends EventEmitter
 					const data = event.getData();
 					this.emit('showEditor', data);
 				},
+				showPlaceholderEditor: (event: BaseEvent) => {
+					this.emit('showPlaceholderEditor', event.getData());
+				},
 			},
 		});
 		const { region, languages, documentMode, isOpenedFromRobot, analytics, templateFolderId } = documentSendConfig;

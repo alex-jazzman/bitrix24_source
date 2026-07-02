@@ -10,6 +10,9 @@ export { JoinService } from './join/join';
 export { MessageService } from './message/message';
 export { ChatServiceOl } from './chat/src/chat';
 export { SilentModeService } from './silent-mode/silent-mode';
+export { SearchService } from './search/search';
+export { CrmFormService } from './crm-form/crm-form';
+export { QuickReplyService } from './quick-reply/quick-reply';
 
 export type {
 	RawRecentItem,
@@ -19,4 +22,12 @@ export type {
 	RawCrm,
 	RawCurrentSession,
 	RawOpenLinesMeta,
+	RawCrmForm,
+	RawQuickReply,
+	RawQuickReplySection,
+	QuickReplyLoadListParams,
+	QuickReplyLoadListResult,
+	QuickReplySaveParams,
+	QuickReplySaveFormData,
+	QuickReplyPermissions,
 } from './types/rest';

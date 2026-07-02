@@ -89,6 +89,11 @@ export const ImportPreview = {
 		},
 		hasDataDisplayedHint()
 		{
+			if (this.sourceType === 'system')
+			{
+				return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_SYSTEM_PREVIEW_HINT');
+			}
+
 			return this.isEditModeInitialDataDisplayed
 				? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_INITIAL_DATA_PREVIEW_HINT_MSGVER_1')
 				: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PREVIEW_HINT_MSGVER_1')

@@ -1,35 +1,35 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Booking = this.BX.Booking || {};
-(function (exports,ui_vue3,booking_component_mixin_locMixin,booking_lib_sidePanelInstance,booking_model_yandexIntegrationWizard,booking_core,booking_component_loader,booking_component_avatar,booking_application_skuResourcesEditor,booking_lib_deepToRaw,booking_provider_service_resourceDialogService,booking_component_helpDeskLoc,booking_component_uiErrorMessage,ui_iconSet_api_vue,booking_lib_utils,booking_component_uiResourceWizardItem,booking_provider_service_mainPageService,ui_vue3_vuex,main_core_events,booking_const,booking_component_button,booking_provider_service_yandexIntegrationWizardService,main_core,main_popup,ui_dialogs_messagebox) {
+(function (exports, main_core, ui_vue3, booking_core, booking_const, booking_component_mixin_locMixin, booking_lib_sidePanelInstance, booking_model_yandexIntegrationWizard, ui_vue3_vuex, booking_provider_service_mainPageService, booking_provider_service_yandexIntegrationWizardService, booking_component_loader, ui_iconSet_api_vue, booking_component_helpDeskLoc, main_core_events, booking_component_button, booking_component_uiResourceWizardItem, booking_component_avatar, booking_application_skuResourcesEditor, booking_lib_deepToRaw, booking_provider_service_resourceDialogService, booking_component_uiErrorMessage, main_popup, booking_lib_utils, ui_dialogs_messagebox) {
 	'use strict';
 
 	const {
-	  mapGetters
+		mapGetters: mapGetters$3
 	} = ui_vue3_vuex.createNamespacedHelpers(booking_const.Model.YandexIntegrationWizard);
 	const WRAPPER_CLASS = 'booking-yiw__wrapper';
 
 	// @vue/component
 	const YandexIntegrationWizardLayout = {
-	  name: 'YandexIntegrationWizardLayout',
-	  components: {
-	    Loader: booking_component_loader.Loader
-	  },
-	  provide() {
-	    return {
-	      menuTimeZoneContainerClass: WRAPPER_CLASS
-	    };
-	  },
-	  setup() {
-	    return {
-	      LoaderType: booking_component_loader.LoaderType,
-	      wrapperClass: WRAPPER_CLASS
-	    };
-	  },
-	  computed: {
-	    ...mapGetters(['isFetching'])
-	  },
-	  template: `
+		name: 'YandexIntegrationWizardLayout',
+		components: {
+			Loader: booking_component_loader.Loader
+		},
+		provide() {
+			return {
+				menuTimeZoneContainerClass: WRAPPER_CLASS
+			};
+		},
+		setup() {
+			return {
+				LoaderType: booking_component_loader.LoaderType,
+				wrapperClass: WRAPPER_CLASS
+			};
+		},
+		computed: {
+			...mapGetters$3(['isFetching'])
+		},
+		template: `
 		<div class="booking-yiw__layout">
 			<div :class="wrapperClass">
 				<slot name="header"/>
@@ -52,26 +52,25 @@ this.BX.Booking = this.BX.Booking || {};
 
 	// @vue/component
 	const YandexIntegrationWizardLayoutHeader = {
-	  name: 'YandexIntegrationWizardLayoutHeader',
-	  components: {
-	    EmptyRichLoc: booking_component_helpDeskLoc.EmptyRichLoc,
-	    Icon: ui_iconSet_api_vue.BIcon
-	  },
-	  setup() {
-	    return {
-	      IconSet: ui_iconSet_api_vue.Set,
-	      Outline: ui_iconSet_api_vue.Outline
-	    };
-	  },
-	  computed: {
-	    integrationMapsImageUrl() {
-	      var _this$loc;
-	      const languageId = (_this$loc = this.loc('LANGUAGE_ID')) != null ? _this$loc : 'en';
-	      const imageLanguageId = languageId === 'ru' ? 'ru' : 'en';
-	      return `/bitrix/js/booking/application/yandex-integration-wizard/images/integrations-maps-${imageLanguageId}.png`;
-	    }
-	  },
-	  template: `
+		name: 'YandexIntegrationWizardLayoutHeader',
+		components: {
+			EmptyRichLoc: booking_component_helpDeskLoc.EmptyRichLoc,
+			Icon: ui_iconSet_api_vue.BIcon
+		},
+		setup() {
+			return {
+				IconSet: ui_iconSet_api_vue.Set,
+				Outline: ui_iconSet_api_vue.Outline
+			};
+		},
+		computed: {
+			integrationMapsImageUrl() {
+				const languageId = this.loc('LANGUAGE_ID') ?? 'en';
+				const imageLanguageId = languageId === 'ru' ? 'ru' : 'en';
+				return `/bitrix/js/booking/application/yandex-integration-wizard/images/integrations-maps-${imageLanguageId}.png`;
+			}
+		},
+		template: `
 		<div class="booking-yiw__title">
 			{{ loc('YANDEX_WIZARD_TITLE') }}
 		</div>
@@ -139,27 +138,27 @@ this.BX.Booking = this.BX.Booking || {};
 
 	// @vue/component
 	const ConfirmButton = {
-	  name: 'ConfirmButton',
-	  components: {
-	    UiButton: booking_component_button.Button
-	  },
-	  props: {
-	    buttonText: {
-	      type: String,
-	      required: true
-	    },
-	    disabled: {
-	      type: Boolean,
-	      default: false
-	    }
-	  },
-	  setup() {
-	    return {
-	      ButtonSize: booking_component_button.ButtonSize,
-	      ButtonColor: booking_component_button.ButtonColor
-	    };
-	  },
-	  template: `
+		name: 'ConfirmButton',
+		components: {
+			UiButton: booking_component_button.Button
+		},
+		props: {
+			buttonText: {
+				type: String,
+				required: true
+			},
+			disabled: {
+				type: Boolean,
+				default: false
+			}
+		},
+		setup() {
+			return {
+				ButtonSize: booking_component_button.ButtonSize,
+				ButtonColor: booking_component_button.ButtonColor
+			};
+		},
+		template: `
 		<UiButton
 			:text="buttonText"
 			:size="ButtonSize.LARGE"
@@ -174,17 +173,17 @@ this.BX.Booking = this.BX.Booking || {};
 
 	// @vue/component
 	const CancelButton = {
-	  name: 'CancelButton',
-	  components: {
-	    UiButton: booking_component_button.Button
-	  },
-	  setup() {
-	    return {
-	      ButtonSize: booking_component_button.ButtonSize,
-	      ButtonColor: booking_component_button.ButtonColor
-	    };
-	  },
-	  template: `
+		name: 'CancelButton',
+		components: {
+			UiButton: booking_component_button.Button
+		},
+		setup() {
+			return {
+				ButtonSize: booking_component_button.ButtonSize,
+				ButtonColor: booking_component_button.ButtonColor
+			};
+		},
+		template: `
 		<UiButton
 			class="booking-yiw__cancel-button"
 			:text="loc('YANDEX_WIZARD_FOOTER_CANCEL_BUTTON')"
@@ -197,78 +196,78 @@ this.BX.Booking = this.BX.Booking || {};
 	};
 
 	const {
-	  mapGetters: mapGetters$1,
-	  mapActions
+		mapGetters: mapGetters$2,
+		mapActions: mapActions$2
 	} = ui_vue3_vuex.createNamespacedHelpers(booking_const.Model.YandexIntegrationWizard);
 
 	// @vue/component
 	const YandexIntegrationWizardLayoutFooter = {
-	  name: 'YandexIntegrationWizardLayoutFooter',
-	  components: {
-	    ConfirmButton,
-	    CancelButton
-	  },
-	  computed: {
-	    ...mapGetters$1({
-	      isFetching: 'isFetching',
-	      isConnected: 'isConnected',
-	      hasChanges: 'hasFormDataChanges',
-	      updatedIntegration: 'getUpdatedIntegration',
-	      isFormDataValid: 'isFormDataValid'
-	    }),
-	    confirmButtonText() {
-	      return this.isConnected ? this.loc('YANDEX_WIZARD_FOOTER_SAVE_BUTTON') : this.loc('YANDEX_WIZARD_FOOTER_СONNECT_BUTTON');
-	    }
-	  },
-	  methods: {
-	    ...mapActions(['setFetching', 'validateFormData']),
-	    async onConfirmButtonClick() {
-	      await this.validateFormData();
-	      if (this.isFormDataValid) {
-	        await this.updateIntegration();
-	      }
-	    },
-	    async updateIntegration() {
-	      this.setFetching(true);
-	      const wasConnected = this.isConnected;
-	      const updateIntegrationResult = await booking_provider_service_yandexIntegrationWizardService.yandexIntegrationWizardService.updateIntegration(this.updatedIntegration);
-	      if (!updateIntegrationResult.success) {
-	        const publicError = updateIntegrationResult.errors.find(errorItem => errorItem.customData.isPublic);
-	        const {
-	          Notifier
-	        } = await main_core.Runtime.loadExtension('ui.notification-manager');
-	        Notifier.notifyViaBrowserProvider({
-	          id: 'booking-yiw-update-error',
-	          text: (publicError == null ? void 0 : publicError.message) || this.loc('YANDEX_WIZARD_UPDATE_ERROR')
-	        });
-	        this.setFetching(false);
-	        return;
-	      }
-	      if (this.isConnected && !wasConnected) {
-	        await this.showConfetti();
-	      }
-	      this.closeWizard();
-	      this.setFetching(false);
-	    },
-	    closeWizard() {
-	      main_core_events.EventEmitter.emit(booking_const.EventName.CloseYandexIntegrationWizard);
-	    },
-	    async showConfetti() {
-	      const {
-	        Confetti
-	      } = await main_core.Runtime.loadExtension('ui.confetti');
-	      return Confetti.fire({
-	        particleCount: 400,
-	        spread: 100,
-	        zIndex: BX.SidePanel.Instance.getTopSlider().getZindex() + 1,
-	        origin: {
-	          y: 0.75,
-	          x: 0.75
-	        }
-	      });
-	    }
-	  },
-	  template: `
+		name: 'YandexIntegrationWizardLayoutFooter',
+		components: {
+			ConfirmButton,
+			CancelButton
+		},
+		computed: {
+			...mapGetters$2({
+				isFetching: 'isFetching',
+				isConnected: 'isConnected',
+				hasChanges: 'hasFormDataChanges',
+				updatedIntegration: 'getUpdatedIntegration',
+				isFormDataValid: 'isFormDataValid'
+			}),
+			confirmButtonText() {
+				return this.isConnected ? this.loc('YANDEX_WIZARD_FOOTER_SAVE_BUTTON') : this.loc('YANDEX_WIZARD_FOOTER_СONNECT_BUTTON');
+			}
+		},
+		methods: {
+			...mapActions$2(['setFetching', 'validateFormData']),
+			async onConfirmButtonClick() {
+				await this.validateFormData();
+				if (this.isFormDataValid) {
+					await this.updateIntegration();
+				}
+			},
+			async updateIntegration() {
+				this.setFetching(true);
+				const wasConnected = this.isConnected;
+				const updateIntegrationResult = await booking_provider_service_yandexIntegrationWizardService.yandexIntegrationWizardService.updateIntegration(this.updatedIntegration);
+				if (!updateIntegrationResult.success) {
+					const publicError = updateIntegrationResult.errors.find(errorItem => errorItem.customData.isPublic);
+					const {
+						Notifier
+					} = await main_core.Runtime.loadExtension('ui.notification-manager');
+					Notifier.notifyViaBrowserProvider({
+						id: 'booking-yiw-update-error',
+						text: publicError?.message || this.loc('YANDEX_WIZARD_UPDATE_ERROR')
+					});
+					this.setFetching(false);
+					return;
+				}
+				if (this.isConnected && !wasConnected) {
+					await this.showConfetti();
+				}
+				this.closeWizard();
+				this.setFetching(false);
+			},
+			closeWizard() {
+				main_core_events.EventEmitter.emit(booking_const.EventName.CloseYandexIntegrationWizard);
+			},
+			async showConfetti() {
+				const {
+					Confetti
+				} = await main_core.Runtime.loadExtension('ui.confetti');
+				return Confetti.fire({
+					particleCount: 400,
+					spread: 100,
+					zIndex: BX.SidePanel.Instance.getTopSlider().getZindex() + 1,
+					origin: {
+						y: 0.75,
+						x: 0.75
+					}
+				});
+			}
+		},
+		template: `
 		<div
 			v-show="!isFetching && (!isConnected || hasChanges)"
 			class="booking-yiw__footer"
@@ -285,128 +284,127 @@ this.BX.Booking = this.BX.Booking || {};
 
 	// @vue/component
 	const YandexIntegrationWizardSettingsResource = {
-	  name: 'YandexIntegrationWizardSettingsResource',
-	  components: {
-	    UiResourceWizardItem: booking_component_uiResourceWizardItem.UiResourceWizardItem,
-	    UiButton: booking_component_button.Button,
-	    UiAvatar: booking_component_avatar.Avatar,
-	    Icon: ui_iconSet_api_vue.BIcon
-	  },
-	  setup() {
-	    return {
-	      ButtonColor: booking_component_button.ButtonColor,
-	      ButtonSize: booking_component_button.ButtonSize,
-	      Outline: ui_iconSet_api_vue.Outline,
-	      Main: ui_iconSet_api_vue.Main
-	    };
-	  },
-	  computed: {
-	    selectedResources() {
-	      return this.$store.state[booking_const.Model.YandexIntegrationWizard].resources.filter(resource => {
-	        return resource.skusYandex.length > 0;
-	      });
-	    },
-	    selectedResourcesCount() {
-	      var _this$selectedResourc, _this$selectedResourc2;
-	      return (_this$selectedResourc = (_this$selectedResourc2 = this.selectedResources) == null ? void 0 : _this$selectedResourc2.length) != null ? _this$selectedResourc : 0;
-	    },
-	    buttonTitle() {
-	      return this.selectedResourcesCount > 0 ? this.loc('YANDEX_WIZARD_SETTINGS_RESOURCE_BUTTON_MORE') : this.loc('YANDEX_WIZARD_SETTINGS_RESOURCE_BUTTON_CHOOSE');
-	    },
-	    informTitle() {
-	      if (this.selectedResourcesCount > 0) {
-	        return main_core.Loc.getMessagePlural('YANDEX_WIZARD_SETTINGS_RESOURCE_STATE', this.selectedResourcesCount, {
-	          '#COUNT#': this.selectedResourcesCount
-	        });
-	      }
-	      return this.loc('YANDEX_WIZARD_SETTINGS_RESOURCE_STATE_EMPTY');
-	    },
-	    imageClass() {
-	      switch (this.selectedResourcesCount) {
-	        case 0:
-	          return '';
-	        case 1:
-	          return '--one';
-	        case 2:
-	          return '--two';
-	        case 3:
-	          return '--three';
-	        default:
-	          return '--many';
-	      }
-	    },
-	    avatarSize() {
-	      switch (this.selectedResourcesCount) {
-	        case 1:
-	          return 64;
-	        case 2:
-	          return 46;
-	        default:
-	          return 32;
-	      }
-	    },
-	    shownResources() {
-	      return this.selectedResources.slice(0, 4);
-	    },
-	    amountHiddenResource() {
-	      return Math.max(this.selectedResourcesCount - 4, 0);
-	    },
-	    integrationStatus() {
-	      return this.$store.state[booking_const.Model.YandexIntegrationWizard].integration.status || booking_const.IntegrationMapItemStatus.NOT_CONNECTED;
-	    }
-	  },
-	  methods: {
-	    openSkuResourcesEditor() {
-	      const editor = new booking_application_skuResourcesEditor.SkuResourcesEditor({
-	        title: this.loc('YANDEX_WIZARD_POPUP_RESOURCE_POPUP_TITLE'),
-	        description: this.loc('YANDEX_WIZARD_POPUP_RESOURCE_POPUP_DESCRIPTION'),
-	        options: {
-	          editMode: true,
-	          catalogSkuEntityOptions: this.getCatalogSkuEntityOptions()
-	        },
-	        loadData: () => this.getResources(),
-	        save: data => this.saveResources(data)
-	      });
-	      editor.open();
-	    },
-	    getCatalogSkuEntityOptions() {
-	      return this.$store.state[booking_const.Model.Sku].catalogSkuEntityOptions;
-	    },
-	    saveResources(data) {
-	      if (main_core.Type.isNil(data) || !main_core.Type.isArray(data.resources)) {
-	        return;
-	      }
-	      const resources = data.resources.map(resource => {
-	        return {
-	          ...resource,
-	          skusYandex: resource.skus
-	        };
-	      });
-	      void this.$store.dispatch(`${booking_const.Model.YandexIntegrationWizard}/updateResourcesSkusYandex`, resources);
-	    },
-	    async getResources() {
-	      const notConnected = this.integrationStatus === booking_const.IntegrationMapItemStatus.NOT_CONNECTED;
-	      const resources = this.$store.state[booking_const.Model.YandexIntegrationWizard].resources.map(resource => {
-	        return {
-	          ...resource,
-	          avatar: {
-	            ...resource.avatar
-	          },
-	          skus: booking_lib_deepToRaw.deepToRaw(notConnected && resource.skusYandex.length === 0 ? resource.skus : resource.skusYandex)
-	        };
-	      });
-	      await booking_provider_service_resourceDialogService.resourceDialogService.getMainResources();
-	      const mainResources = (this.$store.getters[`${booking_const.Model.Resources}/get`] || []).map(resource => {
-	        return {
-	          ...resource,
-	          skus: [],
-	          skusYandex: []
-	        };
-	      });
-	      return [...mainResources, ...resources];
-	    }
-	  },
-	  template: `
+		name: 'YandexIntegrationWizardSettingsResource',
+		components: {
+			UiResourceWizardItem: booking_component_uiResourceWizardItem.UiResourceWizardItem,
+			UiButton: booking_component_button.Button,
+			UiAvatar: booking_component_avatar.Avatar,
+			Icon: ui_iconSet_api_vue.BIcon
+		},
+		setup() {
+			return {
+				ButtonColor: booking_component_button.ButtonColor,
+				ButtonSize: booking_component_button.ButtonSize,
+				Outline: ui_iconSet_api_vue.Outline,
+				Main: ui_iconSet_api_vue.Main
+			};
+		},
+		computed: {
+			selectedResources() {
+				return this.$store.state[booking_const.Model.YandexIntegrationWizard].resources.filter(resource => {
+					return resource.skusYandex.length > 0;
+				});
+			},
+			selectedResourcesCount() {
+				return this.selectedResources?.length ?? 0;
+			},
+			buttonTitle() {
+				return this.selectedResourcesCount > 0 ? this.loc('YANDEX_WIZARD_SETTINGS_RESOURCE_BUTTON_MORE') : this.loc('YANDEX_WIZARD_SETTINGS_RESOURCE_BUTTON_CHOOSE');
+			},
+			informTitle() {
+				if (this.selectedResourcesCount > 0) {
+					return main_core.Loc.getMessagePlural('YANDEX_WIZARD_SETTINGS_RESOURCE_STATE', this.selectedResourcesCount, {
+						'#COUNT#': this.selectedResourcesCount
+					});
+				}
+				return this.loc('YANDEX_WIZARD_SETTINGS_RESOURCE_STATE_EMPTY');
+			},
+			imageClass() {
+				switch (this.selectedResourcesCount) {
+					case 0:
+						return '';
+					case 1:
+						return '--one';
+					case 2:
+						return '--two';
+					case 3:
+						return '--three';
+					default:
+						return '--many';
+				}
+			},
+			avatarSize() {
+				switch (this.selectedResourcesCount) {
+					case 1:
+						return 64;
+					case 2:
+						return 46;
+					default:
+						return 32;
+				}
+			},
+			shownResources() {
+				return this.selectedResources.slice(0, 4);
+			},
+			amountHiddenResource() {
+				return Math.max(this.selectedResourcesCount - 4, 0);
+			},
+			integrationStatus() {
+				return this.$store.state[booking_const.Model.YandexIntegrationWizard].integration.status || booking_const.IntegrationMapItemStatus.NotConnected;
+			}
+		},
+		methods: {
+			openSkuResourcesEditor() {
+				const editor = new booking_application_skuResourcesEditor.SkuResourcesEditor({
+					title: this.loc('YANDEX_WIZARD_POPUP_RESOURCE_POPUP_TITLE'),
+					description: this.loc('YANDEX_WIZARD_POPUP_RESOURCE_POPUP_DESCRIPTION'),
+					options: {
+						editMode: true,
+						catalogSkuEntityOptions: this.getCatalogSkuEntityOptions()
+					},
+					loadData: () => this.getResources(),
+					save: data => this.saveResources(data)
+				});
+				editor.open();
+			},
+			getCatalogSkuEntityOptions() {
+				return this.$store.state[booking_const.Model.Sku].catalogSkuEntityOptions;
+			},
+			saveResources(data) {
+				if (main_core.Type.isNil(data) || !main_core.Type.isArray(data.resources)) {
+					return;
+				}
+				const resources = data.resources.map(resource => {
+					return {
+						...resource,
+						skusYandex: resource.skus
+					};
+				});
+				void this.$store.dispatch(`${booking_const.Model.YandexIntegrationWizard}/updateResourcesSkusYandex`, resources);
+			},
+			async getResources() {
+				const notConnected = this.integrationStatus === booking_const.IntegrationMapItemStatus.NotConnected;
+				const resources = this.$store.state[booking_const.Model.YandexIntegrationWizard].resources.map(resource => {
+					return {
+						...resource,
+						avatar: {
+							...resource.avatar
+						},
+						skus: booking_lib_deepToRaw.deepToRaw(notConnected && resource.skusYandex.length === 0 ? resource.skus : resource.skusYandex)
+					};
+				});
+				await booking_provider_service_resourceDialogService.resourceDialogService.getMainResources();
+				const mainResources = (this.$store.getters[`${booking_const.Model.Resources}/get`] || []).map(resource => {
+					return {
+						...resource,
+						skus: [],
+						skusYandex: []
+					};
+				});
+				return [...mainResources, ...resources];
+			}
+		},
+		template: `
 		<UiResourceWizardItem
 			:iconType="Outline.USER_PROFILE"
 			:title="loc('YANDEX_WIZARD_SETTINGS_RESOURCE_TITLE')"
@@ -473,63 +471,62 @@ this.BX.Booking = this.BX.Booking || {};
 
 	// @vue/component
 	const YandexIntegrationWizardCabinetLink = {
-	  name: 'YandexIntegrationWizardCabinetLink',
-	  components: {
-	    UiResourceWizardItem: booking_component_uiResourceWizardItem.UiResourceWizardItem,
-	    UiErrorMessage: booking_component_uiErrorMessage.UiErrorMessage,
-	    EmptyRichLoc: booking_component_helpDeskLoc.EmptyRichLoc,
-	    UiButton: booking_component_button.Button,
-	    Icon: ui_iconSet_api_vue.BIcon
-	  },
-	  setup() {
-	    return {
-	      ButtonColor: booking_component_button.ButtonColor,
-	      ButtonSize: booking_component_button.ButtonSize,
-	      ButtonIcon: booking_component_button.ButtonIcon,
-	      Outline: ui_iconSet_api_vue.Outline
-	    };
-	  },
-	  computed: {
-	    cabinetLink: {
-	      get() {
-	        return this.$store.getters[`${booking_const.Model.YandexIntegrationWizard}/getCabinetLink`];
-	      },
-	      set(link) {
-	        this.$store.dispatch(`${booking_const.Model.YandexIntegrationWizard}/setCabinetLink`, {
-	          link
-	        });
-	      }
-	    },
-	    hasInvalidCabinetLink() {
-	      return this.$store.getters[`${booking_const.Model.YandexIntegrationWizard}/hasInvalidCabinetLink`];
-	    },
-	    cabinetLinkImageUrl() {
-	      var _this$loc;
-	      const languageId = (_this$loc = this.loc('LANGUAGE_ID')) != null ? _this$loc : 'en';
-	      const imageLanguageId = languageId === 'ru' ? 'ru' : 'en';
-	      return `/bitrix/js/booking/application/yandex-integration-wizard/images/yandex-cabinet-link-guide-${imageLanguageId}.png`;
-	    },
-	    yandexBusinessLink() {
-	      const integrationSettings = this.$store.getters[`${booking_const.Model.YandexIntegrationWizard}/getIntegrationSettings`];
-	      return integrationSettings.businessLink;
-	    },
-	    cabinetLinkPlaceholder() {
-	      const integrationSettings = this.$store.getters[`${booking_const.Model.YandexIntegrationWizard}/getIntegrationSettings`];
-	      return integrationSettings.cabinetLinkPlaceholder;
-	    }
-	  },
-	  methods: {
-	    goToYandexBusiness() {
-	      window.open(this.yandexBusinessLink, '_blank');
-	    },
-	    validateCabinetLink() {
-	      this.$store.dispatch(`${booking_const.Model.YandexIntegrationWizard}/validateCabinetLink`);
-	    },
-	    setInvalidCabinetLink(isInvalid) {
-	      this.$store.dispatch(`${booking_const.Model.YandexIntegrationWizard}/setInvalidCabinetLink`, isInvalid);
-	    }
-	  },
-	  template: `
+		name: 'YandexIntegrationWizardCabinetLink',
+		components: {
+			UiResourceWizardItem: booking_component_uiResourceWizardItem.UiResourceWizardItem,
+			UiErrorMessage: booking_component_uiErrorMessage.UiErrorMessage,
+			EmptyRichLoc: booking_component_helpDeskLoc.EmptyRichLoc,
+			UiButton: booking_component_button.Button,
+			Icon: ui_iconSet_api_vue.BIcon
+		},
+		setup() {
+			return {
+				ButtonColor: booking_component_button.ButtonColor,
+				ButtonSize: booking_component_button.ButtonSize,
+				ButtonIcon: booking_component_button.ButtonIcon,
+				Outline: ui_iconSet_api_vue.Outline
+			};
+		},
+		computed: {
+			cabinetLink: {
+				get() {
+					return this.$store.getters[`${booking_const.Model.YandexIntegrationWizard}/getCabinetLink`];
+				},
+				set(link) {
+					this.$store.dispatch(`${booking_const.Model.YandexIntegrationWizard}/setCabinetLink`, {
+						link
+					});
+				}
+			},
+			hasInvalidCabinetLink() {
+				return this.$store.getters[`${booking_const.Model.YandexIntegrationWizard}/hasInvalidCabinetLink`];
+			},
+			cabinetLinkImageUrl() {
+				const languageId = this.loc('LANGUAGE_ID') ?? 'en';
+				const imageLanguageId = languageId === 'ru' ? 'ru' : 'en';
+				return `/bitrix/js/booking/application/yandex-integration-wizard/images/yandex-cabinet-link-guide-${imageLanguageId}.png`;
+			},
+			yandexBusinessLink() {
+				const integrationSettings = this.$store.getters[`${booking_const.Model.YandexIntegrationWizard}/getIntegrationSettings`];
+				return integrationSettings.businessLink;
+			},
+			cabinetLinkPlaceholder() {
+				const integrationSettings = this.$store.getters[`${booking_const.Model.YandexIntegrationWizard}/getIntegrationSettings`];
+				return integrationSettings.cabinetLinkPlaceholder;
+			}
+		},
+		methods: {
+			goToYandexBusiness() {
+				window.open(this.yandexBusinessLink, '_blank');
+			},
+			validateCabinetLink() {
+				this.$store.dispatch(`${booking_const.Model.YandexIntegrationWizard}/validateCabinetLink`);
+			},
+			setInvalidCabinetLink(isInvalid) {
+				this.$store.dispatch(`${booking_const.Model.YandexIntegrationWizard}/setInvalidCabinetLink`, isInvalid);
+			}
+		},
+		template: `
 		<UiResourceWizardItem
 			:iconType="Outline.REGISTRATION_ON_SITE"
 			:title="loc('YANDEX_WIZARD_CABINET_LINK_TITLE')"
@@ -608,83 +605,82 @@ this.BX.Booking = this.BX.Booking || {};
 
 	// @vue/component
 	const YandexIntegrationWizardTimeZone = {
-	  name: 'YandexIntegrationWizardTimeZone',
-	  components: {
-	    UiResourceWizardItem: booking_component_uiResourceWizardItem.UiResourceWizardItem,
-	    Icon: ui_iconSet_api_vue.BIcon
-	  },
-	  inject: ['menuTimeZoneContainerClass'],
-	  setup() {
-	    return {
-	      Outline: ui_iconSet_api_vue.Outline
-	    };
-	  },
-	  data() {
-	    return {
-	      timezones: []
-	    };
-	  },
-	  computed: {
-	    popupId() {
-	      return 'booking-yiw-timezone-menu';
-	    },
-	    timezoneId: {
-	      get() {
-	        return this.$store.getters[`${booking_const.Model.YandexIntegrationWizard}/getTimezone`];
-	      },
-	      set(timezone) {
-	        this.$store.dispatch(`${booking_const.Model.YandexIntegrationWizard}/setTimezone`, {
-	          timezone
-	        });
-	      }
-	    },
-	    selectedTimezoneTitle() {
-	      const selected = this.timezones.find(tz => tz.timezoneId === this.timezoneId);
-	      return selected ? selected.title : booking_lib_utils.Utils.time.getDefaultUTCTimezone(this.timezoneId);
-	    }
-	  },
-	  async created() {
-	    this.timezones = await booking_provider_service_mainPageService.mainPageService.getTimezones();
-	  },
-	  methods: {
-	    openTimezoneSelector() {
-	      var _this$menuPopup, _this$menuPopup$popup;
-	      if ((_this$menuPopup = this.menuPopup) != null && (_this$menuPopup$popup = _this$menuPopup.popupWindow) != null && _this$menuPopup$popup.isShown()) {
-	        this.destroy();
-	        return;
-	      }
-	      const menuButton = this.$refs['menu-button'];
-	      this.menuPopup = main_popup.MenuManager.create(this.popupId, menuButton, this.getMenuItems(), {
-	        className: 'booking-yiw-timezone-menu',
-	        closeByEsc: true,
-	        maxHeight: 300,
-	        offsetTop: 0,
-	        offsetLeft: 40,
-	        angle: true,
-	        cacheable: true,
-	        targetContainer: document.querySelector(`.${this.menuTimeZoneContainerClass}`),
-	        events: {
-	          onClose: () => this.destroy(),
-	          onDestroy: () => this.destroy()
-	        }
-	      });
-	      this.menuPopup.show();
-	    },
-	    getMenuItems() {
-	      return this.timezones.map(timezone => ({
-	        text: timezone.title,
-	        onclick: () => {
-	          this.timezoneId = timezone.timezoneId;
-	          this.destroy();
-	        }
-	      }));
-	    },
-	    destroy() {
-	      main_popup.MenuManager.destroy(this.popupId);
-	      this.menuPopup = null;
-	    }
-	  },
-	  template: `
+		name: 'YandexIntegrationWizardTimeZone',
+		components: {
+			UiResourceWizardItem: booking_component_uiResourceWizardItem.UiResourceWizardItem,
+			Icon: ui_iconSet_api_vue.BIcon
+		},
+		inject: ['menuTimeZoneContainerClass'],
+		setup() {
+			return {
+				Outline: ui_iconSet_api_vue.Outline
+			};
+		},
+		data() {
+			return {
+				timezones: []
+			};
+		},
+		computed: {
+			popupId() {
+				return 'booking-yiw-timezone-menu';
+			},
+			timezoneId: {
+				get() {
+					return this.$store.getters[`${booking_const.Model.YandexIntegrationWizard}/getTimezone`];
+				},
+				set(timezone) {
+					this.$store.dispatch(`${booking_const.Model.YandexIntegrationWizard}/setTimezone`, {
+						timezone
+					});
+				}
+			},
+			selectedTimezoneTitle() {
+				const selected = this.timezones.find(tz => tz.timezoneId === this.timezoneId);
+				return selected ? selected.title : booking_lib_utils.Utils.time.getDefaultUTCTimezone(this.timezoneId);
+			}
+		},
+		async created() {
+			this.timezones = await booking_provider_service_mainPageService.mainPageService.getTimezones();
+		},
+		methods: {
+			openTimezoneSelector() {
+				if (this.menuPopup?.popupWindow?.isShown()) {
+					this.destroy();
+					return;
+				}
+				const menuButton = this.$refs['menu-button'];
+				this.menuPopup = main_popup.MenuManager.create(this.popupId, menuButton, this.getMenuItems(), {
+					className: 'booking-yiw-timezone-menu',
+					closeByEsc: true,
+					maxHeight: 300,
+					offsetTop: 0,
+					offsetLeft: 40,
+					angle: true,
+					cacheable: true,
+					targetContainer: document.querySelector(`.${this.menuTimeZoneContainerClass}`),
+					events: {
+						onClose: () => this.destroy(),
+						onDestroy: () => this.destroy()
+					}
+				});
+				this.menuPopup.show();
+			},
+			getMenuItems() {
+				return this.timezones.map(timezone => ({
+					text: timezone.title,
+					onclick: () => {
+						this.timezoneId = timezone.timezoneId;
+						this.destroy();
+					}
+				}));
+			},
+			destroy() {
+				main_popup.MenuManager.destroy(this.popupId);
+				this.menuPopup = null;
+			}
+		},
+		template: `
 		<UiResourceWizardItem
 			:iconType="Outline.LOCATION_TIME"
 			:title="loc('YANDEX_WIZARD_TIMEZONE_TITLE')"
@@ -710,86 +706,86 @@ this.BX.Booking = this.BX.Booking || {};
 	};
 
 	class DeactivateConfirmation {
-	  static confirm() {
-	    return new Promise(resolve => {
-	      const messageBox = ui_dialogs_messagebox.MessageBox.create({
-	        title: main_core.Loc.getMessage('YANDEX_WIZARD_CONFIRM_DEACTIVATE_TITLE'),
-	        message: main_core.Loc.getMessage('YANDEX_WIZARD_CONFIRM_DEACTIVATE_DESCRIPTION'),
-	        yesCaption: main_core.Loc.getMessage('YANDEX_WIZARD_CONFIRM_DEACTIVATE_YES_CAPTION'),
-	        modal: true,
-	        buttons: ui_dialogs_messagebox.MessageBoxButtons.YES_CANCEL,
-	        popupOptions: {
-	          className: 'booking-yiw__deactivate-confirmation',
-	          minHeight: 200,
-	          minWidth: 479,
-	          closeByEsc: true,
-	          closeIcon: true,
-	          closeIconSize: main_popup.CloseIconSize.LARGE
-	        },
-	        useAirDesign: true,
-	        onYes: async box => {
-	          box.close();
-	          resolve(true);
-	        },
-	        onCancel: box => {
-	          box.close();
-	          resolve(false);
-	        }
-	      });
-	      messageBox.show();
-	    });
-	  }
+		static confirm() {
+			return new Promise(resolve => {
+				const messageBox = ui_dialogs_messagebox.MessageBox.create({
+					title: main_core.Loc.getMessage('YANDEX_WIZARD_CONFIRM_DEACTIVATE_TITLE'),
+					message: main_core.Loc.getMessage('YANDEX_WIZARD_CONFIRM_DEACTIVATE_DESCRIPTION'),
+					yesCaption: main_core.Loc.getMessage('YANDEX_WIZARD_CONFIRM_DEACTIVATE_YES_CAPTION'),
+					modal: true,
+					buttons: ui_dialogs_messagebox.MessageBoxButtons.YES_CANCEL,
+					popupOptions: {
+						className: 'booking-yiw__deactivate-confirmation',
+						minHeight: 200,
+						minWidth: 479,
+						closeByEsc: true,
+						closeIcon: true,
+						closeIconSize: main_popup.CloseIconSize.LARGE
+					},
+					useAirDesign: true,
+					onYes: async box => {
+						box.close();
+						resolve(true);
+					},
+					onCancel: box => {
+						box.close();
+						resolve(false);
+					}
+				});
+				messageBox.show();
+			});
+		}
 	}
 
 	const {
-	  mapGetters: mapGetters$2,
-	  mapActions: mapActions$1
+		mapGetters: mapGetters$1,
+		mapActions: mapActions$1
 	} = ui_vue3_vuex.createNamespacedHelpers(booking_const.Model.YandexIntegrationWizard);
 
 	// @vue/component
 	const YandexIntegrationWizardDeactivateButton = {
-	  name: 'YandexIntegrationWizardDeactivateButton',
-	  components: {
-	    UiButton: booking_component_button.Button
-	  },
-	  setup() {
-	    return {
-	      ButtonSize: booking_component_button.ButtonSize,
-	      ButtonColor: booking_component_button.ButtonColor
-	    };
-	  },
-	  computed: {
-	    ...mapGetters$2(['isConnected'])
-	  },
-	  methods: {
-	    ...mapActions$1(['setFetching']),
-	    async showDeactivateConfirmation() {
-	      const isDeactivationConfirmed = await DeactivateConfirmation.confirm();
-	      if (!isDeactivationConfirmed) {
-	        return;
-	      }
-	      await this.deactivateIntegration();
-	    },
-	    async deactivateIntegration() {
-	      this.setFetching(true);
-	      try {
-	        await booking_provider_service_yandexIntegrationWizardService.yandexIntegrationWizardService.deactivateIntegration();
-	        main_core_events.EventEmitter.emit(booking_const.EventName.CloseYandexIntegrationWizard);
-	      } catch (error) {
-	        console.error('Deactivate integration error', error);
-	        const {
-	          Notifier
-	        } = await main_core.Runtime.loadExtension('ui.notification-manager');
-	        Notifier.notifyViaBrowserProvider({
-	          id: 'booking-yiw-update-error',
-	          text: this.loc('YANDEX_WIZARD_UPDATE_ERROR')
-	        });
-	      } finally {
-	        this.setFetching(false);
-	      }
-	    }
-	  },
-	  template: `
+		name: 'YandexIntegrationWizardDeactivateButton',
+		components: {
+			UiButton: booking_component_button.Button
+		},
+		setup() {
+			return {
+				ButtonSize: booking_component_button.ButtonSize,
+				ButtonColor: booking_component_button.ButtonColor
+			};
+		},
+		computed: {
+			...mapGetters$1(['isConnected'])
+		},
+		methods: {
+			...mapActions$1(['setFetching']),
+			async showDeactivateConfirmation() {
+				const isDeactivationConfirmed = await DeactivateConfirmation.confirm();
+				if (!isDeactivationConfirmed) {
+					return;
+				}
+				await this.deactivateIntegration();
+			},
+			async deactivateIntegration() {
+				this.setFetching(true);
+				try {
+					await booking_provider_service_yandexIntegrationWizardService.yandexIntegrationWizardService.deactivateIntegration();
+					main_core_events.EventEmitter.emit(booking_const.EventName.CloseYandexIntegrationWizard);
+				} catch (error) {
+					console.error('Deactivate integration error', error);
+					const {
+						Notifier
+					} = await main_core.Runtime.loadExtension('ui.notification-manager');
+					Notifier.notifyViaBrowserProvider({
+						id: 'booking-yiw-update-error',
+						text: this.loc('YANDEX_WIZARD_UPDATE_ERROR')
+					});
+				} finally {
+					this.setFetching(false);
+				}
+			}
+		},
+		template: `
 		<div v-if="isConnected" class="booking-yiw__deactivate-button_container">
 			<UiButton
 				class="booking-yiw__deactivate-button"
@@ -802,59 +798,58 @@ this.BX.Booking = this.BX.Booking || {};
 	};
 
 	const {
-	  mapGetters: mapGetters$3,
-	  mapActions: mapActions$2
+		mapGetters,
+		mapActions
 	} = ui_vue3_vuex.createNamespacedHelpers(booking_const.Model.YandexIntegrationWizard);
 
 	// @vue/component
 	const App = {
-	  name: 'YandexIntegrationWizardApp',
-	  components: {
-	    YandexIntegrationWizardLayout,
-	    YandexIntegrationWizardLayoutHeader,
-	    YandexIntegrationWizardLayoutFooter,
-	    YandexIntegrationWizardCabinetLink,
-	    YandexIntegrationWizardSettingsResource,
-	    YandexIntegrationWizardTimeZone,
-	    YandexIntegrationWizardDeactivateButton
-	  },
-	  computed: {
-	    ...mapGetters$3(['isLoaded'])
-	  },
-	  async beforeMount() {
-	    await this.loadWizardData();
-	  },
-	  methods: {
-	    ...mapActions$2(['setFetching']),
-	    async loadWizardData() {
-	      if (this.isLoaded) {
-	        return;
-	      }
-	      try {
-	        this.setFetching(true);
-	        const responseLoadData = await booking_provider_service_yandexIntegrationWizardService.yandexIntegrationWizardService.loadData();
-	        if ((responseLoadData == null ? void 0 : responseLoadData.success) === true) {
-	          await this.dropCounterIntegration();
-	        }
-	      } catch (error) {
-	        console.error('Loading wizard data error', error);
-	      } finally {
-	        this.setFetching(false);
-	      }
-	    },
-	    async dropCounterIntegration() {
-	      var _Core$getStore, _Core$getStore$state, _Core$getStore$state$, _Core$getStore$state$2;
-	      const counterMapsYa = Number((_Core$getStore = booking_core.Core.getStore()) == null ? void 0 : (_Core$getStore$state = _Core$getStore.state) == null ? void 0 : (_Core$getStore$state$ = _Core$getStore$state.counters) == null ? void 0 : (_Core$getStore$state$2 = _Core$getStore$state$.counters) == null ? void 0 : _Core$getStore$state$2.newYandexMaps);
-	      if (!counterMapsYa) {
-	        return;
-	      }
-	      const responseDropCounter = await booking_provider_service_yandexIntegrationWizardService.yandexIntegrationWizardService.dropCounterIntegration();
-	      if ((responseDropCounter == null ? void 0 : responseDropCounter.success) === true) {
-	        await booking_provider_service_mainPageService.mainPageService.fetchCounters();
-	      }
-	    }
-	  },
-	  template: `
+		name: 'YandexIntegrationWizardApp',
+		components: {
+			YandexIntegrationWizardLayout,
+			YandexIntegrationWizardLayoutHeader,
+			YandexIntegrationWizardLayoutFooter,
+			YandexIntegrationWizardCabinetLink,
+			YandexIntegrationWizardSettingsResource,
+			YandexIntegrationWizardTimeZone,
+			YandexIntegrationWizardDeactivateButton
+		},
+		computed: {
+			...mapGetters(['isLoaded'])
+		},
+		async beforeMount() {
+			await this.loadWizardData();
+		},
+		methods: {
+			...mapActions(['setFetching']),
+			async loadWizardData() {
+				if (this.isLoaded) {
+					return;
+				}
+				try {
+					this.setFetching(true);
+					const responseLoadData = await booking_provider_service_yandexIntegrationWizardService.yandexIntegrationWizardService.loadData();
+					if (responseLoadData?.success === true) {
+						await this.dropCounterIntegration();
+					}
+				} catch (error) {
+					console.error('Loading wizard data error', error);
+				} finally {
+					this.setFetching(false);
+				}
+			},
+			async dropCounterIntegration() {
+				const counterMapsYa = Number(booking_core.Core.getStore()?.state?.counters?.counters?.newYandexMaps);
+				if (!counterMapsYa) {
+					return;
+				}
+				const responseDropCounter = await booking_provider_service_yandexIntegrationWizardService.yandexIntegrationWizardService.dropCounterIntegration();
+				if (responseDropCounter?.success === true) {
+					await booking_provider_service_mainPageService.mainPageService.fetchCounters();
+				}
+			}
+		},
+		template: `
 		<YandexIntegrationWizardLayout>
 			<template #header>
 				<YandexIntegrationWizardLayoutHeader/>
@@ -872,89 +867,65 @@ this.BX.Booking = this.BX.Booking || {};
 	`
 	};
 
-	let _ = t => t,
-	  _t;
-	var _width = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("width");
-	var _application = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("application");
-	var _mountContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("mountContent");
-	var _initCore = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initCore");
-	var _makeContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("makeContainer");
 	class YandexIntegrationWizard {
-	  constructor() {
-	    Object.defineProperty(this, _makeContainer, {
-	      value: _makeContainer2
-	    });
-	    Object.defineProperty(this, _initCore, {
-	      value: _initCore2
-	    });
-	    Object.defineProperty(this, _mountContent, {
-	      value: _mountContent2
-	    });
-	    Object.defineProperty(this, _application, {
-	      writable: true,
-	      value: null
-	    });
-	  }
-	  get name() {
-	    return 'booking:yandex-integration-wizard';
-	  }
-	  open() {
-	    booking_lib_sidePanelInstance.SidePanelInstance.open(this.name, {
-	      width: babelHelpers.classPrivateFieldLooseBase(YandexIntegrationWizard, _width)[_width],
-	      cacheable: false,
-	      events: {
-	        onClose: this.closeSidePanel.bind(this)
-	      },
-	      contentCallback: async () => {
-	        await babelHelpers.classPrivateFieldLooseBase(this, _initCore)[_initCore]();
-	        this.subscribeEvents();
-	        const container = babelHelpers.classPrivateFieldLooseBase(this, _makeContainer)[_makeContainer]();
-	        babelHelpers.classPrivateFieldLooseBase(this, _mountContent)[_mountContent](container);
-	        return container;
-	      }
-	    });
-	  }
-	  closeSidePanel() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _application)[_application].unmount();
-	    babelHelpers.classPrivateFieldLooseBase(this, _application)[_application] = null;
-	    this.unsubscribeEvents();
-	  }
-	  subscribeEvents() {
-	    main_core.Event.EventEmitter.subscribe(booking_const.EventName.CloseYandexIntegrationWizard, this.close);
-	  }
-	  unsubscribeEvents() {
-	    main_core.Event.EventEmitter.unsubscribe(booking_const.EventName.CloseYandexIntegrationWizard, this.close);
-	  }
-	  close() {
-	    booking_lib_sidePanelInstance.SidePanelInstance.close();
-	  }
-	}
-	function _mountContent2(container) {
-	  const application = ui_vue3.BitrixVue.createApp(App, booking_core.Core.getParams());
-	  application.mixin(booking_component_mixin_locMixin.locMixin);
-	  application.use(booking_core.Core.getStore());
-	  application.mount(container);
-	  babelHelpers.classPrivateFieldLooseBase(this, _application)[_application] = application;
-	}
-	async function _initCore2() {
-	  try {
-	    await booking_core.Core.init();
-	    await booking_core.Core.addDynamicModule(booking_model_yandexIntegrationWizard.YandexIntegrationWizardModel.create());
-	  } catch (error) {
-	    console.error('Init Yandex integration wizard error', error);
-	  }
-	}
-	function _makeContainer2() {
-	  return main_core.Tag.render(_t || (_t = _`
+		static #width = 730;
+		#application = null;
+		get name() {
+			return 'booking:yandex-integration-wizard';
+		}
+		#mountContent(container) {
+			const application = ui_vue3.BitrixVue.createApp(App, booking_core.Core.getParams());
+			application.mixin(booking_component_mixin_locMixin.locMixin);
+			application.use(booking_core.Core.getStore());
+			application.mount(container);
+			this.#application = application;
+		}
+		async #initCore() {
+			try {
+				await booking_core.Core.init();
+				await booking_core.Core.addDynamicModule(booking_model_yandexIntegrationWizard.YandexIntegrationWizardModel.create());
+			} catch (error) {
+				console.error('Init Yandex integration wizard error', error);
+			}
+		}
+		#makeContainer() {
+			return main_core.Tag.render`
 			<div id="booking--yandex-integration-wizard--app" class="booking__yandex-integration-wizard_app"></div>
-		`));
+		`;
+		}
+		open() {
+			booking_lib_sidePanelInstance.SidePanelInstance.open(this.name, {
+				width: YandexIntegrationWizard.#width,
+				cacheable: false,
+				events: {
+					onClose: this.closeSidePanel.bind(this)
+				},
+				contentCallback: async () => {
+					await this.#initCore();
+					this.subscribeEvents();
+					const container = this.#makeContainer();
+					this.#mountContent(container);
+					return container;
+				}
+			});
+		}
+		closeSidePanel() {
+			this.#application.unmount();
+			this.#application = null;
+			this.unsubscribeEvents();
+		}
+		subscribeEvents() {
+			main_core.Event.EventEmitter.subscribe(booking_const.EventName.CloseYandexIntegrationWizard, this.close);
+		}
+		unsubscribeEvents() {
+			main_core.Event.EventEmitter.unsubscribe(booking_const.EventName.CloseYandexIntegrationWizard, this.close);
+		}
+		close() {
+			booking_lib_sidePanelInstance.SidePanelInstance.close();
+		}
 	}
-	Object.defineProperty(YandexIntegrationWizard, _width, {
-	  writable: true,
-	  value: 730
-	});
 
 	exports.YandexIntegrationWizard = YandexIntegrationWizard;
 
-}((this.BX.Booking.Application = this.BX.Booking.Application || {}),BX.Vue3,BX.Booking.Component.Mixin,BX.Booking.Lib,BX.Booking.Model,BX.Booking,BX.Booking.Component,BX.Booking.Component,BX.Booking.Application,BX.Booking.Lib,BX.Booking.Provider.Service,BX.Booking.Component,BX.Booking.Component,BX.UI.IconSet,BX.Booking,BX.Booking.Component,BX.Booking.Provider.Service,BX.Vue3.Vuex,BX.Event,BX.Booking.Const,BX.Booking.Component,BX.Booking.Provider.Service,BX,BX.Main,BX.UI.Dialogs));
+})(this.BX.Booking.Application = this.BX.Booking.Application || {}, BX, BX.Vue3, BX.Booking, BX.Booking.Const, BX.Booking.Component.Mixin, BX.Booking.Lib, BX.Booking.Model, BX.Vue3.Vuex, BX.Booking.Provider.Service, BX.Booking.Provider.Service, BX.Booking.Component, BX.UI.IconSet, BX.Booking.Component, BX.Event, BX.Booking.Component, BX.Booking.Component, BX.Booking.Component, BX.Booking.Application, BX.Booking.Lib, BX.Booking.Provider.Service, BX.Booking.Component, BX.Main, BX.Booking, BX.UI.Dialogs);
 //# sourceMappingURL=yandex-integration-wizard.bundle.js.map

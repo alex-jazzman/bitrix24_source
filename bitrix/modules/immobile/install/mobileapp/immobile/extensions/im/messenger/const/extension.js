@@ -34,6 +34,9 @@ jn.define('im/messenger/const', (require, exports, module) => {
 	const {
 		ChatTypes,
 		RecentTab,
+		RecentTabByNavigationTab,
+		NavigationTabByRecentTab,
+		NavigationTabByFolderCode,
 		MessageStatus,
 		SubTitleIconType,
 	} = require('im/messenger/const/recent');
@@ -47,7 +50,6 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		MessageType,
 		MessageIdType,
 		OwnMessageStatus,
-		MessageParams,
 		MessageComponent,
 	} = require('im/messenger/const/message');
 	const { ReactionType } = require('im/messenger/const/reaction-type');
@@ -88,7 +90,7 @@ jn.define('im/messenger/const', (require, exports, module) => {
 	const { ComponentCode } = require('im/messenger/const/component-code');
 	const { Analytics } = require('im/messenger/const/analytics');
 	const { ChatEntityType } = require('im/messenger/const/src/chat-entity-link');
-	const { NavigationTabId } = require('im/messenger/const/navigation-tab');
+	const { NavigationTabId, NonSelectableNavigationTabId, ROOT_PARENT_CHAT_ID } = require('im/messenger/const/navigation-tab');
 	const {
 		KeyboardButtonContext,
 		KeyboardButtonType,
@@ -107,8 +109,10 @@ jn.define('im/messenger/const', (require, exports, module) => {
 	const { EntitySelectorElementType } = require('im/messenger/const/entity-selector');
 	const { MessagesAutoDeleteDelay, MessagesAutoDeleteMenuIds } = require('im/messenger/const/messages-auto-delete');
 	const { MessageMenuActionType } = require('im/messenger/const/message-menu-action-type');
-	const { AnchorType} = require('im/messenger/const/anchor-type');
+	const { MessageMenuSectionId } = require('im/messenger/const/message-menu-section-id');
+	const { AnchorType } = require('im/messenger/const/anchor-type');
 	const { FileDownloadType } = require('im/messenger/const/src/file-download-types');
+	const { MAX_PERSONAL_FOLDERS } = require('im/messenger/const/src/folder');
 	const { PinCount } = require('im/messenger/const/pin');
 	const { AudioEvents } = require('im/messenger/const/src/audio');
 	const { RefreshMode } = require('im/messenger/const/refresher');
@@ -119,7 +123,8 @@ jn.define('im/messenger/const', (require, exports, module) => {
 	const { UploaderClientEvent } = require('im/messenger/const/upload');
 	const { COUNTER_OVERFLOW_LIMIT } = require('im/messenger/const/src/counter');
 	const { ChatSearchSelectorSection } = require('im/messenger/const/chat-search-selector-section');
-	const { RecentFilterId } = require('im/messenger/const/recent-filter');
+	const { RecentFilterId, RecentActionId } = require('im/messenger/const/recent-filter');
+	const { RecentMenuSection } = require('im/messenger/const/recent-menu-section');
 
 	module.exports = {
 		AiAssistantButtonType,
@@ -145,6 +150,9 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		EventFilterType,
 		ChatTypes,
 		RecentTab,
+		RecentTabByNavigationTab,
+		NavigationTabByRecentTab,
+		NavigationTabByFolderCode,
 		MessageStatus,
 		SubTitleIconType,
 		RestMethod,
@@ -152,7 +160,6 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		MessageIdType,
 		MessageComponent,
 		OwnMessageStatus,
-		MessageParams,
 		ReactionType,
 		DialogType,
 		DialogWidgetType,
@@ -191,6 +198,8 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		CopilotRoleType,
 		ComponentCode,
 		NavigationTabId,
+		NonSelectableNavigationTabId,
+		ROOT_PARENT_CHAT_ID,
 		KeyboardButtonContext,
 		KeyboardButtonType,
 		KeyboardButtonNewLineSeparator,
@@ -209,8 +218,10 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		MessagesAutoDeleteDelay,
 		MessagesAutoDeleteMenuIds,
 		MessageMenuActionType,
+		MessageMenuSectionId,
 		AnchorType,
 		FileDownloadType,
+		MAX_PERSONAL_FOLDERS,
 		RefreshMode,
 		TranscriptStatus,
 		TranscriptResponseStatus,
@@ -221,5 +232,7 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		COUNTER_OVERFLOW_LIMIT,
 		ChatSearchSelectorSection,
 		RecentFilterId,
+		RecentActionId,
+		RecentMenuSection,
 	};
 });

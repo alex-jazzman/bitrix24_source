@@ -1,6 +1,13 @@
 import {Dom, Loc, Tag, Text, Type} from "main.core";
 import {EventEmitter} from "main.core.events";
 import 'ui.design-tokens';
+import 'ui.feedback.form';
+import 'ui.common';
+import 'ui.dropdown';
+import 'ui.buttons';
+import 'ui.forms';
+import 'ui.notification.center';
+import 'main.loader';
 import {DetailSearch as DetailSearchPlacement} from "crm.placement.detailsearch"
 import {MessageBox, MessageBoxButtons} from "ui.dialogs.messagebox"
 import "./autocomplete.css"

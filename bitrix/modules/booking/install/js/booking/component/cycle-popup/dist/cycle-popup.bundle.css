@@ -54,6 +54,7 @@
 	background: rgba(0, 0, 0, 0.11);
 	border-radius: 5px;
 	cursor: pointer;
+	-webkit-transition: .2s;
 	transition: .2s;
 }
 
@@ -115,7 +116,6 @@
 .booking-cycle-popup-segment-button {
 	display: flex;
 	gap: 4px;
-	width: -webkit-max-content;
 	width: max-content;
 	padding: 2px;
 	border-radius: var(--ui-border-radius-xs);
@@ -463,9 +463,7 @@
 .booking-cycle-popup-preview-crm-fields {
 	flex: 1;
 	display: grid;
-	grid-template-columns: -webkit-max-content auto;
 	grid-template-columns: max-content auto;
-	grid-auto-rows: -webkit-max-content;
 	grid-auto-rows: max-content;
 	align-items: center;
 	gap: var(--ui-space-stack-2xs2) 0;

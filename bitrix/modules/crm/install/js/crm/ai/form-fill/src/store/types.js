@@ -1,4 +1,4 @@
-export interface FormFieldsToMergeResult {
+export type FormFieldsToMergeResult = {
 	target: EntityInfo,
 	editMode: boolean;
 	fields: FieldInfo[];
@@ -9,7 +9,7 @@ export interface FormFieldsToMergeResult {
 	}
 }
 
-export interface FieldInfo {
+export type FieldInfo = {
 	name: string;
 	type: string;
 	title: string;
@@ -18,7 +18,7 @@ export interface FieldInfo {
 	isUserField: boolean;
 }
 
-export interface EntityInfo {
+export type EntityInfo = {
 	entityTypeName: string;
 	entityTypeId: number;
 	entityId: number;
@@ -27,7 +27,8 @@ export interface EntityInfo {
 	feedbackWasSent: boolean;
 }
 
-export interface ConflictField extends FieldInfo {
+export type ConflictField = {
+	...FieldInfo;
 	aiValue: any;
 	originalValue: any;
 	originalModel: ?UserFieldModel,
@@ -35,13 +36,13 @@ export interface ConflictField extends FieldInfo {
 	order: number;
 }
 
-export interface UserFieldModel {
+export type UserFieldModel = {
 	VALUE: any;
 	IS_EMPTY: boolean;
 	SIGNATURE: string;
 }
 
-export interface EditorControlsParams {
+export type EditorControlsParams = {
 	fieldId: string;
 	relatedFieldOffsetY: number;
 	originalValue: any;

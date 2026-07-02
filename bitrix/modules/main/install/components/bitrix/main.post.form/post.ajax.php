@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * @global CMain $APPLICATION
+ */
+
 use Bitrix\Main\Web\Json;
 
 define("PUBLIC_AJAX_MODE", true);
@@ -87,6 +91,7 @@ if (check_bitrix_sessid())
 			|| $_POST['USER_SEARCH'] != 'N'
 		)
 		{
+			$searchModified = '';
 			$searchResults['USERS'] = CSocNetLogDestination::SearchUsers(
 				array(
 					"SEARCH" => $search,

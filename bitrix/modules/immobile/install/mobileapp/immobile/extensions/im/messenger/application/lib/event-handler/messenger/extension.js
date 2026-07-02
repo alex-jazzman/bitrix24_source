@@ -10,28 +10,13 @@ jn.define('im/messenger/application/lib/event-handler/messenger', (require, expo
 	const { ComponentRequestHandler } = require('im/messenger/application/lib/component-request-handler');
 
 	/**
+	 * @implements {Unsubscribable}
 	 * @class MessengerEventHandler
 	 */
 	class MessengerEventHandler
 	{
-		static #instance;
-
-		/**
-		 * @return {MessengerEventHandler}
-		 */
-		static getInstance()
-		{
-			if (!this.#instance)
-			{
-				this.#instance = new this();
-			}
-
-			return this.#instance;
-		}
-
 		constructor()
 		{
-			this.isLaunched = false;
 			this.logger = getLoggerWithContext('messenger--messenger-event-handler', this);
 			this.componentRequestHandler = new ComponentRequestHandler();
 
@@ -65,36 +50,22 @@ jn.define('im/messenger/application/lib/event-handler/messenger', (require, expo
 
 		subscribeEvents()
 		{
-			if (this.isLaunched)
-			{
-				return;
-			}
-
 			BX.addCustomEvent(EventType.messenger.openDialog, this.openDialogHandler);
 			BX.addCustomEvent(EventType.messenger.openLine, this.openLineHandler);
 			BX.addCustomEvent(EventType.messenger.getOpenLineParams, this.getOpenLineParamsHandler);
 			BX.addCustomEvent(EventType.messenger.clearDatabase, clearDatabaseHandler);
 			BX.addCustomEvent(EventType.notification.open, this.notificationOpenHandler);
 			BX.addCustomEvent(EventType.messenger.api.executeInComponentRequest, this.executeInComponentRequestHandler);
-
-			this.isLaunched = true;
 		}
 
 		unsubscribeEvents()
 		{
-			if (!this.isLaunched)
-			{
-				return;
-			}
-
 			BX.removeCustomEvent(EventType.messenger.openDialog, this.openDialogHandler);
 			BX.removeCustomEvent(EventType.messenger.openLine, this.openLineHandler);
 			BX.removeCustomEvent(EventType.messenger.getOpenLineParams, this.getOpenLineParamsHandler);
 			BX.removeCustomEvent(EventType.messenger.clearDatabase, clearDatabaseHandler);
 			BX.removeCustomEvent(EventType.notification.open, this.notificationOpenHandler);
 			BX.removeCustomEvent(EventType.messenger.api.executeInComponentRequest, this.executeInComponentRequestHandler);
-
-			this.isLaunched = false;
 		}
 
 		/**

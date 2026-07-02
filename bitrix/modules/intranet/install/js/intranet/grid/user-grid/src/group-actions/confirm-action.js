@@ -49,7 +49,7 @@ export class ConfirmAction extends BaseAction
 
 	getAjaxMethod(): string
 	{
-		return 'intranet.controller.user.userlist.groupConfirm';
+		return 'intranet.v2.UserList.restore';
 	}
 
 	getSkippedUsersMessageCode(): string

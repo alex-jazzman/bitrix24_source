@@ -6,7 +6,9 @@ import { ConstantTextarea } from './constant-field/textarea';
 import { ConstantKnowledge } from './constant-field/knowledge';
 import { ConstantProject } from './constant-field/project';
 import { ConstantFile } from './constant-field/file';
+import { ConstantEntitySelector } from './constant-field/entity-selector';
 import { ConstantTime } from './constant-field/time';
+import { ConstantBIDashboard } from './constant-field/bi-dashboard';
 import { CONSTANT_TYPES } from '../../constants';
 
 const ConstantFieldMap = {
@@ -18,7 +20,9 @@ const ConstantFieldMap = {
 	[CONSTANT_TYPES.KNOWLEDGE]: 'ConstantKnowledge',
 	[CONSTANT_TYPES.PROJECT]: 'ConstantProject',
 	[CONSTANT_TYPES.FILE]: 'ConstantFile',
+	[CONSTANT_TYPES.ENTITY_SELECTOR]: 'ConstantEntitySelector',
 	[CONSTANT_TYPES.TIME]: 'ConstantTime',
+	[CONSTANT_TYPES.BI_DASHBOARD]: 'ConstantBIDashboard',
 };
 
 // @vue/component
@@ -32,7 +36,9 @@ export const ConstantComponent = {
 		ConstantKnowledge,
 		ConstantProject,
 		ConstantFile,
+		ConstantEntitySelector,
 		ConstantTime,
+		ConstantBIDashboard,
 	},
 	props: {
 		/** @type ConstantItem */

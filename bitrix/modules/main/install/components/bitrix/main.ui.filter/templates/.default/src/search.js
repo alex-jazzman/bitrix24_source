@@ -35,6 +35,22 @@
 			BX.bind(this.getContainer(), 'click', BX.delegate(this._onSearchContainerClick, this));
 			this.removeAutofocus();
 			this.firstInit = true;
+
+			if (BX.Filter.SearchCollapsedButton)
+			{
+				this.collapsedButton = new BX.Filter.SearchCollapsedButton(this);
+			}
+		},
+
+		/**
+		 * Updates the active filters counter on the collapsed-mode button (air theme only)
+		 */
+		updateCollapsedCounter: function()
+		{
+			if (this.collapsedButton)
+			{
+				this.collapsedButton.updateCounter();
+			}
 		},
 
 
@@ -91,6 +107,7 @@
 		removeSquares: function()
 		{
 			this.getSquares().forEach(this.removeSquare, this);
+			this.updateCollapsedCounter();
 		},
 
 		isSquaresSelected: function()
@@ -321,6 +338,7 @@
 
 			this.removeSquare(square);
 			this.adjustClearButton();
+			this.updateCollapsedCounter();
 		},
 
 		adjustClearButton: function()
@@ -497,7 +515,7 @@
 				parent.closePopup();
 			}
 
-			if (utils.isKey(event, 'tab') || utils.isKey(event, 'downArrow'))
+			if (utils.isKey(event, 'downArrow'))
 			{
 				parent.showPopup();
 				parent.adjustFocus();
@@ -995,6 +1013,8 @@
 					this.showClearButton();
 				}
 			}
+
+			this.updateCollapsedCounter();
 		},
 
 		prepareSquaresData: function(fields)
@@ -1331,6 +1351,7 @@
 			}
 
 			this.hideClearButton();
+			this.updateCollapsedCounter();
 		},
 
 		updatePreset: function(presetData)

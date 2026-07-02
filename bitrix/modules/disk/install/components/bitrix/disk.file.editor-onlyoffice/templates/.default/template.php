@@ -65,6 +65,12 @@ Extension::load([
 	'disk.url-cleaner',
 ]);
 
+$isSignPlaceholdersEnabled = ($arResult['SIGN_PLACEHOLDERS_ENABLED'] ?? false) === true;
+if ($isSignPlaceholdersEnabled)
+{
+	Extension::load('sign.v2.b2e.placeholders-widget');
+}
+
 Asset::getInstance()->addString('<script src="' . $arResult['SERVER'] . '/web-apps/apps/api/documents/api.js"></script>');
 $containerId = 'editorForm'.$this->randString();
 $headerText = Loc::getMessage('DISK_FILE_EDITOR_ONLYOFFICE_HEADER_MODE_VIEW');
@@ -314,4 +320,8 @@ $GLOBALS['APPLICATION']->SetTitle($arResult['OBJECT']['NAME']);
 			forceReloadPopupOkButton: '<?= CUtil::JSEscape(Loc::getMessage('DISK_FILE_EDITOR_ONLYOFFICE_FORCE_RELOAD_POPUP_OK_BUTTON')) ?>',
 		},
 	});
+
+	<?php if ($isSignPlaceholdersEnabled): ?>
+	new BX.Sign.V2.B2e.PlaceholdersWidget().show();
+	<?php endif; ?>
 </script>

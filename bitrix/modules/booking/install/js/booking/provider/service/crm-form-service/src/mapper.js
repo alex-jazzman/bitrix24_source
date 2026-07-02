@@ -1,7 +1,6 @@
-import { CrmFormResourceModel } from 'booking.model.crm-form';
-import type { ResourceDto } from './types';
+import { type ResourceDto } from './types';
 
-export function mapDtoToModel(resourceDto: ResourceDto): CrmFormResourceModel
+export function mapDtoToModel(resourceDto: ResourceDto): ResourceDto
 {
 	return { ...resourceDto };
 }

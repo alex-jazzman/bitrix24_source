@@ -1,4 +1,3 @@
-import { Api } from 'sign.v2.api';
 import type { DocumentDetails } from 'sign.v2.document-setup';
 import { mapState } from 'ui.vue3.pinia';
 
@@ -47,8 +46,6 @@ export const RegionalSettingsApp = {
 			selectedCompanyId: 0,
 			isApplySettingsForAll: false,
 			previewCount: maxPreviewCount,
-			api: null,
-			previewUrlList: {},
 		};
 	},
 	computed: {
@@ -59,6 +56,7 @@ export const RegionalSettingsApp = {
 		...mapState(useRegionalSettingsStore, ['documentTypeList']),
 		...mapState(useRegionalSettingsStore, ['documentSettingsMap']),
 		...mapState(useRegionalSettingsStore, ['documentsGroup']),
+		...mapState(useRegionalSettingsStore, ['previewUrlList']),
 		...mapState(useRegionalSettingsStore, ['isIntegrationEnabled']),
 		...mapState(useRegionalSettingsStore, ['isIntegrationVisible']),
 		showMoreCount(): number
@@ -146,9 +144,7 @@ export const RegionalSettingsApp = {
 	},
 	created(): void
 	{
-		this.api = new Api();
 		this.selectedCompanyId = this.companyId;
-		this.previewUrlList = new Map();
 	},
 	methods: {
 		getDocumentSettings(uid: string | null = null): DocumentSettings | null
@@ -179,17 +175,6 @@ export const RegionalSettingsApp = {
 
 			return documentDetails.id;
 		},
-		async loadDocumentPreviewUrl(uid: string): void
-		{
-			if (this.previewUrlList.has(uid))
-			{
-				return;
-			}
-
-			this.previewUrlList.set(uid, '');
-			const data = await this.api.getDocumentPreviewUrl(uid);
-			this.previewUrlList.set(uid, data?.url);
-		},
 		getDocumentPreviewUrl(uid: string): string | null
 		{
 			const documentDetails = this.getDocumentDetails(uid);
@@ -203,7 +188,7 @@ export const RegionalSettingsApp = {
 				return documentDetails.previewUrl;
 			}
 
-			this.loadDocumentPreviewUrl(uid);
+			useRegionalSettingsStore().loadDocumentPreviewUrl(uid);
 
 			if (!this.previewUrlList.has(uid))
 			{

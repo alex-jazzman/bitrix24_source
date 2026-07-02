@@ -14,8 +14,8 @@ return [
 	'rel' => [
 		'main.polyfill.core',
 		'im.application.core',
-		'ui.vue',
 		'im.component.recent',
+		'ui.vue',
 	],
 	'skip_core' => true,
 ];

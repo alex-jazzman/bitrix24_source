@@ -1,8 +1,8 @@
-<?
+<?php
 /**
- * @global \CUser $USER
- * @global \CMain $APPLICATION
- * @global \CDatabase $DB
+ * @global CUser $USER
+ * @global CMain $APPLICATION
+ * @global CDatabase $DB
  */
 
 require_once(__DIR__."/../include/prolog_admin_before.php");
@@ -27,21 +27,21 @@ $FilterArr = Array(
 	"find_is_custom",
 );
 
-$lAdmin->InitFilter($FilterArr);
+$filter = $lAdmin->InitFilter($FilterArr);
 
 $arFilter = Array(
-	"CLASS_NAME"	=> $find_class_name,
-	"CODE"			=> $find_code,
-	"NAME"			=> $find_name,
-	"URL"			=> $find_url,
-	"IS_CUSTOM"		=> $find_is_custom,
+	"CLASS_NAME"	=> $filter["find_class_name"],
+	"CODE"			=> $filter["find_code"],
+	"NAME"			=> $filter["find_name"],
+	"URL"			=> $filter["find_url"],
+	"IS_CUSTOM"		=> $filter["find_is_custom"],
 );
 
 if ($isAdmin)
 {
 	if($lAdmin->EditAction())
 	{
-		foreach($FIELDS as $ID=>$arFields)
+		foreach($_POST['FIELDS'] as $ID=>$arFields)
 		{
 			$ID = intval($ID);
 			if($ID <= 0)
@@ -58,7 +58,7 @@ if ($isAdmin)
 	{
 		if (isset($_REQUEST['action_target']) && $_REQUEST['action_target']=='selected')
 		{
-			$rsData = $hotKeyCodes->GetList(array($by=>$order), $arFilter);
+			$rsData = $hotKeyCodes->GetList(array($oSort->getField() => $oSort->getOrder()), $arFilter);
 			while($arRes = $rsData->Fetch())
 				$arID[] = $arRes['ID'];
 		}
@@ -80,7 +80,7 @@ if ($isAdmin)
 	}
 }
 
-$rsData = $hotKeyCodes->GetList(array($by=>$order), $arFilter,false);
+$rsData = $hotKeyCodes->GetList(array($oSort->getField() => $oSort->getOrder()), $arFilter, false);
 $rsData = new CAdminResult($rsData, $sTableID);
 $rsData->NavStart();
 $lAdmin->NavText($rsData->GetNavPrint(GetMessage("HK_NAVIGATION")));
@@ -98,21 +98,22 @@ $aHeaders = array(
 
 $lAdmin->AddHeaders($aHeaders);
 
-while($arRes = $rsData->NavNext(true, "f_"))
+while($arRes = $rsData->Fetch())
 {
-	$row =& $lAdmin->AddRow($f_ID, $arRes);
+	$hotKeyId = (int)$arRes["ID"];
+	$row = $lAdmin->AddRow($hotKeyId, $arRes);
 
-	$row->AddViewField("IS_CUSTOM",$f_IS_CUSTOM ? GetMessage('HK_FLT_TRUE') : GetMessage('HK_FLT_FALSE'));
+	$row->AddViewField("IS_CUSTOM", $arRes["IS_CUSTOM"] ? GetMessage('HK_FLT_TRUE') : GetMessage('HK_FLT_FALSE'));
 
-	if($f_IS_CUSTOM)
+	if($arRes["IS_CUSTOM"])
 	{
-		$row->AddViewField("NAME",$f_NAME);
-		$row->AddViewField("COMMENTS",$f_COMMENTS);
+		$row->AddViewField("NAME", htmlspecialcharsbx($arRes["NAME"]));
+		$row->AddViewField("COMMENTS", htmlspecialcharsbx($arRes["COMMENTS"]));
 	}
 	else
 	{
-		$row->AddViewField("NAME",GetMessage($f_NAME));
-		$row->AddViewField("COMMENTS",$f_COMMENTS ? GetMessage($f_COMMENTS) : "");
+		$row->AddViewField("NAME", GetMessage($arRes["NAME"]));
+		$row->AddViewField("COMMENTS", $arRes["COMMENTS"] ? GetMessage($arRes["COMMENTS"]) : "");
 	}
 
 	if ($isAdmin)
@@ -123,14 +124,14 @@ while($arRes = $rsData->NavNext(true, "f_"))
 						"ICON"=>"edit",
 						"DEFAULT"=>true,
 						"TEXT"=>GetMessage("HK_ACTION_EDIT"),
-						"ACTION"=>$lAdmin->ActionRedirect("hot_keys_edit.php?ID=".$f_ID)
+						"ACTION"=>$lAdmin->ActionRedirect("hot_keys_edit.php?ID=".$hotKeyId)
 						);
 
-		if($f_IS_CUSTOM)
+		if($arRes["IS_CUSTOM"])
 			$arActions[] = 	array(
 							"ICON"=>"delete",
 							"TEXT"=>GetMessage("HK_ACTION_DEL"),
-							"ACTION"=>"if(confirm('".GetMessage("HK_DEL_CONFIRM")."')) ".$lAdmin->ActionDoGroup($f_ID, "delete")
+							"ACTION"=>"if(confirm('".GetMessage("HK_DEL_CONFIRM")."')) ".$lAdmin->ActionDoGroup($hotKeyId, "delete")
 							);
 
 		$row->AddActions($arActions);
@@ -144,7 +145,7 @@ if($isAdmin)
 	$aContext = array(
 		array(
 			"TEXT"=>GetMessage("HK_CONTEXT_ADD"),
-			"LINK"=>"hot_keys_edit.php?lang=".LANG,
+			"LINK"=>"hot_keys_edit.php?lang=".LANGUAGE_ID,
 			"TITLE"=>GetMessage("HK_CONTEXT_ADD_TITLE"),
 			"ICON"=>"btn_new",
 		),
@@ -162,9 +163,9 @@ require_once ($_SERVER['DOCUMENT_ROOT'].BX_ROOT."/modules/main/include/prolog_ad
 $oFilter = new CAdminFilter(
 	$sTableID."_filter",
 	array(
+		GetMessage("HK_NAME"),
 		GetMessage("HK_CLASS_NAME"),
 		GetMessage("HK_CODE"),
-		GetMessage("HK_NAME"),
 		GetMessage("HK_URL"),
 		GetMessage("HK_IS_CUSTOM"),
 		)
@@ -172,38 +173,38 @@ $oFilter = new CAdminFilter(
 ?>
 <form name="form1" method="POST" action="<?=$APPLICATION->GetCurPage()?>">
 <input type="hidden" name="lang" value="<?=LANGUAGE_ID?>">
-<?$oFilter->Begin();?>
+<?php $oFilter->Begin();?>
 <tr>
 	<td><?=GetMessage("HK_NAME").":"?></td>
-	<td><input type="text" name="find_name" size="40" value="<?= htmlspecialcharsbx($find_name)?>"><?=ShowFilterLogicHelp()?></td>
+	<td><input type="text" name="find_name" size="40" value="<?= htmlspecialcharsbx($filter["find_name"])?>"><?=ShowFilterLogicHelp()?></td>
 </tr>
 <tr>
 	<td><?=GetMessage("HK_CLASS_NAME").":"?></td>
-	<td><input type="text" name="find_class_name" size="40" value="<?= htmlspecialcharsbx($find_class_name)?>"><?=ShowFilterLogicHelp()?></td>
+	<td><input type="text" name="find_class_name" size="40" value="<?= htmlspecialcharsbx($filter["find_class_name"])?>"><?=ShowFilterLogicHelp()?></td>
 </tr>
 <tr>
 	<td><?=GetMessage("HK_CODE").":"?></td>
-	<td><input type="text" name="find_code" size="40" value="<?= htmlspecialcharsbx($find_code)?>"><?=ShowFilterLogicHelp()?></td>
+	<td><input type="text" name="find_code" size="40" value="<?= htmlspecialcharsbx($filter["find_code"])?>"><?=ShowFilterLogicHelp()?></td>
 </tr>
 <tr>
 	<td><?=GetMessage("HK_URL").":"?></td>
-	<td><input type="text" name="find_url" size="40" value="<?= htmlspecialcharsbx($find_url)?>"><?=ShowFilterLogicHelp()?></td>
+	<td><input type="text" name="find_url" size="40" value="<?= htmlspecialcharsbx($filter["find_url"])?>"><?=ShowFilterLogicHelp()?></td>
 </tr>
 <tr>
 	<td><?=GetMessage("HK_FLT_IS_CUSTOM").":"?></td>
 	<td>
 		<select name="find_is_custom">
-			<option value=""><?echo GetMessage("MAIN_ALL")?></option>
-			<option value="1"<?if($find_is_custom == "1") echo " selected"?>><?=GetMessage("HK_FLT_TRUE")?></option>
-			<option value="0"<?if($find_is_custom == "0") echo " selected"?>><?=GetMessage("HK_FLT_FALSE")?></option>
+			<option value=""><?= GetMessage("MAIN_ALL")?></option>
+			<option value="1"<?php if($filter["find_is_custom"] == "1") echo " selected"?>><?=GetMessage("HK_FLT_TRUE")?></option>
+			<option value="0"<?php if($filter["find_is_custom"] == "0") echo " selected"?>><?=GetMessage("HK_FLT_FALSE")?></option>
 		</select>
 </tr>
-<?
+<?php
 $oFilter->Buttons(array("table_id"=>$sTableID,"url"=>$APPLICATION->GetCurPage(),"form"=>"form1"));
 $oFilter->End();
 ?>
 </form>
-<?
+<?php
 
 $lAdmin->DisplayList();
 

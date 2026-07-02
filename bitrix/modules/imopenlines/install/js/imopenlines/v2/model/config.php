@@ -9,9 +9,8 @@ return [
 	'js' => 'dist/registry.bundle.js',
 	'rel' => [
 		'im.v2.application.core',
-		'imopenlines.v2.const',
-		'main.core',
 		'im.v2.model',
+		'main.core',
 		'ui.vue3.vuex',
 	],
 	'skip_core' => false,

@@ -3,10 +3,12 @@
  * Bitrix Framework
  * @package bitrix
  * @subpackage main
- * @copyright 2001-2024 Bitrix
+ * @copyright 2001-2026 Bitrix
  */
 
 use Bitrix\Main\Web\Json;
+use Bitrix\Main\Localization\CultureTable;
+use Bitrix\Main\Security\Sign\Signer;
 
 /**
  * Bitrix vars
@@ -19,8 +21,6 @@ require_once(__DIR__."/../include/prolog_admin_before.php");
 define("HELP_FILE", "settings/sites/site_edit.php");
 require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/condition.php");
 
-ClearVars();
-
 if(!$USER->CanDoOperation('edit_other_settings') && !$USER->CanDoOperation('view_other_settings') && !$USER->CanDoOperation('lpa_template_edit'))
 	$APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
 
@@ -28,7 +28,6 @@ $isAdmin = $USER->CanDoOperation('edit_other_settings') || $USER->CanDoOperation
 
 IncludeModuleLangFile(__FILE__);
 
-$aMsg = array();
 $message = null;
 $bVarsFromForm = false;
 $LID = $_REQUEST["LID"] ?? '';
@@ -125,7 +124,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && (!empty($_POST['save']) || !empty($_P
 		}
 		else
 		{
-			$res = ($langs->Add($arFields) <> '');
+			$res = ($langs->Add($arFields) != '');
 		}
 	}
 
@@ -188,7 +187,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && (!empty($_POST['save']) || !empty($_P
 
 			$u = "";
 			$domains = explode("\n", str_replace("\r", "", $arSite["DOMAINS"]));
-			if (!empty($domains) && $domains[0] <> '')
+			if (!empty($domains) && $domains[0] != '')
 				$u .= "http://".$domains[0];
 			$u .= $siteDir;
 
@@ -202,55 +201,66 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && (!empty($_POST['save']) || !empty($_P
 	}
 }
 
-$str_LID = '';
-$str_ACTIVE = '';
-$str_NAME = '';
-$str_DEF = '';
-$str_DOMAINS = '';
-$str_DIR = '';
-$str_SORT = '';
-$str_DOC_ROOT = '';
-$str_SITE_NAME = '';
-$str_SERVER_NAME = '';
-$str_EMAIL = '';
-$str_LANGUAGE_ID = '';
-$str_CULTURE_ID = '';
-$str_START_SITE_WIZARD = '';
+$siteData = [
+	'LID' => '',
+	'ACTIVE' => 'Y',
+	'NAME' => '',
+	'DEF' => '',
+	'DOMAINS' => '',
+	'DIR' => '/',
+	'SORT' => '1',
+	'DOC_ROOT' => '',
+	'SITE_NAME' => '',
+	'SERVER_NAME' => '',
+	'EMAIL' => '',
+	'LANGUAGE_ID' => '',
+	'CULTURE_ID' => '',
+	'START_SITE_WIZARD' => '',
+];
 
+$checkboxes = [
+	'ACTIVE' => 1,
+	'DEF' => 1,
+];
 
-if($bNew && $COPY_ID == '')
-{
-	$str_ACTIVE = 'Y';
-	$str_SORT = '1';
-	$str_DIR = '/';
-}
-
-if($COPY_ID <> '')
+if ($COPY_ID != '')
 {
 	$LID = $COPY_ID;
-	$lng = CSite::GetByID($COPY_ID);
-	if(!$lng->ExtractFields("str_"))
-		$bNew = true;
-}
-elseif(!$bNew)
-{
-	$lng = CSite::GetByID($LID);
-	if(!$lng->ExtractFields("str_"))
-		$bNew = true;
 }
 
-if($bVarsFromForm)
+if ($COPY_ID != '' || !$bNew)
 {
-	$DB->InitTableVarsForEdit("b_lang", "", "str_");
-	$str_DOMAINS = htmlspecialcharsbx($DOMAINS);
-	$str_SERVER_NAME = htmlspecialcharsbx($_POST["SERVER_NAME"] ?? '');
+	$lng = CSite::GetByID($LID);
+	$site = $lng->Fetch();
+	if ($site)
+	{
+		foreach ($siteData as $key => $value)
+		{
+			$siteData[$key] = $site[$key] ?? $value;
+		}
+	}
+	else
+	{
+		$bNew = true;
+	}
+}
+
+if ($bVarsFromForm)
+{
+	foreach ($siteData as $key => $value)
+	{
+		if (isset($_POST[$key]) || isset($checkboxes[$key]))
+		{
+			$siteData[$key] = $_POST[$key] ?? '';
+		}
+	}
 }
 
 $SITE_MESSAGE_LINK = $_REQUEST['SITE_MESSAGE_LINK'] ?? '';
 $SITE_MESSAGE_LINK_E_SITE = $_REQUEST['SITE_MESSAGE_LINK_E_SITE'] ?? '';
 $SITE_MESSAGE_LINK_C_SITE = $_REQUEST['SITE_MESSAGE_LINK_C_SITE'] ?? '';
 
-$APPLICATION->SetTitle(($bNew? GetMessage("NEW_SITE_TITLE") : GetMessage("EDIT_SITE_TITLE", array("#ID#"=>$str_LID))));
+$APPLICATION->SetTitle(($bNew ? GetMessage('NEW_SITE_TITLE') : GetMessage('EDIT_SITE_TITLE', ['#ID#' => $siteData['LID']])));
 
 require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_admin_after.php");
 
@@ -284,14 +294,14 @@ if(!$bNew)
 
 	$aMenu[] = array(
 		"TEXT"	=> GetMessage("MAIN_COPY_RECORD"),
-		"LINK"	=> "/bitrix/admin/site_edit.php?lang=".LANGUAGE_ID."&amp;COPY_ID=".urlencode($str_LID),
+		"LINK"	=> "/bitrix/admin/site_edit.php?lang=".LANGUAGE_ID."&amp;COPY_ID=".urlencode($siteData['LID']),
 		"TITLE"	=> GetMessage("MAIN_COPY_RECORD_TITLE"),
 		"ICON"	=> "btn_copy"
 		);
 
 	$aMenu[] = array(
 		"TEXT"	=> GetMessage("MAIN_DELETE_RECORD"),
-		"LINK"	=> "javascript:if(confirm('".CUtil::JSEscape(GetMessage("MAIN_DELETE_RECORD_CONF"))."')) window.location='/bitrix/admin/site_admin.php?ID=".urlencode(urlencode($str_LID))."&lang=".LANGUAGE_ID."&action=delete&".bitrix_sessid_get()."';",
+		"LINK"	=> "javascript:if(confirm('".CUtil::JSEscape(GetMessage("MAIN_DELETE_RECORD_CONF"))."')) window.location='/bitrix/admin/site_admin.php?ID=".urlencode(urlencode($siteData['LID']))."&lang=".LANGUAGE_ID."&action=delete&".bitrix_sessid_get()."';",
 		"TITLE"	=> GetMessage("MAIN_DELETE_RECORD_TITLE"),
 		"ICON"	=> "btn_delete"
 		);
@@ -308,100 +318,100 @@ if($message)
 
 $limitSitesCount = COption::GetOptionInt("main", "PARAM_MAX_SITES", 100);
 ?>
-<form method="POST" action="<?echo $APPLICATION->GetCurPage()?>?" name="bform" <?if($bNew && $limitSitesCount > 0 && $limitSitesCount <= $sites_cnt)echo ' OnSubmit="alert(\''.GetMessage("SITE_EDIT_WARNING_MAX").'\')"';?>>
+<form method="POST" action="<?= $APPLICATION->GetCurPage()?>?" name="bform" <?php if($bNew && $limitSitesCount > 0 && $limitSitesCount <= $sites_cnt)echo ' OnSubmit="alert(\''.GetMessage("SITE_EDIT_WARNING_MAX").'\')"';?>>
 <?=bitrix_sessid_post()?>
-<input type="hidden" name="lang" value="<?echo LANG?>">
-<?if($bNew):?>
+<input type="hidden" name="lang" value="<?= LANGUAGE_ID?>">
+<?php if($bNew):?>
 <input type="hidden" name="new" value="Y">
-<?endif?>
-<?if($COPY_ID <> ''):?>
-<input type="hidden" name="COPY" value="<?echo htmlspecialcharsbx($COPY_ID)?>">
-<?endif?>
-<?
+<?php endif?>
+<?php if($COPY_ID != ''):?>
+<input type="hidden" name="COPY" value="<?= htmlspecialcharsbx($COPY_ID)?>">
+<?php endif?>
+<?php
 $tabControl->Begin();
 $tabControl->BeginNextTab();
 ?>
 	<tr class="adm-detail-required-field">
 		<td width="40%">ID:</td>
-		<td width="60%"><?
+		<td width="60%"><?php
 			if(!$bNew):
-				echo $str_LID;
-				?><input type="hidden" name="LID" value="<? echo $str_LID?>"><?
+				echo htmlspecialcharsbx($siteData['LID']);
+				?><input type="hidden" name="LID" value="<?= htmlspecialcharsbx($siteData['LID'])?>"><?php
 			else:
-				?><input type="text" name="LID" size="2" maxlength="2" value="<? echo $str_LID?>"><?
+				?><input type="text" name="LID" size="2" maxlength="2" value="<?= htmlspecialcharsbx($siteData['LID'])?>"><?php
 			endif;
 				?></td>
 	</tr>
 	<tr>
-		<td><label for="ACTIVE"><?echo GetMessage('ACTIVE')?></label></td>
-		<td><input type="checkbox" name="ACTIVE" value="Y" id="ACTIVE"<?if($str_ACTIVE=="Y")echo " checked"?>></td>
+		<td><label for="ACTIVE"><?= GetMessage('ACTIVE')?></label></td>
+		<td><input type="checkbox" name="ACTIVE" value="Y" id="ACTIVE"<?php if($siteData['ACTIVE'] == 'Y')echo " checked"?>></td>
 	</tr>
 	<tr class="adm-detail-required-field">
-		<td><?echo GetMessage('NAME')?></td>
-		<td><input type="text" name="NAME" size="30" value="<? echo $str_NAME?>"></td>
+		<td><?= GetMessage('NAME')?></td>
+		<td><input type="text" name="NAME" size="30" value="<?= htmlspecialcharsbx($siteData['NAME'])?>"></td>
 	</tr>
 	<tr class="heading">
-		<td colspan="2"><?echo GetMessage("MAIN_SITE_DEFINITIONS")?></td>
+		<td colspan="2"><?= GetMessage("MAIN_SITE_DEFINITIONS")?></td>
 	</tr>
 	<tr>
-		<td><label for="DEF"><?echo GetMessage('DEF')?></label></td>
-		<td><input type="checkbox" name="DEF" value="Y" id="DEF"<?if($str_DEF=="Y")echo " checked"?>></td>
+		<td><label for="DEF"><?= GetMessage('DEF')?></label></td>
+		<td><input type="checkbox" name="DEF" value="Y" id="DEF"<?php if($siteData['DEF'] == 'Y')echo " checked"?>></td>
 	</tr>
 	<tr>
-		<td class="adm-detail-valign-top"><?echo GetMessage("MAIN_SITE_DOMAIN")?><br>
-		<?echo GetMessage("MAIN_SITE_EDIT_DOMAINS")?>
+		<td class="adm-detail-valign-top"><?= GetMessage("MAIN_SITE_DOMAIN")?><br>
+		<?= GetMessage("MAIN_SITE_EDIT_DOMAINS")?>
 		</td>
-		<td><textarea name="DOMAINS" cols="40" rows="5"><? echo $str_DOMAINS?></textarea>
+		<td><textarea name="DOMAINS" cols="40" rows="5"><?= htmlspecialcharsbx($siteData['DOMAINS'])?></textarea>
 		<?=BeginNote();?>
-		<?echo GetMessage("MAIN_SITE_EDIT_DOMAINS_HELP")?>
+		<?= GetMessage("MAIN_SITE_EDIT_DOMAINS_HELP")?>
 		<?=EndNote();?>
 		</td>
 	</tr>
 	<tr class="adm-detail-required-field">
-		<td><? echo GetMessage('DIR')?></td>
-		<td><input type="text" name="DIR" size="30" value="<? echo $str_DIR?>"></td>
+		<td><?= GetMessage('DIR')?></td>
+		<td><input type="text" name="DIR" size="30" value="<?= htmlspecialcharsbx($siteData['DIR'])?>"></td>
 	</tr>
 	<tr class="adm-detail-required-field">
-		<td><?echo GetMessage('SORT')?></td>
-		<td><input type="text" name="SORT" size="10" value="<? echo $str_SORT?>"></td>
+		<td><?= GetMessage('SORT')?></td>
+		<td><input type="text" name="SORT" size="10" value="<?= htmlspecialcharsbx($siteData['SORT'])?>"></td>
 	</tr>
 	<tr>
-		<td><?echo GetMessage("MAIN_DOC_ROOT")?><br />
-		<?echo GetMessage("MAIN_DOC_ROOT_TIPS")?>
+		<td><?= GetMessage("MAIN_DOC_ROOT")?><br />
+		<?= GetMessage("MAIN_DOC_ROOT_TIPS")?>
 		</td>
-		<td><input type="text" name="DOC_ROOT" size="30" value="<?echo $str_DOC_ROOT?>">
-		<a title="<?=GetMessage('MAIN_DOC_ROOT_INS')?>" href="javascript:void(0)" onClick="document.bform.DOC_ROOT.value='<?=htmlspecialcharsbx(CUtil::addslashes($_SERVER["DOCUMENT_ROOT"]))?>'; BX.fireEvent(document.bform.DOC_ROOT, 'change')"><?echo GetMessage("MAIN_DOC_ROOT_SET")?></a>
+		<td><input type="text" name="DOC_ROOT" size="30" value="<?= htmlspecialcharsbx($siteData['DOC_ROOT'])?>">
+		<a title="<?=GetMessage('MAIN_DOC_ROOT_INS')?>" href="javascript:void(0)" onClick="document.bform.DOC_ROOT.value='<?=htmlspecialcharsbx(CUtil::addslashes($_SERVER["DOCUMENT_ROOT"]))?>'; BX.fireEvent(document.bform.DOC_ROOT, 'change')"><?= GetMessage("MAIN_DOC_ROOT_SET")?></a>
 		</td>
 	</tr>
 
 	<tr class="heading">
-		<td colspan="2"><?echo GetMessage("MAIN_SITE_PARAMS")?></td>
+		<td colspan="2"><?= GetMessage("MAIN_SITE_PARAMS")?></td>
 	</tr>
 	<tr>
-		<td><?echo GetMessage("MAIN_SITE_NAME")?></td>
-		<td><input type="text" name="SITE_NAME" size="30" value="<?echo $str_SITE_NAME?>"></td>
+		<td><?= GetMessage("MAIN_SITE_NAME")?></td>
+		<td><input type="text" name="SITE_NAME" size="30" value="<?= htmlspecialcharsbx($siteData['SITE_NAME'])?>"></td>
 	</tr>
 	<tr>
-		<td><?echo GetMessage("MAIN_SERVER_URL")?></td>
-		<td><input type="text" name="SERVER_NAME" size="30" value="<?echo $str_SERVER_NAME?>"></td>
+		<td><?= GetMessage("MAIN_SERVER_URL")?></td>
+		<td><input type="text" name="SERVER_NAME" size="30" value="<?= htmlspecialcharsbx($siteData['SERVER_NAME'])?>"></td>
 	</tr>
 	<tr>
-		<td><?echo GetMessage("MAIN_DEFAULT_EMAIL")?></td>
-		<td><input type="text" name="EMAIL" size="30" value="<?echo $str_EMAIL?>"></td>
+		<td><?= GetMessage("MAIN_DEFAULT_EMAIL")?></td>
+		<td><input type="text" name="EMAIL" size="30" value="<?= htmlspecialcharsbx($siteData['EMAIL'])?>"></td>
 	</tr>
 
 	<tr class="heading">
-		<td colspan="2"><?echo GetMessage("site_edit_culture_title")?></td>
+		<td colspan="2"><?= GetMessage("site_edit_culture_title")?></td>
 	</tr>
 	<tr class="adm-detail-required-field">
-		<td><?echo GetMessage("MAIN_SITE_LANG")?></td>
-		<td><?echo CLanguage::SelectBox("LANGUAGE_ID", $str_LANGUAGE_ID);?></td>
+		<td><?= GetMessage("MAIN_SITE_LANG")?></td>
+		<td><?= CLanguage::SelectBox("LANGUAGE_ID", $siteData['LANGUAGE_ID']);?></td>
 	</tr>
 	<tr class="adm-detail-required-field">
-		<td><?echo GetMessage("site_edit_culture")?></td>
+		<td><?= GetMessage("site_edit_culture")?></td>
 		<td>
-<?
-$cultureRes = \Bitrix\Main\Localization\CultureTable::getList(array('order'=>array('NAME'=>'ASC')));
+<?php
+$cultureRes = CultureTable::getList(array('order'=>array('NAME'=>'ASC')));
 $cultures = array();
 while($cult = $cultureRes->fetch())
 {
@@ -434,11 +444,11 @@ function BXSetCulture()
 BX.ready(BXSetCulture);
 </script>
 			<select name="CULTURE_ID" onchange="BXSetCulture()" id="bx_culture_select">
-<?
+<?php
 foreach($cultures as $cult):
 ?>
-				<option value="<?=$cult["ID"]?>"<?if($cult["ID"] == $str_CULTURE_ID) echo " selected"?>><?=htmlspecialcharsbx($cult["NAME"])?></option>
-<?
+				<option value="<?=$cult["ID"]?>"<?php if($cult["ID"] == $siteData['CULTURE_ID']) echo " selected"?>><?=htmlspecialcharsbx($cult["NAME"])?></option>
+<?php
 endforeach;
 ?>
 			</select>
@@ -446,59 +456,59 @@ endforeach;
 	</tr>
 	<tr>
 		<td>&nbsp;</td>
-		<td><a href="culture_edit.php?lang=<?=LANGUAGE_ID?>" id="bx_culture_link"><?echo GetMessage("site_edit_culture_edit")?></a></td>
+		<td><a href="culture_edit.php?lang=<?=LANGUAGE_ID?>" id="bx_culture_link"><?= GetMessage("site_edit_culture_edit")?></a></td>
 	</tr>
 	<tr>
-		<td><? echo GetMessage('FORMAT_DATE')?></td>
+		<td><?= GetMessage('FORMAT_DATE')?></td>
 		<td><input type="text" name="FORMAT_DATE" size="30" disabled="disabled"></td>
 	</tr>
 	<tr>
-		<td><? echo GetMessage('FORMAT_DATETIME')?></td>
+		<td><?= GetMessage('FORMAT_DATETIME')?></td>
 		<td><input type="text" name="FORMAT_DATETIME" size="30" disabled="disabled"></td>
 	</tr>
 	<tr>
-		<td><? echo GetMessage('SITE_EDIT_WEEK_START')?></td>
+		<td><?= GetMessage('SITE_EDIT_WEEK_START')?></td>
 		<td><input type="text" name="WEEK_START" size="30" disabled="disabled"></td>
 	</tr>
 	<tr>
-		<td><? echo GetMessage('FORMAT_NAME')?></td>
+		<td><?= GetMessage('FORMAT_NAME')?></td>
 		<td><input type="text" name="FORMAT_NAME" size="30" disabled="disabled"></td>
 	</tr>
 	<tr>
-		<td><? echo GetMessage('CHARSET')?></td>
+		<td><?= GetMessage('CHARSET')?></td>
 		<td><input type="text" name="CHARSET" size="30" disabled="disabled"></td>
 	</tr>
 	<tr>
-		<td><?echo GetMessage('DIRECTION')?></td>
+		<td><?= GetMessage('DIRECTION')?></td>
 		<td><input type="text" name="DIRECTION" size="30" disabled="disabled"></td>
 	</tr>
 
-	<?if($bNew):?>
+	<?php if($bNew):?>
 	<tr class="heading">
-		<td colspan="2"><?echo GetMessage("site_edit_mail_templates")?></td>
+		<td colspan="2"><?= GetMessage("site_edit_mail_templates")?></td>
 	</tr>
 	<tr>
-		<td class="adm-detail-valign-top"><?echo GetMessage("MAIN_SITE_CREATE_MESS_TEPL")?></td>
+		<td class="adm-detail-valign-top"><?= GetMessage("MAIN_SITE_CREATE_MESS_TEPL")?></td>
 		<td>
-			<input type="radio"<?if($SITE_MESSAGE_LINK!="E" && $SITE_MESSAGE_LINK!="C") echo " checked"?> name="SITE_MESSAGE_LINK" value="N" id="SITE_MESSAGE_LINK_n" onClick="if(this.checked){document.bform.SITE_MESSAGE_LINK_E_SITE.disabled=true; document.bform.SITE_MESSAGE_LINK_C_SITE.disabled=true}"><label for="SITE_MESSAGE_LINK_n"> <?echo GetMessage("MAIN_SITE_CREATE_MESS_TEPL_N")?></label><br>
-			<input type="radio"<?if($SITE_MESSAGE_LINK=="E") echo " checked"?> name="SITE_MESSAGE_LINK" id="SITE_MESSAGE_LINK_e" value="E" onClick="if(this.checked){document.bform.SITE_MESSAGE_LINK_C_SITE.disabled=true; document.bform.SITE_MESSAGE_LINK_E_SITE.disabled=false}"><label for="SITE_MESSAGE_LINK_e"> <?echo GetMessage("MAIN_SITE_CREATE_MESS_TEPL_LINK")?></label><br>
+			<input type="radio"<?php if($SITE_MESSAGE_LINK!="E" && $SITE_MESSAGE_LINK!="C") echo " checked"?> name="SITE_MESSAGE_LINK" value="N" id="SITE_MESSAGE_LINK_n" onClick="if(this.checked){document.bform.SITE_MESSAGE_LINK_E_SITE.disabled=true; document.bform.SITE_MESSAGE_LINK_C_SITE.disabled=true}"><label for="SITE_MESSAGE_LINK_n"> <?= GetMessage("MAIN_SITE_CREATE_MESS_TEPL_N")?></label><br>
+			<input type="radio"<?php if($SITE_MESSAGE_LINK=="E") echo " checked"?> name="SITE_MESSAGE_LINK" id="SITE_MESSAGE_LINK_e" value="E" onClick="if(this.checked){document.bform.SITE_MESSAGE_LINK_C_SITE.disabled=true; document.bform.SITE_MESSAGE_LINK_E_SITE.disabled=false}"><label for="SITE_MESSAGE_LINK_e"> <?= GetMessage("MAIN_SITE_CREATE_MESS_TEPL_LINK")?></label><br>
 			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<?=CSite::SelectBox("SITE_MESSAGE_LINK_E_SITE", $SITE_MESSAGE_LINK_E_SITE, "", "", ($SITE_MESSAGE_LINK!="E"?'disabled':''));?><br>
-			<input type="radio"<?if($SITE_MESSAGE_LINK=="C") echo " checked"?> name="SITE_MESSAGE_LINK" id="SITE_MESSAGE_LINK_c" value="C" onClick="if(this.checked){document.bform.SITE_MESSAGE_LINK_E_SITE.disabled=true; document.bform.SITE_MESSAGE_LINK_C_SITE.disabled=false}"><label for="SITE_MESSAGE_LINK_c"> <?echo GetMessage("MAIN_SITE_CREATE_MESS_TEPL_COPY")?></label><br>
+			<input type="radio"<?php if($SITE_MESSAGE_LINK=="C") echo " checked"?> name="SITE_MESSAGE_LINK" id="SITE_MESSAGE_LINK_c" value="C" onClick="if(this.checked){document.bform.SITE_MESSAGE_LINK_E_SITE.disabled=true; document.bform.SITE_MESSAGE_LINK_C_SITE.disabled=false}"><label for="SITE_MESSAGE_LINK_c"> <?= GetMessage("MAIN_SITE_CREATE_MESS_TEPL_COPY")?></label><br>
 			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<?=CSite::SelectBox("SITE_MESSAGE_LINK_C_SITE", $SITE_MESSAGE_LINK_C_SITE, "", "", ($SITE_MESSAGE_LINK!="C"?'disabled':''));?><br />
 
 		</td>
 	</tr>
-	<?endif?>
-	<?ConditionJS();?>
+	<?php endif?>
+	<?php ConditionJS();?>
 	<tr class="heading">
-		<td colspan="2"><?echo GetMessage("MAIN_SITE_EDIT_TEMPLATE")?></td>
+		<td colspan="2"><?= GetMessage("MAIN_SITE_EDIT_TEMPLATE")?></td>
 	</tr>
-	<?if ($bNew):?>
+	<?php if ($bNew):?>
 	<tr>
 		<td>&nbsp;</td>
 		<td>
-			<input type="radio" name="START_SITE_WIZARD" value="Y"<?= ($str_START_SITE_WIZARD != "N") ? " checked" : "" ?> onclick="TurnStartSiteWizardOn(false)" id="ID_START_SITE_WIZARD_Y"> <label for="ID_START_SITE_WIZARD_Y"><?= GetMessage("M_START_SITE_WIZARD_Y") ?></label><br />
-			<input type="radio" name="START_SITE_WIZARD" value="N"<?= ($str_START_SITE_WIZARD == "N") ? " checked" : "" ?> onclick="TurnStartSiteWizardOn(true)" id="ID_START_SITE_WIZARD_N"> <label for="ID_START_SITE_WIZARD_N"><?= GetMessage("M_START_SITE_WIZARD_N") ?></label><br />
+			<input type="radio" name="START_SITE_WIZARD" value="Y"<?= ($siteData['START_SITE_WIZARD'] != 'N') ? " checked" : "" ?> onclick="TurnStartSiteWizardOn(false)" id="ID_START_SITE_WIZARD_Y"> <label for="ID_START_SITE_WIZARD_Y"><?= GetMessage("M_START_SITE_WIZARD_Y") ?></label><br />
+			<input type="radio" name="START_SITE_WIZARD" value="N"<?= ($siteData['START_SITE_WIZARD'] == 'N') ? " checked" : "" ?> onclick="TurnStartSiteWizardOn(true)" id="ID_START_SITE_WIZARD_N"> <label for="ID_START_SITE_WIZARD_N"><?= GetMessage("M_START_SITE_WIZARD_N") ?></label><br />
 			<script>
 				function TurnStartSiteWizardOn(bOn)
 				{
@@ -509,21 +519,21 @@ endforeach;
 			<input type="checkbox" name="START_SITE_WIZARD_REWRITE" value="Y" id="ID_START_SITE_WIZARD_REWRITE"><label for="ID_START_SITE_WIZARD_REWRITE"><?= GetMessage("M_START_SITE_WIZARD_REWRITE") ?></label>
 		</td>
 	</tr>
-	<?endif;?>
-	<tr id="ID_HIDDENABLE_TR"<?= ($bNew && ($str_START_SITE_WIZARD != "N")) ? "style='display:none'" : ""?>>
+	<?php endif;?>
+	<tr id="ID_HIDDENABLE_TR"<?= ($bNew && ($siteData['START_SITE_WIZARD'] != 'N')) ? "style='display:none'" : ""?>>
 		<td colspan="2" align="center">
 			<table border="0" cellspacing="0" cellpadding="0" class="internal">
 			<tr class="heading">
-				<td align="center" colspan=2><?echo GetMessage("MAIN_SITE_EDIT_TEMPL")?></td>
-				<td align="center"><?echo GetMessage("MAIN_SITE_EDIT_SORT")?></td>
-				<td align="center"><?echo GetMessage("MAIN_SITE_EDIT_TYPE")?></td>
-				<td align="center"><?echo GetMessage("MAIN_SITE_EDIT_COND")?></td>
+				<td align="center" colspan=2><?= GetMessage("MAIN_SITE_EDIT_TEMPL")?></td>
+				<td align="center"><?= GetMessage("MAIN_SITE_EDIT_SORT")?></td>
+				<td align="center"><?= GetMessage("MAIN_SITE_EDIT_TYPE")?></td>
+				<td align="center"><?= GetMessage("MAIN_SITE_EDIT_COND")?></td>
 			</tr>
-			<?
+			<?php
 			$dbSiteRes = CSite::GetTemplateList($LID);
+			$SITE_TEMPLATE = array();
 			if(!$bVarsFromForm)
 			{
-				$SITE_TEMPLATE = array();
 				$max_sort = 0;
 				while($arSiteRes = $dbSiteRes->Fetch())
 				{
@@ -536,7 +546,6 @@ endforeach;
 			}
 			else
 			{
-				$SITE_TEMPLATE = array();
 				$templates = isset($_POST["SITE_TEMPLATE"]) && is_array($_POST["SITE_TEMPLATE"]) ? $_POST["SITE_TEMPLATE"] : [];
 				foreach($templates as $key=>$val)
 				{
@@ -558,10 +567,9 @@ endforeach;
 						"CONDITION" => $cond
 					);
 				}
-
 			}
 
-			$signer = new Bitrix\Main\Security\Sign\Signer();
+			$signer = new Signer();
 
 			//templates
 			$arSiteTemplates = array();
@@ -580,14 +588,14 @@ endforeach;
 			<tr>
 				<td>
 					<select name="SITE_TEMPLATE[<?=$i?>][TEMPLATE]" id="SITE_TEMPLATE[<?=$i?>][TEMPLATE]">
-						<option value=""><?echo GetMessage("SITE_EDIT_TEMPL_NO")?></option>
-						<?foreach($arSiteTemplates as $arRes):?>
-						<option value="<?=$arRes["ID"]?>"<?if(isset($val["TEMPLATE"]) && $val["TEMPLATE"]==$arRes["ID"])echo " selected"?>><?=$arRes["NAME"]?></option>
-						<?endforeach;?>
+						<option value=""><?= GetMessage("SITE_EDIT_TEMPL_NO")?></option>
+						<?php foreach($arSiteTemplates as $arRes):?>
+						<option value="<?=$arRes["ID"]?>"<?php if(isset($val["TEMPLATE"]) && $val["TEMPLATE"]==$arRes["ID"])echo " selected"?>><?=$arRes["NAME"]?></option>
+						<?php endforeach;?>
 					</select>
 				</td>
 				<td>
-					<?
+					<?php
 					if($bFirst):
 						$bFirst = false;
 					?>
@@ -605,12 +613,12 @@ endforeach;
 							return false;
 						}
 					</script>
-					<?endif?>
+					<?php endif?>
 					<a title="<?=GetMessage('MAIN_PREVIEW_TEMPLATE')?>" href="javascript:void(0)" onclick="bx_preview_template('<?=$i?>')"><img src="/bitrix/images/main/preview.gif" width="16" height="16" border="0" alt=""></a>
 				</td>
 				<td><input type="text" size="2" name="SITE_TEMPLATE[<?=$i?>][SORT]" value="<?=htmlspecialcharsex($val["SORT"])?>"></td>
-				<td><?ConditionSelect($i);?></td>
-				<td align="left"><?
+				<td><?php ConditionSelect($i);?></td>
+				<td align="left"><?php
 ConditionShow(array(
 	"i" => $i,
 	"field_name" => "SITE_TEMPLATE[$i]",
@@ -618,15 +626,16 @@ ConditionShow(array(
 ));
 			?></td>
 			</tr>
-			<?endforeach;?>
+			<?php endforeach;?>
 			</table>
 		</td>
 	</tr>
 
 
-<?$tabControl->Buttons(array("disabled" => !$isAdmin, "back_url"=>"site_admin.php?lang=".LANGUAGE_ID));
+<?php $tabControl->Buttons(array("disabled" => !$isAdmin, "back_url"=>"site_admin.php?lang=".LANGUAGE_ID));
 $tabControl->End();
 $tabControl->ShowWarnings("bform", $message);
 ?>
 </form>
-<?require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin.php");?>
+<?php
+require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin.php");

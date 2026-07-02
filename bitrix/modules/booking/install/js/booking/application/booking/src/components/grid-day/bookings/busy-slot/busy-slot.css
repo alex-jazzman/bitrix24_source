@@ -1,0 +1,5 @@
+.booking-booking__base-component:not(.--week-mode) .booking-booking-busy-slot {
+	width: calc(279px * var(--zoom));
+	top: max(var(--top), calc(-1 * var(--top-cells-height)));
+	bottom: max(calc(100% - var(--top) - var(--height)), 1px);
+}

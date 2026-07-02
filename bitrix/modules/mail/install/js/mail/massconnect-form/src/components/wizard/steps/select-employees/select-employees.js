@@ -1,18 +1,23 @@
+import { Loc, Text, Validation } from 'main.core';
 import { UI } from 'ui.notification';
 import { mapState, mapActions } from 'ui.vue3.pinia';
-import { Dialog, Item } from 'ui.entity-selector';
-import { Set, Outline, BIcon } from 'ui.icon-set.api.vue';
+import { Dialog, type Item } from 'ui.entity-selector';
+import { Set as IconSet, Outline, BIcon } from 'ui.icon-set.api.vue';
 import { Button as UiButton, AirButtonStyle } from 'ui.vue3.components.button';
 import { BMenu, type MenuOptions } from 'ui.vue3.components.menu';
 import { SaveButton, CancelButton } from 'ui.buttons';
-import { Loc } from 'main.core';
+import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
+import { sendData as analyticsSendData } from 'ui.analytics';
 import { Api } from '../../../../api';
 import { useWizardStore } from '../../../../store/wizard.js';
 import { LocalizationMixin } from '../../../../mixins/localization-mixin';
 import { EmployeeListTable } from './employee-list-table';
 import type { Employee } from '../../../../store/type';
-import { sendData as analyticsSendData } from 'ui.analytics';
 import './select-employees.css';
+
+const LIMIT_BLOCKED_USERS = 3;
+const MAX_USERS_PER_LIMIT_REQUEST = 500;
+const LIMIT_CHECK_NOTIFICATION_ID = 'mail_massconnect__limit_check_progress';
 
 // @vue/component
 export const SelectEmployees = {
@@ -25,6 +30,13 @@ export const SelectEmployees = {
 
 	mixins: [LocalizationMixin],
 
+	props: {
+		validationAttempted: {
+			type: Boolean,
+			default: false,
+		},
+	},
+
 	emits: ['update:validity'],
 
 	data(): Object
@@ -33,6 +45,7 @@ export const SelectEmployees = {
 			AirButtonStyle,
 			actionsMenuActive: false,
 			showAddedEmployees: false,
+			usersBlockedByLimit: [],
 		};
 	},
 
@@ -44,13 +57,15 @@ export const SelectEmployees = {
 				'errorState',
 				'addedEmployees',
 				'isLoginColumnShown',
+				'passwordlessMode',
+				'isPasswordlessConnectAvailable',
 				'analyticsSource',
 				'permissions',
 			],
 		),
 		set(): Set
 		{
-			return Set;
+			return IconSet;
 		},
 		outline(): Outline
 		{
@@ -60,43 +75,94 @@ export const SelectEmployees = {
 		{
 			return this.employees.length === 0;
 		},
+		areAllEmployeeFieldsValid(): boolean
+		{
+			return this.employees.every((employee) => {
+				const email = (employee.email ?? '').trim();
+				if (email.length === 0 || !Validation.isEmail(email))
+				{
+					return false;
+				}
+
+				if (!this.passwordlessMode)
+				{
+					const password = (employee.password ?? '').trim();
+					if (password.length === 0)
+					{
+						return false;
+					}
+				}
+
+				return true;
+			});
+		},
 		isValid(): boolean
 		{
-			return !this.isEmployeeListEmpty;
+			if (this.isEmployeeListEmpty)
+			{
+				return false;
+			}
+
+			if (!this.validationAttempted)
+			{
+				return true;
+			}
+
+			return this.areAllEmployeeFieldsValid;
 		},
 		menuOptions(): MenuOptions
 		{
+			const items = [];
+
+			if (this.isPasswordlessConnectAvailable)
+			{
+				items.push({
+					title: this.passwordlessMode
+						? this.loc('MAIL_MASSCONNECT_FORM_SELECT_EMPLOYEE_CARD_ACTIONS_PASSWORD_SHOW')
+						: this.loc('MAIL_MASSCONNECT_FORM_SELECT_EMPLOYEE_CARD_ACTIONS_PASSWORD_HIDE'),
+					icon: this.passwordlessMode ? this.set.OPENED_EYE : this.set.CROSSED_EYE_2,
+					onClick: () => {
+						this.togglePasswordlessMode();
+					},
+				});
+			}
+
+			items.push(
+				{
+					title: this.isLoginColumnShown
+						? this.loc('MAIL_MASSCONNECT_FORM_SELECT_EMPLOYEE_CARD_ACTIONS_LOGIN_HIDE')
+						: this.loc('MAIL_MASSCONNECT_FORM_SELECT_EMPLOYEE_CARD_ACTIONS_LOGIN_SHOW'),
+					icon: this.isLoginColumnShown ? this.set.CROSSED_EYE_2 : this.set.OPENED_EYE,
+					onClick: () => {
+						this.toggleLoginColumn();
+					},
+				},
+				{
+					title: this.loc('MAIL_MASSCONNECT_FORM_SELECT_EMPLOYEE_CARD_ACTIONS_DELETE_ALL'),
+					icon: Outline.TRASHCAN,
+					onClick: () => {
+						this.actionsMenuActive = false;
+						this.clearEmployees();
+						this.usersBlockedByLimit = [];
+						this.employeeDialog.deselectAll();
+					},
+				},
+			);
+
 			return {
 				bindElement: this.$refs.actionsMenuActiveRef,
-				items: [
-					{
-						title: this.isLoginColumnShown
-							? this.loc('MAIL_MASSCONNECT_FORM_SELECT_EMPLOYEE_CARD_ACTIONS_LOGIN_HIDE')
-							: this.loc('MAIL_MASSCONNECT_FORM_SELECT_EMPLOYEE_CARD_ACTIONS_LOGIN_SHOW'),
-						icon: this.isLoginColumnShown ? this.set.CROSSED_EYE_2 : this.set.OPENED_EYE,
-						onClick: () => {
-							this.toggleLoginColumn();
-						},
-					},
-					{
-						title: this.loc('MAIL_MASSCONNECT_FORM_SELECT_EMPLOYEE_CARD_ACTIONS_DELETE_ALL'),
-						icon: Outline.TRASHCAN,
-						onClick: () => {
-							this.actionsMenuActive = false;
-							this.clearEmployees();
-							this.employeeDialog.deselectAll();
-						},
-					},
-				],
+				items,
 			};
 		},
-		isFixingErrorsHintText(): string
+		fixingErrorsHintText(): string
 		{
-			return Loc.getMessagePlural(
+			return this.loc(
 				'MAIL_MASSCONNECT_FORM_UTILITY_BLOCK_IS_FIXING_ERRORS_HINT',
-				this.errorState.errorCnt,
-				{ '#ERROR_CNT#': this.errorState.errorCnt },
 			);
+		},
+		isFixingErrorState(): boolean
+		{
+			return this.errorState.enabled && this.errorState.errorType === 'auth';
 		},
 		helpDescLink(): ?string
 		{
@@ -107,7 +173,7 @@ export const SelectEmployees = {
 
 	watch: {
 		isValid: {
-			handler(isValid)
+			handler(isValid: boolean): void
 			{
 				this.$emit('update:validity', isValid);
 			},
@@ -126,6 +192,7 @@ export const SelectEmployees = {
 			[
 				'setEmployees',
 				'toggleLoginColumn',
+				'togglePasswordlessMode',
 				'addEmployee',
 				'clearEmployees',
 			],
@@ -209,6 +276,18 @@ export const SelectEmployees = {
 				this.employeeDialog.show();
 			}
 		},
+		createDefaultEmployee(id: number, name: string, avatar: string): Employee
+		{
+			return {
+				id,
+				entityId: 'user',
+				name,
+				avatar,
+				email: '',
+				login: '',
+				password: '',
+			};
+		},
 		async handleSaveItems(items: Item[])
 		{
 			const selectedUsers = [];
@@ -217,15 +296,9 @@ export const SelectEmployees = {
 			items.forEach((item) => {
 				if (item.entityId === 'user')
 				{
-					selectedUsers.push({
-						id: item.getId(),
-						entityId: 'user',
-						name: item.getTitle(),
-						avatar: item.getAvatar(),
-						email: '',
-						login: '',
-						password: '',
-					});
+					selectedUsers.push(
+						this.createDefaultEmployee(item.getId(), item.getTitle(), item.getAvatar()),
+					);
 				}
 				else if (item.entityId === 'structure-node')
 				{
@@ -240,17 +313,7 @@ export const SelectEmployees = {
 				{
 					const rawDepartmentUsers = await Api.getDepartmentsUsers(departmentsToCheck);
 					departmentUsers = rawDepartmentUsers.data?.map((user): Employee => {
-						return {
-							id: user.id,
-							entityId: 'user',
-							name: user.name,
-							avatar: (user.avatar === null || user.avatar === '')
-								? this.employeeDialog.getEntity('user').getItemOption('avatar', 'user')
-								: user.avatar,
-							email: '',
-							login: '',
-							password: '',
-						};
+						return this.createDefaultEmployee(user.id, user.name, user.avatar ?? '');
 					});
 				}
 			}
@@ -263,9 +326,186 @@ export const SelectEmployees = {
 				return;
 			}
 
-			[...selectedUsers, ...departmentUsers].forEach((employee) => this.addEmployee(employee));
+			const allNewUsers = [...selectedUsers, ...departmentUsers];
+
+			// Deduplicate against already added employees
+			const existingIds = new Set(this.employees.map((e) => e.id));
+			const trulyNewUsers = allNewUsers.filter((u) => !existingIds.has(u.id));
+
+			if (trulyNewUsers.length === 0)
+			{
+				this.employeeDialog.deselectAll();
+				this.employeeDialog.hide();
+
+				return;
+			}
+
+			// Check limits for new users before adding them
+			const newUserIds = trulyNewUsers.map((u) => u.id);
+			const userIdsBlockedByLimit = await this.getUserIdsBlockedByLimit(newUserIds);
+
+			const allowedUsers = trulyNewUsers.filter((u) => !userIdsBlockedByLimit.has(u.id));
+			const usersBlockedByLimit = trulyNewUsers.filter((u) => userIdsBlockedByLimit.has(u.id));
+
+			// Add only allowed users to the list
+			allowedUsers.forEach((employee) => this.addEmployee(employee));
+
 			this.employeeDialog.deselectAll();
 			this.employeeDialog.hide();
+
+			// Show popup for users who reached mailbox limit
+			if (usersBlockedByLimit.length > 0)
+			{
+				this.usersBlockedByLimit = usersBlockedByLimit;
+				this.showUsersBlockedByLimitPopup(usersBlockedByLimit);
+			}
+		},
+		buildUserNamesHtml(users: Employee[]): string
+		{
+			return users.map((user) => {
+				const userId = Number(user.id);
+
+				return `<a href="/company/personal/user/${userId}/" target="_blank" class="mail_massconnect__limit-popup_link">${Text.encode(user.name)}</a>`;
+			}).join(', ');
+		},
+		showUsersBlockedByLimitPopup(blockedUsers: Employee[]): void
+		{
+			let content = '';
+			if (blockedUsers.length > LIMIT_BLOCKED_USERS)
+			{
+				const namesHtml = this.buildUserNamesHtml(blockedUsers.slice(0, LIMIT_BLOCKED_USERS));
+				const extraCnt = blockedUsers.length - LIMIT_BLOCKED_USERS;
+				content = this.loc(
+					'MAIL_MASSCONNECT_FORM_LIMIT_POPUP_TEXT_EXTRA',
+					{
+						'#NAMES#': namesHtml,
+						'#EXTRA_CNT#': String(extraCnt),
+					},
+				);
+			}
+			else
+			{
+				const namesHtml = this.buildUserNamesHtml(blockedUsers);
+				content = Loc.getMessagePlural(
+					'MAIL_MASSCONNECT_FORM_LIMIT_POPUP_TEXT',
+					blockedUsers.length,
+					{ '#NAMES#': namesHtml },
+				);
+			}
+
+			MessageBox.show({
+				title: this.loc('MAIL_MASSCONNECT_FORM_LIMIT_POPUP_TITLE'),
+				useAirDesign: true,
+				message: content,
+				modal: true,
+				buttons: MessageBoxButtons.OK_CANCEL,
+				okCaption: this.loc('MAIL_MASSCONNECT_FORM_LIMIT_POPUP_OPEN_SETTINGS'),
+				cancelCaption: this.loc('MAIL_MASSCONNECT_FORM_LIMIT_POPUP_SKIP'),
+				onOk: (messageBox) => {
+					this.openMailboxGridWithFilter();
+					messageBox.close();
+				},
+			});
+		},
+		async getUserIdsBlockedByLimit(userIds: number[]): Promise<Set<number>>
+		{
+			if (userIds.length === 0)
+			{
+				return new Set();
+			}
+
+			const totalCount = userIds.length;
+			let processedCount = 0;
+
+			this.showLimitCheckProgress(processedCount, totalCount);
+
+			const chunks = this.chunkUserIds(userIds, MAX_USERS_PER_LIMIT_REQUEST);
+
+			try
+			{
+				const limitedUserIds = new Set();
+				for (const chunk of chunks)
+				{
+					// eslint-disable-next-line no-await-in-loop
+					const response = await Api.checkMailboxLimits(chunk);
+					const limitsData = response?.data?.items ?? [];
+					const processedChunkCount = Number(response?.data?.processedCount ?? chunk.length);
+
+					processedCount = Math.min(processedCount + processedChunkCount, totalCount);
+
+					this.showLimitCheckProgress(
+						processedCount,
+						totalCount,
+						processedCount >= totalCount,
+					);
+
+					limitsData.forEach((item) => {
+						if (!item.canConnectNew)
+						{
+							limitedUserIds.add(item.userId);
+						}
+					});
+				}
+
+				return limitedUserIds;
+			}
+			catch
+			{
+				// If limit check fails, allow all users through
+				this.hideLimitCheckProgress();
+
+				return new Set();
+			}
+		},
+		showLimitCheckProgress(processedCount: number, totalCount: number, isFinal: boolean = false): void
+		{
+			UI.Notification.Center.notify({
+				id: LIMIT_CHECK_NOTIFICATION_ID,
+				content: this.loc('MAIL_MASSCONNECT_FORM_LIMIT_CHECK_PROGRESS', {
+					'#PROCESSED#': String(processedCount),
+					'#TOTAL#': String(totalCount),
+				}),
+				autoHide: isFinal,
+				autoHideDelay: isFinal ? 2000 : 0,
+				closeButton: true,
+				blinkOnUpdate: false,
+			});
+		},
+		hideLimitCheckProgress(): void
+		{
+			const balloon = UI.Notification.Center.getBalloonById(LIMIT_CHECK_NOTIFICATION_ID);
+			if (balloon)
+			{
+				balloon.close();
+			}
+		},
+		chunkUserIds(userIds: number[], chunkSize: number): number[][]
+		{
+			const chunks = [];
+			for (let i = 0; i < userIds.length; i += chunkSize)
+			{
+				chunks.push(userIds.slice(i, i + chunkSize));
+			}
+
+			return chunks;
+		},
+		openMailboxGridWithFilter(): void
+		{
+			const params = new URLSearchParams();
+
+			this.usersBlockedByLimit.forEach((u, index) => {
+				params.append(`OWNER[${index}]`, `U${Number(u.id)}`);
+			});
+
+			params.set('apply_filter', 'Y');
+
+			const url = `/mail/mailbox-list?${params.toString()}`;
+
+			BX.SidePanel.Instance.open(url, {
+				data: {
+					resetFilterOnClose: true,
+				},
+			});
 		},
 	},
 
@@ -276,12 +516,12 @@ export const SelectEmployees = {
 					<span class="mail_massconnect__section-title">
 						{{ loc('MAIL_MASSCONNECT_FORM_SELECT_EMPLOYEE_CARD_TITLE') }}
 					</span>
-					<span v-if="!errorState.enabled" class="mail_massconnect__section-description">
+					<span v-if="!isFixingErrorState" class="mail_massconnect__section-description">
 						{{ loc('MAIL_MASSCONNECT_FORM_SELECT_EMPLOYEE_CARD_DESCRIPTION') }}
 					</span>
 				</div>
-				<div 
-					v-show="!errorState.enabled" 
+				<div
+					v-show="!isFixingErrorState"
 					class="mail_massconnect__employee-list_header_buttons"
 					data-test-id="mail_massconnect__employee-list_header_buttons"
 				>
@@ -297,13 +537,17 @@ export const SelectEmployees = {
 
 			<div v-show="!isEmployeeListEmpty" class="mail_massconnect__employee-list_container">
 				<div 
-					v-if="errorState.enabled" 
+					v-if="isFixingErrorState" 
 					class="mail_massconnect__fixing-errors-hint_container"
 					data-test-id="mail_massconnect__fixing-errors-hint_container"
 				>
-					<div class="mail_massconnect__fixing-errors-hint_image"/>
+					<BIcon
+						:name="outline.ALERT_ACCENT"
+						:size="24"
+						color="var(--ui-color-text-alert)"
+					/>
 					<div class="mail_massconnect__fixing-errors-hint_text">
-						{{ isFixingErrorsHintText }}
+						{{ fixingErrorsHintText }}
 					</div>
 					<div v-if="helpDescLink" class="mail_massconnect__fixing-errors-hint_link">
 						{{ loc('MAIL_MASSCONNECT_FORM_UTILITY_BLOCK_IS_FIXING_ERRORS_LINK') }}
@@ -333,7 +577,9 @@ export const SelectEmployees = {
 				</div>
 				<EmployeeListTable
 					:isLoginColumnShown="isLoginColumnShown"
+					:isPasswordColumnHidden="passwordlessMode"
 					:employees="employees"
+					:showValidationErrors="validationAttempted"
 				/>
 			</div>
 			<div 

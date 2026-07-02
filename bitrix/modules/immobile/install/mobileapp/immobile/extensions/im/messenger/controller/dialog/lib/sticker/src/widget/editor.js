@@ -7,6 +7,7 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/widget/editor', (requi
 
 	const { Loc } = require('im/messenger/loc');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
+	const { Feature } = require('im/messenger/lib/feature');
 
 	const {
 		StickerEventType,
@@ -14,6 +15,7 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/widget/editor', (requi
 		EditableElementType,
 		DEVICE_WIDTH,
 		MAX_STICKER_PACK_SIZE,
+		MenuActionType,
 	} = require('im/messenger/controller/dialog/lib/sticker/src/const');
 	const { GridUtils } = require('im/messenger/controller/dialog/lib/sticker/src/utils/grid');
 	const { emitter } = require('im/messenger/controller/dialog/lib/sticker/src/utils/emitter');
@@ -26,8 +28,9 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/widget/editor', (requi
 	const { StickerCreateView } = require('im/messenger/controller/dialog/lib/sticker/src/ui/grid/element/create');
 	const { UploadingStickerView } = require('im/messenger/controller/dialog/lib/sticker/src/ui/grid/element/uploading');
 	const { StickerView } = require('im/messenger/controller/dialog/lib/sticker/src/ui/grid/element/sticker');
-	const { UploadMenu, ActionType } = require('im/messenger/controller/dialog/lib/sticker/src/ui/menu/upload');
+	const { UploadMenu } = require('im/messenger/controller/dialog/lib/sticker/src/ui/menu/upload');
 	const { PackButton } = require('im/messenger/controller/dialog/lib/sticker/src/ui/button');
+	const { StickerAttachedUploadMenu } = require('im/messenger/controller/dialog/lib/sticker/src/ui/menu/attached-upload');
 
 	const { StickerDialogs } = require('im/messenger/controller/dialog/lib/sticker/src/dialogs');
 	const { StickerNotifier } = require('im/messenger/controller/dialog/lib/sticker/src/notifier');
@@ -141,7 +144,7 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/widget/editor', (requi
 					const menu = new UploadMenu({
 						ui: ref,
 						actions: [{
-							name: ActionType.rename,
+							name: MenuActionType.rename,
 							onItemSelected: async () => {
 								const params = await this.dialogs.renamePack(this.state.title);
 
@@ -194,15 +197,15 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/widget/editor', (requi
 					{
 						return new StickerView({
 							...item,
-							onClick: () => {},
-							onLongClick: this.showStickerMenu,
+							onClick: this.showStickerMenu,
+							onLongClick: this.showAttachedStickerMenu,
 							ref: () => {},
 						});
 					}
 
 					return new UploadingStickerView({
 						...item,
-						onClick: () => {},
+						onClick: this.showUploadMenuSimple,
 						onUploadCancelClick: this.deleteUploadingSticker,
 						onRetryUpload: (id) => {
 							this.uploadQueue.uploadErrorSticker(id);
@@ -308,6 +311,8 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/widget/editor', (requi
 				packId: sticker.packId,
 				packType: sticker.packType,
 				isUploading: true,
+				height: sticker.height,
+				width: sticker.width,
 			}));
 		}
 
@@ -388,10 +393,36 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/widget/editor', (requi
 		};
 
 		showUploadMenu = (id, ref) => {
+			const uploadingSticker = this.state.uploadingFiles
+				.find((sticker) => sticker.stickerId === id)
+			;
+			if (Feature.isMultilevelMessageMenuSupported && uploadingSticker?.localUrl)
+			{
+				const menu = new StickerAttachedUploadMenu({
+					stickerData: { id, uri: uploadingSticker.localUrl },
+					onDelete: () => this.deleteUploadingSticker(id),
+				});
+				menu.show();
+
+				return;
+			}
+
 			const menu = new UploadMenu({
 				ui: ref,
 				actions: [{
-					name: ActionType.delete,
+					name: MenuActionType.delete,
+					onItemSelected: () => this.deleteUploadingSticker(id),
+				}],
+			});
+
+			menu.show();
+		};
+
+		showUploadMenuSimple = (id, ref) => {
+			const menu = new UploadMenu({
+				ui: ref,
+				actions: [{
+					name: MenuActionType.delete,
 					onItemSelected: () => this.deleteUploadingSticker(id),
 				}],
 			});
@@ -403,12 +434,40 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/widget/editor', (requi
 		 * @param {StickerViewClickData} stickerData
 		 * @param ref
 		 */
-		showStickerMenu = (stickerData, ref) => {
-			logger.log('showStickerMenu', stickerData);
+		showAttachedStickerMenu = (stickerData, ref) => {
+			logger.log('showAttachedStickerMenu', stickerData);
+
+			if (Feature.isMultilevelMessageMenuSupported)
+			{
+				const menu = new StickerAttachedUploadMenu({
+					stickerData,
+					onDelete: () => this.deleteSticker(stickerData.id),
+				});
+				menu.show();
+
+				return;
+			}
+
 			const menu = new UploadMenu({
 				ui: ref,
 				actions: [{
-					name: ActionType.delete,
+					name: MenuActionType.delete,
+					onItemSelected: () => this.deleteSticker(stickerData.id),
+				}],
+			});
+
+			menu.show();
+		};
+
+		/**
+		 * @param {StickerViewClickData} stickerData
+		 * @param ref
+		 */
+		showStickerMenu = (stickerData, ref) => {
+			const menu = new UploadMenu({
+				ui: ref,
+				actions: [{
+					name: MenuActionType.delete,
 					onItemSelected: () => this.deleteSticker(stickerData.id),
 				}],
 			});

@@ -2,6 +2,7 @@
 	letter-spacing: var(--ui-text-letter-spacing-neg-3);
 	color: var(--ui-color-palette-black-base);
 	padding: 10px 0 10px 0;
+	overflow: hidden;
 }
 
 .mailbox-grid_active-status-container {
@@ -70,6 +71,19 @@
 	align-items: center;
 	gap: 8px;
 	position: relative;
+	overflow: hidden;
+}
+
+.mailbox-grid_email-text {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	min-width: 0;
+	flex: 1;
+}
+
+.mailbox-grid_counter-container {
+	flex-shrink: 0;
 }
 
 .mailbox-grid_list-members {
@@ -170,6 +184,12 @@
 	position: relative;
 }
 
+.mailbox-grid_mailbox-connection-request_action-button {
+	max-width: 160px;
+	height: 28px;
+	position: relative;
+}
+
 .mailbox-grid_last-sync-error-message {
 	color: var(--ui-color-accent-main-alert);
 }
@@ -177,4 +197,17 @@
 .mailbox-grid_list-members-icon_element .ui-icon.ui-icon-common-company i,
 .mailbox-grid_user-list-popup-popup-avatar-new.--icon .ui-icon.ui-icon-common-company i {
 	background-color: #c6cdd3;
+}
+
+.mailbox-grid_row-highlight > td {
+	animation: mailbox-grid-row-blink 1.2s ease-in-out 3;
+}
+
+@keyframes mailbox-grid-row-blink {
+	0%, 100% {
+		background-color: transparent;
+	}
+	50% {
+		background-color: var(--ui-color-accent-soft-blue-3, #EDF7FF);
+	}
 }

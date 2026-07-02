@@ -7,7 +7,7 @@
 }
 .crm-activity-adding-popup .popup-window-buttons {
 	padding: 14px 0 0 0;
-	text-align: left;
+	justify-content: flex-start;
 }
 
 .crm-activity-adding-popup .crm-activity__todo-editor-file-uploader-wrapper {

@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
-(function (exports,ui_vue3_mixins_locMixin,tasks_v2_application_taskCard,tasks_v2_model_users,main_core_events,ui_vue3,ui_vue3_vuex,ui_notificationManager,ui_uploader_tileWidget,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_component_addTaskButton,tasks_v2_component_fields_title,tasks_v2_component_fields_importance,tasks_v2_component_fields_description,tasks_v2_component_elements_fieldList,tasks_v2_component_dropZone,tasks_v2_component_fields_responsible,tasks_v2_component_fields_deadline,tasks_v2_component_fields_checkList,tasks_v2_component_fields_files,tasks_v2_component_fields_group,tasks_v2_lib_idUtils,tasks_v2_provider_service_taskService,main_core,ui_vue3_components_button,tasks_v2_core,tasks_v2_const,tasks_v2_component_elements_hint,tasks_v2_lib_fieldHighlighter,tasks_v2_lib_analytics,tasks_v2_lib_ahaMoments,tasks_v2_provider_service_fileService) {
+(function (exports,ui_vue3_mixins_locMixin,tasks_v2_model_users,main_core_events,ui_vue3,ui_vue3_vuex,ui_notificationManager,ui_uploader_tileWidget,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_application_taskCard,tasks_v2_component_addTaskButton,tasks_v2_component_fields_title,tasks_v2_component_fields_importance,tasks_v2_component_fields_description,tasks_v2_component_elements_fieldList,tasks_v2_component_dropZone,tasks_v2_component_fields_responsible,tasks_v2_component_fields_deadline,tasks_v2_component_fields_checkList,tasks_v2_component_fields_files,tasks_v2_component_fields_group,tasks_v2_lib_idUtils,tasks_v2_provider_service_taskService,tasks_v2_provider_service_viewersService,main_core,ui_vue3_components_button,tasks_v2_core,tasks_v2_const,tasks_v2_component_elements_hint,tasks_v2_lib_fieldHighlighter,tasks_v2_lib_analytics,tasks_v2_lib_ahaMoments,tasks_v2_provider_service_fileService) {
 	'use strict';
 
 	// @vue/component
@@ -383,7 +383,10 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    async addTask() {
 	      var _this$task, _this$$refs, _this$$refs$descripti;
 	      const checklists = this.checklist;
-	      const [id, error] = await tasks_v2_provider_service_taskService.taskService.add(this.task);
+	      const [id, error] = await tasks_v2_provider_service_taskService.taskService.add({
+	        task: this.task,
+	        view: true
+	      });
 	      if (!id) {
 	        this.creationError = true;
 	        ui_notificationManager.Notifier.notifyViaBrowserProvider({
@@ -394,6 +397,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        return;
 	      }
 	      this.taskId = id;
+	      this.showTaskAddedNotification();
 	      this.sendAddTaskAnalytics(true, checklists);
 	      tasks_v2_lib_analytics.analytics.sendDescription(this.analytics, {
 	        hasDescription: main_core.Type.isStringFilled((_this$task = this.task) == null ? void 0 : _this$task.description),
@@ -413,6 +417,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	          options: {}
 	        }]
 	      }));
+	      if (!this.isTemplate) {
+	        tasks_v2_provider_service_viewersService.viewersService.count(this.taskId);
+	      }
 	      this.close();
 	    },
 	    sendAddTaskAnalytics(isSuccess, checklists) {
@@ -467,6 +474,22 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	          taskId: this.taskId
 	        });
 	      }
+	    },
+	    showTaskAddedNotification() {
+	      const url = tasks_v2_application_taskCard.TaskCard.getUrl(this.taskId);
+	      BX.UI.Notification.Center.notify({
+	        id: main_core.Text.getRandom(),
+	        content: main_core.Loc.getMessage('TASKS_V2_TCC_NOTIFY_TASK_CREATED'),
+	        actions: [{
+	          title: main_core.Loc.getMessage('TASKS_V2_TCC_NOTIFY_TASK_DO_VIEW'),
+	          events: {
+	            click: (event, balloon) => {
+	              balloon.close();
+	              BX.SidePanel.Instance.open(url);
+	            }
+	          }
+	        }]
+	      });
 	    },
 	    handleShowingPopup(event) {
 	      main_core_events.EventEmitter.emit(`${tasks_v2_const.EventName.ShowOverlay}:${this.taskId}`);
@@ -527,7 +550,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        return;
 	      }
 	      if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
-	        this.$refs.addTaskButton.handleClick();
+	        void this.$refs.addTaskButton.handleClick();
 	      }
 	    },
 	    destroy() {
@@ -857,5 +880,5 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 
 	exports.TaskCompactCard = TaskCompactCard;
 
-}((this.BX.Tasks.V2.Application = this.BX.Tasks.V2.Application || {}),BX.Vue3.Mixins,BX.Tasks.V2.Application,BX.Tasks.V2.Model,BX.Event,BX.Vue3,BX.Vue3.Vuex,BX.UI.NotificationManager,BX.UI.Uploader,BX.UI.IconSet,BX,BX.Tasks.V2.Component,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX,BX.Vue3.Components,BX.Tasks.V2,BX.Tasks.V2.Const,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service));
+}((this.BX.Tasks.V2.Application = this.BX.Tasks.V2.Application || {}),BX.Vue3.Mixins,BX.Tasks.V2.Model,BX.Event,BX.Vue3,BX.Vue3.Vuex,BX.UI.NotificationManager,BX.UI.Uploader,BX.UI.IconSet,BX,BX.Tasks.V2.Application,BX.Tasks.V2.Component,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX,BX.Vue3.Components,BX.Tasks.V2,BX.Tasks.V2.Const,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service));
 //# sourceMappingURL=task-compact-card.bundle.js.map

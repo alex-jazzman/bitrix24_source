@@ -21,6 +21,7 @@ Extension::load([
 	'ui.dialogs.messagebox',
 	'ui.hint',
 	'ui.buttons',
+	'ui.icons',
 	'ui.alerts',
 	'ui.system.dialog',
 ]);

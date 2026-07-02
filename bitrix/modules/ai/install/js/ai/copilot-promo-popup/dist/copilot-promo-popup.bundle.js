@@ -9,8 +9,8 @@ this.BX = this.BX || {};
 	      en: '/bitrix/js/ai/copilot-promo-popup/videos/en/tasks.webm',
 	      ru: '/bitrix/js/ai/copilot-promo-popup/videos/ru/tasks.webm'
 	    },
-	    title: 'CoPilot',
-	    text: getTextWithReplaceAccent('COPILOT_PROMO_POPUP_TASKS_TEXT')
+	    title: getCopilotName(),
+	    text: getTextWithReplaceAccent('COPILOT_PROMO_POPUP_TASKS_TEXT_MSGVER_1')
 	  },
 	  liveFeedEditor: {
 	    videoSrc: {
@@ -19,7 +19,7 @@ this.BX = this.BX || {};
 	    },
 	    videoContainerMinHeight: 213,
 	    title: 'CoPilot',
-	    text: getTextWithReplaceAccent('COPILOT_PROMO_POPUP_LIVEFEED_EDITOR_TEXT')
+	    text: getTextWithReplaceAccent('COPILOT_PROMO_POPUP_LIVEFEED_EDITOR_TEXT_MSGVER_1')
 	  },
 	  siteWithCopilot: {
 	    videoSrc: {

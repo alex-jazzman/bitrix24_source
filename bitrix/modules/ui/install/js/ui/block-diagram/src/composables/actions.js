@@ -1,4 +1,4 @@
-import { toValue, toRaw, markRaw } from 'ui.vue3';
+import { toValue, markRaw } from 'ui.vue3';
 import { PORT_POSITION } from '../constants';
 import { commandToArray } from '../utils';
 import { useAutoScroll } from './autoscroll';
@@ -24,8 +24,10 @@ export type UseActions = {
 	setHistoryConnectionsCurrentState: (connections: DiagramConnection[]) => void,
 	isExistConnection: (connection: DiagramConnection) => boolean,
 	addConnection: (connection: DiagramAddConnection) => void,
+	addConnections: (connections: DiagramConnection[]) => void,
 	deleteConnectionById: (connectionId: DiagramConnectionId) => void,
 	addBlock: (block: DiagramBlock) => void,
+	addBlocks: (...blocks: DiagramBlock[]) => void,
 	updateBlockPositionByIndex: (index: number, x: number, y: number) => void,
 	updateBlock: (newBlock: DiagramBlock) => void,
 	deleteBlockById: (blockId: DiagramBlockId) => void,
@@ -50,7 +52,7 @@ export function useActions({ state, getters, hooks }): UseActions
 		state.zoom = toValue(options.zoom);
 	}
 
-	function setUnmountedBlocks(newBlocks: DiagramBlock[], oldBlocks: DiagramBlock[]): void
+	function setUnmountedBlocks(newBlocks: DiagramBlock[], oldBlocks: DiagramBlock[] = []): void
 	{
 		const oldBlockIdsMap = new Set(oldBlocks.map((block) => block.id));
 		const arrWaitedBlockIds = newBlocks
@@ -73,7 +75,7 @@ export function useActions({ state, getters, hooks }): UseActions
 		}
 	}
 
-	function setUnmountedPorts(newBlocks: DiagramBlock[], oldBlocks: DiagramBlock[]): void
+	function setUnmountedPorts(newBlocks: DiagramBlock[], oldBlocks: DiagramBlock[] = []): void
 	{
 		const oldBlockPortsIds = oldBlocks.reduce((accMap, block) => {
 			block.ports.forEach((port) => accMap.add(`${block.id}_${port.id}`));
@@ -211,6 +213,20 @@ export function useActions({ state, getters, hooks }): UseActions
 		}
 	};
 
+	const addConnections = (newConnections: DiagramAddConnection[]): void => {
+		const notExistConnections = toValue(newConnections)
+			.filter((connection) => !isExistConnection(connection));
+
+		if (notExistConnections.length > 0)
+		{
+			setConnectionsOffsets(notExistConnections);
+			hooks.changedConnections.trigger(
+				commandToArray.commandPush(notExistConnections),
+			);
+			hooks.addConnections.trigger(notExistConnections);
+		}
+	};
+
 	const deleteConnectionById = (connectionId: DiagramConnectionId): void => {
 		const connections = state.connections
 			.filter((connection) => connection.id !== connectionId);
@@ -266,17 +282,48 @@ export function useActions({ state, getters, hooks }): UseActions
 		hooks.changedBlocks.trigger(
 			commandToArray.commandDeleteByIndex(blockIndex),
 		);
-		hooks.deleteBlock.trigger(blockId);
+		hooks.deleteBlock.trigger(state.blocks[blockIndex]);
 	};
 
 	const addBlock = (block: DiagramBlock): void => {
+		setUnmountedPorts([block]);
+		setUnmountedBlocks([block]);
 		hooks.changedBlocks.trigger(
 			commandToArray.commandPush(block),
 		);
 		hooks.addBlock.trigger(block);
 	};
 
-	const updateBlockPositionByIndex = (index: number, x: number, y: nubmer): void => {
+	const addBlocks = (blocks: DiagramBlock[]): void => {
+		setUnmountedPorts(blocks);
+		setUnmountedBlocks(blocks);
+		hooks.changedBlocks.trigger(
+			commandToArray.commandPush(blocks),
+		);
+		hooks.addBlocks.trigger(blocks);
+	};
+
+	const deleteBlock = (block: DiagramBlock[]): void => {
+		deleteBlockById(toValue(block).id);
+	};
+
+	const deleteBlocks = (blocks: DiagramBlock[]): void => {
+		const deleteBlockMapIds = new Set(toValue(blocks).map((block) => block.id));
+
+		hooks.changedBlocks.trigger(
+			commandToArray.commandReplace(
+				state.blocks.filter((block) => !deleteBlockMapIds.has(block.id)),
+			),
+		);
+		hooks.deleteBlocks.trigger(blocks);
+	};
+
+	const addBlocksAndConnections = (newBlocks: DiagramBlocks[], newConnections: DiagramConnection[]): void => {
+		addBlocks(newBlocks);
+		addConnections(newConnections);
+	};
+
+	const updateBlockPositionByIndex = (index: number, x: number, y: number): void => {
 		state.blocks[index].position.x = x;
 		state.blocks[index].position.y = y;
 	};
@@ -289,10 +336,10 @@ export function useActions({ state, getters, hooks }): UseActions
 			return;
 		}
 
+		hooks.updateBlock.trigger(state.blocks[blockIndex], newBlock);
 		hooks.changedBlocks.trigger(
 			commandToArray.commandUpdateByIndex(blockIndex, newBlock),
 		);
-		hooks.updateBlock.trigger(newBlock);
 	};
 
 	const transformEventToPoint = (point: { clientX: number, clientY: number }): Point => {
@@ -307,33 +354,12 @@ export function useActions({ state, getters, hooks }): UseActions
 		return { x: transformedX, y: transformedY };
 	};
 
-	const setMovingBlock = (block: DiagramBlock): void => {
-		state.movingBlock = toRaw({ ...block });
-		const movingConnections = [];
-
-		block.ports.forEach((port) => {
-			const connections = state.connections.filter((connection) => {
-				const {
-					targetBlockId,
-					targetPortId,
-					sourceBlockId,
-					sourcePortId,
-				} = connection;
-				const isTarget = targetBlockId === block.id && targetPortId === port.id;
-				const isSource = sourceBlockId === block.id && sourcePortId === port.id;
-
-				return isTarget || isSource;
-			});
-
-			movingConnections.push(...connections);
-		});
-
-		state.movingConnections = movingConnections;
+	const setMovingBlock = (blockId: DiagramBlockId): void => {
+		state.movingBlockId = toValue(blockId);
 	};
 
-	const updateMovingBlockPosition = (x: number, y: number): void => {
-		state.movingBlock.position.x = x;
-		state.movingBlock.position.y = y;
+	const resetMovingBlock = (): void => {
+		state.movingBlockId = null;
 	};
 
 	const updateBlockRectById = (blockId: DiagramBlockId, rect): void => {
@@ -341,11 +367,6 @@ export function useActions({ state, getters, hooks }): UseActions
 			...state.blocksRectMap[blockId],
 			...rect,
 		};
-	};
-
-	const resetMovingBlock = (): void => {
-		state.movingBlock = null;
-		state.movingConnections = [];
 	};
 
 	const setHistoryHandlers = ({
@@ -375,29 +396,38 @@ export function useActions({ state, getters, hooks }): UseActions
 			transformY,
 			blockDiagramLeft,
 			blockDiagramTop,
-			boxIntersection,
 			blocks,
 		} = state;
 		const {
-			x = 0,
-			y = 0,
-			width = 0,
-			height = 0,
+			x: newX = 0,
+			y: newY = 0,
+			width: newWidth = 0,
+			height: newHeight = 0,
 		} = toValue(blockElMap).get(toValue(blockId))?.getBoundingClientRect() ?? {};
 
+		const x = (newX / toValue(zoom)) + toValue(transformX) - (toValue(blockDiagramLeft) / toValue(zoom));
+		const y = (newY / toValue(zoom)) + toValue(transformY) - (toValue(blockDiagramTop) / toValue(zoom));
+
 		blocksRectMap[toValue(blockId)] = {
-			x: (x / toValue(zoom)) + toValue(transformX) - (toValue(blockDiagramLeft) / toValue(zoom)),
-			y: (y / toValue(zoom)) + toValue(transformY) - (toValue(blockDiagramTop) / toValue(zoom)),
-			width,
-			height,
+			x,
+			y,
+			width: newWidth,
+			height: newHeight,
 		};
-		boxIntersection?.update(toValue(blockId), {
-			width: width / zoom,
-			height: height / zoom,
-		});
+
 		const block = toValue(blocks).find((b) => b.id === toValue(blockId));
-		block.dimensions.width = width / zoom;
-		block.dimensions.height = height / zoom;
+
+		updateBlock({
+			...toValue(block),
+			position: {
+				x,
+				y,
+			},
+			dimensions: {
+				width: newWidth / zoom,
+				height: newHeight / zoom,
+			},
+		});
 	};
 
 	const updatePort = (
@@ -437,8 +467,8 @@ export function useActions({ state, getters, hooks }): UseActions
 
 		portsRectMap[blockId][portId].x = (x / zoom) + toValue(transformX) - (toValue(blockDiagramLeft) / zoom);
 		portsRectMap[blockId][portId].y = (y / zoom) + toValue(transformY) - (toValue(blockDiagramTop) / zoom);
-		portsRectMap[blockId][portId].width = width;
-		portsRectMap[blockId][portId].height = height;
+		portsRectMap[blockId][portId].width = width / zoom;
+		portsRectMap[blockId][portId].height = height / zoom;
 	};
 
 	const updatePortSegmentSizes = (
@@ -452,6 +482,10 @@ export function useActions({ state, getters, hooks }): UseActions
 			blocksRectMap,
 			portsRectMap,
 		} = state;
+		if (!blocksRectMap[blockId] || !portsRectMap[blockId]?.[portId])
+		{
+			return;
+		}
 		const {
 			x: blockX,
 			y: blockY,
@@ -496,30 +530,24 @@ export function useActions({ state, getters, hooks }): UseActions
 
 	const autoScroll = useAutoScroll(state, { setCamera });
 
-	const updateTree = (blocks: Array<DiagramBlock>) => {
-		toValue(state.boxIntersection).updateTree(blocks);
-	};
-
-	const calculateIntersectedBlockIds = () => {
+	const transformMouseEventToPoint = (event: MouseEvent): Point => {
 		const {
+			zoom,
+			blockDiagramTop,
+			blockDiagramLeft,
 			transformX,
 			transformY,
-			zoom,
-			canvasWidth,
-			canvasHeight,
-			boxIntersection,
 		} = state;
-		boxIntersection.calculateIntersectedBlockIds({
-			transformX,
-			transformY,
-			zoom,
-			width: canvasWidth,
-			height: canvasHeight,
-		});
-	};
 
-	const updateBlockRectangle = (blockId: DiagramBlockId, rect: Partial<DOMRect>) => {
-		toValue(state.boxIntersection).updateRectangle(blockId, rect);
+		let x = event.clientX / toValue(zoom);
+		x -= toValue(blockDiagramLeft) / toValue(zoom);
+		x += toValue(transformX);
+
+		let y = event.clientY / toValue(zoom);
+		y -= toValue(blockDiagramTop) / toValue(zoom);
+		y += toValue(transformY);
+
+		return { x, y };
 	};
 
 	return {
@@ -534,14 +562,18 @@ export function useActions({ state, getters, hooks }): UseActions
 		updateCanvasTransform,
 		isExistConnection,
 		addConnection,
+		addConnections,
 		deleteConnectionById,
 		addBlock,
+		addBlocks,
+		deleteBlock,
+		deleteBlocks,
+		addBlocksAndConnections,
 		updateBlockPositionByIndex,
 		updateBlock,
 		deleteBlockById,
 		transformEventToPoint,
 		setMovingBlock,
-		updateMovingBlockPosition,
 		resetMovingBlock,
 		setHistoryHandlers,
 		setPortOffsetByBlockId,
@@ -555,8 +587,6 @@ export function useActions({ state, getters, hooks }): UseActions
 		stopAutoScroll: autoScroll.stop,
 		updateMousePosition: autoScroll.updateMousePosition,
 		setCamera,
-		updateTree,
-		updateBlockRectangle,
-		calculateIntersectedBlockIds,
+		transformMouseEventToPoint,
 	};
 }

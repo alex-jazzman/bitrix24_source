@@ -2,158 +2,139 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,main_core_events,im_v2_lib_layout,im_v2_const,im_v2_application_core) {
+(function (exports, main_core_events, im_v2_application_core, im_v2_lib_layout, im_v2_const) {
 	'use strict';
 
-	const EVENT_NAMESPACE = 'BX.Messenger.v2.CreateChatManager';
-	var _instance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("instance");
-	var _isCreating = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isCreating");
-	var _chatType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("chatType");
-	var _chatTitle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("chatTitle");
-	var _chatAvatarFile = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("chatAvatarFile");
-	var _chatFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("chatFields");
-	var _preselectedMembers = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("preselectedMembers");
-	var _includeCurrentUser = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("includeCurrentUser");
-	var _ownerId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("ownerId");
-	class CreateChatManager extends main_core_events.EventEmitter {
-	  static getInstance() {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance]) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance] = new this();
-	    }
-	    return babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance];
-	  }
-	  constructor(props) {
-	    super(props);
-	    Object.defineProperty(this, _isCreating, {
-	      writable: true,
-	      value: false
-	    });
-	    Object.defineProperty(this, _chatType, {
-	      writable: true,
-	      value: im_v2_const.ChatType.chat
-	    });
-	    Object.defineProperty(this, _chatTitle, {
-	      writable: true,
-	      value: ''
-	    });
-	    Object.defineProperty(this, _chatAvatarFile, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _chatFields, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _preselectedMembers, {
-	      writable: true,
-	      value: []
-	    });
-	    Object.defineProperty(this, _includeCurrentUser, {
-	      writable: true,
-	      value: true
-	    });
-	    Object.defineProperty(this, _ownerId, {
-	      writable: true,
-	      value: void 0
-	    });
-	    this.setEventNamespace(EVENT_NAMESPACE);
-	  }
-	  startChatCreation(chatTypeToCreate, params = {}) {
-	    const {
-	      clearCurrentCreation = true
-	    } = params;
-	    if (clearCurrentCreation) {
-	      this.setCreationStatus(false);
-	    }
-	    void im_v2_lib_layout.LayoutManager.getInstance().setLayout({
-	      name: im_v2_const.Layout.createChat,
-	      entityId: chatTypeToCreate
-	    });
-	  }
-	  isCreating() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _isCreating)[_isCreating];
-	  }
-	  getChatType() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _chatType)[_chatType];
-	  }
-	  getChatTitle() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _chatTitle)[_chatTitle];
-	  }
-	  getChatAvatar() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _chatAvatarFile)[_chatAvatarFile];
-	  }
-	  setChatType(type) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _chatType)[_chatType] = type;
-	    this.emit(CreateChatManager.events.chatTypeChange, type);
-	  }
-	  setCreationStatus(flag) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _isCreating)[_isCreating] = flag;
-	    this.clearFields();
-	    this.emit(CreateChatManager.events.creationStatusChange, flag);
-	  }
-	  setChatTitle(chatTitle) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _chatTitle)[_chatTitle] = chatTitle;
-	    this.emit(CreateChatManager.events.titleChange, chatTitle);
-	  }
-	  setChatAvatar(chatAvatarFile) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _chatAvatarFile)[_chatAvatarFile] = chatAvatarFile;
-	    this.emit(CreateChatManager.events.avatarChange, chatAvatarFile);
-	  }
-	  saveFields(chatFields) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _chatFields)[_chatFields] = chatFields;
-	  }
-	  getFields() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _chatFields)[_chatFields];
-	  }
-	  clearFields() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _chatFields)[_chatFields] = null;
-	    this.setChatTitle('');
-	    this.setChatAvatar(null);
-	  }
-	  setPreselectedMembers(preselectedMembers) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _preselectedMembers)[_preselectedMembers] = preselectedMembers;
-	  }
-	  getChatMembers() {
-	    const mappedMembers = babelHelpers.classPrivateFieldLooseBase(this, _preselectedMembers)[_preselectedMembers].map(item => [item.type, item.id]);
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _includeCurrentUser)[_includeCurrentUser]) {
-	      mappedMembers.push(['user', im_v2_application_core.Core.getUserId()]);
-	    }
-	    return mappedMembers;
-	  }
-	  setIncludeCurrentUser(value) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _includeCurrentUser)[_includeCurrentUser] = value;
-	  }
-	  setOwnerId(ownerId) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _ownerId)[_ownerId] = ownerId;
-	  }
-	  getOwnerId() {
-	    var _babelHelpers$classPr;
-	    return (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _ownerId)[_ownerId]) != null ? _babelHelpers$classPr : im_v2_application_core.Core.getUserId();
-	  }
-	  getUndeselectedItems() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _includeCurrentUser)[_includeCurrentUser]) {
-	      return [['user', im_v2_application_core.Core.getUserId()]];
-	    }
-	    return [];
-	  }
-	  clearExternalFields() {
-	    this.setOwnerId(null);
-	    this.setIncludeCurrentUser(true);
-	    this.setPreselectedMembers([]);
-	  }
-	}
-	CreateChatManager.events = {
-	  creationStatusChange: 'creationStatusChange',
-	  titleChange: 'titleChange',
-	  avatarChange: 'avatarChange',
-	  chatTypeChange: 'chatTypeChange'
+	const CreatableChatType = {
+		chat: 'chat',
+		videoconf: 'videoconf',
+		channel: 'channel',
+		collab: 'collab',
+		collabChat: 'collabChat'
 	};
-	Object.defineProperty(CreateChatManager, _instance, {
-	  writable: true,
-	  value: void 0
-	});
+	class CreateChatManager extends main_core_events.EventEmitter {
+		static events = {
+			creationStatusChange: 'creationStatusChange',
+			titleChange: 'titleChange',
+			avatarChange: 'avatarChange',
+			chatTypeChange: 'chatTypeChange'
+		};
+		static #instance;
+		#isCreating = false;
+		#chatType = CreatableChatType.chat;
+		#chatTitle = '';
+		#chatAvatarFile = null;
+		#chatFields;
+		// preset fields - pre-configured one-time values
+		#parentChatId;
+		#preselectedMembers = [];
+		#includeCurrentUser = true;
+		#ownerId;
+		static getInstance() {
+			if (!this.#instance) {
+				this.#instance = new this();
+			}
+			return this.#instance;
+		}
+		constructor(props) {
+			super(props);
+			this.setEventNamespace('BX.Messenger.v2.CreateChatManager');
+		}
+		startChatCreation(chatTypeToCreate, params = {}) {
+			const {
+				clearCurrentCreation = true,
+				preselectedMembers = [],
+				includeCurrentUser = true,
+				ownerId = null,
+				parentChatId = 0
+			} = params;
+			if (clearCurrentCreation) {
+				this.setCreationStatus(false);
+			}
+			this.#parentChatId = parentChatId;
+			this.#preselectedMembers = preselectedMembers;
+			this.#includeCurrentUser = includeCurrentUser;
+			this.#ownerId = ownerId;
+			return im_v2_lib_layout.LayoutManager.getInstance().setLayout({
+				name: im_v2_const.Layout.createChat,
+				entityId: chatTypeToCreate
+			});
+		}
+		isCreating() {
+			return this.#isCreating;
+		}
+		isCreationLayoutActive(type) {
+			const {
+				name: currentLayoutName,
+				entityId: currentLayoutChatType
+			} = im_v2_application_core.Core.getStore().getters['application/getLayout'];
+			return currentLayoutName === im_v2_const.Layout.createChat && currentLayoutChatType === type;
+		}
+		getChatType() {
+			return this.#chatType;
+		}
+		getChatTitle() {
+			return this.#chatTitle;
+		}
+		getChatAvatar() {
+			return this.#chatAvatarFile;
+		}
+		getParentChatId() {
+			return this.#parentChatId;
+		}
+		setChatType(type) {
+			this.#chatType = type;
+			this.emit(CreateChatManager.events.chatTypeChange, type);
+		}
+		setCreationStatus(flag) {
+			this.#isCreating = flag;
+			this.clearFields();
+			this.emit(CreateChatManager.events.creationStatusChange, flag);
+		}
+		setChatTitle(chatTitle) {
+			this.#chatTitle = chatTitle;
+			this.emit(CreateChatManager.events.titleChange, chatTitle);
+		}
+		setChatAvatar(chatAvatarFile) {
+			this.#chatAvatarFile = chatAvatarFile;
+			this.emit(CreateChatManager.events.avatarChange, chatAvatarFile);
+		}
+		saveFields(chatFields) {
+			this.#chatFields = chatFields;
+		}
+		getFields() {
+			return this.#chatFields;
+		}
+		clearFields() {
+			this.#chatFields = null;
+			this.setChatTitle('');
+			this.setChatAvatar(null);
+		}
+		getChatMembers() {
+			const mappedMembers = this.#preselectedMembers.map(item => [item.type, item.id]);
+			if (this.#includeCurrentUser) {
+				mappedMembers.push(['user', im_v2_application_core.Core.getUserId()]);
+			}
+			return mappedMembers;
+		}
+		getOwnerId() {
+			return this.#ownerId ?? im_v2_application_core.Core.getUserId();
+		}
+		getUndeselectedItems() {
+			if (this.#includeCurrentUser) {
+				return [['user', im_v2_application_core.Core.getUserId()]];
+			}
+			return [];
+		}
+		clearPresetFields() {
+			this.#ownerId = null;
+			this.#includeCurrentUser = true;
+			this.#preselectedMembers = [];
+		}
+	}
 
+	exports.CreatableChatType = CreatableChatType;
 	exports.CreateChatManager = CreateChatManager;
 
-}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Application));
+})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX.Event, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Const);
 //# sourceMappingURL=create-chat.bundle.js.map

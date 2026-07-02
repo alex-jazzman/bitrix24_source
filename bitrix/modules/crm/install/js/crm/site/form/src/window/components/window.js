@@ -47,17 +47,18 @@ let windowMixin = {
 	props: [
 		'show', 'title', 'position', 'vertical',
 		'maxWidth', 'zIndex', 'scrollDown', 'scrollDownText',
-		'mountId', 'hideOnOverlayClick'
+		'mountId', 'hideOnOverlayClick', 'messages',
 	],
 	components: {
 		'b24-overlay': Overlay,
 		'b24-scrollable': Scrollable,
 		MountingPortal,
 	},
-	data: function ()
+	data(): { escHandler: ?Function, previousActiveElement: ?HTMLElement }
 	{
 		return {
 			escHandler: null,
+			previousActiveElement: null,
 		};
 	},
 	methods: {
@@ -95,15 +96,46 @@ let windowMixin = {
 		{
 			return getPortalSelector(mountId);
 		},
+
+		setFocusToPopup(): void
+		{
+			if (!this.previousActiveElement && document.activeElement)
+			{
+				this.previousActiveElement = document.activeElement;
+			}
+
+			this.$refs.closeButton?.focus();
+		},
+
+		restoreFocus(): void
+		{
+			this.previousActiveElement?.focus();
+			this.previousActiveElement = null;
+		},
 	},
 	mounted ()
 	{
 		this.listenEsc();
 	},
+	updated(): void
+	{
+		if (this.show)
+		{
+			this.$nextTick(() => {
+				this.setFocusToPopup();
+			});
+		}
+	},
 	watch: {
 		show ()
 		{
 			this.listenEsc();
+			if (!this.show)
+			{
+				this.$nextTick(() => {
+					this.restoreFocus();
+				});
+			}
 		},
 	},
 	computed: {
@@ -111,7 +143,11 @@ let windowMixin = {
 		{
 			return this.zIndex || 200;
 		},
-	}
+		closeButtonLabel(): string
+		{
+			return this.messages?.get('fieldDateClose') || '';
+		},
+	},
 };
 
 const Popup = {
@@ -134,7 +170,7 @@ const Popup = {
 						<div class="b24-window-popup-wrapper" 
 							:style="{ maxWidth: maxWidth + 'px' }"
 						>
-							<button @click="hide()" type="button" class="b24-window-close" :style="{ zIndex: zIndexComputed + 20}" ></button>
+							<button ref="closeButton" @click="hide()" type="button" class="b24-window-close" :style="{ zIndex: zIndexComputed + 20}" :aria-label="closeButtonLabel"></button>
 							<b24-scrollable
 								:show="show"
 								:enabled="scrollDown"
@@ -177,7 +213,7 @@ const Panel = {
 					:class="classes()"
 					v-show="show"
 				>
-					<button @click="hide()" type="button" class="b24-window-close" :style="{ zIndex: zIndexComputed + 20}" ></button>
+					<button ref="closeButton" @click="hide()" type="button" class="b24-window-close" :style="{ zIndex: zIndexComputed + 20}" :aria-label="closeButtonLabel"></button>
 					<b24-scrollable
 						:show="show"
 						:enabled="scrollDown"
@@ -212,7 +248,7 @@ const Widget = {
 					:class="classes()" 
 					v-show="show"
 				>
-					<button @click="hide()" type="button" class="b24-window-close"></button>
+					<button ref="closeButton" @click="hide()" type="button" class="b24-window-close" :aria-label="closeButtonLabel"></button>
 					<div class="b24-window-widget-body">
 						<slot></slot>
 					</div>
@@ -246,5 +282,5 @@ export {
 	Popup,
 	Panel,
 	Widget,
-	Definition
-}
+	Definition,
+};

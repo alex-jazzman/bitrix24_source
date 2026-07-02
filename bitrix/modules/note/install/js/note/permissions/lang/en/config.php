@@ -1,0 +1,26 @@
+<?php
+$MESS["NOTE_PERMISSIONS_POPUP_ADD"] = "Add";
+$MESS["NOTE_PERMISSIONS_POPUP_ALL_EMPLOYEES"] = "All users";
+$MESS["NOTE_PERMISSIONS_POPUP_CANCEL"] = "Cancel";
+$MESS["NOTE_PERMISSIONS_POPUP_CREATE_BUTTON"] = "Create";
+$MESS["NOTE_PERMISSIONS_POPUP_CREATE_ERROR"] = "Could not create space.";
+$MESS["NOTE_PERMISSIONS_POPUP_CREATE_SUCCESS"] = "Space has been created.";
+$MESS["NOTE_PERMISSIONS_POPUP_HINT_EDIT_DOCUMENT"] = "Permission to edit article text, add blocks and files to article.";
+$MESS["NOTE_PERMISSIONS_POPUP_HINT_MANAGE"] = "Permission to create, move, archive and delete articles; rename space.";
+$MESS["NOTE_PERMISSIONS_POPUP_HINT_MODERATE"] = "Permission to delete space, and set space and article access permissions. Full access to all space settings.";
+$MESS["NOTE_PERMISSIONS_POPUP_HINT_VIEW"] = "Permission to view space's articles and download attached files.";
+$MESS["NOTE_PERMISSIONS_POPUP_HINT_VIEW_DOCUMENT"] = "Permission to view article and download attached files.";
+$MESS["NOTE_PERMISSIONS_POPUP_LEVEL_EDIT"] = "Edit";
+$MESS["NOTE_PERMISSIONS_POPUP_LEVEL_MANAGE"] = "Moderate";
+$MESS["NOTE_PERMISSIONS_POPUP_LEVEL_MODERATE"] = "Manage";
+$MESS["NOTE_PERMISSIONS_POPUP_LEVEL_VIEW"] = "View";
+$MESS["NOTE_PERMISSIONS_POPUP_LOAD_ERROR"] = "Could not get space permissions.";
+$MESS["NOTE_PERMISSIONS_POPUP_LOAD_ERROR_DOCUMENT"] = "Could not get article permissions.";
+$MESS["NOTE_PERMISSIONS_POPUP_NAME_PLACEHOLDER"] = "Space name";
+$MESS["NOTE_PERMISSIONS_POPUP_ROLLBACK_FAILED"] = "Error creating space. Please refresh the page.";
+$MESS["NOTE_PERMISSIONS_POPUP_SAVE"] = "Save";
+$MESS["NOTE_PERMISSIONS_POPUP_SAVE_ERROR"] = "Could not save the changes.";
+$MESS["NOTE_PERMISSIONS_POPUP_SAVE_ERROR_DOCUMENT"] = "Could not save article permissions.";
+$MESS["NOTE_PERMISSIONS_POPUP_SAVE_SUCCESS"] = "The changes have been saved.";
+$MESS["NOTE_PERMISSIONS_POPUP_SAVE_SUCCESS_DOCUMENT"] = "Article permissions have been saved.";
+$MESS["NOTE_PERMISSIONS_POPUP_TITLE_EDIT_DOCUMENT"] = "Article access permissions";

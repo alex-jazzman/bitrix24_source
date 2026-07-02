@@ -15,6 +15,8 @@ jn.define('im/messenger/lib/visibility-manager/visibility-manager', (require, ex
 
 	const VISIBILITY_MANAGER_STORAGE_NAME = 'immobileVisibilityManager';
 	const VISIBLE_DIALOG_STORAGE_KEY = 'visibleDialog';
+	const STACK_CACHE_TTL = 1000;
+	const VISIBLE_DIALOG_CACHE_TTL = 500;
 
 	class VisibilityManager
 	{
@@ -49,6 +51,8 @@ jn.define('im/messenger/lib/visibility-manager/visibility-manager', (require, ex
 		{
 			this.storage = new MemoryStorage(VISIBILITY_MANAGER_STORAGE_NAME);
 			this.stackCache = new Map();
+			this.pendingContextRequests = new Map();
+			this.visibleDialogCache = null;
 		}
 
 		/**
@@ -160,7 +164,9 @@ jn.define('im/messenger/lib/visibility-manager/visibility-manager', (require, ex
 				return promise;
 			}
 
-			if (topItem.code === visibleDialog.dialogCode && widgetSettings.dialogId === visibleDialog.dialogId)
+			const isDialogCodeMatch = topItem.code === visibleDialog.dialogCode;
+			const isDialogIdMatch = !widgetSettings.dialogId || widgetSettings.dialogId === visibleDialog.dialogId;
+			if (isDialogCodeMatch && isDialogIdMatch)
 			{
 				logger.info(`${this.constructor.name}: dialog is visible after stack check. We were looking ${dialogId} ${dialogCode}`);
 				resolve(true);
@@ -179,6 +185,8 @@ jn.define('im/messenger/lib/visibility-manager/visibility-manager', (require, ex
 		 */
 		async saveVisibleDialogInfo(visibleDialogInfo)
 		{
+			this.visibleDialogCache = { value: visibleDialogInfo, timestamp: Date.now() };
+
 			return this.storage.set(VISIBLE_DIALOG_STORAGE_KEY, visibleDialogInfo);
 		}
 
@@ -188,9 +196,11 @@ jn.define('im/messenger/lib/visibility-manager/visibility-manager', (require, ex
 		 */
 		async removeVisibleDialogInfoByDialogCode(dialogCode)
 		{
-			const visibleDialog = await this.getVisibleDialogInfo();
+			// read directly from storage to avoid cross-context race with TTL cache
+			const visibleDialog = await this.storage.get(VISIBLE_DIALOG_STORAGE_KEY);
 			if (visibleDialog?.dialogCode === dialogCode)
 			{
+				this.visibleDialogCache = { value: false, timestamp: Date.now() };
 				// false instead of null because we can't write null to MemoryStorage on Android build 3306
 				await this.storage.set(VISIBLE_DIALOG_STORAGE_KEY, false);
 			}
@@ -201,7 +211,16 @@ jn.define('im/messenger/lib/visibility-manager/visibility-manager', (require, ex
 		 */
 		async getVisibleDialogInfo()
 		{
-			return this.storage.get(VISIBLE_DIALOG_STORAGE_KEY);
+			const cached = this.visibleDialogCache;
+			if (cached && Date.now() - cached.timestamp < VISIBLE_DIALOG_CACHE_TTL)
+			{
+				return cached.value;
+			}
+
+			const value = await this.storage.get(VISIBLE_DIALOG_STORAGE_KEY);
+			this.visibleDialogCache = { value, timestamp: Date.now() };
+
+			return value;
 		}
 
 		/**
@@ -210,27 +229,41 @@ jn.define('im/messenger/lib/visibility-manager/visibility-manager', (require, ex
 		 */
 		async getContext(dialogCode)
 		{
-			if (this.stackCache.has(dialogCode))
+			const cached = this.stackCache.get(dialogCode);
+			if (cached?.timestamp && Date.now() - cached.timestamp < STACK_CACHE_TTL)
 			{
 				logger.warn(`${this.constructor.name}: we are looking for a dialog by cached context`);
 
-				return this.stackCache.get(dialogCode);
+				return cached.context;
 			}
 
-			try
+			if (this.pendingContextRequests.has(dialogCode))
 			{
-				logger.warn(`${this.constructor.name}: we are looking for a dialog by real getNavigationContext`);
-				const context = await VisibilityManager.getNavigationContext();
-				this.stackCache.set(dialogCode, context);
+				logger.warn(`${this.constructor.name}: we are waiting for a pending getNavigationContext`);
 
-				return context;
+				return this.pendingContextRequests.get(dialogCode);
 			}
-			catch (error)
-			{
-				logger.error(error);
 
-				return null;
-			}
+			const promise = VisibilityManager.getNavigationContext()
+				.then((context) => {
+					this.stackCache.set(dialogCode, { context, timestamp: Date.now() });
+					this.pendingContextRequests.delete(dialogCode);
+
+					return context;
+				})
+				.catch((error) => {
+					this.pendingContextRequests.delete(dialogCode);
+					logger.error(`${this.constructor.name}.getContext.getNavigationContext catch:`, error);
+
+					return null;
+				})
+			;
+
+			this.pendingContextRequests.set(dialogCode, promise);
+
+			logger.warn(`${this.constructor.name}: we are looking for a dialog by real getNavigationContext`);
+
+			return promise;
 		}
 
 		/**

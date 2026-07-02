@@ -1,7 +1,7 @@
 import { Dom, Type } from 'main.core';
-import EventType from './enums/event-type';
+
 import ActionType from './enums/action-type';
-import { ITEM_ACTION_EVENT } from './layout';
+import EventType from './enums/event-type';
 
 export class Action
 {
@@ -21,7 +21,7 @@ export class Action
 		return new Promise((resolve, reject) => {
 			if (this.isLayoutJsEvent())
 			{
-				vueComponent.$Bitrix.eventEmitter.emit(ITEM_ACTION_EVENT, {
+				vueComponent.$Bitrix.eventEmitter.emit(EventType.ITEM_ACTION, {
 					event: EventType.LAYOUT_EVENT,
 					value: {
 						id: vueComponent.$parent?.getIdByComponentInstance
@@ -108,7 +108,7 @@ export class Action
 			}
 			else if (this.isFooterButtonClick())
 			{
-				vueComponent.$Bitrix.eventEmitter.emit(ITEM_ACTION_EVENT, {
+				vueComponent.$Bitrix.eventEmitter.emit(EventType.ITEM_ACTION, {
 					event: EventType.FOOTER_BUTTON_CLICK,
 					value: this.#value,
 				});

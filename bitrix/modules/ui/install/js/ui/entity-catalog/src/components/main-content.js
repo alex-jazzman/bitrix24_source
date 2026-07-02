@@ -1,6 +1,5 @@
 import { Type } from 'main.core';
 import { mapState } from 'ui.vue3.pinia';
-import { GroupData } from '@/types/group';
 import { ItemListAdvice } from './item-list-advice';
 import { ItemList} from './item-list';
 import { EmptyContent } from './stubs/empty-content';
@@ -27,7 +26,6 @@ export const MainContent = {
 			type: Array,
 		},
 		group: {
-			type: GroupData,
 			required: true,
 		},
 		searching: {

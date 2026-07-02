@@ -2,6 +2,7 @@
 
 $MESS['DASHBOARD_CREATE_FORM_TITLE'] = 'Создание отчёта';
 $MESS['DASHBOARD_CREATE_FORM_DEFAULT_TITLE'] = 'Новый отчёт';
+$MESS['DASHBOARD_CREATE_FORM_DEFAULT_TITLE_NUMBER'] = 'Новый отчёт (#NUMBER#)';
 $MESS['DASHBOARD_CREATE_FORM_OPEN_BIC_UNAVAILABLE_ERROR'] = 'Функционал BI Конструктора недоступен';
 $MESS['DASHBOARD_CREATE_FORM_OPEN_BIC_ACCESS_ERROR'] = 'Недостаточно прав для работы с BI Конструктором';
 $MESS['DASHBOARD_CREATE_FORM_OPEN_ACCESS_ERROR'] = 'Недостаточно прав для создания отчёта';

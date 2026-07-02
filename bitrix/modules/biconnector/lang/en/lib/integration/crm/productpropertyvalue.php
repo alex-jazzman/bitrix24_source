@@ -7,3 +7,4 @@ $MESS["CRM_BIC_PRODUCT_PROPERTY_VALUE_FIELD_VALUE_MSGVER_1"] = "Value ID";
 $MESS["CRM_BIC_PRODUCT_PROPERTY_VALUE_FIELD_VALUE_NAME"] = "Value";
 $MESS["CRM_BIC_PRODUCT_PROPERTY_VALUE_FIELD_VALUE_NAME_FULL"] = "Property value";
 $MESS["CRM_BIC_PRODUCT_PROPERTY_VALUE_TABLE"] = "Product property values";
+$MESS["CRM_BIC_PRODUCT_PROPERTY_VALUE_TABLE_DESCRIPTION_FULL"] = "Provides information on the specific values of product properties, such as a particular color or size.";

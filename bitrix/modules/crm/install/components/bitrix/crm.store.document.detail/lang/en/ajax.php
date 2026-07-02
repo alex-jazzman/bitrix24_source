@@ -1,5 +1,6 @@
 <?php
 $MESS["CRM_STORE_DOCUMENT_SD_CART_NOT_FOUND"] = "Order cart was not found";
+$MESS["CRM_STORE_DOCUMENT_SD_CHANGE_BINDING_ERROR"] = "Cannot change associated item.";
 $MESS["CRM_STORE_DOCUMENT_SD_FORM_DATA_MISSING"] = "Some form data are missing";
 $MESS["CRM_STORE_DOCUMENT_SD_INSUFFICIENT_RIGHTS"] = "Insufficient permissions.";
 $MESS["CRM_STORE_DOCUMENT_SD_NO_INVENTORY_MANAGEMENT_ENABLED"] = "Inventory Management is not available on your plan.";

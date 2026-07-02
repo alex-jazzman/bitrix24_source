@@ -1,4 +1,3 @@
-import { BaseEvent } from 'main.core.events';
 import { TagSelector } from 'ui.entity-selector';
 import type { TagSelectorOptions } from 'ui.entity-selector';
 

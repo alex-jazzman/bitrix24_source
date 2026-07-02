@@ -382,7 +382,31 @@ export type CommunicationChannelConnectEvent = {
 	c_element: Dictionary.ELEMENT_MENU_BUTTON
 		| Dictionary.ELEMENT_BANNER_BUTTON
 		| Dictionary.ELEMENT_NO_CONNECTION_BUTTON
+		| Dictionary.ELEMENT_GOTOCHAT
 	,
+};
+
+export type CommunicationChannelInviteEvent = {
+	tool: Dictionary.TOOL_CRM,
+	category: Dictionary.CATEGORY_COMMUNICATION_OPERATIONS,
+	event: Dictionary.EVENT_INVITE,
+	type: Dictionary.TYPE_CHANNEL,
+	c_section: Dictionary.SECTION_LEAD
+		| Dictionary.SECTION_DEAL
+		| Dictionary.SECTION_CONTACT
+		| Dictionary.SECTION_COMPANY
+		| Dictionary.SECTION_DYNAMIC
+		| Dictionary.SECTION_CUSTOM
+		| Dictionary.SECTION_MYCOMPANY
+		| Dictionary.SECTION_SMART_DOCUMENT_CONTACT
+		| Dictionary.SECTION_CATALOG_CONTRACTOR_CONTACT
+		| Dictionary.SECTION_SALESCENTER_SLIDER
+		| Dictionary.SECTION_DOCUMENT
+	,
+	c_sub_section: Dictionary.SUB_SECTION_DETAILS | Dictionary.SUB_SECTION_LIST,
+	c_element?: Dictionary.ELEMENT_GOTOCHAT,
+	p1: CrmMode,
+	p2: string,
 };
 
 export type CommunicationEditorInteractionEvent = {

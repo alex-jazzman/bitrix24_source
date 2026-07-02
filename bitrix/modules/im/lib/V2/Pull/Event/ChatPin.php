@@ -5,18 +5,23 @@ declare(strict_types = 1);
 namespace Bitrix\Im\V2\Pull\Event;
 
 use Bitrix\Im\V2\Chat;
-use Bitrix\Im\V2\Chat\PrivateChat;
-use Bitrix\Im\V2\Entity\User\UserCollection;
-use Bitrix\Im\V2\Message\MessagePopupItem;
+use Bitrix\Im\V2\Pull\Dto\Diff;
 use Bitrix\Im\V2\Pull\EventType;
-use Bitrix\Im\V2\Rest\RestAdapter;
+use Bitrix\Im\V2\Pull\RecentPreviewPullTrait;
 
 class ChatPin extends BaseChatEvent
 {
+	use RecentPreviewPullTrait;
+
 	protected int $userId;
 	protected bool $active;
 
-	public function __construct(Chat $chat, bool $active, $userId)
+	public function __construct(
+		Chat $chat,
+		bool $active,
+		$userId,
+		protected readonly ?int $folderId = null,
+	)
 	{
 		parent::__construct($chat);
 
@@ -26,33 +31,24 @@ class ChatPin extends BaseChatEvent
 
 	protected function getBasePullParamsInternal(): array
 	{
-		$messages = new MessagePopupItem([$this->chat->getLastMessageId()], true);
-		$users = $this->getUsersForRest();
+		$payload = array_merge(
+			$this->getBaseRecentPreviewParams($this->chat),
+			[
+				'active' => $this->active,
+			]
+		);
 
-		$restAdapter = new RestAdapter($messages, $users);
-		$pull = $restAdapter->toRestFormat([
-			'WITHOUT_OWN_REACTIONS' => true,
-			'MESSAGE_ONLY_COMMON_FIELDS' => true,
-		]);
-
-		$pull['chat'] = $this->chat->toPullFormat();
-		$pull['counterType'] = $this->chat->getCounterType();
-		$pull['recentConfig'] = $this->chat->getRecentConfig()->toPullFormat();
-
-		$pull['active'] = $this->active;
-		$pull['dialogId'] = $this->chat->getDialogId();
-
-		return $pull;
-	}
-
-	protected function getUsersForRest(): UserCollection
-	{
-		if ($this->chat instanceof PrivateChat)
+		if ($this->folderId !== null)
 		{
-			return new UserCollection([$this->chat->getCompanionId()]);
+			$payload['folderId'] = $this->folderId;
 		}
 
-		return new UserCollection();
+		return $payload;
+	}
+
+	protected function getDiffByUser(int $userId): Diff
+	{
+		return new Diff($userId, $this->getRecentPreviewUserDiffParams($this->chat, $userId));
 	}
 
 	protected function getRecipients(): array

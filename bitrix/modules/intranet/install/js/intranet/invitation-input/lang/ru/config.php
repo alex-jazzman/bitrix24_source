@@ -11,3 +11,7 @@ $MESS['INTRANET_INVITATION_INPUT_ALREADY_IN_COLLAB_PARTIAL'] = 'Некоторы
 $MESS['INTRANET_INVITATION_INPUT_ALREADY_IN_COLLAB_SINGLE'] = 'Пользователь уже участвует в коллабе';
 $MESS['INTRANET_INVITATION_INPUT_ALREADY_IN_COLLAB_ALL'] = 'Все приглашённые уже участвуют в коллабе';
 $MESS['INTRANET_INVITATION_INPUT_NO_USERS'] = 'Не удалось получить пользователей для приглашения';
+
+$MESS['INTRANET_INVITATION_INPUT_ALREADY_IN_PROJECT_PARTIAL'] = 'Некоторые приглашённые уже участвуют в проекте';
+$MESS['INTRANET_INVITATION_INPUT_ALREADY_IN_PROJECT_SINGLE'] = 'Пользователь уже участвует в проекте';
+$MESS['INTRANET_INVITATION_INPUT_ALREADY_IN_PROJECT_ALL'] = 'Все приглашённые уже участвуют в проекте';

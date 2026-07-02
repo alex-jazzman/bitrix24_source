@@ -6,9 +6,7 @@ jn.define('layout/ui/search-bar/search-layout-view', (require, exports, module) 
 	const { Preset } = require('layout/ui/search-bar/preset');
 	const { Counter } = require('layout/ui/search-bar/counter');
 	const { Color, Component } = require('tokens');
-	const {
-		MoreButton,
-	} = require('layout/ui/search-bar/ui');
+	const { MoreButton } = require('layout/ui/search-bar/ui');
 
 	/**
 	 * @class SearchLayoutView
@@ -18,6 +16,7 @@ jn.define('layout/ui/search-bar/search-layout-view', (require, exports, module) 
 		constructor(props)
 		{
 			super(props);
+
 			this.state = {
 				presets: props.presets,
 				presetsLoaded: props.presetsLoaded,
@@ -175,6 +174,8 @@ jn.define('layout/ui/search-bar/search-layout-view', (require, exports, module) 
 				active: (this.state.presetId === preset.id),
 				onClick: this.onPresetClick,
 				last: (index === presets.length - 1),
+				isActivePresetRequired: this.props.isActivePresetRequired,
+				showCross: !this.props.isActivePresetRequired,
 			}));
 		}
 	}
@@ -183,6 +184,7 @@ jn.define('layout/ui/search-bar/search-layout-view', (require, exports, module) 
 		presets: PropTypes.array,
 		presetsLoaded: PropTypes.bool,
 		presetId: PropTypes.string,
+		isActivePresetRequired: PropTypes.bool,
 		counters: PropTypes.array,
 		counterId: PropTypes.string,
 		onMoreButtonClick: PropTypes.func,
@@ -191,7 +193,7 @@ jn.define('layout/ui/search-bar/search-layout-view', (require, exports, module) 
 
 	const styles = {
 		wrapper: {
-			height: 44,
+			height: 54,
 			width: '100%',
 			backgroundColor: Color.bgNavigation.toHex(),
 			borderBottomWidth: 1,
@@ -199,14 +201,14 @@ jn.define('layout/ui/search-bar/search-layout-view', (require, exports, module) 
 			paddingTop: Application.getPlatform() === 'ios' ? 3 : 0,
 		},
 		presetsScrollView: {
-			height: 44,
+			height: 54,
 		},
 		presetsWrapper: {
 			flexDirection: 'row',
 			alignItems: 'center',
 			alignContent: 'center',
 			marginTop: 0,
-			height: 34,
+			height: 43,
 			paddingHorizontal: Component.paddingLr.toNumber(),
 		},
 	};

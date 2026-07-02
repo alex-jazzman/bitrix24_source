@@ -1,10 +1,13 @@
-import ConfigurableItem from '../configurable-item';
-import type {ActionParams} from './base';
-import {EventEmitter} from 'main.core.events';
-import {UI} from 'ui.notification';
-import {Loc} from 'main.core';
-import {ActionAnimationCallbacks, Base} from './base';
+import { Loc } from 'main.core';
+import { EventEmitter } from 'main.core.events';
+
+import { UI } from 'ui.notification';
+
 import ExpandableList from '../components/content-blocks/expandable-list/list';
+import ConfigurableItem from '../configurable-item';
+import { type ActionAnimationCallbacks, type ActionParams, Base } from './base';
+
+import 'crm.entity-editor';
 
 export class DealProductList extends Base
 {

@@ -14,6 +14,15 @@ export const Toolbar = {
 	props: [
 		'categories', 'searchFilters', 'menuInfo', 'marketAction', 'searchAction',
 	],
+	setup: function ()
+	{
+		// Keep popup instances out of Vue reactivity to avoid proxying private fields.
+		return {
+			moreMenu: null,
+			searchFilterMenu: null,
+			searchOrderMenu: null,
+		};
+	},
 	data() {
 		return {
 			hoverCategory: 0,
@@ -37,9 +46,6 @@ export const Toolbar = {
 				resultCount: '',
 				foundApps: [],
 			},
-			moreMenu: null,
-			searchFilterMenu: null,
-			searchOrderMenu: null,
 			MarketLinks: MarketLinks,
 		}
 	},

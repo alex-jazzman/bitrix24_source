@@ -2,7 +2,7 @@
 
 return [
 	'extensions' => [
-		'project/project',
+		'project/tabs-manager',
 	],
 	'components' => [],
 ];

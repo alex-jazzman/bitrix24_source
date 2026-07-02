@@ -4,12 +4,15 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 \Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
 
+$skipTemplateWrapper = defined('SKIP_TEMPLATE_WRAPPER') && SKIP_TEMPLATE_WRAPPER === true;
+
 $logoLang = LANGUAGE_ID;
 if (!in_array($logoLang, array('ru', 'ua', 'en')))
 	$logoLang = \Bitrix\Main\Localization\Loc::getDefaultLang(LANGUAGE_ID);
 if (!in_array($logoLang, array('ru', 'ua', 'en')))
 	$logoLang = 'en';
 
+if (!$skipTemplateWrapper):
 ?>
 
 					<div id="pub-template-error" class="error-block" style="display: none; ">
@@ -44,6 +47,7 @@ if (!in_array($logoLang, array('ru', 'ua', 'en')))
 <div class="bottom-cloud"></div>
 <div class="left-cloud"></div>
 <div class="right-cloud"></div>
+<?php endif; ?>
 
 <script>
 

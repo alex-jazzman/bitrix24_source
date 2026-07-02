@@ -63,11 +63,11 @@ export const ConfirmationPopup = {
 		},
 		minHeight: {
 			type: Number,
-			default: false,
+			default: null,
 		},
 		maxHeight: {
 			type: Number,
-			default: false,
+			default: null,
 		},
 	},
 

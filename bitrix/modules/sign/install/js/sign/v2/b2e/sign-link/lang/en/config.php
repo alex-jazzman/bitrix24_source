@@ -11,4 +11,6 @@ $MESS["SIGN_V2_B2E_LINK_EMPLOYEE_SIGNED_DOC_NOT_READY"] = "The document is being
 $MESS["SIGN_V2_B2E_LINK_ERROR_CODE_ACCESS_DENIED"] = "Access to document was denied";
 $MESS["SIGN_V2_B2E_LINK_ERROR_MESSAGE_PLACEHOLDER"] = "Try again later.";
 $MESS["SIGN_V2_B2E_LINK_ERROR_TITLE_PLACEHOLDER"] = "Something's gone wrong.";
+$MESS["SIGN_V2_B2E_LINK_PROCESS_DONE_EDITOR"] = "Fields completed. Document has been sent to subsequent signing parties.";
+$MESS["SIGN_V2_B2E_LINK_PROCESS_DONE_REVIEWER"] = "Document has been approved.";
 $MESS["SIGN_V2_B2E_LINK_SLIDER_TITLE"] = "Signing";

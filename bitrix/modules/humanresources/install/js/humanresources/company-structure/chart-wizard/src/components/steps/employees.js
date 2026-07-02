@@ -3,7 +3,7 @@ import { MoveUserPopup } from 'humanresources.company-structure.structure-compon
 import {
 	EntityTypes,
 	getUserDataBySelectorItem,
-	UserData,
+	type UserData,
 	WizardApiEntityChangedDict,
 } from 'humanresources.company-structure.utils';
 import { ChangeSaveModeControl } from '../change-save-mode-control/change-save-mode-control';

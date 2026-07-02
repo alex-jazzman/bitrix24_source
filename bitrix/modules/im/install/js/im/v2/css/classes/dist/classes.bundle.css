@@ -71,7 +71,16 @@
 	width: 15px;
 	height: 15px;
 	padding: 0 1px;
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='14' height='13' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6.275 7.225h3.611V5.781H7.72V3.25H6.275v3.974z' fill='%23000'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M7 0a6.5 6.5 0 100 13A6.5 6.5 0 007 0zm0 11.556A5.056 5.056 0 117 1.444a5.056 5.056 0 010 10.111z' fill='%23000'/%3E%3C/svg%3E");
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='13' fill='none' viewBox='0 0 14 13'%3E%3Cpath fill='%23000' d='M6.275 7.225h3.611V5.781H7.72V3.25H6.275z'/%3E%3Cpath fill='%23000' fill-rule='evenodd' d='M7 0a6.5 6.5 0 1 0 0 13A6.5 6.5 0 0 0 7 0m0 11.556A5.056 5.056 0 1 1 7 1.444a5.056 5.056 0 0 1 0 10.112' clip-rule='evenodd'/%3E%3C/svg%3E");
 	background-repeat: no-repeat;
 	background-position: center;
+}
+
+.bx-im-messenger__scope .--hidden-scroll {
+	/* @chef-ignore */
+	scrollbar-width: none;
+}
+
+.bx-im-messenger__scope .--hidden-scroll::-webkit-scrollbar {
+	display: none;
 }

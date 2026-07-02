@@ -489,6 +489,9 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	        showEditor: function showEditor(event) {
 	          var data = event.getData();
 	          _this.emit('showEditor', data);
+	        },
+	        showPlaceholderEditor: function showPlaceholderEditor(event) {
+	          _this.emit('showPlaceholderEditor', event.getData());
 	        }
 	      }
 	    }));

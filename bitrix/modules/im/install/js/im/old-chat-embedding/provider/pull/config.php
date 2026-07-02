@@ -9,12 +9,12 @@ return [
 		'./dist/registry.bundle.js',
 	],
 	'rel' => [
-		'pull.client',
-		'main.core',
 		'im.old-chat-embedding.application.core',
+		'im.old-chat-embedding.const',
 		'im.old-chat-embedding.lib.logger',
 		'im.old-chat-embedding.lib.user',
-		'im.old-chat-embedding.const',
+		'main.core',
+		'pull.client',
 	],
 	'skip_core' => false,
 ];

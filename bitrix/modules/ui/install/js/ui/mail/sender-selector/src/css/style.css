@@ -4,6 +4,7 @@
 	padding: 3px;
 	display: inline-flex;
 	align-items: flex-end;
+	border-radius: 4px;
 }
 
 .sender-selector-button-text {

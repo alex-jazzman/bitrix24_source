@@ -5,5 +5,5 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 return [
-	'css' => 'icon-base.css',
+	'css' => 'dist/icon-set.bundle.css',
 ];

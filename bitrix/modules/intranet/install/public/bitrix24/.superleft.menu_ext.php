@@ -9,6 +9,7 @@ use Bitrix\Catalog\Access\AccessController;
 use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Intranet\Binding\Marketplace;
 use Bitrix\Intranet\Integration\Socialnetwork\Collab\CollabProviderData;
+use Bitrix\Intranet\Internal\Integration\Ui\CopilotService;
 use Bitrix\Intranet\Site\Sections\AutomationSection;
 use \Bitrix\Landing\Rights;
 use Bitrix\Main\Loader;
@@ -47,6 +48,11 @@ $isNewLiveFeedCounterAvailable = (
 	&& \Bitrix\Socialnetwork\Space\Service::isAvailable(true)
 );
 
+$isNewProjectsOn = (
+	class_exists(\Bitrix\Socialnetwork\V2\Feature::class)
+	&& \Bitrix\Socialnetwork\V2\Feature::isNewProjectsOn()
+);
+
 $tasksLinkParams = [
 	"real_link" => getLeftMenuItemLink(
 		"tasks_panel_menu",
@@ -73,7 +79,7 @@ $arMenu = [
 		""
 	],
 	[
-		GetMessage("MENU_TASKS"),
+		$isNewProjectsOn ? GetMessage("MENU_TASKS_NEW") : GetMessage("MENU_TASKS"),
 		"/tasks/menu/",
 		[],
 		$tasksLinkParams,
@@ -343,6 +349,26 @@ $arMenu[] = [
 	''
 ];
 
+if
+(
+	CopilotService::shouldShowInLeftMenu()
+	&& ToolsManager::getInstance()->checkAvailabilityByToolId('copilot')
+)
+{
+	$arMenu[] = [
+		(new CopilotService())->getName(),
+		'/online/?IM_COPILOT',
+		[
+			'/desktop_app/?IM_COPILOT',
+		],
+		[
+			'menu_item_id' => 'menu_im_copilot',
+			'can_be_first_item' => false,
+		],
+		'',
+	];
+}
+
 if (
 	ToolsManager::getInstance()->checkAvailabilityByToolId('collab')
 	&& (new CollabProviderData())->isAvailable()
@@ -453,7 +479,15 @@ if (CModule::IncludeModule("intranet") && CIntranetUtils::IsExternalMailAvailabl
 	);
 }
 
-$projectSubLink = "/company/personal/user/".$userId."/groups/create/";
+if ($isNewProjectsOn)
+{
+	$projectSubLink = "javascript: BX.Messenger.Public.openChatCreation('collab');";
+}
+else
+{
+	$projectSubLink = "/company/personal/user/".$userId."/groups/create/";
+}
+
 if (
 	Loader::includeModule('tasks')
 	&& class_exists('\Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ProjectLimit')
@@ -471,8 +505,9 @@ if (
 }
 
 //groups
+$groupsMessageKey = ($isNewProjectsOn ? 'MENU_PROJECT_SECTION' : 'MENU_GROUP_SECTION');
 $arMenu[] = [
-	GetMessage("MENU_GROUP_SECTION"),
+	GetMessage($groupsMessageKey),
 	"/workgroups/",
 	[],
 	[
@@ -481,6 +516,7 @@ $arMenu[] = [
 			"/workgroups/"
 		),
 		"sub_link" => $projectSubLink,
+		"class" => $isNewProjectsOn ? "menu-all-projects" : "",
 		"menu_item_id" => "menu_all_groups",
 		"top_menu_id" => "sonetgroups_panel_menu",
 		// todo oh 'counter_id' => 'workgroups',

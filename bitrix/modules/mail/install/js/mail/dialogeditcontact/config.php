@@ -8,13 +8,14 @@ return [
 	'css' => 'dist/dialogeditcontact.bundle.css',
 	'js' => 'dist/dialogeditcontact.bundle.js',
 	'rel' => [
-		'main.core',
-		'mail.sidepanelwrapper',
-		'ui.dialogs.messagebox',
+		'/bitrix/js/ui/forms/ui.forms.css',
 		'mail.avatar',
+		'mail.sidepanelwrapper',
+		'main.core',
 		'main.core.events',
-		'ui.forms',
 		'ui.alerts',
+		'ui.dialogs.messagebox',
+		'ui.forms',
 	],
 	'skip_core' => false,
 ];

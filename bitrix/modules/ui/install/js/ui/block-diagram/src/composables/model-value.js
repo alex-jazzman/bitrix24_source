@@ -8,8 +8,6 @@ export type UseModelValue = { dispose: () => void };
 export function useModelValue(emit): UseModelValue
 {
 	const {
-		blocks,
-		connections,
 		historyCurrentState,
 		hooks,
 	} = useBlockDiagram();

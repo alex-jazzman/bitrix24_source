@@ -1,7 +1,7 @@
 /**
- * @module im/messenger/application/lib/dialog-manager/integration-settings
+ * @module im/messenger/application/lib/dialog-manager/src/integration-settings
  */
-jn.define('im/messenger/application/lib/dialog-manager/integration-settings', (require, exports, module) => {
+jn.define('im/messenger/application/lib/dialog-manager/src/integration-settings', (require, exports, module) => {
 	const { mergeImmutable } = require('utils/object');
 
 	/**

@@ -78,7 +78,7 @@ export const FormatTable = {
 	template: `
 		<table class="format-table">
 			<thead>
-				<TableHeader :enabled="areAllRowsVisible" :indeterminate="areSomeRowsVisible" @checkbox-click="onHeaderCheckboxClicked" />
+				<TableHeader :enabled="areAllRowsVisible" :indeterminate="areSomeRowsVisible" :source-type="sourceType" @checkbox-click="onHeaderCheckboxClicked" />
 			</thead>
 			<tbody>
 				<template v-for="(field, index) in fieldsSettings" :key="index">

@@ -7,7 +7,7 @@ return [
 		'loc',
 		'require-lazy',
 		'utils/date',
-		'project/utils',
+		'project/opener',
 
 		'im:messenger/api/dialog-opener',
 

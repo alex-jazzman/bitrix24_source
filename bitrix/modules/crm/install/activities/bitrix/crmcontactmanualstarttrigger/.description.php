@@ -33,7 +33,10 @@ $arActivityDescription =
 	))
 	->setClass('CrmContactManualStartTrigger')
 	->setCategory(['ID' => 'document'])
-	->setGroups([ ActivityGroup::STARTER->value ])
+	->setGroups([
+		ActivityGroup::STARTER->value,
+		ActivityGroup::SALES_CRM->value,
+	])
 	->setColorIndex(ActivityColorIndex::ORANGE->value)
 	->setIcon(Outline::CONTACT->name)
 	->setReturn([

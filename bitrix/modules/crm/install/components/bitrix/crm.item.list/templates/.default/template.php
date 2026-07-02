@@ -9,6 +9,7 @@ use Bitrix\Crm\Filter\HeaderSections;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Tour\AutomatedSolution\CustomSectionMenu;
 use Bitrix\Crm\Tour\AutomatedSolution\LeftMenu;
+use Bitrix\Crm\Tour\ClientFields\AbstractClientFieldsEntityList;
 use Bitrix\Crm\Tour\Grid\GridImprovements;
 use Bitrix\Crm\Tour\MobilePromoter\MobilePromoterCustomSection;
 use Bitrix\Crm\Tour\Permissions\AutomatedSolution;
@@ -108,6 +109,16 @@ if (!$isRecurring)
 		->setEntityTypeId($arParams['entityTypeId'])
 		->build()
 	;
+
+	$clientFieldsTour = AbstractClientFieldsEntityList::getInstanceByEntityTypeId($arParams['entityTypeId']);
+	if ($clientFieldsTour !== null)
+	{
+		echo $clientFieldsTour
+			->setTargetId('#crm-type-item-list-container .main-grid-interface-settings-icon')
+			->build()
+		;
+	}
+	unset($clientFieldsTour);
 }
 ?>
 

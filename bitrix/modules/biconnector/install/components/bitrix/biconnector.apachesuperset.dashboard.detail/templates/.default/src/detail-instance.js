@@ -12,6 +12,8 @@ import { ApacheSupersetEmbeddedLoader } from 'biconnector.apache-superset-embedd
 import { ApacheSupersetAnalytics } from 'biconnector.apache-superset-analytics';
 import { ApacheSupersetFeedbackForm } from 'biconnector.apache-superset-feedback-form';
 import { ChatSelector } from './chat-selector';
+import { AhaMoment } from 'biconnector.aha-moment';
+import { SharePopup } from 'biconnector.share-popup';
 import 'sidepanel';
 
 export class DetailInstance
@@ -26,8 +28,15 @@ export class DetailInstance
 	#embeddedDebugMode: boolean;
 	#canExport: boolean;
 	#canEdit: boolean;
+	#canShare: boolean;
+	#shareData: ?Object;
 
 	#moreMenu: Menu;
+	#infoAhaMoment: ?AhaMoment;
+	#infoAhaMomentOptions: ?Object;
+	#dashboardSavedEventName: string;
+	#onDashboardSavedHandler: Function;
+	#sharePopup: ?SharePopup;
 
 	constructor(config: DetailConfig)
 	{
@@ -40,8 +49,13 @@ export class DetailInstance
 		this.#dashboardManager = new DashboardManager();
 		this.#canExport = config.canExport === 'Y';
 		this.#canEdit = config.canEdit === 'Y';
+		this.#canShare = config.canShare === 'Y';
+		this.#shareData = config.shareData ?? null;
 		this.#embeddedParams = config.dashboardEmbeddedParams;
 		this.#embeddedDebugMode = config.embeddedDebugMode;
+		this.#infoAhaMomentOptions = config.infoAhaMoment ?? null;
+		this.#dashboardSavedEventName = 'BIConnector.CreateForm:onDashboardSaved';
+		this.#onDashboardSavedHandler = this.#onDashboardSaved.bind(this);
 
 		this.#frameNode = this.#dashboardNode.querySelector('.dashboard-iframe');
 		this.#subscribeEvents();
@@ -65,6 +79,17 @@ export class DetailInstance
 
 	#subscribeEvents()
 	{
+		const eventBus = this.#getEventBus();
+		if (Type.isFunction(eventBus?.unsubscribe))
+		{
+			eventBus.unsubscribe(this.#dashboardSavedEventName, this.#onDashboardSavedHandler);
+		}
+
+		if (Type.isFunction(eventBus?.subscribe))
+		{
+			eventBus.subscribe(this.#dashboardSavedEventName, this.#onDashboardSavedHandler);
+		}
+
 		EventEmitter.subscribe('BiConnector:DashboardSelector.onSelect', (event) => {
 			Dom.clean(this.#frameNode);
 			BX.BIConnector.ApacheSuperset.Dashboard.Detail.createSkeleton({
@@ -78,6 +103,10 @@ export class DetailInstance
 			this.#embeddedParams = event.data.credentials;
 			this.#canEdit = this.#embeddedParams.canEdit;
 			this.#canExport = this.#embeddedParams.canExport;
+			this.#updateTitle(this.#embeddedParams.title);
+			this.#canShare = this.#embeddedParams.canShare ?? false;
+			this.#shareData = this.#embeddedParams.shareData ?? null;
+			this.#sharePopup = null;
 
 			let historyUrl = this.#embeddedParams.embeddedUrl;
 			this.#initFrame(this.#embeddedParams);
@@ -104,11 +133,90 @@ export class DetailInstance
 			this.#reloadGridAfterSliderClose();
 		});
 
+		EventEmitter.subscribe('BIConnector.SharePopup:onShareActivated', (event) => {
+			if (event.data.dashboardId === this.#embeddedParams.id)
+			{
+				this.#shareData = {
+					...this.#shareData,
+					isActive: true,
+				};
+			}
+		});
+
+		EventEmitter.subscribe('BIConnector.SharePopup:onShareDeactivated', (event) => {
+			if (event.data.dashboardId === this.#embeddedParams.id)
+			{
+				this.#shareData = {
+					...this.#shareData,
+					isActive: false,
+				};
+			}
+		});
+
 		Event.bind(window, 'message', this.#postOptionsForFilter.bind(this));
+		Event.bind(window, 'unload', this.#onWindowUnload.bind(this));
+	}
+
+	#getEventBus(): Object
+	{
+		return window.top?.BX?.Event?.EventEmitter ?? EventEmitter;
+	}
+
+	#onWindowUnload(): void
+	{
+		const eventBus = this.#getEventBus();
+		if (Type.isFunction(eventBus?.unsubscribe))
+		{
+			eventBus.unsubscribe(this.#dashboardSavedEventName, this.#onDashboardSavedHandler);
+		}
+	}
+
+	#onDashboardSaved(event: Object): void
+	{
+		const rawData = event && Type.isFunction(event.getData) ? event.getData() : null;
+		const data = Array.isArray(rawData) ? rawData[0] : rawData;
+		const dashboardId = Text.toNumber(data?.dashboard?.id);
+		const title = data?.dashboard?.title;
+		const isEditMode = data?.isEditMode === true;
+
+		if (!isEditMode || dashboardId <= 0 || dashboardId !== this.#embeddedParams.id || !Type.isStringFilled(title))
+		{
+			return;
+		}
+
+		this.#updateTitle(title);
+	}
+
+	#updateTitle(title: string): void
+	{
+		this.#embeddedParams = {
+			...this.#embeddedParams,
+			title,
+		};
+
+		BX.ajax?.UpdatePageTitle?.(title);
+		BX.ajax?.UpdateWindowTitle?.(title);
+
+		const titleNode = this.#dashboardNode.querySelector('#dashboard-selector-text');
+		if (Type.isDomNode(titleNode))
+		{
+			titleNode.textContent = title;
+			titleNode.setAttribute('title', title);
+		}
 	}
 
 	#initFrame(embeddedParams: DashboardEmbeddedParameters)
 	{
+		if (!embeddedParams.uuid || !embeddedParams.supersetDomain)
+		{
+			BX.BIConnector.ApacheSuperset.Dashboard.Detail.createSkeleton({
+				container: this.#frameNode,
+				supersetStatus: 'ERROR',
+			});
+
+			return;
+		}
+
 		const dashboardParams = {
 			id: embeddedParams.uuid, // given by the Superset embedding UI
 			supersetDomain: embeddedParams.supersetDomain,
@@ -129,7 +237,15 @@ export class DetailInstance
 		};
 
 		this.#embeddedLoader = new ApacheSupersetEmbeddedLoader(dashboardParams);
-		this.#embeddedLoader.embedDashboard();
+		this.#embeddedLoader.embedDashboard()
+			.catch(() => {
+				Dom.clean(this.#frameNode);
+				BX.BIConnector.ApacheSuperset.Dashboard.Detail.createSkeleton({
+					container: this.#frameNode,
+					supersetStatus: 'ERROR',
+				});
+			})
+		;
 	}
 
 	#initHeaderButtons()
@@ -137,6 +253,8 @@ export class DetailInstance
 		this.#initMoreMenu();
 		this.#initDownloadButton();
 		this.#initShareButton();
+		this.#initGptButton();
+		this.#initInfoButton();
 
 		this.#editBtn = this.#dashboardNode.querySelector('.dashboard-header-buttons-edit');
 		Event.unbindAll(this.#editBtn);
@@ -157,6 +275,39 @@ export class DetailInstance
 			this.#disableEditButton();
 			Event.unbindAll(this.#editBtn);
 		}
+	}
+
+	#initInfoButton()
+	{
+		const infoButton = this.#dashboardNode.querySelector('.dashboard-header-buttons-info');
+		Event.unbindAll(infoButton);
+
+		if (Type.isPlainObject(this.#infoAhaMomentOptions))
+		{
+			if (!this.#infoAhaMoment)
+			{
+				this.#infoAhaMoment = new AhaMoment({
+					...this.#infoAhaMomentOptions,
+					bindElement: infoButton,
+				});
+			}
+			else
+			{
+				this.#infoAhaMoment.setBindElement(infoButton);
+			}
+
+			this.#infoAhaMoment.show();
+		}
+
+		Event.bind(infoButton, 'click', () => {
+			this.#infoAhaMoment?.close();
+
+			BX.SidePanel.Instance.open(`/bitrix/components/bitrix/biconnector.apachesuperset.dashboard.detail.info/slider.php?dashboard_id=${this.#embeddedParams.id}`, {
+				width: 860,
+				allowChangeHistory: false,
+				cacheable: false,
+			});
+		});
 	}
 
 	#onEditButtonClick()
@@ -365,8 +516,76 @@ export class DetailInstance
 	#initShareButton()
 	{
 		const shareButton = this.#dashboardNode.querySelector('.dashboard-header-buttons-share');
+		if (!shareButton)
+		{
+			return;
+		}
+
 		Event.unbindAll(shareButton);
-		const downloadMenu = new Menu({
+
+		const menuItems = [];
+
+		if (this.#canShare)
+		{
+			menuItems.push({
+				id: 'share-link',
+				text: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SHARE_LINK'),
+				title: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SHARE_LINK'),
+				onclick: (event, menuItem: MenuItem) => {
+					menuItem.menuWindow.close();
+					this.#showSharePopup();
+				},
+			});
+		}
+
+		menuItems.push(
+			{
+				id: 'share-screenshot',
+				text: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SHARE_TO_CHAT_IMAGE'),
+				title: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SHARE_TO_CHAT_IMAGE'),
+				onclick: (event, menuItem: MenuItem) => {
+					menuItem.menuWindow.close();
+					const moreButton = this.#dashboardNode.querySelector('.dashboard-header-buttons-more');
+					const selector: ChatSelector = new ChatSelector({
+						targetNode: moreButton,
+						dashboardName: Text.decode(this.#embeddedParams.title),
+						fileExtension: 'jpeg',
+						onSend: () => this.#embeddedLoader.getScreenshot(),
+						dashboardId: this.#embeddedParams.id,
+						dashboardType: this.#embeddedParams.type.toLowerCase(),
+						appId: this.#embeddedParams.appId,
+					});
+					selector.show();
+					ApacheSupersetAnalytics.sendAnalytics('share', 'open_selector', {
+						p3: 'ext_jpeg',
+					});
+				},
+			},
+			{
+				id: 'share-pdf',
+				text: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SHARE_TO_CHAT_PDF'),
+				title: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SHARE_TO_CHAT_PDF'),
+				onclick: (event, menuItem: MenuItem) => {
+					menuItem.menuWindow.close();
+					const moreButton = this.#dashboardNode.querySelector('.dashboard-header-buttons-more');
+					const selector: ChatSelector = new ChatSelector({
+						targetNode: moreButton,
+						dashboardName: Text.decode(this.#embeddedParams.title),
+						fileExtension: 'pdf',
+						onSend: () => this.#embeddedLoader.getPdf(),
+						dashboardId: this.#embeddedParams.id,
+						dashboardType: this.#embeddedParams.type.toLowerCase(),
+						appId: this.#embeddedParams.appId,
+					});
+					selector.show();
+					ApacheSupersetAnalytics.sendAnalytics('share', 'open_selector', {
+						p3: 'ext_pdf',
+					});
+				},
+			},
+		);
+
+		const shareMenu = new Menu({
 			closeByEsc: false,
 			closeIcon: false,
 			cacheable: true,
@@ -375,60 +594,33 @@ export class DetailInstance
 			},
 			bindElement: this.#getRectForButtonArrow(shareButton),
 			autoHide: true,
-			items: [
-				{
-					id: 'share-screenshot',
-					text: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_DOWNLOAD_IMAGE'),
-					title: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_DOWNLOAD_IMAGE'),
-					onclick: (event, menuItem: MenuItem) => {
-						menuItem.menuWindow.close();
-						const moreButton = this.#dashboardNode.querySelector('.dashboard-header-buttons-more');
-						const selector: ChatSelector = new ChatSelector({
-							targetNode: moreButton,
-							dashboardName: Text.decode(this.#embeddedParams.title),
-							fileExtension: 'jpeg',
-							onSend: () => this.#embeddedLoader.getScreenshot(),
-							dashboardId: this.#embeddedParams.id,
-							dashboardType: this.#embeddedParams.type.toLowerCase(),
-							appId: this.#embeddedParams.appId,
-						});
-						selector.show();
-						ApacheSupersetAnalytics.sendAnalytics('share', 'open_selector', {
-							p3: 'ext_jpeg',
-						});
-					},
-				},
-				{
-					id: 'share-pdf',
-					text: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_DOWNLOAD_PDF'),
-					title: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_DOWNLOAD_PDF'),
-					onclick: (event, menuItem: MenuItem) => {
-						menuItem.menuWindow.close();
-						const moreButton = this.#dashboardNode.querySelector('.dashboard-header-buttons-more');
-						const selector: ChatSelector = new ChatSelector({
-							targetNode: moreButton,
-							dashboardName: Text.decode(this.#embeddedParams.title),
-							fileExtension: 'pdf',
-							onSend: () => this.#embeddedLoader.getPdf(),
-							dashboardId: this.#embeddedParams.id,
-							dashboardType: this.#embeddedParams.type.toLowerCase(),
-							appId: this.#embeddedParams.appId,
-						});
-						selector.show();
-						ApacheSupersetAnalytics.sendAnalytics('share', 'open_selector', {
-							p3: 'ext_pdf',
-						});
-					},
-				},
-			],
+			items: menuItems,
 		});
 
 		Event.bind(shareButton, 'click', () => {
-			downloadMenu.show();
+			shareMenu.show();
 			ApacheSupersetAnalytics.sendAnalytics('share', 'click_share', {
 				type: this.#embeddedParams.type.toLowerCase(),
 			});
 		});
+	}
+
+	#showSharePopup()
+	{
+		if (!this.#sharePopup)
+		{
+			this.#sharePopup = new SharePopup({
+				dashboardId: this.#embeddedParams.id,
+				dashboardTitle: this.#embeddedParams.title ?? '',
+				embeddedLoader: this.#embeddedLoader,
+				initialShareData: this.#shareData,
+				urlParams: this.#embeddedParams.urlParams ?? null,
+				type: (this.#embeddedParams.type ?? '').toLowerCase(),
+				analyticsElement: 'detail_button',
+			});
+		}
+
+		this.#sharePopup.show();
 	}
 
 	#initMoreMenu()
@@ -541,6 +733,111 @@ export class DetailInstance
 	#getMoreMenu(): Menu
 	{
 		return this.#moreMenu;
+	}
+
+	#initGptButton(): void
+	{
+		const gptBtn = this.#dashboardNode.querySelector('#bitrixgpt-btn');
+		if (!gptBtn)
+		{
+			return;
+		}
+
+		Event.unbindAll(gptBtn);
+		Event.bind(gptBtn, 'click', this.#onGptButtonClick.bind(this));
+	}
+
+	// Scaffold for the BitrixGPT button. The previous wiring talked to
+	// `Controller\Superset::loadDashboardDataAction`, which dispatched to
+	// `/data` in bx-superset; both layers were removed when /meta absorbed
+	// the drill-down path (`chart_ids` parameter). The next iteration will
+	// hand the dashboard off through the MCP tool set instead — keeping the
+	// click handler + #showGptResult panel here as scaffolding so we don't
+	// re-author them from scratch.
+	async #onGptButtonClick(): Promise<void>
+	{
+		/*
+		const gptBtn = this.#dashboardNode.querySelector('#bitrixgpt-btn');
+		Dom.addClass(gptBtn, 'ui-btn-wait');
+
+		try
+		{
+			const appliedFilters = await this.#embeddedLoader.getAppliedFilters();
+
+			const response = await BX.ajax.runAction('biconnector.superset.loadDashboardData', {
+				data: {
+					dashboardId: this.#embeddedParams.id,
+					appliedFilters: JSON.stringify(appliedFilters),
+				},
+			});
+
+			this.#showGptResult(response.data);
+		}
+		catch (error)
+		{
+			console.error('BitrixGPT load failed:', error);
+		}
+		finally
+		{
+			Dom.removeClass(gptBtn, 'ui-btn-wait');
+		}
+		*/
+	}
+
+	#showGptResult(data: Object): void
+	{
+		let panel = this.#dashboardNode.querySelector('.dashboard-gpt-panel');
+		if (!panel)
+		{
+			panel = Dom.create('div', {
+				attrs: { className: 'dashboard-gpt-panel' },
+				style: {
+					position: 'fixed',
+					right: '0',
+					top: '0',
+					width: '400px',
+					height: '100vh',
+					backgroundColor: '#fff',
+					borderLeft: '1px solid #e0e0e0',
+					zIndex: '1000',
+					overflow: 'auto',
+					padding: '20px',
+					boxShadow: '-2px 0 8px rgba(0,0,0,0.1)',
+				},
+			});
+
+			const closeBtn = Dom.create('div', {
+				attrs: { className: 'ui-icon-set --cross-60' },
+				style: { cursor: 'pointer', float: 'right' },
+				events: {
+					click: () => Dom.remove(panel),
+				},
+			});
+
+			panel.appendChild(closeBtn);
+			this.#dashboardNode.appendChild(panel);
+		}
+
+		const content = panel.querySelector('.dashboard-gpt-panel-content')
+			|| Dom.create('div', { attrs: { className: 'dashboard-gpt-panel-content' } });
+
+		if (!content.parentNode)
+		{
+			panel.appendChild(content);
+		}
+
+		const pre = Dom.create('pre', {
+			style: {
+				whiteSpace: 'pre-wrap',
+				wordBreak: 'break-word',
+				fontSize: '12px',
+				lineHeight: '1.4',
+			},
+			text: JSON.stringify(data, null, 2),
+		});
+
+		content.innerHTML = '';
+		content.appendChild(pre);
 	}
 
 	#postOptionsForFilter(event): void

@@ -24,6 +24,13 @@
 	transition: 200ms ease all;
 }
 
+.b24-form-field-bool input[type="checkbox"]:focus-visible,
+.b24-form-field input[type="checkbox"]:focus-visible,
+.b24-form-field input[type="radio"]:focus-visible {
+	outline: 1px solid var(--b24-primary-color, #2fc7f7);
+	outline-offset: 2px;
+}
+
 .b24-form-control-comment {
 	display: flex;
 	align-self: flex-end;
@@ -103,6 +110,10 @@
 	background-color: #fff;
 	background-color: var(--b24-field-focus-background-color);
 	border-color: rgba(0, 0, 0, 0.25);
+	border-color: var(--b24-primary-color);
+}
+
+.b24-form-field-date .b24-form-control:focus-visible {
 	border-color: var(--b24-primary-color);
 }
 
@@ -210,6 +221,12 @@ input.b24-form-control:-webkit-autofill:focus {
 	padding: 0 10px;
 	align-items: center;
 	position: relative;
+}
+
+.b24-form-control-checkbox .b24-form-control:focus-visible,
+.b24-form-control-radio .b24-form-control:focus-visible {
+	outline: 1px solid var(--b24-primary-color);
+	outline-offset: 2px;
 }
 
 .b24-form-control-checkbox .b24-form-control.b24-form-control-checked,
@@ -497,6 +514,16 @@ input.b24-form-control:-webkit-autofill:focus {
 	font: 15px "Helvetica Neue", Helvetica, Arial, sans-serif;
 	font: 15px var(--b24-font-family);
 	cursor: pointer;
+	background: none;
+	border-top: none;
+	border-left: none;
+	border-right: none;
+	text-align: left;
+}
+
+.b24-form-control-add-btn:focus {
+	outline: 1px solid var(--b24-primary-color);
+	outline-offset: 1px;
 }
 
 .b24-form-control-add-btn:after,
@@ -581,10 +608,18 @@ input.b24-form-control:-webkit-autofill:focus {
 .b24-form-icon-remove {
 	cursor: pointer;
 	opacity: .35;
-	transition: 250ms linear all;
+	transition: opacity 250ms linear;
+	background: none;
+	border: none;
+	padding: 0;
+	outline: none;
 }
 
 .b24-form-icon-remove:hover { opacity: .9; }
+
+.b24-form-icon-remove:focus-visible {
+	outline: 1px solid var(--b24-primary-color);
+}
 
 .b24-form-control-list .b24-form-icon-remove { right: 45px; }
 
@@ -632,6 +667,19 @@ input.b24-form-control:-webkit-autofill:focus {
 .b24-form-control-input-text[type="number"]::-webkit-inner-spin-button {
 	-webkit-appearance: none;
 	margin: 0;
+}
+
+/* Screen reader only*/
+.b24-form-sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border-width: 0;
 }
 
 /*endregion*/

@@ -1,0 +1,63 @@
+
+/* normalize */
+.tasks-entities-demonstrator__opener.tasks-entities-demonstrator__opener_native {
+	border-radius: 0;
+	border: none;
+	padding: 0;
+	background-color: transparent;
+	text-align: inherit;
+	cursor: pointer;
+}
+/* normalize end */
+
+.tasks-entities-demonstrator {
+	--transition-entities-demonstrator: all 0.2s ease-in-out;
+	position: relative;
+}
+
+.tasks-entities-demonstrator__opener {
+	--color-opener: var(--ui-color-base-3);
+	--color-opener-active: var(--ui-color-base-2);
+	--size-icon-opener: 20px;
+}
+.tasks-entities-demonstrator__opener.tasks-entities-demonstrator__opener_native {
+	display: flex;
+	align-items: center;
+	padding: 10px 0 10px 0;
+}
+.tasks-entities-demonstrator__opener.tasks-entities-demonstrator__opener_active {}
+.tasks-entities-demonstrator__opener.tasks-entities-demonstrator__opener_active,
+.tasks-entities-demonstrator__opener:hover {
+	--color-opener: var(--color-opener-active);
+}
+.tasks-entities-demonstrator__opener.tasks-entities-demonstrator__opener_no-onclick {}
+.tasks-entities-demonstrator__opener.tasks-entities-demonstrator__opener_native.tasks-entities-demonstrator__opener_no-onclick {
+	cursor: auto;
+}
+
+.tasks-entities-demonstrator__opener-icon {
+	--ui-icon-set__icon-color: var(--color-opener);
+}
+.tasks-entities-demonstrator__opener.tasks-entities-demonstrator__opener_native .tasks-entities-demonstrator__opener-icon {
+	--ui-icon-set__icon-size: var(--size-icon-opener);
+	transition: var(--transition-entities-demonstrator);
+}
+
+.tasks-entities-demonstrator__opener-text {
+	color: var(--color-opener);
+}
+.tasks-entities-demonstrator__opener-count {
+	color: var(--color-opener);
+}
+.tasks-entities-demonstrator__opener.tasks-entities-demonstrator__opener_native .tasks-entities-demonstrator__opener-text,
+.tasks-entities-demonstrator__opener.tasks-entities-demonstrator__opener_native .tasks-entities-demonstrator__opener-count {
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var(--ui-font-size-2xl);
+	transition: var(--transition-entities-demonstrator);
+}
+
+.tasks-entities-demonstrator__popup {
+	--width-popup: 350px;
+	width: var(--width-popup);
+}

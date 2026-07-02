@@ -6,13 +6,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 return [
-	'css' => 'dist/relink-superset-popup.bundle.css',
 	'js' => 'dist/relink-superset-popup.bundle.js',
 	'rel' => [
+		'biconnector.card-select-popup',
 		'main.core',
-		'ui.system.dialog',
-		'ui.buttons',
-		'ui.design-tokens',
 	],
 	'skip_core' => false,
 ];

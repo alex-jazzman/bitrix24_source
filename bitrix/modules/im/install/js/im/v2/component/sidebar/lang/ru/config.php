@@ -92,6 +92,7 @@ $MESS['IM_SIDEBAR_CHAT_TYPE_BOT'] = "Чат-бот";
 $MESS['IM_SIDEBAR_CHAT_TYPE_CHANNEL'] = "Канал";
 $MESS['IM_SIDEBAR_CHAT_TYPE_COMMENTS'] = "Комментарии";
 $MESS['IM_SIDEBAR_CHAT_TYPE_COLLAB'] = "Коллаба";
+$MESS['IM_SIDEBAR_CHAT_TYPE_TASK_COMMENTS'] = "Чат задачи";
 
 //support statuses
 $MESS['IM_SIDEBAR_SUPPORT_TICKET_STATUS_NEW'] = "открыт";

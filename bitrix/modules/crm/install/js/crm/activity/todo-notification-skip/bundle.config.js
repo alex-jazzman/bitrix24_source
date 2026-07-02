@@ -3,5 +3,4 @@ module.exports = {
 	output: 'dist/todo-notification-skip.bundle.js',
 	namespace: 'BX.Crm.Activity',
 	browserslist: true,
-	adjustConfigPhp: false,
 };

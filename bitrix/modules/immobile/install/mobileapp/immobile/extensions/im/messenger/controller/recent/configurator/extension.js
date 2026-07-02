@@ -5,7 +5,8 @@ jn.define('im/messenger/controller/recent/configurator', (require, exports, modu
 	const { Type } = require('type');
 	const { RecentController } = require('im/messenger/controller/recent/controller');
 	const { Feature } = require('im/messenger/lib/feature');
-	const { RecentServiceName } = require('im/messenger/controller/recent/const/service');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { RecentServiceName } = require('im/messenger/controller/recent/const');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 	const logger = getLoggerWithContext('recent--configurator', 'RecentConfigurator');
 
@@ -82,6 +83,7 @@ jn.define('im/messenger/controller/recent/configurator', (require, exports, modu
 				const ServiceClass = require(serviceConfig.extension);
 				const service = new ServiceClass(recentLocator, serviceName, serviceConfig.props);
 				recentLocator.add(serviceName, service);
+				serviceLocator.get('subscription-manager').register(service);
 				logger.info(`${serviceName} added to recent locator`);
 			}
 			catch (error)

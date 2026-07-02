@@ -622,6 +622,56 @@
 					BXMobileApp.Events.postToComponent('bizprocbackground::tab::open', {}, 'background');
 				},
 			},
+			{
+				resolveFunction: (url) => {
+					const match = url.match(/\/bitrix\/tools\/bizproc_show_file\.php\?(.+)/i);
+					if (match)
+					{
+						const params = new URLSearchParams(match[1]);
+						const filename = params.get('f') || '';
+
+						params.set('mobile_action', 'bp_show_file');
+						params.set('filename', filename);
+
+						return {
+							url: '/mobile/ajax.php?' + params.toString(),
+							filename,
+						};
+					}
+
+					return null;
+				},
+				openFunction: (props) => {
+					// eslint-disable-next-line no-undef
+					BXMobileApp.UI.Document.open({
+						url: props.url,
+						filename: props.filename,
+					});
+				},
+			},
+			{
+				resolveFunction: (url) => {
+					const match = url.match(/\/bitrix\/tools\/disk\/uf\.php\?(.+)/i);
+					if (match)
+					{
+						const params = new URLSearchParams(match[1]);
+						params.set('mobile_action', 'disk_uf_view');
+
+						return {
+							url: '/mobile/ajax.php?' + params.toString(),
+						};
+					}
+
+					return null;
+				},
+				openFunction: (props) => {
+					// eslint-disable-next-line no-undef
+					BXMobileApp.UI.Document.open({
+						url: props.url,
+						filename: props.filename || '',
+					});
+				},
+			},
 		]),
 
 		userIdFromUrl(url)
@@ -831,7 +881,7 @@
 					},
 				},
 				{
-					regExp: /\/(board|sheet|pres|doc)\/([^/?]+)(?:\?|$|\/)/i,
+					regExp: /\/(board|sheet|pres|doc|picture|media|file|audio)\/([^/?]+)(?:\?|$|\/)/i,
 					result: {
 						url,
 					},

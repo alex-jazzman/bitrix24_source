@@ -63,6 +63,9 @@ $MESS["CRM_TIMELINE_GOTOCHAT_SELECTED_CLIENT_TITLE"] = "Пригласите #CL
 $MESS["CRM_TIMELINE_GOTOCHAT_CLIENT_SELECTOR_TITLE"] = "[client]Добавьте клиента[/client] и пригласите его в чат";
 $MESS["CRM_TIMELINE_GOTOCHAT_CLIENT_SELECTOR_DESCRIPTION"] = "Выбирайте удобный для клиента формат общения. Пригласите его в мессенджер, чтобы продолжить диалог. Вся история общения сохранится в CRM.";
 
+$MESS["CRM_TIMELINE_GOTOCHAT_SELECTED_CLIENT_TITLE_MSGVER_2"] = "Приглашение в чат  #CLIENT_NAME#";
+$MESS["CRM_TIMELINE_GOTOCHAT_CLIENT_SELECTOR_DESCRIPTION_MSGVER_2"] = "Предложите клиенту перейти в удобный мессенджер, чтобы продолжить диалог. Вся переписка сохранится в CRM";
+
 $MESS["CRM_TIMELINE_GOTOCHAT_SERVICE_TELEGRAM"] = "Telegram";
 $MESS["CRM_TIMELINE_GOTOCHAT_SERVICE_WHATSAPP"] = "WhatsApp";
 $MESS["CRM_TIMELINE_GOTOCHAT_SERVICE_VK"] = "ВКонтакте";
@@ -78,6 +81,10 @@ $MESS["CRM_TIMELINE_GOTOCHAT_INVITE_WHATSAPP"] = "Пригласить в чат
 $MESS["CRM_TIMELINE_GOTOCHAT_WHATSAPP_DISABLED_HINT"] = "WhatsApp временно недоступен из-за внешних ограничений";
 $MESS["CRM_TIMELINE_GOTOCHAT_INVITE_VK"] = "Пригласить в чат ВКонтакте";
 $MESS["CRM_TIMELINE_GOTOCHAT_INVITE_FACEBOOK"] = "Пригласить в чат Facebook";
+$MESS["CRM_TIMELINE_GOTOCHAT_SERVICE_MAX"] = "MAX";
+$MESS["CRM_TIMELINE_GOTOCHAT_CONNECT_MAX"] = "Подключить чат MAX";
+$MESS["CRM_TIMELINE_GOTOCHAT_INVITE_MAX"] = "Пригласить в чат MAX";
+$MESS["CRM_TIMELINE_GOTOCHAT_MAX_OPENLINE_SELECTOR"] = "MAX-бот";
 $MESS["CRM_TIMELINE_GOTOCHAT_SOON_WHATSAPP"] = "WhatsApp скоро";
 $MESS["CRM_TIMELINE_GOTOCHAT_SOON_VK"] = "ВКонтакте скоро";
 $MESS["CRM_TIMELINE_GOTOCHAT_SOON_FACEBOOK"] = "Facebook скоро";

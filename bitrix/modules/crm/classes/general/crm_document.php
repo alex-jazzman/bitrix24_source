@@ -1286,7 +1286,7 @@ class CCrmDocument
 	public static function GetDocument($documentId)
 	{
 		$args = func_get_args();
-		$select = $args[2] ?? ['*'];
+		$select = ($args[2] ?? []) ?: ['*'];
 		$arDocumentID = static::GetDocumentInfo($documentId);
 		if (empty($arDocumentID))
 		{
@@ -2647,6 +2647,23 @@ class CCrmDocument
 		return $documentId;
 	}
 
+	protected static function getEntityFieldCaption(int $entityTypeId, string $fieldName, ?string $fallback = null): string
+	{
+		$factory = Container::getInstance()->getFactory($entityTypeId);
+		if ($factory && $factory->isFieldExists($fieldName))
+		{
+			$caption = $factory->getFieldCaption($fieldName);
+			if ($caption === $fieldName && $fallback)
+			{
+				return $fallback;
+			}
+
+			return $caption;
+		}
+
+		return $fallback ?? $fieldName;
+	}
+
 	protected static function getVirtualFields(): array
 	{
 		$fields = [
@@ -2831,6 +2848,22 @@ class CCrmDocument
 			'COMMUNICATIONS.LAST_FORM_DATE' => [
 				'Name' => $msg . ': '.$webFormName,
 				'Type' => 'datetime',
+			],
+		];
+	}
+
+	protected static function getBadgeFields(): array
+	{
+		$badge = Loc::getMessage('CRM_DOCUMENT_FIELD_BADGE');
+
+		return [
+			'BADGE.NAME' => [
+				'Name' => $badge . ': ' . Loc::getMessage('CRM_DOCUMENT_FIELD_BADGE_NAME'),
+				'Type' => 'string',
+			],
+			'BADGE.VALUE' => [
+				'Name' => $badge . ': ' . Loc::getMessage('CRM_DOCUMENT_FIELD_BADGE_VALUE'),
+				'Type' => 'string',
 			],
 		];
 	}

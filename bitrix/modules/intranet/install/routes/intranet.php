@@ -109,6 +109,9 @@ return static function (RoutingConfigurator $routes) {
 			$routes->any('booking/confirmation/{hash}/{any}', new PublicPageController($siteDir . 'pub/booking/confirmation.php'))
 				->where('hash', '[0-9a-z\.]+')
 			;
+			$routes->any('bi/dashboard/{hash}/{any}', new PublicPageController($siteDir . 'pub/bi/dashboard.php'))
+				->where('hash', '[0-9a-zA-Z]+')
+			;
 			$routes->any('site/{any}', new PublicPageController($siteDir . 'pub/site/index.php'));
 			$routes->any('{any}', new PublicPageController($siteDir . 'pub/payment.php'));
 		})

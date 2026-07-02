@@ -6,27 +6,27 @@ this.BX.Booking = this.BX.Booking || {};
 
 	// @vue/component
 	const UiTabs = {
-	  name: 'UiTabs',
-	  props: {
-	    /**
-	     * @type {tabsOptions}
-	     */
-	    tabsOptions: {
-	      type: Array,
-	      default: null
-	    },
-	    activeComponent: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  emits: ['update:activeComponent'],
-	  methods: {
-	    switchActiveTab(component) {
-	      this.$emit('update:activeComponent', component);
-	    }
-	  },
-	  template: `
+		name: 'UiTabs',
+		props: {
+			/**
+			 * @type {tabsOptions}
+			 */
+			tabsOptions: {
+				type: Array,
+				default: null
+			},
+			activeComponent: {
+				type: String,
+				required: true
+			}
+		},
+		emits: ['update:activeComponent'],
+		methods: {
+			switchActiveTab(component) {
+				this.$emit('update:activeComponent', component);
+			}
+		},
+		template: `
 		<div class="booking-tabs__wrapper">
 			<div class="booking-tabs__nav">
 				<div class="booking-tabs__nav_tabs">
@@ -50,5 +50,5 @@ this.BX.Booking = this.BX.Booking || {};
 
 	exports.UiTabs = UiTabs;
 
-}((this.BX.Booking.Component = this.BX.Booking.Component || {})));
+})(this.BX.Booking.Component = this.BX.Booking.Component || {});
 //# sourceMappingURL=ui-tabs.bundle.js.map

@@ -8,14 +8,14 @@ return [
 	'css' => 'dist/payment-documents.bundle.css',
 	'js' => 'dist/payment-documents.bundle.js',
 	'rel' => [
-		'main.popup',
-		'ui.dialogs.messagebox',
 		'catalog.tool-availability-manager',
-		'ui.hint',
+		'currency.currency-core',
 		'main.core',
 		'main.core.events',
+		'main.popup',
+		'ui.dialogs.messagebox',
+		'ui.hint',
 		'ui.label',
-		'currency.currency-core',
 	],
 	'skip_core' => false,
 ];

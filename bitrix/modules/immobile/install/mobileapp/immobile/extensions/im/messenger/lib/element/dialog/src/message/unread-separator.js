@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/lib/element/dialog/message/unread-separator', (require, exports, module) => {
 	const { Loc } = require('im/messenger/loc');
-
+	const { Color } = require('tokens');
 	const {
 		MessageAlign,
 		MessageTextAlign,
@@ -17,12 +17,12 @@ jn.define('im/messenger/lib/element/dialog/message/unread-separator', (require, 
 	class UnreadSeparatorMessage extends Message
 	{
 		/**
-		 * @param {MessagesModelState} modelMessage
-		 * @param {CreateMessageOptions} options
+		 * @param {MessagesModelState|{}} [modelMessage={}]
+		 * @param {CreateMessageOptions|{}} [options={}]
 		 */
 		constructor(modelMessage = {}, options = {})
 		{
-			if (!modelMessage.id)
+			if (!modelMessage?.id)
 			{
 				// eslint-disable-next-line no-param-reassign
 				modelMessage.id = UnreadSeparatorMessage.getDefaultId();
@@ -38,8 +38,8 @@ jn.define('im/messenger/lib/element/dialog/message/unread-separator', (require, 
 			this.setIsBackgroundWide(true);
 			this.setMessageAlign(MessageAlign.center);
 			this.setTextAlign(MessageTextAlign.center);
-			this.setFontColor('#FFFFFF');
-			this.setBackgroundColor('#525C6966');
+			this.setFontColor(Color.baseWhiteFixed.toHex());
+			this.setBackgroundColor(Color.chatOverallTech.toHex());
 			this.setRoundedCorners(false);
 			this.setMarginTop(12);
 			this.setMarginBottom(4);
@@ -48,11 +48,6 @@ jn.define('im/messenger/lib/element/dialog/message/unread-separator', (require, 
 		getType()
 		{
 			return MessageType.systemText;
-		}
-
-		setShowTail()
-		{
-			return this;
 		}
 
 		static getDefaultId()

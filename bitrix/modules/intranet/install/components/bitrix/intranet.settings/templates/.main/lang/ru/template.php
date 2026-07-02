@@ -263,6 +263,7 @@ $MESS["BITRIX24_PARTNER_POPUP_BUTTON"] = "оставить заявку";
 $MESS["INTRANET_SETTINGS_WARNING_TOOL_INSTANT_MESSENGER"] = "Пункт исчезнет из левого меню, но чат останется на боковой панели вашего Битрикс24, а также в мобильном приложении и приложении для компьютера";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_DEFAULT_EMAIL"] = "E-Mail отправителя по умолчанию";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_DEFAULT_EMAIL"] = "Адрес будет автоматически подставляться во все письма с сайта, если в настройках почты не указаны другие отправители";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_MAIL_CONNECTION_RESPONSIBLE_ADMIN"] = "Кому будут приходить запросы на подключение";
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_CONFIGURATION_DELETE_PORTAL"] = "Удалить мой Битрикс24";
 $MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_MSGVER_1"] = "Удалить Битрикс24 может только администратор. Перед удалением все сотрудники должны быть уволены. Все данные, включая файлы на диске и профили сотрудников, будут удалены.<br><br>После удаления вы можете создать Битрикс24 с таким же адресом. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_CONFIRM_ACTION_DELETE_PORTAL"] = "Удалить мой Битрикс24";

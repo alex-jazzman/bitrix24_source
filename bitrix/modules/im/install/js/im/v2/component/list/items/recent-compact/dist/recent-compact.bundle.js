@@ -3,84 +3,83 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_application_core,im_v2_css_tokens,im_v2_lib_menu,im_v2_lib_recent,im_v2_lib_utils,im_v2_model,im_v2_provider_service_recent,call_component_compactActiveCallList,ui_designTokens_air,main_core,ui_iconSet_api_vue,im_public,im_v2_lib_analytics,im_v2_const,im_v2_component_elements_avatar,im_v2_lib_counter) {
+(function (exports, im_public, im_v2_application_core, im_v2_const, im_v2_css_tokens, im_v2_lib_menu, im_v2_lib_recent, im_v2_lib_utils, im_v2_provider_service_recent, call_component_compactActiveCallList, ui_designTokens_air, main_core, ui_iconSet_api_vue, im_v2_lib_analytics, im_v2_lib_counter, im_v2_component_elements_avatar) {
 	'use strict';
 
 	// @vue/component
 	const CompactActiveCallList = {
-	  name: 'CompactActiveCallList',
-	  emits: ['click'],
-	  computed: {
-	    componentToRender() {
-	      return call_component_compactActiveCallList.CompactActiveCallList;
-	    }
-	  },
-	  template: `
+		name: 'CompactActiveCallList',
+		emits: ['click'],
+		computed: {
+			componentToRender() {
+				return call_component_compactActiveCallList.CompactActiveCallList;
+			}
+		},
+		template: `
 		<component v-if="componentToRender" :is="componentToRender"  @click="$emit('click', $event)" />
 	`
 	};
 
 	const NavigationItemToIcon = Object.freeze({
-	  [im_v2_const.NavigationMenuItem.notification]: ui_iconSet_api_vue.Outline.NOTIFICATION,
-	  [im_v2_const.NavigationMenuItem.copilot]: ui_iconSet_api_vue.Outline.COPILOT,
-	  [im_v2_const.NavigationMenuItem.openlines]: ui_iconSet_api_vue.Outline.OPEN_CHANNELS,
-	  [im_v2_const.NavigationMenuItem.openlinesV2]: ui_iconSet_api_vue.Outline.OPEN_CHANNELS
+		[im_v2_const.NavigationMenuItem.notification]: ui_iconSet_api_vue.Outline.NOTIFICATION,
+		[im_v2_const.NavigationMenuItem.copilot]: ui_iconSet_api_vue.Outline.COPILOT,
+		[im_v2_const.NavigationMenuItem.openlines]: ui_iconSet_api_vue.Outline.OPEN_CHANNELS,
+		[im_v2_const.NavigationMenuItem.openlinesV2]: ui_iconSet_api_vue.Outline.OPEN_CHANNELS
 	});
 	const ICON_SIZE = 24;
 
 	// @vue/component
 	const CompactNavigationItem = {
-	  name: 'CompactNavigationItem',
-	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon
-	  },
-	  props: {
-	    id: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  computed: {
-	    ICON_SIZE: () => ICON_SIZE,
-	    Color: () => im_v2_const.Color,
-	    NavigationItemToIcon: () => NavigationItemToIcon,
-	    counter() {
-	      var _this$$store$getters$;
-	      const counterToItemId = {
-	        [im_v2_const.NavigationMenuItem.notification]: 'notifications/getCounter',
-	        [im_v2_const.NavigationMenuItem.copilot]: 'counters/getTotalCopilotCounter',
-	        [im_v2_const.NavigationMenuItem.openlines]: 'counters/getTotalLinesCounter',
-	        [im_v2_const.NavigationMenuItem.openlinesV2]: 'counters/getTotalLinesCounter'
-	      };
-	      return (_this$$store$getters$ = this.$store.getters[counterToItemId[this.id]]) != null ? _this$$store$getters$ : 0;
-	    },
-	    hasCounter() {
-	      return this.counter > 0;
-	    },
-	    formattedCounter() {
-	      if (!this.hasCounter) {
-	        return '';
-	      }
-	      return im_v2_lib_counter.CounterManager.formatCounter(this.counter);
-	    },
-	    iconColorToken() {
-	      if (this.counter > 0) {
-	        return 'var(--ui-color-design-outline-content)';
-	      }
-	      return 'var(--ui-color-design-outline-na-content)';
-	    }
-	  },
-	  methods: {
-	    onNavigationItemClick() {
-	      void im_public.Messenger.openNavigationItem({
-	        id: this.id
-	      });
-	      if (this.id === im_v2_const.NavigationMenuItem.notification) {
-	        im_v2_lib_analytics.Analytics.getInstance().notification.onOpenFromQuickAccessPanel();
-	      }
-	    }
-	  },
-	  template: `
+		name: 'CompactNavigationItem',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon
+		},
+		props: {
+			id: {
+				type: String,
+				required: true
+			}
+		},
+		computed: {
+			ICON_SIZE: () => ICON_SIZE,
+			Color: () => im_v2_const.Color,
+			NavigationItemToIcon: () => NavigationItemToIcon,
+			counter() {
+				const counterToItemId = {
+					[im_v2_const.NavigationMenuItem.notification]: 'notifications/getCounter',
+					[im_v2_const.NavigationMenuItem.copilot]: 'counters/getTotalCopilotCounter',
+					[im_v2_const.NavigationMenuItem.openlines]: 'counters/getTotalLinesCounter',
+					[im_v2_const.NavigationMenuItem.openlinesV2]: 'counters/getTotalLinesCounter'
+				};
+				return this.$store.getters[counterToItemId[this.id]] ?? 0;
+			},
+			hasCounter() {
+				return this.counter > 0;
+			},
+			formattedCounter() {
+				if (!this.hasCounter) {
+					return '';
+				}
+				return im_v2_lib_counter.CounterManager.formatCounter(this.counter);
+			},
+			iconColorToken() {
+				if (this.counter > 0) {
+					return 'var(--ui-color-design-outline-content)';
+				}
+				return 'var(--ui-color-design-outline-na-content)';
+			}
+		},
+		methods: {
+			onNavigationItemClick() {
+				void im_public.Messenger.openNavigationItem({
+					id: this.id
+				});
+				if (this.id === im_v2_const.NavigationMenuItem.notification) {
+					im_v2_lib_analytics.Analytics.getInstance().notification.onOpenFromQuickAccessPanel();
+				}
+			}
+		},
+		template: `
 		<div class="bx-im-compact-navigation__icon --ui-hoverable" @click="onNavigationItemClick">
 			<BIcon
 				:key="id"
@@ -102,21 +101,21 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const CompactNavigationItems = [im_v2_const.NavigationMenuItem.notification, im_v2_const.NavigationMenuItem.copilot, im_v2_const.NavigationMenuItem.openlines, im_v2_const.NavigationMenuItem.openlinesV2];
 	// @vue/component
 	const CompactNavigation = {
-	  name: 'CompactNavigation',
-	  components: {
-	    CompactNavigationItem
-	  },
-	  computed: {
-	    availableNavigationItems() {
-	      const settings = main_core.Extension.getSettings('im.v2.component.list.items.recent-compact');
-	      const items = settings.get('navigationItems', []);
-	      return items.map(item => item.id);
-	    },
-	    preparedNavigationItems() {
-	      return CompactNavigationItems.filter(item => this.availableNavigationItems.includes(item));
-	    }
-	  },
-	  template: `
+		name: 'CompactNavigation',
+		components: {
+			CompactNavigationItem
+		},
+		computed: {
+			availableNavigationItems() {
+				const settings = main_core.Extension.getSettings('im.v2.component.list.items.recent-compact');
+				const items = settings.get('navigationItems', []);
+				return items.map(item => item.id);
+			},
+			preparedNavigationItems() {
+				return CompactNavigationItems.filter(item => this.availableNavigationItems.includes(item));
+			}
+		},
+		template: `
 		<div class="bx-im-compact-navigation__container">
 			<div class="bx-im-compact-navigation__items">
 				<CompactNavigationItem
@@ -132,16 +131,16 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	// @vue/component
 	const EmptyState = {
-	  name: 'EmptyState',
-	  data() {
-	    return {};
-	  },
-	  methods: {
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
-	    }
-	  },
-	  template: `
+		name: 'EmptyState',
+		data() {
+			return {};
+		},
+		methods: {
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
 		<div class="bx-im-list-recent-compact__empty">
 			{{ loc('IM_LIST_RECENT_COMPACT_EMPTY') }}
 		</div>
@@ -150,67 +149,67 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	// @vue/component
 	const RecentItem = {
-	  name: 'RecentItem',
-	  components: {
-	    ChatAvatar: im_v2_component_elements_avatar.ChatAvatar
-	  },
-	  props: {
-	    item: {
-	      type: Object,
-	      required: true
-	    }
-	  },
-	  data() {
-	    return {};
-	  },
-	  computed: {
-	    AvatarSize: () => im_v2_component_elements_avatar.AvatarSize,
-	    recentItem() {
-	      return this.item;
-	    },
-	    dialog() {
-	      return this.$store.getters['chats/get'](this.recentItem.dialogId, true);
-	    },
-	    isUser() {
-	      return this.dialog.type === im_v2_const.ChatType.user;
-	    },
-	    invitation() {
-	      return this.recentItem.invitation;
-	    },
-	    totalCounter() {
-	      return this.chatCounter + this.childrenCounter;
-	    },
-	    chatCounter() {
-	      return this.$store.getters['counters/getCounterByChatId'](this.dialog.chatId);
-	    },
-	    childrenCounter() {
-	      return this.$store.getters['counters/getChildrenTotalCounter'](this.dialog.chatId);
-	    },
-	    formattedCounter() {
-	      return im_v2_lib_counter.CounterManager.formatCounter(this.totalCounter);
-	    },
-	    wrapClasses() {
-	      return {
-	        '--pinned': this.recentItem.pinned
-	      };
-	    },
-	    itemClasses() {
-	      return {
-	        '--no-counter': this.totalCounter === 0
-	      };
-	    },
-	    avatarType() {
-	      const isSelfChat = this.$store.getters['chats/isSelfChat'](this.recentItem.dialogId);
-	      return isSelfChat ? im_v2_component_elements_avatar.ChatAvatarType.selfChat : '';
-	    }
-	  },
-	  methods: {
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
-	    }
-	  },
-	  // language=Vue
-	  template: `
+		name: 'RecentItem',
+		components: {
+			ChatAvatar: im_v2_component_elements_avatar.ChatAvatar
+		},
+		props: {
+			item: {
+				type: Object,
+				required: true
+			}
+		},
+		data() {
+			return {};
+		},
+		computed: {
+			AvatarSize: () => im_v2_component_elements_avatar.AvatarSize,
+			recentItem() {
+				return this.item;
+			},
+			dialog() {
+				return this.$store.getters['chats/get'](this.recentItem.dialogId, true);
+			},
+			isUser() {
+				return this.dialog.type === im_v2_const.ChatType.user;
+			},
+			invitation() {
+				return this.recentItem.invitation;
+			},
+			totalCounter() {
+				return this.chatCounter + this.childrenCounter;
+			},
+			chatCounter() {
+				return this.$store.getters['counters/getCounterByChatId'](this.dialog.chatId);
+			},
+			childrenCounter() {
+				return this.$store.getters['counters/getChildrenTotalCounter'](this.dialog.chatId);
+			},
+			formattedCounter() {
+				return im_v2_lib_counter.CounterManager.formatCounter(this.totalCounter);
+			},
+			wrapClasses() {
+				return {
+					'--pinned': this.recentItem.pinned
+				};
+			},
+			itemClasses() {
+				return {
+					'--no-counter': this.totalCounter === 0
+				};
+			},
+			avatarType() {
+				const isSelfChat = this.$store.getters['chats/isSelfChat'](this.recentItem.dialogId);
+				return isSelfChat ? im_v2_component_elements_avatar.ChatAvatarType.selfChat : '';
+			}
+		},
+		methods: {
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		// language=Vue
+		template: `
 		<div :data-id="recentItem.dialogId" :class="wrapClasses" class="bx-im-list-recent-compact-item__wrap">
 			<div :class="itemClasses" class="bx-im-list-recent-compact-item__container" ref="container">
 				<div class="bx-im-list-recent-compact-item__avatar_container">
@@ -234,90 +233,86 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	// @vue/component
 	const RecentList = {
-	  name: 'RecentList',
-	  components: {
-	    RecentItem,
-	    EmptyState,
-	    CompactNavigation,
-	    CompactActiveCallList
-	  },
-	  emits: ['chatClick'],
-	  data() {
-	    return {};
-	  },
-	  computed: {
-	    preparedItems() {
-	      const collection = this.$store.getters['recent/getSortedCollection']({
-	        type: im_v2_const.RecentType.default
-	      });
-	      return collection.filter(item => im_v2_lib_recent.RecentManager.needToShowItem(item));
-	    },
-	    activeCalls() {
-	      return this.$store.getters['recent/calls/get'];
-	    },
-	    pinnedItems() {
-	      return this.preparedItems.filter(item => item.pinned === true);
-	    },
-	    generalItems() {
-	      return this.preparedItems.filter(item => item.pinned === false);
-	    },
-	    isEmptyCollection() {
-	      return this.preparedItems.length === 0;
-	    }
-	  },
-	  async created() {
-	    this.contextMenuManager = new im_v2_lib_menu.RecentMenu({
-	      emitter: this.getEmitter()
-	    });
-	    this.managePreloadedList();
-	    await this.getRecentService().loadFirstPage();
-	  },
-	  beforeUnmount() {
-	    this.contextMenuManager.destroy();
-	  },
-	  methods: {
-	    onClick(item) {
-	      im_public.Messenger.openChat(item.dialogId);
-	    },
-	    onRightClick(item, event) {
-	      if (im_v2_lib_utils.Utils.key.isCombination(event, 'Alt+Shift')) {
-	        return;
-	      }
-	      const context = {
-	        dialogId: item.dialogId,
-	        recentItem: item,
-	        compactMode: true
-	      };
-	      this.contextMenuManager.openMenu(context, event.currentTarget);
-	      event.preventDefault();
-	    },
-	    managePreloadedList() {
-	      const {
-	        preloadedList
-	      } = im_v2_application_core.Core.getApplicationData();
-	      if (!preloadedList) {
-	        return;
-	      }
-	      this.getRecentService().setPreloadedData(preloadedList);
-	    },
-	    getRecentService() {
-	      if (!this.service) {
-	        this.service = im_v2_provider_service_recent.LegacyRecentService.getInstance();
-	      }
-	      return this.service;
-	    },
-	    getEmitter() {
-	      return this.$Bitrix.eventEmitter;
-	    },
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
-	    }
-	  },
-	  template: `
+		name: 'RecentList',
+		components: {
+			RecentItem,
+			EmptyState,
+			CompactNavigation,
+			CompactActiveCallList
+		},
+		computed: {
+			preparedItems() {
+				const collection = this.$store.getters['recent/getSortedCollection']({
+					type: im_v2_const.RecentType.default
+				});
+				return collection.filter(item => im_v2_lib_recent.RecentManager.needToShowItem(item));
+			},
+			activeCalls() {
+				return this.$store.getters['recent/calls/get'];
+			},
+			pinnedItems() {
+				return this.preparedItems.filter(item => item.pinned === true);
+			},
+			generalItems() {
+				return this.preparedItems.filter(item => item.pinned === false);
+			},
+			isEmptyCollection() {
+				return this.preparedItems.length === 0;
+			}
+		},
+		async created() {
+			this.contextMenuManager = new im_v2_lib_menu.RecentMenu({
+				emitter: this.getEmitter()
+			});
+			this.managePreloadedList();
+			await this.getRecentService().loadFirstPage();
+		},
+		beforeUnmount() {
+			this.contextMenuManager.destroy();
+		},
+		methods: {
+			onClick(item) {
+				void im_public.Messenger.openChat(item.dialogId);
+			},
+			onRightClick(item, event) {
+				if (im_v2_lib_utils.Utils.key.isCombination(event, 'Alt+Shift')) {
+					return;
+				}
+				const context = {
+					dialogId: item.dialogId,
+					recentItem: item,
+					compactMode: true
+				};
+				this.contextMenuManager.openMenu(context, event.currentTarget);
+				event.preventDefault();
+			},
+			managePreloadedList() {
+				const {
+					preloadedList
+				} = im_v2_application_core.Core.getApplicationData();
+				if (!preloadedList) {
+					return;
+				}
+				this.getRecentService().setPreloadedData(preloadedList);
+			},
+			getRecentService() {
+				if (!this.service) {
+					this.service = im_v2_provider_service_recent.LegacyRecentService.getInstance();
+				}
+				return this.service;
+			},
+			getEmitter() {
+				return this.$Bitrix.eventEmitter;
+			},
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
 		<div class="bx-im-messenger__scope bx-im-list-recent-compact__container">
 			<CompactNavigation />
 			<CompactActiveCallList @click="onClick" />
-			<div class="bx-im-list-recent-compact__scroll-container">
+			<div class="bx-im-list-recent-compact__scroll-container --hidden-scroll">
 				<div v-if="pinnedItems.length > 0" class="bx-im-list-recent-compact__pinned_container">
 					<RecentItem
 						v-for="item in pinnedItems"
@@ -344,5 +339,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.RecentList = RecentList;
 
-}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX?.Messenger?.v2?.Application??{},BX?.Messenger?.v2?.Css??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Model??{},BX?.Messenger?.v2?.Service??{},BX?.Call?.Component??{},BX??{},BX??{},BX?.UI?.IconSet??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Const??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{}));
+})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Application??{}, BX?.Messenger?.v2?.Const??{}, BX?.Messenger?.v2?.Css??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Service??{}, BX?.Call?.Component??{}, BX??{}, BX??{}, BX?.UI?.IconSet??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.Elements??{});
 //# sourceMappingURL=recent-compact.bundle.js.map

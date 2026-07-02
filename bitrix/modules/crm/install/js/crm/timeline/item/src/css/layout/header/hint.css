@@ -30,10 +30,6 @@
 	background-color: var(--ui-color-background-primary, #fff);
 }
 
-.crm-timeline__hint_popup-content-icon.--auto-sum {
-	mask-image: url('../../../../image/hint-icons/hint-icon-auto-summ.svg');
-}
-
 .crm-timeline__hint_popup-content-text {
 	--text-color: #fff;
 

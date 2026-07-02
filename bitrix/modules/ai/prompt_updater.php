@@ -9,8 +9,8 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\ModuleManager;
 
-$incVersion = 1554;
-$incFormatVersion = 2;
+$incVersion = 1568;
+$incFormatVersion = 3;
 $optCode = '~prompts_system_update_version';
 $optFormatVersionCode = '~prompts_system_update_format_version';
 

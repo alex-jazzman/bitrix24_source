@@ -16,6 +16,13 @@ global $DB, $USER;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Web\Uri;
+use Bitrix\Socialnetwork\V2\Public\Provider\ProjectProvider;
+
+$projectProvider = (class_exists(ProjectProvider::class) ? new ProjectProvider() : null);
+if ($projectProvider && $projectProvider->isProject($arResult['Group']['ID'] ?? 0))
+{
+	return;
+}
 
 if (!isset($_REQUEST['BLOCK_RELOAD']) || $_REQUEST['BLOCK_RELOAD'] !== 'Y')
 {

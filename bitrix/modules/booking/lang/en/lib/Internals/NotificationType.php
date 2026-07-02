@@ -1,4 +1,5 @@
 <?php
+$MESS["BOOKING_NOTIFICATION_TYPE_CANCELLATION"] = "Auto reschedule when canceled";
 $MESS["BOOKING_NOTIFICATION_TYPE_CONFIRMATION"] = "Booking confirmation";
 $MESS["BOOKING_NOTIFICATION_TYPE_DELAYED"] = "Nearly missed booking reminder";
 $MESS["BOOKING_NOTIFICATION_TYPE_FEEDBACK"] = "Customer feedback request";

@@ -10,13 +10,11 @@ jn.define('im/messenger/controller/chat-composer/create/group-chat', (require, e
 	const { NestedDepartmentSelector } = require('selector/widget/entity/tree-selectors/nested-department-selector');
 	const {
 		DialogType,
-		EventType,
 		EntitySelectorElementType,
 		OpenDialogContextType,
 	} = require('im/messenger/const');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { EntitySelectorHelper } = require('im/messenger/lib/helper');
 
 	const { ChatService } = require('im/messenger/provider/services/chat');
@@ -31,15 +29,19 @@ jn.define('im/messenger/controller/chat-composer/create/group-chat', (require, e
 	 */
 	class CreateGroupChat
 	{
-		constructor()
+		/**
+		 * @param {number} parentChatId
+		 */
+		constructor(parentChatId)
 		{
 			this.dialogInfo = {
 				name: '',
 				description: '',
 				avatar: '',
-				type: DialogType.openChannel,
+				type: DialogType.chat,
 				userCounter: 0,
 				members: EntitySelectorHelper.createUserList([serviceLocator.get('core').getUserId()]),
+				parentChatId,
 			};
 			/** @type {Array<NestedDepartmentSelectorItem>} */
 			this.participants = [];
@@ -51,7 +53,7 @@ jn.define('im/messenger/controller/chat-composer/create/group-chat', (require, e
 		}
 
 		/**
-		 * @param props
+		 * @param {CreateGroupChatOpenProps} props
 		 * @param parentWidget
 		 *
 		 * @return Promise<LayoutWidget>
@@ -65,7 +67,7 @@ jn.define('im/messenger/controller/chat-composer/create/group-chat', (require, e
 					title: Loc.getMessage('IMMOBILE_CHAT_COMPOSER_CREATE_GROUP_CHAT_TITLE'),
 					sendButtonName: Loc.getMessage('IMMOBILE_CHAT_COMPOSER_USER_SELECTOR_CONTINUE_BUTTON'),
 				},
-				leftButtons: this.#getSelectorButtons(),
+				leftButtons: this.#buildLeftButtons(props),
 				allowMultipleSelection: true,
 				closeOnSelect: true,
 				events: {
@@ -120,7 +122,13 @@ jn.define('im/messenger/controller/chat-composer/create/group-chat', (require, e
 				}
 			};
 
-			selector.show({}, parentWidget)
+			const selectorShowWidgetParams = props.selectorShowWidgetParams ?? {};
+			selector.show(
+				{
+					widgetParams: selectorShowWidgetParams,
+				},
+				parentWidget,
+			)
 				.then((selectorWidget) => {
 					this.selectorWidget = selectorWidget;
 				})
@@ -130,8 +138,17 @@ jn.define('im/messenger/controller/chat-composer/create/group-chat', (require, e
 			;
 		}
 
-		#getSelectorButtons()
+		/**
+		 * @param {CreateGroupChatOpenProps} props
+		 * @return {Array}
+		 */
+		#buildLeftButtons(props)
 		{
+			if (!props?.showLeftButtons)
+			{
+				return [];
+			}
+
 			return [
 				{
 					id: 'immobile_selector_back_button',
@@ -160,7 +177,8 @@ jn.define('im/messenger/controller/chat-composer/create/group-chat', (require, e
 		}
 
 		/**
-		 * @param props
+		 * @protected
+		 * @param {object} props
 		 * @param parentWidget
 		 *
 		 * @return Promise<LayoutWidget>
@@ -221,6 +239,7 @@ jn.define('im/messenger/controller/chat-composer/create/group-chat', (require, e
 			return openPromise;
 		}
 
+		/** @protected */
 		getTitleParams()
 		{
 			return {
@@ -230,6 +249,7 @@ jn.define('im/messenger/controller/chat-composer/create/group-chat', (require, e
 		}
 
 		/**
+		 * @protected
 		 * @return {ChannelViewProps}
 		 */
 		getDialogInfoProps(props)
@@ -252,6 +272,10 @@ jn.define('im/messenger/controller/chat-composer/create/group-chat', (require, e
 			};
 		}
 
+		/**
+		 * @protected
+		 * @param {Array<Object>} selectedEntity
+		 */
 		onCloseParticipantSelector(selectedEntity)
 		{
 			this.participants = selectedEntity;
@@ -261,6 +285,10 @@ jn.define('im/messenger/controller/chat-composer/create/group-chat', (require, e
 			}, this.selectorWidget);
 		}
 
+		/**
+		 * @protected
+		 * @param {{ title: string, description: string }} params
+		 */
 		onClickCreate({ title, description })
 		{
 			this.dialogInfo.name = title;
@@ -280,16 +308,25 @@ jn.define('im/messenger/controller/chat-composer/create/group-chat', (require, e
 			;
 		}
 
+		/**
+		 * @protected
+		 * @param {string} avatar
+		 */
 		onChangeAvatar(avatar)
 		{
 			this.dialogInfo.avatar = avatar;
 		}
 
+		/**
+		 * @protected
+		 * @param {string} delay
+		 */
 		onChangeMessagesAutoDeleteDelay(delay)
 		{
 			this.dialogInfo.messagesAutoDeleteDelay = delay;
 		}
 
+		/** @protected */
 		async create()
 		{
 			const config = {
@@ -299,6 +336,7 @@ jn.define('im/messenger/controller/chat-composer/create/group-chat', (require, e
 				ownerId: serviceLocator.get('core').getUserId(),
 				memberEntities: this.getMemberEntities(),
 				searchable: 'N',
+				parentChatId: this.dialogInfo.parentChatId,
 			};
 
 			if (this.dialogInfo.avatar)
@@ -318,6 +356,7 @@ jn.define('im/messenger/controller/chat-composer/create/group-chat', (require, e
 			return chatService.createChat(config);
 		}
 
+		/** @protected */
 		getMemberEntities()
 		{
 			const currentUserId = serviceLocator.get('core').getUserId();
@@ -336,14 +375,24 @@ jn.define('im/messenger/controller/chat-composer/create/group-chat', (require, e
 			return this.dialogInfo.members;
 		}
 
-		#openChat(chatId)
+		/**
+		 * @param {number} chatId
+		 */
+		async #openChat(chatId)
 		{
 			this.layoutWidget.close();
 
-			MessengerEmitter.emit(EventType.messenger.openDialog, {
-				dialogId: `chat${chatId}`,
-				context: OpenDialogContextType.chatCreation,
-			});
+			try
+			{
+				await serviceLocator.get('dialog-manager').openDialog({
+					dialogId: `chat${chatId}`,
+					context: OpenDialogContextType.chatCreation,
+				});
+			}
+			catch (e)
+			{
+				logger.error(`${this.constructor.name}.#openChat error:`, e);
+			}
 		}
 	}
 

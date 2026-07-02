@@ -1,4 +1,4 @@
-<?
+<?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 
@@ -35,13 +35,13 @@ var bx_app_pass_mess = {
 </script>
 
 <div class="bx-otp-wrap-container">
-	<div class="ui-title-4"><?echo GetMessage("main_app_pass_title")?></div>
-	<div class="ui-text-1 ui-color-medium"><?echo GetMessage("main_app_pass_text1")?></div>
-	<div class="ui-text-1 ui-color-medium"><?echo GetMessage("main_app_pass_text2")?></div>
+	<div class="ui-title-4"><?= GetMessage("main_app_pass_title")?></div>
+	<div class="ui-text-1 ui-color-medium"><?= GetMessage("main_app_pass_text1")?></div>
+	<div class="ui-text-1 ui-color-medium"><?= GetMessage("main_app_pass_text2")?></div>
 
 	<div class="bx-otp-section-white">
 
-	<?
+		<?php
 	foreach($arResult["APPLICATIONS"] as $app_id => $app):
 		if(isset($app["VISIBLE"]) && $app["VISIBLE"] === false)
 		{
@@ -56,19 +56,19 @@ var bx_app_pass_mess = {
 			</div>
 			<div class="bx-otp-accordion-content-block">
 				<table class="bx-otp-access-table" id="bx_app_pass_table_<?=$app_id?>">
-					<?if(!empty($arResult["ROWS"][$app_id])):?>
+					<?php if(!empty($arResult["ROWS"][$app_id])):?>
 					<thead>
 						<tr>
 							<td style="width:100%"></td>
-							<td><?echo GetMessage("main_app_pass_created")?></td>
-							<td><?echo GetMessage("main_app_pass_last")?></td>
-							<td><?echo GetMessage("main_app_pass_last_ip")?></td>
-							<td><?echo GetMessage("main_app_pass_manage")?></td>
+							<td><?= GetMessage("main_app_pass_created")?></td>
+							<td><?= GetMessage("main_app_pass_last")?></td>
+							<td><?= GetMessage("main_app_pass_last_ip")?></td>
+							<td><?= GetMessage("main_app_pass_manage")?></td>
 						</tr>
 					</thead>
-					<?endif?>
+					<?php endif?>
 					<tbody>
-					<?
+					<?php
 					if(isset($arResult["ROWS"][$app_id]) && is_array($arResult["ROWS"][$app_id])):
 						foreach($arResult["ROWS"][$app_id] as $pass):
 					?>
@@ -88,10 +88,10 @@ var bx_app_pass_mess = {
 								<?=$pass["LAST_IP"]?>
 							</td>
 							<td class="bx-otp-access-table-action">
-								<a class="bx-otp-btn big lightgray mb0" href="javascript:void(0);" onclick="bx_app_pass_show_delete_window(<?=$pass["ID"]?>)"><?echo GetMessage("main_app_pass_del")?></a>
+								<a class="bx-otp-btn big lightgray mb0" href="javascript:void(0);" onclick="bx_app_pass_show_delete_window(<?=$pass["ID"]?>)"><?= GetMessage("main_app_pass_del")?></a>
 							</td>
 						</tr>
-					<?
+						<?php
 						endforeach;
 					endif;
 					?>
@@ -102,7 +102,7 @@ var bx_app_pass_mess = {
 										<thead>
 											<tr>
 												<td class="tal" style="padding: 0 30px 0 0;"><small class="fwn ttn m0"><?=(!empty($app["OPTIONS_CAPTION"])? HtmlFilter::encode($app["OPTIONS_CAPTION"]) : GetMessage("main_app_pass_link"))?></small></td>
-												<td class="tal" style="padding: 0;"><small class="fwn ttn m0"><?echo GetMessage("main_app_pass_comment")?></small></td>
+												<td class="tal" style="padding: 0;"><small class="fwn ttn m0"><?= GetMessage("main_app_pass_comment")?></small></td>
 											</tr>
 										</thead>
 										<tbody>
@@ -111,20 +111,20 @@ var bx_app_pass_mess = {
 													<div class="ui-ctl ui-ctl-w100 ui-ctl-after-icon ui-ctl-dropdown">
 														<div class="ui-ctl-after ui-ctl-icon-angle"></div>
 														<select name="SYSCOMMENT" id="" class="ui-ctl-element">
-														<?if(!empty($app["OPTIONS"]) && is_array($app["OPTIONS"])):?>
-															<?foreach($app["OPTIONS"] as $opt):?>
+														<?php if(!empty($app["OPTIONS"]) && is_array($app["OPTIONS"])):?>
+															<?php foreach($app["OPTIONS"] as $opt):?>
 															<option value="<?=HtmlFilter::encode($opt)?>"><?=HtmlFilter::encode($opt)?></option>
-															<?endforeach?>
-															<option value="<?echo GetMessage("main_app_pass_other")?>"><?echo GetMessage("main_app_pass_other")?></option>
-														<?else:?>
+															<?php endforeach?>
+															<option value="<?= GetMessage("main_app_pass_other")?>"><?= GetMessage("main_app_pass_other")?></option>
+														<?php else:?>
 															<option value="<?=HtmlFilter::encode($app["NAME"])?>"><?=HtmlFilter::encode($app["NAME"])?></option>
-														<?endif?>
+														<?php endif?>
 														</select>
 													</div>
 												</td>
 												<td class="tal" style="padding: 0;">
 													<div class="ui-ctl ui-ctl-textbox">
-														<input type="text" name="COMMENT" class="ui-ctl-element" placeholder="<?echo GetMessage("main_app_pass_comment_ph")?>">
+														<input type="text" name="COMMENT" class="ui-ctl-element" placeholder="<?= GetMessage("main_app_pass_comment_ph")?>">
 													</div>
 												</td>
 											</tr>
@@ -134,14 +134,14 @@ var bx_app_pass_mess = {
 								</form>
 							</td>
 							<td class="bx-otp-access-table-value" colspan="2">
-								<a class="ui-btn ui-btn-success" href="javascript:void(0);" onclick="bx_app_pass_show_create_window('bx_app_pass_form_<?=$app_id?>')"><?echo GetMessage("main_app_pass_get_pass")?></a>
+								<a class="ui-btn ui-btn-success" href="javascript:void(0);" onclick="bx_app_pass_show_create_window('bx_app_pass_form_<?=$app_id?>')"><?= GetMessage("main_app_pass_get_pass")?></a>
 							</td>
 						</tr>
 					</tbody>
 				</table>
 			</div>
 		</div>
-	<?
+	<?php
 	endforeach;
 	?>
 
@@ -150,16 +150,16 @@ var bx_app_pass_mess = {
 
 <div id="bx_app_pass_new_password" class="modal" style="margin: 0 auto;display: none; background: #fff;padding: 10px; max-width:500px;">
 	<div class="bx-otp-popup-container">
-		<div class="bx-otp-popup-content-title"><?echo GetMessage("main_app_pass_create_pass")?></div>
+		<div class="bx-otp-popup-content-title"><?= GetMessage("main_app_pass_create_pass")?></div>
 			<div class="bx-otp-popup-lottery-container">
 
-			<p><?echo GetMessage("main_app_pass_create_pass_text")?> </p>
+			<p><?= GetMessage("main_app_pass_create_pass_text")?> </p>
 			<div class="bx-otp-popup-lottery bx-otp-popup-lottery-black" id="bx_app_pass_lottery">
 				<span id="bx_app_pass_password"></span>
 			</div>
 		</div>
 		<div class="bx-otp-popup-buttons">
-			<a class="bx-otp-btn big lightgray" href="javascript:void(0);" onclick="BX.PopupWindowManager.getCurrentPopup().close();" id="bx_app_pass_close_button"><?echo GetMessage("main_app_pass_create_pass_close")?></a>
+			<a class="bx-otp-btn big lightgray" href="javascript:void(0);" onclick="BX.PopupWindowManager.getCurrentPopup().close();" id="bx_app_pass_close_button"><?= GetMessage("main_app_pass_create_pass_close")?></a>
 		</div>
 	</div>
 </div>
@@ -167,15 +167,15 @@ var bx_app_pass_mess = {
 <div id="bx_app_pass_delete_password" class="modal" style="margin: 0 auto;display: none; background: #fff;padding: 10px; max-width:600px;">
 	<div class="bx-otp-popup-container">
 		<div class="bx-otp-popup-remove-container">
-			<div class="bx-otp-popup-remove-title"><?echo GetMessage("main_app_pass_del_pass")?></div>
-			<p class="tac"><?echo GetMessage("main_app_pass_del_pass_text")?></p>
+			<div class="bx-otp-popup-remove-title"><?= GetMessage("main_app_pass_del_pass")?></div>
+			<p class="tac"><?= GetMessage("main_app_pass_del_pass_text")?></p>
 		</div>
 
 		<div class="bx-otp-popup-buttons">
-			<a class="bx-otp-btn big red" href="javascript:void(0);" id="bx_app_pass_del_button"><?echo GetMessage("main_app_pass_del")?></a>
-			<a class="bx-otp-btn big transparent" href="javascript:void(0);" onclick="BX.PopupWindowManager.getCurrentPopup().close();"><?echo GetMessage("main_app_pass_cancel")?></a>
+			<a class="bx-otp-btn big red" href="javascript:void(0);" id="bx_app_pass_del_button"><?= GetMessage("main_app_pass_del")?></a>
+			<a class="bx-otp-btn big transparent" href="javascript:void(0);" onclick="BX.PopupWindowManager.getCurrentPopup().close();"><?= GetMessage("main_app_pass_cancel")?></a>
 		</div>
 	</div>
 </div>
 
-<?endif?>
+<?php endif?>

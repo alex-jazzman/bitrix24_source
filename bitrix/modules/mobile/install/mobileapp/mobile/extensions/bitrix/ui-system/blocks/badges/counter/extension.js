@@ -60,6 +60,7 @@ jn.define('ui-system/blocks/badges/counter', (require, exports, module) => {
 						height: dotSize,
 						width: dotSize,
 						backgroundColor: design.getBackgroundColor().toHex(),
+						backgroundColorGradient: design.getBackgroundColorGradient(),
 						borderRadius: Component.elementAccentCorner.toNumber(),
 					},
 				}),
@@ -93,12 +94,14 @@ jn.define('ui-system/blocks/badges/counter', (require, exports, module) => {
 						paddingHorizontal: isRoundedBadge ? null : size.getPaddingHorizontal().toNumber(),
 						borderRadius: Component.elementAccentCorner.toNumber(),
 						backgroundColor: design.getBackgroundColor().toHex(),
+						backgroundColorGradient: design.getBackgroundColorGradient(),
 					},
 				},
 				Text({
 					accent: true,
 					text: String(badgeText),
 					color: design.getColor(),
+					colorGradient: design.getColorGradient(),
 				}),
 			),
 		);

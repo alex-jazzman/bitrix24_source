@@ -1,4 +1,4 @@
-import { BitrixVueComponentProps } from 'ui.vue3';
+import { type BitrixVueComponentProps } from 'ui.vue3';
 
 import {
 	Field,
@@ -7,12 +7,12 @@ import {
 	ValueEllipsis,
 } from '../../layout/index';
 
-declare type StageItem = {
+import './stage-field.css';
+
+type StageItem = {
 	name: string,
 	color: string,
 };
-
-import './stage-field.css';
 
 export const StageField: BitrixVueComponentProps = {
 	name: 'StageField',

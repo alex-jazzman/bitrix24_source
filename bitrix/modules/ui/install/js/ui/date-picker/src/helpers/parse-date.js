@@ -1,6 +1,6 @@
 import { Type, Text } from 'main.core';
 import { DateTimeFormat } from 'main.date';
-import { createDate } from './create-date';
+
 import { createUtcDate } from './create-utc-date';
 import { getDate } from './get-date';
 
@@ -61,7 +61,19 @@ export function parseDate(dateValue: string, format: string): Date | null
 		}
 	}
 
-	const today = createDate(new Date());
+	const now = new Date();
+	const today = new Date(Date.UTC(
+		now.getFullYear(),
+		now.getMonth(),
+		now.getDate(),
+		now.getHours(),
+		now.getMinutes(),
+		now.getSeconds(),
+		0,
+	));
+
+	today.__utc = true;
+
 	const { day: currentDay, month: currentMonth, year: currentYear } = getDate(today);
 	const defaultYear = currentYear;
 	const defaultMonth = hasYear ? 0 : currentMonth;

@@ -2,6 +2,7 @@
  * @module more-menu
  */
 jn.define('more-menu', (require, exports, module) => {
+	const { Feature } = require('feature');
 	const { Loc } = require('loc');
 	const { Type } = require('type');
 	const { Color, Indent } = require('tokens');
@@ -35,10 +36,12 @@ jn.define('more-menu', (require, exports, module) => {
 	const { createTestIdGenerator } = require('utils/test');
 	const { isEmpty, isEqual } = require('utils/object');
 	const { debounce } = require('utils/function');
+	const { RefRegistry } = require('more-menu/ref-registry');
 
 	const MENU_LIST_ACTION_NAME = 'mobile.Menu.getMenu';
 	const SECONDS_IN_DAY = 86400;
 	const MORE_MENU_TEST_ID = 'more-menu';
+	const MORE_MENU_REFRESH_VIEW_REF_KEY = 'more_menu_refresh_view';
 
 	/**
 	 * @class MoreMenu
@@ -269,6 +272,8 @@ jn.define('more-menu', (require, exports, module) => {
 				user,
 				currentTheme,
 				restrictions,
+				isNewCheckInEnabled,
+				checkInAmount,
 			} = this.state;
 
 			if (loading && menuList.length === 0)
@@ -283,7 +288,7 @@ jn.define('more-menu', (require, exports, module) => {
 						testId: `AppTheme:${AppTheme.id}`,
 					},
 					new LoadingScreenComponent({
-						backgroundColor: Color.bgContentPrimary.toHex(),
+						backgroundColor: Color.bgContentPrimary.toHex(Feature.canUseWidgetBackground() ? 0 : 1),
 					}),
 				);
 			}
@@ -291,7 +296,7 @@ jn.define('more-menu', (require, exports, module) => {
 			return View(
 				{
 					style: {
-						backgroundColor: Color.bgContentSecondary.toHex(),
+						backgroundColor: Color.bgContentSecondary.toHex(Feature.canUseWidgetBackground() ? 0 : 1),
 					},
 					testId: `AppTheme:${AppTheme.id}`,
 				},
@@ -304,11 +309,17 @@ jn.define('more-menu', (require, exports, module) => {
 						style: {
 							flex: 1,
 						},
+						ref: (ref) => {
+							if (ref)
+							{
+								RefRegistry.register(MORE_MENU_REFRESH_VIEW_REF_KEY, ref);
+							}
+						},
 					},
 					View(
 						{
 							style: {
-								backgroundColor: Color.bgContentPrimaryInvert.toHex(),
+								backgroundColor: Color.bgContentPrimaryInvert.toHex(Feature.canUseWidgetBackground() ? 0 : 1),
 								paddingBottom: Indent.XL3.toNumber(),
 							},
 						},
@@ -318,6 +329,8 @@ jn.define('more-menu', (require, exports, module) => {
 							canUseTimeMan: restrictions?.canUseTimeMan,
 							canUseCheckIn: restrictions?.canUseCheckIn,
 							canManageWorkTimeOnMobile: restrictions?.canManageWorkTimeOnMobile,
+							isNewCheckInEnabled,
+							checkInAmount,
 							currentShift,
 							workTime,
 							userId: user?.id,
@@ -336,6 +349,7 @@ jn.define('more-menu', (require, exports, module) => {
 			const {
 				company,
 				supportBotId,
+				supportBanners,
 
 				restrictions,
 				helpdeskUrl,
@@ -346,6 +360,7 @@ jn.define('more-menu', (require, exports, module) => {
 				testId: this.getTestId('company'),
 				company,
 				supportBotId,
+				supportBanners,
 				layout: this.layout,
 				canUseSupport: restrictions?.canUseSupport,
 				canInvite: restrictions?.canInvite,
@@ -414,7 +429,7 @@ jn.define('more-menu', (require, exports, module) => {
 						width: '100%',
 						height: '50%',
 						top: 0,
-						backgroundColor: Color.bgContentPrimary.toHex(),
+						backgroundColor: Color.bgContentPrimary.toHex(Feature.canUseWidgetBackground() ? 0 : 1),
 					},
 				},
 			);
@@ -429,7 +444,7 @@ jn.define('more-menu', (require, exports, module) => {
 						width: '100%',
 						height: '50%',
 						bottom: 0,
-						backgroundColor: Color.bgContentPrimaryInvert.toHex(),
+						backgroundColor: Color.bgContentPrimaryInvert.toHex(Feature.canUseWidgetBackground() ? 0 : 1),
 					},
 				},
 			);
@@ -463,6 +478,7 @@ jn.define('more-menu', (require, exports, module) => {
 								const {
 									currentShift,
 									workTime,
+									checkInAmount,
 									...cachedState
 								} = state;
 
@@ -542,9 +558,12 @@ jn.define('more-menu', (require, exports, module) => {
 				menuList: preparedMenuList,
 				currentShift: data.currentShift || null,
 				workTime: data.workTime || null,
+				isNewCheckInEnabled: data.isNewCheckInEnabled || false,
+				checkInAmount: data.checkInAmount || null,
 				company: data.company || null,
 				helpdeskUrl: data.helpdeskUrl || null,
 				supportBotId: data.supportBotId || 0,
+				supportBanners: data.supportBanners || null,
 				restrictions: data.restrictions || {},
 				ahaMoment: data.ahaMoment || null,
 				currentTheme: data.currentTheme || null,

@@ -207,6 +207,7 @@ export class SignSettings
 		this.#preview.setBlocks(documentData.blocks);
 		this.editor.setUrls([], 0);
 		this.wizard.toggleBtnActiveState('back', true);
+		this.wizard.toggleBtnActiveState('complete', true);
 		const handler = (urls, totalPages, newBlocks): void => {
 			this.enablePreviewReady();
 			this.#preview.urls = urls;
@@ -215,10 +216,16 @@ export class SignSettings
 			{
 				this.#preview.setBlocks(newBlocks);
 			}
+			this.hasPreviewUrls = true;
+			if (this.documentSetup.isEditorFlowPending)
+			{
+				return;
+			}
 			this.wizard.toggleBtnActiveState('back', false);
+			this.wizard.toggleBtnActiveState('complete', false);
 		};
 
-		this.documentSetup.waitForPagesList(documentData, handler, preparedPages, isSelectBlank);
+		this.pagesLoadingPromise = this.documentSetup.waitForPagesList(documentData, handler, preparedPages, isSelectBlank);
 	}
 
 	getFirstDocumentUidFromGroup(): string
@@ -274,6 +281,10 @@ export class SignSettings
 				type: 'toggleActivity',
 				stage: 'setup',
 				method: ({ data }) => {
+					if (this.documentSetup.isEditorFlowPending)
+					{
+						return;
+					}
 					const { selected } = data;
 					this.wizard.toggleBtnActiveState('next', !selected);
 				},
@@ -282,6 +293,10 @@ export class SignSettings
 				type: 'addFile',
 				stage: 'setup',
 				method: ({ data }) => {
+					if (this.documentSetup.isEditorFlowPending)
+					{
+						return;
+					}
 					this.wizard.toggleBtnActiveState('next', !data.ready);
 				},
 			},
@@ -289,13 +304,23 @@ export class SignSettings
 				type: 'removeFile',
 				stage: 'setup',
 				method: ({ data }) => {
+					if (this.documentSetup.isEditorFlowPending)
+					{
+						return;
+					}
 					this.wizard.toggleBtnActiveState('next', !data.ready);
 				},
 			},
 			{
 				type: 'clearFiles',
 				stage: 'setup',
-				method: () => this.wizard.toggleBtnActiveState('next', true),
+				method: () => {
+					if (this.documentSetup.isEditorFlowPending)
+					{
+						return;
+					}
+					this.wizard.toggleBtnActiveState('next', true);
+				},
 			},
 			{
 				type: 'showEditor',
@@ -364,7 +389,7 @@ export class SignSettings
 		this.#subscribeOnEditorEvents();
 	}
 
-	async getPagesUrls(data: DocumentDetails): Promise
+	async getPagesUrls(data: DocumentDetails, preparedPages: boolean = false): Promise
 	{
 		const documentUrls = [];
 		const handler = (urls): void => {
@@ -372,7 +397,7 @@ export class SignSettings
 			documentUrls.push(...urls);
 			targetDocument.urls = documentUrls;
 		};
-		await this.documentSetup.waitForPagesList(data, handler);
+		await this.documentSetup.waitForPagesList(data, handler, preparedPages);
 	}
 
 	async #executeEditorActionsForGroup(uid: string): Promise<void>
@@ -447,7 +472,10 @@ export class SignSettings
 		if (this.#preview.hasUrls())
 		{
 			this.hasPreviewUrls = true;
-			this.wizard.toggleBtnActiveState('next', false);
+			if (!this.documentSetup.isEditorFlowPending)
+			{
+				this.wizard.toggleBtnActiveState('next', false);
+			}
 		}
 
 		this.#isSameBlankSelected = false;
@@ -503,7 +531,7 @@ export class SignSettings
 		const container = document.getElementById(this.#containerId);
 		Dom.append(this.#getOverlayContainer(), container);
 		Dom.append(this.#getLayout(), container);
-		const step = this.documentSetup.setupData ? 1 : 0;
+		const step = this.#getInitialStepIndex();
 
 		if (!this.isB2bSignMaster)
 		{
@@ -511,6 +539,18 @@ export class SignSettings
 			this.wizard.toggleBtnActiveState('next', !isDraft);
 		}
 		this.wizard.moveOnStep(step);
+	}
+
+	#getInitialStepIndex(): number
+	{
+		const query = new URLSearchParams(window.location.search);
+		const stepId = query.get('stepId');
+		if (stepId === 'changePartner' && this.isTemplateMode())
+		{
+			return 0;
+		}
+
+		return this.documentSetup.setupData ? 1 : 0;
 	}
 
 	getStepsMetadata(signSettings: this, documentUid?: string, templateUid?: string): Metadata

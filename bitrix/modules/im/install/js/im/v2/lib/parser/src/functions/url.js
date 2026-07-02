@@ -2,8 +2,6 @@ import { Dom, Text } from 'main.core';
 
 import { getUtils, getConst } from '../utils/core-proxy';
 
-const { DataAttribute } = getConst();
-
 export const ParserUrl = {
 
 	decode(text, config = {}): string
@@ -81,6 +79,8 @@ export const ParserUrl = {
 
 	getLinkHtml(url: string, urlTarget: string, text: string): string
 	{
+		const { DataAttribute } = getConst();
+
 		return Dom.create({
 			tag: 'a',
 			attrs: {

@@ -13,5 +13,8 @@ return [
 		'im:messenger/provider/rest',
 		'im:messenger/lib/ui/notification/messenger-notifier',
 		'im:messenger/controller/recent/service/select/lib/opener',
+		'im:messenger/controller/folder/create',
+		'im:messenger/controller/folder/selector',
+		'im:messenger/provider/services/folder',
 	],
 ];

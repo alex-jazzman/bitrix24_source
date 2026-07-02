@@ -25,4 +25,5 @@ declare type MessengerCoreRepository = {
 	transcript: TranscriptRepository,
 	sticker: StickerRepository,
 	counter: CounterRepository,
+	folder: FolderRepository,
 }

@@ -1,6 +1,6 @@
 import { Event } from 'main.core';
 import { Popup } from 'main.popup';
-import { Button, ButtonColor, ButtonSize, CancelButton } from 'ui.buttons';
+import { AirButtonStyle, Button, ButtonColor, ButtonSize, CancelButton } from 'ui.buttons';
 import { RichMenuItem, RichMenuItemIcon, RichMenuPopup } from 'ui.vue3.components.rich-menu';
 import { mapGetters, mapState } from 'ui.vue3.vuex';
 
@@ -104,7 +104,7 @@ export const RoleHeading = {
 				overlay: true,
 				contentPadding: 10,
 				content: this.$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_POPUP_REMOVE_ROLE'),
-				className: 'ui-access-rights-v2-text-center',
+				className: 'ui-access-rights-del-role',
 				animation: 'fading-slide',
 				cacheable: false,
 				buttons: [
@@ -112,6 +112,7 @@ export const RoleHeading = {
 						text: this.$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_POPUP_REMOVE_ROLE_YES'),
 						size: ButtonSize.SMALL,
 						color: ButtonColor.PRIMARY,
+						useAirDesign: true,
 						events: {
 							click: () => {
 								popup.destroy();
@@ -124,6 +125,8 @@ export const RoleHeading = {
 					new CancelButton({
 						text: this.$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_CANCEL'),
 						size: ButtonSize.SMALL,
+						useAirDesign: true,
+						style: AirButtonStyle.OUTLINE,
 						events: {
 							click: () => {
 								popup.destroy();

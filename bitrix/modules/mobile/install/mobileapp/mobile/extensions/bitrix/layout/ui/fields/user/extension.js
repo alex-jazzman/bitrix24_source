@@ -15,6 +15,7 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 	const { dispatch } = require('statemanager/redux/store');
 	const { usersUpsertedFromEntitySelector } = require('statemanager/redux/slices/users');
 	const { UserProfile } = require('user-profile');
+	const { requireLazy } = require('require-lazy');
 
 	const EMPTY_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/fields/user/images/empty-avatar.png';
 	const DEFAULT_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/fields/user/images/default-avatar.png';

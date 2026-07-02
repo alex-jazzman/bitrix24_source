@@ -123,6 +123,9 @@ class EntitySelector
 			hideOnSelect: true,
 			autoHide: false,
 			hideByEsc: false,
+			popupOptions: {
+				focusTrap: false,
+			},
 		};
 
 		let dialogOptions = this.getSetting('dialogOptions', {});
@@ -174,7 +177,7 @@ class EntitySelector
 				const searchInput = this.getFilterFieldInput();
 				Event.bind(searchInput, 'input', this.controlInputChangeHandler);
 			})
-			;
+		;
 	}
 
 	addItemToFilter(id: string, title: string): void
@@ -318,7 +321,7 @@ class EntitySelector
 			return;
 		}
 
-		const dialogContainerElement = this.dialog.getPopup().getContentContainer();
+		const dialogContainerElement = this.dialog.getPopup().getPopupContainer();
 		if (target === dialogContainerElement || dialogContainerElement.contains(target))
 		{
 			result.stopBlur = true;

@@ -13,6 +13,7 @@ return [
 		'comments/uploadqueue',
 		'catalog:background/barcodescanner',
 		'push/listener',
+		'module',
 
 		'background/notifications',
 
@@ -24,6 +25,7 @@ return [
 		'tasks:background/tasks-notifications',
 
 		'crm:in-app-url/background',
+		'in-app-url/deeplink',
 		"sign:background",
 		"mail:background",
 		'crm:background/crm-notifications',
@@ -47,5 +49,8 @@ return [
 		'onboarding/background',
 		'pull-listener',
 		'pull-listener/aiassistant-client',
+
+		'timeman:background',
+		'stafftrack:check-in-v2/background',
 	],
 ];

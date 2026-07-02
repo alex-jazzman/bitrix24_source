@@ -75,7 +75,7 @@ jn.define('ui-system/layout/card-list', (require, exports, module) => {
 				children,
 			} = this.props;
 
-			return children.map((child, index) => {
+			return children.filter(Boolean).map((child, index) => {
 				const isFirst = index === 0;
 
 				if (!divided || isFirst)

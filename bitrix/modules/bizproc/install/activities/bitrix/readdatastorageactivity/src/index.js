@@ -1,4 +1,4 @@
-import { Type, Dom, Tag, Runtime, Text } from 'main.core';
+import { Type, Dom, Tag, Text, Runtime } from 'main.core';
 import {
 	Context,
 	ConditionGroup,
@@ -7,8 +7,7 @@ import {
 	getGlobalContext,
 	setGlobalContext,
 } from 'bizproc.automation';
-import { BaseEvent } from 'main.core.events';
-import { Dialog } from 'ui.entity-selector';
+import { EventEmitter, BaseEvent } from 'main.core.events';
 
 type PropertyOptions = {
 	documentType: Array<string>;
@@ -40,12 +39,6 @@ type ControlRenderers = {
 	filterFields: (field: Field) => HTMLElement;
 };
 
-type StorageCodeData = {
-	element: HTMLTextAreaElement,
-	dependentElements: Array<HTMLElement>,
-	returnFieldsContainer: ?HTMLDivElement,
-};
-
 export class ReadDataStorageActivityRenderer
 {
 	#form: ?HTMLFormElement = null;
@@ -56,20 +49,20 @@ export class ReadDataStorageActivityRenderer
 	#documentType: Array<string>;
 	#document: Document;
 
-	#storageCodeData: StorageCodeData = {
-		dependentElements: [],
-	};
-
 	#storageIdDependentElements: NodeListOf<HTMLElement>;
-	#returnFieldsMap: Map<number, Map<string, object>>;
-	#returnFieldsIds: Array<string>;
 
-	#filterFieldsContainer: HTMLDivElement | null;
-	#filteringFieldsPrefix: string;
-	#filterFieldsMap: Map<number, object>;
-	#conditionGroup: ConditionGroup | undefined;
+	#returnFieldsMap: Map<string, Map<string, object>> = new Map();
+	#returnFieldsIds: Array<string> = [];
+	#systemReturnFields: Map<string, object> = new Map();
 
-	#currentStorageId: number;
+	#filterFieldsContainer: HTMLDivElement | null = null;
+	#filteringFieldsPrefix: string = '';
+	#filterFieldsMap: Map<string, object> = new Map();
+	#conditionGroup: ConditionGroup | null = null;
+	#conditionGroupSelector: ?ConditionGroupSelector = null;
+
+	#currentStorageId: string = '';
+	#storageBlocks: Array<Object> = [];
 
 	getControlRenderers(): ControlRenderers
 	{
@@ -87,10 +80,12 @@ export class ReadDataStorageActivityRenderer
 		};
 	}
 
-	afterFormRender(form: HTMLFormElement): void
+	async afterFormRender(form: HTMLFormElement): void
 	{
+		const { StorageSelector, mapStorageBlocksToFilterFields, resolveCurrentStorageId } = await Runtime
+			.loadExtension('bizproc.storage-selector');
+
 		this.#form = form;
-		this.#dialog = Dialog.getById('entityselector_storage_id');
 
 		if (Type.isPlainObject(this.#options))
 		{
@@ -98,16 +93,10 @@ export class ReadDataStorageActivityRenderer
 
 			if (!Type.isNil(this.#form))
 			{
-				const item = this.#dialog?.selectedItems.values()?.next()?.value;
-				this.#currentStorageId = item?.id || 0;
+				this.#currentStorageId = resolveCurrentStorageId(this.#form);
+
 				this.#storageIdDependentElements = form.querySelectorAll(
 					'#row_return_fields, #row_filter_fields',
-				);
-
-				this.#storageCodeData.element = form.storage_code;
-				this.#storageCodeData.dependentElements.push(
-					...form.querySelectorAll('#row_return_fields_by_storage_code').values(),
-					form.querySelector('[data-role="bpa-sra-filter-fields-container"]').closest('.node-settings-edit-box'),
 				);
 			}
 
@@ -117,55 +106,83 @@ export class ReadDataStorageActivityRenderer
 				title: 'document',
 			});
 
+			EventEmitter.subscribeOnce('BX.Bizproc.CommonNodeSettings:onBlocksReady', (event: BaseEvent) => {
+				const { blocks } = event.getData();
+				this.#storageBlocks = (blocks || []).filter(
+					(block) => block.activity?.Type === 'CreateStorageNode',
+				);
+
+				this.#initFilterFields(this.#options, mapStorageBlocksToFilterFields);
+				this.#initReturnFields(this.#options);
+				this.#render();
+			});
+
 			this.#initAutomationContext();
-			this.#initFilterFields(this.#options);
-			this.#initStorageSelector();
-			this.#initReturnFields(this.#options);
+			this.#initStorageSelector(StorageSelector);
 
 			this.#render();
-
-			if (this.#storageCodeData.element)
-			{
-				this.#renderFilterFields();
-			}
 		}
 	}
 
-	#initStorageSelector(): void
+	#initStorageSelector(StorageSelector): void
 	{
-		Runtime
-			.loadExtension('bizproc.storage-selector')
-			.then(({ StorageSelector }) => {
-				this.#dialog = new StorageSelector({
-					dialogId: 'entityselector_storage_id',
-					storageCodeInput: this.#storageCodeData.element,
-					onStateChange: this.#onStorageStateChange.bind(this),
-				});
-				this.#dialog.init();
-			})
-			.catch((e) => console.error(e));
+		this.#dialog = new StorageSelector({
+			dialogId: 'entityselector_storage_id',
+			onStateChange: this.#onStorageStateChange.bind(this),
+			initialValue: this.#currentStorageId,
+			storageCodeInput: this.#form?.querySelector('[name="storage_code"]'),
+		});
+		this.#dialog.init();
 	}
 
-	#initFilterFields(options: Object): void
+	#initFilterFields(options: Object, mapStorageBlocksToFilterFields: Function): void
 	{
 		this.#filterFieldsContainer = this.#form.querySelector('[data-role="bpa-sra-filter-fields-container"]');
 		this.#filteringFieldsPrefix = options.filteringFieldsPrefix;
 		this.#filterFieldsMap = new Map(
 			Object.entries(options.filterFieldsMap)
-				.map(([storageId, fieldsMap]) => [Number(storageId), fieldsMap]),
+				.map(([storageId, fieldsMap]) => [String(storageId), fieldsMap]),
 		);
 
+		this.#filterFieldsMap = mapStorageBlocksToFilterFields(this.#storageBlocks, this.#filterFieldsMap);
+
 		this.#conditionGroup = new ConditionGroup(options.conditions);
+		this.#conditionGroupSelector = null;
 	}
 
 	#initReturnFields(options: Object): void
 	{
 		this.#returnFieldsIds = Type.isArray(options.returnFieldsIds) ? options.returnFieldsIds : [];
+
+		const storageInput = this.#form.querySelector('input[name="storage_id"]');
+		const storageIdValue = storageInput?.value || '';
+		if (!storageIdValue || storageIdValue === '0')
+		{
+			const inputs = this.#form.querySelectorAll('[name="return_fields_by_storage_code[]"]');
+			const values = [...inputs]
+				.map((input) => input.value)
+				.filter(Boolean)
+			;
+			if (values.length > 0)
+			{
+				this.#returnFieldsIds = values;
+			}
+		}
+
 		this.#returnFieldsMap = new Map();
 		Object.entries(options.returnFieldsMap).forEach(([storageId, fieldsMap]) => {
-			this.#returnFieldsMap.set(Number(storageId), new Map(Object.entries(fieldsMap)));
+			this.#returnFieldsMap.set(String(storageId), new Map(Object.entries(fieldsMap)));
 		});
-		this.#storageCodeData.returnFieldsContainer = this.#form.querySelector('#row_return_fields_by_storage_code');
+
+		this.#systemReturnFields = new Map();
+		if (Type.isPlainObject(options.systemReturnFields))
+		{
+			Object.entries(options.systemReturnFields).forEach(([fieldId, field]) => {
+				this.#systemReturnFields.set(String(fieldId), { Name: field.Name });
+			});
+		}
+
+		this.#populateDynamicStorageReturnFields();
 	}
 
 	#initAutomationContext(): void
@@ -180,55 +197,50 @@ export class ReadDataStorageActivityRenderer
 		}
 	}
 
-	#onStorageStateChange(newStorageId: number): void
+	#populateDynamicStorageReturnFields(): void
 	{
-		if (newStorageId <= 0 && this.#storageCodeData.element.value === '' && this.#storageCodeData.returnFieldsContainer)
+		for (const block of this.#storageBlocks)
 		{
-			this.#clearStorageCodeAndValue();
-		}
+			const properties = block.activity?.Properties;
+			if (!properties?.StorageCode || !Type.isArrayFilled(properties.SelectedFields))
+			{
+				continue;
+			}
 
-		const isStorageDeselected = newStorageId > 0 && this.#currentStorageId === newStorageId;
-		if (isStorageDeselected)
-		{
-			return;
-		}
+			const fieldsMap = new Map(this.#systemReturnFields);
+			for (const field of properties.SelectedFields)
+			{
+				fieldsMap.set(String(field.code), { Name: field.name });
+			}
 
-		this.#currentStorageId = newStorageId;
-		this.#conditionGroup = new ConditionGroup();
-		this.#returnFieldsIds = [];
-		this.#render();
+			this.#returnFieldsMap.set(String(properties.StorageCode), fieldsMap);
+		}
 	}
 
-	#clearStorageCodeAndValue(): void
+	#onStorageStateChange(newStorageId: string): void
 	{
-		this.#storageCodeData.dependentElements.forEach((element) => Dom.hide(element));
+		if (this.#currentStorageId !== String(newStorageId))
+		{
+			this.#currentStorageId = String(newStorageId);
+			this.#conditionGroupSelector = null;
+			this.#conditionGroup = new ConditionGroup();
+			this.#returnFieldsIds = [];
+		}
 
-		this.#storageCodeData.element.value = '';
-		this.#conditionGroup = new ConditionGroup();
+		this.#render();
 	}
 
 	#render(): void
 	{
-		this.#storageCodeData.dependentElements.forEach((element) => Dom.hide(element));
-
-		if (Type.isNil(this.#currentStorageId) || this.#currentStorageId <= 0)
+		if (!this.#currentStorageId || this.#currentStorageId === '0')
 		{
-			this.#storageIdDependentElements.forEach((element) => Dom.hide(element));
-			this.#renderStorageCodeFields();
+			this.#storageIdDependentElements?.forEach((element) => Dom.hide(element));
 		}
 		else
 		{
-			this.#storageIdDependentElements.forEach((element) => Dom.show(element));
+			this.#storageIdDependentElements?.forEach((element) => Dom.show(element));
 			this.#renderFilterFields();
 			this.#renderReturnFields();
-		}
-	}
-
-	#renderStorageCodeFields(): void
-	{
-		if (Type.isStringFilled(this.#storageCodeData.element.value))
-		{
-			this.#storageCodeData.dependentElements.forEach((element) => Dom.show(element));
 		}
 	}
 
@@ -239,9 +251,9 @@ export class ReadDataStorageActivityRenderer
 
 	#renderFilterFields(): void
 	{
-		if (!Type.isNil(this.#conditionGroup))
+		if (!Type.isNil(this.#conditionGroup) && Type.isNil(this.#conditionGroupSelector))
 		{
-			const selector = new ConditionGroupSelector(this.#conditionGroup, {
+			this.#conditionGroupSelector = new ConditionGroupSelector(this.#conditionGroup, {
 				fields: Object.values(this.#filterFieldsMap.get(this.#currentStorageId) || {}),
 				fieldPrefix: this.#filteringFieldsPrefix,
 				customSelector: Type.isFunction(window.BPAShowSelector) ? this.#showFieldSelector : null,
@@ -252,13 +264,13 @@ export class ReadDataStorageActivityRenderer
 				isExpanded: this.#getFilterExpandedState(),
 			});
 
-			selector.subscribe('onToggleGroupViewClick', (event: BaseEvent) => {
+			this.#conditionGroupSelector.subscribe('onToggleGroupViewClick', (event: BaseEvent) => {
 				const data = event.getData();
 				this.#saveFilterExpandedState(data.isExpanded);
 			});
 
 			Dom.clean(this.#filterFieldsContainer);
-			Dom.append(selector.createNode(), this.#filterFieldsContainer);
+			Dom.append(this.#conditionGroupSelector.createNode(), this.#filterFieldsContainer);
 		}
 	}
 
@@ -275,10 +287,19 @@ export class ReadDataStorageActivityRenderer
 		}
 	}
 
+	destroy(): void
+	{
+		if (this.#dialog)
+		{
+			this.#dialog.destroy();
+			this.#dialog = null;
+		}
+	}
+
 	#renderReturnFields(): void
 	{
 		const storageId = this.#currentStorageId;
-		const fieldsMap = this.#returnFieldsMap.get(storageId);
+		const fieldsMap = this.#returnFieldsMap?.get(storageId);
 
 		if (!Type.isNil(fieldsMap))
 		{
@@ -286,6 +307,7 @@ export class ReadDataStorageActivityRenderer
 			fieldsMap.forEach((field, fieldId) => {
 				fieldOptions[fieldId] = field.Name;
 			});
+
 			const selectElement = this.#form.id_return_fields;
 			if (!selectElement)
 			{

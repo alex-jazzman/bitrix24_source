@@ -48,6 +48,7 @@ export class PermissionCheckerClass
 			currentUserPermissions,
 			teamsAvailable,
 			collabsAvailable,
+			projectsAvailable,
 			deputyApprovesBP,
 			departmentBPSettingsAvailable,
 			areTeamReportSettingsAvailable,
@@ -61,6 +62,7 @@ export class PermissionCheckerClass
 		this.currentUserPermissions = currentUserPermissions;
 		this.isTeamsAvailable = teamsAvailable;
 		this.isCollabsAvailable = collabsAvailable;
+		this.isProjectsAvailable = projectsAvailable;
 		this.isDeputyApprovesBPAvailable = deputyApprovesBP;
 		this.departmentBPSettingsAvailable = departmentBPSettingsAvailable;
 		this.areTeamReportSettingsAvailable = areTeamReportSettingsAvailable;

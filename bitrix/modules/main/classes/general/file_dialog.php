@@ -109,14 +109,14 @@ class CAdminFileDialog
 				if (!Params)
 					Params = {};
 
-				<?if(!$USER->CanDoOperation('fileman_view_file_structure')):?>
-					<?echo '
+				<?php if(!$USER->CanDoOperation('fileman_view_file_structure')):?>
+					<?= '
 					alert(mess_ACCESS_DENIED);
 					return;
 					'?>
-				<?else:?>
+				<?php else:?>
 					var UserConfig;
-				<?
+				<?php
 				$fd_config = stripslashes(CUserOptions::GetOption("fileman", "file_dialog_config", "N"));
 				if ($fd_config == "N" || $arConfig['saveConfig'] === false)
 				{
@@ -129,7 +129,7 @@ class CAdminFileDialog
 						sort : "type",
 						sort_order : "asc"
 					};
-				<?
+				<?php
 				}
 				else
 				{
@@ -152,7 +152,7 @@ class CAdminFileDialog
 						sort : '<?= CUtil::JSEscape($res[3])?>',
 						sort_order : '<?= CUtil::JSEscape($res[4])?>'
 					};
-					<?
+					<?php
 				}
 				?>
 				if (!window.BXFileDialog)
@@ -195,11 +195,11 @@ class CAdminFileDialog
 
 				oBXFileDialog = new BXFileDialog();
 				oBXFileDialog.Open(oConfig, UserConfig);
-				<?endif;?>
+				<?php endif;?>
 			};
 			window.<?= CUtil::JSEscape($arConfig['event'])?>Result = function(filename, path, site, title, menu)
 			{
-<?
+<?php
 $arBuckets = array();
 if($bCloudsBrowse && CModule::IncludeModule('clouds'))
 {
@@ -223,7 +223,7 @@ if($bCloudsBrowse && CModule::IncludeModule('clouds'))
 				if (path == '')
 					path = '/';
 
-				var arBuckets = <?echo Json::encode($arBuckets)?>;
+				var arBuckets = <?= Json::encode($arBuckets)?>;
 				if(arBuckets[site])
 				{
 					full = arBuckets[site] + filename;
@@ -233,19 +233,19 @@ if($bCloudsBrowse && CModule::IncludeModule('clouds'))
 				if ('<?= CUtil::JSEscape($arConfig['select'])?>' == 'D')
 					name = full;
 
-				<?if ($resultDest == "FUNCTION"): ?>
+				<?php if ($resultDest == "FUNCTION"): ?>
 					<?= CUtil::JSEscape($arConfig['arResultDest']["FUNCTION_NAME"])."(filename, path, site, title || '', menu || '');"?>
-				<?elseif($resultDest == "FORM"): ?>
+				<?php elseif($resultDest == "FORM"): ?>
 					document.<?= CUtil::JSEscape($arConfig['arResultDest']["FORM_NAME"])?>.<?= CUtil::JSEscape($arConfig['arResultDest']["FORM_ELEMENT_NAME"])?>.value = full;
 					BX.fireEvent(document.<?= CUtil::JSEscape($arConfig['arResultDest']["FORM_NAME"])?>.<?= CUtil::JSEscape($arConfig['arResultDest']["FORM_ELEMENT_NAME"])?>, 'change');
-				<?elseif($resultDest == "ID"): ?>
+				<?php elseif($resultDest == "ID"): ?>
 					BX('<?= CUtil::JSEscape($arConfig['arResultDest']["ELEMENT_ID"])?>').value = full;
 					BX.fireEvent(BX('<?= CUtil::JSEscape($arConfig['arResultDest']["ELEMENT_ID"])?>'), 'change');
-				<?endif;?>
+				<?php endif;?>
 			};
 			<?self::AttachJSScripts();?>
 			</script>
-			<?
+			<?php
 		}
 		else
 		{
@@ -263,7 +263,7 @@ if (window.jsUtils)
 {
 	jsUtils.addEvent(window, 'load', function(){jsUtils.loadJSFile('<?=CUtil::GetAdditionalFileURL("/bitrix/js/main/file_dialog.js")?>');}, false);
 }
-<?
+<?php
 		}
 	}
 
@@ -380,11 +380,11 @@ if (window.jsUtils)
 		<div id="__bx_fd_top_controls_container">
 			<table class="bx-fd-top-contr-tbl">
 				<tr>
-					<?if (count($arSites) > 1):?>
+					<?php if (count($arSites) > 1):?>
 						<td style="width:22px!important; padding: 0 4px 0 5px !important;">
 						<div id="__bx_site_selector" bxvalue="<?=htmlspecialcharsbx($Params['site'])?>" onclick="oBXDialogControls.SiteSelectorOnClick(this);" class="site_selector_div"><span><?=htmlspecialcharsbx($Params['site'])?></span><span class="fd_iconkit site_selector_div_arrow">&nbsp;&nbsp;</span></div>
 						</td>
-					<?endif;?>
+					<?php endif;?>
 					<td style="padding: 0 2px 0 2px !important;">
 						<input class="fd_input" type="text" id="__bx_dir_path_bar">
 					</td>
@@ -396,7 +396,7 @@ if (window.jsUtils)
 						<img src="/bitrix/images/1.gif" class="fd_iconkit dir_path_root" title="<?=GetMessage("FD_GO_TO_ROOT")?>" id="__bx_dir_path_root" />
 						<img src="/bitrix/images/1.gif" class="fd_iconkit new_dir" title="<?=GetMessage("FD_NEW_FOLDER")?>" id="__bx_new_dir" />
 						<img src="/bitrix/images/1.gif" class="fd_iconkit refresh" title="<?=GetMessage("FD_REFRESH")?>" onclick="oBXDialogControls.RefreshOnclick();"/>
-						<?
+						<?php
 						$arViews = Array(
 							Array("ID" => 'list', "TEXT" => GetMessage("FD_VIEW_LIST"), "ONCLICK" => "oBXDialogControls.ViewSelector.OnChange('list')"),
 							Array("ID" => 'detail', "TEXT" => GetMessage("FD_VIEW_DETAIL"), "ONCLICK" => "oBXDialogControls.ViewSelector.OnChange('detail')"),
@@ -481,7 +481,7 @@ if (window.jsUtils)
 		<div id="__bx_fd_load" style="display:none;">
 			<div id="bxfd_upload_container"><iframe id="bxfd_iframe_upload" src="javascript:''" frameborder="0"></iframe></div>
 		</div>
-		<div id="__bx_fd_container_add2menu" class="bxfd-add-2-menu-tab"><? if ($Params['bAddToMenu']) :?><table class="bx-fd-add-2-menu-tbl">
+		<div id="__bx_fd_container_add2menu" class="bxfd-add-2-menu-tab"><?php if ($Params['bAddToMenu']) :?><table class="bx-fd-add-2-menu-tbl">
 			<tr>
 				<td style="height:30px">
 					<table class="fd_tab_title">
@@ -510,9 +510,9 @@ if (window.jsUtils)
 							<td align="right"><?=GetMessage("FD_MENU_TYPE")?></td>
 							<td>
 								<select id="__bx_fd_menutype" name="menutype">
-								<?for($i = 0, $n = count($Params['arMenuTypes']); $i < $n; $i++): ?>
+								<?php for($i = 0, $n = count($Params['arMenuTypes']); $i < $n; $i++): ?>
 								<option value="<?=htmlspecialcharsbx($Params['arMenuTypes'][$i]['key'])?>"><?=htmlspecialcharsbx($Params['arMenuTypes'][$i]['title'])?></option>
-								<? endfor;?>
+								<?php endfor;?>
 								</select>
 							</td>
 						</tr>
@@ -531,9 +531,9 @@ if (window.jsUtils)
 							<td align="right"><?=GetMessage("FD_ATTACH_BEFORE")?></td>
 							<td>
 								<select name="newppos" id="__bx_fd_newppos">
-									<?for($i = 0, $n = count($Params['menuItems']); $i < $n; $i++):?>
+									<?php for($i = 0, $n = count($Params['menuItems']); $i < $n; $i++):?>
 									<option value="<?= $i + 1 ?>"><?=htmlspecialcharsbx($Params['menuItems'][$i])?></option>
-									<?endfor;?>
+									<?php endfor;?>
 									<option value="0" selected="selected"><?=GetMessage("FD_LAST_POINT")?></option>
 								</select>
 							</td>
@@ -542,9 +542,9 @@ if (window.jsUtils)
 							<td  align="right"><?=GetMessage("FD_ATTACH_2_ITEM")?></td>
 							<td>
 								<select name="menuitem" id="__bx_fd_menuitem">
-									<?for($i = 0; $i < $n; $i++):?>
+									<?php for($i = 0; $i < $n; $i++):?>
 									<option value="<?= $i + 1 ?>"><?=htmlspecialcharsbx($Params['menuItems'][$i])?></option>
-									<?endfor;?>
+									<?php endfor;?>
 								</select>
 							</td>
 						</tr>
@@ -564,7 +564,7 @@ if (window.jsUtils)
 					<input type="button" onclick="oBXFileDialog.Close()" value="<?=GetMessage("FD_BUT_CANCEL");?>">
 				</td>
 			</tr>
-		</table><?endif;?></div>
+		</table><?php endif;?></div>
 	</td>
 </tr>
 <tr>
@@ -573,7 +573,7 @@ if (window.jsUtils)
 </table>
 </form>
 <div id="__bx_get_real_size_cont"></div>
-		<?
+		<?php
 	}
 
 	public static function ShowJS($Params)
@@ -594,7 +594,7 @@ if (!window.arFDDirs || !window.arFDFiles || !window.arFDPermission)
 }
 if (!window.arFDMenuTypes)
 	arFDMenuTypes = {};
-<?
+<?php
 		if (!empty($Params['arMenuTypesScript']))
 			echo $Params['arMenuTypesScript'];
 
@@ -615,9 +615,9 @@ if (!window.arFDMenuTypes)
 
 // Sites array
 var arSites = [];
-<?foreach ($arSites as $key => $val):?>
+<?php foreach ($arSites as $key => $val):?>
 arSites['<?= CUtil::JSEscape($key)?>'] = '<?= CUtil::JSEscape($val)?>';
-<?endforeach;?>
+<?php endforeach;?>
 
 <?self::AppendLangMess();?>
 function OnLoad()
@@ -667,7 +667,7 @@ else
 	BX.loadScript("<?=$fd_engine_js_src.'?v='.@filemtime($_SERVER['DOCUMENT_ROOT'].$fd_engine_js_src)?>", OnLoad);
 
 </script>
-<?
+<?php
 	}
 
 	public static function AppendLangMess()
@@ -714,7 +714,7 @@ var FD_MESS =
 	FD_FOLDER : '<?=GetMessageJS('FD_FOLDER')?>',
 	FD_IMAGE : '<?=GetMessageJS('FD_IMAGE')?>'
 };
-<?
+<?php
 	}
 
 	public static function GetMenuTypes($site, $path, $bEchoResult = false)
@@ -852,7 +852,7 @@ var FD_MESS =
 ?>
 arFDDirs['<?=$path_js?>'] = [];
 arFDFiles['<?=$path_js?>'] = [];
-<?
+<?php
 			foreach ($arFiles["dir"] as $ind => $dir)
 			{
 ?>
@@ -866,7 +866,7 @@ arFDDirs['<?=$path_js?>'][<?=$ind?>] =
 	timestamp : '',
 	size : 0
 };
-<?
+<?php
 			}
 
 
@@ -884,7 +884,7 @@ arFDFiles['<?=$path_js?>'][<?=$ind?>] =
 	timestamp : '',
 	size : '<?=$arFiles["file_size"][$ind];?>'
 };
-<?
+<?php
 				}
 			}
 
@@ -893,7 +893,7 @@ arFDPermission['<?=$path_js?>'] = {
 	new_folder : false,
 	upload : false
 };
-<?
+<?php
 
 			return;
 		}
@@ -923,7 +923,7 @@ arFDPermission['<?=$path_js?>'] = {
 ?>
 arFDDirs['<?=$path_js?>'] = [];
 arFDFiles['<?=$path_js?>'] = [];
-<?
+<?php
 		$ind = -1;
 		foreach ($arDirs as $Dir)
 		{
@@ -963,7 +963,7 @@ arFDDirs['<?=$path_js?>'][<?=$ind?>] =
 	timestamp : '<?=$Dir["TIMESTAMP"];?>',
 	size : 0
 };
-<?
+<?php
 		}
 
 		if ($Params['getFiles'])
@@ -1012,7 +1012,7 @@ arFDFiles['<?=$path_js?>'][<?=$ind?>] =
 	timestamp : '<?=$File["TIMESTAMP"];?>',
 	size : '<?=$File["SIZE"];?>'<?=$imageAddProps?>
 };
-<?
+<?php
 			}
 		}
 
@@ -1022,7 +1022,7 @@ arFDPermission['<?=$path_js?>'] = {
 	new_folder : <?= ($USER->CanDoFileOperation('fm_create_new_folder',$arPath) ? 'true' : 'false');?>,
 	upload : <?= ($USER->CanDoFileOperation('fm_upload_file',$arPath) ? 'true' : 'false');?>
 };
-<?
+<?php
 	}
 
 	public static function GetItemsRecursively($Params)
@@ -1265,14 +1265,14 @@ arFDPermission['<?=$path_js?>'] = {
 	{
 ?>
 		<script>
-		<? if ($strWarning == ''): ?>
+		<?php if ($strWarning == ''): ?>
 			window.action_status = true;
-		<?else: ?>
+		<?php else: ?>
 			window.action_warning = '<?= CUtil::JSEscape($strWarning)?>';
 			window.action_status = false;
-		<?endif;?>
+		<?php endif;?>
 		</script>
-<?
+<?php
 	}
 
 	public static function SetUserConfig($Params)
@@ -1312,7 +1312,7 @@ arFDPermission['<?=$path_js?>'] = {
 <embed id="__flash_preview" pluginspage="http://www.macromedia.com/go/getflashplayer" type="application/x-shockwave-flash" name="__flash_preview" quality="high" width="<?=$Params['width']?>" height="<?=$Params['height']?>" src="<?=htmlspecialcharsex($path)?>"></embed>
 </BODY>
 </HTML>
-<?
+<?php
 			die();
 		}
 	}
@@ -1369,7 +1369,7 @@ arFDPermission['<?=$path_js?>'] = {
 </form>
 </BODY>
 </HTML>
-<?
+<?php
 	}
 
 	public static function UploadFile($Params)

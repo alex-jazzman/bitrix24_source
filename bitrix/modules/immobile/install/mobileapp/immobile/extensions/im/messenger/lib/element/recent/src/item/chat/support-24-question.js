@@ -24,9 +24,10 @@ jn.define('im/messenger/lib/element/recent/item/chat/support-24-question', (requ
 		{
 			this.actions = [
 				this.getHideAction(),
+				this.getAddToFolderAction(),
 				this.getPinAction(),
 				this.getReadAction(),
-			];
+			].filter(Boolean);
 
 			return this;
 		}

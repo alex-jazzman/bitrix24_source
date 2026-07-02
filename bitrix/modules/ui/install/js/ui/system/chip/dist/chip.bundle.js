@@ -10,12 +10,13 @@ this.BX.UI.System = this.BX.UI.System || {};
 	  FilledSuccess: 'filled-success',
 	  FilledAlert: 'filled-alert',
 	  FilledWarning: 'filled-warning',
-	  FilledNoAccent: 'filled-warning',
+	  FilledNoAccent: 'filled-no-accent',
 	  FilledInverted: 'filled-inverted',
 	  FilledSuccessInverted: 'filled-success-inverted',
 	  FilledAlertInverted: 'filled-alert-inverted',
 	  FilledWarningInverted: 'filled-warning-inverted',
 	  FilledNoAccentInverted: 'filled-no-accent-inverted',
+	  FilledBitrixGpt: 'filled-bitrix-gpt',
 	  Tinted: 'tinted',
 	  TintedSuccess: 'tinted-success',
 	  TintedAlert: 'tinted-alert',
@@ -29,6 +30,7 @@ this.BX.UI.System = this.BX.UI.System || {};
 	  Outline: 'outline',
 	  OutlineNoAccent: 'outline-no-accent',
 	  OutlineCopilot: 'outline-copilot',
+	  OutlineBitrixGpt: 'outline-bitrix-gpt',
 	  ShadowNoAccent: 'shadow-no-accent',
 	  Shadow: 'shadow',
 	  ShadowAccent: 'shadow-accent',
@@ -84,6 +86,10 @@ this.BX.UI.System = this.BX.UI.System || {};
 	      type: Boolean,
 	      default: false
 	    },
+	    collapsed: {
+	      type: Boolean,
+	      default: false
+	    },
 	    withClear: {
 	      type: Boolean,
 	      default: false
@@ -126,6 +132,7 @@ this.BX.UI.System = this.BX.UI.System || {};
 				'--' + size,
 				{
 					'--rounded': rounded,
+					'--collapsed': collapsed,
 					'--compact': compact,
 					'--trimmable': trimmable,
 					'--with-right-icon': withClear || dropdown,
@@ -167,6 +174,7 @@ this.BX.UI.System = this.BX.UI.System || {};
 	  _t5,
 	  _t6,
 	  _t7;
+	var _instances = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("instances");
 	var _size = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("size");
 	var _design = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("design");
 	var _icon = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("icon");
@@ -175,6 +183,7 @@ this.BX.UI.System = this.BX.UI.System || {};
 	var _image = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("image");
 	var _text = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("text");
 	var _rounded = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rounded");
+	var _collapsed = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("collapsed");
 	var _withClear = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("withClear");
 	var _dropdown = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dropdown");
 	var _dropdownActive = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dropdownActive");
@@ -300,6 +309,10 @@ this.BX.UI.System = this.BX.UI.System || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _collapsed, {
+	      writable: true,
+	      value: void 0
+	    });
 	    Object.defineProperty(this, _withClear, {
 	      writable: true,
 	      value: void 0
@@ -380,6 +393,7 @@ this.BX.UI.System = this.BX.UI.System || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _image)[_image] = (_options$image = options.image) != null ? _options$image : null;
 	    babelHelpers.classPrivateFieldLooseBase(this, _text)[_text] = (_options$text = options.text) != null ? _options$text : '';
 	    babelHelpers.classPrivateFieldLooseBase(this, _rounded)[_rounded] = options.rounded === true;
+	    babelHelpers.classPrivateFieldLooseBase(this, _collapsed)[_collapsed] = options.collapsed === true;
 	    babelHelpers.classPrivateFieldLooseBase(this, _withClear)[_withClear] = options.withClear === true;
 	    babelHelpers.classPrivateFieldLooseBase(this, _dropdown)[_dropdown] = options.dropdown === true;
 	    babelHelpers.classPrivateFieldLooseBase(this, _dropdownActive)[_dropdownActive] = options.dropdownActive === true;
@@ -388,6 +402,14 @@ this.BX.UI.System = this.BX.UI.System || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _trimmable)[_trimmable] = options.trimmable === true;
 	    babelHelpers.classPrivateFieldLooseBase(this, _onClick)[_onClick] = (_options$onClick = options.onClick) != null ? _options$onClick : null;
 	    babelHelpers.classPrivateFieldLooseBase(this, _onClear)[_onClear] = (_options$onClear = options.onClear) != null ? _options$onClear : null;
+	  }
+	  static getByNode(node) {
+	    var _babelHelpers$classPr;
+	    if (!main_core.Type.isDomNode(node)) {
+	      return null;
+	    }
+	    const chipNode = node.closest('.ui-chip');
+	    return chipNode ? (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(Chip$1, _instances)[_instances].get(chipNode)) != null ? _babelHelpers$classPr : null : null;
 	  }
 	  render() {
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _wrapper)[_wrapper]) {
@@ -403,6 +425,7 @@ this.BX.UI.System = this.BX.UI.System || {};
 			</div>
 		`), babelHelpers.classPrivateFieldLooseBase(this, _getModifierClasses)[_getModifierClasses](), babelHelpers.classPrivateFieldLooseBase(this, _renderIcon)[_renderIcon](), babelHelpers.classPrivateFieldLooseBase(this, _renderText)[_renderText](), babelHelpers.classPrivateFieldLooseBase(this, _renderDropdownIcon)[_renderDropdownIcon](), babelHelpers.classPrivateFieldLooseBase(this, _renderClearIcon)[_renderClearIcon](), babelHelpers.classPrivateFieldLooseBase(this, _renderLock)[_renderLock]());
 	    main_core.Dom.attr(babelHelpers.classPrivateFieldLooseBase(this, _wrapper)[_wrapper], 'tabindex', '0');
+	    babelHelpers.classPrivateFieldLooseBase(Chip$1, _instances)[_instances].set(babelHelpers.classPrivateFieldLooseBase(this, _wrapper)[_wrapper], this);
 	    babelHelpers.classPrivateFieldLooseBase(this, _bindEvents)[_bindEvents]();
 	    return babelHelpers.classPrivateFieldLooseBase(this, _wrapper)[_wrapper];
 	  }
@@ -473,6 +496,13 @@ this.BX.UI.System = this.BX.UI.System || {};
 	  isRounded() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _rounded)[_rounded];
 	  }
+	  setCollapsed(collapsed) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _collapsed)[_collapsed] = collapsed === true;
+	    babelHelpers.classPrivateFieldLooseBase(this, _updateClasses)[_updateClasses]();
+	  }
+	  isCollapsed() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _collapsed)[_collapsed];
+	  }
 	  setWithClear(withClear) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _withClear)[_withClear] = withClear === true;
 	    babelHelpers.classPrivateFieldLooseBase(this, _updateClearIcon)[_updateClearIcon]();
@@ -526,6 +556,7 @@ this.BX.UI.System = this.BX.UI.System || {};
 	  }
 	  destroy() {
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _wrapper)[_wrapper]) {
+	      babelHelpers.classPrivateFieldLooseBase(Chip$1, _instances)[_instances].delete(babelHelpers.classPrivateFieldLooseBase(this, _wrapper)[_wrapper]);
 	      main_core.Event.unbindAll(babelHelpers.classPrivateFieldLooseBase(this, _wrapper)[_wrapper]);
 	      if (babelHelpers.classPrivateFieldLooseBase(this, _withClear)[_withClear]) {
 	        const clearIcon = babelHelpers.classPrivateFieldLooseBase(this, _wrapper)[_wrapper].querySelector('.ui-chip-clear-icon');
@@ -551,6 +582,9 @@ this.BX.UI.System = this.BX.UI.System || {};
 	  const classes = [`--${babelHelpers.classPrivateFieldLooseBase(this, _design)[_design]}`, `--${babelHelpers.classPrivateFieldLooseBase(this, _size)[_size]}`];
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _rounded)[_rounded]) {
 	    classes.push('--rounded');
+	  }
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _collapsed)[_collapsed]) {
+	    classes.push('--collapsed');
 	  }
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _compact)[_compact]) {
 	    classes.push('--compact');
@@ -761,6 +795,10 @@ this.BX.UI.System = this.BX.UI.System || {};
 	    main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _dropdownIconElement)[_dropdownIconElement], 'transform', '');
 	  }
 	}
+	Object.defineProperty(Chip$1, _instances, {
+	  writable: true,
+	  value: new WeakMap()
+	});
 
 	exports.Vue = vue;
 	exports.ChipDesign = ChipDesign;

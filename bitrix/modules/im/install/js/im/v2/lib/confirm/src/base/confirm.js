@@ -1,5 +1,5 @@
 import { Dom } from 'main.core';
-import { Popup } from 'main.popup';
+import { type Popup } from 'main.popup';
 import { MessageBox } from 'ui.dialogs.messagebox';
 
 import './css/confirm.css';

@@ -12,7 +12,6 @@ return [
 		'booking.const',
 		'booking.core',
 		'booking.lib.api-client',
-		'booking.model.yandex-integration-wizard',
 		'booking.provider.service.resources-service',
 	],
 	'skip_core' => true,

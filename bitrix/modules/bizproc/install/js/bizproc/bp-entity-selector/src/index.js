@@ -1,5 +1,5 @@
 import { Type, Tag, Dom } from 'main.core';
-import { TagSelector } from 'ui.entity-selector';
+import { TagSelector, type Item } from 'ui.entity-selector';
 import Footer from './footer';
 
 export type EntitySelectorOptions = {
@@ -55,6 +55,11 @@ export class EntitySelector
 		return multiple === true;
 	}
 
+	#useObjectResponse(): boolean
+	{
+		return this.#config.useObjectResponse === true;
+	}
+
 	#createSelector(): void
 	{
 		if (this.#config.dialogOptions.footerOptions)
@@ -62,8 +67,36 @@ export class EntitySelector
 			this.#config.dialogOptions.footer = Footer;
 		}
 		this.#config.dialogOptions.id = `entityselector_${this.#inputName}`;
+		if (this.#useObjectResponse())
+		{
+			this.#config.dialogOptions.preselectedItems = this.#getPreselectedItems();
+		}
+
 		this.#selector = new TagSelector(this.#config);
 		this.#selector.renderTo(this.#container);
+	}
+
+	#getPreselectedItems(): Array
+	{
+		const preselectedItems = [];
+
+		const initialValue = Type.isArray(this.#initialValue)
+			? this.#initialValue
+			: [this.#initialValue]
+		;
+
+		initialValue
+			.forEach((initialValueItem) => {
+				if (
+					Type.isStringFilled(initialValueItem.id)
+					&& Type.isStringFilled(initialValueItem.entityId)
+				)
+				{
+					preselectedItems.push([initialValueItem.entityId, initialValueItem.id]);
+				}
+			});
+
+		return preselectedItems;
 	}
 
 	#createHiddenInputsContainer(): void
@@ -102,13 +135,20 @@ export class EntitySelector
 			return;
 		}
 
-		const selectedItems = dialog.getSelectedItems();
-		const values = selectedItems.map((item) => String(item.getId()));
+		const items = dialog
+			.getSelectedItems()
+			.map((item: Item) => {
+				return {
+					id: item.getId(),
+					entityId: item.getEntityId(),
+				};
+			})
+		;
 
-		this.#renderHiddenInputs(values);
+		this.#renderHiddenInputs(items);
 	}
 
-	#renderHiddenInputs(values: Array): void
+	#renderHiddenInputs(items: { id: string | number, entityId: string }[]): void
 	{
 		if (!this.#hiddenInputsContainer)
 		{
@@ -116,29 +156,53 @@ export class EntitySelector
 		}
 
 		Dom.clean(this.#hiddenInputsContainer);
+		let index = 0;
 
-		if (values.length === 0)
+		if (items.length === 0)
 		{
-			this.#appendInput('');
+			this.#appendInput(null, index);
 
 			return;
 		}
 
-		values.forEach((value) => {
-			this.#appendInput(value);
-		});
+		items.forEach((item) => this.#appendInput(item, index++));
 	}
 
-	#appendInput(value: string): void
+	#appendInput(item: ?{ id: string | number, entityId: string }, index: number): void
 	{
 		if (!this.#hiddenInputsContainer)
 		{
 			return;
 		}
 
+		if (this.#useObjectResponse())
+		{
+			if (item === null)
+			{
+				const nullInput = Tag.render`<input type="hidden" name="${this.#inputName}[]" value="">`;
+				Dom.append(nullInput, this.#hiddenInputsContainer);
+
+				return;
+			}
+
+			const idInput = Tag.render`<input type="hidden">`;
+			idInput.name = this.#isMultiple() ? `${this.#inputName}[${index}][id]` : `${this.#inputName}[id]`;
+			idInput.value = item.id;
+
+			Dom.append(idInput, this.#hiddenInputsContainer);
+
+			const entityIdInput = Tag.render`<input type="hidden">`;
+			entityIdInput.name = this.#isMultiple() ? `${this.#inputName}[${index}][entityId]` : `${this.#inputName}[entityId]`;
+			entityIdInput.value = item.entityId;
+
+			Dom.append(entityIdInput, this.#hiddenInputsContainer);
+
+			return;
+		}
+
 		const input = Tag.render`<input type="hidden" />`;
 		input.name = this.#isMultiple() ? `${this.#inputName}[]` : this.#inputName;
-		input.value = value;
+		input.value = item?.id ?? '';
 
 		Dom.append(input, this.#hiddenInputsContainer);
 	}
@@ -150,12 +214,42 @@ export class EntitySelector
 			return [];
 		}
 
-		if (this.#isMultiple() && Type.isArray(value))
+		if (this.#useObjectResponse())
 		{
-			return value;
+			const values = Type.isArray(value) ? value : [value];
+
+			return values
+				.map((valueItem) => {
+					if (Type.isStringFilled(valueItem.id) && Type.isStringFilled(valueItem.entityId))
+					{
+						return {
+							id: valueItem.id,
+							entityId: valueItem.entityId,
+						};
+					}
+
+					return null;
+				})
+				.filter((valueItem) => valueItem !== null)
+			;
 		}
 
-		return [value];
+		const values = this.#isMultiple() && Type.isArray(value) ? value : [value];
+
+		return values
+			.map((valueItem) => {
+				if (Type.isStringFilled(valueItem.id))
+				{
+					return {
+						id: valueItem.id,
+					};
+				}
+
+				return {
+					id: valueItem,
+				};
+			})
+		;
 	}
 
 	static create(options: EntitySelectorOptions): EntitySelector

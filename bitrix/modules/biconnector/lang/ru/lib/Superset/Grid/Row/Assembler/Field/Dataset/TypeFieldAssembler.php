@@ -1,0 +1,3 @@
+<?php
+
+$MESS['BICONNECTOR_SUPERSET_DATASET_GRID_TYPE_SYSTEM'] = 'Системные данные';

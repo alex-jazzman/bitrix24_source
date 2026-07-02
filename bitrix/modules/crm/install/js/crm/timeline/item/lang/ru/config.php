@@ -7,6 +7,9 @@ $MESS['CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_COPY_PUBLIC_LINK_ERROR'] = "Не уд
 $MESS['CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_PRINT_NOT_READY'] = "Печать документа невозможна, пока не будет сформирован PDF файл. Пожалуйста, повторите попытку позднее";
 $MESS['CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_PDF_NOT_READY'] = "PDF-файл пока не сформирован. Пожалуйста, повторите попытку позднее или скачайте DOCX-файл прямо сейчас.";
 $MESS['CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_UPDATE_DOCUMENT_ERROR'] = "Произошла неизвестная ошибка при редактировании документа";
+$MESS['CRM_TIMELINE_ITEM_ACTIVITY_ENTITY_EXCLUSION_CONFIRM_DLG_TITLE_DEAL'] = "Добавить эту сделку в стоп-лист?";
+$MESS['CRM_TIMELINE_ITEM_ACTIVITY_ENTITY_EXCLUSION_CONFIRM_DLG_TITLE_LEAD'] = "Добавить этот лид в стоп-лист?";
+$MESS['CRM_TIMELINE_ITEM_ACTIVITY_ENTITY_EXCLUSION_CONFIRM_DLG_HELP'] = "[helpdesklink]Подробнее о стоп-листе[/helpdesklink]";
 $MESS["CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_SAVE"] = "Сохранить";
 $MESS["CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_CANCEL"] = "Отмена";
 $MESS["CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_PLACEHOLDER"] = "Что нужно сделать";
@@ -65,8 +68,9 @@ $MESS['CRM_TIMELINE_ITEM_ACTIVITY_TODO_DELETE_TAG_CONFIRM_YES_CAPTION'] = 'Да,
 $MESS['CRM_TIMELINE_ITEM_BIZPROC_TASK_DO_ACTION_ACCESS_DENIED'] = 'Выполнить задание может только ответственный за дело';
 
 $MESS['CRM_TIMELINE_ITEM_CALL_SCORING_RESPONSIBLE_TITLE'] = 'Ответственный';
-$MESS['CRM_TIMELINE_ITEM_CALL_SCORING_SCRIPT_TITLE'] = 'Соответствие скрипту';
+$MESS['CRM_TIMELINE_ITEM_CALL_SCORING_SCRIPT_TITLE'] = 'Скрипт';
 $MESS['CRM_TIMELINE_ITEM_CALL_SCORING_EDIT_PROMPT_HINT'] = 'Эта возможность скоро будет доступна. Вы можете отредактировать скрипт в разделе Скрипты и Речевая аналитика с AI';
+$MESS['CRM_TIMELINE_ITEM_CALL_SCORING_DETAILS'] = 'Подробнее';
 
 $MESS["CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_COPILOT_HEADER_PENDING"] = '#COPILOT_NAME# готовит рекомендации';
 $MESS["CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_COPILOT_HEADER"] = 'Рекомендации от #COPILOT_NAME#';

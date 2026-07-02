@@ -167,9 +167,30 @@ class booking extends CModule
 	 */
 	public function InstallFiles()
 	{
-		CopyDirFiles($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/booking/install/js', $_SERVER['DOCUMENT_ROOT'].'/bitrix/js', true, true);
-		CopyDirFiles($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/booking/install/components', $_SERVER['DOCUMENT_ROOT'].'/bitrix/components', true, true);
-		CopyDirFiles($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/booking/install/templates', $_SERVER['DOCUMENT_ROOT'].'/bitrix/templates', true, true);
+		CopyDirFiles(
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/booking/install/js',
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/js',
+			true,
+			true,
+		);
+		CopyDirFiles(
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/booking/install/components',
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/components',
+			true,
+			true,
+		);
+		CopyDirFiles(
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/booking/install/templates',
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/templates',
+			true,
+			true,
+		);
+		CopyDirFiles(
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/booking/install/activities',
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/activities',
+			true,
+			true,
+		);
 
 		return true;
 	}
@@ -305,27 +326,11 @@ class booking extends CModule
 	public function InstallAgents(): void
 	{
 		\CAgent::AddAgent(
-			name: '\\Bitrix\\Booking\\Internals\\Service\\Notifications\\Agent\\NotificationAgent::execute();',
+			name: '\\Bitrix\\Booking\\Internals\\Service\\Notifications\\Agent\\NotificationAgentWatchdog::execute();',
 			module: 'booking',
-			interval: 60,
-			next_exec: ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 60, 'FULL'),
-			existError: false
-		);
-
-		\CAgent::AddAgent(
-			name: '\\Bitrix\\Booking\\Internals\\Service\\Notifications\\Agent\\ConfirmationCounterAgent::execute();',
-			module: 'booking',
-			interval: 60,
-			next_exec: ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 60, 'FULL'),
-			existError: false
-		);
-
-		\CAgent::AddAgent(
-			name: '\\Bitrix\\Booking\\Internals\\Service\\Notifications\\Agent\\DelayedCounterAgent::execute();',
-			module: 'booking',
-			interval: 60,
-			next_exec: ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 60, 'FULL'),
-			existError: false
+			interval: 3600,
+			next_exec: ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 3600, 'FULL'),
+			existError: false,
 		);
 
 		\CAgent::AddAgent(
@@ -359,6 +364,7 @@ class booking extends CModule
 			next_exec: \ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 600, 'FULL'),
 			existError: false
 		);
+
 	}
 
 	public function UnInstallEvents(): void

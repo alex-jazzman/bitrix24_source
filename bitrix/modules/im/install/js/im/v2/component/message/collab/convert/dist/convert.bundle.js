@@ -4,32 +4,32 @@ this.BX.IM = this.BX.IM || {};
 this.BX.IM.V2 = this.BX.IM.V2 || {};
 this.BX.IM.V2.Component = this.BX.IM.V2.Component || {};
 this.BX.IM.V2.Component.Message = this.BX.IM.V2.Component.Message || {};
-(function (exports,main_core,ui_vue3_components_richLoc,im_v2_component_message_base) {
+(function (exports, main_core, ui_vue3_components_richLoc, im_v2_component_message_base) {
 	'use strict';
 
 	// @vue/component
 	const ConvertToCollabMessage = {
-	  name: 'ConvertToCollabMessage',
-	  components: {
-	    BaseMessage: im_v2_component_message_base.BaseMessage,
-	    RichLoc: ui_vue3_components_richLoc.RichLoc
-	  },
-	  props: {
-	    item: {
-	      type: Object,
-	      required: true
-	    },
-	    dialogId: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  methods: {
-	    loc(phraseCode, replacements = {}) {
-	      return main_core.Loc.getMessage(phraseCode, replacements);
-	    }
-	  },
-	  template: `
+		name: 'ConvertToCollabMessage',
+		components: {
+			BaseMessage: im_v2_component_message_base.BaseMessage,
+			RichLoc: ui_vue3_components_richLoc.RichLoc
+		},
+		props: {
+			item: {
+				type: Object,
+				required: true
+			},
+			dialogId: {
+				type: String,
+				required: true
+			}
+		},
+		methods: {
+			loc(phraseCode, replacements = {}) {
+				return main_core.Loc.getMessage(phraseCode, replacements);
+			}
+		},
+		template: `
 		<BaseMessage
 			:dialogId="dialogId"
 			:item="item"
@@ -58,5 +58,5 @@ this.BX.IM.V2.Component.Message = this.BX.IM.V2.Component.Message || {};
 
 	exports.ConvertToCollabMessage = ConvertToCollabMessage;
 
-}((this.BX.IM.V2.Component.Message.Collab = this.BX.IM.V2.Component.Message.Collab || {}),BX,BX.UI.Vue3.Components,BX.Messenger.v2.Component.Message));
+})(this.BX.IM.V2.Component.Message.Collab = this.BX.IM.V2.Component.Message.Collab || {}, BX, BX.UI.Vue3.Components, BX.Messenger.v2.Component.Message);
 //# sourceMappingURL=convert.bundle.js.map

@@ -47,7 +47,6 @@ jn.define('statemanager/redux/slices/whats-new/selector', (require, exports, mod
 		(ids, state) => ids.map((id) => selectById(state, id)).filter(Boolean),
 	);
 
-	const selectHasReadNews = (state) => state[sliceName].hasReadNews;
 	const selectLastNewsCheckTime = (state) => state[sliceName].lastNewsCheckTime;
 
 	const selectHasUnsupportedFeatures = createDraftSafeSelector(
@@ -79,7 +78,6 @@ jn.define('statemanager/redux/slices/whats-new/selector', (require, exports, mod
 		selectReactionByItemIdAndReactionName,
 		selectUrlParams,
 		selectNewCount,
-		selectHasReadNews,
 		selectLastNewsCheckTime,
 		selectHasUnsupportedFeatures,
 		selectErrorStatus,

@@ -15,10 +15,10 @@ jn.define('im/messenger/controller/dialog/ai-assistant/dialog', (require, export
 	const { Dialog } = require('im/messenger/controller/dialog/chat');
 	const { DialogTextHelper } = require('im/messenger/controller/dialog/lib/helper/text');
 	const { NotifyPanelManager } = require('im/messenger/controller/dialog/lib/notify-panel-manager');
-	const { MCPButton } = require('im/messenger/controller/dialog/lib/assistant-button-manager/const/buttons');
+	const { MCPButton } = require('im/messenger/controller/dialog/lib/assistant-button-manager');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 
-	const { AiAssistantMessageMenu } = require('im/messenger/controller/dialog/ai-assistant/component/message-menu');
+	const { DialogConfigurator, configs } = require('im/messenger/controller/dialog/lib/configurator');
 
 	const logger = getLogger('dialog--dialog');
 
@@ -58,6 +58,15 @@ jn.define('im/messenger/controller/dialog/ai-assistant/dialog', (require, export
 		}
 
 		/**
+		 * @param {?ChatIntegrationSettings} integrationSettings
+		 */
+		initConfigurator(integrationSettings)
+		{
+			this.configurator = new DialogConfigurator({ ...configs?.aiAssistantDialogConfig, ...integrationSettings });
+			this.locator.add('configurator', this.configurator);
+		}
+
+		/**
 		 * @param {DialogOpenOptions} options
 		 * @param {PageManager} parentWidget
 		 * @return {Promise<void>}
@@ -90,6 +99,14 @@ jn.define('im/messenger/controller/dialog/ai-assistant/dialog', (require, export
 			return false;
 		}
 
+		/**
+		 * @returns {boolean}
+		 */
+		checkCanShowStickerButton()
+		{
+			return false;
+		}
+
 		subscribeViewEvents()
 		{
 			super.subscribeViewEvents();
@@ -108,14 +125,6 @@ jn.define('im/messenger/controller/dialog/ai-assistant/dialog', (require, export
 			this.view
 				.on(EventType.dialog.footnoteTap, this.footnoteTapHandler)
 			;
-		}
-
-		/**
-		 * @return {MessageMenuController}
-		 */
-		createMessageMenu()
-		{
-			return new AiAssistantMessageMenu(this.getMessageMenuParams());
 		}
 
 		/**

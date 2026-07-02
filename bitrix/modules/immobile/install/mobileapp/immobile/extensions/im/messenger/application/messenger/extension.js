@@ -23,8 +23,8 @@ jn.define('im/messenger/application/messenger', (require, exports, module) => {
 	const { Feature } = require('im/messenger/lib/feature');
 
 	const { MessengerCore } = require('im/messenger/core/messenger');
-	const { MessengerHeaderController } = require('im/messenger/controller/messenger-header');
-	const { NavigationController, NavigationApiHandler } = require('im/messenger/controller/navigation');
+	const { MessengerHeaderManager } = require('im/messenger/controller/messenger-header');
+	const { NavigationManager } = require('im/messenger/controller/navigation');
 	const { PullHandlerLauncher } = require('im/messenger/application/lib/pull-handler-launcher');
 	const { RevisionChecker } = require('im/messenger/application/lib/revision-checker');
 	const { waitViewLoaded } = require('im/messenger/lib/wait-view-loaded');
@@ -36,14 +36,16 @@ jn.define('im/messenger/application/messenger', (require, exports, module) => {
 	const { ExternalEventHandler } = require('im/messenger/application/lib/event-handler/external');
 	const { MessengerEventHandler } = require('im/messenger/application/lib/event-handler/messenger');
 	const { ChannelPullWatchManager } = require('im/messenger/application/lib/channel-pull-watch-manager');
+	const { FolderLauncher } = require('im/messenger/application/lib/folder-launcher');
 	const { initializeCountersUpdateSystem } = require('im/messenger/application/lib/counters-update-system');
 	const { RecentManager } = require('im/messenger/controller/recent/manager');
 	const { DialogCreator } = require('im/messenger/controller/dialog-creator');
 	const { TabCounters } = require('im/messenger/lib/counters/tab-counters');
+	const { MessengerIconLoader } = require('im/messenger/assets/icon');
 	const { MessageQueueRequestManager } = require('im/messenger/application/lib/message-queue-request-manager');
 	const { showUpdateAppScreenIfNeeded } = require('im/messenger/application/lib/update-notifier');
 
-	const mobileRevision = 23; // sync with im/lib/revision.php. TODO: move value to some config?
+	const mobileRevision = 24; // sync with im/lib/revision.php. TODO: move value to some config?
 
 	/**
 	 * @class Messenger
@@ -54,6 +56,10 @@ jn.define('im/messenger/application/messenger', (require, exports, module) => {
 		{
 			this.logger = getLoggerWithContext('messenger--application', this);
 			this.logger.log('constructor');
+			/** @type {MessengerLocator} */
+			this.serviceLocator = serviceLocator;
+			/** @type {SubscriptionManager} */
+			this.subscriptionManager = serviceLocator.get('subscription-manager');
 		}
 
 		destructor()
@@ -62,13 +68,9 @@ jn.define('im/messenger/application/messenger', (require, exports, module) => {
 
 			try
 			{
-				BX.listeners = {};
-				this.pullHandlerLauncher?.unsubscribeEvents();
-				this.recentManager?.destructor();
-				this.unsubscribeEvents();
-				this.promotion?.destruct();
-				this.promotionTriggerManager?.unsubscribeAll();
-				this.connectionService?.destructor();
+				const removeAllResult = this.subscriptionManager.removeAll();
+				this.serviceLocator.clear();
+				this.logger.log('destructor: remove handlers result', removeAllResult);
 
 				this.logger.warn('Messenger: Garbage collection after refresh complete');
 			}
@@ -99,10 +101,11 @@ jn.define('im/messenger/application/messenger', (require, exports, module) => {
 			{
 				await this.initCore();
 				await this.initCountersUpdateSystem();
+				await this.initFolderLauncher();
 				this.initPushManager();
 				await this.pushManager.fillDatabaseFromPush();
 				this.initServices();
-				this.initNavigationApiHandler();
+				this.initNavigationManager();
 				this.initRevisionChecker();
 				this.initPlanLimitsUpdater();
 				this.initRefresher();
@@ -144,8 +147,6 @@ jn.define('im/messenger/application/messenger', (require, exports, module) => {
 
 		async initCore()
 		{
-			this.serviceLocator = serviceLocator;
-
 			/**
 			 * @type {CoreApplication}
 			 */
@@ -185,35 +186,45 @@ jn.define('im/messenger/application/messenger', (require, exports, module) => {
 		{
 			this.chatInitService = new MessengerInitService({ actionName: RestMethod.immobileMessengerLoad });
 			serviceLocator.add('messenger-init-service', this.chatInitService);
+			this.subscriptionManager.register(this.chatInitService);
+
+			this.folderLauncher.subscribeInitResult();
 
 			this.tabCounters = new TabCounters();
 			serviceLocator.add('tab-counters', this.tabCounters);
+			this.subscriptionManager.register(this.tabCounters);
 
 			this.connectionService = new ConnectionService();
 			serviceLocator.add('connection-service', this.connectionService);
+			this.subscriptionManager.register(this.connectionService);
 
-			this.syncService = SyncService.getInstance();
+			this.syncService = new SyncService();
 			serviceLocator.add('sync-service', this.syncService);
+			this.subscriptionManager.register(this.syncService);
 
-			this.sendingService = SendingService.getInstance();
+			this.sendingService = new SendingService();
 			serviceLocator.add('sending-service', this.sendingService);
+			this.subscriptionManager.register(this.sendingService);
 
-			this.queueService = QueueService.getInstance();
+			this.queueService = new QueueService();
 			serviceLocator.add('queue-service', this.queueService);
 
 			this.readMessageService = new ReadMessageService();
 			serviceLocator.add('read-service', this.readMessageService);
 
-			this.channelPullWatchManager = ChannelPullWatchManager.getInstance();
+			this.channelPullWatchManager = new ChannelPullWatchManager();
 			serviceLocator.add('channel-pull-watch-manager', this.channelPullWatchManager);
+			this.subscriptionManager.register(this.channelPullWatchManager);
 
-			this.recentManager = RecentManager.getInstance();
+			this.recentManager = new RecentManager();
 			serviceLocator.add('recent-manager', this.recentManager);
 		}
 
-		initNavigationApiHandler()
+		initNavigationManager()
 		{
-			this.navigationApiHandler = NavigationApiHandler.getInstance();
+			this.navigationManager = new NavigationManager();
+			serviceLocator.add('navigation-manager', this.navigationManager);
+			this.subscriptionManager.register(this.navigationManager);
 		}
 
 		initRevisionChecker()
@@ -241,6 +252,13 @@ jn.define('im/messenger/application/messenger', (require, exports, module) => {
 
 			await this.countersUpdateSystem.restoreCounters();
 		}
+
+		async initFolderLauncher()
+		{
+			this.folderLauncher = new FolderLauncher();
+			await this.folderLauncher.restoreModel();
+		}
+
 
 		initPushManager()
 		{
@@ -274,12 +292,17 @@ jn.define('im/messenger/application/messenger', (require, exports, module) => {
 			this.callManager = CallManager.getInstance();
 			this.callManager.subscribeMessengerInitEvent();
 
-			this.promotion = Promotion.getInstance();
-			this.promotionTriggerManager = PromotionTriggerManager.getInstance();
+			this.promotion = new Promotion();
+			serviceLocator.add('promotion', this.promotion);
+			this.subscriptionManager.register(this.promotion);
+
+			this.promotionTriggerManager = new PromotionTriggerManager();
+			this.subscriptionManager.register(this.promotionTriggerManager);
+
 			this.communication = new Communication();
 			this.anchors = new Anchors();
 
-			this.dialogManager = DialogManager.getInstance();
+			this.dialogManager = new DialogManager();
 			serviceLocator.add('dialog-manager', this.dialogManager);
 		}
 
@@ -287,47 +310,58 @@ jn.define('im/messenger/application/messenger', (require, exports, module) => {
 		{
 			(new ChatAssets()).preloadAssets();
 			SidebarLazyFactory.preload();
+			MessengerIconLoader.preload();
 		}
 
 		async initComponents()
 		{
-			this.headerController = MessengerHeaderController.getInstance();
-			serviceLocator.add('messenger-header-controller', this.headerController);
+			this.headerManager = new MessengerHeaderManager();
+			this.headerManager.initGlobalController(window.tabs);
+			serviceLocator.add('messenger-header-manager', this.headerManager);
 
-			this.navigationController = NavigationController.getInstance();
-			serviceLocator.add('navigation-controller', this.navigationController);
+			this.navigationManager.initGlobalController(window.tabs);
+			this.subscriptionManager.register(this.navigationManager);
 
 			this.dialogCreator = new DialogCreator();
 			serviceLocator.add('dialog-creator', this.dialogCreator);
 
-			const currentTabId = await this.navigationController.getActiveTab();
-			this.headerController.redrawRightButtonsIfNeeded(currentTabId);
+			const currentTabId = await this.navigationManager.getActiveTab();
+			this.headerManager.redrawRightButtonsIfNeeded(currentTabId);
 			this.tabCounters.update();
 		}
 
 		initPullHandlers()
 		{
-			this.pullHandlerLauncher = PullHandlerLauncher.getInstance();
+			this.pullHandlerLauncher = new PullHandlerLauncher();
 			this.pullHandlerLauncher.subscribeEvents();
+
+			this.subscriptionManager.register(this.pullHandlerLauncher);
 		}
 
 		subscribeEvents()
 		{
-			this.storeEventHandler = StoreEventHandler.getInstance();
-			this.messengerEventHandler = MessengerEventHandler.getInstance();
-			this.externalEventHandler = ExternalEventHandler.getInstance();
+			this.storeEventHandler = new StoreEventHandler();
+			this.messengerEventHandler = new MessengerEventHandler();
+			this.externalEventHandler = new ExternalEventHandler();
 
 			this.storeEventHandler.subscribeEvents();
 			this.messengerEventHandler.subscribeEvents();
 			this.externalEventHandler.subscribeEvents();
+
+			this.subscriptionManager.register(this.storeEventHandler);
+			this.subscriptionManager.register(this.messengerEventHandler);
+			this.subscriptionManager.register(this.externalEventHandler);
 		}
 
-		unsubscribeEvents()
+		showPromo()
 		{
-			this.storeEventHandler?.unsubscribeEvents();
-			this.messengerEventHandler?.unsubscribeEvents();
-			this.externalEventHandler?.unsubscribeEvents();
+			if (Feature.isTasksRecentListAvailable)
+			{
+				this.promotionTriggerManager.setTabTasksTrigger();
+			}
 		}
+
+		/* region debug getters */
 
 		/**
 		 * @description dialog object reference for debugging purposes only.
@@ -339,13 +373,27 @@ jn.define('im/messenger/application/messenger', (require, exports, module) => {
 			return serviceLocator.get('dialog-manager')?.getLastOpenDialog() ?? null;
 		}
 
-		showPromo()
+		/**
+		 * @description recent manager object reference for debugging purposes only.
+		 * @private
+		 * @return {RecentManager|null}
+		 */
+		get recent()
 		{
-			if (Feature.isTasksRecentListAvailable)
-			{
-				this.promotionTriggerManager.setTabTasksTrigger();
-			}
+			return serviceLocator.get('recent-manager')?.getActiveRecent() ?? null;
 		}
+
+		/**
+		 * @description recent array item list reference for debugging purposes only.
+		 * @private
+		 * @return {Array<RecentItem>|null}
+		 */
+		get recentList()
+		{
+			return serviceLocator.get('recent-manager')?.getActiveRecent()?.locator.get('render')?.getItemList() ?? null;
+		}
+
+		/* endregion */
 	}
 
 	module.exports = { Messenger };

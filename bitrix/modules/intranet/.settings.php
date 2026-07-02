@@ -142,4 +142,17 @@ return [
 		],
 		'readonly' => true,
 	],
+	'aiassistant.marta' => [
+		'value' => [
+			'agents' => [
+				\Bitrix\Intranet\Internal\Integration\AiAssistant\Agents\UserInviteAgent::class,
+			],
+			'toolSets' => [
+				\Bitrix\Intranet\Internal\Integration\AiAssistant\ToolSets\UserToolSet::class,
+				\Bitrix\Intranet\Internal\Integration\AiAssistant\ToolSets\DepartmentToolSet::class,
+				\Bitrix\Intranet\Internal\Integration\AiAssistant\ToolSets\InviteLinkToolSet::class,
+			],
+		],
+		'readonly' => true,
+	],
 ];

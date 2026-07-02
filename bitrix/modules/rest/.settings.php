@@ -1,8 +1,16 @@
 <?php
+
+declare(strict_types=1);
+
+use \Bitrix\Rest;
+
 return [
 	'rest' => [
 		'value' => [
 			'defaultNamespace' => '\\Bitrix\\Rest\\V3\\Realisation\\Controller',
+			'namespaces' => [
+				'\\Bitrix\\Rest\\Infrastructure\\Rest\\Controller',
+			],
 			'routes' => [
 				'documentation' => 'rest.documentation.openApi',
 				'scopes' => 'rest.scope.list',
@@ -10,8 +18,8 @@ return [
 			'documentation' => [
 				'methods' => [
 					'batch' => \Bitrix\Rest\V3\Documentation\BatchMethodProvider::class,
-				]
-			]
+				],
+			],
 		]
 	],
 	'controllers' => [
@@ -39,10 +47,8 @@ return [
 			],
 			'rest.service.app' => [
 				'constructor' => function () {
-					return new \Bitrix\Rest\Service\AppService(
-						new \Bitrix\Rest\Repository\AppRepository(
-							new Bitrix\Rest\Model\Mapper\App()
-						)
+					return new Rest\Service\AppService(
+						new Rest\Internal\Repository\Application\AppRepository()
 					);
 				},
 			],
@@ -57,9 +63,7 @@ return [
 			],
 			'rest.repository.app' => [
 				'constructor' => static function () {
-					return new \Bitrix\Rest\Repository\AppRepository(
-						new \Bitrix\Rest\Model\Mapper\App()
-					);
+					return new Rest\Internal\Repository\Application\AppRepository();
 				},
 			],
 			'rest.repository.integration' => [

@@ -11,8 +11,8 @@ return [
 	],
 	'rel' => [
 		'main.polyfill.core',
-		'im.v2.const',
 		'im.v2.application.core',
+		'im.v2.const',
 		'im.v2.lib.feature',
 	],
 	'skip_core' => true,

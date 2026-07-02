@@ -33,7 +33,14 @@
 	white-space: nowrap;
 	cursor: pointer;
 	position: relative;
-	transition: 250ms linear all;
+	transition: background-color 250ms linear, opacity 250ms linear;
+	background: none;
+	outline: none;
+}
+
+.b24-form-control-file .b24-form-control:focus-visible {
+	outline: 1px solid var(--b24-primary-color);
+	outline-offset: 2px;
 }
 
 .b24-form-control-file .b24-form-control:hover { background-color: rgba(0, 0, 0, 0.12); }
@@ -166,10 +173,19 @@
 .b24-form-control-file-item-remove {
 	cursor: pointer;
 	opacity: .7;
-	transition: 250ms linear all;
+	transition: opacity 250ms linear;
 	width: 33px;
 	height: 33px;
 	position: relative;
+	background: none;
+	border: none;
+	padding: 0;
+	outline: none;
+}
+
+.b24-form-control-file-item-remove:focus-visible {
+	outline: 1px solid var(--b24-primary-color);
+	outline-offset: 2px;
 }
 
 .b24-form-control-file-item-remove:hover {opacity: .9;}

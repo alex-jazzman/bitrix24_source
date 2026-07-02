@@ -243,7 +243,8 @@
 	border-bottom: none;
 }
 
-.ui-section__hint .more {
+.ui-section__hint .more,
+.ui-section__field-label .more {
 	text-decoration: var(--ui-text-decoration-line-underline);
 	color: var(--ui-color-base-50);
 }

@@ -15,10 +15,11 @@ return [
 	'css' => 'dist/entity-selector.bundle.css',
 	'js' => 'dist/entity-selector.bundle.js',
 	'rel' => [
-		'main.popup',
 		'main.core',
+		'main.core.collections',
+		'main.core.events',
 		'main.loader',
-		'ui.fonts.opensans',
+		'main.popup',
 		'ui.design-tokens',
 		'ui.icon-set.api.core',
 		'ui.icon-set.outline',

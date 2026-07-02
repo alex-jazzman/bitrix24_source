@@ -45,3 +45,8 @@ DROP TABLE if exists b_bp_workflow_template_section;
 DROP TABLE if exists b_bp_workflow_template_file;
 DROP TABLE if exists b_bp_messenger_workflow_start_message;
 DROP TABLE if exists b_bp_messenger_workflow_resume_message;
+DROP TABLE if exists b_bp_workflow_template_user_data;
+DROP TABLE if exists b_bp_debug_trace;
+DROP TABLE if exists b_bp_debug_session;
+DROP TABLE if exists b_bp_debug;
+DROP TABLE if exists b_bp_storage_record_field;

@@ -2,6 +2,7 @@
  * @module user-profile/common-tab/src/block/header/view
  */
 jn.define('user-profile/common-tab/src/block/header/view', (require, exports, module) => {
+	const { Feature } = require('feature');
 	const { Avatar } = require('ui-system/blocks/avatar');
 	const { H3 } = require('ui-system/typography/heading');
 	const { Text5 } = require('ui-system/typography/text');
@@ -22,6 +23,7 @@ jn.define('user-profile/common-tab/src/block/header/view', (require, exports, mo
 	const { ReinviteEntry } = require('intranet/reinvite/entry');
 	const { PropTypes } = require('utils/validation');
 	const { isCloudAccount } = require('user/account');
+	const { getTextColorByTheme } = require('user/theme');
 
 	const { dispatch } = require('statemanager/redux/store');
 	const { connect } = require('statemanager/redux/connect');
@@ -101,7 +103,7 @@ jn.define('user-profile/common-tab/src/block/header/view', (require, exports, mo
 				{
 					style: {
 						...editStyles,
-						backgroundColor: Color.bgContentPrimary.toHex(),
+						backgroundColor: Color.bgContentPrimary.toHex(Feature.canUseWidgetBackground() ? 0 : 1),
 					},
 				},
 				this.#renderProfileUserCard(),
@@ -193,7 +195,7 @@ jn.define('user-profile/common-tab/src/block/header/view', (require, exports, mo
 					testId: this.getTestId('edit-badge-button'),
 					size: BadgeButtonSize.XL,
 					icon: Icon.EDIT,
-					design: BadgeButtonDesign.WHITE,
+					design: BadgeButtonDesign.LIGHT,
 				}),
 			);
 		}
@@ -216,27 +218,37 @@ jn.define('user-profile/common-tab/src/block/header/view', (require, exports, mo
 
 		#renderFullName()
 		{
+			const { fullName, currentTheme } = this.props;
+
+			const color = Feature.canUseWidgetBackground()
+				? getTextColorByTheme(currentTheme)
+				: Color.base1;
+
 			return H3({
+				color,
 				testId: this.getTestId('full-name'),
 				accent: true,
-				color: this.#getFullNameColor(),
-				text: this.props.fullName,
+				text: fullName,
 			});
 		}
 
 		#renderWorkPosition()
 		{
-			const { workPosition } = this.props;
+			const { workPosition, currentTheme } = this.props;
 
 			if (Type.isNil(workPosition) || workPosition === '')
 			{
 				return null;
 			}
 
+			const color = Feature.canUseWidgetBackground()
+				? getTextColorByTheme(currentTheme)
+				: Color.base2;
+
 			return Text5({
+				color,
 				testId: this.getTestId('work-position'),
 				text: workPosition,
-				color: Color.base2,
 				style: {
 					marginTop: Indent.XS2.toNumber(),
 				},
@@ -275,23 +287,6 @@ jn.define('user-profile/common-tab/src/block/header/view', (require, exports, mo
 			}
 		};
 
-		#getFullNameColor()
-		{
-			const { isCollaber, isExtranet } = this.props;
-
-			if (isCollaber)
-			{
-				return Color.collabAccentPrimaryAlt;
-			}
-
-			if (isExtranet)
-			{
-				return Color.accentExtraOrange;
-			}
-
-			return Color.base1;
-		}
-
 		#renderButtons()
 		{
 			return View(
@@ -316,7 +311,7 @@ jn.define('user-profile/common-tab/src/block/header/view', (require, exports, mo
 					Button({
 						testId: this.getTestId('chat-button'),
 						text: Loc.getMessage('M_PROFILE_HEADER_CHAT_BUTTON_FIRED_TEXT'),
-						design: ButtonDesign.OUTLINE_ACCENT_2,
+						design: Feature.canUseWidgetBackground() ? ButtonDesign.FILLED : ButtonDesign.OUTLINE_ACCENT_2,
 						size: ButtonSize.L,
 						stretched: true,
 						onClick: this.#openChat,
@@ -332,7 +327,7 @@ jn.define('user-profile/common-tab/src/block/header/view', (require, exports, mo
 							marginRight: Indent.XL.toNumber(),
 						},
 						testId: this.getTestId('chat-button'),
-						design: ButtonDesign.OUTLINE_ACCENT_2,
+						design: Feature.canUseWidgetBackground() ? ButtonDesign.TINTED : ButtonDesign.OUTLINE_ACCENT_2,
 						size: ButtonSize.L,
 						leftIcon: Icon.MESSAGE,
 						onClick: this.#openChat,
@@ -359,7 +354,7 @@ jn.define('user-profile/common-tab/src/block/header/view', (require, exports, mo
 					Button({
 						testId: this.getTestId('notes-button'),
 						text: Loc.getMessage('M_PROFILE_HEADER_NOTES_BUTTON_TEXT'),
-						design: ButtonDesign.OUTLINE_ACCENT_2,
+						design: Feature.canUseWidgetBackground() ? ButtonDesign.FILLED : ButtonDesign.OUTLINE_ACCENT_2,
 						size: ButtonSize.L,
 						stretched: true,
 						leftIcon: Icon.BOOKMARK,
@@ -376,7 +371,7 @@ jn.define('user-profile/common-tab/src/block/header/view', (require, exports, mo
 					},
 					testId: this.getTestId('chat-button'),
 					text: Loc.getMessage('M_PROFILE_HEADER_CHAT_BUTTON_TEXT'),
-					design: ButtonDesign.OUTLINE_ACCENT_2,
+					design: Feature.canUseWidgetBackground() ? ButtonDesign.TINTED : ButtonDesign.OUTLINE_ACCENT_2,
 					size: ButtonSize.L,
 					stretched: true,
 					onClick: this.#openChat,

@@ -1,4 +1,4 @@
-import { BitrixVueComponentProps } from 'ui.vue3';
+import { type BitrixVueComponentProps } from 'ui.vue3';
 import { Button } from 'ui.buttons';
 
 import { Control } from '../../layout/control/control';

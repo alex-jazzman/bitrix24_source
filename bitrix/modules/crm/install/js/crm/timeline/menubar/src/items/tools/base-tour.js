@@ -1,4 +1,4 @@
-import { TourInterface } from 'crm.tour-manager';
+import { type TourInterface } from 'crm.tour-manager';
 import { Dom, Event, Loc, Runtime, Type } from 'main.core';
 import { Guide } from 'ui.tour';
 

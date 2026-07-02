@@ -15,10 +15,9 @@ use Bitrix\Rest\Component\AppLayout\Exception;
 
 class AuthTokenFiller extends FillerBase
 {
-	protected bool $enabled = true;
 	protected array $app;
 	protected bool $accessGranted = false;
-	protected bool $needCheckAuth;
+	protected bool $requireAuth;
 	protected ?\CUser $currentUser = null;
 	protected ?array $token = null;
 
@@ -31,7 +30,7 @@ class AuthTokenFiller extends FillerBase
 		parent::__construct($params, $result, $request);
 
 		$this->app = $result['APPLICATION'];
-		$this->needCheckAuth = $this->params['PLACEMENT'] !== Rest\Api\UserFieldType::PLACEMENT_UF_TYPE;
+		$this->requireAuth = $this->params['PLACEMENT'] !== Rest\Api\UserFieldType::PLACEMENT_UF_TYPE;
 
 		global $USER;
 		if ($USER instanceof \CUser)
@@ -42,10 +41,7 @@ class AuthTokenFiller extends FillerBase
 
 	public function run(): array
 	{
-		if ($this->needCheckAuth)
-		{
-			$this->checkAuth();
-		}
+		$this->checkAuth();
 
 		return [
 			'AUTH' => $this->token,
@@ -60,13 +56,13 @@ class AuthTokenFiller extends FillerBase
 			throw new Exception\AccessDeniedException();
 		}
 		$this->accessGranted = \CRestUtil::checkAppAccess($this->app['ID']);
-		if ($this->accessGranted !== true)
+		if ($this->accessGranted !== true && $this->requireAuth)
 		{
 			throw new Exception\AccessDeniedException();
 		}
 
 		$app = $this->app;
-		$authAttempts = 2;
+		$authAttempts = 3;
 		while ((--$authAttempts) > 0)
 		{
 			$auth = Rest\Application::getAuthProvider()->get(
@@ -101,7 +97,7 @@ class AuthTokenFiller extends FillerBase
 				throw new Exception\SubscriptionRequiredException();
 			}
 
-			if ($auth['error'] == 'ERROR_OAUTH' && $auth['error_description'] === 'Application not installed')
+			if ($auth['error'] === 'ERROR_OAUTH' && $auth['error_description'] === 'Application not installed')
 			{
 				$queryFields = [
 					'CLIENT_ID' => $app['CLIENT_ID'],

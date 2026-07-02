@@ -1,6 +1,6 @@
 import { Tag, Loc } from 'main.core';
 import { Analytics } from '../analytics';
-import DepartmentControl from 'intranet.department-control';
+import { DepartmentControl } from 'intranet.department-control';
 import { RestoreFiredUsersPopup } from '../popup/restore-fired-users-popup';
 import { Page } from './page';
 import { AirButtonStyle, Button, ButtonState } from 'ui.buttons';
@@ -154,6 +154,11 @@ export class RegisterPage extends Page
 
 				registerButton.setState(ButtonState.WAITING);
 
+				const departmentIds = this.#departmentControl.getValues();
+				const workgroupIds = this.#departmentControl.getGroupValues();
+				const notSendInvitationChecked = this.#getCheckboxInput().checked;
+
+
 				this.#transport.send(
 					{
 						action: 'add',
@@ -162,9 +167,9 @@ export class RegisterPage extends Page
 							ADD_NAME: this.#getNameInput().getValue(),
 							ADD_LAST_NAME: this.#getLastNameInput().getValue(),
 							ADD_POSITION: this.#getPositionInput().getValue(),
-							ADD_SEND_PASSWORD: this.#getCheckboxInput().checked ? 'Y' : 'N',
-							SONET_GROUPS_CODE: this.#departmentControl.getGroupValues(),
-							departmentIds: this.#departmentControl.getValues(),
+							ADD_SEND_PASSWORD: notSendInvitationChecked ? 'Y' : 'N',
+							SONET_GROUPS_CODE: workgroupIds,
+							departmentIds,
 						},
 					},
 					(reject) => {
@@ -185,11 +190,20 @@ export class RegisterPage extends Page
 							userList: response.data.firedUserList,
 							isRestoreUsersAccessAvailable: response.data.isRestoreUsersAccessAvailable,
 							transport: this.#transport,
+							departmentIds,
+							workgroupIds,
 						})).show();
 					}
 					else
 					{
-						EventEmitter.emit(EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:showSuccessPopup');
+						EventEmitter.emit(
+							EventEmitter.GLOBAL_TARGET,
+							'BX.Intranet.Invitation:showSuccessPopup',
+							notSendInvitationChecked
+								? {
+									content: this.#getNotificationContentWithoutInvitation(),
+								} : {},
+						);
 					}
 				}).catch((reject) => {
 					console.error(reject);
@@ -198,6 +212,22 @@ export class RegisterPage extends Page
 		});
 
 		return registerButton;
+	}
+
+	#getNotificationContentWithoutInvitation(): HTMLElement
+	{
+		return Tag.render`
+			<div class="invite-email-notification">
+				<div class="invite-email-notification__content">
+					<div class="invite-email-notification__title ui-text --sm --accent">
+						${Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_SUCCESS_ADDED_TITLE')}
+					</div>
+					<div class="invite-email-notification__description ui-text --2xs">
+						${Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_SUCCESS_ADDED_DESCRIPTION')}
+					</div>
+				</div>
+			</div>
+		`;
 	}
 
 	getAnalyticTab(): string

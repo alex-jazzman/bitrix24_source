@@ -1,0 +1,23 @@
+.bx-im-message-source-list-button__container {
+	--ui-color: var(--ui-color-chat-other-citation);
+	--ui-icon-set__icon-color: var(--ui-color-chat-my-base-1_2);
+	--ui-icon-set__icon-size: 18px;
+
+	display: inline-flex;
+	max-width: 122px;
+	padding: 3px 8px 3px 4px;
+	border-radius: 512px;
+	margin-top: 8px;
+	background-color: var(--ui-color);
+	color: var(--ui-color-chat-my-base-0_2);
+	cursor: pointer;
+	font: var(--ui-font-size-sm)/17px var(--ui-font-family-primary);
+	gap: 2px;
+	vertical-align: baseline;
+}
+
+.bx-im-message-base__wrap.--self .bx-im-message-source-list-button__container {
+	--ui-color: var(--ui-color-chat-my-channel-cmnt);
+
+	color: var(--ui-color-chat-my-base-0_2);
+}

@@ -29,6 +29,8 @@ export type TaskModel = {
 	forceUpdateDescription: boolean,
 	creatorId: number,
 	createdTs: number,
+	changedTs: number,
+	activityTs: number,
 	responsibleIds: number[],
 	isForNewUser: boolean,
 	deadlineTs: number,
@@ -43,11 +45,14 @@ export type TaskModel = {
 	containsChecklist: boolean,
 	parentId: number,
 	subTaskIds: number[],
+	subTaskStatuses: { [id: number]: string },
 	containsSubTasks: boolean,
 	relatedToTaskId: number,
 	relatedTaskIds: number[],
+	relatedTaskStatuses: { [id: number]: string },
 	containsRelatedTasks: boolean,
 	ganttTaskIds: number[],
+	ganttTaskStatuses: { [id: number]: string },
 	containsGanttLinks: boolean,
 	placementIds: ?number[],
 	containsPlacements: boolean,
@@ -92,6 +97,7 @@ export type TaskModel = {
 	templateId: number,
 	maxDeadlineChangeDate: string,
 	maxDeadlineChanges: number,
+	deadlineChangeCount: ?number,
 	requireDeadlineChangeReason: boolean,
 	deadlineChangeReason: string,
 	userFields: Array<{ key: string, value: any }>,
@@ -99,6 +105,7 @@ export type TaskModel = {
 	replicate: boolean,
 	mark: ?$Values<typeof Mark>,
 	replicateParams: TaskReplicateParams | null,
+	viewers?: Viewers,
 };
 
 export type TaskRights = {
@@ -224,4 +231,20 @@ export type TaskReplicationYearly = {
 	yearlyWeekDayNum: ?$Values<typeof ReplicationWeekDayNum>;
 	yearlyWeekDay: ?number;
 	yearlyMonth2: number;
+}
+
+export type Viewer = {
+	id: number;
+	image: string;
+	name: string[];
+	type: string;
+	gender: string;
+	viewedTs: number;
+}
+
+export type Viewers = {
+	isLoadingCount: ?boolean;
+	isLoadingList: ?boolean;
+	count: ?number;
+	list: Viewer[];
 }

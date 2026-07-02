@@ -29,7 +29,12 @@ export const Gantt = {
 		},
 	},
 	template: `
-		<RelationTasks :meta="ganttMeta" :fields="new Set(['gantt'])" @add="handleAdd"/>
+		<RelationTasks
+			:meta="ganttMeta"
+			:fields="new Set(['gantt'])"
+			:shouldShowSubTasksOption="false"
+			@add="handleAdd"
+		/>
 		<GanttPopup v-if="bindElement" :bindElement @close="bindElement = null"/>
 	`,
 };

@@ -16,12 +16,12 @@ return [
 		'./dist/counter.bundle.js',
 	],
 	'rel' => [
-		'main.core.events',
-		'main.core',
-		'im.v2.lib.desktop',
-		'im.v2.lib.logger',
 		'im.v2.application.core',
 		'im.v2.const',
+		'im.v2.lib.desktop',
+		'im.v2.lib.logger',
+		'main.core',
+		'main.core.events',
 	],
 	'skip_core' => false,
 	'settings' => [

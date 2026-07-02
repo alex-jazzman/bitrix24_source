@@ -1,15 +1,19 @@
-<?
+<?php
+
+/**
+ * @global CMain $APPLICATION
+ * @var string $mid Defined in main/admin/settings.php
+ */
+
 $module_id = "blog";
 $BLOG_RIGHT = $APPLICATION->GetGroupRight($module_id);
 if ($BLOG_RIGHT>="R") :
-
-global $MESS;
 
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/blog/options.php");
 
 CModule::IncludeModule('blog');
 
-if ($_SERVER['REQUEST_METHOD']=="GET" && $RestoreDefaults <> '' && $BLOG_RIGHT=="W" && check_bitrix_sessid())
+if ($_SERVER['REQUEST_METHOD']=="GET" && !empty($_REQUEST['RestoreDefaults']) && $BLOG_RIGHT=="W" && check_bitrix_sessid())
 {
 	COption::RemoveOption("blog");
 	$z = CGroup::GetList("id", "asc", array("ACTIVE" => "Y", "ADMIN" => "N"));
@@ -45,12 +49,12 @@ $arAllOptions = array(
 );
 
 $strWarning = "";
-if ($_SERVER['REQUEST_METHOD']=="POST" && $Update <> '' && $BLOG_RIGHT=="W" && check_bitrix_sessid() && $use_sonnet_button == '')
+if ($_SERVER['REQUEST_METHOD']=="POST" && !empty($_POST['Update']) && $BLOG_RIGHT=="W" && check_bitrix_sessid())
 {
 	foreach($arAllOptions as $option)
 	{
 		$name = $option[0];
-		$val = $$name;
+		$val = $_POST[$name] ?? '';
 		if ($option[3][0] == "checkbox" && $val != "Y")
 			$val = "N";
 		COption::SetOptionString("blog", $name, $val, $option[1]);
@@ -82,10 +86,10 @@ if ($_SERVER['REQUEST_METHOD']=="POST" && $Update <> '' && $BLOG_RIGHT=="W" && c
 
 		foreach($arType as $type)
 		{
-			if (intval($arPaths[$arSite["LID"]][$type])>0)
+			if (intval($arPaths[$arSite["LID"]][$type] ?? 0) > 0)
 			{
-				if (${"SITE_PATH_".$arSite["LID"]."_".$type} <> '')
-					CBlogSitePath::Update($arPaths[$arSite["LID"]][$type], array("PATH" => ${"SITE_PATH_".$arSite["LID"]."_".$type}, "TYPE"=>$type));
+				if (!empty($_POST["SITE_PATH_".$arSite["LID"]."_".$type]))
+					CBlogSitePath::Update($arPaths[$arSite["LID"]][$type], array("PATH" => $_POST["SITE_PATH_".$arSite["LID"]."_".$type], "TYPE"=>$type));
 				else
 					CBlogSitePath::Delete($arPaths[$arSite["LID"]][$type]);
 			}
@@ -94,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD']=="POST" && $Update <> '' && $BLOG_RIGHT=="W" && c
 				CBlogSitePath::Add(
 					array(
 						"SITE_ID" => $arSite["LID"],
-						"PATH" => ${"SITE_PATH_".$arSite["LID"]."_".$type},
+						"PATH" => $_POST["SITE_PATH_".$arSite["LID"]."_".$type] ?? '',
 						"TYPE" => $type
 					)
 				);
@@ -102,12 +106,12 @@ if ($_SERVER['REQUEST_METHOD']=="POST" && $Update <> '' && $BLOG_RIGHT=="W" && c
 		}
 		unset($arPaths[$arSite["LID"]]);
 		
-		if(${"SITE_PATH_".$arSite["LID"]} <> '')
-			${"SITE_PATH_".$arSite["LID"]} = "/".trim(str_replace("\\", "/", ${"SITE_PATH_".$arSite["LID"]}), "/");
+		if(!empty($_POST["SITE_PATH_".$arSite["LID"]]))
+			$_POST["SITE_PATH_".$arSite["LID"]] = "/".trim(str_replace("\\", "/", $_POST["SITE_PATH_".$arSite["LID"]]), "/");
 		if (array_key_exists($arSite["LID"], $arPathsNullType))
 		{
-			if (${"SITE_PATH_".$arSite["LID"]} <> '')
-				CBlogSitePath::Update($arPathsNullType[$arSite["LID"]], array("PATH" => ${"SITE_PATH_".$arSite["LID"]}));
+			if (!empty($_POST["SITE_PATH_".$arSite["LID"]]))
+				CBlogSitePath::Update($arPathsNullType[$arSite["LID"]], array("PATH" => $_POST["SITE_PATH_".$arSite["LID"]]));
 			else
 				CBlogSitePath::Delete($arPathsNullType[$arSite["LID"]]);
 		}
@@ -116,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD']=="POST" && $Update <> '' && $BLOG_RIGHT=="W" && c
 			CBlogSitePath::Add(
 				array(
 					"SITE_ID" => $arSite["LID"],
-					"PATH" => ${"SITE_PATH_".$arSite["LID"]}
+					"PATH" => $_POST["SITE_PATH_".$arSite["LID"]] ?? '',
 				)
 			);
 		}
@@ -201,23 +205,23 @@ $tabControl->BeginNextTab();
 				<table cellspacing="2" width="100%">
 				<tr>
 					<td align="right" width="50%"><?=GetMessage("BLO_SITE_PATH_SITE_BLOG")?>:</td>
-					<td width="50%"><input type="text" size="40" value="<?echo htmlspecialcharsbx($arPaths[$arSite["LID"]]["B"])?>" name="SITE_PATH_<?= $arSite["LID"] ?>_B"></td>
+					<td width="50%"><input type="text" size="40" value="<?echo htmlspecialcharsbx($arPaths[$arSite["LID"]]["B"] ?? '')?>" name="SITE_PATH_<?= $arSite["LID"] ?>_B"></td>
 				</tr>
 				<tr>
 					<td align="right"><?=GetMessage("BLO_SITE_PATH_SITE_POST")?>:</td>
-					<td><input type="text" size="40" value="<?echo htmlspecialcharsbx($arPaths[$arSite["LID"]]["P"])?>" name="SITE_PATH_<?= $arSite["LID"] ?>_P"></td>
+					<td><input type="text" size="40" value="<?echo htmlspecialcharsbx($arPaths[$arSite["LID"]]["P"] ?? '')?>" name="SITE_PATH_<?= $arSite["LID"] ?>_P"></td>
 				</tr>
 				<tr>
 					<td align="right"><?=GetMessage("BLO_SITE_PATH_SITE_USER")?>:</td>
-					<td><input type="text" size="40" value="<?echo htmlspecialcharsbx($arPaths[$arSite["LID"]]["U"])?>" name="SITE_PATH_<?= $arSite["LID"] ?>_U"></td>
+					<td><input type="text" size="40" value="<?echo htmlspecialcharsbx($arPaths[$arSite["LID"]]["U"] ?? '')?>" name="SITE_PATH_<?= $arSite["LID"] ?>_U"></td>
 				</tr>
 				<tr>
 					<td align="right"><?=GetMessage("BLO_SITE_PATH_SITE_GROUP_BLOG")?>:</td>
-					<td><input type="text" size="40" value="<?echo htmlspecialcharsbx($arPaths[$arSite["LID"]]["G"])?>" name="SITE_PATH_<?= $arSite["LID"] ?>_G"></td>
+					<td><input type="text" size="40" value="<?echo htmlspecialcharsbx($arPaths[$arSite["LID"]]["G"] ?? '')?>" name="SITE_PATH_<?= $arSite["LID"] ?>_G"></td>
 				</tr>
 				<tr>
 					<td align="right"><?=GetMessage("BLO_SITE_PATH_SITE_GROUP_POST")?>:</td>
-					<td><input type="text" size="40" value="<?echo htmlspecialcharsbx($arPaths[$arSite["LID"]]["H"])?>" name="SITE_PATH_<?= $arSite["LID"] ?>_H"></td>
+					<td><input type="text" size="40" value="<?echo htmlspecialcharsbx($arPaths[$arSite["LID"]]["H"] ?? '')?>" name="SITE_PATH_<?= $arSite["LID"] ?>_H"></td>
 				</tr>
 				</table>
 			</td>
@@ -266,7 +270,7 @@ $tabControl->BeginNextTab();
 			<td valign="top" width="50%">
 				<?= str_replace("#SITE#", $arSite["LID"], GetMessage("BLO_SITE_PATH_SITE")) ?>:</td>
 			<td valign="middle" width="50%">
-				<input type="text" size="40" value="<?echo htmlspecialcharsbx($arPaths[$arSite["LID"]])?>" name="SITE_PATH_<?= $arSite["LID"] ?>">
+				<input type="text" size="40" value="<?echo htmlspecialcharsbx($arPaths[$arSite["LID"]] ?? '')?>" name="SITE_PATH_<?= $arSite["LID"] ?>">
 			</td>
 		</tr>
 		<?

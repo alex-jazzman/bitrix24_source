@@ -1,0 +1,153 @@
+/*
+ * Universal dark-theme overrides for upstream UI components that aren't fully
+ * theme-aware. Loaded everywhere `note.ui.theme-context` is included so any
+ * note-module surface that flips its design-system context to dark gets
+ * consistent rendering without per-extension CSS duplication.
+ *
+ * Each rule is a workaround for a specific upstream issue noted inline.
+ */
+
+/* ---------------------------------------------------------------------------
+ * popup-window: upstream falls back to `#fff` for `--popup-window-background-color`
+ * (main.popup/popup.css). Define it for every dark-context popup surface.
+ * ---------------------------------------------------------------------------*/
+.popup-window.--ui-context-content-dark {
+	--popup-window-background-color: var(--ui-color-bg-content-primary);
+}
+
+/* ---------------------------------------------------------------------------
+ * ui.checkbox: uses `--ui-color-base-white-fixed` (intentionally non-themed token).
+ * Re-theme background and border in dark context.
+ * ---------------------------------------------------------------------------*/
+.--ui-context-content-dark .ui-checkbox {
+	--ui-checkbox-background: var(--ui-color-bg-content-primary);
+	--ui-checkbox-border-color: var(--ui-color-base-6);
+}
+
+/* ---------------------------------------------------------------------------
+ * ui.tag-selector: outer-container hardcodes `background: #fff` and `--air`
+ * sibling rule only overrides border (entity-selector.css `.ui-tag-selector-outer-container`).
+ * Outer container also hardcodes `--ui-context-content-light` in HTML —
+ * `NoteThemeContext.applyToTagSelector(selector)` swaps it to dark before this rule fires.
+ * ---------------------------------------------------------------------------*/
+.ui-tag-selector-outer-container.--ui-context-content-dark {
+	background: var(--ui-color-bg-content-primary);
+}
+
+/*
+ * `.ui-tag-selector-container-locked:after` overlay is `rgba(255,255,255,.5)` —
+ * mixes to grey on dark background during entity-selector's preload. Match the bg.
+ */
+.ui-tag-selector-outer-container.--ui-context-content-dark.ui-tag-selector-container-locked:after {
+	background-color: var(--ui-color-bg-content-primary);
+}
+
+/*
+ * entity-selector writes chip bg/text colors as inline `style="..."` from JS
+ * (default-tag-user palette). Override with `!important` for dark context.
+ */
+.ui-tag-selector-outer-container.--ui-context-content-dark .ui-tag-selector-tag {
+	background-color: var(--ui-color-design-tinted-bg) !important;
+}
+
+.ui-tag-selector-outer-container.--ui-context-content-dark .ui-tag-selector-tag-title {
+	color: var(--ui-color-design-tinted-content) !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * ui.entity-selector dropdown: tab labels read `--ui-color-background-tertiary`
+ * (palette static, not theme-aware).
+ * ---------------------------------------------------------------------------*/
+.--ui-context-content-dark.popup-window .ui-selector-tab-label {
+	--ui-color: var(--ui-color-bg-content-secondary);
+}
+
+/* The 1px filler bar between active tab and dropdown body is hardcoded white in upstream */
+.--ui-context-content-dark.popup-window .ui-selector-tab-labels--active.ui-selector-tab-labels:before,
+.--ui-context-content-dark.popup-window .ui-selector-tab-labels--animate-show.ui-selector-tab-labels:before,
+.--ui-context-content-dark.popup-window .ui-selector-tab-labels--animate-hide.ui-selector-tab-labels:before {
+	background: var(--ui-color-bg-content-primary);
+}
+
+/* Create-collection footer on the Search tab: upstream hardcodes
+ * `var(--ui-color-accent-soft-blue-2)` (light blue palette token that does
+ * not flip with theme) and its `:hover` partner; the `-cmd` shortcut hint is
+ * `rgba(0, 0, 0, 0.3)`. Repaint with theme-aware surface + readable text. */
+.--ui-context-content-dark.popup-window .ui-selector-search-footer {
+	background-color: var(--ui-color-design-tinted-bg);
+	color: var(--ui-color-base-1);
+}
+
+.--ui-context-content-dark.popup-window .ui-selector-search-footer:hover {
+	background-color: var(--ui-color-design-tinted-bg-hover, var(--ui-color-design-tinted-bg));
+}
+
+.--ui-context-content-dark.popup-window .ui-selector-search-footer-label,
+.--ui-context-content-dark.popup-window .ui-selector-search-footer-query {
+	color: var(--ui-color-base-1);
+}
+
+.--ui-context-content-dark.popup-window .ui-selector-search-footer-cmd {
+	color: var(--ui-color-base-3);
+}
+
+/* ---------------------------------------------------------------------------
+ * main.colorpicker (note.editor highlight / text-color picker):
+ * upstream colorpicker.css hardcodes #fff/#000/grey rgba — repaint internals
+ * when the popup flips to dark. Popup background itself is already covered
+ * by the generic `.popup-window.--ui-context-content-dark` rule above.
+ * ---------------------------------------------------------------------------*/
+.popup-window.note-editor-color-popup.--ui-context-content-dark .main-color-picker-actions {
+	color: var(--ui-color-base-3);
+}
+.popup-window.note-editor-color-popup.--ui-context-content-dark .main-color-picker-custom-action,
+.popup-window.note-editor-color-popup.--ui-context-content-dark .main-color-picker-default-action {
+	color: var(--ui-color-base-2);
+	border-bottom-color: color-mix(in srgb, var(--ui-color-base-3) 50%, transparent);
+}
+
+/* textbox: own border + force color so `:before "#"` (inherits) is readable */
+.popup-window.note-editor-color-popup.--ui-context-content-dark .main-color-picker-custom-textbox {
+	border-color: var(--ui-color-divider-default);
+	color: var(--ui-color-base-1);
+}
+
+/* hex input: was hard `#fff/#000` */
+.popup-window.note-editor-color-popup.--ui-context-content-dark .main-color-picker-custom-input {
+	background: var(--ui-color-bg-content-primary);
+	color: var(--ui-color-base-1);
+}
+
+/* apply icon: SVG is encoded into background-image with hard #EDEEF0 / #525C69.
+ * Invert the lightness of the icon — keeps shape, flips fg/bg into dark. */
+.popup-window.note-editor-color-popup.--ui-context-content-dark .main-color-picker-custom-button {
+	filter: invert(1);
+}
+
+/* palette tile hover/selected: was hard black border + white inset */
+.popup-window.note-editor-color-popup.--ui-context-content-dark .main-color-picker-box:hover,
+.popup-window.note-editor-color-popup.--ui-context-content-dark .main-color-picker-box-selected {
+	border-color: var(--ui-color-base-1) !important;
+	box-shadow: inset 0 0 0 2px var(--ui-color-bg-content-primary);
+}
+
+/* ---------------------------------------------------------------------------
+ * @tiptap/extension-highlight: user-picked hex stored inline as
+ * `<mark style="background-color: …">`. Bright source colours stay readable
+ * in light theme but clash with dark theme (the design system flips the
+ * default text colour to white, which can become illegible on a saturated
+ * highlight). Tone the highlight down with a translucent overlay coloured
+ * by the current page background — the design-system var changes per theme,
+ * so a single rule covers both:
+ *   - light: white-ish overlay → pastel highlight + black text
+ *   - dark:  dark-ish overlay  → muted highlight + white text
+ * No filter is used, so descendant text keeps its design-system colour
+ * (avoids the previous double-inversion bug on dark theme). Storage stays
+ * untouched.
+ *
+ * Inline `<span style="color: …">` is rendered as the user picked it; no
+ * theme adjustment — explicit choice is respected verbatim.
+ * ---------------------------------------------------------------------------*/
+.ProseMirror mark[style*="background-color"] {
+	box-shadow: inset 0 0 0 100vmax color-mix(in srgb, var(--ui-color-bg-content-primary) 60%, transparent);
+}

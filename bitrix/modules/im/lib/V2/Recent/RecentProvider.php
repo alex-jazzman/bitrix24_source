@@ -24,7 +24,7 @@ class RecentProvider
 	public function getList(RecentParams $params): Recent
 	{
 		$typeCondition = $this->buildTypeCondition();
-		$filter = $params->filter?->with(typeCondition: $typeCondition) ?? new RecentFilter(typeCondition: $typeCondition);
+		$filter = $params->filter->with(typeCondition: $typeCondition);
 
 		$enrichedParams = new RecentParams(
 			filter: $filter,
@@ -35,6 +35,22 @@ class RecentProvider
 		$recentEntities = Recent::getRecentEntities($enrichedParams);
 
 		return Recent::initByArray($recentEntities);
+	}
+
+	public function getItemsByChatIds(int $userId, array $chatIds): Recent
+	{
+		$filter = new RecentFilter(userId: $userId, chatIds: $chatIds);
+		$params = new RecentParams(filter: $filter);
+
+		return Recent::initByArray(Recent::getRecentEntities($params));
+	}
+
+	public function countPinned(int $userId): int
+	{
+		return RecentTable::getCount([
+			'=USER_ID' => $userId,
+			'=PINNED' => 'Y',
+		]);
 	}
 
 	public function getItem(int $userId, int $chatId): ?RecentItem

@@ -3,6 +3,8 @@ import { Type } from 'main.core';
 import { MenuItemOptions, MenuOptions, Popup, PopupOptions, Menu } from 'main.popup';
 import { useBlockDiagram } from './block-diagram';
 
+export type DiagramContextMenuItemOptions = MenuItemOptions;
+
 export type UseContextMenu = {
 	isOpen: boolean,
 	showMenu: (point: { clientX: number, clientY: number }, options: ?MenuOptions) => void,
@@ -12,19 +14,25 @@ export type UseContextMenu = {
 };
 
 // eslint-disable-next-line max-lines-per-function
-export function useContextMenu(): UseContextMenu
+export function useContextMenu(contextMenuName?: string | null | undefined = null): UseContextMenu
 {
 	const {
 		contextMenuLayerRef,
 		targetContainerRef,
 		isOpenContextMenu,
+		openedContextMenuName,
 		positionContextMenu,
 		contextMenuInstance,
 		zoom,
 	} = useBlockDiagram();
 	const isOpen = ref(false);
 
-	function getItems(items: MenuItemOptions[] = []): MenuItemOptions[]
+	function setContextMenuName(newName: string | null): void
+	{
+		openedContextMenuName.value = toValue(newName);
+	}
+
+	function getItems(items: DiagramContextMenuItemOptions[] = []): DiagramContextMenuItemOptions[]
 	{
 		return items.map((item) => {
 			return {
@@ -82,6 +90,7 @@ export function useContextMenu(): UseContextMenu
 		options: ?MenuOptions = null,
 	): void
 	{
+		setContextMenuName(contextMenuName);
 		updateContextMenuPosition(point);
 		toValue(contextMenuInstance)?.destroy();
 
@@ -103,6 +112,7 @@ export function useContextMenu(): UseContextMenu
 		options: ?PopupOptions = null,
 	): void
 	{
+		setContextMenuName(contextMenuName);
 		updateContextMenuPosition(point);
 		toValue(contextMenuInstance)?.destroy();
 
@@ -122,12 +132,13 @@ export function useContextMenu(): UseContextMenu
 	{
 		isOpen.value = false;
 		isOpenContextMenu.value = false;
-
+		setContextMenuName(null);
 		toValue(contextMenuInstance)?.close();
 	}
 
 	return {
 		isOpen,
+		openedContextMenuName,
 		showMenu,
 		showPopup,
 		closeContextMenu,

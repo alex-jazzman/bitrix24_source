@@ -44,6 +44,8 @@
 	};
 
 	this.tabs.on('onTabSelected', (tab, changed) => {
+		BX.postComponentEvent('disk.tabs:onTabSelected', [{ tabId: tab.id, changed }]);
+
 		if (tab.id === ComponentId[TabId.SharedFilesGrid])
 		{
 			tariffPlanRestrictionsReady()

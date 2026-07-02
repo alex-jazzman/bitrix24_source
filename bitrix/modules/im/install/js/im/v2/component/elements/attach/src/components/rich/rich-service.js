@@ -1,10 +1,10 @@
-import { RestClient } from 'rest.client';
+import { type Store } from 'ui.vue3.vuex';
+
+import { type RestClient } from 'rest.client';
 
 import { Core } from 'im.v2.application.core';
 import { RestMethod } from 'im.v2.const';
-
-import type { ImModelMessage } from 'im.v2.model';
-import type { Store } from 'ui.vue3.vuex';
+import { type ImModelMessage } from 'im.v2.model';
 
 export class RichService
 {

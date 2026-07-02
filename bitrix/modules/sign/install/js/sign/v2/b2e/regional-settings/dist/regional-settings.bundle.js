@@ -1,18 +1,1536 @@
-this.BX=this.BX||{},this.BX.Sign=this.BX.Sign||{},this.BX.Sign.V2=this.BX.Sign.V2||{},function(t,e,i,n,s,l,o,a,r,c,d,u,m,p){"use strict";const h={date:{sourceType:"manual",value:new Date,hcmLinkSettingId:null},externalId:{sourceType:"manual",value:null,hcmLinkSettingId:null},hcmLinkDocumentTypeSettingId:null,documentType:null},g=p.defineStore("sign-b2e-regional-settings-store",{state:()=>({currentDocumentUid:null,companyId:null,isIntegrationEnabled:!1,isIntegrationVisible:!0,documentTypeList:[],hcmLinkCompanyId:null,hcmLinkAvailableSettings:{documentTypeList:[],externalIdTypeList:[],dateTypeList:[]},documentSettingsMap:new Map,documentsGroup:new Map}),getters:{currentDocumentSettings:t=>t.currentDocumentUid&&t.documentSettingsMap.has(t.currentDocumentUid)?t.documentSettingsMap.get(t.currentDocumentUid):h},actions:{init(t){this.documentTypeList=t.documentTypeList},updateDocumentsGroup(t){const e=[...this.documentsGroup.keys()].filter(e=>!t.has(e));e.forEach(t=>{this.documentsGroup.delete(t),this.documentSettingsMap.delete(t)});for(const[e,i]of t){const t=this.documentsGroup.has(e)?this.documentsGroup.get(e):{};if(this.documentsGroup.set(e,{...t,...i}),this.documentSettingsMap.has(e))continue;const n={date:{sourceType:i.externalDateCreateSourceType,hcmLinkSettingId:i.hcmLinkDateSettingId,value:i.externalDateCreate?new Date(i.externalDateCreate):new Date},externalId:{sourceType:i.externalIdSourceType,hcmLinkSettingId:i.hcmLinkExternalIdSettingId,value:i.externalId},hcmLinkDocumentTypeSettingId:i.hcmLinkDocumentTypeSettingId,documentType:i.regionDocumentType};this.documentSettingsMap.set(e,n),null===this.hcmLinkCompanyId&&this.modifyHcmLinkCompanyId(i.hcmLinkCompanyId)}e.includes(this.currentDocumentUid)&&(this.currentDocumentUid=null);const i=[...t.keys()].filter(t=>!this.documentSettingsMap.has(t));var n;(i.forEach(t=>{var e;this.documentSettingsMap.set(t,{...h,documentType:null!=(e=this.documentTypeList[0].code)?e:null})}),null===this.currentDocumentUid)&&(this.currentDocumentUid=null!=(n=i[0])?n:null)},modifyHcmLinkCompanyId(t){if(null===t)for(const[t,e]of this.documentSettingsMap)this.documentSettingsMap.set(t,{...e,date:{...e.date,sourceType:"manual",hcmLinkSettingId:null},externalId:{...e.externalId,sourceType:"manual",hcmLinkSettingId:null},hcmLinkDocumentTypeSettingId:null});this.hcmLinkCompanyId=t},modifyAvailableHcmLinkSettings(t){this.hcmLinkAvailableSettings=t;[...this.documentSettingsMap.keys()].forEach(e=>{var i,n,s,l;if(!this.documentSettingsMap.has(e))return;const o=this.documentSettingsMap.get(e);if(!this.documentsGroup.has(e))return;this.documentsGroup.get(e).hcmLinkCompanyId!==this.hcmLinkCompanyId&&this.documentSettingsMap.set(e,{...o,date:{...o.date,hcmLinkSettingId:null!=(i=null==t||null==(n=t.dateTypeList[0])?void 0:n.id)?i:null},externalId:{...o.externalId,hcmLinkSettingId:null!=(s=null==t||null==(l=t.externalIdTypeList[0])?void 0:l.id)?s:null},hcmLinkDocumentTypeSettingId:null})})},modifyCurrentDocumentSettings(t){if(!this.currentDocumentUid)return;const e=this.documentSettingsMap.get(this.currentDocumentUid);this.documentSettingsMap.set(this.currentDocumentUid,{...e,...t})},setDocumentSettings(t,e){if(!t)return;if(!this.documentSettingsMap.has(t))return;const i=this.documentSettingsMap.get(t);this.documentSettingsMap.set(t,{...i,...e})},async save(){const t=new n.Api,e=[...this.documentSettingsMap.keys()];await Promise.all(e.map(e=>t.changeIntegrationId(e,this.hcmLinkCompanyId))),await Promise.all(e.map(e=>{const{documentType:n,externalId:s,date:l,hcmLinkDocumentTypeSettingId:o}=this.documentSettingsMap.get(e);let a=l.value;l.value&&(a=i.DateTimeFormat.format(i.DateTimeFormat.getFormat("SHORT_DATE_FORMAT"),l.value));const r=[t.changeRegionDocumentType(e,n)];return this.isIntegrationVisible&&r.push(t.changeHcmLinkDocumentType(e,o),t.changeExternalDate(e,a,l.sourceType,l.hcmLinkSettingId),t.changeExternalId(e,s.value,s.sourceType,s.hcmLinkSettingId)),Promise.all(r)}))}}}),S={name:"DocumentTypeSelector",components:{SignDropdownComponent:u.SignDropdownComponent,Hint:c.Hint},mixins:[u.LocMixin],props:{typeList:{type:Array,required:!0,default:()=>[]},selectedId:{type:String,required:!0}},emits:["onSelected"],computed:{dropdownItems(){return this.typeList.map(({code:t,description:e})=>({id:t,title:t,caption:`(${e})`,entityId:"b2e-document-code",tabId:"b2e-document-codes"}))}},methods:{setType(t){this.$emit("onSelected",t.id)}},template:'\n\t\t<div class="sign-b2e-regional-settings__item">\n\t\t\t<p class="sign-b2e-regional-settings__item-text">\n\t\t\t\t<span>{{ loc(\'SIGN_DOCUMENT_SETUP_TYPE\') }}</span>\n\t\t\t  \t<Hint class="sign-b2e-regional-settings__hint" :text="loc(\'SIGN_DOCUMENT_SETUP_TYPE_HINT\')"/>\n\t\t\t</p>\n\t\t\t<SignDropdownComponent \n\t\t\t\tclass="sign-b2e-regional-settings-dropdown"\n\t\t\t\t:entities="[{ id: \'b2e-document-code\', searchFields: [{ name: \'caption\', system: true }] }]"\n\t\t\t\t:tabs="[{ id: \'b2e-document-codes\', title: \' \' }]"\n\t\t\t\t:items="dropdownItems"\n\t\t\t\t:isEnableSearch="true"\n\t\t\t\t:isWithCaption="true"\n\t\t\t\t:selectedId="selectedId"\n\t\t\t\t@onSelected="setType"\n\t\t\t/>\n\t\t</div>\n\t'},y=Object.freeze({id:null,title:l.Loc.getMessage("SIGN_V2_B2E_REGIONAL_SETTINGS_NOT_SELECTED_ITEM")}),_={name:"HcmLinkDocumentTypeSelector",components:{SignSelector:u.SignSelector},mixins:[u.LocMixin],props:{typeList:{type:Array,required:!0,default:()=>[]},selectedId:{type:[Number,null],required:!0}},emits:["onSelected"],computed:{dropdownItems(){return(this.typeList.length>0?[y,...this.typeList]:[y]).map(({id:t,title:e})=>({id:t,title:e}))}},methods:{onSelected(t){this.$emit("onSelected",t)}},template:'\n\t\t<div class="sign-b2e-regional-settings__item">\n\t\t  <p class="sign-b2e-regional-settings__item-text">\n\t\t    <span>{{ loc(\'SIGN_V2_B2E_REGIONAL_SETTINGS_DOCUMENT_HCMLINK_UID_TYPE\') }}</span>\n\t\t  </p>\n\t\t  <SignSelector\n\t\t      :items="dropdownItems"\n\t\t\t  :selectedId="selectedId"\n\t\t\t  @onSelect="onSelected"\n\t\t  />\n\t\t</div>\n\t'};let I,b,v=t=>t;const L={name:"RegistrationNumberSettings",components:{Switcher:o.Switcher,SignSelector:u.SignSelector,Notice:u.Notice},mixins:[u.LocMixin],props:{hcmLinkTypeList:{type:Array,required:!1,default:()=>[]},templateMode:{type:Boolean,required:!1,default:!1},settings:{type:Object,required:!0},isIntegrationEnabled:{type:Boolean,required:!1,default:!1},isIntegrationDisabledByProvider:{type:Boolean,required:!1,default:!1}},emits:["onChange"],data:()=>({isValid:!0,switcherSize:a.SwitcherSize.extraSmall}),computed:{dropdownItems(){return this.hcmLinkTypeList.map(({id:t,title:e})=>({id:t,title:e}))},isChecked(){return"hcmlink"===this.settings.sourceType&&this.isIntegrationEnabled}},watch:{isChecked(t){this.toggleHcmLink(t)}},methods:{toggleHcmLink(t){if(this.$emit("onChange",this.settings),!0!==t)this.changeSettings({...this.settings,sourceType:"manual"});else{if(this.hcmLinkTypeList.length<=0||!this.isIntegrationEnabled)return;this.changeSettings({...this.settings,sourceType:"hcmlink"})}},selectHcmLinkSetting(t){this.changeSettings({...this.settings,hcmLinkSettingId:t})},changeManualValue(t){this.changeSettings({...this.settings,value:t})},changeSettings(t){this.$emit("onChange",t)},validate(){return this.isValid=!(!1===this.isChecked&&!this.settings.value),this.isValid},showHideTooltipIfDisabled(t){var e,i,n;null==(e=this.hintDisabled)||e.close(),null==(i=this.hintDisabled)||i.destroy();const o={bindElement:null==t?void 0:t.target,darkMode:!0,autoHide:!0,cacheable:!1};this.isIntegrationDisabledByProvider?this.hintDisabled=new s.Popup({content:l.Tag.render(I||(I=v`
+/* eslint-disable */
+this.BX = this.BX || {};
+this.BX.Sign = this.BX.Sign || {};
+this.BX.Sign.V2 = this.BX.Sign.V2 || {};
+(function (exports, main_core, ui_vue3, ui_vue3_pinia, sign_v2_b2e_vueUtil, main_date, sign_v2_api, ui_vue3_components_hint, main_popup, ui_vue3_components_switcher, ui_switcher, sign_v2_b2e_hcmLinkCompanySelector, crm_router, main_core_events) {
+	'use strict';
+
+	const DefaultDocumentSettings = {
+		date: {
+			sourceType: 'manual',
+			value: new Date(),
+			hcmLinkSettingId: null
+		},
+		externalId: {
+			sourceType: 'manual',
+			value: null,
+			hcmLinkSettingId: null
+		},
+		hcmLinkDocumentTypeSettingId: null,
+		documentType: null
+	};
+	const useRegionalSettingsStore = ui_vue3_pinia.defineStore('sign-b2e-regional-settings-store', {
+		state: () => ({
+			currentDocumentUid: null,
+			companyId: null,
+			isIntegrationEnabled: false,
+			isIntegrationVisible: true,
+			documentTypeList: [],
+			hcmLinkCompanyId: null,
+			hcmLinkAvailableSettings: {
+				documentTypeList: [],
+				externalIdTypeList: [],
+				dateTypeList: []
+			},
+			documentSettingsMap: new Map(),
+			documentsGroup: new Map(),
+			previewUrlList: new Map()
+		}),
+		getters: {
+			currentDocumentSettings(state) {
+				if (!state.currentDocumentUid || !state.documentSettingsMap.has(state.currentDocumentUid)) {
+					return DefaultDocumentSettings;
+				}
+				return state.documentSettingsMap.get(state.currentDocumentUid);
+			}
+		},
+		actions: {
+			init(options) {
+				this.documentTypeList = options.documentTypeList;
+			},
+			updateDocumentsGroup(documentsGroup) {
+				const documentsToDelete = [...this.documentsGroup.keys()].filter(key => !documentsGroup.has(key));
+				documentsToDelete.forEach(key => {
+					this.documentsGroup.delete(key);
+					this.documentSettingsMap.delete(key);
+				});
+				for (const [uid, documentDetail] of documentsGroup) {
+					const documentDetailPrevious = this.documentsGroup.has(uid) ? this.documentsGroup.get(uid) : {};
+					if (documentDetail.previewUrl === null) {
+						this.previewUrlList.delete(uid);
+					}
+					this.documentsGroup.set(uid, {
+						...documentDetailPrevious,
+						...documentDetail
+					});
+					if (this.documentSettingsMap.has(uid)) {
+						continue;
+					}
+					const settings = {
+						date: {
+							sourceType: documentDetail.externalDateCreateSourceType,
+							hcmLinkSettingId: documentDetail.hcmLinkDateSettingId,
+							value: documentDetail.externalDateCreate ? new Date(documentDetail.externalDateCreate) : new Date()
+						},
+						externalId: {
+							sourceType: documentDetail.externalIdSourceType,
+							hcmLinkSettingId: documentDetail.hcmLinkExternalIdSettingId,
+							value: documentDetail.externalId
+						},
+						hcmLinkDocumentTypeSettingId: documentDetail.hcmLinkDocumentTypeSettingId,
+						documentType: documentDetail.regionDocumentType
+					};
+					this.documentSettingsMap.set(uid, settings);
+					if (this.hcmLinkCompanyId === null) {
+						this.modifyHcmLinkCompanyId(documentDetail.hcmLinkCompanyId);
+					}
+				}
+				if (documentsToDelete.includes(this.currentDocumentUid)) {
+					this.currentDocumentUid = null;
+				}
+				const documentsToAdd = [...documentsGroup.keys()].filter(key => !this.documentSettingsMap.has(key));
+				documentsToAdd.forEach(key => {
+					this.documentSettingsMap.set(key, {
+						...DefaultDocumentSettings,
+						documentType: this.documentTypeList[0].code ?? null
+					});
+				});
+				if (this.currentDocumentUid === null) {
+					this.currentDocumentUid = documentsToAdd[0] ?? null;
+				}
+			},
+			modifyHcmLinkCompanyId(id) {
+				if (id === null) {
+					for (const [uid, settings] of this.documentSettingsMap) {
+						this.documentSettingsMap.set(uid, {
+							...settings,
+							date: {
+								...settings.date,
+								sourceType: 'manual',
+								hcmLinkSettingId: null
+							},
+							externalId: {
+								...settings.externalId,
+								sourceType: 'manual',
+								hcmLinkSettingId: null
+							},
+							hcmLinkDocumentTypeSettingId: null
+						});
+					}
+				}
+				this.hcmLinkCompanyId = id;
+			},
+			modifyAvailableHcmLinkSettings(settings) {
+				this.hcmLinkAvailableSettings = settings;
+				const documentUids = [...this.documentSettingsMap.keys()];
+				documentUids.forEach(uid => {
+					if (!this.documentSettingsMap.has(uid)) {
+						return;
+					}
+					const stored = this.documentSettingsMap.get(uid);
+					if (!this.documentsGroup.has(uid)) {
+						return;
+					}
+					const documentDetails = this.documentsGroup.get(uid);
+					if (documentDetails.hcmLinkCompanyId === this.hcmLinkCompanyId) {
+						return;
+					}
+					this.documentSettingsMap.set(uid, {
+						...stored,
+						date: {
+							...stored.date,
+							hcmLinkSettingId: settings?.dateTypeList[0]?.id ?? null
+						},
+						externalId: {
+							...stored.externalId,
+							hcmLinkSettingId: settings?.externalIdTypeList[0]?.id ?? null
+						},
+						hcmLinkDocumentTypeSettingId: null
+					});
+				});
+			},
+			modifyCurrentDocumentSettings(settings) {
+				if (!this.currentDocumentUid) {
+					return;
+				}
+				const storedSettings = this.documentSettingsMap.get(this.currentDocumentUid);
+				this.documentSettingsMap.set(this.currentDocumentUid, {
+					...storedSettings,
+					...settings
+				});
+			},
+			async loadDocumentPreviewUrl(uid) {
+				if (this.previewUrlList.has(uid)) {
+					return;
+				}
+				this.previewUrlList.set(uid, '');
+				const data = await new sign_v2_api.Api().getDocumentPreviewUrl(uid);
+				this.previewUrlList.set(uid, data?.url ?? '');
+			},
+			setDocumentSettings(uid, settings) {
+				if (!uid) {
+					return;
+				}
+				if (!this.documentSettingsMap.has(uid)) {
+					return;
+				}
+				const storedSettings = this.documentSettingsMap.get(uid);
+				this.documentSettingsMap.set(uid, {
+					...storedSettings,
+					...settings
+				});
+			},
+			async save() {
+				const api = new sign_v2_api.Api();
+				const documentUids = [...this.documentSettingsMap.keys()];
+				await Promise.all(documentUids.map(uid => {
+					return api.changeIntegrationId(uid, this.hcmLinkCompanyId);
+				}));
+				await Promise.all(documentUids.map(uid => {
+					const {
+						documentType,
+						externalId,
+						date,
+						hcmLinkDocumentTypeSettingId
+					} = this.documentSettingsMap.get(uid);
+					let dateValue = date.value;
+					if (date.value) {
+						dateValue = main_date.DateTimeFormat.format(main_date.DateTimeFormat.getFormat('SHORT_DATE_FORMAT'), date.value);
+					}
+					const apiPromises = [api.changeRegionDocumentType(uid, documentType)];
+					if (this.isIntegrationVisible) {
+						apiPromises.push(api.changeHcmLinkDocumentType(uid, hcmLinkDocumentTypeSettingId), api.changeExternalDate(uid, dateValue, date.sourceType, date.hcmLinkSettingId), api.changeExternalId(uid, externalId.value, externalId.sourceType, externalId.hcmLinkSettingId));
+					}
+					return Promise.all(apiPromises);
+				}));
+			}
+		}
+	});
+
+	// @vue/component
+	const DocumentTypeSelector = {
+		name: 'DocumentTypeSelector',
+		components: {
+			SignDropdownComponent: sign_v2_b2e_vueUtil.SignDropdownComponent,
+			Hint: ui_vue3_components_hint.Hint
+		},
+		mixins: [sign_v2_b2e_vueUtil.LocMixin],
+		props: {
+			typeList: {
+				type: Array,
+				required: true,
+				default: () => []
+			},
+			selectedId: {
+				type: String,
+				required: true
+			}
+		},
+		emits: ['onSelected'],
+		computed: {
+			dropdownItems() {
+				return this.typeList.map(({
+					code,
+					description
+				}) => ({
+					id: code,
+					title: code,
+					caption: `(${description})`,
+					entityId: 'b2e-document-code',
+					tabId: 'b2e-document-codes'
+				}));
+			}
+		},
+		methods: {
+			setType(item) {
+				this.$emit('onSelected', item.id);
+			}
+		},
+		template: `
+		<div class="sign-b2e-regional-settings__item">
+			<p class="sign-b2e-regional-settings__item-text">
+				<span>{{ loc('SIGN_DOCUMENT_SETUP_TYPE') }}</span>
+					<Hint class="sign-b2e-regional-settings__hint" :text="loc('SIGN_DOCUMENT_SETUP_TYPE_HINT')"/>
+			</p>
+			<SignDropdownComponent 
+				class="sign-b2e-regional-settings-dropdown"
+				:entities="[{ id: 'b2e-document-code', searchFields: [{ name: 'caption', system: true }] }]"
+				:tabs="[{ id: 'b2e-document-codes', title: ' ' }]"
+				:items="dropdownItems"
+				:isEnableSearch="true"
+				:isWithCaption="true"
+				:selectedId="selectedId"
+				@onSelected="setType"
+			/>
+		</div>
+	`
+	};
+
+	const NotSelectedItem = Object.freeze({
+		id: null,
+		title: main_core.Loc.getMessage('SIGN_V2_B2E_REGIONAL_SETTINGS_NOT_SELECTED_ITEM')
+	});
+
+	// @vue/component
+	const HcmLinkDocumentTypeSelector = {
+		name: 'HcmLinkDocumentTypeSelector',
+		components: {
+			SignSelector: sign_v2_b2e_vueUtil.SignSelector
+		},
+		mixins: [sign_v2_b2e_vueUtil.LocMixin],
+		props: {
+			typeList: {
+				type: Array,
+				required: true,
+				default: () => []
+			},
+			selectedId: {
+				type: [Number, null],
+				required: true
+			}
+		},
+		emits: ['onSelected'],
+		computed: {
+			dropdownItems() {
+				const typeList = this.typeList.length > 0 ? [NotSelectedItem, ...this.typeList] : [NotSelectedItem];
+				return typeList.map(({
+					id,
+					title
+				}) => ({
+					id,
+					title
+				}));
+			}
+		},
+		methods: {
+			onSelected(id) {
+				this.$emit('onSelected', id);
+			}
+		},
+		template: `
+		<div class="sign-b2e-regional-settings__item">
+			<p class="sign-b2e-regional-settings__item-text">
+				<span>{{ loc('SIGN_V2_B2E_REGIONAL_SETTINGS_DOCUMENT_HCMLINK_UID_TYPE') }}</span>
+			</p>
+			<SignSelector
+					:items="dropdownItems"
+				:selectedId="selectedId"
+				@onSelect="onSelected"
+			/>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const RegistrationNumberSettings = {
+		name: 'RegistrationNumberSettings',
+		components: {
+			Switcher: ui_vue3_components_switcher.Switcher,
+			SignSelector: sign_v2_b2e_vueUtil.SignSelector,
+			Notice: sign_v2_b2e_vueUtil.Notice
+		},
+		mixins: [sign_v2_b2e_vueUtil.LocMixin],
+		props: {
+			hcmLinkTypeList: {
+				type: Array,
+				required: false,
+				default: () => []
+			},
+			templateMode: {
+				type: Boolean,
+				required: false,
+				default: false
+			},
+			settings: {
+				/** @type ExternalIdSettings */
+				type: Object,
+				required: true
+			},
+			isIntegrationEnabled: {
+				type: Boolean,
+				required: false,
+				default: false
+			},
+			isIntegrationDisabledByProvider: {
+				type: Boolean,
+				required: false,
+				default: false
+			}
+		},
+		emits: ['onChange'],
+		data() {
+			return {
+				isValid: true,
+				switcherSize: ui_switcher.SwitcherSize.extraSmall
+			};
+		},
+		computed: {
+			dropdownItems() {
+				return this.hcmLinkTypeList.map(({
+					id,
+					title
+				}) => ({
+					id,
+					title
+				}));
+			},
+			isChecked() {
+				return this.settings.sourceType === 'hcmlink' && this.isIntegrationEnabled;
+			}
+		},
+		watch: {
+			isChecked(newValue) {
+				this.toggleHcmLink(newValue);
+			}
+		},
+		methods: {
+			toggleHcmLink(value) {
+				this.$emit('onChange', this.settings);
+				if (value === true) {
+					if (this.hcmLinkTypeList.length <= 0 || !this.isIntegrationEnabled) {
+						return;
+					}
+					this.changeSettings({
+						...this.settings,
+						sourceType: 'hcmlink'
+					});
+					return;
+				}
+				this.changeSettings({
+					...this.settings,
+					sourceType: 'manual'
+				});
+			},
+			selectHcmLinkSetting(id) {
+				this.changeSettings({
+					...this.settings,
+					hcmLinkSettingId: id
+				});
+			},
+			changeManualValue(value) {
+				this.changeSettings({
+					...this.settings,
+					value
+				});
+			},
+			changeSettings(settings) {
+				this.$emit('onChange', settings);
+			},
+			validate() {
+				this.isValid = !(this.isChecked === false && !this.settings.value);
+				return this.isValid;
+			},
+			showHideTooltipIfDisabled(event) {
+				this.hintDisabled?.close();
+				this.hintDisabled?.destroy();
+				const commonHintSettings = {
+					bindElement: event?.target,
+					darkMode: true,
+					autoHide: true,
+					cacheable: false
+				};
+				if (this.isIntegrationDisabledByProvider) {
+					this.hintDisabled = new main_popup.Popup({
+						content: main_core.Tag.render`
 						<span class='ui-hint-content'>
-							${0}
+							${main_core.Text.encode(this.loc('SIGN_V2_B2E_REGIONAL_SETTINGS_DOCUMENT_EXTERNAL_ID_DISABLED_HINT'))}
 						</span>
-					`),l.Text.encode(this.loc("SIGN_V2_B2E_REGIONAL_SETTINGS_DOCUMENT_EXTERNAL_ID_DISABLED_HINT"))),...o}):this.isIntegrationEnabled&&0===this.hcmLinkTypeList.length&&(this.hintDisabled=new s.Popup({content:l.Tag.render(b||(b=v`
+					`,
+						...commonHintSettings
+					});
+				} else if (this.isIntegrationEnabled && this.hcmLinkTypeList.length === 0) {
+					this.hintDisabled = new main_popup.Popup({
+						content: main_core.Tag.render`
 						<span class='ui-hint-content'>
-							${0}
+							${main_core.Text.encode(this.loc('SIGN_V2_B2E_REGIONAL_SETTINGS_DOCUMENT_EXTERNAL_ID_NO_SETTINGS'))}
 						</span>
-					`),l.Text.encode(this.loc("SIGN_V2_B2E_REGIONAL_SETTINGS_DOCUMENT_EXTERNAL_ID_NO_SETTINGS"))),...o})),null==(n=this.hintDisabled)||n.show()},created(){this.hintDisabled=null}},template:'\n\t\t<div class="sign-b2e-regional-settings__item">\n\t\t\t<p class="sign-b2e-regional-settings__item-text">\n\t\t\t\t<Switcher style="height: 13px"\n\t\t\t\t\t:isChecked="isChecked"\n\t\t\t\t\t:options="{ size: switcherSize }"\n\t\t\t\t\t@check="toggleHcmLink(true)"\n\t\t\t\t\t@uncheck="toggleHcmLink(false)"\n\t\t\t\t\t@click="showHideTooltipIfDisabled"\n\t\t\t\t/>\n\t\t\t\t<span style="margin-left: 8px">\n\t\t\t\t  {{ loc(\'SIGN_V2_B2E_REGIONAL_SETTINGS_DOCUMENT_EXTERNAL_ID_HCMLINK_SWITCHER_TEXT\') }}\n\t\t\t\t</span>\n\t\t    </p>\n\t\t\t<SignSelector v-if="isChecked"\n\t\t\t\t:items="dropdownItems"\n\t\t\t\t:selectedId="settings.hcmLinkSettingId"\n\t\t\t\t@onSelect="selectHcmLinkSetting"\n\t\t\t/>\n\t\t\t<div v-else-if="!templateMode"\n\t\t\t\tclass="ui-ctl-textbox ui-ctl-w100 ui-ctl-md"\n\t\t\t>\n\t\t\t\t<input\n\t\t\t\t\t:value="settings.value"\n\t\t\t\t\t:placeholder="loc(\'SIGN_V2_B2E_REGIONAL_SETTINGS_DOCUMENT_EXTERNAL_ID_INPUT_HINT\')" \n\t\t\t\t\ttype="text" \n\t\t\t\t\tclass="ui-ctl-element sign-b2e-regional-settings-reg-number-input"\n\t\t\t\t\t:class="{\'ui-element-invalid\': !isValid}"\n\t\t\t\t\tmaxlength="255"\n\t\t\t\t\t@input="changeManualValue($event.target.value)"\n\t\t\t\t>\n\t\t\t</div>\n\t\t  \t<Notice style="margin-top: 8px">\n\t\t\t  {{ loc(\'SIGN_V2_B2E_REGIONAL_SETTINGS_DOCUMENT_EXTERNAL_ID_NOTICE\') }}\n\t\t\t</Notice>\n\t\t</div>\n\t'};let T,D,E=t=>t;const k={name:"DateSettings",components:{DateSelector:u.DateSelector,SignSelector:u.SignSelector,Switcher:o.Switcher,RoundedSmallSelectedItemView:u.RoundedSmallSelectedItemView,Hint:c.Hint},mixins:[u.LocMixin],props:{hcmLinkTypeList:{type:Array,required:!0,default:()=>[]},templateMode:{type:Boolean,required:!1,default:!1},isIntegrationEnabled:{type:Boolean,required:!1,default:!1},settings:{type:Object,required:!0},isIntegrationDisabledByProvider:{type:Boolean,required:!1,default:!1}},emits:["onChange"],data:()=>({switcherSize:a.SwitcherSize.extraSmall}),computed:{dropdownItems(){return this.hcmLinkTypeList.map(({id:t,title:e})=>({id:t,title:e}))},isChecked(){return"hcmlink"===this.settings.sourceType&&this.isIntegrationEnabled}},watch:{isChecked(t){this.toggleHcmLink(t)}},methods:{toggleHcmLink(t){if(!0!==t)this.changeSettings({...this.settings,sourceType:"manual"});else{if(this.hcmLinkTypeList.length<=0||!this.isIntegrationEnabled)return;this.changeSettings({...this.settings,sourceType:"hcmlink"})}},selectHcmLinkSetting(t){this.changeSettings({...this.settings,hcmLinkSettingId:t})},selectDate(t){this.changeSettings({...this.settings,value:t})},changeSettings(t){this.$emit("onChange",t)},showHideTooltipIfDisabled(t){var e,i,n;null==(e=this.hintDisabled)||e.close(),null==(i=this.hintDisabled)||i.destroy();const o={bindElement:null==t?void 0:t.target,darkMode:!0,autoHide:!0,cacheable:!1};this.isIntegrationDisabledByProvider?this.hintDisabled=new s.Popup({content:l.Tag.render(T||(T=E`
+					`,
+						...commonHintSettings
+					});
+				}
+				this.hintDisabled?.show();
+			},
+			created() {
+				this.hintDisabled = null;
+			}
+		},
+		template: `
+		<div class="sign-b2e-regional-settings__item">
+			<p class="sign-b2e-regional-settings__item-text">
+				<Switcher style="height: 13px"
+					:isChecked="isChecked"
+					:options="{ size: switcherSize }"
+					@check="toggleHcmLink(true)"
+					@uncheck="toggleHcmLink(false)"
+					@click="showHideTooltipIfDisabled"
+				/>
+				<span style="margin-left: 8px">
+					{{ loc('SIGN_V2_B2E_REGIONAL_SETTINGS_DOCUMENT_EXTERNAL_ID_HCMLINK_SWITCHER_TEXT') }}
+				</span>
+				</p>
+			<SignSelector v-if="isChecked"
+				:items="dropdownItems"
+				:selectedId="settings.hcmLinkSettingId"
+				@onSelect="selectHcmLinkSetting"
+			/>
+			<div v-else-if="!templateMode"
+				class="ui-ctl-textbox ui-ctl-w100 ui-ctl-md"
+			>
+				<input
+					:value="settings.value"
+					:placeholder="loc('SIGN_V2_B2E_REGIONAL_SETTINGS_DOCUMENT_EXTERNAL_ID_INPUT_HINT')" 
+					type="text" 
+					class="ui-ctl-element sign-b2e-regional-settings-reg-number-input"
+					:class="{'ui-element-invalid': !isValid}"
+					maxlength="255"
+					@input="changeManualValue($event.target.value)"
+				>
+			</div>
+				<Notice style="margin-top: 8px">
+				{{ loc('SIGN_V2_B2E_REGIONAL_SETTINGS_DOCUMENT_EXTERNAL_ID_NOTICE') }}
+			</Notice>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const DateSettings = {
+		name: 'DateSettings',
+		components: {
+			DateSelector: sign_v2_b2e_vueUtil.DateSelector,
+			SignSelector: sign_v2_b2e_vueUtil.SignSelector,
+			Switcher: ui_vue3_components_switcher.Switcher,
+			RoundedSmallSelectedItemView: sign_v2_b2e_vueUtil.RoundedSmallSelectedItemView,
+			Hint: ui_vue3_components_hint.Hint
+		},
+		mixins: [sign_v2_b2e_vueUtil.LocMixin],
+		props: {
+			hcmLinkTypeList: {
+				type: Array,
+				required: true,
+				default: () => []
+			},
+			templateMode: {
+				type: Boolean,
+				required: false,
+				default: false
+			},
+			isIntegrationEnabled: {
+				type: Boolean,
+				required: false,
+				default: false
+			},
+			settings: {
+				/** @type DateSettingsType */
+				type: Object,
+				required: true
+			},
+			isIntegrationDisabledByProvider: {
+				type: Boolean,
+				required: false,
+				default: false
+			}
+		},
+		emits: ['onChange'],
+		data() {
+			return {
+				switcherSize: ui_switcher.SwitcherSize.extraSmall
+			};
+		},
+		computed: {
+			dropdownItems() {
+				return this.hcmLinkTypeList.map(({
+					id,
+					title
+				}) => ({
+					id,
+					title
+				}));
+			},
+			isChecked() {
+				return this.settings.sourceType === 'hcmlink' && this.isIntegrationEnabled;
+			}
+		},
+		watch: {
+			isChecked(newValue) {
+				this.toggleHcmLink(newValue);
+			}
+		},
+		methods: {
+			toggleHcmLink(value) {
+				if (value === true) {
+					if (this.hcmLinkTypeList.length <= 0 || !this.isIntegrationEnabled) {
+						return;
+					}
+					this.changeSettings({
+						...this.settings,
+						sourceType: 'hcmlink'
+					});
+					return;
+				}
+				this.changeSettings({
+					...this.settings,
+					sourceType: 'manual'
+				});
+			},
+			selectHcmLinkSetting(id) {
+				this.changeSettings({
+					...this.settings,
+					hcmLinkSettingId: id
+				});
+			},
+			selectDate(date) {
+				this.changeSettings({
+					...this.settings,
+					value: date
+				});
+			},
+			changeSettings(settings) {
+				this.$emit('onChange', settings);
+			},
+			showHideTooltipIfDisabled(event) {
+				this.hintDisabled?.close();
+				this.hintDisabled?.destroy();
+				const commonHintSettings = {
+					bindElement: event?.target,
+					darkMode: true,
+					autoHide: true,
+					cacheable: false
+				};
+				if (this.isIntegrationDisabledByProvider) {
+					this.hintDisabled = new main_popup.Popup({
+						content: main_core.Tag.render`
 						<span class='ui-hint-content'>
-							${0}
+							${main_core.Text.encode(this.loc('SIGN_V2_B2E_REGIONAL_SETTINGS_DOCUMENT_DATE_DISABLED_HINT'))}
 						</span>
-					`),l.Text.encode(this.loc("SIGN_V2_B2E_REGIONAL_SETTINGS_DOCUMENT_DATE_DISABLED_HINT"))),...o}):this.isIntegrationEnabled&&0===this.hcmLinkTypeList.length&&(this.hintDisabled=new s.Popup({content:l.Tag.render(D||(D=E`
+					`,
+						...commonHintSettings
+					});
+				} else if (this.isIntegrationEnabled && this.hcmLinkTypeList.length === 0) {
+					this.hintDisabled = new main_popup.Popup({
+						content: main_core.Tag.render`
 						<span class='ui-hint-content'>
-							${0}
+							${main_core.Text.encode(this.loc('SIGN_V2_B2E_REGIONAL_SETTINGS_DOCUMENT_DATE_NO_SETTINGS'))}
 						</span>
-					`),l.Text.encode(this.loc("SIGN_V2_B2E_REGIONAL_SETTINGS_DOCUMENT_DATE_NO_SETTINGS"))),...o})),null==(n=this.hintDisabled)||n.show()},created(){this.hintDisabled=null}},template:'\n\t\t<div class="sign-b2e-regional-settings__item --row">\n\t\t\t<p class="sign-b2e-regional-settings__item-text">\n\t\t\t\t<Switcher style="height: 13px"\n\t\t\t\t\t:isChecked="isChecked"\n\t\t\t\t\t:options="{ size: switcherSize }"\n\t\t\t\t\t@check="toggleHcmLink(true)"\n\t\t\t\t\t@uncheck="toggleHcmLink(false)"\n\t\t\t\t\t @click="showHideTooltipIfDisabled"\n\t\t\t\t/>\n\t\t\t\t<span style="margin-left: 8px">\n\t\t\t\t\t{{ loc(\'SIGN_V2_B2E_REGIONAL_SETTINGS_DOCUMENT_DATE_HCMLINK_SWITCHER_TEXT\') }}\n\t\t\t\t</span>\n\t\t\t</p>\n\t\t\t<div class="sign-b2e-regional-settings_date_container">\n\t\t\t\t<SignSelector v-if="isChecked"\n\t\t\t\t\t:items="dropdownItems"\n\t\t\t\t\t:selectedId="settings.hcmLinkSettingId"\n\t\t\t\t\t@onSelect="selectHcmLinkSetting"\n\t\t\t\t\tv-slot="{ title }"\n\t\t\t\t>\n\t\t\t\t\t<RoundedSmallSelectedItemView\n\t\t\t\t\t\t:title="title"\n\t\t\t\t\t/>\n\t\t\t\t</SignSelector>\n\t\t\t\t<div v-else-if="!templateMode">\n\t\t\t\t\t<DateSelector\n\t\t\t\t\t\t:value="settings.value"\n\t\t\t\t\t\t@onSelect="selectDate"\n\t\t\t\t\t/>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<Hint v-if="isChecked" class="sign-b2e-regional-settings__hint sign-b2e-regional-settings_date_hint" :text="loc(\'SIGN_V2_B2E_REGIONAL_SETTINGS_DOCUMENT_DATE_HCMLINK_SWITCHER_HINT\')"/>\n\t\t</div>\n\t'},w={name:"Switcher",components:{UiSwitcher:o.Switcher,Hint:c.Hint},props:{modelValue:{type:Boolean,default:!1},title:{type:String,required:!1,default:""},hint:{type:String,required:!1,default:""},isEnabled:{type:Boolean,default:!0}},emits:["update:modelValue"],data:()=>({isChecked:!1,switcherSize:a.SwitcherSize.extraSmall}),watch:{modelValue(t){this.isChecked=t}},mounted(){this.isChecked=this.isEnabled&&this.modelValue},methods:{setValue(t){!1!==this.isEnabled&&(this.isChecked=t,this.$emit("update:modelValue",t))}},template:'\n\t\t<div>\n\t\t\t<UiSwitcher class="sign-b2e_switcher"\n\t\t\t\t\t  :isChecked="isChecked"\n\t\t\t\t\t  :options="{ size: switcherSize }"\n\t\t\t\t\t  @check="setValue(true)" \n\t\t\t\t\t  @uncheck="setValue(false)"\n\t\t\t/>\n\t\t\t<span @click="setValue(!isChecked)" class="sign-b2e-settings__item_title sign-b2e_switcher__title">{{ title }}</span>\n\t\t\t<Hint v-if="hint" class="sign-b2e_switcher__hint" :text="hint"/>\n\t\t</div>\n\t'},C={name:"CompanySelector",components:{Switcher:w,Notice:u.Notice,Hint:c.Hint},mixins:[u.LocMixin],props:{companyId:{type:Number,required:!0},isChecked:{type:Boolean,default:!1},isEnabled:{type:Boolean,default:!1}},data:()=>({isHcmLinkCompanySelectorVisible:!1,isCompanySelectorActive:!1}),watch:{companyId(t,e){this.isHcmLinkCompanySelectorVisible&&t!==e&&this.hcmLinkCompanySelector.setCompanyId(t)},isChecked(t){this.isHcmLinkCompanySelectorVisible=t},isHcmLinkCompanySelectorVisible(t,e){t!==e&&this.onHcmLinkCompanySelectorVisibleChange(t)},isEnabled(t){t||(this.isHcmLinkCompanySelectorVisible=t)}},created(){this.initCompanySelector()},mounted(){this.$refs.hcmLinkCompanySelector&&l.Dom.append(this.hcmLinkCompanySelector.render(),this.$refs.hcmLinkCompanySelector),this.isHcmLinkCompanySelectorVisible=this.isEnabled&&this.isChecked},methods:{onHcmLinkCompanySelectorVisibleChange(t){!1!==this.isEnabled&&(t&&this.companyId>0?this.hcmLinkCompanySelector.setCompanyId(this.companyId):this.$emit("on-change",null,[],[],[]))},initCompanySelector(){this.hcmLinkCompanySelector=new r.HcmLinkCompanySelector,this.hcmLinkCompanySelector.setAvailability(!0),this.hcmLinkCompanySelector.subscribe("selected",t=>{var e,i,n;const{id:s,availableSettings:l}=t.data;this.$emit("on-change",null!=s?s:0,null!=(e=null==l?void 0:l.documentType)?e:[],null!=(i=null==l?void 0:l.externalId)?i:[],null!=(n=null==l?void 0:l.date)?n:[])})}},template:'\n\t\t<div>\n\t\t\t<p class="sign-b2e-settings__item_title">\n\t\t\t\t<Switcher\n\t\t\t\t\tv-model="isHcmLinkCompanySelectorVisible"\n\t\t\t\t\t:title="loc(\'SIGN_V2_B2E_REGIONAL_SETTINGS_HCMLINK_INTEGRATION\')"\n\t\t\t\t\t:is-enabled="isEnabled"\n\t\t\t\t/>\n\t\t\t</p>\n\t\t\t<div v-show="isHcmLinkCompanySelectorVisible" ref="hcmLinkCompanySelector"></div>\n\t\t\t<Notice class="sign-b2e-regional-settings-company_selector_notice">\n\t\t\t\t<template v-if="isHcmLinkCompanySelectorVisible">\n\t\t\t\t\t{{ loc(\'SIGN_V2_B2E_REGIONAL_SETTINGS_HCMLINK_INTEGRATION_ENABLED_NOTICE\') }}\n\t\t\t\t</template>\n\t\t\t\t<template v-else>\n\t\t\t\t\t{{ loc(\'SIGN_V2_B2E_REGIONAL_SETTINGS_HCMLINK_INTEGRATION_DISABLED_NOTICE\') }}\n\t\t\t\t</template>\n\t\t\t</Notice>\n\t\t</div>\n\t'},f={name:"DocumentPreview",props:{previewSrc:{type:String,required:!0},title:{type:String,required:!1,default:""},documentId:{type:Number,required:!0},previewImageClass:{type:String,required:!1,default:""},isIconVisible:{type:Boolean,required:!1,default:!1}},methods:{previewDocument(){return this.documentId<1?Promise.resolve():d.Router.openSlider(`/sign/b2e/preview/0/?documentId=${this.documentId}&noRedirect=Y`,{width:800,cacheable:!1})}},template:'\n\t\t<div class="sign-b2e_document_preview_container">\n\t\t\t<div v-if="isIconVisible" @click="previewDocument()" class="sign-b2e_document_preview_icon"></div>\n\t\t\t<img v-if="previewSrc" @click="previewDocument()" :class="previewImageClass" :src="previewSrc" :alt="title">\n\t\t</div>\t\n\t'},N={name:"DocumentRegionalSettings",components:{DocumentTypeSelector:S,HcmLinkDocumentTypeSelector:_,RegistrationNumberSettings:L,DateSettings:k,DocumentPreview:f},mixins:[u.LocMixin],props:{templateMode:{type:Boolean,required:!1,default:!1},documentTypeList:{type:Array,required:!0},externalIdTypeList:{type:Array,required:!0},dateTypeList:{type:Array,required:!0},hcmLinkDocumentTypeList:{type:Array,required:!0},previewSrc:{type:[String,null],required:!1,default:null},documentId:{type:Number,required:!1,default:0},uid:{type:[String,null],required:!1,default:null},title:{type:[String,null],required:!1,default:null},isPreviewVisible:{type:Boolean,required:!1,default:!0},settings:{type:Object,required:!0},isIntegrationEnabled:{type:Boolean,required:!1,default:!1},isHcmLinkDocumentTypeVisible:{type:Boolean,required:!1,default:!0},isDocumentTypeVisible:{type:Boolean,required:!1,default:!0},isRegistrationNumberVisible:{type:Boolean,required:!1,default:!0},isDateVisible:{type:Boolean,required:!1,default:!0},isIntegrationDisabledByProvider:{type:Boolean,required:!1,default:!1}},data:()=>({currentValue:{}}),watch:{isIntegrationEnabled(t){!1!==t?this.setDefaultValues(this.settings):this.currentValue.hcmLinkDocumentTypeSettingId=0}},created(){this.setDefaultValues(this.settings)},methods:{modifyDocumentType(t){this.currentValue.documentType=t,this.$emit("on-change-document-type",this.currentValue,this.uid),this.$emit("on-change",this.currentValue,this.uid)},modifyDateSettings(t){this.currentValue.date=t,this.$emit("on-change-date-created",this.currentValue,this.uid),this.$emit("on-change",this.currentValue,this.uid)},modifyRegistrationNumberSettings(t){this.currentValue.externalId=t,this.$emit("on-change-registration-number",this.currentValue,this.uid),this.$emit("on-change",this.currentValue,this.uid)},modifyHcmLinkDocumentType(t){this.currentValue.hcmLinkDocumentTypeSettingId=t,this.$emit("on-change-hcm-link-document-type",this.currentValue,this.uid),this.$emit("on-change",this.currentValue,this.uid)},validate(){return!this.isRegistrationNumberVisible||this.$refs.registrationNumberSettings.validate()},setDefaultValues(t){this.currentValue=this.getDefaultValues(t),this.$emit("on-change",this.currentValue,this.uid)},getDefaultValues(t){return{date:this.getDateDefaultValue(t),externalId:this.getExternalIdDefaultValue(t),hcmLinkDocumentTypeSettingId:this.getHcmLinkDocumentTypeSettingIdDefaultValue(t),documentType:this.getDocumentTypeDefaultValue(t)}},getHcmLinkDocumentTypeSettingIdDefaultValue(t){var e;return null!=(e=t.hcmLinkDocumentTypeSettingId)?e:null},getDocumentTypeDefaultValue(t){var e,i;return null!=(e=t.documentType)?e:null==(i=this.documentTypeList[0])?void 0:i.code},getExternalIdDefaultValue(t){var e,i,n;return{sourceType:t.externalId.sourceType,value:null!=(e=t.externalId.value)?e:this.loc("SIGN_V2_B2E_REGIONAL_SETTINGS_DOCUMENT_EXTERNAL_ID_WITHOUT_NUMBER"),hcmLinkSettingId:null!=(i=t.externalId.hcmLinkSettingId)?i:null==(n=this.externalIdTypeList[0])?void 0:n.id}},getDateDefaultValue(t){var e,i,n;return{sourceType:t.date.sourceType,value:null!=(e=t.date.value)?e:new Date,hcmLinkSettingId:null!=(i=t.date.hcmLinkSettingId)?i:null==(n=this.dateTypeList[0])?void 0:n.id}}},template:'\n\t\t<div :class="{\'sign-b2e-regional-settings__step_settings_wrapper\': uid}" v-if="currentValue" >\n\t\t\t<div>\n\t\t\t\t<DocumentPreview\n\t\t\t\t\tv-if="isPreviewVisible"\n\t\t\t\t\t:title="title ?? \'\'"\n\t\t\t\t\t:preview-src="previewSrc ?? \'\'"\n\t\t\t\t\t:document-id="documentId"\n\t\t\t\t\t:is-icon-visible="true"\n\t\t\t\t\tclass="sign-b2e_document_preview_container"\n\t\t\t\t\tpreview-image-class="sign-b2e_document_preview_image">\n\t\t\t\t</DocumentPreview>\n\t\t\t</div>\n\t\t\t<div class="sign-b2e-regional-settings-gap">\n\t\t\t\t<span v-if="title" class="sign-b2e-regional-settings-company_selector_title">\n\t\t\t\t\t{{ title }}\n\t\t\t\t</span>\n\t\t\t\t<HcmLinkDocumentTypeSelector v-if="isHcmLinkDocumentTypeVisible && hcmLinkDocumentTypeList.length > 0 && isIntegrationEnabled"\n\t\t\t\t\t:typeList="hcmLinkDocumentTypeList"\n\t\t\t\t\t:selectedId="currentValue.hcmLinkDocumentTypeSettingId"\n\t\t\t\t\t:is-integration-enabled="isIntegrationEnabled"\n\t\t\t\t\t@onSelected="modifyHcmLinkDocumentType"\n\t\t\t\t/>\n\t\t\t\t<DocumentTypeSelector v-if="isDocumentTypeVisible && documentTypeList.length > 0"\n\t\t\t\t\t:typeList="documentTypeList"\n\t\t\t\t\t:selectedId="currentValue.documentType"\n\t\t\t\t\t@onSelected="modifyDocumentType"\n\t\t\t\t/>\n\t\t\t\t<RegistrationNumberSettings\n\t\t\t\t\tv-if="isRegistrationNumberVisible"\n\t\t\t\t\tref="registrationNumberSettings"\n\t\t\t\t\t:hcmLinkTypeList="externalIdTypeList"\n\t\t\t\t\t:templateMode="templateMode"\n\t\t\t\t\t:settings="currentValue.externalId"\n\t\t\t\t\t:is-integration-enabled="isIntegrationEnabled"\n\t\t\t\t\t:is-integration-disabled-by-provider="isIntegrationDisabledByProvider"\n\t\t\t\t\t@onChange="modifyRegistrationNumberSettings"\n\t\t\t\t/>\n\t\t\t\t<DateSettings\n\t\t\t\t\tv-if="isDateVisible"\n\t\t\t\t\t:hcmLinkTypeList="dateTypeList"\n\t\t    \t\t:templateMode="templateMode"\n\t\t\t\t\t:settings="currentValue.date"\n\t\t\t\t\t:is-integration-enabled="isIntegrationEnabled"\n\t\t\t\t\t:is-integration-disabled-by-provider="isIntegrationDisabledByProvider"\n\t\t\t\t\t@onChange="modifyDateSettings"\n\t\t\t\t/>\n\t\t\t</div>\n\t\t</div>\n\t'},V={name:"DocumentPreviewList",components:{DocumentPreview:f},mixins:[u.LocMixin],props:{documentList:{type:Array,required:!0},maxPreviewCount:{type:Number,default:7}},data:()=>({isShowMoreButtonVisible:!0,previewCount:0}),computed:{showMoreCount(){return this.documentCount-this.maxPreviewCount},isShowMoreVisible(){return this.showMoreCount>0},documentCount(){return this.documentList.length},documentPreviewList(){const t=[];for(const e of this.documentList)if(t.push(e),t.length>=this.previewCount)break;return t}},created(){this.previewCount=this.maxPreviewCount},methods:{onShowMoreClick(){this.previewCount=this.documentCount,this.isShowMoreButtonVisible=!1},onShowLessClick(){this.previewCount=this.maxPreviewCount,this.isShowMoreButtonVisible=!0}},template:'\n\t\t<div class="sign-b2e-settings__item sign-b2e-regional-settings_apply_for_all_list">\n\t\t\t<template v-for="document in documentPreviewList">\n\t\t\t\t<div class="sign-b2e-regional-settings_apply_for_all_settings_preview_block">\n\t\t\t\t\t<DocumentPreview\n\t\t\t\t\t\t:document-id="document?.documentId"\n\t\t\t\t\t\t:preview-src="document?.previewUrl"\n\t\t\t\t\t\t:is-icon-visible="true"\n\t\t\t\t\t\tpreview-image-class="sign-b2e-regional-settings_apply_for_all_settings_preview">\n\t\t\t\t\t</DocumentPreview>\n\t\t\t\t\t<div class="sign-b2e-regional-settings_apply_for_all_settings_preview_title">\n\t\t\t\t\t\t{{ document.title }}\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<div v-if="isShowMoreVisible" class="sign-b2e-regional-settings_apply_for_all_settings_preview_show_more_less">\n\t\t\t\t<span v-if="isShowMoreButtonVisible" @click="onShowMoreClick" class="sign-b2e-regional-settings_apply_for_all_settings_more_less_button">\n\t\t\t\t\t{{ loc(\'SIGN_V2_B2E_DOCUMENT_PREVIEW_LIST_MORE_TITLE\', { \'#COUNT#\': String(showMoreCount) }) }}\n\t\t\t\t</span>\n\t\t\t\t<span v-else @click="onShowLessClick" class="sign-b2e-regional-settings_apply_for_all_settings_more_less_button">\n\t\t\t\t\t{{ loc(\'SIGN_V2_B2E_DOCUMENT_PREVIEW_LIST_LESS_TITLE\') }}\n\t\t\t\t</span>\n\t\t\t</div>\n\t\t</div>\n\t'},B={name:"RegionalSettingsApp",components:{DocumentTypeSelector:S,HcmLinkDocumentTypeSelector:_,RegistrationNumberSettings:L,DateSettings:k,DocumentRegionalSettings:N,CompanySelector:C,DocumentPreview:f,DocumentPreviewList:V,Notice:u.Notice,Switcher:w},mixins:[u.LocMixin],props:{templateMode:{type:Boolean,required:!1,default:!1}},data:()=>({selectedCompanyId:0,isApplySettingsForAll:!1,previewCount:7,api:null,previewUrlList:{}}),computed:{...p.mapState(g,["companyId"]),...p.mapState(g,["currentDocumentSettings"]),...p.mapState(g,["hcmLinkCompanyId"]),...p.mapState(g,["hcmLinkAvailableSettings"]),...p.mapState(g,["documentTypeList"]),...p.mapState(g,["documentSettingsMap"]),...p.mapState(g,["documentsGroup"]),...p.mapState(g,["isIntegrationEnabled"]),...p.mapState(g,["isIntegrationVisible"]),showMoreCount(){return this.documentCount-7},isShowMoreVisible(){return this.showMoreCount>0},documentCount(){return this.documentsGroup.size},isHcmLinkCompanyIdSet(){return Number(this.hcmLinkCompanyId)>0},documentPreviewList(){const t=[];for(const[e]of this.documentsGroup)t.push({uid:e,documentId:this.getDocumentId(e),previewUrl:this.getDocumentPreviewUrl(e),title:this.getDocumentTitle(e)});return t},documentList(){const t=[];for(const[e,i]of this.documentsGroup)t.push({uid:e,id:i.id,previewUrl:this.getDocumentPreviewUrl(e),title:i.title});return t},isIntegrationDisabledByProvider(){return this.isHcmLinkCompanyIdSet&&!this.isIntegrationEnabled}},watch:{companyId(t,e){t!==e&&(this.selectedCompanyId=t)},isIntegrationEnabled(t){t||g().modifyAvailableHcmLinkSettings({documentTypeList:[],externalIdTypeList:[],dateTypeList:[]})},documentCount(t){t<2&&(this.isApplySettingsForAll=!1)}},created(){this.api=new n.Api,this.selectedCompanyId=this.companyId,this.previewUrlList=new Map},methods:{getDocumentSettings(t=null){return t&&this.documentSettingsMap.has(t)?this.documentSettingsMap.get(t):h},getDocumentDetails(t=null){return t&&this.documentsGroup.has(t)?this.documentsGroup.get(t):null},getDocumentId(t){const e=this.getDocumentDetails(t);return null===e?0:e.id},async loadDocumentPreviewUrl(t){if(this.previewUrlList.has(t))return;this.previewUrlList.set(t,"");const e=await this.api.getDocumentPreviewUrl(t);this.previewUrlList.set(t,null==e?void 0:e.url)},getDocumentPreviewUrl(t){const e=this.getDocumentDetails(t);return null===e?null:e.previewUrl?e.previewUrl:(this.loadDocumentPreviewUrl(t),this.previewUrlList.has(t)?this.previewUrlList.get(t):null)},getDocumentTitle(t){const e=this.getDocumentDetails(t);return null===e?"":e.title},onCompanySelectorChange(t,e,i,n){g().modifyHcmLinkCompanyId(t),g().modifyAvailableHcmLinkSettings({documentTypeList:e,externalIdTypeList:i,dateTypeList:n})},setAllDocumentSettings(t){for(const e of this.documentSettingsMap.keys())g().setDocumentSettings(e,t)},setSettings(t,e){this.isApplySettingsForAll?this.setAllDocumentSettings(t):g().setDocumentSettings(e,t)},validate(){let t=!0;if(this.isApplySettingsForAll)return this.$refs.applySettingsForAll.validate();for(const i of this.documentSettingsMap.keys()){var e;null!=(e=this.$refs["document_settings_"+i][0])&&e.validate()||(!0===t&&this.documentCount>1&&document.getElementById("document_settings_"+i).scrollIntoView({behavior:"smooth"}),t=!1)}return t}},template:'\n\t\t<h1 class="sign-b2e-settings__header">\n\t\t\t{{ loc(\'SIGN_SETTINGS_B2E_REGIONAL_SETTINGS\') }}\n\t\t</h1>\n\t\t<div v-if="isIntegrationVisible" class="sign-b2e-settings__item">\n\t\t\t<div class="sign-b2e-settings__counter">\n\t\t\t\t<span class="sign-b2e-settings__counter_num" data-num="1"></span>\n\t\t\t</div>\n\t\t\t<CompanySelector \n\t\t\t\t:is-enabled="true" \n\t\t\t\t:is-checked="isHcmLinkCompanyIdSet" \n\t\t\t\t@onChange="onCompanySelectorChange" \n\t\t\t\t:company-id="Number(selectedCompanyId)"\n\t\t\t/>\n\t\t</div>\n\t\t<div v-if="documentCount > 1 && isIntegrationVisible" class="sign-b2e-settings__item">\n\t\t\t<div class="sign-b2e-settings__counter">\n\t\t\t\t<span class="sign-b2e-settings__counter_num" :data-num="2"></span>\n\t\t\t\t<span v-if="isApplySettingsForAll" class="sign-b2e-settings__counter_connect"></span>\n\t\t\t</div>\n\t\t\t<Switcher \n\t\t\t\tv-model="isApplySettingsForAll"\n\t\t\t\t:title="loc(\'SIGN_V2_B2E_REGIONAL_SETTINGS_APPLY_FOR_ALL_TITLE\')"\n\t\t\t\t:hint="loc(\'SIGN_V2_B2E_REGIONAL_SETTINGS_APPLY_FOR_ALL_HINT\')"\n\t\t\t/>\n\t\t\t<div v-if="isApplySettingsForAll">\n\t\t\t\t<div class="sign-b2e-regional-settings__item-text sign-b2e-regional-settings_apply_for_all_title">\n\t\t\t\t\t{{ loc(\'SIGN_V2_B2E_REGIONAL_SETTINGS_APPLY_FOR_ALL_DOCUMENTS_TITLE\') }}\n\t\t\t\t</div>\n\t\t\t\t<DocumentPreviewList \n\t\t\t\t\t:document-list="documentPreviewList"\n\t\t\t\t\t:max-preview-count="maxPreviewCount"\n\t\t\t\t/>\n\t\t\t</div>\n\t\t\t<DocumentRegionalSettings\n\t\t\t\tv-if="isApplySettingsForAll"\n\t\t\t\tref="applySettingsForAll"\n\t\t\t\t:is-preview-visible="false"\n\t\t\t\t:template-mode="templateMode"\n\t\t\t\t:document-type-list="documentTypeList"\n\t\t\t\t:external-id-type-list="hcmLinkAvailableSettings.externalIdTypeList"\n\t\t\t\t:date-type-list="hcmLinkAvailableSettings.dateTypeList"\n\t\t\t\t:hcm-link-document-type-list="hcmLinkAvailableSettings.documentTypeList"\n\t\t\t\t:settings="getDocumentSettings()"\n\t\t\t\t@onChange="setSettings"\n\t\t\t\tclass="sign-b2e-regional-settings_apply_for_all_settings"\n\t\t\t\t:is-integration-enabled="isIntegrationEnabled && isHcmLinkCompanyIdSet"\n\t\t\t\t:is-integration-disabled-by-provider="isIntegrationDisabledByProvider"\n\t\t\t/>\n\t\t</div>\n\t\t<template v-if="!isApplySettingsForAll" v-for="(document, index) in documentList" :key="document.uid">\n\t\t\t<div class="sign-b2e-settings__item">\n\t\t\t\t<div class="sign-b2e-settings__counter"  :class="{\'sign-b2e-regional-settings__counter_connect_with_margin\': index > 0 && index < (documentCount - 1), \'sign-b2e-regional-settings__counter_connect_with_left\': index === (documentCount - 1)}">\n\t\t\t\t\t<span v-if="index === 0" class="sign-b2e-settings__counter_num" :data-num="isIntegrationVisible ? (index + (documentCount > 1 ? 3 : 2)) : 1"></span>\n\t\t\t\t\t<span v-if="index === (documentCount - 1)" \n\t\t\t\t\t\t  class="sign-b2e-settings__counter_connect" \n\t\t\t\t\t\t  :class="{\'sign-b2e-regional-settings__counter_connect\': index > 0}">\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t\t<DocumentRegionalSettings\n\t\t\t\t\t:ref="\'document_settings_\' + document.uid"\n\t\t\t\t\t:id="\'document_settings_\' + document.uid"\n\t\t\t\t\t:document-id="document.id"\n\t\t\t\t\t:preview-src="document.previewUrl"\n\t\t\t\t\t:template-mode="templateMode"\n\t\t\t\t\t:document-type-list="documentTypeList"\n\t\t\t\t\t:external-id-type-list="hcmLinkAvailableSettings.externalIdTypeList"\n\t\t\t\t\t:date-type-list="hcmLinkAvailableSettings.dateTypeList"\n\t\t\t\t\t:hcm-link-document-type-list="hcmLinkAvailableSettings.documentTypeList"\n\t\t\t\t\t:uid="document.uid"\n\t\t\t\t\t:title="document.title"\n\t\t\t\t\t:settings="getDocumentSettings(document.uid)"\n\t\t\t\t\t@onChange="setSettings"\n\t\t\t\t\t:is-integration-enabled="isIntegrationEnabled && isHcmLinkCompanyIdSet"\n\t\t\t\t\t:is-hcm-link-document-type-visible="isIntegrationVisible"\n\t\t\t\t\t:is-registration-number-visible="isIntegrationVisible"\n\t\t\t\t\t:is-date-visible="isIntegrationVisible"\n\t\t\t\t\t:is-integration-disabled-by-provider="isIntegrationDisabledByProvider"\n\t\t\t\t/>\n\t\t\t</div>\n\t\t</template>\n\t'};let H,M=t=>t;var P=babelHelpers.classPrivateFieldLooseKey("app"),A=babelHelpers.classPrivateFieldLooseKey("vueApp"),x=babelHelpers.classPrivateFieldLooseKey("options"),G=babelHelpers.classPrivateFieldLooseKey("companyId"),O=babelHelpers.classPrivateFieldLooseKey("container"),R=babelHelpers.classPrivateFieldLooseKey("createApp");function U(t){const i=p.createPinia();babelHelpers.classPrivateFieldLooseBase(this,P)[P]=e.BitrixVue.createApp(B,{templateMode:babelHelpers.classPrivateFieldLooseBase(this,x)[x].templateMode}),babelHelpers.classPrivateFieldLooseBase(this,P)[P].use(i),g().init({documentTypeList:babelHelpers.classPrivateFieldLooseBase(this,x)[x].regionDocumentTypes}),babelHelpers.classPrivateFieldLooseBase(this,A)[A]=babelHelpers.classPrivateFieldLooseBase(this,P)[P].mount(t);const n=()=>{var t;m.EventEmitter.unsubscribe("SidePanel.Slider:onCloseByEsc",n),m.EventEmitter.unsubscribe("SidePanel.Slider:onClose",n),null==(t=babelHelpers.classPrivateFieldLooseBase(this,P)[P])||t.unmount()};m.EventEmitter.subscribe("SidePanel.Slider:onCloseByEsc",n),m.EventEmitter.subscribe("SidePanel.Slider:onClose",n)}t.RegionalSettings=class{constructor(t){Object.defineProperty(this,R,{value:U}),Object.defineProperty(this,P,{writable:!0,value:void 0}),Object.defineProperty(this,A,{writable:!0,value:void 0}),Object.defineProperty(this,x,{writable:!0,value:void 0}),Object.defineProperty(this,G,{writable:!0,value:void 0}),Object.defineProperty(this,O,{writable:!0,value:void 0}),babelHelpers.classPrivateFieldLooseBase(this,x)[x]=t,babelHelpers.classPrivateFieldLooseBase(this,O)[O]=this.getLayout()}getLayout(){return babelHelpers.classPrivateFieldLooseBase(this,O)[O]||(babelHelpers.classPrivateFieldLooseBase(this,O)[O]=l.Tag.render(H||(H=M`<div></div>`)),babelHelpers.classPrivateFieldLooseBase(this,R)[R](babelHelpers.classPrivateFieldLooseBase(this,O)[O]),BX.UI.Hint&&BX.UI.Hint.init(babelHelpers.classPrivateFieldLooseBase(this,O)[O])),babelHelpers.classPrivateFieldLooseBase(this,O)[O]}async save(){if(!babelHelpers.classPrivateFieldLooseBase(this,A)[A].validate())throw new Error("Validation error");await g().save()}set companyId(t){babelHelpers.classPrivateFieldLooseBase(this,G)[G]=t;g().companyId=babelHelpers.classPrivateFieldLooseBase(this,G)[G]}set isIntegrationEnabled(t){g().isIntegrationEnabled=t}set isIntegrationVisible(t){g().isIntegrationVisible=t}set documentsGroup(t){g().updateDocumentsGroup(t)}getSelectedHcmLinkCompanyId(){return g().hcmLinkCompanyId}setLastSavedHcmLinkCompanyId(t){}}}(this.BX.Sign.V2.B2e=this.BX.Sign.V2.B2e||{},BX.Vue3,BX.Main,BX.Sign.V2,BX.Main,BX,BX.UI.Vue3.Components,BX.UI,BX.Sign.V2.B2e,BX.Vue3.Components,BX.Crm,BX.Sign.V2.B2e,BX.Event,BX.Vue3.Pinia);
+					`,
+						...commonHintSettings
+					});
+				}
+				this.hintDisabled?.show();
+			},
+			created() {
+				this.hintDisabled = null;
+			}
+		},
+		template: `
+		<div class="sign-b2e-regional-settings__item --row">
+			<p class="sign-b2e-regional-settings__item-text">
+				<Switcher style="height: 13px"
+					:isChecked="isChecked"
+					:options="{ size: switcherSize }"
+					@check="toggleHcmLink(true)"
+					@uncheck="toggleHcmLink(false)"
+					 @click="showHideTooltipIfDisabled"
+				/>
+				<span style="margin-left: 8px">
+					{{ loc('SIGN_V2_B2E_REGIONAL_SETTINGS_DOCUMENT_DATE_HCMLINK_SWITCHER_TEXT') }}
+				</span>
+			</p>
+			<div class="sign-b2e-regional-settings_date_container">
+				<SignSelector v-if="isChecked"
+					:items="dropdownItems"
+					:selectedId="settings.hcmLinkSettingId"
+					@onSelect="selectHcmLinkSetting"
+					v-slot="{ title }"
+				>
+					<RoundedSmallSelectedItemView
+						:title="title"
+					/>
+				</SignSelector>
+				<div v-else-if="!templateMode">
+					<DateSelector
+						:value="settings.value"
+						@onSelect="selectDate"
+					/>
+				</div>
+			</div>
+			<Hint v-if="isChecked" class="sign-b2e-regional-settings__hint sign-b2e-regional-settings_date_hint" :text="loc('SIGN_V2_B2E_REGIONAL_SETTINGS_DOCUMENT_DATE_HCMLINK_SWITCHER_HINT')"/>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const Switcher = {
+		// eslint-disable-next-line vue/multi-word-component-names
+		name: 'Switcher',
+		components: {
+			UiSwitcher: ui_vue3_components_switcher.Switcher,
+			Hint: ui_vue3_components_hint.Hint
+		},
+		props: {
+			modelValue: {
+				type: Boolean,
+				default: false
+			},
+			title: {
+				type: String,
+				required: false,
+				default: ''
+			},
+			hint: {
+				type: String,
+				required: false,
+				default: ''
+			},
+			isEnabled: {
+				type: Boolean,
+				default: true
+			}
+		},
+		emits: ['update:modelValue'],
+		data() {
+			return {
+				isChecked: false,
+				switcherSize: ui_switcher.SwitcherSize.extraSmall
+			};
+		},
+		watch: {
+			modelValue(newValue) {
+				this.isChecked = newValue;
+			}
+		},
+		mounted() {
+			this.isChecked = this.isEnabled && this.modelValue;
+		},
+		methods: {
+			setValue(value) {
+				if (this.isEnabled === false) {
+					return;
+				}
+				this.isChecked = value;
+				this.$emit('update:modelValue', value);
+			}
+		},
+		template: `
+		<div>
+			<UiSwitcher class="sign-b2e_switcher"
+						:isChecked="isChecked"
+						:options="{ size: switcherSize }"
+						@check="setValue(true)" 
+						@uncheck="setValue(false)"
+			/>
+			<span @click="setValue(!isChecked)" class="sign-b2e-settings__item_title sign-b2e_switcher__title">{{ title }}</span>
+			<Hint v-if="hint" class="sign-b2e_switcher__hint" :text="hint"/>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const CompanySelector = {
+		name: 'CompanySelector',
+		components: {
+			Switcher,
+			Notice: sign_v2_b2e_vueUtil.Notice,
+			Hint: ui_vue3_components_hint.Hint
+		},
+		mixins: [sign_v2_b2e_vueUtil.LocMixin],
+		props: {
+			companyId: {
+				type: Number,
+				required: true
+			},
+			isChecked: {
+				type: Boolean,
+				default: false
+			},
+			isEnabled: {
+				type: Boolean,
+				default: false
+			}
+		},
+		data() {
+			return {
+				isHcmLinkCompanySelectorVisible: false,
+				isCompanySelectorActive: false
+			};
+		},
+		watch: {
+			companyId(newValue, oldValue) {
+				if (!this.isHcmLinkCompanySelectorVisible) {
+					return;
+				}
+				if (newValue === oldValue) {
+					return;
+				}
+				this.hcmLinkCompanySelector.setCompanyId(newValue);
+			},
+			isChecked(newValue) {
+				this.isHcmLinkCompanySelectorVisible = newValue;
+			},
+			isHcmLinkCompanySelectorVisible(newValue, oldValue) {
+				if (newValue === oldValue) {
+					return;
+				}
+				this.onHcmLinkCompanySelectorVisibleChange(newValue);
+			},
+			isEnabled(newValue) {
+				if (newValue) {
+					return;
+				}
+				this.isHcmLinkCompanySelectorVisible = newValue;
+			}
+		},
+		created() {
+			this.initCompanySelector();
+		},
+		mounted() {
+			if (this.$refs.hcmLinkCompanySelector) {
+				main_core.Dom.append(this.hcmLinkCompanySelector.render(), this.$refs.hcmLinkCompanySelector);
+			}
+			this.isHcmLinkCompanySelectorVisible = this.isEnabled && this.isChecked;
+		},
+		methods: {
+			onHcmLinkCompanySelectorVisibleChange(isVisible) {
+				if (this.isEnabled === false) {
+					return;
+				}
+				if (isVisible && this.companyId > 0) {
+					this.hcmLinkCompanySelector.setCompanyId(this.companyId);
+				} else {
+					this.$emit('on-change', null, [], [], []);
+				}
+			},
+			initCompanySelector() {
+				this.hcmLinkCompanySelector = new sign_v2_b2e_hcmLinkCompanySelector.HcmLinkCompanySelector();
+				this.hcmLinkCompanySelector.setAvailability(true);
+				this.hcmLinkCompanySelector.subscribe('selected', event => {
+					const {
+						id,
+						availableSettings
+					} = event.data;
+					this.$emit('on-change', id ?? 0, availableSettings?.documentType ?? [], availableSettings?.externalId ?? [], availableSettings?.date ?? []);
+				});
+			}
+		},
+		template: `
+		<div>
+			<p class="sign-b2e-settings__item_title">
+				<Switcher
+					v-model="isHcmLinkCompanySelectorVisible"
+					:title="loc('SIGN_V2_B2E_REGIONAL_SETTINGS_HCMLINK_INTEGRATION')"
+					:is-enabled="isEnabled"
+				/>
+			</p>
+			<div v-show="isHcmLinkCompanySelectorVisible" ref="hcmLinkCompanySelector"></div>
+			<Notice class="sign-b2e-regional-settings-company_selector_notice">
+				<template v-if="isHcmLinkCompanySelectorVisible">
+					{{ loc('SIGN_V2_B2E_REGIONAL_SETTINGS_HCMLINK_INTEGRATION_ENABLED_NOTICE') }}
+				</template>
+				<template v-else>
+					{{ loc('SIGN_V2_B2E_REGIONAL_SETTINGS_HCMLINK_INTEGRATION_DISABLED_NOTICE') }}
+				</template>
+			</Notice>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const DocumentPreview = {
+		name: 'DocumentPreview',
+		props: {
+			previewSrc: {
+				type: String,
+				required: true
+			},
+			title: {
+				type: String,
+				required: false,
+				default: ''
+			},
+			documentId: {
+				type: Number,
+				required: true
+			},
+			previewImageClass: {
+				type: String,
+				required: false,
+				default: ''
+			},
+			isIconVisible: {
+				type: Boolean,
+				required: false,
+				default: false
+			}
+		},
+		methods: {
+			previewDocument() {
+				if (this.documentId < 1) {
+					return Promise.resolve();
+				}
+				return crm_router.Router.openSlider(`/sign/b2e/preview/0/?documentId=${this.documentId}&noRedirect=Y`, {
+					width: 800,
+					cacheable: false
+				});
+			}
+		},
+		template: `
+		<div class="sign-b2e_document_preview_container">
+			<div v-if="isIconVisible" @click="previewDocument()" class="sign-b2e_document_preview_icon"></div>
+			<img v-if="previewSrc" @click="previewDocument()" :class="previewImageClass" :src="previewSrc" :alt="title">
+		</div>	
+	`
+	};
+
+	// @vue/component
+	const DocumentRegionalSettings = {
+		name: 'DocumentRegionalSettings',
+		components: {
+			DocumentTypeSelector,
+			HcmLinkDocumentTypeSelector,
+			RegistrationNumberSettings,
+			DateSettings,
+			DocumentPreview
+		},
+		mixins: [sign_v2_b2e_vueUtil.LocMixin],
+		props: {
+			templateMode: {
+				type: Boolean,
+				required: false,
+				default: false
+			},
+			documentTypeList: {
+				type: Array,
+				required: true
+			},
+			externalIdTypeList: {
+				type: Array,
+				required: true
+			},
+			dateTypeList: {
+				type: Array,
+				required: true
+			},
+			hcmLinkDocumentTypeList: {
+				type: Array,
+				required: true
+			},
+			previewSrc: {
+				type: [String, null],
+				required: false,
+				default: null
+			},
+			documentId: {
+				type: Number,
+				required: false,
+				default: 0
+			},
+			uid: {
+				type: [String, null],
+				required: false,
+				default: null
+			},
+			title: {
+				type: [String, null],
+				required: false,
+				default: null
+			},
+			isPreviewVisible: {
+				type: Boolean,
+				required: false,
+				default: true
+			},
+			settings: {
+				/** @type DocumentSettings */
+				type: Object,
+				required: true
+			},
+			isIntegrationEnabled: {
+				type: Boolean,
+				required: false,
+				default: false
+			},
+			isHcmLinkDocumentTypeVisible: {
+				type: Boolean,
+				required: false,
+				default: true
+			},
+			isDocumentTypeVisible: {
+				type: Boolean,
+				required: false,
+				default: true
+			},
+			isRegistrationNumberVisible: {
+				type: Boolean,
+				required: false,
+				default: true
+			},
+			isDateVisible: {
+				type: Boolean,
+				required: false,
+				default: true
+			},
+			isIntegrationDisabledByProvider: {
+				type: Boolean,
+				required: false,
+				default: false
+			}
+		},
+		data() {
+			return {
+				currentValue: {}
+			};
+		},
+		watch: {
+			isIntegrationEnabled(newVal) {
+				if (newVal === false) {
+					this.currentValue.hcmLinkDocumentTypeSettingId = 0;
+					return;
+				}
+				this.setDefaultValues(this.settings);
+			}
+		},
+		created() {
+			this.setDefaultValues(this.settings);
+		},
+		methods: {
+			modifyDocumentType(code) {
+				this.currentValue.documentType = code;
+				this.$emit('on-change-document-type', this.currentValue, this.uid);
+				this.$emit('on-change', this.currentValue, this.uid);
+			},
+			modifyDateSettings(settings) {
+				this.currentValue.date = settings;
+				this.$emit('on-change-date-created', this.currentValue, this.uid);
+				this.$emit('on-change', this.currentValue, this.uid);
+			},
+			modifyRegistrationNumberSettings(settings) {
+				this.currentValue.externalId = settings;
+				this.$emit('on-change-registration-number', this.currentValue, this.uid);
+				this.$emit('on-change', this.currentValue, this.uid);
+			},
+			modifyHcmLinkDocumentType(id) {
+				this.currentValue.hcmLinkDocumentTypeSettingId = id;
+				this.$emit('on-change-hcm-link-document-type', this.currentValue, this.uid);
+				this.$emit('on-change', this.currentValue, this.uid);
+			},
+			validate() {
+				if (!this.isRegistrationNumberVisible) {
+					return true;
+				}
+				return this.$refs.registrationNumberSettings.validate();
+			},
+			setDefaultValues(settings) {
+				this.currentValue = this.getDefaultValues(settings);
+				this.$emit('on-change', this.currentValue, this.uid);
+			},
+			getDefaultValues(settings) {
+				return {
+					date: this.getDateDefaultValue(settings),
+					externalId: this.getExternalIdDefaultValue(settings),
+					hcmLinkDocumentTypeSettingId: this.getHcmLinkDocumentTypeSettingIdDefaultValue(settings),
+					documentType: this.getDocumentTypeDefaultValue(settings)
+				};
+			},
+			getHcmLinkDocumentTypeSettingIdDefaultValue(settings) {
+				return settings.hcmLinkDocumentTypeSettingId ?? null;
+			},
+			getDocumentTypeDefaultValue(settings) {
+				return settings.documentType ?? this.documentTypeList[0]?.code;
+			},
+			getExternalIdDefaultValue(settings) {
+				return {
+					sourceType: settings.externalId.sourceType,
+					value: settings.externalId.value ?? this.loc('SIGN_V2_B2E_REGIONAL_SETTINGS_DOCUMENT_EXTERNAL_ID_WITHOUT_NUMBER'),
+					hcmLinkSettingId: settings.externalId.hcmLinkSettingId ?? this.externalIdTypeList[0]?.id
+				};
+			},
+			getDateDefaultValue(settings) {
+				return {
+					sourceType: settings.date.sourceType,
+					value: settings.date.value ?? new Date(),
+					hcmLinkSettingId: settings.date.hcmLinkSettingId ?? this.dateTypeList[0]?.id
+				};
+			}
+		},
+		template: `
+		<div :class="{'sign-b2e-regional-settings__step_settings_wrapper': uid}" v-if="currentValue" >
+			<div>
+				<DocumentPreview
+					v-if="isPreviewVisible"
+					:title="title ?? ''"
+					:preview-src="previewSrc ?? ''"
+					:document-id="documentId"
+					:is-icon-visible="true"
+					class="sign-b2e_document_preview_container"
+					preview-image-class="sign-b2e_document_preview_image">
+				</DocumentPreview>
+			</div>
+			<div class="sign-b2e-regional-settings-gap">
+				<span v-if="title" class="sign-b2e-regional-settings-company_selector_title">
+					{{ title }}
+				</span>
+				<HcmLinkDocumentTypeSelector v-if="isHcmLinkDocumentTypeVisible && hcmLinkDocumentTypeList.length > 0 && isIntegrationEnabled"
+					:typeList="hcmLinkDocumentTypeList"
+					:selectedId="currentValue.hcmLinkDocumentTypeSettingId"
+					:is-integration-enabled="isIntegrationEnabled"
+					@onSelected="modifyHcmLinkDocumentType"
+				/>
+				<DocumentTypeSelector v-if="isDocumentTypeVisible && documentTypeList.length > 0"
+					:typeList="documentTypeList"
+					:selectedId="currentValue.documentType"
+					@onSelected="modifyDocumentType"
+				/>
+				<RegistrationNumberSettings
+					v-if="isRegistrationNumberVisible"
+					ref="registrationNumberSettings"
+					:hcmLinkTypeList="externalIdTypeList"
+					:templateMode="templateMode"
+					:settings="currentValue.externalId"
+					:is-integration-enabled="isIntegrationEnabled"
+					:is-integration-disabled-by-provider="isIntegrationDisabledByProvider"
+					@onChange="modifyRegistrationNumberSettings"
+				/>
+				<DateSettings
+					v-if="isDateVisible"
+					:hcmLinkTypeList="dateTypeList"
+						:templateMode="templateMode"
+					:settings="currentValue.date"
+					:is-integration-enabled="isIntegrationEnabled"
+					:is-integration-disabled-by-provider="isIntegrationDisabledByProvider"
+					@onChange="modifyDateSettings"
+				/>
+			</div>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const DocumentPreviewList = {
+		name: 'DocumentPreviewList',
+		components: {
+			DocumentPreview
+		},
+		mixins: [sign_v2_b2e_vueUtil.LocMixin],
+		props: {
+			documentList: {
+				type: Array,
+				required: true
+			},
+			maxPreviewCount: {
+				type: Number,
+				default: 7
+			}
+		},
+		data() {
+			return {
+				isShowMoreButtonVisible: true,
+				previewCount: 0
+			};
+		},
+		computed: {
+			showMoreCount() {
+				return this.documentCount - this.maxPreviewCount;
+			},
+			isShowMoreVisible() {
+				return this.showMoreCount > 0;
+			},
+			documentCount() {
+				return this.documentList.length;
+			},
+			documentPreviewList() {
+				const result = [];
+				for (const document of this.documentList) {
+					result.push(document);
+					if (result.length >= this.previewCount) {
+						break;
+					}
+				}
+				return result;
+			}
+		},
+		created() {
+			this.previewCount = this.maxPreviewCount;
+		},
+		methods: {
+			onShowMoreClick() {
+				this.previewCount = this.documentCount;
+				this.isShowMoreButtonVisible = false;
+			},
+			onShowLessClick() {
+				this.previewCount = this.maxPreviewCount;
+				this.isShowMoreButtonVisible = true;
+			}
+		},
+		template: `
+		<div class="sign-b2e-settings__item sign-b2e-regional-settings_apply_for_all_list">
+			<template v-for="document in documentPreviewList">
+				<div class="sign-b2e-regional-settings_apply_for_all_settings_preview_block">
+					<DocumentPreview
+						:document-id="document?.documentId"
+						:preview-src="document?.previewUrl"
+						:is-icon-visible="true"
+						preview-image-class="sign-b2e-regional-settings_apply_for_all_settings_preview">
+					</DocumentPreview>
+					<div class="sign-b2e-regional-settings_apply_for_all_settings_preview_title">
+						{{ document.title }}
+					</div>
+				</div>
+			</template>
+			<div v-if="isShowMoreVisible" class="sign-b2e-regional-settings_apply_for_all_settings_preview_show_more_less">
+				<span v-if="isShowMoreButtonVisible" @click="onShowMoreClick" class="sign-b2e-regional-settings_apply_for_all_settings_more_less_button">
+					{{ loc('SIGN_V2_B2E_DOCUMENT_PREVIEW_LIST_MORE_TITLE', { '#COUNT#': String(showMoreCount) }) }}
+				</span>
+				<span v-else @click="onShowLessClick" class="sign-b2e-regional-settings_apply_for_all_settings_more_less_button">
+					{{ loc('SIGN_V2_B2E_DOCUMENT_PREVIEW_LIST_LESS_TITLE') }}
+				</span>
+			</div>
+		</div>
+	`
+	};
+
+	const maxPreviewCount = 7;
+
+	// @vue/component
+	const RegionalSettingsApp = {
+		name: 'RegionalSettingsApp',
+		components: {
+			DocumentTypeSelector,
+			HcmLinkDocumentTypeSelector,
+			RegistrationNumberSettings,
+			DateSettings,
+			DocumentRegionalSettings,
+			CompanySelector,
+			DocumentPreview,
+			DocumentPreviewList,
+			Notice: sign_v2_b2e_vueUtil.Notice,
+			Switcher
+		},
+		mixins: [sign_v2_b2e_vueUtil.LocMixin],
+		props: {
+			templateMode: {
+				type: Boolean,
+				required: false,
+				default: false
+			}
+		},
+		data() {
+			return {
+				selectedCompanyId: 0,
+				isApplySettingsForAll: false,
+				previewCount: maxPreviewCount
+			};
+		},
+		computed: {
+			...ui_vue3_pinia.mapState(useRegionalSettingsStore, ['companyId']),
+			...ui_vue3_pinia.mapState(useRegionalSettingsStore, ['currentDocumentSettings']),
+			...ui_vue3_pinia.mapState(useRegionalSettingsStore, ['hcmLinkCompanyId']),
+			...ui_vue3_pinia.mapState(useRegionalSettingsStore, ['hcmLinkAvailableSettings']),
+			...ui_vue3_pinia.mapState(useRegionalSettingsStore, ['documentTypeList']),
+			...ui_vue3_pinia.mapState(useRegionalSettingsStore, ['documentSettingsMap']),
+			...ui_vue3_pinia.mapState(useRegionalSettingsStore, ['documentsGroup']),
+			...ui_vue3_pinia.mapState(useRegionalSettingsStore, ['previewUrlList']),
+			...ui_vue3_pinia.mapState(useRegionalSettingsStore, ['isIntegrationEnabled']),
+			...ui_vue3_pinia.mapState(useRegionalSettingsStore, ['isIntegrationVisible']),
+			showMoreCount() {
+				return this.documentCount - maxPreviewCount;
+			},
+			isShowMoreVisible() {
+				return this.showMoreCount > 0;
+			},
+			documentCount() {
+				return this.documentsGroup.size;
+			},
+			isHcmLinkCompanyIdSet() {
+				return Number(this.hcmLinkCompanyId) > 0;
+			},
+			documentPreviewList() {
+				const result = [];
+				for (const [uid] of this.documentsGroup) {
+					result.push({
+						uid,
+						documentId: this.getDocumentId(uid),
+						previewUrl: this.getDocumentPreviewUrl(uid),
+						title: this.getDocumentTitle(uid)
+					});
+				}
+				return result;
+			},
+			documentList() {
+				const result = [];
+				for (const [uid, documentDetails] of this.documentsGroup) {
+					result.push({
+						uid,
+						id: documentDetails.id,
+						previewUrl: this.getDocumentPreviewUrl(uid),
+						title: documentDetails.title
+					});
+				}
+				return result;
+			},
+			isIntegrationDisabledByProvider() {
+				return this.isHcmLinkCompanyIdSet && !this.isIntegrationEnabled;
+			}
+		},
+		watch: {
+			companyId(newVal, oldVal) {
+				if (newVal !== oldVal) {
+					this.selectedCompanyId = newVal;
+				}
+			},
+			isIntegrationEnabled(newVal) {
+				if (newVal) {
+					return;
+				}
+				useRegionalSettingsStore().modifyAvailableHcmLinkSettings({
+					documentTypeList: [],
+					externalIdTypeList: [],
+					dateTypeList: []
+				});
+			},
+			documentCount(newVal) {
+				if (newVal < 2) {
+					this.isApplySettingsForAll = false;
+				}
+			}
+		},
+		created() {
+			this.selectedCompanyId = this.companyId;
+		},
+		methods: {
+			getDocumentSettings(uid = null) {
+				if (!uid || !this.documentSettingsMap.has(uid)) {
+					return DefaultDocumentSettings;
+				}
+				return this.documentSettingsMap.get(uid);
+			},
+			getDocumentDetails(uid = null) {
+				if (!uid || !this.documentsGroup.has(uid)) {
+					return null;
+				}
+				return this.documentsGroup.get(uid);
+			},
+			getDocumentId(uid) {
+				const documentDetails = this.getDocumentDetails(uid);
+				if (documentDetails === null) {
+					return 0;
+				}
+				return documentDetails.id;
+			},
+			getDocumentPreviewUrl(uid) {
+				const documentDetails = this.getDocumentDetails(uid);
+				if (documentDetails === null) {
+					return null;
+				}
+				if (documentDetails.previewUrl) {
+					return documentDetails.previewUrl;
+				}
+				useRegionalSettingsStore().loadDocumentPreviewUrl(uid);
+				if (!this.previewUrlList.has(uid)) {
+					return null;
+				}
+				return this.previewUrlList.get(uid);
+			},
+			getDocumentTitle(uid) {
+				const documentDetails = this.getDocumentDetails(uid);
+				if (documentDetails === null) {
+					return '';
+				}
+				return documentDetails.title;
+			},
+			onCompanySelectorChange(id, documentTypeList, externalIdTypeList, dateTypeList) {
+				useRegionalSettingsStore().modifyHcmLinkCompanyId(id);
+				useRegionalSettingsStore().modifyAvailableHcmLinkSettings({
+					documentTypeList,
+					externalIdTypeList,
+					dateTypeList
+				});
+			},
+			setAllDocumentSettings(settings) {
+				for (const uid of this.documentSettingsMap.keys()) {
+					useRegionalSettingsStore().setDocumentSettings(uid, settings);
+				}
+			},
+			setSettings(settings, uid) {
+				if (this.isApplySettingsForAll) {
+					this.setAllDocumentSettings(settings);
+					return;
+				}
+				useRegionalSettingsStore().setDocumentSettings(uid, settings);
+			},
+			validate() {
+				let result = true;
+				if (this.isApplySettingsForAll) {
+					return this.$refs.applySettingsForAll.validate();
+				}
+				for (const uid of this.documentSettingsMap.keys()) {
+					if (!this.$refs[`document_settings_${uid}`][0]?.validate()) {
+						if (result === true && this.documentCount > 1) {
+							document.getElementById(`document_settings_${uid}`).scrollIntoView({
+								behavior: 'smooth'
+							});
+						}
+						result = false;
+					}
+				}
+				return result;
+			}
+		},
+		template: `
+		<h1 class="sign-b2e-settings__header">
+			{{ loc('SIGN_SETTINGS_B2E_REGIONAL_SETTINGS') }}
+		</h1>
+		<div v-if="isIntegrationVisible" class="sign-b2e-settings__item">
+			<div class="sign-b2e-settings__counter">
+				<span class="sign-b2e-settings__counter_num" data-num="1"></span>
+			</div>
+			<CompanySelector 
+				:is-enabled="true" 
+				:is-checked="isHcmLinkCompanyIdSet" 
+				@onChange="onCompanySelectorChange" 
+				:company-id="Number(selectedCompanyId)"
+			/>
+		</div>
+		<div v-if="documentCount > 1 && isIntegrationVisible" class="sign-b2e-settings__item">
+			<div class="sign-b2e-settings__counter">
+				<span class="sign-b2e-settings__counter_num" :data-num="2"></span>
+				<span v-if="isApplySettingsForAll" class="sign-b2e-settings__counter_connect"></span>
+			</div>
+			<Switcher 
+				v-model="isApplySettingsForAll"
+				:title="loc('SIGN_V2_B2E_REGIONAL_SETTINGS_APPLY_FOR_ALL_TITLE')"
+				:hint="loc('SIGN_V2_B2E_REGIONAL_SETTINGS_APPLY_FOR_ALL_HINT')"
+			/>
+			<div v-if="isApplySettingsForAll">
+				<div class="sign-b2e-regional-settings__item-text sign-b2e-regional-settings_apply_for_all_title">
+					{{ loc('SIGN_V2_B2E_REGIONAL_SETTINGS_APPLY_FOR_ALL_DOCUMENTS_TITLE') }}
+				</div>
+				<DocumentPreviewList 
+					:document-list="documentPreviewList"
+					:max-preview-count="maxPreviewCount"
+				/>
+			</div>
+			<DocumentRegionalSettings
+				v-if="isApplySettingsForAll"
+				ref="applySettingsForAll"
+				:is-preview-visible="false"
+				:template-mode="templateMode"
+				:document-type-list="documentTypeList"
+				:external-id-type-list="hcmLinkAvailableSettings.externalIdTypeList"
+				:date-type-list="hcmLinkAvailableSettings.dateTypeList"
+				:hcm-link-document-type-list="hcmLinkAvailableSettings.documentTypeList"
+				:settings="getDocumentSettings()"
+				@onChange="setSettings"
+				class="sign-b2e-regional-settings_apply_for_all_settings"
+				:is-integration-enabled="isIntegrationEnabled && isHcmLinkCompanyIdSet"
+				:is-integration-disabled-by-provider="isIntegrationDisabledByProvider"
+			/>
+		</div>
+		<template v-if="!isApplySettingsForAll" v-for="(document, index) in documentList" :key="document.uid">
+			<div class="sign-b2e-settings__item">
+				<div class="sign-b2e-settings__counter"  :class="{'sign-b2e-regional-settings__counter_connect_with_margin': index > 0 && index < (documentCount - 1), 'sign-b2e-regional-settings__counter_connect_with_left': index === (documentCount - 1)}">
+					<span v-if="index === 0" class="sign-b2e-settings__counter_num" :data-num="isIntegrationVisible ? (index + (documentCount > 1 ? 3 : 2)) : 1"></span>
+					<span v-if="index === (documentCount - 1)" 
+							class="sign-b2e-settings__counter_connect" 
+							:class="{'sign-b2e-regional-settings__counter_connect': index > 0}">
+					</span>
+				</div>
+				<DocumentRegionalSettings
+					:ref="'document_settings_' + document.uid"
+					:id="'document_settings_' + document.uid"
+					:document-id="document.id"
+					:preview-src="document.previewUrl"
+					:template-mode="templateMode"
+					:document-type-list="documentTypeList"
+					:external-id-type-list="hcmLinkAvailableSettings.externalIdTypeList"
+					:date-type-list="hcmLinkAvailableSettings.dateTypeList"
+					:hcm-link-document-type-list="hcmLinkAvailableSettings.documentTypeList"
+					:uid="document.uid"
+					:title="document.title"
+					:settings="getDocumentSettings(document.uid)"
+					@onChange="setSettings"
+					:is-integration-enabled="isIntegrationEnabled && isHcmLinkCompanyIdSet"
+					:is-hcm-link-document-type-visible="isIntegrationVisible"
+					:is-registration-number-visible="isIntegrationVisible"
+					:is-date-visible="isIntegrationVisible"
+					:is-integration-disabled-by-provider="isIntegrationDisabledByProvider"
+				/>
+			</div>
+		</template>
+	`
+	};
+
+	class RegionalSettings {
+		#app;
+		#vueApp;
+		#options;
+		#companyId;
+		#container;
+		constructor(regionalSettingsOptions) {
+			this.#options = regionalSettingsOptions;
+			this.#container = this.getLayout();
+		}
+		getLayout() {
+			if (this.#container) {
+				return this.#container;
+			}
+			this.#container = main_core.Tag.render`<div></div>`;
+			this.#createApp(this.#container);
+			if (BX.UI.Hint) {
+				BX.UI.Hint.init(this.#container);
+			}
+			return this.#container;
+		}
+		#createApp(container) {
+			const store = ui_vue3_pinia.createPinia();
+			this.#app = ui_vue3.BitrixVue.createApp(RegionalSettingsApp, {
+				templateMode: this.#options.templateMode
+			});
+			this.#app.use(store);
+			useRegionalSettingsStore().init({
+				documentTypeList: this.#options.regionDocumentTypes
+			});
+			this.#vueApp = this.#app.mount(container);
+			const onClose = () => {
+				main_core_events.EventEmitter.unsubscribe('SidePanel.Slider:onCloseByEsc', onClose);
+				main_core_events.EventEmitter.unsubscribe('SidePanel.Slider:onClose', onClose);
+				this.#app?.unmount();
+			};
+			main_core_events.EventEmitter.subscribe('SidePanel.Slider:onCloseByEsc', onClose);
+			main_core_events.EventEmitter.subscribe('SidePanel.Slider:onClose', onClose);
+		}
+		async save() {
+			if (!this.#vueApp.validate()) {
+				throw new Error('Validation error');
+			}
+			await useRegionalSettingsStore().save();
+		}
+		set companyId(id) {
+			this.#companyId = id;
+			const store = useRegionalSettingsStore();
+			store.companyId = this.#companyId;
+		}
+		set isIntegrationEnabled(isEnabled) {
+			const store = useRegionalSettingsStore();
+			store.isIntegrationEnabled = isEnabled;
+		}
+		set isIntegrationVisible(isVisible) {
+			const store = useRegionalSettingsStore();
+			store.isIntegrationVisible = isVisible;
+		}
+		set documentsGroup(documentGroup) {
+			useRegionalSettingsStore().updateDocumentsGroup(documentGroup);
+		}
+		getSelectedHcmLinkCompanyId() {
+			const store = useRegionalSettingsStore();
+			return store.hcmLinkCompanyId;
+		}
+		setLastSavedHcmLinkCompanyId(id) {
+			/* @todo */
+			//this.#hcmLinkCompanySelector.setLastSavedId(id);
+		}
+	}
+
+	exports.RegionalSettings = RegionalSettings;
+
+})(this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}, BX, BX.Vue3, BX.Vue3.Pinia, BX.Sign.V2.B2e, BX.Main, BX.Sign.V2, BX.Vue3.Components, BX.Main, BX.UI.Vue3.Components, BX.UI, BX.Sign.V2.B2e, BX.Crm, BX.Event);
 //# sourceMappingURL=regional-settings.bundle.js.map

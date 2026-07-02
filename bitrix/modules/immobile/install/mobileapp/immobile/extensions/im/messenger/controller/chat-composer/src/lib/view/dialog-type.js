@@ -12,6 +12,8 @@ jn.define('im/messenger/controller/chat-composer/lib/view/dialog-type', (require
 
 	/**
 	 * @class DialogTypeView
+	 * View for selecting dialog privacy type (open/closed).
+	 * Used only in channel editing flow (UpdateChannel.openDialogTypeView).
 	 * @typedef {LayoutComponent<DialogTypeViewProps, DialogTypeViewState>} DialogTypeView
 	 */
 	class DialogTypeView extends LayoutComponent
@@ -116,22 +118,10 @@ jn.define('im/messenger/controller/chat-composer/lib/view/dialog-type', (require
 		{
 			if (isOpen)
 			{
-				return this.isChatType()
-					? Loc.getMessage('IMMOBILE_CHAT_COMPOSER_DIALOG_TYPE_GROUP_CHAT_OPEN_SUBTITLE')
-					: Loc.getMessage('IMMOBILE_CHAT_COMPOSER_DIALOG_TYPE_CHANNEL_OPEN_SUBTITLE');
+				return Loc.getMessage('IMMOBILE_CHAT_COMPOSER_DIALOG_TYPE_CHANNEL_OPEN_SUBTITLE');
 			}
 
-			return this.isChatType()
-				? Loc.getMessage('IMMOBILE_CHAT_COMPOSER_DIALOG_TYPE_GROUP_CHAT_CLOSE_SUBTITLE')
-				: Loc.getMessage('IMMOBILE_CHAT_COMPOSER_DIALOG_TYPE_CHANNEL_CLOSE_SUBTITLE');
-		}
-
-		/**
-		 * @return {boolean}
-		 */
-		isChatType()
-		{
-			return [DialogType.chat, DialogType.open].includes(this.state.dialogType);
+			return Loc.getMessage('IMMOBILE_CHAT_COMPOSER_DIALOG_TYPE_CHANNEL_CLOSE_SUBTITLE');
 		}
 
 		/**
@@ -139,7 +129,7 @@ jn.define('im/messenger/controller/chat-composer/lib/view/dialog-type', (require
 		 */
 		isOpenEntityType()
 		{
-			return this.state.dialogType === DialogType.open || this.state.dialogType === DialogType.openChannel;
+			return this.state.dialogType === DialogType.openChannel;
 		}
 
 		/**

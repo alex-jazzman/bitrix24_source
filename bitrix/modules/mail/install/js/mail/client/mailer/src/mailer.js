@@ -1,6 +1,7 @@
 import { FilterToolbar } from 'mail.client.filtertoolbar';
 import { ErrorBox } from 'mail.client.errorbox';
 import { Binding } from 'mail.client.binding';
+import { MailboxSelector } from 'mail.client.mailboxselector';
 import { BaseEvent, EventEmitter } from "main.core.events";
 
 export class Mailer
@@ -16,6 +17,7 @@ export class Mailer
 		mailboxId: 0,
 		syncAvailable: true,
 		configPath: '',
+		mailboxSelectorConfig: null,
 	})
 	{
 		//delete the loader (the envelope is bouncing)
@@ -27,6 +29,8 @@ export class Mailer
 
 		this.#mailboxId = config['mailboxId'];
 		this.#filter = BX.Main.filterManager.getById(config['filterId']);
+
+		this.#initMailboxSelector(config['mailboxSelectorConfig']);
 
 		this.sendApplyFilterEventForMenuRefresh();
 
@@ -112,5 +116,20 @@ export class Mailer
 	getFilterToolbar()
 	{
 		return this.#filterToolbar;
+	}
+
+	#initMailboxSelector(selectorConfig)
+	{
+		if (!selectorConfig)
+		{
+			return;
+		}
+		const root = document.querySelector('[data-role="mailbox-selector-root"]');
+		if (!root)
+		{
+			return;
+		}
+		BX.Mail.Home = BX.Mail.Home || {};
+		BX.Mail.Home.MailboxSelector = new MailboxSelector({ root, selectorConfig });
 	}
 }

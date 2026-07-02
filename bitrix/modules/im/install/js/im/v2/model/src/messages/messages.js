@@ -1,14 +1,12 @@
 import { Type, type JsonObject } from 'main.core';
-import { BuilderModel } from 'ui.vue3.vuex';
-import { type GetterTree, ActionTree, MutationTree } from 'ui.vue3.vuex';
+import { BuilderModel, type GetterTree, type ActionTree, type MutationTree } from 'ui.vue3.vuex';
 
 import { Core } from 'im.v2.application.core';
 import { MessageComponent, MessageType, UserIdNetworkPrefix, type AttachConfig } from 'im.v2.const';
 import { Logger } from 'im.v2.lib.logger';
 import { UserManager } from 'im.v2.lib.user';
 import { Utils } from 'im.v2.lib.utils';
-import { formatFieldsWithConfig } from 'im.v2.model';
-import { type ImModelMessage, ImModelFile } from 'im.v2.model';
+import { formatFieldsWithConfig, type ImModelMessage, type ImModelFile } from 'im.v2.model';
 import { MessageManager } from 'im.v2.lib.message';
 
 import { type RawMessage } from '../type/message';
@@ -16,6 +14,7 @@ import { convertToNumber } from '../utils/format';
 import { messageFieldsConfig } from './format/field-config';
 import { AnchorsModel } from './nested-modules/anchors/anchors';
 import { CommentsModel } from './nested-modules/comments/comments';
+import { MessageBuilderModel } from './nested-modules/builder/builder';
 import { PinModel } from './nested-modules/pin';
 import { ReactionsModel } from './nested-modules/reactions';
 import { SelectModel } from './nested-modules/select';
@@ -49,6 +48,7 @@ export class MessagesModel extends BuilderModel
 			comments: CommentsModel,
 			select: SelectModel,
 			anchors: AnchorsModel,
+			builder: MessageBuilderModel,
 		};
 	}
 

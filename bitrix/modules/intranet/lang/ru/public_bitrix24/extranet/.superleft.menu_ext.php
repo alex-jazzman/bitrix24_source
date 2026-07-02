@@ -9,6 +9,7 @@ $MESS["MENU_BLOG"] = "Сообщения";
 $MESS["MENU_FILES"] = "Мой Диск";
 $MESS["MENU_FILES_COLLAB"] = "Файлы";
 $MESS["MENU_GROUPS"] = "Группы";
+$MESS["MENU_PROJECTS"] = "Проекты";
 $MESS["MENU_EMPLOYEE"] = "Сотрудники";
 $MESS["MENU_CONTACT"] = "Контакты";
 $MESS["MENU_GROUPS_EXTRANET_ALL"] = "Все группы";

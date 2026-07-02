@@ -55,6 +55,16 @@ jn.define('im/messenger/controller/recent/service/render/common', (require, expo
 
 		async onUiReady(ui)
 		{
+			if (!ui)
+			{
+				// widget.nestedWidgets() may return null if the native nested widget
+				// for recentId isn't registered yet (race on dynamic tab addition).
+				// Nothing to subscribe to — bail out without crashing.
+				this.logger.warn('onUiReady received null ui, skipping subscribe');
+
+				return;
+			}
+
 			this.ui = ui;
 			this.worker = new Worker({
 				frequency: 1000,
@@ -65,6 +75,18 @@ jn.define('im/messenger/controller/recent/service/render/common', (require, expo
 			await this.#setSections();
 			void this.renderInstant();
 		}
+
+		subscribeEvents()
+		{
+			this.logger.log('subscribeEvents');
+		}
+
+		unsubscribeEvents()
+		{
+			this.logger.log('unsubscribeEvents');
+			this.worker.stop();
+		}
+
 		// region public interface
 
 		async renderInstant()
@@ -304,7 +326,10 @@ jn.define('im/messenger/controller/recent/service/render/common', (require, expo
 
 			const renderedItem = this.itemCollection.get(id);
 
-			return isEqual(renderedItem, item);
+			return isEqual(
+				this.#prepareElementToRecentWidgetItem(renderedItem),
+				this.#prepareElementToRecentWidgetItem(item),
+			);
 		}
 
 		// endregion methods of interaction with itemCollection

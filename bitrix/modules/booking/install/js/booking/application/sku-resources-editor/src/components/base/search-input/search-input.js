@@ -26,11 +26,9 @@ export const SearchInput = {
 			Outline,
 		};
 	},
-	data(): { searchDebounced: Function }
+	created(): void
 	{
-		return {
-			searchDebounced: Runtime.debounce(this.search, 200, this),
-		};
+		this.searchDebounced = Runtime.debounce(this.search, 200, this);
 	},
 	methods: {
 		inputQuery(event: InputEvent): void

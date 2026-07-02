@@ -24,7 +24,6 @@ div.bizproc-statuses{width:22px;height:18px;margin-right:6px;float: right;backgr
 	display: none !important;
 }
 
-
 .disk-folder-list-toolbar {
 	display: flex;
 	overflow: hidden;
@@ -1107,4 +1106,23 @@ div.disk-folder-list-search-progress {
 .ui-icon.ui-icon-file-board > i {
 	background-image: url(./images/disk-board-card-icon.svg);
 	background-size: cover;
+}
+
+.disk-air-message-box-fit-content .popup-window-content {
+	max-width: 500px;
+}
+
+.disk-air-message-box-file-name-wrapper {
+	display: inline-flex;
+	max-width: 100%;
+	vertical-align: bottom;
+	white-space: nowrap;
+}
+
+.disk-air-message-box-file-name {
+	display: block;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }

@@ -61,10 +61,10 @@ export class IntegratorContent extends Content
 				? this.#getTitleWithIntegrator()
 				: this.#getTitleWithoutPartner();
 
-			if (isPartnerConnect && this.getPartnerUrl())
+			if (isPartnerConnect && this.getPartnerCardUrl())
 			{
 				Event.bind(title, 'click', async () => {
-					window.open(this.getPartnerUrl(), '_blank', 'noopener,noreferrer');
+					window.open(this.getPartnerCardUrl(), '_blank', 'noopener,noreferrer');
 				});
 			}
 
@@ -74,9 +74,13 @@ export class IntegratorContent extends Content
 
 	#getTitleWithIntegrator(): HTMLElement
 	{
+		const partnerName = this.getPartnerName();
+
 		return Tag.render`
 			<div class="license-widget-item-name --link">
-				${Text.encode(this.getPartnerName())}
+				<span class="license-widget-item-name__inner" title="${Text.encode(partnerName)}">
+					${Text.encode(partnerName)}
+				</span>
 				<div class="license-widget-item-chevron-right">
 					<div class="ui-icon-set --chevron-right"></div>
 				</div>
@@ -284,9 +288,9 @@ export class IntegratorContent extends Content
 		return this.getOptions().integratorName ?? this.getOptions().partnerName ?? '';
 	}
 
-	getPartnerUrl(): string
+	getPartnerCardUrl(): string
 	{
-		return this.getOptions().integratorUrl ?? this.getOptions().partnerUrl ?? '';
+		return this.getOptions().integratorCardUrl ?? this.getOptions().partnerCardUrl ?? '';
 	}
 
 	getPartnerLogo(): string

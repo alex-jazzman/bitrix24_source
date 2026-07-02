@@ -19,7 +19,7 @@ use Bitrix\Main\SystemException;
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/start.php");
 
 $application = Main\Application::getInstance();
-$application->initializeExtendedKernel(array(
+$application->initializeContext(array(
 	"get" => $_GET,
 	"post" => $_POST,
 	"files" => $_FILES,
@@ -63,8 +63,13 @@ if ($route !== null)
 	if ($controller instanceof PublicPageController)
 	{
 		$controller->__invoke($route);
+		return;
 	}
-	elseif ($controller instanceof \Closure)
+
+	// disable PHYSICAL file permissions check, because we are using routing
+	define('NOT_CHECK_FILE_PERMISSIONS', true);
+
+	if ($controller instanceof \Closure)
 	{
 		$binder = Main\Engine\AutoWire\Binder::buildForFunction($controller);
 

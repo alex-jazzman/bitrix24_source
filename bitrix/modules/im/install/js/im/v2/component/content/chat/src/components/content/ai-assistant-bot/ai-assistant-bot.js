@@ -2,11 +2,10 @@ import { BaseChatContent } from 'im.v2.component.content.elements';
 import { ChatTextarea } from 'im.v2.component.textarea';
 
 import { McpIntegration } from './components/mcp-integration';
-import { ServiceHealthPanel } from './components/service-health-panel';
 
 export const AiAssistantBotContent = {
 	name: 'AiAssistantBotContent',
-	components: { BaseChatContent, ChatTextarea, ServiceHealthPanel, McpIntegration },
+	components: { BaseChatContent, ChatTextarea, McpIntegration },
 	props: {
 		dialogId: {
 			type: String,
@@ -28,9 +27,6 @@ export const AiAssistantBotContent = {
 		<BaseChatContent :dialogId="dialogId" :withSidebar="withSidebar" :withDropArea="false">
 			<template #header v-if="$slots['header']">
 				<slot name="header"></slot>
-			</template>
-			<template #sub-header>
-				<ServiceHealthPanel />
 			</template>
 			<template #textarea="{ onTextareaMount }">
 				<ChatTextarea

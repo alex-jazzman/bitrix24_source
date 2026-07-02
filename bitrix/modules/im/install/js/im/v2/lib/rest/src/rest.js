@@ -1,50 +1,16 @@
-import { ajax, Type, type JsonObject } from 'main.core';
+import { ajax } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 
 import { EventType } from 'im.v2.const';
 import { Core } from 'im.v2.application.core';
 
-type RunActionConfig = {
-	data?: JsonObject,
-	analyticsLabel?: JsonObject
-};
+import { prepareRequestData } from './helpers/prepare-request-data';
+import { needRetryRequest, getErrorConfig, hasInvalidAuthError } from './helpers/handle-errors';
+import { type RunActionConfig, type RunActionResult, type RunActionResponse } from './types/run-action';
+import { type BatchQuery } from './types/call-batch';
 
-type RunActionResultData = any;
-
-type RunActionResult = {
-	status: 'success' | 'error',
-	data: RunActionResultData,
-	errors: RunActionError[]
-};
-
-type RunActionResponse = RunActionResultData | RunActionError[];
-
-export type RunActionError = {
-	code: number | string,
-	customData: any,
-	message: string
-};
-
-export type CallBatchError = {
-	method: string,
-	code: string,
-	description: string,
-};
-
-type BatchQuery = {
-	[method: string]: {[param: string]: any}
-}
-
-type ErrorsConfig = {
-	retryCount: number,
-	timeout: ?number,
-}
-
-const INVALID_AUTH_ERROR_CODE = 'invalid_authentication';
-
-const errorCodesConfig = {
-	[INVALID_AUTH_ERROR_CODE]: { retryCount: 1, timeout: null },
-};
+export type { RunActionError } from './types/run-action';
+export type { CallBatchError } from './types/call-batch';
 
 let retryCounter = null;
 
@@ -72,8 +38,32 @@ export const runAction = (action: string, config: RunActionConfig = {}): Promise
 	});
 };
 
-const needRetryRequest = (responseErrors: RunActionError[]): boolean => {
-	return responseErrors.some((responseError) => errorCodesConfig[responseError.code]);
+export const callBatch = (query: BatchQuery): Promise<{[method: string]: any}> => {
+	const preparedQuery = {};
+	const methodsToCall = new Set();
+	Object.entries(query).forEach(([method, params]) => {
+		methodsToCall.add(method);
+		preparedQuery[method] = [method, params];
+	});
+
+	return new Promise((resolve, reject) => {
+		Core.getRestClient().callBatch(preparedQuery, (result) => {
+			const data = {};
+			for (const method of methodsToCall)
+			{
+				const methodResult: RestResult = result[method];
+				if (methodResult.error())
+				{
+					const { error: code, error_description: description } = methodResult.error().ex;
+					reject({ method, code, description });
+					break;
+				}
+				data[method] = methodResult.data();
+			}
+
+			return resolve(data);
+		});
+	});
 };
 
 const handleErrors = async (
@@ -105,68 +95,4 @@ const handleErrors = async (
 	}
 
 	return runAction(action, config);
-};
-
-const getErrorConfig = (responseErrors: RunActionError[]): ErrorsConfig => {
-	const error = responseErrors.find((responseError) => errorCodesConfig[responseError.code]);
-
-	return errorCodesConfig[error.code];
-};
-
-const hasInvalidAuthError = (responseErrors: RunActionError[]): boolean => {
-	return responseErrors.some((error) => error.code === INVALID_AUTH_ERROR_CODE);
-};
-
-export const callBatch = (query: BatchQuery): Promise<{[method: string]: any}> => {
-	const preparedQuery = {};
-	const methodsToCall = new Set();
-	Object.entries(query).forEach(([method, params]) => {
-		methodsToCall.add(method);
-		preparedQuery[method] = [method, params];
-	});
-
-	return new Promise((resolve, reject) => {
-		Core.getRestClient().callBatch(preparedQuery, (result) => {
-			const data = {};
-			for (const method of methodsToCall)
-			{
-				const methodResult: RestResult = result[method];
-				if (methodResult.error())
-				{
-					const { error: code, error_description: description } = methodResult.error().ex;
-					reject({ method, code, description });
-					break;
-				}
-				data[method] = methodResult.data();
-			}
-
-			return resolve(data);
-		});
-	});
-};
-
-const prepareRequestData = (data: JsonObject): JsonObject => {
-	if (data instanceof FormData)
-	{
-		return data;
-	}
-
-	if (!Type.isObjectLike(data))
-	{
-		return {};
-	}
-
-	const preparedData = {};
-	for (const [key, value] of Object.entries(data))
-	{
-		let preparedValue = value;
-		if (Type.isBoolean(value))
-		{
-			preparedValue = value === true ? 'Y' : 'N';
-		}
-
-		preparedData[key] = preparedValue;
-	}
-
-	return preparedData;
 };

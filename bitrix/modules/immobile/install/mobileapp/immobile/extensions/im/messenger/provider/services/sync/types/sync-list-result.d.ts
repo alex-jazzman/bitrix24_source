@@ -191,7 +191,6 @@ export type SyncRawUser = {
 	birthday: string,
 	bot: boolean,
 	botData?: {
-		appId: string,
 		code: string,
 		isHidden: boolean,
 		isSupportOpenline: boolean,

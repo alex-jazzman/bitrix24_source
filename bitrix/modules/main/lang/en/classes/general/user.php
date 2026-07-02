@@ -45,6 +45,7 @@ $MESS["USER_LAST_SEEN_TOMORROW"] = "tomorrow at #TIME#";
 $MESS["USER_LAST_SEEN_YESTERDAY"] = "yesterday at #TIME#";
 $MESS["USER_LOGIN_OTP_ERROR"] = "One-time passwords are disabled.";
 $MESS["USER_LOGIN_OTP_INCORRECT"] = "This code is incorrect.";
+$MESS["USER_MAX_LOGIN"] = "Login must not be longer than 50 characters.";
 $MESS["USER_REGISTERED_SIMPLE"] = "You registration has completed successfully.";
 $MESS["USER_REGISTER_OK"] = "You have successfully registered.";
 $MESS["USER_STATUS_OFFLINE"] = "Offline";

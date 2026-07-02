@@ -1,11 +1,10 @@
 import { Core } from 'im.v2.application.core';
+import { type PromoId } from 'im.v2.const';
 import { Logger } from 'im.v2.lib.logger';
-import { PromoId } from 'im.v2.const';
+import { type PromotionUpdatedParams, type PromoParams, type RawPromoData } from 'im.v2.provider.pull';
 
-import { PromoService } from './classes/promo-service';
 import { Promo } from './classes/promo';
-
-import type { PromotionUpdatedParams, PromoParams, RawPromoData } from 'im.v2.provider.pull';
+import { PromoService } from './classes/promo-service';
 
 export class PromoManager
 {

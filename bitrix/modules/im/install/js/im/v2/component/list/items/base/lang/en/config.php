@@ -1,0 +1,6 @@
+<?php
+$MESS["IM_LIST_ITEMS_MESSAGE_DRAFT_MSGVER_3"] = "[highlight]Draft:[/highlight] #TEXT#";
+$MESS["IM_LIST_ITEMS_CHAT_TYPE_GROUP_V2"] = "Group chat";
+$MESS["IM_LIST_ITEMS_CHAT_TYPE_OPEN_CHANNEL"] = "Public channel";
+$MESS["IM_LIST_ITEMS_CHAT_TYPE_PRIVATE_CHANNEL"] = "Private channel";
+$MESS["IM_LIST_ITEMS_CHAT_TYPE_TASK_COMMENTS"] = "Task chat";

@@ -1,39 +1,22 @@
-import { ChatType } from 'im.v2.const';
+import { type BitrixVueComponentProps } from 'ui.vue3';
 
-import { GroupChatCreation } from './components/create/group-chat';
-import { ConferenceCreation } from './components/create/conference';
+import { ChatType, type ChatTypeItem } from 'im.v2.const';
+import { CreatableChatType } from 'im.v2.lib.create-chat';
+
 import { ChannelCreation } from './components/create/channel';
 import { CollabCreation } from './components/create/collab/collab';
+import { CollabChatCreation } from './components/create/collab-chat/collab-chat';
+import { ConferenceCreation } from './components/create/conference';
+import { GroupChatCreation } from './components/create/group-chat';
 
 import './css/chat-forms-content.css';
 
-import type { BitrixVueComponentProps } from 'ui.vue3';
-
-export type CreatableChatType = $Values<typeof CreatableChat>;
-
-export const CreatableChat = {
-	chat: 'chat',
-	videoconf: 'videoconf',
-	channel: 'channel',
-	collab: 'collab',
-};
-
-export type OpenChatCreationParams = {
-	preselectedMembers?: PreselectedMemberItem[],
-	ownerId?: number,
-	includeCurrentUser?: boolean,
-};
-
-export type PreselectedMemberItem = {
-	type: 'user' | 'department',
-	id: number | string,
-};
-
 const CreationComponentByChatType = {
-	[ChatType.chat]: GroupChatCreation,
-	[ChatType.videoconf]: ConferenceCreation,
-	[ChatType.channel]: ChannelCreation,
-	[ChatType.collab]: CollabCreation,
+	[CreatableChatType.chat]: GroupChatCreation,
+	[CreatableChatType.videoconf]: ConferenceCreation,
+	[CreatableChatType.channel]: ChannelCreation,
+	[CreatableChatType.collab]: CollabCreation,
+	[CreatableChatType.collabChat]: CollabChatCreation,
 	default: GroupChatCreation,
 };
 
@@ -51,7 +34,7 @@ export const CreateChatContent = {
 	computed:
 	{
 		ChatType: () => ChatType,
-		chatType(): $Values<typeof ChatType>
+		chatType(): ChatTypeItem
 		{
 			return this.entityId;
 		},

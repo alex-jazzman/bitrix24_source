@@ -626,9 +626,14 @@
 	--o-ui-icon-set__path_package-receive: url('/bitrix/js/ui/icon-set/outline/images/package-receive.svg');
 	--o-ui-icon-set__path_package-cancel: url('/bitrix/js/ui/icon-set/outline/images/package-cancel.svg');
 	--o-ui-icon-set__path_lower-left-arrow: url('/bitrix/js/ui/icon-set/outline/images/lower-left-arrow.svg');
-
 	--o-ui-icon-set__path_mail-plus: url('/bitrix/js/ui/icon-set/outline/images/mail-plus.svg');
 	--o-ui-icon-set__path_messages-multi: url('/bitrix/js/ui/icon-set/outline/images/messages-multi.svg');
+	--o-ui-icon-set__path_crm-form: url('/bitrix/js/ui/icon-set/outline/images/crm-form.svg');
+	--o-ui-icon-set__path_bitrix-gpt: url('/bitrix/js/ui/icon-set/outline/images/bitrix-gpt.svg');
+	--o-ui-icon-set__path_recent-items: url('/bitrix/js/ui/icon-set/outline/images/recent-items.svg');
+
+	--o-ui-icon-set__path_template-plus: url('/bitrix/js/ui/icon-set/outline/images/template-plus.svg');
+	--o-ui-icon-set__path_template-task: url('/bitrix/js/ui/icon-set/outline/images/template-task.svg');
 }
 
 .ui-icon-set.--o-double-gis {
@@ -3141,4 +3146,24 @@
 
 .ui-icon-set.--o-messages-multi {
 	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_messages-multi);
+}
+
+.ui-icon-set.--o-crm-form {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_crm-form);
+}
+
+.ui-icon-set.--bitrix-gpt {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_bitrix-gpt);
+}
+
+.ui-icon-set.--o-recent-items {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_recent-items);
+}
+
+.ui-icon-set.--o-template-plus {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_template-plus);
+}
+
+.ui-icon-set.--o-template-task {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_template-task);
 }

@@ -1,4 +1,4 @@
-import { Loc } from 'main.core';
+import { Loc, Extension } from 'main.core';
 import { Main } from 'ui.icon-set.api.core';
 
 import 'ui.icon-set.main';
@@ -14,7 +14,9 @@ export class OpenCopilotMenuItem extends BaseMenuItem
 			id: 'open-copilot',
 			code: 'open-copilot',
 			icon: Main.COPILOT_AI,
-			text: Loc.getMessage('AI_COPILOT_MENU_ITEM_OPEN_COPILOT'),
+			text: Loc.getMessage('AI_COPILOT_MENU_ITEM_OPEN_COPILOT_MSGVER_1', {
+				'#COPILOT_NAME#': Extension.getSettings('ai.copilot').get('copilotName'),
+			}),
 			...options,
 		});
 	}

@@ -3,12 +3,8 @@
 }
 
 .crm-form-integration-page-container {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
+	align-items: center;
 }
 .crm-form-integration-page-selector {
 	width: 100%;
@@ -39,15 +35,9 @@
 	background-repeat: no-repeat;
 }
 .crm-ads-conversion-social-user {
-	-webkit-box-flex: 0.935;
-	    -ms-flex: 0.935;
-	        flex: 0.935;
-	display: -webkit-box;
-	display: -ms-flexbox;
+	flex: 0.935;
 	display: flex;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
+	align-items: center;
 	padding: 0 8px;
 }
 
@@ -62,8 +52,7 @@
 	overflow: hidden;
 	max-width: 100%;
 	white-space: nowrap;
-	-o-text-overflow: ellipsis;
-	   text-overflow: ellipsis;
+	text-overflow: ellipsis;
 	font-size: 14px;
 	color: #0b66c3;
 	font-weight: bold;
@@ -78,11 +67,7 @@
 .crm-ads-conversion-social-shutoff {
 	float: right;
 	overflow: hidden;
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: center;
-	-ms-flex-align: center;
 	align-items: center;
 	cursor: pointer;
 }
@@ -99,11 +84,7 @@
 	text-decoration: underline;
 }
 .crm-ads-conversion-social {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: center;
-	-ms-flex-align: center;
 	align-items: center;
 	overflow: hidden;
 	height: 50px;
@@ -113,8 +94,6 @@
 }
 
 .crm-ads-conversion-title-section{
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
 }
 
@@ -125,11 +104,7 @@
 	padding: 9px;
 }
 .crm-ads-conversion-login-wrapper{
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
 	margin: 19px 0 19px 0;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
+	align-items: center;
 }

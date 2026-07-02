@@ -1,5 +1,10 @@
 import './block-header.css';
 
+const BLOCK_HEADER_CLASS_NAMES = {
+	base: 'editor-chart-block-header',
+	deactivated: '--deactivated',
+};
+
 // @vue/component
 export const BlockHeader = {
 	name: 'block-header',
@@ -16,9 +21,22 @@ export const BlockHeader = {
 			type: String,
 			default: '',
 		},
+		deactivated: {
+			type: Boolean,
+			default: false,
+		},
+	},
+	computed: {
+		blockHeaderClassNames(): { [string]: boolean }
+		{
+			return {
+				[BLOCK_HEADER_CLASS_NAMES.base]: true,
+				[BLOCK_HEADER_CLASS_NAMES.deactivated]: this.deactivated,
+			};
+		},
 	},
 	template: `
-		<div class="editor-chart-block-header">
+		<div :class="blockHeaderClassNames">
 			<div class="editor-chart-block-header__icon-wrapper">
 				<slot name="icon"/>
 			</div>
@@ -33,7 +51,8 @@ export const BlockHeader = {
 					<slot name="subIcon"/>
 				</div>
 			</template>
-			<div class="editor-chart-block-header__title">{{ title || block.node?.title }}</div>
+
+			<p class="editor-chart-block-header__title">{{ title || block.node?.title }}</p>
 		</div>
 	`,
 };

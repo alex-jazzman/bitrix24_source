@@ -1,0 +1,28 @@
+.bx-imol-quick-reply-popup__success {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+	--ui-icon-set__icon-size: 20px;
+
+	position: absolute;
+	top: 14px;
+	right: 50px;
+	display: flex;
+	align-items: center;
+	padding: 3px 10px 3px 4px;
+	font-size: var(--ui-font-size-md);
+	color: var(--ui-color-accent-main-primary);
+	border: 1px solid var(--ui-color-accent-soft-blue-1);
+	border-radius: 512px;
+	z-index: 1;
+	animation: bx-imol-quick-reply-slide-down 250ms ease;
+}
+
+@keyframes bx-imol-quick-reply-slide-down {
+	from {
+		opacity: 0;
+		transform: translateY(-8px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}

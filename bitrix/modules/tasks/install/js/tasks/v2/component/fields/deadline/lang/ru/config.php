@@ -1,7 +1,6 @@
 <?php
 
 $MESS['TASKS_V2_DEADLINE_TITLE'] = 'Крайний срок';
-$MESS['TASKS_V2_DEADLINE_FORMAT'] = '#DATE# #TIME#';
 $MESS['TASKS_V2_DEADLINE_EMPTY'] = 'Без срока';
 $MESS['TASKS_V2_DEADLINE_AUTO'] = 'Устанавливается автоматически';
 $MESS['TASKS_V2_DEADLINE_SELECT'] = 'Выбрать';
@@ -25,3 +24,8 @@ $MESS['TASKS_V2_DEADLINE_CHANGE_REASON_POPUP_TITLE'] = 'Причина пере�
 $MESS['TASKS_V2_DEADLINE_CHANGE_REASON_POPUP_MESSAGE'] = 'Постановщик запросил причину изменения крайнего срока. После сохранения она будет видна в чате задачи';
 $MESS['TASKS_V2_DEADLINE_CHANGE_REASON_POPUP_BTN_CANCEL'] = 'Отмена';
 $MESS['TASKS_V2_DEADLINE_CHANGE_REASON_POPUP_BTN_SAVE'] = 'Сохранить';
+$MESS['TASKS_V2_DEADLINE_SUPPOSEDLY_COMPLETED'] = 'Ждёт контроля';
+$MESS['TASKS_V2_DEADLINE_COMPLETED'] = 'Завершена';
+$MESS['TASKS_V2_DEADLINE_DEFERRED'] = 'Отложена';
+$MESS['TASKS_V2_DEADLINE_TODAY_FORMATTED'] = 'Сегодня, #TIME#';
+$MESS['TASKS_V2_DEADLINE_TOMORROW_FORMATTED'] = 'Завтра, #TIME#';

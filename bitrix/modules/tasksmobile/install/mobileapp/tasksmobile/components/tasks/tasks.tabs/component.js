@@ -4,7 +4,6 @@
 	const { Entry } = require('tasks/entry');
 	const { ErrorLogger } = require('utils/logger/error-logger');
 	const { StorageCache } = require('storage-cache');
-	const { qrauth } = require('qrauth/utils');
 	const { FeatureId } = require('tasks/enum');
 	const { getFeatureRestriction, tariffPlanRestrictionsReady } = require('tariff-plan-restriction');
 	const { RunActionExecutor } = require('rest/run-action-executor');
@@ -316,10 +315,10 @@
 		{
 			const tabId = tab.id;
 
+			BX.postComponentEvent('tasks.tabs:onTabSelected', [{ tabId, changed }]);
+
 			if (changed)
 			{
-				BX.postComponentEvent('tasks.tabs:onTabSelected', [{ tabId }]);
-
 				return;
 			}
 
@@ -334,19 +333,6 @@
 					}
 					break;
 				}
-
-				case this.tabCodes.SCRUM:
-					qrauth.open({
-						redirectUrl: `/company/personal/user/${this.userId}/tasks/scrum/`,
-						showHint: true,
-						title: BX.message('MOBILE_TASKS_TABS_TAB_SCRUM'),
-						analyticsSection: 'tasks',
-					});
-					break;
-
-				case this.tabCodes.EFFICIENCY:
-					void Entry.openEfficiency({ userId: this.userId });
-					break;
 
 				default:
 					// no default
@@ -365,7 +351,6 @@
 					if (counters)
 					{
 						this.updateTasksCounter(counters.tasks_total);
-						this.updateEfficiencyCounter(counters.tasks_effective);
 					}
 				}
 				catch
@@ -413,8 +398,6 @@
 						this.updateScrumCounter(scrumCounter);
 						scrumListStorage.set({ counterValue: scrumCounter });
 					}
-
-					this.updateEfficiencyCounter(counters.effective);
 				})
 				.call(false)
 			;
@@ -460,17 +443,6 @@
 				title: BX.message('MOBILE_TASKS_TABS_TAB_SCRUM'),
 				counter: Number(value),
 				label: (value > 0 ? String(value) : ''),
-			});
-		}
-
-		updateEfficiencyCounter(value)
-		{
-			const isEfficiencyRestricted = getFeatureRestriction(FeatureId.EFFICIENCY).isRestricted();
-
-			this.tabs.updateItem(this.tabCodes.EFFICIENCY, {
-				title: BX.message('MOBILE_TASKS_TABS_TAB_EFFICIENCY'),
-				label: (!isEfficiencyRestricted && value >= 0 ? `${String(value)}%` : ''),
-				selectable: false,
 			});
 		}
 	}

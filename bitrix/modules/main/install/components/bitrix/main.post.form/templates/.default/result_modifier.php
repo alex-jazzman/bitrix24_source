@@ -83,8 +83,8 @@ if (is_array($arParams["ADDITIONAL"]))
 		{
 			array_unshift(
 				$arParams["ADDITIONAL"],
-				"<span class='feed-add-post-form-editor-btn' data-bx-role='button-show-panel-editor' ".
-				"title=\"".GetMessage("MPF_EDITOR")."\"></span>");
+				"<button type='button' class='feed-add-post-form-editor-btn' data-bx-role='button-show-panel-editor' ".
+				"title=\"".GetMessage("MPF_EDITOR")."\" aria-label=\"".GetMessage("MPF_EDITOR")."\" aria-pressed=\"false\"></button>");
 		}
 		else
 		{

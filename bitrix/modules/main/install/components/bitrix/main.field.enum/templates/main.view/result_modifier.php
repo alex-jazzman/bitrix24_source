@@ -6,6 +6,7 @@ use Bitrix\Main\Page\Asset;
 
 /**
  * @var $component EnumUfComponent
+ * @var array $arResult
  */
 
 $component = $this->getComponent();

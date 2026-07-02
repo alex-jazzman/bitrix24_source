@@ -9,9 +9,14 @@ if ($siteId)
 {
 	define('SITE_ID', $siteId);
 }
-require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php');
-$request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 
+require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php');
+
+/**
+ * @global CMain $APPLICATION
+ */
+
+$request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 
 $APPLICATION->IncludeComponent(
 	'bitrix:ui.sidepanel.wrapper',

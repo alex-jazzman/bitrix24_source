@@ -169,6 +169,12 @@ this.BX = this.BX || {};
 	      return this;
 	    }
 	  }, {
+	    key: "addParameter",
+	    value: function addParameter(key, value) {
+	      babelHelpers.classPrivateFieldGet(this, _parameters)[key] = value;
+	      return this;
+	    }
+	  }, {
 	    key: "setAnalyticParameters",
 	    value: function setAnalyticParameters(parameters) {
 	      babelHelpers.classPrivateFieldSet(this, _analyticParameters, parameters);

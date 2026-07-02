@@ -26,18 +26,24 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  methods: {
 	    showDialog() {
 	      var _this$dialog2;
+	      const popupWidth = 385;
+	      const popupHeight = 385;
 	      (_this$dialog2 = this.dialog) != null ? _this$dialog2 : this.dialog = new tasks_v2_lib_entitySelectorDialog.EntitySelectorDialog({
 	        context: 'tasks-card',
+	        width: popupWidth,
+	        height: popupHeight,
 	        multiple: false,
 	        enableSearch: true,
+	        dropdownMode: true,
 	        entities: [{
-	          id: tasks_v2_const.EntitySelectorEntity.Template,
+	          id: tasks_v2_const.EntitySelectorEntity.TemplateCommon,
 	          options: {
-	            withFooter: false
+	            isFullListOpenable: true
 	          }
 	        }],
-	        preselectedItems: this.task.templateId ? [[tasks_v2_const.EntitySelectorEntity.Template, this.task.templateId]] : [],
+	        preselectedItems: this.task.templateId ? [[tasks_v2_const.EntitySelectorEntity.TemplateCommon, this.task.templateId]] : [],
 	        popupOptions: {
+	          className: 'popup-window_entity-picker-no-check',
 	          events: {
 	            onClose: () => {
 	              var _this$dialog$getSelec;

@@ -3,8 +3,8 @@ import { Loc, Type } from 'main.core';
 import { BuilderModel } from 'ui.vue3.vuex';
 import type { ActionTree, GetterTree, MutationTree } from 'ui.vue3.vuex';
 
-import { Model, NotificationFieldsMap, ResourceEntityType } from 'booking.const';
-import { SlotRange } from 'booking.model.resources';
+import { Model, NotificationFieldsMap, ResourceEntityType, Communication } from 'booking.const';
+import type { SlotRange } from 'booking.model.resources';
 import type { IntegrationCalendarType, IntegrationCalendarDataType, Skus } from 'booking.model.resources';
 
 import { getEmptyResource, getResource } from './lib';
@@ -96,6 +96,8 @@ export class ResourceCreationWizardModel extends BuilderModel
 			showLicenseWarning: (state): boolean => state.showLicenseWarning,
 			/** @function resource-creation-wizard/companyScheduleUrl */
 			companyScheduleUrl: (state): boolean => state.companyScheduleUrl,
+			/** @function resource-creation-wizard/isAiCommunication */
+			isAiCommunication: (state): boolean => state.resource.senderCode === Communication.AiCall,
 			/** @function resource-creation-wizard/weekStart */
 			weekStart: (state): boolean => state.weekStart,
 			/** @function resource-creation-wizard/isChannelChoiceAvailable */
@@ -154,6 +156,7 @@ export class ResourceCreationWizardModel extends BuilderModel
 					step: 2,
 				});
 				commit('setCurrentResourceName', resource.name);
+				commit('setSenderCode', resource.senderCode);
 
 				commit(
 					'setIsIntegrationCalendarEnabled',
@@ -198,16 +201,16 @@ export class ResourceCreationWizardModel extends BuilderModel
 				if (patch.typeId)
 				{
 					const resourceType = rootGetters[`${Model.ResourceTypes}/getById`](patch.typeId);
-					const notifications = [
-						...Object.values(NotificationFieldsMap.NotificationOn),
-						...Object.values(NotificationFieldsMap.TemplateType),
-						...Object.values(NotificationFieldsMap.Settings).flat(),
-					].reduce((acc: Partial<ResourceModel>, field: $Keys<ResourceModel>) => ({
-						...acc,
-						[field]: resourceType[field],
-					}), {});
+					const notificationsData = Object.fromEntries(
+						[
+							...Object.values(NotificationFieldsMap.NotificationOn),
+							...Object.values(NotificationFieldsMap.TemplateType),
+							...Object.values(NotificationFieldsMap.Settings).flat(),
+							'senderCode',
+						].map((field) => [field, resourceType[field]]),
+					);
 
-					Object.assign(patch, notifications);
+					Object.assign(patch, notificationsData);
 				}
 
 				commit('updateResource', patch);
@@ -328,6 +331,10 @@ export class ResourceCreationWizardModel extends BuilderModel
 			setCurrentResourceName(state: ResourceCreationWizardState, name: string): void
 			{
 				state.resourceName = name;
+			},
+			setSenderCode(state: ResourceCreationWizardState, senderCode: $Values<typeof Communication>): void
+			{
+				state.senderCode = senderCode;
 			},
 			setResourceAvatarFile(state: ResourceCreationWizardState, file: File | null): void
 			{

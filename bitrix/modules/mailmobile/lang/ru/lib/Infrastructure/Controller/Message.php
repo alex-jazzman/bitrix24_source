@@ -1,0 +1,3 @@
+<?php
+
+$MESS['MAILMOBILE_MESSAGE_EMPTY_SUBJECT_PLACEHOLDER'] = '(без темы)';

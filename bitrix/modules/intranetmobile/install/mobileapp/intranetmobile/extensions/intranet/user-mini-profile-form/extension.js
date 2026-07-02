@@ -46,8 +46,37 @@ jn.define('intranet/user-mini-profile-form', (require, exports, module) => {
 				this.phoneField,
 				this.emailField,
 			];
-			this.nameField.focus();
+
+			const initialField = this.getInitialFieldToFocus();
+
+			initialField?.focus();
 		}
+
+		getInitialFieldToFocus = () => {
+			for (const field of this.inputs)
+			{
+				if (this.isFieldEmpty(field))
+				{
+					return field;
+				}
+			}
+
+			return this.nameField;
+		};
+
+		isFieldEmpty = (field) => {
+			if (!field)
+			{
+				return false;
+			}
+
+			if (field === this.phoneField)
+			{
+				return this.isEmptyPhoneBody(field.getValue());
+			}
+
+			return field.isEmpty();
+		};
 
 		getProfileData = () => {
 			const { profileData } = this.state;
@@ -151,15 +180,9 @@ jn.define('intranet/user-mini-profile-form', (require, exports, module) => {
 			{
 				const input = this.inputs[index];
 
-				if (
-					input?.isEmpty()
-					|| (
-						input === this.phoneField
-						&& this.isEmptyPhoneBody(input.getValue())
-					)
-				)
+				if (this.isFieldEmpty(input))
 				{
-					return this.inputs[index];
+					return input;
 				}
 			}
 
@@ -270,6 +293,13 @@ jn.define('intranet/user-mini-profile-form', (require, exports, module) => {
 
 		onChangeMobile = (value) => {
 			this.onChange('PERSONAL_MOBILE', value);
+
+			if (this.state.phoneFieldError)
+			{
+				this.setState({
+					phoneFieldError: !this.handleOnValidationPhone(value),
+				});
+			}
 		};
 
 		onChangeEmail = (value) => {
@@ -372,22 +402,24 @@ jn.define('intranet/user-mini-profile-form', (require, exports, module) => {
 				onValid: this.handleOnValidationPhone,
 				errorText: Loc.getMessage('INTRANETMOBILE_USER_MINI_PROFILE_WRONG_PHONE') ?? '',
 				error: this.state.phoneFieldError ?? false,
+				onBlur: this.blurPhoneField,
 			});
 		}
 
+		blurPhoneField = () => {
+			const value = this.getProfileData().PERSONAL_MOBILE ?? '';
+
+			this.setState({
+				phoneFieldError: !this.handleOnValidationPhone(value),
+			});
+		};
+
 		focusPhoneField = () => {
-			this.setState(
-				{
-					phoneFieldError: false,
-				},
-				() => {
-					this.focusedInputIndex = this.inputs.indexOf(this.phoneField);
-				},
-			);
+			this.focusedInputIndex = this.inputs.indexOf(this.phoneField);
 		};
 
 		handleOnValidationPhone = (value) => {
-			return isEmpty(value) || isPhoneNumber(value);
+			return isEmpty(value) || this.isEmptyPhoneBody(value) || isPhoneNumber(value);
 		};
 
 		handleOnSetPhoneRef = (ref) => {

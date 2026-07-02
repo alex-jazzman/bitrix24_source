@@ -1,5 +1,4 @@
 import { Type } from 'main.core';
-import { sendData } from 'ui.analytics';
 
 const ENTITY_TYPE = 'mail';
 
@@ -27,18 +26,20 @@ export class Secretary
 		{
 			instances[messageId] = new Secretary(messageId);
 		}
+
 		return instances[messageId];
 	}
 
 	openChat()
 	{
-		return BX.ajax.runAction('mail.secretary.createChatFromMessage',
-			{data: {messageId: this.#messageId}},
+		return BX.ajax.runAction(
+			'mail.secretary.createChatFromMessage',
+			{ data: { messageId: this.#messageId } },
 		).then(
 			(response) => {
 				if (top.window.BXIM && response.data)
 				{
-					top.BXIM.openMessenger('chat' + parseInt(response.data));
+					top.BXIM.openMessenger(`chat${parseInt(response.data)}`);
 				}
 			},
 			(response) => {
@@ -49,8 +50,9 @@ export class Secretary
 
 	openCalendarEvent()
 	{
-		return BX.ajax.runAction('mail.secretary.getCalendarEventDataFromMessage',
-			{data: {messageId: this.#messageId}}
+		return BX.ajax.runAction(
+			'mail.secretary.getCalendarEventDataFromMessage',
+			{ data: { messageId: this.#messageId } },
 		).then(
 			(response) => {
 				// let users = [];
@@ -70,7 +72,7 @@ export class Secretary
 							entryName: response.data.name,
 							entryDescription: response.data.desc,
 							// participantsEntityList: users,
-						}
+						},
 					).show();
 				}
 				else if (response.data && response.data.isIcal)
@@ -92,14 +94,14 @@ export class Secretary
 				if (response.data && response.data.eventId)
 				{
 					const sliderLoader = new (window.top.BX || window.BX).Calendar.SliderLoader(
-						response.data.eventId
+						response.data.eventId,
 					);
 					sliderLoader.show();
 
 					const grid = new BX.Mail.MessageGrid();
 					grid.reloadTable();
 				}
-			}
+			},
 		);
 	}
 
@@ -135,11 +137,11 @@ export class Secretary
 	{
 		if (Type.isArray(errors))
 		{
-			let errorMessages = [];
+			const errorMessages = [];
 			errors.forEach((error) => {
 				errorMessages.push(error.message);
 			});
-			alert(errorMessages.join("\n"));
+			alert(errorMessages.join('\n'));
 		}
 		else
 		{

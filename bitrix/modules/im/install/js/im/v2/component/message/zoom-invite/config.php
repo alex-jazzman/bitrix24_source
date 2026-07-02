@@ -10,9 +10,9 @@ return [
 	'js' => 'dist/zoom-invite.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'ui.vue3',
-		'im.v2.lib.utils',
 		'im.v2.component.message.call-invite',
+		'im.v2.lib.utils',
+		'ui.vue3',
 	],
 	'skip_core' => true,
 ];

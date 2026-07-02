@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_ACT_EMAIL_AUTH"] = "Ошибка авторизации";
 $MESS["CRM_ACT_EMAIL_NOCRM"] = "Модуль CRM не установлен";
 $MESS["CRM_ACT_EMAIL_NO_MAIL"] = "Модуль Mail не установлен.";
@@ -10,6 +10,7 @@ $MESS["CRM_ACT_EMAIL_HISTORY_MORE"] = "Показать еще";
 $MESS["CRM_ACT_EMAIL_BTN_REPLY"] = "Ответить";
 $MESS["CRM_ACT_EMAIL_BTN_REPLY_All"] = "Ответить всем";
 $MESS["CRM_ACT_EMAIL_BTN_FWD"] = "Переслать";
+$MESS["CRM_ACT_EMAIL_BTN_DISCUSS_IN_CHAT"] = "Обсудить в чате";
 $MESS["CRM_ACT_EMAIL_BTN_SKIP"] = "Исключить из CRM";
 $MESS["CRM_ACT_EMAIL_BTN_SPAM"] = "Это спам";
 $MESS["CRM_ACT_EMAIL_BTN_DEL"] = "Удалить";
@@ -65,9 +66,8 @@ $MESS["CRM_ACT_EMAIL_NEW_FROM_CODE_HINT"] = "На указанный email от�
 $MESS["CRM_ACT_EMAIL_NEW_FROM_CODE_PLACEHOLDER"] = "Введите код подтверждения";
 $MESS["CRM_ACT_EMAIL_CREATE_HTML_BTN"] = "HTML-режим";
 $MESS["CRM_ACT_EMAIL_DELETE_CONFIRM"] = "Вы действительно хотите удалить это письмо?";
-$MESS["CRM_ACT_EMAIL_SKIP_CONFIRM"] = "Вы действительно хотите удалить это письмо и добавить отправителя в список исключений?";
+$MESS["CRM_ACT_EMAIL_SKIP_CONFIRM"] = "Вы действительно хотите удалить это письмо и добавить отправителя в стоп-лист?";
 $MESS["CRM_ACT_EMAIL_SPAM_CONFIRM"] = "Вы действительно хотите удалить это письмо и добавить отправителя в черный список?";
 
 $MESS["CRM_ACT_EMAIL_DISK_ACTION_SAVE_TO_OWN_FILES_MSGVER_1"] = "Сохранить на Битрикс24 Диск";
 $MESS["CRM_ACT_EMAIL_DISK_FILE_DOWNLOAD_ARCHIVE"] = "Скачать все файлы одним архивом";
-

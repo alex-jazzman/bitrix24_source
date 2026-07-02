@@ -1,6 +1,5 @@
 import { Text } from 'main.core';
-import { BaseEvent } from 'main.core.events';
-import { QueueManager, ActionItem } from 'pull.queuemanager';
+import { QueueManager } from 'pull.queuemanager';
 import { Module } from 'booking.const';
 
 import { BookingPullHandler } from './handler/booking-pull-handler';

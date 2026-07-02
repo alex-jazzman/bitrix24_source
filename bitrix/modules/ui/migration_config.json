@@ -1,0 +1,7 @@
+{
+	"defaultTableName": "b_ui_entity_editor_config",
+	"installDirectoriesMapping": {
+		"install/components": "components",
+		"install/js": "js"
+	}
+}

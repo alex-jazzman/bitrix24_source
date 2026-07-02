@@ -1,0 +1,6 @@
+<?php
+$MESS["IMOL_BOT_SETTINGS_ACTIVITY_DESCRIPTION"] = "Changes settings for a specified Open Channel chat bot.";
+$MESS["IMOL_BOT_SETTINGS_ACTIVITY_NAME"] = "Open Channel chat bot settings";
+$MESS["IMOL_BOT_SETTINGS_ACTIVITY_RETURN_BOT_ID_NAME"] = "Open Channel chat bot ID";
+$MESS["IMOL_BOT_SETTINGS_ACTIVITY_RETURN_ERRORS_NAME"] = "Errors";
+$MESS["IMOL_BOT_SETTINGS_ACTIVITY_RETURN_SUCCESS_QUEUE_CONNECTED_NAME"] = "Connected Open Channels";

@@ -5,6 +5,11 @@ use Bitrix\HumanResources\Repository\NodeSettingsRepository;
 use Bitrix\HumanResources\Type\StructureAction;
 
 return [
+	'rest' => [
+		'value' => [
+			'defaultNamespace' => '\\Bitrix\\HumanResources\\Rest\\Controller',
+		],
+	],
 	'services' => [
 		'value' => [
 			'humanresources.container' => [
@@ -272,14 +277,23 @@ return [
 			'humanresources.internal.repository.structure.nodeAccessCode' => [
 				'className' => \Bitrix\HumanResources\Internals\Repository\Structure\NodeAccessCodeRepository::class,
 			],
+			'humanresources.internal.repository.structure.nodePath' => [
+				'className' => \Bitrix\HumanResources\Internals\Repository\Structure\NodePathRepository::class,
+			],
 			'humanresources.internal.service.structure.nodeAccessService' => [
 				'className' => \Bitrix\HumanResources\Internals\Service\Structure\NodeAccessCodeService::class,
+			],
+			'humanresources.internal.service.structure.userService' => [
+				'className' => \Bitrix\HumanResources\Internals\Service\Structure\UserService::class,
 			],
 			'humanresources.internal.repository.structure.node.nodeMemberRepository' => [
 				'className' => \Bitrix\HumanResources\Internals\Repository\Structure\NodeMemberRepository::class,
 			],
 			'humanresources.repository.internal.userSettingsRepository' => [
 				'className' => \Bitrix\HumanResources\Internals\Repository\Structure\UserSettingsRepository::class,
+			],
+			'humanresources.repository.internal.userRepository' => [
+				'className' => \Bitrix\HumanResources\Internals\Repository\Structure\UserRepository::class,
 			],
 			'humanresources.public.service.node.userService' => [
 				'className' => \Bitrix\HumanResources\Public\Service\Node\UserService::class,
@@ -364,10 +378,12 @@ return [
 			'agents' => [
 				Bitrix\HumanResources\Integration\AiAssistant\Agents\DepartmentAgent::class,
 				Bitrix\HumanResources\Integration\AiAssistant\Agents\TeamAgent::class,
+				Bitrix\HumanResources\Integration\AiAssistant\Agents\CompanyStructureAgent::class,
 			],
 			'toolSets' => [
 				Bitrix\HumanResources\Integration\AiAssistant\ToolSets\DepartmentToolSet::class,
 				Bitrix\HumanResources\Integration\AiAssistant\ToolSets\TeamToolSet::class,
+				Bitrix\HumanResources\Integration\AiAssistant\ToolSets\CompanyStructureToolSet::class,
 			],
 		],
 		'readonly' => true,

@@ -6,14 +6,14 @@ this.BX.Booking = this.BX.Booking || {};
 
 	// @vue/component
 	const PopupMaker = {
-	  props: {
-	    contentStructure: {
-	      type: Array,
-	      required: true
-	    }
-	  },
-	  emits: ['freeze', 'unfreeze'],
-	  template: `
+		props: {
+			contentStructure: {
+				type: Array,
+				required: true
+			}
+		},
+		emits: ['freeze', 'unfreeze'],
+		template: `
 		<div class="booking-popup-maker__content">
 			<template v-for="section in contentStructure" :key="section.id">
 				<div class="booking-popup-maker__content-section">
@@ -35,5 +35,5 @@ this.BX.Booking = this.BX.Booking || {};
 
 	exports.PopupMaker = PopupMaker;
 
-}((this.BX.Booking.Component = this.BX.Booking.Component || {})));
+})(this.BX.Booking.Component = this.BX.Booking.Component || {});
 //# sourceMappingURL=popup-maker.bundle.js.map

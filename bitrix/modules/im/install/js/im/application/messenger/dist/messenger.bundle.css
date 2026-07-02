@@ -1,38 +1,24 @@
 /* GENERAL WRAPPER */
 
 .bx-im-next-layout {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
 	height: 100%;
 	width: 100%;
-	-ms-flex-wrap: nowrap;
-	    flex-wrap: nowrap;
-	-webkit-box-align: stretch;
-	    -ms-flex-align: stretch;
-	        align-items: stretch;
+	flex-wrap: nowrap;
+	align-items: stretch;
 }
 
 .bx-im-next-layout-recent {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-flex: 0;
-	    -ms-flex: 0 0 300px;
-	        flex: 0 0 300px;
-	-webkit-box-orient: vertical;
-	-webkit-box-direction: normal;
-	    -ms-flex-direction: column;
-	        flex-direction: column;
+	flex: 0 0 300px;
+	flex-direction: column;
 	width: 100%;
 	height: 100%;
 	border-right: 1px solid #e9ebec;
 }
 
 .bx-im-next-layout-recent-search {
-	-webkit-box-flex: 0;
-	    -ms-flex: 0 0 45px;
-	        flex: 0 0 45px;
+	flex: 0 0 45px;
 }
 
 .bx-im-next-layout-recent-search-input {
@@ -43,20 +29,17 @@
 	padding-left: 40px;
 	border-bottom: 1px solid #e9ebec;
 
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='16' height='16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6.5 0a6.5 6.5 0 015.453 10.04l3.875 3.874a.5.5 0 010 .707l-.707.707a.5.5 0 01-.707 0l-3.797-3.798A6.5 6.5 0 116.5 0zm0 2a4.5 4.5 0 100 9 4.5 4.5 0 000-9z' fill='%23B5BABE'/%3E%3C/svg%3E");
+	background-image: url(data:image/svg+xml,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M6.5%200a6.5%206.5%200%20015.453%2010.04l3.875%203.874a.5.5%200%20010%20.707l-.707.707a.5.5%200%2001-.707%200l-3.797-3.798A6.5%206.5%200%20116.5%200zm0%202a4.5%204.5%200%20100%209%204.5%204.5%200%20000-9z%22%20fill%3D%22%23B5BABE%22%20fill-rule%3D%22nonzero%22%2F%3E%3C%2Fsvg%3E);
 	background-repeat: no-repeat;
 	background-position: 13px center;
 
 	margin: 0 15px;
-	-webkit-box-sizing: border-box;
-	        box-sizing: border-box;
+	box-sizing: border-box;
 	cursor:pointer;
 }
 
 .bx-im-next-layout-recent-list {
-	-webkit-box-flex: 1;
-	    -ms-flex-positive: 1;
-	        flex-grow: 1;
+	flex-grow: 1;
 	overflow: hidden;
 	overflow-y: auto;
 	position: relative;
@@ -69,32 +52,21 @@
 	height: 100%;
 }
 .bx-im-next-layout-content {
-	-webkit-box-flex: 1;
-	    -ms-flex-positive: 1;
-	        flex-grow: 1;
+	flex-grow: 1;
 }
 .bx-im-next-layout-notify {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-orient: vertical;
-	-webkit-box-direction: normal;
-	    -ms-flex-direction: column;
-	        flex-direction: column;
+	flex-direction: column;
 	width: 100%;
 	height: 100%;
 }
 .bx-im-next-layout-notify-header {
-	-webkit-box-flex: 0;
-	    -ms-flex: 0 0 67px;
-	        flex: 0 0 67px;
+	flex: 0 0 67px;
 	border-bottom: 1px solid #e9ebec;
 }
 
 .bx-im-next-layout-notify-messages {
-	-webkit-box-flex: 1;
-	    -ms-flex-positive: 1;
-	        flex-grow: 1;
+	flex-grow: 1;
 	position: relative;
 	overflow: hidden;
 	overflow-y: auto;
@@ -105,32 +77,23 @@
 }
 
 .bx-im-next-layout-dialog {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-orient: vertical;
-	-webkit-box-direction: normal;
-	    -ms-flex-direction: column;
-	        flex-direction: column;
+	flex-direction: column;
 	width: 100%;
 	height: 100%;
 }
 .bx-im-next-layout-dialog-header {
-	-webkit-box-flex: 0;
-	    -ms-flex: 0 0 67px;
-	        flex: 0 0 67px;
+	flex: 0 0 67px;
 	border-bottom: 1px solid #e9ebec;
 }
 
 .bx-im-next-layout-dialog-messages {
-	-webkit-box-flex: 1;
-	    -ms-flex-positive: 1;
-	        flex-grow: 1;
+	flex-grow: 1;
 	position: relative;
 	overflow: hidden;
 	overflow-y: auto;
 	background-color: #fbfbfb;
-	background-image: url(images/images/light_gray_v1.svg);
+	background-image: url("images/light_gray_v1.svg");
 	background-size: 240px;
 }
 .bx-im-next-layout-dialog-messages > div {
@@ -138,13 +101,11 @@
 	width: 100%;
 }
 .bx-im-next-layout-dialog-textarea {
-	-webkit-box-flex: 0;
-	    -ms-flex: 0 0 120px;
-	        flex: 0 0 120px;
+	flex: 0 0 120px;
 	position: relative;
 }
 .bx-im-next-layout-dialog-textarea-handle {
-	background-image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOSIgaGVpZ2h0PSIzIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxwYXRoIGQ9Ik0uNS41SDhtLTcuNSAySDgiIHN0cm9rZT0iIzk3OTc5NyIgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2UtbGluZWNhcD0ic3F1YXJlIi8+PC9zdmc+);
+	background-image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOSIgaGVpZ2h0PSIzIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxnIHN0cm9rZT0iIzk3OTc5NyIgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2UtbGluZWNhcD0ic3F1YXJlIj48cGF0aCBkPSJNLjUuNUg4TS41IDIuNUg4Ii8+PC9nPjwvc3ZnPg==);
 	background-position: center center;
 	background-repeat: no-repeat;
 	height: 10px;
@@ -152,8 +113,6 @@
 	position: absolute;
 	cursor: row-resize;
 	opacity: .5;
-	-webkit-transition: opacity .5s;
-	-o-transition: opacity .5s;
 	transition: opacity .5s;
 }
 .bx-im-next-layout-dialog-textarea .bx-im-textarea {

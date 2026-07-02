@@ -3,22 +3,21 @@
 return [
 	'extensions' => [
 		'asset-manager',
-		'loc',
-		'tokens',
 		'in-app-url',
-
-		'ui-system/typography/text',
-		'ui-system/blocks/icon',
-		'ui-system/form/buttons/button',
-		'utils/validation',
-		'utils/date/moment',
 		'layout/ui/friendly-date',
 		'layout/ui/friendly-date/formatter-factory',
+		'loc',
+		'tokens',
+		'ui-system/blocks/icon',
+		'ui-system/form/buttons/button',
+		'ui-system/typography/text',
 		'utils/date/formats',
+		'utils/date/moment',
+		'utils/object',
 		'utils/string',
 		'utils/test',
-		'utils/object',
-
+		'utils/validation',
+		'stafftrack:check-in-v2/enums',
 		'stafftrack:model/shift',
 	],
 ];

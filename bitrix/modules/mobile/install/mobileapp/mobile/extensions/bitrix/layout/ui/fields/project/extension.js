@@ -3,7 +3,8 @@
  */
 jn.define('layout/ui/fields/project', (require, exports, module) => {
 	const { EntitySelectorFieldClass } = require('layout/ui/fields/entity-selector');
-	const { WorkgroupUtil } = require('project/utils');
+	const { ProjectOpener } = require('project/opener');
+	const { requireLazy } = require('require-lazy');
 	const { checkDisabledToolById } = require('settings/disabled-tools');
 	const { InfoHelper } = require('layout/ui/info-helper');
 	const { Icon } = require('assets/icons');
@@ -135,16 +136,17 @@ jn.define('layout/ui/fields/project', (require, exports, module) => {
 			return true;
 		}
 
-		openEntity(projectId, isCollab = false, dialogId = '')
+		async openEntity(projectId, isCollab = false, dialogId = '')
 		{
 			if (isCollab)
 			{
+				await requireLazy('layout/socialnetwork/project/view');
 				ProjectViewManager.open(env.userId, projectId, this.getParentWidget(), isCollab, dialogId);
 
 				return;
 			}
 
-			void WorkgroupUtil.openProject(null, {
+			void ProjectOpener.open({
 				projectId,
 				siteId: env.siteId,
 				siteDir: env.siteDir,

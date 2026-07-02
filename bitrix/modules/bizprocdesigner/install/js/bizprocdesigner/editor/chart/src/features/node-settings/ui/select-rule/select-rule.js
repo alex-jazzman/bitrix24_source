@@ -14,7 +14,7 @@ import { PORT_TYPES } from '../../../../shared/constants';
 import type { Block } from '../../../../shared/types';
 
 export const SelectRule = {
-	name: 'select-rule',
+	name: 'SelectRule',
 	components: { BIcon },
 	props:
 	{
@@ -27,40 +27,43 @@ export const SelectRule = {
 	},
 	computed:
 	{
-		...mapState(useNodeSettingsStore, ['currentRuleId', 'ports']),
+		...mapState(useNodeSettingsStore, ['currentRule', 'ports']),
 		currentRuleTitle(): string
 		{
-			const { title } = this.ports
-				.find((port) => port.type === PORT_TYPES.input && port.id === this.currentRuleId);
+			const { title } = this.ports.find((port) => port.id === this.currentRule.id);
 
 			return title;
 		},
-	},
-	methods:
-	{
-		...mapActions(useNodeSettingsStore, ['setCurrentRuleId']),
-		getMenuItems(): Array<MenuItem>
+		menuItems(): Array<MenuItem>
 		{
-			return this.ports
-				.filter((port) => port.type === PORT_TYPES.input && !port.isConnectionPort)
+			const ports = this.currentRule.type === PORT_TYPES.input
+				? this.ports.filter((port) => port.type === PORT_TYPES.input)
+				: this.ports.filter((port) => port.type === PORT_TYPES.inputRelation)
+			;
+
+			return ports
 				.map((port) => {
 					return {
 						id: port.id,
 						text: port.title,
 						dataset: { testId: `menuItemRule-${port.id}` },
 						onclick: () => {
-							this.setCurrentRuleId(port.id);
+							this.setCurrentRule(port);
 							this.menu.close();
 						},
 					};
 				});
 		},
+	},
+	methods:
+	{
+		...mapActions(useNodeSettingsStore, ['setCurrentRule']),
 		onShowMenu(): void
 		{
 			this.menu = MenuManager.create(
 				'constructions-menu',
 				this.$refs.nodeSettingsRulesDropdown,
-				this.getMenuItems(),
+				this.menuItems,
 				{
 					width: 100,
 					maxHeight: 200,
@@ -74,12 +77,12 @@ export const SelectRule = {
 	},
 	template: `
 		<div
-			class="node-settings-rules-dropdown"
+			class="editor-chart-node-settings-rules-dropdown"
 			ref="nodeSettingsRulesDropdown"
 			:data-test-id="$testId('complexNodeRuleSettingsDropdown')"
 			@click="onShowMenu"
 		>
-			<span class="node-settings-rules-dropdown__value">
+			<span class="editor-chart-node-settings-rules-dropdown__value">
 				{{ currentRuleTitle }}
 			</span>
 			<BIcon

@@ -113,8 +113,25 @@
 			this.tasksDashboardFilter.updateCounters().then(() => this.updateMoreMenuButton()).catch(console.error);
 
 			this.onPullCallback = this.onPullCallback.bind(this);
+
+			this.shouldShowLoaderOnQueueStart = false;
+
 			this.pull = new Pull({
 				onPullCallback: this.onPullCallback,
+				onQueueStarted: () => {
+					if (!this.shouldShowLoaderOnQueueStart)
+					{
+						return;
+					}
+
+					this.shouldShowLoaderOnQueueStart = false;
+					this.showTitleLoader({ useCache: false, isDefaultBlockPage: true });
+				},
+				onQueueFinished: () => {
+					this.shouldShowLoaderOnQueueStart = false;
+					this.hideTitleLoader(false);
+				},
+				layout,
 				eventCallbacks: {
 					[Pull.events.USER_COUNTER]: (params) => {
 						this.tasksDashboardFilter.updateCountersFromPullEvent(params)
@@ -1030,6 +1047,11 @@
 
 		onTabSelected(data)
 		{
+			if (!data.changed)
+			{
+				return;
+			}
+
 			if (data.tabId === this.getTabName())
 			{
 				this.onAppActive(data);
@@ -1291,6 +1313,12 @@
 						reject(new Error('No need to update the task as we already have the actual data for it'));
 
 						return;
+					}
+
+					const navigator = PageManager.getNavigator();
+					if (!(navigator.isVisible() && navigator.isActiveTab()))
+					{
+						this.shouldShowLoaderOnQueueStart = true;
 					}
 
 					resolve({

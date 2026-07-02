@@ -24,4 +24,9 @@ export class BaseHandler
 	{
 		throw new Error('not implemented');
 	}
+
+	executeForKanban(grid: BX.CRM.Kanban.Grid, selectedIds: number[]): void
+	{
+		throw new Error('not implemented');
+	}
 }

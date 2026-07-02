@@ -6,6 +6,7 @@ jn.define('layout/ui/map/src/const/event-type', (require, exports, module) => {
 		PAGE_WITH_MAP_LOADED: 'pageWithMapLoaded',
 		MAP_LOADED: 'mapLoaded',
 		MARKER_CLICKED: 'markerClicked',
+		CLUSTER_CLICKED: 'clusterClicked',
 	};
 
 	module.exports = {

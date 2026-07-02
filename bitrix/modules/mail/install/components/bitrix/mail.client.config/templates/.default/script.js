@@ -178,6 +178,7 @@ BX.MailClientConfig.Edit = {
 
 		this.setSmtpSwitcher();
 		this.setCrmSwitcher();
+		this.initConnectionRequestSelector();
 		this.initShareAccessSelector();
 		this.initCrmQueueSelector();
 	},
@@ -549,6 +550,65 @@ BX.MailClientConfig.Edit = {
 		});
 
 		tagSelector.renderTo(queueContainerNode);
+	},
+
+	initConnectionRequestSelector()
+	{
+		const ownerBlock = document.getElementById('mail-mailbox-connection-request-owner-block');
+		const selectorContainer = document.getElementById('mail-mailbox-connection-request-selector-container');
+		const requestIdInput = document.getElementById('mail-mailbox-connection-request-id-input');
+
+		if (!ownerBlock || !selectorContainer || !requestIdInput)
+		{
+			return;
+		}
+
+		const slider = BX.SidePanel.Instance.getTopSlider();
+		const connectionRequest = slider?.getRequestParams?.()?.connectionRequest || null;
+
+		if (!connectionRequest)
+		{
+			BX.hide(ownerBlock);
+			selectorContainer.innerHTML = '';
+			requestIdInput.value = '';
+
+			return;
+		}
+
+		requestIdInput.value = connectionRequest.requestId;
+
+		this.ownerId = connectionRequest.requesterId;
+		this.shareAccessSelectorPreselectedIds = [['user', connectionRequest.requesterId]];
+
+		const shareAccessValueContainer = document.getElementById(this.shareAccessValueContainerId);
+		if (shareAccessValueContainer)
+		{
+			shareAccessValueContainer.value = JSON.stringify([`U${connectionRequest.requesterId}`]);
+		}
+
+		BX.show(ownerBlock);
+
+		selectorContainer.innerHTML = '';
+
+		const tagSelector = new BX.UI.EntitySelector.TagSelector({
+			multiple: false,
+			showAddButton: false,
+			dialogOptions: {
+				context: 'MAIL_CLIENT_CONFIG_CONNECTION_REQUEST_OWNER',
+				preselectedItems: [['user', connectionRequest.requesterId]],
+				undeselectedItems: [['user', connectionRequest.requesterId]],
+				maxCount: 1,
+				entities: [{
+					id: 'user',
+					options: {
+						inviteEmployeeLink: false,
+						intranetUsersOnly: true,
+					},
+				}],
+			},
+		});
+
+		tagSelector.renderTo(selectorContainer);
 	},
 
 	/**

@@ -1,0 +1,4 @@
+<?php
+$MESS["IMMOBILE_FOLDER_CREATE_ERROR_LIMIT"] = "Up to 20 folders is supported.";
+$MESS["IMMOBILE_FOLDER_CREATE_NAV_TITLE"] = "New folder";
+$MESS["IMMOBILE_FOLDER_CREATE_SUBMIT_BUTTON"] = "Create";

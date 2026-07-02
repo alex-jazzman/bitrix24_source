@@ -18,9 +18,9 @@ jn.define('im/messenger/lib/element/dialog/message/sticker', (require, exports, 
 	{
 		/**
 		 * @param {MessagesModelState} modelMessage
-		 * @param {CreateMessageOptions} options
+		 * @param {CreateMessageOptions|{}} options
 		 */
-		constructor(modelMessage = {}, options = {})
+		constructor(modelMessage, options = {})
 		{
 			super(modelMessage, options);
 
@@ -52,6 +52,9 @@ jn.define('im/messenger/lib/element/dialog/message/sticker', (require, exports, 
 			return StickerHelper.createImgBBCode(stickerData);
 		}
 
+		/**
+		 * @return {StickerDialogWidgetItem}
+		 */
 		toDialogWidgetItem()
 		{
 			return {

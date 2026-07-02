@@ -12,6 +12,12 @@ jn.define('im/messenger/lib/element/dialog/message/check-in/factory', (require, 
 	 */
 	class CheckInMessageFactory extends CustomMessageFactory
 	{
+		/**
+		 * @override
+		 * @param {MessagesModelState} modelMessage
+		 * @param {CreateMessageOptions|{}} options
+		 * @return {Message}
+		 */
 		static create(modelMessage, options = {})
 		{
 			try
@@ -26,9 +32,9 @@ jn.define('im/messenger/lib/element/dialog/message/check-in/factory', (require, 
 			}
 		}
 
-		static checkSuitableForDisplay(modelMessage)
+		static checkSuitableForDisplay(messageComponent)
 		{
-			return modelMessage.params?.componentId === CheckInMessageFactory.getComponentId();
+			return messageComponent === CheckInMessageFactory.getComponentId();
 		}
 
 		static getComponentId()

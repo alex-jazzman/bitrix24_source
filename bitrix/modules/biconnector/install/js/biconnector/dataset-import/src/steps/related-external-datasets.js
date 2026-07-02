@@ -13,11 +13,9 @@ export const RelatedExternalDatasetsStep = {
 			default: false,
 		},
 	},
-	data()
+	created()
 	{
-		return {
-			createDatasetsMenu: null,
-		};
+		this.createDatasetsMenu = null;
 	},
 	computed: {
 		defaultTitle(): string
@@ -105,6 +103,7 @@ export const RelatedExternalDatasetsStep = {
 							offsetTop: -50,
 							autoHide: true,
 							width: 270,
+							className: 'ui-hint-popup related-external-datasets__create-physical-hint',
 							angle: {
 								position: 'left',
 								offset: 15,

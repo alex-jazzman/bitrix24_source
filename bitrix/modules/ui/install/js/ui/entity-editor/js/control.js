@@ -3553,7 +3553,14 @@ if(typeof BX.UI.EntityEditorSection === "undefined")
 				this._addChildButton = BX.create("span",
 					{
 						props: {className: "ui-entity-editor-content-add-lnk"},
-						text: BX.message("UI_ENTITY_EDITOR_SELECT_FIELD"),
+						children: [
+							BX.create("span", {text: BX.message("UI_ENTITY_EDITOR_SELECT_FIELD")}),
+							new BX.UI.IconSet.Icon({
+								icon: BX.UI.IconSet.Outline.CHEVRON_DOWN_L,
+								size: 16,
+								color: 'var(--ui-color-design-plain-na-content-chevron)',
+							}).render(),
+						],
 						events: {click: BX.delegate(this.onAddChildBtnClick, this)}
 					});
 				this.addButtonElement(this._addChildButton, {position: "left"});

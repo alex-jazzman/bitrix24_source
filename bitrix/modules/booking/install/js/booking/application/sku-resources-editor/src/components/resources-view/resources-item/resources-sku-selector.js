@@ -1,4 +1,3 @@
-import { BaseEvent } from 'main.core.events';
 import { mapGetters } from 'ui.vue3.vuex';
 import { TagSelector } from 'ui.entity-selector';
 import type { TagSelectorOptions, DialogOptions } from 'ui.entity-selector';

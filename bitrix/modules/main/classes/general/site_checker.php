@@ -108,15 +108,16 @@ class CSiteCheckerTest
 
 		$arGroupName[8] = GetMessage("MAIN_SC_PERFORM");
 		$arGroupDesc[8] = '';
+		$arTestGroup[8] = [
+			['check_compression' => GetMessage("MAIN_SC_COMPRESSION_TEST")],
+		];
 		if (!IsModuleInstalled('bitrix24'))
 		{
 			$arTestGroup[8][] = ['check_perf' => GetMessage("MAIN_SC_PERF_TEST")];
 		}
-		$arTestGroup[8][] = ['check_compression' => GetMessage("MAIN_SC_COMPRESSION_TEST")];
 
 		$arGroupName[16] = GetMessage('SC_GR_EXTENDED');
 		$arTestGroup[16] = [
-			['check_dbconn' => GetMessage('SC_T_DBCONN')],
 			['check_session_ua' => GetMessage('SC_T_SESS_UA')],
 			['check_sites' => GetMessage('SC_T_SITES')],
 
@@ -140,6 +141,10 @@ class CSiteCheckerTest
 			['check_exec' => GetMessage('SC_T_EXEC')],
 			['check_getimagesize' => GetMessage('SC_T_GETIMAGESIZE')],
 		];
+		if (!IsModuleInstalled('bitrix24'))
+		{
+			array_unshift($arTestGroup[16], ['check_dbconn' => GetMessage('SC_T_DBCONN')]);
+		}
 
 		$arGroupName[32] = GetMessage('SC_GR_MYSQL');
 		$arTestGroup[32] = [
@@ -3003,18 +3008,30 @@ class CSiteCheckerTest
 		{
 			$file = $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/' . $module . '/install/mysql/install.sql';
 		}
-		if (file_exists($file)) // uses database...
+		$migrationFile = $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/' . $module . '/install/migrations/tables.php';
+
+		if (file_exists($file) || file_exists($migrationFile)) // uses database...
 		{
 			$arTableColumns = [];
 			$bModuleInstalled = ModuleTable::getById($module)->fetch();
 
-			if (false === ($query = file_get_contents($file)))
+			$arQuery = [];
+			if (file_exists($file))
 			{
-				return false;
+				$query = file_get_contents($file);
+				$arQuery = $DB->ParseSQLBatch(str_replace("\r", "", $query));
+			}
+			if (file_exists($migrationFile))
+			{
+				$collector = new \Bitrix\Main\UpdateSystem\Migration\Tools\MigrationQueryCollector(
+					absoluteMigrationFileName: $migrationFile,
+					moduleId: $module,
+					mode: \Bitrix\Main\UpdateSystem\Migration\DatabaseUpdateMode::SiteChecker,
+				);
+				$arQuery = array_merge($arQuery, $collector->collect());
 			}
 
 			$arTables = [];
-			$arQuery = $DB->ParseSQLBatch(str_replace("\r", "", $query));
 			foreach ($arQuery as $sql)
 			{
 				if (preg_match('#^(CREATE TABLE )(IF NOT EXISTS)? *`?([a-z0-9_]+)`?(.*);?$#mis', $sql, $regs))
@@ -3760,7 +3777,7 @@ function InitPureDB()
 	require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/autoload.php");
 	require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/tools.php");
 
-	global $DB, $DBDebug, $DBDebugToFile;
+	global $DB, $DBDebug, $DBDebugToFile, $CACHE_MANAGER;
 
 	/**
 	 * Defined in dbconn.php
@@ -3783,6 +3800,8 @@ function InitPureDB()
 		CDatabase::showConnectionError();
 		die();
 	}
+
+	$CACHE_MANAGER = new CCacheManager;
 }
 
 function TableFieldConstruct($field)

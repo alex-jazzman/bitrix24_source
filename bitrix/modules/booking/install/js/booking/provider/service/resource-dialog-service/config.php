@@ -8,14 +8,14 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 return [
 	'js' => 'dist/resource-dialog-service.bundle.js',
 	'rel' => [
-		'main.core',
-		'booking.core',
 		'booking.const',
-		'booking.lib.resources-date-cache',
+		'booking.core',
 		'booking.lib.api-client',
+		'booking.lib.resources-date-cache',
 		'booking.provider.service.booking-service',
 		'booking.provider.service.client-service',
 		'booking.provider.service.resources-service',
+		'main.core',
 	],
 	'skip_core' => false,
 ];

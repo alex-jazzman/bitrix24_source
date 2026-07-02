@@ -18,6 +18,7 @@ export type RegionalSettingsStoreState = {
 	documentSettingsMap: Map<string, DocumentSettings>,
 	currentDocumentUid: string | null,
 	documentsGroup: Map<string, DocumentDetails>,
+	previewUrlList: Map<string, string>,
 };
 
 export type RegionalSettingsStoreInitOptions = {
@@ -54,6 +55,7 @@ export const useRegionalSettingsStore = defineStore('sign-b2e-regional-settings-
 		},
 		documentSettingsMap: new Map(),
 		documentsGroup: new Map(),
+		previewUrlList: new Map(),
 	}),
 	getters: {
 		currentDocumentSettings(state): DocumentSettings
@@ -82,6 +84,11 @@ export const useRegionalSettingsStore = defineStore('sign-b2e-regional-settings-
 			for (const [uid, documentDetail] of documentsGroup)
 			{
 				const documentDetailPrevious = this.documentsGroup.has(uid) ? this.documentsGroup.get(uid) : {};
+
+				if (documentDetail.previewUrl === null)
+				{
+					this.previewUrlList.delete(uid);
+				}
 
 				this.documentsGroup.set(uid, {
 					...documentDetailPrevious,
@@ -206,6 +213,17 @@ export const useRegionalSettingsStore = defineStore('sign-b2e-regional-settings-
 				...storedSettings,
 				...settings,
 			});
+		},
+		async loadDocumentPreviewUrl(uid: string): Promise<void>
+		{
+			if (this.previewUrlList.has(uid))
+			{
+				return;
+			}
+
+			this.previewUrlList.set(uid, '');
+			const data = await new Api().getDocumentPreviewUrl(uid);
+			this.previewUrlList.set(uid, data?.url ?? '');
 		},
 		setDocumentSettings(uid: string, settings: DocumentSettings): void
 		{

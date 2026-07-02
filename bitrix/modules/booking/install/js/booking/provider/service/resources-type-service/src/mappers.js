@@ -1,5 +1,5 @@
-import { ResourceTypeModel } from 'booking.model.resource-types';
-import { ResourceTypeDto } from './types';
+import type { ResourceTypeModel } from 'booking.model.resource-types';
+import type { ResourceTypeDto } from './types';
 
 export function mapDtoToModel(resourceTypeDto: ResourceTypeDto): ResourceTypeModel
 {
@@ -35,6 +35,10 @@ export function mapDtoToModel(resourceTypeDto: ResourceTypeDto): ResourceTypeMod
 		templateTypeDelayed: resourceTypeDto.templateTypeDelayed,
 		delayedNotificationDelay: resourceTypeDto.delayedNotificationDelay,
 		delayedCounterDelay: resourceTypeDto.delayedCounterDelay,
+
+		// cancellation
+		isCancellationNotificationOn: resourceTypeDto.isCancellationNotificationOn,
+		cancellationNotificationDelay: resourceTypeDto.cancellationNotificationDelay,
 
 		// feedback
 		isFeedbackNotificationOn: resourceTypeDto.isFeedbackNotificationOn,
@@ -76,6 +80,10 @@ export function mapModelToDto(resourceType: ResourceTypeModel): ResourceTypeDto
 		templateTypeDelayed: resourceType.templateTypeDelayed,
 		delayedNotificationDelay: resourceType.delayedNotificationDelay,
 		delayedCounterDelay: resourceType.delayedCounterDelay,
+
+		// cancellation
+		isCancellationNotificationOn: resourceType.isCancellationNotificationOn,
+		cancellationNotificationDelay: resourceType.cancellationNotificationDelay,
 
 		// feedback
 		isFeedbackNotificationOn: resourceType.isFeedbackNotificationOn,

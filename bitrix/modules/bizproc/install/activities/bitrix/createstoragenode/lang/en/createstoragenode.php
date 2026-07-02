@@ -1,6 +1,7 @@
 <?php
 $MESS["BPCSN_DESCRIPTION_CODE_FIELD_NAME"] = "Storage symbolic code:";
-$MESS["BPCSN_DESCRIPTION_DESCRIPTION_FIELD_NAME"] = "Description;";
+$MESS["BPCSN_DESCRIPTION_DESCRIPTION_FIELD_NAME"] = "Description:";
+$MESS["BPCSN_DESCRIPTION_EMPTY_FIELDS_ERROR"] = "The storage name is required.";
 $MESS["BPCSN_DESCRIPTION_FIELD_CODE_CAPTION"] = "copy code";
 $MESS["BPCSN_DESCRIPTION_FIELD_COPY_NOTIFICATION"] = "Field symbolic code has been copied.";
 $MESS["BPCSN_DESCRIPTION_MODE_FIELD_NAME"] = "Update storage if already exists:";

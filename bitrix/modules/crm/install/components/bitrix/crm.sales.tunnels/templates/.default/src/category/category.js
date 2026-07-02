@@ -745,8 +745,8 @@ export class Category extends Event.EventEmitter
 		titleEditor.focus();
 
 		const title = this.getTitle();
-		titleEditor.setSelectionRange(titleLength, titleLength);
 		const titleLength = title.textContent.length;
+		titleEditor.setSelectionRange(titleLength, titleLength);
 	}
 
 	showTitle()

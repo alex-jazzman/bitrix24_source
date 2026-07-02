@@ -1,8 +1,7 @@
 import { Core } from 'im.v2.application.core';
+import { type RunActionError } from 'im.v2.lib.rest';
 
 import { AiAssistantWidgetChatOpener } from './components/ai-assistant-widget-chat-opener';
-
-import type { RunActionError } from 'im.v2.lib.rest';
 
 const APP_NAME = 'AiAssistantWidgetApplication';
 
@@ -43,7 +42,7 @@ export class AiAssistantWidgetApplication
 			el: rootContainer,
 			onError,
 			components: { AiAssistantWidgetChatOpener },
-			template: `<AiAssistantWidgetChatOpener dialogId="${dialogId}" />`,
+			template: `<AiAssistantWidgetChatOpener botDialogId="${dialogId}" />`,
 		});
 	}
 

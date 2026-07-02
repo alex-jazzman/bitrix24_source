@@ -3,6 +3,7 @@ import './style.css';
 import { BIcon } from 'ui.icon-set.api.vue';
 
 import { useLoc } from '../../../../shared/composables';
+import { PORT_TYPES } from '../../../../shared/constants';
 
 import { DragRuleEntity } from '../../directives/drag-rule-entity';
 
@@ -11,7 +12,7 @@ import type { TRuleCard, NodeSettings, OrderPayload } from '../../types';
 
 // @vue/component
 export const NodeSettingsRulesLayout = {
-	name: 'node-settings-rules-layout',
+	name: 'NodeSettingsRulesLayout',
 	components: { BIcon },
 	directives: { 'drag-construction': DragRuleEntity },
 	props:
@@ -22,9 +23,10 @@ export const NodeSettingsRulesLayout = {
 			type: Object,
 			required: true,
 		},
-		currentRuleId:
+		/** @type Port */
+		currentRule:
 		{
-			type: String,
+			type: [Object, null],
 			required: true,
 		},
 		isSaving:
@@ -32,7 +34,7 @@ export const NodeSettingsRulesLayout = {
 			type: Boolean,
 			required: true,
 		},
-		isRuleSettingsShown:
+		isShown:
 		{
 			type: Boolean,
 			required: true,
@@ -49,7 +51,12 @@ export const NodeSettingsRulesLayout = {
 	{
 		ruleCards(): Array<TRuleCard>
 		{
-			return this.nodeSettings.rules.get(this.currentRuleId)?.ruleCards ?? [];
+			const store = this.currentRule.type === PORT_TYPES.input
+				? this.nodeSettings.rules
+				: this.nodeSettings.relations
+			;
+
+			return store.get(this.currentRule.id).ruleCards;
 		},
 	},
 	methods:
@@ -60,36 +67,28 @@ export const NodeSettingsRulesLayout = {
 		},
 	},
 	template: `
-		<transition-group name="slide-rule-panel">
+		<transition-group name="slide-rules-panel">
 			<div
-				v-if="isRuleSettingsShown"
-				class="node-settings-rules-panel"
+				v-if="isShown"
+				class="editor-chart-node-settings-rules-panel"
 				:class="{ '--saving': isSaving }"
 			>
-				<div class="node-settings-rules-panel__header">
+				<div class="editor-chart-node-settings-rules-panel__header">
 					<BIcon
 						:size="20"
 						:data-test-id="$testId('complexNodeRuleSettingsClose')"
 						name="arrow-left-l"
 						color="#828b95"
-						class="node-settings-rules-panel__header_back"
+						class="editor-chart-node-settings-rules-panel__header_back"
 						@click="$emit('close')"
 					/>
-					<span class="node-settings-rules-panel__header_label">
+					<span class="editor-chart-node-settings-rules-panel__header_label">
 						{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_RULES_LAYOUT_TITLE') }}
 					</span>
 					<slot name="rules-dropdown" />
-					<!--
-					<BIcon
-						:size="20"
-						name="o-question"
-						color="#a8adb4"
-						class="node-settings-rules-panel__header_question"
-					/>
-					-->
 				</div>
 				<div
-					class="node-settings-rules-panel__content"
+					class="editor-chart-node-settings-rules-panel__content"
 					v-drag-construction="onDrop"
 					@scroll="$emit('scroll-layout')"
 				>
@@ -103,13 +102,13 @@ export const NodeSettingsRulesLayout = {
 						name="addRuleCardButton"
 					/>
 				</div>
-				<div class="node-settings-rules-panel__footer">
+				<div class="editor-chart-node-settings-rules-panel__footer">
 					<slot name="actions" />
 				</div>
 			</div>
 			<div
-				v-if="isRuleSettingsShown"
-				class="node-settings-rules-layout__back"
+				v-if="isShown"
+				class="editor-chart-node-settings-rules-layout__back"
 			></div>
 		</transition-group>
 	`,

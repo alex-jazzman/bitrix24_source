@@ -94,3 +94,8 @@
 .menu-popup-item-disabled-with-hint:hover {
 	background-color: transparent;
 }
+
+.related-external-datasets__create-physical-hint .popup-window-angly--arrow {
+	background-color: var(--ui-color-accent-soft-element-blue);
+	box-shadow: none;
+}

@@ -402,7 +402,7 @@ export default class Item
 		});
 	}
 
-	static #setFieldError(field: HTMLInputElement): void
+	static setFieldError(field: HTMLInputElement): void
 	{
 		Dom.addClass(field, 'menu-form-input-error');
 		Dom.attr(field, 'aria-invalid', 'true');
@@ -419,7 +419,7 @@ export default class Item
 		field.focus();
 	}
 
-	static #clearFieldError(field: HTMLInputElement): void
+	static clearFieldError(field: HTMLInputElement): void
 	{
 		Dom.removeClass(field, 'menu-form-input-error');
 		Dom.attr(field, 'aria-invalid', null);
@@ -434,7 +434,7 @@ export default class Item
 	{
 		if (String(form.elements["text"].value).trim().length <= 0)
 		{
-			this.#setFieldError(form.elements["text"]);
+			this.setFieldError(form.elements["text"]);
 			return false;
 		}
 		if (form.elements["link"])
@@ -442,7 +442,7 @@ export default class Item
 			if (String(form.elements["link"].value).trim().length <= 0 ||
 				Utils.refineUrl(form.elements["link"].value).length <= 0)
 			{
-				this.#setFieldError(form.elements["link"]);
+				this.setFieldError(form.elements["link"]);
 				return false;
 			}
 			else
@@ -486,12 +486,12 @@ export default class Item
 		;
 
 		Event.bind(form.elements['text'], 'input', () => {
-			this.#clearFieldError(form.elements['text']);
+			this.clearFieldError(form.elements['text']);
 		});
 		if (form.elements['link'])
 		{
 			Event.bind(form.elements['link'], 'input', () => {
-				this.#clearFieldError(form.elements['link']);
+				this.clearFieldError(form.elements['link']);
 			});
 		}
 

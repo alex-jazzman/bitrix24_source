@@ -2,6 +2,9 @@
 	--imol-textarea__background-color_panel-dark: rgba(var(--ui-color-palette-white-base-rgb), 0.06);
 	--imol-textarea__background-color_panel-light: rgba(var(--ui-color-palette-white-base-rgb), 0.3);
 
+	position: absolute;
+	bottom: 0;
+	width: 100%;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -20,4 +23,3 @@
 	padding: 0;
 	list-style: none;
 }
-

@@ -6,11 +6,13 @@ import 'ui.icon-set.outline';
 import { EditButton } from './collapsible-action/edit-button';
 import { ExpandButton } from './collapsible-action/expand-button';
 import { CollapseButton } from './collapsible-action/collapse-button';
+import { EntityCollapsibleTextEvent } from './const';
 
 import './entity-text.css';
 
 // @vue/component
 export const EntityCollapsibleText = {
+	name: 'EntityCollapsibleText',
 	components: {
 		HtmlFormatterComponent,
 		BIcon,
@@ -48,12 +50,17 @@ export const EntityCollapsibleText = {
 			type: Number,
 			default: 200,
 		},
+		stickyFooter: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	emits: ['editButtonClick', 'update:opened'],
-	setup(): { Outline: Object }
+	setup(): { Outline: Object, EntityCollapsibleTextEvent: typeof EntityCollapsibleTextEvent }
 	{
 		return {
 			Outline,
+			EntityCollapsibleTextEvent,
 		};
 	},
 	data(): Object
@@ -132,7 +139,7 @@ export const EntityCollapsibleText = {
 
 		if (this.openByDefault)
 		{
-			this.setPreviewShown(true);
+			this.setPreviewShown(true, EntityCollapsibleTextEvent.ByDefault);
 		}
 	},
 	methods: {
@@ -159,19 +166,19 @@ export const EntityCollapsibleText = {
 
 			if (!this.isOverflowing && this.showCollapseButton)
 			{
-				this.setPreviewShown(false);
+				this.setPreviewShown(false, EntityCollapsibleTextEvent.UpdateIsContentOverflowing);
 			}
 		},
-		onPreviewClick(): void
+		onPreviewClick(targetEvent: string): void
 		{
 			if (this.hidden)
 			{
-				this.setPreviewShown(true);
+				this.setPreviewShown(true, targetEvent);
 			}
 		},
-		setPreviewShown(isShown: boolean): void
+		setPreviewShown(isShown: boolean, targetEvent: string): void
 		{
-			this.$emit('update:opened', isShown);
+			this.$emit('update:opened', isShown, targetEvent);
 		},
 		onMouseDown(event): void
 		{
@@ -220,7 +227,7 @@ export const EntityCollapsibleText = {
 
 				if (!isLinkClick && !isButtonClick && !isImageClick && !isVideoClick)
 				{
-					this.onPreviewClick();
+					this.onPreviewClick(EntityCollapsibleTextEvent.HtmlFormatterComponentMouseUp);
 				}
 			}
 		},
@@ -256,11 +263,12 @@ export const EntityCollapsibleText = {
 				'--empty-content': !hasContent && hidden,
 				'--without-padding': !showFilesIndicator && hasFiles,
 				'--with-edit-button': showEditButton,
+				'--sticky': stickyFooter,
 			}"
 		>
 			<EditButton v-if="showEditButton" @click="$emit('editButtonClick')"/>
-			<ExpandButton v-if="hidden" :showFilesIndicator :filesCount @click="onPreviewClick"/>
-			<CollapseButton v-if="showCollapseButton" @click="setPreviewShown(false)"/>
+			<ExpandButton v-if="hidden" :showFilesIndicator :filesCount @click="onPreviewClick(EntityCollapsibleTextEvent.ExpandButtonClick)"/>
+			<CollapseButton v-if="showCollapseButton" @click="setPreviewShown(false, EntityCollapsibleTextEvent.CollapseButtonClick)"/>
 		</div>
 	`,
 };

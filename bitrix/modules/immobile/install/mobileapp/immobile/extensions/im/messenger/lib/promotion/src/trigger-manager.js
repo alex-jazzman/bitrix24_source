@@ -14,31 +14,19 @@ jn.define('im/messenger/lib/promotion/src/trigger-manager', (require, exports, m
 		eventEmitter: 'event-emitter',
 	};
 
-	/** @type {PromotionTriggerManager} */
-	let instance = null;
-
 	/**
+	 * @implements {Unsubscribable}
 	 * @class PromotionTriggerManager
 	 */
 	class PromotionTriggerManager
 	{
-		/**
-		 * @return {PromotionTriggerManager}
-		 */
-		static getInstance()
-		{
-			instance ??= new this();
-
-			return instance;
-		}
-
 		constructor()
 		{
 			/** @type {PromotionTrigger[]} */
 			this.triggers = [];
 		}
 
-		unsubscribeAll()
+		unsubscribeEvents()
 		{
 			this.triggers.forEach((trigger) => trigger.unsubscriber?.());
 			this.triggers = [];
@@ -213,9 +201,9 @@ jn.define('im/messenger/lib/promotion/src/trigger-manager', (require, exports, m
 					return Boolean(!payload.oldCounters.tasksTask && payload.newCounters.tasksTask > 0);
 				},
 				action: () => {
-					Promotion.getInstance().addToPromoQueue({
+					serviceLocator.get('promotion').addToPromoQueue({
 						promoId: Promo.tasksRecent,
-						callback: () => Promotion.getInstance().showTasksRecentPromotion(),
+						callback: () => serviceLocator.get('promotion').showTasksRecentPromotion(),
 					});
 				},
 			});

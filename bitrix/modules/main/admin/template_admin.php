@@ -3,7 +3,7 @@
  * Bitrix Framework
  * @package bitrix
  * @subpackage main
- * @copyright 2001-2013 Bitrix
+ * @copyright 2001-2026 Bitrix
  */
 
 /**
@@ -29,7 +29,7 @@ $oSort = new CAdminSorting($sTableID, "id", "asc");
 $lAdmin = new CAdminList($sTableID, $oSort);
 
 if(isset($_REQUEST['mode']) && ($_REQUEST['mode']=='list' || $_REQUEST['mode']=='frame'))
-	CFile::DisableJSFunction(true);
+	CFile::DisableJSFunction();
 
 if($lAdmin->EditAction() && $edit_php)
 {
@@ -70,7 +70,7 @@ if(($arID = $lAdmin->GroupAction()) && $edit_php)
 <script>
 exportData('<?=CUtil::JSEscape($ID)?>');
 </script>
-			<?
+			<?php
 				break;
 			case "copy":
 				$from = getLocalPath("templates/".$ID, BX_PERSONAL_ROOT);
@@ -80,9 +80,7 @@ exportData('<?=CUtil::JSEscape($ID)?>');
 		}
 	}
 }
-/** @global string $by */
-/** @global string $order */
-$rsData = CSiteTemplate::GetList(array($by => $order), array('TYPE' => ($isEditingMessageThemePage ? 'mail' : '')), array("ID", "NAME", "DESCRIPTION", "SCREENSHOT", "SORT"));
+$rsData = CSiteTemplate::GetList(array($oSort->getField() => $oSort->getOrder()), array('TYPE' => ($isEditingMessageThemePage ? 'mail' : '')), array("ID", "NAME", "DESCRIPTION", "SCREENSHOT", "SORT"));
 $rsData = new CAdminResult($rsData, $sTableID);
 $rsData->NavStart();
 
@@ -96,13 +94,16 @@ $lAdmin->AddHeaders(array(
 	array("id"=>"SORT", "content"=>GetMessage("site_templ_edit_sort"), "sort"=>"sort", "default"=>true),
 ));
 
-while($arRes = $rsData->NavNext(true, "f_"))
+while($arRes = $rsData->Fetch())
 {
-	$u_ID = urlencode($f_ID);
-	$row =& $lAdmin->AddRow($f_ID, $arRes, ($isEditingMessageThemePage ? "message_theme_edit.php" : "template_edit.php")."?ID=".$u_ID, GetMessage("MAIN_EDIT_TITLE"));
+	$templateIdUrl = urlencode($arRes["ID"]);
+	$templateScreenshot = $arRes["SCREENSHOT"] ?? '';
+	$templatePreview = $arRes["PREVIEW"] ?? '';
 
-	$row->AddViewField("SCREENSHOT", ($f_SCREENSHOT <> ''? CFile::Show2Images(($f_PREVIEW <> ''? $f_PREVIEW:$f_SCREENSHOT), $f_SCREENSHOT, 130, 100, "border=0") : ''));
-	$row->AddViewField("ID", '<a href="'.($isEditingMessageThemePage ? "message_theme_edit.php" : "template_edit.php").'?lang='.LANGUAGE_ID.'&amp;ID='.$u_ID.'" title="'.GetMessage("MAIN_EDIT_TITLE").'">'.$f_ID.'</a>');
+	$row = $lAdmin->AddRow($arRes["ID"], $arRes, ($isEditingMessageThemePage ? "message_theme_edit.php" : "template_edit.php")."?ID=".$templateIdUrl, GetMessage("MAIN_EDIT_TITLE"));
+
+	$row->AddViewField("SCREENSHOT", ($templateScreenshot <> '' ? CFile::Show2Images(($templatePreview <> '' ? $templatePreview : $templateScreenshot), $templateScreenshot, 130, 100, "border=0") : ''));
+	$row->AddViewField("ID", '<a href="'.($isEditingMessageThemePage ? "message_theme_edit.php" : "template_edit.php").'?lang='.LANGUAGE_ID.'&amp;ID='.$templateIdUrl.'" title="'.GetMessage("MAIN_EDIT_TITLE").'">'.htmlspecialcharsbx($arRes["ID"]).'</a>');
 
 	if ($edit_php)
 	{
@@ -112,20 +113,20 @@ while($arRes = $rsData->NavNext(true, "f_"))
 	}
 	else
 	{
-		$row->AddViewField("NAME", $f_NAME);
-		$row->AddViewField("DESCRIPTION", $f_DESCRIPTION);
-		$row->AddViewField("SORT", $f_SORT);
+		$row->AddViewField("NAME", htmlspecialcharsbx($arRes["NAME"] ?? ''));
+		$row->AddViewField("DESCRIPTION", htmlspecialcharsbx($arRes["DESCRIPTION"] ?? ''));
+		$row->AddViewField("SORT", htmlspecialcharsbx($arRes["SORT"] ?? ''));
 	}
 
 	$arActions = Array();
 
-	$arActions[] = array("ICON"=>"edit", "TEXT"=>($USER->CanDoOperation('edit_other_settings') || $USER->CanDoOperation('lpa_template_edit')? GetMessage("MAIN_ADMIN_MENU_EDIT") : GetMessage("MAIN_ADMIN_MENU_VIEW")), "ACTION"=>$lAdmin->ActionRedirect(($isEditingMessageThemePage ? "message_theme_edit.php" : "template_edit.php")."?ID=".$u_ID));
+	$arActions[] = array("ICON"=>"edit", "TEXT"=>($USER->CanDoOperation('edit_other_settings') || $USER->CanDoOperation('lpa_template_edit')? GetMessage("MAIN_ADMIN_MENU_EDIT") : GetMessage("MAIN_ADMIN_MENU_VIEW")), "ACTION"=>$lAdmin->ActionRedirect(($isEditingMessageThemePage ? "message_theme_edit.php" : "template_edit.php")."?ID=".$templateIdUrl));
 	if ($edit_php)
 	{
-		$arActions[] = array("ICON"=>"copy", "TEXT"=>GetMessage("MAIN_ADMIN_MENU_COPY"), "ACTION"=>$lAdmin->ActionDoGroup($u_ID, "copy"));
-		$arActions[] = array("ICON"=>"export", "TEXT"=>GetMessage("MAIN_ADMIN_LIST_EXPORT"), "ACTION"=>"exportData('".$u_ID."')");
+		$arActions[] = array("ICON"=>"copy", "TEXT"=>GetMessage("MAIN_ADMIN_MENU_COPY"), "ACTION"=>$lAdmin->ActionDoGroup($templateIdUrl, "copy"));
+		$arActions[] = array("ICON"=>"export", "TEXT"=>GetMessage("MAIN_ADMIN_LIST_EXPORT"), "ACTION"=>"exportData('".$templateIdUrl."')");
 		$arActions[] = array("SEPARATOR"=>true);
-		$arActions[] = array("ICON"=>"delete", "TEXT"=>GetMessage("MAIN_T_ADMIN_DEL"), "ACTION"=>"if(confirm('".GetMessage('MAIN_T_ADMIN_DEL_CONF')."')) ".$lAdmin->ActionDoGroup($u_ID, "delete"));
+		$arActions[] = array("ICON"=>"delete", "TEXT"=>GetMessage("MAIN_T_ADMIN_DEL"), "ACTION"=>"if(confirm('".GetMessage('MAIN_T_ADMIN_DEL_CONF')."')) ".$lAdmin->ActionDoGroup($templateIdUrl, "delete"));
 	}
 
 	$row->AddActions($arActions);
@@ -169,5 +170,7 @@ function exportData(val)
 	window.open("template_export.php?ID="+val+"&<?=bitrix_sessid_get()?>");
 }
 </script>
-<?$lAdmin->DisplayList();?>
-<?require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin.php");?>
+<?php
+$lAdmin->DisplayList();
+
+require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin.php");

@@ -31,4 +31,5 @@ $MESS["MAIL_BINDING_MEETING_ACTIVE"] = "Встреча";
 $MESS["MAIL_BINDING_MEETING_TITLE"]= "Создать встречу в календаре";
 $MESS["MAIL_BINDING_MEETING_TITLE_ACTIVE"]= "Открыть встречу";
 $MESS["MAIL_BINDING_MEETING_ERROR_MSGVER_1"] = 'Установите модуль "Календарь событий"';
-
+$MESS["MAIL_BINDING_CUSTOM_CHAT_MESSAGE_TEXT"] = "Обсудить в чате";
+$MESS["MAIL_BINDING_CUSTOM_CHAT_MESSAGE_TITLE"] = "Обсудить в чате";

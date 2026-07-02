@@ -9,6 +9,8 @@ use Bitrix\Crm\Format\TextHelper;
 use Bitrix\Crm\Restriction\AvailabilityManager;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\UserPermissions\Event;
+use Bitrix\Crm\Integration\IntranetManager;
 
 /** @var CrmEventViewComponent $this */
 
@@ -17,6 +19,9 @@ if (!CModule::IncludeModule('crm'))
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
 	return;
 }
+
+/** @global CMain $APPLICATION */
+$APPLICATION->SetTitle(htmlspecialcharsbx(GetMessage('CRM_EVENT_MAIN_TITLE')));
 
 $entityType = $arParams['ENTITY_TYPE'] ?? '';
 $toolsManager = Container::getInstance()->getIntranetToolsManager();
@@ -33,6 +38,16 @@ if(!$isAvailable)
 }
 
 $entityTypeID = CCrmOwnerType::ResolveID($entityType);
+$customSectionCode = $arParams['CUSTOM_SECTION_CODE']
+	?? IntranetManager::getCustomSectionByEntityTypeId($entityTypeID)?->getCode()
+	?? '';
+$isCustomSection = IntranetManager::isCustomSectionExists($customSectionCode);
+$customSectionId = IntranetManager::getCustomSection($customSectionCode)?->getId();
+$automateSolutionId = null;
+if ($customSectionId)
+{
+	$automateSolutionId = Container::getInstance()->getAutomatedSolutionManager()->getAutomatedSolutionByIntranetCustomSectionId($customSectionId)['ID'] ?? null;
+}
 
 $entityId = (isset($arParams['ENTITY_ID']) && !is_array($arParams['ENTITY_ID']) && $arParams['ENTITY_ID'] > 0)
 	? $arParams['ENTITY_ID']
@@ -41,23 +56,77 @@ $entityId = (isset($arParams['ENTITY_ID']) && !is_array($arParams['ENTITY_ID']) 
 
 $arFilter = [];
 
+$userPermissions = Container::getInstance()->getUserPermissions();
+
 if ($entityTypeID !== CCrmOwnerType::Undefined && $entityId > 0)
 {
-	if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canRead((int)$entityTypeID, (int)$entityId))
+	if (!$userPermissions->item()->canRead((int)$entityTypeID, (int)$entityId))
 	{
 		$arResult['ERROR'] = GetMessage('CRM_PERMISSION_DENIED');
 		$this->IncludeComponentTemplate();
 
 		return;
 	}
+
+	$needEventPermission = false;
+	if ($isCustomSection && $automateSolutionId !== null)
+	{
+		if (!$userPermissions->automatedSolutionEvent()->canRead($automateSolutionId))
+		{
+			$arResult['ERROR'] = GetMessage('CRM_PERMISSION_DENIED');
+			$this->IncludeComponentTemplate();
+
+			return;
+		}
+	}
+	else
+	{
+		$categoryId = 0;
+		if (in_array($entityTypeID, [CCrmOwnerType::Contact, CCrmOwnerType::Company], true))
+		{
+			$factory = Container::getInstance()->getFactory($entityTypeID);
+			$row = $factory?->getDataClass()::getList([
+				'select' => ['CATEGORY_ID'],
+				'filter' => ['=ID' => $entityId],
+				'limit' => 1,
+			])->fetch();
+			$categoryId = (int)($row['CATEGORY_ID'] ?? 0);
+		}
+		$needEventPermission = Event::isEntityTypeWithEventPermission($entityTypeID, $categoryId);
+	}
+
+	if ($needEventPermission && !$userPermissions->event()->canRead())
+	{
+		$arResult['ERROR'] = GetMessage('CRM_PERMISSION_DENIED');
+		$this->IncludeComponentTemplate();
+
+		return;
+	}
+
 	$arFilter['CHECK_PERMISSIONS'] = 'N';
 }
-elseif (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadSomeItemsInCrm())
+else
 {
-	$arResult['ERROR'] = GetMessage('CRM_PERMISSION_DENIED');
-	$this->IncludeComponentTemplate();
+	if ($isCustomSection && $automateSolutionId !== null)
+	{
+		if (!$userPermissions->automatedSolutionEvent()->canRead($automateSolutionId))
+		{
+			$arResult['ERROR'] = GetMessage('CRM_PERMISSION_DENIED');
+			$this->IncludeComponentTemplate();
 
-	return;
+			return;
+		}
+	}
+	else
+	{
+		if (!$userPermissions->event()->canRead())
+		{
+			$arResult['ERROR'] = GetMessage('CRM_PERMISSION_DENIED');
+			$this->IncludeComponentTemplate();
+
+			return;
+		}
+	}
 }
 
 $arParams['PATH_TO_EVENT_LIST'] = CrmCheckPath(
@@ -187,6 +256,52 @@ else
 	}
 }
 
+$customSectionEntityTypeIds = [];
+$crmDynamicTypesIds = [];
+if (!$entityType)
+{
+	if ($isCustomSection)
+	{
+		$customSectionEntityTypeIds = IntranetManager::getEntityTypesInCustomSection($customSectionCode);
+
+		foreach ($customSectionEntityTypeIds as $entityTypeId)
+		{
+			$arFilter['@ENTITY_TYPE'][] = CCrmOwnerType::ResolveName($entityTypeId);
+		}
+	}
+	else
+	{
+		$arFilter['@ENTITY_TYPE'] = array_merge(
+			array_keys(CCrmStatus::GetStatusList('EVENT_TYPE')),
+			[
+				CCrmOwnerType::LeadName,
+				CCrmOwnerType::DealName,
+				CCrmOwnerType::ContactName,
+				CCrmOwnerType::CompanyName,
+				CCrmOwnerType::InvoiceName,
+				CCrmOwnerType::QuoteName,
+				CCrmOwnerType::OrderName,
+				CCrmOwnerType::SystemName,
+				CCrmOwnerType::CallListTypeName,
+			]
+		);
+
+		$crmDynamicTypes = Container::getInstance()->getDynamicTypeDataClass()::getList([
+			'select' => ['ENTITY_TYPE_ID'],
+			'filter' => [
+				'=CUSTOM_SECTION_ID' => null,
+			],
+		])->fetchAll();
+
+		$crmDynamicTypesIds = array_column($crmDynamicTypes, 'ENTITY_TYPE_ID');
+
+		foreach ($crmDynamicTypesIds as $entityTypeId)
+		{
+			$arFilter['@ENTITY_TYPE'][] = CCrmOwnerType::ResolveName($entityTypeId);
+		}
+	}
+}
+
 if(isset($arParams['EVENT_COUNT']))
 	$arResult['EVENT_COUNT'] = intval($arParams['EVENT_COUNT']) > 0? intval($arParams['EVENT_COUNT']): 20;
 else
@@ -311,6 +426,10 @@ if (!$arResult['INTERNAL'] || $arResult['SHOW_INTERNAL_FILTER'])
 		{
 			$enabledEntityTypeNames[] = \CCrmOwnerType::QuoteName;
 		}
+		if ($entityPermissions->canReadItems(CCrmOwnerType::SmartInvoice))
+		{
+			$enabledEntityTypeNames[] = \CCrmOwnerType::SmartInvoiceName;
+		}
 
 		if(!empty($enabledEntityTypeNames))
 		{
@@ -330,69 +449,112 @@ if (!$arResult['INTERNAL'] || $arResult['SHOW_INTERNAL_FILTER'])
 				'convertJson' => 'Y'
 			);
 
-			$entityTypeCounter = 0;
-			foreach($enabledEntityTypeNames as $entityTypeName)
+			$filterEntityTypeIds = [];
+			if (!$isCustomSection)
 			{
-				switch($entityTypeName)
+				$entityTypeCounter = 0;
+				foreach($enabledEntityTypeNames as $entityTypeName)
 				{
-					case \CCrmOwnerType::LeadName:
-						$destSelectorParams['enableCrmLeads'] = 'Y';
-						$destSelectorParams['addTabCrmLeads'] = 'Y';
-						$entityTypeCounter++;
-						break;
-					case \CCrmOwnerType::DealName:
-						$destSelectorParams['enableCrmDeals'] = 'Y';
-						$destSelectorParams['addTabCrmDeals'] = 'Y';
-						$entityTypeCounter++;
-						break;
-					case \CCrmOwnerType::ContactName:
-						$destSelectorParams['enableCrmContacts'] = 'Y';
-						$destSelectorParams['addTabCrmContacts'] = 'Y';
-						$entityTypeCounter++;
-						break;
-					case \CCrmOwnerType::CompanyName:
-						$destSelectorParams['enableCrmCompanies'] = 'Y';
-						$destSelectorParams['addTabCrmCompanies'] = 'Y';
-						$entityTypeCounter++;
-						break;
-					case \CCrmOwnerType::QuoteName:
-						$destSelectorParams['enableCrmQuotes'] = 'Y';
-						$destSelectorParams['addTabCrmQuotes'] = 'Y';
-						$entityTypeCounter++;
-						break;
-					default:
+					switch($entityTypeName)
+					{
+						case \CCrmOwnerType::LeadName:
+							$destSelectorParams['enableCrmLeads'] = 'Y';
+							$destSelectorParams['addTabCrmLeads'] = 'Y';
+							$entityTypeCounter++;
+							break;
+						case \CCrmOwnerType::DealName:
+							$destSelectorParams['enableCrmDeals'] = 'Y';
+							$destSelectorParams['addTabCrmDeals'] = 'Y';
+							$entityTypeCounter++;
+							break;
+						case \CCrmOwnerType::ContactName:
+							$destSelectorParams['enableCrmContacts'] = 'Y';
+							$destSelectorParams['addTabCrmContacts'] = 'Y';
+							$entityTypeCounter++;
+							break;
+						case \CCrmOwnerType::CompanyName:
+							$destSelectorParams['enableCrmCompanies'] = 'Y';
+							$destSelectorParams['addTabCrmCompanies'] = 'Y';
+							$entityTypeCounter++;
+							break;
+						case \CCrmOwnerType::QuoteName:
+							$destSelectorParams['enableCrmQuotes'] = 'Y';
+							$destSelectorParams['addTabCrmQuotes'] = 'Y';
+							$entityTypeCounter++;
+							break;
+						case \CCrmOwnerType::SmartInvoiceName:
+							$destSelectorParams['enableCrmSmartInvoices'] = 'Y';
+							$destSelectorParams['addTabCrmSmartInvoices'] = 'Y';
+							$entityTypeCounter++;
+							break;
+						default:
+					}
+				}
+				if ($entityTypeCounter <= 1)
+				{
+					$destSelectorParams['addTabCrmLeads'] = 'N';
+					$destSelectorParams['addTabCrmDeals'] = 'N';
+					$destSelectorParams['addTabCrmContacts'] = 'N';
+					$destSelectorParams['addTabCrmCompanies'] = 'N';
+					$destSelectorParams['addTabCrmQuotes'] = 'N';
+					$destSelectorParams['addTabCrmSmartInvoices'] = 'N';
+				}
+
+				$filterEntityTypeIds = [
+					CCrmOwnerType::Lead,
+					CCrmOwnerType::Deal,
+					CCrmOwnerType::Contact,
+					CCrmOwnerType::Company,
+					CCrmOwnerType::Quote,
+					CCrmOwnerType::SmartInvoice,
+				];
+
+				foreach (array_diff($crmDynamicTypesIds, CCrmOwnerType::getDynamicTypeBasedStaticEntityTypeIds()) as $entityTypeId)
+				{
+					$destSelectorParams['enableCrmDynamics'][$entityTypeId] = 'Y';
+					$destSelectorParams['addTabCrmDynamics'][$entityTypeId] = 'Y';
+					$destSelectorParams['crmDynamicTitles']['DYNAMICS_' . $entityTypeId] = htmlspecialcharsbx(CCrmOwnerType::GetDescription($entityTypeId));
+
+					$filterEntityTypeIds[] = $entityTypeId;
 				}
 			}
-			if ($entityTypeCounter <= 1)
+			else
 			{
-				$destSelectorParams['addTabCrmLeads'] = 'N';
-				$destSelectorParams['addTabCrmDeals'] = 'N';
-				$destSelectorParams['addTabCrmContacts'] = 'N';
-				$destSelectorParams['addTabCrmCompanies'] = 'N';
-				$destSelectorParams['addTabCrmQuotes'] = 'N';
+				foreach ($customSectionEntityTypeIds as $entityTypeId)
+				{
+					$destSelectorParams['enableCrmDynamics'][$entityTypeId] = 'Y';
+					$destSelectorParams['addTabCrmDynamics'][$entityTypeId] = 'Y';
+					$destSelectorParams['crmDynamicTitles']['DYNAMICS_' . $entityTypeId] = htmlspecialcharsbx(CCrmOwnerType::GetDescription($entityTypeId));
+
+					$filterEntityTypeIds[] = $entityTypeId;
+				}
 			}
 
-			$arResult['FILTER'][] = array(
+			$arResult['FILTER'][] = [
 				'id' => 'ENTITY',
 				'name' => GetMessage('CRM_COLUMN_ENTITY'),
 				'type' => 'dest_selector',
 				'params' => $destSelectorParams
-			);
+			];
 
-			$arResult['FILTER'][] = array(
+			$entityTypeNames = [];
+			foreach ($filterEntityTypeIds as $entityTypeId)
+			{
+				$entityTypeNames[CCrmOwnerType::ResolveName($entityTypeId)] = CCrmOwnerType::GetDescription($entityTypeId);
+			}
+
+			$filterByEntityType = [
 				'id' => 'ENTITY_TYPE',
 				'name' => GetMessage('CRM_COLUMN_ENTITY_TYPE'),
 				'default' => true,
 				'type' => 'list',
-				'items' => array(
+				'items' => [
 					'' => '',
-					'LEAD' => GetMessage('CRM_ENTITY_TYPE_LEAD'),
-					'CONTACT' => GetMessage('CRM_ENTITY_TYPE_CONTACT'),
-					'COMPANY' => GetMessage('CRM_ENTITY_TYPE_COMPANY'),
-					'DEAL' => GetMessage('CRM_ENTITY_TYPE_DEAL'),
-					'QUOTE' => GetMessage('CRM_ENTITY_TYPE_QUOTE_MSGVER_1')
-				)
-			);
+					...$entityTypeNames,
+				],
+			];
+
+			$arResult['FILTER'][] = $filterByEntityType;
 		}
 	}
 

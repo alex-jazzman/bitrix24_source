@@ -211,6 +211,9 @@ $bodyLoaderMaxTime = ini_get('max_execution_time') ?: 60;
 								<? endif ?>
 							</span>
 						</div>
+						<? if (isset($arParams['LOADED_FROM_LOG']) && $arParams['LOADED_FROM_LOG'] === 'Y'): ?>
+							<button type="button" class="crm-task-list-mail-item-collapse-btn" aria-expanded="true" aria-label="<?=getMessage('CRM_ACT_EMAIL_COLLAPSE') ?>"></button>
+						<? endif ?>
 					</span>
 					<div class="crm-task-list-mail-item-inner-send">
 						<? $rcpt = array(
@@ -227,7 +230,7 @@ $bodyLoaderMaxTime = ini_get('max_execution_time') ?: 60;
 									<span class="crm-task-list-mail-item-inner-send-item" <? if ($k > 0): ?> style="color: #000; "<? endif ?>><?=$type ?>:</span>
 									<? foreach ($list as $item): ?>
 										<? if ($limit == 0): ?>
-											<a class="crm-task-list-mail-item-to-list-more crm-task-list-mail-fake-link" href="#"><?=getMessage('CRM_ACT_EMAIL_CREATE_TO_MORE', array('#NUM#' => $count)) ?></a>
+											<button type="button" class="crm-task-list-mail-item-to-list-more"><?=getMessage('CRM_ACT_EMAIL_CREATE_TO_MORE', array('#NUM#' => $count)) ?></button>
 											<span class="crm-task-list-mail-item-to-list-hidden">
 										<? endif ?>
 										<span class="crm-task-list-mail-item-inner-send-block">
@@ -235,7 +238,8 @@ $bodyLoaderMaxTime = ini_get('max_execution_time') ?: 60;
 												<? if (!empty($item['IMAGE'])): ?> style="background: url('<?=htmlspecialcharsbx($item['IMAGE']) ?>'); background-size: 23px 23px; "<? endif ?>>
 											</span>
 											<? if ($item['URL']): ?>
-												<a class="crm-task-list-mail-item-inner-send-mail-link" href="<?=$item['URL'] ?>" target="_blank"><?=htmlspecialcharsbx($item['TITLE']) ?></a>
+												<a class="crm-task-list-mail-item-inner-send-mail-link" href="<?=$item['URL'] ?>" target="_blank"
+												aria-label="<?=htmlspecialcharsbx($type) ?>: <?=htmlspecialcharsbx($item['TITLE']) ?>"><?=htmlspecialcharsbx($item['TITLE']) ?></a>
 											<? else: ?>
 												<span class="crm-task-list-mail-item-inner-send-mail"><?=htmlspecialcharsbx($item['TITLE']) ?></span>
 											<? endif ?>
@@ -253,20 +257,22 @@ $bodyLoaderMaxTime = ini_get('max_execution_time') ?: 60;
 		</div>
 		<div class="crm-task-list-mail-item-control-block"
 			id="<?= htmlspecialcharsbx($controlElementId) ?>"
-			<?php if($isAjaxBody): ?> style="display:none" <?php endif; ?>>
+			<?php if($isAjaxBody || !empty($activity['IS_READ_ONLY'])): ?> style="display:none" <?php endif; ?>>
 			<div class="crm-task-list-mail-item-control-inner">
 				<input type="hidden" name="OWNER_TYPE" value="<?=\CCrmOwnerType::resolveName($activity['OWNER_TYPE_ID']) ?>">
 				<input type="hidden" name="OWNER_ID" value="<?=$activity['OWNER_ID'] ?>">
-				<div class="crm-task-list-mail-item-control crm-task-list-mail-item-control-reply"><?=getMessage('CRM_ACT_EMAIL_BTN_REPLY') ?></div>
-				<div class="crm-task-list-mail-item-control crm-task-list-mail-item-control-icon-answertoall"><?=getMessage('CRM_ACT_EMAIL_BTN_REPLY_All') ?></div>
-				<div class="crm-task-list-mail-item-control crm-task-list-mail-item-control-icon-resend"><?=getMessage('CRM_ACT_EMAIL_BTN_FWD') ?></div>
+				<button type="button" class="crm-task-list-mail-item-control crm-task-list-mail-item-control-reply"><?=getMessage('CRM_ACT_EMAIL_BTN_REPLY') ?></button>
+				<button type="button" class="crm-task-list-mail-item-control crm-task-list-mail-item-control-icon-answertoall"><?=getMessage('CRM_ACT_EMAIL_BTN_REPLY_All') ?></button>
+				<button type="button" class="crm-task-list-mail-item-control crm-task-list-mail-item-control-icon-resend"><?=getMessage('CRM_ACT_EMAIL_BTN_FWD') ?></button>
+				<button class="crm-task-list-mail-item-control crm-task-list-mail-item-control-icon-discuss js-crm-discuss-in-chat"
+					 data-activity-id="<?= (int)$activity['ID'] ?>"><?=getMessage('CRM_ACT_EMAIL_BTN_DISCUSS_IN_CHAT') ?></button>
 				<? if ($activity['DIRECTION'] == \CCrmActivityDirection::Incoming): ?>
 					<? if ((new \Bitrix\Crm\Exclusion\Access(\CCrmSecurityHelper::getCurrentUserId()))->canWrite()): ?>
-						<div class="crm-task-list-mail-item-control crm-task-list-mail-item-control-icon-skip"><?=getMessage('CRM_ACT_EMAIL_BTN_SKIP') ?></div>
+						<button type="button" class="crm-task-list-mail-item-control crm-task-list-mail-item-control-icon-skip"><?=getMessage('CRM_ACT_EMAIL_BTN_SKIP') ?></button>
 					<? endif ?>
-					<div class="crm-task-list-mail-item-control crm-task-list-mail-item-control-icon-spam"><?=getMessage('CRM_ACT_EMAIL_BTN_SPAM') ?></div>
+					<button type="button" class="crm-task-list-mail-item-control crm-task-list-mail-item-control-icon-spam"><?=getMessage('CRM_ACT_EMAIL_BTN_SPAM') ?></button>
 				<? endif ?>
-				<div class="crm-task-list-mail-item-control crm-task-list-mail-item-control-icon-delete"><?=getMessage('CRM_ACT_EMAIL_BTN_DEL') ?></div>
+				<button type="button" class="crm-task-list-mail-item-control crm-task-list-mail-item-control-icon-delete"><?=getMessage('CRM_ACT_EMAIL_BTN_DEL') ?></button>
 			</div>
 		</div>
 	</div>
@@ -381,12 +387,12 @@ $bodyLoaderMaxTime = ini_get('max_execution_time') ?: 60;
 		</div>
 	</div>
 <? endif ?>
-<div class="crm-task-list-mail-message-panel crm-task-list-mail-border-bottom"
+<button type="button" class="crm-task-list-mail-message-panel crm-task-list-mail-border-bottom"
 	id="<?= htmlspecialcharsbx($replyElementId) ?>"
-	<?php if($isAjaxBody): ?> style="display:none" <?php endif; ?>>
-	<div class="crm-task-list-mail-item-user" <? if (!empty($arParams['USER_IMAGE'])): ?> style="background: url('<?=htmlspecialcharsbx($arParams['USER_IMAGE']) ?>'); background-size: 23px 23px; "<? endif ?>></div>
-	<div class="crm-task-list-mail-message-panel-text"><?=getMessage('CRM_ACT_EMAIL_REPLY') ?></div>
-</div>
+	<?php if($isAjaxBody || !empty($activity['IS_READ_ONLY'])): ?> style="display:none" <?php endif; ?>>
+	<span class="crm-task-list-mail-item-user" aria-hidden="true" <? if (!empty($arParams['USER_IMAGE'])): ?> style="background: url('<?=htmlspecialcharsbx($arParams['USER_IMAGE']) ?>'); background-size: 23px 23px; "<? endif ?>></span>
+	<span class="crm-task-list-mail-message-panel-text"><?=getMessage('CRM_ACT_EMAIL_REPLY') ?></span>
+</button>
 
 <? $formId = sprintf('crm_act_email_reply_%u_form', $activity['ID']); ?>
 <form id="<?=htmlspecialcharsbx($formId) ?>" method="POST"

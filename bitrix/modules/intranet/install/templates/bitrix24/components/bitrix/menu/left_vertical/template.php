@@ -36,7 +36,7 @@ $showAiAssistantWidget = ModuleManager::isModuleInstalled('aiassistant')
 ;
 ?>
 
-<nav aria-label="<?=Loc::getMessage('MENU_NAV_ARIA_LABEL')?>" class="menu-items-block menu-items-view-mode <?= $showAiAssistantWidget ? '--with-ai' : '' ?>" id="menu-items-block">
+<nav tabindex="-1" aria-label="<?=Loc::getMessage('MENU_NAV_ARIA_LABEL_2')?>" class="menu-items-block menu-items-view-mode <?= $showAiAssistantWidget ? '--with-ai' : '' ?>" id="menu-items-block">
 	<div class="menu-items-header">
 		<div class="menu-items-header__menu-swticher">
 			<button type="button"
@@ -150,6 +150,7 @@ $showAiAssistantWidget = ModuleManager::isModuleInstalled('aiassistant')
 					}
 
 					$itemId = $item["PARAMS"]["menu_item_id"];
+					$customClasses = [];
 					$isCustomItem = preg_match("/^[0-9]+$/", $itemId) === 1;
 					$isCustomSection =
 						isset($item['PARAMS']['is_custom_section'])
@@ -161,6 +162,21 @@ $showAiAssistantWidget = ModuleManager::isModuleInstalled('aiassistant')
 					if (!$isCustomItem)
 					{
 						$itemClass .= " " . str_replace("_", "-", $itemId);
+					}
+					if (isset($item['PARAMS']['class']) && is_string($item['PARAMS']['class']))
+					{
+						foreach (preg_split('/\s+/', trim($item['PARAMS']['class'])) as $className)
+						{
+							$className = preg_replace('/[^a-zA-Z0-9_-]/', '', $className);
+							if ($className !== '')
+							{
+								$customClasses[] = $className;
+							}
+						}
+						if (!empty($customClasses))
+						{
+							$itemClass .= ' ' . implode(' ', $customClasses);
+						}
 					}
 
 					if ($isCompositeMode === false && $counter > 0 && $counterId <> '')
@@ -267,7 +283,7 @@ $showAiAssistantWidget = ModuleManager::isModuleInstalled('aiassistant')
 								<?=htmlspecialcharsbx($item["PARAMS"]["onclick"])?>
 							<?endif?>"><?
 						endif;
-							?><span class="menu-item-icon-box"><span class="menu-item-icon" aria-hidden="true"></span></span><?
+							?><span class="menu-item-icon-box"><span class="menu-item-icon ui-icon-set__scope" aria-hidden="true"></span></span><?
 							?><span class="menu-item-link-text <? echo isset($item["PARAMS"]["is_beta"]) ? ' menu-item-link-beta' : ''?>" data-role="item-text"><?=$itemText?></span><?
 							if (isset($item["PARAMS"]["is_beta"]))
 							{
@@ -309,7 +325,11 @@ $showAiAssistantWidget = ModuleManager::isModuleInstalled('aiassistant')
 						?></a><?
 						endif;
 						$editBtnHideClass = "";
-						if ($item["PARAMS"]["menu_item_id"] === "menu_all_groups" && $arResult["GROUP_COUNT"] > 0):
+						if (
+							$item["PARAMS"]["menu_item_id"] === "menu_all_groups"
+							&& $item["PARAMS"]["class"] !== "menu-all-projects"
+							&& $arResult["GROUP_COUNT"] > 0
+						):
 							$editBtnHideClass = " menu-fav-editable-btn-hide";
 							?><button type="button" class="menu-item-show-link" id="menu-all-groups-link"><?=Loc::getMessage("MENU_SHOW")?></button><?
 						endif;
@@ -363,7 +383,7 @@ $showAiAssistantWidget = ModuleManager::isModuleInstalled('aiassistant')
 		>
 			<span class="menu-item-link">
 					<span class="menu-item-icon-box" style="">
-						<span class="menu-item-icon" aria-hidden="true"></span>
+						<span class="menu-item-icon ui-icon-set__scope" aria-hidden="true"></span>
 					</span>
 				<span class="menu-item-link-text" id="menu-more-btn-text" data-role="item-text" style=""><?=Loc::getMessage("MENU_MORE_ITEMS_EXPAND")?></span>
 				<?php if ($isCompositeMode || $sumHiddenCounters <= 0): ?>
@@ -412,7 +432,7 @@ $showAiAssistantWidget = ModuleManager::isModuleInstalled('aiassistant')
 			>
 				<span class="menu-item-link" style="">
 					<span class="menu-item-icon-box" style="">
-						<span class="menu-item-icon" aria-hidden="true"></span>
+						<span class="menu-item-icon ui-icon-set__scope" aria-hidden="true"></span>
 					</span>
 					<span class="menu-item-link-text" id="menu-settings-btn-text" data-role="item-text" style=""><?=Loc::getMessage("LEFT_MENU_SETTINGS")?></span>
 				</span>
@@ -424,10 +444,6 @@ $showAiAssistantWidget = ModuleManager::isModuleInstalled('aiassistant')
 		</div>
 	</div>
 </nav>
-
-<?php if ($showAiAssistantWidget): ?>
-	<div class="menu-items-ai-assistant-stub menu-items-block__scope"></div>
-<?php endif; ?>
 
 <div class="menu-items-stub menu-items-block__scope"></div>
 <?

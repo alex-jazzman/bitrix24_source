@@ -14,6 +14,10 @@ jn.define('layout/ui/copilot-role-selector', (require, exports, module) => {
 	const { CopilotRoleList } = require('layout/ui/copilot-role-selector/src/role-list');
 	const { uniqBy } = require('utils/array');
 	const { Type } = require('type');
+	const { makeLibraryImagePath } = require('asset-manager');
+
+	const bitrixGptAvatarPath = makeLibraryImagePath('bitrix-gpt-avatar-rounded.png', 'graphic');
+	const copilotAvatarPath = `${currentDomain}/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/copilot-role-selector/image/avatar_copilot.png`;
 
 	/**
 	 * @class CopilotRoleSelector
@@ -87,6 +91,7 @@ jn.define('layout/ui/copilot-role-selector', (require, exports, module) => {
 		 * @params {object} [params.openWidgetConfig = {}]
 		 * @params [boolean] [params.showSkipButton = {}]
 		 * @params {string} [params.skipButtonText = null]
+		 * @params {boolean} [params.isBitrixGptV2Enabled = false]
 		 * @return Promise
 		 */
 		static open({
@@ -96,6 +101,7 @@ jn.define('layout/ui/copilot-role-selector', (require, exports, module) => {
 			openWidgetConfig = {},
 			showSkipButton = false,
 			skipButtonText = null,
+			isBitrixGptV2Enabled = false,
 		})
 		{
 			return new Promise((resolve) => {
@@ -117,6 +123,7 @@ jn.define('layout/ui/copilot-role-selector', (require, exports, module) => {
 								}
 							},
 							skipButtonText,
+							isBitrixGptV2Enabled,
 						});
 						if (showSkipButton)
 						{
@@ -155,7 +162,7 @@ jn.define('layout/ui/copilot-role-selector', (require, exports, module) => {
 
 		render()
 		{
-			const { layout } = this.props;
+			const { layout, isBitrixGptV2Enabled } = this.props;
 			const {
 				selectedScopeId,
 				pending,
@@ -180,9 +187,9 @@ jn.define('layout/ui/copilot-role-selector', (require, exports, module) => {
 				getListItemContextMenuItems: this.getListItemContextMenuItems,
 				badgeDisplayField: 'isNew',
 				badgeText: Loc.getMessage('COPILOT_ROLE_SELECTOR_ITEM_BADGE_TEXT'),
-				badgeDesign: BadgeCounterDesign.COPILOT,
+				badgeDesign: isBitrixGptV2Enabled ? BadgeCounterDesign.BITRIX_GPT_SOLID : BadgeCounterDesign.COPILOT,
 				onScopeSelectionChanged: this.onScopeSelectionChanged,
-				listItemImagePlaceholder: `${currentDomain}/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/copilot-role-selector/image/avatar_copilot.png`,
+				listItemImagePlaceholder: isBitrixGptV2Enabled ? bitrixGptAvatarPath : copilotAvatarPath,
 				onSearchStringChanged: this.onSearchStringChanged,
 				searchMatchColor: Color.accentMainCopilot,
 				displayFloatingButton: this.#shouldDisplayFloatingButton(),
@@ -414,6 +421,15 @@ jn.define('layout/ui/copilot-role-selector', (require, exports, module) => {
 			});
 			result.universalRole.id = result.universalRole.code;
 			result.universalRole.displayContextMenuButton = false;
+
+			if (this.props.isBitrixGptV2Enabled)
+			{
+				result.universalRole.avatar = {
+					large: bitrixGptAvatarPath,
+					medium: bitrixGptAvatarPath,
+					small: bitrixGptAvatarPath,
+				};
+			}
 
 			return result;
 		};

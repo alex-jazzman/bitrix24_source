@@ -243,6 +243,13 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 			}
 
 			let restoredTagQuoteText = parsedElements.restoreTags(quoteText);
+			if (restoredTagQuoteText.includes(PLACEHOLDER))
+			{
+				restoredTagQuoteText = restoredTagQuoteText.replace(
+					/####REPLACEMENT_(\d+)/g,
+					(match, id) => parsedElements._list[Number(id)]?.text || '',
+				);
+			}
 			restoredTagQuoteText = parserImage.decodeIcon(restoredTagQuoteText);
 			restoredTagQuoteText = parserImage.simplifyImage(restoredTagQuoteText);
 

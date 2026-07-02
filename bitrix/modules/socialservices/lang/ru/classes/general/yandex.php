@@ -1,7 +1,7 @@
 <?php
 $MESS["socserv_yandex_client_id"] = "ID приложения:";
 $MESS["socserv_yandex_client_secret"] = "Пароль приложения:";
-$MESS["socserv_yandex_note_2"] = "Для получения идентификаторов необходимо <a href=\"https://oauth.yandex.ru/client/new\">создать приложение</a>.<br>
+$MESS["socserv_yandex_note_2"] = "Для получения идентификаторов необходимо <a href=\"https://oauth.yandex.ru/client/new\" target=\"_blank\">создать приложение</a>.<br>
 В настройках приложения в поле \"Callback URI\" укажите адрес: <a href=\"#URL#\">#URL#</a><br />
 В секции \"Права\" необходимо отметить все права в блоке \"API Яндекс.Паспорта\".<br /><br />
 Для работы интеграции с Битрикс24.Диск нужно также отметить следующие права в блоке \"Яндекс.Диск REST API\":

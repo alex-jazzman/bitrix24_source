@@ -3,7 +3,7 @@ import {
 	getChannelDialogEntity,
 	getCollabDialogEntity,
 } from 'humanresources.company-structure.structure-components';
-import type { CommunicationDetailed } from 'humanresources.company-structure.utils';
+import { type CommunicationDetailed } from 'humanresources.company-structure.utils';
 import { ChatLinkDialogDataTestIds, ChannelLinkDialogDataTestIds, CollabLinkDialogDataTestIds } from '../consts';
 
 export const DialogDictionary: Record<string, DialogDictionaryItem> = Object.freeze({
@@ -43,6 +43,19 @@ export const DialogDictionary: Record<string, DialogDictionaryItem> = Object.fre
 		childrenModeText: 'HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_MODE_COLLABS_TEXT',
 		dataTestIds: CollabLinkDialogDataTestIds,
 		getDialogEntity: (): Object => getCollabDialogEntity(),
+		getDialogIdFromId: (item: CommunicationDetailed): string | number => Number(item.id),
+		getIdFromDialogId: (item: CommunicationDetailed): number => Number(item.id),
+	},
+	project: {
+		dialogId: 'hr-department-detail-content-chats-tab-channel-link-dialog',
+		title: 'HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_PROJECT_LINK_DIALOG_TITLE',
+		description: {
+			team: 'HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_PROJECT_LINK_DIALOG_TEAM_DESC',
+			default: 'HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_PROJECT_LINK_DIALOG_DESC',
+		},
+		childrenModeText: 'HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_MODE_PROJECTS_TEXT',
+		dataTestIds: CollabLinkDialogDataTestIds,
+		getDialogEntity: (): Object => getCollabDialogEntity(true),
 		getDialogIdFromId: (item: CommunicationDetailed): string | number => Number(item.id),
 		getIdFromDialogId: (item: CommunicationDetailed): number => Number(item.id),
 	},

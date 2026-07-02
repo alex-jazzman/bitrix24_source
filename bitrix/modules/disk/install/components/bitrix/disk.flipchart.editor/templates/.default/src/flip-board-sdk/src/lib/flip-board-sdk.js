@@ -3,7 +3,7 @@ import { AccessLevel } from './types/SDK';
 import { SDKEvents } from './types/events';
 export default class WebSDK {
     constructor(params) {
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
         this.params = params;
         let accessLevel;
         let canEditBoard;
@@ -55,6 +55,7 @@ export default class WebSDK {
                 confirmUserKick: (_j = params.ui) === null || _j === void 0 ? void 0 : _j.confirmUserKick,
                 scrollToElement: (_k = params.ui) === null || _k === void 0 ? void 0 : _k.scrollToElement,
                 features: (_l = params.ui) === null || _l === void 0 ? void 0 : _l.features,
+                shareElementInBitrix: (_m = params.ui) === null || _m === void 0 ? void 0 : _m.shareElementInBitrix,
             },
             appContainerDomain: window.location.origin,
             boardData,
@@ -81,28 +82,34 @@ export default class WebSDK {
         return {
             tryToCloseBoard: () => new Promise((resolve, reject) => {
                 var _a;
-                window.addEventListener('message', (event) => {
+                const handler = (event) => {
                     var _a, _b;
                     if (((_a = event.data) === null || _a === void 0 ? void 0 : _a.event) === SDKEvents.successCloseApp) {
+                        window.removeEventListener('message', handler);
                         resolve();
                     }
                     if (((_b = event.data) === null || _b === void 0 ? void 0 : _b.event) === SDKEvents.errorCloseApp) {
+                        window.removeEventListener('message', handler);
                         reject();
                     }
-                });
+                };
+                window.addEventListener('message', handler);
                 (_a = this.iframeEl.contentWindow) === null || _a === void 0 ? void 0 : _a.postMessage({ event: SDKEvents.tryToCloseApp }, '*');
             }),
             renameBoard: (name) => new Promise((resolve, reject) => {
                 var _a;
-                window.addEventListener('message', (event) => {
+                const handler = (event) => {
                     var _a, _b;
                     if (((_a = event.data) === null || _a === void 0 ? void 0 : _a.event) === SDKEvents.successBoardRenamed) {
+                        window.removeEventListener('message', handler);
                         resolve();
                     }
                     if (((_b = event.data) === null || _b === void 0 ? void 0 : _b.event) === SDKEvents.errorBoardRenamed) {
+                        window.removeEventListener('message', handler);
                         reject();
                     }
-                });
+                };
+                window.addEventListener('message', handler);
                 (_a = this.iframeEl.contentWindow) === null || _a === void 0 ? void 0 : _a.postMessage({
                     event: SDKEvents.renameBoard,
                     data: { name },
@@ -127,7 +134,7 @@ export default class WebSDK {
         window.addEventListener('message', this.listenBoardEvents.bind(this));
     }
     listenBoardEvents(event) {
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0, _1, _2, _3, _4;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16;
         if (((_a = event.data) === null || _a === void 0 ? void 0 : _a.event) === SDKEvents.waitParams) {
             // @ts-ignore
             (_b = this.iframeEl.contentWindow) === null || _b === void 0 ? void 0 : _b.postMessage({ event: SDKEvents.setParams, data: this.boardParams }, '*');
@@ -155,6 +162,51 @@ export default class WebSDK {
         if (((_w = event.data) === null || _w === void 0 ? void 0 : _w.event) === SDKEvents.shareElementWithSocials) {
             if ((_y = (_x = this.params) === null || _x === void 0 ? void 0 : _x.events) === null || _y === void 0 ? void 0 : _y.onShareElementWithSocials) {
                 (_0 = (_z = this.params) === null || _z === void 0 ? void 0 : _z.events) === null || _0 === void 0 ? void 0 : _0.onShareElementWithSocials(((_2 = (_1 = event.data) === null || _1 === void 0 ? void 0 : _1.data) === null || _2 === void 0 ? void 0 : _2.link) || '', ((_4 = (_3 = event.data) === null || _3 === void 0 ? void 0 : _3.data) === null || _4 === void 0 ? void 0 : _4.social) || 'telegram');
+            }
+        }
+        if (((_5 = event.data) === null || _5 === void 0 ? void 0 : _5.event) === SDKEvents.shareElementWithBitrix) {
+            if ((_7 = (_6 = this.params) === null || _6 === void 0 ? void 0 : _6.events) === null || _7 === void 0 ? void 0 : _7.onShareElementWithBitrix) {
+                (_9 = (_8 = this.params) === null || _8 === void 0 ? void 0 : _8.events) === null || _9 === void 0 ? void 0 : _9.onShareElementWithBitrix(event.data.data);
+            }
+        }
+        if (((_10 = event.data) === null || _10 === void 0 ? void 0 : _10.event) === SDKEvents.aiTextRequest) {
+            const requestData = event.data.data;
+            if ((_12 = (_11 = this.params) === null || _11 === void 0 ? void 0 : _11.events) === null || _12 === void 0 ? void 0 : _12.onAITextRequest) {
+                this.params.events
+                    .onAITextRequest(requestData)
+                    .then((response) => {
+                    var _a, _b;
+                    if ('result' in response) {
+                        (_a = this.iframeEl.contentWindow) === null || _a === void 0 ? void 0 : _a.postMessage({
+                            event: SDKEvents.aiTextResponse,
+                            data: { requestId: requestData.requestId, result: response.result },
+                        }, '*');
+                    }
+                    else {
+                        (_b = this.iframeEl.contentWindow) === null || _b === void 0 ? void 0 : _b.postMessage({
+                            event: SDKEvents.aiTextError,
+                            data: Object.assign({ requestId: requestData.requestId }, response.error),
+                        }, '*');
+                    }
+                })
+                    .catch(() => {
+                    var _a;
+                    (_a = this.iframeEl.contentWindow) === null || _a === void 0 ? void 0 : _a.postMessage({
+                        event: SDKEvents.aiTextError,
+                        data: { requestId: requestData.requestId, code: 'UNKNOWN' },
+                    }, '*');
+                });
+            }
+            else {
+                (_13 = this.iframeEl.contentWindow) === null || _13 === void 0 ? void 0 : _13.postMessage({
+                    event: SDKEvents.aiTextError,
+                    data: { requestId: requestData.requestId, code: 'NOT_SUPPORTED' },
+                }, '*');
+            }
+        }
+        if (((_14 = event.data) === null || _14 === void 0 ? void 0 : _14.event) === SDKEvents.aiTextCancel) {
+            if ((_16 = (_15 = this.params) === null || _15 === void 0 ? void 0 : _15.events) === null || _16 === void 0 ? void 0 : _16.onAITextCancel) {
+                this.params.events.onAITextCancel(event.data.data);
             }
         }
     }

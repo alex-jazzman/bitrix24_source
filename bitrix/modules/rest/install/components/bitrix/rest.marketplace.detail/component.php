@@ -17,6 +17,7 @@ use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\Loader;
 use \Bitrix\Rest\Engine\Access;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Rest\Internal\Integration\UI\CopilotService;
 
 if(!CModule::IncludeModule("rest"))
 {
@@ -193,6 +194,9 @@ if($request->isPost() && $request['install'] && check_bitrix_sessid())
 	{
 		$scopeList = \Bitrix\Rest\Engine\ScopeManager::getInstance()->listScope();
 		\Bitrix\Main\Localization\Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].BX_ROOT.'/modules/rest/scope.php');
+		$copilotReplacements = [
+			'#COPILOT_NAME#' => CopilotService::getName(),
+		];
 		$arResult['SCOPE_DENIED'] = array();
 		if(is_array($arResult['APP']['RIGHTS']))
 		{
@@ -203,10 +207,15 @@ if($request->isPost() && $request['install'] && check_bitrix_sessid())
 					$title = Loc::getMessage('REST_SCOPE_LOG_MSGVER_1') ?: $scope;
 					$description = Loc::getMessage("REST_SCOPE_LOG_DESCRIPTION_MSGVER_1");
 				}
+				elseif (mb_strtoupper($key) === 'AI_ADMIN')
+				{
+					$title = Loc::getMessage('REST_SCOPE_AI_ADMIN_MSGVER_1', $copilotReplacements) ?: $scope;
+					$description = Loc::getMessage("REST_SCOPE_AI_ADMIN_DESCRIPTION", $copilotReplacements);
+				}
 				else
 				{
-					$title = Loc::getMessage("REST_SCOPE_".mb_strtoupper($key)) ?: $scope;
-					$description = Loc::getMessage("REST_SCOPE_".mb_strtoupper($key)."_DESCRIPTION");
+					$title = Loc::getMessage("REST_SCOPE_".mb_strtoupper($key), $copilotReplacements) ?: $scope;
+					$description = Loc::getMessage("REST_SCOPE_".mb_strtoupper($key)."_DESCRIPTION", $copilotReplacements);
 				}
 				$arResult['APP']['RIGHTS'][$key] = [
 					"TITLE" => $title,

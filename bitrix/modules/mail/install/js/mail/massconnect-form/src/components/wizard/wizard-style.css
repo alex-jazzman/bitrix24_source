@@ -3,14 +3,6 @@
 	font-family: var(--ui-font-family-primary);
 }
 
-.mail_massconnect__wizard_step_title {
-	font-size: var(--ui-font-size-4xl);
-	font-weight: var(--ui-font-weight-medium);
-	color: var(--ui-color-palette-black-solid);
-	margin-bottom: var(--ui-space-stack-3xl);
-	letter-spacing: var(--ui-text-letter-spacing-auto);
-}
-
 .mail_massconnect__wizard_card {
 	display: flex;
 	flex-direction: column;
@@ -107,8 +99,11 @@
 }
 
 .mail_massconnect__section-title {
-	font-size: 17px;
-	font-weight: var(--ui-font-weight-medium);
-	color: var(--ui-color-base-1);
+	color: var(--ui-color-base-0, #000);
+	font-size: var(--ui-font-size-2xl, 18px);
+	font-style: normal;
+	font-weight: var(--ui-font-weight-medium, 500);
+	line-height: var(--ui-font-line-height-sm, 23px);
+	letter-spacing: var(--ui-letter-spacing-m, -0.1px);
 	margin: 0;
 }

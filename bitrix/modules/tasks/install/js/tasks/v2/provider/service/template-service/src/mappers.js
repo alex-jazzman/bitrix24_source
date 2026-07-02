@@ -77,6 +77,8 @@ export const mapDtoToTaskDto = (templateDto: TaskDto): TaskDto => ({
 	title: templateDto.title,
 	responsibleCollection: templateDto.responsibleCollection,
 	deadlineTs: mapValue(templateDto.deadlineAfter, ceilTs(Date.now() + templateDto.deadlineAfter * 1000) / 1000),
+	matchesWorkTime: templateDto.matchesWorkTime,
+	subTaskIds: templateDto.subTemplateIds,
 });
 
 const step = 60 * 1000;

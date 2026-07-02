@@ -1,5 +1,6 @@
-<? if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die(); ?>
-<? \Bitrix\Main\UI\Extension::load([
+<?php if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die(); ?>
+<?php
+\Bitrix\Main\UI\Extension::load([
 	'ui.notification',
 	'ui.hint',
 	'ui.mail.sender-selector',
@@ -37,7 +38,7 @@
 							<div class="new-from-email-dialog-cell new-from-email-dialog-full-width-cell">
 								<div class="new-from-email-dialog-string-block">
 									<input tabindex="1" type="text" class="new-from-email-dialog-square-string" data-name="name"
-										<? if (!empty($arParams['USER_FULL_NAME'])): ?> value="<?=htmlspecialcharsbx($arParams['USER_FULL_NAME']) ?>"<? endif ?>>
+										<?php if (!empty($arParams['USER_FULL_NAME'])): ?> value="<?=htmlspecialcharsbx($arParams['USER_FULL_NAME']) ?>"<?php endif ?>>
 								</div>
 							</div>
 						</div>
@@ -53,7 +54,7 @@
 								</div>
 							</div>
 						</div>
-						<div class="new-from-email-dialog-row" <? if (!$arParams['IS_ADMIN']): ?> style="display: none; "<? endif ?>>
+						<div class="new-from-email-dialog-row" <?php if (!$arParams['IS_ADMIN']): ?> style="display: none; "<?php endif ?>>
 							<div class="new-from-email-dialog-text new-from-email-dialog-cell"></div>
 							<div class="new-from-email-dialog-cell new-from-email-dialog-full-width-cell">
 								<label>
@@ -65,7 +66,7 @@
 							</div>
 						</div>
 					</div>
-					<? if (!empty($arParams['IS_SMTP_AVAILABLE'])): ?>
+					<?php if (!empty($arParams['IS_SMTP_AVAILABLE'])): ?>
 						<div class="new-from-email-dialog-row-group new-from-email-dialog-smtp-block" style="display: none; ">
 							<div class="new-from-email-dialog-row">
 								<div class="new-from-email-dialog-cell"></div>
@@ -151,7 +152,7 @@
 								</div>
 							</div>
 						</div>
-					<? endif ?>
+					<?php endif ?>
 				</div>
 			</div>
 		</div>

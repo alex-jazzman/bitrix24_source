@@ -21,12 +21,9 @@ $MESS['IMMOBILE_CHAT_COMPOSER_RULES_LIST_ROLE_OWNER_AND_MANAGERS'] = 'Владе
 $MESS['IMMOBILE_CHAT_COMPOSER_RULES_LIST_ROLE_ONLY_OWNER'] = 'Только владелец';
 
 $MESS['IMMOBILE_CHAT_COMPOSER_DIALOG_TYPE_CHANNEL_TITLE'] = 'Тип канала';
-$MESS['IMMOBILE_CHAT_COMPOSER_DIALOG_TYPE_GROUP_CHAT_TITLE'] = 'Тип чата';
 $MESS['IMMOBILE_CHAT_COMPOSER_DIALOG_TYPE_OPEN_TITLE'] = 'Открытый';
-$MESS['IMMOBILE_CHAT_COMPOSER_DIALOG_TYPE_GROUP_CHAT_OPEN_SUBTITLE'] = 'Чат можно найти в общем списке, вступить в него может любой желающий. Подходит для взаимодействия между командами, адаптации новых сотрудников и общения';
 $MESS['IMMOBILE_CHAT_COMPOSER_DIALOG_TYPE_CHANNEL_OPEN_SUBTITLE'] = 'Канал появится в общем списке каналов компании. Подписаться и просматривать публикации могут все';
 $MESS['IMMOBILE_CHAT_COMPOSER_DIALOG_TYPE_CLOSE_TITLE'] = 'Закрытый';
-$MESS['IMMOBILE_CHAT_COMPOSER_DIALOG_TYPE_GROUP_CHAT_CLOSE_SUBTITLE'] = 'Чат не виден в общем списке чатов, участников можно только добавить. Подходит для обсуждения важных проектов и внутренней работы команды';
 $MESS['IMMOBILE_CHAT_COMPOSER_DIALOG_TYPE_CHANNEL_CLOSE_SUBTITLE'] = 'Канал увидят только подписчики. Права на добавление новых подписчиков настраивает владелец';
 
 $MESS['IMMOBILE_CHAT_COMPOSER_FOOTER_CREATE_BUTTON'] = 'Создать';
@@ -42,7 +39,6 @@ $MESS['IMMOBILE_CHAT_COMPOSER_DIALOG_INFO_DESCRIPTION_INPUT_PLACEHOLDER_CHAT'] =
 $MESS['IMMOBILE_CHAT_COMPOSER_DIALOG_INFO_DESCRIPTION_INPUT_LABEL'] = 'Описание';
 
 $MESS['IMMOBILE_CHAT_COMPOSER_SETTING_ACTION_TYPE_TITLE_CHANNEL'] = 'Тип канала';
-$MESS['IMMOBILE_CHAT_COMPOSER_SETTING_ACTION_TYPE_TITLE_GROUP_CHAT'] = 'Тип чата';
 $MESS['IMMOBILE_CHAT_COMPOSER_SETTING_ACTION_TYPE_SUBTITLE_CLOSED'] = 'Закрытый';
 $MESS['IMMOBILE_CHAT_COMPOSER_SETTING_ACTION_TYPE_SUBTITLE_OPEN'] = 'Открытый';
 

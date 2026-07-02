@@ -23,6 +23,7 @@ type SidePanelMenuOptions = {
 type Options = {
 	extensions: ?Array<string>;
 	title: ?string;
+	hint: ?string;
 	toolbar: ?Function;
 	content: string | Element | Promise | BX.Promise;
 	buttons: ?Function;
@@ -57,6 +58,11 @@ function prepareOptions(options: Options = {}): Options
 	if (options.menu)
 	{
 		options.extensions.push('ui.sidepanel.menu');
+	}
+
+	if (options.hint)
+	{
+		options.extensions.push('ui.hint');
 	}
 
 	return options;
@@ -156,9 +162,21 @@ export class Layout
 		if (this.#options.title)
 		{
 			const title = Tag.safe`${this.#options.title}`;
+			const hint = this.#options.hint
+				? Tag.render`
+					<span class="ui-hint" data-hint="${this.#options.hint}">
+						<span class="ui-hint-icon"/>
+					</span>
+				`
+				: ''
+			;
+
 			const header = Tag.render`
 				<div class="ui-sidepanel-layout-header">
-					<div class="ui-sidepanel-layout-title">${title}</div>
+					<div class="ui-sidepanel-layout-title">
+						<span>${title}</span>
+						${hint}
+					</div>
 				</div>
 			`;
 
@@ -299,6 +317,11 @@ export class Layout
 			EventEmitter.subscribeOnce(topSlider, 'SidePanel.Slider:onDestroy', () => {
 				Event.unbind(window, 'resize', resizeHandler);
 			});
+		}
+
+		if (BX.UI.Hint)
+		{
+			BX.UI.Hint.init(this.getContainer());
 		}
 	}
 

@@ -1,9 +1,15 @@
-<?
+<?php
 define('BX_PUBLIC_MODE', 0);
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_js.php");
 
-$addUrl = 'lang='.LANGUAGE_ID.(isset($logical) && $logical == "Y"?'&logical=Y':'');
+/**
+ * @global CMain $APPLICATION
+ * @global CUser $USER
+ */
+
+$logical = $_REQUEST['logical'] ?? '';
+$addUrl = 'lang='.LANGUAGE_ID.($logical == "Y" ? '&logical=Y' : '');
 $useEditor3 = COption::GetOptionString('fileman', "use_editor_3", "N") == "Y";
 $bFromComponent =
 	isset($_REQUEST['from']) &&
@@ -25,11 +31,19 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/fileman/include.php");
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/fileman/admin/fileman_html_edit.php");
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/public/file_edit.php");
 
-$obJSPopup = new CJSPopup("lang=".urlencode($_GET["lang"] ?? '')."&site=".urlencode($_GET["site"] ?? '')."&back_url=".urlencode($_GET["back_url"] ?? '')."&path=".urlencode($_GET["path"] ?? '')."&name=".urlencode($_GET["name"] ?? ''), array("SUFFIX"=>(isset($_REQUEST['subdialog']) && $_REQUEST['subdialog'] == 'Y'? 'editor':'')));
+$obJSPopup = new CJSPopup(
+	"lang=".urlencode($_GET["lang"] ?? '')
+		."&site=".urlencode($_GET["site"] ?? '')
+		."&back_url=".urlencode($_GET["back_url"] ?? '')
+		."&path=".urlencode($_GET["path"] ?? '')
+		."&name=".urlencode($_GET["name"] ?? ''),
+	array("SUFFIX"=>(isset($_REQUEST['subdialog']) && $_REQUEST['subdialog'] == 'Y'? 'editor':''))
+);
 
 $strWarning = "";
 $site_template = false;
-$rsSiteTemplates = CSite::GetTemplateList($site ?? '');
+$site = $_REQUEST['site'] ?? '';
+$rsSiteTemplates = CSite::GetTemplateList($site);
 while($arSiteTemplate = $rsSiteTemplates->Fetch())
 {
 	if($arSiteTemplate["CONDITION"] == '')
@@ -56,7 +70,7 @@ if ($filename != '' && ($mess = CFileMan::CheckFileName($filename)) !== true)
 	$bVarsFromForm = true;
 }
 
-$path = urldecode($path ?? '');
+$path = urldecode($_REQUEST['path'] ?? '');
 $path = $io->CombinePath("/", $path);
 
 $site = CFileMan::__CheckSite($site);
@@ -189,9 +203,9 @@ if($strWarning == '')
 		}
 	}
 
-	if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_REQUEST['save']) && $_REQUEST['save'] == 'Y')
+	if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['save']) && $_POST['save'] == 'Y')
 	{
-		$filesrc = $filesrc_pub;
+		$filesrc = $_POST['filesrc_pub'] ?? '';
 		if(!check_bitrix_sessid())
 		{
 			$strWarning = GetMessage("FILEMAN_SESSION_EXPIRED");
@@ -220,10 +234,10 @@ if($strWarning == '')
 			}
 
 			$res = CFileman::ParseFileContent($filesrc_tmp, true);
-			$prolog = CFileman::SetTitle($res["PROLOG"], $title);
-			for ($i = 0; $i<=$maxind; $i++)
+			$prolog = CFileman::SetTitle($res["PROLOG"], $_POST['title'] ?? '');
+			for ($i = 0; $i <= ($_POST['maxind'] ?? 0); $i++)
 			{
-				if(trim($_POST["CODE_".$i]) <> '')
+				if(trim($_POST["CODE_".$i] ?? '') <> '')
 				{
 					if($_POST["CODE_".$i] != $_POST["H_CODE_".$i])
 					{
@@ -234,7 +248,9 @@ if($strWarning == '')
 						$prolog = CFileman::SetProperty($prolog, trim($_POST["CODE_".$i]), trim($_POST["VALUE_".$i]));
 				}
 				else
-					$prolog = CFileman::SetProperty($prolog, trim($_POST["H_CODE_".$i]), "");
+				{
+					$prolog = CFileman::SetProperty($prolog, trim($_POST["H_CODE_".$i] ?? ''), "");
+				}
 			}
 			$epilog = $res["EPILOG"];
 			$filesrc_for_save = $prolog.$filesrc.$epilog;
@@ -250,6 +266,8 @@ if($strWarning == '')
 				$bVarsFromForm = true;
 			}
 		}
+
+		$arUndoParams = null;
 
 		if($strWarning == '')
 		{
@@ -307,7 +325,7 @@ if($strWarning == '')
 
 ?>
 <script>
-<?
+<?php
 if(!isset($_REQUEST['subdialog']) || $_REQUEST['subdialog'] != 'Y'):
 	$url = $_REQUEST["back_url"] ?? '';
 	if(!str_starts_with($url, "/") || mb_substr($url, 1, 1) == "/")
@@ -317,13 +335,13 @@ if(!isset($_REQUEST['subdialog']) || $_REQUEST['subdialog'] != 'Y'):
 	}
 ?>
 	top.BX.reload('<?=CUtil::JSEscape($url)?>', true);
-<?else:?>
+<?php else:?>
 	if (null != top.structReload)
 		top.structReload('<?=urlencode($_REQUEST["path"] ?? '')?>');
-<?endif;?>
+<?php endif;?>
 	top.<?=$obJSPopup->jsPopup?>.Close();
 </script>
-<?
+<?php
 		}
 		else
 		{
@@ -333,11 +351,11 @@ top.CloseWaitWindow();
 top.<?=$obJSPopup->jsPopup?>.ShowError('<?=CUtil::JSEscape($strWarning)?>');
 var pMainObj = top.GLOBAL_pMainObj['<?=CUtil::JSEscape($editor_name)?>'];
 pMainObj.Show(true);
-<?if ($bSessIDRefresh):?>
+<?php if ($bSessIDRefresh):?>
 top.BXSetSessionID('<?=CUtil::JSEscape(bitrix_sessid())?>');
-<?endif;?>
+<?php endif;?>
 </script>
-<?
+<?php
 		}
 		die();
 	}
@@ -351,7 +369,7 @@ top.<?=$obJSPopup->jsPopup?>.ShowError('<?=CUtil::JSEscape($strWarning)?>');
 var pMainObj = top.GLOBAL_pMainObj['<?=CUtil::JSEscape($editor_name)?>'];
 pMainObj.Show(true);
 </script>
-<?
+<?php
 	die();
 }
 
@@ -416,12 +434,12 @@ $obJSPopup->StartContent(
 </form>
 <iframe src="javascript:void(0)" name="file_edit_form_target" height="0" width="0" style="display: none;"></iframe>
 <form action="/bitrix/admin/public_file_edit.php" name="editor_form" method="post" enctype="multipart/form-data" target="file_edit_form_target" style="margin: 0px; padding: 0px; ">
-<?
+	<?php
 if (CAutoSave::Allowed())
 {
 	echo CJSCore::Init(array('autosave'), true);
 	$AUTOSAVE->Init();
-?><script>BX.WindowManager.Get().setAutosave();</script><?
+?><script>BX.WindowManager.Get().setAutosave();</script><?php
 }
 ?>
 <?=bitrix_sessid_post()?>
@@ -429,23 +447,23 @@ if (CAutoSave::Allowed())
 <input type="hidden" name="mode" id="mode" value="public" />
 <input type="hidden" name="save" id="save" value="Y" />
 <input type="hidden" name="site" id="site" value="<?=htmlspecialcharsbx($site)?>" />
-<input type="hidden" name="template" id="template" value="<?echo htmlspecialcharsbx($template)?>" />
-<input type="hidden" name="templateID" id="templateID" value="<?echo htmlspecialcharsbx($_REQUEST['templateID'] ?? '')?>" />
-<input type="hidden" name="subdialog" value="<?echo htmlspecialcharsbx($_REQUEST['subdialog'] ?? '')?>" />
-<?if (is_set($_REQUEST, 'back_url')):?>
+<input type="hidden" name="template" id="template" value="<?= htmlspecialcharsbx($template)?>" />
+<input type="hidden" name="templateID" id="templateID" value="<?= htmlspecialcharsbx($_REQUEST['templateID'] ?? '')?>" />
+<input type="hidden" name="subdialog" value="<?= htmlspecialcharsbx($_REQUEST['subdialog'] ?? '')?>" />
+<?php if (is_set($_REQUEST, 'back_url')):?>
 	<input type="hidden" name="back_url" value="<?=htmlspecialcharsbx($_REQUEST['back_url'] ?? '')?>" />
-<?endif;?>
-<?if (is_set($_REQUEST, 'edit_new_file_undo')):?>
+<?php endif;?>
+<?php if (is_set($_REQUEST, 'edit_new_file_undo')):?>
 	<input type="hidden" name="edit_new_file_undo" value="<?=htmlspecialcharsbx($_REQUEST['edit_new_file_undo'] ?? '')?>" />
-<?endif;?>
-<?if(!$bEdit):?>
+<?php endif;?>
+<?php if(!$bEdit):?>
 	<input type="hidden" name="new" id="new" value="Y" />
-	<input type="hidden" name="filename" id="filename" value="<?echo htmlspecialcharsbx($filename)?>" />
+	<input type="hidden" name="filename" id="filename" value="<?= htmlspecialcharsbx($filename)?>" />
 	<input type="hidden" name="path" id="path" value="<?=htmlspecialcharsbx($path.'/'.$filename)?>" />
-<?else:?>
+<?php else:?>
 	<input type="hidden" name="title" value="<?=htmlspecialcharsbx($title)?>" />
 	<input type="hidden" name="path" id="path" value="<?=htmlspecialcharsbx($path)?>" />
-<?endif;?>
+<?php endif;?>
 
 <script>
 <?=$obJSPopup->jsPopup?>.PARTS.CONTENT.getElementsByTagName('FORM')[0].style.display = 'none'; // hack
@@ -463,7 +481,7 @@ function BXSetSessionID(new_sessid)
 }
 </script>
 
-<?
+<?php
 if (!$bDisableEditor)
 {
 	/* ************* HTML EDITOR 3.0 ************* */
@@ -598,7 +616,7 @@ if (!$bDisableEditor)
 				}
 			})();
 		</script>
-		<?
+<?php
 		/* ************* END |HTML EDITOR 3.0| END ************* */
 	}
 	else
@@ -611,7 +629,7 @@ if (!$bDisableEditor)
 			"bWithoutPHP" => (!$USER->CanDoOperation('edit_php')),
 			"toolbarConfig" => CFileman::GetEditorToolbarConfig($editor_name),
 			"arTaskbars" => Array("BXComponentsTaskbar", "BXComponents2Taskbar", "BXPropertiesTaskbar", "BXSnippetsTaskbar"),
-			"sBackUrl" => $back_url,
+			"sBackUrl" => $_REQUEST['back_url'] ?? '',
 			"path" => $path,
 			"limit_php_access" => $limit_php_access,
 			'height' => '490',
@@ -729,21 +747,21 @@ if (!$bDisableEditor)
 
 		CheckEditorFinish();
 
-		<? if (COption::GetOptionString("fileman", "htmleditor_fullscreen", "N") == "Y"):?>
+		<?php if (COption::GetOptionString("fileman", "htmleditor_fullscreen", "N") == "Y"):?>
 		BX.WindowManager.Get().__expand();
-		<?endif;?>
+		<?php endif;?>
 		</script>
-		<?
+<?php
 		/* ************* END |OLD HTML EDITOR| END ************* */
 	}
 	?>
 
 
-<?
+<?php
 }
-else //if ($bDisableEditor)
+else
 {
-	?>
+?>
 <textarea name="<?=htmlspecialcharsbx($editor_name)?>" id="<?=htmlspecialcharsbx($editor_name)?>" style="height: 99%; width: 100%;"><?=htmlspecialcharsex($filesrc)?></textarea>
 <script>
 var
@@ -768,12 +786,12 @@ function TAResize(data)
 BX.addCustomEvent(wnd, 'onWindowResizeExt', TAResize);
 TAResize(wnd.GetInnerPos());
 </script>
-<?
-} //if (!$bDisableEditor)
+<?php
+}
 $obJSPopup->StartButtons();
 ?>
 	<input type="button" class="adm-btn-save" id="btn_popup_save" name="btn_popup_save" value="<?=GetMessage("JSPOPUP_SAVE_CAPTION")?>" onclick="BXFormSubmit();" title="<?=GetMessage("JSPOPUP_SAVE_CAPTION")?>" />
-<?
+<?php
 $obJSPopup->ShowStandardButtons(array('cancel'));
 $obJSPopup->EndButtons();
 
@@ -783,4 +801,3 @@ if (CAutoSave::Allowed())
 }
 
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin_js.php");
-?>

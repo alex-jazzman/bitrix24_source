@@ -31,5 +31,5 @@ $frame = $this->createFrame()->begin('');
 	})();
 </script>
 
-<?
+<?php
 $frame->end();

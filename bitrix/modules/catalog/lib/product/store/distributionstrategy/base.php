@@ -7,10 +7,11 @@ use Bitrix\Catalog\EO_StoreBatch;
 use Bitrix\Catalog\Product\Store\BatchManager;
 use Bitrix\Catalog\Product\Store\CostPriceCalculator;
 use Bitrix\Catalog\StoreBatchDocumentElementTable;
-use Bitrix\Main\Config\Option;
+use Bitrix\Catalog\Product\Price\Calculation;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Result;
+use \Bitrix\Catalog\InventoryManagement\Helpers\Doctor;
 
 /**
  * Class Batch
@@ -74,7 +75,10 @@ abstract class Base
 
 		if ($items->isEmpty())
 		{
-			$result->addError(new Error('Shipment item was not found'));
+			if (!Doctor::isDoctorWorking())
+			{
+				$result->addError(new Error('Shipment item was not found'));
+			}
 
 			return $result;
 		}
@@ -135,8 +139,7 @@ abstract class Base
 		$itemAmount = abs($item->getAmount());
 		$sum = $itemBatchPrice * $itemAmount + $batch->getPurchasingPrice() * $batch->getAvailableAmount();
 		$newPurchasingPrice = $sum / ($itemAmount + $batch->getAvailableAmount());
-		$precision = (int)Option::get('sale', 'value_precision', 2);
 
-		return round($newPurchasingPrice, $precision);
+		return Calculation::roundPrecision($newPurchasingPrice);
 	}
 }

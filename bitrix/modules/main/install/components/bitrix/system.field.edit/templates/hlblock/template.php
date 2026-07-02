@@ -1,4 +1,9 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+
+/**
+ * @var array $arResult
+ * @var array $arParams
+ */
 
 if(
 	$arParams["arUserField"]["ENTITY_VALUE_ID"] <= 0
@@ -16,24 +21,24 @@ if($arParams['arUserField']["SETTINGS"]["DISPLAY"] != "CHECKBOX")
 	if($arParams["arUserField"]["MULTIPLE"] == "Y")
 	{
 		?>
-		<select multiple="multiple" name="<?echo $arParams["arUserField"]["FIELD_NAME"]?>" size="<?echo $arParams["arUserField"]["SETTINGS"]["LIST_HEIGHT"]?>" <?=($arParams["arUserField"]["EDIT_IN_LIST"]!="Y"? ' disabled="disabled" ':'')?> >
-		<?
+		<select multiple="multiple" name="<?= $arParams["arUserField"]["FIELD_NAME"]?>" size="<?= $arParams["arUserField"]["SETTINGS"]["LIST_HEIGHT"]?>" <?=($arParams["arUserField"]["EDIT_IN_LIST"]!="Y"? ' disabled="disabled" ':'')?> >
+			<?php
 		foreach ($arParams["arUserField"]["USER_TYPE"]["FIELDS"] as $key => $val)
 		{
 			$bSelected = in_array($key, $arResult["VALUE"]);
 			?>
-			<option value="<?echo $key?>" <?echo ($bSelected? "selected" : "")?> title="<?echo trim($val, " .")?>"><?echo $val?></option>
-			<?
+			<option value="<?= $key?>" <?= ($bSelected? "selected" : "")?> title="<?= trim($val, " .")?>"><?= $val?></option>
+			<?php
 		}
 		?>
 		</select>
-		<?
+		<?php
 	}
 	else
 	{
 		?>
-		<select name="<?echo $arParams["arUserField"]["FIELD_NAME"]?>" size="<?echo $arParams["arUserField"]["SETTINGS"]["LIST_HEIGHT"]?>" <?=($arParams["arUserField"]["EDIT_IN_LIST"]!="Y"? ' disabled="disabled" ':'')?> >
-		<?
+		<select name="<?= $arParams["arUserField"]["FIELD_NAME"]?>" size="<?= $arParams["arUserField"]["SETTINGS"]["LIST_HEIGHT"]?>" <?=($arParams["arUserField"]["EDIT_IN_LIST"]!="Y"? ' disabled="disabled" ':'')?> >
+			<?php
 		$bWasSelect = false;
 		foreach ($arParams["arUserField"]["USER_TYPE"]["FIELDS"] as $key => $val)
 		{
@@ -45,12 +50,12 @@ if($arParams['arUserField']["SETTINGS"]["DISPLAY"] != "CHECKBOX")
 			if($bSelected)
 				$bWasSelect = true;
 			?>
-			<option value="<?echo $key?>" <?echo ($bSelected? "selected" : "")?> title="<?echo trim($val, " .")?>"><?echo $val?></option>
-			<?
+			<option value="<?= $key?>" <?= ($bSelected? "selected" : "")?> title="<?= trim($val, " .")?>"><?= $val?></option>
+			<?php
 		}
 		?>
 		</select>
-		<?
+		<?php
 	}
 }
 else
@@ -58,16 +63,16 @@ else
 	if($arParams["arUserField"]["MULTIPLE"] == "Y")
 	{
 		?>
-		<input type="hidden" value="" name="<?echo $arParams["arUserField"]["FIELD_NAME"]?>">
-		<?
+		<input type="hidden" value="" name="<?= $arParams["arUserField"]["FIELD_NAME"]?>">
+		<?php
 		foreach ($arParams["arUserField"]["USER_TYPE"]["FIELDS"] as $key => $val)
 		{
 			$id = $arParams["arUserField"]["FIELD_NAME"]."_".$key;
 
 			$bSelected = in_array($key, $arResult["VALUE"]);
 			?>
-			<input type="checkbox" value="<?echo $key?>" name="<?echo $arParams["arUserField"]["FIELD_NAME"]?>" <?echo ($bSelected? "checked" : "")?> id="<?echo $id?>"><label for="<?echo $id?>"><?echo $val?></label><br />
-			<?
+			<input type="checkbox" value="<?= $key?>" name="<?= $arParams["arUserField"]["FIELD_NAME"]?>" <?= ($bSelected? "checked" : "")?> id="<?= $id?>"><label for="<?= $id?>"><?= $val?></label><br />
+			<?php
 		}
 	}
 	else
@@ -76,8 +81,8 @@ else
 		{
 			$id = $arParams["arUserField"]["FIELD_NAME"]."_no";
 			?>
-			<input type="radio" value="" name="<?echo $arParams["arUserField"]["FIELD_NAME"]?>" id="<?echo $id?>"><label for="<?echo $id?>"><?echo GetMessage("MAIN_NO")?></label><br />
-			<?
+			<input type="radio" value="" name="<?= $arParams["arUserField"]["FIELD_NAME"]?>" id="<?= $id?>"><label for="<?= $id?>"><?= GetMessage("MAIN_NO")?></label><br />
+			<?php
 		}
 
 		$bWasSelect = false;
@@ -93,8 +98,8 @@ else
 			if($bSelected)
 				$bWasSelect = true;
 			?>
-			<input type="radio" value="<?echo $key?>" name="<?echo $arParams["arUserField"]["FIELD_NAME"]?>" <?echo ($bSelected? "checked" : "")?> id="<?echo $id?>"><label for="<?echo $id?>"><?echo $val?></label><br />
-			<?
+			<input type="radio" value="<?= $key?>" name="<?= $arParams["arUserField"]["FIELD_NAME"]?>" <?= ($bSelected? "checked" : "")?> id="<?= $id?>"><label for="<?= $id?>"><?= $val?></label><br />
+			<?php
 		}
 	}
 }

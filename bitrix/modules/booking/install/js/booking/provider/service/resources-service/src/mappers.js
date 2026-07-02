@@ -34,6 +34,10 @@ export function mapDtoToModel(resourceDto: ResourceDto | ResourceDtoWithFile): R
 		templateTypeInfo: resourceDto.templateTypeInfo,
 		infoNotificationDelay: resourceDto.infoNotificationDelay,
 
+		// cancellation
+		isCancellationNotificationOn: resourceDto.isCancellationNotificationOn,
+		cancellationNotificationDelay: resourceDto.cancellationNotificationDelay,
+
 		// confirmation
 		isConfirmationNotificationOn: resourceDto.isConfirmationNotificationOn,
 		templateTypeConfirmation: resourceDto.templateTypeConfirmation,
@@ -94,6 +98,10 @@ export async function mapModelToDto(resource: ResourceModelWithFile): ResourceDt
 		isInfoNotificationOn: resource.isInfoNotificationOn,
 		templateTypeInfo: resource.templateTypeInfo,
 		infoNotificationDelay: resource.infoNotificationDelay,
+
+		// cancellation
+		isCancellationNotificationOn: resource.isCancellationNotificationOn,
+		cancellationNotificationDelay: resource.cancellationNotificationDelay,
 
 		// confirmation
 		isConfirmationNotificationOn: resource.isConfirmationNotificationOn,

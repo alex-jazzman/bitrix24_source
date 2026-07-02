@@ -12,6 +12,7 @@
 	width: 100%;
 	height: 100%;
 	overflow: auto;
+	/* @chef-ignore */
 	scrollbar-gutter: stable;
 	padding: 24px 24px 95px;
 	background-color: var(--bx-im-content-chat-forms__background-color_container);

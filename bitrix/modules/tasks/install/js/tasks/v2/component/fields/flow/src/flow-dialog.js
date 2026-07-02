@@ -4,8 +4,8 @@ import { Core } from 'tasks.v2.core';
 import { EntitySelectorEntity, Model } from 'tasks.v2.const';
 import { EntitySelectorDialog, type ItemId } from 'tasks.v2.lib.entity-selector-dialog';
 import { groupService } from 'tasks.v2.provider.service.group-service';
+import { flowService } from 'tasks.v2.provider.service.flow-service';
 import { taskService } from 'tasks.v2.provider.service.task-service';
-import { templateService } from 'tasks.v2.provider.service.template-service';
 import type { FlowModel } from 'tasks.v2.model.flows';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 
@@ -111,12 +111,10 @@ class FlowDialog
 			templateId: item.getCustomData().get('templateId'),
 		};
 
-		if (!Core.getStore().getters[`${Model.Groups}/getById`](flow.groupId))
+		if (!Core.getStore().getters[`${Model.Flows}/getById`](flow.id))
 		{
-			await groupService.getGroup(flow.groupId);
+			await flowService.getFlow(flow.id);
 		}
-
-		await Core.getStore().dispatch(`${Model.Flows}/insert`, flow);
 
 		return flow;
 	};

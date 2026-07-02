@@ -6,7 +6,7 @@ import * as Mixins from "../base/components/mixins";
 const FieldProductSubItem = {
 	props: ['field', 'item',],
 	template: `
-		<div class="b24-form-control-product-info">
+		<div class="b24-form-control-product-info" @click.stop>
 			<input type="hidden" 
 				v-model="item.value.quantity"
 			>
@@ -24,7 +24,7 @@ const FieldProductSubItem = {
 			>
 				<div class="b24-form-control-product-quantity-remove"
 					:style="{visibility: item.getNextDecQuantity() ? 'visible' : 'hidden'}"
-					@click="item.decQuantity()"
+					@click.stop="item.decQuantity()"
 				></div>
 				<div class="b24-form-control-product-quantity-counter">
 					{{ item.value.quantity }}
@@ -34,7 +34,7 @@ const FieldProductSubItem = {
 				</div>
 				<div class="b24-form-control-product-quantity-add"
 					:style="{visibility: item.getNextIncQuantity() ? 'visible' : 'hidden'}"
-					@click="item.incQuantity()"
+					@click.stop="item.incQuantity()"
 				></div>
 			</div>
 			<div class="b24-form-control-product-price">
@@ -184,6 +184,11 @@ const FieldProductPriceOnly = {
 		},
 		onKeyDown(e)
 		{
+			if (e.ctrlKey || e.metaKey)
+			{
+				return;
+			}
+
 			let val = e.key;
 			if (!/[^\d]/.test(val || ''))
 			{

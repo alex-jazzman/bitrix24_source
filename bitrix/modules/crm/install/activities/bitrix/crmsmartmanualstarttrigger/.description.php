@@ -23,6 +23,10 @@ $presets = [
 		'PROPERTIES' => [
 			'onlyAutomatedSolution' => 'Y',
 		],
+		'GROUPS' => [
+			ActivityGroup::STARTER->value,
+			ActivityGroup::DIGITAL_WORKPLACE->value,
+		],
 	],
 	[
 		'ID' => 'smart',
@@ -30,6 +34,10 @@ $presets = [
 		'DESCRIPTION' => Loc::getMessage('BP_CRM_CRM_SMART_START_TRIGGER_DESCR') ?? '',
 		'PROPERTIES' => [
 			'onlyAutomatedSolution' => 'N',
+		],
+		'GROUPS' => [
+			ActivityGroup::STARTER->value,
+			ActivityGroup::SALES_CRM->value,
 		],
 	],
 ];

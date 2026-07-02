@@ -1,17 +1,17 @@
 import { Dom, Loc, Runtime, Type } from 'main.core';
-import { Popup, PopupManager } from 'main.popup';
+import { PopupManager, type Popup } from 'main.popup';
 import { DateTimeFormat } from 'main.date';
-import { Draggable, DragMoveEvent, DragStartEvent, DragEndEvent } from 'ui.draganddrop.draggable';
+import { Draggable, type DragStartEvent, type DragEndEvent, type DragMoveEvent } from 'ui.draganddrop.draggable';
 
 import { Model, DraggedElementKind } from 'booking.const';
 import { Core } from 'booking.core';
 import { busySlots } from 'booking.lib.busy-slots';
-import { BookingAnalytics } from 'booking.lib.analytics';
-import { bookingService } from 'booking.provider.service.booking-service';
 import { NonDraggableBookingPopup } from 'booking.component.non-draggable-booking-popup';
-import type { BookingModel } from 'booking.model.bookings';
-import type { DraggedDataTransfer } from 'booking.model.interface';
-import type { ResourceModel } from 'booking.model.resources';
+import { type BookingModel } from 'booking.model.bookings';
+import { type DraggedDataTransfer, type Cell } from 'booking.model.interface';
+import { type ResourceModel } from 'booking.model.resources';
+
+import { dragActions } from './actions';
 
 type Params = {
 	draggable: string,
@@ -29,7 +29,7 @@ export class Drag
 	constructor(params: Params)
 	{
 		this.#params = {
-			element: 'booking-booking',
+			element: 'booking-booking-card-container',
 			...params,
 		};
 
@@ -54,7 +54,7 @@ export class Drag
 	{
 		const { draggable, source: { dataset }, clientX, clientY } = event.getData();
 
-		this.#params.element = `booking-${dataset.kind}`;
+		this.#params.element = 'booking-booking-card-container';
 		this.#draggedKind = dataset.kind;
 		this.#draggedId = parseInt(dataset.id, 10);
 
@@ -140,20 +140,21 @@ export class Drag
 			Dom.style(element, 'visibility', '');
 		});
 
-		if (this.#hoveredCell && !this.#getResourceById(this.#hoveredCell.resourceId)?.isDeleted)
+		if (this.#hoveredPlacementSlot && !this.#getResourceById(this.#hoveredPlacementSlot.resourceId)?.isDeleted)
 		{
 			if (this.#draggedKind === DraggedElementKind.Booking)
 			{
-				void this.#moveBooking({
-					booking: this.#draggedBooking,
+				void dragActions.moveBookingOnGrid({
+					bookingId: this.#draggedBookingId,
 					resourceId: this.#draggedBookingResourceId,
-					cell: this.#hoveredCell,
+					cell: this.#hoveredPlacementSlot,
 				});
 			}
 			else if (this.#draggedKind === DraggedElementKind.WaitListItem)
 			{
-				void this.#moveWaitListItem({
-					cell: this.#hoveredCell,
+				void dragActions.createBookingFromWaitListItem({
+					waitListItemId: this.#draggedDataTransfer.id,
+					cell: this.#hoveredPlacementSlot,
 				});
 			}
 		}
@@ -259,97 +260,11 @@ export class Drag
 		return document.elementFromPoint(x, y)?.closest('[data-element="booking-drag-delete"]');
 	}
 
-	async #moveBooking({ booking, resourceId, cell }: {
-		booking: BookingModel,
-		resourceId: number,
-		cell: CellDto
-	}): void
-	{
-		if (cell.fromTs === booking.dateFromTs && cell.toTs === booking.dateToTs && cell.resourceId === resourceId)
-		{
-			return;
-		}
-
-		const resourceIds = booking.resourcesIds.includes(cell.resourceId)
-			? booking.resourcesIds
-			: [
-				cell.resourceId,
-				...booking.resourcesIds.filter((id: number) => id !== resourceId),
-			]
-		;
-
-		await bookingService.update({
-			id: booking.id,
-			dateFromTs: cell.fromTs,
-			dateToTs: cell.toTs,
-			resourcesIds: [...new Set(resourceIds)],
-			timezoneFrom: booking.timezoneFrom,
-			timezoneTo: booking.timezoneTo,
-		});
-	}
-
-	async #moveWaitListItem({ cell }: { cell: CellDto }): void
-	{
-		const $store = Core.getStore();
-		const waitListItemId = this.#draggedDataTransfer.id;
-		const waitListItem = $store.getters[`${Model.WaitList}/getById`](waitListItemId);
-		const resourceId = cell.resourceId;
-		const resource = $store.getters[`${Model.Resources}/getById`](resourceId);
-		const timezone = resource?.slotRanges?.[0]?.timezone;
-		const clients = [...waitListItem.clients];
-		const intersections = $store.getters[`${Model.Interface}/intersections`];
-
-		if ($store.getters[`${Model.Interface}/editingWaitListItemId`] === waitListItemId)
-		{
-			await this.#setEditingBookingId(waitListItemId);
-		}
-
-		const result = await bookingService.createFromWaitListItem(waitListItemId, {
-			id: `wl${waitListItemId}`,
-			clients,
-			primaryClient: clients.length > 0 ? clients[0] : undefined,
-			externalData: [...waitListItem.externalData],
-			name: waitListItem.name,
-			note: waitListItem.note,
-			resourcesIds: [
-				...new Set([
-					cell.resourceId,
-					...(intersections[0] ?? []),
-					...(intersections[cell.resourceId] ?? []),
-				]),
-			],
-			dateFromTs: cell.fromTs,
-			dateToTs: cell.toTs,
-			timezoneFrom: timezone,
-			timezoneTo: timezone,
-		});
-
-		if (result.success && result.booking)
-		{
-			BookingAnalytics.sendAddBooking({ isOverbooking: false });
-
-			if ($store.getters[`${Model.Interface}/editingBookingId`] === waitListItemId)
-			{
-				await this.#setEditingBookingId(result.booking.id);
-			}
-		}
-	}
-
-	async #setEditingBookingId(id: number | string): Promise<void>
-	{
-		const $store = Core.getStore();
-
-		await Promise.all([
-			$store.dispatch(`${Model.Interface}/setEditingBookingId`, id),
-			$store.dispatch(`${Model.Interface}/setEditingWaitListItemId`, null),
-		]);
-	}
-
 	get #timeFormatted(): string
 	{
 		const timeFormat = DateTimeFormat.getFormat('SHORT_TIME_FORMAT');
-		const from = this.#hoveredCell?.fromTs ?? this.#draggedBooking.dateFromTs;
-		const to = this.#hoveredCell?.toTs ?? this.#draggedBooking.dateToTs;
+		const from = this.#hoveredPlacementSlot?.fromTs ?? this.#draggedBooking.dateFromTs;
+		const to = this.#hoveredPlacementSlot?.toTs ?? this.#draggedBooking.dateToTs;
 
 		return Loc.getMessage('BOOKING_BOOKING_TIME_RANGE', {
 			'#FROM#': DateTimeFormat.format(timeFormat, (from + this.#offset) / 1000),
@@ -396,9 +311,9 @@ export class Drag
 		return Core.getStore().getters[`${Model.Interface}/draggedBookingResourceId`];
 	}
 
-	get #hoveredCell(): CellDto
+	get #hoveredPlacementSlot(): Cell
 	{
-		return Core.getStore().getters[`${Model.Interface}/hoveredCell`];
+		return Core.getStore().getters[`${Model.Interface}/hoveredPlacementSlot`];
 	}
 
 	get #offset(): number
@@ -413,6 +328,6 @@ export class Drag
 
 	get #gridColumns(): HTMLElement
 	{
-		return BX('booking-booking-grid-columns');
+		return BX('booking-booking-grid-columns') ?? this.#gridWrap;
 	}
 }

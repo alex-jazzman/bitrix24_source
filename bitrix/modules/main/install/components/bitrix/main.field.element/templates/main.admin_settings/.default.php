@@ -2,6 +2,11 @@
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
+/**
+ * @var array $arResult
+ * @var CBitrixComponent $component
+ */
+
 use Bitrix\Main\UserField\Types\ElementType;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\HtmlFilter;

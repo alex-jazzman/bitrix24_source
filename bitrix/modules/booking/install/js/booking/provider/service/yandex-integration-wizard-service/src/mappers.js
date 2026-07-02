@@ -1,4 +1,4 @@
-import { YandexIntegrationModel } from 'booking.model.yandex-integration-wizard';
+import type { YandexIntegrationModel } from 'booking.model.yandex-integration-wizard';
 import { YandexCabinetIdExtractor } from './internal/cabinet-id-extractor';
 
 import type { ResourceModel } from 'booking.model.resources';

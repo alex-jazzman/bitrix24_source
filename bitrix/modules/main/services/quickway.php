@@ -1,20 +1,33 @@
 <?php
-
 if (!empty($_GET['_gen']))
 {
 	return;
 }
 
-$encryptedData = $_GET['_esd'] ?? null;
-if (empty($encryptedData))
+$encryptedScopeData = $_GET['_esd'] ?? null;
+if (!empty($encryptedScopeData))
+{
+	$encryptedScopeData = strtr(
+		string: $encryptedScopeData,
+		from: '-_',
+		to: '+/',
+	);
+}
+
+$encryptedFileData = $_GET['_efd'] ?? null;
+if (!empty($encryptedFileData))
+{
+	$encryptedFileData = strtr(
+		string: $encryptedFileData,
+		from: '-_',
+		to: '+/',
+	);
+}
+
+if (empty($encryptedScopeData) && empty($encryptedFileData))
 {
 	return;
 }
-$encryptedData = strtr(
-	string: $encryptedData,
-	from: '-_',
-	to: '+/',
-);
 
 if (str_starts_with($_SERVER['SCRIPT_NAME'], '/mobile/ajax.php'))
 {
@@ -121,15 +134,29 @@ if (!$config)
 	return null;
 }
 
-function isValidSign(string $key, string $signedUserToken): bool
+function parseSignedUserToken(string $signedUserToken): ?array
 {
 	$parts = explode('.', $signedUserToken, 2);
+
 	if (count($parts) !== 2)
+	{
+		return null;
+	}
+
+	return $parts;
+}
+
+function isValidSign(string $key, string $signedUserToken): bool
+{
+	$parts = parseSignedUserToken($signedUserToken);
+
+	if ($parts === null)
 	{
 		return false;
 	}
 
 	[$message, $signature] = $parts;
+
 	if (empty($message) || empty($signature))
 	{
 		return false;
@@ -184,18 +211,15 @@ function getRedisStorage(array $config): ?\Redis
 
 	if ($result)
 	{
-		if (isset($config['compression']) || defined('\Redis::COMPRESSION_LZ4'))
+		if (defined('\Redis::OPT_SERIALIZER') && defined('\Redis::SERIALIZER_NONE'))
 		{
-			$connection->setOption(\Redis::OPT_COMPRESSION, $config['compression'] ?? \Redis::COMPRESSION_LZ4);
-			$connection->setOption(\Redis::OPT_COMPRESSION_LEVEL,
-				$config['compression_level'] ?? \Redis::COMPRESSION_ZSTD_MAX);
+			$connection->setOption(\Redis::OPT_SERIALIZER, \Redis::SERIALIZER_NONE);
 		}
 
-		$serializer = $config['serializer'] ?? (defined('\Redis::SERIALIZER_IGBINARY')
-			? \Redis::SERIALIZER_IGBINARY
-			: \Redis::SERIALIZER_PHP)
-		;
-		$connection->setOption(\Redis::OPT_SERIALIZER, $serializer);
+		if (defined('\Redis::OPT_COMPRESSION') && defined('\Redis::COMPRESSION_NONE'))
+		{
+			$connection->setOption(\Redis::OPT_COMPRESSION, \Redis::COMPRESSION_NONE);
+		}
 	}
 
 	return $result ? $connection : null;
@@ -306,7 +330,7 @@ function decryptData(string $data, string $key): ?array
 
 $cookiePrefix = $config['cookiePrefix'] ?? 'BITRIX_SM';
 
-/** @see \Bitrix\Disk\QuickAccess\ScopeTokenService::COOKIE_NAME */
+/** @see \Bitrix\Disk\QuickAccess\UserQuickAccessTokenManager::COOKIE_NAME */
 $signedUserToken = $_COOKIE["{$cookiePrefix}_DTOKEN"] ?? null;
 if (empty($signedUserToken))
 {
@@ -320,40 +344,65 @@ if (isValidSign($key, $signedUserToken) === false)
 	return;
 }
 
-$decryptedData = decryptData($encryptedData, $key);
-if (empty($decryptedData))
+if ($encryptedScopeData)
 {
-	return;
-}
+	$decryptedData = decryptData($encryptedScopeData, $key);
+	if (empty($decryptedData))
+	{
+		return;
+	}
 
-$storage = getStorage($config['storage']);
-if (!$storage)
-{
-	return;
-}
+	$storage = getStorage($config['storage']);
+	if (!$storage)
+	{
+		return;
+	}
 
-$userToken = explode('.', $signedUserToken, 2)[0];
+	$userToken = explode('.', $signedUserToken, 2)[0];
 
-if (!hasScope($config['storage']['keyPrefix'], $userToken, $decryptedData['scope'], $storage))
-{
-	return;
-}
+	if (!hasScope($config['storage']['keyPrefix'], $userToken, $decryptedData['scope'], $storage))
+	{
+		return;
+	}
 
-/** @see \Bitrix\Disk\QuickAccess\Storage\ScopeStorage::getFileKey */
-$fileInfoKey = "{$config['storage']['keyPrefix']}file:{$decryptedData['fileId']}";
-$storedData = $storage->get($fileInfoKey);
-if (empty($storedData))
-{
-	return;
-}
+	/** @see \Bitrix\Disk\QuickAccess\Storage\ScopeStorage::getFileKey */
+	$fileInfoKey = "{$config['storage']['keyPrefix']}file:{$decryptedData['fileId']}";
+	$storedData = $storage->get($fileInfoKey);
 
-try
-{
-	$storedData = json_decode($storedData, true, 3, JSON_THROW_ON_ERROR);
+	if (empty($storedData))
+	{
+		return;
+	}
+
+	try
+	{
+		$storedData = json_decode($storedData, true, 3, JSON_THROW_ON_ERROR);
+	}
+	catch (\JsonException $e)
+	{
+		return;
+	}
 }
-catch (\JsonException $e)
+else // then it should be encrypted file data
 {
-	return;
+	$parsedSignedUserToken = parseSignedUserToken($signedUserToken);
+
+	if (empty($parsedSignedUserToken))
+	{
+		return;
+	}
+
+	$userToken = $parsedSignedUserToken[0];
+
+	/** @see \Bitrix\Disk\QuickAccess\FileDataParameterService::encryptFileData */
+	$keyForUser = hash_hmac('sha256', $userToken, $key, true);
+	$decryptedFileData = decryptData($encryptedFileData, $keyForUser);
+	if (empty($decryptedFileData))
+	{
+		return;
+	}
+
+	$storedData = $decryptedFileData;
 }
 
 /** @see \Bitrix\Disk\Public\TypeFileMap */
@@ -368,7 +417,7 @@ $previewActions = [
 	'disk.api.file.showPreview',
 	'ui.fileuploader.preview',
 ];
-$isPreview = in_array($_GET['action'], $previewActions, true);
+$isPreview = isset($_GET['action']) && in_array($_GET['action'], $previewActions, true);
 if ($isPreview && isset($storedData['preview']))
 {
 	$storedData = $storedData['preview'];
@@ -380,7 +429,7 @@ $expirationTime = $storedData['expirationTime'];
 $dir = $storedData['dir'];
 $bFileId = $storedData['id'];
 $fileName = $storedData['filename'];
-$attachmentName = $decryptedData['l'] ?? null;
+$attachmentName = $decryptedData['l'] ?? $decryptedFileData['l'] ?? null;
 
 if (time() > $expirationTime)
 {
@@ -405,7 +454,7 @@ if (
 	&& ($requestedWidth < $originalWidth || $requestedHeight < $originalHeight)
 )
 {
-	$exact = $_GET['exact'] === 'Y' ? 2 : 1;
+	$exact = (isset($_GET['exact']) && $_GET['exact'] === 'Y' ? 2 : 1);
 
 	if (empty($storedData['handlerId']))
 	{

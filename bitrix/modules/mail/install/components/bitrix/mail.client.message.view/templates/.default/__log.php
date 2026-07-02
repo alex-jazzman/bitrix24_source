@@ -8,7 +8,7 @@ foreach ($list as $item)
 {
 	$datetimeFormat = \Bitrix\Main\Loader::includeModule('intranet') ? \CIntranetUtils::getCurrentDatetimeFormat() : false;
 	$datetimeFormatted = \CComponentUtil::getDateTimeFormatted(
-		$item['FIELD_DATE']->getTimestamp()+\CTimeZone::getOffset(),
+		($item['INTERNALDATE'] ?? $item['FIELD_DATE'])->getTimestamp()+\CTimeZone::getOffset(),
 		$datetimeFormat,
 		\CTimeZone::getOffset()
 	);
@@ -19,9 +19,9 @@ foreach ($list as $item)
 			\CTimeZone::getOffset()
 		) : null;
 	?>
-	<div class="mail-msg-view-log-item mail-msg-view-logitem-<?=intval($item['ID']) ?>"
-		data-id="<?=intval($item['ID']) ?>" data-log="<?=htmlspecialcharsbx($item['__log']) ?>">
-		<span class="<?=($item['__is_outcome'] ? 'mail-msg-view-log-item-icon-outcome' : 'mail-msg-view-log-item-icon-income') ?>"></span>
+	<button type="button" class="mail-msg-view-log-item mail-msg-view-logitem-<?=intval($item['ID']) ?>"
+		data-id="<?=intval($item['ID']) ?>" data-log="<?=htmlspecialcharsbx($item['__log']) ?>" aria-expanded="false">
+		<span class="<?=($item['__is_outcome'] ? 'mail-msg-view-log-item-icon-outcome' : 'mail-msg-view-log-item-icon-income') ?>" aria-hidden="true"></span>
 		<?php $__from = reset($item['__from']); ?>
 		<span class="mail-msg-view-log-item-name"><?=htmlspecialcharsbx($__from['name'] ?: $__from['email']) ?></span>
 		<span class="mail-msg-view-log-item-description"><?=htmlspecialcharsbx($item['SUBJECT']) ?></span>
@@ -48,7 +48,7 @@ foreach ($list as $item)
 				endif ?>
 			</span>
 		</span>
-	</div>
+	</button>
 	<div class="mail-msg-view-details mail-msg-view-details-<?=intval($item['ID']) ?>"
 		id="mail-msg-view-details-<?=intval($item['ID']) ?>"
 		style="display: none; text-align: center; " data-id="<?=intval($item['ID']) ?>" data-empty="1">

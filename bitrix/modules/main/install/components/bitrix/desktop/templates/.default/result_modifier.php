@@ -1,5 +1,10 @@
-<?
+<?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+
+/**
+ * @var array $arResult
+ * @var array $arParams
+ */
 
 $col = 0;
 $arDiff = array_diff($arParams["GADGETS_FIXED"], $arResult["GADGETS_LIST"]);

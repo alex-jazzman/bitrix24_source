@@ -68,7 +68,7 @@ if (!function_exists("__GetVisibleJS"))
 	var arVisibleCheckbox = [];
 //-->
 </script><?
-if ($arResult["NEED_AUTH"] == "Y")
+if (($arResult["NEED_AUTH"] ?? null) == "Y")
 {
 	$APPLICATION->AuthForm("");
 }
@@ -186,7 +186,7 @@ else
 					?><a href="javascript:void(0)" onclick="sonet_sl_list_show('bx_sl_list_<?=$entity_type?>'); return false;"><div id="plus_bx_sl_list_<?=$entity_type?>" class="subscribe-list-selector subscribe-list-selector-plus"></div><?
 				}
 				?>
-				<b><?=$arResult["arSocNetAllowedSubscribeEntityTypesDesc"][$entity_type]["TITLE_LIST"]?></b>
+				<b><?=$arResult["arSocNetAllowedSubscribeEntityTypesDesc"][$entity_type]["TITLE_LIST"] ?? ''?></b>
 				<?
 				if ($bHasEntities)
 				{
@@ -633,7 +633,7 @@ else
 		</script>	
 		<?
 		if (
-			is_array($arResult["arSocNetAllowedSubscribeEntityTypesDesc"][$entity_type])
+			is_array($arResult["arSocNetAllowedSubscribeEntityTypesDesc"][$entity_type] ?? null)
 			&& array_key_exists("HAS_MY", $arResult["arSocNetAllowedSubscribeEntityTypesDesc"][$entity_type]) 
 			&& $arResult["arSocNetAllowedSubscribeEntityTypesDesc"][$entity_type]["HAS_MY"] == "Y"
 		):
@@ -935,7 +935,7 @@ else
 		/* created by */
 		
 		if (
-			is_array($arResult["arSocNetAllowedSubscribeEntityTypesDesc"][$entity_type])
+			is_array($arResult["arSocNetAllowedSubscribeEntityTypesDesc"][$entity_type] ?? null)
 			&& array_key_exists("HAS_CB", $arResult["arSocNetAllowedSubscribeEntityTypesDesc"][$entity_type]) 
 			&& $arResult["arSocNetAllowedSubscribeEntityTypesDesc"][$entity_type]["HAS_CB"] == "Y"
 			&& array_key_exists($entity_type."_CB", $arResult["EventsNew"])

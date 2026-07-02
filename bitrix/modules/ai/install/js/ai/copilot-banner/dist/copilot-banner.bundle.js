@@ -26,6 +26,7 @@ this.BX = this.BX || {};
 	var _getTextWithAccents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTextWithAccents");
 	var _renderTitle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderTitle");
 	var _renderButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderButton");
+	var _getCopilotName = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCopilotName");
 	var _handleButtonClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleButtonClick");
 	class CopilotBanner extends main_core_events.EventEmitter {
 	  constructor(options) {
@@ -33,6 +34,9 @@ this.BX = this.BX || {};
 	    super(options);
 	    Object.defineProperty(this, _handleButtonClick, {
 	      value: _handleButtonClick2
+	    });
+	    Object.defineProperty(this, _getCopilotName, {
+	      value: _getCopilotName2
 	    });
 	    Object.defineProperty(this, _renderButton, {
 	      value: _renderButton2
@@ -126,7 +130,7 @@ this.BX = this.BX || {};
 				</footer>
 				</div>
 			</div>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _renderCopilotBannerIcon)[_renderCopilotBannerIcon](), babelHelpers.classPrivateFieldLooseBase(this, _renderPlatesByZone)[_renderPlatesByZone](), babelHelpers.classPrivateFieldLooseBase(this, _getTextWithAccents)[_getTextWithAccents]('AI_COPILOT_BANNER_TEXT_1'), babelHelpers.classPrivateFieldLooseBase(this, _getTextWithAccents)[_getTextWithAccents]('AI_COPILOT_BANNER_TEXT_2'), babelHelpers.classPrivateFieldLooseBase(this, _getTextWithAccents)[_getTextWithAccents]('AI_COPILOT_BANNER_TEXT_3'), babelHelpers.classPrivateFieldLooseBase(this, _renderTitle)[_renderTitle](), babelHelpers.classPrivateFieldLooseBase(this, _renderButton)[_renderButton]());
+		`), babelHelpers.classPrivateFieldLooseBase(this, _renderCopilotBannerIcon)[_renderCopilotBannerIcon](), babelHelpers.classPrivateFieldLooseBase(this, _renderPlatesByZone)[_renderPlatesByZone](), babelHelpers.classPrivateFieldLooseBase(this, _getTextWithAccents)[_getTextWithAccents]('AI_COPILOT_BANNER_TEXT_1_MSGVER_1'), babelHelpers.classPrivateFieldLooseBase(this, _getTextWithAccents)[_getTextWithAccents]('AI_COPILOT_BANNER_TEXT_2'), babelHelpers.classPrivateFieldLooseBase(this, _getTextWithAccents)[_getTextWithAccents]('AI_COPILOT_BANNER_TEXT_3_MSGVER_1'), babelHelpers.classPrivateFieldLooseBase(this, _renderTitle)[_renderTitle](), babelHelpers.classPrivateFieldLooseBase(this, _renderButton)[_renderButton]());
 	}
 	function _renderPlatesByZone2() {
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _isWestZone)[_isWestZone]) {
@@ -163,12 +167,14 @@ this.BX = this.BX || {};
 	}
 	function _getTextWithAccents2(phraseCode) {
 	  return main_core.Loc.getMessage(phraseCode, {
+	    '#COPILOT_NAME#': babelHelpers.classPrivateFieldLooseBase(this, _getCopilotName)[_getCopilotName](),
 	    '#accent#': '<span class="--accent">',
 	    '#/accent#': '</span>'
 	  });
 	}
 	function _renderTitle2() {
-	  const titleText = main_core.Loc.getMessage('AI_COPILOT_BANNER_TITLE', {
+	  const titleText = main_core.Loc.getMessage('AI_COPILOT_BANNER_TITLE_MSGVER_1', {
+	    '#COPILOT_NAME#': babelHelpers.classPrivateFieldLooseBase(this, _getCopilotName)[_getCopilotName](),
 	    '#hint-start#': '<span class="ai__copilot-banner_title-hint">',
 	    '#hint-end#': '</span>'
 	  });
@@ -178,7 +184,9 @@ this.BX = this.BX || {};
 			</h4>
 		`), titleText);
 	  const titlePartWithHint = title.querySelector('.ai__copilot-banner_title-hint');
-	  const hintContent = `<div>${main_core.Loc.getMessage('AI_COPILOT_BANNER_TITLE_HINT')}</div>`;
+	  const hintContent = `<div>${main_core.Loc.getMessage('AI_COPILOT_BANNER_TITLE_HINT_MSGVER_1', {
+    '#COPILOT_NAME#': babelHelpers.classPrivateFieldLooseBase(this, _getCopilotName)[_getCopilotName]()
+  })}</div>`;
 	  const hint = BX.UI.Hint.createInstance({
 	    popupParameters: {
 	      className: 'ai__copilot-banner-hint-popup',
@@ -201,6 +209,9 @@ this.BX = this.BX || {};
 		`), main_core.Loc.getMessage('AI_COPILOT_START_USING_BUTTON'));
 	  main_core.bind(btn, 'click', babelHelpers.classPrivateFieldLooseBase(this, _handleButtonClick)[_handleButtonClick].bind(this));
 	  return btn;
+	}
+	function _getCopilotName2() {
+	  return main_core.Extension.getSettings('ai.copilot-banner').get('copilotName');
 	}
 	async function _handleButtonClick2() {
 	  this.emit(CopilotBannerEvents.actionStart);

@@ -10,28 +10,6 @@ jn.define('ui-system/layout/card', (require, exports, module) => {
 	const { IconView, Icon } = require('ui-system/blocks/icon');
 
 	/**
-	 * @typedef {Object} CardProps
-	 * @property {string} testId
-	 * @property {Object} [style={}]
-	 * @property {Object} [excludePaddingSide={}]
-	 * @property {boolean} [excludePaddingSide.left=false]
-	 * @property {boolean} [excludePaddingSide.right=false]
-	 * @property {boolean} [excludePaddingSide.top=false]
-	 * @property {boolean} [excludePaddingSide.bottom=false]
-	 * @property {boolean} [excludePaddingSide.horizontal=false]
-	 * @property {boolean} [excludePaddingSide.vertical=false]
-	 * @property {boolean} [excludePaddingSide.all]
-	 * @property {boolean} [hideCross=true]
-	 * @property {boolean} [selected=true]
-	 * @property {boolean} [accent=false]
-	 * @property {boolean} [border=false]
-	 * @property {boolean} [corner=CardCorner.L]
-	 * @property {boolean} [withPressed=false]
-	 * @property {BadgeStatusMode} [badgeMode=null]
-	 * @property {function} [onClose=null]
-	 * @property {function} [onClick=null]
-	 * @property {CardDesign} [design=CardDesign.PRIMARY]
-	 *
 	 * @function Card
 	 * @param {CardProps} props
 	 * @param {Array} children
@@ -48,6 +26,7 @@ jn.define('ui-system/layout/card', (require, exports, module) => {
 			design = CardDesign.PRIMARY,
 			corner = CardCorner.L,
 			badgeMode = null,
+			badge = null,
 			hideCross = true,
 			selected = false,
 			accent = false,
@@ -107,22 +86,27 @@ jn.define('ui-system/layout/card', (require, exports, module) => {
 				size: 20,
 			});
 
-		const topRightView = View(
-			{
-				style: {
-					position: 'absolute',
-					top: Indent.S.toNumber(),
-					right: Indent.S.toNumber(),
+		const topRightContent = badge || status || crossIcon;
+		const isCloseClickable = Boolean(onClose) && !hideCross && !status && !badge;
+
+		const topRightView = topRightContent
+			? View(
+				{
+					style: {
+						position: 'absolute',
+						top: Indent.S.toNumber(),
+						right: Indent.S.toNumber(),
+					},
+					onClick: () => {
+						if (isCloseClickable)
+						{
+							onClose();
+						}
+					},
 				},
-				onClick: () => {
-					if (onClose && !hideCross && !status)
-					{
-						onClose();
-					}
-				},
-			},
-			status || crossIcon,
-		);
+				topRightContent,
+			)
+			: null;
 
 		return View(
 			{
@@ -146,6 +130,7 @@ jn.define('ui-system/layout/card', (require, exports, module) => {
 
 	Card.defaultProps = {
 		badgeMode: null,
+		badge: null,
 		hideCross: true,
 		selected: true,
 		border: false,
@@ -165,6 +150,7 @@ jn.define('ui-system/layout/card', (require, exports, module) => {
 		design: PropTypes.instanceOf(CardDesign),
 		corner: PropTypes.instanceOf(CardCorner),
 		badgeMode: PropTypes.instanceOf(BadgeStatusMode),
+		badge: PropTypes.object,
 		excludePaddingSide: PropTypes.objectOf(PropTypes.bool),
 		onClose: PropTypes.func,
 		onClick: PropTypes.func,

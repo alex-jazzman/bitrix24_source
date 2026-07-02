@@ -27,22 +27,31 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 	const { parserDate } = require('im/messenger/lib/parser/functions/date');
 	const { QuoteActive } = require('im/messenger/lib/parser/elements/dialog/message/quote-active');
 	const { QuoteInactive } = require('im/messenger/lib/parser/elements/dialog/message/quote-inactive');
+	const { Code } = require('im/messenger/lib/parser/elements/dialog/message/code');
 	const { MessageText } = require('im/messenger/lib/parser/elements/dialog/message/text');
 	const { NEW_LINE } = require('im/messenger/lib/parser/const');
+	const { markdownConverter } = require('im/messenger/lib/parser/markdown/converter');
 
-	function removeExtraNewLinesAfterQuotes(elements)
+	function removeExtraNewLinesAroundBlocks(elements)
 	{
-		const quoteTypes = new Set([QuoteActive.getType(), QuoteInactive.getType()]);
+		const blockTypes = new Set([
+			QuoteActive.getType(),
+			QuoteInactive.getType(),
+			Code.getType(),
+		]);
 
 		return elements.filter((element, index) => {
-			if (index === 0)
+			if (element.type !== MessageText.getType())
 			{
 				return true;
 			}
 
 			const prevElement = elements[index - 1];
-			const isAfterQuote = quoteTypes.has(prevElement.type);
-			if (!isAfterQuote || element.type !== MessageText.getType())
+			const nextElement = elements[index + 1];
+			const isAfterBlock = prevElement && blockTypes.has(prevElement.type);
+			const isBeforeBlock = nextElement && blockTypes.has(nextElement.type);
+
+			if (!isAfterBlock && !isBeforeBlock)
 			{
 				return true;
 			}
@@ -52,9 +61,14 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 				return false;
 			}
 
-			if (element.text.startsWith(NEW_LINE))
+			if (isAfterBlock && element.text.startsWith(NEW_LINE))
 			{
 				element.text = element.text.slice(1);
+			}
+
+			if (isBeforeBlock && element.text.endsWith(NEW_LINE))
+			{
+				element.text = element.text.slice(0, -1);
 			}
 
 			return true;
@@ -69,6 +83,10 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 				return [];
 			}
 
+			if (Feature.isMarkdownParserEnabled)
+			{
+				text = markdownConverter.decode(text, options.messageId, options.dialogCode);
+			}
 			text = parserDate.decode(text);
 
 			// TODO: support bb code [context]
@@ -89,7 +107,7 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 
 			text = parserCommon.decodeNewLine(text);
 			text = parserImage.decodeImageWithSize(text);
-			text = parserUrl.prepareGifUrl(text);
+			text = parserUrl.prepareImageUrls(text);
 			text = parserSmile.decodeSmile(text, options);
 			text = parserMention.decode(text);
 			text = parserAction.decodePut(text);
@@ -107,7 +125,7 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 
 			if (Feature.isChatDialogCompactQuoteSupported)
 			{
-				return removeExtraNewLinesAfterQuotes(elementList);
+				return removeExtraNewLinesAroundBlocks(elementList);
 			}
 
 			return elementList;
@@ -194,6 +212,10 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 				text = parserCommon.simplifyNewLine(text, '\n');
 			}
 
+			if (Feature.isMarkdownParserEnabled)
+			{
+				text = markdownConverter.simplify(text);
+			}
 			text = parserSlashCommand.simplify(text);
 			text = parserQuote.simplifyArrowQuote(text);
 			text = parserQuote.simplifyQuote(text);
@@ -280,6 +302,24 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 			text = parserQuote.truncateDoubleLineBreak(text);
 
 			return text.trim();
+		},
+
+		/**
+		 * @param {string} text
+		 * @return {string[]}
+		 */
+		splitByUrlTag(text)
+		{
+			return parserUrl.splitByUrlTag(text);
+		},
+
+		/**
+		 * @param {string} part
+		 * @return {boolean}
+		 */
+		isUrlTag(part)
+		{
+			return parserUrl.isUrlTag(part);
 		},
 	};
 

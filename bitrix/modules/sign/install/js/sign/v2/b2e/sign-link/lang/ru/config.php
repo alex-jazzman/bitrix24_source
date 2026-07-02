@@ -12,3 +12,5 @@ $MESS['SIGN_V2_B2E_LINK_EMPLOYEE_BUTTON_ALLDOCS'] = 'Все подписанны
 $MESS['SIGN_V2_B2E_LINK_EMPLOYEE_DOCUMENT_DATE'] = 'Подписано #DATE#';
 $MESS['SIGN_V2_B2E_LINK_SLIDER_TITLE'] = 'Подпись';
 $MESS['SIGN_V2_B2E_LINK_EMPLOYEE_SIGNED_DOC_NOT_READY'] = 'Документ ещё в обработке. Вы сможете скачать его через несколько минут';
+$MESS['SIGN_V2_B2E_LINK_PROCESS_DONE_EDITOR'] = 'Данные заполнены. Документ отправлен следующим участникам';
+$MESS['SIGN_V2_B2E_LINK_PROCESS_DONE_REVIEWER'] = 'Документ согласован';

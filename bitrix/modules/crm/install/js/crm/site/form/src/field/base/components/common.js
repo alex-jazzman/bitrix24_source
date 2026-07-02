@@ -1,9 +1,9 @@
-import "./css/slider.css";
-import "./css/dropdown.css";
-import {Scroll, MoveObserver} from "../../../util/registry";
+import './css/slider.css';
+import './css/dropdown.css';
+import { Scroll, MoveObserver, Aria } from '../../../util/registry';
 
 const Dropdown = {
-	props: ['marginTop', 'maxHeight', 'width', 'visible', 'title'],
+	props: ['marginTop', 'maxHeight', 'width', 'visible', 'title', 'messages'],
 	template: `
 		<div class="b24-form-dropdown">
 			<transition name="b24-form-dropdown-slide" appear>
@@ -12,7 +12,7 @@ const Dropdown = {
 				v-if="visible"
 			>
 				<div class="b24-form-dropdown-header" ref="header">
-					<button @click="close()" type="button" class="b24-window-close"></button>
+					<button @click="close()" type="button" class="b24-window-close" :aria-label="closeButtonLabel"></button>
 					<div class="b24-form-dropdown-title">{{ title }}</div>
 				</div>			
 				<slot></slot>
@@ -64,6 +64,12 @@ const Dropdown = {
 				this.$root.flags.hideEars = val;
 			}
 		}
+	},
+	computed: {
+		closeButtonLabel()
+		{
+			return this.messages?.get('fieldDateClose');
+		},
 	},
 	methods: {
 		close ()
@@ -123,20 +129,26 @@ const Dropdown = {
 };
 
 const Alert = {
-	props: ['field', 'item'],
+	props: ['field', 'item', 'itemIndex'],
 	template: `
 		<div class="b24-form-control-alert-message"
+			:id="errorId"
+			role="alert"
 			v-show="hasErrors"
 		>
-			{{ message }}
+			<span class="b24-form-sr-only">{{ field.label }}: </span>{{ message }}
 		</div>
 	`,
 	computed: {
+		errorId()
+		{
+			const index = this.itemIndex === undefined ? null : this.itemIndex;
+
+			return Aria.getErrorId(this.field, index);
+		},
 		hasErrors()
 		{
-			return this.field.validated
-				&& !this.field.focused
-				&& !this.field.valid();
+			return Aria.hasErrors(this.field);
 		},
 		message()
 		{
@@ -144,7 +156,8 @@ const Alert = {
 			{
 				return this.field.messages.get('fieldErrorRequired');
 			}
-			else if (this.field.validated && !this.field.valid())
+
+			if (this.field.validated && !this.field.valid())
 			{
 				let type = this.field.type;
 				type = type.charAt(0).toUpperCase() + type.slice(1);
@@ -156,6 +169,8 @@ const Alert = {
 					this.field.messages.get('fieldErrorInvalid')
 				);
 			}
+
+			return '';
 		},
 	},
 };
@@ -195,11 +210,11 @@ const Slider = {
 					</div>
 				</div>
 					<div class="b24-form-slider-control-prev"
-						@click="prev"
+						@click.stop="prev"
 						:style="{ visibility: prevable() ? 'visible' : 'hidden'}"
 					><div class="b24-form-slider-control-prev-icon"></div></div>
 					<div class="b24-form-slider-control-next"
-						@click="next"
+						@click.stop="next"
 						:style="{ visibility: nextable() ? 'visible' : 'hidden'}"
 					><div class="b24-form-slider-control-next-icon"></div></div>
 			</div>
@@ -387,4 +402,4 @@ export {
 	Alert,
 	Slider,
 	Dropdown,
-}
+};

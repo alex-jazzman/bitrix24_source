@@ -1,5 +1,10 @@
-<?
+<?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+
+/**
+ * @var array $arResult
+ * @var array $arParams
+ */
 
 if (!is_array($arResult["arMap"]) || count($arResult["arMap"]) < 1)
 	return;
@@ -20,7 +25,7 @@ $colNum = ceil($allNum / $arParams["COL_NUM"]);
 	<td>
 		<ul class="map-level-0">
 
-		<?
+			<?php
 		$previousLevel = -1;
 		$counter = 0;
 		$column = 1;
@@ -30,43 +35,45 @@ $colNum = ceil($allNum / $arParams["COL_NUM"]);
 			$arItem["DESCRIPTION"] = htmlspecialcharsbx($arItem["DESCRIPTION"], ENT_COMPAT, false);
 		?>
 
-			<?if ($arItem["LEVEL"] < $previousLevel):?>
+			<?php if ($arItem["LEVEL"] < $previousLevel):?>
 				<?=str_repeat("</ul></li>", ($previousLevel - $arItem["LEVEL"]));?>
-			<?endif?>
+			<?php endif?>
 
 
-			<?if ($counter >= $colNum && $arItem["LEVEL"] == 0): 
+			<?php if ($counter >= $colNum && $arItem["LEVEL"] == 0): 
 					$allNum = $allNum-$counter;
 					$colNum = ceil(($allNum) / ($arParams["COL_NUM"] > 1 ? ($arParams["COL_NUM"]-$column) : 1));
 					$counter = 0;
 					$column++;
 			?>
 				</ul></td><td><ul class="map-level-0">
-			<?endif?>
+			<?php endif?>
 
-			<?if (array_key_exists($index+1, $arResult["arMap"]) && $arItem["LEVEL"] < $arResult["arMap"][$index+1]["LEVEL"]):?>
+			<?php if (array_key_exists($index+1, $arResult["arMap"]) && $arItem["LEVEL"] < $arResult["arMap"][$index+1]["LEVEL"]):?>
 
-				<li><a href="<?=$arItem["FULL_PATH"]?>"><?=$arItem["NAME"]?></a><?if ($arParams["SHOW_DESCRIPTION"] == "Y" && $arItem["DESCRIPTION"] <> '') {?><div><?=$arItem["DESCRIPTION"]?></div><?}?>
+				<li><a href="<?=$arItem["FULL_PATH"]?>"><?=$arItem["NAME"]?></a><?php if ($arParams["SHOW_DESCRIPTION"] == "Y" && $arItem["DESCRIPTION"] <> '') {?><div><?=$arItem["DESCRIPTION"]?></div><?php
+					}?>
 					<ul class="map-level-<?=$arItem["LEVEL"]+1?>">
 
-			<?else:?>
+			<?php else:?>
 
-					<li><a href="<?=$arItem["FULL_PATH"]?>"><?=$arItem["NAME"]?></a><?if ($arParams["SHOW_DESCRIPTION"] == "Y" && $arItem["DESCRIPTION"] <> '') {?><div><?=$arItem["DESCRIPTION"]?></div><?}?></li>
+					<li><a href="<?=$arItem["FULL_PATH"]?>"><?=$arItem["NAME"]?></a><?php if ($arParams["SHOW_DESCRIPTION"] == "Y" && $arItem["DESCRIPTION"] <> '') {?><div><?=$arItem["DESCRIPTION"]?></div><?php
+						}?></li>
 
-			<?endif?>
+			<?php endif?>
 
 
-			<?
+						<?php
 				$previousLevel = $arItem["LEVEL"];
 				if($arItem["LEVEL"] == 0)
 					$counter++;
 			?>
 
-		<?endforeach?>
+		<?php endforeach?>
 
-		<?if ($previousLevel > 1)://close last item tags?>
+		<?php if ($previousLevel > 1)://close last item tags?>
 			<?=str_repeat("</ul></li>", ($previousLevel-1) );?>
-		<?endif?>
+		<?php endif?>
 
 		</ul>
 	</td>

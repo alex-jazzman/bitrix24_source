@@ -1,0 +1,3 @@
+<?php
+
+$MESS['NOTE_ACCESS_RIGHTS_BUTTON_CANCEL'] = 'Отменить';

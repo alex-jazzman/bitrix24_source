@@ -126,7 +126,23 @@ export const ChatsTab = {
 		{
 			let stateArray = [];
 
-			if (this.isCollabsAvailable && this.isTeamEntity)
+			if (this.isProjectsAvailable && this.isTeamEntity)
+			{
+				stateArray = [
+					this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_TEAM_LIST_W_PROJECTS_ITEM_1'),
+					this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_LIST_W_PROJECTS_ITEM_2'),
+					this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_TEAM_LIST_W_PROJECTS_ITEM_3'),
+				];
+			}
+			else if (this.isProjectsAvailable)
+			{
+				stateArray = [
+					this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_LIST_W_PROJECTS_ITEM_1'),
+					this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_LIST_W_PROJECTS_ITEM_2'),
+					this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_LIST_W_PROJECTS_ITEM_3'),
+				];
+			}
+			else if (this.isCollabsAvailable && this.isTeamEntity)
 			{
 				stateArray = [
 					this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_TEAM_LIST_W_COLLABS_ITEM_1'),
@@ -168,6 +184,10 @@ export const ChatsTab = {
 		isCollabsAvailable(): boolean
 		{
 			return PermissionChecker.getInstance().isCollabsAvailable;
+		},
+		isProjectsAvailable(): boolean
+		{
+			return PermissionChecker.getInstance().isProjectsAvailable;
 		},
 		communicationTypes(): Record<string, string>
 		{
@@ -416,7 +436,7 @@ export const ChatsTab = {
 						:canEdit="canEditCollab"
 						:searchQuery="searchQuery"
 						:focusedNode="focusedNode"
-						:communicationType="communicationTypes.collab"
+						:communicationType="isProjectsAvailable ? communicationTypes.project : communicationTypes.collab"
 						:isTeamEntity="isTeamEntity"
 						:dataTestId="getCollabListDataTestIds"
 						@tabListAction="onActionMenuItemClick"
@@ -472,7 +492,7 @@ export const ChatsTab = {
 			<LinkDialog
 				v-if="isCollabsAvailable"
 				:communications="collabs"
-				:communicationType="communicationTypes.collab"
+				:communicationType="isProjectsAvailable ? communicationTypes.project : communicationTypes.collab"
 				:focusedNode="focusedNode"
 				:isTeamEntity="isTeamEntity"
 				:entityType="entityType"

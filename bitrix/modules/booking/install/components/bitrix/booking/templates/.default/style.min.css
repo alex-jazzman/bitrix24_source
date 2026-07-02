@@ -1,1 +1,103 @@
-.booking-booking-slider .ui-slider-page{height:100vh;overflow:hidden}.booking-booking-slider .ui-side-panel-toolbar{margin:0;padding:0 18px;background:var(--ui-color-background-primary);border-bottom:1px solid var(--ui-color-base-10)}.bitrix24-dark-theme .page-toolbar{margin-left:18px}.bitrix24-dark-theme .ui-toolbar-filter-box .main-ui-filter-search,.booking-booking-slider .ui-toolbar-filter-box .main-ui-filter-search{padding:2px;background-image:linear-gradient(#fff,#fff);box-shadow:inset 0 0 0 1px #c8d1d6;border:none!important}.booking-booking-slider .ui-side-panel-wrap-workarea{position:relative;box-sizing:border-box;background-image:linear-gradient(var(--ui-color-base-03),var(--ui-color-base-03));border-radius:0}.ui-toolbar .ui-toolbar-title-box{padding:0!important;min-width:max-content!important}.workarea-content{background-image:linear-gradient(var(--ui-color-base-03),var(--ui-color-base-03))}.workarea-content-paddings{box-sizing:border-box;position:relative;height:100%;width:100%}.booking-toolbar-custom-html{display:flex;align-items:center;gap:12px}.booking-toolbar-custom-html.--margin-right{margin-right:12px}.booking-toolbar-custom-html.--margin-left{margin-left:12px}.bx-layout-inner-top-row tr:not(.bx-layout-inner-inner-top-row) .bx-layout-inner-inner-cont{padding-bottom:10px}.bx-layout-inner-top-row+tr{display:none}.crm-agreement-terms-popup .popup-window-titlebar{text-align:center;height:auto}.crm-agreement-terms-popup .popup-window-titlebar-text{color:var(--ui-color-text-primary);font-size:16px;font-weight:500;padding:5px 0}.crm-agreement-terms-popup .popup-window-content{font-size:15px;margin:22px}.crm-agreement-terms-popup .popup-window-buttons{border-top:1px solid var(--ui-color-base-15);padding:20px 0;margin:0 20px}
+/** region slider **/
+.booking-booking-slider .ui-slider-page {
+	height: 100vh;
+	overflow: hidden;
+}
+
+.booking-booking-slider .ui-side-panel-toolbar {
+	margin: 0;
+	padding: 0 18px;
+	background: var(--ui-color-background-primary);
+	border-bottom: 1px solid var(--ui-color-base-10);
+}
+
+.bitrix24-dark-theme .page-toolbar {
+	margin-left: 18px;
+}
+
+.booking-booking-slider .ui-toolbar-filter-box .main-ui-filter-search,
+.bitrix24-dark-theme .ui-toolbar-filter-box .main-ui-filter-search {
+	padding: 2px;
+	background-image: linear-gradient(#fff, #fff);
+	box-shadow: inset 0 0 0 1px #c8d1d6;
+	border: none !important;
+}
+
+.booking-booking-slider .ui-side-panel-wrap-workarea {
+	position: relative;
+	box-sizing: border-box;
+	background-image: linear-gradient(var(--ui-color-base-03), var(--ui-color-base-03));
+	border-radius: 0;
+}
+/** endregion slider **/
+
+.ui-toolbar .ui-toolbar-title-box {
+	padding: 0 !important;
+	min-width: max-content !important;
+}
+
+.workarea-content {
+	background-image: linear-gradient(var(--ui-color-base-03), var(--ui-color-base-03));
+}
+
+.workarea-content-paddings {
+	box-sizing: border-box;
+	position: relative;
+	height: 100%;
+	width: 100%;
+}
+
+.booking-toolbar-custom-html {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.booking-toolbar-custom-html.--margin-right {
+	margin-right: 12px;
+}
+
+.booking-page .ui-toolbar-right-custom-html {
+	margin-left: 0;
+}
+
+/** region hide footer **/
+.bx-layout-inner-top-row tr:not(.bx-layout-inner-inner-top-row) .bx-layout-inner-inner-cont {
+	padding-bottom: 10px;
+}
+
+.bx-layout-inner-top-row + tr {
+	display: none;
+}
+/** endregion hide footer **/
+
+
+/** region crm notifications agreement **/
+.crm-agreement-terms-popup {
+}
+
+.crm-agreement-terms-popup .popup-window-titlebar {
+	text-align: center;
+	height: auto;
+}
+
+.crm-agreement-terms-popup .popup-window-titlebar-text {
+	color: var(--ui-color-text-primary);
+	font-size: 16px;
+	font-weight: 500;
+	padding: 5px 0;
+}
+
+.crm-agreement-terms-popup .popup-window-content {
+	font-size: 15px;
+	margin: 22px;
+}
+
+.crm-agreement-terms-popup .popup-window-buttons {
+	border-top: var(--ui-color-base-15) solid 1px;
+	padding: 20px 0;
+	margin: 0 20px;
+}
+/** endregion crm notifications agreement **/
+
+/*# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3RtcC96Y0hsOFUiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IkFBQUEiLCJmaWxlIjoiLi4vLi4vLi4vdG1wL3pjSGw4VSIsInNvdXJjZXNDb250ZW50IjpbIi8qKiByZWdpb24gc2xpZGVyICoqL1xuLmJvb2tpbmctYm9va2luZy1zbGlkZXIgLnVpLXNsaWRlci1wYWdlIHtcblx0aGVpZ2h0OiAxMDB2aDtcblx0b3ZlcmZsb3c6IGhpZGRlbjtcbn1cblxuLmJvb2tpbmctYm9va2luZy1zbGlkZXIgLnVpLXNpZGUtcGFuZWwtdG9vbGJhciB7XG5cdG1hcmdpbjogMDtcblx0cGFkZGluZzogMCAxOHB4O1xuXHRiYWNrZ3JvdW5kOiB2YXIoLS11aS1jb2xvci1iYWNrZ3JvdW5kLXByaW1hcnkpO1xuXHRib3JkZXItYm90dG9tOiAxcHggc29saWQgdmFyKC0tdWktY29sb3ItYmFzZS0xMCk7XG59XG5cbi5iaXRyaXgyNC1kYXJrLXRoZW1lIC5wYWdlLXRvb2xiYXIge1xuXHRtYXJnaW4tbGVmdDogMThweDtcbn1cblxuLmJvb2tpbmctYm9va2luZy1zbGlkZXIgLnVpLXRvb2xiYXItZmlsdGVyLWJveCAubWFpbi11aS1maWx0ZXItc2VhcmNoLFxuLmJpdHJpeDI0LWRhcmstdGhlbWUgLnVpLXRvb2xiYXItZmlsdGVyLWJveCAubWFpbi11aS1maWx0ZXItc2VhcmNoIHtcblx0cGFkZGluZzogMnB4O1xuXHRiYWNrZ3JvdW5kLWltYWdlOiBsaW5lYXItZ3JhZGllbnQoI2ZmZiwgI2ZmZik7XG5cdGJveC1zaGFkb3c6IGluc2V0IDAgMCAwIDFweCAjYzhkMWQ2O1xuXHRib3JkZXI6IG5vbmUgIWltcG9ydGFudDtcbn1cblxuLmJvb2tpbmctYm9va2luZy1zbGlkZXIgLnVpLXNpZGUtcGFuZWwtd3JhcC13b3JrYXJlYSB7XG5cdHBvc2l0aW9uOiByZWxhdGl2ZTtcblx0Ym94LXNpemluZzogYm9yZGVyLWJveDtcblx0YmFja2dyb3VuZC1pbWFnZTogbGluZWFyLWdyYWRpZW50KHZhcigtLXVpLWNvbG9yLWJhc2UtMDMpLCB2YXIoLS11aS1jb2xvci1iYXNlLTAzKSk7XG5cdGJvcmRlci1yYWRpdXM6IDA7XG59XG4vKiogZW5kcmVnaW9uIHNsaWRlciAqKi9cblxuLnVpLXRvb2xiYXIgLnVpLXRvb2xiYXItdGl0bGUtYm94IHtcblx0cGFkZGluZzogMCAhaW1wb3J0YW50O1xuXHRtaW4td2lkdGg6IG1heC1jb250ZW50ICFpbXBvcnRhbnQ7XG59XG5cbi53b3JrYXJlYS1jb250ZW50IHtcblx0YmFja2dyb3VuZC1pbWFnZTogbGluZWFyLWdyYWRpZW50KHZhcigtLXVpLWNvbG9yLWJhc2UtMDMpLCB2YXIoLS11aS1jb2xvci1iYXNlLTAzKSk7XG59XG5cbi53b3JrYXJlYS1jb250ZW50LXBhZGRpbmdzIHtcblx0Ym94LXNpemluZzogYm9yZGVyLWJveDtcblx0cG9zaXRpb246IHJlbGF0aXZlO1xuXHRoZWlnaHQ6IDEwMCU7XG5cdHdpZHRoOiAxMDAlO1xufVxuXG4uYm9va2luZy10b29sYmFyLWN1c3RvbS1odG1sIHtcblx0ZGlzcGxheTogZmxleDtcblx0YWxpZ24taXRlbXM6IGNlbnRlcjtcblx0Z2FwOiAxMnB4O1xufVxuXG4uYm9va2luZy10b29sYmFyLWN1c3RvbS1odG1sLi0tbWFyZ2luLXJpZ2h0IHtcblx0bWFyZ2luLXJpZ2h0OiAxMnB4O1xufVxuXG4uYm9va2luZy1wYWdlIC51aS10b29sYmFyLXJpZ2h0LWN1c3RvbS1odG1sIHtcblx0bWFyZ2luLWxlZnQ6IDA7XG59XG5cbi8qKiByZWdpb24gaGlkZSBmb290ZXIgKiovXG4uYngtbGF5b3V0LWlubmVyLXRvcC1yb3cgdHI6bm90KC5ieC1sYXlvdXQtaW5uZXItaW5uZXItdG9wLXJvdykgLmJ4LWxheW91dC1pbm5lci1pbm5lci1jb250IHtcblx0cGFkZGluZy1ib3R0b206IDEwcHg7XG59XG5cbi5ieC1sYXlvdXQtaW5uZXItdG9wLXJvdyArIHRyIHtcblx0ZGlzcGxheTogbm9uZTtcbn1cbi8qKiBlbmRyZWdpb24gaGlkZSBmb290ZXIgKiovXG5cblxuLyoqIHJlZ2lvbiBjcm0gbm90aWZpY2F0aW9ucyBhZ3JlZW1lbnQgKiovXG4uY3JtLWFncmVlbWVudC10ZXJtcy1wb3B1cCB7XG59XG5cbi5jcm0tYWdyZWVtZW50LXRlcm1zLXBvcHVwIC5wb3B1cC13aW5kb3ctdGl0bGViYXIge1xuXHR0ZXh0LWFsaWduOiBjZW50ZXI7XG5cdGhlaWdodDogYXV0bztcbn1cblxuLmNybS1hZ3JlZW1lbnQtdGVybXMtcG9wdXAgLnBvcHVwLXdpbmRvdy10aXRsZWJhci10ZXh0IHtcblx0Y29sb3I6IHZhcigtLXVpLWNvbG9yLXRleHQtcHJpbWFyeSk7XG5cdGZvbnQtc2l6ZTogMTZweDtcblx0Zm9udC13ZWlnaHQ6IDUwMDtcblx0cGFkZGluZzogNXB4IDA7XG59XG5cbi5jcm0tYWdyZWVtZW50LXRlcm1zLXBvcHVwIC5wb3B1cC13aW5kb3ctY29udGVudCB7XG5cdGZvbnQtc2l6ZTogMTVweDtcblx0bWFyZ2luOiAyMnB4O1xufVxuXG4uY3JtLWFncmVlbWVudC10ZXJtcy1wb3B1cCAucG9wdXAtd2luZG93LWJ1dHRvbnMge1xuXHRib3JkZXItdG9wOiB2YXIoLS11aS1jb2xvci1iYXNlLTE1KSBzb2xpZCAxcHg7XG5cdHBhZGRpbmc6IDIwcHggMDtcblx0bWFyZ2luOiAwIDIwcHg7XG59XG4vKiogZW5kcmVnaW9uIGNybSBub3RpZmljYXRpb25zIGFncmVlbWVudCAqKi9cbiJdfQ== */

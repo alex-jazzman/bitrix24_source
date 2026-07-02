@@ -23,7 +23,8 @@ jn.define('im/messenger/controller/recent/service/action/common', (require, expo
 		async onUiReady(ui)
 		{
 			this.logger.log('onUiReady');
-			ui?.on(EventType.recent.itemAction, this.onItemAction);
+			this.ui = ui;
+			this.subscribeEvents(ui);
 		}
 
 		/**
@@ -71,6 +72,23 @@ jn.define('im/messenger/controller/recent/service/action/common', (require, expo
 		get store()
 		{
 			return serviceLocator.get('core').getStore();
+		}
+
+		subscribeEvents(ui)
+		{
+			ui?.on(EventType.recent.itemAction, this.onItemAction);
+		}
+
+		unsubscribeEvents()
+		{
+			this.recentLocator.get('ui')
+				.then((ui) => {
+					ui?.off(EventType.recent.itemAction, this.onItemAction);
+				})
+				.catch((error) => {
+					this.logger.error('unsubscribeEvents error', error);
+				})
+			;
 		}
 	}
 

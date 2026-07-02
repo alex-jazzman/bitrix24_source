@@ -8,14 +8,14 @@ import { createUniqueId, parsePortTitle } from '../../../shared/utils';
 import { complexNodeApi } from '../api';
 import { CONSTRUCTION_TYPES } from '../constants';
 
-import type { Construction, TRuleCard, NodeSettings, OrderPayload, OutputConstruction } from '../types';
+import type { Construction, TRuleCard, NodeSettings, OrderPayload, OutputConstruction, Rule } from '../types';
 import { generateNextInputPortId } from '../utils';
 
 type NodesSettingsState = {
 	isLoading: boolean;
 	isShown: boolean;
 	isRuleSettingsShown: boolean;
-	currentRuleId: string;
+	currentRule: Port;
 	nodeSettings: NodeSettings | null;
 	block: Block | null,
 	lastFetchId: number,
@@ -24,6 +24,16 @@ type NodesSettingsState = {
 type SyncOutputPorts = {
 	outputPortsToAdd: Map<PortId, Partial<Port>>,
 	outputPortsToDelete: Set<PortId>,
+};
+
+type SyncAuxPort = {
+	portId: PortId,
+	title: string,
+};
+
+type SyncAuxPorts = {
+	auxPortsToAdd: Map<PortId, SyncAuxPort>,
+	auxPortsToActivate: Set<PortId>,
 };
 
 type PortParams = {
@@ -44,13 +54,25 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 		isSaving: false,
 		isShown: false,
 		isRuleSettingsShown: false,
-		currentRuleId: '',
+		currentRule: null,
 		prevSavedNodeSettings: null,
 		ports: null,
 		nodeSettings: null,
 		block: null,
 		lastFetchId: 0,
 	}),
+	getters:
+	{
+		currentSettingsItems: (state: NodesSettingsState): Map<PortId, Rule> => {
+			return state.currentRule.type === PORT_TYPES.input
+				? state.nodeSettings.rules
+				: state.nodeSettings.relations;
+		},
+		inputPorts: (state: NodesSettingsState): Array<Port> => {
+			return state.ports.filter((port) => port.type === PORT_TYPES.input
+				|| port.type === PORT_TYPES.inputRelation);
+		},
+	},
 	actions:
 	{
 		async fetchNodeSettings(block: Block): Promise<void>
@@ -60,6 +82,7 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 				title: block.node.title,
 				description: '',
 				rules: new Map(),
+				relations: new Map(),
 				blockId: block.id,
 			};
 			this.isLoading = true;
@@ -100,7 +123,7 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 				description,
 			};
 			this.prevSavedNodeSettings = Runtime.clone(this.nodeSettings);
-			this.ports = [...block.ports].sort((a, b) => {
+			this.ports = block.ports.map((port) => ({ ...port })).sort((a, b) => {
 				const { id: aId } = parsePortTitle(a.title);
 				const { id: bId } = parsePortTitle(b.title);
 
@@ -108,9 +131,16 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 			});
 			const rulesIds = new Set(this.nodeSettings.rules.keys());
 			this.ports.forEach((port) => {
-				if (port.type === PORT_TYPES.input && !rulesIds.has(port.id) && !port.isConnectionPort)
+				if (port.type === PORT_TYPES.input && !rulesIds.has(port.id))
 				{
 					this.addRule(port.id);
+
+					return;
+				}
+
+				if (port.type === PORT_TYPES.inputRelation)
+				{
+					this.addRelation(port.id);
 				}
 			});
 			this.block = block;
@@ -122,7 +152,7 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 		},
 		reset(): void
 		{
-			this.currentRuleId = '';
+			this.currentRule = null;
 			this.nodeSettings = null;
 			this.block = null;
 			this.ports = null;
@@ -135,17 +165,25 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 		{
 			this.isRuleSettingsShown = isShown;
 		},
-		setCurrentRuleId(ruleId: string): void
+		setCurrentRule(port: Port): void
 		{
-			this.currentRuleId = ruleId;
+			this.currentRule = port;
 		},
-		addRule(portId: ?PortId): string
+		addRule(portId: ?PortId): PortId
 		{
-			const nextPortId = portId ?? generateNextInputPortId(
-				this.ports.filter((port) => port.type === PORT_TYPES.input),
-			);
-
+			const nextPortId = portId ?? generateNextInputPortId(this.inputPorts);
 			this.nodeSettings.rules.set(nextPortId, {
+				isFilled: false,
+				portId: nextPortId,
+				ruleCards: [],
+			});
+
+			return nextPortId;
+		},
+		addRelation(portId: ?PortId): PortId
+		{
+			const nextPortId = portId ?? generateNextInputPortId(this.inputPorts);
+			this.nodeSettings.relations.set(nextPortId, {
 				isFilled: false,
 				portId: nextPortId,
 				ruleCards: [],
@@ -184,14 +222,8 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 				};
 			}
 
-			if (position)
-			{
-				ruleCard.constructions.splice(position, 0, newConstruction);
-			}
-			else
-			{
-				ruleCard.constructions.push(newConstruction);
-			}
+			const pos = position ?? ruleCard.constructions.length;
+			ruleCard.constructions.splice(pos, 0, newConstruction);
 		},
 		deleteConstruction(ruleCard: TRuleCard, construction: Construction): void
 		{
@@ -203,7 +235,7 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 		},
 		deleteRuleSettings(ruleId: string): SyncOutputPorts | null
 		{
-			this.nodeSettings.rules.delete(ruleId);
+			this.currentSettingsItems.delete(ruleId);
 
 			return this.syncOutputPortsWithRules();
 		},
@@ -217,12 +249,12 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 		},
 		deleteRuleCard(ruleCard: TRuleCard): void
 		{
-			const rule = this.nodeSettings.rules.get(this.currentRuleId);
+			const rule = this.currentSettingsItems.get(this.currentRule.id);
 			rule.ruleCards.splice(rule.ruleCards.indexOf(ruleCard), 1);
 		},
 		addRuleCard(): TRuleCard
 		{
-			const rule = this.nodeSettings.rules.get(this.currentRuleId);
+			const rule = this.currentSettingsItems.get(this.currentRule.id);
 			const ruleCard = {
 				id: createUniqueId(),
 				constructions: [],
@@ -234,7 +266,7 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 		reorder(payload: OrderPayload): void
 		{
 			const { draggedId, targetId, insertion, ruleCardId } = payload;
-			const rule = this.nodeSettings.rules.get(this.currentRuleId);
+			const rule = this.currentSettingsItems.get(this.currentRule.id);
 			let collection = rule.ruleCards;
 			if (ruleCardId)
 			{
@@ -274,15 +306,20 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 				return null;
 			}
 
-			const outputConstructions = [...this.nodeSettings.rules.values()].flatMap((r) => {
+			const outputConstructions = [...this.currentSettingsItems.values()].flatMap((r) => {
 				return r.ruleCards.flatMap((ruleCard) => {
 					return ruleCard.constructions.filter((construction) => construction.type === CONSTRUCTION_TYPES.OUTPUT);
 				});
 			});
 
+			const outputType = this.currentRule.type === PORT_TYPES.input
+				? PORT_TYPES.output
+				: PORT_TYPES.outputRelation
+			;
+
 			const allExistingOutputPortIds = new Set(
 				this.ports
-					.filter((port) => port.type === PORT_TYPES.output)
+					.filter((port) => port.type === outputType)
 					.map((port) => port.id),
 			);
 
@@ -315,12 +352,36 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 			const {
 				outputPortsToAdd,
 				outputPortsToDelete,
-			} = await this.savePortRule(this.currentRuleId, documentType);
+			} = await this.savePortRule(this.currentRule.id, documentType);
 			this.toggleRuleSettingsVisibility(false);
-			outputPortsToAdd.values().forEach(({ portId, title }) => {
+			outputPortsToAdd.forEach(({ portId, title }) => {
 				this.addRulePort(portId, PORT_TYPES.output, title);
 			});
-			outputPortsToDelete.keys().forEach((portId) => {
+			outputPortsToDelete.forEach((portId) => {
+				this.deletePort(portId);
+			});
+
+			const auxSync = this.syncAuxPortsWithActions();
+			auxSync?.auxPortsToAdd.forEach(({ portId, title }) => {
+				this.addAuxPort(portId, title);
+			});
+			auxSync?.auxPortsToActivate?.forEach((portId) => {
+				this.activatePort(portId);
+			});
+		},
+		async saveRelation(): Promise<void>
+		{
+			await new Promise((resolve) => {
+				setTimeout(resolve, 2000);
+			});
+			const rule = this.nodeSettings.relations.get(this.currentRule.id);
+			rule.isFilled = true;
+			this.toggleRuleSettingsVisibility(false);
+			const { outputPortsToAdd, outputPortsToDelete } = this.syncOutputPortsWithRules();
+			outputPortsToAdd.forEach(({ portId, title }) => {
+				this.addRelationPort(portId, PORT_TYPES.outputRelation, title);
+			});
+			outputPortsToDelete.forEach((portId) => {
 				this.deletePort(portId);
 			});
 		},
@@ -346,18 +407,21 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 		},
 		discardRuleSettings(): void
 		{
-			const { rules: prevSavedRules } = this.prevSavedNodeSettings;
-			if (!prevSavedRules.has(this.currentRuleId))
+			const { rules: prevSavedRules, relations: prevSavedRelations } = this.prevSavedNodeSettings;
+			const prevSavedItems = this.currentRule.type === PORT_TYPES.input
+				? prevSavedRules : prevSavedRelations;
+
+			if (!prevSavedItems.has(this.currentRule.id))
 			{
-				const currentRule = this.nodeSettings.rules.get(this.currentRuleId);
+				const currentRule = this.currentSettingsItems.get(this.currentRule.id);
 				currentRule.isFilled = false;
 				currentRule.ruleCards = [];
 
 				return;
 			}
 
-			const copyRule = Runtime.clone(prevSavedRules.get(this.currentRuleId));
-			this.nodeSettings.rules.set(this.currentRuleId, copyRule);
+			const copyItem = Runtime.clone(prevSavedItems.get(this.currentRule.id));
+			this.currentSettingsItems.set(this.currentRule.id, copyItem);
 		},
 		createPort(ports: Array<Port>, { portId, type, label, portTitle }: PortParams): Port
 		{
@@ -365,19 +429,27 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 			const [, count] = (lastPort?.title?.split(label) ?? []);
 			const title = portTitle ?? `${label}${Number(count ?? 0) + 1}`;
 
+			const leftInputPortTypes = new Set([PORT_TYPES.input, PORT_TYPES.inputRelation]);
+
 			return {
 				id: portId,
 				title,
 				type,
-				position: type === PORT_TYPES.input ? PORT_POSITIONS.left : PORT_POSITIONS.right,
+				position: leftInputPortTypes.has(type) ? PORT_POSITIONS.left : PORT_POSITIONS.right,
 			};
 		},
 		addRulePort(portId: string, type: PortType, portTitle: ?string): void
 		{
-			const currentPorts = this.ports.filter((port) => port.type === type && !port.isConnectionPort);
+			if (![PORT_TYPES.input, PORT_TYPES.output].includes(type))
+			{
+				return;
+			}
+
+			const currentPorts = this.ports.filter((port) => port.type === type);
 			const label = type === PORT_TYPES.input
 				? COMPLEX_NODE_PORT_LABELS.inputRule
-				: COMPLEX_NODE_PORT_LABELS.outputRule;
+				: COMPLEX_NODE_PORT_LABELS.outputRule
+			;
 
 			const port = this.createPort(currentPorts, { portId, type, label, portTitle });
 			const addedPortId = parsePortTitle(port.title).id;
@@ -394,19 +466,125 @@ export const useNodeSettingsStore = defineStore('bizprocdesigner-editor-node-set
 
 			this.ports.unshift(port);
 		},
-		addConnectionPort(portId: string, type: PortType): void
+		addRelationPort(portId: string, type: PortType): void
 		{
-			const currentPorts = type === PORT_TYPES.input
-				? this.ports.filter((port) => port.type === PORT_TYPES.input)
-				: this.ports.filter((port) => port.type === PORT_TYPES.output);
-			const connectionPorts = currentPorts.filter((p) => p.isConnectionPort);
-			const port = this.createPort(connectionPorts, { portId, type, label: COMPLEX_NODE_PORT_LABELS.connection });
-			this.ports.push({ ...port, isConnectionPort: true });
+			if (![PORT_TYPES.inputRelation, PORT_TYPES.outputRelation].includes(type))
+			{
+				return;
+			}
+
+			const relationPorts = type === PORT_TYPES.inputRelation
+				? this.ports.filter((port) => port.type === PORT_TYPES.inputRelation)
+				: this.ports.filter((port) => port.type === PORT_TYPES.outputRelation)
+			;
+			const port = this.createPort(relationPorts, { portId, type, label: COMPLEX_NODE_PORT_LABELS.relation });
+			this.ports.push({ ...port });
 		},
 		deletePort(portId: string): void
 		{
 			const deletedPort = this.ports.find((port) => port.id === portId);
+			if (!deletedPort)
+			{
+				return;
+			}
+
+			if (deletedPort.type === PORT_TYPES.aux)
+			{
+				deletedPort.isActive = false;
+				this.resetAuxPortReferencesInRules(portId);
+
+				return;
+			}
+
 			this.ports.splice(this.ports.indexOf(deletedPort), 1);
+		},
+		activatePort(portId: string): void
+		{
+			const port = this.ports.find((p) => p.id === portId);
+			if (port)
+			{
+				port.isActive = true;
+			}
+		},
+		resetAuxPortReferencesInRules(portId: string): void
+		{
+			if (!this.nodeSettings?.rules)
+			{
+				return;
+			}
+
+			this.nodeSettings.rules.forEach((rule) => {
+				rule.ruleCards.forEach((ruleCard) => {
+					ruleCard.constructions.forEach((construction) => {
+						if (
+							construction.type === CONSTRUCTION_TYPES.ACTION
+							&& construction.expression?.auxPortId === portId
+						)
+						{
+							construction.expression.auxPortId = null;
+							construction.expression.auxPortTitle = null;
+						}
+					});
+				});
+			});
+		},
+		syncAuxPortsWithActions(): SyncAuxPorts | null
+		{
+			if (!this.block)
+			{
+				return null;
+			}
+
+			const actionConstructions = [...this.nodeSettings.rules.values()].flatMap((r) => {
+				return r.ruleCards.flatMap((ruleCard) => {
+					return ruleCard.constructions.filter(
+						(construction) => construction.type === CONSTRUCTION_TYPES.ACTION
+							&& construction.expression.auxPortId,
+					);
+				});
+			});
+
+			const existingAuxPorts = new Map(
+				this.ports
+					.filter((port) => port.type === PORT_TYPES.aux)
+					.map((port) => [port.id, port]),
+			);
+
+			const toAddPortsMap: Map<PortId, SyncAuxPort> = new Map();
+			const toActivatePortIds: Set<PortId> = new Set();
+
+			actionConstructions.forEach((construction) => {
+				const { auxPortId, auxPortTitle } = construction.expression;
+				if (!auxPortId || !auxPortTitle)
+				{
+					return;
+				}
+
+				const existingPort = existingAuxPorts.get(auxPortId);
+				if (!existingPort)
+				{
+					toAddPortsMap.set(auxPortId, { portId: auxPortId, title: auxPortTitle });
+
+					return;
+				}
+
+				if (existingPort.isActive === false)
+				{
+					toActivatePortIds.add(auxPortId);
+				}
+			});
+
+			return {
+				auxPortsToAdd: toAddPortsMap,
+				auxPortsToActivate: toActivatePortIds,
+			};
+		},
+		addAuxPort(portId: string, portTitle: ?string): void
+		{
+			const auxPorts = this.ports.filter((port) => port.type === PORT_TYPES.aux);
+			const label = COMPLEX_NODE_PORT_LABELS.aux;
+			const port = this.createPort(auxPorts, { portId, type: PORT_TYPES.aux, label, portTitle });
+			this.ports.push(port);
 		},
 	},
 });

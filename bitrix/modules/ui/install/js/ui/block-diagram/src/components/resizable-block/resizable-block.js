@@ -40,10 +40,17 @@ export const ResizableBlock = {
 	setup(props): {...}
 	{
 		const { block, minWidth, minHeight } = toRefs(props);
-		const { isHiglitedBlock, isDisabled } = useBlockState(block);
+		const blockRef = useTemplateRef('blockEl');
+		const { isHiglitedBlock, isDisabled } = useBlockState({
+			block,
+			blockRef,
+		});
 		const highlightedBlocks = useHighlightedBlocks();
-		const { isDragged, blockPositionStyle } = useMoveableBlock(
-			useTemplateRef('blockEl'),
+		const {
+			isDragged,
+			blockPositionStyle,
+		} = useMoveableBlock(
+			blockRef,
 			block,
 		);
 		const {
@@ -70,6 +77,14 @@ export const ResizableBlock = {
 				...toValue(blockPositionStyle),
 				...toValue(sizeBlockStyle),
 			};
+		});
+
+		watch(isResize, (resizeStatus) => {
+			if (resizeStatus)
+			{
+				highlightedBlocks.clear();
+				highlightedBlocks.add(props.block.id);
+			}
 		});
 
 		watch(() => props.highlighted, (value) => {
@@ -154,6 +169,8 @@ export const ResizableBlock = {
 					:isDragged="isDragged"
 					:isResize="isResize"
 					:isDisabled="isDisabled"
+					:width="block.dimensions.width"
+					:height="block.dimensions.height"
 				/>
 			</div>
 		</div>

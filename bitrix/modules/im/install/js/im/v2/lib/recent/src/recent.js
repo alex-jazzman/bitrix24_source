@@ -1,7 +1,7 @@
 import { Type } from 'main.core';
 
 import { Core } from 'im.v2.application.core';
-import { ChatType, Settings } from 'im.v2.const';
+import { ChatType, Settings, RecentType, type RecentTypeItem } from 'im.v2.const';
 import { ChannelManager } from 'im.v2.lib.channel';
 import { MessageManager } from 'im.v2.lib.message';
 import { Utils } from 'im.v2.lib.utils';
@@ -31,14 +31,13 @@ export const RecentManager = {
 			return Utils.date.getStartOfTheDay();
 		}
 
-		const lastActivity = lastActivityDate;
-		const shouldUseActivityDate = Type.isDate(lastActivity) && lastActivity > messageDate;
-		if (ChannelManager.isChannel(dialogId) && shouldUseActivityDate)
+		const shouldUseActivityDate = Type.isDate(lastActivityDate) && lastActivityDate > messageDate;
+		if (shouldUseActivityDate)
 		{
-			return lastActivity;
+			return lastActivityDate;
 		}
 
-		return messageDate ?? lastActivity;
+		return messageDate ?? lastActivityDate;
 	},
 	needToShowItem(item: ImModelRecentItem): boolean
 	{
@@ -78,6 +77,13 @@ export const RecentManager = {
 		}
 
 		return needsPlaceholder(dialogId);
+	},
+	// recent type includes not only root elements (parentChatId = 0) but children elements too (parentChatId > 0)
+	isTypeWithNestedChats(type: RecentTypeItem): boolean
+	{
+		const RECENT_TYPES_WITH_NESTED_CHATS = [RecentType.taskComments];
+
+		return RECENT_TYPES_WITH_NESTED_CHATS.includes(type);
 	},
 };
 
@@ -138,4 +144,12 @@ const needToShowFakeItem = (item: ImModelRecentItem): boolean => {
 	}
 
 	return Core.getStore().getters['users/hasBirthday'](item.dialogId);
+};
+
+const shouldUseActivityDate = (dialogId: string, messageDate: ?Date): boolean => {
+	const shouldUseActivityDate = Type.isDate(lastActivityDate) && lastActivityDate > messageDate;
+	if (ChannelManager.isChannel(dialogId) && shouldUseActivityDate)
+	{
+		return lastActivityDate;
+	}
 };

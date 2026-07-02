@@ -97,6 +97,7 @@ jn.define('tasks/enum', (require, exports, module) => {
 		STAGE: 'stage',
 		CHECKLIST: 'checklist',
 		RESULT: 'result',
+		TEMPLATE: 'template',
 
 		CREATOR: 'creator',
 		RESPONSIBLE: 'responsible',

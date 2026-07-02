@@ -11,7 +11,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 
 /**
  * Bitrix vars
- * @param array $arCurrentValues
+ * @var array $arCurrentValues
  */
 
 $arComponentParameters = array(

@@ -1,10 +1,13 @@
-import { DraggedElementKind } from 'booking.const';
+import { DraggedElementKind, Grid } from 'booking.const';
 
 export type InterfaceModelState = {
 	isFeatureEnabled: boolean,
 	canTurnOnTrial: boolean,
 	canTurnOnDemo: boolean,
+	isMultidayFeatureAvailable: boolean,
 	isLoaded: boolean,
+	saleChannelsLoaded: boolean,
+	gridMode: $Values<typeof Grid.Mode>,
 	zoom: number,
 	expanded: boolean,
 	scroll: number,
@@ -12,15 +15,18 @@ export type InterfaceModelState = {
 	offHoursExpanded: boolean,
 	waitListExpanded: boolean,
 	calendarExpanded: boolean,
+	intersectionExpanded: boolean,
+	firstWeekDay: number,
 	fromHour: number,
 	toHour: number,
 	selectedDateTs: number,
+	selectedFirstDayPeriodTs: number | null,
 	viewDateTs: number,
 	deletingBookings: { [key: number ]: number },
 	deletingResources: { [key: number ]: number },
 	deletingWaitListItemIds: { [key: number ]: number },
-	selectedCells: { [key: string ]: Object },
-	hoveredCell: CellDto,
+	selectedPlacementSlots: { [key: string ]: Object },
+	hoveredPlacementSlot: HoveredPlacementSlot | null,
 	busySlots: { [key: string ]: Object },
 	disabledBusySlots: { [key: string ]: Object },
 	resourcesIds: number[],
@@ -40,7 +46,6 @@ export type InterfaceModelState = {
 	draggedDataTransfer: DraggedDataTransfer,
 	resizedBookingId: number,
 	mousePosition: MousePosition,
-	isCurrentSenderAvailable: boolean,
 	isShownTrialPopup: boolean,
 	animationPause: boolean,
 	createdFromEmbedBookings: { [key: number | string ]: number | string },
@@ -50,6 +55,24 @@ export type InterfaceModelState = {
 	enabledFeature: EnabledFeatures,
 	shouldShowWhatsAppEmergency: boolean,
 }
+
+export type CellStats = {
+	busySlotsCount: number,
+	freeSlotsCount: number,
+};
+
+export type Cell = {
+	id: string,
+	minutes: number,
+	fromTs: number,
+	toTs: number,
+	resourceId: number,
+};
+
+export type HoveredPlacementSlot = Cell & {
+	stats: CellStats | null,
+	isFixed: Boolean | null,
+};
 
 export type Intersections = {
 	[resourceId: number | 0]: number[],

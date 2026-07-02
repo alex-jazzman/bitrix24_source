@@ -2,11 +2,12 @@ import { type JsonObject } from 'main.core';
 
 import { ChatHeader } from 'im.v2.component.content.elements';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
+import { GroupChatTitle, EntityButton } from 'im.v2.component.content.elements';
 
 // @vue/component
 export const TaskCommentsHeader = {
 	name: 'TaskCommentsHeader',
-	components: { ChatHeader },
+	components: { ChatHeader, GroupChatTitle, EntityButton },
 	props: {
 		dialogId: {
 			type: String,
@@ -33,6 +34,12 @@ export const TaskCommentsHeader = {
 		{
 			return !this.isTaskCardAvailable;
 		},
+		entityText(): string
+		{
+			return this.isTaskCardOpened ?
+				this.loc('IM_CONTENT_TASK_ENTITY_CONTROL_CLOSE_CARD_TEXT') :
+				this.loc('IM_CONTENT_TASK_ENTITY_CONTROL_OPEN_CARD_TEXT');
+		},
 	},
 	methods: {
 		onCompactModeChange(compactMode: boolean)
@@ -46,20 +53,19 @@ export const TaskCommentsHeader = {
 	},
 	template: `
 		<ChatHeader 
-			:dialogId="dialogId" 
-			:withEntityLink="needShowEntityLink" 
+			:dialogId="dialogId"
 			@compactModeChange="onCompactModeChange"
 		>
-			<template v-if="isTaskCardAvailable" #after-actions>
-				<div 
-					@click="$emit('toggleTaskCard')" 
-					:class="['bx-im-task-comments-header-button__container', { '--active': isTaskCardOpened }]"
+			<template v-if="isTaskCardAvailable" #title="{ onNewTitleHandler }">
+				<GroupChatTitle
+					:dialogId="dialogId"
+					:withEntityLink="needShowEntityLink"
+					@newTitle="onNewTitleHandler"
 				>
-					<div class="bx-im-task-comments-header-button__icon"></div>
-					<div :class="['bx-im-task-comments-header-button__title', { '--compact': compactMode }]">
-						{{ loc('IM_CONTENT_TASK_HEADER_BUTTON_TITLE') }}
-					</div>
-				</div>
+					<template #after-user-counter>
+						<EntityButton :text="entityText" :compactMode="compactMode" @click="$emit('toggleTaskCard')"/>
+					</template>
+				</GroupChatTitle>
 			</template>
 		</ChatHeader>
 	`,

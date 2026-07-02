@@ -65,9 +65,7 @@ class ChangeDeadlineAction extends BaseAction
 			return false;
 		}
 
-		const deadlineChangeCount = Core.getStore().getters[`${Model.Interface}/deadlineChangeCount`];
-
-		return deadlineChangeCount >= task.maxDeadlineChanges;
+		return task.deadlineChangeCount !== null && task.deadlineChangeCount >= task.maxDeadlineChanges;
 	}
 
 	#showAccessDeniedHint(payload: ActionPayload): void

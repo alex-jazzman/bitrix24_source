@@ -1,112 +1,117 @@
 /* eslint-disable */
-(function (exports,main_core) {
+(function (exports,ui_vue3,main_core) {
 	'use strict';
 
-	let _ = t => t,
-	  _t,
-	  _t2;
-	var _storageFieldsWrapper = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("storageFieldsWrapper");
-	var _options = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("options");
-	var _getField = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getField");
-	class CreateStorageNodeRenderer {
-	  constructor() {
-	    Object.defineProperty(this, _getField, {
-	      value: _getField2
-	    });
-	    Object.defineProperty(this, _storageFieldsWrapper, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _options, {
-	      writable: true,
-	      value: void 0
-	    });
-	  }
-	  getControlRenderers() {
-	    return {
-	      'storage-fields': field => {
-	        var _field$property;
-	        const element = main_core.Tag.render(_t || (_t = _`
-					<div class="storage-fields">
-						<a ref="addField" class="custom-fields__add-button" href="#" id="add_field">${0}</a>
-					</div>
-				`), main_core.Text.encode(field.property.Name));
-	        babelHelpers.classPrivateFieldLooseBase(this, _storageFieldsWrapper)[_storageFieldsWrapper] = element.root;
-	        babelHelpers.classPrivateFieldLooseBase(this, _options)[_options] = (field == null ? void 0 : (_field$property = field.property) == null ? void 0 : _field$property.Options) || {};
-	        main_core.Event.bind(element.addField, 'click', this.handleAddFieldClick.bind(this));
-	        if (main_core.Type.isArrayFilled(field.value)) {
-	          field.value.forEach(field => {
-	            main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _getField)[_getField](field), babelHelpers.classPrivateFieldLooseBase(this, _storageFieldsWrapper)[_storageFieldsWrapper]);
-	          });
-	        }
-	        return element.root;
-	      }
+	const StorageFieldSelector = {
+	  name: 'StorageFieldSelector',
+	  props: {
+	    field: {
+	      type: [Object, Array],
+	      required: true
+	    }
+	  },
+	  setup({
+	    field
+	  }) {
+	    var _field$property;
+	    const initialItems = Array.isArray(field == null ? void 0 : field.value) ? [...field.value] : [];
+	    const items = ui_vue3.ref(initialItems);
+	    const options = (field == null ? void 0 : (_field$property = field.property) == null ? void 0 : _field$property.Options) || {};
+	    const onRemoveField = index => {
+	      items.value.splice(index, 1);
 	    };
-	  }
-	  handleAddFieldClick(event) {
-	    event.preventDefault();
-	    main_core.Runtime.loadExtension('bizproc.router').then(({
-	      Router
-	    }) => {
-	      Router.openStorageFieldEdit({
-	        events: {
-	          onCloseComplete: event => {
-	            const slider = event.getSlider();
-	            const dictionary = slider ? slider.getData() : null;
-	            let data = null;
-	            if (dictionary && dictionary.has('data')) {
-	              data = dictionary.get('data');
-	              main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _getField)[_getField](data), babelHelpers.classPrivateFieldLooseBase(this, _storageFieldsWrapper)[_storageFieldsWrapper]);
+	    const onAddFieldClick = async () => {
+	      try {
+	        const {
+	          Router
+	        } = await main_core.Runtime.loadExtension('bizproc.router');
+	        Router.openStorageFieldEdit({
+	          requestMethod: 'get',
+	          requestParams: {
+	            storageId: 0,
+	            fieldId: null,
+	            skipSave: true
+	          },
+	          events: {
+	            onCloseComplete: event => {
+	              const slider = event.getSlider();
+	              const dictionary = slider ? slider.getData() : null;
+	              if (dictionary && dictionary.has('data')) {
+	                items.value.push(dictionary.get('data'));
+	              }
 	            }
 	          }
-	        },
-	        requestMethod: 'get',
-	        requestParams: {
-	          storageId: 0,
-	          fieldId: null,
-	          skipSave: true
-	        }
+	        });
+	      } catch (error) {
+	        console.error(error);
+	      }
+	    };
+	    const onCopyCode = code => {
+	      var _options$copyNotifica;
+	      BX.clipboard.copy(code);
+	      BX.UI.Notification.Center.notify({
+	        content: (_options$copyNotifica = options.copyNotification) != null ? _options$copyNotifica : ''
 	      });
-	    }).catch(e => {
-	      console.error(e);
-	    });
-	  }
-	}
-	function _getField2(field) {
-	  var _babelHelpers$classPr;
-	  const jsonValue = JSON.stringify(field);
-	  const fieldItem = main_core.Tag.render(_t2 || (_t2 = _`
-			<div class="storage-fields__item">
-			   <input type="hidden" name="SelectedFields[]" value="${0}">
-			   <div class="storage-fields__item-content">
-			      <span class="storage-fields__item-name">
-			         ${0}
-			      </span>
-			      <a ref="copyCode" class="storage-fields__code-button" href="#" title="${0}">
-			         ${0}
-			      </a>
-			      <a ref="deleteField" class="storage-fields__delete-button" href="#">
-			         <div class="ui-icon-set --cross-m"></div>
-			      </a>
-			   </div>
+	    };
+	    const jsonStringify = val => JSON.stringify(val);
+	    return {
+	      items,
+	      options,
+	      onAddFieldClick,
+	      onRemoveField,
+	      onCopyCode,
+	      jsonStringify
+	    };
+	  },
+	  template: `
+		<div class="storage-fields">
+			<div class="bizproc-create-storage__outer-block">
+
+				<div class="bizproc-create-storage__fields-container">
+					<div v-for="(item, index) in items" :key="index" class="bizproc-create-storage__field-row">
+						<input
+							type="hidden"
+							name="SelectedFields[]"
+							:value="jsonStringify(item)"
+						>
+						<div class="bizproc-create-storage__field-row-content">
+		                      <span class="bizproc-create-storage__field-name">
+		                         {{ item.name }}
+		                      </span>
+							<a
+								href="#"
+								class="storage-fields__code-button"
+								:title="item.code"
+								@click.prevent="onCopyCode(item.code)"
+							>
+								{{ options.codeCaption ?? '' }}
+							</a>
+							<div class="bizproc-create-storage__delete-button" @click="onRemoveField(index)">
+								<div class="ui-icon-set --cross-m"></div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="node-settings-add-field-button" @click="onAddFieldClick">
+					<div class="ui-icon-set --plus-m bizproc-create-storage__icon-plus"></div>
+					<span>{{ field.property.Name }}</span>
+				</div>
+
 			</div>
-		`), main_core.Text.encode(jsonValue), main_core.Text.encode(field.name), main_core.Text.encode(field.code), main_core.Text.encode((_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].codeCaption) != null ? _babelHelpers$classPr : ''));
-	  main_core.Event.bind(fieldItem.copyCode, 'click', event => {
-	    var _babelHelpers$classPr2;
-	    event.preventDefault();
-	    BX.clipboard.copy(field.code);
-	    BX.UI.Notification.Center.notify({
-	      content: (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].copyNotification) != null ? _babelHelpers$classPr2 : ''
-	    });
-	  });
-	  main_core.Event.bind(fieldItem.deleteField, 'click', event => {
-	    event.preventDefault();
-	    main_core.Dom.remove(fieldItem.root);
-	  });
-	  return fieldItem.root;
+		</div>
+	`
+	};
+
+	class CreateStorageNodeRenderer {
+	  getControlRenderers() {
+	    return {
+	      storageFieldSelector: StorageFieldSelector
+	    };
+	  }
 	}
 
 	exports.CreateStorageNodeRenderer = CreateStorageNodeRenderer;
 
-}((this.window = this.window || {}),BX));
+}((this.window = this.window || {}),BX.Vue3,BX));
 //# sourceMappingURL=renderer.js.map

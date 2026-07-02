@@ -2,8 +2,6 @@
 $MESS['BRCW_TITLE'] = 'Новый ресурс';
 $MESS['BRCW_DEFAULT_RESOURCE_NAME'] = 'Новый ресурс';
 
-$MESS['BRCW_SOON_HINT'] = 'Скоро будет доступно';
-
 $MESS['BRCW_BUTTON_CONTINUE'] = 'Продолжить';
 $MESS['BRCW_BUTTON_CREATE'] = 'Создать';
 $MESS['BRCW_BUTTON_CANCEL'] = 'Отмена';
@@ -82,6 +80,10 @@ $MESS['BRCW_NOTIFICATION_CARD_LATE_HELPER_TEXT_SECOND_MSGVER_1'] = 'Отправ
 $MESS['BRCW_NOTIFICATION_CARD_LATE_MANAGER_HELPER'] = 'Если клиент не подтвердит, что он придёт, в сделке будет создано дело. Так менеджер узнает,  что с этим клиентом нужно связаться. [helpdesk]Подробнее[/helpdesk]';
 $MESS['BRCW_NOTIFICATION_CARD_LATE_MANAGER_NOTIFY_IN'] = 'Отправить #time# после начала записи';
 
+$MESS['BRCW_NOTIFICATION_CARD_CANCELLATION_TITLE'] = 'Удержание при отмене';
+$MESS['BRCW_NOTIFICATION_CARD_CANCELLATION_HELPER_TEXT_FIRST'] = 'Уведомите клиента, когда его запись отменена. [helpdesk]Подробнее[/helpdesk]';
+$MESS['BRCW_NOTIFICATION_CARD_CANCELLATION_HELPER_TEXT_SECOND'] = 'Отправлять #time# после отмены записи';
+
 $MESS['BRCW_NOTIFICATION_CARD_FEEDBACK_TITLE'] = 'Запрос обратной связи';
 $MESS['BRCW_NOTIFICATION_CARD_FEEDBACK_HELPER_TEXT_FIRST_MSGVER_2'] = 'Отзывы помогают укрепить доверие к бренду и повысить качество сервиса. [helpdesk]Подробнее[/helpdesk]';
 $MESS['BRCW_NOTIFICATION_CARD_FEEDBACK_HELPER_TEXT_SECOND'] = 'Отправлять #time# после завершения записи';
@@ -145,3 +147,30 @@ $MESS['BRCW_NOTIFICATION_CARD_TARIFF_INFO_TITLE'] = 'Уведомления';
 $MESS['BRCW_NOTIFICATION_CARD_TARIFF_INFO_DESCRIPTION'] = 'Настройте, какие уведомления получат клиенты и менеджеры после записи. Автоматические напоминания и подтверждения помогут клиентам не забыть о визите, а уведомления для менеджеров помогут отследить неподтверждённые записи. [helpdesk]Подробнее[/helpdesk]';
 
 $MESS['BRCW_NOTIFICATION_CARD_TARIFF_INFO_ALERT'] = 'На бесплатном тарифе доступен только просмотр шаблонов сообщений. Чтобы отправлять их клиентам, перейдите на другой тариф.';
+
+$MESS['BRCW_METHODS_COMMUNICATION_TITLE'] = 'Способы связи с клиентами';
+$MESS['BRCW_METHODS_COMMUNICATION_DESCRIPTION'] = 'Выберите, как связываться с клиентами: AI‑звонки или текстовые сообщения. Автоматические уведомления помогают разгрузить менеджеров';
+$MESS['BRCW_METHODS_COMMUNICATION_AI_TITLE'] = 'AI-звонки';
+$MESS['BRCW_METHODS_COMMUNICATION_AI_DESCRIPTION'] = 'Голосовой канал';
+$MESS['BRCW_METHODS_COMMUNICATION_TEXT_CHANNEL_TITLE'] = 'СМС и WhatsApp';
+$MESS['BRCW_METHODS_COMMUNICATION_TEXT_CHANNEL_DESCRIPTION'] = 'Текстовый канал';
+$MESS['BRCW_METHODS_COMMUNICATION_AI_SETTINGS_TITLE'] = 'Настройки AI-звонков';
+$MESS['BRCW_METHODS_COMMUNICATION_AI_SETTINGS_SUBTITLE'] = 'AI-звонки вместо ручных обзвонов';
+$MESS['BRCW_METHODS_COMMUNICATION_AI_SETTINGS_DESCRIPTION'] = 'Позвольте менеджерам сосредоточиться на более важных задачах, а AI‑агент возьмёт на себя однообразные звонки и уведомления';
+$MESS['BRCW_METHODS_COMMUNICATION_AI_SETTINGS_BTN'] = 'Настроить';
+
+$MESS['BRCW_NOTIFICATION_CARD_MESSAGE_AI'] = 'Звонок клиенту';
+$MESS['BRCW_NOTIFICATION_CARD_MESSAGE_AI_TEXT'] = 'Сценарий звонка';
+$MESS['BRCW_NOTIFICATION_CARD_MESSAGE_AI_DESCRIPTION_FIRST'] = 'AI звонит клиенту, приветствует его и предлагает подтвердить запись на #дата и время#. Если клиент подтверждает запись, этот статус автоматически сохранится в записи. Если отказывается или не отвечает — менеджер получит уведомление.';
+$MESS['BRCW_NOTIFICATION_CARD_MESSAGE_AI_DESCRIPTION_SECOND'] = 'AI звонит клиенту утром в день записи, приветствует его и напоминает о визите в #время#. Если клиент не отвечает, звонок повторится по заданному расписанию.';
+$MESS['BRCW_NOTIFICATION_CARD_MESSAGE_AI_DESCRIPTION_THIRD'] = 'AI звонит клиенту, если он не пришёл в течение #15 минут# после начала записи. Уточняет, придёт ли он, и предлагает перенести визит, если это нужно.';
+$MESS['BRCW_NOTIFICATION_CARD_MESSAGE_AI_DESCRIPTION_FOURTH'] = 'AI звонит клиенту, когда он самостоятельно отменяет запись. Предлагает перенести визит на другое удобное время и помогает записаться снова.';
+$MESS['BRCW_NOTIFICATION_CARD_CONFIRMATION_AI_HELPER_TEXT_FIRST'] = 'Когда клиент сам подтверждает запись по звонку, выше вероятность, что он придёт. Обзванивать нужно будет только тех, кто не подтвердил. [helpdesk]Подробнее[/helpdesk]';
+$MESS['BRCW_NOTIFICATION_CARD_CONFIRMATION_AI_HELPER_TEXT_SECOND'] = 'Звонить #days_before# до записи';
+$MESS['BRCW_NOTIFICATION_CARD_CONFIRMATION_AI_HELPER_TEXT_THIRD'] = 'Перезванивать #times#, раз через каждые #time_delay#';
+$MESS['BRCW_NOTIFICATION_CARD_REMINDER_AI_HELPER_TEXT_FIRST'] = 'Настройте автоматический звонок, чтобы клиент точно не забыл о записи. [helpdesk]Подробнее[/helpdesk]';
+$MESS['BRCW_NOTIFICATION_CARD_REMINDER_AI_HELPER_TEXT_SECOND'] = 'Звонить #time#';
+$MESS['BRCW_NOTIFICATION_CARD_LATE_AI_HELPER_TEXT_FIRST'] = 'Автоматический звонок сработает, если клиент опаздывает на запись. [helpdesk]Подробнее[/helpdesk]';
+$MESS['BRCW_NOTIFICATION_CARD_LATE_AI_HELPER_TEXT_SECOND'] = 'Позвонить через #time# после начала записи';
+$MESS['BRCW_NOTIFICATION_CARD_CANCELLATION_AI_HELPER_TEXT_FIRST'] = 'AI позвонит клиенту после того, как он сам отменит запись. Помогает вернуть клиента и предложить альтернативное время. [helpdesk]Подробнее[/helpdesk]';
+$MESS['BRCW_NOTIFICATION_CARD_CANCELLATION_AI_HELPER_TEXT_SECOND'] = 'Звонить #time# после отмены записи';

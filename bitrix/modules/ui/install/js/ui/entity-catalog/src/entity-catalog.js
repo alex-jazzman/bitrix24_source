@@ -1,6 +1,6 @@
 import { Loc, Tag, Text, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
-import { Popup, PopupOptions } from 'main.popup';
+import { Popup, type PopupOptions } from 'main.popup';
 import { BitrixVue } from 'ui.vue3';
 import { createPinia } from 'ui.vue3.pinia';
 import { Hint } from 'ui.vue3.components.hint';
@@ -607,15 +607,19 @@ export class EntityCatalog extends EventEmitter
 
 		return {
 			content: Tag.render`
-				<div class="popup-window-titlebar-text ui-entity-catalog-popup-titlebar">
+				<div class="ui-entity-catalog-popup-titlebar">
 					${titleBar}
+					<div class="ui-entity-catalog-popup-titlebar-controls">
+						${this.#showSearch ? '<div class="ui-entity-catalog__titlebar_search" data-role="titlebar-search"></div>' : ''}
+						${this.#filterOptions.filterItems.length > 0 ? '<div data-role="titlebar-filter"></div>' : ''}
+						<button
+							type="button"
+							class="ui-entity-catalog-popup-close-icon"
+							onclick="${this.#handleClose.bind(this)}"
+							onmousedown="${this.#handleMouseDown.bind(this)}"
+						></button>
+					</div>
 					
-					${this.#showSearch ? `<div class="ui-entity-catalog__titlebar_search" data-role="titlebar-search"></div>` : ''}
-					${this.#filterOptions.filterItems.length > 0 ? '<div data-role="titlebar-filter"></div>' : ''}
-					<span
-						class="popup-window-close-icon popup-window-titlebar-close-icon"
-						onclick="${this.#handleClose.bind(this)}"
-						></span>
 				</div>
 			`,
 		};
@@ -624,6 +628,11 @@ export class EntityCatalog extends EventEmitter
 	#handleClose(): void
 	{
 		this.close();
+	}
+
+	#handleMouseDown(event: MouseEvent): void
+	{
+		event.stopPropagation();
 	}
 
 	close()

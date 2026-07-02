@@ -13,10 +13,9 @@ jn.define('im/messenger/lib/element/dialog/message/video', (require, exports, mo
 	{
 		/**
 		 * @param {MessagesModelState} modelMessage
-		 * @param {CreateMessageOptions} options
-		 * @param {FilesModelState} file
+		 * @param {CreateMessageOptions|{}} options
 		 */
-		constructor(modelMessage = {}, options = {}, file = {})
+		constructor(modelMessage, options = {})
 		{
 			super(modelMessage, options);
 
@@ -27,10 +26,9 @@ jn.define('im/messenger/lib/element/dialog/message/video', (require, exports, mo
 				this.setMessage(modelMessage.text, { dialogId: options.dialogId });
 			}
 
-			this.setShowTail(true);
 			this.setLoadText();
-
-			this.video = Video.createByFileModel(file).toMessageFormat();
+			const [firstFile = {}] = this.getModelFiles();
+			this.video = Video.createByFileModel(firstFile).toMessageFormat();
 
 			/* region deprecated properties */
 			this.videoUrl = this.video.url;
@@ -58,11 +56,6 @@ jn.define('im/messenger/lib/element/dialog/message/video', (require, exports, mo
 		getType()
 		{
 			return MessageType.video;
-		}
-
-		setShowTail()
-		{
-			return this;
 		}
 	}
 

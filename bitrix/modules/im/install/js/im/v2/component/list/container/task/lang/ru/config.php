@@ -1,3 +1,2 @@
 <?php
-$MESS["IM_LIST_CONTAINER_TASK_HEADER_MENU_READ_ALL"] = "Прочитать все чаты задач";
 $MESS["IM_LIST_CONTAINER_TASK_SEARCH_INPUT_PLACEHOLDER"] = "Найти задачу";

@@ -8,13 +8,13 @@ return [
 	'css' => 'dist/input.bundle.css',
 	'js' => 'dist/input.bundle.js',
 	'rel' => [
-		'ui.system.chip.vue',
+		'main.core',
+		'ui.hint',
+		'ui.icon-set.api.core',
 		'ui.icon-set.api.vue',
 		'ui.icon-set.outline',
-		'main.core',
-		'ui.icon-set.api.core',
 		'ui.system.chip',
-		'ui.hint',
+		'ui.system.chip.vue',
 	],
 	'skip_core' => false,
 ];

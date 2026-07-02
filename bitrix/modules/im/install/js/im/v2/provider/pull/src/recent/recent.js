@@ -1,29 +1,27 @@
 import { Core } from 'im.v2.application.core';
+import { RecentType, type RecentTypeItem } from 'im.v2.const';
 import { Logger } from 'im.v2.lib.logger';
 import { Utils } from 'im.v2.lib.utils';
-import { RecentType } from 'im.v2.const';
+import { type ImModelRecentItem, type ImModelMessage } from 'im.v2.model';
 
+import { type ChatUserLeaveParams } from '../types/chat';
+import { type PullExtraParams, type RawMessage } from '../types/common';
+import {
+	type MessageAddParams,
+	type AddReactionParams,
+	type MessageDeleteCompleteParams,
+	type MultipleMessageDeleteParams,
+} from '../types/message';
+import {
+	type RecentHideParams,
+	type RecentUpdateParams,
+	type UserShowInRecentParams,
+	type RecentPinChatParams,
+} from '../types/recent';
+import { type UserInviteParams } from '../types/user';
 import { NewMessageManager } from '../classes/new-message-manager';
 import { RecentUpdateManager } from './classes/recent-update-manager';
 import { buildRecentItem } from './helpers/helpers';
-
-import type { ImModelRecentItem, ImModelMessage } from 'im.v2.model';
-import type { RecentTypeItem } from 'im.v2.const';
-import type { PullExtraParams, RawMessage } from '../types/common';
-import type {
-	MessageAddParams,
-	AddReactionParams,
-	MessageDeleteCompleteParams,
-	MultipleMessageDeleteParams,
-} from '../types/message';
-import type { UserInviteParams } from '../types/user';
-import type { ChatUserLeaveParams } from '../types/chat';
-import type {
-	RecentHideParams,
-	RecentUpdateParams,
-	UserShowInRecentParams,
-	RecentPinChatParams,
-} from '../types/recent';
 
 // noinspection JSUnusedGlobalSymbols
 export class RecentPullHandler
@@ -62,6 +60,7 @@ export class RecentPullHandler
 			void Core.getStore().dispatch('recent/setCollection', {
 				type: section,
 				items: [newRecentItem],
+				parentChatId: manager.getParentChatId(),
 			});
 		});
 	}
@@ -113,7 +112,7 @@ export class RecentPullHandler
 		Logger.warn('RecentPullHandler: handleChatPin', params);
 
 		const manager = new RecentUpdateManager(params);
-		manager.updateRecent();
+		manager.addToRecentCollection();
 
 		Core.getStore().dispatch('recent/pin', { dialogId, action: active });
 	}
@@ -190,7 +189,7 @@ export class RecentPullHandler
 	{
 		Logger.warn('RecentPullHandler: handleRecentUpdate', params);
 		const manager = new RecentUpdateManager(params);
-		manager.updateRecent();
+		manager.addToRecentCollection();
 	}
 
 	#deleteLastMessage(dialogId: number, newLastMessage: RawMessage) {

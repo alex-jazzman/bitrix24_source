@@ -1,1 +1,17 @@
-.popup-window-angly--arrow{border-radius:var(--booking-popup-angle-border-radius,0)}.booking-booking-sticky-popup{height:100vh;box-shadow:none;pointer-events:none}.booking-booking-sticky-popup-content{position:-webkit-sticky;position:sticky;padding:12px;pointer-events:all}
+.popup-window-angly--arrow {
+	border-radius: var(--booking-popup-angle-border-radius, 0);
+}
+
+.booking-booking-sticky-popup {
+	height: 100vh;
+	box-shadow: none;
+	pointer-events: none;
+}
+
+.booking-booking-sticky-popup-content {
+	position: sticky;
+	padding: 12px;
+	pointer-events: all;
+}
+
+/*# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3RtcC9uZGhKWHUiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IkFBQUEiLCJmaWxlIjoiLi4vLi4vLi4vdG1wL25kaEpYdSIsInNvdXJjZXNDb250ZW50IjpbIi5wb3B1cC13aW5kb3ctYW5nbHktLWFycm93IHtcblx0Ym9yZGVyLXJhZGl1czogdmFyKC0tYm9va2luZy1wb3B1cC1hbmdsZS1ib3JkZXItcmFkaXVzLCAwKTtcbn1cblxuLmJvb2tpbmctYm9va2luZy1zdGlja3ktcG9wdXAge1xuXHRoZWlnaHQ6IDEwMHZoO1xuXHRib3gtc2hhZG93OiBub25lO1xuXHRwb2ludGVyLWV2ZW50czogbm9uZTtcbn1cblxuLmJvb2tpbmctYm9va2luZy1zdGlja3ktcG9wdXAtY29udGVudCB7XG5cdHBvc2l0aW9uOiBzdGlja3k7XG5cdHBhZGRpbmc6IDEycHg7XG5cdHBvaW50ZXItZXZlbnRzOiBhbGw7XG59XG4iXX0= */

@@ -1,2 +1,302 @@
-this.BX=this.BX||{},this.BX.Booking=this.BX.Booking||{},function(t,o,e,n,i){"use strict";function s(){var t,o,n;return((null==(t=e.Core.getStore())||null==(o=t.state)||null==(n=o[i.Model.Interface])?void 0:n.embedItems)||[]).some(t=>t.moduleId===i.Module.Crm)?i.AnalyticsCSection.crm:i.AnalyticsCSection.booking}function c(){const t=e.Core.getStore().state[i.Model.ResourceCreationWizard].resourceId||null;return o.Type.isNumber(t)}function a(t,o=[]){return o.some(({moduleId:t})=>t===i.Module.Crm)||t>0?"crm":"main_menu"}function r(t,o=[]){if(t>0)return"crm_business";if(0===o.length)return"";const e=new Set(o.map(({entityTypeId:t})=>t)),n=t=>e.has(t);return n(i.EntityTypeId.Lead)?"lead":n(i.EntityTypeId.Deal)?"deal":(()=>{const t=/^DYNAMIC_\d+$/;for(const o of e)if(t.test(o))return!0;return!1})()?"smart":n(i.EntityTypeId.Company)?"company":n(i.EntityTypeId.Contact)?"contact":""}t.BannerAnalytics=class{static sendShowPopup(){const t={tool:i.AnalyticsTool.booking,category:i.AnalyticsCategory.booking,event:"show_popup",c_section:"booking"};n.sendData(t)}static sendClickEnable(){const t={tool:i.AnalyticsTool.booking,category:i.AnalyticsCategory.booking,event:"click_enable",c_section:"booking"};n.sendData(t)}},t.BookingAnalytics=class{static sendAddMultiBookings(t){const o=e.Core.getStore(),c=s(),a=o.getters[i.Model.Bookings+"/overbookingMap"];for(const o of t){const t=a.has(o),e={tool:i.AnalyticsTool.booking,category:i.AnalyticsCategory.booking,event:"add_booking",c_section:c,c_element:"multi_button",p1:"isMultiResource_Y",p2:t?"isOverbooking_Y":"isOverbooking_N",p3:"isWaitlist_N"};n.sendData(e)}}static sendAddBooking({isOverbooking:t}={}){const o={tool:i.AnalyticsTool.booking,category:i.AnalyticsCategory.booking,event:"add_booking",c_section:s(),c_element:"solo_button",p1:"isMultiResource_N",p2:t?"isOverbooking_Y":"isOverbooking_N",p3:"isWaitlist_N"};n.sendData(o)}static sendAddWaitListItem(){const t={tool:i.AnalyticsTool.booking,category:i.AnalyticsCategory.booking,event:"add_booking",c_section:s(),c_element:"solo_button",p1:"isMultiResource_N",p2:"isOverbooking_N",p3:"isWaitlist_Y"};n.sendData(t)}},t.RcwAnalytics=class{static sendClickAddResource(){const t={tool:i.AnalyticsTool.booking,category:i.AnalyticsCategory.booking,event:i.AnalyticsEvent.clickAddResource,c_section:s(),c_element:i.AnalyticsElement.addButton};n.sendData(t)}static sendAddResourceStep1(){var t;const o=e.Core.getStore();if(c())return;const a={tool:i.AnalyticsTool.booking,category:i.AnalyticsCategory.booking,event:i.AnalyticsEvent.addResourceStep1,c_section:s()};let r=(null==(t=o.getters[i.Model.ResourceCreationWizard+"/advertisingResourceType"])?void 0:t.code)||null;"none"===r&&(r="other"),r?(a.type=r,n.sendData(a)):console.error("Booking.RCW. Code not found")}static sendAddResourceStep2(){const t=e.Core.getStore();if(c())return;const o={tool:i.AnalyticsTool.booking,category:i.AnalyticsCategory.booking,event:i.AnalyticsEvent.addResourceStep2,c_section:s(),p1:t.state[i.Model.ResourceCreationWizard].resource.isMain?"renderType_main":"renderType_additional",p2:t.state[i.Model.ResourceCreationWizard].globalSchedule?"setSchedule_Y":"setSchedule_N",p3:(()=>{switch(t.state[i.Model.ResourceCreationWizard].slotLengthId/60){case 1:return"slotLength_1h";case 2:return"slotLength_2h";case 24:return"slotLength_24h";case 168:return"slotLength_7d";default:return"slotLength_custom"}})()};n.sendData(o)}static sendAddResourceFinish(){const t=e.Core.getStore();if(c())return;const o=t.getters[i.Model.Notifications+"/isCurrentSenderAvailable"],a=t.state[i.Model.ResourceCreationWizard].resource,r={tool:i.AnalyticsTool.booking,category:i.AnalyticsCategory.booking,event:i.AnalyticsEvent.addResourceFinish,c_section:s(),p1:o&&a.isInfoNotificationOn?"infoNotification_Y":"infoNotification_N",p2:o&&a.isConfirmationNotificationOn?"confirmationNotification_Y":"confirmationNotification_N",p3:o&&a.isReminderNotificationOn?"reminderNotification_Y":"reminderNotification_N",p4:o&&a.isDelayedNotificationOn?"delayedNotification_Y":"delayedNotification_N",p5:o&&a.isFeedbackNotificationOn?"feedbackNotification_Y":"feedbackNotification_N"};n.sendData(r)}static sendAcceptAgreement({accepted:t}){if(c())return;const o={tool:i.AnalyticsTool.booking,category:i.AnalyticsCategory.booking,event:i.AnalyticsEvent.acceptAgreement,c_section:s(),c_sub_section:t?"accept":"deny"};n.sendData(o)}},t.SectionAnalytics=class{static sendOpenSection(){const t=e.Core.getStore(),o=t.getters[i.Model.Interface+"/embedItems"],s=t.getters[i.Model.Interface+"/editingBookingId"]||0,c={tool:i.AnalyticsTool.booking,category:i.AnalyticsCategory.booking,event:"open_section",c_section:a(s,o),c_sub_section:r(s,o)};n.sendData(c)}},t.WaitListAnalytics=class{static sendAddBooking(){const t={tool:i.AnalyticsTool.booking,category:i.AnalyticsCategory.waitlist,c_section:s(),event:"add_booking",c_element:"add_button"};n.sendData(t)}}}(this.BX.Booking.Lib=this.BX.Booking.Lib||{},BX,BX.Booking,BX.UI.Analytics,BX.Booking.Const);
+/* eslint-disable */
+this.BX = this.BX || {};
+this.BX.Booking = this.BX.Booking || {};
+(function (exports, ui_analytics, booking_const, booking_core, main_core) {
+	'use strict';
+
+	class BannerAnalytics {
+		static sendShowPopup() {
+			const options = {
+				tool: booking_const.AnalyticsTool.booking,
+				category: booking_const.AnalyticsCategory.booking,
+				event: 'show_popup',
+				c_section: 'booking'
+			};
+			ui_analytics.sendData(options);
+		}
+		static sendClickEnable() {
+			const options = {
+				tool: booking_const.AnalyticsTool.booking,
+				category: booking_const.AnalyticsCategory.booking,
+				event: 'click_enable',
+				c_section: 'booking'
+			};
+			ui_analytics.sendData(options);
+		}
+	}
+
+	function getCSection() {
+		const embedItems = booking_core.Core.getStore()?.state?.[booking_const.Model.Interface]?.embedItems || [];
+		const fromCrm = embedItems.some(item => item.moduleId === booking_const.Module.Crm);
+		return fromCrm ? booking_const.AnalyticsCSection.crm : booking_const.AnalyticsCSection.booking;
+	}
+
+	class BookingAnalytics {
+		static sendAddMultiBookings(bookingIds) {
+			const $store = booking_core.Core.getStore();
+			const cSection = getCSection();
+			const overbookingMap = $store.getters[`${booking_const.Model.Bookings}/overbookingMap`];
+			const gridMode = $store.getters[`${booking_const.Model.Interface}/gridMode`];
+			for (const bookingId of bookingIds) {
+				const isOverbooking = overbookingMap.has(bookingId);
+				const options = {
+					tool: booking_const.AnalyticsTool.booking,
+					category: booking_const.AnalyticsCategory.booking,
+					event: 'add_booking',
+					c_section: cSection,
+					c_sub_section: gridMode,
+					c_element: 'multi_button',
+					p1: 'isMultiResource_Y',
+					p2: isOverbooking ? 'isOverbooking_Y' : 'isOverbooking_N',
+					p3: 'isWaitlist_N'
+				};
+				ui_analytics.sendData(options);
+			}
+		}
+		static sendAddBooking({
+			isOverbooking
+		} = {}) {
+			const $store = booking_core.Core.getStore();
+			const options = {
+				tool: booking_const.AnalyticsTool.booking,
+				category: booking_const.AnalyticsCategory.booking,
+				event: 'add_booking',
+				c_section: getCSection(),
+				c_sub_section: $store.getters[`${booking_const.Model.Interface}/gridMode`],
+				c_element: 'solo_button',
+				p1: 'isMultiResource_N',
+				p2: isOverbooking ? 'isOverbooking_Y' : 'isOverbooking_N',
+				p3: 'isWaitlist_N'
+			};
+			ui_analytics.sendData(options);
+		}
+		static sendAddWaitListItem() {
+			const $store = booking_core.Core.getStore();
+			const options = {
+				tool: booking_const.AnalyticsTool.booking,
+				category: booking_const.AnalyticsCategory.booking,
+				event: 'add_booking',
+				c_section: getCSection(),
+				c_sub_section: $store.getters[`${booking_const.Model.Interface}/gridMode`],
+				c_element: 'solo_button',
+				p1: 'isMultiResource_N',
+				p2: 'isOverbooking_N',
+				p3: 'isWaitlist_Y'
+			};
+			ui_analytics.sendData(options);
+		}
+	}
+
+	function isExistingResource() {
+		const $store = booking_core.Core.getStore();
+		const resourceId = $store.state[booking_const.Model.ResourceCreationWizard].resourceId || null;
+		return main_core.Type.isNumber(resourceId);
+	}
+
+	class RcwAnalytics {
+		static sendClickAddResource() {
+			const options = {
+				tool: booking_const.AnalyticsTool.booking,
+				category: booking_const.AnalyticsCategory.booking,
+				event: booking_const.AnalyticsEvent.clickAddResource,
+				c_section: getCSection(),
+				c_element: booking_const.AnalyticsElement.addButton
+			};
+			ui_analytics.sendData(options);
+		}
+		static sendAddResourceStep1() {
+			const $store = booking_core.Core.getStore();
+			if (isExistingResource()) {
+				return;
+			}
+			const options = {
+				tool: booking_const.AnalyticsTool.booking,
+				category: booking_const.AnalyticsCategory.booking,
+				event: booking_const.AnalyticsEvent.addResourceStep1,
+				c_section: getCSection()
+			};
+			let code = $store.getters[`${booking_const.Model.ResourceCreationWizard}/advertisingResourceType`]?.code || null;
+			if (code === 'none') {
+				code = 'other';
+			}
+			if (!code) {
+				console.error('Booking.RCW. Code not found');
+				return;
+			}
+			options.type = code;
+			ui_analytics.sendData(options);
+		}
+		static sendAddResourceStep2() {
+			const $store = booking_core.Core.getStore();
+			if (isExistingResource()) {
+				return;
+			}
+			const getP1 = () => {
+				return $store.state[booking_const.Model.ResourceCreationWizard].resource.isMain ? 'renderType_main' : 'renderType_additional';
+			};
+			const getP2 = () => {
+				return $store.state[booking_const.Model.ResourceCreationWizard].globalSchedule ? 'setSchedule_Y' : 'setSchedule_N';
+			};
+			const getP3 = () => {
+				const slotLengthId = $store.state[booking_const.Model.ResourceCreationWizard].slotLengthId;
+				switch (slotLengthId / 60) {
+					case 1:
+						return 'slotLength_1h';
+					case 2:
+						return 'slotLength_2h';
+					case 24:
+						return 'slotLength_24h';
+					case 168:
+						return 'slotLength_7d';
+					default:
+						return 'slotLength_custom';
+				}
+			};
+			const options = {
+				tool: booking_const.AnalyticsTool.booking,
+				category: booking_const.AnalyticsCategory.booking,
+				event: booking_const.AnalyticsEvent.addResourceStep2,
+				c_section: getCSection(),
+				p1: getP1(),
+				p2: getP2(),
+				p3: getP3()
+			};
+			ui_analytics.sendData(options);
+		}
+		static sendAddResourceFinish() {
+			const $store = booking_core.Core.getStore();
+			if (isExistingResource()) {
+				return;
+			}
+			const resource = $store.state[booking_const.Model.ResourceCreationWizard].resource;
+			const senders = $store.getters[`${booking_const.Model.Notifications}/getSenders`];
+			const activeSender = senders.find(s => s.code === resource.senderCode) ?? senders[0] ?? null;
+			const senderCanUse = activeSender?.canUse ?? false;
+			const getP1 = () => {
+				return senderCanUse && resource.isInfoNotificationOn ? 'infoNotification_Y' : 'infoNotification_N';
+			};
+			const getP2 = () => {
+				return senderCanUse && resource.isConfirmationNotificationOn ? 'confirmationNotification_Y' : 'confirmationNotification_N';
+			};
+			const getP3 = () => {
+				return senderCanUse && resource.isReminderNotificationOn ? 'reminderNotification_Y' : 'reminderNotification_N';
+			};
+			const getP4 = () => {
+				return senderCanUse && resource.isDelayedNotificationOn ? 'delayedNotification_Y' : 'delayedNotification_N';
+			};
+			const getP5 = () => {
+				return senderCanUse && resource.isFeedbackNotificationOn ? 'feedbackNotification_Y' : 'feedbackNotification_N';
+			};
+			const options = {
+				tool: booking_const.AnalyticsTool.booking,
+				category: booking_const.AnalyticsCategory.booking,
+				event: booking_const.AnalyticsEvent.addResourceFinish,
+				c_section: getCSection(),
+				p1: getP1(),
+				p2: getP2(),
+				p3: getP3(),
+				p4: getP4(),
+				p5: getP5()
+			};
+			ui_analytics.sendData(options);
+		}
+		static sendAcceptAgreement({
+			accepted
+		}) {
+			if (isExistingResource()) {
+				return;
+			}
+			const getCSubSection = () => {
+				return accepted ? 'accept' : 'deny';
+			};
+			const options = {
+				tool: booking_const.AnalyticsTool.booking,
+				category: booking_const.AnalyticsCategory.booking,
+				event: booking_const.AnalyticsEvent.acceptAgreement,
+				c_section: getCSection(),
+				c_sub_section: getCSubSection()
+			};
+			ui_analytics.sendData(options);
+		}
+	}
+
+	function getOpenSectionCSection(editingBookingId, embedItems = []) {
+		return embedItems.some(({
+			moduleId
+		}) => moduleId === booking_const.Module.Crm) || editingBookingId > 0 ? 'crm' : 'main_menu';
+	}
+	function getOpenSectionCSubSection(editingBookingId, embedItems = []) {
+		if (editingBookingId > 0) {
+			return 'crm_business';
+		}
+		if (embedItems.length === 0) {
+			return '';
+		}
+		const entityTypeSet = new Set(embedItems.map(({
+			entityTypeId
+		}) => entityTypeId));
+		const isType = entityTypeId => entityTypeSet.has(entityTypeId);
+		const isSmart = () => {
+			const regExp = /^DYNAMIC_\d+$/;
+			for (const entityType of entityTypeSet) {
+				if (regExp.test(entityType)) {
+					return true;
+				}
+			}
+			return false;
+		};
+		if (isType(booking_const.EntityTypeId.Lead)) {
+			return 'lead';
+		}
+		if (isType(booking_const.EntityTypeId.Deal)) {
+			return 'deal';
+		}
+		if (isSmart()) {
+			return 'smart';
+		}
+		if (isType(booking_const.EntityTypeId.Company)) {
+			return 'company';
+		}
+		if (isType(booking_const.EntityTypeId.Contact)) {
+			return 'contact';
+		}
+		return '';
+	}
+
+	class SectionAnalytics {
+		static sendOpenSection() {
+			const $store = booking_core.Core.getStore();
+			const embedItems = $store.getters[`${booking_const.Model.Interface}/embedItems`];
+			const editingBookingId = $store.getters[`${booking_const.Model.Interface}/editingBookingId`] || 0;
+			const options = {
+				tool: booking_const.AnalyticsTool.booking,
+				category: booking_const.AnalyticsCategory.booking,
+				event: 'open_section',
+				c_section: getOpenSectionCSection(editingBookingId, embedItems),
+				c_sub_section: getOpenSectionCSubSection(editingBookingId, embedItems)
+			};
+			ui_analytics.sendData(options);
+		}
+	}
+
+	class WaitListAnalytics {
+		static sendAddBooking() {
+			const options = {
+				tool: booking_const.AnalyticsTool.booking,
+				category: booking_const.AnalyticsCategory.waitlist,
+				c_section: getCSection(),
+				event: 'add_booking',
+				c_element: 'add_button'
+			};
+			ui_analytics.sendData(options);
+		}
+	}
+
+	exports.BannerAnalytics = BannerAnalytics;
+	exports.BookingAnalytics = BookingAnalytics;
+	exports.RcwAnalytics = RcwAnalytics;
+	exports.SectionAnalytics = SectionAnalytics;
+	exports.WaitListAnalytics = WaitListAnalytics;
+
+})(this.BX.Booking.Lib = this.BX.Booking.Lib || {}, BX.UI.Analytics, BX.Booking.Const, BX.Booking, BX);
 //# sourceMappingURL=analytics.bundle.js.map

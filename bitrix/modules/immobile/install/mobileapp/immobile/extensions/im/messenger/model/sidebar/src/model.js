@@ -10,6 +10,7 @@ jn.define('im/messenger/model/sidebar/src/model', (require, exports, module) => 
 	const { sidebarFilesModel } = require('im/messenger/model/sidebar/src/files/model');
 	const { sidebarLinksModel } = require('im/messenger/model/sidebar/src/links/model');
 	const { sidebarCommonChatsModel } = require('im/messenger/model/sidebar/src/common-chats/model');
+	const { sidebarSharedLinkModel } = require('im/messenger/model/sidebar/src/shared-link/model');
 	const { sidebarDefaultElement } = require('im/messenger/model/sidebar/src/default-element');
 	const { MessengerParams } = require('im/messenger/lib/params');
 
@@ -23,6 +24,7 @@ jn.define('im/messenger/model/sidebar/src/model', (require, exports, module) => 
 			sidebarFilesModel,
 			sidebarLinksModel,
 			sidebarCommonChatsModel,
+			sidebarSharedLinkModel,
 		},
 		getters: {
 			/**
@@ -162,6 +164,7 @@ jn.define('im/messenger/model/sidebar/src/model', (require, exports, module) => 
 				store.dispatch('sidebarModel/sidebarLinksModel/deleteByChatId', { chatId }, { root: true });
 				store.dispatch('sidebarModel/sidebarFilesModel/deleteByChatId', { chatId }, { root: true });
 				store.dispatch('sidebarModel/sidebarCommonChatsModel/deleteByChatId', { chatId }, { root: true });
+				store.dispatch('sidebarModel/sidebarSharedLinkModel/deleteByChatId', { chatId }, { root: true });
 			},
 
 			/** @function sidebarModel/update */

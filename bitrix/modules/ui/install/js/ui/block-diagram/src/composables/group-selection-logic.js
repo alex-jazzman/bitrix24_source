@@ -30,6 +30,7 @@ type UseGroupSelectionLogicOptions = {
 	defaultBlockSize?: DefaultBlockSize,
 };
 
+// eslint-disable-next-line max-lines-per-function
 export function useGroupSelectionLogic(closeContextMenu, options: UseGroupSelectionLogicOptions): UseGroupSelectionLogic
 {
 	const {

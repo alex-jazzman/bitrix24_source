@@ -1,4 +1,11 @@
-<? if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die(); ?>
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+
+/**
+ * @var array $arParams
+ */
+?>
 
 <span style="font-size:16px;line-height:20px;">
 <?=getMessage('MAIN_MAIL_CONFIRM_MESSAGE_HINT') ?><br>

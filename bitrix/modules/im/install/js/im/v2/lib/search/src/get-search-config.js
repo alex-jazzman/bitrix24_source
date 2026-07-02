@@ -5,11 +5,18 @@ const ContextId = 'IM_CHAT_SEARCH';
 const SearchDialogId = 'im-chat-search';
 
 export const getSearchConfig = (searchConfig: SearchConfig): EntitySelectorRequestConfig => {
+	const {
+		entityId = EntityId,
+		contextId = ContextId,
+		searchDialogId = SearchDialogId,
+		...entityOptions
+	} = searchConfig;
+
 	const entity = {
-		id: EntityId,
+		id: entityId,
 		dynamicLoad: true,
 		dynamicSearch: true,
-		options: searchConfig,
+		options: entityOptions,
 	};
 
 	return {
@@ -19,8 +26,8 @@ export const getSearchConfig = (searchConfig: SearchConfig): EntitySelectorReque
 			],
 			preselectedItems: [],
 			clearUnavailableItems: false,
-			context: ContextId,
-			id: SearchDialogId,
+			context: contextId,
+			id: searchDialogId,
 		},
 	};
 };

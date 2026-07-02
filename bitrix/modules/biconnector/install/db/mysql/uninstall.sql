@@ -30,3 +30,8 @@ DROP TABLE IF EXISTS b_biconnector_permission_tmp;
 DROP TABLE IF EXISTS b_biconnector_superset_dashboard_group_tmp;
 DROP TABLE IF EXISTS b_biconnector_superset_dashboard_group_scope_tmp;
 DROP TABLE IF EXISTS b_biconnector_superset_dashboard_group_binding_tmp;
+DROP TABLE IF EXISTS b_biconnector_superset_dashboard_view;
+DROP TABLE IF EXISTS b_biconnector_superset_dashboard_info;
+DROP TABLE IF EXISTS b_biconnector_superset_dashboard_info_gallery;
+DROP TABLE IF EXISTS b_biconnector_superset_dashboard_chat;
+DROP TABLE IF EXISTS b_biconnector_superset_dashboard_share;

@@ -8,6 +8,7 @@ export class Slider
 		datasetId: ?number = 0,
 		connection: ?Object = {},
 		sectionsConfig: ?Object = {},
+		extra: ?Object = {},
 	): void
 	{
 		const componentLink = '/bitrix/components/bitrix/biconnector.dataset.import/slider.php';
@@ -17,6 +18,11 @@ export class Slider
 		if (datasetId)
 		{
 			sliderLink.setQueryParam('datasetId', datasetId);
+		}
+
+		if (Type.isStringFilled(extra?.tableName))
+		{
+			sliderLink.setQueryParam('tableName', extra.tableName);
 		}
 
 		if (Object.keys(connection).length > 0)

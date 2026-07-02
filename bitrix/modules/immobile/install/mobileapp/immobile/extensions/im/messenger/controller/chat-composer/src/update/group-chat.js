@@ -11,7 +11,7 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 	const { NestedDepartmentSelector } = require('selector/widget/entity/tree-selectors/nested-department-selector');
 	const { MemberSelector } = require('im/messenger/controller/selector/member');
 
-	const { DialogType, WidgetTitleParamsType } = require('im/messenger/const');
+	const { WidgetTitleParamsType } = require('im/messenger/const');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 	const { Notification } = require('im/messenger/lib/ui/notification');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
@@ -24,7 +24,6 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 	const { GroupChatView } = require('im/messenger/controller/chat-composer/lib/view/group-chat');
 	const { ManagersView } = require('im/messenger/controller/chat-composer/lib/view/managers');
 	const { RulesListView } = require('im/messenger/controller/chat-composer/lib/view/rules-list');
-	const { DialogTypeView } = require('im/messenger/controller/chat-composer/lib/view/dialog-type');
 	const { UserListBuilder } = require('im/messenger/controller/chat-composer/lib/user-list-builder');
 
 	/**
@@ -42,8 +41,6 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 		 */
 		constructor({ dialogId, parentWidget = PageManager })
 		{
-			/** @type {DialogTypeView | null} */
-			this.dialogTypeView = null;
 			/** @type {RulesListView | null} */
 			this.rulesListView = null;
 			this.core = serviceLocator.get('core');
@@ -71,6 +68,7 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 		}
 
 		/**
+		 * @protected
 		 * @desc Method binding this for use in handlers
 		 * @void
 		 */
@@ -79,12 +77,14 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 			this.onUpdateDialogStore = this.onUpdateDialogStore.bind(this);
 		}
 
+		/** @protected */
 		subscribeStoreEvents()
 		{
 			logger.log(`${this.constructor.name}.subscribeStoreEvents`);
 			this.storeManager.on('dialoguesModel/update', this.onUpdateDialogStore);
 		}
 
+		/** @protected */
 		unsubscribeStoreEvents()
 		{
 			logger.log(`${this.constructor.name}.unsubscribeStoreEvents`);
@@ -92,6 +92,7 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 		}
 
 		/**
+		 * @protected
 		 * @return {DialoguesModelState}
 		 */
 		getDialogModel()
@@ -99,11 +100,13 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 			return this.store.getters['dialoguesModel/getById'](this.dialogId);
 		}
 
+		/** @protected */
 		setDialogModel()
 		{
 			this.dialogModel = this.getDialogModel();
 		}
 
+		/** @protected */
 		setPermissions()
 		{
 			this.permissions = {
@@ -111,6 +114,9 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 			};
 		}
 
+		/**
+		 * @param {{ titleType?: string }} [params]
+		 */
 		openGroupChatView({ titleType = WidgetTitleParamsType.entity } = {})
 		{
 			this.parentWidget.openWidget('layout', {
@@ -144,6 +150,7 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 				});
 		}
 
+		/** @protected */
 		checkBeforeCloseWidget()
 		{
 			if (this.mainView.state.isInputChanged && !this.isMainWidgetClosing)
@@ -154,6 +161,7 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 			return this.mainWidget.close();
 		}
 
+		/** @protected */
 		showConfirmOnWidgetClosing()
 		{
 			Keyboard.dismiss();
@@ -189,7 +197,6 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 					{
 						onClickDoneButton: this.onClickDoneButton.bind(this),
 						onChangeAvatar: this.onChangeAvatar.bind(this),
-						onClickDialogTypeAction: this.openDialogTypeView.bind(this),
 						onClickParticipantAction: this.onClickParticipantAction.bind(this),
 						onClickManagersAction: this.openManagersView.bind(this),
 						onClickRulesAction: this.openRulesListView.bind(this),
@@ -200,6 +207,10 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 			};
 		}
 
+		/**
+		 * @protected
+		 * @param {{ titleType?: string }} [params]
+		 */
 		openManagersView({ titleType = WidgetTitleParamsType.entity } = {})
 		{
 			PageManager.openWidget(
@@ -232,6 +243,7 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 		}
 
 		/**
+		 * @protected
 		 * @param {Array<Number>} addManagersIds
 		 * @void
 		 */
@@ -245,6 +257,7 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 		};
 
 		/**
+		 * @protected
 		 * @param {LayoutWidget} widget
 		 */
 		onClickAddManager(widget)
@@ -258,6 +271,10 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 			memberSelector.open(widget);
 		}
 
+		/**
+		 * @protected
+		 * @param {{ titleType?: string }} [params]
+		 */
 		async onClickParticipantAction({ titleType = WidgetTitleParamsType.entity } = {})
 		{
 			const initSelectedIds = await this.getCurrentMemberIds();
@@ -307,6 +324,7 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 		}
 
 		/**
+		 * @protected
 		 * @return {string}
 		 */
 		getParticipantWidgetTitle()
@@ -314,6 +332,10 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 			return Loc.getMessage('IMMOBILE_CHAT_COMPOSER_PARTICIPANT_TITLE');
 		}
 
+		/**
+		 * @protected
+		 * @param {{ titleType?: string }} [params]
+		 */
 		openRulesListView({ titleType = WidgetTitleParamsType.entity } = {})
 		{
 			PageManager.openWidget(
@@ -346,46 +368,8 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 				});
 		}
 
-		openDialogTypeView({ titleType = WidgetTitleParamsType.entity } = {})
-		{
-			PageManager.openWidget(
-				'layout',
-				{
-					titleParams: {
-						text: this.getDialogTypeWidgetTitle(),
-						type: titleType,
-					},
-				},
-				this.mainWidget,
-			)
-				.then((widget) => {
-					this.dialogTypeView = new DialogTypeView(
-						{
-							dialogType: this.dialogModel.type,
-							callbacks: {
-								onChangeDialogType: this.onChangeDialogType.bind(this),
-								onDestroyView: () => {
-									this.dialogTypeView = null;
-								},
-							},
-						},
-					);
-					widget.showComponent(this.dialogTypeView);
-				})
-				.catch((error) => {
-					logger.error(`${this.constructor.name}.PageManager.openWidget.catch:`, error);
-				});
-		}
-
 		/**
-		 * @return {string}
-		 */
-		getDialogTypeWidgetTitle()
-		{
-			return Loc.getMessage('IMMOBILE_CHAT_COMPOSER_DIALOG_TYPE_GROUP_CHAT_TITLE');
-		}
-
-		/**
+		 * @protected
 		 * @desc update info
 		 * @param {object} event
 		 * @param {string?} event.title
@@ -425,6 +409,7 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 		}
 
 		/**
+		 * @protected
 		 * @void
 		 */
 		sendAnalyticsByClickDialogInfoDone()
@@ -433,6 +418,7 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 		}
 
 		/**
+		 * @protected
 		 * @desc update avatar
 		 * @param {string} avatarBase64str
 		 * @param {string} preview
@@ -470,6 +456,7 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 		}
 
 		/**
+		 * @protected
 		 * @desc update role by rule
 		 * @param {string} rule
 		 * @param {UserRole} userRole
@@ -492,44 +479,7 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 		}
 
 		/**
-		 * @desc update dialog type
-		 * @param {boolean} isSetOpenEntityType
-		 * @void
-		 */
-		onChangeDialogType(isSetOpenEntityType)
-		{
-			const searchable = isSetOpenEntityType ? 'Y' : 'N';
-			const { permissions } = this.dialogModel;
-			this.restChatUpdate({
-				searchable,
-				manageUsersAdd: permissions.manageUsersAdd,
-				manageUsersDelete: permissions.manageUsersDelete,
-				manageMessages: permissions.manageMessages,
-			})
-				.then(async (result) => {
-					if (result !== true)
-					{
-						return false;
-					}
-					const type = this.getTypeByEntityType(isSetOpenEntityType);
-					this.showSuccessfullyToast();
-					await this.updateDialogModel({ type });
-
-					return true;
-				})
-				.catch((error) => logger.log(`${this.constructor.name}.onChangeDialogType.catch:`, error));
-		}
-
-		/**
-		 * @param {boolean} isOpenEntityType
-		 * @return {DialogType}
-		 */
-		getTypeByEntityType(isOpenEntityType)
-		{
-			return isOpenEntityType ? DialogType.open : DialogType.chat;
-		}
-
-		/**
+		 * @protected
 		 * @param {Array<number>} addedManagers
 		 * @void
 		 */
@@ -552,6 +502,7 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 		}
 
 		/**
+		 * @protected
 		 * @param {number} userId
 		 * @void
 		 */
@@ -577,6 +528,7 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 		}
 
 		/**
+		 * @protected
 		 * @param {Array<Object>} selectedEntity
 		 * @param {Array<Array>} initSelectedIds
 		 * @void
@@ -607,6 +559,7 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 		}
 
 		/**
+		 * @protected
 		 * @desc rest update chat
 		 * @param {object} fields
 		 * @return {Promise<{result:boolean}>}
@@ -617,6 +570,7 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 		}
 
 		/**
+		 * @protected
 		 * @desc rest update avatar
 		 * @param {string} avatarBase64str
 		 * @return {Promise<{result:boolean}>}
@@ -627,6 +581,7 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 		}
 
 		/**
+		 * @protected
 		 * @desc rest update title
 		 * @param {string} title
 		 * @return {Promise<{result:boolean}>}
@@ -636,6 +591,7 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 			return this.chatService.updateService.updateTitle(this.dialogId, title);
 		}
 
+		/** @protected */
 		showSuccessfullyToast()
 		{
 			Keyboard.dismiss();
@@ -647,6 +603,7 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 		}
 
 		/**
+		 * @protected
 		 * @return {Promise<memberEntities:Array<*>>}
 		 */
 		async getCurrentMemberIds()
@@ -655,6 +612,7 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 		}
 
 		/**
+		 * @protected
 		 * @return {Array<Object>}
 		 */
 		buildManagerDataList()
@@ -663,6 +621,7 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 		}
 
 		/**
+		 * @protected
 		 * @desc rest get member entity
 		 * @return {Promise<memberEntities:Array<*>>}
 		 */
@@ -672,7 +631,8 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 		}
 
 		/**
-		 * @param {Promise<object>} fields
+		 * @protected
+		 * @param {object} fields
 		 * @return {Promise}
 		 */
 		updateDialogModel(fields)
@@ -684,7 +644,8 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 		}
 
 		/**
-		 * @param {Promise<object>} fields
+		 * @protected
+		 * @param {object} fields
 		 * @return {Promise}
 		 */
 		updateDialogModelPermissions(fields)
@@ -696,25 +657,29 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 		}
 
 		/**
+		 * @protected
+		 * @param {MutationPayload<DialoguesUpdateData>} payload
+		 * @return {boolean}
+		 */
+		isOwnDialogPayload(payload)
+		{
+			return this.dialogId === payload.data.dialogId;
+		}
+
+		/**
+		 * @protected
 		 * @desc Handler dialog store update
 		 * @param {MutationPayload<DialoguesUpdateData>} payload
 		 * @void
 		 */
 		onUpdateDialogStore({ payload })
 		{
-			if (this.dialogId !== payload.data.dialogId)
+			if (!this.isOwnDialogPayload(payload))
 			{
 				return;
 			}
 
 			logger.log(`${this.constructor.name}.onUpdateDialogStore:`, payload);
-			if ((payload.actionName === 'updateType' || payload.actionName === 'update')
-				&& payload.data?.fields?.type
-			)
-			{
-				this.updateDialogTypeState(payload.data?.fields?.type);
-			}
-
 			if (payload.actionName === 'removeParticipants'
 				|| payload.actionName === 'updateManagerList'
 				|| (payload.actionName === 'update' && payload.data?.fields?.managerList)
@@ -735,21 +700,7 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 		}
 
 		/**
-		 * @desc dialog type view - state update
-		 * @param {DialogType} newType
-		 * @void
-		 */
-		updateDialogTypeState(newType)
-		{
-			if (Type.isNil(this.dialogTypeView))
-			{
-				return;
-			}
-
-			this.dialogTypeView.setState({ dialogType: newType });
-		}
-
-		/**
+		 * @protected
 		 * @desc managers view - state update
 		 * @void
 		 */
@@ -764,6 +715,10 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 			this.managersView.setState({ users });
 		}
 
+		/**
+		 * @protected
+		 * @param {DialogPermissions} newPermissions
+		 */
 		updateRulesListState(newPermissions)
 		{
 			if (Type.isNil(this.rulesListView))
@@ -775,6 +730,7 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 		}
 
 		/**
+		 * @protected
 		 * @desc main view - state update
 		 * @param {MutationPayload<DialoguesUpdateData>} payload
 		 * @void
@@ -805,6 +761,7 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 		}
 
 		/**
+		 * @protected
 		 * @desc get common fields by key object
 		 * @param {object} obj1
 		 * @param {object} obj2

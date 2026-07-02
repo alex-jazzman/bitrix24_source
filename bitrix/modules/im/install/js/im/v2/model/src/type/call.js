@@ -1,4 +1,4 @@
-import type { ChatType } from 'im.v2.const';
+import { type ChatTypeItem } from 'im.v2.const';
 
 export type Call = {
 	id?: number,
@@ -10,7 +10,7 @@ export type Call = {
 export type CallAssociatedEntity = {
 	advanced: {
 		chatType: string,
-		entityType: $Values<typeof ChatType>,
+		entityType: ChatTypeItem,
 		entityId: string,
 		entityData1?: string,
 		entityData2?: string,
@@ -21,6 +21,6 @@ export type CallAssociatedEntity = {
 	name: string,
 	avatar: string,
 	avatarColor: string,
-	type: $Values<typeof ChatType>,
+	type: ChatTypeItem,
 	userCounter: number,
 };

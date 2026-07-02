@@ -51,6 +51,11 @@ jn.define('im/messenger/lib/converter/data/message', (require, exports, module) 
 				modelMessage.viewed ??= false;
 			}
 
+			if (Type.isPlainObject(params.message?.builder) && Type.isArrayFilled(params.message?.builder?.blocks))
+			{
+				modelMessage.builder = { ...params.message.builder };
+			}
+
 			return modelMessage;
 		}
 	}

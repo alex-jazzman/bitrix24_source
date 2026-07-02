@@ -1,9 +1,13 @@
 import { sendData as analyticsSendData } from 'ui.analytics';
 import { InputDesign, InputSize } from 'ui.system.input';
 import { BInput } from 'ui.system.input.vue';
-import { mapState } from 'ui.vue3.pinia';
+import { mapState, mapActions } from 'ui.vue3.pinia';
 import { LocalizationMixin } from '../../../../mixins/localization-mixin';
 import { useWizardStore } from '../../../../store/wizard.js';
+import {
+	ERROR_TYPE_IMAP_CONNECTION,
+	ERROR_TYPE_SMTP_CONNECTION,
+} from '../../../../utils/const/connection-error';
 import './connection-data.css';
 
 // @vue/component
@@ -34,7 +38,29 @@ export const ConnectionData = {
 	},
 
 	computed: {
-		...mapState(useWizardStore, ['connectionSettings', 'analyticsSource']),
+		...mapState(useWizardStore, ['connectionSettings', 'analyticsSource', 'errorState']),
+		imapPortModel: {
+			get(): string
+			{
+				return this.connectionSettings.imapPort?.toString() ?? '';
+			},
+			set(value)
+			{
+				const port = parseInt(value, 10);
+				this.connectionSettings.imapPort = Number.isNaN(port) ? null : port;
+			},
+		},
+		smtpPortModel: {
+			get(): string
+			{
+				return this.connectionSettings.smtpSettings.port?.toString() ?? '';
+			},
+			set(value)
+			{
+				const port = parseInt(value, 10);
+				this.connectionSettings.smtpSettings.port = Number.isNaN(port) ? null : port;
+			},
+		},
 		isValid(): boolean
 		{
 			const imapValid = Boolean(this.connectionSettings.imapServer && this.connectionSettings.imapPort);
@@ -61,21 +87,49 @@ export const ConnectionData = {
 		{
 			return this.validationAttempted;
 		},
+		isFixingImapError(): boolean
+		{
+			return this.errorState?.errorType === ERROR_TYPE_IMAP_CONNECTION;
+		},
+		isFixingSmtpError(): boolean
+		{
+			return this.errorState?.errorType === ERROR_TYPE_SMTP_CONNECTION;
+		},
 		imapServerError(): ?string
 		{
+			if (this.isFixingImapError)
+			{
+				return this.loc('MAIL_MASSCONNECT_FORM_CONNECTION_DATA_IMAP_INPUT_CONNECTION_ERROR');
+			}
+
 			return this.showErrors && !this.connectionSettings.imapServer
 				? this.loc('MAIL_MASSCONNECT_FORM_CONNECTION_DATA_IMAP_INPUT_ERROR')
 				: null;
 		},
 		imapPortError(): ?string
 		{
+			if (this.isFixingImapError)
+			{
+				return this.loc('MAIL_MASSCONNECT_FORM_CONNECTION_DATA_IMAP_PORTS_INPUT_CONNECTION_ERROR');
+			}
+
 			return this.showErrors && !this.connectionSettings.imapPort
 				? this.loc('MAIL_MASSCONNECT_FORM_CONNECTION_DATA_IMAP_PORTS_INPUT_ERROR')
 				: null;
 		},
 		smtpServerError(): ?string
 		{
-			if (!this.showErrors || !this.connectionSettings.smtpSettings.enabled)
+			if (!this.connectionSettings.smtpSettings.enabled)
+			{
+				return null;
+			}
+
+			if (this.isFixingSmtpError)
+			{
+				return this.loc('MAIL_MASSCONNECT_FORM_CONNECTION_DATA_SMTP_INPUT_CONNECTION_ERROR');
+			}
+
+			if (!this.showErrors)
 			{
 				return null;
 			}
@@ -92,7 +146,17 @@ export const ConnectionData = {
 		},
 		smtpPortError(): ?string
 		{
-			if (!this.showErrors || !this.connectionSettings.smtpSettings.enabled)
+			if (!this.connectionSettings.smtpSettings.enabled)
+			{
+				return null;
+			}
+
+			if (this.isFixingSmtpError)
+			{
+				return this.loc('MAIL_MASSCONNECT_FORM_CONNECTION_DATA_SMTP_PORTS_INPUT_CONNECTION_ERROR');
+			}
+
+			if (!this.showErrors)
 			{
 				return null;
 			}
@@ -107,19 +171,42 @@ export const ConnectionData = {
 
 			return null;
 		},
+		imapWatchKey(): string
+		{
+			return `${this.connectionSettings.imapServer ?? ''}|${this.connectionSettings.imapPort ?? ''}`;
+		},
+		smtpWatchKey(): string
+		{
+			return `${this.connectionSettings.smtpSettings.server ?? ''}|${this.connectionSettings.smtpSettings.port ?? ''}`;
+		},
 	},
 
 	watch: {
 		isValid: {
-			handler(isValid)
+			handler(isValid: boolean): void
 			{
 				this.$emit('update:validity', isValid);
 			},
 			immediate: true,
 		},
+		imapWatchKey(): void
+		{
+			if (this.isFixingImapError)
+			{
+				this.disableErrorState();
+			}
+		},
+		smtpWatchKey(): void
+		{
+			if (this.isFixingSmtpError)
+			{
+				this.disableErrorState();
+			}
+		},
 	},
 
 	methods: {
+		...mapActions(useWizardStore, ['disableErrorState']),
 		onStepComplete(): void
 		{
 			analyticsSendData({
@@ -128,18 +215,6 @@ export const ConnectionData = {
 				category: 'mail_mass_ops',
 				c_section: this.analyticsSource,
 			});
-		},
-		handleImapPortInput(port: string): void
-		{
-			this.connectionSettings.imapPort = this.getSanitizedValue(port);
-		},
-		handleSmtpPortInput(port: string): void
-		{
-			this.connectionSettings.smtpSettings.port = this.getSanitizedValue(port);
-		},
-		getSanitizedValue(value: ?string): string
-		{
-			return String(value ?? '').replaceAll(/\D/g, '');
 		},
 	},
 
@@ -153,17 +228,6 @@ export const ConnectionData = {
 				<span class="mail_massconnect__section-description">
 					{{ loc('MAIL_MASSCONNECT_FORM_CONNECTION_DATA_CARD_DESCRIPTION') }}
 				</span>
-			</div>
-
-			<div v-if="false" data-test-id="mail_massconnect__connection-data_domain-group">
-				<BInput
-					class="mail_massconnect__group"
-					:label="loc('MAIL_MASSCONNECT_FORM_CONNECTION_DATA_DOMAIN_INPUT_LABEL')"
-					:placeholder="loc('MAIL_MASSCONNECT_FORM_CONNECTION_DATA_DOMAIN_INPUT_PLACEHOLDER')"
-					:size="InputSize.Lg"
-					:design="InputDesign.Grey"
-					v-model="connectionSettings.email"
-				/>
 			</div>
 
 			<div class="mail_massconnect__connection-block">
@@ -184,9 +248,8 @@ export const ConnectionData = {
 						type="number"
 						:size="InputSize.Lg"
 						:design="InputDesign.DEFAULT"
-						v-model="connectionSettings.imapPort"
+						v-model="imapPortModel"
 						:error="imapPortError"
-						@input="handleImapPortInput(connectionSettings.imapPort)"
 					/>
 				</div>
 				<div class="mail_massconnect__connection-data_checkbox-group">
@@ -224,9 +287,8 @@ export const ConnectionData = {
 						type="number"
 						:size="InputSize.Lg"
 						:design="InputDesign.DEFAULT"
-						v-model="connectionSettings.smtpSettings.port"
+						v-model="smtpPortModel"
 						:error="smtpPortError"
-						@input="handleSmtpPortInput(connectionSettings.smtpSettings.port)"
 					/>
 				</div>
 				<div class="mail_massconnect__connection-data_checkbox-group">

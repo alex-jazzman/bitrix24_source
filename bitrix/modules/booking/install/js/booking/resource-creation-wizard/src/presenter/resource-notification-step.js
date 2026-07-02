@@ -1,10 +1,11 @@
 import { Event, Loc, Text, Type } from 'main.core';
-import { Notifier, NotificationOptions } from 'ui.notification-manager';
+import { Notifier } from 'ui.notification-manager';
 import { ConditionChecker, Types as SenderTypes } from 'crm.messagesender';
 
-import { EventName, Model, NotificationFieldsMap } from 'booking.const';
+import { Communication, EventName, Model, NotificationFieldsMap } from 'booking.const';
 import { resourceService } from 'booking.provider.service.resources-service';
 import { resourceTypeService } from 'booking.provider.service.resources-type-service';
+import { aiAgentLauncherService } from 'booking.provider.service.ai-agent-launcher-service';
 import { RcwAnalytics } from 'booking.lib.analytics';
 import type { SlotRange, ResourceModel } from 'booking.model.resources';
 import type { ResourceTypeModel } from 'booking.model.resource-types';
@@ -77,11 +78,22 @@ export class ResourceNotificationStep extends Step
 			...this.#prepareResourceTypeNotifications(this.#resource),
 		});
 
+		const aiAgent = this.store.getters[`${Model.AiAgent}/aiAgent`];
+		if (aiAgent?.action === 'copyAndStart' && this.#resource.senderCode === Communication.AiCall)
+		{
+			void aiAgentLauncherService.launchInBackground();
+		}
+
 		Event.EventEmitter.emit(EventName.CloseWizard);
 	}
 
 	#isBitrix24Approved(): Promise<boolean>
 	{
+		if (this.#resource.senderCode !== Communication.Bitrix24)
+		{
+			return Promise.resolve(true);
+		}
+
 		if (!this.#isBitrix24SenderAvailable())
 		{
 			return Promise.resolve(true);

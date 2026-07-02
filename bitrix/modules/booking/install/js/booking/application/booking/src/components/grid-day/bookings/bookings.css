@@ -1,0 +1,27 @@
+.booking-booking-bookings {
+	position: absolute;
+	z-index: 3;
+	inset: 0;
+	max-height: calc((var(--to-hour) - var(--from-hour)) * 50px * var(--zoom) + (24 - var(--to-hour) + var(--from-hour)) * var(--booking-off-hours-cell-height));
+	margin-top: var(--padding-top);
+	transform: translateY(var(--top-cells-height));
+	pointer-events: none;
+}
+
+.booking-booking-bookings__busy-slots,
+.booking-booking-bookings__items {
+	position: absolute;
+	inset: 0;
+}
+
+.booking-booking-bookings__busy-slots {
+	z-index: 3;
+}
+
+.booking-booking-bookings__items {
+	z-index: 4;
+}
+
+.booking-transition-booking-leave-to {
+	opacity: 0 !important;
+}

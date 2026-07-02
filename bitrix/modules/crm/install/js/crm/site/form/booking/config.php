@@ -18,7 +18,7 @@ return [
 	'skip_core' => true,
 	'options' => [
 		'webpacker' => [
-			'useAllLangs' => false,
+			'useAllLangs' => true,
 			'useLangCamelCase' => false,
 			'properties' => [
 				'DAY_MONTH_FORMAT' => $culture->get('DAY_MONTH_FORMAT'),

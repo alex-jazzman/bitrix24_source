@@ -1,4 +1,4 @@
-import { Tag, Loc } from 'main.core';
+import { Tag, Loc, Extension } from 'main.core';
 import { Popup, CloseIconSize } from 'main.popup';
 import { Icon, Main } from 'ui.icon-set.api.core';
 
@@ -28,6 +28,8 @@ export function showRolesDialogErrorPopup()
 
 function renderPopupContent(): HTMLElement
 {
+	const copilotName = Extension.getSettings('ai.roles-dialog').get('copilotName');
+
 	return Tag.render`
 		<div class="ai__roles-dialog_error-popup-inner">
 			<div class="ai__roles-dialog_error-popup-content">
@@ -35,7 +37,9 @@ function renderPopupContent(): HTMLElement
 					${renderWarningIcon()}
 				</div>
 				<p class="ai__roles-dialog_error-popup-content-error-text">
-					${Loc.getMessage('AI_COPILOT_ROLES_ERROR_TEXT')}
+					${Loc.getMessage('AI_COPILOT_ROLES_ERROR_TEXT_MSGVER_1', {
+						'#COPILOT_NAME#': copilotName,
+					})}
 				</p>
 			</div>
 		</div>

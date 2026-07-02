@@ -19,19 +19,6 @@ jn.define('im/messenger/provider/services/sync/date-service', (require, exports,
 	 */
 	class DateService
 	{
-		/**
-		 * @return {DateService}
-		 */
-		static getInstance()
-		{
-			if (!this.instance)
-			{
-				this.instance = new this();
-			}
-
-			return this.instance;
-		}
-
 		constructor()
 		{
 			this.store = serviceLocator.get('core').getStore();

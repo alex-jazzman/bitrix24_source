@@ -35,8 +35,8 @@ if (\Bitrix\Main\Loader::includeModule('currency'))
 return [
 	'js' => 'dist/currency-format.bundle.js',
 	'rel' => [
-		'main.core',
 		'currency.currency-core',
+		'main.core',
 	],
 	'skip_core' => false,
 	'settings' => [

@@ -1,6 +1,6 @@
 import type { AnimationItemTypes } from './types';
 
-export const PORT_SIZE = 9;
+export const PORT_SIZE = 10;
 export const CONNECTION_OFFSET = 30;
 export const CONNECTION_BEND_OFFSET = 30;
 export const CONNECTION_BORDER_RADIUS = 10;
@@ -15,8 +15,12 @@ export const HOOK_NAMES = {
 	MOVE_DRAG_BLOCK: 'moveDragBlock',
 	END_DRAG_BLOCK: 'endDragBlock',
 	ADD_BLOCK: 'addBlock',
+	ADD_BLOCKS: 'addBlocks',
 	UPDATE_BLOCK: 'updateBlock',
 	DELETE_BLOCK: 'deleteBlock',
+	DELETE_BLOCKS: 'deleteBlocks',
+	ADD_CONNECTION: 'addConnection',
+	ADD_CONNECTIONS: 'addConnections',
 	CREATE_CONNECTION: 'createConnection',
 	DELETE_CONNECTION: 'deleteConnection',
 	BLOCK_TRANSITION_START: 'blockTransitionStart',
@@ -24,6 +28,8 @@ export const HOOK_NAMES = {
 	CONNECTION_TRANSITION_START: 'connectionTransitionStart',
 	CONNECTION_TRANSITION_END: 'connectionTransitionEnd',
 	DROP_NEW_BLOCK: 'dropNewBlock',
+	HISTORY_NEXT: 'historyNext',
+	HISTORY_PREV: 'historyPrev',
 };
 
 export const PORT_TYPES: { ... } = {
@@ -67,3 +73,6 @@ export const INPUT_TAGS = Object.freeze({
 	TEXTAREA: true,
 	SELECT: true,
 });
+
+export const SOURCE_PORT_STUB_TELEPORT_NAME = 'sourcePortNewConnection';
+export const TARGET_PORT_STUB_TELEPORT_NAME = 'targetPortNewConnection';

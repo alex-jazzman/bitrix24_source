@@ -1,10 +1,10 @@
-import { BIcon } from 'ui.icon-set.api.vue';
 import { Outline, Main } from 'ui.icon-set.api.core';
-import { UpdateItemPropertyEventPayload } from '../../types';
+import { BIcon } from 'ui.icon-set.api.vue';
+
+// eslint-disable-next-line no-unused-vars
+import { type UpdateItemPropertyEventPayload, type TitleItem } from '../../types';
 
 import './title-field.css';
-// eslint-disable-next-line no-unused-vars
-import type { TitleItem } from '../../types';
 
 // @vue/component
 export const TitleField = {

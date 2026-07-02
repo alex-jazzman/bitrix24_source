@@ -20,7 +20,6 @@ jn.define('onboarding/testing-tool/src/const', (require, exports, module) => {
 		ON_DEAL_CONTACT_FILLED: 'crm.tabs:onContactInDealFilled',
 		ON_CUSTOM_PRESET_APPEARED: 'crm.tabs:onCustomPresetAppeared',
 		ON_PAYMENT_ON_DEAL: 'crm.entity.detail:onPaymentEnabled',
-		ON_DETAIL_CARD_TELEGRAM_BOT: 'mobile:onDetailCardTelegramBot',
 	};
 
 	const TestRequestKey = {

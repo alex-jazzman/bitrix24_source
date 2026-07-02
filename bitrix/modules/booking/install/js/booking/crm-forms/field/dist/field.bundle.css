@@ -122,7 +122,6 @@
 
 .booking-crm-forms-field-slot.--day div:nth-child(2) {
 	margin: 0 auto;
-	max-width: -webkit-max-content;
 	max-width: max-content;
 }
 
@@ -130,7 +129,7 @@
 .booking-crm-forms-field-slots-loader {
 	width: 100%;
 	height: 125px;
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns:xlink='http://www.w3.org/1999/xlink' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 100%25 100%25'%3E%3Csvg width='100%25' height='1000' id='c'%3E%3Crect width='100%25' height='38' rx='4' fill='%23e5e5e5'/%3E%3Crect y='43' width='100%25' height='38' rx='4' fill='%23e5e5e5'/%3E%3Crect y='86' width='100%25' height='38' rx='4' fill='%23e5e5e5'/%3E%3C/svg%3E%3Crect id='d' width='100%25' fill='url(%23a)' mask='url(%23b)' height='100%25'/%3E%3Cmask id='b' fill='%23fff'%3E%3Cuse xlink:href='%23c'/%3E%3C/mask%3E%3ClinearGradient x1='66.6%25' y1='50%25' x2='33.3%25' y2='50%25' id='a'%3E%3Cstop stop-opacity='0' offset='0%25'/%3E%3Cstop stop-opacity='.07' offset='50%25'/%3E%3Cstop stop-opacity='0' offset='100%25'/%3E%3C/linearGradient%3E%3Canimate xlink:href='%23d' attributeName='x' from='-100%25' to='100%25' dur='1s' begin='0s' repeatCount='indefinite'/%3E%3C/svg%3E");
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' fill='none' viewBox='0 0 100%25 100%25'%3E%3Csvg id='c' width='100%25' height='1000'%3E%3Crect width='100%25' height='38' fill='%23e5e5e5' rx='4'/%3E%3Crect width='100%25' height='38' y='43' fill='%23e5e5e5' rx='4'/%3E%3Crect width='100%25' height='38' y='86' fill='%23e5e5e5' rx='4'/%3E%3C/svg%3E%3Crect id='d' width='100%25' height='100%25' fill='url(%23a)' mask='url(%23b)'/%3E%3Cmask id='b' fill='%23fff'%3E%3Cuse xlink:href='%23c'/%3E%3C/mask%3E%3ClinearGradient id='a' x1='66.6%25' x2='33.3%25' y1='50%25' y2='50%25'%3E%3Cstop offset='0%25' stop-opacity='0'/%3E%3Cstop offset='50%25' stop-opacity='.07'/%3E%3Cstop offset='100%25' stop-opacity='0'/%3E%3C/linearGradient%3E%3Canimate xlink:href='%23d' attributeName='x' begin='0s' dur='1s' from='-100%25' repeatCount='indefinite' to='100%25'/%3E%3C/svg%3E");
 }
 
 .booking--crm-forms--field-hint-text {
@@ -199,8 +198,8 @@
 	cursor: pointer;
 	height: 28px;
 	width: 28px;
-	-webkit-mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='20' height='20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M8.746 4.587a.583.583 0 10-.825.825L12.508 10l-4.587 4.587a.583.583 0 10.825.825l5-5a.583.583 0 000-.825l-5-5z' fill='%23525C69'/%3E%3C/svg%3E");
-	        mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='20' height='20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M8.746 4.587a.583.583 0 10-.825.825L12.508 10l-4.587 4.587a.583.583 0 10.825.825l5-5a.583.583 0 000-.825l-5-5z' fill='%23525C69'/%3E%3C/svg%3E");
+	-webkit-mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' fill='none' viewBox='0 0 20 20'%3E%3Cpath fill='%23525c69' fill-rule='evenodd' d='M8.746 4.587a.583.583 0 1 0-.825.825L12.508 10l-4.587 4.587a.583.583 0 1 0 .825.825l5-5a.583.583 0 0 0 0-.825z' clip-rule='evenodd'/%3E%3C/svg%3E");
+	        mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' fill='none' viewBox='0 0 20 20'%3E%3Cpath fill='%23525c69' fill-rule='evenodd' d='M8.746 4.587a.583.583 0 1 0-.825.825L12.508 10l-4.587 4.587a.583.583 0 1 0 .825.825l5-5a.583.583 0 0 0 0-.825z' clip-rule='evenodd'/%3E%3C/svg%3E");
 	-webkit-mask-size: contain;
 	        mask-size: contain;
 	-webkit-mask-repeat: no-repeat;
@@ -229,6 +228,39 @@
 
 .booking--crm-forms--field-description-text-more:hover {
 	color: rgba(1, 84, 200, 1);
+}
+
+.booking--crm-forms--skus-selector-sku {
+	display: flex;
+	justify-content: space-between;
+	align-items: start;
+	width: 100%;
+}
+
+.booking--crm-forms--skus-selector-sku-price {
+	font-weight: bold;
+	white-space: nowrap;
+}
+
+.booking-crm-forms-field-sku-selector-container {
+	margin-bottom: 0;
+}
+
+.booking-crm-forms-field-sku-selector-quantity {
+	position: relative;
+	display: flex;
+	justify-content: end;
+	align-items: center;
+	border: 1px solid var(--b24-field-border-color);
+	border-top: none;
+	text-align: center;
+	min-height: 58px;
+	border-radius: 0 0 4px 4px;
+	margin-bottom: 12px;
+}
+
+.booking--crm-forms--resource-selector-resource {
+	min-height: 58px;
 }
 
 .booking--crm-forms--calendar-block-content {
@@ -261,8 +293,8 @@
 	cursor: pointer;
 	height: 20px;
 	width: 20px;
-	-webkit-mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='20' height='20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M8.746 4.587a.583.583 0 10-.825.825L12.508 10l-4.587 4.587a.583.583 0 10.825.825l5-5a.583.583 0 000-.825l-5-5z' fill='%23525C69'/%3E%3C/svg%3E");
-	        mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='20' height='20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M8.746 4.587a.583.583 0 10-.825.825L12.508 10l-4.587 4.587a.583.583 0 10.825.825l5-5a.583.583 0 000-.825l-5-5z' fill='%23525C69'/%3E%3C/svg%3E");
+	-webkit-mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' fill='none' viewBox='0 0 20 20'%3E%3Cpath fill='%23525c69' fill-rule='evenodd' d='M8.746 4.587a.583.583 0 1 0-.825.825L12.508 10l-4.587 4.587a.583.583 0 1 0 .825.825l5-5a.583.583 0 0 0 0-.825z' clip-rule='evenodd'/%3E%3C/svg%3E");
+	        mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' fill='none' viewBox='0 0 20 20'%3E%3Cpath fill='%23525c69' fill-rule='evenodd' d='M8.746 4.587a.583.583 0 1 0-.825.825L12.508 10l-4.587 4.587a.583.583 0 1 0 .825.825l5-5a.583.583 0 0 0 0-.825z' clip-rule='evenodd'/%3E%3C/svg%3E");
 	-webkit-mask-size: contain;
 	        mask-size: contain;
 	-webkit-mask-repeat: no-repeat;
@@ -348,54 +380,6 @@
 	line-height: normal;
 }
 
-.booking--crm-forms--field-group--available-slots-block__footer {
-	display: flex;
-	justify-content: center;
-	margin: 10px 0;
-}
-
-.booking--crm-forms--field-group--available-slots-block__btn-show-more {
-	width: 160px
-}
-
-.booking--crm-forms--available-slots-block__empty-slots {
-	margin: 4em 0;
-	text-align: center;
-}
-
-.booking--crm-forms--skus-selector-sku {
-	display: flex;
-	justify-content: space-between;
-	align-items: start;
-	width: 100%;
-}
-
-.booking--crm-forms--skus-selector-sku-price {
-	font-weight: bold;
-	white-space: nowrap;
-}
-
-.booking-crm-forms-field-sku-selector-container {
-	margin-bottom: 0;
-}
-
-.booking-crm-forms-field-sku-selector-quantity {
-	position: relative;
-	display: flex;
-	justify-content: end;
-	align-items: center;
-	border: 1px solid var(--b24-field-border-color);
-	border-top: none;
-	text-align: center;
-	min-height: 58px;
-	border-radius: 0 0 4px 4px;
-	margin-bottom: 12px;
-}
-
-.booking--crm-forms--resource-selector-resource {
-	min-height: 58px;
-}
-
 .booking-crm-forms-field.booking--crm-forms--resource-slots {
 	--slots-shown-delay: 300ms;
 
@@ -471,4 +455,19 @@
 .booking--crm-forms--time-selector-block-header__button {
 	flex-shrink: 0;
 	padding-top: 16px;
+}
+
+.booking--crm-forms--field-group--available-slots-block__footer {
+	display: flex;
+	justify-content: center;
+	margin: 10px 0;
+}
+
+.booking--crm-forms--field-group--available-slots-block__btn-show-more {
+	width: 160px
+}
+
+.booking--crm-forms--available-slots-block__empty-slots {
+	margin: 4em 0;
+	text-align: center;
 }

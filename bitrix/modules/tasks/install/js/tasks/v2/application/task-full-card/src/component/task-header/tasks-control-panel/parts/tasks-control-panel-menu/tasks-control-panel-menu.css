@@ -1,0 +1,103 @@
+
+/* normalize */
+.tasks-control-panel-menu__content,
+.tasks-control-panel-menu__list,
+.tasks-control-panel-menu__action-content { box-sizing: border-box; }
+.tasks-control-panel-menu__action {
+	border-radius: 0;
+	border: none;
+	padding: 0;
+	background-color: transparent;
+	text-align: inherit;
+	cursor: pointer;
+}
+.tasks-control-panel-menu__list { margin: 0; padding: 0; }
+.tasks-control-panel-menu__item { list-style: none; }
+/* normalize end */
+
+.tasks-control-panel-menu {
+	position: relative;
+	width: 100%;
+}
+
+.tasks-control-panel-menu__bg {}
+
+.tasks-control-panel-menu__content {
+	position: relative;
+	padding: 0 var(--whitespace) var(--whitespace) var(--whitespace);
+	width: 100%;
+}
+.tasks-control-panel-menu:first-of-type .tasks-control-panel-menu__content,
+.tasks-control-panel-section + .tasks-control-panel-menu .tasks-control-panel-menu__content {
+	padding-top: var(--whitespace);
+}
+
+.tasks-control-panel-menu__list {
+	--whitespace: 16px;
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.04);
+	border-radius: 10px;
+	padding: calc(var(--whitespace) / 2) 0 calc(var(--whitespace) / 2) 0;
+	width: 100%;
+	background-color: #FFFFFF;
+}
+
+.tasks-control-panel-menu__item {
+	position: relative;
+	width: 100%;
+}
+
+.tasks-control-panel-menu__action {
+	position: relative;
+	width: 100%;
+}
+
+.tasks-control-panel-menu__action-bg {}
+
+.tasks-control-panel-menu__action-content {
+	position: relative;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 3px var(--whitespace) 3px var(--whitespace);
+	width: 100%;
+	min-height: 42px;
+}
+
+.tasks-control-panel-menu__action-text {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.tasks-control-panel-menu__action-text-icon {
+	--ui-icon-set__icon-size: 26px;
+	flex-shrink: 0;
+}
+
+.tasks-control-panel-menu__action-text-title {
+	font-size: 13px;
+}
+
+.tasks-control-panel-menu__action-vis {
+	line-height: 0;
+}
+
+.tasks-control-panel-menu__action-vis-icon {
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: var(--ui-color-base-0);
+	flex-shrink: 0;
+	opacity: 0.4;
+	transform-origin: center center;
+	transform: rotate(0deg);
+	transition: var(--transition-controls);
+}
+.tasks-control-panel-menu__action:hover .tasks-control-panel-menu__action-vis-icon {
+	opacity: 1;
+}
+.tasks-control-panel-menu__action:active .tasks-control-panel-menu__action-vis-icon,
+.tasks-control-panel-menu__action.tasks-control-panel-menu__action_active .tasks-control-panel-menu__action-vis-icon {
+	opacity: 1;
+}

@@ -57,8 +57,8 @@
 	margin-right: 12px;
 }
 
-.booking-toolbar-custom-html.--margin-left {
-	margin-left: 12px;
+.booking-page .ui-toolbar-right-custom-html {
+	margin-left: 0;
 }
 
 /** region hide footer **/

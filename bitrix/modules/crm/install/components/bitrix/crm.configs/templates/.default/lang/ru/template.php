@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_CONFIGS_TAB_WHERE_TO_BEGIN"] = "С чего начать";
 $MESS["CRM_CONFIGS_TAB_SETTINGS_FORMS_AND_REPORTS"] = "Настройки форм и отчетов";
 $MESS["CRM_CONFIGS_TAB_CREATION_ON_THE_BASIS"] = "Создание на основании";
@@ -24,7 +24,7 @@ $MESS["CRM_CONFIGS_FIELDS"] = "Пользовательские поля";
 $MESS["CRM_CONFIGS_CONFIG"] = "Прочие настройки";
 $MESS["CRM_CONFIGS_ROUND"] = "Округление";
 $MESS["CRM_CONFIGS_VOLUME"] = "Чем занято место";
-$MESS["CRM_CONFIGS_EXCLUSION"] = "Список исключений";
+$MESS["CRM_CONFIGS_EXCLUSION"] = "Стоп-лист";
 $MESS["CRM_CONFIGS_SENDSAVE"] = "Интеграция с почтой";
 $MESS["CRM_CONFIGS_MEASURE"] = "Единицы измерения";
 $MESS["CRM_CONFIGS_EXTERNAL_SALE"] = "CMS";

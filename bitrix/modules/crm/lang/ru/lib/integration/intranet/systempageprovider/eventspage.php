@@ -1,0 +1,3 @@
+<?php
+
+$MESS['CRM_INTEGRATION_INTRANET_EVENTS_PAGE_TITLE'] = "История";

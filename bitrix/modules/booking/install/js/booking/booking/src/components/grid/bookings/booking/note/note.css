@@ -1,7 +1,0 @@
-.booking-booking-booking.--zoom-is-less-than-08 .booking-booking-booking-note-button {
-	display: none;
-}
-
-.booking-booking-booking-note-button .ui-icon-set {
-	--ui-icon-set__icon-size: calc(16px * var(--quater-zoom));
-}

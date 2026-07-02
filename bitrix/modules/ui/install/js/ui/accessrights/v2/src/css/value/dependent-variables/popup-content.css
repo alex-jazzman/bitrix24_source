@@ -13,7 +13,6 @@
 	align-items: center;
 	height: 38px;
 	margin-bottom: 5px;
-	border-bottom: 1px solid #F0F0F0;
 }
 
 .ui-access-rights-v2-dv-popup--line:last-child {
@@ -23,6 +22,10 @@
 .ui-access-rights-v2-dv-popup--line.--secondary {
 	justify-content: flex-start;
 	border-bottom: none;
+}
+
+.ui-access-rights-v2-dv-popup--line.--dependant {
+	padding-left: 30px;
 }
 
 .ui-access-rights-v2-dv-popup--line .ui-access-rights-v2-text-ellipsis {
@@ -46,4 +49,19 @@
 	justify-content: center;
 	margin-bottom: 20px;
 	color: var(--ui-color-palette-gray-50);
+}
+
+.ui-access-rights-v2-dv-fade-enter-active,
+.ui-access-rights-v2-dv-fade-leave-active {
+	transition: opacity 150ms ease, transform 150ms ease;
+}
+
+.ui-access-rights-v2-dv-fade-enter-from,
+.ui-access-rights-v2-dv-fade-leave-to {
+	opacity: 0;
+	transform: translateY(-6px);
+}
+
+.ui-access-rights-v2-dv-fade-move {
+	transition: transform 150ms ease;
 }

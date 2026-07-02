@@ -2,6 +2,7 @@ import { Type } from 'main.core';
 
 import { Core } from 'im.v2.application.core';
 import { ChatType, Settings } from 'im.v2.const';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 
 import {
 	SelectableBackground,
@@ -10,9 +11,8 @@ import {
 	SpecialBackgroundId,
 	ThemeType,
 	ImageFileByBackgroundId,
+	type BackgroundItem,
 } from './color-scheme';
-
-import type { BackgroundItem } from './color-scheme';
 
 export {
 	SelectableBackground,
@@ -27,8 +27,16 @@ const IMAGE_FOLDER_PATH = '/bitrix/js/im/images/chat-v2-background';
 export type BackgroundStyle = {
 	backgroundColor: string,
 	backgroundImage: string,
+	backgroundPosition: string,
 	backgroundRepeat: string,
-	backgroundSize: string
+	backgroundSize: string,
+};
+
+type BackgroundStyleLayer = {
+	image: string,
+	position: string,
+	repeat: string,
+	size: string,
 };
 
 const BackgroundPatternColor = Object.freeze({
@@ -66,25 +74,12 @@ const ThemeManager = {
 		const colorScheme: BackgroundItem = backgroundsList[backgroundId];
 		if (!colorScheme)
 		{
-			return {};
+			return this.getCurrentBackgroundStyle();
 		}
 
-		const patternColor = colorScheme.type === ThemeType.light
-			? BackgroundPatternColor.gray
-			: BackgroundPatternColor.white
-		;
-		const patternType = colorScheme.pattern;
-
-		const fileName = ImageFileByBackgroundId[backgroundId] ?? backgroundId;
-		const patternImage = `url('${IMAGE_FOLDER_PATH}/pattern-${patternColor}-${patternType}.svg')`;
-		const highlightImage = `url('${IMAGE_FOLDER_PATH}/${fileName}.png')`;
-
 		return {
+			...buildBackgroundStyles(colorScheme, backgroundId),
 			backgroundColor: colorScheme.color,
-			backgroundImage: `${patternImage}, ${highlightImage}`,
-			backgroundPosition: 'top right, center',
-			backgroundRepeat: 'repeat, no-repeat',
-			backgroundSize: 'auto, cover',
 		};
 	},
 };
@@ -111,6 +106,11 @@ const resolveBackgroundId = (dialogId?: string): string => {
 
 	if (chatType === ChatType.copilot)
 	{
+		if (FeatureManager.isFeatureAvailable(Feature.isBitrixGptV2Available))
+		{
+			return SpecialBackgroundId.aiAssistant;
+		}
+
 		return SpecialBackgroundId.copilot;
 	}
 
@@ -133,4 +133,67 @@ const resolveBackgroundId = (dialogId?: string): string => {
 	}
 
 	return userBackground;
+};
+
+const getPatternBackgroundStyleLayer = (colorScheme: BackgroundItem): ?BackgroundStyleLayer => {
+	if (!colorScheme.pattern)
+	{
+		return null;
+	}
+
+	const patternColor = colorScheme.type === ThemeType.light
+		? BackgroundPatternColor.gray
+		: BackgroundPatternColor.white
+	;
+
+	return {
+		image: `url('${IMAGE_FOLDER_PATH}/pattern-${patternColor}-${colorScheme.pattern}.svg')`,
+		position: 'top right',
+		repeat: 'repeat',
+		size: 'auto',
+	};
+};
+
+const getHighlightBackgroundStyleLayer = (backgroundId: string): ?BackgroundStyleLayer => {
+	const fileName = ImageFileByBackgroundId[backgroundId];
+	if (!fileName)
+	{
+		return null;
+	}
+
+	return {
+		image: `url('${IMAGE_FOLDER_PATH}/${fileName}.png')`,
+		position: 'center',
+		repeat: 'no-repeat',
+		size: 'cover',
+	};
+};
+
+const buildBackgroundStyles = (colorScheme: BackgroundItem, backgroundId: string): $Shape<BackgroundStyle> => {
+	const patternLayer = getPatternBackgroundStyleLayer(colorScheme);
+	const highlightLayer = getHighlightBackgroundStyleLayer(backgroundId);
+
+	if (!patternLayer && !highlightLayer)
+	{
+		return {};
+	}
+
+	if (patternLayer && highlightLayer)
+	{
+		return {
+			backgroundImage: `${patternLayer.image}, ${highlightLayer.image}`,
+			backgroundPosition: `${patternLayer.position}, ${highlightLayer.position}`,
+			backgroundRepeat: `${patternLayer.repeat}, ${highlightLayer.repeat}`,
+			backgroundSize: `${patternLayer.size}, ${highlightLayer.size}`,
+		};
+	}
+
+	const layer = patternLayer ?? highlightLayer;
+
+	return {
+		backgroundImage: layer.image,
+		backgroundPosition: layer.position,
+		backgroundRepeat: layer.repeat,
+		backgroundSize: layer.size,
+	};
 };

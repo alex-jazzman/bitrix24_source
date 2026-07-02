@@ -1,14 +1,11 @@
 import { Type } from 'main.core';
 
-import { DefaultMessageContent, MessageHeader, MessageFooter } from 'im.v2.component.message.elements';
 import { BaseMessage } from 'im.v2.component.message.base';
+import { AudioItem, DefaultMessageContent, MessageHeader, MessageFooter } from 'im.v2.component.message.elements';
 import { FileType } from 'im.v2.const';
-
-import { AudioItem } from './items/audio';
+import { type ImModelMessage, type ImModelFile } from 'im.v2.model';
 
 import '../css/audio-message.css';
-
-import type { ImModelMessage, ImModelFile } from 'im.v2.model';
 
 // @vue/component
 export const AudioMessage = {

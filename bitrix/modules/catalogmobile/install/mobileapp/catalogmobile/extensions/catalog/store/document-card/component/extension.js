@@ -8,6 +8,7 @@ jn.define('catalog/store/document-card/component', (require, exports, module) =>
 	const { DetailCardComponent } = require('layout/ui/detail-card');
 	const { DocumentType } = require('catalog/store/document-type');
 	const AppTheme = require('apptheme');
+	const { UIMenuType } = require('layout/ui/menu');
 
 	/**
 	 * @class DocumentCardComponent
@@ -143,7 +144,7 @@ jn.define('catalog/store/document-card/component', (require, exports, module) =>
 					}
 
 					result.push({
-						type: UI.Menu.Types.DESKTOP,
+						type: UIMenuType.DESKTOP,
 						showHint: false,
 						showTopSeparator: isCancelDocumentActive,
 						data: {
@@ -155,7 +156,7 @@ jn.define('catalog/store/document-card/component', (require, exports, module) =>
 					if (articleCode)
 					{
 						result.push({
-							type: UI.Menu.Types.HELPDESK,
+							type: UIMenuType.HELPDESK,
 							data: {
 								articleCode,
 							},

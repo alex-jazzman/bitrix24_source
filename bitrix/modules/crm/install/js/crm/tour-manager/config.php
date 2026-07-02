@@ -10,7 +10,6 @@ return [
 	'js' => 'dist/tour-manager.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'ui.tour',
 		'crm.integration.ui.banner-dispatcher',
 	],
 	'skip_core' => true,

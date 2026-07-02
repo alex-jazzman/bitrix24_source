@@ -561,6 +561,73 @@ jn.define('im/messenger/provider/pull/message/handler', (require, exports, modul
 		}
 
 		/**
+		 * @param {MessagePullHandlerBuilderBlockAppendParams} params
+		 * @param {PullExtraParams} extra
+		 */
+		async handleBuilderBlockAppend(params, extra)
+		{
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
+
+			this.logger.info('handleBuilderBlockAppend:', params);
+
+			const { messageId, block, text } = params;
+
+			await this.store.dispatch('messagesModel/builderModel/appendBlock', {
+				messageId,
+				block,
+				text,
+			});
+		}
+
+		/**
+		 * @param {MessagePullHandlerBuilderBlockUpdateParams} params
+		 * @param {PullExtraParams} extra
+		 */
+		async handleBuilderBlockUpdate(params, extra)
+		{
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
+
+			this.logger.info('handleBuilderBlockUpdate:', params);
+
+			const { messageId, blockId, block, text } = params;
+
+			await this.store.dispatch('messagesModel/builderModel/updateBlock', {
+				messageId,
+				blockId,
+				block,
+				text,
+			});
+		}
+
+		/**
+		 * @param {MessagePullHandlerBuilderBlockDeleteParams} params
+		 * @param {PullExtraParams} extra
+		 */
+		async handleBuilderBlockDelete(params, extra)
+		{
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
+
+			this.logger.info('handleBuilderBlockDelete:', params);
+
+			const { messageId, blockId, text } = params;
+
+			await this.store.dispatch('messagesModel/builderModel/deleteBlock', {
+				messageId,
+				blockId,
+				text,
+			});
+		}
+
+		/**
 		 * @param {MessageAddParams} params
 		 * @param {PullExtraParams} extra
 		 * @return {NewMessageManager}
@@ -1457,7 +1524,7 @@ jn.define('im/messenger/provider/pull/message/handler', (require, exports, modul
 		 */
 		async #updateMessage(updateParams)
 		{
-			const { params, text, id } = updateParams;
+			const { params, text, id, builder = {} } = updateParams;
 
 			const message = this.getMessage(id);
 			if (!message)
@@ -1477,6 +1544,7 @@ jn.define('im/messenger/provider/pull/message/handler', (require, exports, modul
 				fields: {
 					text,
 					params,
+					builder,
 				},
 			});
 		}

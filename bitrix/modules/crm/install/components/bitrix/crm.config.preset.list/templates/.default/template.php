@@ -18,7 +18,8 @@ $presetAddFormId = 'PresetListManager_'.$arResult['COMPONENT_ID'].'_FormPresetAd
 
 \Bitrix\Main\UI\Extension::load([
 	'ui.design-tokens',
-	'ui.fonts.opensans'
+	'ui.fonts.opensans',
+	'ui.system.alert',
 ]);
 
 $presetUfieldsUrl = str_replace(

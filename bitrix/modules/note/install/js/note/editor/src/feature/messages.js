@@ -1,0 +1,57 @@
+import { Loc } from 'main.core';
+
+type DocumentMessages = {
+	document: string,
+	collection: string,
+	loading: string,
+	edit: string,
+	cancel: string,
+	save: string,
+	done: string,
+	titleRequired: string,
+	saveError: string,
+	loadError: string,
+	unavailable: string,
+	copyLink: string,
+	copyLinkDone: string,
+	copyMarkdown: string,
+	copyMarkdownDone: string,
+	more: string,
+	archive: string,
+	restore: string,
+	archivedAt: string,
+	permissions: string,
+	delete: string,
+	restoreFromTrash: string,
+	hardDelete: string,
+};
+
+export function createDocumentMessages(): DocumentMessages
+{
+	return {
+		document: Loc.getMessage('NOTE_EDITOR_DOCUMENT_TITLE'),
+		collection: Loc.getMessage('NOTE_EDITOR_DOCUMENT_COLLECTION_LABEL'),
+		loading: Loc.getMessage('NOTE_EDITOR_DOCUMENT_LOADING'),
+		edit: Loc.getMessage('NOTE_EDITOR_DOCUMENT_EDIT'),
+		cancel: Loc.getMessage('NOTE_EDITOR_DOCUMENT_CANCEL'),
+		save: Loc.getMessage('NOTE_EDITOR_DOCUMENT_SAVE'),
+		done: Loc.getMessage('NOTE_EDITOR_DOCUMENT_DONE'),
+		titleRequired: Loc.getMessage('NOTE_EDITOR_DOCUMENT_TITLE_REQUIRED'),
+		saveError: Loc.getMessage('NOTE_EDITOR_DOCUMENT_SAVE_ERROR'),
+		loadError: Loc.getMessage('NOTE_EDITOR_DOCUMENT_LOAD_ERROR'),
+		unavailable: Loc.getMessage('NOTE_EDITOR_DOCUMENT_UNAVAILABLE'),
+		copyLink: Loc.getMessage('NOTE_EDITOR_DOCUMENT_COPY_LINK'),
+		copyLinkDone: Loc.getMessage('NOTE_EDITOR_DOCUMENT_COPY_LINK_DONE'),
+		copyMarkdown: Loc.getMessage('NOTE_EDITOR_DOCUMENT_MENU_COPY_MARKDOWN'),
+		copyMarkdownDone: Loc.getMessage('NOTE_EDITOR_DOCUMENT_MENU_COPY_MARKDOWN_DONE'),
+		more: Loc.getMessage('NOTE_EDITOR_DOCUMENT_MORE'),
+		archive: Loc.getMessage('NOTE_EDITOR_DOCUMENT_MENU_ARCHIVE'),
+		restore: Loc.getMessage('NOTE_EDITOR_DOCUMENT_MENU_RESTORE'),
+		archivedAt: Loc.getMessage('NOTE_EDITOR_DOCUMENT_ARCHIVED_AT'),
+		permissions: Loc.getMessage('NOTE_EDITOR_DOCUMENT_MENU_PERMISSIONS'),
+		delete: Loc.getMessage('NOTE_EDITOR_DOCUMENT_MENU_DELETE'),
+		restoreFromTrash: Loc.getMessage('NOTE_EDITOR_DOCUMENT_MENU_RESTORE_FROM_TRASH'),
+		hardDelete: Loc.getMessage('NOTE_EDITOR_DOCUMENT_MENU_HARD_DELETE'),
+		documents: Loc.getMessage('NOTE_EDITOR_CHILDREN_HEADER'),
+	};
+}

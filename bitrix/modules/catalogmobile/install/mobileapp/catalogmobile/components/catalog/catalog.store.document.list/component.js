@@ -264,6 +264,11 @@
 						items: this.documentTabs,
 					},
 					onTabSelected: (tab, changed) => {
+						BX.postComponentEvent(
+							'catalog.store.document.list:onTabSelected',
+							[{ tabId: tab.id, changed }],
+						);
+
 						if (changed)
 						{
 							this.setState({

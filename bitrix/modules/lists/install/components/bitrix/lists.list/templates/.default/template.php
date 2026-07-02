@@ -15,9 +15,11 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Component\ParameterSigner;
+use Bitrix\Main\Web\Json;
 
 \Bitrix\Main\Loader::includeModule('ui');
-\Bitrix\Main\UI\Extension::load(["lists", "ui.fonts.opensans", 'ui.dialogs.messagebox']);
+\Bitrix\Main\UI\Extension::load(['lists', 'ui.fonts.opensans', 'ui.dialogs.messagebox', 'bizproc.workflow.starter']);
 
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/main/utils.js');
 Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/lists/css/autorun_progress_bar.css');
@@ -95,11 +97,11 @@ if (isset($arResult['CAN_EXPORT']) && $arResult["CAN_EXPORT"])
 {
 	if ($USER->isAuthorized())
 	{
-		$url = CHTTP::urlAddParams((mb_strpos($APPLICATION->GetCurPageParam(), "?") == false) ?
-			$arResult["EXPORT_EXCEL_URL"] : $arResult["EXPORT_EXCEL_URL"].mb_substr($APPLICATION->GetCurPageParam(), mb_strpos($APPLICATION->GetCurPageParam(), "?")), array("ncc" => "y"));
 		$listAction[] = array(
 			"text" => Loc::getMessage("CT_BLL_EXPORT_IN_EXCEL"),
-			"href" => $url,
+			"onclick" => new \Bitrix\UI\Buttons\JsCode(
+				"BX.Lists['" . CUtil::JSEscape($arResult['JS_OBJECT']) . "'].startExport('excel');"
+			),
 		);
 	}
 }
@@ -162,10 +164,6 @@ if(!IsModuleInstalled("intranet"))
 
 	$APPLICATION->SetAdditionalCSS("/bitrix/js/lists/css/intranet-common.css");
 }
-else
-{
-	\Bitrix\Main\UI\Extension::load(['intranet.old-interface.intranet-common']);
-}
 
 if ($arResult["CAN_ADD_ELEMENT"] || $arResult["CAN_EDIT_SECTIONS"])
 {
@@ -212,6 +210,18 @@ if ($listAction)
 
 $sectionId = $arResult["SECTION_ID"] ?: 0;
 $socnetGroupId = $arParams["SOCNET_GROUP_ID"] ?: 0;
+$exportComponentParams = [
+	'IBLOCK_TYPE_ID' => $arParams['IBLOCK_TYPE_ID'],
+	'IBLOCK_ID' => $arResult['IBLOCK_ID'],
+	'SECTION_ID' => $arResult['SECTION_ID'],
+	'ANY_SECTION' => $arResult['ANY_SECTION'],
+	'LIST_URL' => $arParams['LIST_URL'],
+	'LIST_FILE_URL' => $arParams['LIST_FILE_URL'],
+	'SOCNET_GROUP_ID' => $arParams['SOCNET_GROUP_ID'],
+	'CACHE_TYPE' => $arParams['CACHE_TYPE'],
+	'CACHE_TIME' => $arParams['CACHE_TIME'],
+];
+$exportSignedParameters = ParameterSigner::signParameters('bitrix:lists.export.excel', $exportComponentParams);
 $rebuildedData = Option::get("lists", "rebuild_seachable_content");
 $rebuildedData = unserialize($rebuildedData, ['allowed_classes' => false]);
 $shouldStartRebuildSeachableContent = isset($rebuildedData[$arResult["IBLOCK_ID"]]);
@@ -346,7 +356,29 @@ $APPLICATION->IncludeComponent(
 			socnetGroupId: '<?=$socnetGroupId?>',
 			jsObject: '<?= $arResult['JS_OBJECT'] ?>',
 			gridId: '<?=$arResult["GRID_ID"]?>',
-			filterId: '<?=$arResult["FILTER_ID"]?>'
+			filterId: '<?=$arResult["FILTER_ID"]?>',
+			exportProcessParams: <?= Json::encode([
+				'excel' => [
+					'id' => 'lists_list_export_' . $arResult['GRID_ID'] . '_excel',
+					'controller' => 'lists.controller.export',
+					'queue' => [
+						[
+							'action' => 'dispatcher',
+						],
+					],
+					'params' => [
+						'SITE_ID' => SITE_ID,
+						'EXPORT_TYPE' => 'excel',
+						'COMPONENT_NAME' => 'bitrix:lists.export.excel',
+						'signedParameters' => $exportSignedParameters,
+					],
+					'messages' => [
+						'DialogTitle' => Loc::getMessage('CT_BLL_EXPORT_EXCEL_DIALOG_TITLE'),
+						'DialogSummary' => Loc::getMessage('CT_BLL_EXPORT_DIALOG_SUMMARY'),
+					],
+					'dialogMaxWidth' => 650,
+				],
+			]) ?>
 		});
 
 		BX.message({
@@ -363,8 +395,9 @@ $APPLICATION->IncludeComponent(
 			CT_BLL_DELETE_POPUP_ACCEPT_BUTTON: '<?=GetMessageJS("CT_BLL_DELETE_POPUP_ACCEPT_BUTTON")?>',
 			CT_BLL_DELETE_POPUP_CANCEL_BUTTON: '<?=GetMessageJS("CT_BLL_DELETE_POPUP_CANCEL_BUTTON")?>',
 			CT_BLL_SHOW_SECTION_GRID: '<?=GetMessageJS("CT_BLL_SHOW_SECTION_GRID")?>',
-			CT_BLL_HIDE_SECTION_GRID: '<?=GetMessageJS("CT_BLL_HIDE_SECTION_GRID")?>'
+			CT_BLL_HIDE_SECTION_GRID: '<?=GetMessageJS("CT_BLL_HIDE_SECTION_GRID")?>',
+			CT_BLL_EXPORT_EXCEL_DIALOG_TITLE: '<?=GetMessageJS("CT_BLL_EXPORT_EXCEL_DIALOG_TITLE")?>',
+			CT_BLL_EXPORT_DIALOG_SUMMARY: '<?=GetMessageJS("CT_BLL_EXPORT_DIALOG_SUMMARY")?>'
 		});
 	});
 </script>
-

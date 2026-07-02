@@ -1,1 +1,47 @@
-.booking-whatsapp-changes-sending-messages{background:linear-gradient(180deg,var(--ui-color-accent-soft-green-1) 20%,var( --ui-color-base-white-fixed) 50%)}.booking-whatsapp-csm__wrapper{display:flex;flex-direction:column;gap:35px;align-items:center}.booking-whatsapp-csm__content{display:grid;grid-template-columns:1fr 78px;grid-template-rows:auto auto;gap:10px}.booking-whatsapp-csm__icon{--booking-whatsapp-csm__icon-size:78px;grid-row:1/span 2;grid-column:2;display:block;width:var(--booking-whatsapp-csm__icon-size);height:var(--booking-whatsapp-csm__icon-size);margin-top:12px;background:url(image/whatsapp-popup-icon.png) no-repeat 50%;background-size:contain}.booking-whatsapp-csm__content_title{font-size:var(--ui-font-size-2xl);font-weight:var(--ui-font-weight-medium);line-height:var(--ui-font-line-height-3xs);letter-spacing:var(--ui-letter-spacing-s);color:var(--ui-color-base-0)}.booking-whatsapp-csm__content_description{font-size:var(--ui-font-size-lg);line-height:var(--ui-font-line-height-2xs);letter-spacing:var(--ui-letter-spacing-l);color:var(--ui-color-base-1)}
+.booking-whatsapp-changes-sending-messages {
+	background: linear-gradient(180deg, var(--ui-color-accent-soft-green-1) 20%, var( --ui-color-base-white-fixed) 50%);
+}
+
+.booking-whatsapp-csm__wrapper {
+	display: flex;
+	flex-direction: column;
+	gap: 35px;
+	align-items: center;
+}
+
+.booking-whatsapp-csm__content {
+	display: grid;
+	grid-template-columns: 1fr 78px;
+	grid-template-rows: auto auto;
+	gap: 10px;
+}
+
+.booking-whatsapp-csm__icon {
+	--booking-whatsapp-csm__icon-size: 78px;
+
+	grid-row: 1 / span 2;
+	grid-column: 2;
+	display: block;
+	width: var(--booking-whatsapp-csm__icon-size);
+	height: var(--booking-whatsapp-csm__icon-size);
+	margin-top: 12px;
+	background: url("images/image/whatsapp-popup-icon.png") no-repeat center center;
+	background-size: contain;
+}
+
+.booking-whatsapp-csm__content_title {
+	font-size: var(--ui-font-size-2xl);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-3xs);
+	letter-spacing: var(--ui-letter-spacing-s);
+	color: var(--ui-color-base-0);
+}
+
+.booking-whatsapp-csm__content_description {
+	font-size: var(--ui-font-size-lg);
+	line-height: var(--ui-font-line-height-2xs);
+	letter-spacing: var(--ui-letter-spacing-l);
+	color: var(--ui-color-base-1);
+}
+
+/*# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3RtcC84eTNGYnkiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IkFBQUEiLCJmaWxlIjoiLi4vLi4vLi4vdG1wLzh5M0ZieSIsInNvdXJjZXNDb250ZW50IjpbIi5ib29raW5nLXdoYXRzYXBwLWNoYW5nZXMtc2VuZGluZy1tZXNzYWdlcyB7XG5cdGJhY2tncm91bmQ6IGxpbmVhci1ncmFkaWVudCgxODBkZWcsIHZhcigtLXVpLWNvbG9yLWFjY2VudC1zb2Z0LWdyZWVuLTEpIDIwJSwgdmFyKCAtLXVpLWNvbG9yLWJhc2Utd2hpdGUtZml4ZWQpIDUwJSk7XG59XG5cbi5ib29raW5nLXdoYXRzYXBwLWNzbV9fd3JhcHBlciB7XG5cdGRpc3BsYXk6IGZsZXg7XG5cdGZsZXgtZGlyZWN0aW9uOiBjb2x1bW47XG5cdGdhcDogMzVweDtcblx0YWxpZ24taXRlbXM6IGNlbnRlcjtcbn1cblxuLmJvb2tpbmctd2hhdHNhcHAtY3NtX19jb250ZW50IHtcblx0ZGlzcGxheTogZ3JpZDtcblx0Z3JpZC10ZW1wbGF0ZS1jb2x1bW5zOiAxZnIgNzhweDtcblx0Z3JpZC10ZW1wbGF0ZS1yb3dzOiBhdXRvIGF1dG87XG5cdGdhcDogMTBweDtcbn1cblxuLmJvb2tpbmctd2hhdHNhcHAtY3NtX19pY29uIHtcblx0LS1ib29raW5nLXdoYXRzYXBwLWNzbV9faWNvbi1zaXplOiA3OHB4O1xuXG5cdGdyaWQtcm93OiAxIC8gc3BhbiAyO1xuXHRncmlkLWNvbHVtbjogMjtcblx0ZGlzcGxheTogYmxvY2s7XG5cdHdpZHRoOiB2YXIoLS1ib29raW5nLXdoYXRzYXBwLWNzbV9faWNvbi1zaXplKTtcblx0aGVpZ2h0OiB2YXIoLS1ib29raW5nLXdoYXRzYXBwLWNzbV9faWNvbi1zaXplKTtcblx0bWFyZ2luLXRvcDogMTJweDtcblx0YmFja2dyb3VuZDogdXJsKFwiaW1hZ2VzL2ltYWdlL3doYXRzYXBwLXBvcHVwLWljb24ucG5nXCIpIG5vLXJlcGVhdCBjZW50ZXIgY2VudGVyO1xuXHRiYWNrZ3JvdW5kLXNpemU6IGNvbnRhaW47XG59XG5cbi5ib29raW5nLXdoYXRzYXBwLWNzbV9fY29udGVudF90aXRsZSB7XG5cdGZvbnQtc2l6ZTogdmFyKC0tdWktZm9udC1zaXplLTJ4bCk7XG5cdGZvbnQtd2VpZ2h0OiB2YXIoLS11aS1mb250LXdlaWdodC1tZWRpdW0pO1xuXHRsaW5lLWhlaWdodDogdmFyKC0tdWktZm9udC1saW5lLWhlaWdodC0zeHMpO1xuXHRsZXR0ZXItc3BhY2luZzogdmFyKC0tdWktbGV0dGVyLXNwYWNpbmctcyk7XG5cdGNvbG9yOiB2YXIoLS11aS1jb2xvci1iYXNlLTApO1xufVxuXG4uYm9va2luZy13aGF0c2FwcC1jc21fX2NvbnRlbnRfZGVzY3JpcHRpb24ge1xuXHRmb250LXNpemU6IHZhcigtLXVpLWZvbnQtc2l6ZS1sZyk7XG5cdGxpbmUtaGVpZ2h0OiB2YXIoLS11aS1mb250LWxpbmUtaGVpZ2h0LTJ4cyk7XG5cdGxldHRlci1zcGFjaW5nOiB2YXIoLS11aS1sZXR0ZXItc3BhY2luZy1sKTtcblx0Y29sb3I6IHZhcigtLXVpLWNvbG9yLWJhc2UtMSk7XG59XG4iXX0= */

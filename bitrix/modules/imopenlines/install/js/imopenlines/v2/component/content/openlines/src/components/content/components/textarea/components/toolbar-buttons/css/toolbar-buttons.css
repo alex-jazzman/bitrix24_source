@@ -1,0 +1,21 @@
+.bx-imol-textarea-buttons {
+	display: flex;
+	margin-right: auto;
+	gap: 8px;
+}
+
+.bx-imol-textarea-buttons span {
+	display: flex;
+	min-width: 24px;
+}
+
+.bx-imol-textarea-icon {
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+	--ui-icon-set__icon-size: 24px;
+
+	cursor: pointer;
+}
+
+.bx-imol-textarea-icon.--active {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}

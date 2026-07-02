@@ -3,8 +3,6 @@
  * @global CUser $USER
  * @global CMain $APPLICATION
  * @global CDatabase $DB
- * @global string $by
- * @global string $order
  */
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
@@ -362,11 +360,11 @@ foreach($arTmpFiles as $k=>$ar)
 		$arSize[$BUCKET_ID.$regs[1]] += $ar['SIZE'];
 		if (empty($regs[3]))
 		{
-			if ($by == 'size')
+			if ($oSort->getField() == 'size')
 				$key = $arSize[$BUCKET_ID.$regs[1]];
-			elseif ($by == 'timestamp')
+			elseif ($oSort->getField() == 'timestamp')
 				$key = $ar['DATE'];
-			elseif ($by == 'location')
+			elseif ($oSort->getField() == 'location')
 				$key = $ar['PLACE'];
 			else // name
 				$key = $regs[1];
@@ -376,7 +374,7 @@ foreach($arTmpFiles as $k=>$ar)
 	}
 }
 
-if ($order == 'desc')
+if ($oSort->getOrder() == 'desc')
 	krsort($arFiles);
 else
 	ksort($arFiles);
@@ -394,10 +392,10 @@ $lAdmin->AddHeaders(array(
 ));
 
 $arWriteBucket = CBackup::GetBucketList($arFilter = array('READ_ONLY' => 'N'));
-while($f = $rsDirContent->NavNext(true, "f_"))
+while($f = $rsDirContent->Fetch())
 {
 	$BUCKET_ID = intval($f['BUCKET_ID']);
-	$row =& $lAdmin->AddRow($BUCKET_ID.'_'.$f['NAME'], $f);
+	$row = $lAdmin->AddRow($BUCKET_ID.'_'.$f['NAME'], $f);
 
 	$c = $arParts[$BUCKET_ID.$f['NAME']];
 	if ($c > 1)
@@ -564,7 +562,7 @@ require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_admin_af
 	}
 </script>
 <div id="dump_result_div"></div>
-<?
+<?php
 $lAdmin->DisplayList();
 
 echo BeginNote();

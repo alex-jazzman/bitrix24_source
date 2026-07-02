@@ -15,6 +15,7 @@ const ItemTextByChatType = {
 	[ChatType.generalChannel]: Loc.getMessage('IM_SEARCH_ITEM_OPEN_CHANNEL_TYPE_GROUP'),
 	[ChatType.channel]: Loc.getMessage('IM_SEARCH_ITEM_PRIVATE_CHANNEL_TYPE_GROUP'),
 	[ChatType.collab]: Loc.getMessage('IM_SEARCH_ITEM_COLLAB_TYPE'),
+	[ChatType.taskComments]: Loc.getMessage('IM_SEARCH_ITEM_TASK_COMMENTS_TYPE'),
 	default: Loc.getMessage('IM_SEARCH_ITEM_CHAT_TYPE_GROUP_V2'),
 };
 

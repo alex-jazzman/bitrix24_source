@@ -1,5 +1,7 @@
 import { Dom, Loc, Runtime, Tag } from 'main.core';
 import { type BaseCache, MemoryCache } from 'main.core.cache';
+import { DateTimeFormat } from 'main.date';
+import { createUtcDate } from './helpers/index.js';
 import {
 	TimePickerBase,
 	type TimePickerHour,
@@ -19,23 +21,29 @@ export class TimePickerWheel extends TimePickerBase
 	{
 		return this.#refs.remember('container', () => {
 			return Tag.render`
-				<div class="ui-time-picker">
+				<div class="ui-time-picker" role="none">
 					${
 						this.getDatePicker().getType() === 'time'
 							? null
 							: this.getHeaderContainer(this.getPrevBtn(), this.getHeaderTitle())
 					}
-					<div class="ui-time-picker-content">
+					<div class="ui-time-picker-content" role="none">
 						${this.getTimeHighlighter()}
-						<div 
+						<div
 							class="ui-time-picker-selector"
-							data-selector-id="hour" 
+							role="none"
+							data-selector-id="hour"
 							onmouseenter="${this.#handleSelectorMouseEnter.bind(this)}"
 						>
-							<div class="ui-time-picker-selector-title">${Loc.getMessage('UI_DATE_PICKER_HOURS')}</div>
-							<div class="ui-time-picker-viewport">
-								<div class="ui-time-picker-scroll-container" 
-									tabindex="0" 
+							<div 
+								class="ui-time-picker-selector-title" 
+								id="${this.getSelectorId('hours')}"
+							>${Loc.getMessage('UI_DATE_PICKER_HOURS')}</div>
+							<div class="ui-time-picker-viewport" role="none">
+								<div class="ui-time-picker-scroll-container"
+									tabindex="0"
+									role="listbox"
+									aria-labelledby="${this.getSelectorId('hours')}"
 									onscroll="${this.#selectorScrollHandler}"
 									onfocus="${this.#handleFocus.bind(this)}"
 								>
@@ -43,16 +51,22 @@ export class TimePickerWheel extends TimePickerBase
 								</div>
 							</div>
 						</div>
-						<div class="ui-time-picker-time-separator"></div>
-						<div 
+						<div class="ui-time-picker-time-separator" aria-hidden="true"></div>
+						<div
 							class="ui-time-picker-selector"
-							data-selector-id="minute" 
+							role="none"
+							data-selector-id="minute"
 							onmouseenter="${this.#handleSelectorMouseEnter.bind(this)}"
 						>
-							<div class="ui-time-picker-selector-title">${Loc.getMessage('UI_DATE_PICKER_MINUTES')}</div>
-							<div class="ui-time-picker-viewport">
-								<div class="ui-time-picker-scroll-container" 
-									tabindex="0" 
+							<div 
+								class="ui-time-picker-selector-title" 
+								id="${this.getSelectorId('minutes')}"
+							>${Loc.getMessage('UI_DATE_PICKER_MINUTES')}</div>
+							<div class="ui-time-picker-viewport" role="none">
+								<div class="ui-time-picker-scroll-container"
+									tabindex="0"
+									role="listbox"
+									aria-labelledby="${this.getSelectorId('minutes')}"
 									onscroll="${this.#selectorScrollHandler}"
 									onfocus="${this.#handleFocus.bind(this)}"
 								>
@@ -63,15 +77,21 @@ export class TimePickerWheel extends TimePickerBase
 						${
 							this.getDatePicker().isAmPmMode()
 								? Tag.render`
-									<div 
-										class="ui-time-picker-selector" 
+									<div
+										class="ui-time-picker-selector"
+										role="none"
 										onmouseenter="${this.#handleSelectorMouseEnter.bind(this)}"
 										data-selector-id="meridiem"
 									>
-										<div class="ui-time-picker-selector-title">AM/PM</div>
-										<div class="ui-time-picker-viewport">
-											<div class="ui-time-picker-scroll-container" 
-												tabindex="0" 
+										<div 
+											class="ui-time-picker-selector-title" 
+											id="${this.getSelectorId('meridiem')}"
+										>AM/PM</div>
+										<div class="ui-time-picker-viewport" role="none">
+											<div class="ui-time-picker-scroll-container"
+												tabindex="0"
+												role="listbox"
+												aria-labelledby="${this.getSelectorId('meridiem')}"
 												onscroll="${this.#selectorScrollHandler}"
 												onfocus="${this.#handleFocus.bind(this)}"
 											>
@@ -102,7 +122,8 @@ export class TimePickerWheel extends TimePickerBase
 		return this.#refs.remember('hours', () => {
 			return Tag.render`
 				<div 
-					class="ui-time-picker-list-container" 
+					class="ui-time-picker-list-container"
+					role="none"
 					onclick="${this.#handleItemClick.bind(this)}"
 				></div>
 			`;
@@ -133,10 +154,15 @@ export class TimePickerWheel extends TimePickerBase
 		});
 	}
 
+	getSelectorId(id: string): string
+	{
+		return `${this.getDatePicker().getId()}-time-selector${id}`;
+	}
+
 	getTimeHighlighter(): HTMLElement
 	{
 		return this.#refs.remember('time-highlighter', () => {
-			return Tag.render`<div class="ui-time-picker-time-highlighter"></div>`;
+			return Tag.render`<div class="ui-time-picker-time-highlighter" aria-hidden="true"></div>`;
 		});
 	}
 
@@ -240,10 +266,19 @@ export class TimePickerWheel extends TimePickerBase
 	#renderHour(hour: TimePickerHour): void
 	{
 		const div = this.#refs.remember(`hour-${hour.value}`, () => {
+			const label = DateTimeFormat.format(
+				DateTimeFormat.getFormat('SHORT_TIME_FORMAT'),
+				createUtcDate(1970, 0, 1, hour.value),
+				null,
+				true,
+			);
+
 			const hourContainer = Tag.render`
-				<div 
-					class="ui-time-picker-list-item" 
-					data-index="${hour.index}" 
+				<div
+					class="ui-time-picker-list-item"
+					role="option"
+					aria-label="${label}"
+					data-index="${hour.index}"
 					data-value="${hour.value}"
 				>${hour.name}</div>
 			`;
@@ -261,15 +296,26 @@ export class TimePickerWheel extends TimePickerBase
 		{
 			Dom.removeClass(div, '--selected');
 		}
+
+		div.setAttribute('aria-selected', hour.selected ? 'true' : 'false');
 	}
 
 	#renderMinute(minute: TimePickerMinute): void
 	{
 		const div = this.#refs.remember(`minute-${minute.value}`, () => {
+			const label = DateTimeFormat.format(
+				'idiff',
+				createUtcDate(1970, 0, 1, 0, 0),
+				createUtcDate(1970, 0, 1, 0, minute.value),
+				true,
+			);
+
 			const minuteContainer = Tag.render`
-				<div 
+				<div
 					class="ui-time-picker-list-item"
-					data-index="${minute.index}" 
+					role="option"
+					aria-label="${label}"
+					data-index="${minute.index}"
 					data-value="${minute.value}"
 				>${minute.name}</div>
 			`;
@@ -288,15 +334,19 @@ export class TimePickerWheel extends TimePickerBase
 			Dom.removeClass(div, '--selected');
 		}
 
+		div.setAttribute('aria-selected', minute.selected ? 'true' : 'false');
+
 		if (minute.hidden)
 		{
 			div.dataset.index = '';
 			Dom.addClass(div, '--hidden');
+			div.setAttribute('aria-hidden', 'true');
 		}
 		else
 		{
 			div.dataset.index = minute.index;
 			Dom.removeClass(div, '--hidden');
+			div.removeAttribute('aria-hidden');
 		}
 	}
 
@@ -304,9 +354,10 @@ export class TimePickerWheel extends TimePickerBase
 	{
 		const div = this.#refs.remember(`meridiem-${meridiem.value}`, () => {
 			const meridiemContainer = Tag.render`
-				<div 
+				<div
 					class="ui-time-picker-list-item"
-					data-index="${meridiem.index}" 
+					role="option"
+					data-index="${meridiem.index}"
 					data-value="${meridiem.value}"
 				>${meridiem.name}</div>
 			`;
@@ -324,6 +375,8 @@ export class TimePickerWheel extends TimePickerBase
 		{
 			Dom.removeClass(div, '--selected');
 		}
+
+		div.setAttribute('aria-selected', meridiem.selected ? 'true' : 'false');
 	}
 
 	#adjustScrollHeight(listContainer: HTMLElement): void
@@ -375,6 +428,16 @@ export class TimePickerWheel extends TimePickerBase
 	#handleTitleClick(event: MouseEvent): void
 	{
 		this.emit('onTitleClick');
+	}
+
+	getPrevBtnLabel(): string
+	{
+		return Loc.getMessage('UI_DATE_PICKER_BACK_TO_DAYS');
+	}
+
+	getNextBtnLabel(): string
+	{
+		return '';
 	}
 
 	#handleSelectorMouseEnter(event: MouseEvent): void

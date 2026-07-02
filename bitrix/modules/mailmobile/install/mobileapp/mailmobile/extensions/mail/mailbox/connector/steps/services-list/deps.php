@@ -3,7 +3,7 @@
 return [
 	'extensions' => [
 		'layout/ui/wizard/step',
-		'crm:salescenter/progress-bar-number',
+		'mail:mailbox/connector/progress-bar-number',
 		'loc',
 		'apptheme',
         'tokens',

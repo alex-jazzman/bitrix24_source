@@ -727,7 +727,11 @@ export class UserGroupsModel extends BuilderModel
 			members: new Map(),
 		};
 
-		if (store.state.selectedMember && store.state.selectedMember.member)
+		if (
+			store.state.selectedMember
+			&& store.state.selectedMember.id !== SELECTED_ALL_USER_ID
+			&& store.state.selectedMember.member
+		)
 		{
 			newGroup.members.set(store.state.selectedMember.member.id, store.state.selectedMember.member);
 		}

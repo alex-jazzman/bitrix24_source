@@ -59,6 +59,11 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 	class MentionManager
 	{
 		/**
+		 * @type {object|null}
+		 */
+		#addUserPopup = null;
+
+		/**
 		 * @param {DialogView} view
 		 * @param dialogId
 		 */
@@ -415,6 +420,8 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 		onChangeText(text, inputCharacters, cursorPosition)
 		{
 			logger.log('Mention.onChangeText', text, inputCharacters, cursorPosition);
+			this.#closeAddUserPopup();
+
 			if (this.isMentionProcessed)
 			{
 				this.onProcessedMentionChangeText(text, inputCharacters, cursorPosition);
@@ -627,6 +634,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 					}
 
 					case 'onHide': {
+						this.#addUserPopup = null;
 						if (!wasTappedUserAdd)
 						{
 							this.#onHideAddUserPopup(mentionId);
@@ -645,11 +653,20 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 				}
 			};
 
-			const addUserPopup = dialogs.createPopupMenu();
-			addUserPopup.setData(items, sections, addUserHandler);
-			addUserPopup.setTarget(actionViewId);
-			addUserPopup.show();
+			this.#addUserPopup = dialogs.createPopupMenu();
+			this.#addUserPopup.setData(items, sections, addUserHandler);
+			this.#addUserPopup.setTarget(actionViewId);
+			this.#addUserPopup.show();
 		};
+
+		#closeAddUserPopup()
+		{
+			if (this.#addUserPopup)
+			{
+				this.#addUserPopup.hide();
+				this.#addUserPopup = null;
+			}
+		}
 
 		/**
 		 * @param {string} mentionId
@@ -657,17 +674,19 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 		#onAddParticipant(mentionId)
 		{
 			AnalyticsService.getInstance().sendAddParticipantFromMentionPanel(this.dialogId);
+			this.provider.updateMembershipMap(mentionId, true);
+
 			if (DialogHelper.isDialogId(this.dialogId))
 			{
 				void this.#addParticipant(mentionId);
+				this.#onShowAddUserSuccess(mentionId);
+				this.onMentionItemSelected(this.prepareItemForDrawing(mentionId));
 			}
 			else
 			{
 				void this.#addChat(mentionId);
+				this.#onShowAddUserSuccess(mentionId);
 			}
-
-			this.provider.updateMembershipMap(mentionId, true);
-			this.#onShowAddUserSuccess(mentionId);
 		}
 
 		/**
@@ -1113,9 +1132,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 
 			return {
 				id: String(copilotData.id),
-				title: chatTitleParams.title,
-				titleColor: chatTitleParams.titleColor,
-				description: chatTitleParams.description,
+				...chatTitleParams,
 				avatar: avatarTitleParams,
 				testId: 'copilot',
 				actions: [],

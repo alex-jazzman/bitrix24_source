@@ -1,23 +1,23 @@
 import { Extension, Type } from 'main.core';
-import { Store } from 'ui.vue3.vuex';
+import { type Store } from 'ui.vue3.vuex';
+
 import { CallTokenManager } from 'call.lib.call-token-manager';
 
 import { Messenger } from 'im.public';
 import { Core } from 'im.v2.application.core';
 import { RestMethod, Layout } from 'im.v2.const';
-import { runAction, type RunActionError } from 'im.v2.lib.rest';
-import { MessageService } from 'im.v2.provider.service.message';
-import { UserManager } from 'im.v2.lib.user';
-import { LayoutManager } from 'im.v2.lib.layout';
-import { Utils } from 'im.v2.lib.utils';
 import { CopilotManager } from 'im.v2.lib.copilot';
-import { Notifier } from 'im.v2.lib.notifier';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
+import { LayoutManager } from 'im.v2.lib.layout';
+import { Notifier } from 'im.v2.lib.notifier';
+import { runAction, type RunActionError } from 'im.v2.lib.rest';
+import { UserManager } from 'im.v2.lib.user';
+import { Utils } from 'im.v2.lib.utils';
+import { type ImModelChat, type ImModelMessage } from 'im.v2.model';
+import { MessageService } from 'im.v2.provider.service.message';
 
+import { type ChatLoadRestResult, type CommentInfoRestResult } from '../types/chat';
 import { ChatDataExtractor } from './chat-data-extractor';
-
-import type { ImModelChat, ImModelMessage } from 'im.v2.model';
-import type { ChatLoadRestResult, CommentInfoRestResult } from '../types/chat';
 
 const { callInstalled } = Extension.getSettings('im.v2.lib.call');
 
@@ -265,6 +265,7 @@ export class LoadService
 			this.#store.dispatch('stickers/set', extractor.getStickers()),
 		]);
 
+		const builderPromise = this.#store.dispatch('messages/builder/set', extractor.getMessages());
 		const customPromises = this.updateChatCustomModels(restResult);
 
 		await Promise.all([
@@ -276,6 +277,7 @@ export class LoadService
 			collabPromise,
 			autoDeletePromise,
 			stickersPromise,
+			builderPromise,
 			...customPromises,
 		]);
 

@@ -1,5 +1,4 @@
 <?php
-
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_js.php");
 
@@ -15,12 +14,12 @@ if(!$USER->CanDoOperation('fileman_edit_menu_elements'))
 
 IncludeModuleLangFile(__FILE__);
 
-$site = CFileMan::__CheckSite($site);
+$site = CFileMan::__CheckSite($_REQUEST['site'] ?? '');
 $DOC_ROOT = CSite::GetSiteDocRoot($site);
 
 $io = CBXVirtualIo::GetInstance();
 
-$path = $io->CombinePath("/", $path);
+$path = $io->CombinePath("/", $_REQUEST['path'] ?? '');
 
 $arParsedPath = CFileMan::ParsePath(
 	[$site, $path],
@@ -80,14 +79,14 @@ if(isset($_REQUEST["action"]) && $_REQUEST["action"] == "delete" && check_bitrix
 	}
 ?>
 <script bxrunfirst="true">
-<?if($success):?>
-	top.BX.reload('<?=CUtil::JSEscape($back_url);?>', true);
-<?else:?>
+<?php if($success):?>
+	top.BX.reload('<?=CUtil::JSEscape($_REQUEST['back_url'] ?? '');?>', true);
+<?php else:?>
 	top.BX.closeWait();
 	alert('<?=CUtil::JSEscape(GetMessage("pub_menu_edit_err_del").' '.$menufilename);?>');
-<?endif;?>
+<?php endif;?>
 </script>
-<?
+<?php
 	die();
 }
 
@@ -106,11 +105,13 @@ if(!$USER->CanDoOperation('fileman_edit_existent_files') || !$USER->CanDoFileOpe
 }
 else
 {
-	if($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST['save'] == 'Y')
+	if ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST['save'] == 'Y')
 	{
-		if (!is_array($ids)) $ids = array();
-
-		$arValues = $_POST;
+		$ids = $_POST['ids'] ?? [];
+		if (!is_array($ids))
+		{
+			$ids = array();
+		}
 
 		$res = CFileMan::GetMenuArray($abs_path);
 
@@ -124,21 +125,21 @@ else
 			if (!isset($aMenuLinksTmp[$num-1]) && $only_edit)
 				continue;
 
-			if(${"del_".$num}=="Y" && !$only_edit)
+			if (isset($_POST["del_".$num]) && $_POST["del_".$num] == "Y" && !$only_edit)
 				continue;
 
-			$aMenuItem = Array($arValues["text_".$num], $arValues["link_".$num]);
+			$aMenuItem = Array($_POST["text_".$num] ?? '', $_POST["link_".$num] ?? '');
 
 			$arAdditionalParams = array(array(), array());
-			if (check_bitrix_sessid() && $arValues['additional_params_'.$num] && CheckSerializedData($arValues['additional_params_'.$num]))
+			if (check_bitrix_sessid() && !empty($_POST['additional_params_'.$num]) && CheckSerializedData($_POST['additional_params_'.$num]))
 			{
-				$arAdditionalParams = @unserialize($arValues['additional_params_'.$num], ['allowed_classes' => false]);
+				$arAdditionalParams = @unserialize($_POST['additional_params_'.$num], ['allowed_classes' => false]);
 			}
 
 			$aMenuItem = array_merge($aMenuItem, $arAdditionalParams);
 
 			$aMenuLinksTmp_[] = $aMenuItem;
-			$aMenuSort[] = intval(${"sort_".$num});
+			$aMenuSort[] = intval($_POST["sort_".$num] ?? 0);
 		}
 
 		$aMenuLinksTmp = $aMenuLinksTmp_;
@@ -208,9 +209,9 @@ else
 <script bxrunfirst="true">
 top.BX.WindowManager.Get().Close();
 top.BX.showWait();
-top.BX.reload('<?=CUtil::JSEscape($back_url);?>', true);
+top.BX.reload('<?=CUtil::JSEscape($_REQUEST['back_url'] ?? '');?>', true);
 </script>
-<?
+		<?php
 				die();
 			}
 		}
@@ -239,7 +240,7 @@ $obJSPopup->ShowTitlebar();
 ?>
 <script src="/bitrix/js/main/dd.js"></script>
 
-<?
+<?php
 // ======================== Show description ============================= //
 $obJSPopup->StartDescription('bx-core-edit-menu');
 ?>
@@ -248,13 +249,13 @@ $obJSPopup->StartDescription('bx-core-edit-menu');
 </p><p>
 <a href="/bitrix/admin/fileman_menu_edit.php?<?="lang=".urlencode($_GET["lang"])."&site=".urlencode($_GET["site"])."&back_url=".urlencode($_GET["back_url"])."&path=".urlencode($_GET["path"])."&name=".urlencode($_GET["name"])?>"><?=GetMessage('MENU_EDIT_OLD_STYLE')?></a>
 </p>
-<?
+<?php
 if($strWarning <> "")
 	$obJSPopup->ShowValidationError($strWarning);
 
 ?>
 
-<?
+<?php
 // ======================== Show content ============================= //
 $obJSPopup->StartContent();
 
@@ -273,8 +274,8 @@ if(!is_array($aMenuLinksTmp))
 	<thead>
 		<tr class="section">
 			<td width="0"></td>
-			<td width="50%"><b><?echo GetMessage("MENU_EDIT_NAME")?></b></td>
-			<td width="50%"><b><?echo GetMessage("MENU_EDIT_LINK")?></b></td>
+			<td width="50%"><b><?= GetMessage("MENU_EDIT_NAME")?></b></td>
+			<td width="50%"><b><?= GetMessage("MENU_EDIT_LINK")?></b></td>
 			<td width="0"></td>
 			<td width="0"></td>
 			<td width="0"></td>
@@ -283,7 +284,7 @@ if(!is_array($aMenuLinksTmp))
 	</thead>
 	</table>
 
-	<div id="bx_menu_layout" class="bx-menu-layout"><?
+	<div id="bx_menu_layout" class="bx-menu-layout"><?php
 	$itemcnt = 0;
 	for($i = 1, $n = count($aMenuLinksTmp); $i <= $n; $i++):
 		$itemcnt++;
@@ -291,7 +292,7 @@ if(!is_array($aMenuLinksTmp))
 	?><div class="bx-menu-placement" id="bx_menu_placement_<?=$i?>"><div class="bx-edit-menu-item" id="bx_menu_row_<?=$i?>"><table border="0" cellpadding="0" cellspacing="0" class="bx-width100 internal menu-table"><tbody>
 	<tr>
 
-		<td><input type="hidden" name="sort_<?=$i?>" value="<?echo $i*10?>" />
+		<td><input type="hidden" name="sort_<?=$i?>" value="<?= $i*10?>" />
 		<input type="hidden" name="ids[]" value="<?=$i?>" />
 		<input type="hidden" name="del_<?=$i?>" value="N" />
 		<input type="hidden" name="additional_params_<?=$i?>" value="<?=htmlspecialcharsex(serialize(array($aMenuLinksItem[2], $aMenuLinksItem[3], $aMenuLinksItem[4])))?>" />
@@ -299,15 +300,15 @@ if(!is_array($aMenuLinksTmp))
 		</td>
 		<td>
 			<div onmouseout="rowMouseOut(this)" onmouseover="rowMouseOver(this)" class="edit-field view-area" id="view_area_text_<?=$i?>" onclick="editArea('text_<?=$i?>')" title="<?=GetMessage('MENU_EDIT_TOOLTIP_TEXT_EDIT')?>"><?=$aMenuLinksItem[0] <> '' ? htmlspecialcharsbx($aMenuLinksItem[0]) : GetMessage('MENU_EDIT_JS_NONAME')?></div>
-			<div class="edit-area" id="edit_area_text_<?=$i?>" style="display: none;"><input type="text" style="width: 220px;" name="text_<?echo $i?>" value="<?=htmlspecialcharsbx($aMenuLinksItem[0])?>" onblur="viewArea('text_<?=$i?>')" />
+			<div class="edit-area" id="edit_area_text_<?=$i?>" style="display: none;"><input type="text" class="menu-edit-input" name="text_<?= $i?>" value="<?=htmlspecialcharsbx($aMenuLinksItem[0])?>" onblur="viewArea('text_<?=$i?>')" />
 </div>
 		</td>
 		<td>
 			<div onmouseout="rowMouseOut(this)" onmouseover="rowMouseOver(this)" class="edit-field view-area" id="view_area_link_<?=$i?>" onclick="editArea('link_<?=$i?>')" title="<?=GetMessage('MENU_EDIT_TOOLTIP_LINK_EDIT')?>"><?=$aMenuLinksItem[1] <> '' ? htmlspecialcharsbx($aMenuLinksItem[1]) : GetMessage('MENU_EDIT_JS_NONAME')?></div>
-			<div class="edit-area" id="edit_area_link_<?=$i?>" style="display: none;"><input type="text" style="width: 220px;" name="link_<?echo $i?>" value="<?=htmlspecialcharsbx($aMenuLinksItem[1])?>" onblur="viewArea('link_<?=$i?>')" /></div>
+			<div class="edit-area" id="edit_area_link_<?=$i?>" style="display: none;"><input type="text" class="menu-edit-input" name="link_<?= $i?>" value="<?=htmlspecialcharsbx($aMenuLinksItem[1])?>" onblur="viewArea('link_<?=$i?>')" /></div>
 		</td>
 		<td>
-<?
+<?php
 CAdminFileDialog::ShowScript(
 	Array
 	(
@@ -330,10 +331,10 @@ CAdminFileDialog::ShowScript(
 		<td><span onclick="menuMoveDown(<?=$i?>)" class="rowcontrol down" style="visibility: <?=($i == count($aMenuLinksTmp) ? 'hidden' : 'visible')?>" title="<?=GetMessage('MENU_EDIT_TOOLTIP_DOWN')?>"></span></td>
 		<td><span onclick="menuDelete(<?=$i?>)" class="rowcontrol delete" title="<?=GetMessage('MENU_EDIT_TOOLTIP_DELETE')?>"></span></td>
 	</tr>
-	</tbody></table></div></div><?endfor?>
+	</tbody></table></div></div><?php endfor?>
 </div>
-	<?if(!$only_edit):?><br /><input type="button" onClick="menuAdd()" value="<?echo GetMessage("MENU_EDIT_ADD_ITEM")?>" /><?endif;?>
-	<input type="hidden" name="itemcnt" value="<?echo $itemcnt?>" />
+	<?php if(!$only_edit):?><br /><input type="button" onClick="menuAdd()" value="<?= GetMessage("MENU_EDIT_ADD_ITEM")?>" /><?php endif;?>
+	<input type="hidden" name="itemcnt" value="<?= $itemcnt?>" />
 <script>
 var currentLink = -1;
 var currentRow = null;
@@ -347,7 +348,7 @@ var jsMenuMess = {
 
 function setLink(filename, path)
 {
-	<?echo $obJSPopup->jsPopup?>.GetForm()['link_' + currentLink].value = ((path == '' || path == '/') ? '/' : path + '/') + filename;
+	<?= $obJSPopup->jsPopup?>.GetForm()['link_' + currentLink].value = ((path == '' || path == '/') ? '/' : path + '/') + filename;
 	editArea('link_' + currentLink, true);
 	viewArea('link_' + currentLink, true);
 }
@@ -424,7 +425,7 @@ function menuDelete(i)
 	if (GLOBAL_bDisableActions)
 		return;
 
-	var obInput = <?echo $obJSPopup->jsPopup?>.GetForm()['del_' + i];
+	var obInput = <?= $obJSPopup->jsPopup?>.GetForm()['del_' + i];
 	var obPlacement = BX('bx_menu_row_' + i).parentNode;
 
 	obInput.value = 'Y';
@@ -437,7 +438,7 @@ function menuDelete(i)
 
 function menuAdd()
 {
-	var obCounter = <?echo $obJSPopup->jsPopup?>.GetForm().itemcnt;
+	var obCounter = <?= $obJSPopup->jsPopup?>.GetForm().itemcnt;
 	var nums = parseInt(obCounter.value);
 	obCounter.value = ++nums;
 
@@ -448,7 +449,7 @@ function menuAdd()
 	var obRow = BX.create('DIV', {props: {className: 'bx-edit-menu-item', id: 'bx_menu_row_' + nums}});
 	obPlacement.appendChild(obRow);
 
-	<?
+	<?php
 	ob_start();
 	CAdminFileDialog::ShowScript(
 		Array
@@ -530,7 +531,7 @@ function getAreaHTML(area, value, title)
 	if (null === value) value = '';
 
 	return '<div onmouseout="rowMouseOut(this)" onmouseover="rowMouseOver(this)" class="edit-field view-area" ' + /*style="width: 220px; padding: 2px; display: block; border: 1px solid white; cursor: text; -moz-box-sizing: border-box; background-position: right center; background-repeat: no-repeat;"*/' id="view_area_' + area + '" onclick="editArea(\'' + area + '\')" title="' + title + '">' + (value ? value : jsMenuMess.noname) + '</div>' +
-			'<div class="edit-area" id="edit_area_' + area + '" style="display: none;"><input type="text" style="width: 220px;" name="' + area + '" value="' + value + '" onblur="viewArea(\'' + area + '\')" /></div>';
+			'<div class="edit-area" id="edit_area_' + area + '" style="display: none;"><input type="text" class="menu-edit-input" name="' + area + '" value="' + value + '" onblur="viewArea(\'' + area + '\')" /></div>';
 }
 
 var currentEditingRow = null;
@@ -677,7 +678,7 @@ BX.ready(function ()
 {
 	jsDD.Reset();
 
-<?
+<?php
 for ($i = 1, $n = count($aMenuLinksTmp); $i <= $n; $i++):
 ?>
 	jsDD.registerDest(BX('bx_menu_placement_<?=$i?>'));
@@ -687,7 +688,7 @@ for ($i = 1, $n = count($aMenuLinksTmp); $i <= $n; $i++):
 	obEl.onbxdragstop = BXDD_DragStop;
 	obEl.onbxdraghover = BXDD_DragHover;
 	jsDD.registerObject(obEl);
-<?
+<?php
 endfor;
 ?>
 	jsDD.registerContainer(BX.WindowManager.Get().GetContent());
@@ -696,9 +697,8 @@ endfor;
 	l.style.MozUserSelect = 'none';
 });
 </script>
-<?
+<?php
 // ======================== Show buttons ============================= //
 $obJSPopup->ShowStandardButtons();
-?>
-<?
+
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin_js.php");

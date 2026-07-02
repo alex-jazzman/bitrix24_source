@@ -98,7 +98,7 @@ if($rss)
 			<div class="gdrssitemtitle">&raquo; <a href="javascript:void(0)" onclick="ShowHide<?=$idAttr?>('z<?=$cnt.md5($item["TITLE"])?><?=$idAttr?>')"><?=htmlspecialcharsEx($item["TITLE"])?></a></div>
 			<div class="gdrssitemdetail" id="z<?=$cnt.md5($item["TITLE"])?><?=$idAttr?>" style="display:none">
 				<div class="gdrssitemdate"><?=htmlspecialcharsEx($item["PUBDATE"])?></div>
-				<div class="gdrssitemdesc"><?=$item["DESCRIPTION"]?> <?php if(isset($arGadgetParams["SHOW_URL"]) && $arGadgetParams["SHOW_URL"]=="Y" && preg_match("'^(http://|https://|ftp://)'i", $item["LINK"])):?><a href="<?=htmlspecialcharsbx($item["LINK"])?>"><?echo GetMessage("GD_RSS_READER_RSS_MORE")?></a><?endif?></div>
+				<div class="gdrssitemdesc"><?=$item["DESCRIPTION"]?> <?php if(isset($arGadgetParams["SHOW_URL"]) && $arGadgetParams["SHOW_URL"]=="Y" && preg_match("'^(http://|https://|ftp://)'i", $item["LINK"])):?><a href="<?=htmlspecialcharsbx($item["LINK"])?>"><?= GetMessage("GD_RSS_READER_RSS_MORE")?></a><?php endif?></div>
 			</div>
 		</div><?php
 	}

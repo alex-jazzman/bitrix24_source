@@ -51,3 +51,12 @@
 	background-repeat: no-repeat;
 	background-position: center;
 }
+
+.bx-im-messenger__scope .--hidden-scroll {
+	/* @chef-ignore */
+	scrollbar-width: none;
+}
+
+.bx-im-messenger__scope .--hidden-scroll::-webkit-scrollbar {
+	display: none;
+}

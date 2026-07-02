@@ -9,9 +9,9 @@ return [
 		'./dist/launch.bundle.js',
 	],
 	'rel' => [
-		'main.core',
 		'im.v2.lib.logger',
 		'im.v2.lib.utils',
+		'main.core',
 	],
 	'skip_core' => false,
 ];

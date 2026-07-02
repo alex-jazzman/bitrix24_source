@@ -17,6 +17,7 @@ import { CallAssessmentSelector } from './selector/call-assessment-selector';
 import { CategorySelector } from './selector/category-selector';
 import { StageSelector } from './selector/stage-selector';
 import { UserSelector } from './selector/user-selector';
+import { InlinePlaceholderSelector } from './selector/inline-placeholder-selector';
 
 export const Segment = {
 	components: {
@@ -25,6 +26,7 @@ export const Segment = {
 		AiSwitcherComponent,
 		AssignmentTypeSelector,
 		TextEditorWrapperComponent,
+		InlinePlaceholderSelector,
 		CallAssessmentSelector,
 		CategorySelector,
 		StageSelector,
@@ -86,6 +88,11 @@ export const Segment = {
 			currentEntityTitlePattern: segment.entityTitlePattern ?? null,
 			currentCallAssessmentId: segment.callAssessmentId ?? null,
 			currentIsAiEnabled: isAiEnabled,
+			minimumDaysAfterLastClosedEntity: segment.minimumDaysAfterLastClosedEntity,
+			placeholderSelectorTypes: [
+				BX.CrmEntityType.enumeration.contact,
+				BX.CrmEntityType.enumeration.company,
+			],
 		};
 	},
 
@@ -138,6 +145,7 @@ export const Segment = {
 				assignmentTypeId: this.assignmentTypeId,
 				callAssessmentId: this.currentCallAssessmentId,
 				isAiEnabled: this.currentIsAiEnabled,
+				minimumDaysAfterLastClosedEntity: Number(this.minimumDaysAfterLastClosedEntity),
 			};
 
 			if (!this.currentIsAiEnabled)
@@ -223,6 +231,24 @@ export const Segment = {
 				return false;
 			}
 
+			if (
+				!Type.isInteger(Number(this.minimumDaysAfterLastClosedEntity))
+				|| this.minimumDaysAfterLastClosedEntity < 0
+			)
+			{
+				UI.Notification.Center.notify({
+					content: this.$Bitrix.Loc.getMessage(
+						'CRM_REPEAT_SALE_SEGMENT_VALIDATE_MIN_DAYS_AFTER_LAST_CLOSED_ENTITY_ERROR',
+						{
+							'#MIN_DAYS#': 0,
+						},
+					),
+					autoHideDelay: 6000,
+				});
+
+				return false;
+			}
+
 			return true;
 		},
 		closeSlider(): void
@@ -271,6 +297,10 @@ export const Segment = {
 		onDeselectAssignmentUser(user: Object): void
 		{
 			this.assignmentUserIds.delete(user.id);
+		},
+		onTitlePatternChange(value: string): void
+		{
+			this.currentEntityTitlePattern = value;
 		},
 		setCurrentCallAssessmentId(id: number): void
 		{
@@ -384,6 +414,8 @@ export const Segment = {
 		},
 		messages(): Object
 		{
+			const minimumDaysAfterLastClosedEntityUnitLabel = this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_MANUAL_MIN_DAYS_AFTER_LAST_CLOSED_ENTITY_UNIT_LABEL');
+
 			return {
 				textAreaTitle: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_MANUAL_TEXTAREA_TITLE'),
 				dealHelp: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_DEAL_HELP'),
@@ -393,6 +425,8 @@ export const Segment = {
 				dealTitlePattern: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_DEAL_NAME_PATTERN_TITLE'),
 				assessmentTitle: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_CALL_ASSESSMENT_TITLE'),
 				assessmentDescription: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_CALL_ASSESSMENT_DESCRIPTION'),
+				minimumDaysAfterLastClosedEntityTitle: this.getMessageByCode('CRM_REPEAT_SALE_SEGMENT_MANUAL_MIN_DAYS_AFTER_LAST_CLOSED_ENTITY_TITLE'),
+				minimumDaysAfterLastClosedEntityUnitLabel: minimumDaysAfterLastClosedEntityUnitLabel.split(/(#INPUT#)/),
 			};
 		},
 		assignmentTypes(): Array
@@ -556,12 +590,40 @@ export const Segment = {
 								<div class="crm-repeat-sale__segment-field-title">
 									{{messages.dealTitlePattern}}
 								</div>
-								<input
-									class="ui-ctl-element"
-									type="text"
-									v-model="currentEntityTitlePattern"
-									:readonly="readOnly"
-								>
+								<InlinePlaceholderSelector
+									@titlePatternChanged="onTitlePatternChange"
+									:entity-type-ids="placeholderSelectorTypes"
+									:is-multiple-selector="true"
+									:value="currentEntityTitlePattern"
+									:mode="'input'"
+									:read-only="readOnly"
+								/>
+							</div>
+						</div>
+
+						<div class="crm-repeat-sale__segment-fields-row">
+							<div class="crm-repeat-sale__segment-field">
+								<div class="crm-repeat-sale__segment-field-title">
+									{{messages.minimumDaysAfterLastClosedEntityTitle}}
+								</div>
+								<div class="crm-repeat-sale__segment-fields-input-flex-wrapper">
+									<template v-for="(item, index) in messages.minimumDaysAfterLastClosedEntityUnitLabel" :key="index">
+										<input
+											v-if="item === '#INPUT#'"
+											class="ui-ctl-element ui-ctl-w10"
+											type="text"
+											maxlength="3"
+											v-model="minimumDaysAfterLastClosedEntity"
+											:readonly="readOnly"
+										/>
+										<p
+											v-else-if="item.length > 0"
+											class="crm-repeat-sale__segment-fields-input-unit-label ui-typography-text-md"
+										>
+											{{ item }}
+										</p>
+									</template>
+								</div>
 							</div>
 						</div>
 					</section>

@@ -3,6 +3,9 @@ import {RequisiteAutocompleteField} from "crm.entity-editor.field.requisite.auto
 import {EventEmitter} from "main.core.events";
 import {EntityEditorRequisiteTooltip} from './requisite-tooltip';
 import {PresetMenu} from './preset-menu';
+import 'crm.entity-editor';
+import 'ui.entity-editor';
+import 'ui.dropdown';
 
 export class EntityEditorRequisiteField extends BX.Crm.EntityEditorField
 {

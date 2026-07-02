@@ -1,0 +1,3 @@
+<?php
+$MESS["NOTE_IMPORT_ERROR_ATTACHMENT_DOWNLOAD_FAILED"] = "Could not download file.";
+$MESS["NOTE_IMPORT_ERROR_ATTACHMENT_SAVE_FAILED"] = "Could not save file.";

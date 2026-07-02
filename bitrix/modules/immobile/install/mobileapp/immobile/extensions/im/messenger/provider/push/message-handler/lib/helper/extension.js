@@ -186,8 +186,47 @@ jn.define('im/messenger/provider/push/message-handler/lib/helper', (require, exp
 			return !Type.isNil(this.#event.params.lines);
 		}
 
+		/**
+		 * @return {number}
+		 */
+		getParentChatId()
+		{
+			return this.getChat()?.parent_chat_id ?? 0;
+		}
+
+		/**
+		 * @return {number}
+		 */
+		getParentMessageId()
+		{
+			return this.getChat()?.parent_message_id ?? 0;
+		}
+
+		/**
+		 * @return {RecentConfigSections}
+		 */
+		getRecentConfigSections()
+		{
+			return this.#event.params.recentConfig?.sections ?? [];
+		}
+
+		/**
+		 * @deprecated Use getRecentConfigSections() instead
+		 * @return {RecentConfigSections}
+		 */
 		getRecentSections()
 		{
+			const sections = this.getRecentConfigSections();
+			if (sections.length > 0)
+			{
+				return sections;
+			}
+
+			if (this.getParentChatId() > 0)
+			{
+				return [];
+			}
+
 			if (this.isLines())
 			{
 				return [RecentTab.openlines];

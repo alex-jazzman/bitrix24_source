@@ -8,10 +8,10 @@ return [
 	'css' => 'dist/zoom.bundle.css',
 	'js' => 'dist/zoom.bundle.js',
 	'rel' => [
-		'main.core',
-		'main.core.events',
 		'calendar.planner',
 		'calendar.util',
+		'main.core',
+		'main.core.events',
 	],
 	'skip_core' => false,
 ];

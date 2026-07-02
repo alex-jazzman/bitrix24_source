@@ -1,4 +1,4 @@
-import { TourInterface } from './tour.js';
+import { type TourInterface } from './tour.js';
 
 export default class Queue
 {

@@ -56,6 +56,28 @@
 	border-radius: var(--ui-border-radius-sm);
 }
 
+.popup-window.--bitrixgpt-redesign .ai__roles-dialog_group-item:hover {
+	--ui-icon-set__icon-color: rgba(var(--ui-color-base-90-rgb), 0.3);
+	color: var(--ui-color-text-primary);
+	background-color: rgba(var(--ui-color-base-solid-rgb), 0.03);
+}
+
+.popup-window.--bitrixgpt-redesign .ai__roles-dialog_group-item:focus,
+.popup-window.--bitrixgpt-redesign .ai__roles-dialog_group-item:active {
+	--ui-icon-set__icon-color: rgba(var(--ui-color-base-90-rgb), 0.3);
+	color: var(--ui-color-text-primary);
+	background-color: rgba(var(--ui-color-base-solid-rgb), 0.07);
+}
+
+.popup-window.--bitrixgpt-redesign .ai__roles-dialog_group-item.--selected,
+.popup-window.--bitrixgpt-redesign .ai__roles-dialog_group-item.--selected:hover,
+.popup-window.--bitrixgpt-redesign .ai__roles-dialog_group-item.--selected:focus,
+.popup-window.--bitrixgpt-redesign .ai__roles-dialog_group-item.--selected:active {
+	--ui-icon-set__icon-color: var(--ui-color-on-primary);
+	color: var(--ui-color-on-primary);
+	background: var(--ui-color-accent-main-primary, #0075FF);
+}
+
 .ai__roles-dialog_group-item-title-wrapper {
 	display: flex;
 	flex-direction: row;

@@ -1,6 +1,12 @@
 .b24-form-field-agreement .b24-form-control-container {
 	line-height: 11px;
 }
+
+.b24-form-field-agreement input[type="checkbox"]:focus-visible {
+	outline: 1px solid var(--b24-primary-color);
+	outline-offset: 2px;
+}
+
 .b24-form-field-agreement .b24-form-control-desc {
 	font-size: 11px;
 	opacity: 0.5;

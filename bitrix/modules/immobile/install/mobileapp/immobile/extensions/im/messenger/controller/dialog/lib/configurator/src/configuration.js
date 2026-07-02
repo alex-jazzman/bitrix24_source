@@ -62,7 +62,31 @@ jn.define('im/messenger/controller/dialog/lib/configurator/configuration', (requ
 			contextMenu: {
 				controller: {
 					extensionName: 'im:messenger/controller/dialog/lib/message-menu',
-					className: 'MessageMenu',
+					className: 'DialogMessageContextMenu',
+				},
+			},
+		},
+	};
+
+	const copilotDialogConfig = {
+		...baseDialogConfig,
+		message: {
+			contextMenu: {
+				controller: {
+					extensionName: 'im:messenger/controller/dialog/lib/message-menu',
+					className: 'CopilotMessageContextMenu',
+				},
+			},
+		},
+	};
+
+	const aiAssistantDialogConfig = {
+		...baseDialogConfig,
+		message: {
+			contextMenu: {
+				controller: {
+					extensionName: 'im:messenger/controller/dialog/lib/message-menu',
+					className: 'AiAssistantMessageContextMenu',
 				},
 			},
 		},
@@ -83,5 +107,7 @@ jn.define('im/messenger/controller/dialog/lib/configurator/configuration', (requ
 		defaultConfig,
 		baseDialogConfig,
 		channelCommentDialogConfig,
+		copilotDialogConfig,
+		aiAssistantDialogConfig,
 	};
 });

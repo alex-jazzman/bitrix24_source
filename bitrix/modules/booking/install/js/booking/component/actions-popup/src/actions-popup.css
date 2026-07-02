@@ -176,6 +176,7 @@
 .booking__actions-popup-info_element-text {
 	flex-grow: 1;
 	max-height: 2rem;
+	/* @chef-ignore */
 	text-wrap: auto;
 	white-space: break-spaces;
 	text-overflow: ellipsis;

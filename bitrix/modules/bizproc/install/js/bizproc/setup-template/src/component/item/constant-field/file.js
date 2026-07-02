@@ -1,9 +1,6 @@
 import { Type } from 'main.core';
-import { TileWidgetComponent } from 'ui.uploader.tile-widget';
-import { UploaderEvent, UploaderFile, Uploader } from 'ui.uploader.core';
-
-import type { TileWidgetOptions } from 'ui.uploader.tile-widget';
-import type { UploaderOptions } from 'ui.uploader.core';
+import { TileWidgetComponent, type TileWidgetOptions } from 'ui.uploader.tile-widget';
+import { UploaderEvent, type UploaderFile, type Uploader, type UploaderOptions } from 'ui.uploader.core';
 
 // @vue/component
 export const ConstantFile = {

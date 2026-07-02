@@ -290,7 +290,7 @@
 }
 
 .sign-placeholders-tab--active {
-	background: var(--ui-color-g-plastic-bluish-bg);
+	background: var(--ui-color-design-selection-bg);
 	color: var(--ui-color-g-content-blue-2);
 }
 

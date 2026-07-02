@@ -1,3 +1,19 @@
 <?php
+$MESS["UI_DATE_PICKER_BACK_TO_DAYS"] = "Back to date picker";
+$MESS["UI_DATE_PICKER_DIALOG_LABEL"] = "Calendar";
 $MESS["UI_DATE_PICKER_HOURS"] = "Hours";
 $MESS["UI_DATE_PICKER_MINUTES"] = "Minutes";
+$MESS["UI_DATE_PICKER_MONTH_VIEW_LABEL"] = "Select month";
+$MESS["UI_DATE_PICKER_NEXT_DECADE"] = "Next 12 years";
+$MESS["UI_DATE_PICKER_NEXT_MONTH"] = "Next month";
+$MESS["UI_DATE_PICKER_NEXT_YEAR"] = "Next year";
+$MESS["UI_DATE_PICKER_PRESETS_LABEL"] = "Date picker";
+$MESS["UI_DATE_PICKER_PREV_DECADE"] = "Previous 12 years";
+$MESS["UI_DATE_PICKER_PREV_MONTH"] = "Previous month";
+$MESS["UI_DATE_PICKER_PREV_YEAR"] = "Previous year";
+$MESS["UI_DATE_PICKER_RANGE_TIME"] = "Time range";
+$MESS["UI_DATE_PICKER_RANGE_TIME_END"] = "End time";
+$MESS["UI_DATE_PICKER_RANGE_TIME_START"] = "Start time";
+$MESS["UI_DATE_PICKER_TIME_LABEL"] = "Select time";
+$MESS["UI_DATE_PICKER_TIME_VIEW_LABEL"] = "Select time";
+$MESS["UI_DATE_PICKER_YEAR_VIEW_LABEL"] = "Select year";

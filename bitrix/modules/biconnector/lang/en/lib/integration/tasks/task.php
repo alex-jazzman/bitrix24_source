@@ -80,3 +80,4 @@ $MESS["TASK_FIELD_TIME_SPENT_IN_LOGS"] = "Task time as per log";
 $MESS["TASK_FIELD_TIME_SPENT_IN_LOGS_FULL"] = "The time the task took to complete. The value is derived from the log events, seconds";
 $MESS["TASK_FIELD_TITLE"] = "Name";
 $MESS["TASK_TABLE"] = "Tasks";
+$MESS["TASK_TABLE_DESCRIPTION_FULL"] = "Includes basic task information and parameters like names, statuses, deadlines, assignees, participants, and observers.";

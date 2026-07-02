@@ -1,8 +1,9 @@
-<?
+<?php
+
 /**
- * @global \CUser $USER
- * @global \CMain $APPLICATION
- * @global \CDatabase $DB
+ * @global CUser $USER
+ * @global CMain $APPLICATION
+ * @global CDatabase $DB
  */
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
@@ -30,7 +31,7 @@ $bInitVars = false;
 $APPLICATION->SetTitle($ID > 0 ? GetMessage("SMILE_EDIT_RECORD") : GetMessage("SMILE_NEW_RECORD"));
 
 $fileName = '';
-if ($_SERVER['REQUEST_METHOD'] == "POST" && (!empty($_POST['save']) || !empty($_POST['apply']) || $save_and_add <> ''))
+if ($_SERVER['REQUEST_METHOD'] == "POST" && (!empty($_POST['save']) || !empty($_POST['apply']) || !empty($_POST['save_and_add'])))
 {
 	if (isset($_FILES["IMAGE"]["name"]))
 		$fileName = RemoveScriptExtension($_FILES["IMAGE"]["name"]);
@@ -152,10 +153,10 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && (!empty($_POST['save']) || !empty($_
 				}
 			}
 			LocalRedirect(!empty($_POST['save']) || !empty($_POST['apply'])?
-				"smile_edit.php?lang=".LANG."&ID=".$ID."&".GetFilterParams("filter_", false) :
-				($save_and_add <> '' ?
-					"smile_edit.php?lang=".LANG."&TYPE=".($arSmile['TYPE'] == CSmile::TYPE_ICON? CSmile::TYPE_ICON: CSmile::TYPE_SMILE)."&SET_ID=".intval($_REQUEST['SET_ID'])."&".GetFilterParams("filter_", false) :
-					"smile.php?SET_ID=".intval($_REQUEST['SET_ID'])."&lang=".LANG."&".GetFilterParams("filter_", false))
+				"smile_edit.php?lang=".LANGUAGE_ID."&ID=".$ID."&".GetFilterParams("filter_", false) :
+				(!empty($_POST['save_and_add']) ?
+					"smile_edit.php?lang=".LANGUAGE_ID."&TYPE=".($arSmile['TYPE'] == CSmile::TYPE_ICON? CSmile::TYPE_ICON: CSmile::TYPE_SMILE)."&SET_ID=".intval($_REQUEST['SET_ID'])."&".GetFilterParams("filter_", false) :
+					"smile.php?SET_ID=".intval($_REQUEST['SET_ID'])."&lang=".LANGUAGE_ID."&".GetFilterParams("filter_", false))
 			);
 		}
 	}
@@ -212,7 +213,7 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_aft
 $aMenu = array(
 	array(
 		"TEXT" => GetMessage("SMILE_BTN_BACK"),
-		"LINK" => "/bitrix/admin/smile.php?SET_ID=".$arSmile['SET_ID']."&lang=".LANG."&".GetFilterParams("filter_", false),
+		"LINK" => "/bitrix/admin/smile.php?SET_ID=".$arSmile['SET_ID']."&lang=".LANGUAGE_ID."&".GetFilterParams("filter_", false),
 		"ICON" => "btn_list",
 	)
 );
@@ -223,13 +224,13 @@ if ($ID > 0)
 
 	$aMenu[] = array(
 		"TEXT" => GetMessage("SMILE_BTN_NEW"),
-		"LINK" => "/bitrix/admin/smile_edit.php?lang=".LANG."&SET_ID=".$arSmile['SET_ID']."&".GetFilterParams("filter_", false),
+		"LINK" => "/bitrix/admin/smile_edit.php?lang=".LANGUAGE_ID."&SET_ID=".$arSmile['SET_ID']."&".GetFilterParams("filter_", false),
 		"ICON" => "btn_new",
 	);
 
 	$aMenu[] = array(
 		"TEXT" => GetMessage("SMILE_BTN_DELETE"),
-		"LINK" => "javascript:if(confirm('".GetMessage("SMILE_BTN_DELETE_CONFIRM")."')) window.location='/bitrix/admin/smile.php?SET_ID=".$arSmile['SET_ID']."&action=delete&ID[]=".$ID."&lang=".LANG."&".bitrix_sessid_get()."#tb';",
+		"LINK" => "javascript:if(confirm('".GetMessage("SMILE_BTN_DELETE_CONFIRM")."')) window.location='/bitrix/admin/smile.php?SET_ID=".$arSmile['SET_ID']."&action=delete&ID[]=".$ID."&lang=".LANGUAGE_ID."&".bitrix_sessid_get()."#tb';",
 		"ICON" => "btn_delete",
 	);
 }
@@ -242,10 +243,10 @@ if (isset($message) && $message)
 ?>
 	<form method="POST" action="<?=$APPLICATION->GetCurPageParam()?>" name="smile_edit" enctype="multipart/form-data">
 	<input type="hidden" name="Update" value="Y" />
-	<input type="hidden" name="lang" value="<?=LANG?>" />
+	<input type="hidden" name="lang" value="<?=LANGUAGE_ID?>" />
 	<input type="hidden" name="ID" value="<?=$ID?>" />
 	<?=bitrix_sessid_post()?>
-<?
+<?php
 	$aTabs = array(
 		array("DIV" => "edit1", "TAB" => GetMessage("SMILE_TAB_SMILE"), "ICON" => "smile", "TITLE" => GetMessage("SMILE_TAB_SMILE_DESCR"))
 	);
@@ -267,9 +268,9 @@ $tabControl->BeginNextTab();
 		<td><?=GetMessage("SMILE_SET_ID")?>:</td>
 		<td>
 			<select name="SET_ID">
-			<?foreach (CSmileSet::getListForForm($arSmile['PARENT_ID']) as $key => $value):?>
+			<?php foreach (CSmileSet::getListForForm($arSmile['PARENT_ID']) as $key => $value):?>
 				<option value="<?=$key?>" <?=($arSmile["SET_ID"] == $key ? "selected" : "")?>><?=$value;?></option>
-			<?endforeach;?>
+			<?php endforeach;?>
 			</select>
 		</td>
 	</tr>
@@ -279,26 +280,26 @@ $tabControl->BeginNextTab();
 			<input type="text" name="TYPING" value="<?=$arSmile["TYPING"]?>" size="40" />
 		</td>
 	</tr>
-	<?if (!empty($arSmile["IMAGE"])):?>
+	<?php if (!empty($arSmile["IMAGE"])):?>
 	<tr>
 		<td>
 			<?=GetMessage("SMILE_IMAGE")?>:</td>
 		<td>
 			<div style="margin-top: 5px">
-				<img src="<?=($arSmile["TYPE"] == CSmile::TYPE_ICON? CSmile::PATH_TO_ICON: CSmile::PATH_TO_SMILE).$arSmile["SET_ID"]."/".$arSmile["IMAGE"]?>" width="<?=$arSmile["IMAGE_WIDTH"]?>" height="<?=$arSmile["IMAGE_HEIGHT"]?>" style="vertical-align: text-top" />
+				<img src="<?=($arSmile["TYPE"] == CSmile::TYPE_ICON? CSmile::PATH_TO_ICON: CSmile::PATH_TO_SMILE).$arSmile["SET_ID"]."/".$arSmile["IMAGE"]?>" width="<?=$arSmile["IMAGE_WIDTH"]?>" height="<?=$arSmile["IMAGE_HEIGHT"]?>" style="vertical-align: text-top"  alt=""/>
 				&nbsp;<?=($arSmile["TYPE"] == CSmile::TYPE_ICON? CSmile::PATH_TO_ICON: CSmile::PATH_TO_SMILE).$arSmile["SET_ID"]."/".$arSmile["IMAGE"]?>
 			</div>
 		</td>
 	</tr>
-	<?endif;?>
-	<tr<?if ($ID <= 0){ ?> class="adm-detail-required-field"<? }?>>
+	<?php endif;?>
+	<tr<?php if ($ID <= 0){ ?> class="adm-detail-required-field"<?php }?>>
 		<td>
 			<?=GetMessage(($ID <= 0)?"SMILE_IMAGE" :"SMILE_IMAGE_UPLOAD")?> <span title="<?=GetMessage('SMILE_IMAGE_HR_TITLE_2')?>">(?)</span>:<br><small><?=GetMessage("SMILE_IMAGE_NOTE_2")?></small></td>
 		<td>
 			<input type="file" name="IMAGE" size="30" />
 			<div style="margin-top: 10px">
 
-				<div><label><input type="radio" name="IMAGE_DEFINITION" value="<?=CSmile::IMAGE_SD?>" checked="true" /><?=GetMessage('SMILE_IMAGE_SD')?></label></div>
+				<div><label><input type="radio" name="IMAGE_DEFINITION" value="<?=CSmile::IMAGE_SD?>" checked="checked" /><?=GetMessage('SMILE_IMAGE_SD')?></label></div>
 				<div><label><input type="radio" name="IMAGE_DEFINITION" value="<?=CSmile::IMAGE_HD?>" /><?=GetMessage('SMILE_IMAGE_HD')?></label></div>
 				<div><label><input type="radio" name="IMAGE_DEFINITION" value="<?=CSmile::IMAGE_UHD?>" /><?=GetMessage('SMILE_IMAGE_UHD')?></label></div>
 		</td>
@@ -318,23 +319,23 @@ $tabControl->BeginNextTab();
 	<tr class="heading">
 		<td colspan="2"><?=GetMessage("SMILE_IMAGE_NAME")?></td>
 	</tr>
-	<?foreach ($arLang as $key => $val):?>
+	<?php foreach ($arLang as $key => $val):?>
 	<tr>
-		<td><? $word = GetMessage('SMILE_IMAGE_NAME_'.mb_strtoupper($key)); if ($word <> '') { echo $word; } else { echo $val["NAME"]; }?>:</td>
+		<td><?php $word = GetMessage('SMILE_IMAGE_NAME_'.mb_strtoupper($key)); if ($word <> '') { echo $word; } else { echo $val["NAME"]; }?>:</td>
 		<td><input type="text" name="LANG[<?=$key?>]" value="<?=($arSmile["LANG"][$key] ?? '')?>" size="40" /></td>
 	</tr>
-	<?endforeach;?>
+	<?php endforeach;?>
 
-<?
+<?php
 $tabControl->EndTab();
 
 $tabControl->Buttons(array(
 	"btnSaveAndAdd" => true,
-	"back_url" => "/bitrix/admin/smile.php?SET_ID=".$arSmile['SET_ID']."&lang=".LANG."&".GetFilterParams("filter_", false)));
+	"back_url" => "/bitrix/admin/smile.php?SET_ID=".$arSmile['SET_ID']."&lang=".LANGUAGE_ID."&".GetFilterParams("filter_", false)));
 ?>
 </form>
-<?
+<?php
 $tabControl->End();
 $tabControl->ShowWarnings("smile_edit", $message);
 ?>
-<?require($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/main/include/epilog_admin.php");?>
+<?php require($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/main/include/epilog_admin.php");?>

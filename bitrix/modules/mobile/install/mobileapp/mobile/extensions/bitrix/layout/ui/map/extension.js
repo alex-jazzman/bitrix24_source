@@ -6,9 +6,10 @@ jn.define('layout/ui/map', (require, exports, module) => {
 	const { CommandType } = require('layout/ui/map/src/const/command-type');
 	const { Type } = require('type');
 	const { createTestIdGenerator } = require('utils/test');
-	const { Indent, Color } = require('tokens');
-
+	const { Indent, Color, Component } = require('tokens');
+	const AppTheme = require('apptheme');
 	const { Icon } = require('assets/icons');
+	const { PropTypes } = require('utils/validation');
 	const {
 		ChipButtonSize,
 		ChipButtonMode,
@@ -77,7 +78,7 @@ jn.define('layout/ui/map', (require, exports, module) => {
 
 		render()
 		{
-			const { mapUrl } = this.props;
+			const { mapUrl, isLoading, loadingOverlayImageUri } = this.props;
 
 			return View(
 				{},
@@ -93,12 +94,46 @@ jn.define('layout/ui/map', (require, exports, module) => {
 						this.webViewRef = ref;
 					},
 					onReceiveEvent: (event) => {
-						console.warn('onReceiveEvent', event);
 						const { onReceiveEvent } = this.props;
 						onReceiveEvent?.(event);
 					},
 				}),
-				this.#renderZoomButtons(),
+				isLoading && loadingOverlayImageUri && Image({
+					style: {
+						position: 'absolute',
+						top: 0,
+						left: 0,
+						right: 0,
+						bottom: 0,
+					},
+					uri: loadingOverlayImageUri,
+					resizeMode: 'cover',
+				}),
+				this.#renderControlButtons(),
+			);
+		}
+
+		#renderControlButtons()
+		{
+			return View(
+				{
+					style: {
+						position: 'absolute',
+						top: 0,
+						bottom: 0,
+						right: Indent.XL3.toNumber(),
+					},
+				},
+				View(
+					{
+						style: {
+							flex: 1,
+							justifyContent: 'center',
+							paddingBottom: Indent.M.toNumber(),
+						},
+					},
+					this.#renderZoomButtons(),
+				),
 				this.#renderFitButton(),
 			);
 		}
@@ -110,79 +145,84 @@ jn.define('layout/ui/map', (require, exports, module) => {
 					style: {
 						position: 'absolute',
 						bottom: 100,
-						right: Indent.XL3.toNumber(),
 					},
 				},
 				ChipButton({
 					testId: this.getTestId('fit-to-layers-button'),
 					text: '',
 					icon: Icon.MOBILE_FILL,
-					avatar: false,
 					rounded: false,
 					size: ChipButtonSize.L,
 					mode: ChipButtonMode.SOLID,
 					design: ChipButtonDesign.PRIMARY,
-					badge: false,
 					backgroundColor: Color.bgContentPrimary,
 					iconColor: Color.base1,
 					ellipsize: Ellipsize.END,
-					onClick: () => {
-						this.fitToLayers();
+					onClick: this.onFitToLayersButtonClick,
+					style: {
+						borderWidth: 1,
+						borderColor: Color.base7.toHex(),
+						borderRadius: Component.chipsLCorner.toNumber(),
 					},
 				}),
 			);
 		}
 
+		onFitToLayersButtonClick = () => {
+			this.fitToLayers();
+		};
+
 		#renderZoomButtons()
 		{
 			return View(
-				{
-					style: {
-						position: 'absolute',
-						top: '45%',
-						right: Indent.XL3.toNumber(),
-						justifyContent: 'center',
-					},
-				},
+				{},
 				ChipButton({
 					testId: this.getTestId('zoom-in-button'),
 					text: '',
 					icon: Icon.PLUS,
-					avatar: false,
 					rounded: false,
 					size: ChipButtonSize.L,
 					mode: ChipButtonMode.SOLID,
 					design: ChipButtonDesign.PRIMARY,
-					badge: false,
 					backgroundColor: Color.bgContentPrimary,
 					iconColor: Color.base1,
 					ellipsize: Ellipsize.END,
-					onClick: () => {
-						this.zoomIn();
+					onClick: this.onZoomInButtonClick,
+					style: {
+						borderWidth: 1,
+						borderColor: Color.base7.toHex(),
+						borderRadius: Component.chipsLCorner.toNumber(),
 					},
 				}),
 				ChipButton({
 					testId: this.getTestId('zoom-out-button'),
 					text: '',
 					icon: Icon.MINUS,
-					avatar: false,
 					rounded: false,
 					size: ChipButtonSize.L,
 					mode: ChipButtonMode.SOLID,
 					design: ChipButtonDesign.PRIMARY,
-					badge: false,
 					backgroundColor: Color.bgContentPrimary,
 					iconColor: Color.base1,
 					ellipsize: Ellipsize.END,
 					style: {
 						marginTop: Indent.M.toNumber(),
+						borderWidth: 1,
+						borderColor: Color.base7.toHex(),
+						borderRadius: Component.chipsLCorner.toNumber(),
 					},
-					onClick: () => {
-						this.zoomOut();
-					},
+					onClick: this.onZoomOutButtonClick,
 				}),
 			);
 		}
+
+		onZoomInButtonClick = () => {
+			this.zoomIn();
+		};
+
+		onZoomOutButtonClick = () => {
+			this.zoomOut();
+		};
 
 		/**
 		 * Send arbitrary command to the map iframe.
@@ -214,6 +254,15 @@ jn.define('layout/ui/map', (require, exports, module) => {
 			const preparedProps = {
 				...props,
 				zoomControlPosition: 'none',
+				colorScheme: AppTheme.id,
+				colors: {
+					primaryBg: Color.bgContentPrimary.toHex(),
+					accent: Color.bgDarkLensGradient2.toHex(),
+					accentBg: Color.accentMainPrimary.toHex(),
+					base3: Color.base3.toHex(),
+					base7: Color.base7.toHex(),
+					success: Color.accentMainSuccess.toHex(),
+				},
 			};
 			this.sendEvent(CommandType.INIT_MAP, preparedProps);
 		}
@@ -333,7 +382,55 @@ jn.define('layout/ui/map', (require, exports, module) => {
 		{
 			this.sendEvent(CommandType.FIT_TO_LAYERS, { maxZoom });
 		}
+
+		/**
+		 * Enable automatic marker clustering based on zoom level and pixel distance.
+		 * @param {Object} [options]
+		 * @param {Number} [options.maxClusterRadius=80] - Pixel radius for grouping markers into a cluster
+		 * @param {Function} [options.clusterIconFactory]
+		 * - Custom factory: (count) => { html, className, iconSize, iconAnchor }
+		 */
+		enableClustering(options = {})
+		{
+			this.sendEvent(CommandType.ENABLE_CLUSTERING, { options });
+		}
+
+		/**
+		 * Disable marker clustering and restore individual markers.
+		 */
+		disableClustering()
+		{
+			this.sendEvent(CommandType.DISABLE_CLUSTERING);
+		}
+
+		/**
+		 * Update icon of a cluster identified by its member marker IDs.
+		 * @param {string[]} markerIds
+		 * @param {boolean} loading
+		 */
+		updateClusterIcon(markerIds, loading)
+		{
+			this.sendEvent(CommandType.UPDATE_CLUSTER_ICON, { markerIds, loading });
+		}
+
+		/**
+		 * Update map settings after initialization.
+		 * @param {Object} props
+		 * @param {Array<Number>} [props.fitBoundsPadding] - [vertical, horizontal] or [top, right, bottom, left]
+		 * @param {Number} [props.fitBoundsMaxZoom] - Range: 0..22
+		 */
+		updateSettings(props = {})
+		{
+			this.sendEvent(CommandType.UPDATE_SETTINGS, props);
+		}
 	}
+
+	Map.propTypes = {
+		mapUrl: PropTypes.string.isRequired,
+		isLoading: PropTypes.bool,
+		loadingOverlayImageUri: PropTypes.string,
+		onReceiveEvent: PropTypes.func,
+	};
 
 	module.exports = {
 		Map: (props) => new Map(props),

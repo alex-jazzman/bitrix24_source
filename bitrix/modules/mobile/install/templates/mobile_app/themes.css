@@ -401,6 +401,20 @@
 	--copilot-element2-rgb: 255, 255, 255;
 	--tech-dark-fixes: #ffffff;
 	--tech-dark-fixes-rgb: 255, 255, 255;
+	--text-bitrix-gpt-gradient1: #ffffff;
+	--text-bitrix-gpt-gradient1-rgb: 255, 255, 255;
+	--text-bitrix-gpt-gradient2: #ffffff;
+	--text-bitrix-gpt-gradient2-rgb: 255, 255, 255;
+	--text-bitrix-gpt-gradient3: #ffffff;
+	--text-bitrix-gpt-gradient3-rgb: 255, 255, 255;
+	--text-bitrix-gpt-gradient4: #ffffff;
+	--text-bitrix-gpt-gradient4-rgb: 255, 255, 255;
+	--text-bitrix-gpt-gradient5: #ffffff;
+	--text-bitrix-gpt-gradient5-rgb: 255, 255, 255;
+	--text-bitrix-gpt-gradient6: #ffffff;
+	--text-bitrix-gpt-gradient6-rgb: 255, 255, 255;
+	--text-bitrix-gpt-gradient7: #ffffff;
+	--text-bitrix-gpt-gradient7-rgb: 255, 255, 255;
 }
 
 :root.dark {
@@ -806,6 +820,20 @@
 	--copilot-element2-rgb: 255, 255, 255;
 	--tech-dark-fixes: #ffffff;
 	--tech-dark-fixes-rgb: 255, 255, 255;
+	--text-bitrix-gpt-gradient1: #ffffff;
+	--text-bitrix-gpt-gradient1-rgb: 255, 255, 255;
+	--text-bitrix-gpt-gradient2: #ffffff;
+	--text-bitrix-gpt-gradient2-rgb: 255, 255, 255;
+	--text-bitrix-gpt-gradient3: #ffffff;
+	--text-bitrix-gpt-gradient3-rgb: 255, 255, 255;
+	--text-bitrix-gpt-gradient4: #ffffff;
+	--text-bitrix-gpt-gradient4-rgb: 255, 255, 255;
+	--text-bitrix-gpt-gradient5: #ffffff;
+	--text-bitrix-gpt-gradient5-rgb: 255, 255, 255;
+	--text-bitrix-gpt-gradient6: #ffffff;
+	--text-bitrix-gpt-gradient6-rgb: 255, 255, 255;
+	--text-bitrix-gpt-gradient7: #ffffff;
+	--text-bitrix-gpt-gradient7-rgb: 255, 255, 255;
 }
 
 :root.newlight {
@@ -1211,6 +1239,20 @@
 	--copilot-element2-rgb: 45, 19, 83;
 	--tech-dark-fixes: #FFFFFF00;
 	--tech-dark-fixes-rgb: 255, 255, 255;
+	--text-bitrix-gpt-gradient1: #0098EA;
+	--text-bitrix-gpt-gradient1-rgb: 0, 152, 234;
+	--text-bitrix-gpt-gradient2: #3F68FF;
+	--text-bitrix-gpt-gradient2-rgb: 63, 104, 255;
+	--text-bitrix-gpt-gradient3: #9D48FF;
+	--text-bitrix-gpt-gradient3-rgb: 157, 72, 255;
+	--text-bitrix-gpt-gradient4: #F046B7;
+	--text-bitrix-gpt-gradient4-rgb: 240, 70, 183;
+	--text-bitrix-gpt-gradient5: #F96269;
+	--text-bitrix-gpt-gradient5-rgb: 249, 98, 105;
+	--text-bitrix-gpt-gradient6: #FFB61A;
+	--text-bitrix-gpt-gradient6-rgb: 255, 182, 26;
+	--text-bitrix-gpt-gradient7: #FF7438;
+	--text-bitrix-gpt-gradient7-rgb: 255, 116, 56;
 }
 
 :root.newdark {
@@ -1572,8 +1614,8 @@
 	--chat-overall-banner-bg-rgb: 7, 7, 7;
 	--chat-overall-fixed-white: #E7E7E7;
 	--chat-overall-fixed-white-rgb: 231, 231, 231;
-	--chat-overall-invert-alert: #FF5752;
-	--chat-overall-invert-alert-rgb: 255, 87, 82;
+	--chat-overall-invert-alert: #F2473D;
+	--chat-overall-invert-alert-rgb: 242, 71, 61;
 	--chat-overall-message-tech: #2B2E3266;
 	--chat-overall-message-tech-rgb: 43, 46, 50;
 	--chat-overall-viewer-bg: #051D3AF5;
@@ -1616,4 +1658,18 @@
 	--copilot-element2-rgb: 221, 214, 231;
 	--tech-dark-fixes: #383838;
 	--tech-dark-fixes-rgb: 56, 56, 56;
+	--text-bitrix-gpt-gradient1: #28B4FF;
+	--text-bitrix-gpt-gradient1-rgb: 40, 180, 255;
+	--text-bitrix-gpt-gradient2: #7D98FF;
+	--text-bitrix-gpt-gradient2-rgb: 125, 152, 255;
+	--text-bitrix-gpt-gradient3: #BD82FF;
+	--text-bitrix-gpt-gradient3-rgb: 189, 130, 255;
+	--text-bitrix-gpt-gradient4: #FF67CC;
+	--text-bitrix-gpt-gradient4-rgb: 255, 103, 204;
+	--text-bitrix-gpt-gradient5: #FF8A90;
+	--text-bitrix-gpt-gradient5-rgb: 255, 138, 144;
+	--text-bitrix-gpt-gradient6: #F6BC41;
+	--text-bitrix-gpt-gradient6-rgb: 246, 188, 65;
+	--text-bitrix-gpt-gradient7: #FD8552;
+	--text-bitrix-gpt-gradient7-rgb: 253, 133, 82;
 }

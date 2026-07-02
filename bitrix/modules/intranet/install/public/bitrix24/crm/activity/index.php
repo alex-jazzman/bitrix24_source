@@ -21,12 +21,14 @@ if (CModule::IncludeModule("crm")):
 				'list' => '',
 				'widget' => 'widget/', // @todo remove this?
 				'kanban' => 'kanban/',
+				'details' => 'details/#activity_id#/',
 			],
 			"VARIABLE_ALIASES" => [
 				'index' => [],
 				'list' => [],
 				'widget' => [], // @todo remove this?
 				'kanban' => [],
+				'details' => [],
 			],
 		),
 		false

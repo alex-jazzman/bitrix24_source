@@ -54,6 +54,15 @@ jn.define('im/messenger/controller/recent/service/server-load/chat', (require, e
 		}
 
 		/**
+		 * @param {RefreshModeType} mode
+		 * @return {object}
+		 */
+		getInitRequestOptions(mode)
+		{
+			return {};
+		}
+
+		/**
 		 * @return {MessengerCoreStore}
 		 */
 		get store()
@@ -224,10 +233,14 @@ jn.define('im/messenger/controller/recent/service/server-load/chat', (require, e
 					this.store.dispatch('dialoguesModel/copilotModel/setCollection', modelData.copilot),
 				]);
 
-				const recentAction = firstPage ? 'recentModel/setFirstPageByTab' : 'recentModel/setChat';
+				const recentAction = firstPage ? 'recentModel/setFirstPageByRecentSection' : 'recentModel/setChat';
 				await this.store.dispatch(
 					recentAction,
-					{ tab: this.recentLocator.get('id') ?? NavigationTabId.chats, itemList: modelData.recent },
+					{
+						recentSection: this.recentLocator.get('recentSection'),
+						itemList: modelData.recent,
+						parentChatId: this.recentLocator.get('parentChatId'),
+					},
 				);
 
 				this.#saveShareDialogCache();
@@ -416,6 +429,16 @@ jn.define('im/messenger/controller/recent/service/server-load/chat', (require, e
 		#saveShareDialogCache()
 		{
 			this.shareDialogCache.saveRecentItemListThrottled();
+		}
+
+		subscribeEvents()
+		{
+			this.logger.log('subscribeEvents');
+		}
+
+		unsubscribeEvents()
+		{
+			this.logger.log('unsubscribeEvents');
 		}
 	}
 

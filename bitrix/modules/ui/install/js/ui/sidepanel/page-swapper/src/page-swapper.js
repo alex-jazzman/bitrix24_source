@@ -111,8 +111,8 @@ export class PageSwapper extends EventEmitter
 			size: this.btnSize,
 		});
 
-		this.prevBtn = icon.render();
-		Dom.addClass(this.getPrevButton(), 'ui-page-swap-left');
+		this.prevBtn = Tag.render`<button type="button" class="ui-page-swap-btn ui-page-swap-left"></button>`;
+		Dom.append(icon.render(), this.prevBtn);
 		this.#setButtonHref(this.getPrevButton(), this.prevPageId, this.prevPageHref);
 	}
 
@@ -123,8 +123,8 @@ export class PageSwapper extends EventEmitter
 			size: this.btnSize,
 		});
 
-		this.nextBtn = icon.render();
-		Dom.addClass(this.getNextButton(), 'ui-page-swap-right');
+		this.nextBtn = Tag.render`<button type="button" class="ui-page-swap-btn ui-page-swap-right"></button>`;
+		Dom.append(icon.render(), this.nextBtn);
 		this.#setButtonHref(this.getNextButton(), this.nextPageId, this.nextPageHref);
 	}
 
@@ -158,11 +158,13 @@ export class PageSwapper extends EventEmitter
 		{
 			Dom.removeClass(button, this.#disableClass);
 			Dom.style(button, 'cursor', 'pointer');
+			button.disabled = false;
 		}
 		else if (!Dom.hasClass(button, this.#disableClass) && !(pageId && pageHref))
 		{
 			Dom.addClass(button, this.#disableClass);
 			Dom.style(button, 'cursor', 'not-allowed');
+			button.disabled = true;
 		}
 	}
 
@@ -317,8 +319,12 @@ export class PageSwapper extends EventEmitter
 	setTitles(type: string): void {
 		if (type === 'mail')
 		{
-			this.prevBtn.setAttribute('title', Loc.getMessage('UI_SIDEPANEL_PAGE_SWAPPER_PREVIOUS_MAIL_MESSAGE'));
-			this.nextBtn.setAttribute('title', Loc.getMessage('UI_SIDEPANEL_PAGE_SWAPPER_NEXT_MAIL_MESSAGE'));
+			const prevLabel = Loc.getMessage('UI_SIDEPANEL_PAGE_SWAPPER_PREVIOUS_MAIL_MESSAGE');
+			const nextLabel = Loc.getMessage('UI_SIDEPANEL_PAGE_SWAPPER_NEXT_MAIL_MESSAGE');
+			this.prevBtn.setAttribute('title', prevLabel);
+			this.prevBtn.setAttribute('aria-label', prevLabel);
+			this.nextBtn.setAttribute('title', nextLabel);
+			this.nextBtn.setAttribute('aria-label', nextLabel);
 		}
 	}
 }

@@ -1,6 +1,6 @@
 import { ajax as Ajax, type AjaxResponse, Dom, type JsonObject, Loc, Runtime, Text, Type } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
-import { Button, ButtonColor, ButtonSize, CancelButton } from 'ui.buttons';
+import { EventEmitter } from 'main.core.events';
+import { AirButtonStyle, Button, ButtonColor, ButtonSize, CancelButton } from 'ui.buttons';
 import { MessageBox } from 'ui.dialogs.messagebox';
 import { BitrixVue, type VueCreateAppResult } from 'ui.vue3';
 import type { Store } from 'ui.vue3.vuex';
@@ -18,7 +18,8 @@ import { ApplicationInternalizer } from './store/model/transformation/internaliz
 import type { ExternalUserGroup } from './store/model/transformation/internalizer/user-groups-internalizer';
 import { UserGroupsInternalizer } from './store/model/transformation/internalizer/user-groups-internalizer';
 import { ShownUserGroupsCopier } from './store/model/transformation/shown-user-groups-copier';
-import { SELECTED_ALL_USER_ID, SelectedMember } from './store/model/user-groups-model';
+import { SELECTED_ALL_USER_ID } from './store/model/user-groups-model';
+import type { SelectedMember } from './store/model/user-groups-model';
 import type { AccessRightsModel } from './store/model/access-rights-model';
 import { Loader } from 'main.loader';
 import { saveSortConfigForAllUserGroups } from './utils';
@@ -126,6 +127,7 @@ export class App
 						this.#resetState();
 						box.close();
 					},
+					useAirDesign: true,
 				}),
 				new Button({
 					color: ButtonColor.LINK,
@@ -134,8 +136,11 @@ export class App
 					onclick: () => {
 						box.close();
 					},
+					useAirDesign: true,
+					style: AirButtonStyle.OUTLINE,
 				}),
 			],
+			useAirDesign: true,
 		});
 
 		box.show();
@@ -363,19 +368,23 @@ export class App
 							sliderEvent.getSlider().close();
 						});
 					},
+					useAirDesign: true,
 				}),
 				new CancelButton({
 					size: ButtonSize.SMALL,
+					style: AirButtonStyle.OUTLINE,
 					text: Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_CANCEL'),
 					onclick: () => {
 						this.#confirmationPopup.close();
 						this.#confirmationPopup = null;
 					},
+					useAirDesign: true,
 				}),
 			],
 			popupOptions: {
 				fixed: true,
 			},
+			useAirDesign: true,
 		});
 
 		this.#confirmationPopup.show();

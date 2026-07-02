@@ -135,14 +135,19 @@ export class SubTasksService extends RelationService
 	}
 
 	/** @protected */
-	async requestTasks(taskId: TaskId, withIds: boolean = false): Promise<{ tasks: TaskDto[], ids?: number[] }>
+	async requestTasks(
+		taskId: TaskId,
+		withIds: boolean = false,
+	): Promise<{ tasks: TaskDto[], ids?: number[], statuses?: Object }>
 	{
 		const task = taskService.getStoreTask(taskId);
+
 		if (withIds && !task.subTaskIds?.length && task.templateId)
 		{
-			const { templates, ids } = await apiClient.post('Template.Relation.Child.list', {
+			const { templates, ids } = await apiClient.post(Endpoint.TemplateRelationChildList, {
 				templateId: task.templateId,
 				withIds,
+				withSubTemplates: this.showSubTemplates,
 				navigation: {
 					size: limit,
 				},
@@ -171,27 +176,74 @@ export class SubTasksService extends RelationService
 		if (!idUtils.isReal(taskId))
 		{
 			const ids = taskService.getStoreTask(taskId).subTaskIds;
-
-			const { templates } = await apiClient.post('Template.Relation.Child.listByIds', {
-				templateIds: this.getVisibleIds(ids).map((id) => idUtils.unbox(id)),
-			});
-
-			const tasks = templates.map((it) => ({ ...it, id: idUtils.boxTemplate(it.id) }));
+			const templateIds = this.getVisibleIds(taskId, ids, true);
+			const tasks = await this.requestTasksByIds(taskId, templateIds);
 
 			return { tasks, ids };
 		}
 
-		const { templates, ids } = await apiClient.post('Template.Relation.Child.list', {
+		const { templates, ids } = await apiClient.post(Endpoint.TemplateRelationChildList, {
 			templateId: idUtils.unbox(taskId),
 			withIds,
+			withSubTemplates: this.showSubTemplates,
 			navigation: {
 				size: limit,
 			},
 		});
 
-		const tasks = templates.map((it) => ({ ...it, id: idUtils.boxTemplate(it.id) }));
+		const tasks = templates.map((it) => ({
+			...it,
+			id: idUtils.boxTemplate(it.id),
+			subTaskIds: idUtils.boxTemplates(it?.subTemplateIds ?? []),
+			rights: {
+				...TemplateMappers.mapRights(it?.rights),
+				...it?.rights,
+			},
+		}));
 
 		return { tasks, ids: ids?.map((id) => idUtils.boxTemplate(id)) };
+	}
+
+	/** @protected */
+	async requestTasksByIds(taskId: TaskId, taskIds: number[]): Promise<TaskDto[]>
+	{
+		if (!idUtils.isTemplate(taskId))
+		{
+			return super.requestTasksByIds(taskId, taskIds);
+		}
+
+		const { templates } = await apiClient.post(Endpoint.TemplateRelationChildListByIds, {
+			templateIds: taskIds.map((id) => idUtils.unbox(id)),
+			withSubTemplates: this.showSubTemplates,
+		});
+
+		return templates.map((it) => ({
+			...it,
+			id: idUtils.boxTemplate(it.id),
+			subTaskIds: idUtils.boxTemplates(it?.subTemplateIds ?? []),
+			rights: {
+				...TemplateMappers.mapRights(it?.rights),
+				...it?.rights,
+			},
+		}));
+	}
+
+	/** @protected */
+	async requestSubTaskIds(taskId: TaskId, taskIds: number[]): Promise<TaskDto[]>
+	{
+		if (!idUtils.isTemplate(taskId))
+		{
+			return super.requestSubTaskIds(taskId, taskIds);
+		}
+
+		const { templates } = await apiClient.post(Endpoint.TemplateRelationChildGetSubTemplateIds, {
+			templateIds: taskIds.map((id) => idUtils.unbox(id)),
+		});
+
+		return templates.map((it) => ({
+			id: idUtils.boxTemplate(it.id),
+			subTaskIds: idUtils.boxTemplates(it?.subTemplateIds ?? []),
+		}));
 	}
 
 	/** @protected */
@@ -202,7 +254,7 @@ export class SubTasksService extends RelationService
 			return super.requestAdd(taskId, taskIds, noOverride);
 		}
 
-		return this.requestUpdate('Template.Relation.Child.add', {
+		return this.requestUpdate(Endpoint.TemplateRelationChildAdd, {
 			templateId: idUtils.unbox(taskId),
 			templateIds: taskIds.map((id) => idUtils.unbox(id)),
 			noOverride,
@@ -217,7 +269,7 @@ export class SubTasksService extends RelationService
 			return super.requestDelete(taskId, taskIds);
 		}
 
-		return this.requestUpdate('Template.Relation.Child.delete', {
+		return this.requestUpdate(Endpoint.TemplateRelationChildDelete, {
 			templateId: idUtils.unbox(taskId),
 			templateIds: taskIds.map((id) => idUtils.unbox(id)),
 		});
@@ -227,17 +279,21 @@ export class SubTasksService extends RelationService
 	{
 		if (idUtils.isTemplate(taskId))
 		{
-			const { templates } = await apiClient.post('Template.Relation.Child.listByIds', {
+			const { templates } = await apiClient.post(Endpoint.TemplateRelationChildListByIds, {
 				templateIds: [idUtils.unbox(taskId)],
 			});
 
 			const parent = templates[0];
-			if (parent)
-			{
-				parent.id = idUtils.boxTemplate(parent.id);
-			}
 
-			return parent;
+			return {
+				...parent,
+				id: idUtils.boxTemplate(parent.id),
+				subTaskIds: idUtils.boxTemplates(parent?.subTemplateIds ?? []),
+				rights: {
+					...TemplateMappers.mapRights(parent?.rights),
+					...parent?.rights,
+				},
+			};
 		}
 
 		const { tasks } = await apiClient.post(Endpoint.TaskRelationChildListByIds, {

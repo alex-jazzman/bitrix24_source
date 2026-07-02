@@ -12,6 +12,17 @@ jn.define('im/messenger/lib/src/feature', (require, exports, module) => {
 	};
 
 	/**
+	 * @param {string} minVersion - e.g. '5.6.300'
+	 * @return {boolean}
+	 */
+	function isAppVersionAtLeast(minVersion)
+	{
+		return Application.getAppVersion()
+			.localeCompare(minVersion, undefined, { numeric: true, sensitivity: 'base' }) >= 0
+		;
+	}
+
+	/**
 	 * @class Feature
 	 */
 	class Feature
@@ -148,6 +159,11 @@ jn.define('im/messenger/lib/src/feature', (require, exports, module) => {
 			return MessengerParams.getImFeatures().sidebarLinks;
 		}
 
+		static get isChatSharingLinkAvailable()
+		{
+			return MessengerParams.getImFeatures().chatSharingLinkAvailable === true;
+		}
+
 		static get isSidebarV2Enabled()
 		{
 			return Application.getApiVersion() >= 60;
@@ -181,6 +197,17 @@ jn.define('im/messenger/lib/src/feature', (require, exports, module) => {
 		static get isDevModeEnabled()
 		{
 			return Feature.getChatSettings().chatDevModeEnable;
+		}
+
+		static get isBitrixGptV2Available()
+		{
+			return MessengerParams.getImFeatures().isBitrixGptV2Available;
+		}
+
+		static get isBitrixGptV2Enabled()
+		{
+			return Feature.isBitrixGptV2Available
+				&& Feature.nativeFeature.isFeatureEnabled('bitrix_gpt_brand_v1');
 		}
 
 		static showUnsupportedWidget(options = {}, parentWidget = PageManager)
@@ -336,6 +363,11 @@ jn.define('im/messenger/lib/src/feature', (require, exports, module) => {
 			return Feature.nativeFeature.isFeatureEnabled('tabswidget_api_v2');
 		}
 
+		static get isTabsWidgetApiV3Supported()
+		{
+			return Feature.nativeFeature.isFeatureEnabled('tabswidget_api_v3');
+		}
+
 		static get isAiFileTranscriptionAvailable()
 		{
 			return MessengerParams.getImFeatures().aiFileTranscriptionAvailable;
@@ -429,6 +461,11 @@ jn.define('im/messenger/lib/src/feature', (require, exports, module) => {
 				&& MessengerParams.isAiAssistantMcpSelectorAvailable();
 		}
 
+		static get isMarkdownParserEnabled()
+		{
+			return MessengerParams.isMarkdownParserEnabled();
+		}
+
 		static get isOpenlinesInMessengerAvailable()
 		{
 			return MessengerParams.isOpenlinesInMessengerAvailable();
@@ -457,6 +494,21 @@ jn.define('im/messenger/lib/src/feature', (require, exports, module) => {
 		static get isTasksRecentListAvailable()
 		{
 			return MessengerParams.getTasksRecentListAvailable();
+		}
+
+		static get isCopilotMCPButtonAvailable()
+		{
+			return MessengerParams.getCopilotMCPButtonAvailable();
+		}
+
+		static get isSearchModeButtonAvailable()
+		{
+			return MessengerParams.getSearchModeButtonAvailable();
+		}
+
+		static get isAgentButtonAvailable()
+		{
+			return MessengerParams.getAgentButtonAvailable();
 		}
 
 		static get isNativeStickerMessageSupported()
@@ -490,6 +542,21 @@ jn.define('im/messenger/lib/src/feature', (require, exports, module) => {
 			return Feature.nativeFeature?.isFeatureEnabled('footnote_message_id') ?? false;
 		}
 
+		static get isBuilderMessageAvailable()
+		{
+			return MessengerParams.getImFeatures().isMessageBuilderAvailable && this.isBuilderMessageSupported;
+		}
+
+		static get isBuilderMessageSupported()
+		{
+			return Feature.nativeFeature.isFeatureEnabled('chat_builder');
+		}
+
+		static get isCopilotAnimatedScrollSupported()
+		{
+			return Feature.isBitrixGptV2Available && (Feature.nativeFeature?.isFeatureEnabled('chat_bitrixgpt_scroll') ?? false);
+		}
+
 		static get isChatDialogTextFieldActionsSupported()
 		{
 			return Feature.nativeFeature.isFeatureEnabled('chat_textfield_stylable');
@@ -497,7 +564,15 @@ jn.define('im/messenger/lib/src/feature', (require, exports, module) => {
 
 		static get isChatDialogTextFieldMultiLevelActionsSupported()
 		{
-			return Feature.isChatDialogTextFieldActionsSupported && Application.getPlatform() === 'ios' && parseInt(device.version, 10) >= 16;
+			return Feature.isChatDialogTextFieldActionsSupported
+				&& Application.getPlatform() === 'ios'
+				&& parseInt(device.version, 10) >= 16
+			;
+		}
+
+		static get isMultilevelMessageMenuSupported()
+		{
+			return Feature.nativeFeature?.isFeatureEnabled('chat_multilevel_menu') ?? false;
 		}
 
 		static get isChatDialogExpandingQuoteSupported()
@@ -508,6 +583,33 @@ jn.define('im/messenger/lib/src/feature', (require, exports, module) => {
 		static get isChatDialogCompactQuoteSupported()
 		{
 			return Feature.isChatDialogExpandingQuoteSupported;
+		}
+
+		static get isNestedChatAvailable()
+		{
+			return MessengerParams.getImFeatures().isNestedChatAvailable;
+		}
+
+		static get isExternalChatMessageForwardingAvailable()
+		{
+			return MessengerParams.isExternalChatMessageForwardingAvailable();
+		}
+
+		static get isSystemMessageStyleSupported()
+		{
+			return Feature.nativeFeature?.isFeatureEnabled('chat_additional_styles') ?? false;
+		}
+
+		static get isChatFoldersAvailable()
+		{
+			if (Application.getPlatform() === 'ios' && !isAppVersionAtLeast('5.6.300'))
+			{
+				return false;
+			}
+
+			return MessengerParams.getImFeatures().isChatFoldersAvailable === true
+				&& Feature.isTabsWidgetApiV3Supported
+			;
 		}
 	}
 

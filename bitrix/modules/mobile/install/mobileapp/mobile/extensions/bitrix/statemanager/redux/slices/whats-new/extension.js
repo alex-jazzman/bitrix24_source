@@ -40,7 +40,6 @@ jn.define('statemanager/redux/slices/whats-new', (require, exports, module) => {
 		selectReactionByItemIdAndReactionName,
 		selectUrlParams,
 		selectNewCount,
-		selectHasReadNews,
 		selectLastNewsCheckTime,
 		selectHasUnsupportedFeatures,
 		selectErrorStatus,
@@ -69,11 +68,7 @@ jn.define('statemanager/redux/slices/whats-new', (require, exports, module) => {
 	const whatsNewSlice = createSlice({
 		name: sliceName,
 		initialState,
-		reducers: {
-			setHasReadNews: (state) => {
-				state.hasReadNews = true;
-			},
-		},
+		reducers: {},
 		extraReducers: (builder) => {
 			builder
 				.addCase(fetchWhatsNewThunk.pending, (state) => {
@@ -190,11 +185,7 @@ jn.define('statemanager/redux/slices/whats-new', (require, exports, module) => {
 		},
 	});
 
-	const { reducer, actions } = whatsNewSlice;
-
-	const {
-		setHasReadNews,
-	} = actions;
+	const { reducer } = whatsNewSlice;
 
 	ReducerRegistry.register(sliceName, createOptimisticUiSliceReducer(sliceName, reducer));
 
@@ -209,8 +200,6 @@ jn.define('statemanager/redux/slices/whats-new', (require, exports, module) => {
 		sendReactionThunk,
 		updateReadNewsThunk,
 		updateLocalWhatsNewsParamsThunk,
-
-		setHasReadNews,
 
 		selectAll,
 		selectById,
@@ -228,7 +217,6 @@ jn.define('statemanager/redux/slices/whats-new', (require, exports, module) => {
 		selectReactionByItemIdAndReactionName,
 		selectUrlParams,
 		selectNewCount,
-		selectHasReadNews,
 		selectLastNewsCheckTime,
 		selectHasUnsupportedFeatures,
 		selectErrorStatus,

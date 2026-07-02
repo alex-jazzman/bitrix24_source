@@ -172,6 +172,23 @@ jn.define('im/messenger/lib/helper/url', (require, exports, module) => {
 		/**
 		 * @return {string}
 		 */
+		getDomain()
+		{
+			try
+			{
+				const parsed = new URL(this.href);
+
+				return parsed.hostname;
+			}
+			catch
+			{
+				return '';
+			}
+		}
+
+		/**
+		 * @return {string}
+		 */
 		getPreparedAvatarUrl()
 		{
 			let result = '';

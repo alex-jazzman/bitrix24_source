@@ -1,8 +1,9 @@
-<?
+<?php
 /**
- * @global \CUser $USER
- * @global \CMain $APPLICATION
- * @global \CDatabase $DB
+ * @global CUser $USER
+ * @global CMain $APPLICATION
+ * @global CDatabase $DB
+ * @global CUserTypeManager $USER_FIELD_MANAGER
  */
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
@@ -22,7 +23,8 @@ $oSort = new CAdminSorting($sTableID, "ID", "desc");
 $lAdmin = new CAdminList($sTableID, $oSort);
 
 $FilterArr = Array(
-	"find","find_type",
+	"find",
+	"find_type",
 	"find_entity_id",
 	"find_id",
 	"find_field_name",
@@ -36,26 +38,26 @@ $FilterArr = Array(
 	"find_is_searchable",
 );
 
-$lAdmin->InitFilter($FilterArr);
+$filter = $lAdmin->InitFilter($FilterArr);
 
 $arFilter = array(
-	"ID" => ($find!="" && $find_type == "ID"? $find:$find_id),
-	"ENTITY_ID" => ($find!="" && $find_type == "ENTITY_ID"? $find:$find_entity_id),
-	"FIELD_NAME" => $find_field_name,
-	"USER_TYPE_ID" => $find_user_type_id,
-	"XML_ID" => $find_xml_id,
-	"MULTIPLE" => $find_multiple,
-	"MANDATORY" => $find_mandatory,
-	"SHOW_FILTER" => $find_show_filter,
-	"SHOW_IN_LIST" => $find_show_in_list,
-	"EDIT_IN_LIST" => $find_edit_in_list,
-	"IS_SEARCHABLE" => $find_is_searchable,
+	"ID" => ($filter['find'] != "" && $filter['find_type'] == "ID"? $filter['find'] : $filter['find_id']),
+	"ENTITY_ID" => ($filter['find'] != "" && $filter['find_type'] == "ENTITY_ID"? $filter['find'] : $filter['find_entity_id']),
+	"FIELD_NAME" => $filter['find_field_name'],
+	"USER_TYPE_ID" => $filter['find_user_type_id'],
+	"XML_ID" => $filter['find_xml_id'],
+	"MULTIPLE" => $filter['find_multiple'],
+	"MANDATORY" => $filter['find_mandatory'],
+	"SHOW_FILTER" => $filter['find_show_filter'],
+	"SHOW_IN_LIST" => $filter['find_show_in_list'],
+	"EDIT_IN_LIST" => $filter['find_edit_in_list'],
+	"IS_SEARCHABLE" => $filter['find_is_searchable'],
 );
 
 if($lAdmin->EditAction())
 {
 	$obUserField = new CUserTypeEntity;
-	foreach($FIELDS as $ID=>$arFields)
+	foreach ($_POST['FIELDS'] as $ID => $arFields)
 	{
 		if(!$lAdmin->IsUpdated($ID))
 			continue;
@@ -82,7 +84,7 @@ if($arID = $lAdmin->GroupAction())
 {
 	if (isset($_REQUEST['action_target']) && $_REQUEST['action_target']=='selected')
 	{
-		$rsData = CUserTypeEntity::GetList(array($by=>$order), $arFilter);
+		$rsData = CUserTypeEntity::GetList(array($oSort->getField() => $oSort->getOrder()), $arFilter);
 		while($arRes = $rsData->Fetch())
 			$arID[] = $arRes['ID'];
 	}
@@ -100,7 +102,6 @@ if($arID = $lAdmin->GroupAction())
 		switch($_REQUEST['action'])
 		{
 		case "delete":
-			@set_time_limit(0);
 			$DB->StartTransaction();
 			if(!$obUserField->Delete($ID))
 			{
@@ -117,7 +118,7 @@ if($arID = $lAdmin->GroupAction())
 }
 
 
-$rsData = CUserTypeEntity::GetList(array($by=>$order), $arFilter);
+$rsData = CUserTypeEntity::GetList(array($oSort->getField() => $oSort->getOrder()), $arFilter);
 $rsData = new CAdminResult($rsData, $sTableID);
 $rsData->NavStart();
 $lAdmin->NavText($rsData->GetNavPrint(GetMessage("USERTYPE_NAV")));
@@ -193,17 +194,18 @@ $lAdmin->AddHeaders(array(
 	),
 ));
 
-while($arRes = $rsData->NavNext(true, "f_")):
+while ($arRes = $rsData->Fetch())
+{
 	//Rights check
-	if($USER_FIELD_MANAGER->GetRights(false, $f_ID) < "W")
+	if($USER_FIELD_MANAGER->GetRights(false, $arRes['ID']) < "W")
 		continue;
 
-	$row =& $lAdmin->AddRow($f_ID, $arRes);
+	$row = $lAdmin->AddRow($arRes['ID'], $arRes);
 
-	$arUserType = $USER_FIELD_MANAGER->GetUserType($f_USER_TYPE_ID);
+	$arUserType = $USER_FIELD_MANAGER->GetUserType($arRes['USER_TYPE_ID']);
 	$row->AddViewField("USER_TYPE_ID", htmlspecialcharsbx($arUserType["DESCRIPTION"] ?? ''));
 	$row->AddInputField("SORT", array("size"=>5));
-	$row->AddViewField("MULTIPLE", $f_MULTIPLE=="Y"?GetMessage("MAIN_YES"):GetMessage("MAIN_NO"));
+	$row->AddViewField("MULTIPLE", $arRes['MULTIPLE'] == "Y" ? GetMessage("MAIN_YES") : GetMessage("MAIN_NO"));
 	$row->AddCheckField("MANDATORY");
 	$row->AddSelectField("SHOW_FILTER", array(
 		"N"=>GetMessage("USER_TYPE_FILTER_N"),
@@ -221,16 +223,16 @@ while($arRes = $rsData->NavNext(true, "f_")):
 		"ICON"=>"edit",
 		"DEFAULT"=>true,
 		"TEXT"=>GetMessage("MAIN_EDIT"),
-		"ACTION"=>$lAdmin->ActionRedirect("userfield_edit.php?ID=".$f_ID)
+		"ACTION"=>$lAdmin->ActionRedirect("userfield_edit.php?ID=".$arRes['ID'])
 	);
 	$arActions[] = array(
 		"ICON"=>"delete",
 		"TEXT"=>GetMessage("MAIN_DELETE"),
-		"ACTION"=>"if(confirm('".GetMessageJS('USERTYPE_DELETE_CONF')."')) ".$lAdmin->ActionDoGroup($f_ID, "delete", 'back_url='.urlencode($back_url).'&list_url='.urlencode($_REQUEST['list_url'] ?? ''))
+		"ACTION"=>"if(confirm('".GetMessageJS('USERTYPE_DELETE_CONF')."')) ".$lAdmin->ActionDoGroup($arRes['ID'], "delete", 'back_url='.urlencode($back_url).'&list_url='.urlencode($_REQUEST['list_url'] ?? ''))
 	);
 
 	$row->AddActions($arActions);
-endwhile;
+}
 
 $lAdmin->AddGroupActionTable(Array(
 	"delete"=>true,
@@ -251,11 +253,11 @@ if ($back_url <> '')
 }
 
 // add button
-$add_url =  "userfield_edit.php?lang=".LANG;
+$add_url =  "userfield_edit.php?lang=".LANGUAGE_ID;
 
-if ($find_type === 'ENTITY_ID' && !empty($find))
+if ($filter['find_type'] === 'ENTITY_ID' && !empty($filter['find']))
 {
-	$add_url .= '&ENTITY_ID='.urlencode($find);
+	$add_url .= '&ENTITY_ID='.urlencode($filter['find']);
 
 	if ($back_url <> '')
 	{
@@ -298,13 +300,13 @@ $arrYN = array(
 	"reference_id" => array("Y", "N")
 );
 ?>
-<form name="find_form" method="get" action="<?echo $APPLICATION->GetCurPage();?>">
-<?$oFilter->Begin();?>
+<form name="find_form" method="get" action="<?= $APPLICATION->GetCurPage();?>">
+<?php $oFilter->Begin();?>
 <tr>
 	<td><b><?=GetMessage("USERTYPE_F_FIND")?>:</b></td>
 	<td>
-		<input type="text" size="25" name="find" value="<?echo htmlspecialcharsbx($find)?>">
-		<?
+		<input type="text" size="25" name="find" value="<?= htmlspecialcharsbx($filter['find'])?>">
+		<?php
 		$arr = array(
 			"reference" => array(
 				"ID",
@@ -315,28 +317,28 @@ $arrYN = array(
 				"ENTITY_ID",
 			)
 		);
-		echo SelectBoxFromArray("find_type", $arr, $find_type, "", "");
+		echo SelectBoxFromArray("find_type", $arr, $filter['find_type'], "", "");
 		?>
 	</td>
 </tr>
 <tr>
 	<td><?="ID"?>:</td>
 	<td>
-		<input type="text" name="find_id" size="47" value="<?echo htmlspecialcharsbx($find_id)?>">
+		<input type="text" name="find_id" size="47" value="<?= htmlspecialcharsbx($filter['find_id'])?>">
 	</td>
 </tr>
 <tr>
 	<td><?=GetMessage("USERTYPE_ENTITY_ID").":"?></td>
-	<td><input type="text" name="find_entity_id" size="47" value="<?echo htmlspecialcharsbx($find_entity_id)?>"></td>
+	<td><input type="text" name="find_entity_id" size="47" value="<?= htmlspecialcharsbx($filter['find_entity_id'])?>"></td>
 </tr>
 <tr>
 	<td><?=GetMessage("USERTYPE_FIELD_NAME").":"?></td>
-	<td><input type="text" name="find_field_name" size="47" value="<?echo htmlspecialcharsbx($find_field_name)?>"></td>
+	<td><input type="text" name="find_field_name" size="47" value="<?= htmlspecialcharsbx($filter['find_field_name'])?>"></td>
 </tr>
 <tr>
 	<td><?=GetMessage("USERTYPE_USER_TYPE_ID")?>:</td>
 	<td>
-		<?
+		<?php
 		$typeList = array();
 		foreach($USER_FIELD_MANAGER->GetUserType() as $arUserType)
 		{
@@ -353,30 +355,30 @@ $arrYN = array(
 			"reference" => array_values($typeList),
 			"reference_id" =>array_keys($typeList)
 		);
-		echo SelectBoxFromArray("find_user_type_id", $arr, $find_user_type_id, GetMessage("MAIN_ALL"), "");
+		echo SelectBoxFromArray("find_user_type_id", $arr, $filter['find_user_type_id'], GetMessage("MAIN_ALL"), "");
 		?>
 	</td>
 </tr>
 <tr>
 	<td><?=GetMessage("USERTYPE_XML_ID").":"?></td>
-	<td><input type="text" name="find_xml_id" size="47" value="<?echo htmlspecialcharsbx($find_xml_id)?>"></td>
+	<td><input type="text" name="find_xml_id" size="47" value="<?= htmlspecialcharsbx($filter['find_xml_id'])?>"></td>
 </tr>
 <tr>
 	<td><?=GetMessage("USERTYPE_MULTIPLE")?>:</td>
 	<td>
-		<?=SelectBoxFromArray("find_multiple", $arrYN, $find_multiple, GetMessage("MAIN_ALL"), "");?>
+		<?=SelectBoxFromArray("find_multiple", $arrYN, $filter['find_multiple'], GetMessage("MAIN_ALL"), "");?>
 	</td>
 </tr>
 <tr>
 	<td><?=GetMessage("USERTYPE_MANDATORY")?>:</td>
 	<td>
-		<?=SelectBoxFromArray("find_mandatory", $arrYN, $find_mandatory, GetMessage("MAIN_ALL"), "");?>
+		<?=SelectBoxFromArray("find_mandatory", $arrYN, $filter['find_mandatory'], GetMessage("MAIN_ALL"), "");?>
 	</td>
 </tr>
 <tr>
 	<td><?=GetMessage("USERTYPE_SHOW_FILTER")?>:</td>
 	<td>
-		<?
+		<?php
 		$arr = array(
 			"reference" => array(
 				GetMessage("USER_TYPE_FILTER_N"),
@@ -391,34 +393,34 @@ $arrYN = array(
 				"S",
 			),
 		);
-		echo SelectBoxFromArray("find_show_filter", $arr, $find_show_filter, GetMessage("MAIN_ALL"), "");
+		echo SelectBoxFromArray("find_show_filter", $arr, $filter['find_show_filter'], GetMessage("MAIN_ALL"), "");
 		?>
 	</td>
 </tr>
 <tr>
 	<td><?=GetMessage("USERTYPE_SHOW_IN_LIST")?>:</td>
 	<td>
-		<?=SelectBoxFromArray("find_show_in_list", $arrYN, $find_show_in_list, GetMessage("MAIN_ALL"), "");?>
+		<?=SelectBoxFromArray("find_show_in_list", $arrYN, $filter['find_show_in_list'], GetMessage("MAIN_ALL"), "");?>
 	</td>
 </tr>
 <tr>
 	<td><?=GetMessage("USERTYPE_EDIT_IN_LIST")?>:</td>
 	<td>
-		<?=SelectBoxFromArray("find_edit_in_list", $arrYN, $find_edit_in_list, GetMessage("MAIN_ALL"), "");?>
+		<?=SelectBoxFromArray("find_edit_in_list", $arrYN, $filter['find_edit_in_list'], GetMessage("MAIN_ALL"), "");?>
 	</td>
 </tr>
 <tr>
 	<td><?=GetMessage("USERTYPE_IS_SEARCHABLE")?>:</td>
 	<td>
-		<?=SelectBoxFromArray("find_is_searchable", $arrYN, $find_is_searchable, GetMessage("MAIN_ALL"), "");?>
+		<?=SelectBoxFromArray("find_is_searchable", $arrYN, $filter['find_is_searchable'], GetMessage("MAIN_ALL"), "");?>
 	</td>
 </tr>
-<?
+<?php
 $oFilter->Buttons(array("table_id"=>$sTableID,"url"=>$APPLICATION->GetCurPage(),"form"=>"find_form"));
 $oFilter->End();
 ?>
 </form>
 
-<?$lAdmin->DisplayList();?>
+<?php $lAdmin->DisplayList();?>
 
-<?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");
+<?php require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");

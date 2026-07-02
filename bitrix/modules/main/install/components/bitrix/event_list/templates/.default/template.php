@@ -5,9 +5,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 /**
  * Bitrix vars
  * @global CMain $APPLICATION
- * @param array $arParams
- * @param array $arResult
- * @param CBitrixComponentTemplate $this
+ * @var array $arParams
+ * @var array $arResult
+ * @var CBitrixComponentTemplate $this
+ * @var CBitrixComponent $component
  */
 
 CJSCore::Init();
@@ -38,14 +39,14 @@ CJSCore::Init();
 			<script>
 				var arFltFeaturesID = [];
 			</script>
-			<?if (!$arResult["NO_ACTIVE_FEATURES"]):?>
+			<?php if (!$arResult["NO_ACTIVE_FEATURES"]):?>
 			<div class="log-filter-title"><?=GetMessage("EVENT_LIST_FILTER_FEATURES_TITLE")?></div>
-				<?
+				<?php
 				$bCheckedAll = true;
 				foreach ($arResult["ActiveFeatures"] as $featureID => $featureName):
 					?><script>
 						arFltFeaturesID.push('<?=$featureID?>');
-					</script><?
+					</script><?php
 					if (isset($arResult["flt_event_id"]) && in_array($featureID, $arResult["flt_event_id"]) || empty($arParams["EVENT_ID"]) || (!empty($arParams["EVENT_ID"]) && in_array($featureID, $arParams["EVENT_ID"])))
 						$bChecked = true;
 					else
@@ -55,19 +56,19 @@ CJSCore::Init();
 					}
 					?>
 					<span class="event_list-filter-feature"><span class="event_list-filter-checkbox"><input type="checkbox" id="flt_event_id_<?=$featureID?>" name="flt_event_id[]" value="<?=$featureID?>" <?=($bChecked ? "checked" : "")?> onclick="__logFilterClick('<?=$featureID?>')"></span><label id="event_list-filter-label" for="flt_event_id_<?=$featureID?>"><?=$featureName?></label></span>
-					<?
+			<?php
 				endforeach;
 				?>
 
 			<div class="event-list-filter-line"></div>
-			<?endif;?>
+			<?php endif;?>
 			<table cellspacing="0" border="0">
 				<tr>
 				<td valign="top">
 				<div class="event-list-filter-createdby" style="width: 200px;">
 
 					<div class="event-list-filter-createdby-title"><?=GetMessage("EVENT_LIST_FILTER_CREATED_BY");?></div>
-					<?
+					<?php
 					if (IsModuleInstalled("intranet")):
 						$APPLICATION->IncludeComponent('bitrix:intranet.user.selector', '', array(
 							'INPUT_NAME' => "flt_created_by_id",
@@ -97,21 +98,21 @@ CJSCore::Init();
 				<td valign="top">
 				<div class="event-list-filter-date-title"><?=GetMessage("EVENT_LIST_FILTER_DATE");?>:</div>
 					<select name="flt_date_datesel" onchange="__logOnDateChange(this)" class="filter-dropdown" id="flt-date-datesel">
-					<?
+						<?php
 					foreach($arResult["DATE_FILTER"] as $k=>$v):
 						?>
-						<option value="<?=$k?>"<?if($_REQUEST["flt_date_datesel"] == $k) echo ' selected="selected"'?>><?=$v?></option>
-						<?
+						<option value="<?=$k?>"<?php if($_REQUEST["flt_date_datesel"] == $k) echo ' selected="selected"'?>><?=$v?></option>
+					<?php
 					endforeach;
 					?>
 					</select>
 					<br>
 					<span class="filter-field filter-day-interval" style="display:none" id="flt_date_day_span">
-						<input type="text" name="flt_date_days" value="<?=htmlspecialcharsbx($_REQUEST["flt_date_days"])?>" class="filter-date-days" size="2" /> <?echo GetMessage("EVENT_LIST_DATE_FILTER_DAYS")?>
+						<input type="text" name="flt_date_days" value="<?=htmlspecialcharsbx($_REQUEST["flt_date_days"])?>" class="filter-date-days" size="2" /> <?= GetMessage("EVENT_LIST_DATE_FILTER_DAYS")?>
 					</span>
 					<span class="filter-date-interval filter-date-interval-after filter-date-interval-before">
 						<span class="filter-field filter-date-interval-from" style="display:none" id="flt_date_from_span">
-							<input type="text" name="flt_date_from" value="<?=(array_key_exists("LOG_DATE_FROM", $arParams) ? htmlspecialcharsbx($arParams["LOG_DATE_FROM"]) : "")?>" class="filter-date-interval-from" /><?
+							<input type="text" name="flt_date_from" value="<?=(array_key_exists("LOG_DATE_FROM", $arParams) ? htmlspecialcharsbx($arParams["LOG_DATE_FROM"]) : "")?>" class="filter-date-interval-from" /><?php
 							$APPLICATION->IncludeComponent(
 								"bitrix:main.calendar",
 								"",
@@ -126,7 +127,7 @@ CJSCore::Init();
 							);?></span>
 						<span class="filter-date-interval-hellip" style="display:none" id="flt_date_hellip_span">&hellip;</span>
 						<span class="filter-field filter-date-interval-to" style="display:none" id="flt_date_to_span">
-							<input type="text" name="flt_date_to" value="<?=(array_key_exists("LOG_DATE_TO", $arParams) ? htmlspecialcharsbx($arParams["LOG_DATE_TO"]) : "")?>" class="filter-date-interval-to" /><?
+							<input type="text" name="flt_date_to" value="<?=(array_key_exists("LOG_DATE_TO", $arParams) ? htmlspecialcharsbx($arParams["LOG_DATE_TO"]) : "")?>" class="filter-date-interval-to" /><?php
 							$APPLICATION->IncludeComponent(
 								"bitrix:main.calendar",
 								"",
@@ -147,7 +148,7 @@ CJSCore::Init();
 				</tr>
 			</table>
 			<div class="event-list-filter-line"></div>
-			<?
+			<?php
 			if (array_key_exists("flt_show_hidden", $_REQUEST) && $_REQUEST["flt_show_hidden"] == "Y")
 				$bChecked = true;
 			else
@@ -155,7 +156,7 @@ CJSCore::Init();
 			?>
 			<input type="hidden" id="flt_event_id_all" name="flt_event_id_all" value="<?=($bCheckedAll ? "Y" : "")?>">
 			<div class="event-list-filter-submit"><input type="submit" name="log_filter_submit" value="<?=GetMessage("EVENT_LIST_SUBMIT")?>"></div>
-			<?echo bitrix_sessid_post();?>
+			<?= bitrix_sessid_post();?>
 		</form>
 	</div>
 	<div class="event_list-filter-lb">
@@ -163,7 +164,7 @@ CJSCore::Init();
 	</div>
 </div>
 
-<?
+<?php
 if ($arResult["NO_ACTIVE_FEATURES"])
 {
 	ShowError(GetMessage("EVENT_LIST_NO_ACTIVE_FEATURES_ERROR"));
@@ -176,18 +177,19 @@ if ($arResult["EVENT"])
 	?>
 		<span class="event-list-header-center" nowrap><span class="event-list-header-day"><nobr><?=$date?></nobr></span></span>
 		<div class="event-list-date-line"></div>
-	<?
+		<?php
 		foreach ($arEvents as $arEvent)
 		{
 		?>
 			<div class="event-list-item">
-				<span class="event-list-item-avatar"<?
+				<span class="event-list-item-avatar"
+				      <?php
 				if (
 					array_key_exists("avatar", $arEvent["user"])
 					&& $arEvent["user"]["avatar"] <> ''
 				)
 				{
-					?>style="background: url('<?=$arEvent["user"]["avatar"]?>') no-repeat 0 0;"<?
+					?>style="background: url('<?=$arEvent["user"]["avatar"]?>') no-repeat 0 0;"<?php
 				}?>>
 				</span>
 				<span class="event-list-item-body">
@@ -199,7 +201,7 @@ if ($arResult["EVENT"])
 					</div>
 					<div class="event-list-item-content">
 						<div class=" event-list-message-show">
-							<?
+							<?php
 								if ($arEvent["eventURL"] != "")
 									$eventName = "<a href =\"".$arEvent['eventURL']."\">\"".htmlspecialcharsbx($arEvent["eventName"])."\"</a>";
 								else
@@ -212,7 +214,7 @@ if ($arResult["EVENT"])
 					<div class="event-list-item-footer"><span class="event-list-item-time"><?=$arEvent["time"]?></span></div>
 				</span>
 			</div>
-		<?
+			<?php
 		}
 	}
 	echo $arResult["NAV"]->GetPageNavString(GetMessage("EVENT_LIST_PAGE_NAV"));

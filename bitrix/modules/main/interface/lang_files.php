@@ -5,7 +5,7 @@ if (defined('NO_LANG_FILES') || !\Bitrix\Main\Loader::includeModule('translate')
 {
 	return;
 }
-/** @global \CMain $APPLICATION */
+/** @global CMain $APPLICATION */
 if ($APPLICATION->GetGroupRight("translate") <= "D")
 {
 	return;

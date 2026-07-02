@@ -5,8 +5,10 @@ import { RelationMeta } from './types';
 export const subTasksMeta: RelationMeta = Object.freeze({
 	id: TaskField.SubTasks,
 	idsField: 'subTaskIds',
+	statusesField: 'subTaskStatuses',
 	containsField: 'containsSubTasks',
 	relationToField: 'parentId',
+	showCompletedField: 'showCompletedSubTasks',
 	controller: 'Task.Relation.Child',
 	uniqueRight: 'detachParent',
 	addError: Loc.getMessage('TASKS_V2_RELATION_SUBTASKS_NO_ACCESS'),
@@ -18,8 +20,10 @@ export const subTasksMeta: RelationMeta = Object.freeze({
 export const relatedTasksMeta: RelationMeta = Object.freeze({
 	id: TaskField.RelatedTasks,
 	idsField: 'relatedTaskIds',
+	statusesField: 'relatedTaskStatuses',
 	containsField: 'containsRelatedTasks',
 	relationToField: 'relatedToTaskId',
+	showCompletedField: 'showCompletedRelatedTasks',
 	controller: 'Task.Relation.Related',
 	uniqueRight: 'detachRelated',
 	addError: Loc.getMessage('TASKS_V2_RELATION_RELATED_TASKS_NO_ACCESS'),
@@ -29,8 +33,10 @@ export const relatedTasksMeta: RelationMeta = Object.freeze({
 export const ganttMeta: RelationMeta = Object.freeze({
 	id: TaskField.Gantt,
 	idsField: 'ganttTaskIds',
+	statusesField: 'ganttTaskStatuses',
 	containsField: 'containsGanttLinks',
 	relationToField: 'ganttParentId',
+	showCompletedField: 'showCompletedGantt',
 	controller: 'Task.Relation.Gantt.Dependence',
 	uniqueRight: 'changeDependence',
 });

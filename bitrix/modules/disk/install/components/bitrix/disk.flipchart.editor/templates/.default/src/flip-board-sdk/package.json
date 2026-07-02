@@ -1,6 +1,6 @@
 {
   "name": "@flip-chart/flip-board-sdk",
-  "version": "0.0.25",
+  "version": "0.0.31",
   "license": "MIT",
   "dependencies": {
     "tslib": "^2.3.0"

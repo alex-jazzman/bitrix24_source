@@ -18,10 +18,11 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 	const { getLogger } = require('im/messenger/lib/logger');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
-	const { UnreadSeparatorMessage } = require('im/messenger/lib/element/dialog');
+	const { UnreadSeparatorMessage, MarkedSeparatorMessage } = require('im/messenger/lib/element/dialog');
 	const { createPromiseWithResolvers } = require('im/messenger/lib/utils');
 
 	const { StateManager } = require('im/messenger/view/lib/state-manager');
+	const { SuggestsManager } = require('im/messenger/controller/dialog/lib/suggests-manager');
 	const { DialogTextField } = require('im/messenger/view/dialog/text-field');
 	const { DialogMentionPanel } = require('im/messenger/view/dialog/mention-panel');
 	const { DialogPinPanel } = require('im/messenger/view/dialog/pin-panel');
@@ -32,7 +33,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 	const { DialogSelector } = require('im/messenger/view/dialog/selector');
 	const { DialogRestrictions } = require('im/messenger/view/dialog/restrictions');
 	const { DialogNotifyPanel } = require('im/messenger/view/dialog/notify-panel');
-	const { Theme } = require('im/lib/theme');
+	const { DialogSuggests } = require('im/messenger/view/dialog/suggests');
 
 	const AfterScrollMessagePosition = Object.freeze({
 		top: 'top',
@@ -121,6 +122,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 				isShowMessageListLoader: false,
 				isShowWelcomeScreen: false,
 				background: null,
+				keyboardOverContent: false,
 			};
 
 			this.stateManager = new StateManager(state);
@@ -180,6 +182,11 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			 * @type {boolean}
 			 */
 			this.unreadSeparatorAdded = false;
+			/**
+			 * @private
+			 * @type {boolean}
+			 */
+			this.markedSeparatorAdded = false;
 			/**
 			 * @private
 			 * @type {boolean}
@@ -289,6 +296,16 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			this.notifyPanelView ??= new DialogNotifyPanel(this.ui.notifyPanel, this.eventFilter);
 
 			return this.notifyPanelView;
+		}
+
+		/**
+		 * @return {DialogSuggests}
+		 */
+		get suggests()
+		{
+			this.suggestsView ??= new DialogSuggests(this.ui.suggests, this.eventFilter);
+
+			return this.suggestsView;
 		}
 
 		/* endregion nested objects */
@@ -431,7 +448,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 
 		/* region Message */
 		/**
-		 * @return {Promise<{messageList: Array<Message>, indexList: Array<number>}>}
+		 * @return {Promise<{messageList: Array<DialogWidgetItem>, indexList: Array<number>}>}
 		 */
 		getViewableMessages = async () => {
 			const {
@@ -502,6 +519,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 
 			const options = this.getSetMessagesContextOptions(messagesOptions);
 			this.unreadSeparatorAdded = messageList.some((message) => message.id === UnreadSeparatorMessage.getDefaultId());
+			this.markedSeparatorAdded = messageList.some((message) => message.id === MarkedSeparatorMessage.getDefaultId());
 			logger.log(`${this.constructor.name}.setMessages:`, messageList, options);
 			await this.ui.setMessages(this.#prepareMessagesToDialogWidgetItem(messageList), options);
 			this.setMessageList(messageList);
@@ -596,6 +614,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			}
 
 			this.disableShowScrollButton();
+			logger.log(`${this.constructor.name}.addMessages:`, messageList);
 
 			await this.ui.addMessages(this.#prepareMessagesToDialogWidgetItem(messageList));
 			this.addMessageList(messageList);
@@ -644,7 +663,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {number} id
+		 * @param {string} id
 		 * @param {Message} message
 		 * @param {UpdateMessageByIdUpdatingBlocksParam} updatingBlocks
 		 */
@@ -682,6 +701,20 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		}
 
 		/**
+		 * @param {Message} message
+		 * @param {string} blockId
+		 * @param {object} options
+		 */
+		async updateMessageBlock(message, blockId, options)
+		{
+			logger.log(`${this.constructor.name}.updateMessageBlock:`, message.id, options);
+
+			await this.ui.updateMessageBlock(this.#prepareMessageToDialogWidgetItem(message), blockId, options);
+
+			this.updateMessageListById(message.id, message);
+		}
+
+		/**
 		 * @desc update messages
 		 * @param {object} messages
 		 */
@@ -708,10 +741,35 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			this.removeMessageListByIds(removeIdList);
 			if (this.messageList.length === 0)
 			{
-				this.showWelcomeScreen();
+				this.#showSuggests();
+				if (!this.suggests.isShown)
+				{
+					this.showWelcomeScreen();
+				}
 			}
 
 			return true;
+		}
+
+		#showSuggests()
+		{
+			if (true) // TODO: Back not ready yet
+			{
+				return;
+			}
+
+			if (!Feature.isBitrixGptV2Enabled)
+			{
+				return;
+			}
+
+			const params = SuggestsManager.getParams(this.dialogId);
+			if (!params)
+			{
+				return;
+			}
+
+			this.suggests.show(params);
 		}
 
 		/**
@@ -737,12 +795,24 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {Message} message
-		 * @param {MessageMenu} menu
+		 * @param {DialogWidgetItem} message
+		 * @param {DialogWidgetMessageMenu} menu
 		 */
 		showMenuForMessage(message, menu)
 		{
 			this.ui.showMenuForMessage(message, menu);
+		}
+
+		/**
+		 * @param {DialogWidgetItem} message
+		 * @param {DialogWidgetMessageMultiLevelMenu} menu
+		 */
+		showMultiLevelMenuForMessage(
+			message,
+			menu,
+		)
+		{
+			this.ui.showMultiLevelMenuForMessage(message, menu);
 		}
 
 		/* endregion Message */
@@ -892,8 +962,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {MessageId} messageId
-		 * @returns {Promise<boolean>}
+		 * @param {string} messageId
 		 */
 		isAllContentCache(messageId)
 		{
@@ -901,8 +970,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {MessageId} messageId
-		 * @returns {Promise<boolean>}
+		 * @param {string} messageId
 		 */
 		downloadFilesForMessage(messageId)
 		{
@@ -910,8 +978,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {MessageId} messageId
-		 * @returns {Promise<string[]>}
+		 * @param {string} messageId
 		 */
 		getLocalPathListForMessage(messageId)
 		{
@@ -1010,7 +1077,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 
 		/**
 		 * @param {AssistantButton[]} buttons
-		 * @param {?boolean} animated
+		 * @param {boolean?} animated
 		 * @return {Promise<any>}
 		 */
 		showAssistantButtons(buttons, animated = false)
@@ -1019,7 +1086,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {?boolean} animated
+		 * @param {boolean?} animated
 		 * @return {Promise<any>}
 		 */
 		hideAssistantButtons(animated = false)
@@ -1030,11 +1097,12 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		/**
 		 * @param {AssistantButton['id']} id
 		 * @param {AssistantButton} button
+		 * @param {boolean?} animated
 		 * @return {Promise<any>}
 		 */
-		updateAssistantButton(id, button)
+		updateAssistantButton(id, button, animated)
 		{
-			return this.textField.updateAssistantButton(id, button);
+			return this.textField.updateAssistantButton(id, button, animated);
 		}
 
 		/**
@@ -1128,11 +1196,17 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			return this.isScrollToNewMessageButtonVisible;
 		}
 
+		/**
+		 * @param {number} index
+		 * @param {boolean} withAnimation
+		 * @param {()=>any} afterScrollEndCallback
+		 * @param {string} position
+		 * @return {Promise}
+		 */
 		async scrollToMessageByIndex(
 			index,
 			withAnimation = false,
-			afterScrollEndCallback = () => {
-			},
+			afterScrollEndCallback = () => {},
 			position = AfterScrollMessagePosition.bottom,
 		)
 		{
@@ -1148,8 +1222,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		async scrollToMessageById(
 			id,
 			withAnimation = false,
-			afterScrollEndCallback = () => {
-			},
+			afterScrollEndCallback = () => {},
 			position = AfterScrollMessagePosition.bottom,
 		)
 		{
@@ -1170,6 +1243,15 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			if (this.setMessagesOptions.targetMessageId)
 			{
 				return this.setMessagesOptions;
+			}
+
+			if (this.markedSeparatorAdded)
+			{
+				return {
+					targetMessageId: MarkedSeparatorMessage.getDefaultId(),
+					withMessageHighlight: false,
+					targetMessagePosition: AfterScrollMessagePosition.top,
+				};
 			}
 
 			if (this.unreadSeparatorAdded)
@@ -1210,17 +1292,31 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		}
 
 		async scrollToBottomSmoothly(
-			afterScrollEndCallback = () => {
-			},
+			afterScrollEndCallback = () => {},
 			position = AfterScrollMessagePosition.bottom,
 		)
 		{
 			await this.ui.scrollToMessageByIndex(0, true, afterScrollEndCallback, position);
 		}
 
+		/**
+		 * @param {boolean} isAnimate
+		 */
+		scrollLastMessageToTop(isAnimate)
+		{
+			this.ui.scrollLastMessageToTop(isAnimate);
+		}
+
+		/**
+		 * @param {Message} message
+		 */
+		async addAnimateMessageExpand(message)
+		{
+			await this.ui.addAnimateMessageExpand(this.#prepareMessageToDialogWidgetItem(message));
+		}
+
 		async scrollToLastReadMessage(
-			afterScrollEndCallback = () => {
-			},
+			afterScrollEndCallback = () => {},
 			position = AfterScrollMessagePosition.center,
 		)
 		{
@@ -1251,6 +1347,9 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			this.ui.highlightMessageById(messageIdAsString);
 		}
 
+		/**
+		 * @param {?string} [text='']
+		 */
 		setFloatingText(text = '')
 		{
 			const { floatingText } = this.stateManager.state;
@@ -1332,7 +1431,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {{imageUrl?: string, defaultIconSvg?: string, avatar?: object}} currentUserAvatar
+		 * @param {DialogReactionSettingCurrentUserAvatar} currentUserAvatar
 		 */
 		setCurrentUserAvatar(currentUserAvatar)
 		{
@@ -1544,6 +1643,9 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			return true;
 		}
 
+		/**
+		 * @param {string|number} counter
+		 */
 		setNewMessageCounter(counter)
 		{
 			this.ui.setNewMessageCounter(counter);
@@ -1822,6 +1924,26 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			}
 		}
 
+		/**
+		 * @param {boolean} keyboardOverContent
+		 */
+		setKeyboardOverContent(keyboardOverContent)
+		{
+			if (!Feature.isCopilotAnimatedScrollSupported)
+			{
+				return;
+			}
+
+			const newState = { keyboardOverContent };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (hasChanges)
+			{
+				this.ui.setKeyboardOverContent(keyboardOverContent);
+				this.stateManager.updateState(newState);
+			}
+		}
+
 		async #processReadMessagesAfterSet()
 		{
 			const {
@@ -1859,7 +1981,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 
 		/**
 		 * @param {Array<Message>|Message} messageData
-		 * @return {Array<DialogWidgetItem>|DialogWidgetItem}
+		 * @return {Array<DialogWidgetItem>}
 		 */
 		#prepareMessagesToDialogWidgetItem(messageData)
 		{

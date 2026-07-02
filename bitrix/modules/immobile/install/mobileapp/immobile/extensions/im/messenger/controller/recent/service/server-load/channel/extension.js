@@ -60,6 +60,15 @@ jn.define('im/messenger/controller/recent/service/server-load/channel', (require
 
 		/**
 		 * @param {RefreshModeType} mode
+		 * @return {object}
+		 */
+		getInitRequestOptions(mode)
+		{
+			return {};
+		}
+
+		/**
+		 * @param {RefreshModeType} mode
 		 * @param initResult
 		 * @param {imV2RecentChannelTailResult} initResult.channelList
 		 * @return {Promise<void>}
@@ -191,10 +200,11 @@ jn.define('im/messenger/controller/recent/service/server-load/channel', (require
 				this.store.dispatch('stickerPackModel/addStickers', { stickers: modelData.stickers }),
 			]);
 
-			const recentAction = firstPage ? 'recentModel/setFirstPageByTab' : 'recentModel/setChannel';
+			const recentAction = firstPage ? 'recentModel/setFirstPageByRecentSection' : 'recentModel/setChannel';
 			await this.store.dispatch(recentAction, {
-				tab: this.recentLocator.get('id'),
+				recentSection: this.recentLocator.get('recentSection'),
 				itemList: modelData.recent,
+				parentChatId: this.recentLocator.get('parentChatId'),
 			});
 		}
 
@@ -243,6 +253,16 @@ jn.define('im/messenger/controller/recent/service/server-load/channel', (require
 		setLastItem(lastItem)
 		{
 			this.logger.warn('setLastItem', lastItem);
+		}
+
+		subscribeEvents()
+		{
+			this.logger.log('subscribeEvents');
+		}
+
+		unsubscribeEvents()
+		{
+			this.logger.log('unsubscribeEvents');
 		}
 	}
 

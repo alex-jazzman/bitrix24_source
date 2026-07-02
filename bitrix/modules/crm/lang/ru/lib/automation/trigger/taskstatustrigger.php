@@ -9,3 +9,4 @@ $MESS['CRM_AUTOMATION_TRIGGER_TASK_STATUS_CONDITION'] = 'Поля задачи';
 
 $MESS['CRM_AUTOMATION_TRIGGER_TASK_STATUS_NODE_NAME'] = 'Отследить нужный статус задачи из CRM';
 $MESS['CRM_AUTOMATION_TRIGGER_TASK_STATUS_NODE_DESCRIPTION'] = 'Запускает процесс, когда статус задачи изменился на указанный';
+$MESS['CRM_AUTOMATION_TRIGGER_TASK_STATUS_RETURN_TASK'] = 'Задача';

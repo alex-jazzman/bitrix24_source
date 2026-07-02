@@ -52,3 +52,4 @@ $MESS['SN_BIC_GROUP_FIELD_SCRUM_SPRINT_DURATION'] = "Длительность с
 $MESS['SN_BIC_GROUP_FIELD_SCRUM_SPRINT_DURATION_FULL'] = "Длительность спринта в Скрам-команде в секундах";
 $MESS['SN_BIC_GROUP_FIELD_SCRUM_TASK_RESPONSIBLE'] = "Исполнитель по умолчанию в Скрам-команде";
 $MESS['SN_BIC_GROUP_FIELD_SCRUM_TASK_RESPONSIBLE_FULL'] = "Исполнитель по умолчанию в Скрам-команде: A - Постановщик, M - Скрам-мастер";
+$MESS['SN_BIC_GROUP_TABLE_DESCRIPTION_FULL'] = "Набор содержит информацию о проектах: названия, имена владельцев, участников, типы, сроки и активность.";

@@ -1,21 +1,25 @@
-import { MoveableBlock } from 'ui.block-diagram';
+import { MoveableBlock, PORT_POSITION } from 'ui.block-diagram';
 import { Outline } from 'ui.icon-set.api.vue';
-import { Type } from 'main.core';
 import type { MenuItemOptions } from 'ui.vue3.components.menu';
-import { isBlockActivated, getBlockUserTitle } from '../../../../entities/blocks/utils';
 import { IconDivider, IconButton } from '../../../../shared/ui';
+import { PORT_TYPES } from '../../../../shared/constants';
 import {
 	BlockContainer,
-	BlockLayout,
 	BlockHeader,
 	BlockIcon,
-	PortsInOutCenter,
-	BlockTopTitle,
+	BlockToolSubIcon,
+	BlockToolIcon,
+	PortsLayout,
+	PortAux,
+	BLOCK_LAYOUT_SLOT_NAMES,
 } from '../../../../entities/blocks';
 import {
 	DeleteBlockIconBtn,
 	UpdatePublishedStatusLabel,
+	ChangeActivationTopBtn,
 } from '../../../../features/blocks';
+import { BlockLayoutWidget } from '../block-layout/block-layout';
+import { BlockTopTitleWidget } from '../block-top-title/block-top-title';
 
 import type { Block } from '../../../../shared/types';
 
@@ -30,21 +34,30 @@ type Props = {
 	block: Block,
 };
 
+const BLOCK_ICON_NAMES = {
+	DATABASE: 'DATABASE',
+	MCP_LETTERS: 'MCP_LETTERS',
+};
+
 // @vue/component
 export const BlockTool = {
 	name: 'BlockTool',
 	components: {
 		MoveableBlock,
 		BlockContainer,
-		BlockLayout,
+		BlockLayoutWidget,
 		BlockHeader,
 		BlockIcon,
+		BlockToolSubIcon,
+		BlockToolIcon,
 		DeleteBlockIconBtn,
 		UpdatePublishedStatusLabel,
 		IconDivider,
 		IconButton,
-		PortsInOutCenter,
-		BlockTopTitle,
+		PortsLayout,
+		PortAux,
+		BlockTopTitleWidget,
+		ChangeActivationTopBtn,
 	},
 	props: {
 		/** @type Block */
@@ -58,146 +71,113 @@ export const BlockTool = {
 		return {
 			iconSet: Outline,
 			blockMediator: new BlockMediator(),
+			portTypes: PORT_TYPES,
+			portPosition: PORT_POSITION,
+			blockLayoutSlotNames: BLOCK_LAYOUT_SLOT_NAMES,
 		};
 	},
 	computed: {
-		isBlockActivated(): boolean
-		{
-			return isBlockActivated(this.block);
-		},
-		userTitle(): ?string
-		{
-			return getBlockUserTitle(this.block);
-		},
 		contextMenuItems(): Array<MenuItemOptions>
 		{
 			return this.blockMediator.getCommonBlockMenuOptions(this.block);
 		},
-	},
-	methods: {
-		isUrl(value: string): boolean
+		headerBlockIconName(): string
 		{
-			if (!value || !Type.isString(value))
-			{
-				return false;
-			}
-
-			try
-			{
-				const u = new URL(value);
-
-				return u.protocol === 'https:';
-			}
-			catch
-			{
-				return false;
-			}
+			return this.block.node.icon === BLOCK_ICON_NAMES.DATABASE
+				? this.block.node.icon
+				: BLOCK_ICON_NAMES.MCP_LETTERS;
 		},
-
-		getSafeUrl(url: string): string
+		isShowSubIcon(): boolean
 		{
-			if (!url || !Type.isString(url))
-			{
-				return '';
-			}
+			const iconName = this.block.node?.icon ?? null;
 
-			try
-			{
-				const u = new URL(url.trim());
-				if (u.protocol !== 'https:')
-				{
-					return '';
-				}
-
-				return u.href;
-			}
-			catch
-			{
-				return '';
-			}
-		},
-
-		getBackgroundImage(url: string): Object
-		{
-			const safeUrl = this.getSafeUrl(url);
-			if (!safeUrl)
-			{
-				return {};
-			}
-
-			return {
-				'background-image': `url('${safeUrl}')`,
-			};
+			return iconName && iconName !== BLOCK_ICON_NAMES.DATABASE;
 		},
 	},
 	template: `
 		<MoveableBlock :block="block">
 			<template #default="{ isHighlighted, isDragged, isDisabled, isMakeNewConnection }">
 				<BlockContainer
-					:width="200"
+					:block="block"
+					:width="300"
+					:height="58"
 					:highlighted="isHighlighted && !isDragged"
 					:disabled="isDisabled"
-					:deactivated="!isBlockActivated"
 					:hoverable="!isMakeNewConnection"
 					:contextMenuItems="contextMenuItems"
 					@mouseup="blockMediator.handleMouseUp($event, block)"
 					@mousedown="blockMediator.handleMouseDown($event)"
 				>
-					<BlockLayout
-						:block="block"
-						:moreMenuItems="contextMenuItems"
-						:dragged="isDragged"
-						:disabled="isDisabled"
-						:hoverable="!isMakeNewConnection"
-					>
-						<template #top-menu-title>
-							<BlockTopTitle
-								:title="userTitle"
-								:description="block.activity.Properties.EditorComment"
-							/>
-						</template>
-						<template #top-menu>
-							<DeleteBlockIconBtn
-								:blockId="block.id"
-								:disabled="isDisabled"
-								@deletedBlock="blockMediator.hideCurrentBlockSettings($event)"
-							/>
-							<IconDivider/>
-						</template>
+					<template #default="{ isBlockActivated }">
+						<BlockLayoutWidget
+							:block="block"
+							:moreMenuItems="contextMenuItems"
+							:dragged="isDragged"
+							:disabled="isDisabled"
+							:hoverable="!isMakeNewConnection"
+						>
+							<template #[blockLayoutSlotNames.TOP_MENU_TITLE]>
+								<BlockTopTitleWidget :block="block"/>
+							</template>
 
-						<template #default>
-							<PortsInOutCenter
-								:block="block"
-								:disabled="isDisabled"
-							>
-								<BlockHeader :block="block" :subIconExternal="isUrl(block.node?.icon)">
-									<template #icon>
-										<BlockIcon
-											:iconName="block.node.icon === 'DATABASE' ? block.node.icon : 'MCP_LETTERS'"
-											:iconColorIndex="0"
+							<template #[blockLayoutSlotNames.TOP_MENU]>
+								<DeleteBlockIconBtn
+									:blockId="block.id"
+									:disabled="isDisabled"
+									@deletedBlock="blockMediator.hideCurrentBlockSettings($event)"
+								/>
+								<IconDivider/>
+								<ChangeActivationTopBtn :block="block"/>
+							</template>
+
+							<template #[blockLayoutSlotNames.DEFAULT]>
+								<PortsLayout
+									:block="block"
+									:topPortTypes="portTypes.topAux"
+									:bottomPortTypes="portTypes.aux"
+									:leftPortTypes="portTypes.input"
+									:rightPortTypes="portTypes.output"
+									:disabled="isDisabled"
+								>
+									<template #top="{ port, index }">
+										<PortAux
+											:block="block"
+											:port="port"
+											:index="index"
+											:position="portPosition.TOP"
+											:inactive="port.isActive === false"
 										/>
 									</template>
-									<template #subIcon v-if="block.node?.icon && block.node.icon !== 'DATABASE'">
-										<div
-											v-if="isUrl(block.node.icon)"
-											:style="getBackgroundImage(block.node.icon)"
-											class="ui-selector-item-avatar"
-										/>
-										<BlockIcon
-											v-else
-											:iconName="block.node.icon"
-											:iconColorIndex="7"
-											:iconSize="24"
-										/>
-									</template>
-								</BlockHeader>
-							</PortsInOutCenter>
-						</template>
 
-						<template #status>
-							<UpdatePublishedStatusLabel :block="block"/>
-						</template>
-					</BlockLayout>
+									<template #default>
+										<BlockHeader
+											:block="block"
+											:deactivated="!isBlockActivated"
+										>
+											<template #icon>
+												<BlockToolIcon
+													:iconName="block.node.icon"
+													:deactivated="!isBlockActivated"
+												/>
+											</template>
+
+											<template #subIcon>
+												<BlockToolSubIcon
+													v-if="block.node?.icon && block.node.icon !== 'DATABASE'"
+													:icon="block.node.icon"
+													:deactivated="!isBlockActivated"
+												/>
+											</template>
+										</BlockHeader>
+									</template>
+								</PortsLayout>
+							</template>
+
+							<template #[blockLayoutSlotNames.STATUS]>
+								<UpdatePublishedStatusLabel :block="block"/>
+							</template>
+						</BlockLayoutWidget>
+					</template>
 				</BlockContainer>
 			</template>
 		</MoveableBlock>

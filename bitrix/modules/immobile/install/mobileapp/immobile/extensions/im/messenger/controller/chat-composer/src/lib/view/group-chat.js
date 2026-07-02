@@ -18,7 +18,7 @@ jn.define('im/messenger/controller/chat-composer/lib/view/group-chat', (require,
 	const { SettingsPanel } = require('im/messenger/controller/chat-composer/lib/area/settings-panel');
 	const { MessagesAutoDeletePanel } = require('im/messenger/controller/chat-composer/lib/area/messages-auto-delete');
 	const { ComposerDialogType } = require('im/messenger/controller/chat-composer/lib/const');
-	const { dialogTypeAction, participantsAction, managersAction, rulesAction } = require('im/messenger/controller/chat-composer/lib/actions');
+	const { participantsAction, managersAction, rulesAction } = require('im/messenger/controller/chat-composer/lib/actions');
 	const { ParticipantsList } = require('im/messenger/controller/chat-composer/lib/area/participants-list');
 
 	/**
@@ -240,12 +240,6 @@ jn.define('im/messenger/controller/chat-composer/lib/view/group-chat', (require,
 		createActionList()
 		{
 			return [
-				dialogTypeAction({
-					title: Loc.getMessage('IMMOBILE_CHAT_COMPOSER_SETTING_ACTION_TYPE_TITLE_GROUP_CHAT'),
-					subtitle: this.getDialogTypeSubtitle(this.state.type),
-					icon: this.getActionIcon(),
-					onClick: this.props.callbacks.onClickDialogTypeAction,
-				}),
 				participantsAction(
 					{
 						title: Loc.getMessage('IMMOBILE_CHAT_COMPOSER_SETTING_ACTION_PARTICIPANTS_TITLE'),
@@ -277,17 +271,6 @@ jn.define('im/messenger/controller/chat-composer/lib/view/group-chat', (require,
 		getActionIcon()
 		{
 			return Icon.CHEVRON_TO_THE_RIGHT;
-		}
-
-		/**
-		 * @param {string} dialogType
-		 * @return {string}
-		 */
-		getDialogTypeSubtitle(dialogType)
-		{
-			return dialogType === DialogType.open
-				? Loc.getMessage('IMMOBILE_CHAT_COMPOSER_DIALOG_TYPE_OPEN_TITLE')
-				: Loc.getMessage('IMMOBILE_CHAT_COMPOSER_DIALOG_TYPE_CLOSE_TITLE');
 		}
 
 		/**

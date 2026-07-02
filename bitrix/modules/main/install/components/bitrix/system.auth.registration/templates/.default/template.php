@@ -24,36 +24,36 @@ if($arResult["SHOW_SMS_FIELD"] == true)
 }
 ?>
 <div class="bx-auth">
-<?
+<?php
 if (!empty($arParams["~AUTH_RESULT"]))
 {
 	ShowMessage($arParams["~AUTH_RESULT"]);
 }
 ?>
-<?if($arResult["SHOW_EMAIL_SENT_CONFIRMATION"]):?>
-	<p><?echo GetMessage("AUTH_EMAIL_SENT")?></p>
-<?endif;?>
+<?php if($arResult["SHOW_EMAIL_SENT_CONFIRMATION"]):?>
+	<p><?= GetMessage("AUTH_EMAIL_SENT")?></p>
+<?php endif;?>
 
-<?if(!$arResult["SHOW_EMAIL_SENT_CONFIRMATION"] && $arResult["USE_EMAIL_CONFIRMATION"] === "Y"):?>
-	<p><?echo GetMessage("AUTH_EMAIL_WILL_BE_SENT")?></p>
-<?endif?>
+<?php if(!$arResult["SHOW_EMAIL_SENT_CONFIRMATION"] && $arResult["USE_EMAIL_CONFIRMATION"] === "Y"):?>
+	<p><?= GetMessage("AUTH_EMAIL_WILL_BE_SENT")?></p>
+<?php endif?>
 <noindex>
 
-<?if($arResult["SHOW_SMS_FIELD"] == true):?>
+<?php if($arResult["SHOW_SMS_FIELD"] == true):?>
 
 <form method="post" action="<?=$arResult["AUTH_URL"]?>" name="regform">
 <input type="hidden" name="SIGNED_DATA" value="<?=htmlspecialcharsbx($arResult["SIGNED_DATA"])?>" />
 <table class="data-table bx-registration-table">
 	<tbody>
 		<tr>
-			<td><span class="starrequired">*</span><?echo GetMessage("main_register_sms_code")?></td>
+			<td><span class="starrequired">*</span><?= GetMessage("main_register_sms_code")?></td>
 			<td><input size="30" type="text" name="SMS_CODE" value="<?=htmlspecialcharsbx($arResult["SMS_CODE"])?>" autocomplete="off" /></td>
 		</tr>
 	</tbody>
 	<tfoot>
 		<tr>
 			<td></td>
-			<td><input type="submit" name="code_submit_button" value="<?echo GetMessage("main_register_sms_send")?>" /></td>
+			<td><input type="submit" name="code_submit_button" value="<?= GetMessage("main_register_sms_send")?>" /></td>
 		</tr>
 	</tfoot>
 </table>
@@ -83,11 +83,11 @@ new BX.PhoneAuth({
 });
 </script>
 
-<div id="bx_register_error" style="display:none"><?ShowError("error")?></div>
+<div id="bx_register_error" style="display:none"><?php ShowError("error")?></div>
 
 <div id="bx_register_resend"></div>
 
-<?elseif(!$arResult["SHOW_EMAIL_SENT_CONFIRMATION"]):?>
+<?php elseif(!$arResult["SHOW_EMAIL_SENT_CONFIRMATION"]):?>
 
 <form method="post" action="<?=$arResult["AUTH_URL"]?>" name="bform" enctype="multipart/form-data">
 	<input type="hidden" name="AUTH_FORM" value="Y" />
@@ -116,19 +116,19 @@ new BX.PhoneAuth({
 		<tr>
 			<td><span class="starrequired">*</span><?=GetMessage("AUTH_PASSWORD_REQ")?></td>
 			<td><input type="password" name="USER_PASSWORD" maxlength="255" value="<?=$arResult["USER_PASSWORD"]?>" class="bx-auth-input" autocomplete="off" />
-<?if($arResult["SECURE_AUTH"]):?>
-				<span class="bx-auth-secure" id="bx_auth_secure" title="<?echo GetMessage("AUTH_SECURE_NOTE")?>" style="display:none">
+<?php if($arResult["SECURE_AUTH"]):?>
+				<span class="bx-auth-secure" id="bx_auth_secure" title="<?= GetMessage("AUTH_SECURE_NOTE")?>" style="display:none">
 					<div class="bx-auth-secure-icon"></div>
 				</span>
 				<noscript>
-				<span class="bx-auth-secure" title="<?echo GetMessage("AUTH_NONSECURE_NOTE")?>">
+				<span class="bx-auth-secure" title="<?= GetMessage("AUTH_NONSECURE_NOTE")?>">
 					<div class="bx-auth-secure-icon bx-auth-secure-unlock"></div>
 				</span>
 				</noscript>
 <script>
 document.getElementById('bx_auth_secure').style.display = 'inline-block';
 </script>
-<?endif?>
+<?php endif?>
 			</td>
 		</tr>
 		<tr>
@@ -136,33 +136,35 @@ document.getElementById('bx_auth_secure').style.display = 'inline-block';
 			<td><input type="password" name="USER_CONFIRM_PASSWORD" maxlength="255" value="<?=$arResult["USER_CONFIRM_PASSWORD"]?>" class="bx-auth-input" autocomplete="off" /></td>
 		</tr>
 
-<?if($arResult["EMAIL_REGISTRATION"]):?>
+<?php if($arResult["EMAIL_REGISTRATION"]):?>
 		<tr>
-			<td><?if($arResult["EMAIL_REQUIRED"]):?><span class="starrequired">*</span><?endif?><?=GetMessage("AUTH_EMAIL")?></td>
+			<td><?php if($arResult["EMAIL_REQUIRED"]):?><span class="starrequired">*</span><?php endif?><?=GetMessage("AUTH_EMAIL")?></td>
 			<td><input type="text" name="USER_EMAIL" maxlength="255" value="<?=$arResult["USER_EMAIL"]?>" class="bx-auth-input" /></td>
 		</tr>
-<?endif?>
+<?php endif?>
 
-<?if($arResult["PHONE_REGISTRATION"]):?>
+<?php if($arResult["PHONE_REGISTRATION"]):?>
 		<tr>
-			<td><?if($arResult["PHONE_REQUIRED"]):?><span class="starrequired">*</span><?endif?><?echo GetMessage("main_register_phone_number")?></td>
+			<td><?php if($arResult["PHONE_REQUIRED"]):?><span class="starrequired">*</span><?php endif?><?= GetMessage("main_register_phone_number")?></td>
 			<td><input type="text" name="USER_PHONE_NUMBER" maxlength="255" value="<?=$arResult["USER_PHONE_NUMBER"]?>" class="bx-auth-input" /></td>
 		</tr>
-<?endif?>
+<?php endif?>
 
-<?// ********************* User properties ***************************************************?>
-<?if($arResult["USER_PROPERTIES"]["SHOW"] == "Y"):?>
+		<?php
+		// ********************* User properties ***************************************************?>
+<?php if($arResult["USER_PROPERTIES"]["SHOW"] == "Y"):?>
 	<tr><td colspan="2"><?=trim($arParams["USER_PROPERTY_NAME"]) <> '' ? $arParams["USER_PROPERTY_NAME"] : GetMessage("USER_TYPE_EDIT_TAB")?></td></tr>
-	<?foreach ($arResult["USER_PROPERTIES"]["DATA"] as $FIELD_NAME => $arUserField):?>
-	<tr><td><?if ($arUserField["MANDATORY"]=="Y"):?><span class="starrequired">*</span><?endif;
+	<?php foreach ($arResult["USER_PROPERTIES"]["DATA"] as $FIELD_NAME => $arUserField):?>
+	<tr><td><?php if ($arUserField["MANDATORY"]=="Y"):?><span class="starrequired">*</span><?php endif;
 		?><?=$arUserField["EDIT_FORM_LABEL"]?>:</td><td>
-			<?$APPLICATION->IncludeComponent(
+			<?php $APPLICATION->IncludeComponent(
 				"bitrix:system.field.edit",
 				$arUserField["USER_TYPE"]["USER_TYPE_ID"],
 				array("bVarsFromForm" => $arResult["bVarsFromForm"], "arUserField" => $arUserField, "form_name" => "bform"), null, array("HIDE_ICONS"=>"Y"));?></td></tr>
-	<?endforeach;?>
-<?endif;?>
-<?// ******************** /User properties ***************************************************
+	<?php endforeach;?>
+<?php endif;?>
+		<?php
+		// ******************** /User properties ***************************************************
 
 	/* CAPTCHA */
 	if ($arResult["USE_CAPTCHA"] == "Y")
@@ -182,14 +184,14 @@ document.getElementById('bx_auth_secure').style.display = 'inline-block';
 			<td><span class="starrequired">*</span><?=GetMessage("CAPTCHA_REGF_PROMT")?>:</td>
 			<td><input type="text" name="captcha_word" maxlength="50" value="" autocomplete="off" /></td>
 		</tr>
-		<?
+		<?php
 	}
 	/* CAPTCHA */
 	?>
 		<tr>
 			<td></td>
 			<td>
-				<?$APPLICATION->IncludeComponent("bitrix:main.userconsent.request", "",
+				<?php $APPLICATION->IncludeComponent("bitrix:main.userconsent.request", "",
 					array(
 						"ID" => COption::getOptionString("main", "new_user_agreement", ""),
 						"IS_CHECKED" => "Y",
@@ -223,7 +225,7 @@ document.getElementById('bx_auth_secure').style.display = 'inline-block';
 
 </form>
 
-<p><?echo $arResult["GROUP_POLICY"]["PASSWORD_REQUIREMENTS"];?></p>
+<p><?= $arResult["GROUP_POLICY"]["PASSWORD_REQUIREMENTS"];?></p>
 <p><span class="starrequired">*</span><?=GetMessage("AUTH_REQ")?></p>
 
 <p><a href="<?=$arResult["AUTH_AUTH_URL"]?>" rel="nofollow"><b><?=GetMessage("AUTH_AUTH")?></b></a></p>
@@ -232,7 +234,7 @@ document.getElementById('bx_auth_secure').style.display = 'inline-block';
 document.bform.USER_NAME.focus();
 </script>
 
-<?endif?>
+<?php endif?>
 
 </noindex>
 </div>

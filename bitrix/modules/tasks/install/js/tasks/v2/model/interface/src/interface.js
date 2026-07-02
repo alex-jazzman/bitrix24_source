@@ -1,21 +1,21 @@
 /* eslint-disable no-param-reassign */
 import { localStorage } from 'main.core';
-import { BuilderModel } from 'ui.vue3.vuex';
-import type { ActionTree, GetterTree, MutationTree } from 'ui.vue3.vuex';
+import { BuilderModel, type ActionTree, type GetterTree, type MutationTree } from 'ui.vue3.vuex';
 
 import { Model } from 'tasks.v2.const';
 import { calendar } from 'tasks.v2.lib.calendar';
 import { timezone } from 'tasks.v2.lib.timezone';
 
-import type {
-	InterfaceModelParams,
-	InterfaceModelState,
-	CheckListCompletionCallback,
-	DeadlineUserOption,
-	StateFlags,
-	UserFieldScheme,
+import {
+	type InterfaceModelParams,
+	type InterfaceModelState,
+	type CheckListCompletionCallback,
+	type DeadlineUserOption,
+	type StateFlags,
+	type UserFieldScheme,
+	type TaskListOptions,
 } from './types';
-import type { TaskModel } from 'tasks.v2.model.tasks';
+import { type TaskModel } from 'tasks.v2.model.tasks';
 
 export class Interface extends BuilderModel
 {
@@ -31,6 +31,10 @@ export class Interface extends BuilderModel
 			taskUserFieldScheme: params.taskUserFieldScheme,
 			templateUserFieldScheme: params.templateUserFieldScheme,
 			fullCardWidth: params.userOptions.fullCard?.cardWidth,
+			taskListOptions: params.userOptions.fullCard?.taskListOptions
+				? JSON.parse(params.userOptions.fullCard.taskListOptions)
+				: undefined
+			,
 		});
 	}
 
@@ -43,7 +47,6 @@ export class Interface extends BuilderModel
 	{
 		return {
 			currentUserId: this.getVariable('currentUserId', 0),
-			deadlineChangeCount: 0,
 			titleFieldOffsetHeight: null,
 			stateFlags: this.getVariable('stateFlags', {
 				needsControl: false,
@@ -69,6 +72,13 @@ export class Interface extends BuilderModel
 			taskUserFieldScheme: this.getVariable('taskUserFieldScheme', []),
 			templateUserFieldScheme: this.getVariable('templateUserFieldScheme', []),
 			taskWithActiveTimer: null,
+			taskListOptions: this.getVariable('taskListOptions', {
+				showCompletedSubTasks: true,
+				showCompletedRelatedTasks: true,
+				showCompletedGantt: true,
+				showSubTasks: true,
+				showSubTemplates: true,
+			}),
 		};
 	}
 
@@ -79,8 +89,6 @@ export class Interface extends BuilderModel
 			currentUserId: (state: InterfaceModelState): number => state.currentUserId,
 			/** @function interface/fullCardWidth */
 			fullCardWidth: (state: InterfaceModelState): number => state.fullCardWidth,
-			/** @function interface/deadlineChangeCount */
-			deadlineChangeCount: (state: InterfaceModelState): number => state.deadlineChangeCount,
 			/** @function interface/titleFieldOffsetHeight */
 			titleFieldOffsetHeight: (state: InterfaceModelState): number => state.titleFieldOffsetHeight,
 			/** @function interface/stateFlags */
@@ -122,6 +130,8 @@ export class Interface extends BuilderModel
 			templateUserFieldScheme: (state: InterfaceModelState): UserFieldScheme[] => state.templateUserFieldScheme,
 			/** @function interface/taskWithActiveTimer */
 			taskWithActiveTimer: (state: InterfaceModelState): ?TaskModel => state.taskWithActiveTimer,
+			/** @function interface/taskListOptions */
+			taskListOptions: (state: InterfaceModelState): TaskListOptions => state.taskListOptions,
 		};
 	}
 
@@ -132,10 +142,6 @@ export class Interface extends BuilderModel
 			updateFullCardWidth: (store, fullCardWidth: number) => {
 				store.commit('setFullCardWidth', fullCardWidth);
 				updateSkeleton(fullCardWidth);
-			},
-			/** @function interface/updateDeadlineChangeCount */
-			updateDeadlineChangeCount: (store, deadlineChangeCount: number) => {
-				store.commit('setDeadlineChangeCount', deadlineChangeCount);
 			},
 			/** @function interface/updateTitleFieldOffsetHeight */
 			updateTitleFieldOffsetHeight: (store, titleFieldOffsetHeight: number) => {
@@ -189,6 +195,10 @@ export class Interface extends BuilderModel
 			setTaskWithActiveTimer: (store, task: ?TaskModel) => {
 				store.commit('setTaskWithActiveTimer', task);
 			},
+			/** @function interface/updateTaskListOptions */
+			updateTaskListOptions: (store, taskListOptions: TaskListOptions) => {
+				store.commit('setTaskListOptions', taskListOptions);
+			},
 		};
 	}
 
@@ -197,9 +207,6 @@ export class Interface extends BuilderModel
 		return {
 			setFullCardWidth: (state: InterfaceModelState, fullCardWidth: number) => {
 				state.fullCardWidth = fullCardWidth;
-			},
-			setDeadlineChangeCount: (state: InterfaceModelState, deadlineChangeCount: number) => {
-				state.deadlineChangeCount = deadlineChangeCount;
 			},
 			setTitleFieldOffsetHeight: (state: InterfaceModelState, titleFieldOffsetHeight: number) => {
 				state.titleFieldOffsetHeight = titleFieldOffsetHeight;
@@ -249,6 +256,9 @@ export class Interface extends BuilderModel
 			},
 			setTaskWithActiveTimer: (state: InterfaceModelState, task: ?TaskModel) => {
 				state.taskWithActiveTimer = task;
+			},
+			setTaskListOptions: (state: InterfaceModelState, taskListOptions: TaskListOptions) => {
+				state.taskListOptions = taskListOptions;
 			},
 		};
 	}

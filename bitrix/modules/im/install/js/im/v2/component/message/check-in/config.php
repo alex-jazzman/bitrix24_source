@@ -8,12 +8,12 @@ return [
 	'css' => 'dist/check-in.bundle.css',
 	'js' => 'dist/check-in.bundle.js',
 	'rel' => [
+		'im.v2.component.message.base',
+		'im.v2.component.message.default',
+		'im.v2.component.message.elements',
+		'im.v2.lib.analytics',
 		'main.core',
 		'stafftrack.user-statistics-link',
-		'im.v2.lib.analytics',
-		'im.v2.component.message.base',
-		'im.v2.component.message.elements',
-		'im.v2.component.message.default',
 	],
 	'skip_core' => false,
 ];

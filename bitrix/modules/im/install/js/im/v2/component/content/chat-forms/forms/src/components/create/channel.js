@@ -1,12 +1,8 @@
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { type JsonObject } from 'main.core';
+import { EventEmitter, type BaseEvent } from 'main.core.events';
 import { MenuManager } from 'main.popup';
 
 import { Messenger } from 'im.public';
-import { CreateChatManager } from 'im.v2.lib.create-chat';
-import { PermissionManager } from 'im.v2.lib.permission';
-import { EmptyAvatarType } from 'im.v2.component.elements.avatar';
-import { ChatService } from 'im.v2.provider.service.chat';
-import { UserRole, PopupType, ChatType, EventType, Layout, type OnLayoutChangeEvent } from 'im.v2.const';
 import {
 	TitleInput,
 	ChatAvatar,
@@ -18,8 +14,11 @@ import {
 	AppearanceSection,
 	PrivacySection,
 } from 'im.v2.component.content.chat-forms.elements';
-
-import type { JsonObject } from 'main.core';
+import { EmptyAvatarType } from 'im.v2.component.elements.avatar';
+import { PopupType, ChatType, EventType, Layout, type UserRole, type OnLayoutChangeEvent } from 'im.v2.const';
+import { CreateChatManager, CreatableChatType } from 'im.v2.lib.create-chat';
+import { PermissionManager } from 'im.v2.lib.permission';
+import { ChatService } from 'im.v2.provider.service.chat';
 
 type UserRoleItem = $Keys<typeof UserRole>;
 
@@ -82,13 +81,13 @@ export const ChannelCreation = {
 		this.chatMembers = CreateChatManager.getInstance().getChatMembers();
 
 		this.restoreFields();
-		CreateChatManager.getInstance().setChatType(ChatType.channel);
+		CreateChatManager.getInstance().setChatType(CreatableChatType.channel);
 		CreateChatManager.getInstance().setCreationStatus(true);
 		CreateChatManager.getInstance().setChatAvatar(this.avatarFile);
 	},
 	beforeUnmount()
 	{
-		CreateChatManager.getInstance().clearExternalFields();
+		CreateChatManager.getInstance().clearPresetFields();
 		EventEmitter.unsubscribe(EventType.layout.onLayoutChange, this.onLayoutChange);
 
 		if (this.exitByCancel || this.exitByChatTypeSwitch || this.exitByCreation)
@@ -146,7 +145,7 @@ export const ChannelCreation = {
 				memberEntities: this.chatMembers,
 				ownerId: this.rights.ownerId,
 				managers: this.rights.managerIds,
-				isAvailableInSearch: this.settings.isAvailableInSearch,
+				searchable: this.settings.isAvailableInSearch,
 				description: this.settings.description,
 				manageUsersAdd: this.rights.manageUsersAdd,
 				manageUsersDelete: this.rights.manageUsersDelete,
@@ -159,15 +158,13 @@ export const ChannelCreation = {
 			this.isCreating = false;
 			this.exitByCreation = true;
 			CreateChatManager.getInstance().setCreationStatus(false);
-			CreateChatManager.getInstance().setPreselectedMembers([]);
 			void Messenger.openChat(newDialogId);
 		},
 		onCancelClick()
 		{
 			this.exitByCancel = true;
 			CreateChatManager.getInstance().setCreationStatus(false);
-			CreateChatManager.getInstance().setPreselectedMembers([]);
-			Messenger.openChat();
+			void Messenger.openChat();
 		},
 		onAvatarChange(newAvatarFile: File)
 		{
@@ -184,7 +181,7 @@ export const ChannelCreation = {
 		onLayoutChange(event: BaseEvent<OnLayoutChangeEvent>)
 		{
 			const { to } = event.getData();
-			if (to.name === Layout.createChat && to.entityId !== ChatType.channel)
+			if (to.name === Layout.createChat && to.entityId !== CreatableChatType.channel)
 			{
 				this.exitByChatTypeSwitch = true;
 			}

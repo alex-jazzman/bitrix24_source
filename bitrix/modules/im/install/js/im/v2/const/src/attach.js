@@ -1,4 +1,4 @@
-import { ColorToken } from 'im.v2.const';
+import { type ColorToken } from 'im.v2.const';
 
 export const AttachType = Object.freeze({
 	Delimiter: 'delimiter',

@@ -1,11 +1,11 @@
 export const Model = Object.freeze({
+	AiAgent: 'ai-agent',
 	BookingInfo: 'booking-info',
 	Bookings: 'bookings',
 	Clients: 'clients',
 	Counters: 'counters',
 	Dictionary: 'dictionary',
 	Favorites: 'favorites',
-	FormsMenu: 'forms-menu',
 	Interface: 'interface',
 	MainResources: 'main-resources',
 	MessageStatus: 'message-status',

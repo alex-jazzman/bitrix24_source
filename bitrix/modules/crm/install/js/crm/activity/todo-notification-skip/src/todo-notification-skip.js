@@ -1,6 +1,7 @@
 import {BaseEvent, EventEmitter} from "main.core.events";
 import {ajax as Ajax, Loc, Type} from "main.core";
 import {UI} from "ui.notification";
+import 'ls';
 
 declare type TodoNotificationSkipParams = {
 	entityTypeId: number,

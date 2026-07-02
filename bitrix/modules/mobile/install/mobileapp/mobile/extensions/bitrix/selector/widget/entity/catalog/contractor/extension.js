@@ -1,4 +1,10 @@
-(() => {
+/**
+ * @module selector/widget/entity/catalog/contractor
+ */
+jn.define('selector/widget/entity/catalog/contractor', (require, exports, module) => {
+	const { Loc } = require('loc');
+	const { BaseSelectorEntity } = require('selector/widget/entity');
+
 	/**
 	 * @class CatalogContractorSelector
 	 */
@@ -16,12 +22,12 @@
 
 		static getStartTypingText()
 		{
-			return BX.message('SELECTOR_COMPONENT_START_TYPING_TO_SEARCH_CONTRACTOR');
+			return Loc.getMessage('SELECTOR_COMPONENT_START_TYPING_TO_SEARCH_CONTRACTOR');
 		}
 
 		static getStartTypingWithCreationText()
 		{
-			return BX.message('SELECTOR_COMPONENT_START_TYPING_TO_CREATE_CONTRACTOR');
+			return Loc.getMessage('SELECTOR_COMPONENT_START_TYPING_TO_CREATE_CONTRACTOR');
 		}
 
 		static isCreationEnabled()
@@ -31,12 +37,12 @@
 
 		static getCreateText()
 		{
-			return BX.message('SELECTOR_COMPONENT_CREATE_CONTRACTOR');
+			return Loc.getMessage('SELECTOR_COMPONENT_CREATE_CONTRACTOR');
 		}
 
 		static getCreatingText()
 		{
-			return BX.message('SELECTOR_COMPONENT_CREATING_CONTRACTOR');
+			return Loc.getMessage('SELECTOR_COMPONENT_CREATING_CONTRACTOR');
 		}
 
 		static getCreateEntityHandler(providerOptions)
@@ -47,17 +53,17 @@
 					{
 						data: {
 							fields: {
-								companyName: text
-							}
-						}
-					}
+								companyName: text,
+							},
+						},
+					},
 				).then((response) => {
 					if (response.data && response.data.id)
 					{
 						return {
 							id: response.data.id,
 							entityId: this.getEntityId(),
-							title: text
+							title: text,
 						};
 					}
 
@@ -68,9 +74,18 @@
 
 		static getTitle()
 		{
-			return BX.message('SELECTOR_COMPONENT_PICK_CONTRACTOR_2');
+			return Loc.getMessage('SELECTOR_COMPONENT_PICK_CONTRACTOR_2');
 		}
 	}
+
+	module.exports = {
+		CatalogContractorSelector,
+	};
+});
+
+(() => {
+	const require = (ext) => jn.require(ext);
+	const { CatalogContractorSelector } = require('selector/widget/entity/catalog/contractor');
 
 	this.CatalogContractorSelector = CatalogContractorSelector;
 })();

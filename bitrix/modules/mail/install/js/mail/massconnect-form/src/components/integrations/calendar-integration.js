@@ -2,7 +2,7 @@ import { Switcher } from 'ui.vue3.components.switcher';
 import { SwitcherSize } from 'ui.switcher';
 import { LocalizationMixin } from '../../mixins/localization-mixin';
 import './integrations.css';
-import { CalendarIntegrationSettingsType } from '../../utils/calendar-integration-settings-type';
+import { type CalendarIntegrationSettingsType } from '../../utils/calendar-integration-settings-type';
 
 // @vue/component
 export const CalendarIntegration = {

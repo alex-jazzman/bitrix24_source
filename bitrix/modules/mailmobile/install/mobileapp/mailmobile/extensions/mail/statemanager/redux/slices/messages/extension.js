@@ -9,7 +9,7 @@ jn.define('mail/statemanager/redux/slices/messages', (require, exports, module) 
 	const { ReducerRegistry } = require('statemanager/redux/reducer-registry');
 
 	const { sliceName, messagesListAdapter } = require('mail/statemanager/redux/slices/messages/meta');
-	const { remove, changeReadStatus, moveToFolder, addToChat, addToEvent } = require('mail/statemanager/redux/slices/messages/thunk');
+	const { remove, changeReadStatus, moveToFolder, markAsSpam, addToChat, addToEvent } = require('mail/statemanager/redux/slices/messages/thunk');
 	const {
 		removePending,
 		removeFulfilled,
@@ -223,6 +223,8 @@ jn.define('mail/statemanager/redux/slices/messages', (require, exports, module) 
 				.addCase(changeReadStatus.fulfilled, changeReadStatusFulfilled)
 				.addCase(moveToFolder.pending, removePending)
 				.addCase(moveToFolder.fulfilled, removeFulfilled)
+				.addCase(markAsSpam.pending, removePending)
+				.addCase(markAsSpam.fulfilled, removeFulfilled)
 				.addCase(addToChat.fulfilled, addToChatFulfilled)
 			;
 		},

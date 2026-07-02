@@ -1,6 +1,6 @@
 import { GroupList } from './group-list';
 
-import { GroupData } from '@/type/group';
+import { type GroupData } from '../types/group';
 
 import '../css/main-groups.css';
 

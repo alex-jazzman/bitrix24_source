@@ -9,11 +9,11 @@ return [
 	'css' => 'dist/autorun.bundle.css',
 	'js' => 'dist/autorun.bundle.js',
 	'rel' => [
-		'ui.design-tokens',
 		'crm.integration.analytics',
-		'ui.analytics',
-		'ui.dialogs.messagebox',
 		'main.core',
+		'ui.analytics',
+		'ui.design-tokens',
+		'ui.dialogs.messagebox',
 	],
 	'skip_core' => false,
 ];

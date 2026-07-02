@@ -1,39 +1,30 @@
 import { type JsonObject } from 'main.core';
-import { type EventEmitter } from 'main.core.events';
+import { type BaseEvent, type EventEmitter } from 'main.core.events';
 
-import { ListLoadingState as LoadingState } from 'im.v2.component.elements.list-loading-state';
+import { BaseRecentItem, BaseRecentList } from 'im.v2.component.list.items.base';
 import { RecentEmptyState } from 'im.v2.component.list.items.elements.empty-state';
-import { RecentType } from 'im.v2.const';
+import { EventType, RecentType } from 'im.v2.const';
 import { DraftManager } from 'im.v2.lib.draft';
 import { RecentMenu } from 'im.v2.lib.menu';
-import { Utils } from 'im.v2.lib.utils';
-import { type ImModelCallItem, ImModelRecentItem } from 'im.v2.model';
+import { type ImModelCallItem, type ImModelRecentItem } from 'im.v2.model';
 import { UnreadRecentService } from 'im.v2.provider.service.recent';
-
-import { LikeManager } from '../../classes/like-manager';
-import { RecentItem } from '../recent-item/recent-item';
+import { UnreadModeManager } from 'im.v2.lib.unread-mode';
 
 // @vue/component
 export const RecentUnreadList = {
 	name: 'RecentUnreadList',
-	components: {
-		LoadingState,
-		RecentItem,
-		RecentEmptyState,
-	},
-	emits: ['chatClick'],
-	data(): JsonObject {
+	components: { BaseRecentList, BaseRecentItem, RecentEmptyState },
+	emits: ['selectChat'],
+	data(): JsonObject
+	{
 		return {
 			isLoading: false,
 			isLoadingNextPage: false,
+			firstPageLoaded: false,
 		};
 	},
 	computed: {
-		isEmptyCollection(): boolean
-		{
-			return this.preparedItems.length === 0;
-		},
-		preparedItems(): ImModelRecentItem[]
+		collection(): ImModelRecentItem[]
 		{
 			return this.$store.getters['recent/getSortedUnreadCollection']({ type: RecentType.default });
 		},
@@ -41,79 +32,79 @@ export const RecentUnreadList = {
 		{
 			return this.$store.getters['recent/calls/get'];
 		},
-		pinnedItems(): ImModelRecentItem[]
-		{
-			return this.preparedItems.filter((item) => item.pinned === true);
-		},
-		generalItems(): ImModelRecentItem[]
-		{
-			return this.preparedItems.filter((item) => item.pinned === false);
-		},
 	},
-	async created() {
+	async created()
+	{
 		this.contextMenuManager = new RecentMenu({ emitter: this.getEmitter() });
 
-		this.initLikeManager();
-
-		this.isLoading = true;
-		await this.getUnreadRecentService().loadFirstPage({ ignorePreloadedItems: true });
-		this.isLoading = false;
+		await this.loadInitialItems();
 
 		void DraftManager.getInstance().initDraftHistory();
+
+		this.getEmitter().subscribe(EventType.dialog.onCloseChat, this.onCloseChat);
 	},
-	beforeUnmount() {
+	beforeUnmount()
+	{
 		this.contextMenuManager.destroy();
-		this.destroyLikeManager();
+
+		this.getEmitter().unsubscribe(EventType.dialog.onCloseChat, this.onCloseChat);
 	},
 	methods: {
-		async onScroll(event: Event)
+		onCloseChat(event: BaseEvent<{ dialogId: string }>)
 		{
-			this.contextMenuManager.close();
-			if (!Utils.dom.isOneScreenRemaining(event.target) || !this.getUnreadRecentService().hasMoreItemsToLoad)
+			const { dialogId } = event.getData();
+
+			UnreadModeManager.removeItemFromList(RecentType.default, dialogId);
+		},
+		async loadInitialItems()
+		{
+			if (this.firstPageLoaded || this.isLoading)
+			{
+				return;
+			}
+
+			this.isLoading = true;
+			await this.getRecentUnreadService().loadFirstPage({ ignorePreloadedItems: true });
+			this.firstPageLoaded = true;
+			this.isLoading = false;
+		},
+		async onLoadNextPage()
+		{
+			if (this.isLoadingNextPage || !this.getRecentUnreadService().hasMoreItemsToLoad())
 			{
 				return;
 			}
 
 			this.isLoadingNextPage = true;
-			await this.getUnreadRecentService().loadNextPage();
+			await this.getRecentUnreadService().loadNextPage();
 			this.isLoadingNextPage = false;
 		},
-		onClick(item)
+		onSelectChat(dialogId: string)
 		{
-			this.$emit('chatClick', item.dialogId);
+			this.$emit('selectChat', dialogId);
 		},
-		onRightClick(item, event)
+		onItemRightClick(payload: { item: ImModelRecentItem, event: PointerEvent })
 		{
-			if (Utils.key.isCombination(event, 'Alt+Shift'))
-			{
-				return;
-			}
+			const { item, event } = payload;
+			event.preventDefault();
 
 			const context = {
 				dialogId: item.dialogId,
 				recentItem: item,
 				compactMode: false,
+				recentSection: RecentType.default,
 			};
 
-			const positionTarget = {
+			this.contextMenuManager.openMenu(context, {
 				left: event.pageX,
 				top: event.pageY,
-			};
-
-			this.contextMenuManager.openMenu(context, positionTarget);
-
-			event.preventDefault();
+			});
 		},
-		initLikeManager()
+		onCloseMenu()
 		{
-			this.likeManager = new LikeManager();
-			this.likeManager.init();
+			this.contextMenuManager.close();
 		},
-		destroyLikeManager()
-		{
-			this.likeManager.destroy();
-		},
-		getUnreadRecentService(): UnreadRecentService
+		getRecentUnreadService(): UnreadRecentService
 		{
 			if (!this.service)
 			{
@@ -132,33 +123,18 @@ export const RecentUnreadList = {
 		},
 	},
 	template: `
-		<div class="bx-im-list-recent__container">
-			<LoadingState v-if="isLoading" />
-			<div v-else @scroll="onScroll" class="bx-im-list-recent__scroll-container">
-				<RecentEmptyState
-					v-if="isEmptyCollection" 
-					:title="loc('IM_LIST_UNREAD_RECENT_EMPTY_STATE_TITLE')"
-				/>
-				<div v-if="pinnedItems.length > 0" class="bx-im-list-recent__pinned_container">
-					<RecentItem
-						v-for="item in pinnedItems"
-						:key="item.dialogId"
-						:item="item"
-						@click="onClick(item, $event)"
-						@click.right="onRightClick(item, $event)"
-					/>
-				</div>
-				<div class="bx-im-list-recent__general_container">
-					<RecentItem
-						v-for="item in generalItems"
-						:key="item.dialogId"
-						:item="item"
-						@click="onClick(item, $event)"
-						@click.right="onRightClick(item, $event)"
-					/>
-				</div>
-				<LoadingState v-if="isLoadingNextPage" />
-			</div>
-		</div>
+		<BaseRecentList
+			:collection="collection"
+			:showMainLoader="isLoading && !firstPageLoaded"
+			:showBottomLoader="isLoadingNextPage"
+			@selectChat="onSelectChat"
+			@itemRightClick="onItemRightClick"
+			@closeMenu="onCloseMenu"
+			@loadNextPage="onLoadNextPage"
+		>
+			<template #empty-state>
+				<RecentEmptyState :title="loc('IM_LIST_UNREAD_RECENT_EMPTY_STATE_TITLE')" />
+			</template>
+		</BaseRecentList>
 	`,
 };

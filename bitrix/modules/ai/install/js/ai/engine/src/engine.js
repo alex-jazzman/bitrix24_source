@@ -70,6 +70,12 @@ export class Engine
 		return this;
 	}
 
+	addParameter(key: string, value: string): this
+	{
+		this.#parameters[key] = value;
+
+		return this;
+	}
 	setAnalyticParameters(parameters: {[key: string]: string}): this
 	{
 		this.#analyticParameters = parameters;

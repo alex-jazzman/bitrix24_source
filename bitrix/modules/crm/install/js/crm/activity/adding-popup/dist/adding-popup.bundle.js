@@ -1,17 +1,15 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,crm_activity_todoEditorV2,main_core,main_core_events,main_popup,ui_buttons,ui_notification) {
+(function (exports, crm_activity_todoEditorV2, main_core, main_core_events, main_popup, ui_buttons, ui_notification) {
 	'use strict';
 
-	let _ = t => t,
-	  _t,
-	  _t2,
-	  _t3;
-	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodInitSpec(e, a) { _checkPrivateRedeclaration(e, a), a.add(e); }
+	function _classPrivateFieldInitSpec(e, t, a) { _checkPrivateRedeclaration(e, t), t.set(e, a); }
+	function _checkPrivateRedeclaration(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
+	function _classPrivateFieldGet(s, a) { return s.get(_assertClassBrand(s, a)); }
+	function _classPrivateFieldSet(s, a, r) { return s.set(_assertClassBrand(s, a), r), r; }
+	function _assertClassBrand(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
 	var _entityId = /*#__PURE__*/new WeakMap();
 	var _entityTypeId = /*#__PURE__*/new WeakMap();
 	var _currentUser = /*#__PURE__*/new WeakMap();
@@ -24,320 +22,259 @@ this.BX.Crm = this.BX.Crm || {};
 	var _todoEditor = /*#__PURE__*/new WeakMap();
 	var _eventEmitter = /*#__PURE__*/new WeakMap();
 	var _context = /*#__PURE__*/new WeakMap();
-	var _createToDoEditor = /*#__PURE__*/new WeakSet();
-	var _prepareAndShowPopup = /*#__PURE__*/new WeakSet();
-	var _fetchNearActivity = /*#__PURE__*/new WeakSet();
-	var _createPopupIfNotExists = /*#__PURE__*/new WeakSet();
-	var _getPopupTitle = /*#__PURE__*/new WeakSet();
-	var _getPopupParams = /*#__PURE__*/new WeakSet();
-	var _saveAndClose = /*#__PURE__*/new WeakSet();
-	var _actualizePopupLayout = /*#__PURE__*/new WeakSet();
-	var _onEditorSaveHotkeyPressed = /*#__PURE__*/new WeakSet();
-	var _onChangeUploaderContainerSize = /*#__PURE__*/new WeakSet();
-	var _onFocus = /*#__PURE__*/new WeakSet();
+	var _AddingPopup_brand = /*#__PURE__*/new WeakSet();
 	/**
 	 * @event onSave
 	 * @event onClose
 	 */
 	let AddingPopup = /*#__PURE__*/function () {
-	  function AddingPopup(entityTypeId, entityId, currentUser, settings, _params) {
-	    babelHelpers.classCallCheck(this, AddingPopup);
-	    _classPrivateMethodInitSpec(this, _onFocus);
-	    _classPrivateMethodInitSpec(this, _onChangeUploaderContainerSize);
-	    _classPrivateMethodInitSpec(this, _onEditorSaveHotkeyPressed);
-	    _classPrivateMethodInitSpec(this, _actualizePopupLayout);
-	    _classPrivateMethodInitSpec(this, _saveAndClose);
-	    _classPrivateMethodInitSpec(this, _getPopupParams);
-	    _classPrivateMethodInitSpec(this, _getPopupTitle);
-	    _classPrivateMethodInitSpec(this, _createPopupIfNotExists);
-	    _classPrivateMethodInitSpec(this, _fetchNearActivity);
-	    _classPrivateMethodInitSpec(this, _prepareAndShowPopup);
-	    _classPrivateMethodInitSpec(this, _createToDoEditor);
-	    _classPrivateFieldInitSpec(this, _entityId, {
-	      writable: true,
-	      value: null
-	    });
-	    _classPrivateFieldInitSpec(this, _entityTypeId, {
-	      writable: true,
-	      value: null
-	    });
-	    _classPrivateFieldInitSpec(this, _currentUser, {
-	      writable: true,
-	      value: null
-	    });
-	    _classPrivateFieldInitSpec(this, _pingSettings, {
-	      writable: true,
-	      value: null
-	    });
-	    _classPrivateFieldInitSpec(this, _calendarSettings, {
-	      writable: true,
-	      value: null
-	    });
-	    _classPrivateFieldInitSpec(this, _colorSettings, {
-	      writable: true,
-	      value: null
-	    });
-	    _classPrivateFieldInitSpec(this, _popup, {
-	      writable: true,
-	      value: null
-	    });
-	    _classPrivateFieldInitSpec(this, _popupContainer, {
-	      writable: true,
-	      value: null
-	    });
-	    _classPrivateFieldInitSpec(this, _popupToDoEditorContainer, {
-	      writable: true,
-	      value: null
-	    });
-	    _classPrivateFieldInitSpec(this, _todoEditor, {
-	      writable: true,
-	      value: null
-	    });
-	    _classPrivateFieldInitSpec(this, _eventEmitter, {
-	      writable: true,
-	      value: null
-	    });
-	    _classPrivateFieldInitSpec(this, _context, {
-	      writable: true,
-	      value: {}
-	    });
-	    babelHelpers.classPrivateFieldSet(this, _entityId, main_core.Text.toInteger(entityId));
-	    babelHelpers.classPrivateFieldSet(this, _entityTypeId, main_core.Text.toInteger(entityTypeId));
-	    babelHelpers.classPrivateFieldSet(this, _currentUser, currentUser);
-	    babelHelpers.classPrivateFieldSet(this, _eventEmitter, new main_core_events.EventEmitter());
-	    babelHelpers.classPrivateFieldGet(this, _eventEmitter).setEventNamespace('Crm.Activity.AddingPopup');
-	    if (main_core.Type.isObject(settings)) {
-	      var _settings$pingSetting, _settings$calendarSet, _settings$colorSettin;
-	      babelHelpers.classPrivateFieldSet(this, _pingSettings, (_settings$pingSetting = settings.pingSettings) !== null && _settings$pingSetting !== void 0 ? _settings$pingSetting : null);
-	      babelHelpers.classPrivateFieldSet(this, _calendarSettings, (_settings$calendarSet = settings.calendarSettings) !== null && _settings$calendarSet !== void 0 ? _settings$calendarSet : null);
-	      babelHelpers.classPrivateFieldSet(this, _colorSettings, (_settings$colorSettin = settings.colorSettings) !== null && _settings$colorSettin !== void 0 ? _settings$colorSettin : null);
-	    }
-	    if (!main_core.Type.isPlainObject(_params)) {
-	      // eslint-disable-next-line no-param-reassign
-	      _params = {};
-	    }
-	    if (main_core.Type.isObject(_params.events)) {
-	      for (const eventName in _params.events) {
-	        if (main_core.Type.isFunction(_params.events[eventName])) {
-	          babelHelpers.classPrivateFieldGet(this, _eventEmitter).subscribe(eventName, _params.events[eventName]);
-	        }
-	      }
-	    }
-	    if (main_core.Type.isPlainObject(_params.context)) {
-	      babelHelpers.classPrivateFieldSet(this, _context, _params.context);
-	    }
-	  }
-	  babelHelpers.createClass(AddingPopup, [{
-	    key: "show",
-	    value: async function show(mode = crm_activity_todoEditorV2.TodoEditorMode.ADD) {
-	      const popup = _classPrivateMethodGet(this, _createPopupIfNotExists, _createPopupIfNotExists2).call(this);
-	      if (popup.isShown()) {
-	        return;
-	      }
-	      if (!babelHelpers.classPrivateFieldGet(this, _popupToDoEditorContainer).hasChildNodes()) {
-	        await _classPrivateMethodGet(this, _createToDoEditor, _createToDoEditor2).call(this);
-	        popup.setButtons([new ui_buttons.SaveButton({
-	          id: 'save',
-	          color: ui_buttons.ButtonColor.PRIMARY,
-	          size: ui_buttons.ButtonSize.EXTRA_SMALL,
-	          round: true,
-	          events: {
-	            click: _classPrivateMethodGet(this, _saveAndClose, _saveAndClose2).bind(this)
-	          }
-	        }), new ui_buttons.CancelButton({
-	          id: 'cancel',
-	          size: ui_buttons.ButtonSize.EXTRA_SMALL,
-	          round: true,
-	          events: {
-	            click: () => {
-	              var _babelHelpers$classPr, _babelHelpers$classPr2, _babelHelpers$classPr3;
-	              (_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(this, _todoEditor)) === null || _babelHelpers$classPr === void 0 ? void 0 : _babelHelpers$classPr.sendAnalyticsCancelEvent((_babelHelpers$classPr2 = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldGet(this, _context)) === null || _babelHelpers$classPr3 === void 0 ? void 0 : _babelHelpers$classPr3.analytics) !== null && _babelHelpers$classPr2 !== void 0 ? _babelHelpers$classPr2 : {});
-	              popup.close();
-	            }
-	          }
-	        })]);
-	        popup.subscribeOnce('onFirstShow', event => {
-	          event.target.getZIndexComponent().setZIndex(1400);
-	          babelHelpers.classPrivateFieldGet(this, _todoEditor).show();
-	        });
-	        popup.subscribe('onAfterShow', () => {
-	          _classPrivateMethodGet(this, _actualizePopupLayout, _actualizePopupLayout2).call(this);
-	          babelHelpers.classPrivateFieldGet(this, _todoEditor).setFocused();
-	        });
-	        popup.subscribe('onAfterClose', () => {
-	          void babelHelpers.classPrivateFieldGet(this, _todoEditor).resetToDefaults().then(() => {
-	            babelHelpers.classPrivateFieldGet(this, _eventEmitter).emit('onClose');
-	          });
-	        });
-	        popup.subscribe('onShow', () => {
-	          const {
-	            mode: todoEditorMode,
-	            activity
-	          } = popup.params;
-	          if (todoEditorMode === crm_activity_todoEditorV2.TodoEditorMode.UPDATE && activity) {
-	            babelHelpers.classPrivateFieldGet(this, _todoEditor).setMode(todoEditorMode).setActivityId(activity.id).setDescription(activity.description).setDeadline(activity.deadline);
-	          }
-	        });
-	      }
-	      _classPrivateMethodGet(this, _prepareAndShowPopup, _prepareAndShowPopup2).call(this, popup, mode);
-	    }
-	  }]);
-	  return AddingPopup;
+		function AddingPopup(entityTypeId, entityId, currentUser, settings, _params) {
+			babelHelpers.classCallCheck(this, AddingPopup);
+			_classPrivateMethodInitSpec(this, _AddingPopup_brand);
+			_classPrivateFieldInitSpec(this, _entityId, null);
+			_classPrivateFieldInitSpec(this, _entityTypeId, null);
+			_classPrivateFieldInitSpec(this, _currentUser, null);
+			_classPrivateFieldInitSpec(this, _pingSettings, null);
+			_classPrivateFieldInitSpec(this, _calendarSettings, null);
+			_classPrivateFieldInitSpec(this, _colorSettings, null);
+			_classPrivateFieldInitSpec(this, _popup, null);
+			_classPrivateFieldInitSpec(this, _popupContainer, null);
+			_classPrivateFieldInitSpec(this, _popupToDoEditorContainer, null);
+			_classPrivateFieldInitSpec(this, _todoEditor, null);
+			_classPrivateFieldInitSpec(this, _eventEmitter, null);
+			_classPrivateFieldInitSpec(this, _context, {});
+			_classPrivateFieldSet(_entityId, this, main_core.Text.toInteger(entityId));
+			_classPrivateFieldSet(_entityTypeId, this, main_core.Text.toInteger(entityTypeId));
+			_classPrivateFieldSet(_currentUser, this, currentUser);
+			_classPrivateFieldSet(_eventEmitter, this, new main_core_events.EventEmitter());
+			_classPrivateFieldGet(_eventEmitter, this).setEventNamespace('Crm.Activity.AddingPopup');
+			if (main_core.Type.isObject(settings)) {
+				_classPrivateFieldSet(_pingSettings, this, settings.pingSettings ?? null);
+				_classPrivateFieldSet(_calendarSettings, this, settings.calendarSettings ?? null);
+				_classPrivateFieldSet(_colorSettings, this, settings.colorSettings ?? null);
+			}
+			if (!main_core.Type.isPlainObject(_params)) {
+				// eslint-disable-next-line no-param-reassign
+				_params = {};
+			}
+			if (main_core.Type.isObject(_params.events)) {
+				for (const eventName in _params.events) {
+					if (main_core.Type.isFunction(_params.events[eventName])) {
+						_classPrivateFieldGet(_eventEmitter, this).subscribe(eventName, _params.events[eventName]);
+					}
+				}
+			}
+			if (main_core.Type.isPlainObject(_params.context)) {
+				_classPrivateFieldSet(_context, this, _params.context);
+			}
+		}
+		return babelHelpers.createClass(AddingPopup, [{
+			key: "show",
+			value: async function show(mode = crm_activity_todoEditorV2.TodoEditorMode.ADD) {
+				const popup = _assertClassBrand(_AddingPopup_brand, this, _createPopupIfNotExists).call(this);
+				if (popup.isShown()) {
+					return;
+				}
+				if (!_classPrivateFieldGet(_popupToDoEditorContainer, this).hasChildNodes()) {
+					await _assertClassBrand(_AddingPopup_brand, this, _createToDoEditor).call(this);
+					popup.setButtons([new ui_buttons.SaveButton({
+						id: 'save',
+						color: ui_buttons.ButtonColor.PRIMARY,
+						size: ui_buttons.ButtonSize.EXTRA_SMALL,
+						round: true,
+						events: {
+							click: _assertClassBrand(_AddingPopup_brand, this, _saveAndClose).bind(this)
+						}
+					}), new ui_buttons.CancelButton({
+						id: 'cancel',
+						size: ui_buttons.ButtonSize.EXTRA_SMALL,
+						round: true,
+						events: {
+							click: () => {
+								_classPrivateFieldGet(_todoEditor, this)?.sendAnalyticsCancelEvent(_classPrivateFieldGet(_context, this)?.analytics ?? {});
+								popup.close();
+							}
+						}
+					})]);
+					popup.subscribeOnce('onFirstShow', event => {
+						event.target.getZIndexComponent().setZIndex(1400);
+						_classPrivateFieldGet(_todoEditor, this).show();
+					});
+					popup.subscribe('onAfterShow', () => {
+						_assertClassBrand(_AddingPopup_brand, this, _actualizePopupLayout).call(this);
+						_classPrivateFieldGet(_todoEditor, this).setFocused();
+					});
+					popup.subscribe('onAfterClose', () => {
+						void _classPrivateFieldGet(_todoEditor, this).resetToDefaults().then(() => {
+							_classPrivateFieldGet(_eventEmitter, this).emit('onClose');
+						});
+					});
+					popup.subscribe('onShow', () => {
+						const {
+							mode: todoEditorMode,
+							activity
+						} = popup.params;
+						if (todoEditorMode === crm_activity_todoEditorV2.TodoEditorMode.UPDATE && activity) {
+							_classPrivateFieldGet(_todoEditor, this).setMode(todoEditorMode).setActivityId(activity.id).setDescription(activity.description).setDeadline(activity.deadline);
+						}
+					});
+				}
+				_assertClassBrand(_AddingPopup_brand, this, _prepareAndShowPopup).call(this, popup, mode);
+			}
+		}]);
 	}();
-	async function _createToDoEditor2() {
-	  var _babelHelpers$classPr4, _babelHelpers$classPr5, _analytics$c_section, _analytics$c_sub_sect;
-	  // just created, initialize
-	  const params = {
-	    container: babelHelpers.classPrivateFieldGet(this, _popupToDoEditorContainer),
-	    ownerTypeId: babelHelpers.classPrivateFieldGet(this, _entityTypeId),
-	    ownerId: babelHelpers.classPrivateFieldGet(this, _entityId),
-	    currentUser: babelHelpers.classPrivateFieldGet(this, _currentUser),
-	    pingSettings: babelHelpers.classPrivateFieldGet(this, _pingSettings),
-	    events: {
-	      onSaveHotkeyPressed: _classPrivateMethodGet(this, _onEditorSaveHotkeyPressed, _onEditorSaveHotkeyPressed2).bind(this),
-	      onChangeUploaderContainerSize: _classPrivateMethodGet(this, _onChangeUploaderContainerSize, _onChangeUploaderContainerSize2).bind(this),
-	      onFocus: _classPrivateMethodGet(this, _onFocus, _onFocus2).bind(this)
-	    },
-	    popupMode: true
-	  };
-	  const analytics = (_babelHelpers$classPr4 = (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldGet(this, _context)) === null || _babelHelpers$classPr5 === void 0 ? void 0 : _babelHelpers$classPr5.analytics) !== null && _babelHelpers$classPr4 !== void 0 ? _babelHelpers$classPr4 : {};
-	  const section = (_analytics$c_section = analytics.c_section) !== null && _analytics$c_section !== void 0 ? _analytics$c_section : null;
-	  const subSection = (_analytics$c_sub_sect = analytics.c_sub_section) !== null && _analytics$c_sub_sect !== void 0 ? _analytics$c_sub_sect : null;
-	  params.calendarSettings = babelHelpers.classPrivateFieldGet(this, _calendarSettings);
-	  params.colorSettings = babelHelpers.classPrivateFieldGet(this, _colorSettings);
-	  params.defaultDescription = '';
-	  params.analytics = {
-	    section,
-	    subSection
-	  };
-	  babelHelpers.classPrivateFieldSet(this, _todoEditor, new crm_activity_todoEditorV2.TodoEditorV2(params));
+	async function _createToDoEditor() {
+		// just created, initialize
+		const params = {
+			container: _classPrivateFieldGet(_popupToDoEditorContainer, this),
+			ownerTypeId: _classPrivateFieldGet(_entityTypeId, this),
+			ownerId: _classPrivateFieldGet(_entityId, this),
+			currentUser: _classPrivateFieldGet(_currentUser, this),
+			pingSettings: _classPrivateFieldGet(_pingSettings, this),
+			events: {
+				onSaveHotkeyPressed: _assertClassBrand(_AddingPopup_brand, this, _onEditorSaveHotkeyPressed).bind(this),
+				onChangeUploaderContainerSize: _assertClassBrand(_AddingPopup_brand, this, _onChangeUploaderContainerSize).bind(this),
+				onFocus: _assertClassBrand(_AddingPopup_brand, this, _onFocus).bind(this)
+			},
+			popupMode: true
+		};
+		const analytics = _classPrivateFieldGet(_context, this)?.analytics ?? {};
+		const section = analytics.c_section ?? null;
+		const subSection = analytics.c_sub_section ?? null;
+		params.calendarSettings = _classPrivateFieldGet(_calendarSettings, this);
+		params.colorSettings = _classPrivateFieldGet(_colorSettings, this);
+		params.defaultDescription = '';
+		params.analytics = {
+			section,
+			subSection
+		};
+		_classPrivateFieldSet(_todoEditor, this, new crm_activity_todoEditorV2.TodoEditorV2(params));
 	}
-	function _prepareAndShowPopup2(popup, mode = crm_activity_todoEditorV2.TodoEditorMode.ADD) {
-	  // eslint-disable-next-line no-param-reassign
-	  popup.params.mode = mode;
-	  if (mode === crm_activity_todoEditorV2.TodoEditorMode.ADD) {
-	    popup.show();
-	    return;
-	  }
-	  if (mode === crm_activity_todoEditorV2.TodoEditorMode.UPDATE) {
-	    void _classPrivateMethodGet(this, _fetchNearActivity, _fetchNearActivity2).call(this).then(data => {
-	      if (data) {
-	        // eslint-disable-next-line no-param-reassign
-	        popup.params.activity = data;
-	        popup.show();
-	      }
-	    });
-	    return;
-	  }
-	  console.error('Wrong TodoEditor mode');
+	function _prepareAndShowPopup(popup, mode = crm_activity_todoEditorV2.TodoEditorMode.ADD) {
+		// eslint-disable-next-line no-param-reassign
+		popup.params.mode = mode;
+		if (mode === crm_activity_todoEditorV2.TodoEditorMode.ADD) {
+			popup.show();
+			return;
+		}
+		if (mode === crm_activity_todoEditorV2.TodoEditorMode.UPDATE) {
+			void _assertClassBrand(_AddingPopup_brand, this, _fetchNearActivity).call(this).then(data => {
+				if (data) {
+					// eslint-disable-next-line no-param-reassign
+					popup.params.activity = data;
+					popup.show();
+				}
+			});
+			return;
+		}
+		console.error('Wrong TodoEditor mode');
 	}
-	function _fetchNearActivity2() {
-	  const data = {
-	    ownerTypeId: babelHelpers.classPrivateFieldGet(this, _entityTypeId),
-	    ownerId: babelHelpers.classPrivateFieldGet(this, _entityId)
-	  };
-	  return new Promise((resolve, reject) => {
-	    main_core.ajax.runAction('crm.activity.todo.getNearest', {
-	      data
-	    }).then(({
-	      data: responseData
-	    }) => resolve(responseData)).catch(response => {
-	      ui_notification.UI.Notification.Center.notify({
-	        content: response.errors[0].message,
-	        autoHideDelay: 5000
-	      });
-	      reject();
-	    });
-	  });
+	function _fetchNearActivity() {
+		const data = {
+			ownerTypeId: _classPrivateFieldGet(_entityTypeId, this),
+			ownerId: _classPrivateFieldGet(_entityId, this)
+		};
+		return new Promise((resolve, reject) => {
+			main_core.ajax.runAction('crm.activity.todo.getNearest', {
+				data
+			}).then(({
+				data: responseData
+			}) => resolve(responseData)).catch(response => {
+				ui_notification.UI.Notification.Center.notify({
+					content: response.errors[0].message,
+					autoHideDelay: 5000
+				});
+				reject();
+			});
+		});
 	}
-	function _createPopupIfNotExists2() {
-	  if (!babelHelpers.classPrivateFieldGet(this, _popup) || babelHelpers.classPrivateFieldGet(this, _popup).isDestroyed()) {
-	    babelHelpers.classPrivateFieldSet(this, _popupToDoEditorContainer, main_core.Tag.render(_t || (_t = _`<div></div>`)));
-	    babelHelpers.classPrivateFieldSet(this, _popupContainer, main_core.Tag.render(_t2 || (_t2 = _`
+	function _createPopupIfNotExists() {
+		if (!_classPrivateFieldGet(_popup, this) || _classPrivateFieldGet(_popup, this).isDestroyed()) {
+			_classPrivateFieldSet(_popupToDoEditorContainer, this, main_core.Tag.render`<div></div>`);
+			_classPrivateFieldSet(_popupContainer, this, main_core.Tag.render`
 				<div class="crm-activity-adding-popup-container">
-					${0}
-					${0}
+					${_assertClassBrand(_AddingPopup_brand, this, _getPopupTitle).call(this)}
+					${_classPrivateFieldGet(_popupToDoEditorContainer, this)}
 				</div>
-			`), _classPrivateMethodGet(this, _getPopupTitle, _getPopupTitle2).call(this), babelHelpers.classPrivateFieldGet(this, _popupToDoEditorContainer)));
-	    babelHelpers.classPrivateFieldSet(this, _popup, new main_popup.Popup(_classPrivateMethodGet(this, _getPopupParams, _getPopupParams2).call(this)));
-	  }
-	  return babelHelpers.classPrivateFieldGet(this, _popup);
+			`);
+			_classPrivateFieldSet(_popup, this, new main_popup.Popup(_assertClassBrand(_AddingPopup_brand, this, _getPopupParams).call(this)));
+		}
+		return _classPrivateFieldGet(_popup, this);
 	}
-	function _getPopupTitle2() {
-	  return main_core.Tag.render(_t3 || (_t3 = _`
+	function _getPopupTitle() {
+		return main_core.Tag.render`
 			<div class="crm-activity-adding-popup-title">
-				${0}
+				${main_core.Loc.getMessage('CRM_ACTIVITY_ADDING_POPUP_TITLE')}
 			</div>
-		`), main_core.Loc.getMessage('CRM_ACTIVITY_ADDING_POPUP_TITLE'));
+		`;
 	}
-	function _getPopupParams2() {
-	  const {
-	    innerWidth
-	  } = window;
-	  return {
-	    id: `kanban_planner_menu_${babelHelpers.classPrivateFieldGet(this, _entityId)}`,
-	    content: babelHelpers.classPrivateFieldGet(this, _popupContainer),
-	    cacheable: false,
-	    isScrollBlock: true,
-	    className: 'crm-activity-adding-popup',
-	    closeByEsc: true,
-	    closeIcon: false,
-	    padding: 16,
-	    minWidth: 537,
-	    width: Math.round(innerWidth * 0.45),
-	    maxWidth: 737,
-	    minHeight: 150,
-	    maxHeight: 482,
-	    overlay: {
-	      opacity: 50
-	    }
-	  };
+	function _getPopupParams() {
+		const {
+			innerWidth
+		} = window;
+		return {
+			id: `kanban_planner_menu_${_classPrivateFieldGet(_entityId, this)}`,
+			content: _classPrivateFieldGet(_popupContainer, this),
+			cacheable: false,
+			isScrollBlock: true,
+			className: 'crm-activity-adding-popup',
+			closeByEsc: true,
+			closeIcon: false,
+			padding: 16,
+			minWidth: 537,
+			width: Math.round(innerWidth * 0.45),
+			maxWidth: 737,
+			minHeight: 150,
+			maxHeight: 482,
+			overlay: {
+				opacity: 50
+			}
+		};
 	}
-	function _saveAndClose2() {
-	  if (babelHelpers.classPrivateFieldGet(this, _popup)) {
-	    const saveButton = babelHelpers.classPrivateFieldGet(this, _popup).getButton('save');
-	    if (saveButton.getState()) {
-	      return; // button is disabled
-	    }
-
-	    saveButton === null || saveButton === void 0 ? void 0 : saveButton.setWaiting(true);
-	    babelHelpers.classPrivateFieldGet(this, _todoEditor).save().then(() => {
-	      babelHelpers.classPrivateFieldGet(this, _popup).close();
-	      babelHelpers.classPrivateFieldGet(this, _eventEmitter).emit('onSave');
-	    }).catch(() => {}).finally(() => saveButton === null || saveButton === void 0 ? void 0 : saveButton.setWaiting(false));
-	  }
+	function _saveAndClose() {
+		if (_classPrivateFieldGet(_popup, this)) {
+			const saveButton = _classPrivateFieldGet(_popup, this).getButton('save');
+			if (saveButton.getState()) {
+				return; // button is disabled
+			}
+			saveButton?.setWaiting(true);
+			_classPrivateFieldGet(_todoEditor, this).save().then(() => {
+				_classPrivateFieldGet(_popup, this).close();
+				_classPrivateFieldGet(_eventEmitter, this).emit('onSave');
+			}).catch(() => {}).finally(() => saveButton?.setWaiting(false));
+		}
 	}
-	function _actualizePopupLayout2(description) {
-	  if (babelHelpers.classPrivateFieldGet(this, _popup) && babelHelpers.classPrivateFieldGet(this, _popup).isShown()) {
-	    babelHelpers.classPrivateFieldGet(this, _eventEmitter).emit('onActualizePopupLayout', {
-	      entityId: babelHelpers.classPrivateFieldGet(this, _entityId)
-	    });
-	    babelHelpers.classPrivateFieldGet(this, _popup).adjustPosition({
-	      forceBindPosition: true
-	    });
-	  }
+	function _actualizePopupLayout(description) {
+		if (_classPrivateFieldGet(_popup, this) && _classPrivateFieldGet(_popup, this).isShown()) {
+			_classPrivateFieldGet(_eventEmitter, this).emit('onActualizePopupLayout', {
+				entityId: _classPrivateFieldGet(_entityId, this)
+			});
+			_classPrivateFieldGet(_popup, this).adjustPosition({
+				forceBindPosition: true
+			});
+		}
 	}
-	function _onEditorSaveHotkeyPressed2() {
-	  _classPrivateMethodGet(this, _saveAndClose, _saveAndClose2).call(this);
+	function _onEditorSaveHotkeyPressed() {
+		_assertClassBrand(_AddingPopup_brand, this, _saveAndClose).call(this);
 	}
-	function _onChangeUploaderContainerSize2() {
-	  if (babelHelpers.classPrivateFieldGet(this, _popup)) {
-	    babelHelpers.classPrivateFieldGet(this, _eventEmitter).emit('onActualizePopupLayout', {
-	      entityId: babelHelpers.classPrivateFieldGet(this, _entityId)
-	    });
-	    babelHelpers.classPrivateFieldGet(this, _popup).adjustPosition();
-	  }
+	function _onChangeUploaderContainerSize() {
+		if (_classPrivateFieldGet(_popup, this)) {
+			_classPrivateFieldGet(_eventEmitter, this).emit('onActualizePopupLayout', {
+				entityId: _classPrivateFieldGet(_entityId, this)
+			});
+			_classPrivateFieldGet(_popup, this).adjustPosition();
+		}
 	}
-	function _onFocus2() {
-	  setTimeout(() => {
-	    const popup = _classPrivateMethodGet(this, _createPopupIfNotExists, _createPopupIfNotExists2).call(this);
-	    popup.adjustPosition({
-	      forceBindPosition: true
-	    });
-	  }, 0);
+	function _onFocus() {
+		setTimeout(() => {
+			const popup = _assertClassBrand(_AddingPopup_brand, this, _createPopupIfNotExists).call(this);
+			popup.adjustPosition({
+				forceBindPosition: true
+			});
+		}, 0);
 	}
 
 	exports.AddingPopup = AddingPopup;
 
-}((this.BX.Crm.Activity = this.BX.Crm.Activity || {}),BX.Crm.Activity,BX,BX.Event,BX.Main,BX.UI,BX));
+})(this.BX.Crm.Activity = this.BX.Crm.Activity || {}, BX.Crm.Activity, BX, BX.Event, BX.Main, BX.UI, BX);
 //# sourceMappingURL=adding-popup.bundle.js.map

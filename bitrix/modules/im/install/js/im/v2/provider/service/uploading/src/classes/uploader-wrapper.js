@@ -1,5 +1,5 @@
 import { Type } from 'main.core';
-import { EventEmitter, BaseEvent } from 'main.core.events';
+import { EventEmitter, type BaseEvent } from 'main.core.events';
 import {
 	Uploader,
 	UploaderEvent,
@@ -11,7 +11,7 @@ import {
 
 import { UploaderVideoCompressionFilter } from './video-compression-filter';
 
-import type { UploaderWrapperFileOptions, UploaderWrapperOptions } from './types/uploader-wrapper';
+import { type UploaderWrapperFileOptions, type UploaderWrapperOptions } from './types/uploader-wrapper';
 
 export class UploaderWrapper extends EventEmitter
 {

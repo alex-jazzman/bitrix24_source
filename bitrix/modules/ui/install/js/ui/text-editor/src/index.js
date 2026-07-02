@@ -4,6 +4,8 @@ import type { DecoratorComponentOptions } from './types/decorator-component-opti
 import type { DecoratorOptions } from './types/decorator-options';
 import type { ToolbarItem, ToolbarOptions } from './types/toolbar-options';
 import type { InitialEditorStateType } from './types/initial-editor-state-type';
+import type { SchemeValidationOptions } from './types/scheme-validation-options';
+import type { BBCodeExportConversion, BBCodeImportConversion } from './bbcode';
 
 import * as AllCommands from './commands';
 import * as AllConstants from './constants';
@@ -43,6 +45,11 @@ import * as Table from './plugins/table';
 import * as Hashtag from './plugins/hashtag';
 import * as File from './plugins/file';
 import * as Copilot from './plugins/copilot';
+
+import 'ui.typography';
+import 'ui.design-tokens';
+import 'ui.design-tokens.air';
+import 'ui.forms';
 
 /**
  * @namespace BX.UI.TextEditor.Plugins
@@ -115,4 +122,7 @@ export type {
 	ToolbarOptions,
 	ToolbarItem,
 	InitialEditorStateType,
+	SchemeValidationOptions,
+	BBCodeExportConversion,
+	BBCodeImportConversion,
 };

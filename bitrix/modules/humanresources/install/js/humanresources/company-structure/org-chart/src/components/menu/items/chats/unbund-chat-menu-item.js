@@ -1,7 +1,7 @@
 import type { CommunicationDetailed } from 'humanresources.company-structure.utils';
 import { EntityTypes, getColorCode, ChatTypes } from 'humanresources.company-structure.utils';
 import { Main } from 'ui.icon-set.api.core';
-import { PermissionActions, PermissionCheckerClass } from 'humanresources.company-structure.permission-checker';
+import { PermissionActions, type PermissionCheckerClass } from 'humanresources.company-structure.permission-checker';
 import { AbstractMenuItem } from '../abstract-menu-item';
 import { MenuActions } from '../../menu-actions';
 import { Loc } from 'main.core';

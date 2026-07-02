@@ -10,8 +10,8 @@ return [
 	'rel' => [
 		'currency.currency-core',
 		'main.core',
-		'ui.vue3',
 		'main.popup',
+		'ui.vue3',
 	],
 	'skip_core' => false,
 ];

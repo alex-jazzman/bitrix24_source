@@ -41,6 +41,15 @@ jn.define('im/messenger/controller/recent/service/server-load/collab', (require,
 		}
 
 		/**
+		 * @param {RefreshModeType} mode
+		 * @return {object}
+		 */
+		getInitRequestOptions(mode)
+		{
+			return {};
+		}
+
+		/**
 		 * @return {MessengerCoreStore}
 		 */
 		get store()
@@ -196,7 +205,7 @@ jn.define('im/messenger/controller/recent/service/server-load/collab', (require,
 
 			try
 			{
-				const recentAction = firstPage ? 'recentModel/setFirstPageByTab' : 'recentModel/setCollab';
+				const recentAction = firstPage ? 'recentModel/setFirstPageByRecentSection' : 'recentModel/setCollab';
 				await Promise.all([
 					this.store.dispatch('usersModel/set', modelData.users),
 					this.store.dispatch('messagesModel/store', modelData.messages),
@@ -206,8 +215,9 @@ jn.define('im/messenger/controller/recent/service/server-load/collab', (require,
 					this.store.dispatch(
 						recentAction,
 						{
-							tab: this.recentLocator.get('id') ?? NavigationTabId.collab,
+							recentSection: this.recentLocator.get('recentSection'),
 							itemList: modelData.recent,
+							parentChatId: this.recentLocator.get('parentChatId'),
 						},
 					),
 				]);
@@ -381,6 +391,16 @@ jn.define('im/messenger/controller/recent/service/server-load/collab', (require,
 
 				return recentItem.pinned === false;
 			});
+		}
+
+		subscribeEvents()
+		{
+			this.logger.log('subscribeEvents');
+		}
+
+		unsubscribeEvents()
+		{
+			this.logger.log('unsubscribeEvents');
 		}
 	}
 

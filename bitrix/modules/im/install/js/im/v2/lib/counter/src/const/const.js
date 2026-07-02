@@ -1,7 +1,6 @@
 import { Core } from 'im.v2.application.core';
-import { ChatType } from 'im.v2.const';
+import { ChatType, type ChatTypeItem } from 'im.v2.const';
 
-type ChatTypeItem = $Values<typeof ChatType>;
 type ClearHandlerByChatTypeMap = {
 	[chatType: ChatTypeItem]: Array<(type: ChatTypeItem) => void>
 }

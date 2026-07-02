@@ -1,7 +1,7 @@
 import { Tag, Loc, Type, Dom } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Analytics } from '../analytics';
-import DepartmentControl from 'intranet.department-control';
+import { DepartmentControl } from 'intranet.department-control';
 import { Transport } from '../transport';
 import { Page } from './page';
 import { AirButtonStyle, Button, ButtonState } from 'ui.buttons';

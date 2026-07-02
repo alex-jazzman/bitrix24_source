@@ -1,31 +1,21 @@
 import { EventEmitter } from 'main.core.events';
 
-import { LayoutManager } from 'im.v2.lib.layout';
-
-import { UserRole, ChatType, Layout } from 'im.v2.const';
-import type { PreselectedMemberItem } from 'im.v2.component.content.chat-forms.forms';
 import { Core } from 'im.v2.application.core';
+import { LayoutManager } from 'im.v2.lib.layout';
+import { Layout } from 'im.v2.const';
 
-const EVENT_NAMESPACE = 'BX.Messenger.v2.CreateChatManager';
+import { type CreateChatFields, type PreselectedMemberItem, type OpenChatCreationParams } from './types/types';
 
-type UserRoleItem = $Values<typeof UserRole>;
-type ChatFields = {
-	chatTitle: string,
-	avatarFile: ?File,
-	chatMembers: number[],
-	settings: {
-		isAvailableInSearch: boolean,
-		description: string,
-	},
-	rights: {
-		ownerId: number,
-		managerIds: number[],
-		manageUsers: UserRoleItem,
-		manageSettings: UserRoleItem,
-		manageUi: UserRoleItem,
-	},
+export type { OpenChatCreationParams } from './types/types';
+export type CreatableChatTypeItem = $Values<typeof CreatableChatType>;
+
+export const CreatableChatType = {
+	chat: 'chat',
+	videoconf: 'videoconf',
+	channel: 'channel',
+	collab: 'collab',
+	collabChat: 'collabChat',
 };
-type ChatTypeItem = $Values<typeof ChatType>;
 
 export class CreateChatManager extends EventEmitter
 {
@@ -39,10 +29,12 @@ export class CreateChatManager extends EventEmitter
 	static #instance: CreateChatManager;
 
 	#isCreating: boolean = false;
-	#chatType: ChatTypeItem = ChatType.chat;
+	#chatType: CreatableChatTypeItem = CreatableChatType.chat;
 	#chatTitle: string = '';
 	#chatAvatarFile: File = null;
-	#chatFields: ChatFields;
+	#chatFields: CreateChatFields;
+	// preset fields - pre-configured one-time values
+	#parentChatId: number;
 	#preselectedMembers: PreselectedMemberItem[] = [];
 	#includeCurrentUser: boolean = true;
 	#ownerId: number;
@@ -60,17 +52,30 @@ export class CreateChatManager extends EventEmitter
 	constructor(props)
 	{
 		super(props);
-		this.setEventNamespace(EVENT_NAMESPACE);
+		this.setEventNamespace('BX.Messenger.v2.CreateChatManager');
 	}
 
-	startChatCreation(chatTypeToCreate: ChatTypeItem, params: { clearCurrentCreation: boolean } = {})
+	startChatCreation(chatTypeToCreate: CreatableChatTypeItem, params: OpenChatCreationParams = {}): Promise
 	{
-		const { clearCurrentCreation = true } = params;
+		const {
+			clearCurrentCreation = true,
+			preselectedMembers = [],
+			includeCurrentUser = true,
+			ownerId = null,
+			parentChatId = 0,
+		} = params;
+
 		if (clearCurrentCreation)
 		{
 			this.setCreationStatus(false);
 		}
-		void LayoutManager.getInstance().setLayout({
+
+		this.#parentChatId = parentChatId;
+		this.#preselectedMembers = preselectedMembers;
+		this.#includeCurrentUser = includeCurrentUser;
+		this.#ownerId = ownerId;
+
+		return LayoutManager.getInstance().setLayout({
 			name: Layout.createChat,
 			entityId: chatTypeToCreate,
 		});
@@ -81,7 +86,14 @@ export class CreateChatManager extends EventEmitter
 		return this.#isCreating;
 	}
 
-	getChatType(): ChatTypeItem
+	isCreationLayoutActive(type: CreatableChatTypeItem): boolean
+	{
+		const { name: currentLayoutName, entityId: currentLayoutChatType } = Core.getStore().getters['application/getLayout'];
+
+		return currentLayoutName === Layout.createChat && currentLayoutChatType === type;
+	}
+
+	getChatType(): CreatableChatTypeItem
 	{
 		return this.#chatType;
 	}
@@ -96,7 +108,12 @@ export class CreateChatManager extends EventEmitter
 		return this.#chatAvatarFile;
 	}
 
-	setChatType(type: ChatTypeItem)
+	getParentChatId(): number
+	{
+		return this.#parentChatId;
+	}
+
+	setChatType(type: CreatableChatTypeItem)
 	{
 		this.#chatType = type;
 		this.emit(CreateChatManager.events.chatTypeChange, type);
@@ -121,12 +138,12 @@ export class CreateChatManager extends EventEmitter
 		this.emit(CreateChatManager.events.avatarChange, chatAvatarFile);
 	}
 
-	saveFields(chatFields: ChatFields)
+	saveFields(chatFields: CreateChatFields)
 	{
 		this.#chatFields = chatFields;
 	}
 
-	getFields(): ?ChatFields
+	getFields(): ?CreateChatFields
 	{
 		return this.#chatFields;
 	}
@@ -138,11 +155,6 @@ export class CreateChatManager extends EventEmitter
 		this.setChatAvatar(null);
 	}
 
-	setPreselectedMembers(preselectedMembers: PreselectedMemberItem[])
-	{
-		this.#preselectedMembers = preselectedMembers;
-	}
-
 	getChatMembers(): [[string, number | string]]
 	{
 		const mappedMembers = this.#preselectedMembers.map((item) => [item.type, item.id]);
@@ -152,16 +164,6 @@ export class CreateChatManager extends EventEmitter
 		}
 
 		return mappedMembers;
-	}
-
-	setIncludeCurrentUser(value: boolean)
-	{
-		this.#includeCurrentUser = value;
-	}
-
-	setOwnerId(ownerId: number)
-	{
-		this.#ownerId = ownerId;
 	}
 
 	getOwnerId(): boolean
@@ -179,10 +181,10 @@ export class CreateChatManager extends EventEmitter
 		return [];
 	}
 
-	clearExternalFields()
+	clearPresetFields()
 	{
-		this.setOwnerId(null);
-		this.setIncludeCurrentUser(true);
-		this.setPreselectedMembers([]);
+		this.#ownerId = null;
+		this.#includeCurrentUser = true;
+		this.#preselectedMembers = [];
 	}
 }

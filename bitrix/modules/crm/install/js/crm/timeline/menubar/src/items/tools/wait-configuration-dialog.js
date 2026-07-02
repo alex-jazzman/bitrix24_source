@@ -1,7 +1,7 @@
 /* eslint-disable no-underscore-dangle, @bitrix24/bitrix24-rules/no-pseudo-private */
+import { Dom, Loc, Runtime, Tag, Text } from 'main.core';
 
-import Wait from '../wait';
-import { Loc, Tag, Dom, Text, Runtime } from 'main.core';
+import WaitingType from './waiting-type';
 
 /** @memberof BX.Crm.Timeline.Tools */
 export default class WaitConfigurationDialog
@@ -22,7 +22,7 @@ export default class WaitConfigurationDialog
 	{
 		this._id = '';
 		this._settings = {};
-		this._type = Wait.WaitingType.undefined;
+		this._type = WaitingType.undefined;
 		this._duration = 0;
 		this._target = '';
 		this._targetDates = [];
@@ -36,7 +36,7 @@ export default class WaitConfigurationDialog
 	{
 		this._id = BX.type.isNotEmptyString(id) ? id : BX.util.getRandomString(4);
 		this._settings = settings || {};
-		this._type = BX.prop.getInteger(this._settings, 'type', Wait.WaitingType.after);
+		this._type = BX.prop.getInteger(this._settings, 'type', WaitingType.after);
 		this._duration = BX.prop.getInteger(this._settings, 'duration', 1);
 		this._target = BX.prop.getString(this._settings, 'target', '');
 		this._targetDates = BX.prop.getArray(this._settings, 'targetDates', []);
@@ -96,7 +96,7 @@ export default class WaitConfigurationDialog
 
 	isBeforeWaitingType(): boolean
 	{
-		return this.getType() === Wait.WaitingType.before;
+		return this.getType() === WaitingType.before;
 	}
 
 	open()

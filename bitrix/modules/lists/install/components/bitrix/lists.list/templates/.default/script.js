@@ -12,6 +12,8 @@ BX.Lists.ListClass = (function ()
 		this.listActionAdd = parameters.listActionAdd;
 		this.gridId = parameters.gridId;
 		this.filterId = parameters.filterId;
+		this.exportProcessParams = parameters.exportProcessParams || {};
+		this.exportProcesses = {};
 
 		this.init();
 	};
@@ -228,6 +230,38 @@ BX.Lists.ListClass = (function ()
 		gridObject = BX.Main.gridManager.getById(this.gridId);
 		if(gridObject.hasOwnProperty("instance"))
 			gridObject.instance.reloadTable("POST", reloadParams);
+	};
+
+	ListClass.prototype.startExport = function (exportType)
+	{
+		this.getExportProcess(exportType).then(function(process) {
+			process.showDialog();
+		});
+	};
+
+	ListClass.prototype.getExportProcess = function (exportType)
+	{
+		if (this.exportProcesses[exportType])
+		{
+			return Promise.resolve(this.exportProcesses[exportType]);
+		}
+
+		var processConfig = BX.clone(this.exportProcessParams[exportType] || {});
+		processConfig.params = processConfig.params || {};
+		processConfig.params.PROCESS_TOKEN = 'lists_export_' + this.iblockId + '_' + exportType + '_' + Date.now();
+
+		return BX.Runtime.loadExtension('ui.stepprocessing').then(BX.proxy(function(exports) {
+			this.exportProcesses[exportType] = exports.ProcessManager.create(processConfig);
+
+			this.exportProcesses[exportType].setHandler(
+				BX.UI.StepProcessing.ProcessCallback.StepCompleted,
+				BX.proxy(function() {
+					delete this.exportProcesses[exportType];
+				}, this)
+			);
+
+			return this.exportProcesses[exportType];
+		}, this));
 	};
 
 	ListClass.prototype.editSection = function (currentSectionId)

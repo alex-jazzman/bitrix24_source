@@ -1,4 +1,4 @@
-<?
+<?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 	die();
 
@@ -14,7 +14,7 @@ if(is_array($arResult["CHAIN"]) && !empty($arResult["CHAIN"]))
 	foreach ($arResult["CHAIN"] as $arSectionPath)
 	{
 		if (!$bFirst):
-			?><br><?
+			?><br><?php
 		else:
 			$bFirst = false;
 		endif;
@@ -41,12 +41,12 @@ if(is_array($arResult["CHAIN"]) && !empty($arResult["CHAIN"]))
 			}
 	
 			if (!$bFirstChain):
-				?> - <?
+				?> - <?php
 			else:
 				$bFirstChain = false;
 			endif;
 
-			?><span class="fields enumeration"><?=$res?></span><?
+			?><span class="fields enumeration"><?=$res?></span><?php
 		}
 	}
 }
@@ -60,12 +60,12 @@ else
 			$res = '<a href="'.str_replace('#VALUE#', urlencode($ID), $arParams['arUserField']['PROPERTY_VALUE_LINK']).'">'.$res.'</a>';
 	
 		if (!$bFirst):
-			?>, <?
+			?>, <?php
 		else:
 			$bFirst = false;
 		endif;
 
-		?><span class="fields enumeration"><?=$res?></span><?
+		?><span class="fields enumeration"><?=$res?></span><?php
 	endforeach;
 }
 ?>

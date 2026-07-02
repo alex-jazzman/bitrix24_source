@@ -5,8 +5,10 @@ export type GanttLinkType = 'start_start' | 'start_finish' | 'finish_start' | 'f
 export type RelationMeta = {
 	id: string,
 	idsField: string,
+	statusesField: string,
 	containsField: string,
 	relationToField: string,
+	showCompletedField: string,
 	controller: string,
 	uniqueRight: string,
 	addError: string,

@@ -6,13 +6,11 @@ import { SidePanel } from 'main.sidepanel';
 import { Utils } from 'im.v2.lib.utils';
 import { CallManager } from 'im.v2.lib.call';
 import { Core } from 'im.v2.application.core';
-import { EventType, Layout } from 'im.v2.const';
+import { EventType, Layout, type ApplicationContext } from 'im.v2.const';
 import { LayoutManager } from 'im.v2.lib.layout';
 import { MessengerSlider } from 'im.v2.lib.slider';
 import { DesktopManager } from 'im.v2.lib.desktop';
 import { DesktopApi } from 'im.v2.lib.desktop-api';
-
-import type { ApplicationContext } from 'im.v2.const';
 
 export const EscEventAction = Object.freeze({
 	handled: 'handled',
@@ -86,6 +84,11 @@ export class EscManager
 		}
 
 		if (this.#handleLayoutClear())
+		{
+			return;
+		}
+
+		if (await this.#handleAdditionalRecentLists())
 		{
 			return;
 		}
@@ -231,5 +234,12 @@ export class EscManager
 		}
 
 		return areCommentsOpened;
+	}
+
+	async #handleAdditionalRecentLists(): Promise<boolean>
+	{
+		const eventResult = await EventEmitter.emitAsync(EventType.recent.closeListSlider);
+
+		return eventResult.includes(EscEventAction.handled);
 	}
 }

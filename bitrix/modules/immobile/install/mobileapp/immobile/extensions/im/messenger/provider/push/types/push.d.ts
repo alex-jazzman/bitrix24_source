@@ -1,6 +1,7 @@
 import {RawChat, RawFile, RawUser} from "../../service/src/types/sync-list-result";
 import {DialogId} from "../../../types/common";
 import {StickerState} from "../../../model/sticker-pack/src/types";
+import {RecentConfigSections} from "../../pull/base/types/recent";
 
 declare type MessengerPushEvent = {
 	command: 'message' | 'messageChat',
@@ -20,6 +21,10 @@ declare type MessengerPushEvent = {
 		userInChat: Record<number, Array<number>>,
 		users: Record<number, RawUser>
 		sticker: StickerState | '',
+		recentConfig: {
+			chatId: number,
+			sections: RecentConfigSections,
+		}
 	}
 }
 
@@ -41,6 +46,7 @@ declare type PushRawChat = {
 	name: string,
 	owner: number,
 	type: string,
+	parent_chat_id: number,
 }
 
 declare type PushRawMessage = {

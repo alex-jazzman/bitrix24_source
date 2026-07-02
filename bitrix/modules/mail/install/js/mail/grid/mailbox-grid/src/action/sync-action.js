@@ -1,4 +1,4 @@
-import { BaseAction, ActionConfig } from './base-action';
+import { BaseAction, type ActionConfig } from './base-action';
 import { Loc } from 'main.core';
 
 export class SyncAction extends BaseAction

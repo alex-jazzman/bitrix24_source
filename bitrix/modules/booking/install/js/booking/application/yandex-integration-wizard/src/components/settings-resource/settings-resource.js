@@ -104,7 +104,7 @@ export const YandexIntegrationWizardSettingsResource = {
 		{
 			return (
 				this.$store.state[Model.YandexIntegrationWizard].integration.status
-				|| IntegrationMapItemStatus.NOT_CONNECTED
+				|| IntegrationMapItemStatus.NotConnected
 			);
 		},
 	},
@@ -145,7 +145,7 @@ export const YandexIntegrationWizardSettingsResource = {
 		},
 		async getResources(): ResourceModel[]
 		{
-			const notConnected = this.integrationStatus === IntegrationMapItemStatus.NOT_CONNECTED;
+			const notConnected = this.integrationStatus === IntegrationMapItemStatus.NotConnected;
 			const resources = this.$store.state[Model.YandexIntegrationWizard].resources.map((resource) => {
 				return {
 					...resource,

@@ -1,4 +1,4 @@
-import type { ResourceSkuRelationsDto } from 'booking.provider.service.resources-service';
+import { type ResourceSkuRelationsDto } from 'booking.provider.service.resources-service';
 
 export type ResourceDto = {
 	id: number,

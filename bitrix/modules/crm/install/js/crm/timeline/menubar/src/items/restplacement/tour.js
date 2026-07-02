@@ -1,6 +1,6 @@
+import { type TourInterface } from 'crm.tour-manager';
+import { Dom, Text, Type } from 'main.core';
 import { Guide } from 'ui.tour';
-import { Type, Dom, Text } from 'main.core';
-import { TourInterface } from 'crm.tour-manager';
 
 const SPOTLIGHT_ID_PREFIX = 'rest_placement_spotlight';
 const MODULE_ID = 'crm';

@@ -23,7 +23,13 @@ export class NewMessageManager
 
 	getParentChatId(): number
 	{
-		return this.getChat()?.parent_chat_id || 0;
+		const chat = this.getChat();
+		if (!chat)
+		{
+			return 0;
+		}
+
+		return chat.parent_chat_id;
 	}
 
 	getChat(): ?RawChat

@@ -1,14 +1,14 @@
+import { type JsonObject } from 'main.core';
+import { type EventEmitter } from 'main.core.events';
+
 import { ActionByRole, EventType } from 'im.v2.const';
 import { EscEventAction } from 'im.v2.lib.esc-manager';
 import { PermissionManager } from 'im.v2.lib.permission';
+import { type ImModelChat } from 'im.v2.model';
 
-import { ChatTitle } from '../registry';
+import { ChatTitle } from '../base/chat-title.js';
 
 import './css/editable-chat-title.css';
-
-import type { JsonObject } from 'main.core';
-import type { EventEmitter } from 'main.core.events';
-import type { ImModelChat } from 'im.v2.model';
 
 const INPUT_PADDING = 5;
 

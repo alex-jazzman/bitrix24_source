@@ -7,6 +7,7 @@ jn.define('whats-new', (require, exports, module) => {
 	const { WhatsNewService } = require('whats-new/service');
 	const { WhatsNewCounter } = require('whats-new/counter-manager');
 	const { WhatsNewAnalytics } = require('layout/ui/whats-new/analytics');
+	const { Tourist } = require('tourist');
 
 	/**
 	 * @class WhatsNewManager
@@ -35,6 +36,13 @@ jn.define('whats-new', (require, exports, module) => {
 
 			if (WhatsNewManager.canOpenOnAppActive() && counter > 0)
 			{
+				if (Tourist.firstTime('skip_first_whats_new_auto_open'))
+				{
+					Tourist.remember('skip_first_whats_new_auto_open');
+
+					return;
+				}
+
 				new WhatsNewAnalytics()
 					.setEvent(WhatsNewAnalytics.Event.drawerOpen)
 					.send();

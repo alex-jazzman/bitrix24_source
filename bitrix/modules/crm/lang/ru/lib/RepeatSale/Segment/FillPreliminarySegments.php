@@ -26,3 +26,7 @@ $MESS['CRM_FPS_AI_SCREENING_ENTITY_TITLE_PATTERN'] = 'Повторная про�
 $MESS['CRM_FPS_AI_APPROVE_TITLE'] = 'Покупки к праздникам (системный)';
 $MESS['CRM_FPS_AI_APPROVE_PROMPT'] = 'Этот клиент сделал покупку к празднику год назад. Проверьте, не пришло ли время для новой продажи, и напомните, что он покупал раньше';
 $MESS['CRM_FPS_AI_APPROVE_ENTITY_TITLE_PATTERN'] = 'Повторная продажа по сценарию Покупки к праздникам';
+
+$MESS['CRM_FPS_REMAINING_TITLE'] = 'Любые покупки';
+$MESS['CRM_FPS_REMAINING_PROMPT'] = 'Этот клиент уже покупал у вас. Проверьте, не пришло ли время для новой продажи — возможно, его заинтересует что-то ещё';
+$MESS['CRM_FPS_REMAINING_ENTITY_TITLE_PATTERN'] = 'Повторная продажа по сценарию Любые покупки';

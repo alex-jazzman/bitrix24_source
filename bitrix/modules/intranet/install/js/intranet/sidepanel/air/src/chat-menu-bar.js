@@ -8,6 +8,11 @@ export class ChatMenuBar
 	#container: HTMLElement = null;
 	#loaded: boolean = false;
 
+	#onZIndexChangeHandler: Function | null = null;
+	#onOpeningSliderHandler: Function | null = null;
+	#onClosingSliderHandler: Function | null = null;
+	#onImLayoutChange: Function | null = null;
+
 	constructor(slider: Slider)
 	{
 		this.#slider = slider;
@@ -29,7 +34,7 @@ export class ChatMenuBar
 		EventEmitter.subscribe(this.#slider, 'SidePanel.Slider:onDestroy', this.#handleSliderDestroy.bind(this));
 		EventEmitter.subscribe(this.#slider, 'SidePanel.Slider:onLayout', this.#handleSliderLayout.bind(this));
 
-		EventEmitter.subscribe('SidePanel.Slider:onOpening', (event: BaseEvent) => {
+		this.#onOpeningSliderHandler = (event: BaseEvent) => {
 			const [sliderEvent] = event.getData();
 			if (sliderEvent.getSlider() !== this.#slider)
 			{
@@ -37,24 +42,28 @@ export class ChatMenuBar
 				Dom.style(this.getContainer(), 'box-shadow', `-10px 0px 10px 3px ${this.#slider.getOverlayBgColor()}`);
 				Dom.attr(this.getContainer(), 'inert', 'true');
 			}
-		});
+		};
 
-		EventEmitter.subscribe('SidePanel.Slider:onClosing', () => {
+		this.#onClosingSliderHandler = () => {
 			if (this.#slider === SidePanel.Instance.getPreviousSlider())
 			{
 				Dom.style(this.getContainer(), 'background', null);
 				Dom.style(this.getContainer(), 'box-shadow', null);
 				Dom.attr(this.getContainer(), 'inert', null);
 			}
-		});
+		};
 
-		EventEmitter.subscribe('IM.Layout:onLayoutChange', () => {
+		this.#onImLayoutChange = () => {
 			if (!this.#loaded)
 			{
 				this.#loaded = true;
 				Dom.addClass(this.getContainer(), '--loaded');
 			}
-		});
+		};
+
+		EventEmitter.subscribe('SidePanel.Slider:onOpening', this.#onOpeningSliderHandler);
+		EventEmitter.subscribe('SidePanel.Slider:onClosing', this.#onClosingSliderHandler);
+		EventEmitter.subscribe('IM.Layout:onLayoutChange', this.#onImLayoutChange);
 	}
 
 	getContainer(): HTMLElement
@@ -89,12 +98,22 @@ export class ChatMenuBar
 
 	#handleSliderOpenStartOnce(): void
 	{
-		EventEmitter.subscribe(this.#slider.getZIndexComponent(), 'onZIndexChange', this.#handleZIndexChange.bind(this));
+		const zIndexComponent = this.#slider.getZIndexComponent();
+		if (zIndexComponent && this.#onZIndexChangeHandler === null)
+		{
+			this.#onZIndexChangeHandler = this.#handleZIndexChange.bind(this);
+			EventEmitter.subscribe(zIndexComponent, 'onZIndexChange', this.#onZIndexChangeHandler);
+		}
 	}
 
 	#handleSliderOpening(): void
 	{
-		this.setZIndex(this.#slider.getZIndexComponent().getZIndex() + 1);
+		const zIndexComponent = this.#slider.getZIndexComponent();
+		if (zIndexComponent)
+		{
+			this.setZIndex(zIndexComponent.getZIndex() + 1);
+		}
+
 		Dom.style(this.getContainer(), 'display', 'block');
 		Dom.style(this.getContainer(), 'background', null);
 		Dom.style(this.getContainer(), 'box-shadow', null);
@@ -122,13 +141,27 @@ export class ChatMenuBar
 	#handleSliderDestroy(): void
 	{
 		this.reset();
+
+		EventEmitter.unsubscribe('SidePanel.Slider:onOpening', this.#onOpeningSliderHandler);
+		EventEmitter.unsubscribe('SidePanel.Slider:onClosing', this.#onClosingSliderHandler);
+		EventEmitter.unsubscribe('IM.Layout:onLayoutChange', this.#onImLayoutChange);
+
+		const zIndexComponent = this.#slider.getZIndexComponent();
+		if (zIndexComponent)
+		{
+			EventEmitter.unsubscribe(zIndexComponent, 'onZIndexChange', this.#onZIndexChangeHandler);
+		}
+
+		this.#onZIndexChangeHandler = null;
 	}
 
 	#handleZIndexChange(): void
 	{
-		const sliderZIndex = this.#slider.getZIndexComponent().getZIndex();
-
-		this.setZIndex(sliderZIndex + 1);
+		const zIndexComponent = this.#slider.getZIndexComponent();
+		if (zIndexComponent)
+		{
+			this.setZIndex(zIndexComponent.getZIndex() + 1);
+		}
 	}
 
 	#handleSliderLayout(): void

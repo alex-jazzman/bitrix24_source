@@ -1,13 +1,10 @@
-import { ActionTree, BuilderModel, GetterTree, MutationTree } from 'ui.vue3.vuex';
-import { Type } from 'main.core';
+import { Type, type JsonObject } from 'main.core';
+import { BuilderModel, type ActionTree, type GetterTree, type MutationTree } from 'ui.vue3.vuex';
 
-import { formatFieldsWithConfig } from 'im.v2.model';
 import { Core } from 'im.v2.application.core';
+import { formatFieldsWithConfig, type ImModelSidebarSharedLinkItem } from 'im.v2.model';
 
 import { sidebarSharedLinkFieldsConfig } from './format/field-config';
-
-import type { JsonObject } from 'main.core';
-import type { ImModelSidebarSharedLinkItem } from 'im.v2.model';
 
 type SharedLinkState = {
 	collection: { [id: number]: ImModelSidebarSharedLinkItem },

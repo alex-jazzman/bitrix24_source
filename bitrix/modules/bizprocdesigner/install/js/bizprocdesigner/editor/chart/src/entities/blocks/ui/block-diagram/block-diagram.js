@@ -17,7 +17,7 @@ type Props = {
 
 // @vue/component
 export const BlockDiagram = {
-	name: 'block-diagram',
+	name: 'BlockDiagram',
 	components: {
 		UiBlockDiagram,
 	},
@@ -54,9 +54,19 @@ export const BlockDiagram = {
 	setup(props: Props): BlockDiagramSetup
 	{
 		return {
-			blockSlotNames: BLOCK_SLOT_NAMES,
-			connectionSlotNames: CONNECTION_SLOT_NAMES,
+			blockSlotNamesMap: BLOCK_SLOT_NAMES,
+			connectionSlotNamesMap: CONNECTION_SLOT_NAMES,
 		};
+	},
+	computed: {
+		blockSlotNames(): string[]
+		{
+			return Object.values(this.blockSlotNamesMap);
+		},
+		connectionSlotNames(): string[]
+		{
+			return Object.values(this.connectionSlotNamesMap);
+		},
 	},
 	template: `
 		<UiBlockDiagram
@@ -69,47 +79,26 @@ export const BlockDiagram = {
 			@update:connections="$emit('update:connections', $event)"
 			@blockTransitionEnd="$emit('blockTransitionEnd', $event)"
 		>
-			<template #[blockSlotNames.SIMPLE]="{ block }">
+			<template
+				v-for="slotName in blockSlotNames"
+				#[slotName]="{ block }"
+			>
 				<slot
-					:name="blockSlotNames.SIMPLE"
+					:name="slotName"
 					:block="block"
 				/>
 			</template>
 
-			<template #[blockSlotNames.TRIGGER]="{ block }">
+			<template
+				v-for="slotName in connectionSlotNames"
+				#[slotName]="{ connection }"
+			>
 				<slot
-					:name="blockSlotNames.TRIGGER"
-					:block="block"
-				/>
-			</template>
-
-			<template #[blockSlotNames.COMPLEX]="{ block }">
-				<slot
-					:name="blockSlotNames.COMPLEX"
-					:block="block"
-				/>
-			</template>
-
-			<template #[blockSlotNames.TOOL]="{ block }">
-				<slot
-					:name="blockSlotNames.TOOL"
-					:block="block"
-				/>
-			</template>
-
-			<template #[blockSlotNames.FRAME]="{ block }">
-				<slot
-					:name="blockSlotNames.FRAME"
-					:block="block"
-				/>
-			</template>
-
-			<template #[connectionSlotNames.AUX]="{ connection }">
-				<slot
-					:name="connectionSlotNames.AUX"
+					:name="slotName"
 					:connection="connection"
 				/>
 			</template>
+
 			<template #group-selection-box>
 				<slot name="group-selection-box"/>
 			</template>

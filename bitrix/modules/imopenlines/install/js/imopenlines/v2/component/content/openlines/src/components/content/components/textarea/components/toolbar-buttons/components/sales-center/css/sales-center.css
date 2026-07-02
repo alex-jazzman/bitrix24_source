@@ -1,0 +1,19 @@
+.bx-imol-textarea-sales-center {
+	--ui-icon-set__icon-size: 18px;
+
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	padding: 2px 10px 2px 4px;
+	border: 1px solid var(--ui-color-palette-gray-10);
+	border-radius: 512px;
+	background-color: transparent;
+	cursor: pointer;
+}
+
+.bx-imol-textarea-sales-center__text {
+	font-size: var(--ui-font-size-xs);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var(--ui-font-size-xl);
+	color: var(--ui-color-text-secondary);
+}

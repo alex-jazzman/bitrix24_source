@@ -3,5 +3,4 @@ module.exports = {
 	output: 'dist/timeline.bundle.js',
 	namespace: 'BX.Crm.Timeline',
 	browserslist: true,
-	transformClasses: true,
 };

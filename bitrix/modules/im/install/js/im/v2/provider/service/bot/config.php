@@ -10,9 +10,9 @@ return [
 	],
 	'rel' => [
 		'main.polyfill.core',
-		'main.core.events',
-		'im.v2.lib.rest',
 		'im.v2.const',
+		'im.v2.lib.rest',
+		'main.core.events',
 	],
 	'skip_core' => true,
 ];

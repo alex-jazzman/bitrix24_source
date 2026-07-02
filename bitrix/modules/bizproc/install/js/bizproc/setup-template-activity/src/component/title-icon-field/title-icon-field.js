@@ -1,16 +1,14 @@
 import { EventEmitter } from 'main.core.events';
-import { BIcon } from 'ui.icon-set.api.vue';
 import { Outline, Main } from 'ui.icon-set.api.core';
+import { BIcon } from 'ui.icon-set.api.vue';
+import { type MenuOptions } from 'ui.system.menu';
 import { BMenu } from 'ui.system.menu.vue';
 
-import { UpdateItemPropertyEventPayload } from '../../types';
 import { PRESET_TITLE_ICONS } from '../../constants';
+// eslint-disable-next-line no-unused-vars
+import { type UpdateItemPropertyEventPayload, type TitleWithIconItem } from '../../types';
 
 import './title-icon-field.css';
-
-// eslint-disable-next-line no-unused-vars
-import type { TitleWithIconItem } from '../../types';
-import type { MenuOptions } from 'ui.system.menu';
 
 // @vue/component
 export const TitleIconField = {

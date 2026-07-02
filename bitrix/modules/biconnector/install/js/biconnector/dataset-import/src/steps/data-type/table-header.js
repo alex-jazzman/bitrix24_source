@@ -13,6 +13,11 @@ export const TableHeader = {
 			required: false,
 			default: false,
 		},
+		sourceType: {
+			type: String,
+			required: false,
+			default: '',
+		},
 	},
 	emits: [
 		'checkboxClick',
@@ -33,7 +38,7 @@ export const TableHeader = {
 	// language=Vue
 	template: `
 		<tr>
-			<th class="format-table__header format-table__checkbox-header">
+			<th v-if="sourceType !== 'system'" class="format-table__header format-table__checkbox-header">
 				<input class="format-table__checkbox" type="checkbox" @change="onCheckboxClick" :checked="enabled" :indeterminate.prop="indeterminate">
 			</th>
 			<th class="format-table__header format-table__type-header format-table__type-subfield-header">{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_FIELD_SETTINGS_TYPE_HEADER') }}</th>

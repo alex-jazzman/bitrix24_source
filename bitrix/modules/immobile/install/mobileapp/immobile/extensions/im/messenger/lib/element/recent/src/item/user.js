@@ -5,10 +5,13 @@ jn.define('im/messenger/lib/element/recent/item/user', (require, exports, module
 	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
 	const { merge } = require('utils/object');
+	const { Color } = require('tokens');
+	const { Icon } = require('assets/icons');
 
 	const { Theme } = require('im/lib/theme');
 	const { SubTitleIconType } = require('im/messenger/const');
 	const { UserHelper } = require('im/messenger/lib/helper');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { RecentItem } = require('im/messenger/lib/element/recent/item/base');
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
@@ -28,8 +31,53 @@ jn.define('im/messenger/lib/element/recent/item/user', (require, exports, module
 			super(modelItem, options);
 		}
 
+		/**
+		 * @return RecentItem
+		 */
+		createAvatarStyle()
+		{
+			if (!Feature.isImageInRecentAvatarStyleAvailable)
+			{
+				return this;
+			}
+
+			if (this.checkNeedsVacationIcon())
+			{
+				this.styles.avatar = {
+					image: {
+						name: Icon.SMALL_VACATION.getIconName(),
+						tintColor: Color.accentSoftElementGreen.toHex(),
+					},
+				};
+
+				return this;
+			}
+
+			if (this.checkNeedsBirthdayIcon())
+			{
+				this.styles.avatar = {
+					image: {
+						name: Icon.SMALL_GIFT.getIconName(),
+						tintColor: Color.accentSoftElementGreen.toHex(),
+					},
+				};
+
+				return this;
+			}
+
+			return this;
+		}
+
+		/**
+		 * @return RecentItem
+		 */
 		createTitleStyle()
 		{
+			if (Feature.isImageInRecentAvatarStyleAvailable)
+			{
+				return this;
+			}
+
 			if (this.checkNeedsBirthdayIcon())
 			{
 				this.styles.title = merge(this.styles.title, {
@@ -173,6 +221,7 @@ jn.define('im/messenger/lib/element/recent/item/user', (require, exports, module
 			const canMuted = ChatPermission.сanMute(dialogId);
 
 			this.actions = [
+				this.getAddToFolderAction(),
 				this.getPinAction(),
 				this.getReadAction(),
 				canMuted && this.getMuteAction(),

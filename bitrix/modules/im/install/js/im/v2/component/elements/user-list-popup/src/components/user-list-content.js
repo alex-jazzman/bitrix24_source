@@ -1,13 +1,12 @@
-import { ImModelUser } from 'im.v2.model';
+import { type JsonObject } from 'main.core';
+
 import { Loader } from 'im.v2.component.elements.loader';
+import { type ImModelUser } from 'im.v2.model';
 
 import { UserListService } from '../classes/user-list-service';
-
 import { UserItem } from './user-item';
 
 import '../css/user-list-content.css';
-
-import type { JsonObject } from 'main.core';
 
 // @vue/component
 export const UserListContent = {

@@ -30,10 +30,96 @@
 	margin: 0;
 }
 
+.ui-date-picker-body {
+	display: flex;
+	flex-direction: row;
+	flex: 1;
+}
+
 .ui-date-picker-views {
 	display: flex;
 	flex: 1;
 	position: relative;
+}
+
+.ui-date-picker-presets {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 12px 12px 12px 16px;
+	overflow-y: auto;
+	scrollbar-width: none; /* @chef-ignore */
+	height: var(--ui-date-picker-min-height);
+	box-sizing: border-box;
+}
+
+.ui-date-picker.--inline .ui-date-picker-presets {
+	padding-top: 6px;
+}
+
+.ui-date-picker-preset {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	min-width: 160px;
+	max-width: 215px;
+	gap: 2px;
+	padding: var(--ui-space-stack-2xs2) var(--ui-space-inline-sm) var(--ui-space-stack-xs);
+	border: var(--ui-border-width-thin) solid var(--ui-color-design-outline-a2-content-divider);
+	border-radius: 10px;
+	background: transparent;
+	cursor: pointer;
+	text-align: left;
+	font: inherit;
+	color: inherit;
+	transition: border-color .15s, background-color .15s;
+}
+
+.ui-date-picker-preset:hover,
+.ui-date-picker-preset.--active{
+	background: var(--ui-color-accent-soft-blue-3);
+	color: var(--ui-color-accent-main-primary);
+	border-color: var(--ui-color-accent-main-primary-alt-2);
+}
+
+.ui-date-picker-preset.--disabled {
+	cursor: not-allowed;
+	opacity: 0.4;
+	pointer-events: none;
+}
+
+.ui-date-picker-preset:focus-visible,
+.ui-date-picker-preset.--focus-visible {
+	outline: 2px solid var(--ui-date-picker-outiline-color);
+	outline-offset: 1px;
+}
+
+.ui-date-picker-preset-label {
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-semi-bold);
+	color: var(--ui-color-text-primary);
+	line-height: 1.25;
+
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	max-width: 100%;
+}
+
+.ui-date-picker-preset:hover .ui-date-picker-preset-label,
+.ui-date-picker-preset.--active .ui-date-picker-preset-label {
+	color: var(--ui-color-accent-main-primary)
+}
+
+.ui-date-picker-preset-subtitle {
+	font-size: var(--ui-font-size-4xs);
+	color: var(--ui-color-base-70);
+	line-height: 1.25;
+
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	max-width: 100%;
 }
 
 .ui-date-picker-header {
@@ -103,6 +189,15 @@
 
 .ui-date-picker-button:hover .ui-icon-set {
 	opacity: 1;
+}
+
+.ui-date-picker-button:disabled {
+	cursor: not-allowed;
+	pointer-events: none;
+}
+
+.ui-date-picker-button:disabled .ui-icon-set {
+	opacity: 0.2;
 }
 
 .ui-date-picker-button:focus-visible,

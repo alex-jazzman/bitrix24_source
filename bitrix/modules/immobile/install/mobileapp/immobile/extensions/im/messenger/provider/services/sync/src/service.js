@@ -17,25 +17,11 @@ jn.define('im/messenger/provider/services/sync/service', (require, exports, modu
 	const CRITICAL_AWAIT_TIMEOUT_REQUEST_SERVER = 15000;
 
 	/**
+	 * @implements {Unsubscribable}
 	 * @class SyncService
 	 */
 	class SyncService
 	{
-		static instance = null;
-
-		/**
-		 * @return {SyncService}
-		 */
-		static getInstance()
-		{
-			if (!this.instance)
-			{
-				this.instance = new this();
-			}
-
-			return this.instance;
-		}
-
 		constructor()
 		{
 			this.syncInProgress = false;
@@ -54,11 +40,17 @@ jn.define('im/messenger/provider/services/sync/service', (require, exports, modu
 			this.#initServices();
 		}
 
+		unsubscribeEvents()
+		{
+			this.stopBackgroundSync();
+			this.syncFiller.unsubscribeEvents();
+		}
+
 		#initServices()
 		{
-			this.dateService = DateService.getInstance();
-			this.syncLoader = SyncLoader.getInstance();
-			this.syncFiller = SyncFiller.getInstance();
+			this.dateService = new DateService();
+			this.syncLoader = new SyncLoader();
+			this.syncFiller = new SyncFiller();
 		}
 
 		/**
@@ -178,6 +170,7 @@ jn.define('im/messenger/provider/services/sync/service', (require, exports, modu
 		{
 			this.stopBackgroundSync();
 
+			this.logger.log('startBackgroundSync');
 			const handler = async () => {
 				if (!Application.isBackground())
 				{
@@ -204,6 +197,7 @@ jn.define('im/messenger/provider/services/sync/service', (require, exports, modu
 
 		stopBackgroundSync()
 		{
+			this.logger.log('stopBackgroundSync');
 			clearTimeout(this.backgroundTimerId);
 			this.backgroundTimerId = null;
 		}

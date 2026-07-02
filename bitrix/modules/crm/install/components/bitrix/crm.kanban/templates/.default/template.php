@@ -117,6 +117,21 @@ echo Tour\Permissions\AutomatedSolution::getInstance()
 	->build()
 ;
 
+if ($entityTypeId === CCrmOwnerType::Lead || $entityTypeId === CCrmOwnerType::Deal)
+{
+	echo \Bitrix\Crm\Tour\ImOpenLines\AiAgent\OnboardingPopup::getInstance()->build();
+}
+
+$clientFieldsTour = Tour\ClientFields\AbstractClientFieldsEntityList::getInstanceByEntityTypeId($entityTypeId);
+if ($clientFieldsTour !== null)
+{
+	echo $clientFieldsTour
+		->setTargetId('#crm-toolbar-settings-button .ui-btn-text')
+		->build()
+	;
+}
+unset($clientFieldsTour);
+
 $repeatSaleEntityTypeIds = [\CCrmOwnerType::Deal, \CCrmOwnerType::Contact, \CCrmOwnerType::Company];
 if (in_array($entityTypeId, $repeatSaleEntityTypeIds, true))
 {
@@ -302,6 +317,7 @@ if (defined('AIR_SITE_TEMPLATE'))
 								c_sub_section: '<?= CUtil::JSEscape($subSection) ?>',
 							},
 							performance: <?= CUtil::phpToJsObject($arResult['PERFORMANCE']) ?>,
+							copilotName: "<?= CUtil::JSEscape($arResult['COPILOT_NAME'] ?? '') ?>",
 						}
 				}
 			);
@@ -336,7 +352,7 @@ if (defined('AIR_SITE_TEMPLATE'))
 				}
 			);
 
-			new BX.Crm.Kanban.PullManager(Kanban);
+			new BX.CRM.Kanban.PullManager(Kanban);
 
 			const sortSettings = BX.CRM.Kanban.Sort.Settings.createFromJson(
 				'<?= Json::encode($arResult['SORT_SETTINGS']) ?>',

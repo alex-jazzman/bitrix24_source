@@ -13,7 +13,7 @@ export type ShowPartnerFormParams = {
 	forms: PartnerForm[] | null;
 	messages: { [string]: string };
 	partnerLogo?: string;
-	publicDomain: string;
+	partnerCardUrl: string;
 	partnerPhone?: string;
 	partnerEmail?: string;
 	partnerCompany?: string;
@@ -41,7 +41,7 @@ type ShowPartnerFormPopupOptions = {
 	partnerEmail?: string;
 	partnerCompany?: string;
 	arParams: Object;
-	publicDomain: string;
+	partnerCardUrl: string;
 }
 
 async function showPartnerFormPopup(options: ShowPartnerFormPopupOptions): Popup
@@ -50,12 +50,11 @@ async function showPartnerFormPopup(options: ShowPartnerFormPopupOptions): Popup
 		? '/bitrix/modules/intranet/install/templates/bitrix24/dist/dist/images/b24-partner__icon.svg'
 		: options.partnerLogo
 	;
-	const partnerCardUrl = `${options.publicDomain}partners/partner/${options.partnerId}/`;
 
 	const clipboardButton = initCopyBtn();
 	const email = initEmail(clipboardButton, options);
 	const phone = initPhone(clipboardButton, options);
-	const partnerAbout = initAboutPartner(partnerCardUrl);
+	const partnerAbout = initAboutPartner(options.partnerCardUrl);
 
 	const popupOptions: PopupOptions = {
 		className: 'bitrix24-partner__popup',

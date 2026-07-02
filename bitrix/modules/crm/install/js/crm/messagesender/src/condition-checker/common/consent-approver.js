@@ -1,4 +1,7 @@
 import { ajax, Loc } from 'main.core';
+import { MessageBox } from 'ui.dialogs.messagebox';
+import { Button, ButtonColor } from 'ui.buttons';
+import 'ui.notification.center';
 
 export const Types: Readonly<string, string> = Object.freeze({
 	bitrix24: 'bitrix24',
@@ -46,7 +49,7 @@ export class ConsentApprover
 
 	#showConsentAgreementBox({ title, html: message }, resolve: Function): void
 	{
-		BX.UI.Dialogs.MessageBox.show({
+		MessageBox.show({
 			modal: true,
 			message,
 			buttons: this.#getButtons(resolve),
@@ -56,12 +59,12 @@ export class ConsentApprover
 		});
 	}
 
-	#getButtons(resolve: Function): BX.UI.Button[]
+	#getButtons(resolve: Function): Button[]
 	{
 		return [
-			new BX.UI.Button({
+			new Button({
 				className: 'ui-btn-round',
-				color: BX.UI.Button.Color.SUCCESS,
+				color: ButtonColor.SUCCESS,
 				text: Loc.getMessage('CRM_MESSAGESENDER_B24_CONSENT_ACCEPT'),
 				onclick: (button) => {
 					this
@@ -82,9 +85,9 @@ export class ConsentApprover
 					;
 				},
 			}),
-			new BX.UI.Button({
+			new Button({
 				className: 'ui-btn-round',
-				color: BX.UI.Button.Color.LIGHT_BORDER,
+				color: ButtonColor.LIGHT_BORDER,
 				text: Loc.getMessage('CRM_MESSAGESENDER_B24_CONSENT_REJECT'),
 				onclick: (button) => {
 					this.#closeAgreementBox(button);

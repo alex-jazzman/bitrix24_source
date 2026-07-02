@@ -14,10 +14,10 @@ return [
 	'rel' => [
 		'main.polyfill.core',
 		'im.application.core',
-		'ui.vue',
-		'ui.vue.vuex',
 		'im.view.list.recent',
 		'im.view.list.sidebar',
+		'ui.vue',
+		'ui.vue.vuex',
 	],
 	'skip_core' => true,
 ];

@@ -1,4 +1,4 @@
-import { Menu, MenuManager } from 'main.popup';
+import { MenuManager } from 'main.popup';
 import { BIcon as Icon, Outline } from 'ui.icon-set.api.vue';
 
 import { Utils } from 'booking.lib.utils';

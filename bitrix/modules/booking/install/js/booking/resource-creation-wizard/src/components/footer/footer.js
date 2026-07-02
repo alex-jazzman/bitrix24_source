@@ -1,4 +1,5 @@
 import { mapGetters } from 'ui.vue3.vuex';
+
 import { Model } from 'booking.const';
 import { NextButton } from './next-button';
 import { BackButton } from './back-button';
@@ -14,14 +15,13 @@ export const ResourceCreationWizardFooter = {
 		},
 		disabled: Boolean,
 	},
-	data(): Object {
-		return {
-			steps: [
-				new ChooseResourceStep(),
-				new ResourceSettingsStep(),
-				new ResourceNotificationStep(),
-			],
-		};
+	created(): void
+	{
+		this.steps = [
+			new ChooseResourceStep(),
+			new ResourceSettingsStep(),
+			new ResourceNotificationStep(),
+		];
 	},
 	computed: mapGetters({
 		isSaving: `${Model.ResourceCreationWizard}/isSaving`,

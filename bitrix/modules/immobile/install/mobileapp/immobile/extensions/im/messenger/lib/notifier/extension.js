@@ -10,21 +10,10 @@ jn.define('im/messenger/lib/notifier', (require, exports, module) => {
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const {
 		EventType,
-		RecentTab,
-		NavigationTabId,
+		RecentTabByNavigationTab,
 	} = require('im/messenger/const');
 	const { VisibilityManager } = require('im/messenger/lib/visibility-manager');
-	const { RecentManager } = require('im/messenger/controller/recent/manager');
-
-	// TODO: MessengerV2 move to helper
-	const RecentTabByNavigationTab = {
-		[NavigationTabId.chats]: RecentTab.chat,
-		[NavigationTabId.copilot]: RecentTab.copilot,
-		[NavigationTabId.collab]: RecentTab.collab,
-		[NavigationTabId.channel]: RecentTab.openChannel,
-		[NavigationTabId.task]: RecentTab.tasksTask,
-		[NavigationTabId.openlines]: RecentTab.openlines,
-	};
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	/**
 	 * @class Notifier
@@ -39,22 +28,6 @@ jn.define('im/messenger/lib/notifier', (require, exports, module) => {
 			this.visibilityManager = VisibilityManager.getInstance();
 
 			this.isInitialized = !Type.isUndefined(InAppNotifier);
-			if (this.isInitialized)
-			{
-				InAppNotifier.setHandler((data) => {
-					if (data && data.dialogId)
-					{
-						if (data.dialogId === 'notify')
-						{
-							MessengerEmitter.emit(EventType.messenger.openNotifications);
-
-							return;
-						}
-
-						MessengerEmitter.emit(EventType.messenger.openDialog, { dialogId: data.dialogId });
-					}
-				});
-			}
 		}
 
 		/**
@@ -97,9 +70,14 @@ jn.define('im/messenger/lib/notifier', (require, exports, module) => {
 			)
 			{
 				const sections = options.recentConfig.sections;
-				const tabId = RecentManager.getInstance().getActiveRecentId();
+				const tabId = serviceLocator.get('recent-manager').getActiveRecentId();
 				const currentRecentTab = RecentTabByNavigationTab[tabId];
 				if (sections.includes(currentRecentTab))
+				{
+					return false;
+				}
+
+				if (this.#isDialogInActiveNestedNavigation(options))
 				{
 					return false;
 				}
@@ -118,6 +96,42 @@ jn.define('im/messenger/lib/notifier', (require, exports, module) => {
 			return true;
 		}
 
+		/**
+		 * @param {Object} options
+		 * @return {boolean}
+		 */
+		#isDialogInActiveNestedNavigation(options)
+		{
+			const navigationManager = serviceLocator.get('navigation-manager');
+			if (!navigationManager?.hasNestedNavigation())
+			{
+				return false;
+			}
+
+			const chatId = options.recentConfig?.chatId;
+			if (!chatId)
+			{
+				return false;
+			}
+
+			if (navigationManager.isTopNestedNavigationForChat(chatId))
+			{
+				return true;
+			}
+
+			const store = serviceLocator.get('core')?.getStore();
+			if (!store)
+			{
+				return false;
+			}
+
+			const dialog = store.getters['dialoguesModel/getById'](options.dialogId);
+
+			return dialog?.parentChatId > 0
+				&& navigationManager.isTopNestedNavigationForChat(dialog.parentChatId)
+			;
+		}
+
 		showNotification(options)
 		{
 			const notification = {
@@ -132,7 +146,29 @@ jn.define('im/messenger/lib/notifier', (require, exports, module) => {
 				notification.imageUrl = options.avatar;
 			}
 
+			this.#setInAppNotifierHandler();
 			InAppNotifier.showNotification(notification);
+		}
+
+		/**
+		 * InAppNotifier keeps a single native tap handler and can lose the JS handler after navigation changes.
+		 * Register it right before showing a notification so tapping the currently visible notification opens the dialog.
+		 */
+		#setInAppNotifierHandler()
+		{
+			InAppNotifier.setHandler((data) => {
+				if (data && data.dialogId)
+				{
+					if (data.dialogId === 'notify')
+					{
+						MessengerEmitter.emit(EventType.messenger.openNotifications);
+
+						return;
+					}
+
+					MessengerEmitter.emit(EventType.messenger.openDialog, { dialogId: data.dialogId });
+				}
+			});
 		}
 	}
 

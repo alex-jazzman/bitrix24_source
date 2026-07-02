@@ -2,6 +2,7 @@
  * @module im/messenger/lib/counters/update-system/system
  */
 jn.define('im/messenger/lib/counters/update-system/system', (require, exports, module) => {
+	const { Type } = require('type');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 
 	const logger = getLoggerWithContext('counters--update-system', 'CountersUpdateSystem');
@@ -82,6 +83,10 @@ jn.define('im/messenger/lib/counters/update-system/system', (require, exports, m
 				logger.error('readAllChats: counterModel/readAllChats error', error);
 			});
 
+			await this.store.dispatch('recentModel/readAllChats').catch((error) => {
+				logger.error('readAllChats: recentModel/readAllChats error', error);
+			});
+
 			await this.repository.clearAllCountersInDatabase().catch((error) => {
 				logger.error('readAllChats: clearAllCountersInDatabase error', error);
 			});
@@ -124,6 +129,12 @@ jn.define('im/messenger/lib/counters/update-system/system', (require, exports, m
 		 */
 		async readByRecentSection(recentSection)
 		{
+			await this.store.dispatch('recentModel/readByRecentSection', {
+				recentSection,
+			}).catch((error) => {
+				logger.error('readByRecentSection: recentModel/readByRecentSection error', error);
+			});
+
 			const promises = this.store.getters['counterModel/getByRecentSection'](recentSection)
 				.map((counterState) => {
 					return this.readChat(counterState.chatId);
@@ -157,6 +168,13 @@ jn.define('im/messenger/lib/counters/update-system/system', (require, exports, m
 		 */
 		async updateCounterState(counterState)
 		{
+			if (!Type.isNumber(counterState?.chatId))
+			{
+				logger.error('updateCounterState: invalid counterState', counterState);
+
+				return;
+			}
+
 			await this.store.dispatch('counterModel/setList', {
 				counterList: [counterState],
 			}).catch((error) => {
@@ -164,6 +182,12 @@ jn.define('im/messenger/lib/counters/update-system/system', (require, exports, m
 			});
 
 			const storedCounterState = this.store.getters['counterModel/getByChatId'](counterState.chatId);
+			if (!storedCounterState)
+			{
+				logger.error('updateCounterState: stored counter state not found', counterState);
+
+				return;
+			}
 
 			await this.repository.saveCounterStateList([storedCounterState]).catch((error) => {
 				logger.error('updateCounterState: saveCounterStateList error', error);

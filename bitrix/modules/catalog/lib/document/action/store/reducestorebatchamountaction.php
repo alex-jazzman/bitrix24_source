@@ -11,12 +11,11 @@ use Bitrix\Catalog\Product\Store\CostPriceCalculator;
 use Bitrix\Catalog\StoreBatchDocumentElementTable;
 use Bitrix\Catalog\StoreDocumentElementTable;
 use Bitrix\Catalog\StoreBatchTable;
-use Bitrix\Catalog\StoreDocumentTable;
-use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\Result;
+use Bitrix\Catalog\Product\Price\Calculation;
 
 /**
  * Reduce amount for existed batch of products.
@@ -26,11 +25,14 @@ class ReduceStoreBatchAmountAction implements Action
 	use WriteOffAmountValidator;
 
 	protected int $storeId;
-
 	protected int $productId;
 	protected ?EO_StoreDocumentElement $storeDocumentElement;
-	public function __construct(int $documentElementId)
+	protected float $totalAmount;
+
+	public function __construct(int $documentElementId, float $totalAmount)
 	{
+		$this->totalAmount = $totalAmount;
+
 		$this->storeDocumentElement = StoreDocumentElementTable::getList([
 				'filter' => [
 					'=ID' => $documentElementId,
@@ -57,7 +59,7 @@ class ReduceStoreBatchAmountAction implements Action
 			$this->storeId = $this->storeDocumentElement->getStoreTo();
 		}
 
-		return $this->checkStoreAmount($this->storeDocumentElement);
+		return $this->checkStoreAmount($this->storeDocumentElement, $this->totalAmount);
 	}
 
 	/**
@@ -114,10 +116,12 @@ class ReduceStoreBatchAmountAction implements Action
 					&& Loader::includeModule('currency')
 				)
 				{
-					$purchasingPrice = \CCurrencyRates::convertCurrency(
-						$this->storeDocumentElement->getPurchasingPrice(),
-						$this->storeDocumentElement->getDocument()->getCurrency(),
-						$batch->getPurchasingCurrency()
+					$purchasingPrice = Calculation::roundPrecision(
+						\CCurrencyRates::convertCurrency(
+							$this->storeDocumentElement->getPurchasingPrice(),
+							$this->storeDocumentElement->getDocument()->getCurrency(),
+							$batch->getPurchasingCurrency()
+						)
 					);
 				}
 
@@ -126,8 +130,7 @@ class ReduceStoreBatchAmountAction implements Action
 				{
 					$newSum = $batch->getAvailableAmount() * $batch->getPurchasingPrice() - $oldBatchElement->getAmount() * $purchasingPrice;
 					$newPurchasingPrice = $newSum / $newAmount;
-					$precision = (int)Option::get('sale', 'value_precision', 2);
-					$newPurchasingPrice = round($newPurchasingPrice, $precision);
+					$newPurchasingPrice = Calculation::roundPrecision($newPurchasingPrice);
 					$batch->setPurchasingPrice($newPurchasingPrice);
 				}
 				$batch->setAvailableAmount($newAmount);

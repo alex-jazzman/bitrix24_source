@@ -19,14 +19,17 @@ $arResult['VARIABLES'] = array();
 if (!empty($mailbox))
 {
 	$arResult['VARIABLES']['id'] = $mailbox['ID'];
+	$lastViewState = \CUserOptions::getOption('mail', 'last_view_state', \Bitrix\Mail\Helper\MessageFolder::VIEW_STATE_MAILBOX);
+	if ($lastViewState === \Bitrix\Mail\Helper\MessageFolder::VIRTUAL_ALL_MESSAGES)
+	{
+		$arResult['VARIABLES']['virtual'] = $lastViewState;
+	}
 	$componentName = 'bitrix:mail.client.message.list';
 }
 else
 {
 	global $USER;
-	$userId = $USER->getId();
-	$siteId = SITE_ID;
-	\CUserCounter::set($userId, 'mail_unseen', 0, $siteId);
+	\Bitrix\Mail\Helper\Message::setUserUnseenCounter((int)$USER->getId(), SITE_ID);
 
 	$arResult['VARIABLES']['IS_MAIN_MAIL_PAGE'] = true;
 	$componentName = 'bitrix:mail.client.config';

@@ -224,6 +224,7 @@ export default class Dialog extends EventEmitter
 				'events',
 				'animation',
 				'className',
+				'focusTrap',
 			]);
 
 			const popupOptions = {};
@@ -1745,6 +1746,7 @@ export default class Dialog extends EventEmitter
 			bindOptions: {
 				forceBindPosition: true,
 			},
+			focusTrap: this.getTagSelector() === null ? undefined : false,
 			autoHide: this.isAutoHide(),
 			autoHideHandler: this.handleAutoHide.bind(this),
 			closeByEsc: this.shouldHideByEsc(),

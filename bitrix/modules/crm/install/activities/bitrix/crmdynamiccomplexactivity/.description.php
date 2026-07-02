@@ -39,6 +39,10 @@ $arActivityDescription = (new ActivityDescription(
 					presetId: 'dynamic',
 				),
 				new NodeAction(
+					activityCode: 'crmcreatetodoactivity',
+					sort: 125,
+				),
+				new NodeAction(
 					activityCode: 'setfieldactivity',
 					customName: Loc::getMessage('CRM_COMPLEX_ACTIVITY_DYNAMIC_DESCRIPTION_NODE_ACTION_CHANGE'),
 					sort: 200,
@@ -80,6 +84,11 @@ $arActivityDescription = (new ActivityDescription(
 				new NodeAction(
 					activityCode: 'crmgenerateentitydocumentactivity',
 					sort: 1050,
+				),
+				new NodeAction(
+					activityCode: 'crmtimelinecommentadd',
+					customName: Loc::getMessage('CRM_COMPLEX_ACTIVITY_DYNAMIC_DESCRIPTION_NODE_ACTION_ADD_COMMENT'),
+					sort: 1051,
 				),
 				new NodeAction(
 					activityCode: 'crmaddproductrow',

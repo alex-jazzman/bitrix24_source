@@ -1,19 +1,18 @@
 import { Core } from 'im.v2.application.core';
+import { ChatType, DataAttribute, type MessageComponent, type ApplicationContext, type ChatTypeItem } from 'im.v2.const';
 import { ChannelManager } from 'im.v2.lib.channel';
 import { CopilotManager } from 'im.v2.lib.copilot';
-import { ChatType, DataAttribute, MessageComponent } from 'im.v2.const';
+import { type MessageMenuContext } from 'im.v2.lib.menu';
+import { type ImModelChat } from 'im.v2.model';
 
-// noinspection ES6PreferShortImport
-import { MessageMenu } from './classes/message-base';
+import { AiAssistantMessageMenu } from './classes/ai-assistant';
 import { ChannelMessageMenu } from './classes/channel';
 import { CommentsMessageMenu } from './classes/comments';
 import { CopilotMessageMenu } from './classes/copilot';
-import { AiAssistantMessageMenu } from './classes/ai-assistant';
+import { MessageMenu } from './classes/message-base';
 import { TaskCommentsMessageMenu } from './classes/task-comments';
 
-import type { ImModelChat } from 'im.v2.model';
-import type { MessageMenuContext } from 'im.v2.lib.menu';
-import type { ApplicationContext } from 'im.v2.const';
+// noinspection ES6PreferShortImport
 
 type MenuCheckFunction = (context: MessageMenuContext) => boolean;
 type MessageType = $Values<typeof MessageComponent>;
@@ -150,7 +149,7 @@ export class MessageMenuManager
 		return null;
 	}
 
-	#getChatType(dialogId: string): $Values<typeof ChatType>
+	#getChatType(dialogId: string): ChatTypeItem
 	{
 		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId, true);
 

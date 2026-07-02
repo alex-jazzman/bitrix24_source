@@ -314,6 +314,14 @@ jn.define('qrauth/src/auth', (require, exports, module) => {
 
 		getStepsGuide()
 		{
+			if (!cloud)
+			{
+				return [
+					this.renderStepOne(),
+					this.renderStepThree(),
+				];
+			}
+
 			return [
 				this.renderStepOne(),
 				this.renderStepTwo(),

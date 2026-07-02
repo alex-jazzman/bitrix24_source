@@ -46,13 +46,6 @@ $extensionsList = [
 	'ai.picker',
 ];
 
-if (in_array('tasks', $arResult['tabs'], true))
-{
-	Loader::includeModule('tasks');
-	$extensionsList[] = 'tasks_component';
-	$extensionsList[] = 'tasks_integration_socialnetwork';
-}
-
 if (in_array('lists', $arResult['tabs'], true))
 {
 	$extensionsList[] = 'lists';
@@ -201,16 +194,6 @@ else
 
 	$settings = new Settings();
 
-	$isTasksEnabled = $settings->isToolAvailable(Settings::TASKS_TOOLS['base_tasks']);
-	if (in_array('tasks', $arResult['tabs'], true) && $isTasksEnabled)
-	{
-		$arTabs[] = [
-			"ID" => "tasks",
-			"NAME" => Loc::getMessage("BLOG_TAB_TASK"),
-			"ONCLICK" => "BX.Socialnetwork.Livefeed.PostFormTabs.getInstance().getTaskForm();"
-		];
-	}
-
 	$isCalendarEnabled = $settings->isToolAvailable(Settings::CALENDAR_TOOLS['calendar']);
 	if (in_array('calendar', $arResult['tabs'], true) && $isCalendarEnabled)
 	{
@@ -306,7 +289,12 @@ else
 	$tabsCnt = count($arTabs);
 	for ($i = 0; $i < $maxTabs; $i++)
 	{
-		$arTab = $arTabs[$i];
+		$arTab = ($arTabs[$i] ?? null);
+		if (!$arTab)
+		{
+			continue;
+		}
+		
 		$moreClass = ($arResult['tabActive'] === $arTab["ID"] ? " feed-add-post-form-link-active" : "");
 		if ($arTab["ID"] === "lists")
 		{
@@ -501,7 +489,7 @@ HTML;
 		BX.message(<?=Json::encode(Loc::loadLanguageFile(__FILE__))?>);
 
 		BX.message({
-			PATH_TO_USER_TASKS_TASK : '<?=CUtil::JSEscape($arParams['PATH_TO_USER_TASKS_TASK'])?>',
+			PATH_TO_USER_TASKS_TASK : '<?=CUtil::JSEscape($arParams['PATH_TO_USER_TASKS_TASK'] ?? null)?>',
 		});
 
 		new BX.Socialnetwork.Livefeed.PostForm({
@@ -983,77 +971,6 @@ HTML;
 					<?php
 				}
 
-				if (in_array('tasks', $arResult['tabs'], true))
-				{
-					?><div id="feed-add-post-content-tasks" style="display: none;"><div id="feed-add-post-content-tasks-container"><?php
-
-						$taskSubmitted = false;
-
-						if (
-							isset($_REQUEST['ACTION'])
-							&& is_array($_REQUEST['ACTION'])
-						)
-						{
-							foreach ($_REQUEST['ACTION'] as $taskAction)
-							{
-								if (
-									!empty($taskAction['OPERATION'])
-									&& $taskAction['OPERATION'] === 'task.add'
-									&& Loader::includeModule('tasks')
-								)
-								{
-									$taskSubmitted = true;
-									break;
-								}
-							}
-						}
-
-						if ($taskSubmitted)
-						{
-							$componentParameters = [
-								'ID' => 0,
-								'GROUP_ID' => $arParams['SOCNET_GROUP_ID'],
-								'PATH_TO_USER_PROFILE' => $arParams['PATH_TO_USER_PROFILE'],
-								'PATH_TO_GROUP' => $arParams['PATH_TO_GROUP'],
-								'PATH_TO_USER_TASKS' => $arParams['PATH_TO_USER_TASKS'],
-								'PATH_TO_USER_TASKS_TASK' => $arParams['PATH_TO_USER_TASKS_TASK'],
-								'PATH_TO_GROUP_TASKS' => $arParams['PATH_TO_GROUP_TASKS'],
-								'PATH_TO_GROUP_TASKS_TASK' => $arParams['PATH_TO_GROUP_TASKS_TASK'],
-								'PATH_TO_USER_TASKS_PROJECTS_OVERVIEW' => $arParams['PATH_TO_USER_TASKS_PROJECTS_OVERVIEW'],
-								'PATH_TO_USER_TASKS_TEMPLATES' => $arParams['PATH_TO_USER_TASKS_TEMPLATES'],
-								'PATH_TO_USER_TEMPLATES_TEMPLATE' => $arParams['PATH_TO_USER_TEMPLATES_TEMPLATE'],
-								'SET_NAVCHAIN' => 'N',
-								'SET_TITLE' => 'N',
-								'SHOW_RATING' => 'N',
-								'NAME_TEMPLATE' => $arParams["NAME_TEMPLATE"],
-								'ENABLE_FOOTER' => 'N',
-								'ENABLE_MENU_TOOLBAR' => 'N',
-								'SUB_ENTITY_SELECT' => [
-									'TAG',
-									'CHECKLIST',
-									'REMINDER',
-									'PROJECTDEPENDENCE',
-									'TEMPLATE',
-									'RELATEDTASK'
-								], // change to API call
-								'AUX_DATA_SELECT' => [
-									'COMPANY_WORKTIME',
-									'USER_FIELDS',
-									'TEMPLATE'
-								], // change to API call
-								'BACKURL' => $arParams['TASK_SUBMIT_BACKURL'],
-								'ACTION' => 'edit'
-							];
-
-							$APPLICATION->IncludeComponent('bitrix:tasks.task', '',
-								$componentParameters,
-								null,
-								[ "HIDE_ICONS" => "Y" ]
-							);
-						}
-						?></div></div><?php
-				}
-
 				?></div>
 				<script>
 					BX.message({
@@ -1066,26 +983,6 @@ HTML;
 						'SBPE_CALENDAR_EVENT': '<?= GetMessageJS("SBPE_CALENDAR_EVENT") ?>',
 						'LISTS_CATALOG_PROCESSES_ACCESS_DENIED' : '<?= GetMessageJS("LISTS_CATALOG_PROCESSES_ACCESS_DENIED") ?>',
 					});
-					<?php
-					if (in_array('tasks', $arResult['tabs'], true))
-					{
-						?>
-						BX.message({
-							'TASK_SOCNET_GROUP_ID' : <?=(int)$arParams['SOCNET_GROUP_ID']?>,
-							'PATH_TO_USER_PROFILE' : '<?=CUtil::JSEscape($arParams['PATH_TO_USER_PROFILE'])?>',
-							'PATH_TO_GROUP' : '<?=CUtil::JSEscape($arParams['PATH_TO_GROUP'])?>',
-							'PATH_TO_USER_TASKS' : '<?=CUtil::JSEscape($arParams['PATH_TO_USER_TASKS'])?>',
-							'PATH_TO_GROUP_TASKS' : '<?=CUtil::JSEscape($arParams['PATH_TO_GROUP_TASKS'])?>',
-							'PATH_TO_GROUP_TASKS_TASK' : '<?=CUtil::JSEscape($arParams['PATH_TO_GROUP_TASKS_TASK'])?>',
-							'PATH_TO_USER_TASKS_PROJECTS_OVERVIEW' : '<?=CUtil::JSEscape($arParams['PATH_TO_USER_TASKS_PROJECTS_OVERVIEW'])?>',
-							'PATH_TO_USER_TASKS_TEMPLATES' : '<?=CUtil::JSEscape($arParams['PATH_TO_USER_TASKS_TEMPLATES'])?>',
-							'PATH_TO_USER_TEMPLATES_TEMPLATE' : '<?=CUtil::JSEscape($arParams['PATH_TO_USER_TEMPLATES_TEMPLATE'])?>',
-							'LOG_EXPERT_MODE' : '<?=(isset($arParams["LOG_EXPERT_MODE"]) ? CUtil::JSEscape($arParams['LOG_EXPERT_MODE']) : 'N')?>',
-							'TASK_SUBMIT_BACKURL' : '<?=CUtil::JSEscape($arParams['TASK_SUBMIT_BACKURL'])?>'
-						});
-						<?php
-					}
-					?>
 					new BX.Socialnetwork.Livefeed.PostFormEditor('<?=$arParams["FORM_ID"]?>', {
 						editorID: '<?=$id?>',
 						showTitle: '<?=$bShowTitle?>',

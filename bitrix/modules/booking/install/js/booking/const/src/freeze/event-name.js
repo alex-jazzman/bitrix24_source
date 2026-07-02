@@ -7,4 +7,6 @@ export const EventName = Object.freeze({
 	UpdateBooking: 'booking:booking:update',
 	StartLockedBookingAnimation: 'booking:booking:startLockedBookingAnimation',
 	BookingOpenSkusSettings: 'booking:booking:open-skus-settings',
+	MultiBookingShowPreviousPeriod: 'booking:booking:multi-booking-show-previous-period',
+	MultiBookingShowNextPeriod: 'booking:booking:multi-booking-show-next-period',
 });

@@ -7,6 +7,7 @@ return [
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/logger',
 		'im:messenger/model/dialogues',
+		'im:messenger/model/folder',
 	],
 	'bundle' => [
 		'./src/base',
@@ -22,5 +23,6 @@ return [
 		'./src/recent/deleter',
 		'./src/result',
 		'./src/sticker',
+		'./src/folder',
 	],
 ];

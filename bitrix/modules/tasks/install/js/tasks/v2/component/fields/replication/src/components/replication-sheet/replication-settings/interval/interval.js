@@ -6,8 +6,15 @@ import { TextXs } from 'ui.system.typography.vue';
 
 import { ReplicationPeriod } from 'tasks.v2.const';
 import { Checkbox as UiCheckbox } from 'tasks.v2.component.elements.checkbox';
+import { UiRadio } from 'tasks.v2.component.elements.radio';
 
 import './interval.css';
+
+const ReplicationIntervalControlType = Object.freeze({
+	Checkbox: 'checkbox',
+	Radio: 'radio',
+	None: 'none',
+});
 
 // @vue/component
 export const ReplicationInterval = {
@@ -17,6 +24,7 @@ export const ReplicationInterval = {
 		BInput,
 		TextXs,
 		UiCheckbox,
+		UiRadio,
 	},
 	props: {
 		interval: {
@@ -33,6 +41,17 @@ export const ReplicationInterval = {
 			validator: (value: string) => {
 				return [ReplicationPeriod.Daily, ReplicationPeriod.Weekly, ReplicationPeriod.Monthly].includes(value);
 			},
+		},
+		controlType: {
+			type: String,
+			default: ReplicationIntervalControlType.Checkbox,
+			validator: (value: string) => {
+				return Object.values(ReplicationIntervalControlType).includes(value);
+			},
+		},
+		inputName: {
+			type: String,
+			default: '',
 		},
 	},
 	emits: ['update:interval', 'update:useInterval'],
@@ -93,10 +112,54 @@ export const ReplicationInterval = {
 
 			return Loc.getMessagePlural(getMess(this.period), this.interval);
 		},
+		isCheckbox(): boolean
+		{
+			return this.controlType === ReplicationIntervalControlType.Checkbox;
+		},
+		isRadio(): boolean
+		{
+			return this.controlType === ReplicationIntervalControlType.Radio;
+		},
+		radioValue(): string
+		{
+			return this.useInterval ? 'selected' : '';
+		},
+	},
+	methods: {
+		toggleCheckbox(): void
+		{
+			this.useIntervalValue = !this.useInterval;
+		},
+		selectRadio(): void
+		{
+			if (!this.useInterval)
+			{
+				this.$emit('update:useInterval', true);
+			}
+		},
 	},
 	template: `
-		<div class="tasks-replication-sheet-action-row" :class="{'--active': useInterval}">
-			<UiCheckbox :checked="useIntervalValue" @click="useIntervalValue = !useInterval"/>
+		<div
+			class="tasks-replication-sheet-action-row"
+			:class="{
+				'--active': useInterval,
+				'--selectable': isRadio,
+			}"
+			@click.self="isRadio && selectRadio()"
+		>
+				<UiCheckbox
+					v-if="isCheckbox"
+					:checked="useIntervalValue"
+					@click="toggleCheckbox"
+				/>
+				<UiRadio
+					v-else-if="isRadio"
+					tag="label"
+					:modelValue="radioValue"
+					value="selected"
+				:inputName
+				@update:modelValue="selectRadio"
+			/>
 			<RichLoc
 				class="tasks-field-replication-row --text"
 				:text="loc('TASKS_V2_REPLICATION_SETTINGS_INTERVAL')"

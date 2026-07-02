@@ -20,6 +20,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	'ui.alerts',
 	'ui.sidepanel.page-swapper',
 	'mail.message-body',
+	'mail.client.action.discuss-in-chat',
 ]);
 \Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
 $bodyClass = $APPLICATION->getPageProperty('BodyClass', false);
@@ -52,10 +53,10 @@ ob_start();
 <div class="pagetitle-container mail-pagetitle-flexible-space"></div>
 <div class="mail-msg-header-group">
 	<? if (!empty($message['BIND_LINKS']) && !empty(@array_merge(...array_values((array)$message['BIND_LINKS'])))): ?>
-		<div class="mail-msg-header-control-item mail-msg-header-control-select" id="mail-msg-additional-switch">
-			<div class="mail-msg-header-control-text"><?=Loc::getMessage('MAIL_MESSAGE_EXT_BLOCK_LINK') ?></div>
-			<div class="mail-msg-header-control-triangle"></div>
-		</div>
+		<button type="button" class="mail-msg-header-control-item mail-msg-header-control-select" id="mail-msg-additional-switch" aria-expanded="false">
+			<span class="mail-msg-header-control-text"><?=Loc::getMessage('MAIL_MESSAGE_EXT_BLOCK_LINK') ?></span>
+			<span class="mail-msg-header-control-triangle"></span>
+		</button>
 	<? endif ?>
 	<div id="header-page-swapper-container" style="padding: 0 8px"></div>
 	<? $APPLICATION->includeComponent(
@@ -97,10 +98,13 @@ BX.ready(function ()
 		'click',
 		function ()
 		{
+			var switchBtn = BX('mail-msg-additional-switch');
 			var block = BX('mail-msg-additional-block');
 
 			if (block.offsetHeight > 0 && !BX.hasClass(block, 'mail-msg-close-animation'))
 			{
+				switchBtn.setAttribute('aria-expanded', 'false');
+
 				block.style.maxHeight = (block.offsetHeight*1.5)+'px';
 				block.style.transition = 'max-height .12s ease-in';
 
@@ -115,6 +119,8 @@ BX.ready(function ()
 			}
 			else
 			{
+				switchBtn.setAttribute('aria-expanded', 'true');
+
 				BX.removeClass(block, 'mail-msg-close-animation');
 				BX.addClass(block, 'mail-msg-show-animation');
 
@@ -164,11 +170,11 @@ $renderBindLink = function ($item)
 	</div>
 </div>
 
-<div class="mail-msg-view-wrapper" data-uid-key="<?= htmlspecialcharsbx($arResult['MESSAGE_UID_KEY']); ?>">
+<div class="mail-msg-view-wrapper" tabindex="-1" data-uid-key="<?= htmlspecialcharsbx($arResult['MESSAGE_UID_KEY']); ?>">
 
 	<div class="mail-msg-view-log-separator"
 		style="margin-bottom: 1px; <? if (count($arResult['LOG']['A']) < $arParams['PAGE_SIZE']): ?> display: none; <? endif ?>">
-		<a class="mail-msg-view-log-more mail-msg-view-log-more-a" href="#"><?=Loc::getMessage('MAIL_MESSAGE_LOG_MORE') ?></a>
+		<button type="button" class="mail-msg-view-log-more mail-msg-view-log-more-a"><?=Loc::getMessage('MAIL_MESSAGE_LOG_MORE') ?></button>
 	</div>
 
 	<?
@@ -213,7 +219,7 @@ $renderBindLink = function ($item)
 
 	<div class="mail-msg-view-log-separator"
 		style="margin-top: 1px; <? if (count($arResult['LOG']['B']) < $arParams['PAGE_SIZE']): ?> display: none; <? endif ?>">
-		<a class="mail-msg-view-log-more mail-msg-view-log-more-b" href="#"><?=Loc::getMessage('MAIL_MESSAGE_LOG_MORE') ?></a>
+		<button type="button" class="mail-msg-view-log-more mail-msg-view-log-more-b"><?=Loc::getMessage('MAIL_MESSAGE_LOG_MORE') ?></button>
 	</div>
 
 </div>

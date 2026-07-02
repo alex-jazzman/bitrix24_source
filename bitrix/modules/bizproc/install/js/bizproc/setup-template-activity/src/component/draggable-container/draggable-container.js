@@ -1,5 +1,5 @@
 import { Dom, Event } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { type BaseEvent, EventEmitter } from 'main.core.events';
 
 import './draggable-container.css';
 

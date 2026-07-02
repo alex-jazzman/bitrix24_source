@@ -19,6 +19,16 @@ jn.define('im/messenger/controller/recent/service/search/dummy', (require, expor
 		{
 			this.logger.log('openSearch');
 		}
+
+		subscribeEvents()
+		{
+			this.logger.log('subscribeEvents');
+		}
+
+		unsubscribeEvents()
+		{
+			this.logger.log('unsubscribeEvents');
+		}
 	}
 
 	module.exports = DummySearchService;

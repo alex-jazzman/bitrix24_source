@@ -17,3 +17,6 @@ $MESS['BI_CONNECTOR_CONFIGURATION_MANIFEST_APACHE_SUPERSET_IMPORT_TITLE_BLOCK'] 
 $MESS['BI_CONNECTOR_CONFIGURATION_MANIFEST_APACHE_SUPERSET_IMPORT_TITLE_PAGE'] = 'BI Конструктор';
 $MESS['BI_CONNECTOR_CONFIGURATION_MANIFEST_APACHE_SUPERSET_IMPORT_INSTALL_STEP'] = 'Устанавливаем выбранный вами отчёт, осталось совсем чуть-чуть...';
 $MESS['BI_CONNECTOR_CONFIGURATION_MANIFEST_APACHE_SUPERSET_IMPORT_FINISH_DESCRIPTION'] = 'Готово! Можно перейти к отчёту';
+$MESS['BI_CONNECTOR_CONFIGURATION_MANIFEST_SUPERSET_ACCESS_DENIED'] = 'Недостаточно прав для импорта отчётов BI Конструктора.';
+$MESS['BI_CONNECTOR_CONFIGURATION_MANIFEST_SUPERSET_TARIFF_ERROR'] = 'BI Конструктор недоступен на вашем тарифе. Обратитесь к администратору вашего Битрикс24';
+$MESS['BI_CONNECTOR_CONFIGURATION_MANIFEST_SUPERSET_TOOL_DISABLED'] = 'BI Конструктор отключен. Обратитесь к вашему руководителю или администратору Битрикс24';

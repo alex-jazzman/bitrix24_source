@@ -2,6 +2,7 @@
  * @module user-profile/common-tab/src/block/header/block
  */
 jn.define('user-profile/common-tab/src/block/header/block', (require, exports, module) => {
+	const { Feature } = require('feature');
 	const { BaseBlock } = require('user-profile/common-tab/src/block/base-block');
 	const { Header } = require('user-profile/common-tab/src/block/header/view');
 	const { usersUpserted } = require('statemanager/redux/slices/users');
@@ -46,6 +47,16 @@ jn.define('user-profile/common-tab/src/block/header/block', (require, exports, m
 		shouldUseBaseViewWrapper()
 		{
 			return false;
+		}
+
+		shouldUseBaseEditWrapper()
+		{
+			if (Feature.canUseWidgetBackground())
+			{
+				return false;
+			}
+
+			return super.shouldUseBaseEditWrapper();
 		}
 
 		getContentClass()

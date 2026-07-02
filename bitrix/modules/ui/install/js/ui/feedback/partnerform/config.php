@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Loader;
 use Bitrix\UI\Form\FormProvider;
 use Bitrix\UI\Form\UrlProvider;
@@ -37,6 +38,13 @@ return [
 		'partnerForms' => $formProvider->getPartnerFormList(),
 		'partnerFeedbackForms' => $formProvider->getPartnerFeedbackFormList(),
 		'partnerRefusalForms' => $formProvider->getPartnerRefusalFormList(),
-		'partnerRefusalCheckoutForms' => $formProvider->getPartnerRefusalCheckoutFormList(),
+		'partnerRefusalCheckoutForms' =>
+			(
+				(!empty($partnerPresets['is_admin']) && $partnerPresets['is_admin'] === 'Y')
+				|| CurrentUser::get()->isAdmin()
+			)
+			? $formProvider->getPartnerRefusalCheckoutFormList()
+			: $formProvider->getPartnerRefusalCheckoutNonAdminFormList()
+		,
 	],
 ];

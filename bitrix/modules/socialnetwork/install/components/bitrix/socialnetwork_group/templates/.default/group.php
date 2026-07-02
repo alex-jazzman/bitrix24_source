@@ -105,6 +105,12 @@ if (SITE_TEMPLATE_ID === 'bitrix24' || SITE_TEMPLATE_ID === 'air')
 }
 include("util_group_limit.php");
 
+$favoritesTitleTemplate = (
+	($arParams['HIDE_OWNER_IN_TITLE'] ?? null) === 'Y'
+		? ''
+		: $arResult['PAGES_TITLE_TEMPLATE']
+);
+
 $APPLICATION->IncludeComponent(
 	'bitrix:ui.sidepanel.wrapper',
 	'',
@@ -119,8 +125,8 @@ $APPLICATION->IncludeComponent(
 		'USE_UI_TOOLBAR' => 'Y',
 		'USE_PADDING' => false,
 		'USE_FAST_WAY_CLOSE_LOADER' => true,
-		'UI_TOOLBAR_FAVORITES_TITLE_TEMPLATE' => $arResult['PAGES_TITLE_TEMPLATE'],
+		'UI_TOOLBAR_FAVORITES_TITLE_TEMPLATE' => $favoritesTitleTemplate,
 	]
 );
 
-$APPLICATION->SetPageProperty('FavoriteTitleTemplate', $arResult['PAGES_TITLE_TEMPLATE']);
+$APPLICATION->SetPageProperty('FavoriteTitleTemplate', $favoritesTitleTemplate);

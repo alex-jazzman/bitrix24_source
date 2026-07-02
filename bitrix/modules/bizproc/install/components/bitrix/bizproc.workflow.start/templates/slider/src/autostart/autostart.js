@@ -12,7 +12,7 @@ import { renderBpForm } from '../helpers/render-bp-form';
 
 import { showCancelDialog } from './helpers/show-cancel-dialog';
 
-import type { AutostartData, TemplateData } from './types/autostart-data';
+import type { AutostartData, DocumentData, TemplateData } from './types/autostart-data';
 
 import '../css/style.css';
 import '../css/form.css';
@@ -27,13 +27,13 @@ export class Autostart
 	#buttons: Buttons;
 	#errorNotifier: ErrorNotifier;
 
-	#templates: Array<TemplateData>;
-	#documentType: [];
-	#signedDocumentType: string;
-	#signedDocumentId: ?string;
+	#templates: TemplateData[] = [];
+	#documents: DocumentData[] = [];
+	#signedDocumentType: ?string = null;
+	#signedDocumentId: ?string = null;
 	#autoExecute: number;
 
-	#forms: [] = [];
+	#forms: HTMLFormElement[] = [];
 	#canExit: boolean = false;
 	#isExitInProcess: boolean = false;
 
@@ -74,9 +74,21 @@ export class Autostart
 			this.#templates = config.templates;
 		}
 
-		this.#documentType = config.documentType;
-		this.#signedDocumentType = config.signedDocumentType;
-		this.#signedDocumentId = config.signedDocumentId || null;
+		if (Type.isArrayFilled(config.documents))
+		{
+			this.#documents = config.documents;
+		}
+
+		if (Type.isStringFilled(config.signedDocumentType))
+		{
+			this.#signedDocumentType = config.signedDocumentType;
+		}
+
+		if (Type.isStringFilled(config.signedDocumentId))
+		{
+			this.#signedDocumentId = config.signedDocumentId;
+		}
+
 		this.#autoExecute = Text.toInteger(config.autoExecuteType);
 
 		this.#subscribeOnSliderClose();
@@ -113,7 +125,7 @@ export class Autostart
 			`${FORM_NAME}_${template.id}`,
 			template.name,
 			template.parameters,
-			this.#documentType,
+			template.documentType,
 			template.description,
 		);
 
@@ -138,11 +150,7 @@ export class Autostart
 		this.#forms.forEach((form) => {
 			addMissingFormDataValues(data, new FormData(form));
 		});
-		data.set('signedDocumentType', this.#signedDocumentType);
-		if (this.#signedDocumentId)
-		{
-			data.set('signedDocumentId', this.#signedDocumentId);
-		}
+		this.#appendDocumentsToFormData(data);
 		data.set('autoExecuteType', this.#autoExecute);
 
 		ajax.runAction('bizproc.workflow.starter.checkParameters', { data })
@@ -154,6 +162,8 @@ export class Autostart
 					dictionary.set('data', { signedParameters: response.data.parameters });
 				}
 
+				this.#errorNotifier.clean();
+				this.#buttons.resolveWaitingState({ save: false });
 				this.#canExit = true;
 				this.#exit();
 			})
@@ -163,6 +173,32 @@ export class Autostart
 				this.#buttons.resolveWaitingState({ save: false });
 			})
 		;
+	}
+
+	#appendDocumentsToFormData(data: FormData): void
+	{
+		this.#documents.forEach((document, index) => {
+			document.documentType.forEach((value, documentTypeIndex) => {
+				data.append(`documents[${index}][documentType][${documentTypeIndex}]`, value);
+			});
+
+			if (Type.isArray(document.documentId))
+			{
+				document.documentId.forEach((value, documentIdIndex) => {
+					data.append(`documents[${index}][documentId][${documentIdIndex}]`, value);
+				});
+			}
+		});
+
+		if (this.#documents.length === 1 && Type.isStringFilled(this.#signedDocumentType))
+		{
+			data.set('signedDocumentType', this.#signedDocumentType);
+		}
+
+		if (this.#documents.length === 1 && Type.isStringFilled(this.#signedDocumentId))
+		{
+			data.set('signedDocumentId', this.#signedDocumentId);
+		}
 	}
 
 	#subscribeOnSliderClose()

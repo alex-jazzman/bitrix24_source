@@ -1,2 +1,116 @@
-this.BX=this.BX||{},this.BX.Booking=this.BX.Booking||{},this.BX.Booking.Provider=this.BX.Booking.Provider||{},function(e,r,s,t,o,i,a,l){"use strict";var n=babelHelpers.classPrivateFieldLooseKey("getResourcesRequest"),c=babelHelpers.classPrivateFieldLooseKey("getResourcesTypesRequest"),u=babelHelpers.classPrivateFieldLooseKey("getCatalogSkuEntityOptionsRequest"),p=babelHelpers.classPrivateFieldLooseKey("getDefaultResourceSkuRelations"),b=babelHelpers.classPrivateFieldLooseKey("fetchGetResources"),d=babelHelpers.classPrivateFieldLooseKey("requestCatalogSkuEntityOptions"),v=babelHelpers.classPrivateFieldLooseKey("requestResourcesTypeList"),g=babelHelpers.classPrivateFieldLooseKey("requestDefaultResourceSkuRelations");function y(e){const s=(new o.ApiClient).buildUrl("CrmForm.PublicForm.getResources");return r.ajax.runAction(s,{data:{ids:e}})}function B(){return r.ajax.runAction((new o.ApiClient).buildUrl("CrmForm.SettingsForm.getCatalogSkuEntityOptions"),{json:{}})}function h(){return r.ajax.runAction((new o.ApiClient).buildUrl("ResourceType.list"),{json:{}})}async function F(){const e=(new o.ApiClient).buildUrl("CrmForm.SettingsForm.getDefaultResourceSkuRelations"),{data:s}=await r.ajax.runAction(e,{json:{}});return s}const R=new class{constructor(){Object.defineProperty(this,g,{value:F}),Object.defineProperty(this,v,{value:h}),Object.defineProperty(this,d,{value:B}),Object.defineProperty(this,b,{value:y}),Object.defineProperty(this,n,{writable:!0,value:void 0}),Object.defineProperty(this,c,{writable:!0,value:void 0}),Object.defineProperty(this,u,{writable:!0,value:void 0}),Object.defineProperty(this,p,{writable:!0,value:void 0})}async getResources(e){try{var r;null!=(r=babelHelpers.classPrivateFieldLooseBase(this,n))[n]||(r[n]=babelHelpers.classPrivateFieldLooseBase(this,b)[b]);const{data:s}=await babelHelpers.classPrivateFieldLooseBase(this,n)[n](e);return s.map(e=>function(e){return{...e}}(e))}catch(e){return console.error("CrmFormService: get resources error",e),[]}}async getCatalogSkuEntityOptions(){try{var e;null!=(e=babelHelpers.classPrivateFieldLooseBase(this,u))[u]||(e[u]=babelHelpers.classPrivateFieldLooseBase(this,d)[d]);return(await babelHelpers.classPrivateFieldLooseBase(this,u)[u]()).data}catch(e){return console.error("CrmFormService: get CatalogSkuEntityOptions error",e),null}}async getResourceTypeList(){try{var e;null!=(e=babelHelpers.classPrivateFieldLooseBase(this,c))[c]||(e[c]=babelHelpers.classPrivateFieldLooseBase(this,v)[v]);const r=(await babelHelpers.classPrivateFieldLooseBase(this,c)[c]()).data.map(e=>i.ResourceTypeMappers.mapDtoToModel(e));await s.Core.getStore().dispatch(t.Model.ResourceTypes+"/upsertMany",r)}catch(e){console.error("CrmFormService: get resource types error",e)}}getResourceSkuRelations(e=[]){return 0===e.length?this.getDefaultResourceSkuRelations():this.getFormSpecificResourceSkuRelations(e)}async getDefaultResourceSkuRelations(){try{var e;null!=(e=babelHelpers.classPrivateFieldLooseBase(this,p))[p]||(e[p]=babelHelpers.classPrivateFieldLooseBase(this,g)[g]);return(await babelHelpers.classPrivateFieldLooseBase(this,p)[p]()).resources.map(e=>a.ResourceMappers.mapResourceSkuRelationsDtoToModel(e))}catch(e){return console.error("CrmFormService: get default resource skus relations error",e),[]}}async getFormSpecificResourceSkuRelations(e){try{const s=(new o.ApiClient).buildUrl("CrmForm.SettingsForm.getFormSpecificResourceSkuRelations"),{data:t}=await r.ajax.runAction(s,{json:{resources:e}});return t.resources.map(e=>a.ResourceMappers.mapResourceSkuRelationsDtoToModel(e))}catch(e){return console.log("CrmFormService: get default resource skus relations error",e),[]}}};e.crmFormService=R}(this.BX.Booking.Provider.Service=this.BX.Booking.Provider.Service||{},BX,BX.Booking,BX.Booking.Const,BX.Booking.Lib,BX.Booking.Provider.Service,BX.Booking.Provider.Service,BX.Booking.Model);
+/* eslint-disable */
+this.BX = this.BX || {};
+this.BX.Booking = this.BX.Booking || {};
+this.BX.Booking.Provider = this.BX.Booking.Provider || {};
+(function (exports, main_core, booking_core, booking_const, booking_lib_apiClient, booking_provider_service_resourcesTypeService, booking_provider_service_resourcesService) {
+	'use strict';
+
+	function mapDtoToModel(resourceDto) {
+		return {
+			...resourceDto
+		};
+	}
+
+	class CrmFormService {
+		#getResourcesRequest;
+		#getResourcesTypesRequest;
+		#getCatalogSkuEntityOptionsRequest;
+		#getDefaultResourceSkuRelations;
+		async getResources(ids) {
+			try {
+				this.#getResourcesRequest ??= this.#fetchGetResources;
+				const {
+					data
+				} = await this.#getResourcesRequest(ids);
+				return data.map(resourceDto => mapDtoToModel(resourceDto));
+			} catch (error) {
+				console.error('CrmFormService: get resources error', error);
+				return [];
+			}
+		}
+		#fetchGetResources(ids) {
+			const action = new booking_lib_apiClient.ApiClient().buildUrl('CrmForm.PublicForm.getResources');
+			return main_core.ajax.runAction(action, {
+				data: {
+					ids
+				}
+			});
+		}
+		async getCatalogSkuEntityOptions() {
+			try {
+				this.#getCatalogSkuEntityOptionsRequest ??= this.#requestCatalogSkuEntityOptions;
+				const response = await this.#getCatalogSkuEntityOptionsRequest();
+				return response.data;
+			} catch (error) {
+				console.error('CrmFormService: get CatalogSkuEntityOptions error', error);
+				return null;
+			}
+		}
+		#requestCatalogSkuEntityOptions() {
+			return main_core.ajax.runAction(new booking_lib_apiClient.ApiClient().buildUrl('CrmForm.SettingsForm.getCatalogSkuEntityOptions'), {
+				json: {}
+			});
+		}
+		async getResourceTypeList() {
+			try {
+				this.#getResourcesTypesRequest ??= this.#requestResourcesTypeList;
+				const response = await this.#getResourcesTypesRequest();
+				const resourceTypes = response.data.map(dto => booking_provider_service_resourcesTypeService.ResourceTypeMappers.mapDtoToModel(dto));
+				await booking_core.Core.getStore().dispatch(`${booking_const.Model.ResourceTypes}/upsertMany`, resourceTypes);
+			} catch (e) {
+				console.error('CrmFormService: get resource types error', e);
+			}
+		}
+		#requestResourcesTypeList() {
+			return main_core.ajax.runAction(new booking_lib_apiClient.ApiClient().buildUrl('ResourceType.list'), {
+				json: {}
+			});
+		}
+		getResourceSkuRelations(resources = []) {
+			if (resources.length === 0) {
+				return this.getDefaultResourceSkuRelations();
+			}
+			return this.getFormSpecificResourceSkuRelations(resources);
+		}
+		async getDefaultResourceSkuRelations() {
+			try {
+				this.#getDefaultResourceSkuRelations ??= this.#requestDefaultResourceSkuRelations;
+				const response = await this.#getDefaultResourceSkuRelations();
+				return response.resources.map(dto => booking_provider_service_resourcesService.ResourceMappers.mapResourceSkuRelationsDtoToModel(dto));
+			} catch (error) {
+				console.error('CrmFormService: get default resource skus relations error', error);
+				return [];
+			}
+		}
+		async #requestDefaultResourceSkuRelations() {
+			const action = new booking_lib_apiClient.ApiClient().buildUrl('CrmForm.SettingsForm.getDefaultResourceSkuRelations');
+			const {
+				data
+			} = await main_core.ajax.runAction(action, {
+				json: {}
+			});
+			return data;
+		}
+		async getFormSpecificResourceSkuRelations(resources) {
+			try {
+				const action = new booking_lib_apiClient.ApiClient().buildUrl('CrmForm.SettingsForm.getFormSpecificResourceSkuRelations');
+				const {
+					data
+				} = await main_core.ajax.runAction(action, {
+					json: {
+						resources
+					}
+				});
+				return data.resources.map(dto => booking_provider_service_resourcesService.ResourceMappers.mapResourceSkuRelationsDtoToModel(dto));
+			} catch (error) {
+				console.log('CrmFormService: get default resource skus relations error', error);
+				return [];
+			}
+		}
+	}
+	const crmFormService = new CrmFormService();
+
+	exports.crmFormService = crmFormService;
+
+})(this.BX.Booking.Provider.Service = this.BX.Booking.Provider.Service || {}, BX, BX.Booking, BX.Booking.Const, BX.Booking.Lib, BX.Booking.Provider.Service, BX.Booking.Provider.Service);
 //# sourceMappingURL=crm-form-service.bundle.js.map

@@ -5,6 +5,11 @@ jn.define('layout/ui/search-bar/preset', (require, exports, module) => {
 	const { Color } = require('tokens');
 	const { BaseItem } = require('layout/ui/search-bar/base-item');
 
+	const PresetType = {
+		BUTTON: 'button',
+		TOGGLE: 'toggle',
+	};
+
 	/**
 	 * @class Preset
 	 * @typedef {LayoutComponent<SearchBarPresetProps, {}>}
@@ -18,7 +23,30 @@ jn.define('layout/ui/search-bar/preset', (require, exports, module) => {
 			this.preset = {
 				id: props.id,
 				name: props.name,
+				type: props.type ?? PresetType.TOGGLE,
 			};
+		}
+
+		shouldIgnoreClick()
+		{
+			if (this.preset.type === PresetType.BUTTON)
+			{
+				return false;
+			}
+
+			return this.props.active && this.props.isActivePresetRequired;
+		}
+
+		handleClick()
+		{
+			if (this.preset.type === PresetType.BUTTON)
+			{
+				this.props.onButtonClick?.();
+
+				return;
+			}
+
+			super.handleClick();
 		}
 
 		getSearchButtonBackgroundColor()
@@ -36,5 +64,5 @@ jn.define('layout/ui/search-bar/preset', (require, exports, module) => {
 		}
 	}
 
-	module.exports = { Preset };
+	module.exports = { Preset, PresetType };
 });

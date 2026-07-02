@@ -1,8 +1,8 @@
-<?
+<?php
 /**
- * @global \CUser $USER
- * @global \CMain $APPLICATION
- * @global \CDatabase $DB
+ * @global CUser $USER
+ * @global CMain $APPLICATION
+ * @global CDatabase $DB
  */
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
@@ -18,32 +18,31 @@ $sTableID = "tbl_short_uri";
 $oSort = new CAdminSorting($sTableID, "ID", "desc");
 $lAdmin = new CAdminList($sTableID, $oSort);
 
-function CheckFilter()
+function CheckFilter(array $filter)
 {
-	global $FilterArr, $lAdmin;
-	foreach ($FilterArr as $f) global $$f;
-	if (trim($find_modified_1) <> '' || trim($find_modified_2) <> '')
+	global $lAdmin;
+	if (trim($filter["find_modified_1"]) <> '' || trim($filter["find_modified_2"]) <> '')
 	{
 		$date_1_ok = false;
-		$date1_stm = MkDateTime(FmtDate($find_modified_1,"D.M.Y"),"d.m.Y");
-		$date2_stm = MkDateTime(FmtDate($find_modified_2,"D.M.Y")." 23:59","d.m.Y H:i");
-		if (!$date1_stm && trim($find_modified_1) <> '')
+		$date1_stm = MkDateTime(FmtDate($filter["find_modified_1"],"D.M.Y"),"d.m.Y");
+		$date2_stm = MkDateTime(FmtDate($filter["find_modified_2"],"D.M.Y")." 23:59","d.m.Y H:i");
+		if (!$date1_stm && trim($filter["find_modified_1"]) <> '')
 			$lAdmin->AddFilterError(GetMessage("SU_AF_WRONG_UPDATE_FROM"));
 		else $date_1_ok = true;
-		if (!$date2_stm && trim($find_modified_2) <> '')
+		if (!$date2_stm && trim($filter["find_modified_2"]) <> '')
 			$lAdmin->AddFilterError(GetMessage("SU_AF_WRONG_UPDATE_TILL"));
 		elseif ($date_1_ok && $date2_stm <= $date1_stm && $date2_stm <> '')
 			$lAdmin->AddFilterError(GetMessage("SU_AF_FROM_TILL_UPDATE"));
 	}
-	if (trim($find_last_used_1) <> '' || trim($find_last_used_2) <> '')
+	if (trim($filter["find_last_used_1"]) <> '' || trim($filter["find_last_used_2"]) <> '')
 	{
 		$date_1_ok = false;
-		$date1_stm = MkDateTime(FmtDate($find_last_used_1,"D.M.Y"),"d.m.Y");
-		$date2_stm = MkDateTime(FmtDate($find_last_used_2,"D.M.Y")." 23:59","d.m.Y H:i");
-		if (!$date1_stm && trim($find_last_used_1) <> '')
+		$date1_stm = MkDateTime(FmtDate($filter["find_last_used_1"],"D.M.Y"),"d.m.Y");
+		$date2_stm = MkDateTime(FmtDate($filter["find_last_used_2"],"D.M.Y")." 23:59","d.m.Y H:i");
+		if (!$date1_stm && trim($filter["find_last_used_1"]) <> '')
 			$lAdmin->AddFilterError(GetMessage("SU_AF_WRONG_INSERT_FROM"));
 		else $date_1_ok = true;
-		if (!$date2_stm && trim($find_last_used_2) <> '')
+		if (!$date2_stm && trim($filter["find_last_used_2"]) <> '')
 			$lAdmin->AddFilterError(GetMessage("SU_AF_WRONG_INSERT_TILL"));
 		elseif ($date_1_ok && $date2_stm <= $date1_stm && $date2_stm <> '')
 			$lAdmin->AddFilterError(GetMessage("SU_AF_FROM_TILL_INSERT"));
@@ -60,28 +59,28 @@ $FilterArr = Array(
 	"find_last_used_2",
 	);
 
-$lAdmin->InitFilter($FilterArr);
+$filter = $lAdmin->InitFilter($FilterArr);
 
-if (CheckFilter())
+$arFilter = Array();
+if (CheckFilter($filter))
 {
-	$arFilter = Array();
-	if ($find_modified_1 <> '')
-		$arFilter["MODIFIED_1"]	= $find_modified_1;
-	if ($find_modified_2 <> '')
-		$arFilter["MODIFIED_2"]	= $find_modified_2;
-	if ($find_last_used_1 <> '')
-		$arFilter["LAST_USED_1"] = $find_last_used_1;
-	if ($find_last_used_2 <> '')
-		$arFilter["LAST_USED_2"] = $find_last_used_2;
-	if ($find_uri <> '')
-		$arFilter["URI"] = $find_uri;
-	if ($find_short_uri <> '')
-		$arFilter["SHORT_URI"] = $find_short_uri;
+	if ($filter["find_modified_1"] <> '')
+		$arFilter["MODIFIED_1"]	= $filter["find_modified_1"];
+	if ($filter["find_modified_2"] <> '')
+		$arFilter["MODIFIED_2"]	= $filter["find_modified_2"];
+	if ($filter["find_last_used_1"] <> '')
+		$arFilter["LAST_USED_1"] = $filter["find_last_used_1"];
+	if ($filter["find_last_used_2"] <> '')
+		$arFilter["LAST_USED_2"] = $filter["find_last_used_2"];
+	if ($filter["find_uri"] <> '')
+		$arFilter["URI"] = $filter["find_uri"];
+	if ($filter["find_short_uri"] <> '')
+		$arFilter["SHORT_URI"] = $filter["find_short_uri"];
 }
 
 if($lAdmin->EditAction() && $isAdmin)
 {
-	foreach($FIELDS as $ID=>$arFields)
+	foreach($_POST['FIELDS'] as $ID=>$arFields)
 	{
 		if(!$lAdmin->IsUpdated($ID))
 			continue;
@@ -106,7 +105,7 @@ if(($arID = $lAdmin->GroupAction()) && $isAdmin)
 {
 	if (isset($_REQUEST['action_target']) && $_REQUEST['action_target']=='selected')
 	{
-		$rsData = CBXShortUri::GetList(array($by=>$order), $arFilter);
+		$rsData = CBXShortUri::GetList(array($oSort->getField() => $oSort->getOrder()), $arFilter);
 		while($arRes = $rsData->Fetch())
 			$arID[] = $arRes['ID'];
 	}
@@ -119,7 +118,6 @@ if(($arID = $lAdmin->GroupAction()) && $isAdmin)
 		switch($_REQUEST['action'])
 		{
 		case "delete":
-			@set_time_limit(0);
 			$DB->StartTransaction();
 			if(!CBXShortUri::Delete($ID))
 			{
@@ -136,7 +134,7 @@ if(($arID = $lAdmin->GroupAction()) && $isAdmin)
 	}
 }
 
-$rsData = CBXShortUri::GetList(array($by=>$order), $arFilter, array("nPageSize"=>CAdminResult::GetNavSize($sTableID)));
+$rsData = CBXShortUri::GetList(array($oSort->getField() => $oSort->getOrder()), $arFilter, array("nPageSize"=>CAdminResult::GetNavSize($sTableID)));
 $rsData = new CAdminResult($rsData, $sTableID);
 $rsData->NavStart();
 $lAdmin->NavText($rsData->GetNavPrint(GetMessage("SU_AF_nav")));
@@ -180,8 +178,10 @@ $lAdmin->AddHeaders(array(
 	),
 ));
 
-while($arRes = $rsData->NavNext(true, "f_")):
-	$row =& $lAdmin->AddRow($f_ID, $arRes);
+while($arRes = $rsData->Fetch()):
+	$shortUriId = (int)$arRes["ID"];
+	$shortUriIdHtml = htmlspecialcharsbx($arRes["ID"]);
+	$row = $lAdmin->AddRow($shortUriId, $arRes);
 
 	$arActions = Array();
 
@@ -189,13 +189,13 @@ while($arRes = $rsData->NavNext(true, "f_")):
 		"ICON"=>"edit",
 		"DEFAULT"=>true,
 		"TEXT"=>GetMessage("SU_AF_upd"),
-		"ACTION"=>$lAdmin->ActionRedirect("short_uri_edit.php?ID=".$f_ID)
+		"ACTION"=>$lAdmin->ActionRedirect("short_uri_edit.php?ID=".$shortUriIdHtml)
 	);
 	if ($isAdmin)
 		$arActions[] = array(
 			"ICON"=>"delete",
 			"TEXT"=>GetMessage("SU_AF_del"),
-			"ACTION"=>"if(confirm('".GetMessage("SU_AF_del_conf")."')) ".$lAdmin->ActionDoGroup($f_ID, "delete")
+			"ACTION"=>"if(confirm('".GetMessage("SU_AF_del_conf")."')) ".$lAdmin->ActionDoGroup($shortUriId, "delete")
 		);
 	$row->AddActions($arActions);
 
@@ -208,7 +208,7 @@ $lAdmin->AddGroupActionTable(Array(
 $aContext = array(
 	array(
 		"TEXT"=>GetMessage("MAIN_ADD"),
-		"LINK"=>"short_uri_edit.php?lang=".LANG,
+		"LINK"=>"short_uri_edit.php?lang=".LANGUAGE_ID,
 		"TITLE"=>GetMessage("SU_AF_add_title"),
 		"ICON"=>"btn_new",
 	),
@@ -231,34 +231,34 @@ $oFilter = new CAdminFilter(
 );
 ?>
 
-<form name="find_form" method="get" action="<?echo $APPLICATION->GetCurPage();?>">
-<?$oFilter->Begin();?>
+<form name="find_form" method="get" action="<?= $APPLICATION->GetCurPage();?>">
+<?php $oFilter->Begin();?>
 <tr>
 	<td><b><?=GetMessage("SU_AF_F_URI")?>:</b></td>
 	<td>
-		<input type="text" size="47" name="find_uri" value="<?echo htmlspecialcharsbx($find_uri)?>">&nbsp;<?=ShowFilterLogicHelp()?>
+		<input type="text" size="47" name="find_uri" value="<?= htmlspecialcharsbx($filter["find_uri"])?>">&nbsp;<?=ShowFilterLogicHelp()?>
 	</td>
 </tr>
 <tr>
-	<td><?echo GetMessage("SU_AF_F_SHORT_URI")?>:</td>
-	<td><input type="text" name="find_short_uri" size="47" value="<?echo htmlspecialcharsbx($find_short_uri)?>"></td>
+	<td><?= GetMessage("SU_AF_F_SHORT_URI")?>:</td>
+	<td><input type="text" name="find_short_uri" size="47" value="<?= htmlspecialcharsbx($filter["find_short_uri"])?>"></td>
 </tr>
 <tr>
-	<td><?echo GetMessage("SU_AF_F_MODIFIED")?>:</td>
-	<td><?echo CalendarPeriod("find_modified_1", htmlspecialcharsbx($find_modified_1), "find_modified_2", htmlspecialcharsbx($find_modified_2), "find_form","Y")?></td>
+	<td><?= GetMessage("SU_AF_F_MODIFIED")?>:</td>
+	<td><?= CalendarPeriod("find_modified_1", htmlspecialcharsbx($filter["find_modified_1"]), "find_modified_2", htmlspecialcharsbx($filter["find_modified_2"]), "find_form","Y")?></td>
 </tr>
 <tr>
-	<td><?echo GetMessage("SU_AF_F_LAST_USED")?>:</td>
-	<td><?echo CalendarPeriod("find_last_used_1", htmlspecialcharsbx($find_last_used_1), "find_last_used_2", htmlspecialcharsbx($find_last_used_2), "find_form","Y")?></td>
+	<td><?= GetMessage("SU_AF_F_LAST_USED")?>:</td>
+	<td><?= CalendarPeriod("find_last_used_1", htmlspecialcharsbx($filter["find_last_used_1"]), "find_last_used_2", htmlspecialcharsbx($filter["find_last_used_2"]), "find_form","Y")?></td>
 </tr>
-<?
+<?php
 $oFilter->Buttons(array("table_id"=>$sTableID,"url"=>$APPLICATION->GetCurPage(),"form"=>"find_form"));
 $oFilter->End();
 ?>
 </form>
 
-<?$lAdmin->DisplayList();?>
+<?php $lAdmin->DisplayList();?>
 
-<?
+<?php
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");
 ?>

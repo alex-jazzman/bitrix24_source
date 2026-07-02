@@ -1,0 +1,53 @@
+.editor-chart-block-content {
+    width: 100%;
+    min-height: 31px;
+    padding: 6px 0;
+    border-top: 1px solid var(--ui-color-divider-vibrant-accent);
+    border-radius: 0 0 7px 7px;
+    background: var(--ui-color-bg-content-secondary);
+    box-sizing: border-box;
+}
+
+.editor-chart-block-content.--deactivated {
+    background-color: var(--ui-color-gray-05);
+}
+
+.editor-chart-block-content.--background-color-1 {
+	background-color: var(--designer-bp-ai-bg);
+    opacity: 0.4;
+}
+
+.editor-chart-block-content.--background-color-2 {
+	background-color: var(--designer-bp-entities-bg);
+    opacity: 0.4;
+}
+
+.editor-chart-block-content.--background-color-3 {
+	background-color: var(--designer-bp-employe-bg);
+    opacity: 0.4;
+}
+
+.editor-chart-block-content.--background-color-4 {
+	background-color: var(--designer-bp-technical-bg);
+    opacity: 0.4;
+}
+
+.editor-chart-block-content.--background-color-5 {
+	background-color: var(--designer-bp-communication-bg);
+    opacity: 0.4;
+}
+
+.editor-chart-block-content.--background-color-6 {
+	background-color: var(--designer-bp-storage-bg);
+    opacity: 0.4;
+}
+
+.editor-chart-block-content.--background-color-7 {
+	background-color: var(--designer-bp-afiliate-bg);
+    opacity: 0.4;
+}
+
+.editor-chart-block-content.--background-color-8 {
+	background-color: rgba(31, 134, 255, 1); /* token will be provided later */
+    opacity: 0.4;
+}

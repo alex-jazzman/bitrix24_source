@@ -23,8 +23,7 @@
 	text-decoration: underline;
 	cursor: pointer;
 	color: inherit;
-	-webkit-text-decoration-color: rgba(var(--im-color-palette-black-solid-rgb), 0.08);
-	        text-decoration-color: rgba(var(--im-color-palette-black-solid-rgb), 0.08);
+	text-decoration-color: rgba(var(--im-color-palette-black-solid-rgb), 0.08);
 }
 
 .bx-im-message-ai-bizproc__status-container .bx-im-message-status__date {

@@ -67,16 +67,29 @@
 {
 	flex-direction: row-reverse;
 	justify-content: flex-end;
+	align-items: center;
+	gap: 8px;
+	min-height: 20px;
 }
 .bx-stepprocessing-dialog-process-options .bx-stepprocessing-dialog-process-option-container.bx-stepprocessing-dialog-process-option-checkbox .bx-stepprocessing-dialog-process-options-title
 {
 	width: unset;
 	text-align: left;
+	padding-right: 0;
+}
+.bx-stepprocessing-dialog-process-options .bx-stepprocessing-dialog-process-option-container.bx-stepprocessing-dialog-process-option-checkbox .bx-stepprocessing-dialog-process-options-title label
+{
+	margin-top: 0;
 }
 .bx-stepprocessing-dialog-process-options .bx-stepprocessing-dialog-process-option-container.bx-stepprocessing-dialog-process-option-checkbox .bx-stepprocessing-dialog-process-options-input
 {
 	width: unset;
-	padding-right: 15px;
+	padding: 4px 0 0 0;
+}
+.bx-stepprocessing-dialog-process-options .bx-stepprocessing-dialog-process-option-container.bx-stepprocessing-dialog-process-option-checkbox input[type="checkbox"]
+{
+	margin: 0;
+	display: block;
 }
 #bx-admin-prefix .bx-stepprocessing-dialog-process-options .bx-stepprocessing-dialog-process-option-container.bx-stepprocessing-dialog-process-option-checkbox
 {

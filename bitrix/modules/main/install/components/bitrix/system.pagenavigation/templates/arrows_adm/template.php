@@ -1,5 +1,9 @@
-<?
+<?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+
+/**
+ * @var array $arResult
+ */
 
 $ClientID = 'navigation_'.$arResult['NavNum'];
 
@@ -10,7 +14,7 @@ if(!$arResult["NavShowAlways"])
 }
 ?>
 <div class="adm-navigation">
-	<?
+	<?php
 	$strNavQueryString = ($arResult["NavQueryString"] != "" ? $arResult["NavQueryString"]."&amp;" : "");
 	$strNavQueryStringFull = ($arResult["NavQueryString"] != "" ? "?".$arResult["NavQueryString"] : "");
 	if($arResult["bDescPageNumbering"] === true)
@@ -57,7 +61,7 @@ if(!$arResult["NavShowAlways"])
 		?>
 			<div class="adm-nav-pages-block">
 				<span class="navigation-title"><?=GetMessage("navigation_pages")?></span>
-		<?
+		<?php
 		$bFirst = true;
 		$bPoints = false;
 		do
@@ -69,15 +73,15 @@ if(!$arResult["NavShowAlways"])
 				if ($arResult["nStartPage"] == $arResult["NavPageNomer"]):
 		?>
 				<span class="adm-nav-page-active adm-nav-page"><?=$NavRecordGroupPrint?></span>
-		<?
+		<?php
 				elseif($arResult["nStartPage"] == $arResult["NavPageCount"] && $arResult["bSavePage"] == false):
 		?>
 				<a class="adm-nav-page" href="<?=$arResult["sUrlPath"]?><?=$strNavQueryStringFull?>"><?=$NavRecordGroupPrint?></a>
-		<?
+		<?php
 				else:
 		?>
 				<a class="adm-nav-page" href="<?=$arResult["sUrlPath"]?>?<?=$strNavQueryString?>PAGEN_<?=$arResult["NavNum"]?>=<?=$arResult["nStartPage"]?>"><?=$NavRecordGroupPrint?></a>
-		<?
+		<?php
 				endif;
 				$bFirst = false;
 				$bPoints = true;
@@ -91,11 +95,11 @@ if(!$arResult["NavShowAlways"])
 					if ($curEndPage-$NavRecordGroupPrint > 1)
 					{
 						$hrefPageNumber = floor(($curEndPage-$NavRecordGroupPrint-2)/2)+$NavRecordGroupPrint;
-						?><a class="adm-nav-page adm-nav-page-separator" href="<?=$arResult["sUrlPath"]?>?<?=$strNavQueryString?>PAGEN_<?=$arResult["NavNum"]?>=<?=$hrefPageNumber?>" pagenum="<?=$hrefPageNumber?>"></a><?
+						?><a class="adm-nav-page adm-nav-page-separator" href="<?=$arResult["sUrlPath"]?>?<?=$strNavQueryString?>PAGEN_<?=$arResult["NavNum"]?>=<?=$hrefPageNumber?>" pagenum="<?=$hrefPageNumber?>"></a><?php
 					}
 					else
 					{
-						?><span class="adm-nav-page adm-nav-page-separator disabled" style="cursor: default;"></span><?
+						?><span class="adm-nav-page adm-nav-page-separator disabled" style="cursor: default;"></span><?php
 					}
 					$bPoints = false;
 				}
@@ -144,15 +148,15 @@ if(!$arResult["NavShowAlways"])
 
 
 
-			<? if ($arResult["bShowAll"] && !$arResult["NavShowAll"]): ?>
+			<?php if ($arResult["bShowAll"] && !$arResult["NavShowAll"]): ?>
 				<!-- prev -->
-				<? if ($bPrevDisabled): ?>
+				<?php if ($bPrevDisabled): ?>
 					<span class="adm-nav-page adm-nav-page-prev disabled" id="<?=$ClientID?>_previous_page"></span>
-				<? else: ?>
+				<?php else: ?>
 					<a class="adm-nav-page adm-nav-page-prev" href="<?=$sPrevHref;?>" id="<?=$ClientID?>_previous_page"></a>
-				<? endif; ?>
-			<? endif; ?>
-		<?
+				<?php endif; ?>
+			<?php endif; ?>
+				<?php
 		$bFirst = true;
 		$bPoints = false;
 		do
@@ -163,15 +167,15 @@ if(!$arResult["NavShowAlways"])
 				if ($arResult["nStartPage"] == $arResult["NavPageNomer"]):
 		?>
 				<span class="adm-nav-page-active adm-nav-page"><?=$arResult["nStartPage"]?></span>
-		<?
+				<?php
 				elseif($arResult["nStartPage"] == 1 && $arResult["bSavePage"] == false):
 		?>
 				<a class="adm-nav-page" href="<?=$arResult["sUrlPath"]?><?=$strNavQueryStringFull?>"><?=$arResult["nStartPage"]?></a>
-		<?
+				<?php
 				else:
 		?>
 				<a class="adm-nav-page" href="<?=$arResult["sUrlPath"]?>?<?=$strNavQueryString?>PAGEN_<?=$arResult["NavNum"]?>=<?=$arResult["nStartPage"]?>"><?=$arResult["nStartPage"]?></a>
-		<?
+				<?php
 				endif;
 				$bFirst = false;
 				$bPoints = true;
@@ -184,11 +188,11 @@ if(!$arResult["NavShowAlways"])
 					if ($curEndPage-$arResult['nStartPage'] > 1)
 					{
 						$hrefPageNumber = floor(($curEndPage-$arResult["nStartPage"]-2)/2)+$arResult["nStartPage"];
-						?><a class="adm-nav-page adm-nav-page-separator" href="<?=$arResult["sUrlPath"]?>?<?=$strNavQueryString?>PAGEN_<?=$arResult["NavNum"]?>=<?=$hrefPageNumber?>" pagenum="<?=$hrefPageNumber?>"></a><?
+						?><a class="adm-nav-page adm-nav-page-separator" href="<?=$arResult["sUrlPath"]?>?<?=$strNavQueryString?>PAGEN_<?=$arResult["NavNum"]?>=<?=$hrefPageNumber?>" pagenum="<?=$hrefPageNumber?>"></a><?php
 					}
 					else
 					{
-						?><span class="adm-nav-page adm-nav-page-separator disabled" style="cursor: default;"></span><?
+						?><span class="adm-nav-page adm-nav-page-separator disabled" style="cursor: default;"></span><?php
 					}
 					$bPoints = false;
 				}
@@ -201,24 +205,24 @@ if(!$arResult["NavShowAlways"])
 		if ($arResult["NavShowAll"]):
 	?>
 			<a class="adm-nav-page" href="<?=$arResult["sUrlPath"]?>?<?=$strNavQueryString?>SHOWALL_<?=$arResult["NavNum"]?>=0"><?=GetMessage("navigation_paged")?></a>
-	<?
+		<?php
 		else:
 	?>
 			<!-- next -->
-			<? if ($bNextDisabled): ?>
+			<?php if ($bNextDisabled): ?>
 				<span class="adm-nav-page adm-nav-page-next disabled" id="<?=$ClientID?>_next_page"></span>
-			<? else: ?>
+			<?php else: ?>
 				<a class="adm-nav-page adm-nav-page-next" href="<?=$sNextHref;?>" id="<?=$ClientID?>_next_page"></a>
-			<? endif; ?>
+			<?php endif; ?>
 
 			<a class="adm-nav-page" href="<?=$arResult["sUrlPath"]?>?<?=$strNavQueryString?>SHOWALL_<?=$arResult["NavNum"]?>=1"><?=GetMessage("navigation_all")?></a>
-	<?
+		<?php
 		endif;
 	endif;
 	?>
 		</div>
 	</div>
-	<?CJSCore::Init();?>
+	<?php CJSCore::Init();?>
 	<script>
 		BX.bind(document, "keydown", function (event) {
 

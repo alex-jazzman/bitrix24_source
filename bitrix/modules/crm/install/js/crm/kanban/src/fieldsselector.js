@@ -1,6 +1,8 @@
 import {UI} from 'ui.notification';
 import {PopupManager} from "main.popup";
 import {Dom, Event, Loc, Tag, Text, Type} from "main.core";
+import { SaveButton, CancelButton, Button } from 'ui.buttons';
+import { Loader } from 'main.loader';
 
 type FieldsSelectorOptions = {
 	type: string,
@@ -82,9 +84,9 @@ export default class FieldsSelector
 				}
 			},
 			buttons: [
-				new BX.UI.SaveButton({
-					color: BX.UI.Button.Color.PRIMARY,
-					state: this.fields ? '' : BX.UI.Button.State.DISABLED,
+				new SaveButton({
+					color: Button.Color.PRIMARY,
+					state: this.fields ? '' : Button.State.DISABLED,
 					onclick: () =>
 					{
 						const selectedFields =
@@ -107,7 +109,7 @@ export default class FieldsSelector
 						}
 					}
 				}),
-				new BX.UI.CancelButton({
+				new CancelButton({
 					onclick: () =>
 					{
 						this.popup.close();
@@ -121,7 +123,7 @@ export default class FieldsSelector
 	{
 		const loaderContainer = Tag.render`<div class="crm-kanban-popup-field-loader"></div>`;
 
-		const loader = new BX.Loader({
+		const loader = new Loader({
 			target: loaderContainer,
 			size: 80
 		});

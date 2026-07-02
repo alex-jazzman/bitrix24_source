@@ -1,10 +1,11 @@
-import { BitrixVueComponentProps } from 'ui.vue3';
+import { type BitrixVueComponentProps } from 'ui.vue3';
 import { Text, Event } from 'main.core';
 import { BaseEvent } from 'main.core.events';
+
 import { MiniCardItem } from '../lib/model/mini-card-item';
 import { Loader } from './loader/loader';
 import { MiniCardContent } from './mini-card-content';
-import { EVENTS } from '../mini-card';
+import { EVENTS } from '../lib/types/events.js';
 
 import '../styles.css';
 

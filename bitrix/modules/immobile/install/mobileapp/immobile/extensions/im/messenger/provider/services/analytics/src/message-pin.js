@@ -20,8 +20,9 @@ jn.define('im/messenger/provider/services/analytics/message-pin', (require, expo
 		/**
 		 * @param {DialogId} dialogId
 		 * @param {number} chatId
+		 * @param {boolean} isNestedSection
 		 */
-		sendMessagePin({ dialogId, chatId })
+		sendMessagePin({ dialogId, chatId, isNestedSection })
 		{
 			const chatData = this.store.getters['dialoguesModel/getById'](dialogId);
 
@@ -38,9 +39,16 @@ jn.define('im/messenger/provider/services/analytics/message-pin', (require, expo
 				.setCategory(AnalyticsHelper.getCategoryByChatType(chatData.type))
 				.setEvent(Analytics.Event.pinMessage)
 				.setType(type)
+				.setSection(Analytics.Section.chatWindow)
+				.setSubSection(Analytics.SubSection.contextMenu)
 				.setP1(AnalyticsHelper.getP1ByDialog(chatData))
 				.setP3(p3Value)
 			;
+
+			if (isNestedSection)
+			{
+				analyticsEvent.setElement(Analytics.Element.more);
+			}
 
 			analyticsEvent.send();
 		}
@@ -48,8 +56,10 @@ jn.define('im/messenger/provider/services/analytics/message-pin', (require, expo
 		/**
 		 * @param {DialogId} dialogId
 		 * @param {number} chatId
+		 * @param {boolean} [isNestedSection]
+		 * @param {boolean} [isContextMenu]
 		 */
-		sendMessageUnpin({ dialogId, chatId })
+		sendMessageUnpin({ dialogId, chatId, isNestedSection = false, isContextMenu = false })
 		{
 			const chatData = this.store.getters['dialoguesModel/getById'](dialogId);
 
@@ -67,6 +77,17 @@ jn.define('im/messenger/provider/services/analytics/message-pin', (require, expo
 				.setType(type)
 				.setP1(AnalyticsHelper.getP1ByDialog(chatData))
 			;
+
+			if (isNestedSection)
+			{
+				analyticsEvent.setElement(Analytics.Element.more);
+			}
+
+			if (isContextMenu)
+			{
+				analyticsEvent.setSection(Analytics.Section.chatWindow);
+				analyticsEvent.setSubSection(Analytics.SubSection.contextMenu);
+			}
 
 			analyticsEvent.send();
 		}

@@ -1,6 +1,7 @@
-import { BitrixVueComponentProps } from 'ui.vue3';
 import { type MenuOptions } from 'main.popup';
+import { type BitrixVueComponentProps } from 'ui.vue3';
 
+import { ServiceLocator } from '../../../../lib/service-locator';
 import {
 	Field,
 	FieldTitle,
@@ -9,17 +10,16 @@ import {
 	ValueEllipsis,
 } from '../../layout/index';
 import { ShowMoreMenu } from '../../show-more/show-more-menu';
-import { ServiceLocator } from '../../../../lib/service-locator';
 
-declare type Email = {
+import './email-field.css';
+
+type Email = {
 	value: String,
 	ownerTypeId: number,
 	ownerId: number,
 };
 
 const SHOWABLE_EMAILS_LIMIT = 2;
-
-import './email-field.css';
 
 export const EmailField: BitrixVueComponentProps = {
 	name: 'EmailField',

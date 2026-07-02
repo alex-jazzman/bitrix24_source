@@ -2,6 +2,7 @@
  * @module user-profile/common-tab/src/block/header/user-card
  */
 jn.define('user-profile/common-tab/src/block/header/user-card', (require, exports, module) => {
+	const { Feature } = require('feature');
 	const { UserCardClass } = require('layout/ui/user/card');
 	const { Avatar } = require('ui-system/blocks/avatar');
 	const { Color, Indent } = require('tokens');
@@ -17,6 +18,7 @@ jn.define('user-profile/common-tab/src/block/header/user-card', (require, export
 	const { Moment } = require('utils/date');
 	const { Circle, Line } = require('utils/skeleton');
 	const { PropTypes } = require('utils/validation');
+	const { getTextColorByTheme } = require('user/theme');
 
 	const AVATAR_SIZE = 72;
 
@@ -25,6 +27,23 @@ jn.define('user-profile/common-tab/src/block/header/user-card', (require, export
 	 */
 	class ProfileUserCard extends UserCardClass
 	{
+		render()
+		{
+			if (!Feature.canUseWidgetBackground())
+			{
+				return super.render();
+			}
+
+			return this.renderContainer(
+				{
+					style: {
+						backgroundColor: '#00000000',
+					},
+				},
+				this.renderInnerContent(),
+			);
+		}
+
 		renderAvatar()
 		{
 			const { user, status, isBirthday, onAvatarClick } = this.props;
@@ -144,7 +163,7 @@ jn.define('user-profile/common-tab/src/block/header/user-card', (require, export
 				);
 			}
 
-			const textColor = this.getTextColorByTheme(currentTheme);
+			const textColor = getTextColorByTheme(currentTheme);
 
 			return View(
 				{

@@ -3,6 +3,11 @@
 use Bitrix\Main\Localization\Loc;
 Loc::loadMessages(__FILE__);
 
+if (class_exists('bizprocdesigner'))
+{
+	return;
+}
+
 Class bizprocdesigner extends CModule
 {
 	var $MODULE_ID = "bizprocdesigner";

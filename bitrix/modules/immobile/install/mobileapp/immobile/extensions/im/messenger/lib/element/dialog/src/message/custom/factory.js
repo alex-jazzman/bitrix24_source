@@ -10,7 +10,7 @@ jn.define('im/messenger/lib/element/dialog/message/custom/factory', (require, ex
 		/**
 		 * @abstract
 		 * @param {MessagesModelState} modelMessage
-		 * @param {CreateMessageOptions} options
+		 * @param {CreateMessageOptions|{}} options
 		 * @return {Message}
 		 */
 		static create(modelMessage, options = {})
@@ -20,9 +20,10 @@ jn.define('im/messenger/lib/element/dialog/message/custom/factory', (require, ex
 
 		/**
 		 * @abstract
+		 * @param {string} [messageComponent]
 		 * @return {boolean}
 		 */
-		static checkSuitableForDisplay(modelMessage)
+		static checkSuitableForDisplay(messageComponent)
 		{
 			throw new Error('CustomMessage: checkSuitableForDisplay() must be override in subclass.');
 		}

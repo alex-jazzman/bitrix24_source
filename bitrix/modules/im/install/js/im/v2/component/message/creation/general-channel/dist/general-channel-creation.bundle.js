@@ -3,31 +3,31 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_component_message_base) {
+(function (exports, im_v2_component_message_base) {
 	'use strict';
 
 	// @vue/component
 	const GeneralChannelCreationMessage = {
-	  name: 'GeneralChannelCreationMessage',
-	  components: {
-	    BaseMessage: im_v2_component_message_base.BaseMessage
-	  },
-	  props: {
-	    item: {
-	      type: Object,
-	      required: true
-	    },
-	    dialogId: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  methods: {
-	    loc(phraseCode, replacements = {}) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
-	    }
-	  },
-	  template: `
+		name: 'GeneralChannelCreationMessage',
+		components: {
+			BaseMessage: im_v2_component_message_base.BaseMessage
+		},
+		props: {
+			item: {
+				type: Object,
+				required: true
+			},
+			dialogId: {
+				type: String,
+				required: true
+			}
+		},
+		methods: {
+			loc(phraseCode, replacements = {}) {
+				return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+			}
+		},
+		template: `
 		<BaseMessage
 			:dialogId="dialogId"
 			:item="item"
@@ -66,5 +66,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.GeneralChannelCreationMessage = GeneralChannelCreationMessage;
 
-}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX.Messenger.v2.Component.Message));
+})(this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}, BX.Messenger.v2.Component.Message);
 //# sourceMappingURL=general-channel-creation.bundle.js.map

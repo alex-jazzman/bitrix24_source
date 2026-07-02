@@ -1736,7 +1736,7 @@
               "isAlias": true,
               "value": {
                 "collection": "design",
-                "name": "ui-color-base-6"
+                "name": "ui-color-base-5"
               }
             },
             {
@@ -2313,21 +2313,21 @@
               }
             },
             {
-              "name": "ui-color-design-plain-na-focused-stroke",
-              "type": "color",
-              "isAlias": true,
-              "value": {
-                "collection": "design",
-                "name": "ui-color-divider-default"
-              }
-            },
-            {
               "name": "ui-color-design-selection-content",
               "type": "color",
               "isAlias": true,
               "value": {
                 "collection": "design",
                 "name": "ui-color-accent-main-primary"
+              }
+            },
+            {
+              "name": "ui-color-design-plain-na-focused-stroke",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "ui-color-divider-default"
               }
             },
             {
@@ -2358,21 +2358,21 @@
               }
             },
             {
-              "name": "ui-color-design-plain-na-focused-content",
-              "type": "color",
-              "isAlias": true,
-              "value": {
-                "collection": "design",
-                "name": "ui-color-base-1"
-              }
-            },
-            {
               "name": "ui-color-design-selection-content-chevron",
               "type": "color",
               "isAlias": true,
               "value": {
                 "collection": "design",
                 "name": "ui-color-accent-main-primary"
+              }
+            },
+            {
+              "name": "ui-color-design-plain-na-focused-content",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "ui-color-base-1"
               }
             },
             {
@@ -2916,6 +2916,12 @@
               "value": "#B7D7FF"
             },
             {
+              "name": "ui-color-designer-bp-rules-blue-text",
+              "type": "color",
+              "isAlias": false,
+              "value": "#3391FF"
+            },
+            {
               "name": "ui-color-designer-bp-rules-blue-bg",
               "type": "color",
               "isAlias": false,
@@ -2926,6 +2932,12 @@
               "type": "color",
               "isAlias": false,
               "value": "#6EF1B4"
+            },
+            {
+              "name": "ui-color-designer-bp-rules-green-text",
+              "type": "color",
+              "isAlias": false,
+              "value": "#1BCE7B"
             },
             {
               "name": "ui-color-designer-bp-rules-green-bg",
@@ -2940,10 +2952,34 @@
               "value": "#D5D7DB"
             },
             {
+              "name": "ui-color-designer-bp-rules-grey-text",
+              "type": "color",
+              "isAlias": false,
+              "value": "#828B95"
+            },
+            {
               "name": "ui-color-designer-bp-rules-grey-bg",
               "type": "color",
               "isAlias": false,
               "value": "#F8FAFB"
+            },
+            {
+              "name": "ui-color-designer-bp-rules-orange-stroke",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFE1A6"
+            },
+            {
+              "name": "ui-color-designer-bp-rules-orange-text",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFA900"
+            },
+            {
+              "name": "ui-color-designer-bp-rules-orange-bg",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFAF0"
             },
             {
               "name": "ui-color-helper-bg-default",
@@ -2984,20 +3020,29 @@
             {
               "name": "ui-color-chat-my-primary-1",
               "type": "color",
-              "isAlias": false,
-              "value": "#1F86FF"
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "ui-color-accent-main-primary-alt"
+              }
             },
             {
               "name": "ui-color-chat-my-primary-2",
               "type": "color",
-              "isAlias": false,
-              "value": "#1F86FF"
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "ui-color-accent-main-primary-alt"
+              }
             },
             {
               "name": "ui-color-chat-my-primary-3",
               "type": "color",
-              "isAlias": false,
-              "value": "#1F86FF"
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "ui-color-accent-main-primary-alt"
+              }
             },
             {
               "name": "ui-color-chat-my-message-1",
@@ -3026,14 +3071,20 @@
             {
               "name": "ui-color-chat-my-channel-alert",
               "type": "color",
-              "isAlias": false,
-              "value": "#FF5752"
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "ui-color-design-filled-alert-bg"
+              }
             },
             {
               "name": "ui-color-chat-my-channel-success",
               "type": "color",
-              "isAlias": false,
-              "value": "#1BCE7B"
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "ui-color-design-filled-success-bg"
+              }
             },
             {
               "name": "ui-color-chat-my-base-black",
@@ -3050,8 +3101,11 @@
             {
               "name": "ui-color-chat-my-color-white",
               "type": "color",
-              "isAlias": false,
-              "value": "#FFFFFF"
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "ui-color-base-white-fixed"
+              }
             },
             {
               "name": "ui-color-chat-my-color-shade",
@@ -3126,6 +3180,12 @@
               "value": "#00000033"
             },
             {
+              "name": "ui-color-chat-overall-message-tech",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFFFF33"
+            },
+            {
               "name": "ui-color-chat-overall-tech-2",
               "type": "color",
               "isAlias": false,
@@ -3146,8 +3206,11 @@
             {
               "name": "ui-color-chat-overall-base-white-1",
               "type": "color",
-              "isAlias": false,
-              "value": "#FFFFFF"
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "ui-color-base-white-fixed"
+              }
             },
             {
               "name": "ui-color-chat-overall-base-white-2",
@@ -3164,8 +3227,11 @@
             {
               "name": "ui-color-chat-overall-invert-alert",
               "type": "color",
-              "isAlias": false,
-              "value": "#FFFFFF"
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "ui-color-base-white-fixed"
+              }
             },
             {
               "name": "ui-color-chat-overall-fixed-white",
@@ -3194,8 +3260,11 @@
             {
               "name": "ui-color-chat-other-message-1",
               "type": "color",
-              "isAlias": false,
-              "value": "#FFFFFF"
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "ui-color-bg-content-primary"
+              }
             },
             {
               "name": "ui-color-chat-other-message-2",
@@ -3230,8 +3299,11 @@
             {
               "name": "ui-color-chat-other-invert-1",
               "type": "color",
-              "isAlias": false,
-              "value": "#FFFFFF"
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "ui-color-base-white-fixed"
+              }
             },
             {
               "name": "ui-color-chat-other-copilot-1",
@@ -3363,12 +3435,6 @@
               "value": "#10B96A"
             },
             {
-              "name": "ui-color-marta-bg-gradient-1",
-              "type": "color",
-              "isAlias": false,
-              "value": "#58D7D5"
-            },
-            {
               "name": "ui-color-leftmenu-bg-expanded",
               "type": "color",
               "isAlias": true,
@@ -3376,6 +3442,12 @@
                 "collection": "design",
                 "name": "ui-color-bg-content-secondary"
               }
+            },
+            {
+              "name": "ui-color-marta-bg-gradient-1",
+              "type": "color",
+              "isAlias": false,
+              "value": "#58D7D5"
             },
             {
               "name": "ui-color-marta-bg-gradient-2",
@@ -3759,16 +3831,16 @@
               "value": "#F9FCFF"
             },
             {
-              "name": "ui-color-black-base",
-              "type": "color",
-              "isAlias": false,
-              "value": "#333333"
-            },
-            {
               "name": "ui-color-blue-04",
               "type": "color",
               "isAlias": false,
               "value": "#F8FBFF"
+            },
+            {
+              "name": "ui-color-black-base",
+              "type": "color",
+              "isAlias": false,
+              "value": "#333333"
             },
             {
               "name": "ui-color-blue-06",
@@ -4059,16 +4131,16 @@
               "value": "#FFFFFF2E"
             },
             {
-              "name": "ui-color-blue-09",
-              "type": "color",
-              "isAlias": false,
-              "value": "#F3F8FF"
-            },
-            {
               "name": "ui-color-white-base",
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF"
+            },
+            {
+              "name": "ui-color-blue-09",
+              "type": "color",
+              "isAlias": false,
+              "value": "#F3F8FF"
             },
             {
               "name": "ui-color-blue-10",
@@ -5206,6 +5278,24 @@
                 "collection": "design",
                 "name": "ui-color-blue-57"
               }
+            },
+            {
+              "name": "ui-focus-outline-offset",
+              "type": "number",
+              "isAlias": false,
+              "value": 2
+            },
+            {
+              "name": "ui-focus-outline-offset-inset",
+              "type": "number",
+              "isAlias": false,
+              "value": -2
+            },
+            {
+              "name": "ui-focus-outline-width",
+              "type": "number",
+              "isAlias": false,
+              "value": 2
             }
           ]
         },
@@ -6949,7 +7039,7 @@
               "isAlias": true,
               "value": {
                 "collection": "design",
-                "name": "ui-color-base-6"
+                "name": "ui-color-base-5"
               }
             },
             {
@@ -7520,6 +7610,12 @@
               }
             },
             {
+              "name": "ui-color-design-selection-content",
+              "type": "color",
+              "isAlias": false,
+              "value": "#2A94FF"
+            },
+            {
               "name": "ui-color-design-plain-na-focused-stroke",
               "type": "color",
               "isAlias": true,
@@ -7527,12 +7623,6 @@
                 "collection": "design",
                 "name": "ui-color-divider-default"
               }
-            },
-            {
-              "name": "ui-color-design-selection-content",
-              "type": "color",
-              "isAlias": false,
-              "value": "#2A94FF"
             },
             {
               "name": "ui-design-plain-na-focused-stroke-weight",
@@ -7556,6 +7646,12 @@
               "value": "#5EAEFF"
             },
             {
+              "name": "ui-color-design-selection-content-chevron",
+              "type": "color",
+              "isAlias": false,
+              "value": "#2A94FF"
+            },
+            {
               "name": "ui-color-design-plain-na-focused-content",
               "type": "color",
               "isAlias": true,
@@ -7563,12 +7659,6 @@
                 "collection": "design",
                 "name": "ui-color-base-1"
               }
-            },
-            {
-              "name": "ui-color-design-selection-content-chevron",
-              "type": "color",
-              "isAlias": false,
-              "value": "#2A94FF"
             },
             {
               "name": "ui-color-design-selection-content-divider",
@@ -8108,6 +8198,12 @@
               "value": "#B7D7FF"
             },
             {
+              "name": "ui-color-designer-bp-rules-blue-text",
+              "type": "color",
+              "isAlias": false,
+              "value": "#3391FF"
+            },
+            {
               "name": "ui-color-designer-bp-rules-blue-bg",
               "type": "color",
               "isAlias": false,
@@ -8118,6 +8214,12 @@
               "type": "color",
               "isAlias": false,
               "value": "#6EF1B4"
+            },
+            {
+              "name": "ui-color-designer-bp-rules-green-text",
+              "type": "color",
+              "isAlias": false,
+              "value": "#1BCE7B"
             },
             {
               "name": "ui-color-designer-bp-rules-green-bg",
@@ -8132,10 +8234,34 @@
               "value": "#D5D7DB"
             },
             {
+              "name": "ui-color-designer-bp-rules-grey-text",
+              "type": "color",
+              "isAlias": false,
+              "value": "#828B95"
+            },
+            {
               "name": "ui-color-designer-bp-rules-grey-bg",
               "type": "color",
               "isAlias": false,
               "value": "#F8FAFB"
+            },
+            {
+              "name": "ui-color-designer-bp-rules-orange-stroke",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFE1A6"
+            },
+            {
+              "name": "ui-color-designer-bp-rules-orange-text",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFA900"
+            },
+            {
+              "name": "ui-color-designer-bp-rules-orange-bg",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFAF0"
             },
             {
               "name": "ui-color-helper-bg-default",
@@ -8254,8 +8380,11 @@
             {
               "name": "ui-color-chat-my-color-green",
               "type": "color",
-              "isAlias": false,
-              "value": "#FFFFFF"
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "ui-color-base-white-fixed"
+              }
             },
             {
               "name": "ui-color-chat-my-poll-1",
@@ -8313,6 +8442,12 @@
             },
             {
               "name": "ui-color-chat-overall-tech",
+              "type": "color",
+              "isAlias": false,
+              "value": "#2B2E3266"
+            },
+            {
+              "name": "ui-color-chat-overall-message-tech",
               "type": "color",
               "isAlias": false,
               "value": "#2B2E3266"
@@ -8552,16 +8687,16 @@
               "value": "#10B96A"
             },
             {
-              "name": "ui-color-marta-bg-gradient-1",
-              "type": "color",
-              "isAlias": false,
-              "value": "#58D7D5"
-            },
-            {
               "name": "ui-color-leftmenu-bg-expanded",
               "type": "color",
               "isAlias": false,
               "value": "#262626"
+            },
+            {
+              "name": "ui-color-marta-bg-gradient-1",
+              "type": "color",
+              "isAlias": false,
+              "value": "#58D7D5"
             },
             {
               "name": "ui-color-marta-bg-gradient-2",
@@ -8939,16 +9074,16 @@
               "value": "#FFFFFF"
             },
             {
-              "name": "ui-color-black-base",
-              "type": "color",
-              "isAlias": false,
-              "value": "#333333"
-            },
-            {
               "name": "ui-color-blue-04",
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF"
+            },
+            {
+              "name": "ui-color-black-base",
+              "type": "color",
+              "isAlias": false,
+              "value": "#333333"
             },
             {
               "name": "ui-color-blue-06",
@@ -9239,13 +9374,13 @@
               "value": "#00000029"
             },
             {
-              "name": "ui-color-blue-09",
+              "name": "ui-color-white-base",
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF"
             },
             {
-              "name": "ui-color-white-base",
+              "name": "ui-color-blue-09",
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF"
@@ -10166,43 +10301,43 @@
               "name": "ui-color-design-outline-bitrix-gpt-content-gradient-1",
               "type": "color",
               "isAlias": false,
-              "value": "#0E618E"
+              "value": "#28B4FF"
             },
             {
               "name": "ui-color-design-outline-bitrix-gpt-content-gradient-2",
               "type": "color",
               "isAlias": false,
-              "value": "#2E4A99"
+              "value": "#7D98FF"
             },
             {
               "name": "ui-color-design-outline-bitrix-gpt-content-gradient-3",
               "type": "color",
               "isAlias": false,
-              "value": "#62369A"
+              "value": "#BD82FF"
             },
             {
               "name": "ui-color-design-outline-bitrix-gpt-content-gradient-4",
               "type": "color",
               "isAlias": false,
-              "value": "#913670"
+              "value": "#FF67CC"
             },
             {
               "name": "ui-color-design-outline-bitrix-gpt-content-gradient-5",
               "type": "color",
               "isAlias": false,
-              "value": "#96424A"
+              "value": "#FF8A90"
             },
             {
               "name": "ui-color-design-outline-bitrix-gpt-content-gradient-6",
               "type": "color",
               "isAlias": false,
-              "value": "#BA8D2E"
+              "value": "#F6BC41"
             },
             {
               "name": "ui-color-design-outline-bitrix-gpt-content-gradient-7",
               "type": "color",
               "isAlias": false,
-              "value": "#B6552B"
+              "value": "#FD8552"
             },
             {
               "name": "ui-color-design-outline-bitrix-gpt-stroke-gradient-1",
@@ -10334,43 +10469,43 @@
               "name": "ui-color-design-tinted-bitrix-gpt-content-gradient-1",
               "type": "color",
               "isAlias": false,
-              "value": "#0E618E"
+              "value": "#28B4FF"
             },
             {
               "name": "ui-color-design-tinted-bitrix-gpt-content-gradient-2",
               "type": "color",
               "isAlias": false,
-              "value": "#2E4A99"
+              "value": "#7D98FF"
             },
             {
               "name": "ui-color-design-tinted-bitrix-gpt-content-gradient-3",
               "type": "color",
               "isAlias": false,
-              "value": "#62369A"
+              "value": "#BD82FF"
             },
             {
               "name": "ui-color-design-tinted-bitrix-gpt-content-gradient-4",
               "type": "color",
               "isAlias": false,
-              "value": "#913670"
+              "value": "#FF67CC"
             },
             {
               "name": "ui-color-design-tinted-bitrix-gpt-content-gradient-5",
               "type": "color",
               "isAlias": false,
-              "value": "#96424A"
+              "value": "#FF8A90"
             },
             {
               "name": "ui-color-design-tinted-bitrix-gpt-content-gradient-6",
               "type": "color",
               "isAlias": false,
-              "value": "#BA8D2E"
+              "value": "#F6BC41"
             },
             {
               "name": "ui-color-design-tinted-bitrix-gpt-content-gradient-7",
               "type": "color",
               "isAlias": false,
-              "value": "#B6552B"
+              "value": "#FD8552"
             },
             {
               "name": "ui-color-design-tinted-bitrix-gpt-content-divider",
@@ -10386,6 +10521,24 @@
                 "collection": "design",
                 "name": "ui-color-blue-57"
               }
+            },
+            {
+              "name": "ui-focus-outline-offset",
+              "type": "number",
+              "isAlias": false,
+              "value": 2
+            },
+            {
+              "name": "ui-focus-outline-offset-inset",
+              "type": "number",
+              "isAlias": false,
+              "value": -2
+            },
+            {
+              "name": "ui-focus-outline-width",
+              "type": "number",
+              "isAlias": false,
+              "value": 2
             }
           ]
         },
@@ -12709,12 +12862,6 @@
               "value": 0
             },
             {
-              "name": "ui-color-design-plain-na-focused-stroke",
-              "type": "color",
-              "isAlias": false,
-              "value": "#00000014"
-            },
-            {
               "name": "ui-color-design-selection-content",
               "type": "color",
               "isAlias": true,
@@ -12722,6 +12869,12 @@
                 "collection": "design",
                 "name": "ui-color-base-1"
               }
+            },
+            {
+              "name": "ui-color-design-plain-na-focused-stroke",
+              "type": "color",
+              "isAlias": false,
+              "value": "#00000014"
             },
             {
               "name": "ui-design-plain-na-focused-stroke-weight",
@@ -12751,21 +12904,21 @@
               }
             },
             {
-              "name": "ui-color-design-plain-na-focused-content",
-              "type": "color",
-              "isAlias": true,
-              "value": {
-                "collection": "design",
-                "name": "ui-color-base-1"
-              }
-            },
-            {
               "name": "ui-color-design-selection-content-chevron",
               "type": "color",
               "isAlias": true,
               "value": {
                 "collection": "design",
                 "name": "ui-color-base-0"
+              }
+            },
+            {
+              "name": "ui-color-design-plain-na-focused-content",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "ui-color-base-1"
               }
             },
             {
@@ -13306,6 +13459,12 @@
               "value": "#B7D7FF"
             },
             {
+              "name": "ui-color-designer-bp-rules-blue-text",
+              "type": "color",
+              "isAlias": false,
+              "value": "#3391FF"
+            },
+            {
               "name": "ui-color-designer-bp-rules-blue-bg",
               "type": "color",
               "isAlias": false,
@@ -13316,6 +13475,12 @@
               "type": "color",
               "isAlias": false,
               "value": "#6EF1B4"
+            },
+            {
+              "name": "ui-color-designer-bp-rules-green-text",
+              "type": "color",
+              "isAlias": false,
+              "value": "#1BCE7B"
             },
             {
               "name": "ui-color-designer-bp-rules-green-bg",
@@ -13330,10 +13495,34 @@
               "value": "#D5D7DB"
             },
             {
+              "name": "ui-color-designer-bp-rules-grey-text",
+              "type": "color",
+              "isAlias": false,
+              "value": "#828B95"
+            },
+            {
               "name": "ui-color-designer-bp-rules-grey-bg",
               "type": "color",
               "isAlias": false,
               "value": "#F8FAFB"
+            },
+            {
+              "name": "ui-color-designer-bp-rules-orange-stroke",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFE1A6"
+            },
+            {
+              "name": "ui-color-designer-bp-rules-orange-text",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFA900"
+            },
+            {
+              "name": "ui-color-designer-bp-rules-orange-bg",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFAF0"
             },
             {
               "name": "ui-color-helper-bg-default",
@@ -13374,20 +13563,29 @@
             {
               "name": "ui-color-chat-my-primary-1",
               "type": "color",
-              "isAlias": false,
-              "value": "#1F86FF"
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "ui-color-accent-main-primary-alt"
+              }
             },
             {
               "name": "ui-color-chat-my-primary-2",
               "type": "color",
-              "isAlias": false,
-              "value": "#1F86FF"
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "ui-color-accent-main-primary-alt"
+              }
             },
             {
               "name": "ui-color-chat-my-primary-3",
               "type": "color",
-              "isAlias": false,
-              "value": "#1F86FF"
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "ui-color-accent-main-primary-alt"
+              }
             },
             {
               "name": "ui-color-chat-my-message-1",
@@ -13422,8 +13620,11 @@
             {
               "name": "ui-color-chat-my-channel-success",
               "type": "color",
-              "isAlias": false,
-              "value": "#1BCE7B"
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "ui-color-design-filled-success-bg"
+              }
             },
             {
               "name": "ui-color-chat-my-base-black",
@@ -13452,8 +13653,11 @@
             {
               "name": "ui-color-chat-my-color-green",
               "type": "color",
-              "isAlias": false,
-              "value": "#FFFFFF"
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "ui-color-base-white-fixed"
+              }
             },
             {
               "name": "ui-color-chat-my-poll-1",
@@ -13516,6 +13720,12 @@
               "value": "#2B2E3266"
             },
             {
+              "name": "ui-color-chat-overall-message-tech",
+              "type": "color",
+              "isAlias": false,
+              "value": "#2B2E3266"
+            },
+            {
               "name": "ui-color-chat-overall-tech-2",
               "type": "color",
               "isAlias": false,
@@ -13536,8 +13746,11 @@
             {
               "name": "ui-color-chat-overall-base-white-1",
               "type": "color",
-              "isAlias": false,
-              "value": "#FFFFFFB3"
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "ui-color-base-white-fixed"
+              }
             },
             {
               "name": "ui-color-chat-overall-base-white-2",
@@ -13750,16 +13963,16 @@
               "value": "#10B96A"
             },
             {
-              "name": "ui-color-marta-bg-gradient-1",
-              "type": "color",
-              "isAlias": false,
-              "value": "#58D7D5"
-            },
-            {
               "name": "ui-color-leftmenu-bg-expanded",
               "type": "color",
               "isAlias": false,
               "value": "#00000005"
+            },
+            {
+              "name": "ui-color-marta-bg-gradient-1",
+              "type": "color",
+              "isAlias": false,
+              "value": "#58D7D5"
             },
             {
               "name": "ui-color-marta-bg-gradient-2",
@@ -14140,16 +14353,16 @@
               "value": "#FFFFFF"
             },
             {
-              "name": "ui-color-black-base",
-              "type": "color",
-              "isAlias": false,
-              "value": "#333333"
-            },
-            {
               "name": "ui-color-blue-04",
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF"
+            },
+            {
+              "name": "ui-color-black-base",
+              "type": "color",
+              "isAlias": false,
+              "value": "#333333"
             },
             {
               "name": "ui-color-blue-06",
@@ -14440,13 +14653,13 @@
               "value": "#FFFFFF24"
             },
             {
-              "name": "ui-color-blue-09",
+              "name": "ui-color-white-base",
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF"
             },
             {
-              "name": "ui-color-white-base",
+              "name": "ui-color-blue-09",
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF"
@@ -15581,6 +15794,24 @@
                 "collection": "design",
                 "name": "ui-color-blue-57"
               }
+            },
+            {
+              "name": "ui-focus-outline-offset",
+              "type": "number",
+              "isAlias": false,
+              "value": 2
+            },
+            {
+              "name": "ui-focus-outline-offset-inset",
+              "type": "number",
+              "isAlias": false,
+              "value": -2
+            },
+            {
+              "name": "ui-focus-outline-width",
+              "type": "number",
+              "isAlias": false,
+              "value": 2
             }
           ]
         },
@@ -17904,12 +18135,6 @@
               "value": 0
             },
             {
-              "name": "ui-color-design-plain-na-focused-stroke",
-              "type": "color",
-              "isAlias": false,
-              "value": "#FFFFFF1F"
-            },
-            {
               "name": "ui-color-design-selection-content",
               "type": "color",
               "isAlias": true,
@@ -17917,6 +18142,12 @@
                 "collection": "design",
                 "name": "ui-color-base-0"
               }
+            },
+            {
+              "name": "ui-color-design-plain-na-focused-stroke",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFFFF1F"
             },
             {
               "name": "ui-design-plain-na-focused-stroke-weight",
@@ -17946,21 +18177,21 @@
               }
             },
             {
-              "name": "ui-color-design-plain-na-focused-content",
-              "type": "color",
-              "isAlias": true,
-              "value": {
-                "collection": "design",
-                "name": "ui-color-base-1"
-              }
-            },
-            {
               "name": "ui-color-design-selection-content-chevron",
               "type": "color",
               "isAlias": true,
               "value": {
                 "collection": "design",
                 "name": "ui-color-base-0"
+              }
+            },
+            {
+              "name": "ui-color-design-plain-na-focused-content",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "ui-color-base-1"
               }
             },
             {
@@ -18501,6 +18732,12 @@
               "value": "#B7D7FF"
             },
             {
+              "name": "ui-color-designer-bp-rules-blue-text",
+              "type": "color",
+              "isAlias": false,
+              "value": "#3391FF"
+            },
+            {
               "name": "ui-color-designer-bp-rules-blue-bg",
               "type": "color",
               "isAlias": false,
@@ -18511,6 +18748,12 @@
               "type": "color",
               "isAlias": false,
               "value": "#6EF1B4"
+            },
+            {
+              "name": "ui-color-designer-bp-rules-green-text",
+              "type": "color",
+              "isAlias": false,
+              "value": "#1BCE7B"
             },
             {
               "name": "ui-color-designer-bp-rules-green-bg",
@@ -18525,10 +18768,34 @@
               "value": "#D5D7DB"
             },
             {
+              "name": "ui-color-designer-bp-rules-grey-text",
+              "type": "color",
+              "isAlias": false,
+              "value": "#828B95"
+            },
+            {
               "name": "ui-color-designer-bp-rules-grey-bg",
               "type": "color",
               "isAlias": false,
               "value": "#F8FAFB"
+            },
+            {
+              "name": "ui-color-designer-bp-rules-orange-stroke",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFE1A6"
+            },
+            {
+              "name": "ui-color-designer-bp-rules-orange-text",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFA900"
+            },
+            {
+              "name": "ui-color-designer-bp-rules-orange-bg",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFAF0"
             },
             {
               "name": "ui-color-helper-bg-default",
@@ -18647,8 +18914,11 @@
             {
               "name": "ui-color-chat-my-color-green",
               "type": "color",
-              "isAlias": false,
-              "value": "#FFFFFF"
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "ui-color-base-white-fixed"
+              }
             },
             {
               "name": "ui-color-chat-my-poll-1",
@@ -18706,6 +18976,12 @@
             },
             {
               "name": "ui-color-chat-overall-tech",
+              "type": "color",
+              "isAlias": false,
+              "value": "#2B2E3266"
+            },
+            {
+              "name": "ui-color-chat-overall-message-tech",
               "type": "color",
               "isAlias": false,
               "value": "#2B2E3266"
@@ -18945,16 +19221,16 @@
               "value": "#10B96A"
             },
             {
-              "name": "ui-color-marta-bg-gradient-1",
-              "type": "color",
-              "isAlias": false,
-              "value": "#58D7D5"
-            },
-            {
               "name": "ui-color-leftmenu-bg-expanded",
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF0A"
+            },
+            {
+              "name": "ui-color-marta-bg-gradient-1",
+              "type": "color",
+              "isAlias": false,
+              "value": "#58D7D5"
             },
             {
               "name": "ui-color-marta-bg-gradient-2",
@@ -19335,16 +19611,16 @@
               "value": "#FFFFFF"
             },
             {
-              "name": "ui-color-black-base",
-              "type": "color",
-              "isAlias": false,
-              "value": "#333333"
-            },
-            {
               "name": "ui-color-blue-04",
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF"
+            },
+            {
+              "name": "ui-color-black-base",
+              "type": "color",
+              "isAlias": false,
+              "value": "#333333"
             },
             {
               "name": "ui-color-blue-06",
@@ -19635,13 +19911,13 @@
               "value": "#FFFFFF24"
             },
             {
-              "name": "ui-color-blue-09",
+              "name": "ui-color-white-base",
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF"
             },
             {
-              "name": "ui-color-white-base",
+              "name": "ui-color-blue-09",
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF"
@@ -20559,31 +20835,31 @@
               "name": "ui-color-design-outline-bitrix-gpt-content-gradient-1",
               "type": "color",
               "isAlias": false,
-              "value": "#0E618E"
+              "value": "#73C6F3"
             },
             {
               "name": "ui-color-design-outline-bitrix-gpt-content-gradient-2",
               "type": "color",
               "isAlias": false,
-              "value": "#2E4A99"
+              "value": "#92AEFE"
             },
             {
               "name": "ui-color-design-outline-bitrix-gpt-content-gradient-3",
               "type": "color",
               "isAlias": false,
-              "value": "#62369A"
+              "value": "#CC9AFD"
             },
             {
               "name": "ui-color-design-outline-bitrix-gpt-content-gradient-4",
               "type": "color",
               "isAlias": false,
-              "value": "#913670"
+              "value": "#ED99E0"
             },
             {
               "name": "ui-color-design-outline-bitrix-gpt-content-gradient-5",
               "type": "color",
               "isAlias": false,
-              "value": "#96424A"
+              "value": "#F89ECB"
             },
             {
               "name": "ui-color-design-outline-bitrix-gpt-content-gradient-6",
@@ -20724,43 +21000,43 @@
               "name": "ui-color-design-tinted-bitrix-gpt-content-gradient-1",
               "type": "color",
               "isAlias": false,
-              "value": "#0E618E"
+              "value": "#28B4FF"
             },
             {
               "name": "ui-color-design-tinted-bitrix-gpt-content-gradient-2",
               "type": "color",
               "isAlias": false,
-              "value": "#2E4A99"
+              "value": "#7D98FF"
             },
             {
               "name": "ui-color-design-tinted-bitrix-gpt-content-gradient-3",
               "type": "color",
               "isAlias": false,
-              "value": "#62369A"
+              "value": "#BD82FF"
             },
             {
               "name": "ui-color-design-tinted-bitrix-gpt-content-gradient-4",
               "type": "color",
               "isAlias": false,
-              "value": "#913670"
+              "value": "#FF67CC"
             },
             {
               "name": "ui-color-design-tinted-bitrix-gpt-content-gradient-5",
               "type": "color",
               "isAlias": false,
-              "value": "#96424A"
+              "value": "#FF8A90"
             },
             {
               "name": "ui-color-design-tinted-bitrix-gpt-content-gradient-6",
               "type": "color",
               "isAlias": false,
-              "value": "#BA8D2E"
+              "value": "#F6BC41"
             },
             {
               "name": "ui-color-design-tinted-bitrix-gpt-content-gradient-7",
               "type": "color",
               "isAlias": false,
-              "value": "#B6552B"
+              "value": "#FD8552"
             },
             {
               "name": "ui-color-design-tinted-bitrix-gpt-content-divider",
@@ -20776,6 +21052,24 @@
                 "collection": "design",
                 "name": "ui-color-blue-57"
               }
+            },
+            {
+              "name": "ui-focus-outline-offset",
+              "type": "number",
+              "isAlias": false,
+              "value": 2
+            },
+            {
+              "name": "ui-focus-outline-offset-inset",
+              "type": "number",
+              "isAlias": false,
+              "value": -2
+            },
+            {
+              "name": "ui-focus-outline-width",
+              "type": "number",
+              "isAlias": false,
+              "value": 2
             }
           ]
         }

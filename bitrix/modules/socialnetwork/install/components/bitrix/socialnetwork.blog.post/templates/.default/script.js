@@ -625,6 +625,8 @@ function __blogPostSetFollow(log_id)
 		this.busy = false;
 
 		this.node = node;
+		const textHtml = node.dataset.textHtml;
+		this.textNode = BX.create('div', { html: textHtml });
 		this.btn = node.parentNode;
 		this.block = node.parentNode.parentNode;
 
@@ -642,8 +644,7 @@ function __blogPostSetFollow(log_id)
 	};
 	window.SBPImpPost.prototype.showClick = function(){
 		var start_anim = this.btn.offsetWidth,
-			text = BX.message('BLOG_ALREADY_READ'),
-			text_block = BX.create('span',{ props:{className:'have-read-text-block'}, html:'<i></i>' + text + '<span class="feed-imp-post-footer-comma">,</span>' });
+			text_block = this.textNode.firstElementChild;
 
 		this.block.style.minWidth =  this.btn.offsetWidth-27 + 'px';
 
@@ -658,7 +659,7 @@ function __blogPostSetFollow(log_id)
 			complete : BX.delegate(function(){
 				this.btn.innerHTML = '';
 				this.btn.appendChild(text_block);
-				var width_2 = text_block.scrollWidth + 31; // 31 - image width
+				var width_2 = text_block.scrollWidth;
 				var easing_2 = new BX.easing({
 						duration : 300,
 						start : { width_2:0 },

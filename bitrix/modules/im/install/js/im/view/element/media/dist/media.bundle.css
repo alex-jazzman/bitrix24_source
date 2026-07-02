@@ -1,9 +1,6 @@
 .bx-im-element-file {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-ms-flex-wrap: nowrap;
-	    flex-wrap: nowrap;
+	flex-wrap: nowrap;
 	overflow: hidden;
 	margin-left: -4px;
 	cursor: pointer;
@@ -28,11 +25,8 @@
 }
 
 .bx-im-element-file-icon {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-ms-flex-negative: 0;
-	    flex-shrink: 0;
+	flex-shrink: 0;
 	padding-right: 7px;
 }
 
@@ -41,11 +35,8 @@
 }
 
 .bx-im-element-file-name {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-ms-flex-wrap: nowrap;
-	    flex-wrap: nowrap;
+	flex-wrap: nowrap;
 }
 
 .bx-im-element-file-size {
@@ -79,16 +70,10 @@
 }
 .bx-im-element-file-image
 {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
 	cursor: pointer;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
-    -webkit-box-pack: center;
-        -ms-flex-pack: center;
-            justify-content: center;
+	align-items: center;
+    justify-content: center;
 	overflow: hidden;
 	min-width: 100px;
 	min-height: 100px;
@@ -128,7 +113,7 @@
 }
 
 @media screen and (max-width: 320px) {
-	.bx-im-element-file-image-source { -o-object-fit: cover; object-fit: cover; }
+	.bx-im-element-file-image-source { object-fit: cover; }
 }
 .bx-im-element-file-video
 {
@@ -138,9 +123,7 @@
 }
 
 .bx-im-element-file-video-safari {
-	-webkit-transform: rotate(0.001deg);
-	    -ms-transform: rotate(0.001deg);
-	        transform: rotate(0.001deg); /* fix safari video bug */
+	transform: rotate(0.001deg); /* fix safari video bug */
 }
 
 .bx-im-element-file-video .ui-vue-socialvideo-timers-container {
@@ -158,5 +141,5 @@
 
 @media screen and (max-width: 320px) {
 	.bx-im-element-file-video .ui-vue-socialvideo-image-source,
-	.bx-im-element-file-video .ui-vue-socialvideo-source { -o-object-fit: cover; object-fit: cover; }
+	.bx-im-element-file-video .ui-vue-socialvideo-source { object-fit: cover; }
 }

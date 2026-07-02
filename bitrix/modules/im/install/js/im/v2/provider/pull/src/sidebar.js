@@ -1,18 +1,17 @@
 import { Type } from 'main.core';
 
 import { Core } from 'im.v2.application.core';
-import { UserManager } from 'im.v2.lib.user';
 import { SidebarDetailBlock } from 'im.v2.const';
-import { ChatUnreadParams } from './types/chat';
+import { UserManager } from 'im.v2.lib.user';
+import { type ImModelSidebarMultidialogItem } from 'im.v2.model';
 
-import type {
-	AddMultidialogParams,
-	ChangeMultidialogSessionsLimitParams,
-	ChangeMultidialogStatusParams,
+import { type ChatUnreadParams, type ChatUserAddParams, type ChatUserLeaveParams } from './types/chat';
+import { type MessageChatParams, type MessageParams, type ReadMessageChatParams, type ReadMessageParams } from './types/message';
+import {
+	type AddMultidialogParams,
+	type ChangeMultidialogSessionsLimitParams,
+	type ChangeMultidialogStatusParams,
 } from './types/multidialog';
-import { MessageChatParams, MessageParams, ReadMessageChatParams, ReadMessageParams } from './types/message';
-import type { ChatUserAddParams, ChatUserLeaveParams } from './types/chat';
-import type { ImModelSidebarMultidialogItem } from 'im.v2.model';
 
 export class SidebarPullHandler
 {

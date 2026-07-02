@@ -1,5 +1,5 @@
 import { EventEmitter } from 'main.core.events';
-import { Store } from 'ui.vue3.vuex';
+import { type Store } from 'ui.vue3.vuex';
 
 import { Core } from 'im.v2.application.core';
 import { EventType } from 'im.v2.const';
@@ -7,10 +7,10 @@ import { Analytics } from 'im.v2.lib.analytics';
 import { InputActionListener } from 'im.v2.lib.input-action';
 import { Notifier } from 'im.v2.lib.notifier';
 
-import type {
-	MessageDeletePreparedParams,
-	MessageDeleteCompletePreparedParams,
-	DialogUpdateFieldsParams,
+import {
+	type MessageDeletePreparedParams,
+	type MessageDeleteCompletePreparedParams,
+	type DialogUpdateFieldsParams,
 } from '../../../types/message';
 
 export class MessageDeleteManager

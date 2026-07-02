@@ -42,12 +42,8 @@
 }
 
 .dashboard-login-popup-info-title {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
+	align-items: center;
 	margin-bottom: 13px;
 	color: var(--ui-color-base-90);
 	font-weight: var(--ui-font-weight-bold);
@@ -59,12 +55,8 @@
 }
 
 .dashboard-login-popup-info-data-row {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
+	align-items: center;
 	margin-bottom: 2px;
 }
 
@@ -87,31 +79,22 @@
 }
 
 .dashboard-login-popup-info-data-row .ui-icon-set {
-	-ms-flex-negative: 0;
-	    flex-shrink: 0;
+	flex-shrink: 0;
 	margin-left: 2px;
 	margin-top: -1px;
 	opacity: .75;
 	cursor: pointer;
-	-webkit-transition: .1s;
-	-o-transition: .1s;
 	transition: .1s;
 }
 
 .dashboard-login-popup-info-data-row .ui-icon-set:hover {
 	opacity: 1;
-	-webkit-transition: none;
-	-o-transition: none;
 	transition: none;
 }
 
 .dashboard-login-popup-lock-logo-container {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-pack: center;
-	    -ms-flex-pack: center;
-	        justify-content: center;
+	justify-content: center;
 }
 
 .dashboard-login-popup-copy-attention {
@@ -130,3 +113,47 @@
 	font-size: var(--ui-typography-heading-h5-font-size);
 	font-weight: var(--ui-typography-heading-h5-font-weight);
 }
+
+.market-dashboard-delete-popup-text {
+	margin-bottom: 16px;
+	color: var(--ui-color-palette-gray-90);
+	font-size: var(--ui-font-size-md);
+	line-height: 20px;
+}
+
+.dashboard-delete-loading-popup {
+	padding-top: 5px;
+	padding-bottom: 50px;
+	text-align: center;
+}
+
+.dashboard-delete-loading-popup-spinner-wrapper {
+	display: flex;
+	justify-content: center;
+	margin-bottom: 20px;
+}
+
+.dashboard-delete-loading-popup-spinner {
+	width: 40px;
+	height: 40px;
+	border: 3px solid var(--ui-color-base-4);
+	border-top-color: var(--ui-color-accent-main-primary);
+	border-radius: 50%;
+	animation: dashboard-delete-spin 1.1s linear infinite;
+}
+
+.dashboard-delete-loading-popup-text {
+	color: var(--ui-color-base-2);
+	font-size: var(--ui-font-size-sm);
+}
+
+@keyframes dashboard-delete-spin {
+	0% {
+		transform: rotate(0deg);
+	}
+
+	100% {
+		transform: rotate(360deg);
+	}
+}
+

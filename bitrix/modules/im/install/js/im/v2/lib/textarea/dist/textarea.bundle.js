@@ -2,56 +2,43 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,im_v2_lib_parser,im_v2_lib_quote,im_v2_lib_utils,main_core,main_core_events) {
+(function (exports, im_v2_lib_parser, im_v2_lib_quote, im_v2_lib_utils, main_core, main_core_events) {
 	'use strict';
 
 	const EVENT_NAMESPACE = 'BX.Messenger.v2.Textarea.ResizeManager';
-	var _observer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("observer");
-	var _textareaHeight = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("textareaHeight");
-	var _initObserver = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initObserver");
 	class ResizeManager extends main_core_events.EventEmitter {
-	  constructor() {
-	    super();
-	    Object.defineProperty(this, _initObserver, {
-	      value: _initObserver2
-	    });
-	    Object.defineProperty(this, _observer, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _textareaHeight, {
-	      writable: true,
-	      value: void 0
-	    });
-	    this.setEventNamespace(EVENT_NAMESPACE);
-	    babelHelpers.classPrivateFieldLooseBase(this, _initObserver)[_initObserver]();
-	  }
-	  observeTextarea(element) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _observer)[_observer].observe(element);
-	    babelHelpers.classPrivateFieldLooseBase(this, _textareaHeight)[_textareaHeight] = element.clientHeight;
-	  }
-	  unobserveTextarea(element) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _observer)[_observer].unobserve(element);
-	    babelHelpers.classPrivateFieldLooseBase(this, _textareaHeight)[_textareaHeight] = 0;
-	  }
+		#observer;
+		#textareaHeight;
+		static events = {
+			onHeightChange: 'onHeightChange'
+		};
+		constructor() {
+			super();
+			this.setEventNamespace(EVENT_NAMESPACE);
+			this.#initObserver();
+		}
+		observeTextarea(element) {
+			this.#observer.observe(element);
+			this.#textareaHeight = element.clientHeight;
+		}
+		unobserveTextarea(element) {
+			this.#observer.unobserve(element);
+			this.#textareaHeight = 0;
+		}
+		#initObserver() {
+			this.#observer = new ResizeObserver(entries => {
+				entries.forEach(entry => {
+					const height = entry.borderBoxSize?.[0].blockSize;
+					if (main_core.Type.isNumber(height) && height !== this.#textareaHeight) {
+						this.emit(ResizeManager.events.onHeightChange, {
+							newHeight: height
+						});
+						this.#textareaHeight = height;
+					}
+				});
+			});
+		}
 	}
-	function _initObserver2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _observer)[_observer] = new ResizeObserver(entries => {
-	    entries.forEach(entry => {
-	      var _entry$borderBoxSize;
-	      const height = (_entry$borderBoxSize = entry.borderBoxSize) == null ? void 0 : _entry$borderBoxSize[0].blockSize;
-	      if (main_core.Type.isNumber(height) && height !== babelHelpers.classPrivateFieldLooseBase(this, _textareaHeight)[_textareaHeight]) {
-	        this.emit(ResizeManager.events.onHeightChange, {
-	          newHeight: height
-	        });
-	        babelHelpers.classPrivateFieldLooseBase(this, _textareaHeight)[_textareaHeight] = height;
-	      }
-	    });
-	  });
-	}
-	ResizeManager.events = {
-	  onHeightChange: 'onHeightChange'
-	};
 
 	const TAB = '\t';
 	const NEW_LINE = '\n';
@@ -59,184 +46,183 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	/* eslint-disable no-param-reassign */
 	const Textarea = {
-	  prepareInlineQuote(textarea) {
-	    const selectedText = textarea.value.slice(textarea.selectionStart, textarea.selectionEnd);
-	    if (!selectedText) {
-	      return textarea.value;
-	    }
-	    const quoteText = im_v2_lib_parser.Parser.prepareQuote({}, selectedText);
-	    const textBefore = textarea.value.slice(0, textarea.selectionStart);
-	    const textAfter = textarea.value.slice(textarea.selectionEnd);
-	    return im_v2_lib_quote.Quote.prepareInlineQuote(textBefore, textAfter, quoteText);
-	  },
-	  addTab(textarea) {
-	    const newSelectionPosition = textarea.selectionStart + 1;
-	    const textBefore = textarea.value.slice(0, textarea.selectionStart);
-	    const textAfter = textarea.value.slice(textarea.selectionEnd);
-	    const textWithTab = `${textBefore}${TAB}${textAfter}`;
-	    textarea.value = textWithTab;
-	    textarea.selectionStart = newSelectionPosition;
-	    textarea.selectionEnd = newSelectionPosition;
-	    return textWithTab;
-	  },
-	  removeTab(textarea) {
-	    const previousSymbol = textarea.value.slice(textarea.selectionStart - 1, textarea.selectionStart);
-	    if (previousSymbol !== TAB) {
-	      return textarea.value;
-	    }
-	    const newSelectionPosition = textarea.selectionStart - 1;
-	    const textBefore = textarea.value.slice(0, textarea.selectionStart - 1);
-	    const textAfter = textarea.value.slice(textarea.selectionEnd);
-	    const textWithoutTab = `${textBefore}${textAfter}`;
-	    textarea.value = textWithoutTab;
-	    textarea.selectionStart = newSelectionPosition;
-	    textarea.selectionEnd = newSelectionPosition;
-	    return textWithoutTab;
-	  },
-	  handleDecorationTag(textarea, decorationKey) {
-	    decorationKey = decorationKey.replace(LETTER_CODE_PREFIX, '').toLowerCase();
-	    const LEFT_TAG = `[${decorationKey}]`;
-	    const RIGHT_TAG = `[/${decorationKey}]`;
-	    const selectedText = textarea.value.slice(textarea.selectionStart, textarea.selectionEnd);
-	    if (!selectedText) {
-	      return textarea.value;
-	    }
-	    const hasDecorationTag = selectedText.toLowerCase().startsWith(LEFT_TAG) && selectedText.toLowerCase().endsWith(RIGHT_TAG);
-	    if (hasDecorationTag) {
-	      return this.removeDecorationTag(textarea, decorationKey);
-	    } else {
-	      return this.addDecorationTag(textarea, decorationKey);
-	    }
-	  },
-	  addDecorationTag(textarea, decorationKey) {
-	    const LEFT_TAG = `[${decorationKey}]`;
-	    const RIGHT_TAG = `[/${decorationKey}]`;
-	    return this.applyWrapping(textarea, LEFT_TAG, RIGHT_TAG);
-	  },
-	  removeDecorationTag(textarea, decorationKey) {
-	    const LEFT_TAG = `[${decorationKey}]`;
-	    const RIGHT_TAG = `[/${decorationKey}]`;
-	    const decorationTagLength = LEFT_TAG.length + RIGHT_TAG.length;
-	    const newSelectionStart = textarea.selectionStart;
-	    const newSelectionEnd = textarea.selectionEnd - decorationTagLength;
-	    const textBefore = textarea.value.slice(0, textarea.selectionStart);
-	    const textInTagStart = textarea.selectionStart + LEFT_TAG.length;
-	    const textInTagEnd = textarea.selectionEnd - RIGHT_TAG.length;
-	    const textInTag = textarea.value.slice(textInTagStart, textInTagEnd);
-	    const textAfter = textarea.value.slice(textarea.selectionEnd);
-	    const textWithoutTag = `${textBefore}${textInTag}${textAfter}`;
-	    textarea.value = textWithoutTag;
-	    textarea.selectionStart = newSelectionStart;
-	    textarea.selectionEnd = newSelectionEnd;
-	    return textWithoutTag;
-	  },
-	  addNewLine(textarea) {
-	    const newSelectionPosition = textarea.selectionStart + 1;
-	    const textBefore = textarea.value.slice(0, textarea.selectionStart);
-	    const textAfter = textarea.value.slice(textarea.selectionEnd);
-	    const textWithNewLine = `${textBefore}${NEW_LINE}${textAfter}`;
-	    textarea.value = textWithNewLine;
-	    textarea.selectionStart = newSelectionPosition;
-	    textarea.selectionEnd = newSelectionPosition;
-	    return textWithNewLine;
-	  },
-	  insertText(textarea, config = {}) {
-	    const {
-	      text,
-	      withNewLine = false,
-	      replace = false
-	    } = config;
-	    const newSelectionPosition = textarea.selectionStart + text.length + 1;
-	    let resultText = '';
-	    if (replace) {
-	      resultText = '';
-	      textarea.value = '';
-	      textarea.selectionStart = 0;
-	      textarea.selectionEnd = 0;
-	    }
-	    if (textarea.value.length === 0) {
-	      resultText = text;
-	    } else {
-	      const textBefore = textarea.value.slice(0, textarea.selectionStart);
-	      const textAfter = textarea.value.slice(textarea.selectionEnd);
-	      resultText = withNewLine ? `${textarea.value}${NEW_LINE}${text}` : `${textBefore} ${text} ${textAfter}`;
-	    }
-	    textarea.focus({
-	      preventScroll: true
-	    });
-	    textarea.value = resultText;
-	    textarea.selectionStart = newSelectionPosition;
-	    textarea.selectionEnd = newSelectionPosition;
-	    return resultText;
-	  },
-	  insertMention(textarea, config = {}) {
-	    const {
-	      textToInsert,
-	      textToReplace = ''
-	    } = config;
-	    const isMentionWithSymbol = textToReplace.length > 0;
-	    let resultText = '';
-	    let newSelectionPosition = textarea.selectionStart + textToInsert.length + 1;
-	    if (isMentionWithSymbol) {
-	      newSelectionPosition -= textToReplace.length;
-	      const textBefore = textarea.value.slice(0, textarea.selectionStart - textToReplace.length);
-	      const textAfter = textarea.value.slice(textarea.selectionStart);
-	      resultText = `${textBefore}${textToInsert} ${textAfter}`;
-	    } else {
-	      const textBefore = textarea.value.slice(0, textarea.selectionStart);
-	      const textAfter = textarea.value.slice(textarea.selectionEnd);
-	      resultText = `${textBefore}${textToInsert} ${textAfter}`;
-	    }
-	    textarea.focus({
-	      preventScroll: true
-	    });
-	    textarea.value = resultText;
-	    textarea.selectionStart = newSelectionPosition;
-	    textarea.selectionEnd = newSelectionPosition;
-	    return resultText;
-	  },
-	  addUrlTag(textarea, linkUrl) {
-	    if (!this.shouldHandleUrl(textarea, linkUrl)) {
-	      return textarea.value;
-	    }
-	    return this.applyUrlWrapping(textarea, linkUrl);
-	  },
-	  handlePasteUrl(textarea, event) {
-	    var _event$clipboardData;
-	    const pastedLinkUrl = (_event$clipboardData = event.clipboardData) == null ? void 0 : _event$clipboardData.getData('text/plain');
-	    if (!this.shouldHandleUrl(textarea, pastedLinkUrl)) {
-	      return textarea.value;
-	    }
-	    event.preventDefault();
-	    return this.applyUrlWrapping(textarea, pastedLinkUrl);
-	  },
-	  shouldHandleUrl(textarea, linkUrl) {
-	    const selectedText = textarea.value.slice(textarea.selectionStart, textarea.selectionEnd);
-	    const isUrl = im_v2_lib_utils.Utils.text.checkUrl(linkUrl);
-	    return isUrl && selectedText;
-	  },
-	  applyUrlWrapping(textarea, linkUrl) {
-	    const LEFT_TAG = `[URL=${linkUrl}]`;
-	    const RIGHT_TAG = '[/URL]';
-	    return this.applyWrapping(textarea, LEFT_TAG, RIGHT_TAG);
-	  },
-	  applyWrapping(textarea, leftTag, rightTag) {
-	    const selectedText = textarea.value.slice(textarea.selectionStart, textarea.selectionEnd);
-	    const decorationTagLength = leftTag.length + rightTag.length;
-	    const newSelectionStart = textarea.selectionStart;
-	    const newSelectionEnd = textarea.selectionEnd + decorationTagLength;
-	    const textBefore = textarea.value.slice(0, textarea.selectionStart);
-	    const textAfter = textarea.value.slice(textarea.selectionEnd);
-	    const textWithTag = `${textBefore}${leftTag}${selectedText}${rightTag}${textAfter}`;
-	    textarea.value = textWithTag;
-	    textarea.selectionStart = newSelectionStart;
-	    textarea.selectionEnd = newSelectionEnd;
-	    return textWithTag;
-	  }
+		prepareInlineQuote(textarea) {
+			const selectedText = textarea.value.slice(textarea.selectionStart, textarea.selectionEnd);
+			if (!selectedText) {
+				return textarea.value;
+			}
+			const quoteText = im_v2_lib_parser.Parser.prepareQuote({}, selectedText);
+			const textBefore = textarea.value.slice(0, textarea.selectionStart);
+			const textAfter = textarea.value.slice(textarea.selectionEnd);
+			return im_v2_lib_quote.Quote.prepareInlineQuote(textBefore, textAfter, quoteText);
+		},
+		addTab(textarea) {
+			const newSelectionPosition = textarea.selectionStart + 1;
+			const textBefore = textarea.value.slice(0, textarea.selectionStart);
+			const textAfter = textarea.value.slice(textarea.selectionEnd);
+			const textWithTab = `${textBefore}${TAB}${textAfter}`;
+			textarea.value = textWithTab;
+			textarea.selectionStart = newSelectionPosition;
+			textarea.selectionEnd = newSelectionPosition;
+			return textWithTab;
+		},
+		removeTab(textarea) {
+			const previousSymbol = textarea.value.slice(textarea.selectionStart - 1, textarea.selectionStart);
+			if (previousSymbol !== TAB) {
+				return textarea.value;
+			}
+			const newSelectionPosition = textarea.selectionStart - 1;
+			const textBefore = textarea.value.slice(0, textarea.selectionStart - 1);
+			const textAfter = textarea.value.slice(textarea.selectionEnd);
+			const textWithoutTab = `${textBefore}${textAfter}`;
+			textarea.value = textWithoutTab;
+			textarea.selectionStart = newSelectionPosition;
+			textarea.selectionEnd = newSelectionPosition;
+			return textWithoutTab;
+		},
+		handleDecorationTag(textarea, decorationKey) {
+			decorationKey = decorationKey.replace(LETTER_CODE_PREFIX, '').toLowerCase();
+			const LEFT_TAG = `[${decorationKey}]`;
+			const RIGHT_TAG = `[/${decorationKey}]`;
+			const selectedText = textarea.value.slice(textarea.selectionStart, textarea.selectionEnd);
+			if (!selectedText) {
+				return textarea.value;
+			}
+			const hasDecorationTag = selectedText.toLowerCase().startsWith(LEFT_TAG) && selectedText.toLowerCase().endsWith(RIGHT_TAG);
+			if (hasDecorationTag) {
+				return this.removeDecorationTag(textarea, decorationKey);
+			} else {
+				return this.addDecorationTag(textarea, decorationKey);
+			}
+		},
+		addDecorationTag(textarea, decorationKey) {
+			const LEFT_TAG = `[${decorationKey}]`;
+			const RIGHT_TAG = `[/${decorationKey}]`;
+			return this.applyWrapping(textarea, LEFT_TAG, RIGHT_TAG);
+		},
+		removeDecorationTag(textarea, decorationKey) {
+			const LEFT_TAG = `[${decorationKey}]`;
+			const RIGHT_TAG = `[/${decorationKey}]`;
+			const decorationTagLength = LEFT_TAG.length + RIGHT_TAG.length;
+			const newSelectionStart = textarea.selectionStart;
+			const newSelectionEnd = textarea.selectionEnd - decorationTagLength;
+			const textBefore = textarea.value.slice(0, textarea.selectionStart);
+			const textInTagStart = textarea.selectionStart + LEFT_TAG.length;
+			const textInTagEnd = textarea.selectionEnd - RIGHT_TAG.length;
+			const textInTag = textarea.value.slice(textInTagStart, textInTagEnd);
+			const textAfter = textarea.value.slice(textarea.selectionEnd);
+			const textWithoutTag = `${textBefore}${textInTag}${textAfter}`;
+			textarea.value = textWithoutTag;
+			textarea.selectionStart = newSelectionStart;
+			textarea.selectionEnd = newSelectionEnd;
+			return textWithoutTag;
+		},
+		addNewLine(textarea) {
+			const newSelectionPosition = textarea.selectionStart + 1;
+			const textBefore = textarea.value.slice(0, textarea.selectionStart);
+			const textAfter = textarea.value.slice(textarea.selectionEnd);
+			const textWithNewLine = `${textBefore}${NEW_LINE}${textAfter}`;
+			textarea.value = textWithNewLine;
+			textarea.selectionStart = newSelectionPosition;
+			textarea.selectionEnd = newSelectionPosition;
+			return textWithNewLine;
+		},
+		insertText(textarea, config = {}) {
+			const {
+				text,
+				withNewLine = false,
+				replace = false
+			} = config;
+			const newSelectionPosition = textarea.selectionStart + text.length + 1;
+			let resultText = '';
+			if (replace) {
+				resultText = '';
+				textarea.value = '';
+				textarea.selectionStart = 0;
+				textarea.selectionEnd = 0;
+			}
+			if (textarea.value.length === 0) {
+				resultText = text;
+			} else {
+				const textBefore = textarea.value.slice(0, textarea.selectionStart);
+				const textAfter = textarea.value.slice(textarea.selectionEnd);
+				resultText = withNewLine ? `${textarea.value}${NEW_LINE}${text}` : `${textBefore} ${text} ${textAfter}`;
+			}
+			textarea.focus({
+				preventScroll: true
+			});
+			textarea.value = resultText;
+			textarea.selectionStart = newSelectionPosition;
+			textarea.selectionEnd = newSelectionPosition;
+			return resultText;
+		},
+		insertMention(textarea, config = {}) {
+			const {
+				textToInsert,
+				textToReplace = ''
+			} = config;
+			const isMentionWithSymbol = textToReplace.length > 0;
+			let resultText = '';
+			let newSelectionPosition = textarea.selectionStart + textToInsert.length + 1;
+			if (isMentionWithSymbol) {
+				newSelectionPosition -= textToReplace.length;
+				const textBefore = textarea.value.slice(0, textarea.selectionStart - textToReplace.length);
+				const textAfter = textarea.value.slice(textarea.selectionStart);
+				resultText = `${textBefore}${textToInsert} ${textAfter}`;
+			} else {
+				const textBefore = textarea.value.slice(0, textarea.selectionStart);
+				const textAfter = textarea.value.slice(textarea.selectionEnd);
+				resultText = `${textBefore}${textToInsert} ${textAfter}`;
+			}
+			textarea.focus({
+				preventScroll: true
+			});
+			textarea.value = resultText;
+			textarea.selectionStart = newSelectionPosition;
+			textarea.selectionEnd = newSelectionPosition;
+			return resultText;
+		},
+		addUrlTag(textarea, linkUrl) {
+			if (!this.shouldHandleUrl(textarea, linkUrl)) {
+				return textarea.value;
+			}
+			return this.applyUrlWrapping(textarea, linkUrl);
+		},
+		handlePasteUrl(textarea, event) {
+			const pastedLinkUrl = event.clipboardData?.getData('text/plain');
+			if (!this.shouldHandleUrl(textarea, pastedLinkUrl)) {
+				return textarea.value;
+			}
+			event.preventDefault();
+			return this.applyUrlWrapping(textarea, pastedLinkUrl);
+		},
+		shouldHandleUrl(textarea, linkUrl) {
+			const selectedText = textarea.value.slice(textarea.selectionStart, textarea.selectionEnd);
+			const isUrl = im_v2_lib_utils.Utils.text.checkUrl(linkUrl);
+			return isUrl && selectedText;
+		},
+		applyUrlWrapping(textarea, linkUrl) {
+			const LEFT_TAG = `[URL=${linkUrl}]`;
+			const RIGHT_TAG = '[/URL]';
+			return this.applyWrapping(textarea, LEFT_TAG, RIGHT_TAG);
+		},
+		applyWrapping(textarea, leftTag, rightTag) {
+			const selectedText = textarea.value.slice(textarea.selectionStart, textarea.selectionEnd);
+			const decorationTagLength = leftTag.length + rightTag.length;
+			const newSelectionStart = textarea.selectionStart;
+			const newSelectionEnd = textarea.selectionEnd + decorationTagLength;
+			const textBefore = textarea.value.slice(0, textarea.selectionStart);
+			const textAfter = textarea.value.slice(textarea.selectionEnd);
+			const textWithTag = `${textBefore}${leftTag}${selectedText}${rightTag}${textAfter}`;
+			textarea.value = textWithTag;
+			textarea.selectionStart = newSelectionStart;
+			textarea.selectionEnd = newSelectionEnd;
+			return textWithTag;
+		}
 	};
 
-	exports.Textarea = Textarea;
 	exports.ResizeManager = ResizeManager;
+	exports.Textarea = Textarea;
 
-}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Event));
+})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX, BX.Event);
 //# sourceMappingURL=textarea.bundle.js.map

@@ -5,11 +5,13 @@ jn.define('feature-flag', (require, exports, module) => {
 	const { RunActionExecutor } = require('rest/run-action-executor');
 
 	const FeatureFlagType = {
+		PROJECTS_V2: 'ProjectsV2Feature',
 		SETTINGS_V2: 'SettingsV2Feature',
 		SUPPORT: 'SupportFeature',
 		WHATS_NEW: 'WhatsNewFeature',
 		DEVELOPER_MENU: 'DeveloperMenuEnabled',
 		SECURITY_SETTINGS: 'SecuritySettingsFeature',
+		WORK_REPORTS: 'WorkReportsFeature',
 	};
 
 	function getFeatureFlags()

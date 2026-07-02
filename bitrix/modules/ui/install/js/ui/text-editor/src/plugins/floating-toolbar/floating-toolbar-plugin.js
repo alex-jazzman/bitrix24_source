@@ -111,7 +111,7 @@ export class FloatingToolbarPlugin extends BasePlugin
 		}
 		else
 		{
-			this.getPopup().close();
+			this.hide();
 		}
 	}
 

@@ -48,8 +48,11 @@ export class Controller
 		}, () => {
 			showNotification(
 				Loc.getMessage(
-					'PROMPT_LIBRARY_GRID_NOTIFICATION_HIDE',
-					{ '#NAME#': `<b>${Text.encode(promptTitle)}</b>` },
+					'PROMPT_LIBRARY_GRID_NOTIFICATION_HIDE_MSGVER_1',
+					{
+						'#NAME#': `<b>${Text.encode(promptTitle)}</b>`,
+						'#COPILOT_NAME#': this.#getCopilotName(),
+					},
 				),
 			);
 		});
@@ -67,8 +70,11 @@ export class Controller
 		}, () => {
 			showNotification(
 				Loc.getMessage(
-					'PROMPT_LIBRARY_GRID_NOTIFICATION_SHOW',
-					{ '#NAME#': `<b>${Text.encode(promptTitle)}</b>` },
+					'PROMPT_LIBRARY_GRID_NOTIFICATION_SHOW_MSGVER_1',
+					{
+						'#NAME#': `<b>${Text.encode(promptTitle)}</b>`,
+						'#COPILOT_NAME#': this.#getCopilotName(),
+					},
 				),
 			);
 		});
@@ -407,12 +413,16 @@ export class Controller
 
 			case 'multiple-show-for-me':
 			{
-				return Loc.getMessage('PROMPT_LIBRARY_GRID_NOTIFICATION_MASS_SHOW');
+				return Loc.getMessage('PROMPT_LIBRARY_GRID_NOTIFICATION_MASS_SHOW_MSGVER_1', {
+					'#COPILOT_NAME#': this.#getCopilotName(),
+				});
 			}
 
 			case 'multiple-hide-from-me':
 			{
-				return Loc.getMessage('PROMPT_LIBRARY_GRID_NOTIFICATION_MASS_HIDE');
+				return Loc.getMessage('PROMPT_LIBRARY_GRID_NOTIFICATION_MASS_HIDE_MSGVER_1', {
+					'#COPILOT_NAME#': this.#getCopilotName(),
+				});
 			}
 
 			default:
@@ -575,5 +585,10 @@ export class Controller
 		};
 
 		this.#grid.reloadTable('POST', dataWithAction, callback);
+	}
+
+	static #getCopilotName(): string
+	{
+		return BX.message('COPILOT_NAME');
 	}
 }

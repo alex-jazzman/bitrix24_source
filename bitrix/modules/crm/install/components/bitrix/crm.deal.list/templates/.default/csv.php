@@ -171,6 +171,11 @@ else
 							$dealData['CONTACT_ID'] = isset($arDeal['CONTACT_FORMATTED_NAME']) ? $arDeal['CONTACT_FORMATTED_NAME'] : '';
 							break;
 						}
+						case 'MYCOMPANY_ID':
+						{
+							$dealData['MYCOMPANY_ID'] = $arDeal['MYCOMPANY_TITLE'] ?? '';
+							break;
+						}
 						case 'CREATED_BY':
 						{
 							$dealData['CREATED_BY'] = isset($arDeal['CREATED_BY_FORMATTED_NAME']) ? $arDeal['CREATED_BY_FORMATTED_NAME'] : '';

@@ -6,7 +6,7 @@
 // region environment initialization
 if (!defined("UPDATE_SYSTEM_VERSION"))
 {
-	define("UPDATE_SYSTEM_VERSION", "25.1100.0");
+	define("UPDATE_SYSTEM_VERSION", "26.500.0");
 }
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
@@ -440,7 +440,7 @@ function UpdateSystemRenderLicenseIsNotSigned()
 		</table>
 		<br>
 	</div>
-	<?
+	<?php
 }
 
 function UpdateSystemRenderLicenceNotFound($bLicenseNotFound)
@@ -457,14 +457,14 @@ function UpdateSystemRenderLicenceNotFound($bLicenseNotFound)
 						<tr>
 							<td class="icon-new"><div class="icon icon-licence"></div></td>
 							<td>
-								<?if($bLicenseNotFound):?>
+								<?php if($bLicenseNotFound):?>
 									<?= GetMessage("SUP_SUBK_HINT") ?><br><br>
 									<input TYPE="button" NAME="licence_key_btn" value="<?= GetMessage("SUP_SUBK_BUTTON") ?>" onclick="ShowLicenceKeyForm()"><br><br>
 									<a href="https://<?= ((LANGUAGE_ID == "ru") ? "www.1c-bitrix.ru" : "www.bitrixsoft.com") ?>/bsm_register.php" target="_blank"><?= GetMessage("SUP_SUBK_GET_KEY") ?></a>
-								<?else:?>
+								<?php else:?>
 									<?= GetMessage("SUP_SUBK_HINT_DEMO") ?><br><br>
 									<input TYPE="button" NAME="licence_key_btn" value="<?= GetMessage("SUP_SUBK_BUTTON") ?>" onclick="ShowLicenceKeyForm()">
-								<?endif?>
+								<?php endif?>
 							</td>
 						</tr>
 					</table>
@@ -596,7 +596,7 @@ function UpdateSystemRenderSupport($bLockControls, $arClientModules = array())
 						<tr>
 							<td class="icon-new"><div class="icon icon-support"></div></td>
 							<td>
-								<input type="text" name="support_list" id="id_support_list" size="90" value="<?
+								<input type="text" name="support_list" id="id_support_list" size="90" value="<?php
 								$i = 0;
 								foreach ($arClientModules as $key => $value)
 								{
@@ -621,7 +621,7 @@ function UpdateSystemRenderServerResponse($arUpdateList)
 	?>
 	<table border="0" cellspacing="1" cellpadding="3" width="100%" class="internal">
 		<tr class="heading">
-			<td><b><?echo GetMessage("SUP_SERVER_ANSWER")?></b></td>
+			<td><b><?= GetMessage("SUP_SERVER_ANSWER")?></b></td>
 		</tr>
 		<tr>
 			<td valign="top">
@@ -632,30 +632,30 @@ function UpdateSystemRenderServerResponse($arUpdateList)
 
 							<table border="0" cellspacing="1" cellpadding="3">
 								<tr>
-									<td nowrap><?echo GetMessage("SUP_REGISTERED")?>&nbsp;&nbsp;</td>
-									<td><?echo isset($arUpdateList["CLIENT"][0]["@"]["NAME"]) ? htmlspecialcharsbx($arUpdateList["CLIENT"][0]["@"]["NAME"]) : '<i>N/A</i>'?></td>
+									<td nowrap><?= GetMessage("SUP_REGISTERED")?>&nbsp;&nbsp;</td>
+									<td><?= isset($arUpdateList["CLIENT"][0]["@"]["NAME"]) ? htmlspecialcharsbx($arUpdateList["CLIENT"][0]["@"]["NAME"]) : '<i>N/A</i>'?></td>
 								</tr>
 								<tr>
 									<td nowrap><?= GetMessage("SUP_LICENSE_KEY") ?>:&nbsp;&nbsp;</td>
-									<td><?
+									<td><?php
 										$lic = CUpdateClient::GetLicenseKey();
 										echo ($USER->CanDoOperation('edit_other_settings')? $lic : "XXX-XX-XXXXXXXXXXX");
 										?>&nbsp;&nbsp;<a href="javascript:;" onclick="javascript: document.getElementById('check_key_info_form').submit()"><?= GetMessage("SUP_CHECK_LIC_MESSAGE") ?></a></td>
 								</tr>
 								<tr>
-									<td nowrap><?echo GetMessage("SUP_EDITION")?>&nbsp;&nbsp;</td>
-									<td><?echo isset($arUpdateList["CLIENT"][0]["@"]["LICENSE"]) ? $arUpdateList["CLIENT"][0]["@"]["LICENSE"] : '<i>N/A</i>';?></td>
+									<td nowrap><?= GetMessage("SUP_EDITION")?>&nbsp;&nbsp;</td>
+									<td><?= isset($arUpdateList["CLIENT"][0]["@"]["LICENSE"]) ? $arUpdateList["CLIENT"][0]["@"]["LICENSE"] : '<i>N/A</i>';?></td>
 								</tr>
 								<tr>
-									<td nowrap><?echo GetMessage("SUP_SITES")?>&nbsp;&nbsp;</td>
-									<td><?
+									<td nowrap><?= GetMessage("SUP_SITES")?>&nbsp;&nbsp;</td>
+									<td><?php
 										$maxSites = isset($arUpdateList["CLIENT"][0]["@"]["MAX_SITES"]) ? $arUpdateList["CLIENT"][0]["@"]["MAX_SITES"] : COption::GetOptionInt("main", "PARAM_MAX_SITES");
 										echo ($maxSites > 0 ? $maxSites : GetMessage("SUP_CHECK_PROMT_2"));
 									?></td>
 								</tr>
 								<tr valign="top">
-									<td nowrap><?echo GetMessage("SUP_USERS")?>&nbsp;&nbsp;</td>
-									<td><?
+									<td nowrap><?= GetMessage("SUP_USERS")?>&nbsp;&nbsp;</td>
+									<td><?php
 										$maxUsers = isset($arUpdateList["CLIENT"][0]["@"]["MAX_USERS"]) ? $arUpdateList["CLIENT"][0]["@"]["MAX_USERS"] : COption::GetOptionInt("main", "PARAM_MAX_USERS");
 										if (IsModuleInstalled("intranet"))
 										{
@@ -682,8 +682,8 @@ function UpdateSystemRenderServerResponse($arUpdateList)
 										?></td>
 								</tr>
 								<tr>
-									<td nowrap><?echo GetMessage("SUP_ACTIVE")?>&nbsp;&nbsp;</td>
-									<td><?
+									<td nowrap><?= GetMessage("SUP_ACTIVE")?>&nbsp;&nbsp;</td>
+									<td><?php
 										$dateFrom = '';
 										$dateTo = '';
 										if (class_exists('\Bitrix\Main\Type\Date'))
@@ -718,15 +718,15 @@ function UpdateSystemRenderServerResponse($arUpdateList)
 										echo GetMessage("SUP_ACTIVE_PERIOD", array("#DATE_FROM#" => ($dateFrom != '' ? $dateFrom : "<i>N/A</i>"), "#DATE_TO#" => ($dateTo != '' ? $dateTo : "<i>N/A</i>")));
 									?></td>
 								</tr>
-								<?if(!empty($arUpdateList["CLIENT"][0]["@"]["B24SUBSC_DATE"])):?>
+								<?php if(!empty($arUpdateList["CLIENT"][0]["@"]["B24SUBSC_DATE"])):?>
 									<tr>
 										<td nowrap><?=($arUpdateList["CLIENT"][0]["@"]["B24SUBSC"] == "T") ? GetMessage("SUP_MARKET_SUBSCRIPTION_DEMO") : GetMessage("SUP_MARKET_SUBSCRIPTION")?>&nbsp;&nbsp;</td>
-										<td><?echo ConvertTimeStamp($arUpdateList["CLIENT"][0]["@"]["B24SUBSC_DATE"]);?></td>
+										<td><?= ConvertTimeStamp($arUpdateList["CLIENT"][0]["@"]["B24SUBSC_DATE"]);?></td>
 									</tr>
-								<?endif;?>
+								<?php endif;?>
 								<tr>
-									<td nowrap><?echo GetMessage("SUP_SERVER")?>&nbsp;&nbsp;</td>
-									<td><?
+									<td nowrap><?= GetMessage("SUP_SERVER")?>&nbsp;&nbsp;</td>
+									<td><?php
 										$updateHost = isset($arUpdateList["CLIENT"][0]["@"]["HTTP_HOST"]) ? $arUpdateList["CLIENT"][0]["@"]["HTTP_HOST"] : COption::GetOptionString("main", "update_site");
 										echo $updateHost != '' ? $updateHost : '<i>N/A</i>';
 									?></td>
@@ -770,11 +770,11 @@ function UpdateSystemRenderServerResponse($arUpdateList)
 //endregion
 //region tabs and form header
 ?>
-<form method="POST" action="<?echo $APPLICATION->GetCurPage()?>?" name="form1">
-<input type="hidden" name="lang" value="<?echo LANG ?>">
+<form method="POST" action="<?= $APPLICATION->GetCurPage()?>?" name="form1">
+<input type="hidden" name="lang" value="<?= LANG ?>">
 <?=bitrix_sessid_post()?>
 
-<?
+<?php
 $arTabs = array();
 $arTabs[] = array(
 	"DIV" => "tab1",
@@ -819,7 +819,7 @@ $tabControl->BeginNextTab();
 	<tr>
 		<td colspan="2">
 
-			<?
+			<?php
 			if ($arUpdateList)
 			{
 				if (isset($arUpdateList["MODULES"][0]["#"]["MODULE"]) && is_array($arUpdateList["MODULES"][0]["#"]["MODULE"]))
@@ -904,7 +904,7 @@ $tabControl->BeginNextTab();
 				?>
 
 
-				<?
+				<?php
 				if (isset($_REQUEST[_32763223666625(0)]) && ($_REQUEST[_32763223666625(0)] == "Y") && isset($arUpdateList["CLIENT"]) && !isset($arUpdateList["UPDATE_SYSTEM"]))
 				{
 					UpdateSystemRenderSupport($bLockControls, $arClientModules);
@@ -980,7 +980,7 @@ $tabControl->BeginNextTab();
 											<td class="icon-new"><div class="icon icon-main"></div></td>
 											<td>
 								<b><?= GetMessage("SUP_SU_RECOMEND") ?>:</b>
-								<?
+								<?php
 								$bComma = false;
 								if ($countModuleUpdates > 0)
 								{
@@ -1016,7 +1016,7 @@ $tabControl->BeginNextTab();
 								<br><br>
 								<?= GetMessage("SUP_SU_UPD_HINT_CHECK") ?>
 								<br><br>
-								<?
+								<?php
 								$m = "";
 								if ($stableVersionsOnly === "Y")
 								{
@@ -1054,7 +1054,7 @@ $tabControl->BeginNextTab();
 						</tr>
 					</table>
 				</div>
-				<?
+				<?php
 				//endregion
 			}
 			?>
@@ -1070,7 +1070,7 @@ $tabControl->BeginNextTab();
 		</td>
 	</tr>
 
-<?
+<?php
 $tabControl->EndTab();
 // endregion
 // region updates list tab
@@ -1090,7 +1090,7 @@ $tabControl->BeginNextTab();
 			</table>
 			<br>
 
-			<?
+			<?php
 			if ($arUpdateList)
 			{
 				?>
@@ -1102,14 +1102,14 @@ $tabControl->BeginNextTab();
 						<td class="heading"><B><?= GetMessage("SUP_SULL_REL") ?></B></td>
 						<td class="heading"><B><?= GetMessage("SUP_SULL_NOTE") ?></B></td>
 					</tr>
-					<?
+					<?php
 					if (isset($arUpdateList["MODULES"][0]["#"]["MODULE"]) || isset($arUpdateList["LANGS"][0]["#"]["INST"]))
 					{
 						?>
 						<tr>
 							<td colspan="5"><b><?= GetMessage("SUP_SU_RECOMEND") ?></b></td>
 						</tr>
-						<?
+						<?php
 					}
 					if (isset($arUpdateList["MODULES"][0]["#"]["MODULE"]))
 					{
@@ -1128,7 +1128,7 @@ $tabControl->BeginNextTab();
 								<td><?= (isset($arModuleTmp["#"]["VERSION"]) ? $arModuleTmp["#"]["VERSION"][count($arModuleTmp["#"]["VERSION"]) - 1]["@"]["ID"] : "") ?></td>
 								<td><a href="javascript:ShowDescription('<?= CUtil::JSEscape(htmlspecialcharsbx($arModuleTmp["@"]["ID"])) ?>')"><?= GetMessage("SUP_SULL_NOTE_D") ?></a></td>
 							</tr>
-							<?
+							<?php
 						}
 					}
 					if (isset($arUpdateList["LANGS"][0]["#"]["INST"]))
@@ -1144,7 +1144,7 @@ $tabControl->BeginNextTab();
 								<td><?= $arLangTmp["@"]["DATE"] ?></td>
 								<td>&nbsp;</td>
 							</tr>
-							<?
+							<?php
 						}
 					}
 					if (isset($arUpdateList["LANGS"][0]["#"]["OTHER"]))
@@ -1153,7 +1153,7 @@ $tabControl->BeginNextTab();
 						<tr>
 							<td colspan="5"><b><?= GetMessage("SUP_SU_OPTION") ?></b></td>
 						</tr>
-						<?
+						<?php
 						for ($i = 0, $cnt = count($arUpdateList["LANGS"][0]["#"]["OTHER"][0]["#"]["LANG"]); $i < $cnt; $i++)
 						{
 							$arLangTmp = $arUpdateList["LANGS"][0]["#"]["OTHER"][0]["#"]["LANG"][$i];
@@ -1165,18 +1165,18 @@ $tabControl->BeginNextTab();
 								<td><?= $arLangTmp["@"]["DATE"] ?></td>
 								<td>&nbsp;</td>
 							</tr>
-							<?
+							<?php
 						}
 					}
 					?>
 				</table>
-				<?
+				<?php
 			}
 			?>
 		</td>
 	</tr>
 
-<?
+<?php
 $tabControl->EndTab();
 // endregion
 // region expert tab
@@ -1205,7 +1205,7 @@ $tabControl->BeginNextTab();
 	<tr>
 		<td colspan="2">
 
-			<?
+			<?php
 			if (!$bLockUpdateSystemKernel)
 			{
 				?>
@@ -1220,17 +1220,17 @@ $tabControl->BeginNextTab();
 											<tr>
 												<td class="icon-new"><div class="icon icon-licence"></div></td>
 												<td>
-													<?if (isset($arUpdateList["CLIENT"][0]["@"]["MAX_SITES"]) && intval($arUpdateList["CLIENT"][0]["@"]["MAX_SITES"]) > 0):?>
+													<?php if (isset($arUpdateList["CLIENT"][0]["@"]["MAX_SITES"]) && intval($arUpdateList["CLIENT"][0]["@"]["MAX_SITES"]) > 0):?>
 														<?= str_replace("#NUM#", $arUpdateList["CLIENT"][0]["@"]["MAX_SITES"], GetMessage("SUP_SUAC_LIMIT")) ?>
-													<?else:?>
+													<?php else:?>
 														<?= GetMessage("SUP_CHECK_PROMT_2") ?>
-													<?endif;?>
+													<?php endif;?>
 													<br><br>
-													<?if (isset($arUpdateList["CLIENT"][0]["@"]["MAX_USERS"]) && intval($arUpdateList["CLIENT"][0]["@"]["MAX_USERS"]) > 0):?>
+													<?php if (isset($arUpdateList["CLIENT"][0]["@"]["MAX_USERS"]) && intval($arUpdateList["CLIENT"][0]["@"]["MAX_USERS"]) > 0):?>
 														<?= str_replace("#NUM#", $arUpdateList["CLIENT"][0]["@"]["MAX_USERS"], GetMessage("SUP_SUAC_LIMIT1")) ?>
-													<?else:?>
+													<?php else:?>
 														<?= GetMessage("SUP_CHECK_PROMT_21") ?>
-													<?endif;?>
+													<?php endif;?>
 													<br><br>
 													<?= GetMessage("SUP_SUAC_HINT") ?>
 													<br><br>
@@ -1281,13 +1281,13 @@ $tabControl->BeginNextTab();
 					}
 				}
 				</SCRIPT>
-				<?
+				<?php
 			}
 			?>
 		</td>
 	</tr>
 
-<?
+<?php
 $tabControl->EndTab();
 // endregion
 // region additional tab
@@ -1297,7 +1297,7 @@ $tabControl->BeginNextTab();
 	<tr>
 		<td colspan="2">
 
-			<?
+			<?php
 			if (!$bLockUpdateSystemKernel)
 			{
 				?>
@@ -1312,7 +1312,7 @@ $tabControl->BeginNextTab();
 									<tr>
 										<td class="icon-new"><div class="icon icon-beta"></div></td>
 										<td>
-								<?
+								<?php
 								$m = "";
 								if ($stableVersionsOnly === "Y")
 								{
@@ -1346,16 +1346,16 @@ $tabControl->BeginNextTab();
 								<select id="id_stable_select" name="stable_select" onchange="SwithStability()">
 									<option value="Y"<?= ($stableVersionsOnly === "Y") ? " selected" : ""; ?>><?= GetMessage("SUP_SUBV_STABB") ?></option>
 									<option value="N"<?= ($stableVersionsOnly === "N") ? " selected" : ""; ?>><?= GetMessage("SUP_SUBV_BETB") ?></option>
-									<?
+									<?php
 									if (isset($arUpdateList["AVAILABLE_VERSIONS"][0]["#"]["VERSIONS"]) && is_array($arUpdateList["AVAILABLE_VERSIONS"][0]["#"]["VERSIONS"]))
 									{
 										foreach ($arUpdateList["AVAILABLE_VERSIONS"][0]["#"]["VERSIONS"] as $versions)
 										{
-											?><option value="<?= intval($versions["@"]["ID"]) ?>"<?= (intval($versions["@"]["ID"]) === intval($stableVersionsOnly)) ? " selected" : "";?>><?
+											?><option value="<?= intval($versions["@"]["ID"]) ?>"<?= (intval($versions["@"]["ID"]) === intval($stableVersionsOnly)) ? " selected" : "";?>><?php
 												echo htmlspecialcharsbx($versions["@"]["NAME"]);
 												if ($versions["@"]["IS_STABLE"] === "N")
 													echo " (beta version)";
-											?></option><?
+											?></option><?php
 										}
 									}
 									?>
@@ -1456,13 +1456,13 @@ $tabControl->BeginNextTab();
 					}
 				}
 				</SCRIPT>
-				<?
+				<?php
 			}
 			?>
 		</td>
 	</tr>
 
-<?
+<?php
 $tabControl->EndTab();
 $tabControl->End();
 // endregion
@@ -1471,14 +1471,14 @@ $tabControl->End();
 <script>
 	var updRand = 0;
 	var modulesList = new Array();
-	<?
+	<?php
 	$i = 0;
 	foreach ($arClientModules as $key => $value)
 		echo "modulesList[".($i++)."] = \"".$key."\";";
 	?>
 	var modulesListSupport = new Array();
 
-	var arModuleUpdatesDescr = {<?
+	var arModuleUpdatesDescr = {<?php
 	if (isset($arUpdateList["MODULES"][0]["#"]["MODULE"]))
 	{
 		for ($i = 0, $cnt = count($arUpdateList["MODULES"][0]["#"]["MODULE"]); $i < $cnt; $i++)
@@ -1511,7 +1511,7 @@ $tabControl->End();
 	}
 	?>};
 
-	var arModuleUpdatesCnt = {<?
+	var arModuleUpdatesCnt = {<?php
 	if ($countModuleUpdates > 0)
 	{
 		$updatesCount = CUpdateClient::getUpdatesCount($arUpdateList, $arClientModules);
@@ -1528,7 +1528,7 @@ $tabControl->End();
 	}
 	?>};
 
-	var arModuleUpdatesControl = {<?
+	var arModuleUpdatesControl = {<?php
 	if ($countModuleUpdates > 0)
 	{
 		for ($i = 0, $cnt = count($arUpdateList["MODULES"][0]["#"]["MODULE"]); $i < $cnt; $i++)
@@ -1636,7 +1636,7 @@ $tabControl->End();
 	function AgreeLicenceCheckbox(checkbox)
 	{
 		var lab = document.getElementById("licence_agree_button");
-		lab.disabled=<?if(!$USER->CanDoOperation('install_updates')):?>true<?else:?>!checkbox.checked<?endif;?>;
+		lab.disabled=<?php if(!$USER->CanDoOperation('install_updates')):?>true<?php else:?>!checkbox.checked<?php endif;?>;
 	}
 
 	function AgreeLicence()
@@ -1654,7 +1654,7 @@ $tabControl->End();
 				CloseLicence();
 				var udl = document.getElementById("upd_licence_div");
 				udl.style["display"] = "none";
-				<?if (empty($errorMessage)){?>UnLockControls();<?}?>
+				<?php if (empty($errorMessage)){?>UnLockControls();<?php }?>
 			}
 			else
 			{
@@ -2524,12 +2524,12 @@ $tabControl->End();
 	}
 	//endregion
 </script>
-<? //endregion
+<?php //endregion
 // region footer
 ?>
 
 <SCRIPT>
-	<?
+	<?php
 	if ($bLockControls)
 		echo "if (window.LockControls) LockControls();";
 	?>
@@ -2537,10 +2537,10 @@ $tabControl->End();
 
 </form>
 
-<?echo BeginNote();?>
+<?= BeginNote();?>
 <?= GetMessage("SUP_SUG_NOTES") ?><br><br>
 <?= GetMessage("SUP_SUG_NOTES1") ?>
-<?echo EndNote(); ?>
+<?= EndNote(); ?>
 
 <form id="check_key_info_form" action="<?=GetMessage("SUP_SUA_DOMAIN")?>" method="post" target="_blank">
 <input type="hidden" name="license_key" value="<?= md5(CUpdateClient::GetLicenseKey()) ?>">
@@ -2562,7 +2562,7 @@ $tabControl->End();
 		font-size: 100%;
 	}
 </style>
-<?
+<?php
 COption::SetOptionString("main", "update_system_check_time", time());
 
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");

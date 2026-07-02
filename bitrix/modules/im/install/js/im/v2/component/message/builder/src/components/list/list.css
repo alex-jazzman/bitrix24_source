@@ -1,0 +1,25 @@
+.bx-im-message-block-list-fold__header {
+	display: flex;
+	align-items: end;
+	padding: 4px 0;
+	cursor: pointer;
+	gap: 2px;
+	user-select: none;
+}
+
+.bx-im-message-block-list-fold__title {
+	color: var(--ui-color-base-3);
+	font: var(--ui-font-size-lg)/20px var(--ui-font-family-primary);
+}
+
+.bx-im-message-block-list-fold__icon {
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
+	--ui-icon-set__icon-size: 18px;
+
+	flex-shrink: 0;
+	transition: transform 0.2s ease;
+}
+
+.bx-im-message-block-list-fold__icon.--folded {
+	transform: rotate(-90deg);
+}

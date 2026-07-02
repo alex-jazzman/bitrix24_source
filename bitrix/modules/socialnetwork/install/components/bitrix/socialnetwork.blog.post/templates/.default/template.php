@@ -1175,19 +1175,21 @@ else
 				{
 					?><div class="feed-com-tags-block">
 						<noindex>
-							<div class="feed-com-files-title"><?= Loc::getMessage("BLOG_BLOG_BLOG_CATEGORY") ?></div>
-							<div class="feed-com-files-cont" id="blogpost-tags-<?= (int)$arResult["Post"]['ID'] ?>"><?php
-								$i = 0;
-								foreach ($arResult["Category"] as $v)
-								{
-									if ($i !== 0)
+							<div class="feed-com-tags-inner">
+								<div class="feed-com-files-title"><?= Loc::getMessage("BLOG_BLOG_BLOG_CATEGORY") ?></div>
+								<div class="feed-com-files-cont" id="blogpost-tags-<?= (int)$arResult["Post"]['ID'] ?>"><?php
+									$i = 0;
+									foreach ($arResult["Category"] as $v)
 									{
-										echo ',';
+										if ($i !== 0)
+										{
+											echo ',';
+										}
+										?> <a href="<?=$v["urlToCategory"]?>" rel="nofollow" class="feed-com-tag" bx-tag-value="<?=$v["NAME"]?>"><?=$v["NAME"]?></a><?php
+										$i++;
 									}
-									?> <a href="<?=$v["urlToCategory"]?>" rel="nofollow" class="feed-com-tag" bx-tag-value="<?=$v["NAME"]?>"><?=$v["NAME"]?></a><?php
-									$i++;
-								}
-							?></div>
+									?></div>
+							</div>
 						</noindex>
 					</div><?php
 				}
@@ -1365,6 +1367,13 @@ else
 							$postId = (int)$arResult['Post']['ID'];
 							$blogPostButtonCopilotId = "blog_post_button_copilot_$postId";
 							$pathToPostCreate = $arResult['PATH_TO_CREATE_NEW_POST'];
+
+							$copilotName = 'CoPilot';
+
+							if (\Bitrix\Main\Loader::includeModule('ai'))
+							{
+								$copilotName = (new \Bitrix\AI\Services\CopilotNameService())->getCopilotName();
+							}
 							?>
 
 							<span id="<?= $blogPostButtonCopilotId ?>"></span>
@@ -1380,6 +1389,7 @@ else
 									},
 									blogId: 'BLOG_<?= $postId ?>',
 									pathToPostCreate: '<?= $pathToPostCreate?>',
+									copilotName: '<?= CUtil::JSEscape($copilotName) ?>',
 								}));
 							</script>
 

@@ -3,4 +3,5 @@ export type Queue = {
 	lineName: string,
 	type: string,
 	isActive: boolean,
+	color: string,
 }

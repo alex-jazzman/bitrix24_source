@@ -58,6 +58,7 @@ jn.define('im/messenger/db/table/message', (require, exports, module) => {
 				{ name: 'previousId', type: FieldType.integer },
 				{ name: 'nextId', type: FieldType.integer },
 				{ name: 'stickerParams', type: FieldType.object },
+				{ name: 'builder', type: FieldType.object },
 			];
 		}
 

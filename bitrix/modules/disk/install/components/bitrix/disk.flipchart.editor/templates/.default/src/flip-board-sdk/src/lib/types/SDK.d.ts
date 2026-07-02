@@ -1,3 +1,5 @@
+import { SDKAITextCancelData, SDKAITextErrorResult, SDKAITextRequestData, SDKAITextSuccessResult } from './aiText';
+import { ShareInBitrixData } from './shareInBitrix';
 export interface IBoard {
     tryToCloseBoard: () => Promise<void>;
     renameBoard: (name: string) => Promise<void>;
@@ -35,7 +37,12 @@ export interface UIParams {
     features?: {
         shareElementInSocials?: boolean;
         elementLink?: boolean;
+        aiTextGeneration?: boolean;
+        shareInBitrix?: boolean;
+        elementInfo?: boolean;
+        duplicatingFlip?: boolean;
     };
+    shareElementInBitrix?: string[];
 }
 export interface BoardData {
     boardId?: string;
@@ -75,6 +82,9 @@ export interface SDKParams {
         onUserKickConfirmed?: () => void;
         onUserKicked?: () => void;
         onShareElementWithSocials?: (link: string, social: ShareElementSocial) => void;
+        onShareElementWithBitrix?: (data: ShareInBitrixData) => void;
+        onAITextRequest?: (data: SDKAITextRequestData) => Promise<SDKAITextSuccessResult | SDKAITextErrorResult>;
+        onAITextCancel?: (data: SDKAITextCancelData) => void;
     };
 }
 export {};

@@ -10,8 +10,9 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 	const { clone, isEqual } = require('utils/object');
 	const { Uuid } = require('utils/uuid');
 
+	const { Feature } = require('im/messenger/lib/feature');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { MessageIdType, MessageType, DialogType, MessageParams } = require('im/messenger/const');
+	const { MessageIdType, MessageType, DialogType, MessageComponent, BotCode } = require('im/messenger/const');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { Analytics } = require('im/messenger/const');
 	const { AnalyticsEvent } = require('analytics');
@@ -20,6 +21,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		Message,
 		DateSeparatorMessage,
 		UnreadSeparatorMessage,
+		MarkedSeparatorMessage,
 	} = require('im/messenger/lib/element/dialog');
 
 	const { getLogger } = require('im/messenger/lib/logger');
@@ -56,6 +58,8 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			/** @type {Array<string>} */
 			this.messageIdsStack = [];
 			this.unreadSeparatorAdded = false;
+			this.markedSeparatorAdded = false;
+			this.markedSeparatorMessageId = 0;
 			this.idAfterUnreadSeparatorMessage = '0';
 			this.idBeforeUnreadSeparatorMessage = '0';
 			/** @type {MessagesModelState} */
@@ -309,7 +313,6 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			this.resetState();
 
 			await this.view.setMessages([]);
-			this.view.showWelcomeScreen();
 		}
 
 		/**
@@ -324,13 +327,15 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			this.updateMessageIndex(this.messageList);
 
 			const viewMessageList = this.dialogLocator.get('message-ui-converter').createMessageList(clone(messageList).reverse());
-			const viewMessageListWithTemplate = this.addTemplateMessagesToList(viewMessageList);
+			let viewMessageListWithTemplate = this.addTemplateMessagesToList(viewMessageList);
+			viewMessageListWithTemplate = this.insertMarkedSeparator(messageList, viewMessageListWithTemplate);
 
 			const messageForStack = [...viewMessageListWithTemplate];
 			this.putMessageIdToStack(messageForStack.reverse());
 
 			const viewMessageListToSet = this.processNearbyMessagesList(viewMessageListWithTemplate);
 			this.view.unreadSeparatorAdded = this.unreadSeparatorAdded;
+			this.view.markedSeparatorAdded = this.markedSeparatorAdded;
 
 			if (this.store.getters['messagesModel/isUploadingMessage'](viewMessageListToSet[0]?.id))
 			{
@@ -527,7 +532,8 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 
 			viewMessageList.unshift(this.viewMessageCollection[this.messageIdsStack[0]]);
 
-			const viewMessageListWithTemplate = this.addTemplateMessagesToList(viewMessageList);
+			let viewMessageListWithTemplate = this.addTemplateMessagesToList(viewMessageList);
+			viewMessageListWithTemplate = this.insertMarkedSeparator(messageList, viewMessageListWithTemplate);
 
 			const viewMessageListToPush = this.processTopNearbyMessages([...viewMessageListWithTemplate]);
 
@@ -576,18 +582,88 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 				await this.updateViewMessages(updateMessageList);
 				const addMessageList = viewMessageListToAdd.slice(0, viewMessageListWithTemplate.length);
 
-				await this.view.addMessages(addMessageList);
-				viewMessageListWithTemplate.forEach((message) => {
-					this.viewMessageCollection[message.id] = message;
-				});
+				await this.#addNewMessages(addMessageList);
 			}
 			else
 			{
-				await this.view.addMessages(viewMessageListToAdd);
-				viewMessageListWithTemplate.forEach((message) => {
-					this.viewMessageCollection[message.id] = message;
-				});
+				await this.#addNewMessages(viewMessageListToAdd);
 			}
+
+			viewMessageListWithTemplate.forEach((message) => {
+				this.viewMessageCollection[message.id] = message;
+			});
+
+			if (this.#shouldScrollLastMessageToTop(messageList))
+			{
+				this.view.scrollLastMessageToTop(true);
+			}
+		}
+
+		/**
+		 * @param {Array<Message>} viewMessageList
+		 */
+		async #addNewMessages(viewMessageList)
+		{
+			if (!this.#shouldAnimateLastMessage(viewMessageList))
+			{
+				await this.view.addMessages(viewMessageList);
+
+				return;
+			}
+
+			const [lastMessage, ...precedingMessages] = viewMessageList;
+			if (precedingMessages.length > 0)
+			{
+				await this.view.addMessages(precedingMessages);
+			}
+
+			await this.view.addAnimateMessageExpand(lastMessage);
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		#isCopilotDirectWithAnimatedScroll()
+		{
+			if (!Feature.isCopilotAnimatedScrollSupported)
+			{
+				return false;
+			}
+
+			return DialogHelper.createByModel(this.getDialog())?.isCopilotDirect ?? false;
+		}
+
+		/**
+		 * @param {Array<Message>} viewMessageList
+		 * @return {boolean}
+		 */
+		#shouldAnimateLastMessage(viewMessageList)
+		{
+			if (viewMessageList.length === 0 || !this.#isCopilotDirectWithAnimatedScroll())
+			{
+				return false;
+			}
+
+			const lastMessage = viewMessageList[0];
+			const authorModel = this.store.getters['usersModel/getById'](lastMessage.authorId);
+
+			return authorModel?.botData?.code === BotCode.copilot;
+		}
+
+		/**
+		 * @param {Array<MessagesModelState>} modelMessageList
+		 * @return {boolean}
+		 */
+		#shouldScrollLastMessageToTop(modelMessageList)
+		{
+			if (!this.#isCopilotDirectWithAnimatedScroll())
+			{
+				return false;
+			}
+
+			const lastMessage = modelMessageList[modelMessageList.length - 1];
+
+			return lastMessage?.authorId === this.currentUserId;
 		}
 
 		/**
@@ -634,6 +710,8 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 					}
 					viewMessageListWithTemplate = this.insertUnreadSeparator(messageList, [...viewMessageListWithTemplate]);
 				}
+
+				viewMessageListWithTemplate = this.insertMarkedSeparator(messageList, viewMessageListWithTemplate);
 
 				const messageListWithStyles = this.processNearbyMessagesList(viewMessageListWithTemplate);
 				logger.log(`${this.constructor.name}.addMessageListBetween: messages with styles`, messageListWithStyles);
@@ -1082,7 +1160,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 				}
 			});
 
-			const dialog = this.store.getters['dialoguesModel/getById'](this.dialogId);
+			const dialog = this.getDialog();
 			const options = this.dialogLocator.get('message-ui-converter').prepareSharedOptionsForMessages(dialog);
 
 			for (const messageListItem of messageList)
@@ -1143,6 +1221,46 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 					await this.pushPlanLimitMessage();
 				}
 			}
+		}
+
+		/**
+		 * @param {MessagesModelState} modelMessage
+		 * @param {string} blockId
+		 * @param {object} options - { animated }
+		 * @return {Promise}
+		 */
+		async renderMessageBlock(modelMessage, blockId, options)
+		{
+			logger.log('MessageRenderer.renderMessageBlock:', modelMessage.id, options);
+
+			this.renderQueuePromise = this.renderQueuePromise
+				.then(async () => {
+					const dialog = this.getDialog();
+					const converter = this.dialogLocator.get('message-ui-converter');
+					const sharedOptions = converter.prepareSharedOptionsForMessages(dialog);
+					const viewMessage = converter.createMessage(modelMessage, sharedOptions);
+
+					const currentViewMessage = this.viewMessageCollection[viewMessage.id];
+					if (currentViewMessage instanceof Message)
+					{
+						viewMessage.setAuthorTopMessage(currentViewMessage.isAuthorTopMessage);
+						viewMessage.setAuthorBottomMessage(currentViewMessage.isAuthorBottomMessage);
+						viewMessage.setShowAvatar(modelMessage, currentViewMessage.showAvatar);
+						viewMessage.setShowUsername(modelMessage, currentViewMessage.showUsername);
+					}
+
+					this.viewMessageCollection[viewMessage.id] = viewMessage;
+
+					await this.view.updateMessageBlock(viewMessage, blockId, options);
+
+					this.doTick();
+				})
+				.catch((error) => {
+					logger.error('MessageRenderer.renderMessageBlock error:', error);
+				})
+			;
+
+			await this.renderQueuePromise;
 		}
 
 		/**
@@ -2003,7 +2121,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		getPlanLimitMessage()
 		{
 			const messageBanner = {
-				text: MessageParams.ComponentId.PlanLimitsMessage,
+				text: MessageComponent.planLimits,
 				id: MessageIdType.planLimitBanner,
 				authorId: 0,
 				message: [],
@@ -2011,7 +2129,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 				attach: [],
 				reactions: null,
 				params: {
-					componentId: MessageParams.ComponentId.PlanLimitsMessage,
+					componentId: MessageComponent.planLimits,
 				},
 			};
 
@@ -2119,7 +2237,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		 */
 		sendAnalyticsIsHistoryLimitExceeded(dialogId, section)
 		{
-			const dialog = this.store.getters['dialoguesModel/getById'](dialogId);
+			const dialog = this.getDialog();
 			const dialogType = dialog.type;
 			const analytics = new AnalyticsEvent()
 				.setTool(Analytics.Tool.im)
@@ -2226,6 +2344,103 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			);
 
 			return result;
+		}
+
+		/**
+		 * @private
+		 * @param {Array<MessagesModelState>} messageList
+		 * @param {Array<Message>} viewMessageList
+		 * @return {Array<Message>}
+		 */
+		insertMarkedSeparator(messageList, viewMessageList)
+		{
+			const result = [...viewMessageList];
+			const dialogModel = this.getDialog();
+			const markedId = dialogModel.markedId;
+
+			if (markedId === 0 || this.markedSeparatorAdded)
+			{
+				return result;
+			}
+
+			const markedMessageIndex = result.findIndex(
+				(message) => Number(message.id) === Number(markedId),
+			);
+
+			if (markedMessageIndex === -1)
+			{
+				return result;
+			}
+
+			const insertIndex = (markedMessageIndex + 1 < result.length && result[markedMessageIndex + 1] instanceof DateSeparatorMessage)
+				? markedMessageIndex + 2
+				: markedMessageIndex + 1;
+
+			const separator = new MarkedSeparatorMessage();
+			result.splice(insertIndex, 0, separator);
+			this.viewMessageCollection[separator.id] = separator;
+			this.markedSeparatorAdded = true;
+			this.markedSeparatorMessageId = markedId;
+
+			return result;
+		}
+
+		/**
+		 * @param {number} markedId
+		 */
+		async addMarkedSeparatorDynamic(markedId)
+		{
+			if (this.markedSeparatorAdded && this.markedSeparatorMessageId === markedId)
+			{
+				return;
+			}
+
+			if (this.markedSeparatorAdded)
+			{
+				this.removeMarkedSeparator();
+			}
+
+			const markedMessageStringId = String(markedId);
+			const stackIndex = this.messageIdsStack.indexOf(markedMessageStringId);
+			if (stackIndex === -1)
+			{
+				return;
+			}
+
+			const separator = new MarkedSeparatorMessage();
+			this.viewMessageCollection[separator.id] = separator;
+			this.messageIdsStack.splice(stackIndex, 0, separator.id);
+			this.markedSeparatorAdded = true;
+			this.markedSeparatorMessageId = markedId;
+
+			if (stackIndex === 0)
+			{
+				await this.view.pushMessages([separator]);
+			}
+			else
+			{
+				const previousMessageId = this.messageIdsStack[stackIndex - 1];
+				await this.view.insertMessages(previousMessageId, [separator], 'below');
+			}
+		}
+
+		removeMarkedSeparator()
+		{
+			if (!this.markedSeparatorAdded)
+			{
+				return;
+			}
+
+			const separatorId = MarkedSeparatorMessage.getDefaultId();
+			delete this.viewMessageCollection[separatorId];
+			this.markedSeparatorMessageId = null;
+			const stackIndex = this.messageIdsStack.indexOf(separatorId);
+			if (stackIndex !== -1)
+			{
+				this.messageIdsStack.splice(stackIndex, 1);
+			}
+			this.markedSeparatorAdded = false;
+			this.view.removeMessagesByIds([separatorId]);
 		}
 	}
 

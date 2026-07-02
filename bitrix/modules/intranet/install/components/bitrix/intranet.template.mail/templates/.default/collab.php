@@ -40,20 +40,17 @@ $canInsertUserData = !\Bitrix\Main\Loader::includeModule('bitrix24') || !\CBitri
 		}
 		.intranet-email-btn-collab {
 			background-color:#3F62E8!important;
-			background-color: linear-gradient(#3F62E8, #3F62E8)!important;
 			color:#ffffff!important;
 		}
 		@media (prefers-color-scheme: dark) {
 			.intranet-email-btn-collab {
 				background-color:#3F62E8!important;
-				background-color: linear-gradient(#3F62E8, #3F62E8)!important;
 				color:#ffffff!important;
 			}
 		}
 		@media (prefers-color-scheme: dark) {
 			u + .body .intranet-email-btn-collab {
 				background-color:#3F62E8!important;
-				background-color: linear-gradient(#3F62E8, #3F62E8)!important;
 				color:#ffffff!important;
 			}
 		}
@@ -73,6 +70,11 @@ $canInsertUserData = !\Bitrix\Main\Loader::includeModule('bitrix24') || !\CBitri
 	</style>
 </head>
 <body class="body">
+<!--[if gte mso 9]>
+<v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="width:600px;">
+	<v:fill type="frame" src="<?=$this->getFolder()?>/images/collab/orion-bg.jpg" color="#ffffff"/>
+	<v:textbox inset="0,0,0,0">
+<![endif]-->
 <table class="bg-container" cellpadding="0" cellspacing="0" border="0" style="padding-top: 0; padding-right: 10px; padding-bottom: 0; padding-left: 10px; width: 100%; border-radius: 10px; background-image: url(<?=$this->getFolder()?>/images/collab/orion-bg.jpg); background-size: cover;">
 	<tr>
 		<td>
@@ -91,7 +93,7 @@ $canInsertUserData = !\Bitrix\Main\Loader::includeModule('bitrix24') || !\CBitri
 							<tr>
 								<td style="">
 									<!--[if mso]>
-									<v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="#" style="height:200px;v-text-anchor:middle;width:100%;" arcsize="10%" stroke="f" fillcolor="#333333">
+									<v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="<?=$arParams["LINK"]?>" style="height:200px;v-text-anchor:middle;width:100%;" arcsize="10%" stroke="f" fillcolor="#333333">
 										<w:anchorlock/>
 										<center style="color:#333333;font-family:sans-serif;font-size:14px;font-weight:bold;">
 									<![endif]-->
@@ -118,24 +120,64 @@ $canInsertUserData = !\Bitrix\Main\Loader::includeModule('bitrix24') || !\CBitri
 													<?php endif;?>
 													<td>
 														<div style="font-size: 15px;"><?=htmlspecialcharsbx($arResult["USER_NAME"])?></div>
-														<div style="font-size: 14px;"><?=Loc::getMessage("INTRANET_INVITATION_COLLAB_INVITE_YOU")?></div>
+														<?php if ($arResult['isNewProjectsAvailable']): ?>
+															<div style="font-size: 14px;">
+																<?=Loc::getMessage("INTRANET_INVITATION_PROJECT_INVITE_YOU")?>
+															</div>
+														<?php else: ?>
+															<div style="font-size: 14px;">
+																<?=Loc::getMessage("INTRANET_INVITATION_COLLAB_INVITE_YOU")?>
+															</div>
+														<?php endif;?>
 													</td>
 												</tr>
 											</table>
 										</div>
 										<?php endif; ?>
 										<div style="margin-bottom: 15px; font-size: 36px; font-weight: 700; line-height: 41px;">
-											<?= $canInsertUserData ? htmlspecialcharsbx($arParams['FIELDS']['COLLAB_NAME']) : Loc::getMessage("INTRANET_INVITATION_COLLAB_TITLE") ?>
+											<?php if ($arResult['isNewProjectsAvailable']): ?>
+												<?=
+													$canInsertUserData
+														? htmlspecialcharsbx($arParams['FIELDS']['COLLAB_NAME'])
+														: Loc::getMessage("INTRANET_INVITATION_PROJECT_TITLE");
+												?>
+											<?php else: ?>
+												<?=
+													$canInsertUserData
+														? htmlspecialcharsbx($arParams['FIELDS']['COLLAB_NAME'])
+														: Loc::getMessage("INTRANET_INVITATION_COLLAB_TITLE");
+												?>
+											<?php endif;?>
 										</div>
 										<div style="margin-bottom: 40px;">
 											<a href="<?=$arParams["LINK"]?>"
 											   class="intranet-email-btn-collab"
-											   style="background-color:#3F62E8!important;background-color: linear-gradient(#3F62E8, #3F62E8)!important;;border-radius:10px;color:#ffffff;display:inline-block;font-family:sans-serif;font-size:16px;line-height:46px;text-align:center;text-decoration:none;width:226px;-webkit-text-size-adjust:none;"
+											   style="background-color:#3F62E8!important;border-radius:10px;color:#ffffff;display:inline-block;font-family:sans-serif;font-size:16px;line-height:46px;text-align:center;text-decoration:none;width:226px;-webkit-text-size-adjust:none;"
 											>
 												<?=Loc::getMessage("INTRANET_INVITATION_COLLAB_JOIN_BTN")?>
 											</a>
 										</div>
-										<div style="font-size: 16px; line-height: 18px;"><?=$canInsertUserData ? Loc::getMessage("INTRANET_INVITATION_COLLAB_JOIN_US", ["#COLLAB_NAME#" => htmlspecialcharsbx($arParams['FIELDS']['COLLAB_NAME'])]) : Loc::getMessage('INTRANET_INVITATION_COLLAB_JOIN_US_WITHOUT_NAME')?></div>
+										<div style="font-size: 16px; line-height: 18px;">
+											<?php if ($arResult['isNewProjectsAvailable']): ?>
+												<?=
+													$canInsertUserData
+														? Loc::getMessage(
+														"INTRANET_INVITATION_PROJECT_JOIN_US",
+														["#COLLAB_NAME#" => htmlspecialcharsbx($arParams['FIELDS']['COLLAB_NAME'])]
+													)
+														: Loc::getMessage('INTRANET_INVITATION_PROJECT_JOIN_US_WITHOUT_NAME')
+												?>
+											<?php else: ?>
+												<?=
+													$canInsertUserData
+														? Loc::getMessage(
+															"INTRANET_INVITATION_COLLAB_JOIN_US",
+															["#COLLAB_NAME#" => htmlspecialcharsbx($arParams['FIELDS']['COLLAB_NAME'])]
+														)
+														: Loc::getMessage('INTRANET_INVITATION_COLLAB_JOIN_US_WITHOUT_NAME')
+												?>
+											<?php endif;?>
+										</div>
 									</div>
 									<!--[if mso]>
 									</center>
@@ -156,7 +198,15 @@ $canInsertUserData = !\Bitrix\Main\Loader::includeModule('bitrix24') || !\CBitri
 									<div class="email-block intranet-email-mobile-block" style="margin-bottom: 24px; padding-top: 30px; padding-right: 36px; padding-bottom: 20px; padding-left: 36px; border-radius: 10px; background-color: #f1f4f6!important; color: #333333; text-align: center;">
 										<div style="display: inline-block; margin-right: 5px; margin-bottom: 10px; max-width: 156px; font-size:12px; text-align: center;">
 											<img src="<?=$this->getFolder()?>/images/collab/email-icon-1.png" alt="icon" style="display: block; margin-top: 0; margin-left: auto; margin-bottom: 16px; margin-right: auto; max-width: 120px;">
-											<div style="line-height: 16px"><?=Loc::getMessage("INTRANET_INVITATION_COLLAB_SECTION_IM")?></div>
+											<?php if ($arResult['isNewProjectsAvailable']): ?>
+												<div style="line-height: 16px">
+													<?=Loc::getMessage("INTRANET_INVITATION_PROJECT_SECTION_IM")?>
+												</div>
+											<?php else: ?>
+												<div style="line-height: 16px">
+													<?=Loc::getMessage("INTRANET_INVITATION_COLLAB_SECTION_IM")?>
+												</div>
+											<?php endif;?>
 										</div>
 										<div style="display: inline-block; margin-right: 5px; margin-bottom: 10px; max-width: 156px; font-size:12px; text-align: center;">
 											<img src="<?=$this->getFolder()?>/images/collab/email-icon-2.png" alt="icon" style="display: block; margin-top: 0; margin-left: auto; margin-bottom: 16px; margin-right: auto; max-width: 120px;">

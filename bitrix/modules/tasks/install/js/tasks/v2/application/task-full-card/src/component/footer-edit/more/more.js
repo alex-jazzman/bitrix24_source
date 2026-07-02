@@ -262,7 +262,7 @@ export const More = {
 					this.taskId,
 					{
 						context: this.analytics?.context ?? Analytics.Section.Tasks,
-						additionalContext: this.analytics?.additionalContext ?? Analytics.SubSection.TaskCard,
+						additionalContext: Analytics.SubSection.TaskCard,
 						element: Analytics.Element.ContextMenu,
 					},
 				)),
@@ -319,7 +319,15 @@ export const More = {
 				title: this.loc('TASKS_V2_TASK_FULL_CARD_DELETE'),
 				icon: Outline.TRASHCAN,
 				onClick: (): void => {
-					void taskService.delete(this.taskId);
+					void taskService.delete(
+						this.taskId,
+						{
+							context: this.analytics?.context ?? Analytics.Section.Tasks,
+							additionalContext: Analytics.SubSection.TaskCard,
+							element: Analytics.Element.ContextMenu,
+						},
+					);
+
 					EventEmitter.emit(EventName.CloseFullCard, { taskId: this.taskId });
 				},
 			};

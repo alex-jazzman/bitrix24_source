@@ -1,8 +1,17 @@
+.crm-item-import__table-sticky-scroll {
+	position: sticky;
+	bottom: 0;
+	z-index: 1;
+	overflow-x: auto;
+	overflow-y: hidden;
+	scrollbar-width: thin;
+	scrollbar-color: var(--ui-color-palette-gray-10);
+}
+
 .crm-item-import__table-container {
 	overflow: auto;
 	max-width: 100%;
-	scrollbar-width: thin;
-	scrollbar-color: var(--ui-color-palette-gray-10);
+	scrollbar-width: none;
 }
 
 .crm-item-import__table {

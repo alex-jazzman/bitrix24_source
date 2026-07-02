@@ -631,9 +631,11 @@ class CAdminFilter
 						<input type="submit" class="adm-btn" id="'.$this->id.'del_filter" name="del_filter" title="'.GetMessage("admin_lib_filter_clear_butt_title").$hkInst->GetTitle("del_filter").'" onclick="return '.htmlspecialcharsbx($this->id.'.OnClear(\''.CUtil::AddSlashes($aParams["table_id"]).'\', \''.CUtil::AddSlashes($url).'\', this);').'" value="'.GetMessage("admin_lib_filter_clear_butt").'">';
 			}
 			else
+			{
 				echo '
 						<input type="submit" class="adm-btn" id="'.$this->id.'set_filter" name="set_filter" title="'.GetMessage("admin_lib_filter_set_butt").$hkInst->GetTitle("set_filter").'" onclick="return '.htmlspecialcharsbx($this->id.'.OnSet(\''.CUtil::AddSlashes($aParams["table_id"]).'\', \''.CUtil::AddSlashes($url).'\', this);').'" value="'.GetMessage("admin_lib_filter_set_butt").'">
 						<input type="submit" class="adm-btn" id="'.$this->id.'del_filter" name="del_filter" title="'.GetMessage("admin_lib_filter_clear_butt").$hkInst->GetTitle("del_filter").'" onclick="return '.htmlspecialcharsbx($this->id.'.OnClear(\''.CUtil::AddSlashes($aParams["table_id"]).'\', \''.CUtil::AddSlashes($url).'\', this);').'" value="'.GetMessage("admin_lib_filter_clear_butt").'">';
+			}
 
 		}
 		if($this->popup)
@@ -834,12 +836,12 @@ class CAdminFilter
 				<td align="right" width="40%"><?=GetMessage("admin_lib_filter_sett_name")?></td>
 				<td><input type="text" name="save_filter_name" value="" size="30" maxlength="255"></td>
 			</tr>
-			<?if($isAdmin):?>
+			<?php if($isAdmin):?>
 				<tr>
 					<td align="right" width="40%"><?=GetMessage("admin_lib_filter_sett_common")?></td>
 					<td><input type="checkbox" name="common" ></td>
 				</tr>
-			<?endif;?>
+			<?php endif;?>
 		</table>
 	</div>
 </div>

@@ -1,14 +1,22 @@
 import { Button as UiButton, AirButtonStyle } from 'ui.vue3.components.button';
+import { Validation } from 'main.core';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import { mapActions } from 'ui.vue3.pinia';
+import { InputDesign, InputSize } from 'ui.system.input';
+import { BInput } from 'ui.system.input.vue';
+import { Avatar } from 'ui.vue3.components.avatar';
 import { useWizardStore } from '../../../../store/wizard.js';
 import { LocalizationMixin } from '../../../../mixins/localization-mixin';
+
+const AVATAR_SIZE = 22;
 
 // @vue/component
 export const EmployeeListTable = {
 	components: {
 		UiButton,
 		BIcon,
+		BInput,
+		Avatar,
 	},
 
 	mixins: [LocalizationMixin],
@@ -23,7 +31,15 @@ export const EmployeeListTable = {
 			type: Array,
 			required: true,
 		},
+		isPasswordColumnHidden: {
+			type: Boolean,
+			default: false,
+		},
 		readonlyMode: {
+			type: Boolean,
+			default: false,
+		},
+		showValidationErrors: {
 			type: Boolean,
 			default: false,
 		},
@@ -32,6 +48,9 @@ export const EmployeeListTable = {
 	data(): Object {
 		return {
 			AirButtonStyle,
+			InputDesign,
+			InputSize,
+			touchedFields: new Set(),
 		};
 	},
 
@@ -44,12 +63,63 @@ export const EmployeeListTable = {
 
 	methods: {
 		...mapActions(useWizardStore, ['removeEmployeeById']),
+		getAvatarOptions(employee: Object): Object
+		{
+			return {
+				size: AVATAR_SIZE,
+				userName: employee.avatar ? employee.name : null,
+				userpicPath: employee.avatar || '',
+			};
+		},
+		markTouched(employeeId: number, field: string): void
+		{
+			this.touchedFields.add(`${employeeId}_${field}`);
+		},
+		shouldShowError(employeeId: number, field: string): boolean
+		{
+			return this.showValidationErrors || this.touchedFields.has(`${employeeId}_${field}`);
+		},
+		getEmailError(employee: Object): string
+		{
+			if (!this.shouldShowError(employee.id, 'email'))
+			{
+				return '';
+			}
+
+			const email = (employee.email ?? '').trim();
+			if (email.length === 0)
+			{
+				return this.loc('MAIL_MASSCONNECT_FORM_EMAIL_EMPTY_ERROR');
+			}
+
+			if (!Validation.isEmail(email))
+			{
+				return this.loc('MAIL_MASSCONNECT_FORM_EMAIL_VALIDATION_ERROR');
+			}
+
+			return '';
+		},
+		getPasswordError(employee: Object): string
+		{
+			if (!this.shouldShowError(employee.id, 'password'))
+			{
+				return '';
+			}
+
+			const password = (employee.password ?? '').trim();
+			if (password.length === 0)
+			{
+				return this.loc('MAIL_MASSCONNECT_FORM_PASSWORD_EMPTY_ERROR');
+			}
+
+			return '';
+		},
 	},
 
 	template: `
 		<div 
-			class="mail_massconnect__employee-list_table" 
-			:class="{ '--login-hidden': !isLoginColumnShown }"
+			class="mail_massconnect__employee-list_table"
+			:class="{ '--login-hidden': !isLoginColumnShown, '--password-hidden': isPasswordColumnHidden }"
 			data-test-id="mail_massconnect__employee-list_table"
 		>
 			<div class="mail_massconnect__employee-list_table_header">
@@ -66,8 +136,8 @@ export const EmployeeListTable = {
 				>
 					{{ loc('MAIL_MASSCONNECT_FORM_SELECT_EMPLOYEE_TABLE_LOGIN_COLUMN_TITLE') }}
 				</div>
-				<div 
-					v-if="!readonlyMode" 
+				<div
+					v-if="!readonlyMode && !isPasswordColumnHidden"
 					class="mail_massconnect__employee-list_table_cell --password"
 					data-test-id="mail_massconnect__employee-list_table_password-header"
 				>
@@ -81,10 +151,8 @@ export const EmployeeListTable = {
 			>
 				<div class="mail_massconnect__employee-list_table_cell --name">
 					<div class="mail_massconnect__employee-list_table_employee-info">
-						<img
-							class="mail_massconnect__employee-list_table_employee-avatar"
-							:src="encodeURI(employee.avatar)"
-							alt=""
+						<Avatar
+							:options="getAvatarOptions(employee)"
 							:data-test-id="'mail_massconnect__employee-list_table_row-' + index + '_avatar'"
 						/>
 						<span 
@@ -108,35 +176,38 @@ export const EmployeeListTable = {
 					</div>
 				</div>
 				<div class="mail_massconnect__employee-list_table_cell --email">
-					<input
-						type="email"
-						class="mail_massconnect__employee-list_table_input"
+					<BInput
 						v-model="employee.email"
+						:size="InputSize.Lg"
+						:design="readonlyMode ? InputDesign.Disabled : InputDesign.Naked"
 						:placeholder="loc('MAIL_MASSCONNECT_FORM_SELECT_EMPLOYEE_TABLE_EMAIL_COLUMN_PLACEHOLDER')"
-						:readonly="readonlyMode"
+						:error="getEmailError(employee)"
 						:data-test-id="'mail_massconnect__employee-list_table_row-' + index + '_email-input'"
 						:name="'mail_massconnect__employee-list_table_row-' + index + '_email-input'"
+						@blur="markTouched(employee.id, 'email')"
 					/>
 				</div>
 				<div class="mail_massconnect__employee-list_table_cell --login">
-					<input
-						type="text"
-						class="mail_massconnect__employee-list_table_input"
+					<BInput
 						v-model="employee.login"
+						:size="InputSize.Lg"
+						:design="readonlyMode ? InputDesign.Disabled : InputDesign.Naked"
 						:placeholder="loc('MAIL_MASSCONNECT_FORM_SELECT_EMPLOYEE_TABLE_LOGIN_COLUMN_PLACEHOLDER')"
-						:readonly="readonlyMode"
 						:data-test-id="'mail_massconnect__employee-list_table_row-' + index + '_login-input'"
-						:name="'mail_massconnect__employee-list_table_row-' + index + '_password-input'"
+						:name="'mail_massconnect__employee-list_table_row-' + index + '_login-input'"
 					/>
 				</div>
-				<div v-if="!readonlyMode" class="mail_massconnect__employee-list_table_cell --password">
-					<input
-						type="password"
-						class="mail_massconnect__employee-list_table_input"
+				<div v-if="!readonlyMode && !isPasswordColumnHidden" class="mail_massconnect__employee-list_table_cell --password">
+					<BInput
 						v-model="employee.password"
+						type="password"
+						:size="InputSize.Lg"
+						:design="InputDesign.Naked"
 						:placeholder="loc('MAIL_MASSCONNECT_FORM_SELECT_EMPLOYEE_TABLE_PASSWORD_COLUMN_PLACEHOLDER')"
+						:error="getPasswordError(employee)"
 						:data-test-id="'mail_massconnect__employee-list_table_row-' + index + '_password-input'"
 						:name="'mail_massconnect__employee-list_table_row-' + index + '_password-input'"
+						@blur="markTouched(employee.id, 'password')"
 					/>
 				</div>
 			</div>

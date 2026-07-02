@@ -427,7 +427,12 @@ class Router
 			return null;
 		}
 
-		const uri = new Uri(template.replace('#entityId#', normalizedEntityId));
+		template = template.replace('#entityId#', normalizedEntityId);
+
+		template = template.replace('#ENTITY_ID#', normalizedEntityId);
+		template = template.replace('#ENTITY_TYPE_ID#', normalizedEntityTypeId);
+
+		const uri = new Uri(template);
 
 		if (!Type.isNil(normalizedCategoryId))
 		{

@@ -391,6 +391,16 @@ jn.define('im/messenger/db/repository/dialog', (require, exports, module) => {
 				result.backgroundId = DialogBackgroundId.default;
 			}
 
+			if (Type.isNumber(dialog.parentChatId) || Type.isNumber(dialog.parent_chat_id))
+			{
+				result.parentChatId = dialog.parent_chat_id ?? dialog.parentChatId;
+			}
+
+			if (Type.isNumber(dialog.parentMessageId) || Type.isNumber(dialog.parent_message_id))
+			{
+				result.parentMessageId = dialog.parent_message_id ?? dialog.parentMessageId;
+			}
+
 			result.permissions = {};
 			if (Type.isObject(dialog.permissions))
 			{

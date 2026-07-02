@@ -1,11 +1,8 @@
+import { type JsonObject } from 'main.core';
+import { type EventEmitter } from 'main.core.events';
 import { MenuManager } from 'main.popup';
 
 import { Messenger } from 'im.public';
-import { Analytics } from 'im.v2.lib.analytics';
-import { ChatService } from 'im.v2.provider.service.chat';
-import { EmptyAvatarType } from 'im.v2.component.elements.avatar';
-import { UserRole, PopupType, ChatType, EventType, SidebarDetailBlock } from 'im.v2.const';
-import { showExitUpdateChatConfirm } from 'im.v2.lib.confirm';
 import {
 	TitleInput,
 	ChatAvatar,
@@ -17,13 +14,15 @@ import {
 	AppearanceSection,
 	PrivacySection,
 } from 'im.v2.component.content.chat-forms.elements';
+import { EmptyAvatarType } from 'im.v2.component.elements.avatar';
+import { PopupType, ChatType, EventType, SidebarDetailBlock, type UserRole, type ChatTypeItem } from 'im.v2.const';
+import { Analytics } from 'im.v2.lib.analytics';
+import { showExitUpdateChatConfirm } from 'im.v2.lib.confirm';
+import { type ImModelChat } from 'im.v2.model';
+import { ChatService } from 'im.v2.provider.service.chat';
 
 import { ChatMemberDiffManager } from '../../classes/chat-member-diff-manager';
 import { getCollapsedUsersElement, type TagSelectorElement } from '../../helpers/get-collapsed-users-element';
-
-import type { JsonObject } from 'main.core';
-import type { EventEmitter } from 'main.core.events';
-import type { ImModelChat } from 'im.v2.model';
 
 type UserRoleItem = $Keys<typeof UserRole>;
 
@@ -84,7 +83,7 @@ export const ChannelUpdating = {
 		{
 			return this.dialog.chatId;
 		},
-		chatType(): $Values<typeof ChatType>
+		chatType(): ChatTypeItem
 		{
 			return this.dialog.type;
 		},
@@ -105,10 +104,6 @@ export const ChannelUpdating = {
 			});
 
 			return [element];
-		},
-		changedChatType(): $Values<typeof ChatType>
-		{
-			return this.settings.isAvailableInSearch ? ChatType.openChannel : ChatType.channel;
 		},
 	},
 	async created()
@@ -168,13 +163,12 @@ export const ChannelUpdating = {
 			await this.getChatService().updateChat(this.chatId, {
 				title: this.chatTitle,
 				avatar: this.avatarFile,
-				type: this.changedChatType,
 				addedMemberEntities: this.memberDiffManager.getAddedMemberEntities(this.chatMembers),
 				deletedMemberEntities: this.memberDiffManager.getDeletedMemberEntities(this.chatMembers),
 				addedManagers: this.memberDiffManager.getAddedManagers(this.rights.managerIds),
 				deletedManagers: this.memberDiffManager.getDeletedManagers(this.rights.managerIds),
 				ownerId: this.rights.ownerId,
-				isAvailableInSearch: this.settings.isAvailableInSearch,
+				searchable: this.settings.isAvailableInSearch,
 				description: this.settings.description,
 				manageUsersAdd: this.rights.manageUsersAdd,
 				manageUsersDelete: this.rights.manageUsersDelete,

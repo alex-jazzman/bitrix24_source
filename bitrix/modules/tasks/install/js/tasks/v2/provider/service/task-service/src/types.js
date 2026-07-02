@@ -15,6 +15,8 @@ export type TaskDto = {
 	descriptionChecksum: string,
 	creator: UserDto,
 	createdTs: number,
+	changedTs: number,
+	activityTs: number,
 	responsible: UserDto,
 	deadlineTs: number,
 	deadlineAfter: number,
@@ -28,7 +30,7 @@ export type TaskDto = {
 	containsChecklist: boolean,
 	parent: TaskDto,
 	base: TaskDto,
-	subTaskIds: number[],
+	subTaskIds: number[] | string[],
 	relatedTaskIds: number[],
 	ganttLinks: GanttLinksDto,
 	containsSubTasks: boolean,
@@ -73,17 +75,19 @@ export type TaskDto = {
 	archiveLink: ?string,
 	maxDeadlineChangeDate: string,
 	maxDeadlineChanges: number,
+	deadlineChangeCount: ?number,
 	requireDeadlineChangeReason: boolean,
 	deadlineChangeReason: ?string,
 	userFields: Array<{ key: string, value: any }>,
 	multiResponsibles: UserDto[],
 	replicate: ?boolean,
 	replicateParams: ?ReplicateParamsDto,
+	mark: ?$Values<typeof Mark>,
 	/** @description Template only props */
 	responsibleCollection: UserDto[],
+	subTemplateIds: number[],
 	type: ?$Values<typeof TemplateType>,
 	permissions: ?TemplatePermissionDto[],
-	mark: ?$Values<typeof Mark>,
 };
 
 export type TaskSliderData = {

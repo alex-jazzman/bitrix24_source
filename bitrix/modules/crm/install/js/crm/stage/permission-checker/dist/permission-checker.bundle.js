@@ -1,2 +1,83 @@
-this.BX=this.BX||{},this.BX.Crm=this.BX.Crm||{},function(e,s,t,i){"use strict";const o={process:null,success:"S",failure:"F",apology:"F"};var a=babelHelpers.classPrivateFieldLooseKey("stages");class r{constructor(e){Object.defineProperty(this,a,{writable:!0,value:void 0}),babelHelpers.classPrivateFieldLooseBase(this,a)[a]=e}isHasPermissionToMove(e,s){var t,i;if(e===s)return!0;const o=babelHelpers.classPrivateFieldLooseBase(this,a)[a].get(s);if(!o)return!1;if(o.isAllowedMoveToAnyStage())return!0;const r=babelHelpers.classPrivateFieldLooseBase(this,a)[a].get(e);return!!r&&(null!=(t=null==(i=r.getStagesToMove())?void 0:i.includes(s))&&t||r.isAllowedMoveToAnyStage())}isHasPermissionToMoveAtLeastOneFailureStage(e){return this.getStages().some(s=>s.isFailure()&&this.isHasPermissionToMove(e,s.getStatusId()))}isHasPermissionToMoveSuccessStage(e){return this.getStages().some(s=>s.isSuccess()&&this.isHasPermissionToMove(e,s.getStatusId()))}isHasPermissionToMoveAtLeastOneTerminationStage(e){return this.isHasPermissionToMoveSuccessStage(e)||this.isHasPermissionToMoveAtLeastOneFailureStage(e)}showMissPermissionError(){BX.UI.Notification.Center.notify({content:s.Loc.getMessage("CRM_STAGE_MISS_PERMISSION_TO_MOVE_STAGE"),autoHideDelay:2e3})}getStages(){return[...babelHelpers.classPrivateFieldLooseBase(this,a)[a].values()]}static createFromStageModels(e){const s=new Map;return e.forEach(e=>{s.set(e.getStatusId(),e)}),new r(s)}static createFromStageInfos(e){const s=[];return e.forEach(e=>{const t=o[e.semantics],a={...e};a.semantics=t,a.statusId=e.id;const r=new i.StageModel(a);s.push(r)}),r.createFromStageModels(s)}}e.PermissionChecker=r}(this.BX.Crm.Stage=this.BX.Crm.Stage||{},BX,BX,BX.Crm.Models);
+/* eslint-disable */
+this.BX = this.BX || {};
+this.BX.Crm = this.BX.Crm || {};
+(function (exports, main_core, ui_notification, crm_stageModel) {
+	'use strict';
+
+	const SEMANTICS_TRANSLATE_RULES = {
+		process: null,
+		success: 'S',
+		failure: 'F',
+		apology: 'F'
+	};
+	class PermissionChecker {
+		#stages;
+		constructor(stages) {
+			this.#stages = stages;
+		}
+		isHasPermissionToMove(fromStatusId, toStatusId) {
+			if (fromStatusId === toStatusId) {
+				return true;
+			}
+			const targetStage = this.#stages.get(toStatusId);
+			if (!targetStage) {
+				return false;
+			}
+			if (targetStage.isAllowedMoveToAnyStage()) {
+				return true;
+			}
+			const stage = this.#stages.get(fromStatusId);
+			if (!stage) {
+				return false;
+			}
+			return (stage.getStagesToMove()?.includes(toStatusId) ?? false) || stage.isAllowedMoveToAnyStage();
+		}
+		isHasPermissionToMoveAtLeastOneFailureStage(fromStatusId) {
+			return this.getStages().some(stage => {
+				return stage.isFailure() && this.isHasPermissionToMove(fromStatusId, stage.getStatusId());
+			});
+		}
+		isHasPermissionToMoveSuccessStage(fromStatusId) {
+			return this.getStages().some(stage => {
+				return stage.isSuccess() && this.isHasPermissionToMove(fromStatusId, stage.getStatusId());
+			});
+		}
+		isHasPermissionToMoveAtLeastOneTerminationStage(fromStatusId) {
+			return this.isHasPermissionToMoveSuccessStage(fromStatusId) || this.isHasPermissionToMoveAtLeastOneFailureStage(fromStatusId);
+		}
+		showMissPermissionError() {
+			BX.UI.Notification.Center.notify({
+				content: main_core.Loc.getMessage('CRM_STAGE_MISS_PERMISSION_TO_MOVE_STAGE'),
+				autoHideDelay: 2000
+			});
+		}
+		getStages() {
+			return [...this.#stages.values()];
+		}
+		static createFromStageModels(stages) {
+			const stagesMap = new Map();
+			stages.forEach(stage => {
+				stagesMap.set(stage.getStatusId(), stage);
+			});
+			return new PermissionChecker(stagesMap);
+		}
+		static createFromStageInfos(stageInfos) {
+			const stageModels = [];
+			stageInfos.forEach(stageInfo => {
+				const stageModelSemantics = SEMANTICS_TRANSLATE_RULES[stageInfo.semantics];
+				const stageModelData = {
+					...stageInfo
+				};
+				stageModelData.semantics = stageModelSemantics;
+				stageModelData.statusId = stageInfo.id;
+				const stageModel = new crm_stageModel.StageModel(stageModelData);
+				stageModels.push(stageModel);
+			});
+			return PermissionChecker.createFromStageModels(stageModels);
+		}
+	}
+
+	exports.PermissionChecker = PermissionChecker;
+
+})(this.BX.Crm.Stage = this.BX.Crm.Stage || {}, BX, BX, BX.Crm.Models);
 //# sourceMappingURL=permission-checker.bundle.js.map

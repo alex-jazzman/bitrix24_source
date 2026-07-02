@@ -285,6 +285,11 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 		#handleOnClick = () => {
 			const { onClick, onDisabledClick } = this.props;
 
+			if (this.isLoading())
+			{
+				return;
+			}
+
 			if (onClick && !this.#isDisabled())
 			{
 				onClick();
@@ -298,6 +303,11 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 
 		#handleOnLongClick = () => {
 			const { onLongClick } = this.props;
+
+			if (this.isLoading())
+			{
+				return;
+			}
 
 			if (onLongClick && !this.#isDisabled())
 			{

@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS['CRM_ENT_DETAIL_MAIN_TAB'] = "Общие";
 $MESS['CRM_ENT_DETAIL_COPY_LEAD_URL'] = "Скопировать ссылку на лид в буфер обмена";
 $MESS['CRM_ENT_DETAIL_COPY_DEAL_URL'] = "Скопировать ссылку на сделку в буфер обмена";
@@ -37,11 +37,11 @@ $MESS['CRM_ENT_DETAIL_COPY_QUOTE_URL_MSGVER_1'] = "Скопировать ссы
 $MESS['CRM_ENT_DETAIL_QUOTE_URL_COPIED_MSGVER_1'] = "Ссылка на предложение скопирована в буфер обмена";
 $MESS["CRM_ENT_DETAIL_QUOTE_DELETE_DIALOG_TITLE_MSGVER_1"] = "Удаление предложения";
 $MESS["CRM_ENT_DETAIL_QUOTE_DELETE_DIALOG_MESSAGE_MSGVER_1"] = "Вы уверены, что хотите удалить это предложение?";
-$MESS["CRM_ENT_DETAIL_LEAD_EXCLUDE_DIALOG_TITLE"] = "Добавление лида в исключения";
-$MESS["CRM_ENT_DETAIL_LEAD_EXCLUDE_DIALOG_MESSAGE"] = "Вы уверены, что хотите добавить этот лид в список исключений?";
-$MESS["CRM_ENT_DETAIL_DEAL_EXCLUDE_DIALOG_TITLE"] = "Добавление сделки в исключения";
-$MESS["CRM_ENT_DETAIL_DEAL_EXCLUDE_DIALOG_MESSAGE"] = "Вы уверены, что хотите добавить эту сделку в список исключений?";
-$MESS["CRM_ENT_DETAIL_EXCLUDE_DIALOG_MESSAGE_HELP"] = "Подробнее о списке исключений";
+$MESS["CRM_ENT_DETAIL_LEAD_EXCLUDE_DIALOG_TITLE"] = "Добавление лида в стоп-лист";
+$MESS["CRM_ENT_DETAIL_LEAD_EXCLUDE_DIALOG_MESSAGE"] = "Вы уверены, что хотите добавить этот лид в стоп-лист?";
+$MESS["CRM_ENT_DETAIL_DEAL_EXCLUDE_DIALOG_TITLE"] = "Добавление сделки в стоп-лист";
+$MESS["CRM_ENT_DETAIL_DEAL_EXCLUDE_DIALOG_MESSAGE"] = "Вы уверены, что хотите добавить эту сделку в стоп-лист?";
+$MESS["CRM_ENT_DETAIL_EXCLUDE_DIALOG_MESSAGE_HELP"] = "Подробнее о стоп-листе";
 $MESS["CRM_ENT_DETAIL_DEAL_CATEGORY_DLG_TITLE"] = "Настройка сделки";
 $MESS["CRM_ENT_DETAIL_DEAL_CATEGORY_DLG_FIELD"] = "Воронка";
 $MESS["CRM_ENT_DETAIL_BUTTON_SAVE"] = "Сохранить";

@@ -49,3 +49,6 @@ $MESS['MAIN_MAIL_FORM_CRM_EMPTY_SEARCH_SUBTITLE_QUOTE'] = 'Проверьте о
 
 $MESS['MAIN_MAIL_FORM_CRM_EMPTY_SEARCH_TITLE'] = 'Такого получателя нет в этом элементе';
 $MESS['MAIN_MAIL_FORM_CRM_EMPTY_SEARCH_SUBTITLE'] = 'Проверьте опечатки или добавьте электронную почту в карточку компании или контакта из этого элемента';
+
+$MESS['MAIN_MAIL_FORM_FIELD_MENU'] = 'Дополнительно';
+$MESS['MAIN_MAIL_FORM_QUOTE_SHOW'] = 'Показать цитату';

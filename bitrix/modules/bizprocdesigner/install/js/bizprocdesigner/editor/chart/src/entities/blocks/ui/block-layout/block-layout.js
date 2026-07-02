@@ -1,9 +1,21 @@
-import './block-layout.css';
-import { computed, toValue, useTemplateRef, useSlots, inject } from 'ui.vue3';
-import { useContextMenu, useBlockDiagram } from 'ui.block-diagram';
+import { computed, toValue, useSlots } from 'ui.vue3';
+import { useBlockDiagram } from 'ui.block-diagram';
 import { Outline } from 'ui.icon-set.api.vue';
 import { IconButton } from '../../../../shared/ui';
-import { ACTIVATION_STATUS } from '../../../../shared/constants';
+
+import type { Block } from '../../../../shared/typed';
+
+import './block-layout.css';
+
+type BlockLayoutProps = {
+	block: Block,
+	showTopMenu: boolean,
+	dragged: boolean,
+	resized: boolean,
+	disabled: boolean,
+	isActivationVisible: boolean,
+	hoverable: boolean,
+};
 
 type BlockLayoutSetup = {
 	iconSet: { [string]: string };
@@ -31,8 +43,19 @@ const STATUS_CLASS_NAMES = {
 	hide: '--hide',
 };
 
-const OFFSET_MORE_MENU_RIGHT = 15;
-const OFFSET_MORE_MENU_TOP = 10;
+const CONTENT_CLASS_NAMES = {
+	base: 'editor-chart-block-layout__content',
+	hasHeader: '--has-header',
+};
+
+export const BLOCK_LAYOUT_SLOT_NAMES = {
+	TOP_MENU_TITLE: 'top-menu-title',
+	TOP_MENU: 'top-menu',
+	HEADER: 'header',
+	DEFAULT: 'default',
+	LEFT: 'left',
+	STATUS: 'status',
+};
 
 // @vue/component
 export const BlockLayout = {
@@ -46,11 +69,7 @@ export const BlockLayout = {
 			type: Object,
 			required: true,
 		},
-		moreMenuItems: {
-			type: Array,
-			default: () => ([]),
-		},
-		topMenuOpened: {
+		showTopMenu: {
 			type: Boolean,
 			default: false,
 		},
@@ -75,18 +94,11 @@ export const BlockLayout = {
 			default: true,
 		},
 	},
-	setup(props): BlockLayoutSetup
+	setup(props: BlockLayoutProps, ctx: {...}): BlockLayoutSetup
 	{
-		const buttonMore = useTemplateRef('buttonMore');
 		const slots = useSlots();
-		const {
-			isOpen,
-			showMenu,
-			closeContextMenu,
-		} = useContextMenu();
 		const { highlitedBlockIds, isSelectionActive } = useBlockDiagram();
 
-		const isShowButtonMore = computed(() => props.moreMenuItems.length > 0);
 		const isGroupSelected = computed(() => {
 			return (toValue(highlitedBlockIds) || []).length > 1;
 		});
@@ -96,15 +108,19 @@ export const BlockLayout = {
 			return {
 				[BLOCK_LAYOUT_CLASS_NAMES.base]: true,
 				[BLOCK_LAYOUT_CLASS_NAMES.hoverable]: isHoverEnabled,
+				[BLOCK_LAYOUT_CLASS_NAMES.openedMenu]: props.showTopMenu,
 			};
 		});
 
 		const topMenuClassNames = computed((): { [string]: boolean } => {
-			const isMenuHidden = props.dragged || props.resized || toValue(isSelectionActive) || toValue(isGroupSelected);
+			const isMenuHidden = props.dragged
+				|| props.resized
+				|| toValue(isSelectionActive)
+				|| toValue(isGroupSelected);
 
 			return {
 				[TOP_MENU_CLASS_NAMES.base]: true,
-				[TOP_MENU_CLASS_NAMES.show]: toValue(isOpen) || props.topMenuOpened,
+				[TOP_MENU_CLASS_NAMES.show]: props.showTopMenu,
 				[TOP_MENU_CLASS_NAMES.hide]: isMenuHidden,
 			};
 		});
@@ -114,63 +130,26 @@ export const BlockLayout = {
 			[STATUS_CLASS_NAMES.hide]: props.dragged || props.resized || !slots.status,
 		}));
 
-		function onOpenMoreMenu(): void
-		{
-			const { top = 0, right = 0 } = toValue(buttonMore)
-				?.$el?.getBoundingClientRect() ?? {};
-
-			showMenu(
-				{
-					clientX: right + OFFSET_MORE_MENU_RIGHT,
-					clientY: top - OFFSET_MORE_MENU_TOP,
-				},
-				{ items: props.moreMenuItems },
-			);
-		}
-
-		const onToggleBlockActivation = inject('onToggleBlockActivation');
-		function handleIconClick(): void
-		{
-			if (!onToggleBlockActivation)
-			{
-				console.warn('onToggleBlockActivation is not provided');
-
-				return;
-			}
-
-			onToggleBlockActivation(props.block.id);
-		}
-
-		function onCloseMoreMenu(): void
-		{
-			closeContextMenu();
-		}
+		const contentClassNames = computed((): { [string]: boolean } => {
+			return {
+				[CONTENT_CLASS_NAMES.base]: true,
+				[CONTENT_CLASS_NAMES.hasHeader]: ctx.slots.header,
+			};
+		});
 
 		return {
 			iconSet: Outline,
-			isOpen,
-			isShowButtonMore,
+			slotNames: BLOCK_LAYOUT_SLOT_NAMES,
 			blockLayoutClassNames,
 			topMenuClassNames,
 			statusClassNames,
-			onOpenMoreMenu,
-			onCloseMoreMenu,
-			handleIconClick,
+			contentClassNames,
 		};
-	},
-	computed: {
-		activationIcon(): string
-		{
-			return this.block.activity.Activated === ACTIVATION_STATUS.ACTIVE
-				? this.iconSet.PAUSE_L
-				: this.iconSet.PLAY_L;
-		},
 	},
 	template: `
 		<div
 			:class="blockLayoutClassNames"
 			ref="editorBlockMenu"
-			@mousedown="onCloseMoreMenu"
 		>
 			<div 
 				:class="topMenuClassNames"
@@ -188,25 +167,24 @@ export const BlockLayout = {
 					<slot
 						name="top-menu"
 					/>
-					<IconButton
-						v-if="isActivationVisible"
-						:icon-name="activationIcon"
-						@click="handleIconClick"
-					/>
-					<IconButton
-						v-if="isShowButtonMore"
-						ref="buttonMore"
-						:active="isOpen"
-						:size="16"
-						:icon-name="iconSet.MORE_L"
-						@click="onOpenMoreMenu"
-					/>
 				</div>
 			</div>
-			<div class="editor-chart-block-layout__content">
+			<div
+				v-if="$slots.header"
+				class="editor-chart-block-layout__header"
+			>
+				<slot name="header"/>
+			</div>
+			<div
+				v-if="$slots.default"
+				:class="contentClassNames"
+			>
 				<slot/>
 			</div>
-			<div class="editor-chart-block-layout__left-content">
+			<div
+				v-if="$slots.left"
+				class="editor-chart-block-layout__left-content"
+			>
 				<slot name="left"/>
 			</div>
 			<div :class="statusClassNames">

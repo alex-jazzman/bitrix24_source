@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["MAIL_CLIENT_CONFIG_DIRS_TITLE"] = 'Настройки папок';
 $MESS["MAIL_CLIENT_CONFIG_DIRS_SYNC"] = 'Папки для синхронизации';
 $MESS["MAIL_CLIENT_CONFIG_DIRS_FOR"] = 'Назначения папок';
@@ -14,6 +14,9 @@ $MESS["MAIL_CLIENT_CONFIG_DIRS_BTN_CANCEL"] = "Отменить";
 $MESS["MAIL_CLIENT_CONFIG_DIRS_BTN_SELECT_ALL"] = "Выбрать все";
 $MESS["MAIL_CLIENT_CONFIG_DIRS_BTN_CANCEL_ALL"] = "Отменить все";
 
-$MESS["MAIL_CLIENT_MAILBOX_NOT_FOUND"] = "Ящик не найден";
-$MESS["MAIL_CLIENT_CONFIG_DIRS_MAX_LEVEL_DIRS"] = "Превышен максимальный уровень вложенности";
+$MESS["MAIL_CLIENT_MAILBOX_NOT_FOUND"] = 'Ящик не найден';
+$MESS["MAIL_CLIENT_CONFIG_DIRS_MAX_LEVEL_DIRS"] = 'Превышен максимальный уровень вложенности';
 $MESS["MAIL_CLIENT_CONFIG_DIRS_NO_NESTED_FOLDERS"] = "В этой папке нет дополнительных папок";
+
+$MESS["MAIL_CLIENT_CONFIG_DIRS_EXPAND_FOLDER"] = "Развернуть папку";
+$MESS["MAIL_CLIENT_CONFIG_DIRS_COLLAPSE_FOLDER"] = "Свернуть папку";

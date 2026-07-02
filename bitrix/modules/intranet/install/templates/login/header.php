@@ -36,6 +36,7 @@ Loader::includeModule('intranet');
 	<link rel="preload" href="/bitrix/templates/login/images/bg/<?= $urlSubCut ?>/horizontal-1024-preview.webp" as="image">
 	<link rel="preload" href="/bitrix/templates/login/images/bg/<?= $urlSubCut ?>/vert-1024-preview.webp" as="image">
 	<?php $APPLICATION->ShowCSS(true, true); ?>
+	<?php $APPLICATION->ShowHead(); ?>
 	<?php $APPLICATION->ShowHeadStrings(); ?>
 	<title><?php $APPLICATION->ShowTitle() ?></title>
 </head>
@@ -47,6 +48,7 @@ $logoUrl = \Bitrix\Intranet\Portal::getInstance()->getSettings()->getDefaultLogo
 
 <body class="<?= $seasonCssClassName ?> <?php $APPLICATION->ShowProperty("BodyClass"); ?>">
 <?php
+$APPLICATION->ShowPanel();
 $APPLICATION->SetPageProperty('BodyClass', 'home ' . LANGUAGE_ID);
 ?>
 <div class="intranet-body" id="login-auth-container">

@@ -29,12 +29,6 @@ export default
 		action: Object,
 	},
 
-	data(): Object
-	{
-		return {
-			uiButton: Object.freeze(null),
-		};
-	},
 	computed:
 	{
 		buttonContainerRef(): HTMLElement | undefined {

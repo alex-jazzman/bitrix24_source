@@ -1,6 +1,6 @@
-import { BuilderModel, GetterTree, ActionTree, MutationTree } from 'ui.vue3.vuex';
+import { BuilderModel, type GetterTree, type ActionTree, type MutationTree } from 'ui.vue3.vuex';
 
-import type { InputActionType } from 'im.v2.lib.input-action';
+import { type InputActionType } from 'im.v2.lib.input-action';
 
 export type InputActionState = {
 	collection: {

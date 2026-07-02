@@ -162,8 +162,8 @@ $isConfirmRegistrationBlockVisible = (
 							/>
 							<i
 								class="ui-icon-set --opened-eye intranet-text-input__eye-icon"
-								@mousedown="onEyeMouseDown('PASSWORD')"
-								@mouseup="onEyeMouseUp('PASSWORD')"
+								@pointerdown="onEyeMouseDown('PASSWORD')"
+								@pointerup="onEyeMouseUp('PASSWORD')"
 							></i>
 						</div>
 						<div class="intranet-text-input intranet-login-enter-form__login">
@@ -179,8 +179,8 @@ $isConfirmRegistrationBlockVisible = (
 							/>
 							<i
 								class="ui-icon-set --opened-eye intranet-text-input__eye-icon"
-								@mousedown="onEyeMouseDown('CONFIRM_PASSWORD')"
-								@mouseup="onEyeMouseUp('CONFIRM_PASSWORD')"
+								@pointerdown="onEyeMouseDown('CONFIRM_PASSWORD')"
+								@pointerup="onEyeMouseUp('CONFIRM_PASSWORD')"
 							></i>
 						</div>
 						<div class="intranet-password-edit-form__indicators-wrapper">

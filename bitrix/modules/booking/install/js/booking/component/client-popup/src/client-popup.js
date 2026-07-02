@@ -1,4 +1,3 @@
-import { PopupOptions } from 'main.popup';
 import { StickyPopup } from 'booking.component.popup';
 import { ClientPopupContent } from './client-popup-content/client-popup-content';
 

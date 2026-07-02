@@ -10,11 +10,11 @@ return [
 		'./dist/access.bundle.js',
 	],
 	'rel' => [
+		'im.v2.const',
+		'im.v2.lib.feature',
 		'im.v2.lib.rest',
 		'main.core',
 		'main.popup',
-		'im.v2.const',
-		'im.v2.lib.feature',
 	],
 	'skip_core' => false,
 ];

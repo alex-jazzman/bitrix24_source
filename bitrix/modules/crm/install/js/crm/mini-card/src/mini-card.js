@@ -2,23 +2,16 @@ import { Event, Tag, Type, Text, Loc } from 'main.core';
 import { BaseEvent } from 'main.core.events';
 import { Popup } from 'main.popup';
 import { UI } from 'ui.notification';
-import { BitrixVue, VueCreateAppResult, reactive } from 'ui.vue3';
+import { BitrixVue, type VueCreateAppResult, reactive } from 'ui.vue3';
+
 import { MiniCardComponent } from './components/mini-card-component';
 import { MiniCardItem } from './lib/model/mini-card-item';
-import type { MiniCardResolver } from './lib/model/mini-card-resolver';
+import { type MiniCardResolver } from './lib/model/mini-card-resolver';
+import { EVENTS } from './lib/types/events';
 
 export type MiniCardOptions = {
 	miniCardResolver: MiniCardResolver,
 	bindElement: HTMLElement,
-};
-
-export const EVENTS = {
-	GLOBAL_ON_CLOSE_MAIN_POPUP: 'BX.Crm.MiniCard:OnMainPopupClose',
-	GLOBAL_ON_MOUSE_ENTER_CHILD_POPUP: 'BX.Crm.MiniCard:onMouseEnterChildPopup',
-	GLOBAL_ON_MOUSE_LEAVE_CHILD_POPUP: 'BX.Crm.MiniCard:onMouseLeaveChildPopup',
-	INTERNAL_ON_CLOSE_MAIN_POPUP: 'crm:mini-card:on-close-main-popup',
-	INTERNAL_ON_MOUSE_ENTER_CHILD_POPUP: 'crm:mini-card:on-mouse-enter-child-popup',
-	INTERNAL_ON_MOUSE_LEAVE_CHILD_POPUP: 'crm:mini-card:on-mouse-leave-child-popup',
 };
 
 export class MiniCard

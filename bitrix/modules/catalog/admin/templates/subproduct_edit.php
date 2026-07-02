@@ -18,6 +18,10 @@ global $adminPage;
 /** @global CAdminSidePanelHelper $adminSidePanelHelper */
 global $adminSidePanelHelper;
 
+\Bitrix\Main\UI\Extension::load('catalog.admin-money-field');
+
+$request = Main\Context::getCurrent()->getRequest();
+
 if (
 	isset($urlBuilderId)
 	&& in_array(
@@ -643,13 +647,19 @@ else
 			?>
 			<td width="40%"><?= GetMessage("C2IT_COST_PRICE_EXT")?></td>
 			<td width="60%"><?php
-				$isDisabled = (!$allowEdit || $bUseStoreControl)
-					? ' disabled'
-					: ''
-				;
+				$disablePurchasingPrice = !$allowEdit || $bUseStoreControl;
+				$isDisabled = $disablePurchasingPrice ? ' disabled' : '';
 				?>
 				<input type="hidden" id="SUBCAT_PURCHASING_PRICE_hidden" name="SUBCAT_PURCHASING_PRICE" value="<?= htmlspecialcharsbx($str_CAT_PURCHASING_PRICE) ?>">
-				<input type="text"<?= $isDisabled; ?> id="SUBCAT_PURCHASING_PRICE" name="SUBCAT_PURCHASING_PRICE" value="<?= htmlspecialcharsbx($str_CAT_PURCHASING_PRICE) ?>" size="30">
+				<?= CCatalogAdminTools::renderMoneyEditField([
+						'NAME' => 'SUBCAT_PURCHASING_PRICE',
+						'ID' => 'SUBCAT_PURCHASING_PRICE',
+						'VALUE' => $str_CAT_PURCHASING_PRICE,
+						'CURRENCY' => $arBaseProduct['PURCHASING_CURRENCY'],
+						'CURRENCY_CONTROL_ID' => 'SUBCAT_PURCHASING_CURRENCY',
+						'DISABLED' => $disablePurchasingPrice,
+						'SIZE' => 30,
+					]); ?>
 				<input type="hidden" id="SUBCAT_PURCHASING_CURRENCY_hidden" name="SUBCAT_PURCHASING_CURRENCY" value="<?= htmlspecialcharsbx($arBaseProduct['PURCHASING_CURRENCY']) ?>"><?php
 				echo CCurrency::SelectBox("SUBCAT_PURCHASING_CURRENCY", $arBaseProduct['PURCHASING_CURRENCY'], "", true, "", "id='SUBCAT_PURCHASING_CURRENCY' $isDisabled");?>
 			</td>
@@ -930,7 +940,27 @@ else
 			if (trim($str_CAT_BASE_PRICE) != '' && doubleval($str_CAT_BASE_PRICE) >= 0)
 				$boolBaseExistPrice = true;
 			?>
-			<input type="text"<?= $disablePrice; ?> id="SUBCAT_BASE_PRICE" name="SUBCAT_BASE_PRICE" value="<?= htmlspecialcharsbx($str_CAT_BASE_PRICE) ?>" size="30" OnBlur="ChangeSubBasePrice(this)">
+			<?php
+			$str_CAT_BASE_CURRENCY_view = '';
+			if ($arBasePrice)
+			{
+				$str_CAT_BASE_CURRENCY_view = $arBasePrice["CURRENCY"];
+			}
+			if ($bVarsFromForm)
+			{
+				$str_CAT_BASE_CURRENCY_view = $SUBCAT_BASE_CURRENCY;
+			}
+			echo CCatalogAdminTools::renderMoneyEditField([
+				'NAME' => 'SUBCAT_BASE_PRICE',
+				'ID' => 'SUBCAT_BASE_PRICE',
+				'VALUE' => $str_CAT_BASE_PRICE,
+				'CURRENCY' => $str_CAT_BASE_CURRENCY_view,
+				'CURRENCY_CONTROL_ID' => 'SUBCAT_BASE_CURRENCY',
+				'DISABLED' => !$allowEditPrices,
+				'SIZE' => 30,
+				'ATTRIBUTES' => 'OnBlur="ChangeSubBasePrice(this)"',
+			]);
+			?>
 		</td>
 	</tr>
 	<tr id="tr_SUB_BASE_CURRENCY" style="display: <?= ($bUseExtendedPrice ? 'none' : 'table-row'); ?>;">
@@ -1028,9 +1058,9 @@ SetSubFieldsStyle('subcatalog_vat_table');
 			}
 			if ($bVarsFromForm)
 			{
-				$str_CAT_EXTRA = ${"SUBCAT_EXTRA_".$arCatalogGroup["ID"]};
-				$str_CAT_PRICE = ${"SUBCAT_PRICE_".$arCatalogGroup["ID"]};
-				$str_CAT_CURRENCY = ${"SUBCAT_CURRENCY_".$arCatalogGroup["ID"]};
+				$str_CAT_EXTRA = $request->getPost("SUBCAT_EXTRA_".$arCatalogGroup["ID"]) ?? '';
+				$str_CAT_PRICE = $request->getPost("SUBCAT_PRICE_".$arCatalogGroup["ID"]) ?? '';
+				$str_CAT_CURRENCY = $request->getPost("SUBCAT_CURRENCY_".$arCatalogGroup["ID"]) ?? '';
 			}
 			if (trim($str_CAT_PRICE) != '' && doubleval($str_CAT_PRICE) >= 0)
 				$boolBaseExistPrice = true;
@@ -1052,7 +1082,16 @@ SetSubFieldsStyle('subcatalog_vat_table');
 					?>
 				</td>
 				<td valign="top" align="center">
-					<input type="text"<?= $disablePrice; ?> id="SUBCAT_PRICE_<?= $arCatalogGroup["ID"] ?>" name="SUBCAT_PRICE_<?= $arCatalogGroup["ID"] ?>" value="<?= htmlspecialcharsbx($str_CAT_PRICE) ?>" size="8" OnChange="ChangeSubPrice(<?= $arCatalogGroup["ID"] ?>)">
+					<?= CCatalogAdminTools::renderMoneyEditField([
+							'NAME' => 'SUBCAT_PRICE_'.$arCatalogGroup["ID"],
+							'ID' => 'SUBCAT_PRICE_'.$arCatalogGroup["ID"],
+							'VALUE' => $str_CAT_PRICE,
+							'CURRENCY' => $str_CAT_CURRENCY,
+							'CURRENCY_CONTROL_ID' => 'SUBCAT_CURRENCY_'.$arCatalogGroup["ID"],
+							'DISABLED' => !$allowEditPrices,
+							'SIZE' => 8,
+							'ATTRIBUTES' => 'OnChange="ChangeSubPrice('.$arCatalogGroup["ID"].')"',
+						]); ?>
 				</td>
 				<td valign="top" align="center">
 					<?php
@@ -1529,10 +1568,10 @@ function HideNotice()
 
 								if ($bVarsFromForm)
 								{
-									$str_CAT_BASE_QUANTITY_FROM = ${"SUBCAT_BASE_QUANTITY_FROM_".$ind};
-									$str_CAT_BASE_QUANTITY_TO = ${"SUBCAT_BASE_QUANTITY_TO_".$ind};
-									$str_CAT_BASE_PRICE = ${"SUBCAT_BASE_PRICE_".$ind};
-									$str_CAT_BASE_CURRENCY = ${"SUBCAT_BASE_CURRENCY_".$ind};
+									$str_CAT_BASE_QUANTITY_FROM = $request->getPost("SUBCAT_BASE_QUANTITY_FROM_".$ind) ?? '';
+									$str_CAT_BASE_QUANTITY_TO = $request->getPost("SUBCAT_BASE_QUANTITY_TO_".$ind) ?? '';
+									$str_CAT_BASE_PRICE = $request->getPost("SUBCAT_BASE_PRICE_".$ind) ?? '';
+									$str_CAT_BASE_CURRENCY = $request->getPost("SUBCAT_BASE_CURRENCY_".$ind) ?? '';
 								}
 								if (trim($str_CAT_BASE_PRICE) != '' && doubleval($str_CAT_BASE_PRICE) >= 0)
 									$boolExistPrice = true;
@@ -1540,17 +1579,26 @@ function HideNotice()
 								?>
 								<tr id="submodel3">
 									<td valign="top" align="center">
-										<input type="text" <?= $allowEditPrices; ?> name="SUBCAT_BASE_QUANTITY_FROM_<?= $ind ?>" value="<?= ($str_CAT_BASE_QUANTITY_FROM != 0 ? htmlspecialcharsbx($str_CAT_BASE_QUANTITY_FROM) : "") ?>" size="3" OnChange="ChangeSubBaseQuantityEx(this)">
+										<input type="text" <?= $disablePrice; ?> name="SUBCAT_BASE_QUANTITY_FROM_<?= $ind ?>" value="<?= ($str_CAT_BASE_QUANTITY_FROM != 0 ? htmlspecialcharsbx($str_CAT_BASE_QUANTITY_FROM) : "") ?>" size="3" OnChange="ChangeSubBaseQuantityEx(this)">
 										<input type="hidden" name="SUBCAT_BASE_ID[<?= $ind ?>]" value="<?= htmlspecialcharsbx($str_CAT_BASE_ID) ?>">
 									</td>
 									<td valign="top" align="center">
-										<input type="text" <?= $allowEditPrices; ?> name="SUBCAT_BASE_QUANTITY_TO_<?= $ind ?>" value="<?= ($str_CAT_BASE_QUANTITY_TO != 0 ? htmlspecialcharsbx($str_CAT_BASE_QUANTITY_TO) : "") ?>" size="3" OnChange="ChangeSubBaseQuantityEx(this)">
+										<input type="text" <?= $disablePrice; ?> name="SUBCAT_BASE_QUANTITY_TO_<?= $ind ?>" value="<?= ($str_CAT_BASE_QUANTITY_TO != 0 ? htmlspecialcharsbx($str_CAT_BASE_QUANTITY_TO) : "") ?>" size="3" OnChange="ChangeSubBaseQuantityEx(this)">
 									</td>
 									<td valign="top" align="center">
-										<input type="text" <?= $allowEditPrices; ?> id="SUBCAT_BASE_PRICE_<?= $ind ?>" name="SUBCAT_BASE_PRICE_<?= $ind ?>" value="<?= htmlspecialcharsbx($str_CAT_BASE_PRICE) ?>" size="15" OnBlur="ChangeSubBasePriceEx(this)">
+										<?= CCatalogAdminTools::renderMoneyEditField([
+											'NAME' => 'SUBCAT_BASE_PRICE_'.$ind,
+											'ID' => 'SUBCAT_BASE_PRICE_'.$ind,
+											'VALUE' => $str_CAT_BASE_PRICE,
+											'CURRENCY' => $str_CAT_BASE_CURRENCY,
+											'CURRENCY_CONTROL_ID' => 'SUBCAT_BASE_CURRENCY_'.$ind,
+											'DISABLED' => !$allowEditPrices,
+											'SIZE' => 15,
+											'ATTRIBUTES' => 'OnBlur="ChangeSubBasePriceEx(this)"',
+										]); ?>
 									</td>
 									<td valign="top" align="center">
-										<select id="SUBCAT_BASE_CURRENCY_<?= $ind ?>" name="SUBCAT_BASE_CURRENCY_<?= $ind ?>" <?= $allowEditPrices; ?> OnChange="ChangeSubBaseCurrencyEx(this)">
+										<select id="SUBCAT_BASE_CURRENCY_<?= $ind ?>" name="SUBCAT_BASE_CURRENCY_<?= $ind ?>" <?= $disablePrice; ?> OnChange="ChangeSubBaseCurrencyEx(this)">
 											<?php
 											foreach ($currencyList as &$currency)
 											{
@@ -1570,27 +1618,36 @@ function HideNotice()
 								{
 									$boolExistPrice = false;
 									$ind++;
-									$str_CAT_BASE_QUANTITY_FROM = ${"SUBCAT_BASE_QUANTITY_FROM_".$ind};
-									$str_CAT_BASE_QUANTITY_TO = ${"SUBCAT_BASE_QUANTITY_TO_".$ind};
-									$str_CAT_BASE_PRICE = ${"SUBCAT_BASE_PRICE_".$ind};
-									$str_CAT_BASE_CURRENCY = ${"SUBCAT_BASE_CURRENCY_".$ind};
+									$str_CAT_BASE_QUANTITY_FROM = $request->getPost("SUBCAT_BASE_QUANTITY_FROM_".$ind) ?? '';
+									$str_CAT_BASE_QUANTITY_TO = $request->getPost("SUBCAT_BASE_QUANTITY_TO_".$ind) ?? '';
+									$str_CAT_BASE_PRICE = $request->getPost("SUBCAT_BASE_PRICE_".$ind) ?? '';
+									$str_CAT_BASE_CURRENCY = $request->getPost("SUBCAT_BASE_CURRENCY_".$ind) ?? '';
 									if (trim($str_CAT_BASE_PRICE) != '' && doubleval($str_CAT_BASE_PRICE) >= 0)
 										$boolExistPrice = true;
 									$arCatPricesExist[$ind][$arBaseGroup['ID']] = ($boolExistPrice == true ? 'Y' : 'N');
 									?>
 									<tr id="submodel3">
 										<td valign="top" align="center">
-											<input type="text" <?= $allowEditPrices; ?> name="SUBCAT_BASE_QUANTITY_FROM_<?= $ind ?>" value="<?= ($str_CAT_BASE_QUANTITY_FROM != 0 ? htmlspecialcharsbx($str_CAT_BASE_QUANTITY_FROM) : "") ?>" size="3" OnChange="ChangeSubBaseQuantityEx(this)">
+											<input type="text" <?= $disablePrice; ?> name="SUBCAT_BASE_QUANTITY_FROM_<?= $ind ?>" value="<?= ($str_CAT_BASE_QUANTITY_FROM != 0 ? htmlspecialcharsbx($str_CAT_BASE_QUANTITY_FROM) : "") ?>" size="3" OnChange="ChangeSubBaseQuantityEx(this)">
 											<input type="hidden" name="SUBCAT_BASE_ID[<?= $ind ?>]" value="<?= 0 ?>">
 										</td>
 										<td valign="top" align="center">
-											<input type="text" <?= $allowEditPrices; ?> name="SUBCAT_BASE_QUANTITY_TO_<?= $ind ?>" value="<?= ($str_CAT_BASE_QUANTITY_TO != 0 ? htmlspecialcharsbx($str_CAT_BASE_QUANTITY_TO) : "") ?>" size="3" OnChange="ChangeSubBaseQuantityEx(this)">
+											<input type="text" <?= $disablePrice; ?> name="SUBCAT_BASE_QUANTITY_TO_<?= $ind ?>" value="<?= ($str_CAT_BASE_QUANTITY_TO != 0 ? htmlspecialcharsbx($str_CAT_BASE_QUANTITY_TO) : "") ?>" size="3" OnChange="ChangeSubBaseQuantityEx(this)">
 										</td>
 										<td valign="top" align="center">
-											<input type="text" <?= $allowEditPrices; ?> id="SUBCAT_BASE_PRICE_<?= $ind ?>" name="SUBCAT_BASE_PRICE_<?= $ind ?>" value="<?= htmlspecialcharsbx($str_CAT_BASE_PRICE) ?>" size="15" OnBlur="ChangeSubBasePriceEx(this)">
+											<?= CCatalogAdminTools::renderMoneyEditField([
+											'NAME' => 'SUBCAT_BASE_PRICE_'.$ind,
+											'ID' => 'SUBCAT_BASE_PRICE_'.$ind,
+											'VALUE' => $str_CAT_BASE_PRICE,
+											'CURRENCY' => $str_CAT_BASE_CURRENCY,
+											'CURRENCY_CONTROL_ID' => 'SUBCAT_BASE_CURRENCY_'.$ind,
+											'DISABLED' => !$allowEditPrices,
+											'SIZE' => 15,
+											'ATTRIBUTES' => 'OnBlur="ChangeSubBasePriceEx(this)"',
+										]); ?>
 										</td>
 										<td valign="top" align="center">
-											<select id="SUBCAT_BASE_CURRENCY_<?= $ind ?>" name="SUBCAT_BASE_CURRENCY_<?= $ind ?>" <?= $allowEditPrices; ?> OnChange="ChangeSubBaseCurrencyEx(this)">
+											<select id="SUBCAT_BASE_CURRENCY_<?= $ind ?>" name="SUBCAT_BASE_CURRENCY_<?= $ind ?>" <?= $disablePrice; ?> OnChange="ChangeSubBaseCurrencyEx(this)">
 												<?php
 												foreach ($currencyList as &$currency)
 												{
@@ -1610,16 +1667,16 @@ function HideNotice()
 								?>
 								<tr id="submodel3">
 									<td valign="top" align="center">
-										<input type="text" <?= $allowEditPrices; ?> name="SUBCAT_BASE_QUANTITY_FROM_<?= $ind ?>" value="" size="3" OnChange="ChangeSubBaseQuantityEx(this)">
+										<input type="text" <?= $disablePrice; ?> name="SUBCAT_BASE_QUANTITY_FROM_<?= $ind ?>" value="" size="3" OnChange="ChangeSubBaseQuantityEx(this)">
 									</td>
 									<td valign="top" align="center">
-										<input type="text" <?= $allowEditPrices; ?> name="SUBCAT_BASE_QUANTITY_TO_<?= $ind ?>" value="" size="3" OnChange="ChangeSubBaseQuantityEx(this)">
+										<input type="text" <?= $disablePrice; ?> name="SUBCAT_BASE_QUANTITY_TO_<?= $ind ?>" value="" size="3" OnChange="ChangeSubBaseQuantityEx(this)">
 									</td>
 									<td valign="top" align="center">
-										<input type="text" <?= $allowEditPrices; ?> id="SUBCAT_BASE_PRICE_<?= $ind ?>" name="SUBCAT_BASE_PRICE_<?= $ind ?>" value="" size="15" OnBlur="ChangeSubBasePriceEx(this)">
+										<input type="text" <?= $disablePrice; ?> id="SUBCAT_BASE_PRICE_<?= $ind ?>" name="SUBCAT_BASE_PRICE_<?= $ind ?>" value="" size="15" OnBlur="ChangeSubBasePriceEx(this)">
 									</td>
 									<td valign="top" align="center">
-										<select id="SUBCAT_BASE_CURRENCY_<?= $ind ?>" name="SUBCAT_BASE_CURRENCY_<?= $ind ?>" <?= $allowEditPrices; ?> OnChange="ChangeSubBaseCurrencyEx(this)">
+										<select id="SUBCAT_BASE_CURRENCY_<?= $ind ?>" name="SUBCAT_BASE_CURRENCY_<?= $ind ?>" <?= $disablePrice; ?> OnChange="ChangeSubBaseCurrencyEx(this)">
 											<?php
 											foreach ($currencyList as &$currency)
 											{
@@ -1710,11 +1767,11 @@ function HideNotice()
 
 								if ($bVarsFromForm)
 								{
-									$str_CAT_EXTRA = ${"SUBCAT_EXTRA_".$arCatalogGroup["ID"]."_".$ind};
-									$str_CAT_PRICE = ${"SUBCAT_PRICE_".$arCatalogGroup["ID"]."_".$ind};
-									$str_CAT_CURRENCY = ${"SUBCAT_CURRENCY_".$arCatalogGroup["ID"]."_".$ind};
-									$str_CAT_QUANTITY_FROM = ${"SUBCAT_BASE_QUANTITY_FROM_".$ind};
-									$str_CAT_QUANTITY_TO = ${"SUBCAT_BASE_QUANTITY_TO_".$ind};
+									$str_CAT_EXTRA = $request->getPost("SUBCAT_EXTRA_".$arCatalogGroup["ID"]."_".$ind) ?? '';
+									$str_CAT_PRICE = $request->getPost("SUBCAT_PRICE_".$arCatalogGroup["ID"]."_".$ind) ?? '';
+									$str_CAT_CURRENCY = $request->getPost("SUBCAT_CURRENCY_".$arCatalogGroup["ID"]."_".$ind) ?? '';
+									$str_CAT_QUANTITY_FROM = $request->getPost("SUBCAT_BASE_QUANTITY_FROM_".$ind) ?? '';
+									$str_CAT_QUANTITY_TO = $request->getPost("SUBCAT_BASE_QUANTITY_TO_".$ind) ?? '';
 								}
 								if (trim($str_CAT_PRICE) != '' && doubleval($str_CAT_PRICE) >= 0)
 									$boolExistPrice = true;
@@ -1731,17 +1788,26 @@ function HideNotice()
 									</td>
 									<td valign="top" align="center">
 										<?php
-										echo CExtra::SelectBox("SUBCAT_EXTRA_".$arCatalogGroup["ID"]."_".$ind, $str_CAT_EXTRA, GetMessage("VAL_NOT_SET"), "ChangeSubExtraEx(this)", $allowEditPrices.' id="'."SUBCAT_EXTRA_".$arCatalogGroup["ID"]."_".$ind.'" ');
+										echo CExtra::SelectBox("SUBCAT_EXTRA_".$arCatalogGroup["ID"]."_".$ind, $str_CAT_EXTRA, GetMessage("VAL_NOT_SET"), "ChangeSubExtraEx(this)", $disablePrice.' id="'."SUBCAT_EXTRA_".$arCatalogGroup["ID"]."_".$ind.'" ');
 										?>
 
 									</td>
 									<td valign="top" align="center">
-										<input type="text" <?= $allowEditPrices; ?> id="SUBCAT_PRICE_<?= $arCatalogGroup["ID"] ?>_<?= $ind ?>" name="SUBCAT_PRICE_<?= $arCatalogGroup["ID"] ?>_<?= $ind ?>" value="<?= htmlspecialcharsbx($str_CAT_PRICE) ?>" size="10" OnChange="ptSubPriceChangeEx(this)">
+										<?= CCatalogAdminTools::renderMoneyEditField([
+											'NAME' => 'SUBCAT_PRICE_'.$arCatalogGroup["ID"].'_'.$ind,
+											'ID' => 'SUBCAT_PRICE_'.$arCatalogGroup["ID"].'_'.$ind,
+											'VALUE' => $str_CAT_PRICE,
+											'CURRENCY' => $str_CAT_CURRENCY,
+											'CURRENCY_CONTROL_ID' => 'SUBCAT_CURRENCY_'.$arCatalogGroup["ID"].'_'.$ind,
+											'DISABLED' => !$allowEditPrices,
+											'SIZE' => 10,
+											'ATTRIBUTES' => 'OnChange="ptSubPriceChangeEx(this)"',
+										]); ?>
 
 									</td>
 									<td valign="top" align="center">
 
-											<?= CCurrency::SelectBox("SUBCAT_CURRENCY_".$arCatalogGroup["ID"]."_".$ind, $str_CAT_CURRENCY, GetMessage("VAL_BASE"), true, "ChangeSubCurrencyEx(this)", $allowEditPrices.' id="'."SUBCAT_CURRENCY_".$arCatalogGroup["ID"]."_".$ind.'" ') ?>
+											<?= CCurrency::SelectBox("SUBCAT_CURRENCY_".$arCatalogGroup["ID"]."_".$ind, $str_CAT_CURRENCY, GetMessage("VAL_BASE"), true, "ChangeSubCurrencyEx(this)", $disablePrice.' id="'."SUBCAT_CURRENCY_".$arCatalogGroup["ID"]."_".$ind.'" ') ?>
 											<script>
 												jsUtils.addEvent(window, 'load', function() {ChangeSubExtraEx(BX('SUBCAT_EXTRA_<?= $arCatalogGroup["ID"] ?>_<?= $ind ?>'));});
 											</script>
@@ -1751,17 +1817,17 @@ function HideNotice()
 								<?php
 							}
 
-							if ($bVarsFromForm && $ind < intval(${"SUBCAT_ROW_COUNTER_".$arCatalogGroup["ID"]}))
+							if ($bVarsFromForm && $ind < intval($request->getPost("SUBCAT_ROW_COUNTER_".$arCatalogGroup["ID"])))
 							{
-								for ($i = $ind + 1; $i <= intval(${"SUBCAT_ROW_COUNTER_".$arCatalogGroup["ID"]}); $i++)
+								for ($i = $ind + 1; $i <= intval($request->getPost("SUBCAT_ROW_COUNTER_".$arCatalogGroup["ID"])); $i++)
 								{
 									$boolExistPrice = false;
 									$ind++;
-									$str_CAT_QUANTITY_FROM = ${"SUBCAT_BASE_QUANTITY_FROM_".$ind};
-									$str_CAT_QUANTITY_TO = ${"SUBCAT_BASE_QUANTITY_TO_".$ind};
-									$str_CAT_EXTRA = ${"SUBCAT_EXTRA_".$arCatalogGroup["ID"]."_".$ind};
-									$str_CAT_PRICE = ${"SUBCAT_PRICE_".$arCatalogGroup["ID"]."_".$ind};
-									$str_CAT_CURRENCY = ${"SUBCAT_CURRENCY_".$arCatalogGroup["ID"]."_".$ind};
+									$str_CAT_QUANTITY_FROM = $request->getPost("SUBCAT_BASE_QUANTITY_FROM_".$ind) ?? '';
+									$str_CAT_QUANTITY_TO = $request->getPost("SUBCAT_BASE_QUANTITY_TO_".$ind) ?? '';
+									$str_CAT_EXTRA = $request->getPost("SUBCAT_EXTRA_".$arCatalogGroup["ID"]."_".$ind) ?? '';
+									$str_CAT_PRICE = $request->getPost("SUBCAT_PRICE_".$arCatalogGroup["ID"]."_".$ind) ?? '';
+									$str_CAT_CURRENCY = $request->getPost("SUBCAT_CURRENCY_".$arCatalogGroup["ID"]."_".$ind) ?? '';
 									if (trim($str_CAT_PRICE) != '' && doubleval($str_CAT_PRICE) >= 0)
 										$boolExistPrice = true;
 									$arCatPricesExist[$ind][$arCatalogGroup['ID']] = ($boolExistPrice == true ? 'Y' : 'N');
@@ -1777,17 +1843,26 @@ function HideNotice()
 										</td>
 										<td valign="top" align="center">
 											<?php
-											echo CExtra::SelectBox("SUBCAT_EXTRA_".$arCatalogGroup["ID"]."_".$ind, $str_CAT_EXTRA, GetMessage("VAL_NOT_SET"), "ChangeSubExtraEx(this)", $allowEditPrices.' id="'."SUBCAT_EXTRA_".$arCatalogGroup["ID"]."_".$ind.'" ');
+											echo CExtra::SelectBox("SUBCAT_EXTRA_".$arCatalogGroup["ID"]."_".$ind, $str_CAT_EXTRA, GetMessage("VAL_NOT_SET"), "ChangeSubExtraEx(this)", $disablePrice.' id="'."SUBCAT_EXTRA_".$arCatalogGroup["ID"]."_".$ind.'" ');
 											?>
 
 										</td>
 										<td valign="top" align="center">
-											<input type="text" <?= $allowEditPrices; ?> id="SUBCAT_PRICE_<?= $arCatalogGroup["ID"] ?>_<?= $ind ?>" name="SUBCAT_PRICE_<?= $arCatalogGroup["ID"] ?>_<?= $ind ?>" value="<?= htmlspecialcharsbx($str_CAT_PRICE) ?>" size="10" OnChange="ptSubPriceChangeEx(this)">
+											<?= CCatalogAdminTools::renderMoneyEditField([
+											'NAME' => 'SUBCAT_PRICE_'.$arCatalogGroup["ID"].'_'.$ind,
+											'ID' => 'SUBCAT_PRICE_'.$arCatalogGroup["ID"].'_'.$ind,
+											'VALUE' => $str_CAT_PRICE,
+											'CURRENCY' => $str_CAT_CURRENCY,
+											'CURRENCY_CONTROL_ID' => 'SUBCAT_CURRENCY_'.$arCatalogGroup["ID"].'_'.$ind,
+											'DISABLED' => !$allowEditPrices,
+											'SIZE' => 10,
+											'ATTRIBUTES' => 'OnChange="ptSubPriceChangeEx(this)"',
+										]); ?>
 
 										</td>
 										<td valign="top" align="center">
 
-												<?= CCurrency::SelectBox("SUBCAT_CURRENCY_".$arCatalogGroup["ID"]."_".$ind, $str_CAT_CURRENCY, GetMessage("VAL_BASE"), true, "ChangeSubCurrencyEx(this)", $allowEditPrices.' id="'."SUBCAT_CURRENCY_".$arCatalogGroup["ID"]."_".$ind.'" ') ?>
+												<?= CCurrency::SelectBox("SUBCAT_CURRENCY_".$arCatalogGroup["ID"]."_".$ind, $str_CAT_CURRENCY, GetMessage("VAL_BASE"), true, "ChangeSubCurrencyEx(this)", $disablePrice.' id="'."SUBCAT_CURRENCY_".$arCatalogGroup["ID"]."_".$ind.'" ') ?>
 												<script>
 													jsUtils.addEvent(window, 'load', function () {ChangeSubExtraEx(BX('SUBCAT_EXTRA_<?= $arCatalogGroup["ID"] ?>_<?= $ind ?>'));});
 												</script>
@@ -1811,17 +1886,17 @@ function HideNotice()
 									</td>
 									<td valign="top" align="center">
 										<?php
-										echo CExtra::SelectBox("SUBCAT_EXTRA_".$arCatalogGroup["ID"]."_".$ind, "", GetMessage("VAL_NOT_SET"), "ChangeSubExtraEx(this)", $allowEditPrices.' id="'."SUBCAT_EXTRA_".$arCatalogGroup["ID"]."_".$ind.'" ');
+										echo CExtra::SelectBox("SUBCAT_EXTRA_".$arCatalogGroup["ID"]."_".$ind, "", GetMessage("VAL_NOT_SET"), "ChangeSubExtraEx(this)", $disablePrice.' id="'."SUBCAT_EXTRA_".$arCatalogGroup["ID"]."_".$ind.'" ');
 										?>
 
 									</td>
 									<td valign="top" align="center">
-										<input type="text" <?= $allowEditPrices; ?> id="SUBCAT_PRICE_<?= $arCatalogGroup["ID"] ?>_<?= $ind ?>" name="SUBCAT_PRICE_<?= $arCatalogGroup["ID"] ?>_<?= $ind ?>" value="" size="10" OnChange="ptSubPriceChangeEx(this)">
+										<input type="text" <?= $disablePrice; ?> id="SUBCAT_PRICE_<?= $arCatalogGroup["ID"] ?>_<?= $ind ?>" name="SUBCAT_PRICE_<?= $arCatalogGroup["ID"] ?>_<?= $ind ?>" value="" size="10" OnChange="ptSubPriceChangeEx(this)">
 
 									</td>
 									<td valign="top" align="center">
 
-											<?= CCurrency::SelectBox("SUBCAT_CURRENCY_".$arCatalogGroup["ID"]."_".$ind, "", GetMessage("VAL_BASE"), true, "ChangeSubCurrencyEx(this)", $allowEditPrices.' id="'."SUBCAT_CURRENCY_".$arCatalogGroup["ID"]."_".$ind.'" ') ?>
+											<?= CCurrency::SelectBox("SUBCAT_CURRENCY_".$arCatalogGroup["ID"]."_".$ind, "", GetMessage("VAL_BASE"), true, "ChangeSubCurrencyEx(this)", $disablePrice.' id="'."SUBCAT_CURRENCY_".$arCatalogGroup["ID"]."_".$ind.'" ') ?>
 
 									</td>
 								</tr>
@@ -2333,9 +2408,9 @@ SetSubFieldsStyle('subcatalog_properties_table');
 
 					if ($bVarsFromForm)
 					{
-						if (isset(${"SUBCAT_USER_GROUP_ID_".$arGroup["ID"]}) && ${"SUBCAT_USER_GROUP_ID_".$arGroup["ID"]} == "Y")
+						if ($request->getPost("SUBCAT_USER_GROUP_ID_".$arGroup["ID"]) !== null && $request->getPost("SUBCAT_USER_GROUP_ID_".$arGroup["ID"]) == "Y")
 						{
-							$arCurProductGroups[$arGroup["ID"]] = array(intval(${"SUBCAT_ACCESS_LENGTH_".$arGroup["ID"]}), ${"SUBCAT_ACCESS_LENGTH_TYPE_".$arGroup["ID"]});
+							$arCurProductGroups[$arGroup["ID"]] = array(intval($request->getPost("SUBCAT_ACCESS_LENGTH_".$arGroup["ID"])), $request->getPost("SUBCAT_ACCESS_LENGTH_TYPE_".$arGroup["ID"]) ?? '');
 						}
 						elseif (array_key_exists($arGroup["ID"], $arCurProductGroups))
 						{

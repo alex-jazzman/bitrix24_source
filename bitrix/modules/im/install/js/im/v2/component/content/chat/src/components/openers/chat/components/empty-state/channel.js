@@ -1,4 +1,4 @@
-import { BaseEmptyState } from './base/base';
+import { BaseEmptyState } from 'im.v2.component.content.elements';
 
 // @vue/component
 export const ChannelEmptyState = {

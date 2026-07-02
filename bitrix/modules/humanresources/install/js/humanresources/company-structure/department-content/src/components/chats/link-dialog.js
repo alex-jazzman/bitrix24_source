@@ -6,7 +6,7 @@ import {
 	getCommunicationsRecentTabOptions,
 } from 'humanresources.company-structure.structure-components';
 import { ChildrenModeSelector } from './children-mode-selector';
-import { DialogDictionary, DialogDictionaryItem } from './dictionaries/dialog-dictionary';
+import { DialogDictionary, type DialogDictionaryItem } from './dictionaries/dialog-dictionary';
 import { DepartmentAPI } from '../../api';
 
 // @vue/component
@@ -64,7 +64,10 @@ export const LinkDialog = {
 		dialogEntities(): Object[]
 		{
 			const entity = this.dictionary.getDialogEntity();
-			if (this.communicationType === CommunicationsTypeDict.collab)
+			if (
+				this.communicationType === CommunicationsTypeDict.collab
+				|| this.communicationType === CommunicationsTypeDict.project
+			)
 			{
 				entity.options['!projectId'] = this.communications.map((item) => item.id);
 			}
@@ -122,6 +125,7 @@ export const LinkDialog = {
 						await DepartmentAPI.saveChannel(nodeId, mappedIds, [], addWithChildren);
 						break;
 					case CommunicationsTypeDict.collab:
+					case CommunicationsTypeDict.project:
 						await DepartmentAPI.saveCollab(nodeId, mappedIds, [], addWithChildren);
 						break;
 					default:

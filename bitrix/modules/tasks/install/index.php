@@ -244,6 +244,14 @@ class tasks extends CModule
 			'onBoostActivated'
 		);
 
+		$eventManager->registerEventHandler(
+			fromModuleId: 'intranet',
+			eventType: 'onInitSummaryProviders',
+			toModuleId: 'tasks',
+			toClass: '\Bitrix\Tasks\V2\Internal\Integration\Intranet\EventHandler\OnInitSummaryProviders\CreateProvider',
+			toMethod: 'handle',
+		);
+
 		$this->registerChatEvents();
 
 		$this->InstallTasks();
@@ -546,10 +554,6 @@ class tasks extends CModule
 			[
 				'name' => '\Bitrix\Tasks\Util\AgentManager::notificationThrottleRelease();',
 				'interval' => 300,
-			],
-			[
-				'name' => '\Bitrix\Tasks\Util\AgentManager::createOverdueChats();',
-				'interval' => 900,
 			],
 			[
 				'name' => '\Bitrix\Tasks\Internals\Effective::agent();',
@@ -884,6 +888,14 @@ class tasks extends CModule
 			'onBoostActivated',
 		);
 
+		$eventManager->unRegisterEventHandler(
+			fromModuleId: 'intranet',
+			eventType: 'onInitSummaryProviders',
+			toModuleId: 'tasks',
+			toClass: '\Bitrix\Tasks\V2\Internal\Integration\Intranet\EventHandler\OnInitSummaryProviders\CreateProvider',
+			toMethod: 'handle',
+		);
+
 		$this->unRegisterChatEvents();
 
 		// remove tasks from socnetlog table
@@ -1100,6 +1112,13 @@ class tasks extends CModule
 		CopyDirFiles(
 			$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/tasks/install/js",
 			$_SERVER["DOCUMENT_ROOT"]."/bitrix/js",
+			true,
+			true
+		);
+
+		CopyDirFiles(
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/tasks/install/images",
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/images",
 			true,
 			true
 		);

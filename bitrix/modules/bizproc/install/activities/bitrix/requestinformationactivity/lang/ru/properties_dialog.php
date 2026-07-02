@@ -3,7 +3,6 @@
 $MESS["BPSFA_PD_YES"] = "Да";
 $MESS["BPSFA_PD_NO"] = "Нет";
 $MESS["BPSFA_PD_DELETE"] = "Удалить";
-$MESS["BPSFA_PD_F_VLIST"] = "Список значений";
 $MESS["BPSFA_PD_EMPTY_TITLE"] = "Не указано название поля";
 $MESS["BPSFA_PD_EMPTY_NAME"] = "Не указан код поля";
 $MESS["BPSFA_PD_WRONG_NAME"] = "Код поля может содержать только латинские буквы и цифры и не может начинаться с цифры";

@@ -10851,6 +10851,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 	                    entity.removeItem(groupModeItem);
 	                    _this19.deactivateGroupMode(entity, groupModeItem);
 	                    groupModeItem.removeYourself();
+	                    ui_analytics.sendData({
+	                      tool: 'tasks',
+	                      category: 'task_operations',
+	                      type: 'task',
+	                      event: 'task_delete',
+	                      c_section: 'scrum',
+	                      c_element: 'context_menu',
+	                      p1: "taskId_".concat(groupModeItem.getSourceId())
+	                    });
 	                  });
 	                  _this19.updateEntityCounters(entity);
 	                });

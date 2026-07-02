@@ -10,9 +10,10 @@ import { mapWritableState } from 'ui.vue3.pinia';
 import { FeatureCode } from 'bizprocdesigner.feature';
 import { initAiUpdatePull } from './entities/ai-assistant/api/pull';
 import { makeAnimationQueue } from './entities/ai-assistant/util/animation';
+import { useFeature } from './shared/composables';
 import { SHARED_TOAST_TYPES } from './shared/constants';
 import { ToastWarning } from './entities/toast';
-import { NodeSettings as ComplexNodeSettings, NodeSettingsRules } from './widgets/node-settings';
+import { NodeSettings as ComplexNodeSettings, NodeSettingsRules, NodeSettingsRelations } from './widgets/node-settings';
 import {
 	diagramStore,
 	BLOCK_SLOT_NAMES,
@@ -23,6 +24,8 @@ import {
 } from './entities/blocks';
 import { useCatalogStore, DRAG_ITEM_SLOT_NAMES } from './entities/catalog';
 import { SearchBar } from './shared/ui/search-bar/search-bar';
+import { DebugButton } from './shared/ui/debug-button';
+import { DebugBar } from './widgets/debug-bar';
 
 import type { BlockId } from './entities/blocks';
 
@@ -33,6 +36,8 @@ import {
 	BlockComplex,
 	BlockTool,
 	BlockFrame,
+	BlockOperator,
+	BlockService,
 	DiagramMenu,
 	AutosaveStatus,
 	TemplateName,
@@ -62,13 +67,18 @@ export const Chart = {
 		BlockComplex,
 		BlockTool,
 		BlockFrame,
+		BlockOperator,
+		BlockService,
 		DiagramMenu,
 		AutosaveStatus,
 		TemplateName,
 		PublishDropdownButton,
 		ZoomBar,
+		DebugButton,
+		DebugBar,
 		ComplexNodeSettings,
 		NodeSettingsRules,
+		NodeSettingsRelations,
 		HistoryBar,
 		SearchBar,
 		Catalog,
@@ -202,6 +212,12 @@ export const Chart = {
 				'templateId',
 			],
 		),
+		isDebugBarAvailable(): boolean
+		{
+			const { isFeatureAvailable } = useFeature();
+
+			return isFeatureAvailable('debugBar');
+		}
 	},
 	watch: {
 		templateId(value)
@@ -262,6 +278,14 @@ export const Chart = {
 						<BlockFrame :block="block"/>
 					</template>
 
+					<template #[blockDiagramSlotNames.OPERATORS]="{ block }">
+						<BlockOperator :block="block"/>
+					</template>
+
+					<template #[blockDiagramSlotNames.SERVICES]="{ block }">
+						<BlockService :block="block"/>
+					</template>
+
 					<template #[connectionSlotNames.AUX]="{ connection }">
 						<ConnectionAux :connection="connection" />
 					</template>
@@ -271,17 +295,11 @@ export const Chart = {
 			<template #catalog>
 				<Catalog>
 					<template #[dragItemSlotNames.simple]="{ item }">
-						<BlockSimple
-							:block="item"
-							autosize
-						/>
+						<BlockSimple :block="item"/>
 					</template>
 
 					<template #[dragItemSlotNames.trigger]="{ item }">
-						<BlockTrigger
-							:block="item"
-							autosize
-						/>
+						<BlockTrigger :block="item"/>
 					</template>
 
 					<template #[dragItemSlotNames.complex]="{ item }">
@@ -295,6 +313,14 @@ export const Chart = {
 					<template #[dragItemSlotNames.frame]="{ item }">
 						<BlockFrame :block="item"/>
 					</template>
+
+					<template #[dragItemSlotNames.operators]="{ item }">
+						<BlockOperator :block="item"/>
+					</template>
+
+					<template #[dragItemSlotNames.services]="{ item }">
+						<BlockService :block="item"/>
+					</template>
 				</Catalog>
 			</template>
 
@@ -304,10 +330,15 @@ export const Chart = {
 			</template>
 
 			<template #bottom-right-toolbar>
-				<ZoomBar 
+				<DebugButton v-if="isDebugBarAvailable"/>
+				<ZoomBar
 					:stepZoom="0.2"
 					:blockColors="blockColors"
 				/>
+			</template>
+
+			<template #debug-bar-toolbar>
+				<DebugBar v-if="isDebugBarAvailable" />
 			</template>
 
 			<template #top-middle-anchor>
@@ -321,8 +352,8 @@ export const Chart = {
 					</template>
 
 					<template #[toast.blockToastTypes.ACTIVITY_PUBLIC_ERROR]="{ message }">
-						<ToastWarning 
-							:message="message" 
+						<ToastWarning
+							:message="message"
 							:closeable="true"
 						>
 							<template #contentEnd>
@@ -339,6 +370,7 @@ export const Chart = {
 
 				<ComplexNodeSettings>
 					<NodeSettingsRules />
+					<NodeSettingsRelations />
 				</ComplexNodeSettings>
 			</template>
 		</AppLayout>

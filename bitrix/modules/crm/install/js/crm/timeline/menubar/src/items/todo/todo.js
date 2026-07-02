@@ -2,7 +2,8 @@ import type { ColorSettings } from 'crm.activity.todo-editor-v2';
 import { TodoEditorV2 } from 'crm.activity.todo-editor-v2';
 import { TourManager } from 'crm.tour-manager';
 import { Dom, Loc, Tag, Type } from 'main.core';
-import { BaseEvent } from 'main.core.events';
+import { type BaseEvent } from 'main.core.events';
+
 import Context from '../../context';
 import Item from '../../item';
 import Tour from './tour';

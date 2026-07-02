@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,ui_vue3_components_button,main_core_events,ui_dialogs_messagebox,tasks_v2_const,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_component_elements_userFieldWidgetComponent,tasks_v2_component_elements_bottomSheet,tasks_v2_component_dropZone,main_core,ui_textEditor,tasks_v2_core,tasks_v2_provider_service_taskService,tasks_v2_provider_service_fileService,tasks_v2_component_entityText) {
+(function (exports,ui_vue3_components_button,main_core_events,ui_dialogs_messagebox,tasks_v2_lib_promotion,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_const,tasks_v2_lib_analytics,tasks_v2_component_elements_userFieldWidgetComponent,tasks_v2_component_elements_bottomSheet,tasks_v2_component_dropZone,main_core,ui_textEditor,tasks_v2_core,tasks_v2_provider_service_taskService,tasks_v2_provider_service_fileService,tasks_v2_component_entityText) {
 	'use strict';
 
 	const emitAddCheckListDebounced = main_core.Runtime.debounce((component, checklistString) => {
@@ -380,6 +380,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    if (!this.isEdit && this.title.length > 0) {
 	      this.handleEditorFocus(100);
 	    }
+	    this.showTasksAiPromo();
 	  },
 	  methods: {
 	    handleExpand() {
@@ -408,6 +409,15 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	          defaultSelection: 'rootEnd'
 	        });
 	      }, timeout);
+	    },
+	    showTasksAiPromo() {
+	      if (this.isEdit || !this.isCopilotEnabled) {
+	        return;
+	      }
+	      const promo = new tasks_v2_lib_promotion.TasksAiPromo({
+	        targetElement: this.$refs.copilotButton.$el
+	      });
+	      promo.show();
 	    }
 	  },
 	  template: `
@@ -436,7 +446,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 							<BulletListButton :editor/>
 							<NumberListButton :editor/>
 							<MoreButton :editor/>
-							<CopilotButton v-if="isCopilotEnabled" :editor/>
+							<CopilotButton v-if="isCopilotEnabled" ref="copilotButton" :editor/>
 							<CheckList
 								ref="checkListButton"
 								v-if="isCopilotEnabled"
@@ -466,6 +476,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    UserFieldWidgetComponent: tasks_v2_component_elements_userFieldWidgetComponent.DiskUserFieldWidgetComponent
 	  },
 	  inject: {
+	    analytics: {},
 	    task: {},
 	    isEdit: {}
 	  },
@@ -519,6 +530,34 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      };
 	    }
 	  },
+	  methods: {
+	    editButtonClick() {
+	      this.$emit('editButtonClick');
+	      void tasks_v2_lib_analytics.analytics.sendDescriptionEdit({
+	        ...this.analytics,
+	        element: tasks_v2_const.Analytics.Element.DescriptionEditButton
+	      }, {
+	        taskId: this.taskId
+	      });
+	    },
+	    updateOpened(opened, event) {
+	      if (event === tasks_v2_component_entityText.EntityCollapsibleTextEvent.HtmlFormatterComponentMouseUp) {
+	        void tasks_v2_lib_analytics.analytics.sendDescriptionExpand({
+	          ...this.analytics,
+	          element: tasks_v2_const.Analytics.Element.DescriptionExpandClick
+	        }, {
+	          taskId: this.taskId
+	        });
+	      } else if (event === tasks_v2_component_entityText.EntityCollapsibleTextEvent.ExpandButtonClick && opened) {
+	        void tasks_v2_lib_analytics.analytics.sendDescriptionExpand({
+	          ...this.analytics,
+	          element: tasks_v2_const.Analytics.Element.DescriptionExpandButton
+	        }, {
+	          taskId: this.taskId
+	        });
+	      }
+	    }
+	  },
 	  template: `
 		<div class="tasks-full-card-field-container print-no-box-shadow">
 			<EntityCollapsibleText
@@ -528,8 +567,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				:readonly
 				showFilesIndicator
 				:maxHeight="300"
+				stickyFooter
 				v-model:opened="opened"
-				@editButtonClick="$emit('editButtonClick')"
+				@update:opened="updateOpened"
+				@editButtonClick="editButtonClick"
 			>
 				<div
 					v-if="opened && filesCount"
@@ -986,5 +1027,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.DescriptionSheet = DescriptionSheet;
 	exports.DescriptionInline = DescriptionInline;
 
-}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Vue3.Components,BX.Event,BX.UI.Dialogs,BX.Tasks.V2.Const,BX.UI.IconSet,BX,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component,BX,BX.UI.TextEditor,BX.Tasks.V2,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Component));
+}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Vue3.Components,BX.Event,BX.UI.Dialogs,BX.Tasks.V2.Lib.Promotion,BX.UI.IconSet,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component,BX,BX.UI.TextEditor,BX.Tasks.V2,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Component));
 //# sourceMappingURL=description.bundle.js.map

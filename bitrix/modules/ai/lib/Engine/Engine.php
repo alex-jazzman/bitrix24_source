@@ -16,6 +16,7 @@ use Bitrix\AI\Quality;
 use Bitrix\AI\QueueJob;
 use Bitrix\AI\Result;
 use Bitrix\AI\Role\RoleManager;
+use Bitrix\AI\Service\BasicAuthToken;
 use Bitrix\AI\Services\ImageService;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Error;
@@ -48,6 +49,7 @@ abstract class Engine
 	protected bool $historyState = false;
 	protected bool $cache = false;
 	protected bool $isModeResponseJson = false;
+	protected ?ResponseFormat $responseFormat = null;
 	protected bool $reasoningMode = false;
 	protected int $historyGroupId = -1;//Group ID for save history. -1 - no grouped, 0 - first item of group
 	protected ?IPayload $payload = null;
@@ -649,6 +651,11 @@ abstract class Engine
 
 		$http = new HttpClient;
 		$http->setHeader('Content-Type', 'application/json');
+		$authHeader = BasicAuthToken::getAuthorizationHeader();
+		if ($authHeader !== null)
+		{
+			$http->setHeader('Authorization', $authHeader);
+		}
 
 		$http->post($url, json_encode([
 			'callbackUrl' => $this->queueJob->getCallbackUrl(),
@@ -842,27 +849,39 @@ abstract class Engine
 		$this->cache = $cache;
 	}
 
-	/**
-	 * Get response json mode.
-	 *
-	 * @return bool
-	 */
+	public function setResponseJsonMode(bool $enable): void
+	{
+		$quality = new Quality(['json_response_mode']);
+		$this->isModeResponseJson = $this->hasQuality($quality) && $enable;
+		if ($this->isModeResponseJson)
+		{
+			$this->responseFormat = ResponseFormat::JSON;
+		}
+	}
+
 	public function getResponseJsonMode(): bool
 	{
 		return $this->isModeResponseJson;
 	}
 
-	/**
-	 * Set response json mode.
-	 *
-	 * @param bool $enable
-	 *
-	 * @return void
-	 */
-	public function setResponseJsonMode(bool $enable): void
+	public function setResponseFormat(ResponseFormat $mode): void
 	{
-		$quality = new Quality(['json_response_mode']);
-		$this->isModeResponseJson = $this->hasQuality($quality) && $enable;
+		$this->setResponseJsonMode($mode === ResponseFormat::JSON);
+		if (($mode === ResponseFormat::JSON) && $this->isModeResponseJson)
+		{
+			return;
+		}
+		$this->responseFormat = $mode;
+	}
+
+	public function getResponseFormat(): ?ResponseFormat
+	{
+		if ($this->isModeResponseJson)
+		{
+			return ResponseFormat::JSON;
+		}
+
+		return $this->getContext()->getResponseFormat();
 	}
 
 	/**

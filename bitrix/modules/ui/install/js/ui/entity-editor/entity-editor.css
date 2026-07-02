@@ -567,7 +567,7 @@ input.ui-entity-editor-header-title-text {
 /*region Section Actions btn*/
 .ui-entity-card-content-actions-container {
 	box-sizing: border-box;
-	margin: 0;
+	margin: 16px 0 0;
 	display: -webkit-box;
 	display: -ms-flexbox;
 	display: flex;
@@ -592,6 +592,13 @@ input.ui-entity-editor-header-title-text {
 	font: 13px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	cursor: pointer;
 	transition: 220ms all ease;
+}
+
+.ui-entity-editor-content-add-lnk {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	border-bottom: none;
 }
 
 .ui-entity-editor-content-add-lnk:hover,
@@ -2067,15 +2074,15 @@ input.ui-entity-editor-header-title-text {
 
 .ui-entity-editor-block-title-text .ui-hint {
 	display: inline-flex;
-	margin-left: 4px;
+	margin-left: 2px;
 	width: fit-content;
 	height: fit-content;
 }
 
 .ui-entity-editor-block-title-text .ui-hint-icon {
 	margin: 0;
-	width: 1.2em;
-	height: 1.2em;
+	width: 17px;
+	height: 17px;
 }
 
 .ui-entity-editor-block-title-text-right-icon {

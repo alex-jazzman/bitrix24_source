@@ -1,6 +1,5 @@
 import { Dom, Event, Loc, Tag, Type } from 'main.core';
-import { BaseEvent } from 'main.core.events';
-import { Dialog, Item } from 'ui.entity-selector';
+import { Dialog } from 'ui.entity-selector';
 
 import { EntitySelectorEntity, EntitySelectorTab } from 'booking.const';
 import type { ResourceModel } from 'booking.model.resources';

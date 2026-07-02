@@ -8,9 +8,9 @@ return [
 	'js' => 'dist/counters-service.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
+		'booking.const',
 		'booking.core',
 		'booking.lib.api-client',
-		'booking.const',
 	],
 	'skip_core' => true,
 ];

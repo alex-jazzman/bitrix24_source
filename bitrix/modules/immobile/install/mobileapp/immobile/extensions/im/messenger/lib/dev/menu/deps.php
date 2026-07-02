@@ -25,7 +25,6 @@ return [
 	'bundle' => [
 		'./src/menu',
 		'./src/developer-settings',
-		'./src/logging/settings',
 		'./src/logging/settings-search',
 		'./src/logging/list',
 		'./src/logging/all-enabler',
@@ -34,7 +33,9 @@ return [
 		'./src/chat-dialog-benchmark',
 		'./src/vuex-manager',
 		'./src/playground',
-		'./src/dialog-snippets',
+		'./src/dialog/dialog-snippets',
+		'./src/dialog/send-message',
+		'./src/dialog/builder-message',
 		'./src/recent-snippets',
 	],
 ];

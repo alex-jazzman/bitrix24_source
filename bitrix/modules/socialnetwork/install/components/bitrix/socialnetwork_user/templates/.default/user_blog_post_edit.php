@@ -41,7 +41,7 @@ $APPLICATION->IncludeComponent(
 		'POPUP_COMPONENT_NAME' => "bitrix:socialnetwork.blog.post.edit",
 		"POPUP_COMPONENT_TEMPLATE_NAME" => "",
 		"POPUP_COMPONENT_PARAMS" => array(
-			"ID" => $arResult["VARIABLES"]["post_id"],
+			"ID" => $arResult["VARIABLES"]["post_id"] ?? null,
 			"PATH_TO_BLOG" => $arResult["PATH_TO_USER_BLOG"],
 			"PATH_TO_POST" => $arResult["PATH_TO_USER_BLOG_POST"],
 			"PATH_TO_POST_EDIT" => $arResult["PATH_TO_USER_BLOG_POST_EDIT"],

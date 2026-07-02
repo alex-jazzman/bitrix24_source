@@ -3,20 +3,23 @@ import { Event } from 'main.core';
 import { Core } from 'booking.core';
 import { EventName, Model } from 'booking.const';
 import { ApiClient } from 'booking.lib.api-client';
-import { bookingFilter } from 'booking.lib.booking-filter';
+import { bookingFilter, type BookingUIFilter, type BookingListFilter } from 'booking.lib.booking-filter';
+import { DatePeriod } from 'booking.lib.date-period';
 import { deepToRaw } from 'booking.lib.deep-to-raw';
+import { RequestRevisionGuard } from 'booking.lib.request-revision-guard';
 import { mainPageService } from 'booking.provider.service.main-page-service';
-import type { BookingModel } from 'booking.model.bookings';
-import type { BookingUIFilter, BookingListFilter } from 'booking.lib.booking-filter';
+import { type BookingModel } from 'booking.model.bookings';
 
 import { BookingDataExtractor } from './booking-data-extractor';
 import { mapModelToDto, mapDtoToModel, mapModelToCreateFromWaitListItemDto } from './mappers';
-import type { BookingDto } from './types';
+import { type BookingDto } from './types';
 
 class BookingService
 {
 	#filterRequests: { [key: string]: Promise } = {};
 	#lastFilterRequest: Promise;
+	#bookingsForResourceRequests: { [key: string]: Promise<Object[]> } = {};
+	#updateRequestRevisionGuard = new RequestRevisionGuard();
 
 	async add(booking: BookingModel): Promise<{ success: boolean, booking: ?BookingModel }>
 	{
@@ -107,6 +110,7 @@ class BookingService
 	{
 		const id = booking.id;
 		const bookingBeforeUpdate = { ...Core.getStore().getters[`${Model.Bookings}/getById`](id) };
+		const updateRevision = this.#updateRequestRevisionGuard.next(id);
 
 		try
 		{
@@ -121,6 +125,11 @@ class BookingService
 			const bookingDto = mapModelToDto(booking);
 			const data = await (new ApiClient()).post('Booking.update', { booking: bookingDto });
 			const updatedBooking = mapDtoToModel(data);
+
+			if (!this.#updateRequestRevisionGuard.isActual(id, updateRevision))
+			{
+				return;
+			}
 
 			void Core.getStore().dispatch(`${Model.Bookings}/update`, {
 				id,
@@ -140,12 +149,46 @@ class BookingService
 		}
 		catch (error)
 		{
+			if (!this.#updateRequestRevisionGuard.isActual(id, updateRevision))
+			{
+				return;
+			}
+
 			void Core.getStore().dispatch(`${Model.Bookings}/update`, {
 				id,
 				booking: bookingBeforeUpdate,
 			});
 
 			console.error('BookingService: update error', error);
+		}
+	}
+
+	async confirm(id: number, isConfirmed: boolean): Promise<void>
+	{
+		const bookingBeforeUpdate = { ...Core.getStore().getters[`${Model.Bookings}/getById`](id) };
+
+		try
+		{
+			await Core.getStore().dispatch(`${Model.Bookings}/update`, { id, booking: { id, isConfirmed } });
+
+			const data = await (new ApiClient()).post('Booking.confirm', { id, isConfirmed });
+			const updatedBooking = mapDtoToModel(data);
+
+			void Core.getStore().dispatch(`${Model.Bookings}/update`, {
+				id,
+				booking: updatedBooking,
+			});
+
+			void mainPageService.fetchCounters();
+		}
+		catch (error)
+		{
+			void Core.getStore().dispatch(`${Model.Bookings}/update`, {
+				id,
+				booking: bookingBeforeUpdate,
+			});
+
+			console.error('BookingService: confirm error', error);
 		}
 	}
 
@@ -282,9 +325,7 @@ class BookingService
 		{
 			await Core.getStore().dispatch(`${Model.Interface}/setEditingBookingId`, 0);
 
-			const selectedDateTs = Core.getStore().getters[`${Model.Interface}/selectedDateTs`];
-
-			await mainPageService.loadData(selectedDateTs / 1000);
+			await mainPageService.loadData(DatePeriod.createByCurrentGridMode());
 
 			const resourcesIds = Core.getStore().getters[`${Model.Interface}/resourcesIds`];
 
@@ -370,6 +411,77 @@ class BookingService
 			withClientData: true,
 			withExternalData: true,
 			withSkus: true,
+		});
+	}
+
+	async getBookingsByResourceId(
+		resourceId: number,
+		dateFromTs: number,
+		dateToTs: number,
+		excludeBookingId: number | string | null = null,
+	): Promise<Object[]>
+	{
+		try
+		{
+			const key = JSON.stringify({ resourceId, dateFromTs, dateToTs, excludeBookingId });
+			this.#bookingsForResourceRequests[key] ??= this.#requestBookingsForResource(
+				resourceId,
+				dateFromTs,
+				dateToTs,
+				excludeBookingId,
+			);
+
+			return await this.#bookingsForResourceRequests[key];
+		}
+		catch (error)
+		{
+			console.error('BookingService: getBookingsByResourceId error', error);
+
+			return [];
+		}
+	}
+
+	async canChangeDate(bookingId: number, dateFromTs: number, dateToTs: number): Promise<boolean>
+	{
+		try
+		{
+			return await new ApiClient().post('Booking.canChangeDate', {
+				bookingId,
+				dateFromTs: Math.floor(dateFromTs / 1000),
+				dateToTs: Math.floor(dateToTs / 1000),
+			});
+		}
+		catch (error)
+		{
+			console.error('BookingService: canChangeDate error', error);
+
+			return false;
+		}
+	}
+
+	#requestBookingsForResource(
+		resourceId: number,
+		dateFromTs: number,
+		dateToTs: number,
+		excludeBookingId: number | string | null,
+	): Promise<Object[]>
+	{
+		const filter = {
+			RESOURCE_ID: [resourceId],
+			WITHIN: {
+				DATE_FROM: dateFromTs,
+				DATE_TO: dateToTs,
+			},
+		};
+
+		if (excludeBookingId !== null)
+		{
+			filter['!ID'] = [excludeBookingId];
+		}
+
+		return new ApiClient().post('Booking.list', {
+			filter,
+			select: [],
 		});
 	}
 }

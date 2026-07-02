@@ -68,8 +68,14 @@ jn.define('im/messenger/controller/recent/service/filter/common', (require, expo
 			}
 
 			const currentFilterId = this.store.getters['recentModel/recentFilteredModel/getCurrentFilterId'](this.tabId);
+			let effectiveFilterId = filterId;
 
-			if (currentFilterId === filterId)
+			if (currentFilterId === filterId && filterId !== RecentFilterId.all)
+			{
+				this.logger.log('applyFilter: same filter, reset to all');
+				effectiveFilterId = RecentFilterId.all;
+			}
+			else if (currentFilterId === filterId)
 			{
 				this.logger.log('applyFilter: same filter, skip');
 
@@ -78,10 +84,18 @@ jn.define('im/messenger/controller/recent/service/filter/common', (require, expo
 
 			await this.store.dispatch('recentModel/recentFilteredModel/setCurrentFilter', {
 				tabId: this.tabId,
-				filterId,
+				filterId: effectiveFilterId,
 			});
 
-			this.#sendAnalyticsEventBySelectedFilter(filterId);
+			this.#sendAnalyticsEventBySelectedFilter(effectiveFilterId);
+		}
+
+		/**
+		 * @returns {Promise<void>}
+		 */
+		async resetFilter()
+		{
+			await this.applyFilter(RecentFilterId.all);
 		}
 
 		/**

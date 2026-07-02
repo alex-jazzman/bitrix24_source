@@ -323,34 +323,7 @@ class Stream implements Tabable
 					'title' => Loc::getMessage('TAB_STREAM_NAVIGATION_TAB_BP'),
 					'component' => $component,
 				];
-
-				return;
 			}
 		}
-
-		$bpWebPath = $this->context->siteDir . 'mobile/bp/?USER_STATUS=0';
-
-		$tabs[] = [
-			'id' => 'bp',
-			'title' => Loc::getMessage('TAB_STREAM_NAVIGATION_TAB_BP'),
-			'component' => [
-				'name' => 'JSStackComponent',
-				'componentCode' => 'web: ' . $bpWebPath,
-				'rootWidget' => [
-					'name' => 'web',
-					'settings' => [
-						'titleParams' => [
-							'useLargeTitleMode' => true,
-							'text' => Loc::getMessage('TAB_STREAM_NAVIGATION_TAB_BP'),
-						],
-						'page' => [
-							'preload' => false,
-							'url' => $bpWebPath,
-							'useSearchBar' => false,
-						],
-					],
-				],
-			],
-		];
 	}
 }

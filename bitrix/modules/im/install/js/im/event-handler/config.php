@@ -8,14 +8,14 @@ return [
 	'css' => 'dist/event-handler.bundle.css',
 	'js' => 'dist/event-handler.bundle.js',
 	'rel' => [
+		'im.const',
 		'im.lib.clipboard',
+		'im.lib.logger',
 		'im.lib.timer',
 		'im.lib.uploader',
 		'im.lib.utils',
-		'main.core.events',
-		'im.const',
-		'im.lib.logger',
 		'main.core',
+		'main.core.events',
 	],
 	'skip_core' => false,
 ];

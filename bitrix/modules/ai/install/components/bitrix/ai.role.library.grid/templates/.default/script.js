@@ -314,6 +314,7 @@ this.BX.AI.ShareRole = this.BX.AI.ShareRole || {};
 	     * @var BX.Main.Grid
 	     */
 	    value: function handleClickOnDeleteRoleSwitcher(event, roleCode, roleName) {
+	      var _this = this;
 	      event.preventDefault();
 	      event.stopPropagation();
 	      _classStaticPrivateMethodGet(this, Controller, _sendRowAction).call(this, 'toggle-deleted', {
@@ -321,14 +322,16 @@ this.BX.AI.ShareRole = this.BX.AI.ShareRole || {};
 	        needDeleted: 1,
 	        page: _classStaticPrivateMethodGet(this, Controller, _getCurrentPage).call(this)
 	      }, function () {
-	        showNotification(main_core.Loc.getMessage('ROLE_LIBRARY_GRID_NOTIFICATION_HIDE', {
-	          '#NAME#': "<b>".concat(main_core.Text.encode(roleName), "</b>")
+	        showNotification(main_core.Loc.getMessage('ROLE_LIBRARY_GRID_NOTIFICATION_HIDE_MSGVER_1', {
+	          '#NAME#': "<b>".concat(main_core.Text.encode(roleName), "</b>"),
+	          '#COPILOT_NAME#': _classStaticPrivateMethodGet(_this, Controller, _getCopilotName).call(_this)
 	        }));
 	      });
 	    }
 	  }, {
 	    key: "handleClickOnUndoDeleteRoleSwitcher",
 	    value: function handleClickOnUndoDeleteRoleSwitcher(event, roleCode, roleName) {
+	      var _this2 = this;
 	      event.preventDefault();
 	      event.stopPropagation();
 	      _classStaticPrivateMethodGet(this, Controller, _sendRowAction).call(this, 'toggle-deleted', {
@@ -336,8 +339,9 @@ this.BX.AI.ShareRole = this.BX.AI.ShareRole || {};
 	        needDeleted: 0,
 	        page: _classStaticPrivateMethodGet(this, Controller, _getCurrentPage).call(this)
 	      }, function () {
-	        showNotification(main_core.Loc.getMessage('ROLE_LIBRARY_GRID_NOTIFICATION_SHOW', {
-	          '#NAME#': "<b>".concat(main_core.Text.encode(roleName), "</b>")
+	        showNotification(main_core.Loc.getMessage('ROLE_LIBRARY_GRID_NOTIFICATION_SHOW_MSGVER_1', {
+	          '#NAME#': "<b>".concat(main_core.Text.encode(roleName), "</b>"),
+	          '#COPILOT_NAME#': _classStaticPrivateMethodGet(_this2, Controller, _getCopilotName).call(_this2)
 	        }));
 	      });
 	    }
@@ -567,7 +571,7 @@ this.BX.AI.ShareRole = this.BX.AI.ShareRole || {};
 	    key: "init",
 	    value: function init(gridId) {
 	      var _BX$Main$gridManager$,
-	        _this = this;
+	        _this3 = this;
 	      var isShowTour = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 	      if (isShowTour) {
 	        _classStaticPrivateMethodGet(this, Controller, _showSimpleTour).call(this);
@@ -575,8 +579,8 @@ this.BX.AI.ShareRole = this.BX.AI.ShareRole || {};
 	      _classStaticPrivateFieldSpecSet(this, Controller, _grid, (_BX$Main$gridManager$ = BX.Main.gridManager.getById(gridId)) === null || _BX$Main$gridManager$ === void 0 ? void 0 : _BX$Main$gridManager$.instance);
 	      main_core.bind(_classStaticPrivateFieldSpecGet(this, Controller, _grid).getScrollContainer(), 'scroll', function () {
 	        var _classStaticPrivateFi, _classStaticPrivateFi2;
-	        (_classStaticPrivateFi = _classStaticPrivateFieldSpecGet(_this, Controller, _categoriesListPopup)) === null || _classStaticPrivateFi === void 0 ? void 0 : _classStaticPrivateFi.hide();
-	        (_classStaticPrivateFi2 = _classStaticPrivateFieldSpecGet(_this, Controller, _allSharesListPopup)) === null || _classStaticPrivateFi2 === void 0 ? void 0 : _classStaticPrivateFi2.hide();
+	        (_classStaticPrivateFi = _classStaticPrivateFieldSpecGet(_this3, Controller, _categoriesListPopup)) === null || _classStaticPrivateFi === void 0 ? void 0 : _classStaticPrivateFi.hide();
+	        (_classStaticPrivateFi2 = _classStaticPrivateFieldSpecGet(_this3, Controller, _allSharesListPopup)) === null || _classStaticPrivateFi2 === void 0 ? void 0 : _classStaticPrivateFi2.hide();
 	      });
 	      _classStaticPrivateMethodGet(Controller, Controller, _updateApplyButtonClassname).call(Controller);
 	      _classStaticPrivateMethodGet(Controller, Controller, _observeSelectActionButtonValue).call(Controller);
@@ -600,7 +604,7 @@ this.BX.AI.ShareRole = this.BX.AI.ShareRole || {};
 	    key: "handleClickOnSharesCell",
 	    value: function () {
 	      var _handleClickOnSharesCell = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee4(shareRoleCode, event) {
-	        var _this2 = this;
+	        var _this4 = this;
 	        var formData, res, list;
 	        return _regeneratorRuntime$1().wrap(function _callee4$(_context4) {
 	          while (1) switch (_context4.prev = _context4.next) {
@@ -619,7 +623,7 @@ this.BX.AI.ShareRole = this.BX.AI.ShareRole || {};
 	                listRenderer: new SharesListRenderer(),
 	                events: {
 	                  onPopupDestroy: function onPopupDestroy() {
-	                    _classStaticPrivateFieldSpecSet(_this2, Controller, _allSharesListPopup, null);
+	                    _classStaticPrivateFieldSpecSet(_this4, Controller, _allSharesListPopup, null);
 	                  }
 	                },
 	                filter: function filter(item, searchValue) {
@@ -680,11 +684,15 @@ this.BX.AI.ShareRole = this.BX.AI.ShareRole || {};
 	      }
 	    case 'multiple-show-for-me':
 	      {
-	        return main_core.Loc.getMessage('ROLE_LIBRARY_GRID_NOTIFICATION_MASS_SHOW');
+	        return main_core.Loc.getMessage('ROLE_LIBRARY_GRID_NOTIFICATION_MASS_SHOW_MSGVER_1', {
+	          '#COPILOT_NAME#': _classStaticPrivateMethodGet(this, Controller, _getCopilotName).call(this)
+	        });
 	      }
 	    case 'multiple-hide-from-me':
 	      {
-	        return main_core.Loc.getMessage('ROLE_LIBRARY_GRID_NOTIFICATION_MASS_HIDE');
+	        return main_core.Loc.getMessage('ROLE_LIBRARY_GRID_NOTIFICATION_MASS_HIDE_MSGVER_1', {
+	          '#COPILOT_NAME#': _classStaticPrivateMethodGet(this, Controller, _getCopilotName).call(this)
+	        });
 	      }
 	    default:
 	      {
@@ -741,6 +749,7 @@ this.BX.AI.ShareRole = this.BX.AI.ShareRole || {};
 	}
 	function _showSimpleTour3() {
 	  _showSimpleTour3 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee5() {
+	    var _this5 = this;
 	    var loadGuideExtensionPromise, loadBannerDispatcherExtensionPromise, result, Guide, BannerDispatcher;
 	    return _regeneratorRuntime$1().wrap(function _callee5$(_context5) {
 	      while (1) switch (_context5.prev = _context5.next) {
@@ -762,7 +771,9 @@ this.BX.AI.ShareRole = this.BX.AI.ShareRole || {};
 	              autoSave: true,
 	              steps: [{
 	                target: '.ui-btn.ui-btn-success',
-	                title: main_core.Loc.getMessage('ROLE_LIBRARY_GRID_TOUR_TITLE'),
+	                title: main_core.Loc.getMessage('ROLE_LIBRARY_GRID_TOUR_TITLE_MSGVER_1', {
+	                  '#COPILOT_NAME#': _classStaticPrivateMethodGet(_this5, Controller, _getCopilotName).call(_this5)
+	                }),
 	                text: main_core.Loc.getMessage('ROLE_LIBRARY_GRID_TOUR_DESCRIPTION')
 	              }]
 	            });
@@ -787,6 +798,9 @@ this.BX.AI.ShareRole = this.BX.AI.ShareRole || {};
 	function _sendRowAction(action, data, callback) {
 	  var dataWithAction = _objectSpread$1(babelHelpers.defineProperty({}, _classStaticPrivateFieldSpecGet(this, Controller, _grid).getActionKey(), action), data);
 	  _classStaticPrivateFieldSpecGet(this, Controller, _grid).reloadTable('POST', dataWithAction, callback);
+	}
+	function _getCopilotName() {
+	  return BX.message('COPILOT_NAME');
 	}
 	var _grid = {
 	  writable: true,

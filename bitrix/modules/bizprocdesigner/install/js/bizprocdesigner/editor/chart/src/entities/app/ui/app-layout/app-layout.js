@@ -1,4 +1,6 @@
 import './app-layout.css';
+import { useBlockDiagram } from 'ui.block-diagram';
+import { useFeature, useLoc } from '../../../../shared/composables';
 
 const SETTINGS_PANEL_CLASSNAMES = {
 	base: 'editor-chart-app-layout__settings',
@@ -12,6 +14,12 @@ const TOP_RIGHT_TOOLBAR_CLASSNAMES = {
 
 const BOTTOM_RIGHT_TOOLBAR_CLASSNAMES = {
 	base: 'editor-chart-app-layout__bottom-right-toolbar',
+	shifted: '--shifted',
+	margined: '--margined',
+};
+
+const DEBUG_BAR_TOOLBAR_CLASSNAMES = {
+	base: 'editor-chart-app-layout__debug-bar-toolbar',
 	shifted: '--shifted',
 };
 
@@ -27,6 +35,14 @@ export const AppLayout = {
 			type: Boolean,
 			default: false,
 		},
+		showDebugBar: {
+			type: Boolean,
+			default: false,
+		},
+		catalogExpanded: {
+			type: Boolean,
+			default: true,
+		},
 	},
 	computed: {
 		topRightClassNames(): { [string]: boolean }
@@ -41,6 +57,14 @@ export const AppLayout = {
 			return {
 				[BOTTOM_RIGHT_TOOLBAR_CLASSNAMES.base]: true,
 				[BOTTOM_RIGHT_TOOLBAR_CLASSNAMES.shifted]: this.showSettings,
+				[BOTTOM_RIGHT_TOOLBAR_CLASSNAMES.margined]: this.showDebugBar,
+			};
+		},
+		debugBarClassNames(): { [string]: boolean }
+		{
+			return {
+				[DEBUG_BAR_TOOLBAR_CLASSNAMES.base]: true,
+				[DEBUG_BAR_TOOLBAR_CLASSNAMES.shifted]: this.showSettings,
 			};
 		},
 		settingsClassNames(): { [string]: boolean }
@@ -50,6 +74,28 @@ export const AppLayout = {
 				[SETTINGS_PANEL_CLASSNAMES.withPreviewPanel]: this.showPreviewPanel,
 			};
 		},
+		debugBarStyle(): { [string]: string }
+		{
+			const CATALOG_WIDTH_COLLAPSED = 54;
+			const CATALOG_WIDTH_EXPANDED = 330;
+			const SETTINGS_WIDTH = 470;
+			const SIDE_MARGINS = 40;
+			const SIDE_PADDINGS = 10;
+			const catalogWidth = this.catalogExpanded ? CATALOG_WIDTH_EXPANDED : CATALOG_WIDTH_COLLAPSED;
+			const settingsWidth = this.showSettings ? SETTINGS_WIDTH + 10 : 0;
+
+			const maxWidth = `calc(100vw - ${catalogWidth}px - ${settingsWidth}px - ${SIDE_MARGINS}px - ${SIDE_PADDINGS}px)`;
+
+			return {
+				width: maxWidth,
+			};
+		},
+		isDebugBarAvailable(): boolean
+		{
+			const { isFeatureAvailable } = useFeature();
+
+			return isFeatureAvailable('debugBar');
+		}
 	},
 	template: `
 		<div class="editor-chart-app-layout">
@@ -70,7 +116,11 @@ export const AppLayout = {
 				<section :class="bottomRightClassNames">
 					<slot name="bottom-right-toolbar"/>
 				</section>
-				
+
+				<section v-if="showDebugBar && isDebugBarAvailable" :class="debugBarClassNames" :style="debugBarStyle">
+					<slot name="debug-bar-toolbar"/>
+				</section>
+
 				<section class="editor-chart-app-layout__top-middle-anchor">
 					<slot name="top-middle-anchor"/>
 				</section>

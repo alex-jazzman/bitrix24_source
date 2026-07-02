@@ -116,3 +116,4 @@ $MESS["MENU_ADD_SUB_ITEM_ARIA"] = "Добавить элемент #TOPIC#";
 $MESS["MENU_TOGGLE_FAVORITE_ARIA"] = "Избранное";
 $MESS["MENU_ITEM_ARIA_PLURAL_0"] = "#ITEM#, #COUNT# новое";
 $MESS["MENU_ITEM_ARIA_PLURAL_1"] = "#ITEM#, #COUNT# новых";
+$MESS["MENU_NAV_ARIA_LABEL_2"] = "Главное меню";

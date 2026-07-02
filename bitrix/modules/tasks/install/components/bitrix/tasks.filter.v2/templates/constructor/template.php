@@ -953,15 +953,12 @@ BX.ready(function(){
 				if (params.hasOwnProperty('skipSetSelector'))
 					skipSetSelector = params.skipSetSelector;
 
-				var bNeedFormatUserName = true;
-
 				this.selectedValue =  newValue;
 				var selectedValueFormattedName = '...';
 
 				if (BX.Tasks.filterV2.engine.formattedUserNames.hasOwnProperty('u' + newValue))
 				{
 					selectedValueFormattedName = BX.Tasks.filterV2.engine.formattedUserNames['u' + newValue];
-					bNeedFormatUserName = false;
 				}
 
 				this.node.value = selectedValueFormattedName;
@@ -972,30 +969,6 @@ BX.ready(function(){
 						id   : newValue,
 						name : selectedValueFormattedName
 					}]);
-				}
-
-				if (bNeedFormatUserName)
-				{
-					BX.CJSTask.formatUsersNames(
-						[newValue],
-						{
-							callback: (function(skipSetSelector, newValue, selfObj){
-								return function(arUsers) {
-									selfObj.node.value = arUsers['u' + newValue];
-
-									BX.Tasks.filterV2.engine.formattedUserNames['u' + newValue] = arUsers['u' + newValue];
-
-									if ( ! skipSetSelector )
-									{
-										selfObj.objSelector.setSelectedUsers([{
-											id   : newValue,
-											name : arUsers['u' + newValue]
-										}]);
-									}
-								}
-							})(skipSetSelector, newValue, this)
-						}
-					);
 				}
 			};
 
@@ -1053,8 +1026,6 @@ BX.ready(function(){
 			{
 				var params = params || {};
 
-				var bNeedFormatName = true;
-
 				var skipSetSelector = false;
 				if (params.hasOwnProperty('skipSetSelector'))
 					skipSetSelector = params.skipSetSelector;
@@ -1068,7 +1039,6 @@ BX.ready(function(){
 				if (BX.Tasks.filterV2.engine.formattedGroupsNames.hasOwnProperty('g' + newValue))
 				{
 					selectedValueFormattedName = BX.Tasks.filterV2.engine.formattedGroupsNames['g' + newValue];
-					bNeedFormatUserName = false;
 				}
 
 				this.node.value = selectedValueFormattedName;
@@ -1079,30 +1049,6 @@ BX.ready(function(){
 						id    : newValue,
 						title : selectedValueFormattedName
 					});
-				}
-
-				if (bNeedFormatName && (newValue > 0))
-				{
-					BX.CJSTask.getGroupsData(
-						[newValue], {
-							callback: (function(skipSetSelector, groupId, selfObj){
-								return function(arGroups) {
-									var groupName = arGroups[groupId]['NAME'];
-
-									selfObj.node.value = groupName;
-									BX.Tasks.filterV2.engine.formattedGroupsNames['g' + groupId] = groupName;
-
-									if ( ! skipSetSelector )
-									{
-										selfObj.objSelector.setSelected({
-											id    : groupId,
-											title : groupName
-										});
-									}
-								}
-							})(skipSetSelector, newValue, this)
-						}
-					);
 				}
 			};
 

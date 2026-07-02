@@ -11,3 +11,6 @@ $MESS['BICONNECTOR_CONTROLLER_SUPERSET_DELETE_LOCAL_ERROR_RIGHTS'] = 'Недос
 $MESS['BICONNECTOR_CONTROLLER_SUPERSET_DELETE_LOCAL_ERROR_ONLY_BOX'] = 'Действие доступно только в коробочной версии Битрикс24';
 $MESS['BICONNECTOR_CONTROLLER_SUPERSET_LINK_ADDRESS_ERROR_RIGHTS'] = 'Недостаточно прав для привязки адреса к BI Конструктору';
 $MESS['BICONNECTOR_CONTROLLER_SUPERSET_LINK_ADDRESS_ERROR_ONLY_BOX'] = 'Действие доступно только в коробочной версии Битрикс24';
+$MESS['BICONNECTOR_CONTROLLER_SUPERSET_REBIND_ERROR_RIGHTS'] = 'Недостаточно прав для перепривязки BI Конструктора';
+$MESS['BICONNECTOR_CONTROLLER_SUPERSET_REBIND_NOT_REQUIRED'] = 'Перепривязка BI Конструктора не требуется';
+$MESS['BICONNECTOR_CONTROLLER_SUPERSET_REBIND_NO_KEY'] = 'Не найден ключ доступа BI Конструктора';

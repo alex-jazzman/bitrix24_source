@@ -7,7 +7,7 @@
 	--designer-bp-storage-icons: #52BCBC;
 	--designer-bp-storage-bg: #E3F5ED;
 
-	--designer-bp-entities-icons: #47A1EB;
+	--designer-bp-entities-icons: var(--ui-color-accent-main-primary);
 	--designer-bp-entities-bg: #E5F1FF;
 
 	--designer-bp-employe-icons: #E08908;

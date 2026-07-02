@@ -71,6 +71,7 @@ return [
 		'main.core',
 		'main.core.cache',
 		'ui.icon-set.actions',
+		'ui.a11y',
 	],
 	'skip_core' => false,
 	'settings' => [

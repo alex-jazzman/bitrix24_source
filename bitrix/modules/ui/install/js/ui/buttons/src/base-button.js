@@ -513,10 +513,10 @@ export default class BaseButton implements IButton
 
 	unbindEvent(eventName: string): this
 	{
+		Event.unbindAll(this.getContainer(), eventName);
 		if (this.events[eventName])
 		{
 			delete this.events[eventName];
-			Event.unbind(this.getContainer(), eventName, this.#handleEvent);
 		}
 
 		return this;

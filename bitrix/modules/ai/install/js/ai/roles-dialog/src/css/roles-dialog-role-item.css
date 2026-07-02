@@ -59,6 +59,39 @@
 	outline: 2px solid var(--ui-color-copilot-secondary);
 }
 
+.ai__roles-dialog_role-image-wrapper.--universal {
+	background: url(../../images/ai-roles-dialog-universal-avatar.png) center / cover no-repeat;
+}
+
+.popup-window.--bitrixgpt-redesign .ai__roles-dialog_role-item.--selected .ai__roles-dialog_role-image-wrapper {
+	border: none;
+	outline: none;
+}
+
+.popup-window.--bitrixgpt-redesign .ai__roles-dialog_role-image-wrapper.--universal {
+	border-radius: 0;
+	background-color: transparent;
+	overflow: visible;
+}
+
+.popup-window.--bitrixgpt-redesign .ai__roles-dialog_role-item:hover .ai__roles-dialog_role-item-description {
+	color: var(--ui-color-base-50);
+}
+
+.ai__roles-dialog_role-item.--universal .ai__roles-dialog_role-item-title {
+	background: var(--Bitrix-GPT-filled, linear-gradient(264deg, #F96269 1.67%, #F046B7 21.82%, #9D48FF 52.44%, #3F68FF 76.41%, #0098EA 97.21%));
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+}
+
+.ai__roles-dialog_role-item.--universal.--selected .ai__roles-dialog_role-item-title {
+	background: var(--Bitrix-GPT-filled, linear-gradient(264deg, #F96269 1.67%, #F046B7 21.82%, #9D48FF 52.44%, #3F68FF 76.41%, #0098EA 97.21%));
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+}
+
 .ai__roles-dialog_role-image-wrapper > div {
 	height: 42px;
 	width: 42px;

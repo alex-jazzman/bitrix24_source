@@ -8,6 +8,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+/**
+ * @global CMain $APPLICATION
+ * @var array $arParams
+ */
+
 \Bitrix\Main\UI\Extension::load([
 	'ui.design-tokens',
 	'main.core',
@@ -36,7 +41,7 @@ $renderField = function($htmlFormId, $field, $isExt = false, $version, $renderFi
 	$htmlFieldId = sprintf('%s_%s', $htmlFormId, htmlspecialcharsbx($field['id']));
 
 	?><tr id="<?=$htmlFieldId ?>"
-		<? if (!empty($field['hidden']) || !empty($field['folded'])): ?> style="display: none; "<? endif ?>><?
+		<?php if (!empty($field['hidden']) || !empty($field['folded'])): ?> style="display: none; "<?php endif ?>><?
 
 		$titleSubClass = 'main-mail-form-field-title-cell';
 		if (!empty($field['required']))
@@ -62,7 +67,7 @@ $renderField = function($htmlFormId, $field, $isExt = false, $version, $renderFi
 				?>
 				<td class="main-mail-form-fields-table-cell <?=$titleSubClass ?>">
 					<span class="main-mail-form-field-spacer-25"></span>
-					<span class="main-mail-form-field-title"><?=preg_replace('/[\r\n]+/', '<br>', htmlspecialcharsbx($field['title'])) ?>:</span>
+					<label class="main-mail-form-field-title" id="<?=$htmlFieldId ?>_label"><?=preg_replace('/[\r\n]+/', '<br>', htmlspecialcharsbx($field['title'])) ?>:</label>
 				</td>
 				<td class="main-mail-form-fields-table-cell <?=$valueSubClass ?>">
 					<input type="hidden"
@@ -70,9 +75,13 @@ $renderField = function($htmlFormId, $field, $isExt = false, $version, $renderFi
 						name="<?=htmlspecialcharsbx($field['name']) ?>"
 						value="<?=htmlspecialcharsbx($field['value']) ?>">
 					<span class="main-mail-form-field-spacer-25"></span>
-					<span class="main-mail-form-field-title main-mail-form-field-value-menu"><?
+					<button type="button" class="main-mail-form-field-title main-mail-form-field-value-menu"
+						aria-labelledby="<?=$htmlFieldId ?>_label"
+						aria-haspopup="listbox"
+						aria-expanded="false"
+						<?php if (!empty($field['required'])): ?> aria-required="true"<?php endif ?>><?
 						echo htmlspecialcharsbx(!empty($field['list'][$field['value']]) ? $field['list'][$field['value']] : $field['placeholder']);
-					?></span>
+					?></button>
 				</td>
 				<?
 				break;
@@ -81,7 +90,7 @@ $renderField = function($htmlFormId, $field, $isExt = false, $version, $renderFi
 				?>
 				<td class="main-mail-form-fields-table-cell <?=$titleSubClass ?>">
 					<span class="main-mail-form-field-spacer-25"></span>
-					<span class="main-mail-form-field-title"><?=preg_replace('/[\r\n]+/', '<br>', htmlspecialcharsbx($field['title'])) ?>:</span>
+					<label class="main-mail-form-field-title" id="<?=$htmlFieldId ?>_label"><?=preg_replace('/[\r\n]+/', '<br>', htmlspecialcharsbx($field['title'])) ?>:</label>
 				</td>
 				<td class="main-mail-form-fields-table-cell <?=$valueSubClass ?>" id="main-mail-from-field">
 					<?php $mailboxes = $APPLICATION->includeComponent('bitrix:main.mail.confirm', '', []); ?>
@@ -97,6 +106,30 @@ $renderField = function($htmlFormId, $field, $isExt = false, $version, $renderFi
 								isSenderAvailable: <?= Json::encode($renderFieldOptions['isSenderAvailable']) ?>,
 							});
 							senderSelector.renderTo(BX('main-mail-from-field'));
+							var senderButton = BX('main-mail-from-field').querySelector('.sender-selector-button');
+							if (senderButton)
+							{
+								senderButton.setAttribute('tabindex', '0');
+								senderButton.setAttribute('aria-haspopup', 'dialog');
+								senderButton.setAttribute('aria-expanded', 'false');
+								senderButton.setAttribute('aria-labelledby', '<?= CUtil::JSEscape($htmlFieldId) ?>_label');
+								<?php if (!empty($field['required'])): ?>
+								senderButton.setAttribute('aria-required', 'true');
+								<?php endif; ?>
+								senderButton.addEventListener('keydown', function(e) {
+									if (e.key === 'Enter' || e.key === ' ')
+									{
+										e.preventDefault();
+										senderButton.click();
+									}
+								});
+								senderSelector.senderDialog?.subscribe('onShow', function() {
+									senderButton.setAttribute('aria-expanded', 'true');
+								});
+								senderSelector.senderDialog?.subscribe('onHide', function() {
+									senderButton.setAttribute('aria-expanded', 'false');
+								});
+							}
 						}
 						else
 						{
@@ -109,9 +142,13 @@ $renderField = function($htmlFormId, $field, $isExt = false, $version, $renderFi
 									>
 									<span class="main-mail-form-field-spacer-25"></span>
 									<span class="main-mail-form-field-from-icon"></span>
-									<span class="main-mail-form-field-title main-mail-form-field-value-menu">
+									<button type="button" class="main-mail-form-field-title main-mail-form-field-value-menu"
+										aria-labelledby="<?= $htmlFieldId ?>_label"
+										aria-haspopup="listbox"
+										aria-expanded="false"
+										<?php if (!empty($field['required'])): ?> aria-required="true"<?php endif; ?>>
 										<?= htmlspecialcharsbx($field['value'] ?: $field['placeholder']); ?>
-									</span>
+									</button>
 									<?php if (!empty($field['copy'])): ?>
 										<label class="main-mail-form-field-from-copy">
 											<span class="main-mail-form-field-spacer-25"></span>
@@ -119,7 +156,7 @@ $renderField = function($htmlFormId, $field, $isExt = false, $version, $renderFi
 												name="<?=htmlspecialcharsbx($field['copy']) ?>" value="Y" id="<?=$htmlFieldId ?>_copy">
 											<span class="main-mail-form-field-title main-mail-form-field-from-copy-text"><?=getMessage('MAIN_MAIL_FORM_FROM_FIELD_COPY') ?></span>
 										</label>
-									<? endif; ?>
+									<?php endif; ?>
 								</div>
 							`;
 							BX.Dom.append(oldSelector, BX('main-mail-from-field'))
@@ -134,10 +171,11 @@ $renderField = function($htmlFormId, $field, $isExt = false, $version, $renderFi
 				?>
 				<td class="main-mail-form-fields-table-cell <?=$titleSubClass ?>">
 					<span class="main-mail-form-field-spacer"></span>
-					<span class="main-mail-form-field-title"><?=preg_replace('/[\r\n]+/', '<br>', htmlspecialcharsbx($field['title'])) ?>:</span>
+					<label class="main-mail-form-field-title" id="<?=$htmlFieldId ?>_label"><?=preg_replace('/[\r\n]+/', '<br>', htmlspecialcharsbx($field['title'])) ?>:</label>
 				</td>
 				<td class="main-mail-form-fields-table-cell <?=$valueSubClass ?>">
-					<div data-field-form-id="<?=$htmlFormId?>" data-form-field-type="<?=htmlspecialcharsbx($field['name'])?>">
+					<div data-field-form-id="<?=$htmlFormId?>" data-form-field-type="<?=htmlspecialcharsbx($field['name'])?>"
+						data-field-required="<?=!empty($field['required']) ? 'true' : 'false'?>">
 						<div type="hidden"></div>
 					</div>
 				</td>
@@ -149,7 +187,7 @@ $renderField = function($htmlFormId, $field, $isExt = false, $version, $renderFi
 				?>
 				<td class="main-mail-form-fields-table-cell <?=$titleSubClass ?>">
 					<span class="main-mail-form-field-spacer"></span>
-					<span class="main-mail-form-field-title"><?=preg_replace('/[\r\n]+/', '<br>', htmlspecialcharsbx($field['title'])) ?>:</span>
+					<label class="main-mail-form-field-title" id="<?=$htmlFieldId ?>_label"><?=preg_replace('/[\r\n]+/', '<br>', htmlspecialcharsbx($field['title'])) ?>:</label>
 				</td>
 				<td class="main-mail-form-fields-table-cell <?=$valueSubClass ?>"><?
 
@@ -229,7 +267,7 @@ $renderField = function($htmlFormId, $field, $isExt = false, $version, $renderFi
 				?>
 				<td class="main-mail-form-fields-table-cell <?=$titleSubClass ?>">
 					<span class="main-mail-form-field-spacer <?=$titleSpacerSubClass ?>"></span>
-					<span class="main-mail-form-field-title"><?=preg_replace('/[\r\n]+/', '<br>', htmlspecialcharsbx($field['title'])) ?>:</span>
+					<label class="main-mail-form-field-title" id="<?=$htmlFieldId ?>_label"><?=preg_replace('/[\r\n]+/', '<br>', htmlspecialcharsbx($field['title'])) ?>:</label>
 				</td>
 				<td class="main-mail-form-fields-table-cell <?=$valueSubClass ?>">
 					<?=(isset($field['render']) && is_callable($field['render']) ? $field['render']($field) : $field['value']); ?>
@@ -242,7 +280,7 @@ $renderField = function($htmlFormId, $field, $isExt = false, $version, $renderFi
 				?>
 				<td class="main-mail-form-fields-table-cell <?=$titleSubClass ?>">
 					<span class="main-mail-form-field-spacer"></span>
-					<span class="main-mail-form-field-title"><?=preg_replace('/[\r\n]+/', '<br>', htmlspecialcharsbx($field['title'])) ?>:</span>
+					<label class="main-mail-form-field-title" for="<?=$htmlFieldId ?>_value"><?=preg_replace('/[\r\n]+/', '<br>', htmlspecialcharsbx($field['title'])) ?>:</label>
 				</td>
 				<td class="main-mail-form-fields-table-cell <?=$valueSubClass ?>">
 					<div class="main-mail-form-field-value-wrapper">
@@ -250,8 +288,14 @@ $renderField = function($htmlFormId, $field, $isExt = false, $version, $renderFi
 							id="<?=$htmlFieldId ?>_value"
 							name="<?=htmlspecialcharsbx($field['name']) ?>"
 							value="<?=htmlspecialcharsbx($field['value'] ?? '') ?>"
-							placeholder="<?=htmlspecialcharsbx($field['placeholder'] ?? '') ?>">
-						<span class="main-mail-form-field-value-menu-ext-button"></span>
+							placeholder="<?=htmlspecialcharsbx($field['placeholder'] ?? '') ?>"
+							<?php if (!empty($field['required'])): ?> aria-required="true"<?php endif ?>>
+						<?php if (!empty($field['menu'])): ?>
+							<button type="button" class="main-mail-form-field-value-menu-ext-button"
+								aria-label="<?=htmlspecialcharsbx(Loc::getMessage('MAIN_MAIL_FORM_FIELD_MENU') ?? '') ?>"></button>
+						<?php else: ?>
+							<span class="main-mail-form-field-value-menu-ext-button"></span>
+						<?php endif ?>
 					</div>
 				</td>
 				<?
@@ -262,8 +306,8 @@ $renderField = function($htmlFormId, $field, $isExt = false, $version, $renderFi
 ?>
 <div class="main-mail-form-wrapper" id="<?=$htmlFormId ?>">
 	<div class="main-mail-form-fields-wrapper">
-		<table class="main-mail-form-fields-table">
-			<?
+		<table class="main-mail-form-fields-table" role="presentation">
+			<?php
 			/**
 			 * Fix erroneous autocomplete (it won't work without an id)
 			 *
@@ -276,25 +320,26 @@ $renderField = function($htmlFormId, $field, $isExt = false, $version, $renderFi
 			?>
 			<tr>
 				<td>
-					<input style="display:none" id="mail-form-pseudo-field">
+					<input style="display:none" id="mail-form-pseudo-field" aria-hidden="true">
 				</td>
 			</tr>
 			<div id="main-mail-form-message-send-warning-empty"></div>
-			<?
+			<?php
 			foreach ($arParams['FIELDS'] as $field)
 				$renderField($htmlFormId, $field, false, $arParams['VERSION'], $renderFieldOptions);
 			?>
 			<tr id="<?=sprintf('%s_fields_footer', $htmlFormId) ?>">
 				<td class="main-mail-form-fields-footer-cell" colspan="2">
 					<div class="main-mail-form-fields-buttons">
-						<? foreach ($arParams['FIELDS'] as $field): ?>
-							<? if (in_array($field['type'], array('editor', 'files', 'separator'))) continue; ?>
-							<span class="main-mail-form-field-button"
+						<?php foreach ($arParams['FIELDS'] as $field): ?>
+							<?php if (in_array($field['type'], array('editor', 'files', 'separator'))) continue; ?>
+							<button type="button" class="main-mail-form-field-button"
 								data-target="<?=sprintf('%s_%s', $htmlFormId, htmlspecialcharsbx($field['id'])) ?>"
-								<? if (empty($field['folded']) || !empty($field['hidden'])): ?> style="display: none; "<? endif ?>><?
+								aria-expanded="<?=(!empty($field['folded']) && empty($field['hidden'])) ? 'false' : 'true' ?>"
+								<?php if (empty($field['folded']) || !empty($field['hidden'])): ?> style="display: none; "<?php endif ?>><?php
 								echo htmlspecialcharsbx($field['title'])
-							?></span>
-						<? endforeach ?>
+							?></button>
+						<?php endforeach ?>
 					</div>
 				</td>
 			</tr>
@@ -302,7 +347,7 @@ $renderField = function($htmlFormId, $field, $isExt = false, $version, $renderFi
 		</table>
 	</div>
 
-	<? $editorHeight = isset($arParams['EDITOR']['height']) && $arParams['EDITOR']['height'] > 0 ? (int) $arParams['EDITOR']['height'] : 200;
+	<?php $editorHeight = isset($arParams['EDITOR']['height']) && $arParams['EDITOR']['height'] > 0 ? (int) $arParams['EDITOR']['height'] : 200;
 	$editorValue = '';
 	$fromField = false;
 	foreach($arParams['FIELDS'] as $field)
@@ -327,9 +372,9 @@ $renderField = function($htmlFormId, $field, $isExt = false, $version, $renderFi
 
 	?>
 	<div id="<?=sprintf('%s_%s', $htmlFormId, htmlspecialcharsbx($arParams['EDITOR']['id'])) ?>"
-		class="main-mail-form-editor-wrapper <? if (!empty($arParams['EDITOR']['menu'])): ?> main-mail-form-field-value-menu-ext<? endif ?>"
+		class="main-mail-form-editor-wrapper <?php if (!empty($arParams['EDITOR']['menu'])): ?> main-mail-form-field-value-menu-ext<?php endif ?>"
 		style="min-height: <?=$editorHeight ?>px; ">
-		<? $APPLICATION->includeComponent(
+		<?php $APPLICATION->includeComponent(
 			'bitrix:main.post.form', '',
 			array(
 				'FORM_ID' => $htmlFormId,
@@ -343,7 +388,7 @@ $renderField = function($htmlFormId, $field, $isExt = false, $version, $renderFi
 				),
 				'BUTTONS' => $arParams['POST_FORM_BUTTONS'],
 				'BUTTONS_HTML' => (!empty($arParams['FOLD_QUOTE']) ?
-					['ReplyQuote' => '<span class="main-mail-form-quote-button-wrapper"><span class="main-mail-form-quote-button">...</span></span>'] : []
+					['ReplyQuote' => '<span class="main-mail-form-quote-button-wrapper" data-toolbar-aria-label="'.htmlspecialcharsbx(Loc::getMessage('MAIN_MAIL_FORM_QUOTE_SHOW') ?? '').'"><span class="main-mail-form-quote-button">...</span></span>'] : []
 				),
 				'TEXT' => array(
 					'INPUT_NAME' => 'dummy_'.$arParams['EDITOR']['name'],
@@ -410,41 +455,47 @@ $renderField = function($htmlFormId, $field, $isExt = false, $version, $renderFi
 			false,
 			array('HIDE_ICONS' => 'Y', 'ACTIVE_COMPONENT' => 'Y')
 		); ?>
-		<span class="main-mail-form-field-value-menu-ext-button"></span>
+		<?php if (!empty($arParams['EDITOR']['menu'])): ?>
+			<button type="button" class="main-mail-form-field-value-menu-ext-button"
+				aria-label="<?=htmlspecialcharsbx(Loc::getMessage('MAIN_MAIL_FORM_FIELD_MENU') ?? '') ?>"></button>
+		<?php else: ?>
+			<span class="main-mail-form-field-value-menu-ext-button"></span>
+		<?php endif ?>
 	</div>
 
-	<? if (!empty($arParams['FIELDS_EXT'])): ?>
+	<?php if (!empty($arParams['FIELDS_EXT'])): ?>
 		<div class="main-mail-form-docs-wrapper main-mail-form-border-bottom">
-			<table class="main-mail-form-fields-table">
-				<?
+			<table class="main-mail-form-fields-table" role="presentation">
+				<?php
 				foreach ($arParams['FIELDS_EXT'] as $field)
 					$renderField($htmlFormId, $field, true, $arParams['VERSION'], $renderFieldOptions);
 				?>
 				<tr id="<?=sprintf('%s_fields_ext_footer', $htmlFormId) ?>">
 					<td class="main-mail-form-fields-footer-cell" colspan="2">
 						<div class="main-mail-form-fields-buttons">
-							<? foreach ($arParams['FIELDS_EXT'] as $field): ?>
-								<? if (in_array($field['type'], array('editor', 'files', 'separator'))) continue; ?>
-								<span class="main-mail-form-field-button"
+							<?php foreach ($arParams['FIELDS_EXT'] as $field): ?>
+								<?php if (in_array($field['type'], array('editor', 'files', 'separator'))) continue; ?>
+								<button type="button" class="main-mail-form-field-button"
 									data-target="<?=sprintf('%s_%s', $htmlFormId, htmlspecialcharsbx($field['id'])) ?>"
-									<? if (empty($field['folded']) || !empty($field['hidden'])): ?> style="display: none; "<? endif ?>><?
+									aria-expanded="<?=(!empty($field['folded']) && empty($field['hidden'])) ? 'false' : 'true' ?>"
+									<?php if (empty($field['folded']) || !empty($field['hidden'])): ?> style="display: none; "<?php endif ?>><?php
 									echo htmlspecialcharsbx($field['title'])
-								?></span>
-							<? endforeach ?>
+								?></button>
+							<?php endforeach ?>
 						</div>
 					</td>
 				</tr>
 			</table>
 		</div>
-	<? else: ?>
+	<?php else: ?>
 		<div class="main-mail-form-border-bottom"></div>
-	<? endif ?>
+	<?php endif ?>
 
-	<div class="main-mail-form-error"></div>
+	<div class="main-mail-form-error" role="alert" aria-live="assertive"></div>
 	<div class="main-mail-form-footer-wrapper">
 		<div class="main-mail-form-footer">
 			<div class="main-mail-form-footer-buttons-wrapper">
-				<? foreach ($arParams['BUTTONS'] as $type => $item)
+				<?php foreach ($arParams['BUTTONS'] as $type => $item)
 				{
 					if (empty($item['class']))
 					{
@@ -461,7 +512,7 @@ $renderField = function($htmlFormId, $field, $isExt = false, $version, $renderFi
 					else if ('cancel' == $type)
 						$item['class'] .= ' main-mail-form-cancel-button';
 
-					?><button class="ui-btn main-mail-form-footer-button <?=htmlspecialcharsbx($item['class']) ?>" type="button"><?=htmlspecialcharsbx($item['title']) ?></button><?
+					?><button class="ui-btn main-mail-form-footer-button <?=htmlspecialcharsbx($item['class']) ?>" type="button"><?=htmlspecialcharsbx($item['title']) ?></button><?php
 				}
 				?>
 			</div>
@@ -501,9 +552,9 @@ BX.ready(function()
 			'userCalendarPath' => $arParams['USER_CALENDAR_PATH'],
 		)) ?>
 	);
-	<? if (empty($arParams['LAYOUT_ONLY'])): ?>
+	<?php if (empty($arParams['LAYOUT_ONLY'])): ?>
 		form.init();
-	<? endif ?>
+	<?php endif ?>
 
 	BX.addCustomEvent(
 		'SidePanel.Slider:onMessage',

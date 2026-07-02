@@ -1,9 +1,9 @@
 import { Type } from 'main.core';
-import { BuilderModel, GetterTree, ActionTree, MutationTree } from 'ui.vue3.vuex';
+import { BuilderModel, type GetterTree, type ActionTree, type MutationTree } from 'ui.vue3.vuex';
 
 import { RecentCallStatus } from 'im.v2.const';
 
-import type { ImModelCallItem } from 'im.v2.model';
+import { type ImModelCallItem } from 'im.v2.model';
 
 type CallsState = {
 	collection: {

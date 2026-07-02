@@ -38,7 +38,8 @@ import {
 export function $importFromBBCode(bbcode: string, editor: TextEditor, normalize: boolean = true): Array<LexicalNode>
 {
 	const scheme: BBCodeScheme = editor.getBBCodeScheme();
-	const parser: BBCodeParser = new BBCodeParser({ scheme });
+	const linkify: boolean = editor.getBBCodeImportMap().has('url');
+	const parser: BBCodeParser = new BBCodeParser({ scheme, linkify });
 	const ast: BBCodeRootNode = parser.parse(bbcode);
 	const elements: BBCodeContentNode = ast.getChildren();
 

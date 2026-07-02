@@ -1,4 +1,4 @@
-import { Type, Cache, Text, Tag, Dom, type JsonObject } from 'main.core';
+import { Type, Cache, Text, Tag, Dom, Loc, type JsonObject } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { PopupManager, Popup } from 'main.popup';
 
@@ -117,9 +117,17 @@ export class ToolbarItem extends EventEmitter
 					onmouseleave="${this.handleMouseLeave.bind(this)}"
 				>
 					${this.getTitleContainer()}
-					<div class="side-panel-toolbar-item-remove-btn" onclick="${this.handleRemoveBtnClick.bind(this)}">
-						<div class="ui-icon-set --cross-20" style="--ui-icon-set__icon-size: 100%;"></div>
-					</div>
+					<button
+						type="button"
+						tabindex="0"
+						class="side-panel-toolbar-item-remove-btn" 
+						onclick="${this.handleRemoveBtnClick.bind(this)}"
+						title="${Loc.getMessage('MAIN_SIDEPANEL_TOOLBAR_REMOVE_ITEM')}"
+						aria-label="${Loc.getMessage('MAIN_SIDEPANEL_TOOLBAR_REMOVE_ITEM')}"
+						aria-describedby="${this.getTitleContainer().id}"
+					>
+						<span class="ui-icon-set --cross-20" style="--ui-icon-set__icon-size: 100%;"></span>
+					</button>
 				</div>
 			`;
 		});
@@ -135,8 +143,10 @@ export class ToolbarItem extends EventEmitter
 		return this.refs.remember('title', () => {
 			return Tag.render`
 				<a 
+					id="${Text.getRandom().toLowerCase()}"
 					class="side-panel-toolbar-item-title"
 					href="${encodeURI(this.getUrl())}"
+					tabindex="0"
 					data-slider-maximize="true"
 				>${Text.encode(this.getTitle())}</a>
 			`;
@@ -201,6 +211,7 @@ export class ToolbarItem extends EventEmitter
 				forceTop: true,
 				position: 'top',
 			},
+			focusTrap: false,
 			width: popupWidth,
 			content: Tag.render`
 				<div class="sidepanel-toolbar-item-hint">

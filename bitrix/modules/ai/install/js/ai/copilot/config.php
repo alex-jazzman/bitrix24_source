@@ -1,4 +1,4 @@
-<?
+<?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -10,10 +10,13 @@ use Bitrix\AI\Facade\User;
 use Bitrix\AI\Facade\Bitrix24;
 use Bitrix\AI\Services\CopilotAccessCheckerService;
 use Bitrix\Main\Loader;
+use Bitrix\Ui\Public\Services\Copilot\CopilotNameService;
 
 $isShowAgreementPopup = false;
 $isRestrictByEula = false;
 $userHasAccessToLibrary = false;
+$isSupportResponseFormatting = true;
+$copilotName = (new CopilotNameService())->getCopilotName();
 
 if (Loader::includeModule('ai'))
 {
@@ -62,5 +65,7 @@ return [
 		'isRestrictByEula' => $isRestrictByEula,
 		'isShowAgreementPopup' => $isShowAgreementPopup,
 		'isLibraryVisible' => $userHasAccessToLibrary,
+		'copilotName' => $copilotName,
+		'isSupportResponseFormatting' => $isSupportResponseFormatting
 	]
 ];

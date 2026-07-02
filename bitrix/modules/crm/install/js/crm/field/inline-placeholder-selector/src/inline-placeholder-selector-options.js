@@ -4,4 +4,5 @@ export type InlinePlaceholderSelectorOptions = {
 	value: string,
 	mode: string,
 	multiple: boolean,
+	isReadOnly: boolean,
 };

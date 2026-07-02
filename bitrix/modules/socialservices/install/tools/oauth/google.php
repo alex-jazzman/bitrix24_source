@@ -6,35 +6,26 @@ The page opens in popup window after user authorized on Google.
 */
 define("NOT_CHECK_PERMISSIONS", true);
 
-$provider = "GoogleOAuth";
-if(isset($_REQUEST["state"]) && is_string($_REQUEST["state"]))
-{
-	$arState = array();
-	parse_str($_REQUEST["state"], $arState);
-
-	if(isset($arState['site_id']) && is_string($arState['site_id']))
-	{
-		$site = mb_substr(preg_replace("/[^a-z0-9_]/i", "", $arState['site_id']), 0, 2);
-		define("SITE_ID", $site);
-	}
-
-	if(isset($arState['provider']) && $arState['provider'] === 'GooglePlusOAuth')
-	{
-		$provider = 'GooglePlusOAuth';
-	}
-}
-
-define('SOCSERV_CURRENT_PROVIDER', $provider);
+require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/socialservices/include/state_processing.php';
 
 require_once($_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/main/include/prolog_before.php");
 
 if(Bitrix\Main\Loader::includeModule("socialservices"))
 {
+	$provider = 'GoogleOAuth';
+
+	$state = (string)($_REQUEST['state'] ?? '');
+	$statePayload = \Bitrix\Socialservices\OAuth\StateService::getInstance()->getPayload($state);
+	if (isset($statePayload['provider']) && $statePayload['provider'] === 'GooglePlusOAuth')
+	{
+		$provider = 'GooglePlusOAuth';
+	}
+
 	$oAuthManager = CSocServGoogleProxyOAuth::isProxyAuth()
 			? new CSocServGoogleProxyOAuth()
 			: new CSocServAuthManager()
 	;
-	$oAuthManager->Authorize(SOCSERV_CURRENT_PROVIDER);
+	$oAuthManager->Authorize($provider);
 }
 
 require_once($_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/main/include/epilog_after.php");

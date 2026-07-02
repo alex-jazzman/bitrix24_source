@@ -49,7 +49,9 @@ export const GroupChatTitle = {
 			<FadeAnimation :duration="100">
 				<div v-if="dialog.inited" class="bx-im-chat-header__subtitle_container">
 					<UserCounter :dialogId="dialogId" />
-					<EntityLink v-if="hasEntityLink" :dialogId="dialogId" />
+					<slot name="after-user-counter">
+						<EntityLink v-if="hasEntityLink" :dialogId="dialogId" />
+					</slot>
 				</div>
 			</FadeAnimation>
 		</div>

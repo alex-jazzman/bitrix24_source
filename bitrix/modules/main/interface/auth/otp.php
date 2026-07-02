@@ -41,7 +41,7 @@ $bNeedCaptcha = (CModule::IncludeModule("security") && Otp::isCaptchaRequired())
 				<img class="login-waiter" alt="" src="/bitrix/panel/main/images/login-waiter.gif">
 			</div>
 		</div>
-		<?
+		<?php
 		if ($store_password):
 			?>
 			<div class="login-popup-checbox-block">
@@ -52,7 +52,7 @@ $bNeedCaptcha = (CModule::IncludeModule("security") && Otp::isCaptchaRequired())
 				<label for="OTP_REMEMBER"
 					   class="login-popup-checkbox-label"><?= GetMessage("AUTH_OTP_REMEMBER_ME") ?></label>
 			</div>
-		<?
+		<?php
 		endif;
 
 		$CAPTCHA_CODE = '';
@@ -66,21 +66,21 @@ $bNeedCaptcha = (CModule::IncludeModule("security") && Otp::isCaptchaRequired())
 		<div class="login-popup-field login-captcha-field">
 			<div class="login-popup-field-title"><?= GetMessage("AUTH_CAPTCHA_PROMT") ?></div>
 			<div class="login-input-wrap">
-				<span class="login-captcha-wrap" id="captcha_image"><?
+				<span class="login-captcha-wrap" id="captcha_image"><?php
 					if ($bNeedCaptcha): ?><img src="/bitrix/tools/captcha.php?captcha_sid=<?= $CAPTCHA_CODE ?>"
-											   width="180" height="40" alt="CAPTCHA" /><?
+											   width="180" height="40" alt="CAPTCHA" /><?php
 					endif; ?></span><input type="text" onfocus="BX.addClass(this.parentNode, 'login-input-active')"
 										   onblur="BX.removeClass(this.parentNode, 'login-input-active')"
 										   name="captcha_word" class="login-input" tabindex="4" autocomplete="off">
 				<div class="login-inp-border"></div>
 			</div>
 		</div>
-		<?
+		<?php
 		if ($not_show_links != "Y"):
 			?>
 			<a class="login-popup-link login-popup-forget-pas" href="javascript:void(0)"
 			   onclick="BX.adminLogin.toggleAuthForm('authorize')"><?= GetMessage("AUTH_GOTO_AUTH_FORM_1") ?></a>
-		<?
+		<?php
 		endif;
 		?>
 	</div>

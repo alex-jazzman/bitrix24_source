@@ -1,12 +1,14 @@
 import { Runtime, Type } from 'main.core';
-import { BaseEvent } from 'main.core.events';
+import type { BaseEvent } from 'main.core.events';
 import { Loader } from 'main.loader';
 import ActionType from './enums/action-type';
 import ButtonType from './enums/button-type';
+import EventType from './enums/event-type';
 
 import Button from './layout/button';
 
-export const ITEM_ACTION_EVENT = 'crm:activityplacement:item:action';
+/** @deprecated Use EventType.ITEM_ACTION */
+export const ITEM_ACTION_EVENT = EventType.ITEM_ACTION;
 
 export const Layout = {
 	components: {
@@ -21,7 +23,6 @@ export const Layout = {
 	{
 		return {
 			layout: {},
-			loader: Object.freeze(null),
 			isLoading: true,
 			primaryButtonParams: this.getButtonParams(ButtonType.PRIMARY, null, this.layout?.primaryButton),
 			secondaryButtonParams: this.getButtonParams(ButtonType.SECONDARY, null, this.layout?.secondaryButton),
@@ -31,14 +32,14 @@ export const Layout = {
 	},
 	created(): void
 	{
-		this.$Bitrix.eventEmitter.subscribe(ITEM_ACTION_EVENT, this.onActionEvent);
+		this.$Bitrix.eventEmitter.subscribe(EventType.ITEM_ACTION, this.onActionEvent);
 	},
 	mounted() {
 		this.showLoader(true);
 	},
 	beforeUnmount(): void
 	{
-		this.$Bitrix.eventEmitter.unsubscribe(ITEM_ACTION_EVENT, this.onActionEvent);
+		this.$Bitrix.eventEmitter.unsubscribe(EventType.ITEM_ACTION, this.onActionEvent);
 	},
 	watch: {
 		layout(newLayout)

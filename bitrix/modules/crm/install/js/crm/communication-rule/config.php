@@ -10,9 +10,11 @@ return [
 	'js' => 'dist/communication-rule.bundle.js',
 	'rel' => [
 		'main.core',
-		'ui.vue3',
-		'ui.layout-form',
+		'main.core.events',
+		'main.popup',
 		'ui.entity-selector',
+		'ui.layout-form',
+		'ui.vue3',
 	],
 	'skip_core' => false,
 ];

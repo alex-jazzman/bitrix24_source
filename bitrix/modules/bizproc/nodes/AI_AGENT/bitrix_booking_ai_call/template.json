@@ -1,0 +1,961 @@
+{
+    "NAME": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_NAME_1###",
+    "DESCRIPTION": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_DESCRIPTION_1###",
+    "PARAMETERS": [],
+    "VARIABLES": [],
+    "CONSTANTS": {
+        "PromptConfirmation": {
+            "Name": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_NAME_2###",
+            "Description": "",
+            "Type": "text",
+            "Required": 0,
+            "Multiple": 0,
+            "Options": [],
+            "Default": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_DEFAULT_1###"
+        },
+        "PromptReminder": {
+            "Name": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_NAME_3###",
+            "Description": "",
+            "Type": "text",
+            "Required": 0,
+            "Multiple": 0,
+            "Options": [],
+            "Default": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_DEFAULT_2###"
+        },
+        "PromptDelayed": {
+            "Name": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_NAME_4###",
+            "Description": "",
+            "Type": "text",
+            "Required": 0,
+            "Multiple": 0,
+            "Options": [],
+            "Default": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_DEFAULT_3###"
+        },
+        "PromptCancellation": {
+            "Name": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_NAME_5###",
+            "Description": "",
+            "Type": "text",
+            "Required": 0,
+            "Multiple": 0,
+            "Options": [],
+            "Default": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_DEFAULT_4###"
+        }
+    },
+    "TEMPLATE": [
+        {
+            "Type": "NodeWorkflowActivity",
+            "Name": "Template",
+            "Properties": {
+                "Title": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_TITLE_1###",
+                "Links": [
+                    [
+                        "A7649_2965_8496_3775:o0",
+                        "A7426_4464_6102_9845:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A6799_3346_2347_2123:o0",
+                        "A5172_6770_9062_4959:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A4791_5036_6881_3286:o0",
+                        "A7649_2965_8496_3775:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A9700_4393_6634_9720:o0",
+                        "A6799_3346_2347_2123:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A5172_6770_9062_4959:o0",
+                        "A8106_3093_8889_3355:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A4889_7438_8206_9038:o0",
+                        "A4632_2501_2036_1473:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A3922_7992_6256_9512:o0",
+                        "A8939_8471_4950_3897:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A3922_7992_6256_9512:o0",
+                        "A4460_4773_5285_8053:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A4460_4773_5285_8053:o1",
+                        "A6818_8593_1799_2521:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A6799_3346_2347_2123:o0",
+                        "A6833_3320_3842_9837:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A6833_3320_3842_9837:o0",
+                        "A3922_7992_6256_9512:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A4460_4773_5285_8053:o1",
+                        "A7868_4961_2315_7261:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A7426_4464_6102_9845:o0",
+                        "A4889_7438_8206_9038:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A2532_3871_3620_3427:o0",
+                        "A9737_6776_3554_8777:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A9737_6776_3554_8777:o1",
+                        "A9988_4968_1175_9417:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A7868_4961_2315_7261:o0",
+                        "A7443_4094_7448_4833:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A7443_4094_7448_4833:o0",
+                        "A2637_1165_8843_2682:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A2637_1165_8843_2682:o0",
+                        "A7930_3492_4440_1410:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A4460_4773_5285_8053:o0",
+                        "A7930_3492_4440_1410:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A6833_3320_3842_9837:o1",
+                        "A3712_2922_5544_6850:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A6833_3320_3842_9837:o0",
+                        "A1908_2854_9166_1869:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A4460_4773_5285_8053:o1",
+                        "A2577_2609_9029_7391:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A4460_4773_5285_8053:o0",
+                        "A7645_2085_3700_8707:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A7868_4961_2315_7261:o0",
+                        "A8483_2519_9624_3890:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A3922_7992_6256_9512:o0",
+                        "A8681_6811_9133_2178:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A4889_7438_8206_9038:o0",
+                        "A7445_3035_2369_4564:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A4632_2501_2036_1473:o0",
+                        "A2479_5231_1058_7910:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A4632_2501_2036_1473:o0",
+                        "A2532_3871_3620_3427:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A7868_4961_2315_7261:o0",
+                        "A2637_1165_8843_2682:i0",
+                        1769690123661
+                    ],
+                    [
+                        "A7426_4464_6102_9845:o0",
+                        "A9988_4968_1175_9417:i0",
+                        1769692982614
+                    ],
+                    [
+                        "A1173_1746_8725_3959:o0",
+                        "A4046_4344_6041_7435:i0",
+                        1774511924105
+                    ],
+                    [
+                        "A1434_4869_8745_7569:o0",
+                        "A6541_4383_8073_5722:i0",
+                        1774511929593
+                    ],
+                    [
+                        "A6461_2711_9056_1649:o0",
+                        "A2157_6333_3481_4770:i0",
+                        1774511931448
+                    ],
+                    [
+                        "A7591_6910_3837_5969:o0",
+                        "A3921_1088_5120_7721:i0",
+                        1774511933332
+                    ],
+                    [
+                        "A4046_4344_6041_7435:o0",
+                        "A9584_5418_4167_8209:i0",
+                        1777112552585
+                    ],
+                    [
+                        "A6541_4383_8073_5722:o0",
+                        "A8070_3549_6682_8099:i0",
+                        1777112555356
+                    ],
+                    [
+                        "A2157_6333_3481_4770:o0",
+                        "A8164_3258_3139_1182:i0",
+                        1777112556772
+                    ],
+                    [
+                        "A3921_1088_5120_7721:o0",
+                        "A1349_4223_6870_7072:i0",
+                        1777112558888
+                    ]
+                ]
+            },
+            "Children": [
+                {
+                    "Name": "A7649_2965_8496_3775",
+                    "Type": "SetupTemplateActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "blocks": [
+                            {
+                                "items": [
+                                    {
+                                        "itemType": "title",
+                                        "text": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_TEXT_1###"
+                                    },
+                                    {
+                                        "itemType": "description",
+                                        "text": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_TEXT_2###"
+                                    },
+                                    {
+                                        "itemType": "constant",
+                                        "id": "PromptConfirmation",
+                                        "name": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_NAME_2###",
+                                        "constantType": "text",
+                                        "description": "",
+                                        "multiple": false,
+                                        "required": false,
+                                        "options": [],
+                                        "default": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_DEFAULT_1###"
+                                    },
+                                    {
+                                        "itemType": "constant",
+                                        "id": "PromptReminder",
+                                        "name": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_NAME_3###",
+                                        "constantType": "text",
+                                        "description": "",
+                                        "multiple": false,
+                                        "required": false,
+                                        "options": [],
+                                        "default": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_DEFAULT_2###"
+                                    },
+                                    {
+                                        "itemType": "constant",
+                                        "id": "PromptDelayed",
+                                        "name": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_NAME_4###",
+                                        "constantType": "text",
+                                        "description": "",
+                                        "multiple": false,
+                                        "required": false,
+                                        "options": [],
+                                        "default": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_DEFAULT_3###"
+                                    },
+                                    {
+                                        "itemType": "constant",
+                                        "id": "PromptCancellation",
+                                        "name": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_NAME_5###",
+                                        "constantType": "text",
+                                        "description": "",
+                                        "multiple": false,
+                                        "required": false,
+                                        "options": [],
+                                        "default": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_DEFAULT_4###"
+                                    }
+                                ]
+                            }
+                        ],
+                        "Title": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_TITLE_2###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A7649_2965_8496_3775",
+                        "type": "simple",
+                        "position": {
+                            "x": 883,
+                            "y": -442
+                        },
+                        "dimensions": {
+                            "width": null,
+                            "height": null
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input",
+                                "isActive": true
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output",
+                                "isActive": true
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_TITLE_2###",
+                            "colorIndex": 2,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "SETTINGS",
+                            "updated": 1777388585395,
+                            "published": 1777388585395,
+                            "shouldShowAuxPorts": false
+                        }
+                    }
+                },
+                {
+                    "Name": "A4791_5036_6881_3286",
+                    "Type": "AiAgentStartTrigger",
+                    "Properties": {
+                        "Title": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_TITLE_3###"
+                    },
+                    "Activated": "Y",
+                    "Node": {
+                        "id": "A4791_5036_6881_3286",
+                        "type": "trigger",
+                        "position": {
+                            "x": 474,
+                            "y": -442
+                        },
+                        "dimensions": {
+                            "width": null,
+                            "height": null
+                        },
+                        "ports": [
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output",
+                                "isActive": true
+                            }
+                        ],
+                        "node": {
+                            "type": "trigger",
+                            "title": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_TITLE_3###",
+                            "colorIndex": 0,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "AI_ROBOT",
+                            "updated": 1777388585395,
+                            "published": 1777388585395,
+                            "shouldShowAuxPorts": false
+                        }
+                    }
+                },
+                {
+                    "Name": "A1173_1746_8725_3959",
+                    "Type": "BookingAiCallTrigger",
+                    "PresetId": "booking_ai_call_confirmation",
+                    "Properties": {
+                        "Title": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_TITLE_4###",
+                        "Scenario": "confirmation"
+                    },
+                    "Activated": "Y",
+                    "Node": {
+                        "id": "A1173_1746_8725_3959",
+                        "type": "trigger",
+                        "position": {
+                            "x": 500,
+                            "y": -267
+                        },
+                        "dimensions": {
+                            "width": 275.566650390625,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output",
+                                "isActive": true
+                            }
+                        ],
+                        "node": {
+                            "type": "trigger",
+                            "title": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_TITLE_4###",
+                            "colorIndex": 4,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "CALL_BACK",
+                            "updated": 1777388585395,
+                            "published": 1777388585395,
+                            "shouldShowAuxPorts": false
+                        }
+                    }
+                },
+                {
+                    "Name": "A1434_4869_8745_7569",
+                    "Type": "BookingAiCallTrigger",
+                    "PresetId": "booking_ai_call_reminder",
+                    "Properties": {
+                        "Title": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_TITLE_5###",
+                        "Scenario": "reminder"
+                    },
+                    "Activated": "Y",
+                    "Node": {
+                        "id": "A1434_4869_8745_7569",
+                        "type": "trigger",
+                        "position": {
+                            "x": 504,
+                            "y": -133
+                        },
+                        "dimensions": {
+                            "width": 269.7166748046875,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output",
+                                "isActive": true
+                            }
+                        ],
+                        "node": {
+                            "type": "trigger",
+                            "title": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_TITLE_5###",
+                            "colorIndex": 4,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "CALL_BACK",
+                            "updated": 1777388585395,
+                            "published": 1777388585395,
+                            "shouldShowAuxPorts": false
+                        }
+                    }
+                },
+                {
+                    "Name": "A6461_2711_9056_1649",
+                    "Type": "BookingAiCallTrigger",
+                    "PresetId": "booking_ai_call_delayed",
+                    "Properties": {
+                        "Title": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_TITLE_6###",
+                        "Scenario": "delayed"
+                    },
+                    "Activated": "Y",
+                    "Node": {
+                        "id": "A6461_2711_9056_1649",
+                        "type": "trigger",
+                        "position": {
+                            "x": 515,
+                            "y": -26
+                        },
+                        "dimensions": {
+                            "width": 286.26666259765625,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output",
+                                "isActive": true
+                            }
+                        ],
+                        "node": {
+                            "type": "trigger",
+                            "title": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_TITLE_6###",
+                            "colorIndex": 4,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "CALL_BACK",
+                            "updated": 1777388585395,
+                            "published": 1777388585395,
+                            "shouldShowAuxPorts": false
+                        }
+                    }
+                },
+                {
+                    "Name": "A7591_6910_3837_5969",
+                    "Type": "BookingAiCallTrigger",
+                    "PresetId": "booking_ai_call_cancellation",
+                    "Properties": {
+                        "Title": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_TITLE_7###",
+                        "Scenario": "cancellation"
+                    },
+                    "Activated": "Y",
+                    "Node": {
+                        "id": "A7591_6910_3837_5969",
+                        "type": "trigger",
+                        "position": {
+                            "x": 527,
+                            "y": 95
+                        },
+                        "dimensions": {
+                            "width": 234.31666564941406,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output",
+                                "isActive": true
+                            }
+                        ],
+                        "node": {
+                            "type": "trigger",
+                            "title": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_TITLE_7###",
+                            "colorIndex": 4,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "CALL_BACK",
+                            "updated": 1777388585395,
+                            "published": 1777388585395,
+                            "shouldShowAuxPorts": false
+                        }
+                    }
+                },
+                {
+                    "Name": "A4046_4344_6041_7435",
+                    "Type": "VoximplantAiCallActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "Number": "{=A1173_1746_8725_3959:PhoneNumber}",
+                        "Prompt": "{=A1173_1746_8725_3959:Prompt}\n{=Constant:PromptConfirmation}",
+                        "Title": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_TITLE_8###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A4046_4344_6041_7435",
+                        "type": "simple",
+                        "position": {
+                            "x": 890,
+                            "y": -267
+                        },
+                        "dimensions": {
+                            "width": 208.3333282470703,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input",
+                                "isActive": true
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output",
+                                "isActive": true
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_TITLE_8###",
+                            "colorIndex": 0,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "PHONE_OUT",
+                            "updated": 1777388585395,
+                            "published": 1777388585395,
+                            "shouldShowAuxPorts": false
+                        }
+                    }
+                },
+                {
+                    "Name": "A6541_4383_8073_5722",
+                    "Type": "VoximplantAiCallActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "Number": "{=A1434_4869_8745_7569:PhoneNumber}",
+                        "Prompt": "{=A1434_4869_8745_7569:Prompt}\n{=Constant:PromptReminder}",
+                        "Title": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_TITLE_8###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A6541_4383_8073_5722",
+                        "type": "simple",
+                        "position": {
+                            "x": 932,
+                            "y": -131
+                        },
+                        "dimensions": {
+                            "width": 208.3333282470703,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input",
+                                "isActive": true
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output",
+                                "isActive": true
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_TITLE_8###",
+                            "colorIndex": 0,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "PHONE_OUT",
+                            "updated": 1777388585395,
+                            "published": 1777388585395,
+                            "shouldShowAuxPorts": false
+                        }
+                    }
+                },
+                {
+                    "Name": "A2157_6333_3481_4770",
+                    "Type": "VoximplantAiCallActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "Number": "{=A6461_2711_9056_1649:PhoneNumber}",
+                        "Prompt": "{=A6461_2711_9056_1649:Prompt}\n{=Constant:PromptDelayed}",
+                        "Title": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_TITLE_8###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A2157_6333_3481_4770",
+                        "type": "simple",
+                        "position": {
+                            "x": 921,
+                            "y": -21
+                        },
+                        "dimensions": {
+                            "width": 208.3333282470703,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input",
+                                "isActive": true
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output",
+                                "isActive": true
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_TITLE_8###",
+                            "colorIndex": 0,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "PHONE_OUT",
+                            "updated": 1777388585395,
+                            "published": 1777388585395,
+                            "shouldShowAuxPorts": false
+                        }
+                    }
+                },
+                {
+                    "Name": "A3921_1088_5120_7721",
+                    "Type": "VoximplantAiCallActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "Number": "{=A7591_6910_3837_5969:PhoneNumber}",
+                        "Prompt": "{=A7591_6910_3837_5969:Prompt}\n{=Constant:PromptCancellation}",
+                        "Title": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_TITLE_8###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A3921_1088_5120_7721",
+                        "type": "simple",
+                        "position": {
+                            "x": 921,
+                            "y": 94
+                        },
+                        "dimensions": {
+                            "width": 208.3333282470703,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input",
+                                "isActive": true
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output",
+                                "isActive": true
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_TITLE_8###",
+                            "colorIndex": 0,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "PHONE_OUT",
+                            "updated": 1777388585395,
+                            "published": 1777388585395,
+                            "shouldShowAuxPorts": false
+                        }
+                    }
+                },
+                {
+                    "Name": "A9584_5418_4167_8209",
+                    "Type": "BookingAiCallResultActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "BookingMessageId": "{=A1173_1746_8725_3959:BookingMessageId}",
+                        "CallResult": "{=A4046_4344_6041_7435:Result}",
+                        "Title": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_TITLE_9###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A9584_5418_4167_8209",
+                        "type": "simple",
+                        "position": {
+                            "x": 1271,
+                            "y": -268
+                        },
+                        "dimensions": {
+                            "width": 300,
+                            "height": 58
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input",
+                                "isActive": true
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output",
+                                "isActive": true
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_TITLE_9###",
+                            "colorIndex": 4,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "",
+                            "updated": 1777388585395,
+                            "published": 1777388585395,
+                            "shouldShowAuxPorts": false
+                        }
+                    }
+                },
+                {
+                    "Name": "A8070_3549_6682_8099",
+                    "Type": "BookingAiCallResultActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "BookingMessageId": "{=A1434_4869_8745_7569:BookingMessageId}",
+                        "CallResult": "{=A6541_4383_8073_5722:Result}",
+                        "Title": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_TITLE_9###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A8070_3549_6682_8099",
+                        "type": "simple",
+                        "position": {
+                            "x": 1286,
+                            "y": -128
+                        },
+                        "dimensions": {
+                            "width": 300,
+                            "height": 58
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input",
+                                "isActive": true
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output",
+                                "isActive": true
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_TITLE_9###",
+                            "colorIndex": 4,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "",
+                            "updated": 1777388585395,
+                            "published": 1777388585395,
+                            "shouldShowAuxPorts": false
+                        }
+                    }
+                },
+                {
+                    "Name": "A8164_3258_3139_1182",
+                    "Type": "BookingAiCallResultActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "BookingMessageId": "{=A6461_2711_9056_1649:BookingMessageId}",
+                        "CallResult": "{=A2157_6333_3481_4770:Result}",
+                        "Title": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_TITLE_9###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A8164_3258_3139_1182",
+                        "type": "simple",
+                        "position": {
+                            "x": 1280,
+                            "y": -22
+                        },
+                        "dimensions": {
+                            "width": 300,
+                            "height": 58
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input",
+                                "isActive": true
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output",
+                                "isActive": true
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_TITLE_9###",
+                            "colorIndex": 4,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "",
+                            "updated": 1777388585395,
+                            "published": 1777388585395,
+                            "shouldShowAuxPorts": false
+                        }
+                    }
+                },
+                {
+                    "Name": "A1349_4223_6870_7072",
+                    "Type": "BookingAiCallResultActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "BookingMessageId": "{=A7591_6910_3837_5969:BookingMessageId}",
+                        "CallResult": "{=A3921_1088_5120_7721:Result}",
+                        "Title": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_TITLE_9###",
+                        "EditorComment": ""
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A1349_4223_6870_7072",
+                        "type": "simple",
+                        "position": {
+                            "x": 1280,
+                            "y": 91
+                        },
+                        "dimensions": {
+                            "width": 300,
+                            "height": 58
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input",
+                                "isActive": true
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output",
+                                "isActive": true
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BIZPROC_NODES_BITRIX_BOOKING_AI_CALL_TITLE_9###",
+                            "colorIndex": 4,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "",
+                            "updated": 1777388585395,
+                            "published": 1777388585395,
+                            "shouldShowAuxPorts": false
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

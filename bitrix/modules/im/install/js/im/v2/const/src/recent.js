@@ -10,6 +10,9 @@ export const RecentType = {
 	collab: 'collab',
 	taskComments: 'tasksTask',
 	openlines: 'lines',
+	calendar: 'calendar',
+	collabDefault: 'collabDefault',
+	collabChat: 'collabChat',
 };
 
 export type RecentTypeItem = $Values<typeof RecentType>;

@@ -301,6 +301,11 @@
 	padding-top: 17px;
 }
 
+.feed-com-tags-inner {
+	display: flex;
+	align-items: center;
+}
+
 .feed-add-post-files-block {
 	-moz-border-bottom-colors: none;
 	-moz-border-left-colors: none;
@@ -2269,6 +2274,8 @@ a.feed-post-more-link:hover {
 
 .feed-com-tags-block .feed-com-files-title {
 	margin-top: 1px;
+	padding-bottom: 1px;
+	border-bottom: 1px solid transparent;
 }
 
 .feed-com-tags-block .feed-com-files-cont {

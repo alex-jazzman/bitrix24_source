@@ -7,9 +7,12 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/grid/rows/stickers'
 	const {
 		StickerEventType,
 		GridSection,
+		MenuActionType,
 	} = require('im/messenger/controller/dialog/lib/sticker/src/const');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { emitter } = require('im/messenger/controller/dialog/lib/sticker/src/utils/emitter');
-	const { StickerMenu, ActionType } = require('im/messenger/controller/dialog/lib/sticker/src/ui/menu/sticker');
+	const { StickerMenu } = require('im/messenger/controller/dialog/lib/sticker/src/ui/menu/sticker');
+	const { StickerAttachedMenu } = require('im/messenger/controller/dialog/lib/sticker/src/ui/menu/attached-sticker');
 
 	const { StickerCreateView } = require('im/messenger/controller/dialog/lib/sticker/src/ui/grid/element/create');
 	const { StickerView } = require('im/messenger/controller/dialog/lib/sticker/src/ui/grid/element/sticker');
@@ -87,6 +90,8 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/grid/rows/stickers'
 
 			return new StickerView({
 				uri: sticker.uri,
+				width: sticker.width,
+				height: sticker.height,
 				isUploading: sticker.uploading,
 				id: sticker.id,
 				packId: sticker.packId,
@@ -101,11 +106,11 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/grid/rows/stickers'
 		 */
 		#getMenuActions()
 		{
-			const result = [ActionType.send];
+			const result = [MenuActionType.send];
 
 			if (this.props.sectionType === GridSection.recent)
 			{
-				result.push(ActionType.deleteFromRecent);
+				result.push(MenuActionType.deleteFromRecent);
 
 				return result;
 			}
@@ -133,11 +138,21 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/grid/rows/stickers'
 		 * @param ref
 		 */
 		#longClickStickerHandler = (stickerData, ref) => {
-			const menu = new StickerMenu({
+			const menuData = {
 				ui: ref,
 				actions: this.#getMenuActions(),
 				stickerData,
-			});
+			};
+
+			let menu = null;
+			if (Feature.isMultilevelMessageMenuSupported)
+			{
+				menu = new StickerAttachedMenu(menuData);
+			}
+			else
+			{
+				menu = new StickerMenu(menuData);
+			}
 
 			menu.show();
 		};

@@ -6,11 +6,10 @@ jn.define('mail/mailbox/connector/steps/login-password', (require, exports, modu
 	const { Haptics } = require('haptics');
 	const { WizardStep } = require('layout/ui/wizard/step');
 	const { Loc } = require('loc');
-	const { ProgressBarNumber } = require('crm/salescenter/progress-bar-number');
+	const { ProgressBarNumber } = require('mail/mailbox/connector/progress-bar-number');
 	const { useCallback } = require('utils/function');
 	const { clone, isEmpty } = require('utils/object');
 	const { stringify } = require('utils/string');
-	const { NotifyManager } = require('notify-manager');
 	const { getServiceInfo } = require('mail/mailbox/connector/steps/services-list');
 	const AppTheme = require('apptheme');
 	const { StringInput, InputDesign, InputMode, InputSize } = require('ui-system/form/inputs/string');
@@ -23,6 +22,8 @@ jn.define('mail/mailbox/connector/steps/login-password', (require, exports, modu
 		ButtonDesign,
 		Button,
 	} = require('ui-system/form/buttons/button');
+	const ACTIVE_STEP_COLOR = Color.accentMainPrimary.toHex();
+	const NEXT_STEP_COLOR = Color.base6.toHex();
 
 	/**
 	 * @class FieldsLayout
@@ -224,18 +225,10 @@ jn.define('mail/mailbox/connector/steps/login-password', (require, exports, modu
 
 			if (login.value !== '' && password.value !== '')
 			{
-				NotifyManager.showLoadingIndicator();
-				await this.props.parent.connectMailbox({
+				this.props.parent.onAuthComplete({
 					login: login.value,
 					password: password.value,
 					loginWithoutDomain: login.value,
-				}).then(
-					({ data }) => {
-						this.props.parent.onConnectMailbox(data.id, data.email);
-					},
-				).catch(({ errors }) => {
-					this.props.parent.sendErrorAnalytics();
-					NotifyManager.showErrors(errors);
 				});
 			}
 
@@ -251,7 +244,10 @@ jn.define('mail/mailbox/connector/steps/login-password', (require, exports, modu
 					text: Loc.getMessage('MAILBOX_CONNECTOR_LOGIN_PASSWORD_TITLE_3'),
 				},
 				number: 2,
-				count: 2,
+				count: 3,
+				previousLineColor: ACTIVE_STEP_COLOR,
+				currentLineColor: ACTIVE_STEP_COLOR,
+				nextLineColor: NEXT_STEP_COLOR,
 			};
 		}
 
@@ -262,8 +258,12 @@ jn.define('mail/mailbox/connector/steps/login-password', (require, exports, modu
 
 		renderNumberBlock()
 		{
+			const progressBarSettings = this.getProgressBarSettings();
+
 			return new ProgressBarNumber({
-				number: '2',
+				number: progressBarSettings.number.toString(),
+				backgroundColor: ACTIVE_STEP_COLOR,
+				showOuterDecoration: false,
 			});
 		}
 

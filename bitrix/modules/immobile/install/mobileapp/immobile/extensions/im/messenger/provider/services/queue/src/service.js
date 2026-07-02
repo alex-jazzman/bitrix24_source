@@ -12,20 +12,6 @@ jn.define('im/messenger/provider/services/queue/service', (require, exports, mod
 	 */
 	class QueueService
 	{
-		static #instance = null;
-		/**
-		 * @return {QueueService}
-		 */
-		static getInstance()
-		{
-			if (!this.#instance)
-			{
-				this.#instance = new this();
-			}
-
-			return this.#instance;
-		}
-
 		constructor()
 		{
 			/** @private */

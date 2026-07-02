@@ -1,71 +1,107 @@
 import 'im.v2.css.classes';
-import { Analytics } from 'im.v2.lib.analytics';
-import { Logger } from 'im.v2.lib.logger';
-import { ChatService } from 'im.v2.provider.service.chat';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 
-import { AiAssistantWidgetChatContent } from './content/chat-content';
-
-import type { ImModelChat } from 'im.v2.model';
+import { WidgetChatManager } from '../classes/widget-chat-manager';
+import { CopilotWidgetLayout } from './copilot-widget/layout';
+import { MartaWidgetChatContent } from './marta-widget/chat-content';
 
 import './css/ai-assistant-chat-opener.css';
 
 // @vue/component
 export const AiAssistantWidgetChatOpener = {
 	name: 'AiAssistantWidgetChatOpener',
-	components: { AiAssistantWidgetChatContent },
+	components: { CopilotWidgetLayout, MartaWidgetChatContent },
 	props: {
-		dialogId: {
+		botDialogId: {
 			type: String,
 			required: true,
 		},
 	},
+
+	data(): { selectedDialogId: string, isCreatingChat: boolean }
+	{
+		return {
+			selectedDialogId: '',
+			isCreatingChat: false,
+		};
+	},
+
 	computed: {
-		dialog(): ImModelChat
+		isCopilotMode(): boolean
 		{
-			return this.$store.getters['chats/get'](this.dialogId, true);
-		},
-		chatId(): number
-		{
-			return this.dialog.chatId;
+			return FeatureManager.isFeatureAvailable(Feature.isBitrixGptV2Available);
 		},
 	},
-	created(): Promise
+
+	created(): void
 	{
-		return this.onChatOpen();
+		if (this.isCopilotMode)
+		{
+			void this.resolveInitialChat();
+		}
+		else
+		{
+			void WidgetChatManager.getInstance().loadChat(this.botDialogId);
+		}
 	},
 	methods: {
-		async onChatOpen()
+		async resolveInitialChat()
 		{
-			if (this.dialog.inited)
+			const dialogId = await WidgetChatManager.getInstance().resolveInitialChat();
+			if (dialogId)
 			{
-				Logger.warn(`AiAssistantChatOpener: chat ${this.chatId} is already loaded`);
-
+				this.selectedDialogId = dialogId;
+			}
+		},
+		async onChangeDialogId(dialogId: string)
+		{
+			const openedDialogId = await WidgetChatManager.getInstance().selectAndOpenChat(dialogId, this.selectedDialogId);
+			if (openedDialogId)
+			{
+				this.selectedDialogId = openedDialogId;
+			}
+		},
+		onRecentVisibilityChange(isOpened: boolean)
+		{
+			if (!isOpened)
+			{
 				return;
 			}
 
-			await this.loadChat();
-			Analytics.getInstance().aiAssistant.onOpenWidget(this.dialog);
-			Analytics.getInstance().aiAssistant.onOpenChatAI(this.dialog, true);
+			WidgetChatManager.getInstance().setRecentDraftText(this.selectedDialogId);
 		},
-		async loadChat()
+		async onCreateChat()
 		{
-			Logger.warn(`AiAssistantChatOpener: loading chat ${this.chatId}`);
-			await this.getChatService().loadChatWithMessages(this.dialogId);
-			Logger.warn(`AiAssistantChatOpener: chat ${this.chatId} is loaded`);
-		},
-		getChatService(): ChatService
-		{
-			if (!this.chatService)
+			this.isCreatingChat = true;
+			try
 			{
-				this.chatSerivce = new ChatService();
+				const newDialogId = await WidgetChatManager.getInstance().createNewChat();
+				if (newDialogId)
+				{
+					this.selectedDialogId = newDialogId;
+				}
 			}
-
-			return this.chatSerivce;
+			finally
+			{
+				this.isCreatingChat = false;
+			}
 		},
 	},
 	template: `
 		<div class="bx-im-messenger__scope bx-im-ai-assistant-chat-opener__container --ui-context-content-light">
-			<AiAssistantWidgetChatContent :dialogId="dialogId" :withSidebar="false"/>
+			<CopilotWidgetLayout
+				v-if="isCopilotMode"
+				:dialogId="selectedDialogId"
+				:isCreatingChat="isCreatingChat"
+				@select="onChangeDialogId"
+				@createChat="onCreateChat"
+				@recentVisibilityChanged="onRecentVisibilityChange"
+			/>
+			<MartaWidgetChatContent
+				v-else
+				:dialogId="botDialogId"
+				:withSidebar="false"
+			/>
 		</div>
 	`,
 };

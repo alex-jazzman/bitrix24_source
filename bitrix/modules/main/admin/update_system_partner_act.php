@@ -1,8 +1,14 @@
-<?
+<?php
 //**********************************************************************/
 //**    DO NOT MODIFY THIS FILE                                       **/
 //**    MODIFICATION OF THIS FILE WILL ENTAIL SITE FAILURE            **/
 //**********************************************************************/
+
+/**
+ * @global CMain $APPLICATION
+ * @global CUser $USER
+ */
+
 if (!defined("UPD_INTERNAL_CALL") || UPD_INTERNAL_CALL != "Y")
 {
 	require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
@@ -31,7 +37,7 @@ if ($queryType == "search")
 {
 	$searchModule = $APPLICATION->UnJSEscape($_REQUEST["search_module"]);
 
-	$arModules = CUpdateClientPartner::SearchModules($searchModule, LANG);
+	$arModules = CUpdateClientPartner::SearchModules($searchModule, LANGUAGE_ID);
 
 	if ($arModules)
 	{
@@ -54,7 +60,7 @@ if ($queryType == "search")
 }
 elseif ($queryType == "register")
 {
-	if (CUpdateClientPartner::RegisterModules($errorMessage, LANG, $stableVersionsOnly))
+	if (CUpdateClientPartner::RegisterModules($errorMessage, LANGUAGE_ID, $stableVersionsOnly))
 	{
 		echo "Y";
 	}
@@ -71,7 +77,7 @@ elseif ($queryType == "coupon")
 
 	if ($errorMessage == '')
 	{
-		if (!CUpdateClientPartner::ActivateCoupon($coupon, $errorMessage, LANG, $stableVersionsOnly))
+		if (!CUpdateClientPartner::ActivateCoupon($coupon, $errorMessage, LANGUAGE_ID, $stableVersionsOnly))
 			$errorMessage .= GetMessage("SUPA_ACE_ACT").". ";
 	}
 
@@ -94,4 +100,3 @@ if (!defined("UPD_INTERNAL_CALL") || UPD_INTERNAL_CALL != "Y")
 {
 	require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin_after.php");
 }
-?>

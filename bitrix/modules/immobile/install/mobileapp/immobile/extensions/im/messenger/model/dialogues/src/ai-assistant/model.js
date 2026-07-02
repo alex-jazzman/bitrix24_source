@@ -6,11 +6,9 @@
 jn.define('im/messenger/model/dialogues/ai-assistant/model', (require, exports, module) => {
 	const {
 		validateNotifyPanel,
-		validateMCP,
 	} = require('im/messenger/model/dialogues/ai-assistant/validator');
 	const {
 		aiAssistantNotifyPanelDefaultElement,
-		aiAssistantMCPDefaultElement,
 	} = require('im/messenger/model/dialogues/ai-assistant/default-element');
 
 	const { LoggerManager } = require('im/messenger/lib/logger');
@@ -21,7 +19,6 @@ jn.define('im/messenger/model/dialogues/ai-assistant/model', (require, exports, 
 		namespaced: true,
 		state: () => ({
 			notifyPanel: aiAssistantNotifyPanelDefaultElement,
-			mcp: aiAssistantMCPDefaultElement,
 		}),
 		getters: {
 			/**
@@ -29,12 +26,6 @@ jn.define('im/messenger/model/dialogues/ai-assistant/model', (require, exports, 
 			 * @return () => boolean
 			 */
 			isClosedNotifyPanel: (state) => () => state.notifyPanel.isClosedNotifyPanel,
-
-			/**
-			 * @function dialoguesModel/aiAssistantModel/getMCPSelectedAuthId
-			 * @return () => AiAssistantMCPModelState['selectedAuthId']
-			 */
-			getMCPSelectedAuthId: (state) => () => state.mcp.selectedAuthId,
 		},
 		actions: {
 			/**
@@ -54,46 +45,8 @@ jn.define('im/messenger/model/dialogues/ai-assistant/model', (require, exports, 
 					},
 				});
 			},
-
-			/**
-			 * @function dialoguesModel/aiAssistantModel/setMCP
-			 * @param {AiAssistantMCPModelState} payload
-			 */
-			setMCP: (store, payload) => {
-				const data = { ...payload };
-
-				store.commit('updateMCP', {
-					actionName: 'setMCP',
-					data: {
-						...aiAssistantMCPDefaultElement,
-						...validateMCP(data),
-					},
-				});
-			},
-
-			/**
-			 * @function dialoguesModel/aiAssistantModel/resetMCP
-			 */
-			resetMCP: (store) => {
-				store.commit('updateMCP', {
-					actionName: 'resetMCP',
-					data: {
-						...aiAssistantMCPDefaultElement,
-					},
-				});
-			},
 		},
 		mutations: {
-			/**
-			 * @param state
-			 * @param {MutationPayload<AiAssistantMCPUpdateData, AiAssistantModelActions>} payload
-			 */
-			updateMCP: (state, payload) => {
-				logger.log('aiAssistantModel: updateMCP mutation', payload);
-
-				state.mcp = { ...payload.data };
-			},
-
 			/**
 			 * @param state
 			 * @param {MutationPayload<AiAssistantNotifyPanelUpdateData, AiAssistantModelActions>} payload

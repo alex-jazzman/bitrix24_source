@@ -8,9 +8,9 @@ return [
 	'css' => 'dist/popup.bundle.css',
 	'js' => 'dist/popup.bundle.js',
 	'rel' => [
-		'main.popup',
-		'main.core',
 		'im.v2.lib.logger',
+		'main.core',
+		'main.popup',
 	],
 	'skip_core' => false,
 ];

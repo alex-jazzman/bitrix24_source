@@ -9,6 +9,7 @@ use Bitrix\Crm\Category\Entity\Category;
 use Bitrix\Crm\Component\EntityList\Settings\PermissionItem;
 use Bitrix\Crm\Counter\EntityCounterFactory;
 use Bitrix\Crm\Counter\EntityCounterType;
+use Bitrix\Crm\Filter\EntityDataProvider;
 use Bitrix\Crm\Filter\Filter;
 use Bitrix\Crm\Filter\HeaderSections;
 use Bitrix\Crm\Filter\ItemDataProvider;
@@ -25,10 +26,12 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\InvoiceSettings;
 use Bitrix\Crm\UI\Tools\NavigationBar;
 use Bitrix\Intranet\CustomSection\Entity\CustomSectionTable;
+use Bitrix\Main\Application;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Web\Uri;
 use Bitrix\UI\Buttons;
 use Bitrix\UI\Buttons\Button;
@@ -42,6 +45,8 @@ abstract class ItemList extends Base
 	protected $provider;
 	/** @var ItemUfDataProvider */
 	protected $ufProvider;
+	/** @var EntityDataProvider[] */
+	protected array $additionalProviders = [];
 	/** @var Filter */
 	protected $filter;
 	protected $users;
@@ -154,14 +159,15 @@ abstract class ItemList extends Base
 			[
 				'categoryId' => $this->getCategoryId(),
 				'type' => $type,
+				'isRecurring' => $this->isRecurring(),
 			],
 		);
 		$this->provider = $filterFactory->getDataProvider($settings);
 
 		$this->ufProvider = $filterFactory->getUserFieldDataProvider($settings);
-		$additionalProviders = HeaderSections::getInstance()->additionalProviders($settings, $filterFactory);
+		$this->additionalProviders = HeaderSections::getInstance()->additionalProviders($settings, $filterFactory);
 
-		$this->filter = $filterFactory->createFilter($settings->getID(), $this->provider, $additionalProviders);
+		$this->filter = $filterFactory->createFilter($settings->getID(), $this->provider, $this->additionalProviders);
 
 		EntityRelationTable::initiateClearingDuplicateSourceElementsWithInterval($this->factory->getEntityTypeId());
 	}
@@ -398,6 +404,31 @@ abstract class ItemList extends Base
 					'text' => $text,
 					'href' => $link,
 					'onclick' => new Buttons\JsHandler('BX.Crm.Page.openSlider("' . $link . '");'),
+				];
+			}
+		}
+
+		if (
+			$this->entityTypeId === \CCrmOwnerType::SmartB2eDocument
+			&& Loader::includeModule('sign')
+			&& class_exists(\Bitrix\Sign\Access\AccessController::class)
+			&& class_exists(\Bitrix\Sign\Access\ActionDictionary::class)
+			&& class_exists(\Bitrix\Sign\FeatureResolver::class)
+			&& \Bitrix\Sign\FeatureResolver::instance()->released('repeatTestSigning')
+			&& \Bitrix\Main\UI\Extension::register('sign.onboarding')
+			&& Application::getInstance()->getLicense()->getRegion() === 'ru'
+		)
+		{
+			\Bitrix\Main\UI\Extension::load(['sign.onboarding']);
+			$accessController = (new \Bitrix\Sign\Access\AccessController(CurrentUser::get()->getId()));
+			$hasSigningPermissions = $accessController->check(\Bitrix\Sign\Access\ActionDictionary::ACTION_B2E_DOCUMENT_ADD)
+				&& $accessController->check(\Bitrix\Sign\Access\ActionDictionary::ACTION_B2E_DOCUMENT_EDIT);
+
+			if ($hasSigningPermissions)
+			{
+				$settingsItems[] = [
+					'text' => Loc::getMessage('CRM_COMPONENT_ITEM_LIST_TEST_SIGNING'),
+					'onclick' => new Buttons\JsHandler('BX.Sign.Onboarding.closeSettingsMenuAndOpenTestSigningSlider'),
 				];
 			}
 		}

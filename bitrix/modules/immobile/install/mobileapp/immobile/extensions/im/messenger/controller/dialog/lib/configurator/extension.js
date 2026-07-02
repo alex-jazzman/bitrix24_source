@@ -5,6 +5,8 @@ jn.define('im/messenger/controller/dialog/lib/configurator', (require, exports, 
 	const { DialogConfigurator } = require('im/messenger/controller/dialog/lib/configurator/configurator');
 	const {
 		channelCommentDialogConfig,
+		copilotDialogConfig,
+		aiAssistantDialogConfig,
 		baseDialogConfig,
 	} = require('im/messenger/controller/dialog/lib/configurator/configuration');
 
@@ -12,6 +14,8 @@ jn.define('im/messenger/controller/dialog/lib/configurator', (require, exports, 
 		DialogConfigurator,
 		configs: {
 			channelCommentDialogConfig,
+			copilotDialogConfig,
+			aiAssistantDialogConfig,
 			baseDialogConfig,
 		},
 	};

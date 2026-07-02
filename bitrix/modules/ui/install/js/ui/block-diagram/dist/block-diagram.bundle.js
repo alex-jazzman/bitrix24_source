@@ -1,465 +1,489 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,main_popup,main_polyfill_intersectionobserver,ui_iconSet_api_vue,main_core,ui_vue3) {
+(function (exports, ui_vue3, main_core, main_popup, main_polyfill_intersectionobserver, ui_iconSet_api_vue) {
 	'use strict';
 
 	const CONNECTION_OFFSET = 30;
 	const CONNECTION_BEND_OFFSET = 30;
 	const CONNECTION_BORDER_RADIUS = 10;
 	const HOOK_NAMES = {
-	  CHANGED_BLOCKS: 'changedBlocks',
-	  CHANGED_CONNECTIONS: 'changedConnections',
-	  START_DRAG_BLOCK: 'startDragBlock',
-	  MOVE_DRAG_BLOCK: 'moveDragBlock',
-	  END_DRAG_BLOCK: 'endDragBlock',
-	  ADD_BLOCK: 'addBlock',
-	  UPDATE_BLOCK: 'updateBlock',
-	  DELETE_BLOCK: 'deleteBlock',
-	  CREATE_CONNECTION: 'createConnection',
-	  DELETE_CONNECTION: 'deleteConnection',
-	  BLOCK_TRANSITION_START: 'blockTransitionStart',
-	  BLOCK_TRANSITION_END: 'blockTransitionEnd',
-	  CONNECTION_TRANSITION_START: 'connectionTransitionStart',
-	  CONNECTION_TRANSITION_END: 'connectionTransitionEnd',
-	  DROP_NEW_BLOCK: 'dropNewBlock'
+		CHANGED_BLOCKS: 'changedBlocks',
+		CHANGED_CONNECTIONS: 'changedConnections',
+		START_DRAG_BLOCK: 'startDragBlock',
+		MOVE_DRAG_BLOCK: 'moveDragBlock',
+		END_DRAG_BLOCK: 'endDragBlock',
+		ADD_BLOCK: 'addBlock',
+		ADD_BLOCKS: 'addBlocks',
+		UPDATE_BLOCK: 'updateBlock',
+		DELETE_BLOCK: 'deleteBlock',
+		DELETE_BLOCKS: 'deleteBlocks',
+		ADD_CONNECTION: 'addConnection',
+		ADD_CONNECTIONS: 'addConnections',
+		CREATE_CONNECTION: 'createConnection',
+		DELETE_CONNECTION: 'deleteConnection',
+		BLOCK_TRANSITION_START: 'blockTransitionStart',
+		BLOCK_TRANSITION_END: 'blockTransitionEnd',
+		CONNECTION_TRANSITION_START: 'connectionTransitionStart',
+		CONNECTION_TRANSITION_END: 'connectionTransitionEnd',
+		DROP_NEW_BLOCK: 'dropNewBlock',
+		HISTORY_NEXT: 'historyNext',
+		HISTORY_PREV: 'historyPrev'
 	};
 	const BLOCK_GROUP_DEFAULT_NAME = 'default';
 	const CONNECTION_GROUP_DEFAULT_NAME = 'default';
 	const PORT_POSITION = {
-	  TOP: 'top',
-	  BOTTOM: 'bottom',
-	  RIGHT: 'right',
-	  LEFT: 'left'
+		TOP: 'top',
+		BOTTOM: 'bottom',
+		RIGHT: 'right',
+		LEFT: 'left'
 	};
 	const ANIMATED_TYPES = {
-	  BLOCK: 'block',
-	  CONNECTION: 'connection',
-	  REMOVE_BLOCK: 'remove_block',
-	  REMOVE_CONNECTION: 'remove_connection'
+		BLOCK: 'block',
+		CONNECTION: 'connection',
+		REMOVE_BLOCK: 'remove_block',
+		REMOVE_CONNECTION: 'remove_connection'
 	};
 	const CURSOR_TYPES = {
-	  EW_RESIZE: 'ew-resize',
-	  NS_RESIZE: 'ns-resize',
-	  NWSE_RESIZE: 'nwse-resize',
-	  NESW_RESIZE: 'nesw-resize'
+		EW_RESIZE: 'ew-resize',
+		NS_RESIZE: 'ns-resize',
+		NWSE_RESIZE: 'nwse-resize',
+		NESW_RESIZE: 'nesw-resize'
 	};
 	const BLOCK_INDEXES = {
-	  HIGHLITED: 4,
-	  MOVABLE: 3,
-	  STANDING: 2,
-	  RESIZABLE: 1
-	};
+		HIGHLITED: 4,
+		MOVABLE: 3,
+		STANDING: 2};
 	const INPUT_TAGS = Object.freeze({
-	  INPUT: true,
-	  TEXTAREA: true,
-	  SELECT: true
+		INPUT: true,
+		TEXTAREA: true,
+		SELECT: true
 	});
+	const SOURCE_PORT_STUB_TELEPORT_NAME = 'sourcePortNewConnection';
+	const TARGET_PORT_STUB_TELEPORT_NAME = 'targetPortNewConnection';
 
 	const DIR_ACCESSOR_X = 'x';
 	const DIR_ACCESSOR_Y = 'y';
 	const DIRECTIONS_BY_POSITION = {
-	  [PORT_POSITION.LEFT]: {
-	    x: -1,
-	    y: 0
-	  },
-	  [PORT_POSITION.RIGHT]: {
-	    x: 1,
-	    y: 0
-	  },
-	  [PORT_POSITION.TOP]: {
-	    x: 0,
-	    y: -1
-	  },
-	  [PORT_POSITION.BOTTOM]: {
-	    x: 0,
-	    y: 1
-	  }
+		[PORT_POSITION.LEFT]: {
+			x: -1,
+			y: 0
+		},
+		[PORT_POSITION.RIGHT]: {
+			x: 1,
+			y: 0
+		},
+		[PORT_POSITION.TOP]: {
+			x: 0,
+			y: -1
+		},
+		[PORT_POSITION.BOTTOM]: {
+			x: 0,
+			y: 1
+		}
 	};
+	function getLinePath(start, end) {
+		const [x, y] = getConnectionCenter({
+			sourceX: start.x,
+			sourceY: start.y,
+			targetX: end.x,
+			targetY: end.y
+		});
+		return {
+			path: `M ${start.x} ${start.y} L ${end.x} ${end.y}`,
+			center: {
+				x,
+				y
+			}
+		};
+	}
 	const BEZIER_DIR = {
-	  VERTICAL: 'vertical',
-	  HORIZONTAL: 'horizontal'
+		VERTICAL: 'vertical',
+		HORIZONTAL: 'horizontal'
 	};
 	function getBeziePath(start, end, dir = BEZIER_DIR.VERTICAL) {
-	  const midX = (start.x + end.x) / 2;
-	  const midY = (start.y + end.y) / 2;
-	  const [centerX, centerY] = getConnectionCenter({
-	    sourceX: start.x,
-	    sourceY: start.y,
-	    targetX: end.x,
-	    targetY: end.y
-	  });
-	  return {
-	    path: dir === BEZIER_DIR.HORIZONTAL ? `M ${start.x} ${start.y} C ${midX} ${start.y}, ${midX} ${end.y}, ${end.x} ${end.y}` : `M ${start.x} ${start.y} C ${start.x} ${midY}, ${end.x} ${midY}, ${end.x} ${end.y}`,
-	    center: {
-	      x: centerX,
-	      y: centerY
-	    }
-	  };
+		const midX = (start.x + end.x) / 2;
+		const midY = (start.y + end.y) / 2;
+		const [centerX, centerY] = getConnectionCenter({
+			sourceX: start.x,
+			sourceY: start.y,
+			targetX: end.x,
+			targetY: end.y
+		});
+		return {
+			path: dir === BEZIER_DIR.HORIZONTAL ? `M ${start.x} ${start.y} C ${midX} ${start.y}, ${midX} ${end.y}, ${end.x} ${end.y}` : `M ${start.x} ${start.y} C ${start.x} ${midY}, ${end.x} ${midY}, ${end.x} ${end.y}`,
+			center: {
+				x: centerX,
+				y: centerY
+			}
+		};
 	}
 	function transformPoint(point, transform, viewport) {
-	  let transformedX = Math.round((point.x - transform.x) / transform.zoom);
-	  let transformedY = Math.round((point.y - transform.y) / transform.zoom);
-	  transformedX -= Math.round(viewport.left / transform.zoom);
-	  transformedY -= Math.round(viewport.top / transform.zoom);
-	  return {
-	    x: transformedX,
-	    y: transformedY
-	  };
+		let transformedX = Math.round((point.x - transform.x) / transform.zoom);
+		let transformedY = Math.round((point.y - transform.y) / transform.zoom);
+		transformedX -= Math.round(viewport.left / transform.zoom);
+		transformedY -= Math.round(viewport.top / transform.zoom);
+		return {
+			x: transformedX,
+			y: transformedY
+		};
 	}
 	function getConnectionCenter({
-	  sourceX,
-	  sourceY,
-	  targetX,
-	  targetY
+		sourceX,
+		sourceY,
+		targetX,
+		targetY
 	}) {
-	  const xOffset = Math.abs(targetX - sourceX) / 2;
-	  const centerX = targetX < sourceX ? targetX + xOffset : targetX - xOffset;
-	  const yOffset = Math.abs(targetY - sourceY) / 2;
-	  const centerY = targetY < sourceY ? targetY + yOffset : targetY - yOffset;
-	  return [centerX, centerY, xOffset, yOffset];
+		const xOffset = Math.abs(targetX - sourceX) / 2;
+		const centerX = targetX < sourceX ? targetX + xOffset : targetX - xOffset;
+		const yOffset = Math.abs(targetY - sourceY) / 2;
+		const centerY = targetY < sourceY ? targetY + yOffset : targetY - yOffset;
+		return [centerX, centerY, xOffset, yOffset];
 	}
 	function getDirection({
-	  source,
-	  sourcePosition = PORT_POSITION.BOTTOM,
-	  target
+		source,
+		sourcePosition = PORT_POSITION.BOTTOM,
+		target
 	}) {
-	  if (sourcePosition === PORT_POSITION.LEFT || sourcePosition === PORT_POSITION.RIGHT) {
-	    return source.x < target.x ? {
-	      x: 1,
-	      y: 0
-	    } : {
-	      x: -1,
-	      y: 0
-	    };
-	  }
-	  return source.y < target.y ? {
-	    x: 0,
-	    y: 1
-	  } : {
-	    x: 0,
-	    y: -1
-	  };
+		if (sourcePosition === PORT_POSITION.LEFT || sourcePosition === PORT_POSITION.RIGHT) {
+			return source.x < target.x ? {
+				x: 1,
+				y: 0
+			} : {
+				x: -1,
+				y: 0
+			};
+		}
+		return source.y < target.y ? {
+			x: 0,
+			y: 1
+		} : {
+			x: 0,
+			y: -1
+		};
 	}
 	function distance(a, b) {
-	  return Math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2);
+		return Math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2);
 	}
 	// eslint-disable-next-line max-lines-per-function
 	function getPoints({
-	  source,
-	  sourcePosition = PORT_POSITION.BOTTOM,
-	  target,
-	  targetPosition = PORT_POSITION.TOP,
-	  center,
-	  offset
+		source,
+		sourcePosition = PORT_POSITION.BOTTOM,
+		target,
+		targetPosition = PORT_POSITION.TOP,
+		center,
+		offset
 	}) {
-	  const sourceDir = DIRECTIONS_BY_POSITION[sourcePosition];
-	  const targetDir = DIRECTIONS_BY_POSITION[targetPosition];
-	  const sourceGapped = {
-	    x: source.x + sourceDir.x * offset,
-	    y: source.y + sourceDir.y * offset
-	  };
-	  const targetGapped = {
-	    x: target.x + targetDir.x * offset,
-	    y: target.y + targetDir.y * offset
-	  };
-	  const dir = getDirection({
-	    source: sourceGapped,
-	    sourcePosition,
-	    target: targetGapped
-	  });
-	  const dirAccessor = dir.x !== 0 ? DIR_ACCESSOR_X : DIR_ACCESSOR_Y;
-	  const currDir = dir[dirAccessor];
-	  let points = [];
-	  let centerX = 0;
-	  let centerY = 0;
-	  const sourceGapOffset = {
-	    x: 0,
-	    y: 0
-	  };
-	  const targetGapOffset = {
-	    x: 0,
-	    y: 0
-	  };
-	  const [defaultCenterX, defaultCenterY, defaultOffsetX, defaultOffsetY] = getConnectionCenter({
-	    sourceX: source.x,
-	    sourceY: source.y,
-	    targetX: target.x,
-	    targetY: target.y
-	  });
-	  if (sourceDir[dirAccessor] * targetDir[dirAccessor] === -1) {
-	    var _center$x, _center$y;
-	    centerX = (_center$x = center.x) != null ? _center$x : defaultCenterX;
-	    centerY = (_center$y = center.y) != null ? _center$y : defaultCenterY;
-	    const verticalSplit = [{
-	      x: centerX,
-	      y: sourceGapped.y
-	    }, {
-	      x: centerX,
-	      y: targetGapped.y
-	    }];
-	    const horizontalSplit = [{
-	      x: sourceGapped.x,
-	      y: centerY
-	    }, {
-	      x: targetGapped.x,
-	      y: centerY
-	    }];
-	    if (sourceDir[dirAccessor] === currDir) {
-	      points = dirAccessor === DIR_ACCESSOR_X ? verticalSplit : horizontalSplit;
-	    } else {
-	      points = dirAccessor === DIR_ACCESSOR_X ? horizontalSplit : verticalSplit;
-	    }
-	  } else {
-	    const sourceTarget = [{
-	      x: sourceGapped.x,
-	      y: targetGapped.y
-	    }];
-	    const targetSource = [{
-	      x: targetGapped.x,
-	      y: sourceGapped.y
-	    }];
-	    if (dirAccessor === DIR_ACCESSOR_X) {
-	      points = sourceDir.x === currDir ? targetSource : sourceTarget;
-	    } else {
-	      points = sourceDir.y === currDir ? sourceTarget : targetSource;
-	    }
-	    if (sourcePosition === targetPosition) {
-	      const diff = Math.abs(source[dirAccessor] - target[dirAccessor]);
-	      if (diff <= offset) {
-	        const gapOffset = Math.min(offset - 1, offset - diff);
-	        if (sourceDir[dirAccessor] === currDir) {
-	          const dirSource = sourceGapped[dirAccessor] > source[dirAccessor] ? -1 : 1;
-	          sourceGapOffset[dirAccessor] = dirSource * gapOffset;
-	        } else {
-	          const dirTarget = targetGapped[dirAccessor] > target[dirAccessor] ? -1 : 1;
-	          targetGapOffset[dirAccessor] = dirTarget * gapOffset;
-	        }
-	      }
-	    }
-	    if (sourcePosition !== targetPosition) {
-	      const dirAccessorOpposite = dirAccessor === DIR_ACCESSOR_X ? DIR_ACCESSOR_Y : DIR_ACCESSOR_X;
-	      const isSameDir = sourceDir[dirAccessor] === targetDir[dirAccessorOpposite];
-	      const sourceGtTargetOppo = sourceGapped[dirAccessorOpposite] > targetGapped[dirAccessorOpposite];
-	      const sourceLtTargetOppo = sourceGapped[dirAccessorOpposite] < targetGapped[dirAccessorOpposite];
-	      const isFlipSourceTarget = sourceDir[dirAccessor] === 1 && (!isSameDir && sourceGtTargetOppo || isSameDir && sourceLtTargetOppo) || sourceDir[dirAccessor] !== 1 && (!isSameDir && sourceLtTargetOppo || isSameDir && sourceGtTargetOppo);
-	      if (isFlipSourceTarget) {
-	        points = dirAccessor === DIR_ACCESSOR_X ? sourceTarget : targetSource;
-	      }
-	    }
-	    const sourceGapPoint = {
-	      x: sourceGapped.x + sourceGapOffset.x,
-	      y: sourceGapped.y + sourceGapOffset.y
-	    };
-	    const targetGapPoint = {
-	      x: targetGapped.x + targetGapOffset.x,
-	      y: targetGapped.y + targetGapOffset.y
-	    };
-	    const maxXDistance = Math.max(Math.abs(sourceGapPoint.x - points[0].x), Math.abs(targetGapPoint.x - points[0].x));
-	    const maxYDistance = Math.max(Math.abs(sourceGapPoint.y - points[0].y), Math.abs(targetGapPoint.y - points[0].y));
-	    if (maxXDistance >= maxYDistance) {
-	      centerX = (sourceGapPoint.x + targetGapPoint.x) / 2;
-	      centerY = points[0].y;
-	    } else {
-	      centerX = points[0].x;
-	      centerY = (sourceGapPoint.y + targetGapPoint.y) / 2;
-	    }
-	  }
-	  const pathPoints = [source, {
-	    x: sourceGapped.x + sourceGapOffset.x,
-	    y: sourceGapped.y + sourceGapOffset.y
-	  }, ...points, {
-	    x: targetGapped.x + targetGapOffset.x,
-	    y: targetGapped.y + targetGapOffset.y
-	  }, target];
-	  return {
-	    points: pathPoints,
-	    offsetX: defaultOffsetX,
-	    offsetY: defaultOffsetY,
-	    centerX,
-	    centerY
-	  };
+		const sourceDir = DIRECTIONS_BY_POSITION[sourcePosition];
+		const targetDir = DIRECTIONS_BY_POSITION[targetPosition];
+		const sourceGapped = {
+			x: source.x + sourceDir.x * offset,
+			y: source.y + sourceDir.y * offset
+		};
+		const targetGapped = {
+			x: target.x + targetDir.x * offset,
+			y: target.y + targetDir.y * offset
+		};
+		const dir = getDirection({
+			source: sourceGapped,
+			sourcePosition,
+			target: targetGapped
+		});
+		const dirAccessor = dir.x !== 0 ? DIR_ACCESSOR_X : DIR_ACCESSOR_Y;
+		const currDir = dir[dirAccessor];
+		let points = [];
+		let centerX = 0;
+		let centerY = 0;
+		const sourceGapOffset = {
+			x: 0,
+			y: 0
+		};
+		const targetGapOffset = {
+			x: 0,
+			y: 0
+		};
+		const [defaultCenterX, defaultCenterY, defaultOffsetX, defaultOffsetY] = getConnectionCenter({
+			sourceX: source.x,
+			sourceY: source.y,
+			targetX: target.x,
+			targetY: target.y
+		});
+		if (sourceDir[dirAccessor] * targetDir[dirAccessor] === -1) {
+			centerX = center.x ?? defaultCenterX;
+			centerY = center.y ?? defaultCenterY;
+			const verticalSplit = [{
+				x: centerX,
+				y: sourceGapped.y
+			}, {
+				x: centerX,
+				y: targetGapped.y
+			}];
+			const horizontalSplit = [{
+				x: sourceGapped.x,
+				y: centerY
+			}, {
+				x: targetGapped.x,
+				y: centerY
+			}];
+			if (sourceDir[dirAccessor] === currDir) {
+				points = dirAccessor === DIR_ACCESSOR_X ? verticalSplit : horizontalSplit;
+			} else {
+				points = dirAccessor === DIR_ACCESSOR_X ? horizontalSplit : verticalSplit;
+			}
+		} else {
+			const sourceTarget = [{
+				x: sourceGapped.x,
+				y: targetGapped.y
+			}];
+			const targetSource = [{
+				x: targetGapped.x,
+				y: sourceGapped.y
+			}];
+			if (dirAccessor === DIR_ACCESSOR_X) {
+				points = sourceDir.x === currDir ? targetSource : sourceTarget;
+			} else {
+				points = sourceDir.y === currDir ? sourceTarget : targetSource;
+			}
+			if (sourcePosition === targetPosition) {
+				const diff = Math.abs(source[dirAccessor] - target[dirAccessor]);
+				if (diff <= offset) {
+					const gapOffset = Math.min(offset - 1, offset - diff);
+					if (sourceDir[dirAccessor] === currDir) {
+						const dirSource = sourceGapped[dirAccessor] > source[dirAccessor] ? -1 : 1;
+						sourceGapOffset[dirAccessor] = dirSource * gapOffset;
+					} else {
+						const dirTarget = targetGapped[dirAccessor] > target[dirAccessor] ? -1 : 1;
+						targetGapOffset[dirAccessor] = dirTarget * gapOffset;
+					}
+				}
+			}
+			if (sourcePosition !== targetPosition) {
+				const dirAccessorOpposite = dirAccessor === DIR_ACCESSOR_X ? DIR_ACCESSOR_Y : DIR_ACCESSOR_X;
+				const isSameDir = sourceDir[dirAccessor] === targetDir[dirAccessorOpposite];
+				const sourceGtTargetOppo = sourceGapped[dirAccessorOpposite] > targetGapped[dirAccessorOpposite];
+				const sourceLtTargetOppo = sourceGapped[dirAccessorOpposite] < targetGapped[dirAccessorOpposite];
+				const isFlipSourceTarget = sourceDir[dirAccessor] === 1 && (!isSameDir && sourceGtTargetOppo || isSameDir && sourceLtTargetOppo) || sourceDir[dirAccessor] !== 1 && (!isSameDir && sourceLtTargetOppo || isSameDir && sourceGtTargetOppo);
+				if (isFlipSourceTarget) {
+					points = dirAccessor === DIR_ACCESSOR_X ? sourceTarget : targetSource;
+				}
+			}
+			const sourceGapPoint = {
+				x: sourceGapped.x + sourceGapOffset.x,
+				y: sourceGapped.y + sourceGapOffset.y
+			};
+			const targetGapPoint = {
+				x: targetGapped.x + targetGapOffset.x,
+				y: targetGapped.y + targetGapOffset.y
+			};
+			const maxXDistance = Math.max(Math.abs(sourceGapPoint.x - points[0].x), Math.abs(targetGapPoint.x - points[0].x));
+			const maxYDistance = Math.max(Math.abs(sourceGapPoint.y - points[0].y), Math.abs(targetGapPoint.y - points[0].y));
+			if (maxXDistance >= maxYDistance) {
+				centerX = (sourceGapPoint.x + targetGapPoint.x) / 2;
+				centerY = points[0].y;
+			} else {
+				centerX = points[0].x;
+				centerY = (sourceGapPoint.y + targetGapPoint.y) / 2;
+			}
+		}
+		const pathPoints = [source, {
+			x: sourceGapped.x + sourceGapOffset.x,
+			y: sourceGapped.y + sourceGapOffset.y
+		}, ...points, {
+			x: targetGapped.x + targetGapOffset.x,
+			y: targetGapped.y + targetGapOffset.y
+		}, target];
+		return {
+			points: pathPoints,
+			offsetX: defaultOffsetX,
+			offsetY: defaultOffsetY,
+			centerX,
+			centerY
+		};
 	}
 	function getBend(a, b, c, size) {
-	  const bendSize = Math.min(distance(a, b) / 2, distance(b, c) / 2, size);
-	  const {
-	    x,
-	    y
-	  } = b;
-	  if (a.x === x && x === c.x || a.y === y && y === c.y) {
-	    return `L${x} ${y}`;
-	  }
-	  if (a.y === y) {
-	    const xDir = a.x < c.x ? -1 : 1;
-	    const yDir = a.y < c.y ? 1 : -1;
-	    return `L ${x + bendSize * xDir},${y}Q ${x},${y} ${x},${y + bendSize * yDir}`;
-	  }
-	  const xDir = a.x < c.x ? 1 : -1;
-	  const yDir = a.y < c.y ? -1 : 1;
-	  return `L ${x},${y + bendSize * yDir}Q ${x},${y} ${x + bendSize * xDir},${y}`;
+		const bendSize = Math.min(distance(a, b) / 2, distance(b, c) / 2, size);
+		const {
+			x,
+			y
+		} = b;
+		if (a.x === x && x === c.x || a.y === y && y === c.y) {
+			return `L${x} ${y}`;
+		}
+		if (a.y === y) {
+			const xDir = a.x < c.x ? -1 : 1;
+			const yDir = a.y < c.y ? 1 : -1;
+			return `L ${x + bendSize * xDir},${y}Q ${x},${y} ${x},${y + bendSize * yDir}`;
+		}
+		const xDir = a.x < c.x ? 1 : -1;
+		const yDir = a.y < c.y ? -1 : 1;
+		return `L ${x},${y + bendSize * yDir}Q ${x},${y} ${x + bendSize * xDir},${y}`;
 	}
 	function getSmoothStepPath(params) {
-	  const {
-	    sourceX,
-	    sourceY,
-	    sourcePosition = PORT_POSITION.BOTTOM,
-	    targetX,
-	    targetY,
-	    targetPosition = PORT_POSITION.TOP,
-	    borderRadius = 5,
-	    centerX,
-	    centerY,
-	    offset = 20
-	  } = params;
-	  const {
-	    points,
-	    centerX: pointsCenterX,
-	    centerY: pointsCenterY
-	  } = getPoints({
-	    source: {
-	      x: sourceX,
-	      y: sourceY
-	    },
-	    sourcePosition,
-	    target: {
-	      x: targetX,
-	      y: targetY
-	    },
-	    targetPosition,
-	    center: {
-	      x: centerX,
-	      y: centerY
-	    },
-	    offset
-	  });
-	  const path = points.reduce((res, p, i) => {
-	    let segment = '';
-	    if (i > 0 && i < points.length - 1) {
-	      segment = getBend(points[i - 1], p, points[i + 1], borderRadius);
-	    } else {
-	      segment = `${i === 0 ? 'M' : 'L'}${p.x} ${p.y}`;
-	    }
-	    res += segment;
-	    return res;
-	  }, '');
-	  return {
-	    path,
-	    points,
-	    center: {
-	      x: pointsCenterX,
-	      y: pointsCenterY
-	    }
-	  };
+		const {
+			sourceX,
+			sourceY,
+			sourcePosition = PORT_POSITION.BOTTOM,
+			targetX,
+			targetY,
+			targetPosition = PORT_POSITION.TOP,
+			borderRadius = 5,
+			centerX,
+			centerY,
+			offset = 20
+		} = params;
+		const {
+			points,
+			centerX: pointsCenterX,
+			centerY: pointsCenterY
+		} = getPoints({
+			source: {
+				x: sourceX,
+				y: sourceY
+			},
+			sourcePosition,
+			target: {
+				x: targetX,
+				y: targetY
+			},
+			targetPosition,
+			center: {
+				x: centerX,
+				y: centerY
+			},
+			offset
+		});
+		const path = points.reduce((res, p, i) => {
+			let segment = '';
+			if (i > 0 && i < points.length - 1) {
+				segment = getBend(points[i - 1], p, points[i + 1], borderRadius);
+			} else {
+				segment = `${i === 0 ? 'M' : 'L'}${p.x} ${p.y}`;
+			}
+			res += segment;
+			return res;
+		}, '');
+		return {
+			path,
+			points,
+			center: {
+				x: pointsCenterX,
+				y: pointsCenterY
+			}
+		};
 	}
 
 	const ARRAY_COMMANDS = Object.freeze({
-	  REPLACE: 'replace',
-	  PUSH: 'push',
-	  UPDATE_BY_INDEX: 'updateByIndex',
-	  DELETE_BY_INDEX: 'deleteByIndex'
+		REPLACE: 'replace',
+		PUSH: 'push',
+		UPDATE_BY_INDEX: 'updateByIndex',
+		DELETE_BY_INDEX: 'deleteByIndex'
 	});
 	const commandExecMap = {
-	  [ARRAY_COMMANDS.REPLACE]: ({
-	    payload
-	  }) => {
-	    return [...payload];
-	  },
-	  [ARRAY_COMMANDS.PUSH]: ({
-	    source,
-	    payload
-	  }) => {
-	    const result = [...source];
-	    result.push(payload);
-	    return result;
-	  },
-	  [ARRAY_COMMANDS.UPDATE_BY_INDEX]: ({
-	    source,
-	    payload,
-	    index
-	  }) => {
-	    const result = [...source];
-	    result[index] = {
-	      ...result[index],
-	      ...payload
-	    };
-	    return result;
-	  },
-	  [ARRAY_COMMANDS.DELETE_BY_INDEX]: ({
-	    source,
-	    index
-	  }) => {
-	    const result = [...source];
-	    result.splice(index, 1);
-	    return result;
-	  }
+		[ARRAY_COMMANDS.REPLACE]: ({
+			payload
+		}) => {
+			return [...payload];
+		},
+		[ARRAY_COMMANDS.PUSH]: ({
+			source,
+			payload
+		}) => {
+			let result = [...source];
+			if (Array.isArray(payload)) {
+				result = [...result, ...payload];
+			} else {
+				result.push(payload);
+			}
+			return result;
+		},
+		[ARRAY_COMMANDS.UPDATE_BY_INDEX]: ({
+			source,
+			payload,
+			index
+		}) => {
+			const result = [...source];
+			result[index] = {
+				...result[index],
+				...payload
+			};
+			return result;
+		},
+		[ARRAY_COMMANDS.DELETE_BY_INDEX]: ({
+			source,
+			index
+		}) => {
+			const result = [...source];
+			result.splice(index, 1);
+			return result;
+		}
 	};
 	function command(commandType, args) {
-	  return {
-	    commandType,
-	    ...args
-	  };
+		return {
+			commandType,
+			...args
+		};
 	}
 	function commandReplace(payload) {
-	  return command(ARRAY_COMMANDS.REPLACE, {
-	    payload
-	  });
+		return command(ARRAY_COMMANDS.REPLACE, {
+			payload
+		});
 	}
 	function commandPush(payload) {
-	  return command(ARRAY_COMMANDS.PUSH, {
-	    payload
-	  });
+		return command(ARRAY_COMMANDS.PUSH, {
+			payload
+		});
 	}
 	function commandUpdateByIndex(index, payload) {
-	  return command(ARRAY_COMMANDS.UPDATE_BY_INDEX, {
-	    index,
-	    payload
-	  });
+		return command(ARRAY_COMMANDS.UPDATE_BY_INDEX, {
+			index,
+			payload
+		});
 	}
 	function commandDeleteByIndex(index) {
-	  return command(ARRAY_COMMANDS.DELETE_BY_INDEX, {
-	    index
-	  });
+		return command(ARRAY_COMMANDS.DELETE_BY_INDEX, {
+			index
+		});
 	}
 	function runCommand(sourceArray, commandPayload, callback) {
-	  const {
-	    commandType,
-	    payload,
-	    index
-	  } = commandPayload;
-	  const result = commandExecMap[commandType]({
-	    source: sourceArray,
-	    payload,
-	    index
-	  });
-	  callback(result);
+		const {
+			commandType,
+			payload,
+			index
+		} = commandPayload;
+		const result = commandExecMap[commandType]({
+			source: sourceArray,
+			payload,
+			index
+		});
+		callback(result);
 	}
 
 	function createHook() {
-	  const handlers = new Set();
-	  const on = handler => {
-	    if (main_core.Type.isFunction(handler) && !handlers.has(handler)) {
-	      handlers.add(handler);
-	    }
-	  };
-	  const off = handler => {
-	    handlers.delete(handler);
-	  };
-	  const trigger = (...args) => {
-	    for (const handler of handlers) {
-	      handler(...args);
-	    }
-	  };
-	  return {
-	    on,
-	    off,
-	    trigger
-	  };
+		const handlers = new Set();
+		const on = handler => {
+			if (main_core.Type.isFunction(handler) && !handlers.has(handler)) {
+				handlers.add(handler);
+			}
+		};
+		const off = handler => {
+			handlers.delete(handler);
+		};
+		const trigger = (...args) => {
+			for (const handler of handlers) {
+				handler(...args);
+			}
+		};
+		return {
+			on,
+			off,
+			trigger
+		};
 	}
 
 	function getGroupBlockSlotName(group) {
-	  return `block:${group}`;
+		return `block:${group}`;
 	}
 	function getGroupConnectionSlotName(group) {
-	  return `connection:${group}`;
+		return `connection:${group}`;
 	}
 
 	/**
@@ -469,14 +493,13 @@ this.BX = this.BX || {};
 	// Configuration Constants
 	var EPSILON = 0.000001;
 	var ARRAY_TYPE = typeof Float32Array !== "undefined" ? Float32Array : Array;
-	var degree = Math.PI / 180;
 	if (!Math.hypot) Math.hypot = function () {
-	  var y = 0,
-	    i = arguments.length;
-	  while (i--) {
-	    y += arguments[i] * arguments[i];
-	  }
-	  return Math.sqrt(y);
+		var y = 0,
+			i = arguments.length;
+		while (i--) {
+			y += arguments[i] * arguments[i];
+		}
+		return Math.sqrt(y);
 	};
 
 	/**
@@ -490,20 +513,20 @@ this.BX = this.BX || {};
 	 * @returns {mat3} a new 3x3 matrix
 	 */
 
-	function create$2() {
-	  var out = new ARRAY_TYPE(9);
-	  if (ARRAY_TYPE != Float32Array) {
-	    out[1] = 0;
-	    out[2] = 0;
-	    out[3] = 0;
-	    out[5] = 0;
-	    out[6] = 0;
-	    out[7] = 0;
-	  }
-	  out[0] = 1;
-	  out[4] = 1;
-	  out[8] = 1;
-	  return out;
+	function create$4() {
+		var out = new ARRAY_TYPE(9);
+		if (ARRAY_TYPE != Float32Array) {
+			out[1] = 0;
+			out[2] = 0;
+			out[3] = 0;
+			out[5] = 0;
+			out[6] = 0;
+			out[7] = 0;
+		}
+		out[0] = 1;
+		out[4] = 1;
+		out[8] = 1;
+		return out;
 	}
 	/**
 	 * Copy the values from one mat3 to another
@@ -513,17 +536,17 @@ this.BX = this.BX || {};
 	 * @returns {mat3} out
 	 */
 
-	function copy$2(out, a) {
-	  out[0] = a[0];
-	  out[1] = a[1];
-	  out[2] = a[2];
-	  out[3] = a[3];
-	  out[4] = a[4];
-	  out[5] = a[5];
-	  out[6] = a[6];
-	  out[7] = a[7];
-	  out[8] = a[8];
-	  return out;
+	function copy(out, a) {
+		out[0] = a[0];
+		out[1] = a[1];
+		out[2] = a[2];
+		out[3] = a[3];
+		out[4] = a[4];
+		out[5] = a[5];
+		out[6] = a[6];
+		out[7] = a[7];
+		out[8] = a[8];
+		return out;
 	}
 	/**
 	 * Set a mat3 to the identity matrix
@@ -532,17 +555,17 @@ this.BX = this.BX || {};
 	 * @returns {mat3} out
 	 */
 
-	function identity$2(out) {
-	  out[0] = 1;
-	  out[1] = 0;
-	  out[2] = 0;
-	  out[3] = 0;
-	  out[4] = 1;
-	  out[5] = 0;
-	  out[6] = 0;
-	  out[7] = 0;
-	  out[8] = 1;
-	  return out;
+	function identity(out) {
+		out[0] = 1;
+		out[1] = 0;
+		out[2] = 0;
+		out[3] = 0;
+		out[4] = 1;
+		out[5] = 0;
+		out[6] = 0;
+		out[7] = 0;
+		out[8] = 1;
+		return out;
 	}
 	/**
 	 * Inverts a mat3
@@ -552,35 +575,35 @@ this.BX = this.BX || {};
 	 * @returns {mat3} out
 	 */
 
-	function invert$2(out, a) {
-	  var a00 = a[0],
-	    a01 = a[1],
-	    a02 = a[2];
-	  var a10 = a[3],
-	    a11 = a[4],
-	    a12 = a[5];
-	  var a20 = a[6],
-	    a21 = a[7],
-	    a22 = a[8];
-	  var b01 = a22 * a11 - a12 * a21;
-	  var b11 = -a22 * a10 + a12 * a20;
-	  var b21 = a21 * a10 - a11 * a20; // Calculate the determinant
+	function invert(out, a) {
+		var a00 = a[0],
+			a01 = a[1],
+			a02 = a[2];
+		var a10 = a[3],
+			a11 = a[4],
+			a12 = a[5];
+		var a20 = a[6],
+			a21 = a[7],
+			a22 = a[8];
+		var b01 = a22 * a11 - a12 * a21;
+		var b11 = -a22 * a10 + a12 * a20;
+		var b21 = a21 * a10 - a11 * a20; // Calculate the determinant
 
-	  var det = a00 * b01 + a01 * b11 + a02 * b21;
-	  if (!det) {
-	    return null;
-	  }
-	  det = 1.0 / det;
-	  out[0] = b01 * det;
-	  out[1] = (-a22 * a01 + a02 * a21) * det;
-	  out[2] = (a12 * a01 - a02 * a11) * det;
-	  out[3] = b11 * det;
-	  out[4] = (a22 * a00 - a02 * a20) * det;
-	  out[5] = (-a12 * a00 + a02 * a10) * det;
-	  out[6] = b21 * det;
-	  out[7] = (-a21 * a00 + a01 * a20) * det;
-	  out[8] = (a11 * a00 - a01 * a10) * det;
-	  return out;
+		var det = a00 * b01 + a01 * b11 + a02 * b21;
+		if (!det) {
+			return null;
+		}
+		det = 1.0 / det;
+		out[0] = b01 * det;
+		out[1] = (-a22 * a01 + a02 * a21) * det;
+		out[2] = (a12 * a01 - a02 * a11) * det;
+		out[3] = b11 * det;
+		out[4] = (a22 * a00 - a02 * a20) * det;
+		out[5] = (-a12 * a00 + a02 * a10) * det;
+		out[6] = b21 * det;
+		out[7] = (-a21 * a00 + a01 * a20) * det;
+		out[8] = (a11 * a00 - a01 * a10) * det;
+		return out;
 	}
 	/**
 	 * Multiplies two mat3's
@@ -591,35 +614,35 @@ this.BX = this.BX || {};
 	 * @returns {mat3} out
 	 */
 
-	function multiply$2(out, a, b) {
-	  var a00 = a[0],
-	    a01 = a[1],
-	    a02 = a[2];
-	  var a10 = a[3],
-	    a11 = a[4],
-	    a12 = a[5];
-	  var a20 = a[6],
-	    a21 = a[7],
-	    a22 = a[8];
-	  var b00 = b[0],
-	    b01 = b[1],
-	    b02 = b[2];
-	  var b10 = b[3],
-	    b11 = b[4],
-	    b12 = b[5];
-	  var b20 = b[6],
-	    b21 = b[7],
-	    b22 = b[8];
-	  out[0] = b00 * a00 + b01 * a10 + b02 * a20;
-	  out[1] = b00 * a01 + b01 * a11 + b02 * a21;
-	  out[2] = b00 * a02 + b01 * a12 + b02 * a22;
-	  out[3] = b10 * a00 + b11 * a10 + b12 * a20;
-	  out[4] = b10 * a01 + b11 * a11 + b12 * a21;
-	  out[5] = b10 * a02 + b11 * a12 + b12 * a22;
-	  out[6] = b20 * a00 + b21 * a10 + b22 * a20;
-	  out[7] = b20 * a01 + b21 * a11 + b22 * a21;
-	  out[8] = b20 * a02 + b21 * a12 + b22 * a22;
-	  return out;
+	function multiply(out, a, b) {
+		var a00 = a[0],
+			a01 = a[1],
+			a02 = a[2];
+		var a10 = a[3],
+			a11 = a[4],
+			a12 = a[5];
+		var a20 = a[6],
+			a21 = a[7],
+			a22 = a[8];
+		var b00 = b[0],
+			b01 = b[1],
+			b02 = b[2];
+		var b10 = b[3],
+			b11 = b[4],
+			b12 = b[5];
+		var b20 = b[6],
+			b21 = b[7],
+			b22 = b[8];
+		out[0] = b00 * a00 + b01 * a10 + b02 * a20;
+		out[1] = b00 * a01 + b01 * a11 + b02 * a21;
+		out[2] = b00 * a02 + b01 * a12 + b02 * a22;
+		out[3] = b10 * a00 + b11 * a10 + b12 * a20;
+		out[4] = b10 * a01 + b11 * a11 + b12 * a21;
+		out[5] = b10 * a02 + b11 * a12 + b12 * a22;
+		out[6] = b20 * a00 + b21 * a10 + b22 * a20;
+		out[7] = b20 * a01 + b21 * a11 + b22 * a21;
+		out[8] = b20 * a02 + b21 * a12 + b22 * a22;
+		return out;
 	}
 	/**
 	 * Translate a mat3 by the given vector
@@ -630,28 +653,28 @@ this.BX = this.BX || {};
 	 * @returns {mat3} out
 	 */
 
-	function translate$1(out, a, v) {
-	  var a00 = a[0],
-	    a01 = a[1],
-	    a02 = a[2],
-	    a10 = a[3],
-	    a11 = a[4],
-	    a12 = a[5],
-	    a20 = a[6],
-	    a21 = a[7],
-	    a22 = a[8],
-	    x = v[0],
-	    y = v[1];
-	  out[0] = a00;
-	  out[1] = a01;
-	  out[2] = a02;
-	  out[3] = a10;
-	  out[4] = a11;
-	  out[5] = a12;
-	  out[6] = x * a00 + y * a10 + a20;
-	  out[7] = x * a01 + y * a11 + a21;
-	  out[8] = x * a02 + y * a12 + a22;
-	  return out;
+	function translate(out, a, v) {
+		var a00 = a[0],
+			a01 = a[1],
+			a02 = a[2],
+			a10 = a[3],
+			a11 = a[4],
+			a12 = a[5],
+			a20 = a[6],
+			a21 = a[7],
+			a22 = a[8],
+			x = v[0],
+			y = v[1];
+		out[0] = a00;
+		out[1] = a01;
+		out[2] = a02;
+		out[3] = a10;
+		out[4] = a11;
+		out[5] = a12;
+		out[6] = x * a00 + y * a10 + a20;
+		out[7] = x * a01 + y * a11 + a21;
+		out[8] = x * a02 + y * a12 + a22;
+		return out;
 	}
 	/**
 	 * Rotates a mat3 by the given angle
@@ -662,28 +685,28 @@ this.BX = this.BX || {};
 	 * @returns {mat3} out
 	 */
 
-	function rotate$2(out, a, rad) {
-	  var a00 = a[0],
-	    a01 = a[1],
-	    a02 = a[2],
-	    a10 = a[3],
-	    a11 = a[4],
-	    a12 = a[5],
-	    a20 = a[6],
-	    a21 = a[7],
-	    a22 = a[8],
-	    s = Math.sin(rad),
-	    c = Math.cos(rad);
-	  out[0] = c * a00 + s * a10;
-	  out[1] = c * a01 + s * a11;
-	  out[2] = c * a02 + s * a12;
-	  out[3] = c * a10 - s * a00;
-	  out[4] = c * a11 - s * a01;
-	  out[5] = c * a12 - s * a02;
-	  out[6] = a20;
-	  out[7] = a21;
-	  out[8] = a22;
-	  return out;
+	function rotate(out, a, rad) {
+		var a00 = a[0],
+			a01 = a[1],
+			a02 = a[2],
+			a10 = a[3],
+			a11 = a[4],
+			a12 = a[5],
+			a20 = a[6],
+			a21 = a[7],
+			a22 = a[8],
+			s = Math.sin(rad),
+			c = Math.cos(rad);
+		out[0] = c * a00 + s * a10;
+		out[1] = c * a01 + s * a11;
+		out[2] = c * a02 + s * a12;
+		out[3] = c * a10 - s * a00;
+		out[4] = c * a11 - s * a01;
+		out[5] = c * a12 - s * a02;
+		out[6] = a20;
+		out[7] = a21;
+		out[8] = a22;
+		return out;
 	}
 	/**
 	 * Scales the mat3 by the dimensions in the given vec2
@@ -694,19 +717,19 @@ this.BX = this.BX || {};
 	 * @returns {mat3} out
 	 **/
 
-	function scale$2(out, a, v) {
-	  var x = v[0],
-	    y = v[1];
-	  out[0] = x * a[0];
-	  out[1] = x * a[1];
-	  out[2] = x * a[2];
-	  out[3] = y * a[3];
-	  out[4] = y * a[4];
-	  out[5] = y * a[5];
-	  out[6] = a[6];
-	  out[7] = a[7];
-	  out[8] = a[8];
-	  return out;
+	function scale(out, a, v) {
+		var x = v[0],
+			y = v[1];
+		out[0] = x * a[0];
+		out[1] = x * a[1];
+		out[2] = x * a[2];
+		out[3] = y * a[3];
+		out[4] = y * a[4];
+		out[5] = y * a[5];
+		out[6] = a[6];
+		out[7] = a[7];
+		out[8] = a[8];
+		return out;
 	}
 	/**
 	 * Generates a 2D projection matrix with the given bounds
@@ -718,16 +741,16 @@ this.BX = this.BX || {};
 	 */
 
 	function projection(out, width, height) {
-	  out[0] = 2 / width;
-	  out[1] = 0;
-	  out[2] = 0;
-	  out[3] = 0;
-	  out[4] = -2 / height;
-	  out[5] = 0;
-	  out[6] = -1;
-	  out[7] = 1;
-	  out[8] = 1;
-	  return out;
+		out[0] = 2 / width;
+		out[1] = 0;
+		out[2] = 0;
+		out[3] = 0;
+		out[4] = -2 / height;
+		out[5] = 0;
+		out[6] = -1;
+		out[7] = 1;
+		out[8] = 1;
+		return out;
 	}
 
 	/**
@@ -741,14 +764,14 @@ this.BX = this.BX || {};
 	 * @returns {vec3} a new 3D vector
 	 */
 
-	function create$4() {
-	  var out = new ARRAY_TYPE(3);
-	  if (ARRAY_TYPE != Float32Array) {
-	    out[0] = 0;
-	    out[1] = 0;
-	    out[2] = 0;
-	  }
-	  return out;
+	function create$3() {
+		var out = new ARRAY_TYPE(3);
+		if (ARRAY_TYPE != Float32Array) {
+			out[0] = 0;
+			out[1] = 0;
+			out[2] = 0;
+		}
+		return out;
 	}
 	/**
 	 * Calculates the length of a vec3
@@ -758,10 +781,10 @@ this.BX = this.BX || {};
 	 */
 
 	function length(a) {
-	  var x = a[0];
-	  var y = a[1];
-	  var z = a[2];
-	  return Math.hypot(x, y, z);
+		var x = a[0];
+		var y = a[1];
+		var z = a[2];
+		return Math.hypot(x, y, z);
 	}
 	/**
 	 * Creates a new vec3 initialized with the given values
@@ -772,12 +795,12 @@ this.BX = this.BX || {};
 	 * @returns {vec3} a new 3D vector
 	 */
 
-	function fromValues$4(x, y, z) {
-	  var out = new ARRAY_TYPE(3);
-	  out[0] = x;
-	  out[1] = y;
-	  out[2] = z;
-	  return out;
+	function fromValues(x, y, z) {
+		var out = new ARRAY_TYPE(3);
+		out[0] = x;
+		out[1] = y;
+		out[2] = z;
+		return out;
 	}
 	/**
 	 * Normalize a vec3
@@ -787,19 +810,19 @@ this.BX = this.BX || {};
 	 * @returns {vec3} out
 	 */
 
-	function normalize(out, a) {
-	  var x = a[0];
-	  var y = a[1];
-	  var z = a[2];
-	  var len = x * x + y * y + z * z;
-	  if (len > 0) {
-	    //TODO: evaluate use of glm_invsqrt here?
-	    len = 1 / Math.sqrt(len);
-	  }
-	  out[0] = a[0] * len;
-	  out[1] = a[1] * len;
-	  out[2] = a[2] * len;
-	  return out;
+	function normalize$2(out, a) {
+		var x = a[0];
+		var y = a[1];
+		var z = a[2];
+		var len = x * x + y * y + z * z;
+		if (len > 0) {
+			//TODO: evaluate use of glm_invsqrt here?
+			len = 1 / Math.sqrt(len);
+		}
+		out[0] = a[0] * len;
+		out[1] = a[1] * len;
+		out[2] = a[2] * len;
+		return out;
 	}
 	/**
 	 * Calculates the dot product of two vec3's
@@ -810,7 +833,7 @@ this.BX = this.BX || {};
 	 */
 
 	function dot(a, b) {
-	  return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+		return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 	}
 	/**
 	 * Computes the cross product of two vec3's
@@ -822,16 +845,16 @@ this.BX = this.BX || {};
 	 */
 
 	function cross(out, a, b) {
-	  var ax = a[0],
-	    ay = a[1],
-	    az = a[2];
-	  var bx = b[0],
-	    by = b[1],
-	    bz = b[2];
-	  out[0] = ay * bz - az * by;
-	  out[1] = az * bx - ax * bz;
-	  out[2] = ax * by - ay * bx;
-	  return out;
+		var ax = a[0],
+			ay = a[1],
+			az = a[2];
+		var bx = b[0],
+			by = b[1],
+			bz = b[2];
+		out[0] = ay * bz - az * by;
+		out[1] = az * bx - ax * bz;
+		out[2] = ax * by - ay * bx;
+		return out;
 	}
 	/**
 	 * Alias for {@link vec3.length}
@@ -852,33 +875,33 @@ this.BX = this.BX || {};
 	 * @function
 	 */
 
-	var forEach = function () {
-	  var vec = create$4();
-	  return function (a, stride, offset, count, fn, arg) {
-	    var i, l;
-	    if (!stride) {
-	      stride = 3;
-	    }
-	    if (!offset) {
-	      offset = 0;
-	    }
-	    if (count) {
-	      l = Math.min(count * stride + offset, a.length);
-	    } else {
-	      l = a.length;
-	    }
-	    for (i = offset; i < l; i += stride) {
-	      vec[0] = a[i];
-	      vec[1] = a[i + 1];
-	      vec[2] = a[i + 2];
-	      fn(vec, vec, arg);
-	      a[i] = vec[0];
-	      a[i + 1] = vec[1];
-	      a[i + 2] = vec[2];
-	    }
-	    return a;
-	  };
-	}();
+	(function () {
+		var vec = create$3();
+		return function (a, stride, offset, count, fn, arg) {
+			var i, l;
+			if (!stride) {
+				stride = 3;
+			}
+			if (!offset) {
+				offset = 0;
+			}
+			if (count) {
+				l = Math.min(count * stride + offset, a.length);
+			} else {
+				l = a.length;
+			}
+			for (i = offset; i < l; i += stride) {
+				vec[0] = a[i];
+				vec[1] = a[i + 1];
+				vec[2] = a[i + 2];
+				fn(vec, vec, arg);
+				a[i] = vec[0];
+				a[i + 1] = vec[1];
+				a[i + 2] = vec[2];
+			}
+			return a;
+		};
+	})();
 
 	/**
 	 * 4 Dimensional Vector
@@ -891,15 +914,15 @@ this.BX = this.BX || {};
 	 * @returns {vec4} a new 4D vector
 	 */
 
-	function create$5() {
-	  var out = new ARRAY_TYPE(4);
-	  if (ARRAY_TYPE != Float32Array) {
-	    out[0] = 0;
-	    out[1] = 0;
-	    out[2] = 0;
-	    out[3] = 0;
-	  }
-	  return out;
+	function create$2() {
+		var out = new ARRAY_TYPE(4);
+		if (ARRAY_TYPE != Float32Array) {
+			out[0] = 0;
+			out[1] = 0;
+			out[2] = 0;
+			out[3] = 0;
+		}
+		return out;
 	}
 	/**
 	 * Normalize a vec4
@@ -910,19 +933,19 @@ this.BX = this.BX || {};
 	 */
 
 	function normalize$1(out, a) {
-	  var x = a[0];
-	  var y = a[1];
-	  var z = a[2];
-	  var w = a[3];
-	  var len = x * x + y * y + z * z + w * w;
-	  if (len > 0) {
-	    len = 1 / Math.sqrt(len);
-	  }
-	  out[0] = x * len;
-	  out[1] = y * len;
-	  out[2] = z * len;
-	  out[3] = w * len;
-	  return out;
+		var x = a[0];
+		var y = a[1];
+		var z = a[2];
+		var w = a[3];
+		var len = x * x + y * y + z * z + w * w;
+		if (len > 0) {
+			len = 1 / Math.sqrt(len);
+		}
+		out[0] = x * len;
+		out[1] = y * len;
+		out[2] = z * len;
+		out[3] = w * len;
+		return out;
 	}
 	/**
 	 * Perform some operation over an array of vec4s.
@@ -937,35 +960,35 @@ this.BX = this.BX || {};
 	 * @function
 	 */
 
-	var forEach$1 = function () {
-	  var vec = create$5();
-	  return function (a, stride, offset, count, fn, arg) {
-	    var i, l;
-	    if (!stride) {
-	      stride = 4;
-	    }
-	    if (!offset) {
-	      offset = 0;
-	    }
-	    if (count) {
-	      l = Math.min(count * stride + offset, a.length);
-	    } else {
-	      l = a.length;
-	    }
-	    for (i = offset; i < l; i += stride) {
-	      vec[0] = a[i];
-	      vec[1] = a[i + 1];
-	      vec[2] = a[i + 2];
-	      vec[3] = a[i + 3];
-	      fn(vec, vec, arg);
-	      a[i] = vec[0];
-	      a[i + 1] = vec[1];
-	      a[i + 2] = vec[2];
-	      a[i + 3] = vec[3];
-	    }
-	    return a;
-	  };
-	}();
+	(function () {
+		var vec = create$2();
+		return function (a, stride, offset, count, fn, arg) {
+			var i, l;
+			if (!stride) {
+				stride = 4;
+			}
+			if (!offset) {
+				offset = 0;
+			}
+			if (count) {
+				l = Math.min(count * stride + offset, a.length);
+			} else {
+				l = a.length;
+			}
+			for (i = offset; i < l; i += stride) {
+				vec[0] = a[i];
+				vec[1] = a[i + 1];
+				vec[2] = a[i + 2];
+				vec[3] = a[i + 3];
+				fn(vec, vec, arg);
+				a[i] = vec[0];
+				a[i + 1] = vec[1];
+				a[i + 2] = vec[2];
+				a[i + 3] = vec[3];
+			}
+			return a;
+		};
+	})();
 
 	/**
 	 * Quaternion in the format XYZW
@@ -978,15 +1001,15 @@ this.BX = this.BX || {};
 	 * @returns {quat} a new quaternion
 	 */
 
-	function create$6() {
-	  var out = new ARRAY_TYPE(4);
-	  if (ARRAY_TYPE != Float32Array) {
-	    out[0] = 0;
-	    out[1] = 0;
-	    out[2] = 0;
-	  }
-	  out[3] = 1;
-	  return out;
+	function create$1() {
+		var out = new ARRAY_TYPE(4);
+		if (ARRAY_TYPE != Float32Array) {
+			out[0] = 0;
+			out[1] = 0;
+			out[2] = 0;
+		}
+		out[3] = 1;
+		return out;
 	}
 	/**
 	 * Sets a quat from the given angle and rotation axis,
@@ -999,13 +1022,13 @@ this.BX = this.BX || {};
 	 **/
 
 	function setAxisAngle(out, axis, rad) {
-	  rad = rad * 0.5;
-	  var s = Math.sin(rad);
-	  out[0] = s * axis[0];
-	  out[1] = s * axis[1];
-	  out[2] = s * axis[2];
-	  out[3] = Math.cos(rad);
-	  return out;
+		rad = rad * 0.5;
+		var s = Math.sin(rad);
+		out[0] = s * axis[0];
+		out[1] = s * axis[1];
+		out[2] = s * axis[2];
+		out[3] = Math.cos(rad);
+		return out;
 	}
 	/**
 	 * Performs a spherical linear interpolation between two quat
@@ -1017,47 +1040,47 @@ this.BX = this.BX || {};
 	 * @returns {quat} out
 	 */
 
-	function slerp$1(out, a, b, t) {
-	  // benchmarks:
-	  //    http://jsperf.com/quaternion-slerp-implementations
-	  var ax = a[0],
-	    ay = a[1],
-	    az = a[2],
-	    aw = a[3];
-	  var bx = b[0],
-	    by = b[1],
-	    bz = b[2],
-	    bw = b[3];
-	  var omega, cosom, sinom, scale0, scale1; // calc cosine
+	function slerp(out, a, b, t) {
+		// benchmarks:
+		//    http://jsperf.com/quaternion-slerp-implementations
+		var ax = a[0],
+			ay = a[1],
+			az = a[2],
+			aw = a[3];
+		var bx = b[0],
+			by = b[1],
+			bz = b[2],
+			bw = b[3];
+		var omega, cosom, sinom, scale0, scale1; // calc cosine
 
-	  cosom = ax * bx + ay * by + az * bz + aw * bw; // adjust signs (if necessary)
+		cosom = ax * bx + ay * by + az * bz + aw * bw; // adjust signs (if necessary)
 
-	  if (cosom < 0.0) {
-	    cosom = -cosom;
-	    bx = -bx;
-	    by = -by;
-	    bz = -bz;
-	    bw = -bw;
-	  } // calculate coefficients
+		if (cosom < 0.0) {
+			cosom = -cosom;
+			bx = -bx;
+			by = -by;
+			bz = -bz;
+			bw = -bw;
+		} // calculate coefficients
 
-	  if (1.0 - cosom > EPSILON) {
-	    // standard case (slerp)
-	    omega = Math.acos(cosom);
-	    sinom = Math.sin(omega);
-	    scale0 = Math.sin((1.0 - t) * omega) / sinom;
-	    scale1 = Math.sin(t * omega) / sinom;
-	  } else {
-	    // "from" and "to" quaternions are very close
-	    //  ... so we can do a linear interpolation
-	    scale0 = 1.0 - t;
-	    scale1 = t;
-	  } // calculate final values
+		if (1.0 - cosom > EPSILON) {
+			// standard case (slerp)
+			omega = Math.acos(cosom);
+			sinom = Math.sin(omega);
+			scale0 = Math.sin((1.0 - t) * omega) / sinom;
+			scale1 = Math.sin(t * omega) / sinom;
+		} else {
+			// "from" and "to" quaternions are very close
+			//  ... so we can do a linear interpolation
+			scale0 = 1.0 - t;
+			scale1 = t;
+		} // calculate final values
 
-	  out[0] = scale0 * ax + scale1 * bx;
-	  out[1] = scale0 * ay + scale1 * by;
-	  out[2] = scale0 * az + scale1 * bz;
-	  out[3] = scale0 * aw + scale1 * bw;
-	  return out;
+		out[0] = scale0 * ax + scale1 * bx;
+		out[1] = scale0 * ay + scale1 * by;
+		out[2] = scale0 * az + scale1 * bz;
+		out[3] = scale0 * aw + scale1 * bw;
+		return out;
 	}
 	/**
 	 * Creates a quaternion from the given 3x3 rotation matrix.
@@ -1072,35 +1095,35 @@ this.BX = this.BX || {};
 	 */
 
 	function fromMat3(out, m) {
-	  // Algorithm in Ken Shoemake's article in 1987 SIGGRAPH course notes
-	  // article "Quaternion Calculus and Fast Animation".
-	  var fTrace = m[0] + m[4] + m[8];
-	  var fRoot;
-	  if (fTrace > 0.0) {
-	    // |w| > 1/2, may as well choose w > 1/2
-	    fRoot = Math.sqrt(fTrace + 1.0); // 2w
+		// Algorithm in Ken Shoemake's article in 1987 SIGGRAPH course notes
+		// article "Quaternion Calculus and Fast Animation".
+		var fTrace = m[0] + m[4] + m[8];
+		var fRoot;
+		if (fTrace > 0.0) {
+			// |w| > 1/2, may as well choose w > 1/2
+			fRoot = Math.sqrt(fTrace + 1.0); // 2w
 
-	    out[3] = 0.5 * fRoot;
-	    fRoot = 0.5 / fRoot; // 1/(4w)
+			out[3] = 0.5 * fRoot;
+			fRoot = 0.5 / fRoot; // 1/(4w)
 
-	    out[0] = (m[5] - m[7]) * fRoot;
-	    out[1] = (m[6] - m[2]) * fRoot;
-	    out[2] = (m[1] - m[3]) * fRoot;
-	  } else {
-	    // |w| <= 1/2
-	    var i = 0;
-	    if (m[4] > m[0]) i = 1;
-	    if (m[8] > m[i * 3 + i]) i = 2;
-	    var j = (i + 1) % 3;
-	    var k = (i + 2) % 3;
-	    fRoot = Math.sqrt(m[i * 3 + i] - m[j * 3 + j] - m[k * 3 + k] + 1.0);
-	    out[i] = 0.5 * fRoot;
-	    fRoot = 0.5 / fRoot;
-	    out[3] = (m[j * 3 + k] - m[k * 3 + j]) * fRoot;
-	    out[j] = (m[j * 3 + i] + m[i * 3 + j]) * fRoot;
-	    out[k] = (m[k * 3 + i] + m[i * 3 + k]) * fRoot;
-	  }
-	  return out;
+			out[0] = (m[5] - m[7]) * fRoot;
+			out[1] = (m[6] - m[2]) * fRoot;
+			out[2] = (m[1] - m[3]) * fRoot;
+		} else {
+			// |w| <= 1/2
+			var i = 0;
+			if (m[4] > m[0]) i = 1;
+			if (m[8] > m[i * 3 + i]) i = 2;
+			var j = (i + 1) % 3;
+			var k = (i + 2) % 3;
+			fRoot = Math.sqrt(m[i * 3 + i] - m[j * 3 + j] - m[k * 3 + k] + 1.0);
+			out[i] = 0.5 * fRoot;
+			fRoot = 0.5 / fRoot;
+			out[3] = (m[j * 3 + k] - m[k * 3 + j]) * fRoot;
+			out[j] = (m[j * 3 + i] + m[i * 3 + j]) * fRoot;
+			out[k] = (m[k * 3 + i] + m[i * 3 + k]) * fRoot;
+		}
+		return out;
 	}
 	/**
 	 * Normalize a quat
@@ -1111,7 +1134,7 @@ this.BX = this.BX || {};
 	 * @function
 	 */
 
-	var normalize$2 = normalize$1;
+	var normalize = normalize$1;
 	/**
 	 * Sets a quaternion to represent the shortest rotation from one
 	 * vector to another.
@@ -1124,34 +1147,34 @@ this.BX = this.BX || {};
 	 * @returns {quat} out
 	 */
 
-	var rotationTo = function () {
-	  var tmpvec3 = create$4();
-	  var xUnitVec3 = fromValues$4(1, 0, 0);
-	  var yUnitVec3 = fromValues$4(0, 1, 0);
-	  return function (out, a, b) {
-	    var dot$$1 = dot(a, b);
-	    if (dot$$1 < -0.999999) {
-	      cross(tmpvec3, xUnitVec3, a);
-	      if (len(tmpvec3) < 0.000001) cross(tmpvec3, yUnitVec3, a);
-	      normalize(tmpvec3, tmpvec3);
-	      setAxisAngle(out, tmpvec3, Math.PI);
-	      return out;
-	    } else if (dot$$1 > 0.999999) {
-	      out[0] = 0;
-	      out[1] = 0;
-	      out[2] = 0;
-	      out[3] = 1;
-	      return out;
-	    } else {
-	      cross(tmpvec3, a, b);
-	      out[0] = tmpvec3[0];
-	      out[1] = tmpvec3[1];
-	      out[2] = tmpvec3[2];
-	      out[3] = 1 + dot$$1;
-	      return normalize$2(out, out);
-	    }
-	  };
-	}();
+	(function () {
+		var tmpvec3 = create$3();
+		var xUnitVec3 = fromValues(1, 0, 0);
+		var yUnitVec3 = fromValues(0, 1, 0);
+		return function (out, a, b) {
+			var dot$1 = dot(a, b);
+			if (dot$1 < -0.999999) {
+				cross(tmpvec3, xUnitVec3, a);
+				if (len(tmpvec3) < 0.000001) cross(tmpvec3, yUnitVec3, a);
+				normalize$2(tmpvec3, tmpvec3);
+				setAxisAngle(out, tmpvec3, Math.PI);
+				return out;
+			} else if (dot$1 > 0.999999) {
+				out[0] = 0;
+				out[1] = 0;
+				out[2] = 0;
+				out[3] = 1;
+				return out;
+			} else {
+				cross(tmpvec3, a, b);
+				out[0] = tmpvec3[0];
+				out[1] = tmpvec3[1];
+				out[2] = tmpvec3[2];
+				out[3] = 1 + dot$1;
+				return normalize(out, out);
+			}
+		};
+	})();
 	/**
 	 * Performs a spherical linear interpolation with two control points
 	 *
@@ -1164,16 +1187,16 @@ this.BX = this.BX || {};
 	 * @returns {quat} out
 	 */
 
-	var sqlerp = function () {
-	  var temp1 = create$6();
-	  var temp2 = create$6();
-	  return function (out, a, b, c, d, t) {
-	    slerp$1(temp1, a, d, t);
-	    slerp$1(temp2, b, c, t);
-	    slerp$1(out, temp1, temp2, 2 * t * (1 - t));
-	    return out;
-	  };
-	}();
+	(function () {
+		var temp1 = create$1();
+		var temp2 = create$1();
+		return function (out, a, b, c, d, t) {
+			slerp(temp1, a, d, t);
+			slerp(temp2, b, c, t);
+			slerp(out, temp1, temp2, 2 * t * (1 - t));
+			return out;
+		};
+	})();
 	/**
 	 * Sets the specified quaternion with values corresponding to the given
 	 * axes. Each axis is a vec3 and is expected to be unit length and
@@ -1185,21 +1208,21 @@ this.BX = this.BX || {};
 	 * @returns {quat} out
 	 */
 
-	var setAxes = function () {
-	  var matr = create$2();
-	  return function (out, view, right, up) {
-	    matr[0] = right[0];
-	    matr[3] = right[1];
-	    matr[6] = right[2];
-	    matr[1] = up[0];
-	    matr[4] = up[1];
-	    matr[7] = up[2];
-	    matr[2] = -view[0];
-	    matr[5] = -view[1];
-	    matr[8] = -view[2];
-	    return normalize$2(out, fromMat3(out, matr));
-	  };
-	}();
+	(function () {
+		var matr = create$4();
+		return function (out, view, right, up) {
+			matr[0] = right[0];
+			matr[3] = right[1];
+			matr[6] = right[2];
+			matr[1] = up[0];
+			matr[4] = up[1];
+			matr[7] = up[2];
+			matr[2] = -view[0];
+			matr[5] = -view[1];
+			matr[8] = -view[2];
+			return normalize(out, fromMat3(out, matr));
+		};
+	})();
 
 	/**
 	 * 2 Dimensional Vector
@@ -1212,13 +1235,13 @@ this.BX = this.BX || {};
 	 * @returns {vec2} a new 2D vector
 	 */
 
-	function create$8() {
-	  var out = new ARRAY_TYPE(2);
-	  if (ARRAY_TYPE != Float32Array) {
-	    out[0] = 0;
-	    out[1] = 0;
-	  }
-	  return out;
+	function create() {
+		var out = new ARRAY_TYPE(2);
+		if (ARRAY_TYPE != Float32Array) {
+			out[0] = 0;
+			out[1] = 0;
+		}
+		return out;
 	}
 	/**
 	 * Transforms the vec2 with a mat3
@@ -1230,12 +1253,12 @@ this.BX = this.BX || {};
 	 * @returns {vec2} out
 	 */
 
-	function transformMat3$1(out, a, m) {
-	  var x = a[0],
-	    y = a[1];
-	  out[0] = m[0] * x + m[3] * y + m[6];
-	  out[1] = m[1] * x + m[4] * y + m[7];
-	  return out;
+	function transformMat3(out, a, m) {
+		var x = a[0],
+			y = a[1];
+		out[0] = m[0] * x + m[3] * y + m[6];
+		out[1] = m[1] * x + m[4] * y + m[7];
+		return out;
 	}
 	/**
 	 * Perform some operation over an array of vec2s.
@@ -1250,872 +1273,644 @@ this.BX = this.BX || {};
 	 * @function
 	 */
 
-	var forEach$2 = function () {
-	  var vec = create$8();
-	  return function (a, stride, offset, count, fn, arg) {
-	    var i, l;
-	    if (!stride) {
-	      stride = 2;
-	    }
-	    if (!offset) {
-	      offset = 0;
-	    }
-	    if (count) {
-	      l = Math.min(count * stride + offset, a.length);
-	    } else {
-	      l = a.length;
-	    }
-	    for (i = offset; i < l; i += stride) {
-	      vec[0] = a[i];
-	      vec[1] = a[i + 1];
-	      fn(vec, vec, arg);
-	      a[i] = vec[0];
-	      a[i + 1] = vec[1];
-	    }
-	    return a;
-	  };
-	}();
+	(function () {
+		var vec = create();
+		return function (a, stride, offset, count, fn, arg) {
+			var i, l;
+			if (!stride) {
+				stride = 2;
+			}
+			if (!offset) {
+				offset = 0;
+			}
+			if (count) {
+				l = Math.min(count * stride + offset, a.length);
+			} else {
+				l = a.length;
+			}
+			for (i = offset; i < l; i += stride) {
+				vec[0] = a[i];
+				vec[1] = a[i + 1];
+				fn(vec, vec, arg);
+				a[i] = vec[0];
+				a[i + 1] = vec[1];
+			}
+			return a;
+		};
+	})();
 
-	var _x = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("x");
-	var _y = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("y");
-	var _rotation = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rotation");
-	var _zoom = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("zoom");
-	var _width = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("width");
-	var _height = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("height");
-	var _matrix = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("matrix");
-	var _projectionMatrix = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("projectionMatrix");
-	var _viewMatrix = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("viewMatrix");
-	var _viewProjectionMatrix = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("viewProjectionMatrix");
-	var _viewProjectionMatrixInv = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("viewProjectionMatrixInv");
-	var _changeCallback = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("changeCallback");
-	var _onChangedTransformParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onChangedTransformParams");
 	class Camera {
-	  constructor(options) {
-	    Object.defineProperty(this, _onChangedTransformParams, {
-	      value: _onChangedTransformParams2
-	    });
-	    Object.defineProperty(this, _x, {
-	      writable: true,
-	      value: 0
-	    });
-	    Object.defineProperty(this, _y, {
-	      writable: true,
-	      value: 0
-	    });
-	    Object.defineProperty(this, _rotation, {
-	      writable: true,
-	      value: 0
-	    });
-	    Object.defineProperty(this, _zoom, {
-	      writable: true,
-	      value: 1
-	    });
-	    Object.defineProperty(this, _width, {
-	      writable: true,
-	      value: 0
-	    });
-	    Object.defineProperty(this, _height, {
-	      writable: true,
-	      value: 0
-	    });
-	    Object.defineProperty(this, _matrix, {
-	      writable: true,
-	      value: create$2()
-	    });
-	    Object.defineProperty(this, _projectionMatrix, {
-	      writable: true,
-	      value: create$2()
-	    });
-	    Object.defineProperty(this, _viewMatrix, {
-	      writable: true,
-	      value: create$2()
-	    });
-	    Object.defineProperty(this, _viewProjectionMatrix, {
-	      writable: true,
-	      value: create$2()
-	    });
-	    Object.defineProperty(this, _viewProjectionMatrixInv, {
-	      writable: true,
-	      value: create$2()
-	    });
-	    Object.defineProperty(this, _changeCallback, {
-	      writable: true,
-	      value: null
-	    });
-	    const {
-	      width,
-	      height,
-	      onChangeCallback
-	    } = options;
-	    babelHelpers.classPrivateFieldLooseBase(this, _changeCallback)[_changeCallback] = onChangeCallback;
-	    this.projection(width, height);
-	    this.updateMatrix();
-	    babelHelpers.classPrivateFieldLooseBase(this, _onChangedTransformParams)[_onChangedTransformParams]({
-	      width,
-	      height
-	    });
-	  }
-	  get projectionMatrix() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _projectionMatrix)[_projectionMatrix];
-	  }
-	  get viewMatrix() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _viewMatrix)[_viewMatrix];
-	  }
-	  get viewProjectionMatrix() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _viewProjectionMatrix)[_viewProjectionMatrix];
-	  }
-	  get viewProjectionMatrixInv() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _viewProjectionMatrixInv)[_viewProjectionMatrixInv];
-	  }
-	  get matrix() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _matrix)[_matrix];
-	  }
-	  get zoom() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _zoom)[_zoom];
-	  }
-	  set zoom(zoom) {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _zoom)[_zoom] !== zoom) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _zoom)[_zoom] = zoom;
-	      babelHelpers.classPrivateFieldLooseBase(this, _onChangedTransformParams)[_onChangedTransformParams]({
-	        zoom
-	      });
-	      this.updateMatrix();
-	    }
-	  }
-	  get x() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _x)[_x];
-	  }
-	  set x(x) {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _x)[_x] !== x) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _x)[_x] = x;
-	      babelHelpers.classPrivateFieldLooseBase(this, _onChangedTransformParams)[_onChangedTransformParams]({
-	        x
-	      });
-	      this.updateMatrix();
-	    }
-	  }
-	  get y() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _y)[_y];
-	  }
-	  set y(y) {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _y)[_y] !== y) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _y)[_y] = y;
-	      babelHelpers.classPrivateFieldLooseBase(this, _onChangedTransformParams)[_onChangedTransformParams]({
-	        y
-	      });
-	      this.updateMatrix();
-	    }
-	  }
-	  get rotation() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _rotation)[_rotation];
-	  }
-	  set rotation(rotation) {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _rotation)[_rotation] !== rotation) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _rotation)[_rotation] = rotation;
-	      this.updateMatrix();
-	    }
-	  }
-	  get width() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _width)[_width];
-	  }
-	  get height() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _height)[_height];
-	  }
-	  setChangeTransformCallback(callback) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _changeCallback)[_changeCallback] = callback;
-	  }
-	  clone(width = null, height = null) {
-	    const camera = new Camera({
-	      width: width || babelHelpers.classPrivateFieldLooseBase(this, _width)[_width],
-	      height: height || babelHelpers.classPrivateFieldLooseBase(this, _height)[_height],
-	      onChangeCallback: babelHelpers.classPrivateFieldLooseBase(this, _changeCallback)[_changeCallback]
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(camera, _x)[_x] = babelHelpers.classPrivateFieldLooseBase(this, _x)[_x];
-	    babelHelpers.classPrivateFieldLooseBase(camera, _y)[_y] = babelHelpers.classPrivateFieldLooseBase(this, _y)[_y];
-	    babelHelpers.classPrivateFieldLooseBase(camera, _zoom)[_zoom] = babelHelpers.classPrivateFieldLooseBase(this, _zoom)[_zoom];
-	    babelHelpers.classPrivateFieldLooseBase(camera, _rotation)[_rotation] = babelHelpers.classPrivateFieldLooseBase(this, _rotation)[_rotation];
-	    camera.updateMatrix();
-	    return camera;
-	  }
-	  projection(width, height) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _width)[_width] = width;
-	    babelHelpers.classPrivateFieldLooseBase(this, _height)[_height] = height;
-	    projection(babelHelpers.classPrivateFieldLooseBase(this, _projectionMatrix)[_projectionMatrix], width, height);
-	    this.updateViewProjectionMatrix();
-	  }
-	  updateMatrix() {
-	    const zoomScale = 1 / babelHelpers.classPrivateFieldLooseBase(this, _zoom)[_zoom];
-	    identity$2(babelHelpers.classPrivateFieldLooseBase(this, _matrix)[_matrix]);
-	    translate$1(babelHelpers.classPrivateFieldLooseBase(this, _matrix)[_matrix], babelHelpers.classPrivateFieldLooseBase(this, _matrix)[_matrix], [babelHelpers.classPrivateFieldLooseBase(this, _x)[_x], babelHelpers.classPrivateFieldLooseBase(this, _y)[_y]]);
-	    rotate$2(babelHelpers.classPrivateFieldLooseBase(this, _matrix)[_matrix], babelHelpers.classPrivateFieldLooseBase(this, _matrix)[_matrix], babelHelpers.classPrivateFieldLooseBase(this, _rotation)[_rotation]);
-	    scale$2(babelHelpers.classPrivateFieldLooseBase(this, _matrix)[_matrix], babelHelpers.classPrivateFieldLooseBase(this, _matrix)[_matrix], [zoomScale, zoomScale]);
-	    invert$2(babelHelpers.classPrivateFieldLooseBase(this, _viewMatrix)[_viewMatrix], babelHelpers.classPrivateFieldLooseBase(this, _matrix)[_matrix]);
-	    this.updateViewProjectionMatrix();
-	  }
-	  updateViewProjectionMatrix() {
-	    multiply$2(babelHelpers.classPrivateFieldLooseBase(this, _viewProjectionMatrix)[_viewProjectionMatrix], babelHelpers.classPrivateFieldLooseBase(this, _projectionMatrix)[_projectionMatrix], babelHelpers.classPrivateFieldLooseBase(this, _viewMatrix)[_viewMatrix]);
-	    invert$2(babelHelpers.classPrivateFieldLooseBase(this, _viewProjectionMatrixInv)[_viewProjectionMatrixInv], babelHelpers.classPrivateFieldLooseBase(this, _viewProjectionMatrix)[_viewProjectionMatrix]);
-	  }
-	  createLandmark(params = {}) {
-	    return {
-	      zoom: babelHelpers.classPrivateFieldLooseBase(this, _zoom)[_zoom],
-	      x: babelHelpers.classPrivateFieldLooseBase(this, _x)[_x],
-	      y: babelHelpers.classPrivateFieldLooseBase(this, _y)[_y],
-	      rotation: babelHelpers.classPrivateFieldLooseBase(this, _rotation)[_rotation],
-	      ...params
-	    };
-	  }
-	  viewportToCanvas({
-	    x,
-	    y
-	  }, camera) {
-	    const {
-	      width,
-	      height,
-	      viewProjectionMatrixInv
-	    } = camera || this;
-	    const canvas = transformMat3$1(create$8(), [x / width * 2 - 1, (1 - y / height) * 2 - 1], viewProjectionMatrixInv);
-	    return {
-	      x: canvas[0],
-	      y: canvas[1]
-	    };
-	  }
-	  applyLandmark(landmark) {
-	    const {
-	      x,
-	      y,
-	      zoom,
-	      rotation,
-	      viewportX,
-	      viewportY
-	    } = landmark;
-	    const useFixedViewport = viewportX || viewportY;
-	    let preZoomX = 0;
-	    let preZoomY = 0;
-	    if (useFixedViewport) {
-	      const canvas = this.viewportToCanvas({
-	        x: viewportX,
-	        y: viewportY
-	      });
-	      preZoomX = canvas.x;
-	      preZoomY = canvas.y;
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _zoom)[_zoom] = zoom;
-	    babelHelpers.classPrivateFieldLooseBase(this, _rotation)[_rotation] = rotation;
-	    babelHelpers.classPrivateFieldLooseBase(this, _x)[_x] = x;
-	    babelHelpers.classPrivateFieldLooseBase(this, _y)[_y] = y;
-	    this.updateMatrix();
-	    babelHelpers.classPrivateFieldLooseBase(this, _onChangedTransformParams)[_onChangedTransformParams]({
-	      x: babelHelpers.classPrivateFieldLooseBase(this, _x)[_x],
-	      y: babelHelpers.classPrivateFieldLooseBase(this, _y)[_y],
-	      zoom: babelHelpers.classPrivateFieldLooseBase(this, _zoom)[_zoom]
-	    });
-	    if (useFixedViewport) {
-	      const {
-	        x: postZoomX,
-	        y: postZoomY
-	      } = this.viewportToCanvas({
-	        x: viewportX,
-	        y: viewportY
-	      });
-	      babelHelpers.classPrivateFieldLooseBase(this, _x)[_x] += preZoomX - postZoomX;
-	      babelHelpers.classPrivateFieldLooseBase(this, _y)[_y] += preZoomY - postZoomY;
-	      this.updateMatrix();
-	      babelHelpers.classPrivateFieldLooseBase(this, _onChangedTransformParams)[_onChangedTransformParams]({
-	        x: babelHelpers.classPrivateFieldLooseBase(this, _x)[_x],
-	        y: babelHelpers.classPrivateFieldLooseBase(this, _y)[_y],
-	        zoom: babelHelpers.classPrivateFieldLooseBase(this, _zoom)[_zoom]
-	      });
-	    }
-	  }
-	}
-	function _onChangedTransformParams2(params) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _changeCallback)[_changeCallback]({
-	    x: babelHelpers.classPrivateFieldLooseBase(this, _x)[_x],
-	    y: babelHelpers.classPrivateFieldLooseBase(this, _y)[_y],
-	    zoom: babelHelpers.classPrivateFieldLooseBase(this, _zoom)[_zoom],
-	    width: babelHelpers.classPrivateFieldLooseBase(this, _width)[_width],
-	    height: babelHelpers.classPrivateFieldLooseBase(this, _height)[_height],
-	    ...params
-	  });
+		#x = 0;
+		#y = 0;
+		#rotation = 0;
+		#zoom = 1;
+		#width = 0;
+		#height = 0;
+		#matrix = create$4();
+		#projectionMatrix = create$4();
+		#viewMatrix = create$4();
+		#viewProjectionMatrix = create$4();
+		#viewProjectionMatrixInv = create$4();
+		#changeCallback = null;
+		constructor(options) {
+			const {
+				width,
+				height,
+				onChangeCallback
+			} = options;
+			this.#changeCallback = onChangeCallback;
+			this.projection(width, height);
+			this.updateMatrix();
+			this.#onChangedTransformParams({
+				width,
+				height
+			});
+		}
+		get projectionMatrix() {
+			return this.#projectionMatrix;
+		}
+		get viewMatrix() {
+			return this.#viewMatrix;
+		}
+		get viewProjectionMatrix() {
+			return this.#viewProjectionMatrix;
+		}
+		get viewProjectionMatrixInv() {
+			return this.#viewProjectionMatrixInv;
+		}
+		get matrix() {
+			return this.#matrix;
+		}
+		get zoom() {
+			return this.#zoom;
+		}
+		set zoom(zoom) {
+			if (this.#zoom !== zoom) {
+				this.#zoom = zoom;
+				this.#onChangedTransformParams({
+					zoom
+				});
+				this.updateMatrix();
+			}
+		}
+		get x() {
+			return this.#x;
+		}
+		set x(x) {
+			if (this.#x !== x) {
+				this.#x = x;
+				this.#onChangedTransformParams({
+					x
+				});
+				this.updateMatrix();
+			}
+		}
+		get y() {
+			return this.#y;
+		}
+		set y(y) {
+			if (this.#y !== y) {
+				this.#y = y;
+				this.#onChangedTransformParams({
+					y
+				});
+				this.updateMatrix();
+			}
+		}
+		get rotation() {
+			return this.#rotation;
+		}
+		set rotation(rotation) {
+			if (this.#rotation !== rotation) {
+				this.#rotation = rotation;
+				this.updateMatrix();
+			}
+		}
+		get width() {
+			return this.#width;
+		}
+		get height() {
+			return this.#height;
+		}
+		setChangeTransformCallback(callback) {
+			this.#changeCallback = callback;
+		}
+		#onChangedTransformParams(params) {
+			this.#changeCallback({
+				x: this.#x,
+				y: this.#y,
+				zoom: this.#zoom,
+				width: this.#width,
+				height: this.#height,
+				...params
+			});
+		}
+		clone(width = null, height = null) {
+			const camera = new Camera({
+				width: width || this.#width,
+				height: height || this.#height,
+				onChangeCallback: this.#changeCallback
+			});
+			camera.#x = this.#x;
+			camera.#y = this.#y;
+			camera.#zoom = this.#zoom;
+			camera.#rotation = this.#rotation;
+			camera.updateMatrix();
+			return camera;
+		}
+		projection(width, height) {
+			this.#width = width;
+			this.#height = height;
+			projection(this.#projectionMatrix, width, height);
+			this.updateViewProjectionMatrix();
+		}
+		updateMatrix() {
+			const zoomScale = 1 / this.#zoom;
+			identity(this.#matrix);
+			translate(this.#matrix, this.#matrix, [this.#x, this.#y]);
+			rotate(this.#matrix, this.#matrix, this.#rotation);
+			scale(this.#matrix, this.#matrix, [zoomScale, zoomScale]);
+			invert(this.#viewMatrix, this.#matrix);
+			this.updateViewProjectionMatrix();
+		}
+		updateViewProjectionMatrix() {
+			multiply(this.#viewProjectionMatrix, this.#projectionMatrix, this.#viewMatrix);
+			invert(this.#viewProjectionMatrixInv, this.#viewProjectionMatrix);
+		}
+		createLandmark(params = {}) {
+			return {
+				zoom: this.#zoom,
+				x: this.#x,
+				y: this.#y,
+				rotation: this.#rotation,
+				...params
+			};
+		}
+		viewportToCanvas({
+			x,
+			y
+		}, camera) {
+			const {
+				width,
+				height,
+				viewProjectionMatrixInv
+			} = camera || this;
+			const canvas = transformMat3(create(), [x / width * 2 - 1, (1 - y / height) * 2 - 1], viewProjectionMatrixInv);
+			return {
+				x: canvas[0],
+				y: canvas[1]
+			};
+		}
+		applyLandmark(landmark) {
+			const {
+				x,
+				y,
+				zoom,
+				rotation,
+				viewportX,
+				viewportY
+			} = landmark;
+			const useFixedViewport = viewportX || viewportY;
+			let preZoomX = 0;
+			let preZoomY = 0;
+			if (useFixedViewport) {
+				const canvas = this.viewportToCanvas({
+					x: viewportX,
+					y: viewportY
+				});
+				preZoomX = canvas.x;
+				preZoomY = canvas.y;
+			}
+			this.#zoom = zoom;
+			this.#rotation = rotation;
+			this.#x = x;
+			this.#y = y;
+			this.updateMatrix();
+			this.#onChangedTransformParams({
+				x: this.#x,
+				y: this.#y,
+				zoom: this.#zoom
+			});
+			if (useFixedViewport) {
+				const {
+					x: postZoomX,
+					y: postZoomY
+				} = this.viewportToCanvas({
+					x: viewportX,
+					y: viewportY
+				});
+				this.#x += preZoomX - postZoomX;
+				this.#y += preZoomY - postZoomY;
+				this.updateMatrix();
+				this.#onChangedTransformParams({
+					x: this.#x,
+					y: this.#y,
+					zoom: this.#zoom
+				});
+			}
+		}
 	}
 
-	var _canvas = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canvas");
-	var _dpr = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dpr");
-	var _width$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("width");
-	var _height$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("height");
-	var _minZoom = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("minZoom");
-	var _maxZoom = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("maxZoom");
-	var _camera = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("camera");
-	var _canvasStyleInstance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canvasStyleInstance");
-	var _startInvertViewProjectionMatrix = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("startInvertViewProjectionMatrix");
-	var _startCameraX = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("startCameraX");
-	var _startCameraY = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("startCameraY");
-	var _startPos = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("startPos");
-	var _resizeObserver = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resizeObserver");
-	var _initCanvas = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initCanvas");
-	var _initCamera = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initCamera");
-	var _initCanvasStyle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initCanvasStyle");
-	var _initResizeObserver = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initResizeObserver");
-	var _setCameraZoom = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setCameraZoom");
-	var _getClipSpaceMousePosition = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getClipSpaceMousePosition");
 	class Canvas {
-	  constructor(options) {
-	    Object.defineProperty(this, _getClipSpaceMousePosition, {
-	      value: _getClipSpaceMousePosition2
-	    });
-	    Object.defineProperty(this, _setCameraZoom, {
-	      value: _setCameraZoom2
-	    });
-	    Object.defineProperty(this, _initResizeObserver, {
-	      value: _initResizeObserver2
-	    });
-	    Object.defineProperty(this, _initCanvasStyle, {
-	      value: _initCanvasStyle2
-	    });
-	    Object.defineProperty(this, _initCamera, {
-	      value: _initCamera2
-	    });
-	    Object.defineProperty(this, _initCanvas, {
-	      value: _initCanvas2
-	    });
-	    Object.defineProperty(this, _canvas, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _dpr, {
-	      writable: true,
-	      value: window.devicePixelRatio || 1
-	    });
-	    Object.defineProperty(this, _width$1, {
-	      writable: true,
-	      value: 0
-	    });
-	    Object.defineProperty(this, _height$1, {
-	      writable: true,
-	      value: 0
-	    });
-	    Object.defineProperty(this, _minZoom, {
-	      writable: true,
-	      value: 0.02
-	    });
-	    Object.defineProperty(this, _maxZoom, {
-	      writable: true,
-	      value: 4
-	    });
-	    Object.defineProperty(this, _camera, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _canvasStyleInstance, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _startInvertViewProjectionMatrix, {
-	      writable: true,
-	      value: create$2()
-	    });
-	    Object.defineProperty(this, _startCameraX, {
-	      writable: true,
-	      value: 0
-	    });
-	    Object.defineProperty(this, _startCameraY, {
-	      writable: true,
-	      value: 0
-	    });
-	    Object.defineProperty(this, _startPos, {
-	      writable: true,
-	      value: create$8()
-	    });
-	    Object.defineProperty(this, _resizeObserver, {
-	      writable: true,
-	      value: null
-	    });
-	    this.transform = ui_vue3.ref({
-	      x: 0,
-	      y: 0,
-	      zoom: 0
-	    });
-	    const {
-	      canvas: _canvas2,
-	      canvasStyle: _canvasStyle,
-	      minZoom,
-	      maxZoom
-	    } = options;
-	    babelHelpers.classPrivateFieldLooseBase(this, _minZoom)[_minZoom] = minZoom;
-	    babelHelpers.classPrivateFieldLooseBase(this, _maxZoom)[_maxZoom] = maxZoom;
-	    babelHelpers.classPrivateFieldLooseBase(this, _initCanvas)[_initCanvas](_canvas2);
-	    babelHelpers.classPrivateFieldLooseBase(this, _initCamera)[_initCamera]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _initCanvasStyle)[_initCanvasStyle](_canvasStyle);
-	    babelHelpers.classPrivateFieldLooseBase(this, _initResizeObserver)[_initResizeObserver]();
-	  }
-	  get viewMatrix() {
-	    var _babelHelpers$classPr, _babelHelpers$classPr2;
-	    return (_babelHelpers$classPr = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera]) == null ? void 0 : _babelHelpers$classPr2.viewMatrix) != null ? _babelHelpers$classPr : [];
-	  }
-	  get camera() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera];
-	  }
-	  clientToViewport({
-	    x,
-	    y
-	  }) {
-	    const {
-	      left,
-	      top
-	    } = babelHelpers.classPrivateFieldLooseBase(this, _canvas)[_canvas].getBoundingClientRect();
-	    return {
-	      x: x - left,
-	      y: y - top
-	    };
-	  }
-	  viewportToClient({
-	    x,
-	    y
-	  }) {
-	    const {
-	      left,
-	      top
-	    } = babelHelpers.classPrivateFieldLooseBase(this, _canvas)[_canvas].getBoundingClientRect();
-	    return {
-	      x: x + left,
-	      y: y + top
-	    };
-	  }
-	  render() {
-	    var _babelHelpers$classPr3;
-	    (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _canvasStyleInstance)[_canvasStyleInstance]) == null ? void 0 : _babelHelpers$classPr3.render({
-	      projectionMatrix: babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].projectionMatrix,
-	      viewMatrix: babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].viewMatrix,
-	      viewProjectionMatrixInv: babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].viewProjectionMatrixInv,
-	      zoomScale: babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].zoom
-	    });
-	  }
-	  setCamera(params) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].applyLandmark(babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].createLandmark({
-	      ...params
-	    }));
-	  }
-	  zoomIn(zoomStep) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _setCameraZoom)[_setCameraZoom](zoomStep);
-	  }
-	  zoomOut(zoomStep) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _setCameraZoom)[_setCameraZoom](zoomStep * -1);
-	  }
-	  setZoom(zoom) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].applyLandmark(babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].createLandmark({
-	      x: babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].x,
-	      y: babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].y,
-	      viewportX: babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].width / 2,
-	      viewportY: babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].height / 2,
-	      zoom
-	    }));
-	  }
-	  setCameraZoomByWheel(event, zoomChange = 0) {
-	    const newZoom = Math.max(babelHelpers.classPrivateFieldLooseBase(this, _minZoom)[_minZoom], Math.min(babelHelpers.classPrivateFieldLooseBase(this, _maxZoom)[_maxZoom], babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].zoom + zoomChange));
-	    const viewport = this.clientToViewport({
-	      x: event.clientX,
-	      y: event.clientY
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].applyLandmark(babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].createLandmark({
-	      viewportX: viewport.x,
-	      viewportY: viewport.y,
-	      zoom: newZoom
-	    }));
-	  }
-	  setCameraPositionByWheel(event) {
-	    if (event.shiftKey) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].x += event.deltaY / babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].zoom;
-	      babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].y += event.deltaX / babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].zoom;
-	      return;
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].x += event.deltaX / babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].zoom;
-	    babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].y += event.deltaY / babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].zoom;
-	  }
-	  setCameraPositionByMouseDown(event) {
-	    copy$2(babelHelpers.classPrivateFieldLooseBase(this, _startInvertViewProjectionMatrix)[_startInvertViewProjectionMatrix], babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].viewProjectionMatrixInv);
-	    babelHelpers.classPrivateFieldLooseBase(this, _startCameraX)[_startCameraX] = babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].x;
-	    babelHelpers.classPrivateFieldLooseBase(this, _startCameraY)[_startCameraY] = babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].y;
-	    transformMat3$1(babelHelpers.classPrivateFieldLooseBase(this, _startPos)[_startPos], babelHelpers.classPrivateFieldLooseBase(this, _getClipSpaceMousePosition)[_getClipSpaceMousePosition](event), babelHelpers.classPrivateFieldLooseBase(this, _startInvertViewProjectionMatrix)[_startInvertViewProjectionMatrix]);
-	  }
-	  setCameraPositionByMouseMove(event) {
-	    const pos = transformMat3$1(create$8(), babelHelpers.classPrivateFieldLooseBase(this, _getClipSpaceMousePosition)[_getClipSpaceMousePosition](event), babelHelpers.classPrivateFieldLooseBase(this, _startInvertViewProjectionMatrix)[_startInvertViewProjectionMatrix]);
-	    babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].x = babelHelpers.classPrivateFieldLooseBase(this, _startCameraX)[_startCameraX] + babelHelpers.classPrivateFieldLooseBase(this, _startPos)[_startPos][0] - pos[0];
-	    babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].y = babelHelpers.classPrivateFieldLooseBase(this, _startCameraY)[_startCameraY] + babelHelpers.classPrivateFieldLooseBase(this, _startPos)[_startPos][1] - pos[1];
-	  }
-	  destroy() {
-	    var _babelHelpers$classPr4;
-	    (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _canvasStyleInstance)[_canvasStyleInstance]) == null ? void 0 : _babelHelpers$classPr4.destroy();
-	    babelHelpers.classPrivateFieldLooseBase(this, _resizeObserver)[_resizeObserver].unobserve(babelHelpers.classPrivateFieldLooseBase(this, _canvas)[_canvas]);
-	  }
-	}
-	function _initCanvas2(canvas) {
-	  const {
-	    width,
-	    height
-	  } = canvas.getBoundingClientRect();
-	  babelHelpers.classPrivateFieldLooseBase(this, _canvas)[_canvas] = canvas;
-	  babelHelpers.classPrivateFieldLooseBase(this, _canvas)[_canvas].width = width * babelHelpers.classPrivateFieldLooseBase(this, _dpr)[_dpr];
-	  babelHelpers.classPrivateFieldLooseBase(this, _canvas)[_canvas].height = height * babelHelpers.classPrivateFieldLooseBase(this, _dpr)[_dpr];
-	  babelHelpers.classPrivateFieldLooseBase(this, _width$1)[_width$1] = babelHelpers.classPrivateFieldLooseBase(this, _canvas)[_canvas].width;
-	  babelHelpers.classPrivateFieldLooseBase(this, _height$1)[_height$1] = babelHelpers.classPrivateFieldLooseBase(this, _canvas)[_canvas].height;
-	}
-	function _initCamera2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera] = new Camera({
-	    width: babelHelpers.classPrivateFieldLooseBase(this, _width$1)[_width$1] / babelHelpers.classPrivateFieldLooseBase(this, _dpr)[_dpr],
-	    height: babelHelpers.classPrivateFieldLooseBase(this, _height$1)[_height$1] / babelHelpers.classPrivateFieldLooseBase(this, _dpr)[_dpr],
-	    onChangeCallback: ({
-	      x,
-	      y,
-	      zoom
-	    }) => {
-	      this.transform.x = x;
-	      this.transform.y = y;
-	      this.transform.zoom = zoom;
-	    }
-	  });
-	}
-	function _initCanvasStyle2(canvasStyle) {
-	  if (canvasStyle) {
-	    const StyleInstance = canvasStyle.instance;
-	    babelHelpers.classPrivateFieldLooseBase(this, _canvasStyleInstance)[_canvasStyleInstance] = new StyleInstance(babelHelpers.classPrivateFieldLooseBase(this, _canvas)[_canvas], canvasStyle.options);
-	  }
-	}
-	function _initResizeObserver2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _resizeObserver)[_resizeObserver] = new ResizeObserver(entries => {
-	    for (const entry of entries) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera] = babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].clone(entry.contentRect.width, entry.contentRect.height);
-	    }
-	  });
-	  babelHelpers.classPrivateFieldLooseBase(this, _resizeObserver)[_resizeObserver].observe(babelHelpers.classPrivateFieldLooseBase(this, _canvas)[_canvas]);
-	}
-	function _setCameraZoom2(zoomStep) {
-	  const zoom = Number((babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].zoom + zoomStep).toFixed(1));
-	  if (zoom < babelHelpers.classPrivateFieldLooseBase(this, _minZoom)[_minZoom] || zoom > babelHelpers.classPrivateFieldLooseBase(this, _maxZoom)[_maxZoom]) {
-	    return;
-	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].applyLandmark(babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].createLandmark({
-	    x: babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].x,
-	    y: babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].y,
-	    viewportX: babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].width / 2,
-	    viewportY: babelHelpers.classPrivateFieldLooseBase(this, _camera)[_camera].height / 2,
-	    zoom
-	  }));
-	}
-	function _getClipSpaceMousePosition2(event) {
-	  const {
-	    left,
-	    top
-	  } = babelHelpers.classPrivateFieldLooseBase(this, _canvas)[_canvas].getBoundingClientRect();
-	  const cssX = event.clientX - left;
-	  const cssY = event.clientY - top;
-	  const normalizedX = cssX / babelHelpers.classPrivateFieldLooseBase(this, _canvas)[_canvas].clientWidth || babelHelpers.classPrivateFieldLooseBase(this, _canvas)[_canvas].width / babelHelpers.classPrivateFieldLooseBase(this, _dpr)[_dpr];
-	  const normalizedY = cssY / babelHelpers.classPrivateFieldLooseBase(this, _canvas)[_canvas].clientHeight || babelHelpers.classPrivateFieldLooseBase(this, _canvas)[_canvas].height / babelHelpers.classPrivateFieldLooseBase(this, _dpr)[_dpr];
-	  const clipX = normalizedX * 2 - 1;
-	  const clipY = normalizedY * -2 + 1;
-	  return [clipX, clipY];
+		#canvas = null;
+		#dpr = window.devicePixelRatio || 1;
+		#width = 0;
+		#height = 0;
+		#minZoom = 0.02;
+		#maxZoom = 4;
+		#camera = null;
+		#canvasStyleInstance = null;
+		#startInvertViewProjectionMatrix = create$4();
+		#startCameraX = 0;
+		#startCameraY = 0;
+		#startPos = create();
+		#resizeObserver = null;
+		transform = ui_vue3.ref({
+			x: 0,
+			y: 0,
+			zoom: 0
+		});
+		constructor(options) {
+			const {
+				canvas,
+				canvasStyle,
+				minZoom,
+				maxZoom
+			} = options;
+			this.#minZoom = minZoom;
+			this.#maxZoom = maxZoom;
+			this.#initCanvas(canvas);
+			this.#initCamera();
+			this.#initCanvasStyle(canvasStyle);
+			this.#initResizeObserver();
+		}
+		get viewMatrix() {
+			return this.#camera?.viewMatrix ?? [];
+		}
+		get camera() {
+			return this.#camera;
+		}
+		#initCanvas(canvas) {
+			const {
+				width,
+				height
+			} = canvas.getBoundingClientRect();
+			this.#canvas = canvas;
+			this.#canvas.width = width * this.#dpr;
+			this.#canvas.height = height * this.#dpr;
+			this.#width = this.#canvas.width;
+			this.#height = this.#canvas.height;
+		}
+		#initCamera() {
+			this.#camera = new Camera({
+				width: this.#width / this.#dpr,
+				height: this.#height / this.#dpr,
+				onChangeCallback: ({
+					x,
+					y,
+					zoom
+				}) => {
+					this.transform.x = x;
+					this.transform.y = y;
+					this.transform.zoom = zoom;
+				}
+			});
+		}
+		#initCanvasStyle(canvasStyle) {
+			if (canvasStyle) {
+				const StyleInstance = canvasStyle.instance;
+				this.#canvasStyleInstance = new StyleInstance(this.#canvas, canvasStyle.options);
+			}
+		}
+		#initResizeObserver() {
+			this.#resizeObserver = new ResizeObserver(entries => {
+				for (const entry of entries) {
+					this.#camera = this.#camera.clone(entry.contentRect.width, entry.contentRect.height);
+				}
+			});
+			this.#resizeObserver.observe(this.#canvas);
+		}
+		clientToViewport({
+			x,
+			y
+		}) {
+			const {
+				left,
+				top
+			} = this.#canvas.getBoundingClientRect();
+			return {
+				x: x - left,
+				y: y - top
+			};
+		}
+		viewportToClient({
+			x,
+			y
+		}) {
+			const {
+				left,
+				top
+			} = this.#canvas.getBoundingClientRect();
+			return {
+				x: x + left,
+				y: y + top
+			};
+		}
+		render() {
+			this.#canvasStyleInstance?.render({
+				projectionMatrix: this.#camera.projectionMatrix,
+				viewMatrix: this.#camera.viewMatrix,
+				viewProjectionMatrixInv: this.#camera.viewProjectionMatrixInv,
+				zoomScale: this.#camera.zoom
+			});
+		}
+		setCamera(params) {
+			this.#camera.applyLandmark(this.#camera.createLandmark({
+				...params
+			}));
+		}
+		#setCameraZoom(zoomStep) {
+			const zoom = Number((this.#camera.zoom + zoomStep).toFixed(1));
+			if (zoom < this.#minZoom || zoom > this.#maxZoom) {
+				return;
+			}
+			this.#camera.applyLandmark(this.#camera.createLandmark({
+				x: this.#camera.x,
+				y: this.#camera.y,
+				viewportX: this.#camera.width / 2,
+				viewportY: this.#camera.height / 2,
+				zoom
+			}));
+		}
+		zoomIn(zoomStep) {
+			this.#setCameraZoom(zoomStep);
+		}
+		zoomOut(zoomStep) {
+			this.#setCameraZoom(zoomStep * -1);
+		}
+		setZoom(zoom) {
+			this.#camera.applyLandmark(this.#camera.createLandmark({
+				x: this.#camera.x,
+				y: this.#camera.y,
+				viewportX: this.#camera.width / 2,
+				viewportY: this.#camera.height / 2,
+				zoom
+			}));
+		}
+		setCameraZoomByWheel(event, zoomChange = 0) {
+			const newZoom = Math.max(this.#minZoom, Math.min(this.#maxZoom, this.#camera.zoom + zoomChange));
+			const viewport = this.clientToViewport({
+				x: event.clientX,
+				y: event.clientY
+			});
+			this.#camera.applyLandmark(this.#camera.createLandmark({
+				viewportX: viewport.x,
+				viewportY: viewport.y,
+				zoom: newZoom
+			}));
+		}
+		setCameraPositionByWheel(event) {
+			const lineStep = 40;
+			const pixelStep = event.deltaMode === 1 ? lineStep : 1;
+			let dx = event.deltaX * pixelStep;
+			let dy = event.deltaY * pixelStep;
+			if (event.shiftKey && Math.abs(dy) > Math.abs(dx)) {
+				dx = dy;
+				dy = 0;
+			}
+			this.#camera.x += dx / this.#camera.zoom;
+			this.#camera.y += dy / this.#camera.zoom;
+		}
+		#getClipSpaceMousePosition(event) {
+			const {
+				left,
+				top
+			} = this.#canvas.getBoundingClientRect();
+			const cssX = event.clientX - left;
+			const cssY = event.clientY - top;
+			const normalizedX = cssX / this.#canvas.clientWidth || this.#canvas.width / this.#dpr;
+			const normalizedY = cssY / this.#canvas.clientHeight || this.#canvas.height / this.#dpr;
+			const clipX = normalizedX * 2 - 1;
+			const clipY = normalizedY * -2 + 1;
+			return [clipX, clipY];
+		}
+		setCameraPositionByMouseDown(event) {
+			copy(this.#startInvertViewProjectionMatrix, this.#camera.viewProjectionMatrixInv);
+			this.#startCameraX = this.#camera.x;
+			this.#startCameraY = this.#camera.y;
+			transformMat3(this.#startPos, this.#getClipSpaceMousePosition(event), this.#startInvertViewProjectionMatrix);
+		}
+		setCameraPositionByMouseMove(event) {
+			const pos = transformMat3(create(), this.#getClipSpaceMousePosition(event), this.#startInvertViewProjectionMatrix);
+			this.#camera.x = this.#startCameraX + this.#startPos[0] - pos[0];
+			this.#camera.y = this.#startCameraY + this.#startPos[1] - pos[1];
+		}
+		destroy() {
+			this.#canvasStyleInstance?.destroy();
+			this.#resizeObserver.unobserve(this.#canvas);
+		}
 	}
 
 	const vertexShader = `
-  #extension GL_OES_standard_derivatives : enable
-  precision mediump float;
+	#extension GL_OES_standard_derivatives : enable
+	precision mediump float;
 
-  attribute vec2 a_Position;
-  uniform mat3 u_ViewProjectionInvMatrix;
-  varying vec2 v_Position;
+	attribute vec2 a_Position;
+	uniform mat3 u_ViewProjectionInvMatrix;
+	varying vec2 v_Position;
 
-  vec2 project_clipspace(vec2 p) {
-  	return (u_ViewProjectionInvMatrix * vec3(p, 1)).xy;
-  }
+	vec2 project_clipspace(vec2 p) {
+		return (u_ViewProjectionInvMatrix * vec3(p, 1)).xy;
+	}
 
-  void main() {
-  	v_Position = project_clipspace(a_Position);
-  	gl_Position = vec4(a_Position, 0, 1);
-  }
+	void main() {
+		v_Position = project_clipspace(a_Position);
+		gl_Position = vec4(a_Position, 0, 1);
+	}
 `;
 	const fragmentShader = `
-  #extension GL_OES_standard_derivatives : enable
-  precision mediump float;
+	#extension GL_OES_standard_derivatives : enable
+	precision mediump float;
 
-  uniform vec4 u_BackgroundColor;
-  uniform vec4 u_GridColor;
-  uniform float u_GridSize;
-  uniform float u_ZoomStep;
-  uniform float u_ZoomScale;
-  varying vec2 v_Position;
+	uniform vec4 u_BackgroundColor;
+	uniform vec4 u_GridColor;
+	uniform float u_GridSize;
+	uniform float u_ZoomStep;
+	uniform float u_ZoomScale;
+	varying vec2 v_Position;
 
-  vec4 render_grid(vec2 coord) {
-  	float alpha = 0.0;
-  	float gridSize1 = u_GridSize;
-  	float gridSize2 = gridSize1 / 4.0;
+	vec4 render_grid(vec2 coord) {
+		float alpha = 0.0;
+		float gridSize1 = u_GridSize;
+		float gridSize2 = gridSize1 / 4.0;
 
-  	vec2 grid1 = abs(fract(coord / gridSize1 - 0.5) - 0.5) / fwidth(coord) * gridSize1 / 0.95;
-  	vec2 grid2 = abs(fract(coord / gridSize2 - 0.5) - 0.5) / fwidth(coord) * gridSize2 / 0.75;
-  	float v1 = 1.0 - min(min(grid1.x, grid1.y), 1.0);
-  	float v2 = 1.0 - min(min(grid2.x, grid2.y), 1.0);
+		vec2 grid1 = abs(fract(coord / gridSize1 - 0.5) - 0.5) / fwidth(coord) * gridSize1 / 0.95;
+		vec2 grid2 = abs(fract(coord / gridSize2 - 0.5) - 0.5) / fwidth(coord) * gridSize2 / 0.75;
+		float v1 = 1.0 - min(min(grid1.x, grid1.y), 1.0);
+		float v2 = 1.0 - min(min(grid2.x, grid2.y), 1.0);
 
-  	if (v1 > 0.0) {
-  		alpha = clamp(v1, 0.0, 0.222);
-  	} else {
-  		alpha = v2 * clamp(u_ZoomScale / u_ZoomStep, 0.0, 1.0);
-  	}
+		if (v1 > 0.0) {
+			alpha = clamp(v1, 0.0, 0.222);
+		} else {
+			alpha = v2 * clamp(u_ZoomScale / u_ZoomStep, 0.0, 1.0);
+		}
 
-  	return mix(u_BackgroundColor, u_GridColor, alpha);
-  }
+		return mix(u_BackgroundColor, u_GridColor, alpha);
+	}
 
-  void main() {
-  	gl_FragColor = render_grid(v_Position);
-  }
+	void main() {
+		gl_FragColor = render_grid(v_Position);
+	}
 `;
 
 	function compileShader(gl, shaderSource, shaderType) {
-	  const shader = gl.createShader(shaderType);
-	  gl.shaderSource(shader, shaderSource);
-	  gl.compileShader(shader);
-	  const success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
-	  if (!success) {
-	    throw new Error(`Error shader compilation: ${gl.getShaderInfoLog(shader)}`);
-	  }
-	  return shader;
+		const shader = gl.createShader(shaderType);
+		gl.shaderSource(shader, shaderSource);
+		gl.compileShader(shader);
+		const success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+		if (!success) {
+			throw new Error(`Error shader compilation: ${gl.getShaderInfoLog(shader)}`);
+		}
+		return shader;
 	}
 	function createProgram(gl, vertexShader, fragmentShader) {
-	  const program = gl.createProgram();
-	  gl.attachShader(program, vertexShader);
-	  gl.attachShader(program, fragmentShader);
-	  gl.linkProgram(program);
-	  const success = gl.getProgramParameter(program, gl.LINK_STATUS);
-	  if (!success) {
-	    throw new Error(`Error initializing shader program: ${gl.getProgramInfoLog(program)}`);
-	  }
-	  return program;
+		const program = gl.createProgram();
+		gl.attachShader(program, vertexShader);
+		gl.attachShader(program, fragmentShader);
+		gl.linkProgram(program);
+		const success = gl.getProgramParameter(program, gl.LINK_STATUS);
+		if (!success) {
+			throw new Error(`Error initializing shader program: ${gl.getProgramInfoLog(program)}`);
+		}
+		return program;
 	}
 	function createBufferFromTypedArray(gl, array, type, drawType) {
-	  const bufferType = type || gl.ARRAY_BUFFER;
-	  const buffer = gl.createBuffer();
-	  gl.bindBuffer(bufferType, buffer);
-	  gl.bufferData(bufferType, array, drawType || gl.STATIC_DRAW);
-	  return buffer;
+		const bufferType = gl.ARRAY_BUFFER;
+		const buffer = gl.createBuffer();
+		gl.bindBuffer(bufferType, buffer);
+		gl.bufferData(bufferType, array, gl.STATIC_DRAW);
+		return buffer;
 	}
 	function convHex(hex) {
-	  const preHex = hex.replace(/^#/, '');
-	  const r = parseInt(preHex.slice(0, 2), 16);
-	  const g = parseInt(preHex.slice(2, 4), 16);
-	  const b = parseInt(preHex.slice(4, 6), 16);
-	  return [r / 255, g / 255, b / 255];
+		const preHex = hex.replace(/^#/, '');
+		const r = parseInt(preHex.slice(0, 2), 16);
+		const g = parseInt(preHex.slice(2, 4), 16);
+		const b = parseInt(preHex.slice(4, 6), 16);
+		return [r / 255, g / 255, b / 255];
 	}
 
-	var _gl = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("gl");
-	var _program = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("program");
-	var _positionAttributeLocation = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("positionAttributeLocation");
-	var _vertexShader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("vertexShader");
-	var _fragmentShader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fragmentShader");
-	var _projectionMatrixLink = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("projectionMatrixLink");
-	var _viewMatrixLink = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("viewMatrixLink");
-	var _viewProjectionInvMatrixLink = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("viewProjectionInvMatrixLink");
-	var _backgroundColorLink = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("backgroundColorLink");
-	var _backgroundColor = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("backgroundColor");
-	var _gridColorLink = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("gridColorLink");
-	var _gridColor = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("gridColor");
-	var _gridColorAlpha = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("gridColorAlpha");
-	var _gridSizeLink = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("gridSizeLink");
-	var _gridSize = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("gridSize");
-	var _zoomScaleLink = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("zoomScaleLink");
-	var _gridPosition = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("gridPosition");
-	var _gridPositionBuffer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("gridPositionBuffer");
-	var _zoomStepLink = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("zoomStepLink");
-	var _zoomStep = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("zoomStep");
-	var _zoomSteps = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("zoomSteps");
-	var _initGrid = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initGrid");
-	var _getPreparedZoomSteps = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPreparedZoomSteps");
-	var _initParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initParams");
-	var _getParamsByZoom = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getParamsByZoom");
 	class Grid {
-	  constructor(_canvas, _options) {
-	    Object.defineProperty(this, _getParamsByZoom, {
-	      value: _getParamsByZoom2
-	    });
-	    Object.defineProperty(this, _initParams, {
-	      value: _initParams2
-	    });
-	    Object.defineProperty(this, _getPreparedZoomSteps, {
-	      value: _getPreparedZoomSteps2
-	    });
-	    Object.defineProperty(this, _initGrid, {
-	      value: _initGrid2
-	    });
-	    Object.defineProperty(this, _gl, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _program, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _positionAttributeLocation, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _vertexShader, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _fragmentShader, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _projectionMatrixLink, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _viewMatrixLink, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _viewProjectionInvMatrixLink, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _backgroundColorLink, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _backgroundColor, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _gridColorLink, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _gridColor, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _gridColorAlpha, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _gridSizeLink, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _gridSize, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _zoomScaleLink, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _gridPosition, {
-	      writable: true,
-	      value: [-1, -1, -1, 1, 1, -1, 1, 1]
-	    });
-	    Object.defineProperty(this, _gridPositionBuffer, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _zoomStepLink, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _zoomStep, {
-	      writable: true,
-	      value: 4
-	    });
-	    Object.defineProperty(this, _zoomSteps, {
-	      writable: true,
-	      value: []
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _initParams)[_initParams](_options);
-	    babelHelpers.classPrivateFieldLooseBase(this, _initGrid)[_initGrid](_canvas);
-	  }
-	  render({
-	    projectionMatrix,
-	    viewMatrix,
-	    viewProjectionMatrixInv,
-	    zoomScale
-	  }) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl].clearColor(1, 1, 1, 1);
-	    babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl].clear(babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl].COLOR_BUFFER_BIT);
-	    babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl].useProgram(babelHelpers.classPrivateFieldLooseBase(this, _program)[_program]);
-	    const {
-	      gridColor,
-	      zoomStep,
-	      size
-	    } = babelHelpers.classPrivateFieldLooseBase(this, _getParamsByZoom)[_getParamsByZoom](zoomScale);
-	    babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl].uniformMatrix3fv(babelHelpers.classPrivateFieldLooseBase(this, _projectionMatrixLink)[_projectionMatrixLink], false, projectionMatrix);
-	    babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl].uniformMatrix3fv(babelHelpers.classPrivateFieldLooseBase(this, _viewMatrixLink)[_viewMatrixLink], false, viewMatrix);
-	    babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl].uniformMatrix3fv(babelHelpers.classPrivateFieldLooseBase(this, _viewProjectionInvMatrixLink)[_viewProjectionInvMatrixLink], false, viewProjectionMatrixInv);
-	    babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl].uniform4f(babelHelpers.classPrivateFieldLooseBase(this, _backgroundColorLink)[_backgroundColorLink], ...babelHelpers.classPrivateFieldLooseBase(this, _backgroundColor)[_backgroundColor], 1);
-	    babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl].uniform4f(babelHelpers.classPrivateFieldLooseBase(this, _gridColorLink)[_gridColorLink], ...gridColor, 1);
-	    babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl].uniform1f(babelHelpers.classPrivateFieldLooseBase(this, _gridSizeLink)[_gridSizeLink], size);
-	    babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl].uniform1f(babelHelpers.classPrivateFieldLooseBase(this, _zoomStepLink)[_zoomStepLink], zoomStep);
-	    babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl].uniform1f(babelHelpers.classPrivateFieldLooseBase(this, _zoomScaleLink)[_zoomScaleLink], zoomScale);
-	    babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl].enableVertexAttribArray(babelHelpers.classPrivateFieldLooseBase(this, _positionAttributeLocation)[_positionAttributeLocation]);
-	    babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl].bindBuffer(babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl].ARRAY_BUFFER, babelHelpers.classPrivateFieldLooseBase(this, _gridPositionBuffer)[_gridPositionBuffer]);
-	    babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl].vertexAttribPointer(babelHelpers.classPrivateFieldLooseBase(this, _positionAttributeLocation)[_positionAttributeLocation], 2, babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl].FLOAT, false, 0, 0);
-	    babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl].drawArrays(babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl].TRIANGLE_STRIP, 0, 4);
-	  }
-	  destroy() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl].deleteProgram(babelHelpers.classPrivateFieldLooseBase(this, _program)[_program]);
-	    babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl].deleteShader(babelHelpers.classPrivateFieldLooseBase(this, _vertexShader)[_vertexShader]);
-	    babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl].deleteShader(babelHelpers.classPrivateFieldLooseBase(this, _fragmentShader)[_fragmentShader]);
-	  }
-	}
-	function _initGrid2(canvas) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl] = canvas.getContext('webgl');
-	  babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl].getExtension('OES_standard_derivatives');
-	  babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl].viewport(0, 0, babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl].canvas.width, babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl].canvas.height);
-	  babelHelpers.classPrivateFieldLooseBase(this, _vertexShader)[_vertexShader] = compileShader(babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl], vertexShader, babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl].VERTEX_SHADER);
-	  babelHelpers.classPrivateFieldLooseBase(this, _fragmentShader)[_fragmentShader] = compileShader(babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl], fragmentShader, babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl].FRAGMENT_SHADER);
-	  babelHelpers.classPrivateFieldLooseBase(this, _program)[_program] = createProgram(babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl], babelHelpers.classPrivateFieldLooseBase(this, _vertexShader)[_vertexShader], babelHelpers.classPrivateFieldLooseBase(this, _fragmentShader)[_fragmentShader]);
-	  babelHelpers.classPrivateFieldLooseBase(this, _positionAttributeLocation)[_positionAttributeLocation] = babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl].getAttribLocation(babelHelpers.classPrivateFieldLooseBase(this, _program)[_program], 'a_Position');
-	  babelHelpers.classPrivateFieldLooseBase(this, _projectionMatrixLink)[_projectionMatrixLink] = babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl].getUniformLocation(babelHelpers.classPrivateFieldLooseBase(this, _program)[_program], 'u_ProjectionMatrix');
-	  babelHelpers.classPrivateFieldLooseBase(this, _viewMatrixLink)[_viewMatrixLink] = babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl].getUniformLocation(babelHelpers.classPrivateFieldLooseBase(this, _program)[_program], 'u_ViewMatrix');
-	  babelHelpers.classPrivateFieldLooseBase(this, _viewProjectionInvMatrixLink)[_viewProjectionInvMatrixLink] = babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl].getUniformLocation(babelHelpers.classPrivateFieldLooseBase(this, _program)[_program], 'u_ViewProjectionInvMatrix');
-	  babelHelpers.classPrivateFieldLooseBase(this, _backgroundColorLink)[_backgroundColorLink] = babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl].getUniformLocation(babelHelpers.classPrivateFieldLooseBase(this, _program)[_program], 'u_BackgroundColor');
-	  babelHelpers.classPrivateFieldLooseBase(this, _gridColorLink)[_gridColorLink] = babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl].getUniformLocation(babelHelpers.classPrivateFieldLooseBase(this, _program)[_program], 'u_GridColor');
-	  babelHelpers.classPrivateFieldLooseBase(this, _gridSizeLink)[_gridSizeLink] = babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl].getUniformLocation(babelHelpers.classPrivateFieldLooseBase(this, _program)[_program], 'u_GridSize');
-	  babelHelpers.classPrivateFieldLooseBase(this, _zoomStepLink)[_zoomStepLink] = babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl].getUniformLocation(babelHelpers.classPrivateFieldLooseBase(this, _program)[_program], 'u_ZoomStep');
-	  babelHelpers.classPrivateFieldLooseBase(this, _zoomScaleLink)[_zoomScaleLink] = babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl].getUniformLocation(babelHelpers.classPrivateFieldLooseBase(this, _program)[_program], 'u_ZoomScale');
-	  babelHelpers.classPrivateFieldLooseBase(this, _gridPositionBuffer)[_gridPositionBuffer] = createBufferFromTypedArray(babelHelpers.classPrivateFieldLooseBase(this, _gl)[_gl], new Float32Array(babelHelpers.classPrivateFieldLooseBase(this, _gridPosition)[_gridPosition]));
-	}
-	function _getPreparedZoomSteps2(zoomSteps) {
-	  return zoomSteps.sort((stepA, stepB) => stepB.zoomStep - stepA.zoomStep).map(step => ({
-	    zoomStep: babelHelpers.classPrivateFieldLooseBase(this, _zoomStep)[_zoomStep],
-	    ...step,
-	    size: 'size' in step ? step.size : babelHelpers.classPrivateFieldLooseBase(this, _gridSize)[_gridSize],
-	    gridColor: 'gridColor' in step ? convHex(step.gridColor) : babelHelpers.classPrivateFieldLooseBase(this, _gridColor)[_gridColor]
-	  }));
-	}
-	function _initParams2(options) {
-	  const {
-	    size,
-	    gridColor,
-	    gridColorAlpha,
-	    backgroundColor,
-	    zoomStep,
-	    zoomSteps
-	  } = options;
-	  babelHelpers.classPrivateFieldLooseBase(this, _gridSize)[_gridSize] = size;
-	  babelHelpers.classPrivateFieldLooseBase(this, _zoomStep)[_zoomStep] = zoomStep;
-	  babelHelpers.classPrivateFieldLooseBase(this, _gridColor)[_gridColor] = new Float32Array(convHex(gridColor));
-	  babelHelpers.classPrivateFieldLooseBase(this, _gridColorAlpha)[_gridColorAlpha] = gridColorAlpha;
-	  babelHelpers.classPrivateFieldLooseBase(this, _backgroundColor)[_backgroundColor] = new Float32Array(convHex(backgroundColor));
-	  babelHelpers.classPrivateFieldLooseBase(this, _zoomSteps)[_zoomSteps] = babelHelpers.classPrivateFieldLooseBase(this, _getPreparedZoomSteps)[_getPreparedZoomSteps](zoomSteps);
-	}
-	function _getParamsByZoom2(zoom) {
-	  for (const step of babelHelpers.classPrivateFieldLooseBase(this, _zoomSteps)[_zoomSteps]) {
-	    if (step.zoom <= zoom) {
-	      return step;
-	    }
-	  }
-	  return {
-	    gridColor: babelHelpers.classPrivateFieldLooseBase(this, _gridColor)[_gridColor],
-	    size: babelHelpers.classPrivateFieldLooseBase(this, _gridSize)[_gridSize],
-	    zoomStep: babelHelpers.classPrivateFieldLooseBase(this, _zoomStep)[_zoomStep]
-	  };
+		#gl;
+		#program = null;
+		#positionAttributeLocation = null;
+		#vertexShader = null;
+		#fragmentShader = null;
+		#projectionMatrixLink = null;
+		#viewMatrixLink = null;
+		#viewProjectionInvMatrixLink = null;
+		#backgroundColorLink = null;
+		#backgroundColor = null;
+		#gridColorLink = null;
+		#gridColor = null;
+		#gridColorAlpha = null;
+		#gridSizeLink = null;
+		#gridSize = null;
+		#zoomScaleLink = null;
+		#gridPosition = [-1, -1, -1, 1, 1, -1, 1, 1];
+		#gridPositionBuffer = null;
+		#zoomStepLink = null;
+		#zoomStep = 4;
+		#zoomSteps = [];
+		constructor(canvas, options) {
+			this.#initParams(options);
+			this.#initGrid(canvas);
+		}
+		#initGrid(canvas) {
+			this.#gl = canvas.getContext('webgl');
+			this.#gl.getExtension('OES_standard_derivatives');
+			this.#gl.viewport(0, 0, this.#gl.canvas.width, this.#gl.canvas.height);
+			this.#vertexShader = compileShader(this.#gl, vertexShader, this.#gl.VERTEX_SHADER);
+			this.#fragmentShader = compileShader(this.#gl, fragmentShader, this.#gl.FRAGMENT_SHADER);
+			this.#program = createProgram(this.#gl, this.#vertexShader, this.#fragmentShader);
+			this.#positionAttributeLocation = this.#gl.getAttribLocation(this.#program, 'a_Position');
+			this.#projectionMatrixLink = this.#gl.getUniformLocation(this.#program, 'u_ProjectionMatrix');
+			this.#viewMatrixLink = this.#gl.getUniformLocation(this.#program, 'u_ViewMatrix');
+			this.#viewProjectionInvMatrixLink = this.#gl.getUniformLocation(this.#program, 'u_ViewProjectionInvMatrix');
+			this.#backgroundColorLink = this.#gl.getUniformLocation(this.#program, 'u_BackgroundColor');
+			this.#gridColorLink = this.#gl.getUniformLocation(this.#program, 'u_GridColor');
+			this.#gridSizeLink = this.#gl.getUniformLocation(this.#program, 'u_GridSize');
+			this.#zoomStepLink = this.#gl.getUniformLocation(this.#program, 'u_ZoomStep');
+			this.#zoomScaleLink = this.#gl.getUniformLocation(this.#program, 'u_ZoomScale');
+			this.#gridPositionBuffer = createBufferFromTypedArray(this.#gl, new Float32Array(this.#gridPosition));
+		}
+		#getPreparedZoomSteps(zoomSteps) {
+			return zoomSteps.sort((stepA, stepB) => stepB.zoomStep - stepA.zoomStep).map(step => ({
+				zoomStep: this.#zoomStep,
+				...step,
+				size: 'size' in step ? step.size : this.#gridSize,
+				gridColor: 'gridColor' in step ? convHex(step.gridColor) : this.#gridColor
+			}));
+		}
+		#initParams(options) {
+			const {
+				size,
+				gridColor,
+				gridColorAlpha,
+				backgroundColor,
+				zoomStep,
+				zoomSteps
+			} = options;
+			this.#gridSize = size;
+			this.#zoomStep = zoomStep;
+			this.#gridColor = new Float32Array(convHex(gridColor));
+			this.#gridColorAlpha = gridColorAlpha;
+			this.#backgroundColor = new Float32Array(convHex(backgroundColor));
+			this.#zoomSteps = this.#getPreparedZoomSteps(zoomSteps);
+		}
+		#getParamsByZoom(zoom) {
+			for (const step of this.#zoomSteps) {
+				if (step.zoom <= zoom) {
+					return step;
+				}
+			}
+			return {
+				gridColor: this.#gridColor,
+				size: this.#gridSize,
+				zoomStep: this.#zoomStep
+			};
+		}
+		render({
+			projectionMatrix,
+			viewMatrix,
+			viewProjectionMatrixInv,
+			zoomScale
+		}) {
+			this.#gl.clearColor(1, 1, 1, 1);
+			this.#gl.clear(this.#gl.COLOR_BUFFER_BIT);
+			this.#gl.useProgram(this.#program);
+			const {
+				gridColor,
+				zoomStep,
+				size
+			} = this.#getParamsByZoom(zoomScale);
+			this.#gl.uniformMatrix3fv(this.#projectionMatrixLink, false, projectionMatrix);
+			this.#gl.uniformMatrix3fv(this.#viewMatrixLink, false, viewMatrix);
+			this.#gl.uniformMatrix3fv(this.#viewProjectionInvMatrixLink, false, viewProjectionMatrixInv);
+			this.#gl.uniform4f(this.#backgroundColorLink, ...this.#backgroundColor, 1);
+			this.#gl.uniform4f(this.#gridColorLink, ...gridColor, 1);
+			this.#gl.uniform1f(this.#gridSizeLink, size);
+			this.#gl.uniform1f(this.#zoomStepLink, zoomStep);
+			this.#gl.uniform1f(this.#zoomScaleLink, zoomScale);
+			this.#gl.enableVertexAttribArray(this.#positionAttributeLocation);
+			this.#gl.bindBuffer(this.#gl.ARRAY_BUFFER, this.#gridPositionBuffer);
+			this.#gl.vertexAttribPointer(this.#positionAttributeLocation, 2, this.#gl.FLOAT, false, 0, 0);
+			this.#gl.drawArrays(this.#gl.TRIANGLE_STRIP, 0, 4);
+		}
+		destroy() {
+			this.#gl.deleteProgram(this.#program);
+			this.#gl.deleteShader(this.#vertexShader);
+			this.#gl.deleteShader(this.#fragmentShader);
+		}
 	}
 
 	/*!
@@ -2141,37 +1936,37 @@ this.BX = this.BX || {};
 
 	/* eslint-disable */
 	function quickselect(arr, k, left = 0, right = arr.length - 1, compare = defaultCompare) {
-	  while (right > left) {
-	    if (right - left > 600) {
-	      const n = right - left + 1;
-	      const m = k - left + 1;
-	      const z = Math.log(n);
-	      const s = 0.5 * Math.exp(2 * z / 3);
-	      const sd = 0.5 * Math.sqrt(z * s * (n - s) / n) * (m - n / 2 < 0 ? -1 : 1);
-	      const newLeft = Math.max(left, Math.floor(k - m * s / n + sd));
-	      const newRight = Math.min(right, Math.floor(k + (n - m) * s / n + sd));
-	      quickselect(arr, k, newLeft, newRight, compare);
-	    }
-	    const t = arr[k];
-	    let i = left;
-	    /** @type {number} */
-	    let j = right;
-	    swap(arr, left, k);
-	    if (compare(arr[right], t) > 0) swap(arr, left, right);
-	    while (i < j) {
-	      swap(arr, i, j);
-	      i++;
-	      j--;
-	      while (compare(arr[i], t) < 0) i++;
-	      while (compare(arr[j], t) > 0) j--;
-	    }
-	    if (compare(arr[left], t) === 0) swap(arr, left, j);else {
-	      j++;
-	      swap(arr, j, right);
-	    }
-	    if (j <= k) left = j + 1;
-	    if (k <= j) right = j - 1;
-	  }
+		while (right > left) {
+			if (right - left > 600) {
+				const n = right - left + 1;
+				const m = k - left + 1;
+				const z = Math.log(n);
+				const s = 0.5 * Math.exp(2 * z / 3);
+				const sd = 0.5 * Math.sqrt(z * s * (n - s) / n) * (m - n / 2 < 0 ? -1 : 1);
+				const newLeft = Math.max(left, Math.floor(k - m * s / n + sd));
+				const newRight = Math.min(right, Math.floor(k + (n - m) * s / n + sd));
+				quickselect(arr, k, newLeft, newRight, compare);
+			}
+			const t = arr[k];
+			let i = left;
+			/** @type {number} */
+			let j = right;
+			swap(arr, left, k);
+			if (compare(arr[right], t) > 0) swap(arr, left, right);
+			while (i < j) {
+				swap(arr, i, j);
+				i++;
+				j--;
+				while (compare(arr[i], t) < 0) i++;
+				while (compare(arr[j], t) > 0) j--;
+			}
+			if (compare(arr[left], t) === 0) swap(arr, left, j);else {
+				j++;
+				swap(arr, j, right);
+			}
+			if (j <= k) left = j + 1;
+			if (k <= j) right = j - 1;
+		}
 	}
 
 	/**
@@ -2181,9 +1976,9 @@ this.BX = this.BX || {};
 	 * @param {number} j
 	 */
 	function swap(arr, i, j) {
-	  const tmp = arr[i];
-	  arr[i] = arr[j];
-	  arr[j] = tmp;
+		const tmp = arr[i];
+		arr[i] = arr[j];
+		arr[j] = tmp;
 	}
 
 	/**
@@ -2193,7 +1988,7 @@ this.BX = this.BX || {};
 	 * @returns {number}
 	 */
 	function defaultCompare(a, b) {
-	  return a < b ? -1 : a > b ? 1 : 0;
+		return a < b ? -1 : a > b ? 1 : 0;
 	}
 
 	/*!
@@ -2204,3761 +1999,4225 @@ this.BX = this.BX || {};
 	 * @source: https://github.com/mourner/rbush
 	 */
 
+
 	/* eslint-disable */
 	class RBush {
-	  constructor(maxEntries = 9) {
-	    // max entries in a node is 9 by default; min node fill is 40% for best performance
-	    this._maxEntries = Math.max(4, maxEntries);
-	    this._minEntries = Math.max(2, Math.ceil(this._maxEntries * 0.4));
-	    this.clear();
-	  }
-	  all() {
-	    return this._all(this.data, []);
-	  }
-	  search(bbox) {
-	    let node = this.data;
-	    const result = [];
-	    if (!intersects(bbox, node)) return result;
-	    const toBBox = this.toBBox;
-	    const nodesToSearch = [];
-	    while (node) {
-	      for (let i = 0; i < node.children.length; i++) {
-	        const child = node.children[i];
-	        const childBBox = node.leaf ? toBBox(child) : child;
-	        if (intersects(bbox, childBBox)) {
-	          if (node.leaf) result.push(child);else if (contains(bbox, childBBox)) this._all(child, result);else nodesToSearch.push(child);
-	        }
-	      }
-	      node = nodesToSearch.pop();
-	    }
-	    return result;
-	  }
-	  collides(bbox) {
-	    let node = this.data;
-	    if (!intersects(bbox, node)) return false;
-	    const nodesToSearch = [];
-	    while (node) {
-	      for (let i = 0; i < node.children.length; i++) {
-	        const child = node.children[i];
-	        const childBBox = node.leaf ? this.toBBox(child) : child;
-	        if (intersects(bbox, childBBox)) {
-	          if (node.leaf || contains(bbox, childBBox)) return true;
-	          nodesToSearch.push(child);
-	        }
-	      }
-	      node = nodesToSearch.pop();
-	    }
-	    return false;
-	  }
-	  load(data) {
-	    if (!(data && data.length)) return this;
-	    if (data.length < this._minEntries) {
-	      for (let i = 0; i < data.length; i++) {
-	        this.insert(data[i]);
-	      }
-	      return this;
-	    }
+		constructor(maxEntries = 9) {
+			// max entries in a node is 9 by default; min node fill is 40% for best performance
+			this._maxEntries = Math.max(4, maxEntries);
+			this._minEntries = Math.max(2, Math.ceil(this._maxEntries * 0.4));
+			this.clear();
+		}
+		all() {
+			return this._all(this.data, []);
+		}
+		search(bbox) {
+			let node = this.data;
+			const result = [];
+			if (!intersects(bbox, node)) return result;
+			const toBBox = this.toBBox;
+			const nodesToSearch = [];
+			while (node) {
+				for (let i = 0; i < node.children.length; i++) {
+					const child = node.children[i];
+					const childBBox = node.leaf ? toBBox(child) : child;
+					if (intersects(bbox, childBBox)) {
+						if (node.leaf) result.push(child);else if (contains(bbox, childBBox)) this._all(child, result);else nodesToSearch.push(child);
+					}
+				}
+				node = nodesToSearch.pop();
+			}
+			return result;
+		}
+		collides(bbox) {
+			let node = this.data;
+			if (!intersects(bbox, node)) return false;
+			const nodesToSearch = [];
+			while (node) {
+				for (let i = 0; i < node.children.length; i++) {
+					const child = node.children[i];
+					const childBBox = node.leaf ? this.toBBox(child) : child;
+					if (intersects(bbox, childBBox)) {
+						if (node.leaf || contains(bbox, childBBox)) return true;
+						nodesToSearch.push(child);
+					}
+				}
+				node = nodesToSearch.pop();
+			}
+			return false;
+		}
+		load(data) {
+			if (!(data && data.length)) return this;
+			if (data.length < this._minEntries) {
+				for (let i = 0; i < data.length; i++) {
+					this.insert(data[i]);
+				}
+				return this;
+			}
 
-	    // recursively build the tree with the given data from scratch using OMT algorithm
-	    let node = this._build(data.slice(), 0, data.length - 1, 0);
-	    if (!this.data.children.length) {
-	      // save as is if tree is empty
-	      this.data = node;
-	    } else if (this.data.height === node.height) {
-	      // split root if trees have the same height
-	      this._splitRoot(this.data, node);
-	    } else {
-	      if (this.data.height < node.height) {
-	        // swap trees if inserted one is bigger
-	        const tmpNode = this.data;
-	        this.data = node;
-	        node = tmpNode;
-	      }
+			// recursively build the tree with the given data from scratch using OMT algorithm
+			let node = this._build(data.slice(), 0, data.length - 1, 0);
+			if (!this.data.children.length) {
+				// save as is if tree is empty
+				this.data = node;
+			} else if (this.data.height === node.height) {
+				// split root if trees have the same height
+				this._splitRoot(this.data, node);
+			} else {
+				if (this.data.height < node.height) {
+					// swap trees if inserted one is bigger
+					const tmpNode = this.data;
+					this.data = node;
+					node = tmpNode;
+				}
 
-	      // insert the small tree into the large tree at appropriate level
-	      this._insert(node, this.data.height - node.height - 1, true);
-	    }
-	    return this;
-	  }
-	  insert(item) {
-	    if (item) this._insert(item, this.data.height - 1);
-	    return this;
-	  }
-	  clear() {
-	    this.data = createNode([]);
-	    return this;
-	  }
-	  remove(item, equalsFn) {
-	    if (!item) return this;
-	    let node = this.data;
-	    const bbox = this.toBBox(item);
-	    const path = [];
-	    const indexes = [];
-	    let i, parent, goingUp;
+				// insert the small tree into the large tree at appropriate level
+				this._insert(node, this.data.height - node.height - 1, true);
+			}
+			return this;
+		}
+		insert(item) {
+			if (item) this._insert(item, this.data.height - 1);
+			return this;
+		}
+		clear() {
+			this.data = createNode([]);
+			return this;
+		}
+		remove(item, equalsFn) {
+			if (!item) return this;
+			let node = this.data;
+			const bbox = this.toBBox(item);
+			const path = [];
+			const indexes = [];
+			let i, parent, goingUp;
 
-	    // depth-first iterative tree traversal
-	    while (node || path.length) {
-	      if (!node) {
-	        // go up
-	        node = path.pop();
-	        parent = path[path.length - 1];
-	        i = indexes.pop();
-	        goingUp = true;
-	      }
-	      if (node.leaf) {
-	        // check current node
-	        const index = findItem(item, node.children, equalsFn);
-	        if (index !== -1) {
-	          // item found, remove the item and condense tree upwards
-	          node.children.splice(index, 1);
-	          path.push(node);
-	          this._condense(path);
-	          return this;
-	        }
-	      }
-	      if (!goingUp && !node.leaf && contains(node, bbox)) {
-	        // go down
-	        path.push(node);
-	        indexes.push(i);
-	        i = 0;
-	        parent = node;
-	        node = node.children[0];
-	      } else if (parent) {
-	        // go right
-	        i++;
-	        node = parent.children[i];
-	        goingUp = false;
-	      } else node = null; // nothing found
-	    }
+			// depth-first iterative tree traversal
+			while (node || path.length) {
+				if (!node) {
+					// go up
+					node = path.pop();
+					parent = path[path.length - 1];
+					i = indexes.pop();
+					goingUp = true;
+				}
+				if (node.leaf) {
+					// check current node
+					const index = findItem(item, node.children, equalsFn);
+					if (index !== -1) {
+						// item found, remove the item and condense tree upwards
+						node.children.splice(index, 1);
+						path.push(node);
+						this._condense(path);
+						return this;
+					}
+				}
+				if (!goingUp && !node.leaf && contains(node, bbox)) {
+					// go down
+					path.push(node);
+					indexes.push(i);
+					i = 0;
+					parent = node;
+					node = node.children[0];
+				} else if (parent) {
+					// go right
+					i++;
+					node = parent.children[i];
+					goingUp = false;
+				} else node = null; // nothing found
+			}
+			return this;
+		}
+		toBBox(item) {
+			return item;
+		}
+		compareMinX(a, b) {
+			return a.minX - b.minX;
+		}
+		compareMinY(a, b) {
+			return a.minY - b.minY;
+		}
+		toJSON() {
+			return this.data;
+		}
+		fromJSON(data) {
+			this.data = data;
+			return this;
+		}
+		_all(node, result) {
+			const nodesToSearch = [];
+			while (node) {
+				if (node.leaf) result.push(...node.children);else nodesToSearch.push(...node.children);
+				node = nodesToSearch.pop();
+			}
+			return result;
+		}
+		_build(items, left, right, height) {
+			const N = right - left + 1;
+			let M = this._maxEntries;
+			let node;
+			if (N <= M) {
+				// reached leaf level; return leaf
+				node = createNode(items.slice(left, right + 1));
+				calcBBox(node, this.toBBox);
+				return node;
+			}
+			if (!height) {
+				// target height of the bulk-loaded tree
+				height = Math.ceil(Math.log(N) / Math.log(M));
 
-	    return this;
-	  }
-	  toBBox(item) {
-	    return item;
-	  }
-	  compareMinX(a, b) {
-	    return a.minX - b.minX;
-	  }
-	  compareMinY(a, b) {
-	    return a.minY - b.minY;
-	  }
-	  toJSON() {
-	    return this.data;
-	  }
-	  fromJSON(data) {
-	    this.data = data;
-	    return this;
-	  }
-	  _all(node, result) {
-	    const nodesToSearch = [];
-	    while (node) {
-	      if (node.leaf) result.push(...node.children);else nodesToSearch.push(...node.children);
-	      node = nodesToSearch.pop();
-	    }
-	    return result;
-	  }
-	  _build(items, left, right, height) {
-	    const N = right - left + 1;
-	    let M = this._maxEntries;
-	    let node;
-	    if (N <= M) {
-	      // reached leaf level; return leaf
-	      node = createNode(items.slice(left, right + 1));
-	      calcBBox(node, this.toBBox);
-	      return node;
-	    }
-	    if (!height) {
-	      // target height of the bulk-loaded tree
-	      height = Math.ceil(Math.log(N) / Math.log(M));
+				// target number of root entries to maximize storage utilization
+				M = Math.ceil(N / Math.pow(M, height - 1));
+			}
+			node = createNode([]);
+			node.leaf = false;
+			node.height = height;
 
-	      // target number of root entries to maximize storage utilization
-	      M = Math.ceil(N / Math.pow(M, height - 1));
-	    }
-	    node = createNode([]);
-	    node.leaf = false;
-	    node.height = height;
+			// split the items into M mostly square tiles
 
-	    // split the items into M mostly square tiles
+			const N2 = Math.ceil(N / M);
+			const N1 = N2 * Math.ceil(Math.sqrt(M));
+			multiSelect(items, left, right, N1, this.compareMinX);
+			for (let i = left; i <= right; i += N1) {
+				const right2 = Math.min(i + N1 - 1, right);
+				multiSelect(items, i, right2, N2, this.compareMinY);
+				for (let j = i; j <= right2; j += N2) {
+					const right3 = Math.min(j + N2 - 1, right2);
 
-	    const N2 = Math.ceil(N / M);
-	    const N1 = N2 * Math.ceil(Math.sqrt(M));
-	    multiSelect(items, left, right, N1, this.compareMinX);
-	    for (let i = left; i <= right; i += N1) {
-	      const right2 = Math.min(i + N1 - 1, right);
-	      multiSelect(items, i, right2, N2, this.compareMinY);
-	      for (let j = i; j <= right2; j += N2) {
-	        const right3 = Math.min(j + N2 - 1, right2);
+					// pack each entry recursively
+					node.children.push(this._build(items, j, right3, height - 1));
+				}
+			}
+			calcBBox(node, this.toBBox);
+			return node;
+		}
+		_chooseSubtree(bbox, node, level, path) {
+			while (true) {
+				path.push(node);
+				if (node.leaf || path.length - 1 === level) break;
+				let minArea = Infinity;
+				let minEnlargement = Infinity;
+				let targetNode;
+				for (let i = 0; i < node.children.length; i++) {
+					const child = node.children[i];
+					const area = bboxArea(child);
+					const enlargement = enlargedArea(bbox, child) - area;
 
-	        // pack each entry recursively
-	        node.children.push(this._build(items, j, right3, height - 1));
-	      }
-	    }
-	    calcBBox(node, this.toBBox);
-	    return node;
-	  }
-	  _chooseSubtree(bbox, node, level, path) {
-	    while (true) {
-	      path.push(node);
-	      if (node.leaf || path.length - 1 === level) break;
-	      let minArea = Infinity;
-	      let minEnlargement = Infinity;
-	      let targetNode;
-	      for (let i = 0; i < node.children.length; i++) {
-	        const child = node.children[i];
-	        const area = bboxArea(child);
-	        const enlargement = enlargedArea(bbox, child) - area;
+					// choose entry with the least area enlargement
+					if (enlargement < minEnlargement) {
+						minEnlargement = enlargement;
+						minArea = area < minArea ? area : minArea;
+						targetNode = child;
+					} else if (enlargement === minEnlargement) {
+						// otherwise choose one with the smallest area
+						if (area < minArea) {
+							minArea = area;
+							targetNode = child;
+						}
+					}
+				}
+				node = targetNode || node.children[0];
+			}
+			return node;
+		}
+		_insert(item, level, isNode) {
+			const bbox = isNode ? item : this.toBBox(item);
+			const insertPath = [];
 
-	        // choose entry with the least area enlargement
-	        if (enlargement < minEnlargement) {
-	          minEnlargement = enlargement;
-	          minArea = area < minArea ? area : minArea;
-	          targetNode = child;
-	        } else if (enlargement === minEnlargement) {
-	          // otherwise choose one with the smallest area
-	          if (area < minArea) {
-	            minArea = area;
-	            targetNode = child;
-	          }
-	        }
-	      }
-	      node = targetNode || node.children[0];
-	    }
-	    return node;
-	  }
-	  _insert(item, level, isNode) {
-	    const bbox = isNode ? item : this.toBBox(item);
-	    const insertPath = [];
+			// find the best node for accommodating the item, saving all nodes along the path too
+			const node = this._chooseSubtree(bbox, this.data, level, insertPath);
 
-	    // find the best node for accommodating the item, saving all nodes along the path too
-	    const node = this._chooseSubtree(bbox, this.data, level, insertPath);
+			// put the item into the node
+			node.children.push(item);
+			extend(node, bbox);
 
-	    // put the item into the node
-	    node.children.push(item);
-	    extend(node, bbox);
+			// split on node overflow; propagate upwards if necessary
+			while (level >= 0) {
+				if (insertPath[level].children.length > this._maxEntries) {
+					this._split(insertPath, level);
+					level--;
+				} else break;
+			}
 
-	    // split on node overflow; propagate upwards if necessary
-	    while (level >= 0) {
-	      if (insertPath[level].children.length > this._maxEntries) {
-	        this._split(insertPath, level);
-	        level--;
-	      } else break;
-	    }
+			// adjust bboxes along the insertion path
+			this._adjustParentBBoxes(bbox, insertPath, level);
+		}
 
-	    // adjust bboxes along the insertion path
-	    this._adjustParentBBoxes(bbox, insertPath, level);
-	  }
+		// split overflowed node into two
+		_split(insertPath, level) {
+			const node = insertPath[level];
+			const M = node.children.length;
+			const m = this._minEntries;
+			this._chooseSplitAxis(node, m, M);
+			const splitIndex = this._chooseSplitIndex(node, m, M);
+			const newNode = createNode(node.children.splice(splitIndex, node.children.length - splitIndex));
+			newNode.height = node.height;
+			newNode.leaf = node.leaf;
+			calcBBox(node, this.toBBox);
+			calcBBox(newNode, this.toBBox);
+			if (level) insertPath[level - 1].children.push(newNode);else this._splitRoot(node, newNode);
+		}
+		_splitRoot(node, newNode) {
+			// split root node
+			this.data = createNode([node, newNode]);
+			this.data.height = node.height + 1;
+			this.data.leaf = false;
+			calcBBox(this.data, this.toBBox);
+		}
+		_chooseSplitIndex(node, m, M) {
+			let index;
+			let minOverlap = Infinity;
+			let minArea = Infinity;
+			for (let i = m; i <= M - m; i++) {
+				const bbox1 = distBBox(node, 0, i, this.toBBox);
+				const bbox2 = distBBox(node, i, M, this.toBBox);
+				const overlap = intersectionArea(bbox1, bbox2);
+				const area = bboxArea(bbox1) + bboxArea(bbox2);
 
-	  // split overflowed node into two
-	  _split(insertPath, level) {
-	    const node = insertPath[level];
-	    const M = node.children.length;
-	    const m = this._minEntries;
-	    this._chooseSplitAxis(node, m, M);
-	    const splitIndex = this._chooseSplitIndex(node, m, M);
-	    const newNode = createNode(node.children.splice(splitIndex, node.children.length - splitIndex));
-	    newNode.height = node.height;
-	    newNode.leaf = node.leaf;
-	    calcBBox(node, this.toBBox);
-	    calcBBox(newNode, this.toBBox);
-	    if (level) insertPath[level - 1].children.push(newNode);else this._splitRoot(node, newNode);
-	  }
-	  _splitRoot(node, newNode) {
-	    // split root node
-	    this.data = createNode([node, newNode]);
-	    this.data.height = node.height + 1;
-	    this.data.leaf = false;
-	    calcBBox(this.data, this.toBBox);
-	  }
-	  _chooseSplitIndex(node, m, M) {
-	    let index;
-	    let minOverlap = Infinity;
-	    let minArea = Infinity;
-	    for (let i = m; i <= M - m; i++) {
-	      const bbox1 = distBBox(node, 0, i, this.toBBox);
-	      const bbox2 = distBBox(node, i, M, this.toBBox);
-	      const overlap = intersectionArea(bbox1, bbox2);
-	      const area = bboxArea(bbox1) + bboxArea(bbox2);
+				// choose distribution with minimum overlap
+				if (overlap < minOverlap) {
+					minOverlap = overlap;
+					index = i;
+					minArea = area < minArea ? area : minArea;
+				} else if (overlap === minOverlap) {
+					// otherwise choose distribution with minimum area
+					if (area < minArea) {
+						minArea = area;
+						index = i;
+					}
+				}
+			}
+			return index || M - m;
+		}
 
-	      // choose distribution with minimum overlap
-	      if (overlap < minOverlap) {
-	        minOverlap = overlap;
-	        index = i;
-	        minArea = area < minArea ? area : minArea;
-	      } else if (overlap === minOverlap) {
-	        // otherwise choose distribution with minimum area
-	        if (area < minArea) {
-	          minArea = area;
-	          index = i;
-	        }
-	      }
-	    }
-	    return index || M - m;
-	  }
+		// sorts node children by the best axis for split
+		_chooseSplitAxis(node, m, M) {
+			const compareMinX = node.leaf ? this.compareMinX : compareNodeMinX;
+			const compareMinY = node.leaf ? this.compareMinY : compareNodeMinY;
+			const xMargin = this._allDistMargin(node, m, M, compareMinX);
+			const yMargin = this._allDistMargin(node, m, M, compareMinY);
 
-	  // sorts node children by the best axis for split
-	  _chooseSplitAxis(node, m, M) {
-	    const compareMinX = node.leaf ? this.compareMinX : compareNodeMinX;
-	    const compareMinY = node.leaf ? this.compareMinY : compareNodeMinY;
-	    const xMargin = this._allDistMargin(node, m, M, compareMinX);
-	    const yMargin = this._allDistMargin(node, m, M, compareMinY);
+			// if total distributions margin value is minimal for x, sort by minX,
+			// otherwise it's already sorted by minY
+			if (xMargin < yMargin) node.children.sort(compareMinX);
+		}
 
-	    // if total distributions margin value is minimal for x, sort by minX,
-	    // otherwise it's already sorted by minY
-	    if (xMargin < yMargin) node.children.sort(compareMinX);
-	  }
-
-	  // total margin of all possible split distributions where each node is at least m full
-	  _allDistMargin(node, m, M, compare) {
-	    node.children.sort(compare);
-	    const toBBox = this.toBBox;
-	    const leftBBox = distBBox(node, 0, m, toBBox);
-	    const rightBBox = distBBox(node, M - m, M, toBBox);
-	    let margin = bboxMargin(leftBBox) + bboxMargin(rightBBox);
-	    for (let i = m; i < M - m; i++) {
-	      const child = node.children[i];
-	      extend(leftBBox, node.leaf ? toBBox(child) : child);
-	      margin += bboxMargin(leftBBox);
-	    }
-	    for (let i = M - m - 1; i >= m; i--) {
-	      const child = node.children[i];
-	      extend(rightBBox, node.leaf ? toBBox(child) : child);
-	      margin += bboxMargin(rightBBox);
-	    }
-	    return margin;
-	  }
-	  _adjustParentBBoxes(bbox, path, level) {
-	    // adjust bboxes along the given tree path
-	    for (let i = level; i >= 0; i--) {
-	      extend(path[i], bbox);
-	    }
-	  }
-	  _condense(path) {
-	    // go through the path, removing empty nodes and updating bboxes
-	    for (let i = path.length - 1, siblings; i >= 0; i--) {
-	      if (path[i].children.length === 0) {
-	        if (i > 0) {
-	          siblings = path[i - 1].children;
-	          siblings.splice(siblings.indexOf(path[i]), 1);
-	        } else this.clear();
-	      } else calcBBox(path[i], this.toBBox);
-	    }
-	  }
+		// total margin of all possible split distributions where each node is at least m full
+		_allDistMargin(node, m, M, compare) {
+			node.children.sort(compare);
+			const toBBox = this.toBBox;
+			const leftBBox = distBBox(node, 0, m, toBBox);
+			const rightBBox = distBBox(node, M - m, M, toBBox);
+			let margin = bboxMargin(leftBBox) + bboxMargin(rightBBox);
+			for (let i = m; i < M - m; i++) {
+				const child = node.children[i];
+				extend(leftBBox, node.leaf ? toBBox(child) : child);
+				margin += bboxMargin(leftBBox);
+			}
+			for (let i = M - m - 1; i >= m; i--) {
+				const child = node.children[i];
+				extend(rightBBox, node.leaf ? toBBox(child) : child);
+				margin += bboxMargin(rightBBox);
+			}
+			return margin;
+		}
+		_adjustParentBBoxes(bbox, path, level) {
+			// adjust bboxes along the given tree path
+			for (let i = level; i >= 0; i--) {
+				extend(path[i], bbox);
+			}
+		}
+		_condense(path) {
+			// go through the path, removing empty nodes and updating bboxes
+			for (let i = path.length - 1, siblings; i >= 0; i--) {
+				if (path[i].children.length === 0) {
+					if (i > 0) {
+						siblings = path[i - 1].children;
+						siblings.splice(siblings.indexOf(path[i]), 1);
+					} else this.clear();
+				} else calcBBox(path[i], this.toBBox);
+			}
+		}
 	}
 	function findItem(item, items, equalsFn) {
-	  if (!equalsFn) return items.indexOf(item);
-	  for (let i = 0; i < items.length; i++) {
-	    if (equalsFn(item, items[i])) return i;
-	  }
-	  return -1;
+		if (!equalsFn) return items.indexOf(item);
+		for (let i = 0; i < items.length; i++) {
+			if (equalsFn(item, items[i])) return i;
+		}
+		return -1;
 	}
 
 	// calculate node's bbox from bboxes of its children
 	function calcBBox(node, toBBox) {
-	  distBBox(node, 0, node.children.length, toBBox, node);
+		distBBox(node, 0, node.children.length, toBBox, node);
 	}
 
 	// min bounding rectangle of node children from k to p-1
 	function distBBox(node, k, p, toBBox, destNode) {
-	  if (!destNode) destNode = createNode(null);
-	  destNode.minX = Infinity;
-	  destNode.minY = Infinity;
-	  destNode.maxX = -Infinity;
-	  destNode.maxY = -Infinity;
-	  for (let i = k; i < p; i++) {
-	    const child = node.children[i];
-	    extend(destNode, node.leaf ? toBBox(child) : child);
-	  }
-	  return destNode;
+		if (!destNode) destNode = createNode(null);
+		destNode.minX = Infinity;
+		destNode.minY = Infinity;
+		destNode.maxX = -Infinity;
+		destNode.maxY = -Infinity;
+		for (let i = k; i < p; i++) {
+			const child = node.children[i];
+			extend(destNode, node.leaf ? toBBox(child) : child);
+		}
+		return destNode;
 	}
 	function extend(a, b) {
-	  a.minX = Math.min(a.minX, b.minX);
-	  a.minY = Math.min(a.minY, b.minY);
-	  a.maxX = Math.max(a.maxX, b.maxX);
-	  a.maxY = Math.max(a.maxY, b.maxY);
-	  return a;
+		a.minX = Math.min(a.minX, b.minX);
+		a.minY = Math.min(a.minY, b.minY);
+		a.maxX = Math.max(a.maxX, b.maxX);
+		a.maxY = Math.max(a.maxY, b.maxY);
+		return a;
 	}
 	function compareNodeMinX(a, b) {
-	  return a.minX - b.minX;
+		return a.minX - b.minX;
 	}
 	function compareNodeMinY(a, b) {
-	  return a.minY - b.minY;
+		return a.minY - b.minY;
 	}
 	function bboxArea(a) {
-	  return (a.maxX - a.minX) * (a.maxY - a.minY);
+		return (a.maxX - a.minX) * (a.maxY - a.minY);
 	}
 	function bboxMargin(a) {
-	  return a.maxX - a.minX + (a.maxY - a.minY);
+		return a.maxX - a.minX + (a.maxY - a.minY);
 	}
 	function enlargedArea(a, b) {
-	  return (Math.max(b.maxX, a.maxX) - Math.min(b.minX, a.minX)) * (Math.max(b.maxY, a.maxY) - Math.min(b.minY, a.minY));
+		return (Math.max(b.maxX, a.maxX) - Math.min(b.minX, a.minX)) * (Math.max(b.maxY, a.maxY) - Math.min(b.minY, a.minY));
 	}
 	function intersectionArea(a, b) {
-	  const minX = Math.max(a.minX, b.minX);
-	  const minY = Math.max(a.minY, b.minY);
-	  const maxX = Math.min(a.maxX, b.maxX);
-	  const maxY = Math.min(a.maxY, b.maxY);
-	  return Math.max(0, maxX - minX) * Math.max(0, maxY - minY);
+		const minX = Math.max(a.minX, b.minX);
+		const minY = Math.max(a.minY, b.minY);
+		const maxX = Math.min(a.maxX, b.maxX);
+		const maxY = Math.min(a.maxY, b.maxY);
+		return Math.max(0, maxX - minX) * Math.max(0, maxY - minY);
 	}
 	function contains(a, b) {
-	  return a.minX <= b.minX && a.minY <= b.minY && b.maxX <= a.maxX && b.maxY <= a.maxY;
+		return a.minX <= b.minX && a.minY <= b.minY && b.maxX <= a.maxX && b.maxY <= a.maxY;
 	}
 	function intersects(a, b) {
-	  return b.minX <= a.maxX && b.minY <= a.maxY && b.maxX >= a.minX && b.maxY >= a.minY;
+		return b.minX <= a.maxX && b.minY <= a.maxY && b.maxX >= a.minX && b.maxY >= a.minY;
 	}
 	function createNode(children) {
-	  return {
-	    children,
-	    height: 1,
-	    leaf: true,
-	    minX: Infinity,
-	    minY: Infinity,
-	    maxX: -Infinity,
-	    maxY: -Infinity
-	  };
+		return {
+			children,
+			height: 1,
+			leaf: true,
+			minX: Infinity,
+			minY: Infinity,
+			maxX: -Infinity,
+			maxY: -Infinity
+		};
 	}
 
 	// sort an array so that items come in groups of n unsorted items, with groups sorted between each other;
 	// combines selection algorithm with binary divide & conquer approach
 
 	function multiSelect(arr, left, right, n, compare) {
-	  const stack = [left, right];
-	  while (stack.length) {
-	    right = stack.pop();
-	    left = stack.pop();
-	    if (right - left <= n) continue;
-	    const mid = left + Math.ceil((right - left) / n / 2) * n;
-	    quickselect(arr, mid, left, right, compare);
-	    stack.push(left, mid, mid, right);
-	  }
+		const stack = [left, right];
+		while (stack.length) {
+			right = stack.pop();
+			left = stack.pop();
+			if (right - left <= n) continue;
+			const mid = left + Math.ceil((right - left) / n / 2) * n;
+			quickselect(arr, mid, left, right, compare);
+			stack.push(left, mid, mid, right);
+		}
 	}
 
-	var _tree = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("tree");
-	var _rectangles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rectangles");
-	class BoxIntersection {
-	  constructor() {
-	    Object.defineProperty(this, _tree, {
-	      writable: true,
-	      value: new RBush()
-	    });
-	    Object.defineProperty(this, _rectangles, {
-	      writable: true,
-	      value: new Map()
-	    });
-	    this.intersectedBlocksIds = ui_vue3.ref(new Set());
-	  }
-	  updateTree(blocks) {
-	    const insertedRectangles = [];
-	    blocks.forEach(({
-	      id,
-	      position,
-	      dimensions
-	    }) => {
-	      if (babelHelpers.classPrivateFieldLooseBase(this, _rectangles)[_rectangles].has(id)) {
-	        return;
-	      }
-	      const rectangle = {
-	        minX: position.x,
-	        minY: position.y,
-	        maxX: position.x + dimensions.width,
-	        maxY: position.y + dimensions.height,
-	        id
-	      };
-	      babelHelpers.classPrivateFieldLooseBase(this, _rectangles)[_rectangles].set(id, rectangle);
-	      insertedRectangles.push(rectangle);
-	    });
-	    if (insertedRectangles.length > 0) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _tree)[_tree].load(insertedRectangles);
-	    }
-	    const blocksIds = new Set(blocks.map(block => block.id));
-	    babelHelpers.classPrivateFieldLooseBase(this, _rectangles)[_rectangles].forEach(({
-	      id: blockId
-	    }) => {
-	      if (!blocksIds.has(blockId)) {
-	        const rectangle = babelHelpers.classPrivateFieldLooseBase(this, _rectangles)[_rectangles].get(blockId);
-	        babelHelpers.classPrivateFieldLooseBase(this, _tree)[_tree].remove(rectangle);
-	        babelHelpers.classPrivateFieldLooseBase(this, _rectangles)[_rectangles].delete(blockId);
-	      }
-	    });
-	  }
-	  calculateIntersectedBlockIds(viewPort) {
-	    const {
-	      transformX,
-	      transformY,
-	      width,
-	      height,
-	      zoom
-	    } = viewPort;
-	    const minX = transformX;
-	    const minY = transformY;
-	    const intersectedRectangles = babelHelpers.classPrivateFieldLooseBase(this, _tree)[_tree].search({
-	      minX,
-	      minY,
-	      maxX: minX + width / zoom,
-	      maxY: minY + height / zoom
-	    });
-	    this.intersectedBlocksIds.value = new Set(intersectedRectangles.map(r => r.id));
-	  }
-	  updateRectangle(blockId, {
-	    x,
-	    y,
-	    width,
-	    height
-	  }) {
-	    const rectangle = babelHelpers.classPrivateFieldLooseBase(this, _rectangles)[_rectangles].get(blockId);
-	    const minX = x != null ? x : rectangle.minX;
-	    const minY = y != null ? y : rectangle.minY;
-	    const maxX = width ? minX + width : minX + (rectangle.maxX - rectangle.minX);
-	    const maxY = height ? minY + height : minY + (rectangle.maxY - rectangle.minY);
-	    const newRectangle = {
-	      ...rectangle,
-	      minX,
-	      minY,
-	      maxX,
-	      maxY
-	    };
-	    babelHelpers.classPrivateFieldLooseBase(this, _tree)[_tree].remove(rectangle);
-	    babelHelpers.classPrivateFieldLooseBase(this, _tree)[_tree].insert(newRectangle);
-	    babelHelpers.classPrivateFieldLooseBase(this, _rectangles)[_rectangles].set(blockId, newRectangle);
-	  }
+	class BlockRBush extends RBush {
+		toBBox({
+			position,
+			dimensions
+		}) {
+			return {
+				minX: ui_vue3.toValue(position).x,
+				minY: ui_vue3.toValue(position).y,
+				maxX: ui_vue3.toValue(position).x + ui_vue3.toValue(dimensions).width,
+				maxY: ui_vue3.toValue(position).y + ui_vue3.toValue(dimensions).height
+			};
+		}
+		compareMinX({
+			position: positionA
+		}, {
+			position: positionB
+		}) {
+			return ui_vue3.toValue(positionA).x - ui_vue3.toValue(positionB).x;
+		}
+		compareMinY({
+			position: positionA
+		}, {
+			position: positionB
+		}) {
+			return ui_vue3.toValue(positionA).y - ui_vue3.toValue(positionB).y;
+		}
+	}
+
+	class BlockIntersections {
+		#throttleTimerId = null;
+		#tree = null;
+		#state = null;
+		visibleBlocks = ui_vue3.ref([]);
+		visibleBlockIds = ui_vue3.computed(() => {
+			return new Set(ui_vue3.toValue(this.visibleBlocks).map(block => block.id));
+		});
+		groupedVisibleBlocks = ui_vue3.computed(() => {
+			const blocks = this.#state?.isRenderOptimizationAvailable ?? false ? this.visibleBlocks : this.#state?.blocks ?? [];
+			return ui_vue3.toValue(blocks).reduce((acc, block) => {
+				const type = block?.type ?? BLOCK_GROUP_DEFAULT_NAME;
+				if (type in acc) {
+					acc[type].push(block);
+				} else {
+					acc[type] = [block];
+				}
+				return acc;
+			}, {
+				[BLOCK_GROUP_DEFAULT_NAME]: []
+			});
+		});
+		visibleBlockGroupNames = ui_vue3.computed(() => {
+			return Object.keys(ui_vue3.toValue(this.groupedVisibleBlocks));
+		});
+		visiblePorts = ui_vue3.computed(() => {
+			const portsMap = new Map();
+			for (const block of ui_vue3.toValue(this.visibleBlocks)) {
+				for (const port of block.ports) {
+					if (!portsMap.has(block.id)) {
+						portsMap.set(block.id, new Map());
+					}
+					portsMap.get(block.id).set(port.id, port);
+				}
+			}
+			return portsMap;
+		});
+		constructor(ctx) {
+			this.#state = ctx.state;
+			this.#tree = new BlockRBush();
+		}
+		load(blocks) {
+			this.#tree?.load(ui_vue3.toRaw(ui_vue3.unref(blocks)));
+			this.selectVisibleBlocks();
+		}
+		search(searchRect) {
+			return this.#tree.search(searchRect);
+		}
+		selectVisibleBlocks(throttleDelay = 50) {
+			if (this.#throttleTimerId === null) {
+				this.#throttleTimerId = setTimeout(() => {
+					const {
+						transformX,
+						transformY,
+						zoom,
+						canvasWidth,
+						canvasHeight
+					} = this.#state;
+					this.visibleBlocks.value = this.#tree.search({
+						minX: ui_vue3.toValue(transformX),
+						minY: ui_vue3.toValue(transformY),
+						maxX: ui_vue3.toValue(transformX) + ui_vue3.toValue(canvasWidth) / ui_vue3.toValue(zoom),
+						maxY: ui_vue3.toValue(transformY) + ui_vue3.toValue(canvasHeight) / ui_vue3.toValue(zoom)
+					});
+					this.#throttleTimerId = null;
+				}, throttleDelay);
+			}
+		}
+		updateBlock(oldBlock, newBlock) {
+			this.removeBlock(oldBlock);
+			this.insertBlock(newBlock);
+		}
+		#preparedBlock(block) {
+			return ui_vue3.toRaw(ui_vue3.unref({
+				...block,
+				position: ui_vue3.toRaw(ui_vue3.toValue(block).position),
+				dimensions: ui_vue3.toRaw(ui_vue3.toValue(block).dimensions),
+				ports: ui_vue3.toRaw(ui_vue3.unref(ui_vue3.toValue(block).ports))
+			}));
+		}
+		insertBlock(block) {
+			this.#tree?.insert(this.#preparedBlock(block));
+			this.selectVisibleBlocks();
+		}
+		removeBlock(block) {
+			this.#tree?.remove(this.#preparedBlock(block), (blockA, blockB) => {
+				return ui_vue3.toValue(blockA).id === ui_vue3.toValue(blockB).id;
+			});
+			this.selectVisibleBlocks();
+		}
+		clear() {
+			this.#tree?.clear();
+			this.visibleBlocks.value = [];
+			clearTimeout(this.#throttleTimerId);
+			this.#throttleTimerId = null;
+		}
+	}
+
+	class Node {
+		constructor(obj, dimension, parent) {
+			this.obj = obj;
+			this.left = null;
+			this.right = null;
+			this.parent = parent;
+			this.dimension = dimension;
+		}
+	}
+
+	class BinaryHeap {
+		content = [];
+		scoreFunction = null;
+		constructor(scoreFunction) {
+			this.scoreFunction = scoreFunction;
+		}
+		push(element) {
+			this.content.push(element);
+			this.bubbleUp(this.content.length - 1);
+		}
+		pop() {
+			const result = this.content[0];
+			const end = this.content.pop();
+			if (this.content.length > 0) {
+				this.content[0] = end;
+				this.sinkDown(0);
+			}
+			return result;
+		}
+		peek() {
+			return this.content[0];
+		}
+		remove(node) {
+			const len = this.content.length;
+			for (let i = 0; i < len; i++) {
+				if (this.content[i] === node) {
+					const end = this.content.pop();
+					if (i !== len - 1) {
+						this.content[i] = end;
+						if (this.scoreFunction(end) < this.scoreFunction(node)) {
+							this.bubbleUp(i);
+						} else {
+							this.sinkDown(i);
+						}
+					}
+					return;
+				}
+			}
+			throw new Error('Node not found.');
+		}
+		size() {
+			return this.content.length;
+		}
+		bubbleUp(n) {
+			const element = this.content[n];
+			while (n > 0) {
+				const parentN = Math.floor((n + 1) / 2) - 1;
+				const parent = this.content[parentN];
+				if (this.scoreFunction(element) < this.scoreFunction(parent)) {
+					this.content[parentN] = element;
+					this.content[n] = parent;
+					n = parentN;
+				} else {
+					break;
+				}
+			}
+		}
+		sinkDown(n) {
+			const length = this.content.length;
+			const element = this.content[n];
+			const elemScore = this.scoreFunction(element);
+			while (true) {
+				const child2N = (n + 1) * 2;
+				const child1N = child2N - 1;
+				let swap = null;
+				if (child1N < length) {
+					const child1 = this.content[child1N];
+					const child1Score = this.scoreFunction(child1);
+					if (child1Score < elemScore) {
+						swap = child1N;
+					}
+				}
+				if (child2N < length) {
+					const child2 = this.content[child2N];
+					const child2Score = this.scoreFunction(child2);
+					if (child2Score < (swap === null ? elemScore : child1Score)) {
+						swap = child2N;
+					}
+				}
+				if (swap === null) {
+					break;
+				} else {
+					this.content[n] = this.content[swap];
+					this.content[swap] = element;
+					n = swap;
+				}
+			}
+		}
+	}
+
+	class KdTree {
+		#root = null;
+		#dimensions = [];
+		#metric = null;
+		#bestNodes = new BinaryHeap(e => -e[1]);
+		constructor(points, metric, dimensions) {
+			this.#dimensions = dimensions;
+			this.#metric = metric;
+			if (Array.isArray(points)) {
+				this.#root = this.buildTree(points, 0, null);
+			} else {
+				this.loadTree(points, metric, dimensions);
+			}
+		}
+		buildTree(points, depth, parent) {
+			const dim = depth % this.#dimensions.length;
+			let median = 0;
+			let node = null;
+			if (points.length === 0) {
+				return null;
+			}
+			if (points.length === 1) {
+				return new Node(points[0], dim, parent);
+			}
+			points.sort((a, b) => {
+				return a[this.#dimensions[dim]] - b[this.#dimensions[dim]];
+			});
+			median = Math.floor(points.length / 2);
+			node = new Node(points[median], dim, parent);
+			node.left = this.buildTree(points.slice(0, median), depth + 1, node);
+			node.right = this.buildTree(points.slice(median + 1), depth + 1, node);
+			return node;
+		}
+		#restoreParent(parentNode) {
+			if (parentNode === null) {
+				return;
+			}
+			if (this.#root.left) {
+				this.#root.left.parent = this.#root;
+				this.#restoreParent(this.#root.left);
+			}
+			if (this.#root.right) {
+				this.#root.right.parent = this.#root;
+				this.#restoreParent(this.#root.right);
+			}
+		}
+		loadTree(data) {
+			this.#root = data;
+			this.#restoreParent(this.#root);
+		}
+		#nodeHeight(node) {
+			if (node === null) {
+				return 0;
+			}
+			return Math.max(this.#nodeHeight(node.left), this.#nodeHeight(node.right)) + 1;
+		}
+		#nodeCount(node) {
+			if (node === null) {
+				return 0;
+			}
+			return this.#nodeCount(node.left) + this.#nodeCount(node.right) + 1;
+		}
+		balanceFactor() {
+			return this.#nodeHeight(this.#root) / (Math.log(this.#nodeCount(this.#root)) / Math.log(2));
+		}
+		#innerSearch(node, parent, point) {
+			if (node === null) {
+				return parent;
+			}
+			const dimension = this.#dimensions[node.dimension];
+			if (point[dimension] < node.obj[dimension]) {
+				return this.#innerSearch(node.left, node, point);
+			}
+			return this.#innerSearch(node.right, node, point);
+		}
+		insert(point) {
+			const insertPosition = this.#innerSearch(this.root, null, point);
+			if (insertPosition === null) {
+				this.root = new Node(point, 0, null);
+				return;
+			}
+			const newNode = new Node(point, (insertPosition.dimension + 1) % this.#dimensions.length, insertPosition);
+			const dimension = this.#dimensions[insertPosition.dimension];
+			if (point[dimension] < insertPosition.obj[dimension]) {
+				insertPosition.left = newNode;
+			} else {
+				insertPosition.right = newNode;
+			}
+		}
+		#nodeSearch(node, point) {
+			if (node === null) {
+				return null;
+			}
+			if (node.obj === point) {
+				return node;
+			}
+			const dimension = this.#dimensions[node.dimension];
+			if (point[dimension] < node.obj[dimension]) {
+				return this.#nodeSearch(node.left, point);
+			}
+			return this.#nodeSearch(node.right, point);
+		}
+		#findMinNode(node, dim) {
+			if (node === null) {
+				return null;
+			}
+			const dimension = this.#dimensions[dim];
+			if (node.dimension === dim) {
+				if (node.left !== null) {
+					return this.#findMinNode(node.left, dim);
+				}
+				return node;
+			}
+			const own = node.obj[dimension];
+			const left = this.#findMinNode(node.left, dim);
+			const right = this.#findMinNode(node.right, dim);
+			let min = node;
+			if (left !== null && left.obj[dimension] < own) {
+				min = left;
+			}
+			if (right !== null && right.obj[dimension] < min.obj[dimension]) {
+				min = right;
+			}
+			return min;
+		}
+		#removeNode(node) {
+			const currentNode = node;
+			if (currentNode.left === null && currentNode.right === null) {
+				if (currentNode.parent === null) {
+					this.#root = null;
+					return;
+				}
+				const pDimension = this.#dimensions[currentNode.parent.dimension];
+				if (currentNode.obj[pDimension] < currentNode.parent.obj[pDimension]) {
+					currentNode.parent.left = null;
+				} else {
+					currentNode.parent.right = null;
+				}
+				return;
+			}
+			if (node.right === null) {
+				const nextNode = this.#findMinNode(currentNode.left, node.dimension);
+				const nextObj = nextNode.obj;
+				this.#removeNode(nextNode);
+				currentNode.right = node.left;
+				currentNode.left = null;
+				currentNode.obj = nextObj;
+			} else {
+				const nextNode = this.#findMinNode(currentNode.right, node.dimension);
+				const nextObj = nextNode.obj;
+				this.#removeNode(nextNode);
+				currentNode.obj = nextObj;
+			}
+		}
+		remove(point) {
+			const node = this.#nodeSearch(this.#root, point);
+			if (node === null) {
+				return;
+			}
+			this.#removeNode(node);
+		}
+		#saveBestNode(node, distance, maxNodes) {
+			this.#bestNodes.push([node, distance]);
+			if (this.#bestNodes.size() > maxNodes) {
+				this.#bestNodes.pop();
+			}
+		}
+		#nearestSearch(node, point, maxNodes) {
+			let bestChild = null;
+			const dimension = this.#dimensions[node.dimension];
+			const ownDistance = this.#metric(point, node.obj);
+			const linearPoint = {};
+			let linearDistance = 0;
+			let otherChild = null;
+			for (let i = 0; i < this.#dimensions.length; i += 1) {
+				if (i === node.dimension) {
+					linearPoint[this.#dimensions[i]] = point[this.#dimensions[i]];
+				} else {
+					linearPoint[this.#dimensions[i]] = node.obj[this.#dimensions[i]];
+				}
+			}
+			linearDistance = this.#metric(linearPoint, node.obj);
+			if (node.right === null && node.left === null) {
+				if (this.#bestNodes.size() < maxNodes || ownDistance < this.#bestNodes.peek()[1]) {
+					this.#saveBestNode(node, ownDistance, maxNodes);
+				}
+				return;
+			}
+			if (node.right === null) {
+				bestChild = node.left;
+			} else if (node.left === null) {
+				bestChild = node.right;
+			} else {
+				bestChild = point[dimension] < node.obj[dimension] ? node.left : node.right;
+			}
+			this.#nearestSearch(bestChild, point, maxNodes);
+			if (this.#bestNodes.size() < maxNodes || ownDistance < this.#bestNodes.peek()[1]) {
+				this.#saveBestNode(node, ownDistance, maxNodes);
+			}
+			if (this.#bestNodes.size() < maxNodes || Math.abs(linearDistance) < this.#bestNodes.peek()[1]) {
+				if (bestChild === node.left) {
+					otherChild = node.right;
+				} else {
+					otherChild = node.left;
+				}
+				if (otherChild !== null) {
+					this.#nearestSearch(otherChild, point, maxNodes);
+				}
+			}
+		}
+		nearest(point, maxNodes, maxDistance) {
+			const result = [];
+			this.#bestNodes = new BinaryHeap(e => -e[1]);
+			if (maxDistance) {
+				for (let i = 0; i < maxNodes; i += 1) {
+					this.#bestNodes.push([null, maxDistance]);
+				}
+			}
+			if (this.#root) {
+				this.#nearestSearch(this.#root, point, maxNodes);
+			}
+			for (let i = 0; i < Math.min(maxNodes, this.#bestNodes.content.length); i += 1) {
+				if (this.#bestNodes.content[i][0]) {
+					result.push([this.#bestNodes.content[i][0].obj, this.#bestNodes.content[i][1]]);
+				}
+			}
+			return result;
+		}
+	}
+
+	const PORT_X_KEY = 'x';
+	const PORT_Y_KEY = 'y';
+	class PortsNearest {
+		#portsKdTree = null;
+		#state = null;
+		constructor(ctx) {
+			this.#state = ctx.state;
+		}
+		init(portsMap) {
+			const {
+				portsRectMap
+			} = this.#state;
+			const portsPoint = [];
+			for (const [blockId, ports] of portsMap.entries()) {
+				for (const [portId, port] of ports.entries()) {
+					const {
+						x = 0,
+						y = 0
+					} = ui_vue3.toValue(portsRectMap)?.[blockId]?.[portId] ?? {};
+					portsPoint.push({
+						x,
+						y,
+						blockId,
+						portId,
+						port: {
+							...port
+						}
+					});
+				}
+			}
+			this.#portsKdTree = new KdTree(portsPoint, distance, [PORT_X_KEY, PORT_Y_KEY]);
+		}
+		insert(point, blockId, port) {
+			this.#portsKdTree?.insert({
+				...point,
+				blockId,
+				portId: port.id,
+				port: {
+					...port
+				}
+			});
+		}
+		nearest(point, maxNodes = 1, maxDistance = 100) {
+			return this.#portsKdTree?.nearest(point, maxNodes, maxDistance) ?? [];
+		}
+		remove(point) {
+			return this.#portsKdTree?.remove(point);
+		}
+		clear() {
+			this.#portsKdTree = null;
+		}
 	}
 
 	const isRenderOptimizationAvailable = main_core.Extension.getSettings('ui.block-diagram').get('isRenderOptimizationAvailable');
 	const RENDER_OPTIMIZATION = {
-	  enabled: 'Y'
+		enabled: 'Y'
 	};
 	function useState() {
-	  return {
-	    blockDiagramRef: null,
-	    blockDiagramTop: 0,
-	    blockDiagramLeft: 0,
-	    cursorType: 'default',
-	    isResizing: false,
-	    isDisabled: false,
-	    waitAllBlocksMounted: Promise.withResolvers(),
-	    waitedBlockIds: new Set(),
-	    waitAllPortsMounted: Promise.withResolvers(),
-	    waitedBlockPortsIds: new Set(),
-	    blocks: [],
-	    connections: [],
-	    connectionOffset: CONNECTION_OFFSET,
-	    connectionBendOffset: CONNECTION_BEND_OFFSET,
-	    connectionBorderRadius: CONNECTION_BORDER_RADIUS,
-	    connectionsOffsetMap: {},
-	    blockElMap: ui_vue3.markRaw(new Map()),
-	    blocksRectMap: {},
-	    portsElMap: ui_vue3.markRaw(new Map()),
-	    portsRectMap: {},
-	    newConnection: null,
-	    isValidNewConnection: true,
-	    movingBlock: null,
-	    movingConnections: [],
-	    resizingBlock: null,
-	    canvasRef: null,
-	    transformLayoutRef: null,
-	    canvasInstance: null,
-	    canvasWidth: 0,
-	    canvasHeight: 0,
-	    transformX: 0,
-	    transformY: 0,
-	    viewportX: 0,
-	    viewportY: 0,
-	    zoom: 1,
-	    minZoom: 0.2,
-	    maxZoom: 4,
-	    contextMenuLayerRef: null,
-	    targetContainerRef: null,
-	    isOpenContextMenu: false,
-	    contextMenuInstance: null,
-	    positionContextMenu: {
-	      top: 0,
-	      left: 0
-	    },
-	    historyCurrentState: ui_vue3.markRaw({
-	      blocks: [],
-	      connections: []
-	    }),
-	    headSnapshot: null,
-	    tailSnapshot: null,
-	    currentSnapshot: null,
-	    maxCountSnapshots: 20,
-	    snapshotHandler: null,
-	    revertHandler: null,
-	    highlitedBlockIds: [],
-	    isSelectionActive: false,
-	    selectionWorldRect: null,
-	    animationQueue: null,
-	    currentAnimationItem: null,
-	    isPauseAnimation: false,
-	    isStopAnimation: false,
-	    shortcuts: [],
-	    mousePosition: {
-	      x: 0,
-	      y: 0
-	    },
-	    isKeyboardInitialized: false,
-	    boxIntersection: isRenderOptimizationAvailable === RENDER_OPTIMIZATION.enabled ? ui_vue3.markRaw(new BoxIntersection()) : null,
-	    waitForTransformEnd: null
-	  };
+		return {
+			blockDiagramRef: null,
+			blockDiagramTop: 0,
+			blockDiagramLeft: 0,
+			blockDiagramWidth: 0,
+			blockDiagramHeight: 0,
+			cursorType: 'default',
+			isResizing: false,
+			isDisabled: false,
+			waitAllBlocksMounted: Promise.withResolvers(),
+			waitedBlockIds: new Set(),
+			waitAllPortsMounted: Promise.withResolvers(),
+			waitedBlockPortsIds: new Set(),
+			isRunUpdateBlocksCommand: false,
+			blocks: [],
+			connections: [],
+			connectionOffset: CONNECTION_OFFSET,
+			connectionBendOffset: CONNECTION_BEND_OFFSET,
+			connectionBorderRadius: CONNECTION_BORDER_RADIUS,
+			connectionsOffsetMap: {},
+			blockElMap: ui_vue3.markRaw(new Map()),
+			blocksRectMap: {},
+			portsElMap: ui_vue3.markRaw(new Map()),
+			portsRectMap: {},
+			portsValidationsFnMap: new Map(),
+			validPortsMap: new Map(),
+			newConnection: null,
+			movingBlockId: null,
+			resizingBlock: null,
+			canvasRef: null,
+			transformLayoutRef: null,
+			canvasInstance: null,
+			canvasWidth: 0,
+			canvasHeight: 0,
+			transformX: 0,
+			transformY: 0,
+			viewportX: 0,
+			viewportY: 0,
+			zoom: 1,
+			minZoom: 0.2,
+			maxZoom: 4,
+			contextMenuLayerRef: null,
+			targetContainerRef: null,
+			isOpenContextMenu: false,
+			openedContextMenuName: null,
+			contextMenuInstance: null,
+			positionContextMenu: {
+				top: 0,
+				left: 0
+			},
+			historyCurrentState: ui_vue3.markRaw({
+				blocks: [],
+				connections: []
+			}),
+			headSnapshot: null,
+			tailSnapshot: null,
+			currentSnapshot: null,
+			maxCountSnapshots: 20,
+			snapshotHandler: null,
+			revertHandler: null,
+			highlitedBlockIds: [],
+			isSelectionActive: false,
+			selectionWorldRect: null,
+			animationQueue: null,
+			currentAnimationItem: null,
+			isPauseAnimation: false,
+			isStopAnimation: false,
+			shortcuts: [],
+			mousePosition: {
+				x: 0,
+				y: 0
+			},
+			isKeyboardInitialized: false,
+			isRenderOptimizationAvailable: isRenderOptimizationAvailable === RENDER_OPTIMIZATION.enabled,
+			waitForTransformEnd: null
+		};
+	}
+
+	function useInstances(ctx) {
+		return {
+			portsNearest: new PortsNearest(ctx),
+			blockIntersections: new BlockIntersections(ctx)
+		};
 	}
 
 	const SCROLL_THRESHOLD = 80;
-	const MAX_SPEED = 4;
+	const BASE_SPEED = 8;
+	const HARD_CAP = 20;
 	function useAutoScroll(state, actions) {
-	  let rafId = null;
-	  let mouseX = 0;
-	  let mouseY = 0;
-	  let rect = null;
-	  let activeCallback = null;
-	  const scrollLoop = () => {
-	    if (!rect || !activeCallback) {
-	      return;
-	    }
-	    let dx = 0;
-	    let dy = 0;
-	    if (mouseX < rect.left + SCROLL_THRESHOLD) {
-	      dx = -MAX_SPEED;
-	    } else if (mouseX > rect.right - SCROLL_THRESHOLD) {
-	      dx = MAX_SPEED;
-	    }
-	    if (mouseY < rect.top + SCROLL_THRESHOLD) {
-	      dy = -MAX_SPEED;
-	    } else if (mouseY > rect.bottom - SCROLL_THRESHOLD) {
-	      dy = MAX_SPEED;
-	    }
-	    if (dx !== 0 || dy !== 0) {
-	      const currentZoom = ui_vue3.toValue(state.zoom);
-	      actions.setCamera({
-	        x: ui_vue3.toValue(state.transformX) + dx / currentZoom,
-	        y: ui_vue3.toValue(state.transformY) + dy / currentZoom,
-	        zoom: currentZoom
-	      });
-	      activeCallback(dx, dy);
-	    }
-	    rafId = requestAnimationFrame(scrollLoop);
-	  };
-	  const start = (event, callback) => {
-	    const el = ui_vue3.toValue(state.canvasRef);
-	    if (el) {
-	      rect = el.getBoundingClientRect();
-	    }
-	    mouseX = event.clientX;
-	    mouseY = event.clientY;
-	    activeCallback = callback;
-	    if (!rafId) {
-	      rafId = requestAnimationFrame(scrollLoop);
-	    }
-	  };
-	  const stop = () => {
-	    if (rafId) {
-	      cancelAnimationFrame(rafId);
-	      rafId = null;
-	    }
-	    rect = null;
-	    activeCallback = null;
-	  };
-	  const updateMousePosition = event => {
-	    mouseX = event.clientX;
-	    mouseY = event.clientY;
-	  };
-	  return {
-	    start,
-	    stop,
-	    updateMousePosition
-	  };
+		let rafId = null;
+		let mouseX = 0;
+		let mouseY = 0;
+		let rect = null;
+		let activeCallback = null;
+		const getAxisSpeed = penetration => {
+			if (penetration <= 0) {
+				return 0;
+			}
+			const t = penetration / SCROLL_THRESHOLD;
+			const speed = BASE_SPEED * t * t;
+			return Math.min(speed, HARD_CAP);
+		};
+		const scrollLoop = () => {
+			if (!rect || !activeCallback) {
+				return;
+			}
+			let dx = 0;
+			let dy = 0;
+			const leftPenetration = rect.left + SCROLL_THRESHOLD - mouseX;
+			const rightPenetration = mouseX - (rect.right - SCROLL_THRESHOLD);
+			const topPenetration = rect.top + SCROLL_THRESHOLD - mouseY;
+			const bottomPenetration = mouseY - (rect.bottom - SCROLL_THRESHOLD);
+			if (leftPenetration > 0) {
+				dx = -getAxisSpeed(leftPenetration);
+			} else if (rightPenetration > 0) {
+				dx = getAxisSpeed(rightPenetration);
+			}
+			if (topPenetration > 0) {
+				dy = -getAxisSpeed(topPenetration);
+			} else if (bottomPenetration > 0) {
+				dy = getAxisSpeed(bottomPenetration);
+			}
+			if (dx !== 0 || dy !== 0) {
+				const currentZoom = ui_vue3.toValue(state.zoom);
+				actions.setCamera({
+					x: ui_vue3.toValue(state.transformX) + dx / currentZoom,
+					y: ui_vue3.toValue(state.transformY) + dy / currentZoom,
+					zoom: currentZoom
+				});
+				activeCallback(dx, dy);
+			}
+			rafId = requestAnimationFrame(scrollLoop);
+		};
+		const start = (event, callback) => {
+			const el = ui_vue3.toValue(state.canvasRef);
+			if (el) {
+				rect = el.getBoundingClientRect();
+			}
+			mouseX = event.clientX;
+			mouseY = event.clientY;
+			activeCallback = callback;
+			if (!rafId) {
+				rafId = requestAnimationFrame(scrollLoop);
+			}
+		};
+		const stop = () => {
+			if (rafId) {
+				cancelAnimationFrame(rafId);
+				rafId = null;
+			}
+			rect = null;
+			activeCallback = null;
+		};
+		const updateMousePosition = event => {
+			mouseX = event.clientX;
+			mouseY = event.clientY;
+		};
+		return {
+			start,
+			stop,
+			updateMousePosition
+		};
 	}
 
 	// eslint-disable-next-line max-lines-per-function
 	function useHistory(options = {}) {
-	  const commonSnapshotHandler = newState => {
-	    return ui_vue3.markRaw({
-	      blocks: ui_vue3.markRaw(JSON.parse(JSON.stringify(newState.blocks))),
-	      connections: ui_vue3.markRaw(JSON.parse(JSON.stringify(newState.connections)))
-	    });
-	  };
-	  const commonRevertHandler = snapshot => {
-	    hooks.changedBlocks.trigger(commandReplace(snapshot.blocks));
-	    hooks.changedConnections.trigger(commandReplace(snapshot.connections));
-	  };
-	  const commonEmptyHistorySnapshot = {
-	    blocks: [],
-	    connections: []
-	  };
-	  const instance = useBlockDiagram();
-	  const {
-	    headSnapshot,
-	    tailSnapshot,
-	    currentSnapshot,
-	    maxCountSnapshots,
-	    hooks,
-	    snapshotHandler,
-	    revertHandler,
-	    setHistoryHandlers,
-	    historyCurrentState
-	  } = instance;
-	  const {
-	    snapshotHandler: newSnapshotHandler = null,
-	    revertHandler: newRevertHandler = null,
-	    emptyHistorySnapshot = commonEmptyHistorySnapshot,
-	    maxCount
-	  } = options;
-	  setHandlers({
-	    newSnapshotHandler,
-	    newRevertHandler
-	  });
-	  maxCountSnapshots.value = maxCount || ui_vue3.toValue(maxCountSnapshots);
-	  const hasNext = ui_vue3.computed(() => ui_vue3.toValue(currentSnapshot) && ui_vue3.toValue(currentSnapshot).next !== null);
-	  const hasPrev = ui_vue3.computed(() => ui_vue3.toValue(currentSnapshot) && ui_vue3.toValue(currentSnapshot).prev !== null);
-	  function setHandlers(newHandlerOptions) {
-	    var _ref, _newHandlerOptions$sn, _ref2, _newHandlerOptions$re;
-	    const handlerOptions = {
-	      snapshotHandler: (_ref = (_newHandlerOptions$sn = newHandlerOptions.snapshotHandler) != null ? _newHandlerOptions$sn : ui_vue3.toValue(snapshotHandler)) != null ? _ref : commonSnapshotHandler,
-	      revertHandler: (_ref2 = (_newHandlerOptions$re = newHandlerOptions.revertHandler) != null ? _newHandlerOptions$re : ui_vue3.toValue(revertHandler)) != null ? _ref2 : commonRevertHandler
-	    };
-	    setHistoryHandlers(handlerOptions);
-	  }
-	  function getCountSnapshots() {
-	    let count = 0;
-	    let current = ui_vue3.toValue(headSnapshot);
-	    while (current) {
-	      current = current.next;
-	      count += 1;
-	    }
-	    return count;
-	  }
-	  function makeSnapshot(options = {}) {
-	    var _toValue;
-	    const {
-	      snapshotHandler: newSnapshotHandler = null,
-	      revertHandler: newRevertHandler = null,
-	      emptySnapshot: newEmptySnapshot = null
-	    } = options;
-	    const snapshotHistoryHandler = newSnapshotHandler || ui_vue3.toValue(snapshotHandler);
-	    const revertHistoryHandler = newRevertHandler || ui_vue3.toValue(revertHandler);
-	    const emptySnapshot = newEmptySnapshot || emptyHistorySnapshot;
-	    const newSnapshot = ui_vue3.markRaw({
-	      snapshot: snapshotHistoryHandler(ui_vue3.toValue(historyCurrentState)),
-	      revertHandler: revertHistoryHandler,
-	      emptySnapshot,
-	      next: null,
-	      prev: tailSnapshot.value
-	    });
-	    if (ui_vue3.toValue(currentSnapshot) && ((_toValue = ui_vue3.toValue(currentSnapshot)) == null ? void 0 : _toValue.next) !== null) {
-	      currentSnapshot.value.next = newSnapshot;
-	      newSnapshot.prev = currentSnapshot.value;
-	      tailSnapshot.value.prev = null;
-	      tailSnapshot.value.next = null;
-	      tailSnapshot.value = newSnapshot;
-	    } else if (ui_vue3.toValue(headSnapshot) === null) {
-	      headSnapshot.value = newSnapshot;
-	      tailSnapshot.value = newSnapshot;
-	    } else {
-	      tailSnapshot.value.next = newSnapshot;
-	      tailSnapshot.value = newSnapshot;
-	    }
-	    currentSnapshot.value = newSnapshot;
-	    if (getCountSnapshots() <= ui_vue3.toValue(maxCountSnapshots) + 1) {
-	      return;
-	    }
-	    const firstSnapshot = headSnapshot.value;
-	    headSnapshot.value = firstSnapshot.next;
-	    headSnapshot.value.prev = null;
-	    firstSnapshot.next = null;
-	  }
-	  async function revertState({
-	    revertHandler,
-	    snapshot,
-	    emptySnapshot
-	  }) {
-	    revertHandler(emptySnapshot);
-	    await ui_vue3.nextTick();
-	    revertHandler(snapshot);
-	  }
-	  async function next() {
-	    if (ui_vue3.toValue(currentSnapshot) === null || ui_vue3.toValue(currentSnapshot).next === null) {
-	      return;
-	    }
-	    await revertState(ui_vue3.toValue(currentSnapshot).next);
-	    currentSnapshot.value = ui_vue3.toValue(currentSnapshot).next;
-	  }
-	  async function prev() {
-	    if (ui_vue3.toValue(currentSnapshot) === null || ui_vue3.toValue(currentSnapshot).prev === null) {
-	      return;
-	    }
-	    await revertState(ui_vue3.toValue(currentSnapshot).prev);
-	    currentSnapshot.value = ui_vue3.toValue(currentSnapshot).prev;
-	  }
-	  function clear() {
-	    headSnapshot.value = null;
-	    tailSnapshot.value = null;
-	    currentSnapshot.value = null;
-	  }
-	  return {
-	    hasNext,
-	    hasPrev,
-	    setHandlers,
-	    makeSnapshot: () => ui_vue3.nextTick(() => makeSnapshot()),
-	    next,
-	    prev,
-	    clear,
-	    commonSnapshotHandler,
-	    commonRevertHandler
-	  };
+		const commonSnapshotHandler = newState => {
+			return ui_vue3.markRaw({
+				blocks: ui_vue3.markRaw(JSON.parse(JSON.stringify(newState.blocks))),
+				connections: ui_vue3.markRaw(JSON.parse(JSON.stringify(newState.connections)))
+			});
+		};
+		const commonRevertHandler = snapshot => {
+			hooks.changedBlocks.trigger(commandReplace(snapshot.blocks));
+			hooks.changedConnections.trigger(commandReplace(snapshot.connections));
+		};
+		const commonEmptyHistorySnapshot = {
+			blocks: [],
+			connections: []
+		};
+		const instance = useBlockDiagram();
+		const {
+			headSnapshot,
+			tailSnapshot,
+			currentSnapshot,
+			maxCountSnapshots,
+			hooks,
+			snapshotHandler,
+			revertHandler,
+			setHistoryHandlers,
+			historyCurrentState
+		} = instance;
+		const {
+			snapshotHandler: newSnapshotHandler = null,
+			revertHandler: newRevertHandler = null,
+			emptyHistorySnapshot = commonEmptyHistorySnapshot,
+			maxCount
+		} = options;
+		setHandlers({
+			});
+		maxCountSnapshots.value = maxCount || ui_vue3.toValue(maxCountSnapshots);
+		const hasNext = ui_vue3.computed(() => ui_vue3.toValue(currentSnapshot) && ui_vue3.toValue(currentSnapshot).next !== null);
+		const hasPrev = ui_vue3.computed(() => ui_vue3.toValue(currentSnapshot) && ui_vue3.toValue(currentSnapshot).prev !== null);
+		function setHandlers(newHandlerOptions) {
+			const handlerOptions = {
+				snapshotHandler: newHandlerOptions.snapshotHandler ?? ui_vue3.toValue(snapshotHandler) ?? commonSnapshotHandler,
+				revertHandler: newHandlerOptions.revertHandler ?? ui_vue3.toValue(revertHandler) ?? commonRevertHandler
+			};
+			setHistoryHandlers(handlerOptions);
+		}
+		function getCountSnapshots() {
+			let count = 0;
+			let current = ui_vue3.toValue(headSnapshot);
+			while (current) {
+				current = current.next;
+				count += 1;
+			}
+			return count;
+		}
+		function makeSnapshot(options = {}) {
+			const {
+				snapshotHandler: newSnapshotHandler = null,
+				revertHandler: newRevertHandler = null,
+				emptySnapshot: newEmptySnapshot = null
+			} = options;
+			const snapshotHistoryHandler = newSnapshotHandler || ui_vue3.toValue(snapshotHandler);
+			const revertHistoryHandler = newRevertHandler || ui_vue3.toValue(revertHandler);
+			const emptySnapshot = newEmptySnapshot || emptyHistorySnapshot;
+			const newSnapshot = ui_vue3.markRaw({
+				snapshot: snapshotHistoryHandler(ui_vue3.toValue(historyCurrentState)),
+				revertHandler: revertHistoryHandler,
+				emptySnapshot,
+				next: null,
+				prev: tailSnapshot.value
+			});
+			if (ui_vue3.toValue(currentSnapshot) && ui_vue3.toValue(currentSnapshot)?.next !== null) {
+				currentSnapshot.value.next = newSnapshot;
+				newSnapshot.prev = currentSnapshot.value;
+				tailSnapshot.value.prev = null;
+				tailSnapshot.value.next = null;
+				tailSnapshot.value = newSnapshot;
+			} else if (ui_vue3.toValue(headSnapshot) === null) {
+				headSnapshot.value = newSnapshot;
+				tailSnapshot.value = newSnapshot;
+			} else {
+				tailSnapshot.value.next = newSnapshot;
+				tailSnapshot.value = newSnapshot;
+			}
+			currentSnapshot.value = newSnapshot;
+			if (getCountSnapshots() <= ui_vue3.toValue(maxCountSnapshots) + 1) {
+				return;
+			}
+			const firstSnapshot = headSnapshot.value;
+			headSnapshot.value = firstSnapshot.next;
+			headSnapshot.value.prev = null;
+			firstSnapshot.next = null;
+		}
+		async function revertState({
+			revertHandler,
+			snapshot,
+			emptySnapshot
+		}) {
+			revertHandler(emptySnapshot);
+			await ui_vue3.nextTick();
+			revertHandler(snapshot);
+		}
+		async function next() {
+			if (ui_vue3.toValue(currentSnapshot) === null || ui_vue3.toValue(currentSnapshot).next === null) {
+				return;
+			}
+			await revertState(ui_vue3.toValue(currentSnapshot).next);
+			currentSnapshot.value = ui_vue3.toValue(currentSnapshot).next;
+			hooks.historyNext.trigger(currentSnapshot.value);
+		}
+		async function prev() {
+			if (ui_vue3.toValue(currentSnapshot) === null || ui_vue3.toValue(currentSnapshot).prev === null) {
+				return;
+			}
+			await revertState(ui_vue3.toValue(currentSnapshot).prev);
+			currentSnapshot.value = ui_vue3.toValue(currentSnapshot).prev;
+			hooks.historyPrev.trigger(currentSnapshot.value);
+		}
+		function clear() {
+			headSnapshot.value = null;
+			tailSnapshot.value = null;
+			currentSnapshot.value = null;
+		}
+		return {
+			hasNext,
+			hasPrev,
+			setHandlers,
+			makeSnapshot: () => ui_vue3.nextTick(() => makeSnapshot()),
+			next,
+			prev,
+			clear,
+			commonSnapshotHandler,
+			commonRevertHandler
+		};
 	}
 
 	/* eslint-disable no-param-reassign */
 	// eslint-disable-next-line max-lines-per-function
 	function useActions({
-	  state,
-	  getters,
-	  hooks
+		state,
+		getters,
+		hooks
 	}) {
-	  function setState(options) {
-	    state.blocks = ui_vue3.toValue(options.blocks);
-	    state.connections = ui_vue3.toValue(options.connections);
-	    state.transformX = options.transform.x;
-	    state.transformY = options.transfrom.y;
-	    state.zoom = ui_vue3.toValue(options.zoom);
-	  }
-	  function setUnmountedBlocks(newBlocks, oldBlocks) {
-	    const oldBlockIdsMap = new Set(oldBlocks.map(block => block.id));
-	    const arrWaitedBlockIds = newBlocks.filter(block => !oldBlockIdsMap.has(block.id)).map(block => block.id);
-	    state.waitAllBlocksMounted = Promise.withResolvers();
-	    state.waitedBlockIds = new Set(arrWaitedBlockIds);
-	  }
-	  function blockMounted(blockId) {
-	    const {
-	      waitedBlockIds,
-	      waitAllBlocksMounted
-	    } = state;
-	    waitedBlockIds.delete(blockId);
-	    if (waitedBlockIds.size === 0) {
-	      waitAllBlocksMounted.resolve();
-	    }
-	  }
-	  function setUnmountedPorts(newBlocks, oldBlocks) {
-	    const oldBlockPortsIds = oldBlocks.reduce((accMap, block) => {
-	      block.ports.forEach(port => accMap.add(`${block.id}_${port.id}`));
-	      return accMap;
-	    }, new Set());
-	    const arrNewBlockPortIds = newBlocks.flatMap(block => block.ports.map(port => `${block.id}_${port.id}`)).filter(blockPortId => !oldBlockPortsIds.has(blockPortId));
-	    state.waitedBlockPortsIds = new Set(arrNewBlockPortIds);
-	    state.waitAllPortsMounted = Promise.withResolvers();
-	  }
-	  function portMounted(blockId, portId) {
-	    const {
-	      waitedBlockPortsIds,
-	      waitAllPortsMounted
-	    } = state;
-	    waitedBlockPortsIds.delete(`${blockId}_${portId}`);
-	    if (waitedBlockPortsIds.size === 0) {
-	      waitAllPortsMounted.resolve();
-	    }
-	  }
-	  function setConnectionsOffsets(connections) {
-	    const {
-	      connectionOffset,
-	      connectionBendOffset
-	    } = state;
-	    state.connectionsOffsetMap = connections.reduce((accMap, connection) => {
-	      const {
-	        id,
-	        sourceBlockId,
-	        sourcePortId,
-	        targetBlockId,
-	        targetPortId
-	      } = connection;
-	      accMap[sourceBlockId] = sourceBlockId in accMap ? accMap[sourceBlockId] : {};
-	      accMap[sourceBlockId][sourcePortId] = sourcePortId in accMap[sourceBlockId] ? accMap[sourceBlockId][sourcePortId] : {};
-	      accMap[targetBlockId] = targetBlockId in accMap ? accMap[targetBlockId] : {};
-	      accMap[targetBlockId][targetPortId] = targetPortId in accMap[targetBlockId] ? accMap[targetBlockId][targetPortId] : {};
-	      const sourceConnectionsCount = Object.keys(accMap[sourceBlockId][sourcePortId]).length + 1;
-	      const targetConnectionsCount = Object.keys(accMap[targetBlockId][targetPortId]).length + 1;
-	      accMap[sourceBlockId][sourcePortId][id] = {
-	        firstSegmentSize: sourceConnectionsCount * connectionOffset,
-	        secondSegmentSize: connectionBendOffset * connectionOffset,
-	        secondSegmentOrder: sourceConnectionsCount
-	      };
-	      accMap[targetBlockId][targetPortId][id] = {
-	        firstSegmentSize: targetConnectionsCount * connectionOffset,
-	        secondSegmentSize: connectionBendOffset * connectionOffset,
-	        secondSegmentOrder: targetConnectionsCount
-	      };
-	      return accMap;
-	    }, {});
-	  }
-	  function setHistoryBlocksCurrentState(blocks) {
-	    state.historyCurrentState.blocks = ui_vue3.markRaw(JSON.parse(JSON.stringify(blocks)));
-	  }
-	  function setHistoryConnectionsCurrentState(connections) {
-	    state.historyCurrentState.connections = ui_vue3.markRaw(JSON.parse(JSON.stringify(connections)));
-	  }
-	  function updateCanvasTransform(transform) {
-	    const {
-	      x = 0,
-	      y = 0,
-	      zoom = 1,
-	      viewportX = 0,
-	      viewportY = 0
-	    } = transform;
-	    state.transformX = x;
-	    state.transformY = y;
-	    state.viewportX = viewportX;
-	    state.viewportY = viewportY;
-	    state.zoom = zoom;
-	  }
-	  const isExistConnection = connection => {
-	    const {
-	      sourceBlockId,
-	      sourcePortId,
-	      targetBlockId,
-	      targetPortId
-	    } = connection;
-	    return state.connections.some(({
-	      sourceBlockId: exSourceBlockId,
-	      sourcePortId: exSourcePortId,
-	      targetBlockId: exTargetBlockId,
-	      targetPortId: exTargetPortId
-	    }) => {
-	      const isSource = exSourceBlockId === sourceBlockId && exSourcePortId === sourcePortId && exTargetBlockId === targetBlockId && exTargetPortId === targetPortId;
-	      const isTarget = exSourceBlockId === targetBlockId && exSourcePortId === targetPortId && exTargetBlockId === sourceBlockId && exTargetPortId === sourcePortId;
-	      return isSource || isTarget;
-	    });
-	  };
-	  const addConnection = newConnection => {
-	    if (!isExistConnection(newConnection)) {
-	      hooks.changedConnections.trigger(commandPush(newConnection));
-	      hooks.createConnection.trigger(newConnection);
-	    }
-	  };
-	  const deleteConnectionById = connectionId => {
-	    const connections = state.connections.filter(connection => connection.id !== connectionId);
-	    hooks.changedConnections.trigger(commandReplace(connections));
-	    hooks.deleteConnection.trigger(connectionId);
-	  };
-	  const deleteConnectionByBlockIdAndPortId = (blockId, portId) => {
-	    var _block$ports$input, _block$ports, _block$ports$output, _block$ports2;
-	    const block = state.blocks.find(stateBlock => stateBlock.id === blockId);
-	    if (!block) {
-	      return;
-	    }
-	    const portIdMap = new Set([...((_block$ports$input = (_block$ports = block.ports) == null ? void 0 : _block$ports.input) != null ? _block$ports$input : []), ...((_block$ports$output = (_block$ports2 = block.ports) == null ? void 0 : _block$ports2.output) != null ? _block$ports$output : [])].map(port => port.id));
-	    const newConnections = state.connections.filter(connection => {
-	      const {
-	        sourceBlockId,
-	        sourcePortId,
-	        targetBlockId,
-	        targetPortId
-	      } = connection;
-	      const isSource = sourceBlockId === blockId && portIdMap.has(sourcePortId);
-	      const isTarget = targetBlockId === blockId && portIdMap.has(targetPortId);
-	      return !isSource && !isTarget;
-	    });
-	    hooks.changedConnections.trigger(commandReplace(newConnections));
-	  };
-	  const deleteBlockById = blockId => {
-	    const blockIndex = state.blocks.findIndex(block => block.id === blockId);
-	    if (blockIndex === -1) {
-	      return;
-	    }
-	    deleteConnectionByBlockIdAndPortId(blockId);
-	    hooks.changedBlocks.trigger(commandDeleteByIndex(blockIndex));
-	    hooks.deleteBlock.trigger(blockId);
-	  };
-	  const addBlock = block => {
-	    hooks.changedBlocks.trigger(commandPush(block));
-	    hooks.addBlock.trigger(block);
-	  };
-	  const updateBlockPositionByIndex = (index, x, y) => {
-	    state.blocks[index].position.x = x;
-	    state.blocks[index].position.y = y;
-	  };
-	  const updateBlock = newBlock => {
-	    const blockIndex = state.blocks.findIndex(block => block.id === newBlock.id);
-	    if (blockIndex === -1) {
-	      return;
-	    }
-	    hooks.changedBlocks.trigger(commandUpdateByIndex(blockIndex, newBlock));
-	    hooks.updateBlock.trigger(newBlock);
-	  };
-	  const transformEventToPoint = point => {
-	    var _toValue$getBoundingC, _toValue;
-	    let transformedX = Math.round(point.clientX / ui_vue3.toValue(state.zoom));
-	    let transformedY = Math.round(point.clientY / ui_vue3.toValue(state.zoom));
-	    const {
-	      top,
-	      left
-	    } = (_toValue$getBoundingC = (_toValue = ui_vue3.toValue(state.blockDiagramRef)) == null ? void 0 : _toValue.getBoundingClientRect()) != null ? _toValue$getBoundingC : {
-	      top: 0,
-	      left: 0
-	    };
-	    transformedX -= Math.round(left / ui_vue3.toValue(state.zoom));
-	    transformedY -= Math.round(top / ui_vue3.toValue(state.zoom));
-	    return {
-	      x: transformedX,
-	      y: transformedY
-	    };
-	  };
-	  const setMovingBlock = block => {
-	    state.movingBlock = ui_vue3.toRaw({
-	      ...block
-	    });
-	    const movingConnections = [];
-	    block.ports.forEach(port => {
-	      const connections = state.connections.filter(connection => {
-	        const {
-	          targetBlockId,
-	          targetPortId,
-	          sourceBlockId,
-	          sourcePortId
-	        } = connection;
-	        const isTarget = targetBlockId === block.id && targetPortId === port.id;
-	        const isSource = sourceBlockId === block.id && sourcePortId === port.id;
-	        return isTarget || isSource;
-	      });
-	      movingConnections.push(...connections);
-	    });
-	    state.movingConnections = movingConnections;
-	  };
-	  const updateMovingBlockPosition = (x, y) => {
-	    state.movingBlock.position.x = x;
-	    state.movingBlock.position.y = y;
-	  };
-	  const updateBlockRectById = (blockId, rect) => {
-	    state.blocksRectMap[blockId] = {
-	      ...state.blocksRectMap[blockId],
-	      ...rect
-	    };
-	  };
-	  const resetMovingBlock = () => {
-	    state.movingBlock = null;
-	    state.movingConnections = [];
-	  };
-	  const setHistoryHandlers = ({
-	    snapshotHandler: newSnapshotHandler = null,
-	    revertHandler: newRevertHandler = null
-	  }) => {
-	    state.snapshotHandler = newSnapshotHandler || state.snapshotHandler;
-	    state.revertHandler = newRevertHandler || state.revertHandler;
-	  };
-	  const setPortOffsetByBlockId = (blockId, offsets) => {
-	    var _toValue$blockId, _toValue2;
-	    const ports = (_toValue$blockId = (_toValue2 = ui_vue3.toValue(state.portsRectMap)) == null ? void 0 : _toValue2[blockId]) != null ? _toValue$blockId : {};
-	    Object.entries(ports).forEach(([id, portRect]) => {
-	      ports[id].x = portRect.x - offsets.x;
-	      ports[id].y = portRect.y - offsets.y;
-	    });
-	  };
-	  const updateBlockRect = blockId => {
-	    var _toValue$get$getBound, _toValue$get;
-	    const {
-	      blockElMap,
-	      blocksRectMap,
-	      zoom,
-	      transformX,
-	      transformY,
-	      blockDiagramLeft,
-	      blockDiagramTop,
-	      boxIntersection,
-	      blocks
-	    } = state;
-	    const {
-	      x = 0,
-	      y = 0,
-	      width = 0,
-	      height = 0
-	    } = (_toValue$get$getBound = (_toValue$get = ui_vue3.toValue(blockElMap).get(ui_vue3.toValue(blockId))) == null ? void 0 : _toValue$get.getBoundingClientRect()) != null ? _toValue$get$getBound : {};
-	    blocksRectMap[ui_vue3.toValue(blockId)] = {
-	      x: x / ui_vue3.toValue(zoom) + ui_vue3.toValue(transformX) - ui_vue3.toValue(blockDiagramLeft) / ui_vue3.toValue(zoom),
-	      y: y / ui_vue3.toValue(zoom) + ui_vue3.toValue(transformY) - ui_vue3.toValue(blockDiagramTop) / ui_vue3.toValue(zoom),
-	      width,
-	      height
-	    };
-	    boxIntersection == null ? void 0 : boxIntersection.update(ui_vue3.toValue(blockId), {
-	      width: width / zoom,
-	      height: height / zoom
-	    });
-	    const block = ui_vue3.toValue(blocks).find(b => b.id === ui_vue3.toValue(blockId));
-	    block.dimensions.width = width / zoom;
-	    block.dimensions.height = height / zoom;
-	  };
-	  const updatePort = (blockId, portId, order = 0) => {
-	    updateBlockRect(blockId);
-	    updatePortRect(blockId, portId);
-	    updatePortSegmentSizes(blockId, portId, order);
-	  };
-	  const updatePortRect = (blockId, portId) => {
-	    var _portsElMap$get$get$g, _portsElMap$get, _portsElMap$get$get;
-	    const {
-	      portsElMap,
-	      portsRectMap,
-	      blockDiagramLeft,
-	      blockDiagramTop,
-	      zoom,
-	      transformX,
-	      transformY
-	    } = state;
-	    const hasBlock = ui_vue3.toValue(portsElMap).has(blockId);
-	    const hasPort = hasBlock && ui_vue3.toValue(portsElMap).get(blockId).has(portId);
-	    if (!hasBlock || !hasPort) {
-	      return;
-	    }
-	    const {
-	      x = 0,
-	      y = 0,
-	      width = 0,
-	      height = 0
-	    } = (_portsElMap$get$get$g = (_portsElMap$get = portsElMap.get(blockId)) == null ? void 0 : (_portsElMap$get$get = _portsElMap$get.get(portId)) == null ? void 0 : _portsElMap$get$get.getBoundingClientRect()) != null ? _portsElMap$get$get$g : {};
-	    portsRectMap[blockId][portId].x = x / zoom + ui_vue3.toValue(transformX) - ui_vue3.toValue(blockDiagramLeft) / zoom;
-	    portsRectMap[blockId][portId].y = y / zoom + ui_vue3.toValue(transformY) - ui_vue3.toValue(blockDiagramTop) / zoom;
-	    portsRectMap[blockId][portId].width = width;
-	    portsRectMap[blockId][portId].height = height;
-	  };
-	  const updatePortSegmentSizes = (blockId, portId, order) => {
-	    const {
-	      connectionOffset,
-	      connectionBendOffset,
-	      blocksRectMap,
-	      portsRectMap
-	    } = state;
-	    const {
-	      x: blockX,
-	      y: blockY,
-	      width: blockWidth,
-	      height: blockHeight
-	    } = blocksRectMap[blockId];
-	    const {
-	      x: portX,
-	      y: portY,
-	      width: portWidth,
-	      height: portHeight,
-	      position
-	    } = portsRectMap[blockId][portId];
-	    const isLeftOrRightPosition = position === PORT_POSITION.LEFT || position === PORT_POSITION.RIGHT;
-	    const additionalOffset = (order + 1) * connectionOffset;
-	    const additionalBendOffset = (order + 1) * connectionBendOffset;
-	    const offset = isLeftOrRightPosition ? Math.abs(blockY - (portY + portHeight / 2)) : Math.abs(blockX - (portX + portWidth / 2));
-	    portsRectMap[blockId][portId].firstSegmentSize = additionalOffset;
-	    portsRectMap[blockId][portId].secondSegmentSizeWithoutOffset = isLeftOrRightPosition ? blockHeight - offset : blockWidth - offset;
-	    portsRectMap[blockId][portId].secondSegmentSize = isLeftOrRightPosition ? blockHeight - offset + additionalBendOffset : blockWidth - offset + additionalBendOffset;
-	  };
-	  const setSelectionActive = value => {
-	    state.isSelectionActive = value;
-	  };
-	  const setSelectionWorldRect = rect => {
-	    state.selectionWorldRect = rect;
-	  };
-	  const setCamera = params => {
-	    var _toValue3;
-	    (_toValue3 = ui_vue3.toValue(state.canvasInstance)) == null ? void 0 : _toValue3.setCamera(params);
-	  };
-	  const autoScroll = useAutoScroll(state, {
-	    setCamera
-	  });
-	  const updateTree = blocks => {
-	    ui_vue3.toValue(state.boxIntersection).updateTree(blocks);
-	  };
-	  const calculateIntersectedBlockIds = () => {
-	    const {
-	      transformX,
-	      transformY,
-	      zoom,
-	      canvasWidth,
-	      canvasHeight,
-	      boxIntersection
-	    } = state;
-	    boxIntersection.calculateIntersectedBlockIds({
-	      transformX,
-	      transformY,
-	      zoom,
-	      width: canvasWidth,
-	      height: canvasHeight
-	    });
-	  };
-	  const updateBlockRectangle = (blockId, rect) => {
-	    ui_vue3.toValue(state.boxIntersection).updateRectangle(blockId, rect);
-	  };
-	  return {
-	    setState,
-	    setConnectionsOffsets,
-	    setHistoryBlocksCurrentState,
-	    setHistoryConnectionsCurrentState,
-	    setUnmountedBlocks,
-	    blockMounted,
-	    setUnmountedPorts,
-	    portMounted,
-	    updateCanvasTransform,
-	    isExistConnection,
-	    addConnection,
-	    deleteConnectionById,
-	    addBlock,
-	    updateBlockPositionByIndex,
-	    updateBlock,
-	    deleteBlockById,
-	    transformEventToPoint,
-	    setMovingBlock,
-	    updateMovingBlockPosition,
-	    resetMovingBlock,
-	    setHistoryHandlers,
-	    setPortOffsetByBlockId,
-	    updatePort,
-	    updatePortRect,
-	    updateBlockRectById,
-	    updatePortSegmentSizes,
-	    setSelectionActive,
-	    setSelectionWorldRect,
-	    startAutoScroll: autoScroll.start,
-	    stopAutoScroll: autoScroll.stop,
-	    updateMousePosition: autoScroll.updateMousePosition,
-	    setCamera,
-	    updateTree,
-	    updateBlockRectangle,
-	    calculateIntersectedBlockIds
-	  };
-	}
-
-	function useGetters(state) {
-	  const transform = ui_vue3.computed(() => ({
-	    x: state.transformX,
-	    y: state.transformY,
-	    zoom: state.zoom,
-	    viewportX: state.viewportX,
-	    viewportY: state.viewportY
-	  }));
-	  const canvasId = ui_vue3.computed(() => {
-	    var _state$canvasRef$canv, _state$canvasRef;
-	    return (_state$canvasRef$canv = (_state$canvasRef = state.canvasRef) == null ? void 0 : _state$canvasRef.canvasId) != null ? _state$canvasRef$canv : null;
-	  });
-	  const isMakeNewConnection = ui_vue3.computed(() => {
-	    return state.newConnection !== null;
-	  });
-	  const groupedBlocks = ui_vue3.computed(() => {
-	    return state.blocks.reduce((acc, block) => {
-	      var _block$type;
-	      if (state.boxIntersection) {
-	        const intersectedBlocksIds = state.boxIntersection.intersectedBlocksIds;
-	        if (!intersectedBlocksIds.value.has(block.id)) {
-	          return acc;
-	        }
-	      }
-	      const type = (_block$type = block == null ? void 0 : block.type) != null ? _block$type : BLOCK_GROUP_DEFAULT_NAME;
-	      if (type in acc) {
-	        acc[type] = [...acc[type], block];
-	      } else {
-	        acc[type] = [block];
-	      }
-	      return acc;
-	    }, {
-	      [BLOCK_GROUP_DEFAULT_NAME]: []
-	    });
-	  });
-	  const blockGroupNames = ui_vue3.computed(() => {
-	    return Object.keys(ui_vue3.toValue(groupedBlocks));
-	  });
-	  const groupedConnections = ui_vue3.computed(() => {
-	    return state.connections.reduce((acc, connection) => {
-	      var _connection$type;
-	      const type = (_connection$type = connection == null ? void 0 : connection.type) != null ? _connection$type : CONNECTION_GROUP_DEFAULT_NAME;
-	      if (type in acc) {
-	        acc[type] = [...acc[type], connection];
-	      } else {
-	        acc[type] = [connection];
-	      }
-	      return acc;
-	    }, {
-	      [CONNECTION_GROUP_DEFAULT_NAME]: []
-	    });
-	  });
-	  const connectionGroupNames = ui_vue3.computed(() => {
-	    return Object.keys(ui_vue3.toValue(groupedConnections));
-	  });
-	  const isAnimate = ui_vue3.computed(() => {
-	    return state.animationQueue !== null;
-	  });
-	  const isBoxIntersection = ui_vue3.computed(() => {
-	    return state.boxIntersection !== null;
-	  });
-	  const isDisabledBlockDiagram = ui_vue3.computed(() => {
-	    return state.isDisabled || ui_vue3.toValue(isAnimate);
-	  });
-	  const connectionOffsets = ui_vue3.computed(() => {
-	    return state.connections.reduce((connectionsMap, connection) => {
-	      var _toValue$sourceBlockI, _toValue, _toValue$sourceBlockI2, _toValue2, _toValue2$sourceBlock;
-	      const {
-	        sourceBlockId,
-	        sourcePortId
-	      } = connection;
-	      const {
-	        height: blockHeight = 0,
-	        y: blockTop = 0
-	      } = (_toValue$sourceBlockI = (_toValue = ui_vue3.toValue(state.blocksRectMap)) == null ? void 0 : _toValue[sourceBlockId]) != null ? _toValue$sourceBlockI : {};
-	      const {
-	        y: portTop = 0
-	      } = (_toValue$sourceBlockI2 = (_toValue2 = ui_vue3.toValue(state.portsRectMap)) == null ? void 0 : (_toValue2$sourceBlock = _toValue2[sourceBlockId]) == null ? void 0 : _toValue2$sourceBlock[sourcePortId]) != null ? _toValue$sourceBlockI2 : {};
-
-	      // state.blocksRectMap
-	      // state.portsRectMap
-
-	      connectionsMap[connection.id] = {
-	        offsetDown: blockHeight - (Math.abs(portTop - blockTop) + 9)
-	      };
-	      return connectionsMap;
-	    }, {});
-	  });
-	  return {
-	    transform,
-	    canvasId,
-	    groupedBlocks,
-	    blockGroupNames,
-	    groupedConnections,
-	    connectionGroupNames,
-	    isAnimate,
-	    isBoxIntersection,
-	    isDisabledBlockDiagram,
-	    isMakeNewConnection,
-	    connectionOffsets
-	  };
-	}
-
-	function useHooks() {
-	  return {
-	    [HOOK_NAMES.START_DRAG_BLOCK]: createHook(),
-	    [HOOK_NAMES.MOVE_DRAG_BLOCK]: createHook(),
-	    [HOOK_NAMES.END_DRAG_BLOCK]: createHook(),
-	    [HOOK_NAMES.ADD_BLOCK]: createHook(),
-	    [HOOK_NAMES.UPDATE_BLOCK]: createHook(),
-	    [HOOK_NAMES.DELETE_BLOCK]: createHook(),
-	    [HOOK_NAMES.CREATE_CONNECTION]: createHook(),
-	    [HOOK_NAMES.DELETE_CONNECTION]: createHook(),
-	    [HOOK_NAMES.CHANGED_BLOCKS]: createHook(),
-	    [HOOK_NAMES.CHANGED_CONNECTIONS]: createHook(),
-	    [HOOK_NAMES.BLOCK_TRANSITION_START]: createHook(),
-	    [HOOK_NAMES.BLOCK_TRANSITION_END]: createHook(),
-	    [HOOK_NAMES.CONNECTION_TRANSITION_START]: createHook(),
-	    [HOOK_NAMES.CONNECTION_TRANSITION_END]: createHook(),
-	    [HOOK_NAMES.DROP_NEW_BLOCK]: createHook()
-	  };
-	}
-
-	function useBlockDiagram(options) {
-	  var _getCurrentInstance, _app$config$globalPro, _app$config, _app$config$globalPro2, _app$config$globalPro3;
-	  const app = (_getCurrentInstance = ui_vue3.getCurrentInstance()) == null ? void 0 : _getCurrentInstance.appContext.app;
-	  const blockDiagramState = (_app$config$globalPro = app == null ? void 0 : (_app$config = app.config) == null ? void 0 : (_app$config$globalPro2 = _app$config.globalProperties) == null ? void 0 : _app$config$globalPro2.$blockDiagram) != null ? _app$config$globalPro : null;
-	  if (blockDiagramState !== null) {
-	    return blockDiagramState;
-	  }
-	  const state = useState(options);
-	  const reactiveState = ui_vue3.reactive(state);
-	  const getters = useGetters(reactiveState);
-	  const hooks = useHooks();
-	  const actions = useActions({
-	    state: reactiveState,
-	    getters,
-	    hooks
-	  });
-	  if (options) {
-	    actions.setState(options);
-	  }
-	  app.config.globalProperties.$blockDiagram = {
-	    ...ui_vue3.toRefs(reactiveState),
-	    ...getters,
-	    ...actions,
-	    hooks
-	  };
-	  app.config.globalProperties.$blockDiagramTestId = (id, ...args) => {
-	    if (!id) {
-	      throw new Error('ui.block-diagram not found test id');
-	    }
-	    const preparedArgs = args.reduce((acc, arg) => {
-	      return `${acc}-${arg}`;
-	    }, '');
-	    return `${id}${preparedArgs}`;
-	  };
-	  return (_app$config$globalPro3 = app.config.globalProperties) == null ? void 0 : _app$config$globalPro3.$blockDiagram;
+		function setState(options) {
+			state.blocks = ui_vue3.toValue(options.blocks);
+			state.connections = ui_vue3.toValue(options.connections);
+			state.transformX = options.transform.x;
+			state.transformY = options.transfrom.y;
+			state.zoom = ui_vue3.toValue(options.zoom);
+		}
+		function setUnmountedBlocks(newBlocks, oldBlocks = []) {
+			const oldBlockIdsMap = new Set(oldBlocks.map(block => block.id));
+			const arrWaitedBlockIds = newBlocks.filter(block => !oldBlockIdsMap.has(block.id)).map(block => block.id);
+			state.waitAllBlocksMounted = Promise.withResolvers();
+			state.waitedBlockIds = new Set(arrWaitedBlockIds);
+		}
+		function blockMounted(blockId) {
+			const {
+				waitedBlockIds,
+				waitAllBlocksMounted
+			} = state;
+			waitedBlockIds.delete(blockId);
+			if (waitedBlockIds.size === 0) {
+				waitAllBlocksMounted.resolve();
+			}
+		}
+		function setUnmountedPorts(newBlocks, oldBlocks = []) {
+			const oldBlockPortsIds = oldBlocks.reduce((accMap, block) => {
+				block.ports.forEach(port => accMap.add(`${block.id}_${port.id}`));
+				return accMap;
+			}, new Set());
+			const arrNewBlockPortIds = newBlocks.flatMap(block => block.ports.map(port => `${block.id}_${port.id}`)).filter(blockPortId => !oldBlockPortsIds.has(blockPortId));
+			state.waitedBlockPortsIds = new Set(arrNewBlockPortIds);
+			state.waitAllPortsMounted = Promise.withResolvers();
+		}
+		function portMounted(blockId, portId) {
+			const {
+				waitedBlockPortsIds,
+				waitAllPortsMounted
+			} = state;
+			waitedBlockPortsIds.delete(`${blockId}_${portId}`);
+			if (waitedBlockPortsIds.size === 0) {
+				waitAllPortsMounted.resolve();
+			}
+		}
+		function setConnectionsOffsets(connections) {
+			const {
+				connectionOffset,
+				connectionBendOffset
+			} = state;
+			state.connectionsOffsetMap = connections.reduce((accMap, connection) => {
+				const {
+					id,
+					sourceBlockId,
+					sourcePortId,
+					targetBlockId,
+					targetPortId
+				} = connection;
+				accMap[sourceBlockId] = sourceBlockId in accMap ? accMap[sourceBlockId] : {};
+				accMap[sourceBlockId][sourcePortId] = sourcePortId in accMap[sourceBlockId] ? accMap[sourceBlockId][sourcePortId] : {};
+				accMap[targetBlockId] = targetBlockId in accMap ? accMap[targetBlockId] : {};
+				accMap[targetBlockId][targetPortId] = targetPortId in accMap[targetBlockId] ? accMap[targetBlockId][targetPortId] : {};
+				const sourceConnectionsCount = Object.keys(accMap[sourceBlockId][sourcePortId]).length + 1;
+				const targetConnectionsCount = Object.keys(accMap[targetBlockId][targetPortId]).length + 1;
+				accMap[sourceBlockId][sourcePortId][id] = {
+					firstSegmentSize: sourceConnectionsCount * connectionOffset,
+					secondSegmentSize: connectionBendOffset * connectionOffset,
+					secondSegmentOrder: sourceConnectionsCount
+				};
+				accMap[targetBlockId][targetPortId][id] = {
+					firstSegmentSize: targetConnectionsCount * connectionOffset,
+					secondSegmentSize: connectionBendOffset * connectionOffset,
+					secondSegmentOrder: targetConnectionsCount
+				};
+				return accMap;
+			}, {});
+		}
+		function setHistoryBlocksCurrentState(blocks) {
+			state.historyCurrentState.blocks = ui_vue3.markRaw(JSON.parse(JSON.stringify(blocks)));
+		}
+		function setHistoryConnectionsCurrentState(connections) {
+			state.historyCurrentState.connections = ui_vue3.markRaw(JSON.parse(JSON.stringify(connections)));
+		}
+		function updateCanvasTransform(transform) {
+			const {
+				x = 0,
+				y = 0,
+				zoom = 1,
+				viewportX = 0,
+				viewportY = 0
+			} = transform;
+			state.transformX = x;
+			state.transformY = y;
+			state.viewportX = viewportX;
+			state.viewportY = viewportY;
+			state.zoom = zoom;
+		}
+		const isExistConnection = connection => {
+			const {
+				sourceBlockId,
+				sourcePortId,
+				targetBlockId,
+				targetPortId
+			} = connection;
+			return state.connections.some(({
+				sourceBlockId: exSourceBlockId,
+				sourcePortId: exSourcePortId,
+				targetBlockId: exTargetBlockId,
+				targetPortId: exTargetPortId
+			}) => {
+				const isSource = exSourceBlockId === sourceBlockId && exSourcePortId === sourcePortId && exTargetBlockId === targetBlockId && exTargetPortId === targetPortId;
+				const isTarget = exSourceBlockId === targetBlockId && exSourcePortId === targetPortId && exTargetBlockId === sourceBlockId && exTargetPortId === sourcePortId;
+				return isSource || isTarget;
+			});
+		};
+		const addConnection = newConnection => {
+			if (!isExistConnection(newConnection)) {
+				hooks.changedConnections.trigger(commandPush(newConnection));
+				hooks.createConnection.trigger(newConnection);
+			}
+		};
+		const addConnections = newConnections => {
+			const notExistConnections = ui_vue3.toValue(newConnections).filter(connection => !isExistConnection(connection));
+			if (notExistConnections.length > 0) {
+				setConnectionsOffsets(notExistConnections);
+				hooks.changedConnections.trigger(commandPush(notExistConnections));
+				hooks.addConnections.trigger(notExistConnections);
+			}
+		};
+		const deleteConnectionById = connectionId => {
+			const connections = state.connections.filter(connection => connection.id !== connectionId);
+			hooks.changedConnections.trigger(commandReplace(connections));
+			hooks.deleteConnection.trigger(connectionId);
+		};
+		const deleteConnectionByBlockIdAndPortId = (blockId, portId) => {
+			const block = state.blocks.find(stateBlock => stateBlock.id === blockId);
+			if (!block) {
+				return;
+			}
+			const portIdMap = new Set([...(block.ports?.input ?? []), ...(block.ports?.output ?? [])].map(port => port.id));
+			const newConnections = state.connections.filter(connection => {
+				const {
+					sourceBlockId,
+					sourcePortId,
+					targetBlockId,
+					targetPortId
+				} = connection;
+				const isSource = sourceBlockId === blockId && portIdMap.has(sourcePortId);
+				const isTarget = targetBlockId === blockId && portIdMap.has(targetPortId);
+				return !isSource && !isTarget;
+			});
+			hooks.changedConnections.trigger(commandReplace(newConnections));
+		};
+		const deleteBlockById = blockId => {
+			const blockIndex = state.blocks.findIndex(block => block.id === blockId);
+			if (blockIndex === -1) {
+				return;
+			}
+			deleteConnectionByBlockIdAndPortId(blockId);
+			hooks.changedBlocks.trigger(commandDeleteByIndex(blockIndex));
+			hooks.deleteBlock.trigger(state.blocks[blockIndex]);
+		};
+		const addBlock = block => {
+			setUnmountedPorts([block]);
+			setUnmountedBlocks([block]);
+			hooks.changedBlocks.trigger(commandPush(block));
+			hooks.addBlock.trigger(block);
+		};
+		const addBlocks = blocks => {
+			setUnmountedPorts(blocks);
+			setUnmountedBlocks(blocks);
+			hooks.changedBlocks.trigger(commandPush(blocks));
+			hooks.addBlocks.trigger(blocks);
+		};
+		const deleteBlock = block => {
+			deleteBlockById(ui_vue3.toValue(block).id);
+		};
+		const deleteBlocks = blocks => {
+			const deleteBlockMapIds = new Set(ui_vue3.toValue(blocks).map(block => block.id));
+			hooks.changedBlocks.trigger(commandReplace(state.blocks.filter(block => !deleteBlockMapIds.has(block.id))));
+			hooks.deleteBlocks.trigger(blocks);
+		};
+		const addBlocksAndConnections = (newBlocks, newConnections) => {
+			addBlocks(newBlocks);
+			addConnections(newConnections);
+		};
+		const updateBlockPositionByIndex = (index, x, y) => {
+			state.blocks[index].position.x = x;
+			state.blocks[index].position.y = y;
+		};
+		const updateBlock = newBlock => {
+			const blockIndex = state.blocks.findIndex(block => block.id === newBlock.id);
+			if (blockIndex === -1) {
+				return;
+			}
+			hooks.updateBlock.trigger(state.blocks[blockIndex], newBlock);
+			hooks.changedBlocks.trigger(commandUpdateByIndex(blockIndex, newBlock));
+		};
+		const transformEventToPoint = point => {
+			let transformedX = Math.round(point.clientX / ui_vue3.toValue(state.zoom));
+			let transformedY = Math.round(point.clientY / ui_vue3.toValue(state.zoom));
+			const {
+				top,
+				left
+			} = ui_vue3.toValue(state.blockDiagramRef)?.getBoundingClientRect() ?? {
+				top: 0,
+				left: 0
+			};
+			transformedX -= Math.round(left / ui_vue3.toValue(state.zoom));
+			transformedY -= Math.round(top / ui_vue3.toValue(state.zoom));
+			return {
+				x: transformedX,
+				y: transformedY
+			};
+		};
+		const setMovingBlock = blockId => {
+			state.movingBlockId = ui_vue3.toValue(blockId);
+		};
+		const resetMovingBlock = () => {
+			state.movingBlockId = null;
+		};
+		const updateBlockRectById = (blockId, rect) => {
+			state.blocksRectMap[blockId] = {
+				...state.blocksRectMap[blockId],
+				...rect
+			};
+		};
+		const setHistoryHandlers = ({
+			snapshotHandler: newSnapshotHandler = null,
+			revertHandler: newRevertHandler = null
+		}) => {
+			state.snapshotHandler = newSnapshotHandler || state.snapshotHandler;
+			state.revertHandler = newRevertHandler || state.revertHandler;
+		};
+		const setPortOffsetByBlockId = (blockId, offsets) => {
+			const ports = ui_vue3.toValue(state.portsRectMap)?.[blockId] ?? {};
+			Object.entries(ports).forEach(([id, portRect]) => {
+				ports[id].x = portRect.x - offsets.x;
+				ports[id].y = portRect.y - offsets.y;
+			});
+		};
+		const updateBlockRect = blockId => {
+			const {
+				blockElMap,
+				blocksRectMap,
+				zoom,
+				transformX,
+				transformY,
+				blockDiagramLeft,
+				blockDiagramTop,
+				blocks
+			} = state;
+			const {
+				x: newX = 0,
+				y: newY = 0,
+				width: newWidth = 0,
+				height: newHeight = 0
+			} = ui_vue3.toValue(blockElMap).get(ui_vue3.toValue(blockId))?.getBoundingClientRect() ?? {};
+			const x = newX / ui_vue3.toValue(zoom) + ui_vue3.toValue(transformX) - ui_vue3.toValue(blockDiagramLeft) / ui_vue3.toValue(zoom);
+			const y = newY / ui_vue3.toValue(zoom) + ui_vue3.toValue(transformY) - ui_vue3.toValue(blockDiagramTop) / ui_vue3.toValue(zoom);
+			blocksRectMap[ui_vue3.toValue(blockId)] = {
+				x,
+				y,
+				width: newWidth,
+				height: newHeight
+			};
+			const block = ui_vue3.toValue(blocks).find(b => b.id === ui_vue3.toValue(blockId));
+			updateBlock({
+				...ui_vue3.toValue(block),
+				position: {
+					x,
+					y
+				},
+				dimensions: {
+					width: newWidth / zoom,
+					height: newHeight / zoom
+				}
+			});
+		};
+		const updatePort = (blockId, portId, order = 0) => {
+			updateBlockRect(blockId);
+			updatePortRect(blockId, portId);
+			updatePortSegmentSizes(blockId, portId, order);
+		};
+		const updatePortRect = (blockId, portId) => {
+			const {
+				portsElMap,
+				portsRectMap,
+				blockDiagramLeft,
+				blockDiagramTop,
+				zoom,
+				transformX,
+				transformY
+			} = state;
+			const hasBlock = ui_vue3.toValue(portsElMap).has(blockId);
+			const hasPort = hasBlock && ui_vue3.toValue(portsElMap).get(blockId).has(portId);
+			if (!hasBlock || !hasPort) {
+				return;
+			}
+			const {
+				x = 0,
+				y = 0,
+				width = 0,
+				height = 0
+			} = portsElMap.get(blockId)?.get(portId)?.getBoundingClientRect() ?? {};
+			portsRectMap[blockId][portId].x = x / zoom + ui_vue3.toValue(transformX) - ui_vue3.toValue(blockDiagramLeft) / zoom;
+			portsRectMap[blockId][portId].y = y / zoom + ui_vue3.toValue(transformY) - ui_vue3.toValue(blockDiagramTop) / zoom;
+			portsRectMap[blockId][portId].width = width / zoom;
+			portsRectMap[blockId][portId].height = height / zoom;
+		};
+		const updatePortSegmentSizes = (blockId, portId, order) => {
+			const {
+				connectionOffset,
+				connectionBendOffset,
+				blocksRectMap,
+				portsRectMap
+			} = state;
+			if (!blocksRectMap[blockId] || !portsRectMap[blockId]?.[portId]) {
+				return;
+			}
+			const {
+				x: blockX,
+				y: blockY,
+				width: blockWidth,
+				height: blockHeight
+			} = blocksRectMap[blockId];
+			const {
+				x: portX,
+				y: portY,
+				width: portWidth,
+				height: portHeight,
+				position
+			} = portsRectMap[blockId][portId];
+			const isLeftOrRightPosition = position === PORT_POSITION.LEFT || position === PORT_POSITION.RIGHT;
+			const additionalOffset = (order + 1) * connectionOffset;
+			const additionalBendOffset = (order + 1) * connectionBendOffset;
+			const offset = isLeftOrRightPosition ? Math.abs(blockY - (portY + portHeight / 2)) : Math.abs(blockX - (portX + portWidth / 2));
+			portsRectMap[blockId][portId].firstSegmentSize = additionalOffset;
+			portsRectMap[blockId][portId].secondSegmentSizeWithoutOffset = isLeftOrRightPosition ? blockHeight - offset : blockWidth - offset;
+			portsRectMap[blockId][portId].secondSegmentSize = isLeftOrRightPosition ? blockHeight - offset + additionalBendOffset : blockWidth - offset + additionalBendOffset;
+		};
+		const setSelectionActive = value => {
+			state.isSelectionActive = value;
+		};
+		const setSelectionWorldRect = rect => {
+			state.selectionWorldRect = rect;
+		};
+		const setCamera = params => {
+			ui_vue3.toValue(state.canvasInstance)?.setCamera(params);
+		};
+		const autoScroll = useAutoScroll(state, {
+			setCamera
+		});
+		const transformMouseEventToPoint = event => {
+			const {
+				zoom,
+				blockDiagramTop,
+				blockDiagramLeft,
+				transformX,
+				transformY
+			} = state;
+			let x = event.clientX / ui_vue3.toValue(zoom);
+			x -= ui_vue3.toValue(blockDiagramLeft) / ui_vue3.toValue(zoom);
+			x += ui_vue3.toValue(transformX);
+			let y = event.clientY / ui_vue3.toValue(zoom);
+			y -= ui_vue3.toValue(blockDiagramTop) / ui_vue3.toValue(zoom);
+			y += ui_vue3.toValue(transformY);
+			return {
+				x,
+				y
+			};
+		};
+		return {
+			setState,
+			setConnectionsOffsets,
+			setHistoryBlocksCurrentState,
+			setHistoryConnectionsCurrentState,
+			setUnmountedBlocks,
+			blockMounted,
+			setUnmountedPorts,
+			portMounted,
+			updateCanvasTransform,
+			isExistConnection,
+			addConnection,
+			addConnections,
+			deleteConnectionById,
+			addBlock,
+			addBlocks,
+			deleteBlock,
+			deleteBlocks,
+			addBlocksAndConnections,
+			updateBlockPositionByIndex,
+			updateBlock,
+			deleteBlockById,
+			transformEventToPoint,
+			setMovingBlock,
+			resetMovingBlock,
+			setHistoryHandlers,
+			setPortOffsetByBlockId,
+			updatePort,
+			updatePortRect,
+			updateBlockRectById,
+			updatePortSegmentSizes,
+			setSelectionActive,
+			setSelectionWorldRect,
+			startAutoScroll: autoScroll.start,
+			stopAutoScroll: autoScroll.stop,
+			updateMousePosition: autoScroll.updateMousePosition,
+			setCamera,
+			transformMouseEventToPoint
+		};
 	}
 
 	// eslint-disable-next-line max-lines-per-function
-	function useContextMenu() {
-	  const {
-	    contextMenuLayerRef,
-	    targetContainerRef,
-	    isOpenContextMenu,
-	    positionContextMenu,
-	    contextMenuInstance,
-	    zoom
-	  } = useBlockDiagram();
-	  const isOpen = ui_vue3.ref(false);
-	  function getItems(items = []) {
-	    return items.map(item => {
-	      return {
-	        ...item,
-	        onclick: () => {
-	          var _toValue;
-	          if (main_core.Type.isFunction(item.onclick)) {
-	            const point = {
-	              x: positionContextMenu.value.left,
-	              y: positionContextMenu.value.top
-	            };
-	            item.onclick(point);
-	          }
-	          (_toValue = ui_vue3.toValue(contextMenuInstance)) == null ? void 0 : _toValue.close();
-	        }
-	      };
-	    });
-	  }
-	  function getDefaultOptions(additionalOptions = {}) {
-	    const defaultOptions = {
-	      id: 'block-diagram-context-menu',
-	      bindElement: {
-	        left: 0,
-	        top: 0
-	      },
-	      minWidth: 200,
-	      autoHide: true,
-	      draggable: false,
-	      cacheable: false,
-	      targetContainer: ui_vue3.toValue(targetContainerRef),
-	      ...additionalOptions
-	    };
-	    if ('items' in additionalOptions) {
-	      defaultOptions.items = getItems(additionalOptions.items);
-	    }
-	    return defaultOptions;
-	  }
-	  function updateContextMenuPosition(point) {
-	    var _toValue$getBoundingC, _toValue2;
-	    const {
-	      clientX = 0,
-	      clientY = 0
-	    } = point;
-	    const {
-	      left,
-	      top
-	    } = (_toValue$getBoundingC = (_toValue2 = ui_vue3.toValue(contextMenuLayerRef)) == null ? void 0 : _toValue2.getBoundingClientRect()) != null ? _toValue$getBoundingC : {
-	      top: 0,
-	      left: 0
-	    };
-	    positionContextMenu.value.top = (clientY - top) / ui_vue3.toValue(zoom);
-	    positionContextMenu.value.left = (clientX - left) / ui_vue3.toValue(zoom);
-	  }
-	  function showMenu(point, options = null) {
-	    var _toValue3, _toValue4, _toValue4$popupWindow, _toValue5;
-	    updateContextMenuPosition(point);
-	    (_toValue3 = ui_vue3.toValue(contextMenuInstance)) == null ? void 0 : _toValue3.destroy();
-	    contextMenuInstance.value = ui_vue3.shallowRef(new main_popup.Menu(getDefaultOptions(options)));
-	    (_toValue4 = ui_vue3.toValue(contextMenuInstance)) == null ? void 0 : (_toValue4$popupWindow = _toValue4.popupWindow) == null ? void 0 : _toValue4$popupWindow.subscribeOnce('onDestroy', () => {
-	      isOpen.value = false;
-	    });
-	    (_toValue5 = ui_vue3.toValue(contextMenuInstance)) == null ? void 0 : _toValue5.show();
-	    isOpen.value = true;
-	    isOpenContextMenu.value = true;
-	  }
-	  function showPopup(point, options = null) {
-	    var _toValue6, _toValue7, _toValue8;
-	    updateContextMenuPosition(point);
-	    (_toValue6 = ui_vue3.toValue(contextMenuInstance)) == null ? void 0 : _toValue6.destroy();
-	    contextMenuInstance.value = ui_vue3.shallowRef(new main_popup.Popup(getDefaultOptions(options)));
-	    (_toValue7 = ui_vue3.toValue(contextMenuInstance)) == null ? void 0 : _toValue7.subscribeOnce('onDestroy', () => {
-	      isOpen.value = false;
-	    });
-	    (_toValue8 = ui_vue3.toValue(contextMenuInstance)) == null ? void 0 : _toValue8.show();
-	    isOpen.value = true;
-	    isOpenContextMenu.value = true;
-	  }
-	  function closeContextMenu() {
-	    var _toValue9;
-	    isOpen.value = false;
-	    isOpenContextMenu.value = false;
-	    (_toValue9 = ui_vue3.toValue(contextMenuInstance)) == null ? void 0 : _toValue9.close();
-	  }
-	  return {
-	    isOpen,
-	    showMenu,
-	    showPopup,
-	    closeContextMenu
-	  };
+	function useGetters(state) {
+		const transform = ui_vue3.computed(() => ({
+			x: state.transformX,
+			y: state.transformY,
+			zoom: state.zoom,
+			viewportX: state.viewportX,
+			viewportY: state.viewportY
+		}));
+		const canvasId = ui_vue3.computed(() => {
+			return state.canvasRef?.canvasId ?? null;
+		});
+		const isMakeNewConnection = ui_vue3.computed(() => {
+			return state.newConnection !== null;
+		});
+		const groupedConnections = ui_vue3.computed(() => {
+			return state.connections.reduce((acc, connection) => {
+				const type = connection?.type ?? CONNECTION_GROUP_DEFAULT_NAME;
+				if (type in acc) {
+					acc[type] = [...acc[type], connection];
+				} else {
+					acc[type] = [connection];
+				}
+				return acc;
+			}, {
+				[CONNECTION_GROUP_DEFAULT_NAME]: []
+			});
+		});
+		const connectionGroupNames = ui_vue3.computed(() => {
+			return Object.keys(ui_vue3.toValue(groupedConnections));
+		});
+		const isAnimate = ui_vue3.computed(() => {
+			return state.animationQueue !== null;
+		});
+		const isDisabledBlockDiagram = ui_vue3.computed(() => {
+			return state.isDisabled || ui_vue3.toValue(isAnimate);
+		});
+		return {
+			transform,
+			canvasId,
+			groupedConnections,
+			connectionGroupNames,
+			isAnimate,
+			isDisabledBlockDiagram,
+			isMakeNewConnection
+		};
+	}
+
+	function useHooks() {
+		return {
+			[HOOK_NAMES.START_DRAG_BLOCK]: createHook(),
+			[HOOK_NAMES.MOVE_DRAG_BLOCK]: createHook(),
+			[HOOK_NAMES.END_DRAG_BLOCK]: createHook(),
+			[HOOK_NAMES.ADD_BLOCK]: createHook(),
+			[HOOK_NAMES.ADD_BLOCKS]: createHook(),
+			[HOOK_NAMES.UPDATE_BLOCK]: createHook(),
+			[HOOK_NAMES.DELETE_BLOCK]: createHook(),
+			[HOOK_NAMES.DELETE_BLOCKS]: createHook(),
+			[HOOK_NAMES.ADD_CONNECTION]: createHook(),
+			[HOOK_NAMES.ADD_CONNECTIONS]: createHook(),
+			[HOOK_NAMES.CREATE_CONNECTION]: createHook(),
+			[HOOK_NAMES.DELETE_CONNECTION]: createHook(),
+			[HOOK_NAMES.CHANGED_BLOCKS]: createHook(),
+			[HOOK_NAMES.CHANGED_CONNECTIONS]: createHook(),
+			[HOOK_NAMES.BLOCK_TRANSITION_START]: createHook(),
+			[HOOK_NAMES.BLOCK_TRANSITION_END]: createHook(),
+			[HOOK_NAMES.CONNECTION_TRANSITION_START]: createHook(),
+			[HOOK_NAMES.CONNECTION_TRANSITION_END]: createHook(),
+			[HOOK_NAMES.DROP_NEW_BLOCK]: createHook(),
+			[HOOK_NAMES.HISTORY_NEXT]: createHook(),
+			[HOOK_NAMES.HISTORY_PREV]: createHook()
+		};
+	}
+
+	function useBlockDiagram(options) {
+		const app = ui_vue3.getCurrentInstance()?.appContext.app;
+		const blockDiagramState = app?.config?.globalProperties?.$blockDiagram ?? null;
+		if (blockDiagramState !== null) {
+			return blockDiagramState;
+		}
+		const state = useState();
+		const reactiveState = ui_vue3.reactive(state);
+		const getters = useGetters(reactiveState);
+		const hooks = useHooks();
+		const actions = useActions({
+			state: reactiveState,
+			getters,
+			hooks
+		});
+		const instances = useInstances({
+			state: reactiveState,
+			getters
+		});
+		if (options) {
+			actions.setState(options);
+		}
+		app.config.globalProperties.$blockDiagram = {
+			...ui_vue3.toRefs(reactiveState),
+			...getters,
+			...actions,
+			...instances,
+			hooks
+		};
+		app.config.globalProperties.$blockDiagramTestId = (id, ...args) => {
+			if (!id) {
+				throw new Error('ui.block-diagram not found test id');
+			}
+			const preparedArgs = args.reduce((acc, arg) => {
+				return `${acc}-${arg}`;
+			}, '');
+			return `${id}${preparedArgs}`;
+		};
+		return app.config.globalProperties?.$blockDiagram;
+	}
+
+	// eslint-disable-next-line max-lines-per-function
+	function useContextMenu(contextMenuName = null) {
+		const {
+			contextMenuLayerRef,
+			targetContainerRef,
+			isOpenContextMenu,
+			openedContextMenuName,
+			positionContextMenu,
+			contextMenuInstance,
+			zoom
+		} = useBlockDiagram();
+		const isOpen = ui_vue3.ref(false);
+		function setContextMenuName(newName) {
+			openedContextMenuName.value = ui_vue3.toValue(newName);
+		}
+		function getItems(items = []) {
+			return items.map(item => {
+				return {
+					...item,
+					onclick: () => {
+						if (main_core.Type.isFunction(item.onclick)) {
+							const point = {
+								x: positionContextMenu.value.left,
+								y: positionContextMenu.value.top
+							};
+							item.onclick(point);
+						}
+						ui_vue3.toValue(contextMenuInstance)?.close();
+					}
+				};
+			});
+		}
+		function getDefaultOptions(additionalOptions = {}) {
+			const defaultOptions = {
+				id: 'block-diagram-context-menu',
+				bindElement: {
+					left: 0,
+					top: 0
+				},
+				minWidth: 200,
+				autoHide: true,
+				draggable: false,
+				cacheable: false,
+				targetContainer: ui_vue3.toValue(targetContainerRef),
+				...additionalOptions
+			};
+			if ('items' in additionalOptions) {
+				defaultOptions.items = getItems(additionalOptions.items);
+			}
+			return defaultOptions;
+		}
+		function updateContextMenuPosition(point) {
+			const {
+				clientX = 0,
+				clientY = 0
+			} = point;
+			const {
+				left,
+				top
+			} = ui_vue3.toValue(contextMenuLayerRef)?.getBoundingClientRect() ?? {
+				top: 0,
+				left: 0
+			};
+			positionContextMenu.value.top = (clientY - top) / ui_vue3.toValue(zoom);
+			positionContextMenu.value.left = (clientX - left) / ui_vue3.toValue(zoom);
+		}
+		function showMenu(point, options = null) {
+			setContextMenuName(contextMenuName);
+			updateContextMenuPosition(point);
+			ui_vue3.toValue(contextMenuInstance)?.destroy();
+			contextMenuInstance.value = ui_vue3.shallowRef(new main_popup.Menu(getDefaultOptions(options)));
+			ui_vue3.toValue(contextMenuInstance)?.popupWindow?.subscribeOnce('onDestroy', () => {
+				isOpen.value = false;
+			});
+			ui_vue3.toValue(contextMenuInstance)?.show();
+			isOpen.value = true;
+			isOpenContextMenu.value = true;
+		}
+		function showPopup(point, options = null) {
+			setContextMenuName(contextMenuName);
+			updateContextMenuPosition(point);
+			ui_vue3.toValue(contextMenuInstance)?.destroy();
+			contextMenuInstance.value = ui_vue3.shallowRef(new main_popup.Popup(getDefaultOptions(options)));
+			ui_vue3.toValue(contextMenuInstance)?.subscribeOnce('onDestroy', () => {
+				isOpen.value = false;
+			});
+			ui_vue3.toValue(contextMenuInstance)?.show();
+			isOpen.value = true;
+			isOpenContextMenu.value = true;
+		}
+		function closeContextMenu() {
+			isOpen.value = false;
+			isOpenContextMenu.value = false;
+			setContextMenuName(null);
+			ui_vue3.toValue(contextMenuInstance)?.close();
+		}
+		return {
+			isOpen,
+			openedContextMenuName,
+			showMenu,
+			showPopup,
+			closeContextMenu
+		};
 	}
 
 	// eslint-disable-next-line max-lines-per-function
 	function useNewConnection(options) {
-	  const {
-	    isDisabledBlockDiagram,
-	    newConnection,
-	    isValidNewConnection,
-	    portsRectMap,
-	    blockDiagramTop,
-	    blockDiagramLeft,
-	    zoom,
-	    transformX,
-	    transformY,
-	    addConnection
-	  } = useBlockDiagram();
-	  const {
-	    block,
-	    port,
-	    position,
-	    validationRules = null,
-	    normalyzeConnectionFn = null
-	  } = options;
-	  const isSourcePort = ui_vue3.ref(false);
-	  const isValid = ui_vue3.computed(() => {
-	    if (ui_vue3.toValue(newConnection) === null) {
-	      return true;
-	    }
-	    const {
-	      sourceBlockId,
-	      sourcePortId,
-	      targetBlockId,
-	      targetPortId
-	    } = ui_vue3.toValue(newConnection);
-	    if (targetPortId === null) {
-	      return true;
-	    }
-	    const isSource = ui_vue3.toValue(block).id === sourceBlockId && ui_vue3.toValue(port).id === sourcePortId;
-	    const isTarget = ui_vue3.toValue(block).id === targetBlockId && ui_vue3.toValue(port).id === targetPortId;
-	    if (isSource || isTarget) {
-	      return ui_vue3.toValue(isValidNewConnection);
-	    }
-	    return true;
-	  });
-	  function validateNewConnection(rules) {
-	    if (rules === null) {
-	      return true;
-	    }
-	    if (main_core.Type.isArray(rules)) {
-	      return rules.every(rule => rule(ui_vue3.toValue(newConnection)));
-	    }
-	    if (!main_core.Type.isFunction(rules)) {
-	      return true;
-	    }
-	    return rules(ui_vue3.toValue(newConnection));
-	  }
-	  function normalyzeNewConnection(newConnection, normalyzeFn = null) {
-	    if (main_core.Type.isFunction(normalyzeFn)) {
-	      return normalyzeFn(newConnection);
-	    }
-	    return {
-	      id: newConnection.id,
-	      sourceBlockId: newConnection.sourceBlockId,
-	      sourcePortId: newConnection.sourcePortId,
-	      targetBlockId: newConnection.targetBlockId,
-	      targetPortId: newConnection.targetPortId
-	    };
-	  }
-	  function onMouseDownPort(event) {
-	    var _toValue, _toValue$toValue$id;
-	    event.stopPropagation();
-	    if (ui_vue3.toValue(isDisabledBlockDiagram)) {
-	      return;
-	    }
-	    isSourcePort.value = true;
-	    const portRect = (_toValue = ui_vue3.toValue(portsRectMap)) == null ? void 0 : (_toValue$toValue$id = _toValue[ui_vue3.toValue(block).id]) == null ? void 0 : _toValue$toValue$id[ui_vue3.toValue(port).id];
-	    const startPosition = {
-	      x: portRect.x + portRect.width / 2,
-	      y: portRect.y + portRect.height / 2
-	    };
-	    newConnection.value = {
-	      id: main_core.Text.getRandom(),
-	      sourceBlockId: ui_vue3.toValue(block).id,
-	      sourcePortId: ui_vue3.toValue(port).id,
-	      sourcePort: {
-	        ...ui_vue3.toValue(port)
-	      },
-	      sourcePortPosition: position,
-	      targetBlockId: null,
-	      targetPortId: null,
-	      targetPort: null,
-	      start: startPosition,
-	      end: startPosition
-	    };
-	    main_core.Event.bind(document, 'mousemove', onMouseMove);
-	    main_core.Event.bind(document, 'mouseup', onMouseUp);
-	  }
-	  function onMouseMove(event) {
-	    if (!ui_vue3.toValue(newConnection) || ui_vue3.toValue(isDisabledBlockDiagram)) {
-	      return;
-	    }
-	    const x = event.clientX / ui_vue3.toValue(zoom);
-	    const y = event.clientY / ui_vue3.toValue(zoom);
-	    newConnection.value.end = {
-	      x: x + ui_vue3.toValue(transformX) - ui_vue3.toValue(blockDiagramLeft) / ui_vue3.toValue(zoom),
-	      y: y + ui_vue3.toValue(transformY) - ui_vue3.toValue(blockDiagramTop) / ui_vue3.toValue(zoom)
-	    };
-	  }
-	  function onMouseUp(event) {
-	    if (ui_vue3.toValue(newConnection) === null || ui_vue3.toValue(isDisabledBlockDiagram)) {
-	      return;
-	    }
-	    const {
-	      sourceBlockId = null,
-	      sourcePortId = null,
-	      targetBlockId = null,
-	      targetPortId = null
-	    } = ui_vue3.toValue(newConnection);
-	    const isSamePort = sourceBlockId === targetBlockId && sourcePortId === targetPortId;
-	    const hasSourceIds = sourceBlockId !== null && sourcePortId !== null;
-	    const hasTargetIds = targetBlockId !== null && targetPortId !== null;
-	    if (!isSamePort && hasSourceIds && hasTargetIds && ui_vue3.toValue(isValidNewConnection)) {
-	      addConnection(normalyzeNewConnection(ui_vue3.toValue(newConnection), normalyzeConnectionFn));
-	    }
-	    newConnection.value = null;
-	    isSourcePort.value = false;
-	    main_core.Event.unbind(document, 'mousemove', onMouseMove);
-	    main_core.Event.unbind(document, 'mouseup', onMouseUp);
-	  }
-	  function onMouseOverPort() {
-	    if (ui_vue3.toValue(isDisabledBlockDiagram)) {
-	      return;
-	    }
-	    if (ui_vue3.toValue(newConnection) !== null) {
-	      newConnection.value.targetBlockId = ui_vue3.toValue(block).id;
-	      newConnection.value.targetPortId = ui_vue3.toValue(port).id;
-	      newConnection.value.targetPort = {
-	        ...ui_vue3.toValue(port)
-	      };
-	      isValidNewConnection.value = validateNewConnection(ui_vue3.toValue(validationRules));
-	    }
-	  }
-	  function onMouseLeavePort() {
-	    if (ui_vue3.toValue(isDisabledBlockDiagram)) {
-	      return;
-	    }
-	    if (ui_vue3.toValue(newConnection) !== null) {
-	      newConnection.value.targetBlockId = null;
-	      newConnection.value.targetPortId = null;
-	      newConnection.value.targetPort = null;
-	      isValidNewConnection.value = true;
-	    }
-	  }
-	  return {
-	    isSourcePort,
-	    isValid,
-	    onMouseDownPort,
-	    onMouseOverPort,
-	    onMouseLeavePort
-	  };
+		const {
+			isDisabledBlockDiagram,
+			newConnection,
+			portsRectMap,
+			portsValidationsFnMap,
+			validPortsMap,
+			addConnection,
+			portsNearest,
+			blockIntersections,
+			transformMouseEventToPoint
+		} = useBlockDiagram();
+		const {
+			block,
+			port,
+			position,
+			normalyzeConnectionFn = null
+		} = options;
+		const isSourcePort = ui_vue3.ref(false);
+		const isTargetPort = ui_vue3.computed(() => {
+			const {
+				targetBlockId = null,
+				targetPortId = null
+			} = ui_vue3.toValue(newConnection) ?? {};
+			return ui_vue3.toValue(block).id === targetBlockId && ui_vue3.toValue(port).id === targetPortId;
+		});
+		function validateConnection(rules, connection) {
+			if (rules === null) {
+				return true;
+			}
+			if (main_core.Type.isArray(rules)) {
+				return rules.every(rule => rule(ui_vue3.toValue(connection)));
+			}
+			if (!main_core.Type.isFunction(rules)) {
+				return true;
+			}
+			return rules(ui_vue3.toValue(connection));
+		}
+		function getValidPorts(portsMap, connection) {
+			const filteredPortsMap = new Map();
+			for (const [blockId, ports] of ui_vue3.toValue(portsMap).entries()) {
+				for (const [portId, targetPort] of ports.entries()) {
+					const rules = ui_vue3.toValue(portsValidationsFnMap).get(blockId).get(portId);
+					const isValidConnection = validateConnection(rules, {
+						...ui_vue3.toValue(connection),
+						targetBlockId: blockId,
+						targetPortId: portId,
+						targetPort: {
+							...ui_vue3.toValue(targetPort)
+						}
+					});
+					if (!isValidConnection) {
+						continue;
+					}
+					if (!filteredPortsMap.has(blockId)) {
+						filteredPortsMap.set(blockId, new Map());
+					}
+					filteredPortsMap.get(blockId).set(portId, targetPort);
+				}
+			}
+			return filteredPortsMap;
+		}
+		function normalyzeNewConnection(connection, normalyzeFn = null) {
+			if (main_core.Type.isFunction(normalyzeFn)) {
+				return normalyzeFn(connection);
+			}
+			return {
+				id: connection.id,
+				sourceBlockId: connection.sourceBlockId,
+				sourcePortId: connection.sourcePortId,
+				targetBlockId: connection.targetBlockId,
+				targetPortId: connection.targetPortId
+			};
+		}
+		function onMouseDownPort(event) {
+			event.stopPropagation();
+			if (ui_vue3.toValue(isDisabledBlockDiagram)) {
+				return;
+			}
+			isSourcePort.value = true;
+			const portRect = ui_vue3.toValue(portsRectMap)?.[ui_vue3.toValue(block).id]?.[ui_vue3.toValue(port).id];
+			const start = {
+				x: portRect.x + portRect.width / 2,
+				y: portRect.y + portRect.height / 2
+			};
+			const center = transformMouseEventToPoint(event);
+			newConnection.value = {
+				id: main_core.Text.getRandom(),
+				sourceBlockId: ui_vue3.toValue(block).id,
+				sourcePortId: ui_vue3.toValue(port).id,
+				sourcePort: {
+					...ui_vue3.toValue(port)
+				},
+				sourcePortPosition: position,
+				targetBlockId: null,
+				targetPortId: null,
+				targetPort: null,
+				start,
+				center,
+				end: null
+			};
+			validPortsMap.value = getValidPorts(blockIntersections.visiblePorts, newConnection);
+			portsNearest.init(ui_vue3.toValue(validPortsMap));
+			main_core.Event.bind(document, 'mousemove', onMouseMove);
+			main_core.Event.bind(document, 'mouseup', onMouseUp);
+		}
+		function onMouseMove(event) {
+			if (!ui_vue3.toValue(newConnection) || ui_vue3.toValue(isDisabledBlockDiagram)) {
+				return;
+			}
+			const point = transformMouseEventToPoint(event);
+			const [nearestPort] = portsNearest.nearest(point, 1, 100)?.[0] ?? [null];
+			const isSamePorts = ui_vue3.toValue(newConnection).sourceBlockId === nearestPort?.blockId && ui_vue3.toValue(newConnection).sourcePortId === nearestPort?.portId;
+			if (nearestPort && !isSamePorts) {
+				const portRect = ui_vue3.toValue(portsRectMap)?.[nearestPort.blockId]?.[nearestPort.portId];
+				newConnection.value = {
+					...ui_vue3.toValue(newConnection),
+					targetBlockId: nearestPort.blockId,
+					targetPortId: nearestPort.portId,
+					targetPort: nearestPort.port,
+					center: point,
+					end: {
+						x: portRect.x + portRect.width / 2,
+						y: portRect.y + portRect.height / 2
+					}
+				};
+			} else {
+				newConnection.value = {
+					...ui_vue3.toValue(newConnection),
+					targetBlockId: null,
+					targetPortId: null,
+					targetPort: null,
+					center: point,
+					end: null
+				};
+			}
+		}
+		function onMouseUp(event) {
+			if (ui_vue3.toValue(newConnection) === null || ui_vue3.toValue(isDisabledBlockDiagram)) {
+				return;
+			}
+			const {
+				sourceBlockId = null,
+				sourcePortId = null,
+				targetBlockId = null,
+				targetPortId = null
+			} = ui_vue3.toValue(newConnection);
+			const isSamePort = sourceBlockId === targetBlockId && sourcePortId === targetPortId;
+			const hasSourceIds = sourceBlockId !== null && sourcePortId !== null;
+			const hasTargetIds = targetBlockId !== null && targetPortId !== null;
+			if (!isSamePort && hasSourceIds && hasTargetIds) {
+				addConnection(normalyzeNewConnection(ui_vue3.toValue(newConnection), normalyzeConnectionFn));
+			}
+			newConnection.value = null;
+			isSourcePort.value = false;
+			main_core.Event.unbind(document, 'mousemove', onMouseMove);
+			main_core.Event.unbind(document, 'mouseup', onMouseUp);
+		}
+		return {
+			isSourcePort,
+			isTargetPort,
+			onMouseDownPort
+		};
 	}
 
 	function useBlockState(options) {
-	  const {
-	    block,
-	    blockRef
-	  } = options;
-	  const {
-	    blockElMap,
-	    blocksRectMap,
-	    highlitedBlockIds,
-	    isDisabledBlockDiagram,
-	    zoom,
-	    transformX,
-	    transformY,
-	    blockDiagramLeft,
-	    blockDiagramTop,
-	    movingBlock,
-	    blockMounted
-	  } = useBlockDiagram();
-	  const isHiglitedBlock = ui_vue3.computed(() => {
-	    return highlitedBlockIds.value.includes(ui_vue3.toValue(block).id);
-	  });
-	  const isDisabled = ui_vue3.computed(() => {
-	    return ui_vue3.toValue(isDisabledBlockDiagram);
-	  });
-	  const blockZindex = ui_vue3.computed(() => {
-	    var _toValue;
-	    if (((_toValue = ui_vue3.toValue(movingBlock)) == null ? void 0 : _toValue.id) === ui_vue3.toValue(block).id) {
-	      return {
-	        zIndex: BLOCK_INDEXES.MOVABLE
-	      };
-	    }
-	    if (ui_vue3.toValue(isHiglitedBlock)) {
-	      return {
-	        zIndex: BLOCK_INDEXES.HIGHLITED
-	      };
-	    }
-	    return {
-	      zIndex: BLOCK_INDEXES.STANDING
-	    };
-	  });
-	  function onMountedBlock() {
-	    var _toValue$getBoundingC, _toValue2;
-	    if (!ui_vue3.toValue(blockElMap).has(ui_vue3.toValue(block).id)) {
-	      ui_vue3.toValue(blockElMap).set(ui_vue3.toValue(block).id, ui_vue3.toValue(blockRef));
-	    }
-	    const {
-	      x,
-	      y,
-	      width,
-	      height
-	    } = (_toValue$getBoundingC = (_toValue2 = ui_vue3.toValue(blockRef)) == null ? void 0 : _toValue2.getBoundingClientRect()) != null ? _toValue$getBoundingC : {};
-	    blocksRectMap.value[ui_vue3.toValue(block).id] = {
-	      x: x / ui_vue3.toValue(zoom) + ui_vue3.toValue(transformX) - ui_vue3.toValue(blockDiagramLeft) / ui_vue3.toValue(zoom),
-	      y: y / ui_vue3.toValue(zoom) + ui_vue3.toValue(transformY) - ui_vue3.toValue(blockDiagramTop) / ui_vue3.toValue(zoom),
-	      width,
-	      height
-	    };
-	    blockMounted(ui_vue3.toValue(block).id);
-	  }
-	  function onUnmountedBlock() {
-	    if (ui_vue3.toValue(blockElMap).has(ui_vue3.toValue(block).id)) {
-	      ui_vue3.toValue(blockElMap).delete(ui_vue3.toValue(block).id);
-	    }
-	    delete blocksRectMap[ui_vue3.toValue(block).id];
-	  }
-	  return {
-	    isHiglitedBlock,
-	    isDisabled,
-	    blockZindex,
-	    onMountedBlock,
-	    onUnmountedBlock
-	  };
+		const {
+			block,
+			blockRef
+		} = options;
+		const {
+			blockElMap,
+			blocksRectMap,
+			highlitedBlockIds,
+			isDisabledBlockDiagram,
+			zoom,
+			transformX,
+			transformY,
+			blockDiagramLeft,
+			blockDiagramTop,
+			movingBlockId,
+			blockMounted
+		} = useBlockDiagram();
+		const isHiglitedBlock = ui_vue3.computed(() => {
+			return ui_vue3.toValue(highlitedBlockIds).includes(ui_vue3.toValue(block)?.id);
+		});
+		const isDisabled = ui_vue3.computed(() => {
+			return ui_vue3.toValue(isDisabledBlockDiagram);
+		});
+		const blockZindex = ui_vue3.computed(() => {
+			if (ui_vue3.toValue(movingBlockId) === ui_vue3.toValue(block).id) {
+				return {
+					zIndex: BLOCK_INDEXES.MOVABLE
+				};
+			}
+			if (ui_vue3.toValue(isHiglitedBlock)) {
+				return {
+					zIndex: BLOCK_INDEXES.HIGHLITED
+				};
+			}
+			return {
+				zIndex: BLOCK_INDEXES.STANDING
+			};
+		});
+		function onMountedBlock() {
+			if (!ui_vue3.toValue(blockElMap).has(ui_vue3.toValue(block).id)) {
+				ui_vue3.toValue(blockElMap).set(ui_vue3.toValue(block).id, ui_vue3.toValue(blockRef));
+			}
+			const {
+				x,
+				y,
+				width,
+				height
+			} = ui_vue3.toValue(blockRef)?.getBoundingClientRect() ?? {};
+			blocksRectMap.value[ui_vue3.toValue(block).id] = {
+				x: x / ui_vue3.toValue(zoom) + ui_vue3.toValue(transformX) - ui_vue3.toValue(blockDiagramLeft) / ui_vue3.toValue(zoom),
+				y: y / ui_vue3.toValue(zoom) + ui_vue3.toValue(transformY) - ui_vue3.toValue(blockDiagramTop) / ui_vue3.toValue(zoom),
+				width: width / ui_vue3.toValue(zoom),
+				height: height / ui_vue3.toValue(zoom)
+			};
+			blockMounted(ui_vue3.toValue(block).id);
+		}
+		function onUnmountedBlock() {
+			if (ui_vue3.toValue(blockElMap).has(ui_vue3.toValue(block).id)) {
+				ui_vue3.toValue(blockElMap).delete(ui_vue3.toValue(block).id);
+			}
+			delete blocksRectMap[ui_vue3.toValue(block).id];
+		}
+		return {
+			isHiglitedBlock,
+			isDisabled,
+			blockZindex,
+			onMountedBlock,
+			onUnmountedBlock
+		};
 	}
 
 	// eslint-disable-next-line max-lines-per-function
 	function useMoveableBlock(blockRef, block) {
-	  const isDragged = ui_vue3.ref(false);
-	  const {
-	    isDisabledBlockDiagram,
-	    zoom,
-	    updateBlock,
-	    hooks,
-	    setMovingBlock,
-	    updateMovingBlockPosition,
-	    resetMovingBlock,
-	    setPortOffsetByBlockId,
-	    updateBlockRectById,
-	    blocks: allBlocksRef,
-	    highlitedBlockIds,
-	    startAutoScroll,
-	    stopAutoScroll,
-	    updateMousePosition,
-	    updateBlockRectangle,
-	    isBoxIntersection
-	  } = useBlockDiagram();
-	  let prevValueBlockX = 0;
-	  let prevValueBlockY = 0;
-	  let lastClientX = 0;
-	  let lastClientY = 0;
-	  let currentZoom = 1;
-	  const offsetBlockX = ui_vue3.ref(0);
-	  const offsetBlockY = ui_vue3.ref(0);
-	  let cachedGroupBlocks = [];
-	  const x = ui_vue3.ref(ui_vue3.toValue(block).position.x);
-	  const y = ui_vue3.ref(ui_vue3.toValue(block).position.y);
-	  ui_vue3.watchEffect(() => {
-	    x.value = ui_vue3.toValue(block).position.x;
-	    y.value = ui_vue3.toValue(block).position.y;
-	  });
-	  const blockPositionStyle = ui_vue3.computed(() => {
-	    return {
-	      top: `${y.value}px`,
-	      left: `${x.value}px`
-	    };
-	  });
-	  const updatePositions = (clientX, clientY) => {
-	    const newX = Math.round((clientX - ui_vue3.toValue(offsetBlockX)) / currentZoom);
-	    const newY = Math.round((clientY - ui_vue3.toValue(offsetBlockY)) / currentZoom);
-	    const deltaX = newX - prevValueBlockX;
-	    const deltaY = newY - prevValueBlockY;
-	    x.value = newX;
-	    y.value = newY;
-	    for (const targetBlock of cachedGroupBlocks) {
-	      targetBlock.position.x += deltaX;
-	      targetBlock.position.y += deltaY;
-	      if (setPortOffsetByBlockId) {
-	        setPortOffsetByBlockId(targetBlock.id, {
-	          x: -deltaX,
-	          y: -deltaY
-	        });
-	      }
-	    }
-	    updateMovingBlockPosition(x.value, y.value);
-	    setPortOffsetByBlockId(ui_vue3.toValue(block).id, {
-	      x: prevValueBlockX - x.value,
-	      y: prevValueBlockY - y.value
-	    });
-	    prevValueBlockX = x.value;
-	    prevValueBlockY = y.value;
-	  };
-	  ui_vue3.onMounted(() => {
-	    main_core.Event.bind(ui_vue3.toValue(blockRef), 'mousedown', onMouseDown);
-	  });
-	  ui_vue3.onBeforeUnmount(() => {
-	    main_core.Event.unbind(ui_vue3.toValue(blockRef), 'mousedown', onMouseDown);
-	    stopAutoScroll();
-	  });
-	  const onMouseDown = event => {
-	    if (event.button !== 0 || ui_vue3.toValue(isDisabledBlockDiagram)) {
-	      return;
-	    }
-	    event.stopPropagation();
-	    const blockId = ui_vue3.toValue(block).id;
-	    const selectedIds = ui_vue3.toValue(highlitedBlockIds);
-	    const isSelected = selectedIds.includes(blockId);
-	    currentZoom = ui_vue3.toValue(zoom);
-	    if (!isSelected) {
-	      highlitedBlockIds.value = [blockId];
-	    }
-	    setMovingBlock(ui_vue3.toValue(block));
-	    hooks.startDragBlock.trigger(block);
-	    prevValueBlockX = ui_vue3.toValue(block).position.x;
-	    prevValueBlockY = ui_vue3.toValue(block).position.y;
-	    offsetBlockX.value = Math.round(event.clientX - prevValueBlockX * currentZoom);
-	    offsetBlockY.value = Math.round(event.clientY - prevValueBlockY * currentZoom);
-	    const groupIds = ui_vue3.toValue(highlitedBlockIds);
-	    cachedGroupBlocks = groupIds.length > 1 ? ui_vue3.toValue(allBlocksRef).filter(item => groupIds.includes(item.id) && item.id !== blockId) : [];
-	    isDragged.value = true;
-	    lastClientX = event.clientX;
-	    lastClientY = event.clientY;
-	    startAutoScroll(event, (dx, dy) => {
-	      offsetBlockX.value -= dx;
-	      offsetBlockY.value -= dy;
-	      updatePositions(lastClientX, lastClientY);
-	    });
-	    main_core.Event.bind(document, 'mousemove', onMouseMove);
-	    main_core.Event.bind(document, 'mouseup', onMouseUp);
-	  };
-	  const onMouseMove = event => {
-	    if (!ui_vue3.toValue(isDragged) || ui_vue3.toValue(isDisabledBlockDiagram)) {
-	      return;
-	    }
-	    event.stopPropagation();
-	    lastClientX = event.clientX;
-	    lastClientY = event.clientY;
-	    updateMousePosition(event);
-	    updatePositions(lastClientX, lastClientY);
-	    hooks.moveDragBlock.trigger(block);
-	    const newX = Math.round((event.clientX - ui_vue3.toValue(offsetBlockX)) / ui_vue3.toValue(zoom));
-	    const newY = Math.round((event.clientY - ui_vue3.toValue(offsetBlockY)) / ui_vue3.toValue(zoom));
-	    const deltaX = newX - prevValueBlockX;
-	    const deltaY = newY - prevValueBlockY;
-	    x.value = newX;
-	    y.value = newY;
-	    for (const targetBlock of cachedGroupBlocks) {
-	      targetBlock.position.x += deltaX;
-	      targetBlock.position.y += deltaY;
-	      if (setPortOffsetByBlockId) {
-	        setPortOffsetByBlockId(targetBlock.id, {
-	          x: -deltaX,
-	          y: -deltaY
-	        });
-	      }
-	    }
-	    updateMovingBlockPosition(x.value, y.value);
-	    updateBlockRectById(ui_vue3.toValue(block).id, {
-	      x: prevValueBlockX - x.value,
-	      y: prevValueBlockY - y.value
-	    });
-	    setPortOffsetByBlockId(ui_vue3.toValue(block).id, {
-	      x: prevValueBlockX - x.value,
-	      y: prevValueBlockY - y.value
-	    });
-	    prevValueBlockX = x.value;
-	    prevValueBlockY = y.value;
-	  };
-	  const onMouseUp = event => {
-	    event.stopPropagation();
-	    stopAutoScroll();
-	    if (!ui_vue3.toValue(isDragged) || ui_vue3.toValue(isDisabledBlockDiagram)) {
-	      return;
-	    }
-	    const positionX = Math.round((event.clientX - ui_vue3.toValue(offsetBlockX)) / currentZoom);
-	    const positionY = Math.round((event.clientY - ui_vue3.toValue(offsetBlockY)) / currentZoom);
-	    const isMoved = ui_vue3.toValue(block).position.x !== positionX || ui_vue3.toValue(block).position.y !== positionY;
-	    if (isMoved) {
-	      cachedGroupBlocks.forEach(targetBlock => {
-	        const finalX = targetBlock.position.x;
-	        const finalY = targetBlock.position.y;
-	        const newBlockState = {
-	          ...targetBlock,
-	          position: {
-	            ...targetBlock.position,
-	            x: finalX,
-	            y: finalY
-	          }
-	        };
-	        if (setPortOffsetByBlockId) {
-	          setPortOffsetByBlockId(targetBlock.id, {
-	            x: 0,
-	            y: 0
-	          });
-	        }
-	        updateBlock(newBlockState);
-	        hooks.endDragBlock.trigger(newBlockState);
-	      });
-	      const currentBlockState = {
-	        ...ui_vue3.toValue(block),
-	        position: {
-	          ...ui_vue3.toValue(block).position,
-	          x: positionX,
-	          y: positionY
-	        }
-	      };
-	      if (setPortOffsetByBlockId) {
-	        setPortOffsetByBlockId(ui_vue3.toValue(block).id, {
-	          x: prevValueBlockX - positionX,
-	          y: prevValueBlockY - positionY
-	        });
-	      }
-	      updateBlock(currentBlockState);
-	      hooks.endDragBlock.trigger(currentBlockState);
-	    }
-	    if (ui_vue3.toValue(isBoxIntersection)) {
-	      updateBlockRectangle(ui_vue3.toValue(block).id, {
-	        x: positionX,
-	        y: positionY
-	      });
-	    }
-	    resetMovingBlock();
-	    cachedGroupBlocks = [];
-	    offsetBlockX.value = 0;
-	    offsetBlockY.value = 0;
-	    isDragged.value = false;
-	    main_core.Event.unbind(document, 'mousemove', onMouseMove);
-	    main_core.Event.unbind(document, 'mouseup', onMouseUp);
-	  };
-	  return {
-	    isDragged,
-	    blockPositionStyle
-	  };
+		const isDragged = ui_vue3.ref(false);
+		const {
+			isDisabledBlockDiagram,
+			zoom,
+			updateBlock,
+			hooks,
+			setMovingBlock,
+			resetMovingBlock,
+			setPortOffsetByBlockId,
+			updateBlockRectById,
+			blocks: allBlocksRef,
+			highlitedBlockIds,
+			startAutoScroll,
+			stopAutoScroll,
+			updateMousePosition
+		} = useBlockDiagram();
+		let prevValueBlockX = 0;
+		let prevValueBlockY = 0;
+		let lastClientX = 0;
+		let lastClientY = 0;
+		let currentZoom = 1;
+		const offsetBlockX = ui_vue3.ref(0);
+		const offsetBlockY = ui_vue3.ref(0);
+		let cachedGroupBlocks = [];
+		const x = ui_vue3.ref(ui_vue3.toValue(block).position.x);
+		const y = ui_vue3.ref(ui_vue3.toValue(block).position.y);
+		ui_vue3.watchEffect(() => {
+			x.value = ui_vue3.toValue(block).position.x;
+			y.value = ui_vue3.toValue(block).position.y;
+		});
+		const blockPositionStyle = ui_vue3.computed(() => {
+			return {
+				top: `${y.value}px`,
+				left: `${x.value}px`
+			};
+		});
+		const updatePositions = (clientX, clientY) => {
+			const newX = Math.round((clientX - ui_vue3.toValue(offsetBlockX)) / currentZoom);
+			const newY = Math.round((clientY - ui_vue3.toValue(offsetBlockY)) / currentZoom);
+			const deltaX = newX - prevValueBlockX;
+			const deltaY = newY - prevValueBlockY;
+			x.value = newX;
+			y.value = newY;
+			for (const targetBlock of cachedGroupBlocks) {
+				targetBlock.position.x += deltaX;
+				targetBlock.position.y += deltaY;
+				if (setPortOffsetByBlockId) {
+					setPortOffsetByBlockId(targetBlock.id, {
+						x: -deltaX,
+						y: -deltaY
+					});
+				}
+			}
+			setPortOffsetByBlockId(ui_vue3.toValue(block).id, {
+				x: prevValueBlockX - x.value,
+				y: prevValueBlockY - y.value
+			});
+			prevValueBlockX = x.value;
+			prevValueBlockY = y.value;
+		};
+		ui_vue3.onMounted(() => {
+			main_core.Event.bind(ui_vue3.toValue(blockRef), 'mousedown', onMouseDown);
+		});
+		ui_vue3.onBeforeUnmount(() => {
+			main_core.Event.unbind(ui_vue3.toValue(blockRef), 'mousedown', onMouseDown);
+			stopAutoScroll();
+		});
+		const onMouseDown = event => {
+			if (event.button !== 0 || ui_vue3.toValue(isDisabledBlockDiagram)) {
+				return;
+			}
+			event.stopPropagation();
+			const blockId = ui_vue3.toValue(block).id;
+			const selectedIds = ui_vue3.toValue(highlitedBlockIds);
+			const isSelected = selectedIds.includes(blockId);
+			currentZoom = ui_vue3.toValue(zoom);
+			if (!isSelected) {
+				highlitedBlockIds.value = [blockId];
+			}
+			setMovingBlock(ui_vue3.toValue(block).id);
+			hooks.startDragBlock.trigger(block);
+			prevValueBlockX = ui_vue3.toValue(block).position.x;
+			prevValueBlockY = ui_vue3.toValue(block).position.y;
+			offsetBlockX.value = Math.round(event.clientX - prevValueBlockX * currentZoom);
+			offsetBlockY.value = Math.round(event.clientY - prevValueBlockY * currentZoom);
+			const groupIds = ui_vue3.toValue(highlitedBlockIds);
+			cachedGroupBlocks = groupIds.length > 1 ? ui_vue3.toValue(allBlocksRef).filter(item => groupIds.includes(item.id) && item.id !== blockId) : [];
+			isDragged.value = true;
+			lastClientX = event.clientX;
+			lastClientY = event.clientY;
+			startAutoScroll(event, (dx, dy) => {
+				offsetBlockX.value -= dx;
+				offsetBlockY.value -= dy;
+				updatePositions(lastClientX, lastClientY);
+			});
+			main_core.Event.bind(document, 'mousemove', onMouseMove);
+			main_core.Event.bind(document, 'mouseup', onMouseUp);
+		};
+		const onMouseMove = event => {
+			if (!ui_vue3.toValue(isDragged) || ui_vue3.toValue(isDisabledBlockDiagram)) {
+				return;
+			}
+			event.stopPropagation();
+			lastClientX = event.clientX;
+			lastClientY = event.clientY;
+			updateMousePosition(event);
+			updatePositions(lastClientX, lastClientY);
+			hooks.moveDragBlock.trigger(block);
+			const newX = Math.round((event.clientX - ui_vue3.toValue(offsetBlockX)) / ui_vue3.toValue(zoom));
+			const newY = Math.round((event.clientY - ui_vue3.toValue(offsetBlockY)) / ui_vue3.toValue(zoom));
+			const deltaX = newX - prevValueBlockX;
+			const deltaY = newY - prevValueBlockY;
+			x.value = newX;
+			y.value = newY;
+			for (const targetBlock of cachedGroupBlocks) {
+				targetBlock.position.x += deltaX;
+				targetBlock.position.y += deltaY;
+				if (setPortOffsetByBlockId) {
+					setPortOffsetByBlockId(targetBlock.id, {
+						x: -deltaX,
+						y: -deltaY
+					});
+				}
+			}
+			updateBlockRectById(ui_vue3.toValue(block).id, {
+				x: prevValueBlockX - x.value,
+				y: prevValueBlockY - y.value
+			});
+			setPortOffsetByBlockId(ui_vue3.toValue(block).id, {
+				x: prevValueBlockX - x.value,
+				y: prevValueBlockY - y.value
+			});
+			prevValueBlockX = x.value;
+			prevValueBlockY = y.value;
+		};
+		const onMouseUp = event => {
+			event.stopPropagation();
+			stopAutoScroll();
+			if (!ui_vue3.toValue(isDragged) || ui_vue3.toValue(isDisabledBlockDiagram)) {
+				return;
+			}
+			const positionX = Math.round((event.clientX - ui_vue3.toValue(offsetBlockX)) / currentZoom);
+			const positionY = Math.round((event.clientY - ui_vue3.toValue(offsetBlockY)) / currentZoom);
+			const isMoved = ui_vue3.toValue(block).position.x !== positionX || ui_vue3.toValue(block).position.y !== positionY;
+			if (isMoved) {
+				cachedGroupBlocks.forEach(targetBlock => {
+					const finalX = targetBlock.position.x;
+					const finalY = targetBlock.position.y;
+					const newBlockState = {
+						...targetBlock,
+						position: {
+							...targetBlock.position,
+							x: finalX,
+							y: finalY
+						}
+					};
+					if (setPortOffsetByBlockId) {
+						setPortOffsetByBlockId(targetBlock.id, {
+							x: 0,
+							y: 0
+						});
+					}
+					updateBlock(newBlockState);
+					hooks.endDragBlock.trigger(newBlockState);
+				});
+				const currentBlockState = {
+					...ui_vue3.toValue(block),
+					position: {
+						...ui_vue3.toValue(block).position,
+						x: positionX,
+						y: positionY
+					}
+				};
+				if (setPortOffsetByBlockId) {
+					setPortOffsetByBlockId(ui_vue3.toValue(block).id, {
+						x: prevValueBlockX - positionX,
+						y: prevValueBlockY - positionY
+					});
+				}
+				updateBlock(currentBlockState);
+				hooks.endDragBlock.trigger(currentBlockState);
+			}
+			resetMovingBlock();
+			cachedGroupBlocks = [];
+			offsetBlockX.value = 0;
+			offsetBlockY.value = 0;
+			isDragged.value = false;
+			main_core.Event.unbind(document, 'mousemove', onMouseMove);
+			main_core.Event.unbind(document, 'mouseup', onMouseUp);
+		};
+		return {
+			isDragged,
+			blockPositionStyle
+		};
 	}
 
 	function useModelValue(emit) {
-	  const {
-	    blocks,
-	    connections,
-	    historyCurrentState,
-	    hooks
-	  } = useBlockDiagram();
-	  const handlersMap = {
-	    [HOOK_NAMES.CHANGED_BLOCKS]: handleChangeBlocks,
-	    [HOOK_NAMES.CHANGED_CONNECTIONS]: handleChangeConnections
-	  };
-	  Object.entries(handlersMap).forEach(([hookName, handler]) => {
-	    hooks[hookName].on(handler);
-	  });
-	  function handleChangeBlocks(command) {
-	    runCommand(ui_vue3.toValue(historyCurrentState.value.blocks), command, value => {
-	      historyCurrentState.value.blocks = value;
-	      emit('update:blocks', value);
-	    });
-	  }
-	  function handleChangeConnections(command) {
-	    runCommand(ui_vue3.toValue(historyCurrentState.value.connections), command, value => {
-	      historyCurrentState.value.connections = value;
-	      emit('update:connections', value);
-	    });
-	  }
-	  function dispose() {
-	    Object.entries(handlersMap).forEach(([hookName, handler]) => {
-	      hooks[hookName].off(handler);
-	    });
-	  }
-	  return {
-	    dispose
-	  };
+		const {
+			historyCurrentState,
+			hooks
+		} = useBlockDiagram();
+		const handlersMap = {
+			[HOOK_NAMES.CHANGED_BLOCKS]: handleChangeBlocks,
+			[HOOK_NAMES.CHANGED_CONNECTIONS]: handleChangeConnections
+		};
+		Object.entries(handlersMap).forEach(([hookName, handler]) => {
+			hooks[hookName].on(handler);
+		});
+		function handleChangeBlocks(command) {
+			runCommand(ui_vue3.toValue(historyCurrentState.value.blocks), command, value => {
+				historyCurrentState.value.blocks = value;
+				emit('update:blocks', value);
+			});
+		}
+		function handleChangeConnections(command) {
+			runCommand(ui_vue3.toValue(historyCurrentState.value.connections), command, value => {
+				historyCurrentState.value.connections = value;
+				emit('update:connections', value);
+			});
+		}
+		function dispose() {
+			Object.entries(handlersMap).forEach(([hookName, handler]) => {
+				hooks[hookName].off(handler);
+			});
+		}
+		return {
+			dispose
+		};
 	}
 
 	function useWatchProps(props) {
-	  const {
-	    blocks,
-	    connections,
-	    zoom,
-	    isDisabled,
-	    connectionOffset,
-	    connectionBendOffset,
-	    connectionBorderRadius,
-	    setUnmountedBlocks,
-	    setUnmountedPorts,
-	    setConnectionsOffsets,
-	    setHistoryBlocksCurrentState,
-	    setHistoryConnectionsCurrentState,
-	    updateTree,
-	    calculateIntersectedBlockIds,
-	    isBoxIntersection
-	  } = useBlockDiagram();
-	  const scope = ui_vue3.effectScope(true);
-	  scope.run(() => {
-	    ui_vue3.watch([() => props.blocks, () => props.blocks.length], ([newBlocks = [], newLength = 0], [oldBlocks = [], oldLength = 0]) => {
-	      if (newBlocks && Array.isArray(newBlocks)) {
-	        setHistoryBlocksCurrentState(newBlocks);
-	        setUnmountedPorts(newBlocks, oldBlocks);
-	        setUnmountedBlocks(newBlocks, oldBlocks);
-	        blocks.value = newBlocks;
-	        if (newLength !== oldLength && isBoxIntersection.value) {
-	          updateTree(blocks.value);
-	          calculateIntersectedBlockIds();
-	        }
-	      }
-	    }, {
-	      immediate: true,
-	      deep: true
-	    });
-	    ui_vue3.watch([() => props.connections, () => props.connections.length], ([newConnections]) => {
-	      setConnectionsOffsets(newConnections);
-	      setHistoryConnectionsCurrentState(newConnections);
-	      connections.value = [...newConnections];
-	    }, {
-	      immediate: true,
-	      deep: true
-	    });
-	    ui_vue3.watch(() => props.zoom, newZoom => {
-	      zoom.value = newZoom;
-	    }, {
-	      immediate: true
-	    });
-	    ui_vue3.watch(() => props.minZoom, newMinZoom => {
-	      zoom.value = newMinZoom;
-	    }, {
-	      immediate: true
-	    });
-	    ui_vue3.watch(() => props.maxZoom, newMaxZoom => {
-	      zoom.value = newMaxZoom;
-	    }, {
-	      immediate: true
-	    });
-	    ui_vue3.watch(() => props.connectionOffset, newConnectionOffset => {
-	      connectionOffset.value = newConnectionOffset;
-	    }, {
-	      immediate: true
-	    });
-	    ui_vue3.watch(() => props.connectionBendOffset, newConnectionOffsetBend => {
-	      connectionBendOffset.value = newConnectionOffsetBend;
-	    }, {
-	      immediate: true
-	    });
-	    ui_vue3.watch(() => props.connectionBorderRadius, newConnectionBorderRadius => {
-	      connectionBorderRadius.value = newConnectionBorderRadius;
-	    }, {
-	      immediate: true
-	    });
-	    ui_vue3.watch(() => props.disabled, disabled => {
-	      isDisabled.value = disabled;
-	    }, {
-	      immediate: true
-	    });
-	  });
-	  function dispose() {
-	    scope.stop();
-	  }
-	  return {
-	    dispose
-	  };
+		const {
+			blocks,
+			connections,
+			zoom,
+			isDisabled,
+			connectionOffset,
+			connectionBendOffset,
+			connectionBorderRadius,
+			setUnmountedBlocks,
+			setUnmountedPorts,
+			setConnectionsOffsets,
+			setHistoryBlocksCurrentState,
+			setHistoryConnectionsCurrentState,
+			blockIntersections,
+			isRunUpdateBlocksCommand
+		} = useBlockDiagram();
+		const scope = ui_vue3.effectScope(true);
+		scope.run(() => {
+			ui_vue3.watch([() => props.blocks, () => props.blocks.length], ([newBlocks = [], newLength = 0], [oldBlocks = [], oldLength = 0]) => {
+				if (newBlocks && Array.isArray(newBlocks)) {
+					setHistoryBlocksCurrentState(newBlocks);
+					setUnmountedPorts(newBlocks, oldBlocks);
+					setUnmountedBlocks(newBlocks, oldBlocks);
+					blocks.value = newBlocks;
+					if (!ui_vue3.toValue(isRunUpdateBlocksCommand)) {
+						blockIntersections.clear();
+						blockIntersections.load(blocks.value);
+					}
+					isRunUpdateBlocksCommand.value = false;
+				}
+			}, {
+				immediate: true,
+				deep: true
+			});
+			ui_vue3.watch([() => props.connections, () => props.connections.length], ([newConnections]) => {
+				setConnectionsOffsets(newConnections);
+				setHistoryConnectionsCurrentState(newConnections);
+				connections.value = [...newConnections];
+			}, {
+				immediate: true,
+				deep: true
+			});
+			ui_vue3.watch(() => props.zoom, newZoom => {
+				zoom.value = newZoom;
+			}, {
+				immediate: true
+			});
+			ui_vue3.watch(() => props.minZoom, newMinZoom => {
+				zoom.value = newMinZoom;
+			}, {
+				immediate: true
+			});
+			ui_vue3.watch(() => props.maxZoom, newMaxZoom => {
+				zoom.value = newMaxZoom;
+			}, {
+				immediate: true
+			});
+			ui_vue3.watch(() => props.connectionOffset, newConnectionOffset => {
+				connectionOffset.value = newConnectionOffset;
+			}, {
+				immediate: true
+			});
+			ui_vue3.watch(() => props.connectionBendOffset, newConnectionOffsetBend => {
+				connectionBendOffset.value = newConnectionOffsetBend;
+			}, {
+				immediate: true
+			});
+			ui_vue3.watch(() => props.connectionBorderRadius, newConnectionBorderRadius => {
+				connectionBorderRadius.value = newConnectionBorderRadius;
+			}, {
+				immediate: true
+			});
+			ui_vue3.watch(() => props.disabled, disabled => {
+				isDisabled.value = disabled;
+			}, {
+				immediate: true
+			});
+		});
+		function dispose() {
+			scope.stop();
+		}
+		return {
+			dispose
+		};
 	}
 
 	function useRegisterHooks(...hooksMaps) {
-	  const {
-	    hooks
-	  } = useBlockDiagram();
-	  const mergedHookMaps = [...hooksMaps].reduce((accHookMaps, hookMap) => {
-	    const result = {
-	      ...accHookMaps
-	    };
-	    Object.entries(hookMap).forEach(([hookName, handler]) => {
-	      if (hookName in accHookMaps) {
-	        result[hookName].push(...(main_core.Type.isFunction(handler) ? [handler] : handler));
-	      } else {
-	        result[hookName] = [...(main_core.Type.isFunction(handler) ? [handler] : handler)];
-	      }
-	    });
-	    return result;
-	  }, {});
-	  Object.entries(mergedHookMaps).forEach(([hookName, handlers]) => {
-	    handlers.forEach(handler => {
-	      var _hooks$hookName;
-	      hooks == null ? void 0 : (_hooks$hookName = hooks[hookName]) == null ? void 0 : _hooks$hookName.on(handler);
-	    });
-	  });
-	  function dispose() {
-	    Object.entries(mergedHookMaps).forEach(([hookName, handlers]) => {
-	      handlers.forEach(handler => {
-	        var _hooks$hookName2;
-	        hooks == null ? void 0 : (_hooks$hookName2 = hooks[hookName]) == null ? void 0 : _hooks$hookName2.off(handler);
-	      });
-	    });
-	  }
-	  return {
-	    dispose
-	  };
+		const {
+			hooks
+		} = useBlockDiagram();
+		const mergedHookMaps = [...hooksMaps].reduce((accHookMaps, hookMap) => {
+			const result = {
+				...accHookMaps
+			};
+			Object.entries(hookMap).forEach(([hookName, handler]) => {
+				if (hookName in accHookMaps) {
+					result[hookName].push(...(main_core.Type.isFunction(handler) ? [handler] : handler));
+				} else {
+					result[hookName] = [...(main_core.Type.isFunction(handler) ? [handler] : handler)];
+				}
+			});
+			return result;
+		}, {});
+		Object.entries(mergedHookMaps).forEach(([hookName, handlers]) => {
+			handlers.forEach(handler => {
+				hooks?.[hookName]?.on(handler);
+			});
+		});
+		function dispose() {
+			Object.entries(mergedHookMaps).forEach(([hookName, handlers]) => {
+				handlers.forEach(handler => {
+					hooks?.[hookName]?.off(handler);
+				});
+			});
+		}
+		return {
+			dispose
+		};
 	}
 
 	const DEFAULT_OPTIONS = {
-	  searchCallback: () => false,
-	  delay: 300
+		searchCallback: () => false,
+		delay: 300
 	};
 	function useSearchBlocks(optionParams) {
-	  const {
-	    blocks
-	  } = useBlockDiagram();
-	  const options = {
-	    ...DEFAULT_OPTIONS,
-	    ...optionParams
-	  };
-	  const seachText = ui_vue3.ref('');
-	  const foundBlocks = ui_vue3.ref([]);
-	  function onSearchBlocks(searchText) {
-	    seachText.value = searchText;
-	    foundBlocks.value = [];
-	    if (ui_vue3.toValue(seachText).trim() === '') {
-	      return;
-	    }
-	    blocks.value.forEach(block => {
-	      if (options.searchCallback(block, ui_vue3.toValue(seachText))) {
-	        foundBlocks.value.push(block);
-	      }
-	    });
-	  }
-	  function onClearSearch() {
-	    seachText.value = '';
-	    foundBlocks.value = [];
-	  }
-	  return {
-	    seachText,
-	    foundBlocks,
-	    onSearchBlocks: main_core.debounce(onSearchBlocks, options.delay),
-	    onClearSearch
-	  };
+		const {
+			blocks
+		} = useBlockDiagram();
+		const options = {
+			...DEFAULT_OPTIONS,
+			...optionParams
+		};
+		const seachText = ui_vue3.ref('');
+		const foundBlocks = ui_vue3.ref([]);
+		function onSearchBlocks(searchText) {
+			seachText.value = searchText;
+			foundBlocks.value = [];
+			if (ui_vue3.toValue(seachText).trim() === '') {
+				return;
+			}
+			blocks.value.forEach(block => {
+				if (options.searchCallback(block, ui_vue3.toValue(seachText))) {
+					foundBlocks.value.push(block);
+				}
+			});
+		}
+		function onClearSearch() {
+			seachText.value = '';
+			foundBlocks.value = [];
+		}
+		return {
+			seachText,
+			foundBlocks,
+			onSearchBlocks: main_core.debounce(onSearchBlocks, options.delay),
+			onClearSearch
+		};
 	}
 
 	function useCanvas() {
-	  const {
-	    zoom,
-	    blocks,
-	    canvasWidth,
-	    canvasHeight,
-	    blockDiagramTop,
-	    blockDiagramLeft,
-	    canvasInstance
-	  } = useBlockDiagram();
-	  function zoomIn(zoomStep) {
-	    var _toValue;
-	    (_toValue = ui_vue3.toValue(canvasInstance)) == null ? void 0 : _toValue.zoomIn(zoomStep);
-	  }
-	  function zoomOut(zoomStep) {
-	    var _toValue2;
-	    (_toValue2 = ui_vue3.toValue(canvasInstance)) == null ? void 0 : _toValue2.zoomOut(zoomStep);
-	  }
-	  function setZoom(zoomValue) {
-	    var _toValue3;
-	    (_toValue3 = ui_vue3.toValue(canvasInstance)) == null ? void 0 : _toValue3.setZoom(zoomValue);
-	  }
-	  function setCamera(params) {
-	    var _toValue4;
-	    (_toValue4 = ui_vue3.toValue(canvasInstance)) == null ? void 0 : _toValue4.setCamera(params);
-	  }
-	  function goToBlockById(id) {
-	    const block = ui_vue3.toValue(blocks).find(block => block.id === id);
-	    if (!block) {
-	      return;
-	    }
-	    const {
-	      x,
-	      y
-	    } = block.position;
-	    const {
-	      width,
-	      height
-	    } = block.dimensions;
-	    const centerX = x + width / 2;
-	    const centerY = y + height / 2;
-	    setCamera({
-	      x: centerX - ui_vue3.toValue(canvasWidth) / 2 / ui_vue3.toValue(zoom) - ui_vue3.toValue(blockDiagramLeft) / ui_vue3.toValue(zoom),
-	      y: centerY - ui_vue3.toValue(canvasHeight) / 2 / ui_vue3.toValue(zoom) - ui_vue3.toValue(blockDiagramTop) / ui_vue3.toValue(zoom)
-	    });
-	  }
-	  return {
-	    zoomIn,
-	    zoomOut,
-	    setZoom,
-	    setCamera,
-	    goToBlockById
-	  };
+		const {
+			zoom,
+			blocks,
+			canvasWidth,
+			canvasHeight,
+			blockDiagramTop,
+			blockDiagramLeft,
+			canvasInstance
+		} = useBlockDiagram();
+		function zoomIn(zoomStep) {
+			ui_vue3.toValue(canvasInstance)?.zoomIn(zoomStep);
+		}
+		function zoomOut(zoomStep) {
+			ui_vue3.toValue(canvasInstance)?.zoomOut(zoomStep);
+		}
+		function setZoom(zoomValue) {
+			ui_vue3.toValue(canvasInstance)?.setZoom(zoomValue);
+		}
+		function setCamera(params) {
+			ui_vue3.toValue(canvasInstance)?.setCamera(params);
+		}
+		function goToBlockById(id) {
+			const block = ui_vue3.toValue(blocks).find(block => block.id === id);
+			if (!block) {
+				return;
+			}
+			const {
+				x,
+				y
+			} = block.position;
+			const {
+				width,
+				height
+			} = block.dimensions;
+			const centerX = x + width / 2;
+			const centerY = y + height / 2;
+			setCamera({
+				x: centerX - ui_vue3.toValue(canvasWidth) / 2 / ui_vue3.toValue(zoom) - ui_vue3.toValue(blockDiagramLeft) / ui_vue3.toValue(zoom),
+				y: centerY - ui_vue3.toValue(canvasHeight) / 2 / ui_vue3.toValue(zoom) - ui_vue3.toValue(blockDiagramTop) / ui_vue3.toValue(zoom)
+			});
+		}
+		return {
+			zoomIn,
+			zoomOut,
+			setZoom,
+			setCamera,
+			goToBlockById
+		};
 	}
 
 	function useHighlightedBlocks() {
-	  const {
-	    highlitedBlockIds
-	  } = useBlockDiagram();
-	  function set(blockIds) {
-	    ui_vue3.toValue(highlitedBlockIds).push(...blockIds);
-	  }
-	  function add(blockId) {
-	    ui_vue3.toValue(highlitedBlockIds).push(blockId);
-	  }
-	  function remove(blockId) {
-	    const highlitedIndx = highlitedBlockIds.value.indexOf(blockId);
-	    if (highlitedIndx > -1) {
-	      highlitedBlockIds.value.splice(highlitedIndx, 1);
-	    }
-	  }
-	  function clear() {
-	    highlitedBlockIds.value = [];
-	  }
-	  return {
-	    highlitedBlockIds,
-	    set,
-	    add,
-	    remove,
-	    clear
-	  };
+		const {
+			highlitedBlockIds
+		} = useBlockDiagram();
+		function set(blockIds) {
+			ui_vue3.toValue(highlitedBlockIds).push(...blockIds);
+		}
+		function add(blockId) {
+			ui_vue3.toValue(highlitedBlockIds).push(blockId);
+		}
+		function remove(blockId) {
+			const highlitedIndx = highlitedBlockIds.value.indexOf(blockId);
+			if (highlitedIndx > -1) {
+				highlitedBlockIds.value.splice(highlitedIndx, 1);
+			}
+		}
+		function clear() {
+			highlitedBlockIds.value = [];
+		}
+		return {
+			highlitedBlockIds,
+			set,
+			add,
+			remove,
+			clear
+		};
 	}
 
 	function useLoc() {
-	  var _getCurrentInstance, _app$config$globalPro, _app$config, _app$config$globalPro2;
-	  const app = (_getCurrentInstance = ui_vue3.getCurrentInstance()) == null ? void 0 : _getCurrentInstance.appContext.app;
-	  const bitrix = (_app$config$globalPro = app == null ? void 0 : (_app$config = app.config) == null ? void 0 : (_app$config$globalPro2 = _app$config.globalProperties) == null ? void 0 : _app$config$globalPro2.$bitrix) != null ? _app$config$globalPro : null;
-	  return {
-	    getMessage: (messageId, replacements) => {
-	      var _bitrix$Loc;
-	      return bitrix == null ? void 0 : (_bitrix$Loc = bitrix.Loc) == null ? void 0 : _bitrix$Loc.getMessage(messageId, replacements);
-	    }
-	  };
+		const app = ui_vue3.getCurrentInstance()?.appContext.app;
+		const bitrix = app?.config?.globalProperties?.$bitrix ?? null;
+		return {
+			getMessage: (messageId, replacements) => {
+				return bitrix?.Loc?.getMessage(messageId, replacements);
+			}
+		};
 	}
 
 	// eslint-disable-next-line max-lines-per-function
 	function usePortState(options) {
-	  const {
-	    portRef,
-	    block,
-	    port,
-	    position = PORT_POSITION.LEFT,
-	    index = 0
-	  } = options;
-	  const {
-	    waitAllBlocksMounted,
-	    portsElMap,
-	    portsRectMap,
-	    zoom,
-	    transformX,
-	    transformY,
-	    blockDiagramTop,
-	    blockDiagramLeft,
-	    isDisabledBlockDiagram,
-	    updatePortSegmentSizes,
-	    portMounted,
-	    waitForTransformEnd
-	  } = useBlockDiagram();
-	  const isDisabled = ui_vue3.computed(() => {
-	    return ui_vue3.toValue(isDisabledBlockDiagram);
-	  });
-	  function addPortElement(blockId, portId, portEl) {
-	    if (!ui_vue3.toValue(portsElMap).has(blockId)) {
-	      ui_vue3.toValue(portsElMap).set(blockId, new Map());
-	    }
-	    ui_vue3.toValue(portsElMap).get(blockId).set(portId, ui_vue3.toValue(portEl));
-	  }
-	  function deletePortElement(blockId, portId) {
-	    if (!ui_vue3.toValue(portsElMap).has(blockId)) {
-	      return;
-	    }
-	    ui_vue3.toValue(portsElMap).get(blockId).delete(portId);
-	  }
-	  function addPortRect(blockId, portId, portEl) {
-	    var _toValue$getBoundingC, _toValue;
-	    if (!(blockId in ui_vue3.toValue(portsRectMap))) {
-	      ui_vue3.toValue(portsRectMap)[blockId] = {};
-	    }
-	    const {
-	      x = 0,
-	      y = 0,
-	      width = 0,
-	      height = 0
-	    } = (_toValue$getBoundingC = (_toValue = ui_vue3.toValue(portEl)) == null ? void 0 : _toValue.getBoundingClientRect()) != null ? _toValue$getBoundingC : {};
-	    ui_vue3.toValue(portsRectMap)[blockId][portId] = {
-	      x: x / ui_vue3.toValue(zoom) + ui_vue3.toValue(transformX) - ui_vue3.toValue(blockDiagramLeft) / ui_vue3.toValue(zoom),
-	      y: y / ui_vue3.toValue(zoom) + ui_vue3.toValue(transformY) - ui_vue3.toValue(blockDiagramTop) / ui_vue3.toValue(zoom),
-	      width,
-	      height,
-	      position,
-	      firstSegmentSize: 0,
-	      secondSegmentSize: 0,
-	      secondSegmentSizeWithoutOffset: 0
-	    };
-	  }
-	  function deletePortRect(blockId, portId) {
-	    if (!(blockId in ui_vue3.toValue(portsRectMap))) {
-	      return;
-	    }
-	    const portsMap = ui_vue3.toValue(portsRectMap)[blockId];
-	    if (Object.keys(portsMap).length === 1) {
-	      delete ui_vue3.toValue(portsRectMap)[blockId];
-	    } else {
-	      delete ui_vue3.toValue(portsMap)[portId];
-	    }
-	  }
-	  async function onMountedPort() {
-	    var _waitForTransformEnd$, _waitAllBlocksMounted;
-	    // Workaround to fix connections render after they are in viewport. Should be removed later
-	    await ((_waitForTransformEnd$ = waitForTransformEnd.value) == null ? void 0 : _waitForTransformEnd$.promise);
-	    addPortElement(ui_vue3.toValue(block).id, ui_vue3.toValue(port).id, portRef);
-	    addPortRect(ui_vue3.toValue(block).id, ui_vue3.toValue(port).id, portRef);
-	    (_waitAllBlocksMounted = waitAllBlocksMounted.value) == null ? void 0 : _waitAllBlocksMounted.promise.then(() => {
-	      if (!(ui_vue3.toValue(block).id in ui_vue3.toValue(portsRectMap))) {
-	        return;
-	      }
-	      updatePortSegmentSizes(ui_vue3.toValue(block).id, ui_vue3.toValue(port).id, index);
-	      portMounted(ui_vue3.toValue(block).id, ui_vue3.toValue(port).id);
-	    });
-	  }
-	  async function onUnmountedPort() {
-	    var _waitForTransformEnd$2;
-	    // Workaround to fix connections render after they are in viewport. Should be removed later
-	    await ((_waitForTransformEnd$2 = waitForTransformEnd.value) == null ? void 0 : _waitForTransformEnd$2.promise);
-	    deletePortElement(ui_vue3.toValue(block).id, ui_vue3.toValue(port).id);
-	    deletePortRect(ui_vue3.toValue(block).id, ui_vue3.toValue(port).id);
-	  }
-	  return {
-	    isDisabled,
-	    onMountedPort,
-	    onUnmountedPort
-	  };
+		const {
+			portRef,
+			block,
+			port,
+			position = PORT_POSITION.LEFT,
+			validationRules = [],
+			index = 0
+		} = options;
+		const {
+			isMakeNewConnection,
+			waitAllBlocksMounted,
+			portsElMap,
+			portsRectMap,
+			portsValidationsFnMap,
+			zoom,
+			transformX,
+			transformY,
+			blockDiagramTop,
+			blockDiagramLeft,
+			highlitedBlockIds,
+			movingBlockId,
+			isDisabledBlockDiagram,
+			updatePortSegmentSizes,
+			portMounted,
+			validPortsMap,
+			waitForTransformEnd
+		} = useBlockDiagram();
+		const isMaybePortForNewConnection = ui_vue3.computed(() => {
+			const hasBlock = ui_vue3.toValue(validPortsMap).has(ui_vue3.toValue(block).id);
+			const hasPort = ui_vue3.toValue(validPortsMap)?.get(ui_vue3.toValue(block).id)?.has(ui_vue3.toValue(port).id) ?? false;
+			return ui_vue3.toValue(isMakeNewConnection) && hasBlock && hasPort;
+		});
+		const isDisabled = ui_vue3.computed(() => {
+			return ui_vue3.toValue(isDisabledBlockDiagram);
+		});
+		const isIncludedPortInSelectedBlock = ui_vue3.computed(() => {
+			return ui_vue3.toValue(highlitedBlockIds).includes(ui_vue3.toValue(block).id);
+		});
+		const isIncludedPortInMovingBlock = ui_vue3.computed(() => {
+			return ui_vue3.toValue(movingBlockId) !== null && ui_vue3.toValue(movingBlockId) === ui_vue3.toValue(block).id;
+		});
+		function addPortElement(blockId, portId, portEl) {
+			if (!ui_vue3.toValue(portsElMap).has(blockId)) {
+				ui_vue3.toValue(portsElMap).set(blockId, new Map());
+			}
+			ui_vue3.toValue(portsElMap).get(blockId).set(portId, ui_vue3.toValue(portEl));
+		}
+		function deletePortElement(blockId, portId) {
+			if (!ui_vue3.toValue(portsElMap).has(blockId)) {
+				return;
+			}
+			ui_vue3.toValue(portsElMap).get(blockId).delete(portId);
+		}
+		function addPortRect(blockId, portId, portEl) {
+			if (!(blockId in ui_vue3.toValue(portsRectMap))) {
+				ui_vue3.toValue(portsRectMap)[blockId] = {};
+			}
+			const {
+				x = 0,
+				y = 0,
+				width = 0,
+				height = 0
+			} = ui_vue3.toValue(portEl)?.getBoundingClientRect() ?? {};
+			ui_vue3.toValue(portsRectMap)[blockId][portId] = {
+				x: x / ui_vue3.toValue(zoom) + ui_vue3.toValue(transformX) - ui_vue3.toValue(blockDiagramLeft) / ui_vue3.toValue(zoom),
+				y: y / ui_vue3.toValue(zoom) + ui_vue3.toValue(transformY) - ui_vue3.toValue(blockDiagramTop) / ui_vue3.toValue(zoom),
+				width: width / ui_vue3.toValue(zoom),
+				height: height / ui_vue3.toValue(zoom),
+				position,
+				firstSegmentSize: 0,
+				secondSegmentSize: 0,
+				secondSegmentSizeWithoutOffset: 0
+			};
+		}
+		function deletePortRect(blockId, portId) {
+			if (!(blockId in ui_vue3.toValue(portsRectMap))) {
+				return;
+			}
+			const portsMap = ui_vue3.toValue(portsRectMap)[blockId];
+			if (Object.keys(portsMap).length === 1) {
+				delete ui_vue3.toValue(portsRectMap)[blockId];
+			} else {
+				delete ui_vue3.toValue(portsMap)[portId];
+			}
+		}
+		function addValidationFn() {
+			if (!ui_vue3.toValue(portsValidationsFnMap).has(ui_vue3.toValue(block).id)) {
+				ui_vue3.toValue(portsValidationsFnMap).set(ui_vue3.toValue(block).id, new Map());
+			}
+			ui_vue3.toValue(portsValidationsFnMap).get(ui_vue3.toValue(block).id).set(ui_vue3.toValue(port.id), ui_vue3.toValue(validationRules));
+		}
+		function deleteValidationFn() {
+			const portsCount = ui_vue3.toValue(portsValidationsFnMap)?.get(ui_vue3.toValue(block).id)?.size ?? 0;
+			if (portsCount === 1) {
+				ui_vue3.toValue(portsValidationsFnMap).delete(ui_vue3.toValue(block).id);
+			}
+			ui_vue3.toValue(portsValidationsFnMap)?.get(ui_vue3.toValue(block).id)?.delete(ui_vue3.toValue(port).id);
+		}
+		async function onMountedPort() {
+			// Workaround to fix connections render after they are in viewport. Should be removed later
+			await waitForTransformEnd.value?.promise;
+			addPortElement(ui_vue3.toValue(block).id, ui_vue3.toValue(port).id, portRef);
+			addPortRect(ui_vue3.toValue(block).id, ui_vue3.toValue(port).id, portRef);
+			addValidationFn();
+			waitAllBlocksMounted.value?.promise.then(() => {
+				if (!(ui_vue3.toValue(block).id in ui_vue3.toValue(portsRectMap))) {
+					return;
+				}
+				updatePortSegmentSizes(ui_vue3.toValue(block).id, ui_vue3.toValue(port).id, index);
+				portMounted(ui_vue3.toValue(block).id, ui_vue3.toValue(port).id);
+			});
+		}
+		async function onUnmountedPort() {
+			// Workaround to fix connections render after they are in viewport. Should be removed later
+			await waitForTransformEnd.value?.promise;
+			deletePortElement(ui_vue3.toValue(block).id, ui_vue3.toValue(port).id);
+			deletePortRect(ui_vue3.toValue(block).id, ui_vue3.toValue(port).id);
+			deleteValidationFn();
+		}
+		return {
+			isDisabled,
+			isMaybePortForNewConnection,
+			isIncludedPortInSelectedBlock,
+			isIncludedPortInMovingBlock,
+			onMountedPort,
+			onUnmountedPort
+		};
 	}
 
 	const MIN_DISTANCE_DISPLAY_BIZIER_LINE = 100;
-	const DEFAULT_PATH_INFO = {
-	  path: '',
-	  center: {
-	    x: 0,
-	    y: 0
-	  }
+	const DEFAULT_PATH_INFO$1 = {
+		path: '',
+		center: {
+			x: 0,
+			y: 0
+		}
 	};
 
 	// eslint-disable-next-line max-lines-per-function
 	function useConnectionState(connection) {
-	  const {
-	    portsRectMap,
-	    isDisabledBlockDiagram,
-	    connectionsOffsetMap,
-	    connectionOffset,
-	    connectionBendOffset,
-	    connectionBorderRadius
-	  } = useBlockDiagram();
-	  const connectionPortsPosition = ui_vue3.computed(() => {
-	    var _toValue$sourceBlockI, _toValue, _toValue$sourceBlockI2, _toValue$targetBlockI, _toValue2, _toValue2$targetBlock, _toValue$sourceBlockI3, _toValue3, _toValue3$sourceBlock, _toValue3$sourceBlock2, _toValue$targetBlockI2, _toValue4, _toValue4$targetBlock, _toValue4$targetBlock2;
-	    const {
-	      id: connectionId,
-	      sourceBlockId,
-	      sourcePortId,
-	      targetBlockId,
-	      targetPortId
-	    } = ui_vue3.toValue(connection);
-	    const hasSourceBlockId = (sourceBlockId in ui_vue3.toValue(portsRectMap));
-	    const hasSourcePortId = hasSourceBlockId && sourcePortId in ui_vue3.toValue(portsRectMap)[sourceBlockId];
-	    const hasTargetBlockId = (targetBlockId in ui_vue3.toValue(portsRectMap));
-	    const hasTargetPortId = hasTargetBlockId && targetPortId in ui_vue3.toValue(portsRectMap)[targetBlockId];
-	    if (!hasSourceBlockId || !hasSourcePortId || !hasTargetBlockId || !hasTargetPortId) {
-	      return null;
-	    }
-	    const hasManyConnectionSourcePort = Object.keys((_toValue$sourceBlockI = (_toValue = ui_vue3.toValue(connectionsOffsetMap)) == null ? void 0 : (_toValue$sourceBlockI2 = _toValue[sourceBlockId]) == null ? void 0 : _toValue$sourceBlockI2[sourcePortId]) != null ? _toValue$sourceBlockI : {}).length > 1;
-	    const hasManyConnectionTargetPort = Object.keys((_toValue$targetBlockI = (_toValue2 = ui_vue3.toValue(connectionsOffsetMap)) == null ? void 0 : (_toValue2$targetBlock = _toValue2[targetBlockId]) == null ? void 0 : _toValue2$targetBlock[targetPortId]) != null ? _toValue$targetBlockI : {}).length > 1;
-	    const {
-	      firstSegmentSize: sourceConnectionFirstSegmentSize = 0,
-	      secondSegmentOrder: sourceSecondSegmentOrder = 0
-	    } = (_toValue$sourceBlockI3 = (_toValue3 = ui_vue3.toValue(connectionsOffsetMap)) == null ? void 0 : (_toValue3$sourceBlock = _toValue3[sourceBlockId]) == null ? void 0 : (_toValue3$sourceBlock2 = _toValue3$sourceBlock[sourcePortId]) == null ? void 0 : _toValue3$sourceBlock2[connectionId]) != null ? _toValue$sourceBlockI3 : {};
-	    const {
-	      firstSegmentSize: targetConnectionFirstSegmentSize = 0,
-	      secondSegmentOrder: targetSecondSegmentOrder = 0
-	    } = (_toValue$targetBlockI2 = (_toValue4 = ui_vue3.toValue(connectionsOffsetMap)) == null ? void 0 : (_toValue4$targetBlock = _toValue4[targetBlockId]) == null ? void 0 : (_toValue4$targetBlock2 = _toValue4$targetBlock[targetPortId]) == null ? void 0 : _toValue4$targetBlock2[connectionId]) != null ? _toValue$targetBlockI2 : {};
-	    const {
-	      x: sourceX,
-	      y: sourceY,
-	      width: sourceWidth,
-	      height: sourceHeight,
-	      position: sourcePosition,
-	      firstSegmentSize: sourceFirstSegmentSize,
-	      secondSegmentSize: sourceSecondSegmentSize,
-	      secondSegmentSizeWithoutOffset: sourceSecondSegmentSizeWithoutOffset
-	    } = ui_vue3.toValue(portsRectMap)[sourceBlockId][sourcePortId];
-	    const {
-	      x: targetX,
-	      y: targetY,
-	      width: targetWidth,
-	      height: targetHeight,
-	      position: targetPosition,
-	      firstSegmentSize: targetFirstSegmentSize,
-	      secondSegmentSize: targetSecondSegmentSize,
-	      secondSegmentSizeWithoutOffset: targetSecondSegmentSizeWithoutOffset
-	    } = ui_vue3.toValue(portsRectMap)[targetBlockId][targetPortId];
-	    return {
-	      sourcePort: {
-	        x: sourceX + sourceWidth / 2,
-	        y: sourceY + sourceHeight / 2,
-	        position: sourcePosition,
-	        firstSegmentSize: hasManyConnectionSourcePort ? sourceConnectionFirstSegmentSize : sourceFirstSegmentSize,
-	        secondSegmentSize: hasManyConnectionSourcePort ? sourceSecondSegmentSizeWithoutOffset + ui_vue3.toValue(connectionBendOffset) * sourceSecondSegmentOrder : sourceSecondSegmentSize
-	      },
-	      targetPort: {
-	        x: targetX + targetWidth / 2,
-	        y: targetY + targetHeight / 2,
-	        position: targetPosition,
-	        firstSegmentSize: hasManyConnectionTargetPort ? targetConnectionFirstSegmentSize : targetFirstSegmentSize,
-	        secondSegmentSize: hasManyConnectionTargetPort ? targetSecondSegmentSizeWithoutOffset + ui_vue3.toValue(connectionBendOffset) * targetSecondSegmentOrder : targetSecondSegmentSize
-	      }
-	    };
-	  });
-	  const connectionPathInfo = ui_vue3.computed(() => {
-	    if (ui_vue3.toValue(connectionPortsPosition) === null) {
-	      return DEFAULT_PATH_INFO;
-	    }
-	    const sourcePosition = ui_vue3.toValue(connectionPortsPosition).sourcePort.position;
-	    const targetPosition = ui_vue3.toValue(connectionPortsPosition).targetPort.position;
-	    const isVerticalDirection = sourcePosition !== targetPosition && [PORT_POSITION.TOP, PORT_POSITION.BOTTOM].includes(sourcePosition) && [PORT_POSITION.TOP, PORT_POSITION.BOTTOM].includes(targetPosition);
-	    const isHorizontalDirection = sourcePosition !== targetPosition && [PORT_POSITION.LEFT, PORT_POSITION.RIGHT].includes(sourcePosition) && [PORT_POSITION.LEFT, PORT_POSITION.RIGHT].includes(targetPosition);
-	    const {
-	      points
-	    } = getSmoothStepPath({
-	      sourceX: ui_vue3.toValue(connectionPortsPosition).sourcePort.x,
-	      sourceY: ui_vue3.toValue(connectionPortsPosition).sourcePort.y,
-	      sourcePosition,
-	      targetX: ui_vue3.toValue(connectionPortsPosition).targetPort.x,
-	      targetY: ui_vue3.toValue(connectionPortsPosition).targetPort.y,
-	      targetPosition,
-	      borderRadius: ui_vue3.toValue(connectionBorderRadius),
-	      offset: ui_vue3.toValue(connectionOffset)
-	    });
-	    const [p1, p2, p3, p4, p5, p6] = points;
-	    const isDisplayBezierLineByDistance = distance(p1, p6) < MIN_DISTANCE_DISPLAY_BIZIER_LINE;
-	    const isXConsistOfThreeParts = p1.x === p2.x && p1.x === p3.x && p4.x === p5.x && p4.x === p6.x;
-	    const isYConsistOfThreeParts = p1.y === p2.y && p1.y === p3.y && p4.y === p5.y && p4.y === p6.y;
-	    if (isDisplayBezierLineByDistance || isXConsistOfThreeParts && isVerticalDirection || isYConsistOfThreeParts && isHorizontalDirection) {
-	      return getBeziePath(ui_vue3.toValue(connectionPortsPosition).sourcePort, ui_vue3.toValue(connectionPortsPosition).targetPort, isVerticalDirection ? BEZIER_DIR.VERTICAL : BEZIER_DIR.HORIZONTAL);
-	    }
-	    const {
-	      x: sourceX,
-	      y: sourceY,
-	      firstSegmentSize: sourceFirtsSegmentSize,
-	      secondSegmentSize
-	    } = ui_vue3.toValue(connectionPortsPosition).sourcePort;
-	    const {
-	      x: targetX,
-	      y: targetY,
-	      firstSegmentSize: targetFirstSegmentSize
-	    } = ui_vue3.toValue(connectionPortsPosition).targetPort;
-	    const firstSegmentTargetX = isHorizontalDirection ? (sourceX + targetX) / 2 : sourceX + secondSegmentSize;
-	    const firstSegmentTargetY = isHorizontalDirection ? sourceY + secondSegmentSize : (sourceY + targetY) / 2;
-	    const firstSegmentPath = getSmoothStepPath({
-	      sourceX,
-	      sourceY,
-	      targetX: firstSegmentTargetX,
-	      targetY: firstSegmentTargetY,
-	      sourcePosition,
-	      targetPosition: isHorizontalDirection ? PORT_POSITION.RIGHT : PORT_POSITION.BOTTOM,
-	      borderRadius: ui_vue3.toValue(connectionBorderRadius),
-	      offset: sourceFirtsSegmentSize
-	    });
-	    const secondSegmentPath = getSmoothStepPath({
-	      sourceX: firstSegmentTargetX,
-	      sourceY: firstSegmentTargetY,
-	      targetX,
-	      targetY,
-	      sourcePosition: isHorizontalDirection ? PORT_POSITION.LEFT : PORT_POSITION.TOP,
-	      targetPosition,
-	      borderRadius: ui_vue3.toValue(connectionBorderRadius),
-	      offset: targetFirstSegmentSize
-	    });
-	    return {
-	      path: `${firstSegmentPath.path} ${secondSegmentPath.path}`,
-	      center: {
-	        x: firstSegmentTargetX,
-	        y: firstSegmentTargetY
-	      }
-	    };
-	  });
-	  const isDisabled = ui_vue3.computed(() => {
-	    return ui_vue3.toValue(isDisabledBlockDiagram);
-	  });
-	  return {
-	    connectionPortsPosition,
-	    connectionPathInfo,
-	    isDisabled
-	  };
+		const {
+			portsRectMap,
+			isDisabledBlockDiagram,
+			connectionsOffsetMap,
+			connectionOffset,
+			connectionBendOffset,
+			connectionBorderRadius
+		} = useBlockDiagram();
+		const connectionPortsPosition = ui_vue3.computed(() => {
+			const {
+				id: connectionId,
+				sourceBlockId,
+				sourcePortId,
+				targetBlockId,
+				targetPortId
+			} = ui_vue3.toValue(connection);
+			const hasSourceBlockId = sourceBlockId in ui_vue3.toValue(portsRectMap);
+			const hasSourcePortId = hasSourceBlockId && sourcePortId in ui_vue3.toValue(portsRectMap)[sourceBlockId];
+			const hasTargetBlockId = targetBlockId in ui_vue3.toValue(portsRectMap);
+			const hasTargetPortId = hasTargetBlockId && targetPortId in ui_vue3.toValue(portsRectMap)[targetBlockId];
+			if (!hasSourceBlockId || !hasSourcePortId || !hasTargetBlockId || !hasTargetPortId) {
+				return null;
+			}
+			const hasManyConnectionSourcePort = Object.keys(ui_vue3.toValue(connectionsOffsetMap)?.[sourceBlockId]?.[sourcePortId] ?? {}).length > 1;
+			const hasManyConnectionTargetPort = Object.keys(ui_vue3.toValue(connectionsOffsetMap)?.[targetBlockId]?.[targetPortId] ?? {}).length > 1;
+			const {
+				firstSegmentSize: sourceConnectionFirstSegmentSize = 0,
+				secondSegmentOrder: sourceSecondSegmentOrder = 0
+			} = ui_vue3.toValue(connectionsOffsetMap)?.[sourceBlockId]?.[sourcePortId]?.[connectionId] ?? {};
+			const {
+				firstSegmentSize: targetConnectionFirstSegmentSize = 0,
+				secondSegmentOrder: targetSecondSegmentOrder = 0
+			} = ui_vue3.toValue(connectionsOffsetMap)?.[targetBlockId]?.[targetPortId]?.[connectionId] ?? {};
+			const {
+				x: sourceX,
+				y: sourceY,
+				width: sourceWidth,
+				height: sourceHeight,
+				position: sourcePosition,
+				firstSegmentSize: sourceFirstSegmentSize,
+				secondSegmentSize: sourceSecondSegmentSize,
+				secondSegmentSizeWithoutOffset: sourceSecondSegmentSizeWithoutOffset
+			} = ui_vue3.toValue(portsRectMap)[sourceBlockId][sourcePortId];
+			const {
+				x: targetX,
+				y: targetY,
+				width: targetWidth,
+				height: targetHeight,
+				position: targetPosition,
+				firstSegmentSize: targetFirstSegmentSize,
+				secondSegmentSize: targetSecondSegmentSize,
+				secondSegmentSizeWithoutOffset: targetSecondSegmentSizeWithoutOffset
+			} = ui_vue3.toValue(portsRectMap)[targetBlockId][targetPortId];
+			return {
+				sourcePort: {
+					x: sourceX + sourceWidth / 2,
+					y: sourceY + sourceHeight / 2,
+					position: sourcePosition,
+					firstSegmentSize: hasManyConnectionSourcePort ? sourceConnectionFirstSegmentSize : sourceFirstSegmentSize,
+					secondSegmentSize: hasManyConnectionSourcePort ? sourceSecondSegmentSizeWithoutOffset + ui_vue3.toValue(connectionBendOffset) * sourceSecondSegmentOrder : sourceSecondSegmentSize
+				},
+				targetPort: {
+					x: targetX + targetWidth / 2,
+					y: targetY + targetHeight / 2,
+					position: targetPosition,
+					firstSegmentSize: hasManyConnectionTargetPort ? targetConnectionFirstSegmentSize : targetFirstSegmentSize,
+					secondSegmentSize: hasManyConnectionTargetPort ? targetSecondSegmentSizeWithoutOffset + ui_vue3.toValue(connectionBendOffset) * targetSecondSegmentOrder : targetSecondSegmentSize
+				}
+			};
+		});
+		const connectionPathInfo = ui_vue3.computed(() => {
+			if (ui_vue3.toValue(connectionPortsPosition) === null) {
+				return DEFAULT_PATH_INFO$1;
+			}
+			const sourcePosition = ui_vue3.toValue(connectionPortsPosition).sourcePort.position;
+			const targetPosition = ui_vue3.toValue(connectionPortsPosition).targetPort.position;
+			const isVerticalDirection = sourcePosition !== targetPosition && [PORT_POSITION.TOP, PORT_POSITION.BOTTOM].includes(sourcePosition) && [PORT_POSITION.TOP, PORT_POSITION.BOTTOM].includes(targetPosition);
+			const isHorizontalDirection = sourcePosition !== targetPosition && [PORT_POSITION.LEFT, PORT_POSITION.RIGHT].includes(sourcePosition) && [PORT_POSITION.LEFT, PORT_POSITION.RIGHT].includes(targetPosition);
+			const {
+				points
+			} = getSmoothStepPath({
+				sourceX: ui_vue3.toValue(connectionPortsPosition).sourcePort.x,
+				sourceY: ui_vue3.toValue(connectionPortsPosition).sourcePort.y,
+				sourcePosition,
+				targetX: ui_vue3.toValue(connectionPortsPosition).targetPort.x,
+				targetY: ui_vue3.toValue(connectionPortsPosition).targetPort.y,
+				targetPosition,
+				borderRadius: ui_vue3.toValue(connectionBorderRadius),
+				offset: ui_vue3.toValue(connectionOffset)
+			});
+			const [p1, p2, p3, p4, p5, p6] = points;
+			const isDisplayBezierLineByDistance = distance(p1, p6) < MIN_DISTANCE_DISPLAY_BIZIER_LINE;
+			const isXConsistOfThreeParts = p1.x === p2.x && p1.x === p3.x && p4.x === p5.x && p4.x === p6.x;
+			const isYConsistOfThreeParts = p1.y === p2.y && p1.y === p3.y && p4.y === p5.y && p4.y === p6.y;
+			if (isDisplayBezierLineByDistance || isXConsistOfThreeParts && isVerticalDirection || isYConsistOfThreeParts && isHorizontalDirection) {
+				return getBeziePath(ui_vue3.toValue(connectionPortsPosition).sourcePort, ui_vue3.toValue(connectionPortsPosition).targetPort, isVerticalDirection ? BEZIER_DIR.VERTICAL : BEZIER_DIR.HORIZONTAL);
+			}
+			const {
+				x: sourceX,
+				y: sourceY,
+				firstSegmentSize: sourceFirtsSegmentSize,
+				secondSegmentSize
+			} = ui_vue3.toValue(connectionPortsPosition).sourcePort;
+			const {
+				x: targetX,
+				y: targetY,
+				firstSegmentSize: targetFirstSegmentSize
+			} = ui_vue3.toValue(connectionPortsPosition).targetPort;
+			const firstSegmentTargetX = isHorizontalDirection ? (sourceX + targetX) / 2 : sourceX + secondSegmentSize;
+			const firstSegmentTargetY = isHorizontalDirection ? sourceY + secondSegmentSize : (sourceY + targetY) / 2;
+			const firstSegmentPath = getSmoothStepPath({
+				sourceX,
+				sourceY,
+				targetX: firstSegmentTargetX,
+				targetY: firstSegmentTargetY,
+				sourcePosition,
+				targetPosition: isHorizontalDirection ? PORT_POSITION.RIGHT : PORT_POSITION.BOTTOM,
+				borderRadius: ui_vue3.toValue(connectionBorderRadius),
+				offset: sourceFirtsSegmentSize
+			});
+			const secondSegmentPath = getSmoothStepPath({
+				sourceX: firstSegmentTargetX,
+				sourceY: firstSegmentTargetY,
+				targetX,
+				targetY,
+				sourcePosition: isHorizontalDirection ? PORT_POSITION.LEFT : PORT_POSITION.TOP,
+				targetPosition,
+				borderRadius: ui_vue3.toValue(connectionBorderRadius),
+				offset: targetFirstSegmentSize
+			});
+			return {
+				path: `${firstSegmentPath.path} ${secondSegmentPath.path}`,
+				center: {
+					x: firstSegmentTargetX,
+					y: firstSegmentTargetY
+				}
+			};
+		});
+		const isDisabled = ui_vue3.computed(() => {
+			return ui_vue3.toValue(isDisabledBlockDiagram);
+		});
+		return {
+			connectionPortsPosition,
+			connectionPathInfo,
+			isDisabled
+		};
 	}
 
 	function useInitAppElements(options) {
-	  const {
-	    blockDiagramRef: newBlockDiagramRef
-	  } = options;
-	  const {
-	    blockDiagramRef,
-	    blockDiagramTop,
-	    blockDiagramLeft
-	  } = useBlockDiagram();
-	  let observer = null;
-	  function handleInterObserver(entries) {
-	    entries.forEach(entry => {
-	      const {
-	        top,
-	        left
-	      } = entry.boundingClientRect;
-	      blockDiagramTop.value = top;
-	      blockDiagramLeft.value = left;
-	    });
-	  }
-	  function onMountedAppElements() {
-	    blockDiagramRef.value = ui_vue3.toValue(newBlockDiagramRef);
-	    const {
-	      left,
-	      top
-	    } = ui_vue3.toValue(newBlockDiagramRef).getBoundingClientRect();
-	    blockDiagramTop.value = top;
-	    blockDiagramLeft.value = left;
-	    observer = new IntersectionObserver(handleInterObserver);
-	    observer.observe(ui_vue3.toValue(blockDiagramRef));
-	  }
-	  function onUnmountedAppElements() {
-	    observer.unobserve(ui_vue3.toValue(blockDiagramRef));
-	  }
-	  return {
-	    onMountedAppElements,
-	    onUnmountedAppElements
-	  };
+		const {
+			blockDiagramRef: newBlockDiagramRef
+		} = options;
+		const {
+			blockDiagramRef,
+			blockDiagramTop,
+			blockDiagramLeft,
+			blockDiagramWidth,
+			blockDiagramHeight
+		} = useBlockDiagram();
+		let observer = null;
+		function handleInterObserver(entries) {
+			entries.forEach(entry => {
+				const {
+					top,
+					left,
+					width,
+					height
+				} = entry.boundingClientRect;
+				blockDiagramTop.value = top;
+				blockDiagramLeft.value = left;
+				blockDiagramWidth.value = width;
+				blockDiagramHeight.value = height;
+			});
+		}
+		function onMountedAppElements() {
+			blockDiagramRef.value = ui_vue3.toValue(newBlockDiagramRef);
+			const {
+				left,
+				top,
+				width,
+				height
+			} = ui_vue3.toValue(newBlockDiagramRef).getBoundingClientRect();
+			blockDiagramTop.value = top;
+			blockDiagramLeft.value = left;
+			blockDiagramWidth.value = width;
+			blockDiagramHeight.value = height;
+			observer = new IntersectionObserver(handleInterObserver);
+			observer.observe(ui_vue3.toValue(blockDiagramRef));
+		}
+		function onUnmountedAppElements() {
+			observer.unobserve(ui_vue3.toValue(blockDiagramRef));
+		}
+		return {
+			onMountedAppElements,
+			onUnmountedAppElements
+		};
 	}
 
+	const DEFAULT_PATH_INFO = {
+		path: '',
+		center: {
+			x: 0,
+			y: 0
+		}
+	};
 	function useNewConnectionState() {
-	  const {
-	    newConnection,
-	    isValidNewConnection
-	  } = useBlockDiagram();
-	  const hasNewConnection = ui_vue3.computed(() => {
-	    return ui_vue3.toValue(newConnection) !== null;
-	  });
-	  const newConnectionPathInfo = ui_vue3.computed(() => {
-	    if (!ui_vue3.toValue(hasNewConnection)) {
-	      return {
-	        path: '',
-	        center: {
-	          x: 0,
-	          y: 0
-	        }
-	      };
-	    }
-	    const isHorizontalBezier = [PORT_POSITION.LEFT, PORT_POSITION.RIGHT].includes(ui_vue3.toValue(newConnection).sourcePortPosition);
-	    return getBeziePath(ui_vue3.toValue(newConnection).start, ui_vue3.toValue(newConnection).end, isHorizontalBezier ? BEZIER_DIR.HORIZONTAL : BEZIER_DIR.VERTICAL);
-	  });
-	  const isValid = ui_vue3.computed(() => {
-	    if (ui_vue3.toValue(newConnection) === null) {
-	      return true;
-	    }
-	    return ui_vue3.toValue(isValidNewConnection);
-	  });
-	  return {
-	    hasNewConnection,
-	    newConnectionPathInfo,
-	    isValid
-	  };
+		const {
+			newConnection,
+			portsRectMap
+		} = useBlockDiagram();
+		const hasNewConnection = ui_vue3.computed(() => {
+			return ui_vue3.toValue(newConnection) !== null;
+		});
+		const hasSourcePort = ui_vue3.computed(() => {
+			return ui_vue3.toValue(hasNewConnection) && ui_vue3.toValue(newConnection).sourceBlockId !== null && ui_vue3.toValue(newConnection).sourcePortId !== null;
+		});
+		const hasTargetPort = ui_vue3.computed(() => {
+			return ui_vue3.toValue(hasNewConnection) && ui_vue3.toValue(newConnection).targetBlockId !== null && ui_vue3.toValue(newConnection).targetPortId !== null;
+		});
+		const sourcePortLayoutRect = ui_vue3.computed(() => {
+			const {
+				x = 0,
+				y = 0,
+				width = 0,
+				height = 0
+			} = ui_vue3.toValue(portsRectMap)?.[ui_vue3.toValue(newConnection)?.sourceBlockId]?.[ui_vue3.toValue(newConnection)?.sourcePortId] ?? {};
+			return {
+				x,
+				y,
+				width,
+				height
+			};
+		});
+		const targetPortLayoutRect = ui_vue3.computed(() => {
+			const {
+				x = 0,
+				y = 0,
+				width = 0,
+				height = 0
+			} = ui_vue3.toValue(portsRectMap)?.[ui_vue3.toValue(newConnection)?.targetBlockId]?.[ui_vue3.toValue(newConnection)?.targetPortId] ?? {};
+			return {
+				x,
+				y,
+				width,
+				height
+			};
+		});
+		const newConnectionPathInfo = ui_vue3.computed(() => {
+			if (!ui_vue3.toValue(hasNewConnection)) {
+				return DEFAULT_PATH_INFO;
+			}
+			return getLinePath(ui_vue3.toValue(newConnection).start, ui_vue3.toValue(newConnection).center);
+		});
+		const newTmpConnectionPathInfo = ui_vue3.computed(() => {
+			if (ui_vue3.toValue(newConnection) === null || ui_vue3.toValue(newConnection).end === null) {
+				return DEFAULT_PATH_INFO;
+			}
+			return getLinePath(ui_vue3.toValue(newConnection).center, ui_vue3.toValue(newConnection).end);
+		});
+		return {
+			hasNewConnection,
+			hasSourcePort,
+			hasTargetPort,
+			sourcePortLayoutRect,
+			targetPortLayoutRect,
+			newConnectionPathInfo,
+			newTmpConnectionPathInfo,
+			newConnection
+		};
 	}
 
 	function useAnimationQueue() {
-	  const {
-	    zoom,
-	    isPauseAnimation,
-	    isStopAnimation,
-	    animationQueue,
-	    currentAnimationItem,
-	    addConnection,
-	    deleteConnectionById,
-	    addBlock,
-	    deleteBlockById
-	  } = useBlockDiagram();
-	  function animateItem(animatedItem) {
-	    switch (animatedItem.type) {
-	      case ANIMATED_TYPES.BLOCK:
-	        {
-	          addBlock(animatedItem.item);
-	          break;
-	        }
-	      case ANIMATED_TYPES.CONNECTION:
-	        {
-	          addConnection(animatedItem.item);
-	          break;
-	        }
-	      case ANIMATED_TYPES.REMOVE_BLOCK:
-	        {
-	          deleteBlockById(animatedItem.item.id);
-	          break;
-	        }
-	      case ANIMATED_TYPES.REMOVE_CONNECTION:
-	        {
-	          deleteConnectionById(animatedItem.item.id);
-	          break;
-	        }
-	      default:
-	        break;
-	    }
-	  }
-	  function* animationQueueFn(animatedQueueItems) {
-	    for (const animatedItem of animatedQueueItems) {
-	      if (ui_vue3.toValue(isPauseAnimation)) {
-	        yield;
-	      }
-	      if (ui_vue3.toValue(isStopAnimation)) {
-	        break;
-	      }
-	      currentAnimationItem.value = animatedItem;
-	      if (animatedItem.type && animatedItem.item) {
-	        animateItem(animatedItem);
-	        yield animatedItem;
-	      }
-	    }
-	    stop();
-	  }
-	  function start(options) {
-	    const {
-	      items: shouldAnimatedItems = []
-	    } = options != null ? options : {};
-	    zoom.value = 1;
-	    isStopAnimation.value = false;
-	    animationQueue.value = animationQueueFn(shouldAnimatedItems);
-	    if (shouldAnimatedItems.length > 0) {
-	      setTimeout(() => play(), 100);
-	    } else {
-	      stop();
-	    }
-	  }
-	  function pause() {
-	    isPauseAnimation.value = true;
-	  }
-	  function play() {
-	    var _animationQueue$value;
-	    isPauseAnimation.value = false;
-	    (_animationQueue$value = animationQueue.value) == null ? void 0 : _animationQueue$value.next();
-	  }
-	  function stop() {
-	    isStopAnimation.value = true;
-	    isPauseAnimation.value = false;
-	    currentAnimationItem.value = null;
-	    animationQueue.value = null;
-	  }
-	  return {
-	    start,
-	    pause,
-	    play,
-	    stop
-	  };
+		const {
+			zoom,
+			isPauseAnimation,
+			isStopAnimation,
+			animationQueue,
+			currentAnimationItem,
+			addConnection,
+			deleteConnectionById,
+			addBlock,
+			deleteBlockById
+		} = useBlockDiagram();
+		function animateItem(animatedItem) {
+			switch (animatedItem.type) {
+				case ANIMATED_TYPES.BLOCK:
+					{
+						addBlock(animatedItem.item);
+						break;
+					}
+				case ANIMATED_TYPES.CONNECTION:
+					{
+						addConnection(animatedItem.item);
+						break;
+					}
+				case ANIMATED_TYPES.REMOVE_BLOCK:
+					{
+						deleteBlockById(animatedItem.item.id);
+						break;
+					}
+				case ANIMATED_TYPES.REMOVE_CONNECTION:
+					{
+						deleteConnectionById(animatedItem.item.id);
+						break;
+					}
+			}
+		}
+		function* animationQueueFn(animatedQueueItems) {
+			for (const animatedItem of animatedQueueItems) {
+				if (ui_vue3.toValue(isPauseAnimation)) {
+					yield;
+				}
+				if (ui_vue3.toValue(isStopAnimation)) {
+					break;
+				}
+				currentAnimationItem.value = animatedItem;
+				if (animatedItem.type && animatedItem.item) {
+					animateItem(animatedItem);
+					yield animatedItem;
+				}
+			}
+			stop();
+		}
+		function start(options) {
+			const {
+				items: shouldAnimatedItems = []
+			} = options ?? {};
+			zoom.value = 1;
+			isStopAnimation.value = false;
+			animationQueue.value = animationQueueFn(shouldAnimatedItems);
+			if (shouldAnimatedItems.length > 0) {
+				setTimeout(() => play(), 100);
+			} else {
+				stop();
+			}
+		}
+		function pause() {
+			isPauseAnimation.value = true;
+		}
+		function play() {
+			isPauseAnimation.value = false;
+			animationQueue.value?.next();
+		}
+		function stop() {
+			isStopAnimation.value = true;
+			isPauseAnimation.value = false;
+			currentAnimationItem.value = null;
+			animationQueue.value = null;
+		}
+		return {
+			start,
+			pause,
+			play,
+			stop
+		};
 	}
 
 	const CANVAS_STYLE_DEFAULT_OPTIONS = {
-	  grid: {
-	    options: {
-	      size: 64,
-	      gridColor: '#A1B8D9',
-	      backgroundColor: '#ECF0F2',
-	      zoomStep: 4,
-	      zoomSteps: [{
-	        zoom: 1.1,
-	        size: 64,
-	        zoomStep: 4
-	      }, {
-	        zoom: 1,
-	        size: 64,
-	        zoomStep: 4
-	      }, {
-	        zoom: 0.99,
-	        size: 64,
-	        zoomStep: 4
-	      }, {
-	        zoom: 0.5,
-	        size: 64 * 5,
-	        zoomStep: 0.5
-	      }, {
-	        zoom: 0.25,
-	        size: 64 * 25,
-	        zoomStep: 0.25
-	      }, {
-	        zoom: 0.125,
-	        size: 64 * 125,
-	        zoomStep: 0.125
-	      }]
-	    },
-	    instance: Grid
-	  }
+		grid: {
+			options: {
+				size: 64,
+				gridColor: '#A1B8D9',
+				backgroundColor: '#ECF0F2',
+				zoomStep: 4,
+				zoomSteps: [{
+					zoom: 1.1,
+					size: 64,
+					zoomStep: 4
+				}, {
+					zoom: 1,
+					size: 64,
+					zoomStep: 4
+				}, {
+					zoom: 0.99,
+					size: 64,
+					zoomStep: 4
+				}, {
+					zoom: 0.5,
+					size: 64 * 5,
+					zoomStep: 0.5
+				}, {
+					zoom: 0.25,
+					size: 64 * 25,
+					zoomStep: 0.25
+				}, {
+					zoom: 0.125,
+					size: 64 * 125,
+					zoomStep: 0.125
+				}]
+			},
+			instance: Grid
+		}
 	};
 
 	// eslint-disable-next-line max-lines-per-function
 	function useCanvasTransfrom(options) {
-	  const {
-	    canvasRef: newCanvasRef,
-	    transformLayoutRef: newTransformLayoutRef,
-	    canvasStyle: newCanvasStyle,
-	    zoomSensitivity,
-	    zoomSensitivityMouse
-	  } = options;
-	  const {
-	    isDisabledBlockDiagram,
-	    transformX,
-	    transformY,
-	    zoom,
-	    minZoom,
-	    maxZoom,
-	    canvasRef,
-	    transformLayoutRef,
-	    canvasWidth,
-	    canvasHeight,
-	    canvasInstance,
-	    isBoxIntersection,
-	    calculateIntersectedBlockIds,
-	    waitForTransformEnd
-	  } = useBlockDiagram();
-	  const dragOn = ui_vue3.ref(false);
-	  const isDragging = ui_vue3.ref(false);
-	  const zooming = ui_vue3.ref(false);
-	  let requestAnimationId = null;
-	  let transformEndTimer = null;
-	  function getCanvasStyleOptions(canvasStyle) {
-	    if (canvasStyle && canvasStyle.style in CANVAS_STYLE_DEFAULT_OPTIONS) {
-	      return {
-	        instance: CANVAS_STYLE_DEFAULT_OPTIONS[canvasStyle.style].instance,
-	        options: {
-	          ...CANVAS_STYLE_DEFAULT_OPTIONS[canvasStyle.style].options,
-	          ...canvasStyle
-	        }
-	      };
-	    }
-	    return null;
-	  }
-	  function onMounted() {
-	    canvasRef.value = newCanvasRef;
-	    transformLayoutRef.value = newTransformLayoutRef;
-	    canvasInstance.value = ui_vue3.markRaw(new Canvas({
-	      canvas: ui_vue3.toValue(newCanvasRef),
-	      canvasStyle: getCanvasStyleOptions(newCanvasStyle),
-	      minZoom: ui_vue3.toValue(minZoom),
-	      maxZoom: ui_vue3.toValue(maxZoom)
-	    }));
-	    ui_vue3.toValue(canvasInstance).camera.setChangeTransformCallback(payload => {
-	      transformX.value = payload.x;
-	      transformY.value = payload.y;
-	      zoom.value = payload.zoom;
-	      canvasWidth.value = payload.width;
-	      canvasHeight.value = payload.height;
-	      if (ui_vue3.toValue(isBoxIntersection)) {
-	        calculateIntersectedBlockIds();
-	        waitTransformEnd();
-	      }
-	    });
-	    render();
-	  }
-	  function waitTransformEnd() {
-	    if (!waitForTransformEnd.value) {
-	      waitForTransformEnd.value = Promise.withResolvers();
-	    }
-	    if (transformEndTimer) {
-	      clearTimeout(transformEndTimer);
-	    }
-	    transformEndTimer = setTimeout(() => {
-	      waitForTransformEnd.value.resolve();
-	      waitForTransformEnd.value = null;
-	    }, 150);
-	  }
-	  function onUnmounted() {
-	    var _toValue;
-	    (_toValue = ui_vue3.toValue(canvasInstance)) == null ? void 0 : _toValue.destroy();
-	    cancelAnimationFrame(requestAnimationId);
-	  }
-	  function onMouseDown(event) {
-	    var _toValue2;
-	    if (ui_vue3.toValue(isDisabledBlockDiagram)) {
-	      return;
-	    }
-	    dragOn.value = true;
-	    (_toValue2 = ui_vue3.toValue(canvasInstance)) == null ? void 0 : _toValue2.setCameraPositionByMouseDown(event);
-	  }
-	  function onMouseMove(event) {
-	    var _toValue3;
-	    if (!ui_vue3.toValue(dragOn) || ui_vue3.toValue(isDisabledBlockDiagram)) {
-	      return;
-	    }
-	    if (event.buttons !== 1 && event.buttons !== 4) {
-	      dragOn.value = false;
-	      isDragging.value = false;
-	      return;
-	    }
-	    isDragging.value = true;
-	    (_toValue3 = ui_vue3.toValue(canvasInstance)) == null ? void 0 : _toValue3.setCameraPositionByMouseMove(event);
-	  }
-	  function onMouseUp() {
-	    dragOn.value = false;
-	    isDragging.value = false;
-	  }
-	  function onWheel(event) {
-	    event.preventDefault();
-	    if (ui_vue3.toValue(isDisabledBlockDiagram)) {
-	      return;
-	    }
-	    const isTrackpad = event.wheelDeltaY ? event.wheelDeltaY === -3 * event.deltaY : event.deltaMode === 0;
-	    const isCmd = main_core.Browser.isMac() && event.metaKey;
-	    if (event.ctrlKey || isCmd) {
-	      var _toValue4;
-	      const zoomChange = isTrackpad ? -event.deltaY * ui_vue3.toValue(zoomSensitivity) : -Math.sign(event.deltaY) * ui_vue3.toValue(zoomSensitivityMouse);
-	      zooming.value = true;
-	      (_toValue4 = ui_vue3.toValue(canvasInstance)) == null ? void 0 : _toValue4.setCameraZoomByWheel(event, zoomChange);
-	      setTimeout(() => {
-	        zooming.value = false;
-	      }, 200);
-	    } else {
-	      var _toValue5;
-	      (_toValue5 = ui_vue3.toValue(canvasInstance)) == null ? void 0 : _toValue5.setCameraPositionByWheel(event);
-	    }
-	  }
-	  function render() {
-	    if (canvasInstance) {
-	      var _toValue6;
-	      (_toValue6 = ui_vue3.toValue(canvasInstance)) == null ? void 0 : _toValue6.render();
-	      const viewMatrix = ui_vue3.toValue(canvasInstance).viewMatrix;
-	      main_core.Dom.style(ui_vue3.toValue(transformLayoutRef), 'transform', `
+		const {
+			canvasRef: newCanvasRef,
+			transformLayoutRef: newTransformLayoutRef,
+			canvasStyle: newCanvasStyle,
+			zoomSensitivity,
+			zoomSensitivityMouse
+		} = options;
+		const {
+			isDisabledBlockDiagram,
+			transformX,
+			transformY,
+			zoom,
+			minZoom,
+			maxZoom,
+			canvasRef,
+			transformLayoutRef,
+			canvasWidth,
+			canvasHeight,
+			canvasInstance,
+			blockIntersections,
+			waitForTransformEnd
+		} = useBlockDiagram();
+		const dragOn = ui_vue3.ref(false);
+		const isDragging = ui_vue3.ref(false);
+		const zooming = ui_vue3.ref(false);
+		let requestAnimationId = null;
+		let transformEndTimer = null;
+		function getCanvasStyleOptions(canvasStyle) {
+			if (canvasStyle && canvasStyle.style in CANVAS_STYLE_DEFAULT_OPTIONS) {
+				return {
+					instance: CANVAS_STYLE_DEFAULT_OPTIONS[canvasStyle.style].instance,
+					options: {
+						...CANVAS_STYLE_DEFAULT_OPTIONS[canvasStyle.style].options,
+						...canvasStyle
+					}
+				};
+			}
+			return null;
+		}
+		function onMounted() {
+			canvasRef.value = newCanvasRef;
+			transformLayoutRef.value = newTransformLayoutRef;
+			canvasInstance.value = ui_vue3.markRaw(new Canvas({
+				canvas: ui_vue3.toValue(newCanvasRef),
+				canvasStyle: getCanvasStyleOptions(newCanvasStyle),
+				minZoom: ui_vue3.toValue(minZoom),
+				maxZoom: ui_vue3.toValue(maxZoom)
+			}));
+			ui_vue3.toValue(canvasInstance).camera.setChangeTransformCallback(payload => {
+				transformX.value = payload.x;
+				transformY.value = payload.y;
+				zoom.value = payload.zoom;
+				canvasWidth.value = payload.width;
+				canvasHeight.value = payload.height;
+				blockIntersections.selectVisibleBlocks();
+				waitTransformEnd();
+			});
+			render();
+		}
+		function waitTransformEnd() {
+			if (!waitForTransformEnd.value) {
+				waitForTransformEnd.value = Promise.withResolvers();
+			}
+			if (transformEndTimer) {
+				clearTimeout(transformEndTimer);
+			}
+			transformEndTimer = setTimeout(() => {
+				waitForTransformEnd.value?.resolve();
+				waitForTransformEnd.value = null;
+			}, 150);
+		}
+		function onUnmounted() {
+			ui_vue3.toValue(canvasInstance)?.destroy();
+			cancelAnimationFrame(requestAnimationId);
+		}
+		function onMouseDown(event) {
+			if (ui_vue3.toValue(isDisabledBlockDiagram)) {
+				return;
+			}
+			dragOn.value = true;
+			ui_vue3.toValue(canvasInstance)?.setCameraPositionByMouseDown(event);
+		}
+		function onMouseMove(event) {
+			if (!ui_vue3.toValue(dragOn) || ui_vue3.toValue(isDisabledBlockDiagram)) {
+				return;
+			}
+			if (event.buttons !== 1 && event.buttons !== 4) {
+				dragOn.value = false;
+				isDragging.value = false;
+				return;
+			}
+			isDragging.value = true;
+			ui_vue3.toValue(canvasInstance)?.setCameraPositionByMouseMove(event);
+		}
+		function onMouseUp() {
+			dragOn.value = false;
+			isDragging.value = false;
+		}
+		function onWheel(event) {
+			event.preventDefault();
+			if (ui_vue3.toValue(isDisabledBlockDiagram)) {
+				return;
+			}
+			const isTrackpad = event.wheelDeltaY ? event.wheelDeltaY === -3 * event.deltaY : event.deltaMode === 0;
+			const isCmd = main_core.Browser.isMac() && event.metaKey;
+			if (event.ctrlKey || isCmd) {
+				const zoomChange = isTrackpad ? -event.deltaY * ui_vue3.toValue(zoomSensitivity) : -Math.sign(event.deltaY) * ui_vue3.toValue(zoomSensitivityMouse);
+				zooming.value = true;
+				ui_vue3.toValue(canvasInstance)?.setCameraZoomByWheel(event, zoomChange);
+				setTimeout(() => {
+					zooming.value = false;
+				}, 200);
+			} else {
+				ui_vue3.toValue(canvasInstance)?.setCameraPositionByWheel(event);
+			}
+		}
+		function render() {
+			if (canvasInstance) {
+				ui_vue3.toValue(canvasInstance)?.render();
+				const viewMatrix = ui_vue3.toValue(canvasInstance).viewMatrix;
+				main_core.Dom.style(ui_vue3.toValue(transformLayoutRef), 'transform', `
 					matrix(
 						${viewMatrix[0]}, 0, 0, ${viewMatrix[4]}, ${viewMatrix[6]}, ${viewMatrix[7]}
 					)
 				`);
-	    }
-	    requestAnimationId = requestAnimationFrame(render);
-	  }
-	  return {
-	    isDragging,
-	    onMounted,
-	    onUnmounted,
-	    onMouseDown,
-	    onMouseMove,
-	    onMouseUp,
-	    onWheel
-	  };
+			}
+			requestAnimationId = requestAnimationFrame(render);
+		}
+		return {
+			isDragging,
+			onMounted,
+			onUnmounted,
+			onMouseDown,
+			onMouseMove,
+			onMouseUp,
+			onWheel
+		};
 	}
 
 	function useDragAndDrop() {
-	  const {
-	    zoom,
-	    blockDiagramTop,
-	    blockDiagramLeft,
-	    transformX,
-	    transformY,
-	    addBlock,
-	    hooks
-	  } = useBlockDiagram();
-	  function onDrop(event) {
-	    event.preventDefault();
-	    const dataString = event.dataTransfer.getData('text/plain');
-	    const receivedData = JSON.parse(dataString);
-	    const {
-	      width,
-	      height
-	    } = receivedData.dimensions;
-	    receivedData.position.x = (event.clientX - width * ui_vue3.toValue(zoom) / 2) / ui_vue3.toValue(zoom);
-	    receivedData.position.y = (event.clientY - height * ui_vue3.toValue(zoom) / 2) / ui_vue3.toValue(zoom);
-	    receivedData.position.x += ui_vue3.toValue(transformX);
-	    receivedData.position.y += ui_vue3.toValue(transformY);
-	    receivedData.position.x -= ui_vue3.toValue(blockDiagramLeft) / ui_vue3.toValue(zoom);
-	    receivedData.position.y -= ui_vue3.toValue(blockDiagramTop) / ui_vue3.toValue(zoom);
-	    addBlock(receivedData);
-	    hooks.dropNewBlock.trigger(receivedData);
-	  }
-	  function setBlockData(event, addedBlock) {
-	    event.dataTransfer.setData('text/plain', JSON.stringify(addedBlock));
-	  }
-	  return {
-	    setBlockData,
-	    onDrop
-	  };
+		const {
+			zoom,
+			blockDiagramTop,
+			blockDiagramLeft,
+			transformX,
+			transformY,
+			addBlock,
+			hooks
+		} = useBlockDiagram();
+		function onDrop(event) {
+			event.preventDefault();
+			const dataString = event.dataTransfer.getData('text/plain');
+			const receivedData = JSON.parse(dataString);
+			const {
+				width,
+				height
+			} = receivedData.dimensions;
+			receivedData.position.x = (event.clientX - width * ui_vue3.toValue(zoom) / 2) / ui_vue3.toValue(zoom);
+			receivedData.position.y = (event.clientY - height * ui_vue3.toValue(zoom) / 2) / ui_vue3.toValue(zoom);
+			receivedData.position.x += ui_vue3.toValue(transformX);
+			receivedData.position.y += ui_vue3.toValue(transformY);
+			receivedData.position.x -= ui_vue3.toValue(blockDiagramLeft) / ui_vue3.toValue(zoom);
+			receivedData.position.y -= ui_vue3.toValue(blockDiagramTop) / ui_vue3.toValue(zoom);
+			addBlock(receivedData);
+			hooks.dropNewBlock.trigger(receivedData);
+		}
+		function setBlockData(event, addedBlock) {
+			event.dataTransfer.setData('text/plain', JSON.stringify(addedBlock));
+		}
+		return {
+			setBlockData,
+			onDrop
+		};
 	}
 
 	// eslint-disable-next-line max-lines-per-function
 	function useResizableBlock(options) {
-	  const {
-	    cursorType,
-	    resizingBlock,
-	    blockDiagramTop,
-	    blockDiagramLeft,
-	    transformX,
-	    transformY,
-	    zoom,
-	    updateBlock,
-	    updateBlockRectangle,
-	    isBoxIntersection
-	  } = useBlockDiagram();
-	  const {
-	    block,
-	    minWidth,
-	    minHeight,
-	    leftSideRef,
-	    topSideRef,
-	    rightSideRef,
-	    bottomSideRef,
-	    leftTopCornerRef,
-	    rightTopCornerRef,
-	    rightBottomCornerRef,
-	    leftBottomCornerRef
-	  } = options;
-	  const isResize = ui_vue3.ref(false);
-	  let prevBlockX = 0;
-	  let prevBlockY = 0;
-	  let prevBlockWidth = 0;
-	  let prevBlockHeight = 0;
-	  const sizeBlockStyle = ui_vue3.computed(() => {
-	    if (ui_vue3.toValue(isResize)) {
-	      return {
-	        width: `${ui_vue3.toValue(resizingBlock).dimensions.width}px`,
-	        height: `${ui_vue3.toValue(resizingBlock).dimensions.height}px`,
-	        cursor: ui_vue3.toValue(cursorType)
-	      };
-	    }
-	    return {
-	      width: `${ui_vue3.toValue(block).dimensions.width}px`,
-	      height: `${ui_vue3.toValue(block).dimensions.height}px`,
-	      cursor: ui_vue3.toValue(cursorType)
-	    };
-	  });
-	  function updateResizableBlock() {
-	    updateBlock({
-	      ...ui_vue3.toValue(block),
-	      position: {
-	        x: ui_vue3.toValue(resizingBlock).position.x,
-	        y: ui_vue3.toValue(resizingBlock).position.y
-	      },
-	      dimensions: {
-	        width: ui_vue3.toValue(resizingBlock).dimensions.width,
-	        height: ui_vue3.toValue(resizingBlock).dimensions.height
-	      }
-	    });
-	    if (ui_vue3.toValue(isBoxIntersection)) {
-	      updateBlockRectangle(ui_vue3.toValue(block).id, {
-	        x: ui_vue3.toValue(resizingBlock).position.x,
-	        y: ui_vue3.toValue(resizingBlock).position.y,
-	        width: ui_vue3.toValue(resizingBlock).dimensions.width,
-	        height: ui_vue3.toValue(resizingBlock).dimensions.height
-	      });
-	    }
-	  }
-	  function onMounted() {
-	    main_core.Event.bind(ui_vue3.toValue(rightSideRef), 'mousedown', onMouseDownRightSide);
-	    main_core.Event.bind(ui_vue3.toValue(bottomSideRef), 'mousedown', onMouseDownBottomSide);
-	    main_core.Event.bind(ui_vue3.toValue(leftSideRef), 'mousedown', onMouseDownLeftSide);
-	    main_core.Event.bind(ui_vue3.toValue(topSideRef), 'mousedown', onMouseDownTopSide);
-	    main_core.Event.bind(ui_vue3.toValue(rightTopCornerRef), 'mousedown', onMouseDownRightTopCorner);
-	    main_core.Event.bind(ui_vue3.toValue(rightBottomCornerRef), 'mousedown', onMouseDownRightBottomCorner);
-	    main_core.Event.bind(ui_vue3.toValue(leftTopCornerRef), 'mousedown', onMouseDownLeftTopCorner);
-	    main_core.Event.bind(ui_vue3.toValue(leftBottomCornerRef), 'mousedown', onMouseDownLeftBottomCorner);
-	  }
-	  function onUnmounted() {
-	    main_core.Event.unbind(ui_vue3.toValue(rightSideRef), 'mousedown', onMouseDownRightSide);
-	    main_core.Event.unbind(ui_vue3.toValue(bottomSideRef), 'mousedown', onMouseDownBottomSide);
-	    main_core.Event.unbind(ui_vue3.toValue(leftSideRef), 'mousedown', onMouseDownLeftSide);
-	    main_core.Event.unbind(ui_vue3.toValue(topSideRef), 'mousedown', onMouseDownTopSide);
-	    main_core.Event.unbind(ui_vue3.toValue(rightTopCornerRef), 'mousedown', onMouseDownRightTopCorner);
-	    main_core.Event.unbind(ui_vue3.toValue(rightBottomCornerRef), 'mousedown', onMouseDownRightBottomCorner);
-	    main_core.Event.unbind(ui_vue3.toValue(leftTopCornerRef), 'mousedown', onMouseDownLeftTopCorner);
-	    main_core.Event.unbind(ui_vue3.toValue(leftBottomCornerRef), 'mousedown', onMouseDownLeftBottomCorner);
-	  }
-	  function startResize(event, curType) {
-	    event.stopPropagation();
-	    cursorType.value = curType;
-	    resizingBlock.value = {
-	      ...ui_vue3.toValue(block)
-	    };
-	    prevBlockX = ui_vue3.toValue(block).position.x;
-	    prevBlockY = ui_vue3.toValue(block).position.y;
-	    prevBlockWidth = ui_vue3.toValue(block).dimensions.width;
-	    prevBlockHeight = ui_vue3.toValue(block).dimensions.height;
-	    isResize.value = true;
-	  }
-	  function endResize(event) {
-	    event.stopPropagation();
-	    cursorType.value = 'default';
-	    updateResizableBlock();
-	    isResize.value = false;
-	    resizingBlock.value = null;
-	  }
-	  function resizeTopSide(event) {
-	    let newY = event.clientY / ui_vue3.toValue(zoom);
-	    newY += ui_vue3.toValue(transformY);
-	    newY -= ui_vue3.toValue(blockDiagramTop) / ui_vue3.toValue(zoom);
-	    let newHeight = event.clientY / ui_vue3.toValue(zoom);
-	    newHeight += ui_vue3.toValue(transformY);
-	    newHeight -= ui_vue3.toValue(blockDiagramTop) / ui_vue3.toValue(zoom);
-	    newHeight -= prevBlockY + prevBlockHeight;
-	    newHeight = Math.abs(newHeight);
-	    const fixedPositionY = prevBlockY + prevBlockHeight - ui_vue3.toValue(minHeight);
-	    resizingBlock.value.position.y = newHeight < ui_vue3.toValue(minHeight) || newY >= fixedPositionY ? fixedPositionY : newY;
-	    resizingBlock.value.dimensions.height = newHeight < ui_vue3.toValue(minHeight) || newY >= fixedPositionY ? ui_vue3.toValue(minHeight) : newHeight;
-	  }
-	  function resizeRightSide(event) {
-	    let cursorX = event.clientX / ui_vue3.toValue(zoom);
-	    cursorX += ui_vue3.toValue(transformX);
-	    cursorX -= ui_vue3.toValue(blockDiagramLeft) / ui_vue3.toValue(zoom);
-	    let newWidth = prevBlockX;
-	    newWidth -= event.clientX / ui_vue3.toValue(zoom);
-	    newWidth -= ui_vue3.toValue(transformX);
-	    newWidth -= ui_vue3.toValue(blockDiagramLeft) / ui_vue3.toValue(zoom);
-	    newWidth = Math.abs(newWidth);
-	    resizingBlock.value.dimensions.width = newWidth < ui_vue3.toValue(minWidth) || cursorX <= prevBlockX ? ui_vue3.toValue(minWidth) : newWidth;
-	  }
-	  function resizeBottomSide(event) {
-	    let cursorX = event.clientY / ui_vue3.toValue(zoom);
-	    cursorX += ui_vue3.toValue(transformY);
-	    cursorX -= ui_vue3.toValue(blockDiagramTop) / ui_vue3.toValue(zoom);
-	    let newHeight = event.clientY / ui_vue3.toValue(zoom);
-	    newHeight -= prevBlockY;
-	    newHeight += ui_vue3.toValue(transformY);
-	    newHeight -= ui_vue3.toValue(blockDiagramTop) / ui_vue3.toValue(zoom);
-	    newHeight = Math.abs(newHeight);
-	    resizingBlock.value.dimensions.height = newHeight < ui_vue3.toValue(minHeight) || cursorX <= prevBlockY ? ui_vue3.toValue(minHeight) : newHeight;
-	  }
-	  function resizeLeftSide(event) {
-	    let newX = event.clientX / ui_vue3.toValue(zoom);
-	    newX += ui_vue3.toValue(transformX);
-	    newX -= ui_vue3.toValue(blockDiagramLeft) / ui_vue3.toValue(zoom);
-	    let newWidth = event.clientX / ui_vue3.toValue(zoom);
-	    newWidth += ui_vue3.toValue(transformX);
-	    newWidth -= ui_vue3.toValue(blockDiagramLeft) / ui_vue3.toValue(zoom);
-	    newWidth -= prevBlockX + prevBlockWidth;
-	    newWidth = Math.abs(newWidth);
-	    const fixedPositionX = prevBlockX + prevBlockWidth - ui_vue3.toValue(minWidth);
-	    resizingBlock.value.position.x = newWidth < ui_vue3.toValue(minWidth) || newX >= fixedPositionX ? fixedPositionX : newX;
-	    resizingBlock.value.dimensions.width = newWidth < ui_vue3.toValue(minWidth) || newX >= fixedPositionX ? ui_vue3.toValue(minWidth) : newWidth;
-	  }
-	  function onMouseDownRightSide(event) {
-	    startResize(event, CURSOR_TYPES.EW_RESIZE);
-	    main_core.Event.bind(document, 'mousemove', onMouseMoveRightSide);
-	    main_core.Event.bind(document, 'mouseup', onMouseUpRightSide);
-	  }
-	  function onMouseMoveRightSide(event) {
-	    event.stopPropagation();
-	    if (!ui_vue3.toValue(isResize)) {
-	      return;
-	    }
-	    resizeRightSide(event);
-	  }
-	  function onMouseUpRightSide(event) {
-	    endResize(event);
-	    main_core.Event.unbind(document, 'mousemove', onMouseMoveRightSide);
-	    main_core.Event.unbind(document, 'mouseup', onMouseUpRightSide);
-	  }
-	  function onMouseDownBottomSide(event) {
-	    startResize(event, CURSOR_TYPES.NS_RESIZE);
-	    main_core.Event.bind(document, 'mousemove', onMouseMoveBottomSide);
-	    main_core.Event.bind(document, 'mouseup', onMouseUpBottomSide);
-	  }
-	  function onMouseMoveBottomSide(event) {
-	    event.stopPropagation();
-	    if (!ui_vue3.toValue(isResize)) {
-	      return;
-	    }
-	    resizeBottomSide(event);
-	  }
-	  function onMouseUpBottomSide(event) {
-	    endResize(event);
-	    main_core.Event.unbind(document, 'mousemove', onMouseMoveBottomSide);
-	    main_core.Event.unbind(document, 'mouseup', onMouseUpBottomSide);
-	  }
-	  function onMouseDownLeftSide(event) {
-	    startResize(event, CURSOR_TYPES.EW_RESIZE);
-	    main_core.Event.bind(document, 'mousemove', onMouseMoveLeftSide);
-	    main_core.Event.bind(document, 'mouseup', onMouseUpLeftSide);
-	  }
-	  function onMouseMoveLeftSide(event) {
-	    event.stopPropagation();
-	    if (!ui_vue3.toValue(isResize)) {
-	      return;
-	    }
-	    resizeLeftSide(event);
-	  }
-	  function onMouseUpLeftSide(event) {
-	    endResize(event);
-	    main_core.Event.unbind(document, 'mousemove', onMouseMoveLeftSide);
-	    main_core.Event.unbind(document, 'mouseup', onMouseUpLeftSide);
-	  }
-	  function onMouseDownTopSide(event) {
-	    startResize(event, CURSOR_TYPES.NS_RESIZE);
-	    main_core.Event.bind(document, 'mousemove', onMouseMoveTopSide);
-	    main_core.Event.bind(document, 'mouseup', onMouseUpTopSide);
-	  }
-	  function onMouseMoveTopSide(event) {
-	    event.stopPropagation();
-	    if (!ui_vue3.toValue(isResize)) {
-	      return;
-	    }
-	    resizeTopSide(event);
-	  }
-	  function onMouseUpTopSide(event) {
-	    endResize(event);
-	    main_core.Event.unbind(document, 'mousemove', onMouseMoveTopSide);
-	    main_core.Event.unbind(document, 'mouseup', onMouseUpTopSide);
-	  }
-	  function onMouseDownRightBottomCorner(event) {
-	    startResize(event, CURSOR_TYPES.NWSE_RESIZE);
-	    main_core.Event.bind(document, 'mousemove', onMouseMoveRightBottomCorner);
-	    main_core.Event.bind(document, 'mouseup', onMouseUpRightBottomCorner);
-	  }
-	  function onMouseMoveRightBottomCorner(event) {
-	    event.stopPropagation();
-	    if (!ui_vue3.toValue(isResize)) {
-	      return;
-	    }
-	    resizeRightSide(event);
-	    resizeBottomSide(event);
-	  }
-	  function onMouseUpRightBottomCorner(event) {
-	    endResize(event);
-	    main_core.Event.unbind(document, 'mousemove', onMouseMoveRightBottomCorner);
-	    main_core.Event.unbind(document, 'mouseup', onMouseUpRightBottomCorner);
-	  }
-	  function onMouseDownRightTopCorner(event) {
-	    startResize(event, CURSOR_TYPES.NESW_RESIZE);
-	    main_core.Event.bind(document, 'mousemove', onMouseMoveRightTopCorner);
-	    main_core.Event.bind(document, 'mouseup', onMouseUpRightTopCorner);
-	  }
-	  function onMouseMoveRightTopCorner(event) {
-	    event.stopPropagation();
-	    if (!ui_vue3.toValue(isResize)) {
-	      return;
-	    }
-	    resizeTopSide(event);
-	    resizeRightSide(event);
-	  }
-	  function onMouseUpRightTopCorner(event) {
-	    endResize(event);
-	    main_core.Event.unbind(document, 'mousemove', onMouseMoveRightTopCorner);
-	    main_core.Event.unbind(document, 'mouseup', onMouseUpRightTopCorner);
-	  }
-	  function onMouseDownLeftBottomCorner(event) {
-	    startResize(event, CURSOR_TYPES.NESW_RESIZE);
-	    main_core.Event.bind(document, 'mousemove', onMouseMoveLeftBottomCorner);
-	    main_core.Event.bind(document, 'mouseup', onMouseUpLeftBottomCorner);
-	  }
-	  function onMouseMoveLeftBottomCorner(event) {
-	    event.stopPropagation();
-	    if (!ui_vue3.toValue(isResize)) {
-	      return;
-	    }
-	    resizeLeftSide(event);
-	    resizeBottomSide(event);
-	  }
-	  function onMouseUpLeftBottomCorner(event) {
-	    endResize(event);
-	    main_core.Event.unbind(document, 'mousemove', onMouseMoveLeftBottomCorner);
-	    main_core.Event.unbind(document, 'mouseup', onMouseUpLeftBottomCorner);
-	  }
-	  function onMouseDownLeftTopCorner(event) {
-	    startResize(event, CURSOR_TYPES.NWSE_RESIZE);
-	    main_core.Event.bind(document, 'mousemove', onMouseMoveLeftTopCorner);
-	    main_core.Event.bind(document, 'mouseup', onMouseUpLeftTopCorner);
-	  }
-	  function onMouseMoveLeftTopCorner(event) {
-	    event.stopPropagation();
-	    if (!ui_vue3.toValue(isResize)) {
-	      return;
-	    }
-	    resizeLeftSide(event);
-	    resizeTopSide(event);
-	  }
-	  function onMouseUpLeftTopCorner(event) {
-	    endResize(event);
-	    main_core.Event.unbind(document, 'mousemove', onMouseMoveLeftTopCorner);
-	    main_core.Event.unbind(document, 'mouseup', onMouseUpLeftTopCorner);
-	  }
-	  return {
-	    isResize,
-	    sizeBlockStyle,
-	    onMounted,
-	    onUnmounted
-	  };
+		const {
+			cursorType,
+			resizingBlock,
+			blockDiagramTop,
+			blockDiagramLeft,
+			transformX,
+			transformY,
+			zoom,
+			updateBlock
+		} = useBlockDiagram();
+		const {
+			block,
+			minWidth,
+			minHeight,
+			leftSideRef,
+			topSideRef,
+			rightSideRef,
+			bottomSideRef,
+			leftTopCornerRef,
+			rightTopCornerRef,
+			rightBottomCornerRef,
+			leftBottomCornerRef
+		} = options;
+		const isResize = ui_vue3.ref(false);
+		let prevBlockX = 0;
+		let prevBlockY = 0;
+		let prevBlockWidth = 0;
+		let prevBlockHeight = 0;
+		const sizeBlockStyle = ui_vue3.computed(() => {
+			if (ui_vue3.toValue(isResize)) {
+				return {
+					width: `${ui_vue3.toValue(resizingBlock).dimensions.width}px`,
+					height: `${ui_vue3.toValue(resizingBlock).dimensions.height}px`,
+					cursor: ui_vue3.toValue(cursorType)
+				};
+			}
+			return {
+				width: `${ui_vue3.toValue(block).dimensions.width}px`,
+				height: `${ui_vue3.toValue(block).dimensions.height}px`,
+				cursor: ui_vue3.toValue(cursorType)
+			};
+		});
+		function updateResizableBlock() {
+			updateBlock({
+				...ui_vue3.toValue(block),
+				position: {
+					x: ui_vue3.toValue(resizingBlock).position.x,
+					y: ui_vue3.toValue(resizingBlock).position.y
+				},
+				dimensions: {
+					width: ui_vue3.toValue(resizingBlock).dimensions.width,
+					height: ui_vue3.toValue(resizingBlock).dimensions.height
+				}
+			});
+		}
+		function onMounted() {
+			main_core.Event.bind(ui_vue3.toValue(rightSideRef), 'mousedown', onMouseDownRightSide);
+			main_core.Event.bind(ui_vue3.toValue(bottomSideRef), 'mousedown', onMouseDownBottomSide);
+			main_core.Event.bind(ui_vue3.toValue(leftSideRef), 'mousedown', onMouseDownLeftSide);
+			main_core.Event.bind(ui_vue3.toValue(topSideRef), 'mousedown', onMouseDownTopSide);
+			main_core.Event.bind(ui_vue3.toValue(rightTopCornerRef), 'mousedown', onMouseDownRightTopCorner);
+			main_core.Event.bind(ui_vue3.toValue(rightBottomCornerRef), 'mousedown', onMouseDownRightBottomCorner);
+			main_core.Event.bind(ui_vue3.toValue(leftTopCornerRef), 'mousedown', onMouseDownLeftTopCorner);
+			main_core.Event.bind(ui_vue3.toValue(leftBottomCornerRef), 'mousedown', onMouseDownLeftBottomCorner);
+		}
+		function onUnmounted() {
+			main_core.Event.unbind(ui_vue3.toValue(rightSideRef), 'mousedown', onMouseDownRightSide);
+			main_core.Event.unbind(ui_vue3.toValue(bottomSideRef), 'mousedown', onMouseDownBottomSide);
+			main_core.Event.unbind(ui_vue3.toValue(leftSideRef), 'mousedown', onMouseDownLeftSide);
+			main_core.Event.unbind(ui_vue3.toValue(topSideRef), 'mousedown', onMouseDownTopSide);
+			main_core.Event.unbind(ui_vue3.toValue(rightTopCornerRef), 'mousedown', onMouseDownRightTopCorner);
+			main_core.Event.unbind(ui_vue3.toValue(rightBottomCornerRef), 'mousedown', onMouseDownRightBottomCorner);
+			main_core.Event.unbind(ui_vue3.toValue(leftTopCornerRef), 'mousedown', onMouseDownLeftTopCorner);
+			main_core.Event.unbind(ui_vue3.toValue(leftBottomCornerRef), 'mousedown', onMouseDownLeftBottomCorner);
+		}
+		function startResize(event, curType) {
+			event.stopPropagation();
+			cursorType.value = curType;
+			resizingBlock.value = {
+				...ui_vue3.toValue(block)
+			};
+			prevBlockX = ui_vue3.toValue(block).position.x;
+			prevBlockY = ui_vue3.toValue(block).position.y;
+			prevBlockWidth = ui_vue3.toValue(block).dimensions.width;
+			prevBlockHeight = ui_vue3.toValue(block).dimensions.height;
+			isResize.value = true;
+		}
+		function endResize(event) {
+			event.stopPropagation();
+			cursorType.value = 'default';
+			updateResizableBlock();
+			isResize.value = false;
+			resizingBlock.value = null;
+		}
+		function resizeTopSide(event) {
+			let newY = event.clientY / ui_vue3.toValue(zoom);
+			newY += ui_vue3.toValue(transformY);
+			newY -= ui_vue3.toValue(blockDiagramTop) / ui_vue3.toValue(zoom);
+			let newHeight = event.clientY / ui_vue3.toValue(zoom);
+			newHeight += ui_vue3.toValue(transformY);
+			newHeight -= ui_vue3.toValue(blockDiagramTop) / ui_vue3.toValue(zoom);
+			newHeight -= prevBlockY + prevBlockHeight;
+			newHeight = Math.abs(newHeight);
+			const fixedPositionY = prevBlockY + prevBlockHeight - ui_vue3.toValue(minHeight);
+			resizingBlock.value.position.y = newHeight < ui_vue3.toValue(minHeight) || newY >= fixedPositionY ? fixedPositionY : newY;
+			resizingBlock.value.dimensions.height = newHeight < ui_vue3.toValue(minHeight) || newY >= fixedPositionY ? ui_vue3.toValue(minHeight) : newHeight;
+		}
+		function resizeRightSide(event) {
+			let cursorX = event.clientX / ui_vue3.toValue(zoom);
+			cursorX += ui_vue3.toValue(transformX);
+			cursorX -= ui_vue3.toValue(blockDiagramLeft) / ui_vue3.toValue(zoom);
+			let newWidth = prevBlockX;
+			newWidth -= event.clientX / ui_vue3.toValue(zoom);
+			newWidth -= ui_vue3.toValue(transformX);
+			newWidth -= ui_vue3.toValue(blockDiagramLeft) / ui_vue3.toValue(zoom);
+			newWidth = Math.abs(newWidth);
+			resizingBlock.value.dimensions.width = newWidth < ui_vue3.toValue(minWidth) || cursorX <= prevBlockX ? ui_vue3.toValue(minWidth) : newWidth;
+		}
+		function resizeBottomSide(event) {
+			let cursorX = event.clientY / ui_vue3.toValue(zoom);
+			cursorX += ui_vue3.toValue(transformY);
+			cursorX -= ui_vue3.toValue(blockDiagramTop) / ui_vue3.toValue(zoom);
+			let newHeight = event.clientY / ui_vue3.toValue(zoom);
+			newHeight -= prevBlockY;
+			newHeight += ui_vue3.toValue(transformY);
+			newHeight -= ui_vue3.toValue(blockDiagramTop) / ui_vue3.toValue(zoom);
+			newHeight = Math.abs(newHeight);
+			resizingBlock.value.dimensions.height = newHeight < ui_vue3.toValue(minHeight) || cursorX <= prevBlockY ? ui_vue3.toValue(minHeight) : newHeight;
+		}
+		function resizeLeftSide(event) {
+			let newX = event.clientX / ui_vue3.toValue(zoom);
+			newX += ui_vue3.toValue(transformX);
+			newX -= ui_vue3.toValue(blockDiagramLeft) / ui_vue3.toValue(zoom);
+			let newWidth = event.clientX / ui_vue3.toValue(zoom);
+			newWidth += ui_vue3.toValue(transformX);
+			newWidth -= ui_vue3.toValue(blockDiagramLeft) / ui_vue3.toValue(zoom);
+			newWidth -= prevBlockX + prevBlockWidth;
+			newWidth = Math.abs(newWidth);
+			const fixedPositionX = prevBlockX + prevBlockWidth - ui_vue3.toValue(minWidth);
+			resizingBlock.value.position.x = newWidth < ui_vue3.toValue(minWidth) || newX >= fixedPositionX ? fixedPositionX : newX;
+			resizingBlock.value.dimensions.width = newWidth < ui_vue3.toValue(minWidth) || newX >= fixedPositionX ? ui_vue3.toValue(minWidth) : newWidth;
+		}
+		function onMouseDownRightSide(event) {
+			startResize(event, CURSOR_TYPES.EW_RESIZE);
+			main_core.Event.bind(document, 'mousemove', onMouseMoveRightSide);
+			main_core.Event.bind(document, 'mouseup', onMouseUpRightSide);
+		}
+		function onMouseMoveRightSide(event) {
+			event.stopPropagation();
+			if (!ui_vue3.toValue(isResize)) {
+				return;
+			}
+			resizeRightSide(event);
+		}
+		function onMouseUpRightSide(event) {
+			endResize(event);
+			main_core.Event.unbind(document, 'mousemove', onMouseMoveRightSide);
+			main_core.Event.unbind(document, 'mouseup', onMouseUpRightSide);
+		}
+		function onMouseDownBottomSide(event) {
+			startResize(event, CURSOR_TYPES.NS_RESIZE);
+			main_core.Event.bind(document, 'mousemove', onMouseMoveBottomSide);
+			main_core.Event.bind(document, 'mouseup', onMouseUpBottomSide);
+		}
+		function onMouseMoveBottomSide(event) {
+			event.stopPropagation();
+			if (!ui_vue3.toValue(isResize)) {
+				return;
+			}
+			resizeBottomSide(event);
+		}
+		function onMouseUpBottomSide(event) {
+			endResize(event);
+			main_core.Event.unbind(document, 'mousemove', onMouseMoveBottomSide);
+			main_core.Event.unbind(document, 'mouseup', onMouseUpBottomSide);
+		}
+		function onMouseDownLeftSide(event) {
+			startResize(event, CURSOR_TYPES.EW_RESIZE);
+			main_core.Event.bind(document, 'mousemove', onMouseMoveLeftSide);
+			main_core.Event.bind(document, 'mouseup', onMouseUpLeftSide);
+		}
+		function onMouseMoveLeftSide(event) {
+			event.stopPropagation();
+			if (!ui_vue3.toValue(isResize)) {
+				return;
+			}
+			resizeLeftSide(event);
+		}
+		function onMouseUpLeftSide(event) {
+			endResize(event);
+			main_core.Event.unbind(document, 'mousemove', onMouseMoveLeftSide);
+			main_core.Event.unbind(document, 'mouseup', onMouseUpLeftSide);
+		}
+		function onMouseDownTopSide(event) {
+			startResize(event, CURSOR_TYPES.NS_RESIZE);
+			main_core.Event.bind(document, 'mousemove', onMouseMoveTopSide);
+			main_core.Event.bind(document, 'mouseup', onMouseUpTopSide);
+		}
+		function onMouseMoveTopSide(event) {
+			event.stopPropagation();
+			if (!ui_vue3.toValue(isResize)) {
+				return;
+			}
+			resizeTopSide(event);
+		}
+		function onMouseUpTopSide(event) {
+			endResize(event);
+			main_core.Event.unbind(document, 'mousemove', onMouseMoveTopSide);
+			main_core.Event.unbind(document, 'mouseup', onMouseUpTopSide);
+		}
+		function onMouseDownRightBottomCorner(event) {
+			startResize(event, CURSOR_TYPES.NWSE_RESIZE);
+			main_core.Event.bind(document, 'mousemove', onMouseMoveRightBottomCorner);
+			main_core.Event.bind(document, 'mouseup', onMouseUpRightBottomCorner);
+		}
+		function onMouseMoveRightBottomCorner(event) {
+			event.stopPropagation();
+			if (!ui_vue3.toValue(isResize)) {
+				return;
+			}
+			resizeRightSide(event);
+			resizeBottomSide(event);
+		}
+		function onMouseUpRightBottomCorner(event) {
+			endResize(event);
+			main_core.Event.unbind(document, 'mousemove', onMouseMoveRightBottomCorner);
+			main_core.Event.unbind(document, 'mouseup', onMouseUpRightBottomCorner);
+		}
+		function onMouseDownRightTopCorner(event) {
+			startResize(event, CURSOR_TYPES.NESW_RESIZE);
+			main_core.Event.bind(document, 'mousemove', onMouseMoveRightTopCorner);
+			main_core.Event.bind(document, 'mouseup', onMouseUpRightTopCorner);
+		}
+		function onMouseMoveRightTopCorner(event) {
+			event.stopPropagation();
+			if (!ui_vue3.toValue(isResize)) {
+				return;
+			}
+			resizeTopSide(event);
+			resizeRightSide(event);
+		}
+		function onMouseUpRightTopCorner(event) {
+			endResize(event);
+			main_core.Event.unbind(document, 'mousemove', onMouseMoveRightTopCorner);
+			main_core.Event.unbind(document, 'mouseup', onMouseUpRightTopCorner);
+		}
+		function onMouseDownLeftBottomCorner(event) {
+			startResize(event, CURSOR_TYPES.NESW_RESIZE);
+			main_core.Event.bind(document, 'mousemove', onMouseMoveLeftBottomCorner);
+			main_core.Event.bind(document, 'mouseup', onMouseUpLeftBottomCorner);
+		}
+		function onMouseMoveLeftBottomCorner(event) {
+			event.stopPropagation();
+			if (!ui_vue3.toValue(isResize)) {
+				return;
+			}
+			resizeLeftSide(event);
+			resizeBottomSide(event);
+		}
+		function onMouseUpLeftBottomCorner(event) {
+			endResize(event);
+			main_core.Event.unbind(document, 'mousemove', onMouseMoveLeftBottomCorner);
+			main_core.Event.unbind(document, 'mouseup', onMouseUpLeftBottomCorner);
+		}
+		function onMouseDownLeftTopCorner(event) {
+			startResize(event, CURSOR_TYPES.NWSE_RESIZE);
+			main_core.Event.bind(document, 'mousemove', onMouseMoveLeftTopCorner);
+			main_core.Event.bind(document, 'mouseup', onMouseUpLeftTopCorner);
+		}
+		function onMouseMoveLeftTopCorner(event) {
+			event.stopPropagation();
+			if (!ui_vue3.toValue(isResize)) {
+				return;
+			}
+			resizeLeftSide(event);
+			resizeTopSide(event);
+		}
+		function onMouseUpLeftTopCorner(event) {
+			endResize(event);
+			main_core.Event.unbind(document, 'mousemove', onMouseMoveLeftTopCorner);
+			main_core.Event.unbind(document, 'mouseup', onMouseUpLeftTopCorner);
+		}
+		return {
+			isResize,
+			sizeBlockStyle,
+			onMounted,
+			onUnmounted
+		};
 	}
 
 	function useCanvasSelection(params) {
-	  const {
-	    zoom,
-	    setSelectionWorldRect,
-	    setSelectionActive,
-	    isSelectionActive
-	  } = useBlockDiagram();
-	  const {
-	    rootRef,
-	    transformLayoutRef
-	  } = params;
-	  const selectionRect = ui_vue3.ref({
-	    x: 0,
-	    y: 0,
-	    width: 0,
-	    height: 0
-	  });
-	  let startClientX = 0;
-	  let startClientY = 0;
-	  let cachedRootRect = null;
-	  let cachedLayerRect = null;
-	  function start(event) {
-	    const root = ui_vue3.toValue(rootRef);
-	    const layer = ui_vue3.toValue(transformLayoutRef);
-	    if (!root || !layer) {
-	      return;
-	    }
-	    startClientX = event.clientX;
-	    startClientY = event.clientY;
-	    cachedRootRect = root.getBoundingClientRect();
-	    cachedLayerRect = layer.getBoundingClientRect();
-	    const visualStartX = startClientX - cachedRootRect.left;
-	    const visualStartY = startClientY - cachedRootRect.top;
-	    setSelectionActive(true);
-	    selectionRect.value = {
-	      x: visualStartX,
-	      y: visualStartY,
-	      width: 0,
-	      height: 0
-	    };
-	  }
-	  function move(event) {
-	    if (!ui_vue3.toValue(isSelectionActive) || !cachedRootRect || !cachedLayerRect) {
-	      return;
-	    }
-	    const root = ui_vue3.toValue(rootRef);
-	    const layer = ui_vue3.toValue(transformLayoutRef);
-	    const currentZoom = ui_vue3.toValue(zoom);
-	    if (!root || !layer || !currentZoom) {
-	      return;
-	    }
-	    const visualStartX = startClientX - cachedRootRect.left;
-	    const visualStartY = startClientY - cachedRootRect.top;
-	    const currentVisualX = event.clientX - cachedRootRect.left;
-	    const currentVisualY = event.clientY - cachedRootRect.top;
-	    selectionRect.value = {
-	      x: Math.min(visualStartX, currentVisualX),
-	      y: Math.min(visualStartY, currentVisualY),
-	      width: Math.abs(currentVisualX - visualStartX),
-	      height: Math.abs(currentVisualY - visualStartY)
-	    };
-	    const startLayerX = startClientX - cachedLayerRect.left;
-	    const startLayerY = startClientY - cachedLayerRect.top;
-	    const currentLayerX = event.clientX - cachedLayerRect.left;
-	    const currentLayerY = event.clientY - cachedLayerRect.top;
-	    setSelectionWorldRect({
-	      x: Math.min(startLayerX, currentLayerX) / currentZoom,
-	      y: Math.min(startLayerY, currentLayerY) / currentZoom,
-	      width: Math.abs(currentLayerX - startLayerX) / currentZoom,
-	      height: Math.abs(currentLayerY - startLayerY) / currentZoom
-	    });
-	  }
-	  function end() {
-	    if (ui_vue3.toValue(isSelectionActive)) {
-	      setSelectionActive(false);
-	      setSelectionWorldRect(null);
-	      selectionRect.value = {
-	        x: 0,
-	        y: 0,
-	        width: 0,
-	        height: 0
-	      };
-	    }
-	    cachedRootRect = null;
-	    cachedLayerRect = null;
-	  }
-	  return {
-	    isSelecting: isSelectionActive,
-	    selectionRect,
-	    start,
-	    move,
-	    end
-	  };
+		const {
+			zoom,
+			setSelectionWorldRect,
+			setSelectionActive,
+			isSelectionActive,
+			startAutoScroll,
+			stopAutoScroll,
+			updateMousePosition
+		} = useBlockDiagram();
+		const {
+			rootRef,
+			transformLayoutRef
+		} = params;
+		const selectionRect = ui_vue3.ref({
+			x: 0,
+			y: 0,
+			width: 0,
+			height: 0
+		});
+		let startClientX = 0;
+		let startClientY = 0;
+		let cachedRootRect = null;
+		let cachedLayerRect = null;
+		let scrollOffsetX = 0;
+		let scrollOffsetY = 0;
+		let lastClientX = 0;
+		let lastClientY = 0;
+		function updateRects(clientX, clientY) {
+			if (!cachedRootRect || !cachedLayerRect) {
+				return;
+			}
+			const currentZoom = ui_vue3.toValue(zoom);
+			if (!currentZoom) {
+				return;
+			}
+			const visualStartX = startClientX - cachedRootRect.left - scrollOffsetX;
+			const visualStartY = startClientY - cachedRootRect.top - scrollOffsetY;
+			const currentVisualX = clientX - cachedRootRect.left;
+			const currentVisualY = clientY - cachedRootRect.top;
+			selectionRect.value = {
+				x: Math.min(visualStartX, currentVisualX),
+				y: Math.min(visualStartY, currentVisualY),
+				width: Math.abs(currentVisualX - visualStartX),
+				height: Math.abs(currentVisualY - visualStartY)
+			};
+			const startLayerX = startClientX - cachedLayerRect.left;
+			const startLayerY = startClientY - cachedLayerRect.top;
+			const currentLayerX = clientX - cachedLayerRect.left + scrollOffsetX;
+			const currentLayerY = clientY - cachedLayerRect.top + scrollOffsetY;
+			setSelectionWorldRect({
+				x: Math.min(startLayerX, currentLayerX) / currentZoom,
+				y: Math.min(startLayerY, currentLayerY) / currentZoom,
+				width: Math.abs(currentLayerX - startLayerX) / currentZoom,
+				height: Math.abs(currentLayerY - startLayerY) / currentZoom
+			});
+		}
+		function start(event) {
+			const root = ui_vue3.toValue(rootRef);
+			const layer = ui_vue3.toValue(transformLayoutRef);
+			if (!root || !layer) {
+				return;
+			}
+			startClientX = event.clientX;
+			startClientY = event.clientY;
+			lastClientX = event.clientX;
+			lastClientY = event.clientY;
+			scrollOffsetX = 0;
+			scrollOffsetY = 0;
+			cachedRootRect = root.getBoundingClientRect();
+			cachedLayerRect = layer.getBoundingClientRect();
+			const visualStartX = startClientX - cachedRootRect.left;
+			const visualStartY = startClientY - cachedRootRect.top;
+			setSelectionActive(true);
+			selectionRect.value = {
+				x: visualStartX,
+				y: visualStartY,
+				width: 0,
+				height: 0
+			};
+			startAutoScroll(event, (dx, dy) => {
+				scrollOffsetX += dx;
+				scrollOffsetY += dy;
+				updateRects(lastClientX, lastClientY);
+			});
+		}
+		function move(event) {
+			if (!ui_vue3.toValue(isSelectionActive) || !cachedRootRect || !cachedLayerRect) {
+				return;
+			}
+			lastClientX = event.clientX;
+			lastClientY = event.clientY;
+			updateMousePosition(event);
+			updateRects(event.clientX, event.clientY);
+		}
+		function end() {
+			stopAutoScroll();
+			if (ui_vue3.toValue(isSelectionActive)) {
+				setSelectionActive(false);
+				setSelectionWorldRect(null);
+				selectionRect.value = {
+					x: 0,
+					y: 0,
+					width: 0,
+					height: 0
+				};
+			}
+			cachedRootRect = null;
+			cachedLayerRect = null;
+		}
+		return {
+			isSelecting: isSelectionActive,
+			selectionRect,
+			start,
+			move,
+			end
+		};
 	}
 
 	// eslint-disable-next-line max-lines-per-function
 	function useGroupDragLogic(closeContextMenu) {
-	  const {
-	    blocks: uiBlocksRef,
-	    zoom,
-	    updateBlock,
-	    setPortOffsetByBlockId,
-	    highlitedBlockIds,
-	    startAutoScroll,
-	    stopAutoScroll,
-	    updateMousePosition,
-	    updateBlockRectangle,
-	    isBoxIntersection
-	  } = useBlockDiagram();
-	  let currentZoom = 1;
-	  let movingItems = [];
-	  let anchor = {
-	    x: 0,
-	    y: 0
-	  };
-	  let client = {
-	    x: 0,
-	    y: 0
-	  };
-	  let lastTotalDelta = {
-	    x: 0,
-	    y: 0
-	  };
-	  const updatePositions = (clientX, clientY) => {
-	    const totalDeltaX = (clientX - anchor.x) / currentZoom;
-	    const totalDeltaY = (clientY - anchor.y) / currentZoom;
-	    const stepX = totalDeltaX - lastTotalDelta.x;
-	    const stepY = totalDeltaY - lastTotalDelta.y;
-	    if (stepX === 0 && stepY === 0) {
-	      return;
-	    }
-	    for (const item of movingItems) {
-	      item.block.position.x = item.startX + totalDeltaX;
-	      item.block.position.y = item.startY + totalDeltaY;
-	      if (setPortOffsetByBlockId) {
-	        setPortOffsetByBlockId(item.block.id, {
-	          x: -stepX,
-	          y: -stepY
-	        });
-	      }
-	    }
-	    lastTotalDelta.x = totalDeltaX;
-	    lastTotalDelta.y = totalDeltaY;
-	  };
-	  const onGroupMouseDown = event => {
-	    if (event.button !== 0) {
-	      return;
-	    }
-	    event.stopPropagation();
-	    closeContextMenu();
-	    currentZoom = ui_vue3.toValue(zoom);
-	    anchor = {
-	      x: event.clientX,
-	      y: event.clientY
-	    };
-	    client = {
-	      x: event.clientX,
-	      y: event.clientY
-	    };
-	    lastTotalDelta = {
-	      x: 0,
-	      y: 0
-	    };
-	    const selectedIds = new Set(ui_vue3.toValue(highlitedBlockIds));
-	    movingItems = ui_vue3.toValue(uiBlocksRef).filter(block => selectedIds.has(block.id)).map(block => ({
-	      block,
-	      startX: Number(block.position.x),
-	      startY: Number(block.position.y)
-	    }));
-	    startAutoScroll(event, (dx, dy) => {
-	      anchor.x -= dx;
-	      anchor.y -= dy;
-	      updatePositions(client.x, client.y);
-	    });
-	    main_core.Event.bind(window, 'mousemove', onGroupMouseMove);
-	    main_core.Event.bind(window, 'mouseup', onGroupMouseUp);
-	  };
-	  const onGroupMouseMove = event => {
-	    client.x = event.clientX;
-	    client.y = event.clientY;
-	    updateMousePosition(event);
-	    updatePositions(client.x, client.y);
-	  };
-	  const onGroupMouseUp = () => {
-	    stopAutoScroll();
-	    main_core.Event.unbind(window, 'mousemove', onGroupMouseMove);
-	    main_core.Event.unbind(window, 'mouseup', onGroupMouseUp);
-	    for (const item of movingItems) {
-	      const {
-	        block
-	      } = item;
-	      block.position.x = Math.round(block.position.x);
-	      block.position.y = Math.round(block.position.y);
-	      if (setPortOffsetByBlockId) {
-	        setPortOffsetByBlockId(block.id, {
-	          x: 0,
-	          y: 0
-	        });
-	      }
-	      const newBlock = {
-	        ...block
-	      };
-	      updateBlock(newBlock);
-	      if (ui_vue3.toValue(isBoxIntersection)) {
-	        updateBlockRectangle(block.id, {
-	          x: block.position.x,
-	          y: block.position.y
-	        });
-	      }
-	    }
-	    movingItems = [];
-	  };
-	  return {
-	    onGroupMouseDown
-	  };
+		const {
+			blocks: uiBlocksRef,
+			zoom,
+			updateBlock,
+			setPortOffsetByBlockId,
+			highlitedBlockIds,
+			startAutoScroll,
+			stopAutoScroll,
+			updateMousePosition
+		} = useBlockDiagram();
+		let currentZoom = 1;
+		let movingItems = [];
+		let anchor = {
+			x: 0,
+			y: 0
+		};
+		let client = {
+			x: 0,
+			y: 0
+		};
+		let lastTotalDelta = {
+			x: 0,
+			y: 0
+		};
+		const updatePositions = (clientX, clientY) => {
+			const totalDeltaX = (clientX - anchor.x) / currentZoom;
+			const totalDeltaY = (clientY - anchor.y) / currentZoom;
+			const stepX = totalDeltaX - lastTotalDelta.x;
+			const stepY = totalDeltaY - lastTotalDelta.y;
+			if (stepX === 0 && stepY === 0) {
+				return;
+			}
+			for (const item of movingItems) {
+				item.block.position.x = item.startX + totalDeltaX;
+				item.block.position.y = item.startY + totalDeltaY;
+				if (setPortOffsetByBlockId) {
+					setPortOffsetByBlockId(item.block.id, {
+						x: -stepX,
+						y: -stepY
+					});
+				}
+			}
+			lastTotalDelta.x = totalDeltaX;
+			lastTotalDelta.y = totalDeltaY;
+		};
+		const onGroupMouseDown = event => {
+			if (event.button !== 0) {
+				return;
+			}
+			event.stopPropagation();
+			closeContextMenu();
+			currentZoom = ui_vue3.toValue(zoom);
+			anchor = {
+				x: event.clientX,
+				y: event.clientY
+			};
+			client = {
+				x: event.clientX,
+				y: event.clientY
+			};
+			lastTotalDelta = {
+				x: 0,
+				y: 0
+			};
+			const selectedIds = new Set(ui_vue3.toValue(highlitedBlockIds));
+			movingItems = ui_vue3.toValue(uiBlocksRef).filter(block => selectedIds.has(block.id)).map(block => ({
+				block,
+				startX: Number(block.position.x),
+				startY: Number(block.position.y)
+			}));
+			startAutoScroll(event, (dx, dy) => {
+				anchor.x -= dx;
+				anchor.y -= dy;
+				updatePositions(client.x, client.y);
+			});
+			main_core.Event.bind(window, 'mousemove', onGroupMouseMove);
+			main_core.Event.bind(window, 'mouseup', onGroupMouseUp);
+		};
+		const onGroupMouseMove = event => {
+			client.x = event.clientX;
+			client.y = event.clientY;
+			updateMousePosition(event);
+			updatePositions(client.x, client.y);
+		};
+		const onGroupMouseUp = () => {
+			stopAutoScroll();
+			main_core.Event.unbind(window, 'mousemove', onGroupMouseMove);
+			main_core.Event.unbind(window, 'mouseup', onGroupMouseUp);
+			for (const item of movingItems) {
+				const {
+					block
+				} = item;
+				block.position.x = Math.round(block.position.x);
+				block.position.y = Math.round(block.position.y);
+				if (setPortOffsetByBlockId) {
+					setPortOffsetByBlockId(block.id, {
+						x: 0,
+						y: 0
+					});
+				}
+				const newBlock = {
+					...block
+				};
+				updateBlock(newBlock);
+			}
+			movingItems = [];
+		};
+		return {
+			onGroupMouseDown
+		};
 	}
 
+	// eslint-disable-next-line max-lines-per-function
 	function useGroupSelectionLogic(closeContextMenu, options) {
-	  const {
-	    blocks: uiBlocksRef,
-	    transformLayoutRef,
-	    highlitedBlockIds,
-	    setSelectionActive,
-	    isSelectionActive
-	  } = useBlockDiagram();
-	  const width = options.defaultBlockSize.width;
-	  const height = options.defaultBlockSize.height;
-	  const getBlockDimensions = (block, container) => {
-	    var _block$dimensions, _block$dimensions2;
-	    const el = container == null ? void 0 : container.querySelector(`[data-id="${block.id}"]`);
-	    if (el) {
-	      return {
-	        w: el.offsetWidth,
-	        h: el.offsetHeight
-	      };
-	    }
-	    const w = ((_block$dimensions = block.dimensions) == null ? void 0 : _block$dimensions.width) || width;
-	    const h = ((_block$dimensions2 = block.dimensions) == null ? void 0 : _block$dimensions2.height) || height;
-	    return {
-	      w,
-	      h
-	    };
-	  };
-	  const getSelectionBoxPadding = () => {
-	    const pad = ui_vue3.toValue(options.padding);
-	    if (main_core.Type.isNumber(pad)) {
-	      return {
-	        top: pad,
-	        right: pad,
-	        bottom: pad,
-	        left: pad
-	      };
-	    }
-	    return {
-	      top: pad.top,
-	      right: pad.right,
-	      bottom: pad.bottom,
-	      left: pad.left
-	    };
-	  };
-	  function onCanvasSelect(worldRect) {
-	    if (!worldRect) {
-	      setSelectionActive(false);
-	      return;
-	    }
-	    const blocks = ui_vue3.toValue(uiBlocksRef);
-	    const container = ui_vue3.toValue(transformLayoutRef);
-	    const intersectingIds = new Set();
-	    blocks.forEach(block => {
-	      const {
-	        x,
-	        y
-	      } = block.position;
-	      const {
-	        w,
-	        h
-	      } = getBlockDimensions(block, container);
-	      const isIntersecting = worldRect.x < x + w && worldRect.x + worldRect.width > x && worldRect.y < y + h && worldRect.y + worldRect.height > y;
-	      if (isIntersecting) {
-	        intersectingIds.add(block.id);
-	      }
-	    });
-	    const currentIds = ui_vue3.toValue(highlitedBlockIds) || [];
-	    const nextIds = currentIds.filter(id => intersectingIds.has(id));
-	    intersectingIds.forEach(id => {
-	      if (!nextIds.includes(id)) {
-	        nextIds.push(id);
-	      }
-	    });
-	    highlitedBlockIds.value = nextIds;
-	  }
-	  function onSelectionStart() {
-	    setSelectionActive(true);
-	    closeContextMenu();
-	    highlitedBlockIds.value = [];
-	  }
-	  const groupSelectionStyle = ui_vue3.computed(() => {
-	    if (ui_vue3.toValue(isSelectionActive)) {
-	      return null;
-	    }
-	    const ids = ui_vue3.toValue(highlitedBlockIds) || [];
-	    if (ids.length <= 1) {
-	      return null;
-	    }
-	    let minX = Infinity;
-	    let minY = Infinity;
-	    let maxX = -Infinity;
-	    let maxY = -Infinity;
-	    let hasBlocks = false;
-	    const blocks = ui_vue3.toValue(uiBlocksRef);
-	    const container = ui_vue3.toValue(transformLayoutRef);
-	    ids.forEach(id => {
-	      const block = blocks.find(item => item.id === id);
-	      if (block) {
-	        hasBlocks = true;
-	        const {
-	          x,
-	          y
-	        } = block.position;
-	        const {
-	          w,
-	          h
-	        } = getBlockDimensions(block, container);
-	        minX = Math.min(minX, x);
-	        minY = Math.min(minY, y);
-	        maxX = Math.max(maxX, x + w);
-	        maxY = Math.max(maxY, y + h);
-	      }
-	    });
-	    if (!hasBlocks) {
-	      return null;
-	    }
-	    const padding = getSelectionBoxPadding();
-	    return {
-	      left: `${minX - padding.left}px`,
-	      top: `${minY - padding.top}px`,
-	      width: `${maxX - minX + padding.left + padding.right}px`,
-	      height: `${maxY - minY + padding.top + padding.bottom}px`
-	    };
-	  });
-	  return {
-	    onCanvasSelect,
-	    onSelectionStart,
-	    groupSelectionStyle
-	  };
+		const {
+			blocks: uiBlocksRef,
+			transformLayoutRef,
+			highlitedBlockIds,
+			setSelectionActive,
+			isSelectionActive
+		} = useBlockDiagram();
+		const width = options.defaultBlockSize.width;
+		const height = options.defaultBlockSize.height;
+		const getBlockDimensions = (block, container) => {
+			const el = container?.querySelector(`[data-id="${block.id}"]`);
+			if (el) {
+				return {
+					w: el.offsetWidth,
+					h: el.offsetHeight
+				};
+			}
+			const w = block.dimensions?.width || width;
+			const h = block.dimensions?.height || height;
+			return {
+				w,
+				h
+			};
+		};
+		const getSelectionBoxPadding = () => {
+			const pad = ui_vue3.toValue(options.padding);
+			if (main_core.Type.isNumber(pad)) {
+				return {
+					top: pad,
+					right: pad,
+					bottom: pad,
+					left: pad
+				};
+			}
+			return {
+				top: pad.top,
+				right: pad.right,
+				bottom: pad.bottom,
+				left: pad.left
+			};
+		};
+		function onCanvasSelect(worldRect) {
+			if (!worldRect) {
+				setSelectionActive(false);
+				return;
+			}
+			const blocks = ui_vue3.toValue(uiBlocksRef);
+			const container = ui_vue3.toValue(transformLayoutRef);
+			const intersectingIds = new Set();
+			blocks.forEach(block => {
+				const {
+					x,
+					y
+				} = block.position;
+				const {
+					w,
+					h
+				} = getBlockDimensions(block, container);
+				const isIntersecting = worldRect.x < x + w && worldRect.x + worldRect.width > x && worldRect.y < y + h && worldRect.y + worldRect.height > y;
+				if (isIntersecting) {
+					intersectingIds.add(block.id);
+				}
+			});
+			const currentIds = ui_vue3.toValue(highlitedBlockIds) || [];
+			const nextIds = currentIds.filter(id => intersectingIds.has(id));
+			intersectingIds.forEach(id => {
+				if (!nextIds.includes(id)) {
+					nextIds.push(id);
+				}
+			});
+			highlitedBlockIds.value = nextIds;
+		}
+		function onSelectionStart() {
+			setSelectionActive(true);
+			closeContextMenu();
+			highlitedBlockIds.value = [];
+		}
+		const groupSelectionStyle = ui_vue3.computed(() => {
+			if (ui_vue3.toValue(isSelectionActive)) {
+				return null;
+			}
+			const ids = ui_vue3.toValue(highlitedBlockIds) || [];
+			if (ids.length <= 1) {
+				return null;
+			}
+			let minX = Infinity;
+			let minY = Infinity;
+			let maxX = -Infinity;
+			let maxY = -Infinity;
+			let hasBlocks = false;
+			const blocks = ui_vue3.toValue(uiBlocksRef);
+			const container = ui_vue3.toValue(transformLayoutRef);
+			ids.forEach(id => {
+				const block = blocks.find(item => item.id === id);
+				if (block) {
+					hasBlocks = true;
+					const {
+						x,
+						y
+					} = block.position;
+					const {
+						w,
+						h
+					} = getBlockDimensions(block, container);
+					minX = Math.min(minX, x);
+					minY = Math.min(minY, y);
+					maxX = Math.max(maxX, x + w);
+					maxY = Math.max(maxY, y + h);
+				}
+			});
+			if (!hasBlocks) {
+				return null;
+			}
+			const padding = getSelectionBoxPadding();
+			return {
+				left: `${minX - padding.left}px`,
+				top: `${minY - padding.top}px`,
+				width: `${maxX - minX + padding.left + padding.right}px`,
+				height: `${maxY - minY + padding.top + padding.bottom}px`
+			};
+		});
+		return {
+			onCanvasSelect,
+			onSelectionStart,
+			groupSelectionStyle
+		};
 	}
 
 	const MODIFIER_KEYS = new Set(['control', 'meta', 'shift', 'alt', 'command', 'option', 'ctrl', 'mod']);
 	const KEY_CODE_PREFIX = 'Key';
 	function useKeyboardShortcuts(shortcutsConfig) {
-	  const {
-	    shortcuts,
-	    mousePosition,
-	    isKeyboardInitialized
-	  } = useBlockDiagram();
-	  const isMac = main_core.Browser.isMac();
-	  const prepareShortcut = ({
-	    keys,
-	    handler
-	  }) => {
-	    const lowerKeys = keys.map(k => k.toLowerCase());
-	    const keySet = new Set(lowerKeys);
-	    const hasMod = keySet.has('mod');
-	    const needCtrl = keySet.has('ctrl') || hasMod && !isMac;
-	    const needMeta = keySet.has('meta') || hasMod && isMac;
-	    const mainKey = lowerKeys.find(k => !MODIFIER_KEYS.has(k));
-	    if (!mainKey) {
-	      console.error('Invalid shortcut config: no main key found', keys);
-	    }
-	    return {
-	      id: Math.random().toString(36).slice(2, 11),
-	      mainKey: mainKey || '',
-	      requiredModifiers: {
-	        ctrl: needCtrl,
-	        meta: needMeta,
-	        shift: keySet.has('shift'),
-	        alt: keySet.has('alt')
-	      },
-	      handler
-	    };
-	  };
-	  const localPrepared = shortcutsConfig.map(element => prepareShortcut(element));
-	  const onMouseMove = event => {
-	    mousePosition.x = event.clientX;
-	    mousePosition.y = event.clientY;
-	  };
-	  const onKeyDown = event => {
-	    const target = event.target;
-	    const pressedKey = event.code.startsWith(KEY_CODE_PREFIX) ? event.code.slice(KEY_CODE_PREFIX.length).toLowerCase() : event.key.toLowerCase();
-	    if (MODIFIER_KEYS.has(pressedKey)) {
-	      return;
-	    }
-	    const isInputActive = target.tagName in INPUT_TAGS || target.isContentEditable;
-	    if (isInputActive) {
-	      return;
-	    }
-	    for (const {
-	      mainKey,
-	      requiredModifiers,
-	      handler
-	    } of ui_vue3.toValue(shortcuts)) {
-	      if (mainKey !== pressedKey) {
-	        continue;
-	      }
-	      const {
-	        ctrl,
-	        meta,
-	        shift,
-	        alt
-	      } = requiredModifiers;
-	      const isMatch = event.ctrlKey === ctrl && event.metaKey === meta && event.shiftKey === shift && event.altKey === alt;
-	      if (isMatch) {
-	        event.preventDefault();
-	        handler(event, {
-	          x: mousePosition.x,
-	          y: mousePosition.y
-	        });
-	        return;
-	      }
-	    }
-	  };
-	  ui_vue3.onMounted(() => {
-	    shortcuts.value.push(...localPrepared);
-	    if (!isKeyboardInitialized.value) {
-	      main_core.Event.bind(window, 'keydown', onKeyDown);
-	      main_core.Event.bind(window, 'mousemove', onMouseMove);
-	      isKeyboardInitialized.value = true;
-	    }
-	  });
-	  ui_vue3.onUnmounted(() => {
-	    const idsToRemove = new Set(localPrepared.map(item => item.id));
-	    shortcuts.value = shortcuts.value.filter(item => !idsToRemove.has(item.id));
-	  });
+		const {
+			shortcuts,
+			mousePosition,
+			isKeyboardInitialized
+		} = useBlockDiagram();
+		const isMac = main_core.Browser.isMac();
+		const prepareShortcut = ({
+			keys,
+			handler
+		}) => {
+			const lowerKeys = keys.map(k => k.toLowerCase());
+			const keySet = new Set(lowerKeys);
+			const hasMod = keySet.has('mod');
+			const needCtrl = keySet.has('ctrl') || hasMod && !isMac;
+			const needMeta = keySet.has('meta') || hasMod && isMac;
+			const mainKey = lowerKeys.find(k => !MODIFIER_KEYS.has(k));
+			if (!mainKey) {
+				console.error('Invalid shortcut config: no main key found', keys);
+			}
+			return {
+				id: Math.random().toString(36).slice(2, 11),
+				mainKey: mainKey || '',
+				requiredModifiers: {
+					ctrl: needCtrl,
+					meta: needMeta,
+					shift: keySet.has('shift'),
+					alt: keySet.has('alt')
+				},
+				handler
+			};
+		};
+		const localPrepared = shortcutsConfig.map(element => prepareShortcut(element));
+		const onMouseMove = event => {
+			mousePosition.x = event.clientX;
+			mousePosition.y = event.clientY;
+		};
+		const onKeyDown = event => {
+			const target = event.target;
+			const pressedKey = event.code.startsWith(KEY_CODE_PREFIX) ? event.code.slice(KEY_CODE_PREFIX.length).toLowerCase() : event.key.toLowerCase();
+			if (MODIFIER_KEYS.has(pressedKey)) {
+				return;
+			}
+			const isInputActive = target.tagName in INPUT_TAGS || target.isContentEditable;
+			if (isInputActive) {
+				return;
+			}
+			for (const {
+				mainKey,
+				requiredModifiers,
+				handler
+			} of ui_vue3.toValue(shortcuts)) {
+				if (mainKey !== pressedKey) {
+					continue;
+				}
+				const {
+					ctrl,
+					meta,
+					shift,
+					alt
+				} = requiredModifiers;
+				const isMatch = event.ctrlKey === ctrl && event.metaKey === meta && event.shiftKey === shift && event.altKey === alt;
+				if (isMatch) {
+					event.preventDefault();
+					handler(event, {
+						x: mousePosition.x,
+						y: mousePosition.y
+					});
+					return;
+				}
+			}
+		};
+		ui_vue3.onMounted(() => {
+			shortcuts.value.push(...localPrepared);
+			if (!isKeyboardInitialized.value) {
+				main_core.Event.bind(window, 'keydown', onKeyDown);
+				main_core.Event.bind(window, 'mousemove', onMouseMove);
+				isKeyboardInitialized.value = true;
+			}
+		});
+		ui_vue3.onUnmounted(() => {
+			const idsToRemove = new Set(localPrepared.map(item => item.id));
+			shortcuts.value = shortcuts.value.filter(item => !idsToRemove.has(item.id));
+		});
 	}
 
 	const CANVAS_TRANSFORM_CLASS_NAMES = {
-	  base: 'ui-block-diagram-canvas-transform',
-	  dragging: '--dragging',
-	  grabbing: '--grabbing',
-	  grab: '--grab'
+		base: 'ui-block-diagram-canvas-transform',
+		dragging: '--dragging',
+		grabbing: '--grabbing',
+		grab: '--grab'
 	};
 	const KEY_SPACE = 'Space';
 
 	// @vue/component
 	const CanvasTransform = {
-	  name: 'canvas-transform',
-	  props: {
-	    canvasStyle: {
-	      type: Object,
-	      required: true
-	    },
-	    zoomSensitivity: {
-	      type: Number,
-	      default: 0.01
-	    },
-	    zoomSensitivityMouse: {
-	      type: Number,
-	      default: 0.04
-	    },
-	    selectionEnabled: {
-	      type: Boolean,
-	      default: true
-	    }
-	  },
-	  emits: ['openContextMenu'],
-	  setup(props, {
-	    emit
-	  }) {
-	    const rootRef = ui_vue3.useTemplateRef('rootRef');
-	    const canvasRef = ui_vue3.useTemplateRef('canvasLayout');
-	    const transformLayoutRef = ui_vue3.useTemplateRef('transformLayout');
-	    const isSpacePressed = ui_vue3.ref(false);
-	    const isPanning = ui_vue3.ref(false);
-	    const {
-	      isDragging,
-	      onMounted: onMountedCanvasTransform,
-	      onUnmounted: onUnmountedCanvasTransform,
-	      onMouseDown: onPanStart,
-	      onMouseMove: onPanMove,
-	      onMouseUp: onPanEnd,
-	      onWheel
-	    } = useCanvasTransfrom({
-	      canvasRef,
-	      transformLayoutRef,
-	      canvasStyle: props.canvasStyle,
-	      zoomSensitivity: props.zoomSensitivity,
-	      zoomSensitivityMouse: props.zoomSensitivityMouse
-	    });
-	    const {
-	      isSelecting,
-	      selectionRect,
-	      start: onSelectionStart,
-	      move: onSelectionMove,
-	      end: onSelectionEnd
-	    } = useCanvasSelection({
-	      rootRef,
-	      transformLayoutRef
-	    });
-	    const canvasTransformClassNames = ui_vue3.computed(() => ({
-	      [CANVAS_TRANSFORM_CLASS_NAMES.base]: true,
-	      [CANVAS_TRANSFORM_CLASS_NAMES.dragging]: ui_vue3.toValue(isDragging),
-	      [CANVAS_TRANSFORM_CLASS_NAMES.grabbing]: ui_vue3.toValue(isPanning),
-	      [CANVAS_TRANSFORM_CLASS_NAMES.grab]: ui_vue3.toValue(isSpacePressed) && !ui_vue3.toValue(isPanning)
-	    }));
-	    ui_vue3.onMounted(() => {
-	      onMountedCanvasTransform();
-	      main_core.Event.bind(window, 'keydown', onKeyDown);
-	      main_core.Event.bind(window, 'keyup', onKeyUp);
-	    });
-	    ui_vue3.onUnmounted(() => {
-	      onUnmountedCanvasTransform();
-	      main_core.Event.unbind(window, 'keydown', onKeyDown);
-	      main_core.Event.unbind(window, 'keyup', onKeyUp);
-	    });
-	    function onMouseDown(event) {
-	      if (event.button === 2) {
-	        return;
-	      }
-	      const isMiddleClick = event.button === 1;
-	      const isLeftClick = event.button === 0;
-	      const isSpace = ui_vue3.toValue(isSpacePressed);
-	      const shouldPan = isMiddleClick || isLeftClick && (isSpace || !props.selectionEnabled);
-	      const shouldSelect = isLeftClick && !isSpace && props.selectionEnabled;
-	      if (shouldPan) {
-	        if (ui_vue3.toValue(isSelecting)) {
-	          onSelectionEnd();
-	        }
-	        isPanning.value = true;
-	        if (isMiddleClick || isLeftClick && !props.selectionEnabled) {
-	          event.preventDefault();
-	        }
-	        onPanStart(event);
-	      } else if (shouldSelect) {
-	        isPanning.value = false;
-	        event.preventDefault();
-	        onSelectionStart(event);
-	      }
-	    }
-	    function onMouseMove(event) {
-	      if (ui_vue3.toValue(isSelecting) && ui_vue3.toValue(isSpacePressed)) {
-	        onSelectionEnd();
-	        isPanning.value = true;
-	        onPanStart(event);
-	      }
-	      if (ui_vue3.toValue(isSelecting)) {
-	        onSelectionMove(event);
-	      } else if (ui_vue3.toValue(isPanning)) {
-	        onPanMove(event);
-	      }
-	    }
-	    function onMouseUp() {
-	      if (ui_vue3.toValue(isSelecting)) {
-	        onSelectionEnd();
-	      }
-	      if (ui_vue3.toValue(isPanning)) {
-	        isPanning.value = false;
-	        onPanEnd();
-	      }
-	    }
-	    const onKeyDown = event => {
-	      if (event.code !== KEY_SPACE) {
-	        return;
-	      }
-	      if (event.repeat) {
-	        return;
-	      }
-	      const target = event.target;
-	      const isInputActive = target.tagName in INPUT_TAGS || target.isContentEditable;
-	      if (isInputActive) {
-	        return;
-	      }
-	      isSpacePressed.value = true;
-	    };
-	    const onKeyUp = event => {
-	      if (event.code === KEY_SPACE) {
-	        isSpacePressed.value = false;
-	      }
-	    };
-	    function openContextMenu(event) {
-	      var _event$target;
-	      if (event.target === ui_vue3.toValue(canvasRef) || ((_event$target = event.target) == null ? void 0 : _event$target.parentElement) === ui_vue3.toValue(transformLayoutRef)) {
-	        emit('openContextMenu', event);
-	      }
-	    }
-	    return {
-	      rootRef,
-	      canvasRef,
-	      transformLayoutRef,
-	      canvasTransformClassNames,
-	      onMouseDown,
-	      onMouseMove,
-	      onMouseUp,
-	      onWheel,
-	      openContextMenu,
-	      isSelecting,
-	      selectionRect
-	    };
-	  },
-	  template: `
+		name: 'canvas-transform',
+		props: {
+			canvasStyle: {
+				type: Object,
+				required: true
+			},
+			zoomSensitivity: {
+				type: Number,
+				default: 0.01
+			},
+			zoomSensitivityMouse: {
+				type: Number,
+				default: 0.04
+			},
+			selectionEnabled: {
+				type: Boolean,
+				default: true
+			}
+		},
+		emits: ['openContextMenu'],
+		// eslint-disable-next-line max-lines-per-function
+		setup(props, {
+			emit
+		}) {
+			const rootRef = ui_vue3.useTemplateRef('rootRef');
+			const canvasRef = ui_vue3.useTemplateRef('canvasLayout');
+			const transformLayoutRef = ui_vue3.useTemplateRef('transformLayout');
+			const isSpacePressed = ui_vue3.ref(false);
+			const isPanning = ui_vue3.ref(false);
+			const {
+				isDragging,
+				onMounted: onMountedCanvasTransform,
+				onUnmounted: onUnmountedCanvasTransform,
+				onMouseDown: onPanStart,
+				onMouseMove: onPanMove,
+				onMouseUp: onPanEnd,
+				onWheel
+			} = useCanvasTransfrom({
+				canvasRef,
+				transformLayoutRef,
+				canvasStyle: props.canvasStyle,
+				zoomSensitivity: props.zoomSensitivity,
+				zoomSensitivityMouse: props.zoomSensitivityMouse
+			});
+			const {
+				isSelecting,
+				selectionRect,
+				start: onSelectionStart,
+				move: onSelectionMove,
+				end: onSelectionEnd
+			} = useCanvasSelection({
+				rootRef,
+				transformLayoutRef
+			});
+			const canvasTransformClassNames = ui_vue3.computed(() => ({
+				[CANVAS_TRANSFORM_CLASS_NAMES.base]: true,
+				[CANVAS_TRANSFORM_CLASS_NAMES.dragging]: ui_vue3.toValue(isDragging),
+				[CANVAS_TRANSFORM_CLASS_NAMES.grabbing]: ui_vue3.toValue(isPanning),
+				[CANVAS_TRANSFORM_CLASS_NAMES.grab]: ui_vue3.toValue(isSpacePressed) && !ui_vue3.toValue(isPanning)
+			}));
+			ui_vue3.onMounted(() => {
+				onMountedCanvasTransform();
+				main_core.Event.bind(window, 'keydown', onKeyDown);
+				main_core.Event.bind(window, 'keyup', onKeyUp);
+			});
+			ui_vue3.onUnmounted(() => {
+				onUnmountedCanvasTransform();
+				main_core.Event.unbind(window, 'keydown', onKeyDown);
+				main_core.Event.unbind(window, 'keyup', onKeyUp);
+			});
+			function onMouseDown(event) {
+				if (event.button === 2) {
+					return;
+				}
+				const isMiddleClick = event.button === 1;
+				const isLeftClick = event.button === 0;
+				const isSpace = ui_vue3.toValue(isSpacePressed);
+				const shouldPan = isMiddleClick || isLeftClick && (isSpace || !props.selectionEnabled);
+				const shouldSelect = isLeftClick && !isSpace && props.selectionEnabled;
+				if (shouldPan) {
+					if (ui_vue3.toValue(isSelecting)) {
+						onSelectionEnd();
+					}
+					isPanning.value = true;
+					if (isMiddleClick || isLeftClick && !props.selectionEnabled) {
+						event.preventDefault();
+					}
+					onPanStart(event);
+				} else if (shouldSelect) {
+					isPanning.value = false;
+					event.preventDefault();
+					onSelectionStart(event);
+				}
+				main_core.Event.bind(document, 'mouseup', onMouseUp);
+			}
+			function onMouseMove(event) {
+				if (ui_vue3.toValue(isSelecting) && ui_vue3.toValue(isSpacePressed)) {
+					onSelectionEnd();
+					isPanning.value = true;
+					onPanStart(event);
+				}
+				if (ui_vue3.toValue(isSelecting)) {
+					onSelectionMove(event);
+				} else if (ui_vue3.toValue(isPanning)) {
+					onPanMove(event);
+				}
+			}
+			function onMouseUp() {
+				main_core.Event.unbind(document, 'mouseup', onMouseUp);
+				if (ui_vue3.toValue(isSelecting)) {
+					onSelectionEnd();
+				}
+				if (ui_vue3.toValue(isPanning)) {
+					isPanning.value = false;
+					onPanEnd();
+				}
+			}
+			const onKeyDown = event => {
+				if (event.code !== KEY_SPACE) {
+					return;
+				}
+				if (event.repeat) {
+					return;
+				}
+				const target = event.target;
+				const isInputActive = target.tagName in INPUT_TAGS || target.isContentEditable;
+				if (isInputActive) {
+					return;
+				}
+				isSpacePressed.value = true;
+			};
+			const onKeyUp = event => {
+				if (event.code === KEY_SPACE) {
+					isSpacePressed.value = false;
+				}
+			};
+			function openContextMenu(event) {
+				if (event.target === ui_vue3.toValue(canvasRef) || event.target?.parentElement === ui_vue3.toValue(transformLayoutRef)) {
+					emit('openContextMenu', event);
+				}
+			}
+			return {
+				rootRef,
+				canvasRef,
+				transformLayoutRef,
+				canvasTransformClassNames,
+				onMouseDown,
+				onMouseMove,
+				onMouseUp,
+				onWheel,
+				openContextMenu,
+				isSelecting,
+				selectionRect
+			};
+		},
+		template: `
 		<div
 			ref="rootRef"
 			:class="canvasTransformClassNames"
@@ -5991,99 +6250,109 @@ this.BX = this.BX || {};
 	`
 	};
 
-	const TARGET_CONNECTION_CLASSES = {
-	  base: 'ui-block-diagram-connection__target',
-	  active: '--active'
+	const CONNECTION_CLASS_NAME = {
+		base: 'ui-block-diagram-connection',
+		active: '--active'
+	};
+	const TARGET_CONNECTION_CLASS_NAMES = {
+		base: 'ui-block-diagram-connection__target',
+		active: '--active'
 	};
 
 	// @vue/component
 	const Connection = {
-	  name: 'diagram-connection',
-	  props: {
-	    /** @type DiagramConnection */
-	    connection: {
-	      type: Object,
-	      required: true
-	    },
-	    barWidth: {
-	      type: Number,
-	      default: 22
-	    },
-	    barHeight: {
-	      type: Number,
-	      default: 22
-	    },
-	    contextMenuItems: {
-	      type: Array,
-	      default: () => []
-	    },
-	    disabled: {
-	      type: Boolean,
-	      default: false
-	    }
-	  },
-	  setup(props) {
-	    const {
-	      connectionPathInfo,
-	      isDisabled
-	    } = useConnectionState(props.connection);
-	    const {
-	      deleteConnectionById
-	    } = useBlockDiagram();
-	    const loc = useLoc();
-	    const {
-	      isOpen,
-	      showMenu
-	    } = useContextMenu();
-	    const preparedContextMenuItems = ui_vue3.computed(() => {
-	      const defaultItems = [{
-	        id: 'deleteConnection',
-	        text: loc.getMessage('UI_BLOCK_DIAGRAM_DELETE_CONNECTION_CONTEXT_MENU_ITEM'),
-	        onclick: () => {
-	          this.deleteConnectionById(this.connection.id);
-	        }
-	      }];
-	      if (props.contextMenuItems.length > 0) {
-	        return props.contextMenuItems;
-	      }
-	      return defaultItems;
-	    });
-	    const targetConnectionClasses = ui_vue3.computed(() => ({
-	      [TARGET_CONNECTION_CLASSES.base]: true,
-	      [TARGET_CONNECTION_CLASSES.active]: ui_vue3.toValue(isOpen)
-	    }));
-	    const barPosition = ui_vue3.computed(() => {
-	      var _toValue$center;
-	      const {
-	        x: centerX = 0,
-	        y: centerY = 0
-	      } = (_toValue$center = ui_vue3.toValue(connectionPathInfo).center) != null ? _toValue$center : {};
-	      return {
-	        x: centerX - props.barWidth / 2,
-	        y: centerY - props.barHeight / 2
-	      };
-	    });
-	    function onOpenContextMenu(event) {
-	      if (ui_vue3.toValue(isDisabled) || props.disabled) {
-	        return;
-	      }
-	      event.preventDefault();
-	      showMenu(event, {
-	        items: ui_vue3.toValue(preparedContextMenuItems)
-	      });
-	    }
-	    return {
-	      isDisabled,
-	      connectionPathInfo,
-	      targetConnectionClasses,
-	      barPosition,
-	      onOpenContextMenu,
-	      loc,
-	      deleteConnectionById
-	    };
-	  },
-	  template: `
-		<svg class="ui-block-diagram-connection">
+		name: 'diagram-connection',
+		props: {
+			/** @type DiagramConnection */
+			connection: {
+				type: Object,
+				required: true
+			},
+			barWidth: {
+				type: Number,
+				default: 22
+			},
+			barHeight: {
+				type: Number,
+				default: 22
+			},
+			contextMenuItems: {
+				type: Array,
+				default: () => []
+			},
+			disabled: {
+				type: Boolean,
+				default: false
+			}
+		},
+		setup(props) {
+			const {
+				connectionPathInfo,
+				isDisabled
+			} = useConnectionState(props.connection);
+			const {
+				deleteConnectionById
+			} = useBlockDiagram();
+			const loc = useLoc();
+			const {
+				isOpen,
+				showMenu
+			} = useContextMenu();
+			const preparedContextMenuItems = ui_vue3.computed(() => {
+				const defaultItems = [{
+					id: 'deleteConnection',
+					text: loc.getMessage('UI_BLOCK_DIAGRAM_DELETE_CONNECTION_CONTEXT_MENU_ITEM'),
+					onclick: () => {
+						deleteConnectionById(props.connection.id);
+					}
+				}];
+				if (props.contextMenuItems.length > 0) {
+					return props.contextMenuItems;
+				}
+				return defaultItems;
+			});
+			const connectionClassNames = ui_vue3.computed(() => {
+				return {
+					[CONNECTION_CLASS_NAME.base]: true,
+					[CONNECTION_CLASS_NAME.active]: ui_vue3.toValue(isOpen)
+				};
+			});
+			const targetConnectionClasses = ui_vue3.computed(() => ({
+				[TARGET_CONNECTION_CLASS_NAMES.base]: true,
+				[TARGET_CONNECTION_CLASS_NAMES.active]: ui_vue3.toValue(isOpen)
+			}));
+			const barPosition = ui_vue3.computed(() => {
+				const {
+					x: centerX = 0,
+					y: centerY = 0
+				} = ui_vue3.toValue(connectionPathInfo).center ?? {};
+				return {
+					x: centerX - props.barWidth / 2,
+					y: centerY - props.barHeight / 2
+				};
+			});
+			function onOpenContextMenu(event) {
+				if (ui_vue3.toValue(isDisabled) || props.disabled) {
+					return;
+				}
+				event.preventDefault();
+				showMenu(event, {
+					items: ui_vue3.toValue(preparedContextMenuItems)
+				});
+			}
+			return {
+				isDisabled,
+				connectionPathInfo,
+				connectionClassNames,
+				targetConnectionClasses,
+				barPosition,
+				onOpenContextMenu,
+				loc,
+				deleteConnectionById
+			};
+		},
+		template: `
+		<svg :class="connectionClassNames">
 			<g class="ui-block-diagram-connection__group">
 				<path
 					:d="connectionPathInfo.path"
@@ -6096,7 +6365,7 @@ this.BX = this.BX || {};
 					class="ui-block-diagram-connection__hovered"
 					stroke="transparent"
 					fill="transparent"
-					@contextmenu="onOpenContextMenu"
+					@contextmenu.stop="onOpenContextMenu"
 				/>
 				<foreignObject
 					:x="barPosition.x"
@@ -6114,36 +6383,36 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const DeleteConnectionBtn = {
-	  name: 'delete-connection-btn',
-	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon
-	  },
-	  props: {
-	    connectionId: {
-	      type: String,
-	      required: true
-	    },
-	    disabled: {
-	      type: Boolean,
-	      default: false
-	    }
-	  },
-	  setup(props) {
-	    const {
-	      deleteConnectionById
-	    } = useBlockDiagram();
-	    function onDeleteConnection() {
-	      if (props.disabled) {
-	        return;
-	      }
-	      deleteConnectionById(props.connectionId);
-	    }
-	    return {
-	      iconSet: ui_iconSet_api_vue.Outline,
-	      onDeleteConnection
-	    };
-	  },
-	  template: `
+		name: 'delete-connection-btn',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon
+		},
+		props: {
+			connectionId: {
+				type: String,
+				required: true
+			},
+			disabled: {
+				type: Boolean,
+				default: false
+			}
+		},
+		setup(props) {
+			const {
+				deleteConnectionById
+			} = useBlockDiagram();
+			function onDeleteConnection() {
+				if (props.disabled) {
+					return;
+				}
+				deleteConnectionById(props.connectionId);
+			}
+			return {
+				iconSet: ui_iconSet_api_vue.Outline,
+				onDeleteConnection
+			};
+		},
+		template: `
 		<button
 			class="ui-block-diagram-delete-connection-btn"
 			:data-test-id="$blockDiagramTestId('connectionDeleteBtn', connectionId)"
@@ -6162,19 +6431,19 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const ContextMenuLayout = {
-	  name: 'ContextMenuLayout',
-	  setup() {
-	    const instance = useBlockDiagram();
-	    const targetContainerStyle = ui_vue3.computed(() => ({
-	      top: `${ui_vue3.toValue(instance.positionContextMenu).top}px`,
-	      left: `${ui_vue3.toValue(instance.positionContextMenu).left}px`
-	    }));
-	    return {
-	      instance,
-	      targetContainerStyle
-	    };
-	  },
-	  template: `
+		name: 'ContextMenuLayout',
+		setup() {
+			const instance = useBlockDiagram();
+			const targetContainerStyle = ui_vue3.computed(() => ({
+				top: `${ui_vue3.toValue(instance.positionContextMenu).top}px`,
+				left: `${ui_vue3.toValue(instance.positionContextMenu).left}px`
+			}));
+			return {
+				instance,
+				targetContainerStyle
+			};
+		},
+		template: `
 		<div
 			:ref="instance.contextMenuLayerRef"
 			class="ui-block-diagram-context-menu__layout"
@@ -6192,54 +6461,51 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const BlocksQueueTransition = {
-	  name: 'blocks-queue-transition',
-	  setup() {
-	    const {
-	      isAnimate,
-	      currentAnimationItem,
-	      animationQueue,
-	      hooks
-	    } = useBlockDiagram();
-	    const canvas = useCanvas();
-	    const history = useHistory();
-	    const highlighted = useHighlightedBlocks();
-	    function nextAnimationItem() {
-	      var _toValue$next, _toValue;
-	      const {
-	        done = false
-	      } = (_toValue$next = (_toValue = ui_vue3.toValue(animationQueue)) == null ? void 0 : _toValue.next()) != null ? _toValue$next : {};
-	      if (done) {
-	        animationQueue.value = null;
-	      } else {
-	        history.makeSnapshot();
-	      }
-	    }
-	    function onBeforeEnter() {
-	      var _toValue2;
-	      hooks.blockTransitionStart.trigger((_toValue2 = ui_vue3.toValue(currentAnimationItem)) == null ? void 0 : _toValue2.item);
-	    }
-	    function onEnter() {
-	      highlighted.clear();
-	      highlighted.add(ui_vue3.toValue(currentAnimationItem).item.id);
-	      canvas.goToBlockById(ui_vue3.toValue(currentAnimationItem).item.id);
-	    }
-	    function onAfterEnter() {
-	      var _toValue3;
-	      hooks.blockTransitionEnd.trigger((_toValue3 = ui_vue3.toValue(currentAnimationItem)) == null ? void 0 : _toValue3.item);
-	      nextAnimationItem();
-	    }
-	    function onAfterLeave() {
-	      nextAnimationItem();
-	    }
-	    return {
-	      isAnimate,
-	      onBeforeEnter,
-	      onEnter,
-	      onAfterEnter,
-	      onAfterLeave
-	    };
-	  },
-	  template: `
+		name: 'blocks-queue-transition',
+		setup() {
+			const {
+				isAnimate,
+				currentAnimationItem,
+				animationQueue,
+				hooks
+			} = useBlockDiagram();
+			const canvas = useCanvas();
+			const history = useHistory();
+			const highlighted = useHighlightedBlocks();
+			function nextAnimationItem() {
+				const {
+					done = false
+				} = ui_vue3.toValue(animationQueue)?.next() ?? {};
+				if (done) {
+					animationQueue.value = null;
+				} else {
+					history.makeSnapshot();
+				}
+			}
+			function onBeforeEnter() {
+				hooks.blockTransitionStart.trigger(ui_vue3.toValue(currentAnimationItem)?.item);
+			}
+			function onEnter() {
+				highlighted.clear();
+				highlighted.add(ui_vue3.toValue(currentAnimationItem).item.id);
+				canvas.goToBlockById(ui_vue3.toValue(currentAnimationItem).item.id);
+			}
+			function onAfterEnter() {
+				hooks.blockTransitionEnd.trigger(ui_vue3.toValue(currentAnimationItem)?.item);
+				nextAnimationItem();
+			}
+			function onAfterLeave() {
+				nextAnimationItem();
+			}
+			return {
+				isAnimate,
+				onBeforeEnter,
+				onEnter,
+				onAfterEnter,
+				onAfterLeave
+			};
+		},
+		template: `
 		<TransitionGroup
 			v-if="isAnimate"
 			name="ui-block-diagram-blocks-queue-transition"
@@ -6258,124 +6524,257 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const GroupedBlocks = {
-	  name: 'grouped-blocks',
-	  components: {
-	    BlocksQueueTransition
-	  },
-	  setup() {
-	    const {
-	      groupedBlocks,
-	      blockGroupNames
-	    } = useBlockDiagram();
-	    return {
-	      blockGroupNames,
-	      groupedBlocks,
-	      getGroupBlockSlotName
-	    };
-	  },
-	  template: `
+		name: 'GroupedBlocks',
+		components: {
+			BlocksQueueTransition
+		},
+		setup() {
+			const {
+				blockIntersections
+			} = useBlockDiagram();
+			return {
+				getGroupBlockSlotName,
+				visibleBlockGroupNames: blockIntersections.visibleBlockGroupNames,
+				groupedVisibleBlocks: blockIntersections.groupedVisibleBlocks
+			};
+		},
+		template: `
 		<BlocksQueueTransition>
 			<slot
-				v-for="group in blockGroupNames"
+				v-for="group in visibleBlockGroupNames"
 				:key="group"
 				:name="getGroupBlockSlotName(group)"
-				:blocks="groupedBlocks[group]"
+				:blocks="groupedVisibleBlocks[group]"
 			/>
 		</BlocksQueueTransition>
 	`
 	};
 
-	const PATH_CLASS_NAMES = {
-	  base: 'ui-block-diagram-new-connection__path',
-	  error: '--error'
+	const NEW_CONNECTION_CLASS_NAME = {
+		base: 'ui-block-diagram-new-connection',
+		up: '--up'
 	};
 
 	// @vue/component
 	const NewConnection = {
-	  name: 'NewConnection',
-	  setup(props) {
-	    const {
-	      hasNewConnection,
-	      newConnectionPathInfo,
-	      isValid
-	    } = useNewConnectionState();
-	    const pathClassNames = ui_vue3.computed(() => ({
-	      [PATH_CLASS_NAMES.base]: true,
-	      [PATH_CLASS_NAMES.error]: !ui_vue3.toValue(isValid)
-	    }));
-	    return {
-	      hasNewConnection,
-	      newConnectionPathInfo,
-	      pathClassNames
-	    };
-	  },
-	  template: `
-		<svg
-			v-if="hasNewConnection"
-			class="ui-block-diagram-new-connection"
-		>
-			<path
-				:d="newConnectionPathInfo.path"
-				:class="pathClassNames"
-			/>
+		name: 'NewConnection',
+		props: {
+			stubSize: {
+				type: Number,
+				default: 50
+			},
+			duration: {
+				type: Number,
+				default: 3000
+			}
+		},
+		// eslint-disable-next-line max-lines-per-function
+		setup(props) {
+			const {
+				zoom
+			} = useBlockDiagram();
+			const {
+				hasNewConnection,
+				hasSourcePort,
+				hasTargetPort,
+				sourcePortLayoutRect,
+				targetPortLayoutRect,
+				hasTmpConnection,
+				newConnectionPathInfo,
+				newTmpConnectionPathInfo,
+				newConnection
+			} = useNewConnectionState();
+			const tmpPathRef = ui_vue3.useTemplateRef('tmpPath');
+			let animateTmpPath = null;
+			const newConnectionClassNames = ui_vue3.computed(() => {
+				return {
+					[NEW_CONNECTION_CLASS_NAME.base]: true,
+					[NEW_CONNECTION_CLASS_NAME.up]: ui_vue3.toValue(hasNewConnection)
+				};
+			});
+			const sourceForeignObjectPosition = ui_vue3.computed(() => {
+				return getForeignObjectPosition(sourcePortLayoutRect);
+			});
+			const targetForeignObjectPosition = ui_vue3.computed(() => {
+				return getForeignObjectPosition(targetPortLayoutRect);
+			});
+			const stubContainerStyle = ui_vue3.computed(() => {
+				return {
+					width: `${props.stubSize / ui_vue3.toValue(zoom)}px`,
+					height: `${props.stubSize / ui_vue3.toValue(zoom)}px`
+				};
+			});
+			const circleCenterPosition = ui_vue3.computed(() => {
+				return {
+					cx: ui_vue3.toValue(newConnection)?.center?.x ?? 0,
+					cy: ui_vue3.toValue(newConnection)?.center?.y ?? 0
+				};
+			});
+			const hasConnectionEndPoint = ui_vue3.computed(() => {
+				return ui_vue3.toValue(newConnection)?.end !== null;
+			});
+			ui_vue3.watch(hasConnectionEndPoint, () => {
+				animateTmpPath?.cancel();
+				animateTmpPath?.play();
+			});
+			ui_vue3.onMounted(() => {
+				initAnimateTmpPath();
+			});
+			function initAnimateTmpPath() {
+				animateTmpPath = ui_vue3.toValue(tmpPathRef)?.animate([{
+					strokeDasharray: '5, 5',
+					strokeDashoffset: '100'
+				}, {
+					strokeDasharray: '5, 5',
+					strokeDashoffset: '0'
+				}], {
+					duration: props.duration,
+					easing: 'linear',
+					iterations: Infinity
+				});
+			}
+			function getForeignObjectPosition(rect) {
+				const {
+					x,
+					y,
+					width,
+					height
+				} = ui_vue3.toValue(rect);
+				const centerPoint = {
+					x: x + width / 2,
+					y: y + height / 2
+				};
+				return {
+					x: centerPoint.x - props.stubSize / ui_vue3.toValue(zoom) / 2,
+					y: centerPoint.y - props.stubSize / ui_vue3.toValue(zoom) / 2
+				};
+			}
+			return {
+				SOURCE_PORT_STUB_TELEPORT_NAME,
+				TARGET_PORT_STUB_TELEPORT_NAME,
+				hasNewConnection,
+				hasSourcePort,
+				hasTargetPort,
+				sourcePortLayoutRect,
+				targetPortLayoutRect,
+				hasTmpConnection,
+				newConnectionPathInfo,
+				newTmpConnectionPathInfo,
+				newConnectionClassNames,
+				sourceForeignObjectPosition,
+				targetForeignObjectPosition,
+				stubContainerStyle,
+				circleCenterPosition
+			};
+		},
+		template: `
+		<svg :class="newConnectionClassNames">
+			<g
+				v-show="hasNewConnection"
+				stroke="none"
+				stroke-width="1"
+				fill="none"
+				fill-rule="evenodd"
+			>
+				<path
+					:d="newConnectionPathInfo.path"
+					class="ui-block-diagram-new-connection__path"
+				/>
+
+				<path
+					ref="tmpPath"
+					:d="newTmpConnectionPathInfo.path"
+					class="ui-block-diagram-new-connection__tmp-path"
+				/>
+
+				<circle
+					:cx="circleCenterPosition.cx"
+					:cy="circleCenterPosition.cy"
+					:r="4"
+					class="ui-block-diagram-new-connection__cursor"
+				/>
+			</g>
+
+			<foreignObject
+				:x="sourceForeignObjectPosition.x"
+				:y="sourceForeignObjectPosition.y"
+				:width="stubSize"
+				:height="stubSize"
+			>
+				<div
+					:style="stubContainerStyle"
+					:id="SOURCE_PORT_STUB_TELEPORT_NAME"
+					class="ui-block-diagram-new-connection__port-stub-container"
+				/>
+			</foreignObject>
+
+			<foreignObject
+				:x="targetForeignObjectPosition.x"
+				:y="targetForeignObjectPosition.y"
+				:width="stubSize"
+				:height="stubSize"
+			>
+				<div
+					:style="stubContainerStyle"
+					:id="TARGET_PORT_STUB_TELEPORT_NAME"
+					class="ui-block-diagram-new-connection__port-stub-container"
+				/>
+			</foreignObject>
 		</svg>
 	`
 	};
 
 	// @vue/component
 	const ConnectionsQueueTransition = {
-	  name: 'connections-queue-transition',
-	  setup() {
-	    const {
-	      isAnimate,
-	      currentAnimationItem,
-	      animationQueue,
-	      updatePortPosition,
-	      hooks
-	    } = useBlockDiagram();
-	    const history = useHistory();
-	    function onBeforeEnter() {
-	      var _toValue;
-	      const {
-	        item: connection
-	      } = (_toValue = ui_vue3.toValue(currentAnimationItem)) != null ? _toValue : {};
-	      hooks.connectionTransitionStart.trigger(connection);
-	      const {
-	        sourceBlockId,
-	        sourcePortId,
-	        targetBlockId,
-	        targetPortId
-	      } = connection;
-	      updatePortPosition(sourceBlockId, sourcePortId);
-	      updatePortPosition(targetBlockId, targetPortId);
-	    }
-	    function nextAnimatedItem() {
-	      var _toValue$next, _toValue2;
-	      const {
-	        done = false
-	      } = (_toValue$next = (_toValue2 = ui_vue3.toValue(animationQueue)) == null ? void 0 : _toValue2.next()) != null ? _toValue$next : {};
-	      if (done) {
-	        animationQueue.value = null;
-	      } else {
-	        history.makeSnapshot();
-	      }
-	    }
-	    function onAfterEnter() {
-	      var _toValue3;
-	      hooks.connectionTransitionEnd.trigger((_toValue3 = ui_vue3.toValue(currentAnimationItem)) == null ? void 0 : _toValue3.item);
-	      nextAnimatedItem();
-	    }
-	    function onAfterLeave() {
-	      nextAnimatedItem();
-	    }
-	    return {
-	      isAnimate,
-	      onBeforeEnter,
-	      onAfterEnter,
-	      onAfterLeave
-	    };
-	  },
-	  template: `
+		name: 'connections-queue-transition',
+		setup() {
+			const {
+				isAnimate,
+				currentAnimationItem,
+				animationQueue,
+				updatePortPosition,
+				hooks
+			} = useBlockDiagram();
+			const history = useHistory();
+			function onBeforeEnter() {
+				const {
+					item: connection
+				} = ui_vue3.toValue(currentAnimationItem) ?? {};
+				hooks.connectionTransitionStart.trigger(connection);
+				const {
+					sourceBlockId,
+					sourcePortId,
+					targetBlockId,
+					targetPortId
+				} = connection;
+				updatePortPosition(sourceBlockId, sourcePortId);
+				updatePortPosition(targetBlockId, targetPortId);
+			}
+			function nextAnimatedItem() {
+				const {
+					done = false
+				} = ui_vue3.toValue(animationQueue)?.next() ?? {};
+				if (done) {
+					animationQueue.value = null;
+				} else {
+					history.makeSnapshot();
+				}
+			}
+			function onAfterEnter() {
+				hooks.connectionTransitionEnd.trigger(ui_vue3.toValue(currentAnimationItem)?.item);
+				nextAnimatedItem();
+			}
+			function onAfterLeave() {
+				nextAnimatedItem();
+			}
+			return {
+				isAnimate,
+				onBeforeEnter,
+				onAfterEnter,
+				onAfterLeave
+			};
+		},
+		template: `
 		<TransitionGroup
 			v-if="isAnimate"
 			name="ui-block-diagram-connections-queue-transition"
@@ -6393,24 +6792,26 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const GroupedConnections = {
-	  name: 'grouped-connections',
-	  components: {
-	    Connection,
-	    NewConnection,
-	    ConnectionsQueueTransition
-	  },
-	  setup() {
-	    const {
-	      groupedConnections,
-	      connectionGroupNames
-	    } = useBlockDiagram();
-	    return {
-	      groupedConnections,
-	      connectionGroupNames,
-	      getGroupConnectionSlotName
-	    };
-	  },
-	  template: `
+		name: 'grouped-connections',
+		components: {
+			Connection,
+			NewConnection,
+			ConnectionsQueueTransition
+		},
+		setup() {
+			const {
+				groupedConnections,
+				connectionGroupNames,
+				newConnections
+			} = useBlockDiagram();
+			return {
+				groupedConnections,
+				connectionGroupNames,
+				getGroupConnectionSlotName,
+				newConnections
+			};
+		},
+		template: `
 		<ConnectionsQueueTransition>
 			<slot
 				v-for="connection in connectionGroupNames"
@@ -6427,75 +6828,75 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const MoveableBlock = {
-	  name: 'moveable-block',
-	  props: {
-	    /** @type DiagramBlock */
-	    block: {
-	      type: Object,
-	      required: true
-	    },
-	    highlighted: {
-	      type: Boolean,
-	      default: false
-	    }
-	  },
-	  setup(props) {
-	    const {
-	      block
-	    } = ui_vue3.toRefs(props);
-	    const blockRef = ui_vue3.useTemplateRef('blockEl');
-	    const {
-	      isMakeNewConnection
-	    } = useBlockDiagram();
-	    const {
-	      blockZindex,
-	      isHiglitedBlock,
-	      isDisabled,
-	      onMountedBlock,
-	      onUnmountedBlock
-	    } = useBlockState({
-	      block,
-	      blockRef
-	    });
-	    const highlightedBlocks = useHighlightedBlocks();
-	    const {
-	      isDragged,
-	      blockPositionStyle
-	    } = useMoveableBlock(blockRef, block);
-	    ui_vue3.watch(() => props.highlighted, value => {
-	      if (value) {
-	        highlightedBlocks.add(props.block.id);
-	      } else {
-	        highlightedBlocks.remove(props.block.id);
-	      }
-	    });
-	    const blockStyle = ui_vue3.computed(() => ({
-	      ...ui_vue3.toValue(blockPositionStyle),
-	      ...ui_vue3.toValue(blockZindex)
-	    }));
-	    ui_vue3.onMounted(() => {
-	      onMountedBlock();
-	    });
-	    ui_vue3.onUnmounted(() => {
-	      highlightedBlocks.remove(props.block.id);
-	      onUnmountedBlock();
-	    });
-	    function onMouseDownSelectBlock() {
-	      highlightedBlocks.clear();
-	      highlightedBlocks.add(props.block.id);
-	    }
-	    return {
-	      isHiglitedBlock,
-	      isDisabled,
-	      isDragged,
-	      isMakeNewConnection,
-	      blockStyle,
-	      blockZindex,
-	      blockPositionStyle,
-	      onMouseDownSelectBlock
-	    };
-	  },
-	  template: `
+		name: 'moveable-block',
+		props: {
+			/** @type DiagramBlock */
+			block: {
+				type: Object,
+				required: true
+			},
+			highlighted: {
+				type: Boolean,
+				default: false
+			}
+		},
+		setup(props) {
+			const {
+				block
+			} = ui_vue3.toRefs(props);
+			const blockRef = ui_vue3.useTemplateRef('blockEl');
+			const {
+				isMakeNewConnection
+			} = useBlockDiagram();
+			const {
+				blockZindex,
+				isHiglitedBlock,
+				isDisabled,
+				onMountedBlock,
+				onUnmountedBlock
+			} = useBlockState({
+				block,
+				blockRef
+			});
+			const highlightedBlocks = useHighlightedBlocks();
+			const {
+				isDragged,
+				blockPositionStyle
+			} = useMoveableBlock(blockRef, block);
+			ui_vue3.watch(() => props.highlighted, value => {
+				if (value) {
+					highlightedBlocks.add(props.block.id);
+				} else {
+					highlightedBlocks.remove(props.block.id);
+				}
+			});
+			const blockStyle = ui_vue3.computed(() => ({
+				...ui_vue3.toValue(blockPositionStyle),
+				...ui_vue3.toValue(blockZindex)
+			}));
+			ui_vue3.onMounted(() => {
+				onMountedBlock();
+			});
+			ui_vue3.onUnmounted(() => {
+				highlightedBlocks.remove(props.block.id);
+				onUnmountedBlock();
+			});
+			function onMouseDownSelectBlock() {
+				highlightedBlocks.clear();
+				highlightedBlocks.add(props.block.id);
+			}
+			return {
+				isHiglitedBlock,
+				isDisabled,
+				isDragged,
+				isMakeNewConnection,
+				blockStyle,
+				blockZindex,
+				blockPositionStyle,
+				onMouseDownSelectBlock
+			};
+		},
+		template: `
 		<div
 			class="ui-block-diagram-moveable-block"
 			:style="blockStyle"
@@ -6516,182 +6917,217 @@ this.BX = this.BX || {};
 	};
 
 	const PORT_CLASS_NAMES = {
-	  base: 'ui-block-diagram-port',
-	  disabled: '--disabled',
-	  active: '--active',
-	  error: '--error'
-	};
+		base: 'ui-block-diagram-port',
+		disabled: '--disabled',
+		active: '--active'};
+	const SOURCE_PORT_STUB_SLOT_NAME = 'sourcePortStub';
+	const TARGET_PORT_STUB_SLOT_NAME = 'targetPortStub';
 
 	// @vue/component
 	const Port = {
-	  name: 'DiagramPort',
-	  props: {
-	    /** @type DiagramBlock */
-	    block: {
-	      type: Object,
-	      required: true
-	    },
-	    /** @type DiagramPort */
-	    port: {
-	      type: Object,
-	      required: true
-	    },
-	    /** @type DiagramPortPosition */
-	    position: {
-	      type: String,
-	      required: true,
-	      validator(position) {
-	        return Object.values(PORT_POSITION).includes(position);
-	      }
-	    },
-	    index: {
-	      type: Number,
-	      required: true
-	    },
-	    /** @type Array<DiagramValidationPortRuleFn> */
-	    validationRules: {
-	      type: Array,
-	      default: () => []
-	    },
-	    /** @type DiagramNormalyzeConnectionFn | null */
-	    normalyzeConnectionFn: {
-	      type: Function,
-	      default: null
-	    },
-	    disabled: {
-	      type: Boolean,
-	      default: false
-	    }
-	  },
-	  setup(props) {
-	    const {
-	      isDisabled,
-	      onMountedPort,
-	      onUnmountedPort
-	    } = usePortState({
-	      portRef: ui_vue3.useTemplateRef('port'),
-	      block: props.block,
-	      port: props.port,
-	      position: props.position,
-	      index: props.index
-	    });
-	    const {
-	      isSourcePort,
-	      isValid,
-	      onMouseDownPort,
-	      onMouseOverPort,
-	      onMouseLeavePort
-	    } = useNewConnection({
-	      block: props.block,
-	      port: props.port,
-	      position: props.position,
-	      index: props.index,
-	      validationRules: props.validationRules,
-	      normalyzeConnectionFn: props.normalyzeConnectionFn
-	    });
-	    const portClassNames = ui_vue3.computed(() => ({
-	      [PORT_CLASS_NAMES.base]: true,
-	      [PORT_CLASS_NAMES.active]: ui_vue3.toValue(isSourcePort),
-	      [PORT_CLASS_NAMES.disabled]: ui_vue3.toValue(isDisabled),
-	      [PORT_CLASS_NAMES.error]: !ui_vue3.toValue(isValid)
-	    }));
-	    ui_vue3.onMounted(() => {
-	      onMountedPort();
-	    });
-	    ui_vue3.onUnmounted(() => {
-	      onUnmountedPort();
-	    });
-	    return {
-	      portClassNames,
-	      onMouseDownPort,
-	      onMouseOverPort,
-	      onMouseLeavePort
-	    };
-	  },
-	  template: `
+		name: 'DiagramPort',
+		props: {
+			/** @type DiagramBlock */
+			block: {
+				type: Object,
+				required: true
+			},
+			/** @type DiagramPort */
+			port: {
+				type: Object,
+				required: true
+			},
+			/** @type DiagramPortPosition */
+			position: {
+				type: String,
+				required: true,
+				validator(position) {
+					return Object.values(PORT_POSITION).includes(position);
+				}
+			},
+			index: {
+				type: Number,
+				required: true
+			},
+			/** @type Array<DiagramValidationPortRuleFn> */
+			validationRules: {
+				type: Array,
+				default: () => []
+			},
+			/** @type DiagramNormalyzeConnectionFn | null */
+			normalyzeConnectionFn: {
+				type: Function,
+				default: null
+			},
+			disabled: {
+				type: Boolean,
+				default: false
+			}
+		},
+		setup(props, {
+			slots
+		}) {
+			const {
+				isDisabled,
+				isMaybePortForNewConnection,
+				isIncludedPortInSelectedBlock,
+				isIncludedPortInMovingBlock,
+				onMountedPort,
+				onUnmountedPort
+			} = usePortState({
+				portRef: ui_vue3.useTemplateRef('port'),
+				block: props.block,
+				port: props.port,
+				position: props.position,
+				validationRules: props.validationRules,
+				index: props.index
+			});
+			const {
+				isSourcePort,
+				isTargetPort,
+				onMouseDownPort
+			} = useNewConnection({
+				block: props.block,
+				port: props.port,
+				position: props.position,
+				index: props.index,
+				normalyzeConnectionFn: props.normalyzeConnectionFn
+			});
+			const isActive = ui_vue3.computed(() => {
+				return (ui_vue3.toValue(isSourcePort) || ui_vue3.toValue(isMaybePortForNewConnection) || ui_vue3.toValue(isTargetPort) || ui_vue3.toValue(isIncludedPortInSelectedBlock)) && !ui_vue3.toValue(isIncludedPortInMovingBlock);
+			});
+			const portClassNames = ui_vue3.computed(() => ({
+				[PORT_CLASS_NAMES.base]: true,
+				[PORT_CLASS_NAMES.active]: ui_vue3.toValue(isSourcePort) || ui_vue3.toValue(isMaybePortForNewConnection),
+				[PORT_CLASS_NAMES.disabled]: ui_vue3.toValue(isDisabled)
+			}));
+			ui_vue3.onMounted(() => {
+				onMountedPort();
+			});
+			ui_vue3.onUnmounted(() => {
+				onUnmountedPort();
+			});
+			return {
+				sourcePortStubTeleportName: `#${SOURCE_PORT_STUB_TELEPORT_NAME}`,
+				targetPortStubTeleportName: `#${TARGET_PORT_STUB_TELEPORT_NAME}`,
+				sourcePortStubSlotName: SOURCE_PORT_STUB_SLOT_NAME,
+				targetPortStubSlotName: TARGET_PORT_STUB_SLOT_NAME,
+				isSourcePort,
+				isTargetPort,
+				isActive,
+				isDisabled,
+				isIncludedPortInSelectedBlock,
+				isIncludedPortInMovingBlock,
+				portClassNames,
+				onMouseDownPort
+			};
+		},
+		template: `
 		<div
 			ref="port"
 			:class="portClassNames"
 			:data-test-id="$blockDiagramTestId('port', port.id)"
 			@mousedown="onMouseDownPort"
-			@mouseover="onMouseOverPort"
-			@mouseleave="onMouseLeavePort"
-		/>
+		>
+			<slot
+				:isActive="isActive"
+				:isDisabled="isDisabled"
+				name="port"
+			/>
+
+			<teleport
+				v-if="isSourcePort"
+				:to="sourcePortStubTeleportName"
+			>
+				<slot :name="sourcePortStubSlotName">
+					<div class="ui-block-diagram-port__stub"/>
+				</slot>
+			</teleport>
+
+			<teleport
+				v-if="isTargetPort"
+				:to="targetPortStubTeleportName"
+			>
+				<slot :name="targetPortStubSlotName">
+					<div class="ui-block-diagram-port__stub"/>
+				</slot>
+			</teleport>
+		</div>
 	`
 	};
 
 	// eslint-disable-next-line no-unused-vars
 
 	const BLOCK_CONTENT_STUB_CLASS_NAMES = {
-	  base: 'ui-block-diagram-block-content-stub',
-	  highlighted: '--highlighted'
+		base: 'ui-block-diagram-block-content-stub',
+		highlighted: '--highlighted'
 	};
 
 	// @vue/component
 	const BlockContentStub = {
-	  name: 'block-content-stub',
-	  components: {
-	    Port
-	  },
-	  props: {
-	    /* @type DiagramBlock */
-	    block: {
-	      type: Object,
-	      required: true
-	    },
-	    highlighted: {
-	      type: Boolean,
-	      default: false
-	    },
-	    dragged: {
-	      type: Boolean,
-	      default: false
-	    },
-	    disabled: {
-	      type: Boolean,
-	      default: false
-	    }
-	  },
-	  setup(props) {
-	    const {
-	      deleteBlockById
-	    } = useBlockDiagram();
-	    const loc = useLoc();
-	    const {
-	      showMenu
-	    } = useContextMenu();
-	    const blockContentClassNames = ui_vue3.computed(() => ({
-	      [BLOCK_CONTENT_STUB_CLASS_NAMES.base]: true,
-	      [BLOCK_CONTENT_STUB_CLASS_NAMES.highlighted]: props.highlighted
-	    }));
-	    function onShowContextMenu(event) {
-	      event.preventDefault();
-	      if (props.disabled) {
-	        return;
-	      }
-	      const {
-	        clientX,
-	        clientY
-	      } = event;
-	      showMenu({
-	        clientX,
-	        clientY
-	      }, {
-	        items: [{
-	          id: 'deleteConnection',
-	          text: loc.getMessage('UI_BLOCK_DIAGRAM_DELETE_BLOCK_CONTEXT_MENU_ITEM'),
-	          onclick: () => {
-	            deleteBlockById(props.block.id);
-	          }
-	        }]
-	      });
-	    }
-	    return {
-	      blockContentClassNames,
-	      onShowContextMenu
-	    };
-	  },
-	  template: `
+		name: 'block-content-stub',
+		components: {
+			Port
+		},
+		props: {
+			/* @type DiagramBlock */
+			block: {
+				type: Object,
+				required: true
+			},
+			highlighted: {
+				type: Boolean,
+				default: false
+			},
+			dragged: {
+				type: Boolean,
+				default: false
+			},
+			disabled: {
+				type: Boolean,
+				default: false
+			}
+		},
+		setup(props) {
+			const {
+				deleteBlockById
+			} = useBlockDiagram();
+			const loc = useLoc();
+			const {
+				showMenu
+			} = useContextMenu();
+			const blockContentClassNames = ui_vue3.computed(() => ({
+				[BLOCK_CONTENT_STUB_CLASS_NAMES.base]: true,
+				[BLOCK_CONTENT_STUB_CLASS_NAMES.highlighted]: props.highlighted
+			}));
+			function onShowContextMenu(event) {
+				event.preventDefault();
+				if (props.disabled) {
+					return;
+				}
+				const {
+					clientX,
+					clientY
+				} = event;
+				showMenu({
+					clientX,
+					clientY
+				}, {
+					items: [{
+						id: 'deleteConnection',
+						text: loc.getMessage('UI_BLOCK_DIAGRAM_DELETE_BLOCK_CONTEXT_MENU_ITEM'),
+						onclick: () => {
+							deleteBlockById(props.block.id);
+						}
+					}]
+				});
+			}
+			return {
+				blockContentClassNames,
+				onShowContextMenu
+			};
+		},
+		template: `
 		<div
 			:class="blockContentClassNames"
 			@contextmenu="onShowContextMenu"
@@ -6742,199 +7178,242 @@ this.BX = this.BX || {};
 	const UI_CANVAS_GRID_COLOR = '#A1B8D9';
 	const UI_CANVAS_BACKGROUND_COLOR = '#ECF0F2';
 	const BLOCK_DIAGRAM_CLASS_NAMES = {
-	  base: 'ui-block-diagram',
-	  ewResize: '--cursor-ew-resize',
-	  nsResize: '--cursor-ns-resize',
-	  nwSeResize: '--cursor-nwse-resize',
-	  neSwResize: '--cursor-nesw-resize',
-	  grabbing: '--grabbing',
-	  disabled: '--disabled'
+		base: 'ui-block-diagram',
+		ewResize: '--cursor-ew-resize',
+		nsResize: '--cursor-ns-resize',
+		nwSeResize: '--cursor-nwse-resize',
+		neSwResize: '--cursor-nesw-resize',
+		grabbing: '--grabbing',
+		disabled: '--disabled'
 	};
 	// @vue/component
 	const BlockDiagram = {
-	  name: 'block-diagram',
-	  components: {
-	    CanvasTransform,
-	    ContextMenuLayout,
-	    GroupedBlocks,
-	    GroupedConnections,
-	    Connection,
-	    DeleteConnectionBtn,
-	    MoveableBlock,
-	    BlockContentStub
-	  },
-	  props: {
-	    /** @type Array<DiagramBlock> */
-	    blocks: {
-	      type: Array,
-	      required: true
-	    },
-	    /** @type Array<DiagramConnection> */
-	    connections: {
-	      type: Array,
-	      required: true
-	    },
-	    canvasStyle: {
-	      type: Object,
-	      default: () => ({
-	        style: 'grid',
-	        size: 64,
-	        gridColor: UI_CANVAS_GRID_COLOR,
-	        backgroundColor: UI_CANVAS_BACKGROUND_COLOR
-	      })
-	    },
-	    zoomSensitivity: {
-	      type: Number,
-	      default: 0.01
-	    },
-	    zoomSensitivityMouse: {
-	      type: Number,
-	      default: 0.04
-	    },
-	    zoom: {
-	      type: Number,
-	      default: 1
-	    },
-	    minZoom: {
-	      type: Number,
-	      default: 0.2
-	    },
-	    maxZoom: {
-	      type: Number,
-	      default: 4
-	    },
-	    connectionOffset: {
-	      type: Number,
-	      default: CONNECTION_OFFSET
-	    },
-	    connectionBendOffset: {
-	      type: Number,
-	      default: CONNECTION_BEND_OFFSET
-	    },
-	    connectionBorderRadius: {
-	      type: Number,
-	      default: CONNECTION_BORDER_RADIUS
-	    },
-	    historyHooks: {
-	      type: Array,
-	      default: () => [HOOK_NAMES.END_DRAG_BLOCK, HOOK_NAMES.ADD_BLOCK, HOOK_NAMES.DELETE_BLOCK, HOOK_NAMES.CREATE_CONNECTION, HOOK_NAMES.DELETE_CONNECTION]
-	    },
-	    snapshotHandler: {
-	      type: Function,
-	      default: null
-	    },
-	    revertHandler: {
-	      type: Function,
-	      default: null
-	    },
-	    disabled: {
-	      type: Boolean,
-	      default: false
-	    },
-	    enableGrouping: {
-	      type: Boolean,
-	      default: false
-	    },
-	    /** @type Array<MenuItemOptions> */
-	    contextMenuItems: {
-	      type: Array,
-	      default: () => []
-	    }
-	  },
-	  emits: ['update:blocks', 'update:connections', HOOK_NAMES.CHANGED_BLOCKS, HOOK_NAMES.CHANGED_CONNECTIONS, HOOK_NAMES.START_DRAG_BLOCK, HOOK_NAMES.MOVE_DRAG_BLOCK, HOOK_NAMES.END_DRAG_BLOCK, HOOK_NAMES.ADD_BLOCK, HOOK_NAMES.UPDATE_BLOCK, HOOK_NAMES.DELETE_BLOCK, HOOK_NAMES.CREATE_CONNECTION, HOOK_NAMES.DELETE_CONNECTION, HOOK_NAMES.BLOCK_TRANSITION_START, HOOK_NAMES.BLOCK_TRANSITION_END, HOOK_NAMES.CONNECTION_TRANSITION_START, HOOK_NAMES.CONNECTION_TRANSITION_END, HOOK_NAMES.DROP_NEW_BLOCK],
-	  setup(props, {
-	    emit
-	  }) {
-	    const {
-	      blockGroupNames,
-	      connectionGroupNames,
-	      cursorType
-	    } = useBlockDiagram(props);
-	    const initAppElements = useInitAppElements({
-	      blockDiagramRef: ui_vue3.useTemplateRef('blockDiagram')
-	    });
-	    const {
-	      makeSnapshot
-	    } = useHistory();
-	    const {
-	      dispose: disposeModelValue
-	    } = useModelValue(emit);
-	    const {
-	      dispose: disposeWatchProps
-	    } = useWatchProps(props);
-	    const {
-	      dispose: disposeRegisterHooks
-	    } = useRegisterHooks({
-	      ...Object.entries(HOOK_NAMES).reduce((acc, [name, hookName]) => {
-	        acc[hookName] = (...args) => {
-	          emit(hookName, ...args);
-	        };
-	        return acc;
-	      }, {})
-	    }, {
-	      ...props.historyHooks.reduce((acc, hookName) => {
-	        acc[hookName] = () => makeSnapshot();
-	        return acc;
-	      }, {})
-	    });
-	    const {
-	      onDrop
-	    } = useDragAndDrop();
-	    const isGrabbing = ui_vue3.ref(false);
-	    const blockDiagramClassNames = ui_vue3.computed(() => ({
-	      [BLOCK_DIAGRAM_CLASS_NAMES.base]: true,
-	      [BLOCK_DIAGRAM_CLASS_NAMES.grabbing]: isGrabbing.value,
-	      [BLOCK_DIAGRAM_CLASS_NAMES.disabled]: props.disabled,
-	      [BLOCK_DIAGRAM_CLASS_NAMES.ewResize]: ui_vue3.toValue(cursorType) === CURSOR_TYPES.EW_RESIZE,
-	      [BLOCK_DIAGRAM_CLASS_NAMES.nsResize]: ui_vue3.toValue(cursorType) === CURSOR_TYPES.NS_RESIZE,
-	      [BLOCK_DIAGRAM_CLASS_NAMES.nwSeResize]: ui_vue3.toValue(cursorType) === CURSOR_TYPES.NWSE_RESIZE,
-	      [BLOCK_DIAGRAM_CLASS_NAMES.neSwResize]: ui_vue3.toValue(cursorType) === CURSOR_TYPES.NESW_RESIZE
-	    }));
-	    const {
-	      showMenu
-	    } = useContextMenu();
-	    ui_vue3.onMounted(() => {
-	      initAppElements.onMountedAppElements();
-	    });
-	    ui_vue3.onUnmounted(() => {
-	      disposeModelValue();
-	      disposeWatchProps();
-	      disposeRegisterHooks();
-	      initAppElements.onUnmountedAppElements();
-	    });
-	    function onDragEnter(event) {
-	      isGrabbing.value = true;
-	    }
-	    function onDragLeave(event) {
-	      isGrabbing.value = false;
-	    }
-	    function onDragDrop(event) {
-	      isGrabbing.value = false;
-	      onDrop(event);
-	    }
-	    function openContextMenu(event) {
-	      if (props.contextMenuItems.length > 0) {
-	        showMenu({
-	          clientX: event.clientX,
-	          clientY: event.clientY
-	        }, {
-	          items: props.contextMenuItems
-	        });
-	      }
-	    }
-	    return {
-	      blockDiagramClassNames,
-	      blockGroupNames,
-	      connectionGroupNames,
-	      getGroupBlockSlotName,
-	      getGroupConnectionSlotName,
-	      onDragDrop,
-	      onDragEnter,
-	      onDragLeave,
-	      openContextMenu
-	    };
-	  },
-	  template: `
+		name: 'block-diagram',
+		components: {
+			CanvasTransform,
+			ContextMenuLayout,
+			GroupedBlocks,
+			GroupedConnections,
+			Connection,
+			DeleteConnectionBtn,
+			MoveableBlock,
+			BlockContentStub
+		},
+		props: {
+			/** @type Array<DiagramBlock> */
+			blocks: {
+				type: Array,
+				required: true
+			},
+			/** @type Array<DiagramConnection> */
+			connections: {
+				type: Array,
+				required: true
+			},
+			canvasStyle: {
+				type: Object,
+				default: () => ({
+					style: 'grid',
+					size: 64,
+					gridColor: UI_CANVAS_GRID_COLOR,
+					backgroundColor: UI_CANVAS_BACKGROUND_COLOR
+				})
+			},
+			zoomSensitivity: {
+				type: Number,
+				default: 0.01
+			},
+			zoomSensitivityMouse: {
+				type: Number,
+				default: 0.04
+			},
+			zoom: {
+				type: Number,
+				default: 1
+			},
+			minZoom: {
+				type: Number,
+				default: 0.2
+			},
+			maxZoom: {
+				type: Number,
+				default: 4
+			},
+			connectionOffset: {
+				type: Number,
+				default: CONNECTION_OFFSET
+			},
+			connectionBendOffset: {
+				type: Number,
+				default: CONNECTION_BEND_OFFSET
+			},
+			connectionBorderRadius: {
+				type: Number,
+				default: CONNECTION_BORDER_RADIUS
+			},
+			historyHooks: {
+				type: Array,
+				default: () => [HOOK_NAMES.END_DRAG_BLOCK, HOOK_NAMES.ADD_BLOCK, HOOK_NAMES.DELETE_BLOCK, HOOK_NAMES.CREATE_CONNECTION, HOOK_NAMES.DELETE_CONNECTION]
+			},
+			snapshotHandler: {
+				type: Function,
+				default: null
+			},
+			revertHandler: {
+				type: Function,
+				default: null
+			},
+			disabled: {
+				type: Boolean,
+				default: false
+			},
+			enableGrouping: {
+				type: Boolean,
+				default: false
+			},
+			/** @type Array<MenuItemOptions> */
+			contextMenuItems: {
+				type: Array,
+				default: () => []
+			}
+		},
+		emits: ['update:blocks', 'update:connections', HOOK_NAMES.CHANGED_BLOCKS, HOOK_NAMES.CHANGED_CONNECTIONS, HOOK_NAMES.START_DRAG_BLOCK, HOOK_NAMES.MOVE_DRAG_BLOCK, HOOK_NAMES.END_DRAG_BLOCK, HOOK_NAMES.ADD_BLOCK, HOOK_NAMES.ADD_BLOCKS, HOOK_NAMES.UPDATE_BLOCK, HOOK_NAMES.DELETE_BLOCK, HOOK_NAMES.CREATE_CONNECTION, HOOK_NAMES.ADD_CONNECTIONS, HOOK_NAMES.DELETE_CONNECTION, HOOK_NAMES.BLOCK_TRANSITION_START, HOOK_NAMES.BLOCK_TRANSITION_END, HOOK_NAMES.CONNECTION_TRANSITION_START, HOOK_NAMES.CONNECTION_TRANSITION_END, HOOK_NAMES.DROP_NEW_BLOCK],
+		// eslint-disable-next-line max-lines-per-function
+		setup(props, {
+			emit
+		}) {
+			const {
+				connectionGroupNames,
+				groupedConnections,
+				cursorType,
+				blockIntersections,
+				isRunUpdateBlocksCommand
+			} = useBlockDiagram(props);
+			const initAppElements = useInitAppElements({
+				blockDiagramRef: ui_vue3.useTemplateRef('blockDiagram')
+			});
+			const {
+				makeSnapshot
+			} = useHistory();
+			const {
+				dispose: disposeModelValue
+			} = useModelValue(emit);
+			const {
+				dispose: disposeWatchProps
+			} = useWatchProps(props);
+			const {
+				dispose: disposeRegisterHooks
+			} = useRegisterHooks({
+				...Object.entries(HOOK_NAMES).reduce((acc, [name, hookName]) => {
+					acc[hookName] = (...args) => {
+						emit(hookName, ...args);
+					};
+					return acc;
+				}, {})
+			}, {
+				[HOOK_NAMES.ADD_BLOCK](block) {
+					isRunUpdateBlocksCommand.value = true;
+					blockIntersections.insertBlock(block);
+				},
+				[HOOK_NAMES.ADD_BLOCKS](blocks) {
+					isRunUpdateBlocksCommand.value = true;
+					ui_vue3.toValue(blocks).forEach(block => {
+						blockIntersections.insertBlock(block);
+					});
+				},
+				[HOOK_NAMES.UPDATE_BLOCK](oldBlock, newBlock) {
+					isRunUpdateBlocksCommand.value = true;
+					blockIntersections.updateBlock(oldBlock, newBlock);
+				},
+				[HOOK_NAMES.DELETE_BLOCK](block) {
+					isRunUpdateBlocksCommand.value = true;
+					blockIntersections.removeBlock(ui_vue3.toValue(block));
+				},
+				[HOOK_NAMES.DELETE_BLOCKS](blocks) {
+					isRunUpdateBlocksCommand.value = true;
+					ui_vue3.toValue(blocks).forEach(block => {
+						blockIntersections.removeBlock(ui_vue3.toValue(block));
+					});
+				},
+				[HOOK_NAMES.HISTORY_NEXT]({
+					snapshot
+				}) {
+					isRunUpdateBlocksCommand.value = true;
+					blockIntersections.clear();
+					blockIntersections.load(ui_vue3.toValue(snapshot.blocks));
+				},
+				[HOOK_NAMES.HISTORY_PREV]({
+					snapshot
+				}) {
+					isRunUpdateBlocksCommand.value = true;
+					blockIntersections.clear();
+					blockIntersections.load(ui_vue3.toValue(snapshot.blocks));
+				}
+			}, {
+				...props.historyHooks.reduce((acc, hookName) => {
+					acc[hookName] = () => makeSnapshot();
+					return acc;
+				}, {})
+			});
+			const {
+				onDrop
+			} = useDragAndDrop();
+			const isGrabbing = ui_vue3.ref(false);
+			const blockDiagramClassNames = ui_vue3.computed(() => ({
+				[BLOCK_DIAGRAM_CLASS_NAMES.base]: true,
+				[BLOCK_DIAGRAM_CLASS_NAMES.grabbing]: isGrabbing.value,
+				[BLOCK_DIAGRAM_CLASS_NAMES.disabled]: props.disabled,
+				[BLOCK_DIAGRAM_CLASS_NAMES.ewResize]: ui_vue3.toValue(cursorType) === CURSOR_TYPES.EW_RESIZE,
+				[BLOCK_DIAGRAM_CLASS_NAMES.nsResize]: ui_vue3.toValue(cursorType) === CURSOR_TYPES.NS_RESIZE,
+				[BLOCK_DIAGRAM_CLASS_NAMES.nwSeResize]: ui_vue3.toValue(cursorType) === CURSOR_TYPES.NWSE_RESIZE,
+				[BLOCK_DIAGRAM_CLASS_NAMES.neSwResize]: ui_vue3.toValue(cursorType) === CURSOR_TYPES.NESW_RESIZE
+			}));
+			const {
+				showMenu
+			} = useContextMenu();
+			ui_vue3.onMounted(() => {
+				initAppElements.onMountedAppElements();
+			});
+			ui_vue3.onUnmounted(() => {
+				disposeModelValue();
+				disposeWatchProps();
+				disposeRegisterHooks();
+				initAppElements.onUnmountedAppElements();
+			});
+			function onDragEnter(event) {
+				isGrabbing.value = true;
+			}
+			function onDragLeave(event) {
+				isGrabbing.value = false;
+			}
+			function onDragDrop(event) {
+				isGrabbing.value = false;
+				onDrop(event);
+			}
+			function openContextMenu(event) {
+				if (props.contextMenuItems.length > 0) {
+					showMenu({
+						clientX: event.clientX,
+						clientY: event.clientY
+					}, {
+						items: props.contextMenuItems
+					});
+				}
+			}
+			return {
+				blockDiagramClassNames,
+				visibleBlockGroupNames: blockIntersections.visibleBlockGroupNames,
+				groupedConnections,
+				connectionGroupNames,
+				getGroupBlockSlotName,
+				getGroupConnectionSlotName,
+				onDragDrop,
+				onDragEnter,
+				onDragLeave,
+				openContextMenu
+			};
+		},
+		template: `
 		<div
 			:class="blockDiagramClassNames"
 			ref="blockDiagram"
@@ -6947,8 +7426,8 @@ this.BX = this.BX || {};
 				:canvasStyle="canvasStyle"
 				:zoomSensitivity="zoomSensitivity"
 				:zoomSensitivityMouse="zoomSensitivityMouse"
-				@openContextMenu="openContextMenu"
 				:selectionEnabled="enableGrouping"
+				@contextmenu.prevent="openContextMenu"
 			>
 				<slot name="group-selection-box"/>
 				<ContextMenuLayout>
@@ -6984,7 +7463,7 @@ this.BX = this.BX || {};
 					</GroupedConnections>
 					<GroupedBlocks>
 						<template
-							v-for="groupName in blockGroupNames"
+							v-for="groupName in visibleBlockGroupNames"
 							#[getGroupBlockSlotName(groupName)]="{ blocks }"
 							:key="groupName"
 						>
@@ -7018,61 +7497,61 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const IconButton = {
-	  name: 'icon-button',
-	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon
-	  },
-	  props: {
-	    iconName: {
-	      type: String,
-	      default: ''
-	    },
-	    size: {
-	      type: [Number, String],
-	      default: 16
-	    },
-	    color: {
-	      type: String,
-	      default: '#959CA4'
-	    },
-	    active: {
-	      type: Boolean,
-	      default: false
-	    },
-	    activeColor: {
-	      type: String,
-	      default: '#4A9DFF'
-	    },
-	    disabled: {
-	      type: Boolean,
-	      default: false
-	    }
-	  },
-	  setup(props) {
-	    const {
-	      size,
-	      active,
-	      disabled
-	    } = ui_vue3.toRefs(props);
-	    const buttonClassNames = ui_vue3.computed(() => ({
-	      'ui-block-diagram-icon-button': true,
-	      '--disabled': ui_vue3.toValue(disabled)
-	    }));
-	    const buttonStyle = ui_vue3.computed(() => ({
-	      width: `${ui_vue3.toValue(size)}px`,
-	      height: `${ui_vue3.toValue(size)}px`
-	    }));
-	    const iconClassNames = ui_vue3.computed(() => ({
-	      'ui-block-diagram-icon-button__icon': true,
-	      '--active': ui_vue3.toValue(active)
-	    }));
-	    return {
-	      buttonClassNames,
-	      buttonStyle,
-	      iconClassNames
-	    };
-	  },
-	  template: `
+		name: 'icon-button',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon
+		},
+		props: {
+			iconName: {
+				type: String,
+				default: ''
+			},
+			size: {
+				type: [Number, String],
+				default: 16
+			},
+			color: {
+				type: String,
+				default: '#959CA4'
+			},
+			active: {
+				type: Boolean,
+				default: false
+			},
+			activeColor: {
+				type: String,
+				default: '#4A9DFF'
+			},
+			disabled: {
+				type: Boolean,
+				default: false
+			}
+		},
+		setup(props) {
+			const {
+				size,
+				active,
+				disabled
+			} = ui_vue3.toRefs(props);
+			const buttonClassNames = ui_vue3.computed(() => ({
+				'ui-block-diagram-icon-button': true,
+				'--disabled': ui_vue3.toValue(disabled)
+			}));
+			const buttonStyle = ui_vue3.computed(() => ({
+				width: `${ui_vue3.toValue(size)}px`,
+				height: `${ui_vue3.toValue(size)}px`
+			}));
+			const iconClassNames = ui_vue3.computed(() => ({
+				'ui-block-diagram-icon-button__icon': true,
+				'--active': ui_vue3.toValue(active)
+			}));
+			return {
+				buttonClassNames,
+				buttonStyle,
+				iconClassNames
+			};
+		},
+		template: `
 		<button
 			:class="buttonClassNames"
 			:style="buttonStyle"
@@ -7091,55 +7570,55 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const HistoryBar = {
-	  name: 'history-bar',
-	  components: {
-	    IconButton
-	  },
-	  props: {
-	    disabled: {
-	      type: Boolean,
-	      default: false
-	    }
-	  },
-	  setup(props) {
-	    const {
-	      isDisabledBlockDiagram
-	    } = useBlockDiagram();
-	    const {
-	      hasNext,
-	      hasPrev,
-	      next,
-	      prev
-	    } = useHistory();
-	    const isMac = main_core.Browser.isMac();
-	    useKeyboardShortcuts([{
-	      keys: ['Mod', 'z'],
-	      handler: prev
-	    }, {
-	      keys: isMac ? ['Mod', 'Shift', 'z'] : ['Mod', 'y'],
-	      handler: next
-	    }]);
-	    function onNext() {
-	      if (props.disabled || ui_vue3.toValue(isDisabledBlockDiagram)) {
-	        return;
-	      }
-	      next();
-	    }
-	    function onPrev() {
-	      if (props.disabled || ui_vue3.toValue(isDisabledBlockDiagram)) {
-	        return;
-	      }
-	      prev();
-	    }
-	    return {
-	      hasNext,
-	      hasPrev,
-	      onNext,
-	      onPrev,
-	      Outline: ui_iconSet_api_vue.Outline
-	    };
-	  },
-	  template: `
+		name: 'history-bar',
+		components: {
+			IconButton
+		},
+		props: {
+			disabled: {
+				type: Boolean,
+				default: false
+			}
+		},
+		setup(props) {
+			const {
+				isDisabledBlockDiagram
+			} = useBlockDiagram();
+			const {
+				hasNext,
+				hasPrev,
+				next,
+				prev
+			} = useHistory();
+			const isMac = main_core.Browser.isMac();
+			useKeyboardShortcuts([{
+				keys: ['Mod', 'z'],
+				handler: prev
+			}, {
+				keys: isMac ? ['Mod', 'Shift', 'z'] : ['Mod', 'y'],
+				handler: next
+			}]);
+			function onNext() {
+				if (props.disabled || ui_vue3.toValue(isDisabledBlockDiagram)) {
+					return;
+				}
+				next();
+			}
+			function onPrev() {
+				if (props.disabled || ui_vue3.toValue(isDisabledBlockDiagram)) {
+					return;
+				}
+				prev();
+			}
+			return {
+				hasNext,
+				hasPrev,
+				onNext,
+				onPrev,
+				Outline: ui_iconSet_api_vue.Outline
+			};
+		},
+		template: `
 		<div class="ui-block-diagram-histoy-bar">
 			<slot>
 				<IconButton
@@ -7163,66 +7642,66 @@ this.BX = this.BX || {};
 	};
 
 	const ZOOM_TYPES = {
-	  in: 'in',
-	  out: 'out'
+		in: 'in',
+		out: 'out'
 	};
 
 	// @vue/component
 	const ZoomBtn = {
-	  name: 'zoom-btn',
-	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon
-	  },
-	  props: {
-	    stepZoom: {
-	      type: Number,
-	      default: 0.2
-	    },
-	    /** @type ZoomType */
-	    typeZoom: {
-	      type: String,
-	      default: ZOOM_TYPES.in,
-	      validator(value) {
-	        return value === ZOOM_TYPES.in || value === ZOOM_TYPES.out;
-	      }
-	    },
-	    disabled: {
-	      type: Boolean,
-	      default: false
-	    }
-	  },
-	  emits: ['zoom-change'],
-	  setup(props, {
-	    emit
-	  }) {
-	    const {
-	      isDisabledBlockDiagram
-	    } = useBlockDiagram();
-	    const {
-	      zoomIn,
-	      zoomOut
-	    } = useCanvas();
-	    const {
-	      stepZoom,
-	      typeZoom
-	    } = ui_vue3.toRefs(props);
-	    function onZoom() {
-	      if (props.disabled || ui_vue3.toValue(isDisabledBlockDiagram)) {
-	        return;
-	      }
-	      if (ui_vue3.toValue(typeZoom) === ZOOM_TYPES.in) {
-	        zoomIn(ui_vue3.toValue(stepZoom));
-	      } else if (ui_vue3.toValue(typeZoom) === ZOOM_TYPES.out) {
-	        zoomOut(ui_vue3.toValue(stepZoom));
-	      }
-	    }
-	    return {
-	      iconSet: ui_iconSet_api_vue.Outline,
-	      zoomTypes: ZOOM_TYPES,
-	      onZoom
-	    };
-	  },
-	  template: `
+		name: 'zoom-btn',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon
+		},
+		props: {
+			stepZoom: {
+				type: Number,
+				default: 0.2
+			},
+			/** @type ZoomType */
+			typeZoom: {
+				type: String,
+				default: ZOOM_TYPES.in,
+				validator(value) {
+					return value === ZOOM_TYPES.in || value === ZOOM_TYPES.out;
+				}
+			},
+			disabled: {
+				type: Boolean,
+				default: false
+			}
+		},
+		emits: ['zoom-change'],
+		setup(props, {
+			emit
+		}) {
+			const {
+				isDisabledBlockDiagram
+			} = useBlockDiagram();
+			const {
+				zoomIn,
+				zoomOut
+			} = useCanvas();
+			const {
+				stepZoom,
+				typeZoom
+			} = ui_vue3.toRefs(props);
+			function onZoom() {
+				if (props.disabled || ui_vue3.toValue(isDisabledBlockDiagram)) {
+					return;
+				}
+				if (ui_vue3.toValue(typeZoom) === ZOOM_TYPES.in) {
+					zoomIn(ui_vue3.toValue(stepZoom));
+				} else if (ui_vue3.toValue(typeZoom) === ZOOM_TYPES.out) {
+					zoomOut(ui_vue3.toValue(stepZoom));
+				}
+			}
+			return {
+				iconSet: ui_iconSet_api_vue.Outline,
+				zoomTypes: ZOOM_TYPES,
+				onZoom
+			};
+		},
+		template: `
 		<button
 			class="ui-block-diagram-control-btn__btn"
 			@click="onZoom"
@@ -7247,52 +7726,51 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const ZoomPercent = {
-	  name: 'zoom-percent',
-	  setup(props) {
-	    const {
-	      zoom,
-	      isDisabledBlockDiagram
-	    } = useBlockDiagram();
-	    const {
-	      setZoom
-	    } = useCanvas();
-	    const {
-	      showMenu,
-	      isOpen
-	    } = useContextMenu();
-	    const percent = ui_vue3.computed(() => {
-	      var _toValue;
-	      return (((_toValue = ui_vue3.toValue(zoom)) != null ? _toValue : 0) * 100).toFixed(0);
-	    });
-	    const root = ui_vue3.ref(null);
-	    function onOpenZoomPresetMenu() {
-	      if (ui_vue3.toValue(isDisabledBlockDiagram)) {
-	        return;
-	      }
-	      const options = {
-	        className: 'ui-block-diagram-percent-menu',
-	        minWidth: 106,
-	        targetContainer: root.value.parentElement,
-	        items: ZOOM_PRESET.map(value => {
-	          return {
-	            text: `${value * 100}%`,
-	            onclick: () => setZoom(value)
-	          };
-	        })
-	      };
-	      showMenu({
-	        clientX: 0,
-	        clientY: 0
-	      }, options);
-	    }
-	    return {
-	      percent,
-	      root,
-	      isOpen,
-	      onOpenZoomPresetMenu
-	    };
-	  },
-	  template: `
+		name: 'zoom-percent',
+		setup(props) {
+			const {
+				zoom,
+				isDisabledBlockDiagram
+			} = useBlockDiagram();
+			const {
+				setZoom
+			} = useCanvas();
+			const {
+				showMenu,
+				isOpen
+			} = useContextMenu();
+			const percent = ui_vue3.computed(() => {
+				return ((ui_vue3.toValue(zoom) ?? 0) * 100).toFixed(0);
+			});
+			const root = ui_vue3.ref(null);
+			function onOpenZoomPresetMenu() {
+				if (ui_vue3.toValue(isDisabledBlockDiagram)) {
+					return;
+				}
+				const options = {
+					className: 'ui-block-diagram-percent-menu',
+					minWidth: 106,
+					targetContainer: root.value.parentElement,
+					items: ZOOM_PRESET.map(value => {
+						return {
+							text: `${value * 100}%`,
+							onclick: () => setZoom(value)
+						};
+					})
+				};
+				showMenu({
+					clientX: 0,
+					clientY: 0
+				}, options);
+			}
+			return {
+				percent,
+				root,
+				isOpen,
+				onOpenZoomPresetMenu
+			};
+		},
+		template: `
 		<span
 			class="ui-block-diagram-percent"
 			:class="{ '--selected': isOpen }"
@@ -7309,244 +7787,242 @@ this.BX = this.BX || {};
 	const DEFAULT_FRAME_BLOCK_COLOR = 'rgba(0,0,0,0.05)';
 	const FRAME_BLOCK_TYPE = 'frame';
 	const INTERACTION_STATE_MODES = {
-	  CURSOR: 'cursor',
-	  MAP: 'map'
+		CURSOR: 'cursor',
+		MAP: 'map'
 	};
 
 	// @vue/component
 	const CanvasMap = {
-	  name: 'canvas-map',
-	  props: {
-	    mapWidth: {
-	      type: Number,
-	      default: 310
-	    },
-	    mapHeight: {
-	      type: Number,
-	      default: 183
-	    },
-	    blockColors: {
-	      type: Object,
-	      default: () => {}
-	    }
-	  },
-	  // eslint-disable-next-line max-lines-per-function
-	  setup(props, {
-	    emit
-	  }) {
-	    const {
-	      blocks,
-	      blocksRectMap,
-	      canvasWidth,
-	      canvasHeight,
-	      transformX,
-	      transformY,
-	      zoom
-	    } = useBlockDiagram();
-	    const {
-	      setCamera
-	    } = useCanvas();
-	    const {
-	      mapWidth,
-	      mapHeight,
-	      blockColors
-	    } = ui_vue3.toRefs(props);
-	    const mapEl = ui_vue3.useTemplateRef('map');
-	    const interactionState = ui_vue3.reactive({
-	      isDragging: false,
-	      mode: null,
-	      dragOffsetX: 0,
-	      dragOffsetY: 0,
-	      mapRect: null
-	    });
-	    const canvasMapStyle = ui_vue3.computed(() => ({
-	      width: `${ui_vue3.toValue(mapWidth)}px`,
-	      height: `${ui_vue3.toValue(mapHeight)}px`
-	    }));
-	    const layoutData = ui_vue3.computed(() => {
-	      const items = ui_vue3.toValue(blocks);
-	      if (!main_core.Type.isArrayFilled(items)) {
-	        const cWidth = ui_vue3.toValue(canvasWidth);
-	        const cHeight = ui_vue3.toValue(canvasHeight);
-	        return {
-	          sortedBlocks: [],
-	          minX: 0,
-	          minY: 0,
-	          width: cWidth ? 2 * cWidth : 1000,
-	          height: cHeight ? 2 * cHeight : 1000
-	        };
-	      }
-	      let minX = Infinity;
-	      let minY = Infinity;
-	      let maxX = -Infinity;
-	      let maxY = -Infinity;
-	      const frames = [];
-	      const content = [];
-	      items.forEach(block => {
-	        const {
-	          x,
-	          y
-	        } = block.position;
-	        const {
-	          width,
-	          height
-	        } = getBlockSize(block);
-	        minX = Math.min(minX, x);
-	        minY = Math.min(minY, y);
-	        maxX = Math.max(maxX, x + width);
-	        maxY = Math.max(maxY, y + height);
-	        const renderBlock = {
-	          ...block,
-	          dimensions: {
-	            width,
-	            height
-	          }
-	        };
-	        if ((block == null ? void 0 : block.type) === FRAME_BLOCK_TYPE) {
-	          frames.push(renderBlock);
-	        } else {
-	          content.push(renderBlock);
-	        }
-	      });
-	      return {
-	        sortedBlocks: [...content, ...frames],
-	        minX: minX - MAP_PADDING,
-	        minY: minY - MAP_PADDING,
-	        width: maxX + MAP_PADDING - (minX - MAP_PADDING),
-	        height: maxY + MAP_PADDING - (minY - MAP_PADDING)
-	      };
-	    });
-	    const sortedBlocks = ui_vue3.computed(() => ui_vue3.toValue(layoutData).sortedBlocks);
-	    const contentOffsetX = ui_vue3.computed(() => ui_vue3.toValue(layoutData).minX);
-	    const contentOffsetY = ui_vue3.computed(() => ui_vue3.toValue(layoutData).minY);
-	    const renderScale = ui_vue3.computed(() => {
-	      const {
-	        width,
-	        height
-	      } = ui_vue3.toValue(layoutData);
-	      if (width <= 0 || height <= 0) {
-	        return 1;
-	      }
-	      return Math.min(ui_vue3.toValue(mapWidth) / width, ui_vue3.toValue(mapHeight) / height);
-	    });
-	    const viewportIndicator = ui_vue3.computed(() => {
-	      const scale = ui_vue3.toValue(renderScale);
-	      const currentZoom = ui_vue3.toValue(zoom);
-	      const width = ui_vue3.toValue(canvasWidth) * scale / currentZoom;
-	      const height = ui_vue3.toValue(canvasHeight) * scale / currentZoom;
-	      const x = (ui_vue3.toValue(transformX) - ui_vue3.toValue(contentOffsetX)) * scale;
-	      const y = (ui_vue3.toValue(transformY) - ui_vue3.toValue(contentOffsetY)) * scale;
-	      return {
-	        x,
-	        y,
-	        width,
-	        height
-	      };
-	    });
-	    function isPointInViewport(x, y) {
-	      const indicator = ui_vue3.toValue(viewportIndicator);
-	      return x >= indicator.x && x <= indicator.x + indicator.width && y >= indicator.y && y <= indicator.y + indicator.height;
-	    }
-	    function updateCamera(clientX, clientY) {
-	      if (!interactionState.mapRect) {
-	        return;
-	      }
-	      const mouseRelX = clientX - interactionState.mapRect.left;
-	      const mouseRelY = clientY - interactionState.mapRect.top;
-	      const indicator = ui_vue3.toValue(viewportIndicator);
-	      const scale = ui_vue3.toValue(renderScale);
-	      const currentZoom = ui_vue3.toValue(zoom);
-	      let targetMapX = mouseRelX - indicator.width;
-	      let targetMapY = mouseRelY - indicator.height;
-	      if (interactionState.mode === INTERACTION_STATE_MODES.CURSOR) {
-	        targetMapX = mouseRelX - interactionState.dragOffsetX - indicator.width / 2;
-	        targetMapY = mouseRelY - interactionState.dragOffsetY - indicator.height / 2;
-	      }
-	      const canvasX = targetMapX / scale + ui_vue3.toValue(contentOffsetX);
-	      const canvasY = targetMapY / scale + ui_vue3.toValue(contentOffsetY);
-	      setCamera({
-	        x: canvasX + ui_vue3.toValue(canvasWidth) / currentZoom / 2,
-	        y: canvasY + ui_vue3.toValue(canvasHeight) / currentZoom / 2,
-	        zoom: currentZoom,
-	        viewportX: 0,
-	        viewportY: 0
-	      });
-	    }
-	    function onMapMouseDown(event) {
-	      event.preventDefault();
-	      const el = ui_vue3.toValue(mapEl);
-	      if (!el) {
-	        return;
-	      }
-	      const rect = el.getBoundingClientRect();
-	      interactionState.mapRect = rect;
-	      interactionState.isDragging = true;
-	      const mouseRelX = event.clientX - rect.left;
-	      const mouseRelY = event.clientY - rect.top;
-	      if (isPointInViewport(mouseRelX, mouseRelY)) {
-	        const indicator = ui_vue3.toValue(viewportIndicator);
-	        interactionState.mode = INTERACTION_STATE_MODES.CURSOR;
-	        interactionState.dragOffsetX = mouseRelX - indicator.x;
-	        interactionState.dragOffsetY = mouseRelY - indicator.y;
-	      } else {
-	        interactionState.mode = INTERACTION_STATE_MODES.MAP;
-	        interactionState.dragOffsetX = 0;
-	        interactionState.dragOffsetY = 0;
-	        updateCamera(event.clientX, event.clientY);
-	      }
-	    }
-	    function onMapMouseMove(event) {
-	      if (!interactionState.isDragging) {
-	        return;
-	      }
-	      event.preventDefault();
-	      updateCamera(event.clientX, event.clientY);
-	    }
-	    function onMapMouseUp(event) {
-	      interactionState.isDragging = false;
-	      interactionState.mode = null;
-	    }
-	    function getBlockColor(block) {
-	      var _block$node, _block$node2, _toValue;
-	      const blockType = block == null ? void 0 : (_block$node = block.node) == null ? void 0 : _block$node.type;
-	      const colorIndex = block == null ? void 0 : (_block$node2 = block.node) == null ? void 0 : _block$node2.colorIndex;
-	      if (blockType === FRAME_BLOCK_TYPE) {
-	        return DEFAULT_FRAME_BLOCK_COLOR;
-	      }
-	      if (colorIndex === null || colorIndex === false) {
-	        return DEFAULT_BLOCK_COLOR;
-	      }
-	      const palette = (_toValue = ui_vue3.toValue(blockColors)) != null ? _toValue : {};
-	      return palette[colorIndex] || DEFAULT_BLOCK_COLOR;
-	    }
-	    function getBlockSize(block) {
-	      const dimensions = {
-	        width: block.dimensions.width,
-	        height: block.dimensions.height
-	      };
-	      if (!dimensions.width || !dimensions.height) {
-	        var _blockDimensions$widt, _blockDimensions$heig;
-	        const blocksRectangleMap = ui_vue3.toValue(blocksRectMap);
-	        const blockDimensions = blocksRectangleMap[block.id];
-	        dimensions.width = (_blockDimensions$widt = blockDimensions.width) != null ? _blockDimensions$widt : 200;
-	        dimensions.height = (_blockDimensions$heig = blockDimensions.height) != null ? _blockDimensions$heig : 50;
-	      }
-	      return dimensions;
-	    }
-	    return {
-	      sortedBlocks,
-	      canvasMapStyle,
-	      contentOffsetX,
-	      contentOffsetY,
-	      renderScale,
-	      viewportIndicator,
-	      onMapMouseDown,
-	      onMapMouseMove,
-	      onMapMouseUp,
-	      getBlockColor
-	    };
-	  },
-	  template: `
+		name: 'canvas-map',
+		props: {
+			mapWidth: {
+				type: Number,
+				default: 310
+			},
+			mapHeight: {
+				type: Number,
+				default: 183
+			},
+			blockColors: {
+				type: Object,
+				default: () => {}
+			}
+		},
+		// eslint-disable-next-line max-lines-per-function
+		setup(props, {
+			emit
+		}) {
+			const {
+				blocks,
+				blocksRectMap,
+				canvasWidth,
+				canvasHeight,
+				transformX,
+				transformY,
+				zoom
+			} = useBlockDiagram();
+			const {
+				setCamera
+			} = useCanvas();
+			const {
+				mapWidth,
+				mapHeight,
+				blockColors
+			} = ui_vue3.toRefs(props);
+			const mapEl = ui_vue3.useTemplateRef('map');
+			const interactionState = ui_vue3.reactive({
+				isDragging: false,
+				mode: null,
+				dragOffsetX: 0,
+				dragOffsetY: 0,
+				mapRect: null
+			});
+			const canvasMapStyle = ui_vue3.computed(() => ({
+				width: `${ui_vue3.toValue(mapWidth)}px`,
+				height: `${ui_vue3.toValue(mapHeight)}px`
+			}));
+			const layoutData = ui_vue3.computed(() => {
+				const items = ui_vue3.toValue(blocks);
+				if (!main_core.Type.isArrayFilled(items)) {
+					const cWidth = ui_vue3.toValue(canvasWidth);
+					const cHeight = ui_vue3.toValue(canvasHeight);
+					return {
+						sortedBlocks: [],
+						minX: 0,
+						minY: 0,
+						width: cWidth ? 2 * cWidth : 1000,
+						height: cHeight ? 2 * cHeight : 1000
+					};
+				}
+				let minX = Infinity;
+				let minY = Infinity;
+				let maxX = -Infinity;
+				let maxY = -Infinity;
+				const frames = [];
+				const content = [];
+				items.forEach(block => {
+					const {
+						x,
+						y
+					} = block.position;
+					const {
+						width,
+						height
+					} = getBlockSize(block);
+					minX = Math.min(minX, x);
+					minY = Math.min(minY, y);
+					maxX = Math.max(maxX, x + width);
+					maxY = Math.max(maxY, y + height);
+					const renderBlock = {
+						...block,
+						dimensions: {
+							width,
+							height
+						}
+					};
+					if (block?.type === FRAME_BLOCK_TYPE) {
+						frames.push(renderBlock);
+					} else {
+						content.push(renderBlock);
+					}
+				});
+				return {
+					sortedBlocks: [...content, ...frames],
+					minX: minX - MAP_PADDING,
+					minY: minY - MAP_PADDING,
+					width: maxX + MAP_PADDING - (minX - MAP_PADDING),
+					height: maxY + MAP_PADDING - (minY - MAP_PADDING)
+				};
+			});
+			const sortedBlocks = ui_vue3.computed(() => ui_vue3.toValue(layoutData).sortedBlocks);
+			const contentOffsetX = ui_vue3.computed(() => ui_vue3.toValue(layoutData).minX);
+			const contentOffsetY = ui_vue3.computed(() => ui_vue3.toValue(layoutData).minY);
+			const renderScale = ui_vue3.computed(() => {
+				const {
+					width,
+					height
+				} = ui_vue3.toValue(layoutData);
+				if (width <= 0 || height <= 0) {
+					return 1;
+				}
+				return Math.min(ui_vue3.toValue(mapWidth) / width, ui_vue3.toValue(mapHeight) / height);
+			});
+			const viewportIndicator = ui_vue3.computed(() => {
+				const scale = ui_vue3.toValue(renderScale);
+				const currentZoom = ui_vue3.toValue(zoom);
+				const width = ui_vue3.toValue(canvasWidth) * scale / currentZoom;
+				const height = ui_vue3.toValue(canvasHeight) * scale / currentZoom;
+				const x = (ui_vue3.toValue(transformX) - ui_vue3.toValue(contentOffsetX)) * scale;
+				const y = (ui_vue3.toValue(transformY) - ui_vue3.toValue(contentOffsetY)) * scale;
+				return {
+					x,
+					y,
+					width,
+					height
+				};
+			});
+			function isPointInViewport(x, y) {
+				const indicator = ui_vue3.toValue(viewportIndicator);
+				return x >= indicator.x && x <= indicator.x + indicator.width && y >= indicator.y && y <= indicator.y + indicator.height;
+			}
+			function updateCamera(clientX, clientY) {
+				if (!interactionState.mapRect) {
+					return;
+				}
+				const mouseRelX = clientX - interactionState.mapRect.left;
+				const mouseRelY = clientY - interactionState.mapRect.top;
+				const indicator = ui_vue3.toValue(viewportIndicator);
+				const scale = ui_vue3.toValue(renderScale);
+				const currentZoom = ui_vue3.toValue(zoom);
+				let targetMapX = mouseRelX - indicator.width;
+				let targetMapY = mouseRelY - indicator.height;
+				if (interactionState.mode === INTERACTION_STATE_MODES.CURSOR) {
+					targetMapX = mouseRelX - interactionState.dragOffsetX - indicator.width / 2;
+					targetMapY = mouseRelY - interactionState.dragOffsetY - indicator.height / 2;
+				}
+				const canvasX = targetMapX / scale + ui_vue3.toValue(contentOffsetX);
+				const canvasY = targetMapY / scale + ui_vue3.toValue(contentOffsetY);
+				setCamera({
+					x: canvasX + ui_vue3.toValue(canvasWidth) / currentZoom / 2,
+					y: canvasY + ui_vue3.toValue(canvasHeight) / currentZoom / 2,
+					zoom: currentZoom,
+					viewportX: 0,
+					viewportY: 0
+				});
+			}
+			function onMapMouseDown(event) {
+				event.preventDefault();
+				const el = ui_vue3.toValue(mapEl);
+				if (!el) {
+					return;
+				}
+				const rect = el.getBoundingClientRect();
+				interactionState.mapRect = rect;
+				interactionState.isDragging = true;
+				const mouseRelX = event.clientX - rect.left;
+				const mouseRelY = event.clientY - rect.top;
+				if (isPointInViewport(mouseRelX, mouseRelY)) {
+					const indicator = ui_vue3.toValue(viewportIndicator);
+					interactionState.mode = INTERACTION_STATE_MODES.CURSOR;
+					interactionState.dragOffsetX = mouseRelX - indicator.x;
+					interactionState.dragOffsetY = mouseRelY - indicator.y;
+				} else {
+					interactionState.mode = INTERACTION_STATE_MODES.MAP;
+					interactionState.dragOffsetX = 0;
+					interactionState.dragOffsetY = 0;
+					updateCamera(event.clientX, event.clientY);
+				}
+			}
+			function onMapMouseMove(event) {
+				if (!interactionState.isDragging) {
+					return;
+				}
+				event.preventDefault();
+				updateCamera(event.clientX, event.clientY);
+			}
+			function onMapMouseUp(event) {
+				interactionState.isDragging = false;
+				interactionState.mode = null;
+			}
+			function getBlockColor(block) {
+				const blockType = block?.node?.type;
+				const colorIndex = block?.node?.colorIndex;
+				if (blockType === FRAME_BLOCK_TYPE) {
+					return DEFAULT_FRAME_BLOCK_COLOR;
+				}
+				if (colorIndex === null || colorIndex === false) {
+					return DEFAULT_BLOCK_COLOR;
+				}
+				const palette = ui_vue3.toValue(blockColors) ?? {};
+				return palette[colorIndex] || DEFAULT_BLOCK_COLOR;
+			}
+			function getBlockSize(block) {
+				const dimensions = {
+					width: block.dimensions.width,
+					height: block.dimensions.height
+				};
+				if (!dimensions.width || !dimensions.height) {
+					const blocksRectangleMap = ui_vue3.toValue(blocksRectMap);
+					const blockDimensions = blocksRectangleMap[block.id];
+					dimensions.width = blockDimensions.width ?? 200;
+					dimensions.height = blockDimensions.height ?? 50;
+				}
+				return dimensions;
+			}
+			return {
+				sortedBlocks,
+				canvasMapStyle,
+				contentOffsetX,
+				contentOffsetY,
+				renderScale,
+				viewportIndicator,
+				onMapMouseDown,
+				onMapMouseMove,
+				onMapMouseUp,
+				getBlockColor
+			};
+		},
+		template: `
 		<div :style="canvasMapStyle">
 			<svg
 				:width="mapWidth"
@@ -7587,43 +8063,43 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const CanvasMapBtn = {
-	  name: 'canvas-map-btn',
-	  props: {
-	    width: {
-	      type: Number,
-	      default: 28
-	    },
-	    height: {
-	      type: Number,
-	      default: 32
-	    },
-	    iconColor: {
-	      type: String,
-	      default: DEFAULT_ICON_COLOR
-	    },
-	    clickedIconColor: {
-	      type: String,
-	      default: DEFAULT_CLICKED_ICON_COLOR
-	    },
-	    isActive: {
-	      type: Boolean,
-	      default: false
-	    }
-	  },
-	  setup(props) {
-	    const btnStyle = ui_vue3.computed(() => ({
-	      width: `${props.width}px`,
-	      height: `${props.height}px`
-	    }));
-	    const currentIconColor = ui_vue3.computed(() => {
-	      return props.isActive ? props.clickedIconColor : props.iconColor;
-	    });
-	    return {
-	      btnStyle,
-	      currentIconColor
-	    };
-	  },
-	  template: `
+		name: 'canvas-map-btn',
+		props: {
+			width: {
+				type: Number,
+				default: 28
+			},
+			height: {
+				type: Number,
+				default: 32
+			},
+			iconColor: {
+				type: String,
+				default: DEFAULT_ICON_COLOR
+			},
+			clickedIconColor: {
+				type: String,
+				default: DEFAULT_CLICKED_ICON_COLOR
+			},
+			isActive: {
+				type: Boolean,
+				default: false
+			}
+		},
+		setup(props) {
+			const btnStyle = ui_vue3.computed(() => ({
+				width: `${props.width}px`,
+				height: `${props.height}px`
+			}));
+			const currentIconColor = ui_vue3.computed(() => {
+				return props.isActive ? props.clickedIconColor : props.iconColor;
+			});
+			return {
+				btnStyle,
+				currentIconColor
+			};
+		},
+		template: `
 		<button
 			:style="btnStyle"
 			class="ui-block-diagram-canvas-map-btn"
@@ -7643,79 +8119,75 @@ this.BX = this.BX || {};
 	};
 
 	const VERTICAL_MAP_POSITION = {
-	  left: 'left',
-	  right: 'right'
-	};
+		left: 'left'};
 	const HORIZONTAL_MAP_POSITION = {
-	  top: 'top',
-	  bottom: 'bottom'
-	};
+		top: 'top'};
 	const MAP_CLASSES = {
-	  base: 'ui-block-diagram-canvas-zoom-bar__map',
-	  top: '--top',
-	  bottom: '--bottom',
-	  left: '--left',
-	  right: '--right'
+		base: 'ui-block-diagram-canvas-zoom-bar__map',
+		top: '--top',
+		bottom: '--bottom',
+		left: '--left',
+		right: '--right'
 	};
 	const POSITION_MAP_DEFAULT_VALUES = 'top right';
 
 	// @vue/component
 	const ZoomBar = {
-	  name: 'zoom-bar',
-	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon,
-	    ZoomBtn,
-	    ZoomPercent,
-	    CanvasMap,
-	    CanvasMapBtn
-	  },
-	  props: {
-	    stepZoom: {
-	      type: Number,
-	      default: 0.2
-	    },
-	    positionMap: {
-	      type: String,
-	      default: POSITION_MAP_DEFAULT_VALUES
-	    },
-	    blockColors: {
-	      type: Object,
-	      default: () => {}
-	    },
-	    disabled: {
-	      type: Boolean,
-	      default: false
-	    }
-	  },
-	  emits: ['update:modelValue'],
-	  setup(props) {
-	    const isShowMap = ui_vue3.ref(false);
-	    const mapPositionClasses = ui_vue3.computed(() => {
-	      const isTop = props.positionMap.toLowerCase().includes(HORIZONTAL_MAP_POSITION.top);
-	      const isLeft = props.positionMap.toLowerCase().includes(VERTICAL_MAP_POSITION.left);
-	      return {
-	        [MAP_CLASSES.base]: true,
-	        [MAP_CLASSES.top]: isTop,
-	        [MAP_CLASSES.bottom]: !isTop,
-	        [MAP_CLASSES.left]: isLeft,
-	        [MAP_CLASSES.right]: !isLeft
-	      };
-	    });
-	    function onToggleMap() {
-	      if (props.disabled) {
-	        isShowMap.value = false;
-	        return;
-	      }
-	      isShowMap.value = !ui_vue3.toValue(isShowMap);
-	    }
-	    return {
-	      iconSet: ui_iconSet_api_vue.Outline,
-	      mapPositionClasses,
-	      isShowMap,
-	      onToggleMap
-	    };
-	  },
-	  template: `
+		name: 'zoom-bar',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon,
+			ZoomBtn,
+			ZoomPercent,
+			CanvasMap,
+			CanvasMapBtn
+		},
+		props: {
+			stepZoom: {
+				type: Number,
+				default: 0.2
+			},
+			positionMap: {
+				type: String,
+				default: POSITION_MAP_DEFAULT_VALUES
+			},
+			blockColors: {
+				type: Object,
+				default: () => {}
+			},
+			disabled: {
+				type: Boolean,
+				default: false
+			}
+		},
+		emits: ['update:modelValue'],
+		setup(props) {
+			const isShowMap = ui_vue3.ref(false);
+			const mapPositionClasses = ui_vue3.computed(() => {
+				const isTop = props.positionMap.toLowerCase().includes(HORIZONTAL_MAP_POSITION.top);
+				const isLeft = props.positionMap.toLowerCase().includes(VERTICAL_MAP_POSITION.left);
+				return {
+					[MAP_CLASSES.base]: true,
+					[MAP_CLASSES.top]: isTop,
+					[MAP_CLASSES.bottom]: !isTop,
+					[MAP_CLASSES.left]: isLeft,
+					[MAP_CLASSES.right]: !isLeft
+				};
+			});
+			function onToggleMap() {
+				if (props.disabled) {
+					isShowMap.value = false;
+					return;
+				}
+				isShowMap.value = !ui_vue3.toValue(isShowMap);
+			}
+			return {
+				iconSet: ui_iconSet_api_vue.Outline,
+				mapPositionClasses,
+				isShowMap,
+				onToggleMap
+			};
+		},
+		template: `
 		<div class="ui-block-diagram-canvas-zoom-bar">
 			<div class="ui-block-diagram-canvas-zoom-bar__locate">
 				<CanvasMapBtn
@@ -7769,18 +8241,18 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const SearchResult = {
-	  name: 'search-result',
-	  props: {
-	    title: {
-	      type: String,
-	      required: true
-	    },
-	    count: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  template: `
+		name: 'search-result',
+		props: {
+			title: {
+				type: String,
+				required: true
+			},
+			count: {
+				type: String,
+				required: true
+			}
+		},
+		template: `
 		<div class="ui-block-diagram-search-result">
 			<div class="ui-block-diagram-search-result__left-col">
 				<p class="ui-block-diagram-search-result__title">{{ title }}</p>
@@ -7797,17 +8269,17 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const SearchNavBtn = {
-	  name: 'search-nav-btn',
-	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon
-	  },
-	  props: {
-	    iconName: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  template: `
+		name: 'search-nav-btn',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon
+		},
+		props: {
+			iconName: {
+				type: String,
+				required: true
+			}
+		},
+		template: `
 		<button class="ui-block-diagram-search-nav-btn">
 			<BIcon
 				:name="iconName"
@@ -7820,16 +8292,16 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const OpenSearchBtn = {
-	  name: 'open-search-btn',
-	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon
-	  },
-	  setup() {
-	    return {
-	      iconSet: ui_iconSet_api_vue.Outline
-	    };
-	  },
-	  template: `
+		name: 'open-search-btn',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon
+		},
+		setup() {
+			return {
+				iconSet: ui_iconSet_api_vue.Outline
+			};
+		},
+		template: `
 		<button class="ui-block-diagram-open-search-btn">
 			<BIcon
 				:name="iconSet.SEARCH"
@@ -7841,114 +8313,112 @@ this.BX = this.BX || {};
 	};
 
 	const SEARCH_INPUT_CLASS_NAMES = {
-	  base: 'ui-block-diagram-search-input',
-	  open: '--open',
-	  focus: '--focus'
+		base: 'ui-block-diagram-search-input',
+		open: '--open',
+		focus: '--focus'
 	};
 
 	// @vue/component
 	const SearchInput = {
-	  name: 'SearchInput',
-	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon,
-	    OpenSearchBtn
-	  },
-	  props: {
-	    value: {
-	      type: String,
-	      default: ''
-	    },
-	    open: {
-	      type: Boolean,
-	      default: false
-	    },
-	    placeholder: {
-	      type: String,
-	      default: ''
-	    },
-	    disabled: {
-	      type: Boolean,
-	      default: false
-	    }
-	  },
-	  emits: ['update:value', 'clear', 'update:open'],
-	  setup(props, {
-	    emit
-	  }) {
-	    const loc = useLoc();
-	    const searchInput = ui_vue3.useTemplateRef('searchInput');
-	    const showSearchBtn = ui_vue3.ref(true);
-	    const showSearchBar = ui_vue3.ref(false);
-	    const isFocus = ui_vue3.ref(false);
-	    const placeholderOrDefaultValue = ui_vue3.computed(() => {
-	      if (props.placeholder) {
-	        return props.placeholder;
-	      }
-	      return loc.getMessage('UI_BLOCK_DIAGRAM_SEARCH_BAR_SEARCH_PLACEHOLDER');
-	    });
-	    const searchInputClassNames = ui_vue3.computed(() => ({
-	      [SEARCH_INPUT_CLASS_NAMES.base]: true,
-	      [SEARCH_INPUT_CLASS_NAMES.open]: ui_vue3.toValue(showSearchBar),
-	      [SEARCH_INPUT_CLASS_NAMES.focus]: ui_vue3.toValue(isFocus)
-	    }));
-	    function onInput(event) {
-	      if (props.disabled) {
-	        return;
-	      }
-	      emit('update:value', event.target.value);
-	    }
-	    function onClear(event) {
-	      event.stopPropagation();
-	      if (props.disabled) {
-	        return;
-	      }
-	      showSearchBar.value = false;
-	      emit('clear');
-	    }
-	    function onAfterEnterTransition() {
-	      ui_vue3.nextTick(() => {
-	        var _toValue;
-	        isFocus.value = true;
-	        (_toValue = ui_vue3.toValue(searchInput)) == null ? void 0 : _toValue.focus();
-	      });
-	    }
-	    function onLeaveTransition() {
-	      showSearchBtn.value = true;
-	      emit('update:open', false);
-	    }
-	    function onOpenSearchBar() {
-	      showSearchBar.value = true;
-	      showSearchBtn.value = false;
-	      emit('update:open', true);
-	    }
-	    function onClickSearchInput() {
-	      var _toValue2;
-	      isFocus.value = true;
-	      (_toValue2 = ui_vue3.toValue(searchInput)) == null ? void 0 : _toValue2.focus();
-	    }
-	    function onBlurSearchInput() {
-	      isFocus.value = false;
-	    }
-	    function collapseSearchBar() {
-	      showSearchBar.value = false;
-	    }
-	    return {
-	      iconSet: ui_iconSet_api_vue.Outline,
-	      showSearchBar,
-	      showSearchBtn,
-	      placeholderOrDefaultValue,
-	      searchInputClassNames,
-	      onInput,
-	      onClear,
-	      onAfterEnterTransition,
-	      onLeaveTransition,
-	      onOpenSearchBar,
-	      onClickSearchInput,
-	      onBlurSearchInput,
-	      collapseSearchBar
-	    };
-	  },
-	  template: `
+		name: 'SearchInput',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon,
+			OpenSearchBtn
+		},
+		props: {
+			value: {
+				type: String,
+				default: ''
+			},
+			open: {
+				type: Boolean,
+				default: false
+			},
+			placeholder: {
+				type: String,
+				default: ''
+			},
+			disabled: {
+				type: Boolean,
+				default: false
+			}
+		},
+		emits: ['update:value', 'clear', 'update:open'],
+		setup(props, {
+			emit
+		}) {
+			const loc = useLoc();
+			const searchInput = ui_vue3.useTemplateRef('searchInput');
+			const showSearchBtn = ui_vue3.ref(true);
+			const showSearchBar = ui_vue3.ref(false);
+			const isFocus = ui_vue3.ref(false);
+			const placeholderOrDefaultValue = ui_vue3.computed(() => {
+				if (props.placeholder) {
+					return props.placeholder;
+				}
+				return loc.getMessage('UI_BLOCK_DIAGRAM_SEARCH_BAR_SEARCH_PLACEHOLDER');
+			});
+			const searchInputClassNames = ui_vue3.computed(() => ({
+				[SEARCH_INPUT_CLASS_NAMES.base]: true,
+				[SEARCH_INPUT_CLASS_NAMES.open]: ui_vue3.toValue(showSearchBar),
+				[SEARCH_INPUT_CLASS_NAMES.focus]: ui_vue3.toValue(isFocus)
+			}));
+			function onInput(event) {
+				if (props.disabled) {
+					return;
+				}
+				emit('update:value', event.target.value);
+			}
+			function onClear(event) {
+				event.stopPropagation();
+				if (props.disabled) {
+					return;
+				}
+				showSearchBar.value = false;
+				emit('clear');
+			}
+			function onAfterEnterTransition() {
+				ui_vue3.nextTick(() => {
+					isFocus.value = true;
+					ui_vue3.toValue(searchInput)?.focus();
+				});
+			}
+			function onLeaveTransition() {
+				showSearchBtn.value = true;
+				emit('update:open', false);
+			}
+			function onOpenSearchBar() {
+				showSearchBar.value = true;
+				showSearchBtn.value = false;
+				emit('update:open', true);
+			}
+			function onClickSearchInput() {
+				isFocus.value = true;
+				ui_vue3.toValue(searchInput)?.focus();
+			}
+			function onBlurSearchInput() {
+				isFocus.value = false;
+			}
+			function collapseSearchBar() {
+				showSearchBar.value = false;
+			}
+			return {
+				iconSet: ui_iconSet_api_vue.Outline,
+				showSearchBar,
+				showSearchBtn,
+				placeholderOrDefaultValue,
+				searchInputClassNames,
+				onInput,
+				onClear,
+				onAfterEnterTransition,
+				onLeaveTransition,
+				onOpenSearchBar,
+				onClickSearchInput,
+				onBlurSearchInput,
+				collapseSearchBar
+			};
+		},
+		template: `
 		<OpenSearchBtn
 			v-show="showSearchBtn"
 			:data-test-id="$blockDiagramTestId('searchOpenBtn')"
@@ -7999,162 +8469,161 @@ this.BX = this.BX || {};
 	};
 
 	const SEARCH_BAR_CLASS_NAMES = {
-	  base: 'ui-block-diagram-search-bar',
-	  opened: '--opened'
+		base: 'ui-block-diagram-search-bar',
+		opened: '--opened'
 	};
 
 	// @vue/component
 	const SearchBar = {
-	  name: 'SearchBar',
-	  components: {
-	    SearchResult,
-	    SearchNavBtn,
-	    SearchInput,
-	    OpenSearchBtn
-	  },
-	  props: {
-	    searchResultTitle: {
-	      type: String,
-	      default: ''
-	    },
-	    placeholder: {
-	      type: String,
-	      default: ''
-	    },
-	    searchCallback: {
-	      type: Function,
-	      required: true,
-	      default: (block, text) => {
-	        return block.node.title.toLowerCase().includes(text.toLowerCase());
-	      }
-	    },
-	    searchDelay: {
-	      type: Number,
-	      default: 300
-	    },
-	    disabled: {
-	      type: Boolean,
-	      default: false
-	    }
-	  },
-	  // eslint-disable-next-line max-lines-per-function
-	  setup(props) {
-	    const {
-	      seachText,
-	      foundBlocks,
-	      onSearchBlocks,
-	      onClearSearch
-	    } = useSearchBlocks({
-	      searchCallback: props.searchCallback,
-	      delay: props.searchDelay
-	    });
-	    const {
-	      isDisabledBlockDiagram
-	    } = useBlockDiagram();
-	    const highlitedBlocks = useHighlightedBlocks();
-	    const loc = useLoc();
-	    const {
-	      goToBlockById
-	    } = useCanvas();
-	    const searchPanel = ui_vue3.useTemplateRef('searchPanel');
-	    const searchInputRef = ui_vue3.useTemplateRef('searchInput');
-	    const currentBlockIndex = ui_vue3.ref(0);
-	    const isOpenedSearchBar = ui_vue3.ref(false);
-	    const isDisabled = ui_vue3.computed(() => {
-	      return props.disabled || ui_vue3.toValue(isDisabledBlockDiagram);
-	    });
-	    const labelResult = ui_vue3.computed(() => {
-	      return `${currentBlockIndex.value + 1} / ${ui_vue3.toValue(foundBlocks).length}`;
-	    });
-	    const placeholderOrDefaultValue = ui_vue3.computed(() => {
-	      if (props.placeholder) {
-	        return props.placeholder;
-	      }
-	      return loc.getMessage('UI_BLOCK_DIAGRAM_SEARCH_BAR_SEARCH_PLACEHOLDER');
-	    });
-	    const searchResultTitleOrDefaultValue = ui_vue3.computed(() => {
-	      if (props.searchResultTitle) {
-	        return props.searchResultTitle;
-	      }
-	      return loc.getMessage('UI_BLOCK_DIAGRAM_SEARCH_BAR_SEARCH_RESULT_TITLE');
-	    });
-	    const searchBarClassNames = ui_vue3.computed(() => ({
-	      [SEARCH_BAR_CLASS_NAMES.base]: true,
-	      [SEARCH_BAR_CLASS_NAMES.opened]: ui_vue3.toValue(isOpenedSearchBar)
-	    }));
-	    ui_vue3.watch(foundBlocks, newBlocks => {
-	      currentBlockIndex.value = 0;
-	      if (ui_vue3.toValue(newBlocks).length > 0) {
-	        const id = ui_vue3.toValue(newBlocks)[0].id;
-	        highlitedBlocks.clear();
-	        highlitedBlocks.add(id);
-	        goToBlockById(id);
-	      } else {
-	        highlitedBlocks.clear();
-	      }
-	    });
-	    ui_vue3.onMounted(() => {
-	      main_core.Event.bind(document, 'mousedown', onClickOutside);
-	    });
-	    ui_vue3.onUnmounted(() => {
-	      main_core.Event.unbind(document, 'mousedown', onClickOutside);
-	    });
-	    function onGoToNextBlock() {
-	      if (ui_vue3.toValue(isDisabled)) {
-	        return;
-	      }
-	      currentBlockIndex.value += 1;
-	      if (ui_vue3.toValue(currentBlockIndex) > ui_vue3.toValue(foundBlocks).length - 1) {
-	        currentBlockIndex.value = 0;
-	      }
-	      const id = ui_vue3.toValue(foundBlocks)[ui_vue3.toValue(currentBlockIndex)].id;
-	      highlitedBlocks.clear();
-	      highlitedBlocks.add(id);
-	      goToBlockById(id);
-	    }
-	    function onGoToPrevBlock() {
-	      if (ui_vue3.toValue(isDisabled)) {
-	        return;
-	      }
-	      currentBlockIndex.value -= 1;
-	      if (ui_vue3.toValue(currentBlockIndex) < 0) {
-	        currentBlockIndex.value = ui_vue3.toValue(foundBlocks).length - 1;
-	      }
-	      const id = ui_vue3.toValue(foundBlocks)[ui_vue3.toValue(currentBlockIndex)].id;
-	      highlitedBlocks.clear();
-	      highlitedBlocks.add(id);
-	      goToBlockById(ui_vue3.toValue(foundBlocks)[ui_vue3.toValue(currentBlockIndex)].id);
-	    }
-	    function closeAndResetSearch() {
-	      highlitedBlocks.clear();
-	      onClearSearch();
-	      currentBlockIndex.value = 0;
-	    }
-	    function onClickOutside(event) {
-	      if (ui_vue3.toValue(searchPanel) && !ui_vue3.toValue(searchPanel).contains(event.target) && ui_vue3.toValue(isOpenedSearchBar)) {
-	        var _toValue;
-	        closeAndResetSearch();
-	        (_toValue = ui_vue3.toValue(searchInputRef)) == null ? void 0 : _toValue.collapseSearchBar();
-	      }
-	    }
-	    return {
-	      iconSet: ui_iconSet_api_vue.Outline,
-	      searchBarClassNames,
-	      isOpenedSearchBar,
-	      isDisabled,
-	      placeholderOrDefaultValue,
-	      searchResultTitleOrDefaultValue,
-	      seachText,
-	      labelResult,
-	      foundBlocks,
-	      onSearchBlocks,
-	      onClearSearch,
-	      closeAndResetSearch,
-	      onGoToNextBlock,
-	      onGoToPrevBlock
-	    };
-	  },
-	  template: `
+		name: 'SearchBar',
+		components: {
+			SearchResult,
+			SearchNavBtn,
+			SearchInput,
+			OpenSearchBtn
+		},
+		props: {
+			searchResultTitle: {
+				type: String,
+				default: ''
+			},
+			placeholder: {
+				type: String,
+				default: ''
+			},
+			searchCallback: {
+				type: Function,
+				required: true,
+				default: (block, text) => {
+					return block.node.title.toLowerCase().includes(text.toLowerCase());
+				}
+			},
+			searchDelay: {
+				type: Number,
+				default: 300
+			},
+			disabled: {
+				type: Boolean,
+				default: false
+			}
+		},
+		// eslint-disable-next-line max-lines-per-function
+		setup(props) {
+			const {
+				seachText,
+				foundBlocks,
+				onSearchBlocks,
+				onClearSearch
+			} = useSearchBlocks({
+				searchCallback: props.searchCallback,
+				delay: props.searchDelay
+			});
+			const {
+				isDisabledBlockDiagram
+			} = useBlockDiagram();
+			const highlitedBlocks = useHighlightedBlocks();
+			const loc = useLoc();
+			const {
+				goToBlockById
+			} = useCanvas();
+			const searchPanel = ui_vue3.useTemplateRef('searchPanel');
+			const searchInputRef = ui_vue3.useTemplateRef('searchInput');
+			const currentBlockIndex = ui_vue3.ref(0);
+			const isOpenedSearchBar = ui_vue3.ref(false);
+			const isDisabled = ui_vue3.computed(() => {
+				return props.disabled || ui_vue3.toValue(isDisabledBlockDiagram);
+			});
+			const labelResult = ui_vue3.computed(() => {
+				return `${currentBlockIndex.value + 1} / ${ui_vue3.toValue(foundBlocks).length}`;
+			});
+			const placeholderOrDefaultValue = ui_vue3.computed(() => {
+				if (props.placeholder) {
+					return props.placeholder;
+				}
+				return loc.getMessage('UI_BLOCK_DIAGRAM_SEARCH_BAR_SEARCH_PLACEHOLDER');
+			});
+			const searchResultTitleOrDefaultValue = ui_vue3.computed(() => {
+				if (props.searchResultTitle) {
+					return props.searchResultTitle;
+				}
+				return loc.getMessage('UI_BLOCK_DIAGRAM_SEARCH_BAR_SEARCH_RESULT_TITLE');
+			});
+			const searchBarClassNames = ui_vue3.computed(() => ({
+				[SEARCH_BAR_CLASS_NAMES.base]: true,
+				[SEARCH_BAR_CLASS_NAMES.opened]: ui_vue3.toValue(isOpenedSearchBar)
+			}));
+			ui_vue3.watch(foundBlocks, newBlocks => {
+				currentBlockIndex.value = 0;
+				if (ui_vue3.toValue(newBlocks).length > 0) {
+					const id = ui_vue3.toValue(newBlocks)[0].id;
+					highlitedBlocks.clear();
+					highlitedBlocks.add(id);
+					goToBlockById(id);
+				} else {
+					highlitedBlocks.clear();
+				}
+			});
+			ui_vue3.onMounted(() => {
+				main_core.Event.bind(document, 'mousedown', onClickOutside);
+			});
+			ui_vue3.onUnmounted(() => {
+				main_core.Event.unbind(document, 'mousedown', onClickOutside);
+			});
+			function onGoToNextBlock() {
+				if (ui_vue3.toValue(isDisabled)) {
+					return;
+				}
+				currentBlockIndex.value += 1;
+				if (ui_vue3.toValue(currentBlockIndex) > ui_vue3.toValue(foundBlocks).length - 1) {
+					currentBlockIndex.value = 0;
+				}
+				const id = ui_vue3.toValue(foundBlocks)[ui_vue3.toValue(currentBlockIndex)].id;
+				highlitedBlocks.clear();
+				highlitedBlocks.add(id);
+				goToBlockById(id);
+			}
+			function onGoToPrevBlock() {
+				if (ui_vue3.toValue(isDisabled)) {
+					return;
+				}
+				currentBlockIndex.value -= 1;
+				if (ui_vue3.toValue(currentBlockIndex) < 0) {
+					currentBlockIndex.value = ui_vue3.toValue(foundBlocks).length - 1;
+				}
+				const id = ui_vue3.toValue(foundBlocks)[ui_vue3.toValue(currentBlockIndex)].id;
+				highlitedBlocks.clear();
+				highlitedBlocks.add(id);
+				goToBlockById(ui_vue3.toValue(foundBlocks)[ui_vue3.toValue(currentBlockIndex)].id);
+			}
+			function closeAndResetSearch() {
+				highlitedBlocks.clear();
+				onClearSearch();
+				currentBlockIndex.value = 0;
+			}
+			function onClickOutside(event) {
+				if (ui_vue3.toValue(searchPanel) && !ui_vue3.toValue(searchPanel).contains(event.target) && ui_vue3.toValue(isOpenedSearchBar)) {
+					closeAndResetSearch();
+					ui_vue3.toValue(searchInputRef)?.collapseSearchBar();
+				}
+			}
+			return {
+				iconSet: ui_iconSet_api_vue.Outline,
+				searchBarClassNames,
+				isOpenedSearchBar,
+				isDisabled,
+				placeholderOrDefaultValue,
+				searchResultTitleOrDefaultValue,
+				seachText,
+				labelResult,
+				foundBlocks,
+				onSearchBlocks,
+				onClearSearch,
+				closeAndResetSearch,
+				onGoToNextBlock,
+				onGoToPrevBlock
+			};
+		},
+		template: `
 		<div
 			:class="searchBarClassNames"
 			ref="searchPanel"
@@ -8194,93 +8663,103 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const ResizableBlock = {
-	  name: 'resizable-block',
-	  props: {
-	    /** @type DiagramBlock */
-	    block: {
-	      type: Object,
-	      required: true
-	    },
-	    minWidth: {
-	      type: Number,
-	      default: 100
-	    },
-	    minHeight: {
-	      type: Number,
-	      default: 100
-	    },
-	    highlighted: {
-	      type: Boolean,
-	      default: false
-	    }
-	  },
-	  setup(props) {
-	    const {
-	      block,
-	      minWidth,
-	      minHeight
-	    } = ui_vue3.toRefs(props);
-	    const {
-	      isHiglitedBlock,
-	      isDisabled
-	    } = useBlockState(block);
-	    const highlightedBlocks = useHighlightedBlocks();
-	    const {
-	      isDragged,
-	      blockPositionStyle
-	    } = useMoveableBlock(ui_vue3.useTemplateRef('blockEl'), block);
-	    const {
-	      isResize,
-	      sizeBlockStyle,
-	      onMounted: onMountedResizableBlock,
-	      onUnmounted: onUnmountedResizableBlock
-	    } = useResizableBlock({
-	      block,
-	      minWidth,
-	      minHeight,
-	      leftSideRef: ui_vue3.useTemplateRef('leftSide'),
-	      topSideRef: ui_vue3.useTemplateRef('topSide'),
-	      rightSideRef: ui_vue3.useTemplateRef('rightSide'),
-	      bottomSideRef: ui_vue3.useTemplateRef('bottomSide'),
-	      leftTopCornerRef: ui_vue3.useTemplateRef('leftTopCorner'),
-	      rightTopCornerRef: ui_vue3.useTemplateRef('rightTopCorner'),
-	      rightBottomCornerRef: ui_vue3.useTemplateRef('rightBottomCorner'),
-	      leftBottomCornerRef: ui_vue3.useTemplateRef('leftBottomCorner')
-	    });
-	    const blockStyle = ui_vue3.computed(() => {
-	      return {
-	        ...ui_vue3.toValue(blockPositionStyle),
-	        ...ui_vue3.toValue(sizeBlockStyle)
-	      };
-	    });
-	    ui_vue3.watch(() => props.highlighted, value => {
-	      if (value) {
-	        highlightedBlocks.add(props.block.id);
-	      } else {
-	        highlightedBlocks.remove(props.block.id);
-	      }
-	    });
-	    ui_vue3.onMounted(() => {
-	      onMountedResizableBlock();
-	    });
-	    ui_vue3.onUnmounted(() => {
-	      highlightedBlocks.remove(props.block.id);
-	      onUnmountedResizableBlock();
-	    });
-	    function onMouseDownSelectBlock() {
-	      highlightedBlocks.clear();
-	      highlightedBlocks.add(props.block.id);
-	    }
-	    return {
-	      isHiglitedBlock,
-	      isDisabled,
-	      isResize,
-	      isDragged,
-	      blockStyle,
-	      onMouseDownSelectBlock
-	    };
-	  },
-	  template: `
+		name: 'resizable-block',
+		props: {
+			/** @type DiagramBlock */
+			block: {
+				type: Object,
+				required: true
+			},
+			minWidth: {
+				type: Number,
+				default: 100
+			},
+			minHeight: {
+				type: Number,
+				default: 100
+			},
+			highlighted: {
+				type: Boolean,
+				default: false
+			}
+		},
+		setup(props) {
+			const {
+				block,
+				minWidth,
+				minHeight
+			} = ui_vue3.toRefs(props);
+			const blockRef = ui_vue3.useTemplateRef('blockEl');
+			const {
+				isHiglitedBlock,
+				isDisabled
+			} = useBlockState({
+				block,
+				blockRef
+			});
+			const highlightedBlocks = useHighlightedBlocks();
+			const {
+				isDragged,
+				blockPositionStyle
+			} = useMoveableBlock(blockRef, block);
+			const {
+				isResize,
+				sizeBlockStyle,
+				onMounted: onMountedResizableBlock,
+				onUnmounted: onUnmountedResizableBlock
+			} = useResizableBlock({
+				block,
+				minWidth,
+				minHeight,
+				leftSideRef: ui_vue3.useTemplateRef('leftSide'),
+				topSideRef: ui_vue3.useTemplateRef('topSide'),
+				rightSideRef: ui_vue3.useTemplateRef('rightSide'),
+				bottomSideRef: ui_vue3.useTemplateRef('bottomSide'),
+				leftTopCornerRef: ui_vue3.useTemplateRef('leftTopCorner'),
+				rightTopCornerRef: ui_vue3.useTemplateRef('rightTopCorner'),
+				rightBottomCornerRef: ui_vue3.useTemplateRef('rightBottomCorner'),
+				leftBottomCornerRef: ui_vue3.useTemplateRef('leftBottomCorner')
+			});
+			const blockStyle = ui_vue3.computed(() => {
+				return {
+					...ui_vue3.toValue(blockPositionStyle),
+					...ui_vue3.toValue(sizeBlockStyle)
+				};
+			});
+			ui_vue3.watch(isResize, resizeStatus => {
+				if (resizeStatus) {
+					highlightedBlocks.clear();
+					highlightedBlocks.add(props.block.id);
+				}
+			});
+			ui_vue3.watch(() => props.highlighted, value => {
+				if (value) {
+					highlightedBlocks.add(props.block.id);
+				} else {
+					highlightedBlocks.remove(props.block.id);
+				}
+			});
+			ui_vue3.onMounted(() => {
+				onMountedResizableBlock();
+			});
+			ui_vue3.onUnmounted(() => {
+				highlightedBlocks.remove(props.block.id);
+				onUnmountedResizableBlock();
+			});
+			function onMouseDownSelectBlock() {
+				highlightedBlocks.clear();
+				highlightedBlocks.add(props.block.id);
+			}
+			return {
+				isHiglitedBlock,
+				isDisabled,
+				isResize,
+				isDragged,
+				blockStyle,
+				onMouseDownSelectBlock
+			};
+		},
+		template: `
 		<div
 			:style="blockStyle"
 			ref="blockEl"
@@ -8327,6 +8806,8 @@ this.BX = this.BX || {};
 					:isDragged="isDragged"
 					:isResize="isResize"
 					:isDisabled="isDisabled"
+					:width="block.dimensions.width"
+					:height="block.dimensions.height"
 				/>
 			</div>
 		</div>
@@ -8335,123 +8816,126 @@ this.BX = this.BX || {};
 
 	const DEFAULT_SELECTION_PADDING = 17;
 	const DEFAULT_BLOCK_SIZE = {
-	  width: 150,
-	  height: 100
+		width: 150,
+		height: 100
 	};
 	const GroupSelectionBox = {
-	  name: 'GroupSelectionBox',
-	  props: {
-	    menuItems: {
-	      type: Array,
-	      default: () => []
-	    },
-	    padding: {
-	      type: [Number, Object],
-	      default: DEFAULT_SELECTION_PADDING
-	    },
-	    defaultBlockSize: {
-	      type: Object,
-	      default: DEFAULT_BLOCK_SIZE
-	    }
-	  },
-	  setup(props) {
-	    const highlightedBlocks = useHighlightedBlocks();
-	    const {
-	      selectionWorldRect,
-	      isSelectionActive
-	    } = useBlockDiagram();
-	    const {
-	      showMenu,
-	      closeContextMenu
-	    } = useContextMenu();
-	    const {
-	      onCanvasSelect,
-	      onSelectionStart,
-	      groupSelectionStyle
-	    } = useGroupSelectionLogic(closeContextMenu, {
-	      padding: ui_vue3.computed(() => props.padding),
-	      defaultBlockSize: props.defaultBlockSize
-	    });
-	    ui_vue3.watch(selectionWorldRect, newRect => {
-	      onCanvasSelect(newRect);
-	    });
-	    ui_vue3.watch(isSelectionActive, isActive => {
-	      if (isActive) {
-	        onSelectionStart();
-	      }
-	    });
-	    const {
-	      onGroupMouseDown
-	    } = useGroupDragLogic(closeContextMenu);
-	    function onGroupContextMenu(event) {
-	      const ids = ui_vue3.toValue(highlightedBlocks.highlitedBlockIds);
-	      if (!ids || ids.length === 0 || props.menuItems.length === 0) {
-	        return;
-	      }
-	      showMenu({
-	        clientX: event.clientX,
-	        clientY: event.clientY
-	      }, {
-	        items: props.menuItems
-	      });
-	    }
-	    return {
-	      groupSelectionStyle,
-	      onGroupMouseDown,
-	      onGroupContextMenu
-	    };
-	  },
-	  template: `
+		name: 'GroupSelectionBox',
+		props: {
+			menuItems: {
+				type: Array,
+				default: () => []
+			},
+			padding: {
+				type: [Number, Object],
+				default: DEFAULT_SELECTION_PADDING
+			},
+			defaultBlockSize: {
+				type: Object,
+				default: DEFAULT_BLOCK_SIZE
+			}
+		},
+		setup(props) {
+			const highlightedBlocks = useHighlightedBlocks();
+			const {
+				selectionWorldRect,
+				isSelectionActive
+			} = useBlockDiagram();
+			const {
+				showMenu,
+				closeContextMenu
+			} = useContextMenu();
+			const {
+				onCanvasSelect,
+				onSelectionStart,
+				groupSelectionStyle
+			} = useGroupSelectionLogic(closeContextMenu, {
+				padding: ui_vue3.computed(() => props.padding),
+				defaultBlockSize: props.defaultBlockSize
+			});
+			ui_vue3.watch(selectionWorldRect, newRect => {
+				onCanvasSelect(newRect);
+			});
+			ui_vue3.watch(isSelectionActive, isActive => {
+				if (isActive) {
+					onSelectionStart();
+				}
+			});
+			const {
+				onGroupMouseDown
+			} = useGroupDragLogic(closeContextMenu);
+			function onGroupContextMenu(event) {
+				const ids = ui_vue3.toValue(highlightedBlocks.highlitedBlockIds);
+				if (!ids || ids.length === 0 || props.menuItems.length === 0) {
+					return;
+				}
+				showMenu({
+					clientX: event.clientX,
+					clientY: event.clientY
+				}, {
+					items: props.menuItems
+				});
+			}
+			return {
+				groupSelectionStyle,
+				onGroupMouseDown,
+				onGroupContextMenu
+			};
+		},
+		template: `
 		<div
 			v-if="groupSelectionStyle"
 			:style="groupSelectionStyle"
 			class="ui-block-diagram-group-box"
-			@mousedown="onGroupMouseDown"
-			@contextmenu.prevent.stop="onGroupContextMenu"
-		></div>
+			@mousedown.stop="onGroupMouseDown"
+		>
+			<div
+				class="ui-block-diagram-group-box__layout"
+				@contextmenu.prevent.stop="onGroupContextMenu"
+			>
+			</div>
+		</div>
 	`
 	};
 
-	let _ = t => t,
-	  _t;
 	let copiedDragItem = null;
 	function onDragStart(event, value) {
-	  const {
-	    dragData,
-	    dragImage
-	  } = main_core.Type.isFunction(value) ? value() : value;
-	  copiedDragItem = ui_vue3.toValue(dragImage).cloneNode(true).children[0];
-	  const wrapper = document.getElementById('blockDiagramDragWrapper');
-	  main_core.Dom.append(copiedDragItem, wrapper);
-	  main_core.Dom.style(copiedDragItem, {
-	    display: 'block',
-	    position: 'absolute',
-	    top: 0,
-	    left: 0
-	  });
-	  const {
-	    width,
-	    height
-	  } = copiedDragItem.getBoundingClientRect();
-	  event.dataTransfer.setDragImage(copiedDragItem, width / 2, height / 2);
-	  event.dataTransfer.setData('text/plain', JSON.stringify({
-	    ...ui_vue3.toValue(dragData),
-	    dimensions: {
-	      width,
-	      height
-	    }
-	  }));
+		const {
+			dragData,
+			dragImage
+		} = main_core.Type.isFunction(value) ? value() : value;
+		copiedDragItem = ui_vue3.toValue(dragImage).cloneNode(true).children[0];
+		const wrapper = document.getElementById('blockDiagramDragWrapper');
+		main_core.Dom.append(copiedDragItem, wrapper);
+		main_core.Dom.style(copiedDragItem, {
+			display: 'block',
+			position: 'absolute',
+			top: 0,
+			left: 0
+		});
+		const {
+			width,
+			height
+		} = copiedDragItem.getBoundingClientRect();
+		event.dataTransfer.setDragImage(copiedDragItem, width / 2, height / 2);
+		event.dataTransfer.setData('text/plain', JSON.stringify({
+			...ui_vue3.toValue(dragData),
+			dimensions: {
+				width,
+				height
+			}
+		}));
 	}
 	function onDragEnd(event) {
-	  main_core.Dom.remove(copiedDragItem);
-	  copiedDragItem = null;
+		main_core.Dom.remove(copiedDragItem);
+		copiedDragItem = null;
 	}
 	function initDragItemWrapper() {
-	  const hasWrapper = document.getElementById('blockDiagramDragWrapper');
-	  if (hasWrapper) {
-	    return;
-	  }
-	  const wrapper = main_core.Tag.render(_t || (_t = _`
+		const hasWrapper = document.getElementById('blockDiagramDragWrapper');
+		if (hasWrapper) {
+			return;
+		}
+		const wrapper = main_core.Tag.render`
 		<div>
 			<div
 				id="blockDiagramDragWrapper"
@@ -8459,64 +8943,67 @@ this.BX = this.BX || {};
 			>
 			</div>
 		</div>
-	`));
-	  main_core.Dom.append(wrapper, document.body);
-	  main_core.Dom.style(wrapper, {
-	    position: 'absolute',
-	    transform: 'translate(-100%, -100%)',
-	    top: 0,
-	    right: 0
-	  });
+	`;
+		main_core.Dom.append(wrapper, document.body);
+		main_core.Dom.style(wrapper, {
+			position: 'absolute',
+			transform: 'translate(-100%, -100%)',
+			top: 0,
+			right: 0
+		});
 	}
 	const DragBlock = {
-	  mounted(el, {
-	    arg,
-	    value
-	  }) {
-	    initDragItemWrapper();
-	    main_core.Dom.attr(el, 'draggable', 'true');
-	    main_core.Event.bind(el, 'dragstart', event => onDragStart(event, value));
-	    main_core.Event.bind(el, 'dragend', event => onDragEnd());
-	  },
-	  unmounted(el, {
-	    arg,
-	    value
-	  }) {
-	    main_core.Event.unbind(el, 'dragstart', event => onDragStart(event, value));
-	    main_core.Event.unbind(el, 'dragend', event => onDragEnd(event));
-	  }
+		mounted(el, {
+			arg,
+			value
+		}) {
+			initDragItemWrapper();
+			main_core.Dom.attr(el, 'draggable', 'true');
+			main_core.Event.bind(el, 'dragstart', event => onDragStart(event, value));
+			main_core.Event.bind(el, 'dragend', event => onDragEnd());
+		},
+		unmounted(el, {
+			arg,
+			value
+		}) {
+			main_core.Event.unbind(el, 'dragstart', event => onDragStart(event, value));
+			main_core.Event.unbind(el, 'dragend', event => onDragEnd());
+		}
 	};
 
 	exports.BlockDiagram = BlockDiagram;
-	exports.HistoryBar = HistoryBar;
-	exports.ZoomBar = ZoomBar;
-	exports.SearchBar = SearchBar;
-	exports.MoveableBlock = MoveableBlock;
-	exports.ResizableBlock = ResizableBlock;
-	exports.Port = Port;
 	exports.Connection = Connection;
-	exports.GroupSelectionBox = GroupSelectionBox;
 	exports.DeleteConnectionBtn = DeleteConnectionBtn;
-	exports.transformPoint = transformPoint;
-	exports.useBlockDiagram = useBlockDiagram;
-	exports.useContextMenu = useContextMenu;
-	exports.useHistory = useHistory;
-	exports.useSearchBlocks = useSearchBlocks;
-	exports.useCanvas = useCanvas;
-	exports.useBlockState = useBlockState;
-	exports.useMoveableBlock = useMoveableBlock;
-	exports.useResizableBlock = useResizableBlock;
-	exports.useHighlightedBlocks = useHighlightedBlocks;
-	exports.useAnimationQueue = useAnimationQueue;
-	exports.usePortState = usePortState;
-	exports.useConnectionState = useConnectionState;
-	exports.useNewConnectionState = useNewConnectionState;
-	exports.useDragAndDrop = useDragAndDrop;
-	exports.useGroupSelectionLogic = useGroupSelectionLogic;
-	exports.useGroupDragLogic = useGroupDragLogic;
-	exports.useKeyboardShortcuts = useKeyboardShortcuts;
-	exports.useAutoScroll = useAutoScroll;
 	exports.DragBlock = DragBlock;
+	exports.GroupSelectionBox = GroupSelectionBox;
+	exports.HistoryBar = HistoryBar;
+	exports.MoveableBlock = MoveableBlock;
+	exports.PORT_POSITION = PORT_POSITION;
+	exports.Port = Port;
+	exports.ResizableBlock = ResizableBlock;
+	exports.SOURCE_PORT_STUB_SLOT_NAME = SOURCE_PORT_STUB_SLOT_NAME;
+	exports.SearchBar = SearchBar;
+	exports.TARGET_PORT_STUB_SLOT_NAME = TARGET_PORT_STUB_SLOT_NAME;
+	exports.ZoomBar = ZoomBar;
+	exports.transformPoint = transformPoint;
+	exports.useAnimationQueue = useAnimationQueue;
+	exports.useAutoScroll = useAutoScroll;
+	exports.useBlockDiagram = useBlockDiagram;
+	exports.useBlockState = useBlockState;
+	exports.useCanvas = useCanvas;
+	exports.useConnectionState = useConnectionState;
+	exports.useContextMenu = useContextMenu;
+	exports.useDragAndDrop = useDragAndDrop;
+	exports.useGroupDragLogic = useGroupDragLogic;
+	exports.useGroupSelectionLogic = useGroupSelectionLogic;
+	exports.useHighlightedBlocks = useHighlightedBlocks;
+	exports.useHistory = useHistory;
+	exports.useKeyboardShortcuts = useKeyboardShortcuts;
+	exports.useMoveableBlock = useMoveableBlock;
+	exports.useNewConnectionState = useNewConnectionState;
+	exports.usePortState = usePortState;
+	exports.useResizableBlock = useResizableBlock;
+	exports.useSearchBlocks = useSearchBlocks;
 
-}((this.BX.UI = this.BX.UI || {}),BX.Main,BX,BX.UI.IconSet,BX,BX.Vue3));
+})(this.BX.UI = this.BX.UI || {}, BX.Vue3, BX, BX.Main, BX, BX.UI.IconSet);
 //# sourceMappingURL=block-diagram.bundle.js.map

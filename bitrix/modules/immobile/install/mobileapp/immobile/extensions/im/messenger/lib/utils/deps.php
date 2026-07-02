@@ -22,5 +22,6 @@ return [
 		'./src/queue',
 		'./src/model',
 		'./src/normalizer',
+		'./src/html',
 	],
 ];

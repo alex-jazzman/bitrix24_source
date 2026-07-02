@@ -46,6 +46,22 @@ body.--right-panel-expanded.--resizing .root {
 	grid-template-columns: auto minmax(0, 1fr) var(--air-right-panel-width) var(--air-right-bar-width);
 }
 
+.air-fullscreen-mode .root,
+.air-fullscreen-mode.--right-panel-expanded .root,
+.air-fullscreen-mode.im-bar-mode-off .root,
+.air-fullscreen-mode.--right-panel-expanded.--resizing .root,
+.air-fullscreen-mode.--right-panel-expanded.--right-panel-no-transition .root,
+.air-fullscreen-mode.--right-panel-expanded.--right-panel-no-transition .root:has(.app__right-panel),
+.air-fullscreen-mode.im-bar-mode-off:not(.--right-panel-expanded) .root {
+	grid-template-columns: 1fr auto;
+	grid-template-rows: minmax(0, 1fr);
+	grid-template-areas:"admin admin" "header panel" "main panel" "footer panel";
+}
+
+body.im-bar-mode-off:not(.--right-panel-expanded) .root {
+	grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
 body.--right-panel-expanded.--right-panel-no-transition .root:has(.app__right-panel) {
 	grid-template-columns: auto minmax(0, 1fr) auto var(--air-right-bar-width);
 }
@@ -92,4 +108,24 @@ body:has(#bx-panel.bx-panel-fixed.bx-panel-folded) {
 	left: 0;
 	top: 0;
 	right: 0;
+}
+
+@media (max-width: 767px) {
+	body {
+		--air-right-panel-width: 0px;
+		--air-right-panel-expanded: 0;
+		--air-content-area-left-shift: 12px;
+	}
+
+	.root,
+	body.im-bar-mode-off:not(.--right-panel-expanded) .root {
+		grid-template-columns: minmax(0, 1fr) var(--air-right-bar-width);
+		grid-template-rows: auto var(--air-topbar-height) minmax(0, 1fr) auto;
+		grid-template-areas:
+			"admin  admin"
+			"header avatar"
+			"main   main"
+			"footer footer"
+	;
+	}
 }

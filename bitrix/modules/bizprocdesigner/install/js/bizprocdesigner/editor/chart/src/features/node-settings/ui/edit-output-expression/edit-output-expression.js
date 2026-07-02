@@ -10,9 +10,14 @@ import { PORT_TYPES } from '../../../../shared/constants';
 
 import type { Port } from '../../../../shared/types';
 
+const OUTPUT_LABELS = {
+	rule: 'E',
+	relation: 'NE',
+};
+
 // @vue/component
 export const EditOutputExpression = {
-	name: 'edit-output-expression',
+	name: 'EditOutputExpression',
 	components: { BIcon, Popup },
 	props:
 	{
@@ -22,7 +27,7 @@ export const EditOutputExpression = {
 			type: Object,
 			required: true,
 		},
-		scrolling:
+		isScrolling:
 		{
 			type: Boolean,
 			required: true,
@@ -38,21 +43,12 @@ export const EditOutputExpression = {
 	{
 		return {
 			isPopupShown: false,
-			changedOutputPorts: [],
+			allOutputPorts: [],
 		};
 	},
 	computed:
 	{
-		...mapState(useNodeSettingsStore, ['nodeSettings', 'block']),
-		savedOutputPorts(): Array
-		{
-			return this.block?.ports
-				.filter((port) => port.type === PORT_TYPES.output)
-				.map((port) => ({
-					portId: port.id,
-					title: port.title,
-				})) ?? [];
-		},
+		...mapState(useNodeSettingsStore, ['nodeSettings', 'block', 'currentRule']),
 		selectedPort:
 		{
 			get(): string
@@ -88,12 +84,43 @@ export const EditOutputExpression = {
 				width: 200,
 			};
 		},
+		portId(): string
+		{
+			const nextPortNumber = this.allOutputPorts.reduce(
+				(acc, currentValue: Port) => Math.max(acc, parseInt(currentValue.portId.slice(1), 10)),
+				0,
+			) + 1;
+
+			return `o${nextPortNumber}`;
+		},
+		portTitle(): string
+		{
+			const lastPort = this.ports[this.ports.length - 1];
+			const label = this.portType === PORT_TYPES.output
+				? OUTPUT_LABELS.rule
+				: OUTPUT_LABELS.relation;
+			const num = (lastPort?.title.split(label)[1]) ?? 0;
+
+			return `${label}${Number(num) + 1}`;
+		},
+		portType(): string
+		{
+			return this.currentRule.type === PORT_TYPES.input
+				? PORT_TYPES.output
+				: PORT_TYPES.outputRelation;
+		},
+		ports(): Array<Port>
+		{
+			return this.currentRule.type === PORT_TYPES.input
+				? this.allOutputPorts.filter((port) => port.type === PORT_TYPES.output)
+				: this.allOutputPorts.filter((port) => port.type === PORT_TYPES.outputRelation);
+		},
 	},
 	watch:
 	{
-		scrolling(scrolling: boolean)
+		isScrolling(isScrolling: boolean)
 		{
-			if (scrolling && this.isPopupShown)
+			if (isScrolling && this.isPopupShown)
 			{
 				this.isPopupShown = false;
 			}
@@ -101,8 +128,19 @@ export const EditOutputExpression = {
 	},
 	created(): void
 	{
-		this.changedOutputPorts = [...this.savedOutputPorts];
-		if (this.changedOutputPorts.length === 0)
+		this.allOutputPorts = this.block?.ports.reduce((acc, port) => {
+			if (port.type === PORT_TYPES.output || port.type === PORT_TYPES.outputRelation)
+			{
+				acc.push({
+					portId: port.id,
+					title: port.title,
+					type: port.type,
+				});
+			}
+
+			return acc;
+		}, []) ?? [];
+		if (this.ports.length === 0)
 		{
 			this.addNewPort();
 		}
@@ -116,16 +154,15 @@ export const EditOutputExpression = {
 		},
 		addNewPort(): void
 		{
-			const lastPort = this.changedOutputPorts[this.changedOutputPorts.length - 1] ?? null;
-			const lastPortIdNumber = lastPort ? parseInt(lastPort.portId.replace('o', ''), 10) : 0;
-			this.changedOutputPorts.push({
-				portId: `o${lastPortIdNumber + 1}`,
-				title: `E${lastPortIdNumber + 1}`,
+			this.allOutputPorts.push({
+				portId: this.portId,
+				title: this.portTitle,
+				type: this.portType,
 			});
 		},
 		deletePort(portId: string): void
 		{
-			this.changedOutputPorts = this.changedOutputPorts.filter((port) => {
+			this.allOutputPorts = this.allOutputPorts.filter((port) => {
 				return port.portId !== portId;
 			});
 			if (portId === this.selectedPort.portId)
@@ -153,9 +190,9 @@ export const EditOutputExpression = {
 		},
 	},
 	template: `
-		<div class="edit-output-expression-form">
-			<div class="edit-output-expression-form__item">
-				<span class="edit-output-expression-form__label">
+		<div class="editor-chart-node-settings-edit-output-expression-form">
+			<div class="editor-chart-node-settings-edit-output-expression-form__item">
+				<span class="editor-chart-node-settings-edit-output-expression-form__label">
 					{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_ACTION_EXPRESSION_NAME') }}
 				</span>
 				<div class="ui-ctl ui-ctl-textbox">
@@ -167,12 +204,12 @@ export const EditOutputExpression = {
 					/>
 				</div>
 			</div>
-			<div class="edit-output-expression-form__item">
-				<span class="edit-output-expression-form__label">
+			<div class="editor-chart-node-settings-edit-output-expression-form__item">
+				<span class="editor-chart-node-settings-edit-output-expression-form__label">
 					{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_EXPRESSION_VALUE') }}
 				</span>
 				<div
-					class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown edit-output-expression-form__dropdown"
+					class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown editor-chart-node-settings-edit-output-expression-form__dropdown"
 					ref="nodeSettingsRuleOutputDropdown"
 					@click="isPopupShown = true"
 				>
@@ -188,14 +225,14 @@ export const EditOutputExpression = {
 						:options="popupOptions"
 						@close="isPopupShown = false"
 					>
-						<div class="edit-output-expression-form__dropdown_popup">
+						<div class="editor-chart-node-settings-edit-output-expression-form__dropdown_popup">
 							<div
-								class="edit-output-expression-form__dropdown_popup-content"
+								class="editor-chart-node-settings-edit-output-expression-form__dropdown_popup-content"
 								ref="nodeSettingsRuleOutputDropdownContent"
 							>
 								<div
-									v-for="outputPort in changedOutputPorts"
-									class="edit-output-expression-form__dropdown_popup-item"
+									v-for="outputPort in ports"
+									class="editor-chart-node-settings-edit-output-expression-form__dropdown_popup-item"
 									@click="selectPort(outputPort)"
 								>
 									<span>{{ outputPort.title }}</span>
@@ -207,16 +244,16 @@ export const EditOutputExpression = {
 									</button>
 								</div>
 							</div>
-							<div class="edit-output-expression-form__dropdown_popup-footer">
+							<div class="editor-chart-node-settings-edit-output-expression-form__dropdown_popup-footer">
 								<div
-									class="edit-output-expression-form__dropdown_popup-footer-content"
+									class="editor-chart-node-settings-edit-output-expression-form__dropdown_popup-footer-content"
 									@click="onAddButtonClick"
 								>
 									<BIcon
 										:size="24"
 										name="circle-plus"
 										color="#0075ff"
-										class="edit-output-expression-form__dropdown_popup-footer-icon"
+										class="editor-chart-node-settings-edit-output-expression-form__dropdown_popup-footer-icon"
 									/>
 									<span>{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_ACTION_OUTPUT_ADD') }}</span>
 								</div>

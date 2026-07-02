@@ -1,9 +1,8 @@
 import { Loc } from 'main.core';
+import { type EventEmitter } from 'main.core.events';
 
 import { ChatType, EventType, SidebarDetailBlock } from 'im.v2.const';
-
-import type { EventEmitter } from 'main.core.events';
-import type { ImModelChat } from 'im.v2.model';
+import { type ImModelChat } from 'im.v2.model';
 
 const UserCounterPhraseCodeByChatType = {
 	[ChatType.openChannel]: 'IM_CONTENT_CHAT_HEADER_CHANNEL_USER_COUNT',
@@ -51,6 +50,16 @@ export const UserCounter = {
 				'#COUNT#': this.dialog.userCounter,
 			});
 		},
+		isShowGuestCount(): boolean
+		{
+			return this.dialog.guestCount > 0 && this.dialog.type === ChatType.chat;
+		},
+		guestCounterText(): string
+		{
+			return Loc.getMessagePlural('IM_CONTENT_CHAT_HEADER_GUEST_COUNT', this.dialog.guestCount, {
+				'#COUNT#': this.dialog.guestCount,
+			});
+		},
 	},
 	methods:
 	{
@@ -85,6 +94,9 @@ export const UserCounter = {
 			:class="{'--click': needShowSubtitleCursor}"
 		>
 			{{ userCounterText }}
+			<span v-if="isShowGuestCount" class="bx-im-chat-header__guest-counter">
+				{{ guestCounterText }}
+			</span>
 		</div>
 	`,
 };

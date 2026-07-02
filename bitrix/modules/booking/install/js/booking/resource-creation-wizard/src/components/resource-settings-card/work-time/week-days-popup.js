@@ -1,4 +1,3 @@
-import { PopupOptions } from 'main.popup';
 import { Popup } from 'booking.component.popup';
 import { WorkTimeMixin } from './work-time-mixin';
 

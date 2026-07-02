@@ -1,7 +1,7 @@
 import { PingSelector, PingSelectorEvents } from 'crm.field.ping-selector';
 import { DatetimeConverter } from 'crm.timeline.tools';
 import { Runtime, Type } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { type BaseEvent, EventEmitter } from 'main.core.events';
 import { Timezone } from 'main.date';
 
 import { Action } from '../../../action';

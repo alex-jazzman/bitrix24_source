@@ -34,6 +34,7 @@ type Options = {
 	addSenderCallback?: Function,
 	setSenderCallback?: Function,
 	updateSenderList: () => void,
+	sliderOptions?: Object,
 }
 
 const SidePanel = BX.SidePanel;
@@ -52,6 +53,7 @@ export class ProviderShowcase
 		this.setSenderCallback = options.setSenderCallback ?? null;
 		this.addSenderCallback = options.addSenderCallback ?? null;
 		this.updateSenderList = options.updateSenderList ?? null;
+		this.sliderOptions = options.sliderOptions ?? {};
 
 		this.container = Tag.render`
 			<div class="showcase-container"></div>
@@ -186,17 +188,23 @@ export class ProviderShowcase
 
 	#createSmtpItemNode(): void
 	{
-		this.smtpNode = Tag.render`
-			<div class="mail-provider-item mail-provider-item-available">
-				<div class="mail-provider-img-container">
-					<div class="mail-provider-img-smtp"></div>
-				</div>
-				<div class="mail-provider-item-title-container">
-					<span class="mail-provider-item-title">${Loc.getMessage('UI_MAIL_PROVIDER_SMTP_TITLE')}</span>
-				</div>
-			</div>
+		const smtpTitle = Loc.getMessage('UI_MAIL_PROVIDER_SMTP_TITLE');
+		const { root: smtpRoot, button: smtpButton } = Tag.render`
+			<li ref="root">
+				<button class="mail-provider-item mail-provider-item-available" ref="button"
+					aria-label="${Loc.getMessage('UI_MAIL_PROVIDER_CONNECT_LABEL', { '#NAME#': smtpTitle })}"
+				>
+					<div class="mail-provider-img-container">
+						<div class="mail-provider-img-smtp"></div>
+					</div>
+					<div class="mail-provider-item-title-container">
+						<span class="mail-provider-item-title">${smtpTitle}</span>
+					</div>
+				</button>
+			</li>
 		`;
-		Event.bind(this.smtpNode, 'click', () => {
+		this.smtpNode = smtpRoot;
+		Event.bind(smtpButton, 'click', () => {
 			const slider = BX.SidePanel.Instance.getTopSlider();
 			if (slider)
 			{
@@ -219,8 +227,8 @@ export class ProviderShowcase
 			return;
 		}
 
-		Dom.addClass(this.smtpNode, 'available-mail-provider-item');
-		Dom.attr(this.smtpNode, 'data-tag', Loc.getMessage('UI_MAIL_PROVIDER_AVAILABLE_TAG'));
+		Dom.addClass(smtpButton, 'available-mail-provider-item');
+		Dom.attr(smtpButton, 'data-tag', Loc.getMessage('UI_MAIL_PROVIDER_AVAILABLE_TAG'));
 	}
 
 	#createShowcase(params: ProvidersParams): void
@@ -228,7 +236,7 @@ export class ProviderShowcase
 		this.options = params.options;
 		this.providers = params.providers;
 		this.showcaseNode = Tag.render`
-			<div class="mail-provider-list"></div>
+			<ul class="mail-provider-list" aria-label="${Loc.getMessage('UI_MAIL_PROVIDER_SHOWCASE_TITLE')}"></ul>
 		`;
 		Dom.append(this.showcaseNode, this.container);
 		this.#createProvidersList();
@@ -267,15 +275,23 @@ export class ProviderShowcase
 		this.providers.forEach((provider) => {
 			const key = this.#getProviderKey(provider.name);
 			const name = provider.name;
-			const { root, title } = Tag.render`
-				<a class="mail-provider-item mail-provider-item-available">
-					<div class="mail-provider-img-container">
-						<div class="mail-provider-img ${this.#getProviderImgSrcClass(key)}"></div>
-					</div>
-					<div class="mail-provider-item-title-container" ref="title">
-						<span class="mail-provider-item-title">${Text.encode(this.#getProviderName(key) ?? (name[0].toUpperCase() + name.slice(1)))}</span>
-					</div>
-				</a>
+			const providerName = this.#getProviderName(key) ?? (name[0].toUpperCase() + name.slice(1));
+			const { root, button, title } = Tag.render`
+				<li ref="root">
+					<button class="mail-provider-item mail-provider-item-available" ref="button"
+						aria-label="${Text.encode(Loc.getMessage(
+						'UI_MAIL_PROVIDER_CONNECT_LABEL',
+						{ '#NAME#': providerName },
+						))}"
+					>
+						<div class="mail-provider-img-container">
+							<div class="mail-provider-img ${this.#getProviderImgSrcClass(key)}"></div>
+						</div>
+						<div class="mail-provider-item-title-container" ref="title">
+							<span class="mail-provider-item-title">${Text.encode(providerName)}</span>
+						</div>
+					</button>
+				</li>
 			`;
 
 			if (provider.name === imapServiceName)
@@ -286,40 +302,7 @@ export class ProviderShowcase
 				Dom.append(imapSubtitle, title);
 			}
 
-			if (!this.options.isMailToolAvailable)
-			{
-				Event.bind(root, 'click', () => {
-					BX.UI.InfoHelper.show(this.options.toolLimitSliderCode);
-				});
-			}
-			else if (this.options.canConnectNewMailbox)
-			{
-				Event.bind(root, 'click', () => {
-					SidePanel.Instance.open(
-						provider.href,
-						{
-							width: 760,
-						},
-					);
-				});
-			}
-			else
-			{
-				Event.bind(root, 'click', () => {
-					if (this.activeFeaturePromoter)
-					{
-						this.activeFeaturePromoter.close();
-						this.activeFeaturePromoter = null;
-					}
-
-					const featureRegistry = BX.Intranet ? BX.UI.FeaturePromotersRegistry : top.BX.UI.FeaturePromotersRegistry;
-					this.activeFeaturePromoter = featureRegistry.getPromoter({
-						code: this.options.mailboxLimitSliderCode,
-						bindElement: title,
-					});
-					this.activeFeaturePromoter.show();
-				});
-			}
+			Event.bind(button, 'click', this.#createProviderClickHandler(provider, title));
 
 			Dom.append(root, this.showcaseNode);
 			if (!this.isSender || !this.options.isMailToolAvailable || !this.options.canConnectNewMailbox)
@@ -349,22 +332,27 @@ export class ProviderShowcase
 				<div class="ui-alert ui-alert-icon-info ui-alert-primary">
 					<span class="ui-alert-message">${promotionMessage}</span>
 				</div>
-				<div class="mail-provider-list" ref="providerList" style="margin-top: 10px"></div>
+				<ul class="mail-provider-list" ref="providerList" style="margin-top: 10px"
+					aria-label="${Loc.getMessage('UI_MAIL_PROVIDER_UNAVAILABLE_LIST_LABEL')}"
+				></ul>
 			</div>
 		`;
 		this.promotionShowcaseNode = root;
 
 		this.options.promotionProviders.forEach((providerName) => {
 			const name = Text.encode(providerName);
+			const displayName = this.#getProviderName(name) ?? (name[0].toUpperCase() + name.slice(1));
 			const item = Tag.render`
-				<a class="mail-provider-item mail-provider-item-unavailable">
-					<div class="mail-provider-img-container">
-						<div class="mail-provider-img ${this.#getProviderImgSrcClass(name)}"></div>
-					</div>
-					<div class="mail-provider-item-title-container">
-						<span class="mail-provider-item-title">${Text.encode(this.#getProviderName(name) ?? (name[0].toUpperCase() + name.slice(1)))}</span>
-					</div>
-				</a>
+				<li>
+					<span class="mail-provider-item mail-provider-item-unavailable">
+						<span class="mail-provider-img-container">
+							<span class="mail-provider-img ${this.#getProviderImgSrcClass(name)}"></span>
+						</span>
+						<span class="mail-provider-item-title-container">
+							<span class="mail-provider-item-title">${Text.encode(displayName)}</span>
+						</span>
+					</span>
+				</li>
 			`;
 			Dom.append(item, providerList);
 		});
@@ -389,6 +377,44 @@ export class ProviderShowcase
 		mailbox.name = name;
 		mailbox.email = email;
 		this.addSenderCallback(mailbox);
+	}
+
+	#createProviderClickHandler(provider: Provider, title: HTMLElement): Function
+	{
+		if (!this.options.isMailToolAvailable)
+		{
+			return () => {
+				BX.UI.InfoHelper.show(this.options.toolLimitSliderCode);
+			};
+		}
+
+		if (this.options.canConnectNewMailbox)
+		{
+			return () => {
+				SidePanel.Instance.open(
+					provider.href,
+					{
+						width: 760,
+						...this.sliderOptions,
+					},
+				);
+			};
+		}
+
+		return () => {
+			if (this.activeFeaturePromoter)
+			{
+				this.activeFeaturePromoter.close();
+				this.activeFeaturePromoter = null;
+			}
+
+			const featureRegistry = BX.Intranet ? BX.UI.FeaturePromotersRegistry : top.BX.UI.FeaturePromotersRegistry;
+			this.activeFeaturePromoter = featureRegistry.getPromoter({
+				code: this.options.mailboxLimitSliderCode,
+				bindElement: title,
+			});
+			this.activeFeaturePromoter.show();
+		};
 	}
 
 	#getProviderKey(name: string): string

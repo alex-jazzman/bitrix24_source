@@ -137,13 +137,6 @@ if (
 				->build()
 			;
 		}
-		else
-		{
-			echo (\Bitrix\Crm\Tour\CopilotInCallBuyingBoost::getInstance())
-				->setEntityTypeId($entityTypeId)
-				->build()
-			;
-		}
 	}
 
 	if (Container::getInstance()->getRepeatSaleAvailabilityChecker()->isEnabled())
@@ -588,3 +581,5 @@ if ($arResult['BIZPROC_AVAILABLE']): ?>
 		);
 	</script>
 <?php endif;
+
+echo \Bitrix\Crm\Tour\ImOpenLines\AiAgent\OpenLineActivityTour::getInstance()->build();

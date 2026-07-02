@@ -3,5 +3,4 @@ module.exports = {
 	output: 'dist/deep-to-raw.bundle.js',
 	namespace: 'BX.Booking.Lib',
 	browserslist: true,
-	minification: true,
 };

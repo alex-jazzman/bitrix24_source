@@ -1,4 +1,11 @@
-<?require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
+<?php
+
+require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
+
+/**
+ * @global CMain $APPLICATION
+ * @global CUser $USER
+ */
 
 IncludeModuleLangFile(__FILE__);
 
@@ -116,17 +123,17 @@ if ($bImportComplete)
 		"HTML"=>true,
 		"TYPE"=>"OK",
 	));
-	LocalRedirect("smile.php?SET_ID=".$arSmile['SET_ID']."&lang=".LANG);
+	LocalRedirect("smile.php?SET_ID=".$arSmile['SET_ID']."&lang=".LANGUAGE_ID);
 }
 else if (isset($message) && $message)
 	echo $message->Show();
 ?>
 	<form method="POST" action="<?=$APPLICATION->GetCurPageParam()?>" name="smile_import" enctype="multipart/form-data">
 	<input type="hidden" name="Update" value="Y" />
-	<input type="hidden" name="lang" value="<?=LANG?>" />
+	<input type="hidden" name="lang" value="<?=LANGUAGE_ID?>" />
 	<input type="hidden" name="ID" value="<?=$ID?>" />
 	<?=bitrix_sessid_post()?>
-<?
+<?php
 	$aTabs = array(
 		array("DIV" => "edit1", "TAB" => GetMessage("SMILE_TAB_SMILE"), "ICON" => "smile", "TITLE" => GetMessage("SMILE_TAB_SMILE_DESCR"))
 	);
@@ -147,20 +154,20 @@ $tabControl->BeginNextTab();
 		<td width="40%"><?=GetMessage("SMILE_SET_ID")?>:</td>
 		<td width="60%">
 			<select name="SET_ID" <?=($arSmileSetDisabled? 'disabled="true"':'')?>>
-			<?foreach ($arSmileSet as $key => $value):?>
+			<?php foreach ($arSmileSet as $key => $value):?>
 				<option value="<?=$key?>" <?=($arSmile["SET_ID"] == $key ? "selected" : "")?>><?=$value;?></option>
-			<?endforeach;?>
+			<?php endforeach;?>
 			</select>
 		</td>
 	</tr>
-	<tr<?if ($ID <= 0){ ?> class="adm-detail-required-field"<? }?>>
+	<tr<?php if ($ID <= 0){ ?> class="adm-detail-required-field"<?php }?>>
 		<td>
 			<?=GetMessage("SMILE_FILE")?>:<br><small><?=GetMessage("SMILE_FILE_NOTE")?></small></td>
 		<td>
 			<input type="file" name="IMPORT" size="30" />
 		</td>
 	</tr>
-<?
+<?php
 $tabControl->EndTab();
 
 $tabControl->Buttons(array(
@@ -168,15 +175,15 @@ $tabControl->Buttons(array(
 ));
 ?>
 </form>
-<?
+<?php
 $tabControl->End();
 $tabControl->ShowWarnings("smile_import", $message);
 
 ?>
 <?=BeginNote();?>
-<div><?=GetMessage('IM_IMPORT_HELP_1', Array('#LINK_START#'=>'<a href="/bitrix/admin/fileman_admin.php?lang='.LANG.'&path=%2Fbitrix%2Fmodules%2Fmain%2Finstall%2Fsmiles">', '#LINK_END#'=>'</a>'))?></div>
+<div><?=GetMessage('IM_IMPORT_HELP_1', Array('#LINK_START#'=>'<a href="/bitrix/admin/fileman_admin.php?lang='.LANGUAGE_ID.'&path=%2Fbitrix%2Fmodules%2Fmain%2Finstall%2Fsmiles">', '#LINK_END#'=>'</a>'))?></div>
 <div style="padding-top:5px"><?=GetMessage('IM_IMPORT_HELP_2')?></div>
 <div style="padding-top:5px"><?=GetMessage('IM_IMPORT_HELP_3')?></div>
 <div style="padding-top:15px"><?=GetMessage('IM_IMPORT_HELP_4')?></div>
 <?=EndNote();?>
-<?require($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/main/include/epilog_admin.php");?>
+<?php require($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/main/include/epilog_admin.php");?>

@@ -112,6 +112,20 @@ jn.define('feature', (require, exports, module) => {
 		{
 			return Boolean(feature?.isFeatureEnabled('tabswidget_api_v1'));
 		}
+
+		/**
+		 * Fullscreen backgrounds for user's profile screen and main menu
+		 * @return {boolean}
+		 */
+		static canUseWidgetBackground()
+		{
+			return Boolean(feature?.isFeatureEnabled('widget_background_layout'));
+		}
+
+		static isLocationStatusSupported()
+		{
+			return Boolean(feature?.isFeatureEnabled('device_location_status'));
+		}
 	}
 
 	/**

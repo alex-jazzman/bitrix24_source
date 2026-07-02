@@ -109,7 +109,7 @@
 .bx-im-desktop-mode-selection-banner__mode-option.--selected .bx-im-desktop-mode-selection-banner__selected-icon::before {
 	border: 1px solid var(--im-desktop-mode-selection-banner__border-color_selected-icon_active);
 	background-color: var(--im-desktop-mode-selection-banner__background-color_selected-icon_active);
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='11' height='9' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1.192 4l2.872 3.077L9.808.923' stroke='%23fff' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E");
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='9' fill='none' viewBox='0 0 11 9'%3E%3Cpath stroke='%23fff' stroke-linecap='round' stroke-width='1.4' d='m1.192 4 2.872 3.077L9.808.923'/%3E%3C/svg%3E");
 	background-position: center center;
 	background-repeat: no-repeat;
 }
@@ -138,14 +138,14 @@
 .bx-im-desktop-mode-selection-banner__mode-option.--two-window .bx-im-desktop-mode-selection-banner__image {
 	width: 257px;
 	height: 173px;
-	background-image: url("images/images/two-window.png");
+	background-image: url("images/css/images/two-window.png");
 }
 
 .bx-im-desktop-mode-selection-banner__mode-option.--one-window .bx-im-desktop-mode-selection-banner__image {
 	margin-bottom: 29px;
 	width: 165px;
 	height: 128px;
-	background-image: url("images/images/one-window.png");
+	background-image: url("images/css/images/one-window.png");
 }
 
 .bx-im-desktop-mode-selection-banner__description_container {

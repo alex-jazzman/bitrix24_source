@@ -19,18 +19,16 @@ jn.define('im/messenger/lib/element/dialog/message/media-gallery', (require, exp
 
 		/**
 		 * @param {MessagesModelState} modelMessage
-		 * @param {CreateMessageOptions} options
-		 * @param {Array<FilesModelState>} fileList
+		 * @param {CreateMessageOptions|{}} options
 		 */
-		constructor(modelMessage = {}, options = {}, fileList = [])
+		constructor(modelMessage, options = {})
 		{
 			super(modelMessage, options);
 
 			this.setMessage(modelMessage.text);
-			this.setShowTail(true);
 			this.setLoadText();
 
-			this.mediaList = this.createMediaList(fileList);
+			this.mediaList = this.createMediaList(this.getModelFiles());
 		}
 
 		/**

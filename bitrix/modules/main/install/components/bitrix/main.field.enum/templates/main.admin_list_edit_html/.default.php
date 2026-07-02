@@ -2,6 +2,10 @@
 
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
+/**
+ * @var array $arResult
+ */
+
 $name = $arResult['additionalParameters']['NAME'];
 $size = $arResult['size'];
 $enumItems = $arResult['additionalParameters']['enumItems'];

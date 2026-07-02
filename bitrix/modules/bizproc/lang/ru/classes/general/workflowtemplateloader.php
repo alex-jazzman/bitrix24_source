@@ -12,5 +12,6 @@ $MESS ['BPCGWTL_INVALID6'] = "Для параметра '#NAME#' типа 'По�
 $MESS ['BPCGWTL_INVALID7'] = "Тип параметра '#NAME#' не определен";
 $MESS ['BPCGWTL_INVALID8'] = "Поле '#NAME#' должно быть обязательно заполнено";
 $MESS ['BPCGWTL_WRONG_TEMPLATE'] = "Некорректный шаблон бизнес-процесса";
+$MESS ['BPCGWTL_DUPLICATE_ACTIVITY_NAME'] = "Идентификатор '#NAME#' дублируется";
 $MESS ['BPWTL_ERROR_MESSAGE_PREFIX'] = "Действие '#TITLE#':";
 ?>

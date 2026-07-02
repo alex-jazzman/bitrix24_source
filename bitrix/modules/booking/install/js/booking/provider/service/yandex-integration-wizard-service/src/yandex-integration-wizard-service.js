@@ -90,7 +90,7 @@ class YandexIntegrationWizardService
 				this.$store.dispatch(`${yiwModel}/setIntegration`, updatedModel),
 				this.$store.dispatch(`${yiwModel}/setStatus`, updatedModel.status),
 				this.$store.dispatch(`${Model.SaleChannels}/setIntegrationStatus`, {
-					code: IntegrationMapItemCode.YANDEX,
+					code: IntegrationMapItemCode.Yandex,
 					status: updatedModel.status,
 				}),
 				this.$store.dispatch(`${yiwModel}/setResourceSkuRelationsSaved`, true),
@@ -127,7 +127,7 @@ class YandexIntegrationWizardService
 					updatedModel.status,
 				),
 				this.$store.dispatch(`${Model.SaleChannels}/setIntegrationStatus`, {
-					code: IntegrationMapItemCode.YANDEX,
+					code: IntegrationMapItemCode.Yandex,
 					status: updatedModel.status,
 				}),
 			]);

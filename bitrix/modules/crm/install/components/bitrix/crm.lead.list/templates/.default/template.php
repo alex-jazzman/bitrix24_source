@@ -56,6 +56,8 @@ Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js')
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/partial_entity_editor.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/dialog.js');
 
+echo \Bitrix\Crm\Tour\ImOpenLines\AiAgent\OnboardingPopup::getInstance()->build();
+
 ?><div id="crm-lead-list-progress-bar-container"></div><div id="batchConversionWrapper"></div><?
 echo (\Bitrix\Crm\Tour\NumberOfClients::getInstance())->build();
 ?><div id="batchDeletionWrapper"></div><?

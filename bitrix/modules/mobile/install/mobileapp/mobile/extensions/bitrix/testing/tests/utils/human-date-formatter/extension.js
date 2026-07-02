@@ -5,7 +5,11 @@
 		FormatterTypes,
 	} = require('layout/ui/friendly-date/formatter-factory');
 	const { Moment } = require('utils/date');
+	const { shortTime } = require('utils/date/formats');
 	const { describe, test, expect } = require('testing');
+
+	// locale-aware (24h/12h with am/pm)
+	const formatTime = (moment) => moment.format(shortTime).toLocaleLowerCase(env.languageId);
 
 	describe('HumanDateFormatter (FriendlyDate)', () => {
 		const now = new Moment('2025-03-09T12:00:00');
@@ -40,32 +44,29 @@
 		test('shows "today" time for same-day moments', () => {
 			const formatter = createFormatter({ showTime: true });
 			const moment = createMoment('2025-03-09T09:30:00');
-			expect(formatter.format(moment)).toBe('сегодня в 09:30');
+			expect(formatter.format(moment)).toBe(`сегодня в ${formatTime(moment)}`);
 		});
 
 		test('shows "yesterday" for previous day moments', () => {
 			const formatter = createFormatter({ showTime: true });
-			const cases = [
-				{ time: '2025-03-08T23:59:00', expected: 'вчера в 23:59' },
-				{ time: '2025-03-08T00:01:00', expected: 'вчера в 00:01' },
-			];
+			const times = ['2025-03-08T23:59:00', '2025-03-08T00:01:00'];
 
-			cases.forEach(({ time, expected }) => {
+			times.forEach((time) => {
 				const moment = createMoment(time);
-				expect(formatter.format(moment)).toBe(expected);
+				expect(formatter.format(moment)).toBe(`вчера в ${formatTime(moment)}`);
 			});
 		});
 
 		test('shows date without year for current year moments', () => {
 			const formatter = createFormatter({ showTime: true });
 			const cases = [
-				{ time: '2025-03-07T12:00:00', expected: '7 марта в 12:00' },
-				{ time: '2025-01-01T00:00:00', expected: '1 января в 00:00' },
+				{ time: '2025-03-07T12:00:00', date: '7 марта' },
+				{ time: '2025-01-01T00:00:00', date: '1 января' },
 			];
 
-			cases.forEach(({ time, expected }) => {
+			cases.forEach(({ time, date }) => {
 				const moment = createMoment(time);
-				expect(formatter.format(moment)).toBe(expected);
+				expect(formatter.format(moment)).toBe(`${date} в ${formatTime(moment)}`);
 			});
 		});
 
@@ -73,7 +74,7 @@
 			const formatter = createFormatter({ showTime: true });
 
 			const moment = createMoment('2024-06-11T12:00:00');
-			expect(formatter.format(moment)).toBe('11 июня 2024 в 12:00');
+			expect(formatter.format(moment)).toBe(`11 июня 2024 в ${formatTime(moment)}`);
 		});
 
 		test('corner cases', () => {
@@ -83,7 +84,7 @@
 			expect(formatter.format(exactly1Hour)).toBe('60 минут назад');
 
 			const exactly24h = createMoment('2025-03-08T12:00:00');
-			expect(formatter.format(exactly24h)).toBe('вчера в 12:00');
+			expect(formatter.format(exactly24h)).toBe(`вчера в ${formatTime(exactly24h)}`);
 		});
 
 		test('shows month and day without time for current year dates', () => {

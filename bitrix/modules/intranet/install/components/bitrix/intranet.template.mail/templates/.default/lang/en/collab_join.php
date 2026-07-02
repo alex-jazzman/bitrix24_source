@@ -12,3 +12,6 @@ $MESS["INTRANET_COLLAB_JOIN_LINK_IM_NAME"] = "Messenger";
 $MESS["INTRANET_COLLAB_JOIN_LINK_TASKS_NAME"] = "Tasks";
 $MESS["INTRANET_COLLAB_JOIN_LOGIN_TO_COLLAB"] = "Open the collab";
 $MESS["INTRANET_COLLAB_JOIN_SUBJECT"] = "You joined the collab";
+$MESS["INTRANET_PROJECT_JOIN_JOINED_TO_PROJECT"] = "You have joined [style]the project[/style].";
+$MESS["INTRANET_PROJECT_JOIN_LOGIN_TO_PROJECT"] = "Open project";
+$MESS["INTRANET_PROJECT_JOIN_SUBJECT"] = "You have joined the project.";

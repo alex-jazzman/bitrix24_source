@@ -9,9 +9,9 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/grid/rows/pack-head
 
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
-	const { GridSection, StickerEventType } = require('im/messenger/controller/dialog/lib/sticker/src/const');
+	const { GridSection, StickerEventType, MenuActionType } = require('im/messenger/controller/dialog/lib/sticker/src/const');
 	const { emitter } = require('im/messenger/controller/dialog/lib/sticker/src/utils/emitter');
-	const { PackMenu, ActionType } = require('im/messenger/controller/dialog/lib/sticker/src/ui/menu/pack');
+	const { PackMenu } = require('im/messenger/controller/dialog/lib/sticker/src/ui/menu/pack');
 
 	/**
 	 * @class StickerPackHeader
@@ -159,13 +159,13 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/grid/rows/pack-head
 			if (this.props.sectionType === GridSection.recent)
 			{
 				return [
-					ActionType.clearHistory,
+					MenuActionType.clearHistory,
 				];
 			}
 
 			if (this.props.sectionData.authorId !== StickerPackHeader.currentUserId)
 			{
-				return [ActionType.unlink];
+				return [MenuActionType.unlink];
 			}
 
 			if (this.props.sectionData.authorId === StickerPackHeader.currentUserId)
@@ -173,10 +173,10 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/grid/rows/pack-head
 				const data = [];
 				if (this.props.canEditPack)
 				{
-					data.push(ActionType.edit);
+					data.push(MenuActionType.edit);
 				}
 
-				return [...data, ActionType.delete];
+				return [...data, MenuActionType.delete];
 			}
 
 			return [];

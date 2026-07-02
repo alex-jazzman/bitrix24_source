@@ -1,4 +1,5 @@
 import type { SlotRange } from 'booking.model.resources';
+import type { AiAgentData } from 'booking.model.ai-agent';
 import type { AdvertisingResourceType, NotificationsSettings } from './types';
 
 export class ResourceCreationWizardDataExtractor
@@ -53,5 +54,10 @@ export class ResourceCreationWizardDataExtractor
 	isChannelChoiceAvailable(): boolean
 	{
 		return this.#data.isChannelChoiceAvailable;
+	}
+
+	getAiAgent(): AiAgentData | null
+	{
+		return this.#data.aiAgent ?? null;
 	}
 }

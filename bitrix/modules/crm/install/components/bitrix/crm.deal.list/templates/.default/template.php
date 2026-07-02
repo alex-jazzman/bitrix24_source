@@ -62,6 +62,8 @@ Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js')
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/partial_entity_editor.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/dialog.js');
 
+echo \Bitrix\Crm\Tour\ImOpenLines\AiAgent\OnboardingPopup::getInstance()->build();
+
 ?><div id="crm-deal-list-progress-bar-container"></div><div id="batchDeletionWrapper"></div>
 <?
 echo \Bitrix\Crm\Update\Order\DealGenerator::getHtml();
@@ -492,103 +494,133 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 		'data' => $arDeal,
 		'editable' => !$arDeal['EDIT'] ? ($arResult['INTERNAL'] ? 'N' : $arColumns) : 'Y',
 		'columns' => array(
-				'DEAL_SUMMARY' => CCrmViewHelper::RenderInfo(
-					$arDeal['PATH_TO_DEAL_SHOW'] ?? '',
-					($arDeal['TITLE_PREFIX'] ?? '') . ($arDeal['TITLE'] ?? ('[' . $arDeal['ID'] . ']')),
-					Tracking\UI\Grid::enrichSourceName(
-						\CCrmOwnerType::Deal,
-						$arDeal['ID'],
-						$arDeal['DEAL_DESCRIPTION']
-					),
-					[
-						'TARGET' => '_top',
-						'LEGEND' => $arDeal['DEAL_LEGEND'],
-					]
+			'DEAL_SUMMARY' => CCrmViewHelper::RenderInfo(
+				$arDeal['PATH_TO_DEAL_SHOW'] ?? '',
+				($arDeal['TITLE_PREFIX'] ?? '') . ($arDeal['TITLE'] ?? ('[' . $arDeal['ID'] . ']')),
+				Tracking\UI\Grid::enrichSourceName(
+					\CCrmOwnerType::Deal,
+					$arDeal['ID'],
+					$arDeal['DEAL_DESCRIPTION']
 				),
-				'DEAL_CLIENT' => isset($arDeal['CLIENT_INFO']) ? CCrmViewHelper::PrepareClientInfo($arDeal['CLIENT_INFO']) : '',
-				'COMPANY_ID' => isset($arDeal['COMPANY_INFO']) ? CCrmViewHelper::PrepareClientInfo($arDeal['COMPANY_INFO']) : '',
-				'CONTACT_ID' => isset($arDeal['CONTACT_INFO']) ? CCrmViewHelper::PrepareClientInfo($arDeal['CONTACT_INFO']) : '',
-				'TITLE' => $title,
-				'CLOSED' => isset($arDeal['CLOSED']) && $arDeal['CLOSED'] === 'Y'
-					? GetMessage('MAIN_YES')
-					: GetMessage('MAIN_NO'),
-				'ASSIGNED_BY' => isset($arDeal['~ASSIGNED_BY_ID']) && $arDeal['~ASSIGNED_BY_ID'] > 0
-					? $userRender->render(
-						$arDeal['~ASSIGNED_BY_ID'],
-						'ASSIGNED_BY_ID',
-						$arResult['GRID_ID'],
-						$arResult['DB_FILTER'],
-					)
-					: '',
-				'COMMENTS' => htmlspecialcharsback($arDeal['COMMENTS'] ?? ''),
-				'SUM' => $arDeal['FORMATTED_OPPORTUNITY'],
-				'OPPORTUNITY' => $arDeal['OPPORTUNITY'] ?? 0.0,
-				'PROBABILITY' => $probability,
-				'DATE_CREATE' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($dateCreate), $now),
-				'DATE_MODIFY' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($dateModify), $now),
-				'MOVED_TIME' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($movedTime), $now),
-				'TYPE_ID' => $typeId,
-				'SOURCE_ID' => $sourceId,
-				'EVENT_ID' => $eventId,
-				'CURRENCY_ID' => CCrmCurrency::GetEncodedCurrencyName($arDeal['CURRENCY_ID'] ?? null),
-				'PRODUCT_ID' => isset($arDeal['PRODUCT_ROWS'])
-					? htmlspecialcharsbx(CCrmProductRow::RowsToString($arDeal['PRODUCT_ROWS']))
-					: '',
-				'STATE_ID' => $stateId,
-				'WEBFORM_ID' => $webformId,
-				'PAYMENT_STAGE' => ($arDeal['PAYMENT_STAGE'] ?? ''),
-				'DELIVERY_STAGE' => ($arDeal['DELIVERY_STAGE'] ?? ''),
-				'STAGE_ID' => CCrmViewHelper::RenderDealStageControl(
-					array(
-						'PREFIX' => "{$arResult['GRID_ID']}_PROGRESS_BAR_",
-						'ENTITY_ID' => $arDeal['~ID'],
-						'CURRENT_ID' => $arDeal['~STAGE_ID'],
-						'CATEGORY_ID' => $arDeal['~CATEGORY_ID'],
-						'SERVICE_URL' => '/bitrix/components/bitrix/crm.deal.list/list.ajax.php',
-						'READ_ONLY' => !(isset($arDeal['EDIT']) && $arDeal['EDIT'] === true)
-					)
-				),
-				'PREVIOUS_STAGE_ID' => htmlspecialcharsbx($arDeal['DEAL_PREVIOUS_STAGE_NAME']),
-				'CATEGORY_ID' => $arDeal['DEAL_CATEGORY_NAME'],
-				'IS_RETURN_CUSTOMER' => $arDeal['IS_RETURN_CUSTOMER'] === 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO'),
-				'IS_REPEATED_APPROACH' => $arDeal['IS_REPEATED_APPROACH'] === 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO'),
-				'ORIGINATOR_ID' => $arDeal['ORIGINATOR_NAME'] ?? '',
-				'CREATED_BY' => isset($arDeal['~CREATED_BY']) && isset($arDeal['CREATED_BY_FORMATTED_NAME']) && $arDeal['~CREATED_BY'] > 0
+				[
+					'TARGET' => '_top',
+					'LEGEND' => $arDeal['DEAL_LEGEND'],
+				]
+			),
+			'DEAL_CLIENT' =>
+				isset($arDeal['CLIENT_INFO']) ? CCrmViewHelper::PrepareClientInfo($arDeal['CLIENT_INFO']) : ''
+			,
+			'COMPANY_ID' =>
+				isset($arDeal['COMPANY_INFO']) ? CCrmViewHelper::PrepareClientInfo($arDeal['COMPANY_INFO']) : ''
+			,
+			'CONTACT_ID' =>
+				isset($arDeal['CONTACT_INFO']) ? CCrmViewHelper::PrepareClientInfo($arDeal['CONTACT_INFO']) : ''
+			,
+			'MYCOMPANY_ID' =>
+				isset($arDeal['MY_COMPANY_INFO']) ? CCrmViewHelper::PrepareClientInfo($arDeal['MY_COMPANY_INFO']) : ''
+			,
+			'TITLE' => $title,
+			'CLOSED' =>
+				isset($arDeal['CLOSED']) && $arDeal['CLOSED'] === 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO')
+			,
+			'ASSIGNED_BY' =>
+				isset($arDeal['~ASSIGNED_BY_ID']) && $arDeal['~ASSIGNED_BY_ID'] > 0
+				? $userRender->render(
+					$arDeal['~ASSIGNED_BY_ID'],
+					'ASSIGNED_BY_ID',
+					$arResult['GRID_ID'],
+					$arResult['DB_FILTER'],
+				)
+				: ''
+			,
+			'COMMENTS' => htmlspecialcharsback($arDeal['COMMENTS'] ?? ''),
+			'SOURCE_DESCRIPTION' => nl2br($arDeal['SOURCE_DESCRIPTION'] ?? ''),
+			'SUM' => $arDeal['FORMATTED_OPPORTUNITY'],
+			'OPPORTUNITY' => $arDeal['OPPORTUNITY'] ?? 0.0,
+			'PROBABILITY' => $probability,
+			'DATE_CREATE' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($dateCreate), $now),
+			'DATE_MODIFY' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($dateModify), $now),
+			'MOVED_TIME' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($movedTime), $now),
+			'TYPE_ID' => $typeId,
+			'SOURCE_ID' => $sourceId,
+			'EVENT_ID' => $eventId,
+			'CURRENCY_ID' => CCrmCurrency::GetEncodedCurrencyName($arDeal['CURRENCY_ID'] ?? null),
+			'PRODUCT_ID' => isset($arDeal['PRODUCT_ROWS'])
+				? htmlspecialcharsbx(CCrmProductRow::RowsToString($arDeal['PRODUCT_ROWS']))
+				: '',
+			'STATE_ID' => $stateId,
+			'WEBFORM_ID' => $webformId,
+			'PAYMENT_STAGE' => ($arDeal['PAYMENT_STAGE'] ?? ''),
+			'DELIVERY_STAGE' => ($arDeal['DELIVERY_STAGE'] ?? ''),
+			'STAGE_ID' => CCrmViewHelper::RenderDealStageControl(
+				array(
+					'PREFIX' => "{$arResult['GRID_ID']}_PROGRESS_BAR_",
+					'ENTITY_ID' => $arDeal['~ID'],
+					'CURRENT_ID' => $arDeal['~STAGE_ID'],
+					'CATEGORY_ID' => $arDeal['~CATEGORY_ID'],
+					'SERVICE_URL' => '/bitrix/components/bitrix/crm.deal.list/list.ajax.php',
+					'READ_ONLY' => !(isset($arDeal['EDIT']) && $arDeal['EDIT'] === true)
+				)
+			),
+			'PREVIOUS_STAGE_ID' => htmlspecialcharsbx($arDeal['DEAL_PREVIOUS_STAGE_NAME']),
+			'CATEGORY_ID' => $arDeal['DEAL_CATEGORY_NAME'],
+			'IS_RETURN_CUSTOMER' =>
+				$arDeal['IS_RETURN_CUSTOMER'] === 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO')
+			,
+			'IS_REPEATED_APPROACH' =>
+				$arDeal['IS_REPEATED_APPROACH'] === 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO')
+			,
+			'ORIGINATOR_ID' => $arDeal['ORIGINATOR_NAME'] ?? '',
+			'CREATED_BY' =>
+				isset($arDeal['~CREATED_BY'])
+				&& isset($arDeal['CREATED_BY_FORMATTED_NAME'])
+				&& $arDeal['~CREATED_BY'] > 0
 					? $userRender->render(
 						$arDeal['~CREATED_BY'],
 						'CREATED_BY_ID',
 						$arResult['GRID_ID'],
 						$arResult['DB_FILTER'],
 					)
-					: '',
-				'MOVED_BY' => isset($arDeal['~MOVED_BY']) && isset($arDeal['MOVED_BY_FORMATTED_NAME']) && $arDeal['~MOVED_BY'] > 0
+					: ''
+			,
+			'MOVED_BY' =>
+				isset($arDeal['~MOVED_BY'])
+				&& isset($arDeal['MOVED_BY_FORMATTED_NAME'])
+				&& $arDeal['~MOVED_BY'] > 0
 					? $userRender->render(
 						$arDeal['~MOVED_BY'],
 						'MOVED_BY_ID',
 						$arResult['GRID_ID'],
 						$arResult['DB_FILTER'],
 					)
-					: '',
-				'MODIFY_BY' => isset($arDeal['~MODIFY_BY']) && isset($arDeal['MODIFY_BY_FORMATTED_NAME']) && $arDeal['~MODIFY_BY'] > 0
+					: ''
+			,
+			'MODIFY_BY' =>
+				isset($arDeal['~MODIFY_BY'])
+				&& isset($arDeal['MODIFY_BY_FORMATTED_NAME'])
+				&& $arDeal['~MODIFY_BY'] > 0
 					? $userRender->render(
 						$arDeal['~MODIFY_BY'],
 						'MODIFY_BY_ID',
 						$arResult['GRID_ID'],
 						$arResult['DB_FILTER'],
 					)
-					: '',
-				'OBSERVERS' => CCrmViewHelper::renderObservers(
-					$arResult['GRID_ID'],
-					$arResult['DB_FILTER'],
-					$arDeal['~OBSERVERS'] ?? [],
-				),
-			) + (is_array($arResult['DEAL_UF'][$sKey]) ? $arResult['DEAL_UF'][$sKey] : [])
+					: ''
+			,
+			'OBSERVERS' => CCrmViewHelper::renderObservers(
+				$arResult['GRID_ID'],
+				$arResult['DB_FILTER'],
+				$arDeal['~OBSERVERS'] ?? [],
+			),
+		) + (is_array($arResult['DEAL_UF'][$sKey]) ? $arResult['DEAL_UF'][$sKey] : [])
 	);
 
 	$availabilityChecker = Container::getInstance()->getRepeatSaleAvailabilityChecker();
 	if ($availabilityChecker->isAvailable() && $availabilityChecker->hasPermission())
 	{
-		$resultItem['columns']['REPEAT_SALE_SEGMENT_ID'] = CCrmViewHelper::renderRepeatSaleSegmentTitle((int)($arDeal['REPEAT_SALE_SEGMENT_ID'] ?? 0));
+		$resultItem['columns']['REPEAT_SALE_SEGMENT_ID'] =
+			CCrmViewHelper::renderRepeatSaleSegmentTitle((int)($arDeal['REPEAT_SALE_SEGMENT_ID'] ?? 0))
+		;
 	}
 
 	if (isset($arDeal['COMPANY_REVENUE']))
@@ -623,42 +655,6 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 				)
 			;
 		}
-	}
-
-	$extraWebformFields = [
-		'CONTACT_WEBFORM_ID',
-		'COMPANY_WEBFORM_ID',
-	];
-	foreach ($extraWebformFields as $extraWebformField)
-	{
-		if (
-			isset($arDeal[$extraWebformField])
-			&& $arDeal[$extraWebformField] != ''
-			&& isset($arResult['WEBFORM_LIST'][$arDeal[$extraWebformField]])
-		)
-		{
-			$resultItem['columns'][$extraWebformField] = $arResult['WEBFORM_LIST'][$arDeal[$extraWebformField]];
-		}
-	}
-
-	if (isset($arDeal['CONTACT_SOURCE_DESCRIPTION']))
-	{
-		$resultItem['columns']['CONTACT_SOURCE_DESCRIPTION'] = nl2br($arDeal['CONTACT_SOURCE_DESCRIPTION']);
-	}
-
-	if (isset($arDeal['CONTACT_COMMENTS']))
-	{
-		$resultItem['columns']['CONTACT_COMMENTS'] = htmlspecialcharsback($arDeal['CONTACT_COMMENTS']);
-	}
-
-	if (isset($arDeal['COMPANY_BANKING_DETAILS']))
-	{
-		$resultItem['columns']['COMPANY_BANKING_DETAILS'] = nl2br($arDeal['COMPANY_BANKING_DETAILS']);
-	}
-
-	if (isset($arDeal['COMPANY_COMMENTS']))
-	{
-		$resultItem['columns']['COMPANY_COMMENTS'] = htmlspecialcharsback($arDeal['COMPANY_COMMENTS']);
 	}
 
 	Tracking\UI\Grid::appendRows(

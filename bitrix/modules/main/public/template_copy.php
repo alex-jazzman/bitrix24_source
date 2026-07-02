@@ -165,7 +165,7 @@ if($strWarning == "")
 
 <?=$strJSText?>
 </script>
-<?
+				<?php
 				die();
 			}
 		}
@@ -192,14 +192,14 @@ $sCurrentTemplateName = ($arComponent["DATA"]["TEMPLATE_NAME"] <> ""? htmlspecia
 $obJSPopup->ShowTitlebar();
 $obJSPopup->StartDescription($sIcon);
 ?>
-<?if($arComponentDescription["NAME"] <> ""):?>
-<p title="<?echo GetMessage("comp_prop_name")?>"><b><?echo htmlspecialcharsbx($arComponentDescription["NAME"])?></b></p>
-<?endif;?>
-<?if($arComponentDescription["DESCRIPTION"] <> ""):?>
-<p title="<?echo GetMessage("comp_prop_desc")?>"><?echo htmlspecialcharsbx($arComponentDescription["DESCRIPTION"])?></p>
-<?endif;?>
-<p class="note" title="<?echo GetMessage("comp_prop_path")?>"><a href="/bitrix/admin/fileman_admin.php?lang=<?echo LANGUAGE_ID?>&amp;path=<?echo urlencode($localPath)?>"><?echo htmlspecialcharsbx($_GET["component_name"])?></a></p>
-<?
+<?php if($arComponentDescription["NAME"] <> ""):?>
+<p title="<?= GetMessage("comp_prop_name")?>"><b><?= htmlspecialcharsbx($arComponentDescription["NAME"])?></b></p>
+<?php endif;?>
+<?php if($arComponentDescription["DESCRIPTION"] <> ""):?>
+<p title="<?= GetMessage("comp_prop_desc")?>"><?= htmlspecialcharsbx($arComponentDescription["DESCRIPTION"])?></p>
+<?php endif;?>
+<p class="note" title="<?= GetMessage("comp_prop_path")?>"><a href="/bitrix/admin/fileman_admin.php?lang=<?= LANGUAGE_ID?>&amp;path=<?= urlencode($localPath)?>"><?= htmlspecialcharsbx($_GET["component_name"])?></a></p>
+<?php
 if (isset($_GET['system_template']) && $_GET['system_template'] == 'Y')
 	ShowNote(GetMessage("copy_comp_sys_templ"));
 
@@ -211,7 +211,7 @@ if($strWarning <> "")
 }
 ?>
 
-<?
+<?php
 $obJSPopup->StartContent();
 ?>
 <input type="hidden" name="action" value="save" />
@@ -230,9 +230,9 @@ window.CheckSiteTemplate = function(el)
 <table cellspacing="0" class="bx-width100">
 	<tr>
 		<td class="bx-popup-label bx-width50"><?= GetMessage("comp_templ_cur_template") ?>:</td>
-		<td><b><?=$sCurrentTemplateName?></b><?if($templateSiteTemplate==""):?> (<?echo GetMessage("comp_templ_system")?>)<?endif?></td>
+		<td><b><?=$sCurrentTemplateName?></b><?php if($templateSiteTemplate==""):?> (<?= GetMessage("comp_templ_system")?>)<?php endif?></td>
 	</tr>
-<?
+<?php
 $arSiteTemplates = array(".default"=>GetMessage("comp_templ_def_templ"));
 $db_site_templates = CSiteTemplate::GetList(array("sort"=>"asc", "name"=>"asc"), array(), array());
 while($ar_site_templates = $db_site_templates->Fetch())
@@ -243,15 +243,15 @@ if($templateSiteTemplate<>""):
 ?>
 	<tr>
 		<td class="bx-popup-label bx-width50"><?= GetMessage("comp_templ_cur_site_template")?>:</td>
-		<td><b><?= htmlspecialcharsbx($templateSiteTemplate)?></b><?if($sSiteTemplate <> "") echo " (".htmlspecialcharsbx($sSiteTemplate).")"?></td>
+		<td><b><?= htmlspecialcharsbx($templateSiteTemplate)?></b><?php if($sSiteTemplate <> "") echo " (".htmlspecialcharsbx($sSiteTemplate).")"?></td>
 	</tr>
-<?
+<?php
 endif;
 ?>
 	<tr>
 		<td class="bx-popup-label bx-width50"><?= GetMessage("comp_templ_new_tpl") ?>:</td>
 		<td>
-<?
+<?php
 $sParentComp = mb_strtolower($arComponent["DATA"]["PARENT_COMP"]);
 $bParentComp = ($sParentComp <> "" && $sParentComp !== "false" && $sParentComp !== "null");
 if(!$bParentComp):
@@ -264,55 +264,54 @@ if(!$bParentComp):
 		if(mb_strpos($templ["NAME"], $def) === 0 && ($v = intval(mb_substr($templ["NAME"], mb_strlen($def))))>$max)
 			$max = $v;
 ?>
-			<input type="text" name="TEMPLATE_NAME" value="<?echo (!empty($_REQUEST["TEMPLATE_NAME"]) ? htmlspecialcharsbx($_REQUEST["TEMPLATE_NAME"]) : htmlspecialcharsbx($def).($max+1)); ?>">
-<?else:?>
-			<?echo $sCurrentTemplateName?>
-			<input type="hidden" name="TEMPLATE_NAME" value="<?echo $sCurrentTemplateName?>">
-<?endif;?>
+			<input type="text" name="TEMPLATE_NAME" value="<?= (!empty($_REQUEST["TEMPLATE_NAME"]) ? htmlspecialcharsbx($_REQUEST["TEMPLATE_NAME"]) : htmlspecialcharsbx($def).($max+1)); ?>">
+<?php else:?>
+			<?= $sCurrentTemplateName?>
+			<input type="hidden" name="TEMPLATE_NAME" value="<?= $sCurrentTemplateName?>">
+<?php endif;?>
 		</td>
 	</tr>
 	<tr>
 		<td class="bx-popup-label bx-width50" valign="top"><?= GetMessage("comp_templ_new_template") ?>:</td>
 		<td>
-<input type="radio" name="SITE_TEMPLATE" value=".default" id="SITE_TEMPLATE_def"<?if(empty($_REQUEST["SITE_TEMPLATE"]) || $_REQUEST["SITE_TEMPLATE"] == ".default") echo " checked"?> onclick="CheckSiteTemplate(this)"><label for="SITE_TEMPLATE_def"><?echo GetMessage("template_copy_def")?> / .default (<?echo GetMessage("comp_templ_def_templ")?>)</label><br>
-<?if($_GET["template_id"] <> "" && $_GET["template_id"] <> ".default"):?>
-<input type="radio" name="SITE_TEMPLATE" value="<?echo htmlspecialcharsbx($_GET["template_id"])?>" id="SITE_TEMPLATE_cur"<?if(isset($_REQUEST["SITE_TEMPLATE"]) && $_REQUEST["SITE_TEMPLATE"] == $_GET["template_id"]) echo " checked"?> onclick="CheckSiteTemplate(this)"><label for="SITE_TEMPLATE_cur"><?echo GetMessage("template_copy_cur")?> / <?echo htmlspecialcharsbx($_GET["template_id"])?><?if($arSiteTemplates[$_GET["template_id"]] <> '') echo " (".$arSiteTemplates[$_GET["template_id"]].")"?></label><br>
-<?endif?>
-<?
+<input type="radio" name="SITE_TEMPLATE" value=".default" id="SITE_TEMPLATE_def"<?php if(empty($_REQUEST["SITE_TEMPLATE"]) || $_REQUEST["SITE_TEMPLATE"] == ".default") echo " checked"?> onclick="CheckSiteTemplate(this)"><label for="SITE_TEMPLATE_def"><?= GetMessage("template_copy_def")?> / .default (<?= GetMessage("comp_templ_def_templ")?>)</label><br>
+<?php if($_GET["template_id"] <> "" && $_GET["template_id"] <> ".default"):?>
+<input type="radio" name="SITE_TEMPLATE" value="<?= htmlspecialcharsbx($_GET["template_id"])?>" id="SITE_TEMPLATE_cur"<?php if(isset($_REQUEST["SITE_TEMPLATE"]) && $_REQUEST["SITE_TEMPLATE"] == $_GET["template_id"]) echo " checked"?> onclick="CheckSiteTemplate(this)"><label for="SITE_TEMPLATE_cur"><?= GetMessage("template_copy_cur")?> / <?= htmlspecialcharsbx($_GET["template_id"])?><?php if($arSiteTemplates[$_GET["template_id"]] <> '') echo " (".$arSiteTemplates[$_GET["template_id"]].")"?></label><br>
+<?php endif?>
+<?php
 $bList = (!empty($_REQUEST["SITE_TEMPLATE"]) && $_REQUEST["SITE_TEMPLATE"] <> $_GET["template_id"] && $_REQUEST["SITE_TEMPLATE"] <> ".default")
 ?>
-<input type="radio" name="SITE_TEMPLATE" value="" id="SITE_TEMPLATE_sel"<?if($bList) echo " checked"?> onclick="CheckSiteTemplate(this)"><label for="SITE_TEMPLATE_sel"><?echo GetMessage("template_copy_sel")?></label>
-			<select name="SITE_TEMPLATE"<?if(!$bList) echo " disabled"?>>
-				<?
+<input type="radio" name="SITE_TEMPLATE" value="" id="SITE_TEMPLATE_sel"<?php if($bList) echo " checked"?> onclick="CheckSiteTemplate(this)"><label for="SITE_TEMPLATE_sel"><?= GetMessage("template_copy_sel")?></label>
+			<select name="SITE_TEMPLATE"<?php if(!$bList) echo " disabled"?>>
+				<?php
 				foreach($arSiteTemplates as $templ_id=>$templ_name):
 					if($templ_id == ".default" || $templ_id == $_GET["template_id"])
 						continue;
 				?>
-				<option value="<?= htmlspecialcharsbx($templ_id) ?>"<?if ((!empty($_REQUEST["SITE_TEMPLATE"]) && $_REQUEST["SITE_TEMPLATE"] == $templ_id) || (empty($_REQUEST["SITE_TEMPLATE"]) && $templ_id == $template_site_template)) echo " selected";?>><?= htmlspecialcharsbx($templ_id." (".$templ_name.")") ?></option>
-				<?endforeach;?>
+				<option value="<?= htmlspecialcharsbx($templ_id) ?>"<?php if ((!empty($_REQUEST["SITE_TEMPLATE"]) && $_REQUEST["SITE_TEMPLATE"] == $templ_id) || (empty($_REQUEST["SITE_TEMPLATE"]) && $templ_id == $template_site_template)) echo " selected";?>><?= htmlspecialcharsbx($templ_id." (".$templ_name.")") ?></option>
+				<?php endforeach;?>
 			</select>
 		</td>
 	</tr>
-<?if(!$bParentComp):?>
+<?php if(!$bParentComp):?>
 	<tr>
 		<td class="bx-popup-label bx-width50"><?= GetMessage("comp_templ_use") ?>:</td>
 		<td>
-			<input type="checkbox" name="USE_TEMPLATE" value="Y"<?if (!(isset($_REQUEST["action"]) && $_REQUEST["action"] == "save" && $_REQUEST["USE_TEMPLATE"] <> "Y")) echo " checked";?><?if($bList) echo " disabled"?>>
+			<input type="checkbox" name="USE_TEMPLATE" value="Y"<?php if (!(isset($_REQUEST["action"]) && $_REQUEST["action"] == "save" && $_REQUEST["USE_TEMPLATE"] <> "Y")) echo " checked";?><?php if($bList) echo " disabled"?>>
 		</td>
 	</tr>
-<?endif?>
-<?if($USER->CanDoOperation('edit_php')):?>
+<?php endif?>
+<?php if($USER->CanDoOperation('edit_php')):?>
 	<tr>
 		<td class="bx-popup-label bx-width50"><?= GetMessage("comp_templ_edit") ?>:</td>
 		<td>
-			<input type="checkbox" name="EDIT_TEMPLATE" value="Y"<?if (!(isset($_REQUEST["action"]) && $_REQUEST["action"] == "save" && $_REQUEST["EDIT_TEMPLATE"] <> "Y")) echo " checked";?>>
+			<input type="checkbox" name="EDIT_TEMPLATE" value="Y"<?php if (!(isset($_REQUEST["action"]) && $_REQUEST["action"] == "save" && $_REQUEST["EDIT_TEMPLATE"] <> "Y")) echo " checked";?>>
 		</td>
 	</tr>
-<?endif?>
+<?php endif?>
 </table>
 
-<?
+<?php
 $obJSPopup->ShowStandardButtons();
 
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin_js.php");
-?>

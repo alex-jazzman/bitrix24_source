@@ -123,11 +123,15 @@
 		}
 
 
-		this.bindingTypeField = BX.create('a',
+		this.bindingTypeField = BX.create(
+			'button',
 			{
 				text: BX.message('MAIL_USERSIGNATURE_SENDER_TYPE_SENDER'),
-				attrs : {
-					title : BX.message('MAIL_USERSIGNATURE_SENDER_TYPE_SENDER')
+				attrs: {
+					title: BX.message('MAIL_USERSIGNATURE_SENDER_TYPE_SENDER'),
+					type: 'button',
+					tabindex: '0',
+					'aria-expanded': 'false',
 				},
 				props : {
 					className : "mail-signature-binding-type-field"
@@ -142,6 +146,16 @@
 
 		this.contextMenuBindingType = new BX.PopupMenuWindow({
 			bindElement: this.bindingTypeField,
+			closeByEsc: true,
+			focusTrap: true,
+			events: {
+				onShow: BX.proxy(function() {
+					this.bindingTypeField.setAttribute('aria-expanded', 'true');
+				}, this),
+				onClose: BX.proxy(function() {
+					this.bindingTypeField.setAttribute('aria-expanded', 'false');
+				}, this),
+			},
 			items: [
 				{
 					text: BX.message('MAIL_USERSIGNATURE_SENDER_TYPE_SENDER'),
@@ -163,11 +177,14 @@
 			]
 		});
 
-		this.bindingSignatureList = BX.create('a',
+		this.bindingSignatureList = BX.create('button',
 			{
 				text: '',
-				attrs : {
-					title : ''
+				attrs: {
+					title: '',
+					type: 'button',
+					tabindex: '0',
+					'aria-expanded': 'false',
 				},
 				props : {
 					className : "mail-signature-binding-type-field"
@@ -190,12 +207,32 @@
 		this.contextMenuSignatureAddress = new BX.PopupMenuWindow({
 			maxHeight: 150,
 			bindElement: this.bindingSignatureList,
+			closeByEsc: true,
+			focusTrap: true,
+			events: {
+				onShow: BX.proxy(function() {
+					this.bindingSignatureList.setAttribute('aria-expanded', 'true');
+				}, this),
+				onClose: BX.proxy(function() {
+					this.bindingSignatureList.setAttribute('aria-expanded', 'false');
+				}, this),
+			},
 			items: this.bindingsForPopup['ADDRESSES'],
 		});
 
 		this.contextMenuSignatureSenders = new BX.PopupMenuWindow({
 			maxHeight: 150,
 			bindElement: this.bindingSignatureList,
+			closeByEsc: true,
+			focusTrap: true,
+			events: {
+				onShow: BX.proxy(function() {
+					this.bindingSignatureList.setAttribute('aria-expanded', 'true');
+				}, this),
+				onClose: BX.proxy(function() {
+					this.bindingSignatureList.setAttribute('aria-expanded', 'false');
+				}, this),
+			},
 			items: this.bindingsForPopup['SENDERS'],
 		});
 

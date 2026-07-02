@@ -1,11 +1,8 @@
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { type JsonObject } from 'main.core';
+import { EventEmitter, type BaseEvent } from 'main.core.events';
 import { MenuManager } from 'main.popup';
 
 import { Messenger } from 'im.public';
-import { CreateChatManager } from 'im.v2.lib.create-chat';
-import { PermissionManager } from 'im.v2.lib.permission';
-import { ChatService } from 'im.v2.provider.service.chat';
-import { UserRole, PopupType, ChatType, EventType, Layout, type OnLayoutChangeEvent } from 'im.v2.const';
 import {
 	TitleInput,
 	ChatAvatar,
@@ -16,8 +13,10 @@ import {
 	RightsSection,
 	AppearanceSection,
 } from 'im.v2.component.content.chat-forms.elements';
-
-import type { JsonObject } from 'main.core';
+import { PopupType, EventType, Layout, type UserRole, type OnLayoutChangeEvent } from 'im.v2.const';
+import { CreateChatManager, CreatableChatType } from 'im.v2.lib.create-chat';
+import { PermissionManager } from 'im.v2.lib.permission';
+import { ChatService } from 'im.v2.provider.service.chat';
 
 type UserRoleItem = $Keys<typeof UserRole>;
 
@@ -75,13 +74,13 @@ export const GroupChatCreation = {
 		this.chatMembers = CreateChatManager.getInstance().getChatMembers();
 
 		this.restoreFields();
-		CreateChatManager.getInstance().setChatType(ChatType.chat);
+		CreateChatManager.getInstance().setChatType(CreatableChatType.chat);
 		CreateChatManager.getInstance().setCreationStatus(true);
 		CreateChatManager.getInstance().setChatAvatar(this.avatarFile);
 	},
 	beforeUnmount()
 	{
-		CreateChatManager.getInstance().clearExternalFields();
+		CreateChatManager.getInstance().clearPresetFields();
 		if (this.exitByCancel || this.exitByChatTypeSwitch || this.exitByCreation)
 		{
 			return;
@@ -140,13 +139,13 @@ export const GroupChatCreation = {
 				memberEntities: this.chatMembers,
 				ownerId: this.rights.ownerId,
 				managers: this.rights.managerIds,
-				isAvailableInSearch: this.settings.isAvailableInSearch,
+				searchable: this.settings.isAvailableInSearch,
 				description: this.settings.description,
 				manageUsersAdd: this.rights.manageUsersAdd,
 				manageUsersDelete: this.rights.manageUsersDelete,
 				manageUi: this.rights.manageUi,
 				manageMessages: this.rights.manageMessages,
-				autoDeleteDelay: this.settings.autoDeleteDelay,
+				messagesAutoDeleteDelay: this.settings.autoDeleteDelay,
 			}).catch(() => {
 				this.isCreating = false;
 			});
@@ -177,7 +176,7 @@ export const GroupChatCreation = {
 		onLayoutChange(event: BaseEvent<OnLayoutChangeEvent>)
 		{
 			const { to } = event.getData();
-			if (to.name === Layout.createChat && to.entityId !== ChatType.chat)
+			if (to.name === Layout.createChat && to.entityId !== CreatableChatType.chat)
 			{
 				this.exitByChatTypeSwitch = true;
 			}

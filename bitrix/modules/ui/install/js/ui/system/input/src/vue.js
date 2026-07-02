@@ -101,6 +101,10 @@ export const BInput = {
 			type: String,
 			default: 'text',
 		},
+		required: {
+			type: Boolean,
+			default: false,
+		},
 		copyable: {
 			type: Boolean,
 			default: false,
@@ -216,18 +220,29 @@ export const BInput = {
 		},
 		handleCopy(): void
 		{
-			if (this.modelValue && navigator.clipboard && window.isSecureContext)
+			if (!this.modelValue)
 			{
-				navigator.clipboard.writeText(this.modelValue);
+				return;
 			}
 
-			const button = this.$refs.copyButton;
-			if (button)
+			const showHint = () => {
+				const button = this.$refs.copyButton;
+				if (button)
+				{
+					BX.UI.Hint.show(button, this.$Bitrix.Loc.getMessage('UI_SYSTEM_INPUT_COPIED'));
+					setTimeout(() => {
+						BX.UI.Hint.hide(button);
+					}, 1500);
+				}
+			};
+
+			if (navigator.clipboard && window.isSecureContext)
 			{
-				BX.UI.Hint.show(button, this.$Bitrix.Loc.getMessage('UI_SYSTEM_INPUT_COPIED'));
-				setTimeout(() => {
-					BX.UI.Hint.hide(button);
-				}, 1500);
+				navigator.clipboard.writeText(this.modelValue).then(() => showHint());
+			}
+			else if (BX.clipboard?.copy(this.modelValue))
+			{
+				showHint();
 			}
 		},
 	},
@@ -247,16 +262,18 @@ export const BInput = {
 					'--readonly': readonly,
 				},
 			]">
-			<div v-if="label" class="ui-system-input-label" :class="{ '--inline': labelInline }">{{ label }}</div>
+			<div v-if="label" class="ui-system-input-label" :class="{ '--inline': labelInline }">{{ label }}<span v-if="required" class="ui-system-input-label-required">*</span></div>
 			<div class="ui-system-input-container" ref="inputContainer" @click="handleClick">
-				<div v-for="chip in chips" class="ui-system-input-chip">
-					<Chip
-						v-bind="chip"
-						:design="disabled ? ChipDesign.Disabled : chip.design"
-						:size="chipSize"
-						@click="$emit('chipClick', chip)"
-						@clear="$emit('chipClear', chip)"
-					/>
+				<div v-if="chips?.length > 0" class="ui-system-input-chips">
+					<div v-for="chip in chips" class="ui-system-input-chip">
+						<Chip
+							v-bind="chip"
+							:design="disabled ? ChipDesign.Disabled : chip.design"
+							:size="chipSize"
+							@click="$emit('chipClick', chip)"
+							@clear="$emit('chipClear', chip)"
+						/>
+					</div>
 				</div>
 				<BIcon v-if="icon" class="ui-system-input-icon" :name="icon"/>
 				<textarea

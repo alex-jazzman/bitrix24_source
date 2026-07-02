@@ -1,0 +1,27 @@
+.resource-notification-card-ai-settings-card {
+	border-radius: var(--ui-border-radius-lg);
+	background: var(--ui-color-accent-soft-blue-3);
+	padding: 18px 20px 20px 122px;
+	box-sizing: border-box;
+	background-image: url(../images/ai-calls.png);
+	background-size: 106px;
+	background-position: left, bottom;
+	background-repeat: no-repeat;
+}
+
+.resource-notification-card-ai-settings-card-title {
+	margin-bottom: 4px;
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-2xs);
+	letter-spacing: var(--ui-text-letter-spacing-neg-1);
+}
+
+.resource-notification-card-ai-settings-card-description {
+	margin-bottom: 14px;
+	color: var(--ui-color-base-2);
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var(--ui-font-line-height-2xs);
+	letter-spacing: var(--ui-letter-spacing-l);
+}

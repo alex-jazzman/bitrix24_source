@@ -3,6 +3,12 @@
 //**    DO NOT MODIFY THIS FILE                                       **/
 //**    MODIFICATION OF THIS FILE WILL ENTAIL SITE FAILURE            **/
 //**********************************************************************/
+
+/**
+ * @global CMain $APPLICATION
+ * @global CUser $USER
+ */
+
 if (!defined("UPD_INTERNAL_CALL") || UPD_INTERNAL_CALL != "Y")
 {
 	require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");

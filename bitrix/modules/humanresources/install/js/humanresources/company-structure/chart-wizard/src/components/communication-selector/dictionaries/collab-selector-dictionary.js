@@ -1,4 +1,6 @@
 import { getCollabDialogEntity } from 'humanresources.company-structure.structure-components';
+import { type BaseEvent } from 'main.core.events';
+import { type Dialog } from 'ui.entity-selector';
 import { AbstractSelectorDictionary } from '../selector-dictionary';
 import { PermissionActions } from 'humanresources.company-structure.permission-checker';
 

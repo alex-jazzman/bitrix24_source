@@ -53,11 +53,11 @@ $arParams["NAME_TEMPLATE_WO_NOBR"] = str_replace(
 	);
 $bUseLogin = $arParams["SHOW_LOGIN"] != "N" ? true : false;
 
-$arFilter["ENTITY_TYPE"] = Trim($arFilter["ENTITY_TYPE"]);
+$arFilter["ENTITY_TYPE"] = Trim($arFilter["ENTITY_TYPE"] ?? '');
 if ($arFilter["ENTITY_TYPE"] != SONET_ENTITY_GROUP && $arFilter["ENTITY_TYPE"] != SONET_ENTITY_USER)
 	$arFilter["ENTITY_TYPE"] = "";
-if ($arParams["ENTITY_TYPE"] == '')
-	$arParams["ENTITY_TYPE"] = Trim($_REQUEST["flt_entity_type"]);
+if (($arParams["ENTITY_TYPE"] ?? null) == '')
+	$arParams["ENTITY_TYPE"] = Trim($_REQUEST["flt_entity_type"] ?? '');
 if ($arFilter["ENTITY_TYPE"] != SONET_ENTITY_GROUP && $arFilter["ENTITY_TYPE"] != SONET_ENTITY_USER)
 	$arFilter["ENTITY_TYPE"] = "";
 
@@ -258,7 +258,7 @@ else
 	foreach ($arResult["arSocNetAllowedSubscribeEntityTypes"] as $entity_type)
 	{
 		if (
-			is_array($arResult["arSocNetAllowedSubscribeEntityTypesDesc"][$entity_type])
+			is_array($arResult["arSocNetAllowedSubscribeEntityTypesDesc"][$entity_type] ?? null)
 			&& array_key_exists("TITLE_LIST", $arResult["arSocNetAllowedSubscribeEntityTypesDesc"][$entity_type])
 			&& $arResult["arSocNetAllowedSubscribeEntityTypesDesc"][$entity_type]["TITLE_LIST"] <> ''
 		)

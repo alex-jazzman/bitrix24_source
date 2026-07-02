@@ -1,8 +1,7 @@
-<?
+<?php
 /**
- * @global \CUser $USER
- * @global \CMain $APPLICATION
- * @global \CDatabase $DB
+ * @global CUser $USER
+ * @global CMain $APPLICATION
  */
 
 use Bitrix\Main\UrlRewriter;
@@ -33,22 +32,24 @@ $arFilterFields = array(
 	"filter_id",
 );
 
-$lAdmin->InitFilter($arFilterFields);
+$filter = $lAdmin->InitFilter($arFilterFields);
 
-$siteId = \CSite::getDefSite($filter_site_id);
-
-if ($filter_site_id == '')
-{
-	$set_filter = "Y";
-	$filter_site_id = $siteId;
-	$lAdmin->InitFilter($arFilterFields);
-}
+$siteId = CSite::getDefSite($filter['filter_site_id'] ?? false);
 
 $arFilter = array();
 
-if ($filter_condition <> '') $arFilter["CONDITION"] = $filter_condition;
-if ($filter_id <> '') $arFilter["ID"] = $filter_id;
-if ($filter_path <> '') $arFilter["PATH"] = $filter_path;
+if (!empty($filter['filter_condition']))
+{
+	$arFilter["CONDITION"] = $filter['filter_condition'];
+}
+if (!empty($filter['filter_id']))
+{
+	$arFilter["ID"] = $filter['filter_id'];
+}
+if (!empty($filter['filter_path']))
+{
+	$arFilter["PATH"] = $filter['filter_path'];
+}
 
 // обработка действий групповых и одиночных
 if (($arID = $lAdmin->GroupAction()) && $isAdmin)
@@ -56,8 +57,8 @@ if (($arID = $lAdmin->GroupAction()) && $isAdmin)
 	if (isset($_REQUEST['action_target']) && $_REQUEST['action_target']=='selected')
 	{
 		$arID = Array();
-		$dbResultList = UrlRewriter::getList($siteId, $arFilter);
-		while ($arResult = $dbResultList->Fetch())
+		$arResultList = UrlRewriter::getList($siteId, $arFilter);
+		foreach ($arResultList as $arResult)
 			$arID[] = $arResult["CONDITION"];
 	}
 
@@ -66,17 +67,15 @@ if (($arID = $lAdmin->GroupAction()) && $isAdmin)
 		if ($ID == '')
 			continue;
 
-		switch ($_REQUEST['action'])
+		if ($_REQUEST['action'] == "delete")
 		{
-			case "delete":
-				UrlRewriter::delete($siteId, array("CONDITION" => $ID));
-				break;
+			UrlRewriter::delete($siteId, ["CONDITION" => $ID]);
 		}
 	}
 }
 
 // инициализация списка - выборка данных
-$arResultList = UrlRewriter::getList($siteId, $arFilter, array($by => $order));
+$arResultList = UrlRewriter::getList($siteId, $arFilter, array($oSort->getField() => $oSort->getOrder()));
 
 $dbResultList = new CDBResult;
 $dbResultList->InitFromArray($arResultList);
@@ -100,7 +99,7 @@ $arVisibleColumns = $lAdmin->GetVisibleHeaderColumns();
 // построение списка
 while ($arResult = $dbResultList->NavNext(true, "f_"))
 {
-	$row =& $lAdmin->AddRow($f_CONDITION ?? '', $arResult, "urlrewrite_edit.php?CONDITION=".UrlEncode($arResult["CONDITION"])."&lang=".LANG."&site_id=".UrlEncode($filter_site_id), GetMessage("MURL_EDIT"));
+	$row = $lAdmin->AddRow($f_CONDITION ?? '', $arResult, "urlrewrite_edit.php?CONDITION=".UrlEncode($arResult["CONDITION"])."&lang=".LANGUAGE_ID."&site_id=".UrlEncode($siteId), GetMessage("MURL_EDIT"));
 
 	$row->AddField("CONDITION", $f_CONDITION ?? '');
 	$row->AddField("ID", $f_ID ?? '');
@@ -108,7 +107,7 @@ while ($arResult = $dbResultList->NavNext(true, "f_"))
 	$row->AddField("RULE", $f_RULE ?? '');
 
 	$arActions = Array();
-	$arActions[] = array("ICON"=>"edit", "TEXT"=>GetMessage("MURL_EDIT"), "ACTION"=>$lAdmin->ActionRedirect("urlrewrite_edit.php?CONDITION=".UrlEncode($arResult["CONDITION"])."&lang=".LANG."&site_id=".UrlEncode($filter_site_id)), "DEFAULT"=>true);
+	$arActions[] = array("ICON"=>"edit", "TEXT"=>GetMessage("MURL_EDIT"), "ACTION"=>$lAdmin->ActionRedirect("urlrewrite_edit.php?CONDITION=".UrlEncode($arResult["CONDITION"])."&lang=".LANGUAGE_ID."&site_id=".UrlEncode($siteId)), "DEFAULT"=>true);
 	if($isAdmin)
 		$arActions[] = array("ICON"=>"delete", "TEXT"=>GetMessage("MURL_DELETE"), "ACTION"=>"if(confirm('".GetMessage("MURL_DELETE_CONF")."')) ".$lAdmin->ActionDoGroup(UrlEncode($arResult["CONDITION"]), "delete"));
 
@@ -129,7 +128,7 @@ while(($arRes = $dbRes->Fetch()))
 {
 	$arDDMenu[] = array(
 		"TEXT" => htmlspecialcharsbx("[".$arRes["LID"]."] ".$arRes["NAME"]),
-		"ACTION" => "window.location = 'urlrewrite_edit.php?lang=".urlencode(LANG)."&site_id=".urlencode($arRes["LID"])."';"
+		"ACTION" => "window.location = 'urlrewrite_edit.php?lang=".urlencode(LANGUAGE_ID)."&site_id=".urlencode($arRes["LID"])."';"
 	);
 }
 
@@ -143,7 +142,7 @@ $aContext = array(
 	array(
 		"TEXT" => GetMessage("MURL_REINDEX"),
 		"TITLE" => GetMessage("MURL_REINDEX_TITLE"),
-		"LINK" => "urlrewrite_reindex.php?lang=".LANG.""
+		"LINK" => "urlrewrite_reindex.php?lang=".LANGUAGE_ID
 	),
 );
 
@@ -156,8 +155,8 @@ $APPLICATION->SetTitle(GetMessage("MURL_TITLE"));
 
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_after.php");
 ?>
-<form name="find_form" method="GET" action="<?echo $APPLICATION->GetCurPage()?>?">
-<?
+<form name="find_form" method="GET" action="<?= $APPLICATION->GetCurPage()?>?">
+<?php
 $oFilter = new CAdminFilter(
 	$sTableID."_filter",
 	array(
@@ -172,28 +171,28 @@ $oFilter->Begin();
 	<tr>
 		<td><?= GetMessage("MURL_FILTER_PATH") ?>:</td>
 		<td align="left" nowrap>
-			<input type="text" name="filter_path" size="50" value="<?= htmlspecialcharsEx($filter_path) ?>">
+			<input type="text" name="filter_path" size="50" value="<?= htmlspecialcharsbx($filter['filter_path']) ?>">
 		</td>
 	</tr>
 	<tr>
 		<td><?= GetMessage("MURL_FILTER_SITE") ?>:</td>
 		<td>
-			<?echo CLang::SelectBox("filter_site_id", $filter_site_id) ?>
+			<?= CLang::SelectBox("filter_site_id", $filter['filter_site_id']) ?>
 		</td>
 	</tr>
 	<tr>
 		<td><?= GetMessage("MURL_USL") ?>:</td>
 		<td>
-			<input type="text" name="filter_condition" size="50" value="<?= htmlspecialcharsEx($filter_condition) ?>">
+			<input type="text" name="filter_condition" size="50" value="<?= htmlspecialcharsbx($filter['filter_condition']) ?>">
 		</td>
 	</tr>
 	<tr>
 		<td><?= GetMessage("MURL_COMPONENT") ?>:</td>
 		<td>
-			<input type="text" name="filter_id" size="50" value="<?= htmlspecialcharsEx($filter_id) ?>">
+			<input type="text" name="filter_id" size="50" value="<?= htmlspecialcharsbx($filter['filter_id']) ?>">
 		</td>
 	</tr>
-<?
+<?php
 $oFilter->Buttons(
 	array(
 		"table_id" => $sTableID,
@@ -204,9 +203,8 @@ $oFilter->Buttons(
 $oFilter->End();
 ?>
 </form>
-<?
+<?php
 // место для вывода списка
 $lAdmin->DisplayList();
 
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");
-?>

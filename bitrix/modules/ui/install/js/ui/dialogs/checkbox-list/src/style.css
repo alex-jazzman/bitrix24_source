@@ -169,7 +169,7 @@
 }
 
 .ui-checkbox-list__search.--disabled button.ui-ctl-after {
-	pointer-events: none!important;
+	pointer-events: none !important;
 }
 
 .ui-checkbox-list__search-clear{

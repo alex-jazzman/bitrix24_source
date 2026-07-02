@@ -232,6 +232,17 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 			return this.renderBody();
 		}
 
+		/**
+		 * ClientField uses this method only when there is no permission to read entities
+		 *
+		 * @protected
+		 * @return {string}
+		 */
+		getEditableEmptyValue()
+		{
+			return BX.message('FIELDS_CLIENT_ACCESS_DENIED');
+		}
+
 		renderBody()
 		{
 			if (this.isEmpty() && !this.isShowClientAdd())
@@ -810,10 +821,7 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 					isContact
 					|| (isCompany && !companies.some((company) => this.shouldShowClient(company)))
 				)
-				&& (
-					this.checkPermissions(selectorType, 'add')
-					|| this.checkPermissions(selectorType, 'update')
-				)
+				&& this.checkPermissions(selectorType, 'read')
 			);
 		}
 

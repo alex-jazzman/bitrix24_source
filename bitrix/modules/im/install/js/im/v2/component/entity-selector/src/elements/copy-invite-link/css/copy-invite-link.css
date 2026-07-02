@@ -1,0 +1,37 @@
+.bx-im-copy-invite-link__invite-block.--link {
+	--im-copy-invite-link__color_copy-link-title: var(--ui-color-black-base);
+
+	display: flex;
+	align-items: center;
+}
+
+.bx-im-copy-invite-link__invite-block {
+	padding: 20px 16px;
+	background: var(--ui-color-bg-content-primary);
+	box-shadow: 0 1px 2px 0 rgba(var(--im-color-palette-black-solid-rgb), 0.05);
+}
+
+.bx-im-copy-invite-link__invite-block-title {
+	font-size: var(--im-font-size-xl);
+	font-weight: var(--im-font-weight-medium);
+	color: var(--im-copy-invite-link__color_copy-link-title);
+	margin-right: auto;
+}
+
+.bx-im-copy-invite-link__update-link_button {
+	display: inline-flex;
+	border: none;
+	border-radius: 50%;
+	background-color: transparent;
+	padding: 0;
+	cursor: pointer;
+	margin-left: 12px;
+}
+
+.bx-im-copy-invite-link__update-link_button:not(.--loading):hover {
+	background-color: #ebeff2;
+}
+
+.bx-im-copy-invite-link__update-link_button.--loading {
+	cursor: not-allowed;
+}

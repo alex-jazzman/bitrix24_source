@@ -2,6 +2,8 @@
 
 return [
 	'extensions' => [
+		'apptheme',
+		'feature',
 		'haptics',
 		'layout/ui/loading-screen',
 		'loc',
@@ -14,6 +16,7 @@ return [
 		'more-menu/search-list',
 		'more-menu/ui/panel',
 		'more-menu/utils',
+		'more-menu/ref-registry',
 		'rest/run-action-executor',
 		'statemanager/redux/slices/users',
 		'statemanager/redux/store',
@@ -23,6 +26,5 @@ return [
 		'utils/object',
 		'utils/test',
 		'utils/validation',
-		'apptheme',
 	],
 ];

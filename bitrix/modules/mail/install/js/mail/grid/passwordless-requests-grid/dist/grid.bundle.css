@@ -1,0 +1,35 @@
+#MAIL_PASSWORDLESS_REQUESTS_table .main-grid-cell-content {
+	letter-spacing: var(--ui-text-letter-spacing-neg-3);
+	color: var(--ui-color-palette-black-base);
+	padding: 10px 0 10px 0;
+}
+
+.passwordless-grid_employee-card-container {
+	display: flex;
+	gap: 10px;
+}
+
+.passwordless-grid_full-name-container {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+}
+
+.passwordless-grid_full-name-label {
+	color: var(--ui-color-accent-main-link);
+	text-decoration: none;
+}
+
+.passwordless-grid_full-name-label:hover {
+	color: var(--ui-color-accent-main-primary);
+}
+
+.passwordless-grid_position-label {
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-lg);
+	color: var(--ui-color-palette-gray-70);
+	white-space: normal;
+	max-width: 100%;
+	text-overflow: ellipsis;
+	overflow: clip;
+}

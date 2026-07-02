@@ -1,6 +1,6 @@
 import { NameService } from 'crm.ai.name-service';
 import { Router } from 'crm.router';
-import { ajax as Ajax, Loc, Runtime, Text, Type } from 'main.core';
+import { ajax as Ajax, Extension, Loc, Runtime, Text, Type } from 'main.core';
 import { Button as ButtonUI, ButtonState } from 'ui.buttons';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { FeaturePromotersRegistry } from 'ui.info-helper';
@@ -9,6 +9,8 @@ import { UI } from 'ui.notification';
 import { Button } from '../../components/layout/button';
 import ConfigurableItem from '../../configurable-item';
 import { Base } from '../base';
+
+import 'ui.feedback.form';
 
 const COPILOT_BUTTON_DISABLE_DELAY = 5000;
 const COPILOT_HELPDESK_CODE = 18_799_442;
@@ -50,11 +52,6 @@ export class CopilotBase extends Base
 		throw new Error('Method "getCopilotConfig" must be overridden');
 	}
 
-	getAdditionalRequestData(actionData: Object): Object
-	{
-		return {};
-	}
-
 	useInfoHelper(): boolean
 	{
 		return false;
@@ -74,12 +71,44 @@ export class CopilotBase extends Base
 		}
 	}
 
+	async openCopilotSummaryPopup(actionData: Object, activityProvider: string, jobId: number = null): void
+	{
+		Runtime.loadExtension('crm.ai.call').then((exports) => {
+			const summary = new exports.Call.Summary({
+				activityId: actionData.activityId,
+				ownerTypeId: actionData.ownerTypeId,
+				ownerId: actionData.ownerId,
+				languageTitle: actionData.languageTitle,
+				activityProvider,
+				jobId,
+			});
+			summary.open();
+		}).catch((exception) => {
+			console.error('Error loading "crm.ai.call":', exception);
+		});
+	}
+
+	getFooterCopilotButton(item: ConfigurableItem, scenario: string = null): ?Button
+	{
+		const buttonId = Type.isStringFilled(scenario) && scenario === 'call_scoring'
+			? 'aiSecondaryScenarioButton'
+			: 'aiPrimaryScenarioButton'
+		;
+
+		let copilotBtn = item.getLayoutFooterButtonById(buttonId);
+		if (copilotBtn === null)
+		{
+			copilotBtn = item.getLayoutFooterButtonById('aiPrimaryScenarioButton');
+		}
+
+		return copilotBtn;
+	}
+
 	async #showCopilotAgreement(item: ConfigurableItem, actionData: Object): Promise<void>
 	{
 		try
 		{
 			const { CopilotAgreement } = await Runtime.loadExtension('ai.copilot-agreement');
-
 			const copilotAgreementPopup = new CopilotAgreement({
 				moduleId: 'crm',
 				contextId: this.#copilotConfig.agreementContext,
@@ -107,25 +136,23 @@ export class CopilotBase extends Base
 			throw new Error('Invalid "actionData" parameters');
 		}
 
-		const aiCopilotBtn = this.#getCopilotButton(item);
-		const aiCopilotBtnUI = aiCopilotBtn.getUiButton();
-		const prevState = aiCopilotBtnUI.getState();
-
-		if (aiCopilotBtnUI.getState() === ButtonState.AI_WAITING)
+		const aiCopilotBtn = this.getFooterCopilotButton(item, actionData.scenario);
+		const aiCopilotBtnUI = aiCopilotBtn?.getUiButton();
+		if (aiCopilotBtnUI?.getState() === ButtonState.AI_WAITING)
 		{
 			return;
 		}
 
 		this.#copilotConfig.onPreLaunch?.(item, actionData);
 
-		aiCopilotBtnUI.setState(ButtonState.AI_WAITING);
+		aiCopilotBtnUI?.setState(ButtonState.AI_WAITING);
 
 		this.#executeCopilotRequest(actionData)
 			.then((response) => {
 				this.#copilotConfig.onPostLaunch?.(item, actionData, response);
 			})
 			.catch((response) => {
-				this.#handleCopilotError(item, actionData, response, aiCopilotBtnUI, prevState);
+				this.#handleCopilotError(item, actionData, response, aiCopilotBtnUI);
 			});
 	}
 
@@ -138,43 +165,32 @@ export class CopilotBase extends Base
 		;
 	}
 
-	#getCopilotButton(item: ConfigurableItem): Button
-	{
-		const aiCopilotBtn = item.getLayoutFooterButtonById('aiButton');
-		if (!aiCopilotBtn)
-		{
-			throw new Error('"AI button" component is not found in layout');
-		}
-
-		return aiCopilotBtn;
-	}
-
 	#executeCopilotRequest(actionData: Object): Promise
 	{
+		const settings: Object<string, any> = Extension.getSettings('crm.timeline.item');
+		const scenarioList: Array = settings.aiScenarioList ?? [];
+		const isValidScenario = Type.isStringFilled(actionData.scenario)
+			&& scenarioList.includes(actionData.scenario)
+		;
+
 		return Ajax.runAction(this.#copilotConfig.actionEndpoint, {
 			data: {
 				activityId: actionData.activityId,
 				ownerTypeId: actionData.ownerTypeId,
 				ownerId: actionData.ownerId,
-				...this.getAdditionalRequestData(actionData),
+				scenario: isValidScenario ? actionData.scenario : null,
 			},
 		});
 	}
 
-	#handleCopilotError(
-		item: ConfigurableItem,
-		actionData: Object,
-		response: Object,
-		btnUI: ButtonUI,
-		prevState: string,
-	): void
+	#handleCopilotError(item: ConfigurableItem, actionData: Object, response: Object, btnUI: ?ButtonUI): void
 	{
-		const customData: ?CoPilotAdditionalInfoData = response.errors[0].customData;
+		const customData: ?CoPilotAdditionalInfoData = response?.errors?.[0]?.customData;
 		if (customData)
 		{
 			this.#showAdditionalInfo(customData, item);
 
-			btnUI.setState(prevState || ButtonState.ACTIVE);
+			btnUI?.setState(ButtonState.ACTIVE);
 		}
 		else
 		{
@@ -186,17 +202,17 @@ export class CopilotBase extends Base
 		throw response;
 	}
 
-	#showGenericError(response: Object, btnUI: ButtonUI): void
+	#showGenericError(response: Object, btnUI: ?ButtonUI): void
 	{
-		btnUI.setState(ButtonState.DISABLED);
+		btnUI?.setState(ButtonState.DISABLED);
 
 		UI.Notification.Center.notify({
-			content: Text.encode(response.errors[0].message),
+			content: Text.encode(response?.errors?.[0]?.message ?? Loc.getMessage('CRM_COMMON_ERROR')),
 			autoHideDelay: COPILOT_BUTTON_DISABLE_DELAY,
 		});
 
 		setTimeout(() => {
-			btnUI.setState(ButtonState.ACTIVE);
+			btnUI?.setState(ButtonState.ACTIVE);
 		}, COPILOT_BUTTON_DISABLE_DELAY);
 	}
 

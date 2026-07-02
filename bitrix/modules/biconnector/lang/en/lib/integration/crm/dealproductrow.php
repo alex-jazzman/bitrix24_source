@@ -34,3 +34,4 @@ $MESS["CRM_BIC_DEAL_PRODUCT_ROW_FIELD_TAX_INCLUDED"] = "Include tax in price";
 $MESS["CRM_BIC_DEAL_PRODUCT_ROW_FIELD_TAX_INCLUDED_FULL"] = "Y - yes, N - no";
 $MESS["CRM_BIC_DEAL_PRODUCT_ROW_FIELD_TAX_RATE"] = "Tax";
 $MESS["CRM_BIC_DEAL_PRODUCT_ROW_TABLE"] = "Deal: products";
+$MESS["CRM_BIC_DEAL_PRODUCT_ROW_TABLE_DESCRIPTION_FULL"] = "Provides information on products in deals from standard fields.";

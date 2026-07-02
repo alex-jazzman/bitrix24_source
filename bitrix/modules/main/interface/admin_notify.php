@@ -1,4 +1,9 @@
-<?
+<?php
+
+/**
+ * @global CUser $USER
+ */
+
 define("NO_KEEP_STATISTIC", true);
 define("NO_AGENT_STATISTIC", true);
 define("NOT_CHECK_PERMISSIONS", true);
@@ -10,4 +15,3 @@ if($USER->IsAdmin() && isset($_POST["ID"]) && check_bitrix_sessid())
 }
 echo "OK";
 require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin_after.php");
-?>

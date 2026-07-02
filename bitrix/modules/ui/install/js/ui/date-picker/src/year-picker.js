@@ -1,6 +1,6 @@
-import { Dom, Tag, Event, Text } from 'main.core';
-import { MemoryCache } from 'main.core.cache';
-import type { BaseCache } from 'main.core.cache';
+import { Dom, Loc, Tag, Event, Text } from 'main.core';
+import { MemoryCache, type BaseCache } from 'main.core.cache';
+
 import { BasePicker } from './base-picker';
 
 import { createUtcDate } from './helpers/create-utc-date';
@@ -14,6 +14,7 @@ export type YearPickerYear = {
 	year: number,
 	current: boolean,
 	selected: boolean,
+	disabled: boolean,
 	focused: boolean,
 	tabIndex: number,
 };
@@ -26,14 +27,31 @@ export class YearPicker extends BasePicker
 	{
 		return this.#refs.remember('container', () => {
 			return Tag.render`
-				<div class="ui-year-picker">
+				<div
+					class="ui-year-picker"
+					role="none"
+				>
 					${this.getHeaderContainer(
 						this.getPrevBtn(),
 						this.getHeaderTitle(),
 						this.getNextBtn(),
 					)}
-					${this.getContentContainer()}
+					${this.getContentContainer(this.getTrioContainer())}
 				</div>
+			`;
+		});
+	}
+
+	getTrioContainer(): HTMLElement
+	{
+		return this.#refs.remember('trio-container', () => {
+			return Tag.render`
+				<div 
+					class="ui-year-picker-content"
+					role="grid"
+					aria-label="${Loc.getMessage('UI_DATE_PICKER_YEAR_VIEW_LABEL')}"
+					aria-multiselectable="${this.getDatePicker().isSingleMode() ? 'false' : 'true'}"
+				></div>
 			`;
 		});
 	}
@@ -42,7 +60,7 @@ export class YearPicker extends BasePicker
 	{
 		return this.#refs.remember('header-title', () => {
 			return Tag.render`
-				<div class="ui-year-picker-header-title"></div>
+				<div class="ui-year-picker-header-title" aria-live="polite"></div>
 			`;
 		});
 	}
@@ -68,6 +86,7 @@ export class YearPicker extends BasePicker
 					name: year,
 					current: currentYear === year,
 					selected: this.getDatePicker().isDateSelected(createUtcDate(year), 'year'),
+					disabled: !this.getDatePicker().isDateAllowed(createUtcDate(year), 'year'),
 					focused,
 					tabIndex: focused || year === initialFocusYear ? 0 : -1,
 				});
@@ -125,7 +144,7 @@ export class YearPicker extends BasePicker
 			});
 		});
 
-		if (focusButton !== null && isFocused)
+		if (focusButton !== null && isFocused && this.getDatePicker().getFocusInputModality() === 'keyboard')
 		{
 			focusButton.focus({ preventScroll: true });
 		}
@@ -133,13 +152,16 @@ export class YearPicker extends BasePicker
 		const firstYear = years[0][0].name;
 		const lastYear = years.at(-1).at(-1).name;
 		this.getHeaderTitle().textContent = `${firstYear} — ${lastYear}`;
+
+		this.getPrevBtn().disabled = !this.getDatePicker().canNavigate('year', 'prev');
+		this.getNextBtn().disabled = !this.getDatePicker().canNavigate('year', 'next');
 	}
 
 	#renderQuarter(index: number): HTMLElement
 	{
 		return this.#refs.remember(`quarter-${index}`, () => {
-			const container: HTMLElement = Tag.render`<div class="ui-year-picker-trio"></div>`;
-			Dom.append(container, this.getContentContainer());
+			const container: HTMLElement = Tag.render`<div class="ui-year-picker-trio" role="row"></div>`;
+			Dom.append(container, this.getTrioContainer());
 
 			return container;
 		});
@@ -152,6 +174,7 @@ export class YearPicker extends BasePicker
 				<button
 					type="button"
 					class="ui-year-picker-year"
+					role="gridcell"
 					data-year="${year}"
 					data-tab-priority="true"
 					onmouseenter="${this.#handleMouseEnter.bind(this)}"
@@ -171,13 +194,27 @@ export class YearPicker extends BasePicker
 			button.textContent = year.name;
 		}
 
+		const ariaSelected = year.selected ? 'true' : 'false';
+		if (button.getAttribute('aria-selected') !== ariaSelected)
+		{
+			button.setAttribute('aria-selected', ariaSelected);
+		}
+
 		if (year.current)
 		{
 			Dom.addClass(button, '--current');
+			if (button.getAttribute('aria-current') !== 'date')
+			{
+				button.setAttribute('aria-current', 'date');
+			}
 		}
 		else
 		{
 			Dom.removeClass(button, '--current');
+			if (button.hasAttribute('aria-current'))
+			{
+				button.removeAttribute('aria-current');
+			}
 		}
 
 		if (year.selected)
@@ -198,6 +235,16 @@ export class YearPicker extends BasePicker
 			Dom.removeClass(button, '--focused');
 		}
 
+		if (year.disabled)
+		{
+			Dom.addClass(button, '--disabled');
+		}
+		else
+		{
+			Dom.removeClass(button, '--disabled');
+		}
+
+		button.disabled = Boolean(year.disabled);
 		button.tabIndex = year.tabIndex;
 
 		return button;
@@ -217,12 +264,22 @@ export class YearPicker extends BasePicker
 
 	#handleYearClick(event: MouseEvent): void
 	{
-		if (!Dom.hasClass(event.target, 'ui-year-picker-year'))
+		if (!Dom.hasClass(event.target, 'ui-year-picker-year') || event.target.disabled)
 		{
 			return;
 		}
 
 		const year = Text.toInteger(event.target.dataset.year);
 		this.emit('onSelect', { year });
+	}
+
+	getPrevBtnLabel(): string
+	{
+		return Loc.getMessage('UI_DATE_PICKER_PREV_DECADE');
+	}
+
+	getNextBtnLabel(): string
+	{
+		return Loc.getMessage('UI_DATE_PICKER_NEXT_DECADE');
 	}
 }

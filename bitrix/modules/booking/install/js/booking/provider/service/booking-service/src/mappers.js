@@ -77,6 +77,7 @@ export function mapDtoToModel(bookingDto: BookingDto): BookingModel
 		messages: bookingDto.messages?.length ? bookingDto.messages : undefined,
 		skus: bookingDto.skus,
 		payment: bookingDto.payment,
+		source: bookingDto.source,
 	};
 
 	return Object.fromEntries(Object.entries(booking).filter(([, value]) => !Type.isUndefined(value)));

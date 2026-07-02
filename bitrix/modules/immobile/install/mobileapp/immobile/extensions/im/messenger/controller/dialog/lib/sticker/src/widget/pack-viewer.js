@@ -12,15 +12,15 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/widget/pack-viewer', (
 
 	const { StickerWidgetHeader } = require('im/messenger/controller/dialog/lib/sticker/src/ui/header');
 	const { StickerService } = require('im/messenger/controller/dialog/lib/sticker/src/service/service');
-	const { StickerEventType } = require('im/messenger/controller/dialog/lib/sticker/src/const');
+	const { StickerEventType, MenuActionType } = require('im/messenger/controller/dialog/lib/sticker/src/const');
 	const { emitter } = require('im/messenger/controller/dialog/lib/sticker/src/utils/emitter');
 	const { StickerGrid } = require('im/messenger/controller/dialog/lib/sticker/src/ui/grid/grid');
 	const { PackButton } = require('im/messenger/controller/dialog/lib/sticker/src/ui/button');
 	const { ShimmerGrid } = require('im/messenger/controller/dialog/lib/sticker/src/ui/grid/shimmer-grid');
 	const { StickerNotifier } = require('im/messenger/controller/dialog/lib/sticker/src/notifier');
 	const { StickerDialogs } = require('im/messenger/controller/dialog/lib/sticker/src/dialogs');
-	const { PackMenu, ActionType: PackActionType } = require('im/messenger/controller/dialog/lib/sticker/src/ui/menu/pack');
-	const { StickerMenu, ActionType: StickerActionType } = require('im/messenger/controller/dialog/lib/sticker/src/ui/menu/sticker');
+	const { PackMenu } = require('im/messenger/controller/dialog/lib/sticker/src/ui/menu/pack');
+	const { StickerMenu } = require('im/messenger/controller/dialog/lib/sticker/src/ui/menu/sticker');
 
 	const logger = getLoggerWithContext('dialog--sticker', 'StickerPackViewer');
 
@@ -213,7 +213,7 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/widget/pack-viewer', (
 		stickerClickHandler = (stickerId, packId, packType, ref) => {
 			const menu = new StickerMenu({
 				ui: ref,
-				actions: [StickerActionType.send],
+				actions: [MenuActionType.send],
 				stickerData: {
 					id: stickerId,
 					packId,
@@ -332,17 +332,17 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/widget/pack-viewer', (
 				const actionList = [];
 				if (this.props.canEditPack)
 				{
-					actionList.push(PackActionType.edit);
+					actionList.push(MenuActionType.edit);
 				}
 
 				return [
 					...actionList,
-					PackActionType.delete,
+					MenuActionType.delete,
 				];
 			}
 
 			return [
-				PackActionType.unlink,
+				MenuActionType.unlink,
 			];
 		}
 

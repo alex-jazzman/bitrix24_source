@@ -1,5 +1,5 @@
 // @flow
-import { Event, Extension, Type } from 'main.core';
+import { type Event, Extension, Type } from 'main.core';
 import { DatePicker } from 'ui.date-picker';
 
 const boundTimePickers = new WeakSet();
@@ -33,7 +33,6 @@ export const ConstantTime = {
 			timeValue: '',
 			timezone: '',
 			timezones: [],
-			timePicker: null,
 		};
 	},
 	mounted(): void
@@ -48,6 +47,9 @@ export const ConstantTime = {
 			this.timePicker.destroy();
 			this.timePicker = null;
 		}
+	},
+	created(): void {
+		this.timePicker = null;
 	},
 	methods: {
 		syncFromModel(): void

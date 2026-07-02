@@ -432,8 +432,9 @@ export class Fields
 	{
 		const CustomEntity = this.getCustomEntityInstance();
 		const popupContainer = CustomEntity.getPopupContainer();
+		const realPopupContainer = popupContainer && popupContainer.closest('.popup-window');
 		const isOnInputField = CustomEntity.getLabelNode() === event.target;
-		const isInsidePopup = !!popupContainer && popupContainer.contains(event.target);
+		const isInsidePopup = realPopupContainer && realPopupContainer.contains(event.target);
 
 		if (!isOnInputField && !isInsidePopup)
 		{

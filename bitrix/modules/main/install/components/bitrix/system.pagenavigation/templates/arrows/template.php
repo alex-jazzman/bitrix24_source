@@ -1,5 +1,9 @@
-<?
+<?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+
+/**
+ * @var array $arResult
+ */
 
 $ClientID = 'navigation_'.$arResult['NavNum'];
 
@@ -12,7 +16,7 @@ if(!$arResult["NavShowAlways"])
 }
 ?>
 <div class="navigation">
-<?
+<?php
 $strNavQueryString = ($arResult["NavQueryString"] != "" ? $arResult["NavQueryString"]."&amp;" : "");
 $strNavQueryStringFull = ($arResult["NavQueryString"] != "" ? "?".$arResult["NavQueryString"] : "");
 if($arResult["bDescPageNumbering"] === true)
@@ -58,12 +62,12 @@ if($arResult["bDescPageNumbering"] === true)
 	}
 	?>
 		<div class="navigation-arrows">
-			<span class="arrow">&larr;</span><span class="ctrl"> ctrl</span>&nbsp;<?if ($bPrevDisabled):?><span class="disabled"><?=GetMessage("nav_prev")?></span><?else:?><a href="<?=$sPrevHref;?>" id="<?=$ClientID?>_previous_page"><?=GetMessage("nav_prev")?></a><?endif;?>&nbsp;<?if ($bNextDisabled):?><span class="disabled"><?=GetMessage("nav_next")?></span><?else:?><a href="<?=$sNextHref;?>" id="<?=$ClientID?>_next_page"><?=GetMessage("nav_next")?></a><?endif;?>&nbsp;<span class="ctrl">ctrl </span><span class="arrow">&rarr;</span>
+			<span class="arrow">&larr;</span><span class="ctrl"> ctrl</span>&nbsp;<?php if ($bPrevDisabled):?><span class="disabled"><?=GetMessage("nav_prev")?></span><?php else:?><a href="<?=$sPrevHref;?>" id="<?=$ClientID?>_previous_page"><?=GetMessage("nav_prev")?></a><?php endif;?>&nbsp;<?php if ($bNextDisabled):?><span class="disabled"><?=GetMessage("nav_next")?></span><?php else:?><a href="<?=$sNextHref;?>" id="<?=$ClientID?>_next_page"><?=GetMessage("nav_next")?></a><?php endif;?>&nbsp;<span class="ctrl">ctrl </span><span class="arrow">&rarr;</span>
 		</div>
 
 		<div class="navigation-pages">
 			<span class="navigation-title"><?=GetMessage("pages")?></span>
-	<?
+	<?php
 	$bFirst = true;
 	$bPoints = false;
 	do
@@ -75,15 +79,15 @@ if($arResult["bDescPageNumbering"] === true)
 			if ($arResult["nStartPage"] == $arResult["NavPageNomer"]):
 	?>
 			<span class="nav-current-page"><?=$NavRecordGroupPrint?></span>
-	<?
+	<?php
 			elseif($arResult["nStartPage"] == $arResult["NavPageCount"] && $arResult["bSavePage"] == false):
 	?>
 			<a href="<?=$arResult["sUrlPath"]?><?=$strNavQueryStringFull?>"><?=$NavRecordGroupPrint?></a>
-	<?
+	<?php
 			else:
 	?>
 			<a href="<?=$arResult["sUrlPath"]?>?<?=$strNavQueryString?>PAGEN_<?=$arResult["NavNum"]?>=<?=$arResult["nStartPage"]?>"><?=$NavRecordGroupPrint?></a>
-	<?
+	<?php
 			endif;
 			$bFirst = false;
 			$bPoints = true;
@@ -92,7 +96,7 @@ if($arResult["bDescPageNumbering"] === true)
 		{
 			if ($bPoints)
 			{
-	?>...<?
+	?>...<?php
 				$bPoints = false;
 			}
 		}
@@ -136,12 +140,12 @@ else
 	}
 	?>
 		<div class="navigation-arrows">
-			<span class="arrow">&larr;</span><span class="ctrl"> ctrl</span>&nbsp;<?if ($bPrevDisabled):?><span class="disabled"><?=GetMessage("nav_prev")?></span><?else:?><a href="<?=$sPrevHref;?>" id="<?=$ClientID?>_previous_page"><?=GetMessage("nav_prev")?></a><?endif;?>&nbsp;<?if ($bNextDisabled):?><span class="disabled"><?=GetMessage("nav_next")?></span><?else:?><a href="<?=$sNextHref;?>" id="<?=$ClientID?>_next_page"><?=GetMessage("nav_next")?></a><?endif;?>&nbsp;<span class="ctrl">ctrl </span><span class="arrow">&rarr;</span>
+			<span class="arrow">&larr;</span><span class="ctrl"> ctrl</span>&nbsp;<?php if ($bPrevDisabled):?><span class="disabled"><?=GetMessage("nav_prev")?></span><?php else:?><a href="<?=$sPrevHref;?>" id="<?=$ClientID?>_previous_page"><?=GetMessage("nav_prev")?></a><?php endif;?>&nbsp;<?php if ($bNextDisabled):?><span class="disabled"><?=GetMessage("nav_next")?></span><?php else:?><a href="<?=$sNextHref;?>" id="<?=$ClientID?>_next_page"><?=GetMessage("nav_next")?></a><?php endif;?>&nbsp;<span class="ctrl">ctrl </span><span class="arrow">&rarr;</span>
 		</div>
 
 		<div class="navigation-pages">
 			<span class="navigation-title"><?=GetMessage("pages")?></span>
-	<?
+	<?php
 	$bFirst = true;
 	$bPoints = false;
 	do
@@ -152,15 +156,15 @@ else
 			if ($arResult["nStartPage"] == $arResult["NavPageNomer"]):
 	?>
 			<span class="nav-current-page"><?=$arResult["nStartPage"]?></span>
-	<?
+	<?php
 			elseif($arResult["nStartPage"] == 1 && $arResult["bSavePage"] == false):
 	?>
 			<a href="<?=$arResult["sUrlPath"]?><?=$strNavQueryStringFull?>"><?=$arResult["nStartPage"]?></a>
-	<?
+	<?php
 			else:
 	?>
 			<a href="<?=$arResult["sUrlPath"]?>?<?=$strNavQueryString?>PAGEN_<?=$arResult["NavNum"]?>=<?=$arResult["nStartPage"]?>"><?=$arResult["nStartPage"]?></a>
-	<?
+	<?php
 			endif;
 			$bFirst = false;
 			$bPoints = true;
@@ -169,7 +173,7 @@ else
 		{
 			if ($bPoints)
 			{
-	?>...<?
+	?>...<?php
 				$bPoints = false;
 			}
 		}
@@ -181,17 +185,17 @@ if ($arResult["bShowAll"]):
 	if ($arResult["NavShowAll"]):
 ?>
 		<a class="nav-page-pagen" href="<?=$arResult["sUrlPath"]?>?<?=$strNavQueryString?>SHOWALL_<?=$arResult["NavNum"]?>=0"><?=GetMessage("nav_paged")?></a>
-<?
+<?php
 	else:
 ?>
 		<a class="nav-page-all" href="<?=$arResult["sUrlPath"]?>?<?=$strNavQueryString?>SHOWALL_<?=$arResult["NavNum"]?>=1"><?=GetMessage("nav_all")?></a>
-<?
+<?php
 	endif;
 endif;
 ?>
 	</div>
 </div>
-<?CJSCore::Init();?>
+<?php CJSCore::Init();?>
 <script>
 	BX.bind(document, "keydown", function (event) {
 

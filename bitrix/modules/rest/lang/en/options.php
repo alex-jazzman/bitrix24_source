@@ -1,4 +1,9 @@
-<?
+<?php
+$MESS["REST_OPT_ACCESS_POLICY"] = "Permissions";
+$MESS["REST_OPT_ACCESS_POLICY_ADD_USERS"] = "Add users";
+$MESS["REST_OPT_ACCESS_POLICY_INCOMING_WEBHOOK"] = "Users allowed to add incoming webhooks";
+$MESS["REST_OPT_ACCESS_POLICY_LOCAL_APP"] = "Users allowed to add apps for everyone";
+$MESS["REST_OPT_ACCESS_POLICY_PERSONAL_APP"] = "Users allowed to add their own apps";
 $MESS["REST_OPT_ACTIVE"] = "Logging is active";
 $MESS["REST_OPT_ACTIVE_N"] = "No";
 $MESS["REST_OPT_ACTIVE_TO"] = "Logging will become inactive in";

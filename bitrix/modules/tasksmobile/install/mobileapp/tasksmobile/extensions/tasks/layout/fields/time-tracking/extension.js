@@ -211,10 +211,10 @@ jn.define('tasks/layout/fields/time-tracking', (require, exports, module) => {
 				timeEstimate = 0,
 			} = this.props.value || {};
 
-			TimeTrackingSettingsWidget.open({
+			TimeTrackingSettingsWidget.show({
+				layout: this.getParentWidget(),
 				allowTimeTracking,
 				timeEstimate,
-				parentWidget: this.getParentWidget(),
 				onChange: (nextValue) => {
 					this.props.onChange?.({
 						...this.props.value,

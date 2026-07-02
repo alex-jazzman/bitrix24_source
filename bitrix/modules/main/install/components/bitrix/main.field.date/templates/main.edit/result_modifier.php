@@ -7,7 +7,10 @@ use Bitrix\Main\UserField\Types\DateType;
 use Bitrix\Main\Text\HtmlFilter;
 
 /**
+ * @global CDatabase $DB
  * @var $component DateUfComponent
+ * @var array $arResult
+ * @var array $arParams
  */
 
 $component = $this->getComponent();

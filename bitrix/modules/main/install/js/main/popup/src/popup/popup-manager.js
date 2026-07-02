@@ -1,9 +1,10 @@
-import Popup from './popup';
-import { type PopupOptions } from './popup-types';
 import { Type } from 'main.core';
 import { EventEmitter, type BaseEvent } from 'main.core.events';
 
-export default class PopupManager
+import { Popup } from './popup';
+import { type PopupOptions } from './popup-types';
+
+export class PopupManager
 {
 	static _popups: Popup[] = [];
 	static _currentPopup: Popup = null;
@@ -15,7 +16,7 @@ export default class PopupManager
 
 	static create(options: PopupOptions): Popup
 	{
-		let [popupId, bindElement, params] = arguments; //compatible arguments
+		let [popupId, bindElement, params] = arguments; // compatible arguments
 
 		let id = popupId;
 		let compatMode = true;

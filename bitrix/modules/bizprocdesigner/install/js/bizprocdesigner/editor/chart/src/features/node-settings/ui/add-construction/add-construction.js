@@ -2,7 +2,7 @@ import './style.css';
 
 import { MenuManager, type MenuItem } from 'main.popup';
 import { BIcon } from 'ui.icon-set.api.vue';
-import { mapActions } from 'ui.vue3.pinia';
+import { mapActions, mapState } from 'ui.vue3.pinia';
 
 import { useLoc } from '../../../../shared/composables';
 
@@ -11,7 +11,7 @@ import { CONSTRUCTION_TYPES, useNodeSettingsStore, type TRuleCard } from '../../
 
 // @vue/component
 export const AddConstruction = {
-	name: 'add-construction',
+	name: 'AddConstruction',
 	components: { BIcon },
 	props:
 	{
@@ -32,6 +32,10 @@ export const AddConstruction = {
 		const { getMessage } = useLoc();
 
 		return { getMessage };
+	},
+	computed:
+	{
+		...mapState(useNodeSettingsStore, ['nodeSettings']),
 	},
 	methods:
 	{
@@ -73,6 +77,7 @@ export const AddConstruction = {
 					text: this.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_ACTION_MENU_ITEM'),
 					dataset: { testId: 'complexNodeRuleSettingsMenuItemConstructionAction' },
 					onclick: this.onClickMenuItem,
+					disabled: this.nodeSettings.actions.size === 0,
 				},
 				{
 					id: CONSTRUCTION_TYPES.OUTPUT,
@@ -103,7 +108,7 @@ export const AddConstruction = {
 	},
 	template: `
 		<div
-			class="add-construction"
+			class="editor-chart-node-settings-add-construction"
 			@click="onShowMenu"
 		>
 			<BIcon

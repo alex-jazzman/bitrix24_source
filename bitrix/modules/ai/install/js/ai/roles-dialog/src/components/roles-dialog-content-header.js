@@ -1,4 +1,4 @@
-import { Runtime } from 'main.core';
+import { Runtime, Extension } from 'main.core';
 import type { States as StatesType } from 'ui.entity-catalog';
 import { mapWritableState } from 'ui.vue3.pinia';
 import type { RolesDialogAnalytics } from '../roles-dialog-analytics';
@@ -27,7 +27,9 @@ export function getRolesDialogContentHeader(States: StatesType, analytic: RolesD
 				return this.$Bitrix.Loc.getMessage('AI_COPILOT_ROLES_MAIN_CONTENT_HEADER');
 			},
 			hint(): string {
-				return this.$Bitrix.Loc.getMessage('AI_COPILOT_ROLES_MAIN_CONTENT_HEADER_HINT');
+				return this.$Bitrix.Loc.getMessage('AI_COPILOT_ROLES_MAIN_CONTENT_HEADER_HINT_MSGVER_1', {
+					'#COPILOT_NAME#': Extension.getSettings('ai.roles-dialog').get('copilotName'),
+				});
 			},
 		},
 		watch: {

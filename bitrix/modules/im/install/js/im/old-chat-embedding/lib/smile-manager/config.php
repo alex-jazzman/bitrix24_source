@@ -10,12 +10,12 @@ return [
 	'css' => 'dist/smile-manager.bundle.css',
 	'js' => 'dist/smile-manager.bundle.js',
 	'rel' => [
-		'main.core',
-		'ui.dexie',
-		'rest.client',
 		'im.old-chat-embedding.application.core',
 		'im.old-chat-embedding.const',
 		'im.old-chat-embedding.lib.local-storage',
+		'main.core',
+		'rest.client',
+		'ui.dexie',
 	],
 	'skip_core' => false,
 	'settings' => [

@@ -49,16 +49,15 @@ jn.define('im/messenger/lib/element/dialog/message/video-note', (require, export
 	{
 		/**
 		 * @param {MessagesModelState} modelMessage
-		 * @param {CreateMessageOptions} options
-		 * @param {FilesModelState} file
+		 * @param {CreateMessageOptions|{}} options
 		 */
-		constructor(modelMessage = {}, options = {}, file = {})
+		constructor(modelMessage, options = {})
 		{
-			super(modelMessage, options, file);
-
-			this.fileModel = file;
-			this.transcriptModel = serviceLocator.get('core').getStore().getters['filesModel/transcriptModel/getById'](file?.id);
-			this.videoNote = this.getVideoNote(modelMessage, options, { ...file });
+			super(modelMessage, options);
+			const [firstFile = {}] = this.getModelFiles();
+			this.fileModel = firstFile;
+			this.transcriptModel = serviceLocator.get('core').getStore().getters['filesModel/transcriptModel/getById'](firstFile?.id);
+			this.videoNote = this.getVideoNote(modelMessage, options, { ...firstFile });
 		}
 
 		/**
@@ -74,8 +73,8 @@ jn.define('im/messenger/lib/element/dialog/message/video-note', (require, export
 
 		/**
 		 * @param {MessagesModelState} modelMessage
-		 * @param {CreateMessageOptions} options
-		 * @param {FilesModelState} file
+		 * @param {CreateMessageOptions|{}} options
+		 * @param {FilesModelState|{}} file
 		 * @return {MessageVideoNote}
 		 */
 		getVideoNote(modelMessage, options, file)
@@ -90,7 +89,7 @@ jn.define('im/messenger/lib/element/dialog/message/video-note', (require, export
 				previewUrl: video.previewImage,
 				isPlaying,
 				playingTime,
-				speech2text: this.#prepareTranscriptProps(modelMessage),
+				speech2text: this.#prepareTranscriptProps(),
 				aiAnimation: this.#prepareAiAnimation(modelMessage),
 			};
 		}

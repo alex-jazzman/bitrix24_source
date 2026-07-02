@@ -37,6 +37,7 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 	const { DialogTextFormatAnalytics } = require('im/messenger/provider/services/analytics/src/dialog-text-format');
 	const { SearchAnalytics } = require('im/messenger/provider/services/analytics/src/search');
 	const { RecentAnalytics } = require('im/messenger/provider/services/analytics/src/recent');
+	const { MessageMenu } = require('im/messenger/provider/services/analytics/src/message-menu');
 
 	/** @type {AnalyticsService} */
 	let instance = null;
@@ -104,6 +105,8 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 		#dialogTextFormat;
 		/** @type {SearchAnalytics} */
 		#search;
+		/** @type {MessageMenu} */
+		#messageMenu;
 
 		static getInstance()
 		{
@@ -344,6 +347,16 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 		}
 
 		/**
+		 * @return {MessageMenu}
+		 */
+		get messageMenuAnalytics()
+		{
+			this.#messageMenu = this.#messageMenu ?? new MessageMenu();
+
+			return this.#messageMenu;
+		}
+
+		/**
 		 * @param {DialogId} dialogId
 		 * @param {number} recordLength
 		 */
@@ -419,9 +432,9 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 			return this.#navigation;
 		}
 
-		sendMessageDeleteActionClicked({ messageId, dialogId })
+		sendMessageDeleteActionClicked({ messageId, dialogId, isNestedSection })
 		{
-			return this.messageDelete.sendMessageDeleteActionClicked({ messageId, dialogId });
+			return this.messageDelete.sendMessageDeleteActionClicked({ messageId, dialogId, isNestedSection });
 		}
 
 		sendMessageDeletingCanceled({ messageId, dialogId })
@@ -644,19 +657,22 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 		/**
 		 * @param {DialogId} dialogId
 		 * @param {number} chatId
+		 * @param {boolean} isNestedSection
 		 */
-		sendMessagePin({ dialogId, chatId })
+		sendMessagePin({ dialogId, chatId, isNestedSection })
 		{
-			return this.messagePin.sendMessagePin({ dialogId, chatId });
+			return this.messagePin.sendMessagePin({ dialogId, chatId, isNestedSection });
 		}
 
 		/**
 		 * @param {DialogId} dialogId
 		 * @param {number} chatId
+		 * @param {boolean} isNestedSection
+		 * @param {boolean} isContextMenu
 		 */
-		sendMessageUnpin({ dialogId, chatId })
+		sendMessageUnpin({ dialogId, chatId, isNestedSection, isContextMenu })
 		{
-			return this.messagePin.sendMessageUnpin({ dialogId, chatId });
+			return this.messagePin.sendMessageUnpin({ dialogId, chatId, isNestedSection, isContextMenu });
 		}
 
 		sendTypeMessageChatNotes()
@@ -710,20 +726,21 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 		/**
 		 * @param {DialogId} dialogId
 		 * @param {number} voteId
-		 * @param {Object} voteData
+		 * @param {object} params
 		 */
-		sendVoteFinished(dialogId, voteId, voteData)
+		sendVoteFinished(dialogId, voteId, params)
 		{
-			this.vote.sendVoteFinished(dialogId, voteId, voteData);
+			this.vote.sendVoteFinished(dialogId, voteId, params);
 		}
 
 		/**
 		 * @param {DialogId} dialogId
 		 * @param {number} voteId
+		 * @param {object} params
 		 */
-		sendVoteCancelled(dialogId, voteId)
+		sendVoteCancelled(dialogId, voteId, params)
 		{
-			this.vote.sendVoteCancelled(dialogId, voteId);
+			this.vote.sendVoteCancelled(dialogId, voteId, params);
 		}
 
 		/**
@@ -738,10 +755,11 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 		/**
 		 * @param {DialogId} dialogId
 		 * @param {number} voteId
+		 * @param {boolean} isNestedSection
 		 */
-		sendVoteMessageLinkCopied(dialogId, voteId)
+		sendVoteMessageLinkCopied(dialogId, voteId, isNestedSection)
 		{
-			this.vote.sendVoteMessageLinkCopied(dialogId, voteId);
+			this.vote.sendVoteMessageLinkCopied(dialogId, voteId, isNestedSection);
 		}
 
 		sendOpenDialogCreator()

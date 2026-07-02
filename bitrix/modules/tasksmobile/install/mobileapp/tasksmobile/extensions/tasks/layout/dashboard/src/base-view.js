@@ -27,23 +27,8 @@ jn.define('tasks/layout/dashboard/base-view', (require, exports, module) => {
 
 		componentDidMount()
 		{
-			this.showOnboarding();
-		}
-
-		showOnboarding()
-		{
 			if (this.viewComponent)
 			{
-				void Onboarding.tryToShow(CaseName.ON_EMPTY_TASK_LIST, {
-					itemQuantity: this.getItems()?.length ?? 0,
-					onShow: (ctx, onHide) => this.displayFloatingButtonAhaMoment({
-						title: Loc.getMessage('M_ONBOARDING_NO_TASKS_TITLE'),
-						description: Loc.getMessage('M_ONBOARDING_NO_TASKS_DESCRIPTION'),
-						delay: 300,
-						onHide,
-					}),
-				});
-
 				BX.addCustomEvent('TasksDashboard::onSupposedlyCompletedTaskAppeared', this.onSupposedlyCompletedTaskAppeared);
 				BX.addCustomEvent('UI.SimpleList::onAllItemsPositionStable', this.onAllItemsPositionStable);
 			}

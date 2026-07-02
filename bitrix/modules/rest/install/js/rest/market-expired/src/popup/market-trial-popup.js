@@ -19,7 +19,7 @@ export class MarketTrialPopup extends MarketExpiredPopup
 				<p class="rest-market-expired-popup__description-text">
 					${
 						this.isRenamedMarket
-							? Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DESCRIPTION_TRIAL_BITRIX_GPT')
+							? Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DESCRIPTION_TRIAL_BITRIX_GPT', this.getCopilotReplacements())
 							: Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DESCRIPTION_TRIAL_MARKET_PLUS')
 					}
 				</p>
@@ -29,7 +29,7 @@ export class MarketTrialPopup extends MarketExpiredPopup
 
 	getTitle(): string
 	{
-		const replacements = { '#DAYS#': this.expireDays };
+		const replacements = { ...this.getCopilotReplacements(), '#DAYS#': this.expireDays };
 
 		if (this.type === PopupType.FINAL)
 		{

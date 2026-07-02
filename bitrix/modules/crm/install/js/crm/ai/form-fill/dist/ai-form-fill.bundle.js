@@ -1,2 +1,1528 @@
-this.BX=this.BX||{},function(e,t,i,s,o,l,a,n,r,d,c,b,u,p){"use strict";const m=e=>new Promise(t=>{setTimeout(t,e)}),h=async(e,t,i)=>{if(i<=0)return;const s=(t-e.scrollTop)/i*10;await m(10),e.scrollTop+=s,e.scrollTop!==t&&await h(e,t,i-10)},v={name:"CloseConfirm",data:()=>({messageBoxInstance:null,uniquePopupId:"ai-form-fill-feedback-popup_"+u.Text.getRandom(20).toLowerCase()}),computed:{...a.mapGetters(["isFooterHiddenAndSaveDisabled"])},methods:{...a.mapMutations(["setIsConfirmPopupShow"]),onMessageClose(e){e.uniquePopupId===this.uniquePopupId&&this.setIsConfirmPopupShow(!1)}},mounted(){this.messageBoxInstance=o.MessageBox.create({message:u.Loc.getMessage("CRM_AI_FORM_FILL_MERGER_CANCEL_CONFIRM_TEXT"),title:u.Loc.getMessage("CRM_AI_FORM_FILL_MERGER_CANCEL_CONFIRM_TITLE"),okCaption:u.Loc.getMessage("CRM_AI_FORM_FILL_MERGER_CANCEL_CONFIRM_CLOSE"),cancelCaption:u.Loc.getMessage("CRM_AI_FORM_FILL_MERGER_CANCEL_CONFIRM_CANCEL"),onOk:()=>{this.$Bitrix.eventEmitter.emit("crm:ai:form-fill:close-confirm:confirmClose",{})},onCancel:()=>{this.setIsConfirmPopupShow(!1)},buttons:BX.UI.Dialogs.MessageBoxButtons.OK_CANCEL,popupOptions:{targetContainer:this.$refs.closeConfirmRoot,id:this.uniquePopupId}}),u.addCustomEvent(window,"BX.Main.Popup:onClose",this.onMessageClose),this.messageBoxInstance.show()},unmounted(){this.messageBoxInstance&&this.messageBoxInstance.close(),u.removeCustomEvent(window,"BX.Main.Popup:onClose",this.onMessageClose)},template:'\n\t\t<div \n\t\t\tref="closeConfirmRoot" \n\t\t\tclass="crm-ai-form-fill__close-confirm"\n\t\t\t:class="{\'hidden-footer\': isFooterHiddenAndSaveDisabled}"\n\t\t></div>\n\t'},f={name:"EntityEditorWrapper",computed:{...a.mapGetters(["mergeUuid"]),entityEditorContainerId(){return`crm-ai-merge-fields__container__${this.mergeUuid}_container`}},template:'<div v-bind:id="entityEditorContainerId"></div>'},g={name:"FeedbackMessage",data:()=>({messageBoxInstance:null,uniquePopupId:"ai-form-fill-feedback-popup_"+u.Text.getRandom(20).toLowerCase()}),computed:{...a.mapGetters(["isFooterHiddenAndSaveDisabled"])},methods:{...a.mapActions(["closeFeedbackMessage","sendAiCallParsingData"]),async onOKButton(){this.closeFeedbackMessage(!0)},onCancelButton(){this.closeFeedbackMessage(!1),this.sendAiCallParsingData("feedback_refused")},onMessageClose(e){e.uniquePopupId===this.uniquePopupId&&this.closeFeedbackMessage(!1)}},mounted(){this.messageBoxInstance=r.createFeedbackMessageBox({onOk:this.onOKButton,onCancel:this.onCancelButton,popupOptions:{targetContainer:this.$refs.feedbackMessageRoot,id:this.uniquePopupId}}),u.addCustomEvent(window,"BX.Main.Popup:onClose",this.onMessageClose),this.messageBoxInstance.show()},unmounted(){this.messageBoxInstance&&this.messageBoxInstance.close(),u.removeCustomEvent(window,"BX.Main.Popup:onClose",this.onMessageClose)},template:'\n\t\t<div \n\t\t\tref="feedbackMessageRoot" \n\t\t\tclass="crm-ai-form-fill__confirm" \n\t\t\t:class="{\'hidden-footer\': isFooterHiddenAndSaveDisabled}"\n\t\t></div>\n\t'},F={name:"FloatingActionButton",computed:{...a.mapGetters({count:"getNotVisibleUnresolvedCount"}),showCounter(){return this.count>0}},methods:{click(){this.$Bitrix.eventEmitter.emit("crm:ai:form-fill:scroll-to-next",{})}},template:'\n\t\t<div @click="click" class="bx-crm-ai-merge-fields-fab">\n\t\t\t<div\n\t\t\t\tv-if="showCounter"\n\t\t\t\tclass="bx-crm-ai-merge-fields-fab_counter"\n\t\t\t>{{count}}</div>\n\t\t\t<i class="bx-crm-ai-merge-fields-fab_icon"></i>\n\t\t</div>\n\t'},C={name:"Main",components:{Loader:{name:"Loader",data:()=>({loaderInstance:null}),template:'\n\t\t<div ref="root" class="bx-crm-ai-merge-fields-loading">\n\t\t\t<div class="bx-crm-ai-merge-fields-loading__image"></div>\n\t\t</div>\n\t'},EntityEditorWrapper:f,ToolBar:{name:"ToolBar",computed:{...a.mapGetters(["conflictFields"]),conflictCount(){return this.conflictFields.length},resolvedCount(){return this.conflictFields.filter(e=>e.isAiValuesUsed).length},isApplyAllDisabled(){return this.conflictCount===this.resolvedCount},isRevertDisabled(){return 0===this.resolvedCount},titleText:()=>u.Loc.getMessage("CRM_AI_FORM_FILL_TOOLBAR_CONFLICT_COUNT_TITLE"),applyAllBtnText:()=>u.Loc.getMessage("CRM_AI_FORM_FILL_TOOLBAR_BUTTON_APPLY_ALL"),revertText:()=>u.Loc.getMessage("CRM_AI_FORM_FILL_TOOLBAR_BUTTON_ROLLBACK")},methods:{...a.mapActions(["applyAllAiFields","revertAllAiFields"])},template:'\n\t\t<div class="bx-crm-ai-form-fill__toolbar">\n\t\t\t<div class="bx-crm-ai-form-fill__toolbar__conflict_count">\n\t\t\t\t{{ titleText }}<span class="bx-crm-ai-form-fill__toolbar__conflict_count__count">{{conflictCount}}</span>\n\t\t\t</div>\n\t\t\t<div\n\t\t\t\tclass="bx-crm-ai-form-fill__toolbar__button"\n\t\t\t\t@click="applyAllAiFields"\n\t\t\t>{{ applyAllBtnText }}</div>\n\t\t\t<div\n\t\t\t\tclass="bx-crm-ai-form-fill__toolbar__button"\n\t\t\t\t@click="revertAllAiFields"\n\t\t\t>{{ revertText }}</div>\n\t\t</div>\n\t'},Merger:{name:"Merger",components:{MergeControl:{name:"MergeControl",props:{field:{type:Object,required:!0},tmp:Number},data:()=>({hasLargeContent:!0,isExpanded:!1,coveredByAnother:!1}),computed:{...a.mapGetters(["getexpandedConflictControls","eeControlPositions"]),replaceBtnText(){return this.field.isAiValuesUsed?u.Loc.getMessage("CRM_AI_FORM_FILL_MERGER_REPLACE_BTN_BACK"):u.Loc.getMessage("CRM_AI_FORM_FILL_MERGER_REPLACE_BTN_FORTH")},value(){return this.field.isAiValuesUsed?this.field.originalValue:this.field.aiValue}},methods:{...a.mapActions(["setEditorFieldValue","showEntityEditorControlOutline"]),...a.mapMutations(["toggleExpandedConflictControls"]),async toggleAiValue(e){await this.setEditorFieldValue(e),await this.expand(!1),this.hasLargeContent=this.checkHasLargeContent()},async expand(e){this.hasLargeContent&&(this.isExpanded=e,await l.nextTick(),this.toggleExpandedConflictControls({fieldId:this.field.name,size:this.$refs.root.getBoundingClientRect().height,isExpanded:e}))},onControlsExpandedModeChange(){let e=!1;const t=this.eeControlPositions.get(this.field.name,0);for(const[i,s]of this.getexpandedConflictControls){const o=this.eeControlPositions.get(i,0);if(t>o&&t-o<s){e=!0;break}}this.coveredByAnother=e},checkHasLargeContent(){return this.$refs.fieldValue.scrollWidth>this.$refs.fieldValue.clientWidth},onMouseenter(e){this.showEntityEditorControlOutline({fieldName:this.field.name,isShow:!0}),this.expand(!0)},onMouseleave(e){this.showEntityEditorControlOutline({fieldName:this.field.name,isShow:!1}),this.expand(!1)}},mounted(){this.hasLargeContent=this.checkHasLargeContent(),l.watch(this.getexpandedConflictControls,this.onControlsExpandedModeChange)},template:'\n\t\t<div \n\t\t\tclass="bx-crm-ai-form-fill-merge-control__container"\n\t\t\t:class="{\'expanded\': isExpanded, \'covered\': coveredByAnother}"\n\t\t\t@mouseenter="onMouseenter"\n\t\t\t@mouseleave="onMouseleave"\n\t\t\tref="root"\n\t\t>\n\t\t\t<div \n\t\t\t\tclass="bx-crm-ai-form-fill-merge-control-icon"\n\t\t\t\t@click="toggleAiValue(field)"\n\t\t\t>\n\n\t\t\t</div>\n\t\t\t<div class="bx-crm-ai-form-fill-merge-control-field">\n\t\t\t\t<div\n\t\t\t\t\tclass="bx-crm-ai-form-fill-merge-control-field-title"\n\t\t\t\t\t:title="field.title"\n\t\t\t\t>{{ field.title }}</div>\n\t\t\t\t<div class="bx-crm-ai-form-fill-merge-control-field-value-container">\n\t\t\t\t\t<div\n\t\t\t\t\t\tref="fieldValue"\n\t\t\t\t\t\tclass="bx-crm-ai-form-fill-merge-control-field-value-container__value"\n\t\t\t\t\t\t:class="{\'expanded\': isExpanded, \'ai-value\': !field.isAiValuesUsed}"\n\t\t\t\t\t\t:title="this.value"\n\t\t\t\t\t>{{ this.value }}</div>\n\t\t\t\t\t<div\n\t\t\t\t\t\tclass="bx-crm-ai-form-fill-merge-control-field-value-container__control"\n\t\t\t\t\t\t:class="{\'expanded\': isExpanded}"\n\t\t\t\t\t\t:style="{display: hasLargeContent ? \'block\': \'none\'}"\n\t\t\t\t\t></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div\n\t\t\t\tclass="bx-crm-ai-form-fill-merge-control-right-column"\n\t\t\t\t@click="toggleAiValue(field)"\n\t\t\t>\n\t\t\t\t<div \n\t\t\t\t\tclass="bx-crm-ai-form-fill-merge-control-button">\n\t\t\t\t\t{{ replaceBtnText }}\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t'}},data:()=>({isRootMounted:!1}),computed:{...a.mapGetters(["conflictFields","eeControlPosition","eeControlPositions","getMainLayoutScrollPosition"])},methods:{getControlTopOffset(e){return this.eeControlPositions.get(e.name,0)}},mounted(){this.isRootMounted=!0},template:'\n\t\t<div ref="root" class="bx-crm-ai-merge-fields-merger ">\n\t\t\t<MergeControl\n\t\t\t\tv-if="isRootMounted"\n\t\t\t\tv-for="field in conflictFields" :key="field.name"\n\t\t\t\tclass="bx-crm-ai-merge-fields-merger__field"\n\t\t\t\t:style="{top: getControlTopOffset(field) + \'px\'}"\n\t\t\t\t:field="field"\n\t\t\t\t:tmp="getControlTopOffset(field)"\n\t\t\t></MergeControl>\n\t\t</div>\n\t'},FloatingActionButton:F,CloseConfirm:v,FeedbackMessage:g},data:()=>({}),computed:{...a.mapGetters(["conflictFields","isLoading","eeControlPositions","getFirstUnseenFieldPosition","aiValuesAppliedCount","mergeUuid","isSliderConfirmPopupShown","isFeedbackMessageShown","isFooterHiddenAndSaveDisabled"])},methods:{...a.mapActions(["initialize","saveFormFieldsToMerge","updateControlPositionInfo","updateSliderFooter","closeFormWithoutConfirm","sendAiCallParsingData"]),...a.mapMutations(["changeMainLayoutScrollPosition","startLoading","stopLoading","setMainLayoutScrollHeight"]),onFooterSaveBtn(){this.saveFormFieldsToMerge().then(()=>this.sendAiCallParsingData("conflict_accept_changes")).catch(()=>{})},onFooterCancelBtn(){this.closeFormWithoutConfirm(),this.sendAiCallParsingData("conflict_cancel_changes")},onCloseConfirm(){this.closeFormWithoutConfirm()},handleScroll:null,positionChanged(){this.setMainLayoutScrollHeight(this.$refs.layout.scrollHeight),this.changeMainLayoutScrollPosition({scrollTop:this.$refs.layout.scrollTop,containerHeight:this.$refs.layout.getBoundingClientRect().height})},resizeHandler(){this.handleScroll()},scrollToNext(){const e=this.getFirstUnseenFieldPosition;e&&h(this.$refs.layout,e,300)},subscribeInternalEvents(){this.$Bitrix.eventEmitter.subscribe("crm:ai:form-fill:scroll-to-next",this.scrollToNext),this.$Bitrix.eventEmitter.subscribe("crm:ai:form-fill:close-confirm:confirmClose",this.onCloseConfirm),this.$Bitrix.eventEmitter.subscribe("crm:ai:form-fill:close-confirm:cancelClose",this.scrollToNext)},unSubscribeInternalEvents(){this.$Bitrix.eventEmitter.unsubscribe("crm:ai:form-fill:scroll-to-next",this.scrollToNext),this.$Bitrix.eventEmitter.unsubscribe("crm:ai:form-fill:close-confirm:confirmClose",this.onCloseConfirm),this.$Bitrix.eventEmitter.unsubscribe("crm:ai:form-fill:close-confirm:cancelClose",this.scrollToNext)},autoScrollToFirst(){const e=this.$refs.layout.getBoundingClientRect().height,t=this.getFirstUnseenFieldPosition;t&&t>e&&h(this.$refs.layout,t,800)}},async mounted(){this.updateSliderFooter(),this.startLoading(),this.handleScroll=u.Runtime.throttle(()=>{this.positionChanged()},300),await this.initialize(),this.positionChanged(),this.subscribeInternalEvents(),await this.$nextTick(()=>{u.Event.bind(window,"resize",this.resizeHandler)}),this.stopLoading(),this.autoScrollToFirst(),e.sliderButtonsAdapter.onSaveCallback=this.onFooterSaveBtn,e.sliderButtonsAdapter.onCancelCallback=this.onFooterCancelBtn},watch:{aiValuesAppliedCount:{handler(e,t){this.updateSliderFooter()},immediate:!0}},unmounted(){this.unSubscribeInternalEvents(),u.Event.unbind(window,"resize",this.resizeHandler)},template:'\n\t\t<div class="bx-crm-ai-merge-fields" :class="{\'hidden-footer\': isFooterHiddenAndSaveDisabled}">\n\t\t\t<div \n\t\t\t\tclass="bx-crm-ai-merge-fields-layout" \n\t\t\t\t@scroll="handleScroll"\n\t\t\t\tref="layout"\n\t\t\t\t:style="{\'visibility\': !isLoading ? \'visible\' : \'hidden\'}"\n\t\t\t\t:class="{\'hidden-footer\': isFooterHiddenAndSaveDisabled}"\n\t\t\t>\n\t\t\t\t<EntityEditorWrapper class="bx-crm-ai-merge-fields-layout__ee_column"/>\n\t\t\t\t<Merger class="bx-crm-ai-merge-fields-layout__aifields_column"/>\n\t\t\t\t<div class="bx-crm-ai-merge-fields-layout__floating-button_column">\n\t\t\t\t\t<FloatingActionButton/>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<Loader v-if="isLoading" />\n\t\t\t<CloseConfirm v-if="isSliderConfirmPopupShown" />\n\t\t\t<FeedbackMessage v-if="isFeedbackMessageShown" />\n\t\t</div>\n\t'};var L=babelHelpers.classPrivateFieldLooseKey("editor"),B=babelHelpers.classPrivateFieldLooseKey("initialContainerTop"),P=babelHelpers.classPrivateFieldLooseKey("onUserFieldDeployedCb"),y=babelHelpers.classPrivateFieldLooseKey("refreshControlLayout"),E=babelHelpers.classPrivateFieldLooseKey("setEntityEditorBBValue"),I=babelHelpers.classPrivateFieldLooseKey("setPlainTextFieldValue"),_=babelHelpers.classPrivateFieldLooseKey("setUserFieldValue"),A=babelHelpers.classPrivateFieldLooseKey("getValueFromControl");class H{constructor(){Object.defineProperty(this,A,{value:O}),Object.defineProperty(this,_,{value:T}),Object.defineProperty(this,I,{value:w}),Object.defineProperty(this,E,{value:M}),Object.defineProperty(this,y,{value:S}),Object.defineProperty(this,L,{writable:!0,value:null}),Object.defineProperty(this,B,{writable:!0,value:void 0}),Object.defineProperty(this,P,{writable:!0,value:null})}async init(e){babelHelpers.classPrivateFieldLooseBase(this,L)[L]=e;babelHelpers.classPrivateFieldLooseBase(this,B)[B]=babelHelpers.classPrivateFieldLooseBase(this,L)[L].getContainer().getBoundingClientRect().y+5,u.addCustomEvent(window,"BX.UI.EntityUserFieldLayoutLoader:onUserFieldDeployed",e=>{u.Type.isFunction(babelHelpers.classPrivateFieldLooseBase(this,P)[P])&&babelHelpers.classPrivateFieldLooseBase(this,P)[P](e)})}setOnUserFieldDeployedCb(e){babelHelpers.classPrivateFieldLooseBase(this,P)[P]=e}async getEditorControlsParams(e){await m(10);const t=[];let i=0;for(const s of babelHelpers.classPrivateFieldLooseBase(this,L)[L].getAllControls()){if(!e.has(s.getId())||!s.getWrapper())continue;const[o,l]=babelHelpers.classPrivateFieldLooseBase(this,A)[A](s);t.push({fieldId:s.getId(),relatedFieldOffsetY:s.getWrapper().getBoundingClientRect().y,originalValue:o,originalModel:l,order:i}),i++}return t}async getEditorControlsPositions(e){const t=new Map;for(const i of babelHelpers.classPrivateFieldLooseBase(this,L)[L].getAllControls()){if(!e.has(i.getId())||!i.getWrapper())continue;const s=i.getWrapper().getBoundingClientRect().y;t.set(i.getId(),s-babelHelpers.classPrivateFieldLooseBase(this,B)[B])}return t}setControlOutline(e,t){const i=babelHelpers.classPrivateFieldLooseBase(this,L)[L].getControlById(e);if(!i)return;const s=i.getWrapper();t?u.Dom.addClass(s,"bx-crm-ai-merge-fields-ee-control-outline"):u.Dom.removeClass(s,"bx-crm-ai-merge-fields-ee-control-outline")}setControlAiClass(e,t){const i=babelHelpers.classPrivateFieldLooseBase(this,L)[L].getControlById(e);if(!i)return;const s=i.getWrapper();t?u.Dom.addClass(s,"bx-crm-ai-merge-fields-ee-control-ai-value"):u.Dom.removeClass(s,"bx-crm-ai-merge-fields-ee-control-ai-value")}async setFieldValue(e,t){const i=babelHelpers.classPrivateFieldLooseBase(this,L)[L].getControlById(e);if(i)switch(i.constructor){case BX.Crm.EntityEditorText:babelHelpers.classPrivateFieldLooseBase(this,I)[I](e,t.value);break;case BX.UI.EntityEditorBB:babelHelpers.classPrivateFieldLooseBase(this,E)[E](e,t.value),babelHelpers.classPrivateFieldLooseBase(this,y)[y](i);break;case BX.Crm.EntityEditorUserField:babelHelpers.classPrivateFieldLooseBase(this,_)[_](e,t.model),babelHelpers.classPrivateFieldLooseBase(this,y)[y](i);break;default:throw new Error("Not supported field type")}}}function S(e){e.refreshLayout({reset:!0})}function M(e,t){const i=e+"_HTML";babelHelpers.classPrivateFieldLooseBase(this,L)[L].getModel().setField(i,t,{enableNotification:!0})}function w(e,t){babelHelpers.classPrivateFieldLooseBase(this,L)[L].getModel().setField(e,t,{enableNotification:!0})}function T(e,t){babelHelpers.classPrivateFieldLooseBase(this,L)[L].getModel().setField(e,t)}function O(e){const t=e.getValue();let i=null,s=null;if(e.constructor===BX.UI.EntityEditorBB){const t=babelHelpers.classPrivateFieldLooseBase(this,L)[L].getModel(),s=e.getId()+"_HTML";i=t.getField(s,"")}else u.Type.isObject(t)&&Object.hasOwn(t,"VALUE")?(i=t.VALUE,s=t):(u.Type.isString(t)||u.Type.isNumber(t))&&(i=t,s=null);return[i,s]}var R={isLoading:e=>e.isLoading,conflictFields:e=>e.conflictFields.sort((e,t)=>e.order-t.order),mergeUuid:e=>e.mergeUuid,activityId:e=>e.activityId,activityDirection:e=>e.activityDirection,activityProvider:e=>e.activityProvider,summarizeJobId:e=>e.summarizeJobId,getEntityInfo:e=>e.entityInfo,isEntityEditorLoaded:e=>e.isEntityEditorLoaded,eeControlPosition:e=>t=>e.eeControlPositions.get(t,0),eeControlPositions:e=>e.eeControlPositions,getexpandedConflictControls:e=>e.expandedConflictControls,getNotVisibleUnresolvedCount:e=>e.notVisibleUnresolvedCount,getMainLayoutScrollPosition:e=>e.mainLayoutScrollPosition,getMainLayoutContainerHeight:e=>e.mainLayoutContainerHeight,getMainLayoutScrollHeight:e=>e.mainLayoutScrollHeight,getFirstUnseenFieldPosition:e=>{const t=e.mainLayoutScrollPosition;let i=null,s=1/0;for(const[o,l]of e.eeControlPositions){const a=e.conflictFields.find(e=>e.name===o);!a||a.isAiValuesUsed||t+120>l||l<s&&(s=l,i=o)}return i?e.eeControlPositions.get(i):null},isFieldsTouched:e=>e.isFieldsTouched,aiValuesAppliedCount:e=>e.aiValuesAppliedCount,isFooterHiddenAndSaveDisabled:e=>0===e.aiValuesAppliedCount,isSliderConfirmPopupShown:e=>e.isSliderConfirmPopupShown,isNeededShowCloseConfirm:e=>e.isNeededShowCloseConfirm,isFeedbackMessageShown:e=>e.aiFeedback.isMessageComponentShown,isAiFeedbackShowBeforeClose:e=>e.aiFeedback.showBeforeClose&&e.activityProvider===n.ActivityProvider.call,aiFeedback:e=>e.aiFeedback},x={setMergeUUID:(e,t)=>{e.mergeUuid=t},setActivityId:(e,t)=>{e.activityId=t},setActivityDirection:(e,t)=>{e.activityDirection=t},setActivityProvider:(e,t)=>{e.activityProvider=t},setSummarizeJobId:(e,t)=>{e.summarizeJobId=t},startLoading:e=>{e.isLoading=!0},stopLoading:e=>{e.isLoading=!1},setEntityInfo:(e,t)=>{e.entityInfo=t},setConflictFields:(e,t)=>{e.conflictFields=t},setEditMode:(e,t)=>{e.isEditMode=t},setIsEntityEditorLoaded(e,t){e.isEntityEditorLoaded=t},updateConflictField:(e,{name:t,field:i})=>{e.conflictFields=e.conflictFields.map(e=>e.name===t?{...e,...i}:e);const s=e.conflictFields.filter(e=>e.isAiValuesUsed).length;e.aiValuesAppliedCount=s,e.isNeededShowCloseConfirm=s>0},setEeControlPositions:(e,{fieldId:t,topPosition:i})=>{e.eeControlPositions.set(t,i)},toggleExpandedConflictControls:(e,{fieldId:t,size:i,isExpanded:s})=>{s?e.expandedConflictControls.set(t,i):e.expandedConflictControls.delete(t)},changeMainLayoutScrollPosition:(e,{scrollTop:t,containerHeight:i})=>{const s=t+i;e.mainLayoutScrollPosition=t,e.mainLayoutContainerHeight=i;const o=[];for(const[t,i]of e.eeControlPositions)s<i+30&&o.push(t);if(0===o.length)return void(e.notVisibleUnresolvedCount=0);let l=0;for(const t of o){const i=e.conflictFields.find(e=>e.name===t);i&&!i.isAiValuesUsed&&l++}e.notVisibleUnresolvedCount=l},setIsFieldsTouched(e,t){e.isFieldsTouched=t},setIsConfirmPopupShow(e,t){e.isSliderConfirmPopupShown=t},setNeededShowCloseConfirm(e,t){e.isNeededShowCloseConfirm=t},showFeedbackMessageIfNeeded(e,t){e.aiFeedback.feedbackWasSent||"FEEDBACK_TRIGGER_CONTROL"===t&&e.aiFeedback.isShownByReturnBtn||e.activityProvider===n.ActivityProvider.openLine||(e.aiFeedback.lastTriggeredBy=t,"FEEDBACK_TRIGGER_CONTROL"===t&&(e.aiFeedback.isShownByReturnBtn=!0),e.aiFeedback.isMessageComponentShown=!0)},hideFeedbackMessage(e){e.aiFeedback.isMessageComponentShown=!1},setAiFeedbackWasSent(e,t){e.aiFeedback.feedbackWasSent=t},setAiFeedbackShowBeforeClose(e,t){e.aiFeedback.showBeforeClose=t},setMainLayoutScrollHeight(e,t){e.mainLayoutScrollHeight=t}},U=babelHelpers.classPrivateFieldLooseKey("params"),k=babelHelpers.classPrivateFieldLooseKey("fetchEntityEditor");class D{constructor(e){Object.defineProperty(this,k,{value:N}),Object.defineProperty(this,U,{writable:!0,value:void 0}),babelHelpers.classPrivateFieldLooseBase(this,U)[U]=e}async render(){return babelHelpers.classPrivateFieldLooseBase(this,k)[k](babelHelpers.classPrivateFieldLooseBase(this,U)[U]),new Promise(e=>{u.addCustomEvent(window,"BX.Crm.EntityEditor:onUserFieldsDeployed",async t=>{t.getId()===babelHelpers.classPrivateFieldLooseBase(this,U)[U].domContainerId&&e(t)})})}}function N(e){let t="";switch(e.entityTypeName){case"DEAL":t="/bitrix/components/bitrix/crm.deal.details/ajax.php";break;case"LEAD":t="/bitrix/components/bitrix/crm.lead.details/ajax.php";break;default:throw new Error("Unknown entity type: "+e.entityTypeName)}t=`${t}?sessid=${BX.bitrix_sessid()}`,BX.ajax.post(t,{ACTION:"PREPARE_EDITOR_HTML",ACTION_ENTITY_TYPE_NAME:e.entityTypeName,ACTION_ENTITY_ID:e.entityId,GUID:e.domContainerId,CONFIG_ID:e.configId,FORCE_DEFAULT_CONFIG:"N",FORCE_DEFAULT_OPTIONS:"Y",IS_EMBEDDED:"Y",ENABLE_CONFIG_SCOPE_TOGGLE:"N",ENABLE_CONFIGURATION_UPDATE:"N",ENABLE_REQUIRED_USER_FIELD_CHECK:"N",ENABLE_FIELDS_CONTEXT_MENU:"N",CONTEXT:{},READ_ONLY:"Y",MODULE_ID:"crm"},()=>{})}var V={async initialize({dispatch:e,getters:t}){await e("fetchFormFieldsToMerge"),await e("createEntityEditor"),await e("collectFieldDataFromEntityEditor"),await e("updateControlPositionInfo")},async fetchFormFieldsToMerge({commit:e,getters:t}){const i=await G(t.mergeUuid);e("setConflictFields",i.fields.map(e=>({name:e.name,type:e.type,title:e.title,aiModel:e.aiModel,isMultiple:e.isMultiple,isUserField:e.isUserField,aiValue:e.aiModel.VALUE,originalValue:null,originalModel:null,isAiValuesUsed:!1}))),e("setEditMode",i.editMode),e("setEntityInfo",i.target),e("setAiFeedbackWasSent",i.target.feedbackWasSent),e("setAiFeedbackShowBeforeClose",!i.target.feedbackWasSent)},async saveFormFieldsToMerge({getters:e,commit:t,dispatch:i}){const s=e.conflictFields.filter(e=>e.isAiValuesUsed).map(e=>e.name),o=e.mergeUuid,l=await BX.ajax.runAction("crm.timeline.ai.applyMerge",{method:"GET",getParameters:{mergeUuid:o,fieldNamesToApply:s}});t("setAiFeedbackShowBeforeClose",!1),"success"===l.status?i("closeFormWithoutConfirm"):b.UI.Notification.Center.notify({content:u.Loc.getMessage("CRM_AI_FORM_FILL_MERGER_SAVE_ERROR"),autoHideDelay:5e3})},showFeedbackMessageBeforeClose({getters:e,commit:t}){t("showFeedbackMessageIfNeeded","FEEDBACK_TRIGGER_APP_CLOSE"),t("setAiFeedbackShowBeforeClose",!1)},closeFeedbackMessage({getters:e,commit:t,dispatch:i},s=!1){s&&(i("sendFeedBack"),t("setAiFeedbackShowBeforeClose",!1)),t("hideFeedbackMessage"),"FEEDBACK_TRIGGER_APP_CLOSE"===e.aiFeedback.lastTriggeredBy&&i("closeFormWithoutConfirm")},closeFormWithoutConfirm({getters:e,commit:t}){t("setNeededShowCloseConfirm",!1),t("setIsConfirmPopupShow",!1);const i=e.mergeUuid;u.onCustomEvent(window,"BX.Crm.AiFormFill:CloseSlider",{mergeUuid:i})},async setEditorFieldValue({dispatch:e,getters:t,commit:i},s){const o=s.name,l=!s.isAiValuesUsed,a=l?s.aiValue:s.originalValue,n=l?s.aiModel:s.originalModel;l||setTimeout(()=>{i("showFeedbackMessageIfNeeded","FEEDBACK_TRIGGER_CONTROL")},300);const r={value:a,model:n};await K.setFieldValue(o,r),await K.setControlAiClass(o,l),i("setIsFieldsTouched",!0),i("updateConflictField",{name:o,field:{isAiValuesUsed:!s.isAiValuesUsed}})},async createEntityEditor({getters:e,commit:t,dispatch:i}){const s=e.getEntityInfo,o=new D({entityId:s.entityId,configId:s.editorId,entityTypeName:s.entityTypeName,domContainerId:"crm-ai-merge-fields__container__"+e.mergeUuid}),l=await o.render();await K.init(l),K.setOnUserFieldDeployedCb(async()=>{const t=Math.floor(e.getMainLayoutScrollPosition+e.getMainLayoutContainerHeight);let s=0;(e.getMainLayoutScrollHeight||0)-t<40&&(s=400),await m(s),i("updateControlPositionInfo")})},async collectFieldDataFromEntityEditor({getters:e,commit:t,dispatch:i}){const s=e.conflictFields,o=new Set(s.map(e=>e.name)),l=await K.getEditorControlsParams(o);if(0!==l.length){for(const e of l)t("updateConflictField",{name:e.fieldId,field:{originalValue:e.originalValue,originalModel:e.originalModel,order:e.order}}),t("setEeControlPositions",{fieldId:e.fieldId,topPosition:e.relatedFieldOffsetY});t("setIsEntityEditorLoaded",!0)}},async updateControlPositionInfo({getters:e,commit:t},{updateOnlyFrom:i}={}){const s=e.conflictFields;if(0===s.length)return;const o=new Set(s.map(e=>e.name)),l=await K.getEditorControlsPositions(o),a=e.getMainLayoutScrollPosition||0;for(const[e,t]of l)l.set(e,a+t);for(const e of s){const s=e.name;!i&&i>e.order||l.has(s)&&t("setEeControlPositions",{fieldId:s,topPosition:l.get(s)})}},async applyAllAiFields({dispatch:e,getters:t}){for(const i of t.conflictFields)i.isAiValuesUsed||e("setEditorFieldValue",i)},revertAllAiFields({dispatch:e,getters:t}){for(const i of t.conflictFields)i.isAiValuesUsed&&e("setEditorFieldValue",i)},showEntityEditorControlOutline(e,{fieldName:t,isShow:i}){K.setControlOutline(t,i)},updateSliderFooter({getters:t}){const i=t.isFooterHiddenAndSaveDisabled;e.sliderButtonsAdapter.saveButton.setDisabled(i),null==e.copilotSliderInstance||e.copilotSliderInstance.footerDisplay(!i)},async sendFeedBack({commit:e,getters:t}){const i=t.mergeUuid;if(t.aiFeedback.checkFeedbackBeforeSend){if(await X(i))return void e("setAiFeedbackWasSent",!0)}const s=t.getEntityInfo.entityTypeName;r.sendFeedback(i,s,t.activityId),e("setAiFeedbackWasSent",!0)},sendAiCallParsingData({getters:e},t){const i=e.getEntityInfo.entityTypeName,s=e.activityId,o=e.activityDirection;c.sendData(d.Builder.AI.CallParsingEvent.createDefault(i,s,d.Dictionary.STATUS_SUCCESS).setElement(t).setActivityDirection(o).buildData()),c.sendData(d.Builder.AI.CallParsingEvent.createDefault(i,s,d.Dictionary.STATUS_SUCCESS).setTool(d.Dictionary.TOOL_CRM).setCategory(d.Dictionary.CATEGORY_AI_OPERATIONS).setElement(t).setActivityDirection(o).buildData())}};const X=async e=>r.wasFeedbackSent(e),G=async e=>(await BX.ajax.runAction("crm.timeline.ai.mergeFields",{method:"GET",getParameters:{mergeUuid:e}})).data;let K=null;var j=babelHelpers.classPrivateFieldLooseKey("application"),W=babelHelpers.classPrivateFieldLooseKey("options"),z=babelHelpers.classPrivateFieldLooseKey("store");class ${constructor(e,t={}){if(Object.defineProperty(this,j,{writable:!0,value:void 0}),Object.defineProperty(this,W,{writable:!0,value:void 0}),Object.defineProperty(this,z,{writable:!0,value:void 0}),babelHelpers.classPrivateFieldLooseBase(this,W)[W]=t,this.rootNode=document.querySelector("#"+e),!babelHelpers.classPrivateFieldLooseBase(this,W)[W].mergeUuid)throw new Error("param mergeUuid is required")}get application(){return babelHelpers.classPrivateFieldLooseBase(this,j)[j]}get store(){return babelHelpers.classPrivateFieldLooseBase(this,z)[z]}start(){K=new H,babelHelpers.classPrivateFieldLooseBase(this,z)[z]=a.createStore({state:{mergeUuid:null,isLoading:!0,conflictFields:[],isEditMode:!1,isEntityEditorLoaded:!1,entityInfo:null,eeControlPositions:new Map,expandedConflictControls:new Map,mainLayoutScrollPosition:null,mainLayoutContainerHeight:null,mainLayoutScrollHeight:null,notVisibleUnresolvedCount:0,isFieldsTouched:!1,aiValuesAppliedCount:0,isSliderConfirmPopupShown:!1,isNeededShowCloseConfirm:!1,aiFeedback:{feedbackWasSent:!1,isShownByReturnBtn:!1,isMessageComponentShown:!1,lastTriggeredBy:null,showBeforeClose:!0,checkFeedbackBeforeSend:!1}},getters:R,mutations:x,actions:V}),babelHelpers.classPrivateFieldLooseBase(this,j)[j]=l.BitrixVue.createApp({name:"AiFormFill",components:{Main:C},beforeCreate(){this.$bitrix.Application.set(this)},template:"\n\t\t\t\t<Main/>\n\t\t\t"}),babelHelpers.classPrivateFieldLooseBase(this,z)[z].commit("setMergeUUID",babelHelpers.classPrivateFieldLooseBase(this,W)[W].mergeUuid),babelHelpers.classPrivateFieldLooseBase(this,z)[z].commit("setActivityId",babelHelpers.classPrivateFieldLooseBase(this,W)[W].activityId),babelHelpers.classPrivateFieldLooseBase(this,z)[z].commit("setActivityDirection",babelHelpers.classPrivateFieldLooseBase(this,W)[W].activityDirection),babelHelpers.classPrivateFieldLooseBase(this,z)[z].commit("setActivityProvider",babelHelpers.classPrivateFieldLooseBase(this,W)[W].activityProvider),babelHelpers.classPrivateFieldLooseBase(this,z)[z].commit("setSummarizeJobId",babelHelpers.classPrivateFieldLooseBase(this,W)[W].summarizeJobId),babelHelpers.classPrivateFieldLooseBase(this,j)[j].use(babelHelpers.classPrivateFieldLooseBase(this,z)[z]),babelHelpers.classPrivateFieldLooseBase(this,j)[j].mount(this.rootNode)}stop(){babelHelpers.classPrivateFieldLooseBase(this,j)[j].unmount(),babelHelpers.classPrivateFieldLooseBase(this,j)[j]=null,babelHelpers.classPrivateFieldLooseBase(this,z)[z]=null,K=null}isNeededShowCloseConfirm(){return babelHelpers.classPrivateFieldLooseBase(this,z)[z].getters.isNeededShowCloseConfirm}showCloseConfirm(){babelHelpers.classPrivateFieldLooseBase(this,z)[z].commit("setIsConfirmPopupShow",!0)}isShowAiFeedbackBeforeClose(){return babelHelpers.classPrivateFieldLooseBase(this,z)[z].getters.isAiFeedbackShowBeforeClose}showAiFeedbackBeforeClose(){babelHelpers.classPrivateFieldLooseBase(this,z)[z].dispatch("showFeedbackMessageBeforeClose")}isAppLoading(){return babelHelpers.classPrivateFieldLooseBase(this,z)[z].getters.isLoading}}var q=babelHelpers.classPrivateFieldLooseKey("onSaveCallback"),Y=babelHelpers.classPrivateFieldLooseKey("onCancelCallback"),J=babelHelpers.classPrivateFieldLooseKey("saveButton"),Q=babelHelpers.classPrivateFieldLooseKey("cancelButton"),Z=babelHelpers.classPrivateFieldLooseKey("createButtons");class ee{constructor(){Object.defineProperty(this,Z,{value:te}),Object.defineProperty(this,q,{writable:!0,value:null}),Object.defineProperty(this,Y,{writable:!0,value:null}),Object.defineProperty(this,J,{writable:!0,value:null}),Object.defineProperty(this,Q,{writable:!0,value:null}),babelHelpers.classPrivateFieldLooseBase(this,Z)[Z]()}set onSaveCallback(e){babelHelpers.classPrivateFieldLooseBase(this,q)[q]=e}set onCancelCallback(e){babelHelpers.classPrivateFieldLooseBase(this,Y)[Y]=e}get saveButton(){return babelHelpers.classPrivateFieldLooseBase(this,J)[J]}get cancelButton(){return babelHelpers.classPrivateFieldLooseBase(this,Q)[Q]}getButtons(){return[babelHelpers.classPrivateFieldLooseBase(this,J)[J],babelHelpers.classPrivateFieldLooseBase(this,Q)[Q]]}}function te(){babelHelpers.classPrivateFieldLooseBase(this,J)[J]=new p.Button({text:u.Loc.getMessage("CRM_AI_FORM_FILL_MERGER_SAVE"),size:p.Button.Size.MEDIUM,color:p.Button.Color.SUCCESS,dependOnTheme:!0,onclick:()=>{u.Type.isFunction(babelHelpers.classPrivateFieldLooseBase(this,q)[q])&&babelHelpers.classPrivateFieldLooseBase(this,q)[q]()}}),babelHelpers.classPrivateFieldLooseBase(this,Q)[Q]=new p.Button({text:u.Loc.getMessage("CRM_AI_FORM_FILL_MERGER_CANCEL"),size:p.Button.Size.MEDIUM,color:p.ButtonColor.LIGHT_BORDER,onclick:()=>{u.Type.isFunction(babelHelpers.classPrivateFieldLooseBase(this,Y)[Y])&&babelHelpers.classPrivateFieldLooseBase(this,Y)[Y]()}})}e.sliderButtonsAdapter=null,e.copilotSliderInstance=null;var ie=babelHelpers.classPrivateFieldLooseKey("options"),se=babelHelpers.classPrivateFieldLooseKey("copilotSliderClass"),oe=babelHelpers.classPrivateFieldLooseKey("app"),le=babelHelpers.classPrivateFieldLooseKey("sliderInstance"),ae=babelHelpers.classPrivateFieldLooseKey("onLoadEventName"),ne=babelHelpers.classPrivateFieldLooseKey("onCloseEventName"),re=babelHelpers.classPrivateFieldLooseKey("sliderUrl"),de=babelHelpers.classPrivateFieldLooseKey("containerId"),ce=babelHelpers.classPrivateFieldLooseKey("makeSliderToolbar"),be=babelHelpers.classPrivateFieldLooseKey("createSliderWrapper"),ue=babelHelpers.classPrivateFieldLooseKey("calculateSliderWidth"),pe=babelHelpers.classPrivateFieldLooseKey("onSliderLoadFn"),me=babelHelpers.classPrivateFieldLooseKey("onSliderCloseFn"),he=babelHelpers.classPrivateFieldLooseKey("onAiFormFillDownFn");class ve{constructor(t,i){Object.defineProperty(this,he,{value:Ie}),Object.defineProperty(this,me,{value:Ee}),Object.defineProperty(this,pe,{value:ye}),Object.defineProperty(this,ue,{value:Pe}),Object.defineProperty(this,be,{value:Be}),Object.defineProperty(this,ce,{value:Le}),Object.defineProperty(this,de,{get:Ce,set:void 0}),Object.defineProperty(this,re,{get:Fe,set:void 0}),Object.defineProperty(this,ne,{get:ge,set:void 0}),Object.defineProperty(this,ae,{get:fe,set:void 0}),Object.defineProperty(this,ie,{writable:!0,value:void 0}),Object.defineProperty(this,se,{writable:!0,value:void 0}),Object.defineProperty(this,oe,{writable:!0,value:void 0}),Object.defineProperty(this,le,{writable:!0,value:void 0}),babelHelpers.classPrivateFieldLooseBase(this,ie)[ie]=t,babelHelpers.classPrivateFieldLooseBase(this,se)[se]=i,e.sliderButtonsAdapter=new ee}create(){babelHelpers.classPrivateFieldLooseBase(this,le)[le]=babelHelpers.classPrivateFieldLooseBase(this,be)[be](),u.addCustomEvent("SidePanel.Slider:onLoad",babelHelpers.classPrivateFieldLooseBase(this,pe)[pe].bind(this),babelHelpers.classPrivateFieldLooseBase(this,ae)[ae]),u.addCustomEvent("SidePanel.Slider:onClose",babelHelpers.classPrivateFieldLooseBase(this,me)[me].bind(this),babelHelpers.classPrivateFieldLooseBase(this,ne)[ne]),u.addCustomEvent(window,"BX.Crm.AiFormFill:CloseSlider",babelHelpers.classPrivateFieldLooseBase(this,he)[he].bind(this)),babelHelpers.classPrivateFieldLooseBase(this,le)[le].open()}}function fe(){return"CopilotSliderWrapper:onLoad_"+babelHelpers.classPrivateFieldLooseBase(this,ie)[ie].mergeUuid}function ge(){return"CopilotSliderWrapper:onClose_"+babelHelpers.classPrivateFieldLooseBase(this,ie)[ie].mergeUuid}function Fe(){return"crm:copilot-wrapper-slider-"+babelHelpers.classPrivateFieldLooseBase(this,ie)[ie].mergeUuid}function Ce(){return"crm-ai-merge-fields__container__"+babelHelpers.classPrivateFieldLooseBase(this,ie)[ie].mergeUuid}function Le(){const e=babelHelpers.classPrivateFieldLooseBase(this,se)[se].makeDefaultToolbarButtons(),t=new p.Button({text:u.Loc.getMessage("CRM_AI_FORM_FILL_MERGER_TRANSCRIPTION"),size:s.Settings.get(s.Setting.UseAirDesign)?p.Button.Size.SMALL:p.Button.Size.MEDIUM,color:p.Button.Color.LIGHT_BORDER,dependOnTheme:!0,useAirDesign:s.Settings.get(s.Setting.UseAirDesign),style:p.Button.AirStyle.OUTLINE,onclick:()=>{if(top.BX.Helper){new n.Call.Transcription({activityId:babelHelpers.classPrivateFieldLooseBase(this,ie)[ie].activityId,ownerTypeId:babelHelpers.classPrivateFieldLooseBase(this,ie)[ie].ownerTypeId,ownerId:babelHelpers.classPrivateFieldLooseBase(this,ie)[ie].ownerId,languageTitle:babelHelpers.classPrivateFieldLooseBase(this,ie)[ie].languageTitle}).open()}}});let i=[new p.Button({text:u.Loc.getMessage("CRM_AI_FORM_FILL_MERGER_RESUME"),size:s.Settings.get(s.Setting.UseAirDesign)?p.Button.Size.SMALL:p.Button.Size.MEDIUM,color:p.Button.Color.LIGHT_BORDER,dependOnTheme:!0,useAirDesign:s.Settings.get(s.Setting.UseAirDesign),style:p.Button.AirStyle.OUTLINE,onclick:()=>{if(top.BX.Helper){new n.Call.Summary({activityId:babelHelpers.classPrivateFieldLooseBase(this,ie)[ie].activityId,ownerTypeId:babelHelpers.classPrivateFieldLooseBase(this,ie)[ie].ownerTypeId,ownerId:babelHelpers.classPrivateFieldLooseBase(this,ie)[ie].ownerId,languageTitle:babelHelpers.classPrivateFieldLooseBase(this,ie)[ie].languageTitle,activityProvider:babelHelpers.classPrivateFieldLooseBase(this,ie)[ie].activityProvider,jobId:babelHelpers.classPrivateFieldLooseBase(this,ie)[ie].summarizeJobId}).open()}}}),...e];return babelHelpers.classPrivateFieldLooseBase(this,ie)[ie].activityProvider===n.ActivityProvider.call&&(i=[t,...i]),i}function Be(){const i=e.sliderButtonsAdapter.getButtons(),s=babelHelpers.classPrivateFieldLooseBase(this,ce)[ce]();return new(babelHelpers.classPrivateFieldLooseBase(this,se)[se])({content:()=>`<div id="${babelHelpers.classPrivateFieldLooseBase(this,de)[de]}"></div>`,sliderTitle:u.Loc.getMessage("CRM_AI_FORM_FILL_MERGER_TITLE",t.NameService.copilotNameReplacement()),label:babelHelpers.classPrivateFieldLooseBase(this,ie)[ie].label,extensions:["crm.ai.form-fill","crm.entity-editor"],url:babelHelpers.classPrivateFieldLooseBase(this,re)[re],width:babelHelpers.classPrivateFieldLooseBase(this,ue)[ue](),toolbar:()=>s,buttons:()=>i})}function Pe(){const e=BX.SidePanel.Instance.getTopSlider().getWidth()||.86*window.screen.width;return Math.floor(.86*e)}function ye(t){t.getSlider().getUrl()===babelHelpers.classPrivateFieldLooseBase(this,re)[re]&&(e.copilotSliderInstance=babelHelpers.classPrivateFieldLooseBase(this,le)[le],babelHelpers.classPrivateFieldLooseBase(this,oe)[oe]=new $(babelHelpers.classPrivateFieldLooseBase(this,de)[de],{mergeUuid:babelHelpers.classPrivateFieldLooseBase(this,ie)[ie].mergeUuid,activityId:babelHelpers.classPrivateFieldLooseBase(this,ie)[ie].activityId,activityDirection:babelHelpers.classPrivateFieldLooseBase(this,ie)[ie].activityDirection,activityProvider:babelHelpers.classPrivateFieldLooseBase(this,ie)[ie].activityProvider,summarizeJobId:babelHelpers.classPrivateFieldLooseBase(this,ie)[ie].summarizeJobId}),babelHelpers.classPrivateFieldLooseBase(this,oe)[oe].start(),u.removeAllCustomEvents("SidePanel.Slider:onLoad",babelHelpers.classPrivateFieldLooseBase(this,ae)[ae]))}function Ee(t){if(t.getSlider().getUrl()===babelHelpers.classPrivateFieldLooseBase(this,re)[re])if(babelHelpers.classPrivateFieldLooseBase(this,oe)[oe]&&!babelHelpers.classPrivateFieldLooseBase(this,oe)[oe].isAppLoading()){if(babelHelpers.classPrivateFieldLooseBase(this,oe)[oe].isNeededShowCloseConfirm())return babelHelpers.classPrivateFieldLooseBase(this,oe)[oe].showCloseConfirm(),void t.denyAction();if(babelHelpers.classPrivateFieldLooseBase(this,oe)[oe].isShowAiFeedbackBeforeClose())return babelHelpers.classPrivateFieldLooseBase(this,oe)[oe].showAiFeedbackBeforeClose(),void t.denyAction();u.removeAllCustomEvents("SidePanel.Slider:onClose",babelHelpers.classPrivateFieldLooseBase(this,ne)[ne]),u.removeAllCustomEvents(window,"BX.Crm.AiFormFill:CloseSlider"),babelHelpers.classPrivateFieldLooseBase(this,oe)[oe]&&(babelHelpers.classPrivateFieldLooseBase(this,oe)[oe].stop(),babelHelpers.classPrivateFieldLooseBase(this,oe)[oe]=null),e.sliderButtonsAdapter=null,e.copilotSliderInstance=null}else t.denyAction()}function Ie(e){var t;(null==e||null==(t=e.data)?void 0:t.mergeUuid)===babelHelpers.classPrivateFieldLooseBase(this,ie)[ie].mergeUuid&&babelHelpers.classPrivateFieldLooseBase(this,le)[le].close()}e.createAiFormFillApplicationInsideSlider=function(e){var t,i,s;const o=t=>{new ve(e,t).create()};u.Type.isFunction(null==(t=BX)||null==(i=t.Crm)||null==(s=i.AI)?void 0:s.Slider)?o(BX.Crm.AI.Slider):top.BX.Runtime.loadExtension("crm.ai.slider").then(e=>{const{Slider:t}=e;o(t)}).catch(()=>{throw new Error("Cant load Crm.AI.Slider extension")})}}(this.BX.Crm=this.BX.Crm||{},BX.Crm.AI,BX.Crm.AI,BX.Crm.Integration.UI,BX.UI.Dialogs,BX.Vue3,BX.Vue3.Vuex,BX.Crm.AI,BX.Crm.AI.Feedback,BX.Crm.Integration.Analytics,BX.UI.Analytics,BX,BX,BX.UI);
+/* eslint-disable */
+this.BX = this.BX || {};
+(function (exports, crm_ai_call, crm_ai_nameService, crm_integration_ui_settings, main_core, ui_buttons, ui_vue3, ui_vue3_vuex, ui_dialogs_messagebox, crm_ai_feedback, crm_integration_analytics, ui_analytics, ui_notification) {
+	'use strict';
+
+	const timeout = ms => {
+		return new Promise(resolve => {
+			setTimeout(resolve, ms);
+		});
+	};
+	const myScrollTo = async (element, to, duration) => {
+		if (duration <= 0) {
+			return;
+		}
+		const difference = to - element.scrollTop;
+		const perTick = difference / duration * 10;
+		await timeout(10);
+		element.scrollTop += perTick;
+		if (element.scrollTop === to) {
+			return;
+		}
+		await myScrollTo(element, to, duration - 10);
+	};
+
+	let sliderButtonsAdapter = null;
+	let copilotSliderInstance = null;
+	let entityEditorProxy = null;
+	function setSliderButtonsAdapter(value) {
+		sliderButtonsAdapter = value;
+	}
+	function setCopilotSliderInstance(value) {
+		copilotSliderInstance = value;
+	}
+	function setEntityEditorProxy(value) {
+		entityEditorProxy = value;
+	}
+
+	const CloseConfirm = {
+		name: 'CloseConfirm',
+		data() {
+			return {
+				uniquePopupId: `ai-form-fill-feedback-popup_${main_core.Text.getRandom(20).toLowerCase()}`
+			};
+		},
+		computed: {
+			...ui_vue3_vuex.mapGetters(['isFooterHiddenAndSaveDisabled'])
+		},
+		methods: {
+			...ui_vue3_vuex.mapMutations(['setIsConfirmPopupShow']),
+			onMessageClose(event) {
+				if (event.uniquePopupId === this.uniquePopupId) {
+					this.setIsConfirmPopupShow(false);
+				}
+			}
+		},
+		mounted() {
+			this.messageBoxInstance = ui_dialogs_messagebox.MessageBox.create({
+				message: main_core.Loc.getMessage('CRM_AI_FORM_FILL_MERGER_CANCEL_CONFIRM_TEXT'),
+				title: main_core.Loc.getMessage('CRM_AI_FORM_FILL_MERGER_CANCEL_CONFIRM_TITLE'),
+				okCaption: main_core.Loc.getMessage('CRM_AI_FORM_FILL_MERGER_CANCEL_CONFIRM_CLOSE'),
+				cancelCaption: main_core.Loc.getMessage('CRM_AI_FORM_FILL_MERGER_CANCEL_CONFIRM_CANCEL'),
+				onOk: () => {
+					this.$Bitrix.eventEmitter.emit('crm:ai:form-fill:close-confirm:confirmClose', {});
+				},
+				onCancel: () => {
+					this.setIsConfirmPopupShow(false);
+				},
+				buttons: BX.UI.Dialogs.MessageBoxButtons.OK_CANCEL,
+				popupOptions: {
+					targetContainer: this.$refs.closeConfirmRoot,
+					id: this.uniquePopupId
+				}
+			});
+			main_core.addCustomEvent(window, 'BX.Main.Popup:onClose', this.onMessageClose);
+			this.messageBoxInstance.show();
+		},
+		unmounted() {
+			if (this.messageBoxInstance) {
+				this.messageBoxInstance.close();
+			}
+			main_core.removeCustomEvent(window, 'BX.Main.Popup:onClose', this.onMessageClose);
+		},
+		template: `
+		<div 
+			ref="closeConfirmRoot" 
+			class="crm-ai-form-fill__close-confirm"
+			:class="{'hidden-footer': isFooterHiddenAndSaveDisabled}"
+		></div>
+	`
+	};
+
+	const EntityEditorWrapper = {
+		name: 'EntityEditorWrapper',
+		computed: {
+			...ui_vue3_vuex.mapGetters(['mergeUuid']),
+			entityEditorContainerId() {
+				return `crm-ai-merge-fields__container__${this.mergeUuid}_container`;
+			}
+		},
+		template: '<div v-bind:id="entityEditorContainerId"></div>'
+	};
+
+	const FeedbackMessage = {
+		name: 'FeedbackMessage',
+		data() {
+			return {
+				uniquePopupId: `ai-form-fill-feedback-popup_${main_core.Text.getRandom(20).toLowerCase()}`
+			};
+		},
+		computed: {
+			...ui_vue3_vuex.mapGetters(['isFooterHiddenAndSaveDisabled'])
+		},
+		methods: {
+			...ui_vue3_vuex.mapActions(['closeFeedbackMessage', 'sendAiCallParsingData']),
+			async onOKButton() {
+				this.closeFeedbackMessage(true);
+			},
+			onCancelButton() {
+				this.closeFeedbackMessage(false);
+				this.sendAiCallParsingData('feedback_refused');
+			},
+			onMessageClose(event) {
+				if (event.uniquePopupId === this.uniquePopupId) {
+					this.closeFeedbackMessage(false);
+				}
+			}
+		},
+		mounted() {
+			this.messageBoxInstance = crm_ai_feedback.createFeedbackMessageBox({
+				onOk: this.onOKButton,
+				onCancel: this.onCancelButton,
+				popupOptions: {
+					targetContainer: this.$refs.feedbackMessageRoot,
+					id: this.uniquePopupId
+				}
+			});
+			main_core.addCustomEvent(window, 'BX.Main.Popup:onClose', this.onMessageClose);
+			this.messageBoxInstance.show();
+		},
+		unmounted() {
+			if (this.messageBoxInstance) {
+				this.messageBoxInstance.close();
+			}
+			main_core.removeCustomEvent(window, 'BX.Main.Popup:onClose', this.onMessageClose);
+		},
+		template: `
+		<div 
+			ref="feedbackMessageRoot" 
+			class="crm-ai-form-fill__confirm" 
+			:class="{'hidden-footer': isFooterHiddenAndSaveDisabled}"
+		></div>
+	`
+	};
+
+	const FloatingActionButton = {
+		name: 'FloatingActionButton',
+		computed: {
+			...ui_vue3_vuex.mapGetters({
+				count: 'getNotVisibleUnresolvedCount'
+			}),
+			showCounter() {
+				return this.count > 0;
+			}
+		},
+		methods: {
+			click() {
+				this.$Bitrix.eventEmitter.emit('crm:ai:form-fill:scroll-to-next', {});
+			}
+		},
+		template: `
+		<div @click="click" class="bx-crm-ai-merge-fields-fab">
+			<div
+				v-if="showCounter"
+				class="bx-crm-ai-merge-fields-fab_counter"
+			>{{count}}</div>
+			<i class="bx-crm-ai-merge-fields-fab_icon"></i>
+		</div>
+	`
+	};
+
+	const Loader = {
+		name: 'Loader',
+		data() {
+			return {
+				loaderInstance: null
+			};
+		},
+		template: `
+		<div ref="root" class="bx-crm-ai-merge-fields-loading">
+			<div class="bx-crm-ai-merge-fields-loading__image"></div>
+		</div>
+	`
+	};
+
+	const MergeControl = {
+		name: 'MergeControl',
+		props: {
+			field: {
+				type: Object,
+				required: true
+			},
+			tmp: Number
+		},
+		data() {
+			return {
+				hasLargeContent: true,
+				isExpanded: false,
+				coveredByAnother: false
+			};
+		},
+		computed: {
+			...ui_vue3_vuex.mapGetters(['getexpandedConflictControls', 'eeControlPositions']),
+			replaceBtnText() {
+				return this.field.isAiValuesUsed ? main_core.Loc.getMessage('CRM_AI_FORM_FILL_MERGER_REPLACE_BTN_BACK') : main_core.Loc.getMessage('CRM_AI_FORM_FILL_MERGER_REPLACE_BTN_FORTH');
+			},
+			value() {
+				return this.field.isAiValuesUsed ? this.field.originalValue : this.field.aiValue;
+			}
+		},
+		methods: {
+			...ui_vue3_vuex.mapActions(['setEditorFieldValue', 'showEntityEditorControlOutline']),
+			...ui_vue3_vuex.mapMutations(['toggleExpandedConflictControls']),
+			async toggleAiValue(field) {
+				await this.setEditorFieldValue(field);
+				await this.expand(false);
+				this.hasLargeContent = this.checkHasLargeContent();
+			},
+			async expand(expand) {
+				if (!this.hasLargeContent) {
+					return;
+				}
+				this.isExpanded = expand;
+				await ui_vue3.nextTick();
+				this.toggleExpandedConflictControls({
+					fieldId: this.field.name,
+					size: this.$refs.root.getBoundingClientRect().height,
+					isExpanded: expand
+				});
+			},
+			onControlsExpandedModeChange() {
+				let coveredByAnother = false;
+				const selfPosY = this.eeControlPositions.get(this.field.name, 0);
+				for (const [fieldName, size] of this.getexpandedConflictControls) {
+					const expandedPosY = this.eeControlPositions.get(fieldName, 0);
+					if (selfPosY > expandedPosY && selfPosY - expandedPosY < size) {
+						coveredByAnother = true;
+						break;
+					}
+				}
+				this.coveredByAnother = coveredByAnother;
+			},
+			checkHasLargeContent() {
+				return this.$refs.fieldValue.scrollWidth > this.$refs.fieldValue.clientWidth;
+			},
+			onMouseenter(e) {
+				this.showEntityEditorControlOutline({
+					fieldName: this.field.name,
+					isShow: true
+				});
+				this.expand(true);
+			},
+			onMouseleave(e) {
+				this.showEntityEditorControlOutline({
+					fieldName: this.field.name,
+					isShow: false
+				});
+				this.expand(false);
+			}
+		},
+		mounted() {
+			this.hasLargeContent = this.checkHasLargeContent();
+			ui_vue3.watch(this.getexpandedConflictControls, this.onControlsExpandedModeChange);
+		},
+		template: `
+		<div 
+			class="bx-crm-ai-form-fill-merge-control__container"
+			:class="{'expanded': isExpanded, 'covered': coveredByAnother}"
+			@mouseenter="onMouseenter"
+			@mouseleave="onMouseleave"
+			ref="root"
+		>
+			<div 
+				class="bx-crm-ai-form-fill-merge-control-icon"
+				@click="toggleAiValue(field)"
+			>
+
+			</div>
+			<div class="bx-crm-ai-form-fill-merge-control-field">
+				<div
+					class="bx-crm-ai-form-fill-merge-control-field-title"
+					:title="field.title"
+				>{{ field.title }}</div>
+				<div class="bx-crm-ai-form-fill-merge-control-field-value-container">
+					<div
+						ref="fieldValue"
+						class="bx-crm-ai-form-fill-merge-control-field-value-container__value"
+						:class="{'expanded': isExpanded, 'ai-value': !field.isAiValuesUsed}"
+						:title="this.value"
+					>{{ this.value }}</div>
+					<div
+						class="bx-crm-ai-form-fill-merge-control-field-value-container__control"
+						:class="{'expanded': isExpanded}"
+						:style="{display: hasLargeContent ? 'block': 'none'}"
+					></div>
+				</div>
+			</div>
+			<div
+				class="bx-crm-ai-form-fill-merge-control-right-column"
+				@click="toggleAiValue(field)"
+			>
+				<div 
+					class="bx-crm-ai-form-fill-merge-control-button">
+					{{ replaceBtnText }}
+				</div>
+			</div>
+		</div>
+	`
+	};
+
+	const Merger = {
+		name: 'Merger',
+		components: {
+			MergeControl
+		},
+		data() {
+			return {
+				isRootMounted: false
+			};
+		},
+		computed: {
+			...ui_vue3_vuex.mapGetters(['conflictFields', 'eeControlPosition', 'eeControlPositions', 'getMainLayoutScrollPosition'])
+		},
+		methods: {
+			getControlTopOffset(field) {
+				return this.eeControlPositions.get(field.name, 0);
+			}
+		},
+		mounted() {
+			this.isRootMounted = true;
+		},
+		template: `
+		<div ref="root" class="bx-crm-ai-merge-fields-merger ">
+			<MergeControl
+				v-if="isRootMounted"
+				v-for="field in conflictFields" :key="field.name"
+				class="bx-crm-ai-merge-fields-merger__field"
+				:style="{top: getControlTopOffset(field) + 'px'}"
+				:field="field"
+				:tmp="getControlTopOffset(field)"
+			></MergeControl>
+		</div>
+	`
+	};
+
+	const ToolBar = {
+		name: 'ToolBar',
+		computed: {
+			...ui_vue3_vuex.mapGetters(['conflictFields']),
+			conflictCount() {
+				return this.conflictFields.length;
+			},
+			resolvedCount() {
+				return this.conflictFields.filter(f => f.isAiValuesUsed).length;
+			},
+			isApplyAllDisabled() {
+				return this.conflictCount === this.resolvedCount;
+			},
+			isRevertDisabled() {
+				return this.resolvedCount === 0;
+			},
+			titleText() {
+				return main_core.Loc.getMessage('CRM_AI_FORM_FILL_TOOLBAR_CONFLICT_COUNT_TITLE');
+			},
+			applyAllBtnText() {
+				return main_core.Loc.getMessage('CRM_AI_FORM_FILL_TOOLBAR_BUTTON_APPLY_ALL');
+			},
+			revertText() {
+				return main_core.Loc.getMessage('CRM_AI_FORM_FILL_TOOLBAR_BUTTON_ROLLBACK');
+			}
+		},
+		methods: {
+			...ui_vue3_vuex.mapActions(['applyAllAiFields', 'revertAllAiFields'])
+		},
+		template: `
+		<div class="bx-crm-ai-form-fill__toolbar">
+			<div class="bx-crm-ai-form-fill__toolbar__conflict_count">
+				{{ titleText }}<span class="bx-crm-ai-form-fill__toolbar__conflict_count__count">{{conflictCount}}</span>
+			</div>
+			<div
+				class="bx-crm-ai-form-fill__toolbar__button"
+				@click="applyAllAiFields"
+			>{{ applyAllBtnText }}</div>
+			<div
+				class="bx-crm-ai-form-fill__toolbar__button"
+				@click="revertAllAiFields"
+			>{{ revertText }}</div>
+		</div>
+	`
+	};
+
+	const Main = {
+		name: 'Main',
+		components: {
+			Loader,
+			EntityEditorWrapper,
+			ToolBar,
+			Merger,
+			FloatingActionButton,
+			CloseConfirm,
+			FeedbackMessage
+		},
+		data() {
+			return {};
+		},
+		computed: {
+			...ui_vue3_vuex.mapGetters(['conflictFields', 'isLoading', 'eeControlPositions', 'getFirstUnseenFieldPosition', 'aiValuesAppliedCount', 'mergeUuid', 'isSliderConfirmPopupShown', 'isFeedbackMessageShown', 'isFooterHiddenAndSaveDisabled'])
+		},
+		methods: {
+			...ui_vue3_vuex.mapActions(['initialize', 'saveFormFieldsToMerge', 'updateControlPositionInfo', 'updateSliderFooter', 'closeFormWithoutConfirm', 'sendAiCallParsingData']),
+			...ui_vue3_vuex.mapMutations(['changeMainLayoutScrollPosition', 'startLoading', 'stopLoading', 'setMainLayoutScrollHeight']),
+			onFooterSaveBtn() {
+				this.saveFormFieldsToMerge().then(() => this.sendAiCallParsingData('conflict_accept_changes')).catch(() => {});
+			},
+			onFooterCancelBtn() {
+				this.closeFormWithoutConfirm();
+				this.sendAiCallParsingData('conflict_cancel_changes');
+			},
+			onCloseConfirm() {
+				this.closeFormWithoutConfirm();
+			},
+			handleScroll: null,
+			// will be assigned in the mounted callback
+			positionChanged() {
+				this.setMainLayoutScrollHeight(this.$refs.layout.scrollHeight);
+				this.changeMainLayoutScrollPosition({
+					scrollTop: this.$refs.layout.scrollTop,
+					containerHeight: this.$refs.layout.getBoundingClientRect().height
+				});
+			},
+			resizeHandler() {
+				this.handleScroll();
+			},
+			scrollToNext() {
+				const scrollTo = this.getFirstUnseenFieldPosition;
+				if (scrollTo) {
+					myScrollTo(this.$refs.layout, scrollTo, 300);
+				}
+			},
+			subscribeInternalEvents() {
+				this.$Bitrix.eventEmitter.subscribe('crm:ai:form-fill:scroll-to-next', this.scrollToNext);
+				this.$Bitrix.eventEmitter.subscribe('crm:ai:form-fill:close-confirm:confirmClose', this.onCloseConfirm);
+				this.$Bitrix.eventEmitter.subscribe('crm:ai:form-fill:close-confirm:cancelClose', this.scrollToNext);
+			},
+			unSubscribeInternalEvents() {
+				this.$Bitrix.eventEmitter.unsubscribe('crm:ai:form-fill:scroll-to-next', this.scrollToNext);
+				this.$Bitrix.eventEmitter.unsubscribe('crm:ai:form-fill:close-confirm:confirmClose', this.onCloseConfirm);
+				this.$Bitrix.eventEmitter.unsubscribe('crm:ai:form-fill:close-confirm:cancelClose', this.scrollToNext);
+			},
+			autoScrollToFirst() {
+				const height = this.$refs.layout.getBoundingClientRect().height;
+				const firstPosY = this.getFirstUnseenFieldPosition;
+				if (firstPosY && firstPosY > height) {
+					myScrollTo(this.$refs.layout, firstPosY, 800);
+				}
+			}
+		},
+		async mounted() {
+			this.updateSliderFooter();
+			this.startLoading();
+			this.handleScroll = main_core.Runtime.throttle(() => {
+				this.positionChanged();
+			}, 300);
+			await this.initialize();
+			this.positionChanged();
+			this.subscribeInternalEvents();
+			await this.$nextTick(() => {
+				main_core.Event.bind(window, 'resize', this.resizeHandler);
+			});
+			this.stopLoading();
+			this.autoScrollToFirst();
+			sliderButtonsAdapter.onSaveCallback = this.onFooterSaveBtn;
+			sliderButtonsAdapter.onCancelCallback = this.onFooterCancelBtn;
+		},
+		watch: {
+			aiValuesAppliedCount: {
+				handler(newVal, oldVal) {
+					this.updateSliderFooter();
+				},
+				immediate: true
+			}
+		},
+		unmounted() {
+			this.unSubscribeInternalEvents();
+			main_core.Event.unbind(window, 'resize', this.resizeHandler);
+		},
+		template: `
+		<div class="bx-crm-ai-merge-fields" :class="{'hidden-footer': isFooterHiddenAndSaveDisabled}">
+			<div 
+				class="bx-crm-ai-merge-fields-layout" 
+				@scroll="handleScroll"
+				ref="layout"
+				:style="{'visibility': !isLoading ? 'visible' : 'hidden'}"
+				:class="{'hidden-footer': isFooterHiddenAndSaveDisabled}"
+			>
+				<EntityEditorWrapper class="bx-crm-ai-merge-fields-layout__ee_column"/>
+				<Merger class="bx-crm-ai-merge-fields-layout__aifields_column"/>
+				<div class="bx-crm-ai-merge-fields-layout__floating-button_column">
+					<FloatingActionButton/>
+				</div>
+			</div>
+			<Loader v-if="isLoading" />
+			<CloseConfirm v-if="isSliderConfirmPopupShown" />
+			<FeedbackMessage v-if="isFeedbackMessageShown" />
+		</div>
+	`
+	};
+
+	const controlOutlineClassName = 'bx-crm-ai-merge-fields-ee-control-outline';
+	const controlAiValueClassName = 'bx-crm-ai-merge-fields-ee-control-ai-value';
+	class EntityEditorProxy {
+		#editor = null;
+		#initialContainerTop;
+		#onUserFieldDeployedCb = null;
+		async init(entityEditor) {
+			this.#editor = entityEditor;
+			const correctionY = 5;
+			this.#initialContainerTop = this.#editor.getContainer().getBoundingClientRect().y + correctionY;
+			main_core.addCustomEvent(window, 'BX.UI.EntityUserFieldLayoutLoader:onUserFieldDeployed', field => {
+				if (!main_core.Type.isFunction(this.#onUserFieldDeployedCb)) {
+					return;
+				}
+				this.#onUserFieldDeployedCb(field);
+			});
+		}
+		setOnUserFieldDeployedCb(cb) {
+			this.#onUserFieldDeployedCb = cb;
+		}
+		async getEditorControlsParams(fieldsIds) {
+			await timeout(10);
+			const result = [];
+			let counter = 0;
+			for (const control of this.#editor.getAllControls()) {
+				if (!fieldsIds.has(control.getId()) || !control.getWrapper()) {
+					continue;
+				}
+				const [value, model] = this.#getValueFromControl(control);
+				result.push({
+					fieldId: control.getId(),
+					relatedFieldOffsetY: control.getWrapper().getBoundingClientRect().y,
+					originalValue: value,
+					originalModel: model,
+					order: counter
+				});
+				counter++;
+			}
+			return result;
+		}
+		async getEditorControlsPositions(fieldsIds) {
+			const result = new Map();
+			for (const control of this.#editor.getAllControls()) {
+				if (!fieldsIds.has(control.getId()) || !control.getWrapper()) {
+					continue;
+				}
+				const y = control.getWrapper().getBoundingClientRect().y;
+				result.set(control.getId(), y - this.#initialContainerTop);
+			}
+			return result;
+		}
+		setControlOutline(fieldId, show) {
+			const control = this.#editor.getControlById(fieldId);
+			if (!control) {
+				return;
+			}
+			const wrapper = control.getWrapper();
+			if (show) {
+				main_core.Dom.addClass(wrapper, controlOutlineClassName);
+			} else {
+				main_core.Dom.removeClass(wrapper, controlOutlineClassName);
+			}
+		}
+		setControlAiClass(fieldId, show) {
+			const control = this.#editor.getControlById(fieldId);
+			if (!control) {
+				return;
+			}
+			const wrapper = control.getWrapper();
+			if (show) {
+				main_core.Dom.addClass(wrapper, controlAiValueClassName);
+			} else {
+				main_core.Dom.removeClass(wrapper, controlAiValueClassName);
+			}
+		}
+		async setFieldValue(fieldName, newValue) {
+			const control = this.#editor.getControlById(fieldName);
+			if (!control) {
+				return;
+			}
+			switch (control.constructor) {
+				case BX.Crm.EntityEditorText:
+					this.#setPlainTextFieldValue(fieldName, newValue.value);
+					break;
+				case BX.UI.EntityEditorBB:
+					this.#setEntityEditorBBValue(fieldName, newValue.value);
+					this.#refreshControlLayout(control);
+					break;
+				case BX.Crm.EntityEditorUserField:
+					this.#setUserFieldValue(fieldName, newValue.model);
+					this.#refreshControlLayout(control);
+					break;
+				default:
+					throw new Error('Not supported field type');
+			}
+		}
+		#refreshControlLayout(control) {
+			control.refreshLayout({
+				reset: true
+			});
+		}
+		#setEntityEditorBBValue(fieldId, value) {
+			const fieldKey = `${fieldId}_HTML`;
+			const model = this.#editor.getModel();
+			model.setField(fieldKey, value, {
+				enableNotification: true
+			});
+		}
+		#setPlainTextFieldValue(fieldId, value) {
+			const model = this.#editor.getModel();
+			model.setField(fieldId, value, {
+				enableNotification: true
+			});
+		}
+		#setUserFieldValue(fieldId, signedModel) {
+			const model = this.#editor.getModel();
+			model.setField(fieldId, signedModel);
+		}
+		#getValueFromControl(control) {
+			const controlValue = control.getValue();
+			let value = null;
+			let ufModel = null;
+			if (control.constructor === BX.UI.EntityEditorBB) {
+				const model = this.#editor.getModel();
+				const fieldKey = `${control.getId()}_HTML`;
+				value = model.getField(fieldKey, '');
+			} else if (main_core.Type.isObject(controlValue) && Object.hasOwn(controlValue, 'VALUE')) {
+				value = controlValue.VALUE;
+				ufModel = controlValue;
+			} else if (main_core.Type.isString(controlValue) || main_core.Type.isNumber(controlValue)) {
+				value = controlValue;
+				ufModel = null;
+			}
+			return [value, ufModel];
+		}
+	}
+
+	var getters = {
+		isLoading(state) {
+			return state.isLoading;
+		},
+		conflictFields(state) {
+			return state.conflictFields.sort((a, b) => a.order - b.order);
+		},
+		mergeUuid(state) {
+			return state.mergeUuid;
+		},
+		activityId(state) {
+			return state.activityId;
+		},
+		activityDirection(state) {
+			return state.activityDirection;
+		},
+		activityProvider(state) {
+			return state.activityProvider;
+		},
+		summarizeJobId(state) {
+			return state.summarizeJobId;
+		},
+		getEntityInfo(state) {
+			return state.entityInfo;
+		},
+		isEntityEditorLoaded(state) {
+			return state.isEntityEditorLoaded;
+		},
+		eeControlPosition: state => fieldId => {
+			return state.eeControlPositions.get(fieldId, 0);
+		},
+		eeControlPositions: state => {
+			return state.eeControlPositions;
+		},
+		getexpandedConflictControls: state => {
+			return state.expandedConflictControls;
+		},
+		getNotVisibleUnresolvedCount: state => {
+			return state.notVisibleUnresolvedCount;
+		},
+		getMainLayoutScrollPosition: state => {
+			return state.mainLayoutScrollPosition;
+		},
+		getMainLayoutContainerHeight: state => {
+			return state.mainLayoutContainerHeight;
+		},
+		getMainLayoutScrollHeight: state => {
+			return state.mainLayoutScrollHeight;
+		},
+		getFirstUnseenFieldPosition: state => {
+			const position = state.mainLayoutScrollPosition;
+			let lowerField = null;
+			let min = Infinity;
+			for (const [fieldName, value] of state.eeControlPositions) {
+				const field = state.conflictFields.find(f => f.name === fieldName);
+				if (!field || field.isAiValuesUsed || position + 120 > value) {
+					continue;
+				}
+				if (value < min) {
+					min = value;
+					lowerField = fieldName;
+				}
+			}
+			if (!lowerField) {
+				return null;
+			}
+			return state.eeControlPositions.get(lowerField);
+		},
+		isFieldsTouched: state => {
+			return state.isFieldsTouched;
+		},
+		aiValuesAppliedCount: state => {
+			return state.aiValuesAppliedCount;
+		},
+		isFooterHiddenAndSaveDisabled(state) {
+			return state.aiValuesAppliedCount === 0;
+		},
+		isSliderConfirmPopupShown: state => {
+			return state.isSliderConfirmPopupShown;
+		},
+		isNeededShowCloseConfirm: state => {
+			return state.isNeededShowCloseConfirm;
+		},
+		isFeedbackMessageShown: state => {
+			return state.aiFeedback.isMessageComponentShown;
+		},
+		isAiFeedbackShowBeforeClose(state) {
+			return state.aiFeedback.showBeforeClose && state.activityProvider === crm_ai_call.ActivityProvider.call;
+		},
+		aiFeedback(state) {
+			return state.aiFeedback;
+		}
+	};
+
+	const FEEDBACK_TRIGGER_CONTROL = 'FEEDBACK_TRIGGER_CONTROL';
+	const FEEDBACK_TRIGGER_APP_CLOSE = 'FEEDBACK_TRIGGER_APP_CLOSE';
+
+	/* eslint no-param-reassign: off */
+	var mutations = {
+		setMergeUUID: (state, val) => {
+			state.mergeUuid = val;
+		},
+		setActivityId: (state, val) => {
+			state.activityId = val;
+		},
+		setActivityDirection: (state, val) => {
+			state.activityDirection = val;
+		},
+		setActivityProvider: (state, val) => {
+			state.activityProvider = val;
+		},
+		setSummarizeJobId: (state, val) => {
+			state.summarizeJobId = val;
+		},
+		startLoading: state => {
+			state.isLoading = true;
+		},
+		stopLoading: state => {
+			state.isLoading = false;
+		},
+		setEntityInfo: (state, entityInfo) => {
+			state.entityInfo = entityInfo;
+		},
+		setConflictFields: (state, conflictFields) => {
+			state.conflictFields = conflictFields;
+		},
+		setEditMode: (state, isEditMode) => {
+			state.isEditMode = isEditMode;
+		},
+		setIsEntityEditorLoaded(state, isEntityEditorLoaded) {
+			state.isEntityEditorLoaded = isEntityEditorLoaded;
+		},
+		updateConflictField: (state, {
+			name,
+			field
+		}) => {
+			state.conflictFields = state.conflictFields.map(f => {
+				if (f.name === name) {
+					return {
+						...f,
+						...field
+					};
+				}
+				return f;
+			});
+			const aiAppliedCount = state.conflictFields.filter(f => f.isAiValuesUsed).length;
+			state.aiValuesAppliedCount = aiAppliedCount;
+			state.isNeededShowCloseConfirm = aiAppliedCount > 0;
+		},
+		setEeControlPositions: (state, {
+			fieldId,
+			topPosition
+		}) => {
+			state.eeControlPositions.set(fieldId, topPosition);
+		},
+		toggleExpandedConflictControls: (state, {
+			fieldId,
+			size,
+			isExpanded
+		}) => {
+			if (isExpanded) {
+				state.expandedConflictControls.set(fieldId, size);
+			} else {
+				state.expandedConflictControls.delete(fieldId);
+			}
+		},
+		changeMainLayoutScrollPosition: (state, {
+			scrollTop,
+			containerHeight
+		}) => {
+			const containerBottomPosition = scrollTop + containerHeight;
+			state.mainLayoutScrollPosition = scrollTop;
+			state.mainLayoutContainerHeight = containerHeight;
+			const hidden = [];
+			const controlHeight = 30;
+			for (const [key, value] of state.eeControlPositions) {
+				if (containerBottomPosition < value + controlHeight) {
+					hidden.push(key);
+				}
+			}
+			if (hidden.length === 0) {
+				state.notVisibleUnresolvedCount = 0;
+				return;
+			}
+			let counter = 0;
+			for (const hideName of hidden) {
+				const field = state.conflictFields.find(f => f.name === hideName);
+				if (!field || field.isAiValuesUsed) {
+					continue;
+				}
+				counter++;
+			}
+			state.notVisibleUnresolvedCount = counter;
+		},
+		setIsFieldsTouched(state, isFieldsTouched) {
+			state.isFieldsTouched = isFieldsTouched;
+		},
+		setIsConfirmPopupShow(state, isSliderConfirmPopupShown) {
+			state.isSliderConfirmPopupShown = isSliderConfirmPopupShown;
+		},
+		setNeededShowCloseConfirm(state, isNeededShowCloseConfirm) {
+			state.isNeededShowCloseConfirm = isNeededShowCloseConfirm;
+		},
+		showFeedbackMessageIfNeeded(state, source) {
+			if (state.aiFeedback.feedbackWasSent || source === FEEDBACK_TRIGGER_CONTROL && state.aiFeedback.isShownByReturnBtn || state.activityProvider === crm_ai_call.ActivityProvider.openLine) {
+				return;
+			}
+			state.aiFeedback.lastTriggeredBy = source;
+			if (source === FEEDBACK_TRIGGER_CONTROL) {
+				state.aiFeedback.isShownByReturnBtn = true;
+			}
+			state.aiFeedback.isMessageComponentShown = true;
+		},
+		hideFeedbackMessage(state) {
+			state.aiFeedback.isMessageComponentShown = false;
+		},
+		setAiFeedbackWasSent(state, isFeedbackWasSent) {
+			state.aiFeedback.feedbackWasSent = isFeedbackWasSent;
+		},
+		setAiFeedbackShowBeforeClose(state, showBeforeClose) {
+			state.aiFeedback.showBeforeClose = showBeforeClose;
+		},
+		setMainLayoutScrollHeight(state, height) {
+			state.mainLayoutScrollHeight = height;
+		}
+	};
+	/* eslint no-param-reassign: 2 */
+
+	class EntityEditorRender {
+		#params;
+		constructor(params) {
+			this.#params = params;
+		}
+		async render() {
+			this.#fetchEntityEditor(this.#params);
+			return new Promise(resolve => {
+				main_core.addCustomEvent(window, 'BX.Crm.EntityEditor:onUserFieldsDeployed', async editor => {
+					if (editor.getId() !== this.#params.domContainerId) {
+						return;
+					}
+					resolve(editor);
+				});
+			});
+		}
+		#fetchEntityEditor(params) {
+			let eeUrl = '';
+			switch (params.entityTypeName) {
+				case 'DEAL':
+					eeUrl = '/bitrix/components/bitrix/crm.deal.details/ajax.php';
+					break;
+				case 'LEAD':
+					eeUrl = '/bitrix/components/bitrix/crm.lead.details/ajax.php';
+					break;
+				default:
+					throw new Error(`Unknown entity type: ${params.entityTypeName}`);
+			}
+
+			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx
+			eeUrl = `${eeUrl}?sessid=${BX.bitrix_sessid()}`;
+			BX.ajax.post(eeUrl, {
+				ACTION: 'PREPARE_EDITOR_HTML',
+				ACTION_ENTITY_TYPE_NAME: params.entityTypeName,
+				ACTION_ENTITY_ID: params.entityId,
+				GUID: params.domContainerId,
+				CONFIG_ID: params.configId,
+				FORCE_DEFAULT_CONFIG: 'N',
+				FORCE_DEFAULT_OPTIONS: 'Y',
+				IS_EMBEDDED: 'Y',
+				ENABLE_CONFIG_SCOPE_TOGGLE: 'N',
+				ENABLE_CONFIGURATION_UPDATE: 'N',
+				ENABLE_REQUIRED_USER_FIELD_CHECK: 'N',
+				ENABLE_FIELDS_CONTEXT_MENU: 'N',
+				CONTEXT: {},
+				READ_ONLY: 'Y',
+				MODULE_ID: 'crm'
+			}, () => {});
+		}
+	}
+
+	var actions = {
+		async initialize({
+			dispatch,
+			getters
+		}) {
+			await dispatch('fetchFormFieldsToMerge');
+			await dispatch('createEntityEditor');
+			await dispatch('collectFieldDataFromEntityEditor');
+			await dispatch('updateControlPositionInfo');
+		},
+		async fetchFormFieldsToMerge({
+			commit,
+			getters
+		}) {
+			const data = await fetchMergeFields(getters.mergeUuid);
+			const fields = data.fields.map(field => {
+				return {
+					name: field.name,
+					type: field.type,
+					title: field.title,
+					aiModel: field.aiModel,
+					isMultiple: field.isMultiple,
+					isUserField: field.isUserField,
+					aiValue: field.aiModel.VALUE,
+					originalValue: null,
+					originalModel: null,
+					isAiValuesUsed: false
+				};
+			});
+			commit('setConflictFields', fields);
+			commit('setEditMode', data.editMode);
+			commit('setEntityInfo', data.target);
+			commit('setAiFeedbackWasSent', data.target.feedbackWasSent);
+			commit('setAiFeedbackShowBeforeClose', !data.target.feedbackWasSent);
+		},
+		async saveFormFieldsToMerge({
+			getters,
+			commit,
+			dispatch
+		}) {
+			const fieldNamesToApply = getters.conflictFields.filter(field => field.isAiValuesUsed).map(field => field.name);
+			const mergeUuid = getters.mergeUuid;
+			const response = await BX.ajax.runAction('crm.timeline.ai.applyMerge', {
+				method: 'GET',
+				getParameters: {
+					mergeUuid,
+					fieldNamesToApply
+				}
+			});
+			commit('setAiFeedbackShowBeforeClose', false);
+			if (response.status === 'success') {
+				dispatch('closeFormWithoutConfirm');
+			} else {
+				ui_notification.UI.Notification.Center.notify({
+					content: main_core.Loc.getMessage('CRM_AI_FORM_FILL_MERGER_SAVE_ERROR'),
+					autoHideDelay: 5000
+				});
+			}
+		},
+		showFeedbackMessageBeforeClose({
+			getters,
+			commit
+		}) {
+			commit('showFeedbackMessageIfNeeded', FEEDBACK_TRIGGER_APP_CLOSE);
+			commit('setAiFeedbackShowBeforeClose', false);
+		},
+		closeFeedbackMessage({
+			getters,
+			commit,
+			dispatch
+		}, sendFeedback = false) {
+			if (sendFeedback) {
+				dispatch('sendFeedBack');
+				commit('setAiFeedbackShowBeforeClose', false);
+			}
+			commit('hideFeedbackMessage');
+			if (getters.aiFeedback.lastTriggeredBy === FEEDBACK_TRIGGER_APP_CLOSE) {
+				dispatch('closeFormWithoutConfirm');
+			}
+		},
+		closeFormWithoutConfirm({
+			getters,
+			commit
+		}) {
+			commit('setNeededShowCloseConfirm', false);
+			commit('setIsConfirmPopupShow', false);
+			const mergeUuid = getters.mergeUuid;
+			main_core.onCustomEvent(window, 'BX.Crm.AiFormFill:CloseSlider', {
+				mergeUuid
+			});
+		},
+		async setEditorFieldValue({
+			dispatch,
+			getters,
+			commit
+		}, conflictField) {
+			const fieldName = conflictField.name;
+			const isSetAiValue = !conflictField.isAiValuesUsed;
+			const value = isSetAiValue ? conflictField.aiValue : conflictField.originalValue;
+			const model = isSetAiValue ? conflictField.aiModel : conflictField.originalModel;
+			if (!isSetAiValue) {
+				setTimeout(() => {
+					commit('showFeedbackMessageIfNeeded', FEEDBACK_TRIGGER_CONTROL);
+				}, 300);
+			}
+			const controlValue = {
+				value,
+				model
+			};
+			await entityEditorProxy.setFieldValue(fieldName, controlValue);
+			await entityEditorProxy.setControlAiClass(fieldName, isSetAiValue);
+			commit('setIsFieldsTouched', true);
+			commit('updateConflictField', {
+				name: fieldName,
+				field: {
+					isAiValuesUsed: !conflictField.isAiValuesUsed
+				}
+			});
+		},
+		async createEntityEditor({
+			getters,
+			commit,
+			dispatch
+		}) {
+			const getEntityInfo = getters.getEntityInfo;
+			const entityEditorRender = new EntityEditorRender({
+				entityId: getEntityInfo.entityId,
+				configId: getEntityInfo.editorId,
+				entityTypeName: getEntityInfo.entityTypeName,
+				domContainerId: `crm-ai-merge-fields__container__${getters.mergeUuid}`
+			});
+			const editor = await entityEditorRender.render();
+			await entityEditorProxy.init(editor);
+			entityEditorProxy.setOnUserFieldDeployedCb(async () => {
+				const scrollPositionThreshold = 40;
+				const scrollPosY = Math.floor(getters.getMainLayoutScrollPosition + getters.getMainLayoutContainerHeight);
+				const scrollHeight = getters.getMainLayoutScrollHeight || 0;
+				let waitMs = 0;
+				if (scrollHeight - scrollPosY < scrollPositionThreshold) {
+					waitMs = 400;
+				}
+				// at the scroll bottom position entity editor will shake and resize, to prevent it do some timeout before
+				// update control positions info
+				await timeout(waitMs);
+				dispatch('updateControlPositionInfo');
+			});
+		},
+		async collectFieldDataFromEntityEditor({
+			getters,
+			commit,
+			dispatch
+		}) {
+			const conflictFields = getters.conflictFields;
+			const fieldsIds = new Set(conflictFields.map(field => field.name));
+			const fieldParams = await entityEditorProxy.getEditorControlsParams(fieldsIds);
+			if (fieldParams.length === 0) {
+				return;
+			}
+			for (const param of fieldParams) {
+				commit('updateConflictField', {
+					name: param.fieldId,
+					field: {
+						originalValue: param.originalValue,
+						originalModel: param.originalModel,
+						order: param.order
+					}
+				});
+				commit('setEeControlPositions', {
+					fieldId: param.fieldId,
+					topPosition: param.relatedFieldOffsetY
+				});
+			}
+			commit('setIsEntityEditorLoaded', true);
+		},
+		async updateControlPositionInfo({
+			getters,
+			commit
+		}, {
+			updateOnlyFrom
+		} = {}) {
+			const conflictFields = getters.conflictFields;
+			if (conflictFields.length === 0) {
+				return;
+			}
+			const fieldsIds = new Set(conflictFields.map(field => field.name));
+			const positions = await entityEditorProxy.getEditorControlsPositions(fieldsIds);
+			const scrollPosition = getters.getMainLayoutScrollPosition || 0;
+			for (const [fieldId, topPosition] of positions) {
+				positions.set(fieldId, scrollPosition + topPosition);
+			}
+			for (const field of conflictFields) {
+				const fieldId = field.name;
+				if (!updateOnlyFrom && updateOnlyFrom > field.order) {
+					continue;
+				}
+				if (!positions.has(fieldId)) {
+					continue;
+				}
+				commit('setEeControlPositions', {
+					fieldId,
+					topPosition: positions.get(fieldId)
+				});
+			}
+		},
+		async applyAllAiFields({
+			dispatch,
+			getters
+		}) {
+			for (const field of getters.conflictFields) {
+				if (field.isAiValuesUsed) {
+					continue;
+				}
+				dispatch('setEditorFieldValue', field);
+			}
+		},
+		revertAllAiFields({
+			dispatch,
+			getters
+		}) {
+			for (const field of getters.conflictFields) {
+				if (!field.isAiValuesUsed) {
+					continue;
+				}
+				dispatch('setEditorFieldValue', field);
+			}
+		},
+		showEntityEditorControlOutline(store, {
+			fieldName,
+			isShow
+		}) {
+			entityEditorProxy.setControlOutline(fieldName, isShow);
+		},
+		updateSliderFooter({
+			getters
+		}) {
+			const disable = getters.isFooterHiddenAndSaveDisabled;
+			sliderButtonsAdapter.saveButton.setDisabled(disable);
+			copilotSliderInstance?.footerDisplay(!disable);
+		},
+		async sendFeedBack({
+			commit,
+			getters
+		}) {
+			const mergeUuid = getters.mergeUuid;
+			if (getters.aiFeedback.checkFeedbackBeforeSend) {
+				const checkResult = await checkIsFeedbackAlreadySend(mergeUuid);
+				if (checkResult) {
+					commit('setAiFeedbackWasSent', true);
+					return;
+				}
+			}
+			const getEntityInfo = getters.getEntityInfo;
+			const ownerType = getEntityInfo.entityTypeName;
+			crm_ai_feedback.sendFeedback(mergeUuid, ownerType, getters.activityId);
+			commit('setAiFeedbackWasSent', true);
+		},
+		sendAiCallParsingData({
+			getters
+		}, element) {
+			const getEntityInfo = getters.getEntityInfo;
+			const ownerType = getEntityInfo.entityTypeName;
+			const activityId = getters.activityId;
+			const activityDirection = getters.activityDirection;
+			ui_analytics.sendData(crm_integration_analytics.Builder.AI.CallParsingEvent.createDefault(ownerType, activityId, crm_integration_analytics.Dictionary.STATUS_SUCCESS).setElement(element).setActivityDirection(activityDirection).buildData());
+			ui_analytics.sendData(crm_integration_analytics.Builder.AI.CallParsingEvent.createDefault(ownerType, activityId, crm_integration_analytics.Dictionary.STATUS_SUCCESS).setTool(crm_integration_analytics.Dictionary.TOOL_CRM).setCategory(crm_integration_analytics.Dictionary.CATEGORY_AI_OPERATIONS).setElement(element).setActivityDirection(activityDirection).buildData());
+		}
+	};
+	const checkIsFeedbackAlreadySend = async mergeUuid => {
+		return crm_ai_feedback.wasFeedbackSent(mergeUuid);
+	};
+	const fetchMergeFields = async mergeUuid => {
+		const response = await BX.ajax.runAction('crm.timeline.ai.mergeFields', {
+			method: 'GET',
+			getParameters: {
+				mergeUuid
+			}
+		});
+		return response.data;
+	};
+
+	var store = () => {
+		return {
+			state: {
+				mergeUuid: null,
+				isLoading: true,
+				conflictFields: [],
+				isEditMode: false,
+				isEntityEditorLoaded: false,
+				entityInfo: null,
+				eeControlPositions: new Map(),
+				expandedConflictControls: new Map(),
+				mainLayoutScrollPosition: null,
+				mainLayoutContainerHeight: null,
+				mainLayoutScrollHeight: null,
+				notVisibleUnresolvedCount: 0,
+				isFieldsTouched: false,
+				aiValuesAppliedCount: 0,
+				isSliderConfirmPopupShown: false,
+				isNeededShowCloseConfirm: false,
+				aiFeedback: {
+					feedbackWasSent: false,
+					isShownByReturnBtn: false,
+					isMessageComponentShown: false,
+					lastTriggeredBy: null,
+					showBeforeClose: true,
+					checkFeedbackBeforeSend: false // Send check request before sending
+				}
+			},
+			getters,
+			mutations,
+			actions
+		};
+	};
+
+	// export default store;
+
+	class AiFormFillApplication {
+		#application;
+		#options;
+		#store;
+		constructor(rootNode, options = {}) {
+			this.#options = options;
+			this.rootNode = document.querySelector(`#${rootNode}`);
+			if (!this.#options.mergeUuid) {
+				throw new Error('param mergeUuid is required');
+			}
+		}
+		get application() {
+			return this.#application;
+		}
+		get store() {
+			return this.#store;
+		}
+		start() {
+			setEntityEditorProxy(new EntityEditorProxy());
+			this.#store = ui_vue3_vuex.createStore(store());
+			this.#application = ui_vue3.BitrixVue.createApp({
+				name: 'AiFormFill',
+				components: {
+					Main
+				},
+				beforeCreate() {
+					this.$bitrix.Application.set(this);
+				},
+				template: `
+				<Main/>
+			`
+			});
+			this.#store.commit('setMergeUUID', this.#options.mergeUuid);
+			this.#store.commit('setActivityId', this.#options.activityId);
+			this.#store.commit('setActivityDirection', this.#options.activityDirection);
+			this.#store.commit('setActivityProvider', this.#options.activityProvider);
+			this.#store.commit('setSummarizeJobId', this.#options.summarizeJobId);
+			this.#application.use(this.#store);
+			this.#application.mount(this.rootNode);
+		}
+		stop() {
+			this.#application.unmount();
+			this.#application = null;
+			this.#store = null;
+			setEntityEditorProxy(null);
+		}
+		isNeededShowCloseConfirm() {
+			return this.#store.getters.isNeededShowCloseConfirm;
+		}
+		showCloseConfirm() {
+			this.#store.commit('setIsConfirmPopupShow', true);
+		}
+		isShowAiFeedbackBeforeClose() {
+			return this.#store.getters.isAiFeedbackShowBeforeClose;
+		}
+		showAiFeedbackBeforeClose() {
+			this.#store.dispatch('showFeedbackMessageBeforeClose');
+		}
+		isAppLoading() {
+			return this.#store.getters.isLoading;
+		}
+	}
+
+	class SliderButtonsAdapter {
+		#onSaveCallback = null;
+		#onCancelCallback = null;
+		#saveButton = null;
+		#cancelButton = null;
+		constructor() {
+			this.#createButtons();
+		}
+		set onSaveCallback(cb) {
+			this.#onSaveCallback = cb;
+		}
+		set onCancelCallback(cb) {
+			this.#onCancelCallback = cb;
+		}
+		get saveButton() {
+			return this.#saveButton;
+		}
+		get cancelButton() {
+			return this.#cancelButton;
+		}
+		#createButtons() {
+			this.#saveButton = new ui_buttons.Button({
+				text: main_core.Loc.getMessage('CRM_AI_FORM_FILL_MERGER_SAVE'),
+				size: ui_buttons.Button.Size.MEDIUM,
+				color: ui_buttons.Button.Color.SUCCESS,
+				dependOnTheme: true,
+				onclick: () => {
+					if (main_core.Type.isFunction(this.#onSaveCallback)) {
+						this.#onSaveCallback();
+					}
+				}
+			});
+			this.#cancelButton = new ui_buttons.Button({
+				text: main_core.Loc.getMessage('CRM_AI_FORM_FILL_MERGER_CANCEL'),
+				size: ui_buttons.Button.Size.MEDIUM,
+				color: ui_buttons.ButtonColor.LIGHT_BORDER,
+				onclick: () => {
+					if (main_core.Type.isFunction(this.#onCancelCallback)) {
+						this.#onCancelCallback();
+					}
+				}
+			});
+		}
+		getButtons() {
+			return [this.#saveButton, this.#cancelButton];
+		}
+	}
+
+	class ConflictFieldsliderCreator {
+		#options;
+		#copilotSliderClass;
+		#app;
+		#sliderInstance;
+		constructor(options, CopilotSliderWrapper) {
+			this.#options = options;
+			this.#copilotSliderClass = CopilotSliderWrapper;
+			setSliderButtonsAdapter(new SliderButtonsAdapter());
+		}
+		get #onLoadEventName() {
+			return `CopilotSliderWrapper:onLoad_${this.#options.mergeUuid}`;
+		}
+		get #onCloseEventName() {
+			return `CopilotSliderWrapper:onClose_${this.#options.mergeUuid}`;
+		}
+		get #sliderUrl() {
+			return `crm:copilot-wrapper-slider-${this.#options.mergeUuid}`;
+		}
+		get #containerId() {
+			return `crm-ai-merge-fields__container__${this.#options.mergeUuid}`;
+		}
+		create() {
+			this.#sliderInstance = this.#createSliderWrapper();
+			main_core.addCustomEvent('SidePanel.Slider:onLoad', this.#onSliderLoadFn.bind(this), this.#onLoadEventName);
+			main_core.addCustomEvent('SidePanel.Slider:onClose', this.#onSliderCloseFn.bind(this), this.#onCloseEventName);
+			main_core.addCustomEvent(window, 'BX.Crm.AiFormFill:CloseSlider', this.#onAiFormFillDownFn.bind(this));
+			this.#sliderInstance.open();
+		}
+		#makeSliderToolbar() {
+			const toolbarButtons = this.#copilotSliderClass.makeDefaultToolbarButtons();
+			const transcriptButton = new ui_buttons.Button({
+				text: main_core.Loc.getMessage('CRM_AI_FORM_FILL_MERGER_TRANSCRIPTION'),
+				size: crm_integration_ui_settings.Settings.get(crm_integration_ui_settings.Setting.UseAirDesign) ? ui_buttons.Button.Size.SMALL : ui_buttons.Button.Size.MEDIUM,
+				color: ui_buttons.Button.Color.LIGHT_BORDER,
+				dependOnTheme: true,
+				useAirDesign: crm_integration_ui_settings.Settings.get(crm_integration_ui_settings.Setting.UseAirDesign),
+				style: ui_buttons.Button.AirStyle.OUTLINE,
+				onclick: () => {
+					if (top.BX.Helper) {
+						const transcription = new crm_ai_call.Call.Transcription({
+							activityId: this.#options.activityId,
+							ownerTypeId: this.#options.ownerTypeId,
+							ownerId: this.#options.ownerId,
+							languageTitle: this.#options.languageTitle
+						});
+						transcription.open();
+					}
+				}
+			});
+			const resumeButton = new ui_buttons.Button({
+				text: main_core.Loc.getMessage('CRM_AI_FORM_FILL_MERGER_RESUME'),
+				size: crm_integration_ui_settings.Settings.get(crm_integration_ui_settings.Setting.UseAirDesign) ? ui_buttons.Button.Size.SMALL : ui_buttons.Button.Size.MEDIUM,
+				color: ui_buttons.Button.Color.LIGHT_BORDER,
+				dependOnTheme: true,
+				useAirDesign: crm_integration_ui_settings.Settings.get(crm_integration_ui_settings.Setting.UseAirDesign),
+				style: ui_buttons.Button.AirStyle.OUTLINE,
+				onclick: () => {
+					if (top.BX.Helper) {
+						const resume = new crm_ai_call.Call.Summary({
+							activityId: this.#options.activityId,
+							ownerTypeId: this.#options.ownerTypeId,
+							ownerId: this.#options.ownerId,
+							languageTitle: this.#options.languageTitle,
+							activityProvider: this.#options.activityProvider,
+							jobId: this.#options.summarizeJobId
+						});
+						resume.open();
+					}
+				}
+			});
+			let result = [resumeButton, ...toolbarButtons];
+			if (this.#options.activityProvider === crm_ai_call.ActivityProvider.call) {
+				result = [transcriptButton, ...result];
+			}
+			return result;
+		}
+		#createSliderWrapper() {
+			const buttons = sliderButtonsAdapter.getButtons();
+			const toolbarButtons = this.#makeSliderToolbar();
+			return new this.#copilotSliderClass({
+				content: () => `<div id="${this.#containerId}"></div>`,
+				sliderTitle: main_core.Loc.getMessage('CRM_AI_FORM_FILL_MERGER_TITLE', crm_ai_nameService.NameService.copilotNameReplacement()),
+				label: this.#options.label,
+				extensions: ['crm.ai.form-fill', 'crm.entity-editor'],
+				url: this.#sliderUrl,
+				width: this.#calculateSliderWidth(),
+				toolbar: () => toolbarButtons,
+				buttons: () => buttons
+			});
+		}
+		#calculateSliderWidth() {
+			const topSlider = BX.SidePanel.Instance.getTopSlider();
+			const width = topSlider.getWidth() || window.screen.width * 0.86;
+			return Math.floor(width * 0.86);
+		}
+		#onSliderLoadFn(event) {
+			if (event.getSlider().getUrl() !== this.#sliderUrl) {
+				return;
+			}
+			setCopilotSliderInstance(this.#sliderInstance);
+			this.#app = new AiFormFillApplication(this.#containerId, {
+				mergeUuid: this.#options.mergeUuid,
+				activityId: this.#options.activityId,
+				activityDirection: this.#options.activityDirection,
+				activityProvider: this.#options.activityProvider,
+				summarizeJobId: this.#options.summarizeJobId
+			});
+			this.#app.start();
+			main_core.removeAllCustomEvents('SidePanel.Slider:onLoad', this.#onLoadEventName);
+		}
+		#onSliderCloseFn(event) {
+			if (event.getSlider().getUrl() !== this.#sliderUrl) {
+				return;
+			}
+			if (!this.#app || this.#app.isAppLoading()) {
+				event.denyAction();
+				return;
+			}
+			if (this.#app.isNeededShowCloseConfirm()) {
+				this.#app.showCloseConfirm();
+				event.denyAction();
+				return;
+			}
+			if (this.#app.isShowAiFeedbackBeforeClose()) {
+				this.#app.showAiFeedbackBeforeClose();
+				event.denyAction();
+				return;
+			}
+			main_core.removeAllCustomEvents('SidePanel.Slider:onClose', this.#onCloseEventName);
+			main_core.removeAllCustomEvents(window, 'BX.Crm.AiFormFill:CloseSlider');
+			if (this.#app) {
+				this.#app.stop();
+				this.#app = null;
+			}
+			setSliderButtonsAdapter(null);
+			setCopilotSliderInstance(null);
+		}
+		#onAiFormFillDownFn(event) {
+			const mergeUuid = event?.data?.mergeUuid;
+			if (mergeUuid === this.#options.mergeUuid) {
+				this.#sliderInstance.close();
+			}
+		}
+	}
+	const createAiFormFillApplicationInsideSlider = function (options) {
+		const makeApp = CopilotSliderWrapper => {
+			const creator = new ConflictFieldsliderCreator(options, CopilotSliderWrapper);
+			creator.create();
+		};
+		if (main_core.Type.isFunction(BX?.Crm?.AI?.Slider)) {
+			makeApp(BX.Crm.AI.Slider);
+		} else {
+			top.BX.Runtime.loadExtension('crm.ai.slider').then(exports$1 => {
+				const {
+					Slider
+				} = exports$1;
+				makeApp(Slider);
+			}).catch(() => {
+				throw new Error('Cant load Crm.AI.Slider extension');
+			});
+		}
+	};
+
+	exports.createAiFormFillApplicationInsideSlider = createAiFormFillApplicationInsideSlider;
+
+})(this.BX.Crm = this.BX.Crm || {}, BX.Crm.AI, BX.Crm.AI, BX.Crm.Integration.UI, BX, BX.UI, BX.Vue3, BX.Vue3.Vuex, BX.UI.Dialogs, BX.Crm.AI.Feedback, BX.Crm.Integration.Analytics, BX.UI.Analytics, BX);
 //# sourceMappingURL=ai-form-fill.bundle.js.map

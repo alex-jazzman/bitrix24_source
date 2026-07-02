@@ -35,15 +35,19 @@ $jsParams = [
 <script>
 	<?php
 	\Bitrix\Main\UI\Extension::load([
-		'bitrix24.notify',
 		'ui.notification-panel',
 		'ui.banner-dispatcher',
+		'bitrix24.notify-panel',
 	]);
 	?>
 	BX.ready(() => {
-		BX.Event.EventEmitter.subscribe('BX.Bitrix24.NotifyPanel:onAutomatedSolutionPanelCallback', () => {
-			BX.userOptions.save('crm', 'automated_solution_imported', 'lastShowDate', (new Date()).getTime());
-		});
-		(new BX.Bitrix24.NotifyPanel(<?= Json::encode($jsParams)?>)).show();
+		if (BX.Bitrix24?.NotifyPanel)
+		{
+			BX.Event.EventEmitter.subscribe('BX.Bitrix24.NotifyPanel:onAutomatedSolutionPanelCallback', () => {
+				BX.userOptions.save('crm', 'automated_solution_imported', 'lastShowDate', (new Date()).getTime());
+			});
+
+			(new BX.Bitrix24.NotifyPanel(<?= Json::encode($jsParams)?>)).show();
+		}
 	});
 </script>

@@ -33,3 +33,4 @@ $MESS['WORKFLOW_TEMPLATE_FIELD_ACTIVE'] = 'Активность';
 $MESS['WORKFLOW_TEMPLATE_FIELD_ACTIVE_FULL'] = 'Активность, Y - активен, N - отключен';
 $MESS['WORKFLOW_TEMPLATE_FIELD_TYPE'] = 'Тип шаблона';
 $MESS['WORKFLOW_TEMPLATE_FIELD_TYPE_FULL'] = 'Тип шаблона бизнес-процесса указывает на его тип: бизнес-процесс, встроенный робот или пользовательский робот';
+$MESS['WORKFLOW_TEMPLATE_TABLE_DESCRIPTION_FULL'] = "Набор содержит данные о шаблонах бизнес-процессов: их названия, статусы, типы, дату изменения и информацию о пользователях, которые их создали.";

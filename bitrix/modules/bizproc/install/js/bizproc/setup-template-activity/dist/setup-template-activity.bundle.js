@@ -1,199 +1,199 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,main_sidepanel,ui_vue3,main_core,main_core_events,ui_iconSet_api_vue,ui_iconSet_api_core,ui_system_menu_vue,ui_vue3_components_button,bizproc_setupTemplate) {
+(function (exports, main_core_events, ui_vue3, main_sidepanel, ui_iconSet_api_vue, ui_iconSet_api_core, main_core, ui_system_menu_vue, ui_vue3_components_button, bizproc_setupTemplate) {
 	'use strict';
 
 	// @vue/component
 	const DraggableContainer = {
-	  name: 'DraggableContainer',
-	  props: {
-	    items: {
-	      type: Array,
-	      required: true
-	    },
-	    blockIndex: {
-	      type: Number,
-	      required: true
-	    }
-	  },
-	  emits: ['update:items'],
-	  data() {
-	    return {
-	      isDragging: false,
-	      dropTargetIndex: null,
-	      dragState: {
-	        sourceBlockIndex: null,
-	        draggedItemIndex: null,
-	        draggedElement: null,
-	        ghostElement: null,
-	        offsetX: 0,
-	        offsetY: 0,
-	        lastTargetBlockIndex: null,
-	        lastTargetItemIndex: null,
-	        mouseX: 0,
-	        mouseY: 0
-	      }
-	    };
-	  },
-	  computed: {
-	    draggedItemIndex() {
-	      return this.isDragging ? this.dragState.draggedItemIndex : null;
-	    }
-	  },
-	  created() {
-	    this.boundHandleDragMove = this.handleDragMove.bind(this);
-	    this.boundHandleDragEnd = this.handleDragEnd.bind(this);
-	    main_core_events.EventEmitter.subscribe('Bizproc.NodeSettings:onScroll', this.onScrollContainer);
-	    main_core_events.EventEmitter.subscribe('Bizproc.SetupTemplate:Draggable:start', this.onGlobalDragStart);
-	    main_core_events.EventEmitter.subscribe('Bizproc.SetupTemplate:Draggable:dragover', this.onGlobalDragOver);
-	    main_core_events.EventEmitter.subscribe('Bizproc.SetupTemplate:Draggable:end', this.onGlobalDragEnd);
-	  },
-	  beforeUnmount() {
-	    main_core_events.EventEmitter.unsubscribe('Bizproc.SetupTemplate:Draggable:start', this.onGlobalDragStart);
-	    main_core_events.EventEmitter.unsubscribe('Bizproc.SetupTemplate:Draggable:dragover', this.onGlobalDragOver);
-	    main_core_events.EventEmitter.unsubscribe('Bizproc.SetupTemplate:Draggable:end', this.onGlobalDragEnd);
-	    main_core_events.EventEmitter.unsubscribe('Bizproc.NodeSettings:onScroll', this.onScrollContainer);
-	  },
-	  methods: {
-	    onGlobalDragStart(e) {
-	      const payload = e.getData();
-	      const {
-	        sourceItemIndex,
-	        sourceBlockIndex,
-	        event,
-	        element
-	      } = payload;
-	      if (sourceBlockIndex !== this.blockIndex) {
-	        return;
-	      }
-	      event.preventDefault();
-	      this.isDragging = true;
-	      this.dragState.sourceBlockIndex = this.blockIndex;
-	      this.dragState.draggedItemIndex = sourceItemIndex;
-	      this.dragState.draggedElement = element;
-	      this.dragState.mouseX = event.clientX;
-	      this.dragState.mouseY = event.clientY;
-	      this.createGhost(event);
-	      main_core.Dom.addClass(this.dragState.draggedElement, '--dragging');
-	      main_core.Dom.addClass(document.body, '--user-dragging');
-	      main_core.Event.bind(document, 'mousemove', this.boundHandleDragMove);
-	      main_core.Event.bind(document, 'mouseup', this.boundHandleDragEnd);
-	    },
-	    onGlobalDragOver(e) {
-	      const payload = e.getData();
-	      if (payload.targetBlockIndex === this.blockIndex) {
-	        this.dropTargetIndex = payload.targetItemIndex;
-	      } else {
-	        this.dropTargetIndex = null;
-	      }
-	      if (this.isDragging) {
-	        this.dragState.lastTargetBlockIndex = payload.targetBlockIndex;
-	        this.dragState.lastTargetItemIndex = payload.targetItemIndex;
-	      }
-	    },
-	    handleDragMove(event) {
-	      if (!this.isDragging) {
-	        return;
-	      }
-	      this.dragState.mouseX = event.clientX;
-	      this.dragState.mouseY = event.clientY;
-	      this.updateGhostPosition(event);
-	      main_core_events.EventEmitter.emit('Bizproc.SetupTemplate:Draggable:move', {
-	        clientY: event.clientY
-	      });
-	      const result = {
-	        targetBlockIndex: null,
-	        targetItemIndex: null
-	      };
-	      const elementUnderCursor = document.elementFromPoint(event.clientX, event.clientY);
-	      if (elementUnderCursor) {
-	        const container = elementUnderCursor.closest('[data-draggable-container]');
-	        if (container) {
-	          result.targetBlockIndex = parseInt(container.dataset.blockIndex, 10);
-	          const allItems = [...container.querySelectorAll('[data-draggable-item]')];
-	          const closestItem = elementUnderCursor.closest('[data-draggable-item]');
-	          if (closestItem) {
-	            const rect = closestItem.getBoundingClientRect();
-	            const isAfter = event.clientY - rect.top > rect.height / 2;
-	            const index = allItems.indexOf(closestItem);
-	            result.targetItemIndex = isAfter ? index + 1 : index;
-	          } else if (allItems.length === 0) {
-	            result.targetItemIndex = 0;
-	          }
-	        }
-	      }
-	      main_core_events.EventEmitter.emit('Bizproc.SetupTemplate:Draggable:dragover', result);
-	    },
-	    handleDragEnd() {
-	      if (!this.isDragging) {
-	        return;
-	      }
-	      main_core_events.EventEmitter.emit('Bizproc.SetupTemplate:Draggable:drop', {
-	        sourceBlockIndex: this.dragState.sourceBlockIndex,
-	        sourceItemIndex: this.dragState.draggedItemIndex,
-	        targetBlockIndex: this.dragState.lastTargetBlockIndex,
-	        targetItemIndex: this.dragState.lastTargetItemIndex
-	      });
-	      main_core_events.EventEmitter.emit('Bizproc.SetupTemplate:Draggable:end');
-	    },
-	    onGlobalDragEnd() {
-	      if (this.isDragging) {
-	        this.resetDragState();
-	      }
-	      this.isDragging = false;
-	      this.dropTargetIndex = null;
-	    },
-	    resetDragState() {
-	      main_core.Dom.removeClass(document.body, '--user-dragging');
-	      if (this.dragState.draggedElement) {
-	        main_core.Dom.removeClass(this.dragState.draggedElement, '--dragging');
-	      }
-	      if (this.dragState.ghostElement) {
-	        main_core.Dom.remove(this.dragState.ghostElement);
-	      }
-	      main_core.Event.unbind(document, 'mousemove', this.boundHandleDragMove);
-	      main_core.Event.unbind(document, 'mouseup', this.boundHandleDragEnd);
-	      this.dragState = {
-	        sourceBlockIndex: null,
-	        draggedItemIndex: null,
-	        draggedElement: null,
-	        ghostElement: null,
-	        offsetX: 0,
-	        offsetY: 0,
-	        lastTargetBlockIndex: null,
-	        lastTargetItemIndex: null,
-	        mouseX: 0,
-	        mouseY: 0
-	      };
-	    },
-	    updateGhostPosition(event) {
-	      if (!this.dragState.ghostElement) {
-	        return;
-	      }
-	      main_core.Dom.style(this.dragState.ghostElement, 'left', `${event.clientX - this.dragState.offsetX}px`);
-	      main_core.Dom.style(this.dragState.ghostElement, 'top', `${event.clientY - this.dragState.offsetY}px`);
-	    },
-	    createGhost(event) {
-	      const rect = this.dragState.draggedElement.getBoundingClientRect();
-	      this.dragState.offsetX = event.clientX - rect.left;
-	      this.dragState.offsetY = event.clientY - rect.top;
-	      const ghost = this.dragState.draggedElement.cloneNode(true);
-	      main_core.Dom.addClass(ghost, '--ghost');
-	      main_core.Dom.style(ghost, 'width', `${rect.width}px`);
-	      main_core.Dom.append(ghost, document.body);
-	      this.dragState.ghostElement = ghost;
-	      this.updateGhostPosition(event);
-	    },
-	    onScrollContainer() {
-	      if (this.isDragging) {
-	        this.handleDragMove({
-	          clientX: this.dragState.mouseX,
-	          clientY: this.dragState.mouseY
-	        });
-	      }
-	    }
-	  },
-	  template: `
+		name: 'DraggableContainer',
+		props: {
+			items: {
+				type: Array,
+				required: true
+			},
+			blockIndex: {
+				type: Number,
+				required: true
+			}
+		},
+		emits: ['update:items'],
+		data() {
+			return {
+				isDragging: false,
+				dropTargetIndex: null,
+				dragState: {
+					sourceBlockIndex: null,
+					draggedItemIndex: null,
+					draggedElement: null,
+					ghostElement: null,
+					offsetX: 0,
+					offsetY: 0,
+					lastTargetBlockIndex: null,
+					lastTargetItemIndex: null,
+					mouseX: 0,
+					mouseY: 0
+				}
+			};
+		},
+		computed: {
+			draggedItemIndex() {
+				return this.isDragging ? this.dragState.draggedItemIndex : null;
+			}
+		},
+		created() {
+			this.boundHandleDragMove = this.handleDragMove.bind(this);
+			this.boundHandleDragEnd = this.handleDragEnd.bind(this);
+			main_core_events.EventEmitter.subscribe('Bizproc.NodeSettings:onScroll', this.onScrollContainer);
+			main_core_events.EventEmitter.subscribe('Bizproc.SetupTemplate:Draggable:start', this.onGlobalDragStart);
+			main_core_events.EventEmitter.subscribe('Bizproc.SetupTemplate:Draggable:dragover', this.onGlobalDragOver);
+			main_core_events.EventEmitter.subscribe('Bizproc.SetupTemplate:Draggable:end', this.onGlobalDragEnd);
+		},
+		beforeUnmount() {
+			main_core_events.EventEmitter.unsubscribe('Bizproc.SetupTemplate:Draggable:start', this.onGlobalDragStart);
+			main_core_events.EventEmitter.unsubscribe('Bizproc.SetupTemplate:Draggable:dragover', this.onGlobalDragOver);
+			main_core_events.EventEmitter.unsubscribe('Bizproc.SetupTemplate:Draggable:end', this.onGlobalDragEnd);
+			main_core_events.EventEmitter.unsubscribe('Bizproc.NodeSettings:onScroll', this.onScrollContainer);
+		},
+		methods: {
+			onGlobalDragStart(e) {
+				const payload = e.getData();
+				const {
+					sourceItemIndex,
+					sourceBlockIndex,
+					event,
+					element
+				} = payload;
+				if (sourceBlockIndex !== this.blockIndex) {
+					return;
+				}
+				event.preventDefault();
+				this.isDragging = true;
+				this.dragState.sourceBlockIndex = this.blockIndex;
+				this.dragState.draggedItemIndex = sourceItemIndex;
+				this.dragState.draggedElement = element;
+				this.dragState.mouseX = event.clientX;
+				this.dragState.mouseY = event.clientY;
+				this.createGhost(event);
+				main_core.Dom.addClass(this.dragState.draggedElement, '--dragging');
+				main_core.Dom.addClass(document.body, '--user-dragging');
+				main_core.Event.bind(document, 'mousemove', this.boundHandleDragMove);
+				main_core.Event.bind(document, 'mouseup', this.boundHandleDragEnd);
+			},
+			onGlobalDragOver(e) {
+				const payload = e.getData();
+				if (payload.targetBlockIndex === this.blockIndex) {
+					this.dropTargetIndex = payload.targetItemIndex;
+				} else {
+					this.dropTargetIndex = null;
+				}
+				if (this.isDragging) {
+					this.dragState.lastTargetBlockIndex = payload.targetBlockIndex;
+					this.dragState.lastTargetItemIndex = payload.targetItemIndex;
+				}
+			},
+			handleDragMove(event) {
+				if (!this.isDragging) {
+					return;
+				}
+				this.dragState.mouseX = event.clientX;
+				this.dragState.mouseY = event.clientY;
+				this.updateGhostPosition(event);
+				main_core_events.EventEmitter.emit('Bizproc.SetupTemplate:Draggable:move', {
+					clientY: event.clientY
+				});
+				const result = {
+					targetBlockIndex: null,
+					targetItemIndex: null
+				};
+				const elementUnderCursor = document.elementFromPoint(event.clientX, event.clientY);
+				if (elementUnderCursor) {
+					const container = elementUnderCursor.closest('[data-draggable-container]');
+					if (container) {
+						result.targetBlockIndex = parseInt(container.dataset.blockIndex, 10);
+						const allItems = [...container.querySelectorAll('[data-draggable-item]')];
+						const closestItem = elementUnderCursor.closest('[data-draggable-item]');
+						if (closestItem) {
+							const rect = closestItem.getBoundingClientRect();
+							const isAfter = event.clientY - rect.top > rect.height / 2;
+							const index = allItems.indexOf(closestItem);
+							result.targetItemIndex = isAfter ? index + 1 : index;
+						} else if (allItems.length === 0) {
+							result.targetItemIndex = 0;
+						}
+					}
+				}
+				main_core_events.EventEmitter.emit('Bizproc.SetupTemplate:Draggable:dragover', result);
+			},
+			handleDragEnd() {
+				if (!this.isDragging) {
+					return;
+				}
+				main_core_events.EventEmitter.emit('Bizproc.SetupTemplate:Draggable:drop', {
+					sourceBlockIndex: this.dragState.sourceBlockIndex,
+					sourceItemIndex: this.dragState.draggedItemIndex,
+					targetBlockIndex: this.dragState.lastTargetBlockIndex,
+					targetItemIndex: this.dragState.lastTargetItemIndex
+				});
+				main_core_events.EventEmitter.emit('Bizproc.SetupTemplate:Draggable:end');
+			},
+			onGlobalDragEnd() {
+				if (this.isDragging) {
+					this.resetDragState();
+				}
+				this.isDragging = false;
+				this.dropTargetIndex = null;
+			},
+			resetDragState() {
+				main_core.Dom.removeClass(document.body, '--user-dragging');
+				if (this.dragState.draggedElement) {
+					main_core.Dom.removeClass(this.dragState.draggedElement, '--dragging');
+				}
+				if (this.dragState.ghostElement) {
+					main_core.Dom.remove(this.dragState.ghostElement);
+				}
+				main_core.Event.unbind(document, 'mousemove', this.boundHandleDragMove);
+				main_core.Event.unbind(document, 'mouseup', this.boundHandleDragEnd);
+				this.dragState = {
+					sourceBlockIndex: null,
+					draggedItemIndex: null,
+					draggedElement: null,
+					ghostElement: null,
+					offsetX: 0,
+					offsetY: 0,
+					lastTargetBlockIndex: null,
+					lastTargetItemIndex: null,
+					mouseX: 0,
+					mouseY: 0
+				};
+			},
+			updateGhostPosition(event) {
+				if (!this.dragState.ghostElement) {
+					return;
+				}
+				main_core.Dom.style(this.dragState.ghostElement, 'left', `${event.clientX - this.dragState.offsetX}px`);
+				main_core.Dom.style(this.dragState.ghostElement, 'top', `${event.clientY - this.dragState.offsetY}px`);
+			},
+			createGhost(event) {
+				const rect = this.dragState.draggedElement.getBoundingClientRect();
+				this.dragState.offsetX = event.clientX - rect.left;
+				this.dragState.offsetY = event.clientY - rect.top;
+				const ghost = this.dragState.draggedElement.cloneNode(true);
+				main_core.Dom.addClass(ghost, '--ghost');
+				main_core.Dom.style(ghost, 'width', `${rect.width}px`);
+				main_core.Dom.append(ghost, document.body);
+				this.dragState.ghostElement = ghost;
+				this.updateGhostPosition(event);
+			},
+			onScrollContainer() {
+				if (this.isDragging) {
+					this.handleDragMove({
+						clientX: this.dragState.mouseX,
+						clientY: this.dragState.mouseY
+					});
+				}
+			}
+		},
+		template: `
 		<div>
 			<slot
 				:dropTargetIndex="dropTargetIndex"
@@ -205,51 +205,51 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const BlockComponent = {
-	  name: 'BlockComponent',
-	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon,
-	    DraggableContainer
-	  },
-	  props: {
-	    position: {
-	      type: Number,
-	      required: true
-	    },
-	    /** type Array<Item> */
-	    items: {
-	      type: Array,
-	      required: true
-	    },
-	    blockIndex: {
-	      type: Number,
-	      required: true
-	    }
-	  },
-	  emits: ['deleteBlock', 'update:items'],
-	  setup() {
-	    return {
-	      Outline: ui_iconSet_api_core.Outline
-	    };
-	  },
-	  computed: {
-	    title() {
-	      return this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_BLOCK_TITLE', {
-	        '#POSITION#': this.position
-	      });
-	    }
-	  },
-	  methods: {
-	    onItemsUpdate(newItems) {
-	      this.$emit('update:items', newItems);
-	    },
-	    showDropPlaceholder(dnd, itemIndex) {
-	      return dnd.dropTargetIndex === itemIndex && dnd.dropTargetIndex !== dnd.draggedItemIndex;
-	    },
-	    showFinalDropPlaceholder(dnd) {
-	      return dnd.dropTargetIndex === this.items.length && dnd.draggedItemIndex !== this.items.length;
-	    }
-	  },
-	  template: `
+		name: 'BlockComponent',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon,
+			DraggableContainer
+		},
+		props: {
+			position: {
+				type: Number,
+				required: true
+			},
+			/** type Array<Item> */
+			items: {
+				type: Array,
+				required: true
+			},
+			blockIndex: {
+				type: Number,
+				required: true
+			}
+		},
+		emits: ['deleteBlock', 'update:items'],
+		setup() {
+			return {
+				Outline: ui_iconSet_api_core.Outline
+			};
+		},
+		computed: {
+			title() {
+				return this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_BLOCK_TITLE', {
+					'#POSITION#': this.position
+				});
+			}
+		},
+		methods: {
+			onItemsUpdate(newItems) {
+				this.$emit('update:items', newItems);
+			},
+			showDropPlaceholder(dnd, itemIndex) {
+				return dnd.dropTargetIndex === itemIndex && dnd.dropTargetIndex !== dnd.draggedItemIndex;
+			},
+			showFinalDropPlaceholder(dnd) {
+				return dnd.dropTargetIndex === this.items.length && dnd.draggedItemIndex !== this.items.length;
+			}
+		},
+		template: `
 		<div class="bizproc-setuptemplateactivity-block">
 			<div class="bizproc-setuptemplateactivity-block__header">
 				<div class="bizproc-setuptemplateactivity-block__header-wrap">
@@ -308,8 +308,8 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const AddBlockBtn = {
-	  name: 'AddBlockBtn',
-	  template: `
+		name: 'AddBlockBtn',
+		template: `
 		<button
 			class="ui-btn --air --wide --style-outline-no-accent ui-btn-no-caps --with-icon"
 			type="button"
@@ -323,198 +323,200 @@ this.BX = this.BX || {};
 	};
 
 	const ITEM_TYPES = Object.freeze({
-	  DELIMITER: 'delimiter',
-	  TITLE: 'title',
-	  TITLE_WITH_ICON: 'titleWithIcon',
-	  ICON_TITLE: 'iconTitle',
-	  DESCRIPTION: 'description',
-	  CONSTANT: 'constant'
+		DELIMITER: 'delimiter',
+		TITLE: 'title',
+		TITLE_WITH_ICON: 'titleWithIcon',
+		ICON_TITLE: 'iconTitle',
+		DESCRIPTION: 'description',
+		CONSTANT: 'constant'
 	});
 	const CONSTANT_TYPES = Object.freeze({
-	  STRING: 'string',
-	  INT: 'int',
-	  USER: 'user',
-	  FILE: 'file',
-	  TEXT: 'text',
-	  SELECT: 'select'
+		STRING: 'string',
+		INT: 'int',
+		USER: 'user',
+		FILE: 'file',
+		TEXT: 'text',
+		SELECT: 'select',
+		ENTITY_SELECTOR: 'entityselector'
 	});
 	const DELIMITER_TYPES = Object.freeze({
-	  LINE: 'line'
+		LINE: 'line'
 	});
 	const CONSTANT_ID_PREFIX = 'SetupTemplateActivity_';
 	const PRESET_TITLE_ICONS = {
-	  IMAGE: 'o-image',
-	  ATTACH: 'o-attach',
-	  SETTINGS: 'o-settings',
-	  STARS: 'o-ai-stars'
+		IMAGE: 'o-image',
+		ATTACH: 'o-attach',
+		SETTINGS: 'o-settings',
+		STARS: 'o-ai-stars'
 	};
 
 	function makeEmptyBlock() {
-	  return {
-	    id: generateConstantId(),
-	    items: []
-	  };
+		return {
+			id: generateConstantId(),
+			items: []
+		};
 	}
 	function makeEmptyDelimiter() {
-	  return {
-	    id: generateConstantId(),
-	    itemType: ITEM_TYPES.DELIMITER,
-	    delimiterType: DELIMITER_TYPES.LINE
-	  };
+		return {
+			id: generateConstantId(),
+			itemType: ITEM_TYPES.DELIMITER,
+			delimiterType: DELIMITER_TYPES.LINE
+		};
 	}
 	function makeEmptyTitle() {
-	  return {
-	    id: generateConstantId(),
-	    itemType: ITEM_TYPES.TITLE,
-	    text: ''
-	  };
+		return {
+			id: generateConstantId(),
+			itemType: ITEM_TYPES.TITLE,
+			text: ''
+		};
 	}
 	function makeEmptyTitleWithIcon() {
-	  return {
-	    id: generateConstantId(),
-	    itemType: ITEM_TYPES.TITLE_WITH_ICON,
-	    text: '',
-	    icon: 'IMAGE'
-	  };
+		return {
+			id: generateConstantId(),
+			itemType: ITEM_TYPES.TITLE_WITH_ICON,
+			text: '',
+			icon: 'IMAGE'
+		};
 	}
 	function makeEmptyDescription() {
-	  return {
-	    id: generateConstantId(),
-	    itemType: ITEM_TYPES.DESCRIPTION,
-	    text: ''
-	  };
+		return {
+			id: generateConstantId(),
+			itemType: ITEM_TYPES.DESCRIPTION,
+			text: ''
+		};
 	}
 	function makeEmptyConstant(id = null) {
-	  return {
-	    itemType: ITEM_TYPES.CONSTANT,
-	    id: id || generateConstantId(),
-	    name: '',
-	    constantType: CONSTANT_TYPES.STRING,
-	    multiple: false,
-	    description: '',
-	    default: '',
-	    options: [],
-	    required: false
-	  };
+		return {
+			itemType: ITEM_TYPES.CONSTANT,
+			id: id || generateConstantId(),
+			name: '',
+			constantType: CONSTANT_TYPES.STRING,
+			multiple: false,
+			description: '',
+			default: '',
+			options: [],
+			required: false,
+			settings: {}
+		};
 	}
 	function convertConstants(constant) {
-	  return {
-	    Name: constant.name,
-	    Description: constant.description,
-	    Type: constant.constantType,
-	    Required: 0,
-	    Multiple: constant.multiple ? 1 : 0,
-	    Options: main_core.Type.isObject(constant.options) ? constant.options : null,
-	    Default: constant.default
-	  };
+		return {
+			Name: constant.name,
+			Description: constant.description,
+			Type: constant.constantType,
+			Required: 0,
+			Multiple: constant.multiple ? 1 : 0,
+			Options: main_core.Type.isObject(constant.options) ? constant.options : null,
+			Default: constant.default,
+			Settings: constant.settings
+		};
 	}
 	function generateRandomString(length) {
-	  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-	  let result = '';
-	  const charactersLength = characters.length;
-	  for (let i = 0; i < length; i++) {
-	    result += characters.charAt(Math.floor(Math.random() * charactersLength));
-	  }
-	  return result;
+		const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+		let result = '';
+		const charactersLength = characters.length;
+		for (let i = 0; i < length; i++) {
+			result += characters.charAt(Math.floor(Math.random() * charactersLength));
+		}
+		return result;
 	}
 	function generateConstantId() {
-	  return CONSTANT_ID_PREFIX + generateRandomString(10);
+		return CONSTANT_ID_PREFIX + generateRandomString(10);
 	}
 	function getScrollParent(node) {
-	  let parent = node == null ? void 0 : node.parentElement;
-	  while (parent && parent !== document.body) {
-	    const style = window.getComputedStyle(parent);
-	    const overflowY = style.overflowY;
-	    const isScrollable = overflowY === 'auto' || overflowY === 'scroll';
-	    if (isScrollable && parent.tagName !== 'FORM') {
-	      return parent;
-	    }
-	    parent = parent.parentElement;
-	  }
-	  return null;
+		let parent = node?.parentElement;
+		while (parent && parent !== document.body) {
+			const style = window.getComputedStyle(parent);
+			const overflowY = style.overflowY;
+			const isScrollable = overflowY === 'auto' || overflowY === 'scroll';
+			if (isScrollable && parent.tagName !== 'FORM') {
+				return parent;
+			}
+			parent = parent.parentElement;
+		}
+		return null;
 	}
 
 	// @vue/component
 	const AddElementBtn = {
-	  name: 'AddElementBtn',
-	  components: {
-	    BMenu: ui_system_menu_vue.BMenu
-	  },
-	  props: {
-	    constantIds: {
-	      type: Set,
-	      default: () => new Set()
-	    }
-	  },
-	  emits: ['add:element', 'create:constant'],
-	  data() {
-	    return {
-	      isMenuShown: false,
-	      offsetLeft: 0
-	    };
-	  },
-	  computed: {
-	    menuOptions() {
-	      return {
-	        bindElement: this.$refs.addElementButton,
-	        offsetLeft: this.offsetLeft,
-	        fixed: false,
-	        cacheable: false,
-	        items: [{
-	          title: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_TITLE_ITEM_LABEL'),
-	          onClick: () => this.$emit('add:element', makeEmptyTitle())
-	        }, {
-	          title: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ICON_TITLE_ITEM_LABEL'),
-	          onClick: () => this.$emit('add:element', makeEmptyTitleWithIcon())
-	        }, {
-	          title: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_DESCRIPTION_ITEM_LABEL'),
-	          onClick: () => this.$emit('add:element', makeEmptyDescription())
-	        }, {
-	          title: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_DELIMITER_ITEM_LABEL'),
-	          onClick: () => this.$emit('add:element', makeEmptyDelimiter())
-	        }, {
-	          title: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_MENU'),
-	          onClick: () => {
-	            const id = this.generateFriendlyId();
-	            this.$emit('create:constant', makeEmptyConstant(id));
-	          }
-	        }]
-	      };
-	    }
-	  },
-	  mounted() {
-	    main_core_events.EventEmitter.subscribe('Bizproc.SetupTemplate:Draggable:start', this.closeMenu);
-	    main_core_events.EventEmitter.subscribe('Bizproc.NodeSettings:onScroll', this.closeMenu);
-	  },
-	  unmounted() {
-	    main_core_events.EventEmitter.unsubscribe('Bizproc.SetupTemplate:Draggable:start', this.closeMenu);
-	    main_core_events.EventEmitter.unsubscribe('Bizproc.NodeSettings:onScroll', this.closeMenu);
-	  },
-	  methods: {
-	    onShowMenu(event) {
-	      var _this$$refs$addElemen, _this$$refs$addElemen2;
-	      const {
-	        left = 0
-	      } = (_this$$refs$addElemen = (_this$$refs$addElemen2 = this.$refs.addElementButton) == null ? void 0 : _this$$refs$addElemen2.getBoundingClientRect()) != null ? _this$$refs$addElemen : {};
-	      this.offsetLeft = Math.abs(event.clientX - left);
-	      this.isMenuShown = true;
-	    },
-	    generateFriendlyId() {
-	      const BASE_NAME = 'Constant';
-	      let counter = 1;
-	      let potentialId = `${BASE_NAME}${counter}`;
-	      while (this.constantIds.has(potentialId)) {
-	        counter++;
-	        potentialId = `${BASE_NAME}${counter}`;
-	      }
-	      return potentialId;
-	    },
-	    closeMenu() {
-	      this.$refs.addElementButton.blur();
-	      this.isMenuShown = false;
-	    }
-	  },
-	  template: `
+		name: 'AddElementBtn',
+		components: {
+			BMenu: ui_system_menu_vue.BMenu
+		},
+		props: {
+			constantIds: {
+				type: Set,
+				default: () => new Set()
+			}
+		},
+		emits: ['add:element', 'create:constant'],
+		data() {
+			return {
+				isMenuShown: false,
+				offsetLeft: 0
+			};
+		},
+		computed: {
+			menuOptions() {
+				return {
+					bindElement: this.$refs.addElementButton,
+					offsetLeft: this.offsetLeft,
+					fixed: false,
+					cacheable: false,
+					items: [{
+						title: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_TITLE_ITEM_LABEL'),
+						onClick: () => this.$emit('add:element', makeEmptyTitle())
+					}, {
+						title: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ICON_TITLE_ITEM_LABEL'),
+						onClick: () => this.$emit('add:element', makeEmptyTitleWithIcon())
+					}, {
+						title: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_DESCRIPTION_ITEM_LABEL'),
+						onClick: () => this.$emit('add:element', makeEmptyDescription())
+					}, {
+						title: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_DELIMITER_ITEM_LABEL'),
+						onClick: () => this.$emit('add:element', makeEmptyDelimiter())
+					}, {
+						title: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_MENU'),
+						onClick: () => {
+							const id = this.generateFriendlyId();
+							this.$emit('create:constant', makeEmptyConstant(id));
+						}
+					}]
+				};
+			}
+		},
+		mounted() {
+			main_core_events.EventEmitter.subscribe('Bizproc.SetupTemplate:Draggable:start', this.closeMenu);
+			main_core_events.EventEmitter.subscribe('Bizproc.NodeSettings:onScroll', this.closeMenu);
+		},
+		unmounted() {
+			main_core_events.EventEmitter.unsubscribe('Bizproc.SetupTemplate:Draggable:start', this.closeMenu);
+			main_core_events.EventEmitter.unsubscribe('Bizproc.NodeSettings:onScroll', this.closeMenu);
+		},
+		methods: {
+			onShowMenu(event) {
+				const {
+					left = 0
+				} = this.$refs.addElementButton?.getBoundingClientRect() ?? {};
+				this.offsetLeft = Math.abs(event.clientX - left);
+				this.isMenuShown = true;
+			},
+			generateFriendlyId() {
+				const BASE_NAME = 'Constant';
+				let counter = 1;
+				let potentialId = `${BASE_NAME}${counter}`;
+				while (this.constantIds.has(potentialId)) {
+					counter++;
+					potentialId = `${BASE_NAME}${counter}`;
+				}
+				return potentialId;
+			},
+			closeMenu() {
+				this.$refs.addElementButton.blur();
+				this.isMenuShown = false;
+			}
+		},
+		template: `
 		<button
 			ref="addElementButton"
 			class="ui-btn --air --wide --style-outline-no-accent ui-btn-no-caps --with-icon bizproc-setuptemplateactivity-add-element-btn"
@@ -536,8 +538,8 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const AppHeader = {
-	  name: 'AppHeader',
-	  template: `
+		name: 'AppHeader',
+		template: `
 		<header class="bizproc-setuptemplateactivity-app-header">
 			<div class="bizproc-setuptemplateactivity-app-header__title-wrap">
 				<h3 class="bizproc-setuptemplateactivity-app-header__title">
@@ -557,64 +559,64 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const PreviewBtn = {
-	  name: 'PreviewBtn',
-	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon
-	  },
-	  props: {
-	    showPreview: {
-	      type: Boolean,
-	      default: false
-	    }
-	  },
-	  data() {
-	    return {
-	      isFixed: false,
-	      fixedStyle: {}
-	    };
-	  },
-	  computed: {
-	    icon() {
-	      return this.showPreview ? ui_iconSet_api_core.Outline.CROSSED_EYE : ui_iconSet_api_core.Outline.OBSERVER;
-	    },
-	    label() {
-	      return this.showPreview ? this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_HIDE_PREVIEW_BTN_TEXT') : this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_SHOW_PREVIEW_BTN_TEXT');
-	    }
-	  },
-	  mounted() {
-	    this.scrollContainer = getScrollParent(this.$el);
-	    if (!this.scrollContainer) {
-	      return;
-	    }
-	    main_core.Dom.style(this.$el, 'minHeight', `${this.$el.offsetHeight}px`);
-	    main_core.Event.bind(this.scrollContainer, 'scroll', this.handleScroll, {
-	      passive: true
-	    });
-	  },
-	  beforeUnmount() {
-	    main_core.Event.unbind(this.scrollContainer, 'scroll', this.handleScroll);
-	  },
-	  methods: {
-	    handleScroll() {
-	      if (this.isFixed && this.scrollContainer.scrollTop < this.fixScrollTop) {
-	        this.isFixed = false;
-	      }
-	      if (this.isFixed) {
-	        return;
-	      }
-	      const elRect = this.$el.getBoundingClientRect();
-	      const containerRect = this.scrollContainer.getBoundingClientRect();
-	      if (elRect.top <= containerRect.top) {
-	        this.fixScrollTop = this.scrollContainer.scrollTop;
-	        this.isFixed = true;
-	        this.fixedStyle = {
-	          top: `${containerRect.top}px`,
-	          width: `${this.scrollContainer.offsetWidth}px`
-	        };
-	      }
-	    }
-	  },
-	  template: `
+		name: 'PreviewBtn',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon
+		},
+		props: {
+			showPreview: {
+				type: Boolean,
+				default: false
+			}
+		},
+		data() {
+			return {
+				isFixed: false,
+				fixedStyle: {}
+			};
+		},
+		computed: {
+			icon() {
+				return this.showPreview ? ui_iconSet_api_core.Outline.CROSSED_EYE : ui_iconSet_api_core.Outline.OBSERVER;
+			},
+			label() {
+				return this.showPreview ? this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_HIDE_PREVIEW_BTN_TEXT') : this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_SHOW_PREVIEW_BTN_TEXT');
+			}
+		},
+		mounted() {
+			this.scrollContainer = getScrollParent(this.$el);
+			if (!this.scrollContainer) {
+				return;
+			}
+			main_core.Dom.style(this.$el, 'minHeight', `${this.$el.offsetHeight}px`);
+			main_core.Event.bind(this.scrollContainer, 'scroll', this.handleScroll, {
+				passive: true
+			});
+		},
+		beforeUnmount() {
+			main_core.Event.unbind(this.scrollContainer, 'scroll', this.handleScroll);
+		},
+		methods: {
+			handleScroll() {
+				if (this.isFixed && this.scrollContainer.scrollTop < this.fixScrollTop) {
+					this.isFixed = false;
+				}
+				if (this.isFixed) {
+					return;
+				}
+				const elRect = this.$el.getBoundingClientRect();
+				const containerRect = this.scrollContainer.getBoundingClientRect();
+				if (elRect.top <= containerRect.top) {
+					this.fixScrollTop = this.scrollContainer.scrollTop;
+					this.isFixed = true;
+					this.fixedStyle = {
+						top: `${containerRect.top}px`,
+						width: `${this.scrollContainer.offsetWidth}px`
+					};
+				}
+			}
+		},
+		template: `
 		<div class="bizproc-setuptemplateactivity-preview-btn-container">
 			<div
 				class="bizproc-setuptemplateactivity-preview-btn-wrapper"
@@ -639,45 +641,43 @@ this.BX = this.BX || {};
 	`
 	};
 
-	// eslint-disable-next-line no-unused-vars
-
 	// @vue/component
 	const TitleField = {
-	  name: 'TitleField',
-	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon
-	  },
-	  props: {
-	    /** @type TitleItem */
-	    item: {
-	      type: Object,
-	      required: true
-	    }
-	  },
-	  emits: ['updateItemProperty', 'delete'],
-	  setup() {
-	    return {
-	      Outline: ui_iconSet_api_core.Outline,
-	      Main: ui_iconSet_api_core.Main
-	    };
-	  },
-	  methods: {
-	    onInput(event) {
-	      const payload = {
-	        propertyValues: {
-	          text: event.target.value
-	        }
-	      };
-	      this.$emit('updateItemProperty', payload);
-	    },
-	    handleDragStart(event) {
-	      this.$emit('itemDragStart', {
-	        event,
-	        element: this.$el
-	      });
-	    }
-	  },
-	  template: `
+		name: 'TitleField',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon
+		},
+		props: {
+			/** @type TitleItem */
+			item: {
+				type: Object,
+				required: true
+			}
+		},
+		emits: ['updateItemProperty', 'delete'],
+		setup() {
+			return {
+				Outline: ui_iconSet_api_core.Outline,
+				Main: ui_iconSet_api_core.Main
+			};
+		},
+		methods: {
+			onInput(event) {
+				const payload = {
+					propertyValues: {
+						text: event.target.value
+					}
+				};
+				this.$emit('updateItemProperty', payload);
+			},
+			handleDragStart(event) {
+				this.$emit('itemDragStart', {
+					event,
+					element: this.$el
+				});
+			}
+		},
+		template: `
 		<div class="bizproc-setuptemplateactivity-field-wrapper">
 			<div
 				class="bizproc-setuptemplateactivity-field-drag-icon"
@@ -718,41 +718,41 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const DescriptionField = {
-	  name: 'DescriptionField',
-	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon
-	  },
-	  props: {
-	    /** @type DescriptionItem */
-	    item: {
-	      type: Object,
-	      required: true
-	    }
-	  },
-	  emits: ['updateItemProperty'],
-	  setup() {
-	    return {
-	      Outline: ui_iconSet_api_core.Outline,
-	      Main: ui_iconSet_api_core.Main
-	    };
-	  },
-	  methods: {
-	    onInput(event) {
-	      const payload = {
-	        propertyValues: {
-	          text: event.target.value
-	        }
-	      };
-	      this.$emit('updateItemProperty', payload);
-	    },
-	    handleDragStart(event) {
-	      this.$emit('itemDragStart', {
-	        event,
-	        element: this.$el
-	      });
-	    }
-	  },
-	  template: `
+		name: 'DescriptionField',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon
+		},
+		props: {
+			/** @type DescriptionItem */
+			item: {
+				type: Object,
+				required: true
+			}
+		},
+		emits: ['updateItemProperty'],
+		setup() {
+			return {
+				Outline: ui_iconSet_api_core.Outline,
+				Main: ui_iconSet_api_core.Main
+			};
+		},
+		methods: {
+			onInput(event) {
+				const payload = {
+					propertyValues: {
+						text: event.target.value
+					}
+				};
+				this.$emit('updateItemProperty', payload);
+			},
+			handleDragStart(event) {
+				this.$emit('itemDragStart', {
+					event,
+					element: this.$el
+				});
+			}
+		},
+		template: `
 		<div class="bizproc-setuptemplateactivity-field-wrapper">
 			<div
 				class="bizproc-setuptemplateactivity-field-drag-icon"
@@ -793,41 +793,41 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const DelimiterField = {
-	  name: 'DelimiterField',
-	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon
-	  },
-	  props: {
-	    /** @type DelimiterItem */
-	    item: {
-	      type: Object,
-	      required: true
-	    }
-	  },
-	  emits: ['updateItemProperty'],
-	  setup() {
-	    return {
-	      Outline: ui_iconSet_api_core.Outline,
-	      Main: ui_iconSet_api_core.Main
-	    };
-	  },
-	  methods: {
-	    onSelect(event) {
-	      const payload = {
-	        propertyValues: {
-	          delimiterType: event.target.value
-	        }
-	      };
-	      this.$emit('updateItemProperty', payload);
-	    },
-	    handleDragStart(event) {
-	      this.$emit('itemDragStart', {
-	        event,
-	        element: this.$el
-	      });
-	    }
-	  },
-	  template: `
+		name: 'DelimiterField',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon
+		},
+		props: {
+			/** @type DelimiterItem */
+			item: {
+				type: Object,
+				required: true
+			}
+		},
+		emits: ['updateItemProperty'],
+		setup() {
+			return {
+				Outline: ui_iconSet_api_core.Outline,
+				Main: ui_iconSet_api_core.Main
+			};
+		},
+		methods: {
+			onSelect(event) {
+				const payload = {
+					propertyValues: {
+						delimiterType: event.target.value
+					}
+				};
+				this.$emit('updateItemProperty', payload);
+			},
+			handleDragStart(event) {
+				this.$emit('itemDragStart', {
+					event,
+					element: this.$el
+				});
+			}
+		},
+		template: `
 		<div class="bizproc-setuptemplateactivity-field-wrapper">
 			<div
 				class="bizproc-setuptemplateactivity-field-drag-icon"
@@ -868,192 +868,289 @@ this.BX = this.BX || {};
 	`
 	};
 
-	// eslint-disable-next-line no-unused-vars
+	const EntitySelectorConstantSettings = {
+		name: 'EntitySelectorConstantSettings',
+		emits: ['update:modelValue'],
+		props: {
+			modelValue: {
+				type: Object,
+				required: true
+			},
+			/** @type EntitySelectorConstantConfiguration */
+			constantConfiguration: {
+				type: Object,
+				required: true
+			}
+		},
+		computed: {
+			selectorId: {
+				get() {
+					return this.modelValue?.selectorId;
+				},
+				set(value) {
+					const updatedValue = {
+						...this.modelValue,
+						selectorId: value,
+						selector: this.getSelectors().find(selector => selector.id === value)
+					};
+					this.$emit('update:modelValue', updatedValue);
+				}
+			}
+		},
+		methods: {
+			getSelectors() {
+				return this.constantConfiguration.options.selectors;
+			},
+			firstSelectorId() {
+				return this.getSelectors()[0].id;
+			},
+			getSelectorIds() {
+				return this.getSelectors().map(selector => selector.id);
+			}
+		},
+		mounted() {
+			const selectorId = this.modelValue.selectorId;
+			if (this.getSelectorIds().includes(selectorId)) {
+				return;
+			}
+			this.selectorId = this.firstSelectorId();
+		},
+		template: `
+		<div class="ui-ctl-container">
+			<div class="ui-ctl-top">
+				<label class="ui-ctl-title">
+					{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_SETTINGS_ENTITY_SELECTOR_PROVIDER') }}
+				</label>
+			</div>
+			<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100">
+				<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+				<select
+					v-model="selectorId"
+					class="ui-ctl-element"
+				>
+					<option
+						v-for="selector in getSelectors()"
+						:value="selector.id"
+					>
+						{{ selector.title }}
+					</option>
+				</select>
+			</div>
+		</div>
+	`
+	};
 
+	const CONSTANT_SETTINGS_COMPONENT = Object.freeze({
+		[CONSTANT_TYPES.ENTITY_SELECTOR]: EntitySelectorConstantSettings
+	});
 	// @vue/component
 	const EditConstantPopupForm = {
-	  name: 'EditConstantPopupForm',
-	  components: {
-	    UiButton: ui_vue3_components_button.Button
-	  },
-	  inject: ['editSlider'],
-	  props: {
-	    /** @type ConstantItem */
-	    item: {
-	      type: Object,
-	      required: true
-	    },
-	    /** Record<string, string> */
-	    fieldTypeNames: {
-	      type: Object,
-	      required: true
-	    },
-	    isCreation: {
-	      type: Boolean,
-	      default: false
-	    }
-	  },
-	  emits: ['update:item', 'cancel'],
-	  setup() {
-	    return {
-	      AirButtonStyle: ui_vue3_components_button.AirButtonStyle,
-	      ButtonSize: ui_vue3_components_button.ButtonSize
-	    };
-	  },
-	  data() {
-	    return {
-	      id: this.item.id,
-	      name: this.item.name,
-	      constantType: this.item.constantType,
-	      multiple: this.item.multiple,
-	      description: this.item.description,
-	      defaultValue: this.item.default,
-	      options: this.convertMapToOptionsModelArray(this.item.options),
-	      required: this.item.required,
-	      errors: {
-	        id: '',
-	        name: '',
-	        options: this.convertMapToOptionsModelArray(this.item.options).map(() => '')
-	      }
-	    };
-	  },
-	  computed: {
-	    isSelectType() {
-	      return this.constantType === CONSTANT_TYPES.SELECT;
-	    },
-	    errorMessages() {
-	      return {
-	        required: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_LABEL_REQUIRED'),
-	        idFormat: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_ID_FORMAT'),
-	        idUnique: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_ID_UNIQUE'),
-	        optionUnique: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_OPTION_UNIQUE')
-	      };
-	    }
-	  },
-	  watch: {
-	    constantType() {
-	      this.options = [];
-	    }
-	  },
-	  methods: {
-	    onAddOption() {
-	      this.options.push({
-	        name: ''
-	      });
-	      this.errors.options.push('');
-	    },
-	    onDeleteOption(index) {
-	      this.options.splice(index, 1);
-	      this.errors.options.splice(index, 1);
-	    },
-	    validateName() {
-	      this.errors.name = '';
-	      if (!main_core.Type.isStringFilled(this.name.trim())) {
-	        this.errors.name = this.errorMessages.required;
-	        return false;
-	      }
-	      return true;
-	    },
-	    validateId() {
-	      this.errors.id = '';
-	      const id = this.id.trim();
-	      if (!main_core.Type.isStringFilled(id)) {
-	        this.errors.id = this.errorMessages.required;
-	        return false;
-	      }
-	      if (!/^[A-Za-z]\w*$/.test(id)) {
-	        this.errors.id = this.errorMessages.idFormat;
-	        return false;
-	      }
-	      return true;
-	    },
-	    validateOption(index) {
-	      const name = this.options[index].name.trim();
-	      this.errors.options[index] = '';
-	      if (!main_core.Type.isStringFilled(name)) {
-	        this.errors.options[index] = this.errorMessages.required;
-	        return false;
-	      }
-	      for (const [optionKey, option] of this.options.entries()) {
-	        if (optionKey !== index && option.name.trim() === name) {
-	          this.errors.options[index] = this.errorMessages.optionUnique;
-	          return false;
-	        }
-	      }
-	      return true;
-	    },
-	    validateOptions() {
-	      if (this.constantType !== CONSTANT_TYPES.SELECT) {
-	        return true;
-	      }
-	      let errorsCount = 0;
-	      this.errors.options = [];
-	      this.options.forEach((option, index) => {
-	        if (this.validateOption(index)) {
-	          this.errors.options[index] = '';
-	        } else {
-	          errorsCount += 1;
-	        }
-	      });
-	      return errorsCount === 0;
-	    },
-	    resetErrors() {
-	      this.errors = {
-	        id: '',
-	        name: '',
-	        options: []
-	      };
-	    },
-	    onSave() {
-	      const isValid = [this.validateId(), this.validateName(), this.validateOptions()].every(value => value);
-	      if (!isValid) {
-	        return;
-	      }
-	      const setUniqueError = () => {
-	        this.errors.id = this.errorMessages.idUnique;
-	      };
-	      this.$emit('update:item', {
-	        propertyValues: {
-	          ...this.item,
-	          id: this.id.trim(),
-	          name: this.name,
-	          description: this.description,
-	          constantType: this.constantType,
-	          multiple: this.multiple,
-	          options: this.convertOptionModelsToMap(this.options),
-	          default: this.defaultValue,
-	          required: this.required
-	        },
-	        setError: setUniqueError
-	      });
-	    },
-	    onCancel() {
-	      var _this$editSlider;
-	      (_this$editSlider = this.editSlider) == null ? void 0 : _this$editSlider.close();
-	      this.$emit('cancel');
-	    },
-	    convertMapToOptionsModelArray(options) {
-	      const models = [];
-	      Object.values(options).forEach(value => {
-	        if (main_core.Type.isStringFilled(value)) {
-	          models.push({
-	            name: value
-	          });
-	        }
-	      });
-	      return models;
-	    },
-	    convertOptionModelsToMap(models) {
-	      const options = {};
-	      for (const model of models) {
-	        if (main_core.Type.isStringFilled(model.name)) {
-	          options[model.name] = model.name;
-	        }
-	      }
-	      return options;
-	    }
-	  },
-	  template: `
+		name: 'EditConstantPopupForm',
+		components: {
+			UiButton: ui_vue3_components_button.Button,
+			EntitySelectorConstantSettings
+		},
+		inject: ['editSlider'],
+		props: {
+			/** @type ConstantItem */
+			item: {
+				type: Object,
+				required: true
+			},
+			/** @type ConstantConfiguration[] */
+			constantConfigurationList: {
+				type: Array,
+				required: true
+			},
+			isCreation: {
+				type: Boolean,
+				default: false
+			}
+		},
+		emits: ['update:item', 'cancel'],
+		setup() {
+			return {
+				AirButtonStyle: ui_vue3_components_button.AirButtonStyle,
+				ButtonSize: ui_vue3_components_button.ButtonSize
+			};
+		},
+		data() {
+			return {
+				id: this.item.id,
+				name: this.item.name,
+				constantType: this.item.constantType,
+				multiple: this.item.multiple,
+				description: this.item.description,
+				defaultValue: this.item.default,
+				settings: this.item.settings,
+				options: this.convertMapToOptionsModelArray(this.item.options),
+				required: this.item.required,
+				errors: {
+					id: '',
+					name: '',
+					options: this.convertMapToOptionsModelArray(this.item.options).map(() => '')
+				}
+			};
+		},
+		computed: {
+			isEntitySelector() {
+				return this.constantType === CONSTANT_TYPES.ENTITY_SELECTOR;
+			},
+			isSelectType() {
+				return this.constantType === CONSTANT_TYPES.SELECT;
+			},
+			errorMessages() {
+				return {
+					required: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_LABEL_REQUIRED'),
+					idFormat: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_ID_FORMAT'),
+					idUnique: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_ID_UNIQUE'),
+					optionUnique: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_OPTION_UNIQUE')
+				};
+			},
+			constantSettingsComponent() {
+				const types = this.constantConfigurationList.map(constant => constant.type);
+				if (!types.includes(this.constantType)) {
+					return null;
+				}
+				return CONSTANT_SETTINGS_COMPONENT[this.constantType];
+			},
+			currentConstantConfiguration() {
+				return this.constantConfigurationList.find(constantConfiguration => constantConfiguration.type === this.constantType);
+			}
+		},
+		watch: {
+			constantType() {
+				this.options = [];
+			}
+		},
+		mounted() {
+			this.resetUnsupportedType();
+		},
+		methods: {
+			onAddOption() {
+				this.options.push({
+					name: ''
+				});
+				this.errors.options.push('');
+			},
+			onDeleteOption(index) {
+				this.options.splice(index, 1);
+				this.errors.options.splice(index, 1);
+			},
+			validateName() {
+				this.errors.name = '';
+				if (!main_core.Type.isStringFilled(this.name.trim())) {
+					this.errors.name = this.errorMessages.required;
+					return false;
+				}
+				return true;
+			},
+			validateId() {
+				this.errors.id = '';
+				const id = this.id.trim();
+				if (!main_core.Type.isStringFilled(id)) {
+					this.errors.id = this.errorMessages.required;
+					return false;
+				}
+				if (!/^[A-Za-z]\w*$/.test(id)) {
+					this.errors.id = this.errorMessages.idFormat;
+					return false;
+				}
+				return true;
+			},
+			validateOption(index) {
+				const name = this.options[index].name.trim();
+				this.errors.options[index] = '';
+				if (!main_core.Type.isStringFilled(name)) {
+					this.errors.options[index] = this.errorMessages.required;
+					return false;
+				}
+				for (const [optionKey, option] of this.options.entries()) {
+					if (optionKey !== index && option.name.trim() === name) {
+						this.errors.options[index] = this.errorMessages.optionUnique;
+						return false;
+					}
+				}
+				return true;
+			},
+			validateOptions() {
+				if (this.constantType !== CONSTANT_TYPES.SELECT) {
+					return true;
+				}
+				let errorsCount = 0;
+				this.errors.options = [];
+				this.options.forEach((option, index) => {
+					if (this.validateOption(index)) {
+						this.errors.options[index] = '';
+					} else {
+						errorsCount += 1;
+					}
+				});
+				return errorsCount === 0;
+			},
+			resetErrors() {
+				this.errors = {
+					id: '',
+					name: '',
+					options: []
+				};
+			},
+			onSave() {
+				const isValid = [this.validateId(), this.validateName(), this.validateOptions()].every(value => value);
+				if (!isValid) {
+					return;
+				}
+				const setUniqueError = () => {
+					this.errors.id = this.errorMessages.idUnique;
+				};
+				this.$emit('update:item', {
+					propertyValues: {
+						...this.item,
+						id: this.id.trim(),
+						name: this.name,
+						description: this.description,
+						constantType: this.constantType,
+						multiple: this.multiple,
+						options: this.convertOptionModelsToMap(this.options),
+						settings: this.settings,
+						default: this.defaultValue,
+						required: this.required
+					},
+					setError: setUniqueError
+				});
+			},
+			onCancel() {
+				this.editSlider?.close();
+				this.$emit('cancel');
+			},
+			convertMapToOptionsModelArray(options) {
+				const models = [];
+				Object.values(options).forEach(value => {
+					if (main_core.Type.isStringFilled(value)) {
+						models.push({
+							name: value
+						});
+					}
+				});
+				return models;
+			},
+			convertOptionModelsToMap(models) {
+				const options = {};
+				for (const model of models) {
+					if (main_core.Type.isStringFilled(model.name)) {
+						options[model.name] = model.name;
+					}
+				}
+				return options;
+			},
+			resetUnsupportedType() {
+				const types = this.constantConfigurationList.map(constant => constant.type);
+				if (!types.includes(this.constantType)) {
+					this.constantType = types[0];
+				}
+			}
+		},
+		template: `
 		<div class="bizproc-setuptemplateactivity-edit-constant-popup">
 			<div class="bizproc-setuptemplateactivity-edit-constant-popup__container">
 				<div class="bizproc-setuptemplateactivity-edit-constant-popup__header">
@@ -1122,15 +1219,22 @@ this.BX = this.BX || {};
 									class="ui-ctl-element"
 								>
 									<option
-										v-for="[fieldType, fieldText] in Object.entries(fieldTypeNames)"
-										:key="fieldType"
-										:value="fieldType"
+										v-for="constantConfiguration in constantConfigurationList"
+										:key="constantConfiguration.type"
+										:value="constantConfiguration.type"
 									>
-										{{ fieldText }}
+										{{ constantConfiguration.title }}
 									</option>
 								</select>
 							</div>
 						</div>
+						<template v-if="constantSettingsComponent">
+							<component
+								:is="constantSettingsComponent"
+								:constantConfiguration="currentConstantConfiguration"
+								v-model="settings"
+							/>
+						</template>
 						<div class="ui-ctl-container">
 							<div class="ui-ctl-top">
 								<div class="ui-ctl-title">
@@ -1187,7 +1291,7 @@ this.BX = this.BX || {};
 							</div>
 						</div>
 
-						<div class="ui-ctl-container">
+						<div class="ui-ctl-container" v-if="!isEntitySelector">
 							<div class="ui-ctl-top">
 								<label class="ui-ctl-title">
 									{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_VALUE') }}
@@ -1287,83 +1391,82 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const ConstantField = {
-	  name: 'ConstantField',
-	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon,
-	    EditConstantPopupForm
-	  },
-	  inject: ['initEditSlider'],
-	  props: {
-	    /** @type TitleItem */
-	    item: {
-	      type: Object,
-	      required: true
-	    },
-	    /** Record<string, string> */
-	    fieldTypeNames: {
-	      type: Object,
-	      required: true
-	    }
-	  },
-	  emits: ['delete', 'updateItemProperty', 'edit'],
-	  setup() {
-	    return {
-	      Outline: ui_iconSet_api_core.Outline,
-	      Main: ui_iconSet_api_core.Main
-	    };
-	  },
-	  data() {
-	    return {
-	      isEdit: false
-	    };
-	  },
-	  computed: {
-	    typeLabel() {
-	      var _this$fieldTypeNames$;
-	      return (_this$fieldTypeNames$ = this.fieldTypeNames[this.item.constantType]) != null ? _this$fieldTypeNames$ : this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_ITEM_TYPE_UNSUPPORTED');
-	    },
-	    titleWithType() {
-	      return this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_ITEM_TITLE', {
-	        '#NAME#': this.item.name,
-	        '#TYPE#': this.typeLabel
-	      });
-	    }
-	  },
-	  created() {
-	    main_core_events.EventEmitter.subscribe('Bitrix24.Slider:onClose', this.handleClosePopup);
-	  },
-	  unmounted() {
-	    main_core_events.EventEmitter.unsubscribe('Bitrix24.Slider:onClose', this.handleClosePopup);
-	  },
-	  methods: {
-	    handleClosePopup() {
-	      this.isEdit = false;
-	    },
-	    onInput(event) {
-	      const payload = {
-	        propertyValues: {
-	          default: event.target.value
-	        }
-	      };
-	      this.$emit('updateItemProperty', payload);
-	    },
-	    onUpdateItem(payload) {
-	      this.$emit('updateItemProperty', payload);
-	    },
-	    onEdit() {
-	      this.initEditSlider().open();
-	      this.$nextTick(() => {
-	        this.isEdit = true;
-	      });
-	    },
-	    handleDragStart(event) {
-	      this.$emit('itemDragStart', {
-	        event,
-	        element: this.$el
-	      });
-	    }
-	  },
-	  template: `
+		name: 'ConstantField',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon,
+			EditConstantPopupForm
+		},
+		inject: ['initEditSlider'],
+		props: {
+			/** @type TitleItem */
+			item: {
+				type: Object,
+				required: true
+			},
+			/** @type ConstantConfiguration[] */
+			constantConfigurationList: {
+				type: Array,
+				required: true
+			}
+		},
+		emits: ['delete', 'updateItemProperty', 'edit'],
+		setup() {
+			return {
+				Outline: ui_iconSet_api_core.Outline,
+				Main: ui_iconSet_api_core.Main
+			};
+		},
+		data() {
+			return {
+				isEdit: false
+			};
+		},
+		computed: {
+			typeLabel() {
+				return this.constantConfigurationList.find(constantConfiguration => constantConfiguration.type === this.item.constantType)?.title ?? this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_ITEM_TYPE_UNSUPPORTED');
+			},
+			titleWithType() {
+				return this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_ITEM_TITLE', {
+					'#NAME#': this.item.name,
+					'#TYPE#': this.typeLabel
+				});
+			}
+		},
+		created() {
+			main_core_events.EventEmitter.subscribe('Bitrix24.Slider:onClose', this.handleClosePopup);
+		},
+		unmounted() {
+			main_core_events.EventEmitter.unsubscribe('Bitrix24.Slider:onClose', this.handleClosePopup);
+		},
+		methods: {
+			handleClosePopup() {
+				this.isEdit = false;
+			},
+			onInput(event) {
+				const payload = {
+					propertyValues: {
+						default: event.target.value
+					}
+				};
+				this.$emit('updateItemProperty', payload);
+			},
+			onUpdateItem(payload) {
+				this.$emit('updateItemProperty', payload);
+			},
+			onEdit() {
+				this.initEditSlider().open();
+				this.$nextTick(() => {
+					this.isEdit = true;
+				});
+			},
+			handleDragStart(event) {
+				this.$emit('itemDragStart', {
+					event,
+					element: this.$el
+				});
+			}
+		},
+		template: `
 		<div class="bizproc-setuptemplateactivity-field-wrapper">
 			<div
 				class="bizproc-setuptemplateactivity-field-drag-icon"
@@ -1411,7 +1514,7 @@ this.BX = this.BX || {};
 				<EditConstantPopupForm
 					v-if="isEdit"
 					:item="item"
-					:fieldTypeNames="fieldTypeNames"
+					:constantConfigurationList="constantConfigurationList"
 					@update:item="onUpdateItem"
 					:isCreation="false"
 				/>
@@ -1420,92 +1523,90 @@ this.BX = this.BX || {};
 	`
 	};
 
-	// eslint-disable-next-line no-unused-vars
-
 	// @vue/component
 	const TitleIconField = {
-	  name: 'TitleIconField',
-	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon,
-	    BMenu: ui_system_menu_vue.BMenu
-	  },
-	  props: {
-	    /** @type TitleWithIconItem */
-	    item: {
-	      type: Object,
-	      required: true
-	    }
-	  },
-	  emits: ['updateItemProperty', 'delete'],
-	  setup() {
-	    return {
-	      Outline: ui_iconSet_api_core.Outline,
-	      Main: ui_iconSet_api_core.Main
-	    };
-	  },
-	  data() {
-	    return {
-	      isMenuShown: false
-	    };
-	  },
-	  computed: {
-	    currentIconCssClass() {
-	      return PRESET_TITLE_ICONS[this.item.icon] || PRESET_TITLE_ICONS.IMAGE;
-	    },
-	    menuOptions() {
-	      const menuItems = Object.entries(PRESET_TITLE_ICONS).map(([iconKey, iconClass]) => {
-	        return {
-	          icon: iconClass,
-	          title: ' ',
-	          onClick: () => this.selectIcon(iconKey)
-	        };
-	      });
-	      return {
-	        bindElement: this.$refs.iconTrigger,
-	        cacheable: false,
-	        angle: true,
-	        offsetLeft: 25,
-	        className: 'bizproc-setuptemplateactivity-title-field__icon-menu',
-	        items: menuItems
-	      };
-	    }
-	  },
-	  mounted() {
-	    main_core_events.EventEmitter.subscribe('Bizproc.SetupTemplate:Draggable:start', this.closeMenu);
-	    main_core_events.EventEmitter.subscribe('Bizproc.NodeSettings:onScroll', this.closeMenu);
-	  },
-	  unmounted() {
-	    main_core_events.EventEmitter.unsubscribe('Bizproc.SetupTemplate:Draggable:start', this.closeMenu);
-	    main_core_events.EventEmitter.unsubscribe('Bizproc.NodeSettings:onScroll', this.closeMenu);
-	  },
-	  methods: {
-	    onInput(event) {
-	      const payload = {
-	        propertyValues: {
-	          text: event.target.value
-	        }
-	      };
-	      this.$emit('updateItemProperty', payload);
-	    },
-	    selectIcon(iconKey) {
-	      const payload = {
-	        propertyValues: {
-	          icon: iconKey
-	        }
-	      };
-	      this.$emit('updateItemProperty', payload);
-	    },
-	    handleDragStart(event) {
-	      this.$emit('itemDragStart', {
-	        event,
-	        element: this.$el
-	      });
-	    },
-	    closeMenu() {
-	      this.isMenuShown = false;
-	    }
-	  },
-	  template: `
+		name: 'TitleIconField',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon,
+			BMenu: ui_system_menu_vue.BMenu
+		},
+		props: {
+			/** @type TitleWithIconItem */
+			item: {
+				type: Object,
+				required: true
+			}
+		},
+		emits: ['updateItemProperty', 'delete'],
+		setup() {
+			return {
+				Outline: ui_iconSet_api_core.Outline,
+				Main: ui_iconSet_api_core.Main
+			};
+		},
+		data() {
+			return {
+				isMenuShown: false
+			};
+		},
+		computed: {
+			currentIconCssClass() {
+				return PRESET_TITLE_ICONS[this.item.icon] || PRESET_TITLE_ICONS.IMAGE;
+			},
+			menuOptions() {
+				const menuItems = Object.entries(PRESET_TITLE_ICONS).map(([iconKey, iconClass]) => {
+					return {
+						icon: iconClass,
+						title: ' ',
+						onClick: () => this.selectIcon(iconKey)
+					};
+				});
+				return {
+					bindElement: this.$refs.iconTrigger,
+					cacheable: false,
+					angle: true,
+					offsetLeft: 25,
+					className: 'bizproc-setuptemplateactivity-title-field__icon-menu',
+					items: menuItems
+				};
+			}
+		},
+		mounted() {
+			main_core_events.EventEmitter.subscribe('Bizproc.SetupTemplate:Draggable:start', this.closeMenu);
+			main_core_events.EventEmitter.subscribe('Bizproc.NodeSettings:onScroll', this.closeMenu);
+		},
+		unmounted() {
+			main_core_events.EventEmitter.unsubscribe('Bizproc.SetupTemplate:Draggable:start', this.closeMenu);
+			main_core_events.EventEmitter.unsubscribe('Bizproc.NodeSettings:onScroll', this.closeMenu);
+		},
+		methods: {
+			onInput(event) {
+				const payload = {
+					propertyValues: {
+						text: event.target.value
+					}
+				};
+				this.$emit('updateItemProperty', payload);
+			},
+			selectIcon(iconKey) {
+				const payload = {
+					propertyValues: {
+						icon: iconKey
+					}
+				};
+				this.$emit('updateItemProperty', payload);
+			},
+			handleDragStart(event) {
+				this.$emit('itemDragStart', {
+					event,
+					element: this.$el
+				});
+			},
+			closeMenu() {
+				this.isMenuShown = false;
+			}
+		},
+		template: `
 		<div class="bizproc-setuptemplateactivity-field-wrapper">
 			<div
 				class="bizproc-setuptemplateactivity-field-drag-icon"
@@ -1559,8 +1660,8 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const PreviewLayout = {
-	  name: 'PreviewLayout',
-	  template: `
+		name: 'PreviewLayout',
+		template: `
 		<div class="bizproc-setuptemplateactivity-preview-layout">
 			<div class="bizproc-setuptemplateactivity-preview-layout__container">
 				<div class="bizproc-setuptemplateactivity-preview-layout__header">
@@ -1581,8 +1682,8 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const PreviewHeader = {
-	  name: 'PreviewHeader',
-	  template: `
+		name: 'PreviewHeader',
+		template: `
 		<header class="bizproc-setuptemplateactivity-preview-header">
 			<h3 class="bizproc-setuptemplateactivity-preview-header__title">
 				{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_PREVIEW_HEADER_TITLE') }}
@@ -1597,14 +1698,14 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const PreviewBlock = {
-	  name: 'PreviewBlock',
-	  props: {
-	    isEmpty: {
-	      type: Boolean,
-	      default: false
-	    }
-	  },
-	  template: `
+		name: 'PreviewBlock',
+		props: {
+			isEmpty: {
+				type: Boolean,
+				default: false
+			}
+		},
+		template: `
 		<div
 			class="bizproc-setuptemplateactivity-preview-block"
 			:class="{ '--empty': isEmpty }"
@@ -1618,46 +1719,45 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const PreviewApp = {
-	  name: 'PreviewApp',
-	  components: {
-	    UiButton: ui_vue3_components_button.Button,
-	    PreviewLayout,
-	    PreviewHeader,
-	    PreviewBlock,
-	    FormElement: bizproc_setupTemplate.FormElement
-	  },
-	  props: {
-	    /** @type Array<Block> */
-	    blocks: {
-	      type: Array,
-	      default: () => []
-	    }
-	  },
-	  setup() {
-	    return {
-	      AirButtonStyle: ui_vue3_components_button.AirButtonStyle,
-	      ButtonSize: ui_vue3_components_button.ButtonSize
-	    };
-	  },
-	  computed: {
-	    formData() {
-	      return this.blocks.reduce((acc, block) => {
-	        const items = block.items.reduce((accItems, item) => {
-	          if (item.itemType === ITEM_TYPES.CONSTANT) {
-	            var _item$default;
-	            accItems[item.id] = (_item$default = item.default) != null ? _item$default : '';
-	            return accItems;
-	          }
-	          return accItems;
-	        }, {});
-	        return {
-	          ...acc,
-	          ...items
-	        };
-	      }, {});
-	    }
-	  },
-	  template: `
+		name: 'PreviewApp',
+		components: {
+			UiButton: ui_vue3_components_button.Button,
+			PreviewLayout,
+			PreviewHeader,
+			PreviewBlock,
+			FormElement: bizproc_setupTemplate.FormElement
+		},
+		props: {
+			/** @type Array<Block> */
+			blocks: {
+				type: Array,
+				default: () => []
+			}
+		},
+		setup() {
+			return {
+				AirButtonStyle: ui_vue3_components_button.AirButtonStyle,
+				ButtonSize: ui_vue3_components_button.ButtonSize
+			};
+		},
+		computed: {
+			formData() {
+				return this.blocks.reduce((acc, block) => {
+					const items = block.items.reduce((accItems, item) => {
+						if (item.itemType === ITEM_TYPES.CONSTANT) {
+							accItems[item.id] = item.default ?? '';
+							return accItems;
+						}
+						return accItems;
+					}, {});
+					return {
+						...acc,
+						...items
+					};
+				}, {});
+			}
+		},
+		template: `
 		<PreviewLayout>
 			<template #header>
 				<PreviewHeader/>
@@ -1701,257 +1801,253 @@ this.BX = this.BX || {};
 
 	const ACTIVITY_NAME = 'SetupTemplateActivity';
 	const ELEMENT_COMPONENTS = {
-	  [ITEM_TYPES.TITLE]: TitleField,
-	  [ITEM_TYPES.TITLE_WITH_ICON]: TitleIconField,
-	  [ITEM_TYPES.DESCRIPTION]: DescriptionField,
-	  [ITEM_TYPES.DELIMITER]: DelimiterField,
-	  [ITEM_TYPES.CONSTANT]: ConstantField
+		[ITEM_TYPES.TITLE]: TitleField,
+		[ITEM_TYPES.TITLE_WITH_ICON]: TitleIconField,
+		[ITEM_TYPES.DESCRIPTION]: DescriptionField,
+		[ITEM_TYPES.DELIMITER]: DelimiterField,
+		[ITEM_TYPES.CONSTANT]: ConstantField
 	};
 	// @vue/component
 	const BlocksAppComponent = {
-	  name: 'BlocksAppComponent',
-	  components: {
-	    BlockComponent,
-	    AddBlockBtn,
-	    AddElementBtn,
-	    AppHeader,
-	    PreviewBtn,
-	    TitleField,
-	    TitleIconField,
-	    DescriptionField,
-	    DelimiterField,
-	    ConstantField,
-	    PreviewApp,
-	    EditConstantPopupForm
-	  },
-	  provide() {
-	    return {
-	      editSlider: ui_vue3.computed(() => this.sliderInstance),
-	      initEditSlider: () => this.initEditSlider()
-	    };
-	  },
-	  props: {
-	    serializedBlocks: {
-	      type: [String, null],
-	      required: true
-	    },
-	    /** Record<string, string> */
-	    fieldTypeNames: {
-	      type: Object,
-	      required: true
-	    },
-	    globalConstants: {
-	      type: Object,
-	      required: false,
-	      default: () => ({})
-	    }
-	  },
-	  data() {
-	    return {
-	      blocks: [],
-	      isShowPreview: false,
-	      sliderInstance: null,
-	      initialConstantIds: new Set(),
-	      currentBlockIndex: null,
-	      createdConstant: null
-	    };
-	  },
-	  computed: {
-	    formValue() {
-	      return JSON.stringify(this.blocks);
-	    },
-	    preparedBlocks() {
-	      return this.blocks.map((block, index) => {
-	        const items = block.items.map(item => {
-	          if (!item.text && item.itemType === ITEM_TYPES.TITLE) {
-	            return {
-	              ...item,
-	              text: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_TITLE_CONTENT')
-	            };
-	          }
-	          if (!item.text && item.itemType === ITEM_TYPES.DESCRIPTION) {
-	            return {
-	              ...item,
-	              text: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_DESCRIPTION_CONTENT')
-	            };
-	          }
-	          return {
-	            ...item
-	          };
-	        });
-	        return {
-	          ...block,
-	          items
-	        };
-	      });
-	    },
-	    localConstants() {
-	      return this.blocks.flatMap(block => block.items || []).filter(item => (item == null ? void 0 : item.itemType) === ITEM_TYPES.CONSTANT);
-	    },
-	    localConstantIds() {
-	      return this.localConstants.filter(item => item.id).map(item => item.id);
-	    },
-	    allConstantIds() {
-	      const globalIds = Object.keys(this.globalConstants);
-	      const localIds = this.localConstantIds;
-	      return new Set([...globalIds, ...localIds]);
-	    }
-	  },
-	  mounted() {
-	    var _JSON$parse;
-	    this.blocks = (_JSON$parse = JSON.parse(this.serializedBlocks)) != null ? _JSON$parse : [];
-	    this.initialConstantIds = new Set(this.localConstantIds);
-	    main_core_events.EventEmitter.subscribe('SidePanel.Slider:onClosing', this.onCancelConstant);
-	    main_core_events.EventEmitter.subscribe('Bizproc.NodeSettings:nodeSettingsSaving', this.onNodeSettingsSave);
-	    main_core_events.EventEmitter.subscribe('Bizproc.SetupTemplate:Draggable:drop', this.onItemDrop);
-	  },
-	  beforeUnmount() {
-	    var _this$sliderInstance;
-	    this.isShowPreview = false;
-	    main_core_events.EventEmitter.unsubscribe('SidePanel.Slider:onClosing', this.onCancelConstant);
-	    main_core_events.EventEmitter.unsubscribe('Bizproc.SetupTemplate:Draggable:drop', this.onItemDrop);
-	    (_this$sliderInstance = this.sliderInstance) == null ? void 0 : _this$sliderInstance.destroy();
-	    this.sliderInstance = null;
-	  },
-	  unmounted() {
-	    main_core_events.EventEmitter.unsubscribe('Bizproc.NodeSettings:nodeSettingsSaving', this.onNodeSettingsSave);
-	  },
-	  methods: {
-	    initEditSlider() {
-	      if (this.sliderInstance) {
-	        return this.sliderInstance;
-	      }
-	      this.sliderInstance = ui_vue3.markRaw(new main_sidepanel.Slider('', {
-	        contentCallback: () => this.$refs.bizprocSetupTemplateActivityPopup,
-	        width: 596,
-	        outerBoundary: {
-	          right: 8,
-	          top: 64
-	        },
-	        startPosition: 'bottom',
-	        overlayClassName: 'bizproc-setuptemplateactivity-app__overlay'
-	      }));
-	      return this.sliderInstance;
-	    },
-	    onAddBlock() {
-	      this.blocks.push(makeEmptyBlock());
-	    },
-	    onAddItem(blockIndex, item) {
-	      this.blocks[blockIndex].items.push(item);
-	    },
-	    onCreateConstant(blockIndex, item) {
-	      this.currentBlockIndex = blockIndex;
-	      this.createdConstant = {
-	        ...item
-	      };
-	      this.initEditSlider().open();
-	    },
-	    onSaveConstant(blockIndex, item) {
-	      var _this$sliderInstance2;
-	      const newId = item.propertyValues.id;
-	      const setError = item.setError;
-	      if (this.allConstantIds.has(newId)) {
-	        setError();
-	        return;
-	      }
-	      this.blocks[blockIndex].items.push(item.propertyValues);
-	      this.currentBlockIndex = null;
-	      this.createdConstant = null;
-	      (_this$sliderInstance2 = this.sliderInstance) == null ? void 0 : _this$sliderInstance2.close();
-	    },
-	    onCancelConstant() {
-	      this.currentBlockIndex = null;
-	      this.createdConstant = null;
-	    },
-	    onDeleteBlock(blockIndex) {
-	      this.blocks.splice(blockIndex, 1);
-	    },
-	    onDeleteItem(blockIndex, itemIndex) {
-	      this.blocks[blockIndex].items.splice(itemIndex, 1);
-	    },
-	    onUpdateItemProperty(blockIndex, itemIndex, payload) {
-	      var _this$sliderInstance3;
-	      const currentItem = this.blocks[blockIndex].items[itemIndex];
-	      const newValues = payload.propertyValues;
-	      const setError = payload.setError;
-	      const newId = newValues.id;
-	      if (newId && newId !== currentItem.id && this.allConstantIds.has(newId)) {
-	        setError();
-	        return;
-	      }
-	      this.blocks[blockIndex].items[itemIndex] = {
-	        ...currentItem,
-	        ...newValues
-	      };
-	      if ((_this$sliderInstance3 = this.sliderInstance) != null && _this$sliderInstance3.isOpen()) {
-	        this.sliderInstance.close();
-	      }
-	    },
-	    onItemsReorder(blockIndex, newItems) {
-	      this.blocks[blockIndex].items = newItems;
-	    },
-	    getElementComponent(type) {
-	      return ELEMENT_COMPONENTS[type];
-	    },
-	    onToggleShowPreview() {
-	      this.isShowPreview = !this.isShowPreview;
-	      main_core_events.EventEmitter.emit('BX.Bizproc:setuptemplateactivity:preview', this.isShowPreview);
-	    },
-	    onNodeSettingsSave(event) {
-	      const {
-	        formData
-	      } = event.getData();
-	      if (formData.activity !== ACTIVITY_NAME) {
-	        return;
-	      }
-	      const currentConstants = this.localConstants;
-	      const missingIds = new Set(this.initialConstantIds);
-	      const constantsToUpdate = {};
-	      for (const constant of currentConstants) {
-	        if (constant != null && constant.id) {
-	          constantsToUpdate[constant.id] = convertConstants(constant);
-	          missingIds.delete(constant.id);
-	        }
-	      }
-	      const deletedConstantIds = [...missingIds];
-	      main_core_events.EventEmitter.emit('Bizproc:onConstantsUpdated', {
-	        constantsToUpdate,
-	        deletedConstantIds
-	      });
-	      this.initialConstantIds = new Set(this.localConstantIds);
-	    },
-	    onItemDragStart(payload, blockIndex, itemIndex) {
-	      main_core_events.EventEmitter.emit('Bizproc.SetupTemplate:Draggable:start', {
-	        ...payload,
-	        sourceBlockIndex: blockIndex,
-	        sourceItemIndex: itemIndex
-	      });
-	    },
-	    onItemDrop(event) {
-	      const payload = event.getData();
-	      const {
-	        sourceBlockIndex,
-	        sourceItemIndex,
-	        targetBlockIndex,
-	        targetItemIndex
-	      } = payload;
-	      if (targetBlockIndex === null || targetItemIndex === null) {
-	        return;
-	      }
-	      const newBlocks = JSON.parse(JSON.stringify(this.blocks));
-	      const [movedItem] = newBlocks[sourceBlockIndex].items.splice(sourceItemIndex, 1);
-	      if (!movedItem) {
-	        return;
-	      }
-	      let finalTargetIndex = targetItemIndex;
-	      if (sourceBlockIndex === targetBlockIndex && sourceItemIndex < targetItemIndex) {
-	        finalTargetIndex--;
-	      }
-	      newBlocks[targetBlockIndex].items.splice(finalTargetIndex, 0, movedItem);
-	      this.blocks = newBlocks;
-	    }
-	  },
-	  template: `
+		name: 'BlocksAppComponent',
+		components: {
+			BlockComponent,
+			AddBlockBtn,
+			AddElementBtn,
+			AppHeader,
+			PreviewBtn,
+			TitleField,
+			TitleIconField,
+			DescriptionField,
+			DelimiterField,
+			ConstantField,
+			PreviewApp,
+			EditConstantPopupForm
+		},
+		provide() {
+			return {
+				editSlider: ui_vue3.computed(() => this.sliderInstance),
+				initEditSlider: () => this.initEditSlider()
+			};
+		},
+		props: {
+			serializedBlocks: {
+				type: [String, null],
+				required: true
+			},
+			/** @type ConstantConfiguration[] */
+			constantConfigurationList: {
+				type: Array,
+				required: true
+			},
+			globalConstants: {
+				type: Object,
+				required: false,
+				default: () => ({})
+			}
+		},
+		data() {
+			return {
+				blocks: [],
+				isShowPreview: false,
+				sliderInstance: null,
+				initialConstantIds: new Set(),
+				currentBlockIndex: null,
+				createdConstant: null
+			};
+		},
+		computed: {
+			formValue() {
+				return JSON.stringify(this.blocks);
+			},
+			preparedBlocks() {
+				return this.blocks.map((block, index) => {
+					const items = block.items.map(item => {
+						if (!item.text && item.itemType === ITEM_TYPES.TITLE) {
+							return {
+								...item,
+								text: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_TITLE_CONTENT')
+							};
+						}
+						if (!item.text && item.itemType === ITEM_TYPES.DESCRIPTION) {
+							return {
+								...item,
+								text: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_DESCRIPTION_CONTENT')
+							};
+						}
+						return {
+							...item
+						};
+					});
+					return {
+						...block,
+						items
+					};
+				});
+			},
+			localConstants() {
+				return this.blocks.flatMap(block => block.items || []).filter(item => item?.itemType === ITEM_TYPES.CONSTANT);
+			},
+			localConstantIds() {
+				return this.localConstants.filter(item => item.id).map(item => item.id);
+			},
+			allConstantIds() {
+				const globalIds = Object.keys(this.globalConstants);
+				const localIds = this.localConstantIds;
+				return new Set([...globalIds, ...localIds]);
+			}
+		},
+		mounted() {
+			this.blocks = JSON.parse(this.serializedBlocks) ?? [];
+			this.initialConstantIds = new Set(this.localConstantIds);
+			main_core_events.EventEmitter.subscribe('SidePanel.Slider:onClosing', this.onCancelConstant);
+			main_core_events.EventEmitter.subscribe('Bizproc.NodeSettings:nodeSettingsSaving', this.onNodeSettingsSave);
+			main_core_events.EventEmitter.subscribe('Bizproc.SetupTemplate:Draggable:drop', this.onItemDrop);
+		},
+		beforeUnmount() {
+			this.isShowPreview = false;
+			main_core_events.EventEmitter.unsubscribe('SidePanel.Slider:onClosing', this.onCancelConstant);
+			main_core_events.EventEmitter.unsubscribe('Bizproc.SetupTemplate:Draggable:drop', this.onItemDrop);
+			this.sliderInstance?.destroy();
+			this.sliderInstance = null;
+		},
+		unmounted() {
+			main_core_events.EventEmitter.unsubscribe('Bizproc.NodeSettings:nodeSettingsSaving', this.onNodeSettingsSave);
+		},
+		methods: {
+			initEditSlider() {
+				if (this.sliderInstance) {
+					return this.sliderInstance;
+				}
+				this.sliderInstance = ui_vue3.markRaw(new main_sidepanel.Slider('', {
+					contentCallback: () => this.$refs.bizprocSetupTemplateActivityPopup,
+					width: 596,
+					outerBoundary: {
+						right: 8,
+						top: 64
+					},
+					startPosition: 'bottom',
+					overlayClassName: 'bizproc-setuptemplateactivity-app__overlay'
+				}));
+				return this.sliderInstance;
+			},
+			onAddBlock() {
+				this.blocks.push(makeEmptyBlock());
+			},
+			onAddItem(blockIndex, item) {
+				this.blocks[blockIndex].items.push(item);
+			},
+			onCreateConstant(blockIndex, item) {
+				this.currentBlockIndex = blockIndex;
+				this.createdConstant = {
+					...item
+				};
+				this.initEditSlider().open();
+			},
+			onSaveConstant(blockIndex, item) {
+				const newId = item.propertyValues.id;
+				const setError = item.setError;
+				if (this.allConstantIds.has(newId)) {
+					setError();
+					return;
+				}
+				this.blocks[blockIndex].items.push(item.propertyValues);
+				this.currentBlockIndex = null;
+				this.createdConstant = null;
+				this.sliderInstance?.close();
+			},
+			onCancelConstant() {
+				this.currentBlockIndex = null;
+				this.createdConstant = null;
+			},
+			onDeleteBlock(blockIndex) {
+				this.blocks.splice(blockIndex, 1);
+			},
+			onDeleteItem(blockIndex, itemIndex) {
+				this.blocks[blockIndex].items.splice(itemIndex, 1);
+			},
+			onUpdateItemProperty(blockIndex, itemIndex, payload) {
+				const currentItem = this.blocks[blockIndex].items[itemIndex];
+				const newValues = payload.propertyValues;
+				const setError = payload.setError;
+				const newId = newValues.id;
+				if (newId && newId !== currentItem.id && this.allConstantIds.has(newId)) {
+					setError();
+					return;
+				}
+				this.blocks[blockIndex].items[itemIndex] = {
+					...currentItem,
+					...newValues
+				};
+				if (this.sliderInstance?.isOpen()) {
+					this.sliderInstance.close();
+				}
+			},
+			onItemsReorder(blockIndex, newItems) {
+				this.blocks[blockIndex].items = newItems;
+			},
+			getElementComponent(type) {
+				return ELEMENT_COMPONENTS[type];
+			},
+			onToggleShowPreview() {
+				this.isShowPreview = !this.isShowPreview;
+				main_core_events.EventEmitter.emit('BX.Bizproc:setuptemplateactivity:preview', this.isShowPreview);
+			},
+			onNodeSettingsSave(event) {
+				const {
+					formData
+				} = event.getData();
+				if (formData.activity !== ACTIVITY_NAME) {
+					return;
+				}
+				const currentConstants = this.localConstants;
+				const missingIds = new Set(this.initialConstantIds);
+				const constantsToUpdate = {};
+				for (const constant of currentConstants) {
+					if (constant?.id) {
+						constantsToUpdate[constant.id] = convertConstants(constant);
+						missingIds.delete(constant.id);
+					}
+				}
+				const deletedConstantIds = [...missingIds];
+				main_core_events.EventEmitter.emit('Bizproc:onConstantsUpdated', {
+					constantsToUpdate,
+					deletedConstantIds
+				});
+				this.initialConstantIds = new Set(this.localConstantIds);
+			},
+			onItemDragStart(payload, blockIndex, itemIndex) {
+				main_core_events.EventEmitter.emit('Bizproc.SetupTemplate:Draggable:start', {
+					...payload,
+					sourceBlockIndex: blockIndex,
+					sourceItemIndex: itemIndex
+				});
+			},
+			onItemDrop(event) {
+				const payload = event.getData();
+				const {
+					sourceBlockIndex,
+					sourceItemIndex,
+					targetBlockIndex,
+					targetItemIndex
+				} = payload;
+				if (targetBlockIndex === null || targetItemIndex === null) {
+					return;
+				}
+				const newBlocks = JSON.parse(JSON.stringify(this.blocks));
+				const [movedItem] = newBlocks[sourceBlockIndex].items.splice(sourceItemIndex, 1);
+				if (!movedItem) {
+					return;
+				}
+				let finalTargetIndex = targetItemIndex;
+				if (sourceBlockIndex === targetBlockIndex && sourceItemIndex < targetItemIndex) {
+					finalTargetIndex--;
+				}
+				newBlocks[targetBlockIndex].items.splice(finalTargetIndex, 0, movedItem);
+				this.blocks = newBlocks;
+			}
+		},
+		template: `
 		<div
 			class="bizproc-setuptemplateactivity-app"
 			id="bizproc-setuptemplateactivity-app"
@@ -1987,7 +2083,7 @@ this.BX = this.BX || {};
 						<component
 							:is="getElementComponent(item.itemType)"
 							:item="item"
-							:fieldTypeNames="fieldTypeNames"
+							:constantConfigurationList="constantConfigurationList"
 							@delete="onDeleteItem(blockIndex, itemIndex)"
 							@updateItemProperty="onUpdateItemProperty(blockIndex, itemIndex, $event)"
 							@itemDragStart="onItemDragStart($event, blockIndex, itemIndex)"
@@ -2033,7 +2129,7 @@ this.BX = this.BX || {};
 			<EditConstantPopupForm
 				v-if="createdConstant !== null"
 				:item="createdConstant"
-				:fieldTypeNames="fieldTypeNames"
+				:constantConfigurationList="constantConfigurationList"
 				@update:item="onSaveConstant(currentBlockIndex, $event)"
 				@cancel="onCancelConstant"
 				:isCreation="true"
@@ -2042,66 +2138,44 @@ this.BX = this.BX || {};
 	`
 	};
 
-	var _app = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("app");
-	var _currentValues = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentValues");
-	var _blocksElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("blocksElement");
-	var _fieldTypeNames = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fieldTypeNames");
-	var _getBlocks = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getBlocks");
 	class SetupTemplateActivity extends main_core_events.EventEmitter {
-	  constructor(parameters) {
-	    super();
-	    Object.defineProperty(this, _getBlocks, {
-	      value: _getBlocks2
-	    });
-	    Object.defineProperty(this, _app, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _currentValues, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _blocksElement, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _fieldTypeNames, {
-	      writable: true,
-	      value: void 0
-	    });
-	    this.setEventNamespace('BX.Bizproc.Activity');
-	    babelHelpers.classPrivateFieldLooseBase(this, _currentValues)[_currentValues] = parameters.currentValues;
-	    babelHelpers.classPrivateFieldLooseBase(this, _blocksElement)[_blocksElement] = document.getElementById(parameters.domElementId);
-	    babelHelpers.classPrivateFieldLooseBase(this, _fieldTypeNames)[_fieldTypeNames] = parameters.fieldTypeNames;
-	  }
-	  unmount() {
-	    var _babelHelpers$classPr;
-	    (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _app)[_app]) == null ? void 0 : _babelHelpers$classPr.unmount();
-	  }
-	  init() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _app)[_app] = ui_vue3.BitrixVue.createApp(BlocksAppComponent, {
-	      serializedBlocks: babelHelpers.classPrivateFieldLooseBase(this, _getBlocks)[_getBlocks](),
-	      fieldTypeNames: babelHelpers.classPrivateFieldLooseBase(this, _fieldTypeNames)[_fieldTypeNames],
-	      globalConstants: window.arWorkflowConstants || {}
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _app)[_app].mount(babelHelpers.classPrivateFieldLooseBase(this, _blocksElement)[_blocksElement]);
-	  }
-	}
-	function _getBlocks2() {
-	  var _JSON$parse, _babelHelpers$classPr2;
-	  const blocks = (_JSON$parse = JSON.parse((_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _currentValues)[_currentValues]) == null ? void 0 : _babelHelpers$classPr2.blocks)) != null ? _JSON$parse : [];
-	  blocks.forEach(block => {
-	    block.id = generateConstantId();
-	    block.items.forEach(item => {
-	      if (!(item != null && item.id)) {
-	        item.id = generateConstantId();
-	      }
-	    });
-	  });
-	  return JSON.stringify(blocks);
+		#app;
+		#currentValues;
+		#blocksElement;
+		#constantConfigurationList;
+		constructor(parameters) {
+			super();
+			this.setEventNamespace('BX.Bizproc.Activity');
+			this.#currentValues = parameters.currentValues;
+			this.#blocksElement = document.getElementById(parameters.domElementId);
+			this.#constantConfigurationList = parameters.constantConfigurationList;
+		}
+		#getBlocks() {
+			const blocks = JSON.parse(this.#currentValues?.blocks) ?? [];
+			blocks.forEach(block => {
+				block.id = generateConstantId();
+				block.items.forEach(item => {
+					if (!item?.id) {
+						item.id = generateConstantId();
+					}
+				});
+			});
+			return JSON.stringify(blocks);
+		}
+		unmount() {
+			this.#app?.unmount();
+		}
+		init() {
+			this.#app = ui_vue3.BitrixVue.createApp(BlocksAppComponent, {
+				serializedBlocks: this.#getBlocks(),
+				constantConfigurationList: this.#constantConfigurationList,
+				globalConstants: window.arWorkflowConstants || {}
+			});
+			this.#app.mount(this.#blocksElement);
+		}
 	}
 
 	exports.SetupTemplateActivity = SetupTemplateActivity;
 
-}((this.BX.Bizproc = this.BX.Bizproc || {}),BX.SidePanel,BX.Vue3,BX,BX.Event,BX.UI.IconSet,BX.UI.IconSet,BX.UI.System.Menu,BX.Vue3.Components,BX.Bizproc));
+})(this.BX.Bizproc = this.BX.Bizproc || {}, BX.Event, BX.Vue3, BX.SidePanel, BX.UI.IconSet, BX.UI.IconSet, BX, BX.UI.System.Menu, BX.Vue3.Components, BX.Bizproc);
 //# sourceMappingURL=setup-template-activity.bundle.js.map

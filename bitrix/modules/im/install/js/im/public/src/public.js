@@ -1,7 +1,7 @@
 import { Type, Extension, Reflection, type JsonObject } from 'main.core';
 
 import { type NavigationMenuItemParams } from 'im.v2.lib.navigation';
-import { type CreatableChatType, type OpenChatCreationParams } from 'im.v2.component.content.chat-forms.forms';
+import { type OpenChatCreationParams, type CreatableChatTypeItem } from 'im.v2.lib.create-chat';
 import { type ChatEmbeddedApplicationType, type ChatEmbeddedApplicationInstance } from 'im.v2.application.launch';
 
 import { legacyMessenger, legacyDesktop } from './legacy';
@@ -24,7 +24,7 @@ type Opener = {
 	openRecentSearch: () => Promise,
 	openSettings: ({ onlyPanel?: string }) => Promise,
 	openConference: ({ code?: string, link?: string }) => Promise,
-	openChatCreation: (chatType: CreatableChatType) => Promise,
+	openChatCreation: (chatType: CreatableChatTypeItem) => Promise,
 	startVideoCall: (dialogId?: string, withVideo?: boolean) => Promise,
 	startPhoneCall: (number: string, params: JsonObject) => Promise,
 	startCallList: (callListId: number, params: JsonObject) => Promise,
@@ -295,7 +295,7 @@ class Messenger
 	}
 
 	async openChatCreation(
-		chatType: CreatableChatType,
+		chatType: CreatableChatTypeItem,
 		params: OpenChatCreationParams = {},
 	): Promise
 	{

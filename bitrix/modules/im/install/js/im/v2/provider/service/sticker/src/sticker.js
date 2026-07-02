@@ -265,10 +265,11 @@ export class StickerService
 	{
 		const { packs, stickers, recentStickers = [] } = response;
 		const packsPromise = Core.getStore().dispatch('stickers/packs/set', packs);
+		const orderPromise = Core.getStore().dispatch('stickers/packs/addSortOrder', packs);
 		const stickersPromise = Core.getStore().dispatch('stickers/set', stickers);
 		const recentPromise = Core.getStore().dispatch('stickers/recent/set', recentStickers);
 
-		return Promise.all([stickersPromise, packsPromise, recentPromise]);
+		return Promise.all([stickersPromise, packsPromise, orderPromise, recentPromise]);
 	}
 
 	#wasPackRenamed({ id, type, name }: ImModelStickerPackIdentifier & {name: string}): boolean

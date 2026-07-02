@@ -9,7 +9,6 @@ jn.define('im/messenger/lib/element/recent/item/chat', (require, exports, module
 	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-
 	/**
 	 * @class ChatItem
 	 */
@@ -86,12 +85,14 @@ jn.define('im/messenger/lib/element/recent/item/chat', (require, exports, module
 			this.actions = [
 				this.getMuteAction(),
 				this.getHideAction(),
+				this.getAddToFolderAction(),
 				this.getPinAction(),
 				this.getReadAction(),
-			];
+			].filter(Boolean);
 
 			return this;
 		}
+
 	}
 
 	module.exports = {

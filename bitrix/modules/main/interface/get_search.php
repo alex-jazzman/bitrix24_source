@@ -6,6 +6,11 @@ define("BX_SEARCH_ADMIN", true);
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_js.php");
 
+/**
+ * @global CAdminPage $adminPage
+ * @global CAdminMenu $adminMenu
+ */
+
 $start = microtime(true);
 
 $query = ltrim($_POST["q"] ?? '');
@@ -15,10 +20,6 @@ if(
 	&& CModule::IncludeModule("search")
 ):
 
-/**
- * @global CAdminPage $adminPage
- * @global CAdminMenu $adminMenu
- */
 $adminPage->Init();
 $adminMenu->Init($adminPage->aModules);
 
@@ -82,7 +83,7 @@ function GetStrings(&$item, $key, $p)
 				$ar[] = trim($m[0], " ,;>");
 			if(count(array_unique($ar)) == count($arPhrase))
 			{
-				$arRes = array("NAME"=>$item["text"], "URL"=>$item["url"], "TITLE"=>$item["title"], "ICON"=>$item['icon']);
+				$arRes = array("NAME"=>$item["text"], "URL"=>$item["url"], "TITLE"=>$item["title"] ?? '', "ICON"=>$item['icon'] ?? '');
 			}
 		}
 	}
@@ -92,10 +93,10 @@ function GetStrings(&$item, $key, $p)
 		if(empty($item['category']))
 			$item['category'] = $category;
 
-		if(!is_array($arResult["CATEGORIES"][$item['category']]))
+		if(!is_array($arResult["CATEGORIES"][$item['category']] ?? null))
 		{
 			$arResult["CATEGORIES"][$item['category']] = Array('TITLE'=>'', 'ITEMS'=>Array());
-			if($item['category_name']!='')
+			if(!empty($item['category_name']))
 				$arResult["CATEGORIES"][$item['category']]['TITLE'] = $item['category_name'];
 		}
 		$arResult["CATEGORIES"][$item['category']]["ITEMS"][] = $arRes;
@@ -114,28 +115,28 @@ if($bFound)
 {
 ?>
 	<table class="adm-search-result">
-		<?foreach($arResult["CATEGORIES"] as $category_id => $arCategory):
+		<?php foreach($arResult["CATEGORIES"] as $category_id => $arCategory):
 			if(empty($arCategory["ITEMS"]))
 				continue;
 			?>
-			<?foreach($arCategory["ITEMS"] as $i => $arItem):
+			<?php foreach($arCategory["ITEMS"] as $i => $arItem):
 				if($i>9)
 					break;
 				?>
 			<tr onclick="window.location='<?=CUtil::JSEscape($arItem["URL"]);?>';">
-				<?if($i == 0):?>
+				<?php if($i == 0):?>
 					<th>&nbsp;<?=$arCategory["TITLE"]?></th>
-				<?else:?>
+				<?php else:?>
 					<th>&nbsp;</th>
-				<?endif?>
-				<td class="adm-search-item" <?if($arItem["TITLE"]!='' && $arItem["TITLE"]!=$arItem["NAME"]):?>title="<?=$arItem["TITLE"]?>"<?endif?>>
-					<a href="<?=$arItem["URL"]?>"><?if($arItem["ICON"]!=''):?><span class="adm-submenu-item-link-icon <?=$arItem["ICON"]?>"></span><?endif?><span class="adm-submenu-item-name-link-text"><?=$arItem["NAME"]?></span></a>
+				<?php endif?>
+				<td class="adm-search-item" <?php if($arItem["TITLE"]!='' && $arItem["TITLE"]!=$arItem["NAME"]):?>title="<?=$arItem["TITLE"]?>"<?php endif?>>
+					<a href="<?=$arItem["URL"]?>"><?php if($arItem["ICON"]!=''):?><span class="adm-submenu-item-link-icon <?=$arItem["ICON"]?>"></span><?php endif?><span class="adm-submenu-item-name-link-text"><?=$arItem["NAME"]?></span></a>
 				</td>
 			</tr>
-			<?endforeach;?>
-		<?endforeach;?>
+			<?php endforeach;?>
+		<?php endforeach;?>
 	</table>
-<?
+	<?php
 }
 
 

@@ -5,7 +5,7 @@ jn.define('qrauth/src/scanner', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { Loc } = require('loc');
 	const { Notify } = require('notify');
-	const { qrauth } = require('qrauth/utils');
+	const { authorizeByUrl } = require('qrauth/utils');
 	const { AnalyticsEvent } = require('analytics');
 
 	const pathToExtension = '/bitrix/mobileapp/mobile/extensions/bitrix/qrauth/';
@@ -232,7 +232,7 @@ jn.define('qrauth/src/scanner', (require, exports, module) => {
 				notify.showIndicatorLoading();
 			}, 100);
 
-			qrauth.authorizeByUrl(value, this.redirectUrl)
+			authorizeByUrl(value, this.redirectUrl)
 				.then(() => {
 					const event = new AnalyticsEvent({
 						tool: 'intranet',

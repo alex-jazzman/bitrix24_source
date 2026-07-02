@@ -10,6 +10,7 @@ jn.define('settings-v2/structure/pages/notifications/counter', (require, exports
 	} = require('settings-v2/structure/helpers/item-create-helper');
 	const { NotificationCounterSettingController } = require('settings-v2/controller/notification-counter');
 	const { NotificationLoadService } = require('settings-v2/services/notification-load');
+	const { Indent } = require('tokens');
 
 	const {
 		SettingsPageId,
@@ -68,7 +69,8 @@ jn.define('settings-v2/structure/pages/notifications/counter', (require, exports
 				id: 'notifications-counter-image',
 				name: ImageName.NOTIFICATIONS_COUNTER,
 				externalStyle: {
-					height: 246,
+					marginBottom: Indent.XL4.toNumber(),
+					minHeight: 216,
 				},
 			}),
 			createSection(

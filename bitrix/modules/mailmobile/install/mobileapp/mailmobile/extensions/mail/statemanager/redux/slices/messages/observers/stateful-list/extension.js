@@ -108,10 +108,10 @@ jn.define('mail/statemanager/redux/slices/messages/observers/stateful-list', (re
 				return;
 			}
 
-			const { isRemoved: prevIsRemoved, ...prevMailWithoutIsRemoved } = prevMail;
-			const { isRemoved: nextIsRemoved, ...nextMailWithoutIsRemoved } = nextMail;
+			const { isRemoved: prevIsRemoved, isSelected: prevIsSelected, ...prevMailComparable } = prevMail;
+			const { isRemoved: nextIsRemoved, isSelected: nextIsSelected, ...nextMailComparable } = nextMail;
 
-			if (!isEqual(prevMailWithoutIsRemoved, nextMailWithoutIsRemoved))
+			if (!isEqual(prevMailComparable, nextMailComparable))
 			{
 				moved.push(nextMail);
 			}

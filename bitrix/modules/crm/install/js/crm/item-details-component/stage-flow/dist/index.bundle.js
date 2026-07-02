@@ -1,2 +1,180 @@
-this.BX=this.BX||{},this.BX.Crm=this.BX.Crm||{},function(e,s,t,i,a,r){"use strict";var l,o=babelHelpers.classPrivateFieldLooseKey("isLoadingCallback"),n=babelHelpers.classPrivateFieldLooseKey("showLoadingNotificationCallback"),c=babelHelpers.classPrivateFieldLooseKey("prepareDisableSemanticButton"),u=babelHelpers.classPrivateFieldLooseKey("getCurrentStage"),b=babelHelpers.classPrivateFieldLooseKey("getCurrentStatusId"),p=babelHelpers.classPrivateFieldLooseKey("getStage"),d=babelHelpers.classPrivateFieldLooseKey("isHasPermissionToMove"),h=babelHelpers.classPrivateFieldLooseKey("isHasPermissionToMoveAtLeastOneTerminationStage"),g=babelHelpers.classPrivateFieldLooseKey("isHasPermissionToMoveSuccessStage"),P=babelHelpers.classPrivateFieldLooseKey("isHasPermissionToMoveAtLeastOneFailureStages"),v=babelHelpers.classPrivateFieldLooseKey("isDisableStageFlow"),F=babelHelpers.classPrivateFieldLooseKey("adjustDisableStages"),S=babelHelpers.classPrivateFieldLooseKey("adjustSemanticsSelectorPopupButtons");class m extends(l=t.StageFlow.Chart){constructor(e,s,t,i,a,r,l=!1){super(e,s),Object.defineProperty(this,S,{value:O}),Object.defineProperty(this,F,{value:j}),Object.defineProperty(this,v,{value:M}),Object.defineProperty(this,P,{value:I}),Object.defineProperty(this,g,{value:k}),Object.defineProperty(this,h,{value:y}),Object.defineProperty(this,d,{value:C}),Object.defineProperty(this,p,{value:f}),Object.defineProperty(this,b,{value:B}),Object.defineProperty(this,u,{value:H}),Object.defineProperty(this,c,{value:L}),this.isNewItem=!1,Object.defineProperty(this,o,{writable:!0,value:void 0}),Object.defineProperty(this,n,{writable:!0,value:void 0}),this.permissionChecker=t,this.getStageModelCallback=i,this.isNewItem=l,babelHelpers.classPrivateFieldLooseBase(this,o)[o]=a,babelHelpers.classPrivateFieldLooseBase(this,n)[n]=r,this.isNewItem||babelHelpers.classPrivateFieldLooseBase(this,F)[F]()}onStageMouseHover(e){this.increaseStageWidthForNameVisibility(e),e.isDisabled()||super.onStageMouseHover(e)}onStageClick(e){this.isLoading()?this.showLoadingNotification():babelHelpers.classPrivateFieldLooseBase(this,d)[d](e.getId())?super.onStageClick(e):this.permissionChecker.showMissPermissionError()}onFinalStageClick(e){this.isLoading()?this.showLoadingNotification():babelHelpers.classPrivateFieldLooseBase(this,h)[h]()?super.onFinalStageClick(e):this.permissionChecker.showMissPermissionError()}setCurrentStageId(e){return super.setCurrentStageId(e),this.adjust(),this}getSemanticPopupSuccessButton(){const e=super.getSemanticPopupSuccessButton();return babelHelpers.classPrivateFieldLooseBase(this,g)[g]()||babelHelpers.classPrivateFieldLooseBase(this,c)[c](e),e}getSemanticPopupFailureButton(){const e=super.getSemanticPopupFailureButton();return null===e?null:(babelHelpers.classPrivateFieldLooseBase(this,P)[P]()||babelHelpers.classPrivateFieldLooseBase(this,c)[c](e),e)}getFinalStagePopupFailStage(e){const t=super.getFinalStagePopupFailStage(e);return babelHelpers.classPrivateFieldLooseBase(this,d)[d](e.getId())||(t.onclick=e=>{e.preventDefault(),this.permissionChecker.showMissPermissionError()},s.Dom.addClass(t,"--disabled")),t}setCheckedStageInFailStagesWrapper(e){const t=[...this.extractFinalStagePopupFailStages(e)].map(e=>e.querySelector("input")),i=this.getFirstFailStage();if(!i)return;const a=t.find(e=>{var t;const a=null==e||null==(t=e.dataset)?void 0:t.stageId;return!!a&&i.getId()===s.Text.toInteger(a)});a&&(a.checked=!0)}getFirstFailStage(){return[...this.stages.values()].find(e=>e.isFail()&&babelHelpers.classPrivateFieldLooseBase(this,d)[d](e.getId()))}getFirstFailStageName(){var e;return null==(e=super.getFirstFailStage())?void 0:e.getName()}adjust(){babelHelpers.classPrivateFieldLooseBase(this,F)[F](),babelHelpers.classPrivateFieldLooseBase(this,S)[S]()}isLoading(){return babelHelpers.classPrivateFieldLooseBase(this,o)[o]()}showLoadingNotification(){return babelHelpers.classPrivateFieldLooseBase(this,n)[n]()}}function L(e){e.setDisabled().setProps({disabled:null}).bindEvent("click",this.permissionChecker.showMissPermissionError)}function H(){return this.getStageModelCallback(this.currentStage)}function B(){var e;return null==(e=babelHelpers.classPrivateFieldLooseBase(this,u)[u]())?void 0:e.getStatusId()}function f(e){return this.getStageModelCallback(e)}function C(e){const s=babelHelpers.classPrivateFieldLooseBase(this,p)[p](e);return!!s&&this.permissionChecker.isHasPermissionToMove(babelHelpers.classPrivateFieldLooseBase(this,b)[b](),s.getStatusId())}function y(){return this.permissionChecker.isHasPermissionToMoveAtLeastOneTerminationStage(babelHelpers.classPrivateFieldLooseBase(this,b)[b]())}function k(){return this.permissionChecker.isHasPermissionToMoveSuccessStage(babelHelpers.classPrivateFieldLooseBase(this,b)[b]())}function I(){return this.permissionChecker.isHasPermissionToMoveAtLeastOneFailureStage(babelHelpers.classPrivateFieldLooseBase(this,b)[b]())}function M(e){return!!this.isLoading()||!e.isFinal()&&(e===this.getFinalStage()?!babelHelpers.classPrivateFieldLooseBase(this,h)[h]():!babelHelpers.classPrivateFieldLooseBase(this,d)[d](e.getId()))}function j(){this.stages.forEach(e=>{e.setDisable(babelHelpers.classPrivateFieldLooseBase(this,v)[v](e))})}function O(){l.prototype.getSemanticSelectorPopup.call(this).setButtons([this.getSemanticPopupSuccessButton(),this.getSemanticPopupFailureButton()])}e.Chart=m}(this.BX.Crm.ItemDetailsComponent=this.BX.Crm.ItemDetailsComponent||{},BX,BX.UI,BX.UI,BX.Crm.Stage,BX.Crm.Models);
+/* eslint-disable */
+this.BX = this.BX || {};
+this.BX.Crm = this.BX.Crm || {};
+(function (exports, main_core, ui_stageflow) {
+	'use strict';
+
+	class Chart extends ui_stageflow.StageFlow.Chart {
+		isNewItem = false;
+		#isLoadingCallback;
+		#showLoadingNotificationCallback;
+		constructor(params, /** @see StageFlow.Chart */
+		stages, permissionChecker, gettingStageModelCallback, isLoadingCallback, showLoadingNotificationCallback, isNewItem = false) {
+			super(params, stages);
+			this.permissionChecker = permissionChecker;
+			this.getStageModelCallback = gettingStageModelCallback;
+			this.isNewItem = isNewItem;
+			this.#isLoadingCallback = isLoadingCallback;
+			this.#showLoadingNotificationCallback = showLoadingNotificationCallback;
+			if (!this.isNewItem) {
+				this.#adjustDisableStages();
+			}
+		}
+		onStageMouseHover(stage) {
+			this.increaseStageWidthForNameVisibility(stage);
+			if (stage.isDisabled()) {
+				return;
+			}
+			super.onStageMouseHover(stage);
+		}
+		onStageClick(stage) {
+			if (this.isLoading()) {
+				this.showLoadingNotification();
+				return;
+			}
+			if (!this.#isHasPermissionToMove(stage.getId())) {
+				this.permissionChecker.showMissPermissionError();
+				return;
+			}
+			super.onStageClick(stage);
+		}
+		onFinalStageClick(stage) {
+			if (this.isLoading()) {
+				this.showLoadingNotification();
+				return;
+			}
+			if (!this.#isHasPermissionToMoveAtLeastOneTerminationStage()) {
+				this.permissionChecker.showMissPermissionError();
+				return;
+			}
+			super.onFinalStageClick(stage);
+		}
+		setCurrentStageId(stageId) {
+			super.setCurrentStageId(stageId);
+			this.adjust();
+			return this;
+		}
+		getSemanticPopupSuccessButton() {
+			const successButton = super.getSemanticPopupSuccessButton();
+			if (!this.#isHasPermissionToMoveSuccessStage()) {
+				this.#prepareDisableSemanticButton(successButton);
+			}
+			return successButton;
+		}
+		getSemanticPopupFailureButton() {
+			const failureButton = super.getSemanticPopupFailureButton();
+			if (failureButton === null) {
+				return null;
+			}
+			if (!this.#isHasPermissionToMoveAtLeastOneFailureStages()) {
+				this.#prepareDisableSemanticButton(failureButton);
+			}
+			return failureButton;
+		}
+		getFinalStagePopupFailStage(stage) {
+			const finalStage = super.getFinalStagePopupFailStage(stage);
+			if (!this.#isHasPermissionToMove(stage.getId())) {
+				finalStage.onclick = event => {
+					event.preventDefault();
+					this.permissionChecker.showMissPermissionError();
+				};
+				main_core.Dom.addClass(finalStage, '--disabled');
+			}
+			return finalStage;
+		}
+		setCheckedStageInFailStagesWrapper(failStageListWrapper) {
+			const failStages = [...this.extractFinalStagePopupFailStages(failStageListWrapper)];
+			const failStageInputs = failStages.map(radioButtonNode => {
+				return radioButtonNode.querySelector('input');
+			});
+			const firstAvailableFailStage = this.getFirstFailStage();
+			if (!firstAvailableFailStage) {
+				return;
+			}
+			const relatedRadioButton = failStageInputs.find(radioButton => {
+				const stageId = radioButton?.dataset?.stageId;
+				if (stageId) {
+					return firstAvailableFailStage.getId() === main_core.Text.toInteger(stageId);
+				}
+				return false;
+			});
+			if (relatedRadioButton) {
+				relatedRadioButton.checked = true;
+			}
+		}
+		getFirstFailStage() {
+			const stages = [...this.stages.values()];
+			return stages.find(stage => stage.isFail() && this.#isHasPermissionToMove(stage.getId()));
+		}
+		getFirstFailStageName() {
+			// get first fail stage name without permissions check
+			return super.getFirstFailStage()?.getName();
+		}
+		#prepareDisableSemanticButton(button) {
+			button.setDisabled().setProps({
+				disabled: null
+			}) // necessary in order to show a notification about miss permissions
+			.bindEvent('click', this.permissionChecker.showMissPermissionError);
+		}
+		#getCurrentStage() {
+			return this.getStageModelCallback(this.currentStage);
+		}
+		#getCurrentStatusId() {
+			return this.#getCurrentStage()?.getStatusId();
+		}
+		#getStage(id) {
+			return this.getStageModelCallback(id);
+		}
+		#isHasPermissionToMove(stageFlowId) {
+			const compareStage = this.#getStage(stageFlowId);
+			if (!compareStage) {
+				return false;
+			}
+			return this.permissionChecker.isHasPermissionToMove(this.#getCurrentStatusId(), compareStage.getStatusId());
+		}
+		#isHasPermissionToMoveAtLeastOneTerminationStage() {
+			return this.permissionChecker.isHasPermissionToMoveAtLeastOneTerminationStage(this.#getCurrentStatusId());
+		}
+		#isHasPermissionToMoveSuccessStage() {
+			return this.permissionChecker.isHasPermissionToMoveSuccessStage(this.#getCurrentStatusId());
+		}
+		#isHasPermissionToMoveAtLeastOneFailureStages() {
+			return this.permissionChecker.isHasPermissionToMoveAtLeastOneFailureStage(this.#getCurrentStatusId());
+		}
+		#isDisableStageFlow(flowStage) {
+			if (this.isLoading()) {
+				return true;
+			}
+			if (flowStage.isFinal()) {
+				return false;
+			}
+			if (flowStage === this.getFinalStage()) {
+				return !this.#isHasPermissionToMoveAtLeastOneTerminationStage();
+			}
+			return !this.#isHasPermissionToMove(flowStage.getId());
+		}
+		adjust() {
+			this.#adjustDisableStages();
+			this.#adjustSemanticsSelectorPopupButtons();
+		}
+		#adjustDisableStages() {
+			this.stages.forEach(stage => {
+				stage.setDisable(this.#isDisableStageFlow(stage));
+			});
+		}
+		#adjustSemanticsSelectorPopupButtons() {
+			const popup = super.getSemanticSelectorPopup();
+			popup.setButtons([this.getSemanticPopupSuccessButton(), this.getSemanticPopupFailureButton()]);
+		}
+		isLoading() {
+			return this.#isLoadingCallback();
+		}
+		showLoadingNotification() {
+			return this.#showLoadingNotificationCallback();
+		}
+	}
+
+	exports.Chart = Chart;
+
+})(this.BX.Crm.ItemDetailsComponent = this.BX.Crm.ItemDetailsComponent || {}, BX, BX.UI);
 //# sourceMappingURL=index.bundle.js.map

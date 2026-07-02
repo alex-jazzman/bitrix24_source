@@ -1,5 +1,5 @@
-import type { RawFile, RawMessage, RawUser, RawChat } from 'im.v2.provider.service.types';
-import type { StatusGroupName } from 'imopenlines.v2.const';
+import { type RawFile, type RawMessage, type RawUser, type RawChat } from 'im.v2.provider.service.types';
+import { type StatusGroupName } from 'imopenlines.v2.const';
 
 export type RawSession = {
 	chatId: number,
@@ -24,6 +24,13 @@ export type RawQueue = {
 	type: string,
 	isActive: boolean,
 }
+
+export type RawCrmForm = {
+	id: number,
+	name: string,
+	code: string,
+	sec: string,
+};
 
 export type RecentRestResult = {
 	users: RawUser[],
@@ -70,3 +77,52 @@ export type RawCurrentSession = {
 	dateCreate: string,
 	multidialog: boolean,
 }
+
+export type RawQuickReply = {
+	id: number,
+	name: string,
+	text: string,
+	sectionId: number,
+	canEdit: boolean,
+	rating: number,
+};
+
+export type RawQuickReplySection = {
+	id: number,
+	name: string,
+	code: string,
+};
+
+export type QuickReplyLoadListParams = {
+	lineId: number,
+	search?: string,
+	sectionId?: number,
+	offset?: number,
+	limit?: number,
+};
+
+export type QuickReplyPermissions = {
+	canView: boolean,
+	canCreate: boolean,
+};
+
+export type QuickReplyLoadListResult = {
+	replies: RawQuickReply[],
+	sections: RawQuickReplySection[],
+	totalCount: number,
+	manageUrl: string,
+	permissions: QuickReplyPermissions,
+};
+
+export type QuickReplySaveParams = {
+	lineId: number,
+	id?: number,
+	text: string,
+	sectionId?: number,
+};
+
+export type QuickReplySaveFormData = {
+	id?: number,
+	text: string,
+	sectionId: number,
+};

@@ -25,25 +25,13 @@ jn.define('im/messenger/provider/services/sending/service', (require, exports, m
 	const UPLOAD_FILES_LIMIT = 100;
 
 	/**
+	 * @implements {Unsubscribable}
 	 * @class SendingService
 	 */
 	class SendingService
 	{
 		#fileUploadService = null;
 		#filesUploadService = null;
-
-		/**
-		 * @return {SendingService}
-		 */
-		static getInstance()
-		{
-			if (!this.instance)
-			{
-				this.instance = new this();
-			}
-
-			return this.instance;
-		}
 
 		constructor()
 		{
@@ -73,6 +61,11 @@ jn.define('im/messenger/provider/services/sending/service', (require, exports, m
 			this.#filesUploadService = this.#filesUploadService ?? new FilesUploadService();
 
 			return this.#filesUploadService;
+		}
+
+		unsubscribeEvents()
+		{
+			this.filesUploadService.unsubscribeEvents();
 		}
 
 		/**
@@ -368,7 +361,7 @@ jn.define('im/messenger/provider/services/sending/service', (require, exports, m
 					this.store.dispatch('filesModel/delete', { id: temporaryFileIds[0] });
 				})
 				.catch((error) => logger.error(error))
-				;
+			;
 		}
 
 		/**
@@ -382,11 +375,11 @@ jn.define('im/messenger/provider/services/sending/service', (require, exports, m
 			const newFiles = messageModel?.files?.filter((fileId) => fileId !== mediaId);
 
 			return this.store.dispatch('messagesModel/update', {
-					id: temporaryMessageId,
-					fields: {
-						files: newFiles,
-					},
-				})
+				id: temporaryMessageId,
+				fields: {
+					files: newFiles,
+				},
+			})
 				.then(() => {
 					this.store.dispatch('filesModel/delete', { id: mediaId });
 				})

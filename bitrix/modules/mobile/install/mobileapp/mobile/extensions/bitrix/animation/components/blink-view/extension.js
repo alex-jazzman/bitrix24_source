@@ -4,6 +4,8 @@
 jn.define('animation/components/blink-view', (require, exports, module) => {
 	const { isObjectLike } = require('utils/object');
 
+	const isAndroid = Application.getPlatform() === 'android';
+
 	/**
 	 * @class BlinkView
 	 *
@@ -149,10 +151,25 @@ jn.define('animation/components/blink-view', (require, exports, module) => {
 		#blinkWithHighlight()
 		{
 			const fadeOutHighlight = () => new Promise((resolve) => {
+				let done = false;
+				const safeResolve = () => {
+					if (done)
+					{
+						return;
+					}
+					done = true;
+					resolve();
+				};
+
+				if (isAndroid)
+				{
+					setTimeout(safeResolve, this.animation.highlightDuration);
+				}
+
 				this.highlightRef?.animate({
 					duration: this.animation.highlightDuration,
 					opacity: 0,
-				}, resolve);
+				}, safeResolve);
 			});
 
 			return this.#promiseState({ highlighted: true })

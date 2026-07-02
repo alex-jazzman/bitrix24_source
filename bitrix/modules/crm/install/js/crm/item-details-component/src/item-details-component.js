@@ -1,7 +1,9 @@
 import { type CategoryModelData } from 'crm.category-model';
+import { Builder, Dictionary } from 'crm.integration.analytics';
 import { CategoryChanger } from 'crm.item-details-component.pagetitle';
 import { Chart as ItemDetailsChart } from 'crm.item-details-component.stage-flow';
 import { ReceiverRepository } from 'crm.messagesender';
+import { Router } from 'crm.router';
 import type { StageModelData } from 'crm.stage-model';
 import { StageModel } from 'crm.stage-model';
 import { PermissionChecker as StagePermissionChecker } from 'crm.stage.permission-checker';
@@ -9,9 +11,9 @@ import { ajax as Ajax, Dom, Loc, Reflection, Runtime, Text, Type, Uri } from 'ma
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Loader } from 'main.loader';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
+import { UI } from 'ui.notification';
 import { StageFlow } from 'ui.stageflow';
 import './item-details-component.css';
-import { EntityCloseEvent, EntityStageChangeEvent, Dictionary, Builder } from 'crm.integration.analytics';
 
 export type ItemDetailsComponentParams = {
 	entityTypeId: number,
@@ -196,7 +198,7 @@ export class ItemDetailsComponent
 		}
 
 		const stageName = Text.encode(this.targetUpdateStage.getName());
-		BX.UI.Notification.Center.notify({
+		UI.Notification.Center.notify({
 			content: this.messages.stageLoadingMessage.replace('#stage#', stageName),
 			autoHideDelay: 3000,
 		});
@@ -373,6 +375,10 @@ export class ItemDetailsComponent
 				this.handleUserFieldCreationUrlClick.bind(this)
 			);
 		}
+		EventEmitter.subscribe(
+			'BX.Crm.ItemDetailsComponent:onClickRecurringExpose',
+			this.handleRecurringExpose.bind(this),
+		);
 	}
 
 	initPull()
@@ -748,6 +754,60 @@ export class ItemDetailsComponent
 				}
 			});
 		}
+	}
+
+	handleRecurringExpose(event: BaseEvent): void
+	{
+		const availableComponents = [
+			'bitrix:crm.invoice.details',
+			'bitrix:crm.item.details',
+		];
+		const componentName = event.getData().button.getDataSet().componentName;
+
+		if (!availableComponents.includes(componentName))
+		{
+			UI.Notification.Center.notify({
+				content: Loc.getMessage('CRM_ITEM_DETAIL_CREATE_RECURRING_ITEM_NOT_SUPPORTED'),
+				autoHideDelay: 6000,
+			});
+
+			return;
+		}
+
+		const data = {
+			entityId: this.id,
+			entityTypeId: this.entityTypeId,
+		};
+
+		BX.ajax.runComponentAction(
+			componentName,
+			'expose',
+			{
+				mode: 'class',
+				data,
+			},
+		).then(
+			({ data: id }) => {
+				const url = Router.Instance.getItemDetailUrl(this.entityTypeId, id);
+				BX.Crm.Page.open(url.getPath());
+			},
+			(response) => {
+				const content = Type.isArrayFilled(response.errors)
+					? response.errors[0]?.message
+					: Loc.getMessage('CRM_ITEM_DETAIL_CREATE_RECURRING_ITEM_ERROR')
+				;
+
+				UI.Notification.Center.notify({
+					content,
+					autoHideDelay: 6000,
+				});
+			},
+		).catch(() => {
+			UI.Notification.Center.notify({
+				content: Loc.getMessage('CRM_ITEM_DETAIL_CREATE_RECURRING_ITEM_ERROR'),
+				autoHideDelay: 6000,
+			});
+		});
 	}
 
 	onCreateUserFieldSliderClose(event: BX.SidePanel.Event)

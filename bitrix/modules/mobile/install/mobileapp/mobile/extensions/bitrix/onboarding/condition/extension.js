@@ -50,58 +50,6 @@ jn.define('onboarding/condition', (require, exports, module) => {
 			};
 		}
 
-		static isClientRelatedEntity()
-		{
-			return async (context) => {
-				if (!context || !context.entityTypeId)
-				{
-					return false;
-				}
-
-				const { TypeId } = await requireLazy('crm:type', false);
-				if (!TypeId)
-				{
-					return false;
-				}
-
-				return context.entityTypeId === TypeId.Contact
-					|| context.entityTypeId === TypeId.Company
-					|| context.isClientEnabled;
-			};
-		}
-
-		static hasTelegramConnection()
-		{
-			return async () => {
-				const hasTelegramConnection = ConditionBase.#hasTelegramConnection();
-
-				return Boolean(hasTelegramConnection);
-			};
-		}
-
-		static hasOpenLineAccess()
-		{
-			return async (context) => {
-				return Boolean(context && context.hasOpenLinesAccess);
-			};
-		}
-
-		static #hasTelegramConnection()
-		{
-			try
-			{
-				const { TelegramConnectorManager } = require('imconnector/connectors/telegram');
-
-				return new TelegramConnectorManager();
-			}
-			catch (e)
-			{
-				console.warn(e, 'TelegramConnectorManager not found');
-
-				return null;
-			}
-		}
-
 		static #extractAllFields(groups)
 		{
 			return (Array.isArray(groups) ? groups : []).flatMap((group) => {

@@ -1,5 +1,5 @@
 import { Outline } from 'ui.icon-set.api.vue';
-import { useHistory } from 'ui.block-diagram';
+import { useHistory, useBlockDiagram } from 'ui.block-diagram';
 
 import { IconButton } from '../../../../shared/ui';
 // eslint-disable-next-line no-unused-vars
@@ -31,7 +31,8 @@ export const DeleteBlockIconBtn = {
 	setup(props, { emit }): DeleteBlockIconBtnSetup
 	{
 		const history = useHistory();
-		const { deleteBlockById, publicDraft, updateStatus } = useDiagramStore();
+		const { deleteBlockById } = useBlockDiagram();
+		const { publicDraft, updateStatus } = useDiagramStore();
 
 		function tryPublicDraft(): void
 		{

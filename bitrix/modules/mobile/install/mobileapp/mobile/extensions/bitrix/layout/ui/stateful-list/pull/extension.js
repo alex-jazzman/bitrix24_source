@@ -22,6 +22,9 @@ jn.define('layout/ui/stateful-list/pull', (require, exports, module) => {
 			this.context = data.context;
 			this.pushProcessor = new PushProcessor({
 				eventCallbacks: data.eventCallbacks,
+				onQueueStarted: data.onQueueStarted,
+				onQueueFinished: data.onQueueFinished,
+				setListActiveListener: data.setListActiveListener,
 			});
 		}
 

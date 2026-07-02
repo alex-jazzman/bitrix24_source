@@ -61,7 +61,7 @@ export class Base
 			isScrollBlock: false,
 			className: `crm-repeat-sale-widget-popup --${this.getType()}`,
 			closeByEsc: true,
-			closeIcon: true,
+			closeIcon: !this.isAutoHidePopup(),
 			padding: 16,
 			width: this.getPopupWidth(),
 			maxHeight: 500,

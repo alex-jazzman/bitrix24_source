@@ -1,17 +1,18 @@
+import { Type, type JsonObject } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 
-import { EventType, GetParameter, Layout, NavigationMenuItem } from 'im.v2.const';
+import { EventType, GetParameter, Layout, NavigationMenuItem, ChatType } from 'im.v2.const';
 import { CallManager } from 'im.v2.lib.call';
+import { CreateChatManager, type OpenChatCreationParams, type CreatableChatTypeItem } from 'im.v2.lib.create-chat';
 import { DesktopApi, DesktopFeature } from 'im.v2.lib.desktop-api';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { LayoutManager } from 'im.v2.lib.layout';
 import { Logger } from 'im.v2.lib.logger';
-import { PhoneManager } from 'im.v2.lib.phone';
-import { Utils } from 'im.v2.lib.utils';
-import { MessengerSlider } from 'im.v2.lib.slider';
-import { Feature, FeatureManager } from 'im.v2.lib.feature';
-import { BotContextService } from 'im.v2.provider.service.bot';
-import { CreateChatManager } from 'im.v2.lib.create-chat';
 import { type NavigationMenuItemParams, NavigationManager } from 'im.v2.lib.navigation';
+import { PhoneManager } from 'im.v2.lib.phone';
+import { MessengerSlider } from 'im.v2.lib.slider';
+import { Utils } from 'im.v2.lib.utils';
+import { BotContextService } from 'im.v2.provider.service.bot';
 
 import { LinesService } from './classes/lines-service';
 import {
@@ -21,9 +22,6 @@ import {
 	isEmbeddedModeWithActiveSlider,
 	openChatInNewTab,
 } from './functions/helpers';
-
-import type { JsonObject } from 'main.core';
-import type { CreatableChatType, OpenChatCreationParams } from 'im.v2.component.content.chat-forms.forms';
 
 export const Opener = {
 	async openChat(dialogId: string | number = '', messageId: number = 0): Promise
@@ -124,10 +122,30 @@ export const Opener = {
 
 		await MessengerSlider.getInstance().openSlider();
 
-		return LayoutManager.getInstance().setLayout({
-			name: Layout.collab,
-			entityId: preparedDialogId,
+		const withCollabId = Type.isStringFilled(preparedDialogId);
+		const isNestedListAvailable = FeatureManager.isFeatureAvailable(Feature.isNestedListAvailable);
+		if (!withCollabId || !isNestedListAvailable)
+		{
+			return LayoutManager.getInstance().setLayout({
+				name: Layout.collab,
+				entityId: preparedDialogId,
+			});
+		}
+
+		if (!Utils.dialog.isChatDialogId(dialogId))
+		{
+			return Promise.resolve();
+		}
+
+		const chatId = Utils.dialog.getChatIdFromDialogId(dialogId);
+
+		await this.openChat();
+		EventEmitter.emit(EventType.recent.openNestedList, {
+			chatType: ChatType.collab,
+			parentChatId: chatId,
 		});
+
+		return Promise.resolve();
 	},
 
 	async openChannel(dialogId: string = ''): Promise
@@ -235,24 +253,13 @@ export const Opener = {
 		return Promise.resolve();
 	},
 
-	async openChatCreation(
-		chatType: CreatableChatType,
-		params: OpenChatCreationParams = {},
-	): Promise
+	async openChatCreation(chatType: CreatableChatTypeItem, params: OpenChatCreationParams): Promise
 	{
 		Logger.warn('Slider: openChatCreation', chatType);
 
-		CreateChatManager.getInstance().setPreselectedMembers(params.preselectedMembers ?? []);
-		CreateChatManager.getInstance().setIncludeCurrentUser(params.includeCurrentUser ?? true);
-		CreateChatManager.getInstance().setOwnerId(params.ownerId ?? null);
-
 		await MessengerSlider.getInstance().openSlider();
-		const layoutParams = {
-			name: Layout.createChat,
-			entityId: chatType,
-		};
 
-		return LayoutManager.getInstance().setLayout(layoutParams);
+		return CreateChatManager.getInstance().startChatCreation(chatType, params);
 	},
 
 	startVideoCall(dialogId: string = '', withVideo: boolean = true): Promise

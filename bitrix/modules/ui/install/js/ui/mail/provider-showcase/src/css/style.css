@@ -11,6 +11,16 @@
 	align-items: center;
 	box-sizing: border-box;
 	cursor: pointer;
+	border: none;
+	padding: 0;
+	font: inherit;
+	color: inherit;
+}
+
+.mail-provider-item:focus-visible {
+	box-shadow: 0 5px 12px rgba(0, 0, 0, .2);
+	outline: 2px solid var(--ui-color-palette-blue-60);
+	outline-offset: -2px;
 }
 
 .mail-provider-item-available {
@@ -150,6 +160,13 @@
 	column-gap: 18px;
 	row-gap: 24px;
 	flex-wrap: wrap;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.mail-provider-list > li {
+	display: contents;
 }
 
 .showcase-container {
@@ -157,4 +174,3 @@
 	flex-direction: column;
 	gap: 10px;
 }
-

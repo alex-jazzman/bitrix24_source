@@ -31,6 +31,8 @@ final class RepeatSaleSegmentController
 
 	public function add(SegmentItem $segmentItem): AddResult
 	{
+		$segmentItem->convertTitlePlaceholdersToExternalFormat();
+
 		$result = RepeatSaleSegmentTable::add($this->getFields($segmentItem));
 
 		if (!$result->isSuccess())
@@ -60,6 +62,8 @@ final class RepeatSaleSegmentController
 
 	public function update(int $id, SegmentItem $segmentItem, ?Context $context = null): UpdateResult
 	{
+		$segmentItem->convertTitlePlaceholdersToExternalFormat();
+
 		$result = RepeatSaleSegmentTable::update($id, $this->getFields($segmentItem));
 
 		if (!$result->isSuccess())
@@ -102,6 +106,7 @@ final class RepeatSaleSegmentController
 			'IS_AI_ENABLED' => $segmentItem->isAiEnabled(),
 			'UPDATED_AT' => new DateTime(),
 			'UPDATED_BY_ID' => Container::getInstance()->getContext()->getUserId(),
+			'MINIMUM_DAYS_AFTER_LAST_CLOSED_ENTITY' => $segmentItem->getMinimumDaysAfterLastClosedEntity(),
 		];
 	}
 
@@ -154,6 +159,16 @@ final class RepeatSaleSegmentController
 
 	public function getById(int $id, bool $loadAssignmentUsers = false): ?RepeatSaleSegment
 	{
+		return $this->getItem('ID', $id, $loadAssignmentUsers);
+	}
+
+	public function getByCode(string $code, bool $loadAssignmentUsers = false): ?RepeatSaleSegment
+	{
+		return $this->getItem('CODE', $code, $loadAssignmentUsers);
+	}
+
+	private function getItem(string $fieldName, int|string $value, bool $loadAssignmentUsers = false): ?RepeatSaleSegment
+	{
 		$select = ['*'];
 		if ($loadAssignmentUsers)
 		{
@@ -162,10 +177,11 @@ final class RepeatSaleSegmentController
 
 		return RepeatSaleSegmentTable::query()
 			->setSelect($select)
-			->setFilter(['=ID' => $id])
+			->setFilter(['=' . $fieldName => $value])
 			->fetchObject()
 		;
 	}
+
 
 	public function getTotalCount(array $filter = []): int
 	{

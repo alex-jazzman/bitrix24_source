@@ -1,0 +1,16 @@
+<?php
+$MESS["MAILBOX_FOLDERS_SETTINGS_ASSIGN_OUTCOME"] = "Move sent emails to folder:";
+$MESS["MAILBOX_FOLDERS_SETTINGS_ASSIGN_SPAM"] = "Move spam to folder:";
+$MESS["MAILBOX_FOLDERS_SETTINGS_ASSIGN_TITLE"] = "Special folders";
+$MESS["MAILBOX_FOLDERS_SETTINGS_ASSIGN_TRASH"] = "Move deleted emails to folder:";
+$MESS["MAILBOX_FOLDERS_SETTINGS_CLOSE_BUTTON"] = "Close";
+$MESS["MAILBOX_FOLDERS_SETTINGS_EMPTY_MENU"] = "No folders found";
+$MESS["MAILBOX_FOLDERS_SETTINGS_LOAD_ERROR"] = "Could not load folder settings. Please try again later.";
+$MESS["MAILBOX_FOLDERS_SETTINGS_NOT_SPECIFIED"] = "Not specified";
+$MESS["MAILBOX_FOLDERS_SETTINGS_NO_NESTED_FOLDERS"] = "This folder does not have subfolders";
+$MESS["MAILBOX_FOLDERS_SETTINGS_SAVE_BUTTON"] = "Save";
+$MESS["MAILBOX_FOLDERS_SETTINGS_SAVE_ERROR"] = "Could not save folder settings. Please try again later.";
+$MESS["MAILBOX_FOLDERS_SETTINGS_SELECT_ALL"] = "Select all";
+$MESS["MAILBOX_FOLDERS_SETTINGS_SELECT_FOLDER_TITLE"] = "Select folder";
+$MESS["MAILBOX_FOLDERS_SETTINGS_SYNC_TITLE"] = "Synchronize folders";
+$MESS["MAILBOX_FOLDERS_SETTINGS_TITLE"] = "Folders settings";

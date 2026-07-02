@@ -1,8 +1,19 @@
-import { BuilderModel, Store } from 'ui.vue3.vuex';
-import type { GetterTree, ActionTree, MutationTree } from 'ui.vue3.vuex';
+import {
+	BuilderModel,
+	type GetterTree,
+	type ActionTree,
+	type MutationTree,
+	type Store,
+} from 'ui.vue3.vuex';
 
 import { Model } from 'booking.const';
-import type { ResourceModel, ResourcesState, SlotRange, Skus, ResourceSkuRelationsModel } from './types';
+import {
+	type ResourceModel,
+	type ResourcesState,
+	type SlotRange,
+	type Skus,
+	type ResourceSkuRelationsModel,
+} from './types';
 
 export class Resources extends BuilderModel
 {
@@ -65,6 +76,15 @@ export class Resources extends BuilderModel
 			},
 			/** @function resources/getById */
 			getById: (state: ResourcesState) => (id: number): ResourceModel => state.collection[id],
+			/** @function resources/isDeleted */
+			isDeleted: (state: ResourcesState) => (id: ?number): boolean => {
+				if (!id)
+				{
+					return false;
+				}
+
+				return state.collection[id]?.isDeleted ?? false;
+			},
 			/** @function resources/getByIds */
 			getByIds: (state: ResourcesState) => (ids: number[]): ResourceModel[] => {
 				return ids.map((id: number): ResourceModel => state.collection[id]);

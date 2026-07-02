@@ -7,6 +7,8 @@ import {
 	useBlockDiagram,
 } from '../../composables';
 
+import './group-selection-box.css';
+
 const DEFAULT_SELECTION_PADDING = 17;
 const DEFAULT_BLOCK_SIZE = { width: 150, height: 100 };
 
@@ -83,8 +85,13 @@ export const GroupSelectionBox = {
 			v-if="groupSelectionStyle"
 			:style="groupSelectionStyle"
 			class="ui-block-diagram-group-box"
-			@mousedown="onGroupMouseDown"
-			@contextmenu.prevent.stop="onGroupContextMenu"
-		></div>
+			@mousedown.stop="onGroupMouseDown"
+		>
+			<div
+				class="ui-block-diagram-group-box__layout"
+				@contextmenu.prevent.stop="onGroupContextMenu"
+			>
+			</div>
+		</div>
 	`,
 };

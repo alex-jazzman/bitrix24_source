@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
-(function (exports,tasks_v2_component_fields_replication,main_core,main_core_events,tasks_v2_lib_idUtils,tasks_v2_lib_apiClient,tasks_v2_provider_service_templateService,tasks_v2_provider_service_fileService,tasks_v2_provider_service_relationService,tasks_v2_provider_service_checkListService,tasks_v2_provider_service_remindersService,tasks_v2_provider_service_resultService,tasks_v2_component_fields_userFields,tasks_v2_core,tasks_v2_provider_service_groupService,tasks_v2_provider_service_flowService,tasks_v2_provider_service_userService,tasks_v2_const) {
+(function (exports,tasks_v2_component_fields_replication,main_core,main_core_events,tasks_v2_lib_analytics,tasks_v2_lib_idUtils,tasks_v2_lib_apiClient,tasks_v2_provider_service_templateService,tasks_v2_provider_service_fileService,tasks_v2_provider_service_relationService,tasks_v2_provider_service_checkListService,tasks_v2_provider_service_remindersService,tasks_v2_provider_service_resultService,tasks_v2_component_fields_userFields,tasks_v2_core,tasks_v2_provider_service_groupService,tasks_v2_provider_service_flowService,tasks_v2_provider_service_userService,tasks_v2_const) {
 	'use strict';
 
 	function mapModelToDto(task) {
@@ -105,6 +105,8 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    descriptionChecksum: taskDto.descriptionChecksum,
 	    creatorId: (_taskDto$creator = taskDto.creator) == null ? void 0 : _taskDto$creator.id,
 	    createdTs: mapValue(taskDto.createdTs, taskDto.createdTs * 1000),
+	    changedTs: mapValue(taskDto.changedTs, taskDto.changedTs * 1000),
+	    activityTs: mapValue(taskDto.activityTs, taskDto.activityTs * 1000),
 	    responsibleIds: mapTaskDtoToResponsibleIds(taskDto),
 	    deadlineTs: mapValue(taskDto.deadlineTs, taskDto.deadlineTs * 1000),
 	    deadlineAfter: mapValue(taskDto.deadlineAfter, taskDto.deadlineAfter * 1000),
@@ -117,6 +119,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    checklist: taskDto.checklist,
 	    containsChecklist: taskDto.containsChecklist,
 	    parentId: (_taskDto$parent$id = (_taskDto$parent = taskDto.parent) == null ? void 0 : _taskDto$parent.id) != null ? _taskDto$parent$id : mapValue(taskDto.base, tasks_v2_lib_idUtils.idUtils.boxTemplate((_taskDto$base = taskDto.base) == null ? void 0 : _taskDto$base.id)),
+	    subTaskIds: taskDto.subTaskIds,
 	    containsSubTasks: (_taskDto$containsSubT = taskDto.containsSubTasks) != null ? _taskDto$containsSubT : taskDto.containsSubTemplates,
 	    containsRelatedTasks: taskDto.containsRelatedTasks,
 	    containsGanttLinks: taskDto.containsGanttLinks,
@@ -158,6 +161,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    archiveLink: taskDto.archiveLink,
 	    maxDeadlineChangeDate: taskDto.maxDeadlineChangeDate,
 	    maxDeadlineChanges: taskDto.maxDeadlineChanges,
+	    deadlineChangeCount: taskDto.deadlineChangeCount,
 	    requireDeadlineChangeReason: taskDto.requireDeadlineChangeReason,
 	    deadlineChangeReason: taskDto.deadlineChangeReason,
 	    email: mapValue(taskDto.email, taskDto.email ? {
@@ -450,7 +454,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	  }
 	}
 
-	var _silentErrorMode, _updateFields, _updateTaskBefore, _updatePromises, _updateServerTaskDebounced, _updateTaskDebounced, _updateTask, _updateTaskFields, _updateSeparateFields, _getTaskFields, _getFilteredFields;
+	var _mergeExtractedTaskWithStoreTask, _silentErrorMode, _updateFields, _updateTaskBefore, _updatePromises, _updateServerTaskDebounced, _updateTaskDebounced, _updateTask, _updateTaskFields, _updateSeparateFields, _getTaskFields, _getFilteredFields;
 	const separateFields = [{
 	  fields: new Set(['storyPoints', 'epicId']),
 	  endpoint: tasks_v2_const.Endpoint.ScrumUpdateTask
@@ -482,7 +486,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	  fields: new Set(['crmItemIds']),
 	  service: crmService
 	}];
-	const taskService = new (_silentErrorMode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("silentErrorMode"), _updateFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateFields"), _updateTaskBefore = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateTaskBefore"), _updatePromises = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updatePromises"), _updateServerTaskDebounced = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateServerTaskDebounced"), _updateTaskDebounced = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateTaskDebounced"), _updateTask = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateTask"), _updateTaskFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateTaskFields"), _updateSeparateFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateSeparateFields"), _getTaskFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTaskFields"), _getFilteredFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFilteredFields"), class {
+	const taskService = new (_mergeExtractedTaskWithStoreTask = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("mergeExtractedTaskWithStoreTask"), _silentErrorMode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("silentErrorMode"), _updateFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateFields"), _updateTaskBefore = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateTaskBefore"), _updatePromises = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updatePromises"), _updateServerTaskDebounced = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateServerTaskDebounced"), _updateTaskDebounced = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateTaskDebounced"), _updateTask = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateTask"), _updateTaskFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateTaskFields"), _updateSeparateFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateSeparateFields"), _getTaskFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTaskFields"), _getFilteredFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFilteredFields"), class {
 	  constructor() {
 	    Object.defineProperty(this, _getFilteredFields, {
 	      value: _getFilteredFields2
@@ -501,6 +505,9 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    });
 	    Object.defineProperty(this, _updateTaskDebounced, {
 	      value: _updateTaskDebounced2
+	    });
+	    Object.defineProperty(this, _mergeExtractedTaskWithStoreTask, {
+	      value: _mergeExtractedTaskWithStoreTask2
 	    });
 	    Object.defineProperty(this, _silentErrorMode, {
 	      writable: true,
@@ -533,7 +540,10 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    if (tasks_v2_lib_idUtils.idUtils.isTemplate(id)) {
 	      await tasks_v2_provider_service_templateService.templateService.get(id);
 	      await this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/removePartiallyLoaded`, id);
-	      return this.getStoreTask(id);
+	      return {
+	        task: this.getStoreTask(id),
+	        error: null
+	      };
 	    }
 	    try {
 	      const data = await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TaskGet, {
@@ -631,13 +641,18 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	      console.error(tasks_v2_const.Endpoint.TaskAccessGet, error);
 	    }
 	  }
-	  async add(task) {
+	  async add(props) {
+	    const {
+	      task,
+	      view
+	    } = props;
 	    if (tasks_v2_lib_idUtils.idUtils.isTemplate(task.id)) {
 	      return tasks_v2_provider_service_templateService.templateService.add(task);
 	    }
 	    try {
 	      const data = await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TaskAdd, {
-	        task: mapModelToDto(task)
+	        task: mapModelToDto(task),
+	        view: Boolean(view)
 	      });
 	      await this.onAfterTaskAdded(task, data);
 	      return [data.id, null];
@@ -701,7 +716,12 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    }
 	    this.deleteStore(initialTask.id);
 	  }
-	  async copy(task, withSubTasks) {
+	  async copy(props) {
+	    const {
+	      task,
+	      withSubTasks,
+	      view
+	    } = props;
 	    if (tasks_v2_lib_idUtils.idUtils.isTemplate(task.id)) {
 	      return tasks_v2_provider_service_templateService.templateService.copy(task);
 	    }
@@ -713,7 +733,8 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	          id: task.copiedFromId,
 	          checklist: checkLists
 	        }),
-	        withSubTasks
+	        withSubTasks,
+	        view: Boolean(view)
 	      });
 	      if (task.responsibleIds.length > 1) {
 	        const userIds = await this.addMultiTask(data.id, task.responsibleIds);
@@ -842,7 +863,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	      return false;
 	    }
 	  }
-	  async delete(id) {
+	  async delete(id, analyticsParams = {}) {
 	    const taskBeforeDelete = this.getStoreTask(id);
 	    this.deleteStore(id);
 	    if (!tasks_v2_lib_idUtils.idUtils.isReal(id)) {
@@ -853,6 +874,9 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	        task: {
 	          id
 	        }
+	      });
+	      tasks_v2_lib_analytics.analytics.sendDeleteTask(analyticsParams, {
+	        taskId: id
 	      });
 	      main_core_events.EventEmitter.emit(tasks_v2_const.EventName.TaskDeleted, {
 	        id
@@ -920,12 +944,9 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	      return;
 	    }
 	    const extractor = new TaskGetExtractor(data);
-	    const task = extractor.getTask();
+	    let task = extractor.getTask();
 	    const currentTask = this.getStoreTask(task.id);
-	    task.rights = {
-	      ...(currentTask == null ? void 0 : currentTask.rights),
-	      ...task.rights
-	    };
+	    task = babelHelpers.classPrivateFieldLooseBase(this, _mergeExtractedTaskWithStoreTask)[_mergeExtractedTaskWithStoreTask](task, currentTask);
 	    if (ignoreContains) {
 	      ['containsSubTasks', 'containsRelatedTasks', 'containsGanttLinks', 'containsPlacements'].forEach(prop => delete task[prop]);
 	    }
@@ -1003,6 +1024,26 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    return tasks_v2_core.Core.getStore();
 	  }
 	})();
+	function _mergeExtractedTaskWithStoreTask2(task, currentTask) {
+	  var _currentTask$subTaskI, _mergedTask$subTaskId;
+	  const mergedTask = {
+	    ...task
+	  };
+	  mergedTask.rights = {
+	    ...(currentTask == null ? void 0 : currentTask.rights),
+	    ...mergedTask.rights
+	  };
+	  const mergedSubTaskIds = [...((_currentTask$subTaskI = currentTask == null ? void 0 : currentTask.subTaskIds) != null ? _currentTask$subTaskI : []), ...((_mergedTask$subTaskId = mergedTask == null ? void 0 : mergedTask.subTaskIds) != null ? _mergedTask$subTaskId : [])];
+	  mergedTask.subTaskIds = [...new Set(mergedSubTaskIds)];
+	  const statusesFields = ['subTaskStatuses', 'relatedTaskStatuses', 'ganttTaskStatuses'];
+	  statusesFields.forEach(field => {
+	    mergedTask[field] = {
+	      ...(mergedTask == null ? void 0 : mergedTask[field]),
+	      ...(currentTask == null ? void 0 : currentTask[field])
+	    };
+	  });
+	  return mergedTask;
+	}
 	function _updateTaskDebounced2(id, fields, taskBeforeUpdate) {
 	  var _babelHelpers$classPr, _babelHelpers$classPr2, _babelHelpers$classPr3, _babelHelpers$classPr4, _babelHelpers$classPr5, _babelHelpers$classPr6;
 	  babelHelpers.classPrivateFieldLooseBase(this, _updateFields)[_updateFields][id] = {
@@ -1152,5 +1193,5 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	exports.taskService = taskService;
 	exports.ReplicateCreator = ReplicateCreator;
 
-}((this.BX.Tasks.V2.Provider.Service = this.BX.Tasks.V2.Provider.Service || {}),BX.Tasks.V2.Component.Fields,BX,BX.Event,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Component.Fields,BX.Tasks.V2,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Const));
+}((this.BX.Tasks.V2.Provider.Service = this.BX.Tasks.V2.Provider.Service || {}),BX.Tasks.V2.Component.Fields,BX,BX.Event,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Component.Fields,BX.Tasks.V2,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Const));
 //# sourceMappingURL=task-service.bundle.js.map

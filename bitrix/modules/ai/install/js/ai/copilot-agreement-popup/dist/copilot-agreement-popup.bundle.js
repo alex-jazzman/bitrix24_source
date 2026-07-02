@@ -14,8 +14,12 @@ this.BX = this.BX || {};
 	var _renderApplyButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderApplyButton");
 	var _renderCancelButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderCancelButton");
 	var _getFullAgreementLink = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFullAgreementLink");
+	var _getCopilotName = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCopilotName");
 	class CopilotAgreementPopup {
 	  constructor(options) {
+	    Object.defineProperty(this, _getCopilotName, {
+	      value: _getCopilotName2
+	    });
 	    Object.defineProperty(this, _getFullAgreementLink, {
 	      value: _getFullAgreementLink2
 	    });
@@ -119,7 +123,12 @@ this.BX = this.BX || {};
 					</div>
 				</footer>
 			</div>
-		`), main_core.Loc.getMessage('COPILOT_AGREEMENT_POPUP_TITLE'), main_core.Loc.getMessage('COPILOT_AGREEMENT_POPUP_PARAGRAPH_1'), main_core.Loc.getMessage('COPILOT_AGREEMENT_POPUP_PARAGRAPH_2', {
+		`), main_core.Loc.getMessage('COPILOT_AGREEMENT_POPUP_TITLE_MSGVER_1', {
+	    '#COPILOT_NAME#': babelHelpers.classPrivateFieldLooseBase(this, _getCopilotName)[_getCopilotName]()
+	  }), main_core.Loc.getMessage('COPILOT_AGREEMENT_POPUP_PARAGRAPH_1_MSGVER_1', {
+	    '#COPILOT_NAME#': babelHelpers.classPrivateFieldLooseBase(this, _getCopilotName)[_getCopilotName]()
+	  }), main_core.Loc.getMessage('COPILOT_AGREEMENT_POPUP_PARAGRAPH_2_MSGVER_1', {
+	    '#COPILOT_NAME#': babelHelpers.classPrivateFieldLooseBase(this, _getCopilotName)[_getCopilotName](),
 	    '#LINK#': `<a target="_blank" href="${babelHelpers.classPrivateFieldLooseBase(this, _getFullAgreementLink)[_getFullAgreementLink]()}">`,
 	    '#/LINK#': '</a>'
 	  }), babelHelpers.classPrivateFieldLooseBase(this, _renderApplyButton)[_renderApplyButton](), babelHelpers.classPrivateFieldLooseBase(this, _renderCancelButton)[_renderCancelButton]());
@@ -166,6 +175,9 @@ this.BX = this.BX || {};
 	    en: 'https://www.bitrix24.com/terms/bitrix24copilot-rules.php'
 	  };
 	  return linksByZone[zone] || linksByZone.en;
+	}
+	function _getCopilotName2() {
+	  return main_core.Extension.getSettings('ai.copilot-agreement-popup').copilotName;
 	}
 
 	exports.CopilotAgreementPopup = CopilotAgreementPopup;

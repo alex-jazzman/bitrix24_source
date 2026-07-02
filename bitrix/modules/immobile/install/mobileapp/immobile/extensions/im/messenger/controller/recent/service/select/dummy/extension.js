@@ -26,6 +26,16 @@ jn.define('im/messenger/controller/recent/service/select/dummy', (require, expor
 		onItemSelected = (itemData) => {
 			this.logger.log('onItemSelected', itemData);
 		};
+
+		subscribeEvents()
+		{
+			this.logger.log('subscribeEvents');
+		}
+
+		unsubscribeEvents()
+		{
+			this.logger.log('unsubscribeEvents');
+		}
 	}
 
 	module.exports = DummySelectService;

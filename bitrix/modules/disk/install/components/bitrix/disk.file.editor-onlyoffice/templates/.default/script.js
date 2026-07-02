@@ -713,13 +713,15 @@ this.BX.Disk = this.BX.Disk || {};
 	        BX.SidePanel.Instance.postMessageAll(window, 'Disk.OnlyOffice:onClosed', {
 	          documentSession: this.documentSession,
 	          object: this.context.object,
-	          process: process
+	          process: process,
+	          documentWasChanged: this.documentWasChanged
 	        });
 	      }
 	      main_core_events.EventEmitter.emit('Disk.OnlyOffice:onClosed', {
 	        documentSession: this.documentSession,
 	        object: this.context.object,
-	        process: process
+	        process: process,
+	        documentWasChanged: this.documentWasChanged
 	      });
 	    }
 	  }, {

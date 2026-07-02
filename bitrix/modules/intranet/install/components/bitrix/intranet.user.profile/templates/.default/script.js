@@ -305,9 +305,7 @@
 						}
 						else if (this.isCloud)
 						{
-							this.getAdminConfirmPopup().then((popup) => {
-								popup.show();
-							});
+							this.getAdminConfirmPopup().show();
 						}
 						else
 						{
@@ -610,76 +608,74 @@
 
 		getAdminConfirmPopup()
 		{
-			return BX.Runtime.loadExtension('main.core').then(({ Tag, Loc }) => {
-				const popup = new BX.Main.Popup(
-					'intranet-user-profile-admin-confirm-popup',
-					null,
-					{
-						className: 'intranet-user-profile-admin-confirm-popup',
-						content:
-							Tag.render`
-								<div class="intranet-user-profile-admin-confirm-popup-content">
-									<div class="intranet-user-profile-admin-confirm-popup-content-blue-card">
-										<div>${BX.message('INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_HINT')}</div>
-										<div>${BX.message('INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_NOTE')}</div>
-									</div>
-									<div class="intranet-user-profile-admin-confirm-popup-content-warning">
-										${BX.message('INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_WARNING')}
-									</div>
-									<a href="javascript:top.BX.Helper.show('redirect=detail&code=20682986')"
-									class="intranet-user-profile-admin-confirm-popup-content-more-link">
-										${BX.message('INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_LINK')}
-									</a>
+			const popup = new BX.Main.Popup(
+				'intranet-user-profile-admin-confirm-popup',
+				null,
+				{
+					className: 'intranet-user-profile-admin-confirm-popup',
+					content:
+						BX.Tag.render`
+							<div class="intranet-user-profile-admin-confirm-popup-content">
+								<div class="intranet-user-profile-admin-confirm-popup-content-blue-card">
+									<div>${BX.message('INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_HINT')}</div>
+									<div>${BX.message('INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_NOTE')}</div>
 								</div>
-							`,
-						closeIcon: true,
-						lightShadow: true,
-						offsetLeft: 100,
-						overlay: true,
-						closeByEsc: true,
-						titleBar: BX.message('INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_TITLE'),
-						buttons: [
-							new BX.UI.Button({
-								className: 'intranet-user-profile-admin-confirm-popup-decline-button',
-								useAirDesign: true,
-								text: Loc.getMessage('INTRANET_USER_PROFILE_CONFIRM_NO_MSGVER_1'),
-								style: BX.UI.AirButtonStyle.PLAIN_NO_ACCENT,
-								onclick: () => {
-									popup.close();
-								},
-							}),
-							new BX.UI.Button({
-								className: 'intranet-user-profile-admin-confirm-popup-set-integrator-button',
-								useAirDesign: true,
-								text: Loc.getMessage('INTRANET_USER_PROFILE_CONFIRM_YES_INTEGRATOR'),
-								style: BX.UI.AirButtonStyle.OUTLINE,
-								onclick: () => {
-									this.setIntegratorRights();
-									popup.close();
-								},
-							}),
-							new BX.UI.Button({
-								className: 'intranet-user-profile-admin-confirm-popup-set-admin-button',
-								useAirDesign: true,
-								text: Loc.getMessage('INTRANET_USER_PROFILE_CONFIRM_YES_MSGVER_1'),
-								style: BX.UI.AirButtonStyle.FILLED,
-								onclick: (button, event) => {
-									this.setAdminRights();
-									event.stopPropagation();
-									popup.close();
-								},
-							}),
-						],
-						events: {
-							onPopupClose: () => {
-								popup.destroy();
+								<div class="intranet-user-profile-admin-confirm-popup-content-warning">
+									${BX.message('INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_WARNING')}
+								</div>
+								<a href="javascript:top.BX.Helper.show('redirect=detail&code=20682986')"
+								class="intranet-user-profile-admin-confirm-popup-content-more-link">
+									${BX.message('INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_LINK')}
+								</a>
+							</div>
+						`,
+					closeIcon: true,
+					lightShadow: true,
+					offsetLeft: 100,
+					overlay: true,
+					closeByEsc: true,
+					titleBar: BX.message('INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_TITLE'),
+					buttons: [
+						new BX.UI.Button({
+							className: 'intranet-user-profile-admin-confirm-popup-decline-button',
+							useAirDesign: true,
+							text: BX.Loc.getMessage('INTRANET_USER_PROFILE_CONFIRM_NO_MSGVER_1'),
+							style: BX.UI.AirButtonStyle.PLAIN_NO_ACCENT,
+							onclick: () => {
+								popup.close();
 							},
+						}),
+						new BX.UI.Button({
+							className: 'intranet-user-profile-admin-confirm-popup-set-integrator-button',
+							useAirDesign: true,
+							text: BX.Loc.getMessage('INTRANET_USER_PROFILE_CONFIRM_YES_INTEGRATOR'),
+							style: BX.UI.AirButtonStyle.OUTLINE,
+							onclick: () => {
+								this.setIntegratorRights();
+								popup.close();
+							},
+						}),
+						new BX.UI.Button({
+							className: 'intranet-user-profile-admin-confirm-popup-set-admin-button',
+							useAirDesign: true,
+							text: BX.Loc.getMessage('INTRANET_USER_PROFILE_CONFIRM_YES_MSGVER_1'),
+							style: BX.UI.AirButtonStyle.FILLED,
+							onclick: (button, event) => {
+								this.setAdminRights();
+								event.stopPropagation();
+								popup.close();
+							},
+						}),
+					],
+					events: {
+						onPopupClose: () => {
+							popup.destroy();
 						},
 					},
-				);
+				},
+			);
 
-				return popup;
-			});
+			return popup;
 		},
 
 		showFireInvitedUserPopup(callback)

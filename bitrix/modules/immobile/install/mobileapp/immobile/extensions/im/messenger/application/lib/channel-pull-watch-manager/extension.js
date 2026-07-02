@@ -7,6 +7,7 @@ jn.define('im/messenger/application/lib/channel-pull-watch-manager', (require, e
 		RestMethod,
 		EventType,
 		NavigationTabId,
+		ROOT_PARENT_CHAT_ID,
 	} = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { runAction } = require('im/messenger/lib/rest');
@@ -15,27 +16,17 @@ jn.define('im/messenger/application/lib/channel-pull-watch-manager', (require, e
 	const logger = getLoggerWithContext('pull--channel-watch-manager', 'PullWatchManager');
 
 	/**
+	 * @implements {Unsubscribable}
 	 * @class ChannelPullWatchManager
 	 */
 	class ChannelPullWatchManager
 	{
-		static instance = null;
-		static getInstance()
-		{
-			if (!this.instance)
-			{
-				this.instance = new ChannelPullWatchManager();
-			}
-
-			return this.instance;
-		}
-
 		/**
-		 * @returns {NavigationController|null}
+		 * @returns {NavigationManager|null}
 		 */
-		get navigationController()
+		get navigationManager()
 		{
-			return serviceLocator.get('navigation-controller') ?? null;
+			return serviceLocator.get('navigation-manager') ?? null;
 		}
 
 		get emitter()
@@ -58,8 +49,15 @@ jn.define('im/messenger/application/lib/channel-pull-watch-manager', (require, e
 			this.emitter.on(EventType.recentManager.resumeController, this.resumeRecentControllerHandler);
 		}
 
-		initRecentControllerHandler = (recentId, controller) => {
-			if (recentId !== NavigationTabId.channel)
+		unsubscribeEvents()
+		{
+			this.emitter.off(EventType.recentManager.initController, this.initRecentControllerHandler);
+			this.emitter.off(EventType.recentManager.resumeController, this.resumeRecentControllerHandler);
+			this.#clearInterval();
+		}
+
+		initRecentControllerHandler = (recentId, controller, parentChatId) => {
+			if (recentId !== NavigationTabId.channel || parentChatId !== ROOT_PARENT_CHAT_ID)
 			{
 				return;
 			}
@@ -72,8 +70,8 @@ jn.define('im/messenger/application/lib/channel-pull-watch-manager', (require, e
 				});
 		};
 
-		resumeRecentControllerHandler = (recentId) => {
-			if (recentId !== NavigationTabId.channel)
+		resumeRecentControllerHandler = (recentId, controller, parentChatId) => {
+			if (recentId !== NavigationTabId.channel || parentChatId !== ROOT_PARENT_CHAT_ID)
 			{
 				return;
 			}
@@ -81,7 +79,7 @@ jn.define('im/messenger/application/lib/channel-pull-watch-manager', (require, e
 
 			this.extendPullWatch(false)
 				.catch((error) => {
-					logger.error('initRecentControllerHandler error', error);
+					logger.error('resumeRecentControllerHandler error', error);
 				});
 		};
 
@@ -115,15 +113,15 @@ jn.define('im/messenger/application/lib/channel-pull-watch-manager', (require, e
 
 		async #isTabChannelActive()
 		{
-			if (Type.isNull(this.navigationController))
+			if (Type.isNull(this.navigationManager))
 			{
 				return false;
 			}
 
-			const isMessengerActive = await this.navigationController.isMessengerTabActive();
-			const isChannelTabActive = await this.navigationController.getActiveTab();
+			const isMessengerActive = await this.navigationManager.isMessengerTabActive();
+			const activeTab = await this.navigationManager.getActiveTab();
 
-			return isMessengerActive && isChannelTabActive;
+			return isMessengerActive && activeTab === NavigationTabId.channel;
 		}
 
 		#setWatchTimer()

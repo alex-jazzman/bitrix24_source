@@ -1,4 +1,4 @@
-import { BitrixVueComponentProps } from 'ui.vue3';
+import { type BitrixVueComponentProps } from 'ui.vue3';
 
 import {
 	Field,
@@ -7,24 +7,23 @@ import {
 	FieldTitle,
 	ValueEllipsis,
 } from '../../layout/index';
-
 import { CommunicationControl } from './components/communication-control';
 
-declare type Entity = {
+import './client-field.css';
+
+type Entity = {
 	entityTypeId: number,
 	entityId: number,
 	ownerTypeId: number,
 	ownerId: number,
 };
 
-declare type Client = {
+type Client = {
 	fullName: string,
 	openUrl: string,
 	communications: Array,
 	entity: Entity,
 };
-
-import './client-field.css';
 
 export const ClientField: BitrixVueComponentProps = {
 	name: 'ClientField',
@@ -54,7 +53,7 @@ export const ClientField: BitrixVueComponentProps = {
 	computed: {
 		clientsWithOpenUrlFirst(): Client[]
 		{
-			return this.clients.sort((client: Client) => {
+			return [...this.clients].sort((client: Client) => {
 				if (client.openUrl === null)
 				{
 					return 1;

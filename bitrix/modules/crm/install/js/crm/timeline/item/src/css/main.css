@@ -128,10 +128,18 @@
 }
 
 .crm-timeline__card_more-menu .menu-popup-item-icon {
-	opacity: 0.5;
+	opacity: var(--ui-opacity-50);
 }
 
 .crm-timeline__card_more-menu .menu-popup-item-text {
+	color: var(--ui-color-palette-gray-90, #525c69);
+}
+
+.crm-timeline__card_more-menu .ui-popup-menu-item-icon {
+	opacity: var(--ui-opacity-50);
+}
+
+.crm-timeline__card_more-menu .ui-popup-menu-item-title-text {
 	color: var(--ui-color-palette-gray-90, #525c69);
 }
 
@@ -154,4 +162,16 @@
 
 .crm-timeline-block-line-of-texts .crm-timeline__card_link {
 	word-break: break-all;
+}
+
+
+.crm-timeline__entity-exclusion-confirm-dlg-content {
+	display: grid;
+	justify-content: start;
+	align-items: center;
+	gap: 10px;
+	color: var(--ui-color-palette-gray-90);
+	font-size: var(--ui-font-size-lg);
+	line-height: var(--ui-font-line-height-md);
+	letter-spacing: var(--ui-text-letter-spacing-neg-1);
 }

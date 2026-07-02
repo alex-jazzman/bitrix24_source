@@ -20,3 +20,6 @@ $MESS["CRM_FPS_EVERY_YEAR_TITLE"] = "Annual customer";
 $MESS["CRM_FPS_LESS_12MONTH_ENTITY_TITLE_PATTERN"] = "Repeat sale script: Dormant customer";
 $MESS["CRM_FPS_LESS_12MONTH_PROMPT"] = "The customer used to be active but didn't make a purchase in a while. Nudge them to remind them that you're still in business and suggest a lucrative deal.";
 $MESS["CRM_FPS_LESS_12MONTH_TITLE"] = "Dormant customer";
+$MESS["CRM_FPS_REMAINING_ENTITY_TITLE_PATTERN"] = "\"Any purchase\" repeat sale";
+$MESS["CRM_FPS_REMAINING_PROMPT"] = "This is a returning customer. Check if now is a good time to suggest they buy something else.";
+$MESS["CRM_FPS_REMAINING_TITLE"] = "Any purchase";

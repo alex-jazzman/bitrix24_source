@@ -2,12 +2,12 @@
  * @module im/messenger/controller/dialog/lib/text-field
  */
 jn.define('im/messenger/controller/dialog/lib/text-field', (require, exports, module) => {
-	const { Loc } = require('im/messenger/loc');
+	const { Loc } = require('im/messenger/controller/dialog/lib/loc');
 	const { Type } = require('type');
 	const { transparent } = require('utils/color');
 
 	const { Theme } = require('im/lib/theme');
-	const { UserRole } = require('im/messenger/const');
+	const { UserRole, EventType } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
 	const { DialogHelper } = require('im/messenger/lib/helper');
@@ -58,6 +58,20 @@ jn.define('im/messenger/controller/dialog/lib/text-field', (require, exports, mo
 			this.#view = this.#view ?? this.#dialogLocator.get('view');
 
 			return this.#view;
+		}
+
+		subscribeViewEvents()
+		{
+			this.view.textField
+				.on(EventType.dialog.textField.submit, this.#hideKeyboard)
+			;
+		}
+
+		unsubscribeViewEvents()
+		{
+			this.view.textField
+				.off(EventType.dialog.textField.submit, this.#hideKeyboard)
+			;
 		}
 
 		update()
@@ -175,6 +189,14 @@ jn.define('im/messenger/controller/dialog/lib/text-field', (require, exports, mo
 		{
 			return this.#shouldHide() || this.#shouldHideByPermissions();
 		}
+
+		#hideKeyboard = () => {
+			const isCopilot = DialogHelper.createByDialogId(this.dialogId)?.isCopilot;
+			if (isCopilot)
+			{
+				this.view.textField.hideKeyboard();
+			}
+		};
 
 		setPlaceholder()
 		{

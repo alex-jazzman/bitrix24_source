@@ -3,6 +3,7 @@
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Application;
+use Bitrix\Ui\Public\Services\Copilot\CopilotNameService;
 
 if (!check_bitrix_sessid())
 {
@@ -16,6 +17,7 @@ $mapByZone = [
 	'en' => 'https://www.bitrix24.com/terms/bitrix24copilot-rules.php',
 ];
 $termsLink = $mapByZone[$zone] ?? $mapByZone['en'];
+$copilotName = (new CopilotNameService())->getCopilotName();
 
 $messageLink = [
 	"<a target=\"_blank\" href=\"{$termsLink}\">",
@@ -28,11 +30,14 @@ $messageLink = [
 	<?php
 		\CAdminMessage::ShowMessage([
 			'TYPE'    => 'PROGRESS',
-			'DETAILS' => Loc::getMessage('AI_INSTALL_COPILOT_AGREEMENT_NOTIFY', [
+			'DETAILS' => Loc::getMessage('AI_INSTALL_COPILOT_AGREEMENT_NOTIFY_MSGVER_1', [
 				'#LINK#' => $messageLink[0],
 				'#/LINK#' => $messageLink[1],
+				'#COPILOT_NAME#' => $copilotName,
 			]),
-			'MESSAGE' => Loc::getMessage('AI_INSTALL_COPILOT_AGREEMENT_NOTIFY_TITLE'),
+			'MESSAGE' => Loc::getMessage('AI_INSTALL_COPILOT_AGREEMENT_NOTIFY_TITLE_MSGVER_1', [
+				'#COPILOT_NAME#' => $copilotName,
+			]),
 			'HTML'    => true,
 	]);
 	?>

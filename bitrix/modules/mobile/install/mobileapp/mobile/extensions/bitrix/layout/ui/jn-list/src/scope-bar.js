@@ -39,7 +39,7 @@ jn.define('layout/ui/jn-list/src/scope-bar', (require, exports, module) => {
 					style: {
 						flexDirection: 'row',
 						width: '100%',
-						height: 50,
+						height: 55,
 						backgroundColor: Color.bgContentPrimary.toHex(),
 					},
 					horizontal: true,

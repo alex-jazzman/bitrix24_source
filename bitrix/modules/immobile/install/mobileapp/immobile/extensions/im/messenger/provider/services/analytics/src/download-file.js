@@ -61,7 +61,7 @@ jn.define('im/messenger/provider/services/analytics/download-file', (require, ex
 		 * @param {string} params.status
 		 * @return {AnalyticsEvent}
 		 */
-		#sendDownload({ fileType, dialogId, status })
+		#sendDownload({ fileType, dialogId, status, isNestedSection })
 		{
 			const dialogModel = this.store.getters['dialoguesModel/getById'](dialogId);
 			const collabInfo = this.store.getters['dialoguesModel/collabModel/getByDialogId'](dialogId);
@@ -80,6 +80,11 @@ jn.define('im/messenger/provider/services/analytics/download-file', (require, ex
 			if (collabInfo?.collabId > 0)
 			{
 				analytics.setP4(this.#getChatP4(collabInfo?.collabId));
+			}
+
+			if (isNestedSection)
+			{
+				analytics.setElement(Analytics.Element.more);
 			}
 
 			if (status)

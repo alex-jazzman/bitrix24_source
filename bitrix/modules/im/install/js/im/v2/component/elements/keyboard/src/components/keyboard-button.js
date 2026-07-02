@@ -1,11 +1,7 @@
-import { Text } from 'main.core';
+import { Text, type JsonObject } from 'main.core';
 
 import { Logger } from 'im.v2.lib.logger';
-import { KeyboardButtonDisplay, ColorToken } from 'im.v2.const';
-import { Utils } from 'im.v2.lib.utils';
-
-import type { JsonObject } from 'main.core';
-import type { KeyboardButtonConfig } from 'im.v2.const';
+import { KeyboardButtonDisplay, ColorToken, type KeyboardButtonConfig } from 'im.v2.const';
 
 type ButtonStyle = {
 	width?: string,

@@ -9,8 +9,8 @@ return [
 		'./dist/call.bundle.js',
 	],
 	'rel' => [
-		'main.core',
 		'call.lib.call-manager',
+		'main.core',
 	],
 	'skip_core' => false,
 	'settings' => [

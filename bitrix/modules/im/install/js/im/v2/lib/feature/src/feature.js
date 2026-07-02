@@ -39,8 +39,13 @@ export const Feature = {
 	videoNoteTranscriptionAvailable: 'videoNoteTranscriptionAvailable',
 	chatSharedLinkAvailable: 'chatSharingLinkAvailable',
 	isCopilotFileUploadAvailable: 'isCopilotFileUploadAvailable',
+	isMessageBuilderAvailable: 'isMessageBuilderAvailable',
 	isTaskCardAvailable: 'isMountedTasksCardAvailable',
+	isBitrixGptV2Available: 'isBitrixGptV2Available',
 	isAddingUserByMentionAvailable: 'isAddingUserByMentionAvailable',
+	isNestedListAvailable: 'isNestedChatAvailable',
+	isChatWithGuestsAvailable: 'isChatWithGuestsAvailable',
+	isCopilotForceSearchAvailable: 'isCopilotForceSearchAvailable',
 };
 
 export const FeatureManager = {

@@ -81,10 +81,19 @@ if (typeof BX.BizProcMobile === 'undefined')
 				return false;
 			}
 		}
-		app.loadPageBlank({
-			url: (BX.message('MobileSiteDir') ? BX.message('MobileSiteDir') : '/') + 'mobile/bp/detail.php?task_id=' + taskId,
-			unique: true
-		});
+
+		const openTask = BX.MobileTools.getOpenFunction(`/company/personal/bizproc/${taskId}/`);
+		if (openTask)
+		{
+			openTask();
+		}
+		else
+		{
+			app.loadPageBlank({
+				url: (BX.message('MobileSiteDir') ? BX.message('MobileSiteDir') : '/') + 'mobile/bp/detail.php?task_id=' + taskId,
+				unique: true
+			});
+		}
 
 		BX.PreventDefault(event);
 

@@ -2,89 +2,42 @@
  * @module mail/message-grid
  */
 jn.define('mail/message-grid', (require, exports, module) => {
-	const { mailsAddedFromServer, mailsUpsertedFromServer, setMultiSelectMode, setTaskId } = require('mail/statemanager/redux/slices/messages');
-	const { selectCurrentFolder, selectByType, selectCurrentFolderCounter } = require('mail/statemanager/redux/slices/folders/selector');
-	const { selectStartEmailSender, selectCurrentMailbox } = require('mail/statemanager/redux/slices/mailboxes/selector');
-	const { selectEntities, selectIsMultiSelectMode } = require('mail/statemanager/redux/slices/messages/selector');
-	const { observeMailboxesChange } = require('mail/statemanager/redux/slices/mailboxes/observers/stateful-list');
-	const { observeFoldersChange } = require('mail/statemanager/redux/slices/folders/observers/stateful-list');
-	const { observeListChange } = require('mail/statemanager/redux/slices/messages/observers/stateful-list');
-	const { MessageModel } = require('mail/statemanager/redux/slices/messages/model/message');
-	const { setCurrentMailbox } = require('mail/statemanager/redux/slices/mailboxes');
 	const { Selector: FolderSelector } = require('mail/folder/selector');
-	const { stringToColor } = require('mail/message/elements/avatar');
-	const {
-		foldersAdded,
-		foldersUpserted,
-		clearFolders,
-		setCurrentFolder,
-	} = require('mail/statemanager/redux/slices/folders');
-	const { syncMailbox } = require('mail/statemanager/redux/slices/mailboxes/thunk');
-
-	const { batchActions } = require('statemanager/redux/batched-actions');
-	const store = require('statemanager/redux/store');
-	const { dispatch } = store;
 
 	const {
+		MessageGridFilterController,
+		MessageGridHeader,
+		MessageGridTabs,
 		MessageGridSorting,
 		MessageGridMoreMenu,
 		MessageGridMultiSelectMenu,
 		MessageGridGroupActionsMenu,
 	} = require('mail/message-grid/navigation');
-	const { ListItemType, ListItemsFactory } = require('mail/simple-list/items');
-	const { DefaultFolderType } = require('mail/enum/default-folder-type');
-	const { updateMailboxList } = require('mail/mailbox/selector');
-	const { MailOpener } = require('mail/opener');
+	const { MessageGridController } = require('mail/message-grid/src/controller');
+	const { MessageGridEventBinder } = require('mail/message-grid/src/event-binder');
+	const { MessageGridListAdapter } = require('mail/message-grid/src/list-adapter');
+	const { MessageGridNavigator } = require('mail/message-grid/src/navigator');
 	const { AjaxMethod } = require('mail/const');
 
-	const { StatusBlock, makeLibraryImagePath } = require('ui-system/blocks/status-block');
 	const { MobileFeature } = require('im/messenger/lib/feature');
-	const { StatefulList } = require('layout/ui/stateful-list');
 	const { SearchLayout } = require('layout/ui/search-bar');
 	const { BottomPanel } = require('native/bottom-panel');
 	const { Box } = require('ui-system/layout/box');
-	const { AnalyticsEvent } = require('analytics');
 	const { Color } = require('tokens');
-	const { Type } = require('type');
-	const { Loc } = require('loc');
-
-	const FILTER_PRESET_ALL_INCOME = 'all_income';
-	const FILTER_PRESET_UNREAD = 'unread';
-	const FILTER_PRESET_SENT = 'sent';
-	const PAGE_SIZE = 50;
-	const CACHE_TTL = 20;
-
-	const FilterField = {
-		FILTER_APPLIED: 'FILTER_APPLIED',
-		DIR: 'DIR',
-		IS_SEEN: 'IS_SEEN',
-		FIND: 'FIND',
-		ATTACHMENTS: 'ATTACHMENTS',
-		DATE_FROM: 'DATE_from',
-		DATE_TO: 'DATE_to',
-		BIND: 'BIND',
-	};
 
 	/**
 	 * @class MessageGrid
 	 */
 	class MessageGrid extends LayoutComponent
 	{
-		static #inMemoryTtl = null;
-		static #storage = null;
-
 		constructor(props)
 		{
 			super(props);
 
 			this.mailboxes = this.props.mailboxes;
-			this.showFloatingButton = false;
-			this.markAsRemovedMails = new Set();
 			this.parentWidget = props.layout;
-			this.stateFulListRef = null;
 			const mailboxId = props.mailboxId ?? 0;
-
-			this.parentWidget.setBackButtonHandler(this.#onSystemBackButton);
+			this.searchMailboxId = mailboxId;
 
 			this.sorting = new MessageGridSorting({
 				type: MessageGridSorting.types.RECEIVE_DATE,
@@ -95,12 +48,10 @@ jn.define('mail/message-grid', (require, exports, module) => {
 				selectedSorting: this.sorting.getType(),
 				isASC: this.sorting.getIsASC(),
 			});
-			this.search = new SearchLayout({
-				layout: this.parentWidget,
-				searchDataAction: AjaxMethod.mailGetFilterPresets,
-				searchDataActionParams: { mailboxId },
-				onSearch: this.#onSearch,
-				onCancel: this.#onSearch,
+			this.#createSearch({ disablePresets: false });
+			this.filterController = new MessageGridFilterController({
+				mailboxId,
+				search: this.search,
 			});
 
 			if (MobileFeature.isNativeBottomPanelApiSupported())
@@ -120,138 +71,69 @@ jn.define('mail/message-grid', (require, exports, module) => {
 			this.folderSelector = new FolderSelector({
 				parentWidget: this.parentWidget,
 			});
-
-			this.filter = { tabId: FILTER_PRESET_ALL_INCOME };
-
-			if (mailboxId !== 0)
-			{
-				this.filter.mailboxId = Number(mailboxId);
-			}
-
-			BX.addCustomEvent('Mail.Binding::bindingSent', () => {
-				this.stateFulListRef?.reload({ skipUseCache: true });
+			this.navigator = new MessageGridNavigator({
+				parentWidget: this.parentWidget,
 			});
-
-			BX.addCustomEvent('Mail.Mailbox::significantChangesInStructure', (id) => {
-				this.newMailboxWasConnected(id);
+			this.tabs = new MessageGridTabs({
+				onTabSelected: (tab) => this.controller.handleTabSelected(tab),
 			});
-
-			BX.addCustomEvent('Mail.Mailbox::significantChangesInStructure', (id) => {
-				this.newMailboxWasConnected(id);
+			this.listAdapter = new MessageGridListAdapter({
+				parentWidget: this.parentWidget,
+				sorting: this.sorting,
+				filterController: this.filterController,
+				getMenuButtons: () => this.rightMenuButtons,
+				onOpenMessageChain: this.navigator.openMessageChain,
+				onWriteEmail: this.navigator.openWriteEmail,
+				onListReloaded: () => this.controller.handleListReloaded(),
+				requestRender: () => this.setState({}),
 			});
-		}
-
-		static #getCurrentTimeInSeconds()
-		{
-			return Math.floor(Date.now() / 1000);
-		}
-
-		static #setTtlValue(ttl)
-		{
-			this.#inMemoryTtl = ttl;
-
-			return this.#getStorage().setNumber('ttl', ttl);
-		}
-
-		static #cacheExpired(ttl = CACHE_TTL)
-		{
-			const cacheTime = this.getTtlValue();
-			const currentTime = this.#getCurrentTimeInSeconds();
-
-			return currentTime > cacheTime + ttl;
-		}
-
-		static #updateStorage()
-		{
-			this.#setTtlValue(this.#getCurrentTimeInSeconds());
-		}
-
-		static getTtlValue()
-		{
-			if (this.#inMemoryTtl === null)
-			{
-				this.#inMemoryTtl = this.#getStorage().getNumber('ttl', 0);
-			}
-
-			return this.#inMemoryTtl;
-		}
-
-		static #getStorage()
-		{
-			if (!this.#storage)
-			{
-				this.#storage = Application.storageById('MailMessageGrid');
-			}
-
-			return this.#storage;
+			this.header = new MessageGridHeader({
+				parentWidget: this.parentWidget,
+				panel: this.panel,
+				actionMenu: this.actionMenu,
+				multiSelectMenu: this.multiSelectMenu,
+				tabs: this.tabs,
+				getRightButtons: () => this.rightMenuButtons,
+				getLeftButtons: () => this.leftMenuButtons,
+				setFloatingButtonVisibility: (isVisible) => this.listAdapter.setFloatingButtonVisibility(isVisible),
+			});
+			this.controller = new MessageGridController({
+				tabs: this.tabs,
+				header: this.header,
+				filterController: this.filterController,
+				listAdapter: this.listAdapter,
+				panel: this.panel,
+				allIncomeTabId: MessageGridTabs.tabIds.allIncome,
+				reloadList: () => this.setState({}, () => this.listAdapter.reload({ skipUseCache: true })),
+				recreateSearch: (params) => this.#createSearch(params),
+			});
+			this.eventBinder = new MessageGridEventBinder({
+				parentWidget: this.parentWidget,
+				onBindingSent: this.controller.handleBindingSent,
+				onMailboxStructureChanged: this.controller.handleMailboxStructureChanged,
+				onTabsSelected: this.controller.handleTabsSelected,
+				onViewHidden: this.controller.handleViewHidden,
+				onOpenFolderMenu: this.navigator.openFolderMenu,
+				onVisibleMailboxesChange: this.controller.handleVisibleMailboxesChange,
+				onVisibleMailsChange: this.controller.handleVisibleMailsChange,
+				onVisibleFoldersChange: this.controller.handleVisibleFoldersChange,
+				onPullCallback: this.controller.handlePullCallback,
+			});
+			this.parentWidget.setBackButtonHandler(() => this.controller.handleSystemBackButton());
 		}
 
 		componentDidMount()
 		{
-			updateMailboxList(() => {}, this.mailboxes);
+			this.controller.syncMailboxes(this.mailboxes);
+			this.eventBinder.bind();
 
-			this.parentWidget.on('removed', this.#onViewHidden);
-			this.parentWidget.on('hidden', this.#onViewHidden);
-			this.parentWidget.on('titleClick', this.openFolderMenu);
-			BX.addCustomEvent('onTabsSelected', (tabId) => this.#onTabsSelected(tabId));
-
-			this.unsubscribeMailboxesObserver = observeMailboxesChange(
-				store,
-				this.onVisibleMailboxesChange,
-			);
-			this.unsubscribeMailsObserver = observeListChange(
-				store,
-				this.onVisibleMailsChange,
-			);
-			this.unsubscribeFoldersObserver = observeFoldersChange(
-				store,
-				this.onVisibleFoldersChange,
-			);
-
-			this.parentWidget.setTitle({
-				text: Loc.getMessage('MAILMOBILE_MESSAGE_GRID_TITLE'),
-				type: 'section',
-			});
-
-			BX.PULL.subscribe({
-				moduleId: 'tasks',
-				command: 'task_add',
-				callback: this.#onPullCallback,
-			});
-		}
-
-		changeShowFloatingButtonStatus(status)
-		{
-			if (this.showFloatingButton !== status)
-			{
-				this.showFloatingButton = status;
-				this.stateFulListRef?.updateFloatingButton({
-					hide: !status,
-				});
-				this.setState({});
-			}
+			this.header.setInitialTitle();
 		}
 
 		componentWillUnmount()
 		{
-			this.parentWidget.off('removed', this.#onViewHidden);
-			this.parentWidget.off('onViewHidden', this.#onViewHidden);
-			this.parentWidget.off('titleClick', this.openFolderMenu);
-
-			if (this.unsubscribeMailboxesObserver)
-			{
-				this.unsubscribeMailboxesObserver();
-			}
-
-			if (this.unsubscribeMailsObserver)
-			{
-				this.unsubscribeMailsObserver();
-			}
-
-			if (this.unsubscribeFoldersObserver)
-			{
-				this.unsubscribeFoldersObserver();
-			}
+			this.eventBinder.unbind();
+			this.controller.destroy();
 		}
 
 		render()
@@ -265,129 +147,20 @@ jn.define('mail/message-grid', (require, exports, module) => {
 					{
 						style: {
 							flex: 1,
+							backgroundColor: Color.bgPrimary,
 						},
 					},
-					this.renderTabs(),
-					this.renderList(),
+					this.tabs.render(),
+					this.listAdapter.render(),
 				),
 			);
 		}
 
-		renderTabs()
-		{
-			return TabView({
-				ref: this.onTabsRef,
-				style: {
-					height: 51,
-				},
-				params: {
-					items: [
-						{
-							title: Loc.getMessage('MAILMOBILE_MESSAGE_GRID_TAB_TITLE_ALL'),
-							id: FILTER_PRESET_ALL_INCOME,
-						},
-						{
-							title: Loc.getMessage('MAILMOBILE_MESSAGE_GRID_TAB_TITLE_UNREAD'),
-							id: FILTER_PRESET_UNREAD,
-						},
-						{
-							title: Loc.getMessage('MAILMOBILE_MESSAGE_GRID_TAB_TITLE_SENT'),
-							id: FILTER_PRESET_SENT,
-						},
-					],
-				},
-				onTabSelected: this.#onTabSelected,
-			});
-		}
-
-		openMessageChain(threadId, startEmailSender)
-		{
-			ComponentHelper.openLayout({
-				name: 'mail:mail.message.view',
-				object: 'layout',
-				widgetParams: {
-					title: Loc.getMessage('MAILMOBILE_MESSAGE_MESSAGE_CHAIN_TITLE'),
-				},
-				componentParams: {
-					threadId,
-					isCrmMessage: 0,
-					folder: selectCurrentFolder(store.getState()).type,
-					element: 'compose_button',
-					startEmailSender,
-				},
-			});
-		}
-
-		renderList()
-		{
-			return new StatefulList({
-				isFloatingButtonAccent: true,
-				layout: this.parentWidget,
-				ref: this.onListRef,
-				testId: 'message-grid',
-				useCache: false,
-				needInitMenu: true,
-				showAirStyle: false,
-				isShowFloatingButton: this.showFloatingButton,
-				onListReloaded: this.onListReloaded,
-				onFloatingButtonClick: this.#onWriteEmail,
-				sortingConfig: this.sorting.getSortingConfig(),
-				onBeforeItemsSetState: this.onBeforeItemsSetState,
-				getEmptyListComponent: this.renderEmptyListComponent,
-				menuButtons: this.rightMenuButtons,
-				itemFactory: ListItemsFactory,
-				itemDetailOpenHandler: this.openMessageChain,
-				itemType: ListItemType.MESSAGE,
-				itemsLoadLimit: PAGE_SIZE,
-				actions: {
-					loadItems: AjaxMethod.mailGetList,
-				},
-				actionParams: this.actionParams,
-				actionCallbacks: {
-					loadItems: this.#onItemsLoaded,
-				},
-			});
-		}
-
-		renderEmptyListComponent()
-		{
-			return StatusBlock({
-				image: Image({
-					uri: makeLibraryImagePath('empty-folder-grid-full.png', 'empty-states', 'mail'),
-					style: {
-						width: 146,
-						height: 137,
-					},
-				}),
-				testId: 'empty-state-message-grid',
-				description: Loc.getMessage('MAILMOBILE_MESSAGE_GRID_EMPTY_STATE_DESCRIPTION_EMPTY_FOLDER'),
-				emptyScreen: false,
-				onRefresh: () => {},
-			});
-		}
-
-		openFolderMenu = () => {
-			this.parentWidget.openWidget(
-				'layout',
-				{
-					...FolderSelector.FOLDER_LAYOUT_PROPERTIES,
-					onReady: (layoutWidget) => {
-						layoutWidget.showComponent(new FolderSelector({
-							parentWidget: this.parentWidget,
-							layoutWidget,
-						}));
-					},
-				},
-				this.parentWidget,
-			);
-		};
-
 		get rightMenuButtons()
 		{
 			return [
-				// @todo: implement search presets
 				this.search.getSearchButton(),
-				this.folderSelector.getMenuButton(this.openFolderMenu),
+				this.folderSelector.getMenuButton(this.navigator.openFolderMenu),
 				this.moreMenu.getMenuButton(),
 			];
 		}
@@ -397,512 +170,27 @@ jn.define('mail/message-grid', (require, exports, module) => {
 			return [];
 		}
 
-		onBeforeItemsSetState = (items) => {
-			const mailEntities = selectEntities(store.getState());
-
-			const normalizedItems = items.map((item) => MessageModel.prepareReduxMailFromServer(item));
-
-			return normalizedItems.filter(({ id }) => {
-				const { isRemoved } = mailEntities[id] || {};
-
-				return Type.isNil(isRemoved) || !isRemoved;
-			});
-		};
-
-		onVisibleMailboxesChange = ({ selected }) => {
-			if (selected !== null && selected !== undefined)
-			{
-				this.tabViewRef.setActiveItem(FILTER_PRESET_ALL_INCOME);
-				dispatch(clearFolders());
-				this.#updateFilterAndLoad({
-					folderPath: null,
-					mailboxId: Number(selected.id),
-				});
-				this.updateMultiSelectModeTitle(true);
-			}
-		};
-
-		onVisibleMailsChange = ({ moved, removed, added, created, multiSelectMode, selectedIds }) => {
-			if (!this.stateFulListRef || this.stateFulListRef.isLoading())
-			{
-				setTimeout(() => {
-					this.onVisibleMailsChange({ moved, removed, added, created, multiSelectMode, selectedIds });
-				}, 30);
-
-				return;
-			}
-
-			if (multiSelectMode.changed)
-			{
-				this.toggleMultiSelectModeHeader(multiSelectMode.previous);
-				const items = this.stateFulListRef.getItems();
-				this.stateFulListRef.updateItemsData(items);
-			}
-
-			if (selectedIds.changed && !multiSelectMode.changed)
-			{
-				this.updateMultiSelectModeTitle(!multiSelectMode.current);
-			}
-
-			if (removed.length > 0)
-			{
-				void this.removeMails(removed);
-			}
-
-			if (added.length > 0)
-			{
-				void this.addOrRestoreMails(added);
-			}
-
-			if (moved.length > 0)
-			{
-				void this.updateMails(moved);
-			}
-		};
-
-		onVisibleFoldersChange = ({ moved, removed, added, created, selected }) => {
-			if (!this.stateFulListRef || this.stateFulListRef.isLoading())
-			{
-				setTimeout(() => {
-					this.onVisibleFoldersChange({ moved, removed, added, created, selected });
-				}, 30);
-
-				return;
-			}
-
-			if (selected !== null)
-			{
-				this.updateCurrentFolder(selected);
-			}
-			else
-			{
-				this.updateMultiSelectModeTitle(true);
-			}
-		};
-
-		updateCurrentFolder(selectedFolder)
+		#createSearch({ disablePresets })
 		{
-			const isMultiSelectMode = selectIsMultiSelectMode(store.getState());
-			if (isMultiSelectMode)
-			{
-				dispatch(setMultiSelectMode({ isMultiSelectMode: false }));
-			}
-			else
-			{
-				this.toggleMultiSelectModeHeader(true);
-			}
-
-			this.#onFolderSelected(selectedFolder);
-		}
-
-		toggleMultiSelectModeHeader(isMultiSelectMode)
-		{
-			let rightButtons = [];
-			if (MobileFeature.isNativeBottomPanelApiSupported())
-			{
-				if (isMultiSelectMode)
-				{
-					this.changeShowFloatingButtonStatus(true);
-					this.panel.hide();
-				}
-				else
-				{
-					this.changeShowFloatingButtonStatus(false);
-					this.panel.show();
-				}
-				rightButtons = isMultiSelectMode
-					? this.rightMenuButtons
-					: [this.actionMenu.getCancelButton()]
-				;
-			}
-			else
-			{
-				const leftButtons = isMultiSelectMode
-					? this.leftMenuButtons
-					: [this.multiSelectMenu.getChanelButton()]
-				;
-				rightButtons = isMultiSelectMode
-					? this.rightMenuButtons
-					: [this.multiSelectMenu.getMenuButton()]
-				;
-				this.parentWidget.setLeftButtons(leftButtons);
-			}
-
-			this.updateMultiSelectModeTitle(isMultiSelectMode);
-			this.parentWidget.setRightButtons(rightButtons);
-		}
-
-		updateMultiSelectModeTitle(isMultiSelectMode)
-		{
-			let titleParams = {};
-			const currentFolder = selectCurrentFolder(store.getState());
-			const currentMailbox = selectCurrentMailbox(store.getState());
-			const unreadCounter = selectCurrentFolderCounter(store.getState());
-			const detailTitle = Number(unreadCounter) > 0 ? String(unreadCounter) : null;
-
-			if (MobileFeature.isNativeBottomPanelApiSupported())
-			{
-				titleParams = {
-					text: currentFolder?.name ?? Loc.getMessage('MAILMOBILE_MESSAGE_GRID_TITLE'),
-					detailText: detailTitle,
-					type: 'section',
-					avatar: {
-						title: currentMailbox.userName,
-						backgroundColor: stringToColor(currentMailbox.email),
-						placeholder: {
-							backgroundColor: stringToColor(currentMailbox.email),
-						},
-						hideOutline: true,
-					},
-				};
-			}
-			else
-			{
-				titleParams = {
-					text: isMultiSelectMode
-						? currentFolder?.name ?? Loc.getMessage('MAILMOBILE_MESSAGE_GRID_TITLE')
-						: this.prepareMultiSelectModeTitle(),
-					detailText: isMultiSelectMode
-						? detailTitle
-						: null,
-					avatar: isMultiSelectMode
-						? {
-							title: currentMailbox.userName,
-							backgroundColor: stringToColor(currentMailbox.email),
-							placeholder: {
-								backgroundColor: stringToColor(currentMailbox.email),
-							},
-							hideOutline: true,
-						}
-						: null,
-					type: isMultiSelectMode
-						? 'section'
-						: 'wizard',
-				};
-			}
-
-			this.parentWidget.setTitle(titleParams);
-		}
-
-		prepareMultiSelectModeTitle()
-		{
-			const currentState = store.getState();
-			const selectedIds = selectEntities(currentState);
-			const selectedCount = Object.values(selectedIds).filter(({ isSelected }) => isSelected).length;
-
-			if (selectedCount === 0)
-			{
-				return Loc.getMessage(
-					'MAILMOBILE_MESSAGE_GRID_MULTISELECT_MODE_TITLE_1',
-					{ '#COUNT#': selectedCount },
-				);
-			}
-
-			const getPluralizationKey = (count) => {
-				const lastDigit = count % 10;
-				const lastTwoDigits = count % 100;
-
-				if (lastTwoDigits >= 11 && lastTwoDigits <= 14)
-				{
-					return 'MAILMOBILE_MESSAGE_GRID_MULTISELECT_MODE_TITLE_1';
-				}
-
-				if (lastDigit === 1)
-				{
-					return 'MAILMOBILE_MESSAGE_GRID_MULTISELECT_MODE_TITLE_2';
-				}
-
-				if (lastDigit >= 2 && lastDigit <= 4)
-				{
-					return 'MAILMOBILE_MESSAGE_GRID_MULTISELECT_MODE_TITLE_5';
-				}
-
-				return 'MAILMOBILE_MESSAGE_GRID_MULTISELECT_MODE_TITLE_1';
-			};
-
-			return Loc.getMessage(
-				getPluralizationKey(selectedCount),
-				{ '#COUNT#': selectedCount },
-			);
-		}
-
-		removeMails(mails)
-		{
-			if (mails.length > 0)
-			{
-				const removedIds = mails.map(({ id }) => id);
-				const markAsRemovedMailsIds = mails.filter((mail) => mail.isRemoved).map(({ id }) => id);
-
-				if (markAsRemovedMailsIds.length > 0)
-				{
-					markAsRemovedMailsIds.forEach((id) => this.markAsRemovedMails.add(id));
-				}
-
-				return this.stateFulListRef.deleteItem(removedIds);
-			}
-
-			return Promise.resolve();
-		}
-
-		updateMails(moved)
-		{
-			this.stateFulListRef.updateItemsData(moved);
-		}
-
-		async addOrRestoreMails(mails)
-		{
-			const restoredMails = [];
-			const addedMails = [];
-
-			mails.forEach((mail) => {
-				if (this.markAsRemovedMails.has(mail.id))
-				{
-					restoredMails.push(mail);
-				}
-				else if (!this.stateFulListRef.hasItem(mail.id))
-				{
-					addedMails.push(mail);
-				}
+			this.search = new SearchLayout({
+				layout: this.parentWidget,
+				searchDataAction: AjaxMethod.mailGetFilterPresets,
+				searchDataActionParams: { mailboxId: this.searchMailboxId },
+				onSearch: (searchData) => this.controller.handleSearch(searchData),
+				onCancel: (searchData) => this.controller.handleSearch(searchData),
+				disablePresets,
 			});
 
-			if (restoredMails.length > 0)
+			if (this.filterController)
 			{
-				await this.stateFulListRef.updateItemsData(restoredMails);
+				this.filterController.search = this.search;
 			}
 
-			if (addedMails.length > 0)
+			if (this.parentWidget && this.controller)
 			{
-				await this.stateFulListRef.updateItemsData(addedMails);
+				this.parentWidget.setRightButtons(this.rightMenuButtons);
 			}
-
-			mails.forEach(({ id }) => this.markAsRemovedMails.delete(id));
 		}
-
-		newMailboxWasConnected(id)
-		{
-			updateMailboxList(() => {
-				dispatch(setCurrentMailbox({ mailboxId: id }));
-			});
-		}
-
-		#onTabsSelected = (tabId) => {
-			if (tabId === 'mail_list')
-			{
-				new AnalyticsEvent({
-					tool: 'mail',
-					category: 'mail_general_ops',
-					event: 'mail_inbox_open',
-					c_section: 'bottom_menu',
-				}).send();
-			}
-		};
-
-		#onViewHidden = () => {
-			dispatch(setMultiSelectMode({ isMultiSelectMode: false }));
-			this.panel.hide();
-		};
-
-		#onSystemBackButton = () => {
-			const isMultiSelectMode = selectIsMultiSelectMode(store.getState());
-
-			if (isMultiSelectMode)
-			{
-				dispatch(setMultiSelectMode({ isMultiSelectMode: false }));
-
-				return true;
-			}
-
-			return false;
-		};
-
-		#onItemsLoaded = (responseData, context) => {
-			const {
-				items = [],
-				dirs = [],
-				currentMailboxId = 0,
-				mailboxIsNotAvailable = false,
-				currentFolderPath = '',
-				startEmailSender = null,
-			} = responseData || {};
-
-			if (!mailboxIsNotAvailable)
-			{
-				this.changeShowFloatingButtonStatus(true);
-			}
-
-			const isCache = context === 'cache';
-			const actions = [];
-
-			if (dirs && dirs.length > 0)
-			{
-				actions.push(isCache ? foldersAdded(dirs) : foldersUpserted(dirs));
-			}
-
-			if (items && items.length > 0)
-			{
-				actions.push(isCache ? mailsAddedFromServer(items) : mailsUpsertedFromServer(items));
-			}
-
-			if (Number(currentMailboxId) > 0)
-			{
-				actions.push(setCurrentMailbox({ mailboxId: Number(currentMailboxId), startEmailSender }));
-			}
-
-			if (currentFolderPath !== '')
-			{
-				this.filter.folderPath = currentFolderPath;
-				actions.push(setCurrentFolder({ folderPath: currentFolderPath }));
-			}
-
-			if (actions.length > 0)
-			{
-				dispatch(batchActions(actions));
-			}
-
-			if (MessageGrid.#cacheExpired() && currentMailboxId > 0)
-			{
-				dispatch(syncMailbox({ mailboxId: currentMailboxId }));
-				MessageGrid.#updateStorage();
-			}
-		};
-
-		#onFolderSelected = (folder) => {
-			if (folder.type === DefaultFolderType.OUTCOME.value)
-			{
-				this.tabViewRef.setActiveItem(FILTER_PRESET_SENT);
-			}
-			else if (this.filter.tabId !== FILTER_PRESET_UNREAD)
-			{
-				this.tabViewRef.setActiveItem(FILTER_PRESET_ALL_INCOME);
-			}
-
-			this.#updateFilterAndLoad({ folderPath: folder.path });
-		};
-
-		#onTabSelected = (tab) => {
-			BX.postComponentEvent('mail.message-grid:onTabSelected', [{ tabId: tab.id }]);
-
-			const currentFolder = selectCurrentFolder(store.getState());
-
-			if (tab.id === FILTER_PRESET_UNREAD
-				&& currentFolder
-				&& currentFolder.type === DefaultFolderType.OUTCOME.value
-			)
-			{
-				const inboxFolder = selectByType(store.getState(), DefaultFolderType.DEFAULT.value);
-
-				if (inboxFolder !== null)
-				{
-					this.filter.tabId = FILTER_PRESET_UNREAD;
-					dispatch(setCurrentFolder({ folderPath: inboxFolder.path }));
-
-					return;
-				}
-			}
-
-			if (tab.id === FILTER_PRESET_SENT)
-			{
-				const outcomeFolder = selectByType(store.getState(), DefaultFolderType.OUTCOME.value);
-
-				if (outcomeFolder !== null)
-				{
-					this.filter.tabId = FILTER_PRESET_ALL_INCOME;
-					dispatch(setCurrentFolder({ folderPath: outcomeFolder.path }));
-				}
-			}
-			else if (
-				currentFolder
-				&& currentFolder.type === DefaultFolderType.OUTCOME.value
-				&& tab.id === FILTER_PRESET_ALL_INCOME
-			)
-			{
-				const inboxFolder = selectByType(store.getState(), DefaultFolderType.DEFAULT.value);
-
-				if (inboxFolder !== null)
-				{
-					dispatch(setCurrentFolder({ folderPath: inboxFolder.path }));
-				}
-			}
-			else
-			{
-				this.#updateFilterAndLoad({ tabId: tab.id });
-			}
-		};
-
-		#onSearch = ({ text, presetId }) => {
-			this.#updateFilterAndLoad({
-				searchString: text ?? '',
-				presetId: presetId ?? '',
-			});
-		};
-
-		#onPullCallback = (params) => {
-			const objectId = Number(params?.AFTER?.UF_MAIL_MESSAGE);
-			const taskId = Number(params?.TASK_ID);
-			if (objectId && taskId)
-			{
-				dispatch(setTaskId({ objectId, taskId }));
-			}
-		};
-
-		#onWriteEmail = () => {
-			MailOpener.openSend({
-				isCrmMessage: false,
-				startEmailSender: selectStartEmailSender(store.getState()),
-			});
-		};
-
-		onListReloaded = (pullToReload) => {
-			if (selectIsMultiSelectMode(store.getState()))
-			{
-				dispatch(setMultiSelectMode({ isMultiSelectMode: false }));
-			}
-
-			if (!pullToReload)
-			{
-				this.markAsRemovedMails?.clear();
-			}
-		};
-
-		onListRef = (ref) => {
-			this.stateFulListRef = ref;
-		};
-
-		onTabsRef = (ref) => {
-			this.tabViewRef = ref;
-		};
-
-		get actionParams()
-		{
-			const loadItems = {
-				mailboxId: this.filter.mailboxId ?? null,
-				presetId: this.filter.presetId ?? null,
-				tabId: this.filter.tabId ?? null,
-				filterParams: {},
-			};
-
-			if (this.filter.folderPath)
-			{
-				loadItems.filterParams[FilterField.DIR] = this.filter.folderPath;
-			}
-
-			if (this.filter.tabId === FILTER_PRESET_UNREAD)
-			{
-				loadItems.filterParams[FilterField.IS_SEEN] = 'N';
-			}
-
-			if (this.filter.searchString && this.filter.searchString.trim() !== '')
-			{
-				loadItems.filterParams[FilterField.FIND] = this.filter.searchString.trim();
-			}
-
-			return { loadItems };
-		}
-
-		#updateFilterAndLoad = (filterUpdates) => {
-			Object.assign(this.filter, filterUpdates);
-			this.setState({}, () => this.stateFulListRef.reload({ skipUseCache: true }));
-		};
 	}
 
 	module.exports = { MessageGrid };

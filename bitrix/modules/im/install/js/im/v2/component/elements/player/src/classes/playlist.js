@@ -1,9 +1,6 @@
-import { EventEmitter } from 'main.core.events';
+import { EventType, type ApplicationContext } from 'im.v2.const';
 
-import { EventType } from 'im.v2.const';
-
-import type { ImModelFile } from 'im.v2.model';
-import type { ApplicationContext } from 'im.v2.const';
+import { type ImModelFile } from 'im.v2.model';
 
 export class Playlist
 {

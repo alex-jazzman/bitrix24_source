@@ -21,6 +21,13 @@ export const DetailComponent = {
 	props: [
 		'params', 'result',
 	],
+	setup: function ()
+	{
+		return {
+			menuPopup1: null,
+			menuPopup2: null,
+		};
+	},
 	data() {
 		return {
 			headerIsFixed: false,
@@ -33,9 +40,6 @@ export const DetailComponent = {
 			installResult: false,
 
 			testInstallProcess: false,
-
-			menuPopup1: null,
-			menuPopup2: null,
 		};
 	},
 	computed: {

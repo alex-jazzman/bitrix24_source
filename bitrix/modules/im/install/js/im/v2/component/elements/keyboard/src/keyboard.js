@@ -1,17 +1,15 @@
-import { KeyboardButtonType, KeyboardButtonContext } from 'im.v2.const';
+import { type JsonObject } from 'main.core';
+import { type EventEmitter } from 'main.core.events';
 
-import { KeyboardButton } from './components/keyboard-button';
-import { KeyboardSeparator } from './components/keyboard-separator';
+import { KeyboardButtonType, KeyboardButtonContext, type KeyboardButtonConfig } from 'im.v2.const';
 
 import { ActionManager } from './classes/action-manager';
 import { BotService } from './classes/bot-service';
+import { KeyboardButton } from './components/keyboard-button';
+import { KeyboardSeparator } from './components/keyboard-separator';
+import { type ActionEvent, type CustomCommandEvent } from './types/events';
 
 import './keyboard.css';
-
-import type { JsonObject } from 'main.core';
-import type { EventEmitter } from 'main.core.events';
-import type { KeyboardButtonConfig } from 'im.v2.const';
-import type { ActionEvent, CustomCommandEvent } from './types/events';
 
 export const Keyboard = {
 	props:

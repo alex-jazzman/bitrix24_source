@@ -38,6 +38,10 @@ if($bSecModuleInstalled){
 		$securityEventsCount = 0;
 	}
 	$minSecurityVersionForScan = "12.5.0";
+
+	/**
+	 * @var array $arModuleVersion Defined in version.php
+	 */
 	include($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/security/install/version.php");
 
 	if(CheckVersion($arModuleVersion['VERSION'], $minSecurityVersionForScan)) {
@@ -67,45 +71,45 @@ if(!$bSecurityFilter || $isScanNeeded || !isset($lastResult["results"]) || !empt
 }
 $eventLogUrl = '/bitrix/admin/event_log.php?set_filter=Y&find_type=audit_type_id&find_audit_type[]=SECURITY_VIRUS&find_audit_type[]=SECURITY_FILTER_SQL&find_audit_type[]=SECURITY_FILTER_XSS&find_audit_type[]=SECURITY_FILTER_XSS2&find_audit_type[]=SECURITY_FILTER_PHP&find_audit_type[]=SECURITY_REDIRECT&find_audit_type[]=SECURITY_HOST_RESTRICTION&mod=security&lang='.LANGUAGE_ID;
 $securityScannerUrl = '/bitrix/admin/security_scanner.php?lang='.LANGUAGE_ID;
-?><table class="bx-gadgets-content-layout"><?
-	?><tr><?
-		?><td><div class="bx-gadgets-title"><?=GetMessage("GD_SECURITY_SCANNER_TITLE")?></div></td><?
-		?><td><div class="bx-gadgets-title2">Web Application<br>Firewall</div></td><?
-	?></tr><?
-	?><tr class="bx-gadget-bottom-cont<?=((!$bSecModuleInstalled && $USER->CanDoOperation('edit_other_settings')) || ($bSecModuleInstalled && $APPLICATION->GetGroupRight("security") >= "W") ? " bx-gadget-bottom-button-cont" : "")?>"><?
+?><table class="bx-gadgets-content-layout"><?php
+	?><tr><?php
+		?><td><div class="bx-gadgets-title"><?=GetMessage("GD_SECURITY_SCANNER_TITLE")?></div></td><?php
+		?><td><div class="bx-gadgets-title2">Web Application<br>Firewall</div></td><?php
+	?></tr><?php
+	?><tr class="bx-gadget-bottom-cont<?=((!$bSecModuleInstalled && $USER->CanDoOperation('edit_other_settings')) || ($bSecModuleInstalled && $APPLICATION->GetGroupRight("security") >= "W") ? " bx-gadget-bottom-button-cont" : "")?>"><?php
 
 		if (!$bSecModuleInstalled && $USER->CanDoOperation('edit_other_settings'))
 		{
-			?><td class="bx-gadgets-colourful-cell"><?
+			?><td class="bx-gadgets-colourful-cell"><?php
 				?><a class="bx-gadget-button bx-gadget-button-clickable" href="/bitrix/admin/module_admin.php?id=security&install=Y&lang=<?=LANGUAGE_ID?>&<?=bitrix_sessid_get()?>">
 					<div class="bx-gadget-button-lamp"></div>
 					<div class="bx-gadget-button-text"><?=GetMessage("GD_SECURITY_MODULE_INSTALL")?></div>
-				</a><?
-			?></td><?
-			?><td class="bx-gadgets-colourful-cell"><?
-			?></td><?
+				</a><?php
+			?></td><?php
+			?><td class="bx-gadgets-colourful-cell"><?php
+			?></td><?php
 		}
 		elseif ($bSecModuleInstalled && $APPLICATION->GetGroupRight("security") >= "W")
 		{
-			?><td class="bx-gadgets-colourful-cell"><?
+			?><td class="bx-gadgets-colourful-cell"><?php
 			if($isShowScanButton) {
 			?>
 				<a class="bx-gadget-button bx-gadget-button-clickable<?=(!$isScanNeeded ? " bx-gadget-button-active" : "")?>"
 				   href="<?=($securityEventsCount ? $eventLogUrl : $securityScannerUrl)?>">
 					<div class="bx-gadget-button-lamp"></div>
 					<div class="bx-gadget-button-text"><?=($securityEventsCount ? GetMessage("GD_SECURITY_SCANNER_VIEW") : GetMessage("GD_SECURITY_SCANNER_RUN"))?></div>
-				</a><?
+				</a><?php
 			} else {
-				?><div class="bx-gadget-desc"><?=$scannerMessage?></div><?
+				?><div class="bx-gadget-desc"><?=$scannerMessage?></div><?php
 			}
-			?></td><?
-			?><td class="bx-gadgets-colourful-cell"><?
+			?></td><?php
+			?><td class="bx-gadgets-colourful-cell"><?php
 				if ($bSecurityFilter && $securityEventsCount > 0)
 				{
-					?><div class="bx-gadget-events"><?=$securityEventsCount?></div><?
+					?><div class="bx-gadget-events"><?=$securityEventsCount?></div><?php
 				}
-				?><div class="bx-gadget-desc"><?=$text2?></div><?
-			?></td><?
+				?><div class="bx-gadget-desc"><?=$text2?></div><?php
+			?></td><?php
 	}
 
 ?></tr>

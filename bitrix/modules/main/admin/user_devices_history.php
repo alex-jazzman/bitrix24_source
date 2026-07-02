@@ -66,16 +66,13 @@ $query = UserDeviceLoginTable::query();
 
 $query->setSelect(['*']);
 
-// TODO: do something about globals
-global $by, $order;
-
-$sortBy = strtoupper($by);
+$sortBy = strtoupper($sort->getField());
 if (!UserDeviceLoginTable::getEntity()->hasField($sortBy))
 {
 	$sortBy = 'ID';
 }
 
-$sortOrder = strtoupper($order);
+$sortOrder = strtoupper($sort->getOrder());
 if ($sortOrder != 'ASC')
 {
 	$sortOrder = 'DESC';

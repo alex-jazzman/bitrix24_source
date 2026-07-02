@@ -15,7 +15,11 @@ use Bitrix\Ui\Public\Enum\IconSet\Outline;
 $arActivityDescription = (new ActivityDescription(
 	name: Loc::getMessage('CRM_SSMSA_NAME'),
 	description: Loc::getMessage('CRM_SSMSA_DESC'),
-	type: [ ActivityType::ACTIVITY->value, ActivityType::ROBOT->value ],
+	type: [
+		ActivityType::ACTIVITY->value,
+		ActivityType::ROBOT->value,
+		ActivityType::NODE->value,
+	],
 ))
 	->setCategory([
 		'ID' => 'document',

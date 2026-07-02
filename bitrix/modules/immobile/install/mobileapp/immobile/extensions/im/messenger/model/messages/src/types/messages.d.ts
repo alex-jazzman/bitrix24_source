@@ -2,8 +2,10 @@ import {MessengerModel, PayloadData} from '../../../base';
 import {DialogType} from '../../../dialogues/src/types';
 import {ReactionsModelState, MessageId} from '../reactions/types';
 import {KeyboardButtonConfig} from './keyboard';
+import {AttachConfig} from './attach';
 import {VoteModelState} from '../vote/types';
 import {FullStickerData, StickerPackId, StickerPackType} from "../../../sticker-pack/src/types";
+import {BuilderConfig} from "./builder";
 
 declare type MessagesModelCollection = {
 	collection: Record<number | string, MessagesModelState>,
@@ -58,6 +60,7 @@ export type MessagesModelState = {
 		aiTaskStatus?: string | null,
 		type?: string | null,
 	},
+	builder: BuilderConfig | null,
 }
 
 declare type MessageParams = {
@@ -78,105 +81,6 @@ declare type MessageParams = {
 	replyId: number,
 	AI_TASK_TRIGGER_MESSAGE_ID: number,
 }
-
-declare type AttachConfig = {
-	id: string,
-	description: string,
-	color: string,
-	blocks: Array<AttachBlock>
-}
-
-declare type AttachBlock = {
-	delimiter?: AttachDelimiterBlock,
-	file?: AttachFileBlock,
-	grid?: AttachGridBlock,
-	html?: AttachHtmlBlock,
-	image?: AttachImageBlock,
-	link?: AttachLinkBlock,
-	message?: AttachMessageBlock,
-	richLink?: AttachRichBlock,
-	user?: AttachUserBlock,
-}
-
-declare type AttachMessageBlock = string;
-
-declare type AttachDelimiterBlock = {
-	size?: string,
-	color?: string,
-}
-
-declare type AttachFileBlock = Array<AttachFileItem>
-
-declare type AttachFileItem = {
-	link: string,
-	name?: string,
-	size?: number
-};
-
-declare type AttachGridBlock = Array<AttachGridItem>
-
-declare type AttachGridItem = {
-	display: AttachGridItemDisplayType,
-	name: string,
-	value: string,
-	width?: number,
-	color?: string,
-	link?: string
-};
-
-declare enum AttachGridItemDisplayType
-{
-	block = 'BLOCK',
-	line = 'LINE',
-	row = 'ROW'
-}
-
-declare type AttachHtmlBlock = string;
-
-declare type AttachImageBlock = Array<AttachImageItem>;
-
-declare type AttachImageItem = {
-	link: string,
-	width?: number,
-	height?: number,
-	name?: string,
-	preview?: string
-};
-
-declare type AttachLinkBlock = Array<AttachLinkItem>
-
-declare type AttachLinkItem = {
-	link: string,
-	name?: string,
-	desk?: string,
-	html?: string,
-	preview?: string,
-	width?: number,
-	height?: number
-};
-
-declare type AttachUserBlock = Array<AttachUserItem>
-
-declare type AttachUserItem = {
-	name: string,
-	avatar: string,
-	avatarType: string,
-	link: string
-};
-
-declare type AttachRichBlock = Array<AttachRichItem>;
-
-declare type AttachRichItem = {
-	link: string,
-	name?: string,
-	desc?: string,
-	html?: string,
-	preview?: string
-	previewSize?: {
-		height: number,
-		width: number
-	}
-};
 
 export type MessagesModelActions =
 	'messagesModel/forceUpdateByChatId'

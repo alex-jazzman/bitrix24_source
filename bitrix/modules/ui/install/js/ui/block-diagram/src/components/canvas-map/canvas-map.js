@@ -2,7 +2,7 @@ import './canvas-map.css';
 import { Type } from 'main.core';
 import { toValue, computed, toRefs, useTemplateRef, reactive } from 'ui.vue3';
 import { useBlockDiagram, useCanvas } from '../../composables';
-import { DiagramBlockDimensions } from '../../types';
+import type { DiagramBlockDimensions } from '../../types';
 import type { DiagramBlock } from '../../types';
 
 type ViewportIndicatorRect = {

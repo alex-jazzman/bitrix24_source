@@ -14,6 +14,7 @@ jn.define('settings-v2/structure/pages/notifications/push', (require, exports, m
 	const { SmartFilterStatusSettingController } = require('settings-v2/controller/smartfilter-status');
 	const { Loc } = require('loc');
 	const { ModuleToTitle, ImageName } = require('settings-v2/const');
+	const { Indent } = require('tokens');
 
 	const requestSettingsData = async () => {
 		const cachedPushTypes = Application.storage.get(NotificationsCacheKey.pushTypes);
@@ -61,7 +62,8 @@ jn.define('settings-v2/structure/pages/notifications/push', (require, exports, m
 				id: 'notifications-push-image',
 				name: ImageName.NOTIFICATIONS_PUSH,
 				externalStyle: {
-					height: 246,
+					marginTop: Indent.XL4.toNumber(),
+					minHeight: 216,
 				},
 			}),
 			createSection({

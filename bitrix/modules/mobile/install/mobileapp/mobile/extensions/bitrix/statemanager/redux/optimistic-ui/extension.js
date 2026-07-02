@@ -85,7 +85,7 @@ jn.define('statemanager/redux/optimistic-ui', (require, exports, module) => {
 		fulfilledReducer = (state, action) => {
 			return createNextState(state, (draftState) => {
 				const { requestId } = action.meta;
-				const { entitiesFromServer } = action.payload;
+				const { entitiesFromServer } = action.payload ?? {};
 				if (this.sliceChangeRegistry.hasChanges(requestId))
 				{
 					this.sliceChangeRegistry.updateRequestStatus(requestId, ChangeStatus.SUCCESS);

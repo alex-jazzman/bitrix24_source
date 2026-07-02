@@ -11,13 +11,23 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    const deadlineChangeCount = await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TaskDeadlineGetDeadlineChangeCount, {
 	      taskId
 	    });
-	    void this.$store.dispatch(`${tasks_v2_const.Model.Interface}/updateDeadlineChangeCount`, deadlineChangeCount);
+	    void this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/update`, {
+	      id: taskId,
+	      fields: {
+	        deadlineChangeCount
+	      }
+	    });
 	  }
 	  cleanChangeLog(taskId) {
-	    tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TaskDeadlineCleanChangeLog, {
+	    void tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.TaskDeadlineCleanChangeLog, {
 	      taskId
 	    });
-	    void this.$store.dispatch(`${tasks_v2_const.Model.Interface}/updateDeadlineChangeCount`, 0);
+	    void this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/update`, {
+	      id: taskId,
+	      fields: {
+	        deadlineChangeCount: 0
+	      }
+	    });
 	  }
 	  get $store() {
 	    return tasks_v2_core.Core.getStore();

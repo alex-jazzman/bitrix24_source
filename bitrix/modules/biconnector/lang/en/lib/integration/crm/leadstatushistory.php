@@ -17,3 +17,4 @@ $MESS["CRM_BIC_LSH_TABLE"] = "Lead: status history";
 $MESS["CRM_BIC_LSH_FIELD_ASSIGNED_BY_NAME"] = "Responsible person";
 $MESS["CRM_BIC_LSH_FIELD_ASSIGNED_BY_NAME_FULL"] = "The name of the user who was assigned as responsible for this lead";
 $MESS["CRM_BIC_LSH_FIELD_STATUS_NAME"] = "Status name";
+$MESS["CRM_BIC_LSH_TABLE_DESCRIPTION_FULL"] = "Contains data on lead status changes from standard fields.";

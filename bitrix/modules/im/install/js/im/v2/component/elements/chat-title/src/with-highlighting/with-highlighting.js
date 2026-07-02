@@ -1,7 +1,7 @@
 import { BitrixVue } from 'ui.vue3';
 
 import { highlightText } from 'im.v2.lib.text-highlighter';
-import { ChatTitle } from '../registry';
+import { ChatTitle } from '../base/chat-title.js';
 
 // @vue/component
 export const ChatTitleWithHighlighting = BitrixVue.cloneComponent(ChatTitle, {

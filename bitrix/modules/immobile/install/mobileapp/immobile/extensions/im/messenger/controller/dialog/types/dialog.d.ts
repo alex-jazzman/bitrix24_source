@@ -5,6 +5,8 @@ import {IServiceLocator} from '../../../lib/di/service-locator/types';
 import {ForwardMessageIds} from '../lib/reply-manager/types/reply-manager';
 import {AvatarDetail} from "../../../lib/element/chat-avatar/chat-avatar";
 import {ReactionLottieUrlMap, ReactionPngUrlMap, ReactionSvgUrlMap} from "../../../lib/reaction-manager/types";
+import {DialogHeaderButton} from "../lib/header/buttons/buttons/extension";
+import {ChatIntegrationSettings} from "../../../api/dialog-opener/dialog-opener";
 
 declare type DialogOpenOptions = {
 	dialogId: string,
@@ -16,7 +18,6 @@ declare type DialogOpenOptions = {
 	userCode?: string, // for openlines dialog only
 	fallbackUrl?: string, // for openlines dialog only
 	botContextData?: string,
-
 	/**
 	 * the context of opening a chat
 	 * @see OpenDialogContextType
@@ -24,6 +25,20 @@ declare type DialogOpenOptions = {
 	context: string,
 	onClose?: function,
 	makeTabActive?: boolean,
+	skipNestedStrategy?: boolean,
+}
+
+declare type DialogOpenOptimisticOptions = {
+	onClose?: () => void,
+	loadingPromise: Promise<{ chatId: number }>,
+	chatType: string,
+	integrationSettings?: ChatIntegrationSettings,
+}
+
+declare type DialogCreateOptimisticWidgetOptions = {
+	titleParams: Object,
+	rightButtons: Array<DialogHeaderButton>,
+	background: object,
 }
 
 declare type DialogTitleParams = {

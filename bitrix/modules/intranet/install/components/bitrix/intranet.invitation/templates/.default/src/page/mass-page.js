@@ -1,6 +1,6 @@
 import { Tag, Loc } from 'main.core';
 import { Analytics } from '../analytics';
-import DepartmentControl from 'intranet.department-control';
+import { DepartmentControl } from 'intranet.department-control';
 import MassInvitationField from '../mass-invitation-field';
 import { Page } from './page';
 import { AirButtonStyle, Button, ButtonState } from 'ui.buttons';

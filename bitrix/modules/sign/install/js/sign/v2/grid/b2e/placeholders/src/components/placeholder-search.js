@@ -40,7 +40,7 @@ export const PlaceholderSearch = {
 				class="sign-placeholders-search-input"
 				:value="searchQuery"
 				@input="onInput"
-				:placeholder="loc('PLACEHOLDER_LIST_SEARCH_PLACEHOLDER')"
+				:placeholder="loc('PLACEHOLDER_LIST_SEARCH_PLACEHOLDER_MSGVER_1')"
 			/>
 			<div v-if="searchQuery" class="sign-placeholders-search-icon-clear" @click="clearInput"></div>
 			<div v-else class="sign-placeholders-search-icon-search"></div>

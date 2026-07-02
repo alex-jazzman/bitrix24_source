@@ -25,3 +25,6 @@ $MESS["TM_VIOLATION_WORKTIME_MANAGER_FORBIDDEN_DEVICE_MOBILE"] = "Использ
 $MESS["TM_VIOLATION_WORKTIME_MANAGER_FORBIDDEN_DEVICE_B24TIME"] = "Использование Bitrix24.Time для управления рабочим временем запрещено";
 
 $MESS["TM_BASE_SERVICE_RESULT_ERROR_NEGATIVE_DURATION"] = "Длительность рабочего дня не может быть отрицательной";
+$MESS["TM_BASE_SERVICE_RESULT_ERROR_STOP_LESS_THAN_START"] = "Время окончания не может быть раньше времени начала";
+$MESS["TM_BASE_SERVICE_RESULT_ERROR_STOP_GREATER_THAN_NOW"] = "Нельзя завершать день временем, которое больше текущего";
+$MESS["TM_BASE_SERVICE_RESULT_ERROR_SHIFT_DURATION_EXCEEDS_DAY"] = "Длительность смены не может превышать 24 часа";

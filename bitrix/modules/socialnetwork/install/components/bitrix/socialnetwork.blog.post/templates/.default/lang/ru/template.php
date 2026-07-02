@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["BLOG_BLOG_BLOG_CATEGORY"] = "Теги:";
 $MESS["BLOG_BLOG_BLOG_NO_AVAIBLE_MES"] = "Сообщение не найдено";
 $MESS["BLOG_MES_DELETE_POST_CONFIRM"] = "Вы уверены, что хотите удалить сообщение и все его комментарии?";
@@ -54,13 +54,21 @@ $MESS["BLOG_BLOG_BLOG_MORE"] = "Читать подробнее...";
 $MESS["BLOG_POST_FOLLOW_Y"] = "Не следить";
 $MESS["BLOG_POST_FOLLOW_N"] = "Следить";
 $MESS["BLOG_ALREADY_READ"] = "С сообщением ознакомлен";
+$MESS["BLOG_ALREADY_READ_TEXT_PLURAL_0"] = "[highlight_wrap]С сообщением ознакомлен,[/highlight_wrap] уже подтвердили прочтение [count_wrap]#COUNT# пользователь[/count_wrap]";
+$MESS["BLOG_ALREADY_READ_TEXT_PLURAL_1"] = "[highlight_wrap]С сообщением ознакомлен,[/highlight_wrap] уже подтвердили прочтение [count_wrap]#COUNT# пользователя[/count_wrap]";
+$MESS["BLOG_ALREADY_READ_TEXT_PLURAL_2"] = "[highlight_wrap]С сообщением ознакомлен,[/highlight_wrap] уже подтвердили прочтение [count_wrap]#COUNT# пользователей[/count_wrap]";
+$MESS["BLOG_ALREADY_READ_BTN_PLURAL_0"] = "[btn_wrap]#BUTTON_TEXT#[/btn_wrap] уже подтвердили прочтение [count_wrap]#COUNT# пользователь[/count_wrap]";
+$MESS["BLOG_ALREADY_READ_BTN_PLURAL_1"] = "[btn_wrap]#BUTTON_TEXT#[/btn_wrap] уже подтвердили прочтение [count_wrap]#COUNT# пользователя[/count_wrap]";
+$MESS["BLOG_ALREADY_READ_BTN_PLURAL_2"] = "[btn_wrap]#BUTTON_TEXT#[/btn_wrap] уже подтвердили прочтение [count_wrap]#COUNT# пользователей[/count_wrap]";
 $MESS["BLOG_READ_"] = "Прочитано";
 $MESS["BLOG_READ_F"] = "Я прочитала";
 $MESS["BLOG_READ_M"] = "Я прочитал";
 $MESS["BLOG_USERS_ALREADY_READ"] = "уже подтвердили прочтение";
+$MESS["BLOG_USERS_ALREADY_READ_NEW_PLURAL_0"] = "уже подтвердили прочтение [count_wrap]#COUNT# пользователь[/count_wrap]";
+$MESS["BLOG_USERS_ALREADY_READ_NEW_PLURAL_1"] = "уже подтвердили прочтение [count_wrap]#COUNT# пользователя[/count_wrap]";
+$MESS["BLOG_USERS_ALREADY_READ_NEW_PLURAL_2"] = "уже подтвердили прочтение [count_wrap]#COUNT# пользователей[/count_wrap]";
 $MESS["BLOG_READERS"] = "пользователей";
 $MESS["BLOG_POST_BUTTON_MORE"] = "Ещё";
-$MESS["BLOG_POST_BUTTON_COPILOT"] = "CoPilot";
 $MESS["BLOG_POST_BUTTON_COPILOT_COPY_INTO_COMMENT"] = "Скопировать в комментарий";
 $MESS["BLOG_POST_BUTTON_COPILOT_COPY_INTO_NEW_POST"] = "Скопировать в новый пост";
 $MESS["BLOG_COMMENTS_ADD"] = "Комментировать";
@@ -83,4 +91,3 @@ $MESS["BLOG_POST_LIMITED_VIEW"] = "(получатели увидят пост �
 $MESS["BLOG_POST_PINNED_EXPAND"] = "показать полностью";
 $MESS["BLOG_POST_PINNED_COLLAPSE"] = "свернуть";
 $MESS["BLOG_PINNED_COMMENTS"] = "Комментарии:";
-?>

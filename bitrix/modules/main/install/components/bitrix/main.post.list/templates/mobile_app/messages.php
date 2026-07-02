@@ -5,12 +5,13 @@ use Bitrix\Main\Web\Json;
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 	die();
 /**
+ * @global CUser $USER
  * @var string $template
  * @var string $thumb
 */
 ?>
 <script>
-<? if (IsModuleInstalled("socialnetwork")): ?>
+<?php if (IsModuleInstalled("socialnetwork")): ?>
 BX.ready(function()
 {
 	if (BX.CommentAux)
@@ -21,7 +22,7 @@ BX.ready(function()
 		});
 	}
 });
-<? endif ?>
+<?php endif ?>
 BX.message({
 	BPC_MES_EDIT : "<?=GetMessageJS("BPC_MES_EDIT")?>",
 	BPC_MES_HIDE : "<?=GetMessageJS("BPC_MES_HIDE")?>",

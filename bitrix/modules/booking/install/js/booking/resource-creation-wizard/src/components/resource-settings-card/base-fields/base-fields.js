@@ -47,17 +47,17 @@ export const BaseFields = {
 		'typeUpdate',
 		'avatarFileUpdate',
 	],
-	setup(): { IconSet: IconSet }
+	setup(): Object
 	{
 		return {
 			IconSet,
+			Actions,
 		};
 	},
 	data(): Object
 	{
 		return {
 			additionalInfoExpanded: this.initialAdditionalInfoExpanded(),
-			Actions,
 		};
 	},
 	computed: {

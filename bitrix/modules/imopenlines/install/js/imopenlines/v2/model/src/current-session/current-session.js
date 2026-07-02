@@ -1,10 +1,9 @@
-import { BuilderModel } from 'ui.vue3.vuex';
+import { BuilderModel, type ActionTree, type GetterTree, type MutationTree } from 'ui.vue3.vuex';
 
-import type { ActionTree, GetterTree, MutationTree } from 'ui.vue3.vuex';
-import type { RawCurrentSession } from 'imopenlines.v2.provider.service';
+import { type ImolModelCurrentSession } from 'imopenlines.v2.model';
 
 type CurrentSessionState = {
-	collection: { [dialogId: string]: RawCurrentSession }
+	collection: { [dialogId: string]: ImolModelCurrentSession }
 }
 
 /* eslint-disable no-param-reassign */
@@ -22,7 +21,7 @@ export class CurrentSessionModel extends BuilderModel
 		};
 	}
 
-	getElementState(): RawCurrentSession
+	getElementState(): ImolModelCurrentSession
 	{
 		return {
 			sessionId: 0,
@@ -39,8 +38,8 @@ export class CurrentSessionModel extends BuilderModel
 	getGetters(): GetterTree<CurrentSessionState>
 	{
 		return {
-			/** @function openlines/currentSession/getByDialogId */
-			getByDialogId: (state: CurrentSessionState) => (dialogId: string): ?RawCurrentSession => {
+			/** @function openLines/currentSession/getByDialogId */
+			getByDialogId: (state: CurrentSessionState) => (dialogId: string): ?ImolModelCurrentSession => {
 				return state.collection[dialogId] || null;
 			},
 			/** @function openlines/currentSession/getSilentModeByDialogId */
@@ -53,8 +52,8 @@ export class CurrentSessionModel extends BuilderModel
 	getActions(): ActionTree<CurrentSessionState>
 	{
 		return {
-			/** @function openlines/currentSession/set */
-			set: (store, payload: { dialogId: string, data: RawCurrentSession }) => {
+			/** @function openLines/currentSession/set */
+			set: (store, payload: { dialogId: string, data: ImolModelCurrentSession }) => {
 				if (!payload.data)
 				{
 					return;
@@ -67,7 +66,7 @@ export class CurrentSessionModel extends BuilderModel
 	getMutations(): MutationTree<CurrentSessionState>
 	{
 		return {
-			set: (state: CurrentSessionState, payload: { dialogId: string, data: RawCurrentSession }) => {
+			set: (state: CurrentSessionState, payload: { dialogId: string, data: ImolModelCurrentSession }) => {
 				const { dialogId, data } = payload;
 				const currentElement = state.collection[dialogId] ?? this.getElementState();
 				state.collection[dialogId] = { ...currentElement, ...data };

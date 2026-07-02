@@ -97,6 +97,7 @@ jn.define('layout/ui/fields', (require, exports, module) => {
 		enumeration: SelectType,
 		list: SelectType,
 		crm_status: SelectType,
+		crm_webform: StringType,
 
 		iblock_element: EntitySelectorType,
 		iblock_section: EntitySelectorType,

@@ -4,6 +4,12 @@ use Bitrix\Main\Web\Json;
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
+/**
+ * @global CMain $APPLICATION
+ * @var array $arResult
+ * @var array $arParams
+ */
+
 $APPLICATION->SetAdditionalCSS('/bitrix/themes/.default/pubstyles.css');
 
 if(!defined("BX_GADGET_DEFAULT"))
@@ -19,9 +25,9 @@ if(!defined("BX_GADGET_DEFAULT"))
 	var langGDConfirmUser = '<?=CUtil::JSEscape(GetMessage("CMDESKTOP_TDEF_CONF_USER"))?>';
 	var langGDConfirmGroup = '<?=CUtil::JSEscape(GetMessage("CMDESKTOP_TDEF_CONF_GROUP"))?>';
 	var langGDClearConfirm = '<?=CUtil::JSEscape(GetMessage("CMDESKTOP_TDEF_CLEAR_CONF"))?>';
-	var langGDCancel = "<?echo CUtil::JSEscape(GetMessage("CMDESKTOP_TDEF_CANCEL"))?>";
+	var langGDCancel = "<?= CUtil::JSEscape(GetMessage("CMDESKTOP_TDEF_CANCEL"))?>";
 	</script>
-<?
+	<?php
 }
 
 if($arResult["PERMISSION"]>"R")
@@ -47,9 +53,9 @@ if($arResult["PERMISSION"]>"R")
 	<div class="bx-gd-buttons">
 		<div class="bx-gd-button bx-gd-add" onclick="getGadgetHolder('<?=AddSlashes($arResult["ID"])?>').ShowAddGDMenu(this);">
 			<span class="bx-gd-l"></span>
-			<span class="bx-gd-c"><span class="bx-gd-text"><a href="javascript:void(0)"><?echo GetMessage("CMDESKTOP_TDEF_ADD")?></a></span></span>
+			<span class="bx-gd-c"><span class="bx-gd-text"><a href="javascript:void(0)"><?= GetMessage("CMDESKTOP_TDEF_ADD")?></a></span></span>
 			<span class="bx-gd-r"></span>
-		</div><?
+		</div><?php
 
 		if($arResult["PERMISSION"]>"W")
 		{
@@ -63,18 +69,18 @@ if($arResult["PERMISSION"]>"R")
 
 			?><div class="bx-gd-button bx-gd-setdef" onclick="getGadgetHolder('<?=AddSlashes($arResult["ID"])?>').SetForAll(<?=$mode?>);">
 				<span class="bx-gd-l"></span>
-				<span class="bx-gd-c"><span class="bx-gd-text"><a href="javascript:void(0)"><?echo GetMessage("CMDESKTOP_TDEF_SET")?></a></span></span>
+				<span class="bx-gd-c"><span class="bx-gd-text"><a href="javascript:void(0)"><?= GetMessage("CMDESKTOP_TDEF_SET")?></a></span></span>
 				<span class="bx-gd-r"></span>
-			</div><?
+			</div><?php
 		}
 
 		?><div class="bx-gd-button bx-gd-clear" onclick="getGadgetHolder('<?=AddSlashes($arResult["ID"])?>').ClearUserSettingsConfirm();">
 			<span class="bx-gd-l"></span>
-			<span class="bx-gd-c"><span class="bx-gd-text"><a href="javascript:void(0)"><?echo GetMessage("CMDESKTOP_TDEF_CLEAR")?></a></span></span>
+			<span class="bx-gd-c"><span class="bx-gd-text"><a href="javascript:void(0)"><?= GetMessage("CMDESKTOP_TDEF_CLEAR")?></a></span></span>
 			<span class="bx-gd-r"></span>
 		</div>
 	</div>
-	<br>&nbsp;<?
+	<br>&nbsp;<?php
 }
 
 ?><form action="<?=POST_FORM_ACTION_URI?>" method="POST" id="GDHolderForm_<?=$arResult["ID"]?>">
@@ -86,12 +92,12 @@ if($arResult["PERMISSION"]>"R")
 
 <table class="gadgetholder" cellspacing="0" cellpadding="0" width="100%" id="GDHolder_<?=$arResult["ID"]?>">
 	<tbody>
-		<tr><?
+		<tr><?php
 		for($i=0; $i<$arResult["COLS"]; $i++)
 		{
 			if ($i==0)
 			{
-				?><td class="gd-page-column<?=$i?>" valign="top" width="<?=$arResult["COLUMN_WIDTH"][$i]?>" id="s0"><?
+				?><td class="gd-page-column<?=$i?>" valign="top" width="<?=$arResult["COLUMN_WIDTH"][$i]?>" id="s0"><?php
 			}
 			elseif ($i==$arResult["COLS"]-1)
 			{
@@ -99,7 +105,7 @@ if($arResult["PERMISSION"]>"R")
 					<div style="WIDTH: 10px"></div>
 					<br />
 				</td>
-				<td class="gd-page-column<?=$i?>" valign="top" width="<?=$arResult["COLUMN_WIDTH"][$i]?>" id="s2"><?
+				<td class="gd-page-column<?=$i?>" valign="top" width="<?=$arResult["COLUMN_WIDTH"][$i]?>" id="s2"><?php
 			}
 			else
 			{
@@ -107,7 +113,7 @@ if($arResult["PERMISSION"]>"R")
 					<div style="WIDTH: 10px"></div>
 					<br />
 				</td>
-				<td class="gd-page-column<?=$i?>" valign="top"  width="<?=$arResult["COLUMN_WIDTH"][$i]?>" id="s1"><?
+				<td class="gd-page-column<?=$i?>" valign="top"  width="<?=$arResult["COLUMN_WIDTH"][$i]?>" id="s1"><?php
 			}
 
 			foreach($arResult["GADGETS"][$i] as $arGadget)
@@ -125,24 +131,24 @@ if($arResult["PERMISSION"]>"R")
 					$bChangable = false;
 
 				?><table id="t<?=$arGadget["ID"]?>" class="data-table-gadget<?=($arGadget["HIDE"] == "Y" ?' gdhided':'')?>"><tr><td><div class="gdparent">
-					<div class="gdcorn"></div><?
+					<div class="gdcorn"></div><?php
 					if($arResult["PERMISSION"]>"R")
 					{
 						?><div class="gdheader" style="cursor:move;" onmousedown="return getGadgetHolder('<?=AddSlashes($arResult["ID"])?>').DragStart('<?=$arGadget["ID"]?>', event)">
-						<?
+								<?php
 						if ($bChangable)
 						{
-							?><a class="gdremove" href="javascript:void(0)" onclick="return getGadgetHolder('<?=AddSlashes($arResult["ID"])?>').Delete('<?=$arGadget["ID"]?>');" title="<?=GetMessage("CMDESKTOP_TDEF_DELETE")?>"></a><?
+							?><a class="gdremove" href="javascript:void(0)" onclick="return getGadgetHolder('<?=AddSlashes($arResult["ID"])?>').Delete('<?=$arGadget["ID"]?>');" title="<?=GetMessage("CMDESKTOP_TDEF_DELETE")?>"></a><?php
 						}
-						?><a class="gdhide" href="javascript:void(0)" onclick="return getGadgetHolder('<?=AddSlashes($arResult["ID"])?>').Hide('<?=$arGadget["ID"]?>', this);" title="<?=GetMessage("CMDESKTOP_TDEF_HIDE")?>"></a><?
+						?><a class="gdhide" href="javascript:void(0)" onclick="return getGadgetHolder('<?=AddSlashes($arResult["ID"])?>').Hide('<?=$arGadget["ID"]?>', this);" title="<?=GetMessage("CMDESKTOP_TDEF_HIDE")?>"></a><?php
 						if ($bChangable)
 						{
-							?><a class="gdsettings<?=(isset($arGadget["NOPARAMS"]) && $arGadget["NOPARAMS"]?' gdnoparams':'')?>" href="javascript:void(0)" onclick="return getGadgetHolder('<?=AddSlashes($arResult["ID"])?>').ShowSettings('<?=$arGadget["ID"]?>');" title="<?=GetMessage("CMDESKTOP_TDEF_SETTINGS")?>"></a><?
+							?><a class="gdsettings<?=(isset($arGadget["NOPARAMS"]) && $arGadget["NOPARAMS"]?' gdnoparams':'')?>" href="javascript:void(0)" onclick="return getGadgetHolder('<?=AddSlashes($arResult["ID"])?>').ShowSettings('<?=$arGadget["ID"]?>');" title="<?=GetMessage("CMDESKTOP_TDEF_SETTINGS")?>"></a><?php
 						}
 					}
 					else
 					{
-						?><div class="gdheader"><?
+						?><div class="gdheader"><?php
 					}
 					?>
 					<?=$arGadget["TITLE"]?>
@@ -151,9 +157,9 @@ if($arResult["PERMISSION"]>"R")
 					<div class="gdcontent" id="dgd<?=$arGadget["ID"]?>"><?=$arGadget["CONTENT"]?></div>
 					<div style="position:relative;"><div class="gdbcorn"></div></div>
 				</div></td></tr></table>
-				<div style="display:none; border:1px #404040 dashed; margin-bottom:8px;" id="d<?=$arGadget["ID"]?>"></div><?
+				<div style="display:none; border:1px #404040 dashed; margin-bottom:8px;" id="d<?=$arGadget["ID"]?>"></div><?php
 			}
-			?></td><?
+			?></td><?php
 		}
 		?></tr>
 	</tbody>

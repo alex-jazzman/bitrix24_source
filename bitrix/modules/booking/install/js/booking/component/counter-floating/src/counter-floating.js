@@ -45,8 +45,11 @@ export const CounterFloating = {
 			shownAha: false,
 			shownLimitPopup: false,
 			shownLimitAnimation: false,
-			limitPopupTimeoutId: null,
 		};
+	},
+	created(): void
+	{
+		this.limitPopupTimeoutId = null;
 	},
 	computed: {
 		...mapGetters({
@@ -186,5 +189,4 @@ type CounterFloatingData = {
 	shownAha: boolean;
 	shownLimitPopup: boolean;
 	shownLimitAnimation: boolean;
-	limitPopupTimeoutId: number | null;
 }

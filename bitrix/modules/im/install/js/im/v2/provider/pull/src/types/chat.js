@@ -2,7 +2,8 @@ import type { JsonObject } from 'main.core';
 
 import type { InputActionType } from 'im.v2.lib.input-action';
 import type { RecentTypeItem } from 'im.v2.const';
-import type { RawUser } from './common';
+
+import type { RawChat, RawFile, RawMessage, RawUser } from './common';
 
 export type ChatOwnerParams = {
 	chatId: number,
@@ -26,6 +27,7 @@ export type ChatUserAddParams = {
 	users: {[userId: string]: RawUser},
 	newUsers: number[],
 	userCount: number,
+	guestCount: number,
 	relations: Relation[],
 };
 
@@ -35,6 +37,7 @@ export type ChatUserLeaveParams = {
 	dialogId: string,
 	message: string,
 	userCount: number,
+	guestCount: number,
 	userId: number,
 	chatExtranet: boolean,
 	containsCollaber: boolean,
@@ -60,6 +63,10 @@ export type InputActionNotifyParams = {
 export type ChatUnreadParams = {
 	chatId: number,
 	dialogId: string,
+	chat: RawChat,
+	message: RawMessage,
+	files: RawFile[],
+	users: RawUser[],
 	active: boolean,
 	muted: boolean,
 	counter: number,
@@ -75,11 +82,19 @@ export type ChatUnreadParams = {
 export type ChatMuteNotifyParams = {
 	chatId: number,
 	dialogId: string,
+	chat: RawChat,
+	message: RawMessage,
+	files: RawFile[],
+	users: RawUser[],
 	muted: boolean,
 	mute: boolean,
 	counter: number,
 	lines: boolean,
 	unread: boolean,
+	recentConfig: {
+		chatId: number,
+		sections: RecentTypeItem[],
+	},
 };
 
 export type ChatRenameParams = {

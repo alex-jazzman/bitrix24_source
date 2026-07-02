@@ -7,31 +7,23 @@ jn.define('ui-system/blocks/status-block', (require, exports, module) => {
 	const { mergeImmutable } = require('utils/object');
 	const { Color, Indent, Component } = require('tokens');
 	const { BBCodeText } = require('ui-system/typography/bbcodetext');
+	const { Text2 } = require('ui-system/typography/text');
+	const { IconView } = require('ui-system/blocks/icon');
 	const { Feature } = require('feature');
 	const { makeLibraryImagePath } = require('asset-manager');
 	const { PropTypes } = require('utils/validation');
 	const { Align } = require('utils/enums/style');
 
-	/**
-	 * @typedef {Object} StatusBlockProps
-	 * @property {string} testId
-	 * @property {string} [title]
-	 * @property {Color} [titleColor]
-	 * @property {string} [description]
-	 * @property {Color} [descriptionColor]
-	 * @property {string} [footnote]
-	 * @property {Color} [footnoteColor]
-	 * @property {Array<Button>} [buttons]
-	 * @property {boolean} [emptyScreen]
-	 * @property {Align} [verticalAlign=Align.CENTER]
-	 * @property {Function} [forwardRef]
-	 * @property {Object} [style]
-	 * @property {Object} [image]
-	 *
-	 * @class StatusBlock
-	 */
 	class StatusBlock extends LayoutComponent
 	{
+		/** @param {StatusBlockProps} props */
+		constructor(props)
+		{
+			super(props);
+
+			this.testId = props.testId ?? 'status-block';
+		}
+
 		get containerStyle()
 		{
 			const { style = {} } = this.props;
@@ -113,7 +105,7 @@ jn.define('ui-system/blocks/status-block', (require, exports, module) => {
 						flexGrow: 1,
 					},
 					refreshing: false,
-					enabled: preventRefresh ? false : this.isRefreshable,
+					enabled: preventRefresh ? false : this.isRefreshable(),
 					onRefresh: this.handleOnRefresh,
 				},
 				content,
@@ -122,12 +114,12 @@ jn.define('ui-system/blocks/status-block', (require, exports, module) => {
 
 		renderStatusContent()
 		{
-			const { testId, forwardRef, verticalAlign, style = {} } = this.props;
+			const { forwardRef, verticalAlign, style = {} } = this.props;
 
 			return Area(
 				{
 					ref: forwardRef,
-					testId,
+					testId: this.testId,
 					clickable: false,
 					style: mergeImmutable(
 						{
@@ -174,6 +166,7 @@ jn.define('ui-system/blocks/status-block', (require, exports, module) => {
 				},
 				this.renderTitle(),
 				this.renderDescription(),
+				this.renderList(),
 				this.renderFootNote(),
 			);
 		}
@@ -188,6 +181,7 @@ jn.define('ui-system/blocks/status-block', (require, exports, module) => {
 			}
 
 			return BBCodeText({
+				testId: `${this.testId}-title`,
 				value: title,
 				size: 3,
 				accent: true,
@@ -207,6 +201,7 @@ jn.define('ui-system/blocks/status-block', (require, exports, module) => {
 			}
 
 			return BBCodeText({
+				testId: `${this.testId}-description`,
 				size: 3,
 				value: description,
 				color: Color.resolve(descriptionColor, Color.base2),
@@ -225,11 +220,66 @@ jn.define('ui-system/blocks/status-block', (require, exports, module) => {
 			}
 
 			return BBCodeText({
+				testId: `${this.testId}-footnote`,
 				size: 4,
 				value: footnote,
 				color: Color.resolve(footnoteColor, Color.base4),
 				style: this.getTextStyle(),
 			});
+		}
+
+		renderList()
+		{
+			const { list = [] } = this.props;
+
+			if (list.length === 0)
+			{
+				return null;
+			}
+
+			return View(
+				{
+					testId: `${this.testId}-list`,
+					style: {
+						width: '100%',
+						marginTop: Indent.L.toNumber(),
+						paddingTop: Indent.XL.toNumber(),
+					},
+				},
+				...list.map((item, index) => this.renderListItem(item, index)),
+			);
+		}
+
+		renderListItem(item, index)
+		{
+			return View(
+				{
+					testId: `${this.testId}-list-item-${index}`,
+					style: {
+						width: '100%',
+						flexDirection: 'row',
+						alignItems: 'flex-start',
+						marginTop: index === 0 ? 0 : Indent.L.toNumber(),
+					},
+				},
+				IconView({
+					testId: `${this.testId}-list-item-${index}-icon`,
+					icon: item.icon,
+					size: 26,
+					color: Color.accentMainPrimary,
+					style: {
+						marginRight: Indent.M.toNumber(),
+					},
+				}),
+				Text2({
+					testId: `${this.testId}-list-item-${index}-text`,
+					text: item.text,
+					color: Color.base2,
+					style: {
+						flexShrink: 1,
+					},
+				}),
+			);
 		}
 
 		renderButtons()
@@ -317,6 +367,10 @@ jn.define('ui-system/blocks/status-block', (require, exports, module) => {
 		titleColor: PropTypes.instanceOf(Color),
 		description: PropTypes.string,
 		descriptionColor: PropTypes.instanceOf(Color),
+		list: PropTypes.arrayOf(PropTypes.shape({
+			icon: PropTypes.oneOfType([PropTypes.string, PropTypes.object]).isRequired,
+			text: PropTypes.string.isRequired,
+		})),
 		footnote: PropTypes.string,
 		footnoteColor: PropTypes.instanceOf(Color),
 		emptyScreen: PropTypes.bool,

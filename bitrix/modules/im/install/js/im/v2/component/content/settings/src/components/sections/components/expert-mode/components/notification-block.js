@@ -1,6 +1,6 @@
-import type { JsonObject } from 'main.core';
+import { type JsonObject } from 'main.core';
 
-import { NotificationSettingsBlock } from 'im.v2.const';
+import { type NotificationSettingsBlock } from 'im.v2.const';
 
 import { NotificationItem } from './notification-item';
 

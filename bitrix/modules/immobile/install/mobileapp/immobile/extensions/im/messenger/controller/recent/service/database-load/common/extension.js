@@ -20,6 +20,7 @@ jn.define('im/messenger/controller/recent/service/database-load/common', (requir
 
 			this.core = serviceLocator.get('core');
 			this.store = serviceLocator.get('core').getStore();
+			/** @type {RecentRepository} */
 			this.recentRepository = this.core.getRepository().recent;
 
 			this.hasMore = true;
@@ -77,6 +78,15 @@ jn.define('im/messenger/controller/recent/service/database-load/common', (requir
 
 		/**
 		 * @private
+		 * @return {number}
+		 */
+		get limit()
+		{
+			return this.props.filter?.limit ?? 50;
+		}
+
+		/**
+		 * @private
 		 * @return {string}
 		 */
 		get savePageAction()
@@ -90,7 +100,25 @@ jn.define('im/messenger/controller/recent/service/database-load/common', (requir
 		 */
 		get saveFirstPageAction()
 		{
-			return 'recentModel/setFirstPageByTab';
+			return this.props.saveFirstPageAction ?? 'recentModel/setFirstPageByRecentSection';
+		}
+
+		/**
+		 * @private
+		 * @return {?string}
+		 */
+		get savePageActionName()
+		{
+			return this.props.savePageActionName;
+		}
+
+		/**
+		 * @private
+		 * @return {?string}
+		 */
+		get saveFirstPageActionName()
+		{
+			return this.props.saveFirstPageActionName;
 		}
 
 		/**
@@ -123,6 +151,11 @@ jn.define('im/messenger/controller/recent/service/database-load/common', (requir
 		 */
 		async #getFirstPage()
 		{
+			if (this.#hasChatIdsFilter())
+			{
+				return this.#getChatIdsPage();
+			}
+
 			const filter = {
 				...this.filter,
 			};
@@ -138,6 +171,11 @@ jn.define('im/messenger/controller/recent/service/database-load/common', (requir
 		 */
 		async #getPage()
 		{
+			if (this.#hasChatIdsFilter())
+			{
+				return this.#getChatIdsPage();
+			}
+
 			const filter = {
 				...this.filter,
 				lastActivityDate: this.lastActivityDate,
@@ -147,6 +185,64 @@ jn.define('im/messenger/controller/recent/service/database-load/common', (requir
 			this.logger.log('#getPage loaded:', page);
 
 			return page;
+		}
+
+		/**
+		 * @return {Promise<RecentListResult>}
+		 */
+		async #getChatIdsPage()
+		{
+			const page = await this.recentRepository.getByChatIds(this.props.filter.chatIds);
+			page.items = this.#sortPageItems(page.items).slice(0, this.limit);
+			page.hasMore = false;
+
+			this.logger.log('#getChatIdsPage loaded:', page);
+
+			return page;
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		#hasChatIdsFilter()
+		{
+			return Type.isArray(this.props.filter?.chatIds);
+		}
+
+		/**
+		 * @param {Array<RecentModelState>} items
+		 * @return {Array<RecentModelState>}
+		 */
+		#sortPageItems(items)
+		{
+			if (!Type.isArrayFilled(items))
+			{
+				return [];
+			}
+
+			return [...items].sort((a, b) => {
+				if (a.pinned !== b.pinned)
+				{
+					return a.pinned ? -1 : 1;
+				}
+
+				return this.#getItemTimestamp(b) - this.#getItemTimestamp(a);
+			});
+		}
+
+		/**
+		 * @param {RecentModelState} item
+		 * @return {number}
+		 */
+		#getItemTimestamp(item)
+		{
+			const date = item.lastActivityDate ?? item.message?.date;
+			if (date instanceof Date)
+			{
+				return date.getTime();
+			}
+
+			return new Date(date).getTime() || 0;
 		}
 
 		/**
@@ -217,7 +313,18 @@ jn.define('im/messenger/controller/recent/service/database-load/common', (requir
 				if (Type.isArrayFilled(page.items))
 				{
 					const recentAction = firstPage ? this.saveFirstPageAction : this.savePageAction;
-					await this.store.dispatch(recentAction, { tab: this.recentLocator.get('id'), itemList: page.items });
+					const actionName = firstPage ? this.saveFirstPageActionName : this.savePageActionName;
+					const payload = {
+						recentSection: this.recentLocator.get('recentSection'),
+						itemList: page.items,
+						parentChatId: this.recentLocator.get('parentChatId'),
+					};
+					if (Type.isStringFilled(actionName))
+					{
+						payload.actionName = actionName;
+					}
+
+					await this.store.dispatch(recentAction, payload);
 				}
 			}
 			catch (error)
@@ -268,6 +375,12 @@ jn.define('im/messenger/controller/recent/service/database-load/common', (requir
 				},
 			);
 		}
+
+		subscribeEvents()
+		{}
+
+		unsubscribeEvents()
+		{}
 	}
 
 	module.exports = CommonDatabaseLoadService;

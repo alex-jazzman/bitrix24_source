@@ -1,28 +1,26 @@
-import { EventEmitter, BaseEvent } from 'main.core.events';
+import { type JsonObject } from 'main.core';
+import { EventEmitter, type BaseEvent } from 'main.core.events';
 import { computed } from 'ui.vue3';
 
 import { ChatDialog } from 'im.v2.component.dialog.chat';
+import { ChatSidebar } from 'im.v2.component.sidebar';
 import { ChatTextarea } from 'im.v2.component.textarea';
-import { ThemeManager } from 'im.v2.lib.theme';
+import { ActionByRole, Settings, UserRole, EventType, SidebarDetailBlock } from 'im.v2.const';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { ResizeManager } from 'im.v2.lib.textarea';
-import { ChatSidebar } from 'im.v2.component.sidebar';
-import { ActionByRole, Settings, UserRole, EventType, SidebarDetailBlock } from 'im.v2.const';
+import { ThemeManager, type BackgroundStyle } from 'im.v2.lib.theme';
+import { type ImModelChat } from 'im.v2.model';
 
-import { Height } from './const/size';
 import { ChatHeader } from '../header/chat-header';
-import { DropArea } from './components/drop-area';
-import { MutePanel } from './components/mute-panel';
-import { JoinPanel } from './components/join-panel';
 import { BulkActionsPanel } from './components/bulk-actions-panel';
+import { DropArea } from './components/drop-area';
+import { JoinPanel } from './components/join-panel';
 import { LoadingBar } from './components/loading-bar';
+import { MutePanel } from './components/mute-panel';
+import { Height } from './const/size';
 import { TextareaObserverDirective } from './utils/observer-directive';
 
 import './css/base-chat-content.css';
-
-import type { JsonObject } from 'main.core';
-import type { ImModelChat } from 'im.v2.model';
-import type { BackgroundStyle } from 'im.v2.lib.theme';
 
 type SidebarDetailBlockType = $Values<typeof SidebarDetailBlock>;
 
@@ -67,11 +65,16 @@ export const BaseChatContent = {
 			type: Boolean,
 			default: true,
 		},
+		backgroundId: {
+			type: String,
+			default: null,
+		},
 	},
 	data(): JsonObject
 	{
 		return {
 			textareaHeight: 0,
+			headerHeight: 0,
 			showLoadingBar: false,
 			currentSidebarPanel: '',
 		};
@@ -111,6 +114,11 @@ export const BaseChatContent = {
 		},
 		backgroundStyle(): BackgroundStyle
 		{
+			if (this.backgroundId)
+			{
+				return ThemeManager.getBackgroundStyleById(this.backgroundId);
+			}
+
 			return ThemeManager.getCurrentBackgroundStyle(this.dialogId);
 		},
 		dialogContainerStyle(): Object
@@ -121,10 +129,8 @@ export const BaseChatContent = {
 				textareaHeight = Height.blockedTextarea;
 			}
 
-			const headerHeight = this.withHeader ? Height.chatHeader : 0;
-
 			return {
-				height: `calc(100% - ${headerHeight}px - ${textareaHeight}px)`,
+				height: `calc(100% - ${this.headerHeight}px - ${textareaHeight}px)`,
 			};
 		},
 	},
@@ -147,6 +153,10 @@ export const BaseChatContent = {
 	{
 		this.initTextareaResizeManager();
 		this.bindEvents();
+	},
+	mounted()
+	{
+		this.headerHeight = this.$refs['header-container']?.clientHeight ?? 0;
 	},
 	beforeUnmount()
 	{
@@ -213,9 +223,11 @@ export const BaseChatContent = {
 	template: `
 		<div class="bx-im-content-chat__scope bx-im-content-chat__container" :class="containerClasses" :style="backgroundStyle">
 			<div class="bx-im-content-chat__content" ref="content">
-				<slot v-if="withHeader" name="header">
-					<ChatHeader :dialogId="dialogId" :key="dialogId" />
-				</slot>
+				<div v-if="withHeader" ref="header-container">
+					<slot name="header">
+						<ChatHeader :dialogId="dialogId" :key="dialogId" />
+					</slot>
+				</div>
 				<slot name="sub-header"></slot>
 				<div :style="dialogContainerStyle" class="bx-im-content-chat__dialog_container">
 					<Transition name="loading-bar-transition">
@@ -238,6 +250,9 @@ export const BaseChatContent = {
 								@mounted="onTextareaMount"
 							/>
 						</slot>
+						<div class="bx-im-content-chat__after-textarea_container">
+							<slot name="after-textarea"></slot>
+						</div>
 					</div>
 					<slot v-else-if="isGuest" name="join-panel">
 						<JoinPanel :dialogId="dialogId" />

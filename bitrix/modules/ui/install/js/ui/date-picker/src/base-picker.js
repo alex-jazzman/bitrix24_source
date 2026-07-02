@@ -26,14 +26,14 @@ export class BasePicker extends EventEmitter
 	getHeaderContainer(...children: HTMLElement): HTMLElement
 	{
 		return this.#refs.remember('header', () => {
-			return Tag.render`<div class="ui-date-picker-header">${children}</div>`;
+			return Tag.render`<div class="ui-date-picker-header" role="none">${children}</div>`;
 		});
 	}
 
 	getContentContainer(...children: HTMLElement): HTMLElement
 	{
 		return this.#refs.remember('content', () => {
-			return Tag.render`<div class="ui-date-picker-content">${children}</div>`;
+			return Tag.render`<div class="ui-date-picker-content" role="none">${children}</div>`;
 		});
 	}
 
@@ -41,8 +41,14 @@ export class BasePicker extends EventEmitter
 	{
 		return this.#refs.remember('prev-button', () => {
 			return Tag.render`
-				<button type="button" class="ui-date-picker-button --left-arrow" onclick="${this.handlePrevBtnClick.bind(this)}">
-					<span class="ui-icon-set --chevron-left" style="--ui-icon-set__icon-size: 20px"></span>
+				<button
+					type="button"
+					class="ui-date-picker-button --left-arrow"
+					aria-label="${this.getPrevBtnLabel()}"
+					title="${this.getPrevBtnLabel()}"
+					onclick="${this.handlePrevBtnClick.bind(this)}"
+				>
+					<span class="ui-icon-set --chevron-left" aria-hidden="true" style="--ui-icon-set__icon-size: 20px"></span>
 				</button>
 			`;
 		});
@@ -52,11 +58,27 @@ export class BasePicker extends EventEmitter
 	{
 		return this.#refs.remember('next-button', () => {
 			return Tag.render`
-				<button type="button" class="ui-date-picker-button --right-arrow" onclick="${this.handleNextBtnClick.bind(this)}">
-					<span class="ui-icon-set --chevron-right" style="--ui-icon-set__icon-size: 20px"></span>
+				<button
+					type="button"
+					class="ui-date-picker-button --right-arrow"
+					aria-label="${this.getNextBtnLabel()}"
+					title="${this.getNextBtnLabel()}"
+					onclick="${this.handleNextBtnClick.bind(this)}"
+				>
+					<span class="ui-icon-set --chevron-right" aria-hidden="true" style="--ui-icon-set__icon-size: 20px"></span>
 				</button>
 			`;
 		});
+	}
+
+	getPrevBtnLabel(): string
+	{
+		return '';
+	}
+
+	getNextBtnLabel(): string
+	{
+		return '';
 	}
 
 	handlePrevBtnClick()

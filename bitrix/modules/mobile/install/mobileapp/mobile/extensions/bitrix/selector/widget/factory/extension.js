@@ -3,9 +3,18 @@
  */
 jn.define('selector/widget/factory', (require, exports, module) => {
 	const { ProjectSelector } = require('selector/widget/entity/socialnetwork/project');
+	const { ProjectTagSelector } = require('selector/widget/entity/socialnetwork/project-tag');
 	const { WarnLogger } = require('utils/logger/warn-logger');
 	const { SocialNetworkUserSelector } = require('selector/widget/entity/socialnetwork/user');
 	const { DepartmentSelector } = require('selector/widget/entity/intranet/department');
+	const { CatalogProductSelector } = require('selector/widget/entity/catalog/product');
+	const { CatalogStoreSelector } = require('selector/widget/entity/catalog/store');
+	const { CatalogSectionSelector } = require('selector/widget/entity/catalog/section');
+	const { CatalogContractorSelector } = require('selector/widget/entity/catalog/contractor');
+	const { IblockElementSelector } = require('selector/widget/entity/iblock/element');
+	const { IblockSectionSelector } = require('selector/widget/entity/iblock/section');
+	const { IblockElementUserFieldSelector } = require('selector/widget/entity/iblock/element-user-field');
+	const { IblockSectionUserFieldSelector } = require('selector/widget/entity/iblock/section-user-field');
 
 	let TaskTagSelector = null;
 	let TaskFlowSelector = null;

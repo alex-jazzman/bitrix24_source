@@ -2,93 +2,72 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.Integration = this.BX.Messenger.Integration || {};
-(function (exports,disk_viewer_onlyofficeItem,main_core) {
+(function (exports, main_core, disk_viewer_onlyofficeItem) {
 	'use strict';
 
-	var OnlyOfficeChatItem = /*#__PURE__*/function (_OnlyOfficeItem) {
-	  babelHelpers.inherits(OnlyOfficeChatItem, _OnlyOfficeItem);
-	  function OnlyOfficeChatItem(options) {
-	    var _this;
-	    babelHelpers.classCallCheck(this, OnlyOfficeChatItem);
-	    options = options || {};
-	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(OnlyOfficeChatItem).call(this, options));
-	    _this.chatId = options.imChatId;
-	    return _this;
-	  }
-	  babelHelpers.createClass(OnlyOfficeChatItem, [{
-	    key: "setPropertiesByNode",
-	    value: function setPropertiesByNode(node) {
-	      babelHelpers.get(babelHelpers.getPrototypeOf(OnlyOfficeChatItem.prototype), "setPropertiesByNode", this).call(this, node);
-	      this.chatId = node.dataset.imChatId;
-	    }
-	  }, {
-	    key: "loadData",
-	    value: function loadData() {
-	      /** @see BXIM.callController.currentCall */
-	      if (!main_core.Reflection.getClass('BXIM.callController.currentCall')) {
-	        return babelHelpers.get(babelHelpers.getPrototypeOf(OnlyOfficeChatItem.prototype), "loadData", this).call(this);
-	      }
-	      var callController = BXIM.callController;
-	      var dialogId = callController.currentCall.associatedEntity.id;
-	      var chatId = this.getChatId(dialogId);
-	      if (!chatId || chatId != this.chatId) {
-	        return babelHelpers.get(babelHelpers.getPrototypeOf(OnlyOfficeChatItem.prototype), "loadData", this).call(this);
-	      }
-	      callController.unfold();
-	      callController.showDocumentEditor({
-	        viewerItem: this,
-	        force: true
-	      });
-	      return new BX.Promise();
-	    }
-	  }, {
-	    key: "getChatId",
-	    value: function getChatId(dialogId) {
-	      return dialogId.toString().startsWith('chat') ? dialogId.substr(4) : BXIM.messenger.userChat[dialogId];
-	    }
-	  }]);
-	  return OnlyOfficeChatItem;
-	}(disk_viewer_onlyofficeItem.OnlyOfficeItem);
+	class OnlyOfficeChatItem extends disk_viewer_onlyofficeItem.OnlyOfficeItem {
+		constructor(options) {
+			options = options || {};
+			super(options);
+			this.chatId = options.imChatId;
+		}
+		setPropertiesByNode(node) {
+			super.setPropertiesByNode(node);
+			this.chatId = node.dataset.imChatId;
+		}
+		loadData() {
+			/** @see BXIM.callController.currentCall */
+			if (!main_core.Reflection.getClass('BXIM.callController.currentCall')) {
+				return super.loadData();
+			}
+			const callController = BXIM.callController;
+			const dialogId = callController.currentCall.associatedEntity.id;
+			const chatId = this.getChatId(dialogId);
+			if (!chatId || chatId != this.chatId) {
+				return super.loadData();
+			}
+			callController.unfold();
+			callController.showDocumentEditor({
+				viewerItem: this,
+				force: true
+			});
+			return new BX.Promise();
+		}
+		getChatId(dialogId) {
+			return dialogId.toString().startsWith('chat') ? dialogId.substr(4) : BXIM.messenger.userChat[dialogId];
+		}
+	}
 
-	var OnlyOfficeResumeItem = /*#__PURE__*/function (_OnlyOfficeChatItem) {
-	  babelHelpers.inherits(OnlyOfficeResumeItem, _OnlyOfficeChatItem);
-	  function OnlyOfficeResumeItem() {
-	    babelHelpers.classCallCheck(this, OnlyOfficeResumeItem);
-	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(OnlyOfficeResumeItem).apply(this, arguments));
-	  }
-	  babelHelpers.createClass(OnlyOfficeResumeItem, [{
-	    key: "loadData",
-	    value: function loadData() {
-	      /** @see BXIM.callController.currentCall */
-	      if (!main_core.Reflection.getClass('BXIM.callController.currentCall')) {
-	        return babelHelpers.get(babelHelpers.getPrototypeOf(OnlyOfficeResumeItem.prototype), "loadData", this).call(this);
-	      }
-	      var messageId = BX.MessengerCommon.diskGetMessageId(this.chatId, this.objectId);
-	      if (!messageId) {
-	        return babelHelpers.get(babelHelpers.getPrototypeOf(OnlyOfficeResumeItem.prototype), "loadData", this).call(this);
-	      }
-	      var callId = BX.MessengerCommon.getMessageParam(messageId, 'CALL_ID');
-	      var callController = BXIM.callController;
-	      if (!callId) {
-	        return babelHelpers.get(babelHelpers.getPrototypeOf(OnlyOfficeResumeItem.prototype), "loadData", this).call(this);
-	      }
-	      if (callId != callController.currentCall.id) {
-	        return babelHelpers.get(babelHelpers.getPrototypeOf(OnlyOfficeResumeItem.prototype), "loadData", this).call(this);
-	      } else {
-	        callController.unfold();
-	        callController.showDocumentEditor({
-	          type: BX.Call.Controller.DocumentType.Resume,
-	          force: true
-	        });
-	      }
-	      return new BX.Promise();
-	    }
-	  }]);
-	  return OnlyOfficeResumeItem;
-	}(OnlyOfficeChatItem);
+	class OnlyOfficeResumeItem extends OnlyOfficeChatItem {
+		loadData() {
+			/** @see BXIM.callController.currentCall */
+			if (!main_core.Reflection.getClass('BXIM.callController.currentCall')) {
+				return super.loadData();
+			}
+			const messageId = BX.MessengerCommon.diskGetMessageId(this.chatId, this.objectId);
+			if (!messageId) {
+				return super.loadData();
+			}
+			const callId = BX.MessengerCommon.getMessageParam(messageId, 'CALL_ID');
+			const callController = BXIM.callController;
+			if (!callId) {
+				return super.loadData();
+			}
+			if (callId != callController.currentCall.id) {
+				return super.loadData();
+			} else {
+				callController.unfold();
+				callController.showDocumentEditor({
+					type: BX.Call.Controller.DocumentType.Resume,
+					force: true
+				});
+			}
+			return new BX.Promise();
+		}
+	}
 
 	exports.OnlyOfficeChatItem = OnlyOfficeChatItem;
 	exports.OnlyOfficeResumeItem = OnlyOfficeResumeItem;
 
-}((this.BX.Messenger.Integration.Viewer = this.BX.Messenger.Integration.Viewer || {}),BX.Disk.Viewer,BX));
+})(this.BX.Messenger.Integration.Viewer = this.BX.Messenger.Integration.Viewer || {}, BX, BX.Disk.Viewer);
 //# sourceMappingURL=im.integration.viewer.bundle.js.map

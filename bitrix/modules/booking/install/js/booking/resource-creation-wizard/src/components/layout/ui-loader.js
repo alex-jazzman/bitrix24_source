@@ -5,11 +5,9 @@ export const UiLoader = {
 	props: {
 		show: Boolean,
 	},
-	data(): { loader: Loader }
+	created(): void
 	{
-		return {
-			loader: new Loader(),
-		};
+		this.loader = new Loader();
 	},
 	mounted(): void
 	{

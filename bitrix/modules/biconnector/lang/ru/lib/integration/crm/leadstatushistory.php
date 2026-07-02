@@ -17,3 +17,4 @@ $MESS['CRM_BIC_LSH_FIELD_STATUS'] = "Статус";
 $MESS['CRM_BIC_LSH_FIELD_ASSIGNED_BY_NAME'] = "Имя ответственного";
 $MESS['CRM_BIC_LSH_FIELD_ASSIGNED_BY_NAME_FULL'] = "Имя пользователя, назначенного ответственным за лид";
 $MESS['CRM_BIC_LSH_FIELD_STATUS_NAME'] = "Название статуса";
+$MESS['CRM_BIC_LSH_TABLE_DESCRIPTION_FULL'] = "Набор содержит данные об изменении статусов лида.";

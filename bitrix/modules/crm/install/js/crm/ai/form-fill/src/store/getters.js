@@ -1,7 +1,6 @@
 import { ActivityProvider } from 'crm.ai.call';
 
-import type { ConflictField } from './types';
-import { EntityInfo } from './types';
+import { type ConflictField, type EntityInfo } from './types';
 
 export default {
 	isLoading(state): boolean {

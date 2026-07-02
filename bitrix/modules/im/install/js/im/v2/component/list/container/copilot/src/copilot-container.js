@@ -1,21 +1,22 @@
+import { type JsonObject } from 'main.core';
+
 import { Messenger } from 'im.public';
 import { CopilotList } from 'im.v2.component.list.items.copilot';
 import { ActionByUserType, ChatType, Layout } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
 import { Logger } from 'im.v2.lib.logger';
-import { CopilotService } from 'im.v2.provider.service.copilot';
+import { CopilotChatService } from 'im.v2.provider.service.copilot';
 import { PermissionManager } from 'im.v2.lib.permission';
+import { CreateChatButton } from 'im.v2.component.list.container.elements.create-chat-button';
 import { CopilotManager } from 'im.v2.lib.copilot';
 
 import './css/copilot-container.css';
 
-import type { JsonObject } from 'main.core';
-
 // @vue/component
 export const CopilotListContainer = {
 	name: 'CopilotListContainer',
-	components: { CopilotList },
-	emits: ['selectEntity'],
+	components: { CopilotList, CreateChatButton },
+	emits: ['selectChat'],
 	data(): JsonObject
 	{
 		return {
@@ -42,29 +43,25 @@ export const CopilotListContainer = {
 	},
 	methods:
 	{
-		async onCreateChatClick()
+		onSelectChat(dialogId)
 		{
-			Analytics.getInstance().chatCreate.onStartClick(ChatType.copilot);
-			await this.createChat();
+			this.$emit('selectChat', { layoutName: Layout.copilot, dialogId });
 		},
-		onChatClick(dialogId)
-		{
-			this.$emit('selectEntity', { layoutName: Layout.copilot, entityId: dialogId });
-		},
-		getCopilotService(): CopilotService
+		getCopilotChatService(): CopilotChatService
 		{
 			if (!this.copilotService)
 			{
-				this.copilotService = new CopilotService();
+				this.copilotService = new CopilotChatService();
 			}
 
 			return this.copilotService;
 		},
-		async createChat(roleCode: string)
+		async createChat()
 		{
+			Analytics.getInstance().chatCreate.onStartClick(ChatType.copilot);
 			this.isCreatingChat = true;
 
-			const newDialogId = await this.getCopilotService().createChat({ roleCode })
+			const newDialogId = await this.getCopilotChatService().createDefaultChat()
 				.catch(() => {
 					this.isCreatingChat = false;
 				});
@@ -81,19 +78,16 @@ export const CopilotListContainer = {
 		<div class="bx-im-list-container-copilot__scope bx-im-list-container-copilot__container">
 			<div class="bx-im-list-container-copilot__header_container">
 				<div class="bx-im-list-container-copilot__header_title">{{ headerTitle }}</div>
-				<div
+				<CreateChatButton
 					v-if="canCreate"
+					:isLoading="isCreatingChat"
+					@click="createChat"
 					class="bx-im-list-container-copilot__create-chat"
-					:class="{'--loading': isCreatingChat}"
-					ref="createChatButton"
-					@click="onCreateChatClick"
-				>
-					<div class="bx-im-list-container-copilot__create-chat_icon"></div>
-				</div>
+				/>
 			</div>
 			<div class="bx-im-list-container-copilot__elements_container">
 				<div class="bx-im-list-container-copilot__elements">
-					<CopilotList @chatClick="onChatClick" />
+					<CopilotList @selectChat="onSelectChat" />
 				</div>
 			</div>
 		</div>

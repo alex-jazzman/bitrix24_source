@@ -91,6 +91,8 @@ export const AnalyticsEvent = Object.freeze({
 	selectSearchRecent: 'click_recent_suggest',
 	openTaskCard: 'open_task_description',
 	addUser: 'add_mentioned_user',
+	openUnreadMode: 'show_unread',
+	readAllChats: 'read_all',
 });
 
 export const AnalyticsTool = Object.freeze({
@@ -145,6 +147,7 @@ export const AnalyticsType = Object.freeze({
 	formatStrikethrough: 'strikethrough',
 	formatLink: 'link',
 	formatCode: 'code',
+	tasks: 'tasks',
 });
 
 export const AnalyticsSection = Object.freeze({
@@ -187,6 +190,7 @@ export const AnalyticsSubSection = Object.freeze({
 	recentChats: 'recent_chats',
 	recentSearch: 'recent_search',
 	chatHeader: 'chat_header',
+	message: 'message',
 });
 
 export const AnalyticsElement = Object.freeze({

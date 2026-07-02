@@ -4,6 +4,10 @@
 	gap: 20px;
 }
 
+.resource-notification-card .booking-resource-wizard-item + .booking-resource-wizard-item {
+	margin-top: 0;
+}
+
 .resource-notification-card select {
 	-moz-appearance: none;
 	-webkit-appearance: none;
@@ -56,6 +60,21 @@
 	width: 16px;
 	height: 15px;
 	background: url("data:image/svg+xml,%3Csvg width='16' height='15' viewBox='0 0 16 15' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg clip-path='url(%23clip0_583_241781)'%3E%3Cpath d='M0 -2H19L3.41421 13.5858C2.15428 14.8457 0 13.9534 0 12.1716V-2Z' fill='white'/%3E%3Cpath d='M0.5 -1.5H17.7929L3.06066 13.2322C2.11571 14.1772 0.5 13.5079 0.5 12.1716V-1.5Z' stroke='black' stroke-opacity='0.11'/%3E%3C/g%3E%3Cdefs%3E%3CclipPath id='clip0_583_241781'%3E%3Crect width='16' height='15' fill='white'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E%0A");
+}
+
+.resource-creation-wizard__form-notification-info.--ai {
+	padding-left: 25px;
+}
+
+.resource-creation-wizard__form-notification-info.--ai:after {
+	content: '';
+	position: absolute;
+	left: 11px;
+	top: 50%;
+	transform: translate(0, -50%);
+	width: 2px;
+	height: calc(100% - 26px);
+	background: linear-gradient(6deg, var(--ui-color-design-filled-bitrix-gpt-bg-gradient-5, #F96269) 10.13%, var(--ui-color-design-filled-bitrix-gpt-bg-gradient-4, #F046B7) 39.93%, var(--ui-color-design-filled-bitrix-gpt-bg-gradient-3, #9D48FF) 69.74%, var(--ui-color-design-filled-bitrix-gpt-bg-gradient-2, #3F68FF) 105.5%, var(--ui-color-design-filled-bitrix-gpt-bg-gradient-1, #0098EA) 117.42%);
 }
 
 .resource-creation-wizard__form-notification-info-switcher {

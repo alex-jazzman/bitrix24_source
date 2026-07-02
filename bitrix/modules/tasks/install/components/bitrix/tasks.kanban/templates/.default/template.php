@@ -85,9 +85,11 @@ CJSCore::Init([
 ]);
 Extension::load([
 	'tasks.kanban-sort',
+	'ui.design-tokens',
 	'ui.notification',
 	'ui.dialogs.messagebox',
 	'ui.counter',
+	'ui.system.chip',
 	'ui.label',
 	'ui.tour',
 	'pull.queuemanager',
@@ -319,7 +321,7 @@ else
 }
 ?>
 
-<div id="task_kanban">
+<div id="task_kanban" class="--ui-context-content-light">
 	<?php
 	if ($emptyKanban):?>
 		<div class="tasks-kanban-start">

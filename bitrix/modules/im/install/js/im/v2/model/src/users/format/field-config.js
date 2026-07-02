@@ -148,11 +148,6 @@ export const userFieldsConfig: FieldsConfig = [
 
 export const botFieldsConfig: FieldsConfig = [
 	{
-		fieldName: 'appId',
-		targetFieldName: 'appId',
-		checkFunction: Type.isString,
-	},
-	{
 		fieldName: 'type',
 		targetFieldName: 'type',
 		checkFunction: Type.isString,

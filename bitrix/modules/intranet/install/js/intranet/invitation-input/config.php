@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Intranet\Internal\Integration\Socialnetwork\FeatureProvider;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 
@@ -12,14 +13,17 @@ return [
 	'css' => 'dist/invitation-input.bundle.css',
 	'js' => 'dist/invitation-input.bundle.js',
 	'rel' => [
+		'main.core',
 		'main.core.cache',
 		'main.core.events',
 		'ui.entity-selector',
-		'main.core',
 	],
 	'skip_core' => false,
 	'settings' => [
-		'isInvitationByPhoneAvailable' => Loader::includeModule("bitrix24")
-			&& Option::get('bitrix24', 'phone_invite_allowed', 'N') === 'Y',
+		'isNewProjectsAvailable' => (new FeatureProvider())->isNewProjectsAvailable(),
+		'isInvitationByPhoneAvailable' => (
+			Loader::includeModule("bitrix24")
+			&& Option::get('bitrix24', 'phone_invite_allowed', 'N') === 'Y'
+		),
 	],
 ];

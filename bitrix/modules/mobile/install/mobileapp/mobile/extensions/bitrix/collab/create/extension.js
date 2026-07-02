@@ -18,6 +18,8 @@ jn.define('collab/create', (require, exports, module) => {
 	const { Alert, ButtonType } = require('alert');
 	const { CollabTaskPermissions } = require('collab/create/src/task-permissions');
 	const { CollabAccessService } = require('collab/service/access');
+	const { checkFeatureFlag, FeatureFlagType } = require('feature-flag');
+	const { ProjectCreateManager, ProjectCreateMode } = require('layout/socialnetwork/project-v2/create');
 
 	const CollabCreateStage = {
 		INTRO: 'intro',
@@ -735,12 +737,38 @@ jn.define('collab/create', (require, exports, module) => {
 	 * @param {number} props.collabId
 	 * @param {function} [props.onUpdate]
 	 * @param {LayoutComponent} parentWidget
-	 * @returns {Promise<CollabCreate|null>}
+	 * @returns {Promise<LayoutComponent|null|void>}
 	 */
-	const openCollabEdit = (props = {}, parentWidget = PageManager) => {
-		return CollabCreate.open({
+	const openCollabEdit = async (props = {}, parentWidget = PageManager) => {
+		const isCollabToolEnabled = await CollabAccessService.checkAccess();
+
+		if (!isCollabToolEnabled)
+		{
+			CollabAccessService.openAccessDeniedBox();
+
+			return null;
+		}
+
+		let isProjectsV2Enabled = false;
+
+		try
+		{
+			isProjectsV2Enabled = await checkFeatureFlag(FeatureFlagType.PROJECTS_V2);
+		}
+		catch (error)
+		{
+			console.error(error);
+		}
+
+		if (!isProjectsV2Enabled)
+		{
+			return CollabCreate.open(props, parentWidget);
+		}
+
+		return ProjectCreateManager.open({
 			...props,
-			stage: CollabCreateStage.EDITING,
+			mode: ProjectCreateMode.EDIT,
+			projectId: Number(props.collabId ?? 0),
 		}, parentWidget);
 	};
 

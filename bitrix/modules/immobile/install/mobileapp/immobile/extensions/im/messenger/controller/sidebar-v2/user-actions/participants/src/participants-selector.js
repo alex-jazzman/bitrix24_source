@@ -6,6 +6,7 @@ jn.define(
 	(require, exports, module) => {
 		const { Loc } = require('im/messenger/loc');
 		const { Type } = require('type');
+		const { requireLazy } = require('require-lazy');
 		const { getLogger } = require('im/messenger/lib/logger');
 		const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 		const { DialogType } = require('im/messenger/const');

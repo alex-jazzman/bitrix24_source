@@ -2,6 +2,7 @@
 
 use Bitrix\Crm\Integration\AI\AIManager;
 use Bitrix\Crm\Integration\AI\BaasManager;
+use Bitrix\Crm\Integration\AI\Enum\GlobalSetting;
 use Bitrix\Crm\Integration\AI\Operation\Scenario;
 use Bitrix\Crm\Integration\AI\Operation\TranscribeCallRecording;
 use Bitrix\Crm\Service\Container;
@@ -30,7 +31,10 @@ if (Loader::includeModule('crm'))
 		;
 	}
 
-	$isAIEnabledInGlobalSettings = AIManager::isEnabledInGlobalSettings();
+	$isAIEnabledInGlobalSettings = AIManager::isEnabledInGlobalSettings(GlobalSetting::FillItemFromCall)
+		|| AIManager::isEnabledInGlobalSettings(GlobalSetting::Summarize)
+		|| AIManager::isEnabledInGlobalSettings(GlobalSetting::AnalyzeCommunication)
+	;
 	$isAIHasPackages = BaasManager::hasPackage();
 	if ($isAIHasPackages && AIManager::isAiCallAutomaticProcessingAllowed())
 	{
@@ -48,10 +52,10 @@ return [
 		'crm.ai.name-service',
 		'crm.kanban.restriction',
 		'crm.kanban.sort',
-		'main.core.events',
-		'ui.entity-selector',
-		'main.popup',
 		'main.core',
+		'main.core.events',
+		'main.popup',
+		'ui.entity-selector',
 	],
 	'skip_core' => false,
 	'settings' => [

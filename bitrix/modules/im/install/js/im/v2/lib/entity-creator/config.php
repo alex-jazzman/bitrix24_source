@@ -10,12 +10,12 @@ return [
 		'./dist/entity-creator.bundle.js',
 	],
 	'rel' => [
-		'main.core',
-		'main.core.events',
 		'calendar.sliderloader',
-		'im.v2.lib.rest',
 		'im.v2.application.core',
 		'im.v2.const',
+		'im.v2.lib.rest',
+		'main.core',
+		'main.core.events',
 	],
 	'skip_core' => false,
 ];

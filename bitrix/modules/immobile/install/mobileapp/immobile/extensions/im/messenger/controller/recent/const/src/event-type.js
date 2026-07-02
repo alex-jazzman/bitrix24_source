@@ -1,7 +1,7 @@
 /**
- * @module im/messenger/controller/recent/const/event-type
+ * @module im/messenger/controller/recent/const/src/event-type
  */
-jn.define('im/messenger/controller/recent/const/event-type', (require, exports, module) => {
+jn.define('im/messenger/controller/recent/const/src/event-type', (require, exports, module) => {
 	const RecentEventType = {
 		ui: {
 			onScroll: 'onScroll',

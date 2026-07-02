@@ -8,5 +8,6 @@ return [
 		'require-lazy',
 		'in-app-url',
 		'type',
+		'more-menu/ref-registry',
 	],
 ];

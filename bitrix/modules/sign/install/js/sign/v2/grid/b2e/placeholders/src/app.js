@@ -33,6 +33,10 @@ export const PlaceholdersApp = {
 			type: Array,
 			required: true,
 		},
+		showHeader: {
+			type: Boolean,
+			default: true,
+		},
 	},
 	data(): Object
 	{
@@ -360,7 +364,7 @@ export const PlaceholdersApp = {
 	},
 	template: `
 		<div class="sign-placeholders-content">
-			<div class="sign-placeholders-common-title-container">
+			<div v-if="showHeader" class="sign-placeholders-common-title-container">
 				<div class="sign-placeholders-common-title-header-container">
 					<div class="sign-placeholders-common-title">
 						{{ loc('PLACEHOLDER_LIST_FIELDS_TITLE_MSGVER_1') }}

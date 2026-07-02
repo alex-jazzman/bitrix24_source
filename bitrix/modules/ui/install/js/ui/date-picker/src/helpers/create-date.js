@@ -1,5 +1,5 @@
 import { Type } from 'main.core';
-import type { DateLike } from '../date-picker-options';
+import { type DateLike } from '../date-picker-options';
 import { convertToDbFormat } from './convert-to-db-format';
 import { parseDate } from './parse-date';
 

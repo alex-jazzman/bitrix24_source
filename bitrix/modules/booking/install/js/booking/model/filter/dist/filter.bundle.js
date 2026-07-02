@@ -1,1 +1,234 @@
-this.BX=this.BX||{},this.BX.Booking=this.BX.Booking||{},function(e,t,i,r){"use strict";class l extends i.BuilderModel{getName(){return r.Model.Filter}getState(){return{datesCount:{count:0,minDate:"",maxDate:""},fields:{},filterDates:[],fetchingNextDate:!1,filteredBookingsIds:[],filteredMarks:[],isFilterMode:!1,quickFilter:{hovered:{},active:{},ignoredBookingIds:{}},deletingResourceFilter:null}}getGetters(){return{datesCount:e=>e.datesCount,fields:e=>e.fields,displayField:e=>e.fields,requestFields:(e,t)=>{var i,r;return t.isDeletingResourceFilterMode&&Object.keys((null==(i=e.deletingResourceFilter)?void 0:i.requestFields)||{}).length>0?null==(r=e.deletingResourceFilter)?void 0:r.requestFields:e.fields},isMaxFilterDate:(e,t,i,l)=>{var s,o;return(null==(s=e.datesCount)||null==(o=s.maxDate)?void 0:o.length)>0&&l[r.Model.Interface+"/selectedDateTs"]>=new Date(e.datesCount.maxDate).setHours(0,0,0,0)},isMinFilterDate:(e,t,i,l)=>{var s,o;return(null==(s=e.datesCount)||null==(o=s.minDate)?void 0:o.length)>0&&l[r.Model.Interface+"/selectedDateTs"]<=new Date(e.datesCount.minDate).setHours(0,0,0,0)},fetchingNextDate:e=>e.fetchingNextDate,filteredBookingsIds:e=>e.filteredBookingsIds,filteredMarks:e=>e.filteredMarks,isFilterMode:e=>e.isFilterMode,isDeletingResourceFilterMode:e=>{var i;return t.Type.isNumber(null==(i=e.deletingResourceFilter)?void 0:i.resourceId)},deletingResource:(e,t,i,l)=>t.isDeletingResourceFilterMode?l[r.Model.Resources+"/getById"](e.deletingResourceFilter.resourceId):null,quickFilter:e=>e.quickFilter}}getActions(){return{setFilterFields:({commit:e},t)=>{e("setFilterFields",t)},setDatesCount:(e,t)=>{e.commit("setDatesCount",t)},addFilterDates:({commit:e},t)=>{e("addFilterDates",t)},clearDatesCount:e=>{e.commit("setDatesCount",{count:0,minDate:"",maxDate:""})},clearFilter:({getters:e,commit:t})=>{t("setFilterFields",{}),t("clearFilterDates"),t("setDatesCount",{count:0,minDate:"",maxDate:""}),e.isDeletingResourceFilterMode&&t("setDeletingResourceFilter",null)},setFetchingNextDate:({commit:e},t)=>{e("setFetchingNextDate",t)},setFilteredBookingsIds:(e,t)=>{e.commit("setFilteredBookingsIds",t)},setFilteredMarks:(e,t)=>{e.commit("setFilteredMarks",t)},setFilterMode:(e,t)=>{e.commit("setFilterMode",t)},hoverQuickFilter:(e,t)=>{e.commit("hoverQuickFilter",t)},fleeQuickFilter:(e,t)=>{e.commit("fleeQuickFilter",t)},activateQuickFilter:(e,t)=>{e.commit("activateQuickFilter",t),e.commit("clearQuickFilterIgnoredBookingIds")},deactivateQuickFilter:(e,t)=>{e.commit("deactivateQuickFilter",t),e.commit("clearQuickFilterIgnoredBookingIds")},addQuickFilterIgnoredBookingId:(e,t)=>{e.commit("addQuickFilterIgnoredBookingId",t)},setDeletingResourceFilter:({commit:e},t)=>{e("setDeletingResourceFilter",t)},setDeletionResourceFilterFields:({commit:e,state:i},r)=>{i.deletingResourceFilter&&t.Type.isNumber(i.deletingResourceFilter.resourceId)&&e("setDeletionResourceFilterFields",r)}}}getMutations(){return{setFilterFields:(e,t)=>{e.fields=t},setDatesCount:(e,t)=>{e.datesCount=t},addFilterDates:(e,t)=>{const i=new Set([...e.filterDates,...t.map(e=>new Date(e).setHours(0,0,0,0))]);e.filterDates=[...i].sort()},clearFilterDates:e=>{e.filterDates=[]},setFetchingNextDate:(e,t)=>{e.fetchingNextDate=t},setFilteredBookingsIds:(e,t)=>{e.filteredBookingsIds=[...t]},setFilteredMarks:(e,t)=>{e.filteredMarks=t},setFilterMode:(e,t)=>{e.isFilterMode=t},hoverQuickFilter:(e,t)=>{e.quickFilter.hovered[t]=t},fleeQuickFilter:(e,t)=>{delete e.quickFilter.hovered[t]},activateQuickFilter:(e,t)=>{e.quickFilter.active[t]=t},deactivateQuickFilter:(e,t)=>{delete e.quickFilter.active[t]},addQuickFilterIgnoredBookingId:(e,t)=>{e.quickFilter.ignoredBookingIds[t]=t},clearQuickFilterIgnoredBookingIds:e=>{e.quickFilter.ignoredBookingIds={}},setDeletingResourceFilter:(e,t)=>{e.deletingResourceFilter=t},setDeletionResourceFilterFields:(e,t)=>{e.deletingResourceFilter.requestFields=t}}}}e.Filter=l}(this.BX.Booking.Model=this.BX.Booking.Model||{},BX,BX.Vue3.Vuex,BX.Booking.Const);
+/* eslint-disable */
+this.BX = this.BX || {};
+this.BX.Booking = this.BX.Booking || {};
+(function (exports, main_core, ui_vue3_vuex, booking_const) {
+	'use strict';
+
+	/* eslint-disable no-param-reassign */
+
+	class Filter extends ui_vue3_vuex.BuilderModel {
+		getName() {
+			return booking_const.Model.Filter;
+		}
+		getState() {
+			return {
+				datesCount: {
+					count: 0,
+					minDate: '',
+					maxDate: ''
+				},
+				fields: {},
+				filterDates: [],
+				fetchingNextDate: false,
+				filteredBookingsIds: [],
+				filteredMarks: [],
+				isFilterMode: false,
+				quickFilter: {
+					hovered: {},
+					active: {},
+					ignoredBookingIds: {}
+				},
+				deletingResourceFilter: null
+			};
+		}
+		getGetters() {
+			return {
+				/** @function filter/datesCount */
+				datesCount: state => state.datesCount,
+				/** @function filter/fields */
+				fields: state => state.fields,
+				/** @function filter/displayFields */
+				displayField: state => state.fields,
+				/** @function filter/resquestFields */
+				requestFields: (state, getters) => {
+					if (getters.isDeletingResourceFilterMode && Object.keys(state.deletingResourceFilter?.requestFields || {}).length > 0) {
+						return state.deletingResourceFilter?.requestFields;
+					}
+					return state.fields;
+				},
+				/** @function filter/isMaxFilterDate */
+				isMaxFilterDate: (state, getters, rootState, rootGetters) => {
+					return state.datesCount?.maxDate?.length > 0 && rootGetters[`${booking_const.Model.Interface}/selectedDateTs`] >= new Date(state.datesCount.maxDate).setHours(0, 0, 0, 0);
+				},
+				/** @function filter/isMinFilterDate */
+				isMinFilterDate: (state, getters, rootState, rootGetters) => {
+					return state.datesCount?.minDate?.length > 0 && rootGetters[`${booking_const.Model.Interface}/selectedDateTs`] <= new Date(state.datesCount.minDate).setHours(0, 0, 0, 0);
+				},
+				/** @function filter/fetchingNextDate */
+				fetchingNextDate: state => state.fetchingNextDate,
+				/** @function interface/filteredBookingsIds */
+				filteredBookingsIds: state => state.filteredBookingsIds,
+				/** @function interface/filteredMarks */
+				filteredMarks: state => state.filteredMarks,
+				/** @function interface/isFilterMode */
+				isFilterMode: state => state.isFilterMode,
+				/** @typedef filter/isDeletingResourceFilterMode */
+				isDeletingResourceFilterMode: state => {
+					return main_core.Type.isNumber(state.deletingResourceFilter?.resourceId);
+				},
+				deletingResource: (state, getters, rootState, rootGetters) => {
+					if (getters.isDeletingResourceFilterMode) {
+						return rootGetters[`${booking_const.Model.Resources}/getById`](state.deletingResourceFilter.resourceId);
+					}
+					return null;
+				},
+				/** @function interface/quickFilter */
+				quickFilter: state => state.quickFilter
+			};
+		}
+		getActions() {
+			return {
+				/** @function filter/setFilterFields */
+				setFilterFields: ({
+					commit
+				}, fields) => {
+					commit('setFilterFields', fields);
+				},
+				/** @function filter/setDatesCount */
+				setDatesCount: (store, datesCount) => {
+					store.commit('setDatesCount', datesCount);
+				},
+				/** @function filter/addFilterDates */
+				addFilterDates: ({
+					commit
+				}, filterDates) => {
+					commit('addFilterDates', filterDates);
+				},
+				/** @function filter/clearDatesCount */
+				clearDatesCount: store => {
+					store.commit('setDatesCount', {
+						count: 0,
+						minDate: '',
+						maxDate: ''
+					});
+				},
+				/** @function filter/clearFilter */
+				clearFilter: ({
+					getters,
+					commit
+				}) => {
+					commit('setFilterFields', {});
+					commit('clearFilterDates');
+					commit('setDatesCount', {
+						count: 0,
+						minDate: '',
+						maxDate: ''
+					});
+					if (getters.isDeletingResourceFilterMode) {
+						commit('setDeletingResourceFilter', null);
+					}
+				},
+				setFetchingNextDate: ({
+					commit
+				}, fetchingNextDate) => {
+					commit('setFetchingNextDate', fetchingNextDate);
+				},
+				/** @function interface/setFilteredBookingsIds */
+				setFilteredBookingsIds: (store, filteredBookingsIds) => {
+					store.commit('setFilteredBookingsIds', filteredBookingsIds);
+				},
+				/** @function interface/setFilteredMarks */
+				setFilteredMarks: (store, dates) => {
+					store.commit('setFilteredMarks', dates);
+				},
+				/** @function interface/setFilterMode */
+				setFilterMode: (store, isFilterMode) => {
+					store.commit('setFilterMode', isFilterMode);
+				},
+				/** @function interface/hoverQuickFilter */
+				hoverQuickFilter: (store, hour) => {
+					store.commit('hoverQuickFilter', hour);
+				},
+				/** @function interface/fleeQuickFilter */
+				fleeQuickFilter: (store, hour) => {
+					store.commit('fleeQuickFilter', hour);
+				},
+				/** @function interface/activateQuickFilter */
+				activateQuickFilter: (store, hour) => {
+					store.commit('activateQuickFilter', hour);
+					store.commit('clearQuickFilterIgnoredBookingIds');
+				},
+				/** @function interface/deactivateQuickFilter */
+				deactivateQuickFilter: (store, hour) => {
+					store.commit('deactivateQuickFilter', hour);
+					store.commit('clearQuickFilterIgnoredBookingIds');
+				},
+				/** @function filter/addQuickFilterIgnoredBookingId */
+				addQuickFilterIgnoredBookingId: (store, bookingId) => {
+					store.commit('addQuickFilterIgnoredBookingId', bookingId);
+				},
+				/** @function filter/setDeletingResourceFilter */
+				setDeletingResourceFilter: ({
+					commit
+				}, deletingResourceFilter) => {
+					commit('setDeletingResourceFilter', deletingResourceFilter);
+				},
+				/** @function filter/setDeletionResourceFIlterFields */
+				setDeletionResourceFilterFields: ({
+					commit,
+					state
+				}, fields) => {
+					if (state.deletingResourceFilter && main_core.Type.isNumber(state.deletingResourceFilter.resourceId)) {
+						commit('setDeletionResourceFilterFields', fields);
+					}
+				}
+			};
+		}
+		getMutations() {
+			return {
+				setFilterFields: (state, fields) => {
+					state.fields = fields;
+				},
+				setDatesCount: (state, datesCount) => {
+					state.datesCount = datesCount;
+				},
+				addFilterDates: (state, filterDates) => {
+					const filterDatesSet = new Set([...state.filterDates, ...filterDates.map(date => new Date(date).setHours(0, 0, 0, 0))]);
+					state.filterDates = [...filterDatesSet].sort();
+				},
+				clearFilterDates: state => {
+					state.filterDates = [];
+				},
+				setFetchingNextDate: (state, fetchingNextDate) => {
+					state.fetchingNextDate = fetchingNextDate;
+				},
+				setFilteredBookingsIds: (state, filteredBookingsIds) => {
+					state.filteredBookingsIds = [...filteredBookingsIds];
+				},
+				setFilteredMarks: (state, dates) => {
+					state.filteredMarks = dates;
+				},
+				setFilterMode: (state, isFilterMode) => {
+					state.isFilterMode = isFilterMode;
+				},
+				hoverQuickFilter: (state, hour) => {
+					state.quickFilter.hovered[hour] = hour;
+				},
+				fleeQuickFilter: (state, hour) => {
+					delete state.quickFilter.hovered[hour];
+				},
+				activateQuickFilter: (state, hour) => {
+					state.quickFilter.active[hour] = hour;
+				},
+				deactivateQuickFilter: (state, hour) => {
+					delete state.quickFilter.active[hour];
+				},
+				addQuickFilterIgnoredBookingId: (state, bookingId) => {
+					state.quickFilter.ignoredBookingIds[bookingId] = bookingId;
+				},
+				clearQuickFilterIgnoredBookingIds: state => {
+					state.quickFilter.ignoredBookingIds = {};
+				},
+				setDeletingResourceFilter: (state, deletingResourceFilter) => {
+					state.deletingResourceFilter = deletingResourceFilter;
+				},
+				setDeletionResourceFilterFields: (state, fields) => {
+					state.deletingResourceFilter.requestFields = fields;
+				}
+			};
+		}
+	}
+
+	exports.Filter = Filter;
+
+})(this.BX.Booking.Model = this.BX.Booking.Model || {}, BX, BX.Vue3.Vuex, BX.Booking.Const);

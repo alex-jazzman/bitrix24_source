@@ -1,4 +1,3 @@
-import { SettingsService } from 'im.v2.provider.service.settings';
 import { Loc } from 'main.core';
 
 import { showNotification } from '../utils/notification';

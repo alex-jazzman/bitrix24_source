@@ -83,7 +83,6 @@ jn.define('ui-system/form/inputs/textarea', (require, exports, module) => {
 		height: 96,
 		showCharacterCount: true,
 		enableLineBreak: true,
-
 	};
 
 	TextAreaInput.propTypes = {

@@ -1,4 +1,4 @@
-import { EntityCloseEvent, EntityStageChangeEvent, Dictionary, Builder } from 'crm.integration.analytics';
+import { type EntityCloseEvent, type EntityStageChangeEvent, Dictionary, Builder } from 'crm.integration.analytics';
 import { Loc, Reflection, Type } from 'main.core';
 import { QueueManager } from 'pull.queuemanager';
 import { UI } from 'ui.notification';

@@ -1,0 +1,3 @@
+<?php
+$MESS["SELECTOR_COMPONENT_TASK_TEMPLATE_START_TYPING"] = "No templates found.";
+$MESS["SELECTOR_COMPONENT_TASK_TEMPLATE_TITLE"] = "Select task template";

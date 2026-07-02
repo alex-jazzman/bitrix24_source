@@ -1,7 +1,7 @@
 import { Event, Text, Type, Uri, Loc, Runtime } from 'main.core';
 import { EventEmitter, BaseEvent } from 'main.core.events';
 import { SidePanel, type Slider, type SliderEvent } from 'main.sidepanel';
-import type { Popup } from 'main.popup';
+import { type Popup } from 'main.popup';
 
 import { BitrixVue, type VueCreateAppResult } from 'ui.vue3';
 import { locMixin } from 'ui.vue3.mixins.loc-mixin';
@@ -11,7 +11,7 @@ import { Core } from 'tasks.v2.core';
 import { EventName } from 'tasks.v2.const';
 import { idUtils } from 'tasks.v2.lib.id-utils';
 import { TaskMappers } from 'tasks.v2.provider.service.task-service';
-import type { TaskModel } from 'tasks.v2.model.tasks';
+import { type TaskModel } from 'tasks.v2.model.tasks';
 
 import { App } from './component/app';
 import { ClosePopup } from './lib/close-popup';

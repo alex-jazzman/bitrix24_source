@@ -25,7 +25,8 @@
 					{
 						condition: [
 							"/crm/catalog/(\\d+)/product/",
-							"/crm/catalog/section/(\\d+)/"
+							"/crm/catalog/section/(\\d+)/",
+							"/shop/settings/userfield_edit/",
 						],
 						handler: this.adjustSidePanelOpener.bind(this),
 					}
@@ -49,6 +50,7 @@
 			if (!isSidePanelParams || (isSidePanelParams && !BX.SidePanel.Instance.getTopSlider()))
 			{
 				event.preventDefault();
+				link.url = BX.util.add_url_param(link.url, { publicSidePanel: 'Y' });
 
 				BX.SidePanel.Instance.open(link.url, {
 					allowChangeHistory: true,

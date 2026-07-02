@@ -7,6 +7,7 @@ return [
 		'im:messenger/lib/visibility-manager',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/feature',
+		'im:messenger/lib/helper',
 		'im:messenger/view/dialog',
 	],
 ];

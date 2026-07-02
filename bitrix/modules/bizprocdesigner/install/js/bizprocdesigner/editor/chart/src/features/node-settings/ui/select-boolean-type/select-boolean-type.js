@@ -15,7 +15,7 @@ import {
 
 // @vue/component
 export const SelectBooleanType = {
-	name: 'select-boolean-type',
+	name: 'SelectBooleanType',
 	props:
 	{
 		/** @type Construction */
@@ -66,10 +66,10 @@ export const SelectBooleanType = {
 		},
 	},
 	template: `
-		<div class="node-settings-boolean-type-switcher">
+		<div class="editor-chart-node-settings-boolean-type-switcher">
 			<span
 				v-for="booleanType in booleanTypes"
-				class="node-settings-boolean-type-switcher_tab"
+				class="editor-chart-node-settings-boolean-type-switcher_tab"
 				:class="{ '--selected': selectedType === booleanType }"
 				@click="onClick(booleanType)"
 			>

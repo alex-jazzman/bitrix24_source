@@ -346,6 +346,29 @@ jn.define('im/messenger/db/update/updater', (require, exports, module) => {
 
 		/**
 		 * @param {typeof Table} TableClass
+		 * @param {string} columnName
+		 */
+		async addColumn(TableClass, columnName)
+		{
+			const table = new TableClass();
+			try
+			{
+				const query = updaterQueryBuilder.addColumn(table, columnName);
+
+				await this.executeSql({
+					query,
+				});
+			}
+			catch (error)
+			{
+				console.error(error);
+
+				throw error;
+			}
+		}
+
+		/**
+		 * @param {typeof Table} TableClass
 		 * @param {() => Promise} callback
 		 * @return {Promise<void>}
 		 */

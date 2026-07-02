@@ -1,4 +1,5 @@
-<?
+<?php
+
 use Bitrix\Main\Composite\Debug\Model\LogTable;
 use Bitrix\Main\Composite\Internals\Model\PageTable;
 use Bitrix\Main\Composite\Page;
@@ -6,8 +7,8 @@ use Bitrix\Main\Context;
 use Bitrix\Main\Localization\Loc;
 
 /**
- * @global \CUser $USER
- * @global \CMain $APPLICATION
+ * @global CUser $USER
+ * @global CMain $APPLICATION
  */
 
 require_once(__DIR__."/../include/prolog_admin_before.php");
@@ -99,53 +100,53 @@ foreach ($diffScript as $scriptRecord)
 		class="adm-composite-source-link"><?=Loc::getMessage("MAIN_COMPOSITE_DIFF_SOURCE_CODE")?></a>)
 	</div>
 
-	<? if (empty($diffScript)):?>
+	<?php if (empty($diffScript)):?>
 		<div class="adm-composite-diff-notice" id="right-header">
 			<?=Loc::getMessage("MAIN_COMPOSITE_DIFF_VERSIONS_IDENTICAL")?>
 		</div>
-	<? endif ?>
+	<?php endif ?>
 </div>
 
 <div class="adm-composite-diff">
 	<div class="adm-composite-diff-file" id="left-window">
-		<?
+		<?php
 			$deletedLines = 0;
 			for ($line = 0, $length = count($linesA); $line < $length; $line++):
 				$deletedLines = $deletedFromA[$line] ?? $deletedLines;
 		?>
 				<div class="adm-composite-diff-line
-					<?if ($deletedLines): $deletedLines--?> adm-composite-deleted-line<?endif?>
+					<?php if ($deletedLines): $deletedLines--?> adm-composite-deleted-line<?php endif?>
 					"><span class="adm-composite-diff-line-content"><?=htmlspecialcharsbx($linesA[$line])?></span></div>
-		<?
+		<?php
 			endfor;
 		?>
 	</div>
 	<div class="adm-composite-diff-gutter" id="gutter">
-		<?
+		<?php
 		$numberOfLines = max(count($linesA), count($linesB));
 
 		?>
 		<div class="adm-composite-line-numbers adm-composite-left-numbers">
-			<?for ($line = 0; $line < $numberOfLines; $line++):
-				?><div class="adm-composite-line-number"><?=($line + 1)?></div><?
+			<?php for ($line = 0; $line < $numberOfLines; $line++):
+				?><div class="adm-composite-line-number"><?=($line + 1)?></div><?php
 			endfor?>
-		</div><?
+		</div><?php
 		?><div class="adm-composite-line-numbers adm-composite-right-numbers">
-			<?for ($line = 0; $line < $numberOfLines; $line++):
-				?><div class="adm-composite-line-number"><?=($line + 1)?></div><?endfor?>
+			<?php for ($line = 0; $line < $numberOfLines; $line++):
+				?><div class="adm-composite-line-number"><?=($line + 1)?></div><?php endfor?>
 		</div>
 	</div>
 	<div class="adm-composite-diff-file" id="right-window">
 
-		<?
+		<?php
 		$insertedLines = 0;
 		for ($line = 0, $length = count($linesB); $line < $length; $line++):
 			$insertedLines = $insertedToB[$line] ?? $insertedLines;
 			?>
 			<div class="adm-composite-diff-line
-					<?if ($insertedLines): $insertedLines--?> adm-composite-inserted-line<?endif?>
+					<?php if ($insertedLines): $insertedLines--?> adm-composite-inserted-line<?php endif?>
 					"><span class="adm-composite-diff-line-content"><?=htmlspecialcharsbx($linesB[$line])?></span></div>
-			<?
+			<?php
 		endfor;
 		?>
 
@@ -235,4 +236,4 @@ foreach ($diffScript as $scriptRecord)
 </html>
 
 
-<?require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin_after.php");
+<?php require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin_after.php");

@@ -13,3 +13,7 @@ $MESS['INTRANET_COLLAB_JOIN_LOGIN_TO_COLLAB'] = "Войти в коллабу";
 $MESS['INTRANET_COLLAB_JOIN_IMPORTANT'] = "Не пропускайте важное";
 $MESS['INTRANET_COLLAB_JOIN_CAMERA_QR'] = "Наведите камеру телефона на QR-код и установите приложение";
 $MESS['INTRANET_COLLAB_JOIN_FOOTER_TITLE'] = "Битрикс24 — набор инструментов для бизнеса";
+
+$MESS['INTRANET_PROJECT_JOIN_SUBJECT'] = "Вы присоединились к проекту";
+$MESS['INTRANET_PROJECT_JOIN_JOINED_TO_PROJECT'] = "Вы присоединились к [style]проекту[/style]";
+$MESS['INTRANET_PROJECT_JOIN_LOGIN_TO_PROJECT'] = "Войти в проект";

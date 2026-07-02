@@ -7,3 +7,4 @@ $MESS['MAIL_MAILBOX_GRID_FILTER_ACCESS_USERS'] = 'Пользователи с д
 $MESS['MAIL_MAILBOX_GRID_FILTER_CRM_QUEUE'] = 'Ответственные в CRM';
 $MESS['MAIL_MAILBOX_GRID_FILTER_DISK_SIZE'] = 'Место на диске (МБ)';
 $MESS['MAIL_MAILBOX_GRID_FILTER_SENDER_NAME'] = 'Имя отправителя';
+$MESS['MAIL_MAILBOX_GRID_FILTER_CONNECTION_REQUESTS'] = 'Запросы на подключение';

@@ -1,4 +1,4 @@
 <?php
 
-$MESS['AI_INSTALL_COPILOT_AGREEMENT_NOTIFY_TITLE'] = 'Использование BitrixGPT связано с передачей данных';
-$MESS['AI_INSTALL_COPILOT_AGREEMENT_NOTIFY'] = 'Нажимая Установить модуль, вы принимаете #LINK#Условия использования дополнительной функциональности «BitrixGPT».#/LINK#';
+$MESS['AI_INSTALL_COPILOT_AGREEMENT_NOTIFY_TITLE_MSGVER_1'] = 'Использование #COPILOT_NAME# связано с передачей данных';
+$MESS['AI_INSTALL_COPILOT_AGREEMENT_NOTIFY_MSGVER_1'] = 'Нажимая Установить модуль, вы принимаете #LINK#Условия использования дополнительной функциональности «#COPILOT_NAME#».#/LINK#';

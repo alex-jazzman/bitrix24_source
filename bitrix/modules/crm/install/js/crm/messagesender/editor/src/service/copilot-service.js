@@ -87,6 +87,7 @@ export class CopilotService
 						mode: exports.CopilotMode.TEXT,
 						autoHide: true,
 						showResultInCopilot: true,
+						responseFormat: 'plaintext',
 					});
 
 					this.#copilot.subscribeOnce(this.#copilotEvents.START_INIT, () => {

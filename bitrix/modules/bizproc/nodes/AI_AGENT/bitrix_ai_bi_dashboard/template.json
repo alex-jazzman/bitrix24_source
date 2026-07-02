@@ -1,0 +1,832 @@
+{
+	"NAME": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_NAME_1###",
+	"DESCRIPTION": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_DESCRIPTION_1###",
+	"PARAMETERS": [],
+	"VARIABLES": [],
+	"CONSTANTS": {
+		"SetupTemplateActivity_a8Rb3BNMrC": {
+			"Name": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_NAME_2###",
+			"Description": "",
+			"Type": "string",
+			"Required": 0,
+			"Multiple": 0,
+			"Options": [],
+			"Default": ""
+		},
+		"SetupTemplateActivity_D7Skxhpzpm": {
+			"Name": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_NAME_3###",
+			"Description": "",
+			"Type": "file",
+			"Required": 0,
+			"Multiple": 0,
+			"Options": [],
+			"Default": ""
+		},
+		"SetupTemplateActivity_eQy6LBm7Yt": {
+			"Name": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_NAME_4###",
+			"Description": "",
+			"Type": "user",
+			"Required": 0,
+			"Multiple": 1,
+			"Options": [],
+			"Default": ""
+		},
+		"SetupTemplateActivity_XW6yGGCKct": {
+			"Name": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_NAME_5###",
+			"Description": "",
+			"Type": "bi_dashboard",
+			"Required": 0,
+			"Multiple": 0,
+			"Options": [],
+			"Default": ""
+		},
+		"SetupTemplateActivity_7IGW4aXf1t": {
+			"Name": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_NAME_6###",
+			"Description": "",
+			"Type": "text",
+			"Required": 0,
+			"Multiple": 0,
+			"Options": [],
+			"Default": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_DEFAULT_1###"
+		},
+		"SetupTemplateActivity_29mfeeiRJY": {
+			"Name": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_NAME_7###",
+			"Description": "",
+			"Type": "text",
+			"Required": 0,
+			"Multiple": 0,
+			"Options": [],
+			"Default": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_DEFAULT_2###"
+		},
+		"SetupTemplateActivity_6ymj93vXGi": {
+			"Name": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_NAME_8###",
+			"Description": "",
+			"Type": "time",
+			"Required": 0,
+			"Multiple": 0,
+			"Options": [],
+			"Default": ""
+		}
+	},
+	"TEMPLATE": [
+		{
+			"Type": "NodeWorkflowActivity",
+			"Name": "Template",
+			"Properties": {
+				"Title": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_TITLE_1###",
+				"Links": [
+					[
+						"A2164_3535_3731_7892:o0",
+						"A7855_7097_5378_9030:i0",
+						1774485300442
+					],
+					[
+						"A7855_7097_5378_9030:o0",
+						"A1918_8569_5735_8216:i0",
+						1774485431429
+					],
+					[
+						"A1918_8569_5735_8216:o0",
+						"A5630_9624_4912_1019:i0",
+						1774485445981
+					],
+					[
+						"A5630_9624_4912_1019:o0",
+						"A4971_4656_2911_4116:i0",
+						1774485469846
+					],
+					[
+						"A4971_4656_2911_4116:o0",
+						"A4885_2137_4199_3300:i0",
+						1774485491985
+					],
+					[
+						"A9375_9407_8257_9313:o0",
+						"A4885_2137_4199_3300:i0",
+						1774485493739
+					],
+					[
+						"A4885_2137_4199_3300:o0",
+						"A9428_8300_4037_8137:i0",
+						1774485505154
+					],
+					[
+						"A9428_8300_4037_8137:o0",
+						"A8048_5029_7768_5549:i0",
+						1774485517124
+					],
+					[
+						"A8048_5029_7768_5549:o0",
+						"A2167_2804_5743_4990:i0",
+						1774485527242
+					],
+					[
+						"A8048_5029_7768_5549:o1",
+						"A4756_1857_7155_6366:i0",
+						1774485538380
+					],
+					[
+						"A2167_2804_5743_4990:o0",
+						"A8825_6084_4420_1186:i0",
+						1774485546729
+					],
+					[
+						"A4756_1857_7155_6366:o0",
+						"A4885_2137_4199_3300:i1",
+						1774604203644
+					],
+					[
+						"A8825_6084_4420_1186:o0",
+						"A4885_2137_4199_3300:i1",
+						1774604220529
+					]
+				]
+			},
+			"Children": [
+				{
+					"Name": "A2164_3535_3731_7892",
+					"Type": "AiAgentStartTrigger",
+					"PresetId": null,
+					"Properties": {
+						"Title": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_TITLE_2###"
+					},
+					"Activated": "Y",
+					"Node": {
+						"id": "A2164_3535_3731_7892",
+						"type": "trigger",
+						"position": {
+							"x": 422,
+							"y": 14
+						},
+						"dimensions": {
+							"width": 321.984375,
+							"height": 48
+						},
+						"ports": [
+							{
+								"id": "o0",
+								"title": "",
+								"type": "output"
+							}
+						],
+						"node": {
+							"type": "trigger",
+							"title": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_TITLE_2###",
+							"colorIndex": 0,
+							"frameColorName": null,
+							"frameTextAlign": null,
+							"frameSeparatorPosition": null,
+							"icon": "AI_ROBOT",
+							"updated": 1774604322469,
+							"published": 1774604322469
+						}
+					}
+				},
+				{
+					"Name": "A7855_7097_5378_9030",
+					"Type": "SetupTemplateActivity",
+					"Activated": "Y",
+					"Properties": {
+						"blocks": [
+							{
+								"items": [
+									{
+										"itemType": "title",
+										"text": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_NAME_1###"
+									},
+									{
+										"itemType": "description",
+										"text": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_TEXT_1###"
+									},
+									{
+										"itemType": "constant",
+										"id": "SetupTemplateActivity_a8Rb3BNMrC",
+										"name": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_NAME_2###",
+										"constantType": "string",
+										"description": "",
+										"multiple": false,
+										"required": true,
+										"options": [],
+										"default": ""
+									},
+									{
+										"itemType": "constant",
+										"id": "SetupTemplateActivity_D7Skxhpzpm",
+										"name": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_NAME_3###",
+										"constantType": "file",
+										"description": "",
+										"multiple": false,
+										"required": false,
+										"options": [],
+										"default": ""
+									},
+									{
+										"itemType": "constant",
+										"id": "SetupTemplateActivity_eQy6LBm7Yt",
+										"name": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_NAME_4###",
+										"constantType": "user",
+										"description": "",
+										"multiple": true,
+										"required": true,
+										"options": [],
+										"default": ""
+									}
+								]
+							},
+							{
+								"items": [
+									{
+										"itemType": "constant",
+										"id": "SetupTemplateActivity_XW6yGGCKct",
+										"name": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_NAME_5###",
+										"constantType": "bi_dashboard",
+										"description": "",
+										"multiple": false,
+										"required": true,
+										"options": [],
+										"default": ""
+									}
+								]
+							},
+							{
+								"items": [
+									{
+										"itemType": "title",
+										"text": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_TITLE_3###"
+									},
+									{
+										"itemType": "description",
+										"text": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_TEXT_2###"
+									},
+									{
+										"itemType": "delimiter",
+										"delimiterType": "line"
+									},
+									{
+										"itemType": "title",
+										"text": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_TITLE_4###"
+									},
+									{
+										"itemType": "description",
+										"text": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_TEXT_3###"
+									},
+									{
+										"itemType": "constant",
+										"id": "SetupTemplateActivity_7IGW4aXf1t",
+										"name": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_NAME_6###",
+										"constantType": "text",
+										"description": "",
+										"multiple": false,
+										"required": false,
+										"options": [],
+										"default": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_DEFAULT_1###"
+									},
+									{
+										"itemType": "constant",
+										"id": "SetupTemplateActivity_29mfeeiRJY",
+										"name": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_NAME_7###",
+										"constantType": "text",
+										"description": "",
+										"multiple": false,
+										"required": false,
+										"options": [],
+										"default": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_DEFAULT_2###"
+									}
+								]
+							},
+							{
+								"items": [
+									{
+										"itemType": "constant",
+										"id": "SetupTemplateActivity_6ymj93vXGi",
+										"name": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_NAME_8###",
+										"constantType": "time",
+										"description": "",
+										"multiple": false,
+										"required": true,
+										"options": [],
+										"default": ""
+									}
+								]
+							}
+						],
+						"Title": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_TITLE_5###",
+						"EditorComment": ""
+					},
+					"Document": null,
+					"Node": {
+						"id": "A7855_7097_5378_9030",
+						"type": "simple",
+						"position": {
+							"x": 868,
+							"y": 30
+						},
+						"dimensions": {
+							"width": 247.2890625,
+							"height": 48
+						},
+						"ports": [
+							{
+								"id": "i0",
+								"title": "",
+								"type": "input"
+							},
+							{
+								"id": "o0",
+								"title": "",
+								"type": "output"
+							}
+						],
+						"node": {
+							"type": "simple",
+							"title": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_TITLE_5###",
+							"colorIndex": 2,
+							"frameColorName": null,
+							"frameTextAlign": null,
+							"frameSeparatorPosition": null,
+							"icon": "SETTINGS",
+							"updated": 1774604322469,
+							"published": 1774604322469
+						}
+					}
+				},
+				{
+					"Name": "A1918_8569_5735_8216",
+					"Type": "ImBotCreateBotActivity",
+					"Activated": "Y",
+					"Properties": {
+						"botName": "{=Constant:SetupTemplateActivity_a8Rb3BNMrC}",
+						"workPosition": "",
+						"botCode": "{=Workflow:TemplateId}-bi-dashboard-sender",
+						"avatar": "{=Constant:SetupTemplateActivity_D7Skxhpzpm}",
+						"avatarDiskFile": null,
+						"Title": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_TITLE_6###",
+						"EditorComment": ""
+					},
+					"Document": null,
+					"Node": {
+						"id": "A1918_8569_5735_8216",
+						"type": "simple",
+						"position": {
+							"x": 1229,
+							"y": 35
+						},
+						"dimensions": {
+							"width": 203.2890625,
+							"height": 48
+						},
+						"ports": [
+							{
+								"id": "i0",
+								"title": "",
+								"type": "input"
+							},
+							{
+								"id": "o0",
+								"title": "",
+								"type": "output"
+							}
+						],
+						"node": {
+							"type": "simple",
+							"title": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_TITLE_6###",
+							"colorIndex": 1,
+							"frameColorName": null,
+							"frameTextAlign": null,
+							"frameSeparatorPosition": null,
+							"icon": "MESSENGER",
+							"updated": 1774604322469,
+							"published": 1774604322469
+						}
+					}
+				},
+				{
+					"Name": "A5630_9624_4912_1019",
+					"Type": "ImBotMessageActivity",
+					"Activated": "Y",
+					"Properties": {
+						"botId": "{=A1918_8569_5735_8216:botId}",
+						"botCode": "",
+						"recipient": [
+							"{=Constant:SetupTemplateActivity_eQy6LBm7Yt}"
+						],
+						"chatId": null,
+						"message": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_MESSAGE_1###",
+						"asError": null,
+						"aiWarning": null,
+						"Title": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_TITLE_7###",
+						"EditorComment": ""
+					},
+					"Document": null,
+					"Node": {
+						"id": "A5630_9624_4912_1019",
+						"type": "simple",
+						"position": {
+							"x": 1624,
+							"y": 45
+						},
+						"dimensions": {
+							"width": 302.5625,
+							"height": 48
+						},
+						"ports": [
+							{
+								"id": "i0",
+								"title": "",
+								"type": "input"
+							},
+							{
+								"id": "o0",
+								"title": "",
+								"type": "output"
+							}
+						],
+						"node": {
+							"type": "simple",
+							"title": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_TITLE_7###",
+							"colorIndex": 2,
+							"frameColorName": null,
+							"frameTextAlign": null,
+							"frameSeparatorPosition": null,
+							"icon": "GO_TO_MESSAGE",
+							"updated": 1774604322469,
+							"published": 1774604322469
+						}
+					}
+				},
+				{
+					"Name": "A9375_9407_8257_9313",
+					"Type": "ScheduledTrigger",
+					"Activated": "Y",
+					"Properties": {
+						"ScheduleType": "daily",
+						"RunAt": "{=Constant:SetupTemplateActivity_6ymj93vXGi}",
+						"Interval": "1",
+						"WeekDays": [],
+						"YearMonth": null,
+						"MonthDay": null,
+						"Title": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_TITLE_9###",
+						"EditorComment": ""
+					},
+					"Document": null,
+					"Node": {
+						"id": "A9375_9407_8257_9313",
+						"type": "trigger",
+						"position": {
+							"x": 376,
+							"y": 412
+						},
+						"dimensions": {
+							"width": 221.796875,
+							"height": 48
+						},
+						"ports": [
+							{
+								"id": "o0",
+								"title": "",
+								"type": "output"
+							}
+						],
+						"node": {
+							"type": "trigger",
+							"title": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_TITLE_9###",
+							"colorIndex": 3,
+							"frameColorName": null,
+							"frameTextAlign": null,
+							"frameSeparatorPosition": null,
+							"icon": "CALENDAR_WITH_SLOTS",
+							"updated": 1774604322469,
+							"published": 1774604322469
+						}
+					}
+				},
+				{
+					"Name": "A4885_2137_4199_3300",
+					"Type": "ForEachActivity",
+					"Activated": "Y",
+					"Properties": {
+						"Variable": "SetupTemplateActivity_eQy6LBm7Yt",
+						"Object": "Constant",
+						"Title": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_TITLE_10###",
+						"EditorComment": ""
+					},
+					"Document": null,
+					"Node": {
+						"id": "A4885_2137_4199_3300",
+						"type": "complex",
+						"position": {
+							"x": 749,
+							"y": 341
+						},
+						"dimensions": {
+							"width": 200,
+							"height": 135
+						},
+						"ports": [
+							{
+								"id": "i0",
+								"title": "in",
+								"type": "input"
+							},
+							{
+								"id": "i1",
+								"title": "->>",
+								"type": "input"
+							},
+							{
+								"id": "o1",
+								"title": "out",
+								"type": "output"
+							},
+							{
+								"id": "o0",
+								"title": "->>",
+								"type": "output"
+							}
+						],
+						"node": {
+							"type": "complex",
+							"title": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_TITLE_10###",
+							"colorIndex": 3,
+							"frameColorName": null,
+							"frameTextAlign": null,
+							"frameSeparatorPosition": null,
+							"icon": "REPEAT",
+							"updated": 1774604322469,
+							"published": 1774604322469
+						}
+					}
+				},
+				{
+					"Name": "A9428_8300_4037_8137",
+					"Type": "BIConnectorDashboardResultActivity",
+					"Activated": "Y",
+					"Properties": {
+						"PARAM_USER_ID": "{=A4885_2137_4199_3300:Value}",
+						"BI_DASHBOARD_ID": "{=Constant:SetupTemplateActivity_XW6yGGCKct}",
+						"Title": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_TITLE_11###",
+						"EditorComment": ""
+					},
+					"Document": null,
+					"Node": {
+						"id": "A9428_8300_4037_8137",
+						"type": "simple",
+						"position": {
+							"x": 1082,
+							"y": 253
+						},
+						"dimensions": {
+							"width": 205.7890625,
+							"height": 48
+						},
+						"ports": [
+							{
+								"id": "i0",
+								"title": "",
+								"type": "input"
+							},
+							{
+								"id": "o0",
+								"title": "",
+								"type": "output"
+							}
+						],
+						"node": {
+							"type": "simple",
+							"title": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_TITLE_11###",
+							"colorIndex": 3,
+							"frameColorName": null,
+							"frameTextAlign": null,
+							"frameSeparatorPosition": null,
+							"icon": "DOCUMENT_LINK",
+							"updated": 1774604322469,
+							"published": 1774604322469
+						}
+					}
+				},
+				{
+					"Name": "A8048_5029_7768_5549",
+					"Type": "IfElseBranchActivity",
+					"Activated": "Y",
+					"Properties": {
+						"Title": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_TITLE_12###",
+						"mixedcondition": [
+							{
+								"object": "A9428_8300_4037_8137",
+								"field": "BI_DASHBOARD_RESULT_FILE",
+								"operator": "!empty",
+								"value": "",
+								"joiner": 0
+							}
+						],
+						"EditorComment": ""
+					},
+					"Document": null,
+					"Node": {
+						"id": "A8048_5029_7768_5549",
+						"type": "complex",
+						"position": {
+							"x": 1104,
+							"y": 451
+						},
+						"dimensions": {
+							"width": 200,
+							"height": 135
+						},
+						"ports": [
+							{
+								"id": "i0",
+								"title": "",
+								"type": "input"
+							},
+							{
+								"id": "o0",
+								"title": "true",
+								"type": "output"
+							},
+							{
+								"id": "o1",
+								"title": "false",
+								"type": "output"
+							}
+						],
+						"node": {
+							"type": "complex",
+							"title": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_TITLE_12###",
+							"colorIndex": 3,
+							"frameColorName": null,
+							"frameTextAlign": null,
+							"frameSeparatorPosition": null,
+							"icon": "CONDITION",
+							"updated": 1774604322469,
+							"published": 1774604322469
+						}
+					}
+				},
+				{
+					"Name": "A2167_2804_5743_4990",
+					"Type": "AiAssistantAgentActivity",
+					"Activated": "Y",
+					"Properties": {
+						"mcpUser": "{=A4885_2137_4199_3300:Value}",
+						"query": "{=A9428_8300_4037_8137:BI_DASHBOARD_RESULT_FILE}",
+						"systemPrompt": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_SYSTEM_PROMPT_1###",
+						"returnType": "text",
+						"jsonSchema": "",
+						"jsonPath": null,
+						"usePseudonymizer": "Y",
+						"Title": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_TITLE_13###",
+						"EditorComment": ""
+					},
+					"Document": null,
+					"Node": {
+						"id": "A2167_2804_5743_4990",
+						"type": "simple",
+						"position": {
+							"x": 1460,
+							"y": 326
+						},
+						"dimensions": {
+							"width": 200,
+							"height": 48
+						},
+						"ports": [
+							{
+								"id": "i0",
+								"title": "",
+								"type": "input"
+							},
+							{
+								"id": "o0",
+								"title": "",
+								"type": "output"
+							},
+							{
+								"id": "a0",
+								"title": "",
+								"type": "aux"
+							}
+						],
+						"node": {
+							"type": "simple",
+							"title": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_TITLE_13###",
+							"colorIndex": 0,
+							"frameColorName": null,
+							"frameTextAlign": null,
+							"frameSeparatorPosition": null,
+							"icon": "AI_ROBOT",
+							"updated": 1774604322469,
+							"published": 1774604322469
+						}
+					}
+				},
+				{
+					"Name": "A4756_1857_7155_6366",
+					"Type": "ImBotMessageActivity",
+					"Activated": "Y",
+					"Properties": {
+						"botId": null,
+						"botCode": "{=Workflow:TemplateId}-bi-dashboard-sender",
+						"recipient": [
+							"{=A4885_2137_4199_3300:Value}"
+						],
+						"chatId": null,
+						"message": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_MESSAGE_2###",
+						"asError": null,
+						"aiWarning": null,
+						"Title": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_TITLE_7###",
+						"EditorComment": ""
+					},
+					"Document": null,
+					"Node": {
+						"id": "A4756_1857_7155_6366",
+						"type": "simple",
+						"position": {
+							"x": 1087,
+							"y": 690
+						},
+						"dimensions": {
+							"width": 302.5625,
+							"height": 48
+						},
+						"ports": [
+							{
+								"id": "i0",
+								"title": "",
+								"type": "input"
+							},
+							{
+								"id": "o0",
+								"title": "",
+								"type": "output"
+							}
+						],
+						"node": {
+							"type": "simple",
+							"title": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_TITLE_7###",
+							"colorIndex": 2,
+							"frameColorName": null,
+							"frameTextAlign": null,
+							"frameSeparatorPosition": null,
+							"icon": "GO_TO_MESSAGE",
+							"updated": 1774604322469,
+							"published": 1774604322469
+						}
+					}
+				},
+				{
+					"Name": "A8825_6084_4420_1186",
+					"Type": "ImBotMessageActivity",
+					"Activated": "Y",
+					"Properties": {
+						"botId": null,
+						"botCode": "{=Workflow:TemplateId}-bi-dashboard-sender",
+						"recipient": null,
+						"chatId": "{=A4885_2137_4199_3300:Value}",
+						"message": "{{=if(strlen({=A2167_2804_5743_4990:aiResult}) > 0, {=A2167_2804_5743_4990:aiResult}, {=A2167_2804_5743_4990:errorMessage})}}",
+						"asError": "{{=if(strlen({=A2167_2804_5743_4990:aiResult}) > 0, 'N', 'Y')}}",
+						"aiWarning": null,
+						"Title": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_TITLE_7###",
+						"EditorComment": ""
+					},
+					"Document": null,
+					"Node": {
+						"id": "A8825_6084_4420_1186",
+						"type": "simple",
+						"position": {
+							"x": 1474,
+							"y": 703
+						},
+						"dimensions": {
+							"width": 302.5625,
+							"height": 48
+						},
+						"ports": [
+							{
+								"id": "i0",
+								"title": "",
+								"type": "input"
+							},
+							{
+								"id": "o0",
+								"title": "",
+								"type": "output"
+							}
+						],
+						"node": {
+							"type": "simple",
+							"title": "###BIZPROC_NODES_BITRIX_AI_BI_DASHBOARD_TITLE_7###",
+							"colorIndex": 2,
+							"frameColorName": null,
+							"frameTextAlign": null,
+							"frameSeparatorPosition": null,
+							"icon": "GO_TO_MESSAGE",
+							"updated": 1774604322469,
+							"published": 1774604322469
+						}
+					}
+				}
+			]
+		}
+	]
+}

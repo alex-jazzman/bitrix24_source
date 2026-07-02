@@ -5,6 +5,7 @@ export const MenuItemDesign = Object.freeze({
 	Alert: 'alert',
 	Copilot: 'copilot',
 	Disabled: 'disabled',
+	BitrixGPT: 'bitrix-gpt',
 });
 
 export const MenuSectionDesign = Object.freeze({

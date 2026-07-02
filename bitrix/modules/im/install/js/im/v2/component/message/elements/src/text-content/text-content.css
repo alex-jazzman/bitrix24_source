@@ -1,0 +1,11 @@
+.bx-im-message-text-content__container {
+	font: var(--im-font-size-lg)/20px var(--im-font-family-system);
+	color: var(--ui-color-base-1);
+	word-break: break-word;
+}
+
+.bx-im-message-text-content__container a {
+	text-decoration: none;
+	font-size: inherit;
+	color: #2067b0;
+}

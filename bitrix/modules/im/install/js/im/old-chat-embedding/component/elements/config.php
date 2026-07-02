@@ -9,10 +9,10 @@ return [
 	'js' => 'dist/registry.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
+		'im.old-chat-embedding.const',
 		'im.old-chat-embedding.lib.utils',
 		'ui.fonts.opensans',
 		'ui.vue3',
-		'im.old-chat-embedding.const',
 	],
 	'skip_core' => true,
 ];

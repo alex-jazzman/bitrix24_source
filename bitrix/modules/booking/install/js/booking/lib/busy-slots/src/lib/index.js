@@ -1,4 +1,5 @@
 import { BusySlot } from 'booking.const';
+import { cellService } from 'booking.lib.cell';
 import type { BookingModel, OverbookingMap } from 'booking.model.bookings';
 
 import type { BusySlotDto, Range } from '../types';
@@ -69,7 +70,7 @@ export function getIntersectionBusySlots({
 			if (fromTs <= overbookingIntersectionBusySlot.fromTs)
 			{
 				intersectionBusySlots.push({
-					id: `${resourceId}-${fromTs}-${overbookingIntersectionBusySlot.fromTs}`,
+					id: cellService.generateId(resourceId, fromTs, overbookingIntersectionBusySlot.fromTs),
 					fromTs,
 					toTs: overbookingIntersectionBusySlot.fromTs,
 					resourceId,
@@ -85,7 +86,7 @@ export function getIntersectionBusySlots({
 		if (fromTs !== toTs)
 		{
 			intersectionBusySlots.push({
-				id: `${resourceId}-${fromTs}-${toTs}`,
+				id: cellService.generateId(resourceId, fromTs, toTs),
 				fromTs,
 				toTs,
 				resourceId,

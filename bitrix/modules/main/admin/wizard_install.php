@@ -1,6 +1,11 @@
-<?
+<?php
 require_once(__DIR__."/../include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/classes/general/wizard.php");
+
+/**
+ * @global CMain $APPLICATION
+ * @global CUser $USER
+ */
 
 IncludeModuleLangFile(__FILE__);
 
@@ -12,7 +17,7 @@ elseif (!check_bitrix_sessid()):?>
 		<?=CAdminUtil::dumpVars($_POST, array("USER_LOGIN", "USER_PASSWORD", "sessid"));?>
 		<br><input type="submit" value="<?=GetMessage("MAIN_WIZARD_INSTALL_RELOAD_PAGE")?>">
 	</form>
-<?
+<?php
 else:
 
 	$arWizardNameTmp = explode(":", $_REQUEST["wizardName"]);

@@ -9,9 +9,9 @@ return [
 	'js' => 'dist/copilot-creation.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'im.v2.provider.service.sending',
-		'im.v2.component.message.base',
 		'im.v2.component.elements.avatar',
+		'im.v2.component.message.base',
+		'im.v2.provider.service.sending',
 	],
 	'skip_core' => true,
 ];

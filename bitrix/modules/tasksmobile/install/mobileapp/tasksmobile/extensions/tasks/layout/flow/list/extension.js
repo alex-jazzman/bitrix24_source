@@ -208,7 +208,9 @@ jn.define('tasks/layout/flow/list', (require, exports, module) => {
 
 		onTabSelected(eventData)
 		{
-			if (eventData?.tabId === 'tasks.flow.list')
+			const { tabId = '', changed = false } = eventData || {};
+
+			if (changed && tabId === 'tasks.flow.list')
 			{
 				new AnalyticsEvent({
 					tool: 'tasks',

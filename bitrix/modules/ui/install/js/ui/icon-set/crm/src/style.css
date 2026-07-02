@@ -1,0 +1,363 @@
+.ui-icon-set,
+.ui-icon-set__scope {
+	--ui-icon-set__path_send-contact: url('images/send-contact.svg');
+	--ui-icon-set__path_book-open: url('images/book-open.svg');
+	--ui-icon-set__path_funnel-1: url('images/funnel-1.svg');
+	--ui-icon-set__path_crm-search: url('images/crm-search.svg');
+	--ui-icon-set__path_refresh-9: url('images/refresh-9.svg');
+	--ui-icon-set__path_check-in-box: url('images/check-in-box.svg');
+	--ui-icon-set__path_arrows-meet: url('images/arrows-meet.svg');
+	--ui-icon-set__path_chat-line: url('images/chat-line.svg');
+	--ui-icon-set__path_commercial-offer: url('images/commercial-offer.svg');
+	--ui-icon-set__path_funnels: url('images/funnels.svg');
+	--ui-icon-set__path_item: url('images/item.svg');
+	--ui-icon-set__path_proposal-settings: url('images/proposal-settings.svg');
+	--ui-icon-set__path_proposal-done: url('images/proposal-done.svg');
+	--ui-icon-set__path_proposal: url('images/proposal.svg');
+	--ui-icon-set__path_crm-group: url('images/crm-group.svg');
+	--ui-icon-set__path_contact: url('images/contact.svg');
+	--ui-icon-set__path_lead: url('images/lead.svg');
+	--ui-icon-set__path_invoice: url('images/invoice.svg');
+	--ui-icon-set__path_stages: url('images/stages.svg');
+	--ui-icon-set__path_exclusion-list: url('images/exclusion-list.svg');
+	--ui-icon-set__path_open-channels: url('images/open-channels.svg');
+	--ui-icon-set__path_approved-list: url('images/approved-list.svg');
+	--ui-icon-set__path_copy-file: url('images/copy-file.svg');
+	--ui-icon-set__path_gird: url('images/gird.svg');
+	--ui-icon-set__path_funnel-2: url('images/funnel-2.svg');
+	--ui-icon-set__path_stage: url('images/stage.svg');
+	--ui-icon-set__path_customer-card: url('images/customer-card.svg');
+	--ui-icon-set__path_smart-activities: url('images/smart-activities.svg');
+	--ui-icon-set__path_add-from-adressbook: url('images/add-from-adressbook.svg');
+	--ui-icon-set__path_add-file: url('images/add-file.svg');
+	--ui-icon-set__path_receive-payment-settings: url('images/receive-payment-settings.svg');
+	--ui-icon-set__path_timeline: url('images/timeline.svg');
+	--ui-icon-set__path_form-settings: url('images/form-settings.svg');
+	--ui-icon-set__path_customer-cards: url('images/customer-cards.svg');
+	--ui-icon-set__path_shop-list: url('images/shop-list.svg');
+	--ui-icon-set__path_shop-seen: url('images/shop-seen.svg');
+	--ui-icon-set__path_add-from-crm: url('images/add-from-crm.svg');
+	--ui-icon-set__path_payment-and-delivery: url('images/payment-and-delivery.svg');
+	--ui-icon-set__path_smart-sort: url('images/smart-sort.svg');
+	--ui-icon-set__path_cart-text: url('images/cart-text.svg');
+	--ui-icon-set__path_cart: url('images/cart.svg');
+	--ui-icon-set__path_cart-image: url('images/cart-image.svg');
+	--ui-icon-set__path_comment-plus: url('images/comment-plus.svg');
+	--ui-icon-set__path_deal-1: url('images/deal-1.svg');
+	--ui-icon-set__path_deal-plus-1: url('images/deal-plus-1.svg');
+	--ui-icon-set__path_timeline-plus: url('images/timeline-plus.svg');
+	--ui-icon-set__path_plus-based-on: url('images/plus-based-on.svg');
+	--ui-icon-set__path_deal: url('images/deal.svg');
+	--ui-icon-set__path_deal-plus: url('images/deal-plus.svg');
+	--ui-icon-set__path_customer-card-1: url('images/customer-card-1.svg');
+	--ui-icon-set__path_person-plus-2: url('images/person-plus-2.svg');
+	--ui-icon-set__path_city-plus: url('images/city-plus.svg');
+	--ui-icon-set__path_customer-card-plus: url('images/customer-card-plus.svg');
+	--ui-icon-set__path_chat-1: url('images/chat-1.svg');
+	--ui-icon-set__path_dialogue-1: url('images/dialogue-1.svg');
+	--ui-icon-set__path_form: url('images/form.svg');
+	--ui-icon-set__path_wallet: url('images/wallet.svg');
+	--ui-icon-set__path_taxi: url('images/taxi.svg');
+	--ui-icon-set__path_reduce: url('images/reduce.svg');
+	--ui-icon-set__path_dialogue: url('images/dialogue.svg');
+	--ui-icon-set__path_delivery-car: url('images/delivery-car.svg');
+	--ui-icon-set__path_car: url('images/car.svg');
+	--ui-icon-set__path_crm-payment: url('images/crm-payment.svg');
+	--ui-icon-set__path_send-file: url('images/send-file.svg');
+	--ui-icon-set__path_bitrix-1c: url('images/bitrix-1c.svg');
+	--ui-icon-set__path_company: url('images/company.svg');
+	--ui-icon-set__path_choose: url('images/choose.svg');
+	--ui-icon-set__path_business-process: url('images/business-process.svg');
+	--ui-icon-set__path_interconnection: url('images/interconnection.svg');
+	--ui-icon-set__path_insert: url('images/insert.svg');
+	--ui-icon-set__path_crm-letters: url('images/crm-letters.svg');
+	--ui-icon-set__path_crm-map: url('images/crm-map.svg');
+}
+
+.ui-icon-set.--send-contact {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_send-contact);
+}
+
+.ui-icon-set.--book-open {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_book-open);
+}
+
+.ui-icon-set.--funnel-1 {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_funnel-1);
+}
+
+.ui-icon-set.--crm-search {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_crm-search);
+}
+
+.ui-icon-set.--refresh-9 {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_refresh-9);
+}
+
+.ui-icon-set.--check-in-box {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_check-in-box);
+}
+
+.ui-icon-set.--arrows-meet {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_arrows-meet);
+}
+
+.ui-icon-set.--chat-line {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_chat-line);
+}
+
+.ui-icon-set.--commercial-offer {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_commercial-offer);
+}
+
+.ui-icon-set.--funnels {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_funnels);
+}
+
+.ui-icon-set.--item {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_item);
+}
+
+.ui-icon-set.--proposal-settings {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_proposal-settings);
+}
+
+.ui-icon-set.--proposal-done {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_proposal-done);
+}
+
+.ui-icon-set.--proposal {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_proposal);
+}
+
+.ui-icon-set.--crm-group {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_crm-group);
+}
+
+.ui-icon-set.--contact {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_contact);
+}
+
+.ui-icon-set.--lead {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_lead);
+}
+
+.ui-icon-set.--invoice {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_invoice);
+}
+
+.ui-icon-set.--stages {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_stages);
+}
+
+.ui-icon-set.--exclusion-list {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_exclusion-list);
+}
+
+.ui-icon-set.--open-channels {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_open-channels);
+}
+
+.ui-icon-set.--approved-list {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_approved-list);
+}
+
+.ui-icon-set.--copy-file {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_copy-file);
+}
+
+.ui-icon-set.--gird {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_gird);
+}
+
+.ui-icon-set.--funnel-2 {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_funnel-2);
+}
+
+.ui-icon-set.--stage {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_stage);
+}
+
+.ui-icon-set.--customer-card {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_customer-card);
+}
+
+.ui-icon-set.--smart-activities {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_smart-activities);
+}
+
+.ui-icon-set.--add-from-adressbook {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_add-from-adressbook);
+}
+
+.ui-icon-set.--add-file {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_add-file);
+}
+
+.ui-icon-set.--receive-payment-settings {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_receive-payment-settings);
+}
+
+.ui-icon-set.--timeline {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_timeline);
+}
+
+.ui-icon-set.--form-settings {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_form-settings);
+}
+
+.ui-icon-set.--customer-cards {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_customer-cards);
+}
+
+.ui-icon-set.--shop-list {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_shop-list);
+}
+
+.ui-icon-set.--shop-seen {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_shop-seen);
+}
+
+.ui-icon-set.--add-from-crm {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_add-from-crm);
+}
+
+.ui-icon-set.--payment-and-delivery {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_payment-and-delivery);
+}
+
+.ui-icon-set.--smart-sort {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_smart-sort);
+}
+
+.ui-icon-set.--cart-text {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_cart-text);
+}
+
+.ui-icon-set.--cart {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_cart);
+}
+
+.ui-icon-set.--cart-image {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_cart-image);
+}
+
+.ui-icon-set.--comment-plus {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_comment-plus);
+}
+
+.ui-icon-set.--deal-1 {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_deal-1);
+}
+
+.ui-icon-set.--deal-plus-1 {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_deal-plus-1);
+}
+
+.ui-icon-set.--timeline-plus {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_timeline-plus);
+}
+
+.ui-icon-set.--plus-based-on {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_plus-based-on);
+}
+
+.ui-icon-set.--deal {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_deal);
+}
+
+.ui-icon-set.--deal-plus {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_deal-plus);
+}
+
+.ui-icon-set.--customer-card-1 {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_customer-card-1);
+}
+
+.ui-icon-set.--person-plus-2 {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_person-plus-2);
+}
+
+.ui-icon-set.--city-plus {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_city-plus);
+}
+
+.ui-icon-set.--customer-card-plus {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_customer-card-plus);
+}
+
+.ui-icon-set.--chat-1 {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_chat-1);
+}
+
+.ui-icon-set.--dialogue-1 {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_dialogue-1);
+}
+
+.ui-icon-set.--form {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_form);
+}
+
+.ui-icon-set.--wallet {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_wallet);
+}
+
+.ui-icon-set.--taxi {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_taxi);
+}
+
+.ui-icon-set.--reduce {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_reduce);
+}
+
+.ui-icon-set.--dialogue {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_dialogue);
+}
+
+.ui-icon-set.--delivery-car {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_delivery-car);
+}
+
+.ui-icon-set.--car {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_car);
+}
+
+.ui-icon-set.--crm-payment {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_crm-payment);
+}
+
+.ui-icon-set.--send-file {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_send-file);
+}
+
+.ui-icon-set.--bitrix-1c {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_bitrix-1c);
+}
+
+.ui-icon-set.--company {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_company);
+}
+
+.ui-icon-set.--choose {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_choose);
+}
+
+.ui-icon-set.--business-process {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_business-process);
+}
+
+.ui-icon-set.--interconnection {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_interconnection);
+}
+
+.ui-icon-set.--insert {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_insert);
+}
+
+.ui-icon-set.--crm-letters {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_crm-letters);
+}
+
+.ui-icon-set.--crm-map {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_crm-map);
+}

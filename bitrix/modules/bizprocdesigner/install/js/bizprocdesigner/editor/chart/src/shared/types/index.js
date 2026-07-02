@@ -17,13 +17,14 @@ export type BlockDimensions = {
 
 export type PortId = string;
 
-export type PortTypes = 'input' | 'output' | 'aux' | 'topAux';
+export type PortTypes = 'input' | 'output' | 'aux' | 'topAux' | 'inputRelation' | 'outputRelation';
 
 export type Port = {
 	id: PortId;
 	position: number;
 	type: PortTypes;
 	title?: string;
+	isActive?: boolean;
 }
 
 export type Ports = {
@@ -38,6 +39,7 @@ export type BlockNode = {
 	type: string;
 	icon: string;
 	colorIndex: number;
+	shouldShowAuxPorts?: boolean;
 };
 
 export type BlockType = 'simple' | 'trigger' | 'complex' | 'frame';
@@ -163,3 +165,5 @@ export type SettingsControls = {
 	controls: Array;
 	useDocumentContext: boolean;
 }
+
+export type BlockFrameTextAlign = 'none' | 'top' | 'bottom' | 'left' | 'right';

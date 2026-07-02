@@ -3,6 +3,7 @@
  */
 jn.define('im/messenger/controller/selector/forward', (require, exports, module) => {
 	const { openDialogSelector } = require('im/messenger/controller/selector/dialog/opener');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { EventType } = require('im/messenger/const');
 	const { Loc } = require('im/messenger/loc');
@@ -26,9 +27,13 @@ jn.define('im/messenger/controller/selector/forward', (require, exports, module)
 		 * @param {Object} parentWidget
 		 * @returns {Promise}
 		 */
-		open({ parentWidget })
+		async open({ parentWidget })
 		{
-			return openDialogSelector({
+			const openSelector = Feature.isExternalChatMessageForwardingAvailable
+				? await this.#getForwardDialogSelector()
+				: openDialogSelector;
+
+			return openSelector({
 				title: Loc.getMessage('IMMOBILE_MESSENGER_FORWARD_SELECTOR_TITLE'),
 				providerOptions: {
 					withFavorite: true,
@@ -36,6 +41,16 @@ jn.define('im/messenger/controller/selector/forward', (require, exports, module)
 				onItemSelected: this.#onDialogSelected,
 				closeOnSelect: this.props.closeOnSelect ?? true,
 			}, parentWidget);
+		}
+
+		/**
+		 * @return {Promise<Function>}
+		 */
+		async #getForwardDialogSelector()
+		{
+			const { openForwardDialogSelector } = await requireLazy('im:messenger/controller/selector/forward/tabbed', true);
+
+			return openForwardDialogSelector;
 		}
 
 		/**

@@ -4,15 +4,19 @@
 jn.define('collab/create/src/permissions', (require, exports, module) => {
 	const { Box } = require('ui-system/layout/box');
 	const { AreaList } = require('ui-system/layout/area-list');
-	const { Color } = require('tokens');
 	const { Area } = require('ui-system/layout/area');
 	const { SettingSelectorList, SettingSelectorListItemDesign } = require('layout/ui/setting-selector-list');
 	const { UIMenu } = require('layout/ui/menu');
 	const { Loc } = require('loc');
 	const { Type } = require('type');
-	const { Icon } = require('assets/icons');
 	const { MemberSelector } = require('im/messenger/controller/selector/member');
 	const { showToast } = require('toast');
+	const {
+		PermissionValueType,
+		PermissionBooleanValueType,
+		buildRoleMenuItems,
+		buildBooleanMenuItems,
+	} = require('layout/socialnetwork/permission-menu');
 
 	const Permission = {
 		OWNER: 'owner',
@@ -21,17 +25,6 @@ jn.define('collab/create/src/permissions', (require, exports, module) => {
 		INVITERS: 'inviters',
 		ALLOW_GUESTS_INVITATION: 'allowGuestsInvitation',
 		MESSAGE_WRITERS: 'messageWriters',
-	};
-
-	const PermissionValueType = {
-		ALL: 'K',
-		OWNER_AND_MODERATORS: 'E',
-		OWNER: 'A',
-	};
-
-	const PermissionBooleanValueType = {
-		TRUE: 'Y',
-		FALSE: 'N',
 	};
 
 	/**
@@ -181,38 +174,6 @@ jn.define('collab/create/src/permissions', (require, exports, module) => {
 			});
 		};
 
-		#getPermissionValueTypesItemsForMenu(permissionKey)
-		{
-			return Object.keys(PermissionValueType).map((key) => ({
-				id: PermissionValueType[key],
-				testId: `${this.testId}-menu-item-${key.toLowerCase()}`,
-				title: Loc.getMessage(`M_COLLAB_PERMISSIONS_${key}`),
-				iconName: this.#getIconNameForMenu(PermissionValueType, key, permissionKey),
-				iconColor: Color.accentMainPrimary,
-				onItemSelected: (event, item) => {
-					this.setState({
-						[permissionKey]: item.id,
-					}, () => this.#callOnChange());
-				},
-			}));
-		}
-
-		#getPermissionBooleanValueTypesItemsForMenu(permissionKey)
-		{
-			return Object.keys(PermissionBooleanValueType).map((key) => ({
-				id: PermissionBooleanValueType[key],
-				testId: `${this.testId}-menu-item-${key.toLowerCase()}`,
-				title: Loc.getMessage(`M_COLLAB_PERMISSIONS_${key}`),
-				iconName: this.#getIconNameForMenu(PermissionBooleanValueType, key, permissionKey),
-				iconColor: Color.accentMainPrimary,
-				onItemSelected: (event, item) => {
-					this.setState({
-						[permissionKey]: item.id,
-					}, () => this.#callOnChange());
-				},
-			}));
-		}
-
 		#callOnChange = () => {
 			const {
 				owner,
@@ -230,13 +191,6 @@ jn.define('collab/create/src/permissions', (require, exports, module) => {
 				allowGuestsInvitation,
 				messageWriters,
 			});
-		};
-
-		#getIconNameForMenu = (targetEnum, permissionValueTypeKey, permissionKey) => {
-			const valueType = targetEnum[permissionValueTypeKey];
-			const currentValue = this.state[permissionKey];
-
-			return valueType === currentValue ? Icon.CHECK : null;
 		};
 
 		#getSubTitleByPermissionBooleanValueType = (valueType) => {
@@ -287,13 +241,13 @@ jn.define('collab/create/src/permissions', (require, exports, module) => {
 					this.#showModeratorsSelector();
 					break;
 				case Permission.SHOW_HISTORY:
-					this.showHistoryMenu = new UIMenu(this.#getPermissionBooleanValueTypesItemsForMenu(Permission.SHOW_HISTORY));
+					this.showHistoryMenu = new UIMenu(this.#buildBooleanMenuItems(Permission.SHOW_HISTORY));
 					this.showHistoryMenu.show({
 						target: this.settingsSelectorItemsRefsMap.get(Permission.SHOW_HISTORY).ref,
 					});
 					break;
 				case Permission.INVITERS:
-					this.invitersMenu = new UIMenu(this.#getPermissionValueTypesItemsForMenu(Permission.INVITERS));
+					this.invitersMenu = new UIMenu(this.#buildRoleMenuItems(Permission.INVITERS));
 					this.invitersMenu.show({
 						target: this.settingsSelectorItemsRefsMap.get(Permission.INVITERS).ref,
 					});
@@ -302,7 +256,7 @@ jn.define('collab/create/src/permissions', (require, exports, module) => {
 					if (canInviteCollabersInPortalSettings)
 					{
 						this.invitersMenu = new UIMenu(
-							this.#getPermissionBooleanValueTypesItemsForMenu(Permission.ALLOW_GUESTS_INVITATION),
+							this.#buildBooleanMenuItems(Permission.ALLOW_GUESTS_INVITATION),
 						);
 						this.invitersMenu.show({
 							target: this.settingsSelectorItemsRefsMap.get(Permission.ALLOW_GUESTS_INVITATION).ref,
@@ -319,7 +273,7 @@ jn.define('collab/create/src/permissions', (require, exports, module) => {
 					}
 					break;
 				case Permission.MESSAGE_WRITERS:
-					this.messageWritersMenu = new UIMenu(this.#getPermissionValueTypesItemsForMenu(Permission.MESSAGE_WRITERS));
+					this.messageWritersMenu = new UIMenu(this.#buildRoleMenuItems(Permission.MESSAGE_WRITERS));
 					this.messageWritersMenu.show({
 						target: this.settingsSelectorItemsRefsMap.get(Permission.MESSAGE_WRITERS).ref,
 					});
@@ -374,6 +328,34 @@ jn.define('collab/create/src/permissions', (require, exports, module) => {
 
 			moderatorSelector.open(this.props.layoutWidget);
 		};
+
+		#buildRoleMenuItems(permissionKey)
+		{
+			return buildRoleMenuItems({
+				currentValue: this.state[permissionKey],
+				getTitle: (key) => Loc.getMessage(`M_COLLAB_PERMISSIONS_${key}`),
+				getTestId: (key) => `${this.testId}-menu-item-${key.toLowerCase()}`,
+				onSelect: (value) => {
+					this.setState({
+						[permissionKey]: value,
+					}, () => this.#callOnChange());
+				},
+			});
+		}
+
+		#buildBooleanMenuItems(permissionKey)
+		{
+			return buildBooleanMenuItems({
+				currentValue: this.state[permissionKey],
+				getTitle: (key) => Loc.getMessage(`M_COLLAB_PERMISSIONS_${key}`),
+				getTestId: (key) => `${this.testId}-menu-item-${key.toLowerCase()}`,
+				onSelect: (value) => {
+					this.setState({
+						[permissionKey]: value,
+					}, () => this.#callOnChange());
+				},
+			});
+		}
 	}
 
 	module.exports = {

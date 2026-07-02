@@ -1,5 +1,6 @@
 import { Address, ControlMode, Format } from 'location.core';
 import { Extension, Loc } from 'main.core';
+import { Factory } from 'location.widget';
 
 export default {
 	props: {
@@ -21,7 +22,7 @@ export default {
 				return;
 			}
 
-			const widgetFactory = new BX.Location.Widget.Factory();
+			const widgetFactory = new Factory();
 
 			const format = new Format(JSON.parse(Loc.getMessage('CRM_ACTIVITY_TODO_ADDRESS_FORMAT')));
 			const address = new Address({

@@ -1,0 +1,21 @@
+.bx-im-ai-assistant-widget-layout__container{
+	display: flex;
+	position: relative;
+	height: 100%;
+	flex-direction: column;
+	justify-content: space-between;
+	align-items: stretch;
+}
+
+.bx-im-ai-assistant-widget-layout__content {
+	flex-grow: 1;
+}
+
+.bx-im-ai-assistant-widget-layout__panel-container {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	z-index: 90;
+}

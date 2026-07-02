@@ -1,5 +1,5 @@
-import { Dom, Tag, Type, Event, ajax, Loc, Text } from 'main.core';
-import { BaseEvent } from 'main.core.events';
+import { Dom, Tag, Type, Event, ajax, Loc } from 'main.core';
+import { type BaseEvent } from 'main.core.events';
 import { Loader } from 'main.loader';
 import { Dialog } from 'ui.entity-selector';
 import { ProviderShowcase } from 'ui.mail.provider-showcase';

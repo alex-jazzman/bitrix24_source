@@ -11,3 +11,4 @@ $MESS["CATALOG_STORE_DOCUMENT_ITEM_FIELD_STORE_FROM_FULL"] = "The ID of the ware
 $MESS["CATALOG_STORE_DOCUMENT_ITEM_FIELD_STORE_TO"] = "Destination warehouse";
 $MESS["CATALOG_STORE_DOCUMENT_ITEM_FIELD_STORE_TO_FULL"] = "The ID of the warehouse that received the products. Used with stock receipt, stock adjustment and stock transfer inventory objects.";
 $MESS["CATALOG_STORE_DOCUMENT_ITEM_TABLE"] = "Inventory object items";
+$MESS["CATALOG_STORE_DOCUMENT_ITEM_TABLE_DESCRIPTION_FULL"] = "Contains information about items in inventory objects.";

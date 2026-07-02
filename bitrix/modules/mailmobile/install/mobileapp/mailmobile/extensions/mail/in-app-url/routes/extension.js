@@ -2,6 +2,7 @@
  * @module mail/in-app-url/routes
  */
 jn.define('mail/in-app-url/routes', (require, exports, module) => {
+	const { Loc } = require('loc');
 
 	/**
 	 * @param {InAppUrl} inAppUrl
@@ -11,6 +12,8 @@ jn.define('mail/in-app-url/routes', (require, exports, module) => {
 			.name('mail:message:open');
 		inAppUrl.register('/mail/list/:threadId', eventOpenMailboxHandler)
 			.name('mail:mailbox:open');
+		inAppUrl.register('/mail/mailbox-list\\?CONNECTION_REQUESTS=Y', eventOpenConnectionRequestsHandler)
+			.name('mail:connectionRequests:open');
 	};
 
 	const eventOpenMessageHandler = ({ threadId, source }) => {
@@ -41,5 +44,23 @@ jn.define('mail/in-app-url/routes', (require, exports, module) => {
 				mailboxId,
 			},
 		});
+	};
+
+	const eventOpenConnectionRequestsHandler = async (_, { url }) => {
+		try
+		{
+			const { qrauth } = await requireLazy('qrauth/utils');
+
+			qrauth.open({
+				title: Loc.getMessage('MAIL_IN_APP_URL_CONNECTION_REQUESTS_QRAUTH_TITLE'),
+				hintText: Loc.getMessage('MAIL_IN_APP_URL_CONNECTION_REQUESTS_QRAUTH_HINT'),
+				redirectUrl: url,
+				showHint: true,
+			});
+		}
+		catch (error)
+		{
+			console.error('mail:connectionRequests:open error', error);
+		}
 	};
 });

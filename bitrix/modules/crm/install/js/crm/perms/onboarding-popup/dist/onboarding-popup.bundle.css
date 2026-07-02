@@ -30,8 +30,7 @@
 	line-height: 35px;
 	text-align: left;
 	text-underline-position: from-font;
-	-webkit-text-decoration-skip-ink: none;
-	        text-decoration-skip-ink: none;
+	text-decoration-skip-ink: none;
 	margin-bottom: 34px;
 }
 
@@ -65,8 +64,7 @@
 	line-height: 22px;
 	text-align: left;
 	text-underline-position: from-font;
-	-webkit-text-decoration-skip-ink: none;
-	        text-decoration-skip-ink: none;
+	text-decoration-skip-ink: none;
 }
 
 .crm-permissions-onboarding-popup__workflow-animation {
@@ -84,7 +82,7 @@
 }
 
 .crm-permissions-onboarding-popup .popup-window-close-icon:after {
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='10' height='10' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M8.665.621a.5.5 0 00-.707 0L5 3.58 2.042.62a.5.5 0 00-.707 0l-.713.714a.5.5 0 000 .707L3.58 5 .622 7.957a.5.5 0 000 .708l.713.713a.5.5 0 00.707 0L5 6.42l2.958 2.958a.5.5 0 00.707 0l.714-.714a.5.5 0 000-.707L6.42 5l2.957-2.958a.5.5 0 000-.707L8.665.62z' fill='%23fff'/%3E%3C/svg%3E");
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='none' viewBox='0 0 10 10'%3E%3Cpath fill='%23fff' d='M8.665.621a.5.5 0 0 0-.707 0L5 3.58 2.042.62a.5.5 0 0 0-.707 0l-.713.714a.5.5 0 0 0 0 .707L3.58 5 .622 7.957a.5.5 0 0 0 0 .708l.713.713a.5.5 0 0 0 .707 0L5 6.42l2.958 2.958a.5.5 0 0 0 .707 0l.714-.714a.5.5 0 0 0 0-.707L6.42 5l2.957-2.958a.5.5 0 0 0 0-.707z'/%3E%3C/svg%3E");
 }
 
 .crm-permissions-onboarding-popup .popup-window-close-icon:hover {

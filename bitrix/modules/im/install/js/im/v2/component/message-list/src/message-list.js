@@ -1,32 +1,30 @@
-import { BaseEvent } from 'main.core.events';
+import { type JsonObject } from 'main.core';
+import { type BaseEvent, type EventEmitter } from 'main.core.events';
 
+import { FadeAnimation } from 'im.v2.component.animation';
 import { ChatType, EventType, MessageComponent, ActionByRole } from 'im.v2.const';
-import { Utils } from 'im.v2.lib.utils';
+import { FeatureManager } from 'im.v2.lib.feature';
+import { MessageMenuManager } from 'im.v2.lib.menu';
+import { MessageComponentManager } from 'im.v2.lib.message-component';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { Quote } from 'im.v2.lib.quote';
-import { FadeAnimation } from 'im.v2.component.animation';
-import { FeatureManager } from 'im.v2.lib.feature';
-import { MessageComponentManager } from 'im.v2.lib.message-component';
-import { MessageMenuManager } from 'im.v2.lib.menu';
+import { Utils } from 'im.v2.lib.utils';
+import { type ImModelChat, type ImModelMessage, type ImModelUser } from 'im.v2.model';
 
-import { DialogStatus } from './components/dialog-status/dialog-status';
-import { DialogLoader } from './components/dialog-loader';
-import { DateGroup } from './components/block/date-group';
+import { AvatarMenu } from './classes/avatar-menu';
+import { CollectionManager, type DateGroupItem } from './classes/collection-manager/collection-manager';
+import { ObserverManager } from './classes/observer-manager';
 import { AuthorGroup } from './components/block/author-group';
-import { NewMessagesBlock } from './components/block/new-messages';
+import { DateGroup } from './components/block/date-group';
 import { MarkedMessagesBlock } from './components/block/marked-messages';
+import { NewMessagesBlock } from './components/block/new-messages';
+import { DialogLoader } from './components/dialog-loader';
+import { DialogStatus } from './components/dialog-status/dialog-status';
 import { EmptyState } from './components/empty-state';
 import { HistoryLimitBanner } from './components/history-limit-banner';
-import { AvatarMenu } from './classes/avatar-menu';
-import { ObserverManager } from './classes/observer-manager';
-import { CollectionManager, type DateGroupItem } from './classes/collection-manager/collection-manager';
 import { MessageComponents } from './utils/message-components';
 
 import './css/message-list.css';
-
-import type { JsonObject } from 'main.core';
-import type { EventEmitter } from 'main.core.events';
-import type { ImModelChat, ImModelMessage, ImModelUser } from 'im.v2.model';
 
 export { AvatarMenu } from './classes/avatar-menu';
 export { AuthorGroup } from './components/block/author-group';

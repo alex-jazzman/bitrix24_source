@@ -27,7 +27,7 @@ const ICON_COLORS = {
 
 // @vue/component
 export const RuleConstruction = {
-	name: 'rule-construction',
+	name: 'RuleConstruction',
 	components: { BIcon },
 	props:
 	{
@@ -122,19 +122,19 @@ export const RuleConstruction = {
 	template: `
 		<div
 			data-name="rule-construction"
-			class="rule-construction"
+			class="editor-chart-node-settings-rule-construction"
 			:class="constructionClassName"
 			:data-id="construction.id"
 			:data-rule-card-id="ruleCardId"
 		>
-			<div class="rule-construction__operator">
+			<div class="editor-chart-node-settings-rule-construction__operator">
 				<slot
 					v-if="isBooleanType"
 					name="booleanTypeSwitcher"
 				/>
 				<span
 					v-else
-					class="rule-construction__operator_label"
+					class="editor-chart-node-settings-rule-construction__operator_label"
 				>
 					{{ parsedMessage }}
 				</span>
@@ -143,36 +143,21 @@ export const RuleConstruction = {
 					name="addConstructionButton"
 				/>
 			</div>
-			<div class="rule-construction__content">
-				<div class="rule-construction__content_top">
+			<div class="editor-chart-node-settings-rule-construction__content">
+				<div class="editor-chart-node-settings-rule-construction__content_top">
 					<BIcon
 						:size="20"
 						:color="iconColor"
-						class="rule-construction__dnd-icon"
+						class="editor-chart-node-settings-rule-construction__dnd-icon"
 						name="drag-s"
 						draggable="true"
 					/>
-					<!--
-					<div
-						v-if="generalConstructionTypes[construction.type] === generalConstructionTypes.action"
-						class="rule-construction__content_mode"
-					>
-						<span
-							v-for="(label, mode) in constructionModes"
-							class="rule-construction__content_mode-text"
-							:class="{ '--selected': selectedMode === mode }"
-							@click="selectedMode = mode"
-						>
-							{{ label }}
-						</span>
-					</div>
-					-->
 					<slot
 						name="deleteConstructionButton"
 						:iconColor="iconColor"
 					/>
 				</div>
-				<div class="rule-construction__expression-form">
+				<div class="editor-chart-node-settings-rule-construction__expression-form">
 					<slot
 						:name="generalConstructionTypes[construction.type]"
 						:isExpertMode="isExpertMode"

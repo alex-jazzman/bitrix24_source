@@ -290,5 +290,5 @@
 }
 
 .format-table__orig_info_title {
-	color: var(--ui-color-palette-gray-60);
+	opacity: 0.7;
 }

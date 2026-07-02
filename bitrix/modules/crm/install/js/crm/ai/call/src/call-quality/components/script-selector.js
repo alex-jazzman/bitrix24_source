@@ -3,7 +3,7 @@ import { CallAssessmentSelector } from 'crm.copilot.call-assessment-selector';
 import { Router } from 'crm.router';
 import { DatetimeConverter } from 'crm.timeline.tools';
 import { Dom, Loc, Runtime } from 'main.core';
-import { BaseEvent } from 'main.core.events';
+import { type BaseEvent } from 'main.core.events';
 import { HtmlFormatter } from 'ui.bbcode.formatter.html-formatter';
 import { ScriptSelectorDisplayStrategy } from '../script-selector-display-strategy';
 import { ViewMode } from './common/view-mode';
@@ -44,12 +44,17 @@ export const ScriptSelector = {
 		},
 	},
 
+	callAssessmentSelector: null,
+	htmlFormatter: null,
 	data(): Object
 	{
-		return {
-			callAssessmentSelector: this.getCallAssessmentSelector(),
-			htmlFormatter: new HtmlFormatter(),
-		};
+		return {};
+	},
+
+	created(): void
+	{
+		this.callAssessmentSelector = this.getCallAssessmentSelector();
+		this.htmlFormatter = new HtmlFormatter();
 	},
 
 	methods: {

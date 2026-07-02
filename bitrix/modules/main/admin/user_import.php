@@ -315,7 +315,7 @@ $tabControl = new CAdminTabControl("tabControl", $arTabs, false, true);
 ?>
 
 <form method="post" enctype="multipart/form-data" action="<?=$APPLICATION->GetCurPage()?>" name="import_user_form">
-<?
+<?php
 $tabControl->Begin();
 $tabControl->BeginNextTab();
 if ($tabStep == 1):
@@ -323,12 +323,12 @@ if ($tabStep == 1):
 	<tr class="adm-detail-required-field">
 		<td class="adm-detail-valign-top" width="30%"><?=GetMessage("USER_IMPORT_FROM")?>:</td>
 		<td>
-			<input type="radio" name="dataSource" id="source-csv" value="csv"<?if($dataSource == "csv"):?> checked<?endif?>/><label for="source-csv"> <?=GetMessage("USER_IMPORT_FROM_CSV")?></label><br />
-			<input type="radio" name="dataSource" id="source-ldap" value="ldap"<?if($dataSource == "ldap"):?> checked<?endif?><?if(!$ldapExists):?> disabled="disabled"<?endif?>/><label for="source-ldap" <?if(!$ldapExists):?> disabled="true"<?endif?>> <?=GetMessage("USER_IMPORT_FROM_LDAP")?></label><?if(!$ldapExists):?> (<?=GetMessage("LDAP_MODULE_NOT_INSTALLED")?>)<?endif?><br />
-			<input type="radio" name="dataSource" id="source-1c" value="1c"<?if($dataSource == "1c"):?> checked<?endif?><?if(!$importFrom1C):?> disabled="disabled"<?endif?>/><label for="source-1c"<?if(!$importFrom1C):?> disabled="true"<?endif?>> <?=GetMessage("USER_IMPORT_FROM_1C")?></label><?if(!$importFrom1C):?> (<?=GetMessage("IMPORT_FROM_1C_REQ_NOTES")?>)<?endif?>
+			<input type="radio" name="dataSource" id="source-csv" value="csv"<?php if($dataSource == "csv"):?> checked<?php endif?>/><label for="source-csv"> <?=GetMessage("USER_IMPORT_FROM_CSV")?></label><br />
+			<input type="radio" name="dataSource" id="source-ldap" value="ldap"<?php if($dataSource == "ldap"):?> checked<?php endif?><?php if(!$ldapExists):?> disabled="disabled"<?php endif?>/><label for="source-ldap" <?php if(!$ldapExists):?> disabled="true"<?php endif?>> <?=GetMessage("USER_IMPORT_FROM_LDAP")?></label><?php if(!$ldapExists):?> (<?=GetMessage("LDAP_MODULE_NOT_INSTALLED")?>)<?php endif?><br />
+			<input type="radio" name="dataSource" id="source-1c" value="1c"<?php if($dataSource == "1c"):?> checked<?php endif?><?php if(!$importFrom1C):?> disabled="disabled"<?php endif?>/><label for="source-1c"<?php if(!$importFrom1C):?> disabled="true"<?php endif?>> <?=GetMessage("USER_IMPORT_FROM_1C")?></label><?php if(!$importFrom1C):?> (<?=GetMessage("IMPORT_FROM_1C_REQ_NOTES")?>)<?php endif?>
 		</td>
 	</tr>
-<?
+<?php
 endif;
 $tabControl->EndTab();
 $tabControl->BeginNextTab();
@@ -339,7 +339,7 @@ if ($tabStep == 2 && $dataSource == "csv"):
 		<td>
 			<input type="text" name="csvDataFile" size="30" value="<?=htmlspecialcharsbx($csvDataFile);?>">
 			<input type="button" value="<?=GetMessage("USER_IMPORT_OPEN_DIALOG")?>" onclick="SelectCSVFile()">
-			<?
+			<?php
 			CAdminFileDialog::ShowScript
 			(
 				array(
@@ -356,25 +356,25 @@ if ($tabStep == 2 && $dataSource == "csv"):
 				)
 			)
 			?>
-			<?if (is_file($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/admin/sample.csv")):?>
+			<?php if (is_file($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/admin/sample.csv")):?>
 				<a href="?getSample=csv"><?=GetMessage("USER_IMPORT_CSV_SAMPLE")?></a>
-			<?endif?>
+			<?php endif?>
 		</td>
 	</tr>
 	<tr>
 		<td></td>
-		<td><?echo BeginNote()?><?echo GetMessage("USER_IMPORT_UTF")?><?echo EndNote()?></td>
+		<td><?= BeginNote()?><?= GetMessage("USER_IMPORT_UTF")?><?= EndNote()?></td>
 	</tr>
 	<tr class="adm-detail-required-field">
 		<td class="adm-detail-valign-top"><?=GetMessage("USER_IMPORT_DELIMETER")?>:</td>
 		<td>
-			<input type="radio" name="delimeter" id="delimeter-semicolon" value="semicolon"<?if($delimeter == "semicolon"):?> checked<?endif?>/><label for="delimeter-semicolon"><?=GetMessage("USER_IMPORT_DELIMETER_SEMICOLON")?></label><br />
+			<input type="radio" name="delimeter" id="delimeter-semicolon" value="semicolon"<?php if($delimeter == "semicolon"):?> checked<?php endif?>/><label for="delimeter-semicolon"><?=GetMessage("USER_IMPORT_DELIMETER_SEMICOLON")?></label><br />
 
-			<input type="radio" name="delimeter" id="delimeter-comma" value="comma"<?if($delimeter == "comma"):?> checked<?endif?>/><label for="delimeter-comma"><?=GetMessage("USER_IMPORT_DELIMETER_COMMA")?></label><br />
+			<input type="radio" name="delimeter" id="delimeter-comma" value="comma"<?php if($delimeter == "comma"):?> checked<?php endif?>/><label for="delimeter-comma"><?=GetMessage("USER_IMPORT_DELIMETER_COMMA")?></label><br />
 
-			<input type="radio" name="delimeter" id="delimeter-tabulation" value="tabulation"<?if($delimeter == "tabulation"):?> checked<?endif?>/><label for="delimeter-tabulation"><?=GetMessage("USER_IMPORT_DELIMETER_TABULATION")?></label><br />
+			<input type="radio" name="delimeter" id="delimeter-tabulation" value="tabulation"<?php if($delimeter == "tabulation"):?> checked<?php endif?>/><label for="delimeter-tabulation"><?=GetMessage("USER_IMPORT_DELIMETER_TABULATION")?></label><br />
 
-			<input type="radio" name="delimeter" id="delimeter-space" value="space"<?if($delimeter == "space"):?> checked<?endif?>/><label for="delimeter-space"><?=GetMessage("USER_IMPORT_DELIMETER_SPACE")?></label><br />
+			<input type="radio" name="delimeter" id="delimeter-space" value="space"<?php if($delimeter == "space"):?> checked<?php endif?>/><label for="delimeter-space"><?=GetMessage("USER_IMPORT_DELIMETER_SPACE")?></label><br />
 		</td>
 	</tr>
 
@@ -382,11 +382,11 @@ if ($tabStep == 2 && $dataSource == "csv"):
 		<td class="adm-detail-valign-top"><?=GetMessage("USER_IMPORT_ATTTACH_GROUP")?>:</td>
 		<td>
 			<select name="userGroups[]" style="width:300px" size="7" multiple="multiple">
-			<?
+			<?php
 			$dbGroup = CGroup::GetList("name", "asc");
 			while ($arGroup = $dbGroup->GetNext()):?>
-				<option value="<?=$arGroup["ID"]?>"<?if (in_array($arGroup["ID"], $userGroups)):?> selected<?endif?>><?=$arGroup["NAME"]?></option>
-			<?endwhile?>
+				<option value="<?=$arGroup["ID"]?>"<?php if (in_array($arGroup["ID"], $userGroups)):?> selected<?php endif?>><?=$arGroup["NAME"]?></option>
+			<?php endwhile?>
 			</select>
 		</td>
 	</tr>
@@ -395,7 +395,7 @@ if ($tabStep == 2 && $dataSource == "csv"):
 		<td><?=GetMessage("USER_IMPORT_IMAGE_PATH")?>:</td>
 		<td><input type="text" name="pathToImages" size="30" value="<?=htmlspecialcharsbx($pathToImages)?>">
 		<input type="button" value="<?=GetMessage("USER_IMPORT_OPEN_DIALOG")?>" onclick="SelectImagePath()">
-		<?
+		<?php
 		CAdminFileDialog::ShowScript
 		(
 			array(
@@ -413,7 +413,7 @@ if ($tabStep == 2 && $dataSource == "csv"):
 			?>
 		</td>
 	</tr>
-<?
+<?php
 if(CModule::IncludeModule("iblock")):
 ?>
 	<tr>
@@ -421,66 +421,66 @@ if(CModule::IncludeModule("iblock")):
 		<td>
 			<select name="attachIBlockID" style="width:300px">
 				<option value="0"><?=GetMessage("USER_IMPORT_SELECT_IBLOCK")?></option>
-			<?
+			<?php
 			$dbIBlock = CIBlock::GetList(array("NAME" => "ASC", "ID" => "DESC"), array());
 			while ($arIBlock = $dbIBlock->GetNext()):?>
-				<option value="<?=$arIBlock["ID"]?>"<?if ($attachIBlockID == $arIBlock["ID"]):?> selected<?endif?>><?=$arIBlock["NAME"]?></option>
-			<?endwhile?>
+				<option value="<?=$arIBlock["ID"]?>"<?php if ($attachIBlockID == $arIBlock["ID"]):?> selected<?php endif?>><?=$arIBlock["NAME"]?></option>
+			<?php endwhile?>
 			</select>
 		</td>
 	</tr>
-<?endif?>
-	<?if ($ldapExists):?>
+<?php endif?>
+	<?php if ($ldapExists):?>
 	<tr>
 		<td><?=GetMessage("USER_IMPORT_ALLOW_LDAP_AUTH")?>:</td>
 		<td>
 			<select name="ldapServer" onchange="OnLdapServerChange(this)">
 				<option value="0"><?=GetMessage("USER_IMPORT_SELECT_FROM_LIST")?></option>
-			<?
+			<?php
 			$dbLdap = CLdapServer::GetList(array("NAME" => "ASC"), array("ACTIVE" => "Y"));
 			while ($arLdap = $dbLdap->GetNext()):?>
-				<option value="<?=$arLdap["ID"]?>"<?if ($ldapServer == $arLdap["ID"]):?> selected<?endif?>><?=$arLdap["NAME"]?></option>
-			<?endwhile?>
+				<option value="<?=$arLdap["ID"]?>"<?php if ($ldapServer == $arLdap["ID"]):?> selected<?php endif?>><?=$arLdap["NAME"]?></option>
+			<?php endwhile?>
 			</select>
 			&nbsp;<a href="/bitrix/admin/ldap_server_edit.php?lang=<?=LANGUAGE_ID?>"><?=GetMessage("USER_IMPORT_NEW_LDAP_SERVER")?></a>
 		</td>
 	</tr>
-	<?endif?>
+	<?php endif?>
 
-	<?if ($ldapExists):?>
-	<tr<?if ($ldapServer < 1):?> style="display:none;"<?endif?> id="eventLdapRow">
+	<?php if ($ldapExists):?>
+	<tr<?php if ($ldapServer < 1):?> style="display:none;"<?php endif?> id="eventLdapRow">
 		<td class="adm-detail-valign-top"></td>
 		<td>
 			<input type="checkbox" checked="checked" disabled="disabled" /> <label disabled="true"><?=GetMessage("USER_IMPORT_SEND_MAIL")?></label>
 			<br />
 			<label for="eventLdapLangID" id="eventLdapLangLabel"><?=GetMessage("USER_IMPORT_EMAIL_TEMPLATE1")?>:</label>
-			<select id="eventLdapLangID" name="eventLdapLangID" style="width:300px;" <?if ($ldapServer < 1):?>disabled="disabled"<?endif?>>
-			<?
+			<select id="eventLdapLangID" name="eventLdapLangID" style="width:300px;" <?php if ($ldapServer < 1):?>disabled="disabled"<?php endif?>>
+			<?php
 			$dbSites = CSite::GetList("name", "asc");
 			while ($arSite = $dbSites->Fetch()):
 			?>
-					<option value="<?=htmlspecialcharsbx($arSite["LID"])?>" <?if ($eventLdapLangID == $arSite["LID"]):?> selected<?endif?>><?=htmlspecialcharsbx($arSite["NAME"])?> (<?=htmlspecialcharsbx($arSite["LID"])?>)</option>
-			<?
+					<option value="<?=htmlspecialcharsbx($arSite["LID"])?>" <?php if ($eventLdapLangID == $arSite["LID"]):?> selected<?php endif?>><?=htmlspecialcharsbx($arSite["NAME"])?> (<?=htmlspecialcharsbx($arSite["LID"])?>)</option>
+			<?php
 			endwhile;
 			?>
 			</select><br />
 		</td>
 	</tr>
-	<?endif?>
+	<?php endif?>
 
-	<tr<?if ($ldapServer > 1):?> style="display:none;"<?endif?> id="eventRow">
+	<tr<?php if ($ldapServer > 1):?> style="display:none;"<?php endif?> id="eventRow">
 		<td class="adm-detail-valign-top"></td>
 		<td>
-			<input type="checkbox" name="sendEmail" id="send-email" onclick="OnSendEmail(this.checked)" value="Y"<?if($sendEmail == "Y"):?> checked<?endif?>/> <label id="sendEmailLabel" for="send-email"><?=GetMessage("USER_IMPORT_SEND_MAIL")?></label>
+			<input type="checkbox" name="sendEmail" id="send-email" onclick="OnSendEmail(this.checked)" value="Y"<?php if($sendEmail == "Y"):?> checked<?php endif?>/> <label id="sendEmailLabel" for="send-email"><?=GetMessage("USER_IMPORT_SEND_MAIL")?></label>
 			<br />
 			<label for="event-lang" id="eventLangLabel"><?=GetMessage("USER_IMPORT_EMAIL_TEMPLATE1")?>:</label>
 			<select id="event-lang" name="eventLangID" style="width:300px;">
-			<?
+			<?php
 			$dbSites = CSite::GetList("name", "asc");
 			while ($arSite = $dbSites->Fetch()):
 			?>
-					<option value="<?=htmlspecialcharsbx($arSite["LID"])?>" <?if ($eventLangID == $arSite["LID"]):?> selected<?endif?>><?=htmlspecialcharsbx($arSite["NAME"])?> (<?=htmlspecialcharsbx($arSite["LID"])?>)</option>
-			<?
+					<option value="<?=htmlspecialcharsbx($arSite["LID"])?>" <?php if ($eventLangID == $arSite["LID"]):?> selected<?php endif?>><?=htmlspecialcharsbx($arSite["NAME"])?> (<?=htmlspecialcharsbx($arSite["LID"])?>)</option>
+			<?php
 			endwhile;
 			?>
 			</select><br />
@@ -490,18 +490,18 @@ if(CModule::IncludeModule("iblock")):
 	<tr>
 		<td></td>
 		<td>
-			<input type="checkbox" name="ignoreDuplicate" id="ignore-duplicate" value="Y"<?if($ignoreDuplicate == "Y"):?> checked<?endif?>/> <label for="ignore-duplicate"><?=GetMessage("USER_IMPORT_IGNORE_DUPLICATE")?></label>
+			<input type="checkbox" name="ignoreDuplicate" id="ignore-duplicate" value="Y"<?php if($ignoreDuplicate == "Y"):?> checked<?php endif?>/> <label for="ignore-duplicate"><?=GetMessage("USER_IMPORT_IGNORE_DUPLICATE")?></label>
 		</td>
 	</tr>
 
-<?elseif ($tabStep == 2 && $dataSource == "ldap"):?>
+<?php elseif ($tabStep == 2 && $dataSource == "ldap"):?>
 
 	<tr class="adm-detail-required-field">
 		<td width="50%"><?=GetMessage("USER_IMPORT_LDAP_SERVER")?>:</td>
 		<td width="50%">
 			<select name="ldapServer" onChange="OnLdapSelect(this.selectedIndex - 1);">
 				<option value="0"><?=GetMessage("USER_IMPORT_SELECT_FROM_LIST")?></option>
-			<?
+			<?php
 			$arAllFields = CLdapUtil::GetSynFields(); // all user fields that are currently set up in the system
 
 			$arFieldMaps = array();
@@ -520,11 +520,11 @@ if(CModule::IncludeModule("iblock")):
 				}
 				$arFieldMaps[] = $map;
 				?>
-				<option value="<?=$arLdap["ID"]?>"<?if ($ldapServer == $arLdap["ID"]): $indSelected = $i;?> selected<?endif?>><?=$arLdap["NAME"]?></option>
-			<?endwhile?>
+				<option value="<?=$arLdap["ID"]?>"<?php if ($ldapServer == $arLdap["ID"]): $indSelected = $i;?> selected<?php endif?>><?=$arLdap["NAME"]?></option>
+			<?php endwhile?>
 			</select>
 			<script>
-				<?
+				<?php
 				$arMapFields = array();
 
 				foreach($arAllFields as $field=>$arFieldParams)
@@ -610,29 +610,29 @@ if(CModule::IncludeModule("iblock")):
 						}
 					}
 					if(res.length>0)
-						definedfields.innerHTML = '<table id="chb"><tr><td><input type="checkbox" id="eall" onclick="Ch(this.checked)"></td><td><label for="eall"><?echo GetMessage("USER_IMPORT_ALL")?></label></td></tr>'+res+'</table>';
+						definedfields.innerHTML = '<table id="chb"><tr><td><input type="checkbox" id="eall" onclick="Ch(this.checked)"></td><td><label for="eall"><?= GetMessage("USER_IMPORT_ALL")?></label></td></tr>'+res+'</table>';
 				}
 				setTimeout('OnLdapSelect(<?=$indSelected?>);', 1);
 			</script>
-			&nbsp;<a href="/bitrix/admin/ldap_server_edit.php?lang=<?=LANGUAGE_ID?>&back_url=<?=urlencode('/bitrix/admin/user_import.php?lang='.$lang.'&dataSource=ldap&tabStep=2')?>"><?=GetMessage("USER_IMPORT_NEW_LDAP_SERVER")?></a>
+			&nbsp;<a href="/bitrix/admin/ldap_server_edit.php?lang=<?=LANGUAGE_ID?>&back_url=<?=urlencode('/bitrix/admin/user_import.php?lang='.LANGUAGE_ID.'&dataSource=ldap&tabStep=2')?>"><?=GetMessage("USER_IMPORT_NEW_LDAP_SERVER")?></a>
 		</td>
 	</tr>
 	<tr id="predef">
-		<td class="adm-detail-valign-top"><?echo GetMessage("USER_IMPORT_LDAP_IMP_DEF")?><br><?echo GetMessage("USER_IMPORT_LDAP_IMP_DEF_NOTE")?></td>
+		<td class="adm-detail-valign-top"><?= GetMessage("USER_IMPORT_LDAP_IMP_DEF")?><br><?= GetMessage("USER_IMPORT_LDAP_IMP_DEF_NOTE")?></td>
 		<td>
 			<div id="predefinedfields"></div>
 		</td>
 	</tr>
 	<tr id="def">
-		<td class="adm-detail-valign-top"><?echo GetMessage("USER_IMPORT_LDAP_IMP_ADD")?></td>
+		<td class="adm-detail-valign-top"><?= GetMessage("USER_IMPORT_LDAP_IMP_ADD")?></td>
 		<td>
 			<div id="definedfields"></div>
 		</td>
 	</tr>
-<?elseif ($tabStep == 2 && $dataSource == "1c"):?>
+<?php elseif ($tabStep == 2 && $dataSource == "1c"):?>
 	<tr>
 		<td></td>
-		<td><input type="checkbox" name="create1cUser" id="create-1c-user" value="Y"<?if($create1cUser == "Y"):?> checked<?endif?> onclick="EnableNewUserFields(this.checked)" /> <label for="create-1c-user"><?=GetMessage("USER_IMPORT_CREATE_1C_USER")?></label>
+		<td><input type="checkbox" name="create1cUser" id="create-1c-user" value="Y"<?php if($create1cUser == "Y"):?> checked<?php endif?> onclick="EnableNewUserFields(this.checked)" /> <label for="create-1c-user"><?=GetMessage("USER_IMPORT_CREATE_1C_USER")?></label>
 		</td>
 	</tr>
 	<tr class="adm-detail-required-field">
@@ -656,26 +656,26 @@ if(CModule::IncludeModule("iblock")):
 		<td class="adm-detail-valign-top"><label disabled="true" id="newUserGroupsLabel"><?=getMessage('USER_IMPORT_1C_USER_GROUP') ?>:</label></td>
 		<td>
 			<select name="newUserGroups[]" style="width: 300px; " size="7" multiple="multiple">
-				<? $groupRes = \CGroup::getList('name', 'asc'); ?>
-				<? while ($item = $groupRes->fetch()): ?>
+				<?php $groupRes = \CGroup::getList('name', 'asc'); ?>
+				<?php while ($item = $groupRes->fetch()): ?>
 					<option value="<?=intval($item['ID']) ?>"><?=htmlspecialcharsbx($item['NAME']) ?></option>
-				<? endwhile ?>
+				<?php endwhile ?>
 			</select>
 		</td>
 	</tr>
-<?endif;
+<?php endif;
 $tabControl->EndTab();
 $tabControl->BeginNextTab();
 if ($tabStep == 3):
 ?>
-	<?if ($dataSource == "csv"):?>
+	<?php if ($dataSource == "csv"):?>
 		<tr>
 			<td colspan="2"><div id="import_errors" style="color:red; margin:8px 0 8px 0;"></div>
 			<div id="importFinishedLabel" style="display:none; margin:8px 0 8px 0;"><b><?=GetMessage("USER_IMPORT_FINISHED")?></b></div>
 			<?=GetMessage("USER_IMPORT_USERS_COUNT")?>: <span id="cntExecuted">0</span></td>
 		</tr>
 
-	<?elseif ($dataSource == "ldap"):?>
+	<?php elseif ($dataSource == "ldap"):?>
 
 		<tr>
 			<td colspan="2">
@@ -684,15 +684,15 @@ if ($tabStep == 3):
 			<?=GetMessage("USER_IMPORT_USERS_COUNT")?>: <span id="cntExecuted">0</span></td>
 		</tr>
 
-	<?elseif ($dataSource == "1c"):?>
+	<?php elseif ($dataSource == "1c"):?>
 
 		<tr>
 			<td colspan="2"><?=GetMessage("USER_IMPORT_1C_HELP")?></td>
 		</tr>
 
-	<?endif?>
+	<?php endif?>
 
-<?
+<?php
 endif;
 $tabControl->EndTab();
 $tabControl->Buttons();
@@ -702,11 +702,11 @@ $tabControl->Buttons();
 <input type="hidden" name="lang" value="<?=LANGUAGE_ID?>" />
 <input type="hidden" name="position" id="action" value="0" />
 
-<?if ($tabStep != 1):?>
+<?php if ($tabStep != 1):?>
 	<input type="hidden" name="dataSource" value="<?=$dataSource?>" />
-<?endif?>
+<?php endif?>
 
-<?if ($tabStep != 2):?>
+<?php if ($tabStep != 2):?>
 	<input type="hidden" name="csvDataFile" value="<?=htmlspecialcharsbx($csvDataFile)?>" />
 	<input type="hidden" name="delimeter" value="<?=$delimeter?>" />
 	<input type="hidden" name="sendEmail" value="<?=$sendEmail?>" />
@@ -716,34 +716,34 @@ $tabControl->Buttons();
 	<input type="hidden" name="pathToImages" value="<?=htmlspecialcharsbx($pathToImages)?>" />
 	<input type="hidden" name="ldapServer" value="<?=$ldapServer?>" />
 	<input type="hidden" name="attachIBlockID" value="<?=$attachIBlockID?>" />
-	<?foreach ($userGroups as $groupID):?>
+	<?php foreach ($userGroups as $groupID):?>
 	<input type="hidden" name="userGroups[]" value="<?=intval($groupID)?>" />
-	<?endforeach?>
-<?endif?>
+	<?php endforeach?>
+<?php endif?>
 
-<?if(isset($_REQUEST["LDAPMAP"]) && is_array($_REQUEST["LDAPMAP"]) &&  $tabStep != 2):?>
-	<?foreach($_REQUEST["LDAPMAP"] as $map=>$y):?>
+<?php if(isset($_REQUEST["LDAPMAP"]) && is_array($_REQUEST["LDAPMAP"]) &&  $tabStep != 2):?>
+	<?php foreach($_REQUEST["LDAPMAP"] as $map=>$y):?>
 		<input type="hidden" name="LDAPMAP[<?=htmlspecialcharsbx($map)?>]" value="<?=htmlspecialcharsbx($y)?>" />
-	<?endforeach?>
-<?endif?>
+	<?php endforeach?>
+<?php endif?>
 
-<?if ($tabStep == 3):?>
+<?php if ($tabStep == 3):?>
 	<input type="hidden" name="action" id="action" value="import" />
-<?endif?>
+<?php endif?>
 
 <?=bitrix_sessid_post()?>
 
-<?if ($tabStep == 2):?>
+<?php if ($tabStep == 2):?>
 	<input type="submit" name="backButton" value="&lt; <?=GetMessage("USER_IMPORT_PREV_BUTTON")?>">
-<?elseif ($tabStep == 3): ?>
-	<input type="submit" name="backToStart" value="&lt; <?=GetMessage("USER_IMPORT_BACK_TO_START")?>" <?if ($dataSource == "csv" || $dataSource == "ldap"):?>disabled="disabled"<?endif?>>
-<?endif?>
+<?php elseif ($tabStep == 3): ?>
+	<input type="submit" name="backToStart" value="&lt; <?=GetMessage("USER_IMPORT_BACK_TO_START")?>" <?php if ($dataSource == "csv" || $dataSource == "ldap"):?>disabled="disabled"<?php endif?>>
+<?php endif?>
 
-<?if ($tabStep < 3):?>
+<?php if ($tabStep < 3):?>
 	<input type="submit" value="<?=GetMessage("USER_IMPORT_NEXT_BUTTON")?> &gt;" name="nextButton" class="adm-btn-save">
-<?endif?>
+<?php endif?>
 
-<?$tabControl->End();?>
+<?php $tabControl->End();?>
 </form>
 
 <iframe style="display:none;" id="progress" name="progress" src="javascript:''"></iframe>
@@ -891,30 +891,30 @@ function OnLdapServerChange(select)
 	}
 }
 
-<?if ($tabStep == 1):?>
+<?php if ($tabStep == 1):?>
 	tabControl.SelectTab("tabSource");
 	tabControl.DisableTab("tabSettings");
 	tabControl.DisableTab("tabResults");
-<?elseif ($tabStep == 2):?>
+<?php elseif ($tabStep == 2):?>
 	tabControl.SelectTab("tabSettings");
 	tabControl.DisableTab("tabSource");
 	tabControl.DisableTab("tabResults");
 
-	<?if ($dataSource == "csv"):?>
+	<?php if ($dataSource == "csv"):?>
 		OnSendEmail(<?=($sendEmail == "Y" ? "true" : "false")?>);
-	<?elseif($dataSource == "1c"):?>
+	<?php elseif($dataSource == "1c"):?>
 		EnableNewUserFields(<?=($create1cUser == "Y" ? "true" : "false")?>);
-	<?endif?>
+	<?php endif?>
 
-<?elseif ($tabStep == 3):?>
+<?php elseif ($tabStep == 3):?>
 	tabControl.SelectTab("tabResults");
 	tabControl.DisableTab("tabSource");
 	tabControl.DisableTab("tabSettings");
 
-	<?if ($dataSource == "csv" || $dataSource == "ldap"):?>
+	<?php if ($dataSource == "csv" || $dataSource == "ldap"):?>
 		jsUtils.addEvent(window, "load", function() {window.Start(0,0);});
-	<?endif?>
-<?endif;?>
+	<?php endif?>
+<?php endif;?>
 </script>
 
-<?require_once ($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin.php");?>
+<?php require_once ($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin.php");?>

@@ -1,8 +1,8 @@
 import BX from '../../core/test/old/core/internal/bootstrap';
-import Popup from '../src/popup/popup';
-import Menu from '../src/menu/menu';
-import MenuManager from '../src/menu/menu-manager';
-import PopupManager from '../src/popup/popup-manager';
+import { Popup } from '../src/popup/popup';
+import { Menu } from '../src/menu/menu';
+import { MenuManager } from '../src/menu/menu-manager';
+import { PopupManager } from '../src/popup/popup-manager';
 import { BaseEvent } from 'main.core.events';
 
 describe('BX.Main.Popup', () => {

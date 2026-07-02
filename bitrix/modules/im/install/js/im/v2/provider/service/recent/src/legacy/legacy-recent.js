@@ -14,11 +14,10 @@ export class LegacyRecentService
 	static instance = null;
 
 	dataIsPreloaded: boolean = false;
-	firstPageIsLoaded: boolean = false;
 	itemsPerPage: number = 50;
 	isLoading: boolean = false;
 	pagesLoaded: number = 0;
-	hasMoreItemsToLoad: boolean = true;
+	hasMoreItems: boolean = true;
 	lastMessageDate: string = null;
 
 	static getInstance(): LegacyRecentService
@@ -32,7 +31,7 @@ export class LegacyRecentService
 	}
 
 	// region public
-	async loadFirstPage({ ignorePreloadedItems = false } = {}): Promise
+	loadFirstPage({ ignorePreloadedItems = false } = {}): Promise
 	{
 		if (this.dataIsPreloaded && !ignorePreloadedItems)
 		{
@@ -42,15 +41,12 @@ export class LegacyRecentService
 		}
 		this.isLoading = true;
 
-		const result = await this.requestItems({ firstPage: true });
-		this.firstPageIsLoaded = true;
-
-		return result;
+		return this.requestItems({ firstPage: true });
 	}
 
 	loadNextPage(): Promise
 	{
-		if (this.isLoading || !this.hasMoreItemsToLoad)
+		if (this.isLoading || !this.hasMoreItems)
 		{
 			return Promise.resolve();
 		}
@@ -58,6 +54,11 @@ export class LegacyRecentService
 		this.isLoading = true;
 
 		return this.requestItems();
+	}
+
+	hasMoreItemsToLoad(): boolean
+	{
+		return this.hasMoreItems;
 	}
 
 	setPreloadedData(params)
@@ -69,7 +70,7 @@ export class LegacyRecentService
 
 		if (!hasMore)
 		{
-			this.hasMoreItemsToLoad = false;
+			this.hasMoreItems = false;
 		}
 
 		this.dataIsPreloaded = true;
@@ -115,7 +116,7 @@ export class LegacyRecentService
 		Logger.warn(`Im.RecentList: ${firstPage ? 'First' : this.pagesLoaded} page request result`, result.data());
 		const { items, hasMore } = result.data();
 		this.lastMessageDate = this.getLastMessageDate(items);
-		this.hasMoreItemsToLoad = hasMore;
+		this.hasMoreItems = hasMore;
 
 		this.isLoading = false;
 

@@ -29,6 +29,11 @@ jn.define('im/messenger/lib/element/recent/item/user/current', (require, exports
 			return false;
 		}
 
+		checkNeedsVacationIcon()
+		{
+			return false;
+		}
+
 		createTitle()
 		{
 			const item = this.getModelItem();

@@ -524,7 +524,7 @@ class LiveFeedAjaxController extends Controller
 		{
 			$this->sendJsonErrorResponse();
 		}
-		$documentType = BizprocDocument::generateDocumentComplexType(COption::GetOptionString("lists", "livefeed_iblock_type_id"), $this->iblockId);
+		$documentType = BizprocDocument::generateDocumentComplexType($this->iblockTypeId, $this->iblockId);
 		$templateLoader = CBPWorkflowTemplateLoader::GetLoader();
 		$templateQuery = $templateLoader->getTemplatesList(
 			array('ID' => 'DESC'),
@@ -703,9 +703,9 @@ class LiveFeedAjaxController extends Controller
 			$this->sendJsonErrorResponse();
 		}
 
-		$documentType = BizprocDocument::generateDocumentComplexType(COption::GetOptionString("lists", "livefeed_iblock_type_id"), $this->iblockId);
+		$documentType = BizprocDocument::generateDocumentComplexType($this->iblockTypeId, $this->iblockId);
 
-		$templateIdString = $_POST['TEMPLATE_ID'];
+		$templateIdString = $_POST['TEMPLATE_ID'] ?? null;
 		$templateData = explode(',', $templateIdString);
 
 		if(!empty($templateData))
@@ -844,7 +844,6 @@ class LiveFeedAjaxController extends Controller
 								}
 								$props[$field["ID"]][$key] = doubleval($value);
 							}
-
 						}
 						else
 						{
@@ -890,6 +889,25 @@ class LiveFeedAjaxController extends Controller
 						}
 					}
 				}
+			}
+			elseif (isset($field['PROPERTY_USER_TYPE']['USER_TYPE']) && $field['PROPERTY_USER_TYPE']['USER_TYPE'] === 'ECrm')
+			{
+				$crmPropertyValidator = new \Bitrix\Lists\Internal\Integration\Crm\Validator\CrmPropertyValidator(
+					$field,
+					(int)(int)$this->getUser()->GetID()
+				);
+				$isValidCrmProperty = $crmPropertyValidator->validate($_POST[$fieldId] ?? null);
+				$_POST[$fieldId] = $crmPropertyValidator->getFilteredValue() ?? '';
+				if (!$isValidCrmProperty)
+				{
+					$this->errorCollection->add([
+						new Error(Loc::getMessage('LISTS_IS_VALIDATE_FIELD_ERROR', ['#NAME#' => $field['NAME']])
+						),
+					]);
+					$this->sendJsonErrorResponse();
+				}
+
+				$props[$field['ID']] = $_POST[$fieldId] ?? '';
 			}
 			else
 			{
@@ -946,40 +964,32 @@ class LiveFeedAjaxController extends Controller
 
 		if($idElement)
 		{
-			foreach($documentStates as $documentState)
+			$startDuration = $_POST['timeToStart'] ?? null;
+			if (is_numeric($startDuration) && (int)$startDuration > 0)
 			{
-				if($documentState["ID"] == '')
-				{
-					$startDuration = $_POST['timeToStart'] ?? null;
-					if (is_numeric($startDuration))
-					{
-						$startDuration = (int)$startDuration;
-					}
-					else
-					{
-						$startDuration = null;
-					}
-
-					$currentUserId = Main\Engine\CurrentUser::get()->getId();
-					$startWorkflowRequest = new \Bitrix\Bizproc\Api\Request\WorkflowService\StartWorkflowRequest(
-						userId: $this->getUser()->getId(),
-						targetUserId: $this->getUser()->getId(),
-						templateId: $documentState['TEMPLATE_ID'],
-						complexDocumentId: ['lists', 'BizprocDocument', $idElement],
-						parameters: array_merge(
-							$bizprocParametersValues[$documentState['TEMPLATE_ID']],
-							[
-								CBPDocument::PARAM_TAGRET_USER => 'user_' . $currentUserId,
-							],
-						),
-						startDuration: $startDuration,
-					);
-					$workflowService = new \Bitrix\Bizproc\Api\Service\WorkflowService(
-						accessService: new \Bitrix\Lists\Api\Service\WorkflowAccessService(),
-					);
-					$workflowService->startWorkflow($startWorkflowRequest);
-				}
+				$startDuration = (int)$startDuration;
 			}
+			else
+			{
+				$startDuration = null;
+			}
+
+			$currentUserId = (int)$this->getUser()->GetID();
+			$workflowService = new \Bitrix\Lists\Api\Service\WorkflowService([
+				'IBLOCK_TYPE_ID' => $this->iblockTypeId,
+				'ID' => $this->iblockId,
+				'BIZPROC' => 'Y',
+			]);
+			$workflowService->startWorkflows(
+				new \Bitrix\Lists\Api\Request\WorkflowService\StartWorkflowsRequest(
+					$idElement,
+					$currentUserId,
+					$bizprocParametersValues,
+					[],
+					true,
+					$startDuration,
+				)
+			);
 
 			/*if(!empty($errorsTmp))
 			{
@@ -1883,7 +1893,7 @@ class LiveFeedAjaxController extends Controller
 							array('lists', 'BizprocDocument', $documentType),
 							$arParameter,
 							array("Form" => "start_workflow_form1", "Field" => $parameterKeyExt),
-							$parametersValues[$parameterKey],
+							$parametersValues[$parameterKey] ?? null,
 							false,
 							true
 						);

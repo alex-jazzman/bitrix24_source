@@ -1,70 +1,70 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Booking = this.BX.Booking || {};
-(function (exports,main_popup,booking_component_button,booking_component_popup) {
+(function (exports, booking_component_button, booking_component_popup) {
 	'use strict';
 
 	const StatisticsPopup = {
-	  emits: ['close'],
-	  props: {
-	    popupId: {
-	      type: String,
-	      required: true
-	    },
-	    bindElement: {
-	      type: HTMLElement,
-	      required: true
-	    },
-	    title: {
-	      type: String,
-	      required: true
-	    },
-	    rows: {
-	      type: Array,
-	      required: true
-	    },
-	    button: {
-	      type: Object,
-	      required: false
-	    },
-	    dataset: {
-	      type: Object,
-	      default: {}
-	    }
-	  },
-	  data() {
-	    return {
-	      ButtonSize: booking_component_button.ButtonSize,
-	      ButtonColor: booking_component_button.ButtonColor
-	    };
-	  },
-	  computed: {
-	    config() {
-	      return {
-	        bindElement: this.bindElement,
-	        minWidth: 200,
-	        offsetTop: 10,
-	        offsetLeft: this.bindElement.offsetWidth / 2,
-	        background: '#2878ca',
-	        padding: 13,
-	        angle: true,
-	        angleBorderRadius: '4px 0'
-	      };
-	    }
-	  },
-	  methods: {
-	    prepareDataset(dataset) {
-	      if (!dataset) {
-	        return {};
-	      }
-	      return Object.fromEntries(Object.entries(dataset).map(([key, value]) => [`data-${key.replaceAll(/([A-Z])/g, '-$1').toLowerCase()}`, value]));
-	    }
-	  },
-	  components: {
-	    Popup: booking_component_popup.Popup,
-	    Button: booking_component_button.Button
-	  },
-	  template: `
+		emits: ['close'],
+		props: {
+			popupId: {
+				type: String,
+				required: true
+			},
+			bindElement: {
+				type: HTMLElement,
+				required: true
+			},
+			title: {
+				type: String,
+				required: true
+			},
+			rows: {
+				type: Array,
+				required: true
+			},
+			button: {
+				type: Object,
+				required: false
+			},
+			dataset: {
+				type: Object,
+				default: {}
+			}
+		},
+		setup() {
+			return {
+				ButtonSize: booking_component_button.ButtonSize,
+				ButtonColor: booking_component_button.ButtonColor
+			};
+		},
+		computed: {
+			config() {
+				return {
+					bindElement: this.bindElement,
+					minWidth: 200,
+					offsetTop: 10,
+					offsetLeft: this.bindElement.offsetWidth / 2,
+					background: '#2878ca',
+					padding: 13,
+					angle: true,
+					angleBorderRadius: '4px 0'
+				};
+			}
+		},
+		methods: {
+			prepareDataset(dataset) {
+				if (!dataset) {
+					return {};
+				}
+				return Object.fromEntries(Object.entries(dataset).map(([key, value]) => [`data-${key.replaceAll(/([A-Z])/g, '-$1').toLowerCase()}`, value]));
+			}
+		},
+		components: {
+			Popup: booking_component_popup.Popup,
+			Button: booking_component_button.Button
+		},
+		template: `
 		<Popup
 			:id="popupId"
 			:config="config"
@@ -104,5 +104,5 @@ this.BX.Booking = this.BX.Booking || {};
 
 	exports.StatisticsPopup = StatisticsPopup;
 
-}((this.BX.Booking.Component = this.BX.Booking.Component || {}),BX.Main,BX.Booking.Component,BX.Booking.Component));
+})(this.BX.Booking.Component = this.BX.Booking.Component || {}, BX.Booking.Component, BX.Booking.Component);
 //# sourceMappingURL=statistics-popup.bundle.js.map

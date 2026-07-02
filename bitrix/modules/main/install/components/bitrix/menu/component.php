@@ -1,4 +1,4 @@
-<?
+<?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
 /**
@@ -6,6 +6,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 *
 * @var array $arResult
 * @var array $arParams
+* @var string $componentPath
 * @var CMain $APPLICATION
 * @var CUser $USER
 * @var CBitrixMenuComponent $this

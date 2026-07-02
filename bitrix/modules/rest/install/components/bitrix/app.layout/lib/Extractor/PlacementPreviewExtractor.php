@@ -18,35 +18,32 @@ class PlacementPreviewExtractor extends Extractor
 
 	public function __construct(array $params, protected Main\HttpRequest $request)
 	{
-		$this->enabled = isset($params['APP_VIEW']);
-
-		if ($this->enabled)
+		if (empty($params['APP_VIEW']))
 		{
-			$clientId = (string) $params['APP_VIEW'];
-			$appInfo = Rest\AppTable::getByClientId($clientId);
-
-			if (!empty($appInfo))
-			{
-				$this->appInfo = $appInfo;
-			}
+			return;
 		}
-		$this->enabled = $this->enabled && !empty($this->appInfo);
+
+		$appInfo = Rest\AppTable::getByClientId((string)$params['APP_VIEW']);
+		if (
+			!$appInfo
+			|| $appInfo['ACTIVE'] !== Rest\AppTable::ACTIVE
+			|| $appInfo['INSTALLED'] !== Rest\AppTable::INSTALLED
+		)
+		{
+			return;
+		}
+
+		$this->appInfo = $appInfo;
+		$this->enabled = true;
 	}
 
 	public function run(): array
 	{
-		$appInfo = $this->appInfo;
-
-		if ($appInfo['ACTIVE'] !== Rest\AppTable::ACTIVE || $appInfo['INSTALLED'] !== Rest\AppTable::INSTALLED)
-		{
-			return [];
-		}
-
 		$placement = Rest\PlacementTable::getList(
 			[
 				'filter' => [
 					'PLACEMENT' => \CRestUtil::PLACEMENT_APP_URI,
-					'APP_ID' => $appInfo['ID']
+					'APP_ID' => $this->appInfo['ID'],
 				],
 			]
 		)->fetch();

@@ -1,8 +1,7 @@
 import { Event } from 'main.core';
-import { MenuManager, Menu } from 'main.popup';
+import { MenuManager } from 'main.popup';
 import { BIcon as Icon } from 'ui.icon-set.api.vue';
 import { Model, NotificationChannel } from 'booking.const';
-import { ButtonSize, ButtonColor, ButtonIcon } from 'booking.component.button';
 import { mapGetters } from 'ui.vue3.vuex';
 
 import './channel-menu.css';
@@ -16,15 +15,15 @@ export const ChannelMenu = {
 			default: null,
 		},
 	},
-	data(): { menuPopup: Menu | null }
+	data(): { channel: string }
 	{
 		return {
-			ButtonSize,
-			ButtonColor,
-			ButtonIcon,
-			menuPopup: null,
 			channel: this.loc('BRCW_NOTIFICATION_CARD_MESSAGE_SELECT_WHA'),
 		};
+	},
+	created(): void
+	{
+		this.menuPopup = null;
 	},
 	computed: {
 		...mapGetters({

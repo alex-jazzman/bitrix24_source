@@ -1,5 +1,6 @@
 import {EventEmitter, BaseEvent} from "main.core.events";
 import {Runtime, ajax as Ajax} from "main.core";
+import 'ui.entity-editor';
 
 export class EntityEditorImage extends BX.UI.EntityEditorImage
 {

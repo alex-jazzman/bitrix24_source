@@ -10,6 +10,8 @@ jn.define('im/messenger/controller/recent/service/action/lib/handler', (require,
 	const { MessengerNotifier } = require('im/messenger/lib/ui/notification/messenger-notifier');
 	const { openDialog } = require('im/messenger/controller/recent/service/select/lib/opener');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { FolderCreate } = require('im/messenger/controller/folder/create');
+	const { FolderSelector } = require('im/messenger/controller/folder/selector');
 
 	const {
 		RecentRest,
@@ -57,6 +59,39 @@ jn.define('im/messenger/controller/recent/service/action/lib/handler', (require,
 		}
 
 		return clone(store.getters['counterModel/getByChatId'](dialog.chatId));
+	}
+
+	/**
+	 * Recent actions pass dialogId as itemId, while FolderService expects numeric chatId.
+	 *
+	 * @param {MessengerCoreStore} store
+	 * @param {string} itemId
+	 * @return {?number}
+	 */
+	function resolveChatIdForFolderSelector(store, itemId)
+	{
+		const dialog = store.getters['dialoguesModel/getById'](itemId);
+		if (Type.isNumber(dialog?.chatId))
+		{
+			return dialog.chatId;
+		}
+
+		const chatId = Number(itemId);
+		if (Number.isInteger(chatId) && chatId > 0)
+		{
+			return chatId;
+		}
+
+		return null;
+	}
+
+	/**
+	 * @param {MessengerCoreStore} store
+	 * @return {boolean}
+	 */
+	function hasPersonalFolders(store)
+	{
+		return store.getters['folderModel/getPersonalFolders']().length > 0;
 	}
 
 	/**
@@ -192,20 +227,26 @@ jn.define('im/messenger/controller/recent/service/action/lib/handler', (require,
 			}
 			const counterState = getCounterStateById(store, itemId);
 
+			const counterChatId = Type.isPlainObject(counterState)
+				? counterState.chatId
+				: getDialogById(store, itemId).chatId
+			;
+
 			await store.dispatch('recentModel/hideByNavigationTabs', {
 				id: recentItem.id,
 				fromTabs: [recentLocator.get('id')],
+				parentChatId: recentLocator.get('parentChatId'),
 			});
 			if (Type.isPlainObject(counterState))
 			{
-				await store.dispatch('counterModel/delete', { chatId: counterState?.chatId });
+				await store.dispatch('counterModel/delete', { chatIdList: [counterChatId] });
 			}
 			renderRecent(recentLocator);
 
 			try
 			{
 				await RecentRest.hideChat({ dialogId: recentItem.id });
-				await serviceLocator.get('counters-update-system').deleteCountersByChatIdList([counterState.chatId]);
+				await serviceLocator.get('counters-update-system').deleteCountersByChatIdList([counterChatId]);
 			}
 			catch (error)
 			{
@@ -213,6 +254,7 @@ jn.define('im/messenger/controller/recent/service/action/lib/handler', (require,
 				await store.dispatch('recentModel/setByNavigationTabs', {
 					tabs: [recentLocator.get('id')],
 					itemList: [recentItem],
+					parentChatId: recentLocator.get('parentChatId'),
 				});
 				if (Type.isPlainObject(counterState))
 				{
@@ -350,34 +392,40 @@ jn.define('im/messenger/controller/recent/service/action/lib/handler', (require,
 				return;
 			}
 
+			const dialog = getDialogById(store, itemId);
 			const counterState = getCounterStateById(store, itemId);
-			await store.dispatch('recentModel/update', [{ id: itemId, unread: true }]);
-			await store.dispatch('counterModel/setList', {
-				counterList: [{
-					...counterState,
-					isMarkedAsUnread: true,
-				}],
+			await store.dispatch('counterModel/setMarkedAsUnread', {
+				dialogId: itemId,
+				recentSection: recentLocator.get('recentSection'),
+				isMarkedAsUnread: true,
 			});
+
+			const updatedCounterState = getCounterStateById(store, itemId);
+			if (!updatedCounterState)
+			{
+				return;
+			}
+
+			await store.dispatch('recentModel/update', [{ id: itemId, unread: true }]);
 			renderRecent(recentLocator);
 
 			try
 			{
 				await RecentRest.unreadChat({ dialogId: itemId });
-				await serviceLocator.get('counters-update-system').updateCounterState({
-					...counterState,
-					isMarkedAsUnread: true,
-				});
+				await serviceLocator.get('counters-update-system').updateCounterState(updatedCounterState);
 			}
 			catch (error)
 			{
 				logger.error('handler recent item unread error: ', error?.error?.() ?? error?.message);
 				await store.dispatch('recentModel/update', [recentItem]);
-				await store.dispatch('counterModel/setList', {
-					counterList: [{
-						...counterState,
-						isMarkedAsUnread: false,
-					}],
-				});
+				if (counterState)
+				{
+					await store.dispatch('counterModel/setList', { counterList: [counterState] });
+				}
+				else if (Type.isNumber(dialog?.chatId))
+				{
+					await store.dispatch('counterModel/delete', { chatIdList: [dialog.chatId] });
+				}
 				renderRecent(recentLocator);
 			}
 		},
@@ -591,6 +639,33 @@ jn.define('im/messenger/controller/recent/service/action/lib/handler', (require,
 			{
 				logger.error('handler recent item operator finish error: ', error);
 			}
+		},
+
+		/**
+		 * @param {{store: MessengerCoreStore, logger: Logger, recentLocator: RecentLocator}} deps
+		 * @param {string} itemId
+		 * @returns {Promise<void>}
+		 */
+		addToFolder: async ({ store, logger }, itemId) => {
+			const chatId = resolveChatIdForFolderSelector(store, itemId);
+			if (!Type.isNumber(chatId))
+			{
+				logger.error('addToFolder: cannot resolve chatId', itemId);
+
+				return;
+			}
+
+			if (!hasPersonalFolders(store))
+			{
+				new FolderCreate({ initialChatIds: [itemId] }).openAsBottomSheet();
+
+				return;
+			}
+
+			FolderSelector.open({
+				chatId,
+				onComplete: () => {},
+			});
 		},
 	};
 

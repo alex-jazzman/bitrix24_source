@@ -19,6 +19,7 @@ jn.define('collab/invite', (require, exports, module) => {
 	const { CollabInviteAnalytics } = require('collab/invite/src/analytics');
 	const { NotifyManager } = require('notify-manager');
 	const { Feature } = require('feature');
+	const { checkFeatureFlag, FeatureFlagType } = require('feature-flag');
 
 	const TabType = {
 		GUESTS: 'guests',
@@ -62,6 +63,7 @@ jn.define('collab/invite', (require, exports, module) => {
 			{
 				await openGuestsInviteRestrictionsBox({
 					parentWidget: this.tabsWidget,
+					isProjectsV2Enabled: this.isProjectsV2Enabled === true,
 					onClose: () => {
 						this.tabsWidget.setActiveItem(TabType.EMPLOYEES);
 					},
@@ -74,6 +76,7 @@ jn.define('collab/invite', (require, exports, module) => {
 			{
 				await openCurrentCollabGuestsInviteRestrictionsBox({
 					parentWidget: this.tabsWidget,
+					isProjectsV2Enabled: this.isProjectsV2Enabled === true,
 					onClose: () => {
 						this.tabsWidget.setActiveItem(TabType.EMPLOYEES);
 					},
@@ -92,7 +95,9 @@ jn.define('collab/invite', (require, exports, module) => {
 			Haptics.impactLight();
 			Alert.confirm(
 				Loc.getMessage('COLLAB_INVITE_NAME_CHECKER_CLOSE_ALERT_TITLE'),
-				Loc.getMessage('COLLAB_INVITE_NAME_CHECKER_CLOSE_ALERT_DESCRIPTION'),
+				this.isProjectsV2Enabled
+					? Loc.getMessage('COLLAB_PROJECT_INVITE_NAME_CHECKER_CLOSE_ALERT_DESCRIPTION')
+					: Loc.getMessage('COLLAB_INVITE_NAME_CHECKER_CLOSE_ALERT_DESCRIPTION'),
 				[
 					{
 						type: ButtonType.DESTRUCTIVE,
@@ -120,6 +125,7 @@ jn.define('collab/invite', (require, exports, module) => {
 				layout,
 				boxLayout: this.tabsWidget,
 				...this.props,
+				isProjectsV2Enabled: this.isProjectsV2Enabled === true,
 				pending: !this.settings,
 				isBitrix24Included: this.settings?.isBitrix24Included ?? false,
 				analytics: this.analytics,
@@ -197,8 +203,6 @@ jn.define('collab/invite', (require, exports, module) => {
 		};
 
 		#getTabsData = () => {
-			const { canInviteCollabersInPortalSettings, allowGuestsInvitation } = this.settings;
-
 			const guestsTab = {
 				id: TabType.GUESTS,
 				title: Loc.getMessage('COLLAB_INVITE_TAB_GUESTS_TITLE'),
@@ -221,12 +225,8 @@ jn.define('collab/invite', (require, exports, module) => {
 				},
 			};
 
-			const items = (
-				!canInviteCollabersInPortalSettings || !allowGuestsInvitation
-			) && Feature.isSelectorWidgetOnViewHiddenEventBugFixed()
-				? [employeesTab, guestsTab]
-				: [guestsTab, employeesTab];
-			items[0].active = true;
+			const items = [employeesTab, guestsTab];
+			employeesTab.active = true;
 
 			return {
 				items,
@@ -234,6 +234,16 @@ jn.define('collab/invite', (require, exports, module) => {
 		};
 
 		open = async () => {
+			try
+			{
+				this.isProjectsV2Enabled = await checkFeatureFlag(FeatureFlagType.PROJECTS_V2);
+			}
+			catch (error)
+			{
+				console.error(error);
+				this.isProjectsV2Enabled = false;
+			}
+
 			await NotifyManager.showLoadingIndicator();
 			const response = await this.#fetchInviteSettings(this.props.collabId);
 			NotifyManager.hideLoadingIndicatorWithoutFallback();
@@ -254,7 +264,9 @@ jn.define('collab/invite', (require, exports, module) => {
 
 			const widgetParams = {
 				titleParams: {
-					text: Loc.getMessage('COLLAB_INVITE_TITLE'),
+					text: this.isProjectsV2Enabled
+						? Loc.getMessage('COLLAB_INVITE_PROJECT_TITLE')
+						: Loc.getMessage('COLLAB_INVITE_TITLE'),
 					type: 'dialog',
 				},
 				grabTitle: false,
@@ -288,7 +300,9 @@ jn.define('collab/invite', (require, exports, module) => {
 				Haptics.impactLight();
 				Alert.alert(
 					Loc.getMessage('COLLAB_INVITE_PERMISSIONS_ALERT_TITLE'),
-					Loc.getMessage('COLLAB_INVITE_PERMISSIONS_ALERT_DESCRIPTION'),
+					this.isProjectsV2Enabled
+						? Loc.getMessage('COLLAB_PROJECT_INVITE_PERMISSIONS_ALERT_DESCRIPTION')
+						: Loc.getMessage('COLLAB_INVITE_PERMISSIONS_ALERT_DESCRIPTION'),
 					resolve,
 					Loc.getMessage('COLLAB_INVITE_PERMISSIONS_ALERT_CONTINUE_BUTTON'),
 				);

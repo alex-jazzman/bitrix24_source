@@ -34,11 +34,20 @@ jn.define('im/messenger/controller/recent/service/pagination/common', (require, 
 		async onUiReady(ui)
 		{
 			this.logger.warn('onUiReady');
+			if (!ui)
+			{
+				// widget.nestedWidgets() may return null for recentId if the native
+				// nested widget isn't ready yet (race on a dynamically added tab).
+				// Without ui there's nothing to subscribe to.
+				this.logger.warn('onUiReady received null ui, skipping subscribe');
+
+				return;
+			}
+
 			/** @type {BaseList} */
 			this.ui = ui;
-			ui.on(RecentEventType.ui.onScroll, this.scrollHandler);
-			ui.on(RecentEventType.ui.itemWillDisplay, this.itemWillDisplayHandler);
-			ui.on(EventType.recent.refresh, this.refreshHandler);
+
+			this.subscribeEvents(ui);
 		}
 
 		/**
@@ -174,6 +183,27 @@ jn.define('im/messenger/controller/recent/service/pagination/common', (require, 
 				this.logger.error('Server load failed:', error);
 				this.state.markAsFailed(PaginationState.SERVER_SOURCE);
 			}
+		}
+
+		subscribeEvents(ui)
+		{
+			ui.on(RecentEventType.ui.onScroll, this.scrollHandler);
+			ui.on(RecentEventType.ui.itemWillDisplay, this.itemWillDisplayHandler);
+			ui.on(EventType.recent.refresh, this.refreshHandler);
+		}
+
+		unsubscribeEvents()
+		{
+			this.recentLocator.get('ui')
+				.then((ui) => {
+					ui?.off(RecentEventType.ui.onScroll, this.scrollHandler);
+					ui?.off(RecentEventType.ui.itemWillDisplay, this.itemWillDisplayHandler);
+					ui?.off(EventType.recent.refresh, this.refreshHandler);
+				})
+				.catch((error) => {
+					this.logger.error('unsubscribeEvents error', error);
+				})
+			;
 		}
 	}
 

@@ -50,6 +50,7 @@ export type {
 	CopilotRoleCode as ImModelCopilotRoleCode,
 	CopilotPrompt as ImModelCopilotPrompt,
 	CopilotAIModel as ImModelCopilotAIModel,
+	CopilotMcpAuth as ImModelCopilotMcpAuth,
 	AvatarSize as ImModelCopilotAvatarSize,
 } from './type/copilot';
 export type { SidebarMultidialogItem as ImModelSidebarMultidialogItem } from './type/sidebar/multidialog';

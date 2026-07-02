@@ -3,4 +3,6 @@ export * as commandToArray from './command-to-array';
 export * from './create-hook';
 export * from './slots';
 export * from './canvas';
-export * from './box-intersection';
+export * from './block-intersections';
+export * from './ports-nearest';
+export * from './blocks';

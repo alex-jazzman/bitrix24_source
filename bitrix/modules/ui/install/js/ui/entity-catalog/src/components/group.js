@@ -1,5 +1,5 @@
 import { Type } from 'main.core';
-import { GroupData } from '@/types/group';
+import { type GroupData } from '../types/group';
 import { CounterStyle } from 'ui.cnt';
 import { Counter } from 'ui.vue3.components.counter';
 
@@ -15,7 +15,6 @@ export const Group = {
 	props: {
 		/** @type GroupData */
 		groupData: {
-			type: GroupData,
 			required: true,
 		},
 	},

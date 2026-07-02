@@ -1,8 +1,8 @@
 import { Text, Type } from 'main.core';
-import { BaseEvent } from 'main.core.events';
+import type { BaseEvent } from 'main.core.events';
 import { Dialog } from 'ui.entity-selector';
 import { hint } from 'ui.vue3.directives.hint';
-import { Events } from './todo-editor';
+import { Events } from './events';
 
 export const TodoEditorResponsibleUserSelector = {
 	directives: { hint },

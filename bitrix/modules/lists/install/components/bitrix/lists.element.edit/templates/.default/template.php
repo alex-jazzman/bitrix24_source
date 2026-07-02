@@ -74,10 +74,6 @@ if(!IsModuleInstalled("intranet"))
 
 	$APPLICATION->SetAdditionalCSS("/bitrix/js/lists/css/intranet-common.css");
 }
-else
-{
-	\Bitrix\Main\UI\Extension::load(['intranet.old-interface.intranet-common']);
-}
 
 \Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
 \Bitrix\UI\Toolbar\Facade\Toolbar::addButton([
@@ -256,8 +252,8 @@ if (
 					foreach ($keys as $key)
 					{
 						$v = $bVarsFromForm
-							? $_REQUEST["bizproc" . $templateId . "_" . $key]
-							: $arWorkflowParameters[$key]["Default"]
+							? ($_REQUEST['bizproc' . $templateId . '_' . $key] ?? null)
+							: $arWorkflowParameters[$key]['Default']
 						;
 						if (!is_array($v))
 						{

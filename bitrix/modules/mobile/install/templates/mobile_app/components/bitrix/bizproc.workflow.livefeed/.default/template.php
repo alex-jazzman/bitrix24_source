@@ -64,7 +64,7 @@ foreach ($arResult['TASKS']['RUNNING'] as $task)
 					</a>
 				<?endforeach;
 			else:?>
-				<a href="/mobile/bp/detail.php?task_id=<?=$task['ID']?>" onclick="return BX.BizProcMobile.openTaskPage(<?=(int)$task['ID']?>)" class="webform-small-button bp-small-button webform-small-button-blue">
+				<a href="#" onclick="return BX.BizProcMobile.openTaskPage(<?=(int)$task['ID']?>)" class="webform-small-button bp-small-button webform-small-button-blue">
 					<span class="bp-button-text"><?=GetMessage("BPATL_BEGIN")?></span>
 				</a>
 			<?endif?>

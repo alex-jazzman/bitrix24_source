@@ -1,12 +1,13 @@
 import { Router } from 'crm.router';
 import { Type } from 'main.core';
 import { FeaturePromotersRegistry } from 'ui.info-helper';
-
-import { CopilotBase } from './ai/copilot-base';
-import type { CopilotConfig } from './ai/copilot-base';
-import ConfigurableItem from '../configurable-item';
-import { ActionParams } from './base';
 import { EditableDescriptionAiStatus } from '../components/enums/editable-description-ai-status';
+import ConfigurableItem from '../configurable-item';
+import 'crm_common';
+
+import type { CopilotConfig } from './ai/copilot-base';
+import { CopilotBase } from './ai/copilot-base';
+import { type ActionParams } from './base';
 
 export class RepeatSale extends CopilotBase
 {
@@ -55,12 +56,14 @@ export class RepeatSale extends CopilotBase
 			actionEndpoint: 'crm.timeline.repeatsale.launchCopilot',
 			validEntityTypes: [BX.CrmEntityType.enumeration.deal],
 			agreementContext: 'audio', // @todo!
-			onPreLaunch: this.handlePreLaunch.bind(this),
-			onError: this.handleError.bind(this),
+			onPreLaunch: (...args) => this.#handlePreLaunch(...args),
+			onError: (...args) => this.#handleError(...args),
 		};
 	}
+	// endregion
 
-	handlePreLaunch(item: ConfigurableItem, actionData: Object): void
+	// region jsEvent action handlers
+	#handlePreLaunch(item: ConfigurableItem, actionData: Object): void
 	{
 		const descriptionBlock = item.getLayoutContentBlockById('description');
 		const errorBlock = item.getLayoutContentBlockById('error');
@@ -72,16 +75,14 @@ export class RepeatSale extends CopilotBase
 		errorBlock?.closeBlock();
 	}
 
-	handleError(item: ConfigurableItem, actionData: Object, response: Object): void
+	#handleError(item: ConfigurableItem, actionData: Object, response: Object): void
 	{
 		const descriptionBlock = item.getLayoutContentBlockById('description');
 
 		descriptionBlock?.setHeaderText(this.#prevHeaderText);
 		descriptionBlock?.setCopilotStatus(EditableDescriptionAiStatus.NONE);
 	}
-	// endregion
 
-	// region jsEvent action handlers
 	#showRestrictionSlider(): void
 	{
 		FeaturePromotersRegistry.getPromoter({ featureId: 'limit_v2_crm_repeat_sale' }).show();

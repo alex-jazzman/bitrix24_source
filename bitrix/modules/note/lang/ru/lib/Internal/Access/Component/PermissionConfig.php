@@ -1,0 +1,3 @@
+<?php
+
+$MESS['NOTE_CONFIG_PERMISSION_SECTION_RIGHTS_MAIN'] = 'Основные права';

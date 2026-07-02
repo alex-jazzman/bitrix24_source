@@ -1,5 +1,5 @@
 /* eslint-disable no-underscore-dangle */
-import { Loc, Type } from 'main.core';
+import { Loc } from 'main.core';
 import { MessageBox } from 'ui.dialogs.messagebox';
 import { BatchManager } from './batch-manager';
 
@@ -53,20 +53,16 @@ export class BatchDeletionManager extends BatchManager
 		 * CRM_AUTORUN_BATCH_DELETE_CONFIRMATION_TITLE_COMPANY
 		 */
 
-		const specificTitle = Loc.getMessage(
-			`CRM_AUTORUN_BATCH_DELETE_TITLE_${entityTypeName}`,
-		);
-		if (Type.isStringFilled(specificTitle))
+		const dynamicTitleKey = `CRM_AUTORUN_BATCH_DELETE_TITLE_${entityTypeName}`;
+		if (Loc.hasMessage(dynamicTitleKey))
 		{
-			messages.title = specificTitle;
+			messages.title = Loc.getMessage(dynamicTitleKey);
 		}
 
-		const specificConfirmationTitle = Loc.getMessage(
-			`CRM_AUTORUN_BATCH_DELETE_CONFIRMATION_TITLE_${entityTypeName}`,
-		);
-		if (Type.isStringFilled(specificConfirmationTitle))
+		const dynamicConfirmationTitleKey = `CRM_AUTORUN_BATCH_DELETE_CONFIRMATION_TITLE_${entityTypeName}`;
+		if (Loc.hasMessage(dynamicConfirmationTitleKey))
 		{
-			messages.confirmationTitle = specificConfirmationTitle;
+			messages.confirmationTitle = Loc.getMessage(dynamicConfirmationTitleKey);
 		}
 
 		return messages;

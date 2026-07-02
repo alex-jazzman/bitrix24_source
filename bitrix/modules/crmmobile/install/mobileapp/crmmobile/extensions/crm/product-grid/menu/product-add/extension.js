@@ -22,6 +22,7 @@ jn.define('crm/product-grid/menu/product-add', (require, exports, module) => {
 		static getFloatingMenuItems(params = {})
 		{
 			const isSearchOnly = Boolean(params.isSearchOnly);
+			const isAvailable = params.isAvailable ?? true;
 			const selectorText = isSearchOnly
 				? Loc.getMessage('PRODUCT_GRID_MENU_PRODUCT_ADD_CHOOSE_FROM_CATALOG_SHORT_MSGVER_1')
 				: Loc.getMessage('PRODUCT_GRID_MENU_PRODUCT_ADD_CHOOSE_FROM_CATALOG_MSGVER_2')
@@ -33,7 +34,7 @@ jn.define('crm/product-grid/menu/product-add', (require, exports, module) => {
 					title: selectorText,
 					shortTitle: Loc.getMessage('PRODUCT_GRID_MENU_PRODUCT_ADD_CHOOSE_FROM_CATALOG_SHORT_MSGVER_1'),
 					isSupported: true,
-					isAvailable: true,
+					isAvailable,
 					checkUnsavedChanges: false,
 					position: 100,
 					icon: Icon.PRODUCT,
@@ -47,7 +48,7 @@ jn.define('crm/product-grid/menu/product-add', (require, exports, module) => {
 					title: Loc.getMessage('PRODUCT_GRID_MENU_PRODUCT_ADD_OPEN_BARCODE_SCANNER'),
 					shortTitle: Loc.getMessage('PRODUCT_GRID_MENU_PRODUCT_ADD_OPEN_BARCODE_SCANNER_SHORT'),
 					isSupported: true,
-					isAvailable: true,
+					isAvailable,
 					isAvailableRecentMenu: false,
 					shouldSaveInRecent: false,
 					isShowRecentMenu: false,

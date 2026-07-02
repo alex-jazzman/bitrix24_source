@@ -31,6 +31,7 @@ $this->setFrameMode(true);
 ?>
 
 <button
+	id="avatar-work-time"
 	data-testid="user-id-<?= (int)$arResult['userId'] ?>"
 	class="air-user-profile --no-transition <?= $workTimeClass ?>"
 	data-id="bx-avatar-widget"

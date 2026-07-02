@@ -62,6 +62,10 @@ $arServices = Array(
 		"NAME" => "Security",
 	),
 
+	"rest" => Array(
+		"NAME" => "REST",
+	),
+
 	"socialnetwork" => Array(
 		"NAME" => GetMessage("SERVICE_SOCIALNETWORK"),
 	),

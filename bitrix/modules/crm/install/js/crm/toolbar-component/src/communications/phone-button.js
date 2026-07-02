@@ -9,7 +9,11 @@ export class PhoneButton extends CommunicationButton
 {
 	getAddAddressSourceMessage(entityTypeName: string): string
 	{
-		return Loc.getMessage(`CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_CALL_${entityTypeName}`) || Loc.getMessage('CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_CALL');
+		const dynamicKey = `CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_CALL_${entityTypeName}`;
+
+		return Loc.hasMessage(dynamicKey)
+			? Loc.getMessage(dynamicKey)
+			: Loc.getMessage('CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_CALL');
 	}
 
 	onButtonClick(button: BaseButton, event: PointerEvent): void

@@ -56,6 +56,7 @@ export const CanvasTransform = {
 		},
 	},
 	emits: ['openContextMenu'],
+	// eslint-disable-next-line max-lines-per-function
 	setup(props, { emit }): CanvasTransformSetup
 	{
 		const rootRef = useTemplateRef('rootRef');
@@ -146,6 +147,8 @@ export const CanvasTransform = {
 				event.preventDefault();
 				onSelectionStart(event);
 			}
+
+			Event.bind(document, 'mouseup', onMouseUp);
 		}
 
 		function onMouseMove(event: MouseEvent): void
@@ -169,6 +172,8 @@ export const CanvasTransform = {
 
 		function onMouseUp(): void
 		{
+			Event.unbind(document, 'mouseup', onMouseUp);
+
 			if (toValue(isSelecting))
 			{
 				onSelectionEnd();

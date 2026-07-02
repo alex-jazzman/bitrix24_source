@@ -1,10 +1,14 @@
-<?
+<?php
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/update_client_partner.php");
 
+/**
+ * @global CMain $APPLICATION
+ * @global CUser $USER
+ */
+
 if(!$USER->CanDoOperation('install_updates'))
 	$APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
-
 
 IncludeModuleLangFile(__FILE__);
 
@@ -16,7 +20,7 @@ $arModules = CUpdateClientPartner::SearchModulesEx(
 	array("ID" => "ASC"),
 	array("ID" => $id),
 	1,
-	LANG,
+	LANGUAGE_ID,
 	$errorMessage
 );
 
@@ -39,7 +43,7 @@ else
 	if ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST["action"] == "load" && check_bitrix_sessid())
 	{
 		if (CUpdateClientPartner::LoadModuleNoDemand($arModule["ID"], $errorMessage, "Y", false))
-			LocalRedirect("/bitrix/admin/module_admin.php?lang=".LANG."&id=".$arModule["ID"]."&".bitrix_sessid_get()."&install=Y");
+			LocalRedirect("/bitrix/admin/module_admin.php?lang=".LANGUAGE_ID."&id=".$arModule["ID"]."&".bitrix_sessid_get()."&install=Y");
 	}
 
 	require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_after.php");
@@ -47,7 +51,7 @@ else
 	$aMenu = array(
 		array(
 			"TEXT" => GetMessage("USMP_BACK"),
-			"LINK" => "update_system_market.php?lang=".LANG."&".GetFilterParams("filter_", false),
+			"LINK" => "update_system_market.php?lang=".LANGUAGE_ID."&".GetFilterParams("filter_", false),
 			"ICON" => "btn_list",
 		)
 	);
@@ -65,7 +69,7 @@ else
 		<input type="hidden" name="action" value="load">
 		<input type="hidden" name="id" value="<?= $arModule["ID"] ?>">
 		<?= bitrix_sessid_post() ?>
-		<?
+		<?php
 
 		$aTabs = array(
 			array("DIV" => "edit1", "TAB" => GetMessage("USMP_TAB_1"), "ICON" => "", "TITLE" => str_replace("#NAME#", $arModule["NAME"], GetMessage("USMP_TAB_2")))
@@ -92,14 +96,14 @@ else
 				<td align="right" valign="top" width="40%"><?= GetMessage("USMP_DESCR") ?>:</td>
 				<td width="60%" valign="top"><?= nl2br($arModule["DESCRIPTION"]) ?></td>
 			</tr>
-			<?if ($arModule["IMAGE"] <> ''):?>
+			<?php if ($arModule["IMAGE"] <> ''):?>
 				<tr>
 					<td align="right" valign="top" width="40%"><?= GetMessage("USMP_IMAGE") ?>:</td>
 					<td width="60%" valign="top">
 						<img src="<?= $arModule["IMAGE"] ?>" width="<?= $arModule["IMAGE_WIDTH"] ?>" height="<?= $arModule["IMAGE_HEIGHT"] ?>">
 					</td>
 				</tr>
-			<?endif;?>
+			<?php endif;?>
 			<tr>
 				<td align="right" valign="top" width="40%"><?= GetMessage("USMP_PARTNER") ?>:</td>
 				<td width="60%" valign="top"><?= $arModule["PARTNER"] ?></td>
@@ -120,19 +124,19 @@ else
 				<td align="right" valign="top" width="40%"><?= GetMessage("USMP_TYPE") ?>:</td>
 				<td width="60%" valign="top"><?= $arModule["TYPE"] ?></td>
 			</tr>
-		<?
+		<?php
 		$tabControl->Buttons();
 		?>
 			<input type="submit" name="laction" value="<?= GetMessage("USMP_DO_LOAD") ?>"<?= array_key_exists($arModule["ID"], $arCurrentModules) ? " disabled" : "" ?>/>
-			<input type="button" name="caction" value="<?= GetMessage("USMP_DO_CANCEL") ?>" onclick="window.location='update_system_market.php?lang=<?= LANG ?>&<?= GetFilterParams("filter_", false) ?>'"/>
-		<?
+			<input type="button" name="caction" value="<?= GetMessage("USMP_DO_CANCEL") ?>" onclick="window.location='update_system_market.php?lang=<?= LANGUAGE_ID ?>&<?= GetFilterParams("filter_", false) ?>'"/>
+		<?php
 		$tabControl->End();
 		?>
 	</form>
-	<?
+	<?php
 }
 ?>
 
-<?
+<?php
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");
 ?>

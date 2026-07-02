@@ -13,20 +13,31 @@ use Bitrix\Main;
 
 class IframeExtractor extends Extractor
 {
+	private array $iframeParams = [];
+
 	public function __construct(protected array $params, protected Main\HttpRequest $request)
 	{
-		$this->enabled = !empty($params['IFRAME']) && $params['IFRAME'] === true;
+		if (($params['IFRAME'] ?? false) !== true)
+		{
+			return;
+		}
+
+		$postParams = $request->getPost('PARAMS');
+		if (!empty($postParams['params']) && is_array($postParams['params']))
+		{
+			$this->iframeParams = $postParams['params'];
+			$this->enabled = true;
+		}
 	}
 
 	public function run(): array
 	{
-		$result = [];
-		$componentParams = $this->request->getPost('PARAMS');
-		if (!empty($componentParams['params']) && is_array($componentParams['params']))
+		$result = $this->iframeParams;
+		if (isset($result['PLACEMENT_OPTIONS']) && !isset($result['~PLACEMENT_OPTIONS']))
 		{
-			$result = $componentParams['params'];
+			$result['~PLACEMENT_OPTIONS'] = $result['PLACEMENT_OPTIONS'];
 		}
-		if (isset($this->params['PLACEMENT_OPTIONS']) && !isset($this->params['~PLACEMENT_OPTIONS']))
+		elseif (isset($this->params['PLACEMENT_OPTIONS']) && !isset($this->params['~PLACEMENT_OPTIONS']))
 		{
 			$result['~PLACEMENT_OPTIONS'] = $this->params['PLACEMENT_OPTIONS'];
 		}

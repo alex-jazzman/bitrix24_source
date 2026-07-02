@@ -59,15 +59,15 @@ $APPLICATION->IncludeComponent(
 		BX.message(<?= \Bitrix\Main\Web\Json::encode(\Bitrix\Main\Localization\Loc::loadLanguageFile(__FILE__)) ?>);
 		const gridId = '<?= CUtil::JSEscape($arResult['gridId']) ?>';
 
-		BX.Bizproc.Component.WorkflowStartList.Instance = new BX.Bizproc.Component.WorkflowStartList({
-			gridId: gridId,
-			createTemplateButton: document.getElementById('bp-add-template'),
-			errorsContainerDiv: document.getElementById('bp-workflow-start-list-errors-container'),
-			canEdit: '<?= $arResult['canEdit'] ?>',
-			bizprocEditorUrl: '<?= CUtil::JSEscape($arResult['bizprocEditorUrl']) ?>',
+			BX.Bizproc.Component.WorkflowStartList.Instance = new BX.Bizproc.Component.WorkflowStartList({
+				gridId: gridId,
+				errorsContainerDiv: document.getElementById('bp-workflow-start-list-errors-container'),
+				canEdit: <?= !empty($arResult['canEdit']) ? 'true' : 'false' ?>,
+				bizprocEditorUrl: '<?= CUtil::JSEscape($arResult['bizprocEditorUrl']) ?>',
 			bizprocNewEditorUrl: '<?= CUtil::JSEscape($arResult['bizprocNewEditorUrl']) ?>',
 			signedDocumentType: '<?= CUtil::JSEscape($arResult['signedDocumentType']) ?>',
 			signedDocumentId:  '<?= CUtil::JSEscape($arResult['signedDocumentId']) ?>',
+			documentConfigs: <?= \Bitrix\Main\Web\Json::encode($arResult['documentConfigs'] ?? []) ?>,
 		});
 
 		BX.Bizproc.Component.WorkflowStartList.Instance.init();

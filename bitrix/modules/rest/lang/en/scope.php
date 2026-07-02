@@ -1,5 +1,5 @@
 <?php
-$MESS["REST_SCOPE_AI_ADMIN"] = "CoPilot";
+$MESS["REST_SCOPE_AI_ADMIN_MSGVER_1"] = "#COPILOT_NAME#";
 $MESS["REST_SCOPE_AI_ADMIN_DESCRIPTION"] = "full access: add and delete AI providers; get a list of existing providers";
 $MESS["REST_SCOPE_BICONNECTOR"] = "BI analytics connector";
 $MESS["REST_SCOPE_BICONNECTOR_DESCRIPTION"] = "add BI dashboards";

@@ -12,5 +12,4 @@ $MESS['TASK_ELAPSED_TIME_FIELD_DATE_START_FULL'] = "Дата и время на�
 $MESS['TASK_ELAPSED_TIME_FIELD_ELAPSED_TIME'] = "Время работы над задачей";
 $MESS['TASK_ELAPSED_TIME_FIELD_ELAPSED_TIME_FULL'] = "Время выполнения задачи, секунд";
 $MESS['TASK_ELAPSED_TIME_FIELD_COMMENT_TEXT'] = "Комментарий";
-
-
+$MESS['TASK_ELAPSED_TIME_TABLE_DESCRIPTION_FULL'] = "Набор содержит данные о затраченном времени на задачи: даты начала работы, продолжительность в секундах и информацию об авторах записей.";

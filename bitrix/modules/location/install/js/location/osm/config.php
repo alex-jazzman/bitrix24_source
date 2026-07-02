@@ -13,9 +13,9 @@ return [
 		'./dist/osm.bundle.js',
 	],
 	'rel' => [
-		'ui.design-tokens',
-		'main.core',
 		'location.core',
+		'main.core',
+		'ui.design-tokens',
 	],
 	'skip_core' => false,
 ];

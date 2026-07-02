@@ -1,4 +1,5 @@
 <?php
 $MESS["SIGN_CONTROLLERS_V1_B2E_DOCUMENT_TEMPLATE_ERROR_COMPANY_DOESNT_EXIST"] = "Cannot find this template's company. It may have been deleted. Select another company, or create a new one.";
+$MESS["SIGN_CONTROLLER_MEMBER_ACCESS_DENIED_TO_CONTACT_COMMUNICATIONS"] = "Access denied.";
 $MESS["SIGN_CONTROLLER_MEMBER_DOCUMENT_NOT_FOUND"] = "Document was not found.";
 $MESS["SIGN_CONTROLLER_MEMBER_FLAT_DEPARTMENT"] = "#DEPARTMENT_NAME# (without subdepartments)";

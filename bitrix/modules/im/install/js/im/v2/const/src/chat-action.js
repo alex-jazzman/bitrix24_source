@@ -27,6 +27,8 @@ export const ActionByRole = Object.freeze({
 	openMessageMenu: 'openMessageMenu',
 	openSidebarMenu: 'openSidebarMenu',
 	updateInviteLink: 'updateInviteLink',
+	manageGuestLink: 'manageGuestLink',
+	updateGuestLink: 'updateGuestLink',
 	createDocumentSign: 'createDocumentSign',
 	createCalendarSlots: 'createCalendarSlots',
 	changeMessagesAutoDeleteDelay: 'changeMessagesAutoDeleteDelay',

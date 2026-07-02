@@ -1,0 +1,54 @@
+.bx-im-list-recent-item__status-icon {
+	margin-right: 5px;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+.bx-im-list-recent-item__status-icon.--sending {
+	width: 11px;
+	min-width: 11px;
+	height: 11px;
+	background-image: url(./images/message-status/sending.svg);
+}
+
+.bx-im-list-recent-item__status-icon.--sent {
+	width: 14px;
+	min-width: 14px;
+	height: 11px;
+	background-image: url(./images/message-status/sent.svg);
+}
+
+.bx-im-list-recent-item__status-icon.--viewed {
+	width: 14px;
+	min-width: 14px;
+	height: 11px;
+	background-image: url(./images/message-status/viewed.svg);
+}
+
+.bx-im-list-recent-item__status-icon.--like {
+	width: 12px;
+	min-width: 12px;
+	height: 10px;
+	background-image: url(./images/like.svg);
+}
+
+/* Active item */
+.bx-im-list-recent-item__wrap.--selected .bx-im-list-recent-item__status-icon.--read {
+	background-image: url(./images/read-hover.svg);
+}
+
+.bx-im-list-recent-item__wrap.--selected .bx-im-list-recent-item__status-icon.--like {
+	background-image: url(./images/like-hover.svg);
+}
+
+.bx-im-list-recent-item__wrap.--selected .bx-im-list-recent-item__status-icon.--sending {
+	background-image: url(./images/message-status/sending-hover.svg);
+}
+
+.bx-im-list-recent-item__wrap.--selected .bx-im-list-recent-item__status-icon.--sent {
+	background-image: url(./images/message-status/sent-hover.svg);
+}
+
+.bx-im-list-recent-item__wrap.--selected .bx-im-list-recent-item__status-icon.--viewed {
+	background-image: url(./images/message-status/viewed-hover.svg);
+}

@@ -3,7 +3,7 @@
  * Bitrix Framework
  * @package bitrix
  * @subpackage main
- * @copyright 2001-2025 Bitrix
+ * @copyright 2001-2026 Bitrix
  */
 
 /**
@@ -46,17 +46,17 @@ $arFilterFields = array(
 	"find_user_agent",
 	"find_request_uri",
 );
-function CheckFilter()
+function CheckFilter($filter)
 {
 	$str = "";
-	if (!empty($_REQUEST["find_timestamp_x_1"]))
+	if (!empty($filter["find_timestamp_x_1"]))
 	{
-		if(!CheckDateTime($_REQUEST["find_timestamp_x_1"], CSite::GetDateFormat("FULL")))
+		if(!CheckDateTime($filter["find_timestamp_x_1"], CSite::GetDateFormat("FULL")))
 			$str.= GetMessage("MAIN_EVENTLOG_WRONG_TIMESTAMP_X_FROM")."<br>";
 	}
-	if (!empty($_REQUEST["find_timestamp_x_2"]))
+	if (!empty($filter["find_timestamp_x_2"]))
 	{
-		if(!CheckDateTime($_REQUEST["find_timestamp_x_2"], CSite::GetDateFormat("FULL")))
+		if(!CheckDateTime($filter["find_timestamp_x_2"], CSite::GetDateFormat("FULL")))
 			$str.= GetMessage("MAIN_EVENTLOG_WRONG_TIMESTAMP_X_TO")."<br>";
 	}
 
@@ -71,55 +71,54 @@ function CheckFilter()
 }
 
 $arFilter = array();
-$lAdmin->InitFilter($arFilterFields);
-InitSorting();
+$filter = $lAdmin->InitFilter($arFilterFields);
 
-if(CheckFilter())
+if(CheckFilter($filter))
 {
-	if(is_array($find_severity) && $find_severity[0] == "NOT_REF")
-		$find_severity = "";
+	if(is_array($filter['find_severity']) && $filter['find_severity'][0] == "NOT_REF")
+		$filter['find_severity'] = "";
 
-	if(is_array($find_audit_type) && $find_audit_type[0] == "NOT_REF")
+	if(is_array($filter['find_audit_type']) && $filter['find_audit_type'][0] == "NOT_REF")
 	{
 		$audit_type_id_op = "=";
 		$audit_type_id_filter = false;
 	}
-	elseif($find_type == "audit_type_id" && $find != '')
+	elseif($filter['find_type'] == "audit_type_id" && $filter['find'] != '')
 	{
 		$audit_type_id_op = "";
-		$audit_type_id_filter = $find;
+		$audit_type_id_filter = $filter['find'];
 	}
-	elseif(is_array($find_audit_type))
+	elseif(is_array($filter['find_audit_type']))
 	{
 		$audit_type_id_op = "=";
-		$audit_type_id_filter = $find_audit_type;
+		$audit_type_id_filter = $filter['find_audit_type'];
 	}
 	else
 	{
 		$audit_type_id_op = "";
-		$audit_type_id_filter = $find_audit_type;
+		$audit_type_id_filter = $filter['find_audit_type'];
 	}
 
-	if(!is_array($audit_type_id_filter) && mb_strlen($find_audit_type_id))
+	if(!is_array($audit_type_id_filter) && mb_strlen($filter['find_audit_type_id']))
 	{
 		$audit_type_id_op = "";
-		$audit_type_id_filter = "(".$audit_type_id_filter.")|(".$find_audit_type_id.")";
+		$audit_type_id_filter = "(".$audit_type_id_filter.")|(".$filter['find_audit_type_id'].")";
 	}
 
 	$arFilter = array(
-		"ID" => $find_id,
-		"TIMESTAMP_X_1" => $find_timestamp_x_1,
-		"TIMESTAMP_X_2" => $find_timestamp_x_2,
-		"SEVERITY" => (is_array($find_severity) && !empty($find_severity) ? implode("|", $find_severity): ""),
+		"ID" => $filter['find_id'],
+		"TIMESTAMP_X_1" => $filter['find_timestamp_x_1'],
+		"TIMESTAMP_X_2" => $filter['find_timestamp_x_2'],
+		"SEVERITY" => (is_array($filter['find_severity']) && !empty($filter['find_severity']) ? implode("|", $filter['find_severity']) : ""),
 		$audit_type_id_op."AUDIT_TYPE_ID" => $audit_type_id_filter,
-		"MODULE_ID" => $find_module_id,
-		"ITEM_ID" => $find_item_id,
-		"SITE_ID" => $find_site_id,
-		"USER_ID" => ($find != '' && $find_type == "user_id" ? $find : $find_user_id),
-		"GUEST_ID" => $find_guest_id,
-		"REMOTE_ADDR" => ($find != '' && $find_type == "remote_addr" ? $find : $find_remote_addr),
-		"REQUEST_URI" => $find_request_uri,
-		"USER_AGENT" => ($find != '' && $find_type == "user_agent" ? $find : $find_user_agent),
+		"MODULE_ID" => $filter['find_module_id'],
+		"ITEM_ID" => $filter['find_item_id'],
+		"SITE_ID" => $filter['find_site_id'],
+		"USER_ID" => ($filter['find'] != '' && $filter['find_type'] == "user_id" ? $filter['find'] : $filter['find_user_id']),
+		"GUEST_ID" => $filter['find_guest_id'],
+		"REMOTE_ADDR" => ($filter['find'] != '' && $filter['find_type'] == "remote_addr" ? $filter['find'] : $filter['find_remote_addr']),
+		"REQUEST_URI" => $filter['find_request_uri'],
+		"USER_AGENT" => ($filter['find'] != '' && $filter['find_type'] == "user_agent" ? $filter['find'] : $filter['find_user_agent']),
 	);
 }
 
@@ -128,9 +127,7 @@ if(isset($_REQUEST["mode"]) && $_REQUEST["mode"] == "excel")
 else
 	$arNavParams = array("nPageSize"=>CAdminResult::GetNavSize($sTableID));
 
-/** @global string $by  */
-/** @global string $order  */
-$rsData = CEventLog::GetList(array($by => $order), $arFilter, $arNavParams);
+$rsData = CEventLog::GetList(array($oSort->getField() => $oSort->getOrder()), $arFilter, $arNavParams);
 $rsData = new CAdminResult($rsData, $sTableID);
 $rsData->NavStart();
 $lAdmin->NavText($rsData->GetNavPrint(GetMessage("MAIN_EVENTLOG_LIST_PAGE")));
@@ -208,32 +205,31 @@ $lAdmin->AddHeaders($arHeaders);
 $arUsersCache = array();
 $arGroupsCache = array();
 $arForumCache = array("FORUM" => array(), "TOPIC" => array(), "MESSAGE" => array());
-$a_ID = $a_AUDIT_TYPE_ID = $a_GUEST_ID = $a_USER_ID = $a_ITEM_ID = $a_REQUEST_URI = $a_DESCRIPTION = $a_REMOTE_ADDR = '';
-while($db_res = $rsData->NavNext(true, "a_"))
+while($db_res = $rsData->Fetch())
 {
-	$row =& $lAdmin->AddRow($a_ID, $db_res);
-	$row->AddViewField("AUDIT_TYPE_ID", array_key_exists($a_AUDIT_TYPE_ID, $arAuditTypes)? preg_replace("/^\\[.*?\\]\\s+/", "", $arAuditTypes[$a_AUDIT_TYPE_ID]): $a_AUDIT_TYPE_ID);
-	if($bStatistic && mb_strlen($a_GUEST_ID))
+	$row = $lAdmin->AddRow($db_res["ID"], $db_res);
+	$row->AddViewField("AUDIT_TYPE_ID", array_key_exists($db_res["AUDIT_TYPE_ID"], $arAuditTypes) ? preg_replace("/^\[.*?]\s+/", "", $arAuditTypes[$db_res["AUDIT_TYPE_ID"]]) : htmlspecialcharsbx($db_res["AUDIT_TYPE_ID"]));
+	if($bStatistic && mb_strlen($db_res["GUEST_ID"]))
 	{
-		$row->AddViewField("GUEST_ID", '<a href="/bitrix/admin/hit_list.php?lang='.LANGUAGE_ID.'&amp;set_filter=Y&amp;find_guest_id='.$a_GUEST_ID.'&amp;find_guest_id_exact_match=Y">'.$a_GUEST_ID.'</a>');
+		$row->AddViewField("GUEST_ID", '<a href="/bitrix/admin/hit_list.php?lang='.LANGUAGE_ID.'&amp;set_filter=Y&amp;find_guest_id='.htmlspecialcharsbx($db_res["GUEST_ID"]).'&amp;find_guest_id_exact_match=Y">'.htmlspecialcharsbx($db_res["GUEST_ID"]).'</a>');
 	}
-	if($a_USER_ID)
+	if($db_res["USER_ID"])
 	{
-		if(!array_key_exists($a_USER_ID, $arUsersCache))
+		if(!array_key_exists($db_res["USER_ID"], $arUsersCache))
 		{
-			$rsUser = CUser::GetByID($a_USER_ID);
+			$rsUser = CUser::GetByID($db_res["USER_ID"]);
 			if($arUser = $rsUser->GetNext())
 			{
 				$arUser["FULL_NAME"] = $arUser["NAME"].($arUser["NAME"] == '' || $arUser["LAST_NAME"] == ''?"":" ").$arUser["LAST_NAME"];
 			}
-			$arUsersCache[$a_USER_ID] = $arUser;
+			$arUsersCache[$db_res["USER_ID"]] = $arUser;
 		}
-		if($arUsersCache[$a_USER_ID])
-			$row->AddViewField("USER_ID", '[<a href="user_edit.php?lang='.LANG.'&ID='.$a_USER_ID.'">'.$a_USER_ID.'</a>] '.$arUsersCache[$a_USER_ID]["FULL_NAME"]);
+		if($arUsersCache[$db_res["USER_ID"]])
+			$row->AddViewField("USER_ID", '[<a href="user_edit.php?lang='.LANGUAGE_ID.'&ID='.htmlspecialcharsbx($db_res["USER_ID"]).'">'.htmlspecialcharsbx($db_res["USER_ID"]).'</a>] '.$arUsersCache[$db_res["USER_ID"]]["FULL_NAME"]);
 	}
-	if($a_ITEM_ID)
+	if($db_res["ITEM_ID"])
 	{
-		switch($a_AUDIT_TYPE_ID)
+		switch($db_res["AUDIT_TYPE_ID"])
 		{
 		case "USER_AUTHORIZE":
 		case "USER_LOGOUT":
@@ -246,50 +242,50 @@ while($db_res = $rsData->NavNext(true, "a_"))
 		case "USER_BLOCKED":
 		case "USER_PERMISSIONS_FAIL":
 		case "SECURITY_OTP":
-			if(!array_key_exists($a_ITEM_ID, $arUsersCache))
+			if(!array_key_exists($db_res["ITEM_ID"], $arUsersCache))
 			{
-				$rsUser = CUser::GetByID($a_ITEM_ID);
+				$rsUser = CUser::GetByID($db_res["ITEM_ID"]);
 				if($arUser = $rsUser->GetNext())
 				{
 					$arUser["FULL_NAME"] = $arUser["NAME"].($arUser["NAME"] == '' || $arUser["LAST_NAME"] == ''?"":" ").$arUser["LAST_NAME"];
 				}
-				$arUsersCache[$a_ITEM_ID] = $arUser;
+				$arUsersCache[$db_res["ITEM_ID"]] = $arUser;
 			}
-			if($arUsersCache[$a_ITEM_ID])
-				$row->AddViewField("ITEM_ID", '[<a href="user_edit.php?lang='.LANG.'&amp;ID='.$a_ITEM_ID.'">'.$a_ITEM_ID.'</a>] '.$arUsersCache[$a_ITEM_ID]["FULL_NAME"]);
+			if($arUsersCache[$db_res["ITEM_ID"]])
+				$row->AddViewField("ITEM_ID", '[<a href="user_edit.php?lang='.LANGUAGE_ID.'&amp;ID='.htmlspecialcharsbx($db_res["ITEM_ID"]).'">'.htmlspecialcharsbx($db_res["ITEM_ID"]).'</a>] '.$arUsersCache[$db_res["ITEM_ID"]]["FULL_NAME"]);
 			break;
 		case "GROUP_POLICY_CHANGED":
 		case "MODULE_RIGHTS_CHANGED":
 		case "GROUP_ADDED":
 		case "GROUP_UPDATED":
-			if(!array_key_exists($a_ITEM_ID, $arGroupsCache))
+			if(!array_key_exists($db_res["ITEM_ID"], $arGroupsCache))
 			{
-				$rsGroup = CGroup::GetByID($a_ITEM_ID);
+				$rsGroup = CGroup::GetByID($db_res["ITEM_ID"]);
 				if($arGroup = $rsGroup->GetNext())
-					$arGroupsCache[$a_ITEM_ID] = $arGroup["NAME"];
+					$arGroupsCache[$db_res["ITEM_ID"]] = $arGroup["NAME"];
 				else
-					$arGroupsCache[$a_ITEM_ID] = "";
+					$arGroupsCache[$db_res["ITEM_ID"]] = "";
 			}
-			$row->AddViewField("ITEM_ID", '[<a href="group_edit.php?lang='.LANG.'&amp;ID='.$a_ITEM_ID.'">'.$a_ITEM_ID.'</a>] '.$arGroupsCache[$a_ITEM_ID]);
+			$row->AddViewField("ITEM_ID", '[<a href="group_edit.php?lang='.LANGUAGE_ID.'&amp;ID='.htmlspecialcharsbx($db_res["ITEM_ID"]).'">'.htmlspecialcharsbx($db_res["ITEM_ID"]).'</a>] '.$arGroupsCache[$db_res["ITEM_ID"]]);
 			break;
 		case "TASK_CHANGED":
-			$rsTask = CTask::GetByID($a_ITEM_ID);
+			$rsTask = CTask::GetByID($db_res["ITEM_ID"]);
 			if($arTask = $rsTask->GetNext())
-				$row->AddViewField("ITEM_ID", '[<a href="task_edit.php?lang='.LANG.'&amp;ID='.$a_ITEM_ID.'">'.$a_ITEM_ID.'</a>] '.$arTask["NAME"]);
+				$row->AddViewField("ITEM_ID", '[<a href="task_edit.php?lang='.LANGUAGE_ID.'&amp;ID='.htmlspecialcharsbx($db_res["ITEM_ID"]).'">'.htmlspecialcharsbx($db_res["ITEM_ID"]).'</a>] '.$arTask["NAME"]);
 			break;
 		case "FORUM_MESSAGE_APPROVE":
 		case "FORUM_MESSAGE_UNAPPROVE":
 		case "FORUM_MESSAGE_MOVE":
 		case "FORUM_MESSAGE_EDIT":
-			if (intval($a_ITEM_ID) <= 0):
+			if (intval($db_res["ITEM_ID"]) <= 0):
 				break;
-			elseif (!array_key_exists($a_ITEM_ID, $arForumCache["MESSAGE"])):
+			elseif (!array_key_exists($db_res["ITEM_ID"], $arForumCache["MESSAGE"])):
 				CModule::IncludeModule("forum");
-				$res = CForumMessage::GetByID($a_ITEM_ID);
+				$res = CForumMessage::GetByID($db_res["ITEM_ID"]);
 				$res["MESSAGE_ID"] = $res["ID"];
-				$arForumCache["MESSAGE"][$a_ITEM_ID] = $res;
+				$arForumCache["MESSAGE"][$db_res["ITEM_ID"]] = $res;
 			else:
-				$res = $arForumCache["MESSAGE"][$a_ITEM_ID];
+				$res = $arForumCache["MESSAGE"][$db_res["ITEM_ID"]];
 			endif;
 			if (!array_key_exists($res["FORUM_ID"], $arForumCache["FORUM"])):
 				$arForumCache["FORUM"][$res["FORUM_ID"]] = CForumNew::GetByID($res["FORUM_ID"]);
@@ -300,9 +296,9 @@ while($db_res = $rsData->NavNext(true, "a_"))
 			endif;
 			if ($arForumCache["FORUM"][$res["FORUM_ID"]]["PATH"]):
 				$sPath = CForumNew::PreparePath2Message($arForumCache["FORUM"][$res["FORUM_ID"]]["PATH"], $res);
-				$row->AddViewField("ITEM_ID", '[<a href="'.$sPath.'">'.$a_ITEM_ID.'</a>] '.GetMessage("MAIN_EVENTLOG_FORUM_MESSAGE"));
+				$row->AddViewField("ITEM_ID", '[<a href="'.$sPath.'">'.htmlspecialcharsbx($db_res["ITEM_ID"]).'</a>] '.GetMessage("MAIN_EVENTLOG_FORUM_MESSAGE"));
 			else:
-				$row->AddViewField("ITEM_ID", '['.$a_ITEM_ID.'] '.GetMessage("MAIN_EVENTLOG_FORUM_MESSAGE"));
+				$row->AddViewField("ITEM_ID", '['.htmlspecialcharsbx($db_res["ITEM_ID"]).'] '.GetMessage("MAIN_EVENTLOG_FORUM_MESSAGE"));
 			endif;
 			break;
 		case "FORUM_TOPIC_APPROVE":
@@ -313,16 +309,16 @@ while($db_res = $rsData->NavNext(true, "a_"))
 		case "FORUM_TOPIC_CLOSE":
 		case "FORUM_TOPIC_MOVE":
 		case "FORUM_TOPIC_EDIT":
-			if (intval($a_ITEM_ID) <= 0):
+			if (intval($db_res["ITEM_ID"]) <= 0):
 				break;
-			elseif (!array_key_exists($a_ITEM_ID, $arForumCache["TOPIC"])):
+			elseif (!array_key_exists($db_res["ITEM_ID"], $arForumCache["TOPIC"])):
 				CModule::IncludeModule("forum");
-				$res = CForumTopic::GetByID($a_ITEM_ID);
+				$res = CForumTopic::GetByID($db_res["ITEM_ID"]);
 				$res["MESSAGE_ID"] = $res["LAST_MESSAGE_ID"];
 				$res["TOPIC_ID"] = $res["ID"];
-				$arForumCache["TOPIC"][$a_ITEM_ID] = $res;
+				$arForumCache["TOPIC"][$db_res["ITEM_ID"]] = $res;
 			else:
-				$res = $arForumCache["TOPIC"][$a_ITEM_ID];
+				$res = $arForumCache["TOPIC"][$db_res["ITEM_ID"]];
 			endif;
 			if (!array_key_exists($res["FORUM_ID"], $arForumCache["FORUM"])):
 				$arForumCache["FORUM"][$res["FORUM_ID"]] = CForumNew::GetByID($res["FORUM_ID"]);
@@ -333,16 +329,16 @@ while($db_res = $rsData->NavNext(true, "a_"))
 			endif;
 			if ($arForumCache["FORUM"][$res["FORUM_ID"]]["PATH"]):
 				$sPath = CForumNew::PreparePath2Message($arForumCache["FORUM"][$res["FORUM_ID"]]["PATH"], $res);
-				$row->AddViewField("ITEM_ID", '[<a href="'.$sPath.'">'.$a_ITEM_ID.'</a>] '.GetMessage("MAIN_EVENTLOG_FORUM_TOPIC"));
+				$row->AddViewField("ITEM_ID", '[<a href="'.$sPath.'">'.htmlspecialcharsbx($db_res["ITEM_ID"]).'</a>] '.GetMessage("MAIN_EVENTLOG_FORUM_TOPIC"));
 			else:
-				$row->AddViewField("ITEM_ID", '['.$a_ITEM_ID.'] '.GetMessage("MAIN_EVENTLOG_FORUM_TOPIC"));
+				$row->AddViewField("ITEM_ID", '['.htmlspecialcharsbx($db_res["ITEM_ID"]).'] '.GetMessage("MAIN_EVENTLOG_FORUM_TOPIC"));
 			endif;
 			break;
 		case "FORUM_MESSAGE_DELETE":
-			$row->AddViewField("ITEM_ID", '['.$a_ITEM_ID.'] '.GetMessage("MAIN_EVENTLOG_FORUM_MESSAGE"));
+			$row->AddViewField("ITEM_ID", '['.htmlspecialcharsbx($db_res["ITEM_ID"]).'] '.GetMessage("MAIN_EVENTLOG_FORUM_MESSAGE"));
 			break;
 		case "FORUM_TOPIC_DELETE":
-			$row->AddViewField("ITEM_ID", '['.$a_ITEM_ID.'] '.GetMessage("MAIN_EVENTLOG_FORUM_TOPIC"));
+			$row->AddViewField("ITEM_ID", '['.htmlspecialcharsbx($db_res["ITEM_ID"]).'] '.GetMessage("MAIN_EVENTLOG_FORUM_TOPIC"));
 			break;
 		case "IBLOCK_SECTION_ADD":
 		case "IBLOCK_SECTION_EDIT":
@@ -353,46 +349,47 @@ while($db_res = $rsData->NavNext(true, "a_"))
 		case "IBLOCK_ADD":
 		case "IBLOCK_EDIT":
 		case "IBLOCK_DELETE":
-			$elementLink = CIBlock::GetAdminElementListLink($a_ITEM_ID, array('filter_section'=>-1));
+			$itemIdHtml = htmlspecialcharsbx($db_res["ITEM_ID"]);
+			$elementLink = CIBlock::GetAdminElementListLink($db_res["ITEM_ID"], array('filter_section'=>-1));
 			parse_str($elementLink, $elementInfo);
 			if (empty($elementInfo["type"]))
 			{
-				$a_ITEM_ID = GetMessage("MAIN_EVENTLOG_IBLOCK_DELETE");
+				$itemIdHtml = GetMessage("MAIN_EVENTLOG_IBLOCK_DELETE");
 			}
 			else
 			{
 				if(CModule::IncludeModule('iblock'))
-					$a_ITEM_ID = '<a href="'.htmlspecialcharsbx($elementLink).'">'.$a_ITEM_ID.'</a>';
+					$itemIdHtml = '<a href="'.htmlspecialcharsbx($elementLink).'">'.$itemIdHtml.'</a>';
 			}
 
-			$row->AddViewField("ITEM_ID", '['.$a_ITEM_ID.'] '.GetMessage("MAIN_EVENTLOG_IBLOCK"));
+			$row->AddViewField("ITEM_ID", '['.$itemIdHtml.'] '.GetMessage("MAIN_EVENTLOG_IBLOCK"));
 			break;
 		}
 	}
-	if($a_REQUEST_URI <> '')
+	if($db_res["REQUEST_URI"] <> '')
 	{
-		$row->AddViewField("REQUEST_URI", htmlspecialcharsbx($a_REQUEST_URI));
+		$row->AddViewField("REQUEST_URI", htmlspecialcharsbx($db_res["REQUEST_URI"]));
 	}
-	if($a_DESCRIPTION <> '')
+	if($db_res["DESCRIPTION"] <> '')
 	{
-		if(strncmp("==", $a_DESCRIPTION, 2) === 0)
+		if(strncmp("==", $db_res["DESCRIPTION"], 2) === 0)
 		{
-			$DESCRIPTION = htmlspecialcharsbx(base64_decode(mb_substr($a_DESCRIPTION, 2)));
+			$DESCRIPTION = htmlspecialcharsbx(base64_decode(mb_substr($db_res["DESCRIPTION"], 2)));
 		}
 		else
 		{
-			$DESCRIPTION = $a_DESCRIPTION;
+			$DESCRIPTION = htmlspecialcharsbx($db_res["DESCRIPTION"]);
 		}
 		//htmlspecialcharsback for <br> <BR> <br/>
 		$DESCRIPTION = preg_replace("#(&lt;)(\\s*br\\s*/{0,1})(&gt;)#is", "<\\2>", $DESCRIPTION);
 		$row->AddViewField("DESCRIPTION", $DESCRIPTION);
 	}
-	if($bStatistic && $a_REMOTE_ADDR)
+	if($bStatistic && $db_res["REMOTE_ADDR"])
 	{
-		$arr = explode(".", $a_REMOTE_ADDR);
+		$arr = explode(".", $db_res["REMOTE_ADDR"]);
 		if(count($arr)==4)
 		{
-			$row->AddViewField("REMOTE_ADDR", $a_REMOTE_ADDR.'<br><a href="stoplist_edit.php?lang='.LANGUAGE_ID.'&amp;net1='.intval($arr[0]).'&amp;net2='.intval($arr[1]).'&amp;net3='.intval($arr[2]).'&amp;net4='.intval($arr[3]).'">['.GetMessage("MAIN_EVENTLOG_STOP_LIST").']<a>');
+			$row->AddViewField("REMOTE_ADDR", htmlspecialcharsbx($db_res["REMOTE_ADDR"]).'<br><a href="stoplist_edit.php?lang='.LANGUAGE_ID.'&amp;net1='.intval($arr[0]).'&amp;net2='.intval($arr[1]).'&amp;net3='.intval($arr[2]).'&amp;net4='.intval($arr[3]).'">['.GetMessage("MAIN_EVENTLOG_STOP_LIST").']<a>');
 		}
 	}
 }
@@ -411,9 +408,9 @@ $lAdmin->CheckListMode();
 
 require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_admin_after.php");
 ?>
-<form name="find_form" method="GET" action="<?echo $APPLICATION->GetCurPage()?>?">
-<input type="hidden" name="lang" value="<?echo LANG?>">
-<?
+<form name="find_form" method="GET" action="<?= $APPLICATION->GetCurPage()?>?">
+<input type="hidden" name="lang" value="<?= LANGUAGE_ID?>">
+<?php
 $arFilterNames = array(
 	"find_id" => GetMessage("MAIN_EVENTLOG_ID"),
 	"find_timestamp_x" => GetMessage("MAIN_EVENTLOG_TIMESTAMP_X"),
@@ -435,28 +432,28 @@ $oFilter = new CAdminFilter($sTableID."_filter", $arFilterNames);
 $oFilter->Begin();
 ?>
 <tr>
-	<td><b><?echo GetMessage("MAIN_EVENTLOG_SEARCH")?>:</b></td>
+	<td><b><?= GetMessage("MAIN_EVENTLOG_SEARCH")?>:</b></td>
 	<td nowrap>
-		<input type="text" size="25" name="find" value="<?echo htmlspecialcharsbx($find)?>">
+		<input type="text" size="25" name="find" value="<?= htmlspecialcharsbx($filter['find'])?>">
 		<select name="find_type">
-			<option value="audit_type_id"<?if($find_type=="audit_type_id") echo " selected"?>><?echo GetMessage("MAIN_EVENTLOG_AUDIT_TYPE_ID")?></option>
-			<option value="user_id"<?if($find_type=="user_id") echo " selected"?>><?echo GetMessage("MAIN_EVENTLOG_USER_ID")?></option>
-			<option value="remote_addr"<?if($find_type=="remote_addr") echo " selected"?>><?echo GetMessage("MAIN_EVENTLOG_REMOTE_ADDR")?></option>
-			<option value="user_agent"<?if($find_type=="user_agent") echo " selected"?>><?echo GetMessage("MAIN_EVENTLOG_USER_AGENT")?></option>
+			<option value="audit_type_id"<?php if($filter['find_type']=="audit_type_id") echo " selected"?>><?= GetMessage("MAIN_EVENTLOG_AUDIT_TYPE_ID")?></option>
+			<option value="user_id"<?php if($filter['find_type']=="user_id") echo " selected"?>><?= GetMessage("MAIN_EVENTLOG_USER_ID")?></option>
+			<option value="remote_addr"<?php if($filter['find_type']=="remote_addr") echo " selected"?>><?= GetMessage("MAIN_EVENTLOG_REMOTE_ADDR")?></option>
+			<option value="user_agent"<?php if($filter['find_type']=="user_agent") echo " selected"?>><?= GetMessage("MAIN_EVENTLOG_USER_AGENT")?></option>
 		</select>
 	</td>
 </tr>
 <tr>
-	<td><?echo GetMessage("MAIN_EVENTLOG_ID")?>:</td>
-	<td><input type="text" name="find_id" size="47" value="<?echo htmlspecialcharsbx($find_id)?>"></td>
+	<td><?= GetMessage("MAIN_EVENTLOG_ID")?>:</td>
+	<td><input type="text" name="find_id" size="47" value="<?= htmlspecialcharsbx($filter['find_id'])?>"></td>
 </tr>
 <tr>
-	<td><?echo GetMessage("MAIN_EVENTLOG_TIMESTAMP_X")?>:</td>
-	<td><?echo CAdminCalendar::CalendarPeriod("find_timestamp_x_1", "find_timestamp_x_2", $find_timestamp_x_1, $find_timestamp_x_2, false, 15, true)?></td>
+	<td><?= GetMessage("MAIN_EVENTLOG_TIMESTAMP_X")?>:</td>
+	<td><?= CAdminCalendar::CalendarPeriod("find_timestamp_x_1", "find_timestamp_x_2", $filter['find_timestamp_x_1'], $filter['find_timestamp_x_2'], false, 15, true)?></td>
 </tr>
 <tr>
-	<td><?echo GetMessage("MAIN_EVENTLOG_SEVERITY")?>:</td>
-	<td><?
+	<td><?= GetMessage("MAIN_EVENTLOG_SEVERITY")?>:</td>
+	<td><?php
 		$severity = [
 			CEventLog::SEVERITY_SECURITY,
 			CEventLog::SEVERITY_EMERGENCY,
@@ -472,24 +469,24 @@ $oFilter->Begin();
 		echo SelectBoxMFromArray("find_severity[]", array(
 			"REFERENCE" => $severity,
 			"REFERENCE_ID" => $severity,
-		), $find_severity, GetMessage("MAIN_ALL"))?></td>
+		), $filter['find_severity'], GetMessage("MAIN_ALL"))?></td>
 </tr>
 <tr>
-	<td><?echo GetMessage("MAIN_EVENTLOG_AUDIT_TYPE_ID")?>:</td>
+	<td><?= GetMessage("MAIN_EVENTLOG_AUDIT_TYPE_ID")?>:</td>
 	<td>
-		<input type="text" name="find_audit_type_id" size="47" value="<?echo htmlspecialcharsbx($find_audit_type_id)?>">&nbsp;<?=ShowFilterLogicHelp()?><br>
-		<?echo SelectBoxMFromArray("find_audit_type[]", array("reference"=>array_values($arAuditTypes),"reference_id"=>array_keys($arAuditTypes)), $find_audit_type, GetMessage("MAIN_ALL"), "");?>
+		<input type="text" name="find_audit_type_id" size="47" value="<?= htmlspecialcharsbx($filter['find_audit_type_id'])?>">&nbsp;<?=ShowFilterLogicHelp()?><br>
+		<?= SelectBoxMFromArray("find_audit_type[]", array("reference"=>array_values($arAuditTypes),"reference_id"=>array_keys($arAuditTypes)), $filter['find_audit_type'], GetMessage("MAIN_ALL"), "");?>
 	</td>
 </tr>
 <tr>
-	<td><?echo GetMessage("MAIN_EVENTLOG_MODULE_ID")?>:</td>
-	<td><input type="text" name="find_module_id" size="47" value="<?echo htmlspecialcharsbx($find_module_id)?>">&nbsp;<?=ShowFilterLogicHelp()?></td>
+	<td><?= GetMessage("MAIN_EVENTLOG_MODULE_ID")?>:</td>
+	<td><input type="text" name="find_module_id" size="47" value="<?= htmlspecialcharsbx($filter['find_module_id'])?>">&nbsp;<?=ShowFilterLogicHelp()?></td>
 </tr>
 <tr>
-	<td><?echo GetMessage("MAIN_EVENTLOG_ITEM_ID")?>:</td>
-	<td><input type="text" name="find_item_id" size="47" value="<?echo htmlspecialcharsbx($find_item_id)?>">&nbsp;<?=ShowFilterLogicHelp()?></td>
+	<td><?= GetMessage("MAIN_EVENTLOG_ITEM_ID")?>:</td>
+	<td><input type="text" name="find_item_id" size="47" value="<?= htmlspecialcharsbx($filter['find_item_id'])?>">&nbsp;<?=ShowFilterLogicHelp()?></td>
 </tr>
-<?
+<?php
 $arSiteDropdown = array("reference" => array(), "reference_id" => array());
 $rs = CSite::GetList();
 while ($ar = $rs->Fetch())
@@ -499,37 +496,37 @@ while ($ar = $rs->Fetch())
 }
 ?>
 <tr>
-	<td><?echo GetMessage("MAIN_EVENTLOG_SITE_ID")?>:</td>
-	<td><?echo SelectBoxFromArray("find_site_id", $arSiteDropdown, $find_site_id, GetMessage("MAIN_ALL"), "");?></td>
+	<td><?= GetMessage("MAIN_EVENTLOG_SITE_ID")?>:</td>
+	<td><?= SelectBoxFromArray("find_site_id", $arSiteDropdown, $filter['find_site_id'], GetMessage("MAIN_ALL"), "");?></td>
 </tr>
 <tr>
-	<td><?echo GetMessage("MAIN_EVENTLOG_USER_ID")?>:</td>
-	<td><input type="text" name="find_user_id" size="47" value="<?echo htmlspecialcharsbx($find_user_id)?>"></td>
+	<td><?= GetMessage("MAIN_EVENTLOG_USER_ID")?>:</td>
+	<td><input type="text" name="find_user_id" size="47" value="<?= htmlspecialcharsbx($filter['find_user_id'])?>"></td>
 </tr>
-<?if($bStatistic):?>
+<?php if($bStatistic):?>
 <tr>
-	<td><?echo GetMessage("MAIN_EVENTLOG_GUEST_ID")?>:</td>
-	<td><input type="text" name="find_guest_id" size="47" value="<?echo htmlspecialcharsbx($find_guest_id)?>"></td>
+	<td><?= GetMessage("MAIN_EVENTLOG_GUEST_ID")?>:</td>
+	<td><input type="text" name="find_guest_id" size="47" value="<?= htmlspecialcharsbx($filter['find_guest_id'])?>"></td>
 </tr>
-<?endif?>
+<?php endif?>
 <tr>
-	<td><?echo GetMessage("MAIN_EVENTLOG_REMOTE_ADDR")?>:</td>
-	<td><input type="text" name="find_remote_addr" size="47" value="<?echo htmlspecialcharsbx($find_remote_addr)?>">&nbsp;<?=ShowFilterLogicHelp()?></td>
-</tr>
-<tr>
-	<td><?echo GetMessage("MAIN_EVENTLOG_USER_AGENT")?>:</td>
-	<td><input type="text" name="find_user_agent" size="47" value="<?echo htmlspecialcharsbx($find_user_agent)?>">&nbsp;<?=ShowFilterLogicHelp()?></td>
+	<td><?= GetMessage("MAIN_EVENTLOG_REMOTE_ADDR")?>:</td>
+	<td><input type="text" name="find_remote_addr" size="47" value="<?= htmlspecialcharsbx($filter['find_remote_addr'])?>">&nbsp;<?=ShowFilterLogicHelp()?></td>
 </tr>
 <tr>
-	<td><?echo GetMessage("MAIN_EVENTLOG_REQUEST_URI")?>:</td>
-	<td><input type="text" name="find_request_uri" size="47" value="<?echo htmlspecialcharsbx($find_request_uri)?>">&nbsp;<?=ShowFilterLogicHelp()?></td>
+	<td><?= GetMessage("MAIN_EVENTLOG_USER_AGENT")?>:</td>
+	<td><input type="text" name="find_user_agent" size="47" value="<?= htmlspecialcharsbx($filter['find_user_agent'])?>">&nbsp;<?=ShowFilterLogicHelp()?></td>
 </tr>
-<?
+<tr>
+	<td><?= GetMessage("MAIN_EVENTLOG_REQUEST_URI")?>:</td>
+	<td><input type="text" name="find_request_uri" size="47" value="<?= htmlspecialcharsbx($filter['find_request_uri'])?>">&nbsp;<?=ShowFilterLogicHelp()?></td>
+</tr>
+<?php
 $oFilter->Buttons(array("table_id"=>$sTableID, "url"=>$APPLICATION->GetCurPage(), "form"=>"find_form"));
 $oFilter->End();
 ?>
 </form>
-<?
+<?php
 
 $lAdmin->DisplayList();
 

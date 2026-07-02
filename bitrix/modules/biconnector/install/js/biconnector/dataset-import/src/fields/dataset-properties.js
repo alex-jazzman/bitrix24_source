@@ -25,6 +25,11 @@ export const DatasetProperties = {
 			required: false,
 			default: {},
 		},
+		readonlyFields: {
+			type: Object,
+			required: false,
+			default: {},
+		},
 		datasetSourceCode: {
 			type: String,
 			required: true,
@@ -60,6 +65,7 @@ export const DatasetProperties = {
 				:placeholder="this.$Bitrix.Loc.getMessage('DATASET_IMPORT_DATASET_PROPERTIES_CODE_PLACEHOLDER_MSGVER_1', { '#CODE#': this.datasetSourceCode })"
 				:is-valid="unvalidatedFields.name?.result ?? true"
 				:is-disabled="disabledFields.name ?? false"
+				:is-readonly="readonlyFields.name ?? false"
 				:error-message="unvalidatedFields.name?.message ?? ''"
 			/>
 			<TextField
@@ -67,6 +73,8 @@ export const DatasetProperties = {
 				:defaultValue="defaultDescription"
 				@value-change="onValueChange"
 				:title="this.$Bitrix.Loc.getMessage('DATASET_IMPORT_DATASET_PROPERTIES_DESCRIPTION')"
+				:is-disabled="disabledFields.description ?? false"
+				:is-readonly="readonlyFields.description ?? false"
 			/>
 		</div>
 	`,

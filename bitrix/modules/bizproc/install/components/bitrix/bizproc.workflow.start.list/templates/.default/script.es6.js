@@ -7,12 +7,20 @@ import 'sidepanel';
 
 const namespace = Reflection.namespace('BX.Bizproc.Component');
 
+type DocumentConfig = {
+	documentTypeKey: string,
+	editorUrl?: string,
+	canEdit?: boolean,
+	signedDocumentType?: string,
+	signedDocumentId?: string,
+};
+
 class WorkflowStartList
 {
 	gridId;
-	createTemplateButton;
 	errorsContainerDiv;
 
+	#documents: Map = new Map();
 	#signedDocumentType: string;
 	#signedDocumentId: string;
 	#counters: Map = new Map();
@@ -34,11 +42,22 @@ class WorkflowStartList
 		}
 
 		this.gridId = options.gridId;
-		this.createTemplateButton = options.createTemplateButton;
 		this.errorsContainerDiv = options.errorsContainerDiv;
 		this.#canEdit = options.canEdit;
 		this.#bizprocEditorUrl = options.bizprocEditorUrl;
 		this.#bizprocNewEditorUrl = options.bizprocNewEditorUrl;
+
+		if (Type.isArray(options.documentConfigs))
+		{
+			options.documentConfigs.forEach((documentConfig) => {
+				if (!Type.isStringFilled(documentConfig?.documentTypeKey))
+				{
+					return;
+				}
+
+				this.#documents.set(documentConfig.documentTypeKey, documentConfig);
+			});
+		}
 
 		if (Type.isStringFilled(options.signedDocumentType))
 		{
@@ -63,23 +82,35 @@ class WorkflowStartList
 		EventEmitter.subscribe('Grid::updated', this.#onAfterGridUpdated.bind(this));
 	}
 
-	editTemplate(event, templateId, templateType): void
+	editTemplate(
+		event,
+		templateId,
+		templateType,
+		documentTypeKeys: string[] = [],
+		preferredDocumentTypeKey: ?string = null,
+	): void
 	{
-		if (!this.#canEdit)
+		const documentConfig = this.resolveEditDocumentConfig(documentTypeKeys, preferredDocumentTypeKey);
+		if (!documentConfig)
+		{
+			return;
+		}
+
+		if (!documentConfig.canEdit)
 		{
 			this.showNoPermissionsHint(event.target);
 
 			return;
 		}
 
-		if (this.#bizprocEditorUrl.length === 0)
+		if (!Type.isStringFilled(documentConfig.editorUrl))
 		{
 			this.showNoEditorHint(event.target);
 
 			return;
 		}
 
-		this.openBizprocEditor(templateId, templateType);
+		this.openBizprocEditor(templateId, templateType, documentConfig.editorUrl);
 	}
 
 	showAngleHint(node, text)
@@ -109,11 +140,17 @@ class WorkflowStartList
 			this.hide();
 		};
 		this.popupHint.show(node, text);
-		this.timeout = setTimeout(this.hideHint.bind(this), 5000);
+		this.hintTimeout = setTimeout(this.hideHint.bind(this), 5000);
 	}
 
 	hideHint()
 	{
+		if (this.hintTimeout)
+		{
+			clearTimeout(this.hintTimeout);
+			this.hintTimeout = null;
+		}
+
 		if (this.popupHint)
 		{
 			this.popupHint.close();
@@ -164,6 +201,14 @@ class WorkflowStartList
 			},
 		}).then(
 			(response) => {
+				const instance = BX.Bizproc.Component.WorkflowStartList.Instance;
+				if (instance)
+				{
+					instance.reloadGrid();
+
+					return;
+				}
+
 				const grid = BX.Main.gridManager.getInstanceById(gridId);
 				if (grid)
 				{
@@ -192,10 +237,20 @@ class WorkflowStartList
 	reloadGrid()
 	{
 		const grid = this.getGrid();
-		if (grid)
+		if (!grid)
 		{
-			grid.reload();
+			return;
 		}
+
+		const data = this.getGridReloadData();
+		if (Object.keys(data).length > 0)
+		{
+			grid.reloadTable('POST', data);
+
+			return;
+		}
+
+		grid.reload();
 	}
 
 	getGrid(): ?BX.Main.grid
@@ -208,12 +263,54 @@ class WorkflowStartList
 		return null;
 	}
 
-	startWorkflow(event: PointerEvent, templateId: number, triggerType: ?string)
+	getGridReloadData(): Object
+	{
+		const signedDocuments = this.resolveDocumentConfigs()
+			.filter((documentConfig) => {
+				return Type.isStringFilled(documentConfig.signedDocumentType)
+					&& Type.isStringFilled(documentConfig.signedDocumentId)
+				;
+			})
+			.map((documentConfig) => ({
+				signedDocumentType: documentConfig.signedDocumentType,
+				signedDocumentId: documentConfig.signedDocumentId,
+			}))
+		;
+
+		if (Type.isArrayFilled(signedDocuments))
+		{
+			return { signedDocuments };
+		}
+
+		if (this.#signedDocumentType && this.#signedDocumentId)
+		{
+			return {
+				signedDocumentType: this.#signedDocumentType,
+				signedDocumentId: this.#signedDocumentId,
+			};
+		}
+
+		return {};
+	}
+
+	startWorkflow(
+		event: PointerEvent,
+		templateId: number,
+		triggerType: ?string,
+		documentTypeKeys: string[] = [],
+		preferredDocumentTypeKey: ?string = null,
+	)
 	{
 		event.preventDefault();
 
 		const id = Text.toNumber(templateId);
-		if (id <= 0 || !this.#signedDocumentType || !this.#signedDocumentId)
+		if (id <= 0)
+		{
+			return;
+		}
+
+		const documentConfig = this.resolveSingleDocumentConfig(documentTypeKeys, preferredDocumentTypeKey);
+		if (!documentConfig)
 		{
 			return;
 		}
@@ -233,12 +330,12 @@ class WorkflowStartList
 			}
 			this.#counters.set(templateId, this.#counters.get(templateId) + 1);
 
-			this.getGrid()?.reload();
+			this.reloadGrid();
 		};
 
 		Starter.singleStart({
-			signedDocumentId: this.#signedDocumentId,
-			signedDocumentType: this.#signedDocumentType,
+			signedDocumentId: documentConfig.signedDocumentId,
+			signedDocumentType: documentConfig.signedDocumentType,
 			templateId: id,
 			triggerType,
 		}, afterSuccessStart);
@@ -291,15 +388,118 @@ class WorkflowStartList
 		return Tag.render`<div class="ui-typography-text-xs">${message}</div>`;
 	}
 
-	openBizprocEditor(templateId, templateType)
+	resolveDocumentConfigs(documentTypeKeys: string[] = []): DocumentConfig[]
 	{
+		const documentConfigs = [];
+
+		if (Type.isArrayFilled(documentTypeKeys))
+		{
+			documentTypeKeys.forEach((documentTypeKey) => {
+				const documentConfig = this.#documents.get(documentTypeKey);
+				if (documentConfig)
+				{
+					documentConfigs.push(documentConfig);
+				}
+			});
+
+			return documentConfigs;
+		}
+
+		if (this.#documents.size > 0)
+		{
+			return Array.from(this.#documents.values());
+		}
+
+		if (this.#signedDocumentType && this.#signedDocumentId)
+		{
+			documentConfigs.push({
+				documentTypeKey: '',
+				editorUrl: this.#bizprocEditorUrl,
+				canEdit: this.#canEdit,
+				signedDocumentType: this.#signedDocumentType,
+				signedDocumentId: this.#signedDocumentId,
+			});
+		}
+
+		return documentConfigs;
+	}
+
+	resolveSingleDocumentConfig(documentTypeKeys: string[] = [], preferredDocumentTypeKey: ?string = null): ?DocumentConfig
+	{
+		if (Type.isStringFilled(preferredDocumentTypeKey))
+		{
+			const preferredDocumentConfig = this.#documents.get(preferredDocumentTypeKey);
+			if (preferredDocumentConfig)
+			{
+				return preferredDocumentConfig;
+			}
+		}
+
+		const documentConfigs = this.resolveDocumentConfigs(documentTypeKeys);
+
+		return documentConfigs.length === 1 ? documentConfigs[0] : null;
+	}
+
+	resolveEditDocumentConfig(documentTypeKeys: string[] = [], preferredDocumentTypeKey: ?string = null): ?DocumentConfig
+	{
+		if (Type.isStringFilled(preferredDocumentTypeKey))
+		{
+			const preferredDocumentConfig = this.#documents.get(preferredDocumentTypeKey);
+			if (preferredDocumentConfig)
+			{
+				return preferredDocumentConfig;
+			}
+		}
+
+		const documentConfigs = this.resolveDocumentConfigs(documentTypeKeys);
+		if (documentConfigs.length === 0)
+		{
+			return null;
+		}
+
+		if (documentConfigs.length === 1)
+		{
+			return documentConfigs[0];
+		}
+
+		const commonEditorUrl = this.getCommonEditorUrl(documentConfigs);
+		if (!Type.isStringFilled(commonEditorUrl))
+		{
+			return null;
+		}
+
+		return {
+			...documentConfigs[0],
+			editorUrl: commonEditorUrl,
+			canEdit: documentConfigs.some((documentConfig) => documentConfig.canEdit === true),
+		};
+	}
+
+	getCommonEditorUrl(documentConfigs: DocumentConfig[]): string
+	{
+		const editorUrls = documentConfigs
+			.map((documentConfig) => documentConfig.editorUrl)
+			.filter((editorUrl) => Type.isStringFilled(editorUrl))
+		;
+
+		if (editorUrls.length !== documentConfigs.length)
+		{
+			return '';
+		}
+
+		return (new Set(editorUrls)).size === 1 ? editorUrls[0] : '';
+	}
+
+	openBizprocEditor(templateId, templateType, editorUrl)
+	{
+		const resolvedEditorUrl = Type.isStringFilled(editorUrl) ? editorUrl : this.#bizprocEditorUrl;
 		if (templateType === WorkflowStartList.NEW_TEMPLATE_TYPE)
 		{
 			top.window.location.href = this.#bizprocNewEditorUrl.replace('#ID#', templateId);
 		}
 		else
 		{
-			top.window.location.href = this.#bizprocEditorUrl.replace('#ID#', templateId);
+			top.window.location.href = resolvedEditorUrl.replace('#ID#', templateId);
 		}
 	}
 }

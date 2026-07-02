@@ -10,6 +10,7 @@ import { EnableEvent as BlockEnableEvent } from './builders/block/enable-event';
 import { LinkEvent as BlockLinkEvent } from './builders/block/link-event';
 
 import { ConnectEvent as CommunicationChannelConnectEventBuilder } from './builders/communication/channel/connect-event';
+import { InviteEvent as CommunicationChannelInviteEventBuilder } from './builders/communication/channel/invite-event';
 
 import { DeleteEvent as CommunicationDeleteEvent } from './builders/communication/delete-event';
 import { CancelEvent as CommunicationEditorCancelEventBuilder } from './builders/communication/editor/cancel-event';
@@ -48,6 +49,7 @@ import { getCrmMode } from './helpers';
 import type {
 	AICallParsingEvent,
 	CommunicationChannelConnectEvent,
+	CommunicationChannelInviteEvent,
 	CommunicationEditorCancelEvent,
 	CommunicationEditorCopilotEvent,
 	CommunicationEditorInteractionEvent,
@@ -109,6 +111,7 @@ const Builder = Object.freeze({
 		SendEvent: CommunicationSendEvent,
 		Channel: {
 			ConnectEvent: CommunicationChannelConnectEventBuilder,
+			InviteEvent: CommunicationChannelInviteEventBuilder,
 		},
 		Editor: {
 			ViewEvent: CommunicationEditorViewEventBuilder,
@@ -167,6 +170,7 @@ export type {
 	RepeatSaleSegmentCancelEvent,
 	RepeatSaleSegmentEditEvent,
 	CommunicationChannelConnectEvent,
+	CommunicationChannelInviteEvent,
 	CommunicationEditorInteractionEvent,
 	CommunicationEditorCopilotEvent,
 	CommunicationEditorSendEvent,

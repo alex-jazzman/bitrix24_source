@@ -168,6 +168,12 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 			});
 		};
 
+		#getCloseAlertDescription = () => {
+			return this.props.isProjectsV2Enabled
+				? Loc.getMessage('COLLAB_PROJECT_INVITE_NAME_CHECKER_CLOSE_ALERT_DESCRIPTION')
+				: Loc.getMessage('COLLAB_INVITE_NAME_CHECKER_CLOSE_ALERT_DESCRIPTION');
+		};
+
 		#renderButtons()
 		{
 			const { canInviteCollabersInPortalSettings, boxLayout } = this.props;
@@ -294,7 +300,7 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 				onSendButtonClickHandler: this.#onContactsSelectorSendButtonClick,
 				dismissAlert: {
 					title: Loc.getMessage('COLLAB_INVITE_NAME_CHECKER_CLOSE_ALERT_TITLE'),
-					description: Loc.getMessage('COLLAB_INVITE_NAME_CHECKER_CLOSE_ALERT_DESCRIPTION'),
+					description: this.#getCloseAlertDescription(),
 					destructiveButtonText: Loc.getMessage('COLLAB_INVITE_NAME_CHECKER_CLOSE_ALERT_DESTRUCTIVE_BUTTON'),
 					defaultButtonText: Loc.getMessage('COLLAB_INVITE_NAME_CHECKER_CLOSE_ALERT_CONTINUE_BUTTON'),
 				},
@@ -405,14 +411,14 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 				getItemFormattedSubDescription: this.#getPhoneItemFormattedSubDescription,
 				getAlreadyInvitedUsersStringForSubtitle: this.#getAlreadyInvitedUsersFormattedPhones,
 				onSendInviteButtonClick: this.#onSendInviteButtonClick,
-				avatarEntityType: AvatarEntityType.COLLAB,
-				dismissAlert: {
-					title: Loc.getMessage('COLLAB_INVITE_NAME_CHECKER_CLOSE_ALERT_TITLE'),
-					description: Loc.getMessage('COLLAB_INVITE_NAME_CHECKER_CLOSE_ALERT_DESCRIPTION'),
-					destructiveButtonText: Loc.getMessage('COLLAB_INVITE_NAME_CHECKER_CLOSE_ALERT_DESTRUCTIVE_BUTTON'),
-					defaultButtonText: Loc.getMessage('COLLAB_INVITE_NAME_CHECKER_CLOSE_ALERT_CONTINUE_BUTTON'),
-				},
-			});
+					avatarEntityType: AvatarEntityType.COLLAB,
+					dismissAlert: {
+						title: Loc.getMessage('COLLAB_INVITE_NAME_CHECKER_CLOSE_ALERT_TITLE'),
+						description: this.#getCloseAlertDescription(),
+						destructiveButtonText: Loc.getMessage('COLLAB_INVITE_NAME_CHECKER_CLOSE_ALERT_DESTRUCTIVE_BUTTON'),
+						defaultButtonText: Loc.getMessage('COLLAB_INVITE_NAME_CHECKER_CLOSE_ALERT_CONTINUE_BUTTON'),
+					},
+				});
 		};
 
 		getNameCheckerTitle = (usersToInvite, alreadyInvitedUsers) => {
@@ -422,6 +428,14 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 		};
 
 		getNameCheckerDescription = (usersToInvite, alreadyInvitedUsers) => {
+
+			if (this.props.isProjectsV2Enabled)
+			{
+				return this.isUserWithNameExists([...(usersToInvite ?? []), ...(alreadyInvitedUsers ?? [])])
+					? Loc.getMessage('COLLAB_PROJECT_INVITE_NAME_CHECKER_DESCRIPTION_PHONE')
+					: Loc.getMessage('COLLAB_PROJECT_INVITE_NAME_CHECKER_DESCRIPTION_EMAIL');
+			}
+
 			return this.isUserWithNameExists([...(usersToInvite ?? []), ...(alreadyInvitedUsers ?? [])])
 				? Loc.getMessage('COLLAB_INVITE_NAME_CHECKER_DESCRIPTION_PHONE')
 				: Loc.getMessage('COLLAB_INVITE_NAME_CHECKER_DESCRIPTION_EMAIL');
@@ -651,7 +665,7 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 				onButtonClick: this.#onInviteByEmailButtonClick,
 				dismissAlert: {
 					title: Loc.getMessage('COLLAB_INVITE_NAME_CHECKER_CLOSE_ALERT_TITLE'),
-					description: Loc.getMessage('COLLAB_INVITE_NAME_CHECKER_CLOSE_ALERT_DESCRIPTION'),
+					description: this.#getCloseAlertDescription(),
 					destructiveButtonText: Loc.getMessage('COLLAB_INVITE_NAME_CHECKER_CLOSE_ALERT_DESTRUCTIVE_BUTTON'),
 					defaultButtonText: Loc.getMessage('COLLAB_INVITE_NAME_CHECKER_CLOSE_ALERT_CONTINUE_BUTTON'),
 				},
@@ -856,14 +870,14 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 				onSendInviteButtonClick: this.#onSendInviteButtonClick,
 				getItemFormattedSubDescription: this.#getEmailItemFormattedSubDescription,
 				getAlreadyInvitedUsersStringForSubtitle: this.#getAlreadyInvitedUsersFormattedEmails,
-				avatarEntityType: AvatarEntityType.COLLAB,
-				dismissAlert: {
-					title: Loc.getMessage('COLLAB_INVITE_NAME_CHECKER_CLOSE_ALERT_TITLE'),
-					description: Loc.getMessage('COLLAB_INVITE_NAME_CHECKER_CLOSE_ALERT_DESCRIPTION'),
-					destructiveButtonText: Loc.getMessage('COLLAB_INVITE_NAME_CHECKER_CLOSE_ALERT_DESTRUCTIVE_BUTTON'),
-					defaultButtonText: Loc.getMessage('COLLAB_INVITE_NAME_CHECKER_CLOSE_ALERT_CONTINUE_BUTTON'),
-				},
-			});
+					avatarEntityType: AvatarEntityType.COLLAB,
+					dismissAlert: {
+						title: Loc.getMessage('COLLAB_INVITE_NAME_CHECKER_CLOSE_ALERT_TITLE'),
+						description: this.#getCloseAlertDescription(),
+						destructiveButtonText: Loc.getMessage('COLLAB_INVITE_NAME_CHECKER_CLOSE_ALERT_DESTRUCTIVE_BUTTON'),
+						defaultButtonText: Loc.getMessage('COLLAB_INVITE_NAME_CHECKER_CLOSE_ALERT_CONTINUE_BUTTON'),
+					},
+				});
 		};
 
 		#onSendInviteButtonClick = async (usersToInvite, alreadyInvitedUsers) => {
@@ -920,11 +934,20 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 
 		#renderHeader()
 		{
+			let text = Loc.getMessage('COLLAB_INVITE_TAB_GUESTS_TEXT_HEADER_FOR_EMPLOYEE');
+
+			if (this.props.isProjectsV2Enabled)
+			{
+				text = Loc.getMessage('COLLAB_INVITE_PROJECT_TAB_GUESTS_TEXT_HEADER');
+			}
+			else if (this.#isCollaberOrExtranet())
+			{
+				text = Loc.getMessage('COLLAB_INVITE_TAB_GUESTS_TEXT_HEADER_FOR_COLLABER');
+			}
+
 			return H4({
 				testId: this.getTestId('header'),
-				text: this.#isCollaberOrExtranet()
-					? Loc.getMessage('COLLAB_INVITE_TAB_GUESTS_TEXT_HEADER_FOR_COLLABER')
-					: Loc.getMessage('COLLAB_INVITE_TAB_GUESTS_TEXT_HEADER_FOR_EMPLOYEE'),
+				text,
 				color: Color.base1,
 				style: {
 					textAlign: 'center',
@@ -935,11 +958,20 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 
 		#renderText()
 		{
+			let text = Loc.getMessage('COLLAB_INVITE_TAB_GUESTS_TEXT_FOR_EMPLOYEE');
+
+			if (this.props.isProjectsV2Enabled)
+			{
+				text = Loc.getMessage('COLLAB_INVITE_PROJECT_TAB_GUESTS_TEXT');
+			}
+			else if (this.#isCollaberOrExtranet())
+			{
+				text = Loc.getMessage('COLLAB_INVITE_TAB_GUESTS_TEXT_FOR_COLLABER');
+			}
+
 			return Text3({
 				testId: this.getTestId('text'),
-				text: this.#isCollaberOrExtranet()
-					? Loc.getMessage('COLLAB_INVITE_TAB_GUESTS_TEXT_FOR_COLLABER')
-					: Loc.getMessage('COLLAB_INVITE_TAB_GUESTS_TEXT_FOR_EMPLOYEE'),
+				text,
 				color: Color.base2,
 				numberOfLines: 0,
 				ellipsize: 'end',

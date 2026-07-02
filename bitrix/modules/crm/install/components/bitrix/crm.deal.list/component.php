@@ -1154,7 +1154,12 @@ else
 				'sort' => 'contact_full_name',
 				'editable' => false,
 			],
-
+			[
+				'id' => 'MYCOMPANY_ID',
+				'name' => Loc::getMessage('CRM_TYPE_ITEM_FIELD_MYCOMPANY_ID'),
+				'sort' => false,
+				'editable' => false,
+			],
 			[
 				'id' => 'CLOSED',
 				'name' => Loc::getMessage('CRM_COLUMN_CLOSED'),
@@ -1368,30 +1373,21 @@ $companyDataProvider
 	->setExportMode($isInExportMode)
 	->setGridId($arResult['GRID_ID']);
 
+$clientFieldsPreparer = new \Bitrix\Crm\Component\EntityList\ClientField\ClientFieldsPreparer(
+	$contactDataProvider,
+	$companyDataProvider,
+	\Bitrix\Crm\Component\EntityList\ClientDataProvider::getPriorityEntityTypeId(),
+);
+
 $observersDataProvider = new \Bitrix\Crm\Component\EntityList\UserDataProvider\Observers(CCrmOwnerType::Deal);
 
 $arResult['HEADERS'] = array_values($arResult['HEADERS']);
 
 if (!$bInternal || $isExtendedInternal === true)
 {
-	$clientFieldHeaders = [];
-	if (Bitrix\Crm\Component\EntityList\ClientDataProvider::getPriorityEntityTypeId() === \CCrmOwnerType::Contact)
-	{
-		$clientFieldHeaders = array_merge(
-			$contactDataProvider->getHeaders(),
-			$companyDataProvider->getHeaders()
-		);
-	}
-	else
-	{
-		$clientFieldHeaders = array_merge(
-			$companyDataProvider->getHeaders(),
-			$contactDataProvider->getHeaders()
-		);
-	}
 	$arResult['HEADERS'] = array_merge(
 		$arResult['HEADERS'],
-		$clientFieldHeaders
+		$clientFieldsPreparer->getHeaders(),
 	);
 }
 
@@ -1583,6 +1579,7 @@ $arImmutableFilters = array(
 	'CONTACT_ID', 'CONTACT_ID_value', 'ASSOCIATED_CONTACT_ID',
 	'COMPANY_ID', 'COMPANY_ID_value',
 	'STAGE_SEMANTIC_ID',
+	'MYCOMPANY_ID', 'MYCOMPANY_ID_value',
 	'CREATED_BY_ID', 'CREATED_BY_ID_value',
 	'MODIFY_BY_ID', 'MODIFY_BY_ID_value',
 	'MOVED_BY_ID', 'MOVED_BY_ID_value',
@@ -1612,7 +1609,12 @@ foreach ($arFilter as $k => $v)
 	}
 
 	$arMatch = [];
-	if ($k === 'ORIGINATOR_ID')
+	if ($k === 'MYCOMPANY_ID')
+	{
+		$arFilter['=' . $k] = $v;
+		unset($arFilter[$k]);
+	}
+	elseif ($k === 'ORIGINATOR_ID')
 	{
 		// HACK: build filter by internal entities
 		$arFilter['=ORIGINATOR_ID'] = $v !== '__INTERNAL' ? $v : null;
@@ -1965,8 +1967,7 @@ $userDataProvider->prepareSelect($arSelect);
 $observersDataProvider->prepareSelect($arSelect);
 if (!$bInternal || $isExtendedInternal === true)
 {
-	$contactDataProvider->prepareSelect($arSelect);
-	$companyDataProvider->prepareSelect($arSelect);
+	$clientFieldsPreparer->prepareSelect($arSelect);
 }
 
 if ($isInExportMode)
@@ -2470,8 +2471,7 @@ if ($arResult['CAN_EXCLUDE'])
 
 if (!$bInternal || $isExtendedInternal === true)
 {
-	$contactDataProvider->appendResult($arResult['DEAL']);
-	$companyDataProvider->appendResult($arResult['DEAL']);
+	$clientFieldsPreparer->appendResult($arResult['DEAL']);
 }
 $userDataProvider->appendResult($arResult['DEAL']);
 $observersDataProvider->appendResult($arResult['DEAL']);
@@ -2488,6 +2488,22 @@ $parentFieldValues = Crm\Service\Container::getInstance()->getParentFieldManager
 );
 
 $debugItemIds = \CCrmBizProcHelper::getActiveDebugEntityIds(\CCrmOwnerType::Deal);
+
+$myCompanyIds = [];
+foreach ($arResult['DEAL'] as $arDealItem)
+{
+	$myCompanyId = isset($arDealItem['~MYCOMPANY_ID']) ? (int)$arDealItem['~MYCOMPANY_ID'] : 0;
+	if ($myCompanyId > 0)
+	{
+		$myCompanyIds[$myCompanyId] = $myCompanyId;
+	}
+}
+$myCompanies =
+	!empty($myCompanyIds)
+		? Container::getInstance()->getCompanyBroker()->getBunchByIds($myCompanyIds)
+		: []
+;
+unset($myCompanyIds);
 
 foreach($arResult['DEAL'] as &$arDeal)
 {
@@ -2625,6 +2641,31 @@ foreach($arResult['DEAL'] as &$arDeal)
 			)
 		);
 	}
+
+	//region My Company
+	$myCompanyId = isset($arDeal['~MYCOMPANY_ID']) ? (int)$arDeal['~MYCOMPANY_ID'] : 0;
+	$arDeal['PATH_TO_MYCOMPANY_SHOW'] =
+		$myCompanyId <= 0
+			? ''
+			: CComponentEngine::MakePathFromTemplate(
+				$arParams['PATH_TO_MYCOMPANY_SHOW'] ?? '',
+				['company_id' => $myCompanyId]
+			)
+	;
+	if (
+		$myCompanyId > 0
+		&& isset($myCompanies[$myCompanyId])
+		&& $userPermissionsService->item()->canRead(CCrmOwnerType::Company, $myCompanyId)
+	)
+	{
+		$arDeal['MY_COMPANY_INFO'] = [
+			'ENTITY_TYPE_ID' => CCrmOwnerType::Company,
+			'ENTITY_ID' => $myCompanyId,
+			'TITLE' => $myCompanies[$myCompanyId]->getTitle() ?? ('[' . $myCompanyId . ']'),
+			'PREFIX' => "DEAL_{$arDeal['~ID']}",
+		];
+	}
+	//endregion
 
 	$arDeal['PATH_TO_USER_PROFILE'] = $arDeal['ASSIGNED_BY_SHOW_URL'] ?? '';
 
@@ -2991,8 +3032,7 @@ if (!$bInternal || $isExtendedInternal === true)
 {
 	$displayFields = array_merge(
 		$displayFields,
-		$contactDataProvider->getDisplayFields(),
-		$companyDataProvider->getDisplayFields()
+		$clientFieldsPreparer->getDisplayFields(),
 	);
 }
 if ($isInExportMode)
@@ -3150,7 +3190,10 @@ foreach ($displayValues as $dealId => $dealDisplayValues)
 			continue;
 		}
 
-		$arResult['DEAL'][$dealId][$fieldId] = $fieldValue;
+		$arResult['DEAL'][$dealId][$fieldId] = $displayFields[$fieldId]->wasRenderedAsHtml()
+			? $fieldValue
+			: htmlspecialcharsbx($fieldValue)
+		;
 	}
 }
 
@@ -3244,54 +3287,6 @@ foreach($arResult['CATEGORIES'] as $categoryID => $IDs)
 		;
 
 		$arResult['DEAL'][$ID]['BIZPROC_LIST'] = [];
-		if ($isBizProcInstalled && !class_exists(\Bitrix\Bizproc\Controller\Workflow\Starter::class))
-		{
-			foreach ($arBPData as $arBP)
-			{
-				if (!CBPDocument::CanUserOperateDocument(
-					CBPCanUserOperateOperation::StartWorkflow,
-					$userID,
-					array('crm', 'CCrmDocumentDeal', 'DEAL_'.$arResult['DEAL'][$ID]['ID']),
-					array(
-						'UserGroups' => $CCrmBizProc->arCurrentUserGroups,
-						'DocumentStates' => $arDocumentStates,
-						'WorkflowTemplateId' => $arBP['ID'],
-						'CreatedBy' => $arResult['DEAL'][$ID]['~ASSIGNED_BY_ID'],
-						'UserIsAdmin' => $isAdmin,
-						'DealCategoryId' => $categoryID,
-					)
-				))
-				{
-					continue;
-				}
-
-				$arBP['PATH_TO_BIZPROC_START'] = CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_DEAL_SHOW'],
-					array(
-						'deal_id' => $arResult['DEAL'][$ID]['ID']
-					)),
-					array(
-						'workflow_template_id' => $arBP['ID'], 'bizproc_start' => 1,  'sessid' => $arResult['SESSION_ID'],
-						'CRM_DEAL_SHOW_V12_active_tab' => 'tab_bizproc', 'back_url' => $arParams['PATH_TO_DEAL_LIST'])
-				);
-
-				if (isset($arBP['HAS_PARAMETERS']))
-				{
-					$params = \Bitrix\Main\Web\Json::encode(array(
-						'moduleId' => 'crm',
-						'entity' => 'CCrmDocumentDeal',
-						'documentType' => 'DEAL',
-						'documentId' => 'DEAL_'.$arResult['DEAL'][$ID]['ID'],
-						'templateId' => $arBP['ID'],
-						'templateName' => $arBP['NAME'],
-						'hasParameters' => $arBP['HAS_PARAMETERS']
-					));
-					$arBP['ONCLICK'] = 'BX.Bizproc.Starter.singleStart('.$params
-						.', function(){BX.Main.gridManager.reload(\''.CUtil::JSEscape($arResult['GRID_ID']).'\');});';
-				}
-
-				$arResult['DEAL'][$ID]['BIZPROC_LIST'][] = $arBP;
-			}
-		}
 	}
 }
 

@@ -23,6 +23,7 @@ jn.define('im/messenger/controller/sidebar-v2/ui/top-container', (require, expor
 				},
 				this.props.renderHeader?.(),
 				this.props.renderDescription?.(),
+				this.props.renderSharingLink?.(),
 				this.props.renderPrimaryActionButtons?.(),
 				this.props.renderPlanLimitBanner?.(),
 			);

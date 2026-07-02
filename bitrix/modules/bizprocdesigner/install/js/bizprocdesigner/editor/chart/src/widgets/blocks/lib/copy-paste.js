@@ -1,78 +1,64 @@
+import { useBlockDiagram } from 'ui.block-diagram';
 import { diagramStore as useDiagramStore, useBufferStore } from '../../../entities/blocks';
 import type { Point } from 'ui.block-diagram';
-import type { Block } from '../../../shared/types';
+import type { Block, BlockId } from '../../../shared/types';
 
-export class CopyPaste
+export function useCopyPaste(): { paste: (point: Point) => BlockId[] }
 {
-	#diagramStore = null;
-	#bufferStore = null;
+	const diagramStore = useDiagramStore();
+	const bufferStore = useBufferStore();
+	const blockDiagram = useBlockDiagram();
 
-	constructor()
+	function paste(point: Point): BlockId[]
 	{
-		this.#diagramStore = useDiagramStore();
-		this.#bufferStore = useBufferStore();
-	}
+		const {
+			blocks = [],
+			connections = [],
+		} = bufferStore.getBufferContent() ?? {};
 
-	paste(point: Point): Block[]
-	{
-		const data = this.#bufferStore.getBufferContent();
-		if (!data)
-		{
-			return [];
-		}
-
-		return this.#pasteGroup(data, point);
-	}
-
-	#pasteGroup({ blocks, connections }, point: Point): Block[]
-	{
 		if (blocks.length === 0)
 		{
 			return [];
 		}
 
+		const addedBlockIds = pasteBlocks(blocks, point);
+		pasteConnections(connections);
+
+		return addedBlockIds;
+	}
+
+	function pasteBlocks(blocks: Block, point: Point): Block[]
+	{
 		const origin = { ...blocks[0].position };
-
 		const newBlocks = blocks.map((block) => {
-			const targetPoint = {
-				x: point.x + (block.position.x - origin.x),
-				y: point.y + (block.position.y - origin.y),
+			return {
+				...block,
+				position: {
+					x: point.x + (block.position.x - origin.x),
+					y: point.y + (block.position.y - origin.y),
+				},
 			};
-
-			return this.#pasteBlock(block, targetPoint);
 		});
 
-		this.#pasteConnections(connections);
+		blockDiagram.addBlocks(newBlocks);
+
+		for (const block of newBlocks)
+		{
+			diagramStore.updateBlockPublishStatus(block);
+		}
 
 		return newBlocks;
 	}
 
-	#pasteBlock(block: Block, point: Point): Block
+	function pasteConnections(connections: Connection[]): void
 	{
-		const positionedBlock = {
-			...block,
-			position: point,
-		};
-		this.#diagramStore.addBlock(positionedBlock);
-		this.#diagramStore.updateBlockPublishStatus(positionedBlock);
+		blockDiagram.addConnections(connections);
 
-		return positionedBlock;
-	}
-
-	#pasteConnections(connections: Connection[]): void
-	{
-		if (connections.length === 0)
+		for (const connection of connections)
 		{
-			return;
+			diagramStore.setConnectionCurrentTimestamp(connection.id);
 		}
-
-		this.#diagramStore.setConnections([
-			...this.#diagramStore.connections,
-			...connections,
-		]);
-
-		connections.forEach((item) => {
-			this.#diagramStore.setConnectionCurrentTimestamp(item.id);
-		});
 	}
+
+	return { paste };
 }

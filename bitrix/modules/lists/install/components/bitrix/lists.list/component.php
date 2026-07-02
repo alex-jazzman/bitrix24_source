@@ -1,6 +1,10 @@
 <?php
 
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
 /** @global CMain $APPLICATION */
 /** @global CUser $USER */
 /** @global CDatabase $DB */
@@ -15,154 +19,166 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 /** @var string $parentComponentTemplate */
 
 use Bitrix\Main\Application;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\DB\SqlQueryException;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 
 $this->setFrameMode(false);
 
-if(!CModule::IncludeModule('lists'))
+if(!Loader::includeModule('lists'))
 {
-	ShowError(GetMessage("CC_BLL_MODULE_NOT_INSTALLED"));
+	ShowError(Loc::getMessage('CC_BLL_MODULE_NOT_INSTALLED'));
+
 	return;
 }
 
-$IBLOCK_ID = intval($arParams["~IBLOCK_ID"]);
-if(isset($_REQUEST["list_section_id"]))
-	$section_id = intval($_REQUEST["list_section_id"]);
+$IBLOCK_ID = (int)$arParams['~IBLOCK_ID'];
+if(isset($_REQUEST['list_section_id']))
+{
+	$section_id = (int)$_REQUEST['list_section_id'];
+}
 else
-	$section_id = intval($arParams["~SECTION_ID"]);
+{
+	$section_id = (int)$arParams['~SECTION_ID'];
+}
 
 $arResult['IS_SOCNET_GROUP_CLOSED'] = false;
-if (
-	intval($arParams["~SOCNET_GROUP_ID"] ?? null) > 0
-	&& CModule::IncludeModule("socialnetwork")
-)
+if ((int)($arParams['~SOCNET_GROUP_ID'] ?? null) > 0 && Loader::includeModule('socialnetwork'))
 {
-	$arSonetGroup = CSocNetGroup::GetByID(intval($arParams["~SOCNET_GROUP_ID"]));
+	$arSonetGroup = CSocNetGroup::getById((int)($arParams['~SOCNET_GROUP_ID']));
 	if (
 		is_array($arSonetGroup)
-		&& $arSonetGroup["CLOSED"] == "Y"
+		&& $arSonetGroup['CLOSED'] === 'Y'
 		&& !CSocNetUser::IsCurrentUserModuleAdmin()
 		&& (
-			$arSonetGroup["OWNER_ID"] != $GLOBALS["USER"]->GetID()
-			|| COption::GetOptionString("socialnetwork", "work_with_closed_groups", "N") != "Y"
+			$arSonetGroup['OWNER_ID'] != $GLOBALS['USER']->GetID()
+			|| Option::get('socialnetwork', 'work_with_closed_groups', 'N') !== 'Y'
 		)
 	)
 	{
-		$arResult["IS_SOCNET_GROUP_CLOSED"] = true;
+		$arResult['IS_SOCNET_GROUP_CLOSED'] = true;
 	}
 }
 
 $lists_perm = CListPermissions::CheckAccess(
 	$USER,
-	$arParams["~IBLOCK_TYPE_ID"],
+	$arParams['~IBLOCK_TYPE_ID'],
 	$IBLOCK_ID,
-	$arParams["~SOCNET_GROUP_ID"] ?? null
+	$arParams['~SOCNET_GROUP_ID'] ?? null
 );
+
 if($lists_perm < 0)
 {
 	switch($lists_perm)
 	{
 	case CListPermissions::WRONG_IBLOCK_TYPE:
-		ShowError(GetMessage("CC_BLL_WRONG_IBLOCK_TYPE"));
+		ShowError(Loc::getMessage('CC_BLL_WRONG_IBLOCK_TYPE'));
+
 		return;
 	case CListPermissions::WRONG_IBLOCK:
-		ShowError(GetMessage("CC_BLL_WRONG_IBLOCK"));
+		ShowError(Loc::getMessage('CC_BLL_WRONG_IBLOCK'));
+
 		return;
 	case CListPermissions::LISTS_FOR_SONET_GROUP_DISABLED:
-		ShowError(GetMessage("CC_BLL_LISTS_FOR_SONET_GROUP_DISABLED"));
+		ShowError(Loc::getMessage('CC_BLL_LISTS_FOR_SONET_GROUP_DISABLED'));
+
 		return;
 	default:
-		ShowError(GetMessage("CC_BLL_UNKNOWN_ERROR"));
+		ShowError(Loc::getMessage('CC_BLL_UNKNOWN_ERROR'));
+
 		return;
 	}
 }
 elseif(
 	$lists_perm < CListPermissions::CAN_READ
 	&& !(
-		CIBlockRights::UserHasRightTo($IBLOCK_ID, $IBLOCK_ID, "element_read")
-		|| CIBlockSectionRights::UserHasRightTo($IBLOCK_ID, $section_id, "section_element_bind")
+		CIBlockRights::UserHasRightTo($IBLOCK_ID, $IBLOCK_ID, 'element_read')
+		|| CIBlockSectionRights::UserHasRightTo($IBLOCK_ID, $section_id, 'section_element_bind')
 	)
 )
 {
-	ShowError(GetMessage("CC_BLL_ACCESS_DENIED"));
+	ShowError(Loc::getMessage('CC_BLL_ACCESS_DENIED'));
+
 	return;
 }
 
-$arParams["CAN_EDIT"] =	(
-	!$arResult["IS_SOCNET_GROUP_CLOSED"]
+$arParams['CAN_EDIT'] =	(
+	!$arResult['IS_SOCNET_GROUP_CLOSED']
 	&& (
 		$lists_perm >= CListPermissions::IS_ADMIN
-		|| CIBlockRights::UserHasRightTo($IBLOCK_ID, $IBLOCK_ID, "iblock_edit")
+		|| CIBlockRights::UserHasRightTo($IBLOCK_ID, $IBLOCK_ID, 'iblock_edit')
 	)
 );
-$arResult["CAN_ADD_ELEMENT"] = (
-	!$arResult["IS_SOCNET_GROUP_CLOSED"]
+$arResult['CAN_ADD_ELEMENT'] = (
+	!$arResult['IS_SOCNET_GROUP_CLOSED']
 	&& (
 		$lists_perm > CListPermissions::CAN_READ
-		|| CIBlockSectionRights::UserHasRightTo($IBLOCK_ID, $section_id, "section_element_bind")
+		|| CIBlockSectionRights::UserHasRightTo($IBLOCK_ID, $section_id, 'section_element_bind')
 	)
 );
-$arResult["CAN_READ"] = (
-	!$arResult["IS_SOCNET_GROUP_CLOSED"]
+$arResult['CAN_READ'] = (
+	!$arResult['IS_SOCNET_GROUP_CLOSED']
 	&& (
 		$lists_perm > CListPermissions::CAN_READ
-		|| CIBlockSectionRights::UserHasRightTo($IBLOCK_ID, $section_id, "element_read")
+		|| CIBlockSectionRights::UserHasRightTo($IBLOCK_ID, $section_id, 'element_read')
 	)
 );
-$arResult["CAN_EDIT_SECTIONS"] = (
-	!$arResult["IS_SOCNET_GROUP_CLOSED"]
+$arResult['CAN_EDIT_SECTIONS'] = (
+	!$arResult['IS_SOCNET_GROUP_CLOSED']
 	&& (
 		$lists_perm >= CListPermissions::CAN_WRITE
-		|| CIBlockSectionRights::UserHasRightTo($IBLOCK_ID, $section_id, "section_edit")
-		|| CIBlockSectionRights::UserHasRightTo($IBLOCK_ID, $section_id, "section_section_bind")
+		|| CIBlockSectionRights::UserHasRightTo($IBLOCK_ID, $section_id, 'section_edit')
+		|| CIBlockSectionRights::UserHasRightTo($IBLOCK_ID, $section_id, 'section_section_bind')
 	)
 );
-$arResult["IBLOCK_PERM"] = $lists_perm;
-$arResult["USER_GROUPS"] = $USER->GetUserGroupArray();
-$arIBlock = CIBlock::GetArrayByID(intval($arParams["~IBLOCK_ID"]));
-$arResult["~IBLOCK"] = $arIBlock;
-$arResult["IBLOCK"] = $arIBlock;
-$arResult["IBLOCK_ID"] = $arIBlock["ID"];
-$arResult["PROCESSES"] = false;
-$arResult["USE_COMMENTS"] = false;
-$arResult["RAND_STRING"] = $this->randString();
+$arResult['IBLOCK_PERM'] = $lists_perm;
+$arResult['USER_GROUPS'] = $USER->GetUserGroupArray();
+$arIBlock = CIBlock::GetArrayByID((int)$arParams['~IBLOCK_ID']);
+$arResult['~IBLOCK'] = $arIBlock;
+$arResult['IBLOCK'] = $arIBlock;
+$arResult['IBLOCK_ID'] = $arIBlock['ID'];
+$arResult['PROCESSES'] = false;
+$arResult['USE_COMMENTS'] = false;
+$arResult['RAND_STRING'] = $this->randString();
 $arResult['JS_OBJECT'] = 'ListClass_'.$arResult['RAND_STRING'];
-if($arParams["IBLOCK_TYPE_ID"] == COption::GetOptionString("lists", "livefeed_iblock_type_id"))
+if($arParams['IBLOCK_TYPE_ID'] === Option::get('lists', 'livefeed_iblock_type_id'))
 {
-	$arResult["USE_COMMENTS"] = (bool)CModule::includeModule("forum");
-	$arResult["PROCESSES"] = true;
+	$arResult['USE_COMMENTS'] = Loader::includeModule('forum');
+	$arResult['PROCESSES'] = true;
 }
 
 if (
-	$arResult["IBLOCK"]["BIZPROC"] == "Y"
-	&& CModule::IncludeModule('bizproc')
-	&& CLists::isBpFeatureEnabled($arParams["IBLOCK_TYPE_ID"])
+	$arResult['IBLOCK']['BIZPROC'] === 'Y'
+	&& Loader::includeModule('bizproc')
+	&& CLists::isBpFeatureEnabled($arParams['IBLOCK_TYPE_ID'])
 )
 {
-	$arParams["CAN_EDIT_BIZPROC"] = (
-		!$arResult["IS_SOCNET_GROUP_CLOSED"]
-		&& CBPDocument::CanUserOperateDocumentType(
+	$arParams['CAN_EDIT_BIZPROC'] = (
+		!$arResult['IS_SOCNET_GROUP_CLOSED']
+		&& CBPDocument::canUserOperateDocumentType(
 			CBPCanUserOperateOperation::CreateWorkflow,
 			$USER->GetID(),
-			BizProcDocument::generateDocumentComplexType($arParams["IBLOCK_TYPE_ID"], $IBLOCK_ID),
-			array("UserGroups" => $arResult["USER_GROUPS"])
+			BizProcDocument::generateDocumentComplexType($arParams['IBLOCK_TYPE_ID'], $IBLOCK_ID),
+			['UserGroups' => $arResult['USER_GROUPS']]
 		)
 	);
 }
 
-if(isset($arParams["SOCNET_GROUP_ID"]) && $arParams["SOCNET_GROUP_ID"] > 0)
+if(isset($arParams['SOCNET_GROUP_ID']) && $arParams['SOCNET_GROUP_ID'] > 0)
 {
-	$arParams["SOCNET_GROUP_ID"] = intval($arParams["SOCNET_GROUP_ID"]);
+	$arParams['SOCNET_GROUP_ID'] = (int)$arParams['SOCNET_GROUP_ID'];
 }
 else
 {
-	$arParams["SOCNET_GROUP_ID"] = "";
+	$arParams['SOCNET_GROUP_ID'] = '';
 }
 
-$APPLICATION->SetTitle(htmlspecialcharsbx($arResult["IBLOCK"]["NAME"]));
+$APPLICATION->SetTitle(htmlspecialcharsbx($arResult['IBLOCK']['NAME']));
 
-$arResult["GRID_ID"] = "lists_list_elements_".$arResult["IBLOCK_ID"];
-$arResult["FILTER_ID"] = "lists_list_elements_".$arResult["IBLOCK_ID"];
+$arResult['GRID_ID'] = 'lists_list_elements_' . $arResult['IBLOCK_ID'];
+$arResult['FILTER_ID'] = 'lists_list_elements_' . $arResult['IBLOCK_ID'];
 
 $arResult["ANY_SECTION"] = (isset($_REQUEST["list_section_id"]) && $_REQUEST["list_section_id"] == '')
 	|| (!isset($_REQUEST["list_section_id"]));
@@ -423,26 +439,26 @@ if ($strError <> "")
 	);
 }
 
-$grid_options = new Bitrix\Main\Grid\Options($arResult["GRID_ID"]);
+$grid_options = new Bitrix\Main\Grid\Options($arResult['GRID_ID']);
 $grid_columns = $grid_options->GetVisibleColumns();
-$grid_sort = $grid_options->GetSorting(array("sort"=>array("name"=>"asc")));
+$grid_sort = $grid_options->getSorting(['sort' => ['name' => 'asc']]);
 
 if (
-	$arResult["IBLOCK"]["BIZPROC"]=="Y"
-	&& CModule::IncludeModule('bizproc')
-	&& CLists::isBpFeatureEnabled($arParams["IBLOCK_TYPE_ID"])
+	$arResult['IBLOCK']['BIZPROC'] === 'Y'
+	&& Loader::includeModule('bizproc')
+	&& CLists::isBpFeatureEnabled($arParams['IBLOCK_TYPE_ID'])
 )
 {
-	$arDocumentTemplates = CBPDocument::GetWorkflowTemplatesForDocumentType(
-		BizProcDocument::generateDocumentComplexType($arParams["IBLOCK_TYPE_ID"], $arResult["IBLOCK_ID"]),
+	$arDocumentTemplates = CBPDocument::getWorkflowTemplatesForDocumentType(
+		BizProcDocument::generateDocumentComplexType($arParams['IBLOCK_TYPE_ID'], $arResult['IBLOCK_ID']),
 		false
 	);
-	$arResult["BIZPROC"] = "Y";
+	$arResult['BIZPROC'] = 'Y';
 }
 else
 {
-	$arDocumentTemplates = array();
-	$arResult["BIZPROC"] = "N";
+	$arDocumentTemplates = [];
+	$arResult['BIZPROC'] = 'N';
 }
 
 /* FIELDS */
@@ -836,34 +852,33 @@ $rsElements = CIBlockElement::getList(
 	$arSelect
 );
 
-if ($arResult["BIZPROC"] == "Y")
+$isBizprocActive = $arResult['BIZPROC'] === 'Y';
+if ($isBizprocActive)
 {
 	$arUserGroupsForBP = \Bitrix\Main\Engine\CurrentUser::get()->getUserGroups();
-	$arDocumentStatesForBP = CBPWorkflowTemplateLoader::GetDocumentTypeStates(
-		BizprocDocument::generateDocumentComplexType($arParams["IBLOCK_TYPE_ID"], $arIBlock["ID"])
+	$arDocumentStatesForBP = CBPWorkflowTemplateLoader::getDocumentTypeStates(
+		BizprocDocument::generateDocumentComplexType($arParams['IBLOCK_TYPE_ID'], $arIBlock['ID'])
 	);
 }
 else
 {
-	$arUserGroupsForBP = array();
-	$arDocumentStatesForBP = array();
+	$arUserGroupsForBP = [];
+	$arDocumentStatesForBP = [];
 }
 
 $processesWithComments = null;
-
-if ($arResult["PROCESSES"])
+if ($arResult['PROCESSES'])
 {
-	$arResult["USE_COMMENTS"] = (bool) CModule::includeModule("forum");
-	$processesWithComments = ($arResult["PROCESSES"] && $arResult["USE_COMMENTS"]);
+	$arResult['USE_COMMENTS'] = Loader::includeModule('forum');
+	$processesWithComments = $arResult['USE_COMMENTS'];
 }
 
-$isBizprocActive = $arResult["BIZPROC"] == "Y";
-$isBizprocVisible = empty($grid_columns) || in_array('BIZPROC', $grid_columns);
+$isBizprocVisible = empty($grid_columns) || in_array('BIZPROC', $grid_columns, true);
 $userId = $USER->GetID();
 
 $n = 0;
 
-$listValues = array();
+$listValues = [];
 while ($obElement = $rsElements->GetNextElement())
 {
 	if (++$n > $nav->getLimit())
@@ -871,26 +886,28 @@ while ($obElement = $rsElements->GetNextElement())
 		break;
 	}
 
-	$arResult["CAN_EXPORT"] = true;
-	$columns = array();
+	$arResult['CAN_EXPORT'] = true;
+	$columns = [];
 	$data = $obElement->GetFields();
 	if(!is_array($data))
+	{
 		continue;
+	}
 
 	if ($isBizprocActive)
 	{
-		$documentComplexType = BizprocDocument::generateDocumentComplexType($arIBlock["IBLOCK_TYPE_ID"], $arIBlock["ID"]);
-		$documentComplexId = BizprocDocument::getDocumentComplexId($arIBlock["IBLOCK_TYPE_ID"], $data["ID"]);
+		$documentComplexType = BizprocDocument::generateDocumentComplexType($arIBlock['IBLOCK_TYPE_ID'], $arIBlock['ID']);
+		$documentComplexId = BizprocDocument::getDocumentComplexId($arIBlock['IBLOCK_TYPE_ID'], $data['ID']);
 
 		$canStartBizproc = CBPDocument::canUserOperateDocument(
 			CBPCanUserOperateOperation::StartWorkflow,
 			$userId,
 			$documentComplexId,
 			[
-				"IBlockId" => $arIBlock["ID"],
-				"AllUserGroups" => $arUserGroupsForBPTmp ?? null,
-				"DocumentStates" => $arDocumentStatesForBP,
-				"WorkflowId" => isset($arWorkflowTemplate, $arWorkflowTemplate['ID']) ? $arWorkflowTemplate["ID"] : null,
+				'IBlockId' => $arIBlock['ID'],
+				'AllUserGroups' => $arUserGroupsForBPTmp ?? null,
+				'DocumentStates' => $arDocumentStatesForBP,
+				'WorkflowId' => $arWorkflowTemplate['ID'] ?? null,
 			]
 		);
 
@@ -905,30 +922,40 @@ while ($obElement = $rsElements->GetNextElement())
 		}
 	}
 
-	if(!is_array($listValues[$data["ID"]] ?? null))
-		$listValues[$data["ID"]] = array();
+	if (!is_array($listValues[$data['ID']] ?? null))
+	{
+		$listValues[$data['ID']] = [];
+	}
 
 	foreach($data as $fieldId => $fieldValue)
-		$listValues[$data["ID"]][$fieldId] = $fieldValue;
-
-	if(!empty($arProperties))
 	{
-		$propertyValuesObject = \CIblockElement::getPropertyValues($arIBlock["ID"],
-			array("ID" => $data["ID"], "SHOW_NEW" => ($arParams["CAN_EDIT"] ? "Y" : "N")));
-		while($propertyValues = $propertyValuesObject->fetch())
+		$listValues[$data['ID']][$fieldId] = $fieldValue;
+	}
+
+	if (!empty($arProperties))
+	{
+		$propertyValuesObject = \CIblockElement::getPropertyValues(
+			$arIBlock['ID'],
+			['ID' => $data['ID'], 'SHOW_NEW' => ($arParams['CAN_EDIT'] ? 'Y' : 'N')]
+		);
+		while ($propertyValues = $propertyValuesObject->fetch())
 		{
-			foreach($propertyValues as $propertyId => $propertyValue)
+			foreach ($propertyValues as $propertyId => $propertyValue)
 			{
-				if($propertyId == "IBLOCK_ELEMENT_ID")
+				if ($propertyId === 'IBLOCK_ELEMENT_ID')
+				{
 					continue;
-				$listValues[$data["ID"]]['PROPERTY_'.$propertyId] = $propertyValue;
+				}
+				$listValues[$data['ID']]['PROPERTY_' . $propertyId] = $propertyValue;
 			}
 		}
 	}
 
 	$iblockSectionId = 0;
-	if(!empty($data["IBLOCK_SECTION_ID"]) && array_key_exists($data["IBLOCK_SECTION_ID"], $arResult["SECTIONS"]))
-		$iblockSectionId = $data["IBLOCK_SECTION_ID"];
+	if(!empty($data['IBLOCK_SECTION_ID']) && array_key_exists($data['IBLOCK_SECTION_ID'], $arResult['SECTIONS']))
+	{
+		$iblockSectionId = $data['IBLOCK_SECTION_ID'];
+	}
 
 	foreach($arResult["FIELDS"] as $fieldId => $field)
 	{
@@ -972,45 +999,26 @@ while ($obElement = $rsElements->GetNextElement())
 		$columns["IBLOCK_SECTION_ID"] .= "<br>".$arResult["SECTIONS"][$iblockSectionId]["NAME_HTML"];
 	}
 
-	$arBPStart = array();
+	$backUrl = $APPLICATION->GetCurPageParam('', ['bxajaxid', 'grid_action', 'grid_id', 'internal', 'sessid']);
 	if ($isBizprocActive)
 	{
-		if ($arResult["PROCESSES"] && $arResult["USE_COMMENTS"])
+		if ($arResult['PROCESSES'] && $arResult['USE_COMMENTS'])
 		{
 			if (!empty($documentStates))
 			{
 				$stateTemporary = current($documentStates);
-				$data["WORKFLOW_ID"] = $stateTemporary["ID"];
+				$data['WORKFLOW_ID'] = $stateTemporary['ID'];
 			}
 			else
 			{
-				$data["WORKFLOW_ID"] = '';
+				$data['WORKFLOW_ID'] = '';
 			}
 		}
 
-		$backUrl = $APPLICATION->GetCurPageParam(
-			"", array("bxajaxid", "grid_action", "grid_id", "internal", "sessid"));
 		$arUserGroupsForBPTmp = $arUserGroupsForBP;
-		if ($USER->GetID() == ($data["CREATED_BY"] ?? 0))
+		if ($USER->GetID() == ($data['CREATED_BY'] ?? 0))
 		{
-			$arUserGroupsForBPTmp[] = "Author";
-		}
-		foreach($arDocumentTemplates as $arWorkflowTemplate)
-		{
-			if ($canStartBizproc)
-			{
-				$url = CHTTP::urlAddParams(str_replace(
-					array("#list_id#", "#section_id#", "#element_id#", "#workflow_template_id#", "#group_id#"),
-					array($arIBlock["ID"], intval($arResult["SECTION_ID"]), intval($data["~ID"]),
-						$arWorkflowTemplate["ID"], $arParams["SOCNET_GROUP_ID"]),
-					$arParams["BIZPROC_WORKFLOW_START_URL"]
-				), array("workflow_template_id" => $arWorkflowTemplate["ID"], "back_url" => $backUrl));
-				$url .= ((mb_strpos($url, "?") === false) ? "?" : "&").bitrix_sessid_get();
-				$arBPStart[] = array(
-					"TEXT" => $arWorkflowTemplate["NAME"],
-					"ONCLICK" =>"jsUtils.Redirect(arguments, '".CUtil::JSEscape($url)."')",
-				);
-			}
+			$arUserGroupsForBPTmp[] = 'Author';
 		}
 
 		/* Fields BIZPROC and COMMENTS */
@@ -1083,8 +1091,8 @@ while ($obElement = $rsElements->GetNextElement())
 	}
 
 	if (
-		CLists::isEnabledLockFeature($IBLOCK_ID)
-		&& in_array("LOCK_STATUS", $grid_columns) || empty($grid_columns)
+		empty($grid_columns)
+		|| (CLists::isEnabledLockFeature($IBLOCK_ID) && in_array('LOCK_STATUS', $grid_columns))
 	)
 	{
 		ob_start();
@@ -1108,115 +1116,163 @@ while ($obElement = $rsElements->GetNextElement())
 	);
 	$url = CHTTP::urlAddParams($url, ["list_section_id" => ($arResult["ANY_SECTION"] ? "" : $section_id)]);
 
-	$aActions = array();
-	if(!$arResult["IS_SOCNET_GROUP_CLOSED"]
-		&& ($lists_perm >= CListPermissions::CAN_WRITE
-			|| CIBlockElementRights::UserHasRightTo($IBLOCK_ID, $data["~ID"], "element_edit")))
+	$aActions = [];
+	if(
+		!$arResult['IS_SOCNET_GROUP_CLOSED']
+		&& (
+			$lists_perm >= CListPermissions::CAN_WRITE
+			|| CIBlockElementRights::UserHasRightTo($IBLOCK_ID, $data['~ID'], 'element_edit')
+		)
+	)
 	{
-		$aActions[] = array(
-			"TEXT" => GetMessage("CC_BLL_ELEMENT_ACTION_MENU_EDIT"),
-			"ONCLICK" =>"jsUtils.Redirect(arguments, '".CUtil::JSEscape($url)."')",
-			"DEFAULT" => true,
-		);
+		$aActions[] = [
+			'TEXT' => Loc::getMessage('CC_BLL_ELEMENT_ACTION_MENU_EDIT'),
+			'ONCLICK' => "jsUtils.Redirect(arguments, '" . CUtil::JSEscape($url) . "')",
+			'DEFAULT' => true,
+		];
 	}
 	else
 	{
-		$aActions[] = array(
-			"TEXT" => GetMessage("CC_BLL_ELEMENT_ACTION_MENU_VIEW"),
-			"ONCLICK" =>"jsUtils.Redirect(arguments, '".CUtil::JSEscape($url)."')",
-			"DEFAULT" => true,
-		);
+		$aActions[] = [
+			'TEXT' => Loc::getMessage('CC_BLL_ELEMENT_ACTION_MENU_VIEW'),
+			'ONCLICK' => "jsUtils.Redirect(arguments, '" . CUtil::JSEscape($url) . "')",
+			'DEFAULT' => true,
+		];
 	}
-	if(!$arResult["IS_SOCNET_GROUP_CLOSED"] && ($lists_perm > CListPermissions::CAN_READ
-		|| CIBlockSectionRights::UserHasRightTo($IBLOCK_ID, intval($arResult["SECTION_ID"]), "section_element_bind")))
+
+	if(
+		!$arResult['IS_SOCNET_GROUP_CLOSED']
+		&& (
+			$lists_perm > CListPermissions::CAN_READ
+			|| CIBlockSectionRights::UserHasRightTo($IBLOCK_ID, (int)($arResult['SECTION_ID']), 'section_element_bind')
+		)
+	)
 	{
 		$urlCopy = CHTTP::urlAddParams(str_replace(
-				["#list_id#", "#section_id#", "#element_id#", "#group_id#"],
-				[$arIBlock["ID"], intval($arResult["SECTION_ID"]), 0, $arParams["SOCNET_GROUP_ID"]],
-				$arParams["LIST_ELEMENT_URL"]
+				['#list_id#', '#section_id#', '#element_id#', '#group_id#'],
+				[$arIBlock['ID'], (int)($arResult['SECTION_ID']), 0, $arParams['SOCNET_GROUP_ID']],
+				$arParams['LIST_ELEMENT_URL']
 			),
-			["copy_id" => $data["~ID"]],
-			["skip_empty" => true, "encode" => true]
+			['copy_id' => $data['~ID']],
+			['skip_empty' => true, 'encode' => true]
 		);
-		$urlCopy = CHTTP::urlAddParams($urlCopy, ["list_section_id" => ($arResult["ANY_SECTION"] ? "" : $section_id)]);
-		$aActions[] = array(
-			"TEXT"=>GetMessage("CC_BLL_ELEMENT_ACTION_MENU_COPY"),
-			"HREF" => $urlCopy,
-		);
+		$urlCopy = CHTTP::urlAddParams($urlCopy, ['list_section_id' => ($arResult['ANY_SECTION'] ? '' : $section_id)]);
+		$aActions[] = [
+			'TEXT' => Loc::getMessage('CC_BLL_ELEMENT_ACTION_MENU_COPY'),
+			'HREF' => $urlCopy,
+		];
 	}
 
 	if ($isBizprocActive)
 	{
-		if(count($arBPStart) && !$arResult["IS_SOCNET_GROUP_CLOSED"] && ($lists_perm >= CListPermissions::CAN_BIZPROC
-				|| CIBlockElementRights::UserHasRightTo($IBLOCK_ID, $data["~ID"], "element_bizproc_start")))
+		if (
+			$canStartBizproc
+			&& !$arResult['IS_SOCNET_GROUP_CLOSED']
+			&& (
+				$lists_perm >= CListPermissions::CAN_BIZPROC
+				|| CIBlockElementRights::UserHasRightTo($IBLOCK_ID, $data['~ID'], 'element_bizproc_start')
+			)
+		)
 		{
-			$aActions[] = array(
-				"TEXT" => GetMessage("CC_BLL_ELEMENT_ACTION_MENU_START_BP"),
-				"MENU" => $arBPStart,
-			);
+			$startParams = \Bitrix\Main\Web\Json::encode([
+				'signedDocumentType' => CBPDocument::signDocumentType($documentComplexType),
+				'signedDocumentId' => CBPDocument::signDocumentType($documentComplexId),
+			]);
+
+			$aActions[] = [
+				'TEXT' => Loc::getMessage('CC_BLL_ELEMENT_ACTION_MENU_START_BP'),
+				'ONCLICK' =>
+					"BX.Bizproc.Workflow.Starter.showTemplates("
+					. "{$startParams},"
+					. " {callback: () => { window.location.reload(); }})"
+				,
+			];
 		}
+
 		if(!empty($documentStates))
 		{
-			$currentUserGroups = $arResult["USER_GROUPS"];
-			if($data["CREATED_BY"] == $GLOBALS["USER"]->GetID())
+			$currentUserGroups = $arResult['USER_GROUPS'];
+			if($data['CREATED_BY'] == $GLOBALS['USER']->GetID())
 			{
-				$currentUserGroups[] = "author";
+				$currentUserGroups[] = 'author';
 			}
 
-			$listProcesses = array();
+			$listProcesses = [];
 			foreach($documentStates as $documentState)
 			{
 				if(!$documentState["ID"])
+				{
 					continue;
+				}
 
-				$actionsProcess = array();
-				$canViewWorkflow = CBPDocument::CanUserOperateDocument(
+				$actionsProcess = [];
+				$canViewWorkflow = CBPDocument::canUserOperateDocument(
 					CBPCanUserOperateOperation::ViewWorkflow,
-					$GLOBALS["USER"]->GetID(),
+					$GLOBALS['USER']->GetID(),
 					$documentComplexId,
-					array(
-						"AllUserGroups" => $currentUserGroups,
-						"DocumentStates" => $documentStates,
-						"WorkflowId" => $documentState["ID"]
-					)
+					[
+						'AllUserGroups' => $currentUserGroups,
+						'DocumentStates' => $documentStates,
+						'WorkflowId' => $documentState['ID']
+					]
 				);
+
 				if(!$canViewWorkflow)
+				{
 					continue;
+				}
 
 				/* Stop workflow */
-				if (mb_strlen($documentState["ID"]) && mb_strlen($documentState["WORKFLOW_STATUS"]))
-				{
-					if (CBPDocument::CanUserOperateDocument(
+				if (
+					mb_strlen($documentState['ID'])
+					&& mb_strlen($documentState['WORKFLOW_STATUS'])
+					&& CBPDocument::canUserOperateDocument(
 						CBPCanUserOperateOperation::StartWorkflow,
-						$GLOBALS["USER"]->GetID(),
+						$GLOBALS['USER']->GetID(),
 						$documentComplexId,
-						array("UserGroups" => $currentUserGroups))
+						['UserGroups' => $currentUserGroups]
 					)
-					{
-						$actionsProcess[] = array(
-							"TEXT" => GetMessage("CT_BLL_BIZPROC_STOP"),
-							"ONCLICK" => "javascript:BX.Lists['".$arResult['JS_OBJECT']."']
-							.performActionBp('".$documentState['ID']."', ".$data["ID"].", 'stop');",
-						);
-					}
-				}
-				/* Removal workflow */
-				if (mb_strlen($documentState["STATE_NAME"]) && mb_strlen($documentState["ID"]))
+				)
 				{
-					if (CBPDocument::CanUserOperateDocument(
-						CBPCanUserOperateOperation::CreateWorkflow,
-						$GLOBALS["USER"]->GetID(),
-						$documentComplexId,
-						array("UserGroups" => $currentUserGroups))
-					)
-					{
-						$actionsProcess[] = array(
-							"TEXT" => GetMessage("CT_BLL_BIZPROC_DELETE"),
-							"ONCLICK" => "javascript:BX.Lists['".$arResult['JS_OBJECT']."']
-							.performActionBp('".$documentState['ID']."', ".$data["ID"].", 'delete');",
-						);
-					}
+					$actionsProcess[] = [
+						'TEXT' => Loc::getMessage('CT_BLL_BIZPROC_STOP'),
+						'ONCLICK' =>
+							"javascript:BX.Lists['"
+							. $arResult['JS_OBJECT'] . "'].performActionBp('"
+							. $documentState['ID']
+							. "', "
+							. $data["ID"]
+							. ", 'stop');"
+						,
+					];
 				}
+
+				/* Removal workflow */
+				if (
+					mb_strlen($documentState['STATE_NAME'])
+					&& mb_strlen($documentState['ID'])
+					&& CBPDocument::canUserOperateDocument(
+						CBPCanUserOperateOperation::CreateWorkflow,
+						$GLOBALS['USER']->GetID(),
+						$documentComplexId,
+						['UserGroups' => $currentUserGroups]
+					)
+				)
+				{
+					$actionsProcess[] = [
+						'TEXT' => Loc::getMessage('CT_BLL_BIZPROC_DELETE'),
+						'ONCLICK' =>
+							"javascript:BX.Lists['"
+							. $arResult['JS_OBJECT']
+							. "'].performActionBp('"
+							. $documentState['ID']
+							. "', "
+							. $data["ID"]
+							. ", 'delete');"
+						,
+					];
+				}
+
 				/* Tasks workflow */
 				if($isBizprocVisible && $documentState["ID"] && $documentState['WORKFLOW_STATUS'])
 				{

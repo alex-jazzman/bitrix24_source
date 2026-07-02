@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,main_sidepanel,tasks_v2_component_elements_hoverPill,tasks_v2_component_elements_fieldAdd,main_core,tasks_v2_core,tasks_v2_lib_entitySelectorDialog,tasks_v2_provider_service_groupService,tasks_v2_provider_service_templateService,ui_system_chip_vue,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_const,tasks_v2_lib_fieldHighlighter,tasks_v2_provider_service_flowService,tasks_v2_provider_service_taskService) {
+(function (exports,main_sidepanel,tasks_v2_component_elements_hoverPill,tasks_v2_component_elements_fieldAdd,main_core,tasks_v2_core,tasks_v2_lib_entitySelectorDialog,tasks_v2_provider_service_groupService,ui_system_chip_vue,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_const,tasks_v2_lib_fieldHighlighter,tasks_v2_provider_service_flowService,tasks_v2_provider_service_taskService) {
 	'use strict';
 
 	const flowMeta = Object.freeze({
@@ -85,10 +85,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	          groupId: item.getCustomData().get('groupId'),
 	          templateId: item.getCustomData().get('templateId')
 	        };
-	        if (!tasks_v2_core.Core.getStore().getters[`${tasks_v2_const.Model.Groups}/getById`](flow.groupId)) {
-	          await tasks_v2_provider_service_groupService.groupService.getGroup(flow.groupId);
+	        if (!tasks_v2_core.Core.getStore().getters[`${tasks_v2_const.Model.Flows}/getById`](flow.id)) {
+	          await tasks_v2_provider_service_flowService.flowService.getFlow(flow.id);
 	        }
-	        await tasks_v2_core.Core.getStore().dispatch(`${tasks_v2_const.Model.Flows}/insert`, flow);
 	        return flow;
 	      }
 	    });
@@ -334,5 +333,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.FlowChip = FlowChip;
 	exports.flowMeta = flowMeta;
 
-}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.SidePanel,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX,BX.Tasks.V2,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.UI.System.Chip.Vue,BX.UI.IconSet,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service));
+}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.SidePanel,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX,BX.Tasks.V2,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.UI.System.Chip.Vue,BX.UI.IconSet,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service));
 //# sourceMappingURL=flow.bundle.js.map

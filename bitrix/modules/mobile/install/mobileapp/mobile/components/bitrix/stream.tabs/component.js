@@ -99,6 +99,8 @@
 		{
 			const tabId = tab.id;
 
+			BX.postComponentEvent('stream.tabs:onTabSelected', [{ tabId, changed }]);
+
 			if (tabId === StreamTabs.tabNames.calendar)
 			{
 				PageManager.openList({

@@ -405,6 +405,12 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 			$messageBody = preg_replace('/https?:\/\/bxacid:(n?\d+)/i', 'bxacid:\1', $messageBody);
 		}
 
+		$outgoingSubject = Helper\Message::getOutgoingSubject(
+			(string)($data['subject'] ?? ''),
+			$messageBodyHtml,
+			(string)(Loc::getMessage('MAIL_MESSAGE_EMPTY_SUBJECT_PLACEHOLDER') ?? '(no subject)'),
+		);
+
 		$outgoingBody = $messageBody;
 
 		$totalSize = 0;
@@ -492,7 +498,7 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 			'CONTENT_TYPE' => 'html',
 			'ATTACHMENT'   => $attachments,
 			'TO'           => implode(', ', $toEncoded),
-			'SUBJECT'      => $data['subject'],
+			'SUBJECT'      => $outgoingSubject,
 			'BODY'         => $outgoingBody,
 			'HEADER'       => [
 				'From'       => $fromEncoded ?: $fromEmail,

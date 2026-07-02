@@ -15,8 +15,8 @@ return [
 		'./dist/public.bundle.js',
 	],
 	'rel' => [
-		'main.core.events',
 		'main.core',
+		'main.core.events',
 	],
 	'settings' => ['v2enabled' => $isV2Enabled],
 	'skip_core' => false,

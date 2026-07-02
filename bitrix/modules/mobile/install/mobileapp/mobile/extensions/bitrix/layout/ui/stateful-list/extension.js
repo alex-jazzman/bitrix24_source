@@ -7,7 +7,6 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 	const { NavigationLoader } = require('navigation-loader');
 	const { debounce } = require('utils/function');
 	const { merge, mergeImmutable, get, set, clone, isEqual } = require('utils/object');
-	const { PureComponent } = require('layout/pure-component');
 	const { SimpleList } = require('layout/ui/simple-list');
 	const { Pull } = require('layout/ui/stateful-list/pull');
 	const { StatefulListCache } = require('layout/ui/stateful-list/src/cache');
@@ -17,7 +16,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { UIMenu } = require('layout/ui/menu');
 	const { showOfflineToast, showErrorToast } = require('toast');
-	const { FloatingActionButton } = require('ui-system/form/buttons/floating-action-button',);
+	const { FloatingActionButton } = require('ui-system/form/buttons/floating-action-button');
 	const { Type } = require('type');
 	const { AhaMoment } = require('ui-system/popups/aha-moment');
 	const { Logger, LogType } = require('utils/logger');
@@ -45,7 +44,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 	/**
 	 * @class StatefulList
 	 */
-	class StatefulList extends PureComponent
+	class StatefulList extends LayoutComponent
 	{
 		constructor(props)
 		{
@@ -269,10 +268,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 
 			const config = {
 				data: (this.state.actionParams.loadItems || {}),
-				navigation: {
-					page: blockPage,
-					size: this.itemsLoadLimit,
-				},
+				navigation: this.resolveRequestNavigation(blockPage),
 			};
 
 			config.data.extra = config.data.extra || {};
@@ -373,6 +369,41 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			}
 
 			runActionExecutor.call(useCache).catch(console.error);
+		}
+
+		resolveRequestNavigation(blockPage)
+		{
+			const defaultNavigation = {
+				page: blockPage,
+				size: this.itemsLoadLimit,
+			};
+
+			const { getRequestNavigation } = this.props;
+
+			if (!Type.isFunction(getRequestNavigation))
+			{
+				return defaultNavigation;
+			}
+
+			return getRequestNavigation({
+				blockPage,
+				itemsLoadLimit: this.itemsLoadLimit,
+				defaultNavigation,
+			});
+		}
+
+		resolveAllItemsLoaded(response, items)
+		{
+			if (!Type.isFunction(this.props.isAllItemsLoaded))
+			{
+				return items.length < this.itemsLoadLimit;
+			}
+
+			return this.props.isAllItemsLoaded({
+				response,
+				items,
+				itemsLoadLimit: this.itemsLoadLimit,
+			});
 		}
 
 		triggerBadConnectionRequest = () => {
@@ -660,6 +691,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			{
 				preparedUpdateItems.forEach((item) => onItemUpdated(item));
 			}
+
 			return true;
 		}
 
@@ -736,7 +768,9 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			});
 		}
 
-		updateSimpleList = (resolve = () => {}, reject = () => {}, animation = {}) => {
+		updateSimpleList = (resolve = () => {
+		}, reject = () => {
+		}, animation = {}) => {
 			const defaultAnimationTypes = {
 				insert: 'none',
 				delete: 'none',
@@ -751,9 +785,9 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			} = animation;
 
 			this.simpleList.changeItemsState(
-				preparedItems,
-				(showAnimateImmediately ? this.prepareAnimationTypes(animationTypes) : defaultAnimationTypes),
-			)
+					preparedItems,
+					(showAnimateImmediately ? this.prepareAnimationTypes(animationTypes) : defaultAnimationTypes),
+				)
 				.then(resolve)
 				.catch((error) => {
 					console.error(error);
@@ -863,7 +897,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 				allItemsLoaded: false,
 			};
 
-			if (items.length < this.itemsLoadLimit)
+			if (this.resolveAllItemsLoaded(data, items))
 			{
 				newState.allItemsLoaded = true;
 			}
@@ -945,8 +979,8 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 				const preparedItems = this.prepareItemsForRender(this.state.items);
 
 				this.simpleList.changeItemsState(preparedItems, {
-					insert: 'none',
-				})
+						insert: 'none',
+					})
 					.then(() => {
 						if (this.state.allItemsLoaded)
 						{
@@ -1002,13 +1036,15 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 		 * @param {Object} loadItemsParams
 		 * @param {Function|null} callback
 		 */
-		reload(initialStateParams = {}, loadItemsParams = {}, callback = () => {})
+		reload(initialStateParams = {}, loadItemsParams = {}, callback = () => {
+		})
 		{
 			this.isRefreshing = false;
 
 			if (typeof callback !== 'function')
 			{
-				callback = () => {};
+				callback = () => {
+				};
 			}
 
 			this.setState(this.getInitialState(initialStateParams), () => {
@@ -1375,7 +1411,8 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 				}
 				else
 				{
-					logger.warn('method displayFloatingButtonAhaMoment() is deprecated without using spotlightIds for floating button. You should set prop spotlightIds');
+					logger.warn(
+						'method displayFloatingButtonAhaMoment() is deprecated without using spotlightIds for floating button. You should set prop spotlightIds');
 				}
 			}
 

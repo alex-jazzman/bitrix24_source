@@ -1,5 +1,9 @@
-<?
+<?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+
+/**
+ * @var array $arCurrentValues
+ */
 
 $arType = array("page" => GetMessage("MAIN_INCLUDE_PAGE"), "sect" => GetMessage("MAIN_INCLUDE_SECT"));
 if ($GLOBALS['USER']->CanDoOperation('edit_php'))

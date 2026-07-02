@@ -1568,7 +1568,8 @@ CREATE TABLE b_user_device
 	APP_PASSWORD_ID int,
 	PRIMARY KEY(ID),
 	INDEX ix_user_device_user(USER_ID, DEVICE_UID),
-	INDEX ix_user_device_user_cookable_appwd(USER_ID, COOKABLE, APP_PASSWORD_ID)
+	INDEX ix_b_user_device_user_id_cookable(USER_ID, COOKABLE),
+	INDEX ix_b_user_device_user_id_app_password_id(USER_ID, APP_PASSWORD_ID)
 );
 
 CREATE TABLE b_user_device_login

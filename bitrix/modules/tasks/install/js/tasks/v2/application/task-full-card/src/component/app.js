@@ -1,4 +1,4 @@
-import { Reflection, Runtime, Loc } from 'main.core';
+import { Reflection, Runtime, Loc, Event } from 'main.core';
 import { EventEmitter, BaseEvent } from 'main.core.events';
 import { Notifier } from 'ui.notification-manager';
 import { renderSkeleton } from 'ui.system.skeleton';
@@ -49,6 +49,7 @@ import { taskService } from 'tasks.v2.provider.service.task-service';
 import { templateService } from 'tasks.v2.provider.service.template-service';
 import { deadlineService } from 'tasks.v2.provider.service.deadline-service';
 import { timeTrackingService } from 'tasks.v2.provider.service.time-tracking-service';
+import { viewersService } from 'tasks.v2.provider.service.viewers-service';
 import type { TaskModel, TimerModel } from 'tasks.v2.model.tasks';
 import type { GroupModel } from 'tasks.v2.model.groups';
 import type { CheckListModel } from 'tasks.v2.model.check-list';
@@ -172,6 +173,7 @@ export const App = {
 			taskGetError: null,
 			isAccessRequested: true,
 			accessRequestError: null,
+			popupCount: 0,
 		};
 	},
 	computed: {
@@ -847,6 +849,11 @@ export const App = {
 			taskService.setSilentErrorMode(false);
 
 			this.taskGetError = error;
+
+			if (!this.isTemplate)
+			{
+				await viewersService.count(this.taskId);
+			}
 		}
 
 		if (!this.task)
@@ -902,7 +909,7 @@ export const App = {
 	},
 	async mounted(): void
 	{
-		EventEmitter.subscribe(EventName.FullCardHasChanges, this.handleHasChanges);
+		this.subscribeEvents();
 
 		this.renderSkeleton();
 		this.iconUrl = (await import('../images/marshmallow_sad_pink_with_orange_lock.png')).default;
@@ -910,7 +917,7 @@ export const App = {
 	},
 	unmounted(): void
 	{
-		EventEmitter.unsubscribe(EventName.FullCardHasChanges, this.handleHasChanges);
+		this.unsubscribeEvents();
 
 		if (!this.isEdit)
 		{
@@ -923,6 +930,46 @@ export const App = {
 		...mapActions(Model.Interface, [
 			'updateFullCardWidth',
 		]),
+		subscribeEvents(): void
+		{
+			EventEmitter.subscribe(EventName.FullCardHasChanges, this.handleHasChanges);
+			EventEmitter.subscribe('BX.Main.Popup:onShow', this.handlePopupShow);
+			Event.bind(document, 'keydown', this.handleKeyDown, { capture: true });
+		},
+		unsubscribeEvents(): void
+		{
+			EventEmitter.unsubscribe(EventName.FullCardHasChanges, this.handleHasChanges);
+			EventEmitter.unsubscribe('BX.Main.Popup:onShow', this.handlePopupShow);
+			Event.unbind(document, 'keydown', this.handleKeyDown, { capture: true });
+		},
+		handlePopupShow(event): void
+		{
+			const popup = event.getCompatData()[0];
+
+			const onClose = (): void => {
+				popup.unsubscribe('onClose', onClose);
+				popup.unsubscribe('onDestroy', onClose);
+
+				this.popupCount--;
+			};
+
+			popup.subscribe('onClose', onClose);
+			popup.subscribe('onDestroy', onClose);
+
+			this.popupCount++;
+		},
+		handleKeyDown(event: KeyboardEvent): void
+		{
+			if (this.isEdit || this.popupCount > 0)
+			{
+				return;
+			}
+
+			if (event.key === 'Enter' && (event.ctrlKey || event.metaKey))
+			{
+				this.$refs.footerCreate.handleAddClick();
+			}
+		},
 		getFields(map: WeakMap): AppField[]
 		{
 			return this.fields.filter(({ component }) => map.get(component));
@@ -935,7 +982,7 @@ export const App = {
 		{
 			const checklists = this.checklist;
 
-			const [id, error] = await taskService.add(this.task);
+			const [id, error] = await taskService.add({ task: this.task, view: true });
 
 			if (!id)
 			{
@@ -955,12 +1002,23 @@ export const App = {
 			this.sendAddTaskAnalytics(isSuccess, checklists);
 
 			this.fireLegacyGlobalEvent();
+
+			if (!this.isTemplate)
+			{
+				await viewersService.count(this.taskId);
+			}
 		},
 		async copyTask(event: Object): Promise<void>
 		{
 			const { withSubTasks } = event;
 
-			const [id, error] = await taskService.copy(this.task, withSubTasks);
+			const optionsTaskCopy = {
+				task: this.task,
+				withSubTasks,
+				view: true,
+			};
+
+			const [id, error] = await taskService.copy(optionsTaskCopy);
 
 			if (!id)
 			{
@@ -977,15 +1035,22 @@ export const App = {
 			entityTextEditor.replace(this.id, id);
 
 			this.fireLegacyGlobalEvent();
+
+			if (!this.isTemplate)
+			{
+				await viewersService.count(this.taskId);
+			}
 		},
 		async createFromTemplate(event: Object): Promise<void>
 		{
 			const { withSubTasks } = event;
+			const view = true;
 
 			const [id, error] = await templateService.addTask(
 				this.task.templateId,
 				this.task,
 				withSubTasks,
+				view,
 			);
 
 			if (!id)
@@ -1000,6 +1065,8 @@ export const App = {
 			this.taskId = id;
 
 			this.sendAddTaskFromTemplateAnalytics(true);
+
+			await viewersService.count(this.taskId);
 
 			fileService.delete(this.id);
 			await fileService.get(this.taskId).list(this.task.fileIds);
@@ -1199,7 +1266,6 @@ export const App = {
 				taskId: this.taskId,
 			});
 		},
-
 		async requestAccess(): Promise<void>
 		{
 			const { accessRequest, error } = await taskService.requestAccess(this.taskId);
@@ -1234,7 +1300,7 @@ export const App = {
 				>
 					<div class="tasks-full-card-content" :data-task-card-scroll="taskId" ref="scrollContent">
 						<div ref="title">
-							<TaskHeader/>
+							<TaskHeader />
 						</div>
 						<CheckList
 							:checkListId
@@ -1419,6 +1485,7 @@ export const App = {
 						@copyTask="copyTask"
 						@fromTemplate="createFromTemplate"
 						@close="tryClose"
+						ref="footerCreate"
 					/>
 					<ContentResizer v-if="!isTemplate" @endResize="handleEndResize"/>
 					<DropZone

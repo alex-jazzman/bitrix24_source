@@ -36,8 +36,14 @@
 
 .bx-im-content-chat__textarea_container {
 	display: flex;
+	flex-direction: column;
 	position: relative;
-	padding: 6px 18px 12px 18px;
+	padding: 6px 18px 0 18px;
+}
+
+.bx-im-content-chat__after-textarea_container {
+	height: 24px;
+	overflow: hidden;
 }
 
 .bx-im-content-chat__textarea_placeholder {

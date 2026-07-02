@@ -3,5 +3,4 @@ module.exports = {
 	output: 'dist/call-assessment-selector.bundle.js',
 	namespace: 'BX.Crm.Copilot',
 	browserslist: true,
-	minification: true,
 };

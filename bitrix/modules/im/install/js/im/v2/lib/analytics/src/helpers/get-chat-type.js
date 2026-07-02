@@ -1,14 +1,11 @@
-import { ChatType } from 'im.v2.const';
+import { ChatType, type ChatTypeItem } from 'im.v2.const';
+import { type ImModelChat } from 'im.v2.model';
 
+import { PSEUDO_SELF_CHAT_TYPE } from '../const';
 import { isAiAssistant } from './is-ai-assistant';
 import { isSelfChat } from './is-self-chat';
-import { PSEUDO_SELF_CHAT_TYPE } from '../const';
 
-import type { ImModelChat } from 'im.v2.model';
-
-export type ExtendedChatType = $Values<typeof ChatType>
-	| typeof CUSTOM_CHAT_TYPE
-	| typeof PSEUDO_SELF_CHAT_TYPE;
+export type ExtendedChatType = ChatTypeItem | typeof CUSTOM_CHAT_TYPE | typeof PSEUDO_SELF_CHAT_TYPE;
 
 const CUSTOM_CHAT_TYPE = 'custom';
 const AI_ASSISTANT_CHAT_TYPE = 'aiAssistant';

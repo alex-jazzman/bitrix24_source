@@ -21,10 +21,10 @@ jn.define('im/messenger/controller/dialog/lib/background/configuration', (requir
 			[DialogBackgroundId.copilot]: {
 				bottomColor: '#738AB2',
 				gradientColors: [
-					'#728AB3',
-					'#748DB7',
-					'#ABA7BE',
-					'#BCB4C3',
+					'#96ABDA',
+					'#918FD9',
+					'#9191D5',
+					'#B5A0CB',
 				],
 				angle: 45,
 			},
@@ -51,8 +51,11 @@ jn.define('im/messenger/controller/dialog/lib/background/configuration', (requir
 			[DialogBackgroundId.copilot]: {
 				bottomColor: '#131313',
 				gradientColors: [
-					'#484B6EA8',
-					'#48B300F5',
+					'#1F2234',
+					'#252431',
+					'#282532',
+					'#2C272F',
+					'#302A2A',
 				],
 				angle: 45,
 			},

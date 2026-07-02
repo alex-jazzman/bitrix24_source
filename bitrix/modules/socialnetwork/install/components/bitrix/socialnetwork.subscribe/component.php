@@ -80,7 +80,7 @@ $arParams["GROUP_ID"] = intval($arParams["GROUP_ID"]);
 $arParams["USER_ID"] = intval($arParams["USER_ID"]);
 $arParams["PAGE_ID"] = Trim($arParams["PAGE_ID"]);
 
-if ($arParams["ENTITY_TYPE"] == '')
+if (($arParams["ENTITY_TYPE"] ?? null) == '')
 {
 	if ($arParams["PAGE_ID"] == "group_subscribe")
 		$arParams["ENTITY_TYPE"] = SONET_SUBSCRIBE_ENTITY_GROUP;
@@ -88,7 +88,7 @@ if ($arParams["ENTITY_TYPE"] == '')
 		$arParams["ENTITY_TYPE"] = SONET_SUBSCRIBE_ENTITY_USER;
 }
 
-if (intval($arParams["ENTITY_ID"]) <= 0)
+if (intval($arParams["ENTITY_ID"] ?? null) <= 0)
 {
 	if ($arParams["ENTITY_TYPE"] == SONET_SUBSCRIBE_ENTITY_GROUP)
 		$arParams["ENTITY_ID"] = $arParams["GROUP_ID"];
@@ -335,7 +335,7 @@ else
 
 					if (
 						!array_key_exists("Operations", $arResult["CurrentUserPerms"])
-						|| !array_key_exists($arEventTmp["ENTITIES"][$arParams["ENTITY_TYPE"]]["OPERATION"], $arResult["CurrentUserPerms"]["Operations"])
+						|| !array_key_exists($arEventTmp["ENTITIES"][$arParams["ENTITY_TYPE"]]["OPERATION"] ?? null, $arResult["CurrentUserPerms"]["Operations"])
 						|| !$arResult["CurrentUserPerms"]["Operations"][$arEventTmp["ENTITIES"][$arParams["ENTITY_TYPE"]]["OPERATION"]]
 					)
 						continue;
@@ -370,7 +370,7 @@ else
 							$arParams["ENTITY_TYPE"], 
 							$arParams["ENTITY_ID"], 
 							$feature, 
-							$arFeature["minoperation"][0], 
+							$arFeature["minoperation"][0] ?? null,
 							CSocNetUser::IsCurrentUserModuleAdmin())
 						)
 						continue;
@@ -391,7 +391,7 @@ else
 							$visible_inherited = $arTmp["inherited"];
 							
 							$arFeatureTmp = array(
-								"SubscribeName" 		=> $arEventTmp["ENTITIES"][$arParams["ENTITY_TYPE"]]["TITLE"],
+								"SubscribeName" 		=> $arEventTmp["ENTITIES"][$arParams["ENTITY_TYPE"]]["TITLE"] ?? null,
 								"Active" 				=> array_key_exists($event_id_tmp, $arSubscribesTmp),
 								"SiteID" 				=> (array_key_exists($event_id_tmp, $arSubscribesTmp) ? $arSubscribesTmp[$event_id_tmp]["SITE_ID"] : ""),
 								"MailEvent" 			=> ((array_key_exists($event_id_tmp, $arSubscribesTmp) && $arSubscribesTmp[$event_id_tmp]["MAIL_EVENT"] == "Y") ? "Y" : "N"),
@@ -546,7 +546,7 @@ else
 					$subscribe_visible = $_REQUEST[$event_id_tmp."_visible"];
 				else
 				{
-					switch ($_REQUEST[$event_id_tmp."_active"])
+					switch ($_REQUEST[$event_id_tmp."_active"] ?? null)
 					{
 						case "M":
 							$subscribe_visible = "Y";
@@ -629,7 +629,7 @@ else
 													: 
 														false
 												),
-								"MAIL_EVENT" 	=> ($_REQUEST[$event_id_tmp."_active"] == "M") ? "Y" : "N",
+								"MAIL_EVENT" 	=> (($_REQUEST[$event_id_tmp."_active"] ?? null) == "M") ? "Y" : "N",
 								"TRANSPORT" 	=> $subscribe_transport,
 								"VISIBLE" 		=> $subscribe_visible,
 							)
@@ -645,8 +645,8 @@ else
 					if (
 						array_key_exists("TransportCB", $arEventTmp) 
 						&& (
-							$subscribe_transport_cb != "I" 
-							|| $subscribe_visible_cb != "I"
+							($subscribe_transport_cb ?? null) != "I"
+							|| ($subscribe_visible_cb ?? null) != "I"
 						)
 					)
 					{
@@ -658,9 +658,9 @@ else
 								"ENTITY_CB" 	=> "Y",
 								"EVENT_ID" 		=> $event_id,
 								"SITE_ID" 		=> (($arParams["ENTITY_TYPE"] == SONET_SUBSCRIBE_ENTITY_GROUP && defined("SITE_ID") && SITE_ID <> '') ? SITE_ID : false),
-								"MAIL_EVENT" 	=> ($_REQUEST[$event_id_tmp."_active"] == "M") ? "Y" : "N",
-								"TRANSPORT"		=> $subscribe_transport_cb,
-								"VISIBLE"		=> $subscribe_visible_cb,								
+								"MAIL_EVENT" 	=> (($_REQUEST[$event_id_tmp."_active"] ?? null) == "M") ? "Y" : "N",
+								"TRANSPORT"		=> $subscribe_transport_cb ?? null,
+								"VISIBLE"		=> $subscribe_visible_cb ?? null,
 							)
 						);
 						if (!$idTmp)

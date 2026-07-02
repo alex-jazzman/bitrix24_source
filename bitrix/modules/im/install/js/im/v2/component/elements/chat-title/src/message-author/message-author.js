@@ -1,8 +1,7 @@
 import { CopilotManager } from 'im.v2.lib.copilot';
+import { type ImModelMessage } from 'im.v2.model';
 
-import { ChatTitle } from '../registry';
-
-import type { ImModelMessage } from 'im.v2.model';
+import { ChatTitle } from '../base/chat-title.js';
 
 // @vue/component
 export const MessageAuthorTitle = {

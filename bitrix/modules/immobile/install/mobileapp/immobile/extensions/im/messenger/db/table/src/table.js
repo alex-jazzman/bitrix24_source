@@ -156,7 +156,7 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 			}
 			catch (error)
 			{
-				logger.error(`Table.restoreDatabaseRow error in ${this.getName()}:`, key, value, error);
+				logger.error(`Table.saveJSONFieldHandler error in ${this.getName()}:`, key, value, error);
 
 				return null;
 			}
@@ -265,7 +265,7 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 			}
 			catch (error)
 			{
-				logger.error(`Table.restoreDatabaseRow error in ${this.getName()}:`, key, value, error);
+				logger.error(`Table.restoreDatabaseRow error in ${this.getName()} failed to parse array field. Returning null:`, key, value, error);
 
 				return null;
 			}
@@ -273,13 +273,20 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 
 		restoreObjectFieldHandler(key, value)
 		{
+			if (!Type.isStringFilled(value) || Type.isNil(value))
+			{
+				logger.log(`Table.restoreDatabaseRow in ${this.getName()}: field is empty (empty string or null/undefined). Returning empty object.`, key, value);
+
+				return FieldDefaultValue.emptyObject;
+			}
+
 			try
 			{
 				return JSON.parse(value);
 			}
 			catch (error)
 			{
-				logger.error(`Table.restoreDatabaseRow error in ${this.getName()}:`, key, value, error);
+				logger.error(`Table.restoreDatabaseRow error in ${this.getName()}: failed to parse object field. Returning empty object.`, key, value, error);
 
 				return FieldDefaultValue.emptyObject;
 			}

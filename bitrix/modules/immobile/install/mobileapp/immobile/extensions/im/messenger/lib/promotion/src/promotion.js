@@ -15,24 +15,12 @@ jn.define('im/messenger/lib/promotion/src/promotion', (require, exports, module)
 
 	const COMPONENT_NAME = 'im.messenger.Promotion';
 
-	/** @type {Promotion || null} */
-	let instance = null;
-
 	/**
+	 * @implements {Unsubscribable}
 	 * @class Promotion
 	 */
 	class Promotion
 	{
-		/**
-		 * @return {Promotion}
-		 */
-		static getInstance()
-		{
-			instance ??= new this();
-
-			return instance;
-		}
-
 		constructor()
 		{
 			this.#bindMethods();
@@ -45,18 +33,18 @@ jn.define('im/messenger/lib/promotion/src/promotion', (require, exports, module)
 			this.subscribeEvents();
 		}
 
-		#bindMethods()
-		{
-			this.handlePromotionGet = this.#handlePromotionGet.bind(this);
-			this.onReadPromo = this.#onReadPromo.bind(this);
-			this.openPromotionFromBackgroundUIManagerEvent = this.#openPromotionFromBackgroundUIManagerEvent.bind(this);
-			this.onShowPromoCallback = this.#onShowPromoCallback.bind(this);
-		}
-
 		subscribeEvents()
 		{
 			this.#subscribeInitMessengerEvent();
 			this.#subscribeToBackgroundUIManagerEvent();
+		}
+
+		unsubscribeEvents()
+		{
+			BX.removeCustomEvent(
+				BackgroundUI.manager.openComponentInAnotherContext,
+				this.openPromotionFromBackgroundUIManagerEvent,
+			);
 		}
 
 		#subscribeToBackgroundUIManagerEvent()
@@ -65,6 +53,14 @@ jn.define('im/messenger/lib/promotion/src/promotion', (require, exports, module)
 				BackgroundUI.manager.openComponentInAnotherContext,
 				this.openPromotionFromBackgroundUIManagerEvent,
 			);
+		}
+
+		#bindMethods()
+		{
+			this.handlePromotionGet = this.#handlePromotionGet.bind(this);
+			this.onReadPromo = this.#onReadPromo.bind(this);
+			this.openPromotionFromBackgroundUIManagerEvent = this.#openPromotionFromBackgroundUIManagerEvent.bind(this);
+			this.onShowPromoCallback = this.#onShowPromoCallback.bind(this);
 		}
 
 		/**
@@ -83,22 +79,9 @@ jn.define('im/messenger/lib/promotion/src/promotion', (require, exports, module)
 			nextPromo.callback();
 		}
 
-		#unsubscribeBackgroundUIManagerEvent()
-		{
-			BX.removeCustomEvent(
-				BackgroundUI.manager.openComponentInAnotherContext,
-				this.openPromotionFromBackgroundUIManagerEvent,
-			);
-		}
-
 		#subscribeInitMessengerEvent()
 		{
 			this.messengerInitService.onInit(this.handlePromotionGet);
-		}
-
-		destruct()
-		{
-			this.#unsubscribeBackgroundUIManagerEvent();
 		}
 
 		/**

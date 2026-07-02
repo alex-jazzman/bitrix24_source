@@ -1,8 +1,5 @@
 <?php
 $MESS["TASKS_ADD_QUICK_TASK"] = "Create quick task";
-$MESS["TASKS_AJAX_EMPTY_TEMPLATES"] = "There are no task templates";
-$MESS["TASKS_AJAX_ERROR_LOAD_TEMPLATES"] = "Error loading template list";
-$MESS["TASKS_AJAX_LOAD_TEMPLATES"] = "Loading list...";
 $MESS["TASKS_ALL_ROLES"] = "All roles";
 $MESS["TASKS_BTN_ADD_RELATION"] = "Add";
 $MESS["TASKS_BTN_ADD_SCRUM_TASK"] = "Create a task";
@@ -22,7 +19,6 @@ $MESS["TASKS_BTN_GROUP_WO"] = "No project";
 $MESS["TASKS_BTN_IMPORT"] = "Import list";
 $MESS["TASKS_BTN_IMPORT_CSV"] = "from CSV";
 $MESS["TASKS_BTN_KANBAN_POPUP_TITLE_CONFIGURE_VIEW"] = "Configure view";
-$MESS["TASKS_BTN_LIST_TASK_TEMPLATE"] = "All templates";
 $MESS["TASKS_BTN_REPORTS"] = "Reports";
 $MESS["TASKS_BTN_SORT_ACTIVITY_DATE"] = "By activity state";
 $MESS["TASKS_BTN_SORT_ACTIVITY_DATE_MSGVER_1"] = "By last active date";

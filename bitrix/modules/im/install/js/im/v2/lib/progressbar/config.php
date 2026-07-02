@@ -9,10 +9,10 @@ return [
 		'./dist/progressbar.bundle.js',
 	],
 	'rel' => [
-		'main.core.events',
-		'main.core',
-		'ui.progressbarjs.uploader',
 		'im.v2.const',
+		'main.core',
+		'main.core.events',
+		'ui.progressbarjs.uploader',
 	],
 	'skip_core' => false,
 ];

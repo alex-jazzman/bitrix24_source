@@ -1,6 +1,6 @@
 import {Popup} from 'main.popup';
 import {Tag, Text} from 'main.core';
-import {Editor} from './product.list.editor';
+import type {Editor} from './product.list.editor';
 
 export default class HintPopup
 {

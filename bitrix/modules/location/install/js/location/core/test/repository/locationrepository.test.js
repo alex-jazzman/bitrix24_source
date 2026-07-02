@@ -1,7 +1,6 @@
 import LocationRepository from "../../src/repository/locationrepository";
 import ActionTestRunner from "./actiontestrunner";
 import Location from "../../src/entity/location";
-import Address from "../../src/entity/address";
 
 describe('LocationRepository', () => {
 
@@ -10,60 +9,6 @@ describe('LocationRepository', () => {
 
 	it('Should be a function', () => {
 		assert(typeof LocationRepository === 'function');
-	});
-
-	describe('findParents', () => {
-		it('Should return locations collection', () => {
-
-			actionRunner.response = `[
-				{
-					"id":222,
-					"externalId":"ChIJM5M9n_k940YR4lo5Ozf8Qxk",
-					"sourceCode":"GOOGLE",
-					"type":100,
-					"name":"Bts Gostinaya 5",
-					"languageId":"en",
-					"latitude":"54.7181357",
-					"longitude":"20.4882992"
-				},
-				{
-					"id":223,
-					"externalId":"ChIJM5M9n_k940YR4lo5Ozf8Qxk1",
-					"sourceCode":"GOOGLE",
-					"type":100,
-					"name":"Bts Gostinaya 6",
-					"languageId":"en",
-					"latitude":"54.7181357",
-					"longitude":"20.4882992"
-				}
-			]`;
-
-			repository.findParents(
-				new Location(),
-				'en'
-			)
-				.then((locationCollection) => {
-					assert.ok(locationCollection);
-					assert.ok(Array.isArray(locationCollection));
-					assert.ok(locationCollection.length = 2);
-
-					let location = locationCollection[0];
-
-					assert.ok(location instanceof Location);
-					assert.equal(location.id, 222);
-					assert.equal(location.name, 'Bts Gostinaya 6');
-				});
-		});
-
-		it('Should throw exception', () => {
-			assert.throws(
-				() => {
-					repository.findParents(new Address(), 'en');
-				},
-				Error,
-				'Location must be defined'
-			);
-		});
 	});
 
 	describe('findByExternalId', () => {

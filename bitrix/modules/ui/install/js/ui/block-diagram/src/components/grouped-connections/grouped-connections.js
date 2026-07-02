@@ -28,12 +28,14 @@ export const GroupedConnections = {
 		const {
 			groupedConnections,
 			connectionGroupNames,
+			newConnections,
 		} = useBlockDiagram();
 
 		return {
 			groupedConnections,
 			connectionGroupNames,
 			getGroupConnectionSlotName,
+			newConnections,
 		};
 	},
 	template: `

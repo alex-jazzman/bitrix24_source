@@ -9,6 +9,6 @@
 }
 
 .sign-wizard__notice.--warning {
-	background: var(--ui-color-palette-orange-15);
-	color: var(--ui-color-base-60);
+	background: var(--ui-color-accent-soft-orange-2);
+	color: var(--ui-color-base-2);
 }

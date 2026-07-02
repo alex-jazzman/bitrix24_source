@@ -211,12 +211,14 @@ class MainMailConfirmAjax
 			if (empty($senderItem))
 			{
 				$error = getMessage('MAIN_MAIL_CONFIRM_AJAX_ERROR');
-				return;
+
+				return [];
 			}
 			if ($USER->getId() !== $senderItem['USER_ID'] && !($senderItem['IS_PUBLIC'] && $isAdmin))
 			{
 				$error = getMessage('MAIN_MAIL_CONFIRM_AJAX_ERROR');
-				return;
+
+				return [];
 			}
 
 			$queryParams = [

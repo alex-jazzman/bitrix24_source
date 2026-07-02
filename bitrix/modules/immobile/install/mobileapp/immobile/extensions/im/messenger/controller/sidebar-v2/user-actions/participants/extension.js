@@ -5,6 +5,7 @@ jn.define('im/messenger/controller/sidebar-v2/user-actions/participants', (requi
 	const { unique } = require('utils/array');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
+	const { requireLazy } = require('require-lazy');
 	const { EventType, ComponentCode } = require('im/messenger/const');
 	const { addChat, addParticipants, deleteParticipant } = require(
 		'im/messenger/controller/sidebar-v2/user-actions/participants/src/rest-service',

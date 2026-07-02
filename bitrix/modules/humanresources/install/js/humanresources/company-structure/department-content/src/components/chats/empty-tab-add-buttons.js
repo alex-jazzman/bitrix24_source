@@ -1,7 +1,13 @@
 import { useChartStore } from 'humanresources.company-structure.chart-store';
+import { PermissionChecker } from 'humanresources.company-structure.permission-checker';
 import { RouteActionMenu } from 'humanresources.company-structure.structure-components';
 import { mapState } from 'ui.vue3.pinia';
-import { ChatsMenuLinkChannel, ChatsMenuLinkChat, ChatsMenuLinkCollab } from './consts';
+import {
+	ChatsMenuLinkChannel,
+	ChatsMenuLinkChat,
+	ChatsMenuLinkCollab,
+	ChatsMenuLinkProject,
+} from './consts';
 import 'ui.icon-set.main';
 import './styles/empty-tab-add-buttons.css';
 
@@ -41,13 +47,17 @@ export const EmptyTabAddButtons = {
 
 	computed:
 	{
+		isProjectsAvailable(): boolean
+		{
+			return PermissionChecker.getInstance().isProjectsAvailable;
+		},
 		menu(): Object[]
 		{
 			const menu = [];
 
 			if (this.canEditCollab)
 			{
-				menu.push(ChatsMenuLinkCollab);
+				menu.push(this.isProjectsAvailable ? ChatsMenuLinkProject : ChatsMenuLinkCollab);
 			}
 
 			if (this.canEditChannel)

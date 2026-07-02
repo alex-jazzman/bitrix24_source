@@ -5,14 +5,14 @@ this.BX.Booking = this.BX.Booking || {};
 	'use strict';
 
 	function range(start, stop, step = 1) {
-	  const result = [];
-	  for (let i = start; i <= stop; i += step) {
-	    result.push(i);
-	  }
-	  return result;
+		const result = [];
+		for (let i = start; i <= stop; i += step) {
+			result.push(i);
+		}
+		return result;
 	}
 
 	exports.range = range;
 
-}((this.BX.Booking.Lib = this.BX.Booking.Lib || {})));
+})(this.BX.Booking.Lib = this.BX.Booking.Lib || {});
 //# sourceMappingURL=range.bundle.js.map

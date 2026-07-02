@@ -1,6 +1,6 @@
 import { NameService } from 'crm.ai.name-service';
 import { Dom, Runtime, Text, Type } from 'main.core';
-import { BaseEvent } from 'main.core.events';
+import type { BaseEvent } from 'main.core.events';
 import { Popup } from 'main.popup';
 import { HtmlFormatterComponent } from 'ui.bbcode.formatter.html-formatter';
 import { BasicEditor, TextEditorComponent } from 'ui.text-editor';

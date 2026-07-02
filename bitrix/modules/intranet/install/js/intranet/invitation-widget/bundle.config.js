@@ -3,5 +3,4 @@ module.exports = {
 	output: 'dist/invitation-widget.bundle.js',
 	namespace: 'BX.Intranet',
 	browserslist: true,
-	minification: true,
 };

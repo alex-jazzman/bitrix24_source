@@ -1,12 +1,15 @@
 .editor-chart-block-switcher {
 	position: relative;
 	z-index: -1;
-	width: 17px;
-	height: 29px;
-	padding-top: 1px;
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	align-items: center;
+	width: 20px;
+	height: 36px;
 	border: none;
-	border-top-left-radius: 6px;
-	border-bottom-left-radius: 6px;
+	border-top-left-radius: 8px;
+	border-bottom-left-radius: 8px;
 	background: var(--ui-color-bg-content-secondary);
 	box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.1);
 	color: var(--ui-color-gray-50);
@@ -14,6 +17,10 @@
 }
 
 .editor-chart-block-switcher__icon {
+	width: 14px;
+	height: 14px;
+	padding: 4px 2px 0 4px;
+	mask-position: 2px 2px;
 	background-color: var(--ui-color-gray-50);
 }
 
@@ -26,9 +33,19 @@
 	color: var(--ui-color-white-base);
 }
 
+.editor-chart-block-switcher__label-wrap {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	width: 14px;
+	height: 14px;
+	padding: 1px 2px 0 4px;
+}
+
 .editor-chart-block-switcher__label {
 	margin: 0 auto;
-	line-height: 1em;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
+	font-size: var(--ui-font-size-3xs, 10px);
 	text-align: center;
-	font-size: var(--ui-font-size-6xs);
+	line-height: 1em;
 }

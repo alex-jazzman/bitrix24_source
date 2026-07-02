@@ -1,6 +1,5 @@
-import { Tag } from 'main.core';
-import { Loc } from 'main.core';
 import { Item } from './item.js';
+import { ActionItem } from './action-item.js';
 import { EventEmitter } from "main.core.events";
 
 export class Binding
@@ -80,13 +79,24 @@ export class Binding
 		parent.replaceChild(newObject,object);
 	}
 
-	static initButtons(context: HTMLElement = document.body)
+	static initButtons(context: HTMLElement = document.body): void
 	{
-		const elements = Array.from(context.getElementsByClassName('mail-ui-binding-data'));
-		for (let element of elements)
+		this.initBindingButtons(context);
+		this.initActionButtons(context);
+	}
+
+	static initBindingButtons(context: HTMLElement): void
+	{
+		const elements = [...context.getElementsByClassName('mail-ui-binding-data')];
+		for (const element of elements)
 		{
-			this.replaceElement(element);
+			this.replaceElement((element: HTMLElement));
 		}
+	}
+
+	static initActionButtons(context: HTMLElement): void
+	{
+		ActionItem.initButtons(context);
 	}
 
 	#subscribeEvent()

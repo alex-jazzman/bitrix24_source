@@ -163,7 +163,7 @@ foreach ($arModules as $moduleDir => $module)
 $stableVersionsOnly = COption::GetOptionString("main", "stable_versions_only", "Y");
 $arRequestedModules = CUpdateClientPartner::GetRequestedModules("");
 
-$arUpdateList = CUpdateClientPartner::GetUpdatesList($errorMessage, LANG, $stableVersionsOnly, $arRequestedModules, Array("fullmoduleinfo" => "Y"));
+$arUpdateList = CUpdateClientPartner::GetUpdatesList($errorMessage, LANGUAGE_ID, $stableVersionsOnly, $arRequestedModules, Array("fullmoduleinfo" => "Y"));
 $strError_tmp = "";
 $arClientModules = CUpdateClientPartner::GetCurrentModules($strError_tmp);
 
@@ -321,7 +321,7 @@ $rsData->InitFromArray($arModules);
 $rsData = new CAdminResult($rsData, $sTableID);
 while($info = $rsData->Fetch())
 {
-	$row =& $lAdmin->AddRow($info["id"], $info);
+	$row = $lAdmin->AddRow($info["id"], $info);
 
 	if(LANGUAGE_ID == "ru")
 		$name = "<b><a href=\"https://marketplace.1c-bitrix.ru/".htmlspecialcharsbx($info["id"])."\" target=\"_blank\">".htmlspecialcharsbx($info["name"])."</a></b> (".htmlspecialcharsbx($info["id"]).")";
@@ -398,7 +398,7 @@ while($info = $rsData->Fetch())
 			"ICON" => "delete",
 			"DEFAULT" => false,
 			"TEXT" => GetMessage("MOD_DELETE"),
-			"ACTION" => $lAdmin->ActionRedirect($APPLICATION->GetCurPage()."?id=".htmlspecialcharsbx($info["id"])."&lang=".LANG."&uninstall=Y&".bitrix_sessid_get()),
+			"ACTION" => $lAdmin->ActionRedirect($APPLICATION->GetCurPage()."?id=".htmlspecialcharsbx($info["id"])."&lang=".LANGUAGE_ID."&uninstall=Y&".bitrix_sessid_get()),
 		);
 	}
 	else
@@ -407,13 +407,13 @@ while($info = $rsData->Fetch())
 			"ICON" => "add",
 			"DEFAULT" => false,
 			"TEXT" => GetMessage("MOD_INSTALL_BUTTON"),
-			"ACTION" => $lAdmin->ActionRedirect($APPLICATION->GetCurPage()."?id=".htmlspecialcharsbx($info["id"])."&lang=".LANG."&install=Y&".bitrix_sessid_get()),
+			"ACTION" => $lAdmin->ActionRedirect($APPLICATION->GetCurPage()."?id=".htmlspecialcharsbx($info["id"])."&lang=".LANGUAGE_ID."&install=Y&".bitrix_sessid_get()),
 		);
 		$arActions[] = array(
 			"ICON" => "delete",
 			"DEFAULT" => false,
 			"TEXT" => GetMessage("MOD_SMP_DELETE"),
-			"ACTION" => "if(confirm('".GetMessageJS('MOD_CLEAR_CONFIRM', Array("#NAME#" => htmlspecialcharsbx($info["name"])))."')) ".$lAdmin->ActionRedirect($APPLICATION->GetCurPage()."?id=".htmlspecialcharsbx($info["id"])."&lang=".LANG."&clear=Y&".bitrix_sessid_get()),
+			"ACTION" => "if(confirm('".GetMessageJS('MOD_CLEAR_CONFIRM', Array("#NAME#" => htmlspecialcharsbx($info["name"])))."')) ".$lAdmin->ActionRedirect($APPLICATION->GetCurPage()."?id=".htmlspecialcharsbx($info["id"])."&lang=".LANGUAGE_ID."&clear=Y&".bitrix_sessid_get()),
 		);
 	}
 	$row->AddActions($arActions);
@@ -451,7 +451,7 @@ $rsData = new CAdminResult($rsData, $sTableID1);
 while($info = $rsData->Fetch())
 {
 
-	$row =& $lAdmin1->AddRow($info["ID"], $info);
+	$row = $lAdmin1->AddRow($info["ID"], $info);
 
 	$row->AddViewField("NAME", "<b><a href=\"https://marketplace.1c-bitrix.ru/".htmlspecialcharsbx($info["ID"])."\" target=\"_blank\">".htmlspecialcharsbx($info["NAME"])."</a></b> (".htmlspecialcharsbx($info["ID"]).")<br />".htmlspecialcharsbx($info["DESCRIPTION"]));
 	$row->AddViewField("PARTNER", $info["PARTNER"]);
@@ -533,7 +533,7 @@ if(!empty($_SESSION["MP_MOD_DELETED"]) && in_array(LANGUAGE_ID, array("ru", "ua"
 	<p><?=GetMessage("MOD_SMP_DELETE_OPINION_THANKS")?></p>
 	<input type="submit" value="<?=GetMessage("MOD_SMP_OPONION_ADD")?>">
 	</form>
-	<?
+	<?php
 	echo EndNote();
 	unset($_SESSION["MP_MOD_DELETED"]);
 }

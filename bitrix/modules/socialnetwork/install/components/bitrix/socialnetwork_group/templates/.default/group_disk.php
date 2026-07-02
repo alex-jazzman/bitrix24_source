@@ -65,6 +65,12 @@ $componentParams = array_merge($arResult, [
 	'RELATIVE_ITEMS' => $arResult['VARIABLES']['RELATIVE_ITEMS'] ?? null,
 ]);
 
+$favoritesTitleTemplate = (
+	($arParams['HIDE_OWNER_IN_TITLE'] ?? null) === 'Y'
+		? ''
+		: $arResult['PAGES_TITLE_TEMPLATE']
+);
+
 if (($_REQUEST['IFRAME'] ?? null) === 'Y')
 {
 	$this->SetViewTarget("below_pagetitle");
@@ -95,12 +101,12 @@ if (($_REQUEST['IFRAME'] ?? null) === 'Y')
 			'POPUP_COMPONENT_USE_BITRIX24_THEME' => 'Y',
 			'POPUP_COMPONENT_BITRIX24_THEME_ENTITY_TYPE' => 'SONET_GROUP',
 			'POPUP_COMPONENT_BITRIX24_THEME_ENTITY_ID' => $arResult['VARIABLES']['group_id'],
-			'UI_TOOLBAR_FAVORITES_TITLE_TEMPLATE' => $arResult['PAGES_TITLE_TEMPLATE'],
+			'UI_TOOLBAR_FAVORITES_TITLE_TEMPLATE' => $favoritesTitleTemplate,
 		]
 	);
 }
 
-$APPLICATION->SetPageProperty('FavoriteTitleTemplate', $arResult['PAGES_TITLE_TEMPLATE']);
+$APPLICATION->SetPageProperty('FavoriteTitleTemplate', $favoritesTitleTemplate);
 ?>
 
 	<div class="bx-disk-container posr" id="bx-disk-container">

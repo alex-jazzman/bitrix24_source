@@ -4,7 +4,6 @@
 }
 /* Normalize end */
 
-
 /* Common */
 .ui-system-input {
 	--padding-horizontal: var(--ui-space-inline-sm);
@@ -12,7 +11,6 @@
 	--border-color: var(--ui-color-base-5);
 	--border-color-active: var(--ui-color-accent-main-link);
 }
-
 
 /* Size */
 .ui-system-input {
@@ -35,7 +33,6 @@
 	--label-font-size: var(--ui-font-size-4xs);
 	--label-line-height: var(--ui-font-line-height-3xs);
 }
-
 
 /* Design */
 .ui-system-input {
@@ -113,7 +110,6 @@
 	display: flex;
 	flex-direction: column;
 	align-items: var(--align);
-	padding: 0 0 6px 0;
 	min-width: 0;
 }
 
@@ -155,10 +151,6 @@
 
 .ui-system-input-chip {
 	align-self: flex-start;
-	margin-top: var(--padding-vertical);
-}
-
-.ui-system-input-chip:last-of-type {
 	margin: var(--padding-vertical) var(--padding-vertical) var(--padding-vertical) 0;
 }
 
@@ -180,9 +172,14 @@
 	background: var(--label-background);
 }
 
+.ui-system-input-label-required {
+	color: var(--ui-color-accent-main-alert);
+	margin-left: 2px;
+}
+
 .ui-system-input-label.--error {
 	position: absolute;
-	bottom: 0;
+	bottom: -6px;
 	left: var(--inline-label-margin);
 	max-width: calc(100% - 2 * (var(--ui-space-inline-2xs) + var(--inline-label-margin)));
 	overflow: hidden;
@@ -192,6 +189,7 @@
 	padding: 0 var(--ui-space-inline-2xs);
 	background: var(--label-background);
 	color: var(--ui-color-accent-main-alert);
+	border-radius: var(--ui-border-radius-2xs);
 }
 
 
@@ -205,7 +203,7 @@
 	line-height: var(--ui-font-line-height-sm);
 	text-align: var(--align);
 	cursor: text;
-	background: var(--background);
+	background: transparent;
 }
 
 .ui-system-input-value::placeholder {
@@ -279,7 +277,6 @@
 	--ui-color: var(--ui-color-design-outline-content-icon-secondary);
 	--ui-color-hover: var(--ui-color-design-outline-content-icon-secondary);
 }
-
 
 /* Dropdown */
 .ui-system-input-dropdown {

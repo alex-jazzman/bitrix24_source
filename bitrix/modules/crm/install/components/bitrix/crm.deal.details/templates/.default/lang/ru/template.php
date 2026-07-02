@@ -22,6 +22,8 @@ $MESS["CRM_DEAL_DETAIL_WAREHOUSE_ADD_DOCUMENT_GUIDE_TEXT"] = "Все данны�
 $MESS["CRM_DEAL_DETAIL_WAREHOUSE_SUCCESS_DEAL_GUIDE_TITLE"] = "Документ реализации";
 $MESS["CRM_DEAL_DETAIL_WAREHOUSE_SUCCESS_DEAL_GUIDE_TEXT"] = "Оформляется автоматически после успешного закрытия сделки";
 $MESS['CRM_DEAL_DETAIL_AUTOMATION_DEBUG_ITEM'] = 'В отладке';
+$MESS['CRM_DEAL_DETAIL_IS_RECURRING_ITEM_TITLE'] = 'Шаблон регулярной сделки';
+$MESS['CRM_DEAL_DETAIL_IS_RECURRING_ITEM_DESCRIPTION'] = 'CRM использует настройки этого шаблона и автоматически создаёт сделки по настроенному расписанию';
 
 $MESS["CRM_DEAL_DETAIL_CHANGE_FUNNEL_CONFIRM_DIALOG_TITLE"] = "Изменить воронку?";
 $MESS["CRM_DEAL_DETAIL_CHANGE_FUNNEL_CONFIRM_DIALOG_MESSAGE"] = "Изменения в сделке не сохранятся";

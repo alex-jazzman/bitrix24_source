@@ -111,6 +111,7 @@ export const ParentTask = {
 				v-if="hasParent"
 				:ids="hasParent ? [parentId] : []"
 				:loadingIds="!subTasksService.hasStoreTask(parentId) ? [parentId] : []"
+				:shouldShowSubTasksOption="false"
 				@removeTask="handleRemoveParentTask"
 			/>
 		</div>

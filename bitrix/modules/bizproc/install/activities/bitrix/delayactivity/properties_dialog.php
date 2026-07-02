@@ -80,7 +80,12 @@ use Bitrix\Main\Localization\Loc;
 		</label>
 	</td>
 </tr>
-<?php if(!CBPHelper::isEqualDocument($dialog->getDocumentType(), Workflow::getComplexType())): ?>
+<?php
+
+$isRestrictedTracking = (CBPRuntime::getRuntime()->getTrackingService() instanceof \Bitrix\Bizproc\Service\RestrictedTracking);
+$isNodeWorkflow = CBPHelper::isEqualDocument($dialog->getDocumentType(), Workflow::getComplexType());
+
+if(!$isNodeWorkflow || !$isRestrictedTracking): ?>
 <tr>
 	<td align="right" width="40%"></td>
 	<td width="60%">

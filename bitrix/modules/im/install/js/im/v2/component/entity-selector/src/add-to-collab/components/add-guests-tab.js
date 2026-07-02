@@ -1,19 +1,19 @@
-import { InvitationInput } from 'intranet.invitation-input';
+import { type JsonObject } from 'main.core';
 import { EventEmitter } from 'main.core.events';
-
-import { UserType, SliderCode } from 'im.v2.const';
-import { Core } from 'im.v2.application.core';
-import { openHelpdeskArticle } from 'im.v2.lib.helpdesk';
-import { Feature, FeatureManager } from 'im.v2.lib.feature';
-import { ScrollWithGradient } from 'im.v2.component.elements.scroll-with-gradient';
-import { ChatButton, ButtonSize, ButtonColor } from 'im.v2.component.elements.button';
 import { FeaturePromoter } from 'ui.info-helper';
+
+import { InvitationInput } from 'intranet.invitation-input';
+
+import { Core } from 'im.v2.application.core';
+import { ChatButton, ButtonSize, ButtonColor } from 'im.v2.component.elements.button';
+import { ScrollWithGradient } from 'im.v2.component.elements.scroll-with-gradient';
+import { UserType, SliderCode } from 'im.v2.const';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
+import { openHelpdeskArticle } from 'im.v2.lib.helpdesk';
+import { type ImModelChat, type ImModelCollabInfo, type ImModelUser } from 'im.v2.model';
 
 import { CopyInviteLink } from './copy-invite-link';
 import { InviteLanguageSelector } from './invite-language-selector';
-
-import type { ImModelChat, ImModelCollabInfo, ImModelUser } from 'im.v2.model';
-import type { JsonObject } from 'main.core';
 
 const HELPDESK_SLIDER_CLOSE_EVENT = 'SidePanel.Slider:onClose';
 const HELPDESK_SLIDER_ID = 'main:helper';
@@ -201,7 +201,7 @@ export const AddGuestsTab = {
 	template: `
 		<div class="bx-im-add-to-collab__container" :style="containerStyles">
 			<div class="bx-im-add-to-collab__invite-section">
-				<ScrollWithGradient :gradientHeight="28" :withShadow="true">
+				<ScrollWithGradient :withShadow="true">
 					<div class="bx-im-add-to-collab__content">
 						<div class="bx-im-add-to-collab__description">
 							<div class="bx-im-add-to-collab__description_content">

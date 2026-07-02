@@ -34,6 +34,10 @@ export const UploadButton: BitrixVueComponentProps = {
 		this.uploader.subscribe(UploaderEvent.UPLOAD_COMPLETE, () => {
 			this.isUploading = false;
 		});
+
+		this.uploader.subscribe(UploaderEvent.FILE_REMOVE, () => {
+			this.isUploading = false;
+		});
 	},
 
 	methods: {

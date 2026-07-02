@@ -10,6 +10,7 @@ jn.define('im/messenger/controller/dialog/lib/floating-buttons-bar-manager', (re
 
 	const { AnchorType } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { RestMethod } = require('im/messenger/const');
 
 	const ButtonId = {
@@ -115,7 +116,7 @@ jn.define('im/messenger/controller/dialog/lib/floating-buttons-bar-manager', (re
 				}
 
 				const action = this.animationQueue.shift();
-				if (typeof action === 'function')
+				if (Type.isFunction(action))
 				{
 					await action();
 				}
@@ -209,6 +210,12 @@ jn.define('im/messenger/controller/dialog/lib/floating-buttons-bar-manager', (re
 		};
 
 		getCommentsButton = () => {
+			const helper = DialogHelper.createByDialogId(this.dialogId);
+			if (!helper?.isChannel)
+			{
+				return null;
+			}
+
 			const postsCountWithCounters = this.store.getters['counterModel/getNumberChildCounters'](this.getChatId());
 			if (!postsCountWithCounters)
 			{

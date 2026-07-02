@@ -54,6 +54,7 @@ export const RestMethod = Object.freeze({
 	imV2RecentChannelTail: 'im.v2.Recent.Channel.Tail',
 	imV2RecentCollabTail: 'im.v2.Recent.Collab.Tail',
 	imV2RecentExternalChatTail: 'im.v2.Recent.ExternalChat.Tail',
+	imV2RecentTail: 'im.v2.Recent.tail',
 	imV2ChatCopilotUpdateRole: 'im.v2.Chat.Copilot.updateRole',
 	imV2ChatCopilotUpdateAiModel: 'im.v2.Chat.Copilot.updateEngine',
 	imV2AccessCheck: 'im.v2.Access.check',
@@ -67,8 +68,10 @@ export const RestMethod = Object.freeze({
 	imV2ChatJoinByCode: 'im.v2.Chat.joinByCode',
 	imV2ChatSharedLinkRevoke: 'im.v2.Chat.SharingLink.revoke',
 	imV2ChatSharedLinkRegenerateIndividual: 'im.v2.Chat.SharingLink.regenerateIndividual',
+	imV2ChatGuestLinkGenerate: 'im.v2.Guest.Link.generate',
+	imV2ChatGuestLinkRegenerate: 'im.v2.Guest.Link.regenerate',
+	imV2ChatGuestLinkRevoke: 'im.v2.Guest.Link.revoke',
 	imV2ChatFilterUsersByParticipation: 'im.v2.Chat.Member.filterUsersByParticipation',
-
 	imV2RecentPin: 'im.v2.Chat.pin',
 	imV2RecentUnpin: 'im.v2.Chat.unpin',
 

@@ -1,10 +1,15 @@
-<?
+<?php
 /**********************************************************************/
 /**    DO NOT MODIFY THIS FILE                                       **/
 /**    MODIFICATION OF THIS FILE WILL ENTAIL SITE FAILURE            **/
 /**********************************************************************/
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
 define("HELP_FILE", "marketplace/sysupdate.php");
+
+/**
+ * @global CMain $APPLICATION
+ * @global CUser $USER
+ */
 
 if (!function_exists('htmlspecialcharsbx'))
 {
@@ -107,7 +112,7 @@ $lAdmin->NavText($rsData->GetNavPrint(GetMessage("update_log_nav")));
 $n = 0;
 while($rec = $rsData->Fetch())
 {
-	$row = &$lAdmin->AddRow(0, null);
+	$row = $lAdmin->AddRow(0, null);
 
 	$aDate = explode(" ", htmlspecialcharsbx($rec[1]));
 	$row->AddField("DATE", '<span style="white-space:nowrap">'.$aDate[0].'</span> '.$aDate[1]);
@@ -143,8 +148,9 @@ $APPLICATION->SetAdditionalCSS("/bitrix/themes/".ADMIN_THEME_ID."/sysupdate.css"
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_after.php");
 ?>
 
-<?$lAdmin->DisplayList();?>
+<?php
+$lAdmin->DisplayList();?>
 
-<?
+<?php
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");
 ?>

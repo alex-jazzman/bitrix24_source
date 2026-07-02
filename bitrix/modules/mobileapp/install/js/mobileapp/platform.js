@@ -144,6 +144,10 @@
 		},
 	};
 
+	/**
+	 * @deprecated Do not export modules into global namespace. Use jn.define() instead.
+	 * @type {jnexport}
+	 */
 	const jnexport = this.jnexport = (...exportData) => {
 		exportData.forEach((exportItem) => {
 			if (Array.isArray(exportItem))

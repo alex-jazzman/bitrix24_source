@@ -46,6 +46,7 @@
 	--ui-btn-color: var(--ui-color-on-primary);
 	--ui-btn-color-hover: var(--ui-btn-color);
 	--ui-btn-color-active: var(--ui-btn-color);
+	--ui-btn-color-chevron: var(--ui-btn-color);
 	--ui-btn-box-shadow: none;
 	--ui-btn-box-shadow-hover: none;
 	--ui-btn-box-shadow-active: none;
@@ -83,8 +84,8 @@
 .ui-btn.--air:hover,
 .ui-btn.--air.ui-btn-hover,
 .ui-btn.--air.ui-btn-hover,
-.ui-btn.--air:focus,
-.ui-btn.--air:focus,
+.ui-btn.--air:focus-visible,
+.ui-btn.--air:focus-visible,
 .ui-btn.--air.ui-btn-focus,
 .ui-btn.--air.ui-btn-focus {
 	background: var(--ui-btn-background-gradient-hover), var(--ui-btn-custom-background, none);
@@ -154,13 +155,13 @@
 }
 
 .ui-btn.--air:hover,
-.ui-btn.--air:focus,
+.ui-btn.--air:focus-visible,
 .ui-btn-split.--air .ui-btn-main:hover,
-.ui-btn-split.--air .ui-btn-main:focus,
+.ui-btn-split.--air .ui-btn-main:focus-visible,
 .ui-btn-split.--air .ui-btn-menu:not(.--switcher):hover,
-.ui-btn-split.--air .ui-btn-menu:not(.--switcher):focus,
+.ui-btn-split.--air .ui-btn-menu:not(.--switcher):focus-visible,
 .ui-btn-split.--air .ui-btn-extra:hover,
-.ui-btn-split.--air .ui-btn-extra:focus,
+.ui-btn-split.--air .ui-btn-extra:focus-visible,
 .ui-btn-split.--air.ui-btn-hover,
 .ui-btn-split.--air.ui-btn-hover .ui-btn-main,
 .ui-btn-split.--air.ui-btn-hover .ui-btn-menu,
@@ -475,6 +476,65 @@ html[data-input-modality="pointer"] :where(.ui-btn, .ui-btn-main, .ui-btn-menu:n
 	--ui-btn-split-divider-color: var(--ui-color-design-tinted-alert-content-divider);
 }
 
+.ui-btn.--air.--style-tinted-bitrix-gpt,
+.ui-btn-split.--air.--style-tinted-bitrix-gpt {
+	--ui-btn-background-gradient: linear-gradient(
+		269.7deg,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-1) 1.77%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-2) 16.38%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-3) 50.5%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-4) 99.23%
+	);
+	--ui-btn-border-color: transparent;
+	--ui-btn-border-width: var(--ui-design-tinted-bitrix-gpt-stroke-weight);
+	--ui-btn-color: var(--ui-color-design-tinted-bitrix-gpt-content-icon);
+	--ui-btn-color-chevron: var(--ui-color-design-tinted-bitrix-gpt-content-chevron);
+	--ui-btn-split-divider-color: var(--ui-color-design-tinted-bitrix-gpt-content-divider);
+}
+
+.ui-btn.--air.--style-tinted-bitrix-gpt,
+.ui-btn-split.--air.--style-tinted-bitrix-gpt {
+	--hover-color-1: color-mix(in srgb, var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-1) 100%, var(--ui-color-bg-state-hover-default-hex) var(--ui-color-bg-state-hover-default-opacity));
+	--hover-color-2: color-mix(in srgb, var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-2) 100%, var(--ui-color-bg-state-hover-default-hex) var(--ui-color-bg-state-hover-default-opacity));
+	--hover-color-3: color-mix(in srgb, var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-3) 100%, var(--ui-color-bg-state-hover-default-hex) var(--ui-color-bg-state-hover-default-opacity));
+	--hover-color-4: color-mix(in srgb, var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-4) 100%, var(--ui-color-bg-state-hover-default-hex) var(--ui-color-bg-state-hover-default-opacity));
+
+	--active-color-1: color-mix(in srgb, var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-1) 100%, var(--ui-color-bg-state-click-default-hex) var(--ui-color-bg-state-click-default-opacity));
+	--active-color-2: color-mix(in srgb, var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-2) 100%, var(--ui-color-bg-state-click-default-hex) var(--ui-color-bg-state-click-default-opacity));
+	--active-color-3: color-mix(in srgb, var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-3) 100%, var(--ui-color-bg-state-click-default-hex) var(--ui-color-bg-state-click-default-opacity));
+	--active-color-4: color-mix(in srgb, var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-4) 100%, var(--ui-color-bg-state-click-default-hex) var(--ui-color-bg-state-click-default-opacity));
+
+	--ui-btn-background-gradient-hover: linear-gradient(
+		269.7deg,
+		var(--hover-color-1) 1.77%,
+		var(--hover-color-2) 16.38%,
+		var(--hover-color-3) 50.5%,
+		var(--hover-color-4) 99.23%
+	);
+	--ui-btn-background-gradient-active: linear-gradient(
+		269.7deg,
+		var(--active-color-1) 1.77%,
+		var(--active-color-2) 16.38%,
+		var(--active-color-3) 50.5%,
+		var(--active-color-4) 99.23%
+	);
+}
+
+.ui-btn.--air.--style-tinted-bitrix-gpt .ui-btn-text-inner,
+.ui-btn-split.--air.--style-tinted-bitrix-gpt .ui-btn-main .ui-btn-text-inner {
+	background: linear-gradient(
+		263.02deg,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-5) 2.92%,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-4) 25.99%,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-3) 49.07%,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-2) 76.77%,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-1) 86%
+	);
+	background-clip: text;
+	-webkit-background-clip: text;
+	color: transparent;
+}
+
 .ui-btn.--air.--style-outline-accent-1,
 .ui-btn-split.--air.--style-outline-accent-1 {
 	--ui-btn-background: var(--ui-color-design-outline-a1-bg);
@@ -500,6 +560,68 @@ html[data-input-modality="pointer"] :where(.ui-btn, .ui-btn-main, .ui-btn-menu:n
 	--ui-btn-border-width: var(--ui-design-outline-stroke-weight);
 	--ui-btn-color: var(--ui-color-design-outline-content);
 	--ui-btn-split-divider-color: var(--ui-color-design-outline-content-divider);
+}
+
+.ui-btn.--air.--style-outline-bitrix-gpt,
+.ui-btn-split.--air.--style-outline-bitrix-gpt {
+	--ui-btn-background: var(--ui-color-design-outline-bitrix-gpt-bg);
+	--ui-btn-background-gradient:
+		linear-gradient(var(--ui-btn-background), var(--ui-btn-background)) padding-box,
+		linear-gradient(
+			263.75deg,
+			var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-5) -5.96%,
+			var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-4) 15.13%,
+			var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-3) 47.18%,
+			var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-2) 72.28%,
+			var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-1) 94.05%
+		) border-box;
+	--ui-btn-border-color: transparent;
+	--ui-btn-border-width: var(--ui-color-design-outline-bitrix-gpt-stroke-weight);
+	--ui-btn-color: var(--ui-color-design-outline-bitrix-gpt-content-icon);
+	--ui-btn-color-chevron: var(--ui-color-design-outline-bitrix-gpt-content-chevron);
+	--ui-btn-split-divider-color: var(--ui-color-design-outline-bitrix-gpt-content-divider);
+}
+
+.ui-btn.--air.--style-outline-bitrix-gpt,
+.ui-btn-split.--air.--style-outline-bitrix-gpt {
+	--hover-bg: color-mix(in srgb, var(--ui-btn-background) 100%, var(--ui-color-bg-state-hover-default-hex) var(--ui-color-bg-state-hover-default-opacity));
+	--active-bg: color-mix(in srgb, var(--ui-btn-background) 100%, var(--ui-color-bg-state-click-default-hex) var(--ui-color-bg-state-click-default-opacity));
+
+	--ui-btn-background-gradient-hover:
+		linear-gradient(var(--hover-bg), var(--hover-bg)) padding-box,
+		linear-gradient(
+			263.75deg,
+			var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-5) -5.96%,
+			var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-4) 15.13%,
+			var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-3) 47.18%,
+			var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-2) 72.28%,
+			var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-1) 94.05%
+		) border-box;
+	--ui-btn-background-gradient-active:
+		linear-gradient(var(--active-bg), var(--active-bg)) padding-box,
+		linear-gradient(
+			263.75deg,
+			var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-5) -5.96%,
+			var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-4) 15.13%,
+			var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-3) 47.18%,
+			var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-2) 72.28%,
+			var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-1) 94.05%
+		) border-box;
+}
+
+.ui-btn.--air.--style-outline-bitrix-gpt .ui-btn-text-inner,
+.ui-btn-split.--air.--style-outline-bitrix-gpt .ui-btn-main .ui-btn-text-inner {
+	background: linear-gradient(
+		264.09deg,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-5) 1.67%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-4) 21.82%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-3) 52.44%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-2) 76.41%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-1) 97.21%
+	);
+	background-clip: text;
+	-webkit-background-clip: text;
+	color: transparent;
 }
 
 .ui-btn.--air.--style-outline-no-accent,
@@ -597,6 +719,55 @@ html[data-input-modality="pointer"] :where(.ui-btn, .ui-btn-main, .ui-btn-menu:n
 	--ui-btn-background-gradient-active: radial-gradient(110.42% 110.42% at -10.42% 31.25%, var(--active-color-1) 0%, var(--active-color-2) 58.65%, var(--active-color-3) 100%);
 }
 
+.ui-btn.--air.--style-filled-bitrix-gpt,
+.ui-btn-split.--air.--style-filled-bitrix-gpt {
+	--ui-btn-background-gradient: linear-gradient(
+		263.02deg,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-5) 2.92%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-4) 25.99%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-3) 49.07%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-2) 76.77%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-1) 86%
+	);
+	--ui-btn-border-color: transparent;
+	--ui-btn-border-width: var(--ui-design-filled-bitrix-gpt-stroke-weight);
+	--ui-btn-color: var(--ui-color-design-filled-bitrix-gpt-content);
+	--ui-btn-color-chevron: var(--ui-color-design-filled-bitrix-gpt-content-chevron);
+	--ui-btn-split-divider-color: var(--ui-color-design-filled-bitrix-gpt-content-divider);
+}
+
+.ui-btn.--air.--style-filled-bitrix-gpt,
+.ui-btn-split.--air.--style-filled-bitrix-gpt {
+	--hover-color-1: color-mix(in srgb, var(--ui-color-design-filled-bitrix-gpt-bg-gradient-5) 100%, var(--ui-color-bg-state-hover-default-hex) var(--ui-color-bg-state-hover-default-opacity));
+	--hover-color-2: color-mix(in srgb, var(--ui-color-design-filled-bitrix-gpt-bg-gradient-4) 100%, var(--ui-color-bg-state-hover-default-hex) var(--ui-color-bg-state-hover-default-opacity));
+	--hover-color-3: color-mix(in srgb, var(--ui-color-design-filled-bitrix-gpt-bg-gradient-3) 100%, var(--ui-color-bg-state-hover-default-hex) var(--ui-color-bg-state-hover-default-opacity));
+	--hover-color-4: color-mix(in srgb, var(--ui-color-design-filled-bitrix-gpt-bg-gradient-2) 100%, var(--ui-color-bg-state-hover-default-hex) var(--ui-color-bg-state-hover-default-opacity));
+	--hover-color-5: color-mix(in srgb, var(--ui-color-design-filled-bitrix-gpt-bg-gradient-1) 100%, var(--ui-color-bg-state-hover-default-hex) var(--ui-color-bg-state-hover-default-opacity));
+
+	--active-color-1: color-mix(in srgb, var(--ui-color-design-filled-bitrix-gpt-bg-gradient-5) 100%, var(--ui-color-bg-state-click-default-hex) var(--ui-color-bg-state-click-default-opacity));
+	--active-color-2: color-mix(in srgb, var(--ui-color-design-filled-bitrix-gpt-bg-gradient-4) 100%, var(--ui-color-bg-state-click-default-hex) var(--ui-color-bg-state-click-default-opacity));
+	--active-color-3: color-mix(in srgb, var(--ui-color-design-filled-bitrix-gpt-bg-gradient-3) 100%, var(--ui-color-bg-state-click-default-hex) var(--ui-color-bg-state-click-default-opacity));
+	--active-color-4: color-mix(in srgb, var(--ui-color-design-filled-bitrix-gpt-bg-gradient-2) 100%, var(--ui-color-bg-state-click-default-hex) var(--ui-color-bg-state-click-default-opacity));
+	--active-color-5: color-mix(in srgb, var(--ui-color-design-filled-bitrix-gpt-bg-gradient-1) 100%, var(--ui-color-bg-state-click-default-hex) var(--ui-color-bg-state-click-default-opacity));
+
+	--ui-btn-background-gradient-hover: linear-gradient(
+		263.02deg,
+		var(--hover-color-1) 2.92%,
+		var(--hover-color-2) 25.99%,
+		var(--hover-color-3) 49.07%,
+		var(--hover-color-4) 76.77%,
+		var(--hover-color-5) 86%
+	);
+	--ui-btn-background-gradient-active: linear-gradient(
+		263.02deg,
+		var(--active-color-1) 2.92%,
+		var(--active-color-2) 25.99%,
+		var(--active-color-3) 49.07%,
+		var(--active-color-4) 76.77%,
+		var(--active-color-5) 86%
+	);
+}
+
 .ui-btn-split.--air .ui-btn-menu::before {
 	content: '';
 	position: relative;
@@ -611,7 +782,7 @@ html[data-input-modality="pointer"] :where(.ui-btn, .ui-btn-main, .ui-btn-menu:n
 	mask-position: center center;
 	mask-repeat: no-repeat;
 	mask-size: contain;
-	background-color: var(--ui-btn-color);
+	background-color: var(--ui-btn-color-chevron);
 }
 
 .ui-btn-split.--air .ui-btn-menu.--switcher::before {
@@ -717,7 +888,7 @@ html[data-input-modality="pointer"] :where(.ui-btn, .ui-btn-main, .ui-btn-menu:n
 	mask-position: center center;
 	mask-repeat: no-repeat;
 	mask-size: contain;
-	background: var(--ui-btn-color);
+	background: var(--ui-btn-color-chevron);
 	transform: none;
 	transition: none;
 }

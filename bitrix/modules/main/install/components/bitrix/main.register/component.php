@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Bitrix Framework
  * @package bitrix
@@ -12,9 +12,9 @@
  * @global CUser $USER
  * @global CDatabase $DB
  * @global CUserTypeManager $USER_FIELD_MANAGER
- * @param array $arParams
- * @param array $arResult
- * @param CBitrixComponent $this
+ * @var array $arParams
+ * @var array $arResult
+ * @var CBitrixComponent $this
  */
 
 use Bitrix\Main\Security\Random;

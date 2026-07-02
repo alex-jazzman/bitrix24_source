@@ -1,7 +1,6 @@
 import { Type } from 'main.core';
 import { Button } from './button';
-import { ItemData } from '@/types/item';
-import { ButtonData } from '@/types/button';
+import { type ButtonData } from '../types/button';
 
 import '../css/item.css';
 
@@ -12,7 +11,6 @@ export const Item = {
 	},
 	props: {
 		itemData: {
-			type: ItemData,
 			required: true,
 		},
 	},

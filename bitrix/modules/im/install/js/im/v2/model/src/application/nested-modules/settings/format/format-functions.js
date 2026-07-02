@@ -1,5 +1,4 @@
-import { NotificationSettingsBlock } from 'im.v2.const';
-import type { RawNotificationSettingsBlock, NotificationSettingsItem } from 'im.v2.const';
+import { type NotificationSettingsBlock, type RawNotificationSettingsBlock, type NotificationSettingsItem } from 'im.v2.const';
 
 type PreparedNotificationSettings = {
 	[block: string]: NotificationSettingsBlock,

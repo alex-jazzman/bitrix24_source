@@ -40,3 +40,4 @@ $MESS['FLOW_FIELD_TASKS_IDS'] = "ID задач в потоке";
 $MESS['FLOW_FIELD_TASKS_IDS_FULL'] = "Идентификаторы всех задач, добавленных в поток";
 $MESS['FLOW_FIELD_EXPIRED_TASKS_IDS'] = 'ID просроченных задач в потоке';
 $MESS['FLOW_FIELD_EXPIRED_TASKS_IDS_FULL'] = 'Идентификаторы просроченных задач, добавленных в поток';
+$MESS['FLOW_TABLE_DESCRIPTION_FULL'] = "Набор содержит данные о потоках задач: их названия, администраторов, типы распределения задач и привязку к проектам.";

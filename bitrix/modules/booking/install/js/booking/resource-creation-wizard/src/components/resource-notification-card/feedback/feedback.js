@@ -22,6 +22,14 @@ export const Feedback = {
 			type: Object,
 			required: true,
 		},
+		ordinal: {
+			type: Number,
+			required: true,
+		},
+		senderCanUse: {
+			type: Boolean,
+			required: true,
+		},
 	},
 	data(): Object
 	{
@@ -33,7 +41,6 @@ export const Feedback = {
 		...mapGetters({
 			/** @type {ResourceModel} */
 			resource: `${Model.ResourceCreationWizard}/getResource`,
-			isCurrentSenderAvailable: `${Model.Notifications}/isCurrentSenderAvailable`,
 		}),
 		isFeedbackNotificationOn: {
 			get(): boolean
@@ -60,6 +67,8 @@ export const Feedback = {
 		<ResourceNotification
 			v-model:checked="isFeedbackNotificationOn"
 			:type="model.type"
+			:ordinal
+			:senderCanUse
 			:title="loc('BRCW_NOTIFICATION_CARD_FEEDBACK_TITLE')"
 			:description="loc('BRCW_NOTIFICATION_CARD_FEEDBACK_HELPER_TEXT_FIRST_MSGVER_2')"
 			:helpDesk="helpDesk"

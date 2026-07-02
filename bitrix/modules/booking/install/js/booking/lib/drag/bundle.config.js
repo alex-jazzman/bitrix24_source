@@ -1,5 +1,5 @@
 module.exports = {
-	input: 'src/drag.js',
+	input: 'src/index.js',
 	output: 'dist/drag.bundle.js',
 	namespace: 'BX.Booking.Lib',
 	browserslist: true,

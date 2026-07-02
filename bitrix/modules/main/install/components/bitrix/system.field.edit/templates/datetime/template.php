@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Bitrix Framework
  * @package bitrix
@@ -22,7 +22,7 @@ $index = 0;
 $fIndex = $arResult["RANDOM"];
 ?>
 <div id="date_container_<?=$fIndex?>">
-<?
+	<?php
 foreach ($arResult["VALUE"] as $res):
 
 	if($index == 0 && $arParams["arUserField"]["ENTITY_VALUE_ID"]<1 && $arParams["arUserField"]["SETTINGS"]["DEFAULT_VALUE"]["TYPE"]!="NONE")
@@ -38,15 +38,15 @@ foreach ($arResult["VALUE"] as $res):
 		$name = $arParams["arUserField"]["~FIELD_NAME"]."[".$index."]";
 
 ?><div class="fields datetime">
-<input type="text" name="<?=$name?>" value="<?=$res?>"<?
+<input type="text" name="<?=$name?>" value="<?=$res?>"<?php
 	if (intval($arParams["arUserField"]["SETTINGS"]["SIZE"]) > 0):
-		?> size="<?=$arParams["arUserField"]["SETTINGS"]["SIZE"]?>"<?
+		?> size="<?=$arParams["arUserField"]["SETTINGS"]["SIZE"]?>"<?php
 	endif;
 	if ($arParams["arUserField"]["EDIT_IN_LIST"]!="Y"):
-		?> readonly="readonly"<?
+		?> readonly="readonly"<?php
 	endif;
-?> class="fields datetime"><?
-if ($arParams["arUserField"]["EDIT_IN_LIST"]=="Y"):?><?
+?> class="fields datetime"><?php
+if ($arParams["arUserField"]["EDIT_IN_LIST"]=="Y"):?><?php
 	$APPLICATION->IncludeComponent(
 		"bitrix:main.calendar",
 		"",
@@ -58,12 +58,12 @@ if ($arParams["arUserField"]["EDIT_IN_LIST"]=="Y"):?><?
 		),
 		$component,
 		array("HIDE_ICONS" => "Y"));
-?><?endif;?></div><?
+?><?php endif;?></div><?php
 $index++;
 endforeach;
 ?></div>
 
-<?if ($arParams["arUserField"]["EDIT_IN_LIST"] == "Y" && $arParams["arUserField"]["MULTIPLE"] == "Y" && $arParams["SHOW_BUTTON"] <> "N"):?>
+<?php if ($arParams["arUserField"]["EDIT_IN_LIST"] == "Y" && $arParams["arUserField"]["MULTIPLE"] == "Y" && $arParams["SHOW_BUTTON"] <> "N"):?>
 <script>
 if(!window.bxDateInputs)
 {
@@ -79,11 +79,11 @@ bxDateInputs['<?=$fIndex?>'] = {
 
 <div id="hidden_<?=$fIndex?>" style="display:none;">
 	<div class="fields datetime">
-		<input type="text" name="#FIELD_NAME#" value=""<?
+		<input type="text" name="#FIELD_NAME#" value=""<?php
 	if (intval($arParams["arUserField"]["SETTINGS"]["SIZE"]) > 0):
-		?> size="<?=$arParams["arUserField"]["SETTINGS"]["SIZE"]?>"<?
+		?> size="<?=$arParams["arUserField"]["SETTINGS"]["SIZE"]?>"<?php
 	endif;
-?> class="fields datetime"><?
+?> class="fields datetime"><?php
 	$APPLICATION->IncludeComponent(
 		"bitrix:main.calendar",
 		"",
@@ -97,4 +97,4 @@ bxDateInputs['<?=$fIndex?>'] = {
 		array("HIDE_ICONS" => "Y"));
 ?></div>
 </div>
-<?endif;?>
+<?php endif;?>

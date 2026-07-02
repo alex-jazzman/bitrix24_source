@@ -1,7 +1,7 @@
 import { sendData } from 'ui.analytics';
 
 import { Core } from 'im.v2.application.core';
-import { ChatType } from 'im.v2.const';
+import { ChatType, type ChatTypeItem } from 'im.v2.const';
 
 import { AnalyticsCategory, AnalyticsEvent, AnalyticsTool, CreateChatContext } from '../const';
 import { getCategoryByChatType } from '../helpers/get-category-by-chat-type';
@@ -9,7 +9,7 @@ import { getUserType } from '../helpers/get-user-type';
 
 export class ChatCreate
 {
-	onStartClick(type: $Values<typeof ChatType>): void
+	onStartClick(type: ChatTypeItem): void
 	{
 		const currentLayout = Core.getStore().getters['application/getLayout'].name;
 

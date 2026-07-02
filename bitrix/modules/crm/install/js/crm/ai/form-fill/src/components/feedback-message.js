@@ -7,7 +7,6 @@ export const FeedbackMessage = {
 	name: 'FeedbackMessage',
 	data() {
 		return {
-			messageBoxInstance: null,
 			uniquePopupId: `ai-form-fill-feedback-popup_${Text.getRandom(20).toLowerCase()}`,
 		};
 	},

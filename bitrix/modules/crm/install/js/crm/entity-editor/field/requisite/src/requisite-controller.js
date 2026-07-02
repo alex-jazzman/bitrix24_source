@@ -3,6 +3,7 @@ import {EventEmitter} from "main.core.events"
 import {RequisiteList, RequisiteListItem} from "./requisite-list";
 import {EntityEditorRequisiteEditor} from "./requisite-editor"
 import {MessageBox} from 'ui.dialogs.messagebox';
+import 'crm.entity-editor';
 
 export class EntityEditorRequisiteController extends BX.Crm.EntityEditorController
 {

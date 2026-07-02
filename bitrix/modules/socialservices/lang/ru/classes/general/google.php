@@ -3,7 +3,7 @@ $MESS["socserv_google_client_id"] = "Идентификатор (Client ID):";
 $MESS["socserv_google_client_secret"] = "Секретный код (Client secret):";
 $MESS["socserv_google_api_key"] = "API key:";
 $MESS["socserv_google_sync_proxy"] = "Выполнять синхронизацию через прокси-сервер Битрикс:";
-$MESS["socserv_google_note_2_MSGVER_1"] = "Необходимо <a href=\"https://console.developers.google.com/\">создать приложение</a> в консоли Google.<br>
+$MESS["socserv_google_note_2_MSGVER_1"] = "Необходимо <a href=\"https://console.developers.google.com/\" target=\"_blank\">создать приложение</a> в консоли Google.<br>
 В поле \"Authorized redirect URIs\" укажите адрес: <a href=\"#URL#\">#URL#</a><br>
 
 <ul style=\"text-align: left;\">

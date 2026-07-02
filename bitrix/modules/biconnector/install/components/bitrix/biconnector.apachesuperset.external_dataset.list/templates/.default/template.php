@@ -20,6 +20,7 @@ Extension::load([
 	'biconnector.loading-popup',
 	'ui.hint',
 	'ui.buttons',
+	'ui.icons',
 	'ui.system.dialog',
 ]);
 

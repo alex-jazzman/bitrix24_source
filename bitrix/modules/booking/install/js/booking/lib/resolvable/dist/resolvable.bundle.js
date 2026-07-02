@@ -5,14 +5,14 @@ this.BX.Booking = this.BX.Booking || {};
 	'use strict';
 
 	function Resolvable() {
-	  const promise = new Promise(resolve => {
-	    this.resolve = resolve;
-	  });
-	  promise.resolve = this.resolve;
-	  return promise;
+		const promise = new Promise(resolve => {
+			this.resolve = resolve;
+		});
+		promise.resolve = this.resolve;
+		return promise;
 	}
 
 	exports.Resolvable = Resolvable;
 
-}((this.BX.Booking.Lib = this.BX.Booking.Lib || {})));
+})(this.BX.Booking.Lib = this.BX.Booking.Lib || {});
 //# sourceMappingURL=resolvable.bundle.js.map

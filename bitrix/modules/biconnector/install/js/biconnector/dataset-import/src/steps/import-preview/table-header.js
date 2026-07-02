@@ -39,16 +39,9 @@ export const TableHeader = {
 		{
 			return {
 				text: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PREVIEW_COLUMN_DATETIME_HINT'),
+				icon: true,
 				popupOptions: {
-					bindOptions: {
-						position: 'bottom',
-					},
-					angle: {
-						position: 'top',
-					},
 					width: 300,
-					offsetLeft: 10,
-					autoHide: false,
 				},
 			};
 		},

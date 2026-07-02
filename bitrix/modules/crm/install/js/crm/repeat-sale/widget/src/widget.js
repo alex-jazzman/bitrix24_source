@@ -21,6 +21,7 @@ export const WidgetType = Object.freeze({
 
 export type WidgetParams = {
 	showSettingsButton?: boolean,
+	isGlowingSettingsButton?: boolean,
 	showConfetti?: boolean,
 	isRepeatSaleGrid?: boolean,
 	periodTypeId?: PeriodType.day30 | PeriodType.quarter | PeriodType.halfYear | PeriodType.year,

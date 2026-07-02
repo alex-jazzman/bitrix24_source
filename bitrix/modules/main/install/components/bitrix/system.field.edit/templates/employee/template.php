@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Bitrix Framework
  * @package bitrix
@@ -22,7 +22,7 @@ global $USER_FIELD_MANAGER;
 $name = $arParams["arUserField"]["~FIELD_NAME"];
 ?>
 <table id="table_<?=$name?>" width="100%" cellpadding="0" cellspacing="0">
-<?
+	<?php
 foreach ($arResult["VALUE"] as $i => $ID)
 {
 	$name_c = ($arParams["arUserField"]["MULTIPLE"] == "Y"? $name.'['.$i.']' : $name);
@@ -30,8 +30,8 @@ foreach ($arResult["VALUE"] as $i => $ID)
 ?>
 	<tr>
 		<td>
-		<input type="text" name="<?=$name_c?>" id="<?echo $name_x?>" value="<?echo intval($ID) > 0 ? intval($ID) : ''?>" size="3" class="typeinput" />
-		<?
+		<input type="text" name="<?=$name_c?>" id="<?= $name_x?>" value="<?= intval($ID) > 0 ? intval($ID) : ''?>" size="3" class="typeinput" />
+			<?php
 		$APPLICATION->IncludeComponent(
 			'bitrix:intranet.user.search',
 			'',
@@ -52,16 +52,16 @@ foreach ($arResult["VALUE"] as $i => $ID)
 		function Ch<?=$name_x?>()
 		{
 			var DV_<?=$name_x?> = document.getElementById("div_<?=$name_x?>");
-			if (document.getElementById('<?echo $name_x?>'))
+			if (document.getElementById('<?= $name_x?>'))
 			{
 				var old_value = value_<?=$name_x?>;
-				value_<?=$name_x?> = parseInt(document.getElementById('<?echo $name_x?>').value);
+				value_<?=$name_x?> = parseInt(document.getElementById('<?= $name_x?>').value);
 				if (value_<?=$name_x?> > 0)
 				{
 					if (old_value != value_<?=$name_x?>)
 					{
-						DV_<?=$name_x?>.innerHTML = '<i><? echo CUtil::JSEscape(GetMessage("MAIN_WAIT"))?></i>';
-						document.getElementById("hiddenframe<?=$name_x?>").src='/bitrix/admin/get_user.php?ID=' + value_<?=$name_x?>+'&strName=<?=$name_x?>&lang=<? echo LANG.(defined("ADMIN_SECTION") && ADMIN_SECTION===true?"&admin_section=Y":"")?>';
+						DV_<?=$name_x?>.innerHTML = '<i><?= CUtil::JSEscape(GetMessage("MAIN_WAIT"))?></i>';
+						document.getElementById("hiddenframe<?=$name_x?>").src='/bitrix/admin/get_user.php?ID=' + value_<?=$name_x?>+'&strName=<?=$name_x?>&lang=<?= LANG.(defined("ADMIN_SECTION") && ADMIN_SECTION===true?"&admin_section=Y":"")?>';
 					}
 
 				}
@@ -76,19 +76,19 @@ foreach ($arResult["VALUE"] as $i => $ID)
 		</script>
 		</td>
 	</tr>
-<?
+	<?php
 }
 ?>
-<?
+	<?php
 if($arParams["arUserField"]["MULTIPLE"] == "Y"):
 ?>
 <tr>
 	<td>
-		<?echo $USER_FIELD_MANAGER->ShowScript();?>
+		<?= $USER_FIELD_MANAGER->ShowScript();?>
 		<input type="button" value="<?=GetMessage("USER_TYPE_PROP_ADD")?>" onclick="addNewRow('table_<?=$name?>', '<?=$name?>')">
 	</td>
 </tr>
-<?
+<?php
 endif; //multiple
 ?>
 <script>

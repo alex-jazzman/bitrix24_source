@@ -27,3 +27,5 @@ $MESS["INTRANET_SETTINGS_FIELD_HINT_DISABLE_COPY_MSGVER_1"] = "Сохраняй�
 $MESS["INTRANET_SETTINGS_FIELD_HINT_DISABLE_SCREENSHOT_MSGVER_1"] = "При попытке сделать скриншот сотрудники увидят сообщение о запрете, скриншот не сохранится. Это защитит конфиденциальные данные от утечки, вся информация останется внутри компании.";
 $MESS['INTRANET_SETTINGS_SECTION_TITLE_REST_INTEGRATION'] = 'Интеграции Битрикс24';
 $MESS['INTRANET_SETTINGS_FIELD_LABEL_REST_CREATE_ACCESS_INHOOK'] = 'Кому разрешить создавать входящие вебхуки';
+$MESS['INTRANET_SETTINGS_FIELD_LABEL_REST_LOCAL_APP_CREATE'] = 'Кому разрешить создавать приложения для всех';
+$MESS['INTRANET_SETTINGS_FIELD_LABEL_REST_PERSONAL_APP_CREATE'] = 'Кому разрешить создавать свои приложения';

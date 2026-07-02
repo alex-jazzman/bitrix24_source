@@ -9,4 +9,5 @@ export const Option = Object.freeze({
 	AhaStartTimeTracking: 'aha_start_time_tracking',
 	AhaTaskChatPopup: 'aha_task_chat',
 	AhaTaskImportantMessagesPopup: 'aha_task_important_messages',
+	AhaTasksAiPromo: 'aha_tasks_ai_promo',
 });

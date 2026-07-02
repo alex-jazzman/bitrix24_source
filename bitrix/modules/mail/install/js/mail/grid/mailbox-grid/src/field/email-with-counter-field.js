@@ -1,5 +1,5 @@
 import { Tag, Text, Type, Dom } from 'main.core';
-import { Counter, CounterColor, CounterStyle } from 'ui.cnt';
+import { Counter, CounterStyle } from 'ui.cnt';
 import { BaseField } from './base-field';
 
 export type EmailWithCounterFieldType = {

@@ -12,15 +12,17 @@ declare type CounterModelState = {
 
 declare type CounterModelCollection = {
 	collection: Record<number, CounterModelState>,
+	childrenIndex: Map<number, Set<number>>,
 }
 
 export type CounterMessengerModel = MessengerModel<CounterModelCollection>;
 
 export type CounterModelActions = 'counterModel/setList'
+	| 'counterModel/setMarkedAsUnread'
 	| 'counterModel/readChildChatsCounters'
 	| 'counterModel/readAllChats'
 	| 'counterModel/readByRecentSection'
-	| 'counterModel/setMuted '
+	| 'counterModel/setMuted'
 	| 'counterModel/delete'
 ;
 
@@ -35,6 +37,7 @@ export interface CounterDeleteData extends PayloadData
 	type?: string;
 }
 declare type CounterSetActions = 'setList'
+	| 'setMarkedAsUnread'
 	| 'readChildChatsCounters'
 	| 'readAllChats'
 	| 'readByRecentSection'

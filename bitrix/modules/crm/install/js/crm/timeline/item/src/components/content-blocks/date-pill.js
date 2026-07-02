@@ -56,26 +56,36 @@ export default {
 				},
 			];
 		},
-		formattedDate(): string {
+		formattedDate(): string
+		{
 			if (!this.currentTimestamp)
 			{
 				return null;
 			}
 
-			const converter = this.getDatetimeConverter();
-
-			let result = converter.toDatetimeString({
+			const converterOptions = {
+				delimiter: ', ',
 				withDayOfWeek: true,
 				withFullMonth: true,
-				delimiter: ', ',
-			});
-			if (Type.isNumber(this.duration))
+			};
+
+			const converter = this.getDatetimeConverter();
+			const dateFrom = converter.toDatetimeString(converterOptions);
+
+			if (!Type.isNumber(this.duration) || this.duration <= 0)
 			{
-				const converterWithDuration = this.getDatetimeConverterWithDuration();
-				result = `${result}-${converterWithDuration.toTimeString()}`;
+				return dateFrom;
 			}
 
-			return result;
+			const converterWithDuration = this.getDatetimeConverterWithDuration();
+			const isSameDay = converter.toDateString() === converterWithDuration.toDateString();
+
+			const dateTo = isSameDay
+				? converterWithDuration.toTimeString()
+				: converterWithDuration.toDatetimeString(converterOptions)
+			;
+
+			return `${dateFrom} - ${dateTo}`;
 		},
 		currentDateInSiteFormat(): ?string
 		{

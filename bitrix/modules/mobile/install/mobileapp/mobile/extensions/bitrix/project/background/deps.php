@@ -3,5 +3,6 @@
 return [
 	'extensions' => [
 		'require-lazy',
+		'project/opener',
 	],
 ];

@@ -1,4 +1,9 @@
-<? if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 /** @var array $arResult */
 /** @global CMain $APPLICATION */
@@ -11,10 +16,11 @@
 /** @var string $componentPath */
 /** @var CBitrixComponent $component */
 
-use Bitrix\Main\Localization\Loc;
-
-\Bitrix\Main\UI\Extension::load(['intranet.old-interface.intranet-common']);
-CJSCore::init(['lists', 'bp_starter']);
+\Bitrix\Main\UI\Extension::load([
+	'lists',
+	'bp_starter',
+	'bizproc.workflow.starter',
+]);
 ?>
 
 <script>
@@ -40,7 +46,7 @@ CJSCore::init(['lists', 'bp_starter']);
 	});
 </script>
 
-<?if($arResult['SINGLE_MODE'] && $arResult['IBLOCK_PERMISSION'][$arResult['IBLOCK_ID']]['ADD_ELEMENT']):?>
+<?php if ($arResult['SINGLE_MODE'] && $arResult['IBLOCK_PERMISSION'][$arResult['IBLOCK_ID']]['ADD_ELEMENT']): ?>
 <div class="leac-title-wrap">
 	<div class="leac-title-menu">
 		<div class="sidebar-buttons">
@@ -53,23 +59,23 @@ CJSCore::init(['lists', 'bp_starter']);
 		</div>
 	</div>
 </div>
-<?endif;?>
+<?php endif;?>
 
-<? foreach($arResult['GRID_ID'] as $iblockId => $gridId): ?>
-	<div id="container_<?=$gridId?>">
+<?php foreach($arResult['GRID_ID'] as $iblockId => $gridId): ?>
+	<div id="container_<?= $gridId ?>">
 
-		<?if(!$arResult['SINGLE_MODE']):?>
+		<?php if(!$arResult['SINGLE_MODE']):?>
 			<div class="leac-grid-title">
-				<?=htmlspecialcharsbx($arResult['LIST_IBLOCK_NAME'][$iblockId])?>
+				<?= htmlspecialcharsbx($arResult['LIST_IBLOCK_NAME'][$iblockId]) ?>
 			</div>
-		<?endif;?>
+		<?php endif;?>
 
 		<div class="leac-grid-container">
 			<?=
 			$APPLICATION->IncludeComponent(
 				'bitrix:main.ui.grid',
 				'',
-				array(
+				[
 					'GRID_ID' => $gridId,
 					'COLUMNS' => $arResult['GRID_HEADERS'][$iblockId],
 					'ROWS' => $arResult['GRID_ROWS'][$iblockId] ?? [],
@@ -79,7 +85,7 @@ CJSCore::init(['lists', 'bp_starter']);
 					'AJAX_ID' => CAjax::getComponentID('bitrix:main.ui.grid', '.default', ''),
 					'ENABLE_NEXT_PAGE' => $arResult['GRID_NAVIGATION'][$iblockId]['ENABLE_NEXT_PAGE'] ?? false,
 					'PAGE_SIZES' => $arResult['GRID_NAVIGATION'][$iblockId]['PAGE_SIZES'] ?? null,
-					'ACTION_PANEL' => $arResult['GRID_GROUP_ACTIONS'][$iblockId],
+					'ACTION_PANEL' => $arResult['GRID_GROUP_ACTIONS'][$iblockId] ?? [],
 					'SHOW_CHECK_ALL_CHECKBOXES' => true,
 					'SHOW_ROW_CHECKBOXES' => true,
 					'SHOW_ROW_ACTIONS_MENU' => true,
@@ -97,9 +103,8 @@ CJSCore::init(['lists', 'bp_starter']);
 					'ALLOW_PIN_HEADER' => true,
 					'AJAX_OPTION_JUMP' => 'N',
 					"AJAX_OPTION_HISTORY" => "N"
-				)
-			);
-			?>
+				]
+			) ?>
 		</div>
 	</div>
-<? endforeach; ?>
+<?php endforeach;

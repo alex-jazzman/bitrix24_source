@@ -7,11 +7,10 @@ export type BaseUser = {
 	avatar: string,
 };
 
-export type Employee = {
-	...BaseUser,
-	email: string,
-	login: string,
-	password: string,
+export type Employee = BaseUser & {
+	email: string;
+	login: string;
+	password: string;
 };
 
 export type DepartmentEmployee = {
@@ -21,6 +20,35 @@ export type DepartmentEmployee = {
 };
 
 export type ResponsibleQueueItem = BaseUser;
+
+export type SettingOption = {
+	label: string,
+	value: string,
+};
+
+export type MailboxSettingsDefaults = {
+	mailSyncEnabled: boolean,
+	messageMaxAge: number,
+	crmEnabled: boolean,
+	crmSyncEnabled: boolean,
+	crmSyncPeriod: number,
+	crmAssignKnownClientEmails: boolean,
+	crmIncomingCreate: boolean,
+	crmIncomingEntity: string,
+	crmOutgoingCreate: boolean,
+	crmOutgoingEntity: string,
+	crmSource: string,
+	calendarAutoAddEvents: boolean,
+};
+
+export type MailboxSettingsConfig = {
+	mailSyncIntervals: SettingOption[],
+	crmSyncIntervals: SettingOption[],
+	crmEntities: SettingOption[],
+	crmSources: SettingOption[],
+	defaultCrmSource: string,
+	defaults: MailboxSettingsDefaults,
+};
 
 export type ConnectionSettings = {
 	imapServer: ?string,
@@ -65,10 +93,10 @@ export type CalendarSettingsState = {
 };
 
 export type CrmOptionsPayload = {
-	enabled: boolean,
+	enabled: string,
 	config: {
 		crm_sync_days?: number,
-		crm_public?: boolean,
+		crm_public?: string,
 		crm_new_entity_in?: string,
 		crm_new_entity_out?: string,
 		crm_lead_source?: string,
@@ -81,9 +109,9 @@ export type MailboxPayload = {
 	userIdToConnect: number,
 	email: string,
 	login: string,
-	password: string,
+	password?: string,
 	loginSmtp: string,
-	passwordSMTP: string,
+	passwordSMTP?: string,
 	mailboxName: string,
 	senderName: string,
 	server: string,
@@ -115,4 +143,33 @@ export type MassConnectDataType = {
 export type MassconnectPermissions = {
 	allowedLevels: ?number,
 	canEditCrmIntegration: ?boolean,
+};
+
+export type MassconnectFeatures = {
+	isPasswordlessConnectAvailable: boolean,
+};
+
+export type MailboxLimitItem = {
+	userId: number,
+	canConnectNew: boolean,
+};
+
+export type StatusPart = {
+	type: 'text'
+		| 'counter'
+		| 'static',
+	key: string,
+	value: string | number,
+};
+
+export type ErrorDetailCustomData = {
+	type?: string,
+	userIdToConnect?: number,
+	details?: string,
+};
+
+export type ErrorDetail = {
+	code?: number | string,
+	message?: string,
+	customData?: ErrorDetailCustomData,
 };

@@ -4,7 +4,7 @@
  * Bitrix Framework
  * @package bitrix
  * @subpackage main
- * @copyright 2001-2013 Bitrix
+ * @copyright 2001-2026 Bitrix
  */
 
 /**
@@ -32,7 +32,7 @@ $lAdmin = new CAdminList($sTableID, $oSort);
 
 if($lAdmin->EditAction() && $isAdmin)
 {
-	foreach($_REQUEST["FIELDS"] as $ID => $arFields)
+	foreach($_POST["FIELDS"] as $ID => $arFields)
 	{
 		if(!$lAdmin->IsUpdated($ID))
 			continue;
@@ -65,7 +65,6 @@ if(($arID = $lAdmin->GroupAction()) && $isAdmin)
 		switch($_REQUEST['action'])
 		{
 		case "delete":
-			@set_time_limit(0);
 			$DB->StartTransaction();
 			if(!CLanguage::Delete($ID))
 			{
@@ -90,9 +89,7 @@ if(($arID = $lAdmin->GroupAction()) && $isAdmin)
 
 $APPLICATION->SetTitle(GetMessage("TITLE"));
 
-global $by, $order;
-
-$langs = CLanguage::GetList($by, $order, Array());
+$langs = CLanguage::GetList($oSort->getField(), $oSort->getOrder(), Array());
 $rsData = new CAdminResult($langs, $sTableID);
 $rsData->NavStart();
 
@@ -107,10 +104,13 @@ $lAdmin->AddHeaders(array(
 	array("id"=>"DEF", "content"=>GetMessage("DEF"), "sort"=>"def", "default"=>true),
 ));
 
-while($arRes = $rsData->NavNext(true, "f_"))
+while($arRes = $rsData->Fetch())
 {
-	$row =& $lAdmin->AddRow($f_ID, $arRes, "lang_edit.php?LID=".$f_ID."&lang=".LANGUAGE_ID, GetMessage("LANG_EDIT_TITLE"));
-	$row->AddViewField("ID", '<a href="lang_edit.php?lang='.LANGUAGE_ID.'&amp;LID='.$f_ID.'" title="'.GetMessage("LANG_EDIT_TITLE").'">'.$f_ID.'</a>');
+	$langId = $arRes["ID"];
+	$langIdHtml = htmlspecialcharsbx($arRes["ID"]);
+	$langIdUrl = urlencode($arRes["ID"]);
+	$row = $lAdmin->AddRow($langId, $arRes, "lang_edit.php?LID=".$langIdUrl."&lang=".LANGUAGE_ID, GetMessage("LANG_EDIT_TITLE"));
+	$row->AddViewField("ID", '<a href="lang_edit.php?lang='.LANGUAGE_ID.'&amp;LID='.$langIdUrl.'" title="'.GetMessage("LANG_EDIT_TITLE").'">'.$langIdHtml.'</a>');
 	$row->AddCheckField("ACTIVE");
 	$row->AddInputField("SORT");
 	$row->AddInputField("NAME");
@@ -118,13 +118,13 @@ while($arRes = $rsData->NavNext(true, "f_"))
 	$row->AddCheckField("DEF");
 	$arActions = Array();
 
-	$arActions[] = array("ICON"=>"edit", "TEXT"=>GetMessage("CHANGE"), "ACTION"=>$lAdmin->ActionRedirect("lang_edit.php?LID=".$f_ID));
+	$arActions[] = array("ICON"=>"edit", "TEXT"=>GetMessage("CHANGE"), "ACTION"=>$lAdmin->ActionRedirect("lang_edit.php?LID=".$langIdUrl));
 
 	if($isAdmin)
 	{
-		$arActions[] = array("ICON"=>"copy", "TEXT"=>GetMessage("COPY"), "ACTION"=>$lAdmin->ActionRedirect("lang_edit.php?COPY_ID=".$f_ID));
+		$arActions[] = array("ICON"=>"copy", "TEXT"=>GetMessage("COPY"), "ACTION"=>$lAdmin->ActionRedirect("lang_edit.php?COPY_ID=".$langIdUrl));
 		$arActions[] = array("SEPARATOR"=>true);
-		$arActions[] = array("ICON"=>"delete", "TEXT"=>GetMessage("DELETE"), "ACTION"=>"if(confirm('".GetMessage('CONFIRM_DEL')."')) ".$lAdmin->ActionDoGroup($f_ID, "delete"));
+		$arActions[] = array("ICON"=>"delete", "TEXT"=>GetMessage("DELETE"), "ACTION"=>"if(confirm('".GetMessage('CONFIRM_DEL')."')) ".$lAdmin->ActionDoGroup($langIdUrl, "delete"));
 	}
 
 	$row->AddActions($arActions);

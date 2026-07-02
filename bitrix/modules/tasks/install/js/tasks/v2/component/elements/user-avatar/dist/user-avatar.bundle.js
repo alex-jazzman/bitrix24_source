@@ -27,6 +27,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  [UserAvatarSize.XXS]: 14
 	});
 
+	const USER_TYPES = {
+	  EMPLOYEE: 'employee',
+	  COLLABER: 'collaber',
+	  EXTRANET: 'extranet'
+	};
+
 	// @vue/component
 	const UserAvatar = {
 	  name: 'UiUserAvatar',
@@ -37,7 +43,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    },
 	    type: {
 	      type: String,
-	      default: 'employee'
+	      default: USER_TYPES.EMPLOYEE
 	    },
 	    size: {
 	      type: String,
@@ -51,6 +57,40 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  computed: {
 	    normalizedSrc() {
 	      return this.src === null ? '' : this.src;
+	    },
+	    isCollaber() {
+	      return this.type === USER_TYPES.COLLABER;
+	    },
+	    isExtranet() {
+	      return this.type === USER_TYPES.EXTRANET;
+	    },
+	    colorAvatar() {
+	      let colorAvatarNew = '#858D95';
+	      if (this.isCollaber) {
+	        colorAvatarNew = '#19CC45';
+	      }
+	      if (this.isExtranet) {
+	        colorAvatarNew = '#ca8600';
+	      }
+	      return colorAvatarNew;
+	    },
+	    ClassComponentAvatar() {
+	      let ClassComponentAvatarNew = ui_avatar.AvatarBase;
+	      if (this.isCollaber) {
+	        ClassComponentAvatarNew = ui_avatar.AvatarRoundGuest;
+	      }
+	      if (this.isExtranet) {
+	        ClassComponentAvatarNew = ui_avatar.AvatarRoundExtranet;
+	      }
+	      return ClassComponentAvatarNew;
+	    },
+	    optionsAvatar() {
+	      return {
+	        size: UserAvatarSizeMap[this.size],
+	        picPath: encodeURI(this.normalizedSrc),
+	        baseColor: this.colorAvatar,
+	        borderColor: this.borderColor
+	      };
 	    }
 	  },
 	  watch: {
@@ -64,15 +104,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  methods: {
 	    render() {
 	      var _this$avatar, _this$avatar$getConta;
-	      const isExternal = this.type === 'collaber' || this.type === 'extranet';
 	      (_this$avatar = this.avatar) == null ? void 0 : (_this$avatar$getConta = _this$avatar.getContainer()) == null ? void 0 : _this$avatar$getConta.remove();
-	      const AvatarClass = isExternal ? ui_avatar.AvatarRoundGuest : ui_avatar.AvatarBase;
-	      this.avatar = new AvatarClass({
-	        size: UserAvatarSizeMap[this.size],
-	        picPath: encodeURI(this.normalizedSrc),
-	        baseColor: isExternal ? null : '#858D95',
-	        borderColor: this.borderColor
-	      });
+	      this.avatar = new this.ClassComponentAvatar(this.optionsAvatar);
 	      this.avatar.renderTo(this.$refs.container);
 	    }
 	  },

@@ -1,0 +1,14 @@
+.booking-booking-booking__counter {
+	z-index: 5;
+	transform: translate(50%, -50%);
+	position: absolute;
+	top: 5px;
+	right: 5px;
+	pointer-events: none;
+}
+
+/* @chef-ignore */
+.booking-booking-booking__counter:has(> .booking-booking-booking__counter-dot) {
+	top: 3px;
+	right: 2px;
+}

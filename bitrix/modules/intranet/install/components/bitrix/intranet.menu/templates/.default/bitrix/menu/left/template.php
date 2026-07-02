@@ -42,6 +42,7 @@ $getClass = function ($item, $counterId, $counter, $isCompositeMode): string
 {
 	$itemId = $item["PARAMS"]["menu_item_id"];
 	$itemClass = "menu-item-block";
+	$customClasses = [];
 	$isCustomItem = preg_match("/^[0-9]+$/", $itemId) === 1;
 	$isCustomSection =
 		isset($item['PARAMS']['is_custom_section'])
@@ -51,6 +52,21 @@ $getClass = function ($item, $counterId, $counter, $isCompositeMode): string
 	if (!$isCustomItem)
 	{
 		$itemClass .= " ".str_replace("_", "-", $itemId);
+	}
+	if (isset($item['PARAMS']['class']) && is_string($item['PARAMS']['class']))
+	{
+		foreach (preg_split('/\s+/', trim($item['PARAMS']['class'])) as $className)
+		{
+			$className = preg_replace('/[^a-zA-Z0-9_-]/', '', $className);
+			if ($className !== '')
+			{
+				$customClasses[] = $className;
+			}
+		}
+		if (!empty($customClasses))
+		{
+			$itemClass .= ' ' . implode(' ', $customClasses);
+		}
 	}
 	if ($item["ITEM_TYPE"] !== "default" || $isCustomItem || $isCustomSection)
 	{

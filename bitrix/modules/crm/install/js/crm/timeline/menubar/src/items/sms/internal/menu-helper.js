@@ -1,5 +1,5 @@
 import { Type } from 'main.core';
-import { MenuItemOptions } from 'main.popup';
+import { type MenuItemOptions } from 'main.popup';
 
 export const MENU_ITEM_STUB_ID = 'stub';
 export const MENU_SETTINGS_ID = 'crm-timeline-whatsapp-settings-menu';

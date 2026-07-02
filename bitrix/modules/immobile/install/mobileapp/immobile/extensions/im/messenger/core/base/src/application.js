@@ -14,6 +14,12 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 	const { Feature } = require('im/messenger/lib/feature');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
+	const { DatabaseConnection } = require('im/messenger/db/connection');
+	const {
+		FolderSchema,
+		FolderChatSchema,
+	} = require('im/messenger/db/table-schema');
+
 	const {
 		OptionRepository,
 		RecentRepository,
@@ -28,6 +34,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 		PinMessageRepository,
 		CopilotRepository,
 		DraftRepository,
+		FolderRepository,
 		CommentRepository,
 		CounterRepository,
 		// SidebarFileRepository, TODO: The backend is not ready yet
@@ -49,6 +56,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 		commentModel,
 		anchorModel,
 		stickerPackModel,
+		folderModel,
 	} = require('im/messenger/model');
 
 	const {
@@ -84,6 +92,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 				pinMessage: null,
 				copilot: null,
 				draft: null,
+				folder: null,
 				comment: null,
 				readMessageQueue: null,
 				// sidebarFile: null, TODO: The backend is not ready yet
@@ -203,6 +212,9 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 				this.repository.counter.counterTable.drop();
 				this.repository.counter.counterPendingOperationInternalTable.drop();
 
+				DatabaseConnection.getInstance().dropSchema(FolderSchema);
+				DatabaseConnection.getInstance().dropSchema(FolderChatSchema);
+
 				logger.warn('CoreApplication drop database complete');
 			};
 		}
@@ -223,6 +235,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 				pinMessage: new PinMessageRepository(),
 				copilot: new CopilotRepository(),
 				draft: new DraftRepository(),
+				folder: new FolderRepository(),
 				comment: new CommentRepository(),
 				// sidebarFile: new SidebarFileRepository(),
 				counter: new CounterRepository(),
@@ -283,6 +296,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 				commentModel,
 				anchorModel,
 				stickerPackModel,
+				folderModel,
 			});
 		}
 

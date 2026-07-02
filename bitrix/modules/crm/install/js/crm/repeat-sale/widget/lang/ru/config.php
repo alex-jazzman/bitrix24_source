@@ -15,7 +15,7 @@ $MESS['CRM_REPEAT_SALE_WIDGET_START_POPUP_BTN_FORCE'] = 'Включить сей
 $MESS['CRM_REPEAT_SALE_WIDGET_START_POPUP_BTN_READ_MORE'] = 'Подробнее';
 
 $MESS['CRM_REPEAT_SALE_WIDGET_START_POPUP_DESC_WITHOUT_CLIENTS'] = 'В вашем Битрикс24 пока недостаточно данных для анализа. Узнайте, как&nbsp;правильно работать с&nbsp;клиентами, чтобы регулярно получать доход от&nbsp;повторных продаж';
-$MESS['CRM_REPEAT_SALE_WIDGET_START_POPUP_DESC_WITH_CLIENTS'] = 'AI проанализирует историю ваших продаж и&nbsp;подготовит рекомендации, как&nbsp;получать больше прибыли от&nbsp;существующих клиентов';
+$MESS['CRM_REPEAT_SALE_WIDGET_START_POPUP_DESC_WITH_CLIENTS'] = '#COPILOT_NAME# проанализирует историю ваших продаж и&nbsp;подготовит рекомендации, как&nbsp;получать больше прибыли от&nbsp;существующих клиентов';
 $MESS['CRM_REPEAT_SALE_WIDGET_START_POPUP_DESC_WITHOUT_TIME'] = 'Повторные продажи скоро включатся автоматически. Вы в&nbsp;любой момент можете отключить их в&nbsp;[link]настройках[/link]';
 $MESS['CRM_REPEAT_SALE_WIDGET_START_POPUP_DESC_WITHOUT_TIME_IN_RS_GRID'] = 'Повторные продажи скоро включатся автоматически. Вы в&nbsp;любой момент можете отключить их на&nbsp;этой&nbsp;странице';
 $MESS['CRM_REPEAT_SALE_WIDGET_START_POPUP_DESC_WITHOUT_TIME_AND_PERMISSIONS'] = 'Повторные продажи скоро включатся автоматически. Если хотите их отключить, обратитесь к&nbsp;администратору вашего Битрикс24';

@@ -75,12 +75,14 @@ export const BlockSwitcher = {
 		>
 			<BIcon
 				:class="iconClassNames"
-				:size="12"
+				:size="14"
 				name="o-power" 
 			/>
-			<p class="editor-chart-block-switcher__label">
-				{{ switcherLabel }}
-			</p>
+			<div class="editor-chart-block-switcher__label-wrap">
+				<p class="editor-chart-block-switcher__label">
+					{{ switcherLabel }}
+				</p>
+			</div>
 		</div>
 	`,
 };

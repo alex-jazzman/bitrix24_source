@@ -1,8 +1,8 @@
 import { Event } from 'main.core';
-import { EventEmitter } from 'main.core.events';
+import { type EventEmitter } from 'main.core.events';
 import { Popup } from 'main.popup';
 
-import { EVENTS } from '../../mini-card';
+import { EVENTS } from '../types/events.js';
 
 export class EventService
 {

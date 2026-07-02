@@ -886,9 +886,15 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      return !this.settings.restrictions.project.available;
 	    }
 	  },
-	  created() {
-	    if (this.task.groupId && !this.group) {
-	      void tasks_v2_provider_service_groupService.groupService.getGroup(this.task.groupId);
+	  async created() {
+	    if (this.task.groupId && !this.group && !this.task.flowId) {
+	      const group = await tasks_v2_provider_service_groupService.groupService.getGroup(this.task.groupId);
+	      if (!group) {
+	        tasks_v2_provider_service_taskService.taskService.updateStoreTask(this.taskId, {
+	          groupId: 0,
+	          stageId: 0
+	        });
+	      }
 	    }
 	  },
 	  methods: {

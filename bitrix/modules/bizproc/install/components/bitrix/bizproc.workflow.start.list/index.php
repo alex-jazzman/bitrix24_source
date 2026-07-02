@@ -17,6 +17,8 @@ if ($request->get('IFRAME') === 'Y' && $request->get('IFRAME_TYPE') === 'SIDE_SL
 			'POPUP_COMPONENT_PARAMS' => [
 				'signedDocumentType' => $request->get('signedDocumentType'),
 				'signedDocumentId' => $request->get('signedDocumentId'),
+				'signedDocuments' => $request->get('signedDocuments'),
+				'documents' => $request->get('documents'),
 			],
 			'POPUP_COMPONENT_USE_BITRIX24_THEME' => 'Y',
 		]

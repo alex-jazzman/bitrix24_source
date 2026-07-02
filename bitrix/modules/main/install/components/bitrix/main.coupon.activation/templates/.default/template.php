@@ -29,7 +29,7 @@ use Bitrix\Main\Web\Json;
 	<title><?=Loc::getMessage('MAIN_COUPON_ACTIVATION_HEADER_TITLE')?></title>
 </head>
 <body id="workarea-content">
-	<div class="logo-container main-logo-<?if (LANGUAGE_ID === "ru"):?>ru<?elseif(LANGUAGE_ID === "ua"):?>ua<?else:?>en<?endif?>"></div>
+	<div class="logo-container main-logo-<?php if (LANGUAGE_ID === "ru"):?>ru<?php elseif(LANGUAGE_ID === "ua"):?>ua<?php else:?>en<?php endif?>"></div>
 	<div class="copyright"><?= Loc::getMessage('MAIN_COUPON_ACTIVATION_COPYRIGHT', ['#YEAR#' => (new \Bitrix\Main\Type\Date(null))->format('Y')]) ?></div>
 <script>
 	BX.ready(() => {

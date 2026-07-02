@@ -5,16 +5,12 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 }
 
 return [
-	"css" => "/bitrix/js/ui/notification/ui.notification.css",
-	"js" => [
-		"/bitrix/js/ui/notification/ui.notification.balloon.js",
-		"/bitrix/js/ui/notification/ui.notification.stack.js",
-		"/bitrix/js/ui/notification/ui.notification.center.js",
-	],
-	"bundle_js" => "ui_notification",
-	"bundle_css" => "ui_notification",
+	"css" => "./dist/notification.bundle.css",
+	"js" => "./dist/notification.bundle.js",
 	"rel" => [
+		"main.core",
 		"ui.design-tokens",
 		"ui.design-tokens.air",
 	],
+	"skip_core" => false,
 ];

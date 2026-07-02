@@ -1,4 +1,4 @@
-import { Loc, Runtime, Tag, Type, type AjaxResponse, ajax } from 'main.core';
+import { Loc, Runtime, Tag, Type, Extension, type AjaxResponse, ajax } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Alert, AlertColor, AlertSize } from 'ui.alerts';
 import { BaseField, Checker } from 'ui.form-elements.view';
@@ -21,12 +21,20 @@ export class AiPage extends BaseSettingsPage
 	#itemRelations: [AiSettingsItemRelations] = [];
 	#itemFields: {[string]: AiSettingsItemField} = {};
 	#onSaveCheckers: [Checker] = [];
+	#agreementCheckers: [Checker] = [];
+	#isAgreementAccepted: boolean = false;
+	#isSwitcherProgrammaticChange: boolean = false;
 
 	constructor()
 	{
 		super();
-		this.titlePage = Loc.getMessage('INTRANET_SETTINGS_TITLE_PAGE_AI');
-		this.descriptionPage = Loc.getMessage('INTRANET_SETTINGS_TITLE_PAGE_AI_DESC');
+		const copilotName = Extension.getSettings('ai.integration.intranet-settings').copilotName;
+		this.titlePage = Loc.getMessage('INTRANET_SETTINGS_TITLE_PAGE_AI_MSGVER_1', {
+			'#COPILOT_NAME#': copilotName,
+		});
+		this.descriptionPage = Loc.getMessage('INTRANET_SETTINGS_TITLE_PAGE_AI_DESC_MSGVER_1', {
+			'#COPILOT_NAME#': copilotName,
+		});
 	}
 
 	getType(): string
@@ -164,6 +172,10 @@ export class AiPage extends BaseSettingsPage
 			}
 
 			field = new Checker(checkerOptions);
+			if (!restriction)
+			{
+				this.#agreementCheckers.push(field);
+			}
 		}
 
 		else if (type === 'list' && options && value)
@@ -235,7 +247,14 @@ export class AiPage extends BaseSettingsPage
 		};
 	}
 
-	#showBitrixGptAgreementPopup(): void
+	#setCheckerState(checker: Checker, isChecked: boolean): void
+	{
+		this.#isSwitcherProgrammaticChange = true;
+		checker.switcher?.check(isChecked);
+		this.#isSwitcherProgrammaticChange = false;
+	}
+
+	#showBitrixGptAgreementPopup(checker: Checker): void
 	{
 		Runtime.loadExtension('ai.bitrixgpt-agreement-popup')
 			.then(({ showBitrixGptAgreementPopup }) => ajax.runAction('ai.bitrixgptagreement.getPopupData')
@@ -246,25 +265,57 @@ export class AiPage extends BaseSettingsPage
 						|| !Type.isNumber(data.attempt)
 					)
 					{
+						this.#isAgreementAccepted = true;
+
 						return;
 					}
 
-					showBitrixGptAgreementPopup(data);
-				}))
-			.catch((error) => {
-				console.error(error);
-			});
+					this.#setCheckerState(checker, false);
+
+					showBitrixGptAgreementPopup({
+						...data,
+						useQueue: false,
+						showSkip: false,
+						messages: {
+							accept: Loc.getMessage('INTRANET_SETTINGS_AI_ENABLE_BUTTON'),
+						},
+						onAccept: () => {
+							this.#isAgreementAccepted = true;
+							this.#setCheckerState(checker, true);
+						},
+						onDecline: () => {
+							this.#setCheckerState(checker, false);
+						},
+					});
+				}));
 	}
 
 	#bindEvents()
 	{
+		if (this.#agreementCheckers.length > 0)
+		{
+			this.#agreementCheckers.forEach((checker) => {
+				EventEmitter.subscribe(checker, 'change', (event) => {
+					if (
+						this.#isSwitcherProgrammaticChange
+						|| this.#isAgreementAccepted
+						|| event.getData() !== true
+					)
+					{
+						return;
+					}
+
+					this.#showBitrixGptAgreementPopup(checker);
+				});
+			});
+		}
+
 		if (this.#onSaveCheckers.length > 0)
 		{
 			EventEmitter.subscribe(EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Settings:onBeforeSave', () => {
 				this.#onSaveCheckers.forEach((field) => {
 					field.switcher?.check(false, false);
 				});
-				this.#showBitrixGptAgreementPopup();
 			});
 		}
 

@@ -72,6 +72,7 @@ export function makeEmptyConstant(id: ?string = null): ConstantItem
 		default: '',
 		options: [],
 		required: false,
+		settings: {},
 	};
 }
 
@@ -85,6 +86,7 @@ export function convertConstants(constant: ConstantItem): ConstantConvertedData
 		Multiple: constant.multiple ? 1 : 0,
 		Options: Type.isObject(constant.options) ? constant.options : null,
 		Default: constant.default,
+		Settings: constant.settings,
 	};
 }
 

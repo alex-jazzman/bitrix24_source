@@ -289,6 +289,14 @@
 	animation-play-state: running;
 }
 
+.crm-rs__w-footer-button.--glowing {
+	position: relative;
+	padding-right: 0.3em;
+	margin-bottom: 2px;
+	margin-left: 2px;
+	--ui-highlighter-radius: 10px;
+}
+
 @keyframes icon-settings-rotate {
 	from {
 		transform: rotate(0);

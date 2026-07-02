@@ -1,5 +1,6 @@
 import {Base} from './base';
 import ConfigurableItem from '../configurable-item';
+import 'crm.entity-editor';
 
 export class Payment extends Base
 {

@@ -8,7 +8,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	/* eslint-disable no-param-reassign */
 	class Interface extends ui_vue3_vuex.BuilderModel {
 	  static createWithVariables(params) {
-	    var _params$userOptions$f, _params$userOptions$f2;
+	    var _params$userOptions$f, _params$userOptions$f2, _params$userOptions$f3;
 	    updateSkeleton((_params$userOptions$f = params.userOptions.fullCard) == null ? void 0 : _params$userOptions$f.cardWidth);
 	    return Interface.create().setVariables({
 	      currentUserId: params.currentUser.id,
@@ -17,7 +17,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      deadlineUserOption: params.deadlineUserOption,
 	      taskUserFieldScheme: params.taskUserFieldScheme,
 	      templateUserFieldScheme: params.templateUserFieldScheme,
-	      fullCardWidth: (_params$userOptions$f2 = params.userOptions.fullCard) == null ? void 0 : _params$userOptions$f2.cardWidth
+	      fullCardWidth: (_params$userOptions$f2 = params.userOptions.fullCard) == null ? void 0 : _params$userOptions$f2.cardWidth,
+	      taskListOptions: (_params$userOptions$f3 = params.userOptions.fullCard) != null && _params$userOptions$f3.taskListOptions ? JSON.parse(params.userOptions.fullCard.taskListOptions) : undefined
 	    });
 	  }
 	  getName() {
@@ -26,7 +27,6 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  getState() {
 	    return {
 	      currentUserId: this.getVariable('currentUserId', 0),
-	      deadlineChangeCount: 0,
 	      titleFieldOffsetHeight: null,
 	      stateFlags: this.getVariable('stateFlags', {
 	        needsControl: false,
@@ -51,7 +51,14 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      draggedCheckListId: null,
 	      taskUserFieldScheme: this.getVariable('taskUserFieldScheme', []),
 	      templateUserFieldScheme: this.getVariable('templateUserFieldScheme', []),
-	      taskWithActiveTimer: null
+	      taskWithActiveTimer: null,
+	      taskListOptions: this.getVariable('taskListOptions', {
+	        showCompletedSubTasks: true,
+	        showCompletedRelatedTasks: true,
+	        showCompletedGantt: true,
+	        showSubTasks: true,
+	        showSubTemplates: true
+	      })
 	    };
 	  }
 	  getGetters() {
@@ -60,8 +67,6 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      currentUserId: state => state.currentUserId,
 	      /** @function interface/fullCardWidth */
 	      fullCardWidth: state => state.fullCardWidth,
-	      /** @function interface/deadlineChangeCount */
-	      deadlineChangeCount: state => state.deadlineChangeCount,
 	      /** @function interface/titleFieldOffsetHeight */
 	      titleFieldOffsetHeight: state => state.titleFieldOffsetHeight,
 	      /** @function interface/stateFlags */
@@ -96,7 +101,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      /** @function interface/templateUserFieldScheme */
 	      templateUserFieldScheme: state => state.templateUserFieldScheme,
 	      /** @function interface/taskWithActiveTimer */
-	      taskWithActiveTimer: state => state.taskWithActiveTimer
+	      taskWithActiveTimer: state => state.taskWithActiveTimer,
+	      /** @function interface/taskListOptions */
+	      taskListOptions: state => state.taskListOptions
 	    };
 	  }
 	  getActions() {
@@ -105,10 +112,6 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      updateFullCardWidth: (store, fullCardWidth) => {
 	        store.commit('setFullCardWidth', fullCardWidth);
 	        updateSkeleton(fullCardWidth);
-	      },
-	      /** @function interface/updateDeadlineChangeCount */
-	      updateDeadlineChangeCount: (store, deadlineChangeCount) => {
-	        store.commit('setDeadlineChangeCount', deadlineChangeCount);
 	      },
 	      /** @function interface/updateTitleFieldOffsetHeight */
 	      updateTitleFieldOffsetHeight: (store, titleFieldOffsetHeight) => {
@@ -167,6 +170,10 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      /** @function interface/setTaskWithActiveTimer */
 	      setTaskWithActiveTimer: (store, task) => {
 	        store.commit('setTaskWithActiveTimer', task);
+	      },
+	      /** @function interface/updateTaskListOptions */
+	      updateTaskListOptions: (store, taskListOptions) => {
+	        store.commit('setTaskListOptions', taskListOptions);
 	      }
 	    };
 	  }
@@ -174,9 +181,6 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    return {
 	      setFullCardWidth: (state, fullCardWidth) => {
 	        state.fullCardWidth = fullCardWidth;
-	      },
-	      setDeadlineChangeCount: (state, deadlineChangeCount) => {
-	        state.deadlineChangeCount = deadlineChangeCount;
 	      },
 	      setTitleFieldOffsetHeight: (state, titleFieldOffsetHeight) => {
 	        state.titleFieldOffsetHeight = titleFieldOffsetHeight;
@@ -229,6 +233,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      },
 	      setTaskWithActiveTimer: (state, task) => {
 	        state.taskWithActiveTimer = task;
+	      },
+	      setTaskListOptions: (state, taskListOptions) => {
+	        state.taskListOptions = taskListOptions;
 	      }
 	    };
 	  }

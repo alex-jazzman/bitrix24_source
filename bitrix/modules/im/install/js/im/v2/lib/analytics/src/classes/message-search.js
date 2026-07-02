@@ -1,12 +1,11 @@
 import { sendData } from 'ui.analytics';
 
 import { Core } from 'im.v2.application.core';
+import { type ImModelChat } from 'im.v2.model';
 
 import { AnalyticsEvent, AnalyticsTool, AnalyticsStatus, AnalyticsSection, AnalyticsCategory } from '../const';
 import { getCategoryByChatType } from '../helpers/get-category-by-chat-type';
-import { ExtendedChatType, getChatType } from '../helpers/get-chat-type';
-
-import type { ImModelChat } from 'im.v2.model';
+import { getChatType, type ExtendedChatType } from '../helpers/get-chat-type';
 
 export class MessageSearch
 {

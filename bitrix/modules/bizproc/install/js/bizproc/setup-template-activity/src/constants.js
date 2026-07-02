@@ -16,6 +16,7 @@ export const CONSTANT_TYPES: Record<string, ConstantType> = Object.freeze({
 	FILE: 'file',
 	TEXT: 'text',
 	SELECT: 'select',
+	ENTITY_SELECTOR: 'entityselector',
 });
 
 export const DELIMITER_TYPES: Record<string, DelimiterType> = Object.freeze({

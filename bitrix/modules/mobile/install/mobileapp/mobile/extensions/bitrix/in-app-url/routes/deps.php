@@ -2,8 +2,10 @@
 
 return [
 	'extensions' => [
-		'project/utils',
-		'disk:in-app-url/routes',
+		'feature-flag',
+		'project/opener',
 		'require-lazy',
+		'rest/run-action-executor',
+		'disk:in-app-url/routes',
 	],
 ];

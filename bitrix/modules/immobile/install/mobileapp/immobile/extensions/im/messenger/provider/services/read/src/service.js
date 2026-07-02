@@ -33,6 +33,10 @@ jn.define('im/messenger/provider/services/read/src/service', (require, exports, 
 				this.logger.error('readAllMessages counterModel/readAllChats error: ', error);
 			});
 
+			await this.#core.getStore().dispatch('recentModel/readAllChats').catch((error) => {
+				this.logger.error('readAllMessages recentModel/readAllChats error: ', error);
+			});
+
 			await callMethod(RestMethod.imV2ChatReadAll, {}).catch((error) => {
 				this.logger.error('readAllMessages imV2ChatReadAll error: ', error);
 			});
@@ -50,7 +54,13 @@ jn.define('im/messenger/provider/services/read/src/service', (require, exports, 
 			await this.#core.getStore().dispatch('counterModel/readByRecentSection', {
 				recentSection: RecentTab.tasksTask,
 			}).catch((error) => {
-				this.logger.error('readAllMessagesByDialogType anchorModel/clearByType error: ', error);
+				this.logger.error('readAllMessagesByDialogType counterModel/readByRecentSection error: ', error);
+			});
+
+			await this.#core.getStore().dispatch('recentModel/readByRecentSection', {
+				recentSection: RecentTab.tasksTask,
+			}).catch((error) => {
+				this.logger.error('readAllMessagesByDialogType recentModel/readByRecentSection error: ', error);
 			});
 
 			await this.#core.getStore().dispatch('anchorModel/clearByDialogType', {

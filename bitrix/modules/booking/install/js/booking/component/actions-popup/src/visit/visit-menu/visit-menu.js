@@ -1,12 +1,11 @@
 import { Event } from 'main.core';
-import { MenuManager, Menu } from 'main.popup';
+import { MenuManager, type MenuItemOptions } from 'main.popup';
 import { mapGetters } from 'ui.vue3.vuex';
 import { BIcon as Icon, Set as IconSet } from 'ui.icon-set.api.vue';
-import type { MenuItemOptions } from 'main.popup';
 
 import { Model } from 'booking.const';
 import { limit } from 'booking.lib.limit';
-import { Button, ButtonSize, ButtonColor, ButtonIcon } from 'booking.component.button';
+import { Button, ButtonSize, ButtonColor } from 'booking.component.button';
 
 export type VisitUpdateVisitStatusPayload = {
 	id: string | number,
@@ -34,14 +33,12 @@ export const VisitMenu = {
 			default: '',
 		},
 	},
-	data(): { menuPopup: Menu | null }
+	setup(): Object
 	{
 		return {
 			IconSet,
 			ButtonSize,
 			ButtonColor,
-			ButtonIcon,
-			menuPopup: null,
 		};
 	},
 	computed: {

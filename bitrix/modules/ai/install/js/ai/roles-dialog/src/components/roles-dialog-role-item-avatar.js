@@ -27,6 +27,11 @@ export const RolesDialogRoleItemAvatar = {
 			required: false,
 			default: null,
 		},
+		isUniversal: {
+			type: Boolean,
+			required: false,
+			default: false,
+		},
 	},
 	computed: {
 		iconSize(): number {
@@ -37,6 +42,12 @@ export const RolesDialogRoleItemAvatar = {
 		},
 		fallbackIcon(): string {
 			return Main.COPILOT_AI;
+		},
+		wrapperClassName(): Object {
+			return {
+				'ai__roles-dialog_role-image-wrapper': true,
+				'--universal': this.isUniversal,
+			};
 		},
 	},
 	methods: {
@@ -49,10 +60,13 @@ export const RolesDialogRoleItemAvatar = {
 	},
 	template: `
 		<div
-			class="ai__roles-dialog_role-image-wrapper"
+			:class="wrapperClassName"
 		>
 			<div
-				v-if="icon"
+				v-if="isUniversal"
+			></div>
+			<div
+				v-else-if="icon"
 				class="ai__roles-dialog_role-image-icon"
 			>
 				<BIcon

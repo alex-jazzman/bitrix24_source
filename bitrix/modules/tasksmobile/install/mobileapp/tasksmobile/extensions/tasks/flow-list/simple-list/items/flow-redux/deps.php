@@ -47,6 +47,8 @@ return [
 
 		'require-lazy',
 		'user-profile',
+		'layout/ui/status-box',
+		'asset-manager',
 	],
 	'bundle' => [
 		'./src/flow',

@@ -9,10 +9,10 @@ return [
 	'js' => 'dist/search-input.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'im.v2.const',
-		'im.v2.lib.utils',
-		'im.v2.lib.esc-manager',
 		'im.v2.component.elements.loader',
+		'im.v2.const',
+		'im.v2.lib.esc-manager',
+		'im.v2.lib.utils',
 	],
 	'skip_core' => true,
 ];

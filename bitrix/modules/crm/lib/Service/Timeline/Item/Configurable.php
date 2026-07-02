@@ -2,11 +2,13 @@
 
 namespace Bitrix\Crm\Service\Timeline\Item;
 
+use Bitrix\Crm\Activity\Entity\ConfigurableRestApp\Dto\ContentBlockDto;
+use Bitrix\Crm\Integration\AI\AIManager;
 use Bitrix\Crm\Integration\Analytics\Builder\communication\WhatsAppPinUnpinEvent;
 use Bitrix\Crm\Integration\Analytics\Dictionary;
-use Bitrix\Crm\Activity\Entity\ConfigurableRestApp\Dto\ContentBlockDto;
 use Bitrix\Crm\Integration\Intranet\BindingMenu\CodeBuilder;
 use Bitrix\Crm\Integration\Intranet\BindingMenu\SectionCode;
+use Bitrix\Crm\Integration\Market\Router;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Context;
 use Bitrix\Crm\Service\Timeline\Item;
@@ -14,6 +16,7 @@ use Bitrix\Crm\Service\Timeline\Layout;
 use Bitrix\Crm\Service\Timeline\Layout\Action\Analytics;
 use Bitrix\Crm\Service\Timeline\Layout\Action\Redirect;
 use Bitrix\Crm\Service\Timeline\Layout\Action\RunAjaxAction;
+use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Note;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Text;
 use Bitrix\Crm\Service\Timeline\Layout\Converter;
@@ -28,6 +31,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Rest\AppTable;
+use Bitrix\Ui\Public\Enum\IconSet\Outline;
 use Bitrix\UI\Util;
 
 abstract class Configurable extends Item
@@ -435,6 +439,19 @@ abstract class Configurable extends Item
 		return $result;
 	}
 
+	/**
+	 * Declares explicit menu sections for timeline items rendered with `ui.system.menu`.
+	 *
+	 * Each section definition must contain a unique `code` key and may additionally provide
+	 * `title` and `design` keys.
+	 *
+	 * @return array<int, array{code: string, title?: string, design?: string}>
+	 */
+	public function getMenuSections(): array
+	{
+		return [];
+	}
+
 	protected function addPinMenuItems(array &$menuItems): void
 	{
 		$canBeFixed =
@@ -458,6 +475,7 @@ abstract class Configurable extends Item
 		{
 			$menuItems['pin'] = (new MenuItem(Loc::getMessage('CRM_TIMELINE_MENU_FASTEN')))
 				->setHideIfReadonly()
+				->setIcon(Outline::PIN)
 				->setSort(9900)
 				->setAction($this->getPinAction())
 			;
@@ -466,6 +484,7 @@ abstract class Configurable extends Item
 		{
 			$menuItems['unpin'] = (new MenuItem(Loc::getMessage('CRM_TIMELINE_MENU_UNFASTEN')))
 				->setHideIfReadonly()
+				->setIcon(Outline::UNPIN)
 				->setSort(9900)
 				->setAction($this->getUnpinAction())
 			;
@@ -503,7 +522,7 @@ abstract class Configurable extends Item
 				->setDetailsText(Loc::getMessage('CRM_TIMELINE_MARKET_PANEL_TEXT_DETAILS'))
 				->setDetailsTextAction(
 					$placementCode
-						? new Redirect(new Uri(\Bitrix\Crm\Integration\Market\Router::getBasePath() . '?placement=' . $placementCode))
+						? new Redirect(new Uri(Router::getBasePath() . '?placement=' . $placementCode))
 						: null
 				)
 			;
@@ -534,7 +553,7 @@ abstract class Configurable extends Item
 		return $userData ?? [];
 	}
 
-	protected function buildClientBlock(int $options = 0, string $blockTitle = null): ?Layout\Body\ContentBlock
+	protected function buildClientBlock(int $options = 0, string $blockTitle = null): ?ContentBlock
 	{
 		$communication = $this->getAssociatedEntityModel()?->get('COMMUNICATION') ?? [];
 		if (empty($communication))
@@ -542,9 +561,49 @@ abstract class Configurable extends Item
 			return null;
 		}
 
-		return (new Layout\Body\ContentBlock\Client($communication, $options))
+		return (new ContentBlock\Client($communication, $options))
 			->setTitle($blockTitle ?? Loc::getMessage("CRM_TIMELINE_CLIENT_TITLE"))
+			->setUserId($this->getAssociatedEntityModel()?->get('RESPONSIBLE_ID'))
 			->build()
+		;
+	}
+
+	protected function buildBaseActivityBlock(string $creator = ''): ?ContentBlock
+	{
+		$activityId = $this->getAssociatedEntityModel()?->get('ASSOCIATED_ENTITY_ID');
+		if (!isset($activityId))
+		{
+			return null;
+		}
+
+		$subject = Container::getInstance()->getActivityBroker()->getById($activityId)['SUBJECT'] ?? '';
+		if (empty($subject))
+		{
+			return null;
+		}
+
+		$value = Loc::getMessage(
+			'CRM_TIMELINE_BLOCK_CREATED_FROM',
+			[
+				'#SUBJECT#' => $subject,
+				'#CREATOR#' => trim($creator),
+			]
+		);
+		if (!is_string($value) || $value === '')
+		{
+			return null;
+		}
+
+		$value = preg_replace('/\s+/u', ' ', trim($value));
+		if (!is_string($value) || $value === '')
+		{
+			return null;
+		}
+
+		return (new Text())
+			->setValue($value)
+			->setColor(Text::COLOR_BASE_50)
+			->setFontSize(Text::FONT_SIZE_SM)
 		;
 	}
 
@@ -659,7 +718,7 @@ abstract class Configurable extends Item
 	{
 		if (Loader::includeModule('rest'))
 		{
-			return AppTable::getByClientId($clientId) ?? null;
+			return AppTable::getByClientId($clientId);
 		}
 
 		return null;
@@ -697,11 +756,33 @@ abstract class Configurable extends Item
 
 	/**
 	 * Returns true if item data allowed to be re-fetched (e.g. after push-message handling)
+	 *
 	 * @return bool
 	 */
 	protected function canBeReloaded(): bool
 	{
 		return true;
+	}
+
+	protected function buildAiCreatedBlock(): ?Text
+	{
+		$copilotName = AIManager::getCopilotName();
+		if (empty($copilotName))
+		{
+			return null;
+		}
+
+		$blockValue = Loc::getMessage(
+			'CRM_TIMELINE_BLOCK_AI_CREATED',
+			[
+				'#COPILOT_NAME#' => $copilotName,
+			],
+		);
+
+		return (new ContentBlock\Text())
+			->setValue($blockValue)
+			->setColor(Text::COLOR_BASE_70)
+		;
 	}
 
 	final protected function getLinkOnHelp(string $code): ?string

@@ -1,5 +1,5 @@
 import { Dom } from 'main.core';
-import { Popup as MainPopup, PopupManager, PopupOptions } from 'main.popup';
+import { Popup as MainPopup, PopupManager } from 'main.popup';
 import { SliderIntegration } from './integration/slider-integration';
 import './popup.css';
 

@@ -117,15 +117,6 @@ body{
 	gap: 6px;
 	display: flex;
 }
-.confirm-page__footer {
-	display: flex;
-	align-self: stretch;
-	flex-direction: column;
-	align-items: center;
-	margin-top: 12px;
-	gap: 12px;
-}
-
 
 .confirm-page-content-booking-time{
 	align-self: stretch;
@@ -258,6 +249,129 @@ body{
 	display: inline-flex;
 }
 
+.booking-confirm-page__booking-detail_sku-list {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+}
+
+.booking-confirm-page__booking-detail_sku-container {
+	align-self: stretch;
+	padding-top: 3px;
+	padding-bottom: 3px;
+	justify-content: center;
+	align-items: flex-start;
+	gap: 8px;
+	display: inline-flex;
+}
+
+.booking-confirm-page__booking-detail_sku-item {
+	display: flex;
+	width: 100%;
+
+	height: 34px;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 12px;
+}
+
+.booking-confirm-page__booking-detail_sku-item-summary {
+	flex: 1 1 0;
+	flex-direction: column;
+	justify-content: center;
+	align-items: flex-start;
+	gap: 2px;
+	display: flex;
+	min-width: 0;
+}
+
+.booking-confirm-page__booking-detail_sku-item-summary-title {
+	color: var(--ui-color-palette-black-base);
+	font-size: var(--ui-font-size-md);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	display: block;
+	max-width: 100%;
+}
+
+.booking-confirm-page__booking-detail_sku-item-summary-duration {
+	color: var(--ui-color-palette-gray-50);
+	font-size: var(--ui-font-size-xs);
+}
+
+.booking-confirm-page__booking-detail_sku-item-price {
+	color: var(--ui-color-palette-black-base);
+	font-size: var(--ui-font-size-md);
+}
+
+.booking-confirm-page__booking-detail_total-price-container {
+	display: flex;
+	justify-content: space-between;
+	width: 100%;
+}
+
+.booking-confirm-page__booking-detail_total-price-title {
+	display: flex;
+	color: var(--ui-color-palette-gray-50);
+	font-size: var(--ui-font-size-md);
+}
+
+.booking-confirm-page__booking-detail_total-price-price {
+	display: flex;
+	color: var(--ui-color-palette-black-base);
+	font-size: var(--ui-font-size-xl);
+}
+
+.booking-confirm-page__booking-detail_resource-info {
+	flex: 1 1 0;
+	flex-direction: column;
+	justify-content: center;
+	align-items: flex-start;
+	gap: 2px;
+	display: inline-flex;
+}
+
+.booking-confirm-page__booking-detail_resource-name {
+	align-self: stretch;
+	color: var(--ui-color-palette-black-base);
+	font-size: var(--ui-font-size-md);
+}
+
+.booking-confirm-page__booking-detail_resource-title {
+	align-self: stretch;
+	color: var(--ui-color-palette-gray-50);
+	font-size: var(--ui-font-size-xs);
+}
+
+.booking-confirm-page__booking-detail_resource-avatar {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-shrink: 0;
+	width: 34px;
+	height: 34px;
+	border-radius: 50%;
+	overflow: hidden;
+}
+
+.booking-confirm-page__booking-detail_resource-avatar-image {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	user-select: none;
+	-webkit-user-select: none;
+}
+
+.confirm-page__footer {
+	display: flex;
+	align-self: stretch;
+	flex-direction: column;
+	align-items: center;
+	margin-top: 12px;
+	gap: 12px;
+}
+
 .cancel-booking{
 	display: flex;
 	align-items: center;
@@ -349,118 +463,4 @@ body{
 	font-weight: var(--ui-font-weight-regular);
 	border-color: var(--ui-color-tag-9);
 	border-radius: 6px;
-}
-
-.booking-confirm-page__booking-detail_sku-list {
-	display: flex;
-	flex-direction: column;
-	width: 100%;
-}
-
-.booking-confirm-page__booking-detail_total-price-container {
-	display: flex;
-	justify-content: space-between;
-	width: 100%;
-}
-
-.booking-confirm-page__booking-detail_total-price-title {
-	display: flex;
-	color: var(--ui-color-palette-gray-50);
-	font-size: var(--ui-font-size-md);
-}
-
-.booking-confirm-page__booking-detail_total-price-price {
-	display: flex;
-	color: var(--ui-color-palette-black-base);
-	font-size: var(--ui-font-size-xl);
-}
-
-.booking-confirm-page__booking-detail_resource-info {
-	flex: 1 1 0;
-	flex-direction: column;
-	justify-content: center;
-	align-items: flex-start;
-	gap: 2px;
-	display: inline-flex;
-}
-
-.booking-confirm-page__booking-detail_resource-name {
-	align-self: stretch;
-	color: var(--ui-color-palette-black-base);
-	font-size: var(--ui-font-size-md);
-}
-
-.booking-confirm-page__booking-detail_resource-title {
-	align-self: stretch;
-	color: var(--ui-color-palette-gray-50);
-	font-size: var(--ui-font-size-xs);
-}
-
-.booking-confirm-page__booking-detail_sku-container {
-	align-self: stretch;
-	padding-top: 3px;
-	padding-bottom: 3px;
-	justify-content: center;
-	align-items: flex-start;
-	gap: 8px;
-	display: inline-flex;
-}
-
-.booking-confirm-page__booking-detail_sku-item {
-	display: flex;
-	width: 100%;
-
-	height: 34px;
-	justify-content: space-between;
-	align-items: flex-start;
-	gap: 12px;
-}
-
-.booking-confirm-page__booking-detail_sku-item-summary {
-	flex: 1 1 0;
-	flex-direction: column;
-	justify-content: center;
-	align-items: flex-start;
-	gap: 2px;
-	display: flex;
-	min-width: 0;
-}
-
-.booking-confirm-page__booking-detail_sku-item-summary-title {
-	color: var(--ui-color-palette-black-base);
-	font-size: var(--ui-font-size-md);
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	display: block;
-	max-width: 100%;
-}
-
-.booking-confirm-page__booking-detail_sku-item-summary-duration {
-	color: var(--ui-color-palette-gray-50);
-	font-size: var(--ui-font-size-xs);
-}
-
-.booking-confirm-page__booking-detail_sku-item-price {
-	color: var(--ui-color-palette-black-base);
-	font-size: var(--ui-font-size-md);
-}
-
-.booking-confirm-page__booking-detail_resource-avatar {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	flex-shrink: 0;
-	width: 34px;
-	height: 34px;
-	border-radius: 50%;
-	overflow: hidden;
-}
-
-.booking-confirm-page__booking-detail_resource-avatar-image {
-	width: 100%;
-	height: 100%;
-	object-fit: cover;
-	user-select: none;
-	-webkit-user-select: none;
 }

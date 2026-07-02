@@ -1,1 +1,475 @@
-.booking-crm-forms-field-container{--booking--crm-forms--title-color:#333;--booking--crm-forms--text-color-rgb:82,92,105;--booking--crm-forms--text-disabled-color-rgb:130,139,149;--booking--crm-forms--border-color-rgb:223,224,227;--booking--crm-forms--tag-selector-input-icon-color:rgb(var(--booking--crm-forms--text-color-rgb));--booking--crm-forms--hint-text-color:rgb(var(--booking--crm-forms--text-color-rgb));--booking--crm-forms--hint-text-opacity:1;--booking--crm-forms--datepicker-header-title-color:rgb(var(--booking--crm-forms--text-color-rgb));--booking--crm-forms--datepicker-header-icon-color:rgb(var(--booking--crm-forms--text-color-rgb));--booking--crm-forms--resource-name-color:var(--b24-text-color);--booking--crm-forms--resource-type-name-color:#000;--booking--crm-forms--resource-type-name-opacity:.3;--booking--crm-forms--resource-slot-text-color:#525c69;--booking--crm-forms--resource-slot-text-opacity:1;--booking--crm-forms--resource-slot-selected-text-color:#525c69;--booking--crm-forms--resource-description-color:rgb(var(--ui-color-palette-gray-90-rgb))}.b24-form-dark .booking-crm-forms-field-container{--booking--crm-forms--title-color:var(--b24-text-color);--booking--crm-forms--tag-selector-input-icon-color:hsla(0,0%,100%,.8);--booking--crm-forms--hint-text-color:var(--b24-text-color);--booking--crm-forms--hint-text-opacity:.7;--booking--crm-forms--datepicker-header-title-color:hsla(0,0%,100%,.8);--booking--crm-forms--datepicker-header-icon-color:hsla(0,0%,100%,.8);--booking--crm-forms--resource-type-name-color:var(--b24-text-color);--booking--crm-forms--resource-type-name-opacity:.7;--booking--crm-forms--resource-slot-text-color:var(--b24-text-color);--booking--crm-forms--resource-slot-text-opacity:.9;--booking--crm-forms--resource-slot-selected-text-color:var(--b24-text-color)}.booking-crm-forms-field{position:relative;font-family:var(--b24-font-family),sans-serif;margin-bottom:30px}.booking-crm-forms-field.--error{--b24-field-background-color:rgba(242,88,48,.08);--b24-field-border-color:rgba(242,88,48,.25)}.booking-crm-forms-field:not(.--error) .b24-form-control-alert-message{display:none!important}.booking-crm-forms-field-title{font-size:18px;font-style:normal;font-weight:400;line-height:26px;letter-spacing:-.2px;margin-bottom:4px;pointer-events:none}.booking-crm-forms-field-tag-selector{padding-bottom:12px}.booking-crm-forms-field-tag-selector .ui-tag-selector-outer-container{background:var(--b24-field-background-color);border:1px solid var(--b24-field-border-color)}.booking-crm-forms-field-tag-selector .ui-tag-selector-tag{background-color:var(--b24-primary-color);color:var(--b24-primary-text-color)!important}.booking-crm-forms-field-tag-selector .ui-tag-selector-text-box{background:none}.booking-crm-forms-field-tag-selector .ui-tag-selector-add-button-caption{font-family:inherit}.booking-crm-forms-field-slot{white-space:nowrap;padding:10px;margin-bottom:5px;border-radius:4px;background:var(--b24-field-background-color);color:var(--b24-text-color);font-size:var(--ui-font-size-lg);cursor:pointer}.booking-crm-forms-field-slot.--selected{background:var(--b24-primary-color);color:var(--b24-primary-text-color)}.booking-crm-forms-field-slot:hover{box-shadow:inset 0 0 999px rgba(0,0,0,.05)}.booking-crm-forms-field-days{display:flex;overflow:auto}.booking-crm-forms-field-days::-webkit-scrollbar{display:none}.booking-crm-forms-field-slot.--day{margin-bottom:0;margin-right:5px}.booking-crm-forms-field-slot.--day div:first-child{font-size:var(--ui-font-size-lg);font-weight:var(--ui-font-weight-medium)}.booking-crm-forms-field-slot.--day div:nth-child(2){margin:0 auto;max-width:-webkit-max-content;max-width:max-content}.booking-crm-forms-field-slots-loader{width:100%;height:125px;background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' fill='none' viewBox='0 0 100%25 100%25'%3E%3Csvg id='c' width='100%25' height='1000'%3E%3Crect width='100%25' height='38' fill='%23e5e5e5' rx='4'/%3E%3Crect width='100%25' height='38' y='43' fill='%23e5e5e5' rx='4'/%3E%3Crect width='100%25' height='38' y='86' fill='%23e5e5e5' rx='4'/%3E%3C/svg%3E%3Crect id='d' width='100%25' height='100%25' fill='url(%23a)' mask='url(%23b)'/%3E%3Cmask id='b' fill='%23fff'%3E%3Cuse xlink:href='%23c'/%3E%3C/mask%3E%3ClinearGradient id='a' x1='66.6%25' x2='33.3%25' y1='50%25' y2='50%25'%3E%3Cstop offset='0%25' stop-opacity='0'/%3E%3Cstop offset='50%25' stop-opacity='.07'/%3E%3Cstop offset='100%25' stop-opacity='0'/%3E%3C/linearGradient%3E%3Canimate xlink:href='%23d' attributeName='x' begin='0s' dur='1s' from='-100%25' repeatCount='indefinite' to='100%25'/%3E%3C/svg%3E")}.booking--crm-forms--field-hint-text{color:var(--booking--crm-forms--hint-text-color);opacity:var(--booking--crm-forms--hint-text-opacity);font-size:12px;font-style:normal;font-weight:400;line-height:15px;letter-spacing:-.05px}.booking--crm-forms--field-tag-selector-input{padding-top:0!important;cursor:pointer}.booking-crm-forms-field-tag-selector.--disabled .booking--crm-forms--field-tag-selector-input{color:rgb(var(--booking--crm-forms--text-disabled-color-rgb));font-size:14px;font-style:normal;font-weight:400;line-height:19px}.booking--crm-forms--change-date-btn{display:flex;min-height:28px;min-width:8em;padding:0 10px;flex-direction:column;justify-content:center;align-items:center;border-radius:8px;border:1px solid #0075ff;background-color:#fff;color:#0075ff;cursor:pointer}@media (max-width:350px){.booking--crm-forms--change-date-btn{max-width:8em;padding:4px 10px}}@media (min-width:350px) and (max-width:400px){.booking--crm-forms--change-date-btn{max-width:9em;padding:4px 10px}}.booking--crm-forms--change-date-btn:focus,.booking--crm-forms--change-date-btn:hover{outline:none;box-shadow:0 0 0 1px rgba(0,117,255,.3)}.booking--crm-forms--field-tag-selector-input-icon{position:absolute;right:8px;top:12px;background-color:var(--booking--crm-forms--tag-selector-input-icon-color);cursor:pointer;height:28px;width:28px;-webkit-mask-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' fill='none'%3E%3Cpath fill='%23525C69' fill-rule='evenodd' d='M8.746 4.587a.583.583 0 1 0-.825.825L12.508 10l-4.587 4.587a.583.583 0 1 0 .825.825l5-5a.583.583 0 0 0 0-.825z' clip-rule='evenodd'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' fill='none'%3E%3Cpath fill='%23525C69' fill-rule='evenodd' d='M8.746 4.587a.583.583 0 1 0-.825.825L12.508 10l-4.587 4.587a.583.583 0 1 0 .825.825l5-5a.583.583 0 0 0 0-.825z' clip-rule='evenodd'/%3E%3C/svg%3E");-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}.booking-crm-forms-field-tag-selector.--disabled .booking--crm-forms--field-tag-selector-input-icon{background-color:rgb(var(--booking--crm-forms--text-disabled-color-rgb));cursor:unset}.booking--crm-forms--field-description-text{color:var(--booking--crm-forms--resource-description-color);font-size:13px;font-style:normal;font-weight:400;padding-top:11px}.booking--crm-forms--field-description-text-more{padding-left:2px;color:#0075ff;cursor:pointer;transition:.4s}.booking--crm-forms--field-description-text-more:hover{color:#0154c8}.booking--crm-forms--calendar-block-content{--scale:1.3;display:flex;flex-direction:column;align-items:center;justify-content:center}.booking--crm-forms--calendar-block-datepicker-header{display:flex;gap:10px;padding:8px 0;width:calc(250px*var(--scale, 1))}.booking--crm-forms--calendar-block-datepicker-header-title{color:var(--booking--crm-forms--datepicker-header-title-color);font-size:15px;font-style:normal;font-weight:400;line-height:normal;flex-grow:1}.booking--crm-forms--calendar-block-datepicker-icon{background-color:var(--booking--crm-forms--datepicker-header-icon-color);cursor:pointer;height:20px;width:20px;-webkit-mask-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' fill='none'%3E%3Cpath fill='%23525C69' fill-rule='evenodd' d='M8.746 4.587a.583.583 0 1 0-.825.825L12.508 10l-4.587 4.587a.583.583 0 1 0 .825.825l5-5a.583.583 0 0 0 0-.825z' clip-rule='evenodd'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' fill='none'%3E%3Cpath fill='%23525C69' fill-rule='evenodd' d='M8.746 4.587a.583.583 0 1 0-.825.825L12.508 10l-4.587 4.587a.583.583 0 1 0 .825.825l5-5a.583.583 0 0 0 0-.825z' clip-rule='evenodd'/%3E%3C/svg%3E");-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}.booking--crm-forms--calendar-block-datepicker-icon.--chevron-left{transform:rotate(180deg)}.booking--crm-forms--calendar-block-datepicker{scale:var(--scale,1);margin:calc(2rem*var(--scale)) 0;border-radius:8px;border:1px solid #f0f0f0;padding:8px}.booking--crm-forms--calendar-block-datepicker-header-button.--disabled .booking--crm-forms--calendar-block-datepicker-icon{background-color:rgba(var(--booking--crm-forms--text-color-rgb),.2)}.booking--crm-forms--calendar-block button.ui-day-picker-day{outline:none!important}.booking--crm-forms--time-selector-block-header{display:flex;padding-top:12px;align-items:center;gap:7px}.booking--crm-forms--time-selector-block-resource{display:flex;flex-direction:row;flex-grow:1;gap:8px}.booking--crm-forms--resource-avatar{display:flex;justify-content:center;align-items:center;flex-shrink:0;width:40px;height:40px;border-radius:var(--ui-border-radius-circle);overflow:hidden}.booking--crm-forms--resource-avatar-image{width:100%;height:100%;object-fit:cover;user-select:none;-webkit-user-select:none;pointer-events:none}.booking--crm-forms--resource-info{display:flex;flex-direction:column}.booking--crm-forms--resource-name{color:var(--booking--crm-forms--resource-name-color);font-size:17px;font-weight:500}.booking--crm-forms--resource-name,.booking--crm-forms--resource-type-name{overflow:hidden;text-overflow:ellipsis;font-style:normal;line-height:normal}.booking--crm-forms--resource-type-name{color:var(--booking--crm-forms--resource-type-name-color);font-size:13px;font-weight:400}.booking--crm-forms--field-group--available-slots-block__footer{display:flex;justify-content:center;margin:10px 0}.booking--crm-forms--field-group--available-slots-block__btn-show-more{width:160px}.booking--crm-forms--available-slots-block__empty-slots{margin:4em 0;text-align:center}.booking--crm-forms--skus-selector-sku{display:flex;justify-content:space-between;align-items:start;width:100%}.booking--crm-forms--skus-selector-sku-price{font-weight:700;white-space:nowrap}.booking-crm-forms-field-sku-selector-container{margin-bottom:0}.booking-crm-forms-field-sku-selector-quantity{position:relative;display:flex;justify-content:end;align-items:center;border:1px solid var(--b24-field-border-color);border-top:none;text-align:center;min-height:58px;border-radius:0 0 4px 4px;margin-bottom:12px}.booking--crm-forms--resource-selector-resource{min-height:58px}.booking-crm-forms-field.booking--crm-forms--resource-slots{--slots-shown-delay:300ms;opacity:0;animation:visible var(--slots-shown-delay) forwards}.booking-crm-forms-field.booking--crm-forms--resource-slots.--fade{animation:fadeOut var(--slots-shown-delay) ease-in-out;animation-fill-mode:forwards}@keyframes visible{0%{opacity:0}to{opacity:1}}@keyframes fadeOut{0%{opacity:1}to{opacity:0}}.booking--crm-forms--resource-slots__slot-list-wrapper{min-height:110px}.booking--crm-forms--resource-slots__slot-list{display:flex;gap:7px;flex-wrap:wrap;padding-top:10px}.booking--crm-forms--resource-slots__slot{display:flex;justify-content:center;align-items:center;height:3em;border:1px solid rgb(var(--booking--crm-forms--border-color-rgb));padding:14px 12px;cursor:pointer;border-radius:8px;min-width:70px;transition:background-color .2s}.booking--crm-forms--resource-slots__slot.--selected{border-radius:8px;border:1px solid #11a9d9;background:linear-gradient(180deg,#2fc6f6,#67d3f5);color:var(--b24-background-color,#fff)}.booking--crm-forms--resource-slots__slot>span{color:var(--booking--crm-forms--resource-slot-text-color)}.booking--crm-forms--resource-slots__slot.--selected>span{color:var(--booking--crm-forms--resource-slot-selected-text-color)}.booking--crm-forms--resource-slots__empty-slots{width:100%;display:flex;align-items:center;justify-content:center}.booking--crm-forms--time-selector-block-header__button{flex-shrink:0;padding-top:16px}
+.booking-crm-forms-field-container {
+	--booking--crm-forms--title-color: rgb(51, 51, 51);
+	--booking--crm-forms--text-color-rgb: 82, 92, 105;
+	--booking--crm-forms--text-disabled-color-rgb: 130, 139, 149;
+	--booking--crm-forms--border-color-rgb: 223, 224, 227;
+	--booking--crm-forms--tag-selector-input-icon-color: rgb(var(--booking--crm-forms--text-color-rgb));
+	--booking--crm-forms--hint-text-color: rgb(var(--booking--crm-forms--text-color-rgb));
+	--booking--crm-forms--hint-text-opacity: 1;
+	--booking--crm-forms--datepicker-header-title-color: rgb(var(--booking--crm-forms--text-color-rgb));
+	--booking--crm-forms--datepicker-header-icon-color: rgb(var(--booking--crm-forms--text-color-rgb));
+	--booking--crm-forms--resource-name-color: var(--b24-text-color);
+	--booking--crm-forms--resource-type-name-color: rgb(0, 0, 0);
+	--booking--crm-forms--resource-type-name-opacity: .3;
+	--booking--crm-forms--resource-slot-text-color: rgb(82, 92, 105);
+	--booking--crm-forms--resource-slot-text-opacity: 1;
+	--booking--crm-forms--resource-slot-selected-text-color: rgb(82, 92, 105);
+	--booking--crm-forms--resource-description-color: rgb(var(--ui-color-palette-gray-90-rgb));
+}
+
+.b24-form-dark .booking-crm-forms-field-container {
+	--booking--crm-forms--title-color: var(--b24-text-color);
+	--booking--crm-forms--tag-selector-input-icon-color: rgba(255, 255, 255, .8);
+	--booking--crm-forms--hint-text-color: var(--b24-text-color);
+	--booking--crm-forms--hint-text-opacity: .7;
+	--booking--crm-forms--datepicker-header-title-color: rgba(255, 255, 255, .8);
+	--booking--crm-forms--datepicker-header-icon-color: rgba(255, 255, 255, .8);
+	--booking--crm-forms--resource-type-name-color: var(--b24-text-color);
+	--booking--crm-forms--resource-type-name-opacity: .7;
+	--booking--crm-forms--resource-slot-text-color: var(--b24-text-color);
+	--booking--crm-forms--resource-slot-text-opacity: .9;
+	--booking--crm-forms--resource-slot-selected-text-color: var(--b24-text-color);
+}
+
+.booking-crm-forms-field {
+	position: relative;
+	font-family: var(--b24-font-family), sans-serif;
+	margin-bottom: 30px;
+}
+
+.booking-crm-forms-field.--error {
+	--b24-field-background-color: rgba(242, 88, 48, 0.08);
+	--b24-field-border-color: rgba(242, 88, 48, 0.25);
+}
+
+.booking-crm-forms-field:not(.--error) .b24-form-control-alert-message {
+	display: none !important;
+}
+
+.booking-crm-forms-field-title {
+	font-size: 18px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 26px;
+	letter-spacing: -0.2px;
+	margin-bottom: 4px;
+	pointer-events: none;
+}
+
+.booking-crm-forms-field-tag-selector {
+	padding-bottom: 12px;
+}
+
+.booking-crm-forms-field-tag-selector .ui-tag-selector-outer-container {
+	background: var(--b24-field-background-color);
+	border: 1px solid var(--b24-field-border-color);
+}
+
+.booking-crm-forms-field-tag-selector .ui-tag-selector-tag {
+	background-color: var(--b24-primary-color);
+	color: var(--b24-primary-text-color) !important;
+}
+
+.booking-crm-forms-field-tag-selector .ui-tag-selector-text-box {
+	background: none;
+}
+
+.booking-crm-forms-field-tag-selector .ui-tag-selector-add-button-caption {
+	font-family: inherit;
+}
+
+
+.booking-crm-forms-field-slot {
+	white-space: nowrap;
+	padding: 10px;
+	margin-bottom: 5px;
+	border-radius: 4px;
+	background: var(--b24-field-background-color);
+	color: var(--b24-text-color);
+	font-size: var(--ui-font-size-lg);
+	cursor: pointer;
+}
+
+.booking-crm-forms-field-slot.--selected {
+	background: var(--b24-primary-color);
+	color: var(--b24-primary-text-color);
+}
+
+.booking-crm-forms-field-slot:hover {
+	box-shadow: inset 0 0 999px rgba(0, 0, 0, 0.05);
+}
+
+
+.booking-crm-forms-field-days {
+	display: flex;
+	overflow: auto;
+}
+
+.booking-crm-forms-field-days::-webkit-scrollbar {
+	display: none;
+}
+
+
+.booking-crm-forms-field-slot.--day {
+	margin-bottom: 0;
+	margin-right: 5px;
+}
+
+.booking-crm-forms-field-slot.--day div:nth-child(1) {
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.booking-crm-forms-field-slot.--day div:nth-child(2) {
+	margin: 0 auto;
+	max-width: max-content;
+}
+
+
+.booking-crm-forms-field-slots-loader {
+	width: 100%;
+	height: 125px;
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' fill='none' viewBox='0 0 100%25 100%25'%3E%3Csvg id='c' width='100%25' height='1000'%3E%3Crect width='100%25' height='38' fill='%23e5e5e5' rx='4'/%3E%3Crect width='100%25' height='38' y='43' fill='%23e5e5e5' rx='4'/%3E%3Crect width='100%25' height='38' y='86' fill='%23e5e5e5' rx='4'/%3E%3C/svg%3E%3Crect id='d' width='100%25' height='100%25' fill='url(%23a)' mask='url(%23b)'/%3E%3Cmask id='b' fill='%23fff'%3E%3Cuse xlink:href='%23c'/%3E%3C/mask%3E%3ClinearGradient id='a' x1='66.6%25' x2='33.3%25' y1='50%25' y2='50%25'%3E%3Cstop offset='0%25' stop-opacity='0'/%3E%3Cstop offset='50%25' stop-opacity='.07'/%3E%3Cstop offset='100%25' stop-opacity='0'/%3E%3C/linearGradient%3E%3Canimate xlink:href='%23d' attributeName='x' begin='0s' dur='1s' from='-100%25' repeatCount='indefinite' to='100%25'/%3E%3C/svg%3E");
+}
+
+.booking--crm-forms--field-hint-text {
+	color: var(--booking--crm-forms--hint-text-color);
+	opacity: var(--booking--crm-forms--hint-text-opacity);
+	font-size: 12px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 15px;
+	letter-spacing: -0.05px;
+}
+
+.booking--crm-forms--field-tag-selector-input {
+	padding-top: 0 !important;
+	cursor: pointer;
+}
+
+.booking-crm-forms-field-tag-selector.--disabled .booking--crm-forms--field-tag-selector-input {
+	color: rgb(var(--booking--crm-forms--text-disabled-color-rgb));
+	font-size: 14px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 19px;
+}
+
+.booking--crm-forms--change-date-btn {
+	display: flex;
+	min-height: 28px;
+	min-width: 8em;
+	padding: 0 10px;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	border-radius: 8px;
+	border: 1px solid rgba(0, 117, 255, 1);
+	background-color: #fff;
+	color: rgba(0, 117, 255, 1);
+	cursor: pointer;
+}
+
+@media (max-width: 350px) {
+	.booking--crm-forms--change-date-btn {
+		max-width: 8em;
+		padding: 4px 10px;
+	}
+}
+
+@media (min-width: 350px) and (max-width: 400px) {
+	.booking--crm-forms--change-date-btn {
+		max-width: 9em;
+		padding: 4px 10px;
+	}
+}
+
+.booking--crm-forms--change-date-btn:hover,
+.booking--crm-forms--change-date-btn:focus {
+	outline: none;
+	box-shadow: 0 0 0 1px rgba(0, 117, 255, 0.3);
+}
+
+.booking--crm-forms--field-tag-selector-input-icon {
+	position: absolute;
+	right: 8px;
+	top: 12px;
+	background-color: var(--booking--crm-forms--tag-selector-input-icon-color);
+	cursor: pointer;
+	height: 28px;
+	width: 28px;
+	-webkit-mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' fill='none' viewBox='0 0 20 20'%3E%3Cpath fill='%23525c69' fill-rule='evenodd' d='M8.746 4.587a.583.583 0 1 0-.825.825L12.508 10l-4.587 4.587a.583.583 0 1 0 .825.825l5-5a.583.583 0 0 0 0-.825z' clip-rule='evenodd'/%3E%3C/svg%3E");
+	        mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' fill='none' viewBox='0 0 20 20'%3E%3Cpath fill='%23525c69' fill-rule='evenodd' d='M8.746 4.587a.583.583 0 1 0-.825.825L12.508 10l-4.587 4.587a.583.583 0 1 0 .825.825l5-5a.583.583 0 0 0 0-.825z' clip-rule='evenodd'/%3E%3C/svg%3E");
+	-webkit-mask-size: contain;
+	        mask-size: contain;
+	-webkit-mask-repeat: no-repeat;
+	        mask-repeat: no-repeat;
+}
+
+.booking-crm-forms-field-tag-selector.--disabled .booking--crm-forms--field-tag-selector-input-icon {
+	background-color: rgb(var(--booking--crm-forms--text-disabled-color-rgb));
+	cursor: unset;
+}
+
+.booking--crm-forms--field-description-text {
+	color: var(--booking--crm-forms--resource-description-color);
+	font-size: 13px;
+	font-style: normal;
+	font-weight: 400;
+	padding-top: 11px;
+}
+
+.booking--crm-forms--field-description-text-more {
+	padding-left: 2px;
+	color: rgba(0, 117, 255, 1);
+	cursor: pointer;
+	transition: .4s;
+}
+
+.booking--crm-forms--field-description-text-more:hover {
+	color: rgba(1, 84, 200, 1);
+}
+
+.booking--crm-forms--skus-selector-sku {
+	display: flex;
+	justify-content: space-between;
+	align-items: start;
+	width: 100%;
+}
+
+.booking--crm-forms--skus-selector-sku-price {
+	font-weight: bold;
+	white-space: nowrap;
+}
+
+.booking-crm-forms-field-sku-selector-container {
+	margin-bottom: 0;
+}
+
+.booking-crm-forms-field-sku-selector-quantity {
+	position: relative;
+	display: flex;
+	justify-content: end;
+	align-items: center;
+	border: 1px solid var(--b24-field-border-color);
+	border-top: none;
+	text-align: center;
+	min-height: 58px;
+	border-radius: 0 0 4px 4px;
+	margin-bottom: 12px;
+}
+
+.booking--crm-forms--resource-selector-resource {
+	min-height: 58px;
+}
+
+.booking--crm-forms--calendar-block-content {
+	--scale: 1.3;
+
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+}
+
+.booking--crm-forms--calendar-block-datepicker-header {
+	display: flex;
+	gap: 10px;
+	padding: 8px 0;
+	width: calc(250px * var(--scale, 1));
+}
+
+.booking--crm-forms--calendar-block-datepicker-header-title {
+	color: var(--booking--crm-forms--datepicker-header-title-color);
+	font-size: 15px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: normal;
+	flex-grow: 1;
+}
+
+.booking--crm-forms--calendar-block-datepicker-icon {
+	background-color: var(--booking--crm-forms--datepicker-header-icon-color);
+	cursor: pointer;
+	height: 20px;
+	width: 20px;
+	-webkit-mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' fill='none' viewBox='0 0 20 20'%3E%3Cpath fill='%23525c69' fill-rule='evenodd' d='M8.746 4.587a.583.583 0 1 0-.825.825L12.508 10l-4.587 4.587a.583.583 0 1 0 .825.825l5-5a.583.583 0 0 0 0-.825z' clip-rule='evenodd'/%3E%3C/svg%3E");
+	        mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' fill='none' viewBox='0 0 20 20'%3E%3Cpath fill='%23525c69' fill-rule='evenodd' d='M8.746 4.587a.583.583 0 1 0-.825.825L12.508 10l-4.587 4.587a.583.583 0 1 0 .825.825l5-5a.583.583 0 0 0 0-.825z' clip-rule='evenodd'/%3E%3C/svg%3E");
+	-webkit-mask-size: contain;
+	        mask-size: contain;
+	-webkit-mask-repeat: no-repeat;
+	        mask-repeat: no-repeat;
+}
+
+.booking--crm-forms--calendar-block-datepicker-icon.--chevron-left {
+	transform: rotate(180deg);
+}
+
+.booking--crm-forms--calendar-block-datepicker {
+	scale: var(--scale, 1);
+	margin: calc(2rem * var(--scale)) 0;
+	border-radius: 8px;
+	border: 1px solid rgba(240, 240, 240, 1);
+	padding: 8px;
+}
+
+.booking--crm-forms--calendar-block-datepicker-header-button.--disabled .booking--crm-forms--calendar-block-datepicker-icon {
+	background-color: rgba(var(--booking--crm-forms--text-color-rgb), .2);
+}
+
+.booking--crm-forms--calendar-block button.ui-day-picker-day {
+	outline: none !important;
+}
+
+.booking--crm-forms--time-selector-block-header {
+	display: flex;
+	padding-top: 12px;
+	align-items: center;
+	gap: 7px;
+}
+
+.booking--crm-forms--time-selector-block-resource {
+	display: flex;
+	flex-direction: row;
+	flex-grow: 1;
+	gap: 8px;
+}
+
+.booking--crm-forms--resource-avatar {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-shrink: 0;
+	width: 40px;
+	height: 40px;
+	border-radius: var(--ui-border-radius-circle);
+	overflow: hidden;
+}
+
+.booking--crm-forms--resource-avatar-image {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	user-select: none;
+	-webkit-user-select: none;
+	pointer-events: none;
+}
+
+.booking--crm-forms--resource-info {
+	display: flex;
+	flex-direction: column;
+}
+
+.booking--crm-forms--resource-name {
+	overflow: hidden;
+	color: var(--booking--crm-forms--resource-name-color);
+	text-overflow: ellipsis;
+	font-size: 17px;
+	font-style: normal;
+	font-weight: 500;
+	line-height: normal;
+}
+
+.booking--crm-forms--resource-type-name {
+	overflow: hidden;
+	color: var(--booking--crm-forms--resource-type-name-color);
+	text-overflow: ellipsis;
+	font-size: 13px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: normal;
+}
+
+.booking-crm-forms-field.booking--crm-forms--resource-slots {
+	--slots-shown-delay: 300ms;
+
+	opacity: 0;
+	animation: visible var(--slots-shown-delay) forwards;
+}
+
+.booking-crm-forms-field.booking--crm-forms--resource-slots.--fade {
+	animation: fadeOut var(--slots-shown-delay) ease-in-out;
+	animation-fill-mode: forwards;
+}
+
+@keyframes visible {
+	0% { opacity: 0 }
+	100% { opacity: 1 }
+}
+
+@keyframes fadeOut {
+	0% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+	}
+}
+
+.booking--crm-forms--resource-slots__slot-list-wrapper {
+	min-height: 110px;
+}
+
+.booking--crm-forms--resource-slots__slot-list {
+	display: flex;
+	gap: 7px;
+	flex-wrap: wrap;
+	padding-top: 10px;
+}
+
+.booking--crm-forms--resource-slots__slot {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	height: 3em;
+	border: 1px solid rgb(var(--booking--crm-forms--border-color-rgb));
+	padding: 14px 12px;
+	cursor: pointer;
+	border-radius: 8px;
+	min-width: 70px;
+	transition: background-color 200ms;
+}
+
+.booking--crm-forms--resource-slots__slot.--selected {
+	border-radius: 8px;
+	border: 1px solid #11A9D9;
+	background: linear-gradient(180deg, #2FC6F6 0%, #67D3F5 100%);
+	color: var(--b24-background-color, #FFF);
+}
+
+.booking--crm-forms--resource-slots__slot > span {
+	color: var(--booking--crm-forms--resource-slot-text-color);
+}
+
+.booking--crm-forms--resource-slots__slot.--selected > span {
+	color: var(--booking--crm-forms--resource-slot-selected-text-color);
+}
+
+.booking--crm-forms--resource-slots__empty-slots {
+	width: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.booking--crm-forms--time-selector-block-header__button {
+	flex-shrink: 0;
+	padding-top: 16px;
+}
+
+.booking--crm-forms--field-group--available-slots-block__footer {
+	display: flex;
+	justify-content: center;
+	margin: 10px 0;
+}
+
+.booking--crm-forms--field-group--available-slots-block__btn-show-more {
+	width: 160px
+}
+
+.booking--crm-forms--available-slots-block__empty-slots {
+	margin: 4em 0;
+	text-align: center;
+}
+
+/*# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3RtcC9EV2RnaXQiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IkFBQUEiLCJmaWxlIjoiLi4vLi4vLi4vdG1wL0RXZGdpdCIsInNvdXJjZXNDb250ZW50IjpbIi5ib29raW5nLWNybS1mb3Jtcy1maWVsZC1jb250YWluZXIge1xuXHQtLWJvb2tpbmctLWNybS1mb3Jtcy0tdGl0bGUtY29sb3I6IHJnYig1MSwgNTEsIDUxKTtcblx0LS1ib29raW5nLS1jcm0tZm9ybXMtLXRleHQtY29sb3ItcmdiOiA4MiwgOTIsIDEwNTtcblx0LS1ib29raW5nLS1jcm0tZm9ybXMtLXRleHQtZGlzYWJsZWQtY29sb3ItcmdiOiAxMzAsIDEzOSwgMTQ5O1xuXHQtLWJvb2tpbmctLWNybS1mb3Jtcy0tYm9yZGVyLWNvbG9yLXJnYjogMjIzLCAyMjQsIDIyNztcblx0LS1ib29raW5nLS1jcm0tZm9ybXMtLXRhZy1zZWxlY3Rvci1pbnB1dC1pY29uLWNvbG9yOiByZ2IodmFyKC0tYm9va2luZy0tY3JtLWZvcm1zLS10ZXh0LWNvbG9yLXJnYikpO1xuXHQtLWJvb2tpbmctLWNybS1mb3Jtcy0taGludC10ZXh0LWNvbG9yOiByZ2IodmFyKC0tYm9va2luZy0tY3JtLWZvcm1zLS10ZXh0LWNvbG9yLXJnYikpO1xuXHQtLWJvb2tpbmctLWNybS1mb3Jtcy0taGludC10ZXh0LW9wYWNpdHk6IDE7XG5cdC0tYm9va2luZy0tY3JtLWZvcm1zLS1kYXRlcGlja2VyLWhlYWRlci10aXRsZS1jb2xvcjogcmdiKHZhcigtLWJvb2tpbmctLWNybS1mb3Jtcy0tdGV4dC1jb2xvci1yZ2IpKTtcblx0LS1ib29raW5nLS1jcm0tZm9ybXMtLWRhdGVwaWNrZXItaGVhZGVyLWljb24tY29sb3I6IHJnYih2YXIoLS1ib29raW5nLS1jcm0tZm9ybXMtLXRleHQtY29sb3ItcmdiKSk7XG5cdC0tYm9va2luZy0tY3JtLWZvcm1zLS1yZXNvdXJjZS1uYW1lLWNvbG9yOiB2YXIoLS1iMjQtdGV4dC1jb2xvcik7XG5cdC0tYm9va2luZy0tY3JtLWZvcm1zLS1yZXNvdXJjZS10eXBlLW5hbWUtY29sb3I6IHJnYigwLCAwLCAwKTtcblx0LS1ib29raW5nLS1jcm0tZm9ybXMtLXJlc291cmNlLXR5cGUtbmFtZS1vcGFjaXR5OiAuMztcblx0LS1ib29raW5nLS1jcm0tZm9ybXMtLXJlc291cmNlLXNsb3QtdGV4dC1jb2xvcjogcmdiKDgyLCA5MiwgMTA1KTtcblx0LS1ib29raW5nLS1jcm0tZm9ybXMtLXJlc291cmNlLXNsb3QtdGV4dC1vcGFjaXR5OiAxO1xuXHQtLWJvb2tpbmctLWNybS1mb3Jtcy0tcmVzb3VyY2Utc2xvdC1zZWxlY3RlZC10ZXh0LWNvbG9yOiByZ2IoODIsIDkyLCAxMDUpO1xuXHQtLWJvb2tpbmctLWNybS1mb3Jtcy0tcmVzb3VyY2UtZGVzY3JpcHRpb24tY29sb3I6IHJnYih2YXIoLS11aS1jb2xvci1wYWxldHRlLWdyYXktOTAtcmdiKSk7XG59XG5cbi5iMjQtZm9ybS1kYXJrIC5ib29raW5nLWNybS1mb3Jtcy1maWVsZC1jb250YWluZXIge1xuXHQtLWJvb2tpbmctLWNybS1mb3Jtcy0tdGl0bGUtY29sb3I6IHZhcigtLWIyNC10ZXh0LWNvbG9yKTtcblx0LS1ib29raW5nLS1jcm0tZm9ybXMtLXRhZy1zZWxlY3Rvci1pbnB1dC1pY29uLWNvbG9yOiByZ2JhKDI1NSwgMjU1LCAyNTUsIC44KTtcblx0LS1ib29raW5nLS1jcm0tZm9ybXMtLWhpbnQtdGV4dC1jb2xvcjogdmFyKC0tYjI0LXRleHQtY29sb3IpO1xuXHQtLWJvb2tpbmctLWNybS1mb3Jtcy0taGludC10ZXh0LW9wYWNpdHk6IC43O1xuXHQtLWJvb2tpbmctLWNybS1mb3Jtcy0tZGF0ZXBpY2tlci1oZWFkZXItdGl0bGUtY29sb3I6IHJnYmEoMjU1LCAyNTUsIDI1NSwgLjgpO1xuXHQtLWJvb2tpbmctLWNybS1mb3Jtcy0tZGF0ZXBpY2tlci1oZWFkZXItaWNvbi1jb2xvcjogcmdiYSgyNTUsIDI1NSwgMjU1LCAuOCk7XG5cdC0tYm9va2luZy0tY3JtLWZvcm1zLS1yZXNvdXJjZS10eXBlLW5hbWUtY29sb3I6IHZhcigtLWIyNC10ZXh0LWNvbG9yKTtcblx0LS1ib29raW5nLS1jcm0tZm9ybXMtLXJlc291cmNlLXR5cGUtbmFtZS1vcGFjaXR5OiAuNztcblx0LS1ib29raW5nLS1jcm0tZm9ybXMtLXJlc291cmNlLXNsb3QtdGV4dC1jb2xvcjogdmFyKC0tYjI0LXRleHQtY29sb3IpO1xuXHQtLWJvb2tpbmctLWNybS1mb3Jtcy0tcmVzb3VyY2Utc2xvdC10ZXh0LW9wYWNpdHk6IC45O1xuXHQtLWJvb2tpbmctLWNybS1mb3Jtcy0tcmVzb3VyY2Utc2xvdC1zZWxlY3RlZC10ZXh0LWNvbG9yOiB2YXIoLS1iMjQtdGV4dC1jb2xvcik7XG59XG5cbi5ib29raW5nLWNybS1mb3Jtcy1maWVsZCB7XG5cdHBvc2l0aW9uOiByZWxhdGl2ZTtcblx0Zm9udC1mYW1pbHk6IHZhcigtLWIyNC1mb250LWZhbWlseSksIHNhbnMtc2VyaWY7XG5cdG1hcmdpbi1ib3R0b206IDMwcHg7XG59XG5cbi5ib29raW5nLWNybS1mb3Jtcy1maWVsZC4tLWVycm9yIHtcblx0LS1iMjQtZmllbGQtYmFja2dyb3VuZC1jb2xvcjogcmdiYSgyNDIsIDg4LCA0OCwgMC4wOCk7XG5cdC0tYjI0LWZpZWxkLWJvcmRlci1jb2xvcjogcmdiYSgyNDIsIDg4LCA0OCwgMC4yNSk7XG59XG5cbi5ib29raW5nLWNybS1mb3Jtcy1maWVsZDpub3QoLi0tZXJyb3IpIC5iMjQtZm9ybS1jb250cm9sLWFsZXJ0LW1lc3NhZ2Uge1xuXHRkaXNwbGF5OiBub25lICFpbXBvcnRhbnQ7XG59XG5cbi5ib29raW5nLWNybS1mb3Jtcy1maWVsZC10aXRsZSB7XG5cdGZvbnQtc2l6ZTogMThweDtcblx0Zm9udC1zdHlsZTogbm9ybWFsO1xuXHRmb250LXdlaWdodDogNDAwO1xuXHRsaW5lLWhlaWdodDogMjZweDtcblx0bGV0dGVyLXNwYWNpbmc6IC0wLjJweDtcblx0bWFyZ2luLWJvdHRvbTogNHB4O1xuXHRwb2ludGVyLWV2ZW50czogbm9uZTtcbn1cblxuLmJvb2tpbmctY3JtLWZvcm1zLWZpZWxkLXRhZy1zZWxlY3RvciB7XG5cdHBhZGRpbmctYm90dG9tOiAxMnB4O1xufVxuXG4uYm9va2luZy1jcm0tZm9ybXMtZmllbGQtdGFnLXNlbGVjdG9yIC51aS10YWctc2VsZWN0b3Itb3V0ZXItY29udGFpbmVyIHtcblx0YmFja2dyb3VuZDogdmFyKC0tYjI0LWZpZWxkLWJhY2tncm91bmQtY29sb3IpO1xuXHRib3JkZXI6IDFweCBzb2xpZCB2YXIoLS1iMjQtZmllbGQtYm9yZGVyLWNvbG9yKTtcbn1cblxuLmJvb2tpbmctY3JtLWZvcm1zLWZpZWxkLXRhZy1zZWxlY3RvciAudWktdGFnLXNlbGVjdG9yLXRhZyB7XG5cdGJhY2tncm91bmQtY29sb3I6IHZhcigtLWIyNC1wcmltYXJ5LWNvbG9yKTtcblx0Y29sb3I6IHZhcigtLWIyNC1wcmltYXJ5LXRleHQtY29sb3IpICFpbXBvcnRhbnQ7XG59XG5cbi5ib29raW5nLWNybS1mb3Jtcy1maWVsZC10YWctc2VsZWN0b3IgLnVpLXRhZy1zZWxlY3Rvci10ZXh0LWJveCB7XG5cdGJhY2tncm91bmQ6IG5vbmU7XG59XG5cbi5ib29raW5nLWNybS1mb3Jtcy1maWVsZC10YWctc2VsZWN0b3IgLnVpLXRhZy1zZWxlY3Rvci1hZGQtYnV0dG9uLWNhcHRpb24ge1xuXHRmb250LWZhbWlseTogaW5oZXJpdDtcbn1cblxuXG4uYm9va2luZy1jcm0tZm9ybXMtZmllbGQtc2xvdCB7XG5cdHdoaXRlLXNwYWNlOiBub3dyYXA7XG5cdHBhZGRpbmc6IDEwcHg7XG5cdG1hcmdpbi1ib3R0b206IDVweDtcblx0Ym9yZGVyLXJhZGl1czogNHB4O1xuXHRiYWNrZ3JvdW5kOiB2YXIoLS1iMjQtZmllbGQtYmFja2dyb3VuZC1jb2xvcik7XG5cdGNvbG9yOiB2YXIoLS1iMjQtdGV4dC1jb2xvcik7XG5cdGZvbnQtc2l6ZTogdmFyKC0tdWktZm9udC1zaXplLWxnKTtcblx0Y3Vyc29yOiBwb2ludGVyO1xufVxuXG4uYm9va2luZy1jcm0tZm9ybXMtZmllbGQtc2xvdC4tLXNlbGVjdGVkIHtcblx0YmFja2dyb3VuZDogdmFyKC0tYjI0LXByaW1hcnktY29sb3IpO1xuXHRjb2xvcjogdmFyKC0tYjI0LXByaW1hcnktdGV4dC1jb2xvcik7XG59XG5cbi5ib29raW5nLWNybS1mb3Jtcy1maWVsZC1zbG90OmhvdmVyIHtcblx0Ym94LXNoYWRvdzogaW5zZXQgMCAwIDk5OXB4IHJnYmEoMCwgMCwgMCwgMC4wNSk7XG59XG5cblxuLmJvb2tpbmctY3JtLWZvcm1zLWZpZWxkLWRheXMge1xuXHRkaXNwbGF5OiBmbGV4O1xuXHRvdmVyZmxvdzogYXV0bztcbn1cblxuLmJvb2tpbmctY3JtLWZvcm1zLWZpZWxkLWRheXM6Oi13ZWJraXQtc2Nyb2xsYmFyIHtcblx0ZGlzcGxheTogbm9uZTtcbn1cblxuXG4uYm9va2luZy1jcm0tZm9ybXMtZmllbGQtc2xvdC4tLWRheSB7XG5cdG1hcmdpbi1ib3R0b206IDA7XG5cdG1hcmdpbi1yaWdodDogNXB4O1xufVxuXG4uYm9va2luZy1jcm0tZm9ybXMtZmllbGQtc2xvdC4tLWRheSBkaXY6bnRoLWNoaWxkKDEpIHtcblx0Zm9udC1zaXplOiB2YXIoLS11aS1mb250LXNpemUtbGcpO1xuXHRmb250LXdlaWdodDogdmFyKC0tdWktZm9udC13ZWlnaHQtbWVkaXVtKTtcbn1cblxuLmJvb2tpbmctY3JtLWZvcm1zLWZpZWxkLXNsb3QuLS1kYXkgZGl2Om50aC1jaGlsZCgyKSB7XG5cdG1hcmdpbjogMCBhdXRvO1xuXHRtYXgtd2lkdGg6IG1heC1jb250ZW50O1xufVxuXG5cbi5ib29raW5nLWNybS1mb3Jtcy1maWVsZC1zbG90cy1sb2FkZXIge1xuXHR3aWR0aDogMTAwJTtcblx0aGVpZ2h0OiAxMjVweDtcblx0YmFja2dyb3VuZC1pbWFnZTogdXJsKFwiZGF0YTppbWFnZS9zdmcreG1sO2NoYXJzZXQ9dXRmLTgsJTNDc3ZnIHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZycgeG1sbnM6eGxpbms9J2h0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsnIGZpbGw9J25vbmUnIHZpZXdCb3g9JzAgMCAxMDAlMjUgMTAwJTI1JyUzRSUzQ3N2ZyBpZD0nYycgd2lkdGg9JzEwMCUyNScgaGVpZ2h0PScxMDAwJyUzRSUzQ3JlY3Qgd2lkdGg9JzEwMCUyNScgaGVpZ2h0PSczOCcgZmlsbD0nJTIzZTVlNWU1JyByeD0nNCcvJTNFJTNDcmVjdCB3aWR0aD0nMTAwJTI1JyBoZWlnaHQ9JzM4JyB5PSc0MycgZmlsbD0nJTIzZTVlNWU1JyByeD0nNCcvJTNFJTNDcmVjdCB3aWR0aD0nMTAwJTI1JyBoZWlnaHQ9JzM4JyB5PSc4NicgZmlsbD0nJTIzZTVlNWU1JyByeD0nNCcvJTNFJTNDL3N2ZyUzRSUzQ3JlY3QgaWQ9J2QnIHdpZHRoPScxMDAlMjUnIGhlaWdodD0nMTAwJTI1JyBmaWxsPSd1cmwoJTIzYSknIG1hc2s9J3VybCglMjNiKScvJTNFJTNDbWFzayBpZD0nYicgZmlsbD0nJTIzZmZmJyUzRSUzQ3VzZSB4bGluazpocmVmPSclMjNjJy8lM0UlM0MvbWFzayUzRSUzQ2xpbmVhckdyYWRpZW50IGlkPSdhJyB4MT0nNjYuNiUyNScgeDI9JzMzLjMlMjUnIHkxPSc1MCUyNScgeTI9JzUwJTI1JyUzRSUzQ3N0b3Agb2Zmc2V0PScwJTI1JyBzdG9wLW9wYWNpdHk9JzAnLyUzRSUzQ3N0b3Agb2Zmc2V0PSc1MCUyNScgc3RvcC1vcGFjaXR5PScuMDcnLyUzRSUzQ3N0b3Agb2Zmc2V0PScxMDAlMjUnIHN0b3Atb3BhY2l0eT0nMCcvJTNFJTNDL2xpbmVhckdyYWRpZW50JTNFJTNDYW5pbWF0ZSB4bGluazpocmVmPSclMjNkJyBhdHRyaWJ1dGVOYW1lPSd4JyBiZWdpbj0nMHMnIGR1cj0nMXMnIGZyb209Jy0xMDAlMjUnIHJlcGVhdENvdW50PSdpbmRlZmluaXRlJyB0bz0nMTAwJTI1Jy8lM0UlM0Mvc3ZnJTNFXCIpO1xufVxuXG4uYm9va2luZy0tY3JtLWZvcm1zLS1maWVsZC1oaW50LXRleHQge1xuXHRjb2xvcjogdmFyKC0tYm9va2luZy0tY3JtLWZvcm1zLS1oaW50LXRleHQtY29sb3IpO1xuXHRvcGFjaXR5OiB2YXIoLS1ib29raW5nLS1jcm0tZm9ybXMtLWhpbnQtdGV4dC1vcGFjaXR5KTtcblx0Zm9udC1zaXplOiAxMnB4O1xuXHRmb250LXN0eWxlOiBub3JtYWw7XG5cdGZvbnQtd2VpZ2h0OiA0MDA7XG5cdGxpbmUtaGVpZ2h0OiAxNXB4O1xuXHRsZXR0ZXItc3BhY2luZzogLTAuMDVweDtcbn1cblxuLmJvb2tpbmctLWNybS1mb3Jtcy0tZmllbGQtdGFnLXNlbGVjdG9yLWlucHV0IHtcblx0cGFkZGluZy10b3A6IDAgIWltcG9ydGFudDtcblx0Y3Vyc29yOiBwb2ludGVyO1xufVxuXG4uYm9va2luZy1jcm0tZm9ybXMtZmllbGQtdGFnLXNlbGVjdG9yLi0tZGlzYWJsZWQgLmJvb2tpbmctLWNybS1mb3Jtcy0tZmllbGQtdGFnLXNlbGVjdG9yLWlucHV0IHtcblx0Y29sb3I6IHJnYih2YXIoLS1ib29raW5nLS1jcm0tZm9ybXMtLXRleHQtZGlzYWJsZWQtY29sb3ItcmdiKSk7XG5cdGZvbnQtc2l6ZTogMTRweDtcblx0Zm9udC1zdHlsZTogbm9ybWFsO1xuXHRmb250LXdlaWdodDogNDAwO1xuXHRsaW5lLWhlaWdodDogMTlweDtcbn1cblxuLmJvb2tpbmctLWNybS1mb3Jtcy0tY2hhbmdlLWRhdGUtYnRuIHtcblx0ZGlzcGxheTogZmxleDtcblx0bWluLWhlaWdodDogMjhweDtcblx0bWluLXdpZHRoOiA4ZW07XG5cdHBhZGRpbmc6IDAgMTBweDtcblx0ZmxleC1kaXJlY3Rpb246IGNvbHVtbjtcblx0anVzdGlmeS1jb250ZW50OiBjZW50ZXI7XG5cdGFsaWduLWl0ZW1zOiBjZW50ZXI7XG5cdGJvcmRlci1yYWRpdXM6IDhweDtcblx0Ym9yZGVyOiAxcHggc29saWQgcmdiYSgwLCAxMTcsIDI1NSwgMSk7XG5cdGJhY2tncm91bmQtY29sb3I6ICNmZmY7XG5cdGNvbG9yOiByZ2JhKDAsIDExNywgMjU1LCAxKTtcblx0Y3Vyc29yOiBwb2ludGVyO1xufVxuXG5AbWVkaWEgKG1heC13aWR0aDogMzUwcHgpIHtcblx0LmJvb2tpbmctLWNybS1mb3Jtcy0tY2hhbmdlLWRhdGUtYnRuIHtcblx0XHRtYXgtd2lkdGg6IDhlbTtcblx0XHRwYWRkaW5nOiA0cHggMTBweDtcblx0fVxufVxuXG5AbWVkaWEgKG1pbi13aWR0aDogMzUwcHgpIGFuZCAobWF4LXdpZHRoOiA0MDBweCkge1xuXHQuYm9va2luZy0tY3JtLWZvcm1zLS1jaGFuZ2UtZGF0ZS1idG4ge1xuXHRcdG1heC13aWR0aDogOWVtO1xuXHRcdHBhZGRpbmc6IDRweCAxMHB4O1xuXHR9XG59XG5cbi5ib29raW5nLS1jcm0tZm9ybXMtLWNoYW5nZS1kYXRlLWJ0bjpob3Zlcixcbi5ib29raW5nLS1jcm0tZm9ybXMtLWNoYW5nZS1kYXRlLWJ0bjpmb2N1cyB7XG5cdG91dGxpbmU6IG5vbmU7XG5cdGJveC1zaGFkb3c6IDAgMCAwIDFweCByZ2JhKDAsIDExNywgMjU1LCAwLjMpO1xufVxuXG4uYm9va2luZy0tY3JtLWZvcm1zLS1maWVsZC10YWctc2VsZWN0b3ItaW5wdXQtaWNvbiB7XG5cdHBvc2l0aW9uOiBhYnNvbHV0ZTtcblx0cmlnaHQ6IDhweDtcblx0dG9wOiAxMnB4O1xuXHRiYWNrZ3JvdW5kLWNvbG9yOiB2YXIoLS1ib29raW5nLS1jcm0tZm9ybXMtLXRhZy1zZWxlY3Rvci1pbnB1dC1pY29uLWNvbG9yKTtcblx0Y3Vyc29yOiBwb2ludGVyO1xuXHRoZWlnaHQ6IDI4cHg7XG5cdHdpZHRoOiAyOHB4O1xuXHQtd2Via2l0LW1hc2staW1hZ2U6IHVybChcImRhdGE6aW1hZ2Uvc3ZnK3htbDtjaGFyc2V0PXV0Zi04LCUzQ3N2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScyMCcgaGVpZ2h0PScyMCcgZmlsbD0nbm9uZScgdmlld0JveD0nMCAwIDIwIDIwJyUzRSUzQ3BhdGggZmlsbD0nJTIzNTI1YzY5JyBmaWxsLXJ1bGU9J2V2ZW5vZGQnIGQ9J004Ljc0NiA0LjU4N2EuNTgzLjU4MyAwIDEgMC0uODI1LjgyNUwxMi41MDggMTBsLTQuNTg3IDQuNTg3YS41ODMuNTgzIDAgMSAwIC44MjUuODI1bDUtNWEuNTgzLjU4MyAwIDAgMCAwLS44MjV6JyBjbGlwLXJ1bGU9J2V2ZW5vZGQnLyUzRSUzQy9zdmclM0VcIik7XG5cdCAgICAgICAgbWFzay1pbWFnZTogdXJsKFwiZGF0YTppbWFnZS9zdmcreG1sO2NoYXJzZXQ9dXRmLTgsJTNDc3ZnIHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2Zycgd2lkdGg9JzIwJyBoZWlnaHQ9JzIwJyBmaWxsPSdub25lJyB2aWV3Qm94PScwIDAgMjAgMjAnJTNFJTNDcGF0aCBmaWxsPSclMjM1MjVjNjknIGZpbGwtcnVsZT0nZXZlbm9kZCcgZD0nTTguNzQ2IDQuNTg3YS41ODMuNTgzIDAgMSAwLS44MjUuODI1TDEyLjUwOCAxMGwtNC41ODcgNC41ODdhLjU4My41ODMgMCAxIDAgLjgyNS44MjVsNS01YS41ODMuNTgzIDAgMCAwIDAtLjgyNXonIGNsaXAtcnVsZT0nZXZlbm9kZCcvJTNFJTNDL3N2ZyUzRVwiKTtcblx0LXdlYmtpdC1tYXNrLXNpemU6IGNvbnRhaW47XG5cdCAgICAgICAgbWFzay1zaXplOiBjb250YWluO1xuXHQtd2Via2l0LW1hc2stcmVwZWF0OiBuby1yZXBlYXQ7XG5cdCAgICAgICAgbWFzay1yZXBlYXQ6IG5vLXJlcGVhdDtcbn1cblxuLmJvb2tpbmctY3JtLWZvcm1zLWZpZWxkLXRhZy1zZWxlY3Rvci4tLWRpc2FibGVkIC5ib29raW5nLS1jcm0tZm9ybXMtLWZpZWxkLXRhZy1zZWxlY3Rvci1pbnB1dC1pY29uIHtcblx0YmFja2dyb3VuZC1jb2xvcjogcmdiKHZhcigtLWJvb2tpbmctLWNybS1mb3Jtcy0tdGV4dC1kaXNhYmxlZC1jb2xvci1yZ2IpKTtcblx0Y3Vyc29yOiB1bnNldDtcbn1cblxuLmJvb2tpbmctLWNybS1mb3Jtcy0tZmllbGQtZGVzY3JpcHRpb24tdGV4dCB7XG5cdGNvbG9yOiB2YXIoLS1ib29raW5nLS1jcm0tZm9ybXMtLXJlc291cmNlLWRlc2NyaXB0aW9uLWNvbG9yKTtcblx0Zm9udC1zaXplOiAxM3B4O1xuXHRmb250LXN0eWxlOiBub3JtYWw7XG5cdGZvbnQtd2VpZ2h0OiA0MDA7XG5cdHBhZGRpbmctdG9wOiAxMXB4O1xufVxuXG4uYm9va2luZy0tY3JtLWZvcm1zLS1maWVsZC1kZXNjcmlwdGlvbi10ZXh0LW1vcmUge1xuXHRwYWRkaW5nLWxlZnQ6IDJweDtcblx0Y29sb3I6IHJnYmEoMCwgMTE3LCAyNTUsIDEpO1xuXHRjdXJzb3I6IHBvaW50ZXI7XG5cdHRyYW5zaXRpb246IC40cztcbn1cblxuLmJvb2tpbmctLWNybS1mb3Jtcy0tZmllbGQtZGVzY3JpcHRpb24tdGV4dC1tb3JlOmhvdmVyIHtcblx0Y29sb3I6IHJnYmEoMSwgODQsIDIwMCwgMSk7XG59XG5cbi5ib29raW5nLS1jcm0tZm9ybXMtLXNrdXMtc2VsZWN0b3Itc2t1IHtcblx0ZGlzcGxheTogZmxleDtcblx0anVzdGlmeS1jb250ZW50OiBzcGFjZS1iZXR3ZWVuO1xuXHRhbGlnbi1pdGVtczogc3RhcnQ7XG5cdHdpZHRoOiAxMDAlO1xufVxuXG4uYm9va2luZy0tY3JtLWZvcm1zLS1za3VzLXNlbGVjdG9yLXNrdS1wcmljZSB7XG5cdGZvbnQtd2VpZ2h0OiBib2xkO1xuXHR3aGl0ZS1zcGFjZTogbm93cmFwO1xufVxuXG4uYm9va2luZy1jcm0tZm9ybXMtZmllbGQtc2t1LXNlbGVjdG9yLWNvbnRhaW5lciB7XG5cdG1hcmdpbi1ib3R0b206IDA7XG59XG5cbi5ib29raW5nLWNybS1mb3Jtcy1maWVsZC1za3Utc2VsZWN0b3ItcXVhbnRpdHkge1xuXHRwb3NpdGlvbjogcmVsYXRpdmU7XG5cdGRpc3BsYXk6IGZsZXg7XG5cdGp1c3RpZnktY29udGVudDogZW5kO1xuXHRhbGlnbi1pdGVtczogY2VudGVyO1xuXHRib3JkZXI6IDFweCBzb2xpZCB2YXIoLS1iMjQtZmllbGQtYm9yZGVyLWNvbG9yKTtcblx0Ym9yZGVyLXRvcDogbm9uZTtcblx0dGV4dC1hbGlnbjogY2VudGVyO1xuXHRtaW4taGVpZ2h0OiA1OHB4O1xuXHRib3JkZXItcmFkaXVzOiAwIDAgNHB4IDRweDtcblx0bWFyZ2luLWJvdHRvbTogMTJweDtcbn1cblxuLmJvb2tpbmctLWNybS1mb3Jtcy0tcmVzb3VyY2Utc2VsZWN0b3ItcmVzb3VyY2Uge1xuXHRtaW4taGVpZ2h0OiA1OHB4O1xufVxuXG4uYm9va2luZy0tY3JtLWZvcm1zLS1jYWxlbmRhci1ibG9jay1jb250ZW50IHtcblx0LS1zY2FsZTogMS4zO1xuXG5cdGRpc3BsYXk6IGZsZXg7XG5cdGZsZXgtZGlyZWN0aW9uOiBjb2x1bW47XG5cdGFsaWduLWl0ZW1zOiBjZW50ZXI7XG5cdGp1c3RpZnktY29udGVudDogY2VudGVyO1xufVxuXG4uYm9va2luZy0tY3JtLWZvcm1zLS1jYWxlbmRhci1ibG9jay1kYXRlcGlja2VyLWhlYWRlciB7XG5cdGRpc3BsYXk6IGZsZXg7XG5cdGdhcDogMTBweDtcblx0cGFkZGluZzogOHB4IDA7XG5cdHdpZHRoOiBjYWxjKDI1MHB4ICogdmFyKC0tc2NhbGUsIDEpKTtcbn1cblxuLmJvb2tpbmctLWNybS1mb3Jtcy0tY2FsZW5kYXItYmxvY2stZGF0ZXBpY2tlci1oZWFkZXItdGl0bGUge1xuXHRjb2xvcjogdmFyKC0tYm9va2luZy0tY3JtLWZvcm1zLS1kYXRlcGlja2VyLWhlYWRlci10aXRsZS1jb2xvcik7XG5cdGZvbnQtc2l6ZTogMTVweDtcblx0Zm9udC1zdHlsZTogbm9ybWFsO1xuXHRmb250LXdlaWdodDogNDAwO1xuXHRsaW5lLWhlaWdodDogbm9ybWFsO1xuXHRmbGV4LWdyb3c6IDE7XG59XG5cbi5ib29raW5nLS1jcm0tZm9ybXMtLWNhbGVuZGFyLWJsb2NrLWRhdGVwaWNrZXItaWNvbiB7XG5cdGJhY2tncm91bmQtY29sb3I6IHZhcigtLWJvb2tpbmctLWNybS1mb3Jtcy0tZGF0ZXBpY2tlci1oZWFkZXItaWNvbi1jb2xvcik7XG5cdGN1cnNvcjogcG9pbnRlcjtcblx0aGVpZ2h0OiAyMHB4O1xuXHR3aWR0aDogMjBweDtcblx0LXdlYmtpdC1tYXNrLWltYWdlOiB1cmwoXCJkYXRhOmltYWdlL3N2Zyt4bWw7Y2hhcnNldD11dGYtOCwlM0NzdmcgeG1sbnM9J2h0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnJyB3aWR0aD0nMjAnIGhlaWdodD0nMjAnIGZpbGw9J25vbmUnIHZpZXdCb3g9JzAgMCAyMCAyMCclM0UlM0NwYXRoIGZpbGw9JyUyMzUyNWM2OScgZmlsbC1ydWxlPSdldmVub2RkJyBkPSdNOC43NDYgNC41ODdhLjU4My41ODMgMCAxIDAtLjgyNS44MjVMMTIuNTA4IDEwbC00LjU4NyA0LjU4N2EuNTgzLjU4MyAwIDEgMCAuODI1LjgyNWw1LTVhLjU4My41ODMgMCAwIDAgMC0uODI1eicgY2xpcC1ydWxlPSdldmVub2RkJy8lM0UlM0Mvc3ZnJTNFXCIpO1xuXHQgICAgICAgIG1hc2staW1hZ2U6IHVybChcImRhdGE6aW1hZ2Uvc3ZnK3htbDtjaGFyc2V0PXV0Zi04LCUzQ3N2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScyMCcgaGVpZ2h0PScyMCcgZmlsbD0nbm9uZScgdmlld0JveD0nMCAwIDIwIDIwJyUzRSUzQ3BhdGggZmlsbD0nJTIzNTI1YzY5JyBmaWxsLXJ1bGU9J2V2ZW5vZGQnIGQ9J004Ljc0NiA0LjU4N2EuNTgzLjU4MyAwIDEgMC0uODI1LjgyNUwxMi41MDggMTBsLTQuNTg3IDQuNTg3YS41ODMuNTgzIDAgMSAwIC44MjUuODI1bDUtNWEuNTgzLjU4MyAwIDAgMCAwLS44MjV6JyBjbGlwLXJ1bGU9J2V2ZW5vZGQnLyUzRSUzQy9zdmclM0VcIik7XG5cdC13ZWJraXQtbWFzay1zaXplOiBjb250YWluO1xuXHQgICAgICAgIG1hc2stc2l6ZTogY29udGFpbjtcblx0LXdlYmtpdC1tYXNrLXJlcGVhdDogbm8tcmVwZWF0O1xuXHQgICAgICAgIG1hc2stcmVwZWF0OiBuby1yZXBlYXQ7XG59XG5cbi5ib29raW5nLS1jcm0tZm9ybXMtLWNhbGVuZGFyLWJsb2NrLWRhdGVwaWNrZXItaWNvbi4tLWNoZXZyb24tbGVmdCB7XG5cdHRyYW5zZm9ybTogcm90YXRlKDE4MGRlZyk7XG59XG5cbi5ib29raW5nLS1jcm0tZm9ybXMtLWNhbGVuZGFyLWJsb2NrLWRhdGVwaWNrZXIge1xuXHRzY2FsZTogdmFyKC0tc2NhbGUsIDEpO1xuXHRtYXJnaW46IGNhbGMoMnJlbSAqIHZhcigtLXNjYWxlKSkgMDtcblx0Ym9yZGVyLXJhZGl1czogOHB4O1xuXHRib3JkZXI6IDFweCBzb2xpZCByZ2JhKDI0MCwgMjQwLCAyNDAsIDEpO1xuXHRwYWRkaW5nOiA4cHg7XG59XG5cbi5ib29raW5nLS1jcm0tZm9ybXMtLWNhbGVuZGFyLWJsb2NrLWRhdGVwaWNrZXItaGVhZGVyLWJ1dHRvbi4tLWRpc2FibGVkIC5ib29raW5nLS1jcm0tZm9ybXMtLWNhbGVuZGFyLWJsb2NrLWRhdGVwaWNrZXItaWNvbiB7XG5cdGJhY2tncm91bmQtY29sb3I6IHJnYmEodmFyKC0tYm9va2luZy0tY3JtLWZvcm1zLS10ZXh0LWNvbG9yLXJnYiksIC4yKTtcbn1cblxuLmJvb2tpbmctLWNybS1mb3Jtcy0tY2FsZW5kYXItYmxvY2sgYnV0dG9uLnVpLWRheS1waWNrZXItZGF5IHtcblx0b3V0bGluZTogbm9uZSAhaW1wb3J0YW50O1xufVxuXG4uYm9va2luZy0tY3JtLWZvcm1zLS10aW1lLXNlbGVjdG9yLWJsb2NrLWhlYWRlciB7XG5cdGRpc3BsYXk6IGZsZXg7XG5cdHBhZGRpbmctdG9wOiAxMnB4O1xuXHRhbGlnbi1pdGVtczogY2VudGVyO1xuXHRnYXA6IDdweDtcbn1cblxuLmJvb2tpbmctLWNybS1mb3Jtcy0tdGltZS1zZWxlY3Rvci1ibG9jay1yZXNvdXJjZSB7XG5cdGRpc3BsYXk6IGZsZXg7XG5cdGZsZXgtZGlyZWN0aW9uOiByb3c7XG5cdGZsZXgtZ3JvdzogMTtcblx0Z2FwOiA4cHg7XG59XG5cbi5ib29raW5nLS1jcm0tZm9ybXMtLXJlc291cmNlLWF2YXRhciB7XG5cdGRpc3BsYXk6IGZsZXg7XG5cdGp1c3RpZnktY29udGVudDogY2VudGVyO1xuXHRhbGlnbi1pdGVtczogY2VudGVyO1xuXHRmbGV4LXNocmluazogMDtcblx0d2lkdGg6IDQwcHg7XG5cdGhlaWdodDogNDBweDtcblx0Ym9yZGVyLXJhZGl1czogdmFyKC0tdWktYm9yZGVyLXJhZGl1cy1jaXJjbGUpO1xuXHRvdmVyZmxvdzogaGlkZGVuO1xufVxuXG4uYm9va2luZy0tY3JtLWZvcm1zLS1yZXNvdXJjZS1hdmF0YXItaW1hZ2Uge1xuXHR3aWR0aDogMTAwJTtcblx0aGVpZ2h0OiAxMDAlO1xuXHRvYmplY3QtZml0OiBjb3Zlcjtcblx0dXNlci1zZWxlY3Q6IG5vbmU7XG5cdC13ZWJraXQtdXNlci1zZWxlY3Q6IG5vbmU7XG5cdHBvaW50ZXItZXZlbnRzOiBub25lO1xufVxuXG4uYm9va2luZy0tY3JtLWZvcm1zLS1yZXNvdXJjZS1pbmZvIHtcblx0ZGlzcGxheTogZmxleDtcblx0ZmxleC1kaXJlY3Rpb246IGNvbHVtbjtcbn1cblxuLmJvb2tpbmctLWNybS1mb3Jtcy0tcmVzb3VyY2UtbmFtZSB7XG5cdG92ZXJmbG93OiBoaWRkZW47XG5cdGNvbG9yOiB2YXIoLS1ib29raW5nLS1jcm0tZm9ybXMtLXJlc291cmNlLW5hbWUtY29sb3IpO1xuXHR0ZXh0LW92ZXJmbG93OiBlbGxpcHNpcztcblx0Zm9udC1zaXplOiAxN3B4O1xuXHRmb250LXN0eWxlOiBub3JtYWw7XG5cdGZvbnQtd2VpZ2h0OiA1MDA7XG5cdGxpbmUtaGVpZ2h0OiBub3JtYWw7XG59XG5cbi5ib29raW5nLS1jcm0tZm9ybXMtLXJlc291cmNlLXR5cGUtbmFtZSB7XG5cdG92ZXJmbG93OiBoaWRkZW47XG5cdGNvbG9yOiB2YXIoLS1ib29raW5nLS1jcm0tZm9ybXMtLXJlc291cmNlLXR5cGUtbmFtZS1jb2xvcik7XG5cdHRleHQtb3ZlcmZsb3c6IGVsbGlwc2lzO1xuXHRmb250LXNpemU6IDEzcHg7XG5cdGZvbnQtc3R5bGU6IG5vcm1hbDtcblx0Zm9udC13ZWlnaHQ6IDQwMDtcblx0bGluZS1oZWlnaHQ6IG5vcm1hbDtcbn1cblxuLmJvb2tpbmctY3JtLWZvcm1zLWZpZWxkLmJvb2tpbmctLWNybS1mb3Jtcy0tcmVzb3VyY2Utc2xvdHMge1xuXHQtLXNsb3RzLXNob3duLWRlbGF5OiAzMDBtcztcblxuXHRvcGFjaXR5OiAwO1xuXHRhbmltYXRpb246IHZpc2libGUgdmFyKC0tc2xvdHMtc2hvd24tZGVsYXkpIGZvcndhcmRzO1xufVxuXG4uYm9va2luZy1jcm0tZm9ybXMtZmllbGQuYm9va2luZy0tY3JtLWZvcm1zLS1yZXNvdXJjZS1zbG90cy4tLWZhZGUge1xuXHRhbmltYXRpb246IGZhZGVPdXQgdmFyKC0tc2xvdHMtc2hvd24tZGVsYXkpIGVhc2UtaW4tb3V0O1xuXHRhbmltYXRpb24tZmlsbC1tb2RlOiBmb3J3YXJkcztcbn1cblxuQGtleWZyYW1lcyB2aXNpYmxlIHtcblx0MCUgeyBvcGFjaXR5OiAwIH1cblx0MTAwJSB7IG9wYWNpdHk6IDEgfVxufVxuXG5Aa2V5ZnJhbWVzIGZhZGVPdXQge1xuXHQwJSB7XG5cdFx0b3BhY2l0eTogMTtcblx0fVxuXHQxMDAlIHtcblx0XHRvcGFjaXR5OiAwO1xuXHR9XG59XG5cbi5ib29raW5nLS1jcm0tZm9ybXMtLXJlc291cmNlLXNsb3RzX19zbG90LWxpc3Qtd3JhcHBlciB7XG5cdG1pbi1oZWlnaHQ6IDExMHB4O1xufVxuXG4uYm9va2luZy0tY3JtLWZvcm1zLS1yZXNvdXJjZS1zbG90c19fc2xvdC1saXN0IHtcblx0ZGlzcGxheTogZmxleDtcblx0Z2FwOiA3cHg7XG5cdGZsZXgtd3JhcDogd3JhcDtcblx0cGFkZGluZy10b3A6IDEwcHg7XG59XG5cbi5ib29raW5nLS1jcm0tZm9ybXMtLXJlc291cmNlLXNsb3RzX19zbG90IHtcblx0ZGlzcGxheTogZmxleDtcblx0anVzdGlmeS1jb250ZW50OiBjZW50ZXI7XG5cdGFsaWduLWl0ZW1zOiBjZW50ZXI7XG5cdGhlaWdodDogM2VtO1xuXHRib3JkZXI6IDFweCBzb2xpZCByZ2IodmFyKC0tYm9va2luZy0tY3JtLWZvcm1zLS1ib3JkZXItY29sb3ItcmdiKSk7XG5cdHBhZGRpbmc6IDE0cHggMTJweDtcblx0Y3Vyc29yOiBwb2ludGVyO1xuXHRib3JkZXItcmFkaXVzOiA4cHg7XG5cdG1pbi13aWR0aDogNzBweDtcblx0dHJhbnNpdGlvbjogYmFja2dyb3VuZC1jb2xvciAyMDBtcztcbn1cblxuLmJvb2tpbmctLWNybS1mb3Jtcy0tcmVzb3VyY2Utc2xvdHNfX3Nsb3QuLS1zZWxlY3RlZCB7XG5cdGJvcmRlci1yYWRpdXM6IDhweDtcblx0Ym9yZGVyOiAxcHggc29saWQgIzExQTlEOTtcblx0YmFja2dyb3VuZDogbGluZWFyLWdyYWRpZW50KDE4MGRlZywgIzJGQzZGNiAwJSwgIzY3RDNGNSAxMDAlKTtcblx0Y29sb3I6IHZhcigtLWIyNC1iYWNrZ3JvdW5kLWNvbG9yLCAjRkZGKTtcbn1cblxuLmJvb2tpbmctLWNybS1mb3Jtcy0tcmVzb3VyY2Utc2xvdHNfX3Nsb3QgPiBzcGFuIHtcblx0Y29sb3I6IHZhcigtLWJvb2tpbmctLWNybS1mb3Jtcy0tcmVzb3VyY2Utc2xvdC10ZXh0LWNvbG9yKTtcbn1cblxuLmJvb2tpbmctLWNybS1mb3Jtcy0tcmVzb3VyY2Utc2xvdHNfX3Nsb3QuLS1zZWxlY3RlZCA+IHNwYW4ge1xuXHRjb2xvcjogdmFyKC0tYm9va2luZy0tY3JtLWZvcm1zLS1yZXNvdXJjZS1zbG90LXNlbGVjdGVkLXRleHQtY29sb3IpO1xufVxuXG4uYm9va2luZy0tY3JtLWZvcm1zLS1yZXNvdXJjZS1zbG90c19fZW1wdHktc2xvdHMge1xuXHR3aWR0aDogMTAwJTtcblx0ZGlzcGxheTogZmxleDtcblx0YWxpZ24taXRlbXM6IGNlbnRlcjtcblx0anVzdGlmeS1jb250ZW50OiBjZW50ZXI7XG59XG5cbi5ib29raW5nLS1jcm0tZm9ybXMtLXRpbWUtc2VsZWN0b3ItYmxvY2staGVhZGVyX19idXR0b24ge1xuXHRmbGV4LXNocmluazogMDtcblx0cGFkZGluZy10b3A6IDE2cHg7XG59XG5cbi5ib29raW5nLS1jcm0tZm9ybXMtLWZpZWxkLWdyb3VwLS1hdmFpbGFibGUtc2xvdHMtYmxvY2tfX2Zvb3RlciB7XG5cdGRpc3BsYXk6IGZsZXg7XG5cdGp1c3RpZnktY29udGVudDogY2VudGVyO1xuXHRtYXJnaW46IDEwcHggMDtcbn1cblxuLmJvb2tpbmctLWNybS1mb3Jtcy0tZmllbGQtZ3JvdXAtLWF2YWlsYWJsZS1zbG90cy1ibG9ja19fYnRuLXNob3ctbW9yZSB7XG5cdHdpZHRoOiAxNjBweFxufVxuXG4uYm9va2luZy0tY3JtLWZvcm1zLS1hdmFpbGFibGUtc2xvdHMtYmxvY2tfX2VtcHR5LXNsb3RzIHtcblx0bWFyZ2luOiA0ZW0gMDtcblx0dGV4dC1hbGlnbjogY2VudGVyO1xufVxuIl19 */

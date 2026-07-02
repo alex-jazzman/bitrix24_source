@@ -25,7 +25,6 @@ export type BlankSelectorConfig = {
 	isOpenedFromRobot?: boolean,
 	isOpenedFromTemplateFolder?: boolean,
 	initiatedByType?: DocumentInitiatedType,
-	isPlaceholderDocumentEnabled?: boolean,
 };
 
 export type BlankData = {
@@ -45,7 +44,7 @@ export type ListItemProps = {
 	link?: string | null;
 	onLinkClick?: (() => void) | null;
 	isNew?: boolean;
-	isPlaceholderDocumentAvailable?: boolean,
+	isB2eBlankScenario?: boolean,
 	dragDescriptionTextHTML?: HTMLElement,
 	onDragEnter?: (event: DragEvent) => void,
 };
@@ -56,6 +55,7 @@ export type ButtonConfig = {
 	link?: string;
 	onLinkClick?: () => void;
 	dragDescriptionTextHTML?: HTMLElement;
+	acceptedFileTypes?: string[];
 };
 
 export type BlankProps = {

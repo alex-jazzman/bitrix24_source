@@ -9,7 +9,7 @@ jn.define('asset-manager', (require, exports, module) => {
 	const isSupported = Boolean(AssetsManager);
 
 	const RELATIVE_PATH = `${currentDomain}/bitrix/mobileapp`;
-	const IMAGE_PATH = `${RELATIVE_PATH}/mobile/extensions/bitrix/assets`;
+	const DEFAULT_ASSETS_PATH = `${RELATIVE_PATH}/mobile/extensions/bitrix/assets`;
 
 	/**
 	 * @param {string[]} imageList
@@ -72,39 +72,53 @@ jn.define('asset-manager', (require, exports, module) => {
 	};
 
 	/**
-	 * @public
-	 * @param {string} [filename]
-	 * @param {string} [folder]
-	 * @param {string} [moduleId]
-	 * @param {boolean} withTheme=true
+	 * @param {...(string|false|undefined|null)} segments
 	 * @return {string}
 	 */
-	const makeLibraryImagePathByModule = (filename, folder, moduleId, withTheme = true) => {
-		return withTheme
-			? `${RELATIVE_PATH}/${moduleId}mobile/extensions/${moduleId}/assets/${folder}/${AppTheme.id}/${filename}`
-			: `${RELATIVE_PATH}/${moduleId}mobile/extensions/${moduleId}/assets/${folder}/${filename}`;
+	const buildAssetPath = (...segments) => {
+		return segments.filter(Boolean).join('/');
 	};
 
 	/**
 	 * @public
-	 * @param {string} [filename]
+	 * @param {string} filename
 	 * @param {string} folder
 	 * @param {string} moduleId
-	 * @param {boolean} withTheme=true
+	 * @param {boolean} [withTheme=true]
+	 * @return {string}
+	 */
+	const makeLibraryImagePathByModule = (filename, folder, moduleId, withTheme = true) => {
+		const mobileDir = moduleId.endsWith('mobile') ? moduleId : `${moduleId}mobile`;
+
+		return buildAssetPath(
+			RELATIVE_PATH,
+			mobileDir,
+			'extensions',
+			moduleId,
+			'assets',
+			folder,
+			withTheme && AppTheme.id,
+			filename,
+		);
+	};
+
+	/**
+	 * @public
+	 * @param {string} filename
+	 * @param {string} [folder]
+	 * @param {string} [moduleId]
+	 * @param {boolean} [withTheme=true]
 	 * @return {string}
 	 */
 	const makeLibraryImagePath = (filename, folder, moduleId, withTheme = true) => {
-		if (moduleId && folder)
+		const isExternalModule = moduleId && moduleId !== 'mobile';
+
+		if (isExternalModule && folder)
 		{
 			return makeLibraryImagePathByModule(filename, folder, moduleId, withTheme);
 		}
 
-		if (folder)
-		{
-			return withTheme ? `${IMAGE_PATH}/${folder}/${AppTheme.id}/${filename}` : `${IMAGE_PATH}/${folder}/${filename}`;
-		}
-
-		return withTheme ? `${IMAGE_PATH}/${AppTheme.id}/${filename}` : `${IMAGE_PATH}/${filename}`;
+		return buildAssetPath(DEFAULT_ASSETS_PATH, folder, withTheme && AppTheme.id, filename);
 	};
 
 	module.exports = {

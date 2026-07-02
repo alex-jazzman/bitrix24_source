@@ -3,5 +3,4 @@ module.exports = {
 	output: 'dist/permission-checker.bundle.js',
 	namespace: 'BX.Crm.Stage',
 	browserslist: true,
-	minification: true,
 };

@@ -1,4 +1,5 @@
 import { Type } from 'main.core';
+import { type BitrixVueComponentProps } from 'ui.vue3';
 import {
 	Button as UiButton,
 	AirButtonStyle,
@@ -7,11 +8,17 @@ import {
 import { CONSTANT_TYPES } from '../../constants';
 import './edit-constant-popup-form.css';
 // eslint-disable-next-line no-unused-vars
-import type { ConstantItem } from '../../types';
+import type { ConstantItem, ConstantConfiguration } from '../../types';
 
 type OptionModel = {
 	name: string,
 };
+
+import { EntitySelectorConstantSettings } from '../constant-settings/entity-selector/entity-selector';
+
+const CONSTANT_SETTINGS_COMPONENT = Object.freeze({
+	[CONSTANT_TYPES.ENTITY_SELECTOR]: EntitySelectorConstantSettings,
+});
 
 type EditConstantPopupFormData = {
 	id: string;
@@ -34,6 +41,7 @@ export const EditConstantPopupForm = {
 	name: 'EditConstantPopupForm',
 	components: {
 		UiButton,
+		EntitySelectorConstantSettings,
 	},
 	inject: ['editSlider'],
 	props: {
@@ -42,9 +50,9 @@ export const EditConstantPopupForm = {
 			type: Object,
 			required: true,
 		},
-		/** Record<string, string> */
-		fieldTypeNames: {
-			type: Object,
+		/** @type ConstantConfiguration[] */
+		constantConfigurationList: {
+			type: Array,
 			required: true,
 		},
 		isCreation: {
@@ -69,6 +77,7 @@ export const EditConstantPopupForm = {
 			multiple: this.item.multiple,
 			description: this.item.description,
 			defaultValue: this.item.default,
+			settings: this.item.settings,
 			options: this.convertMapToOptionsModelArray(this.item.options),
 			required: this.item.required,
 			errors: {
@@ -79,6 +88,10 @@ export const EditConstantPopupForm = {
 		};
 	},
 	computed: {
+		isEntitySelector(): boolean
+		{
+			return this.constantType === CONSTANT_TYPES.ENTITY_SELECTOR;
+		},
 		isSelectType(): boolean
 		{
 			return this.constantType === CONSTANT_TYPES.SELECT;
@@ -92,12 +105,32 @@ export const EditConstantPopupForm = {
 				optionUnique: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_OPTION_UNIQUE'),
 			};
 		},
+		constantSettingsComponent(): ?BitrixVueComponentProps
+		{
+			const types = this.constantConfigurationList.map((constant) => constant.type);
+			if (!types.includes(this.constantType))
+			{
+				return null;
+			}
+
+			return CONSTANT_SETTINGS_COMPONENT[this.constantType];
+		},
+		currentConstantConfiguration(): ConstantConfiguration
+		{
+			return this.constantConfigurationList
+				.find((constantConfiguration: ConstantConfiguration) => constantConfiguration.type === this.constantType)
+			;
+		},
 	},
 	watch: {
 		constantType(): void
 		{
 			this.options = [];
 		},
+	},
+	mounted(): any
+	{
+		this.resetUnsupportedType();
 	},
 	methods: {
 		onAddOption(): void
@@ -228,6 +261,7 @@ export const EditConstantPopupForm = {
 					constantType: this.constantType,
 					multiple: this.multiple,
 					options: this.convertOptionModelsToMap(this.options),
+					settings: this.settings,
 					default: this.defaultValue,
 					required: this.required,
 				},
@@ -263,6 +297,14 @@ export const EditConstantPopupForm = {
 			}
 
 			return options;
+		},
+		resetUnsupportedType(): void
+		{
+			const types = this.constantConfigurationList.map((constant) => constant.type);
+			if (!types.includes(this.constantType))
+			{
+				this.constantType = types[0];
+			}
 		},
 	},
 	template: `
@@ -334,15 +376,22 @@ export const EditConstantPopupForm = {
 									class="ui-ctl-element"
 								>
 									<option
-										v-for="[fieldType, fieldText] in Object.entries(fieldTypeNames)"
-										:key="fieldType"
-										:value="fieldType"
+										v-for="constantConfiguration in constantConfigurationList"
+										:key="constantConfiguration.type"
+										:value="constantConfiguration.type"
 									>
-										{{ fieldText }}
+										{{ constantConfiguration.title }}
 									</option>
 								</select>
 							</div>
 						</div>
+						<template v-if="constantSettingsComponent">
+							<component
+								:is="constantSettingsComponent"
+								:constantConfiguration="currentConstantConfiguration"
+								v-model="settings"
+							/>
+						</template>
 						<div class="ui-ctl-container">
 							<div class="ui-ctl-top">
 								<div class="ui-ctl-title">
@@ -399,7 +448,7 @@ export const EditConstantPopupForm = {
 							</div>
 						</div>
 
-						<div class="ui-ctl-container">
+						<div class="ui-ctl-container" v-if="!isEntitySelector">
 							<div class="ui-ctl-top">
 								<label class="ui-ctl-title">
 									{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_VALUE') }}

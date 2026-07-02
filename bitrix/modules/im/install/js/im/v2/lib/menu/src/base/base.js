@@ -2,7 +2,7 @@ import { Event } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { PopupManager, type PopupTarget } from 'main.popup';
 import { Menu, type MenuItemOptions, type MenuOptions, type MenuSectionOptions } from 'ui.system.menu';
-import { Store } from 'ui.vue3.vuex';
+import { type Store } from 'ui.vue3.vuex';
 
 import { type RestClient } from 'rest.client';
 
@@ -71,7 +71,7 @@ export class BaseMenu extends EventEmitter
 		};
 	}
 
-	getMenuItems(): MenuItemOptions | null[]
+	getMenuItems(): MenuItemOptions[] | null[]
 	{
 		return [];
 	}
@@ -81,7 +81,7 @@ export class BaseMenu extends EventEmitter
 		return [];
 	}
 
-	groupItems(menuItems: MenuItemOptions | null[], group: string): MenuItemOptions[]
+	groupItems(menuItems: MenuItemOptions[] | null[], group: string): MenuItemOptions[]
 	{
 		return menuItems.filter((item) => item !== null).map((item: MenuItemOptions) => {
 			return {

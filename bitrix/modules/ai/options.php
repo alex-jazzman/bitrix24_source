@@ -226,21 +226,23 @@ if ($postRight >= 'R'):
 			}
 
 			$name = $arOption[0];
+			$postValue = $request->getPost($name);
 
 			if ($arOption[2][0] === 'text-list')
 			{
 				$val = '';
-				for ($j = 0; $j < count($$name); $j++)
+				$listValues = is_array($postValue) ? $postValue : [];
+				for ($j = 0; $j < count($listValues); $j++)
 				{
-					if (trim(${$name}[$j]) <> '')
+					if (trim($listValues[$j]) <> '')
 					{
-						$val .= ($val <> '' ? ',' : '') . trim(${$name}[$j]);
+						$val .= ($val <> '' ? ',' : '') . trim($listValues[$j]);
 					}
 				}
 			}
 			elseif ($arOption[2][0] === 'doubletext')
 			{
-				$val = ${$name . '_1'} . 'x' . ${$name . '_2'};
+				$val = ($request->getPost($name . '_1') ?? '') . 'x' . ($request->getPost($name . '_2') ?? '');
 			}
 			elseif (
 				$arOption[2][0] === 'selectbox'
@@ -248,24 +250,24 @@ if ($postRight >= 'R'):
 			)
 			{
 				$val = '';
-				if (isset($$name))
+				if (is_array($postValue))
 				{
-					for ($j = 0; $j < count($$name); $j++)
+					for ($j = 0; $j < count($postValue); $j++)
 					{
-						if (trim(${$name}[$j]) <> '')
+						if (trim($postValue[$j]) <> '')
 						{
-							$val .= ($val <> '' ? ',' : '') . trim(${$name}[$j]);
+							$val .= ($val <> '' ? ',' : '') . trim($postValue[$j]);
 						}
 					}
 				}
 			}
 			elseif ($arOption[2][0] === 'access')
 			{
-				$val = implode(',', $$name ?? []);
+				$val = implode(',', is_array($postValue) ? $postValue : []);
 			}
 			else
 			{
-				$val = $$name ?? null;
+				$val = $postValue ?? '';
 			}
 
 			if ($arOption[2][0] === 'checkbox' && $val <> 'Y')
@@ -273,7 +275,7 @@ if ($postRight >= 'R'):
 				$val = 'N';
 			}
 
-			$val = trim($val);
+			$val = trim((string)$val);
 
 			\COption::setOptionString($module_id, $name, $val);
 		}

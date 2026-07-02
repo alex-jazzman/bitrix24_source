@@ -9,7 +9,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/view', (requir
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const { PrimaryButton } = require('im/messenger/controller/sidebar-v2/ui/primary-button');
 	const { ChatDescription } = require('im/messenger/controller/sidebar-v2/ui/chat-description');
-	const { SidebarAvatar } = require('im/messenger/controller/sidebar-v2/ui/sidebar-avatar');
+	const { SidebarAvatar, PositionEnum } = require('im/messenger/controller/sidebar-v2/ui/sidebar-avatar');
 	const { SidebarTopContainer } = require('im/messenger/controller/sidebar-v2/ui/top-container');
 	const { SidebarPlanLimitBanner } = require('im/messenger/controller/sidebar-v2/ui/plan-limit-banner');
 	const { Area } = require('ui-system/layout/area');
@@ -17,6 +17,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/view', (requir
 	const { CardList } = require('ui-system/layout/card-list');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const { DialogHelper } = require('im/messenger/lib/helper');
+	const { SharingLinkSection } = require('im/messenger/controller/sidebar-v2/ui/sharing-link');
 	const { H4, BBCodeText, Text4 } = require('ui-system/typography');
 	const { Avatar, AvatarShape } = require('ui-system/blocks/avatar');
 
@@ -271,6 +272,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/view', (requir
 						onLayout: this.rememberTopContainerHeight,
 						renderHeader: () => this.renderHeader(),
 						renderDescription: () => this.renderDescription(),
+						renderSharingLink: () => this.renderSharingLink(),
 						renderPrimaryActionButtons: () => this.renderPrimaryActionButtons(),
 						renderPlanLimitBanner: () => this.renderPlanLimitBanner(),
 					}),
@@ -334,6 +336,54 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/view', (requir
 			);
 		}
 
+		getAvatarStatusIcons()
+		{
+			if (this.dialogHelper.isNotes)
+			{
+				return null;
+			}
+
+			const hasVacation = this.store.getters['usersModel/hasVacation'](this.dialogId);
+			if (hasVacation)
+			{
+				return [{
+					statusIcon: Image({
+						style: {
+							width: 26,
+							height: 26,
+							backgroundColor: Color.bgContentPrimary.toHex(),
+							borderRadius: 13,
+							overflow: 'hidden',
+						},
+						tintColor: Color.accentSoftElementGreen.toHex(),
+						named: Icon.SMALL_VACATION.getIconName(),
+					}),
+					position: PositionEnum.BOTTOM_RIGHT,
+				}];
+			}
+
+			const hasBirthday = this.store.getters['usersModel/hasBirthday'](this.dialogId);
+			if (hasBirthday)
+			{
+				return [{
+					statusIcon: Image({
+						style: {
+							width: 26,
+							height: 26,
+							backgroundColor: Color.bgContentPrimary.toHex(),
+							borderRadius: 13,
+							overflow: 'hidden',
+						},
+						tintColor: Color.accentSoftElementGreen.toHex(),
+						named: Icon.SMALL_GIFT.getIconName(),
+					}),
+					position: PositionEnum.BOTTOM_RIGHT,
+				}];
+			}
+
+			return null;
+		}
+
 		renderAvatar()
 		{
 			const isCustomAvatar = !isEmpty(this.customAvatarProps);
@@ -359,15 +409,16 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/view', (requir
 					testId,
 					dialogId: this.dialogId,
 					size: 72,
-					style: {
-						marginRight,
-					},
+					statusIcons: this.getAvatarStatusIcons(),
 				});
 			}
 
 			return View(
 				{
 					onClick: () => this.callUserProfile(),
+					style: {
+						marginRight,
+					},
 				},
 				avatar,
 			);
@@ -531,6 +582,18 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/view', (requir
 		{
 			return new SidebarPlanLimitBanner({
 				testId: 'plan-limit-banner',
+				dialogId: this.dialogId,
+			});
+		}
+
+		renderSharingLink()
+		{
+			if (!SharingLinkSection.shouldShow(this.dialogId))
+			{
+				return null;
+			}
+
+			return new SharingLinkSection({
 				dialogId: this.dialogId,
 			});
 		}

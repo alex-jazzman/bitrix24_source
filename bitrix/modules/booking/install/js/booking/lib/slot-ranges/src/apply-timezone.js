@@ -6,10 +6,10 @@ import type { SlotRange } from 'booking.model.resources';
 export function applyTimezone(slotRanges: SlotRange[], dateTs: number, timezone: string): SlotRange[]
 {
 	const minutesInDay = Duration.getUnitDurations().d / Duration.getUnitDurations().i;
-	const timezoneOffset = Timezone.getOffset(dateTs, timezone);
+	const timezoneOffset = Timezone.getOffsetFromUtc(dateTs, timezone);
 
 	return slotRanges.map((slotRange: SlotRange): SlotRange => {
-		const slotTimezoneOffset = Timezone.getOffset(dateTs, slotRange.timezone);
+		const slotTimezoneOffset = Timezone.getOffsetFromUtc(dateTs, slotRange.timezone);
 		const minutesOffset = (timezoneOffset - slotTimezoneOffset) / 60;
 
 		return {

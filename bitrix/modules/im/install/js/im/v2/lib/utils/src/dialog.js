@@ -1,7 +1,31 @@
+import { DialogIdChatPrefix } from 'im.v2.const';
+
 export const DialogUtil = {
-	isDialogId(dialogId)
+	isDialogId(dialogId: string): boolean
 	{
-		return /^(chat\d+)$|^\d+$/i.test(dialogId);
+		const pattern = new RegExp(`^(?:${DialogIdChatPrefix})?\\d+$`);
+
+		return pattern.test(dialogId);
+	},
+
+	isChatDialogId(dialogId: string): boolean
+	{
+		return dialogId.startsWith(DialogIdChatPrefix);
+	},
+
+	getChatIdFromDialogId(dialogId: string): number
+	{
+		if (!this.isChatDialogId(dialogId))
+		{
+			throw new Error('Provided dialogId is not correct');
+		}
+
+		return Number(dialogId.slice(DialogIdChatPrefix.length));
+	},
+
+	buildChatDialogId(chatId: number): string
+	{
+		return `${DialogIdChatPrefix}${chatId}`;
 	},
 
 	isExternalId(dialogId: string): boolean

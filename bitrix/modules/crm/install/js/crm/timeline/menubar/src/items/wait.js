@@ -1,9 +1,10 @@
-import WithEditor from "./witheditor";
-import WaitConfigurationDialog from "./tools/wait-configuration-dialog";
-import {Loc, Tag} from "main.core";
+import { Loc, Tag } from 'main.core';
+import WaitConfigurationDialog from './tools/wait-configuration-dialog';
+import WaitingType from './tools/waiting-type';
+
+import WithEditor from './witheditor';
 
 /** @memberof BX.Crm.Timeline.MenuBar */
-
 export default class Wait extends WithEditor
 {
 	#waitConfigContainer: HTMLElement = null;
@@ -35,7 +36,7 @@ export default class Wait extends WithEditor
 
 		this._hideButtonsOnBlur = false;
 		//region Config
-		this._type = Wait.WaitingType.after;
+		this._type = WaitingType.after;
 		this._duration = 1;
 		this._target = "";
 		this._configSelector = null;
@@ -48,11 +49,11 @@ export default class Wait extends WithEditor
 		this._serviceUrl = this.getSetting('serviceUrl', '');
 
 		const config = this.getSetting('config', {});
-		this._type = Wait.WaitingType.resolveTypeId(
+		this._type = WaitingType.resolveTypeId(
 			BX.prop.getString(
 				config,
 				'type',
-				Wait.WaitingType.names.after
+				WaitingType.names.after
 			)
 		);
 		this._duration = BX.prop.getInteger(config, 'duration', 1);
@@ -162,12 +163,12 @@ export default class Wait extends WithEditor
 		if(item.id === "afterDays" || item.id === "beforeDate")
 		{
 			this.openConfigDialog(
-				item.id === "afterDays" ? Wait.WaitingType.after : Wait.WaitingType.before
+				item.id === "afterDays" ? WaitingType.after : WaitingType.before
 			);
 			return;
 		}
 
-		const params = {type: Wait.WaitingType.after};
+		const params = {type: WaitingType.after};
 		if(item.id === "day_1")
 		{
 			params["duration"] = 1;
@@ -259,13 +260,13 @@ export default class Wait extends WithEditor
 	saveConfiguration(params)
 	{
 		//region Parse params
-		this._type = BX.prop.getInteger(params, "type", Wait.WaitingType.after);
+		this._type = BX.prop.getInteger(params, "type", WaitingType.after);
 		this._duration = BX.prop.getInteger(params, "duration", 0);
 		if(this._duration <= 0)
 		{
 			this._duration = 1;
 		}
-		this._target = this._type === Wait.WaitingType.before
+		this._target = this._type === WaitingType.before
 			? BX.prop.getString(params, "target", "") : "";
 		//endregion
 		//region Save settings
@@ -274,7 +275,7 @@ export default class Wait extends WithEditor
 			"crm.timeline.wait",
 			optionName,
 			"type",
-			this._type === Wait.WaitingType.after ? "after" : "before"
+			this._type === WaitingType.after ? "after" : "before"
 		);
 
 		BX.userOptions.save(
@@ -296,7 +297,7 @@ export default class Wait extends WithEditor
 
 	getSummaryHtml()
 	{
-		if(this._type === Wait.WaitingType.before)
+		if(this._type === WaitingType.before)
 		{
 			return (
 				Loc.getMessage('CRM_TIMELINE_WAIT_COMPLETION_TYPE_BEFORE')
@@ -439,30 +440,7 @@ export default class Wait extends WithEditor
 		return m.hasOwnProperty(name) ? m[name] : name;
 	}
 
-	static WaitingType = {
-		undefined: 0,
-		after: 1,
-		before: 2,
-
-		names:
-			{
-				after: "after",
-				before: "before"
-			},
-		resolveTypeId: function(name)
-		{
-			if(name === this.names.after)
-			{
-				return this.after;
-			}
-			else if(name === this.names.before)
-			{
-				return this.before;
-			}
-
-			return this.undefined;
-		}
-	};
+	static WaitingType = WaitingType;
 
 	static messages = {};
 

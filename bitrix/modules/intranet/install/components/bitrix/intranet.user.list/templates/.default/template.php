@@ -127,7 +127,7 @@ $this->SetViewTarget('below_pagetitle', 1000);
 ?>
 <?php if ($arResult['VIEW'] === 'default'): ?>
 	<div class="ui-actions-bar">
-		<div id="invitation-employee-counter_panel" class="ui-actions-bar"></div>
+		<div id="invitation-employee-counter_panel" class="ui-actions-bar__panel"></div>
 	</div>
 <?php endif; ?>
 <?php

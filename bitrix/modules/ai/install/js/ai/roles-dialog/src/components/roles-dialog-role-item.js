@@ -65,10 +65,14 @@ export function getRolesDialogRoleItemWithStates(States: StatesType): Object
 			isInfoItem(): boolean {
 				return Boolean(this.item.customData?.isInfoItem);
 			},
+			isUniversal(): boolean {
+				return Boolean(this.item.customData?.isUniversal);
+			},
 			className(): Object {
 				return {
 					'ai__roles-dialog_role-item': true,
 					'--selected': this.isSelected,
+					'--universal': this.isUniversal,
 				};
 			},
 			isRoleCanBeFavourite(): boolean {
@@ -100,6 +104,9 @@ export function getRolesDialogRoleItemWithStates(States: StatesType): Object
 			},
 			infoIcon(): string {
 				return Main.INFO;
+			},
+			universalIcon(): string {
+				return Main.COPILOT_AI;
 			},
 		},
 		methods: {
@@ -140,13 +147,14 @@ export function getRolesDialogRoleItemWithStates(States: StatesType): Object
 				<RolesDialogRoleItemAvatar
 					:avatar="item.customData.avatar"
 					:avatar-alt="item.title"
-					:icon="isInfoItem ? infoIcon : null"
+					:icon="isInfoItem ? infoIcon : (isUniversal ? universalIcon : null)"
+					:is-universal="isUniversal"
 				/>
 				<div class="ai__roles-dialog_role-item-info">
 					<div class="ai__roles-dialog_role-item-title-wrapper">
 						<div class="ai__roles-dialog_role-item-title" v-html="title"></div>
 						<div class="ai__roles-dialog_role-item-label">
-							<RolesDialogLabelNew v-if="isNew" />
+							<RolesDialogLabelNew v-if="isNew" :use-redesign="item.customData.isBitrixGptV2Available" />
 						</div>
 					</div>
 					<p class="ai__roles-dialog_role-item-description" v-html="subtitle"></p>

@@ -13,6 +13,12 @@ jn.define('im/messenger/lib/element/dialog/message/vote/factory', (require, expo
 	 */
 	class VoteMessageFactory extends CustomMessageFactory
 	{
+		/**
+		 * @override
+		 * @param {MessagesModelState} modelMessage
+		 * @param {CreateMessageOptions|{}} options
+		 * @return {Message}
+		 */
 		static create(modelMessage, options = {})
 		{
 			try
@@ -27,7 +33,10 @@ jn.define('im/messenger/lib/element/dialog/message/vote/factory', (require, expo
 			}
 		}
 
-		static checkSuitableForDisplay(modelMessage)
+		/**
+		 * @return {boolean}
+		 */
+		static checkSuitableForDisplay(messageComponent)
 		{
 			return Feature.isVoteMessageAvailable;
 		}

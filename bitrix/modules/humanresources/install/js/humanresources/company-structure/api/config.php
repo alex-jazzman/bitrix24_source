@@ -8,10 +8,10 @@ return [
 	'css' => 'dist/api.bundle.css',
 	'js' => 'dist/api.bundle.js',
 	'rel' => [
-		'main.core',
 		'humanresources.company-structure.utils',
-		'ui.notification',
+		'main.core',
 		'ui.analytics',
+		'ui.notification',
 	],
 	'skip_core' => false,
 ];

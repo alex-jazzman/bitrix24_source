@@ -1,27 +1,24 @@
-import { Extension, Runtime } from 'main.core';
+import { Extension, Runtime, type JsonObject } from 'main.core';
+import { type BaseEvent, type EventEmitter } from 'main.core.events';
+import { type SettingsCollection } from 'main.core.collections';
 
 import { Core } from 'im.v2.application.core';
-import { ScrollWithGradient } from 'im.v2.component.elements.scroll-with-gradient';
-import { EntitySearch, getUsersFromRecentItems } from 'im.v2.lib.search';
-import { ChatType, SpecialMentionDialogId, EventType } from 'im.v2.const';
 import { ChannelManager } from 'im.v2.lib.channel';
 import { CopilotManager } from 'im.v2.lib.copilot';
-import { Feature, FeatureManager } from 'im.v2.lib.feature';
+import { FeatureManager, Feature } from 'im.v2.lib.feature';
+import { EntitySearch, getUsersFromRecentItems } from 'im.v2.lib.search';
+import { type ImModelChat } from 'im.v2.model';
+import { ChatType, SpecialMentionDialogId, DialogIdChatPrefix, EventType } from 'im.v2.const';
 
+import { MentionItemFormatter } from './classes/item-formatter';
 import { MentionSearchService } from './classes/search-service';
+import { ParticipantsService } from './classes/participants-service';
 import { ContentFooter } from './components/content-footer';
 import { LoadingState } from './components/loading-state';
 import { MentionItemsContainer } from './components/mention-items-container';
-import { MentionItemFormatter } from './classes/item-formatter';
 import { SearchEmptyState } from './components/search-empty-state';
-import { ParticipantsService } from './classes/participants-service';
 
 import './css/mention-popup-content.css';
-
-import type { SettingsCollection } from 'main.core.collections';
-import type { ImModelChat } from 'im.v2.model';
-import type { BaseEvent, EventEmitter } from 'main.core.events';
-import type { JsonObject } from 'main.core';
 
 export type MentionItemType = {
 	id: string,
@@ -35,7 +32,6 @@ export const MentionPopupContent = {
 	components: {
 		ContentFooter,
 		SearchEmptyState,
-		ScrollWithGradient,
 		LoadingState,
 		MentionItemsContainer,
 	},
@@ -317,7 +313,7 @@ export const MentionPopupContent = {
 		},
 		isChat(dialogId: string): boolean
 		{
-			return dialogId.startsWith('chat');
+			return dialogId.startsWith(DialogIdChatPrefix);
 		},
 		formattedDynamicItems(items: string[]): MentionItemType[]
 		{

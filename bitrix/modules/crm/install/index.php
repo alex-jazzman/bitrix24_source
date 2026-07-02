@@ -1216,6 +1216,7 @@ class crm extends CModule
 		$eventManager->registerEventHandler('rest', 'OnRestApplicationConfigurationClear', 'crm', '\Bitrix\Crm\Integration\Rest\Configuration\Controller', 'onClear');
 		$eventManager->registerEventHandler('rest', 'OnRestApplicationConfigurationEntity', 'crm', '\Bitrix\Crm\Integration\Rest\Configuration\Controller', 'getEntityList');
 		$eventManager->registerEventHandler('rest', 'OnRestApplicationConfigurationGetManifest', 'crm', '\Bitrix\Crm\Integration\Rest\Configuration\Manifest', 'getList');
+		$eventManager->registerEventHandler('rest', 'OnRestApplicationConfigurationGetManifestSetting', 'crm', '\Bitrix\Crm\Integration\Rest\Configuration\Controller', 'onManifestSetting');
 		$eventManager->registerEventHandler('rest', 'OnRestApplicationConfigurationFinish', 'crm', '\Bitrix\Crm\Integration\Rest\Configuration\ConfigChecker', 'onFinish');
 		$eventManager->registerEventHandler('rest', 'onRestAppDelete', 'crm', '\Bitrix\Crm\Integration\Rest\EventHandler', 'onRestAppDelete');
 
@@ -1707,6 +1708,38 @@ class crm extends CModule
 			toClass: \Bitrix\Crm\Integration\BizProc\EventHandler::class,
 			toMethod: 'onGetDocumentType',
 		);
+
+		$eventManager->registerEventHandler(
+			fromModuleId: 'bizproc',
+			eventType: 'onWorkflowCommentAdded',
+			toModuleId: 'crm',
+			toClass:\Bitrix\Crm\Integration\BizProc\EventHandler::class,
+			toMethod: 'onWorkflowCommentAdded',
+		);
+
+		$eventManager->registerEventHandler(
+			fromModuleId: 'bizproc',
+			eventType: 'onWorkflowCommentDeleted',
+			toModuleId: 'crm',
+			toClass:\Bitrix\Crm\Integration\BizProc\EventHandler::class,
+			toMethod: 'onWorkflowCommentDeleted',
+		);
+
+		$eventManager->registerEventHandler(
+			fromModuleId: 'bizproc',
+			eventType: 'onWorkflowAllCommentViewed',
+			toModuleId: 'crm',
+			toClass:\Bitrix\Crm\Integration\BizProc\EventHandler::class,
+			toMethod: 'onWorkflowAllCommentViewed',
+		);
+
+		$eventManager->registerEventHandler(
+			fromModuleId: 'bizproc',
+			eventType: 'onGetDocumentFieldTypes',
+			toModuleId: 'crm',
+			toClass: \Bitrix\Crm\Integration\BizProc\EventHandler::class,
+			toMethod: 'onGetDocumentFieldTypes',
+		);
 	}
 
 	private function installAgents()
@@ -2157,6 +2190,7 @@ class crm extends CModule
 		$eventManager->unregisterEventHandler('rest', 'OnRestApplicationConfigurationClear', 'crm', '\Bitrix\Crm\Integration\Rest\Configuration\Controller', 'onClear');
 		$eventManager->unregisterEventHandler('rest', 'OnRestApplicationConfigurationEntity', 'crm', '\Bitrix\Crm\Integration\Rest\Configuration\Controller', 'getEntityList');
 		$eventManager->unregisterEventHandler('rest', 'OnRestApplicationConfigurationGetManifest', 'crm', '\Bitrix\Crm\Integration\Rest\Configuration\Manifest', 'getList');
+		$eventManager->unregisterEventHandler('rest', 'OnRestApplicationConfigurationGetManifestSetting', 'crm', '\Bitrix\Crm\Integration\Rest\Configuration\Controller', 'onManifestSetting');
 		$eventManager->unregisterEventHandler('rest', 'OnRestApplicationConfigurationFinish', 'crm', '\Bitrix\Crm\Integration\Rest\Configuration\ConfigChecker', 'onFinish');
 
 		$eventManager->unregisterEventHandler('crm', '\Bitrix\Crm\WebForm\Internals\Form::OnAfterAdd', 'crm', '\Bitrix\Crm\Order\TradingPlatform\WebForm', 'onWebFormAdd');
@@ -2658,6 +2692,38 @@ class crm extends CModule
 			toModuleId: 'crm',
 			toClass: \Bitrix\Crm\Integration\BizProc\EventHandler::class,
 			toMethod: 'onGetDocumentType',
+		);
+
+		$eventManager->unRegisterEventHandler(
+			fromModuleId: 'bizproc',
+			eventType: 'onWorkflowCommentAdded',
+			toModuleId: 'crm',
+			toClass: \Bitrix\Crm\Integration\BizProc\EventHandler::class,
+			toMethod: 'onWorkflowCommentAdded',
+		);
+
+		$eventManager->unRegisterEventHandler(
+			fromModuleId: 'bizproc',
+			eventType: 'onWorkflowCommentDeleted',
+			toModuleId: 'crm',
+			toClass: \Bitrix\Crm\Integration\BizProc\EventHandler::class,
+			toMethod: 'onWorkflowCommentDeleted',
+		);
+
+		$eventManager->unRegisterEventHandler(
+			fromModuleId: 'bizproc',
+			eventType: 'onWorkflowAllCommentViewed',
+			toModuleId: 'crm',
+			toClass: \Bitrix\Crm\Integration\BizProc\EventHandler::class,
+			toMethod: 'onWorkflowAllCommentViewed',
+		);
+
+		$eventManager->unRegisterEventHandler(
+			fromModuleId: 'bizproc',
+			eventType: 'onGetDocumentFieldTypes',
+			toModuleId: 'crm',
+			toClass: \Bitrix\Crm\Integration\BizProc\EventHandler::class,
+			toMethod: 'onGetDocumentFieldTypes',
 		);
 	}
 

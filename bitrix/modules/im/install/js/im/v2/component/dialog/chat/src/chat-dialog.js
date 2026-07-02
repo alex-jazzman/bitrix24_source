@@ -1,19 +1,11 @@
 import { Runtime, Event, Dom } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { EventEmitter, type BaseEvent } from 'main.core.events';
 import { PopupManager } from 'main.popup';
+
 import { PullStatus } from 'pull.vue3.status';
 
-import { Analytics } from 'im.v2.lib.analytics';
-import { MessageList } from 'im.v2.component.message-list';
 import { ForwardPopup } from 'im.v2.component.entity-selector';
-import { Logger } from 'im.v2.lib.logger';
-import { CallManager } from 'im.v2.lib.call';
-import { LayoutManager } from 'im.v2.lib.layout';
-import { PermissionManager } from 'im.v2.lib.permission';
-import { AccessManager } from 'im.v2.lib.access';
-import { FeatureManager } from 'im.v2.lib.feature';
-import { MessageService } from 'im.v2.provider.service.message';
-import { ChatService } from 'im.v2.provider.service.chat';
+import { MessageList } from 'im.v2.component.message-list';
 import {
 	DialogBlockType as BlockType,
 	EventType,
@@ -22,25 +14,31 @@ import {
 	UserRole,
 	ActionByRole,
 	ErrorCode,
-	AnchorType,
+	AnchorType, type ScrollToBottomEvent
 } from 'im.v2.const';
+import { AccessManager } from 'im.v2.lib.access';
+import { Analytics } from 'im.v2.lib.analytics';
+import { CallManager } from 'im.v2.lib.call';
+import { FeatureManager } from 'im.v2.lib.feature';
+import { LayoutManager } from 'im.v2.lib.layout';
+import { Logger } from 'im.v2.lib.logger';
+import { PermissionManager } from 'im.v2.lib.permission';
+import { type ImModelMessage, type ImModelChat, type ImModelLayout } from 'im.v2.model';
+import { ChatService } from 'im.v2.provider.service.chat';
+import { MessageService } from 'im.v2.provider.service.message';
 
 import { AnchorService } from './classes/anchor-service';
-import { ScrollManager } from './classes/scroll-manager';
 import { PullWatchManager } from './classes/pull-watch-manager';
+import { ScrollManager } from './classes/scroll-manager';
 import { VisibleMessagesManager } from './classes/visible-messages-manager';
+import { FloatButtons } from './components/float-buttons';
+import { PinnedMessages } from './components/pinned/pinned-messages';
+import { QuoteButton } from './components/quote-button';
 import { findUniqueNumbers } from './helpers/find-unique-numbers';
 import { sequentialize } from './helpers/sequentialize';
 
-import { PinnedMessages } from './components/pinned/pinned-messages';
-import { QuoteButton } from './components/quote-button';
-import { FloatButtons } from './components/float-buttons';
-
 import './css/chat-dialog.css';
 import './css/float-button.css';
-
-import type { ImModelMessage, ImModelChat, ImModelLayout } from 'im.v2.model';
-import type { ScrollToBottomEvent } from 'im.v2.const';
 
 export { ScrollManager } from './classes/scroll-manager';
 export { PinnedMessages } from './components/pinned/pinned-messages';
@@ -237,6 +235,8 @@ export const ChatDialog = {
 		this.closeDialogPopups();
 		this.forwardPopup.show = false;
 		this.readAllAnchors();
+
+		this.getEmitter().emit(EventType.dialog.onCloseChat, { dialogId: this.dialogId });
 	},
 	methods:
 	{
@@ -930,7 +930,7 @@ export const ChatDialog = {
 			</slot>
 			<PullStatus/>
 			<!-- Message list -->
-			<div @scroll="onScroll" class="bx-im-dialog-chat__scroll-container" ref="container">
+			<div @scroll="onScroll" class="bx-im-dialog-chat__scroll-container" tabindex="-1" ref="container">
 				<slot name="message-list">
 					<MessageList :dialogId="dialogId" :containerHeight="containerHeight" />
 				</slot>

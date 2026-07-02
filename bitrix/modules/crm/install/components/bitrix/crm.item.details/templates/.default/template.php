@@ -1,9 +1,14 @@
 <?php
 
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
-
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+use Bitrix\Main\UI\Extension;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 /** @var CMain $APPLICATION */
 /** @var array $arResult */
@@ -26,6 +31,28 @@ $this->getComponent()->addTopPanel($this);
 
 /** @see \Bitrix\Crm\Component\Base::addToolbar() */
 $this->getComponent()->addToolbar($this);
+
+if ($this->getComponent()->isRecurringItem())
+{
+	Extension::load([
+		'crm.item-details-component.pagetitle',
+		'ui.hint',
+	]);
+
+	$isRecurringTitle = Loc::getMessage('CRM_ITEM_DETAIL_IS_RECURRING_ITEM_TITLE');
+	$isRecurringDescription = Loc::getMessage('CRM_ITEM_DETAIL_IS_RECURRING_ITEM_DESCRIPTION');
+	Toolbar::addBeforeTitleHtml('<div class="crm-details-pagetitle-prefix">
+		<span>' . $isRecurringTitle . '</span>
+		<span data-hint="' . $isRecurringDescription . '"></span>
+	</div>');
+	?>
+	<script type="text/javascript">
+		BX.ready(() => {
+			BX.UI.Hint.init(document.querySelector('.crm-details-pagetitle-prefix'));
+		})
+	</script>
+	<?php
+}
 
 /** @see \Bitrix\Crm\Component\Base::addJsRouter() */
 $this->getComponent()->addJsRouter($this);

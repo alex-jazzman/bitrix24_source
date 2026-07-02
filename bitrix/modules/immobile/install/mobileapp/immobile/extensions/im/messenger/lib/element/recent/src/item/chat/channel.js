@@ -194,9 +194,10 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 			this.actions = [
 				this.getMuteAction(),
 				this.getHideAction(),
+				this.getAddToFolderAction(),
 				this.getPinAction(),
 				this.getReadAction(),
-			];
+			].filter(Boolean);
 
 			return this;
 		}

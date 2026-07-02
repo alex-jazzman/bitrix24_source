@@ -1,46 +1,33 @@
-import { Loc } from 'main.core';
-import { PopupOptions } from 'main.popup';
+import { Loc, type JsonObject } from 'main.core';
+import { type PopupOptions } from 'main.popup';
+import { FeaturePromoter } from 'ui.info-helper';
+import { InvitationInput } from 'intranet.invitation-input';
 
-import { UserType } from 'im.v2.const';
+import { SliderCode, UserType, TabId, ActionByRole } from 'im.v2.const';
 import { Core } from 'im.v2.application.core';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
-import { SegmentButton } from 'im.v2.component.elements.button';
+import { PermissionManager } from 'im.v2.lib.permission';
+import { Notifier } from 'im.v2.lib.notifier';
+import { Utils } from 'im.v2.lib.utils';
 import { MessengerPopup } from 'im.v2.component.elements.popup';
+import { type ImModelChat, type ImModelCollabInfo, type ImModelUser } from 'im.v2.model';
+import { CollabInvitationService } from 'im.v2.provider.service.collab-invitation';
 
-import { AddGuestsTab } from './components/add-guests-tab';
+import { TabsWrapper } from '../elements/tabs-wrapper/tabs-wrapper';
+import { AddGuestContent } from '../elements/add-guest-content/add-guest-content';
+import { CopyInviteLink } from '../elements/copy-invite-link/copy-invite-link';
 import { AddEmployeesTab } from './components/add-employees-tab';
 
 import './css/add-to-collab.css';
 
-import type { JsonObject } from 'main.core';
-import type { ImModelUser } from 'im.v2.model';
-import type { BitrixVueComponentProps } from 'ui.vue3';
-
-const TabId = Object.freeze({
-	guests: 'guests',
-	employees: 'employees',
-});
-
-const Tabs: Tab[] = [
-	{
-		id: TabId.guests,
-		title: Loc.getMessage('IM_ENTITY_SELECTOR_GUESTS_TAB'),
-	},
-	{
-		id: TabId.employees,
-		title: Loc.getMessage('IM_ENTITY_SELECTOR_EMPLOYEES_TAB'),
-	},
-];
-
 const POPUP_ID = 'im-add-to-collab-popup';
-const TAB_CONTENT_HEIGHT = 498;
+const ARTICLE_CODE = '22706836';
 
 // @vue/component
 export const AddToCollab = {
 	name: 'AddToCollab',
-	components: { MessengerPopup, SegmentButton, AddGuestsTab, AddEmployeesTab },
-	props:
-	{
+	components: { MessengerPopup, AddGuestContent, AddEmployeesTab, TabsWrapper, CopyInviteLink },
+	props: {
 		bindElement: {
 			type: Object,
 			required: true,
@@ -58,17 +45,21 @@ export const AddToCollab = {
 	data(): JsonObject
 	{
 		return {
-			activeTabId: TabId.guests,
+			activeTabId: TabId.employees,
+			isCopyingInviteLink: false,
+			isUpdatingInviteLink: false,
+			isAddButtonDisabled: true,
+			isInvitingGuests: false,
+			invitationLangCode: '',
 		};
 	},
-	computed:
-	{
+	computed: {
 		POPUP_ID: () => POPUP_ID,
-		Tabs: () => Tabs,
+		ARTICLE_CODE: () => ARTICLE_CODE,
 		config(): PopupOptions
 		{
 			return {
-				titleBar: this.$Bitrix.Loc.getMessage('IM_ENTITY_SELECTOR_ADD_TO_COLLAB_TITLE'),
+				titleBar: Loc.getMessage('IM_ENTITY_SELECTOR_ADD_TO_COLLAB_TITLE'),
 				closeIcon: true,
 				bindElement: this.bindElement,
 				offsetTop: this.popupConfig.offsetTop,
@@ -79,89 +70,210 @@ export const AddToCollab = {
 				className: 'bx-im-add-to-collab__scope',
 			};
 		},
+		defaultLanguageCode(): string
+		{
+			return Core.getLanguageId();
+		},
+		isGuestTab(): boolean
+		{
+			return this.activeTabId === TabId.guests;
+		},
 		isEnabledCollabersInvitation(): boolean
 		{
 			return FeatureManager.isFeatureAvailable(Feature.enabledCollabersInvitation);
 		},
-		tabComponent(): BitrixVueComponentProps
+		chatId(): number
 		{
-			return this.activeTabId === TabId.guests ? AddGuestsTab : AddEmployeesTab;
+			const chat: ImModelChat = this.$store.getters['chats/get'](this.dialogId, true);
+
+			return chat.chatId;
 		},
-		isCollaber(): boolean
+		collabChatId(): number
 		{
-			const currentUser: ImModelUser = this.$store.getters['users/get'](Core.getUserId());
+			const collab: ImModelCollabInfo = this.$store.getters['chats/collabs/getByChatId'](this.chatId);
+
+			return collab.collabId;
+		},
+		isCurrentUserCollaber(): boolean
+		{
+			const currentUser: ImModelUser = this.$store.getters['users/get'](Core.getUserId(), true);
 
 			return currentUser.type === UserType.collaber;
 		},
-		isInviteLinkAvailable(): boolean
+		guestDescription(): string
 		{
-			return FeatureManager.isFeatureAvailable(Feature.inviteByLinkAvailable);
+			if (this.isCurrentUserCollaber)
+			{
+				return Loc.getMessage('IM_ENTITY_SELECTOR_ADD_TO_COLLAB_DESCRIPTION_TEXT_GUEST');
+			}
+
+			return Loc.getMessage('IM_ENTITY_SELECTOR_ADD_TO_CHAT_DESCRIPTION_TEXT_GUEST');
 		},
-		isChangeInviteLanguageAvailable(): boolean
+		guestDescriptionTitle(): string
 		{
-			return FeatureManager.isFeatureAvailable(Feature.changeInviteLanguageAvailable);
+			if (this.isCurrentUserCollaber)
+			{
+				return Loc.getMessage('IM_ENTITY_SELECTOR_ADD_TO_COLLAB_DESCRIPTION_TITLE_GUEST');
+			}
+
+			return Loc.getMessage('IM_ENTITY_SELECTOR_ADD_TO_CHAT_DESCRIPTION_TITLE_EMPLOYEE');
 		},
-		finalHeight(): number
+		canUpdateLink(): boolean
 		{
-			const tabsBlockHeight = 38;
-			const inviteLinkBlockHeight = 58 + 12;
-			const inviteLanguageBlockHeight = 44;
-
-			let finalHeight = TAB_CONTENT_HEIGHT;
-			if (this.isCollaber)
-			{
-				finalHeight -= tabsBlockHeight;
-			}
-
-			if (!this.isInviteLinkAvailable)
-			{
-				finalHeight -= inviteLinkBlockHeight;
-			}
-
-			if (!this.isChangeInviteLanguageAvailable)
-			{
-				finalHeight -= inviteLanguageBlockHeight;
-			}
-
-			return finalHeight;
+			return PermissionManager.getInstance().canPerformActionByRole(ActionByRole.updateInviteLink, this.dialogId);
 		},
 	},
 	created()
 	{
+		this.initInvitationInput();
 		this.activeTabId = this.isEnabledCollabersInvitation ? TabId.guests : TabId.employees;
 	},
-	methods:
+	mounted()
 	{
+		this.invitationGuests.renderTo(this.$refs['collab-invitation-input']);
+		this.invitationLangCode = this.defaultLanguageCode;
+	},
+	beforeUnmount()
+	{
+		this.invitationGuests.unsubscribe('onReadySave', this.onReadySaveInputHandler);
+		this.invitationGuests.unsubscribe('onUnreadySave', this.onUnreadySaveInputHandler);
+	},
+	methods: {
 		onTabSwitch(tabId: string)
 		{
 			this.activeTabId = tabId;
+		},
+		onInvitationGuest()
+		{
+			if (!this.isEnabledCollabersInvitation)
+			{
+				this.showHelper();
+			}
+		},
+		showHelper()
+		{
+			new FeaturePromoter({ code: SliderCode.collabInviteOff }).show();
+		},
+		async copyInviteLink()
+		{
+			if (!this.isEnabledCollabersInvitation)
+			{
+				this.showHelper();
+
+				return;
+			}
+
+			try
+			{
+				this.isCopyingInviteLink = true;
+				const link = await new CollabInvitationService().copyLink(this.collabChatId, this.invitationLangCode);
+				await Utils.text.copyToClipboard(link);
+				Notifier.onCopyLinkComplete();
+			}
+			catch
+			{
+				Notifier.collab.onCopyLinkError();
+			}
+			finally
+			{
+				this.isCopyingInviteLink = false;
+			}
+		},
+		async updateLink()
+		{
+			if (!this.isEnabledCollabersInvitation)
+			{
+				this.showHelper();
+
+				return;
+			}
+
+			try
+			{
+				this.isUpdatingInviteLink = true;
+				await new CollabInvitationService().updateLink(this.collabChatId);
+				Notifier.collab.onUpdateLinkComplete();
+			}
+			catch
+			{
+				Notifier.onDefaultError();
+			}
+			finally
+			{
+				this.isUpdatingInviteLink = false;
+			}
+		},
+		onReadySaveInputHandler()
+		{
+			this.isAddButtonDisabled = false;
+		},
+		onUnreadySaveInputHandler()
+		{
+			this.isAddButtonDisabled = true;
+			this.isInvitingGuests = false;
+		},
+		initInvitationInput()
+		{
+			this.invitationGuests = new InvitationInput();
+			this.invitationGuests.subscribe('onReadySave', this.onReadySaveInputHandler);
+			this.invitationGuests.subscribe('onUnreadySave', this.onUnreadySaveInputHandler);
+		},
+		async addGuest()
+		{
+			this.isInvitingGuests = true;
+			await this.invitationGuests.inviteToGroup(this.collabChatId);
+			this.isInvitingGuests = false;
+			this.$emit('close');
+		},
+		onInviteLanguageSelected(langCode: string)
+		{
+			this.invitationLangCode = langCode;
+			this.invitationGuests.changeLanguage(langCode);
 		},
 	},
 	template: `
 		<MessengerPopup
 			:config="config"
 			:id="POPUP_ID"
-			v-slot="{ enableAutoHide, disableAutoHide }"
 			@close="$emit('close')"
 		>
-			<div class="bx-im-add-to-collab__tabs">
-				<SegmentButton 
-					:tabs="Tabs" 
-					:activeTabId="activeTabId" 
-					@segmentSelected="onTabSwitch"
-				/>
-			</div>
+			<TabsWrapper
+				:activeTabId="activeTabId"
+				@onTabSwitch="onTabSwitch"
+			/>
 			<KeepAlive>
-				<component
-					:is="tabComponent"
-					:dialogId="dialogId" 
-					:height="finalHeight"
+				<AddGuestContent
+					v-if="isGuestTab"
+					:chatId="chatId"
+					:articleCode="ARTICLE_CODE"
+					:guestTitle="guestDescriptionTitle"
+					:guestDescription="guestDescription"
+					:isAddButtonDisabled="isAddButtonDisabled"
+					:isInvitingGuests="isInvitingGuests"
+					class="bx-im-add-to-collab-guest-tab__scope"
+					@addGuest="addGuest"
+					@inviteLanguageSelected="onInviteLanguageSelected"
 					@close="$emit('close')"
-					@openHelpdeskSlider="disableAutoHide"
-					@closeHelpdeskSlider="enableAutoHide"
-					@openLanguageSelector="disableAutoHide"
-					@closeLanguageSelector="enableAutoHide"
-				/>
+				>
+					<template #copy-link>
+						<CopyInviteLink
+							:dialogId="dialogId"
+							:canUpdateLink="canUpdateLink"
+							:isUpdatingInviteLink="isUpdatingInviteLink"
+							:isCopyingInviteLink="isCopyingInviteLink"
+							@onUpdateInviteLink="updateLink"
+							@onCopyInviteLink="copyInviteLink"
+						/>
+					</template>
+					<template #invitation-input>
+						<div
+							ref="collab-invitation-input"
+							class="bx-im-add-to-collab__invite-block-input"
+							@click="onInvitationGuest"
+						/>
+					</template>
+				</AddGuestContent>
+				<AddEmployeesTab v-else :dialogId="dialogId" @close="$emit('close')"/>
 			</KeepAlive>
 		</MessengerPopup>
 	`,

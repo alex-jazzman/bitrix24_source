@@ -4,7 +4,7 @@
  * Bitrix Framework
  * @package bitrix
  * @subpackage main
- * @copyright 2001-2022 Bitrix
+ * @copyright 2001-2026 Bitrix
  */
 
 use Bitrix\Main\Context;
@@ -12,6 +12,7 @@ use Bitrix\Main\Authentication\Internal\UserDeviceTable;
 use Bitrix\Main\Web\UserAgent\DeviceType;
 use Bitrix\Main\UI\Filter;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Application;
 
 /**
  * @global CUser $USER
@@ -27,6 +28,8 @@ if (!$USER->CanDoOperation('edit_all_users'))
 {
 	$APPLICATION->AuthForm(GetMessage('ACCESS_DENIED'));
 }
+
+$admin = $USER->CanDoOperation('edit_php');
 
 $request = Context::getCurrent()->getRequest();
 
@@ -45,6 +48,7 @@ $filterFields = [
 	['id' => 'BROWSER', 'name' => Loc::getMessage('main_user_devices_browser'), 'default' => true],
 	['id' => 'PLATFORM', 'name' => Loc::getMessage('main_user_devices_platform'), 'default' => true],
 	['id' => 'USER_AGENT', 'name' => Loc::getMessage('main_user_devices_agent'), 'default' => true],
+	['id' => 'APP_PASSWORD_ID', 'name' => Loc::getMessage('main_user_devices_app_password'), 'default' => false],
 ];
 
 $headers = [
@@ -55,24 +59,51 @@ $headers = [
 	['id' => 'BROWSER', 'content' => Loc::getMessage('main_user_devices_browser'), 'sort' => 'BROWSER', 'default' => true],
 	['id' => 'PLATFORM', 'content' => Loc::getMessage('main_user_devices_platform'), 'sort' => 'PLATFORM', 'default' => true],
 	['id' => 'USER_AGENT', 'content' => Loc::getMessage('main_user_devices_agent'), 'sort' => 'USER_AGENT', 'default' => true],
+	['id' => 'APP_PASSWORD_ID', 'content' => Loc::getMessage('main_user_devices_app_password'), 'sort' => 'APP_PASSWORD_ID', 'default' => false],
 ];
 
 $list->addHeaders($headers);
+
+if (($idList = $list->GroupAction()) && $admin)
+{
+	$connection = Application::getConnection();
+	$action = $_REQUEST['action'] ?? '';
+
+	foreach ($idList as $deviceId)
+	{
+		switch ($action)
+		{
+			case 'delete':
+				$connection->startTransaction();
+				$result = UserDeviceTable::delete($deviceId);
+				if (!$result->isSuccess())
+				{
+					$connection->rollbackTransaction();
+					foreach ($result->getErrorMessages() as $error)
+					{
+						$list->AddGroupError($error, $deviceId);
+					}
+				}
+				else
+				{
+					$connection->commitTransaction();
+				}
+				break;
+		}
+	}
+}
 
 $query = UserDeviceTable::query();
 
 $query->setSelect(['*']);
 
-// TODO: do something about globals
-global $by, $order;
-
-$sortBy = strtoupper($by);
+$sortBy = strtoupper($sort->getField());
 if (!UserDeviceTable::getEntity()->hasField($sortBy))
 {
 	$sortBy = 'ID';
 }
 
-$sortOrder = strtoupper($order);
+$sortOrder = strtoupper($sort->getOrder());
 if ($sortOrder != 'ASC')
 {
 	$sortOrder = 'DESC';
@@ -122,6 +153,10 @@ if (isset($filter['USER_AGENT']))
 {
 	$query->whereLike('USER_AGENT', '%' . $filter['USER_AGENT'] . '%');
 }
+if (isset($filter['APP_PASSWORD_ID']))
+{
+	$query->where('APP_PASSWORD_ID', $filter['APP_PASSWORD_ID']);
+}
 
 $result = $query->exec();
 
@@ -155,8 +190,25 @@ while ($device = $result->fetch())
 			'DEFAULT' => true,
 		]
 	];
+	if ($admin)
+	{
+		$actions[] = [
+			'ICON' => 'delete',
+			'TEXT' => Loc::getMessage('main_user_devices_delete'),
+			'ACTION' => "if(confirm('" . CUtil::JSEscape(Loc::getMessage('main_user_devices_delete_confirm')) . "')) " . $list->actionDoGroup($device['ID'], 'delete'),
+		];
+	}
 
 	$row->addActions($actions);
+}
+
+if ($admin)
+{
+	$groupActions = [
+		'delete' => true,
+	];
+
+	$list->AddGroupActionTable($groupActions);
 }
 
 $nav->setRecordCount($nav->getOffset() + $n);
@@ -171,6 +223,6 @@ $APPLICATION->SetTitle(Loc::getMessage('main_user_devices_title'));
 require __DIR__ . '/../include/prolog_admin_after.php';
 
 $list->DisplayFilter($filterFields);
-$list->DisplayList(['SHOW_COUNT_HTML' => true, 'ACTION_PANEL' => false]);
+$list->DisplayList(['SHOW_COUNT_HTML' => true, 'ACTION_PANEL' => $admin ? null : false]);
 
 require __DIR__ . '/../include/epilog_admin.php';

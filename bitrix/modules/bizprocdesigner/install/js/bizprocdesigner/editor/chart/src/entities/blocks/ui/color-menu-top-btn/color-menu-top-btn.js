@@ -1,9 +1,15 @@
 import { Tag, Event, Dom } from 'main.core';
 import { Outline } from 'ui.icon-set.api.vue';
-import { useContextMenu, type UseContextMenu } from 'ui.block-diagram';
+import { useContextMenu, type UseContextMenu, useBlockDiagram } from 'ui.block-diagram';
 import { IconButton } from '../../../../shared/ui';
 
 import './color-menu-top-btn.css';
+
+type ColorMenuTopBtnProps = {
+	colorName: string,
+	options: string[],
+	contextMenuName: string,
+};
 
 type ColorMenuTopBtnSetup = {
 	iconSet: { [string]: string },
@@ -35,15 +41,21 @@ export const ColorMenuTopBtn = {
 			type: Array,
 			default: () => ([]),
 		},
+		contextMenuName: {
+			type: String,
+			default: null,
+		},
 	},
 	emits: ['update:colorName', 'update:open'],
-	setup(): ColorMenuTopBtnSetup
+	setup(props: ColorMenuTopBtnProps): ColorMenuTopBtnSetup
 	{
-		const { isOpen, showPopup } = useContextMenu();
+		const { isOpen, showPopup } = useContextMenu(props.contextMenuName);
+		const { zoom } = useBlockDiagram();
 
 		return {
 			iconSet: Outline,
 			isOpen,
+			zoom,
 			showPopup,
 		};
 	},
@@ -133,8 +145,8 @@ export const ColorMenuTopBtn = {
 
 			this.showPopup(
 				{
-					clientX: left - OFFSET_LEFT_COLOR_MENU,
-					clientY: top - OFFSET_TOP_COLOR_MENU,
+					clientX: left - (OFFSET_LEFT_COLOR_MENU * this.zoom),
+					clientY: top - (OFFSET_TOP_COLOR_MENU * this.zoom),
 				},
 				{
 					content: this.getMenuContent(),

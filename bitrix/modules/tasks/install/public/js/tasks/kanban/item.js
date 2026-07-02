@@ -149,13 +149,6 @@ BX.Tasks.Kanban.Item.prototype = {
 		{
 			BX.show(this.task_complete);
 		}
-		BX.show(this.task_status_title);
-		BX.style(this.task_status_title, "display", "inline-block");
-
-		BX.removeClass(this.task_status_title, "tasks-kanban-item-blue");
-		BX.removeClass(this.task_status_title, "tasks-kanban-item-gray");
-		BX.removeClass(this.task_status_title, "tasks-kanban-item-red");
-		BX.removeClass(this.task_status_title, "tasks-kanban-item-white-blue");
 
 		this.setDataKey("status", code);
 
@@ -165,12 +158,6 @@ BX.Tasks.Kanban.Item.prototype = {
 			{
 				BX.hide(this.task_complete);
 			}
-			BX.addClass(this.task_status_title, "tasks-kanban-item-gray");
-			this.task_status_title.textContent = BX.message("TASKS_KANBAN_STATUS_COMPLETED");
-		}
-		else
-		{
-			BX.hide(this.task_status_title);
 		}
 
 		if (this.task_start && data.in_progress && !BX.hasClass(this.task_start, "tasks-kanban-task-pause"))
@@ -788,12 +775,14 @@ BX.Tasks.Kanban.Item.prototype = {
 		}
 
 		// deadline
+		const canChangeDeadline = data.deadline?.clickable && data.allow_change_deadline;
+
 		this.switchClass(
 			this.date_deadline_container,
 			"tasks-kanban-item-pointer",
-			data.allow_change_deadline
+			canChangeDeadline,
 		);
-		if (data.allow_change_deadline)
+		if (canChangeDeadline)
 		{
 			BX.bind(this.date_deadline_container, "click", BX.delegate(function(e) {
 				this.deadlineTask();
@@ -810,21 +799,18 @@ BX.Tasks.Kanban.Item.prototype = {
 
 		if (!this.isSprintView && data?.deadline_visibility !== 'hidden')
 		{
-			if (data.date_deadline || data.deferred || data.completed_supposedly)
+			if (data.date_deadline || data.deferred || data.completed_supposedly || data.completed)
 			{
-				this.deadlineNotificationDate = data.deadline.value.replace('&minus;', '-');
+				this.deadlineNotificationDate = data.deadline.value;
 				this.date_deadline.setText(this.deadlineNotificationDate);
-				this.date_deadline.setFill(data.deadline.fill);
-				this.date_deadline.setColor(data.deadline.color);
+				this.date_deadline.setDesign(data.deadline.design);
 			}
 			else
 			{
 				this.deadlineNotificationDate = '';
 				this.date_deadline.setText(BX.message("TASKS_KANBAN_NO_DATE"));
-				this.date_deadline.setFill(false);
-				this.date_deadline.setColor(BX.UI.Label.LIGHT);
+				this.date_deadline.setDesign(BX.UI.System.Chip.ChipDesign.Outline);
 			}
-			this.date_deadline.setCustomClass("tasks-kanban-item-deadline");
 		}
 
 		// set status
@@ -1251,26 +1237,6 @@ BX.Tasks.Kanban.Item.prototype = {
 
 		//endregion
 
-		//region status
-		this.task_status = BX.create("div", {
-			props: {
-				className: "tasks-kanban-item-task-status"
-			}
-		});
-		this.container.appendChild(this.task_status);
-
-		//endregion
-
-		//region status title
-		this.task_status_title = BX.create("div", {
-			props: {
-				className: "tasks-kanban-item-status"
-			}
-		});
-		this.task_status.appendChild(this.task_status_title);
-
-		//endregion
-
 		//region background
 		this.containerImg = BX.create("a", {
 			props: {
@@ -1292,18 +1258,15 @@ BX.Tasks.Kanban.Item.prototype = {
 		//region deadline
 		if (!this.isSprintView && data.deadline_visibility !== 'hidden')
 		{
-			this.date_deadline = new BX.UI.Label({
-				text: data.deadline.value.replace('&minus;', '-'),
-				color: data.deadline.color,
-				fill: (data.date_deadline ? data.deadline.fill : false),
-				// size: BX.UI.Label.Size.SM,
+			this.date_deadline = new BX.UI.System.Chip.Chip({
+				text: data.deadline.value,
+				design: data.deadline.design,
+				rounded: true,
+				size: BX.UI.System.Chip.ChipSize.Xs,
 			});
 			this.date_deadline_container = BX.create("div", {
-				props: {
-					className: "tasks-kanban-item-deadline",
-				},
 				children: [
-					this.date_deadline.getContainer()
+					this.date_deadline.render()
 				]
 			});
 			this.container.appendChild(this.date_deadline_container);

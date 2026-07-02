@@ -14,7 +14,7 @@ import type { PopupOptions } from 'main.popup';
 const CONTAINER_HEIGHT = 44;
 const CONTAINER_WIDTH = 60;
 
-const MESSAGE_TEXT_NODE_CLASS = '.bx-im-message-default-content__text';
+const MESSAGE_TEXT_NODE_CLASS = '.bx-im-message-text-content__container';
 const POPUP_ID = 'im-quote-button-popup';
 
 // @vue/component

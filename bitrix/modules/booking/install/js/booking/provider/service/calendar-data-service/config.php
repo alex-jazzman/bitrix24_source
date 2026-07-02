@@ -9,8 +9,8 @@ return [
 	'js' => 'dist/calendar-data-service.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'booking.core',
 		'booking.const',
+		'booking.core',
 		'booking.lib.api-client',
 	],
 	'skip_core' => true,

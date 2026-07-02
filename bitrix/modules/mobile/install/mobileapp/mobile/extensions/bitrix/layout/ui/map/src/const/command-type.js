@@ -16,6 +16,10 @@ jn.define('layout/ui/map/src/const/command-type', (require, exports, module) => 
 		ZOOM_OUT: 'zoomOut',
 		FIT_TO_LAYERS: 'fitToLayers',
 		CREATE_ICON: 'createIcon',
+		ENABLE_CLUSTERING: 'enableClustering',
+		DISABLE_CLUSTERING: 'disableClustering',
+		UPDATE_CLUSTER_ICON: 'updateClusterIcon',
+		UPDATE_SETTINGS: 'updateSettings',
 	};
 
 	module.exports = {

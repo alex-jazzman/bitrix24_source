@@ -9,7 +9,7 @@ type AddEmployeesToCollabRequest = {
 
 export class CollabInvitationService
 {
-	addEmployees({ dialogId, members }: AddEmployeesToCollabRequest): void
+	addEmployees({ dialogId, members }: AddEmployeesToCollabRequest): Promise
 	{
 		const payload = {
 			data: {
@@ -18,9 +18,10 @@ export class CollabInvitationService
 			},
 		};
 
-		runAction(RestMethod.socialnetworkMemberAdd, payload)
+		return runAction(RestMethod.socialnetworkMemberAdd, payload)
 			.catch(([error]) => {
 				console.error('CollabInvitationService: add employee error', error);
+				throw error;
 			});
 	}
 
@@ -37,7 +38,7 @@ export class CollabInvitationService
 			});
 	}
 
-	updateLink(collabId: number): Promise<null>
+	updateLink(collabId: number): Promise
 	{
 		const payload = {
 			data: { collabId },

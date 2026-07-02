@@ -1,4 +1,5 @@
 import type { Scenario } from './scenario';
+import { Max } from './scenarios/max';
 import { RuWhatsApp } from './scenarios/ru-whatsapp';
 import { Telegram } from './scenarios/telegram';
 import { WhatsApp } from './scenarios/whatsapp';
@@ -20,6 +21,11 @@ export class Factory
 		if (name === 'whatsapp') // for not RU region
 		{
 			return new WhatsApp(params);
+		}
+
+		if (name === 'max')
+		{
+			return new Max(params);
 		}
 
 		throw new RangeError(`Unknown scenario name: ${name}`);

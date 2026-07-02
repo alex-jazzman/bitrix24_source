@@ -2,48 +2,49 @@
 	display: none;
 }
 
-.field-row #add_field {
-	display: block !important;
-	margin-bottom: 10px;
-	font-family: var(--ui-font-family-primary), serif !important;
-	color: var(--ui-color-design-plain-a-content) !important;
-	cursor: pointer !important;
-	padding-left: 28px !important;
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='24' height='24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12 5a.7.7 0 01.7.7v5.6h5.6a.7.7 0 010 1.4h-5.6v5.6a.7.7 0 01-1.4 0v-5.6H5.7a.7.7 0 010-1.4h5.6V5.7A.7.7 0 0112 5z' fill='%230075FF'/%3E%3C/svg%3E") !important;
-	background-repeat: no-repeat !important;
-	background-position: 4px center !important;
-	background-size: 20px 20px !important;
-	font-weight: 500 !important;
-	font-size: 13px !important;
-	margin-left: 4px !important;
-	border-bottom: none !important;
-	text-decoration: none !important;
+.bizproc-create-storage__outer-block {
+	border: 1px solid var(--ui-color-base-20, #e0e2e4);
+	border-radius: var(--ui-border-radius-lg, 12px);
+	background: var(--ui-color-background-primary, #fff);
+	padding: 12px;
+	overflow: visible;
 }
 
-.storage-fields__item {
-	border: 1px solid #e9ecef;
-	border-radius: 8px;
-	padding: 0 9px 0 9px;
-	margin-bottom: 12px;
+.bizproc-create-storage__fields-container {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
 }
 
-.storage-fields__item-content {
+.bizproc-create-storage__field-row {
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
-	gap: 16px;
 }
 
-.storage-fields__item-name {
+.bizproc-create-storage__field-row-content {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	overflow: hidden;
+	margin: 0 4px;
+	border: 1px solid rgb(var(--ui-field-color-border-default));
+	border-radius: var(--ui-border-radius-md);
+	padding: 0 10px 0 10px;
+}
+
+.bizproc-create-storage__field-name {
 	color: #212529;
-	text-decoration: none;
 	font-weight: 500;
+	font-size: 13px;
 	flex: 1;
 	padding: 8px 0;
 }
 
-.field-row .storage-fields__delete-button {
-	display: flex !important;
+.bizproc-create-storage__delete-button {
+	cursor: pointer;
+	display: flex;
+	align-items: center;
 	justify-content: center;
 }
 
@@ -55,10 +56,29 @@
 	padding: 2px 6px;
 	border: 1px solid #ddd;
 	border-radius: 3px;
-	margin-left: 8px;
+	white-space: nowrap;
 }
 
 .field-row .storage-fields__code-button:hover {
 	background-color: #f5f5f5;
 	color: #333;
+}
+
+.bizproc-create-storage__icon-plus {
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: #828b95;
+}
+
+.node-settings-edit-box .node-settings-add-field-button {
+	border: 1px solid rgba(0, 0, 0, 0.08);
+	border-radius: 8px;
+	margin-top: 18px;
+	justify-content: center;
+	padding: 5px 0;
+	font-size: 14px;
+	line-height: normal;
+	color: var(--ui-color-palette-gray-70);
+	display: flex;
+	align-items: center;
+	cursor: pointer;
 }

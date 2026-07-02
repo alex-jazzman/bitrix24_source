@@ -2,17 +2,18 @@
 
 return [
 	'components' => [
+		'calendar:calendar.event.list',
 		'project.tabs',
-		'tasks:tasks.dashboard',
 		'disk:disk.tabs.group',
+		'tasks:tasks.dashboard',
 	],
 	'extensions' => [
+		'collab/service/access',
+		'loc',
 		'notify-manager',
 		'qrauth/utils',
-		'require-lazy',
 		'rest',
 		'tariff-plan-restriction',
 		'toast',
-		'collab/service/access',
 	],
 ];

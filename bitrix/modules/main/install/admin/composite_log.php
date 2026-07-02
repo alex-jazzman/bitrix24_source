@@ -1,1 +1,2 @@
-<?require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/admin/composite_log.php");?>
+<?php 
+require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/admin/composite_log.php");

@@ -482,6 +482,10 @@ endif;
 
 if ($arResult['IS_SHOW_TOOLBAR_FILTER'])
 {
+	if ($arResult['TOOLBAR_MENU'] !== null) {
+		Toolbar::addButton($arResult['TOOLBAR_MENU']);
+	}
+
 	Toolbar::addFilter([
 		'GRID_ID' => $arResult['GRID_ID'],
 		'FILTER_ID' => $arResult['FILTER_ID'],

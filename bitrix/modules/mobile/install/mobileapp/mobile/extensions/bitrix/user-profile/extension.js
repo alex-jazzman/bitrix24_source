@@ -2,6 +2,7 @@
  * @module user-profile
  */
 jn.define('user-profile', (require, exports, module) => {
+	const { Feature } = require('feature');
 	const { Loc } = require('loc');
 	const { TabType, closeIcon } = require('user-profile/const');
 	const { NotifyManager } = require('notify-manager');
@@ -13,7 +14,6 @@ jn.define('user-profile', (require, exports, module) => {
 		initTabNestedWidgetsStatic,
 		loadTabsForOpen,
 	} = require('user-profile/tabs-preparer');
-	const { Feature } = require('feature');
 
 	/**
 	 * @class UserProfile
@@ -40,6 +40,10 @@ jn.define('user-profile', (require, exports, module) => {
 				],
 				tabs: {
 					items,
+				},
+				backgroundLayout: {
+					mode: 'fixedHeight',
+					resizeMode: 'cover',
 				},
 			};
 		}
@@ -68,6 +72,10 @@ jn.define('user-profile', (require, exports, module) => {
 						],
 						tabs: {
 							items,
+						},
+						backgroundLayout: {
+							mode: 'fixedHeight',
+							resizeMode: 'cover',
 						},
 					},
 				},

@@ -7,25 +7,11 @@ jn.define('im/messenger/application/lib/event-handler/store', (require, exports,
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	/**
+	 * @implements {Unsubscribable}
 	 * @class StoreEventHandler
 	 */
 	class StoreEventHandler
 	{
-		static #instance;
-
-		/**
-		 * @return {StoreEventHandler}
-		 */
-		static getInstance()
-		{
-			if (!this.#instance)
-			{
-				this.#instance = new this();
-			}
-
-			return this.#instance;
-		}
-
 		constructor()
 		{
 			this.logger = getLoggerWithContext('messenger--store-event-handler', this);
@@ -58,11 +44,11 @@ jn.define('im/messenger/application/lib/event-handler/store', (require, exports,
 		}
 
 		/**
-		 * @return {MessengerHeaderController}
+		 * @return {MessengerHeaderManager}
 		 */
-		get #headerController()
+		get #headerManager()
 		{
-			return serviceLocator.get('messenger-header-controller');
+			return serviceLocator.get('messenger-header-manager');
 		}
 
 		/**
@@ -115,7 +101,7 @@ jn.define('im/messenger/application/lib/event-handler/store', (require, exports,
 				void this.#refresher.refreshOnRestoreConnection();
 			}
 
-			this.#headerController.redrawTitleIfNeeded();
+			this.#headerManager.redrawAllTitles();
 			this.appStatus = this.#core.getAppStatus();
 		};
 	}

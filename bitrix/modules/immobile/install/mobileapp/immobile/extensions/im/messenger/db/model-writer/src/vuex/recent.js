@@ -49,6 +49,8 @@ jn.define('im/messenger/db/model-writer/vuex/recent', (require, exports, module)
 				'update',
 				'clearAllCounters',
 				'setFirstPageByTab',
+				'readAllChats',
+				'readByRecentSection',
 			];
 
 			if (!saveActions.includes(actionName))

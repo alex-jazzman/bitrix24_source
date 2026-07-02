@@ -3,42 +3,42 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_component_message_base,im_v2_component_message_elements,im_v2_lib_parser) {
+(function (exports, im_v2_component_message_base, im_v2_component_message_elements, im_v2_lib_parser) {
 	'use strict';
 
 	// @vue/component
 	const SmileMessage = {
-	  name: 'SmileMessage',
-	  components: {
-	    BaseMessage: im_v2_component_message_base.BaseMessage,
-	    MessageStatus: im_v2_component_message_elements.MessageStatus,
-	    ReactionList: im_v2_component_message_elements.ReactionList
-	  },
-	  props: {
-	    item: {
-	      type: Object,
-	      required: true
-	    },
-	    dialogId: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  computed: {
-	    message() {
-	      return this.item;
-	    },
-	    text() {
-	      return im_v2_lib_parser.Parser.decodeSmile(this.message.text, {
-	        ratioConfig: {
-	          Default: 1,
-	          Big: 3
-	        },
-	        enableBigSmile: true
-	      });
-	    }
-	  },
-	  template: `
+		name: 'SmileMessage',
+		components: {
+			BaseMessage: im_v2_component_message_base.BaseMessage,
+			MessageStatus: im_v2_component_message_elements.MessageStatus,
+			ReactionList: im_v2_component_message_elements.ReactionList
+		},
+		props: {
+			item: {
+				type: Object,
+				required: true
+			},
+			dialogId: {
+				type: String,
+				required: true
+			}
+		},
+		computed: {
+			message() {
+				return this.item;
+			},
+			text() {
+				return im_v2_lib_parser.Parser.decodeSmile(this.message.text, {
+					ratioConfig: {
+						Default: 1,
+						Big: 3
+					},
+					enableBigSmile: true
+				});
+			}
+		},
+		template: `
 		<BaseMessage
 			:dialogId="dialogId"
 			:item="item"
@@ -64,5 +64,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.SmileMessage = SmileMessage;
 
-}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Lib));
+})(this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}, BX.Messenger.v2.Component.Message, BX.Messenger.v2.Component.Message, BX.Messenger.v2.Lib);
 //# sourceMappingURL=smile.bundle.js.map

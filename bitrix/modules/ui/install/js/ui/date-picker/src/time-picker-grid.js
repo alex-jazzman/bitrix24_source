@@ -1,5 +1,7 @@
 import { Dom, Tag, Type, Loc, Runtime, Text } from 'main.core';
 import { MemoryCache, type BaseCache } from 'main.core.cache';
+import { DateTimeFormat } from 'main.date';
+import { createUtcDate } from './helpers/index.js';
 import { TimePickerBase, type TimePickerHour, type TimePickerMinute } from './time-picker-base';
 
 import './css/time-picker-grid.css';
@@ -21,14 +23,20 @@ export class TimePickerGrid extends TimePickerBase
 					}
 					<div class="ui-time-picker-grid-content">
 						<div class="ui-time-picker-grid-column">
-							<div class="ui-time-picker-grid-column-title">${Loc.getMessage('UI_DATE_PICKER_HOURS')}</div>
+							<div 
+								class="ui-time-picker-grid-column-title" 
+								id="${this.getHoursColumnId()}"
+							>${Loc.getMessage('UI_DATE_PICKER_HOURS')}</div>
 							<div class="ui-time-picker-grid-column-content">
 								${this.getHoursContainer()}
 							</div>
 						</div>
 						<div class="ui-time-picker-grid-column-separator"></div>
 						<div class="ui-time-picker-grid-column">
-							<div class="ui-time-picker-grid-column-title">${Loc.getMessage('UI_DATE_PICKER_MINUTES')}</div>
+							<div 
+								class="ui-time-picker-grid-column-title" 
+								id="${this.getMinutesColumnId()}"
+							>${Loc.getMessage('UI_DATE_PICKER_MINUTES')}</div>
 							<div class="ui-time-picker-grid-column-content">
 								${this.getMinutesContainer()}
 							</div>
@@ -52,7 +60,9 @@ export class TimePickerGrid extends TimePickerBase
 	{
 		return this.#refs.remember('hours', () => {
 			return Tag.render`
-				<div 
+				<div
+					role="listbox"
+					aria-labelledby="${this.getHoursColumnId()}"
 					class="ui-time-picker-grid-column-items --hours" 
 					onclick="${this.#handleItemClick.bind(this)}"
 				></div>
@@ -60,17 +70,29 @@ export class TimePickerGrid extends TimePickerBase
 		});
 	}
 
+	getHoursColumnId(): string
+	{
+		return `${this.getDatePicker().getId()}-hours-column`;
+	}
+
 	getMinutesContainer(): HTMLElement
 	{
 		return this.#refs.remember('minutes', () => {
 			return Tag.render`
-				<div 
+				<div
+					role="listbox"
+					aria-labelledby="${this.getMinutesColumnId()}"
 					class="ui-time-picker-grid-column-items --minutes" 
 					onclick="${this.#handleItemClick.bind(this)}"
 					onscroll="${Runtime.debounce(this.#adjustScrollShadows, 100, this)}"
 				></div>
 			`;
 		});
+	}
+
+	getMinutesColumnId(): string
+	{
+		return `${this.getDatePicker().getId()}-minutes-column`;
 	}
 
 	onHide()
@@ -123,11 +145,11 @@ export class TimePickerGrid extends TimePickerBase
 
 		if (this.getDatePicker().isFocused())
 		{
-			if (this.getFocusColumn() === 'hours' && focusedHourBtn !== null)
+			if (this.getFocusColumn() === 'hours' && focusedHourBtn !== null && this.getDatePicker().getFocusInputModality() === 'keyboard')
 			{
 				focusedHourBtn.focus({ preventScroll: true });
 			}
-			else if (this.getFocusColumn() === 'minutes' && focusedMinute !== null)
+			else if (this.getFocusColumn() === 'minutes' && focusedMinute !== null && this.getDatePicker().getFocusInputModality() === 'keyboard')
 			{
 				focusedMinute.focus({ preventScroll: true });
 			}
@@ -137,10 +159,19 @@ export class TimePickerGrid extends TimePickerBase
 	#renderHour(hour: TimePickerHour, container: HTMLElement): HTMLButtonElement
 	{
 		const button: HTMLButtonElement = this.#refs.remember(`hour-${hour.value}`, () => {
+			const label = DateTimeFormat.format(
+				DateTimeFormat.getFormat('SHORT_TIME_FORMAT'),
+				createUtcDate(1970, 0, 1, hour.value),
+				null,
+				true,
+			);
+
 			const hourContainer: HTMLButtonElement = Tag.render`
 				<button
 					type="button"
-					class="ui-time-picker-grid-item" 
+					role="option"
+					class="ui-time-picker-grid-item"
+					aria-label="${label}"
 					data-index="${hour.index}" 
 					data-hour="${hour.value}"
 					data-tab-priority="true"
@@ -178,6 +209,12 @@ export class TimePickerGrid extends TimePickerBase
 			Dom.removeClass(button, '--selected');
 		}
 
+		const ariaSelected = hour.selected ? 'true' : 'false';
+		if (button.getAttribute('aria-selected') !== ariaSelected)
+		{
+			button.setAttribute('aria-selected', ariaSelected);
+		}
+
 		if (hour.focused)
 		{
 			Dom.addClass(button, '--focused');
@@ -195,10 +232,19 @@ export class TimePickerGrid extends TimePickerBase
 	#renderMinute(minute: TimePickerMinute, container: HTMLElement): HTMLButtonElement
 	{
 		const button: HTMLButtonElement = this.#refs.remember(`minute-${minute.value}`, () => {
+			const label = DateTimeFormat.format(
+				'idiff',
+				createUtcDate(1970, 0, 1, 0, 0),
+				createUtcDate(1970, 0, 1, 0, minute.value),
+				true,
+			);
+
 			const minuteContainer = Tag.render`
 				<button
 					type="button"
 					class="ui-time-picker-grid-item"
+					role="option"
+					aria-label="${label}"
 					data-index="${minute.index}" 
 					data-minute="${minute.value}"
 					onmouseenter="${this.#handleMouseEnter.bind(this)}"
@@ -219,6 +265,12 @@ export class TimePickerGrid extends TimePickerBase
 		else
 		{
 			Dom.removeClass(button, '--selected');
+		}
+
+		const ariaSelected = minute.selected ? 'true' : 'false';
+		if (button.getAttribute('aria-selected') !== ariaSelected)
+		{
+			button.setAttribute('aria-selected', ariaSelected);
 		}
 
 		if (minute.hidden)
@@ -374,5 +426,15 @@ export class TimePickerGrid extends TimePickerBase
 	#handleTitleClick(event: MouseEvent): void
 	{
 		this.emit('onTitleClick');
+	}
+
+	getPrevBtnLabel(): string
+	{
+		return Loc.getMessage('UI_DATE_PICKER_BACK_TO_DAYS');
+	}
+
+	getNextBtnLabel(): string
+	{
+		return '';
 	}
 }

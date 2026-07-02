@@ -1,0 +1,2 @@
+<?php
+$MESS['REST_INFRASTRUCTURE_REST_CONTROLLER_APPLICATION_PLACEMENT_LISTACTION_TITLE'] = 'Возвращает список доступных мест встраивания';

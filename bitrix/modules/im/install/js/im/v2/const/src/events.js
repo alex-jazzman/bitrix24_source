@@ -7,6 +7,7 @@ export const EventType = {
 		onMessageIsVisible: 'IM:Dialog:onMessageIsVisible',
 		onMessageIsNotVisible: 'IM:Dialog:onMessageIsNotVisible',
 		onClickMessageContextMenu: 'IM:Dialog:onClickMessageContextMenu',
+		onCloseChat: 'IM:Dialog:onCloseChat',
 
 		scrollToBottom: 'IM:Dialog:scrollToBottom',
 		goToMessageContext: 'IM:Dialog:goToMessageContext',
@@ -21,6 +22,7 @@ export const EventType = {
 	},
 	textarea:
 	{
+		onBeforeSendMessage: 'IM:Textarea:onBeforeSendMessage',
 		onAfterSendMessage: 'IM:Textarea:onAfterSendMessage',
 
 		editMessage: 'IM:Textarea:editMessage',
@@ -48,6 +50,8 @@ export const EventType = {
 	recent:
 	{
 		openSearch: 'IM.Recent:openSearch',
+		openNestedList: 'IM.Recent:openNestedList',
+		closeListSlider: 'IM.Recent:closeListSlider',
 	},
 	mention:
 	{
@@ -110,6 +114,7 @@ export const EventType = {
 	task:
 	{
 		onMembersCountChange: 'tasks:card:onMembersCountChange',
+		openCardFromMessage: 'tasks:chat-action:before-execute',
 	},
 	call:
 	{
@@ -133,5 +138,9 @@ export const EventType = {
 		onExit: 'BXExitApplication',
 		onIconClick: 'BXApplicationClick',
 		onNewTabClick: 'BXNewTabClick',
+	},
+	sending:
+	{
+		onBeforeAddMessageToModel: 'IM:Textarea:onBeforeAddMessageToModel',
 	},
 };

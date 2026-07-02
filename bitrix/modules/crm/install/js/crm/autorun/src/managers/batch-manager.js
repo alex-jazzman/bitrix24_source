@@ -188,7 +188,7 @@ export class BatchManager
 	{
 		window.requestAnimationFrame(
 			() => {
-				const grid = BX.Main.gridManager.getById(this._gridId);
+				const grid = BX.Main.gridManager?.getById(this._gridId);
 				if (grid && grid.instance && grid.instance.pinHeader)
 				{
 					grid.instance.pinHeader.refreshRect();
@@ -223,6 +223,11 @@ export class BatchManager
 	getState(): number
 	{
 		return this._progress.getState();
+	}
+
+	getProgress(): Processor
+	{
+		return this._progress;
 	}
 
 	getProcessedItemCount(): number
@@ -344,7 +349,7 @@ export class BatchManager
 		this.enableGridFilter(true);
 		if (enableGridReload)
 		{
-			BX.Main.gridManager.reload(this._gridId);
+			BX.Main.gridManager?.reload(this._gridId);
 		}
 	}
 

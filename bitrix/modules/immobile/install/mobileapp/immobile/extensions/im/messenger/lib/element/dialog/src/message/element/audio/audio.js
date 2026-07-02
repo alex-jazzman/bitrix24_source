@@ -51,7 +51,7 @@ jn.define('im/messenger/lib/element/dialog/message/element/audio/audio', (requir
 		 * @param {MessagesModelState} messageModel
 		 * @param {FilesModelState} fileModel
 		 * @param {TranscriptModelState | null} transcriptModel
-		 * @param {CreateMessageOptions} options
+		 * @param {CreateMessageOptions|{}} options
 		 */
 		constructor(messageModel, fileModel, transcriptModel, options = {})
 		{

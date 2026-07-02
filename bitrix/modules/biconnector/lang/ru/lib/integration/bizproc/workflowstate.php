@@ -48,3 +48,4 @@ $MESS['BP_BIC_WF_STATE_FIELD_MODIFIED_BY_NAME'] = 'Шаблон отредакт
 $MESS['BP_BIC_WF_STATE_FIELD_MODIFIED_BY_NAME_FULL'] = 'Имя пользователя, который последним обновил шаблон';
 $MESS['BP_BIC_WF_STATE_FIELD_MODIFIED_BY'] = 'Шаблон отредактирован пользователем';
 $MESS['BP_BIC_WF_STATE_FIELD_MODIFIED_BY_FULL'] = 'Идентификатор и имя пользователя, который последним обновил шаблон';
+$MESS['BP_BIC_WF_STATE_TABLE_DESCRIPTION_FULL'] = "Набор содержит данные о запущенных бизнес-процессах: их статусы, время выполнения и информацию о пользователях, которые их запустили или отредактировали.";

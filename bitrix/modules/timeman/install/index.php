@@ -254,6 +254,14 @@ class timeman extends CModule
 
 		if($USER->IsAdmin())
 		{
+			if (IsModuleInstalled('timemanmobile'))
+			{
+				$APPLICATION->throwException(GetMessage('TIMEMAN_MODULE_UNINSTALL_ERROR_TIMEMANMOBILE'));
+				$APPLICATION->IncludeAdminFile(GetMessage("TIMEMAN_UNINSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/unstep1.php");
+
+				return;
+			}
+
 			$step = intval($step);
 			if($step < 2)
 			{

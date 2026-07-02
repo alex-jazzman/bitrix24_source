@@ -186,7 +186,7 @@ $MESS["BIZPROC_NODES_BITRIX_AI_COACH_SYSTEMPROMPT_2"] = "ШАГ 0: ПРОВЕР�
 
 {=A4120_8802_2523_2854:questions}";
 $MESS["BIZPROC_NODES_BITRIX_AI_COACH_TEXT_1"] = "У вас будет два чат-бота. В первом можно обсудить с агентом тест. Придумайте название для него, например, «Создатель тестов для отдела Продаж»";
-$MESS["BIZPROC_NODES_BITRIX_AI_COACH_TEXT_2"] = "Настройки чат-бот для тестирования";
+$MESS["BIZPROC_NODES_BITRIX_AI_COACH_TEXT_2"] = "Настройки чат-бота для тестирования";
 $MESS["BIZPROC_NODES_BITRIX_AI_COACH_TEXT_3"] = "Этот чат-бот увидят сотрудники, которые будут проходить тест. Придумайте название для него, например, «Тренер знаний»";
 $MESS["BIZPROC_NODES_BITRIX_AI_COACH_TITLE_1"] = "Нодовый бизнес-процесс";
 $MESS["BIZPROC_NODES_BITRIX_AI_COACH_TITLE_10"] = "Чтение данных. Актуальный тест";

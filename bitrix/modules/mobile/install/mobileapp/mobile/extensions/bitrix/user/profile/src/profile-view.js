@@ -609,7 +609,7 @@ jn.define('user/profile/src/profile-view', (require, exports, module) => {
 		}
 
 		/**
-		 * @deprecated Use UserProfile instead ('user-profile')
+		 * @deprecated Use UserProfile instead: require('user-profile')
 		 */
 		static open(userData = {}, formObject = false)
 		{
@@ -700,7 +700,7 @@ jn.define('user/profile/src/profile-view', (require, exports, module) => {
 		}
 
 		/**
-		 * @deprecated Use UserProfile instead ('user-profile')
+		 * @deprecated Use UserProfile instead: require('user-profile')
 		 */
 		static openComponent(userData = {})
 		{
@@ -721,7 +721,7 @@ jn.define('user/profile/src/profile-view', (require, exports, module) => {
 		}
 
 		/**
-		 * @deprecated Use UserProfile instead ('user-profile')
+		 * @deprecated Use UserProfile instead: require('user-profile')
 		 * @param {number} userId
 		 * @param {PageManager} [parentWidget=PageManager]
 		 * @param {object} [userData={}]

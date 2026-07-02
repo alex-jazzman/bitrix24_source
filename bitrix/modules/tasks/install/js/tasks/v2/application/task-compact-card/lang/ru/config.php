@@ -7,3 +7,6 @@ $MESS['TASKS_V2_TCC_DROP_ZONE'] = 'Переместите файлы в эту �
 $MESS['TASKS_V2_TCC_AUDITORS_HINT_TITLE'] = 'Все участники чата добавлены в задачу в роли наблюдателей';
 $MESS['TASKS_V2_TCC_AUDITORS_HINT_CONTENT'] = 'Список участников можно изменить в полной форме карточки';
 $MESS['TASKS_V2_TCC_AUDITORS_HINT_DO_NOT_SHOW_AGAIN'] = 'Больше не показывать';
+
+$MESS["TASKS_V2_TCC_NOTIFY_TASK_CREATED"] = "Задача добавлена";
+$MESS["TASKS_V2_TCC_NOTIFY_TASK_DO_VIEW"] = "Просмотреть";

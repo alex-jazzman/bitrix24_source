@@ -73,7 +73,7 @@ if (isset($_REQUEST['ajax_mode']) && $_REQUEST['ajax_mode'] == 'Y')
 			BX('db_event_size').innerHTML = "(<?=CFile::FormatSize(getTableSize("^b_event_log$"))?>)";
 			EndDump();
 		</script>
-		<?
+		<?php
 		die();
 	}
 }
@@ -220,7 +220,7 @@ elseif(isset($_REQUEST['process']) && $_REQUEST['process'] == "Y")
 		if ($NS['BUCKET_ID']) // send to the [bitrix]cloud
 			$NS['total_steps']++;
 
-		$NS['dump_site_id'] = $_REQUEST['dump_site_id'] ?? '';
+		$NS['dump_site_id'] = $_REQUEST['dump_site_id'] ?? [];
 		if (!is_array($NS['dump_site_id']))
 			$NS['dump_site_id'] = array();
 		COption::SetOptionString("main", "dump_site_id", serialize($NS['dump_site_id']));
@@ -829,7 +829,7 @@ elseif(isset($_REQUEST['process']) && $_REQUEST['process'] == "Y")
 		<script>
 			window.setTimeout("if(!stop)AjaxSend('?process=Y&<?=bitrix_sessid_get()?>')",<?=1000 * IntOption("dump_max_exec_time_sleep")?>);
 		</script>
-		<?
+		<?php
 	}
 	else // Finish
 	{
@@ -872,11 +872,11 @@ elseif(isset($_REQUEST['process']) && $_REQUEST['process'] == "Y")
 			"HTML" => true));
 
 ?>
-		<?echo bitrix_sessid_post()?>
+		<?= bitrix_sessid_post()?>
 		<script>
 			EndDump();
 		</script>
-<?
+<?php
 	}
 	require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin_js.php");
 	die();
@@ -908,7 +908,7 @@ if (!$encrypt || !$bHash)
 if (defined('DUMP_DEBUG_MODE'))
 	echo '<div style="color:red">DEBUG MODE</div><input type=button value=Next onclick="AjaxSend(\'?process=Y&'.bitrix_sessid_get().'\')">';
 
-?><div id="dump_result_div"></div><?
+?><div id="dump_result_div"></div><?php
 $aMenu = array(
 	array(
 		"TEXT"	=> GetMessage("MAIN_DUMP_LIST_PAGE_TITLE"),
@@ -1048,7 +1048,7 @@ function CheckActiveStart()
 			BX('mnu_FILES_btn_'+i).disabled = !mask;
 		}
 
-		<?
+		<?php
 		if ($arAllBucket)
 		{
 			foreach($arAllBucket as $arBucket)
@@ -1083,7 +1083,7 @@ BX.ready(
 	function()
 	{
 		CheckExpert();
-		<?
+		<?php
 			if (isset($_REQUEST['from']) && $_REQUEST['from'] == 'bitrixcloud')
 				echo 'StartDump();';
 			elseif (isset($_REQUEST['action']) && $_REQUEST['action'] == 'cloud_send' && check_bitrix_sessid())
@@ -1136,7 +1136,7 @@ function StartDump()
 		{
 			PasswordDialog = new BX.CDialog({
 				title: '<?=GetMessage("DUMP_MAIN_ENC_ARC")?>',
-				content: '<?
+				content: '<?php
 					echo '<div style="color:red" id=password_error></div>';
 					echo CUtil::JSEscape(BeginNote().GetMessage('MAIN_DUMP_SAVE_PASS').EndNote());
 					echo '<table>';
@@ -1170,7 +1170,7 @@ function StartDump()
 function DoDump()
 {
 	counter_sec = 0;
-	var queryString = 'lang=<?echo htmlspecialcharsbx(LANGUAGE_ID)?>&process=Y&action=start';
+	var queryString = 'lang=<?= htmlspecialcharsbx(LANGUAGE_ID)?>&process=Y&action=start';
 
 	var ob = document.fd1.dump_bucket_id;
 	for (var i = 0; i<ob.length; i++)
@@ -1232,7 +1232,7 @@ function DoDump()
 				queryString +='&dump_base_skip_log=Y';
 		}
 
-		<?
+		<?php
 		if ($arAllBucket)
 		{
 			foreach($arAllBucket as $arBucket)
@@ -1240,7 +1240,7 @@ function DoDump()
 				?>
 					if (BX('dump_cloud_<?=$arBucket['ID']?>').checked)
 						queryString += '&dump_cloud[<?=$arBucket['ID']?>]=Y';
-				<?
+				<?php
 			}
 		}
 		?>
@@ -1301,8 +1301,8 @@ function getTableSize()
 </script>
 
 
-	<form name="fd1" action="<?echo $APPLICATION->GetCurPage()?>?lang=<?=LANGUAGE_ID?>" method="GET">
-	<?
+	<form name="fd1" action="<?= $APPLICATION->GetCurPage()?>?lang=<?=LANGUAGE_ID?>" method="GET">
+	<?php
 	$editTab->Begin();
 	$editTab->BeginNextTab();
 
@@ -1310,13 +1310,13 @@ function getTableSize()
 	{
 		?>
 		<tr>
-			<td colspan=2><?
+			<td colspan=2><?php
 			echo BeginNote();
 			echo GetMessage('MAIN_DUMP_AUTO_WARN', array('#LINK#' => '/bitrix/admin/dump_auto.php?lang='.LANGUAGE_ID));
 			echo EndNote();
 			?></td>
 		</tr>
-		<?
+		<?php
 	}
 
 	if ($bBitrixCloud)
@@ -1325,7 +1325,7 @@ function getTableSize()
 	<tr>
 		<td class="adm-detail-valign-top" width="40%"><?=GetMessage('DUMP_MAIN_BITRIX_CLOUD_DESC')?><span class="required"><sup>1</sup></span>:</td>
 		<td width="60%">
-		<?
+		<?php
 		if(is_object($backup))
 		{
 			CAdminMessage::ShowMessage(array(
@@ -1342,7 +1342,7 @@ function getTableSize()
 		?>
 		</td>
 	</tr>
-	<?
+	<?php
 	}
 	?>
 	<tr>
@@ -1350,7 +1350,7 @@ function getTableSize()
 		<td>
 			<div><input type=radio name=dump_bucket_id value="-1" <?=$bBitrixCloud ? "checked" : ""?> id="bitrixcloud" <?=$bBitrixCloud ? '' : 'disabled'?> onclick="CheckEncrypt(this)"> <label for="bitrixcloud"><?=GetMessage('DUMP_MAIN_IN_THE_BXCLOUD')?></label><?=$strBXError ? ' <span style="color:red">('.$strBXError.')</span>' : ''?></div>
 			<div><input type=radio name=dump_bucket_id value="0"  <?=!$bBitrixCloud ? "checked" : ""?> id="dump_bucket_id_0" onclick="CheckEncrypt(this)"> <label for="dump_bucket_id_0"><?=GetMessage('MAIN_DUMP_LOCAL_DISK')?></label></div>
-			<?
+			<?php
 			$arWriteBucket = CBackup::GetBucketList($arFilter = array('READ_ONLY' => 'N'));
 			if ($arWriteBucket)
 			{
@@ -1360,7 +1360,7 @@ function getTableSize()
 			?>
 		</td>
 	</tr>
-<?
+<?php
 	$arSitePath = array();
 	$res = CSite::GetList('sort', 'asc', array('ACTIVE'=>'Y'));
 	while($f = $res->Fetch())
@@ -1376,8 +1376,8 @@ function getTableSize()
 	<tr>
 		<td class="adm-detail-valign-top"><?=GetMessage("DUMP_MAIN_SITE")?><span class="required"><sup>2</sup></span></td>
 		<td>
-			<?
-				if ($s = COption::GetOptionString("main", "dump_site_id", $NS['dump_site_id']))
+			<?php
+				if ($s = COption::GetOptionString("main", "dump_site_id"))
 					$dump_site_id = unserialize($s, ['allowed_classes' => false]);
 				else
 					$dump_site_id = array();
@@ -1393,17 +1393,17 @@ function getTableSize()
 			?>
 		</td>
 	</tr>
-	<?
+	<?php
 	}
 	?>
-	<?
+	<?php
 	$editTab->BeginNextTab();
 	?>
 	<tr>
 		<td colspan=2 align=center><input type="checkbox" name="dump_expert" onclick="CheckExpert()" id="dump_expert"> <label for="dump_expert"><?=GetMessage("DUMP_MAIN_ENABLE_EXPERT")?></label></td>
 	</tr>
 	<tr id="tr_dump_expert">
-		<td colspan=2><?
+		<td colspan=2><?php
 		echo BeginNote();
 		echo GetMessage("DUMP_MAIN_CHANGE_SETTINGS");
 		echo EndNote();
@@ -1415,23 +1415,23 @@ function getTableSize()
 	<tr class="heading">
 		<td colspan="2"><?=GetMessage("DUMP_MAIN_ARC_CONTENTS")?></td>
 	</tr>
-<?
+<?php
 if ($arAllBucket)
 {
 ?>
 	<tr>
 		<td class="adm-detail-valign-top"><?=GetMessage("DUMP_MAIN_DOWNLOAD_CLOUDS")?></td>
 		<td>
-			<?
+			<?php
 			foreach($arAllBucket as $arBucket)
 				echo '<div><input type="checkbox" id="dump_cloud_'.$arBucket['ID'].'" OnClick="CheckActiveStart()" '.(IntOption("dump_cloud_".$arBucket['ID'], 1) ? "checked" : "").'> <label for="dump_cloud_'.$arBucket['ID'].'">'.htmlspecialcharsbx($arBucket['BUCKET'].' ('.$arBucket['SERVICE_ID'].')').'</label></div>';
 			?>
 		</td>
 	</tr>
-<?
+<?php
 }
 ?>
-	<?
+	<?php
 	if ($DB->type == 'MYSQL')
 	{
 		?>
@@ -1447,23 +1447,23 @@ if ($arAllBucket)
 				<div><input type="checkbox" name="dump_base_skip_log" value="Y"<?=IntOption("dump_base_skip_log", 0) ? "checked" : "" ?> id="dump_base_skip_log"> <label for="dump_base_skip_log"><?=GetMessage("MAIN_DUMP_EVENT_LOG")?></label> <span id=db_event_size></span></div>
 			</td>
 		</tr>
-		<?
+		<?php
 	}
 	?>
 	<tr>
-		<td><?echo GetMessage("MAIN_DUMP_FILE_KERNEL")?></td>
+		<td><?= GetMessage("MAIN_DUMP_FILE_KERNEL")?></td>
 		<td><input type="checkbox" name="dump_file_kernel" value="Y" OnClick="CheckActiveStart()" <?=IntOption("dump_file_kernel", 1) ? "checked" : ''?>></td>
 	</tr>
 	<tr>
-		<td><?echo GetMessage("MAIN_DUMP_FILE_PUBLIC")?></td>
+		<td><?= GetMessage("MAIN_DUMP_FILE_PUBLIC")?></td>
 		<td><input type="checkbox" name="dump_file_public" value="Y" OnClick="CheckActiveStart()" <?=IntOption("dump_file_public", 1) ? "checked" : ''?>></td>
 	</tr>
 	<tr>
-		<td class="adm-detail-valign-top"><?echo GetMessage("MAIN_DUMP_MASK")?><span class="required"><sup>3</sup></span></td>
+		<td class="adm-detail-valign-top"><?= GetMessage("MAIN_DUMP_MASK")?><span class="required"><sup>3</sup></span></td>
 		<td>
 			<input type="checkbox" name="skip_mask" value="Y" <?=IntOption('skip_mask', 0)?" checked":'';?> onclick="CheckActiveStart()">
 			<table id="skip_mask_table" cellspacing=0 cellpadding=0>
-			<?
+			<?php
 			$i=-1;
 
 			$res = unserialize(COption::GetOptionString("main","skip_mask_array"), ['allowed_classes' => false]);
@@ -1486,9 +1486,9 @@ if ($arAllBucket)
 		</td>
 	</tr>
 	<tr>
-		<td><?echo GetMessage("MAIN_DUMP_FILE_MAX_SIZE")?></td>
+		<td><?= GetMessage("MAIN_DUMP_FILE_MAX_SIZE")?></td>
 		<td><input type="text" name="max_file_size" size="10" value="<?=IntOption("dump_max_file_size", 0)?>" <?=CBackup::CheckDumpFiles() ? '' : "disabled"?>>
-		<?echo GetMessage("MAIN_DUMP_FILE_MAX_SIZE_kb")?></td>
+		<?= GetMessage("MAIN_DUMP_FILE_MAX_SIZE_kb")?></td>
 	</tr>
 
 
@@ -1513,10 +1513,10 @@ if ($arAllBucket)
 		<td width=40%><?=GetMessage('STEP_LIMIT')?></td>
 		<td>
 			<input type="text" name="dump_max_exec_time" value="<?=IntOption("dump_max_exec_time", 20)?>" size=2>
-			<?echo GetMessage("MAIN_DUMP_FILE_STEP_sec");?>,
-			<?echo GetMessage("MAIN_DUMP_FILE_STEP_SLEEP")?>
+			<?= GetMessage("MAIN_DUMP_FILE_STEP_sec");?>,
+			<?= GetMessage("MAIN_DUMP_FILE_STEP_SLEEP")?>
 			<input type="text" name="dump_max_exec_time_sleep" value="<?=IntOption("dump_max_exec_time_sleep", 3)?>" size=2>
-			<?echo GetMessage("MAIN_DUMP_FILE_STEP_sec");?>
+			<?= GetMessage("MAIN_DUMP_FILE_STEP_sec");?>
 		</td>
 	</tr>
 
@@ -1524,18 +1524,18 @@ if ($arAllBucket)
 		<td><?=GetMessage("MAIN_DUMP_MAX_ARCHIVE_SIZE")?></td>
 		<td><input type="text" name="dump_archive_size_limit" value="<?=intval(COption::GetOptionString('main', 'dump_archive_size_limit', 100 * 1024 * 1024)) / 1024 / 1024?>" size=4> <?=GetMessage("MAIN_DUMP_MAX_ARCHIVE_SIZE_VALUES")?><span class="required"><sup>5</sup></span></td>
 	</tr>
-	<?
+	<?php
 	$editTab->Buttons();
 	?>
 	<input type="button" id="start_button" class="adm-btn-save" value="<?=GetMessage("MAIN_DUMP_FILE_DUMP_BUTTON")?>" OnClick="StartDump();">
 	<input type="button" id="stop_button" value="<?=GetMessage("MAIN_DUMP_FILE_STOP_BUTTON")?>" OnClick="EndDump(true)" disabled>
-	<?
+	<?php
 	$editTab->End();
 	?>
 	</form>
 	<br>
 
-<?
+<?php
 echo BeginNote();
 echo '<div><span class=required><sup>1</sup></span> '.GetMessage("DUMP_MAIN_BXCLOUD_INFO").'</div>';
 echo '<div><span class=required><sup>2</sup></span> '.GetMessage("DUMP_MAIN_MULTISITE_INFO").'</div>';

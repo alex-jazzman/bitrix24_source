@@ -10,6 +10,7 @@ import YandexCaptcha from './yandexcaptcha';
 import { Basket } from './basket';
 import * as Components from './components/registry';
 import * as Util from '../util/registry';
+import { Aria } from '../util/aria';
 import Event from '../util/event';
 import Uploader from './uploader';
 
@@ -222,6 +223,13 @@ class Controller extends Event
 
 		if (!this.valid())
 		{
+			const firstInvalidField = this.#fields.find((field) => !field.valid());
+
+			if (firstInvalidField)
+			{
+				this.#focusFirstInvalidField(firstInvalidField);
+			}
+
 			return false;
 		}
 
@@ -638,6 +646,18 @@ class Controller extends Event
 	getId()
 	{
 		return this.#id;
+	}
+
+	#focusFirstInvalidField(field: Field.BaseField): void
+	{
+		setTimeout(() => {
+			const fieldId = Aria.getFieldId(field);
+			const fieldElement = document.getElementById(fieldId);
+
+			const focusableElement = fieldElement?.querySelector('input, textarea, select, [tabindex="0"]') || fieldElement;
+
+			focusableElement?.focus();
+		}, 100);
 	}
 
 	valid()

@@ -1,0 +1,2 @@
+<?php
+$MESS["IMMOBILE_MESSENGER_DIALOG_INPUT_PLACEHOLDER_TEXT_V2"] = "Type a message...";

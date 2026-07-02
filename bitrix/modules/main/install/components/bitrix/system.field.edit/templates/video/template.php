@@ -1,6 +1,9 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
+<?php if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
-<?
+/**
+ * @var array $arParams
+ */
+
 if ($arParams["arUserField"]["MULTIPLE"] == "Y")
 {
 	$tmpName = "bx_tmp_field_div_name[]";
@@ -28,7 +31,7 @@ if ($arParams["arUserField"]["MULTIPLE"] == "Y")
 	if ($arParams["SHOW_BUTTON"] != "N"):?>
 		<input type="button" value="<?=GetMessage("USER_TYPE_PROP_ADD")?>" onClick="addElementVideo('<?=$arParams["arUserField"]["FIELD_NAME"]?>', this, '<?= $tmpName?>')" />
 		<input type="hidden" value="<?= count($arParams['arUserField']["VALUE"]) - 1?>" />
-	<?endif;
+	<?php endif;
 }
 else
 {

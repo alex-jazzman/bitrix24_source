@@ -2,6 +2,7 @@
  * @module user-profile/tabs-preparer
  */
 jn.define('user-profile/tabs-preparer', (require, exports, module) => {
+	const { Feature } = require('feature');
 	const {
 		TabType,
 		closeIcon,
@@ -36,6 +37,7 @@ jn.define('user-profile/tabs-preparer', (require, exports, module) => {
 					component: tab.component,
 					widget: tab.widget,
 					params: tab.params,
+					backgroundOverlay: tab.id === TabType.COMMON ? { type: 'none' } : { type: 'gradient' },
 				}))
 		);
 	}
@@ -50,11 +52,13 @@ jn.define('user-profile/tabs-preparer', (require, exports, module) => {
 				ownerId,
 				selectedTabId: TabType.COMMON,
 			},
+			backgroundOverlay: { type: 'none' },
 			widget: {
 				code: 'common',
 				name: 'layout',
 				settings: {
 					objectName: 'layout',
+					backgroundColor: Feature.canUseWidgetBackground() ? '#00000000' : undefined,
 				},
 			},
 		}];
@@ -151,10 +155,26 @@ jn.define('user-profile/tabs-preparer', (require, exports, module) => {
 		const { selectedTabId, ownerId } = params;
 		const {
 			data: {
+				currentTheme,
 				canView,
 				tabs = [],
 			},
 		} = response;
+
+		const userHasCustomTheme = Number(ownerId) !== Number(env.userId) && currentTheme;
+		const customThemeSupportedByDevice = Feature.canUseWidgetBackground() && tabsWidget.setTheme;
+
+		if (userHasCustomTheme && customThemeSupportedByDevice)
+		{
+			try
+			{
+				await tabsWidget.setTheme(currentTheme);
+			}
+			catch (e)
+			{
+				console.error('Unable to set custom theme', e);
+			}
+		}
 
 		const preparedTabs = prepareTabs(tabs, selectedTabId);
 

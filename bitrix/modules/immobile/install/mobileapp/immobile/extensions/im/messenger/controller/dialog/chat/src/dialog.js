@@ -16,7 +16,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 	/* region mobile import */
 	const AppTheme = require('apptheme');
 	const { Type } = require('type');
-	const { Loc } = require('im/messenger/loc');
+	const { Loc } = require('im/messenger/controller/dialog/lib/loc');
 	const { Haptics } = require('haptics');
 	const { inAppUrl } = require('in-app-url');
 	const { clone, isEmpty, mergeImmutable } = require('utils/object');
@@ -25,7 +25,9 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 	const { openPhoneMenu } = require('communication/phone-menu');
 	const { isOnline } = require('device/connection');
 	const { CollabAccessService } = require('collab/service/access');
-	const { Promotion } = require('im/messenger/lib/promotion');
+	const { BottomSheet } = require('bottom-sheet');
+	const { Color } = require('tokens');
+	const { Icon } = require('assets/icons');
 	/* endregion mobile import */
 
 	/* region immobile import */
@@ -52,6 +54,12 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		DialogViewUpdatingBlocksType,
 	} = require('im/messenger/const');
 
+	const { Promotion } = require('im/messenger/lib/promotion');
+	const {
+		getMarkdownTableData,
+		clearTableData,
+		MARKDOWN_TABLE_URL_PREFIX,
+	} = require('im/messenger/lib/parser');
 	const { MessageUiConverter } = require('im/messenger/lib/converter/ui/message');
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
@@ -77,10 +85,12 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		CallMessageHandler,
 		VoteMessageHandler,
 		AiBizprocMessageHandler,
+		BuilderMessageHandler,
 	} = require('im/messenger/lib/element/dialog');
 
 	const { getLogger } = require('im/messenger/lib/logger');
 	const { MessageService } = require('im/messenger/provider/services/message');
+	const { MarkService } = require('im/messenger/provider/services/message/mark');
 	const { ChatService } = require('im/messenger/provider/services/chat');
 	const { DiskService } = require('im/messenger/provider/services/disk');
 	const { SendingService } = require('im/messenger/provider/services/sending');
@@ -127,6 +137,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 	const { EntityManager } = require('im/messenger/controller/dialog/lib/entity-manager');
 	const { SelectManager } = require('im/messenger/controller/dialog/lib/select-manager');
 	const { VisibilityManager } = require('im/messenger/lib/visibility-manager');
+	const { MarkdownTableView } = require('im/messenger/controller/dialog/lib/markdown-table');
 	const { SidebarSearchMemoryStorage } = require('im/messenger/controller/sidebar-v2/search');
 	const { VideoNoteMessageManager } = require('im/messenger/controller/dialog/lib/video-note-message-manager');
 	const { MessagePlaybackManager } = require('im/messenger/controller/dialog/lib/message-playback-manager');
@@ -148,6 +159,8 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 	const { AssistantButtonManager } = require('im/messenger/controller/dialog/lib/assistant-button-manager');
 	const { InputRecordManager } = require('im/messenger/controller/dialog/lib/input-record');
 	const { ClipboardImageManager } = require('im/messenger/controller/dialog/lib/clipboard-image');
+	const { SuggestsManager } = require('im/messenger/controller/dialog/lib/suggests-manager');
+	const { OptimisticChatManager, TextFieldOptimisticHandler } = require('im/messenger/controller/dialog/lib/optimistic-chat-manager');
 
 	/* endregion lib import */
 
@@ -345,6 +358,12 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 
 			/**
 			 * @protected
+			 * @type {BuilderMessageHandler}
+			 */
+			this.builderMessageHandler = null;
+
+			/**
+			 * @protected
 			 * @type {CallMessageHandler}
 			 */
 			this.callMessageHandler = null;
@@ -381,6 +400,11 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			 * @type {boolean}
 			 */
 			this.withMessageHighlight = false;
+			/**
+			 * @private
+			 * @type {boolean}
+			 */
+			this.isMarkedContext = false;
 
 			/**
 			 * @private
@@ -445,6 +469,12 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 
 			/**
 			 * @protected
+			 * @type {OptimisticChatManager}
+			 */
+			this.optimisticChatManager = null;
+
+			/**
+			 * @protected
 			 * @type {AiBizprocMessageHandler}
 			 */
 			this.aiBizprocMessageHandler = null;
@@ -476,7 +506,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		 */
 		get sendingService()
 		{
-			this.#sendingService = this.#sendingService ?? SendingService.getInstance();
+			this.#sendingService = this.#sendingService ?? serviceLocator.get('sending-service');
 
 			return this.#sendingService;
 		}
@@ -564,6 +594,8 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.setChatCollectionHandler = this.drawMessageList.bind(this);
 			/** @private */
 			this.messageUpdateHandler = this.messageUpdateHandlerRouter.bind(this);
+			/** @private */
+			this.builderBlockUpdateHandler = this.builderBlockUpdateHandler.bind(this);
 			this.deleteHandler = this.deleteMessage.bind(this);
 			this.deleteMessagesByChatIdHandler = this.deleteMessagesByChatId.bind(this);
 			/** @private */
@@ -590,6 +622,10 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.dialogClearAllCountersHandler = this.dialogClearAllCountersHandler.bind(this);
 			/** @private */
 			this.closeDialogHandler = this.closeDialogHandler.bind(this);
+			/** @private */
+			this.callViewOpenedHandler = this.callViewOpenedHandler.bind(this);
+			/** @private */
+			this.callViewClosedHandler = this.callViewClosedHandler.bind(this);
 			/** @protected */
 			this.messageButtonTapHandler = this.messageButtonTapHandler.bind(this);
 			/** @protected */
@@ -626,6 +662,22 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		}
 
 		/** @protected */
+		subscribeLifecycleEvents()
+		{
+			this.view
+				.on(EventType.view.close, this.closeHandler)
+				.on(EventType.view.hidden, this.hiddenHandler)
+				.on(EventType.view.show, this.showHandler);
+		}
+
+		unsubscribeLifecycleEvents()
+		{
+			this.view
+				.off(EventType.view.close, this.closeHandler)
+				.off(EventType.view.hidden, this.hiddenHandler)
+				.off(EventType.view.show, this.showHandler);
+		}
+
 		subscribeViewEvents()
 		{
 			this.view
@@ -649,9 +701,6 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				.on(EventType.dialog.messageQuoteTap, this.messageQuoteTapHandler)
 				.on(EventType.dialog.fileDownloadTap, this.fileDownloadTapHandler)
 				.on(EventType.dialog.messageFileUploadCancelTap, this.messageFileUploadCancelTapHandler)
-				.on(EventType.view.close, this.closeHandler)
-				.on(EventType.view.hidden, this.hiddenHandler)
-				.on(EventType.view.show, this.showHandler)
 				.on(EventType.dialog.audioTap, this.audioTapHandler)
 				.on(EventType.dialog.audioRateTap, this.audioRateTapHandler)
 				.on(EventType.dialog.imageTap, this.mediaTapHandler(FileType.image))
@@ -683,6 +732,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.pinManager?.subscribeViewEvents();
 			this.checkInMessageHandler?.subscribeEvents();
 			this.bannerMessageHandler?.subscribeEvents();
+			this.builderMessageHandler?.subscribeEvents();
 			this.callMessageHandler?.subscribeEvents();
 			this.videoNoteMessageManager?.subscribeViewEvents();
 			this.voteMessageHandler?.subscribeEvents();
@@ -693,6 +743,8 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.inputRecordManager?.subscribeViewEvents();
 			this.clipboardImageManager?.subscribeViewEvents();
 			this.aiBizprocMessageHandler?.subscribeEvents();
+			this.textField?.subscribeViewEvents();
+			this.suggestsManager?.subscribeViewEvents();
 			this.textFormatManager?.subscribeViewEvents();
 		}
 
@@ -703,6 +755,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.videoNoteMessageManager?.unsubscribeEvents();
 			this.checkInMessageHandler?.unsubscribeEvents();
 			this.bannerMessageHandler?.unsubscribeEvents();
+			this.builderMessageHandler?.unsubscribeEvents();
 			this.callMessageHandler?.unsubscribeEvents();
 			this.voteMessageHandler?.unsubscribeEvents();
 			this.messageMenu?.unsubscribeEvents();
@@ -712,6 +765,8 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.messageSender?.unsubscribeViewEvents();
 			this.inputRecordManager?.unsubscribeViewEvents();
 			this.clipboardImageManager?.unsubscribeViewEvents();
+			this.textField?.unsubscribeViewEvents();
+			this.suggestsManager?.unsubscribeViewEvents();
 			this.aiBizprocMessageHandler?.unsubscribeEvents();
 
 			this.view.removeAll();
@@ -724,6 +779,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				.on('messagesModel/setChatCollection', this.setChatCollectionHandler)
 				.on('messagesModel/update', this.messageUpdateHandler)
 				.on('messagesModel/updateWithId', this.messageUpdateHandler)
+				.on('messagesModel/builderModel/update', this.builderBlockUpdateHandler)
 				.on('messagesModel/delete', this.deleteHandler)
 				.on('messagesModel/deleteByChatId', this.deleteMessagesByChatIdHandler)
 				.on('messagesModel/voteModel/set', this.voteMessageUpdateHandler)
@@ -758,6 +814,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				.off('messagesModel/setChatCollection', this.setChatCollectionHandler)
 				.off('messagesModel/update', this.messageUpdateHandler)
 				.off('messagesModel/updateWithId', this.messageUpdateHandler)
+				.off('messagesModel/builderModel/update', this.builderBlockUpdateHandler)
 				.off('messagesModel/delete', this.deleteHandler)
 				.off('messagesModel/deleteByChatId', this.deleteMessagesByChatIdHandler)
 				.off('messagesModel/voteModel/set', this.voteMessageUpdateHandler)
@@ -795,6 +852,8 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			BX.addCustomEvent(EventType.dialog.external.sendMessage, this.sendMessageExternalHandler);
 			BX.addCustomEvent(EventType.dialog.external.textarea.insertText, this.insertTextHandler);
 			BX.addCustomEvent(EventType.dialog.external.close, this.closeDialogHandler);
+			BX.addCustomEvent(EventType.call.viewOpened, this.callViewOpenedHandler);
+			BX.addCustomEvent(EventType.call.viewClosed, this.callViewClosedHandler);
 
 			this.messageSender?.subscribeExternalEvents();
 		}
@@ -808,6 +867,8 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			BX.removeCustomEvent(EventType.dialog.external.sendMessage, this.sendMessageExternalHandler);
 			BX.removeCustomEvent(EventType.dialog.external.textarea.insertText, this.insertTextHandler);
 			BX.removeCustomEvent(EventType.dialog.external.close, this.closeDialogHandler);
+			BX.removeCustomEvent(EventType.call.viewOpened, this.callViewOpenedHandler);
+			BX.removeCustomEvent(EventType.call.viewClosed, this.callViewClosedHandler);
 
 			this.messageSender?.unsubscribeExternalEvents();
 		}
@@ -954,9 +1015,13 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			if (Feature.isAssistantButtonsSupported)
 			{
 				this.assistantButtonManager = new AssistantButtonManager({
-					dialogId: this.getDialogId(),
 					dialogLocator: this.locator,
 				});
+			}
+
+			if (Feature.isBitrixGptV2Enabled)
+			{
+				this.suggestsManager = new SuggestsManager(this.locator);
 			}
 
 			this.locator
@@ -971,6 +1036,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				.add('draft-manager', this.draftManager)
 				.add('input-action-manager', this.inputActionManager)
 				.add('message-sender', this.messageSender)
+				.add('suggests-manager', this.suggestsManager)
 			;
 
 			this.anchorService = new AnchorService(this.dialogId, this.locator);
@@ -1044,6 +1110,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.callMessageHandler = new CallMessageHandler(serviceLocator, this.locator);
 			this.voteMessageHandler = new VoteMessageHandler(serviceLocator, this.locator);
 			this.commentButton = new CommentButton(this.view, this.getDialogId(), this.locator);
+			this.builderMessageHandler = new BuilderMessageHandler(serviceLocator, this.locator);
 			this.audioPlayer = this.createAudioPlayer();
 			this.aiBizprocMessageHandler = new AiBizprocMessageHandler(serviceLocator, this.locator);
 		}
@@ -1180,6 +1247,13 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				});
 
 				this.locator.add('message-service', this.messageService);
+
+				const dialog = this.store.getters['dialoguesModel/getById'](dialogId);
+				if (!this.contextMessageId && dialog?.markedId > 0)
+				{
+					this.contextMessageId = this.store.getters['dialoguesModel/getInitialMessageId'](dialogId);
+					this.isMarkedContext = true;
+				}
 			}
 
 			await this.loadApplicationSettingsFromDb();
@@ -1233,11 +1307,164 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		}
 
 		/**
+		 * @return {Object}
+		 */
+		getOptimisticTitleParams()
+		{
+			throw new Error(`${this.constructor.name}.getOptimisticTitleParams() must be overridden`);
+		}
+
+		/**
+		 * @param {DialogOpenOptimisticOptions} options
+		 * @return {Promise<void>}
+		 */
+		async openOptimistic(options)
+		{
+			const {
+				onClose,
+				chatType = DialogType.chat,
+				loadingPromise,
+				integrationSettings,
+			} = options;
+
+			this.chatType = chatType;
+			this.onClose = onClose;
+
+			this.initConfigurator(integrationSettings, chatType);
+			this.headerTitleControllerClassLoadPromise = this.configurator.getHeaderTitleControllerClass();
+			this.headerButtonsControllerClassLoadPromise = this.configurator.getHeaderButtonsControllerClass();
+
+			this.dialogCode = `im.dialog-optimistic-${this.getDialogType()}-${Uuid.getV4()}`;
+			this.locator.add('dialogCode', this.dialogCode);
+			this.openingContext = OpenDialogContextType.chatCreation;
+
+			const textFieldHandler = new TextFieldOptimisticHandler({
+				chatType: this.getDialogType(),
+				dialogLocator: this.locator,
+				assistantButtons: this.getAssistantButtons(),
+			});
+			this.optimisticChatManager = new OptimisticChatManager({
+				loadingPromise,
+				dialogLocator: this.locator,
+				handlers: [textFieldHandler],
+			});
+
+			this.optimisticTitleParams = this.getOptimisticTitleParams();
+
+			await this.initHeaderButtons();
+			this.inputRecordManager = new InputRecordManager(this.locator);
+			const rightButtons = await this.headerButtons.getButtonsForOptimisticChat(this.getDialogType());
+			const background = BackgroundManager.getOptimisticConfiguration(this.getDialogType());
+
+			await this.createOptimisticWidget({
+				titleParams: this.optimisticTitleParams,
+				rightButtons,
+				background,
+			})
+				.catch((error) => {
+					logger.error(`${this.constructor.name}.openOptimistic createWidget error:`, error);
+				});
+		}
+
+		/**
+		 * @param {DialogCreateOptimisticWidgetOptions} options
+		 * @return {Promise<void>}
+		 */
+		createOptimisticWidget(options)
+		{
+			return PageManager.openWidget(
+				'chat.dialog',
+				this.getWidgetSettings(options),
+			)
+				.then(this.onOptimisticWidgetReady.bind(this))
+				.catch((error) => logger.error(error));
+		}
+
+		/**
+		 * @param {Object} params
+		 * @param {number} params.chatId
+		 */
+		async completeOptimisticOpen({ chatId })
+		{
+			this.dialogId = `chat${chatId}`;
+			this.locator.add('dialogId', this.dialogId);
+			serviceLocator.add(this.dialogId, this);
+
+			this.messageUiConverter = new MessageUiConverter({
+				dialogId: this.dialogId,
+				dialogCode: this.dialogCode,
+			});
+			this.locator.add('message-ui-converter', this.messageUiConverter);
+
+			void this.store.dispatch('applicationModel/openDialogId', this.dialogId);
+
+			this.pinManager = new PinManager({
+				dialogId: this.dialogId,
+				dialogLocator: this.locator,
+				chatType: this.chatType,
+			});
+
+			this.backgroundManager = new BackgroundManager({
+				dialogId: this.dialogId,
+				dialogLocator: this.locator,
+			});
+
+			this.view.dialogId = this.dialogId;
+			this.view.chatId = this.getChatId();
+
+			this.textField = new DialogTextFieldManager({
+				dialogId: this.getDialogId(),
+				locator: this.locator,
+			});
+
+			await this.saveVisibleDialogInfo();
+
+			this.messageRenderer = new MessageRenderer({
+				chatId: this.getChatId(),
+				dialogLocator: this.locator,
+			});
+			this.locator.add('message-renderer', this.messageRenderer);
+
+			await this.initHeaderTitle();
+
+			await this.initComponents();
+			await this.initManagers();
+
+			this.subscribeStoreEvents();
+			this.subscribeExternalEvents();
+			this.updateReactionRestriction();
+
+			try
+			{
+				await this.loadChatWithMessages();
+				await this.handleLoadChatWithMessages();
+			}
+			catch (error)
+			{
+				this.handleLoadChatWithMessagesError(error);
+			}
+
+			this.subscribeViewEvents();
+
+			this.handleMessageNotFoundError();
+			this.view.readDelayedMessageList();
+
+			this.headerTitle?.startRender();
+			this.showPromotion();
+
+			const { pendingText } = this.optimisticChatManager.complete();
+			if (pendingText)
+			{
+				this.view.textField.setText(pendingText);
+			}
+		}
+
+		/**
 		 * @param {DialogOptionActionsAfterOpen} actions
 		 */
 		async executeAfterOpen(actions)
 		{
-			if (!Array.isArray(actions))
+			if (!Type.isArray(actions))
 			{
 				logger.warn(`${this.constructor.name}.executeAfterOpen actions should be an array`);
 
@@ -1562,6 +1789,22 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			return Boolean(Feature.isVideoNoteSupported) && !this.isBot();
 		}
 
+		/**
+		 * @returns {boolean}
+		 */
+		checkCanShowStickerButton()
+		{
+			return Feature.isStickersEnabled;
+		}
+
+		/**
+		 * @returns {boolean}
+		 */
+		checkNeedKeyboardOverContent()
+		{
+			return false;
+		}
+
 		/** @private */
 		async createWidget(titleParams = null, parentWidget = PageManager)
 		{
@@ -1597,25 +1840,10 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			return PageManager.openWidget(
 				'chat.dialog',
 				{
-					dialogId: this.getDialogId(),
-					titleParams,
-					rightButtons,
-					reactions: this.buildReactionWidgetSettings(),
-					autoplayVideo: Feature.isAutoplayVideoEnabled,
-					autoSaveFiles: Feature.isAutoSaveFilesEnabled,
-					textField: {
-						showStickerButton: Feature.isStickersEnabled,
-					},
-					code: this.dialogCode,
-					dialogType: this.getDialogType(),
-					canHaveAttachments: this.checkCanHaveAttachments(),
-					defaultRecordMediaType: this.inputRecordManager.recordMediaType,
-					canRecordAudio: this.checkCanRecordAudio(),
-					canRecordVideo: this.checkCanRecordVideo(),
-					audioRecordFormat: getAudioRecordFormat(),
-					pinPanel: this.pinManager?.getPinPanelParams(),
-					background: this.backgroundManager?.getConfiguration(),
-					isQuoteCompact: true,
+					...this.getWidgetSettings({
+						titleParams,
+						rightButtons,
+					}),
 				},
 				parentWidget,
 			)
@@ -1637,6 +1865,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			await this.initComponents();
 			await this.initManagers();
 			this.subscribeWidgetEvents(widget);
+			this.subscribeLifecycleEvents();
 			this.subscribeViewEvents();
 			this.subscribeStoreEvents();
 			this.subscribeExternalEvents();
@@ -1695,6 +1924,50 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 					},
 				},
 			]);
+
+			OptimisticChatManager.restore(this.getDialogType(), this.locator);
+		}
+
+		/**
+		 * @private
+		 * @param {LayoutWidget} widget
+		 */
+		onOptimisticWidgetReady(widget)
+		{
+			this.visibilityManager = VisibilityManager.getInstance();
+
+			this.view = new DialogView({
+				dialogCode: this.dialogCode,
+				ui: widget,
+				dialogId: this.getDialogId(),
+				chatId: this.getChatId(),
+				lastReadId: 0,
+				onShowScrollToNewMessageButton: this.onShowScrollToNewMessageButton,
+				onHideScrollToNewMessageButton: this.onHideScrollToNewMessageButton,
+				visibleAttachItems: this.visibleAttachItems(),
+			});
+			this.locator.add('view', this.view);
+
+			this.subscribeWidgetEvents(widget);
+			this.subscribeLifecycleEvents();
+
+			this.view.showMessageListLoader();
+
+			this.optimisticChatManager.start()
+				.then((result) => {
+					if (Type.isNil(result))
+					{
+						return;
+					}
+
+					// eslint-disable-next-line consistent-return
+					return this.completeOptimisticOpen(result);
+				})
+				.catch((error) => {
+					logger.error(`${this.constructor.name}: optimistic chat creation failed`, error);
+					Notification.showErrorToast();
+					this.view.back();
+				});
 		}
 
 		renderRecentMessage()
@@ -1764,7 +2037,8 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 
 		async handleLoadChatWithMessages()
 		{
-			if (!Type.isArrayFilled(this.getModelMessages()))
+			const hasMessages = Type.isArrayFilled(this.getModelMessages());
+			if (!hasMessages)
 			{
 				if (this.isHistoryLimitExceeded())
 				{
@@ -1774,7 +2048,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				}
 				else
 				{
-					this.view.showWelcomeScreen();
+					this.showWelcomeScreenOrSuggests();
 				}
 			}
 			this.pullWatchManager.subscribe();
@@ -1790,6 +2064,12 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			});
 
 			this.locator.add('message-service', this.messageService);
+
+			this.markService = new MarkService({
+				chatId: this.getChatId(),
+				dialogId: this.getDialogId(),
+			});
+			this.locator.add('mark-service', this.markService);
 
 			this.showFloatingButtonsBarIfNeeded();
 
@@ -1827,6 +2107,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.checkOpeningBotContext();
 			this.audioPlayer.initialPlayerState?.();
 			this.sendAnalyticsOpenDialog();
+			this.locator.get('mark-service')?.clearMark();
 			BX.postComponentEvent(EventType.messenger.openDialogComplete, [
 				{
 					chatData: this.getDialog(),
@@ -2240,7 +2521,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				onHideScrollToNewMessageButton: this.onHideScrollToNewMessageButton,
 				visibleAttachItems: this.visibleAttachItems(),
 			});
-			if (this.contextMessageId)
+			if (this.contextMessageId && !this.isMarkedContext)
 			{
 				this.view.setContextOptions(
 					this.contextMessageId,
@@ -2432,6 +2713,13 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		 */
 		async closeHandler()
 		{
+			if (this.optimisticChatManager?.isPending)
+			{
+				await this.optimisticChatManager.cancelWithSave(this.onClose);
+
+				return;
+			}
+
 			try
 			{
 				this.onClose();
@@ -2440,6 +2728,8 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			{
 				logger.error(`${this.constructor.name}.closeHandler onClose error:`, error);
 			}
+
+			clearTableData(this.dialogCode);
 
 			await this.visibilityManager.removeVisibleDialogInfoByDialogCode(this.dialogCode);
 			const dialogId = this.getDialogId();
@@ -2493,6 +2783,32 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.mentionManager?.onDialogHidden();
 			this.videoNoteMessageManager.player?.stop();
 			await this.visibilityManager.removeVisibleDialogInfoByDialogCode(this.dialogCode);
+		}
+
+		/**
+		 * @private
+		 * @description Call card is shown on top via widget layer and does NOT trigger
+		 * onViewHidden on the underlying dialog.
+		 */
+		async callViewOpenedHandler()
+		{
+			if (!this.isShown)
+			{
+				return;
+			}
+
+			await this.hiddenHandler();
+		}
+
+		/** @private */
+		async callViewClosedHandler()
+		{
+			if (this.isShown)
+			{
+				return;
+			}
+
+			await this.showHandler();
 		}
 
 		async showHandler()
@@ -2645,6 +2961,17 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		async handleInternalUrl(url)
 		{
 			const urlObject = new Url(url);
+			if (url.includes(MARKDOWN_TABLE_URL_PREFIX))
+			{
+				const tableId = url.split(MARKDOWN_TABLE_URL_PREFIX)[1];
+				if (tableId)
+				{
+					this.openMarkdownTable(tableId);
+
+					return true;
+				}
+			}
+
 			// checking for a link to a message in the current dialog.
 			if (urlObject.isLocal && url.includes('/online/'))
 			{
@@ -2668,6 +2995,47 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			}
 
 			return false;
+		}
+
+		/**
+		 * @param {string} tableId
+		 */
+		openMarkdownTable(tableId)
+		{
+			const tableData = getMarkdownTableData(this.dialogCode, tableId);
+			if (!tableData)
+			{
+				return;
+			}
+
+			void new BottomSheet({
+				titleParams: {
+					type: 'dialog',
+					text: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MARKDOWN_TABLE_TITLE'),
+				},
+				component: (layout) => {
+					return new MarkdownTableView({
+						tableData,
+						parentWidget: layout,
+					});
+				},
+			})
+				.setParentWidget(this.view?.ui || PageManager)
+				.disableOnlyMediumPosition()
+				.setMediumPositionPercent(35)
+				.setBackgroundColor(Color.bgContentPrimary.toHex())
+				.setNavigationBarColor(Color.bgContentPrimary.toHex())
+				.open()
+				.then((widget) => {
+					widget.setRightButtons([
+						{
+							id: 'close',
+							type: Icon.CROSS.getIconName(),
+							callback: () => widget.close(),
+						},
+					]);
+				})
+			;
 		}
 
 		/**
@@ -2804,14 +3172,14 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			const isCopilotBot = UserHelper.createByUserId(Number(params.entityId))?.isCopilotBot;
 			if (params.entityType === 'user' && isCopilotBot)
 			{
-				const navigationController = serviceLocator.get('navigation-controller');
-				if (!navigationController)
+				const navigationManager = serviceLocator.get('navigation-manager');
+				if (!navigationManager)
 				{
 					return;
 				}
 
-				navigationController.setActiveTab(NavigationTabId.copilot)
-					.then(() => navigationController.closeAllWidgets())
+				navigationManager.setActiveTab(NavigationTabId.copilot)
+					.then(() => navigationManager.closeAllWidgets())
 					.catch((error) => {
 						logger.error(`${this.constructor.name}.mentionTapHandler go to copilot tab error`, error);
 					})
@@ -3066,7 +3434,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				}
 				catch (e)
 				{
-					console.error(e);
+					logger.error(e);
 				}
 			}
 
@@ -3472,6 +3840,8 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 
 		async sendMessage(text, promptCode = null, shouldFinishTextFieldActions = true)
 		{
+			this.suggestsManager?.hide();
+
 			return this.messageSender.sendTextMessage(text, promptCode, shouldFinishTextFieldActions);
 		}
 
@@ -3813,6 +4183,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				currentDialogMessageList.push({
 					...validateQuoteMessage,
 					reactions: this.store.getters['messagesModel/reactionsModel/getByMessageId'](message.id),
+					builder: this.store.getters['messagesModel/builderModel/getByMessageId'](message.id),
 				});
 			});
 
@@ -3900,6 +4271,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			return {
 				...validateQuoteMessage,
 				reactions: this.store.getters['messagesModel/reactionsModel/getByMessageId'](message.id),
+				builder: this.store.getters['messagesModel/builderModel/getByMessageId'](message.id),
 			};
 		}
 
@@ -3988,6 +4360,15 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			{
 				this.textField.update();
 				this.backgroundManager?.update();
+			}
+
+			if (!Type.isUndefined(mutation.payload.data?.fields?.markedId))
+			{
+				const markedId = Number(mutation.payload.data.fields.markedId);
+				if (markedId > 0)
+				{
+					void this.messageRenderer.addMarkedSeparatorDynamic(markedId);
+				}
 			}
 
 			switch (mutation.payload.actionName)
@@ -4441,6 +4822,11 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				return;
 			}
 
+			if (mutation.payload.actionName === 'updateBuilderState')
+			{
+				return;
+			}
+
 			if (mutation.payload.actionName === 'updateLoadTextProgress')
 			{
 				this.updateProgressFileHandler(mutation);
@@ -4449,6 +4835,36 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			{
 				void this.redrawMessage(mutation);
 			}
+		}
+
+		/**
+		 * @param {Object} mutation
+		 */
+		async builderBlockUpdateHandler(mutation)
+		{
+			const { messageId, blockId } = mutation.payload.data;
+			const { actionName } = mutation.payload;
+
+			if (!this.messageRenderer.isMessageRendered(messageId))
+			{
+				return;
+			}
+
+			const modelMessage = this.store.getters['messagesModel/getById'](messageId);
+			if (!modelMessage)
+			{
+				return;
+			}
+
+			const animated = actionName !== 'updateBlock';
+
+			await this.messageRenderer.renderMessageBlock(
+				modelMessage,
+				blockId,
+				{
+					animated,
+				},
+			);
 		}
 
 		async voteMessageUpdateHandler(mutation)
@@ -4621,6 +5037,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			}
 
 			await this.messageRenderer.clearHistory();
+			this.showWelcomeScreenOrSuggests();
 			this.pinManager?.redrawPinPanel();
 			if (this.selectManager.isSelectMessagesModeEnabled())
 			{
@@ -4632,6 +5049,15 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			}
 
 			this.view.hideScrollToNewMessagesButton();
+		}
+
+		showWelcomeScreenOrSuggests()
+		{
+			this.suggestsManager?.show();
+			if (!this.suggestsManager?.isShown)
+			{
+				this.view.showWelcomeScreen();
+			}
 		}
 
 		/**
@@ -4893,7 +5319,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		{
 			if (this.checkCanRecordVideo())
 			{
-				const promotion = Promotion.getInstance();
+				const promotion = serviceLocator.get('promotion');
 				promotion.addToPromoQueue({
 					promoId: Promo.videoNote,
 					callback: () => promotion.showVideoNotePromotion(this.getChatId()),
@@ -4922,6 +5348,32 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			};
 
 			this.store.dispatch('messagesModel/updateVisualState', payloadParams);
+		}
+
+		getWidgetSettings(props)
+		{
+			return {
+				dialogId: this.getDialogId(),
+				reactions: this.buildReactionWidgetSettings(),
+				autoplayVideo: Feature.isAutoplayVideoEnabled,
+				autoSaveFiles: Feature.isAutoSaveFilesEnabled,
+				isBitrixGptV1Enabled: Feature.isBitrixGptV2Available,
+				textField: {
+					showStickerButton: this.checkCanShowStickerButton(),
+				},
+				code: this.dialogCode,
+				dialogType: this.getDialogType(),
+				canHaveAttachments: this.checkCanHaveAttachments(),
+				defaultRecordMediaType: this.inputRecordManager.recordMediaType,
+				canRecordAudio: this.checkCanRecordAudio(),
+				keyboardOverContent: this.checkNeedKeyboardOverContent(),
+				canRecordVideo: this.checkCanRecordVideo(),
+				audioRecordFormat: getAudioRecordFormat(),
+				pinPanel: this.pinManager?.getPinPanelParams(),
+				background: this.backgroundManager?.getConfiguration(),
+				isQuoteCompact: true,
+				...props,
+			};
 		}
 	}
 

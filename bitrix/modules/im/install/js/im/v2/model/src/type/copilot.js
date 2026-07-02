@@ -26,6 +26,12 @@ export type CopilotAIModel = {
 	supportsReasoning: boolean,
 };
 
+export type CopilotMcpAuth = {
+	id: number,
+	name: string,
+	icon: ?string,
+};
+
 export type CopilotRoleCode = string;
 export type CopilotAIModelCode = string;
 

@@ -7,6 +7,7 @@ return [
 		'mail:statemanager/redux/slices/messages/selector',
 		'mail:statemanager/redux/slices/messages/thunk',
 		'mail:statemanager/redux/slices/messages',
+		'mail:statemanager/redux/connect',
 		'mail:message/elements/avatar',
 		'mail:const',
 		'layout/ui/simple-list/items/base',
@@ -17,7 +18,6 @@ return [
 		'ui-system/typography/text',
 		'ui-system/form/checkbox',
 		'ui-system/blocks/avatar',
-		'statemanager/redux/connect',
 		'statemanager/redux/store',
 		'layout/pure-component',
 		'layout/ui/user-list',
@@ -33,6 +33,7 @@ return [
 	],
 	'bundle' => [
 		'./src/message-content',
+		'./src/message-bindings',
 		'./src/action-menu',
 	],
 ];

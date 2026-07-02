@@ -3,86 +3,86 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,ui_icons_disk,main_core,im_v2_lib_parser,im_v2_lib_utils,rest_client,im_v2_application_core,im_v2_const,ui_vue3_directives_lazyload) {
+(function (exports, im_v2_const, main_core, ui_icons_disk, im_v2_lib_utils, im_v2_lib_parser, ui_vue3_directives_lazyload, im_v2_application_core) {
 	'use strict';
 
 	// @vue/component
 	const AttachDelimiter = {
-	  name: 'AttachDelimiter',
-	  props: {
-	    config: {
-	      type: Object,
-	      default: () => {}
-	    }
-	  },
-	  computed: {
-	    internalConfig() {
-	      return this.config;
-	    },
-	    styles() {
-	      const result = {};
-	      if (this.internalConfig.delimiter.color) {
-	        result.backgroundColor = this.internalConfig.delimiter.color;
-	      }
-	      if (this.internalConfig.delimiter.size > 0) {
-	        result.width = `${this.internalConfig.delimiter.size}px`;
-	      }
-	      return result;
-	    }
-	  },
-	  template: `
+		name: 'AttachDelimiter',
+		props: {
+			config: {
+				type: Object,
+				default: () => {}
+			}
+		},
+		computed: {
+			internalConfig() {
+				return this.config;
+			},
+			styles() {
+				const result = {};
+				if (this.internalConfig.delimiter.color) {
+					result.backgroundColor = this.internalConfig.delimiter.color;
+				}
+				if (this.internalConfig.delimiter.size > 0) {
+					result.width = `${this.internalConfig.delimiter.size}px`;
+				}
+				return result;
+			}
+		},
+		template: `
 		<div class="bx-im-attach-delimiter__container" :style="styles"></div>
 	`
 	};
 
 	const AttachFileItem = {
-	  name: 'AttachFileItem',
-	  props: {
-	    config: {
-	      type: Object,
-	      default: () => {}
-	    }
-	  },
-	  computed: {
-	    internalConfig() {
-	      return this.config;
-	    },
-	    fileName() {
-	      return this.internalConfig.name;
-	    },
-	    fileSize() {
-	      return this.internalConfig.size;
-	    },
-	    link() {
-	      return this.internalConfig.link;
-	    },
-	    fileShortName() {
-	      const NAME_MAX_LENGTH = 70;
-	      const fileName = main_core.Type.isStringFilled(this.fileName) ? this.fileName : this.$Bitrix.Loc.getMessage('IM_ELEMENTS_ATTACH_RICH_FILE_NO_NAME');
-	      return im_v2_lib_utils.Utils.file.getShortFileName(fileName, NAME_MAX_LENGTH);
-	    },
-	    formattedFileSize() {
-	      if (!this.fileSize) {
-	        return '';
-	      }
-	      return im_v2_lib_utils.Utils.file.formatFileSize(this.fileSize);
-	    },
-	    iconClasses() {
-	      return ['ui-icon', `ui-icon-file-${this.fileIcon}`];
-	    },
-	    fileIcon() {
-	      return im_v2_lib_utils.Utils.file.getIconTypeByFilename(this.fileName);
-	    }
-	  },
-	  methods: {
-	    openLink() {
-	      if (!this.link) {
-	        return;
-	      }
-	      window.open(this.link, '_blank');
-	    }
-	  },
-	  template: `
+		name: 'AttachFileItem',
+		props: {
+			config: {
+				type: Object,
+				default: () => {}
+			}
+		},
+		computed: {
+			internalConfig() {
+				return this.config;
+			},
+			fileName() {
+				return this.internalConfig.name;
+			},
+			fileSize() {
+				return this.internalConfig.size;
+			},
+			link() {
+				return this.internalConfig.link;
+			},
+			fileShortName() {
+				const NAME_MAX_LENGTH = 70;
+				const fileName = main_core.Type.isStringFilled(this.fileName) ? this.fileName : this.$Bitrix.Loc.getMessage('IM_ELEMENTS_ATTACH_RICH_FILE_NO_NAME');
+				return im_v2_lib_utils.Utils.file.getShortFileName(fileName, NAME_MAX_LENGTH);
+			},
+			formattedFileSize() {
+				if (!this.fileSize) {
+					return '';
+				}
+				return im_v2_lib_utils.Utils.file.formatFileSize(this.fileSize);
+			},
+			iconClasses() {
+				return ['ui-icon', `ui-icon-file-${this.fileIcon}`];
+			},
+			fileIcon() {
+				return im_v2_lib_utils.Utils.file.getIconTypeByFilename(this.fileName);
+			}
+		},
+		methods: {
+			openLink() {
+				if (!this.link) {
+					return;
+				}
+				window.open(this.link, '_blank');
+			}
+		},
+		template: `
 		<div @click="openLink" class="bx-im-attach-file__container">
 			<div class="bx-im-attach-file__item">
 				<div class="bx-im-attach-file__icon">
@@ -103,22 +103,22 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	// @vue/component
 	const AttachFile = {
-	  name: 'AttachFile',
-	  components: {
-	    AttachFileItem
-	  },
-	  props: {
-	    config: {
-	      type: Object,
-	      default: () => {}
-	    }
-	  },
-	  computed: {
-	    internalConfig() {
-	      return this.config;
-	    }
-	  },
-	  template: `
+		name: 'AttachFile',
+		components: {
+			AttachFileItem
+		},
+		props: {
+			config: {
+				type: Object,
+				default: () => {}
+			}
+		},
+		computed: {
+			internalConfig() {
+				return this.config;
+			}
+		},
+		template: `
 		<div class="bx-im-attach-file__container">
 			<AttachFileItem
 				v-for="(fileItem, index) in internalConfig.file"
@@ -130,52 +130,52 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	};
 
 	const AttachGridItemDisplayType = {
-	  block: 'block',
-	  line: 'line',
-	  row: 'row'
+		block: 'block',
+		line: 'line',
+		row: 'row'
 	};
 	const DisplayType = AttachGridItemDisplayType;
 
 	// @vue/component
 	const AttachGridItem = {
-	  name: 'AttachGridItem',
-	  props: {
-	    config: {
-	      type: Object,
-	      default: () => {}
-	    }
-	  },
-	  computed: {
-	    DisplayType: () => DisplayType,
-	    internalConfig() {
-	      return this.config;
-	    },
-	    display() {
-	      return this.internalConfig.display.toLowerCase();
-	    },
-	    width() {
-	      if (!this.value || !this.internalConfig.width) {
-	        return '';
-	      }
-	      return `${this.internalConfig.width}px`;
-	    },
-	    value() {
-	      if (!this.internalConfig.value) {
-	        return '';
-	      }
-	      return im_v2_lib_parser.Parser.decodeText(this.internalConfig.value);
-	    },
-	    colorToken() {
-	      return this.internalConfig.colorToken || 'base';
-	    },
-	    name() {
-	      return this.internalConfig.name;
-	    },
-	    link() {
-	      return this.internalConfig.link;
-	    }
-	  },
-	  template: `
+		name: 'AttachGridItem',
+		props: {
+			config: {
+				type: Object,
+				default: () => {}
+			}
+		},
+		computed: {
+			DisplayType: () => DisplayType,
+			internalConfig() {
+				return this.config;
+			},
+			display() {
+				return this.internalConfig.display.toLowerCase();
+			},
+			width() {
+				if (!this.value || !this.internalConfig.width) {
+					return '';
+				}
+				return `${this.internalConfig.width}px`;
+			},
+			value() {
+				if (!this.internalConfig.value) {
+					return '';
+				}
+				return im_v2_lib_parser.Parser.decodeText(this.internalConfig.value);
+			},
+			colorToken() {
+				return this.internalConfig.colorToken || 'base';
+			},
+			name() {
+				return this.internalConfig.name;
+			},
+			link() {
+				return this.internalConfig.link;
+			}
+		},
+		template: `
 		<div v-if="display === DisplayType.block" :style="{width}" class="bx-im-attach-grid__item --block">
 			<div class="bx-im-attach-grid__name">{{ name }}</div>
 			<div v-if="link" class="bx-im-attach-grid__value --link">
@@ -222,22 +222,22 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	// @vue/component
 	const AttachGrid = {
-	  name: 'AttachGrid',
-	  components: {
-	    AttachGridItem
-	  },
-	  props: {
-	    config: {
-	      type: Object,
-	      default: () => {}
-	    }
-	  },
-	  computed: {
-	    internalConfig() {
-	      return this.config;
-	    }
-	  },
-	  template: `
+		name: 'AttachGrid',
+		components: {
+			AttachGridItem
+		},
+		props: {
+			config: {
+				type: Object,
+				default: () => {}
+			}
+		},
+		computed: {
+			internalConfig() {
+				return this.config;
+			}
+		},
+		template: `
 		<div class="bx-im-attach-grid__container">
 			<AttachGridItem
 				v-for="(gridItem, index) in internalConfig.grid"
@@ -249,21 +249,21 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	};
 
 	const AttachHtml = {
-	  props: {
-	    config: {
-	      type: Object,
-	      default: () => {}
-	    }
-	  },
-	  computed: {
-	    internalConfig() {
-	      return this.config;
-	    },
-	    html() {
-	      return im_v2_lib_parser.Parser.decodeHtml(this.internalConfig.html);
-	    }
-	  },
-	  template: `
+		props: {
+			config: {
+				type: Object,
+				default: () => {}
+			}
+		},
+		computed: {
+			internalConfig() {
+				return this.config;
+			},
+			html() {
+				return im_v2_lib_parser.Parser.decodeHtml(this.internalConfig.html);
+			}
+		},
+		template: `
 		<div class="bx-im-element-attach-type-html" v-html="html"></div>
 	`
 	};
@@ -272,74 +272,73 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	// @vue/component
 	const AttachImageItem = {
-	  name: 'AttachImageItem',
-	  directives: {
-	    lazyload: ui_vue3_directives_lazyload.lazyload
-	  },
-	  props: {
-	    config: {
-	      type: Object,
-	      default: () => {}
-	    }
-	  },
-	  computed: {
-	    internalConfig() {
-	      return this.config;
-	    },
-	    width() {
-	      return this.internalConfig.width || 0;
-	    },
-	    height() {
-	      return this.internalConfig.height || 0;
-	    },
-	    link() {
-	      return this.internalConfig.link;
-	    },
-	    name() {
-	      return this.internalConfig.name;
-	    },
-	    preview() {
-	      return this.internalConfig.preview;
-	    },
-	    source() {
-	      var _this$preview;
-	      return (_this$preview = this.preview) != null ? _this$preview : this.link;
-	    },
-	    imageSize() {
-	      if (this.width === 0 || this.height === 0) {
-	        return {};
-	      }
-	      const sizes = im_v2_lib_utils.Utils.file.resizeToFitMaxSize(this.width, this.height, MAX_IMAGE_SIZE);
-	      return {
-	        width: `${sizes.width}px`,
-	        height: `${sizes.height}px`,
-	        'object-fit': sizes.width < 100 || sizes.height < 100 ? 'cover' : 'contain'
-	      };
-	    },
-	    hasWidth() {
-	      return Boolean(this.imageSize.width);
-	    }
-	  },
-	  methods: {
-	    open() {
-	      if (!this.link) {
-	        return;
-	      }
-	      window.open(this.link, '_blank');
-	    },
-	    lazyLoadCallback(event) {
-	      const {
-	        element
-	      } = event;
-	      if (!main_core.Dom.style(element, 'width')) {
-	        main_core.Dom.style(element, 'width', `${element.offsetWidth}px`);
-	      }
-	      if (!main_core.Dom.style(element, 'height')) {
-	        main_core.Dom.style(element, 'height', `${element.offsetHeight}px`);
-	      }
-	    }
-	  },
-	  template: `
+		name: 'AttachImageItem',
+		directives: {
+			lazyload: ui_vue3_directives_lazyload.lazyload
+		},
+		props: {
+			config: {
+				type: Object,
+				default: () => {}
+			}
+		},
+		computed: {
+			internalConfig() {
+				return this.config;
+			},
+			width() {
+				return this.internalConfig.width || 0;
+			},
+			height() {
+				return this.internalConfig.height || 0;
+			},
+			link() {
+				return this.internalConfig.link;
+			},
+			name() {
+				return this.internalConfig.name;
+			},
+			preview() {
+				return this.internalConfig.preview;
+			},
+			source() {
+				return this.preview ?? this.link;
+			},
+			imageSize() {
+				if (this.width === 0 || this.height === 0) {
+					return {};
+				}
+				const sizes = im_v2_lib_utils.Utils.file.resizeToFitMaxSize(this.width, this.height, MAX_IMAGE_SIZE);
+				return {
+					width: `${sizes.width}px`,
+					height: `${sizes.height}px`,
+					'object-fit': sizes.width < 100 || sizes.height < 100 ? 'cover' : 'contain'
+				};
+			},
+			hasWidth() {
+				return Boolean(this.imageSize.width);
+			}
+		},
+		methods: {
+			open() {
+				if (!this.link) {
+					return;
+				}
+				window.open(this.link, '_blank');
+			},
+			lazyLoadCallback(event) {
+				const {
+					element
+				} = event;
+				if (!main_core.Dom.style(element, 'width')) {
+					main_core.Dom.style(element, 'width', `${element.offsetWidth}px`);
+				}
+				if (!main_core.Dom.style(element, 'height')) {
+					main_core.Dom.style(element, 'height', `${element.offsetHeight}px`);
+				}
+			}
+		},
+		template: `
 		<div class="bx-im-attach-image__item" :class="{'--with-width': hasWidth }" @click="open">
 			<img
 				v-lazyload="{callback: lazyLoadCallback}"
@@ -354,22 +353,22 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	};
 
 	const AttachImage = {
-	  name: 'AttachImage',
-	  components: {
-	    AttachImageItem
-	  },
-	  props: {
-	    config: {
-	      type: Object,
-	      default: () => {}
-	    }
-	  },
-	  computed: {
-	    internalConfig() {
-	      return this.config;
-	    }
-	  },
-	  template: `
+		name: 'AttachImage',
+		components: {
+			AttachImageItem
+		},
+		props: {
+			config: {
+				type: Object,
+				default: () => {}
+			}
+		},
+		computed: {
+			internalConfig() {
+				return this.config;
+			}
+		},
+		template: `
 		<div class="bx-im-attach-image__container bx-im-attach-image__scope">
 			<AttachImageItem v-for="(image, index) in internalConfig.image" :config="image" :key="index" />
 		</div>
@@ -378,49 +377,48 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	// @vue/component
 	const AttachLinkItem = {
-	  name: 'AttachLinkItem',
-	  components: {
-	    AttachImage
-	  },
-	  props: {
-	    config: {
-	      type: Object,
-	      default: () => {}
-	    }
-	  },
-	  computed: {
-	    internalConfig() {
-	      return this.config;
-	    },
-	    link() {
-	      return this.internalConfig.link;
-	    },
-	    name() {
-	      var _this$internalConfig$;
-	      return (_this$internalConfig$ = this.internalConfig.name) != null ? _this$internalConfig$ : this.link;
-	    },
-	    description() {
-	      return this.internalConfig.desc;
-	    },
-	    html() {
-	      const content = this.internalConfig.html || this.description;
-	      return im_v2_lib_parser.Parser.decodeText(content);
-	    },
-	    preview() {
-	      return this.internalConfig.preview;
-	    },
-	    imageConfig() {
-	      return {
-	        image: [{
-	          name: this.internalConfig.name,
-	          preview: this.internalConfig.preview,
-	          width: this.internalConfig.width,
-	          height: this.internalConfig.height
-	        }]
-	      };
-	    }
-	  },
-	  template: `
+		name: 'AttachLinkItem',
+		components: {
+			AttachImage
+		},
+		props: {
+			config: {
+				type: Object,
+				default: () => {}
+			}
+		},
+		computed: {
+			internalConfig() {
+				return this.config;
+			},
+			link() {
+				return this.internalConfig.link;
+			},
+			name() {
+				return this.internalConfig.name ?? this.link;
+			},
+			description() {
+				return this.internalConfig.desc;
+			},
+			html() {
+				const content = this.internalConfig.html || this.description;
+				return im_v2_lib_parser.Parser.decodeText(content);
+			},
+			preview() {
+				return this.internalConfig.preview;
+			},
+			imageConfig() {
+				return {
+					image: [{
+						name: this.internalConfig.name,
+						preview: this.internalConfig.preview,
+						width: this.internalConfig.width,
+						height: this.internalConfig.height
+					}]
+				};
+			}
+		},
+		template: `
 		<div class="bx-im-attach-link__item">
 			<a v-if="link" :href="link" target="_blank" class="bx-im-attach-link__link">
 				{{ name }}
@@ -438,22 +436,22 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	// @vue/component
 	const AttachLink = {
-	  name: 'AttachLink',
-	  components: {
-	    AttachLinkItem
-	  },
-	  props: {
-	    config: {
-	      type: Object,
-	      default: () => {}
-	    }
-	  },
-	  computed: {
-	    internalConfig() {
-	      return this.config;
-	    }
-	  },
-	  template: `
+		name: 'AttachLink',
+		components: {
+			AttachLinkItem
+		},
+		props: {
+			config: {
+				type: Object,
+				default: () => {}
+			}
+		},
+		computed: {
+			internalConfig() {
+				return this.config;
+			}
+		},
+		template: `
 		<div class="bx-im-attach-link__container">
 			<AttachLinkItem v-for="(link, index) in internalConfig.link" :config="link" :key="index" />
 		</div>
@@ -462,147 +460,134 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	// @vue/component
 	const AttachMessage = {
-	  name: 'AttachMessage',
-	  props: {
-	    config: {
-	      type: Object,
-	      default: () => {}
-	    }
-	  },
-	  computed: {
-	    internalConfig() {
-	      return this.config;
-	    },
-	    message() {
-	      return im_v2_lib_parser.Parser.decodeText(this.internalConfig.message);
-	    }
-	  },
-	  template: `
+		name: 'AttachMessage',
+		props: {
+			config: {
+				type: Object,
+				default: () => {}
+			}
+		},
+		computed: {
+			internalConfig() {
+				return this.config;
+			},
+			message() {
+				return im_v2_lib_parser.Parser.decodeText(this.internalConfig.message);
+			}
+		},
+		template: `
 		<div class="bx-im-attach-message__container" v-html="message"></div>
 	`
 	};
 
-	var _restClient = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restClient");
-	var _store = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
-	var _message = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("message");
 	class RichService {
-	  constructor(message) {
-	    Object.defineProperty(this, _restClient, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _store, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _message, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _restClient)[_restClient] = im_v2_application_core.Core.getRestClient();
-	    babelHelpers.classPrivateFieldLooseBase(this, _store)[_store] = im_v2_application_core.Core.getStore();
-	    babelHelpers.classPrivateFieldLooseBase(this, _message)[_message] = message;
-	  }
-	  deleteRichLink(attachId) {
-	    void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('messages/deleteAttach', {
-	      messageId: babelHelpers.classPrivateFieldLooseBase(this, _message)[_message].id,
-	      attachId
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _restClient)[_restClient].callMethod(im_v2_const.RestMethod.imV2ChatMessageDeleteRichUrl, {
-	      messageId: babelHelpers.classPrivateFieldLooseBase(this, _message)[_message].id
-	    }).catch(result => {
-	      console.error('RichService: error deleting rich link', result.error);
-	    });
-	  }
+		#restClient;
+		#store;
+		#message;
+		constructor(message) {
+			this.#restClient = im_v2_application_core.Core.getRestClient();
+			this.#store = im_v2_application_core.Core.getStore();
+			this.#message = message;
+		}
+		deleteRichLink(attachId) {
+			void this.#store.dispatch('messages/deleteAttach', {
+				messageId: this.#message.id,
+				attachId
+			});
+			this.#restClient.callMethod(im_v2_const.RestMethod.imV2ChatMessageDeleteRichUrl, {
+				messageId: this.#message.id
+			}).catch(result => {
+				console.error('RichService: error deleting rich link', result.error);
+			});
+		}
 	}
 
 	// @vue/component
 	const AttachRichItem = {
-	  name: 'AttachRichItem',
-	  components: {
-	    AttachImage
-	  },
-	  inject: ['message'],
-	  props: {
-	    config: {
-	      type: Object,
-	      default: () => {}
-	    },
-	    attachId: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  computed: {
-	    internalConfig() {
-	      return this.config;
-	    },
-	    link() {
-	      return this.internalConfig.link;
-	    },
-	    name() {
-	      return im_v2_lib_utils.Utils.text.convertHtmlEntities(this.internalConfig.name);
-	    },
-	    description() {
-	      return im_v2_lib_utils.Utils.text.convertHtmlEntities(this.internalConfig.desc);
-	    },
-	    html() {
-	      return this.internalConfig.html;
-	    },
-	    preview() {
-	      return this.internalConfig.preview;
-	    },
-	    previewSize() {
-	      var _this$internalConfig$, _this$internalConfig$2, _this$internalConfig$3, _this$internalConfig$4;
-	      return {
-	        width: (_this$internalConfig$ = (_this$internalConfig$2 = this.internalConfig.previewSize) == null ? void 0 : _this$internalConfig$2.width) != null ? _this$internalConfig$ : 0,
-	        height: (_this$internalConfig$3 = (_this$internalConfig$4 = this.internalConfig.previewSize) == null ? void 0 : _this$internalConfig$4.height) != null ? _this$internalConfig$3 : 0
-	      };
-	    },
-	    imageConfig() {
-	      return {
-	        image: [{
-	          name: this.name,
-	          preview: this.preview,
-	          width: this.previewSize.width,
-	          height: this.previewSize.height
-	        }]
-	      };
-	    },
-	    canShowDeleteIcon() {
-	      if (!this.message) {
-	        return false;
-	      }
-	      return this.message.authorId === im_v2_application_core.Core.getUserId();
-	    },
-	    deleteRichLinkTitle() {
-	      return this.$Bitrix.Loc.getMessage('IM_ELEMENTS_ATTACH_RICH_LINK_DELETE');
-	    },
-	    imageStyles() {
-	      if (this.previewSize.width === 0 || this.previewSize.height === 0) {
-	        return {
-	          width: '272px',
-	          height: '272px'
-	        };
-	      }
-	      return {};
-	    }
-	  },
-	  methods: {
-	    openLink() {
-	      if (!this.link) {
-	        return;
-	      }
-	      window.open(this.link, '_blank');
-	    },
-	    deleteRichLink() {
-	      if (!this.message) {
-	        return;
-	      }
-	      new RichService(this.message).deleteRichLink(this.attachId);
-	    }
-	  },
-	  template: `
+		name: 'AttachRichItem',
+		components: {
+			AttachImage
+		},
+		inject: ['message'],
+		props: {
+			config: {
+				type: Object,
+				default: () => {}
+			},
+			attachId: {
+				type: String,
+				required: true
+			}
+		},
+		computed: {
+			internalConfig() {
+				return this.config;
+			},
+			link() {
+				return this.internalConfig.link;
+			},
+			name() {
+				return im_v2_lib_utils.Utils.text.convertHtmlEntities(this.internalConfig.name);
+			},
+			description() {
+				return im_v2_lib_utils.Utils.text.convertHtmlEntities(this.internalConfig.desc);
+			},
+			html() {
+				return this.internalConfig.html;
+			},
+			preview() {
+				return this.internalConfig.preview;
+			},
+			previewSize() {
+				return {
+					width: this.internalConfig.previewSize?.width ?? 0,
+					height: this.internalConfig.previewSize?.height ?? 0
+				};
+			},
+			imageConfig() {
+				return {
+					image: [{
+						name: this.name,
+						preview: this.preview,
+						width: this.previewSize.width,
+						height: this.previewSize.height
+					}]
+				};
+			},
+			canShowDeleteIcon() {
+				if (!this.message) {
+					return false;
+				}
+				return this.message.authorId === im_v2_application_core.Core.getUserId();
+			},
+			deleteRichLinkTitle() {
+				return this.$Bitrix.Loc.getMessage('IM_ELEMENTS_ATTACH_RICH_LINK_DELETE');
+			},
+			imageStyles() {
+				if (this.previewSize.width === 0 || this.previewSize.height === 0) {
+					return {
+						width: '272px',
+						height: '272px'
+					};
+				}
+				return {};
+			}
+		},
+		methods: {
+			openLink() {
+				if (!this.link) {
+					return;
+				}
+				window.open(this.link, '_blank');
+			},
+			deleteRichLink() {
+				if (!this.message) {
+					return;
+				}
+				new RichService(this.message).deleteRichLink(this.attachId);
+			}
+		},
+		template: `
 		<div class="bx-im-attach-rich__scope bx-im-attach-rich__container">
 			<div class="bx-im-attach-rich__block">
 				<div class="bx-im-attach-rich__name" @click="openLink">{{ name }}</div>
@@ -623,25 +608,25 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	// @vue/component
 	const AttachRich = {
-	  components: {
-	    AttachRichItem
-	  },
-	  props: {
-	    config: {
-	      type: Object,
-	      default: () => {}
-	    },
-	    attachId: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  computed: {
-	    internalConfig() {
-	      return this.config;
-	    }
-	  },
-	  template: `
+		components: {
+			AttachRichItem
+		},
+		props: {
+			config: {
+				type: Object,
+				default: () => {}
+			},
+			attachId: {
+				type: String,
+				required: true
+			}
+		},
+		computed: {
+			internalConfig() {
+				return this.config;
+			}
+		},
+		template: `
 		<div class="bx-im-attach-rich__container">
 			<AttachRichItem 
 				v-for="(rich, index) in internalConfig.richLink" 
@@ -654,53 +639,53 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	};
 
 	const AVATAR_TYPE = {
-	  user: 'user',
-	  chat: 'chat',
-	  bot: 'bot'
+		user: 'user',
+		chat: 'chat',
+		bot: 'bot'
 	};
 
 	// @vue/component
 	const AttachUserItem = {
-	  name: 'AttachUserItem',
-	  directives: {
-	    lazyload: ui_vue3_directives_lazyload.lazyload
-	  },
-	  props: {
-	    config: {
-	      type: Object,
-	      default: () => {}
-	    }
-	  },
-	  computed: {
-	    internalConfig() {
-	      return this.config;
-	    },
-	    name() {
-	      return this.internalConfig.name;
-	    },
-	    avatar() {
-	      return this.internalConfig.avatar;
-	    },
-	    avatarType() {
-	      return this.internalConfig.avatarType;
-	    },
-	    link() {
-	      return this.internalConfig.link;
-	    },
-	    avatarTypeClass() {
-	      if (this.avatar) {
-	        return '';
-	      }
-	      let avatarType = AVATAR_TYPE.user;
-	      if (this.avatarType === AVATAR_TYPE.chat) {
-	        avatarType = AVATAR_TYPE.chat;
-	      } else if (this.avatarType === AVATAR_TYPE.bot) {
-	        avatarType = AVATAR_TYPE.bot;
-	      }
-	      return [`--${avatarType}`, 'base'];
-	    }
-	  },
-	  template: `
+		name: 'AttachUserItem',
+		directives: {
+			lazyload: ui_vue3_directives_lazyload.lazyload
+		},
+		props: {
+			config: {
+				type: Object,
+				default: () => {}
+			}
+		},
+		computed: {
+			internalConfig() {
+				return this.config;
+			},
+			name() {
+				return this.internalConfig.name;
+			},
+			avatar() {
+				return this.internalConfig.avatar;
+			},
+			avatarType() {
+				return this.internalConfig.avatarType;
+			},
+			link() {
+				return this.internalConfig.link;
+			},
+			avatarTypeClass() {
+				if (this.avatar) {
+					return '';
+				}
+				let avatarType = AVATAR_TYPE.user;
+				if (this.avatarType === AVATAR_TYPE.chat) {
+					avatarType = AVATAR_TYPE.chat;
+				} else if (this.avatarType === AVATAR_TYPE.bot) {
+					avatarType = AVATAR_TYPE.bot;
+				}
+				return [`--${avatarType}`, 'base'];
+			}
+		},
+		template: `
 		<div class="bx-im-attach-user__item">
 			<div class="bx-im-attach-user__avatar" :class="avatarTypeClass">
 				<img v-if="avatar" v-lazyload :data-lazyload-src="avatar" class="bx-im-attach-user__source" alt="name" />
@@ -717,22 +702,22 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	// @vue/component
 	const AttachUser = {
-	  name: 'AttachUser',
-	  components: {
-	    AttachUserItem
-	  },
-	  props: {
-	    config: {
-	      type: Object,
-	      default: () => {}
-	    }
-	  },
-	  computed: {
-	    internalConfig() {
-	      return this.config;
-	    }
-	  },
-	  template: `
+		name: 'AttachUser',
+		components: {
+			AttachUserItem
+		},
+		props: {
+			config: {
+				type: Object,
+				default: () => {}
+			}
+		},
+		computed: {
+			internalConfig() {
+				return this.config;
+			}
+		},
+		template: `
 		<div class="bx-im-attach-user__container">
 			<AttachUserItem v-for="(user, index) in internalConfig.user" :config="user" :key="index" />
 		</div>
@@ -740,61 +725,61 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	};
 
 	const PropertyToComponentMap = {
-	  [im_v2_const.AttachType.Delimiter]: AttachDelimiter,
-	  [im_v2_const.AttachType.File]: AttachFile,
-	  [im_v2_const.AttachType.Grid]: AttachGrid,
-	  [im_v2_const.AttachType.Html]: AttachHtml,
-	  [im_v2_const.AttachType.Image]: AttachImage,
-	  [im_v2_const.AttachType.Link]: AttachLink,
-	  [im_v2_const.AttachType.Message]: AttachMessage,
-	  [im_v2_const.AttachType.Rich]: AttachRich,
-	  [im_v2_const.AttachType.User]: AttachUser
+		[im_v2_const.AttachType.Delimiter]: AttachDelimiter,
+		[im_v2_const.AttachType.File]: AttachFile,
+		[im_v2_const.AttachType.Grid]: AttachGrid,
+		[im_v2_const.AttachType.Html]: AttachHtml,
+		[im_v2_const.AttachType.Image]: AttachImage,
+		[im_v2_const.AttachType.Link]: AttachLink,
+		[im_v2_const.AttachType.Message]: AttachMessage,
+		[im_v2_const.AttachType.Rich]: AttachRich,
+		[im_v2_const.AttachType.User]: AttachUser
 	};
 
 	// @vue/component
 	const Attach = {
-	  name: 'MessengerAttach',
-	  components: {
-	    AttachDelimiter,
-	    AttachFile,
-	    AttachGrid,
-	    AttachHtml,
-	    AttachImage,
-	    AttachLink,
-	    AttachMessage,
-	    AttachRich,
-	    AttachUser
-	  },
-	  props: {
-	    config: {
-	      type: Object,
-	      default: () => {}
-	    }
-	  },
-	  computed: {
-	    internalConfig() {
-	      return this.config;
-	    },
-	    blocks() {
-	      return this.internalConfig.blocks;
-	    },
-	    colorToken() {
-	      const {
-	        colorToken = im_v2_const.ColorToken.base
-	      } = this.internalConfig;
-	      return colorToken;
-	    }
-	  },
-	  methods: {
-	    getComponentForBlock(block) {
-	      const [blockType] = Object.keys(block);
-	      if (!PropertyToComponentMap[blockType]) {
-	        return '';
-	      }
-	      return PropertyToComponentMap[blockType];
-	    }
-	  },
-	  template: `
+		name: 'MessengerAttach',
+		components: {
+			AttachDelimiter,
+			AttachFile,
+			AttachGrid,
+			AttachHtml,
+			AttachImage,
+			AttachLink,
+			AttachMessage,
+			AttachRich,
+			AttachUser
+		},
+		props: {
+			config: {
+				type: Object,
+				default: () => {}
+			}
+		},
+		computed: {
+			internalConfig() {
+				return this.config;
+			},
+			blocks() {
+				return this.internalConfig.blocks;
+			},
+			colorToken() {
+				const {
+					colorToken = im_v2_const.ColorToken.base
+				} = this.internalConfig;
+				return colorToken;
+			}
+		},
+		methods: {
+			getComponentForBlock(block) {
+				const [blockType] = Object.keys(block);
+				if (!PropertyToComponentMap[blockType]) {
+					return '';
+				}
+				return PropertyToComponentMap[blockType];
+			}
+		},
+		template: `
 		<div class="bx-im-attach__container bx-im-attach__scope">
 			<div class="bx-im-attach__border" :class="colorToken"></div>
 			<div class="bx-im-attach__content">
@@ -813,5 +798,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.Attach = Attach;
 
-}((this.BX.Messenger.v2.Component.Elements = this.BX.Messenger.v2.Component.Elements || {}),BX,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Vue3.Directives));
+})(this.BX.Messenger.v2.Component.Elements = this.BX.Messenger.v2.Component.Elements || {}, BX.Messenger.v2.Const, BX, BX, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Vue3.Directives, BX.Messenger.v2.Application);
 //# sourceMappingURL=attach.bundle.js.map

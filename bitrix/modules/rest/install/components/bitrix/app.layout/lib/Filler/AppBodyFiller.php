@@ -28,7 +28,7 @@ class AppBodyFiller extends FillerBase
 			throw new Exception\AppNotFoundInMarketplaceException();
 		}
 
-		$detailUrl = str_replace("#code#", (string) $app['ID'], $this->params['DETAIL_URL']);
+		$detailUrl = str_replace("#code#", (string)($app['CODE'] ?? ''), $this->params['DETAIL_URL']);
 		return [
 			'APPLICATION' => $app,
 			'DETAIL_URL' => $detailUrl,

@@ -2,708 +2,603 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,main_core,main_core_events,im_v2_lib_utils,im_v2_lib_logger,im_v2_lib_rest,im_v2_application_core,im_v2_const,im_v2_provider_service_message) {
+(function (exports, main_core, main_core_events, im_v2_application_core, im_v2_const, im_v2_lib_logger, im_v2_lib_rest, im_v2_lib_utils, im_v2_provider_service_message) {
 	'use strict';
 
-	var _store = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
-	var _addLoadingMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addLoadingMessage");
-	var _processMessageSending = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("processMessageSending");
-	var _handleAddingMessageToModels = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleAddingMessageToModels");
-	var _sendAndProcessMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendAndProcessMessage");
-	var _prepareMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareMessage");
-	var _prepareMessageWithFiles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareMessageWithFiles");
-	var _prepareMessageWithSticker = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareMessageWithSticker");
-	var _preparePrompt = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("preparePrompt");
-	var _handlePagination = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handlePagination");
-	var _addMessageToModels = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addMessageToModels");
-	var _addMessageToRecent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addMessageToRecent");
-	var _sendMessageToServer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendMessageToServer");
-	var _updateModels = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateModels");
-	var _updateMessageError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateMessageError");
-	var _removeMessageError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("removeMessageError");
-	var _sendScrollEvent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendScrollEvent");
-	var _getDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDialog");
-	var _getDialogByChatId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDialogByChatId");
-	var _needToSetAsViewed = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("needToSetAsViewed");
-	var _handleForwardMessageResponse = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleForwardMessageResponse");
-	var _handleForwardMessageError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleForwardMessageError");
-	var _prepareForwardMessages = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareForwardMessages");
-	var _prepareForwardParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareForwardParams");
-	var _prepareSendForwardRequest = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareSendForwardRequest");
-	var _addForwardsToModels = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addForwardsToModels");
-	var _getForwardUuidMap = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getForwardUuidMap");
-	var _buildForwardContextId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buildForwardContextId");
-	var _logSendErrors = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("logSendErrors");
-	var _clearLastMessageViews = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("clearLastMessageViews");
-	var _sendForwardRequest = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendForwardRequest");
-	var _prepareCopilotMessageParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareCopilotMessageParams");
-	var _prepareAiAssistantMessageParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareAiAssistantMessageParams");
 	class SendingService {
-	  static getInstance() {
-	    if (!this.instance) {
-	      this.instance = new this();
-	    }
-	    return this.instance;
-	  }
-	  constructor() {
-	    Object.defineProperty(this, _prepareAiAssistantMessageParams, {
-	      value: _prepareAiAssistantMessageParams2
-	    });
-	    Object.defineProperty(this, _prepareCopilotMessageParams, {
-	      value: _prepareCopilotMessageParams2
-	    });
-	    Object.defineProperty(this, _sendForwardRequest, {
-	      value: _sendForwardRequest2
-	    });
-	    Object.defineProperty(this, _clearLastMessageViews, {
-	      value: _clearLastMessageViews2
-	    });
-	    Object.defineProperty(this, _logSendErrors, {
-	      value: _logSendErrors2
-	    });
-	    Object.defineProperty(this, _buildForwardContextId, {
-	      value: _buildForwardContextId2
-	    });
-	    Object.defineProperty(this, _getForwardUuidMap, {
-	      value: _getForwardUuidMap2
-	    });
-	    Object.defineProperty(this, _addForwardsToModels, {
-	      value: _addForwardsToModels2
-	    });
-	    Object.defineProperty(this, _prepareSendForwardRequest, {
-	      value: _prepareSendForwardRequest2
-	    });
-	    Object.defineProperty(this, _prepareForwardParams, {
-	      value: _prepareForwardParams2
-	    });
-	    Object.defineProperty(this, _prepareForwardMessages, {
-	      value: _prepareForwardMessages2
-	    });
-	    Object.defineProperty(this, _handleForwardMessageError, {
-	      value: _handleForwardMessageError2
-	    });
-	    Object.defineProperty(this, _handleForwardMessageResponse, {
-	      value: _handleForwardMessageResponse2
-	    });
-	    Object.defineProperty(this, _needToSetAsViewed, {
-	      value: _needToSetAsViewed2
-	    });
-	    Object.defineProperty(this, _getDialogByChatId, {
-	      value: _getDialogByChatId2
-	    });
-	    Object.defineProperty(this, _getDialog, {
-	      value: _getDialog2
-	    });
-	    Object.defineProperty(this, _sendScrollEvent, {
-	      value: _sendScrollEvent2
-	    });
-	    Object.defineProperty(this, _removeMessageError, {
-	      value: _removeMessageError2
-	    });
-	    Object.defineProperty(this, _updateMessageError, {
-	      value: _updateMessageError2
-	    });
-	    Object.defineProperty(this, _updateModels, {
-	      value: _updateModels2
-	    });
-	    Object.defineProperty(this, _sendMessageToServer, {
-	      value: _sendMessageToServer2
-	    });
-	    Object.defineProperty(this, _addMessageToRecent, {
-	      value: _addMessageToRecent2
-	    });
-	    Object.defineProperty(this, _addMessageToModels, {
-	      value: _addMessageToModels2
-	    });
-	    Object.defineProperty(this, _handlePagination, {
-	      value: _handlePagination2
-	    });
-	    Object.defineProperty(this, _preparePrompt, {
-	      value: _preparePrompt2
-	    });
-	    Object.defineProperty(this, _prepareMessageWithSticker, {
-	      value: _prepareMessageWithSticker2
-	    });
-	    Object.defineProperty(this, _prepareMessageWithFiles, {
-	      value: _prepareMessageWithFiles2
-	    });
-	    Object.defineProperty(this, _prepareMessage, {
-	      value: _prepareMessage2
-	    });
-	    Object.defineProperty(this, _sendAndProcessMessage, {
-	      value: _sendAndProcessMessage2
-	    });
-	    Object.defineProperty(this, _handleAddingMessageToModels, {
-	      value: _handleAddingMessageToModels2
-	    });
-	    Object.defineProperty(this, _processMessageSending, {
-	      value: _processMessageSending2
-	    });
-	    Object.defineProperty(this, _addLoadingMessage, {
-	      value: _addLoadingMessage2
-	    });
-	    Object.defineProperty(this, _store, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _store)[_store] = im_v2_application_core.Core.getStore();
-	  }
-	  async sendMessage(params) {
-	    const {
-	      text = ''
-	    } = params;
-	    if (!main_core.Type.isStringFilled(text)) {
-	      return;
-	    }
-	    im_v2_lib_logger.Logger.warn('SendingService: sendMessage', params);
-	    const message = babelHelpers.classPrivateFieldLooseBase(this, _prepareMessage)[_prepareMessage](params);
-	    void babelHelpers.classPrivateFieldLooseBase(this, _processMessageSending)[_processMessageSending](message);
-	  }
-	  async sendMessageWithFiles(params) {
-	    const {
-	      text = '',
-	      fileIds = []
-	    } = params;
-	    if (!main_core.Type.isStringFilled(text) && !main_core.Type.isArrayFilled(fileIds)) {
-	      return Promise.resolve();
-	    }
-	    im_v2_lib_logger.Logger.warn('SendingService: sendMessage with files', params);
-	    const message = babelHelpers.classPrivateFieldLooseBase(this, _prepareMessageWithFiles)[_prepareMessageWithFiles](params);
-	    await babelHelpers.classPrivateFieldLooseBase(this, _handlePagination)[_handlePagination](message.dialogId);
-	    await babelHelpers.classPrivateFieldLooseBase(this, _addLoadingMessage)[_addLoadingMessage](message);
-	    await babelHelpers.classPrivateFieldLooseBase(this, _addMessageToRecent)[_addMessageToRecent](message);
-	    await babelHelpers.classPrivateFieldLooseBase(this, _clearLastMessageViews)[_clearLastMessageViews](message.dialogId);
-	    babelHelpers.classPrivateFieldLooseBase(this, _sendScrollEvent)[_sendScrollEvent]({
-	      force: true,
-	      dialogId: message.dialogId
-	    });
-	    return Promise.resolve();
-	  }
-	  async sendMessageWithSticker(params) {
-	    const {
-	      stickerParams
-	    } = params;
-	    if (!main_core.Type.isPlainObject(stickerParams)) {
-	      return;
-	    }
-	    im_v2_lib_logger.Logger.warn('SendingService: sendMessage with sticker', params);
-	    const message = babelHelpers.classPrivateFieldLooseBase(this, _prepareMessageWithSticker)[_prepareMessageWithSticker](params);
-	    void babelHelpers.classPrivateFieldLooseBase(this, _processMessageSending)[_processMessageSending](message);
-	  }
-	  async forwardMessages(params) {
-	    const {
-	      forwardIds,
-	      dialogId,
-	      text
-	    } = params;
-	    if (!main_core.Type.isArrayFilled(forwardIds)) {
-	      return Promise.resolve();
-	    }
-	    im_v2_lib_logger.Logger.warn('SendingService: forwardMessages', params);
-	    await babelHelpers.classPrivateFieldLooseBase(this, _handlePagination)[_handlePagination](dialogId);
-	    let commentMessage = null;
-	    if (main_core.Type.isStringFilled(text)) {
-	      commentMessage = babelHelpers.classPrivateFieldLooseBase(this, _prepareMessage)[_prepareMessage](params);
-	      await babelHelpers.classPrivateFieldLooseBase(this, _addMessageToModels)[_addMessageToModels](commentMessage);
-	    }
-	    const sortForwardIds = [...forwardIds].sort();
-	    const forwardUuidMap = babelHelpers.classPrivateFieldLooseBase(this, _getForwardUuidMap)[_getForwardUuidMap](sortForwardIds);
-	    const forwardedMessages = babelHelpers.classPrivateFieldLooseBase(this, _prepareForwardMessages)[_prepareForwardMessages](params, forwardUuidMap);
-	    await babelHelpers.classPrivateFieldLooseBase(this, _addForwardsToModels)[_addForwardsToModels](forwardedMessages);
-	    babelHelpers.classPrivateFieldLooseBase(this, _sendScrollEvent)[_sendScrollEvent]({
-	      force: true,
-	      dialogId
-	    });
-	    return babelHelpers.classPrivateFieldLooseBase(this, _sendForwardRequest)[_sendForwardRequest]({
-	      forwardUuidMap,
-	      commentMessage,
-	      dialogId
-	    });
-	  }
-	  async retrySendMessage(params) {
-	    const {
-	      tempMessageId,
-	      dialogId
-	    } = params;
-	    const unsentMessage = babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['messages/getById'](tempMessageId);
-	    if (!unsentMessage) {
-	      return Promise.resolve();
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _removeMessageError)[_removeMessageError](tempMessageId);
-	    const message = babelHelpers.classPrivateFieldLooseBase(this, _prepareMessage)[_prepareMessage]({
-	      text: unsentMessage.text,
-	      dialogId,
-	      tempMessageId: unsentMessage.id,
-	      replyId: unsentMessage.replyId
-	    });
-	    if (main_core.Type.isStringFilled(unsentMessage.forward.id)) {
-	      const [, forwardId] = unsentMessage.forward.id.split('/');
-	      const forwardUuidMap = {
-	        [unsentMessage.id]: forwardId
-	      };
-	      return babelHelpers.classPrivateFieldLooseBase(this, _sendForwardRequest)[_sendForwardRequest]({
-	        forwardUuidMap,
-	        dialogId
-	      });
-	    }
-	    return babelHelpers.classPrivateFieldLooseBase(this, _sendAndProcessMessage)[_sendAndProcessMessage](message);
-	  }
-	  async sendCopilotPrompt(params) {
-	    const {
-	      text = ''
-	    } = params;
-	    if (!main_core.Type.isStringFilled(text)) {
-	      return Promise.resolve();
-	    }
-	    im_v2_lib_logger.Logger.warn('SendingService: sendCopilotPrompt', params);
-	    const message = babelHelpers.classPrivateFieldLooseBase(this, _preparePrompt)[_preparePrompt](params);
-	    return babelHelpers.classPrivateFieldLooseBase(this, _processMessageSending)[_processMessageSending](message);
-	  }
+		#store;
+		static instance = null;
+		static getInstance() {
+			if (!this.instance) {
+				this.instance = new this();
+			}
+			return this.instance;
+		}
+		constructor() {
+			this.#store = im_v2_application_core.Core.getStore();
+		}
+		async sendMessage(params) {
+			const {
+				text = ''
+			} = params;
+			if (!main_core.Type.isStringFilled(text)) {
+				return;
+			}
+			im_v2_lib_logger.Logger.warn('SendingService: sendMessage', params);
+			const message = this.#prepareMessage(params);
+			void this.#processMessageSending(message);
+		}
+		async sendMessageWithFiles(params) {
+			const {
+				text = '',
+				fileIds = []
+			} = params;
+			if (!main_core.Type.isStringFilled(text) && !main_core.Type.isArrayFilled(fileIds)) {
+				return Promise.resolve();
+			}
+			im_v2_lib_logger.Logger.warn('SendingService: sendMessage with files', params);
+			const message = this.#prepareMessageWithFiles(params);
+			await this.#handlePagination(message.dialogId);
+			await this.#addLoadingMessage(message);
+			await this.#addMessageToRecent(message);
+			await this.#clearLastMessageViews(message.dialogId);
+			this.#sendScrollEvent({
+				force: true,
+				dialogId: message.dialogId
+			});
+			return Promise.resolve();
+		}
+		async sendMessageWithSticker(params) {
+			const {
+				stickerParams
+			} = params;
+			if (!main_core.Type.isPlainObject(stickerParams)) {
+				return;
+			}
+			im_v2_lib_logger.Logger.warn('SendingService: sendMessage with sticker', params);
+			const message = this.#prepareMessageWithSticker(params);
+			void this.#processMessageSending(message);
+		}
+		async forwardMessages(params) {
+			const {
+				forwardIds,
+				dialogId,
+				text
+			} = params;
+			if (!main_core.Type.isArrayFilled(forwardIds)) {
+				return Promise.resolve();
+			}
+			im_v2_lib_logger.Logger.warn('SendingService: forwardMessages', params);
+			await this.#handlePagination(dialogId);
+			let commentMessage = null;
+			if (main_core.Type.isStringFilled(text)) {
+				commentMessage = this.#prepareMessage(params);
+				await this.#addMessageToModels(commentMessage);
+			}
+			const sortForwardIds = [...forwardIds].sort();
+			const forwardUuidMap = this.#getForwardUuidMap(sortForwardIds);
+			const forwardedMessages = this.#prepareForwardMessages(params, forwardUuidMap);
+			await this.#addForwardsToModels(forwardedMessages);
+			this.#sendScrollEvent({
+				force: true,
+				dialogId
+			});
+			return this.#sendForwardRequest({
+				forwardUuidMap,
+				commentMessage,
+				dialogId
+			});
+		}
+		async retrySendMessage(params) {
+			const {
+				tempMessageId,
+				dialogId
+			} = params;
+			const unsentMessage = this.#store.getters['messages/getById'](tempMessageId);
+			if (!unsentMessage) {
+				return Promise.resolve();
+			}
+			this.#removeMessageError(tempMessageId);
+			const message = this.#prepareMessage({
+				text: unsentMessage.text,
+				dialogId,
+				tempMessageId: unsentMessage.id,
+				replyId: unsentMessage.replyId
+			});
+			if (main_core.Type.isStringFilled(unsentMessage.forward.id)) {
+				const [, forwardId] = unsentMessage.forward.id.split('/');
+				const forwardUuidMap = {
+					[unsentMessage.id]: forwardId
+				};
+				return this.#sendForwardRequest({
+					forwardUuidMap,
+					dialogId
+				});
+			}
+			return this.#sendAndProcessMessage(message);
+		}
+		async sendCopilotPrompt(copilotPromptMessageParams) {
+			const {
+				text = ''
+			} = copilotPromptMessageParams;
+			if (!main_core.Type.isStringFilled(text)) {
+				return Promise.resolve();
+			}
+			im_v2_lib_logger.Logger.warn('SendingService: sendCopilotPrompt', copilotPromptMessageParams);
+			const message = this.#prepareCopilotPromptMessage(copilotPromptMessageParams);
+			return this.#processMessageSending(message);
+		}
+		async #addLoadingMessage(message) {
+			return this.#store.dispatch('messages/addLoadingMessage', {
+				message
+			});
+		}
+		async #processMessageSending(message) {
+			await this.#handleAddingMessageToModels(message);
+			return this.#sendAndProcessMessage(message);
+		}
+		async #handleAddingMessageToModels(message) {
+			await this.#handlePagination(message.dialogId);
+			await this.#addMessageToModels(message);
+			this.#sendScrollEvent({
+				force: true,
+				dialogId: message.dialogId
+			});
+		}
+		async #sendAndProcessMessage(message) {
+			const sendResult = await this.#sendMessageToServer(message).catch(errors => {
+				this.#updateMessageError(message.temporaryId);
+				this.#logSendErrors(errors, 'sendAndProcessMessage');
+			});
+			im_v2_lib_logger.Logger.warn('SendingService: sendAndProcessMessage result -', sendResult);
+			const {
+				id
+			} = sendResult;
+			if (!id) {
+				return Promise.resolve();
+			}
+			this.#updateModels({
+				oldId: message.temporaryId,
+				newId: id,
+				dialogId: message.dialogId
+			});
+			return Promise.resolve();
+		}
+		#prepareCustomFields(dialogId, temporaryId) {
+			const customsFieldsSources = main_core_events.EventEmitter.emit(im_v2_const.EventType.sending.onBeforeAddMessageToModel, {
+				temporaryId,
+				dialogId
+			});
+			let customFields = {};
+			for (const source of customsFieldsSources) {
+				if (main_core.Type.isPlainObject(source)) {
+					customFields = {
+						...customFields,
+						...source
+					};
+				}
+			}
+			return customFields;
+		}
+		#prepareMessage(params) {
+			const {
+				text,
+				tempMessageId,
+				dialogId,
+				replyId,
+				forwardIds
+			} = params;
+			const defaultFields = {
+				authorId: im_v2_application_core.Core.getUserId(),
+				unread: false,
+				sending: true
+			};
+			const copilotParams = this.#prepareCopilotMessageParams(dialogId);
+			const aiAssistantParams = this.#prepareAiAssistantMessageParams(dialogId);
+			const customFields = this.#prepareCustomFields(dialogId, tempMessageId);
+			return {
+				text,
+				dialogId,
+				chatId: this.#getDialog(dialogId).chatId,
+				temporaryId: tempMessageId ?? im_v2_lib_utils.Utils.text.getUuidV4(),
+				replyId,
+				forwardIds,
+				viewedByOthers: this.#needToSetAsViewed(dialogId),
+				...copilotParams,
+				...aiAssistantParams,
+				...defaultFields,
+				...customFields
+			};
+		}
+		#prepareMessageWithFiles(params) {
+			const {
+				fileIds
+			} = params;
+			if (!main_core.Type.isArrayFilled(fileIds)) {
+				throw new Error('SendingService: sendMessageWithFile: no fileId provided');
+			}
+			return {
+				...this.#prepareMessage(params),
+				params: {
+					FILE_ID: fileIds
+				}
+			};
+		}
+		#prepareMessageWithSticker(params) {
+			const {
+				stickerParams
+			} = params;
+			if (!main_core.Type.isPlainObject(stickerParams)) {
+				throw new TypeError('SendingService: sendMessageWithSticker: no stickerParams provided');
+			}
+			return {
+				...this.#prepareMessage(params),
+				stickerParams
+			};
+		}
+		#prepareCopilotPromptMessage(promptMessageParams) {
+			const promptCode = promptMessageParams.copilot?.promptCode;
+			if (!promptCode) {
+				throw new Error('SendingService: preparePrompt: no code provided');
+			}
+			const preparedMessage = this.#prepareMessage(promptMessageParams);
+			return {
+				...preparedMessage,
+				copilot: {
+					...preparedMessage.copilot,
+					promptCode
+				}
+			};
+		}
+		async #handlePagination(dialogId) {
+			if (!this.#getDialog(dialogId).hasNextPage) {
+				return Promise.resolve();
+			}
+			im_v2_lib_logger.Logger.warn('SendingService: sendMessage: there are unread pages, move to chat end');
+			const messageService = new im_v2_provider_service_message.MessageService({
+				chatId: this.#getDialog(dialogId).chatId
+			});
+			await messageService.loadContext(this.#getDialog(dialogId).lastMessageId);
+			this.#sendScrollEvent({
+				dialogId
+			});
+			return Promise.resolve();
+		}
+		#addMessageToModels(message) {
+			this.#addMessageToRecent(message);
+			const hasMessageSticker = main_core.Type.isPlainObject(message.stickerParams);
+			if (hasMessageSticker) {
+				void this.#store.dispatch('stickers/recent/update', message.stickerParams);
+				void this.#store.dispatch('stickers/messages/set', [{
+					messageId: message.temporaryId,
+					...message.stickerParams
+				}]);
+			}
+			void this.#clearLastMessageViews(message.dialogId);
+			return this.#store.dispatch('messages/add', message);
+		}
+		#addMessageToRecent(message) {
+			const hasMessageText = main_core.Type.isStringFilled(message.text);
+			const hasMessageFile = main_core.Type.isArrayFilled(message.params?.FILE_ID);
+			const hasMessageSticker = main_core.Type.isPlainObject(message.stickerParams);
+			if (hasMessageText || hasMessageFile || hasMessageSticker) {
+				void this.#store.dispatch('recent/update', {
+					dialogId: message.dialogId,
+					fields: {
+						messageId: message.temporaryId
+					}
+				});
+			}
+		}
+		#sendMessageToServer(message) {
+			const fields = {};
+			if (message.replyId) {
+				fields.replyId = message.replyId;
+			}
+			if (message.forwardIds) {
+				fields.forwardIds = message.forwardIds;
+			}
+			if (message.text) {
+				fields.message = message.text;
+				fields.templateId = message.temporaryId;
+			}
+			if (message.copilot) {
+				fields.copilot = message.copilot;
+			}
+			if (message.aiAssistant) {
+				fields.aiAssistant = message.aiAssistant;
+			}
+			if (message.stickerParams) {
+				// todo: this is temp fix. We need to figure it out, why templateId is set only for text messages (see above)
+				fields.templateId = message.temporaryId;
+				fields.stickerParams = message.stickerParams;
+			}
+			const queryData = {
+				dialogId: message.dialogId.toString(),
+				fields
+			};
+			return im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatMessageSend, {
+				data: queryData
+			});
+		}
+		#updateModels(params) {
+			const {
+				oldId,
+				newId,
+				dialogId
+			} = params;
+			void this.#store.dispatch('messages/updateWithId', {
+				id: oldId,
+				fields: {
+					id: newId
+				}
+			});
+			void this.#store.dispatch('chats/update', {
+				dialogId,
+				fields: {
+					lastId: newId,
+					lastMessageId: newId
+				}
+			});
+			void this.#store.dispatch('recent/update', {
+				dialogId,
+				fields: {
+					messageId: newId
+				}
+			});
+			const isSticker = this.#store.getters['stickers/messages/isSticker'](oldId);
+			if (isSticker) {
+				void this.#store.dispatch('stickers/messages/updateWithId', {
+					oldId,
+					newId
+				});
+			}
+		}
+		#updateMessageError(messageId) {
+			void this.#store.dispatch('messages/update', {
+				id: messageId,
+				fields: {
+					error: true
+				}
+			});
+		}
+		#removeMessageError(messageId) {
+			void this.#store.dispatch('messages/update', {
+				id: messageId,
+				fields: {
+					sending: true,
+					error: false
+				}
+			});
+		}
+		#sendScrollEvent(params = {}) {
+			const {
+				force = false,
+				dialogId
+			} = params;
+			main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.scrollToBottom, {
+				chatId: this.#getDialog(dialogId).chatId,
+				threshold: force ? im_v2_const.DialogScrollThreshold.none : im_v2_const.DialogScrollThreshold.halfScreenUp
+			});
+		}
+		#getDialog(dialogId) {
+			return this.#store.getters['chats/get'](dialogId, true);
+		}
+		#getDialogByChatId(chatId) {
+			return this.#store.getters['chats/getByChatId'](chatId, true);
+		}
+		#needToSetAsViewed(dialogId) {
+			return this.#store.getters['users/bots/isNetwork'](dialogId);
+		}
+		#handleForwardMessageResponse(params) {
+			const {
+				response,
+				dialogId,
+				commentMessage
+			} = params;
+			const {
+				id,
+				uuidMap
+			} = response;
+			if (id) {
+				this.#updateModels({
+					oldId: commentMessage.temporaryId,
+					newId: id,
+					dialogId
+				});
+			}
+			Object.entries(uuidMap).forEach(([uuid, messageId]) => {
+				this.#updateModels({
+					oldId: uuid,
+					newId: messageId,
+					dialogId
+				});
+			});
+		}
+		#handleForwardMessageError({
+			commentMessage,
+			forwardUuidMap
+		}) {
+			if (commentMessage) {
+				void this.#store.dispatch('messages/update', {
+					id: commentMessage.temporaryId,
+					fields: {
+						error: true
+					}
+				});
+			}
+			Object.keys(forwardUuidMap).forEach(uuid => {
+				void this.#store.dispatch('messages/update', {
+					id: uuid,
+					fields: {
+						error: true
+					}
+				});
+			});
+		}
+		#prepareForwardMessages(params, forwardUuidMap) {
+			const {
+				forwardIds,
+				dialogId
+			} = params;
+			if (forwardIds.length === 0) {
+				return [];
+			}
+			const preparedMessages = [];
+			Object.entries(forwardUuidMap).forEach(([uuid, messageId]) => {
+				const message = this.#store.getters['messages/getById'](messageId);
+				if (!message) {
+					return;
+				}
+				const prepared = {
+					...this.#prepareMessage({
+						dialogId,
+						text: message.text,
+						tempMessageId: uuid,
+						replyId: message.replyId
+					}),
+					forward: this.#prepareForwardParams(messageId),
+					attach: message.attach,
+					isDeleted: message.isDeleted,
+					files: message.files
+				};
+				const isSticker = this.#store.getters['stickers/messages/isSticker'](messageId);
+				if (isSticker) {
+					prepared.stickerParams = this.#store.getters['stickers/messages/getStickerByMessageId'](messageId);
+				}
+				preparedMessages.push(prepared);
+			});
+			return preparedMessages;
+		}
+		#prepareForwardParams(messageId) {
+			const message = this.#store.getters['messages/getById'](messageId);
+			const chat = this.#getDialogByChatId(message.chatId);
+			const isForward = this.#store.getters['messages/isForward'](messageId);
+			const userId = isForward ? message.forward.userId : message.authorId;
+			const chatType = isForward ? message.forward.chatType : chat.type;
+			let chatTitle = isForward ? message.forward.chatTitle : chat.name;
+			if (chatType === im_v2_const.ChatType.channel) {
+				chatTitle = null;
+			}
+			return {
+				id: this.#buildForwardContextId(message.chatId, messageId),
+				userId,
+				chatType,
+				chatTitle
+			};
+		}
+		#prepareSendForwardRequest(params) {
+			const {
+				dialogId,
+				forwardUuidMap,
+				commentMessage
+			} = params;
+			const requestPrams = {
+				dialogId,
+				forwardIds: forwardUuidMap
+			};
+			if (commentMessage) {
+				requestPrams.text = commentMessage.text;
+				requestPrams.temporaryId = commentMessage.temporaryId;
+			}
+			return requestPrams;
+		}
+		#addForwardsToModels(forwardedMessages) {
+			const addPromises = [];
+			forwardedMessages.forEach(message => {
+				addPromises.push(this.#addMessageToModels(message));
+			});
+			return Promise.all(addPromises);
+		}
+		#getForwardUuidMap(forwardIds) {
+			const uuidMap = {};
+			forwardIds.forEach(id => {
+				uuidMap[im_v2_lib_utils.Utils.text.getUuidV4()] = id;
+			});
+			return uuidMap;
+		}
+		#buildForwardContextId(chatId, messageId) {
+			const dialogId = this.#getDialogByChatId(chatId).dialogId;
+			if (dialogId.startsWith(im_v2_const.DialogIdChatPrefix)) {
+				return `${dialogId}/${messageId}`;
+			}
+			const currentUser = im_v2_application_core.Core.getUserId();
+			return `${dialogId}:${currentUser}/${messageId}`;
+		}
+		#logSendErrors(errors, methodName) {
+			errors.forEach(error => {
+				console.error(`SendingService: ${methodName} error: code: ${error.code} message: ${error.message}`);
+			});
+		}
+		#clearLastMessageViews(dialogId) {
+			return this.#store.dispatch('chats/clearLastMessageViews', {
+				dialogId
+			});
+		}
+		async #sendForwardRequest({
+			forwardUuidMap,
+			commentMessage,
+			dialogId
+		}) {
+			try {
+				const requestParams = this.#prepareSendForwardRequest({
+					forwardUuidMap,
+					commentMessage,
+					dialogId
+				});
+				const response = await this.#sendMessageToServer(requestParams);
+				im_v2_lib_logger.Logger.warn('SendingService: forwardMessage result -', response);
+				this.#handleForwardMessageResponse({
+					response,
+					dialogId,
+					commentMessage
+				});
+			} catch (errors) {
+				this.#handleForwardMessageError({
+					commentMessage,
+					forwardUuidMap
+				});
+				this.#logSendErrors(errors, 'forwardMessage');
+			}
+			return Promise.resolve();
+		}
+		#prepareCopilotMessageParams(dialogId) {
+			const store = im_v2_application_core.Core.getStore();
+			const isReasoningEnabled = store.getters['copilot/chats/isReasoningEnabled'](dialogId);
+			const isForceSearchEnabled = store.getters['copilot/chats/isForceSearchEnabled'](dialogId);
+			const mcpAuthId = store.getters['copilot/chats/getMcpAuth'](dialogId)?.id;
+			const copilot = {};
+			if (isReasoningEnabled) {
+				copilot.reasoning = 'Y';
+			}
+			if (isForceSearchEnabled) {
+				copilot.forceSearch = 'Y';
+			}
+			if (mcpAuthId) {
+				copilot.mcpAuthId = mcpAuthId;
+			}
+			return {
+				copilot
+			};
+		}
+		#prepareAiAssistantMessageParams(dialogId) {
+			const isAiAssistant = im_v2_application_core.Core.getStore().getters['users/bots/isAiAssistant'](dialogId);
+			if (!isAiAssistant) {
+				return {};
+			}
+			const mcpAuthId = im_v2_application_core.Core.getStore().getters['aiAssistant/getMcpAuthId'];
+			if (!mcpAuthId) {
+				return {};
+			}
+			return {
+				aiAssistant: {
+					mcpAuthId
+				}
+			};
+		}
 	}
-	async function _addLoadingMessage2(message) {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('messages/addLoadingMessage', {
-	    message
-	  });
-	}
-	async function _processMessageSending2(message) {
-	  await babelHelpers.classPrivateFieldLooseBase(this, _handleAddingMessageToModels)[_handleAddingMessageToModels](message);
-	  return babelHelpers.classPrivateFieldLooseBase(this, _sendAndProcessMessage)[_sendAndProcessMessage](message);
-	}
-	async function _handleAddingMessageToModels2(message) {
-	  await babelHelpers.classPrivateFieldLooseBase(this, _handlePagination)[_handlePagination](message.dialogId);
-	  await babelHelpers.classPrivateFieldLooseBase(this, _addMessageToModels)[_addMessageToModels](message);
-	  babelHelpers.classPrivateFieldLooseBase(this, _sendScrollEvent)[_sendScrollEvent]({
-	    force: true,
-	    dialogId: message.dialogId
-	  });
-	}
-	async function _sendAndProcessMessage2(message) {
-	  const sendResult = await babelHelpers.classPrivateFieldLooseBase(this, _sendMessageToServer)[_sendMessageToServer](message).catch(errors => {
-	    babelHelpers.classPrivateFieldLooseBase(this, _updateMessageError)[_updateMessageError](message.temporaryId);
-	    babelHelpers.classPrivateFieldLooseBase(this, _logSendErrors)[_logSendErrors](errors, 'sendAndProcessMessage');
-	  });
-	  im_v2_lib_logger.Logger.warn('SendingService: sendAndProcessMessage result -', sendResult);
-	  const {
-	    id
-	  } = sendResult;
-	  if (!id) {
-	    return Promise.resolve();
-	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _updateModels)[_updateModels]({
-	    oldId: message.temporaryId,
-	    newId: id,
-	    dialogId: message.dialogId
-	  });
-	  return Promise.resolve();
-	}
-	function _prepareMessage2(params) {
-	  const {
-	    text,
-	    tempMessageId,
-	    dialogId,
-	    replyId,
-	    forwardIds
-	  } = params;
-	  const defaultFields = {
-	    authorId: im_v2_application_core.Core.getUserId(),
-	    unread: false,
-	    sending: true
-	  };
-	  const copilotParams = babelHelpers.classPrivateFieldLooseBase(this, _prepareCopilotMessageParams)[_prepareCopilotMessageParams](dialogId);
-	  const aiAssistantParams = babelHelpers.classPrivateFieldLooseBase(this, _prepareAiAssistantMessageParams)[_prepareAiAssistantMessageParams](dialogId);
-	  return {
-	    text,
-	    dialogId,
-	    chatId: babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog](dialogId).chatId,
-	    temporaryId: tempMessageId != null ? tempMessageId : im_v2_lib_utils.Utils.text.getUuidV4(),
-	    replyId,
-	    forwardIds,
-	    viewedByOthers: babelHelpers.classPrivateFieldLooseBase(this, _needToSetAsViewed)[_needToSetAsViewed](dialogId),
-	    ...copilotParams,
-	    ...aiAssistantParams,
-	    ...defaultFields
-	  };
-	}
-	function _prepareMessageWithFiles2(params) {
-	  const {
-	    fileIds
-	  } = params;
-	  if (!main_core.Type.isArrayFilled(fileIds)) {
-	    throw new Error('SendingService: sendMessageWithFile: no fileId provided');
-	  }
-	  return {
-	    ...babelHelpers.classPrivateFieldLooseBase(this, _prepareMessage)[_prepareMessage](params),
-	    params: {
-	      FILE_ID: fileIds
-	    }
-	  };
-	}
-	function _prepareMessageWithSticker2(params) {
-	  const {
-	    stickerParams
-	  } = params;
-	  if (!main_core.Type.isPlainObject(stickerParams)) {
-	    throw new TypeError('SendingService: sendMessageWithSticker: no stickerParams provided');
-	  }
-	  return {
-	    ...babelHelpers.classPrivateFieldLooseBase(this, _prepareMessage)[_prepareMessage](params),
-	    stickerParams
-	  };
-	}
-	function _preparePrompt2(params) {
-	  const {
-	    copilot
-	  } = params;
-	  if (!copilot || !copilot.promptCode) {
-	    throw new Error('SendingService: preparePrompt: no code provided');
-	  }
-	  return {
-	    ...babelHelpers.classPrivateFieldLooseBase(this, _prepareMessage)[_prepareMessage](params),
-	    copilot
-	  };
-	}
-	async function _handlePagination2(dialogId) {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog](dialogId).hasNextPage) {
-	    return Promise.resolve();
-	  }
-	  im_v2_lib_logger.Logger.warn('SendingService: sendMessage: there are unread pages, move to chat end');
-	  const messageService = new im_v2_provider_service_message.MessageService({
-	    chatId: babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog](dialogId).chatId
-	  });
-	  await messageService.loadContext(babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog](dialogId).lastMessageId);
-	  babelHelpers.classPrivateFieldLooseBase(this, _sendScrollEvent)[_sendScrollEvent]({
-	    dialogId
-	  });
-	  return Promise.resolve();
-	}
-	function _addMessageToModels2(message) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _addMessageToRecent)[_addMessageToRecent](message);
-	  const hasMessageSticker = main_core.Type.isPlainObject(message.stickerParams);
-	  if (hasMessageSticker) {
-	    void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('stickers/recent/update', message.stickerParams);
-	    void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('stickers/messages/set', [{
-	      messageId: message.temporaryId,
-	      ...message.stickerParams
-	    }]);
-	  }
-	  void babelHelpers.classPrivateFieldLooseBase(this, _clearLastMessageViews)[_clearLastMessageViews](message.dialogId);
-	  return babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('messages/add', message);
-	}
-	function _addMessageToRecent2(message) {
-	  var _message$params;
-	  const hasMessageText = main_core.Type.isStringFilled(message.text);
-	  const hasMessageFile = main_core.Type.isArrayFilled((_message$params = message.params) == null ? void 0 : _message$params.FILE_ID);
-	  const hasMessageSticker = main_core.Type.isPlainObject(message.stickerParams);
-	  if (hasMessageText || hasMessageFile || hasMessageSticker) {
-	    void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('recent/update', {
-	      dialogId: message.dialogId,
-	      fields: {
-	        messageId: message.temporaryId
-	      }
-	    });
-	  }
-	}
-	function _sendMessageToServer2(message) {
-	  const fields = {};
-	  if (message.replyId) {
-	    fields.replyId = message.replyId;
-	  }
-	  if (message.forwardIds) {
-	    fields.forwardIds = message.forwardIds;
-	  }
-	  if (message.text) {
-	    fields.message = message.text;
-	    fields.templateId = message.temporaryId;
-	  }
-	  if (message.copilot) {
-	    fields.copilot = message.copilot;
-	  }
-	  if (message.aiAssistant) {
-	    fields.aiAssistant = message.aiAssistant;
-	  }
-	  if (message.stickerParams) {
-	    // todo: this is temp fix. We need to figure it out, why templateId is set only for text messages (see above)
-	    fields.templateId = message.temporaryId;
-	    fields.stickerParams = message.stickerParams;
-	  }
-	  const queryData = {
-	    dialogId: message.dialogId.toString(),
-	    fields
-	  };
-	  return im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatMessageSend, {
-	    data: queryData
-	  });
-	}
-	function _updateModels2(params) {
-	  const {
-	    oldId,
-	    newId,
-	    dialogId
-	  } = params;
-	  void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('messages/updateWithId', {
-	    id: oldId,
-	    fields: {
-	      id: newId
-	    }
-	  });
-	  void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('chats/update', {
-	    dialogId,
-	    fields: {
-	      lastId: newId,
-	      lastMessageId: newId
-	    }
-	  });
-	  void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('recent/update', {
-	    dialogId,
-	    fields: {
-	      messageId: newId
-	    }
-	  });
-	  const isSticker = babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['stickers/messages/isSticker'](oldId);
-	  if (isSticker) {
-	    void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('stickers/messages/updateWithId', {
-	      oldId,
-	      newId
-	    });
-	  }
-	}
-	function _updateMessageError2(messageId) {
-	  void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('messages/update', {
-	    id: messageId,
-	    fields: {
-	      error: true
-	    }
-	  });
-	}
-	function _removeMessageError2(messageId) {
-	  void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('messages/update', {
-	    id: messageId,
-	    fields: {
-	      sending: true,
-	      error: false
-	    }
-	  });
-	}
-	function _sendScrollEvent2(params = {}) {
-	  const {
-	    force = false,
-	    dialogId
-	  } = params;
-	  main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.scrollToBottom, {
-	    chatId: babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog](dialogId).chatId,
-	    threshold: force ? im_v2_const.DialogScrollThreshold.none : im_v2_const.DialogScrollThreshold.halfScreenUp
-	  });
-	}
-	function _getDialog2(dialogId) {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['chats/get'](dialogId, true);
-	}
-	function _getDialogByChatId2(chatId) {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['chats/getByChatId'](chatId, true);
-	}
-	function _needToSetAsViewed2(dialogId) {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['users/bots/isNetwork'](dialogId);
-	}
-	function _handleForwardMessageResponse2(params) {
-	  const {
-	    response,
-	    dialogId,
-	    commentMessage
-	  } = params;
-	  const {
-	    id,
-	    uuidMap
-	  } = response;
-	  if (id) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _updateModels)[_updateModels]({
-	      oldId: commentMessage.temporaryId,
-	      newId: id,
-	      dialogId
-	    });
-	  }
-	  Object.entries(uuidMap).forEach(([uuid, messageId]) => {
-	    babelHelpers.classPrivateFieldLooseBase(this, _updateModels)[_updateModels]({
-	      oldId: uuid,
-	      newId: messageId,
-	      dialogId
-	    });
-	  });
-	}
-	function _handleForwardMessageError2({
-	  commentMessage,
-	  forwardUuidMap
-	}) {
-	  if (commentMessage) {
-	    void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('messages/update', {
-	      id: commentMessage.temporaryId,
-	      fields: {
-	        error: true
-	      }
-	    });
-	  }
-	  Object.keys(forwardUuidMap).forEach(uuid => {
-	    void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('messages/update', {
-	      id: uuid,
-	      fields: {
-	        error: true
-	      }
-	    });
-	  });
-	}
-	function _prepareForwardMessages2(params, forwardUuidMap) {
-	  const {
-	    forwardIds,
-	    dialogId
-	  } = params;
-	  if (forwardIds.length === 0) {
-	    return [];
-	  }
-	  const preparedMessages = [];
-	  Object.entries(forwardUuidMap).forEach(([uuid, messageId]) => {
-	    const message = babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['messages/getById'](messageId);
-	    if (!message) {
-	      return;
-	    }
-	    const prepared = {
-	      ...babelHelpers.classPrivateFieldLooseBase(this, _prepareMessage)[_prepareMessage]({
-	        dialogId,
-	        text: message.text,
-	        tempMessageId: uuid,
-	        replyId: message.replyId
-	      }),
-	      forward: babelHelpers.classPrivateFieldLooseBase(this, _prepareForwardParams)[_prepareForwardParams](messageId),
-	      attach: message.attach,
-	      isDeleted: message.isDeleted,
-	      files: message.files
-	    };
-	    const isSticker = babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['stickers/messages/isSticker'](messageId);
-	    if (isSticker) {
-	      prepared.stickerParams = babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['stickers/messages/getStickerByMessageId'](messageId);
-	    }
-	    preparedMessages.push(prepared);
-	  });
-	  return preparedMessages;
-	}
-	function _prepareForwardParams2(messageId) {
-	  const message = babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['messages/getById'](messageId);
-	  const chat = babelHelpers.classPrivateFieldLooseBase(this, _getDialogByChatId)[_getDialogByChatId](message.chatId);
-	  const isForward = babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['messages/isForward'](messageId);
-	  const userId = isForward ? message.forward.userId : message.authorId;
-	  const chatType = isForward ? message.forward.chatType : chat.type;
-	  let chatTitle = isForward ? message.forward.chatTitle : chat.name;
-	  if (chatType === im_v2_const.ChatType.channel) {
-	    chatTitle = null;
-	  }
-	  return {
-	    id: babelHelpers.classPrivateFieldLooseBase(this, _buildForwardContextId)[_buildForwardContextId](message.chatId, messageId),
-	    userId,
-	    chatType,
-	    chatTitle
-	  };
-	}
-	function _prepareSendForwardRequest2(params) {
-	  const {
-	    dialogId,
-	    forwardUuidMap,
-	    commentMessage
-	  } = params;
-	  const requestPrams = {
-	    dialogId,
-	    forwardIds: forwardUuidMap
-	  };
-	  if (commentMessage) {
-	    requestPrams.text = commentMessage.text;
-	    requestPrams.temporaryId = commentMessage.temporaryId;
-	  }
-	  return requestPrams;
-	}
-	function _addForwardsToModels2(forwardedMessages) {
-	  const addPromises = [];
-	  forwardedMessages.forEach(message => {
-	    addPromises.push(babelHelpers.classPrivateFieldLooseBase(this, _addMessageToModels)[_addMessageToModels](message));
-	  });
-	  return Promise.all(addPromises);
-	}
-	function _getForwardUuidMap2(forwardIds) {
-	  const uuidMap = {};
-	  forwardIds.forEach(id => {
-	    uuidMap[im_v2_lib_utils.Utils.text.getUuidV4()] = id;
-	  });
-	  return uuidMap;
-	}
-	function _buildForwardContextId2(chatId, messageId) {
-	  const dialogId = babelHelpers.classPrivateFieldLooseBase(this, _getDialogByChatId)[_getDialogByChatId](chatId).dialogId;
-	  if (dialogId.startsWith('chat')) {
-	    return `${dialogId}/${messageId}`;
-	  }
-	  const currentUser = im_v2_application_core.Core.getUserId();
-	  return `${dialogId}:${currentUser}/${messageId}`;
-	}
-	function _logSendErrors2(errors, methodName) {
-	  errors.forEach(error => {
-	    console.error(`SendingService: ${methodName} error: code: ${error.code} message: ${error.message}`);
-	  });
-	}
-	function _clearLastMessageViews2(dialogId) {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('chats/clearLastMessageViews', {
-	    dialogId
-	  });
-	}
-	async function _sendForwardRequest2({
-	  forwardUuidMap,
-	  commentMessage,
-	  dialogId
-	}) {
-	  try {
-	    const requestParams = babelHelpers.classPrivateFieldLooseBase(this, _prepareSendForwardRequest)[_prepareSendForwardRequest]({
-	      forwardUuidMap,
-	      commentMessage,
-	      dialogId
-	    });
-	    const response = await babelHelpers.classPrivateFieldLooseBase(this, _sendMessageToServer)[_sendMessageToServer](requestParams);
-	    im_v2_lib_logger.Logger.warn('SendingService: forwardMessage result -', response);
-	    babelHelpers.classPrivateFieldLooseBase(this, _handleForwardMessageResponse)[_handleForwardMessageResponse]({
-	      response,
-	      dialogId,
-	      commentMessage
-	    });
-	  } catch (errors) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _handleForwardMessageError)[_handleForwardMessageError]({
-	      commentMessage,
-	      forwardUuidMap
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _logSendErrors)[_logSendErrors](errors, 'forwardMessage');
-	  }
-	  return Promise.resolve();
-	}
-	function _prepareCopilotMessageParams2(dialogId) {
-	  const isReasoningEnabled = im_v2_application_core.Core.getStore().getters['copilot/chats/isReasoningEnabled'](dialogId);
-	  if (!isReasoningEnabled) {
-	    return {};
-	  }
-	  return {
-	    copilot: {
-	      reasoning: 'Y'
-	    }
-	  };
-	}
-	function _prepareAiAssistantMessageParams2(dialogId) {
-	  const isAiAssistant = im_v2_application_core.Core.getStore().getters['users/bots/isAiAssistant'](dialogId);
-	  if (!isAiAssistant) {
-	    return {};
-	  }
-	  const mcpAuthId = im_v2_application_core.Core.getStore().getters['aiAssistant/getMcpAuthId'];
-	  if (!mcpAuthId) {
-	    return {};
-	  }
-	  return {
-	    aiAssistant: {
-	      mcpAuthId
-	    }
-	  };
-	}
-	SendingService.instance = null;
 
 	exports.SendingService = SendingService;
 
-}((this.BX.Messenger.v2.Service = this.BX.Messenger.v2.Service || {}),BX,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Service));
+})(this.BX.Messenger.v2.Service = this.BX.Messenger.v2.Service || {}, BX, BX.Event, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service);
 //# sourceMappingURL=sending.bundle.js.map

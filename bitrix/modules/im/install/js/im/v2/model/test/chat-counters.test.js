@@ -6,7 +6,7 @@ import 'im.v2.test';
 
 import { CountersModel } from '../src/counters/counters';
 
-describe('CountersModel', () => {
+describe.only('CountersModel', () => {
 	let store: Store = null;
 
 	const initStore = async () => {
@@ -81,6 +81,21 @@ describe('CountersModel', () => {
 				assert.equal(counter, 17);
 			});
 
+			it('should calculate total counter of children chats for provided parentId and recent type', async () => {
+				const counters = [
+					getCounterItem({ chatId: 1, counter: 5, recentSections: [RecentType.collab] }),
+					getCounterItem({ chatId: 2, counter: 10, parentChatId: 1, recentSections: [RecentType.collab] }),
+					getCounterItem({ chatId: 3, counter: 7, parentChatId: 1, recentSections: [RecentType.collab] }),
+					getCounterItem({ chatId: 4, counter: 3, parentChatId: 1, recentSections: [RecentType.default] }),
+					getCounterItem({ chatId: 5, counter: 2, parentChatId: 2, recentSections: [RecentType.collab] }),
+				];
+
+				await store.dispatch('counters/setCounters', counters);
+
+				const counter = store.getters['counters/getChildrenTotalCounter'](1, RecentType.collab);
+				assert.equal(counter, 17);
+			});
+
 			it('should return 0 for empty parentChatId', async () => {
 				const counters = [
 					getCounterItem({ chatId: 1, counter: 5, recentSections: [RecentType.default] }),
@@ -94,6 +109,20 @@ describe('CountersModel', () => {
 
 				const counter = store.getters['counters/getChildrenTotalCounter'](0);
 				assert.equal(counter, 0);
+			});
+
+			it('should not account for muted children chats', async () => {
+				const counters = [
+					getCounterItem({ chatId: 1, counter: 5, recentSections: [RecentType.default] }),
+					getCounterItem({ chatId: 2, counter: 6, parentChatId: 1 }),
+					getCounterItem({ chatId: 3, counter: 7, parentChatId: 1, isMuted: true }),
+					getCounterItem({ chatId: 4, counter: 8, parentChatId: 1 }),
+				];
+
+				await store.dispatch('counters/setCounters', counters);
+
+				const counter = store.getters['counters/getChildrenTotalCounter'](1);
+				assert.equal(counter, 14);
 			});
 		});
 

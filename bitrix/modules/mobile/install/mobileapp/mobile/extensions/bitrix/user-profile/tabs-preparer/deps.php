@@ -9,6 +9,7 @@ return [
 	],
 	'extensions' => [
 		'loc',
+		'feature',
 		'statemanager/redux/slices/users/selector',
 		'statemanager/redux/store',
 		'user-profile/common-tab',

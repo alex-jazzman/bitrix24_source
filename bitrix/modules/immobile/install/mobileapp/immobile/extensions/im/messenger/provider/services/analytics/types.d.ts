@@ -4,7 +4,15 @@ import { DialogId } from '../../../types/common';
 type sendAnalyticsParams = {
 	fileType: FileType,
 	dialogId: DialogId,
-	status: string
+	status?: string,
+	isNestedSection: boolean,
+}
+
+export type SendMessageMenuCommonAnalyticsParams = {
+	dialogId: DialogId,
+	actionId: string,
+	isNestedSection: boolean
+	sectionId?: string
 }
 
 export { sendAnalyticsParams };

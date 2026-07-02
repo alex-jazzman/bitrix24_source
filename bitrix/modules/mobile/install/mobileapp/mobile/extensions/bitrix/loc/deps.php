@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
-		'type',
+		'loc/ai',
+		'loc/base',
 	],
 ];

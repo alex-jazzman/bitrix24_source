@@ -1,0 +1,22 @@
+<?php
+$MESS["DASHBOARD_EDIT_FORM_DASHBOARD_NOT_FOUND"] = "Dashboard was not found.";
+$MESS["DASHBOARD_EDIT_FORM_DEFAULT_TITLE"] = "New dashboard";
+$MESS["DASHBOARD_EDIT_FORM_DEFAULT_TITLE_NUMBER"] = "New dashboard (#NUMBER#)";
+$MESS["DASHBOARD_EDIT_FORM_EMPTY_CREATE_DASHBOARD_GROUP_ERROR"] = "Select a group to create a dashboard for.";
+$MESS["DASHBOARD_EDIT_FORM_EMPTY_DASHBOARD_GROUP_ERROR"] = "Dashboard must be added to at least one group.";
+$MESS["DASHBOARD_EDIT_FORM_EMPTY_TITLE_ERROR"] = "Dashboard name is required.";
+$MESS["DASHBOARD_EDIT_FORM_ERROR"] = "Cannot create dashboard. Please try again.";
+$MESS["DASHBOARD_EDIT_FORM_HELP"] = "Help";
+$MESS["DASHBOARD_EDIT_FORM_INVALID_IMAGE_ERROR"] = "Dashboard includes invalid images. Please refresh the page and try again.";
+$MESS["DASHBOARD_EDIT_FORM_INVALID_RANGE_ERROR"] = "Date range is incorrect.";
+$MESS["DASHBOARD_EDIT_FORM_ONLY_CUSTOM_EDIT_ERROR"] = "Only custom dashboards can be edited.";
+$MESS["DASHBOARD_EDIT_FORM_OPEN_ACCESS_ERROR"] = "Insufficient permission to create dashboard.";
+$MESS["DASHBOARD_EDIT_FORM_OPEN_BIC_ACCESS_ERROR"] = "Insufficient permission to use BI Builder.";
+$MESS["DASHBOARD_EDIT_FORM_OPEN_BIC_UNAVAILABLE_ERROR"] = "BI Builder is not available.";
+$MESS["DASHBOARD_EDIT_FORM_OPEN_EDIT_ACCESS_ERROR"] = "Insufficient permissions to edit dashboard.";
+$MESS["DASHBOARD_EDIT_FORM_SAVE_DESCRIPTION_ERROR"] = "Could not save dashboard description. Please try again.";
+$MESS["DASHBOARD_EDIT_FORM_SAVE_GALLERY_ERROR"] = "Could not save dashboard gallery. Please try again.";
+$MESS["DASHBOARD_EDIT_FORM_SAVE_PARAMS_ERROR"] = "Cannot create dashboard parameters. Open dashboard properties and try again.";
+$MESS["DASHBOARD_EDIT_FORM_TITLE"] = "New dashboard";
+$MESS["DASHBOARD_EDIT_FORM_TITLE_TOO_LONG_ERROR"] = "The dashboard name must not exceed 128 characters.";
+$MESS["DASHBOARD_EDIT_FORM_UPDATE_ERROR"] = "Could not update dashboard. Please try again.";

@@ -1,4 +1,4 @@
-<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 /**
  * Global variables
  * @var array $arResult
@@ -10,22 +10,22 @@
 			<span class="urlpreview-mobile-title-name"><?=$arResult['METADATA']['TITLE']?></span>
 		</a>
 	</span>
-	<?if($arResult['METADATA']['DESCRIPTION']):?>
+	<?php if($arResult['METADATA']['DESCRIPTION']):?>
 		<span class="urlpreview-mobile-description"><?=$arResult['METADATA']['DESCRIPTION']?></span>
-	<?endif?>
-	<?if(isset($arResult['METADATA']['EMBED'])):?>
+	<?php endif?>
+	<?php if(isset($arResult['METADATA']['EMBED'])):?>
 		<div class="urlpreview-mobile-embed">
 			<?=$arResult['METADATA']['EMBED']?>
 		</div>
-	<?elseif($arResult['METADATA']['IMAGE']):?>
+	<?php elseif($arResult['METADATA']['IMAGE']):?>
 		<a href="<?= $arResult['METADATA']['URL']?>" target="_blank">
 			<span class="urlpreview-mobile-image">
 				<img src="<?= $arResult['METADATA']['IMAGE']?>" onerror="this.style.display='none';" class="urlpreview-mobile-image-img">
 			</span>
 		</a>
-	<?endif?>
+	<?php endif?>
 </div>
-<?if(isset($arResult['METADATA']['EMBED']))
+<?php if(isset($arResult['METADATA']['EMBED']))
 {?>
 <script>
 if(!window.BXUrlPreview)
@@ -88,4 +88,5 @@ if(!window.BXUrlPreview)
 	};
 }
 </script>
-<?}?>
+<?php
+}?>

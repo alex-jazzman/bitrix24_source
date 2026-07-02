@@ -1,3 +1,2 @@
-<?
-$MESS ['BPWA_PD_TYPE'] = "Condition Type";
-?>
+<?php
+$MESS["BPWA_PD_TYPE"] = "Condition type";

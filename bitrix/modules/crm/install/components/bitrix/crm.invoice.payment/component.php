@@ -1,9 +1,13 @@
-<?
-use Bitrix\Sale;
-use Bitrix\Crm\Invoice\Invoice;
-use Bitrix\Crm\Invoice\Compatible;
+<?php
 
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+use Bitrix\Crm\Invoice\Compatible;
+use Bitrix\Crm\Invoice\Invoice;
+use Bitrix\Sale;
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -36,9 +40,14 @@ if (isset($arParams['HASH']))
 }
 else
 {
-	if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadItems(CCrmOwnerType::Invoice))
+	$invoiceId = (int)($arParams['ORDER_ID'] ?? 0);
+	if (
+		$invoiceId <= 0
+		|| !\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canRead(CCrmOwnerType::Invoice, $invoiceId)
+	)
 	{
 		ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+
 		return;
 	}
 }

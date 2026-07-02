@@ -12,13 +12,13 @@ return [
 	'js' => 'dist/qrauthorization.bundle.js',
 	'rel' => [
 		'main.core',
-		'main.popup',
 		'main.loader',
-		'pull.client',
+		'main.popup',
 		'main.qrcode',
-		'ui.icon-set.main',
+		'pull.client',
 		'ui.design-tokens',
 		'ui.fonts.opensans',
+		'ui.icon-set.main',
 	],
 	'skip_core' => false,
 	'settings' => [

@@ -10,6 +10,7 @@ this.BX = this.BX || {};
 	var _engine = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("engine");
 	var _popup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("popup");
 	var _checkAgreementResult = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("checkAgreementResult");
+	var _getCopilotName = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCopilotName");
 	var _showAgreementPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showAgreementPopup");
 	var _hideAgreementPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hideAgreementPopup");
 	var _initAgreementPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initAgreementPopup");
@@ -47,6 +48,9 @@ this.BX = this.BX || {};
 	    });
 	    Object.defineProperty(this, _showAgreementPopup, {
 	      value: _showAgreementPopup2
+	    });
+	    Object.defineProperty(this, _getCopilotName, {
+	      value: _getCopilotName2
 	    });
 	    Object.defineProperty(this, _events, {
 	      writable: true,
@@ -99,6 +103,9 @@ this.BX = this.BX || {};
 	      return true;
 	    }
 	  }
+	}
+	function _getCopilotName2() {
+	  return main_core.Extension.getSettings('ai.copilot-agreement').copilotName;
 	}
 	function _showAgreementPopup2() {
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) {
@@ -174,7 +181,12 @@ this.BX = this.BX || {};
 					</div>
 				</footer>
 			</div>
-		`), main_core.Loc.getMessage('COPILOT_AGREEMENT_POPUP_TITLE'), main_core.Loc.getMessage('COPILOT_AGREEMENT_POPUP_PARAGRAPH_1'), main_core.Loc.getMessage('COPILOT_AGREEMENT_POPUP_PARAGRAPH_2', {
+		`), main_core.Loc.getMessage('COPILOT_AGREEMENT_POPUP_TITLE_MSGVER_1', {
+	    '#COPILOT_NAME#': babelHelpers.classPrivateFieldLooseBase(this, _getCopilotName)[_getCopilotName]()
+	  }), main_core.Loc.getMessage('COPILOT_AGREEMENT_POPUP_PARAGRAPH_1_MSGVER_1', {
+	    '#COPILOT_NAME#': babelHelpers.classPrivateFieldLooseBase(this, _getCopilotName)[_getCopilotName]()
+	  }), main_core.Loc.getMessage('COPILOT_AGREEMENT_POPUP_PARAGRAPH_2_MSGVER_1', {
+	    '#COPILOT_NAME#': babelHelpers.classPrivateFieldLooseBase(this, _getCopilotName)[_getCopilotName](),
 	    '#LINK#': `<a target="_blank" href="${CopilotAgreement.getFullAgreementLink()}">`,
 	    '#/LINK#': '</a>'
 	  }), babelHelpers.classPrivateFieldLooseBase(this, _renderApplyButton)[_renderApplyButton](), babelHelpers.classPrivateFieldLooseBase(this, _renderCancelButton)[_renderCancelButton]());

@@ -3,7 +3,6 @@
  */
 jn.define('im/messenger/provider/push/message-handler/messenger', (require, exports, module) => {
 	const { Type } = require('type');
-	const { RecentTab } = require('im/messenger/const');
 	const { RecentDataConverter } = require('im/messenger/lib/converter/data/recent');
 	const { BasePushMessageHandler } = require('im/messenger/provider/push/message-handler/base');
 
@@ -53,20 +52,18 @@ jn.define('im/messenger/provider/push/message-handler/messenger', (require, expo
 
 		/**
 		 * @param {Array<{event: MessengerPushEvent, helper: PushHelper}>} items
-		 * @return {Record<string, Array<object>>}
+		 * @return {Array<{recentItem: object, parentChatId: number, sections: Array<string>}>}
 		 */
 		prepareRecentItems(items)
 		{
-			const groups = {
-				[RecentTab.chat]: {},
-				[RecentTab.copilot]: {},
-				[RecentTab.collab]: {},
-				[RecentTab.tasksTask]: {},
-			};
+			/** @type {Map<string, {recentItem: object, parentChatId: number, sections: Array<string>}>} */
+			const uniqueRecentItems = new Map();
 
 			for (const { event, helper } of items)
 			{
 				const message = this.prepareRecentMessage({ event, helper });
+				const parentChatId = helper.getParentChatId();
+				const sections = helper.getRecentSections();
 
 				const recentItem = RecentDataConverter.fromPushToModel({
 					id: String(helper.getDialogId()),
@@ -80,38 +77,23 @@ jn.define('im/messenger/provider/push/message-handler/messenger', (require, expo
 					message,
 				});
 
-				if (helper.isTaskChat())
-				{
-					groups[RecentTab.tasksTask][recentItem.id] = recentItem;
-
-					continue;
-				}
-
-				groups[RecentTab.chat][recentItem.id] = recentItem;
-
-				if (helper.isCopilotChat())
-				{
-					groups[RecentTab.copilot][recentItem.id] = recentItem;
-				}
-
-				if (helper.isCollabChat())
-				{
-					groups[RecentTab.collab][recentItem.id] = recentItem;
-				}
+				uniqueRecentItems.set(recentItem.id, { recentItem, parentChatId, sections });
 			}
 
-			groups[RecentTab.chat] = Object.values(groups[RecentTab.chat]);
-			groups[RecentTab.copilot] = Object.values(groups[RecentTab.copilot]);
-			groups[RecentTab.collab] = Object.values(groups[RecentTab.collab]);
-			groups[RecentTab.tasksTask] = Object.values(groups[RecentTab.tasksTask]);
-
-			return groups;
+			return [...uniqueRecentItems.values()];
 		}
 
-		async setRecent(groups = {})
+		/**
+		 * @param {Array<{recentItem: object, parentChatId: number, sections: Array<string>}>} recentItems
+		 */
+		async setRecent(recentItems = [])
 		{
-			await this.store.dispatch('recentModel/setGroupCollection', {
-				groups,
+			await this.store.dispatch('recentModel/setByRecentConfigTabsBatch', {
+				items: recentItems.map(({ recentItem, parentChatId, sections }) => ({
+					sections,
+					itemList: recentItem,
+					parentChatId,
+				})),
 			});
 		}
 

@@ -22,6 +22,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  TaskComplete: 'task_complete',
 	  TaskView: 'task_view',
 	  TaskCreate: 'task_create',
+	  TaskDelete: 'task_delete',
 	  AddChecklist: 'add_checklist',
 	  TaskCreateWithChecklist: 'task_create_with_checklist',
 	  AttachFile: 'attach_file',
@@ -36,7 +37,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  AddCoexecutor: 'add_coexecutor',
 	  AddViewer: 'add_viewer',
 	  StatusSummaryAdd: 'status_summary_add',
-	  TimeEntryCreate: 'time_entry_create'
+	  TimeEntryCreate: 'time_entry_create',
+	  DescriptionEdit: 'description_edit',
+	  DescriptionExpand: 'description_expand'
 	});
 	const Type = Object.freeze({
 	  TaskMini: 'task_mini',
@@ -65,6 +68,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  ProjectButton: 'project_button',
 	  Calendar: 'calendar',
 	  DeadlinePreset: 'deadline_preset',
+	  DescriptionEditButton: 'description_edit_button',
+	  DescriptionExpandButton: 'description_expand_button',
+	  DescriptionExpandClick: 'description_expand_click',
 	  ChangeButton: 'change_button',
 	  UploadButton: 'upload_button',
 	  CheckListButton: 'checklist_button',
@@ -164,6 +170,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  DynamicMultiple: 'dynamic_multiple',
 	  ReminderRecipient: 'reminder-recipient',
 	  Task: 'task-with-id',
+	  TemplateCommon: 'task-template',
 	  Template: 'task-template-with-id',
 	  MetaUser: 'meta-user',
 	  AllUser: 'all-users'
@@ -214,7 +221,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  ShowCheckListItems: 'tasks:card:check-list-items:show',
 	  OpenHistory: 'tasks:full-card:openHistory',
 	  OpenTemplateHistory: 'tasks:template:openHistory',
-	  UpdateReplicateParams: 'tasks:template:update-replicate-params'
+	  UpdateReplicateParams: 'tasks:template:update-replicate-params',
+	  ChatActionBeforeExecute: 'tasks:chat-action:before-execute'
 	});
 
 	const GroupType = Object.freeze({
@@ -260,7 +268,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  AhaResultFromMessagePopup: 'aha_result_from_message',
 	  AhaStartTimeTracking: 'aha_start_time_tracking',
 	  AhaTaskChatPopup: 'aha_task_chat',
-	  AhaTaskImportantMessagesPopup: 'aha_task_important_messages'
+	  AhaTaskImportantMessagesPopup: 'aha_task_important_messages',
+	  AhaTasksAiPromo: 'aha_tasks_ai_promo'
 	});
 
 	const PlacementType = Object.freeze({
@@ -392,20 +401,49 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	});
 
 	const Endpoint = Object.freeze({
-	  TaskGet: 'Task.get',
+	  CheckListCollapse: 'CheckList.collapse',
+	  CheckListComplete: 'CheckList.complete',
+	  CheckListExpand: 'CheckList.expand',
+	  CheckListGet: 'CheckList.get',
+	  CheckListRenew: 'CheckList.renew',
+	  CheckListSave: 'CheckList.save',
+	  FileAttach: 'File.attach',
+	  FileDetach: 'File.detach',
+	  FileList: 'File.list',
+	  FileListObjects: 'File.listObjects',
+	  FlowGet: 'Flow.get',
+	  GroupGet: 'Group.get',
+	  GroupGetByTaskId: 'Group.getByTaskId',
+	  GroupStageList: 'Group.Stage.list',
+	  GroupUrlGet: 'Group.Url.get',
+	  LegacyCommentGet: 'LegacyComment.get',
+	  LegacyUserFieldGetTask: 'LegacyUserField.getTask',
+	  LegacyUserFieldGetTemplate: 'LegacyUserField.getTemplate',
+	  OptionSet: 'Option.set',
+	  OptionSetBool: 'Option.setBool',
+	  ScrumUpdateTask: 'Scrum.updateTask',
+	  ScrumGetTaskInfo: 'Scrum.getTaskInfo',
 	  TaskAdd: 'Task.add',
+	  TaskGet: 'Task.get',
 	  TaskCopy: 'Copy.Task.copy',
 	  TaskUpdate: 'Task.update',
 	  TaskDelete: 'Task.delete',
 	  TaskAccessGet: 'Task.Access.get',
 	  TaskAccessRequest: 'Task.Access.request',
 	  TaskAccessIsRequested: 'Task.Access.isRequested',
+	  TaskAttentionMute: 'Task.Attention.mute',
+	  TaskAttentionUnmute: 'Task.Attention.unmute',
+	  TaskCheckListFileList: 'Task.CheckList.File.list',
+	  TaskCrmItemSet: 'Task.CRM.Item.set',
+	  TaskCrmItemList: 'Task.CRM.Item.list',
+	  TaskDeadlineGetDeadlineChangeCount: 'Task.Deadline.getDeadlineChangeCount',
+	  TaskDeadlineCleanChangeLog: 'Task.Deadline.cleanChangeLog',
 	  TaskDescriptionUpdate: 'Task.Description.update',
 	  TaskDescriptionForceUpdate: 'Task.Description.forceUpdate',
 	  TaskFavoriteAdd: 'Task.Favorite.add',
 	  TaskFavoriteDelete: 'Task.Favorite.delete',
-	  TaskAttentionMute: 'Task.Attention.mute',
-	  TaskAttentionUnmute: 'Task.Attention.unmute',
+	  TaskFromTemplateAdd: 'Template.Task.add',
+	  TaskFromTemplateGet: 'Template.Task.get',
 	  TaskResultRequire: 'Task.Result.require',
 	  TaskResultGet: 'Task.Result.get',
 	  TaskResultTail: 'Task.Result.tail',
@@ -423,10 +461,17 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  TaskDeadlineUpdate: 'Task.Deadline.update',
 	  TaskPlanUpdate: 'Task.Plan.update',
 	  TaskStakeholderResponsibleDelegate: 'Task.Stakeholder.Responsible.delegate',
-	  TaskCrmItemSet: 'Task.CRM.Item.set',
-	  LegacyCommentGet: 'LegacyComment.get',
-	  LegacyUserFieldGetTask: 'LegacyUserField.getTask',
-	  LegacyUserFieldGetTemplate: 'LegacyUserField.getTemplate',
+	  TaskMarkSet: 'Task.Mark.set',
+	  TaskMultiTaskAdd: 'Task.Relation.Multi.Task.add',
+	  TaskRelationChildGetSubTaskIds: 'Task.Relation.Child.getSubTaskIds',
+	  TaskRelationChildListByIds: 'Task.Relation.Child.listByIds',
+	  TaskRelationGanttDependenceCheck: 'Task.Relation.Gantt.Dependence.check',
+	  TaskRelationGanttDependenceAdd: 'Task.Relation.Gantt.Dependence.add',
+	  TaskRelationGanttDependenceUpdate: 'Task.Relation.Gantt.Dependence.update',
+	  TaskRelationGanttDependenceDelete: 'Task.Relation.Gantt.Dependence.delete',
+	  TaskReplicateAdd: 'Task.Replicate.add',
+	  TaskReplicateToggle: 'Task.Replicate.toggle',
+	  TaskResultFileList: 'Task.Result.File.list',
 	  TaskStatusStart: 'Task.Status.start',
 	  TaskStatusTake: 'Task.Status.take',
 	  TaskStatusDisapprove: 'Task.Status.disapprove',
@@ -435,52 +480,34 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  TaskStatusPause: 'Task.Status.pause',
 	  TaskStatusComplete: 'Task.Status.complete',
 	  TaskStatusRenew: 'Task.Status.renew',
-	  TaskTrackingTimerStart: 'Task.Tracking.Timer.start',
-	  TaskTrackingTimerStop: 'Task.Tracking.Timer.stop',
-	  TaskTrackingTaskWithActiveTimer: 'Task.Tracking.Timer.getTaskWithActiveTimer',
-	  TaskDeadlineGetDeadlineChangeCount: 'Task.Deadline.getDeadlineChangeCount',
-	  TaskDeadlineCleanChangeLog: 'Task.Deadline.cleanChangeLog',
 	  TaskTimeTrackingAdd: 'Task.Tracking.ElapsedTime.add',
-	  TaskTimeTrackingUpdate: 'Task.Tracking.ElapsedTime.update',
 	  TaskTimeTrackingDelete: 'Task.Tracking.ElapsedTime.delete',
 	  TaskTimeTrackingList: 'Task.Tracking.ElapsedTime.list',
 	  TaskTimeTrackingListParticipants: 'Task.Tracking.ElapsedTime.listParticipants',
-	  TaskMultiTaskAdd: 'Task.Relation.Multi.Task.add',
-	  TaskCrmItemList: 'Task.CRM.Item.list',
-	  TaskRelationChildListByIds: 'Task.Relation.Child.listByIds',
-	  GroupUrlGet: 'Group.Url.get',
-	  GroupStageList: 'Group.Stage.list',
-	  GroupGet: 'Group.get',
-	  GroupGetByTaskId: 'Group.getByTaskId',
-	  ScrumUpdateTask: 'Scrum.updateTask',
-	  ScrumGetTaskInfo: 'Scrum.getTaskInfo',
-	  CheckListGet: 'CheckList.get',
-	  CheckListSave: 'CheckList.save',
-	  CheckListCollapse: 'CheckList.collapse',
-	  CheckListExpand: 'CheckList.expand',
-	  CheckListComplete: 'CheckList.complete',
-	  CheckListRenew: 'CheckList.renew',
-	  FlowGet: 'Flow.get',
-	  FileList: 'File.list',
-	  TaskCheckListFileList: 'Task.CheckList.File.list',
-	  TaskResultFileList: 'Task.Result.File.list',
-	  FileListObjects: 'File.listObjects',
-	  FileAttach: 'File.attach',
-	  FileDetach: 'File.detach',
-	  UserList: 'User.list',
-	  OptionSet: 'Option.set',
-	  OptionSetBool: 'Option.setBool',
-	  TemplateHistoryGetGrid: 'Template.History.getGrid',
-	  TaskMarkSet: 'Task.Mark.set',
+	  TaskTimeTrackingUpdate: 'Task.Tracking.ElapsedTime.update',
+	  TaskTrackingTimerStart: 'Task.Tracking.Timer.start',
+	  TaskTrackingTimerStop: 'Task.Tracking.Timer.stop',
+	  TaskTrackingTaskWithActiveTimer: 'Task.Tracking.Timer.getTaskWithActiveTimer',
+	  TaskViewUserCount: 'Task.View.User.count',
+	  TaskViewUserTail: 'Task.View.User.tail',
 	  TemplateAdd: 'Template.add',
 	  TemplateCopy: 'Copy.Template.copy',
-	  TemplateGet: 'Template.get',
-	  TemplateUpdate: 'Template.update',
 	  TemplateDelete: 'Template.delete',
-	  TaskFromTemplateGet: 'Template.Task.get',
-	  TaskFromTemplateAdd: 'Template.Task.add',
+	  TemplateGet: 'Template.get',
 	  TemplateHistoryGetCount: 'Template.History.getCount',
-	  TemplateStateSet: 'Template.State.set'
+	  TemplateHistoryGetGrid: 'Template.History.getGrid',
+	  TemplateRelationChildAdd: 'Template.Relation.Child.add',
+	  TemplateRelationChildDelete: 'Template.Relation.Child.delete',
+	  TemplateRelationChildGetSubTemplateIds: 'Template.Relation.Child.getSubTemplateIds',
+	  TemplateRelationChildList: 'Template.Relation.Child.list',
+	  TemplateRelationChildListByIds: 'Template.Relation.Child.listByIds',
+	  TemplateRelationRelatedAdd: 'Template.Relation.Related.add',
+	  TemplateRelationRelatedDelete: 'Template.Relation.Related.delete',
+	  TemplateRelationRelatedList: 'Template.Relation.Related.list',
+	  TemplateReplicateToggle: 'Template.Replicate.toggle',
+	  TemplateStateSet: 'Template.State.set',
+	  TemplateUpdate: 'Template.update',
+	  UserList: 'User.list'
 	});
 
 	const UserFieldType = Object.freeze({
@@ -494,6 +521,19 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  Positive: 'positive',
 	  Negative: 'negative',
 	  None: 'none'
+	});
+
+	const DeadlineState = Object.freeze({
+	  None: 'none',
+	  Completed: 'completed',
+	  Deferred: 'deferred',
+	  SupposedlyCompleted: 'supposedlyCompleted',
+	  Expired: 'expired',
+	  Today: 'today',
+	  Tomorrow: 'tomorrow',
+	  ThisWeek: 'thisWeek',
+	  NextWeek: 'nextWeek',
+	  MoreThanTwoWeeks: 'moreThanTwoWeeks'
 	});
 
 	exports.AhaMoment = AhaMoment;
@@ -529,6 +569,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	exports.Endpoint = Endpoint;
 	exports.UserFieldType = UserFieldType;
 	exports.Mark = Mark;
+	exports.DeadlineState = DeadlineState;
 
 }((this.BX.Tasks.V2.Const = this.BX.Tasks.V2.Const || {})));
 //# sourceMappingURL=const.bundle.js.map

@@ -39,3 +39,4 @@ $MESS["FLOW_FIELD_PLANNED_COMPLETION_TIME_FULL"] = "Planned task time, seconds."
 $MESS["FLOW_FIELD_TASKS_IDS"] = "Flow task IDs";
 $MESS["FLOW_FIELD_TASKS_IDS_FULL"] = "The IDs of all tasks added to the flow.";
 $MESS["FLOW_TABLE"] = "Flows";
+$MESS["FLOW_TABLE_DESCRIPTION_FULL"] = "Provides data about task flows, including names, administrators, task distribution types, and links to projects.";

@@ -36,7 +36,7 @@ class AppPlacementFiller extends FillerBase
 
 			$this->app = $result['APPLICATION'];
 			$this->placement = (string)$this->params['PLACEMENT'];
-			$this->placementId = (int)$this->params['PLACEMENT_ID'] ?? null;
+			$this->placementId = (int)($this->params['PLACEMENT_ID'] ?? 0);
 
 			global $USER;
 			if ($USER instanceof \CUser)
@@ -74,7 +74,7 @@ class AppPlacementFiller extends FillerBase
 		if ($this->currentUser !== null)
 		{
 			$userFilter[] = $this->currentUser->GetID();
-		};
+		}
 		$query
 			->where('APP_ID', $app['ID'])
 			->where('PLACEMENT', $this->placement)

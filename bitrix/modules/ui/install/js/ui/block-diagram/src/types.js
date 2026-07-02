@@ -1,9 +1,17 @@
 import { SnapshotHandler, RevertHandler } from './composables';
+import { PortsNearest, BlockIntersections } from './utils';
 
 export type Point = {
-	x: number,
-	y: number,
-}
+	x: number;
+	y: number;
+};
+
+export type Rect = {
+	x: number;
+	y: number;
+	width: number;
+	height: number;
+};
 
 export type DiagramNewConnection = {
 	id: string,
@@ -12,8 +20,9 @@ export type DiagramNewConnection = {
 	sourcePortPosition: DiagramPortPosition;
 	targetBlockId: DiagramBlockId | null;
 	targetPortId: DiagramPortId | null;
-	start: Point,
-	end: Point,
+	start: Point;
+	center: Point | null;
+	end: Point | null;
 };
 
 export type DiagramBlockId = string;
@@ -46,6 +55,16 @@ export type DiagramPortRect = {
 	position: DiagramPortPosition;
 };
 
+export type DiagramNearestPort = {
+	x: number;
+	y: number;
+	blockId: DiagramBlockId;
+	portId: DiagramPortId;
+	port: DiagramPort;
+};
+
+export type DiagramPortsMap = Map<DiagramBlockId, Map<DiagramPortId, DiagramPort>>;
+
 export type DiagramBlockPorts = {
 	input: Array<DiagramPort>;
 	output: Array<DiagramPort>;
@@ -72,8 +91,8 @@ export type PreparedShortcut = {
 	handler: ShortcutHandler,
 };
 
-export type GroupedBlocks = { [string]: Array<DiagramBlock> };
-export type BlockGroupNames = Array<string>;
+export type DiagramGroupedBlocks = { [string]: Array<DiagramBlock> };
+export type DiagramBlockGroupNames = Array<string>;
 
 export type DiagramConnectionId = string;
 
@@ -118,6 +137,25 @@ export type DragData = {
 
 export type DiagramValidationPortRuleFn = (newConnection: DiagramNewConnection) => boolean;
 
+export type DiagramNormalyzeConnectionFn = (newConnection: DiagramNewConnection) => DiagramNewConnection;
+
+export type DiagramInstancesContext = {
+	state: State;
+	getters: Getters;
+};
+
+export type DiagramInstances = {
+	portsNearest: typeof PortsNearest;
+	blockIntersections: typeof BlockIntersections;
+};
+
+export type DiagramSearchBlockRect = {
+	minX: number;
+	minY: number;
+	maxX: number;
+	maxY: number;
+};
+
 export type State = {
 	blockDiagramRef: HTMLElement | null;
 	blockDiagramTop: number;
@@ -142,10 +180,8 @@ export type State = {
 	portsRectMap: { [DiagramBlockId]: { [DiagramPortId]: DiagramPortRect } };
 
 	newConnection: DiagramNewConnection | null;
-	isValidNewConnection: boolean;
 
-	movingBlock: DiagramBlock | null;
-	movingConnections: Array<Connection>;
+	movingBlockId: DiagramBlockId | null;
 
 	canvasRef: HTMLElement | null,
 	transformLayoutRef: HTMLElement | null,
@@ -163,6 +199,7 @@ export type State = {
 	contextMenuLayerRef: HTMLElement | null;
 	targetContainerRef: HTMLElement | null;
 	isOpenContextMenu: boolean;
+	openedContextMenuName: string | null;
 	contextMenuInstance: null;
 	positionContextMenu: {
 		top: number;
@@ -188,4 +225,14 @@ export type State = {
 	shortcuts: Array<PreparedShortcut>;
 	mousePosition: Point;
 	isKeyboardInitialized: boolean;
+};
+
+export type Getters = {
+	transform: Transform;
+	canvasId: string | null;
+	groupedConnections: GroupedConnections;
+	connectionGroupNames: ConnectionGroupNames;
+	isAnimate: boolean;
+	isDisabledBlockDiagram: boolean;
+	isMakeNewConnection: boolean;
 };

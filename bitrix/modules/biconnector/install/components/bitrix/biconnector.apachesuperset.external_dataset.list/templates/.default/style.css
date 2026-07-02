@@ -35,6 +35,17 @@
 	height: 22px;
 }
 
+.biconnector-grid-market-cell {
+	display: inline-flex;
+	align-items: center;
+	vertical-align: middle;
+	overflow: hidden;
+	height: 22px;
+	padding: 3px 12px 3px 3px;
+	margin-top: -4px;
+	white-space: nowrap;
+}
+
 .biconnector-grid-username {
 	display: inline-block;
 	padding-left: 10px;
@@ -82,3 +93,4 @@
 	font-size: var(--ui-font-size-lg);
 	color: #555555;
 }
+

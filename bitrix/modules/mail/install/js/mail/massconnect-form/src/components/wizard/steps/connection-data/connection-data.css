@@ -19,6 +19,12 @@
 	flex-shrink: 0;
 }
 
+.mail_massconnect__connection-block {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
 .mail_massconnect__connection-data_checkbox-group {
 	display: flex;
 	align-items: center;

@@ -21,10 +21,9 @@ export class Switchboard
 		this.name = name;
 		this.debugMode = debug;
 
-		Event.bind('message', async (event) => {
+		Event.bind(this.port, 'message', async (event) => {
 			this.log('message received', event);
 			const message = event.data;
-			console.log(message);
 			if (this.isGet(message))
 			{
 				// find the method, call it, and reply with the result
@@ -40,6 +39,8 @@ export class Switchboard
 				}
 			}
 		});
+
+		this.port.start();
 	}
 
 	async getMethodResult({

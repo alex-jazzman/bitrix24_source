@@ -1,26 +1,24 @@
 import { Loc } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
-import { Store } from 'ui.vue3.vuex';
-import { Notifier, NotificationOptions } from 'ui.notification-manager';
+import { EventEmitter, type BaseEvent } from 'main.core.events';
+import { Notifier, type NotificationOptions } from 'ui.notification-manager';
+import { type Store } from 'ui.vue3.vuex';
 
 import { Messenger } from 'im.public';
-import { SoundNotificationManager } from 'im.v2.lib.sound-notification';
 import { Core } from 'im.v2.application.core';
-import { Parser } from 'im.v2.lib.parser';
+import { NotificationTypesCodes, SoundType, EventType, DesktopBroadcastAction } from 'im.v2.const';
 import { DesktopManager, DesktopBroadcastManager } from 'im.v2.lib.desktop';
 import { DesktopApi, DesktopFeature } from 'im.v2.lib.desktop-api';
-import { NotificationTypesCodes, SoundType, EventType, ChatType, DesktopBroadcastAction } from 'im.v2.const';
+import { Parser } from 'im.v2.lib.parser';
+import { SoundNotificationManager } from 'im.v2.lib.sound-notification';
+import {
+	type ImModelUser,
+	type ImModelNotification,
+	type ImModelNotificationButton,
+} from 'im.v2.model';
 import { NotificationService } from 'im.v2.provider.service.notification';
 
-import { NotificationId, NotificationIdPrefix } from './classes/notification-id';
-
 import { MessageOptionsBuilder } from './classes/message-options-builder';
-
-import type {
-	ImModelUser,
-	ImModelNotification,
-	ImModelNotificationButton,
-} from 'im.v2.model';
+import { NotificationId, NotificationIdPrefix } from './classes/notification-id';
 
 export type NotifierClickParams = {
 	id: string // 'im-notify_2558' | 'im-chat_1_2565'

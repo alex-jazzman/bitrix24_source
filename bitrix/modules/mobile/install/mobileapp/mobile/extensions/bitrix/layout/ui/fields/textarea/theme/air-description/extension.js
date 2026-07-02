@@ -30,9 +30,12 @@ jn.define('layout/ui/fields/textarea/theme/air-description', (require, exports, 
 
 		componentWillReceiveProps(props)
 		{
-			this.state = {
-				value: stringify(this.props.field.getValue()),
-			};
+			const value = stringify(props.field.getValue());
+
+			if (this.state.value !== value)
+			{
+				this.setState({ value });
+			}
 		}
 
 		/**

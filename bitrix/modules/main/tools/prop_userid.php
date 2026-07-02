@@ -128,11 +128,11 @@ class CIBlockPropertyUserID
 							v.readOnly = false;
 							document.getElementById('FindUser<?=$name_x?>').disabled = false;
 						}">
-					<option value="none"<?if($select=="none")echo " selected"?>><?=GetMessage("IBLOCK_PROP_USERID_NONE")?></option>
-					<option value="CU"<?if($select=="CU")echo " selected"?>><?=GetMessage("IBLOCK_PROP_USERID_CURR")?></option>
-					<option value="SU"<?if($select=="SU")echo " selected"?>><?=GetMessage("IBLOCK_PROP_USERID_OTHR")?></option>
+					<option value="none"<?php if($select=="none")echo " selected"?>><?=GetMessage("IBLOCK_PROP_USERID_NONE")?></option>
+					<option value="CU"<?php if($select=="CU")echo " selected"?>><?=GetMessage("IBLOCK_PROP_USERID_CURR")?></option>
+					<option value="SU"<?php if($select=="SU")echo " selected"?>><?=GetMessage("IBLOCK_PROP_USERID_OTHR")?></option>
 				</select>&nbsp;
-				<?echo FindUserIDNew(
+				<?= FindUserIDNew(
 					htmlspecialcharsbx($strHTMLControlName["VALUE"]),
 					$value["VALUE"],
 					$res,

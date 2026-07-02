@@ -15,6 +15,11 @@ $MESS["MAIL_NOTIFY_NEW_MESSAGE_MULTI_1"] = "New emails: #COUNT#<br/><br/><a targ
 $MESS["MAIL_NOTIFY_NEW_MESSAGE_TITLE"] = "Email";
 $MESS["MAIL_NOTIFY_NEW_SINGLE_MESSAGE_IN_MAIL_CLIENT_1"] = "New email: <a target=\"_blank\" href=\"#VIEW_URL#\">\"#SUBJECT#\"</a>";
 $MESS["MAIL_NOTIFY_NEW_SINGLE_MESSAGE_IN_MAIL_CLIENT_EMPTY_SUBJECT"] = "<a target=\"_blank\" href=\"#VIEW_URL#\">New email</a>";
+$MESS["MAIL_PASSWORDLESS_REQUEST_NOTIFICATION_LINK"] = "Proceed";
+$MESS["MAIL_PASSWORDLESS_REQUEST_NOTIFICATION_MESSAGE_F"] = "Your mailbox has been connected. Enter a password to complete connection.";
+$MESS["MAIL_PASSWORDLESS_REQUEST_NOTIFICATION_MESSAGE_M"] = "Your mailbox has been connected. Enter a password to complete connection.";
+$MESS["MAIL_PASSWORDLESS_REQUEST_NOTIFICATION_SUBJECT_F"] = "#AUTHOR# has connected a mailbox for you. Enter a password to complete connection.";
+$MESS["MAIL_PASSWORDLESS_REQUEST_NOTIFICATION_SUBJECT_M"] = "#AUTHOR# has connected a mailbox for you. Enter a password to complete connection.";
 $MESS["MAIL_PUSH_NOTIFY_NEW_MESSAGE_MULTI"] = "New messages: #COUNT#.";
 $MESS["MAIL_PUSH_NOTIFY_NEW_SINGLE_MESSAGE_IN_MAIL_CLIENT"] = "New message: \"#SUBJECT#\".";
 $MESS["MAIL_PUSH_NOTIFY_NEW_SINGLE_MESSAGE_IN_MAIL_CLIENT_EMPTY_SUBJECT"] = "You have received a new messsage.";

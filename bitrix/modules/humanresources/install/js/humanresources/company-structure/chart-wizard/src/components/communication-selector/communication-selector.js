@@ -4,9 +4,9 @@ import {
 	DefaultHint,
 } from 'humanresources.company-structure.structure-components';
 // eslint-disable-next-line no-unused-vars
-import type { CommunicationDetailed } from 'humanresources.company-structure.utils';
+import { type CommunicationDetailed } from 'humanresources.company-structure.utils';
 import { PermissionActions, PermissionChecker } from 'humanresources.company-structure.permission-checker';
-import { Item, TagSelector } from 'ui.entity-selector';
+import { type Item, TagSelector } from 'ui.entity-selector';
 import { Set as IconSet } from 'ui.icon-set.api.core';
 import { BIcon } from 'ui.icon-set.api.vue';
 import { AbstractSelectorDictionary } from './selector-dictionary';
@@ -54,7 +54,7 @@ export const CommunicationSelector = {
 			type: Array,
 			required: true,
 		},
-		/** @type CommunicationsTypeDict.chat | ChatTypeDict.channel | ChatTypeDict.collab */
+		/** @type CommunicationsTypeDict.chat | ChatTypeDict.channel | ChatTypeDict.collab | ChatTypeDict.project */
 		type: {
 			type: String,
 			required: true,
@@ -124,7 +124,10 @@ export const CommunicationSelector = {
 				;
 			}
 
-			if (this.type === CommunicationsTypeDict.collab)
+			if (
+				this.type === CommunicationsTypeDict.collab
+				|| this.type === CommunicationsTypeDict.project
+			)
 			{
 				return this.isTeamEntity
 					? this.permissionChecker.hasPermission(PermissionActions.teamCollabEdit, this.entityId)

@@ -4,21 +4,21 @@ return [
 	'extensions' => [
 		'alert',
 		'asset-manager',
-		'tokens',
-		'loc',
+		'feature-flag',
 		'in-app-url',
-
+		'loc',
 		'more-menu/analytics',
-
-		'ui-system/typography/text',
+		'toast',
+		'tokens',
 		'ui-system/blocks/icon',
 		'ui-system/form/buttons/button',
-
+		'ui-system/typography/text',
 		'utils/function',
+		'utils/object',
+		'utils/skeleton',
 		'utils/test',
 		'utils/time',
 		'utils/validation',
-		'utils/object',
-		'utils/skeleton',
+		'timeman:work-reports/submit/daily',
 	],
 ];

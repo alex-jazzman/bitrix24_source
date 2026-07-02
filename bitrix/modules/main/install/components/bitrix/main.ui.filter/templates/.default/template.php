@@ -4,6 +4,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+/**
+ * @global CMain $APPLICATION
+ * @var array $arResult
+ * @var CBitrixComponent $component
+ */
+
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Main\UI\Extension;
@@ -118,23 +124,39 @@ $filterValue = $arResult["LIMITS_ENABLED"] ? '' : HtmlFilter::encode($arResult["
 		</div>
 	</div>
 <?php else: ?>
-	<div class="main-ui-filter-search <?=$filterSearchClass?>" id="<?=$arParams["FILTER_ID"]?>_search_container">
-		<input
-				type="text"
-				<?php
-				if($arParams["CONFIG"]["AUTOFOCUS"]):?>autofocus="" <?php endif;
-				?>value="<?=$filterValue?>"
-				name="FIND"
-				placeholder="<?=Loc::getMessage($placeholder)?>"
-				class="main-ui-filter-search-filter"
-				id="<?=$arParams["FILTER_ID"]?>_search"
-				autocomplete="off"
-		>
-		<div class="main-ui-item-icon-block">
-			<span class="main-ui-item-icon main-ui-search"></span>
-			<span class="main-ui-item-icon main-ui-delete"></span>
+	<?php $isAirTheme = $arResult['THEME'] === \Bitrix\Main\UI\Filter\Theme::AIR; ?>
+	<?php if ($isAirTheme): ?><div class="main-ui-filter-search-wrap"><?php endif; ?>
+		<div class="main-ui-filter-search <?=$filterSearchClass?>" id="<?=$arParams["FILTER_ID"]?>_search_container">
+			<input
+					type="text"
+					<?php
+					if($arParams["CONFIG"]["AUTOFOCUS"]):?>autofocus="" <?php endif;
+					?>value="<?=$filterValue?>"
+					name="FIND"
+					placeholder="<?=Loc::getMessage($placeholder)?>"
+					class="main-ui-filter-search-filter"
+					id="<?=$arParams["FILTER_ID"]?>_search"
+					autocomplete="off"
+			>
+			<div class="main-ui-item-icon-block">
+				<span class="main-ui-item-icon main-ui-search"></span>
+				<span class="main-ui-item-icon main-ui-delete"></span>
+			</div>
+			<?php if ($isAirTheme):
+				$collapsedSearchButton = new Button([
+					'style' => AirButtonStyle::OUTLINE,
+					'size' => Size::MEDIUM,
+					'classList' => ['main-ui-filter-search-collapsed-button', '--air'],
+				]);
+				$collapsedSearchButton->setCollapsed();
+				$collapsedSearchButton->setAirDesign(true);
+				$collapsedSearchButton->addClass('--air');
+				$collapsedSearchButton->setIcon(Icon::FUNNEL_FILTER);
+				echo $collapsedSearchButton->render();
+				?>
+			<?php endif; ?>
 		</div>
-	</div>
+	<?php if ($isAirTheme): ?></div><?php endif; ?>
 <?php endif;
 
 $frame = $this->createFrame()->begin(false);
@@ -204,12 +226,12 @@ $cancelSettingsButton = new Button([
 					<h5 class="main-ui-filter-sidebar-title-item"><?=Loc::getMessage("MAIN_UI_FILTER__FILTER")?></h5>
 				</div><!--main-ui-filter-sidebar-->
 				<div class="main-ui-filter-sidebar-item-container">
-					<? if (is_array($arResult["PRESETS"])) : ?>
-						<? foreach ($arResult["PRESETS"] as $key => $preset) : ?>
-							<div class="main-ui-filter-sidebar-item<?=(isset($arResult["CURRENT_PRESET"]["ID"]) && $preset["ID"] === $arResult["CURRENT_PRESET"]["ID"]) ? " main-ui-filter-current-item" : ""?><?
-							?><?=$preset["ID"] === "default_filter" || $preset["ID"] === "tmp_filter" ? " main-ui-hide" : ""?><?
-							?><?=($preset["COMMON_PRESET"] ?? false) ? " main-ui-filter-admin-preset" : ""?><?
-							?><?=!empty($preset["IS_PINNED"]) && $arParams["CONFIG"]["DEFAULT_PRESET"] ? " main-ui-item-pin" : ""?>" data-id="<?=htmlspecialcharsbx($preset["ID"])?>"<?
+					<?php if (is_array($arResult["PRESETS"])) : ?>
+						<?php foreach ($arResult["PRESETS"] as $key => $preset) : ?>
+							<div class="main-ui-filter-sidebar-item<?=(isset($arResult["CURRENT_PRESET"]["ID"]) && $preset["ID"] === $arResult["CURRENT_PRESET"]["ID"]) ? " main-ui-filter-current-item" : ""?><?php
+							?><?=$preset["ID"] === "default_filter" || $preset["ID"] === "tmp_filter" ? " main-ui-hide" : ""?><?php
+							?><?=($preset["COMMON_PRESET"] ?? false) ? " main-ui-filter-admin-preset" : ""?><?php
+							?><?=!empty($preset["IS_PINNED"]) && $arParams["CONFIG"]["DEFAULT_PRESET"] ? " main-ui-item-pin" : ""?>" data-id="<?=htmlspecialcharsbx($preset["ID"])?>"<?php
 							?><?=!empty($preset["IS_PINNED"]) && $arParams["CONFIG"]["DEFAULT_PRESET"] ? " title=\"".Loc::getMessage("MAIN_UI_FILTER__IS_SET_AS_DEFAULT_PRESET")."\"" : " "?>>
 								<span class="main-ui-item-icon main-ui-filter-icon-grab" title="<?=Loc::getMessage("MAIN_UI_FILTER__DRAG_TITLE")?>"></span>
 								<span class="main-ui-filter-sidebar-item-text-container">
@@ -217,20 +239,20 @@ $cancelSettingsButton = new Button([
 									<input type="text" placeholder="<?=Loc::getMessage("MAIN_UI_FILTER__FILTER_NAME_PLACEHOLDER")?>" value="<?=HtmlFilter::encode($preset["TITLE"], ENT_COMPAT, false)?>" class="main-ui-filter-sidebar-item-input">
 									<span class="main-ui-item-icon main-ui-filter-icon-pin" title="<?=Loc::getMessage("MAIN_UI_FILTER__IS_SET_AS_DEFAULT_PRESET")?>"></span>
 								</span>
-								<? if ($preset["COMMON_PRESET"] ?? false) : ?>
+								<?php if ($preset["COMMON_PRESET"] ?? false) : ?>
 									<span class="main-ui-filter-admin-preset-icon" title="<?=Loc::getMessage("MAIN_UI_FILTER__ADMIN_PRESET_INFO")?>"></span>
-								<? endif; ?>
-								<? if ($arParams["CONFIG"]["DEFAULT_PRESET"]) : ?>
+								<?php endif; ?>
+								<?php if ($arParams["CONFIG"]["DEFAULT_PRESET"]) : ?>
 									<span class="main-ui-item-icon main-ui-filter-icon-pin" title="<?=Loc::getMessage("MAIN_UI_FILTER__IS_SET_AS_DEFAULT_PRESET")?>"></span>
-								<? endif; ?>
-								<? if (true) : ?>
+								<?php endif; ?>
+								<?php if (true) : ?>
 									<span class="main-ui-item-icon main-ui-filter-icon-edit" title="<?=Loc::getMessage("MAIN_UI_FILTER__EDIT_PRESET_TITLE")?>"></span>
 									<span class="main-ui-item-icon main-ui-delete" title="<?=Loc::getMessage("MAIN_UI_FILTER__REMOVE_PRESET")?>"></span>
-								<? endif; ?>
+								<?php endif; ?>
 								<div class="main-ui-filter-edit-mask"></div>
 							</div>
-						<? endforeach; ?>
-					<? endif; ?>
+						<?php endforeach; ?>
+					<?php endif; ?>
 					<div class="main-ui-filter-sidebar-item main-ui-filter-new-filter">
 						<div class="main-ui-filter-edit-mask"></div>
 						<input class="main-ui-filter-sidebar-edit-control" type="text" placeholder="<?=Loc::getMessage("MAIN_UI_FILTER__FILTER_NAME_PLACEHOLDER")?>">
@@ -238,19 +260,19 @@ $cancelSettingsButton = new Button([
 				</div><!--main-ui-filter-sidebar-item-container-->
 			</div><!--main-ui-filter-sidebar-->
 			<div class="main-ui-filter-field-container">
-				<? if ($arResult["LIMITS_ENABLED"]): ?>
+				<?php if ($arResult["LIMITS_ENABLED"]): ?>
 				<div class="main-ui-filter-field-limits">
 					<div class="main-ui-filter-field-limits-title"><?=$arResult["LIMITS"]["TITLE"]?></div>
 					<div class="main-ui-filter-field-limits-description">
 						<?=$arResult["LIMITS"]["DESCRIPTION"]?>
 					</div>
 					<div class="ui-btn-container ui-btn-container-center main-ui-filter-field-limits-button-box">
-					<? foreach ($arResult["LIMITS"]["BUTTONS"] as $button): ?>
+					<?php foreach ($arResult["LIMITS"]["BUTTONS"] as $button): ?>
 						<?=$button?>
-					<? endforeach ?>
+					<?php endforeach ?>
 					</div>
 				</div>
-				<? endif ?>
+				<?php endif ?>
 				<div class="main-ui-filter-field-container-list">
 
 				</div>
@@ -261,7 +283,7 @@ $cancelSettingsButton = new Button([
 				</div><!--main-ui-filter-field-add-->
 			</div><!--main-ui-filter-field-container-->
 			<div class="main-ui-filter-bottom-controls">
-				<? if ($USER->IsAuthorized()) : ?>
+				<?php if ($USER->IsAuthorized()) : ?>
 					<div class="main-ui-filter-add-container">
 						<span class="main-ui-filter-add-item"><?=Loc::getMessage("MAIN_UI_FILTER__ADD_FILTER")?></span>
 						<span class="main-ui-filter-add-edit" title="<?=Loc::getMessage("MAIN_UI_FILTER__FILTER_SETTINGS_TITLE")?>"></span>
@@ -269,7 +291,7 @@ $cancelSettingsButton = new Button([
 							<span class="main-ui-filter-field-button-item"><?=Loc::getMessage("MAIN_UI_FILTER__RESET_LINK")?></span>
 						</span>
 					</div><!--main-ui-filter-add-container-->
-				<? endif; ?>
+				<?php endif; ?>
 
 				<div class="main-ui-filter-field-preset-button-container">
 					<div class="main-ui-filter-field-button-inner">
@@ -279,12 +301,12 @@ $cancelSettingsButton = new Button([
 				</div>
 				<div class="main-ui-filter-field-button-container">
 					<div class="main-ui-filter-field-button-inner">
-						<? if ($USER->CanDoOperation("edit_other_settings")) : ?>
+						<?php if ($USER->CanDoOperation("edit_other_settings")) : ?>
 							<label class="main-ui-filter-field-button main-ui-filter-save-for-all" for="save-for-all">
 								<input id="save-for-all" class="main-ui-filter-field-button-checkbox" type="checkbox">
 								<span class="main-ui-filter-field-button-item"><?=Loc::getMessage("MAIN_UI_FILTER__CONFIRM_APPLY_FOR_ALL_CHECKBOX")?></span>
 							</label>
-						<? endif; ?>
+						<?php endif; ?>
 						<?= $saveSettingsButton->render(false) ?>
 						<?= $cancelSettingsButton->render(false) ?>
 					</div>
@@ -294,7 +316,7 @@ $cancelSettingsButton = new Button([
 	</div><!--main-ui-filter-wrapper-->
 </script>
 
-<?
+<?php
     $messages = Json::encode(Loc::loadLanguageFile(__FILE__));
 ?>
 
@@ -315,7 +337,7 @@ $cancelSettingsButton = new Button([
 		);
 	});
 </script>
-<?
+<?php
 	$frame->end();
 	if (!empty($arResult["TARGET_VIEW_ID"]))
 	{

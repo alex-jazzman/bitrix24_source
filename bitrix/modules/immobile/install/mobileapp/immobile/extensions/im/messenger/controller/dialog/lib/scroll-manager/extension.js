@@ -4,11 +4,12 @@
 jn.define('im/messenger/controller/dialog/lib/scroll-manager', (require, exports, module) => {
 	const { Type } = require('type');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { EventType, AppStatus } = require('im/messenger/const');
+	const { EventType, AppStatus, BotCode } = require('im/messenger/const');
 	const { VisibilityManager } = require('im/messenger/lib/visibility-manager');
 	const { AfterScrollMessagePosition } = require('im/messenger/view/dialog');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const { Feature } = require('im/messenger/lib/feature');
+	const { DialogHelper } = require('im/messenger/lib/helper');
 
 	const logger = getLogger('dialog--scroll-manager');
 
@@ -80,8 +81,14 @@ jn.define('im/messenger/controller/dialog/lib/scroll-manager', (require, exports
 				force = false,
 				prevMessageId = null,
 				position = AfterScrollMessagePosition.top,
+				messageId,
 			} = params;
 			logger.log(`${this.constructor.name}.onScrollToBottom params`, params);
+
+			if (this.#shouldSkipScrollForCopilotDirect(messageId))
+			{
+				return;
+			}
 
 			logger.log(`${this.constructor.name}.onScrollToBottom isScrollToBottomEnable`, this.isScrollToBottomEnable);
 			if (!this.isScrollToBottomEnable)
@@ -317,6 +324,34 @@ jn.define('im/messenger/controller/dialog/lib/scroll-manager', (require, exports
 			const { messageList } = await this.view.getViewableMessages();
 
 			this.view.readVisibleUnreadMessages(messageList);
+		}
+
+		/**
+		 * @param {number|string|undefined} messageId
+		 * @return {boolean}
+		 */
+		#shouldSkipScrollForCopilotDirect(messageId)
+		{
+			if (!Feature.isCopilotAnimatedScrollSupported)
+			{
+				return false;
+			}
+
+			const isCopilotDirect = DialogHelper.createByDialogId(this.dialogId)?.isCopilotDirect;
+			if (!isCopilotDirect)
+			{
+				return false;
+			}
+
+			const message = this.store.getters['messagesModel/getById'](messageId);
+			if (message.authorId === serviceLocator.get('core').getUserId())
+			{
+				return true;
+			}
+
+			const authorModel = this.store.getters['usersModel/getById'](message.authorId);
+
+			return authorModel?.botData?.code === BotCode.copilot;
 		}
 	}
 

@@ -1,6 +1,6 @@
 import { Loc, Type, Tag, Dom } from 'main.core';
 import { TagSelector } from 'ui.entity-selector';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { type BaseEvent, EventEmitter } from 'main.core.events';
 import EntityType from './entity-type';
 import './style.css';
 
@@ -21,7 +21,7 @@ export {
 	EntityType,
 };
 
-export default class DepartmentControl extends EventEmitter
+export class DepartmentControl extends EventEmitter
 {
 	#tagSelector: TagSelector;
 	#rootDepartment: Object;

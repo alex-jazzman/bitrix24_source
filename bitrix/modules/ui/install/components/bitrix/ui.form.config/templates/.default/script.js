@@ -275,7 +275,8 @@
 	    }, {
 	      id: babelHelpers.classPrivateFieldGet(this, _useHumanResourcesModule) ? 'structure-node' : 'department',
 	      options: {
-	        selectMode: 'usersAndDepartments'
+	        selectMode: 'usersAndDepartments',
+	        allowSelectRootDepartment: true
 	      }
 	    }],
 	    events: {

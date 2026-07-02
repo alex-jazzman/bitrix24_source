@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/controller/dialog/lib/vote-manager', (require, exports, module) => {
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { EventType, MessageParams, OwnMessageStatus } = require('im/messenger/const');
+	const { EventType, MessageComponent, OwnMessageStatus } = require('im/messenger/const');
 	const { voteDefaultElement } = require('im/messenger/model/messages/vote/default-element');
 	const { VoteService } = require('im/messenger/provider/services/vote');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
@@ -211,7 +211,7 @@ jn.define('im/messenger/controller/dialog/lib/vote-manager', (require, exports, 
 				date: new Date(),
 				sending: true,
 				params: {
-					componentId: MessageParams.ComponentId.VoteMessage,
+					componentId: MessageComponent.vote,
 					COMPONENT_PARAMS: {
 						data: {
 							questions: voteData.questions.map((question) => ({
@@ -263,7 +263,7 @@ jn.define('im/messenger/controller/dialog/lib/vote-manager', (require, exports, 
 							templateId: messageUuid,
 							error: false,
 							params: {
-								componentId: MessageParams.ComponentId.VoteMessage,
+								componentId: MessageComponent.vote,
 							},
 							vote: {
 								...voteDefaultElement,
@@ -310,7 +310,7 @@ jn.define('im/messenger/controller/dialog/lib/vote-manager', (require, exports, 
 			AnalyticsService.getInstance().sendVoteVoted(this.dialogId, updatedVoteModel.voteId);
 		}
 
-		async revote(messageId)
+		async revote(messageId, isNestedSection)
 		{
 			logger.log('VoteManager.revote', messageId);
 
@@ -351,10 +351,14 @@ jn.define('im/messenger/controller/dialog/lib/vote-manager', (require, exports, 
 			await this.store.dispatch('messagesModel/voteModel/update', { vote });
 
 			VoteService.getInstance().revote(messageId);
-			AnalyticsService.getInstance().sendVoteCancelled(this.dialogId, voteModel.voteId);
+			AnalyticsService.getInstance().sendVoteCancelled(
+				this.dialogId,
+				voteModel.voteId,
+				{ isNestedSection },
+			);
 		}
 
-		async finishVote(messageId)
+		async finishVote(messageId, isNestedSection)
 		{
 			logger.log('VoteManager.finishVote', messageId);
 
@@ -373,7 +377,11 @@ jn.define('im/messenger/controller/dialog/lib/vote-manager', (require, exports, 
 			});
 
 			VoteService.getInstance().finishVote(messageId);
-			AnalyticsService.getInstance().sendVoteFinished(this.dialogId, messageHelper.voteModel.voteId);
+			AnalyticsService.getInstance().sendVoteFinished(
+				this.dialogId,
+				messageHelper.voteModel.voteId,
+				{ isNestedSection },
+			);
 		}
 
 		openVoteResult(messageId)

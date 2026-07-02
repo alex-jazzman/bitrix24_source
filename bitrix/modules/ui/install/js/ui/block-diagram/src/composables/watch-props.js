@@ -1,4 +1,4 @@
-import { watch, effectScope } from 'ui.vue3';
+import { watch, effectScope, toValue } from 'ui.vue3';
 import { useBlockDiagram } from './block-diagram';
 
 export type UseWatchProps = {
@@ -20,9 +20,8 @@ export function useWatchProps(props): UseWatchProps
 		setConnectionsOffsets,
 		setHistoryBlocksCurrentState,
 		setHistoryConnectionsCurrentState,
-		updateTree,
-		calculateIntersectedBlockIds,
-		isBoxIntersection,
+		blockIntersections,
+		isRunUpdateBlocksCommand,
 	} = useBlockDiagram();
 	const scope = effectScope(true);
 
@@ -37,11 +36,14 @@ export function useWatchProps(props): UseWatchProps
 				setUnmountedPorts(newBlocks, oldBlocks);
 				setUnmountedBlocks(newBlocks, oldBlocks);
 				blocks.value = newBlocks;
-				if (newLength !== oldLength && isBoxIntersection.value)
+
+				if (!toValue(isRunUpdateBlocksCommand))
 				{
-					updateTree(blocks.value);
-					calculateIntersectedBlockIds();
+					blockIntersections.clear();
+					blockIntersections.load(blocks.value);
 				}
+
+				isRunUpdateBlocksCommand.value = false;
 			}
 		}, { immediate: true, deep: true });
 

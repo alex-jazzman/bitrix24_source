@@ -3,11 +3,11 @@ import { Planner } from 'calendar.planner';
 import { Util } from 'calendar.util';
 import 'ui.design-tokens';
 import { ajax as Ajax, Text, Type } from 'main.core';
-import { BaseEvent } from 'main.core.events';
+import type { BaseEvent } from 'main.core.events';
 import { DateTimeFormat, Timezone } from 'main.date';
 import { Dialog } from 'ui.entity-selector';
 import type { BlockSettings } from '../../../todo-editor';
-import { Events } from '../../todo-editor';
+import { Events } from '../../events';
 import { LocationSelector } from './location-selector';
 import { SectionSelector } from './section-selector';
 
@@ -136,8 +136,13 @@ export const TodoEditorBlocksCalendar = {
 				data.to = Number(filledValues.to);
 				data.duration = Number(filledValues.duration);
 				data.timezoneName = filledValues.timezoneFrom;
-				data.ownerId = filledValues.ownerId;
 				data.sectionId = filledValues.sectionId;
+				data.calendarEventId = filledValues.calendarEventId ?? 0;
+
+				if (!Type.isNil(filledValues.ownerId))
+				{
+					data.ownerId = filledValues.ownerId;
+				}
 
 				if (!Type.isNil(filledValues.sectionId))
 				{
@@ -228,8 +233,8 @@ export const TodoEditorBlocksCalendar = {
 					minHeight: 104,
 					height: 104,
 					width: 770,
-					entryTimezone: this.timezoneName,
-					readonly: this.sectionSelectorReadOnly,
+					entryTimezone: this.config.userSettings?.timezoneName ?? this.timezoneName,
+					readonly: !this.selectedUserIds.has(this.context.userId) && this.sectionSelectorReadOnly,
 				});
 			}
 
@@ -240,6 +245,7 @@ export const TodoEditorBlocksCalendar = {
 			const location = (this.locationId ? this.location : '');
 
 			const data = {
+				entryId: this.calendarEventId ?? 0,
 				ownerId: this.ownerId,
 				type: 'user',
 				entityList: [],
@@ -356,7 +362,7 @@ export const TodoEditorBlocksCalendar = {
 		},
 		getFormattedDate(id: string): string
 		{
-			return this.getFormattedValue(id, DateTimeFormat.getFormat('SHORT_DATE_FORMAT'));
+			return this.getFormattedValue(id, DateTimeFormat.getFormat('FORMAT_DATE'));
 		},
 		getFormattedValue(id: string, format: string): string
 		{

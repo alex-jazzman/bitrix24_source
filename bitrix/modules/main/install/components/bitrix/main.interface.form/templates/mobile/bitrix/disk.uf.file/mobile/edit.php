@@ -1,4 +1,4 @@
-<?if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+<?php if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 /** @var array $arParams */
 /** @var array $arResult */
 /** @global CMain $APPLICATION */
@@ -48,10 +48,10 @@ $uploadedFile = <<<HTML
 HTML;
 $thumb = preg_replace("/[\n\t]+/", "", $thumb);
 $uploadedFile =  preg_replace("/[\n\t]+/", "", $uploadedFile);
-?><input type="hidden" name="<?=htmlspecialcharsbx($arResult['controlName'])?>" value="" /><?
+?><input type="hidden" name="<?=htmlspecialcharsbx($arResult['controlName'])?>" value="" /><?php
 ?>
 <div id="diskuf-placeholder-<?= $arResult['UID'] ?>">
-<?
+<?php
 $lazyLoadFileIDs = [];
 foreach ($arResult['FILES'] as $file)
 {

@@ -32,7 +32,8 @@ jn.define('im/messenger/controller/dialog/lib/notify-panel-manager', (require, e
 		 */
 		constructor({ dialogLocator })
 		{
-			if (!Feature.isNotifyPanelAvailable)
+			// TODO: the notification panel is hidden for hot fix
+			if (!Feature.isNotifyPanelAvailable || true)
 			{
 				return;
 			}

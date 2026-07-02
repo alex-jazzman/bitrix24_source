@@ -71,7 +71,6 @@ $MESS['CONFIG_ENTITY_KPI_ANSWER_LIST'] = 'Список пользователе�
 $MESS['CONFIG_ENTITY_KPI_ANSWER_TEXT'] = 'Текст уведомления';
 $MESS['CONFIG_ENTITY_KPI_CHECK_OPERATOR_ACTIVITY'] = 'Останавливать таймер, если ответственный оператор недоступен';
 $MESS['CONFIG_ENTITY_SEND_NOTIFICATION_EMPTY_QUEUE'] = 'Признак отправки нотификации о том, что очередь ОЛ пустая';
-$MESS['CONFIG_ENTITY_SHOW_NOTIFICATION_REDIRECT_FIELD'] = 'Показывать уведомления о перенаправленных обращениях';
 $MESS["CONFIG_ENTITY_USE_WELCOME_FORM"] = "Показывать клиенту форму при старте диалога";
 $MESS["CONFIG_ENTITY_WELCOME_FORM_ID"] = "ID формы, которая будет показана клиенту при старте диалога";
 $MESS["CONFIG_ENTITY_WELCOME_FORM_DELAY"] = "Когда показывать приветственную форму";

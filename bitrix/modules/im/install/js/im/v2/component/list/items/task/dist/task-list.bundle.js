@@ -3,162 +3,251 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_component_elements_listLoadingState,im_v2_component_list_items_recent,im_v2_lib_draft,im_v2_lib_utils,im_v2_lib_menu,im_v2_application_core,im_v2_const,im_v2_provider_service_recent,im_v2_component_list_items_elements_emptyState) {
+(function (exports, im_v2_component_list_items_base, im_v2_const, im_v2_lib_draft, im_v2_provider_service_recent, im_v2_lib_menu, im_v2_component_list_items_elements_emptyState, im_v2_lib_unreadMode) {
 	'use strict';
 
 	class TaskRecentMenu extends im_v2_lib_menu.RecentMenu {
-	  getMenuItems() {
-	    return [this.getUnreadMessageItem(), this.getPinMessageItem(), this.getMuteItem(), this.getHideItem()];
-	  }
-	}
-
-	class TaskService extends im_v2_provider_service_recent.BaseRecentService {
-	  getRestMethodName() {
-	    return im_v2_const.RestMethod.imV2RecentExternalChatTail;
-	  }
-	  getQueryParams(firstPage = false) {
-	    return {
-	      ...super.getQueryParams(firstPage),
-	      type: im_v2_const.ChatType.taskComments
-	    };
-	  }
-	  saveRecentItems(recentItems) {
-	    return im_v2_application_core.Core.getStore().dispatch('recent/setCollection', {
-	      type: im_v2_const.RecentType.taskComments,
-	      items: recentItems
-	    });
-	  }
+		getMenuItems() {
+			return [this.getUnreadMessageItem(), this.getPinMessageItem(), this.getMuteItem(), this.getHideItem()];
+		}
 	}
 
 	// @vue/component
 	const EmptyState = {
-	  name: 'EmptyState',
-	  components: {
-	    RecentEmptyState: im_v2_component_list_items_elements_emptyState.RecentEmptyState
-	  },
-	  methods: {
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
-	    }
-	  },
-	  template: `
+		name: 'EmptyState',
+		components: {
+			RecentEmptyState: im_v2_component_list_items_elements_emptyState.RecentEmptyState
+		},
+		methods: {
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
 		<RecentEmptyState :title="loc('IM_LIST_TASK_EMPTY_STATE_TITLE')" />
 	`
 	};
 
 	// @vue/component
+	const TaskUnreadList = {
+		name: 'TaskUnreadList',
+		components: {
+			BaseRecentList: im_v2_component_list_items_base.BaseRecentList,
+			BaseRecentItem: im_v2_component_list_items_base.BaseRecentItem,
+			RecentEmptyState: im_v2_component_list_items_elements_emptyState.RecentEmptyState
+		},
+		emits: ['selectChat'],
+		data() {
+			return {
+				isLoading: false,
+				isLoadingNextPage: false,
+				firstPageLoaded: false
+			};
+		},
+		computed: {
+			collection() {
+				return this.$store.getters['recent/getSortedUnreadCollection']({
+					type: im_v2_const.RecentType.taskComments
+				});
+			}
+		},
+		async created() {
+			this.contextMenuManager = new TaskRecentMenu({
+				emitter: this.getEmitter()
+			});
+			await this.loadInitialItems();
+			void im_v2_lib_draft.DraftManager.getInstance().initDraftHistory();
+			this.getEmitter().subscribe(im_v2_const.EventType.dialog.onCloseChat, this.onCloseChat);
+		},
+		beforeUnmount() {
+			this.contextMenuManager.destroy();
+			this.getEmitter().unsubscribe(im_v2_const.EventType.dialog.onCloseChat, this.onCloseChat);
+		},
+		methods: {
+			onCloseChat(event) {
+				const {
+					dialogId
+				} = event.getData();
+				im_v2_lib_unreadMode.UnreadModeManager.removeItemFromList(im_v2_const.RecentType.taskComments, dialogId);
+			},
+			async loadInitialItems() {
+				if (this.firstPageLoaded || this.isLoading) {
+					return;
+				}
+				this.isLoading = true;
+				await this.getTaskUnreadService().loadFirstPage();
+				this.firstPageLoaded = true;
+				this.isLoading = false;
+			},
+			async onLoadNextPage() {
+				if (this.isLoadingNextPage || !this.getTaskUnreadService().hasMoreItemsToLoad()) {
+					return;
+				}
+				this.isLoadingNextPage = true;
+				await this.getTaskUnreadService().loadNextPage();
+				this.isLoadingNextPage = false;
+			},
+			onSelectChat(dialogId) {
+				this.$emit('selectChat', dialogId);
+			},
+			onItemRightClick(payload) {
+				const {
+					item,
+					event
+				} = payload;
+				event.preventDefault();
+				const context = {
+					dialogId: item.dialogId,
+					recentItem: item,
+					compactMode: false,
+					recentSection: im_v2_const.RecentType.taskComments
+				};
+				this.contextMenuManager.openMenu(context, {
+					left: event.pageX,
+					top: event.pageY
+				});
+			},
+			onCloseMenu() {
+				this.contextMenuManager.close();
+			},
+			getTaskUnreadService() {
+				if (!this.service) {
+					this.service = new im_v2_provider_service_recent.TaskRecentService({
+						unreadMode: true,
+						parentChatId: im_v2_provider_service_recent.ParentChatScope.all
+					});
+				}
+				return this.service;
+			},
+			getEmitter() {
+				return this.$Bitrix.eventEmitter;
+			},
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
+		<BaseRecentList
+			:collection="collection"
+			:showMainLoader="isLoading && !firstPageLoaded"
+			:showBottomLoader="isLoadingNextPage"
+			@selectChat="onSelectChat"
+			@itemRightClick="onItemRightClick"
+			@closeMenu="onCloseMenu"
+			@loadNextPage="onLoadNextPage"
+		>
+			<template #empty-state>
+				<RecentEmptyState :title="loc('IM_LIST_TASK_UNREAD_EMPTY_STATE_TITLE')" />
+			</template>
+		</BaseRecentList>
+	`
+	};
+
+	// @vue/component
 	const TaskList = {
-	  name: 'TaskList',
-	  components: {
-	    EmptyState,
-	    LoadingState: im_v2_component_elements_listLoadingState.ListLoadingState,
-	    RecentItem: im_v2_component_list_items_recent.RecentItem
-	  },
-	  emits: ['chatClick'],
-	  data() {
-	    return {
-	      isLoading: false,
-	      isLoadingNextPage: false,
-	      firstPageLoaded: false
-	    };
-	  },
-	  computed: {
-	    preparedItems() {
-	      return this.$store.getters['recent/getSortedCollection']({
-	        type: im_v2_const.RecentType.taskComments
-	      });
-	    },
-	    pinnedItems() {
-	      return this.preparedItems.filter(item => item.pinned === true);
-	    },
-	    generalItems() {
-	      return this.preparedItems.filter(item => item.pinned === false);
-	    },
-	    isEmptyCollection() {
-	      return this.preparedItems.length === 0;
-	    }
-	  },
-	  created() {
-	    this.contextMenuManager = new TaskRecentMenu({
-	      emitter: this.getEmitter()
-	    });
-	  },
-	  beforeUnmount() {
-	    this.contextMenuManager.destroy();
-	  },
-	  async activated() {
-	    this.isLoading = true;
-	    await this.getRecentService().loadFirstPage();
-	    if (!this.firstPageLoaded) {
-	      void im_v2_lib_draft.DraftManager.getInstance().initDraftHistory();
-	    }
-	    this.firstPageLoaded = true;
-	    this.isLoading = false;
-	  },
-	  methods: {
-	    async onScroll(event) {
-	      this.contextMenuManager.close();
-	      if (!im_v2_lib_utils.Utils.dom.isOneScreenRemaining(event.target) || !this.getRecentService().hasMoreItemsToLoad()) {
-	        return;
-	      }
-	      this.isLoadingNextPage = true;
-	      await this.getRecentService().loadNextPage();
-	      this.isLoadingNextPage = false;
-	    },
-	    onClick(item) {
-	      this.$emit('chatClick', item.dialogId);
-	    },
-	    onRightClick(item, event) {
-	      event.preventDefault();
-	      const context = {
-	        dialogId: item.dialogId,
-	        recentItem: item
-	      };
-	      this.contextMenuManager.openMenu(context, event.currentTarget);
-	    },
-	    getRecentService() {
-	      if (!this.service) {
-	        this.service = new TaskService();
-	      }
-	      return this.service;
-	    },
-	    getEmitter() {
-	      return this.$Bitrix.eventEmitter;
-	    },
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
-	    }
-	  },
-	  template: `
-		<div class="bx-im-list-task__container">
-			<LoadingState v-if="isLoading && !firstPageLoaded" />
-			<div v-else @scroll="onScroll" class="bx-im-list-task__scroll-container">
-				<EmptyState v-if="isEmptyCollection" />
-				<div v-if="pinnedItems.length > 0" class="bx-im-list-task__pinned_container">
-					<RecentItem
-						v-for="item in pinnedItems"
-						:key="item.dialogId"
-						:item="item"
-						@click="onClick(item)"
-						@click.right="onRightClick(item, $event)"
-					/>
-				</div>
-				<div class="bx-im-list-task__general_container">
-					<RecentItem
-						v-for="item in generalItems"
-						:key="item.dialogId"
-						:item="item"
-						@click="onClick(item)"
-						@click.right="onRightClick(item, $event)"
-					/>
-				</div>
-				<LoadingState v-if="isLoadingNextPage" />
-			</div>
-		</div>
+		name: 'TaskList',
+		components: {
+			EmptyState,
+			BaseRecentList: im_v2_component_list_items_base.BaseRecentList
+		},
+		emits: ['selectChat'],
+		data() {
+			return {
+				isLoading: false,
+				isLoadingNextPage: false,
+				firstPageLoaded: false
+			};
+		},
+		computed: {
+			collection() {
+				return this.$store.getters['recent/getSortedCollection']({
+					type: im_v2_const.RecentType.taskComments
+				});
+			}
+		},
+		async created() {
+			this.contextMenuManager = new TaskRecentMenu({
+				emitter: this.getEmitter()
+			});
+			await this.loadInitialItems();
+			void im_v2_lib_draft.DraftManager.getInstance().initDraftHistory();
+		},
+		beforeUnmount() {
+			this.contextMenuManager.destroy();
+		},
+		methods: {
+			async loadInitialItems() {
+				if (this.firstPageLoaded || this.isLoading) {
+					return;
+				}
+				this.isLoading = true;
+				await this.getRecentService().loadFirstPage();
+				this.firstPageLoaded = true;
+				this.isLoading = false;
+			},
+			async onLoadNextPage() {
+				if (this.isLoadingNextPage || !this.getRecentService().hasMoreItemsToLoad()) {
+					return;
+				}
+				this.isLoadingNextPage = true;
+				await this.getRecentService().loadNextPage();
+				this.isLoadingNextPage = false;
+			},
+			onSelectChat(dialogId) {
+				this.$emit('selectChat', dialogId);
+			},
+			onItemRightClick(payload) {
+				const {
+					item,
+					event
+				} = payload;
+				event.preventDefault();
+				const context = {
+					dialogId: item.dialogId,
+					recentItem: item
+				};
+				this.contextMenuManager.openMenu(context, {
+					left: event.pageX,
+					top: event.pageY
+				});
+			},
+			onCloseMenu() {
+				this.contextMenuManager.close();
+			},
+			getRecentService() {
+				if (!this.service) {
+					this.service = new im_v2_provider_service_recent.TaskRecentService({
+						parentChatId: im_v2_provider_service_recent.ParentChatScope.all
+					});
+				}
+				return this.service;
+			},
+			getEmitter() {
+				return this.$Bitrix.eventEmitter;
+			},
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
+		<BaseRecentList
+			:collection="collection"
+			:showMainLoader="isLoading && !firstPageLoaded"
+			:showBottomLoader="isLoadingNextPage"
+			@selectChat="onSelectChat"
+			@itemRightClick="onItemRightClick"
+			@closeMenu="onCloseMenu"
+			@loadNextPage="onLoadNextPage"
+		>
+			<template #empty-state>
+				<EmptyState />
+			</template>
+		</BaseRecentList>
 	`
 	};
 
 	exports.TaskList = TaskList;
+	exports.TaskUnreadList = TaskUnreadList;
 
-}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.List,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Service,BX.Messenger.v2.Component.List));
+})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX.Messenger.v2.Component.List, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.List, BX.Messenger.v2.Lib);
 //# sourceMappingURL=task-list.bundle.js.map

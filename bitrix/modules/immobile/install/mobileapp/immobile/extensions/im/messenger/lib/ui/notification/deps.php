@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'assets/icons',
+		'tokens',
 		'toast',
 		'type',
 		'utils/color',

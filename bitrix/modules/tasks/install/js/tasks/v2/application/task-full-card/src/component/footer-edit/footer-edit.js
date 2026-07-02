@@ -1,5 +1,5 @@
 import { Type } from 'main.core';
-import { BitrixVue } from 'ui.vue3';
+import { BitrixVue, markRaw } from 'ui.vue3';
 import { mapGetters } from 'ui.vue3.vuex';
 import { BLine } from 'ui.system.skeleton.vue';
 import { Button as UiButton, AirButtonStyle, ButtonSize, ButtonIcon } from 'ui.vue3.components.button';
@@ -8,14 +8,18 @@ import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
 import { TaskCard } from 'tasks.v2.application.task-card';
-import { GroupType, Model, Option, TaskStatus, Mark, EventName, Analytics } from 'tasks.v2.const';
+import { TasksUserActionsDemonstrator } from 'tasks.v2.component.tasks-user-actions-demonstrator';
 import { Hint } from 'tasks.v2.component.elements.hint';
+import { HoverPill } from 'tasks.v2.component.elements.hover-pill';
+import { MarkTaskButton } from 'tasks.v2.component.mark-task-button';
+import { GroupType, Model, Option, TaskStatus, Mark, EventName, Analytics } from 'tasks.v2.const';
 import { ahaMoments } from 'tasks.v2.lib.aha-moments';
 import { idUtils } from 'tasks.v2.lib.id-utils';
-import { statusService } from 'tasks.v2.provider.service.status-service';
-import { MarkTaskButton } from 'tasks.v2.component.mark-task-button';
 import type { GroupModel } from 'tasks.v2.model.groups';
 import type { TaskModel, TimerModel } from 'tasks.v2.model.tasks';
+import { statusService } from 'tasks.v2.provider.service.status-service';
+import { taskService } from 'tasks.v2.provider.service.task-service';
+import { viewersService } from 'tasks.v2.provider.service.viewers-service';
 
 // eslint-disable-next-line import/namespace
 import { More } from './more/more';
@@ -42,6 +46,8 @@ export const FooterEdit = {
 		TextMd,
 		TextXs,
 		MarkTaskButton,
+		TasksUserActionsDemonstrator,
+		HoverPill,
 		TemplatePermissionsButton: BitrixVue.defineAsyncComponent(
 			'tasks.v2.component.template-permissions-button',
 			'TemplatePermissionsButton',
@@ -69,12 +75,13 @@ export const FooterEdit = {
 			ButtonIcon,
 			Outline,
 			TaskStatus,
+			markRaw,
 		};
 	},
 	data(): Object
 	{
 		return {
-			loading: false,
+			isLoadingActions: false,
 			showStartTimeTrackingHint: false,
 			computedSecondaryButton: null,
 		};
@@ -140,12 +147,51 @@ export const FooterEdit = {
 		{
 			return [this.primaryButton, this.secondaryButton];
 		},
+		isLoadingViewersCount(): boolean
+		{
+			return Boolean(this.task.viewers?.isLoadingCount);
+		},
+		isLoadingViewersList(): boolean
+		{
+			return Boolean(this.task.viewers?.isLoadingList);
+		},
+		taskViewersCount(): number | undefined
+		{
+			return this.task.viewers?.count;
+		},
+		taskViewersList(): number | undefined
+		{
+			return this.task.viewers?.list;
+		},
+		optionsViewersDemonstrator(): Object
+		{
+			return {
+				isLoadingCount: this.isLoadingViewersCount,
+				isLoadingList: this.isLoadingViewersList,
+				isOpenedOnClick: true,
+				isOpenedOnHover: false,
+				isDateInline: true,
+				componentOpener: markRaw(HoverPill),
+				textHead: this.loc('TASKS_V2_TASK_FULL_CARD_VIEWS'),
+				userActionsCount: this.taskViewersCount,
+				userActionsList: this.taskViewersList,
+				positioning: {
+					offsetVertical: 11,
+				},
+			};
+		},
 		shouldShowStartTimeTrackingHint(): boolean
 		{
 			return (
 				this.showStartTimeTrackingHint
 				&& this.primaryButton?.id === ButtonId.Start
 			);
+		},
+		shouldShowMoreButton(): boolean
+		{
+			return this.task.rights.remove
+				|| this.task.rights.defer
+				|| this.task.rights.delegate;
 		},
 		shouldShowMarkTaskButton(): boolean
 		{
@@ -158,11 +204,7 @@ export const FooterEdit = {
 				return this.settings.rights.tasks.createFromTemplate || this.task.rights.edit;
 			}
 
-			return Boolean(
-				this.primaryButton
-				|| this.secondaryButton
-				|| this.shouldShowMarkTaskButton,
-			);
+			return true;
 		},
 	},
 	watch: {
@@ -179,6 +221,126 @@ export const FooterEdit = {
 		this.$bitrix.eventEmitter.subscribe(EventName.TimeTrackingChange, this.handleTimeTrackingActivating);
 	},
 	methods: {
+		async updateSecondaryButton(): void
+		{
+			await this.$nextTick();
+			const inProgress = this.task.rights.timeTracking
+				? this.getCompleteButton(this.timer ? null : AirButtonStyle.OUTLINE)
+				: null;
+
+			const statuses = {
+				[TaskStatus.Pending]: this.getCompleteButton(AirButtonStyle.OUTLINE),
+				[TaskStatus.InProgress]: inProgress,
+			};
+
+			let secondary = statuses[this.task.status] || null;
+
+			if (secondary && this.primaryButton && secondary.id === this.primaryButton.id)
+			{
+				secondary = null;
+			}
+
+			this.computedSecondaryButton = secondary;
+		},
+		hideStartTimeTrackingHint(): void
+		{
+			this.showStartTimeTrackingHint = false;
+		},
+		hidePermanentStartTimeTrackingHint(): void
+		{
+			this.hideStartTimeTrackingHint();
+
+			ahaMoments.setInactive(Option.AhaStartTimeTracking);
+			ahaMoments.setShown(Option.AhaStartTimeTracking);
+		},
+		async waitStatus(statusPromise: Promise): Promise<void>
+		{
+			this.loading = true;
+			await statusPromise;
+			this.loading = false;
+		},
+		createTaskFromTemplate(): void
+		{
+			TaskCard.showFullCard({
+				templateId: idUtils.unbox(this.taskId),
+				analytics: {
+					context: Analytics.Section.Templates,
+					additionalContext: Analytics.SubSection.TemplatesCard,
+					element: Analytics.Element.CreateButton,
+				},
+			});
+		},
+		async updateViewersCount(): void
+		{
+			await viewersService.count(this.taskId);
+		},
+		annihilateViewersList(): void
+		{
+			const viewers = this.task.viewers || {};
+
+			taskService.updateStoreTask(this.taskId, {
+				viewers: {
+					...viewers,
+					list: [],
+				},
+			});
+		},
+		async updateViewersList(): void
+		{
+			const stepQuantityViewers = 10;
+			const quantityViewersCurrent = this.task.viewers?.list?.length || 0;
+			const quantityStepNumberCurrent = Math.floor(quantityViewersCurrent / stepQuantityViewers);
+			const quantityStepNumberToLoad = quantityStepNumberCurrent + 1;
+			const paramsRequestGetViewers = {
+				id: this.taskId,
+				page: quantityStepNumberToLoad,
+				size: stepQuantityViewers,
+			};
+
+			await viewersService.list(paramsRequestGetViewers);
+		},
+		refreshViewers(): void
+		{
+			this.annihilateViewersList();
+			this.updateViewersCount();
+		},
+		handleOverPrimaryButton(): void
+		{
+			if (
+				this.task.rights.timeTracking
+				&& this.primaryButton?.id === ButtonId.Start
+				&& ahaMoments.shouldShow(Option.AhaStartTimeTracking)
+			)
+			{
+				ahaMoments.setActive(Option.AhaStartTimeTracking);
+				this.showStartTimeTrackingHint = true;
+			}
+		},
+		handleTimeTrackingActivating(): void
+		{
+			void this.waitStatus(new Promise((resolve) => {
+				const unwatch = this.$watch(
+					() => this.task.rights.timeTracking,
+					async () => {
+						await this.$nextTick();
+						resolve();
+					},
+					{ immediate: false },
+				);
+				setTimeout(() => {
+					unwatch();
+					resolve();
+				}, 5000);
+			}));
+		},
+		handleOpenViewersDemonstrator(): void
+		{
+			this.refreshViewers();
+		},
+		handleDemandViewers(): void
+		{
+			this.updateViewersList();
+		},
 		getStartButton(): ?ButtonOptions
 		{
 			if (!this.task.rights.start || this.timer)
@@ -244,7 +406,7 @@ export const FooterEdit = {
 					this.taskId,
 					{
 						context: this.analytics?.context ?? Analytics.Section.Tasks,
-						additionalContext: this.analytics?.additionalContext ?? Analytics.SubSection.TaskCard,
+						additionalContext: Analytics.SubSection.TaskCard,
 						element: Analytics.Element.CompleteButton,
 					},
 				)),
@@ -299,85 +461,6 @@ export const FooterEdit = {
 				onClick: (): void => this.waitStatus(statusService.approve(this.taskId)),
 			};
 		},
-		updateSecondaryButton(): void
-		{
-			void this.$nextTick(() => {
-				const inProgress = this.task.rights.timeTracking
-					? this.getCompleteButton(this.timer ? null : AirButtonStyle.OUTLINE)
-					: null;
-
-				const statuses = {
-					[TaskStatus.Pending]: this.getCompleteButton(AirButtonStyle.OUTLINE),
-					[TaskStatus.InProgress]: inProgress,
-				};
-
-				let secondary = statuses[this.task.status] || null;
-
-				if (secondary && this.primaryButton && secondary.id === this.primaryButton.id)
-				{
-					secondary = null;
-				}
-
-				this.computedSecondaryButton = secondary;
-			});
-		},
-		handleOverPrimaryButton(): void
-		{
-			if (
-				this.task.rights.timeTracking
-				&& this.primaryButton?.id === ButtonId.Start
-				&& ahaMoments.shouldShow(Option.AhaStartTimeTracking)
-			)
-			{
-				ahaMoments.setActive(Option.AhaStartTimeTracking);
-				this.showStartTimeTrackingHint = true;
-			}
-		},
-		handleTimeTrackingActivating(): void
-		{
-			void this.waitStatus(new Promise((resolve) => {
-				const unwatch = this.$watch(
-					() => this.task.rights.timeTracking,
-					async () => {
-						await this.$nextTick();
-						resolve();
-					},
-					{ immediate: false },
-				);
-				setTimeout(() => {
-					unwatch();
-					resolve();
-				}, 5000);
-			}));
-		},
-		hideStartTimeTrackingHint(): void
-		{
-			this.showStartTimeTrackingHint = false;
-		},
-		hidePermanentStartTimeTrackingHint(): void
-		{
-			this.hideStartTimeTrackingHint();
-
-			ahaMoments.setInactive(Option.AhaStartTimeTracking);
-			ahaMoments.setShown(Option.AhaStartTimeTracking);
-		},
-		async waitStatus(statusPromise: Promise): Promise<void>
-		{
-			this.loading = true;
-			await statusPromise;
-			this.loading = false;
-		},
-		createTaskFromTemplate(): void
-		{
-			TaskCard.showFullCard({
-				templateId: idUtils.unbox(this.taskId),
-				analytics: {
-					context: Analytics.Section.Templates,
-					additionalContext: Analytics.SubSection.TemplatesCard,
-					element: Analytics.Element.CreateButton,
-				},
-			});
-		},
 	},
 	template: `
 		<div v-if="showFooter" class="tasks-full-card-footer print-ignore">
@@ -401,14 +484,14 @@ export const FooterEdit = {
 							:size="ButtonSize.LARGE"
 							:style="primaryButton.style ?? AirButtonStyle.FILLED"
 							:disabled="Boolean(primaryButton.disabled)"
-							:loading
+							:loading="isLoadingActions"
 							:leftIcon="primaryButton.icon"
 							:dataset="{ taskButtonId: 'status' }"
 							@click="primaryButton.onClick"
 						/>
 					</div>
 					<UiButton
-						v-if="secondaryButton && !loading"
+						v-if="secondaryButton && !isLoadingActions"
 						:text="secondaryButton.text"
 						:size="ButtonSize.LARGE"
 						:style="secondaryButton.style ?? AirButtonStyle.FILLED"
@@ -421,6 +504,12 @@ export const FooterEdit = {
 				<div class="tasks-full-card-footer-edit-grow"/>
 				<MarkTaskButton v-if="!isTemplate && shouldShowMarkTaskButton"/>
 				<TemplatePermissionsButton v-if="isTemplate && task.rights.edit"/>
+				<TasksUserActionsDemonstrator
+					v-if="!isTemplate"
+					:options="optionsViewersDemonstrator"
+					@open="handleOpenViewersDemonstrator"
+					@demandUserActions="handleDemandViewers"
+				/>
 			</div>
 			<Hint
 				v-if="shouldShowStartTimeTrackingHint"

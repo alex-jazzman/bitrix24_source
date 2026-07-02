@@ -1,5 +1,5 @@
 import type { ResourceModel } from 'booking.model.resources';
-
+import { Communication } from 'booking.const';
 export type { ResourceModel };
 
 export type ResourceId = number | null;
@@ -26,6 +26,7 @@ export type ResourceCreationWizardState = {
 	isIntegrationCalendarEnabled: boolean;
 	checkedForAll: { [type: string]: boolean };
 	showLicenseWarning: boolean;
+	senderCode: $Values<typeof Communication>;
 }
 
 export type InitPayload = {

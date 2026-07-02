@@ -11,4 +11,7 @@ return [
 		'im:messenger/lib/parser',
 		'im:messenger/lib/permission-manager',
 	],
+	'bundle' => [
+		'./src/message-type-rules'
+	]
 ];

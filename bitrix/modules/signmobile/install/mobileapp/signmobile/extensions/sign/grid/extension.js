@@ -221,6 +221,8 @@ jn.define('sign/grid', (require, exports, module) => {
 		};
 
 		#onTabSelected = (tab) => {
+			BX.postComponentEvent('sign.grid:onTabSelected', [{ tabId: tab.id }]);
+
 			this.filter.tabId = tab.id;
 
 			this.setState({}, () => this.stateFulListRef.reload({ skipUseCache: true }));

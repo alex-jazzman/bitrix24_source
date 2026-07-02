@@ -1,3 +1,4 @@
+import { Communication } from 'booking.const';
 import type { SlotRange, IntegrationCalendarType, Skus, SkuRelations } from 'booking.model.resources';
 
 export type ResourceDto = {
@@ -21,7 +22,7 @@ export type ResourceDto = {
 	updatedAt: number | null,
 	deletedAt: number | null,
 
-	senderCode: string,
+	senderCode: $Values<typeof Communication>;
 
 	// info
 	isInfoNotificationOn: boolean,

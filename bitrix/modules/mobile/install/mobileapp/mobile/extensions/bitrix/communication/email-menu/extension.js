@@ -8,8 +8,17 @@ jn.define('communication/email-menu', (require, exports, module) => {
 	const { copyToClipboard } = require('utils/copy');
 	const { stringify } = require('utils/string');
 	const { isModuleInstalled } = require('module');
-	const { MailDialog } = require('mail/dialog');
 	const { Type } = require('type');
+
+	let MailDialog = null;
+	try
+	{
+		MailDialog = require('mail/dialog').MailDialog;
+	}
+	catch (e)
+	{
+		console.warn(e);
+	}
 
 	class EmailMenu
 	{
@@ -100,12 +109,14 @@ jn.define('communication/email-menu', (require, exports, module) => {
 				showLoadingIndicator: false,
 				preloadedInfo: this.mailOpenerData,
 				isCrmMessage: false,
-				contacts: [{
-					customData: {
-						email: this.preparedEmail,
-						isEmailHidden: false,
+				contacts: [
+					{
+						customData: {
+							email: this.preparedEmail,
+							isEmailHidden: false,
+						},
 					},
-				}],
+				],
 			};
 		}
 
@@ -163,7 +174,10 @@ jn.define('communication/email-menu', (require, exports, module) => {
 					isShimmerEnabled,
 					icon: Icon.COPY,
 					onClickCallback: () => {
-						const closeCallback = () => copyToClipboard(this.preparedEmail, Loc.getMessage('EMAIL_MENU_COPY_DONE'));
+						const closeCallback = () => copyToClipboard(
+							this.preparedEmail,
+							Loc.getMessage('EMAIL_MENU_COPY_DONE'),
+						);
 
 						return Promise.resolve({ closeCallback });
 					},

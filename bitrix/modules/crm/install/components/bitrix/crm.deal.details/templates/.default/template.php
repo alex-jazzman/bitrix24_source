@@ -7,6 +7,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page\Asset;
+use Bitrix\Main\UI\Extension;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 /** @var array $arParams */
 /** @var array $arResult */
@@ -22,7 +24,7 @@ $isRecurring = isset($arResult['ENTITY_DATA']['IS_RECURRING']) && $arResult['ENT
 $factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
 $userPermissions = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions();
 
-\Bitrix\Main\UI\Extension::load([
+Extension::load([
 	'crm.scoringbutton',
 	'crm.conversion',
 	'ui.tour',
@@ -32,9 +34,25 @@ Asset::getInstance()->addJs('/bitrix/js/crm/category.js');
 
 if (isset($arResult['IS_AUTOMATION_DEBUG_ITEM']) && $arResult['IS_AUTOMATION_DEBUG_ITEM'] === 'Y' && \Bitrix\Main\Loader::includeModule('ui')):
 	// css
-	\Bitrix\Main\UI\Extension::load(['crm.item-details-component.pagetitle']);
+	Extension::load(['crm.item-details-component.pagetitle']);
 
-	\Bitrix\UI\Toolbar\Facade\Toolbar::addBeforeTitleHtml('<div class="crm-details-pagetitle-prefix"><span style="color: #FFA900;">' . Loc::getMessage('CRM_DEAL_DETAIL_AUTOMATION_DEBUG_ITEM') . '</span></div>');
+	Toolbar::addBeforeTitleHtml('<div class="crm-details-pagetitle-prefix"><span style="color: #FFA900;">' . Loc::getMessage('CRM_DEAL_DETAIL_AUTOMATION_DEBUG_ITEM') . '</span></div>');
+endif;
+
+if ($isRecurring):
+	Extension::load([
+		'crm.item-details-component.pagetitle',
+		'ui.hint',
+	]);
+
+	Toolbar::addBeforeTitleHtml('<div class="crm-details-pagetitle-prefix"><span style="color: #828B95;">' . Loc::getMessage('CRM_DEAL_DETAIL_IS_RECURRING_ITEM_TITLE') . '</span> <span data-hint="' . Loc::getMessage('CRM_DEAL_DETAIL_IS_RECURRING_ITEM_DESCRIPTION') . '"></span></div>');
+	?>
+	<script type="text/javascript">
+		BX.ready(() => {
+			BX.UI.Hint.init(document.querySelector('.crm-details-pagetitle-prefix'));
+		})
+	</script>
+	<?php
 endif;
 //endregion
 
@@ -267,11 +285,11 @@ endif;
 		<?php
 			$isConversion = isset($arResult['CONTEXT']['PARAMS']['CONVERSION_SOURCE']);
 			if (!$isConversion && \Bitrix\Main\Loader::includeModule('ui')):
-				\Bitrix\Main\UI\Extension::load([
+				Extension::load([
 					'crm.item-details-component.pagetitle',
 				]);
 
-				\Bitrix\UI\Toolbar\Facade\Toolbar::addAfterTitleHtml('<div id="crm-details-category-changer-container" class="crm-details-pagetitle-container"></div>');
+				Toolbar::addAfterTitleHtml('<div id="crm-details-category-changer-container" class="crm-details-pagetitle-container"></div>');
 
 				$changeableCategories = $userPermissions->category()->filterAvailableForAddingCategories(
 					$factory?->getCategories() ?? [],

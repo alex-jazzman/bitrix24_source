@@ -46,15 +46,15 @@ jn.define('im/messenger/controller/recent/service/vuex/lib/handlers/counter', (r
 		 * @param {MutationPayload<CounterDeleteData, CounterDeleteActions>} payload
 		 */
 		deleteHandler = ({ payload }) => {
-			if (!['clear', 'clearByType'].includes(payload.actionName))
+			if (!['clear', 'clearByType', 'delete'].includes(payload.actionName))
 			{
 				return;
 			}
 
 			this.logger.log('counterDeleteHandler', payload);
-			const { chatIdList } = payload.data;
+			const { chatIdList, parentChatIdList = [] } = payload.data;
 
-			this.#updateRecentItems(chatIdList);
+			this.#updateRecentItems(unique([...chatIdList, ...parentChatIdList]));
 		};
 
 		/**
@@ -79,7 +79,7 @@ jn.define('im/messenger/controller/recent/service/vuex/lib/handlers/counter', (r
 
 			const rawChatIdList = counterStateList
 				.map((counterState) => {
-					if (counterState.parentChatId > 0 && !Type.isArrayFilled(counterState.recentSections))
+					if (counterState.parentChatId > 0)
 					{
 						return counterState.parentChatId;
 					}

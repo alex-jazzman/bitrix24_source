@@ -178,9 +178,11 @@ export const BlockDiagram = {
 		HOOK_NAMES.MOVE_DRAG_BLOCK,
 		HOOK_NAMES.END_DRAG_BLOCK,
 		HOOK_NAMES.ADD_BLOCK,
+		HOOK_NAMES.ADD_BLOCKS,
 		HOOK_NAMES.UPDATE_BLOCK,
 		HOOK_NAMES.DELETE_BLOCK,
 		HOOK_NAMES.CREATE_CONNECTION,
+		HOOK_NAMES.ADD_CONNECTIONS,
 		HOOK_NAMES.DELETE_CONNECTION,
 		HOOK_NAMES.BLOCK_TRANSITION_START,
 		HOOK_NAMES.BLOCK_TRANSITION_END,
@@ -188,12 +190,15 @@ export const BlockDiagram = {
 		HOOK_NAMES.CONNECTION_TRANSITION_END,
 		HOOK_NAMES.DROP_NEW_BLOCK,
 	],
+	// eslint-disable-next-line max-lines-per-function
 	setup(props: Props, { emit }): BlockDiagramSetup
 	{
 		const {
-			blockGroupNames,
 			connectionGroupNames,
+			groupedConnections,
 			cursorType,
+			blockIntersections,
+			isRunUpdateBlocksCommand,
 		} = useBlockDiagram(props);
 
 		const initAppElements = useInitAppElements({
@@ -213,6 +218,51 @@ export const BlockDiagram = {
 
 						return acc;
 					}, {}),
+			},
+			{
+				[HOOK_NAMES.ADD_BLOCK](block)
+				{
+					isRunUpdateBlocksCommand.value = true;
+					blockIntersections.insertBlock(block);
+				},
+				[HOOK_NAMES.ADD_BLOCKS](blocks)
+				{
+					isRunUpdateBlocksCommand.value = true;
+					toValue(blocks)
+						.forEach((block) => {
+							blockIntersections.insertBlock(block);
+						});
+				},
+				[HOOK_NAMES.UPDATE_BLOCK](oldBlock, newBlock)
+				{
+					isRunUpdateBlocksCommand.value = true;
+					blockIntersections.updateBlock(oldBlock, newBlock);
+				},
+				[HOOK_NAMES.DELETE_BLOCK](block)
+				{
+					isRunUpdateBlocksCommand.value = true;
+					blockIntersections.removeBlock(toValue(block));
+				},
+				[HOOK_NAMES.DELETE_BLOCKS](blocks)
+				{
+					isRunUpdateBlocksCommand.value = true;
+					toValue(blocks)
+						.forEach((block) => {
+							blockIntersections.removeBlock(toValue(block));
+						});
+				},
+				[HOOK_NAMES.HISTORY_NEXT]({ snapshot })
+				{
+					isRunUpdateBlocksCommand.value = true;
+					blockIntersections.clear();
+					blockIntersections.load(toValue(snapshot.blocks));
+				},
+				[HOOK_NAMES.HISTORY_PREV]({ snapshot })
+				{
+					isRunUpdateBlocksCommand.value = true;
+					blockIntersections.clear();
+					blockIntersections.load(toValue(snapshot.blocks));
+				},
 			},
 			{
 				...props.historyHooks.reduce((acc, hookName) => {
@@ -277,7 +327,8 @@ export const BlockDiagram = {
 
 		return {
 			blockDiagramClassNames,
-			blockGroupNames,
+			visibleBlockGroupNames: blockIntersections.visibleBlockGroupNames,
+			groupedConnections,
 			connectionGroupNames,
 			getGroupBlockSlotName,
 			getGroupConnectionSlotName,
@@ -300,8 +351,8 @@ export const BlockDiagram = {
 				:canvasStyle="canvasStyle"
 				:zoomSensitivity="zoomSensitivity"
 				:zoomSensitivityMouse="zoomSensitivityMouse"
-				@openContextMenu="openContextMenu"
 				:selectionEnabled="enableGrouping"
+				@contextmenu.prevent="openContextMenu"
 			>
 				<slot name="group-selection-box"/>
 				<ContextMenuLayout>
@@ -337,7 +388,7 @@ export const BlockDiagram = {
 					</GroupedConnections>
 					<GroupedBlocks>
 						<template
-							v-for="groupName in blockGroupNames"
+							v-for="groupName in visibleBlockGroupNames"
 							#[getGroupBlockSlotName(groupName)]="{ blocks }"
 							:key="groupName"
 						>

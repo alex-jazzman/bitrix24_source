@@ -1,0 +1,85 @@
+.editor-chart-node-settings-preview {
+	display: flex;
+	border: 1px solid rgba(0, 0, 0, 0.05);
+	border-radius: var(--ui-border-radius-sm);
+	padding: 8px 8px 6px 4px;
+	font-size: 14px;
+	line-height: 20px;
+	cursor: pointer;
+	margin-top: 8px;
+}
+
+.editor-chart-node-settings-preview:hover {
+	border-color: var(--ui-color-blue-57);
+}
+
+.editor-chart-node-settings-preview__edit-icon {
+	display: none;
+}
+
+.editor-chart-node-settings-preview:hover .editor-chart-node-settings-preview__edit-icon {
+	display: block;
+}
+
+.editor-chart-node-settings-preview__dnd-icon {
+	cursor: grab;
+}
+
+.editor-chart-node-settings-preview__dnd-icon:active {
+	cursor: grabbing;
+}
+
+.editor-chart-node-settings-preview__actions {
+	margin-left: auto;
+	display: flex;
+}
+
+.editor-chart-node-settings-preview__title {
+	font-weight: var(--ui-font-weight-semi-bold);
+	color: var(--ui-color-accent-soft-element-blue);
+	margin: 0 15px 0 10px;
+}
+
+.editor-chart-node-settings-preview__construction {
+	font-size: 14px;
+	line-height: 20px;
+	display: flex;
+	gap: 6px;
+}
+
+.editor-chart-node-settings-preview__construction.--empty {
+	color: var(--ui-color-palette-gray-50);
+	display: block;
+}
+
+.editor-chart-node-settings-preview__expression-part {
+	color: var(--ui-color-palette-gray-90);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.editor-chart-node-settings-preview__construction.--condition .editor-chart-node-settings-preview__construction_type {
+	color: var(--ui-color-blue-55);
+}
+
+.editor-chart-node-settings-preview__construction.--action .editor-chart-node-settings-preview__construction_type {
+	color: var(--ui-color-green-50);
+}
+
+.editor-chart-node-settings-preview__construction.--output .editor-chart-node-settings-preview__construction_type {
+	color: var(--ui-color-palette-gray-50);
+}
+
+.editor-chart-node-settings-preview__card:not(:last-child) {
+	margin-bottom: 7px;
+}
+
+.editor-chart-node-settings-preview__construction.--condition + .editor-chart-node-settings-preview__construction:before {
+	visibility: hidden;
+	content: attr(data-if-indent);
+}
+
+.editor-chart-node-settings-preview__card-container {
+	min-width: 0;
+}

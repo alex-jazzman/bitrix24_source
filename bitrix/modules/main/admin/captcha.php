@@ -1,8 +1,8 @@
-<?
+<?php
 /**
- * @global \CUser $USER
- * @global \CMain $APPLICATION
- * @global \CDatabase $DB
+ * @global CUser $USER
+ * @global CMain $APPLICATION
+ * @global CDatabase $DB
  */
 
 if(array_key_exists("Preview", $_REQUEST) && $_REQUEST["Preview"] <> '')
@@ -305,29 +305,29 @@ $CAPTCHA_CODE = htmlspecialcharsbx($APPLICATION->CaptchaGetCode());
 $tabControl->Begin();
 ?>
 <script>
-<?foreach($arSettings as $key => $value):?>
-	<?if($value[0] === "list"):?>
-		var <?echo $key?> = '<?echo CUtil::JSEscape(COption::GetOptionString("main", "CAPTCHA_".$key, implode(",", $value[2])))?>';
-	<?else:?>
-		var <?echo $key?> = '<?echo CUtil::JSEscape(COption::GetOptionString("main", "CAPTCHA_".$key, $value[2]))?>';
-	<?endif?>
-<?endforeach?>
+<?php foreach($arSettings as $key => $value):?>
+	<?php if($value[0] === "list"):?>
+		var <?= $key?> = '<?= CUtil::JSEscape(COption::GetOptionString("main", "CAPTCHA_".$key, implode(",", $value[2])))?>';
+	<?php else:?>
+		var <?= $key?> = '<?= CUtil::JSEscape(COption::GetOptionString("main", "CAPTCHA_".$key, $value[2]))?>';
+	<?php endif?>
+<?php endforeach?>
 var j = 0;
 var preset_selected = false;
 function CheckForChanges()
 {
 	var changed = false;
-	var url = '/bitrix/admin/captcha.php?Preview=Y&captcha_sid=<?echo $CAPTCHA_CODE?>';
+	var url = '/bitrix/admin/captcha.php?Preview=Y&captcha_sid=<?= $CAPTCHA_CODE?>';
 	var ctl, b;
 
-	<?foreach($arSettings as $key => $value):?>
-		ctl = document.getElementById('<?echo $key?>');
-		<?if($value[0] === "checkbox"):?>
+	<?php foreach($arSettings as $key => $value):?>
+		ctl = document.getElementById('<?= $key?>');
+		<?php if($value[0] === "checkbox"):?>
 			if(ctl.checked)
 				b = 'Y';
 			else
 				b = 'N';
-		<?elseif($value[0] == "list"):?>
+		<?php elseif($value[0] == "list"):?>
 			b = '';
 			for(var i = 0; i < ctl.length; i++)
 			{
@@ -339,15 +339,15 @@ function CheckForChanges()
 						b += ctl[i].value;
 				}
 			}
-		<?else:?>
+		<?php else:?>
 			b = ctl.value;
-		<?endif?>
-		if(b != <?echo $key?>)
+		<?php endif?>
+		if(b != <?= $key?>)
 			changed = true;
-		<?echo $key?> = b;
+		<?= $key?> = b;
 
-		url += '&<?echo $key?>='+<?echo $key?>;
-	<?endforeach?>
+		url += '&<?= $key?>='+<?= $key?>;
+	<?php endforeach?>
 
 	if(changed)
 	{
@@ -521,54 +521,54 @@ function set_presets()
 	}
 }
 </script>
-<form name="captcha_form" method="POST" action="<?echo $APPLICATION->GetCurPage()?>?lang=<?echo LANG?>">
+<form name="captcha_form" method="POST" action="<?= $APPLICATION->GetCurPage()?>?lang=<?= LANGUAGE_ID?>">
 <?=bitrix_sessid_post()?>
-<?$tabControl->BeginNextTab();?>
+<?php $tabControl->BeginNextTab();?>
 <tr>
-	<td width="40%"><?echo GetMessage("MAIN_ADM_CAPTCHA_PRESETS")?>:</td>
+	<td width="40%"><?= GetMessage("MAIN_ADM_CAPTCHA_PRESETS")?>:</td>
 	<td width="300">
 	<select id="presets" name="presets" onchange="set_presets()">
-		<option value="0" <?if(COption::GetOptionInt("main", "CAPTCHA_presets") == 0) echo "selected"?>><?echo GetMessage("MAIN_ADM_CAPTCHA_PRESET_0")?></option>
-		<option value="1" <?if(COption::GetOptionInt("main", "CAPTCHA_presets") == 1) echo "selected"?>><?echo GetMessage("MAIN_ADM_CAPTCHA_PRESET_1")?></option>
-		<option value="2" <?if(COption::GetOptionInt("main", "CAPTCHA_presets") == 2) echo "selected"?>><?echo GetMessage("MAIN_ADM_CAPTCHA_PRESET_2")?></option>
-		<option value="3" <?if(COption::GetOptionInt("main", "CAPTCHA_presets") == 3) echo "selected"?>><?echo GetMessage("MAIN_ADM_CAPTCHA_PRESET_3")?></option>
-		<option value="4" <?if(COption::GetOptionInt("main", "CAPTCHA_presets") == 4) echo "selected"?>><?echo GetMessage("MAIN_ADM_CAPTCHA_PRESET_4")?></option>
-		<option value="5" <?if(COption::GetOptionInt("main", "CAPTCHA_presets") == 5) echo "selected"?>><?echo GetMessage("MAIN_ADM_CAPTCHA_PRESET_5")?></option>
-		<option value="6" <?if(COption::GetOptionInt("main", "CAPTCHA_presets") == 6) echo "selected"?>><?echo GetMessage("MAIN_ADM_CAPTCHA_PRESET_6")?></option>
+		<option value="0" <?php if(COption::GetOptionInt("main", "CAPTCHA_presets") == 0) echo "selected"?>><?= GetMessage("MAIN_ADM_CAPTCHA_PRESET_0")?></option>
+		<option value="1" <?php if(COption::GetOptionInt("main", "CAPTCHA_presets") == 1) echo "selected"?>><?= GetMessage("MAIN_ADM_CAPTCHA_PRESET_1")?></option>
+		<option value="2" <?php if(COption::GetOptionInt("main", "CAPTCHA_presets") == 2) echo "selected"?>><?= GetMessage("MAIN_ADM_CAPTCHA_PRESET_2")?></option>
+		<option value="3" <?php if(COption::GetOptionInt("main", "CAPTCHA_presets") == 3) echo "selected"?>><?= GetMessage("MAIN_ADM_CAPTCHA_PRESET_3")?></option>
+		<option value="4" <?php if(COption::GetOptionInt("main", "CAPTCHA_presets") == 4) echo "selected"?>><?= GetMessage("MAIN_ADM_CAPTCHA_PRESET_4")?></option>
+		<option value="5" <?php if(COption::GetOptionInt("main", "CAPTCHA_presets") == 5) echo "selected"?>><?= GetMessage("MAIN_ADM_CAPTCHA_PRESET_5")?></option>
+		<option value="6" <?php if(COption::GetOptionInt("main", "CAPTCHA_presets") == 6) echo "selected"?>><?= GetMessage("MAIN_ADM_CAPTCHA_PRESET_6")?></option>
 	</select>
 	</td>
-	<td valign="top" rowspan="<?echo count($arSettings)+1?>">
-		<?for($i=0;$i < 10; $i++):?>
-			<img id="CAPTCHA_<?echo $i?>" src="/bitrix/admin/captcha.php?Preview=Y&amp;captcha_sid=<?echo $CAPTCHA_CODE?>&amp;i=<?echo $i?>&amp;j=0" width="180" height="40" alt="CAPTCHA" /><br><br><br>
-		<?endfor?>
+	<td valign="top" rowspan="<?= count($arSettings)+1?>">
+		<?php for($i=0;$i < 10; $i++):?>
+			<img id="CAPTCHA_<?= $i?>" src="/bitrix/admin/captcha.php?Preview=Y&amp;captcha_sid=<?= $CAPTCHA_CODE?>&amp;i=<?= $i?>&amp;j=0" width="180" height="40" alt="CAPTCHA" /><br><br><br>
+		<?php endfor?>
 	</td>
 </tr>
-<?foreach($arSettings as $key => $value):?>
+<?php foreach($arSettings as $key => $value):?>
 <tr>
-	<td<?if($value[0] === "list" && count($value[1]) > 1):?> class="adm-detail-valign-top"<?endif?>>
-		<?echo $value[3]?>:
+	<td<?php if($value[0] === "list" && count($value[1]) > 1):?> class="adm-detail-valign-top"<?php endif?>>
+		<?= $value[3]?>:
 	</td>
 	<td>
-		<?if($value[0] === "checkbox"):?>
-			<input type="checkbox" id="<?echo $key?>" name="<?echo $key?>" value="<?echo htmlspecialcharsbx($value[1])?>" <?if(COption::GetOptionString("main", "CAPTCHA_".$key, $value[2]) === "Y") echo "checked"?>>
-		<?elseif($value[0] === "list"):
+		<?php if($value[0] === "checkbox"):?>
+			<input type="checkbox" id="<?= $key?>" name="<?= $key?>" value="<?= htmlspecialcharsbx($value[1])?>" <?php if(COption::GetOptionString("main", "CAPTCHA_".$key, $value[2]) === "Y") echo "checked"?>>
+		<?php elseif($value[0] === "list"):
 			$vv = explode(",", COption::GetOptionString("main", "CAPTCHA_".$key, implode(",", $value[2])));
 			?>
-			<select multiple id="<?echo $key?>" name="<?echo $key?>[]" size="<?echo count($value[1])?>">
-			<?foreach($value[1] as $k => $v):?>
-				<option value="<?echo htmlspecialcharsbx($k)?>" <?if(in_array($k, $vv)) echo "selected"?>><?echo htmlspecialcharsbx($v)?></option>
-			<?endforeach?>
+			<select multiple id="<?= $key?>" name="<?= $key?>[]" size="<?= count($value[1])?>">
+			<?php foreach($value[1] as $k => $v):?>
+				<option value="<?= htmlspecialcharsbx($k)?>" <?php if(in_array($k, $vv)) echo "selected"?>><?= htmlspecialcharsbx($v)?></option>
+			<?php endforeach?>
 			</select>
-		<?else:?>
-			<input type="text" size="<?echo $value[1]?>" id="<?echo $key?>" name="<?echo $key?>" value="<?echo htmlspecialcharsbx(COption::GetOptionString("main", "CAPTCHA_".$key, $value[2]))?>">
-		<?endif?>
+		<?php else:?>
+			<input type="text" size="<?= $value[1]?>" id="<?= $key?>" name="<?= $key?>" value="<?= htmlspecialcharsbx(COption::GetOptionString("main", "CAPTCHA_".$key, $value[2]))?>">
+		<?php endif?>
 	</td>
 </tr>
-<?endforeach?>
-<?
+<?php endforeach?>
+<?php
 $tabControl->Buttons(array("disabled" => !$isAdmin));
 $tabControl->End();
 ?>
 </form>
 
-<?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");?>
+<?php require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");?>

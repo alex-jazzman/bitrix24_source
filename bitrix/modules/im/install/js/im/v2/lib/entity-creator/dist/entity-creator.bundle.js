@@ -2,179 +2,134 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,main_core,main_core_events,calendar_sliderloader,im_v2_lib_rest,im_v2_application_core,im_v2_const) {
+(function (exports, main_core, main_core_events, calendar_sliderloader, im_v2_application_core, im_v2_const, im_v2_lib_rest) {
 	'use strict';
 
-	var _chatId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("chatId");
-	var _restClient = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restClient");
-	var _onCalendarEntrySaveHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onCalendarEntrySaveHandler");
-	var _createMeeting = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createMeeting");
-	var _createTask = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createTask");
-	var _requestPreparedParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("requestPreparedParams");
-	var _openTaskSlider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openTaskSlider");
-	var _openTaskV2Card = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openTaskV2Card");
-	var _openPrefilledTaskV2Card = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openPrefilledTaskV2Card");
-	var _openCalendarSlider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openCalendarSlider");
-	var _onCalendarEntrySave = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onCalendarEntrySave");
 	class EntityCreator {
-	  constructor(chatId) {
-	    Object.defineProperty(this, _onCalendarEntrySave, {
-	      value: _onCalendarEntrySave2
-	    });
-	    Object.defineProperty(this, _openCalendarSlider, {
-	      value: _openCalendarSlider2
-	    });
-	    Object.defineProperty(this, _openPrefilledTaskV2Card, {
-	      value: _openPrefilledTaskV2Card2
-	    });
-	    Object.defineProperty(this, _openTaskV2Card, {
-	      value: _openTaskV2Card2
-	    });
-	    Object.defineProperty(this, _openTaskSlider, {
-	      value: _openTaskSlider2
-	    });
-	    Object.defineProperty(this, _requestPreparedParams, {
-	      value: _requestPreparedParams2
-	    });
-	    Object.defineProperty(this, _createTask, {
-	      value: _createTask2
-	    });
-	    Object.defineProperty(this, _createMeeting, {
-	      value: _createMeeting2
-	    });
-	    Object.defineProperty(this, _chatId, {
-	      writable: true,
-	      value: 0
-	    });
-	    Object.defineProperty(this, _restClient, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _onCalendarEntrySaveHandler, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _restClient)[_restClient] = im_v2_application_core.Core.getRestClient();
-	    babelHelpers.classPrivateFieldLooseBase(this, _chatId)[_chatId] = chatId;
-	  }
-	  openTaskCreationForm() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _openTaskV2Card)[_openTaskV2Card]({
-	      analytics: {
-	        context: 'chat',
-	        element: 'create_button'
-	      }
-	    });
-	  }
-	  createTaskForChat() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _createTask)[_createTask]();
-	  }
-	  createTaskForMessage(messageId) {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _createTask)[_createTask](messageId);
-	  }
-	  createMeetingForChat() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _createMeeting)[_createMeeting]();
-	  }
-	  createMeetingForMessage(messageId) {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _createMeeting)[_createMeeting](messageId);
-	  }
-	}
-	function _createMeeting2(messageId) {
-	  const queryParams = {
-	    CHAT_ID: babelHelpers.classPrivateFieldLooseBase(this, _chatId)[_chatId]
-	  };
-	  if (messageId) {
-	    queryParams.MESSAGE_ID = messageId;
-	  }
-	  return babelHelpers.classPrivateFieldLooseBase(this, _requestPreparedParams)[_requestPreparedParams](im_v2_const.RestMethod.imChatCalendarPrepare, queryParams).then(sliderParams => {
-	    const {
-	      params
-	    } = sliderParams;
-	    const CALENDAR_ON_ENTRY_SAVE_EVENT = 'BX.Calendar:onEntrySave';
-	    babelHelpers.classPrivateFieldLooseBase(this, _onCalendarEntrySaveHandler)[_onCalendarEntrySaveHandler] = babelHelpers.classPrivateFieldLooseBase(this, _onCalendarEntrySave)[_onCalendarEntrySave].bind(this, params.sliderId, messageId);
-	    main_core_events.EventEmitter.subscribeOnce(CALENDAR_ON_ENTRY_SAVE_EVENT, babelHelpers.classPrivateFieldLooseBase(this, _onCalendarEntrySaveHandler)[_onCalendarEntrySaveHandler]);
-	    return babelHelpers.classPrivateFieldLooseBase(this, _openCalendarSlider)[_openCalendarSlider](params);
-	  });
-	}
-	function _createTask2(messageId) {
-	  const config = {
-	    data: {
-	      chatId: babelHelpers.classPrivateFieldLooseBase(this, _chatId)[_chatId]
-	    }
-	  };
-	  if (messageId) {
-	    config.data.messageId = messageId;
-	  }
-	  return im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatTaskPrepare, config).then(taskParams => {
-	    const {
-	      link,
-	      params
-	    } = taskParams;
-	    return params.is_tasks_v2 ? babelHelpers.classPrivateFieldLooseBase(this, _openPrefilledTaskV2Card)[_openPrefilledTaskV2Card](params) : babelHelpers.classPrivateFieldLooseBase(this, _openTaskSlider)[_openTaskSlider](link, params);
-	  });
-	}
-	function _requestPreparedParams2(requestMethod, query) {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _restClient)[_restClient].callMethod(requestMethod, query).then(result => {
-	    return result.data();
-	  }).catch(error => {
-	    console.error(error);
-	  });
-	}
-	function _openTaskSlider2(sliderUri, sliderParams) {
-	  BX.SidePanel.Instance.open(sliderUri, {
-	    requestMethod: 'post',
-	    requestParams: sliderParams,
-	    cacheable: false
-	  });
-	}
-	async function _openTaskV2Card2(payload = {}) {
-	  const {
-	    TaskCard
-	  } = await main_core.Runtime.loadExtension('tasks.v2.application.task-card');
-	  TaskCard.showCompactCard(payload);
-	}
-	function _openPrefilledTaskV2Card2(params) {
-	  var _params$entityId, _params$subEntityId, _params$groupId, _params$description;
-	  const entityId = (_params$entityId = params.entityId) != null ? _params$entityId : null;
-	  const subEntityId = (_params$subEntityId = params.subEntityId) != null ? _params$subEntityId : null;
-	  const auditors = params.auditors ? params.auditors.split(',').map(auditorId => parseInt(auditorId.trim(), 10)) : [];
-	  const payload = {
-	    groupId: (_params$groupId = params.groupId) != null ? _params$groupId : null,
-	    description: (_params$description = params.description) != null ? _params$description : null,
-	    auditorsIds: auditors,
-	    fileIds: params.UF_TASK_WEBDAV_FILES,
-	    analytics: {
-	      context: params.ta_sec,
-	      element: params.ta_el
-	    },
-	    source: {
-	      type: 'chat',
-	      entityId,
-	      subEntityId
-	    }
-	  };
-	  void babelHelpers.classPrivateFieldLooseBase(this, _openTaskV2Card)[_openTaskV2Card](payload);
-	}
-	function _openCalendarSlider2(sliderParams) {
-	  new (window.top.BX || window.BX).Calendar.SliderLoader(0, sliderParams).show();
-	}
-	function _onCalendarEntrySave2(sliderId, messageId, event) {
-	  const eventData = event.getData();
-	  if (eventData.sliderId !== sliderId) {
-	    return;
-	  }
-	  const queryParams = {
-	    CALENDAR_ID: eventData.responseData.entryId,
-	    CHAT_ID: babelHelpers.classPrivateFieldLooseBase(this, _chatId)[_chatId]
-	  };
-	  if (messageId) {
-	    queryParams.MESSAGE_ID = messageId;
-	  }
-	  return babelHelpers.classPrivateFieldLooseBase(this, _restClient)[_restClient].callMethod(im_v2_const.RestMethod.imChatCalendarAdd, queryParams).catch(error => {
-	    console.error(error);
-	  });
+		#chatId = 0;
+		#restClient;
+		#onCalendarEntrySaveHandler;
+		constructor(chatId) {
+			this.#restClient = im_v2_application_core.Core.getRestClient();
+			this.#chatId = chatId;
+		}
+		openTaskCreationForm() {
+			this.#openTaskV2Card({
+				analytics: {
+					context: 'chat',
+					element: 'create_button'
+				}
+			});
+		}
+		createTaskForChat() {
+			return this.#createTask();
+		}
+		createTaskForMessage(messageId) {
+			return this.#createTask(messageId);
+		}
+		createMeetingForChat() {
+			return this.#createMeeting();
+		}
+		createMeetingForMessage(messageId) {
+			return this.#createMeeting(messageId);
+		}
+		#createMeeting(messageId) {
+			const queryParams = {
+				CHAT_ID: this.#chatId
+			};
+			if (messageId) {
+				queryParams.MESSAGE_ID = messageId;
+			}
+			return this.#requestPreparedParams(im_v2_const.RestMethod.imChatCalendarPrepare, queryParams).then(sliderParams => {
+				const {
+					params
+				} = sliderParams;
+				const CALENDAR_ON_ENTRY_SAVE_EVENT = 'BX.Calendar:onEntrySave';
+				this.#onCalendarEntrySaveHandler = this.#onCalendarEntrySave.bind(this, params.sliderId, messageId);
+				main_core_events.EventEmitter.subscribeOnce(CALENDAR_ON_ENTRY_SAVE_EVENT, this.#onCalendarEntrySaveHandler);
+				return this.#openCalendarSlider(params);
+			});
+		}
+		#createTask(messageId) {
+			const config = {
+				data: {
+					chatId: this.#chatId
+				}
+			};
+			if (messageId) {
+				config.data.messageId = messageId;
+			}
+			return im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatTaskPrepare, config).then(taskParams => {
+				const {
+					link,
+					params
+				} = taskParams;
+				return params.is_tasks_v2 ? this.#openPrefilledTaskV2Card(params) : this.#openTaskSlider(link, params);
+			});
+		}
+		#requestPreparedParams(requestMethod, query) {
+			return this.#restClient.callMethod(requestMethod, query).then(result => {
+				return result.data();
+			}).catch(error => {
+				console.error(error);
+			});
+		}
+		#openTaskSlider(sliderUri, sliderParams) {
+			BX.SidePanel.Instance.open(sliderUri, {
+				requestMethod: 'post',
+				requestParams: sliderParams,
+				cacheable: false
+			});
+		}
+		async #openTaskV2Card(payload = {}) {
+			const {
+				TaskCard
+			} = await main_core.Runtime.loadExtension('tasks.v2.application.task-card');
+			TaskCard.showCompactCard(payload);
+		}
+		#openPrefilledTaskV2Card(params) {
+			const entityId = params.entityId ?? null;
+			const subEntityId = params.subEntityId ?? null;
+			const auditors = params.auditors ? params.auditors.split(',').map(auditorId => parseInt(auditorId.trim(), 10)) : [];
+			const payload = {
+				groupId: params.groupId ?? null,
+				description: params.description ?? null,
+				auditorsIds: auditors,
+				fileIds: params.UF_TASK_WEBDAV_FILES,
+				analytics: {
+					context: params.ta_sec,
+					element: params.ta_el
+				},
+				source: {
+					type: 'chat',
+					entityId,
+					subEntityId
+				}
+			};
+			void this.#openTaskV2Card(payload);
+		}
+		#openCalendarSlider(sliderParams) {
+			new (window.top.BX || window.BX).Calendar.SliderLoader(0, sliderParams).show();
+		}
+		#onCalendarEntrySave(sliderId, messageId, event) {
+			const eventData = event.getData();
+			if (eventData.sliderId !== sliderId) {
+				return;
+			}
+			const queryParams = {
+				CALENDAR_ID: eventData.responseData.entryId,
+				CHAT_ID: this.#chatId
+			};
+			if (messageId) {
+				queryParams.MESSAGE_ID = messageId;
+			}
+			return this.#restClient.callMethod(im_v2_const.RestMethod.imChatCalendarAdd, queryParams).catch(error => {
+				console.error(error);
+			});
+		}
 	}
 
 	exports.EntityCreator = EntityCreator;
 
-}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX,BX.Event,BX.Calendar,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Const));
+})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX.Event, BX.Calendar, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib);
 //# sourceMappingURL=entity-creator.bundle.js.map

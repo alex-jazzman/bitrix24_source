@@ -22,8 +22,8 @@ $arActivityDescription = (new ActivityDescription(
 ))
 	->setClass('IfElseBranchActivity')
 	->setJsClass('IfElseBranchActivity')
+	->setNodeType(ActivityNodeType::OPERATORS->value)
 	->set('SORT', 100)
-	->setNodeType(ActivityNodeType::COMPLEX->value)
 	->setNodeSettings(new \Bitrix\Bizproc\Activity\Dto\NodeSettings(
 		width: 230,
 		height: 46,

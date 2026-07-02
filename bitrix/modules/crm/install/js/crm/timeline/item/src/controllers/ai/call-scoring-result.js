@@ -1,10 +1,8 @@
 import { Router } from 'crm.router';
 import { Type } from 'main.core';
+
 import ConfigurableItem from '../../configurable-item';
-
-import { ActionParams, Base } from '../base';
-
-import 'ui.hint';
+import { type ActionParams, Base } from '../base';
 
 export class CallScoringResult extends Base
 {
@@ -73,6 +71,10 @@ export class CallScoringResult extends Base
 
 	static isItemSupported(item: ConfigurableItem): boolean
 	{
-		return (item.getType() === 'AI:CallScoringResult');
+		const type = item.getType();
+
+		return type === 'AI:CallScoringResult'
+			|| type === 'CallScoringEmptyResult'
+		;
 	}
 }

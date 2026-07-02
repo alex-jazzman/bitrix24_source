@@ -22,6 +22,15 @@ jn.define('im/messenger/controller/recent/service/server-load/dummy', (require, 
 			return 'chatsList';
 		}
 
+		/**
+		 * @param {RefreshModeType} mode
+		 * @return {object}
+		 */
+		getInitRequestOptions(mode)
+		{
+			return {};
+		}
+
 		async handleInitResult(mode, initResult)
 		{
 			this.logger.log('handleInitResult', mode, initResult);
@@ -37,6 +46,16 @@ jn.define('im/messenger/controller/recent/service/server-load/dummy', (require, 
 		setLastItem(lastItem)
 		{
 			this.logger.log('setLastItem', lastItem);
+		}
+
+		subscribeEvents()
+		{
+			this.logger.log('subscribeEvents');
+		}
+
+		unsubscribeEvents()
+		{
+			this.logger.log('unsubscribeEvents');
 		}
 	}
 

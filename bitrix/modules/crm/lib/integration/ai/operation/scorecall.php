@@ -13,15 +13,15 @@ use Bitrix\Crm\Copilot\CallAssessment\CallAssessmentItem;
 use Bitrix\Crm\Copilot\CallAssessment\CallAssessmentItemChecker;
 use Bitrix\Crm\Copilot\CallAssessment\Controller\CopilotCallAssessmentController;
 use Bitrix\Crm\Copilot\CallAssessment\ItemFactory;
+use Bitrix\Crm\Copilot\Pipeline\StepContext;
+use Bitrix\Crm\Copilot\Pipeline\TargetResolver;
 use Bitrix\Crm\Copilot\PullManager;
 use Bitrix\Crm\Dto\Dto;
 use Bitrix\Crm\Integration\AI\AIManager;
 use Bitrix\Crm\Integration\AI\Config;
 use Bitrix\Crm\Integration\AI\Dto\Scoring\ScoreCallPayload;
-use Bitrix\Crm\Integration\AI\ErrorCode;
 use Bitrix\Crm\Integration\AI\EventHandler;
 use Bitrix\Crm\Integration\AI\Model\EO_Queue;
-use Bitrix\Crm\Integration\AI\Model\QueueTable;
 use Bitrix\Crm\Integration\AI\Operation\Payload\PayloadFactory;
 use Bitrix\Crm\Integration\AI\Result;
 use Bitrix\Crm\Integration\Analytics\Builder\AI\AIBaseEvent;
@@ -86,37 +86,19 @@ final class ScoreCall extends AbstractOperation
 		return false;
 	}
 
+	public static function shouldRelaunch(Result $existingResult, StepContext $context): bool
+	{
+		if (!$context->isManualLaunch())
+		{
+			return false;
+		}
+
+		return (int)$context->getExtra('assessmentSettingsId', 0) > 0;
+	}
+
 	protected static function checkPreviousJobs(ItemIdentifier $target, int $parentId): Main\Result
 	{
-		$result = new Main\Result();
-
-		$previousJob = self::findDuplicateJob($target, $parentId);
-		if (!$previousJob)
-		{
-			return $result; // new job
-		}
-
-		if ($previousJob->requireExecutionStatus() === QueueTable::EXECUTION_STATUS_SUCCESS)
-		{
-			return $result; // success previous job
-		}
-
-		if ($previousJob->requireExecutionStatus() === QueueTable::EXECUTION_STATUS_PENDING)
-		{
-			return $result->addError(ErrorCode::getJobAlreadyExistsError()); // previous job in progress
-		}
-
-		if (
-			$previousJob->requireExecutionStatus() === QueueTable::EXECUTION_STATUS_ERROR
-			&& $previousJob->requireRetryCount() >= Result::MAX_RETRY_COUNT
-		)
-		{
-			return $result->addError(ErrorCode::getJobMaxRetriesExceededError());
-		}
-
-		$result->setData(['previousJob' => $previousJob]); // update only error jobs
-
-		return $result;
+		return parent::checkPreviousJobsAllowingSuccessfulRelaunch($target, $parentId);
 	}
 
 	protected function getAIPayload(): Main\Result
@@ -140,7 +122,7 @@ final class ScoreCall extends AbstractOperation
 
 	protected function getContextLanguageId(): string
 	{
-		$itemIdentifier = (new Orchestrator())->findPossibleFillFieldsTarget($this->target->getEntityId());
+		$itemIdentifier = $this->targetResolver->findTarget($this->target->getEntityId());
 		if ($itemIdentifier)
 		{
 			return Config::getLanguageId(
@@ -166,16 +148,10 @@ final class ScoreCall extends AbstractOperation
 	protected static function notifyTimelineAfterSuccessfulLaunch(Result $result): void
 	{
 		$activityId = $result->getTarget()?->getEntityId();
-		$nextTarget = (new Orchestrator())->findPossibleFillFieldsTarget($activityId);
+		$nextTarget = (new TargetResolver())->findTarget($activityId);
 		if ($nextTarget)
 		{
 			self::notifyTimelinesAboutActivityUpdate($activityId, true);
-			
-			Controller::getInstance()->onStartCallScoring(
-				$nextTarget,
-				$result->getTarget()?->getEntityId(),
-				$result->getUserId(),
-			);
 		}
 	}
 
@@ -186,30 +162,18 @@ final class ScoreCall extends AbstractOperation
 			return;
 		}
 
-		$nextTarget = (new Orchestrator())->findPossibleFillFieldsTarget($result->getTarget()?->getEntityId());
+		$activityId = $result->getTarget()?->getEntityId();
+		$nextTarget = (new TargetResolver())->findTarget($activityId);
 		if ($nextTarget)
 		{
-			$activityId = $result->getTarget()?->getEntityId();
-			if ($activityId)
-			{
-				Controller::getInstance()->onFinishCallScoring(
-					$nextTarget,
-					$activityId,
-					[
-						'JOB_ID' => $result->getJobId(),
-					],
-					$result->getUserId(),
-				);
-
-				self::notifyTimelinesAboutActivityUpdate($activityId, true);
-			}
+			self::notifyTimelinesAboutActivityUpdate($activityId, true);
 		}
 	}
 
 	protected static function notifyAboutJobError(Result $result, bool $withSyncBadges = true, bool $withSendAnalytics = true): void
 	{
 		$activityId = $result->getTarget()?->getEntityId();
-		$nextTarget = (new Orchestrator())->findPossibleFillFieldsTarget($activityId);
+		$nextTarget = (new TargetResolver())->findTarget($activityId);
 		if ($nextTarget)
 		{
 			if ($withSyncBadges)
@@ -293,7 +257,7 @@ final class ScoreCall extends AbstractOperation
 
 		if (self::isCriteriaListEmpty($payload->criteria))
 		{
-			$nextTarget = (new Orchestrator())->findPossibleFillFieldsTarget($activityId);
+			$nextTarget = (new TargetResolver())->findTarget($activityId);
 			if ($nextTarget)
 			{
 				Controller::getInstance()->onCallScoringEmptyResult(
@@ -312,21 +276,13 @@ final class ScoreCall extends AbstractOperation
 			return;
 		}
 
-		/* @todo: add message via IM service & get RATED_USER_CHAT_ID | MANAGER_USER_CHAT_ID
-		$sender = \Bitrix\Crm\Service\Container::getInstance()->getImService();
-		$message = new Bitrix\Crm\Integration\Im\Message\Type\Assessment\ToEmployee(
-			fromUser: $userIdFrom,
-			toUser: $userIdTo,
-		);
-		$result = $sender->sendMessage($message);
-		*/
-
 		$activity = Container::getInstance()->getActivityBroker()->getById($activityId);
 		$userId = $activity['RESPONSIBLE_ID'] ?? $result->getUserId();
 
 		$assessmentSettingsId = isset($context)
 			? $context->getParameters()['additionalInfo']['assessment_settings_id'] ?? null
-			: null;
+			: null
+		;
 		$assessmentSettings = self::getAssessmentSettings($activityId, $assessmentSettingsId);
 		$assessment = self::getAssessmentsValue($payload);
 		$controller = AiQualityAssessmentController::getInstance();
@@ -483,7 +439,7 @@ final class ScoreCall extends AbstractOperation
 
 	private static function trySyncScoreStatusBadge(int $activityId, int $assessment, int $assessmentLowBorder): void
 	{
-		$itemIdentifier = (new Orchestrator())->findPossibleFillFieldsTarget($activityId);
+		$itemIdentifier = (new TargetResolver())->findTarget($activityId);
 		if (!$itemIdentifier)
 		{
 			return;

@@ -1,3 +1,4 @@
+import { ExecuteRestartAutomation } from './event/handlers/batch-manager/execute-restart-automation';
 import { createCallList, createCallListAndShowAlertOnErrors } from './event/handlers/call-list/internals/functions';
 import { LoadEnumsAndEditSelected } from './event/handlers/load-enums-and-edit-selected';
 import { init } from './init';
@@ -15,4 +16,5 @@ export {
 	loadEnumsGridEditData,
 	createCallList,
 	createCallListAndShowAlertOnErrors,
+	ExecuteRestartAutomation,
 };

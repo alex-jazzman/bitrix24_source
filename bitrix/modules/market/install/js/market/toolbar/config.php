@@ -8,12 +8,12 @@ return [
 	'css' => 'dist/toolbar.bundle.css',
 	'js' => 'dist/toolbar.bundle.js',
 	'rel' => [
-		'main.popup',
 		'main.core',
-		'market.rating-stars',
+		'main.popup',
 		'market.market-links',
-		'ui.forms',
+		'market.rating-stars',
 		'ui.design-tokens',
+		'ui.forms',
 	],
 	'skip_core' => false,
 ];

@@ -1,9 +1,14 @@
 /* eslint-disable @bitrix24/bitrix24-rules/no-style, @bitrix24/bitrix24-rules/no-native-dom-methods */
 
-import Button from '../compatibility/button';
-
 import { Type, Text, Tag, Event, Dom, Reflection } from 'main.core';
+import { FocusTrap, FocusNavigator, type FocusTrapOptions, AccessibilitySettings } from 'ui.a11y';
 import { EventEmitter, BaseEvent } from 'main.core.events';
+import { ZIndexManager, type ZIndexComponent } from 'main.core.z-index-manager';
+
+import { PositionEvent } from './position-event';
+import { CloseIconSize } from './popup-close-icon-size';
+import { Button } from '../compatibility/button';
+
 import {
 	type PopupOptions,
 	type PopupTarget,
@@ -11,10 +16,6 @@ import {
 	type PopupOverlay,
 	type PopupDraggable,
 } from './popup-types';
-
-import { ZIndexManager, ZIndexComponent } from 'main.core.z-index-manager';
-import PositionEvent from './position-event';
-import CloseIconSize from './popup-close-icon-size';
 
 declare type TargetPosition = {
 	left: number,
@@ -52,7 +53,7 @@ const disabledScrolls: WeakMap<HTMLElement, Set<Popup>> = new WeakMap();
 /**
  * @memberof BX.Main
  */
-export default class Popup extends EventEmitter
+export class Popup extends EventEmitter
 {
 	/**
 	 * @private
@@ -119,6 +120,8 @@ export default class Popup extends EventEmitter
 
 		return this.defaultOptions[option];
 	}
+
+	#focusTrap: FocusTrap | null = null;
 
 	constructor(options?: PopupOptions)
 	{
@@ -239,11 +242,10 @@ export default class Popup extends EventEmitter
 		this.designSystemContext = params.darkMode ? '--ui-context-content-dark' : '--ui-context-content-light';
 		popupClassName += ` ${this.designSystemContext}`;
 
+		const titleBarId = `popup-window-titlebar-${popupId}`;
 		if (params.titleBar)
 		{
-			this.titleBar = Tag.render`
-				<div class="popup-window-titlebar" id="popup-window-titlebar-${popupId}"></div>
-			`;
+			this.titleBar = Tag.render`<div class="popup-window-titlebar" id="${titleBarId}"></div>`;
 		}
 
 		if (params.closeIcon)
@@ -255,7 +257,15 @@ export default class Popup extends EventEmitter
 			}
 
 			this.closeIcon = Tag.render`
-				<span class="${className}" onclick="${this.handleCloseIconClick.bind(this)}"></span>
+				<button 
+					tabindex="0" 
+					type="button" 
+					aria-label="Close" 
+					class="${className}" 
+					onclick="${this.handleCloseIconClick.bind(this)}"
+				>
+					<span class="ui-icon-set --cross-l --hoverable-default" style="--ui-icon-set__icon-size: 24px;"></span>
+				</button>
 			`;
 
 			if (Type.isPlainObject(params.closeIcon))
@@ -268,7 +278,7 @@ export default class Popup extends EventEmitter
 		 * @private
 		 */
 		this.contentContainer = Tag.render`
-			<div id="popup-window-content-${popupId}" class="popup-window-content"></div>
+			<div id="popup-window-content-${popupId}" role="presentation" class="popup-window-content"></div>
 		`;
 
 		/**
@@ -279,13 +289,24 @@ export default class Popup extends EventEmitter
 				class="${popupClassName}"
 				id="${popupId}"
 				style="display: none; position: absolute; left: 0; top: 0;"
+				tabindex="-1"
+				role="${Type.isStringFilled(params.role) ? params.role : 'dialog'}"
 			>${[this.titleBar, this.contentContainer, this.closeIcon]}</div>
 		`;
+
+		if (Type.isStringFilled(params.ariaLabel))
+		{
+			Dom.attr(this.popupContainer, 'aria-label', params.ariaLabel);
+		}
+
+		if (Type.isStringFilled(params.ariaLabelledBy))
+		{
+			Dom.attr(this.popupContainer, 'aria-labelledby', params.ariaLabelledBy);
+		}
 
 		this.getTargetContainer().append(this.popupContainer);
 
 		this.zIndexComponent = ZIndexManager.register(this.popupContainer, params.zIndexOptions);
-
 		this.buttonsContainer = null;
 
 		if (params.contentColor && Type.isStringFilled(params.contentColor))
@@ -344,6 +365,8 @@ export default class Popup extends EventEmitter
 		{
 			Event.bind(window, 'resize', this.handleResizeWindow);
 		}
+
+		this.#initFocusTrap(params.focusTrap);
 
 		this.emit('onAfterInit', new BaseEvent({ compatData: [popupId, this] }));
 	}
@@ -422,9 +445,8 @@ export default class Popup extends EventEmitter
 				}
 			}
 
-			this.buttonsContainer = this.contentContainer.parentNode.appendChild(
-				Tag.render`<div class="popup-window-buttons">${newButtons}</div>`,
-			);
+			this.buttonsContainer = Tag.render`<div class="popup-window-buttons">${newButtons}</div>`;
+			this.contentContainer.insertAdjacentElement('afterend', this.buttonsContainer);
 		}
 	}
 
@@ -951,6 +973,66 @@ export default class Popup extends EventEmitter
 		return this.cacheable;
 	}
 
+	#initFocusTrap(options: boolean | FocusTrapOptions): void
+	{
+		if (options === false || (Type.isNil(options) && !Popup.shouldUseFocusTrapByDefault()))
+		{
+			return;
+		}
+
+		const defaultOptions = {
+			initialFocus: ['[data-autofocus]', 'container'],
+			isolateOutside: this.isModal(),
+		};
+
+		const focusTrapOptions: FocusTrapOptions = Type.isPlainObject(options) ? options : {};
+		this.#focusTrap = new FocusTrap(this.popupContainer, { ...defaultOptions, ...focusTrapOptions });
+
+		if (this.isModal())
+		{
+			Dom.attr(this.overlay.element, 'data-focus-trap', this.#focusTrap.getId());
+		}
+	}
+
+	static shouldUseFocusTrapByDefault(): boolean
+	{
+		if (!AccessibilitySettings.useFocusTrapInDialogs())
+		{
+			return false;
+		}
+
+		const activeElement = FocusNavigator.getActiveElement();
+		const nonTextInputTypes = new Set([
+			'checkbox',
+			'radio',
+			'range',
+			'color',
+			'file',
+			'image',
+			'button',
+			'submit',
+			'reset',
+		]);
+
+		if (activeElement === null)
+		{
+			return true;
+		}
+
+		const isTextInput = (
+			activeElement.tagName === 'TEXTAREA'
+			|| (activeElement.tagName === 'INPUT' && !nonTextInputTypes.has(activeElement.type))
+			|| activeElement.isContentEditable
+		);
+
+		return !isTextInput;
+	}
+
+	getFocusTrap(): FocusTrap | null
+	{
+		return this.#focusTrap;
+	}
+
 	setToFrontOnShow(flag: boolean): void
 	{
 		this.toFrontOnShow = flag !== false;
@@ -1221,11 +1303,17 @@ export default class Popup extends EventEmitter
 			this.titleBar.appendChild(
 				Dom.create('span', {
 					props: {
+						id: `popup-window-titlebar-text-${this.getId()}`,
 						className: 'popup-window-titlebar-text',
 					},
 					text: params,
 				}),
 			);
+
+			if (!Type.isStringFilled(Dom.attr(this.getPopupContainer(), 'aria-label')))
+			{
+				Dom.attr(this.getPopupContainer(), 'aria-label', params);
+			}
 		}
 	}
 
@@ -1418,10 +1506,11 @@ export default class Popup extends EventEmitter
 
 			this.overlay = {
 				element: Tag.render`
-					<div 
-						class="popup-window-overlay" 
+					<div
+						class="popup-window-overlay"
 						id="popup-window-overlay-${this.getId()}"
 						onclick="${this.handleOverlayClick.bind(this)}"
+						aria-hidden="true"
 					></div>
 				`,
 			};
@@ -1446,6 +1535,11 @@ export default class Popup extends EventEmitter
 		{
 			Dom.style(this.overlay.element, 'backdrop-filter', params.blur);
 		}
+	}
+
+	isModal(): boolean
+	{
+		return this.hasOverlay();
 	}
 
 	hasOverlay(): boolean
@@ -1505,8 +1599,8 @@ export default class Popup extends EventEmitter
 	{
 		if (this.overlay !== null && this.overlay.element !== null)
 		{
-			let scrollWidth;
-			let scrollHeight;
+			let scrollWidth = 0;
+			let scrollHeight = 0;
 			if (this.isTargetDocumentBody())
 			{
 				scrollWidth = document.documentElement.scrollWidth;
@@ -1598,6 +1692,8 @@ export default class Popup extends EventEmitter
 		this.getPopupContainer().style.display = 'block';
 		Dom.addClass(this.getPopupContainer(), '--open');
 
+		this.#focusTrap?.captureActiveElement();
+
 		if (this.shouldFrontOnShow())
 		{
 			this.bringToFront();
@@ -1619,7 +1715,6 @@ export default class Popup extends EventEmitter
 		this.adjustPosition();
 
 		this.animateOpening(() => {
-
 			if (this.isDestroyed())
 			{
 				return;
@@ -1627,6 +1722,8 @@ export default class Popup extends EventEmitter
 
 			Dom.removeClass(this.getPopupContainer(), this.animationShowClassName);
 			this.emit('onAfterShow', new BaseEvent({ compatData: [this] }));
+
+			this.#focusTrap?.activate();
 		});
 
 		this.bindClosingByEsc();
@@ -1662,8 +1759,9 @@ export default class Popup extends EventEmitter
 			this.#enableTargetScroll();
 		}
 
-		this.animateClosing(() => {
+		this.#focusTrap?.deactivate();
 
+		this.animateClosing(() => {
 			if (this.isDestroyed())
 			{
 				return;
@@ -1673,7 +1771,6 @@ export default class Popup extends EventEmitter
 
 			this.getPopupContainer().style.display = 'none';
 			Dom.removeClass(this.getPopupContainer(), '--open');
-
 			Dom.removeClass(this.getPopupContainer(), this.animationCloseClassName);
 
 			this.unbindClosingByEsc();
@@ -1695,7 +1792,6 @@ export default class Popup extends EventEmitter
 			{
 				this.destroy();
 			}
-
 		});
 	}
 
@@ -1878,6 +1974,9 @@ export default class Popup extends EventEmitter
 
 		ZIndexManager.unregister(this.popupContainer);
 		this.zIndexComponent = null;
+
+		this.#focusTrap?.destroy();
+		this.#focusTrap = null;
 
 		Dom.remove(this.popupContainer);
 
@@ -2127,7 +2226,7 @@ export default class Popup extends EventEmitter
 	 * @private
 	 */
 	handleDocumentKeyUp = (event): void => {
-		if (event.keyCode === 27)
+		if (event.keyCode === 27 && !this.isDestroyed())
 		{
 			checkEscPressed(this.getZindex(), () => {
 				this.close();

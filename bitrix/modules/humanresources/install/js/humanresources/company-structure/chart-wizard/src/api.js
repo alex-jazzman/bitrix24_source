@@ -1,6 +1,6 @@
 import { getData, postData } from 'humanresources.company-structure.api';
 import type { ChatListResponse } from 'humanresources.company-structure.utils';
-import { DepartmentUserIds } from './types';
+import type { DepartmentUserIds } from './types';
 
 export const WizardAPI = {
 	createDepartment: (

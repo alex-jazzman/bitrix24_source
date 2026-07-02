@@ -9,10 +9,10 @@ return [
 	'js' => 'dist/checker.bundle.js',
 	'rel' => [
 		'humanresources.company-structure.api',
-		'humanresources.company-structure.permission-checker',
-		'main.core',
 		'humanresources.company-structure.chart-store',
+		'humanresources.company-structure.permission-checker',
 		'humanresources.company-structure.utils',
+		'main.core',
 	],
 	'skip_core' => false,
 ];

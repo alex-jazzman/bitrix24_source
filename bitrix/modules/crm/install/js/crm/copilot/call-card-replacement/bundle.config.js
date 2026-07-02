@@ -3,5 +3,4 @@ module.exports = {
 	output: 'dist/index.bundle.js',
 	namespace: 'BX.Crm.Copilot',
 	browserslist: true,
-	minification: true,
 };

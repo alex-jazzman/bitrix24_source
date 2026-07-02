@@ -1,12 +1,10 @@
 import { Type, Dom } from 'main.core';
-import { GroupData } from '@/types/group';
 import { Advice } from 'ui.advice';
 
 export const ItemListAdvice = {
 	name: 'ui-entity-catalog-item-list-advice',
 	props: {
 		groupData: {
-			type: GroupData,
 			required: true,
 		},
 	},

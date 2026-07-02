@@ -25,17 +25,24 @@ export const BaseInfo = {
 			type: Object,
 			required: true,
 		},
+		ordinal: {
+			type: Number,
+			required: true,
+		},
+		senderCanUse: {
+			type: Boolean,
+			required: true,
+		},
 	},
 	computed: {
 		...mapGetters({
 			/** @type {ResourceModel} */
 			resource: `${Model.ResourceCreationWizard}/getResource`,
-			isCurrentSenderAvailable: `${Model.Notifications}/isCurrentSenderAvailable`,
 		}),
 		isInfoNotificationOn: {
 			get(): boolean
 			{
-				return this.isCurrentSenderAvailable && this.resource.isInfoNotificationOn;
+				return this.senderCanUse && this.resource.isInfoNotificationOn;
 			},
 			set(isInfoNotificationOn: boolean): void
 			{
@@ -74,6 +81,11 @@ export const BaseInfo = {
 	methods: {
 		async showAhaMoment(): Promise<void>
 		{
+			if (!this.$refs.card)
+			{
+				return;
+			}
+
 			const target = this.$refs.card.getChooseTemplateButton();
 			if (Type.isNull(target))
 			{
@@ -97,6 +109,8 @@ export const BaseInfo = {
 		<ResourceNotification
 			v-model:checked="isInfoNotificationOn"
 			:type="model.type"
+			:ordinal
+			:senderCanUse
 			:title="loc('BRCW_NOTIFICATION_CARD_BASE_INFO_TITLE_MSGVER_1')"
 			:description="loc('BRCW_NOTIFICATION_CARD_BASE_INFO_HELPER_TEXT_FIRST_MSGVER_2')"
 			:helpDesk="helpDesk"

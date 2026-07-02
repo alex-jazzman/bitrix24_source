@@ -85,6 +85,41 @@ jn.define('ui-system/blocks/chips/chip-button/src/design-enum', (require, export
 			},
 		});
 
+		static BITRIX_GPT = new ChipButtonDesign('BITRIX_GPT', {
+			[ChipButtonMode.SOLID]: {
+				backgroundColorGradient: {
+					start: Color.bgBitrixGptLightGradient4.toHex(),
+					middle: Color.bgBitrixGptLightGradient3.toHex(),
+					end: Color.bgBitrixGptLightGradient1.toHex(),
+					angle: 45,
+				},
+				colorGradient: {
+					colors: [
+						Color.bgBitrixGptGradient7,
+						Color.bgBitrixGptGradient4,
+						Color.bgBitrixGptGradient3,
+						Color.bgBitrixGptGradient2,
+						Color.bgBitrixGptGradient1,
+					],
+					angle: 225,
+				},
+			},
+			[ChipButtonMode.OUTLINE]: {
+				borderWidth: 1,
+				borderColor: Color.bgBitrixGptLineGradient2.toHex(),
+				colorGradient: {
+					colors: [
+						Color.bgBitrixGptGradient7,
+						Color.bgBitrixGptGradient4,
+						Color.bgBitrixGptGradient3,
+						Color.bgBitrixGptGradient2,
+						Color.bgBitrixGptGradient1,
+					],
+					angle: 225,
+				},
+			},
+		});
+
 		getDisabled()
 		{
 			return ChipButtonDesign.#DISABLED;

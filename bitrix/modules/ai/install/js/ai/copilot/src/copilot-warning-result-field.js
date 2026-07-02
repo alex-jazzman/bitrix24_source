@@ -1,4 +1,4 @@
-import { Tag, Loc, Dom, Event } from 'main.core';
+import { Tag, Loc, Dom, Event, Extension } from 'main.core';
 import { Icon, Main as MainIconSet } from 'ui.icon-set.api.core';
 
 import './css/copilot-warning-field.css';
@@ -21,7 +21,9 @@ export class CopilotWarningResultField
 					${warningIcon.render()}
 				</span>
 				<span class="ai__copilot_waning-field-text">
-					${Loc.getMessage('AI_COPILOT_RESULT_WARNING')}
+					${Loc.getMessage('AI_COPILOT_RESULT_WARNING_MSGVER_1', {
+						'#COPILOT_NAME#': Extension.getSettings('ai.copilot').get('copilotName'),
+					})}
 				</span>
 				${this.#renderReadMoreLink()}
 			</div>

@@ -2,6 +2,7 @@ import type { StatusGroupName } from 'imopenlines.v2.const';
 
 import type { BotType, UserType } from 'im.v2.const';
 import type { RawReaction, RawShortUser, RawSticker } from 'im.v2.provider.service.types';
+import type { JsonObject } from 'main.core';
 
 export type PullExtraParams = {
 	im_revision: number,
@@ -142,6 +143,7 @@ export type RawMessage = {
 	textLegacy: string,
 	isImportant: boolean,
 	importantFor: number[],
+	builder: RawBuilder,
 	additionalEntities: {
 		additionalMessages: RawMessage[],
 		files: RawFile[],
@@ -179,4 +181,8 @@ export type RawLines = {
 	queueId: number,
 	pinned: boolean,
 	isClosed: boolean,
+}
+
+export type RawBuilder = {
+	blocks: JsonObject[],
 }

@@ -108,6 +108,15 @@
 	margin: 24px;
 }
 
+.intranet-island-otp-push-offline__wrapper {
+	display: flex;
+	flex-direction: column;
+	padding: 14px 18px;
+	width: 535px;
+	align-items: center;
+	margin: 0 24px;
+}
+
 .intranet-login-enter-form {
 	margin-top: 30px;
 }
@@ -208,6 +217,11 @@
 	width: 320px;
 }
 
+.intranet-island-otp-push__description_text {
+	display: flex;
+	flex-direction: column;
+}
+
 .intranet-island-otp-push__description span {
 	font-size: 16px;
 	font-weight: 400;
@@ -218,9 +232,10 @@
 }
 
 .intranet-island-otp-push__mobile {
-	background-image: url("./images/mobile.svg");
+	background-image: image-set(url("./images/mobileX1.png") 1x, url("./images/mobileX2.png") 2x);
 	background-repeat: no-repeat;
 	background-position: center;
+	background-size: contain;
 	width: 167px;
 	height: 320px;
 }
@@ -236,9 +251,10 @@
 }
 
 .intranet-island-otp-offline-code__mobile {
-	background-image: url("./images/mobile-offline.svg");
+	background-image: image-set(url("./images/mobile-offlineX1.png") 1x, url("./images/mobile-offlineX2.png") 2x);
 	background-repeat: no-repeat;
 	background-position: center;
+	background-size: contain;
 	width: 200px;
 	height: 320px;
 	position: absolute;
@@ -471,32 +487,12 @@
 
 .intranet-back-button__arrow {
 	position: absolute;
-	top: -25px;
+	left: 16px;
+	top: 20px;
 	width: 28px;
 	height: 28px;
 	background-color: var(--ui-color-gray-70);
 	cursor: pointer;
-}
-
-.intranet-back-button__arrow.--recovery {
-	left: -271px;
-}
-
-.intranet-back-button__arrow.--smscode {
-	left: -217px;
-}
-
-.intranet-back-button__arrow.--alternative {
-	left: -190px;
-}
-
-.intranet-back-button__arrow.--legacyotp {
-	left: -183px;
-}
-
-.intranet-back-button__arrow.--offline-code {
-	left: -288px;
-	top: -14px;
 }
 
 .intranet-form-add-block__headline.--margin {
@@ -627,5 +623,178 @@
 		width: 51px;
 		height: 48px;
 		padding: 13px 14px 13px 15px;
+	}
+}
+
+/* Mobile adaptations */
+@media (max-width: 768px) {
+	.intranet-island-otp-push__wrapper,
+	.intranet-island-otp-recover-access__wrapper,
+	.intranet-island-otp-push-legacy-otp__wrapper,
+	.intranet-island-otp-push-offline__wrapper,
+	.intranet-island-otp-offline-code__main-content {
+		width: 100%;
+		max-width: 100%;
+		padding: 24px 13px;
+		margin: 0;
+		box-sizing: border-box;
+	}
+
+	.intranet-island-otp-push-offline__wrapper {
+		padding: 24px 10px;
+	}
+
+	.intranet-island-otp-push-legacy-otp__wrapper {
+		padding: 24px 30px;
+	}
+
+	.intranet-island-otp-push__main-content {
+		flex-direction: column;
+		align-items: stretch;
+		gap: 24px;
+		margin-top: 24px;
+	}
+
+	.intranet-island-otp-push__mobile {
+		width: 160px;
+		height: 172px;
+		background-size: cover;
+		background-position: top;
+		align-self: center;
+		order: -1;
+		position: relative;
+		overflow: hidden;
+	}
+
+	.intranet-island-otp-push__mobile::after {
+		content: '';
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		height: 35%;
+		background: linear-gradient(0deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0) 100%);
+	}
+
+	.intranet-island-otp-push__description {
+		width: 100%;
+		align-items: center;
+		text-align: center;
+		order: 0;
+		margin-top: 12px;
+	}
+
+	.intranet-island-otp-push__description_text {
+		display: inline;
+		width: 100%;
+		align-items: center;
+		text-align: center;
+		margin-top: 12px;
+		margin-bottom: 15px;
+	}
+
+	.intranet-island-otp-push__arrow {
+		display: none;
+	}
+
+	.intranet-island-otp__device-row {
+		width: 80%;
+		justify-content: center;
+		margin: 0 0 15px 0;
+	}
+
+	.intranet-island-otp-push-links__wrapper,
+	.intranet-island-revover-access-links__wrapper {
+		flex-direction: column;
+		gap: 12px;
+		margin-top: 20px;
+	}
+
+	.intranet-island-otp-push__link,
+	.intranet-island-recover-access__link {
+		text-align: center;
+	}
+
+	.intranet-island-otp-push-alternative-items__wrapper {
+		width: 90%;
+		padding: 0;
+	}
+
+	.intranet-island-otp-push-alternative__item {
+		width: 100%;
+	}
+
+	.intranet-form-title.--padding {
+		padding: 0 20px;
+		margin: 0 15px;
+	}
+
+	.intranet-island-otp-push-sms__wrapper {
+		justify-content: center;
+		padding: 24px 18px;
+		margin: 0;
+		box-sizing: border-box;
+	}
+
+	.intranet-island-otp-offline-code__description,
+	.intranet-island-otp-push__description {
+		width: 100%;
+	}
+
+	.intranet-island-otp-offline-code__mobile {
+		position: static;
+		width: 160px;
+		height: 260px;
+		margin: 0 auto;
+		background-size: contain;
+	}
+
+	.intranet-island-otp-offline-code__button-wrapper {
+		padding: 0;
+	}
+
+	.intranet-island-otp-offline-code__steps {
+		width: 100%;
+	}
+
+	.intranet-island-otp-captcha__wrapper {
+		padding: 0;
+	}
+
+	.intranet-otp-help-header,
+	.intranet-otp-help-additional-wrap {
+		width: 100%;
+		text-align: center;
+	}
+
+	.intranet-otp-help-additional-wrap {
+		margin-top: 8px;
+	}
+
+	.intranet-verification-code {
+		justify-content: center;
+		flex-wrap: wrap;
+		row-gap: 12px;
+	}
+
+	.intranet-verification-code__digit,
+	.intranet-verification-code__char {
+		margin-left: 8px;
+	}
+
+	.intranet-verification-code__digit:first-of-type,
+	.intranet-verification-code__char:first-of-type {
+		margin-left: 0;
+	}
+
+	.intranet-verification-code__digit--shifted,
+	.intranet-verification-code__char--shifted {
+		margin-left: 16px;
+	}
+
+	.intranet-digit-input,
+	.intranet-char-input {
+		width: 44px;
+		height: 44px;
 	}
 }

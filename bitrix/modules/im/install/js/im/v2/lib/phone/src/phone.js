@@ -1,15 +1,15 @@
-import 'voximplant';
-import { PhoneCallsController } from 'voximplant.phone-calls';
 import { Type, Runtime, Reflection } from 'main.core';
-import { BaseEvent } from 'main.core.events';
+import { type BaseEvent } from 'main.core.events';
+import 'voximplant';
+
+import { PhoneCallsController } from 'voximplant.phone-calls';
 
 import { Core } from 'im.v2.application.core';
-import { Logger } from 'im.v2.lib.logger';
-import { DesktopApi } from 'im.v2.lib.desktop-api';
 import { CallManager } from 'im.v2.lib.call';
+import { DesktopApi } from 'im.v2.lib.desktop-api';
+import { Logger } from 'im.v2.lib.logger';
 import { SoundNotificationManager } from 'im.v2.lib.sound-notification';
-
-import type { ImModelUser } from 'im.v2.model';
+import { type ImModelUser } from 'im.v2.model';
 
 type PhoneSettings = {
 	phoneEnabled: boolean,

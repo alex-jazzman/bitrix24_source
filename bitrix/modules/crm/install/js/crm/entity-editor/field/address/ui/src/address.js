@@ -1,6 +1,7 @@
 import {EntityEditorBaseAddressField} from "crm.entity-editor.field.address.base";
 import {Tag, Dom, Type} from "main.core";
 import {EventEmitter} from "main.core.events";
+import 'ui.entity-editor';
 
 export class EntityEditorUiAddressField extends BX.UI.EntityEditorField
 {

@@ -2,1076 +2,1144 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,imopenlines_v2_const,im_v2_const) {
+(function (exports, imopenlines_v2_const) {
 	'use strict';
 
 	const RestMethod = Object.freeze({
-	  imV2ChatLoad: 'im.v2.Chat.load',
-	  imV2ChatGetDialogId: 'im.v2.Chat.getDialogId',
-	  imV2ChatShallowLoad: 'im.v2.Chat.shallowLoad',
-	  imV2ChatLoadInContext: 'im.v2.Chat.loadInContext',
-	  imV2ChatLoadContext: 'im.v2.Chat.loadInContext',
-	  imV2ChatAdd: 'im.v2.Chat.add',
-	  imV2ChatUpdate: 'im.v2.Chat.update',
-	  imV2ChatDelete: 'im.v2.Chat.delete',
-	  imV2ChatUpdateAvatar: 'im.v2.Chat.updateAvatar',
-	  imV2ChatRead: 'im.v2.Chat.read',
-	  imV2ChatReadAll: 'im.v2.Chat.readAll',
-	  imV2ChatReadAllByType: 'im.v2.Chat.readByType',
-	  imV2ChatUnread: 'im.v2.Chat.unread',
-	  imV2ChatJoin: 'im.v2.Chat.join',
-	  imV2ChatDeleteUser: 'im.v2.Chat.deleteUser',
-	  imV2ChatExtendPullWatch: 'im.v2.Chat.extendPullWatch',
-	  imV2RecentChannelExtendPullWatch: 'im.v2.Recent.Channel.extendPullWatch',
-	  imV2ChatMessageGetContext: 'im.v2.Chat.Message.getContext',
-	  imV2ChatMessageSend: 'im.v2.Chat.Message.send',
-	  imV2ChatMessageList: 'im.v2.Chat.Message.list',
-	  imV2ChatMessageTail: 'im.v2.Chat.Message.tail',
-	  imV2ChatMessageRead: 'im.v2.Chat.Message.read',
-	  imV2ChatMessageMark: 'im.v2.Chat.Message.mark',
-	  imV2ChatMessageDelete: 'im.v2.Chat.Message.delete',
-	  imV2ChatMessageUpdate: 'im.v2.Chat.Message.update',
-	  imV2ChatMessageReactionAdd: 'im.v2.Chat.Message.Reaction.add',
-	  imV2ChatMessageReactionDelete: 'im.v2.Chat.Message.Reaction.delete',
-	  imV2ChatMessageReactionTail: 'im.v2.Chat.Message.Reaction.tail',
-	  imV2ChatMessagePin: 'im.v2.Chat.Message.pin',
-	  imV2ChatMessageUnpin: 'im.v2.Chat.Message.unpin',
-	  imV2ChatMessageTailViewers: 'im.v2.Chat.Message.tailViewers',
-	  imV2ChatMessageDeleteRichUrl: 'im.v2.Chat.Message.deleteRichUrl',
-	  imV2ChatMessageCommentInfoList: 'im.v2.Chat.Message.CommentInfo.list',
-	  imV2ChatAnchorRead: 'im.v2.Chat.Anchor.read',
-	  imV2ChatPinTail: 'im.v2.Chat.Pin.tail',
-	  imV2ChatMentionList: 'im.v2.Chat.Mention.list',
-	  imV2ChatListShared: 'im.v2.Chat.listShared',
-	  imV2ChatCommentSubscribe: 'im.v2.Chat.Comment.subscribe',
-	  imV2ChatCommentUnsubscribe: 'im.v2.Chat.Comment.unsubscribe',
-	  imV2ChatCommentReadAll: 'im.v2.Chat.Comment.readAll',
-	  imV2ChatAddManagers: 'im.v2.Chat.addManagers',
-	  imV2ChatDeleteManagers: 'im.v2.Chat.deleteManagers',
-	  imV2ChatMessageDisappear: 'im.v2.Chat.Message.disappear',
-	  imV2ChatSetMessagesAutoDeleteDelay: 'im.v2.Chat.setMessagesAutoDeleteDelay',
-	  imV2SettingsGeneralUpdate: 'im.v2.Settings.General.update',
-	  imV2SettingsNotifyUpdate: 'im.v2.Settings.Notify.update',
-	  imV2SettingsNotifySwitchScheme: 'im.v2.Settings.Notify.switchScheme',
-	  imV2DesktopLogout: 'im.v2.Desktop.logout',
-	  imV2UpdateState: 'im.v2.UpdateState.getStateData',
-	  imV2BetaEnable: 'im.v2.Beta.enable',
-	  imV2BetaDisable: 'im.v2.Beta.disable',
-	  imV2ChatTaskPrepare: 'im.v2.Chat.Task.prepare',
-	  imV2RecentChannelTail: 'im.v2.Recent.Channel.Tail',
-	  imV2RecentCollabTail: 'im.v2.Recent.Collab.Tail',
-	  imV2RecentExternalChatTail: 'im.v2.Recent.ExternalChat.Tail',
-	  imV2ChatCopilotUpdateRole: 'im.v2.Chat.Copilot.updateRole',
-	  imV2ChatCopilotUpdateAiModel: 'im.v2.Chat.Copilot.updateEngine',
-	  imV2AccessCheck: 'im.v2.Access.check',
-	  imV2ChatMemberEntitiesList: 'im.v2.Chat.MemberEntities.list',
-	  imV2ChatInputActionNotify: 'im.v2.Chat.InputAction.notify',
-	  imV2DiskFileSave: 'im.v2.Disk.File.save',
-	  imV2ChatBotSendContext: 'im.v2.Chat.Bot.sendContext',
-	  imV2ChatMemberTail: 'im.v2.Chat.Member.tail',
-	  imV2DiskFileTranscribe: 'im.v2.Disk.File.transcribe',
-	  imV2ChatSharedLinkGetIndividual: 'im.v2.Chat.SharingLink.getIndividual',
-	  imV2ChatJoinByCode: 'im.v2.Chat.joinByCode',
-	  imV2ChatSharedLinkRevoke: 'im.v2.Chat.SharingLink.revoke',
-	  imV2ChatSharedLinkRegenerateIndividual: 'im.v2.Chat.SharingLink.regenerateIndividual',
-	  imV2ChatFilterUsersByParticipation: 'im.v2.Chat.Member.filterUsersByParticipation',
-	  imV2RecentPin: 'im.v2.Chat.pin',
-	  imV2RecentUnpin: 'im.v2.Chat.unpin',
-	  imV2StickerPackLoad: 'im.v2.Sticker.Pack.load',
-	  imV2StickerPackTail: 'im.v2.Sticker.Pack.tail',
-	  imV2StickerPackGet: 'im.v2.Sticker.Pack.get',
-	  imV2StickerPackAdd: 'im.v2.Sticker.Pack.add',
-	  imV2StickerPackDelete: 'im.v2.Sticker.Pack.delete',
-	  imV2StickerPackLink: 'im.v2.Sticker.Pack.link',
-	  imV2StickerPackUnlink: 'im.v2.Sticker.Pack.unlink',
-	  imV2StickerPackRename: 'im.v2.Sticker.Pack.rename',
-	  imV2StickerRecentDelete: 'im.v2.Sticker.Recent.delete',
-	  imV2StickerRecentDeleteAll: 'im.v2.Sticker.Recent.deleteAll',
-	  imV2StickerAdd: 'im.v2.Sticker.add',
-	  imV2StickerDelete: 'im.v2.Sticker.delete',
-	  imV2AnchorRead: 'im.v2.Anchor.read',
-	  imV2PromotionRead: 'im.v2.Promotion.read',
-	  imV2CallZoomCreate: 'im.v2.Call.Zoom.create',
-	  imCallBetaCreateRoom: 'im.call.beta.createRoom',
-	  imMessageAdd: 'im.message.add',
-	  imMessageCommand: 'im.message.command',
-	  imChatMute: 'im.chat.mute',
-	  imChatUpdateTitle: 'im.chat.updateTitle',
-	  imChatFileCollectionGet: 'im.chat.file.collection.get',
-	  imChatFileGet: 'im.chat.file.get',
-	  imChatUrlGet: 'im.chat.url.get',
-	  imChatUrlDelete: 'im.chat.url.delete',
-	  imChatTaskGet: 'im.chat.task.get',
-	  imChatTaskDelete: 'im.chat.task.delete',
-	  imChatCalendarGet: 'im.chat.calendar.get',
-	  imChatFavoriteAdd: 'im.chat.favorite.add',
-	  imChatFavoriteDelete: 'im.chat.favorite.delete',
-	  imChatFavoriteGet: 'im.chat.favorite.get',
-	  imChatFavoriteCounterGet: 'im.chat.favorite.counter.get',
-	  imChatUrlCounterGet: 'im.chat.url.counter.get',
-	  imChatPinGet: 'im.chat.pin.get',
-	  imChatPinAdd: 'im.chat.pin.add',
-	  imChatPinDelete: 'im.chat.pin.delete',
-	  imChatCalendarPrepare: 'im.chat.calendar.prepare',
-	  imChatCalendarAdd: 'im.chat.calendar.add',
-	  imChatCalendarDelete: 'im.chat.calendar.delete',
-	  imChatUserDelete: 'im.chat.user.delete',
-	  imChatUserAdd: 'im.chat.user.add',
-	  imDialogWriting: 'im.dialog.writing',
-	  imDialogUsersList: 'im.dialog.users.list',
-	  imDialogMessagesSearch: 'im.dialog.messages.search',
-	  imUserGet: 'im.user.get',
-	  imUserListGet: 'im.user.list.get',
-	  imUserStatusSet: 'im.user.status.set',
-	  imUserStatusIdleStart: 'im.user.status.idle.start',
-	  imUserStatusIdleEnd: 'im.user.status.idle.end',
-	  imDiskFolderGet: 'im.disk.folder.get',
-	  imDiskFolderListGet: 'im.disk.folder.list.get',
-	  imDiskFilePreviewUpload: 'disk.api.file.attachPreview',
-	  imDiskFileCommit: 'im.disk.file.commit',
-	  imDiskFileDelete: 'im.disk.file.delete',
-	  imDiskFileSave: 'im.disk.file.save',
-	  imRecentGet: 'im.recent.get',
-	  imRecentList: 'im.recent.list',
-	  imRecentPin: 'im.recent.pin',
-	  imRecentHide: 'im.recent.hide',
-	  imNotifyGet: 'im.notify.get',
-	  imNotifyRead: 'im.notify.read',
-	  imNotifyReadAll: 'im.notify.read.all',
-	  imV2NotifyRead: 'im.v2.Notify.read',
-	  imV2NotifyReadAll: 'im.v2.Notify.readAll',
-	  imNotifySchemaGet: 'im.notify.schema.get',
-	  imNotifyHistorySearch: 'im.notify.history.search',
-	  imNotifyAnswer: 'im.notify.answer',
-	  imCallBackgroundGet: 'call.Desktop.Background.get',
-	  imCallBackgroundCommit: 'call.Desktop.Background.commit',
-	  imCallBackgroundDelete: 'call.Desktop.Background.delete',
-	  imCallMaskGet: 'call.Desktop.Mask.get',
-	  imSmilesGet: 'smile.get',
-	  imPromotionRead: 'im.promotion.read',
-	  imBotGiphyListPopular: 'imbot.Giphy.listPopular',
-	  imBotGiphyList: 'imbot.Giphy.list',
-	  imBotDialogVote: 'imbot.dialog.vote',
-	  imBotNetworkChatCount: 'imbot.Network.Chat.count',
-	  imBotNetworkChatList: 'imbot.Network.Chat.list',
-	  imBotNetworkChatAdd: 'imbot.Network.Chat.add',
-	  linesDialogGet: 'imopenlines.dialog.get',
-	  socialnetworkCollabCreate: 'socialnetwork.collab.Collab.add',
-	  socialnetworkCollabUpdate: 'socialnetwork.collab.Collab.update',
-	  socialnetworkCollabDelete: 'socialnetwork.collab.Collab.delete',
-	  socialnetworkMemberAdd: 'socialnetwork.collab.Member.add',
-	  socialnetworkMemberDelete: 'socialnetwork.collab.Member.delete',
-	  socialnetworkMemberLeave: 'socialnetwork.collab.Member.leave',
-	  intranetInviteGetLinkByCollabId: 'intranet.invite.getLinkByCollabId',
-	  intranetInviteRegenerateLinkByCollabId: 'intranet.invite.regenerateLinkByCollabId',
-	  imV2McpSendSelectionHintOnce: 'aiassistant.api.McpHint.sendSelectionHintOnce'
+		imV2ChatLoad: 'im.v2.Chat.load',
+		imV2ChatGetDialogId: 'im.v2.Chat.getDialogId',
+		imV2ChatShallowLoad: 'im.v2.Chat.shallowLoad',
+		imV2ChatLoadInContext: 'im.v2.Chat.loadInContext',
+		imV2ChatLoadContext: 'im.v2.Chat.loadInContext',
+		imV2ChatAdd: 'im.v2.Chat.add',
+		imV2ChatUpdate: 'im.v2.Chat.update',
+		imV2ChatDelete: 'im.v2.Chat.delete',
+		imV2ChatUpdateAvatar: 'im.v2.Chat.updateAvatar',
+		imV2ChatRead: 'im.v2.Chat.read',
+		imV2ChatReadAll: 'im.v2.Chat.readAll',
+		imV2ChatReadAllByType: 'im.v2.Chat.readByType',
+		imV2ChatUnread: 'im.v2.Chat.unread',
+		imV2ChatJoin: 'im.v2.Chat.join',
+		imV2ChatDeleteUser: 'im.v2.Chat.deleteUser',
+		imV2ChatExtendPullWatch: 'im.v2.Chat.extendPullWatch',
+		imV2RecentChannelExtendPullWatch: 'im.v2.Recent.Channel.extendPullWatch',
+		imV2ChatMessageGetContext: 'im.v2.Chat.Message.getContext',
+		imV2ChatMessageSend: 'im.v2.Chat.Message.send',
+		imV2ChatMessageList: 'im.v2.Chat.Message.list',
+		imV2ChatMessageTail: 'im.v2.Chat.Message.tail',
+		imV2ChatMessageRead: 'im.v2.Chat.Message.read',
+		imV2ChatMessageMark: 'im.v2.Chat.Message.mark',
+		imV2ChatMessageDelete: 'im.v2.Chat.Message.delete',
+		imV2ChatMessageUpdate: 'im.v2.Chat.Message.update',
+		imV2ChatMessageReactionAdd: 'im.v2.Chat.Message.Reaction.add',
+		imV2ChatMessageReactionDelete: 'im.v2.Chat.Message.Reaction.delete',
+		imV2ChatMessageReactionTail: 'im.v2.Chat.Message.Reaction.tail',
+		imV2ChatMessagePin: 'im.v2.Chat.Message.pin',
+		imV2ChatMessageUnpin: 'im.v2.Chat.Message.unpin',
+		imV2ChatMessageTailViewers: 'im.v2.Chat.Message.tailViewers',
+		imV2ChatMessageDeleteRichUrl: 'im.v2.Chat.Message.deleteRichUrl',
+		imV2ChatMessageCommentInfoList: 'im.v2.Chat.Message.CommentInfo.list',
+		imV2ChatAnchorRead: 'im.v2.Chat.Anchor.read',
+		imV2ChatPinTail: 'im.v2.Chat.Pin.tail',
+		imV2ChatMentionList: 'im.v2.Chat.Mention.list',
+		imV2ChatListShared: 'im.v2.Chat.listShared',
+		imV2ChatCommentSubscribe: 'im.v2.Chat.Comment.subscribe',
+		imV2ChatCommentUnsubscribe: 'im.v2.Chat.Comment.unsubscribe',
+		imV2ChatCommentReadAll: 'im.v2.Chat.Comment.readAll',
+		imV2ChatAddManagers: 'im.v2.Chat.addManagers',
+		imV2ChatDeleteManagers: 'im.v2.Chat.deleteManagers',
+		imV2ChatMessageDisappear: 'im.v2.Chat.Message.disappear',
+		imV2ChatSetMessagesAutoDeleteDelay: 'im.v2.Chat.setMessagesAutoDeleteDelay',
+		imV2SettingsGeneralUpdate: 'im.v2.Settings.General.update',
+		imV2SettingsNotifyUpdate: 'im.v2.Settings.Notify.update',
+		imV2SettingsNotifySwitchScheme: 'im.v2.Settings.Notify.switchScheme',
+		imV2DesktopLogout: 'im.v2.Desktop.logout',
+		imV2UpdateState: 'im.v2.UpdateState.getStateData',
+		imV2BetaEnable: 'im.v2.Beta.enable',
+		imV2BetaDisable: 'im.v2.Beta.disable',
+		imV2ChatTaskPrepare: 'im.v2.Chat.Task.prepare',
+		imV2RecentChannelTail: 'im.v2.Recent.Channel.Tail',
+		imV2RecentCollabTail: 'im.v2.Recent.Collab.Tail',
+		imV2RecentExternalChatTail: 'im.v2.Recent.ExternalChat.Tail',
+		imV2RecentTail: 'im.v2.Recent.tail',
+		imV2ChatCopilotUpdateRole: 'im.v2.Chat.Copilot.updateRole',
+		imV2ChatCopilotUpdateAiModel: 'im.v2.Chat.Copilot.updateEngine',
+		imV2AccessCheck: 'im.v2.Access.check',
+		imV2ChatMemberEntitiesList: 'im.v2.Chat.MemberEntities.list',
+		imV2ChatInputActionNotify: 'im.v2.Chat.InputAction.notify',
+		imV2DiskFileSave: 'im.v2.Disk.File.save',
+		imV2ChatBotSendContext: 'im.v2.Chat.Bot.sendContext',
+		imV2ChatMemberTail: 'im.v2.Chat.Member.tail',
+		imV2DiskFileTranscribe: 'im.v2.Disk.File.transcribe',
+		imV2ChatSharedLinkGetIndividual: 'im.v2.Chat.SharingLink.getIndividual',
+		imV2ChatJoinByCode: 'im.v2.Chat.joinByCode',
+		imV2ChatSharedLinkRevoke: 'im.v2.Chat.SharingLink.revoke',
+		imV2ChatSharedLinkRegenerateIndividual: 'im.v2.Chat.SharingLink.regenerateIndividual',
+		imV2ChatGuestLinkGenerate: 'im.v2.Guest.Link.generate',
+		imV2ChatGuestLinkRegenerate: 'im.v2.Guest.Link.regenerate',
+		imV2ChatGuestLinkRevoke: 'im.v2.Guest.Link.revoke',
+		imV2ChatFilterUsersByParticipation: 'im.v2.Chat.Member.filterUsersByParticipation',
+		imV2RecentPin: 'im.v2.Chat.pin',
+		imV2RecentUnpin: 'im.v2.Chat.unpin',
+		imV2StickerPackLoad: 'im.v2.Sticker.Pack.load',
+		imV2StickerPackTail: 'im.v2.Sticker.Pack.tail',
+		imV2StickerPackGet: 'im.v2.Sticker.Pack.get',
+		imV2StickerPackAdd: 'im.v2.Sticker.Pack.add',
+		imV2StickerPackDelete: 'im.v2.Sticker.Pack.delete',
+		imV2StickerPackLink: 'im.v2.Sticker.Pack.link',
+		imV2StickerPackUnlink: 'im.v2.Sticker.Pack.unlink',
+		imV2StickerPackRename: 'im.v2.Sticker.Pack.rename',
+		imV2StickerRecentDelete: 'im.v2.Sticker.Recent.delete',
+		imV2StickerRecentDeleteAll: 'im.v2.Sticker.Recent.deleteAll',
+		imV2StickerAdd: 'im.v2.Sticker.add',
+		imV2StickerDelete: 'im.v2.Sticker.delete',
+		imV2AnchorRead: 'im.v2.Anchor.read',
+		imV2PromotionRead: 'im.v2.Promotion.read',
+		imV2CallZoomCreate: 'im.v2.Call.Zoom.create',
+		imCallBetaCreateRoom: 'im.call.beta.createRoom',
+		imMessageAdd: 'im.message.add',
+		imMessageCommand: 'im.message.command',
+		imChatMute: 'im.chat.mute',
+		imChatUpdateTitle: 'im.chat.updateTitle',
+		imChatFileCollectionGet: 'im.chat.file.collection.get',
+		imChatFileGet: 'im.chat.file.get',
+		imChatUrlGet: 'im.chat.url.get',
+		imChatUrlDelete: 'im.chat.url.delete',
+		imChatTaskGet: 'im.chat.task.get',
+		imChatTaskDelete: 'im.chat.task.delete',
+		imChatCalendarGet: 'im.chat.calendar.get',
+		imChatFavoriteAdd: 'im.chat.favorite.add',
+		imChatFavoriteDelete: 'im.chat.favorite.delete',
+		imChatFavoriteGet: 'im.chat.favorite.get',
+		imChatFavoriteCounterGet: 'im.chat.favorite.counter.get',
+		imChatUrlCounterGet: 'im.chat.url.counter.get',
+		imChatPinGet: 'im.chat.pin.get',
+		imChatPinAdd: 'im.chat.pin.add',
+		imChatPinDelete: 'im.chat.pin.delete',
+		imChatCalendarPrepare: 'im.chat.calendar.prepare',
+		imChatCalendarAdd: 'im.chat.calendar.add',
+		imChatCalendarDelete: 'im.chat.calendar.delete',
+		imChatUserDelete: 'im.chat.user.delete',
+		imChatUserAdd: 'im.chat.user.add',
+		imDialogWriting: 'im.dialog.writing',
+		imDialogUsersList: 'im.dialog.users.list',
+		imDialogMessagesSearch: 'im.dialog.messages.search',
+		imUserGet: 'im.user.get',
+		imUserListGet: 'im.user.list.get',
+		imUserStatusSet: 'im.user.status.set',
+		imUserStatusIdleStart: 'im.user.status.idle.start',
+		imUserStatusIdleEnd: 'im.user.status.idle.end',
+		imDiskFolderGet: 'im.disk.folder.get',
+		imDiskFolderListGet: 'im.disk.folder.list.get',
+		imDiskFilePreviewUpload: 'disk.api.file.attachPreview',
+		imDiskFileCommit: 'im.disk.file.commit',
+		imDiskFileDelete: 'im.disk.file.delete',
+		imDiskFileSave: 'im.disk.file.save',
+		imRecentGet: 'im.recent.get',
+		imRecentList: 'im.recent.list',
+		imRecentPin: 'im.recent.pin',
+		imRecentHide: 'im.recent.hide',
+		imNotifyGet: 'im.notify.get',
+		imNotifyRead: 'im.notify.read',
+		imNotifyReadAll: 'im.notify.read.all',
+		imV2NotifyRead: 'im.v2.Notify.read',
+		imV2NotifyReadAll: 'im.v2.Notify.readAll',
+		imNotifySchemaGet: 'im.notify.schema.get',
+		imNotifyHistorySearch: 'im.notify.history.search',
+		imNotifyAnswer: 'im.notify.answer',
+		imCallBackgroundGet: 'call.Desktop.Background.get',
+		imCallBackgroundCommit: 'call.Desktop.Background.commit',
+		imCallBackgroundDelete: 'call.Desktop.Background.delete',
+		imCallMaskGet: 'call.Desktop.Mask.get',
+		imSmilesGet: 'smile.get',
+		imPromotionRead: 'im.promotion.read',
+		imBotGiphyListPopular: 'imbot.Giphy.listPopular',
+		imBotGiphyList: 'imbot.Giphy.list',
+		imBotDialogVote: 'imbot.dialog.vote',
+		imBotNetworkChatCount: 'imbot.Network.Chat.count',
+		imBotNetworkChatList: 'imbot.Network.Chat.list',
+		imBotNetworkChatAdd: 'imbot.Network.Chat.add',
+		linesDialogGet: 'imopenlines.dialog.get',
+		socialnetworkCollabCreate: 'socialnetwork.collab.Collab.add',
+		socialnetworkCollabUpdate: 'socialnetwork.collab.Collab.update',
+		socialnetworkCollabDelete: 'socialnetwork.collab.Collab.delete',
+		socialnetworkMemberAdd: 'socialnetwork.collab.Member.add',
+		socialnetworkMemberDelete: 'socialnetwork.collab.Member.delete',
+		socialnetworkMemberLeave: 'socialnetwork.collab.Member.leave',
+		intranetInviteGetLinkByCollabId: 'intranet.invite.getLinkByCollabId',
+		intranetInviteRegenerateLinkByCollabId: 'intranet.invite.regenerateLinkByCollabId',
+		imV2McpSendSelectionHintOnce: 'aiassistant.api.McpHint.sendSelectionHintOnce'
 	});
 
 	const EventType = {
-	  // internal
-	  dialog: {
-	    onDialogInited: 'IM:Dialog:onDialogInited',
-	    onMessageDeleted: 'IM:Dialog:onMessageDeleted',
-	    onMessageIsVisible: 'IM:Dialog:onMessageIsVisible',
-	    onMessageIsNotVisible: 'IM:Dialog:onMessageIsNotVisible',
-	    onClickMessageContextMenu: 'IM:Dialog:onClickMessageContextMenu',
-	    scrollToBottom: 'IM:Dialog:scrollToBottom',
-	    goToMessageContext: 'IM:Dialog:goToMessageContext',
-	    showForwardPopup: 'IM:Dialog:showForwardPopup',
-	    openComments: 'IM:Dialog:openComments',
-	    closeComments: 'IM:Dialog:closeComments',
-	    showLoadingBar: 'IM:Dialog:showLoadingBar',
-	    hideLoadingBar: 'IM:Dialog:hideLoadingBar',
-	    showQuoteButton: 'IM:Dialog:showQuoteButton',
-	    openBulkActionsMode: 'IM:Dialog:openBulkActionsMode',
-	    closeBulkActionsMode: 'IM:Dialog:closeBulkActionsMode'
-	  },
-	  textarea: {
-	    onAfterSendMessage: 'IM:Textarea:onAfterSendMessage',
-	    editMessage: 'IM:Textarea:editMessage',
-	    replyMessage: 'IM:Textarea:replyMessage',
-	    insertText: 'IM:Textarea:insertText',
-	    insertMention: 'IM:Textarea:insertMention',
-	    insertForward: 'IM:Textarea:insertForward',
-	    sendMessage: 'IM:Textarea:sendMessage',
-	    openUploadPreview: 'IM:Textarea:openUploadPreview',
-	    getText: 'IM:Textarea:getText'
-	  },
-	  sidebar: {
-	    open: 'IM:Sidebar:open',
-	    close: 'IM:Sidebar:close'
-	  },
-	  header: {
-	    openAddToChatPopup: 'IM:Header:openAddToChatPopup'
-	  },
-	  search: {
-	    keyPressed: 'IM:Search:keyPressed'
-	  },
-	  recent: {
-	    openSearch: 'IM.Recent:openSearch'
-	  },
-	  mention: {
-	    selectItem: 'IM:Mention:selectItem',
-	    onAddUserToChat: 'IM:Mention:onAddUserToChat',
-	    onNestedMenuClosed: 'IM:Mention:onNestedMenuClosed'
-	  },
-	  reaction: {
-	    onReactionSelected: 'IM:Reaction:onReactionSelected'
-	  },
-	  slider: {
-	    onClose: 'onChatSliderClose'
-	  },
-	  request: {
-	    onAuthError: 'IM:request:onAuthError'
-	  },
-	  audioPlayer: {
-	    play: 'IM:AudioPlayer:play',
-	    stop: 'IM:AudioPlayer:stop',
-	    pause: 'IM:AudioPlayer:pause',
-	    preload: 'IM:AudioPlayer:preload'
-	  },
-	  roundVideoPlayer: {
-	    playNext: 'IM:RoundVideoPlayer:playNext',
-	    onClickPlay: 'IM:RoundVideoPlayer:onClickPlay'
-	  },
-	  key: {
-	    onBeforeEscape: 'IM:Keys:onBeforeEscape'
-	  },
-	  notifier: {
-	    onBeforeShowMessage: 'IM:Notifier:onBeforeShowMessage'
-	  },
-	  notification: {
-	    onFilterAuthorPopupStateChange: 'IM:Notification:Filter:onAuthorPopupStateChange',
-	    onFilterAuthorTagAdd: 'IM:Notification:Filter:onAuthorTagAdd',
-	    onFilterAuthorTagRemove: 'IM:Notification:Filter:onAuthorTagRemove'
-	  },
-	  // external
-	  layout: {
-	    onLayoutChange: 'IM.Layout:onLayoutChange',
-	    onOpenNotifications: 'IM.Layout:onOpenNotifications'
-	  },
-	  counter: {
-	    onNotificationCounterChange: 'onImUpdateCounterNotify',
-	    onChatCounterChange: 'onImUpdateCounterMessage',
-	    onImUpdateCounter: 'onImUpdateCounter',
-	    onUpdate: 'IM.Counters:onUpdate'
-	  },
-	  task: {
-	    onMembersCountChange: 'tasks:card:onMembersCountChange'
-	  },
-	  call: {
-	    onFold: 'CallController::onFold',
-	    onJoinFromRecentItem: 'IM.Call:onJoinFromRecentItem'
-	  },
-	  lines: {
-	    onInit: 'onLinesInit',
-	    openChat: 'openLinesChat',
-	    onChatOpen: 'onLinesChatOpen'
-	  },
-	  desktop: {
-	    onInit: 'onDesktopInit',
-	    onReload: 'onDesktopReload',
-	    onSyncPause: 'onDesktopSyncPause',
-	    onUserAway: 'BXUserAway',
-	    onWakeUp: 'BXWakeAction',
-	    onBxLink: 'BXProtocolUrl',
-	    onExit: 'BXExitApplication',
-	    onIconClick: 'BXApplicationClick',
-	    onNewTabClick: 'BXNewTabClick'
-	  }
+		// internal
+		dialog: {
+			onDialogInited: 'IM:Dialog:onDialogInited',
+			onMessageDeleted: 'IM:Dialog:onMessageDeleted',
+			onMessageIsVisible: 'IM:Dialog:onMessageIsVisible',
+			onMessageIsNotVisible: 'IM:Dialog:onMessageIsNotVisible',
+			onClickMessageContextMenu: 'IM:Dialog:onClickMessageContextMenu',
+			onCloseChat: 'IM:Dialog:onCloseChat',
+			scrollToBottom: 'IM:Dialog:scrollToBottom',
+			goToMessageContext: 'IM:Dialog:goToMessageContext',
+			showForwardPopup: 'IM:Dialog:showForwardPopup',
+			openComments: 'IM:Dialog:openComments',
+			closeComments: 'IM:Dialog:closeComments',
+			showLoadingBar: 'IM:Dialog:showLoadingBar',
+			hideLoadingBar: 'IM:Dialog:hideLoadingBar',
+			showQuoteButton: 'IM:Dialog:showQuoteButton',
+			openBulkActionsMode: 'IM:Dialog:openBulkActionsMode',
+			closeBulkActionsMode: 'IM:Dialog:closeBulkActionsMode'
+		},
+		textarea: {
+			onBeforeSendMessage: 'IM:Textarea:onBeforeSendMessage',
+			onAfterSendMessage: 'IM:Textarea:onAfterSendMessage',
+			editMessage: 'IM:Textarea:editMessage',
+			replyMessage: 'IM:Textarea:replyMessage',
+			insertText: 'IM:Textarea:insertText',
+			insertMention: 'IM:Textarea:insertMention',
+			insertForward: 'IM:Textarea:insertForward',
+			sendMessage: 'IM:Textarea:sendMessage',
+			openUploadPreview: 'IM:Textarea:openUploadPreview',
+			getText: 'IM:Textarea:getText'
+		},
+		sidebar: {
+			open: 'IM:Sidebar:open',
+			close: 'IM:Sidebar:close'
+		},
+		header: {
+			openAddToChatPopup: 'IM:Header:openAddToChatPopup'
+		},
+		search: {
+			keyPressed: 'IM:Search:keyPressed'
+		},
+		recent: {
+			openSearch: 'IM.Recent:openSearch',
+			openNestedList: 'IM.Recent:openNestedList',
+			closeListSlider: 'IM.Recent:closeListSlider'
+		},
+		mention: {
+			selectItem: 'IM:Mention:selectItem',
+			onAddUserToChat: 'IM:Mention:onAddUserToChat',
+			onNestedMenuClosed: 'IM:Mention:onNestedMenuClosed'
+		},
+		reaction: {
+			onReactionSelected: 'IM:Reaction:onReactionSelected'
+		},
+		slider: {
+			onClose: 'onChatSliderClose'
+		},
+		request: {
+			onAuthError: 'IM:request:onAuthError'
+		},
+		audioPlayer: {
+			play: 'IM:AudioPlayer:play',
+			stop: 'IM:AudioPlayer:stop',
+			pause: 'IM:AudioPlayer:pause',
+			preload: 'IM:AudioPlayer:preload'
+		},
+		roundVideoPlayer: {
+			playNext: 'IM:RoundVideoPlayer:playNext',
+			onClickPlay: 'IM:RoundVideoPlayer:onClickPlay'
+		},
+		key: {
+			onBeforeEscape: 'IM:Keys:onBeforeEscape'
+		},
+		notifier: {
+			onBeforeShowMessage: 'IM:Notifier:onBeforeShowMessage'
+		},
+		notification: {
+			onFilterAuthorPopupStateChange: 'IM:Notification:Filter:onAuthorPopupStateChange',
+			onFilterAuthorTagAdd: 'IM:Notification:Filter:onAuthorTagAdd',
+			onFilterAuthorTagRemove: 'IM:Notification:Filter:onAuthorTagRemove'
+		},
+		// external
+		layout: {
+			onLayoutChange: 'IM.Layout:onLayoutChange',
+			onOpenNotifications: 'IM.Layout:onOpenNotifications'
+		},
+		counter: {
+			onNotificationCounterChange: 'onImUpdateCounterNotify',
+			onChatCounterChange: 'onImUpdateCounterMessage',
+			onImUpdateCounter: 'onImUpdateCounter',
+			onUpdate: 'IM.Counters:onUpdate'
+		},
+		task: {
+			onMembersCountChange: 'tasks:card:onMembersCountChange',
+			openCardFromMessage: 'tasks:chat-action:before-execute'
+		},
+		call: {
+			onFold: 'CallController::onFold',
+			onJoinFromRecentItem: 'IM.Call:onJoinFromRecentItem'
+		},
+		lines: {
+			onInit: 'onLinesInit',
+			openChat: 'openLinesChat',
+			onChatOpen: 'onLinesChatOpen'
+		},
+		desktop: {
+			onInit: 'onDesktopInit',
+			onReload: 'onDesktopReload',
+			onSyncPause: 'onDesktopSyncPause',
+			onUserAway: 'BXUserAway',
+			onWakeUp: 'BXWakeAction',
+			onBxLink: 'BXProtocolUrl',
+			onExit: 'BXExitApplication',
+			onIconClick: 'BXApplicationClick',
+			onNewTabClick: 'BXNewTabClick'
+		},
+		sending: {
+			onBeforeAddMessageToModel: 'IM:Textarea:onBeforeAddMessageToModel'
+		}
 	};
 
 	const ChatType = Object.freeze({
-	  user: 'user',
-	  chat: 'chat',
-	  open: 'open',
-	  general: 'general',
-	  videoconf: 'videoconf',
-	  announcement: 'announcement',
-	  call: 'call',
-	  support24Notifier: 'support24Notifier',
-	  support24Question: 'support24Question',
-	  crm: 'crm',
-	  sonetGroup: 'sonetGroup',
-	  calendar: 'calendar',
-	  tasks: 'tasks',
-	  taskComments: 'tasksTask',
-	  thread: 'thread',
-	  mail: 'mail',
-	  lines: 'lines',
-	  copilot: 'copilot',
-	  channel: 'channel',
-	  openChannel: 'openChannel',
-	  generalChannel: 'generalChannel',
-	  comment: 'comment',
-	  collab: 'collab'
+		user: 'user',
+		chat: 'chat',
+		open: 'open',
+		general: 'general',
+		videoconf: 'videoconf',
+		announcement: 'announcement',
+		call: 'call',
+		support24Notifier: 'support24Notifier',
+		support24Question: 'support24Question',
+		crm: 'crm',
+		sonetGroup: 'sonetGroup',
+		calendar: 'calendar',
+		tasks: 'tasks',
+		taskComments: 'tasksTask',
+		thread: 'thread',
+		mail: 'mail',
+		lines: 'lines',
+		copilot: 'copilot',
+		channel: 'channel',
+		openChannel: 'openChannel',
+		generalChannel: 'generalChannel',
+		comment: 'comment',
+		collab: 'collab'
 	});
 	const DialogScrollThreshold = Object.freeze({
-	  none: 'none',
-	  nearTheBottom: 'nearTheBottom',
-	  halfScreenUp: 'halfScreenUp'
+		none: 'none',
+		nearTheBottom: 'nearTheBottom',
+		halfScreenUp: 'halfScreenUp'
 	});
 	const DialogBlockType = Object.freeze({
-	  dateGroup: 'dateGroup',
-	  authorGroup: 'authorGroup',
-	  newMessages: 'newMessages',
-	  markedMessages: 'markedMessages'
+		dateGroup: 'dateGroup',
+		authorGroup: 'authorGroup',
+		newMessages: 'newMessages',
+		markedMessages: 'markedMessages'
 	});
 	const DialogAlignment = Object.freeze({
-	  left: 'left',
-	  center: 'center'
+		left: 'left',
+		center: 'center'
 	});
+	const DialogIdChatPrefix = 'chat';
 
 	const FileStatus = Object.freeze({
-	  upload: 'upload',
-	  wait: 'wait',
-	  progress: 'progress',
-	  done: 'done',
-	  error: 'error',
-	  preparing: 'preparing'
+		upload: 'upload',
+		wait: 'wait',
+		progress: 'progress',
+		done: 'done',
+		error: 'error',
+		preparing: 'preparing'
 	});
 	const FileType = Object.freeze({
-	  image: 'image',
-	  video: 'video',
-	  audio: 'audio',
-	  file: 'file'
+		image: 'image',
+		video: 'video',
+		audio: 'audio',
+		file: 'file'
 	});
 	const FileIconType = Object.freeze({
-	  file: 'file',
-	  image: 'image',
-	  audio: 'audio',
-	  video: 'video',
-	  code: 'code',
-	  call: 'call',
-	  attach: 'attach',
-	  quote: 'quote',
-	  gallery: 'gallery'
+		file: 'file',
+		image: 'image',
+		audio: 'audio',
+		video: 'video',
+		code: 'code',
+		call: 'call',
+		attach: 'attach',
+		quote: 'quote',
+		gallery: 'gallery'
 	});
 	const FileViewerContext = Object.freeze({
-	  dialog: 'dialog',
-	  sidebarMain: 'sidebarMain',
-	  sidebarTabBriefs: 'sidebarTabBriefs',
-	  sidebarTabFiles: 'sidebarTabFiles',
-	  sidebarTabMedia: 'sidebarTabMedia',
-	  sidebarTabFileUnsorted: 'sidebarTabFileUnsorted'
+		dialog: 'dialog',
+		sidebarMain: 'sidebarMain',
+		sidebarTabBriefs: 'sidebarTabBriefs',
+		sidebarTabFiles: 'sidebarTabFiles',
+		sidebarTabMedia: 'sidebarTabMedia',
+		sidebarTabFileUnsorted: 'sidebarTabFileUnsorted'
 	});
 	const AudioPlaybackRate = Object.freeze({
-	  1: 1,
-	  1.5: 1.5,
-	  2: 2
+		1: 1,
+		1.5: 1.5,
+		2: 2
 	});
 	const AudioPlaybackState = Object.freeze({
-	  play: 'play',
-	  pause: 'pause',
-	  stop: 'stop',
-	  none: 'none'
+		play: 'play',
+		pause: 'pause',
+		stop: 'stop',
+		none: 'none'
 	});
 
 	const MessageType = Object.freeze({
-	  self: 'self',
-	  opponent: 'opponent',
-	  system: 'system'
+		self: 'self',
+		opponent: 'opponent',
+		system: 'system'
 	});
 	const MessageComponent = Object.freeze({
-	  default: 'DefaultMessage',
-	  file: 'FileMessage',
-	  smile: 'SmileMessage',
-	  sticker: 'StickerMessage',
-	  unsupported: 'UnsupportedMessage',
-	  deleted: 'DeletedMessage',
-	  error: 'ErrorMessage',
-	  callInvite: 'CallInviteMessage',
-	  zoomInvite: 'ZoomInviteMessage',
-	  chatCreation: 'ChatCreationMessage',
-	  ownChatCreation: 'OwnChatCreationMessage',
-	  copilotCreation: 'ChatCopilotCreationMessage',
-	  copilotMessage: 'CopilotMessage',
-	  copilotAddedUsers: 'ChatCopilotAddedUsersMessage',
-	  conferenceCreation: 'ConferenceCreationMessage',
-	  supervisorUpdateFeature: 'SupervisorUpdateFeatureMessage',
-	  supervisorEnableFeature: 'SupervisorEnableFeatureMessage',
-	  sign: 'SignMessage',
-	  admin: 'AdminMessage',
-	  checkIn: 'CheckInMessage',
-	  supportVote: 'SupportVoteMessage',
-	  supportSessionNumber: 'SupportSessionNumberMessage',
-	  supportChatCreation: 'SupportChatCreationMessage',
-	  channelPost: 'ChannelPost',
-	  generalChatCreationMessage: 'GeneralChatCreationMessage',
-	  generalChannelCreationMessage: 'GeneralChannelCreationMessage',
-	  channelCreationMessage: 'ChannelCreationMessage',
-	  callMessage: 'CallMessage',
-	  voteMessage: 'VoteMessage',
-	  taskChatCreationMessage: 'TaskChatCreationMessage',
-	  convertToCollabMessage: 'ConvertToCollabMessage',
-	  aiAssistantMessage: 'AiAssistantMessage',
-	  aiBizprocMessage: 'AiBizprocMessage',
-	  ...imopenlines_v2_const.OpenLinesMessageComponent
+		default: 'DefaultMessage',
+		file: 'FileMessage',
+		smile: 'SmileMessage',
+		sticker: 'StickerMessage',
+		unsupported: 'UnsupportedMessage',
+		deleted: 'DeletedMessage',
+		error: 'ErrorMessage',
+		callInvite: 'CallInviteMessage',
+		zoomInvite: 'ZoomInviteMessage',
+		chatCreation: 'ChatCreationMessage',
+		ownChatCreation: 'OwnChatCreationMessage',
+		copilotCreation: 'ChatCopilotCreationMessage',
+		copilotMessage: 'CopilotMessage',
+		copilotAddedUsers: 'ChatCopilotAddedUsersMessage',
+		conferenceCreation: 'ConferenceCreationMessage',
+		supervisorUpdateFeature: 'SupervisorUpdateFeatureMessage',
+		supervisorEnableFeature: 'SupervisorEnableFeatureMessage',
+		sign: 'SignMessage',
+		admin: 'AdminMessage',
+		checkIn: 'CheckInMessage',
+		supportVote: 'SupportVoteMessage',
+		supportSessionNumber: 'SupportSessionNumberMessage',
+		supportChatCreation: 'SupportChatCreationMessage',
+		channelPost: 'ChannelPost',
+		generalChatCreationMessage: 'GeneralChatCreationMessage',
+		generalChannelCreationMessage: 'GeneralChannelCreationMessage',
+		channelCreationMessage: 'ChannelCreationMessage',
+		callMessage: 'CallMessage',
+		voteMessage: 'VoteMessage',
+		taskChatCreationMessage: 'TaskChatCreationMessage',
+		convertToCollabMessage: 'ConvertToCollabMessage',
+		aiAssistantMessage: 'AiAssistantMessage',
+		aiBizprocMessage: 'AiBizprocMessage',
+		builderMessage: 'builderMessage',
+		...imopenlines_v2_const.OpenLinesMessageComponent
 	});
 	const MessageMentionType = Object.freeze({
-	  user: 'USER',
-	  chat: 'CHAT',
-	  lines: 'LINES',
-	  context: 'CONTEXT',
-	  call: 'CALL'
+		user: 'USER',
+		chat: 'CHAT',
+		lines: 'LINES',
+		context: 'CONTEXT',
+		call: 'CALL'
 	});
 	const MessageStatus = {
-	  received: 'received',
-	  delivered: 'delivered',
-	  error: 'error'
+		received: 'received',
+		delivered: 'delivered',
+		error: 'error'
 	};
 	const OwnMessageStatus = Object.freeze({
-	  sending: 'sending',
-	  sent: 'sent',
-	  viewed: 'viewed',
-	  error: 'error'
+		sending: 'sending',
+		sent: 'sent',
+		viewed: 'viewed',
+		error: 'error'
 	});
 	const FakeMessagePrefix = 'temp';
 	const FakeDraftMessagePrefix = 'temp-draft';
 	const AutoDeleteDelay = Object.freeze({
-	  Off: 0,
-	  Hour: 1,
-	  Day: 24,
-	  Week: 168,
-	  Month: 720
+		Off: 0,
+		Hour: 1,
+		Day: 24,
+		Week: 168,
+		Month: 720
 	});
 
 	const RecentCallStatus = {
-	  waiting: 'waiting',
-	  joined: 'joined'
+		waiting: 'waiting',
+		joined: 'joined'
 	};
 	const RecentType = {
-	  default: 'default',
-	  copilot: 'copilot',
-	  openChannel: 'openChannel',
-	  collab: 'collab',
-	  taskComments: 'tasksTask',
-	  openlines: 'lines'
+		default: 'default',
+		copilot: 'copilot',
+		openChannel: 'openChannel',
+		collab: 'collab',
+		taskComments: 'tasksTask',
+		openlines: 'lines',
+		calendar: 'calendar',
+		collabDefault: 'collabDefault',
+		collabChat: 'collabChat'
 	};
 
 	const NotificationTypesCodes = Object.freeze({
-	  confirm: 1,
-	  simple: 3
+		confirm: 1,
+		simple: 3
 	});
 	const NotificationSettingsMode = {
-	  simple: 'simple',
-	  expert: 'expert'
+		simple: 'simple',
+		expert: 'expert'
 	};
 
 	const Layout = {
-	  chat: 'chat',
-	  createChat: 'createChat',
-	  updateChat: 'updateChat',
-	  channel: 'channel',
-	  notification: 'notification',
-	  openlines: 'openlines',
-	  openlinesV2: 'openlinesV2',
-	  conference: 'conference',
-	  settings: 'settings',
-	  copilot: 'copilot',
-	  collab: 'collab',
-	  market: 'market',
-	  taskComments: 'tasksTask'
+		chat: 'chat',
+		createChat: 'createChat',
+		updateChat: 'updateChat',
+		channel: 'channel',
+		notification: 'notification',
+		openlines: 'openlines',
+		openlinesV2: 'openlinesV2',
+		conference: 'conference',
+		settings: 'settings',
+		copilot: 'copilot',
+		collab: 'collab',
+		market: 'market',
+		taskComments: 'tasksTask'
 	};
 
 	const SearchEntityIdTypes = {
-	  user: 'user',
-	  imUser: 'im-user',
-	  bot: 'im-bot',
-	  chat: 'im-chat',
-	  chatUser: 'im-chat-user',
-	  department: 'department',
-	  network: 'imbot-network'
+		user: 'user',
+		imUser: 'im-user',
+		bot: 'im-bot',
+		chat: 'im-chat',
+		chatUser: 'im-chat-user',
+		department: 'department',
+		network: 'imbot-network',
+		openLines: 'LINES'
 	};
 
 	const UserStatus = {
-	  offline: 'offline',
-	  online: 'online',
-	  mobileOnline: 'mobile-online',
-	  away: 'away',
-	  idle: 'idle',
-	  dnd: 'dnd',
-	  break: 'break'
+		offline: 'offline',
+		online: 'online',
+		mobileOnline: 'mobile-online',
+		away: 'away',
+		idle: 'idle',
+		dnd: 'dnd',
+		break: 'break'
 	};
 	const UserType = {
-	  user: 'user',
-	  bot: 'bot',
-	  extranet: 'extranet',
-	  collaber: 'collaber'
+		user: 'user',
+		bot: 'bot',
+		extranet: 'extranet',
+		collaber: 'collaber'
 	};
 	const UserRole = {
-	  guest: 'guest',
-	  member: 'member',
-	  manager: 'manager',
-	  owner: 'owner',
-	  none: 'none'
+		guest: 'guest',
+		member: 'member',
+		manager: 'manager',
+		owner: 'owner',
+		none: 'none'
 	};
 	const UserIdNetworkPrefix = 'network';
 
 	const SidebarDetailBlock = Object.freeze({
-	  main: 'main',
-	  members: 'members',
-	  link: 'link',
-	  favorite: 'favorite',
-	  task: 'task',
-	  brief: 'brief',
-	  media: 'media',
-	  file: 'file',
-	  audio: 'audio',
-	  document: 'document',
-	  fileUnsorted: 'fileUnsorted',
-	  meeting: 'meeting',
-	  market: 'market',
-	  messageSearch: 'messageSearch',
-	  chatsWithUser: 'chatsWithUser',
-	  multidialog: 'multidialog',
-	  sharedLink: 'sharedLink',
-	  none: ''
+		main: 'main',
+		members: 'members',
+		link: 'link',
+		favorite: 'favorite',
+		task: 'task',
+		brief: 'brief',
+		media: 'media',
+		file: 'file',
+		audio: 'audio',
+		document: 'document',
+		fileUnsorted: 'fileUnsorted',
+		meeting: 'meeting',
+		market: 'market',
+		messageSearch: 'messageSearch',
+		chatsWithUser: 'chatsWithUser',
+		multidialog: 'multidialog',
+		sharedLink: 'sharedLink',
+		none: ''
 	});
 	const SidebarFileGroups = Object.freeze({
-	  media: 'media',
-	  audio: 'audio',
-	  file: 'file',
-	  brief: 'brief',
-	  fileUnsorted: 'fileUnsorted'
+		media: 'media',
+		audio: 'audio',
+		file: 'file',
+		brief: 'brief',
+		fileUnsorted: 'fileUnsorted'
 	});
 	const SidebarFileTabGroups = Object.freeze({
-	  [SidebarFileGroups.media]: SidebarFileGroups.media,
-	  [SidebarFileGroups.file]: SidebarFileGroups.file,
-	  [SidebarFileGroups.audio]: SidebarFileGroups.audio,
-	  [SidebarFileGroups.brief]: SidebarFileGroups.brief
+		[SidebarFileGroups.media]: SidebarFileGroups.media,
+		[SidebarFileGroups.file]: SidebarFileGroups.file,
+		[SidebarFileGroups.audio]: SidebarFileGroups.audio,
+		[SidebarFileGroups.brief]: SidebarFileGroups.brief
 	});
 	const SidebarMainPanelBlock = {
-	  support: 'support',
-	  chat: 'chat',
-	  selfChat: 'selfChat',
-	  user: 'user',
-	  copilot: 'copilot',
-	  copilotInfo: 'copilotInfo',
-	  info: 'info',
-	  post: 'post',
-	  fileList: 'fileList',
-	  fileUnsortedList: 'fileUnsortedList',
-	  task: 'task',
-	  taskList: 'taskList',
-	  taskCommentsHistory: 'taskCommentsHistory',
-	  meetingList: 'meetingList',
-	  marketAppList: 'marketAppList',
-	  multidialog: 'multidialog',
-	  tariffLimit: 'tariffLimit',
-	  collabHelpdesk: 'collabHelpdesk'
+		support: 'support',
+		chat: 'chat',
+		selfChat: 'selfChat',
+		user: 'user',
+		copilot: 'copilot',
+		copilotInfo: 'copilotInfo',
+		info: 'info',
+		post: 'post',
+		fileList: 'fileList',
+		fileUnsortedList: 'fileUnsortedList',
+		task: 'task',
+		taskList: 'taskList',
+		taskCommentsHistory: 'taskCommentsHistory',
+		meetingList: 'meetingList',
+		marketAppList: 'marketAppList',
+		multidialog: 'multidialog',
+		tariffLimit: 'tariffLimit',
+		collabHelpdesk: 'collabHelpdesk'
 	};
 
 	const Color = Object.freeze({
-	  base: '#17a3ea',
-	  transparent: 'transparent',
-	  white: '#fff',
-	  gray40: '#bdc1c6',
-	  gray90: '#525c69',
-	  collab70: '#00a94e',
-	  collab60: '#19cc45',
-	  collab50: '#6be860',
-	  collab10: '#f2fee2',
-	  orange50: '#ffa900',
-	  orangeExtra: '#e88c02',
-	  accentBlue: '#00ace3',
-	  accentExtraAqua: '#37C5D8',
-	  accentMainPrimaryAlt: '#1f86ff',
-	  accentSoftBorderBlue: '#88c8f8',
-	  accentMainSuccess: '#1bce7b',
-	  accentMainSuccessAlt: '#00a659',
-	  base4: '#a8adb4',
-	  blue60: '#11a9d9'
+		base: '#17a3ea',
+		transparent: 'transparent',
+		white: '#fff',
+		gray40: '#bdc1c6',
+		gray90: '#525c69',
+		collab70: '#00a94e',
+		collab60: '#19cc45',
+		collab50: '#6be860',
+		collab10: '#f2fee2',
+		orange50: '#ffa900',
+		orangeExtra: '#e88c02',
+		accentBlue: '#00ace3',
+		accentExtraAqua: '#37C5D8',
+		accentMainPrimaryAlt: '#1f86ff',
+		accentSoftBorderBlue: '#88c8f8',
+		accentMainSuccess: '#1bce7b',
+		accentMainSuccessAlt: '#00a659',
+		base4: '#a8adb4',
+		blue60: '#11a9d9'
 	});
 	const ColorToken = Object.freeze({
-	  base: 'base',
-	  primary: 'primary',
-	  secondary: 'secondary',
-	  alert: 'alert'
+		base: 'base',
+		primary: 'primary',
+		secondary: 'secondary',
+		alert: 'alert'
 	});
 
 	const AttachType = Object.freeze({
-	  Delimiter: 'delimiter',
-	  File: 'file',
-	  Grid: 'grid',
-	  Html: 'html',
-	  Image: 'image',
-	  Link: 'link',
-	  Message: 'message',
-	  Rich: 'richLink',
-	  User: 'user'
+		Delimiter: 'delimiter',
+		File: 'file',
+		Grid: 'grid',
+		Html: 'html',
+		Image: 'image',
+		Link: 'link',
+		Message: 'message',
+		Rich: 'richLink',
+		User: 'user'
 	});
 	const AttachDescription = Object.freeze({
-	  firstMessage: 'FIRST_MESSAGE',
-	  skipMessage: 'SKIP_MESSAGE'
+		firstMessage: 'FIRST_MESSAGE',
+		skipMessage: 'SKIP_MESSAGE'
 	});
 
+	// message
+
+	// delimiter
+
+	// file
+
+	// grid
+
+	// html
+
+	// image
+
+	// link
+
+	// rich
+
+	// user
+
 	const KeyboardButtonType = {
-	  button: 'BUTTON',
-	  newLine: 'NEWLINE'
+		button: 'BUTTON',
+		newLine: 'NEWLINE'
 	};
 	const KeyboardButtonContext = {
-	  all: 'ALL',
-	  mobile: 'MOBILE',
-	  desktop: 'DESKTOP'
+		all: 'ALL',
+		mobile: 'MOBILE',
+		desktop: 'DESKTOP'
 	};
 	const KeyboardButtonDisplay = {
-	  block: 'BLOCK',
-	  line: 'LINE'
+		block: 'BLOCK',
+		line: 'LINE'
 	};
 	const KeyboardButtonAction = {
-	  put: 'PUT',
-	  send: 'SEND',
-	  copy: 'COPY',
-	  call: 'CALL',
-	  dialog: 'DIALOG'
+		put: 'PUT',
+		send: 'SEND',
+		copy: 'COPY',
+		call: 'CALL',
+		dialog: 'DIALOG'
 	};
 
 	const WINDOW_ACTIVATION_DELAY = 300;
 	const DesktopBxLink = {
-	  chat: 'chat',
-	  lines: 'lines',
-	  call: 'call',
-	  phone: 'phone',
-	  conference: 'conference',
-	  callList: 'callList',
-	  notifications: 'notifications',
-	  recentSearch: 'recentSearch',
-	  timeManager: 'timemanpwt',
-	  copilot: 'copilot',
-	  collab: 'collab',
-	  channel: 'channel',
-	  taskComments: 'taskComments',
-	  settings: 'settings',
-	  openTab: 'openTab',
-	  openPage: 'openPage',
-	  chatCreation: 'chatCreation',
-	  botContext: 'botContext',
-	  openLayout: 'openLayout'
+		chat: 'chat',
+		lines: 'lines',
+		call: 'call',
+		phone: 'phone',
+		conference: 'conference',
+		callList: 'callList',
+		notifications: 'notifications',
+		recentSearch: 'recentSearch',
+		timeManager: 'timemanpwt',
+		copilot: 'copilot',
+		collab: 'collab',
+		channel: 'channel',
+		taskComments: 'taskComments',
+		settings: 'settings',
+		openTab: 'openTab',
+		openPage: 'openPage',
+		chatCreation: 'chatCreation',
+		botContext: 'botContext',
+		openLayout: 'openLayout'
 	};
 	const LegacyDesktopBxLink = {
-	  messenger: 'messenger',
-	  chat: 'chat',
-	  videoconf: 'videoconf',
-	  notify: 'notify',
-	  callTo: 'callto',
-	  callList: 'calllist'
+		messenger: 'messenger',
+		chat: 'chat',
+		videoconf: 'videoconf',
+		notify: 'notify',
+		callTo: 'callto',
+		callList: 'calllist'
 	};
 	const DesktopBroadcastAction = {
-	  notification: 'notification',
-	  answerButtonClick: 'answerButtonClick',
-	  bxLink: 'bxLink'
+		notification: 'notification',
+		answerButtonClick: 'answerButtonClick',
+		bxLink: 'bxLink'
 	};
 
 	const LocalStorageKey = Object.freeze({
-	  smileLastUpdateTime: 'smileLastUpdateTime',
-	  sidebarOpened: 'sidebarOpened',
-	  textareaMarketOpened: 'textareaMarketOpened',
-	  textareaHeight: 'textareaHeight',
-	  lastCallType: 'lastCallType',
-	  lastNotificationId: 'lastNotificationId',
-	  layoutConfig: 'layoutConfig',
-	  audioPlaybackRate: 'audioPlaybackRate',
-	  emotePopupTab: 'emotePopupTab',
-	  taskCommentsCardOpened: 'taskCommentsCardOpened'
+		smileLastUpdateTime: 'smileLastUpdateTime',
+		sidebarOpened: 'sidebarOpened',
+		textareaMarketOpened: 'textareaMarketOpened',
+		textareaHeight: 'textareaHeight',
+		lastCallType: 'lastCallType',
+		lastNotificationId: 'lastNotificationId',
+		layoutConfig: 'layoutConfig',
+		audioPlaybackRate: 'audioPlaybackRate',
+		emotePopupTab: 'emotePopupTab',
+		invitePopupTab: 'invitePopupTab',
+		taskCommentsCardOpened: 'taskCommentsCardOpened',
+		copilotWidgetLastDialogId: 'copilotWidgetLastDialogId'
 	});
 
 	const PlacementType = Object.freeze({
-	  contextMenu: 'IM_CONTEXT_MENU',
-	  navigation: 'IM_NAVIGATION',
-	  textarea: 'IM_TEXTAREA',
-	  sidebar: 'IM_SIDEBAR',
-	  smilesSelector: 'IM_SMILES_SELECTOR'
+		contextMenu: 'IM_CONTEXT_MENU',
+		navigation: 'IM_NAVIGATION',
+		textarea: 'IM_TEXTAREA',
+		sidebar: 'IM_SIDEBAR',
+		smilesSelector: 'IM_SMILES_SELECTOR'
 	});
 
 	const PopupType = Object.freeze({
-	  userProfile: 'im-user-settings-popup',
-	  userStatus: 'im-user-status-popup',
-	  backgroundSelect: 'im-background-select-popup',
-	  recentContextMenu: 'im-recent-context-menu',
-	  recentHeaderMenu: 'im-recent-header-menu',
-	  createChatMenu: 'im-create-chat-menu',
-	  dialogMessageMenu: 'bx-im-message-context-menu',
-	  dialogAvatarMenu: 'bx-im-avatar-context-menu',
-	  dialogReactionUsers: 'bx-im-message-reaction-users',
-	  dialogReadUsers: 'bx-im-dialog-read-users',
-	  createChatManageUsersAddMenu: 'im-content-create-chat-manage-users-add',
-	  createChatManageUsersDeleteMenu: 'im-content-create-chat-manage-users-delete',
-	  createChatManageUiMenu: 'im-content-create-chat-manage-ui',
-	  createChatManageMessagesMenu: 'im-content-create-chat-can-post',
-	  messageBaseFileMenu: 'im-message-base-file-context-menu',
-	  desktopItemMenu: 'im-navigation-desktop-item-context-menu',
-	  messageHistoryLimit: 'im-message-history-limit-popup',
-	  emoteSelector: 'im-emote-selector-popup',
-	  stickerPack: 'im-sticker-pack-popup',
-	  stickerContextMenu: 'im-sticker-context-menu',
-	  stickerPackContextMenu: 'im-sticker-pack-context-menu',
-	  sharedLinkContextMenu: 'im-shared-link-context-menu',
-	  mentionAddToChatDropdown: 'im-mention-add-to-chat-dropdown'
+		userProfile: 'im-user-settings-popup',
+		userStatus: 'im-user-status-popup',
+		backgroundSelect: 'im-background-select-popup',
+		recentContextMenu: 'im-recent-context-menu',
+		recentHeaderMenu: 'im-recent-header-menu',
+		createChatMenu: 'im-create-chat-menu',
+		dialogMessageMenu: 'bx-im-message-context-menu',
+		dialogAvatarMenu: 'bx-im-avatar-context-menu',
+		dialogReactionUsers: 'bx-im-message-reaction-users',
+		dialogReadUsers: 'bx-im-dialog-read-users',
+		createChatManageUsersAddMenu: 'im-content-create-chat-manage-users-add',
+		createChatManageUsersDeleteMenu: 'im-content-create-chat-manage-users-delete',
+		createChatManageUiMenu: 'im-content-create-chat-manage-ui',
+		createChatManageMessagesMenu: 'im-content-create-chat-can-post',
+		messageBaseFileMenu: 'im-message-base-file-context-menu',
+		desktopItemMenu: 'im-navigation-desktop-item-context-menu',
+		messageHistoryLimit: 'im-message-history-limit-popup',
+		emoteSelector: 'im-emote-selector-popup',
+		stickerPack: 'im-sticker-pack-popup',
+		stickerContextMenu: 'im-sticker-context-menu',
+		stickerPackContextMenu: 'im-sticker-pack-context-menu',
+		sharedLinkContextMenu: 'im-shared-link-context-menu',
+		mentionAddToChatDropdown: 'im-mention-add-to-chat-dropdown'
 	});
 
 	const Settings = Object.freeze({
-	  appearance: {
-	    background: 'backgroundImageId',
-	    alignment: 'chatAlignment'
-	  },
-	  notification: {
-	    enableSound: 'enableSound',
-	    enableAutoRead: 'notifyAutoRead',
-	    mode: 'notifyScheme',
-	    enableWeb: 'notifySchemeSendSite',
-	    enableMail: 'notifySchemeSendEmail',
-	    enablePush: 'notifySchemeSendPush'
-	  },
-	  hotkey: {
-	    sendByEnter: 'sendByEnter'
-	  },
-	  message: {
-	    bigSmiles: 'enableBigSmile'
-	  },
-	  recent: {
-	    showBirthday: 'viewBirthday',
-	    showInvited: 'viewCommonUsers',
-	    showLastMessage: 'viewLastMessage'
-	  },
-	  desktop: {
-	    enableRedirect: 'openDesktopFromPanel'
-	  },
-	  user: {
-	    status: 'status'
-	  },
-	  notifications: 'notifications'
+		appearance: {
+			background: 'backgroundImageId',
+			alignment: 'chatAlignment'
+		},
+		notification: {
+			enableSound: 'enableSound',
+			enableAutoRead: 'notifyAutoRead',
+			mode: 'notifyScheme',
+			enableWeb: 'notifySchemeSendSite',
+			enableMail: 'notifySchemeSendEmail',
+			enablePush: 'notifySchemeSendPush'
+		},
+		hotkey: {
+			sendByEnter: 'sendByEnter'
+		},
+		message: {
+			bigSmiles: 'enableBigSmile'
+		},
+		recent: {
+			showBirthday: 'viewBirthday',
+			showInvited: 'viewCommonUsers',
+			showLastMessage: 'viewLastMessage'
+		},
+		desktop: {
+			enableRedirect: 'openDesktopFromPanel'
+		},
+		user: {
+			status: 'status'
+		},
+		notifications: 'notifications'
 	});
 	const SettingsSection = Object.freeze({
-	  appearance: 'appearance',
-	  notification: 'notification',
-	  hotkey: 'hotkey',
-	  message: 'message',
-	  recent: 'recent',
-	  desktop: 'desktop'
+		appearance: 'appearance',
+		notification: 'notification',
+		hotkey: 'hotkey',
+		message: 'message',
+		recent: 'recent',
+		desktop: 'desktop'
 	});
 	const NotificationSettingsType = {
-	  web: 'site',
-	  mail: 'mail',
-	  push: 'push'
+		web: 'site',
+		mail: 'mail',
+		push: 'push'
 	};
 
 	const SoundType = {
-	  reminder: 'reminder',
-	  newMessage1: 'newMessage1',
-	  newMessage2: 'newMessage2',
-	  send: 'send',
-	  dialtone: 'dialtone',
-	  ringtone: 'ringtone',
-	  ringtoneModern: 'ringtoneModern',
-	  start: 'start',
-	  stop: 'stop',
-	  error: 'error'
+		reminder: 'reminder',
+		newMessage1: 'newMessage1',
+		newMessage2: 'newMessage2',
+		send: 'send',
+		dialtone: 'dialtone',
+		ringtone: 'ringtone',
+		ringtoneModern: 'ringtoneModern',
+		start: 'start',
+		stop: 'stop',
+		error: 'error'
 	};
 
 	const PromoId = Object.freeze({
-	  createGroupChat: 'im:group-chat-create:20062023:all',
-	  createConference: 'im:conference-create:24082023:all',
-	  createChannel: 'im:channel-create:04032024:all',
-	  createCollabDescription: 'im:collab-create:12092024:all',
-	  addUsersToCopilotChat: 'im:add-users-to-copilot-chat:09042024:all',
-	  changeRoleCopilot: 'im:change-role-copilot-chat:09042024:all',
-	  collabHelpdeskSidebar: 'im:collab-helpdesk-sidebar:30102024:all',
-	  downloadSeveralFiles: 'im:download-several-files:22112024:all',
-	  embeddedChatEmptyState: 'im:air-chat-empty-state:29042025:all',
-	  collabEntities: 'socialnetwork:CreatedTaskOrMeetingOrFileThreeDays-collab',
-	  membersNotInvitedOneDayToCollab: 'socialnetwork:MembersNotInvitedOneDay-collab',
-	  membersNotInvitedFourDayToCollab: 'socialnetwork:MembersNotInvitedFourDays-collab',
-	  collaberNotAcceptInvitationOneDay: 'socialnetwork:CollaberNotAcceptInvitationOneDay-collab',
-	  recentCreateChatInviteUsers: 'im:recent-create-chat-invite-users:22052025:all',
-	  desktopModeSelection: 'im:desktop-mode-selection:13082025:all',
-	  stickersAvailable: 'im:stickers-available:27112025:all'
+		createGroupChat: 'im:group-chat-create:20062023:all',
+		createConference: 'im:conference-create:24082023:all',
+		createChannel: 'im:channel-create:04032024:all',
+		createCollabDescription: 'im:collab-create:12092024:all',
+		addUsersToCopilotChat: 'im:add-users-to-copilot-chat:09042024:all',
+		changeRoleCopilot: 'im:change-role-copilot-chat:09042024:all',
+		collabHelpdeskSidebar: 'im:collab-helpdesk-sidebar:30102024:all',
+		downloadSeveralFiles: 'im:download-several-files:22112024:all',
+		embeddedChatEmptyState: 'im:air-chat-empty-state:29042025:all',
+		collabEntities: 'socialnetwork:CreatedTaskOrMeetingOrFileThreeDays-collab',
+		membersNotInvitedOneDayToCollab: 'socialnetwork:MembersNotInvitedOneDay-collab',
+		membersNotInvitedFourDayToCollab: 'socialnetwork:MembersNotInvitedFourDays-collab',
+		collaberNotAcceptInvitationOneDay: 'socialnetwork:CollaberNotAcceptInvitationOneDay-collab',
+		recentCreateChatInviteUsers: 'im:recent-create-chat-invite-users:22052025:all',
+		desktopModeSelection: 'im:desktop-mode-selection:13082025:all',
+		stickersAvailable: 'im:stickers-available:27112025:all',
+		createCollabNestedChatDescription: 'im:create-collab-nested-chat-description:20032026:all'
 	});
 
 	const ActionByRole = Object.freeze({
-	  avatar: 'avatar',
-	  call: 'call',
-	  extend: 'extend',
-	  leave: 'leave',
-	  leaveOwner: 'leaveOwner',
-	  kick: 'kick',
-	  mute: 'mute',
-	  rename: 'rename',
-	  send: 'send',
-	  deleteOthersMessage: 'deleteOthersMessage',
-	  deleteCompleteOwnMessage: 'deleteCompleteOwnMessage',
-	  userList: 'userList',
-	  changeOwner: 'changeOwner',
-	  changeManagers: 'changeManagers',
-	  update: 'update',
-	  delete: 'delete',
-	  readMessage: 'readMessage',
-	  openComments: 'openComments',
-	  subscribeToComments: 'subscribeToComments',
-	  openSidebar: 'openSidebar',
-	  pinMessage: 'pinMessage',
-	  setReaction: 'setReaction',
-	  createMeeting: 'createMeeting',
-	  createTask: 'createTask',
-	  openAvatarMenu: 'openAvatarMenu',
-	  openMessageMenu: 'openMessageMenu',
-	  openSidebarMenu: 'openSidebarMenu',
-	  updateInviteLink: 'updateInviteLink',
-	  createDocumentSign: 'createDocumentSign',
-	  createCalendarSlots: 'createCalendarSlots',
-	  changeMessagesAutoDeleteDelay: 'changeMessagesAutoDeleteDelay'
+		avatar: 'avatar',
+		call: 'call',
+		extend: 'extend',
+		leave: 'leave',
+		leaveOwner: 'leaveOwner',
+		kick: 'kick',
+		mute: 'mute',
+		rename: 'rename',
+		send: 'send',
+		deleteOthersMessage: 'deleteOthersMessage',
+		deleteCompleteOwnMessage: 'deleteCompleteOwnMessage',
+		userList: 'userList',
+		changeOwner: 'changeOwner',
+		changeManagers: 'changeManagers',
+		update: 'update',
+		delete: 'delete',
+		readMessage: 'readMessage',
+		openComments: 'openComments',
+		subscribeToComments: 'subscribeToComments',
+		openSidebar: 'openSidebar',
+		pinMessage: 'pinMessage',
+		setReaction: 'setReaction',
+		createMeeting: 'createMeeting',
+		createTask: 'createTask',
+		openAvatarMenu: 'openAvatarMenu',
+		openMessageMenu: 'openMessageMenu',
+		openSidebarMenu: 'openSidebarMenu',
+		updateInviteLink: 'updateInviteLink',
+		manageGuestLink: 'manageGuestLink',
+		updateGuestLink: 'updateGuestLink',
+		createDocumentSign: 'createDocumentSign',
+		createCalendarSlots: 'createCalendarSlots',
+		changeMessagesAutoDeleteDelay: 'changeMessagesAutoDeleteDelay'
 	});
 	const ChatActionGroup = Object.freeze({
-	  manageSettings: 'manageSettings',
-	  manageUi: 'manageUi',
-	  manageUsersAdd: 'manageUsersAdd',
-	  manageUsersDelete: 'manageUsersDelete',
-	  manageMessages: 'manageMessages'
+		manageSettings: 'manageSettings',
+		manageUi: 'manageUi',
+		manageUsersAdd: 'manageUsersAdd',
+		manageUsersDelete: 'manageUsersDelete',
+		manageMessages: 'manageMessages'
 	});
 	const ActionByUserType = Object.freeze({
-	  getChannels: 'getChannels',
-	  getMarket: 'getMarket',
-	  getOpenlines: 'getOpenlines',
-	  createCollab: 'createCollab',
-	  createCopilot: 'createCopilot',
-	  createChannel: 'createChannel',
-	  createChat: 'createChat',
-	  createConference: 'createConference',
-	  leaveCollab: 'leaveCollab',
-	  changeMessagesAutoDeleteDelay: 'changeMessagesAutoDeleteDelay',
-	  changeStickerPack: 'changeStickerPack',
-	  createStickerPack: 'createStickerPack'
+		getChannels: 'getChannels',
+		getMarket: 'getMarket',
+		getOpenlines: 'getOpenlines',
+		createCollab: 'createCollab',
+		createCopilot: 'createCopilot',
+		createChannel: 'createChannel',
+		createChat: 'createChat',
+		createConference: 'createConference',
+		leaveCollab: 'leaveCollab',
+		changeMessagesAutoDeleteDelay: 'changeMessagesAutoDeleteDelay',
+		changeStickerPack: 'changeStickerPack',
+		createStickerPack: 'createStickerPack'
 	});
 
 	const RawBotType = Object.freeze({
-	  bot: 'bot',
-	  network: 'network',
-	  support24: 'support24',
-	  human: 'human',
-	  openline: 'openline',
-	  supervisor: 'supervisor',
-	  personal: 'personal'
+		bot: 'bot',
+		network: 'network',
+		support24: 'support24',
+		human: 'human',
+		openline: 'openline',
+		supervisor: 'supervisor',
+		personal: 'personal'
 	});
 	const BotType = Object.freeze({
-	  bot: 'bot',
-	  network: 'network',
-	  support24: 'support24'
+		bot: 'bot',
+		network: 'network',
+		support24: 'support24'
 	});
 	const BotCode = Object.freeze({
-	  marta: 'marta',
-	  giphy: 'giphy',
-	  copilot: 'copilot',
-	  aiAssistant: 'AiAssistantBot'
+		marta: 'marta',
+		giphy: 'giphy',
+		copilot: 'copilot',
+		aiAssistant: 'AiAssistantBot'
 	});
 	const BotCommand = Object.freeze({
-	  activate: 'activate'
+		activate: 'activate'
 	});
 
 	const Path = {
-	  online: '/online/',
-	  history: '/desktop_app/history.php'
+		online: '/online/',
+		history: '/desktop_app/history.php'
 	};
 
 	const GetParameter = {
-	  openNotifications: 'IM_NOTIFY',
-	  openHistory: 'IM_HISTORY',
-	  openChat: 'IM_DIALOG',
-	  openMessage: 'IM_MESSAGE',
-	  openLines: 'IM_LINES',
-	  openSettings: 'IM_SETTINGS',
-	  openCopilotChat: 'IM_COPILOT',
-	  openChannel: 'IM_CHANNEL',
-	  openCollab: 'IM_COLLAB',
-	  openSharedLink: 'IM_CODE',
-	  openTaskComments: 'IM_TASK',
-	  botContext: 'BOT_CONTEXT',
-	  desktopChatTabMode: 'IM_TAB',
-	  backgroundType: 'IM_BACKGROUND',
-	  legacyMode: 'IM_LEGACY'
+		openNotifications: 'IM_NOTIFY',
+		openHistory: 'IM_HISTORY',
+		openChat: 'IM_DIALOG',
+		openMessage: 'IM_MESSAGE',
+		openLines: 'IM_LINES',
+		openSettings: 'IM_SETTINGS',
+		openCopilotChat: 'IM_COPILOT',
+		openChannel: 'IM_CHANNEL',
+		openCollab: 'IM_COLLAB',
+		openSharedLink: 'IM_CODE',
+		openTaskComments: 'IM_TASK',
+		botContext: 'BOT_CONTEXT',
+		desktopChatTabMode: 'IM_TAB',
+		backgroundType: 'IM_BACKGROUND',
+		legacyMode: 'IM_LEGACY'
 	};
 
 	const TextareaPanelType = {
-	  edit: 'edit',
-	  reply: 'reply',
-	  forward: 'forward',
-	  market: 'market',
-	  none: ''
+		edit: 'edit',
+		reply: 'reply',
+		forward: 'forward',
+		market: 'market',
+		none: ''
 	};
 
 	const ChatEntityLinkType = Object.freeze({
-	  tasks: 'TASKS',
-	  sonetGroup: 'SONET_GROUP',
-	  mail: 'MAIL',
-	  calendar: 'CALENDAR',
-	  contact: 'CONTACT',
-	  deal: 'DEAL',
-	  lead: 'LEAD',
-	  dynamic: 'DYNAMIC'
+		tasks: 'TASKS',
+		sonetGroup: 'SONET_GROUP',
+		mail: 'MAIL',
+		calendar: 'CALENDAR',
+		contact: 'CONTACT',
+		deal: 'DEAL',
+		lead: 'LEAD',
+		dynamic: 'DYNAMIC'
 	});
 
 	const MultidialogStatus = Object.freeze({
-	  new: 'new',
-	  open: 'open',
-	  close: 'close'
+		new: 'new',
+		open: 'open',
+		close: 'close'
 	});
 
 	const SliderCode = {
-	  copilotDisabled: 'limit_copilot_off',
-	  historyLimited: 'limit_office_chating_history',
-	  autoDeleteDisabled: 'limit_auto_delete_messages_off',
-	  collabInviteOff: 'limit_v2_socialnetwork_collab_invite_off',
-	  collabDisabled: 'socialnetwork_collab_off',
-	  buyMarketPlus: 'limit_subscription_market_access_buy_marketplus'
+		copilotDisabled: 'limit_copilot_off',
+		historyLimited: 'limit_office_chating_history',
+		autoDeleteDisabled: 'limit_auto_delete_messages_off',
+		collabInviteOff: 'limit_v2_socialnetwork_collab_invite_off',
+		collabDisabled: 'socialnetwork_collab_off',
+		buyMarketPlus: 'limit_subscription_market_access_buy_marketplus'
 	};
 
 	const CollabEntityType = {
-	  tasks: 'tasks',
-	  files: 'files',
-	  calendar: 'calendar'
+		tasks: 'tasks',
+		files: 'files',
+		calendar: 'calendar'
 	};
 
 	const ErrorCode = Object.freeze({
-	  chat: {
-	    accessDenied: 'ACCESS_DENIED',
-	    notFound: 'CHAT_NOT_FOUND'
-	  },
-	  message: {
-	    accessDenied: 'MESSAGE_ACCESS_DENIED',
-	    accessDeniedByTariff: 'MESSAGE_ACCESS_DENIED_BY_TARIFF',
-	    notFound: 'MESSAGE_NOT_FOUND'
-	  },
-	  user: {
-	    invitedFromStructure: 'USER_INVITED_FROM_STRUCTURE',
-	    notFound: 'USER_NOT_FOUND'
-	  },
-	  file: {
-	    maxFileSize: 'MAX_FILE_SIZE_EXCEEDED'
-	  },
-	  sticker: {
-	    maxPacks: 'MAX_PACKS_ERROR',
-	    maxStickers: 'MAX_STICKERS_ERROR'
-	  }
+		chat: {
+			accessDenied: 'ACCESS_DENIED',
+			notFound: 'CHAT_NOT_FOUND'
+		},
+		message: {
+			accessDenied: 'MESSAGE_ACCESS_DENIED',
+			accessDeniedByTariff: 'MESSAGE_ACCESS_DENIED_BY_TARIFF',
+			notFound: 'MESSAGE_NOT_FOUND'
+		},
+		user: {
+			invitedFromStructure: 'USER_INVITED_FROM_STRUCTURE',
+			notFound: 'USER_NOT_FOUND'
+		},
+		file: {
+			maxFileSize: 'MAX_FILE_SIZE_EXCEEDED'
+		},
+		sticker: {
+			maxPacks: 'MAX_PACKS_ERROR',
+			maxStickers: 'MAX_STICKERS_ERROR'
+		}
 	});
 
 	const NavigationMenuItem = Object.freeze({
-	  [Layout.chat]: Layout.chat,
-	  [Layout.copilot]: Layout.copilot,
-	  [Layout.collab]: Layout.collab,
-	  [Layout.channel]: Layout.channel,
-	  [Layout.openlines]: Layout.openlines,
-	  [Layout.openlinesV2]: Layout.openlinesV2,
-	  [Layout.notification]: Layout.notification,
-	  [Layout.market]: Layout.market,
-	  [Layout.settings]: Layout.settings,
-	  [Layout.taskComments]: Layout.taskComments,
-	  call: 'call',
-	  timemanager: 'timemanager',
-	  homepage: 'homepage'
+		[Layout.chat]: Layout.chat,
+		[Layout.copilot]: Layout.copilot,
+		[Layout.collab]: Layout.collab,
+		[Layout.channel]: Layout.channel,
+		[Layout.openlines]: Layout.openlines,
+		[Layout.openlinesV2]: Layout.openlinesV2,
+		[Layout.notification]: Layout.notification,
+		[Layout.market]: Layout.market,
+		[Layout.settings]: Layout.settings,
+		[Layout.taskComments]: Layout.taskComments,
+		call: 'call',
+		timemanager: 'timemanager',
+		homepage: 'homepage'
 	});
 
 	const AnchorType = Object.freeze({
-	  mention: 'mention',
-	  reaction: 'reaction'
+		mention: 'mention',
+		reaction: 'reaction'
 	});
 
 	const TranscriptionStatus = {
-	  SUCCESS: 'Success',
-	  ERROR: 'Error',
-	  PENDING: 'Pending'
+		SUCCESS: 'Success',
+		ERROR: 'Error',
+		PENDING: 'Pending'
 	};
 
 	const SpecialMentionDialogId = {
-	  allParticipants: 'all'
+		allParticipants: 'all'
 	};
 
 	const DataAttribute = {
-	  useNativeContextMenu: 'data-use-native-context-menu'
+		useNativeContextMenu: 'data-use-native-context-menu'
 	};
 
 	const StickerPackType = {
-	  vendor: 'vendor',
-	  custom: 'custom'
+		vendor: 'vendor',
+		custom: 'custom'
 	};
 	const StickerType = {
-	  image: 'image'
+		image: 'image'
 	};
 
-	exports.RestMethod = RestMethod;
-	exports.EventType = EventType;
-	exports.ChatType = ChatType;
-	exports.DialogBlockType = DialogBlockType;
-	exports.DialogScrollThreshold = DialogScrollThreshold;
-	exports.DialogAlignment = DialogAlignment;
-	exports.FileStatus = FileStatus;
-	exports.FileType = FileType;
-	exports.FileIconType = FileIconType;
-	exports.FileViewerContext = FileViewerContext;
+	const TabId = Object.freeze({
+		guests: 'guests',
+		employees: 'employees'
+	});
+
+	const SelectorEntity = {
+		user: 'user',
+		department: 'department'
+	};
+
+	const MessageBuilderPlainColorToken = {
+		base: 'base',
+		primary: 'primary',
+		secondary: 'secondary',
+		alert: 'alert',
+		success: 'success',
+		tertiary: 'tertiary'
+	};
+	const MessageBuilderGradientColorToken = {
+		'ai-assistant': 'ai-assistant'
+	};
+
+	exports.ActionByRole = ActionByRole;
+	exports.ActionByUserType = ActionByUserType;
+	exports.AnchorType = AnchorType;
+	exports.AttachDescription = AttachDescription;
+	exports.AttachType = AttachType;
 	exports.AudioPlaybackRate = AudioPlaybackRate;
 	exports.AudioPlaybackState = AudioPlaybackState;
-	exports.MessageType = MessageType;
+	exports.AutoDeleteDelay = AutoDeleteDelay;
+	exports.BotCode = BotCode;
+	exports.BotCommand = BotCommand;
+	exports.BotType = BotType;
+	exports.ChatActionGroup = ChatActionGroup;
+	exports.ChatEntityLinkType = ChatEntityLinkType;
+	exports.ChatType = ChatType;
+	exports.CollabEntityType = CollabEntityType;
+	exports.Color = Color;
+	exports.ColorToken = ColorToken;
+	exports.DataAttribute = DataAttribute;
+	exports.DesktopBroadcastAction = DesktopBroadcastAction;
+	exports.DesktopBxLink = DesktopBxLink;
+	exports.DialogAlignment = DialogAlignment;
+	exports.DialogBlockType = DialogBlockType;
+	exports.DialogIdChatPrefix = DialogIdChatPrefix;
+	exports.DialogScrollThreshold = DialogScrollThreshold;
+	exports.ErrorCode = ErrorCode;
+	exports.EventType = EventType;
+	exports.FakeDraftMessagePrefix = FakeDraftMessagePrefix;
+	exports.FakeMessagePrefix = FakeMessagePrefix;
+	exports.FileIconType = FileIconType;
+	exports.FileStatus = FileStatus;
+	exports.FileType = FileType;
+	exports.FileViewerContext = FileViewerContext;
+	exports.GetParameter = GetParameter;
+	exports.KeyboardButtonAction = KeyboardButtonAction;
+	exports.KeyboardButtonContext = KeyboardButtonContext;
+	exports.KeyboardButtonDisplay = KeyboardButtonDisplay;
+	exports.KeyboardButtonType = KeyboardButtonType;
+	exports.Layout = Layout;
+	exports.LegacyDesktopBxLink = LegacyDesktopBxLink;
+	exports.LocalStorageKey = LocalStorageKey;
+	exports.MessageBuilderGradientColorToken = MessageBuilderGradientColorToken;
+	exports.MessageBuilderPlainColorToken = MessageBuilderPlainColorToken;
 	exports.MessageComponent = MessageComponent;
 	exports.MessageMentionType = MessageMentionType;
 	exports.MessageStatus = MessageStatus;
+	exports.MessageType = MessageType;
+	exports.MultidialogStatus = MultidialogStatus;
+	exports.NavigationMenuItem = NavigationMenuItem;
+	exports.NotificationSettingsMode = NotificationSettingsMode;
+	exports.NotificationSettingsType = NotificationSettingsType;
+	exports.NotificationTypesCodes = NotificationTypesCodes;
 	exports.OwnMessageStatus = OwnMessageStatus;
-	exports.FakeMessagePrefix = FakeMessagePrefix;
-	exports.FakeDraftMessagePrefix = FakeDraftMessagePrefix;
-	exports.AutoDeleteDelay = AutoDeleteDelay;
+	exports.Path = Path;
+	exports.PlacementType = PlacementType;
+	exports.PopupType = PopupType;
+	exports.PromoId = PromoId;
+	exports.RawBotType = RawBotType;
 	exports.RecentCallStatus = RecentCallStatus;
 	exports.RecentType = RecentType;
-	exports.NotificationTypesCodes = NotificationTypesCodes;
-	exports.NotificationSettingsMode = NotificationSettingsMode;
-	exports.Layout = Layout;
+	exports.RestMethod = RestMethod;
 	exports.SearchEntityIdTypes = SearchEntityIdTypes;
-	exports.UserStatus = UserStatus;
-	exports.UserType = UserType;
-	exports.UserRole = UserRole;
-	exports.UserIdNetworkPrefix = UserIdNetworkPrefix;
+	exports.SelectorEntity = SelectorEntity;
+	exports.Settings = Settings;
+	exports.SettingsSection = SettingsSection;
 	exports.SidebarDetailBlock = SidebarDetailBlock;
 	exports.SidebarFileGroups = SidebarFileGroups;
 	exports.SidebarFileTabGroups = SidebarFileTabGroups;
 	exports.SidebarMainPanelBlock = SidebarMainPanelBlock;
-	exports.Color = Color;
-	exports.ColorToken = ColorToken;
-	exports.AttachType = AttachType;
-	exports.AttachDescription = AttachDescription;
-	exports.KeyboardButtonType = KeyboardButtonType;
-	exports.KeyboardButtonAction = KeyboardButtonAction;
-	exports.KeyboardButtonDisplay = KeyboardButtonDisplay;
-	exports.KeyboardButtonContext = KeyboardButtonContext;
-	exports.DesktopBxLink = DesktopBxLink;
-	exports.LegacyDesktopBxLink = LegacyDesktopBxLink;
-	exports.DesktopBroadcastAction = DesktopBroadcastAction;
-	exports.WINDOW_ACTIVATION_DELAY = WINDOW_ACTIVATION_DELAY;
-	exports.LocalStorageKey = LocalStorageKey;
-	exports.PlacementType = PlacementType;
-	exports.PopupType = PopupType;
-	exports.Settings = Settings;
-	exports.SettingsSection = SettingsSection;
-	exports.NotificationSettingsType = NotificationSettingsType;
-	exports.SoundType = SoundType;
-	exports.PromoId = PromoId;
-	exports.ActionByRole = ActionByRole;
-	exports.ChatActionGroup = ChatActionGroup;
-	exports.ActionByUserType = ActionByUserType;
-	exports.BotType = BotType;
-	exports.RawBotType = RawBotType;
-	exports.BotCode = BotCode;
-	exports.BotCommand = BotCommand;
-	exports.Path = Path;
-	exports.GetParameter = GetParameter;
-	exports.TextareaPanelType = TextareaPanelType;
-	exports.ChatEntityLinkType = ChatEntityLinkType;
-	exports.MultidialogStatus = MultidialogStatus;
 	exports.SliderCode = SliderCode;
-	exports.CollabEntityType = CollabEntityType;
-	exports.ErrorCode = ErrorCode;
-	exports.NavigationMenuItem = NavigationMenuItem;
-	exports.AnchorType = AnchorType;
-	exports.TranscriptionStatus = TranscriptionStatus;
+	exports.SoundType = SoundType;
 	exports.SpecialMentionDialogId = SpecialMentionDialogId;
-	exports.DataAttribute = DataAttribute;
 	exports.StickerPackType = StickerPackType;
 	exports.StickerType = StickerType;
+	exports.TabId = TabId;
+	exports.TextareaPanelType = TextareaPanelType;
+	exports.TranscriptionStatus = TranscriptionStatus;
+	exports.UserIdNetworkPrefix = UserIdNetworkPrefix;
+	exports.UserRole = UserRole;
+	exports.UserStatus = UserStatus;
+	exports.UserType = UserType;
+	exports.WINDOW_ACTIVATION_DELAY = WINDOW_ACTIVATION_DELAY;
 
-}((this.BX.Messenger.v2.Const = this.BX.Messenger.v2.Const || {}),BX?.OpenLines?.v2?.Const??{},BX?.Messenger?.v2?.Const??{}));
+})(this.BX.Messenger.v2.Const = this.BX.Messenger.v2.Const || {}, BX?.OpenLines?.v2?.Const??{});
 //# sourceMappingURL=registry.bundle.js.map

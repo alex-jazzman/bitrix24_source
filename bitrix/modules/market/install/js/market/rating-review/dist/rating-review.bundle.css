@@ -1,0 +1,103 @@
+.market-detail__app-rating_feedback-form {
+	display: flex;
+	flex-direction: column;
+	min-width: 361px;
+	margin-top: 42px;
+}
+
+.market-detail__app-rating_feedback-buttons {
+	width: 100%;
+	margin-top: 19px;
+	text-align: center;
+}
+
+.ui-ctl-checkbox.market-detail__app-rating_feedback-checkbox {
+	margin-bottom: 0;
+	cursor: pointer;
+	min-height: auto;
+}
+
+.market-detail__app-rating_feedback-label {
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-size: var(--ui-font-size-xs, 12px);
+	line-height: var(--ui-font-line-height-reset, 1);
+	color: #525c69;
+}
+
+.ui-ctl-textarea .market-detail__app-rating_feedback-textarea.ui-ctl-element {
+	border-radius: var(--ui-border-radius-sm, 8px);
+	background: transparent;
+	padding: 13px;
+	height: 130px;
+}
+
+.market-detail__app-rating_feedback-form .ui-ctl-textarea {
+	height: 130px;
+	min-height: 130px;
+}
+
+.market-detail__app-rating_feedback-subtitle {
+	font-weight: var(--ui-font-weight-medium);
+	font-size: var(--ui-font-size-2xl);
+	color: var(--ui-color-base-default);
+	text-align: center;
+}
+
+.market-detail__app-rating_feedback-subtitle span {
+	font-weight: var(--ui-font-weight-semi-bold);
+}
+
+.market-detail__app-rating_feedback-text {
+	font-size: var(--ui-font-size-md);
+	color: var(--ui-color-base-70);
+	text-align: center;
+	margin: 12px auto 17px;
+}
+
+.market-detail__app-rating_feedback-form .market-rating-review__stars {
+	justify-content: space-between;
+	width: 165px;
+	margin: 0 auto 12px;
+}
+
+.market-detail__app-rating_feedback-img {
+	border: 1px solid var(--ui-color-base-30);
+	border-radius: 16px;
+	box-shadow: 0 9px 18px 0 rgba(0, 0, 0, 0.12);
+	width: 104px;
+	height: 104px;
+	position: absolute;
+	top: -52px;
+	left: 50%;
+	transform: translateX(-50%);
+	background: var(--ui-color-background-primary);
+}
+
+.market-detail__app-rating_feedback-img img {
+	max-width: 100%;
+	width: 100%;
+	height: auto;
+	border-radius: 16px;
+}
+
+.market-detail__app-rating_feedback-checkbox.ui-ctl + .ui-ctl {
+	margin-left: 0;
+	margin-top: 10px;
+}
+
+.market-detail__app-rating_feedback-checkbox-wrapper {
+	margin-top: 13px;
+}
+
+.market-detail__app-rating_feedback-form .market-rating-review__stars .market-rating-stars-input__star path,
+.market-detail__app-rating_feedback-form .market-rating-review__stars .market-rating-stars-input__star.--pointer:not(.--active):hover path {
+	stroke: #ffa900;
+}
+
+.market-detail__app-rating_feedback-form .market-rating-review__stars .market-rating-stars-input__star path {
+	transform: scale(1.1);
+}
+
+.market-detail__app-rating_feedback-form .market-rating-review__stars .market-rating-stars-input__star.--pointer:hover {
+	transform: scale(1.15);
+}

@@ -7,6 +7,8 @@ use Bitrix\Main\Text\HtmlFilter;
 
 /**
  * @var $component DoubleUfComponent
+ * @var array $arResult
+ * @var array $arParams
  */
 
 $component = $this->getComponent();

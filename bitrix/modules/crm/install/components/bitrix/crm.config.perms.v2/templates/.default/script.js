@@ -1,175 +1,146 @@
 /* eslint-disable */
-(function (exports,main_core,ui_accessrights_v2,ui_buttons,ui_dialogs_messagebox) {
+(function (main_core, ui_accessrights_v2, ui_buttons, ui_dialogs_messagebox) {
 	'use strict';
 
-	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
-	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-	var namespace = main_core.Reflection.namespace('BX.Crm');
-	var _addWrapperSliderContent = /*#__PURE__*/new WeakSet();
-	var _addWrapperLeftMenu = /*#__PURE__*/new WeakSet();
-	var _renderHelpButton = /*#__PURE__*/new WeakSet();
-	var _runGetDataAjaxRequest = /*#__PURE__*/new WeakSet();
-	var _confirmBeforeRedraw = /*#__PURE__*/new WeakSet();
-	var _showNotification = /*#__PURE__*/new WeakSet();
-	var ConfigPermsComponent = /*#__PURE__*/function () {
-	  function ConfigPermsComponent(config) {
-	    var _config$useAirDesign;
-	    babelHelpers.classCallCheck(this, ConfigPermsComponent);
-	    _classPrivateMethodInitSpec(this, _showNotification);
-	    _classPrivateMethodInitSpec(this, _confirmBeforeRedraw);
-	    _classPrivateMethodInitSpec(this, _runGetDataAjaxRequest);
-	    _classPrivateMethodInitSpec(this, _renderHelpButton);
-	    _classPrivateMethodInitSpec(this, _addWrapperLeftMenu);
-	    _classPrivateMethodInitSpec(this, _addWrapperSliderContent);
-	    this.AccessRightsOption = config.AccessRightsOption;
-	    this.AccessRights = config.AccessRights;
-	    this.hasLeftMenu = config.hasLeftMenu;
-	    this.menuId = config.menuId;
-	    this.useAirDesign = (_config$useAirDesign = config.useAirDesign) !== null && _config$useAirDesign !== void 0 ? _config$useAirDesign : false;
-	  }
-	  babelHelpers.createClass(ConfigPermsComponent, [{
-	    key: "init",
-	    value: function init() {
-	      this.AccessRights.draw();
-	      _classPrivateMethodGet(this, _renderHelpButton, _renderHelpButton2).call(this);
-	      if (this.hasLeftMenu) {
-	        _classPrivateMethodGet(this, _addWrapperSliderContent, _addWrapperSliderContent2).call(this);
-	        _classPrivateMethodGet(this, _addWrapperLeftMenu, _addWrapperLeftMenu2).call(this);
-	      }
-	    }
-	  }, {
-	    key: "openPermission",
-	    value: function openPermission(controllerData) {
-	      if (this.menuId === controllerData.menuId) {
-	        return;
-	      }
-	      if (!this.AccessRights.hasUnsavedChanges()) {
-	        this.redrawAccessRight(controllerData);
-	      } else {
-	        event.stopImmediatePropagation();
-	        _classPrivateMethodGet(this, _confirmBeforeRedraw, _confirmBeforeRedraw2).call(this, controllerData);
-	      }
-	    }
-	  }, {
-	    key: "redrawAccessRight",
-	    value: function redrawAccessRight(controllerData) {
-	      var _this = this;
-	      var loader = new BX.Loader({
-	        target: document.getElementById('bx-crm-perms-config-permissions')
-	      });
-	      var selectedMember = this.AccessRights.getSelectedMember();
-	      this.AccessRights.destroy();
-	      loader.show();
-	      _classPrivateMethodGet(this, _runGetDataAjaxRequest, _runGetDataAjaxRequest2).call(this, controllerData).then(function (options) {
-	        _this.AccessRightsOption = _objectSpread(_objectSpread({}, options), {}, {
-	          selectedMember: selectedMember
-	        });
-	        _this.AccessRights = new ui_accessrights_v2.App(_this.AccessRightsOption);
-	        _this.AccessRights.draw();
-	        scrollTo({
-	          top: 0
-	        });
-	        _this.menuId = controllerData.menuId;
-	      })["catch"](function (response) {
-	        var _response$errors, _response$errors$;
-	        console.warn('ui.accessrights.v2: error during redraw', response);
-	        _classPrivateMethodGet(_this, _showNotification, _showNotification2).call(_this, (response === null || response === void 0 ? void 0 : (_response$errors = response.errors) === null || _response$errors === void 0 ? void 0 : (_response$errors$ = _response$errors[0]) === null || _response$errors$ === void 0 ? void 0 : _response$errors$.message) || 'Something went wrong');
-	      })["finally"](function () {
-	        loader.hide();
-	      });
-	    }
-	  }]);
-	  return ConfigPermsComponent;
-	}();
-	function _addWrapperSliderContent2() {
-	  var sliderContent = document.getElementById('ui-page-slider-content');
-	  if (sliderContent) {
-	    var wrapperSliderContent = document.createElement('div');
-	    wrapperSliderContent.className = 'crm-config-perms-v2-slider-content';
-	    sliderContent.parentNode.insertBefore(wrapperSliderContent, sliderContent);
-	    wrapperSliderContent.appendChild(sliderContent);
-	  }
-	}
-	function _addWrapperLeftMenu2() {
-	  var leftPanel = document.getElementById('left-panel');
-	  if (leftPanel) {
-	    var wrapperLeftMenu = document.createElement('div');
-	    wrapperLeftMenu.className = 'crm-config-perms-v2-sidebar';
-	    leftPanel.parentNode.insertBefore(wrapperLeftMenu, leftPanel);
-	    wrapperLeftMenu.appendChild(leftPanel);
-	  }
-	}
-	function _renderHelpButton2() {
-	  var Helper = main_core.Reflection.getClass('top.BX.Helper');
-	  var helpButton = new ui_buttons.Button({
-	    size: ui_buttons.ButtonSize.SMALL,
-	    text: main_core.Loc.getMessage('CRM_CONFIG_PERMS_HELP_MSGVER_1'),
-	    style: ui_buttons.AirButtonStyle.OUTLINE_NO_ACCENT,
-	    useAirDesign: true,
-	    onclick: function onclick() {
-	      var articleCode = '23240636';
-	      Helper === null || Helper === void 0 ? void 0 : Helper.show("redirect=detail&code=".concat(articleCode));
-	    }
-	  });
-	  var parentElement = document.querySelector('.crm-config-perms-v2-header');
-	  helpButton.renderTo(parentElement);
-	}
-	function _runGetDataAjaxRequest2(controllerData) {
-	  return new Promise(function (resolve, reject) {
-	    main_core.ajax.runComponentAction('bitrix:crm.config.perms.v2', 'getData', {
-	      mode: 'class',
-	      json: {
-	        controllerData: controllerData
-	      }
-	    }).then(function (response) {
-	      resolve(response.data);
-	    })["catch"](reject);
-	  });
-	}
-	function _confirmBeforeRedraw2(controllerData) {
-	  var _this2 = this;
-	  var box = ui_dialogs_messagebox.MessageBox.create({
-	    message: main_core.Loc.getMessage('CRM_CONFIG_PERMS_SAVE_POPUP_TITLE'),
-	    modal: true,
-	    useAirDesign: true,
-	    buttons: [new ui_buttons.SaveButton({
-	      size: ui_buttons.ButtonSize.LARGE,
-	      style: ui_buttons.AirButtonStyle.FILLED,
-	      useAirDesign: true,
-	      onclick: function onclick(button) {
-	        button.setWaiting(true);
-	        _this2.AccessRights.sendActionRequest().then(function () {
-	          document.querySelector("[data-menu-id=\"".concat(controllerData.menuId, "\"]")).click();
-	        })["catch"](function () {})["finally"](function () {
-	          box.close();
-	        });
-	      }
-	    }), new ui_buttons.CancelButton({
-	      text: main_core.Loc.getMessage('CRM_CONFIG_PERMS_SAVE_POPUP_CANCEL'),
-	      size: ui_buttons.ButtonSize.LARGE,
-	      style: ui_buttons.AirButtonStyle.OUTLINE,
-	      useAirDesign: true,
-	      onclick: function onclick() {
-	        box.close();
-	      }
-	    })],
-	    popupOptions: {
-	      fixed: true
-	    }
-	  });
-	  box.show();
-	}
-	function _showNotification2(title) {
-	  BX.UI.Notification.Center.notify({
-	    content: title,
-	    position: 'top-right',
-	    autoHideDelay: 3000
-	  });
+	const namespace = main_core.Reflection.namespace('BX.Crm');
+	class ConfigPermsComponent {
+		constructor(config) {
+			this.AccessRightsOption = config.AccessRightsOption;
+			this.AccessRights = config.AccessRights;
+			this.hasLeftMenu = config.hasLeftMenu;
+			this.menuId = config.menuId;
+			this.useAirDesign = config.useAirDesign ?? false;
+		}
+		init() {
+			this.AccessRights.draw();
+			this.#renderHelpButton();
+			if (this.hasLeftMenu) {
+				this.#addWrapperSliderContent();
+				this.#addWrapperLeftMenu();
+			}
+		}
+		#addWrapperSliderContent() {
+			const sliderContent = document.getElementById('ui-page-slider-content');
+			if (sliderContent) {
+				const wrapperSliderContent = document.createElement('div');
+				wrapperSliderContent.className = 'crm-config-perms-v2-slider-content';
+				sliderContent.parentNode.insertBefore(wrapperSliderContent, sliderContent);
+				wrapperSliderContent.appendChild(sliderContent);
+			}
+		}
+		#addWrapperLeftMenu() {
+			const leftPanel = document.getElementById('left-panel');
+			if (leftPanel) {
+				const wrapperLeftMenu = document.createElement('div');
+				wrapperLeftMenu.className = 'crm-config-perms-v2-sidebar';
+				leftPanel.parentNode.insertBefore(wrapperLeftMenu, leftPanel);
+				wrapperLeftMenu.appendChild(leftPanel);
+			}
+		}
+		#renderHelpButton() {
+			const Helper = main_core.Reflection.getClass('top.BX.Helper');
+			const helpButton = new ui_buttons.Button({
+				size: ui_buttons.ButtonSize.SMALL,
+				text: main_core.Loc.getMessage('CRM_CONFIG_PERMS_HELP_MSGVER_1'),
+				style: ui_buttons.AirButtonStyle.OUTLINE_NO_ACCENT,
+				useAirDesign: true,
+				onclick: () => {
+					const articleCode = '23240636';
+					Helper?.show(`redirect=detail&code=${articleCode}`);
+				}
+			});
+			const parentElement = document.querySelector('.crm-config-perms-v2-header');
+			helpButton.renderTo(parentElement);
+		}
+		openPermission(controllerData) {
+			if (this.menuId === controllerData.menuId) {
+				return;
+			}
+			if (!this.AccessRights.hasUnsavedChanges()) {
+				this.redrawAccessRight(controllerData);
+			} else {
+				event.stopImmediatePropagation();
+				this.#confirmBeforeRedraw(controllerData);
+			}
+		}
+		redrawAccessRight(controllerData) {
+			const loader = new BX.Loader({
+				target: document.getElementById('bx-crm-perms-config-permissions')
+			});
+			const selectedMember = this.AccessRights.getSelectedMember();
+			this.AccessRights.destroy();
+			loader.show();
+			this.#runGetDataAjaxRequest(controllerData).then(options => {
+				this.AccessRightsOption = {
+					...options,
+					selectedMember
+				};
+				this.AccessRights = new ui_accessrights_v2.App(this.AccessRightsOption);
+				this.AccessRights.draw();
+				scrollTo({
+					top: 0
+				});
+				this.menuId = controllerData.menuId;
+			}).catch(response => {
+				console.warn('ui.accessrights.v2: error during redraw', response);
+				this.#showNotification(response?.errors?.[0]?.message || 'Something went wrong');
+			}).finally(() => {
+				loader.hide();
+			});
+		}
+		#runGetDataAjaxRequest(controllerData) {
+			return new Promise((resolve, reject) => {
+				main_core.ajax.runComponentAction('bitrix:crm.config.perms.v2', 'getData', {
+					mode: 'class',
+					json: {
+						controllerData
+					}
+				}).then(response => {
+					resolve(response.data);
+				}).catch(reject);
+			});
+		}
+		#confirmBeforeRedraw(controllerData) {
+			const box = ui_dialogs_messagebox.MessageBox.create({
+				message: main_core.Loc.getMessage('CRM_CONFIG_PERMS_SAVE_POPUP_TITLE'),
+				modal: true,
+				useAirDesign: true,
+				buttons: [new ui_buttons.SaveButton({
+					size: ui_buttons.ButtonSize.LARGE,
+					style: ui_buttons.AirButtonStyle.FILLED,
+					useAirDesign: true,
+					onclick: button => {
+						button.setWaiting(true);
+						this.AccessRights.sendActionRequest().then(() => {
+							document.querySelector(`[data-menu-id="${controllerData.menuId}"]`).click();
+						}).catch(() => {}).finally(() => {
+							box.close();
+						});
+					}
+				}), new ui_buttons.CancelButton({
+					text: main_core.Loc.getMessage('CRM_CONFIG_PERMS_SAVE_POPUP_CANCEL'),
+					size: ui_buttons.ButtonSize.LARGE,
+					style: ui_buttons.AirButtonStyle.OUTLINE,
+					useAirDesign: true,
+					onclick: () => {
+						box.close();
+					}
+				})],
+				popupOptions: {
+					fixed: true
+				}
+			});
+			box.show();
+		}
+		#showNotification(title) {
+			BX.UI.Notification.Center.notify({
+				content: title,
+				position: 'top-right',
+				autoHideDelay: 3000
+			});
+		}
 	}
 	namespace.ConfigPermsComponent = ConfigPermsComponent;
 
-}((this.window = this.window || {}),BX,BX.UI.AccessRights.V2,BX.UI,BX.UI.Dialogs));
+})(BX, BX.UI.AccessRights.V2, BX.UI, BX.UI.Dialogs);
 //# sourceMappingURL=script.js.map

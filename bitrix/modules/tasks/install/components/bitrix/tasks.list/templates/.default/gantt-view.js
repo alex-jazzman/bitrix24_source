@@ -92,27 +92,7 @@ function CloseTask(taskId, analyticsSection = 'tasks')
 {
 	SetServerCloseStatus(taskId, "close", { bGannt: true });
 
-	const analyticsData = {
-		tool: 'tasks',
-		category: 'task_operations',
-		event: 'task_complete',
-		type: 'task',
-		c_section: analyticsSection,
-		c_element: 'context_menu',
-		c_sub_section: 'gantt',
-		p1: `taskId_${taskId}`,
-	};
-
-	if (BX.UI.Analytics)
-	{
-		BX.UI.Analytics.sendData(analyticsData);
-	}
-	else
-	{
-		BX.Runtime.loadExtension('ui.analytics').then(() => {
-			BX.UI.Analytics.sendData(analyticsData);
-		});
-	}
+	sendAnalytics(taskId, 'task_complete', analyticsSection);
 }
 
 function StartTask(taskId)
@@ -204,7 +184,7 @@ function DeleteFavorite(taskId, parameters)
 	});
 }
 
-function DeleteTask(taskId)
+function DeleteTask(taskId, analyticsSection = 'tasks')
 {
 	var data = {
 		mode : "delete",
@@ -223,6 +203,7 @@ function DeleteTask(taskId)
 			return function(datum) {
 				TASKS_table_view_onDeleteClick_onSuccess(taskId, datum);
 
+				sendAnalytics(taskId, 'task_delete', analyticsSection);
 			};
 		})(taskId)
 	});
@@ -349,6 +330,31 @@ function onAfterHide() {
 	{
 		ganttChart.layout.timeline.scrollLeft = lastScroll;
 	}
+}
+
+function sendAnalytics(taskId, event, analyticsSection = 'tasks')
+{
+	const analyticsData = {
+		tool: 'tasks',
+		category: 'task_operations',
+		type: 'task',
+		c_section: analyticsSection,
+		c_element: 'context_menu',
+		c_sub_section: 'gantt',
+		p1: `taskId_${taskId}`,
+		event,
+	};
+
+	if (BX.UI.Analytics)
+	{
+		BX.UI.Analytics.sendData(analyticsData);
+
+		return;
+	}
+
+	BX.Runtime.loadExtension('ui.analytics').then(() => {
+		BX.UI.Analytics.sendData(analyticsData);
+	});
 }
 
 function __RenewMenuItems(task)

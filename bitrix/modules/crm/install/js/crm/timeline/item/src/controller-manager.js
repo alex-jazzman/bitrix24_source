@@ -1,4 +1,4 @@
-import ConfigurableItem from "./configurable-item";
+import type ConfigurableItem from "./configurable-item";
 
 export default class ControllerManager
 {

@@ -7,8 +7,8 @@ import { chatFieldsConfig } from './field-config';
 import { formatFieldsWithConfig } from '../../../utils/validate';
 
 import type { JsonObject } from 'main.core';
-import type { GetterTree, ActionTree, MutationTree } from 'ui.vue3.vuex';
-import type { ImModelCopilotAIModel, ImModelCopilotRole } from '../../../registry';
+import type { GetterTree, ActionTree, MutationTree, Store } from 'ui.vue3.vuex';
+import type { ImModelCopilotAIModel, ImModelCopilotRole, ImModelCopilotMcpAuth } from '../../../registry';
 
 type ChatsState = {
 	collection: {[dialogId: string]: CopilotChat},
@@ -19,6 +19,8 @@ type CopilotChat = {
 	role: string,
 	aiModel: string,
 	reasoningEnabled: boolean,
+	forceSearchEnabled: boolean,
+	mcpAuth: ?ImModelCopilotMcpAuth,
 }
 
 const AI_MODEL_DEFAULT_NAME = 'none';
@@ -40,10 +42,12 @@ export class ChatsModel extends BuilderModel
 			role: '',
 			aiModel: '',
 			reasoningEnabled: false,
+			forceSearchEnabled: false,
+			mcpAuth: null,
 		};
 	}
 
-	getGetters(): GetterTree
+	getGetters(): GetterTree<ChatsState>
 	{
 		return {
 			/** @function copilot/chats/getRole */
@@ -81,7 +85,7 @@ export class ChatsModel extends BuilderModel
 				return currentAiModel ?? AI_MODEL_DEFAULT_NAME;
 			},
 			/** @function copilot/chats/isReasoningEnabled */
-			isReasoningEnabled: (state) => (dialogId: string): boolean => {
+			isReasoningEnabled: (state: ChatsState) => (dialogId: string): boolean => {
 				const chat = state.collection[dialogId];
 				if (!chat)
 				{
@@ -90,14 +94,34 @@ export class ChatsModel extends BuilderModel
 
 				return state.collection[dialogId].reasoningEnabled;
 			},
+			/** @function copilot/chats/isForceSearchEnabled */
+			isForceSearchEnabled: (state: ChatsState) => (dialogId: string): boolean => {
+				const chat = state.collection[dialogId];
+				if (!chat)
+				{
+					return false;
+				}
+
+				return state.collection[dialogId].forceSearchEnabled;
+			},
+			/** @function copilot/chats/getMcpAuth */
+			getMcpAuth: (state: ChatsState) => (dialogId: string): ?ImModelCopilotMcpAuth => {
+				const chat = state.collection[dialogId];
+				if (!chat)
+				{
+					return null;
+				}
+
+				return chat.mcpAuth;
+			},
 		};
 	}
 
-	getActions(): ActionTree
+	getActions(): ActionTree<ChatsState>
 	{
 		return {
 			/** @function copilot/chats/set */
-			set: (store, payload) => {
+			set: (store: Store, payload) => {
 				if (!payload)
 				{
 					return;
@@ -128,7 +152,7 @@ export class ChatsModel extends BuilderModel
 				});
 			},
 			/** @function copilot/chats/updateModel */
-			updateModel: (store, payload: { dialogId: string, aiModel: string }) => {
+			updateModel: (store: Store, payload: { dialogId: string, aiModel: string }) => {
 				if (!payload || !store.state.collection[payload.dialogId])
 				{
 					return;
@@ -137,7 +161,7 @@ export class ChatsModel extends BuilderModel
 				store.commit('updateModel', payload);
 			},
 			/** @function copilot/chats/toggleReasoning */
-			toggleReasoning: (store, dialogId: string) => {
+			toggleReasoning: (store: Store, dialogId: string) => {
 				if (!store.state.collection[dialogId])
 				{
 					return;
@@ -145,10 +169,37 @@ export class ChatsModel extends BuilderModel
 
 				store.commit('toggleReasoning', dialogId);
 			},
+			/** @function copilot/chats/toggleForceSearch */
+			toggleForceSearch: (store: Store, dialogId: string) => {
+				if (!store.state.collection[dialogId])
+				{
+					return;
+				}
+
+				store.commit('toggleForceSearch', dialogId);
+			},
+			/** @function copilot/chats/setMcpAuth */
+			setMcpAuth: (store: Store, payload: { dialogId: string, mcpAuth: ImModelCopilotMcpAuth }) => {
+				if (!store.state.collection[payload.dialogId])
+				{
+					return;
+				}
+
+				store.commit('setMcpAuth', payload);
+			},
+			/** @function copilot/chats/clearMcpAuth */
+			clearMcpAuth: (store: Store, dialogId: string) => {
+				if (!store.state.collection[dialogId])
+				{
+					return;
+				}
+
+				store.commit('clearMcpAuth', dialogId);
+			},
 		};
 	}
 
-	getMutations(): MutationTree
+	getMutations(): MutationTree<ChatsState>
 	{
 		return {
 			add: (state: ChatsState, payload) => {
@@ -163,8 +214,17 @@ export class ChatsModel extends BuilderModel
 				const { dialogId, aiModel } = payload;
 				state.collection[dialogId].aiModel = aiModel;
 			},
-			toggleReasoning: (state, dialogId: string) => {
+			toggleReasoning: (state: ChatsState, dialogId: string) => {
 				state.collection[dialogId].reasoningEnabled = !state.collection[dialogId].reasoningEnabled;
+			},
+			toggleForceSearch: (state: ChatsState, dialogId: string) => {
+				state.collection[dialogId].forceSearchEnabled = !state.collection[dialogId].forceSearchEnabled;
+			},
+			setMcpAuth: (state: ChatsState, payload: { dialogId: string, mcpAuth: ImModelCopilotMcpAuth }) => {
+				state.collection[payload.dialogId].mcpAuth = payload.mcpAuth;
+			},
+			clearMcpAuth: (state: ChatsState, dialogId: string) => {
+				state.collection[dialogId].mcpAuth = null;
 			},
 		};
 	}

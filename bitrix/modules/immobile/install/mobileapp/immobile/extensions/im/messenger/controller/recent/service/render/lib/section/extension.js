@@ -5,6 +5,12 @@ jn.define('im/messenger/controller/recent/service/render/lib/section', (require,
 	const { Loc } = require('im/messenger/loc');
 
 	const RecentSection = {
+		parentChat: {
+			title: '',
+			id: 'parentChat',
+			backgroundColor: '#ffffff',
+			sortItemParams: { order: 'desc' },
+		},
 		general: {
 			title: '',
 			id: 'general',

@@ -9,12 +9,12 @@ return [
 	'js' => 'dist/provider-showcase.bundle.js',
 	'rel' => [
 		'main.core',
-		'ui.sidepanel.layout',
-		'ui.mail.sender-editor',
-		'ui.info-helper',
-		'ui.forms',
-		'ui.sidepanel-content',
 		'ui.buttons',
+		'ui.forms',
+		'ui.info-helper',
+		'ui.mail.sender-editor',
+		'ui.sidepanel.layout',
+		'ui.sidepanel-content',
 	],
 	'skip_core' => false,
 ];

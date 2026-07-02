@@ -1,8 +1,15 @@
 import { Label, LabelColor, LabelSize } from 'ui.label';
 
+import '../css/roles-dialog-label-new.css';
+
 export const RolesDialogLabelNew = {
 	props: {
 		inverted: {
+			type: Boolean,
+			required: false,
+			default: false,
+		},
+		useRedesign: {
 			type: Boolean,
 			required: false,
 			default: false,
@@ -21,8 +28,17 @@ export const RolesDialogLabelNew = {
 
 			return label.render().outerHTML;
 		},
+		className(): Object {
+			return {
+				'ai__roles-dialog_label-new': true,
+				'--inverted': this.inverted,
+			};
+		},
 	},
 	template: `
-		<div ref="label" class="ai__roles-dialog_label" v-html="labelHTML"></div>
+		<div v-if="useRedesign" :class="className">
+			<span class="ai__roles-dialog_label-new-text">New</span>
+		</div>
+		<div v-else ref="label" class="ai__roles-dialog_label" v-html="labelHTML"></div>
 	`,
 };

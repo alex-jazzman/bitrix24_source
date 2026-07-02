@@ -13,10 +13,9 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/saver/disk-saver'
 	{
 		async save()
 		{
-			const filesIds = this.getFiles().map((file) => file.id);
-
 			try
 			{
+				const filesIds = this.getFiles().map((file) => file.id);
 				await this.dialogLocator.get('disk-service').save(filesIds);
 				this.showSuccessSaveToast();
 				this.sendAnalytics();

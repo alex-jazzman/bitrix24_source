@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * @global CDatabase $DB
+ * @global CUser $USER
+ */
+
 use Bitrix\Main\Web\Uri;
 use Bitrix\Main\Web\Json;
 

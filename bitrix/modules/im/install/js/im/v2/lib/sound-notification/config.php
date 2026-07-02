@@ -9,12 +9,11 @@ return [
 	'js' => 'dist/sound-notification-manager.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'ui.vue3.vuex',
 		'im.v2.application.core',
-		'im.v2.lib.desktop',
-		'im.v2.lib.call',
-		'main.core.events',
 		'im.v2.const',
+		'im.v2.lib.call',
+		'im.v2.lib.desktop',
+		'main.core.events',
 	],
 	'skip_core' => true,
 ];

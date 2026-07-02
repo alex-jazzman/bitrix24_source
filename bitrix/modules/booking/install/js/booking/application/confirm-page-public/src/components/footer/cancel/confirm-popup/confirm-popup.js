@@ -1,4 +1,3 @@
-import { PopupOptions } from 'main.popup';
 import { Button as UiButton, ButtonSize, ButtonColor } from 'booking.component.button';
 import { Popup } from 'booking.component.popup';
 
@@ -23,11 +22,16 @@ export const ConfirmPopup = {
 		},
 	},
 	emits: ['bookingConfirmed', 'bookingCanceled', 'closePopup'],
-	data(): Object
+	setup(): Object
 	{
 		return {
 			ButtonSize,
 			ButtonColor,
+		};
+	},
+	data(): Object
+	{
+		return {
 			btnWaiting: false,
 		};
 	},

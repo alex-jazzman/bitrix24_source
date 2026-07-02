@@ -1,21 +1,22 @@
-import { Type } from 'main.core';
+import { Type, type JsonObject } from 'main.core';
 import { EventEmitter } from 'main.core.events';
+import { type Store } from 'ui.vue3.vuex';
 
-import { Utils } from 'im.v2.lib.utils';
+import { Core } from 'im.v2.application.core';
+import { EventType, RestMethod, DialogScrollThreshold, ChatType, DialogIdChatPrefix } from 'im.v2.const';
 import { Logger } from 'im.v2.lib.logger';
 import { runAction, type RunActionError } from 'im.v2.lib.rest';
-import { Core } from 'im.v2.application.core';
-import { EventType, RestMethod, DialogScrollThreshold, ChatType } from 'im.v2.const';
+import { Utils } from 'im.v2.lib.utils';
+import { type ImModelChat, type ImModelMessage } from 'im.v2.model';
 import { MessageService } from 'im.v2.provider.service.message';
 
-import type { Store } from 'ui.vue3.vuex';
-import type { ImModelChat, ImModelMessage } from 'im.v2.model';
-import type {
-	PlainMessageParams,
-	CopilotMessageParams,
-	FileMessageParams,
-	PreparedMessage,
-	StickerMessageParams,
+import {
+	type PlainMessageParams,
+	type CopilotPromptMessageParams,
+	type CopilotModeParams,
+	type FileMessageParams,
+	type PreparedMessage,
+	type StickerMessageParams,
 } from './types/sending';
 
 export type { PanelContext, PanelContextWithMultipleIds } from './types/sending';
@@ -151,16 +152,16 @@ export class SendingService
 		return this.#sendAndProcessMessage(message);
 	}
 
-	async sendCopilotPrompt(params: CopilotMessageParams): Promise
+	async sendCopilotPrompt(copilotPromptMessageParams: CopilotPromptMessageParams): Promise
 	{
-		const { text = '' } = params;
+		const { text = '' } = copilotPromptMessageParams;
 		if (!Type.isStringFilled(text))
 		{
 			return Promise.resolve();
 		}
 
-		Logger.warn('SendingService: sendCopilotPrompt', params);
-		const message = this.#preparePrompt(params);
+		Logger.warn('SendingService: sendCopilotPrompt', copilotPromptMessageParams);
+		const message = this.#prepareCopilotPromptMessage(copilotPromptMessageParams);
 
 		return this.#processMessageSending(message);
 	}
@@ -209,6 +210,25 @@ export class SendingService
 		return Promise.resolve();
 	}
 
+	#prepareCustomFields(dialogId: string, temporaryId: string): JsonObject
+	{
+		const customsFieldsSources = EventEmitter.emit(EventType.sending.onBeforeAddMessageToModel, {
+			temporaryId,
+			dialogId,
+		});
+
+		let customFields = {};
+		for (const source of customsFieldsSources)
+		{
+			if (Type.isPlainObject(source))
+			{
+				customFields = { ...customFields, ...source };
+			}
+		}
+
+		return customFields;
+	}
+
 	#prepareMessage(params: PlainMessageParams): PreparedMessage
 	{
 		const { text, tempMessageId, dialogId, replyId, forwardIds } = params;
@@ -221,6 +241,7 @@ export class SendingService
 
 		const copilotParams = this.#prepareCopilotMessageParams(dialogId);
 		const aiAssistantParams = this.#prepareAiAssistantMessageParams(dialogId);
+		const customFields = this.#prepareCustomFields(dialogId, tempMessageId);
 
 		return {
 			text,
@@ -233,6 +254,7 @@ export class SendingService
 			...copilotParams,
 			...aiAssistantParams,
 			...defaultFields,
+			...customFields,
 		};
 	}
 
@@ -264,17 +286,19 @@ export class SendingService
 		};
 	}
 
-	#preparePrompt(params: CopilotMessageParams): PreparedMessage
+	#prepareCopilotPromptMessage(promptMessageParams: CopilotPromptMessageParams): PreparedMessage
 	{
-		const { copilot } = params;
-		if (!copilot || !copilot.promptCode)
+		const promptCode = promptMessageParams.copilot?.promptCode;
+		if (!promptCode)
 		{
 			throw new Error('SendingService: preparePrompt: no code provided');
 		}
 
+		const preparedMessage = this.#prepareMessage(promptMessageParams);
+
 		return {
-			...this.#prepareMessage(params),
-			copilot,
+			...preparedMessage,
+			copilot: { ...preparedMessage.copilot, promptCode },
 		};
 	}
 
@@ -585,7 +609,8 @@ export class SendingService
 	#buildForwardContextId(chatId: number, messageId: number): string
 	{
 		const dialogId = this.#getDialogByChatId(chatId).dialogId;
-		if (dialogId.startsWith('chat'))
+
+		if (dialogId.startsWith(DialogIdChatPrefix))
 		{
 			return `${dialogId}/${messageId}`;
 		}
@@ -627,15 +652,30 @@ export class SendingService
 		return Promise.resolve();
 	}
 
-	#prepareCopilotMessageParams(dialogId: string): { copilot?: { reasoning: boolean } }
+	#prepareCopilotMessageParams(dialogId: string): { copilot: CopilotModeParams }
 	{
-		const isReasoningEnabled = Core.getStore().getters['copilot/chats/isReasoningEnabled'](dialogId);
-		if (!isReasoningEnabled)
+		const store = Core.getStore();
+		const isReasoningEnabled = store.getters['copilot/chats/isReasoningEnabled'](dialogId);
+		const isForceSearchEnabled = store.getters['copilot/chats/isForceSearchEnabled'](dialogId);
+		const mcpAuthId = store.getters['copilot/chats/getMcpAuth'](dialogId)?.id;
+
+		const copilot = {};
+		if (isReasoningEnabled)
 		{
-			return {};
+			copilot.reasoning = 'Y';
 		}
 
-		return { copilot: { reasoning: 'Y' } };
+		if (isForceSearchEnabled)
+		{
+			copilot.forceSearch = 'Y';
+		}
+
+		if (mcpAuthId)
+		{
+			copilot.mcpAuthId = mcpAuthId;
+		}
+
+		return { copilot };
 	}
 
 	#prepareAiAssistantMessageParams(dialogId: string): { aiAssistant?: { mcpAuthId: number } }

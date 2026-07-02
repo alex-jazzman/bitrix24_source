@@ -9,8 +9,8 @@ return [
 	'css' => 'dist/data-structures.bundle.css',
 	'js' => 'dist/data-structures.bundle.js',
 	'rel' => [
-		'main.core',
 		'crm_common',
+		'main.core',
 	],
 	'skip_core' => false,
 ];

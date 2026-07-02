@@ -1214,7 +1214,7 @@ if (empty($arRunErrors))
 	{
 		$saleDiscountOnly = (string)Main\Config\Option::get('sale', 'use_sale_discount_only') == 'Y';
 		if ($saleDiscountOnly)
-			$calculationConfig['PRECISION'] = (int)Main\Config\Option::get('sale', 'value_precision');
+			$calculationConfig['PRECISION'] = Catalog\Product\Price\Calculation::getPrecision();
 	}
 	Catalog\Product\Price\Calculation::setConfig($calculationConfig);
 	unset($calculationConfig);

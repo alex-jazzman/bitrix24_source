@@ -47,3 +47,4 @@ $MESS['CRM_BIC_ACTIVITY_FIELD_EDITOR_NAME'] = "Имя редактора";
 $MESS['CRM_BIC_ACTIVITY_FIELD_EDITOR_NAME_FULL'] = "Имя пользователя, который последним изменил дело";
 $MESS['CRM_BIC_ACTIVITY_FIELD_EDITOR'] = "Редактор";
 $MESS['CRM_BIC_ACTIVITY_FIELD_EDITOR_FULL'] = "Идентификатор и имя пользователя, который последним изменил дело";
+$MESS['CRM_BIC_ACTIVITY_TABLE_DESCRIPTION_FULL'] = "Набор содержит информацию о делах в элементах CRM.";

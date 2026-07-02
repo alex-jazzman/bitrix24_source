@@ -44,6 +44,11 @@ export const chatFieldsConfig: FieldsConfig = [
 		formatFunction: convertToNumber,
 	},
 	{
+		fieldName: 'guestCount',
+		targetFieldName: 'guestCount',
+		checkFunction: Type.isNumber,
+	},
+	{
 		fieldName: 'lastId',
 		targetFieldName: 'lastReadId',
 		checkFunction: Type.isNumber,

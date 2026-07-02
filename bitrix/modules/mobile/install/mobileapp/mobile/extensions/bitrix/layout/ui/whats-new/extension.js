@@ -11,14 +11,12 @@ jn.define('layout/ui/whats-new', (require, exports, module) => {
 		fetchUrlParamsThunk,
 		selectUrlParams,
 		updateReadNewsThunk,
-		setHasReadNews,
 		selectArticlesWithMinimalParams,
 		selectIsIdleStatus,
 		selectIsLoadingStatus,
 		selectIsSuccessStatus,
 		selectIsFailedStatus,
 		selectIsLast,
-		selectHasReadNews,
 		selectNewCheckTime,
 		selectHasUnsupportedFeatures,
 		updateLocalWhatsNewsParamsThunk,
@@ -54,12 +52,10 @@ jn.define('layout/ui/whats-new', (require, exports, module) => {
 	 * @property {boolean} isSucceeded
 	 * @property {boolean} isFailed
 	 * @property {boolean} isLast
-	 * @property {boolean} hasReadNews
 	 * @property {boolean} hasUnsupportedFeatures
 	 * Redux actions
 	 * @property {function} fetchWhatsNewThunk
 	 * @property {function} updateReadNewsThunk
-	 * @property {function} setHasReadNews
 	 *
 	 */
 	class WhatsNewList extends LayoutComponent
@@ -118,13 +114,9 @@ jn.define('layout/ui/whats-new', (require, exports, module) => {
 
 		shouldInitialLoad()
 		{
-			const { isIdle, hasReadNews, errorStatus } = this.props;
+			const { isIdle } = this.props;
 
-			return (
-				isIdle
-				|| hasReadNews
-				|| (Number.isInteger(errorStatus) && errorStatus === 0)
-			);
+			return isIdle;
 		}
 
 		async loadInitialData()
@@ -144,16 +136,6 @@ jn.define('layout/ui/whats-new', (require, exports, module) => {
 			}
 
 			await this.loadItemsHandler(0, false);
-		}
-
-		componentWillUnmount()
-		{
-			super.componentWillUnmount();
-
-			if (this.listMarkReadNewsIds.length > 0)
-			{
-				this.props.setHasReadNews();
-			}
 		}
 
 		componentWillReceiveProps(props)
@@ -294,9 +276,7 @@ jn.define('layout/ui/whats-new', (require, exports, module) => {
 				{
 					style: {
 						flex: 1,
-						backgroundColor: (this.props.articles.length === 0)
-							? Color.accentSoftBlue3.toHex()
-							: Color.bgContentPrimary.toHex(),
+						backgroundColor: Color.accentSoftBlue3.toHex(),
 					},
 					safeArea: {
 						bottom: this.props.hasUnsupportedFeatures,
@@ -583,7 +563,6 @@ jn.define('layout/ui/whats-new', (require, exports, module) => {
 			isSucceeded: selectIsSuccessStatus(state),
 			isFailed: selectIsFailedStatus(state),
 			isLast: selectIsLast(state),
-			hasReadNews: selectHasReadNews(state),
 			newCheckTime: selectNewCheckTime(state),
 			hasUnsupportedFeatures: selectHasUnsupportedFeatures(state, articlesIds),
 			errorStatus: selectErrorStatus(state),
@@ -595,7 +574,6 @@ jn.define('layout/ui/whats-new', (require, exports, module) => {
 		fetchWhatsNewThunk,
 		fetchUrlParamsThunk,
 		updateReadNewsThunk,
-		setHasReadNews,
 		updateLocalWhatsNewsParamsThunk,
 	};
 

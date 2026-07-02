@@ -125,3 +125,7 @@
 	margin-left: auto;
 	opacity: 0.5;
 }
+
+.booking-actions-popup__item-client-info.--empty .booking-actions-popup-item-info {
+	margin-top: 6px;
+}

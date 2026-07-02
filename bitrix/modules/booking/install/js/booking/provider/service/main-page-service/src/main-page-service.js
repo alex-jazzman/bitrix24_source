@@ -3,9 +3,11 @@ import { LocalStorageCache } from 'main.core.cache';
 
 import { Core } from 'booking.core';
 import { Model } from 'booking.const';
+import { DatePeriod } from 'booking.lib.date-period';
 import { resourcesDateCache } from 'booking.lib.resources-date-cache';
 import { ApiClient, apiClient } from 'booking.lib.api-client';
 import type { BookingModel } from 'booking.model.bookings';
+import type { DatePeriodTs } from 'booking.lib.date-period';
 
 import { MainPageDataExtractor } from './main-page-data-extractor';
 import { CountersExtractor } from './counters-extractor';
@@ -13,37 +15,45 @@ import type { TimezonesDto } from './types';
 
 class MainPageService
 {
-	#dateCache: number[] = [];
+	#dateCache: Set<number> = new Set();
 	#timezonesLocalStorageKey = 'bookingTimezones';
 
 	clearCache(ids: number[]): void
 	{
-		this.#dateCache = this.#dateCache.filter((date: number) => resourcesDateCache.isDateLoaded(date, ids));
+		this.#dateCache = new Set(
+			[...this.#dateCache].filter((date: number) => resourcesDateCache.isDateLoaded(date, ids)),
+		);
 	}
 
-	async fetchData(dateTs: number): Promise<void>
+	async fetchData(datePeriod: DatePeriodTs): Promise<void>
 	{
-		if (this.#dateCache.includes(dateTs))
+		const periodDates = DatePeriod.getDates(datePeriod);
+
+		const isCachedDates = periodDates.every((dateTs: number): boolean => this.#dateCache.has(dateTs));
+		if (isCachedDates)
 		{
 			return;
 		}
 
-		this.#dateCache.push(dateTs);
+		await this.loadData(datePeriod);
 
-		await this.loadData(dateTs);
+		for (const dateTs of periodDates)
+		{
+			this.#dateCache.add(dateTs);
+		}
 	}
 
-	async loadData(dateTs: number): Promise<void>
+	async loadData(datePeriod: DatePeriodTs): Promise<void>
 	{
 		try
 		{
 			if (Core.getStore().getters[`${Model.Interface}/editingBookingId`] > 0)
 			{
-				await this.#requestDataForBooking(dateTs);
+				await this.#requestDataForBooking(datePeriod);
 			}
 			else
 			{
-				await this.#requestData(dateTs);
+				await this.#requestData(datePeriod);
 			}
 		}
 		catch (error)
@@ -52,16 +62,23 @@ class MainPageService
 		}
 	}
 
-	async #requestData(dateTs: number): Promise<void>
+	async #requestData(datePeriod: DatePeriodTs): Promise<void>
 	{
-		const data = await new ApiClient().get('MainPage.get', { dateTs });
+		const data = await new ApiClient().get('MainPage.get', {
+			dateFromTs: datePeriod.fromTs,
+			dateToTs: datePeriod.toTs,
+		});
 		const extractor = new MainPageDataExtractor(data);
+		const favoriteIds = extractor.getFavoriteIds();
 
-		resourcesDateCache.upsertIds(dateTs, extractor.getFavoriteIds());
+		for (const dateTs of DatePeriod.getDates(datePeriod))
+		{
+			resourcesDateCache.upsertIds(dateTs, favoriteIds);
+		}
 
 		await Promise.all([
-			Core.getStore().dispatch(`${Model.Favorites}/set`, extractor.getFavoriteIds()),
-			Core.getStore().dispatch(`${Model.Interface}/setResourcesIds`, extractor.getFavoriteIds()),
+			Core.getStore().dispatch(`${Model.Favorites}/set`, favoriteIds),
+			Core.getStore().dispatch(`${Model.Interface}/setResourcesIds`, favoriteIds),
 			Core.getStore().dispatch(`${Model.Interface}/setIntersectionMode`, extractor.getIntersectionMode()),
 			Core.getStore().dispatch(`${Model.Resources}/upsertMany`, extractor.getResources()),
 			Core.getStore().dispatch(`${Model.ResourceTypes}/upsertMany`, extractor.getResourceTypes()),
@@ -71,25 +88,25 @@ class MainPageService
 			Core.getStore().dispatch(`${Model.Clients}/upsertMany`, extractor.getClients()),
 			Core.getStore().dispatch(`${Model.Clients}/setProviderModuleId`, extractor.getClientsProviderModuleId()),
 			Core.getStore().dispatch(
-				`${Model.Interface}/setIsCurrentSenderAvailable`,
-				extractor.getIsCurrentSenderAvailable(),
-			),
-			Core.getStore().dispatch(
 				`${Model.Interface}/setShouldShowWhatsAppEmergency`,
 				extractor.getShouldShowWhatsAppEmergency(),
 			),
-			Core.getStore().dispatch(`${Model.FormsMenu}/setFormsMenu`, extractor.getFormsMenu()),
 			Core.getStore().dispatch(`${Model.Sku}/setCatalogSkuEntityOptions`, extractor.getCatalogSkuEntityOptions()),
+			Core.getStore().dispatch(`${Model.Notifications}/upsertManySenders`, extractor.getSenders()),
 		]);
 	}
 
-	async #requestDataForBooking(dateTs: number): Promise<void>
+	async #requestDataForBooking(datePeriod: DatePeriodTs): Promise<void>
 	{
-		const bookingId = Core.getParams().editingBookingId;
-		const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+		const bookingId = Core.getStore().getters[`${Model.Interface}/editingBookingId`];
 		const resourcesIds = Core.getStore().getters[`${Model.Favorites}/get`];
 
-		const data = await new ApiClient().get('MainPage.getForBooking', { dateTs, bookingId, timezone, resourcesIds });
+		const data = await new ApiClient().get('MainPage.getForBooking', {
+			dateFromTs: datePeriod.fromTs,
+			dateToTs: datePeriod.toTs,
+			bookingId,
+			resourcesIds,
+		});
 
 		const extractor = new MainPageDataExtractor(data);
 
@@ -102,37 +119,21 @@ class MainPageService
 			Core.getStore().dispatch(`${Model.Clients}/upsertMany`, extractor.getClients()),
 			Core.getStore().dispatch(`${Model.Clients}/setProviderModuleId`, extractor.getClientsProviderModuleId()),
 			Core.getStore().dispatch(
-				`${Model.Interface}/setIsCurrentSenderAvailable`,
-				extractor.getIsCurrentSenderAvailable(),
-			),
-			Core.getStore().dispatch(
 				`${Model.Interface}/setShouldShowWhatsAppEmergency`,
 				extractor.getShouldShowWhatsAppEmergency(),
 			),
+			Core.getStore().dispatch(`${Model.Notifications}/upsertManySenders`, extractor.getSenders()),
 		];
 
 		const editingBooking = extractor.getBookings()
 			.find((booking: BookingModel) => booking.id === bookingId)
 		;
 
-		if (!editingBooking && dateTs === 0)
+		if (!editingBooking)
 		{
 			promises.push(
 				Core.getStore().dispatch(`${Model.Interface}/setEditingBookingId`, 0),
 			);
-		}
-
-		let selectedDate = new Date(dateTs * 1000);
-		if (editingBooking && dateTs === 0)
-		{
-			const dateFrom = new Date(editingBooking.dateFromTs);
-			selectedDate = new Date(dateFrom.getFullYear(), dateFrom.getMonth(), dateFrom.getDate());
-
-			promises.push(
-				Core.getStore().dispatch(`${Model.Interface}/setSelectedDateTs`, selectedDate.getTime()),
-			);
-
-			this.#dateCache.push(selectedDate.getTime() / 1000);
 		}
 
 		let selectedResourcesIds = resourcesIds;
@@ -154,7 +155,10 @@ class MainPageService
 			);
 		}
 
-		resourcesDateCache.upsertIds(selectedDate.getTime() / 1000, selectedResourcesIds);
+		for (const dateTs of DatePeriod.getDates(datePeriod))
+		{
+			resourcesDateCache.upsertIds(dateTs, selectedResourcesIds);
+		}
 
 		await Promise.all(promises);
 	}

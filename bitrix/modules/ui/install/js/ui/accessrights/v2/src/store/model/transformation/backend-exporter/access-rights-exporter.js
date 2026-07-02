@@ -1,6 +1,5 @@
-import { AccessRightSection } from '../../access-rights-model';
-import type { AccessRightItem, AccessRightsCollection } from '../../access-rights-model';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import type { AccessRightItem, AccessRightSection, AccessRightsCollection } from '../../access-rights-model';
+import { EventEmitter } from 'main.core.events';
 
 export type RightSaveData = {
 	id: string,

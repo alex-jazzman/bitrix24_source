@@ -14,15 +14,24 @@
 }
 
 .ui-time-picker-header-title {
+	background: none;
+	border: none;
+	margin: 0;
+	font: inherit;
 	cursor: pointer;
 	color: var(--ui-color-text-primary);
 	font-weight: var(--ui-font-weight-semi-bold);
 	font-size: var(--ui-font-size-lg);
 	padding: 5px;
+	border-radius: var(--ui-border-radius-3xs);
 }
 
 .ui-time-picker-header-title:hover {
 	color: var(--ui-date-picker-button-hover-color);
+}
+
+.ui-time-picker-header-title:focus-visible {
+	outline: 2px solid var(--ui-date-picker-outiline-color);
 }
 
 .ui-time-picker-content {
@@ -115,8 +124,8 @@
 	overflow-x: hidden;
 	overflow-y: scroll;
 	scroll-snap-type: y mandatory;
-	overscroll-behavior: contain;
-	scrollbar-width: none;
+	overscroll-behavior: contain; /* @chef-ignore */
+	scrollbar-width: none; /* @chef-ignore */
 	outline: none;
 }
 

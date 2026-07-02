@@ -10,11 +10,16 @@
 /** @var string $templateFolder */
 /** @var string $componentPath */
 /** @var CBitrixComponent $component */
+
+$isStExport = (($arResult['STEXPORT_MODE'] ?? 'N') === 'Y');
+$isFirstPage = (($arResult['STEXPORT_IS_FIRST_PAGE'] ?? 'N') === 'Y');
+$isLastPage = (($arResult['STEXPORT_IS_LAST_PAGE'] ?? 'N') === 'Y');
 ?>
+<?php if (!$isStExport || $isFirstPage): ?>
 <html>
 	<head>
-	<title><? $APPLICATION->GetTitle() ?></title>
-	<meta http-equiv="Content-Type" content="text/html; charset='<?= LANG_CHARSET ?>">
+	<title><?php $APPLICATION->GetTitle() ?></title>
+	<meta http-equiv="Content-Type" content="text/html; charset=<?= LANG_CHARSET ?>">
 	<style>
 		td {mso-number-format:\@;}
 		.number0 {mso-number-format:0;}
@@ -24,32 +29,22 @@
 <body>
 	<table border="1">
 	<tr>
-		<? foreach ($arResult["EXCEL_COLUMN_NAME"] as $value)
-		{
-		?>
-		<td><?= $value; ?></td>
-		<?
-		}
-		?>
+		<?php foreach ($arResult["EXCEL_COLUMN_NAME"] as $value): ?>
+		<td><?= (string)$value ?></td>
+		<?php endforeach; ?>
 	</tr>
+<?php endif; ?>
 
-	<? foreach ($arResult["EXCEL_CELL_VALUE"] as $array)
-	{
-	?>
+<?php foreach ($arResult["EXCEL_CELL_VALUE"] as $array): ?>
 	<tr>
-		<? foreach ($array as $value)
-		{
-		?>
-			<td><?= $value; ?></td>
-		<?
-		}
-		?>
+		<?php foreach ($array as $value): ?>
+			<td><?= (string)$value ?></td>
+		<?php endforeach; ?>
 	</tr>
-	<?
-	}
-	?>
+<?php endforeach; ?>
 
+<?php if (!$isStExport || $isLastPage): ?>
 	</table>
 </body>
 </html>
-
+<?php endif; ?>

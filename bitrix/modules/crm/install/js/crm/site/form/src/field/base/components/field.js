@@ -1,6 +1,7 @@
-import {Controller} from "../controller";
-import "./css/field.css";
-import "./css/animation.css";
+import { Controller } from '../controller';
+import { Aria } from '../../../util/aria';
+import './css/field.css';
+import './css/animation.css';
 
 const Field = {
 	props: {
@@ -8,8 +9,6 @@ const Field = {
 			type: Controller,
 			required: true,
 		},
-	},
-	components: {
 	},
 	template: `
 		<transition name="b24-form-field-a-slide">
@@ -30,14 +29,18 @@ const Field = {
 						@input-key-down="onKeyDown"
 					></component>
 				</transition-group>
-					<a class="b24-form-control-add-btn"
+					<button 
+						type="button"
+						class="b24-form-control-add-btn"
 						v-if="field.multiple"
 						@click="addItem"
+						:aria-label="field.messages.get('fieldAdd')"
 					>
 						{{ field.messages.get('fieldAdd') }}
-					</a>
+					</button>
 					<div
 						class="b24-form-control-comment"
+						:id="hintId"
 						v-if="field.hint && !field.hintOnFocus || field.hint && field.hintOnFocus && field.focused"
 						>{{field.hint}}</div>
 				</div>
@@ -51,6 +54,7 @@ const Field = {
 					></component>
 					<div
 						class="b24-form-control-comment"
+						:id="hintId"
 						v-if="field.hint && !field.hintOnFocus || field.hint && field.hintOnFocus && field.focused"
 						>{{field.hint}}</div>
 				</div>
@@ -58,11 +62,19 @@ const Field = {
 		</transition>
 	`,
 	computed: {
+		hintId(): string
+		{
+			return Aria.getHintId(this.field);
+		},
+		hasErrors(): boolean
+		{
+			return Aria.hasErrors(this.field);
+		},
 		classes()
 		{
-			let list = [
-				'b24-form-field-' + this.field.type,
-				'b24-form-control-' + this.field.getOriginalType(),
+			const list = [
+				`b24-form-field-${this.field.type}`,
+				`b24-form-control-${this.field.getOriginalType()}`,
 			];
 			/*
 			if (this.field.design.dark)
@@ -74,20 +86,13 @@ const Field = {
 			{
 				list.push('b24-form-control-group');
 			}
+
 			if (this.hasErrors)
 			{
 				list.push('b24-form-control-alert');
 			}
-			return list;
-		},
-		hasErrors()
-		{
-			if (!this.field.validated || this.field.focused)
-			{
-				return false;
-			}
 
-			return !this.field.valid();
+			return list;
 		},
 	},
 	methods: {
@@ -98,7 +103,6 @@ const Field = {
 		{
 			this.field.focused = true;
 			this.field.emit(this.field.events.focus);
-
 		},
 		onBlur()
 		{
@@ -107,31 +111,36 @@ const Field = {
 			setTimeout(() => {
 				this.field.emit(this.field.events.blur);
 			}, 350);
-
 		},
 		onKeyDown(e)
 		{
-			let value = e.key;
-			if (this.field.filter(value))
-			{
-				return;
-			}
+			const key = e.key;
 
-			if (['Esc', 'Delete', 'Backspace', 'Tab'].indexOf(e.key) >= 0)
-			{
-				return;
-			}
 			if (e.ctrlKey || e.metaKey)
 			{
 				return;
 			}
 
-			e.preventDefault();
-		},
-	}
-};
+			if (key.length === 1)
+			{
+				// eslint-disable-next-line unicorn/no-array-callback-reference
+				const filteredValue = this.field.filter(key);
+				if (filteredValue !== key)
+				{
+					e.preventDefault();
 
+					return;
+				}
+			}
+
+			if (['Escape', 'Esc', 'Delete', 'Backspace', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key))
+			{
+				return;
+			}
+		},
+	},
+};
 
 export {
 	Field,
-}
+};

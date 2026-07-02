@@ -1,9 +1,7 @@
-import { Popup, PopupManager, PopupOptions } from 'main.popup';
-import { Type } from 'main.core';
+import { Type, type JsonObject } from 'main.core';
+import { Popup, PopupManager, type PopupOptions } from 'main.popup';
 
 import { Logger } from 'im.v2.lib.logger';
-
-import type { JsonObject } from 'main.core';
 
 const POPUP_CONTAINER_PREFIX = '#popup-window-content-';
 const POPUP_BORDER_RADIUS = '10px';
@@ -92,6 +90,7 @@ export const MessengerPopup = {
 					onPopupDestroy: this.closePopup.bind(this),
 					onDragStart: this.dragStart.bind(this),
 				},
+				borderRadius: POPUP_BORDER_RADIUS,
 				contentBorderRadius: POPUP_BORDER_RADIUS,
 			};
 		},

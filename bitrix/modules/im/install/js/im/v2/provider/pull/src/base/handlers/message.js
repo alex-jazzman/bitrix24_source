@@ -1,37 +1,38 @@
 import { Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
+import { type Store } from 'ui.vue3.vuex';
 
-import { CopilotManager } from 'im.v2.lib.copilot';
 import { Core } from 'im.v2.application.core';
+import { EventType, DialogScrollThreshold, UserRole } from 'im.v2.const';
+import { CopilotManager } from 'im.v2.lib.copilot';
+import { InputActionListener } from 'im.v2.lib.input-action';
 import { Logger } from 'im.v2.lib.logger';
 import { UserManager } from 'im.v2.lib.user';
-import { InputActionListener } from 'im.v2.lib.input-action';
-import { EventType, DialogScrollThreshold, UserRole, ChatType } from 'im.v2.const';
+import { type ImModelChat, type ImModelMessage } from 'im.v2.model';
 import { MessageService } from 'im.v2.provider.service.message';
 
-import { NewMessageManager } from '../../classes/new-message-manager';
-import { MessageDeleteManager } from './classes/message-delete-manager';
-
-import type { Store } from 'ui.vue3.vuex';
-import type { ImModelChat, ImModelMessage } from 'im.v2.model';
-
-import type {
-	MessageAddParams,
-	MessageUpdateParams,
-	MessageDeleteParams,
-	MessageDeleteCompleteParams,
-	MultipleMessageDeleteParams,
-	ReadMessageParams,
-	ReadMessageOpponentParams,
-	PinAddParams,
-	PinDeleteParams,
-	AddReactionParams,
-	DeleteReactionParams,
-	MessageDeleteCompletePreparedParams,
-	PrepareDeleteMessageParams,
-	RawReaction,
+import { type RawFile, type RawUser, type RawMessage } from '../../types/common';
+import {
+	type MessageAddParams,
+	type MessageUpdateParams,
+	type MessageDeleteParams,
+	type MessageDeleteCompleteParams,
+	type MultipleMessageDeleteParams,
+	type ReadMessageParams,
+	type ReadMessageOpponentParams,
+	type PinAddParams,
+	type PinDeleteParams,
+	type AddReactionParams,
+	type DeleteReactionParams,
+	type MessageDeleteCompletePreparedParams,
+	type PrepareDeleteMessageParams,
+	type RawReaction,
+	type BuilderBlockAppendParams,
+	type BuilderBlockDeleteParams,
+	type BuilderBlockUpdateParams,
 } from '../../types/message';
-import type { RawFile, RawUser, RawMessage, RawChat } from '../../types/common';
+import { MessageDeleteManager } from './classes/message-delete-manager';
+import { NewMessageManager } from '../../classes/new-message-manager';
 
 type UserId = number;
 
@@ -58,6 +59,7 @@ export class MessagePullHandler
 		this.#setCopilotData(params);
 		this.#setMessagesAutoDeleteConfig(params);
 		this.#setStickers(params);
+		this.#setBuilder(params.message);
 
 		const messageWithTemplateId = this.#store.getters['messages/isInChatCollection']({
 			messageId: params.message.templateId,
@@ -124,6 +126,7 @@ export class MessagePullHandler
 				params: params.params,
 			},
 		});
+		this.#setBuilder(params);
 		this.#sendScrollEvent(params.chatId);
 	}
 
@@ -260,6 +263,31 @@ export class MessagePullHandler
 		});
 	}
 
+	handleBuilderBlockAppend(params: BuilderBlockAppendParams)
+	{
+		Logger.warn('MessagePullHandler: handleBuilderBlockAppend', params);
+		const { block, messageId, text, chatId } = params;
+		void this.#store.dispatch('messages/builder/appendBlock', { messageId, block });
+		void this.#store.dispatch('messages/update', { id: messageId, fields: { text } });
+		this.#sendScrollEvent(chatId, DialogScrollThreshold.halfScreenUp);
+	}
+
+	handleBuilderBlockUpdate(params: BuilderBlockUpdateParams)
+	{
+		Logger.warn('MessagePullHandler: handleBuilderBlockUpdate', params);
+		const { block, blockId, messageId, text } = params;
+		void this.#store.dispatch('messages/builder/updateBlock', { messageId, blockId, block });
+		void this.#store.dispatch('messages/update', { id: messageId, fields: { text } });
+	}
+
+	handleBuilderBlockDelete(params: BuilderBlockDeleteParams)
+	{
+		Logger.warn('MessagePullHandler: builderBlockDelete', params);
+		const { blockId, messageId, text } = params;
+		void this.#store.dispatch('messages/builder/deleteBlock', { messageId, blockId });
+		void this.#store.dispatch('messages/update', { id: messageId, fields: { text } });
+	}
+
 	// helpers
 	#setMessageChat(params: MessageAddParams)
 	{
@@ -325,6 +353,7 @@ export class MessagePullHandler
 		void this.#store.dispatch('files/set', files);
 		void this.#store.dispatch('users/set', users);
 		void this.#store.dispatch('stickers/set', stickers);
+		this.#setBuilder(newMessages);
 	}
 
 	#setCommentInfo(params: MessageAddParams): void
@@ -484,9 +513,12 @@ export class MessagePullHandler
 		this.#messageViews[messageId].add(userId);
 	}
 
-	#sendScrollEvent(chatId: number)
+	#sendScrollEvent(
+		chatId: number,
+		threshold: $Values<typeof DialogScrollThreshold> = DialogScrollThreshold.nearTheBottom,
+	)
 	{
-		EventEmitter.emit(EventType.dialog.scrollToBottom, { chatId, threshold: DialogScrollThreshold.nearTheBottom });
+		EventEmitter.emit(EventType.dialog.scrollToBottom, { chatId, threshold });
 	}
 
 	#getDialog(dialogId: string, temporary: boolean = false): ?ImModelChat
@@ -522,6 +554,13 @@ export class MessagePullHandler
 			}]);
 			void this.#store.dispatch('stickers/set', params.stickers);
 		}
+	}
+
+	#setBuilder(payload: RawMessage | RawMessage[])
+	{
+		const messages = Type.isArray(payload) ? payload : [payload];
+
+		void this.#store.dispatch('messages/builder/set', messages);
 	}
 
 	#prepareDeleteMessageParams(

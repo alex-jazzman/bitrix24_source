@@ -1,4 +1,4 @@
-import { ApplyButton, ButtonColor, CancelButton } from 'ui.buttons';
+import { ApplyButton, ButtonColor, CancelButton, AirButtonStyle } from 'ui.buttons';
 import { Popup } from 'ui.vue3.components.popup';
 import '../../../css/value/value-popup.css';
 
@@ -40,6 +40,7 @@ export const ValuePopup = {
 					this.apply();
 					this.$emit('close');
 				},
+				useAirDesign: true,
 			});
 			applyButton.renderTo(this.$refs['button-container']);
 
@@ -48,6 +49,8 @@ export const ValuePopup = {
 					this.$emit('close');
 				},
 				text: this.$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_CANCEL'),
+				useAirDesign: true,
+				style: AirButtonStyle.OUTLINE,
 			});
 			cancelButton.renderTo(this.$refs['button-container']);
 		});

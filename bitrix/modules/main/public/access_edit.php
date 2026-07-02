@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * @global CMain $APPLICATION
+ * @global CUser $USER
+ */
+
 use Bitrix\Main\Web\Json;
 
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
@@ -214,7 +219,7 @@ if ($strWarning != "")
 
 <p><b><?=($isFolder ? GetMessage("EDIT_ACCESS_TO_FOLDER") : GetMessage("EDIT_ACCESS_TO_FILE"))?></b> <?=htmlspecialcharsbx($path);?></p>
 
-<?
+<?php
 $popupWindow->EndDescription();
 $popupWindow->StartContent();
 ?>
@@ -228,7 +233,7 @@ $popupWindow->StartContent();
 		<td colspan="2"></td>
 	</tr>
 
-<?
+<?php
 //names for access codes
 $access = new CAccess();
 $arNames = $access->GetNames($arUserGroupsID, true);
@@ -261,7 +266,7 @@ foreach($arUserGroupsID as $access_code):
 	$errorOccured = ($strWarning != "" && isset($_POST["PERMISSION"]) && is_array($_POST["PERMISSION"]) && array_key_exists($access_code, $_POST["PERMISSION"]));
 
 	//Inherit Task
-	list ($inheritTaskID) = $APPLICATION->GetFileAccessPermission(Array($site, $assignFolderName), Array($access_code), true);
+	[$inheritTaskID] = $APPLICATION->GetFileAccessPermission(Array($site, $assignFolderName), Array($access_code), true);
 
 	if (!array_key_exists($inheritTaskID, $arPermTypes))
 	{
@@ -309,7 +314,7 @@ foreach($arUserGroupsID as $access_code):
 					. htmlspecialcharsbx($arNames[$access_code]["name"])
 		)?></td>
 		<td>
-			<?if ($currentPerm === false && $path != "/"): //Inherit permission
+			<?php if ($currentPerm === false && $path != "/"): //Inherit permission
 				$jsInheritPermID .= ",'".$permissionID."'";
 			?>
 
@@ -319,30 +324,30 @@ foreach($arUserGroupsID as $access_code):
 
 				<div id="bx_permission_edit_<?=$permissionID?>" style="display:none;"></div>
 
-			<?
+			<?php
 			else: //Current permission
 				$bWasCurrentPerm = true;
 			?>
 
 				<select name="PERMISSION[<?=$access_code?>]" style="width:90%;" id="bx_task_list_<?=$permissionID?>">
 
-					<?if ($path == "/"):?>
+					<?php if ($path == "/"):?>
 						<option value="0"><?=GetMessage("EDIT_ACCESS_NOT_SET")?></option>
-					<?else:?>
+					<?php else:?>
 						<option value="0"><?=GetMessage("EDIT_ACCESS_SET_INHERIT")." &quot;".htmlspecialcharsEx($arPermTypes[$inheritTaskID])."&quot;"?></option>
-					<?endif?>
+					<?php endif?>
 
-					<?foreach ($arPermTypes as $taskID => $taskTitle):?>
-						<option value="<?=$taskID?>"<?if ($currentPerm == $taskID):?> selected="selected"<?endif?>><?=htmlspecialcharsEx($taskTitle);?></option>
-					<?endforeach?>
+					<?php foreach ($arPermTypes as $taskID => $taskTitle):?>
+						<option value="<?=$taskID?>"<?php if ($currentPerm == $taskID):?> selected="selected"<?php endif?>><?=htmlspecialcharsEx($taskTitle);?></option>
+					<?php endforeach?>
 
 				</select>
 
-			<?endif?>
+			<?php endif?>
 		</td>
 	</tr>
 
-<?
+<?php
 endforeach;
 
 $jsInheritPermID .= "];";
@@ -352,13 +357,13 @@ $jsInheritPermID .= "];";
 
 <p><a href="javascript:void(0)" onclick="BX.Access.ShowForm({callback:BXAddNewPermission})"><?=GetMessage("EDIT_ACCESS_ADD_PERMISSION")?></a></p>
 
-<?if($bWasCurrentPerm && $path != "/"):?>
+<?php if($bWasCurrentPerm && $path != "/"):?>
 	<p><b><a href="javascript:void(0)" onclick="BXClearPermission()"><?=($isFolder? GetMessage("EDIT_ACCESS_REMOVE_PERM"):GetMessage("EDIT_ACCESS_REMOVE_PERM_FILE"))?></a></b></p>
 	<input type="hidden" name="REMOVE_PERMISSIONS" id="REMOVE_PERMISSIONS" value="">
-<?endif?>
+<?php endif?>
 
 <input type="hidden" name="save" value="Y" />
-<?
+<?php
 $popupWindow->EndContent();
 $popupWindow->ShowStandardButtons();
 
@@ -417,11 +422,11 @@ window.BXCreateTaskList = function(permissionID, currentPermission, inheritPermi
 
 	var selectedIndex = 0;
 
-	<?if ($path == "/"):?>
+	<?php if ($path == "/"):?>
 		window.BXTaskArray["0"] = "<?=CUtil::JSEscape(GetMessage("EDIT_ACCESS_NOT_SET"))?>";
-	<?else:?>
+	<?php else:?>
 		window.BXTaskArray["0"] = "<?=CUtil::JSEscape(GetMessage("EDIT_ACCESS_SET_INHERIT"))?>" + " \"" + window.BXTaskArray[(inheritPermission == 0 ? <?=intval($jsInheritPerm)?> : inheritPermission)] + "\"";
-	<?endif?>
+	<?php endif?>
 
 	for(var taskID in BXTaskArray)
 	{
@@ -518,4 +523,5 @@ window.BXClearPermission = function()
 window.BXCreateAccessHint();
 </script>
 
-<?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin_js.php");?>
+<?php
+require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin_js.php");

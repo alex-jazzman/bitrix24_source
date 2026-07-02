@@ -29,6 +29,10 @@ export const RelatedTasks = {
 		},
 	},
 	template: `
-		<RelationTasks :meta="relatedTasksMeta" @add="handleAdd"/>
+		<RelationTasks
+			:meta="relatedTasksMeta"
+			:shouldShowSubTasksOption="false"
+			@add="handleAdd"
+		/>
 	`,
 };

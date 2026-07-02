@@ -1,8 +1,8 @@
 import { Loc } from 'main.core';
 import { MessageBox } from 'ui.dialogs.messagebox';
-import { ServiceLocator } from '../service-locator';
+import { type ServiceLocator } from '../service-locator';
 
-declare type PhoneCommunicationOptions = {
+type PhoneCommunicationOptions = {
 	phone: string,
 	ownerTypeId: number,
 	ownerId: number,
@@ -10,7 +10,7 @@ declare type PhoneCommunicationOptions = {
 	entityId: number,
 };
 
-declare type EmailCommunicationOptions = {
+type EmailCommunicationOptions = {
 	email: string,
 	ownerTypeId: number,
 	ownerId: number,
@@ -19,12 +19,19 @@ declare type EmailCommunicationOptions = {
 	activityEditorContainer: HTMLElement,
 };
 
-declare type IMCommunicationOptions = {
+type IMCommunicationOptions = {
 	dialogId: string,
 };
 
 export class CommunicationService
 {
+	#serviceLocator: ServiceLocator;
+
+	constructor(serviceLocator: ServiceLocator)
+	{
+		this.#serviceLocator = serviceLocator;
+	}
+
 	communicateByPhone(options: PhoneCommunicationOptions): void
 	{
 		if (!window.top.BXIM)
@@ -60,8 +67,7 @@ export class CommunicationService
 		};
 
 		return new Promise((resolve, reject) => {
-			ServiceLocator
-				.getInstance()
+			this.#serviceLocator
 				.getActivityEditorService()
 				.loadActivityEditor(
 					options.ownerTypeId,

@@ -34,3 +34,11 @@
 	background-color: var(--ui-color-palette-red-50);
 	border: none;
 }
+
+.booking-actions-popup-item-icon.--ai {
+	width: 24px;
+	height: 24px;
+	background: url("../images/bitrixgpt.png") no-repeat center;
+	background-size: contain;
+	border: none;
+}

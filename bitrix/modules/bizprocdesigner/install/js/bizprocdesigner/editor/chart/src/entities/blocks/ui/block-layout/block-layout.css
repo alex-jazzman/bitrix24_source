@@ -11,10 +11,10 @@
 	position: absolute;
 	top: 0;
 	bottom: 0;
-	left: -18px;
+	left: -21px;
 	z-index: 1;
-	width: 17px;
-	height: 29px;
+	width: 20px;
+	height: 36px;
 	margin: auto;
 }
 
@@ -90,13 +90,29 @@
 	box-sizing: border-box;
 }
 
+.editor-chart-block-layout .editor-chart-block-layout__header {
+	position: relative;
+	width: 100%;
+	height: auto;
+	padding: 6px;
+	margin-bottom: 1px;
+	z-index: 100;
+	box-sizing: border-box;
+}
+
 .editor-chart-block-layout .editor-chart-block-layout__content {
 	position: relative;
 	width: 100%;
 	height: 100%;
-	padding: 4px;
+	padding: 5px;
 	z-index: 100;
 	box-sizing: border-box;
+}
+
+.editor-chart-block-layout .editor-chart-block-layout__content.--has-header {
+	width: 100%;
+	height: auto;
+	padding: 0 6px 6px;
 }
 
 .editor-chart-block-layout .editor-chart-block-layout__context-menu {

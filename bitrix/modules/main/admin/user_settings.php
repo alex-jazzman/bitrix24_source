@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * @global CMain $APPLICATION
  * @global CUser $USER
@@ -150,73 +150,73 @@ if(!empty(\Bitrix\Main\Application::getInstance()->getSession()["ADMIN"]["USER_S
 	unset(\Bitrix\Main\Application::getInstance()->getSession()["ADMIN"]["USER_SETTINGS_MSG"]);
 }
 ?>
-<form method="POST" name="form1" action="<?echo $APPLICATION->GetCurPage()?>">
+<form method="POST" name="form1" action="<?= $APPLICATION->GetCurPage()?>">
 <?=bitrix_sessid_post()?>
 <input type="hidden" name="Update" value="Y">
-<input type="hidden" name="lang" value="<?echo LANG?>">
-<?
+<input type="hidden" name="lang" value="<?= LANGUAGE_ID?>">
+<?php
 $tabControl->Begin();
 $tabControl->BeginNextTab();
 ?>
 	<tr class="heading">
-		<td colspan="2"><?echo GetMessage("user_sett_personal")?></td>
+		<td colspan="2"><?= GetMessage("user_sett_personal")?></td>
 	</tr>
 	<tr>
-		<td width="40%"><?echo GetMessage("user_sett_context")?></td>
-		<td width="60%"><input type="checkbox" name="context_menu" value="Y"<?if($aUserOpt["context_menu"] == "Y") echo " checked"?> onclick="this.form.context_ctrl[0].disabled = this.form.context_ctrl[1].disabled = !this.checked"></td>
+		<td width="40%"><?= GetMessage("user_sett_context")?></td>
+		<td width="60%"><input type="checkbox" name="context_menu" value="Y"<?php if($aUserOpt["context_menu"] == "Y") echo " checked"?> onclick="this.form.context_ctrl[0].disabled = this.form.context_ctrl[1].disabled = !this.checked"></td>
 	</tr>
 	<tr>
-		<td class="adm-detail-valign-top"><?echo GetMessage("user_sett_context_ctrl")?></td>
+		<td class="adm-detail-valign-top"><?= GetMessage("user_sett_context_ctrl")?></td>
 		<td>
-			<input type="radio" name="context_ctrl" id="context_ctrl_N" value="N"<?if($aUserOpt["context_ctrl"] <> "Y") echo " checked"?><?if($aUserOpt["context_menu"] <> "Y") echo " disabled"?>><label for="context_ctrl_N"><?echo GetMessage("user_sett_context_ctrl_val1")?></label><br>
-			<input type="radio" name="context_ctrl" id="context_ctrl_Y" value="Y"<?if($aUserOpt["context_ctrl"] == "Y") echo " checked"?><?if($aUserOpt["context_menu"] <> "Y") echo " disabled"?>><label for="context_ctrl_Y"><?echo GetMessage("user_sett_context_ctrl_val2")?></label><br>
+			<input type="radio" name="context_ctrl" id="context_ctrl_N" value="N"<?php if($aUserOpt["context_ctrl"] <> "Y") echo " checked"?><?php if($aUserOpt["context_menu"] <> "Y") echo " disabled"?>><label for="context_ctrl_N"><?= GetMessage("user_sett_context_ctrl_val1")?></label><br>
+			<input type="radio" name="context_ctrl" id="context_ctrl_Y" value="Y"<?php if($aUserOpt["context_ctrl"] == "Y") echo " checked"?><?php if($aUserOpt["context_menu"] <> "Y") echo " disabled"?>><label for="context_ctrl_Y"><?= GetMessage("user_sett_context_ctrl_val2")?></label><br>
 		</td>
 	</tr>
 	<tr>
-		<td><?echo GetMessage("user_sett_autosave")?></td>
-		<td><input type="checkbox" name="autosave" value="Y"<?if($aUserOpt["autosave"] == "Y") echo " checked=\"checked\""?> /></td>
+		<td><?= GetMessage("user_sett_autosave")?></td>
+		<td><input type="checkbox" name="autosave" value="Y"<?php if($aUserOpt["autosave"] == "Y") echo " checked=\"checked\""?> /></td>
 	</tr>
 	<tr class="heading">
-		<td colspan="2"><?echo GetMessage("user_sett_panel")?></td>
+		<td colspan="2"><?= GetMessage("user_sett_panel")?></td>
 	</tr>
 	<tr>
-		<td><?echo GetMessage("MAIN_OPTION_DYN_EDIT")?></td>
-		<td><input type="checkbox" name="panel_dynamic_mode" value="Y"<?if($aUserOpt["panel_dynamic_mode"] == "Y") echo " checked"?>></td>
+		<td><?= GetMessage("MAIN_OPTION_DYN_EDIT")?></td>
+		<td><input type="checkbox" name="panel_dynamic_mode" value="Y"<?php if($aUserOpt["panel_dynamic_mode"] == "Y") echo " checked"?>></td>
 	</tr>
 	<tr>
-		<td><?echo GetMessage("MAIN_OPTION_PAGE_EDIT_ENABLE")?></td>
-		<td><input type="checkbox" name="page_edit_control_enable" value="Y"<?if($aUserOpt["page_edit_control_enable"] != "N") echo " checked"?>></td>
+		<td><?= GetMessage("MAIN_OPTION_PAGE_EDIT_ENABLE")?></td>
+		<td><input type="checkbox" name="page_edit_control_enable" value="Y"<?php if($aUserOpt["page_edit_control_enable"] != "N") echo " checked"?>></td>
 	</tr>
 	<tr class="heading">
-		<td colspan="2"><?echo GetMessage("user_sett_start")?></td>
+		<td colspan="2"><?= GetMessage("user_sett_start")?></td>
 	</tr>
 	<tr>
-		<td><?echo GetMessage("user_sett_start_preload")?></td>
-		<td><input type="checkbox" name="start_menu_preload" value="Y"<?if($aUserOpt["start_menu_preload"] == "Y") echo " checked"?>></td>
+		<td><?= GetMessage("user_sett_start_preload")?></td>
+		<td><input type="checkbox" name="start_menu_preload" value="Y"<?php if($aUserOpt["start_menu_preload"] == "Y") echo " checked"?>></td>
 	</tr>
 	<tr>
-		<td><?echo GetMessage("user_sett_titles")?></td>
-		<td><input type="checkbox" name="start_menu_title" value="Y"<?if($aUserOpt["start_menu_title"] == "Y") echo " checked"?>></td>
+		<td><?= GetMessage("user_sett_titles")?></td>
+		<td><input type="checkbox" name="start_menu_title" value="Y"<?php if($aUserOpt["start_menu_title"] == "Y") echo " checked"?>></td>
 	</tr>
 	<tr>
-		<td><?echo GetMessage("user_sett_start_links")?></td>
+		<td><?= GetMessage("user_sett_start_links")?></td>
 		<td>
-			<input type="text" name="start_menu_links" value="<?echo htmlspecialcharsbx($aUserOpt["start_menu_links"])?>" size="10">
-			<a href="javascript:if(confirm('<?echo CUtil::addslashes(GetMessage("user_sett_del_links_conf"))?>'))window.location='user_settings.php?action=clear_links&lang=<?echo LANG?>&<?echo bitrix_sessid_get()?>';"><?echo GetMessage("user_sett_del_links")?></a>
+			<input type="text" name="start_menu_links" value="<?= htmlspecialcharsbx($aUserOpt["start_menu_links"])?>" size="10">
+			<a href="javascript:if(confirm('<?= CUtil::addslashes(GetMessage("user_sett_del_links_conf"))?>'))window.location='user_settings.php?action=clear_links&lang=<?= LANGUAGE_ID?>&<?= bitrix_sessid_get()?>';"><?= GetMessage("user_sett_del_links")?></a>
 		</td>
 	</tr>
 
 	<tr class="heading">
-		<td colspan="2"><?echo GetMessage("user_sett_sounds")?></td>
+		<td colspan="2"><?= GetMessage("user_sett_sounds")?></td>
 	</tr>
 	<tr>
-		<td><?echo GetMessage("user_sett_sounds_play")?></td>
-		<td><input type="checkbox" name="sound" value="Y"<?if($aUserOpt["sound"] == "Y") echo " checked"?>></td>
+		<td><?= GetMessage("user_sett_sounds_play")?></td>
+		<td><input type="checkbox" name="sound" value="Y"<?php if($aUserOpt["sound"] == "Y") echo " checked"?>></td>
 	</tr>
 	<tr>
-		<td><?echo GetMessage("user_sett_sounds_login")?></td>
+		<td><?= GetMessage("user_sett_sounds_login")?></td>
 		<td>
-<?
+<?php
 CAdminFileDialog::ShowScript(
 	Array
 	(
@@ -232,71 +232,71 @@ CAdminFileDialog::ShowScript(
 	)
 );
 ?>
-			<input type="text" name="sound_login" value="<?echo htmlspecialcharsbx($aUserOpt["sound_login"])?>" size="40">
-			<input type="button" value="..." title="<?echo GetMessage("user_sett_sounds_button_title")?>" onclick="OpenFileBrowserWindFile()">
+			<input type="text" name="sound_login" value="<?= htmlspecialcharsbx($aUserOpt["sound_login"])?>" size="40">
+			<input type="button" value="..." title="<?= GetMessage("user_sett_sounds_button_title")?>" onclick="OpenFileBrowserWindFile()">
 		</td>
 	</tr>
 
 	<tr class="heading">
-		<td colspan="2"><?echo GetMessage("user_sett_mess_head")?></td>
+		<td colspan="2"><?= GetMessage("user_sett_mess_head")?></td>
 	</tr>
 	<tr>
-		<td class="adm-detail-valign-top"><?echo GetMessage("user_sett_mess")?></td>
+		<td class="adm-detail-valign-top"><?= GetMessage("user_sett_mess")?></td>
 		<td>
 			<div class="adm-list">
 				<div class="adm-list-item">
-					<div class="adm-list-control"><input type="checkbox" name="messages_support" value="Y" id="messages_support"<?if($aUserOpt['messages']['support'] == 'Y') echo " checked"?>></div>
-					<div class="adm-list-label"><label for="messages_support"><?echo GetMessage("user_sett_mess_support")?></label></div>
+					<div class="adm-list-control"><input type="checkbox" name="messages_support" value="Y" id="messages_support"<?php if($aUserOpt['messages']['support'] == 'Y') echo " checked"?>></div>
+					<div class="adm-list-label"><label for="messages_support"><?= GetMessage("user_sett_mess_support")?></label></div>
 				</div>
-				<?if(file_exists($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/security/install/index.php")):?>
+				<?php if(file_exists($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/security/install/index.php")):?>
 				<div class="adm-list-item">
-					<div class="adm-list-control"><input type="checkbox" name="messages_security" value="Y" id="messages_security"<?if($aUserOpt['messages']['security'] == 'Y') echo " checked"?>></div>
-					<div class="adm-list-label"><label for="messages_security"><?echo GetMessage("user_sett_mess_security")?></label></div>
+					<div class="adm-list-control"><input type="checkbox" name="messages_security" value="Y" id="messages_security"<?php if($aUserOpt['messages']['security'] == 'Y') echo " checked"?>></div>
+					<div class="adm-list-label"><label for="messages_security"><?= GetMessage("user_sett_mess_security")?></label></div>
 				</div>
-				<?endif;?>
-				<?if(file_exists($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/perfmon/install/index.php")):?>
+				<?php endif;?>
+				<?php if(file_exists($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/perfmon/install/index.php")):?>
 				<div class="adm-list-item">
-					<div class="adm-list-control"><input type="checkbox" name="messages_perfmon" value="Y" id="messages_perfmon"<?if($aUserOpt['messages']['perfmon'] == 'Y') echo " checked"?>></div>
-					<div class="adm-list-label"><label for="messages_perfmon"><?echo GetMessage("user_sett_mess_perfmon")?></label></div>
+					<div class="adm-list-control"><input type="checkbox" name="messages_perfmon" value="Y" id="messages_perfmon"<?php if($aUserOpt['messages']['perfmon'] == 'Y') echo " checked"?>></div>
+					<div class="adm-list-label"><label for="messages_perfmon"><?= GetMessage("user_sett_mess_perfmon")?></label></div>
 				</div>
-				<?endif;?>
+				<?php endif;?>
 			</div>
 		</td>
 	</tr>
-<?if($USER->CanDoOperation('edit_other_settings')):?>
+<?php if($USER->CanDoOperation('edit_other_settings')):?>
 	<tr class="heading">
-		<td colspan="2"><?echo GetMessage("user_sett_common")?></td>
+		<td colspan="2"><?= GetMessage("user_sett_common")?></td>
 	</tr>
 	<tr>
-		<td><?echo GetMessage("user_sett_common_set")?></td>
+		<td><?= GetMessage("user_sett_common_set")?></td>
 		<td><input type="checkbox" name="default" value="Y"></td>
 	</tr>
-<?endif;?>
-<?
+<?php endif;?>
+<?php
 $tabControl->BeginNextTab();
 ?>
 	<tr>
-		<td colspan="2"><a href="javascript:if(confirm('<?echo CUtil::addslashes(GetMessage("user_sett_del_pers_conf"))?>'))window.location='user_settings.php?action=clear&lang=<?echo LANG?>&<?echo bitrix_sessid_get()?>&tabControl_active_tab=edit2';"><?echo GetMessage("user_sett_del_pers1")?></a></td>
+		<td colspan="2"><a href="javascript:if(confirm('<?= CUtil::addslashes(GetMessage("user_sett_del_pers_conf"))?>'))window.location='user_settings.php?action=clear&lang=<?= LANGUAGE_ID?>&<?= bitrix_sessid_get()?>&tabControl_active_tab=edit2';"><?= GetMessage("user_sett_del_pers1")?></a></td>
 	</tr>
-<?if($USER->CanDoOperation('edit_other_settings')):?>
+<?php if($USER->CanDoOperation('edit_other_settings')):?>
 	<tr>
-		<td colspan="2"><a href="javascript:if(confirm('<?echo CUtil::addslashes(GetMessage("user_sett_del_common_conf"))?>'))window.location='user_settings.php?action=clear_all&lang=<?echo LANG?>&<?echo bitrix_sessid_get()?>&tabControl_active_tab=edit2';"><?echo GetMessage("user_sett_del_common1")?></a></td>
+		<td colspan="2"><a href="javascript:if(confirm('<?= CUtil::addslashes(GetMessage("user_sett_del_common_conf"))?>'))window.location='user_settings.php?action=clear_all&lang=<?= LANGUAGE_ID?>&<?= bitrix_sessid_get()?>&tabControl_active_tab=edit2';"><?= GetMessage("user_sett_del_common1")?></a></td>
 	</tr>
 	<tr>
-		<td colspan="2"><a href="javascript:if(confirm('<?echo CUtil::addslashes(GetMessage("user_sett_del_user_conf"))?>'))window.location='user_settings.php?action=clear_all_user&lang=<?echo LANG?>&<?echo bitrix_sessid_get()?>&tabControl_active_tab=edit2';"><?echo GetMessage("user_sett_del_user1")?></a></td>
+		<td colspan="2"><a href="javascript:if(confirm('<?= CUtil::addslashes(GetMessage("user_sett_del_user_conf"))?>'))window.location='user_settings.php?action=clear_all_user&lang=<?= LANGUAGE_ID?>&<?= bitrix_sessid_get()?>&tabControl_active_tab=edit2';"><?= GetMessage("user_sett_del_user1")?></a></td>
 	</tr>
-<?endif;?>
+<?php endif;?>
 
-<?
+<?php
 $tabControl->Buttons();
 ?>
-<input<?if(!$editable) echo " disabled"?> type="submit" name="apply" value="<?echo GetMessage("admin_lib_edit_apply")?>" title="<?echo GetMessage("admin_lib_edit_apply_title")?>" class="adm-btn-save">
-<?
+<input<?php if(!$editable) echo " disabled"?> type="submit" name="apply" value="<?= GetMessage("admin_lib_edit_apply")?>" title="<?= GetMessage("admin_lib_edit_apply_title")?>" class="adm-btn-save">
+<?php
 $tabControl->End();
 $tabControl->ShowWarnings("form1", $message);
 ?>
 </form>
 
-<?
+<?php
 require_once ($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin.php");
 ?>

@@ -1,10 +1,8 @@
+import { type JsonObject } from 'main.core';
+import { type EventEmitter } from 'main.core.events';
 import { MenuManager } from 'main.popup';
 
 import { Messenger } from 'im.public';
-import { Analytics } from 'im.v2.lib.analytics';
-import { ChatService } from 'im.v2.provider.service.chat';
-import { ChatType, EventType, PopupType, SidebarDetailBlock, UserRole } from 'im.v2.const';
-import { showExitUpdateChatConfirm } from 'im.v2.lib.confirm';
 import {
 	TitleInput,
 	ChatAvatar,
@@ -14,13 +12,14 @@ import {
 	SettingsSection,
 	RightsSection,
 } from 'im.v2.component.content.chat-forms.elements';
+import { ChatType, EventType, PopupType, SidebarDetailBlock, type UserRole } from 'im.v2.const';
+import { Analytics } from 'im.v2.lib.analytics';
+import { showExitUpdateChatConfirm } from 'im.v2.lib.confirm';
+import { type ImModelChat } from 'im.v2.model';
+import { ChatService } from 'im.v2.provider.service.chat';
 
 import { ChatMemberDiffManager } from '../../classes/chat-member-diff-manager';
 import { getCollapsedUsersElement, type TagSelectorElement } from '../../helpers/get-collapsed-users-element';
-
-import type { JsonObject } from 'main.core';
-import type { EventEmitter } from 'main.core.events';
-import type { ImModelChat } from 'im.v2.model';
 
 type UserRoleItem = $Keys<typeof UserRole>;
 
@@ -70,6 +69,7 @@ export const GroupChatUpdating = {
 	},
 	computed:
 	{
+		ChatType: () => ChatType,
 		dialog(): ImModelChat
 		{
 			return this.$store.getters['chats/get'](this.dialogId, true);
@@ -78,7 +78,6 @@ export const GroupChatUpdating = {
 		{
 			return this.dialog.chatId;
 		},
-		ChatType: () => ChatType,
 		collapsedUsers(): TagSelectorElement[]
 		{
 			if (!this.areUsersCollapsed)
@@ -100,15 +99,6 @@ export const GroupChatUpdating = {
 		canChangeSearchAvailability(): boolean
 		{
 			return [ChatType.open, ChatType.chat].includes(this.dialog.type);
-		},
-		changedChatType(): $Values<typeof ChatType>
-		{
-			if (!this.canChangeSearchAvailability)
-			{
-				return this.dialog.type;
-			}
-
-			return this.settings.isAvailableInSearch ? ChatType.open : ChatType.chat;
 		},
 	},
 	async created()
@@ -200,13 +190,12 @@ export const GroupChatUpdating = {
 			await this.getChatService().updateChat(this.chatId, {
 				title: this.chatTitle,
 				avatar: this.avatarFile,
-				type: this.changedChatType,
 				addedMemberEntities: this.memberDiffManager.getAddedMemberEntities(this.chatMembers),
 				deletedMemberEntities: this.memberDiffManager.getDeletedMemberEntities(this.chatMembers),
 				addedManagers: this.memberDiffManager.getAddedManagers(this.rights.managerIds),
 				deletedManagers: this.memberDiffManager.getDeletedManagers(this.rights.managerIds),
 				ownerId: this.rights.ownerId,
-				isAvailableInSearch: this.settings.isAvailableInSearch,
+				searchable: this.settings.isAvailableInSearch,
 				description: this.settings.description,
 				manageUsersAdd: this.rights.manageUsersAdd,
 				manageUsersDelete: this.rights.manageUsersDelete,

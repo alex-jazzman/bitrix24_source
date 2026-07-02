@@ -1,8 +1,8 @@
-<?
+<?php
 /**
- * @global \CUser $USER
- * @global \CMain $APPLICATION
- * @global \CDatabase $DB
+ * @global CUser $USER
+ * @global CMain $APPLICATION
+ * @global CDatabase $DB
  */
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
@@ -17,10 +17,6 @@ $sTableID = "tbl_smile";
 $oSort = new CAdminSorting($sTableID, "ID", "asc");
 $lAdmin = new CAdminList($sTableID, $oSort);
 
-$arFilterFields = array();
-
-$lAdmin->InitFilter($arFilterFields);
-
 $arFilter = array();
 if (isset($_REQUEST['SET_ID']))
 {
@@ -28,7 +24,7 @@ if (isset($_REQUEST['SET_ID']))
 }
 else
 {
-	LocalRedirect("smile_gallery.php?lang=".LANG);
+	LocalRedirect("smile_gallery.php?lang=".LANGUAGE_ID);
 }
 
 if ($arID = $lAdmin->GroupAction())
@@ -37,7 +33,7 @@ if ($arID = $lAdmin->GroupAction())
 	{
 		$arID = Array();
 		$res = CSmile::getList(Array(
-			'ORDER' => array($by => $order),
+			'ORDER' => array($oSort->getField() => $oSort->getOrder()),
 			'SELECT' => array('ID'),
 			'FILTER' => $arFilter,
 			'RETURN_RES' => 'Y'
@@ -59,7 +55,7 @@ if ($arID = $lAdmin->GroupAction())
 }
 if($lAdmin->EditAction())
 {
-	foreach($FIELDS as $ID=>$arFields)
+	foreach($_POST['FIELDS'] as $ID=>$arFields)
 	{
 		$ID = intval($ID);
 		if($ID <= 0)
@@ -80,7 +76,7 @@ $arSmileSet = CSmileSet::getById($arFilter['SET_ID']);
 $dbResultList = CSmile::getList(Array(
 	'SELECT' => Array('ID', 'SET_ID', 'SET_NAME', 'TYPE', 'NAME', 'SORT', 'TYPING', 'IMAGE', 'IMAGE_WIDTH', 'IMAGE_HEIGHT'),
 	'FILTER' => $arFilter,
-	'ORDER' => array($by => $order),
+	'ORDER' => array($oSort->getField() => $oSort->getOrder()),
 	'NAV_PARAMS' => array("nPageSize"=>CAdminResult::GetNavSize($sTableID)),
 	'RETURN_RES' => 'Y'
 ));
@@ -104,29 +100,40 @@ $lAdmin->AddHeaders(array(
 $arVisibleColumns = $lAdmin->GetVisibleHeaderColumns();
 
 
-while ($arForum = $dbResultList->NavNext(true, "f_"))
+while ($arForum = $dbResultList->Fetch())
 {
-	$row =& $lAdmin->AddRow($f_ID, $arForum);
+	$smileId = (int)$arForum["ID"];
+	$smileIdHtml = htmlspecialcharsbx($arForum["ID"]);
+	$setId = (int)$arForum["SET_ID"];
+	$setIdHtml = htmlspecialcharsbx($arForum["SET_ID"]);
+	$setNameHtml = htmlspecialcharsbx($arForum["SET_NAME"]);
+	$smileNameHtml = htmlspecialcharsbx($arForum["NAME"]);
+	$typingHtml = htmlspecialcharsbx($arForum["TYPING"]);
+	$imageWidth = (int)$arForum["IMAGE_WIDTH"];
+	$imageHeight = (int)$arForum["IMAGE_HEIGHT"];
+	$imagePath = ($arForum["TYPE"] == CSmile::TYPE_ICON ? CSmile::PATH_TO_ICON : CSmile::PATH_TO_SMILE).$setId."/".$arForum["IMAGE"];
+	$imagePathHtml = htmlspecialcharsbx($imagePath);
+	$row = $lAdmin->AddRow($smileId, $arForum);
 
-	$row->AddField("ID", $f_ID);
-	$row->AddField("SORT", $f_SORT);
-	$row->AddField("TYPE", ($f_TYPE==CSmile::TYPE_ICON? GetMessage("SMILE_TYPE_ICON"): GetMessage("SMILE_TYPE_SMILE")));
+	$row->AddField("ID", $smileIdHtml);
+	$row->AddField("SORT", htmlspecialcharsbx($arForum["SORT"]));
+	$row->AddField("TYPE", ($arForum["TYPE"] == CSmile::TYPE_ICON ? GetMessage("SMILE_TYPE_ICON") : GetMessage("SMILE_TYPE_SMILE")));
 
-	$row->AddViewField("SET_NAME", '<a title="'.GetMessage("SMILE_EDIT_DESCR").'" href="'."smile_set_edit.php?ID=".$f_SET_ID."&lang=".LANG."&".GetFilterParams("filter_").'">'.($f_SET_NAME <> ''?$f_SET_NAME: GetMessage('SMILE_SET_NO_NAME', Array('#ID#' => $f_SET_ID))).'</a>');
-	$row->AddViewField("NAME", '<a title="'.GetMessage("SMILE_EDIT_DESCR").'" href="'."smile_edit.php?ID=".$f_ID."&lang=".LANG."&".GetFilterParams("filter_").'">'.($f_NAME <> ''?$f_NAME: GetMessage('SMILE_NO_NAME')).'</a>');
+	$row->AddViewField("SET_NAME", '<a title="'.GetMessage("SMILE_EDIT_DESCR").'" href="'."smile_set_edit.php?ID=".$setIdHtml."&lang=".LANGUAGE_ID."&".GetFilterParams("filter_").'">'.($arForum["SET_NAME"] <> '' ? $setNameHtml : GetMessage('SMILE_SET_NO_NAME', Array('#ID#' => $setIdHtml))).'</a>');
+	$row->AddViewField("NAME", '<a title="'.GetMessage("SMILE_EDIT_DESCR").'" href="'."smile_edit.php?ID=".$smileIdHtml."&lang=".LANGUAGE_ID."&".GetFilterParams("filter_").'">'.($arForum["NAME"] <> '' ? $smileNameHtml : GetMessage('SMILE_NO_NAME')).'</a>');
 
-	$row->AddField("TYPING", $f_TYPING);
-	$row->AddField("ICON", "<img src=\"".($f_TYPE == CSmile::TYPE_ICON? CSmile::PATH_TO_ICON: CSmile::PATH_TO_SMILE).$f_SET_ID."/".$f_IMAGE."\" border=\"0\" ".((intval($f_IMAGE_WIDTH) > 0) ? "width=\"".$f_IMAGE_WIDTH."\"" : "")." ".((intval($f_IMAGE_HEIGHT) > 0) ? "height=\"".$f_IMAGE_HEIGHT."\"" : "" ).">");
-	$row->AddField("IMAGE", ($f_TYPE == CSmile::TYPE_ICON? CSmile::PATH_TO_ICON: CSmile::PATH_TO_SMILE).$f_SET_ID."/".$f_IMAGE);
+	$row->AddField("TYPING", $typingHtml);
+	$row->AddField("ICON", "<img src=\"".$imagePathHtml."\" border=\"0\" ".($imageWidth > 0 ? "width=\"".$imageWidth."\"" : "")." ".($imageHeight > 0 ? "height=\"".$imageHeight."\"" : "" ).">");
+	$row->AddField("IMAGE", $imagePathHtml);
 
 	$row->AddInputField("NAME", array("size"=>20));
 	$row->AddInputField("TYPING", array("size"=>10));
 	$row->AddInputField("SORT", array("size"=>5));
 
 	$arActions = Array(
-		array("ICON"=>"edit", "TEXT"=>GetMessage("SMILE_EDIT_DESCR"), "ACTION"=>$lAdmin->ActionRedirect("smile_edit.php?ID=".$f_ID."&lang=".LANG."&".GetFilterParams("filter_").""), "DEFAULT"=>true),
+		array("ICON"=>"edit", "TEXT"=>GetMessage("SMILE_EDIT_DESCR"), "ACTION"=>$lAdmin->ActionRedirect("smile_edit.php?ID=".$smileId."&lang=".LANGUAGE_ID."&".GetFilterParams("filter_").""), "DEFAULT"=>true),
 		array("SEPARATOR" => true),
-		array("ICON"=>"delete", "TEXT"=>GetMessage("SMILE_DELETE_DESCR"), "ACTION"=>"if(confirm('".GetMessage('SMILE_DEL_CONF')."')) ".$lAdmin->ActionDoGroup($f_ID, "delete", "SET_ID=".$arFilter['SET_ID']))
+		array("ICON"=>"delete", "TEXT"=>GetMessage("SMILE_DELETE_DESCR"), "ACTION"=>"if(confirm('".GetMessage('SMILE_DEL_CONF')."')) ".$lAdmin->ActionDoGroup($smileId, "delete", "SET_ID=".$arFilter['SET_ID']))
 	);
 	$row->AddActions($arActions);
 }
@@ -140,19 +147,19 @@ $lAdmin->AddGroupActionTable(
 $aContext = array(
 	array(
 		"TEXT" => GetMessage("SMILE_BTN_BACK"),
-		"LINK" => "smile_set.php?lang=".LANG."&GALLERY_ID=".$arSmileSet['PARENT_ID'],
+		"LINK" => "smile_set.php?lang=".LANGUAGE_ID."&GALLERY_ID=".$arSmileSet['PARENT_ID'],
 		"TITLE" => GetMessage("SMILE_BTN_ADD_NEW_ALT"),
 		"ICON" => "btn_list",
 	),
 	array(
 		"TEXT" => GetMessage("SMILE_BTN_ADD_NEW"),
-		"LINK" => "smile_edit.php?lang=".LANG."&SET_ID=".intval($_REQUEST['SET_ID']),
+		"LINK" => "smile_edit.php?lang=".LANGUAGE_ID."&SET_ID=".intval($_REQUEST['SET_ID']),
 		"TITLE" => GetMessage("SMILE_BTN_ADD_NEW_ALT"),
 		"ICON" => "btn_new",
 	),
 	array(
 		"TEXT" => GetMessage("SMILE_BTN_IMPORT"),
-		"LINK" => "smile_import.php?lang=".LANG."&SET_ID=".intval($_REQUEST['SET_ID']),
+		"LINK" => "smile_import.php?lang=".LANGUAGE_ID."&SET_ID=".intval($_REQUEST['SET_ID']),
 	),
 );
 $lAdmin->AddAdminContextMenu($aContext);
@@ -161,11 +168,11 @@ $lAdmin->CheckListMode();
 $APPLICATION->SetTitle(GetMessage("SMILE_TITLE"));
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_after.php");
 
-if (in_array($arSmileSet["STRING_ID"], Array('bitrix_main')))
+if ($arSmileSet["STRING_ID"] == 'bitrix_main')
 {
 	CAdminMessage::ShowMessage(array(
 		"MESSAGE"=>GetMessage("SMILE_BITRIX_SET_WARNING_TITLE"),
-		"DETAILS"=>GetMessage("SMILE_BITRIX_SET_WARNING_DESC", Array('#LINK_START#' => '<a href="smile_set_edit.php?lang='.LANG.'&GALLERY_ID='.$arSmileSet['PARENT_ID'].'">', '#LINK_END#' => '</a>')),
+		"DETAILS"=>GetMessage("SMILE_BITRIX_SET_WARNING_DESC", Array('#LINK_START#' => '<a href="smile_set_edit.php?lang='.LANGUAGE_ID.'&GALLERY_ID='.$arSmileSet['PARENT_ID'].'">', '#LINK_END#' => '</a>')),
 		"HTML"=>true,
 		"TYPE"=>"WARNING",
 	));
@@ -174,4 +181,3 @@ if (in_array($arSmileSet["STRING_ID"], Array('bitrix_main')))
 $lAdmin->DisplayList();
 
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");
-?>

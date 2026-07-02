@@ -2,6 +2,8 @@ import {RequisiteListItem} from "./requisite-list";
 import {EventEmitter} from "main.core.events";
 import {Loc, Type} from "main.core";
 import {MessageBox} from "ui.dialogs.messagebox";
+import 'ui.entity-editor';
+import 'crm_common';
 
 export class EntityEditorRequisiteEditor
 {

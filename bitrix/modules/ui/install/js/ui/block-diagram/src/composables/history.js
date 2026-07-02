@@ -169,6 +169,7 @@ export function useHistory(options: UseHistoryOptions = {}): UseHistory
 
 		await revertState(toValue(currentSnapshot).next);
 		currentSnapshot.value = toValue(currentSnapshot).next;
+		hooks.historyNext.trigger(currentSnapshot.value);
 	}
 
 	async function prev(): void
@@ -180,6 +181,7 @@ export function useHistory(options: UseHistoryOptions = {}): UseHistory
 
 		await revertState(toValue(currentSnapshot).prev);
 		currentSnapshot.value = toValue(currentSnapshot).prev;
+		hooks.historyPrev.trigger(currentSnapshot.value);
 	}
 
 	function clear(): void

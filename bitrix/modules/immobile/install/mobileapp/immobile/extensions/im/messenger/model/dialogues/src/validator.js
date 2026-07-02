@@ -375,14 +375,14 @@ jn.define('im/messenger/model/dialogues/validator', (require, exports, module) =
 			result.aiProvider = fields.ai_provider;
 		}
 
-		if (Type.isNumber(fields.parentChatId))
+		if (Type.isNumber(fields.parentChatId) || Type.isNumber(fields.parent_chat_id))
 		{
-			result.parentChatId = fields.parentChatId;
+			result.parentChatId = fields.parent_chat_id ?? fields.parentChatId;
 		}
 
-		if (Type.isNumber(fields.parentMessageId))
+		if (Type.isNumber(fields.parentMessageId) || Type.isNumber(fields.parent_message_id))
 		{
-			result.parentMessageId = fields.parentMessageId;
+			result.parentMessageId = fields.parent_message_id ?? fields.parentMessageId;
 		}
 
 		if (fields.tariffRestrictions)

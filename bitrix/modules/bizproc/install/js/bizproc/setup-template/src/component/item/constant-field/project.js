@@ -1,6 +1,5 @@
 import { Type } from 'main.core';
-import type { ItemId } from 'ui.entity-selector';
-import { TagItem, TagSelector } from 'ui.entity-selector';
+import { type TagItem, TagSelector, type ItemId } from 'ui.entity-selector';
 
 const ENTITY_TYPES = Object.freeze({
 	PROJECT: 'project',

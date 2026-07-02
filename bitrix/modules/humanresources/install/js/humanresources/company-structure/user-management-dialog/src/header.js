@@ -133,13 +133,6 @@ export class BaseUserManagementDialogHeader extends BaseHeader
 		];
 		menuItems.forEach((menuItem) => roleSwitcherMenu.addMenuItem(menuItem));
 
-		if (roleSwitcherMenu.isShown)
-		{
-			roleSwitcherMenu.destroy();
-
-			return;
-		}
-
 		roleSwitcherMenu.show();
 		Dom.addClass(this.roleSwitcher, '--focused');
 	}

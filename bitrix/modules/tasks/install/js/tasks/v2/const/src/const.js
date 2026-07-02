@@ -31,3 +31,4 @@ export { PermissionType } from './dictionary/permission-type';
 export { Endpoint } from './dictionary/endpoint';
 export { UserFieldType } from './dictionary/user-field-type';
 export { Mark } from './dictionary/mark';
+export { DeadlineState } from './dictionary/deadline-state';

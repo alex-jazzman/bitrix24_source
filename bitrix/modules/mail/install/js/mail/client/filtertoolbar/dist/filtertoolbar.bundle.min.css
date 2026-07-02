@@ -1,1 +1,57 @@
-.mail-filter-toolbar{border-radius:16px;background:rgba(255,255,255,.15)}.mail-filter-counter{color:#fff;display:-webkit-box;display:-ms-flexbox;display:flex;white-space:nowrap;padding:0 18px;-webkit-box-align:center;-ms-flex-align:center;align-items:center}.bitrix24-dark-theme .mail-filter-counter{color:#333}.bitrix24-dark-theme .mail-filter-toolbar{background:rgba(82,92,105,.08)}.mail-toolbar-counter{height:33px;display:-webkit-box;display:-ms-flexbox;display:flex;-webkit-box-align:center;-ms-flex-align:center;align-items:center;padding:0 15px 0 10px;cursor:pointer;font:14px var(--ui-font-family-secondary,var(--ui-font-family-open-sans));font-weight:var(--ui-font-weight-regular,400);position:relative}.bitrix24-dark-theme .mail-toolbar-counter:nth-last-child(2)::before{background:rgba(51,51,51,.8)}.mail-toolbar-hide-element{display:none !important}.mail-toolbar-counter:hover{background:rgba(255,255,255,.25)}.bitrix24-dark-theme .mail-toolbar-counter:hover{background:rgba(82,92,105,.1)}.mail-msg-counter-number-selected{background:rgba(88,158,255,.45)}.bitrix24-dark-theme .mail-msg-counter-number-selected{background:rgba(0,195,255,.6)}
+.mail-filter-toolbar{
+	border-radius: 16px;
+	background: rgba(255, 255, 255, .15);
+}
+
+.mail-filter-counter{
+	color: #fff;
+	display: flex;
+	white-space: nowrap;
+	padding: 0 18px;
+	align-items: center;
+}
+
+.bitrix24-dark-theme .mail-filter-counter {
+	color: #333;
+}
+
+.bitrix24-dark-theme .mail-filter-toolbar {
+	background: rgba(82,92,105,.08);
+}
+
+.mail-toolbar-counter {
+	height: 33px;
+	display: flex;
+	align-items: center;
+	padding: 0 15px 0 10px;
+	cursor:pointer;
+	font: 14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
+	position: relative;
+}
+
+.bitrix24-dark-theme .mail-toolbar-counter:nth-last-child(2)::before {
+	background: rgba(51, 51, 51, .8);
+}
+
+.mail-toolbar-hide-element
+{
+	display:none !important;
+}
+
+.mail-toolbar-counter:hover {
+	background: rgba(255, 255, 255, .25);
+}
+
+.bitrix24-dark-theme .mail-toolbar-counter:hover {
+	background: rgba(82,92,105,.1);
+}
+
+.mail-msg-counter-number-selected {
+	background: rgba(88, 158, 255, .45);
+}
+
+.bitrix24-dark-theme .mail-msg-counter-number-selected {
+	background: rgba(0,195,255,.6);
+}
+/*# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3RtcC9iVEpkV04iXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IkFBQUEiLCJmaWxlIjoiLi4vLi4vLi4vdG1wL2JUSmRXTiIsInNvdXJjZXNDb250ZW50IjpbIi5tYWlsLWZpbHRlci10b29sYmFye1xuXHRib3JkZXItcmFkaXVzOiAxNnB4O1xuXHRiYWNrZ3JvdW5kOiByZ2JhKDI1NSwgMjU1LCAyNTUsIC4xNSk7XG59XG5cbi5tYWlsLWZpbHRlci1jb3VudGVye1xuXHRjb2xvcjogI2ZmZjtcblx0ZGlzcGxheTogZmxleDtcblx0d2hpdGUtc3BhY2U6IG5vd3JhcDtcblx0cGFkZGluZzogMCAxOHB4O1xuXHRhbGlnbi1pdGVtczogY2VudGVyO1xufVxuXG4uYml0cml4MjQtZGFyay10aGVtZSAubWFpbC1maWx0ZXItY291bnRlciB7XG5cdGNvbG9yOiAjMzMzO1xufVxuXG4uYml0cml4MjQtZGFyay10aGVtZSAubWFpbC1maWx0ZXItdG9vbGJhciB7XG5cdGJhY2tncm91bmQ6IHJnYmEoODIsOTIsMTA1LC4wOCk7XG59XG5cbi5tYWlsLXRvb2xiYXItY291bnRlciB7XG5cdGhlaWdodDogMzNweDtcblx0ZGlzcGxheTogZmxleDtcblx0YWxpZ24taXRlbXM6IGNlbnRlcjtcblx0cGFkZGluZzogMCAxNXB4IDAgMTBweDtcblx0Y3Vyc29yOnBvaW50ZXI7XG5cdGZvbnQ6IDE0cHggdmFyKC0tdWktZm9udC1mYW1pbHktc2Vjb25kYXJ5LCB2YXIoLS11aS1mb250LWZhbWlseS1vcGVuLXNhbnMpKTtcblx0Zm9udC13ZWlnaHQ6IHZhcigtLXVpLWZvbnQtd2VpZ2h0LXJlZ3VsYXIsIDQwMCk7XG5cdHBvc2l0aW9uOiByZWxhdGl2ZTtcbn1cblxuLmJpdHJpeDI0LWRhcmstdGhlbWUgLm1haWwtdG9vbGJhci1jb3VudGVyOm50aC1sYXN0LWNoaWxkKDIpOjpiZWZvcmUge1xuXHRiYWNrZ3JvdW5kOiByZ2JhKDUxLCA1MSwgNTEsIC44KTtcbn1cblxuLm1haWwtdG9vbGJhci1oaWRlLWVsZW1lbnRcbntcblx0ZGlzcGxheTpub25lICFpbXBvcnRhbnQ7XG59XG5cbi5tYWlsLXRvb2xiYXItY291bnRlcjpob3ZlciB7XG5cdGJhY2tncm91bmQ6IHJnYmEoMjU1LCAyNTUsIDI1NSwgLjI1KTtcbn1cblxuLmJpdHJpeDI0LWRhcmstdGhlbWUgLm1haWwtdG9vbGJhci1jb3VudGVyOmhvdmVyIHtcblx0YmFja2dyb3VuZDogcmdiYSg4Miw5MiwxMDUsLjEpO1xufVxuXG4ubWFpbC1tc2ctY291bnRlci1udW1iZXItc2VsZWN0ZWQge1xuXHRiYWNrZ3JvdW5kOiByZ2JhKDg4LCAxNTgsIDI1NSwgLjQ1KTtcbn1cblxuLmJpdHJpeDI0LWRhcmstdGhlbWUgLm1haWwtbXNnLWNvdW50ZXItbnVtYmVyLXNlbGVjdGVkIHtcblx0YmFja2dyb3VuZDogcmdiYSgwLDE5NSwyNTUsLjYpO1xufSJdfQ== */

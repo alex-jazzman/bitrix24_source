@@ -50,6 +50,8 @@
 		}
 
 		this.initAnalytics();
+		this.bindActions();
+		this.overridePrint();
 	};
 
 	BXMailView.prototype.initIframe = function()
@@ -287,6 +289,148 @@
 	{
 		safeShow(this.options.messageControlElementId);
 		safeShow(this.options.fastReplyElementId);
+		this.bindActions();
+	}
+
+	BXMailView.prototype.bindActions = function ()
+	{
+		this.bindDiscussInChat();
+	}
+
+	BXMailView.prototype.overridePrint = function ()
+	{
+		const slider = BX.SidePanel.Instance.getTopSlider();
+		if (!slider)
+		{
+			return;
+		}
+
+		const printLabel = slider.getPrintLabel();
+		if (!printLabel)
+		{
+			return;
+		}
+
+		this.slider = slider;
+		const defaultOnclick = printLabel.getOnclick();
+		printLabel.setOnclick((label, currentSlider) => {
+			if (!this.messageBody)
+			{
+				if (defaultOnclick)
+				{
+					defaultOnclick(label, currentSlider);
+				}
+
+				return;
+			}
+
+			const headerHtml = this.collectPrintHeaderHtml();
+			const headerStyles = this.getPrintHeaderStyles();
+			this.messageBody.print(headerHtml, headerStyles);
+		});
+	};
+
+	BXMailView.prototype.collectPrintHeaderHtml = function ()
+	{
+		const sliderDocument = this.slider ? this.slider.iframe.contentDocument : document;
+		const esc = BX.util.htmlspecialchars;
+
+		let html = '';
+
+		const subject = sliderDocument.querySelector('#pagetitle');
+		if (subject)
+		{
+			html += '<div class="print-subject">' + esc(subject.textContent.trim()) + '</div>';
+		}
+
+		html += '<div class="print-meta">';
+
+		const senderName = sliderDocument.querySelector('.mail-msg-view-sender-name');
+		const senderEmail = sliderDocument.querySelector('.mail-msg-view-sender-email');
+		if (senderName)
+		{
+			html += '<div class="print-from">';
+			html += '<span class="print-from-name">' + esc(senderName.textContent.trim()) + '</span>';
+			if (senderEmail)
+			{
+				html += ' &lt;' + esc(senderEmail.textContent.trim()) + '&gt;';
+			}
+			html += '</div>';
+		}
+
+		const rcptWrapper = sliderDocument.querySelector('.mail-msg-view-rcpt-wrapper');
+		if (rcptWrapper)
+		{
+			const rcptLines = rcptWrapper.querySelectorAll(':scope > span');
+			rcptLines.forEach(function (line) {
+				const label = line.querySelector('.mail-msg-view-rcpt-list');
+				const blocks = line.querySelectorAll('.mail-msg-view-rcpt-block');
+				if (label && blocks.length > 0)
+				{
+					html += '<div class="print-rcpt-line">';
+					html += '<span class="print-rcpt-label">' + esc(label.textContent.trim()) + '</span> ';
+					const names = [];
+					blocks.forEach(function (block) {
+						const link = block.querySelector('.mail-msg-view-rcpt-link, .mail-msg-view-rcpt');
+						if (link)
+						{
+							names.push(esc(link.textContent.trim()));
+						}
+					});
+					html += names.join(', ');
+					html += '</div>';
+				}
+			});
+		}
+
+		const dateEl = sliderDocument.querySelector('.mail-msg-view-date');
+		if (dateEl)
+		{
+			html += '<div class="print-date">' + esc(dateEl.textContent.trim()) + '</div>';
+		}
+
+		html += '</div>';
+
+		return html;
+	};
+
+	BXMailView.prototype.getPrintHeaderStyles = function ()
+	{
+		return '.print-header { display: none; font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #333; padding: 10px 20px 0; }'
+			+ '.print-subject { font-size: 18px; font-weight: bold; color: #333; margin-bottom: 12px; }'
+			+ '.print-meta { margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #e2e3e5; }'
+			+ '.print-from { margin-bottom: 4px; }'
+			+ '.print-from-name { font-size: 15px; font-weight: bold; color: #333; }'
+			+ '.print-rcpt-line { margin-bottom: 2px; color: #80868e; font-size: 13px; }'
+			+ '.print-rcpt-label { color: #80868e; }'
+			+ '.print-date { margin-top: 4px; color: #80868e; font-size: 13px; }'
+			+ '@media print { .print-header { display: block; padding: 0 20px; } }';
+	};
+
+	BXMailView.prototype.bindDiscussInChat = function ()
+	{
+		const controlBlock = document.getElementById(this.options.messageControlElementId);
+		if (!controlBlock)
+		{
+			return;
+		}
+
+		const button = controlBlock.querySelector('.js-mail-discuss-in-chat');
+		if (!button)
+		{
+			return;
+		}
+
+		const messageId = this.id;
+		if (!messageId)
+		{
+			return;
+		}
+
+		BX.bind(button, 'click', (event) => {
+			event.preventDefault();
+			BX.Mail.Client.Action.DiscussInChat.open(messageId, button);
+		});
 	}
 
 	BXMailView.prototype.bindErrorClose = function ()

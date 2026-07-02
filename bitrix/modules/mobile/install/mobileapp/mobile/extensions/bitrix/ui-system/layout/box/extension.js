@@ -89,7 +89,7 @@ jn.define('ui-system/layout/box', (require, exports, module) => {
 
 			boxFooter = footer(footerParams);
 
-			boxCacheKey = Symbol.for(hashCode(JSON.stringify([testId, boxFooter])));
+			boxCacheKey = Symbol.for(hashCode(JSON.stringify([testId, footerParams])));
 			boxCache[boxCacheKey] = boxCache[boxCacheKey] ?? { stubHeight: 0, stubRef: null };
 
 			stubFooter = View({

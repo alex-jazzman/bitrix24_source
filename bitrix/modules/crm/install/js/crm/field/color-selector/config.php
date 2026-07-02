@@ -10,9 +10,9 @@ return [
 	'js' => 'dist/color-selector.bundle.js',
 	'rel' => [
 		'main.core',
-		'ui.design-tokens',
 		'main.core.events',
 		'main.popup',
+		'ui.design-tokens',
 	],
 	'skip_core' => false,
 ];

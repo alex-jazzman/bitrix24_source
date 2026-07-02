@@ -32,3 +32,23 @@
 .bx-im-elements-send-button.--copilot {
 	background-color: var(--im-textarea__background-color_send-button-copilot);
 }
+
+.bx-im-elements-send-button.--copilot-2026 {
+	--im-send-button__gradient: linear-gradient(
+		241deg,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-5) -0.17%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-4) 20.73%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-3) 52.5%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-2) 77.37%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-1) 98.95%
+	);
+
+	background-color: transparent;
+	background-image: url('./images/send.svg'), var(--im-send-button__gradient);
+	background-position: center, center;
+	background-size: 26px 26px, 100% 100%;
+}
+
+.bx-im-elements-send-button.--copilot-2026.--disabled {
+	background-image: url('./images/send-inactive.svg'), var(--im-send-button__gradient);
+}

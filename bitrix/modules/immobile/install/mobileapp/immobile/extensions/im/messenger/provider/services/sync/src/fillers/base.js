@@ -65,6 +65,11 @@ jn.define('im/messenger/provider/services/sync/fillers/base', (require, exports,
 			BX.addCustomEvent(EventType.sync.requestResultReceived, this.onSyncRequestResultReceive);
 		}
 
+		unsubscribeEvents()
+		{
+			BX.removeCustomEvent(EventType.sync.requestResultReceived, this.onSyncRequestResultReceive);
+		}
+
 		/**
 		 * @param {SyncRequestResultReceivedEvent} event
 		 */
@@ -113,7 +118,9 @@ jn.define('im/messenger/provider/services/sync/fillers/base', (require, exports,
 		 */
 		prepareResult(result)
 		{
-			return this.filterUsers(result);
+			const cloneResult = clone(result);
+
+			return this.filterUsers(cloneResult);
 		}
 
 		/**
@@ -122,11 +129,10 @@ jn.define('im/messenger/provider/services/sync/fillers/base', (require, exports,
 		 */
 		filterUsers(result)
 		{
-			const cloneResult = clone(result);
-			cloneResult.usersShort = result.usersShort.filter((user) => user.id > 0);
-			cloneResult.users = result.users.filter((user) => user.id > 0);
+			result.usersShort = result.usersShort.filter((user) => user.id > 0);
+			result.users = result.users.filter((user) => user.id > 0);
 
-			return cloneResult;
+			return result;
 		}
 
 		/**
@@ -706,6 +712,70 @@ jn.define('im/messenger/provider/services/sync/fillers/base', (require, exports,
 			}
 
 			return messageData;
+		}
+
+		/**
+		 * @param {SyncListResult} result
+		 * @return {SyncListResult}
+		 */
+		filterChildChats(result)
+		{
+			const childChatIdSet = new Set(this.#getChildChatIds(result.chats));
+			if (childChatIdSet.size === 0)
+			{
+				return result;
+			}
+
+			result.chats = result.chats.filter((chat) => chat.parentChatId === 0);
+			result.messages = result.messages.filter((message) => !childChatIdSet.has(message.chat_id));
+			result.additionalMessages = result.additionalMessages.filter(
+				(message) => !childChatIdSet.has(message.chat_id),
+			);
+			result.files = result.files.filter((file) => !childChatIdSet.has(file.chatId));
+			result.recentItems = result.recentItems.filter((recentItem) => !childChatIdSet.has(recentItem.chatId));
+			result.pins = result.pins.filter((pin) => !childChatIdSet.has(pin.chatId));
+
+			result.chatSync = {
+				addedChats: this.#filterIdRecord(result.chatSync.addedChats, childChatIdSet),
+				addedRecent: this.#filterIdRecord(result.chatSync.addedRecent, childChatIdSet),
+				deletedChats: this.#filterIdRecord(result.chatSync.deletedChats, childChatIdSet),
+				completeDeletedChats: this.#filterIdRecord(result.chatSync.completeDeletedChats, childChatIdSet),
+			};
+
+			result.dialogIds = Object.fromEntries(
+				Object.entries(result.dialogIds).filter(([chatId]) => !childChatIdSet.has(Number(chatId))),
+			);
+
+			return result;
+		}
+
+		/**
+		 * @param {Record<string, number> | []} idRecord
+		 * @param {Set<number>} excludeIdSet
+		 * @return {Record<string, number> | []}
+		 */
+		#filterIdRecord(idRecord, excludeIdSet)
+		{
+			if (Type.isArray(idRecord))
+			{
+				return [];
+			}
+
+			return Object.fromEntries(
+				Object.entries(idRecord).filter(([, id]) => !excludeIdSet.has(id)),
+			);
+		}
+
+		/**
+		 * @param {SyncListResult['chats']} chats
+		 * @return {Array<number>}
+		 */
+		#getChildChatIds(chats)
+		{
+			return chats
+				.filter((chat) => chat.parentChatId > 0)
+				.map((chat) => (chat.id))
+			;
 		}
 	}
 

@@ -1,12 +1,15 @@
 import { Type } from 'main.core';
 
 import { Parser } from 'im.v2.lib.parser';
+import { type ImModelMessage } from 'im.v2.model';
 
-import { Reply, MessageAttach, MessageStatus, ReactionList } from '../registry';
+import { Reply } from '../reply/reply.js';
+import { MessageAttach } from '../attach/attach.js';
+import { MessageStatus } from '../message-status/message-status.js';
+import { ReactionList } from '../reaction/list.js';
+import { TextContent } from '../text-content/text-content.js';
 
 import './default-message-content.css';
-
-import type { ImModelMessage } from 'im.v2.model';
 
 // @vue/component
 export const DefaultMessageContent = {
@@ -16,6 +19,7 @@ export const DefaultMessageContent = {
 		MessageAttach,
 		ReactionList,
 		Reply,
+		TextContent,
 	},
 	props:
 	{
@@ -64,9 +68,10 @@ export const DefaultMessageContent = {
 		},
 	},
 	template: `
-		<div class="bx-im-message-default-content__container bx-im-message-default-content__scope" :class="{'--no-text': !withText}">
+		<div class="bx-im-message-default-content__container" :class="{'--no-text': !withText}">
 			<Reply v-if="isReply" :dialogId="dialogId" :replyId="message.replyId" :isForward="isForward" />
-			<div v-if="withText" class="bx-im-message-default-content__text" v-html="formattedText"></div>
+			<TextContent v-if="withText" :text="formattedText" />
+			<slot></slot>
 			<div v-if="withAttach && message.attach.length > 0" class="bx-im-message-default-content__attach">
 				<MessageAttach :item="message" :dialogId="dialogId" />
 			</div>

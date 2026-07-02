@@ -1,0 +1,6 @@
+<?php
+$MESS["SN_GET_PROJECT_INFO_ERROR_DURING_FETCHING_DATA"] = "Could not get project information.";
+$MESS["SN_GET_PROJECT_INFO_ERROR_NOT_FOUND"] = "Project was not found.";
+$MESS["SN_GET_PROJECT_INFO_FIELD_ERROR_INVALID_VALUE"] = "The value of \"#PROPERTY_NAME#\" is incorrect.";
+$MESS["SN_GET_PROJECT_INFO_FIELD_PROJECT_ID"] = "Project:";
+$MESS["SN_GET_PROJECT_INFO_FIELD_PROJECT_ID_NAME"] = "Project:";

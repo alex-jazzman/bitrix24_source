@@ -131,34 +131,32 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 		 * @param {CreateCopilotParams} fields
 		 * @returns {Promise<void>}
 		 */
-		async createCopilot(fields)
+		createCopilot(fields)
 		{
 			Logger.log(`${this.constructor.name}.createCopilot.fields:`, fields);
 
-			try
-			{
-				const chatService = new ChatService();
-				const newChatWithCopilot = await chatService.createCopilot(fields);
-				const chatId = newChatWithCopilot.chatId;
-				if (chatId > 0)
-				{
-					const openDialogParams = {
-						dialogId: `chat${chatId}`,
-						context: OpenDialogContextType.chatCreation,
-					};
+			return serviceLocator.get('dialog-manager').openOptimisticDialog({
+				chatType: DialogType.copilot,
+				dataLoader: () => {
+					const chatService = new ChatService();
+					const promise = chatService.createCopilot(fields);
 
-					await serviceLocator.get('dialog-manager').openDialog(openDialogParams);
-					AnalyticsService.getInstance().sendCreateCopilotDialog({ chatId });
-				}
-				else
-				{
-					Logger.error(`${this.constructor.name}.createCopilot: chatId is invalid`, chatId);
-				}
-			}
-			catch (error)
-			{
-				Logger.error(`${this.constructor.name}.createCopilot.catch:`, error);
-			}
+					promise
+						.then((result) => {
+							if (result.chatId > 0)
+							{
+								AnalyticsService.getInstance().sendCreateCopilotDialog({ chatId: result.chatId });
+							}
+
+							return result;
+						})
+						.catch((error) => {
+							Logger.error(`${this.constructor.name}.createCopilot.catch:`, error);
+						});
+
+					return promise;
+				},
+			});
 		}
 
 		getUserList()

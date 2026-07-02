@@ -1,6 +1,9 @@
-import { ActionParams, Base } from '../base';
-import ConfigurableItem from 'crm.timeline.item';
+import type ConfigurableItem from 'crm.timeline.item';
+
+import { type ActionParams, Base } from '../base';
 import { showCyclePopup } from './show-cycle-popup';
+
+import 'main.sidepanel';
 
 export class WaitListItem extends Base
 {

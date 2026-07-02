@@ -1,8 +1,10 @@
-import { PopupOptions } from '../popup/popup-types';
+import { type PopupOptions } from '../popup/popup-types';
+import { MenuNavigationOptions } from './menu-navigation';
 
 export type MenuOptions = PopupOptions & {
 	items: MenuItemOptions[],
 	subMenuOptions?: PopupOptions,
+	navigationOptions: MenuNavigationOptions,
 };
 
 export type MenuItemOptions = {
@@ -11,9 +13,11 @@ export type MenuItemOptions = {
 	html?: string,
 	title?: string,
 	disabled?: boolean,
+	focusable?: boolean,
 	href?: string,
 	target?: string,
 	className?: string,
+	attrs: { [key: string]: string },
 	delimiter?: boolean,
 	menuShowDelay?: number,
 	subMenuOffsetX?: number,

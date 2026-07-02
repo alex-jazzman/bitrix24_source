@@ -14,14 +14,19 @@ export const ControlPage = {
 		Pill,
 	},
 
+	validator: null,
 	data(): Object
 	{
 		return {
 			id: 'control',
 			lowBorder: this.data.lowBorder,
 			highBorder: this.data.highBorder,
-			validator: new BordersAccord(),
 		};
+	},
+
+	created(): void
+	{
+		this.validator = new BordersAccord();
 	},
 
 	methods: {

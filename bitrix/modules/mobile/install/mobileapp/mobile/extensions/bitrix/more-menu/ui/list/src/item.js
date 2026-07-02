@@ -52,7 +52,11 @@ jn.define('more-menu/ui/list/src/item', (require, exports, module) => {
 				prefix: props.testId,
 			});
 
-			this.#initState(props);
+			this.state = {
+				icon: props.icon,
+				imageUrl: props.imageUrl,
+				isHighlighted: false,
+			};
 		}
 
 		componentWillReceiveProps(nextProps)
@@ -65,75 +69,119 @@ jn.define('more-menu/ui/list/src/item', (require, exports, module) => {
 			this.state = {
 				icon: props.icon,
 				imageUrl: props.imageUrl,
+				isHighlighted: this.state.isHighlighted || false,
 			};
 		}
 
 		componentDidMount()
 		{
-			if (this.props.id === 'call_list')
+			const { id } = this.props;
+
+			if (id === 'call_list')
 			{
 				RefRegistry.register('call_list_menu_settings_button', this.itemRef);
 			}
 
-			if (this.props.id === 'mail_list')
+			if (id === 'mail_list')
 			{
 				RefRegistry.register('mail_list_menu_settings_button', this.itemRef);
 			}
+
+			RefRegistry.register(id, this.itemRef);
+			RefRegistry.register(`${id}_component`, this);
 		}
 
 		render()
 		{
-			const { style = {}, title, mode } = this.props;
+			const { style = {} } = this.props;
+
+			const backgroundColorGradient = this.state.isHighlighted
+				? {
+					start: Color.accentMainPrimary.toHex(),
+					end: Color.accentSoftGreen1.toHex(),
+					angle: 90,
+				}
+				: {};
 
 			return View(
 				{
+					style: {
+						backgroundColorGradient,
+						borderRadius: Corner.M.toNumber() + 2,
+						padding: 2,
+					},
 					ref: (ref) => {
 						this.itemRef = ref;
 					},
-					testId: this.getTestId('wrapper'),
-					style: {
-						flexDirection: 'row',
-						alignItems: 'center',
-						paddingHorizontal: Indent.XL.toNumber(),
-						borderRadius: Corner.M.toNumber(),
-						height: 49,
-						...style,
-					},
-					onClick: this.#handleOnClick,
 				},
-				this.renderLeftContent(),
 				View(
 					{
+						testId: this.getTestId('wrapper'),
 						style: {
-							flex: 2,
 							flexDirection: 'row',
-							height: 49,
 							alignItems: 'center',
+							paddingHorizontal: Indent.XL.toNumber(),
+							borderRadius: Corner.M.toNumber(),
+							height: 49,
+							...style,
 						},
+						onClick: this.#handleOnClick,
 					},
-					Text2({
-						text: title,
-						testId: this.getTestId('title'),
-						color: mode === MODE.ALERT ? Color.accentMainAlert : Color.base1,
-						numberOfLines: 1,
-						ellipsize: Ellipsize.MIDDLE.toString(),
+					this.renderLeftContent(),
+					this.renderTitle(),
+					this.renderBadge(),
+					IconView({
+						testId: this.getTestId('right-icon'),
+						icon: Icon.CHEVRON_TO_THE_RIGHT,
+						color: Color.base4,
+						size: 22,
 						style: {
-							flexShrink: 2,
+							marginLeft: Indent.XL.toNumber(),
 						},
 					}),
-					this.renderTag(),
 				),
-				this.renderBadge(),
-				IconView({
-					testId: this.getTestId('right-icon'),
-					icon: Icon.CHEVRON_TO_THE_RIGHT,
-					color: Color.base4,
-					size: 22,
+			);
+		}
+
+		renderTitle()
+		{
+			const { title, mode } = this.props;
+
+			return View(
+				{
 					style: {
-						marginLeft: Indent.XL.toNumber(),
+						flex: 2,
+						flexDirection: 'row',
+						height: 49,
+						alignItems: 'center',
+					},
+				},
+				Text2({
+					text: title,
+					testId: this.getTestId('title'),
+					color: mode === MODE.ALERT ? Color.accentMainAlert : Color.base1,
+					numberOfLines: 1,
+					ellipsize: Ellipsize.MIDDLE.toString(),
+					style: {
+						flexShrink: 2,
 					},
 				}),
+				this.renderTag(),
 			);
+		}
+
+		showHighlight()
+		{
+			return new Promise((resolve) => {
+				this.setState({ isHighlighted: true }, resolve);
+			});
+		}
+
+		hideHighlight()
+		{
+			return new Promise((resolve) => {
+				this.setState({ isHighlighted: false }, resolve);
+			});
 		}
 
 		#handleOnClick = () => {

@@ -1,7 +1,5 @@
 import { Button, ButtonSize, ButtonColor } from 'booking.component.button';
 import './add-to-calendar.css';
-// eslint-disable-next-line no-unused-vars
-import { BookingModel } from 'booking.model.bookings';
 
 // @vue/component
 export const AddToCalendar = {

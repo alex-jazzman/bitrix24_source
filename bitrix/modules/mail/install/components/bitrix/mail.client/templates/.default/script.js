@@ -272,6 +272,10 @@
 
 		BX.removeClass(logItem, 'mail-msg-show-animation-rev');
 		BX.toggleClass(logItem, 'mail-msg-view-item-open');
+		logItem.setAttribute('aria-expanded', opened ? 'false' : 'true');
+
+		var collapseBtn = BX.findChildByClassName(details, 'mail-msg-view-collapse-btn', true);
+		collapseBtn?.setAttribute('aria-expanded', opened ? 'false' : 'true');
 
 		if (opened)
 		{
@@ -339,6 +343,15 @@
 
 							var button = BX.findChildByClassName(details, 'mail-msg-view-header', true);
 							BX.bind(button, 'click', ctrl.handleLogItemClick.bind(ctrl, messageId));
+
+							var collapseBtn = BX.findChildByClassName(details, 'mail-msg-view-collapse-btn', true);
+							if (collapseBtn)
+							{
+								BX.bind(collapseBtn, 'click', function (e) {
+									e.stopPropagation();
+									ctrl.toggleLogItem(messageId);
+								});
+							}
 
 							ctrl.scrollTo(details);
 						}, 10);
@@ -1005,9 +1018,7 @@
 		{
 			if (self.syncData[params.sessid].new > 0 || params.updated > 0 || params.deleted > 0)
 			{
-				var messageGrid = new BX.Mail.MessageGrid();
-				messageGrid.setGridId(gridId);
-				messageGrid.reloadTable();
+				BX.Mail.Home.Grid.reloadTable();
 			}
 
 			if (params.final > 0)

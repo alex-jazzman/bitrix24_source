@@ -31,4 +31,12 @@ export class SessionPullHandler
 
 		void this.store.dispatch('openLines/sessions/set', sessionItem);
 	}
+
+	handleUpdateSilentMode(params: { dialogId: string, silentMode: boolean }): void
+	{
+		void this.store.dispatch('openLines/currentSession/set', {
+			dialogId: params.dialogId,
+			data: { silentMode: params.silentMode },
+		});
+	}
 }

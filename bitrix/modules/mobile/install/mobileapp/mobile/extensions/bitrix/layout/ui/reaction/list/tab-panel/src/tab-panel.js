@@ -96,10 +96,7 @@ jn.define('layout/ui/reaction/list/tab-panel/src/tab-panel', (require, exports, 
 					horizontal: true,
 					showsHorizontalScrollIndicator: false,
 					style: {
-						height: 40,
-						flexDirection: 'row',
-						alignItems: 'center',
-						justifyContent: 'flex-start',
+						height: 43,
 						width: '100%',
 						marginBottom: Indent.M.toNumber(),
 						marginTop: Indent.XS.toNumber(),
@@ -108,8 +105,9 @@ jn.define('layout/ui/reaction/list/tab-panel/src/tab-panel', (require, exports, 
 				View(
 					{
 						style: {
-							display: 'flex',
 							flexDirection: 'row',
+							alignItems: 'center',
+							justifyContent: 'flex-start',
 							marginLeft: Indent.XL3.toNumber(),
 						},
 					},

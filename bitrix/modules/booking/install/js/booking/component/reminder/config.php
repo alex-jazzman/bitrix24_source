@@ -8,8 +8,8 @@ return [
 	'css' => 'dist/reminder.bundle.css',
 	'js' => 'dist/reminder.bundle.js',
 	'rel' => [
-		'main.popup',
 		'main.core',
+		'main.popup',
 		'ui.icon-set.api.vue',
 		'ui.vue3',
 	],

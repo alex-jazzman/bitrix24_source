@@ -5,9 +5,11 @@
  */
 jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, module) => {
 	const { Uuid } = require('utils/uuid');
+	const { Loc } = require('im/messenger/loc');
 
 	const {
 		BotCode,
+		DialogType,
 		DialogWidgetType,
 		OpenDialogContextType,
 	} = require('im/messenger/const');
@@ -16,16 +18,23 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 
 	const { Feature } = require('im/messenger/lib/feature');
 	const { getLogger } = require('im/messenger/lib/logger');
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 	const { MessageUiConverter } = require('im/messenger/lib/converter/ui/message');
 
 	const { Dialog } = require('im/messenger/controller/dialog/chat');
-	const { DialogConfigurator } = require('im/messenger/controller/dialog/lib/configurator');
+	const { DialogConfigurator, configs } = require('im/messenger/controller/dialog/lib/configurator');
 
-	const { CopilotMessageMenu } = require('im/messenger/controller/dialog/copilot/component/message-menu');
+	const { BackgroundManager } = require('im/messenger/controller/dialog/lib/background');
 	const { CopilotMentionManager } = require('im/messenger/controller/dialog/copilot/component/mention/manager');
+	const {
+		ReasoningButton,
+		ModeMenuButton,
+		MCPButton,
+		SearchModeButton,
+		AgentButton,
+		AssistantButtonDesign,
+	} = require('im/messenger/controller/dialog/lib/assistant-button-manager');
 	const { Reasoning } = require('im/messenger/lib/reasoning');
-	const { ReasoningButton } = require('im/messenger/controller/dialog/lib/assistant-button-manager/const/buttons');
-	const { AssistantButtonDesign } = require('im/messenger/controller/dialog/lib/assistant-button-manager/const/type');
 
 	const logger = getLogger('dialog--dialog');
 
@@ -60,11 +69,19 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 		}
 
 		/**
-		 * @return {MessageMenuController}
+		 * @returns {boolean}
 		 */
-		createMessageMenu()
+		checkNeedKeyboardOverContent()
 		{
-			return new CopilotMessageMenu(this.getMessageMenuParams());
+			return Feature.isCopilotAnimatedScrollSupported;
+		}
+
+		/**
+		 * @returns {boolean}
+		 */
+		checkCanShowStickerButton()
+		{
+			return false;
 		}
 
 		subscribeViewEvents()
@@ -100,6 +117,15 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 				.off('dialoguesModel/copilotModel/update', this.dialogUpdateHandlerRouter);
 		}
 
+		/**
+		 * @param {?ChatIntegrationSettings} integrationSettings
+		 */
+		initConfigurator(integrationSettings)
+		{
+			this.configurator = new DialogConfigurator({ ...configs?.copilotDialogConfig, ...integrationSettings });
+			this.locator.add('configurator', this.configurator);
+		}
+
 		async initManagers()
 		{
 			await super.initManagers();
@@ -129,9 +155,7 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 			} = options;
 
 			this.onClose = onClose;
-
-			this.configurator = new DialogConfigurator(integrationSettings);
-			this.locator.add('configurator', this.configurator);
+			this.initConfigurator(integrationSettings);
 			this.headerTitleControllerClassLoadPromise = this.configurator.getHeaderTitleControllerClass();
 			this.headerButtonsControllerClassLoadPromise = this.configurator.getHeaderButtonsControllerClass();
 
@@ -153,6 +177,11 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 					dialogId: this.getDialogId(),
 				});
 			}
+
+			this.backgroundManager = new BackgroundManager({
+				dialogId: this.dialogId,
+				dialogLocator: this.locator,
+			});
 
 			this.firstDbPagePromise = this.loadHistoryMessagesFromDb();
 
@@ -180,9 +209,50 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 		}
 
 		/**
+		 * @override
+		 * @return {DialogHeaderTitleParams}
+		 */
+		getOptimisticTitleParams()
+		{
+			return ChatTitle.createOptimisticCopilotTitleParams();
+		}
+
+		/**
 		 * @return {Array<AssistantButton>}
 		 */
 		getAssistantButtons()
+		{
+			if (!Feature.isBitrixGptV2Enabled)
+			{
+				return this.#getLegacyAssistantButtons();
+			}
+
+			const buttons = [];
+
+			buttons.push({ ...ModeMenuButton });
+
+			if (Feature.isCopilotMCPButtonAvailable)
+			{
+				buttons.push({ ...MCPButton });
+			}
+
+			if (Feature.isSearchModeButtonAvailable)
+			{
+				buttons.push({ ...SearchModeButton });
+			}
+
+			if (Feature.isAgentButtonAvailable)
+			{
+				buttons.push({ ...AgentButton });
+			}
+
+			return buttons;
+		}
+
+		/**
+		 * @return {Array<AssistantButton>}
+		 */
+		#getLegacyAssistantButtons()
 		{
 			const buttons = [];
 
@@ -235,11 +305,13 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 					view: this.view,
 					dialogId: this.dialogId,
 				});
+				this.view.setKeyboardOverContent(true);
 			}
 			else
 			{
 				this.mentionManager?.unsubscribeEvents();
 				this.mentionManager = null;
+				this.view.setKeyboardOverContent(false);
 			}
 		}
 

@@ -1,4 +1,4 @@
-import { BitrixVueComponentProps } from 'ui.vue3';
+import { type BitrixVueComponentProps } from 'ui.vue3';
 import { Menu, type MenuOptions } from 'main.popup';
 
 import { ServiceLocator } from '../../../lib/service-locator';
@@ -19,18 +19,10 @@ export const ShowMoreMenu: BitrixVueComponentProps = {
 		},
 	},
 
-	data(): Object
-	{
-		return {
-			/** @type Menu */
-			menu: null,
-		};
-	},
-
 	methods: {
 		getMenu(): Menu
 		{
-			if (this.menu === null)
+			if (!this.menu)
 			{
 				this.menu = new Menu({
 					items: this.items,

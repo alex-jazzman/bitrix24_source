@@ -11,11 +11,10 @@ use Bitrix\Booking\Internals\Container;
 use Bitrix\Booking\Internals\Exception\ErrorBuilder;
 use Bitrix\Booking\Internals\Exception\Exception;
 use Bitrix\Booking\Internals\Integration;
+use Bitrix\Booking\Internals\Integration\Bizproc\AiAgentProvider;
 use Bitrix\Booking\Internals\Integration\Notifications\TemplateRepository;
 use Bitrix\Booking\Internals\Integration\Notifications\LegalEntityProvider;
 use Bitrix\Booking\Internals\Service\LicenseChecker;
-use Bitrix\Booking\Internals\Service\Notifications\MessageSender;
-use Bitrix\Booking\Internals\Service\Notifications\MessageSender\MessageSenderPicker;
 use Bitrix\Booking\Internals\Service\Notifications\NotificationType;
 use Bitrix\Booking\Internals\Service\OptionDictionary;
 use Bitrix\Booking\Internals\Service\Time;
@@ -30,8 +29,8 @@ class ResourceWizard extends BaseController
 	private int $userId;
 	private TemplateRepository $templateRepository;
 	private LegalEntityProvider $notificationsLegalEntityProvider;
-	private MessageSenderPicker $messageSenderPicker;
 	private LicenseChecker $licenseChecker;
+	private AiAgentProvider $aiAgentProvider;
 
 	public function __construct(Request $request = null)
 	{
@@ -40,8 +39,8 @@ class ResourceWizard extends BaseController
 		$this->userId = (int)CurrentUser::get()->getId();
 		$this->templateRepository = new TemplateRepository();
 		$this->notificationsLegalEntityProvider = new LegalEntityProvider();
-		$this->messageSenderPicker = Container::getMessageSenderPicker();
 		$this->licenseChecker = Container::getLicenseChecker();
+		$this->aiAgentProvider = Container::getAiAgentProvider();
 	}
 
 	public function getAction(CurrentUser $currentUser): ResourceWizardResponseResponse|null
@@ -58,6 +57,7 @@ class ResourceWizard extends BaseController
 				companyScheduleUrl: $this->getCompanyScheduleUrl(),
 				weekStart: $this->getWeekStart(),
 				isChannelChoiceAvailable: $this->notificationsLegalEntityProvider->isRu() === true,
+				aiAgent: $this->aiAgentProvider->getAiAgentData(),
 			);
 		}
 		catch (Exception $e)
@@ -73,14 +73,7 @@ class ResourceWizard extends BaseController
 		$notificationsExpanded = $this->getNotificationsExpanded();
 
 		return [
-			'showLicenseWarning' => !$this->licenseChecker->isPaidOrBox(),
-			'senders' => array_map(
-				static fn (MessageSender\BaseMessageSender $sender) => [
-					'code' => $sender->getCode(),
-					'canUse' => $sender->canUse(),
-				],
-				$this->messageSenderPicker->getSenders(),
-			),
+			'showLicenseWarning' => !$this->licenseChecker->isPaidB24OrBox(),
 			'notifications' => array_map(
 				fn (NotificationType $notificationType) => [
 					'type' => $notificationType->value,
@@ -322,6 +315,25 @@ class ResourceWizard extends BaseController
 							'value' => 15 * Time::SECONDS_IN_MINUTE,
 						],
 					]
+				],
+			],
+			// cancellation
+			NotificationType::Cancellation => [
+				'notification' => [
+					'delayValues' => [
+						[
+							'name' => Loc::getMessage('BOOKING_CONTROLLER_RESOURCE_WIZARD_CANCELLATION_IMMEDIATELY'),
+							'value' => 0,
+						],
+						[
+							'name' => Loc::getMessage('BOOKING_CONTROLLER_RESOURCE_WIZARD_CANCELLATION_IN_TEN_MINUTES'),
+							'value' => 10 * Time::SECONDS_IN_MINUTE,
+						],
+						[
+							'name' => Loc::getMessage('BOOKING_CONTROLLER_RESOURCE_WIZARD_CANCELLATION_IN_HOUR'),
+							'value' => Time::SECONDS_IN_HOUR,
+						],
+					],
 				],
 			],
 			NotificationType::Feedback => [

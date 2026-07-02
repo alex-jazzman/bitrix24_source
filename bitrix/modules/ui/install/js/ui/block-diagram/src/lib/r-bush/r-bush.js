@@ -127,7 +127,6 @@ export default class RBush {
 
         // depth-first iterative tree traversal
         while (node || path.length) {
-
             if (!node) { // go up
                 node = path.pop();
                 parent = path[path.length - 1];
@@ -158,7 +157,6 @@ export default class RBush {
                 i++;
                 node = parent.children[i];
                 goingUp = false;
-
             } else node = null; // nothing found
         }
 

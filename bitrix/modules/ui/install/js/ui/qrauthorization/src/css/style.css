@@ -1,6 +1,6 @@
 .ui-qr-authorization__popup-scope {
-	--gray: 	rgba(51,51,51,1);
-	--green: 	rgba(142,187,0,1);
+	--gray: rgba(51,51,51,1);
+	--green: rgba(142,187,0,1);
 }
 
 .ui-qr-authorization__popup {
@@ -253,3 +253,4 @@
 	--ui-icon-set__icon-color: var(--ui-color-text-warning);
 	margin-right: 8px;
 }
+

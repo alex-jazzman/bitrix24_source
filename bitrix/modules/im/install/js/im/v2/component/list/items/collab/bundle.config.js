@@ -1,6 +1,6 @@
 module.exports = {
-	input: 'src/collab-list.js',
-	output: 'dist/collab-list.bundle.js',
+	input: 'src/registry.js',
+	output: 'dist/registry.bundle.js',
 	namespace: 'BX.Messenger.v2.Component.List',
 	browserslist: true,
 };

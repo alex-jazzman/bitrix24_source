@@ -422,14 +422,14 @@ if (!empty($arParams["ERROR_MESSAGE"]))
 
 ?>
 <script>
-<? if (IsModuleInstalled("im")): ?>
+<?php if (IsModuleInstalled("im")): ?>
 if (window.SPC)
 {
 	SPC.notifyManagerShow();
 }
-<? endif ?>
+<?php endif ?>
 
-<? if (IsModuleInstalled("socialnetwork") && $USER instanceof CUser): ?>
+<?php if (IsModuleInstalled("socialnetwork") && $USER instanceof CUser): ?>
 if (BX.CommentAux)
 {
 	BX.CommentAux.init({
@@ -440,7 +440,7 @@ if (BX.CommentAux)
 		availableUsersList: <?= Json::encode($arResult["availableUsersList"]) ?>,
 	});
 }
-<? endif ?>
+<?php endif ?>
 
 BX.message({
 	MPL_HAVE_WRITTEN : '<?=GetMessageJS("MPL_HAVE_WRITTEN_MSGVER_1")?>',
@@ -470,12 +470,12 @@ BX.message({
 	MPL_MOBILE_POPUP_TITLE : '<?=GetMessageJS('MPL_MOBILE_POPUP_TITLE')?>',
 	MPL_MOBILE_POPUP_BOTTOM_TEXT : '<?=GetMessageJS('MPL_MOBILE_POPUP_BOTTOM_TEXT')?>',
 	MPL_LINK_COPIED : '<?=GetMessageJS('MPL_LINK_COPIED')?>'
-	<?
+	<?php
 		if (IsModuleInstalled("socialnetwork"))
 		{
 			?>
 			, MPL_WORKGROUPS_PATH : '<?=CUtil::JSEscape(COption::GetOptionString("socialnetwork", "workgroups_page", SITE_DIR."workgroups/", SITE_ID))?>'
-			<?
+	<?php
 		}
 	?>,
 	MPL_QUOTE_COPILOT: '<?= GetMessageJS('MPL_QUOTE_COPILOT')?>',

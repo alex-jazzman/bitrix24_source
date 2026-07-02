@@ -5,7 +5,14 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 }
 
 return [
-	"css" => "/bitrix/js/ui/hint/ui.hint.css",
-	"js" => "/bitrix/js/ui/hint/ui.hint.js",
-	"rel" => ["popup"]
+	"css" => 'dist/ui.hint.bundle.css',
+	'js' => 'dist/ui.hint.bundle.js',
+	'rel' => [
+		'main.core',
+		'main.popup',
+		'ui.icon-set.api.core',
+		'ui.icon-set.main',
+		'ui.icon-set.outline',
+	],
+	'skip_core' => false,
 ];

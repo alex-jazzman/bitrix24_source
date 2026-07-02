@@ -634,8 +634,17 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	`
 	};
 
+	const EntityCollapsibleTextEvent = Object.freeze({
+	  ExpandButtonClick: 'ExpandButton.Click',
+	  CollapseButtonClick: 'CollapseButton.Click',
+	  HtmlFormatterComponentMouseUp: 'HtmlFormatterComponent.MouseUp',
+	  ByDefault: 'ByDefault',
+	  UpdateIsContentOverflowing: 'UpdateIsContentOverflowing'
+	});
+
 	// @vue/component
 	const EntityCollapsibleText = {
+	  name: 'EntityCollapsibleText',
 	  components: {
 	    HtmlFormatterComponent: ui_bbcode_formatter_htmlFormatter.HtmlFormatterComponent,
 	    BIcon: ui_iconSet_api_vue.BIcon,
@@ -672,12 +681,17 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    maxHeight: {
 	      type: Number,
 	      default: 200
+	    },
+	    stickyFooter: {
+	      type: Boolean,
+	      default: false
 	    }
 	  },
 	  emits: ['editButtonClick', 'update:opened'],
 	  setup() {
 	    return {
-	      Outline: ui_iconSet_api_vue.Outline
+	      Outline: ui_iconSet_api_vue.Outline,
+	      EntityCollapsibleTextEvent
 	    };
 	  },
 	  data() {
@@ -734,7 +748,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    await this.$nextTick();
 	    this.updateIsOverflowing();
 	    if (this.openByDefault) {
-	      this.setPreviewShown(true);
+	      this.setPreviewShown(true, EntityCollapsibleTextEvent.ByDefault);
 	    }
 	  },
 	  methods: {
@@ -750,16 +764,16 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      this.isOverflowing = fitsWithinPreview && (!this.opened || exceedsMaxHeight);
 	      this.isOverflowChecked = true;
 	      if (!this.isOverflowing && this.showCollapseButton) {
-	        this.setPreviewShown(false);
+	        this.setPreviewShown(false, EntityCollapsibleTextEvent.UpdateIsContentOverflowing);
 	      }
 	    },
-	    onPreviewClick() {
+	    onPreviewClick(targetEvent) {
 	      if (this.hidden) {
-	        this.setPreviewShown(true);
+	        this.setPreviewShown(true, targetEvent);
 	      }
 	    },
-	    setPreviewShown(isShown) {
-	      this.$emit('update:opened', isShown);
+	    setPreviewShown(isShown, targetEvent) {
+	      this.$emit('update:opened', isShown, targetEvent);
 	    },
 	    onMouseDown(event) {
 	      if (this.opened) {
@@ -793,7 +807,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        const isImageClick = target.tagName === 'IMG' || target.closest('img');
 	        const isVideoClick = target.tagName === 'VIDEO' || target.closest('video');
 	        if (!isLinkClick && !isButtonClick && !isImageClick && !isVideoClick) {
-	          this.onPreviewClick();
+	          this.onPreviewClick(EntityCollapsibleTextEvent.HtmlFormatterComponentMouseUp);
 	        }
 	      }
 	    }
@@ -829,11 +843,12 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				'--empty-content': !hasContent && hidden,
 				'--without-padding': !showFilesIndicator && hasFiles,
 				'--with-edit-button': showEditButton,
+				'--sticky': stickyFooter,
 			}"
 		>
 			<EditButton v-if="showEditButton" @click="$emit('editButtonClick')"/>
-			<ExpandButton v-if="hidden" :showFilesIndicator :filesCount @click="onPreviewClick"/>
-			<CollapseButton v-if="showCollapseButton" @click="setPreviewShown(false)"/>
+			<ExpandButton v-if="hidden" :showFilesIndicator :filesCount @click="onPreviewClick(EntityCollapsibleTextEvent.ExpandButtonClick)"/>
+			<CollapseButton v-if="showCollapseButton" @click="setPreviewShown(false, EntityCollapsibleTextEvent.CollapseButtonClick)"/>
 		</div>
 	`
 	};
@@ -1184,6 +1199,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	exports.MentionButton = MentionButton;
 	exports.NumberListButton = NumberListButton;
 	exports.BulletListButton = BulletListButton;
+	exports.EntityCollapsibleTextEvent = EntityCollapsibleTextEvent;
 
 }((this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {}),BX.Vue3,BX.UI.Uploader,BX.Tasks.V2.Const,BX,BX.Event,BX.UI.Lexical.Core,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Component.Elements,BX.UI.BBCode.Formatter,BX.UI.System.Typography.Vue,BX.Vue3.Directives,BX.Tasks.V2.Component.Elements,BX.Tasks.V2,BX.UI.System.Menu,BX,BX,BX.UI.TextEditor,BX.UI.IconSet,BX.UI.Lexical.List));
 //# sourceMappingURL=entity-text.bundle.js.map

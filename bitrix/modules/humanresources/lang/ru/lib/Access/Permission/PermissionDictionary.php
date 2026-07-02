@@ -17,6 +17,7 @@ $MESS['HINT_HUMAN_RESOURCES_DEPARTMENT_SETTINGS_EDIT'] = 'Участие рук�
 $MESS['HUMAN_RESOURCES_DEPARTMENT_CHAT_EDIT'] = 'Управление чатами отдела';
 $MESS['HUMAN_RESOURCES_DEPARTMENT_CHANNEL_EDIT'] = 'Управление каналами отдела';
 $MESS['HUMAN_RESOURCES_DEPARTMENT_COLLAB_EDIT'] = 'Управление коллабами отдела';
+$MESS['HUMAN_RESOURCES_DEPARTMENT_PROJECT_EDIT'] = 'Управление проектами отдела';
 
 $MESS['HUMAN_RESOURCES_USERS_ACCESS_EDIT_MSGVER_2'] = 'Управление правами доступа';
 $MESS['HINT_HUMAN_RESOURCES_USERS_ACCESS_EDIT'] = 'Изменение доступов на настройку прав к отделам';
@@ -38,5 +39,6 @@ $MESS['HINT_HUMAN_RESOURCES_TEAM_SETTINGS_EDIT_MSGVER_1'] = 'Участие ру
 $MESS['HUMAN_RESOURCES_TEAM_CHAT_EDIT'] = 'Управление чатами команды';
 $MESS['HUMAN_RESOURCES_TEAM_CHANNEL_EDIT'] = 'Управление каналами команды';
 $MESS['HUMAN_RESOURCES_TEAM_COLLAB_EDIT'] = 'Управление коллабами команды';
+$MESS['HUMAN_RESOURCES_TEAM_PROJECT_EDIT'] = 'Управление проектами команды';
 $MESS['HUMAN_RESOURCES_TEAM_ACCESS_EDIT'] = 'Управление правами доступа';
 $MESS['HINT_HUMAN_RESOURCES_TEAM_ACCESS_EDIT'] = 'Изменение доступов на настройку прав к командам';

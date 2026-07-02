@@ -1,4 +1,5 @@
 import { Reflection, Dom, Event, Type, Browser } from 'main.core';
+import { EventEmitter } from 'main.core.events';
 import { Slider as BaseSlider, SidePanel, type OuterBoundary, type SliderOptions } from 'main.sidepanel';
 
 import { type ThemePicker } from 'intranet.theme-picker';
@@ -11,6 +12,7 @@ const MENU_EXPANDED_WIDTH = 240;
 export class Slider extends BaseSlider
 {
 	#onWindowResize: Function = null;
+	#onViewerClose: Function = null;
 	#chatMenuBar: ChatMenuBar = null;
 	static #verticalScrollWidth: number = null;
 
@@ -32,6 +34,7 @@ export class Slider extends BaseSlider
 
 		this.#chatMenuBar = isMessenger ? new ChatMenuBar(this) : null;
 		this.#onWindowResize = this.#handleWindowResize.bind(this);
+		this.#onViewerClose = this.#handleViewerClose.bind(this);
 	}
 
 	applyHacks(): void
@@ -40,6 +43,7 @@ export class Slider extends BaseSlider
 
 		this.adjustBackgroundSize();
 		Event.bind(window, 'resize', this.#onWindowResize);
+		EventEmitter.subscribe('BX.UI.Viewer.Controller:onClose', this.#onViewerClose);
 
 		return true;
 	}
@@ -48,6 +52,7 @@ export class Slider extends BaseSlider
 	{
 		this.resetBackgroundSize();
 		Event.unbind(window, 'resize', this.#onWindowResize);
+		EventEmitter.unsubscribe('BX.UI.Viewer.Controller:onClose', this.#onViewerClose);
 	}
 
 	static isMessengerOpen(): boolean
@@ -262,5 +267,10 @@ export class Slider extends BaseSlider
 	#handleWindowResize(): void
 	{
 		this.adjustBackgroundSize();
+	}
+
+	#handleViewerClose(): void
+	{
+		SidePanel.Instance.adjustLayout();
 	}
 }

@@ -31,7 +31,6 @@
 	background-color: var(--im-list-recent-compact__background-color);
 	overflow: hidden scroll;
 	overscroll-behavior: contain;
-	scrollbar-width: none;
 }
 
 .bx-im-list-recent-compact__scroll-container::-webkit-scrollbar {

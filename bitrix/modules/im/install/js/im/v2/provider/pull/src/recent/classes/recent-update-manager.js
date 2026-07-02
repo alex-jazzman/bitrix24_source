@@ -1,13 +1,13 @@
 import { Core } from 'im.v2.application.core';
-import { RecentType } from 'im.v2.const';
+import { RecentType, type RecentTypeItem } from 'im.v2.const';
 import { UserManager } from 'im.v2.lib.user';
 import { Utils } from 'im.v2.lib.utils';
+import { type ImModelRecentItem } from 'im.v2.model';
 
-import type { JsonObject } from 'main.core';
-import type { RecentTypeItem } from 'im.v2.const';
-import type { RecentPinChatParams, RecentUpdateParams } from '../../types/recent';
+import { type RecentPinChatParams, type RecentUpdateParams } from '../../types/recent';
+import { type RecentUnreadUpdateParams } from '../recent-unread';
 
-type RecentUpdateManagerParams = RecentUpdateParams | RecentPinChatParams;
+type RecentUpdateManagerParams = RecentUpdateParams | RecentPinChatParams | RecentUnreadUpdateParams;
 
 export class RecentUpdateManager
 {
@@ -19,7 +19,7 @@ export class RecentUpdateManager
 		this.#params = params;
 	}
 
-	updateRecent(): void
+	addToRecentCollection(): void
 	{
 		this.#setLastMessageInfo();
 		const newRecentItem = {
@@ -28,15 +28,16 @@ export class RecentUpdateManager
 			lastActivityDate: this.#params.lastActivityDate,
 		};
 		const sections = this.#params.recentConfig?.sections || [RecentType.default];
-		this.#applyRecentUpdateActions(sections, newRecentItem);
+		this.applyRecentUpdateActions(sections, newRecentItem);
 	}
 
-	#applyRecentUpdateActions(sections: RecentTypeItem[], recentItem: JsonObject): void
+	applyRecentUpdateActions(sections: RecentTypeItem[], recentItem: ImModelRecentItem): void
 	{
 		sections.forEach((recentSection) => {
 			void Core.getStore().dispatch('recent/setCollection', {
 				type: recentSection,
 				items: [recentItem],
+				parentChatId: this.#getParentChatId(),
 			});
 		});
 	}
@@ -57,6 +58,11 @@ export class RecentUpdateManager
 	#getChatId(): number
 	{
 		return this.#params.chat.id;
+	}
+
+	#getParentChatId(): number
+	{
+		return this.#params.chat.parent_chat_id;
 	}
 
 	#getLastMessageId(): number | string
@@ -86,10 +92,10 @@ export class RecentUpdateManager
 
 	#setMessage(): void
 	{
-		if (this.#params.messages.length > 0)
+		if (this.#params.message)
 		{
 			void Core.getStore().dispatch('messages/setChatCollection', {
-				messages: this.#params.messages,
+				messages: this.#params.message,
 			});
 
 			return;

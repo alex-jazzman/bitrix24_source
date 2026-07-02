@@ -4,7 +4,7 @@ export { ZoomBar } from './components/zoom-bar/zoom-bar';
 export { SearchBar } from './components/search-bar/search-bar';
 export { MoveableBlock } from './components/moveable-block/moveable-block';
 export { ResizableBlock } from './components/resizable-block/resizable-block';
-export { Port } from './components/port/port';
+export { Port, SOURCE_PORT_STUB_SLOT_NAME, TARGET_PORT_STUB_SLOT_NAME } from './components/port/port';
 export { Connection } from './components/connection/connection';
 export { GroupSelectionBox } from './components/group-selection-box/group-selection-box';
 export { DeleteConnectionBtn } from './components/delete-connection-btn/delete-connection-btn';
@@ -31,3 +31,4 @@ export {
 } from './composables';
 export { DragBlock } from './directives';
 export type { Point } from './types';
+export { PORT_POSITION } from './constants';

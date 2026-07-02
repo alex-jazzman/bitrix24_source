@@ -62,9 +62,30 @@ jn.define('im/messenger/lib/utils/promise', (require, exports, module) => {
 		return { promise, cancel };
 	}
 
+	/**
+	 * @template T
+	 * @param {Promise<T>} promise
+	 * @param {number} ms
+	 * @return {Promise<T>}
+	 */
+	function withTimeout(promise, ms)
+	{
+		let timeoutId = null;
+
+		const timeoutPromise = new Promise((_, reject) => {
+			timeoutId = setTimeout(() => {
+				reject(new Error(`Promise timed out after ${ms}ms`));
+			}, ms);
+		});
+
+		return Promise.race([promise, timeoutPromise])
+			.finally(() => clearTimeout(timeoutId));
+	}
+
 	module.exports = {
 		createPromiseWithResolvers,
 		delay,
 		delayWithCancel,
+		withTimeout,
 	};
 });

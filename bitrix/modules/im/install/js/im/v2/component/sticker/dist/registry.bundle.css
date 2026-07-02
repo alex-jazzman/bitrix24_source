@@ -17,44 +17,6 @@
 	gap: 12px;
 }
 
-.bx-im-pack-stickers__container {
-	display: flex;
-	flex-wrap: wrap;
-	align-content: flex-start;
-	padding: 0 2px 0 8px;
-}
-
-.bx-im-sticker-preview__overlay {
-	position: fixed;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	background-color: rgba(0, 0, 0, 0.5);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	pointer-events: none;
-}
-
-.bx-im-sticker-preview__container {
-	width: 386px;
-	height: 386px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	pointer-events: none;
-}
-
-.bx-im-sticker-preview__image {
-	width: 100%;
-	height: 100%;
-	object-fit: contain;
-	-webkit-user-select: none;
-	        user-select: none;
-	pointer-events: none;
-}
-
 .bx-im-sticker-pack-form-header__container {
 	--im-sticker-pack-form-header__border-color_divider: var(--ui-color-divider-vibrant-default);
 	--im-sticker-pack-form-header__color_description: var(--ui-color-base-4);
@@ -66,7 +28,7 @@
 }
 
 .bx-im-sticker-pack-form-header__image {
-	background: url("images/images/creation-form-image.png") no-repeat center center;
+	background: url("images/elements/sticker-pack-form/components/header/css/images/creation-form-image.png") no-repeat center center;
 	background-size: contain;
 	width: 66px;
 	flex-shrink: 0;
@@ -108,10 +70,15 @@
 	font: 13px/17px var(--ui-font-family-system);
 	cursor: pointer;
 	text-decoration: underline;
-	-webkit-text-decoration-style: dashed;
-	        text-decoration-style: dashed;
-	-webkit-text-decoration-color: var(--im-sticker-pack-form-upload-button__text-decoration-color_link);
-	        text-decoration-color: var(--im-sticker-pack-form-upload-button__text-decoration-color_link);
+	text-decoration-style: dashed;
+	text-decoration-color: var(--im-sticker-pack-form-upload-button__text-decoration-color_link);
+}
+
+.bx-im-pack-stickers__container {
+	display: flex;
+	flex-wrap: wrap;
+	align-content: flex-start;
+	padding: 0 2px 0 8px;
 }
 
 .bx-im-stickers-add-sticker-button__container {
@@ -152,4 +119,35 @@
 	width: 100%;
 	height: 100%;
 	object-fit: contain;
+}
+
+.bx-im-sticker-preview__overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: rgba(0, 0, 0, 0.5);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	pointer-events: none;
+}
+
+.bx-im-sticker-preview__container {
+	width: 386px;
+	height: 386px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	pointer-events: none;
+}
+
+.bx-im-sticker-preview__image {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	-webkit-user-select: none;
+	        user-select: none;
+	pointer-events: none;
 }

@@ -1,6 +1,7 @@
 import { ClientSelector } from 'crm.client-selector';
 import { ajax as Ajax, Text, Type } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import type { BaseEvent } from 'main.core.events';
+import { EventEmitter } from 'main.core.events';
 import { Dialog } from 'ui.entity-selector';
 import { UI } from 'ui.notification';
 

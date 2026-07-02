@@ -9,11 +9,8 @@
 	border-radius: 12px;
 	background: #CFEFFF;
 	color: #333;
-	-webkit-box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.15);
-	        box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.15);
+	box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.15);
 	word-break: break-word;
-	-webkit-transition: background-color .5s, color .5s, font-size .3s;
-	-o-transition: background-color .5s, color .5s, font-size .3s;
 	transition: background-color .5s, color .5s, font-size .3s;
 	margin-bottom: 5px;
 }
@@ -41,8 +38,7 @@
 .bx-im-message-type-system .bx-im-message-content {
 	border: 0;
 	background: transparent;
-	-webkit-box-shadow: none;
-	        box-shadow: none;
+	box-shadow: none;
 	color: #717171;
 }
 
@@ -67,8 +63,7 @@
 	background-color: #fcdcde;
 }
 .bx-im-message-status-error .bx-im-message-content {
-	-webkit-box-shadow: 0 1px 0 0 rgba(255, 0, 0, 0.15);
-	        box-shadow: 0 1px 0 0 rgba(255, 0, 0, 0.15);
+	box-shadow: 0 1px 0 0 rgba(255, 0, 0, 0.15);
 }
 
 .bx-im-message-content-box {
@@ -84,8 +79,6 @@
 }
 
 .bx-im-message-content-name-wrap {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
 }
 
@@ -103,8 +96,6 @@
 	font-size: 14px;
 	color: #048bd0;
 	cursor: pointer;
-	-webkit-transition: color 1s;
-	-o-transition: color 1s;
 	transition: color 1s;
 }
 .bx-im-dialog-list-item+.bx-im-dialog-list-item .bx-im-message-content-name {
@@ -264,8 +255,6 @@ temporary
 .bx-messenger-content-item-params {
 	padding-right: 10px;
     margin-right: -10px;
-	-webkit-transition: background .3s;
-	-o-transition: background .3s;
 	transition: background .3s;
 	border-radius: 12px;
 	background: transparent;
@@ -278,8 +267,7 @@ temporary
 .bx-messenger-content-item-like {
 	display:inline-block;
 	font: 11px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
-	color: #bac5cd; text-align: right; padding-top: 1px; padding-left: 3px;margin-right: -9px;white-space: nowrap;
-	-moz-user-select:none; -o-user-select:none; -webkit-user-select:none; -ms-user-select:none; user-select:none;
+	color: #bac5cd; text-align: right; padding-top: 1px; padding-left: 3px;margin-right: -9px;white-space: nowrap; -o-user-select:none; -webkit-user-select:none; user-select:none;
 }
 .bx-messenger-content-like-digit {
 	font: 11px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
@@ -297,8 +285,6 @@ temporary
 	padding-left: 18px;
 	padding-right: 10px;
 	color: #c2c4c7;
-	-webkit-transition: all .3s;
-	-o-transition: all .3s;
 	transition: all .3s;
 	height: 19px;
 }
@@ -346,7 +332,7 @@ temporary
 /* endregion 03. Message params (date, like, etc) */
 
 .bx-notifier-popup-user-more, .bx-messenger-cl, .bx-messenger-cl-notify-button, .bx-messenger-content-item-avatar, .bx-messenger-content-item-date, .bx-messenger-history-item-avatar,
-.bx-messenger-textarea-cntr-enter, .bx-notifier-item-help-popup { -moz-user-select:none; -o-user-select:none; -webkit-user-select:none; -ms-user-select:none; user-select:none; cursor: default; }
+.bx-messenger-textarea-cntr-enter, .bx-notifier-item-help-popup { -o-user-select:none; -webkit-user-select:none; user-select:none; cursor: default; }
 
 .bx-im-message-large-font .bx-im-message-content {
 	font-size: 35px;

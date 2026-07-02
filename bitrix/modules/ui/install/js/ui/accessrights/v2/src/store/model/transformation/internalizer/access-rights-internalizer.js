@@ -63,6 +63,7 @@ export type ExternalVariable = {
 	avatar: ?any,
 	avatarOptions: ?any,
 	conflictsWith?: any[],
+	dependant?: any[],
 	requires?: any[],
 	secondary: ?any,
 	hint: ?any,
@@ -274,6 +275,9 @@ export class AccessRightsInternalizer implements Transformer<ExternalAccessRight
 				: null,
 			requires: Type.isArray(externalVariable.requires)
 				? new Set(externalVariable.requires.map((x) => String(x)))
+				: null,
+			dependant: Type.isArray(externalVariable.dependant)
+				? new Set(externalVariable.dependant.map((x) => String(x)))
 				: null,
 			secondary: Type.isBoolean(externalVariable.secondary) ? externalVariable.secondary : null,
 			hint: Type.isStringFilled(externalVariable.hint) ? externalVariable.hint : null,

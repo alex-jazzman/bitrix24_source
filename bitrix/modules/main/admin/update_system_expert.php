@@ -349,7 +349,7 @@ $updatesCount = $expertUpdateHelper->getUpdatesCount();
 						</td>
 						<td><?php if(isset($moduleUpdates["#"]["VERSION"])):?><a href="javascript:ShowDescription('<?= $escapedModuleId ?>')"><?= GetMessage("SUP_SULL_NOTE_D") ?></a><?php endif ?></td>
 					</tr>
-					<?
+					<?php
 				}
 			}?>
 		</table>
@@ -525,7 +525,7 @@ try
 				continue;
 			}
 			input = document.getElementById('id_expert_select_module_' + moduleName);
-			if (input && input.checked)
+			if (input && input.checked && selectNode.options[selectedIndex])
 			{
 				selectedUpdates.push(new UpdateIdentifier(moduleName, selectNode.options[selectedIndex].innerText));
 			}

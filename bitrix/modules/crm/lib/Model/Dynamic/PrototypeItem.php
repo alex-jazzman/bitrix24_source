@@ -208,6 +208,13 @@ abstract class PrototypeItem extends Main\UserField\Internal\PrototypeItemDataMa
 			$parameters['runtime'][] = static::getFullTextReferenceField();
 		}
 
+		$runtime = [];
+		if (static::castFilterFieldAsDecimal($parameters['filter'], $runtime, 'COMPANY.REVENUE'))
+		{
+			$parameters['runtime'] = $parameters['runtime'] ?? [];
+			array_push($parameters['runtime'], ...array_values($runtime));
+		}
+
 		$parameters['filter'] = PrototypeItemFilter::replaceParameters($parameters['filter'], static::getEntityTypeId());
 
 		return $parameters;
@@ -301,6 +308,57 @@ abstract class PrototypeItem extends Main\UserField\Internal\PrototypeItemDataMa
 		);
 	}
 
+	protected static function castFilterFieldAsDecimal(array &$filter, array &$runtime, string $keyToFind): bool
+	{
+		$hasChanges = false;
+		foreach ($filter as $key => $value)
+		{
+			if (is_numeric($key) && is_array($value))
+			{
+				if (static::castFilterFieldAsDecimal($value, $runtime, $keyToFind))
+				{
+					$filter[$key] = $value;
+					$hasChanges = true;
+				}
+			}
+			elseif (str_contains($key, $keyToFind))
+			{
+				$fieldInfo = \CSqlUtil::GetFilterOperation($key);
+				if (in_array($fieldInfo['OPERATION'] ?? '', ['<', '<=', '>', '>=', 'IN', '='], true))
+				{
+					$fieldId = $fieldInfo['FIELD'] ?? '';
+					$fieldIdStart = mb_strpos($key, $fieldId);
+					$operation = '';
+					if ($fieldIdStart > 0)
+					{
+						$operation = mb_substr($key, 0, $fieldIdStart);
+					}
+
+					$runtimeFieldId = str_replace('.', '__', $fieldId); // '__' to get rid of collisions
+					if (!isset($runtime[$runtimeFieldId]))
+					{
+						$runtime[$runtimeFieldId] = static::getCastAsDecimalField($fieldId, $runtimeFieldId);
+					}
+					unset($filter[$key]);
+					$filter[$operation . $runtimeFieldId] = $value;
+					$hasChanges = true;
+				}
+			}
+		}
+
+		return $hasChanges;
+	}
+
+	protected static function getCastAsDecimalField(string $key, string $runtimeKey): ExpressionField
+	{
+		return new ExpressionField(
+			$runtimeKey,
+			"CAST(%s AS DECIMAL(18,2))",
+			[$key],
+			['data_type' => 'float'],
+		);
+	}
+
 	public static function getFieldsContextDataClass(): string
 	{
 		$typeData = static::getType();
@@ -319,7 +377,7 @@ abstract class PrototypeItem extends Main\UserField\Internal\PrototypeItemDataMa
 			return $result;
 		}
 
-		/** @var Item|null $item */
+		/** @var ORM\Objectify\EntityObject|null $item */
 		$item = $event->getParameter('object');
 		if (!$item)
 		{
@@ -502,6 +560,13 @@ abstract class PrototypeItem extends Main\UserField\Internal\PrototypeItemDataMa
 		if($isUpdate)
 		{
 			$oldData = static::getByPrimary($id)->fetch();
+			if ($oldData === false)
+			{
+				$result->addError(new Main\ORM\EntityError('Item was not found'));
+				static::$isCheckUserFields = true;
+
+				return $result;
+			}
 			static::getTemporaryStorage()->saveData($id, $oldData);
 			if (
 				static::$isCheckUserFields

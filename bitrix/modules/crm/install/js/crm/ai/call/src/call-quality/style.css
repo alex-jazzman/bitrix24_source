@@ -57,7 +57,6 @@
 }
 
 .call-quality__call-client-name {
-	text-wrap: nowrap;
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
@@ -87,7 +86,7 @@
 }
 
 .call-quality__call-date {
-	text-wrap: nowrap;
+	white-space: nowrap;
 	color: var(--ui-color-palette-gray-50);
 	font-size: var(--ui-font-size-sm);
 }
@@ -215,7 +214,6 @@
 .call-quality__compliance__info-value {
 	font-size: var(--ui-font-size-2xl);
 	font-weight: var(--ui-font-weight-medium);
-	text-wrap: nowrap;
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
@@ -383,7 +381,6 @@
 	cursor: pointer !important;
 	font-size: 17px;
 	color: #0B66C3;
-	text-wrap: nowrap;
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;

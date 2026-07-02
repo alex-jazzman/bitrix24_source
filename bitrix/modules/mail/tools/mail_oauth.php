@@ -8,12 +8,18 @@ define('NOT_CHECK_PERMISSIONS', true);
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
 
-if (Loader::includeModule('mail'))
+if (Loader::includeModule('mail') && Loader::includeModule('socialservices'))
 {
+	$rawState = (string)($_REQUEST['state'] ?? '');
+	$state = \Bitrix\Socialservices\OAuth\StateService::getInstance()->getPayload($rawState);
 
-	parse_str($_REQUEST['state'], $state);
+	$helper =
+		is_array($state) && isset($state['service'])
+			? Mail\Helper\OAuth::getInstance($state['service'])
+			: null
+	;
 
-	if ($helper = Mail\Helper\OAuth::getInstance($state['service']))
+	if ($helper)
 	{
 		if (isset($_SESSION["MOBILE_OAUTH"]) && $_SESSION["MOBILE_OAUTH"])
 		{

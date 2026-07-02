@@ -6,11 +6,7 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/menu/upload', (requ
 	const { Icon } = require('assets/icons');
 
 	const { Loc } = require('im/messenger/loc');
-
-	const ActionType = {
-		delete: 'delete',
-		rename: 'rename',
-	};
+	const { MenuActionType } = require('im/messenger/controller/dialog/lib/sticker/src/const');
 
 	/**
 	 * @class UploadMenu
@@ -29,21 +25,21 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/menu/upload', (requ
 		}
 
 		/**
-		 * @return {Record<string, (onItemSelected) => Partial<UIMenuActionProps>>}
+		 * @return {Record<string, (onItemSelected) => Partial<PopupMenuActionItem>>}
 		 */
 		get #actionCollection()
 		{
 			return {
-				[ActionType.delete]: (onItemSelected) => ({
-					id: 'delete',
+				[MenuActionType.delete]: (onItemSelected) => ({
+					id: MenuActionType.delete,
 					testId: 'delete',
 					title: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_STICKER_MENU_STICKER_DELETE_ACTION'),
 					icon: Icon.TRASHCAN,
 					isDestructive: true,
 					onItemSelected,
 				}),
-				[ActionType.rename]: (onItemSelected) => ({
-					id: 'rename',
+				[MenuActionType.rename]: (onItemSelected) => ({
+					id: MenuActionType.rename,
 					testId: 'rename',
 					title: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_STICKER_MENU_PACK_RENAME_ACTION'),
 					icon: Icon.EDIT,
@@ -61,7 +57,7 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/menu/upload', (requ
 		}
 
 		/**
-		 * @return {Array<UIMenuActionProps>}
+		 * @return {Array<PopupMenuActionItem>}
 		 */
 		#getActions()
 		{
@@ -71,5 +67,5 @@ jn.define('im/messenger/controller/dialog/lib/sticker/src/ui/menu/upload', (requ
 		}
 	}
 
-	module.exports = { UploadMenu, ActionType };
+	module.exports = { UploadMenu };
 });

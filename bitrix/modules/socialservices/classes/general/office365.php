@@ -1,4 +1,8 @@
-<?
+<?php
+
+use Bitrix\Socialservices\OAuth\OAuthErrorCode;
+use Bitrix\Main\Web\Uri;
+
 IncludeModuleLangFile(__FILE__);
 
 class CSocServOffice365OAuth extends CSocServAuth
@@ -21,6 +25,8 @@ class CSocServOffice365OAuth extends CSocServAuth
 			$this->entityOAuth->setUser($this->userId);
 		}
 
+		$this->entityOAuth->setLogger($this->logger);
+
 		return $this->entityOAuth;
 	}
 
@@ -38,7 +44,7 @@ class CSocServOffice365OAuth extends CSocServAuth
 			array("office365_tenant", GetMessage("socserv_office365_tenant"), "", Array("text", 40)),
 			array("note"=>GetMessage("socserv_office365_form_note", array(
 				'#URL#'	=>	$this->getEntityOAuth()->getRedirectUri(),
-				'#MAIL_URL#'	=> \CHttp::urn2uri('/bitrix/tools/mail_oauth.php')))),
+				'#MAIL_URL#'	=> (string)(new Uri('/bitrix/tools/mail_oauth.php'))->toAbsolute()))),
 		);
 	}
 
@@ -65,40 +71,29 @@ class CSocServOffice365OAuth extends CSocServAuth
 
 	public function getUrl($location = 'opener', $addScope = null, $arParams = array())
 	{
-		global $APPLICATION;
-
-		$removeParams = [
-			'logout',
-			'auth_service_error',
-			'auth_service_id',
-			'backurl',
-			'serviceName',
-			'hitHash',
+		$stateFields = [
+			'site_id' => SITE_ID,
+			'check_key' => \CSocServAuthManager::getUniqueKey(),
+			'redirect_url' => $this->getRedirectUrl($arParams, ['serviceName', 'hitHash']),
+			'mode' => $location,
 		];
+		$state = \Bitrix\Socialservices\OAuth\StateService::getInstance()->createState($stateFields);
 
-		if(IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME'))
+		if ($this->isCloudPortal())
 		{
-			$redirect_uri = \CSocServOffice365OAuth::getControllerUrl()."/redirect.php";
-			$state = $this->getEntityOAuth()->getRedirectUri()."?state=";
-			$backurl = urlencode($GLOBALS["APPLICATION"]->GetCurPageParam('check_key='.\CSocServAuthManager::getUniqueKey(), $removeParams))
-				.(isset($arParams['BACKURL'])
-					? '&redirect_url='.urlencode($arParams['BACKURL'])
-					: '')
-				.'&mode='.$location;
-			$state .= urlencode(urlencode("backurl=".$backurl));
+			$portalRedirectUri = new Uri(
+				$this->getEntityOAuth()->getRedirectUri()
+			);
+			$portalRedirectUri->addParams([
+				'state' => $state,
+			]);
+
+			$state = (string)$portalRedirectUri;
+			$redirect_uri = \CSocServOffice365OAuth::getControllerUrl() . '/redirect.php';
 		}
 		else
 		{
-			$backurl = $APPLICATION->GetCurPageParam(
-				'check_key='.\CSocServAuthManager::getUniqueKey(),
-				$removeParams
-			);
-
 			$redirect_uri = $this->getEntityOAuth()->getRedirectUri();
-			$state = 'site_id='.SITE_ID.'&backurl='.urlencode($backurl)
-				.(isset($arParams['BACKURL'])
-					? '&redirect_url='.urlencode($arParams['BACKURL'])
-					: '').'&mode='.$location;
 		}
 
 		return $this->getEntityOAuth()->GetAuthUrl($redirect_uri, $state);
@@ -203,8 +198,14 @@ class CSocServOffice365OAuth extends CSocServAuth
 
 		$bProcessState = false;
 		$bSuccess = SOCSERV_AUTHORISATION_ERROR;
+		$this->logger->info('oauth.auth.start');
 
-		if(!empty($_REQUEST["code"]) && CSocServAuthManager::CheckUniqueKey())
+		if (empty($_REQUEST['code']))
+		{
+			$this->logger->error('oauth.request.invalid_code');
+			$this->sendOauthError(OAuthErrorCode::MissingCode);
+		}
+		elseif (CSocServAuthManager::CheckUniqueKey())
 		{
 			$this->getEntityOAuth()->setCode($_REQUEST["code"]);
 
@@ -228,99 +229,54 @@ class CSocServOffice365OAuth extends CSocServAuth
 					{
 						$arFields = $this->prepareUser($office365User);
 						$bSuccess = $this->AuthorizeUser($arFields);
-
-						if ($bSuccess !== true)
-						{
-							$this->log(static::ID, 'Authorize user error: ' . $bSuccess);
-						}
 					}
 					else
 					{
-						$this->log(static::ID, 'Invalid tenant');
+						$this->logger->error('oauth.user.fetch_failed', [
+							'reason' => 'tenant_mismatch',
+						]);
 					}
 				}
 				else
 				{
-					$this->log(
-						static::ID,
-						'Not found current user',
-						is_array($office365User) ? $office365User : null,
-					);
+					$this->logger->error('oauth.user.fetch_failed', [
+						'reason' => 'missing_user_id',
+					]);
 				}
 			}
 			else
 			{
-				$this->log(static::ID, 'Cannot load access token');
+				$this->logger->error('oauth.token.exchange_failed', [
+					'reason' => 'get_access_token_failed',
+				]);
 			}
 		}
+		else
+		{
+			$this->logger->error('oauth.request.invalid_check_key', [
+				'reason' => 'check_key_validation_failed',
+			]);
+			$this->sendOauthError(OAuthErrorCode::InvalidCheckKey);
+		}
+
+		$this->logger->info('oauth.auth.finish', [
+			'success' => ($bSuccess === true),
+			'auth_result' => $bSuccess,
+		]);
 
 		if(!$bProcessState)
 		{
 			unset($_REQUEST["state"]);
 		}
 
-		$url = ($APPLICATION->GetCurDir() === "/login/") ? "" : $APPLICATION->GetCurDir();
-		$aRemove = ["logout", "auth_service_error", "auth_service_id", "code", "error_reason", "error", "error_description", "check_key", "current_fieldset"];
-
 		$mode = 'opener';
-		$addParams = true;
-		if(isset($_REQUEST["state"]))
+		$arState = $this->getState();
+		if(isset($arState['mode']))
 		{
-			$arState = array();
-			parse_str($_REQUEST["state"], $arState);
-			if(isset($arState['backurl']) || isset($arState['redirect_url']))
-			{
-				$url = !empty($arState['redirect_url']) ? $arState['redirect_url'] : $arState['backurl'];
-				if(!str_starts_with($url, "#"))
-				{
-					$parseUrl = parse_url($url);
-					$urlPath = $parseUrl["path"];
-					$arUrlQuery = explode('&', $parseUrl["query"]);
-
-					foreach($arUrlQuery as $key => $value)
-					{
-						foreach($aRemove as $param)
-						{
-							if(str_starts_with($value, $param . "="))
-							{
-								unset($arUrlQuery[$key]);
-								break;
-							}
-						}
-					}
-
-					$url = (!empty($arUrlQuery)) ? $urlPath.'?'.implode("&", $arUrlQuery) : $urlPath;
-				}
-				else
-				{
-					$addParams = false;
-				}
-			}
-
-			if(isset($arState['mode']))
-			{
-				$mode = $arState['mode'];
-			}
+			$mode = $arState['mode'];
 		}
-
-		if($bSuccess === SOCSERV_REGISTRATION_DENY)
-		{
-			$url = (preg_match("/\?/", $url)) ? $url.'&' : $url.'?';
-			$url .= 'auth_service_id='.self::ID.'&auth_service_error='.SOCSERV_REGISTRATION_DENY;
-		}
-		elseif($bSuccess !== true)
-		{
-			$url = (isset($parseUrl))
-				? $urlPath.'?auth_service_id='.self::ID.'&auth_service_error='.$bSuccess
-				: $APPLICATION->GetCurPageParam(('auth_service_id='.self::ID.'&auth_service_error='.$bSuccess), $aRemove);
-		}
-
-		if($addParams && CModule::IncludeModule("socialnetwork") && !str_contains($url, "current_fieldset="))
-		{
-			$url = (preg_match("/\?/", $url)) ? $url . "&current_fieldset=SOCSERV" : $url . "?current_fieldset=SOCSERV";
-		}
-
-		$url = CUtil::JSEscape($url);
+		$url = $this->getRedirectUriAfterAuthorize($bSuccess, self::ID);
+		$addParams = !str_starts_with($url, '#');
 
 		if ($bSuccess && $mode === self::MOBILE_MODE)
 		{
@@ -422,6 +378,10 @@ class COffice365OAuthInterface extends CSocServOAuthTransport
 
 		if($this->code === false)
 		{
+			$this->logger->error('oauth.token.exchange_failed', [
+				'reason' => 'empty_code',
+			]);
+
 			return false;
 		}
 
@@ -450,7 +410,14 @@ class COffice365OAuthInterface extends CSocServOAuthTransport
 
 		$result = $httpClient->post(static::TOKEN_URL, $requestData);
 
-		$arResult = \Bitrix\Main\Web\Json::decode($result);
+		try
+		{
+			$arResult = \Bitrix\Main\Web\Json::decode($result);
+		}
+		catch (\Bitrix\Main\ArgumentException $e)
+		{
+			$arResult = [];
+		}
 
 		if(isset($arResult["access_token"]) && $arResult["access_token"] <> '')
 		{
@@ -463,6 +430,11 @@ class COffice365OAuthInterface extends CSocServOAuthTransport
 			$_SESSION["OAUTH_DATA"] = array("OATOKEN" => $this->access_token);
 			return true;
 		}
+
+		$this->logger->error('oauth.token.exchange_failed', [
+			'reason' => 'token_not_found_in_response',
+		]);
+
 		return false;
 	}
 
@@ -515,20 +487,44 @@ class COffice365OAuthInterface extends CSocServOAuthTransport
 	public function GetCurrentUser()
 	{
 		if($this->access_token === false)
+		{
+			$this->logger->error('oauth.user.fetch_failed', [
+				'reason' => 'empty_access_token',
+			]);
+
 			return false;
+		}
 
 		$httpClient = new \Bitrix\Main\Web\HttpClient();
 		$httpClient->setHeader("Authorization", "Bearer ". $this->access_token);
 
 		$result = $httpClient->get($this->resource.static::VERSION.static::CONTACTS_URL);
-		$result = \Bitrix\Main\Web\Json::decode($result);
+		try
+		{
+			$result = \Bitrix\Main\Web\Json::decode($result);
+		}
+		catch (\Bitrix\Main\ArgumentException $e)
+		{
+			$this->logger->error('oauth.user.fetch_failed', [
+				'reason' => 'invalid_response',
+			]);
+
+			return false;
+		}
 
 		if(is_array($result))
 		{
 			$result["access_token"] = $this->access_token;
 			$result["refresh_token"] = $this->refresh_token;
 			$result["expires_in"] = $this->accessTokenExpires;
+
+			return $result;
 		}
+
+		$this->logger->error('oauth.user.fetch_failed', [
+			'reason' => 'invalid_response_payload',
+		]);
+
 		return $result;
 	}
 
@@ -547,7 +543,7 @@ class COffice365OAuthInterface extends CSocServOAuthTransport
 
 	public function getRedirectUri()
 	{
-		return \CHTTP::URN2URI(static::REDIRECT_URI);
+		return (string)(new Uri(static::REDIRECT_URI))->toAbsolute();
 	}
 }
 

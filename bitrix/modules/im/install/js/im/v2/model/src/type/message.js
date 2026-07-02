@@ -1,7 +1,6 @@
-import { MessageComponent, ChatType } from 'im.v2.const';
+import { type JsonObject } from 'main.core';
 
-import type { JsonObject } from 'main.core';
-import type { AttachConfig, KeyboardButtonConfig } from 'im.v2.const';
+import { MessageComponent, type ChatTypeItem, type AttachConfig, type KeyboardButtonConfig } from 'im.v2.const';
 
 export type Message = {
 	id: number | string,
@@ -20,7 +19,7 @@ export type Message = {
 		userId: number,
 		id: string,
 		chatTitle: string | null,
-		chatType: $Values<typeof ChatType>,
+		chatType: ChatTypeItem,
 	},
 	files: number[],
 	attach: AttachConfig[] | boolean | string,

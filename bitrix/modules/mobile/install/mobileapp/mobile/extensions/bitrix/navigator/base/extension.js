@@ -22,6 +22,11 @@ jn.define('navigator/base', (require, exports, module) => {
 			return this.navigator.isActiveTab();
 		}
 
+		isVisible()
+		{
+			return this.navigator.isVisible();
+		}
+
 		makeTabActive()
 		{
 			return new Promise((resolve) => {

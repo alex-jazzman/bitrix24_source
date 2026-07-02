@@ -1,6 +1,11 @@
-<?
+<?php
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/blog/include.php");
+
+/**
+ * @global CMain $APPLICATION
+ * @global CUserTypeManager $USER_FIELD_MANAGER
+ */
 
 $blogModulePermissions = $APPLICATION->GetGroupRight("blog");
 if ($blogModulePermissions < "R")
@@ -225,15 +230,19 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_aft
 ?>
 <form name="find_form" method="GET" action="<?echo $APPLICATION->GetCurPage()?>?">
 <?
+$findFields = array(
+	GetMessage("BLB_FILTER_ACTIVE"),
+	GetMessage("BLB_FILTER_URL"),
+	GetMessage("BLB_FILTER_GROUP_ID"),
+	GetMessage("BLB_FILTER_OWNER"),
+	"ID"
+);
+
+$USER_FIELD_MANAGER->AddFindFields("BLOG_BLOG", $findFields);
+
 $oFilter = new CAdminFilter(
 	$sTableID."_filter",
-	array(
-		GetMessage("BLB_FILTER_ACTIVE"),
-		GetMessage("BLB_FILTER_URL"),
-		GetMessage("BLB_FILTER_GROUP_ID"),
-		GetMessage("BLB_FILTER_OWNER"),
-		"ID"
-	)
+	$findFields
 );
 
 $oFilter->Begin();

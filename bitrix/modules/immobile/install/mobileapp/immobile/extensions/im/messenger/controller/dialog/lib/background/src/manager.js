@@ -35,6 +35,22 @@ jn.define('im/messenger/controller/dialog/lib/background/manager', (require, exp
 		}
 
 		/**
+		 * @param {string} chatType
+		 * @return {BackgroundConfiguration}
+		 */
+		static getOptimisticConfiguration(chatType)
+		{
+			if (!Feature.isDialogBackgroundAvailable || !Feature.isBitrixGptV2Available)
+			{
+				return {};
+			}
+
+			const themeId = Theme.getInstance().getId();
+
+			return BackgroundConfiguration[themeId][chatType] ?? {};
+		}
+
+		/**
 		 * @return {BackgroundConfiguration}
 		 */
 		getConfiguration()
@@ -44,10 +60,15 @@ jn.define('im/messenger/controller/dialog/lib/background/manager', (require, exp
 				return {};
 			}
 
-			const isAiAssistant = DialogHelper.createByDialogId(this.dialogId)?.isAiAssistant;
-			if (isAiAssistant)
+			const dialogHelper = DialogHelper.createByDialogId(this.dialogId);
+			if (dialogHelper?.isAiAssistant)
 			{
 				return BackgroundConfiguration[this.getThemeId()][DialogBackgroundId.aiAssistant];
+			}
+
+			if (dialogHelper?.isCopilot)
+			{
+				return BackgroundConfiguration[this.getThemeId()][DialogBackgroundId.copilot];
 			}
 
 			const dialogBackgroundId = this.store.getters['dialoguesModel/getBackgroundId'](this.dialogId);
@@ -74,6 +95,11 @@ jn.define('im/messenger/controller/dialog/lib/background/manager', (require, exp
 			if (!dialogHelper)
 			{
 				return false;
+			}
+
+			if (Feature.isBitrixGptV2Available)
+			{
+				return !dialogHelper.isCollab;
 			}
 
 			return !(dialogHelper.isCollab || dialogHelper.isCopilot);

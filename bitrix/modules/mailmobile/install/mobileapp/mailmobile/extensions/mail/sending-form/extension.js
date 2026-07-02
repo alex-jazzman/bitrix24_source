@@ -518,11 +518,10 @@ jn.define('mail/sending-form', (require, exports, module) => {
 					},
 					subject: {
 						testId: 'message-sending-form-subject-field',
-						requiredErrorMessage: Loc.getMessage('MESSAGE_SEND_FIELD_SUBJECT_ERROR'),
 						ref: (ref) => {
 							this.fieldRefs.subject = ref;
 						},
-						required: true,
+						required: false,
 						isComposite: false,
 						type: TextAreaType,
 						title: Loc.getMessage('MESSAGE_SEND_FIELD_SUBJECT'),

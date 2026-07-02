@@ -5,7 +5,7 @@ import { useChartStore } from 'humanresources.company-structure.chart-store';
 import { ChatListActionMenu, MenuActions } from 'humanresources.company-structure.org-chart';
 import { ConfirmationPopup, RouteActionMenu } from 'humanresources.company-structure.structure-components';
 import { ChatTypes, EntityTypes } from 'humanresources.company-structure.utils';
-import { ActionButtonDictionary, ActionButtonDictionaryItem } from './dictionaries/action-button-dictionary';
+import { ActionButtonDictionary, type ActionButtonDictionaryItem } from './dictionaries/action-button-dictionary';
 import { DepartmentContentActions } from '../../actions';
 import { DepartmentAPI } from '../../api';
 
@@ -120,6 +120,7 @@ export const CommunicationListItemActionButton = {
 						await DepartmentAPI.saveChannel(this.nodeId, [], [this.communication.id]);
 						break;
 					case ChatTypes.collab:
+					case ChatTypes.project:
 						await DepartmentAPI.saveCollab(this.nodeId, [], [this.communication.id]);
 						break;
 					default:

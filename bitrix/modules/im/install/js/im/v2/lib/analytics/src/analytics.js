@@ -42,6 +42,7 @@ import { FormatToolbar } from './classes/format-toolbar';
 import { RecentSearch } from './classes/recent-search';
 import { Mention } from './classes/mention';
 import { TaskComments } from './classes/task-comments';
+import { RecentHeaderMenu } from './classes/recent-header-menu';
 
 import type { ImModelChat } from 'im.v2.model';
 
@@ -86,6 +87,7 @@ export class Analytics
 	recentSearch: RecentSearch = new RecentSearch();
 	mention: Mention = new Mention();
 	taskComments: TaskComments = new TaskComments();
+	recentHeaderMenu: RecentHeaderMenu = new RecentHeaderMenu();
 
 	static #instance: Analytics;
 

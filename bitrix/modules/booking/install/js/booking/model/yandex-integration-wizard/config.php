@@ -9,10 +9,9 @@ return [
 	'js' => 'dist/yandex-integration-wizard.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'ui.vue3.vuex',
-		'booking.provider.service.yandex-integration-wizard-service',
 		'booking.const',
-		'booking.model.resources',
+		'booking.provider.service.yandex-integration-wizard-service',
+		'ui.vue3.vuex',
 	],
 	'skip_core' => true,
 ];

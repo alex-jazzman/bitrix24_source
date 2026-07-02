@@ -95,6 +95,38 @@ jn.define('im/messenger/provider/rest/recent', (require, exports, module) => {
 			return BX.rest.callMethod(RestMethod.imV2RecentCollabTail, methodParams);
 		}
 
+		getNestedList(options = {})
+		{
+			const methodParams = {};
+
+			if (Type.isNumber(options.limit))
+			{
+				methodParams.limit = options.limit;
+			}
+
+			if (Type.isPlainObject(options.filter))
+			{
+				methodParams.filter = {};
+
+				if (Type.isNumber(options.filter.lastMessageDate) || Type.isStringFilled(options.filter.lastMessageDate))
+				{
+					methodParams.filter.lastMessageDate = options.filter.lastMessageDate;
+				}
+
+				if (Type.isNumber(options.filter.parentId))
+				{
+					methodParams.filter.parentId = options.filter.parentId;
+				}
+
+				if (Type.isStringFilled(options.filter.recentSection))
+				{
+					methodParams.filter.recentSection = options.filter.recentSection;
+				}
+			}
+
+			return runAction(RestMethod.imV2RecentTail, { data: methodParams });
+		}
+
 		getExternalChatList(options = {})
 		{
 			const methodParams = {};

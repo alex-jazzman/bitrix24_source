@@ -1,8 +1,8 @@
-<?
+<?php
 /**
- * @global \CUser $USER
- * @global \CMain $APPLICATION
- * @global \CDatabase $DB
+ * @global CUser $USER
+ * @global CMain $APPLICATION
+ * @global CDatabase $DB
  */
 
 use Bitrix\Main\Localization\Loc;
@@ -23,14 +23,14 @@ require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_adm
     background: #fff;
 ">
 
-<h2><?echo Loc::getMessage("main_copyright_license")?></h2>
+<h2><?= Loc::getMessage("main_copyright_license")?></h2>
 
 	<div style="
 	    padding: 20px;
 		border: 1px solid #3bc8f5;
 		border-radius: 4px;
 	">
-	<?
+	<?php
 	$bitrixCopyright = Copyright::getBitrixCopyright();
 
 	echo Loc::getMessage("main_copyright_bitrix_license", [
@@ -40,17 +40,17 @@ require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_adm
 	])?>
 	</div>
 
-<h2><?echo Loc::getMessage("main_copyright_3d_party")?></h2>
+<h2><?= Loc::getMessage("main_copyright_3d_party")?></h2>
 
 <table class="list-table">
 	<tr class="heading">
-		<td><?echo Loc::getMessage("main_copyright_program")?></td>
-		<td><?echo Loc::getMessage("main_copyright_owner")?></td>
-		<td><?echo Loc::getMessage("main_copyright_program_license")?></td>
+		<td><?= Loc::getMessage("main_copyright_program")?></td>
+		<td><?= Loc::getMessage("main_copyright_owner")?></td>
+		<td><?= Loc::getMessage("main_copyright_program_license")?></td>
 	</tr>
-<?foreach(Copyright::getThirdPartySoftware() as $i => $software):?>
+<?php foreach(Copyright::getThirdPartySoftware() as $i => $software):?>
 	<tr>
-		<td><?
+		<td><?php
 			if($software->getProductUrl())
 			{
 				echo '<a href="'.HtmlFilter::encode($software->getProductUrl()).'" target="_blank">'.HtmlFilter::encode($software->getProductName()).'</a>';
@@ -60,7 +60,7 @@ require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_adm
 				echo HtmlFilter::encode($software->getProductName());
 			}
 			?></td>
-		<td><?
+		<td><?php
 			if($software->getCopyrightUrl())
 			{
 				echo '<a href="'.HtmlFilter::encode($software->getCopyrightUrl()).'" target="_blank">'.HtmlFilter::encode($software->getCopyright()).'</a>';
@@ -70,7 +70,7 @@ require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_adm
 				echo HtmlFilter::encode($software->getCopyright());
 			}
 			?></td>
-		<td><?
+		<td><?php
 			if($software->getLicenceUrl())
 			{
 				echo '<a href="'.HtmlFilter::encode($software->getLicenceUrl()).'" target="_blank">'.HtmlFilter::encode($software->getLicence()).'</a>';
@@ -89,9 +89,9 @@ require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_adm
 			}
 			?></td>
 	</tr>
-<?endforeach;?>
+<?php endforeach;?>
 </table>
 
 </div>
 
-<?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");
+<?php require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");

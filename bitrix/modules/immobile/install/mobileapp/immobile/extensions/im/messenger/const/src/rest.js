@@ -39,7 +39,19 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 
 		imV2RecentChannelTail: 'im.v2.Recent.Channel.tail',
 		imV2RecentCollabTail: 'im.v2.Recent.Collab.tail',
+		imV2RecentTail: 'im.v2.Recent.tail',
 		imV2RecentExternalChatTail: 'im.v2.Recent.ExternalChat.tail',
+
+		imV2FolderList: 'im.v2.Folder.list',
+		imV2FolderGet: 'im.v2.Folder.get',
+		imV2FolderAdd: 'im.v2.Folder.add',
+		imV2FolderUpdate: 'im.v2.Folder.update',
+		imV2FolderDelete: 'im.v2.Folder.delete',
+		imV2FolderSort: 'im.v2.Folder.sort',
+		imV2FolderAddChats: 'im.v2.Folder.addChats',
+		imV2FolderDeleteChats: 'im.v2.Folder.deleteChats',
+		imV2FolderSetChatFolders: 'im.v2.Folder.setChatFolders',
+		imV2FolderRecentTail: 'im.v2.Folder.Recent.tail',
 
 		imV2RecentChannelExtendPullWatch: 'im.v2.Recent.Channel.extendPullWatch',
 
@@ -126,6 +138,10 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 
 		imV2StickerRecentDelete: 'im.v2.Sticker.Recent.delete',
 		imV2StickerRecentDeleteAll: 'im.v2.Sticker.Recent.deleteAll',
+
+		imV2ChatSharingLinkGetIndividual: 'im.v2.Chat.SharingLink.getIndividual',
+		imV2ChatSharingLinkRegenerateIndividual: 'im.v2.Chat.SharingLink.regenerateIndividual',
+		imV2ChatJoinByCode: 'im.v2.Chat.joinByCode',
 
 		imDialogGet: 'im.dialog.get',
 		imDialogMessagesGet: 'im.dialog.messages.get',

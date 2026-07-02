@@ -11,6 +11,7 @@ jn.define('im/messenger/lib/di/service-locator', (require, exports, module) => {
 	{
 		constructor()
 		{
+			/** @type {Map} */
 			this.services = new Map();
 		}
 
@@ -41,6 +42,16 @@ jn.define('im/messenger/lib/di/service-locator', (require, exports, module) => {
 			this.services.delete(serviceName);
 
 			return this;
+		}
+
+		clear()
+		{
+			this.services.clear();
+		}
+
+		forEach(callback)
+		{
+			this.services.forEach((service, key) => callback(service, key));
 		}
 	}
 

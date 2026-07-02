@@ -9,10 +9,10 @@ return [
 	'js' => 'dist/trial-banner.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'ui.icon-set.api.vue',
-		'ui.lottie',
 		'booking.component.button',
 		'booking.component.popup',
+		'ui.icon-set.api.vue',
+		'ui.lottie',
 	],
 	'skip_core' => true,
 ];

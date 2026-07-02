@@ -44,6 +44,7 @@
 	right: -20px;
 }
 
+/* @chef-ignore */
 .bx-im-content-notification-filter-search__icons-block:has(.bx-im-content-notification-filter-search__icon-delete.--hidden) .bx-im-content-notification-filter-search__icon-search {
 	right: -20px;
 }

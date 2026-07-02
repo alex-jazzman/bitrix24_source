@@ -7,7 +7,10 @@ use Bitrix\Main\UserField\Types\DateTimeType;
 use Bitrix\Main\Page\Asset;
 
 /**
+ * @global CDatabase $DB
  * @var $component DateUfComponent
+ * @var array $arResult
+ * @var array $arParams
  */
 
 $component = $this->getComponent();

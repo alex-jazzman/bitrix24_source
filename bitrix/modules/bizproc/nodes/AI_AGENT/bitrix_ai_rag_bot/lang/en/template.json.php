@@ -7,12 +7,12 @@ After you upload your documents, the chat with this agent will become available 
 $MESS["BIZPROC_AI_AGENT_RAGCHATBOT_DESCRIPTION_2"] = "Upload documents the agent will need when responding to queries. These document will be added to the database.";
 $MESS["BIZPROC_AI_AGENT_RAGCHATBOT_MESSAGE_1"] = "Hello! I'm your knowledge base assistant. Just ask me anything.";
 $MESS["BIZPROC_AI_AGENT_RAGCHATBOT_NAME_1"] = "Knowledge base search agent";
-$MESS["BIZPROC_AI_AGENT_RAGCHATBOT_NAME_2"] = "Chat bot name:";
-$MESS["BIZPROC_AI_AGENT_RAGCHATBOT_NAME_3"] = "Show this agent to users:";
+$MESS["BIZPROC_AI_AGENT_RAGCHATBOT_NAME_2"] = "Chat bot name";
+$MESS["BIZPROC_AI_AGENT_RAGCHATBOT_NAME_3"] = "Show this agent to users";
 $MESS["BIZPROC_AI_AGENT_RAGCHATBOT_NAME_4"] = "Agent knowledge base";
 $MESS["BIZPROC_AI_AGENT_RAGCHATBOT_NAME_5"] = "Context and restrictions";
 $MESS["BIZPROC_AI_AGENT_RAGCHATBOT_NAME_6"] = "Communication style";
-$MESS["BIZPROC_AI_AGENT_RAGCHATBOT_NAME_7"] = "Chat bot avatar image";
+$MESS["BIZPROC_AI_AGENT_RAGCHATBOT_NAME_7"] = "Chat bot avatar";
 $MESS["BIZPROC_AI_AGENT_RAGCHATBOT_SYSTEMPROMPT_1"] = "## Role and Main Objective
 
 You are a **friendly and efficient knowledge base assistant**.
@@ -52,14 +52,14 @@ $MESS["BIZPROC_AI_AGENT_RAGCHATBOT_TEXT_2"] = "Advanced settings";
 $MESS["BIZPROC_AI_AGENT_RAGCHATBOT_TEXT_3"] = "These parameters control the agent's behavior and logic.";
 $MESS["BIZPROC_AI_AGENT_RAGCHATBOT_TEXT_4"] = "Prompts";
 $MESS["BIZPROC_AI_AGENT_RAGCHATBOT_TEXT_5"] = "Describe the desired behavior, tone, expertise and attitude you expect of the agent.";
-$MESS["BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_1"] = "Node workflow";
+$MESS["BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_1"] = "Node-based workflow";
 $MESS["BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_2"] = "AI agent";
-$MESS["BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_3"] = "Edit workflow template parameters";
-$MESS["BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_4"] = "Save chat bot settings";
-$MESS["BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_5"] = "Send message as chat-bot";
-$MESS["BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_6"] = "Manual start";
+$MESS["BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_3"] = "Get user data";
+$MESS["BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_4"] = "Chat bot settings";
+$MESS["BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_5"] = "Send a chat bot message";
+$MESS["BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_6"] = "Manual AI agent run";
 $MESS["BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_7"] = "Chat bot received a message";
-$MESS["BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_8"] = "RAG database";
+$MESS["BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_8"] = "RAG";
 $MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_CHATNAME_1"] = "Extra information required for agent \"{=Constant:SetupTemplateActivity_62HyznTvdU}\"";
 $MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_DESCRIPTION_1"] = "Chat to receive requests for information for knowledge base.";
 $MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_MESSAGE_1"] = "Hello! I was asked this question:

@@ -11,6 +11,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  icon: ui_iconSet_api_vue.Outline.STAGES,
 	  idsField: 'ganttTaskIds',
 	  containsField: 'containsGanttLinks',
+	  showCompletedField: 'showCompletedGantt',
 	  getTitle: () => main_core.Loc.getMessage('TASKS_V2_GANTT_TITLE_V2'),
 	  getChipTitle: () => main_core.Loc.getMessage('TASKS_V2_GANTT_TITLE_CHIP_V2'),
 	  getCountLoc: () => 'TASKS_V2_GANTT_TITLE_COUNT_V2',
@@ -42,7 +43,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    }
 	  },
 	  template: `
-		<RelationTasks :meta="ganttMeta" :fields="new Set(['gantt'])" @add="handleAdd"/>
+		<RelationTasks
+			:meta="ganttMeta"
+			:fields="new Set(['gantt'])"
+			:shouldShowSubTasksOption="false"
+			@add="handleAdd"
+		/>
 		<GanttPopup v-if="bindElement" :bindElement @close="bindElement = null"/>
 	`
 	};

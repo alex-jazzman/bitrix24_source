@@ -1,7 +1,7 @@
 import { ajax, clone, Loc, Type } from 'main.core';
 import Fasten from './animations/fasten';
 import CompatibleItem from './items/compatible-item';
-import Stream from './stream';
+import type Stream from './stream';
 
 declare type PullActionProcessorMessage = {
 	action: string,

@@ -1,43 +1,39 @@
 /**
- * @module im/messenger/controller/messenger-header/controller
+ * @module im/messenger/controller/messenger-header/src/controller
  */
-jn.define('im/messenger/controller/messenger-header/controller', (require, exports, module) => {
-	const { HeaderTitleController } = require('im/messenger/controller/messenger-header/title-controller');
-	const { HeaderButtonsController } = require('im/messenger/controller/messenger-header/buttons-controller');
-
+jn.define('im/messenger/controller/messenger-header/src/controller', (require, exports, module) => {
 	/**
 	 * @class MessengerHeaderController
+	 *
+	 * Controls the header (title + right buttons) for a single navigation widget.
+	 * Created by HeaderConfigurator.
 	 */
 	class MessengerHeaderController
 	{
-		static #instance;
+		/**
+		 * @param {HeaderTitleController} titleController
+		 * @param {HeaderButtonsController} buttonsController
+		 */
+		constructor(titleController, buttonsController)
+		{
+			/** @private */
+			this.titleController = titleController;
+			/** @private */
+			this.buttonsController = buttonsController;
+		}
 
 		/**
-		 * @return {MessengerHeaderController}
+		 * @return {void}
 		 */
-		static getInstance()
-		{
-			if (!this.#instance)
-			{
-				this.#instance = new this(window.tabs);
-			}
-
-			return this.#instance;
-		}
-
-		constructor(widget)
-		{
-			/** @private */
-			this.titleController = new HeaderTitleController(widget);
-			/** @private */
-			this.buttonsController = new HeaderButtonsController(widget);
-		}
-
 		redrawTitleIfNeeded()
 		{
 			this.titleController.redrawTitleIfNeeded();
 		}
 
+		/**
+		 * @param {string} tabId
+		 * @return {void}
+		 */
 		redrawRightButtonsIfNeeded(tabId)
 		{
 			this.buttonsController.redrawRightButtonsIfNeeded(tabId);

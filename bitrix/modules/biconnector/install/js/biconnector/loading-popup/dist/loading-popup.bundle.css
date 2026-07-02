@@ -11,20 +11,15 @@
 .biconnector-loading-popup-spinner {
 	width: 40px;
 	height: 40px;
-	-webkit-animation: biconnector-loading-popup-spin 1.3s linear infinite;
-	        animation: biconnector-loading-popup-spin 1.3s linear infinite;
+	animation: biconnector-loading-popup-spin 1.3s linear infinite;
 }
 
 .biconnector-loading-popup-spinner-wrapper {
 	margin-bottom: 20px;
 }
 
-@-webkit-keyframes biconnector-loading-popup-spin {
-	0% { -webkit-transform: rotate(0deg); transform: rotate(0deg); }
-	100% { -webkit-transform: rotate(360deg); transform: rotate(360deg); }
+@keyframes biconnector-loading-popup-spin {
+	0% { transform: rotate(0deg); }
+	100% { transform: rotate(360deg); }
 }
 
-@keyframes biconnector-loading-popup-spin {
-	0% { -webkit-transform: rotate(0deg); transform: rotate(0deg); }
-	100% { -webkit-transform: rotate(360deg); transform: rotate(360deg); }
-}

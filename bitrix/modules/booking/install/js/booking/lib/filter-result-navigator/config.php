@@ -8,11 +8,11 @@ return [
 	'css' => 'dist/filter-result-navigator.bundle.css',
 	'js' => 'dist/filter-result-navigator.bundle.js',
 	'rel' => [
-		'main.core',
-		'booking.core',
 		'booking.const',
+		'booking.core',
 		'booking.lib.remove-resource',
 		'booking.provider.service.calendar-service',
+		'main.core',
 	],
 	'skip_core' => false,
 ];

@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Main\Web\Uri;
+
 define("STOP_STATISTICS", true);
 define("BX_SECURITY_SHOW_MESSAGE", true);
 
@@ -32,7 +34,7 @@ if($clientId == '' || $clientSecret == '' || $portalURI == '')
 
 $needAuthorize = false;
 $accessToken = '';
-$redirectURI = \CHTTP::URN2URI('/bitrix/tools/oauth/bitrix24.php');
+$redirectURI = (string)(new Uri('/bitrix/tools/oauth/bitrix24.php'))->toAbsolute();
 $savedPortalURI = CUserOptions::GetOption('socialservices', 'bitrix24_task_planer_gadget_portal', '');
 $requestCode = CUserOptions::GetOption('socialservices', 'bitrix24_task_planer_gadget_code', '');
 

@@ -2,6 +2,7 @@
  * @module im/messenger/lib/element/dialog/message/date-separator
  */
 jn.define('im/messenger/lib/element/dialog/message/date-separator', (require, exports, module) => {
+	const { Color } = require('tokens');
 	const {
 		MessageAlign,
 		MessageTextAlign,
@@ -27,8 +28,8 @@ jn.define('im/messenger/lib/element/dialog/message/date-separator', (require, ex
 			this.setCanBeChecked(false);
 			this.setMessageAlign(MessageAlign.center);
 			this.setTextAlign(MessageTextAlign.center);
-			this.setFontColor('#FFFFFF');
-			this.setBackgroundColor('#525C6966');
+			this.setFontColor(Color.baseWhiteFixed.toHex());
+			this.setBackgroundColor(Color.chatOverallTech.toHex());
 			this.setMarginTop(12);
 			this.setMarginBottom(4);
 		}
@@ -43,13 +44,6 @@ jn.define('im/messenger/lib/element/dialog/message/date-separator', (require, ex
 			const text = DateFormatter.getDateGroupFormat(date);
 
 			super.setMessage(text);
-
-			return this;
-		}
-
-		setShowTail()
-		{
-			return this;
 		}
 	}
 

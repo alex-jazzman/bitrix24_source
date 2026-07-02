@@ -1,0 +1,57 @@
+.booking-booking__week-grid-wrapper {
+	position: relative;
+	grid-column: 2 / 4;
+	grid-row: 2 / 5;
+	overflow: hidden;
+	padding-bottom: 52px;
+}
+
+.booking-booking__week-grid-table {
+	position: relative;
+	overflow: auto;
+	height: 100%;
+	width: 100%;
+}
+
+.booking-booking-grid-week-ears {
+	height: 100%;
+	width: 100%;
+}
+
+.booking-booking-grid-week-ears .ui-ear {
+	margin-right: 250px;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 48px;
+	height: 48px;
+	background-size: 48px;
+	background-image: url("data:image/svg+xml,%3Csvg width='48' height='48' viewBox='0 0 48 48' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect x='5' y='5' width='38' height='38' rx='19' fill='%23525C69'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M19.8408 17.8721L24.7451 22.7764L26.0154 23.9998L24.7451 25.2241L19.8408 30.1284L21.5714 31.8589L29.4301 24.0003L21.5714 16.1416L19.8408 17.8721Z' fill='white' fill-opacity='0.94'/%3E%3C/svg%3E%0A");
+}
+
+.booking-booking-grid-week-ears .ui-ear-left {
+	transform: translateY(-50%) scaleX(-1);
+}
+
+.booking-booking__base-component.--week-mode .booking-booking-card__container.--start-booking .booking-booking-card__inner {
+	border-top-right-radius: 0;
+	border-bottom-right-radius: 0;
+}
+
+.booking-booking__base-component.--week-mode .booking-booking-card__container.--middle-booking .booking-booking-card__inner {
+	border-radius: 0;
+}
+
+.booking-booking__base-component.--week-mode .booking-booking-card__container.--end-booking .booking-booking-card__inner {
+	border-top-left-radius: 0;
+	border-bottom-left-radius: 0;
+}
+
+.booking-booking__base-component.--week-mode .booking-booking-grid-cell-select-button-container {
+	width: 100%;
+	justify-content: flex-start;
+	height: fit-content;
+}
+
+.booking-booking__base-component.--week-mode .booking-booking-grid-cell-inner {
+	align-content: space-between;
+}

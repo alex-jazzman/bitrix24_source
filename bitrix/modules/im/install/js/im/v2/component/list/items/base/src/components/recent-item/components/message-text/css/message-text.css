@@ -1,0 +1,110 @@
+.bx-im-list-recent-item__message_container {
+	--im-list-recent-item__background-color_invitation: var(--im-color-palette-blue-30);
+	--im-list-recent-item__background-color_birthday: #eaf6c3;
+	--im-list-recent-item__background-color_vacation: var(--im-color-palette-gray-20);
+	--im-list-recent-item__color_message: var(--im-color-palette-gray-60);
+	--im-list-recent-item__color_invitation: #1983c6;
+	--im-list-recent-item__color_birthday: var(--im-color-palette-green-70);
+	--im-list-recent-item__color_vacation: var(--im-color-palette-gray-80);
+	--im-list-recent-item__color_draft: #d61515;
+	--im-list-recent-item__color_draft-selected: rgba(var(--im-color-palette-white-base-rgb), 0.7);
+
+	display: flex;
+	font: var(--im-font-size-md)/19px var(--im-font-family-system);
+	font-weight: var(--im-font-weight-normal);
+	color: var(--im-list-recent-item__color_message);
+}
+
+.bx-im-list-recent-item__author-avatar {
+	display: inline-block;
+	margin-right: 4px;
+	filter: saturate(70%);
+	vertical-align: text-bottom;
+	margin-bottom: 1px;
+	max-height: 14px;
+}
+
+.bx-im-list-recent-item__self_author-icon {
+	display: inline-block;
+	width: 11px;
+	min-width: 11px;
+	height: 11px;
+	margin-right: 4px;
+	background-image: url(./images/self-message.svg);
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
+}
+
+.bx-im-list-recent-item__message_text {
+	text-overflow: ellipsis;
+	overflow: hidden;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	word-break: break-word;
+}
+
+.bx-im-list-recent-item__message_draft-prefix {
+	color: var(--im-list-recent-item__color_draft);
+}
+
+/* Message balloons */
+.bx-im-list-recent-item__balloon_container {
+	display: inline-flex;
+	align-items: center;
+	height: 23px;
+	max-width: 270px;
+	margin-top: 8px;
+	padding: 4px 9px 5px;
+	border-radius: 100px;
+	font: var(--im-font-size-md) var(--im-font-family-system);
+	font-weight: var(--im-font-weight-medium);
+}
+
+.bx-im-list-recent-item__balloon {
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.bx-im-list-recent-item__balloon_container.--invitation {
+	background-color: var(--im-list-recent-item__background-color_invitation);
+	color: var(--im-list-recent-item__color_invitation);
+}
+
+.bx-im-list-recent-item__balloon_container.--birthday {
+	background-color: var(--im-list-recent-item__background-color_birthday);
+	color: var(--im-list-recent-item__color_birthday);
+}
+
+.bx-im-list-recent-item__balloon_container.--vacation {
+	background-color: var(--im-list-recent-item__background-color_vacation);
+	color: var(--im-list-recent-item__color_vacation);
+}
+/* End message balloons */
+
+/* Start no-text mode */
+.bx-im-list-recent-item__wrap.--no-text .bx-im-list-recent-item__message_container {
+	min-width: 0;
+}
+.bx-im-list-recent-item__wrap.--no-text .bx-im-list-recent-item__message_text {
+	display: initial;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+}
+/* End no-text mode */
+
+/* Active item */
+.bx-im-list-recent-item__wrap.--selected .bx-im-list-recent-item__message_container {
+	color: var(--im-color-palette-white-base);
+}
+
+.bx-im-list-recent-item__wrap.--selected .bx-im-list-recent-item__self_author-icon {
+	background-image: url(./images/self-message-hover.svg);
+}
+
+.bx-im-list-recent-item__wrap.--selected .bx-im-list-recent-item__message_draft-prefix {
+	color: var(--im-list-recent-item__color_draft-selected);
+}

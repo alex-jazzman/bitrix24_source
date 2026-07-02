@@ -8,17 +8,17 @@ $renderLog = function($log) use ($arResult)
 	foreach ($arResult['LOG'][$log] as $item)
 	{
 		?>
-		<div class="crm-task-list-mail-item crm-activity-email-logitem-<?=intval($item['ID']) ?>"
-			data-id="<?=intval($item['ID']) ?>" data-log="<?=htmlspecialcharsbx($log) ?>">
-			<span class="crm-task-list-mail-item-icon-reply-<?=($item['DIRECTION'] == \CCrmActivityDirection::Incoming ? 'incoming' : 'coming') ?>"></span>
-			<span class="crm-task-list-mail-item-icon <? if ($item['COMPLETED'] != 'Y'): ?>active-mail<? endif ?>"></span>
+		<button type="button" class="crm-task-list-mail-item crm-activity-email-logitem-<?=intval($item['ID']) ?>"
+			data-id="<?=intval($item['ID']) ?>" data-log="<?=htmlspecialcharsbx($log) ?>" aria-expanded="false">
+			<span class="crm-task-list-mail-item-icon-reply-<?=($item['DIRECTION'] == \CCrmActivityDirection::Incoming ? 'incoming' : 'coming') ?>" aria-hidden="true"></span>
+			<span class="crm-task-list-mail-item-icon <? if ($item['COMPLETED'] != 'Y'): ?>active-mail<? endif ?>" aria-hidden="true"></span>
 			<span class="crm-task-list-mail-item-user"
 				<? if (!empty($item['LOG_IMAGE'])): ?>style="background: url('<?=htmlspecialcharsbx($item['LOG_IMAGE']) ?>'); background-size: 23px 23px; "<? endif ?>>
 				</span>
 			<span class="crm-task-list-mail-item-name"><?=htmlspecialcharsbx($item['LOG_TITLE']) ?></span>
 			<span class="crm-task-list-mail-item-description"><?=htmlspecialcharsbx($item['SUBJECT']) ?></span>
 			<span class="crm-task-list-mail-item-date"><?=formatDate('x', makeTimeStamp($item['START_TIME']), time()+\CTimeZone::getOffset()) ?></span>
-		</div>
+		</button>
 		<div class="crm-task-list-mail-item-inner crm-task-list-mail-border-bottom crm-activity-email-details-<?=intval($item['ID']) ?>"
 			style="display: none; text-align: center; " data-empty="1">
 			<div class="crm-task-list-mail-item-loading"></div>
@@ -35,7 +35,7 @@ $arParams['ACTIVITY']['DESCRIPTION_HTML'] = $arParams['~ACTIVITY']['DESCRIPTION_
 
 	<div class="crm-task-list-mail-item-separator"
 		style="margin-bottom: 1px; <? if (count($arResult['LOG']['A']) < $arParams['PAGE_SIZE']): ?> display: none; <? endif ?>">
-		<a class="crm-task-list-mail-more crm-task-list-mail-more-a" href="#"><?=getMessage('CRM_ACT_EMAIL_HISTORY_MORE') ?></a>
+		<button type="button" class="crm-task-list-mail-more crm-task-list-mail-more-a"><?=getMessage('CRM_ACT_EMAIL_HISTORY_MORE') ?></button>
 	</div>
 
 	<? $renderLog('A'); ?>
@@ -54,7 +54,7 @@ $arParams['ACTIVITY']['DESCRIPTION_HTML'] = $arParams['~ACTIVITY']['DESCRIPTION_
 
 	<div class="crm-task-list-mail-item-separator"
 		style="margin-top: 1px; <? if (count($arResult['LOG']['B']) < $arParams['PAGE_SIZE']): ?> display: none; <? endif ?>">
-		<a class="crm-task-list-mail-more crm-task-list-mail-more-b" href="#"><?=getMessage('CRM_ACT_EMAIL_HISTORY_MORE') ?></a>
+		<button type="button" class="crm-task-list-mail-more crm-task-list-mail-more-b"><?=getMessage('CRM_ACT_EMAIL_HISTORY_MORE') ?></button>
 	</div>
 </div>
 

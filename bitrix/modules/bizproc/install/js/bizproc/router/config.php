@@ -8,8 +8,8 @@ return [
 	'css' => 'dist/router.bundle.css',
 	'js' => 'dist/router.bundle.js',
 	'rel' => [
-		'sidepanel',
 		'main.core',
+		'sidepanel',
 	],
 	'skip_core' => false,
 ];

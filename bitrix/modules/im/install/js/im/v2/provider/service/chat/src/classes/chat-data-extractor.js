@@ -1,23 +1,22 @@
 import { ChatType } from 'im.v2.const';
 import { UserManager } from 'im.v2.lib.user';
 
-import type {
-	RawChat,
-	RawFile,
-	RawUser,
-	RawShortUser,
-	RawMessage,
-	RawCommentInfo,
-	RawCollabInfo,
-	RawPin,
-	RawReaction,
-	RawCopilot,
-	RawMessagesAutoDeleteConfig,
-	RawStickerMessage,
+import {
+	type RawChat,
+	type RawFile,
+	type RawUser,
+	type RawShortUser,
+	type RawMessage,
+	type RawCommentInfo,
+	type RawCollabInfo,
+	type RawPin,
+	type RawReaction,
+	type RawCopilot,
+	type RawMessagesAutoDeleteConfig,
+	type RawStickerMessage,
 } from 'im.v2.provider.service.types';
-import { RawSticker } from '../types/chat';
 
-import type { ChatLoadRestResult } from '../types/chat';
+import { type ChatLoadRestResult, type RawSticker } from '../types/chat';
 
 export class ChatDataExtractor
 {

@@ -1,3 +1,5 @@
+import { Communication } from 'booking.const';
+
 export type ResourceTypesState = {
 	collection: { [id: number]: ResourceTypeModel },
 };
@@ -9,7 +11,7 @@ export type ResourceTypeModel = {
 	code: string,
 	resourcesCnt: number | null,
 
-	senderCode: string,
+	senderCode: $Values<typeof Communication>;
 
 	// info
 	isInfoNotificationOn: boolean,
@@ -34,6 +36,10 @@ export type ResourceTypeModel = {
 	templateTypeDelayed: string,
 	delayedNotificationDelay: number,
 	delayedCounterDelay: number,
+
+	// cancellation
+	isCancellationNotificationOn: boolean,
+	cancellationNotificationDelay: number,
 
 	// feedback
 	isFeedbackNotificationOn: boolean,

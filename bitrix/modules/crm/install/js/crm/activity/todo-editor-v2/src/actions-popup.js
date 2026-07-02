@@ -1,8 +1,9 @@
 import { Loc, Text, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
-import { Menu, MenuManager } from 'main.popup';
+import type { Menu } from 'main.popup';
+import { MenuManager } from 'main.popup';
 import { FeaturePromotersRegistry } from 'ui.info-helper';
-import { Events } from './components/todo-editor';
+import { Events } from './components/events';
 import type { ActionMenuItem } from './todo-editor';
 
 const DELIMITER_TYPE = 'delimiter';

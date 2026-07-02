@@ -2,6 +2,8 @@ import { ajax as Ajax, Loc, Tag, Text, Type, Uri, UI } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import 'sidepanel';
 import { DashboardExportMaster } from 'biconnector.dashboard-export-master';
+import { DashboardRelatedEntitiesList } from 'biconnector.dashboard-related-items-list';
+import type { Entity as DashboardRelatedEntity } from 'biconnector.dashboard-related-items-list';
 import { DashboardGroup } from 'biconnector.dashboard-group';
 import { AirButtonStyle, Button, ButtonSize } from 'ui.buttons';
 import { Dialog } from 'ui.system.dialog';
@@ -15,6 +17,15 @@ type DashboardInfo = {
 	appId: string, // for analytic
 	editLink: string,
 	title: string,
+};
+
+type DeleteDashboardDialogOptions = {
+	dashboardId: number | string,
+	dashboardType: 'SYSTEM' | 'MARKET' | 'CUSTOM' | string,
+};
+
+type DeleteDashboardDialogResult = {
+	status: 'deleted' | 'cancelled' | 'blocked',
 };
 
 export class DashboardManager
@@ -257,6 +268,283 @@ export class DashboardManager
 		});
 	}
 
+	showDeleteDashboardDialog(
+		options: DeleteDashboardDialogOptions,
+	): Promise<DeleteDashboardDialogResult>
+	{
+		const dashboardId = options?.dashboardId;
+		const dashboardType = options?.dashboardType ?? '';
+
+		if (dashboardType !== 'MARKET')
+		{
+			return this.showDeleteConfirmationPopup(dashboardId, dashboardType);
+		}
+
+		let isPopupClosedByUser = false;
+		let isPopupClosingBySystem = false;
+
+		const loadingPopup = new Dialog({
+			content: Tag.render`
+				<div class="dashboard-delete-loading-popup">
+					<div class="dashboard-delete-loading-popup-spinner-wrapper">
+						<div class="dashboard-delete-loading-popup-spinner"></div>
+					</div>
+					<div class="dashboard-delete-loading-popup-text">
+						${Text.encode(Loc.getMessage('SUPERSET_DASHBOARD_DELETE_POPUP_LOAD'))}
+					</div>
+				</div>
+			`,
+			width: 400,
+			height: 176,
+			title: ' ',
+			hasCloseButton: true,
+			hasOverlay: true,
+			disableScrolling: true,
+			hasVerticalPadding: false,
+			hasHorizontalPadding: false,
+			events: {
+				onHide: () => {
+					if (!isPopupClosingBySystem)
+					{
+						isPopupClosedByUser = true;
+					}
+
+					isPopupClosingBySystem = false;
+				},
+			},
+		});
+
+		const hideLoadingPopup = (): void => {
+			isPopupClosingBySystem = true;
+			loadingPopup.hide();
+		};
+
+		loadingPopup.show();
+
+		return this.getDashboardRelatedItems(dashboardId)
+			.then((result) => {
+				if (isPopupClosedByUser)
+				{
+					return { status: 'cancelled' };
+				}
+
+				hideLoadingPopup();
+
+				if (result.data && result.data.length > 0)
+				{
+					return this.showRelatedEntitiesToDelete(result.data);
+				}
+
+				return this.showDeleteConfirmationPopup(dashboardId, dashboardType);
+			})
+			.catch((response) => {
+				if (isPopupClosedByUser)
+				{
+					return { status: 'cancelled' };
+				}
+
+				hideLoadingPopup();
+				this.notifyDeleteError(response);
+
+				return Promise.reject(response);
+			})
+		;
+	}
+
+	showDeleteConfirmationPopup(
+		dashboardId: number | string,
+		dashboardType: string,
+	): Promise<DeleteDashboardDialogResult>
+	{
+		const message = dashboardType === 'CUSTOM'
+			? Loc.getMessage('SUPERSET_DASHBOARD_DELETE_POPUP_MESSAGE_CUSTOM')
+			: Loc.getMessage('SUPERSET_DASHBOARD_DELETE_POPUP_MESSAGE_MARKET')
+		;
+
+		return new Promise((resolve, reject) => {
+			let isResolved = false;
+			let isDeleteInProgress = false;
+
+			const resolveOnce = (result: DeleteDashboardDialogResult): void => {
+				if (isResolved)
+				{
+					return;
+				}
+
+				isResolved = true;
+				resolve(result);
+			};
+
+			const rejectOnce = (response: Object): void => {
+				if (isResolved)
+				{
+					return;
+				}
+
+				isResolved = true;
+				reject(response);
+			};
+
+			const deletePopup = new Dialog({
+				title: Loc.getMessage('SUPERSET_DASHBOARD_DELETE_POPUP_TITLE'),
+				content: message,
+				width: 400,
+				hasCloseButton: true,
+				hasOverlay: true,
+				closeByEsc: true,
+				disableScrolling: true,
+				centerButtons: [
+					new Button({
+						text: Loc.getMessage('SUPERSET_DASHBOARD_DELETE_POPUP_CAPTION_NO'),
+						size: ButtonSize.LARGE,
+						useAirDesign: true,
+						style: AirButtonStyle.FILLED,
+						onclick: () => deletePopup.hide(),
+					}),
+					new Button({
+						text: Loc.getMessage('SUPERSET_DASHBOARD_DELETE_POPUP_CAPTION_YES'),
+						useAirDesign: true,
+						size: ButtonSize.LARGE,
+						style: AirButtonStyle.PLAIN,
+						onclick: (button) => {
+							isDeleteInProgress = true;
+							button.setWaiting();
+							this.deleteDashboard(dashboardId)
+								.then(() => {
+									resolveOnce({ status: 'deleted' });
+									deletePopup.hide();
+								})
+								.catch((response) => {
+									isDeleteInProgress = false;
+									this.notifyDeleteError(response);
+									rejectOnce(response);
+									deletePopup.hide();
+								})
+							;
+						},
+					}),
+				],
+				events: {
+					onHide: () => {
+						if (!isDeleteInProgress)
+						{
+							resolveOnce({ status: 'cancelled' });
+						}
+					},
+				},
+			});
+
+			deletePopup.show();
+		});
+	}
+
+	showRelatedEntitiesToDelete(
+		entities: DashboardRelatedEntity[],
+	): Promise<DeleteDashboardDialogResult>
+	{
+		const list = new DashboardRelatedEntitiesList(entities, {
+			onOpen: (url: string, onDone: ?Function) => {
+				this.openRelatedEntity(url, onDone);
+			},
+		});
+
+		return new Promise((resolve) => {
+			let isResolved = false;
+
+			const popup = new Dialog({
+				content: Tag.render`
+					<div class="market-dashboard-delete-popup">
+						<div class="market-dashboard-delete-popup-text">
+							${Loc.getMessage('SUPERSET_DASHBOARD_DELETE_RELATED_OBJECTS_TEXT', {
+								'[link]': '<a class="biconnector-grid-scope-hint-more" onclick="top.BX.Helper.show(`redirect=detail&code=26703788`)">',
+								'[/link]': '</a>',
+							})}
+						</div>
+						${list.render()}
+					</div>
+				`,
+				width: 540,
+				closeByEsc: true,
+				hasOverlay: true,
+				disableScrolling: true,
+				title: Loc.getMessage('SUPERSET_DASHBOARD_DELETE_RELATED_OBJECTS_TITLE'),
+				centerButtons: [
+					new Button({
+						text: Loc.getMessage('SUPERSET_DASHBOARD_DELETE_RELATED_OBJECTS_OK_BTN'),
+						onclick: () => {
+							popup.hide();
+						},
+						useAirDesign: true,
+						size: ButtonSize.LARGE,
+						style: AirButtonStyle.FILLED,
+					}),
+				],
+				events: {
+					onHide: () => {
+						if (!isResolved)
+						{
+							isResolved = true;
+							resolve({ status: 'blocked' });
+						}
+					},
+				},
+			});
+
+			popup.show();
+		});
+	}
+
+	openRelatedEntity(url: string, onDone: ?Function = null): void
+	{
+		const tab = window.open('about:blank', '_blank');
+
+		const openUrl = (targetUrl: string): void => {
+			if (tab)
+			{
+				tab.location.href = targetUrl;
+			}
+			else
+			{
+				window.open(targetUrl, '_blank');
+			}
+
+			if (onDone)
+			{
+				onDone();
+			}
+		};
+
+		this.getSupersetEntityLoginUrl(url)
+			.then((result) => {
+				openUrl(result.data);
+			})
+			.catch(() => {
+				openUrl(url);
+			})
+		;
+	}
+
+	notifyDeleteError(response: Object): void
+	{
+		const message = Type.isStringFilled(response?.errors?.[0]?.message)
+			? response.errors[0].message
+			: Loc.getMessage('SUPERSET_DASHBOARD_DELETE_ERROR')
+		;
+
+		BX.UI.Notification.Center.notify({
+			content: Text.encode(message),
+		});
+	}
+
+	openDiscussionChat(dashboardId: number): Promise
+	{
+		return Ajax.runAction('biconnector.dashboard.openDiscussionChat', {
+			data: {
+				id: dashboardId,
+			},
+		});
+	}
+
 	deleteGroup(dashboardId): Promise
 	{
 		return Ajax.runAction('biconnector.group.delete', {
@@ -359,17 +647,31 @@ export class DashboardManager
 		});
 	}
 
-	static openSettingsSlider(dashboardId: number = null)
+	static openSettingsSlider(dashboardId: number = null, dashboardType: ?string = null)
 	{
-		const componentLink = dashboardId === null
-			? '/bitrix/components/bitrix/biconnector.apachesuperset.setting/slider.php'
-			: '/bitrix/components/bitrix/biconnector.apachesuperset.dashboard.setting/slider.php'
-		;
+		const isCustomDashboard = Type.isStringFilled(dashboardType) && dashboardType === 'CUSTOM';
+		let componentLink = '/bitrix/components/bitrix/biconnector.apachesuperset.setting/slider.php';
+
+		const isDashboardSettings = dashboardId !== null;
+		if (isDashboardSettings)
+		{
+			componentLink = isCustomDashboard
+				? '/bitrix/components/bitrix/biconnector.apachesuperset.dashboard.edit/slider.php'
+				: '/bitrix/components/bitrix/biconnector.apachesuperset.dashboard.setting/slider.php'
+			;
+		}
 
 		const sliderLink = new Uri(componentLink);
-		if (dashboardId !== null)
+		if (isDashboardSettings)
 		{
-			sliderLink.setQueryParam('DASHBOARD_ID', Text.toNumber(dashboardId));
+			if (isCustomDashboard)
+			{
+				sliderLink.setQueryParam('dashboardId', Text.toNumber(dashboardId));
+			}
+			else
+			{
+				sliderLink.setQueryParam('DASHBOARD_ID', Text.toNumber(dashboardId));
+			}
 		}
 
 		BX.SidePanel.Instance.open(
@@ -403,13 +705,18 @@ export class DashboardManager
 		});
 	}
 
-	openCreationSlider(groupIds: []): void
+	openCreationSlider(groupIds: number[] = [], dashboardId: number = 0): void
 	{
-		const componentLink = '/bitrix/components/bitrix/biconnector.apachesuperset.dashboard.create/slider.php';
+		const componentLink = '/bitrix/components/bitrix/biconnector.apachesuperset.dashboard.edit/slider.php';
 		const sliderLink = new Uri(componentLink);
 		if (groupIds.length > 0)
 		{
 			sliderLink.setQueryParam('groupIds', groupIds);
+		}
+
+		if (dashboardId > 0)
+		{
+			sliderLink.setQueryParam('dashboardId', Text.toNumber(dashboardId));
 		}
 
 		BX.SidePanel.Instance.open(

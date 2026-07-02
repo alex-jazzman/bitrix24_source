@@ -1,0 +1,11 @@
+<?php
+$MESS["IMBOT_ADD_BOT_TO_GROUP_CHAT_ACTIVITY_ERROR_BOT_ID_OR_CODE_EMPTY"] = "Chat bot ID or code not specified.";
+$MESS["IMBOT_ADD_BOT_TO_GROUP_CHAT_ACTIVITY_ERROR_BOT_NOT_FOUND"] = "Chat bot with this ID does not exist.";
+$MESS["IMBOT_ADD_BOT_TO_GROUP_CHAT_ACTIVITY_ERROR_CANT_ADD_TO_CHAT"] = "Cannot add a chat bot to the specified chat.";
+$MESS["IMBOT_ADD_BOT_TO_GROUP_CHAT_ACTIVITY_ERROR_DURING_ADD"] = "Could not add the chat bot to the chat.";
+$MESS["IMBOT_ADD_BOT_TO_GROUP_CHAT_ACTIVITY_ERROR_EMPTY_CHAT_ID"] = "Chat is not selected.";
+$MESS["IMBOT_ADD_BOT_TO_GROUP_CHAT_ACTIVITY_ERROR_NO_BOT"] = "Chat bot is not specified.";
+$MESS["IMBOT_ADD_BOT_TO_GROUP_CHAT_ACTIVITY_ERROR_NO_CHAT"] = "Chat ID is invalid.";
+$MESS["IMBOT_ADD_BOT_TO_GROUP_CHAT_ACTIVITY_FIELD_BOT_CODE"] = "Unique bot code (used when chat bot ID is missing):";
+$MESS["IMBOT_ADD_BOT_TO_GROUP_CHAT_ACTIVITY_FIELD_BOT_ID"] = "Chat bot:";
+$MESS["IMBOT_ADD_BOT_TO_GROUP_CHAT_ACTIVITY_FIELD_CHAT_ID"] = "Chat:";

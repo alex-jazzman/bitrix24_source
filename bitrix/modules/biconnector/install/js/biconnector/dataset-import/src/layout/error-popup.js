@@ -1,5 +1,5 @@
 import { Tag } from 'main.core';
-import { Popup, PopupOptions } from 'main.popup';
+import { Popup } from 'main.popup';
 
 export class ErrorPopup
 {

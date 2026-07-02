@@ -3,23 +3,24 @@
  * Bitrix Framework
  * @package bitrix
  * @subpackage main
- * @copyright 2001-2013 Bitrix
+ * @copyright 2001-2026 Bitrix
+ */
 
+/**
  * @global CMain $APPLICATION
  * @global CUser $USER
- * @global CDatabase $DB
  * @global CUserTypeManager $USER_FIELD_MANAGER
  */
 
 use Bitrix\Main\Application;
 use Bitrix\Main\Authentication\Policy;
+use Bitrix\Main\UserPhoneAuthTable;
+use Bitrix\Main\Localization\LanguageTable;
 
 require_once(__DIR__."/../include/prolog_admin_before.php");
 define("HELP_FILE", "users/user_edit.php");
-$strRedirect_admin = BX_ROOT."/admin/user_admin.php?lang=".LANG;
-$strRedirect = BX_ROOT."/admin/user_edit.php?lang=".LANG;
-
-ClearVars();
+$strRedirect_admin = BX_ROOT."/admin/user_admin.php?lang=".LANGUAGE_ID;
+$strRedirect = BX_ROOT."/admin/user_edit.php?lang=".LANGUAGE_ID;
 
 $canViewUserList = ($USER->CanDoOperation('view_subordinate_users') || $USER->CanDoOperation('view_all_users') || $USER->CanDoOperation('edit_all_users') || $USER->CanDoOperation('edit_subordinate_users'));
 
@@ -65,7 +66,7 @@ if ($USER->CanDoOperation('edit_subordinate_users') && !$USER->CanDoOperation('e
 
 	if (!empty(array_diff($arUserGroups, $arUserSubordinateGroups)) && !$selfEdit)
 	{
-		LocalRedirect(BX_ROOT."/admin/user_admin.php?lang=".LANG);
+		LocalRedirect(BX_ROOT."/admin/user_admin.php?lang=".LANGUAGE_ID);
 	}
 }
 
@@ -138,10 +139,10 @@ $tabControl = new CAdminForm("user_edit", $aTabs);
 if(
 	$_SERVER["REQUEST_METHOD"]=="POST"
 	&& (
-		!empty($_REQUEST["save"])
-		|| !empty($_REQUEST["apply"])
-		|| (isset($_REQUEST["Update"]) && $_REQUEST["Update"]=="Y")
-		|| !empty($_REQUEST["save_and_add"])
+		!empty($_POST["save"])
+		|| !empty($_POST["apply"])
+		|| (isset($_POST["Update"]) && $_POST["Update"]=="Y")
+		|| !empty($_POST["save_and_add"])
 	)
 	&& $editable
 	&& check_bitrix_sessid()
@@ -263,16 +264,16 @@ if(
 				$arFields["BLOCKED"] = $_POST["BLOCKED"] ?? null;
 			}
 
-			if($showGroupTabs && isset($_REQUEST["GROUP_ID_NUMBER"]))
+			if($showGroupTabs && isset($_POST["GROUP_ID_NUMBER"]))
 			{
-				$GROUP_ID_NUMBER = intval($_REQUEST["GROUP_ID_NUMBER"]);
+				$GROUP_ID_NUMBER = intval($_POST["GROUP_ID_NUMBER"]);
 				$GROUP_ID = array();
 				$ind = -1;
 				for ($i = 0; $i <= $GROUP_ID_NUMBER; $i++)
 				{
-					if (isset(${"GROUP_ID_ACT_".$i}) && ${"GROUP_ID_ACT_".$i} == "Y")
+					if (isset($_POST["GROUP_ID_ACT_".$i]) && $_POST["GROUP_ID_ACT_".$i] == "Y")
 					{
-						$gr_id = intval(${"GROUP_ID_".$i} ?? 0);
+						$gr_id = intval($_POST["GROUP_ID_".$i] ?? 0);
 
 						if($gr_id == 1 && !$USER->IsAdmin())
 							continue;
@@ -282,8 +283,8 @@ if(
 
 						$ind++;
 						$GROUP_ID[$ind]["GROUP_ID"] = $gr_id;
-						$GROUP_ID[$ind]["DATE_ACTIVE_FROM"] = ${"GROUP_ID_FROM_".$i};
-						$GROUP_ID[$ind]["DATE_ACTIVE_TO"] = ${"GROUP_ID_TO_".$i};
+						$GROUP_ID[$ind]["DATE_ACTIVE_FROM"] = $_POST["GROUP_ID_FROM_".$i];
+						$GROUP_ID[$ind]["DATE_ACTIVE_TO"] = $_POST["GROUP_ID_TO_".$i];
 					}
 				}
 
@@ -434,107 +435,127 @@ if(
 		$adminSidePanelHelper->sendJsonErrorResponse($strError);
 }
 
-$str_TITLE = '';
-$str_NAME = '';
-$str_LAST_NAME = '';
-$str_SECOND_NAME = '';
-$str_EMAIL = '';
-$str_LOGIN = '';
-$str_DATE_REGISTER = '';
-$str_TIMESTAMP_X = '';
-$str_LAST_LOGIN = '';
-$str_PHONE_NUMBER = '';
-$str_PASSWORD_EXPIRED = '';
-$str_EXTERNAL_AUTH_ID = '';
-$str_PERSONAL_PROFESSION = '';
-$str_PERSONAL_WWW = '';
-$str_PERSONAL_ICQ = '';
-$str_PERSONAL_GENDER = '';
-$str_PERSONAL_BIRTHDAY = '';
-$str_PERSONAL_PHOTO = '';
-$str_PERSONAL_PHONE = '';
-$str_PERSONAL_FAX = '';
-$str_PERSONAL_MOBILE = '';
-$str_PERSONAL_PAGER = '';
-$str_PERSONAL_COUNTRY = '';
-$str_PERSONAL_STATE = '';
-$str_PERSONAL_CITY = '';
-$str_PERSONAL_ZIP = '';
-$str_PERSONAL_STREET = '';
-$str_PERSONAL_MAILBOX = '';
-$str_PERSONAL_NOTES = '';
-$str_WORK_COMPANY = '';
-$str_WORK_WWW = '';
-$str_WORK_DEPARTMENT = '';
-$str_WORK_POSITION = '';
-$str_WORK_PROFILE = '';
-$str_WORK_LOGO = '';
-$str_WORK_PHONE = '';
-$str_WORK_FAX = '';
-$str_WORK_PAGER = '';
-$str_WORK_COUNTRY = '';
-$str_WORK_STATE = '';
-$str_WORK_CITY = '';
-$str_WORK_ZIP = '';
-$str_WORK_STREET = '';
-$str_WORK_MAILBOX = '';
-$str_WORK_NOTES = '';
-$str_GROUP_ID = [];
-$str_XML_ID = '';
-$str_LANGUAGE_ID = '';
-$str_AUTO_TIME_ZONE = '';
-$str_TIME_ZONE = '';
-$str_ADMIN_NOTES = '';
+$showDataFromForm = ($strError != '' || !$res);
 
-$user = CUser::GetByID($ID);
-if(!$user->NavNext(true, 'str_', true, false))
+$userData = [
+	'ACTIVE' => 'Y',
+	'BLOCKED' => 'N',
+	'LID' => CSite::GetDefSite(),
+	'TITLE' => '',
+	'NAME' => '',
+	'LAST_NAME' => '',
+	'SECOND_NAME' => '',
+	'EMAIL' => '',
+	'LOGIN' => '',
+	'DATE_REGISTER' => '',
+	'TIMESTAMP_X' => '',
+	'LAST_LOGIN' => '',
+	'PHONE_NUMBER' => '',
+	'PASSWORD_EXPIRED' => 'N',
+	'EXTERNAL_AUTH_ID' => '',
+	'PERSONAL_PROFESSION' => '',
+	'PERSONAL_WWW' => '',
+	'PERSONAL_ICQ' => '',
+	'PERSONAL_GENDER' => '',
+	'PERSONAL_BIRTHDAY' => '',
+	'PERSONAL_PHOTO' => '',
+	'PERSONAL_PHONE' => '',
+	'PERSONAL_FAX' => '',
+	'PERSONAL_MOBILE' => '',
+	'PERSONAL_PAGER' => '',
+	'PERSONAL_COUNTRY' => '',
+	'PERSONAL_STATE' => '',
+	'PERSONAL_CITY' => '',
+	'PERSONAL_ZIP' => '',
+	'PERSONAL_STREET' => '',
+	'PERSONAL_MAILBOX' => '',
+	'PERSONAL_NOTES' => '',
+	'WORK_COMPANY' => '',
+	'WORK_WWW' => '',
+	'WORK_DEPARTMENT' => '',
+	'WORK_POSITION' => '',
+	'WORK_PROFILE' => '',
+	'WORK_LOGO' => '',
+	'WORK_PHONE' => '',
+	'WORK_FAX' => '',
+	'WORK_PAGER' => '',
+	'WORK_COUNTRY' => '',
+	'WORK_STATE' => '',
+	'WORK_CITY' => '',
+	'WORK_ZIP' => '',
+	'WORK_STREET' => '',
+	'WORK_MAILBOX' => '',
+	'WORK_NOTES' => '',
+	'GROUP_ID' => [],
+	'XML_ID' => '',
+	'LANGUAGE_ID' => '',
+	'AUTO_TIME_ZONE' => '',
+	'TIME_ZONE' => '',
+	'ADMIN_NOTES' => '',
+	'NEW_PASSWORD' => '',
+	'NEW_PASSWORD_CONFIRM' => '',
+];
+
+$checkboxes = [
+	'ACTIVE' => 1,
+	'BLOCKED' => 1,
+	'PASSWORD_EXPIRED' => 1,
+];
+
+$userResult = CUser::GetByID($ID);
+if ($userRow = $userResult->Fetch())
 {
-	$ID = 0;
-	$str_ACTIVE = "Y";
-	$str_BLOCKED = "N";
-	$str_LID = CSite::GetDefSite();
-}
-else
-{
-	if($phone = \Bitrix\Main\UserPhoneAuthTable::getRowById($ID))
+	foreach ($userData as $key => $value)
 	{
-		$str_PHONE_NUMBER = htmlspecialcharsbx($phone["PHONE_NUMBER"]);
+		$userData[$key] = $userRow[$key] ?? $value;
+	}
+
+	if ($phone = UserPhoneAuthTable::getRowById($ID))
+	{
+		$userData['PHONE_NUMBER'] = $phone['PHONE_NUMBER'];
 	}
 
 	$dbUserGroup = CUser::GetUserGroupList($ID);
 	while ($arUserGroup = $dbUserGroup->Fetch())
 	{
-		$str_GROUP_ID[intval($arUserGroup["GROUP_ID"])]["DATE_ACTIVE_FROM"] = $arUserGroup["DATE_ACTIVE_FROM"];
-		$str_GROUP_ID[intval($arUserGroup["GROUP_ID"])]["DATE_ACTIVE_TO"] = $arUserGroup["DATE_ACTIVE_TO"];
+		$userData['GROUP_ID'][(int)$arUserGroup['GROUP_ID']]['DATE_ACTIVE_FROM'] = $arUserGroup['DATE_ACTIVE_FROM'];
+		$userData['GROUP_ID'][(int)$arUserGroup['GROUP_ID']]['DATE_ACTIVE_TO'] = $arUserGroup['DATE_ACTIVE_TO'];
 	}
 }
-
-if($COPY_ID > 0)
+else
 {
-	$str_PERSONAL_PHOTO = "";
-	$str_WORK_LOGO = "";
+	$ID = 0;
 }
 
-if($strError <> '' || !$res)
+if ($COPY_ID > 0)
 {
-	$save_PERSONAL_PHOTO = $str_PERSONAL_PHOTO;
-	$save_WORK_LOGO = $str_WORK_LOGO;
+	$userData['PERSONAL_PHOTO'] = '';
+	$userData['WORK_LOGO'] = '';
+}
 
-	$DB->InitTableVarsForEdit("b_user", "");
+if ($showDataFromForm)
+{
+	foreach ($userData as $key => $value)
+	{
+		if ($key == 'PERSONAL_PHOTO' || $key == 'WORK_LOGO')
+		{
+			continue;
+		}
+		if (isset($_POST[$key]) || isset($checkboxes[$key]))
+		{
+			$userData[$key] = $_POST[$key] ?? '';
+		}
+	}
 
-	$str_PERSONAL_PHOTO = $save_PERSONAL_PHOTO;
-	$str_WORK_LOGO = $save_WORK_LOGO;
-
-	$str_PHONE_NUMBER = htmlspecialcharsbx($_POST["PHONE_NUMBER"] ?? '');
-
-	$GROUP_ID_NUMBER = intval($_REQUEST["GROUP_ID_NUMBER"] ?? 0);
-	$str_GROUP_ID = array();
+	$GROUP_ID_NUMBER = (int)($_POST['GROUP_ID_NUMBER'] ?? 0);
+	$userData['GROUP_ID'] = [];
 	for ($i = 0; $i <= $GROUP_ID_NUMBER; $i++)
 	{
-		if (isset(${"GROUP_ID_ACT_".$i}) && ${"GROUP_ID_ACT_".$i} == "Y")
+		if (($_POST['GROUP_ID_ACT_'.$i] ?? '') == 'Y')
 		{
-			$str_GROUP_ID[intval(${"GROUP_ID_".$i})]["DATE_ACTIVE_FROM"] = ${"GROUP_ID_FROM_".$i};
-			$str_GROUP_ID[intval(${"GROUP_ID_".$i})]["DATE_ACTIVE_TO"] = ${"GROUP_ID_TO_".$i};
+			$groupId = (int)($_POST['GROUP_ID_'.$i] ?? 0);
+			$userData['GROUP_ID'][$groupId]['DATE_ACTIVE_FROM'] = $_POST['GROUP_ID_FROM_'.$i] ?? '';
+			$userData['GROUP_ID'][$groupId]['DATE_ACTIVE_TO'] = $_POST['GROUP_ID_TO_'.$i] ?? '';
 		}
 	}
 }
@@ -619,7 +640,7 @@ if ($e = $APPLICATION->GetException())
 	$message = new CAdminMessage(GetMessage("MAIN_ERROR_SAVING"), $e);
 if($message)
 	echo $message->Show();
-if($strError <> '')
+if($strError != '')
 {
 	$e = new CAdminException(array(array('text' => $strError)));
 	$message = new CAdminMessage(GetMessage("MAIN_ERROR_SAVING"), $e);
@@ -638,8 +659,8 @@ $tabControl->BeginEpilogContent();
 ?>
 <?=bitrix_sessid_post()?>
 <input type="hidden" name="Update" value="Y">
-<input type="hidden" name="COPY_ID" value=<?echo $COPY_ID?>>
-<?
+<input type="hidden" name="COPY_ID" value=<?= $COPY_ID?>>
+<?php
 $tabControl->EndEpilogContent();
 
 $limitUsersCount = 0;
@@ -678,31 +699,31 @@ function BxCheckUsers(form)
 }
 
 $tabControl->Begin(array(
-	"FORM_ACTION" => $APPLICATION->GetCurPage()."?ID=".intval($ID)."&lang=".LANG,
+	"FORM_ACTION" => $APPLICATION->GetCurPage()."?ID=".intval($ID)."&lang=".LANGUAGE_ID,
 	"FORM_ATTRIBUTES" => $formAttributes,
 ));
 
 $tabControl->BeginNextFormTab();
 
-$tabControl->AddViewField("DATE_REGISTER", GetMessage("USER_EDIT_DATE_REGISTER"), ($ID>0 && $COPY_ID<=0? $str_DATE_REGISTER:''));
-$tabControl->AddViewField("LAST_UPDATE", GetMessage('LAST_UPDATE'), ($ID>0 && $COPY_ID<=0? $str_TIMESTAMP_X:''));
-$tabControl->AddViewField("LAST_LOGIN", GetMessage('LAST_LOGIN'), ($ID>0 && $COPY_ID<=0? $str_LAST_LOGIN:''));
+$tabControl->AddViewField('DATE_REGISTER', GetMessage('USER_EDIT_DATE_REGISTER'), ($ID > 0 && $COPY_ID <= 0 ? htmlspecialcharsbx($userData['DATE_REGISTER']) : ''));
+$tabControl->AddViewField('LAST_UPDATE', GetMessage('LAST_UPDATE'), ($ID > 0 && $COPY_ID <= 0 ? htmlspecialcharsbx($userData['TIMESTAMP_X']) : ''));
+$tabControl->AddViewField('LAST_LOGIN', GetMessage('LAST_LOGIN'), ($ID > 0 && $COPY_ID <= 0 ? htmlspecialcharsbx($userData['LAST_LOGIN']) : ''));
 
-if($ID <> 1 || $COPY_ID > 0):
+if($ID != 1 || $COPY_ID > 0):
 	$tabControl->BeginCustomField("ACTIVE", GetMessage('ACTIVE'));
 ?>
 	<tr>
-		<td><?echo $tabControl->GetCustomLabelHTML()?></td>
+		<td><?= $tabControl->GetCustomLabelHTML()?></td>
 		<td>
-		<?if($canSelfEdit):?>
-			<input type="checkbox" name="ACTIVE" value="Y"<?if($str_ACTIVE=="Y") echo " checked"?>>
-		<?else:?>
-			<input type="checkbox" <?if($str_ACTIVE=="Y") echo " checked"?> disabled>
-			<input type="hidden" name="ACTIVE" value="<?=$str_ACTIVE;?>">
-		<?endif;?>
+		<?php if($canSelfEdit):?>
+			<input type="checkbox" name="ACTIVE" value="Y"<?php if ($userData['ACTIVE'] == 'Y') echo ' checked'?>>
+		<?php else:?>
+			<input type="checkbox" <?php if ($userData['ACTIVE'] == 'Y') echo ' checked'?> disabled>
+			<input type="hidden" name="ACTIVE" value="<?= htmlspecialcharsbx($userData['ACTIVE']) ?>">
+		<?php endif;?>
 	</tr>
-<?
-	$tabControl->EndCustomField("ACTIVE", '<input type="hidden" name="ACTIVE" value="'.$str_ACTIVE.'">');
+<?php
+	$tabControl->EndCustomField('ACTIVE', '<input type="hidden" name="ACTIVE" value="'.htmlspecialcharsbx($userData['ACTIVE']).'">');
 else:
 	$tabControl->HideField('ACTIVE');
 endif;
@@ -710,29 +731,29 @@ endif;
 $tabControl->BeginCustomField("BLOCKED", GetMessage("main_user_edit_blocked"));
 ?>
 	<tr>
-		<td><?echo $tabControl->GetCustomLabelHTML()?></td>
+		<td><?= $tabControl->GetCustomLabelHTML()?></td>
 		<td>
-		<?if($canSelfEdit):?>
-			<input type="checkbox" name="BLOCKED" value="Y"<?if($str_BLOCKED == "Y") echo " checked"?>>
-		<?else:?>
-			<input type="checkbox" <?if($str_BLOCKED == "Y") echo " checked"?> disabled>
-			<input type="hidden" name="BLOCKED" value="<?=$str_BLOCKED;?>">
-		<?endif;?>
+		<?php if($canSelfEdit):?>
+			<input type="checkbox" name="BLOCKED" value="Y"<?php if ($userData['BLOCKED'] == 'Y') echo ' checked'?>>
+		<?php else:?>
+			<input type="checkbox" <?php if ($userData['BLOCKED'] == 'Y') echo ' checked'?> disabled>
+			<input type="hidden" name="BLOCKED" value="<?= htmlspecialcharsbx($userData['BLOCKED']) ?>">
+		<?php endif;?>
 		</td>
 	</tr>
-<?
-$tabControl->EndCustomField("BLOCKED", '<input type="hidden" name="BLOCKED" value="'.$str_BLOCKED.'">');
+<?php
+$tabControl->EndCustomField('BLOCKED', '<input type="hidden" name="BLOCKED" value="'.htmlspecialcharsbx($userData['BLOCKED']).'">');
 
-$emailRequired = (COption::GetOptionString("main", "new_user_email_required", "Y") <> "N");
+$emailRequired = (COption::GetOptionString("main", "new_user_email_required", "Y") != "N");
 $phoneRequired = (COption::GetOptionString("main", "new_user_phone_required", "N") == "Y");
 
-$tabControl->AddEditField("TITLE", GetMessage("USER_EDIT_TITLE"), false, array("size"=>30), $str_TITLE);
-$tabControl->AddEditField("NAME", GetMessage('NAME'), false, array("size"=>30), $str_NAME);
-$tabControl->AddEditField("LAST_NAME", GetMessage('LAST_NAME'), false, array("size"=>30), $str_LAST_NAME);
-$tabControl->AddEditField("SECOND_NAME", GetMessage('SECOND_NAME'), false, array("size"=>30), $str_SECOND_NAME);
-$tabControl->AddEditField("EMAIL", GetMessage('EMAIL'), $emailRequired, array("size"=>30), $str_EMAIL);
-$tabControl->AddEditField("LOGIN", GetMessage('LOGIN'), true, array("size"=>30), $str_LOGIN);
-$tabControl->AddEditField("PHONE_NUMBER", GetMessage("main_user_edit_phone_number"), $phoneRequired, array("size"=>30), $str_PHONE_NUMBER);
+$tabControl->AddEditField('TITLE', GetMessage('USER_EDIT_TITLE'), false, ['size' => 30], $userData['TITLE'], true);
+$tabControl->AddEditField('NAME', GetMessage('NAME'), false, ['size' => 30], $userData['NAME'], true);
+$tabControl->AddEditField('LAST_NAME', GetMessage('LAST_NAME'), false, ['size' => 30], $userData['LAST_NAME'], true);
+$tabControl->AddEditField('SECOND_NAME', GetMessage('SECOND_NAME'), false, ['size' => 30], $userData['SECOND_NAME'], true);
+$tabControl->AddEditField('EMAIL', GetMessage('EMAIL'), $emailRequired, ['size' => 30], $userData['EMAIL'], true);
+$tabControl->AddEditField('LOGIN', GetMessage('LOGIN'), true, ['size' => 30], $userData['LOGIN'], true);
+$tabControl->AddEditField('PHONE_NUMBER', GetMessage('main_user_edit_phone_number'), $phoneRequired, ['size' => 30], $userData['PHONE_NUMBER'], true);
 
 $tabControl->BeginCustomField("PASSWORD", GetMessage('NEW_PASSWORD_REQ'), true);
 
@@ -748,49 +769,49 @@ if(!CMain::IsHTTPS() && COption::GetOptionString('main', 'use_encrypted_auth', '
 	}
 }
 ?>
-	<tr id="bx_pass_row" style="display:<?=($str_EXTERNAL_AUTH_ID <> ''? 'none':'')?>;"<?if($ID<=0 || $COPY_ID>0):?> class="adm-detail-required-field"<?endif?>>
-		<td><?echo GetMessage('NEW_PASSWORD_REQ')?>:</td>
-		<td><input type="password" name="NEW_PASSWORD" size="30" maxlength="255" value="<? echo htmlspecialcharsbx($NEW_PASSWORD ?? '') ?>" autocomplete="new-password" style="vertical-align:middle;">
-<?if($bSecure):?>
-				<span class="bx-auth-secure" id="bx_auth_secure" title="<?echo GetMessage("AUTH_SECURE_NOTE")?>" style="display:none">
+	<tr id="bx_pass_row" style="display:<?=($userData['EXTERNAL_AUTH_ID'] != '' ? 'none' : '')?>;"<?php if($ID<=0 || $COPY_ID>0):?> class="adm-detail-required-field"<?php endif?>>
+		<td><?= GetMessage('NEW_PASSWORD_REQ')?>:</td>
+		<td><input type="password" name="NEW_PASSWORD" size="30" maxlength="255" value="<?= htmlspecialcharsbx($userData['NEW_PASSWORD']) ?>" autocomplete="new-password" style="vertical-align:middle;">
+<?php if($bSecure):?>
+				<span class="bx-auth-secure" id="bx_auth_secure" title="<?= GetMessage("AUTH_SECURE_NOTE")?>" style="display:none">
 					<div class="bx-auth-secure-icon"></div>
 				</span>
 				<noscript>
-				<span class="bx-auth-secure" title="<?echo GetMessage("AUTH_NONSECURE_NOTE")?>">
+				<span class="bx-auth-secure" title="<?= GetMessage("AUTH_NONSECURE_NOTE")?>">
 					<div class="bx-auth-secure-icon bx-auth-secure-unlock"></div>
 				</span>
 				</noscript>
 <script>
 document.getElementById('bx_auth_secure').style.display = 'inline-block';
 </script>
-<?endif?>
+<?php endif?>
 		</td>
 	</tr>
-	<tr id="bx_pass_confirm_row" style="display:<?=($str_EXTERNAL_AUTH_ID <> ''? 'none':'')?>;"<?if($ID<=0 || $COPY_ID>0):?> class="adm-detail-required-field"<?endif?>>
-		<td><?echo GetMessage('NEW_PASSWORD_CONFIRM')?></td>
-		<td><input type="password" name="NEW_PASSWORD_CONFIRM" size="30" maxlength="255" value="<? echo htmlspecialcharsbx($NEW_PASSWORD_CONFIRM ?? '') ?>" autocomplete="new-password"></td>
+	<tr id="bx_pass_confirm_row" style="display:<?=($userData['EXTERNAL_AUTH_ID'] != '' ? 'none' : '')?>;"<?php if($ID<=0 || $COPY_ID>0):?> class="adm-detail-required-field"<?php endif?>>
+		<td><?= GetMessage('NEW_PASSWORD_CONFIRM')?></td>
+		<td><input type="password" name="NEW_PASSWORD_CONFIRM" size="30" maxlength="255" value="<?= htmlspecialcharsbx($userData['NEW_PASSWORD_CONFIRM']) ?>" autocomplete="new-password"></td>
 	</tr>
-<?
+<?php
 $tabControl->EndCustomField("PASSWORD");
 
-$tabControl->AddCheckBoxField("PASSWORD_EXPIRED", GetMessage("main_user_edit_pass_expired"), false, array("Y","N"), ($str_PASSWORD_EXPIRED == "Y"));
+$tabControl->AddCheckBoxField('PASSWORD_EXPIRED', GetMessage('main_user_edit_pass_expired'), false, ['Y', 'N'], ($userData['PASSWORD_EXPIRED'] == 'Y'));
 ?>
-<?if($USER->CanDoOperation('view_all_users')):?>
-<?
+<?php if($USER->CanDoOperation('view_all_users')):?>
+<?php
 	$arAuthList = array();
 	$rExtAuth = CUser::GetExternalAuthList();
 	while($arExtAuth = $rExtAuth->GetNext())
 		$arAuthList[$arExtAuth['ID']] = $arExtAuth;
 
-	if($str_EXTERNAL_AUTH_ID <> '' && !array_key_exists($str_EXTERNAL_AUTH_ID, $arAuthList))
-		$arAuthList[$str_EXTERNAL_AUTH_ID] = array('ID'=>$str_EXTERNAL_AUTH_ID, 'NAME'=>$str_EXTERNAL_AUTH_ID);
+	if ($userData['EXTERNAL_AUTH_ID'] != '' && !array_key_exists($userData['EXTERNAL_AUTH_ID'], $arAuthList))
+		$arAuthList[$userData['EXTERNAL_AUTH_ID']] = ['ID' => $userData['EXTERNAL_AUTH_ID'], 'NAME' => $userData['EXTERNAL_AUTH_ID']];
 
 	if(!empty($arAuthList)):
 
 		$tabControl->BeginCustomField("EXTERNAL_AUTH_ID", GetMessage('MAIN_USERED_AUTH_TYPE'));
 ?>
 		<tr>
-		<td><?echo $tabControl->GetCustomLabelHTML()?></td>
+		<td><?= $tabControl->GetCustomLabelHTML()?></td>
 		<td>
 <script>
 function BXAuthSwitch(val)
@@ -799,50 +820,50 @@ function BXAuthSwitch(val)
 	BX('bx_pass_row').style.display = BX('bx_pass_confirm_row').style.display = (val == ''? '':'none');
 }
 </script>
-			<select id="bx_EXTERNAL_AUTH_ID" name="EXTERNAL_AUTH_ID"<?if(!$canSelfEdit) echo " disabled"?> onchange="BXAuthSwitch(this.value)">
-				<option value=""><?echo GetMessage("MAIN_USERED_AUTH_INT")?></option>
-				<?foreach($arAuthList as $arExtAuth):?>
-				<option value="<?=$arExtAuth['ID']?>"<?if($str_EXTERNAL_AUTH_ID == $arExtAuth['ID']) echo ' selected';?>><?=$arExtAuth['NAME']?></option>
-				<?endforeach;?>
+			<select id="bx_EXTERNAL_AUTH_ID" name="EXTERNAL_AUTH_ID"<?php if(!$canSelfEdit) echo " disabled"?> onchange="BXAuthSwitch(this.value)">
+				<option value=""><?= GetMessage("MAIN_USERED_AUTH_INT")?></option>
+				<?php foreach($arAuthList as $arExtAuth):?>
+				<option value="<?=$arExtAuth['ID']?>"<?php if ($userData['EXTERNAL_AUTH_ID'] == $arExtAuth['ID']) echo ' selected';?>><?=$arExtAuth['NAME']?></option>
+				<?php endforeach;?>
 			</select>
 		</td>
 		</tr>
-<?
-		$tabControl->EndCustomField("EXTERNAL_AUTH_ID", '<input type="hidden" name="EXTERNAL_AUTH_ID" value="'.$str_EXTERNAL_AUTH_ID.'">');
+<?php
+		$tabControl->EndCustomField('EXTERNAL_AUTH_ID', '<input type="hidden" name="EXTERNAL_AUTH_ID" value="'.htmlspecialcharsbx($userData['EXTERNAL_AUTH_ID']).'">');
 
 	endif;
 endif;
 
-$tabControl->AddEditField("XML_ID", GetMessage("MAIN_USER_EDIT_EXT"), false, array("size"=>30, "maxlength"=>255), $str_XML_ID);
+$tabControl->AddEditField('XML_ID', GetMessage('MAIN_USER_EDIT_EXT'), false, ['size' => 30, 'maxlength' => 255], $userData['XML_ID'], true);
 ?>
-<?
+<?php
 if($USER->CanDoOperation('view_subordinate_users') || $USER->CanDoOperation('view_all_users') || $USER->CanDoOperation('edit_all_users') || $USER->CanDoOperation('edit_subordinate_users')):
 	$tabControl->BeginCustomField("LID", GetMessage("MAIN_DEFAULT_SITE"));
 ?>
 	<tr>
-		<td><?echo $tabControl->GetCustomLabelHTML()?></td>
-		<?
+		<td><?= $tabControl->GetCustomLabelHTML()?></td>
+		<?php
 		$dis = '';
 		if (!$canSelfEdit)
 		{
 			$dis = " disabled";
 		}
 		?>
-		<td><?=CSite::SelectBox("LID", $str_LID, "", "", "style=\"width:220px\"".$dis);?></td>
+		<td><?=CSite::SelectBox("LID", $userData['LID'], "", "", "style=\"width:220px\"".$dis);?></td>
 	</tr>
-<?
-	$tabControl->EndCustomField("LID", '<input type="hidden" name="LID" value="'.$str_LID.'">');
+<?php
+	$tabControl->EndCustomField('LID', '<input type="hidden" name="LID" value="'.htmlspecialcharsbx($userData['LID']).'">');
 
 	$langOptions = array("" => GetMessage("user_edit_lang_not_set"));
-	$languages = \Bitrix\Main\Localization\LanguageTable::getList(array("filter" => array("ACTIVE" => "Y"), "order" => array("SORT" => "ASC", "NAME" => "ASC")));
+	$languages = LanguageTable::getList(array("filter" => array("ACTIVE" => "Y"), "order" => array("SORT" => "ASC", "NAME" => "ASC")));
 	while($language = $languages->fetch())
 	{
-		$langOptions[$language["LID"]] = \Bitrix\Main\Text\HtmlFilter::encode($language["NAME"]);
+		$langOptions[$language["LID"]] = htmlspecialcharsbx($language["NAME"]);
 	}
-	$tabControl->AddDropDownField("LANGUAGE_ID", GetMessage("user_edit_lang"), false, $langOptions, $str_LANGUAGE_ID);
+	$tabControl->AddDropDownField('LANGUAGE_ID', GetMessage('user_edit_lang'), false, $langOptions, $userData['LANGUAGE_ID']);
 
 	$params = array('id="bx_user_info_event"');
-	if(!$canSelfEdit || $str_EXTERNAL_AUTH_ID <> '')
+	if (!$canSelfEdit || $userData['EXTERNAL_AUTH_ID'] != '')
 	{
 		$params[] = "disabled";
 	}
@@ -860,11 +881,11 @@ endif;
 if(CTimeZone::Enabled())
 {
 	$tabControl->AddSection("USER_TIME_ZONE", GetMessage("user_edit_time_zones"));
-	$tabControl->AddDropDownField("AUTO_TIME_ZONE", GetMessage("user_edit_time_zones_auto"), false, array(""=>GetMessage("user_edit_time_zones_auto_def"), "Y"=>GetMessage("user_edit_time_zones_auto_yes"), "N"=>GetMessage("user_edit_time_zones_auto_no")), $str_AUTO_TIME_ZONE, array('onchange="this.form.TIME_ZONE.disabled=(this.value != \'N\')"'));
-	$tabControl->AddDropDownField("TIME_ZONE", GetMessage("user_edit_time_zones_zones"), false, CTimeZone::GetZones(), $str_TIME_ZONE, ($str_AUTO_TIME_ZONE<>"N"? array('disabled') : array()));
+	$tabControl->AddDropDownField('AUTO_TIME_ZONE', GetMessage('user_edit_time_zones_auto'), false, ['' => GetMessage('user_edit_time_zones_auto_def'), 'Y' => GetMessage('user_edit_time_zones_auto_yes'), 'N' => GetMessage('user_edit_time_zones_auto_no')], $userData['AUTO_TIME_ZONE'], ['onchange="this.form.TIME_ZONE.disabled=(this.value != \'N\')"']);
+	$tabControl->AddDropDownField('TIME_ZONE', GetMessage('user_edit_time_zones_zones'), false, CTimeZone::GetZones(), $userData['TIME_ZONE'], ($userData['AUTO_TIME_ZONE'] != 'N' ? ['disabled'] : []));
 }
 ?>
-<?
+<?php
 if($showGroupTabs):
 	$tabControl->BeginNextFormTab();
 	$tabControl->BeginCustomField("GROUP_ID", GetMessage("user_edit_form_groups"));
@@ -873,10 +894,10 @@ if($showGroupTabs):
 		<td colspan="2" align="center">
 			<table border="0" cellpadding="0" cellspacing="0" class="internal" style="width:80%;">
 			<tr class="heading">
-				<td colspan="2"><?echo GetMessage("TBL_GROUP")?></td>
+				<td colspan="2"><?= GetMessage("TBL_GROUP")?></td>
 				<td><?=GetMessage('TBL_GROUP_DATE')?></td>
 			</tr>
-			<?
+			<?php
 			$ind = -1;
 			$dbGroups = CGroup::GetList("c_sort", "asc", array("ANONYMOUS" => "N"));
 			while ($arGroups = $dbGroups->Fetch())
@@ -898,25 +919,25 @@ if($showGroupTabs):
 				?>
 				<tr>
 					<td>
-						<input type="hidden" name="GROUP_ID_<?=$ind?>" value="<?=$arGroups["ID"]?>" /><input type="checkbox" name="GROUP_ID_ACT_<?=$ind?>" id="GROUP_ID_ACT_ID_<?=$ind?>" value="Y"<?
-						if (array_key_exists($arGroups["ID"], $str_GROUP_ID))
+						<input type="hidden" name="GROUP_ID_<?=$ind?>" value="<?=$arGroups["ID"]?>" /><input type="checkbox" name="GROUP_ID_ACT_<?=$ind?>" id="GROUP_ID_ACT_ID_<?=$ind?>" value="Y"<?php
+						if (array_key_exists($arGroups["ID"], $userData['GROUP_ID']))
 							echo " checked=\"checked\"";
 						?> />
 					</td>
 					<td class="align-left">
-						<label for="GROUP_ID_ACT_ID_<?= $ind ?>"><?=htmlspecialcharsbx($arGroups["NAME"])?> [<a href="/bitrix/admin/group_edit.php?ID=<?=$arGroups["ID"]?>&lang=<?=LANGUAGE_ID?>" title="<?=GetMessage("MAIN_VIEW_GROUP")?>"><?echo intval($arGroups["ID"])?></a>]</label>
+						<label for="GROUP_ID_ACT_ID_<?= $ind ?>"><?=htmlspecialcharsbx($arGroups["NAME"])?> [<a href="/bitrix/admin/group_edit.php?ID=<?=$arGroups["ID"]?>&lang=<?=LANGUAGE_ID?>" title="<?=GetMessage("MAIN_VIEW_GROUP")?>"><?= $arGroups["ID"] ?></a>]</label>
 					</td>
 					<td>
-						<?= CalendarDate("GROUP_ID_FROM_".$ind, (array_key_exists($arGroups["ID"], $str_GROUP_ID) ? htmlspecialcharsbx($str_GROUP_ID[$arGroups["ID"]]["DATE_ACTIVE_FROM"]) : ""), $tabControl->GetFormName(), "22")?>
-						<?= CalendarDate("GROUP_ID_TO_".$ind, (array_key_exists($arGroups["ID"], $str_GROUP_ID) ? htmlspecialcharsbx($str_GROUP_ID[$arGroups["ID"]]["DATE_ACTIVE_TO"]) : ""), $tabControl->GetFormName(), "22")?>
+						<?= CalendarDate("GROUP_ID_FROM_".$ind, (array_key_exists($arGroups["ID"], $userData['GROUP_ID']) ? htmlspecialcharsbx($userData['GROUP_ID'][$arGroups["ID"]]["DATE_ACTIVE_FROM"]) : ""), $tabControl->GetFormName(), "22")?>
+						<?= CalendarDate("GROUP_ID_TO_".$ind, (array_key_exists($arGroups["ID"], $userData['GROUP_ID']) ? htmlspecialcharsbx($userData['GROUP_ID'][$arGroups["ID"]]["DATE_ACTIVE_TO"]) : ""), $tabControl->GetFormName(), "22")?>
 					</td>
 				</tr>
-				<?
+				<?php
 			}
 			?>
 		</table><input type="hidden" name="GROUP_ID_NUMBER" value="<?= $ind ?>"></td>
 	</tr>
-<?
+<?php
 	$tabControl->EndCustomField("GROUP_ID");
 
 	$tabControl->BeginNextFormTab();
@@ -928,7 +949,7 @@ if($showGroupTabs):
 	<tr>
 		<td width="50%">
 			<?= htmlspecialcharsbx($rule->getTitle()) ?><?php if ($rule->getGroupId() > 0): ?>
-				[<a href="group_edit.php?ID=<?= (int)$rule->getGroupId() ?>&amp;lang=<?= LANGUAGE_ID ?>" title="<?= GetMessage("MAIN_VIEW_GROUP")?> "><?= (int)$rule->getGroupId()?></a>]<?php endif ?>:</td>
+				[<a href="group_edit.php?ID=<?= $rule->getGroupId() ?>&amp;lang=<?= LANGUAGE_ID ?>" title="<?= GetMessage("MAIN_VIEW_GROUP")?> "><?= $rule->getGroupId()?></a>]<?php endif ?>:</td>
 		<td><b>
 			<?php
 				if ($rule instanceof Policy\BooleanRule)
@@ -947,74 +968,74 @@ if($showGroupTabs):
 	$tabControl->EndCustomField("GROUP_POLICY");
 endif;
 ?>
-<?
+<?php
 $tabControl->BeginNextFormTab();
 
-$tabControl->AddEditField("PERSONAL_PROFESSION", GetMessage('USER_PROFESSION'), false, array("size"=>30, "maxlength"=>255), $str_PERSONAL_PROFESSION);
-$tabControl->AddEditField("PERSONAL_WWW", GetMessage('USER_WWW'), false, array("size"=>30, "maxlength"=>255), $str_PERSONAL_WWW);
-$tabControl->AddEditField("PERSONAL_ICQ", GetMessage('USER_ICQ'), false, array("size"=>30, "maxlength"=>255), $str_PERSONAL_ICQ);
-$tabControl->AddDropDownField("PERSONAL_GENDER", GetMessage('USER_GENDER'), false, array(""=>GetMessage("USER_DONT_KNOW"), "M"=>GetMessage("USER_MALE"), "F"=>GetMessage("USER_FEMALE")), $str_PERSONAL_GENDER);
-$tabControl->AddCalendarField("PERSONAL_BIRTHDAY", GetMessage("USER_BIRTHDAY_DT").":", $str_PERSONAL_BIRTHDAY);
-$tabControl->AddFileField("PERSONAL_PHOTO", GetMessage("USER_PHOTO"), $str_PERSONAL_PHOTO, array("iMaxW"=>150, "iMaxH"=>150));
+$tabControl->AddEditField('PERSONAL_PROFESSION', GetMessage('USER_PROFESSION'), false, ['size' => 30, 'maxlength' => 255], $userData['PERSONAL_PROFESSION'], true);
+$tabControl->AddEditField('PERSONAL_WWW', GetMessage('USER_WWW'), false, ['size' => 30, 'maxlength' => 255], $userData['PERSONAL_WWW'], true);
+$tabControl->AddEditField('PERSONAL_ICQ', GetMessage('USER_ICQ'), false, ['size' => 30, 'maxlength' => 255], $userData['PERSONAL_ICQ'], true);
+$tabControl->AddDropDownField('PERSONAL_GENDER', GetMessage('USER_GENDER'), false, ['' => GetMessage('USER_DONT_KNOW'), 'M' => GetMessage('USER_MALE'), 'F' => GetMessage('USER_FEMALE')], $userData['PERSONAL_GENDER']);
+$tabControl->AddCalendarField('PERSONAL_BIRTHDAY', GetMessage('USER_BIRTHDAY_DT').':', $userData['PERSONAL_BIRTHDAY']);
+$tabControl->AddFileField('PERSONAL_PHOTO', GetMessage('USER_PHOTO'), $userData['PERSONAL_PHOTO'], ['iMaxW' => 150, 'iMaxH' => 150]);
 
 $tabControl->AddSection("USER_PHONES", GetMessage("USER_PHONES"));
-$tabControl->AddEditField("PERSONAL_PHONE", GetMessage('USER_PHONE'), false, array("size"=>30, "maxlength"=>255), $str_PERSONAL_PHONE);
-$tabControl->AddEditField("PERSONAL_FAX", GetMessage('USER_FAX'), false, array("size"=>30, "maxlength"=>255), $str_PERSONAL_FAX);
-$tabControl->AddEditField("PERSONAL_MOBILE", GetMessage('USER_MOBILE'), false, array("size"=>30, "maxlength"=>255), $str_PERSONAL_MOBILE);
-$tabControl->AddEditField("PERSONAL_PAGER", GetMessage('USER_PAGER'), false, array("size"=>30, "maxlength"=>255), $str_PERSONAL_PAGER);
+$tabControl->AddEditField('PERSONAL_PHONE', GetMessage('USER_PHONE'), false, ['size' => 30, 'maxlength' => 255], $userData['PERSONAL_PHONE'], true);
+$tabControl->AddEditField('PERSONAL_FAX', GetMessage('USER_FAX'), false, ['size' => 30, 'maxlength' => 255], $userData['PERSONAL_FAX'], true);
+$tabControl->AddEditField('PERSONAL_MOBILE', GetMessage('USER_MOBILE'), false, ['size' => 30, 'maxlength' => 255], $userData['PERSONAL_MOBILE'], true);
+$tabControl->AddEditField('PERSONAL_PAGER', GetMessage('USER_PAGER'), false, ['size' => 30, 'maxlength' => 255], $userData['PERSONAL_PAGER'], true);
 
 $tabControl->AddSection("USER_POST_ADDRESS", GetMessage("USER_POST_ADDRESS"));
 $tabControl->BeginCustomField("PERSONAL_COUNTRY", GetMessage('USER_COUNTRY'));
 ?>
 	<tr>
-		<td><?echo $tabControl->GetCustomLabelHTML()?></td>
-		<td><?echo SelectBoxFromArray("PERSONAL_COUNTRY", GetCountryArray(), $str_PERSONAL_COUNTRY, GetMessage("USER_DONT_KNOW"));?></td>
+		<td><?= $tabControl->GetCustomLabelHTML()?></td>
+		<td><?= SelectBoxFromArray("PERSONAL_COUNTRY", GetCountryArray(), $userData['PERSONAL_COUNTRY'], GetMessage("USER_DONT_KNOW"));?></td>
 	</tr>
-<?
-$tabControl->EndCustomField("PERSONAL_COUNTRY", '<input type="hidden" name="PERSONAL_COUNTRY" value="'.$str_PERSONAL_COUNTRY.'">');
-$tabControl->AddEditField("PERSONAL_STATE", GetMessage('USER_STATE'), false, array("size"=>30, "maxlength"=>255), $str_PERSONAL_STATE);
-$tabControl->AddEditField("PERSONAL_CITY", GetMessage('USER_CITY'), false, array("size"=>30, "maxlength"=>255), $str_PERSONAL_CITY);
-$tabControl->AddEditField("PERSONAL_ZIP", GetMessage('USER_ZIP'), false, array("size"=>30, "maxlength"=>255), $str_PERSONAL_ZIP);
-$tabControl->AddTextField("PERSONAL_STREET", GetMessage("USER_STREET"), $str_PERSONAL_STREET, array("cols"=>40, "rows"=>3));
-$tabControl->AddEditField("PERSONAL_MAILBOX", GetMessage('USER_MAILBOX'), false, array("size"=>30, "maxlength"=>255), $str_PERSONAL_MAILBOX);
-$tabControl->AddTextField("PERSONAL_NOTES", GetMessage("USER_NOTES"), $str_PERSONAL_NOTES, array("cols"=>40, "rows"=>5));
+<?php
+$tabControl->EndCustomField('PERSONAL_COUNTRY', '<input type="hidden" name="PERSONAL_COUNTRY" value="'.htmlspecialcharsbx($userData['PERSONAL_COUNTRY']).'">');
+$tabControl->AddEditField('PERSONAL_STATE', GetMessage('USER_STATE'), false, ['size' => 30, 'maxlength' => 255], $userData['PERSONAL_STATE'], true);
+$tabControl->AddEditField('PERSONAL_CITY', GetMessage('USER_CITY'), false, ['size' => 30, 'maxlength' => 255], $userData['PERSONAL_CITY'], true);
+$tabControl->AddEditField('PERSONAL_ZIP', GetMessage('USER_ZIP'), false, ['size' => 30, 'maxlength' => 255], $userData['PERSONAL_ZIP'], true);
+$tabControl->AddTextField('PERSONAL_STREET', GetMessage('USER_STREET'), $userData['PERSONAL_STREET'], ['cols' => 40, 'rows' => 3], false, true);
+$tabControl->AddEditField('PERSONAL_MAILBOX', GetMessage('USER_MAILBOX'), false, ['size' => 30, 'maxlength' => 255], $userData['PERSONAL_MAILBOX'], true);
+$tabControl->AddTextField('PERSONAL_NOTES', GetMessage('USER_NOTES'), $userData['PERSONAL_NOTES'], ['cols' => 40, 'rows' => 5], false, true);
 
 $tabControl->BeginNextFormTab();
 
-$tabControl->AddEditField("WORK_COMPANY", GetMessage('USER_COMPANY'), false, array("size"=>30, "maxlength"=>255), $str_WORK_COMPANY);
-$tabControl->AddEditField("WORK_WWW", GetMessage('USER_WWW'), false, array("size"=>30, "maxlength"=>255), $str_WORK_WWW);
-$tabControl->AddEditField("WORK_DEPARTMENT", GetMessage('USER_DEPARTMENT'), false, array("size"=>30, "maxlength"=>255), $str_WORK_DEPARTMENT);
-$tabControl->AddEditField("WORK_POSITION", GetMessage('USER_POSITION'), false, array("size"=>30, "maxlength"=>255), $str_WORK_POSITION);
-$tabControl->AddTextField("WORK_PROFILE", GetMessage("USER_WORK_PROFILE"), $str_WORK_PROFILE, array("cols"=>40, "rows"=>5));
-$tabControl->AddFileField("WORK_LOGO", GetMessage("USER_LOGO"), $str_WORK_LOGO, array("iMaxW"=>150, "iMaxH"=>150));
+$tabControl->AddEditField('WORK_COMPANY', GetMessage('USER_COMPANY'), false, ['size' => 30, 'maxlength' => 255], $userData['WORK_COMPANY'], true);
+$tabControl->AddEditField('WORK_WWW', GetMessage('USER_WWW'), false, ['size' => 30, 'maxlength' => 255], $userData['WORK_WWW'], true);
+$tabControl->AddEditField('WORK_DEPARTMENT', GetMessage('USER_DEPARTMENT'), false, ['size' => 30, 'maxlength' => 255], $userData['WORK_DEPARTMENT'], true);
+$tabControl->AddEditField('WORK_POSITION', GetMessage('USER_POSITION'), false, ['size' => 30, 'maxlength' => 255], $userData['WORK_POSITION'], true);
+$tabControl->AddTextField('WORK_PROFILE', GetMessage('USER_WORK_PROFILE'), $userData['WORK_PROFILE'], ['cols' => 40, 'rows' => 5], false, true);
+$tabControl->AddFileField('WORK_LOGO', GetMessage('USER_LOGO'), $userData['WORK_LOGO'], ['iMaxW' => 150, 'iMaxH' => 150]);
 
 $tabControl->AddSection("USER_WORK_PHONES", GetMessage("USER_PHONES"));
-$tabControl->AddEditField("WORK_PHONE", GetMessage('USER_PHONE'), false, array("size"=>30, "maxlength"=>255), $str_WORK_PHONE);
-$tabControl->AddEditField("WORK_FAX", GetMessage('USER_FAX'), false, array("size"=>30, "maxlength"=>255), $str_WORK_FAX);
-$tabControl->AddEditField("WORK_PAGER", GetMessage('USER_PAGER'), false, array("size"=>30, "maxlength"=>255), $str_WORK_PAGER);
+$tabControl->AddEditField('WORK_PHONE', GetMessage('USER_PHONE'), false, ['size' => 30, 'maxlength' => 255], $userData['WORK_PHONE'], true);
+$tabControl->AddEditField('WORK_FAX', GetMessage('USER_FAX'), false, ['size' => 30, 'maxlength' => 255], $userData['WORK_FAX'], true);
+$tabControl->AddEditField('WORK_PAGER', GetMessage('USER_PAGER'), false, ['size' => 30, 'maxlength' => 255], $userData['WORK_PAGER'], true);
 
 $tabControl->AddSection("USER_WORK_POST_ADDRESS", GetMessage("USER_POST_ADDRESS"));
 $tabControl->BeginCustomField("WORK_COUNTRY", GetMessage('USER_COUNTRY'));
 ?>
 	<tr>
-		<td><?echo $tabControl->GetCustomLabelHTML()?></td>
-		<td><?echo SelectBoxFromArray("WORK_COUNTRY", GetCountryArray(), $str_WORK_COUNTRY, GetMessage("USER_DONT_KNOW"));?></td>
+		<td><?= $tabControl->GetCustomLabelHTML()?></td>
+		<td><?= SelectBoxFromArray("WORK_COUNTRY", GetCountryArray(), $userData['WORK_COUNTRY'], GetMessage("USER_DONT_KNOW"));?></td>
 	</tr>
-<?
-$tabControl->EndCustomField("WORK_COUNTRY", '<input type="hidden" name="WORK_COUNTRY" value="'.$str_WORK_COUNTRY.'">');
-$tabControl->AddEditField("WORK_STATE", GetMessage('USER_STATE'), false, array("size"=>30, "maxlength"=>255), $str_WORK_STATE);
-$tabControl->AddEditField("WORK_CITY", GetMessage('USER_CITY'), false, array("size"=>30, "maxlength"=>255), $str_WORK_CITY);
-$tabControl->AddEditField("WORK_ZIP", GetMessage('USER_ZIP'), false, array("size"=>30, "maxlength"=>255), $str_WORK_ZIP);
-$tabControl->AddTextField("WORK_STREET", GetMessage("USER_STREET"), $str_WORK_STREET, array("cols"=>40, "rows"=>3));
-$tabControl->AddEditField("WORK_MAILBOX", GetMessage('USER_MAILBOX'), false, array("size"=>30, "maxlength"=>255), $str_WORK_MAILBOX);
-$tabControl->AddTextField("WORK_NOTES", GetMessage("USER_NOTES"), $str_WORK_NOTES, array("cols"=>40, "rows"=>5));
+<?php
+$tabControl->EndCustomField('WORK_COUNTRY', '<input type="hidden" name="WORK_COUNTRY" value="'.htmlspecialcharsbx($userData['WORK_COUNTRY']).'">');
+$tabControl->AddEditField('WORK_STATE', GetMessage('USER_STATE'), false, ['size' => 30, 'maxlength' => 255], $userData['WORK_STATE'], true);
+$tabControl->AddEditField('WORK_CITY', GetMessage('USER_CITY'), false, ['size' => 30, 'maxlength' => 255], $userData['WORK_CITY'], true);
+$tabControl->AddEditField('WORK_ZIP', GetMessage('USER_ZIP'), false, ['size' => 30, 'maxlength' => 255], $userData['WORK_ZIP'], true);
+$tabControl->AddTextField('WORK_STREET', GetMessage('USER_STREET'), $userData['WORK_STREET'], ['cols' => 40, 'rows' => 3], false, true);
+$tabControl->AddEditField('WORK_MAILBOX', GetMessage('USER_MAILBOX'), false, ['size' => 30, 'maxlength' => 255], $userData['WORK_MAILBOX'], true);
+$tabControl->AddTextField('WORK_NOTES', GetMessage('USER_NOTES'), $userData['WORK_NOTES'], ['cols' => 40, 'rows' => 5], false, true);
 
 $tabControl->BeginNextFormTab();
 $tabControl->BeginCustomField("RATING_BOX", GetMessage("USER_RATING_INFO"));
 ?>
 	<tr>
 		<td width="100%" colspan="100%">
-		<?
+		<?php
 		$i = 1;
 		$aTabs2 = array();
 		$arRatings = array();
@@ -1047,7 +1068,7 @@ $tabControl->BeginCustomField("RATING_BOX", GetMessage("USER_RATING_INFO"));
 				$viewTabControl->BeginNextTab();
 				?>
 					<table cellspacing="7" cellpadding="0" border="0" width="100%" class="edit-table">
-				<?
+				<?php
 					if ($USER->CanDoOperation('edit_ratings') && ($selfEdit || $ID!=$uid)):
 						$showNote = true;
 				?>
@@ -1055,11 +1076,11 @@ $tabControl->BeginCustomField("RATING_BOX", GetMessage("USER_RATING_INFO"));
 						<td class="field-name" width="40%"><?=GetMessage('RATING_BONUS')?>:<sup><span class="required">1</span></sup></td>
 						<td><?=InputType('text', "RATING_BONUS[$ratingId]", floatval($arRatingUserProp['BONUS']), false, false, '', 'size="5" maxlength="11"')?> <?=($ratingWeightType == 'auto'? 'x '.GetMessage('RATING_NORM_VOTE_WEIGHT'): '')?></td>
 					</tr>
-				<? endif; ?>
+				<?php endif; ?>
 					<tr>
 						<td class="field-name" width="40%"><?=GetMessage('RATING_POSITION')?>:</td>
 						<td>
-						<?$APPLICATION->IncludeComponent(
+						<?php $APPLICATION->IncludeComponent(
 							"bitrix:rating.result", "",
 							array(
 								"RESULT_TYPE" 			=> 'POSITION',
@@ -1082,7 +1103,7 @@ $tabControl->BeginCustomField("RATING_BOX", GetMessage("USER_RATING_INFO"));
 						<td class="field-name" width="40%"><?=GetMessage('RATING_PREVIOUS_VALUE')?>:</td>
 						<td><?=floatval($arRatingResult['PREVIOUS_VALUE'] ?? 0);?></td>
 					</tr>
-					<?
+					<?php
 						if ($arRating['AUTHORITY'] == 'Y')
 						{
 							if ($ratingWeightType == 'auto')
@@ -1102,7 +1123,7 @@ $tabControl->BeginCustomField("RATING_BOX", GetMessage("USER_RATING_INFO"));
 									<td class="field-name" width="40%"><?=GetMessage('RATING_VOTE_NORM_VOTE')?>:</td>
 									<td><?=$normVoteCount?></td>
 								</tr>
-								<?
+								<?php
 							}
 							else
 							{
@@ -1121,11 +1142,11 @@ $tabControl->BeginCustomField("RATING_BOX", GetMessage("USER_RATING_INFO"));
 								<td class="field-name" width="40%"><?=GetMessage('RATING_VOTE_AUTHORITY_COUNT')?>:</td>
 								<td><?=floatval($arRatingUserProp['VOTE_COUNT']);?></td>
 							</tr>
-							<?
+							<?php
 						}
 						?>
 					</table>
-				<?
+				<?php
 			}
 			$viewTabControl->End();
 		}
@@ -1136,7 +1157,7 @@ $tabControl->BeginCustomField("RATING_BOX", GetMessage("USER_RATING_INFO"));
 		?>
 		</td>
 	</tr>
-<?
+<?php
 $tabControl->EndCustomField("RATING_BOX");
 
 $db_opt_res = CModule::GetList();
@@ -1162,10 +1183,10 @@ if (($editable && $ID!=$USER->GetID()) || $USER->IsAdmin()):
 	$tabControl->BeginCustomField("ADMIN_NOTES", GetMessage("USER_ADMIN_NOTES"));
 ?>
 	<tr>
-		<td align="center" colspan="2"><textarea name="ADMIN_NOTES" cols="50" rows="10" style="width:100%;"><?echo $str_ADMIN_NOTES?></textarea></td>
+		<td align="center" colspan="2"><textarea name="ADMIN_NOTES" cols="50" rows="10" style="width:100%;"><?= htmlspecialcharsbx($userData['ADMIN_NOTES']) ?></textarea></td>
 	</tr>
-<?
-	$tabControl->EndCustomField("ADMIN_NOTES", '<input type="hidden" name="ADMIN_NOTES" value="'.$str_ADMIN_NOTES.'">');
+<?php
+	$tabControl->EndCustomField('ADMIN_NOTES', '<input type="hidden" name="ADMIN_NOTES" value="'.htmlspecialcharsbx($userData['ADMIN_NOTES']).'">');
 endif;
 
 //Add user fields tab only when there is fields defined or user has rights for adding new field
@@ -1175,7 +1196,7 @@ if(
 )
 {
 	$tabControl->BeginNextFormTab();
-	$tabControl->ShowUserFields($PROPERTY_ID, $ID, ($strError <> '' || !$res));
+	$tabControl->ShowUserFields($PROPERTY_ID, $ID, $showDataFromForm);
 }
 
 if($canViewUserList)
@@ -1202,12 +1223,12 @@ $tabControl->ShowWarnings($tabControl->GetName(), $message);
 ?>
 
 <?php if ($showNote):?>
-<?if(!defined('BX_PUBLIC_MODE') || BX_PUBLIC_MODE != 1):?>
-<?echo BeginNote();?>
-<span class="required">1</span> <?echo GetMessage("RATING_BONUS_NOTICE")?><br>
-<?echo EndNote();?>
-<?endif;?>
+<?php if(!defined('BX_PUBLIC_MODE') || BX_PUBLIC_MODE != 1):?>
+<?= BeginNote();?>
+<span class="required">1</span> <?= GetMessage("RATING_BONUS_NOTICE")?><br>
+<?= EndNote();?>
+<?php endif;?>
 <?php endif;?>
 
-<?
+<?php
 require_once ($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin.php");

@@ -10,11 +10,15 @@
 		BX.message[code] = module.properties[code];
 	}
 
+	const language = window.b24form?.common?.language;
+
 	webPacker.getModules().forEach((mod) => {
-		mod.messages = mod.messages || {};
-		for (const code in mod.messages)
+		const messages = (typeof mod.getMessages === 'function')
+			? mod.getMessages(language)
+			: (mod.messages || {});
+		for (const code in messages)
 		{
-			const mess = mod.messages[code];
+			const mess = messages[code];
 			if (typeof mess === 'undefined' || mess === '')
 			{
 				continue;

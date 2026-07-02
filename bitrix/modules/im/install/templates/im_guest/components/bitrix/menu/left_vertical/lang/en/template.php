@@ -1,0 +1,3 @@
+<?php
+$MESS["IM_GUEST_MENU_LOGO_TEXT"] = "Bitrix24";
+$MESS["IM_GUEST_MENU_NAV_LABEL"] = "Menu";

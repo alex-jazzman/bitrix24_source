@@ -1,5 +1,5 @@
 import { Event } from 'main.core';
-import { MenuManager, Menu } from 'main.popup';
+import { MenuManager } from 'main.popup';
 import { mapGetters } from 'ui.vue3.vuex';
 import { BIcon as Icon, Set as IconSet } from 'ui.icon-set.api.vue';
 

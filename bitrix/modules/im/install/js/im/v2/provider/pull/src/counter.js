@@ -1,16 +1,16 @@
-import { ChatType } from 'im.v2.const';
 import { Core } from 'im.v2.application.core';
+import { type ChatTypeItem } from 'im.v2.const';
 import { CounterClearHandlersByChatType, CounterClearActions } from 'im.v2.lib.counter';
-import { UuidManager } from 'im.v2.lib.uuid';
 import { Logger } from 'im.v2.lib.logger';
+import { UuidManager } from 'im.v2.lib.uuid';
+import { type ImModelCounter } from 'im.v2.model';
 
 import { NewMessageManager } from './classes/new-message-manager';
-
-import type { ImModelCounter } from 'im.v2.model';
-import type { ChatUnreadParams, ChatDeleteParams } from './types/chat';
-import type { ReadAllChannelCommentsParams } from './types/comments';
-import type { MessageAddParams, ReadMessageParams, MultipleMessageDeleteParams } from './types/message';
-import type { PullExtraParams } from './types/common';
+import { type ChatUnreadParams, type ChatDeleteParams } from './types/chat';
+import { type ReadAllChannelCommentsParams } from './types/comments';
+import { type PullExtraParams } from './types/common';
+import { type RecentUpdateParams } from './types/recent';
+import { type MessageAddParams, type ReadMessageParams, type MultipleMessageDeleteParams } from './types/message';
 
 export class CounterPullHandler
 {
@@ -112,6 +112,22 @@ export class CounterPullHandler
 		void Core.getStore().dispatch('counters/setCounters', [counterItem]);
 	}
 
+	handleRecentUpdate(params: RecentUpdateParams)
+	{
+		const { chat, recentConfig } = params;
+
+		// recentUpdate is emitted for parent chat, we add parent item for children counters to work properly
+		const counterItem: ImModelCounter = {
+			chatId: chat.id,
+			isMarkedAsUnread: false,
+			isMuted: false,
+			parentChatId: chat.parent_chat_id,
+			recentSections: recentConfig.sections,
+		};
+
+		void Core.getStore().dispatch('counters/setCounters', [counterItem]);
+	}
+
 	handleChatDelete(params: ChatDeleteParams)
 	{
 		const { chatId } = params;
@@ -126,7 +142,7 @@ export class CounterPullHandler
 		});
 	}
 
-	handleReadAllChatsByType(params: { type: $Values<typeof ChatType> })
+	handleReadAllChatsByType(params: { type: ChatTypeItem })
 	{
 		const { type } = params;
 

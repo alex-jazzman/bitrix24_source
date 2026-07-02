@@ -1,5 +1,6 @@
 import type { ClientDto } from 'booking.provider.service.client-service';
 import type { ResourceDto } from 'booking.provider.service.resources-service';
+import { BookingSource } from 'booking.const';
 
 export type BookingDto = {
 	id: number | null,
@@ -20,6 +21,7 @@ export type BookingDto = {
 	messages: MessageDto[],
 	skus: SkuDto[],
 	payment: PaymentDto,
+	source: $Values<typeof BookingSource>,
 };
 
 export type DealDataDto = {

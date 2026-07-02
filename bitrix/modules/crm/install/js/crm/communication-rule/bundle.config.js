@@ -6,5 +6,4 @@ module.exports = {
 	},
 	namespace: 'BX.Crm',
 	browserslist: true,
-	adjustConfigPhp: false,
 };

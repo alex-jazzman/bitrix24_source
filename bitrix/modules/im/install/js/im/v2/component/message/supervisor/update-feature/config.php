@@ -10,9 +10,9 @@ return [
 	'rel' => [
 		'im.v2.component.elements.button',
 		'im.v2.component.message.supervisor.base',
-		'main.core',
 		'im.v2.lib.analytics',
 		'im.v2.lib.helpdesk',
+		'main.core',
 	],
 	'skip_core' => false,
 ];

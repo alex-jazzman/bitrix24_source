@@ -10,9 +10,9 @@ Result:
 $MESS["BIZPROC_NODES_BITRIX_AI_COACH_MESSAGE_4"] = "Error processing request. Please try again later.";
 $MESS["BIZPROC_NODES_BITRIX_AI_COACH_MESSAGE_5"] = "There are currently no active tests available.";
 $MESS["BIZPROC_NODES_BITRIX_AI_COACH_NAME_1"] = "Employee knowledge assessment agent";
-$MESS["BIZPROC_NODES_BITRIX_AI_COACH_NAME_2"] = "The name of the chat bot that will create tests:";
-$MESS["BIZPROC_NODES_BITRIX_AI_COACH_NAME_3"] = "Show this agent to users:";
-$MESS["BIZPROC_NODES_BITRIX_AI_COACH_NAME_4"] = "The name of the chat bot that will test the employees:";
+$MESS["BIZPROC_NODES_BITRIX_AI_COACH_NAME_2"] = "The name of the chat bot that will create tests";
+$MESS["BIZPROC_NODES_BITRIX_AI_COACH_NAME_3"] = "Show this agent to users";
+$MESS["BIZPROC_NODES_BITRIX_AI_COACH_NAME_4"] = "The name of the chat bot that will test the employees";
 $MESS["BIZPROC_NODES_BITRIX_AI_COACH_NAME_5"] = "Record symbolic code";
 $MESS["BIZPROC_NODES_BITRIX_AI_COACH_NAME_6"] = "Test name";
 $MESS["BIZPROC_NODES_BITRIX_AI_COACH_NAME_7"] = "Test questions";
@@ -83,7 +83,7 @@ Test contents:
 $MESS["BIZPROC_NODES_BITRIX_AI_COACH_TEXT_1"] = "There will be two chat bots. The first one will act as a test author; you will discuss and prepare tests with it. Give it a meaningful name for it (example: \"Sales Department Test Author\").";
 $MESS["BIZPROC_NODES_BITRIX_AI_COACH_TEXT_2"] = "Testing chat bot";
 $MESS["BIZPROC_NODES_BITRIX_AI_COACH_TEXT_3"] = "This chat bot will conduct the employee testing.";
-$MESS["BIZPROC_NODES_BITRIX_AI_COACH_TITLE_1"] = "Node workflow";
+$MESS["BIZPROC_NODES_BITRIX_AI_COACH_TITLE_1"] = "Node-based workflow";
 $MESS["BIZPROC_NODES_BITRIX_AI_COACH_TITLE_2"] = "Chat bot received a message";
 $MESS["BIZPROC_NODES_BITRIX_AI_COACH_TITLE_3"] = "Send message as chat-bot";
 $MESS["BIZPROC_NODES_BITRIX_AI_COACH_TITLE_4"] = "Start AI agent";

@@ -3,6 +3,7 @@ import { Outline, Main } from 'ui.icon-set.api.core';
 import { EventEmitter } from 'main.core.events';
 import { EditConstantPopupForm } from '../edit-constant-popup-form/edit-constant-popup-form';
 import './constant-field.css';
+import type { ConstantConfiguration } from '../../types';
 
 // @vue/component
 export const ConstantField = {
@@ -18,9 +19,9 @@ export const ConstantField = {
 			type: Object,
 			required: true,
 		},
-		/** Record<string, string> */
-		fieldTypeNames: {
-			type: Object,
+		/** @type ConstantConfiguration[] */
+		constantConfigurationList: {
+			type: Array,
 			required: true,
 		},
 	},
@@ -41,9 +42,10 @@ export const ConstantField = {
 	computed: {
 		typeLabel(): string
 		{
-			return this.fieldTypeNames[this.item.constantType]
-				?? this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_ITEM_TYPE_UNSUPPORTED')
-			;
+			return this.constantConfigurationList
+				.find((constantConfiguration: ConstantConfiguration) => constantConfiguration.type === this.item.constantType)
+				?.title
+			?? this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_ITEM_TYPE_UNSUPPORTED');
 		},
 		titleWithType(): string
 		{
@@ -142,7 +144,7 @@ export const ConstantField = {
 				<EditConstantPopupForm
 					v-if="isEdit"
 					:item="item"
-					:fieldTypeNames="fieldTypeNames"
+					:constantConfigurationList="constantConfigurationList"
 					@update:item="onUpdateItem"
 					:isCreation="false"
 				/>

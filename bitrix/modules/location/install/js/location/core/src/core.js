@@ -10,8 +10,8 @@ import SourceRepository from './repository/sourcerepository';
 import FormatTemplateType from './entity/format/formattemplatetype';
 import FormatTemplate from './entity/format/formattemplate';
 import FormatTemplateCollection from './entity/format/formattemplatecollection';
-import {AutocompleteServiceBase} from './base/autocompleteservicebase';
-import type {AutocompleteServiceParams} from './base/autocompleteservicebase';
+import { AutocompleteServiceBase } from './base/autocompleteservicebase';
+import type { AutocompleteServiceParams } from './base/autocompleteservicebase';
 import AutocompleteCache from './common/autocomplete-cache';
 
 import BaseSource from './base/sourcebase';
@@ -25,16 +25,20 @@ import LocationType from './entity/location/locationtype';
 import AddressType from './entity/address/addresstype';
 import LocationFieldType from './entity/location/locationfieldtype';
 
-import LocationJsonConverter from "./entity/location/locationjsonconverter";
+import LocationJsonConverter from './entity/location/locationjsonconverter';
 
 import StringConverter from './entity/address/converter/stringconverter';
-import {SourceCreationError, MethodNotImplemented} from './common/error';
+import { SourceCreationError, MethodNotImplemented } from './common/error';
 import ErrorPublisher from './common/errorpublisher';
 import Storage from './common/storage';
 
 import Point from './common/point';
 
 import DistanceCalculator from './common/distancecalculator';
+
+import CheckInMapEventType from './const/check-in-map-event-type';
+import CheckinMapCommandType from './const/check-in-map-command-type';
+import CheckInMapServiceBase from './base/check-in-map-service-base';
 
 export {
 	Location,
@@ -72,9 +76,13 @@ export {
 	Storage,
 	Point,
 
-	DistanceCalculator
+	DistanceCalculator,
+
+	CheckInMapServiceBase,
+	CheckInMapEventType,
+	CheckinMapCommandType,
 };
 
-export type{
-	AutocompleteServiceParams
+export type {
+	AutocompleteServiceParams,
 };

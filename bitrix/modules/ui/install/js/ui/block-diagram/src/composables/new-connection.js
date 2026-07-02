@@ -8,14 +8,13 @@ import type {
 	DiagramNewConnection,
 	DiagramValidationPortRuleFn,
 	DiagramNormalyzeConnectionFn,
+	DiagramPortsMap,
 } from '../types';
 
 export type UseNewConnection = {
 	isSourcePort: boolean;
-	isValid: boolean;
+	isTargetPort: boolean;
 	onMouseDownPort: (event: MouseEvent) => void;
-	onMouseOverPort: () => void;
-	onMouseLeavePort: () => void;
 };
 
 export type useNewConnectionOptions = {
@@ -32,55 +31,34 @@ export function useNewConnection(options: useNewConnectionOptions): UseNewConnec
 	const {
 		isDisabledBlockDiagram,
 		newConnection,
-		isValidNewConnection,
 		portsRectMap,
-		blockDiagramTop,
-		blockDiagramLeft,
-		zoom,
-		transformX,
-		transformY,
+		portsValidationsFnMap,
+		validPortsMap,
 		addConnection,
+		portsNearest,
+		blockIntersections,
+		transformMouseEventToPoint,
 	} = useBlockDiagram();
 	const {
 		block,
 		port,
 		position,
-		validationRules = null,
 		normalyzeConnectionFn = null,
 	} = options;
 	const isSourcePort = ref(false);
 
-	const isValid = computed((): boolean => {
-		if (toValue(newConnection) === null)
-		{
-			return true;
-		}
-
+	const isTargetPort = computed((): boolean => {
 		const {
-			sourceBlockId,
-			sourcePortId,
-			targetBlockId,
-			targetPortId,
-		} = toValue(newConnection);
+			targetBlockId = null,
+			targetPortId = null,
+		} = toValue(newConnection) ?? {};
 
-		if (targetPortId === null)
-		{
-			return true;
-		}
-
-		const isSource = toValue(block).id === sourceBlockId && toValue(port).id === sourcePortId;
-		const isTarget = toValue(block).id === targetBlockId && toValue(port).id === targetPortId;
-
-		if (isSource || isTarget)
-		{
-			return toValue(isValidNewConnection);
-		}
-
-		return true;
+		return toValue(block).id === targetBlockId && toValue(port).id === targetPortId;
 	});
 
-	function validateNewConnection(
+	function validateConnection(
 		rules: Array<DiagramValidationPortRuleFn> | DiagramValidationPortRuleFn | null,
+		connection: DiagramNewConnection,
 	): boolean
 	{
 		if (rules === null)
@@ -90,7 +68,7 @@ export function useNewConnection(options: useNewConnectionOptions): UseNewConnec
 
 		if (Type.isArray(rules))
 		{
-			return rules.every((rule) => rule(toValue(newConnection)));
+			return rules.every((rule) => rule(toValue(connection)));
 		}
 
 		if (!Type.isFunction(rules))
@@ -98,25 +76,61 @@ export function useNewConnection(options: useNewConnectionOptions): UseNewConnec
 			return true;
 		}
 
-		return rules(toValue(newConnection));
+		return rules(toValue(connection));
+	}
+
+	function getValidPorts(
+		portsMap: DiagramPortsMap,
+		connection: DiagramNewConnection,
+	): DiagramPortsMap
+	{
+		const filteredPortsMap = new Map();
+
+		for (const [blockId, ports] of toValue(portsMap).entries())
+		{
+			for (const [portId, targetPort] of ports.entries())
+			{
+				const rules = toValue(portsValidationsFnMap).get(blockId).get(portId);
+				const isValidConnection = validateConnection(rules, {
+					...toValue(connection),
+					targetBlockId: blockId,
+					targetPortId: portId,
+					targetPort: { ...toValue(targetPort) },
+				});
+
+				if (!isValidConnection)
+				{
+					continue;
+				}
+
+				if (!filteredPortsMap.has(blockId))
+				{
+					filteredPortsMap.set(blockId, new Map());
+				}
+
+				filteredPortsMap.get(blockId).set(portId, targetPort);
+			}
+		}
+
+		return filteredPortsMap;
 	}
 
 	function normalyzeNewConnection(
-		newConnection: DiagramNewConnection,
+		connection: DiagramNewConnection,
 		normalyzeFn: DiagramNormalyzeConnectionFn | null = null,
 	): DiagramAddConnection
 	{
 		if (Type.isFunction(normalyzeFn))
 		{
-			return normalyzeFn(newConnection);
+			return normalyzeFn(connection);
 		}
 
 		return {
-			id: newConnection.id,
-			sourceBlockId: newConnection.sourceBlockId,
-			sourcePortId: newConnection.sourcePortId,
-			targetBlockId: newConnection.targetBlockId,
-			targetPortId: newConnection.targetPortId,
+			id: connection.id,
+			sourceBlockId: connection.sourceBlockId,
+			sourcePortId: connection.sourcePortId,
+			targetBlockId: connection.targetBlockId,
+			targetPortId: connection.targetPortId,
 		};
 	}
 
@@ -131,10 +145,11 @@ export function useNewConnection(options: useNewConnectionOptions): UseNewConnec
 
 		isSourcePort.value = true;
 		const portRect = toValue(portsRectMap)?.[toValue(block).id]?.[toValue(port).id];
-		const startPosition = {
+		const start = {
 			x: portRect.x + (portRect.width / 2),
 			y: portRect.y + (portRect.height / 2),
 		};
+		const center = transformMouseEventToPoint(event);
 
 		newConnection.value = {
 			id: Text.getRandom(),
@@ -145,9 +160,16 @@ export function useNewConnection(options: useNewConnectionOptions): UseNewConnec
 			targetBlockId: null,
 			targetPortId: null,
 			targetPort: null,
-			start: startPosition,
-			end: startPosition,
+			start,
+			center,
+			end: null,
 		};
+
+		validPortsMap.value = getValidPorts(
+			blockIntersections.visiblePorts,
+			newConnection,
+		);
+		portsNearest.init(toValue(validPortsMap));
 
 		Event.bind(document, 'mousemove', onMouseMove);
 		Event.bind(document, 'mouseup', onMouseUp);
@@ -160,13 +182,40 @@ export function useNewConnection(options: useNewConnectionOptions): UseNewConnec
 			return;
 		}
 
-		const x: number = event.clientX / toValue(zoom);
-		const y: number = event.clientY / toValue(zoom);
+		const point = transformMouseEventToPoint(event);
+		const [nearestPort] = portsNearest.nearest(point, 1, 100)?.[0] ?? [null];
+		const isSamePorts = toValue(newConnection).sourceBlockId === nearestPort?.blockId
+			&& toValue(newConnection).sourcePortId === nearestPort?.portId;
 
-		newConnection.value.end = {
-			x: x + toValue(transformX) - (toValue(blockDiagramLeft) / toValue(zoom)),
-			y: y + toValue(transformY) - (toValue(blockDiagramTop) / toValue(zoom)),
-		};
+		if (nearestPort && !isSamePorts)
+		{
+			const portRect = toValue(portsRectMap)
+				?.[nearestPort.blockId]
+				?.[nearestPort.portId];
+
+			newConnection.value = {
+				...toValue(newConnection),
+				targetBlockId: nearestPort.blockId,
+				targetPortId: nearestPort.portId,
+				targetPort: nearestPort.port,
+				center: point,
+				end: {
+					x: portRect.x + (portRect.width / 2),
+					y: portRect.y + (portRect.height / 2),
+				},
+			};
+		}
+		else
+		{
+			newConnection.value = {
+				...toValue(newConnection),
+				targetBlockId: null,
+				targetPortId: null,
+				targetPort: null,
+				center: point,
+				end: null,
+			};
+		}
 	}
 
 	function onMouseUp(event: MouseEvent): void
@@ -187,7 +236,7 @@ export function useNewConnection(options: useNewConnectionOptions): UseNewConnec
 		const hasSourceIds = sourceBlockId !== null && sourcePortId !== null;
 		const hasTargetIds = targetBlockId !== null && targetPortId !== null;
 
-		if (!isSamePort && hasSourceIds && hasTargetIds && toValue(isValidNewConnection))
+		if (!isSamePort && hasSourceIds && hasTargetIds)
 		{
 			addConnection(
 				normalyzeNewConnection(
@@ -203,43 +252,9 @@ export function useNewConnection(options: useNewConnectionOptions): UseNewConnec
 		Event.unbind(document, 'mouseup', onMouseUp);
 	}
 
-	function onMouseOverPort(): void
-	{
-		if (toValue(isDisabledBlockDiagram))
-		{
-			return;
-		}
-
-		if (toValue(newConnection) !== null)
-		{
-			newConnection.value.targetBlockId = toValue(block).id;
-			newConnection.value.targetPortId = toValue(port).id;
-			newConnection.value.targetPort = { ...toValue(port) };
-			isValidNewConnection.value = validateNewConnection(toValue(validationRules));
-		}
-	}
-
-	function onMouseLeavePort(): void
-	{
-		if (toValue(isDisabledBlockDiagram))
-		{
-			return;
-		}
-
-		if (toValue(newConnection) !== null)
-		{
-			newConnection.value.targetBlockId = null;
-			newConnection.value.targetPortId = null;
-			newConnection.value.targetPort = null;
-			isValidNewConnection.value = true;
-		}
-	}
-
 	return {
 		isSourcePort,
-		isValid,
+		isTargetPort,
 		onMouseDownPort,
-		onMouseOverPort,
-		onMouseLeavePort,
 	};
 }

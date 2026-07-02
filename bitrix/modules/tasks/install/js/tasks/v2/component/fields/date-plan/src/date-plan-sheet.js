@@ -413,11 +413,27 @@ export const DatePlanSheet = {
 		},
 		handleTemplateUpdate(): void
 		{
-			void taskService.update(this.taskId, {
+			const updateFields = {
 				startDatePlanAfter: Number(this.startDatePlanAfter),
 				endDatePlanAfter: Number(this.startDatePlanAfter + this.templateDuration),
 				matchesWorkTime: this.matchesWorkTime,
-			});
+			};
+
+			const isMatchesWorkTimeChanged = this.task.matchesWorkTime !== this.matchesWorkTime;
+
+			if (
+				this.task.deadlineAfter
+				&& isMatchesWorkTimeChanged
+			)
+			{
+				updateFields.deadlineAfter = calendar.recalculateDurationByMatchWorkTime(
+					this.task.deadlineAfter,
+					this.task.matchesWorkTime,
+					this.matchesWorkTime,
+				);
+			}
+
+			void taskService.update(this.taskId, updateFields);
 		},
 		async handleTaskUpdate(): void
 		{

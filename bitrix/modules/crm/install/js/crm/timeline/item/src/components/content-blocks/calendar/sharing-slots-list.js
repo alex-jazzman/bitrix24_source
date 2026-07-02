@@ -1,6 +1,6 @@
 import { Dom, Loc, Tag, Event, Text } from 'main.core';
 import { Util } from 'calendar.util';
-import { Popup, PopupOptions } from 'main.popup';
+import { Popup, type PopupOptions } from 'main.popup';
 
 type RuleData = {
 	rule: {
@@ -17,7 +17,6 @@ type RuleData = {
 export default {
 	data(): Object {
 		return {
-			popup: null,
 			moreLinkRef: null,
 		};
 	},

@@ -23,8 +23,10 @@
 
 .crm-item-import__field.--tag-selector.--row .ui-form-label {
 	flex: 0 0 32%;
+	min-width: 0;
 	display: flex;
 	align-items: center;
+	padding-right: 10px;
 }
 
 .crm-item-import__field.--tag-selector.--row .ui-ctl-label-text {
@@ -33,6 +35,7 @@
 	-webkit-box-orient: vertical;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	word-break: break-word;
 	line-height: 1.4;
 	max-height: calc(1.4em * 2);
 	padding: 0;

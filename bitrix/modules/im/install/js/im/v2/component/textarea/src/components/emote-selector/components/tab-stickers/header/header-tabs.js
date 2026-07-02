@@ -1,14 +1,14 @@
-import { PermissionManager } from 'im.v2.lib.permission';
 import { ActionByUserType } from 'im.v2.const';
+import { PermissionManager } from 'im.v2.lib.permission';
+import { type ImModelStickerPack } from 'im.v2.model';
+import { horizontalScroll } from 'im.v2.lib.directives';
 
 import { HeaderAddButton } from './header-add-button';
+import { HeaderHighlight } from './header-highlight';
 import { HeaderItem } from './header-item';
 import { HeaderSkeleton } from './header-skeleton';
-import { HeaderHighlight } from './header-highlight';
 
 import '../css/header/header-tabs.css';
-
-import type { ImModelStickerPack } from 'im.v2.model';
 
 const SCROLL_LOADING_OFFSET = 200;
 
@@ -16,6 +16,7 @@ const SCROLL_LOADING_OFFSET = 200;
 export const HeaderTabs = {
 	name: 'HeaderTabs',
 	components: { HeaderItem, HeaderSkeleton, HeaderAddButton, HeaderHighlight },
+	directives: { horizontalScroll },
 	props: {
 		dialogId: {
 			type: String,
@@ -96,22 +97,6 @@ export const HeaderTabs = {
 			const pack = this.$refs.tabs.children[packIndex];
 			pack.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
 		},
-		onWheel(event: WheelEvent)
-		{
-			const { deltaX, deltaY, shiftKey } = event;
-			const absX = Math.abs(deltaX);
-			const absY = Math.abs(deltaY);
-
-			const isHorizontalScroll = absX > absY || shiftKey;
-			if (isHorizontalScroll)
-			{
-				return;
-			}
-
-			// vertical scroll - convert to horizontal scroll
-			event.preventDefault();
-			this.$refs.tabs.scrollLeft += Number(deltaY);
-		},
 		loc(phraseCode: string): string
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode);
@@ -119,9 +104,9 @@ export const HeaderTabs = {
 	},
 	template: `
 		<div
-			class="bx-im-sticker-header-tabs__container"
+			v-horizontal-scroll
+			class="bx-im-sticker-header-tabs__container --hidden-scroll"
 			@scroll="onScrollHeader"
-			@wheel="onWheel"
 			ref="tabs"
 		>
 			<HeaderAddButton 

@@ -149,8 +149,7 @@
 .menu-items-body::-webkit-scrollbar {
 	width: 6px;
 	background-color: rgba(0, 0, 0, 0);
-	-webkit-appearance: none;
-	        appearance: none;
+	appearance: none;
 }
 
 /* for and safari */
@@ -351,8 +350,7 @@
 }
 
 .menu-items-view-mode .menu-item-block:not(.menu-item-group):not(.menu-item-draggable) .menu-item-link {
-	-webkit-clip-path: inset(0 0 0 0);
-	        clip-path: inset(0 0 0 0);
+	clip-path: inset(0 0 0 0);
 	-webkit-mask-image: linear-gradient(to left, rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 1) 0px);
 	        mask-image: linear-gradient(to left, rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 1) 0px);
 	-webkit-mask-position: 0 0;
@@ -362,11 +360,10 @@
 .menu-items-view-mode .menu-item-block:not(.menu-item-group):not(.menu-item-draggable):hover .menu-item-link,
 .menu-items-view-mode .menu-item-block:not(.menu-item-group):not(.menu-item-draggable).menu-item-block-hover .menu-item-link,
 .menu-items-edit-mode .menu-item-block:not(.menu-item-group):not(.menu-item-draggable) .menu-item-link {
-	-webkit-clip-path: inset(0 var(--menu-item-link-edit-icon-space) 0 0);
-	        clip-path: inset(0 var(--menu-item-link-edit-icon-space) 0 0);
-	transition: -webkit-clip-path .3s .6s, -webkit-mask-position .3s .6s;
+	clip-path: inset(0 var(--menu-item-link-edit-icon-space) 0 0);
+	transition: clip-path .3s .6s, -webkit-mask-position .3s .6s;
 	transition: clip-path .3s .6s, mask-position .3s .6s;
-	transition: clip-path .3s .6s, mask-position .3s .6s, -webkit-clip-path .3s .6s, -webkit-mask-position .3s .6s;
+	transition: clip-path .3s .6s, mask-position .3s .6s, -webkit-mask-position .3s .6s;
 	-webkit-mask-image: linear-gradient(to left, rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 1) var(--menu-item-link-edit-icon-space));
 	        mask-image: linear-gradient(to left, rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 1) var(--menu-item-link-edit-icon-space));
 	-webkit-mask-position: calc(var(--menu-item-link-edit-icon-space) * -1) 0;
@@ -378,15 +375,18 @@
 	outline: revert;
 	outline-offset: 2px;
 	border-radius: var(--menu-item-border-radius, 4px);
-	-webkit-clip-path: none;
-	        clip-path: none;
+	clip-path: none;
 	-webkit-mask-image: none;
 	        mask-image: none;
 }
 
+html[data-input-modality="pointer"] .menu-items-view-mode .menu-item-link:focus-visible,
+html[data-input-modality="pointer"] .menu-items-view-mode .menu-item-block:not(.menu-item-group):not(.menu-item-draggable) .menu-item-link:focus-visible {
+	outline: none;
+}
+
 .menu-items-view-mode .menu-item-block.menu-all-groups:not(.menu-item-draggable) .menu-item-link {
-	-webkit-clip-path: inset(0 0 0 0);
-	        clip-path: inset(0 0 0 0);
+	clip-path: inset(0 0 0 0);
 	-webkit-mask-image: linear-gradient(to left, rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 1) 0px);
 	        mask-image: linear-gradient(to left, rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 1) 0px);
 	-webkit-mask-position: 0 0;
@@ -397,11 +397,10 @@
 .menu-items-view-mode .menu-item-block.menu-all-groups:not(.menu-item-draggable).menu-item-block-hover .menu-item-link,
 .menu-items-edit-mode .menu-item-block.menu-all-groups:not(.menu-item-draggable) .menu-item-link {
 	--mask-size: 38px;
-	-webkit-clip-path: inset(0 var(--mask-size) 0 0);
-	        clip-path: inset(0 var(--mask-size) 0 0);
-	transition: -webkit-clip-path .15s, -webkit-mask-position .1s ease-in-out;
+	clip-path: inset(0 var(--mask-size) 0 0);
+	transition: clip-path .15s, -webkit-mask-position .1s ease-in-out;
 	transition: clip-path .15s, mask-position .1s ease-in-out;
-	transition: clip-path .15s, mask-position .1s ease-in-out, -webkit-clip-path .15s, -webkit-mask-position .1s ease-in-out;
+	transition: clip-path .15s, mask-position .1s ease-in-out, -webkit-mask-position .1s ease-in-out;
 	-webkit-mask-image: linear-gradient(to left, rgba(0, 0, 0, 0) calc(var(--mask-size) / 1.5), rgba(0, 0, 0, 1) var(--mask-size));
 	        mask-image: linear-gradient(to left, rgba(0, 0, 0, 0) calc(var(--mask-size) / 1.5), rgba(0, 0, 0, 1) var(--mask-size));
 	-webkit-mask-position: calc(var(--mask-size) * -1) 0;
@@ -411,8 +410,7 @@
 .menu-collapsed-mode:not(.menu-sliding-mode) .menu-item-block:not(.menu-item-group):not(.menu-item-draggable) .menu-item-link,
 .menu-animation-closing-mode .menu-item-block:not(.menu-item-group):not(.menu-item-draggable) .menu-item-link,
 .menu-collapsed-mode:not(.menu-sliding-mode) .menu-item-block:not(.menu-item-group):not(.menu-item-draggable):hover .menu-item-link {
-	-webkit-clip-path: none;
-	        clip-path: none;
+	clip-path: none;
 	transition: none;
 	-webkit-mask-image: none;
 	        mask-image: none;
@@ -787,6 +785,11 @@ button.menu-item-link {
 	--menu-item-icon-active: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='25' fill='none' viewBox='0 0 24 25'%3E%3Cpath fill='%23fff' d='M6.273 5.23a2.5 2.5 0 0 0-2.5 2.5v4.9c0 1.09.698 2.018 1.671 2.36v1.81a.9.9 0 0 0 1.511.66l.375-.345a2.7 2.7 0 0 1-.055-.544V10.71a2.9 2.9 0 0 1 2.9-2.9h5.956v-.082a2.5 2.5 0 0 0-2.5-2.5z'/%3E%3Cpath fill='%23fff' d='M19.91 11.847a2.4 2.4 0 0 0-2.4-2.4h-5.885a2.4 2.4 0 0 0-2.4 2.4v4.004a2.4 2.4 0 0 0 2.4 2.4h3.627l2.117 1.95a.7.7 0 0 0 1.175-.515v-1.669a2.4 2.4 0 0 0 1.365-2.166z'/%3E%3C/svg%3E");
 }
 
+.menu-im-copilot .menu-item-icon {
+	--menu-item-icon-default: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' viewBox='0 0 24 24'%3E%3Cpath fill='%23fff' fill-rule='evenodd' d='M10.955 7.953c.377-.657 1.35-.657 1.726 0l.072.152.565 1.483a1.8 1.8 0 0 0 1.041 1.042l1.484.565c.858.327.858 1.542 0 1.869l-1.484.565a1.8 1.8 0 0 0-1.04 1.041l-.566 1.484c-.327.858-1.542.858-1.87 0l-.564-1.484a1.8 1.8 0 0 0-1.042-1.04l-1.483-.566c-.858-.328-.858-1.542 0-1.87l1.483-.564a1.8 1.8 0 0 0 1.042-1.042l.565-1.483zm.672 2.133a3.2 3.2 0 0 1-1.852 1.852l-.503.191.503.192a3.2 3.2 0 0 1 1.852 1.851l.191.502.192-.502a3.2 3.2 0 0 1 1.851-1.851l.502-.192-.502-.191a3.2 3.2 0 0 1-1.851-1.852l-.192-.503z' clip-rule='evenodd'/%3E%3Cpath fill='%23fff' d='M15.275 7.634c.132-.449.737-.477.928-.084l.032.084.114.395.396.115c.48.14.48.82 0 .96l-.396.114-.114.396c-.14.479-.82.479-.96 0l-.115-.396-.395-.114c-.479-.14-.479-.82 0-.96l.395-.115z'/%3E%3Cpath fill='%23fff' fill-rule='evenodd' d='M10.353 2.871c.655.059 1.291.397 1.908.99.16.154.308.305.44.444q.073 0 .147.016l.006.002.019.003.073.016.273.058.92.199c.735.159 1.65.357 2.368.517.657.147 1.863.377 2.7.987.447.325.836.788.976 1.431.137.634.01 1.337-.355 2.104a14 14 0 0 1-.408.781l.004.017h-.001v.008l.004.02.006.08.027.296.09.998c.072.792.16 1.767.222 2.498.03.35.079.819.081 1.293.003.473-.039 1.01-.215 1.505-.182.51-.515.996-1.09 1.3-.559.296-1.26.372-2.093.257l-.347-.053-.05.022-.26.113-.883.38c-.703.305-1.571.683-2.235.98-.316.141-.75.347-1.2.512-.451.165-.978.314-1.51.324-.545.01-1.129-.125-1.62-.559-.48-.424-.79-1.062-.956-1.891a13 13 0 0 1-.119-.694.7.7 0 0 1-.103-.1l-.004-.005-.01-.014-.049-.055q-.061-.075-.175-.207c-.15-.176-.36-.422-.601-.7a66 66 0 0 0-1.578-1.77c-.23-.244-.576-.593-.886-.961-.313-.371-.64-.82-.842-1.317-.205-.509-.294-1.108-.058-1.725.23-.605.731-1.114 1.464-1.541q.263-.153.483-.269c0-.12.027-.243.093-.355v-.002l.003-.003.008-.017.038-.061q.046-.083.133-.23l.458-.784c.368-.626.831-1.41 1.21-2.04.35-.582.96-1.67 1.815-2.292.451-.329 1.018-.565 1.68-.506m-.124 1.395c-.233-.02-.47.053-.731.244-.573.417-1.034 1.205-1.439 1.879-.375.624-.835 1.404-1.202 2.03l-.312.531a.7.7 0 0 1 .132.215.7.7 0 0 1-.283.84l-.127.062-.01.004-.051.02q-.072.03-.219.099c-.195.091-.486.237-.848.449-.568.33-.783.626-.862.832-.074.195-.066.416.048.7.12.294.336.611.613.94.28.331.568.617.84.907.51.545 1.127 1.247 1.613 1.81q.162.186.301.35a.7.7 0 0 1 .86.5l.022.14v.003l.001.018.005.077q.008.104.03.3c.028.257.076.619.157 1.028.13.648.338.962.512 1.117.164.144.372.214.663.209.306-.006.664-.096 1.055-.24.391-.143.758-.316 1.11-.474.673-.301 1.548-.682 2.252-.987l.03-.013a.7.7 0 0 1 .004-.243.7.7 0 0 1 .828-.544h.002l.02.005.075.013q.1.02.29.054c.25.044.61.104 1.038.163.658.091 1.034.004 1.247-.108.199-.105.334-.273.426-.532.098-.274.137-.625.135-1.028-.002-.402-.043-.8-.076-1.18-.063-.728-.15-1.701-.222-2.493l-.05-.536a.7.7 0 0 1-.302-1.023l.003-.004.012-.019.05-.078c.042-.069.105-.17.178-.295.147-.251.338-.595.516-.97.282-.593.302-.973.251-1.208-.048-.224-.184-.415-.43-.594-.55-.4-1.411-.58-2.183-.752-.712-.16-1.623-.358-2.357-.517l-.418-.09a.7.7 0 0 1-1.153.067l-.003-.003-.01-.015-.05-.061a12 12 0 0 0-.919-.994c-.469-.451-.822-.584-1.062-.605' clip-rule='evenodd'/%3E%3C/svg%3E");
+	--menu-item-icon-active: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' viewBox='0 0 24 24'%3E%3Cpath fill='%23fff' fill-rule='evenodd' d='M10.345 2.97c.625.056 1.24.38 1.846.962q.262.254.471.478c.436.085 1.123.215 1.457.287.735.159 1.65.359 2.366.519.666.148 1.847.374 2.664.968.432.315.803.759.936 1.372.13.605.011 1.286-.348 2.04-.141.298-.291.572-.422.805.021.205.111 1.16.137 1.444.071.792.159 1.767.222 2.498.03.35.077.816.08 1.285.002.468-.04.991-.21 1.47-.176.493-.495.956-1.042 1.246-.535.282-1.213.36-2.033.246q-.197-.028-.373-.056l-.006.003-.07.03-.261.111-.883.381c-.704.305-1.573.684-2.237.982-.318.142-.747.346-1.194.51-.446.163-.961.307-1.476.317-.528.01-1.084-.121-1.551-.534-.459-.405-.763-1.021-.925-1.837a13 13 0 0 1-.123-.732c-.23-.247-.727-.816-.962-1.087a66 66 0 0 0-1.58-1.774c-.23-.248-.575-.592-.883-.957-.31-.368-.63-.808-.826-1.29-.199-.493-.28-1.065-.056-1.651.22-.577.7-1.071 1.421-1.492q.296-.172.533-.295a12 12 0 0 1 .718-1.459c.367-.626.831-1.41 1.21-2.04.353-.588.954-1.654 1.788-2.261.438-.32.98-.545 1.612-.488m2.034 5.277a.6.6 0 0 0-1.121 0l-.566 1.483a2.2 2.2 0 0 1-1.272 1.273l-1.484.565a.6.6 0 0 0 0 1.121l1.484.566a2.2 2.2 0 0 1 1.272 1.272l.566 1.485a.6.6 0 0 0 1.12 0l.566-1.485a2.2 2.2 0 0 1 1.273-1.272l1.484-.566a.6.6 0 0 0 0-1.12l-1.484-.566a2.2 2.2 0 0 1-1.273-1.273zm3.78-.673c-.171-.354-.716-.33-.835.075l-.123.421-.42.123c-.432.127-.432.738 0 .864l.42.123.123.42c.126.432.738.432.864 0l.122-.42.421-.123c.431-.126.431-.737 0-.864l-.42-.123-.123-.42z' clip-rule='evenodd'/%3E%3C/svg%3E");
+}
+
 .menu-im-collab .menu-item-icon {
 	--menu-item-icon-default: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26' fill='none' viewBox='0 0 26 26'%3E%3Cpath fill='%23000' fill-rule='evenodd' d='M15.167 4.221a4.33 4.33 0 0 0-4.334 0L6.48 6.735a4.33 4.33 0 0 0-2.167 3.752v5.027c0 1.548.826 2.979 2.167 3.753l4.353 2.513a4.33 4.33 0 0 0 4.334 0l4.353-2.513a4.33 4.33 0 0 0 2.167-3.753v-5.027a4.33 4.33 0 0 0-2.167-3.752zm3.595 3.827-4.354-2.513a2.82 2.82 0 0 0-2.816 0L7.238 8.048a2.82 2.82 0 0 0-1.408 2.44v5.026a2.82 2.82 0 0 0 1.408 2.44l4.354 2.513a2.82 2.82 0 0 0 2.816 0l4.354-2.514a2.82 2.82 0 0 0 1.408-2.44v-5.026a2.82 2.82 0 0 0-1.408-2.439m-4.68-.442a2.16 2.16 0 0 0-2.163 0L8.87 9.366a2.16 2.16 0 0 0-1.081 1.873v3.521c0 .773.412 1.487 1.081 1.873l3.05 1.76a2.16 2.16 0 0 0 2.162 0l3.05-1.76a2.16 2.16 0 0 0 1.08-1.873v-3.52c0-.773-.412-1.486-1.08-1.873zm2.291 3.074-3.05-1.76a.65.65 0 0 0-.645 0l-3.05 1.76a.65.65 0 0 0-.323.559v3.521c0 .23.124.444.323.56l3.05 1.76c.2.116.446.116.646 0l3.05-1.76a.65.65 0 0 0 .322-.56v-3.52a.65.65 0 0 0-.323-.56' clip-rule='evenodd'/%3E%3C/svg%3E");
 	--menu-item-icon-active: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' viewBox='0 0 24 24'%3E%3Cpath fill='%23fff' d='M12.998 7.02a2 2 0 0 0-1.997 0L8.187 8.646a2 2 0 0 0-.999 1.728v3.25c0 .714.38 1.373.999 1.73L11 16.978a2 2 0 0 0 1.997 0l2.815-1.626a2 2 0 0 0 .998-1.728v-3.25c0-.714-.381-1.373-.998-1.73z'/%3E%3Cpath fill='%23fff' fill-rule='evenodd' d='M10 3.895a4 4 0 0 1 4 0l4.018 2.32a4 4 0 0 1 2 3.464v4.64a4 4 0 0 1-2 3.464L14 20.104a4 4 0 0 1-4 0l-4.019-2.32a4 4 0 0 1-2-3.464V9.68a4 4 0 0 1 2-3.464zm3.3 1.213 4.018 2.32a2.6 2.6 0 0 1 1.3 2.251v4.64a2.6 2.6 0 0 1-1.3 2.252l-4.018 2.32a2.6 2.6 0 0 1-2.6 0l-4.019-2.32a2.6 2.6 0 0 1-1.3-2.252V9.68a2.6 2.6 0 0 1 1.3-2.251l4.019-2.32a2.6 2.6 0 0 1 2.6 0' clip-rule='evenodd'/%3E%3C/svg%3E");
@@ -795,6 +798,11 @@ button.menu-item-link {
 .menu-all-groups .menu-item-icon {
 	--menu-item-icon-default: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26' fill='none' viewBox='0 0 26 26'%3E%3Cpath fill='%23000' fill-rule='evenodd' d='M11.007 6.048c-2.74 1.957-1.831 7.494 2.04 7.494 4.646 0 5.047-8.125 0-8.125-.71 0-1.585.306-2.04.631m1.388 1.007a2 2 0 0 0-.507.227c-.74.529-1.135 1.702-.861 2.912.259 1.146.986 1.831 2.02 1.831.667 0 1.141-.272 1.487-.703.374-.464.614-1.145.632-1.88.018-.736-.189-1.386-.528-1.817-.306-.389-.784-.691-1.592-.691a2.3 2.3 0 0 0-.65.12m-3.905.238c-.493.041-1.048.25-1.351.472-2.047 1.488-1.368 5.696 1.52 5.696q.188 0 .363-.023c-.07-.26-.236-.872-.398-1.494-.507-.014-.928-.346-1.096-1.102-.185-.832.102-1.56.5-1.85a1 1 0 0 1 .14-.07c.033-.55.137-1.102.32-1.628m-3.045 7.345c.747-.47 1.617-.687 2.453-.764l-.004.135a.86.86 0 0 1-.147.504c-.175.24-.428.515-.715.827l-.317.346q-.247.1-.464.236c-.52.327-.943.843-1.097 1.71h.13a4.7 4.7 0 0 0-.505 1.516h-.04c-.63 0-1.198-.524-1.147-1.22.115-1.579.829-2.647 1.853-3.29m11.882-1.178c3.364 0 3.746-5.812.326-6.159a6 6 0 0 1 .296 1.647.9.9 0 0 1 .255.23c.192.249.332.66.32 1.158s-.173.938-.395 1.22a.94.94 0 0 1-.732.386l-.177.588c-.121.398-.22.722-.26.906a3 3 0 0 0 .367.024m.774.548a2 2 0 0 0-.01-.135c.839.076 1.714.293 2.464.765 1.024.643 1.738 1.711 1.853 3.29.051.696-.518 1.22-1.148 1.22h-.039a4.7 4.7 0 0 0-.505-1.517h.13c-.154-.866-.576-1.382-1.097-1.709a3 3 0 0 0-.463-.235l-.318-.348c-.287-.312-.54-.588-.716-.828a.9.9 0 0 1-.151-.503m-5.1.076c-1.467 0-3.1.233-4.428.995-1.373.787-2.372 2.116-2.536 4.142-.064.778.573 1.363 1.276 1.363h11.375c.703 0 1.339-.585 1.276-1.363-.165-2.026-1.163-3.355-2.537-4.142-1.328-.762-2.96-.995-4.427-.995m3.671 2.31c.897.514 1.569 1.33 1.75 2.673H7.578c.181-1.343.853-2.159 1.75-2.673 1.002-.574 2.33-.794 3.672-.794s2.67.22 3.672.794' clip-rule='evenodd'/%3E%3C/svg%3E");
 	--menu-item-icon-active: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' viewBox='0 0 24 24'%3E%3Cpath fill='%23fff' d='M10.344 5.727c-2.275 1.666-1.52 6.38 1.693 6.38 3.857 0 4.19-6.918 0-6.918-.59 0-1.315.261-1.693.538m1.631 7.476c-1.265 0-2.674.207-3.82.882-1.186.699-2.049 1.877-2.19 3.673a1.113 1.113 0 0 0 1.101 1.209h9.818c.607 0 1.156-.519 1.102-1.209-.142-1.796-1.004-2.974-2.19-3.673-1.146-.675-2.555-.882-3.82-.882m4.09-.767c3.105 0 3.458-5.364.301-5.685.163.493.252 1.009.273 1.52.024 1.168-.187 2.078-.52 3.173-.06.197-.159.414-.243.599-.072.158-.134.293-.15.371q.164.022.339.022m.607.361c.771.071 1.575.271 2.265.705.945.593 1.604 1.58 1.71 3.036.047.644-.477 1.127-1.06 1.127h-.036c-.269-1.903-1.577-3.635-2.74-4.278a.8.8 0 0 1-.136-.465q0-.07-.003-.125M7.76 6.751c-3.157.32-2.804 5.685.301 5.685q.175 0 .34-.022a3 3 0 0 0-.151-.371c-.084-.185-.183-.402-.243-.6-.333-1.094-.545-2.004-.52-3.172.021-.511.11-1.027.273-1.52m-2.571 6.751c.69-.434 1.494-.634 2.265-.705l-.003.125a.8.8 0 0 1-.136.465c-1.163.643-2.471 2.375-2.74 4.278h-.037c-.582 0-1.106-.483-1.06-1.127.107-1.456.766-2.443 1.711-3.036'/%3E%3C/svg%3E");
+}
+
+.menu-all-projects .menu-item-icon {
+	--menu-item-icon-default: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26' fill='none' viewBox='0 0 26 26'%3E%3Cpath fill='%23000' fill-rule='evenodd' d='M15.167 4.221a4.33 4.33 0 0 0-4.334 0L6.48 6.735a4.33 4.33 0 0 0-2.167 3.752v5.027c0 1.548.826 2.979 2.167 3.753l4.353 2.513a4.33 4.33 0 0 0 4.334 0l4.353-2.513a4.33 4.33 0 0 0 2.167-3.753v-5.027a4.33 4.33 0 0 0-2.167-3.752zm3.595 3.827-4.354-2.513a2.82 2.82 0 0 0-2.816 0L7.238 8.048a2.82 2.82 0 0 0-1.408 2.44v5.026a2.82 2.82 0 0 0 1.408 2.44l4.354 2.513a2.82 2.82 0 0 0 2.816 0l4.354-2.514a2.82 2.82 0 0 0 1.408-2.44v-5.026a2.82 2.82 0 0 0-1.408-2.439m-4.68-.442a2.16 2.16 0 0 0-2.163 0L8.87 9.366a2.16 2.16 0 0 0-1.081 1.873v3.521c0 .773.412 1.487 1.081 1.873l3.05 1.76a2.16 2.16 0 0 0 2.162 0l3.05-1.76a2.16 2.16 0 0 0 1.08-1.873v-3.52c0-.773-.412-1.486-1.08-1.873zm2.291 3.074-3.05-1.76a.65.65 0 0 0-.645 0l-3.05 1.76a.65.65 0 0 0-.323.559v3.521c0 .23.124.444.323.56l3.05 1.76c.2.116.446.116.646 0l3.05-1.76a.65.65 0 0 0 .322-.56v-3.52a.65.65 0 0 0-.323-.56' clip-rule='evenodd'/%3E%3C/svg%3E");
+	--menu-item-icon-active: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' viewBox='0 0 24 24'%3E%3Cpath fill='%23fff' d='M12.998 7.02a2 2 0 0 0-1.997 0L8.187 8.646a2 2 0 0 0-.999 1.728v3.25c0 .714.38 1.373.999 1.73L11 16.978a2 2 0 0 0 1.997 0l2.815-1.626a2 2 0 0 0 .998-1.728v-3.25c0-.714-.381-1.373-.998-1.73z'/%3E%3Cpath fill='%23fff' fill-rule='evenodd' d='M10 3.895a4 4 0 0 1 4 0l4.018 2.32a4 4 0 0 1 2 3.464v4.64a4 4 0 0 1-2 3.464L14 20.104a4 4 0 0 1-4 0l-4.019-2.32a4 4 0 0 1-2-3.464V9.68a4 4 0 0 1 2-3.464zm3.3 1.213 4.018 2.32a2.6 2.6 0 0 1 1.3 2.251v4.64a2.6 2.6 0 0 1-1.3 2.252l-4.018 2.32a2.6 2.6 0 0 1-2.6 0l-4.019-2.32a2.6 2.6 0 0 1-1.3-2.252V9.68a2.6 2.6 0 0 1 1.3-2.251l4.019-2.32a2.6 2.6 0 0 1 2.6 0' clip-rule='evenodd'/%3E%3C/svg%3E");
 }
 
 .menu-files .menu-item-icon {
@@ -907,8 +915,8 @@ button.menu-item-link {
 }
 
 .menu-note-base .menu-item-icon {
-	--menu-item-icon-default: url("/bitrix/js/ui/icon-set/outline/images/document-sign.svg");
-	--menu-item-icon-active: url("/bitrix/js/ui/icon-set/outline/images/document-sign.svg");
+	--menu-item-icon-default: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' viewBox='0 0 24 24'%3E%3Cpath fill='%23fff' fill-rule='evenodd' d='M14.728 4.568a2 2 0 0 1 2.449 1.416l2.575 9.609a2 2 0 0 1-1.414 2.45l-1.085.29a2 2 0 0 1-2.45-1.414l-1.757-6.56v6.356a2 2 0 0 1-2 2H9.923a2 2 0 0 1-1.4-.573 2 2 0 0 1-1.4.573H6a2 2 0 0 1-2-2v-9.95a2 2 0 0 1 2-2h1.123c.545 0 1.039.22 1.4.573.36-.354.855-.572 1.4-.572h1.123c.636 0 1.2.298 1.567.76a2 2 0 0 1 1.03-.666zM6 5.965a.8.8 0 0 0-.8.8v9.95a.8.8 0 0 0 .8.8h1.123a.8.8 0 0 0 .8-.8v-9.95c0-.44-.358-.8-.8-.8zm3.923 0a.8.8 0 0 0-.8.791v9.969a.8.8 0 0 0 .8.79h1.123a.8.8 0 0 0 .8-.8v-9.95c0-.44-.358-.8-.8-.8zm6.095.33a.8.8 0 0 0-.98-.567l-1.085.29a.8.8 0 0 0-.566.98l2.575 9.61a.8.8 0 0 0 .98.567l1.085-.291a.8.8 0 0 0 .566-.98z' clip-rule='evenodd'/%3E%3C/svg%3E");
+	--menu-item-icon-active: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' viewBox='0 0 24 24'%3E%3Cpath fill='%23fff' d='M6.05 5.272a1.4 1.4 0 0 1 1.4 1.4v10a1.4 1.4 0 0 1-1.4 1.4H4.9a1.4 1.4 0 0 1-1.4-1.4v-10a1.4 1.4 0 0 1 1.4-1.4zm5.09 0a1.4 1.4 0 0 1 1.4 1.4v10a1.4 1.4 0 0 1-1.4 1.4H9.99a1.4 1.4 0 0 1-1.4-1.4v-10a1.4 1.4 0 0 1 1.4-1.4zm4.334-.224a1.4 1.4 0 0 1 1.714.99l2.588 9.659a1.4 1.4 0 0 1-.99 1.714l-1.11.298a1.4 1.4 0 0 1-1.715-.99l-2.588-9.66a1.4 1.4 0 0 1 .99-1.714z'/%3E%3C/svg%3E");
 }
 
 .menu-boards .menu-item-icon {
@@ -960,6 +968,11 @@ button.menu-item-link {
 	transform: rotate(180deg);
 	--menu-item-icon-default: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' viewBox='0 0 24 24'%3E%3Cpath fill='%23fff' fill-rule='evenodd' d='M6.495 9.505a.7.7 0 1 0-.99.99l6 6a.7.7 0 0 0 .99 0l6-6a.7.7 0 0 0-.99-.99L12 15.01z' clip-rule='evenodd'/%3E%3C/svg%3E");
 	--menu-item-icon-active: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' viewBox='0 0 24 24'%3E%3Cpath fill='%23fff' fill-rule='evenodd' d='M6.495 9.505a.7.7 0 1 0-.99.99l6 6a.7.7 0 0 0 .99 0l6-6a.7.7 0 0 0-.99-.99L12 15.01z' clip-rule='evenodd'/%3E%3C/svg%3E");
+}
+
+.menu-performan-library .menu-item-icon {
+	--menu-item-icon-default: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' viewBox='0 0 24 24'%3E%3Cpath fill='%23fff' fill-rule='evenodd' d='M8.464 5.4h4.23v2.31a2.086 2.086 0 0 0 2.092 2.086h2.313v.263a.7.7 0 1 0 1.4 0v-.265q-.003-.308.001-.617c.004-.269.01-.689-.154-1.093a3.1 3.1 0 0 0-.665-1.007l-2.1-2.186-.007-.007a3.2 3.2 0 0 0-.864-.608c-.318-.154-.703-.277-1.094-.276H8.464c-.364 0-.742.008-1.116.118-.396.117-.736.331-1.08.656-.697.658-.78 1.52-.78 2.334v9.802c0 .661.058 1.547.723 2.221.265.269.553.498.92.65.365.151.755.205 1.195.205h1.197a.7.7 0 1 0 0-1.4H8.326c-.328 0-.52-.04-.66-.098-.136-.057-.272-.15-.459-.34-.239-.242-.319-.604-.319-1.238V7.108c0-.768.1-1.09.34-1.315.226-.213.38-.291.516-.332.16-.047.354-.061.72-.061m5.636.136-.005-.003V7.71a.684.684 0 0 0 .691.686h2.157a1.7 1.7 0 0 0-.261-.339l-2.108-2.193a1.8 1.8 0 0 0-.474-.328' clip-rule='evenodd'/%3E%3Cpath fill='%23fff' d='M9.5 11.275a.7.7 0 0 0 0 1.4h4.338a.7.7 0 1 0 0-1.4zm-.7 3.7a.7.7 0 0 1 .7-.7h1.64a.7.7 0 1 1 0 1.4H9.5a.7.7 0 0 1-.7-.7'/%3E%3Cpath fill='%23fff' fill-rule='evenodd' d='M18.945 12.129a1.6 1.6 0 0 0-2.262 0l-4.576 4.574a.7.7 0 0 0-.183.317l-.469 1.791a1 1 0 0 0 1.223 1.22l1.797-.475a.7.7 0 0 0 .316-.181l4.57-4.568a1.6 1.6 0 0 0 0-2.263zm-1.273.99a.2.2 0 0 1 .283 0l.415.415a.2.2 0 0 1 0 .283l-4.435 4.434-.952.252.247-.944z' clip-rule='evenodd'/%3E%3C/svg%3E");
+	--menu-item-icon-active: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' viewBox='0 0 24 24'%3E%3Cpath fill='%23fff' fill-rule='evenodd' d='M12.787 4.002H8.126a2.6 2.6 0 0 0-1.861.781c-.494.5-.77 1.178-.77 1.886v10.666c0 .707.276 1.386.77 1.886.493.5 1.163.78 1.86.78h2.44a1.03 1.03 0 0 1-.025-.612l.302-1.153.272-.934c.033-.125.245-.547.336-.64l1.328-1.354 4.149-4.147a1.67 1.67 0 0 1 1.567-.443V9.75h-3.856c-.49 0-.96-.194-1.308-.54a1.84 1.84 0 0 1-.543-1.306zm-4.549 7.752a.7.7 0 0 1 .7-.7h4.344a.7.7 0 1 1 0 1.4H8.938a.7.7 0 0 1-.7-.7m.7 2.3a.7.7 0 1 0 0 1.4h1.646a.7.7 0 1 0 0-1.4z' clip-rule='evenodd'/%3E%3Cpath fill='%23fff' d='M18.408 8.35a2.67 2.67 0 0 0-.686-1.21l-2.324-2.356a2.63 2.63 0 0 0-1.21-.699v3.819a.444.444 0 0 0 .45.446zm-5.816 10.861.332-1.266a2 2 0 0 1 .52-.908l4.194-4.19a.9.9 0 0 1 1.272 0l.415.414a.9.9 0 0 1 0 1.273l-4.187 4.187a2 2 0 0 1-.903.519l-1.276.337a.3.3 0 0 1-.367-.366'/%3E%3C/svg%3E");
 }
 
 .menu-items-header {
@@ -2193,20 +2206,4 @@ button.group-panel-item-star {
 
 .group-panel-item-favorite .group-panel-item-star:before {
 	background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNyIgaGVpZ2h0PSIxNyIgdmlld0JveD0iMCAwIDE3IDE3Ij48cGF0aCBmaWxsPSIjNTM1QzY3IiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik04LjQzNy0uMDFjLS4xMy0uMDA2LS4yNS4wNjMtLjMxMy4xNzZsLTIuNDIgNC44NC01LjQyMi44N2MtLjEzMi4wMi0uMjQuMTE1LS4yOC4yNDItLjA0LjEyOC0uMDA1LjI2Ny4wOTIuMzZsMy44NyAzLjc3Mi0uODcyIDUuNDJjLS4wMi4xMzIuMDM0LjI2My4xNC4zNC4xMDguMDguMjUuMDkuMzY3LjAyN2w0LjgzNy0yLjUyIDQuODM4IDIuNTE0LjE2Mi4wNDMuMjA1LS4wNjZjLjEwNy0uMDc4LjE2Mi0uMjEuMTQtLjM0bC0uODctNS40MiAzLjg3LTMuNzc0Yy4wOTctLjA5Mi4xMzMtLjIzLjA5My0uMzYtLjA0LS4xMjYtLjE1LS4yMi0uMjgtLjI0bC01LjQyNS0uODdMOC43NS4xNjJjLS4wNjMtLjExMy0uMTg0LS4xOC0uMzEzLS4xNzR6IiBvcGFjaXR5PSIuNSIvPjwvc3ZnPg==);
-}
-
-.menu-items-ai-assistant-stub {
-	width: 100%;
-	min-width: 66px;
-	height: 66px;
-}
-
-.menu-collapsed-mode .menu-items-ai-assistant-stub,
-.menu-animation-closing-mode .menu-items-ai-assistant-stub {
-	background-color: var(--leftmenu-bg);
-}
-
-.menu-items-ai-assistant-stub,
-.menu-collapsed-mode.menu-animation-opening-mode .menu-items-ai-assistant-stub {
-	background-color: var(--leftmenu-bg-expanded);
 }

@@ -4,6 +4,7 @@ IncludeModuleLangFile(__FILE__);
 use Bitrix\Im as IM;
 use Bitrix\Im\V2\Chat;
 use Bitrix\Im\V2\Chat\Background\Background;
+use Bitrix\Im\V2\Chat\Copilot\CopilotTitle;
 use Bitrix\Im\V2\Chat\TextField\TextFieldEnabled;
 use Bitrix\Im\V2\Entity\User\UserError;
 use Bitrix\Imopenlines\Model\SessionTable;
@@ -73,6 +74,12 @@ class CIMChat
 			{
 				return false;
 			}
+			$chat = \Bitrix\Im\V2\Chat::getInstance((int)$arRes['CHAT_ID']);
+			if (!$chat->checkAccess((int)$this->user_id)->isSuccess())
+			{
+				return false;
+			}
+
 			unset($arRes['CHAT_TYPE']);
 			unset($arRes['RID']);
 
@@ -2463,6 +2470,11 @@ class CIMChat
 				{
 					Chat\OpenChannelChat::sendSharedPull($pushMessage);
 				}
+			}
+
+			if ($arRes['CHAT_TYPE'] === Chat::IM_TYPE_COPILOT)
+			{
+				(new CopilotTitle($chatId))->markAsCustom();
 			}
 
 			foreach(GetModuleEvents("im", "OnChatRename", true) as $arEvent)

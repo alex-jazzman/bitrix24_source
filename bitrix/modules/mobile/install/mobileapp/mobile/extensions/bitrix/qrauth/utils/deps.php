@@ -1,15 +1,14 @@
 <?php
 
 return [
-	'components' => [
-		'qrcodeauth',
-	],
 	'extensions' => [
 		'loc',
+		'qrauth/utils',
 		'require-lazy',
+		'type',
 		'utils/page-manager',
 	],
 	'bundle' => [
-		'./src/manager'
-	]
+		'./src/manager',
+	],
 ];

@@ -1,5 +1,4 @@
 import { Text } from 'main.core';
-import { BaseEvent } from 'main.core.events';
 import { BIcon as Icon, Set as IconSet } from 'ui.icon-set.api.vue';
 
 import { Timezone } from 'booking.lib.timezone';
@@ -146,7 +145,7 @@ export const WorkTimeSelector = {
 		},
 		getTimezoneOffset(timeZone: string): number
 		{
-			return Timezone.getOffset(Date.now(), timeZone) / (-60);
+			return Timezone.getOffsetFromUtc(Date.now(), timeZone) / (-60);
 		},
 		calculateDifferenceBetweenTimezones(initialTimezone: string, currentTimezone: string): void
 		{

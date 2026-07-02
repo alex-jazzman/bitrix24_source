@@ -1,7 +1,6 @@
 import { ActivityProvider } from 'crm.ai.call';
 
-import type { ConflictField } from './types';
-import { EntityInfo, FEEDBACK_TRIGGER_CONTROL } from './types';
+import { type ConflictField, type EntityInfo, FEEDBACK_TRIGGER_CONTROL } from './types'; /* eslint no-param-reassign: off */
 
 /* eslint no-param-reassign: off */
 export default {

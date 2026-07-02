@@ -1,4 +1,4 @@
-import { ImModelSidebarFileItem, ImModelFile } from 'im.v2.model';
+import { type ImModelSidebarFileItem, type ImModelFile } from 'im.v2.model';
 import { AudioPlayer } from 'im.v2.component.elements.player';
 
 import '../css/audio-detail-item.css';

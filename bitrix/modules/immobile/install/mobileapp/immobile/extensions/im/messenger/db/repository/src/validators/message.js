@@ -167,6 +167,11 @@ jn.define('im/messenger/db/repository/validators/message', (require, exports, mo
 			result.forward = message.forward;
 		}
 
+		if (Type.isPlainObject(message.builder) && Type.isArrayFilled(message.builder?.blocks))
+		{
+			result.builder = { ...message.builder };
+		}
+
 		return result;
 	}
 

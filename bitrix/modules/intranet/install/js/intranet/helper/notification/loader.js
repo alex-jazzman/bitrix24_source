@@ -64,7 +64,11 @@
 					localStorage.setItem(this.lsTimeParamName, lastTimeCheckTimeStamp.toString());
 				}
 
-				BX.loadScript(BX.util.add_url_param(this.managerScriptUrl, { actual: lastTimeCheckTimeStamp }));
+				BX.load([{
+					url: BX.util.add_url_param(this.managerScriptUrl, { actual: lastTimeCheckTimeStamp }),
+					ext: 'js',
+					async: true,
+				}]);
 			},
 
 			checkLoadScript: function() {

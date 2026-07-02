@@ -1,12 +1,13 @@
 import { FileUploaderPopup } from 'crm.activity.file-uploader-popup';
 import { ajax as Ajax, Type } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { type BaseEvent, EventEmitter } from 'main.core.events';
 import { Dialog } from 'ui.entity-selector';
 import { UI } from 'ui.notification';
 import { SidePanel } from 'ui.sidepanel';
 import ConfigurableItem from '../configurable-item';
 import type { ActionParams } from './base';
 import { Base } from './base';
+import 'crm_common';
 
 export class ToDo extends Base
 {

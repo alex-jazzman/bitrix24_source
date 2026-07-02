@@ -3,7 +3,8 @@
 return [
 	'extensions' => [
 		'layout/ui/friendly-date/formatter-factory',
-		'utils/date',
 		'testing',
+		'utils/date',
+		'utils/date/formats',
 	],
 ];

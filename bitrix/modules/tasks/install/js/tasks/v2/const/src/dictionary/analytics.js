@@ -13,6 +13,7 @@ const Event = Object.freeze({
 	TaskComplete: 'task_complete',
 	TaskView: 'task_view',
 	TaskCreate: 'task_create',
+	TaskDelete: 'task_delete',
 	AddChecklist: 'add_checklist',
 	TaskCreateWithChecklist: 'task_create_with_checklist',
 	AttachFile: 'attach_file',
@@ -28,6 +29,8 @@ const Event = Object.freeze({
 	AddViewer: 'add_viewer',
 	StatusSummaryAdd: 'status_summary_add',
 	TimeEntryCreate: 'time_entry_create',
+	DescriptionEdit: 'description_edit',
+	DescriptionExpand: 'description_expand',
 });
 
 const Type = Object.freeze({
@@ -61,6 +64,9 @@ const Element = Object.freeze({
 	ProjectButton: 'project_button',
 	Calendar: 'calendar',
 	DeadlinePreset: 'deadline_preset',
+	DescriptionEditButton: 'description_edit_button',
+	DescriptionExpandButton: 'description_expand_button',
+	DescriptionExpandClick: 'description_expand_click',
 	ChangeButton: 'change_button',
 	UploadButton: 'upload_button',
 	CheckListButton: 'checklist_button',

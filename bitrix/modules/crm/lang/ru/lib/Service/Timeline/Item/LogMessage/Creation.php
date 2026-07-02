@@ -1,6 +1,7 @@
 <?php
 $MESS['CRM_TIMELINE_LEAD_CREATION'] = 'Создан лид';
 $MESS['CRM_TIMELINE_DEAL_CREATION'] = 'Создана сделка';
+$MESS['CRM_TIMELINE_DEAL_CREATION_COPY'] = 'Сделка скопирована из другой сделки';
 $MESS['CRM_TIMELINE_RECURRING_DEAL_CREATION'] = 'Создан шаблон сделки';
 $MESS['CRM_TIMELINE_ORDER_CREATION'] = 'Создан заказ';
 $MESS['CRM_TIMELINE_ORDER_PAYMENT_CREATION'] = 'Создана оплата';

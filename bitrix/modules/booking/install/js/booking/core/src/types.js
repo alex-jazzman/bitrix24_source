@@ -1,4 +1,4 @@
-import type{ AhaMoment } from 'booking.const';
+import type { AhaMoment, Grid } from 'booking.const';
 import type { MoneyStatistics } from 'booking.model.interface';
 
 export type BookingParams = {
@@ -11,7 +11,9 @@ export type BookingParams = {
 	features: Feature[],
 	canTurnOnTrial: boolean,
 	canTurnOnDemo: boolean,
+	isMultidayFeatureAvailable: boolean,
 	timezone: string,
+	firstWeekDay: number,
 	filterId: string,
 	editingBookingId: number,
 	editingWaitListItemId: ?number,
@@ -21,6 +23,7 @@ export type BookingParams = {
 	moneyStatistics: MoneyStatistics,
 	isCalendarExpanded: boolean,
 	isWaitListExpanded: boolean,
+	gridMode: $Values<typeof Grid.Mode>,
 	embedItems: {
 		id: number,
 		code: string,

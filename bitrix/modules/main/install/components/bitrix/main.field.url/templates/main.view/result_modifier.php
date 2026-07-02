@@ -7,6 +7,8 @@ use Bitrix\Main\Page\Asset;
 
 /**
  * @var $component UrlUfComponent
+ * @var array $arResult
+ * @var array $arParams
  */
 
 $component = $this->getComponent();

@@ -32,12 +32,12 @@ export function useBlockState(options: UseBlockStateOptions): UseBlockState
 		transformY,
 		blockDiagramLeft,
 		blockDiagramTop,
-		movingBlock,
+		movingBlockId,
 		blockMounted,
 	} = useBlockDiagram();
 
 	const isHiglitedBlock = computed(() => {
-		return highlitedBlockIds.value.includes(toValue(block).id);
+		return toValue(highlitedBlockIds).includes(toValue(block)?.id);
 	});
 
 	const isDisabled = computed(() => {
@@ -45,7 +45,7 @@ export function useBlockState(options: UseBlockStateOptions): UseBlockState
 	});
 
 	const blockZindex = computed(() => {
-		if (toValue(movingBlock)?.id === toValue(block).id)
+		if (toValue(movingBlockId) === toValue(block).id)
 		{
 			return { zIndex: BLOCK_INDEXES.MOVABLE };
 		}
@@ -75,8 +75,8 @@ export function useBlockState(options: UseBlockStateOptions): UseBlockState
 		blocksRectMap.value[toValue(block).id] = {
 			x: (x / toValue(zoom)) + toValue(transformX) - (toValue(blockDiagramLeft) / toValue(zoom)),
 			y: (y / toValue(zoom)) + toValue(transformY) - (toValue(blockDiagramTop) / toValue(zoom)),
-			width,
-			height,
+			width: width / toValue(zoom),
+			height: height / toValue(zoom),
 		};
 
 		blockMounted(toValue(block).id);

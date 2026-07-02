@@ -1,14 +1,13 @@
+import { type JsonObject } from 'main.core';
+
 import { Messenger } from 'im.public';
 import { ChatButton, ButtonSize, type CustomColorScheme } from 'im.v2.component.elements.button';
 import { Color } from 'im.v2.const';
-import { SpecialBackground, ThemeManager } from 'im.v2.lib.theme';
-import { CopilotService } from 'im.v2.provider.service.copilot';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { CopilotManager } from 'im.v2.lib.copilot';
-
+import { SpecialBackground, ThemeManager, type BackgroundStyle } from 'im.v2.lib.theme';
+import { CopilotChatService } from 'im.v2.provider.service.copilot';
 import './css/empty-state.css';
-
-import type { JsonObject } from 'main.core';
-import type { BackgroundStyle } from 'im.v2.lib.theme';
 
 const BUTTON_BACKGROUND_COLOR = '#fff';
 const BUTTON_HOVER_COLOR = '#eee';
@@ -29,7 +28,11 @@ export const CopilotEmptyState = {
 		ButtonSize: () => ButtonSize,
 		backgroundStyle(): BackgroundStyle
 		{
-			return ThemeManager.getBackgroundStyleById(SpecialBackground.copilot);
+			const backgroundId = FeatureManager.isFeatureAvailable(Feature.isBitrixGptV2Available)
+				? SpecialBackground.aiAssistant
+				: SpecialBackground.copilot;
+
+			return ThemeManager.getBackgroundStyleById(backgroundId);
 		},
 		preparedText(): string
 		{
@@ -71,11 +74,11 @@ export const CopilotEmptyState = {
 				this.isCreatingChat = false;
 			}
 		},
-		getCopilotService(): CopilotService
+		getCopilotService(): CopilotChatService
 		{
 			if (!this.copilotService)
 			{
-				this.copilotService = new CopilotService();
+				this.copilotService = new CopilotChatService();
 			}
 
 			return this.copilotService;

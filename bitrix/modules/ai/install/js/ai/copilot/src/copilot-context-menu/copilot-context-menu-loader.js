@@ -1,4 +1,4 @@
-import { Tag, Loc, Event } from 'main.core';
+import { Tag, Loc, Event, Extension } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Popup } from 'main.popup';
 import { Lottie } from 'ui.lottie';
@@ -117,7 +117,9 @@ export class CopilotContextMenuLoader extends EventEmitter
 						${loaderIcon}
 					</div>
 					<div class="ai__copilot-context-menu-loader-text-with-dots">
-						<span class="ai__copilot_loader-text">${Loc.getMessage('AI_COPILOT_INPUT_LOADER_TEXT')}</span>
+						<span class="ai__copilot_loader-text">${Loc.getMessage('AI_COPILOT_INPUT_LOADER_TEXT_MSGVER_1', {
+							'#COPILOT_NAME#': Extension.getSettings('ai.copilot').get('copilotName'),
+						})}</span>
 						<div class="ai__copilot-context-menu-loader_dots">
 							<div class="dot-flashing"></div>
 						</div>

@@ -255,7 +255,8 @@
 	border-bottom: none;
 }
 
-.ui-section__hint .more {
+.ui-section__hint .more,
+.ui-section__field-label .more {
 	-webkit-text-decoration: var(--ui-text-decoration-line-underline);
 	        text-decoration: var(--ui-text-decoration-line-underline);
 	color: var(--ui-color-base-50);

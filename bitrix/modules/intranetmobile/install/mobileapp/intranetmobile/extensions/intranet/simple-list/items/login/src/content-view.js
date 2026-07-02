@@ -134,8 +134,8 @@ jn.define('intranet/simple-list/items/login/src/content-view', (require, exports
 			}
 
 			const text = this.isCurrent
-				? Loc.getMessage('M_INTRANET_LOGIN_ITEM_CURRENT')
-				: Loc.getMessage('M_INTRANET_LOGIN_ITEM_OTHER');
+				? Loc.getMessage('M_INTRANET_LOGIN_ITEM_CURRENT_MSGVER_1')
+				: Loc.getMessage('M_INTRANET_LOGIN_ITEM_OTHER_MSGVER_1');
 
 			return View(
 				{
@@ -246,27 +246,35 @@ jn.define('intranet/simple-list/items/login/src/content-view', (require, exports
 				return DeviceType.UNKNOWN.getPhrase();
 			}
 
-			const parts = [this.deviceType.getPhrase()];
+			let phrase = this.deviceType.getPhrase();
 
 			if (this.devicePlatform !== DevicePlatform.UNKNOWN)
 			{
-				parts.push(this.devicePlatform.getName());
+				phrase = Loc.getMessage('M_INTRANET_LOGIN_ITEM_TITLE_WITH_PLATFORM', {
+					'#DEVICE_TYPE#': this.deviceType.getPhrase(),
+					'#DEVICE_PLATFORM#': this.devicePlatform.getName(),
+				});
 			}
 
-			parts.push(this.browser);
+			if (this.browser)
+			{
+				phrase = Loc.getMessage('M_INTRANET_LOGIN_ITEM_TITLE_FULL', {
+					'#DEVICE_TYPE#': this.deviceType.getPhrase(),
+					'#DEVICE_PLATFORM#': this.devicePlatform.getName(),
+					'#BROWSER#': this.browser,
+				});
+			}
 
-			return this.createText(parts);
+			return phrase;
 		}
 
 		getSubtitleText()
 		{
-			const parts = [
-				this.getDateText(),
-				this.address,
-				this.ip,
-			];
-
-			return this.createText(parts);
+			return Loc.getMessage('M_INTRANET_LOGIN_ITEM_SUBTITLE', {
+				'#DATE#': this.getDateText(),
+				'#ADDRESS#': this.address,
+				'#IP#': this.ip,
+			});
 		}
 
 		getDateText()
@@ -290,7 +298,7 @@ jn.define('intranet/simple-list/items/login/src/content-view', (require, exports
 			);
 		}
 
-		createText(parts, separator = ', ')
+		createText(parts, separator = ' ')
 		{
 			return parts.filter(Boolean).join(separator);
 		}

@@ -1,4 +1,9 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+
+/**
+ * @var array $arResult
+ */
 
 $bFirst = true;
 
@@ -8,11 +13,10 @@ $bFirst = true;
 			$res = '<a href="'.$surl.'">'.$res.'</a>';
 	
 		if (!$bFirst):
-			?>, <?
+			?>, <?php
 		else:
 			$bFirst = false;
 		endif;
 
-		?><span class="fields enumeration"><?=$res?></span><?
+		?><span class="fields enumeration"><?=$res?></span><?php
 	endforeach;
-?>

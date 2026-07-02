@@ -1,4 +1,4 @@
-import { Dialog, Item, type ItemOptions } from 'ui.entity-selector';
+import { Dialog, type ItemOptions } from 'ui.entity-selector';
 import { mapGetters } from 'ui.vue3.vuex';
 
 import { EntitySelectorEntity, EntitySelectorTab, Model } from 'booking.const';

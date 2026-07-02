@@ -1,6 +1,7 @@
 import { ItemIdentifier } from 'crm.data-structures';
 import { Text, Type } from 'main.core';
 import { Receiver } from '../receiver';
+import 'crm_common';
 
 export function extractReceivers(item: ItemIdentifier, entityData: ?Object): Receiver[]
 {

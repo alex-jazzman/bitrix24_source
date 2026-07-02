@@ -5,10 +5,15 @@ namespace Bitrix\Im\V2\Controller;
 use Bitrix\Im\Dialog;
 use Bitrix\Im\Recent;
 use Bitrix\Im\V2\Chat\ChannelChat;
+use Bitrix\Im\V2\Folder\Pin\PinService;
 use Bitrix\Im\V2\Chat\ChatError;
+use Bitrix\Im\V2\Chat\Add\ChatCreateFields;
 use Bitrix\Im\V2\Chat\ChatFactory;
+use Bitrix\Im\V2\Controller\Chat\Dto\ChatCreateFieldsDto;
 use Bitrix\Im\V2\Chat\CollabChat;
 use Bitrix\Im\V2\Chat\CommentChat;
+use Bitrix\Im\V2\Chat\Copilot\CopilotTitle;
+use Bitrix\Im\V2\Chat\CopilotChat;
 use Bitrix\Im\V2\Chat\ExternalChat;
 use Bitrix\Im\V2\Chat\GeneralChat;
 use Bitrix\Im\V2\Chat\GroupChat;
@@ -16,7 +21,6 @@ use Bitrix\Im\V2\Chat\MessagesAutoDelete\MessagesAutoDeleteConfigs;
 use Bitrix\Im\V2\Chat\OpenChannelChat;
 use Bitrix\Im\V2\Chat\OpenChat;
 use Bitrix\Im\V2\Chat\OpenLineChat;
-use Bitrix\Im\V2\Chat\Param\Params;
 use Bitrix\Im\V2\Chat\Type;
 use Bitrix\Im\V2\Chat\Type\TypeRegistry;
 use Bitrix\Im\V2\Common\FormatConverter;
@@ -28,8 +32,10 @@ use Bitrix\Im\V2\Controller\Filter\ChatTypeFilter;
 use Bitrix\Im\V2\Controller\Filter\CheckActionAccess;
 use Bitrix\Im\V2\Controller\Filter\CheckEntityAccess;
 use Bitrix\Im\V2\Controller\Filter\CheckFileAccess;
+use Bitrix\Im\V2\Controller\Filter\ExternalUserTypeFilter;
 use Bitrix\Im\V2\Controller\Filter\ExtendPullWatchPrefilter;
 use Bitrix\Im\V2\Entity\File\ChatAvatar;
+use Bitrix\Im\V2\Entity\User\User;
 use Bitrix\Im\V2\Entity\User\UserPopupItem;
 use Bitrix\Im\V2\Message;
 use Bitrix\Im\V2\Reading\Reader;
@@ -52,21 +58,12 @@ class Chat extends BaseController
 	{
 		return [
 			'add' => [
-				'+prefilters' => [
-					new CheckActionAccess(
-						Permission\GlobalAction::CreateChat,
-						fn (Base $filter) => [
-							'TYPE' => $this->getValidatedType(
-								$filter->getAction()->getArguments()['fields']['type'] ?? ''
-							),
-							'ENTITY_TYPE' => $this->getValidatedEntityType(
-								$filter->getAction()->getArguments()['fields']['entityType'] ?? null
-							),
-						]
-					),
-					new CheckFileAccess(['fields', 'avatar']),
+					'+prefilters' => [
+						new CheckFileAccess(
+							extractor: fn(array $args) => ($args['createFields'] ?? null)?->getAvatar()
+						),
+					],
 				],
-			],
 			'update' => [
 				'+prefilters' => [
 					new CheckFileAccess(['fields', 'avatar']),
@@ -193,6 +190,12 @@ class Chat extends BaseController
 					new CheckActionAccess(Permission\Action::ChangeRight),
 				]
 			],
+			'setManageGuestInvites' => [
+				'+prefilters' => [
+					new CheckEntityAccess(),
+					new CheckActionAccess(Permission\Action::ChangeRight),
+				]
+			],
 			'load' => [
 				'+prefilters' => [
 					new ExtendPullWatchPrefilter(),
@@ -214,6 +217,12 @@ class Chat extends BaseController
 						CommentChat::class,
 						ExternalChat::class,
 					]),
+					new CheckActionAccess(Permission\GlobalAction::JoinChat),
+				],
+			],
+			'joinByCode' => [
+				'+prefilters' => [
+					new CheckActionAccess(Permission\GlobalAction::JoinChat),
 				],
 			],
 			'extendPullWatch' => [
@@ -264,6 +273,15 @@ class Chat extends BaseController
 						$type = FormatConverter::normalizeToUpperSnakeCase($type);
 
 						return ServiceLocator::getInstance()->get(TypeRegistry::class)->getByExtendedType($type);
+					}
+				),
+				new ExactParameter(
+					ChatCreateFields::class,
+					'createFields',
+					function ($className, array $fields) {
+						$dto = ChatCreateFieldsDto::create($fields);
+
+						return ChatCreateFields::fromDto($dto);
 					}
 				),
 			]
@@ -433,35 +451,9 @@ class Chat extends BaseController
 	/**
 	 * @restMethod im.v2.Chat.add
 	 */
-	public function addAction(array $fields): ?array
+	public function addAction(ChatCreateFields $createFields): ?array
 	{
-		$fields['type'] = $this->getValidatedType($fields['type'] ?? null);
-		$fields['entityType'] = $this->getValidatedEntityType($fields['entityType'] ?? null);
-
-		if (
-			!isset($fields['entityType'])
-			|| $fields['entityType'] !== 'VIDEOCONF'
-			|| !isset($fields['conferencePassword'])
-		)
-		{
-			unset($fields['conferencePassword']);
-		}
-
-		if (isset($fields['copilotMainRole']))
-		{
-			$fields['chatParams'][] = [
-				'paramName' => Params::COPILOT_MAIN_ROLE,
-				'paramValue' => $fields['copilotMainRole']
-			];
-		}
-
-		$data = self::recursiveWhiteList($fields, \Bitrix\Im\V2\Chat::AVAILABLE_PARAMS);
-		if (isset($data['OWNER_ID']))
-		{
-			$data['AUTHOR_ID'] = $data['OWNER_ID'];
-		}
-
-		$result = ChatFactory::getInstance()->addChat($data);
+		$result = ChatFactory::getInstance()->addChat($createFields->toArray());
 		if (!$result->isSuccess())
 		{
 			$this->addErrors($result->getErrors());
@@ -533,7 +525,6 @@ class Chat extends BaseController
 		return ['result' => true];
 	}
 
-
 	/**
 	 * @restMethod im.v2.Chat.joinByCode
 	 */
@@ -599,6 +590,11 @@ class Chat extends BaseController
 		if (!$result->isSuccess())
 		{
 			return $this->convertKeysToCamelCase($result->getErrors());
+		}
+
+		if ($chat instanceof CopilotChat)
+		{
+			(new CopilotTitle($chat->getChatId()))->markAsCustom();
 		}
 
 		return $result->isSuccess();
@@ -851,15 +847,34 @@ class Chat extends BaseController
 	}
 
 	/**
+	 * @restMethod im.v2.Chat.setManageGuestInvites
+	 */
+	public function setManageGuestInvitesAction(\Bitrix\Im\V2\Chat $chat, string $rightsLevel)
+	{
+		$chat->setManageGuestInvites(mb_strtoupper($rightsLevel));
+		$result = $chat->save();
+		if (!$result->isSuccess())
+		{
+			return $this->convertKeysToCamelCase($result->getErrors());
+		}
+
+		return $result->isSuccess();
+	}
+
+	/**
 	 * @restMethod im.v2.Chat.pin
 	 */
-	public function pinAction(\Bitrix\Im\V2\Chat $chat, CurrentUser $user): ?array
+	public function pinAction(
+		\Bitrix\Im\V2\Chat $chat,
+		CurrentUser $user,
+		PinService $pinService,
+		?\Bitrix\Im\V2\Folder\Folder $folder = null,
+	): ?array
 	{
-		Recent::pin($chat->getDialogId(), true, $user->getId());
-
-		if (Recent::isLimitError())
+		$result = $pinService->pinChat((int)$user->getId(), $chat, $folder);
+		if (!$result->isSuccess())
 		{
-			$this->addError(new ChatError(ChatError::MAX_PINNED_CHATS_ERROR));
+			$this->addErrors($result->getErrors());
 
 			return null;
 		}
@@ -870,9 +885,20 @@ class Chat extends BaseController
 	/**
 	 * @restMethod im.v2.Chat.unpin
 	 */
-	public function unpinAction(\Bitrix\Im\V2\Chat $chat, CurrentUser $user): ?array
+	public function unpinAction(
+		\Bitrix\Im\V2\Chat $chat,
+		CurrentUser $user,
+		PinService $pinService,
+		?\Bitrix\Im\V2\Folder\Folder $folder = null,
+	): ?array
 	{
-		Recent::pin($chat->getDialogId(), false, $user->getId());
+		$result = $pinService->unpinChat((int)$user->getId(), $chat, $folder);
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($result->getErrors());
+
+			return null;
+		}
 
 		return ['result' => true];
 	}
@@ -894,21 +920,6 @@ class Chat extends BaseController
 		return ['result' => true];
 	}
 
-	private function getValidatedType(?string $type): string
-	{
-		return match ($type)
-		{
-			'CHANNEL' => \Bitrix\Im\V2\Chat::IM_TYPE_CHANNEL,
-			'COPILOT' => \Bitrix\Im\V2\Chat::IM_TYPE_COPILOT,
-			'COLLAB' => \Bitrix\Im\V2\Chat::IM_TYPE_COLLAB,
-			default => \Bitrix\Im\V2\Chat::IM_TYPE_CHAT,
-		};
-	}
-
-	private function getValidatedEntityType(?string $entityType): ?string
-	{
-		return ServiceLocator::getInstance()->get(TypeRegistry::class)->getValidatedEntityType($entityType);
-	}
 	//endregion
 	//endregion
 }

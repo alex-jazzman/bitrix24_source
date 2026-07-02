@@ -104,7 +104,9 @@ export default class Form extends EventEmitter
 			this.messageBar.hideAll();
 		});
 
-		EventEmitter.subscribe('BX.Intranet.Invitation:showSuccessPopup', this.#showSuccessPopup.bind(this));
+		EventEmitter.subscribe('BX.Intranet.Invitation:showSuccessPopup', (event: BaseEvent) => {
+			this.#showSuccessPopup(event.getData().content);
+		});
 	}
 
 	onBeforeChangePage(event: BaseEvent): void
@@ -230,9 +232,9 @@ export default class Form extends EventEmitter
 		});
 	}
 
-	#showSuccessPopup(): void
+	#showSuccessPopup(content): void
 	{
-		(new SuccessInvitePopup()).show();
+		(new SuccessInvitePopup()).show(content);
 	}
 
 	#onSuccessRequest(response): void

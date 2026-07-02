@@ -1,4 +1,3 @@
-import { BaseEvent } from 'main.core.events';
 import { Uploader, UploaderEvent } from 'ui.uploader.core';
 import { RichLoc } from 'ui.vue3.components.rich-loc';
 import { BIcon, Set as IconSet } from 'ui.icon-set.api.vue';

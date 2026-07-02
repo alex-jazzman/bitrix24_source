@@ -14,7 +14,9 @@ use Bitrix\Tasks\Flow\Integration\Socialnetwork\GroupService;
 use Bitrix\Tasks\Flow\Kanban\BizProcService;
 use Bitrix\Tasks\Flow\Migration\Access\Repository\RoleRepository;
 use Bitrix\Tasks\Flow\Migration\Access\Repository\RoleRepositoryInterface;
+use Bitrix\Tasks\Flow\Provider\DepartmentExistsProvider;
 use Bitrix\Tasks\Flow\Provider\FlowMemberFacade;
+use Bitrix\Tasks\Flow\Provider\UserStatusProvider;
 use Bitrix\Tasks\Flow\Template\Access\Permission\TemplatePermissionService;
 use Bitrix\Tasks\Internals\Counter\CounterService;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
@@ -132,6 +134,8 @@ use Bitrix\Tasks\V2\Internal\Repository\Template\TemplatePermissionRepository;
 use Bitrix\Tasks\V2\Internal\Repository\Template\TemplatePermissionRepositoryInterface;
 use Bitrix\Tasks\V2\Internal\Repository\Template\TemplateReadRepository;
 use Bitrix\Tasks\V2\Internal\Repository\Template\TemplateReadRepositoryInterface;
+use Bitrix\Tasks\V2\Internal\Repository\Template\TemplateRecentRepository;
+use Bitrix\Tasks\V2\Internal\Repository\Template\TemplateRecentRepositoryInterface;
 use Bitrix\Tasks\V2\Internal\Repository\Template\TemplateRepositoryInterface;
 use Bitrix\Tasks\V2\Internal\Repository\Template\TemplateTagRepository;
 use Bitrix\Tasks\V2\Internal\Repository\Template\TemplateTagRepositoryInterface;
@@ -141,6 +145,8 @@ use Bitrix\Tasks\V2\Internal\Repository\UserFieldSchemeRepositoryInterface;
 use Bitrix\Tasks\V2\Internal\Repository\UserOptionRepository;
 use Bitrix\Tasks\V2\Internal\Repository\UserOptionRepositoryInterface;
 use Bitrix\Tasks\V2\Internal\Repository\UserRepositoryInterface;
+use Bitrix\Tasks\V2\Internal\Repository\ViewedUserRepository;
+use Bitrix\Tasks\V2\Internal\Repository\ViewedUserRepositoryInterface;
 use Bitrix\Tasks\V2\Internal\Repository\ViewRepository;
 use Bitrix\Tasks\V2\Internal\Repository\ViewRepositoryInterface;
 use Bitrix\Tasks\V2\Internal\Service\Consistency\ConfigConsistencyResolver;
@@ -372,6 +378,9 @@ return [
 		TemplatePermissionRepositoryInterface::class => [
 			'className' => TemplatePermissionRepository::class,
 		],
+		TemplateRecentRepositoryInterface::class => [
+			'className' => TemplateRecentRepository::class,
+		],
 		SubTemplateRepositoryInterface::class => [
 			'className' => SubTemplateRepository::class,
 		],
@@ -392,6 +401,9 @@ return [
 		],
 		LoggerInterface::class => [
 			'className' => Logger::class,
+		],
+		ViewedUserRepositoryInterface::class => [
+			'className' => ViewedUserRepository::class,
 		],
 		TemplateParameterRepositoryInterface::class => [
 			'className' => TemplateParameterRepository::class,

@@ -81,12 +81,15 @@
 	overflow: hidden;
 	z-index: 100;
 }
+
 .ui-sidepanel-layout-buttons {
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	padding: 13px 20px;
+	gap: 12px;
 }
+
 .ui-sidepanel-layout-buttons-align-left {
 	justify-content: start;
 }

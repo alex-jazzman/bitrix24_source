@@ -1,6 +1,7 @@
 import { Tag, Dom, Event, Type } from 'main.core';
+import { EventEmitter } from 'main.core.events';
 
-export class CrmSmartManualStartTriggerRenderer
+export class CrmSmartManualStartTriggerRenderer extends EventEmitter
 {
 	getControlRenderers(): Promise
 	{
@@ -66,7 +67,7 @@ export class CrmSmartManualStartTriggerRenderer
 
 					if (chosen && chosen !== prev)
 					{
-						Event.fire(select, 'change');
+						EventEmitter.emit(select, 'change');
 					}
 				};
 

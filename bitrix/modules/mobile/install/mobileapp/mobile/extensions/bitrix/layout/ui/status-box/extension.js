@@ -19,7 +19,8 @@ jn.define('layout/ui/status-box', (require, exports, module) => {
 	 */
 	class StatusBox extends LayoutComponent
 	{
-		constructor(props) {
+		constructor(props)
+		{
 			super(props);
 
 			this.setParentWidget();

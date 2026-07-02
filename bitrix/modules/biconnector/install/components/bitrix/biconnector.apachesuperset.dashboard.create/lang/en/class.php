@@ -1,5 +1,6 @@
 <?php
 $MESS["DASHBOARD_CREATE_FORM_DEFAULT_TITLE"] = "New dashboard";
+$MESS["DASHBOARD_CREATE_FORM_DEFAULT_TITLE_NUMBER"] = "New dashboard (#NUMBER#)";
 $MESS["DASHBOARD_CREATE_FORM_EMPTY_TITLE_ERROR"] = "Dashboard name is required.";
 $MESS["DASHBOARD_CREATE_FORM_ERROR"] = "Cannot create dashboard. Please try again.";
 $MESS["DASHBOARD_CREATE_FORM_OPEN_ACCESS_ERROR"] = "Insufficient permission to create dashboard.";

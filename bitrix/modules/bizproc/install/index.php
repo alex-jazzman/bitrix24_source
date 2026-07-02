@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Bizproc\Public\Integration\AiAssistant\EventHandler\AiAssistantAgentActivity;
 use Bitrix\Main\Localization\Loc;
 Loc::loadMessages(__FILE__);
 
@@ -78,6 +79,8 @@ class bizproc extends CModule
 		$eventManager->registerEventHandler('crm', 'ItemCategoryOnBeforeDelete', 'bizproc', '\Bitrix\Bizproc\Integration\Crm\CategoryEventListener', 'itemCategoryOnBeforeDelete');
 		$eventManager->registerEventHandler('ai', 'onContextGetMessages', 'bizproc', '\Bitrix\Bizproc\Internal\Integration\AI\Event\EventHandler', 'onContextGetMessages');
 		$eventManager->registerEventHandler('intranet', 'onAddAbsence', 'bizproc', '\Bitrix\Bizproc\Integration\Intranet\EventHandler', 'onAddAbsence');
+		/** @see AiAssistantAgentActivity::onCollectCustomContext() */
+		$eventManager->registerEventHandler('aiassistant', 'AiAssistantAgentActivity::onCollectCustomContext', 'bizproc', AiAssistantAgentActivity::class, 'onCollectCustomContext');
 
 		CAgent::AddAgent('\Bitrix\Bizproc\Infrastructure\Agent\StorageCleanupAgent::runAgent();', 'bizproc', 'N', 86400);
 
@@ -127,6 +130,8 @@ class bizproc extends CModule
 		$eventManager->unRegisterEventHandler('crm', 'ItemCategoryOnBeforeDelete', 'bizproc', '\Bitrix\Bizproc\Integration\Crm\CategoryEventListener', 'itemCategoryOnBeforeDelete');
 		$eventManager->unRegisterEventHandler('ai', 'onContextGetMessages', 'bizproc', '\Bitrix\Bizproc\Internal\Integration\AI\Event\EventHandler', 'onContextGetMessages');
 		$eventManager->unRegisterEventHandler('intranet', 'onAddAbsence', 'bizproc', '\Bitrix\Bizproc\Integration\Intranet\EventHandler', 'onAddAbsence');
+		/** @see AiAssistantAgentActivity::onCollectCustomContext() */
+		$eventManager->unRegisterEventHandler('aiassistant', 'AiAssistantAgentActivity::onCollectCustomContext', 'bizproc', AiAssistantAgentActivity::class, 'onCollectCustomContext');
 
 		return true;
 	}

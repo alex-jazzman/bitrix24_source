@@ -4,9 +4,12 @@
 
 jn.define('mail/mailbox/connector/steps/oauth', (require, exports, module) => {
 	const { WizardStep } = require('layout/ui/wizard/step');
-	const { ProgressBarNumber } = require('crm/salescenter/progress-bar-number');
+	const { ProgressBarNumber } = require('mail/mailbox/connector/progress-bar-number');
 	const { Loc } = require('loc');
+	const { Color } = require('tokens');
 	const { getParameterByName } = require('utils/url');
+	const ACTIVE_STEP_COLOR = Color.accentMainPrimary.toHex();
+	const NEXT_STEP_COLOR = Color.base6.toHex();
 
 	class OAuth extends WizardStep
 	{
@@ -28,8 +31,12 @@ jn.define('mail/mailbox/connector/steps/oauth', (require, exports, module) => {
 
 		renderNumberBlock()
 		{
+			const progressBarSettings = this.getProgressBarSettings();
+
 			return new ProgressBarNumber({
-				number: '2',
+				number: progressBarSettings.number.toString(),
+				backgroundColor: ACTIVE_STEP_COLOR,
+				showOuterDecoration: false,
 			});
 		}
 
@@ -42,7 +49,10 @@ jn.define('mail/mailbox/connector/steps/oauth', (require, exports, module) => {
 					text: Loc.getMessage('MAILBOX_CONNECTOR_OAUTH_TITLE_1'),
 				},
 				number: 2,
-				count: 2,
+				count: 3,
+				previousLineColor: ACTIVE_STEP_COLOR,
+				currentLineColor: ACTIVE_STEP_COLOR,
+				nextLineColor: NEXT_STEP_COLOR,
 			};
 		}
 
@@ -58,18 +68,10 @@ jn.define('mail/mailbox/connector/steps/oauth', (require, exports, module) => {
 							const login = getParameterByName(url, 'email');
 							if (storageOauthUid && storageOauthUid !== '' && login && login !== '')
 							{
-								await this.props.parent.connectMailbox(
-									{
-										useSmtp: 0,
-										storageOauthUid,
-										login,
-									},
-								).then(
-									({ data }) => {
-										this.props.parent.onConnectMailbox(data.id, data.email);
-									},
-								).catch(({ errors }) => {
-									this.props.parent.onErrorEnter(errors);
+								this.props.parent.onAuthComplete({
+									useSmtp: 0,
+									storageOauthUid,
+									login,
 								});
 							}
 							else

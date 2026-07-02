@@ -304,6 +304,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    HeadlineXs: ui_system_typography_vue.HeadlineXs,
 	    UiButton: ui_vue3_components_button.Button
 	  },
+	  props: {
+	    addBtnDisabled: {
+	      type: Boolean,
+	      default: false
+	    }
+	  },
 	  emits: ['add'],
 	  setup() {
 	    return {
@@ -325,6 +331,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					:text="loc('TASKS_V2_TIME_TRACKING_SHEET_LIST_EMPTY_ADD_BTN')"
 					:style="AirButtonStyle.FILLED"
 					:size="ButtonSize.MEDIUM"
+					:disabled="addBtnDisabled"
 				/>
 			</div>
 		</div>
@@ -967,7 +974,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			</div>
 			<div class="tasks-time-tracking-list-content">
 				<template v-if="numbers === 0 && !adding">
-					<TimeTrackingListEmpty @add="handleAdd"/>
+					<TimeTrackingListEmpty :addBtnDisabled @add="handleAdd"/>
 				</template>
 				<template v-if="loading">
 					<TimeTrackingListItemSkeleton v-for="index in numbers" :key="index"/>

@@ -9,8 +9,9 @@ use Bitrix\Main\Web\Json;
 use Bitrix\UI\Buttons\Color;
 use Bitrix\UI\Buttons\Icon;
 use Bitrix\UI\Buttons\JsCode;
-use Bitrix\UI\Toolbar\ButtonLocation;
 use Bitrix\UI\Buttons\Tag;
+use Bitrix\UI\Counter\CounterStyle;
+use Bitrix\UI\Toolbar\ButtonLocation;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
 use Bitrix\Main\UI\Extension;
 
@@ -21,14 +22,19 @@ use Bitrix\Main\UI\Extension;
 
 $component = $this->getComponent();
 
+$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
+$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass . ' ' : '') . 'mail-mailbox-list-page --ui-context-content-light');
+
 Extension::load([
 	'ui.buttons',
 	'ui.forms',
+	'ui.cnt',
 	'main.grid',
 	'main.popup',
 	'mail.grid.mailbox-grid',
 	'ui.mail.provider-showcase',
 	'mail.notification.massconnect-notification',
+	'ui.system.highlighter',
 ]);
 
 $APPLICATION->SetTitle($arResult['TITLE']);
@@ -41,7 +47,6 @@ if ($arResult['HAS_ACCESS_TO_MASS_CONNECT'])
 		"color" => Color::SUCCESS,
 		"text" => Loc::getMessage('MAIL_MAILBOX_GRID_MASSCONNECT_BUTTON'),
 		"dataset" => [
-			'toolbar-collapsed-icon' => Icon::ADD,
 			'id' => 'massconnectButton',
 			'test-id' => 'massconnect-button',
 		],
@@ -62,12 +67,12 @@ if ($arResult['HAS_ACCESS_TO_MASS_CONNECT'])
 			$sliderData,
 		);
 
-		$massConnectButton['icon'] = Icon::ADD;
 		$massConnectButton["onclick"] = new JsCode($onclickCode);
 	}
 	else
 	{
 		$massConnectButton['icon'] = Icon::LOCK;
+		$massConnectButton['dataset']['toolbar-collapsed-icon'] = Icon::LOCK;
 		$massConnectButton["onclick"] = new JsCode(
 			"BX.Mail.MailboxList.LimitHelpers.showLimitSlider('limit_v2_mail_mailbox_massconnect')",
 		);
@@ -88,13 +93,48 @@ Toolbar::addFilter(\Bitrix\Main\Filter\Component\ComponentParams::get($arResult[
 	],
 ));
 
-if ($arResult['HAS_ACCESS_TO_EDIT_PERMISSIONS'])
+$gearMenuItems = [];
+$sentTotalCount = (int)($arResult['PASSWORDLESS_SENT_TOTAL_COUNT'] ?? 0);
+$isPasswordlessConnectAvailable = (bool)$arResult['IS_PASSWORDLESS_CONNECT_AVAILABLE'];
+
+if (
+	$arResult['HAS_ACCESS_TO_MASS_CONNECT']
+	&& $isPasswordlessConnectAvailable
+)
+{
+	$sentRequestsLabel = htmlspecialcharsbx(Loc::getMessage('MAIL_MAILBOX_LIST_GEAR_SENT_REQUESTS'));
+	$counterHtml = ' <span class="ui-counter --air --style-filled-no-accent ui-counter-md" id="mailbox-gear-menu-sent-counter" style="margin-left: 4px;' . ($sentTotalCount <= 0 ? ' display: none;' : '') . '">'
+		. '<span class="ui-counter-inner">' . $sentTotalCount . '</span>'
+		. '</span>';
+
+	$sentRequestsUrl = '/mail/sentrequests';
+	$sentRequestsSliderData = Json::encode([
+		'data' => [
+			'source' => 'mailbox_grid',
+		],
+		'width' => 1100,
+	]);
+
+	$gearMenuItems[] = [
+		'html' => $sentRequestsLabel . $counterHtml,
+		'onclick' => new JsCode(sprintf(
+			"this.close(); BX.SidePanel.Instance.open('%s', %s)",
+			$sentRequestsUrl,
+			$sentRequestsSliderData,
+		)),
+		'dataset' => [
+			'id' => 'mailbox-grid-gear-sent-requests',
+		],
+	];
+}
+
+if ($arResult['HAS_ACCESS_TO_EDIT_PERMISSIONS'] && !$isPasswordlessConnectAvailable)
 {
 	$accessButton = [
-		"color" => Color::LIGHT_BORDER,
-		"tag" => Tag::LINK,
-		"text" => Loc::getMessage('MAIL_MAILBOX_LIST_CONFIG_PERMISSIONS_BUTTON'),
-		"dataset" => [
+		'color' => Color::LIGHT_BORDER,
+		'tag' => Tag::LINK,
+		'text' => Loc::getMessage('MAIL_MAILBOX_LIST_CONFIG_PERMISSIONS_BUTTON'),
+		'dataset' => [
 			'toolbar-collapsed-icon' => Icon::LIST,
 			'id' => 'mailboxGridAccessRightsButton',
 			'test-id' => 'mailbox-grid-access-rights-button',
@@ -104,26 +144,86 @@ if ($arResult['HAS_ACCESS_TO_EDIT_PERMISSIONS'])
 	if ($arResult['ACCESS_RIGHTS_ENABLED'])
 	{
 		$permissionsUrl = '/mail/permissions';
-		$sliderData = Json::encode([
+		$permissionsSliderData = Json::encode([
 			'data' => [
 				'source' => 'mailbox_grid',
 			],
 		]);
 
-		$onclickCode = sprintf("BX.SidePanel.Instance.open('%s', %s)",
+		$accessButton['onclick'] = new JsCode(sprintf(
+			"BX.SidePanel.Instance.open('%s', %s)",
 			$permissionsUrl,
-			$sliderData,
-		);
-
-		$accessButton['onclick'] = new JsCode($onclickCode);
+			$permissionsSliderData,
+		));
 	}
 	else
 	{
 		$accessButton['icon'] = Icon::LOCK;
-		$accessButton["onclick"] = new JsCode("BX.Mail.MailboxList.LimitHelpers.showLimitSlider('limit_v2_mail_access_rights')");
+		$accessButton['onclick'] = new JsCode(
+			"BX.Mail.MailboxList.LimitHelpers.showLimitSlider('limit_v2_mail_access_rights')",
+		);
 	}
 
 	Toolbar::addButton($accessButton);
+}
+elseif ($arResult['HAS_ACCESS_TO_EDIT_PERMISSIONS'])
+{
+	$permissionsItem = [
+		'text' => Loc::getMessage('MAIL_MAILBOX_LIST_CONFIG_PERMISSIONS_BUTTON'),
+		'dataset' => [
+			'id' => 'mailbox-grid-gear-permissions',
+		],
+	];
+
+	if ($arResult['ACCESS_RIGHTS_ENABLED'])
+	{
+		$permissionsUrl = '/mail/permissions';
+		$permissionsSliderData = Json::encode([
+			'data' => [
+				'source' => 'mailbox_grid',
+			],
+		]);
+
+		$permissionsItem['onclick'] = new JsCode(sprintf(
+			"this.close(); BX.SidePanel.Instance.open('%s', %s)",
+			$permissionsUrl,
+			$permissionsSliderData,
+		));
+	}
+	else
+	{
+		$permissionsItem['onclick'] = new JsCode(
+			"this.close(); BX.Mail.MailboxList.LimitHelpers.showLimitSlider('limit_v2_mail_access_rights')",
+		);
+	}
+
+	$gearMenuItems[] = $permissionsItem;
+}
+
+if (!empty($gearMenuItems))
+{
+	$gearButton = [
+		'color' => Color::LIGHT_BORDER,
+		'icon' => Icon::SETTING,
+		'dataset' => [
+			'toolbar-collapsed-icon' => Icon::SETTING,
+			'id' => 'mailboxGridGearButton',
+			'test-id' => 'mailbox-grid-gear-button',
+		],
+	];
+
+	if ($sentTotalCount > 0)
+	{
+		$gearButton['counter'] = $sentTotalCount;
+		$gearButton['counterStyle'] = CounterStyle::FILLED_NO_ACCENT;
+	}
+
+	$gearButton['menu'] = [
+		'items' => $gearMenuItems,
+		'closeByEsc' => true,
+	];
+
+	Toolbar::addButton($gearButton);
 }
 
 $gridContainerId = 'bx-mml-' . $arResult['GRID_ID'] . '-container';
@@ -158,8 +258,13 @@ $gridContainerId = 'bx-mml-' . $arResult['GRID_ID'] . '-container';
 
 		const gridId = '<?= CUtil::JSEscape($arResult['GRID_ID']) ?>'
 
+		const resetFilterOnClose = slider ? Boolean(slider.getData().get('resetFilterOnClose')) : false;
+
 		new BX.Mail.MailboxList.Manager({
 			gridId,
+			needHighlightGearButton: <?= $arResult['NEED_HIGHLIGHT_GEAR_BUTTON'] ? 'true' : 'false' ?>,
+			highlightGearButtonOptionName: '<?= CUtil::JSEscape($arResult['HIGHLIGHT_GEAR_BUTTON_OPTION_NAME']) ?>',
+			resetFilterOnClose,
 		});
 	});
 </script>

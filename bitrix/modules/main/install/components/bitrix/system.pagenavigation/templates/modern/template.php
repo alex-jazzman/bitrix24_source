@@ -1,8 +1,12 @@
-<?
+<?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
+
+/**
+ * @var array $arResult
+ */
 
 \Bitrix\Main\UI\Extension::load(['ui.design-tokens']);
 
@@ -15,13 +19,13 @@ if(!$arResult["NavShowAlways"])
 }
 ?>
 <div class="modern-page-navigation">
-<?
+<?php
 
 $strNavQueryString = ($arResult["NavQueryString"] != "" ? $arResult["NavQueryString"]."&amp;" : "");
 $strNavQueryStringFull = ($arResult["NavQueryString"] != "" ? "?".$arResult["NavQueryString"] : "");
 ?>
 	<span class="modern-page-title"><?=GetMessage("pages")?></span>
-<?
+<?php
 if($arResult["bDescPageNumbering"] === true):
 	$bFirst = true;
 	if ($arResult["NavPageNomer"] < $arResult["NavPageCount"]):
@@ -29,16 +33,16 @@ if($arResult["bDescPageNumbering"] === true):
 ?>
 
 			<a class="modern-page-previous" href="<?=$arResult["sUrlPath"]?>?<?=$strNavQueryString?>PAGEN_<?=$arResult["NavNum"]?>=<?=($arResult["NavPageNomer"]+1)?>"><?=GetMessage("nav_prev")?></a>
-<?
+<?php
 		else:
 			if ($arResult["NavPageCount"] == ($arResult["NavPageNomer"]+1) ):
 ?>
 			<a class="modern-page-previous" href="<?=$arResult["sUrlPath"]?><?=$strNavQueryStringFull?>"><?=GetMessage("nav_prev")?></a>
-<?
+<?php
 			else:
 ?>
 			<a class="modern-page-previous" href="<?=$arResult["sUrlPath"]?>?<?=$strNavQueryString?>PAGEN_<?=$arResult["NavNum"]?>=<?=($arResult["NavPageNomer"]+1)?>"><?=GetMessage("nav_prev")?></a>
-<?
+<?php
 			endif;
 		endif;
 
@@ -47,11 +51,11 @@ if($arResult["bDescPageNumbering"] === true):
 			if($arResult["bSavePage"]):
 ?>
 			<a class="modern-page-first" href="<?=$arResult["sUrlPath"]?>?<?=$strNavQueryString?>PAGEN_<?=$arResult["NavNum"]?>=<?=$arResult["NavPageCount"]?>">1</a>
-<?
+<?php
 			else:
 ?>
 			<a class="modern-page-first" href="<?=$arResult["sUrlPath"]?><?=$strNavQueryStringFull?>">1</a>
-<?
+<?php
 			endif;
 			if ($arResult["nStartPage"] < ($arResult["NavPageCount"] - 1)):
 /*?>
@@ -59,7 +63,7 @@ if($arResult["bDescPageNumbering"] === true):
 <?*/
 ?>
 			<a class="modern-page-dots" href="<?=$arResult["sUrlPath"]?>?<?=$strNavQueryString?>PAGEN_<?=$arResult["NavNum"]?>=<?=intval($arResult["nStartPage"] + ($arResult["NavPageCount"] - $arResult["nStartPage"]) / 2)?>">...</a>
-<?
+<?php
 			endif;
 		endif;
 	endif;
@@ -70,16 +74,16 @@ if($arResult["bDescPageNumbering"] === true):
 		if ($arResult["nStartPage"] == $arResult["NavPageNomer"]):
 ?>
 		<span class="<?=($bFirst ? "modern-page-first " : "")?>modern-page-current"><?=$NavRecordGroupPrint?></span>
-<?
+<?php
 		elseif($arResult["nStartPage"] == $arResult["NavPageCount"] && $arResult["bSavePage"] == false):
 ?>
 		<a href="<?=$arResult["sUrlPath"]?><?=$strNavQueryStringFull?>" class="<?=($bFirst ? "modern-page-first" : "")?>"><?=$NavRecordGroupPrint?></a>
-<?
+<?php
 		else:
 ?>
-		<a href="<?=$arResult["sUrlPath"]?>?<?=$strNavQueryString?>PAGEN_<?=$arResult["NavNum"]?>=<?=$arResult["nStartPage"]?>"<?
+		<a href="<?=$arResult["sUrlPath"]?>?<?=$strNavQueryString?>PAGEN_<?=$arResult["NavNum"]?>=<?=$arResult["nStartPage"]?>"<?php
 			?> class="<?=($bFirst ? "modern-page-first" : "")?>"><?=$NavRecordGroupPrint?></a>
-<?
+<?php
 		endif;
 
 		$arResult["nStartPage"]--;
@@ -94,16 +98,16 @@ if($arResult["bDescPageNumbering"] === true):
 <?*/
 ?>
 		<a class="modern-page-dots" href="<?=$arResult["sUrlPath"]?>?<?=$strNavQueryString?>PAGEN_<?=$arResult["NavNum"]?>=<?=round($arResult["nEndPage"] / 2)?>">...</a>
-<?
+<?php
 			endif;
 ?>
 		<a href="<?=$arResult["sUrlPath"]?>?<?=$strNavQueryString?>PAGEN_<?=$arResult["NavNum"]?>=1"><?=$arResult["NavPageCount"]?></a>
-<?
+<?php
 		endif;
 
 ?>
-		<a class="modern-page-next"href="<?=$arResult["sUrlPath"]?>?<?=$strNavQueryString?>PAGEN_<?=$arResult["NavNum"]?>=<?=($arResult["NavPageNomer"]-1)?>"><?=GetMessage("nav_next")?></a>
-<?
+		<a class="modern-page-next" href="<?=$arResult["sUrlPath"]?>?<?=$strNavQueryString?>PAGEN_<?=$arResult["NavNum"]?>=<?=($arResult["NavPageNomer"]-1)?>"><?=GetMessage("nav_next")?></a>
+<?php
 	endif;
 
 else:
@@ -113,16 +117,16 @@ else:
 		if($arResult["bSavePage"]):
 ?>
 			<a class="modern-page-previous" href="<?=$arResult["sUrlPath"]?>?<?=$strNavQueryString?>PAGEN_<?=$arResult["NavNum"]?>=<?=($arResult["NavPageNomer"]-1)?>"><?=GetMessage("nav_prev")?></a>
-<?
+<?php
 		else:
 			if ($arResult["NavPageNomer"] > 2):
 ?>
 			<a class="modern-page-previous" href="<?=$arResult["sUrlPath"]?>?<?=$strNavQueryString?>PAGEN_<?=$arResult["NavNum"]?>=<?=($arResult["NavPageNomer"]-1)?>"><?=GetMessage("nav_prev")?></a>
-<?
+<?php
 			else:
 ?>
 			<a class="modern-page-previous" href="<?=$arResult["sUrlPath"]?><?=$strNavQueryStringFull?>"><?=GetMessage("nav_prev")?></a>
-<?
+<?php
 			endif;
 
 		endif;
@@ -132,11 +136,11 @@ else:
 			if($arResult["bSavePage"]):
 ?>
 			<a class="modern-page-first" href="<?=$arResult["sUrlPath"]?>?<?=$strNavQueryString?>PAGEN_<?=$arResult["NavNum"]?>=1">1</a>
-<?
+<?php
 			else:
 ?>
 			<a class="modern-page-first" href="<?=$arResult["sUrlPath"]?><?=$strNavQueryStringFull?>">1</a>
-<?
+<?php
 			endif;
 			if ($arResult["nStartPage"] > 2):
 /*?>
@@ -144,7 +148,7 @@ else:
 <?*/
 ?>
 			<a class="modern-page-dots" href="<?=$arResult["sUrlPath"]?>?<?=$strNavQueryString?>PAGEN_<?=$arResult["NavNum"]?>=<?=round($arResult["nStartPage"] / 2)?>">...</a>
-<?
+<?php
 			endif;
 		endif;
 	endif;
@@ -154,16 +158,16 @@ else:
 		if ($arResult["nStartPage"] == $arResult["NavPageNomer"]):
 ?>
 		<span class="<?=($bFirst ? "modern-page-first " : "")?>modern-page-current"><?=$arResult["nStartPage"]?></span>
-<?
+<?php
 		elseif($arResult["nStartPage"] == 1 && $arResult["bSavePage"] == false):
 ?>
 		<a href="<?=$arResult["sUrlPath"]?><?=$strNavQueryStringFull?>" class="<?=($bFirst ? "modern-page-first" : "")?>"><?=$arResult["nStartPage"]?></a>
-<?
+<?php
 		else:
 ?>
-		<a href="<?=$arResult["sUrlPath"]?>?<?=$strNavQueryString?>PAGEN_<?=$arResult["NavNum"]?>=<?=$arResult["nStartPage"]?>"<?
+		<a href="<?=$arResult["sUrlPath"]?>?<?=$strNavQueryString?>PAGEN_<?=$arResult["NavNum"]?>=<?=$arResult["nStartPage"]?>"<?php
 			?> class="<?=($bFirst ? "modern-page-first" : "")?>"><?=$arResult["nStartPage"]?></a>
-<?
+<?php
 		endif;
 		$arResult["nStartPage"]++;
 		$bFirst = false;
@@ -177,15 +181,15 @@ else:
 <?*/
 ?>
 		<a class="modern-page-dots" href="<?=$arResult["sUrlPath"]?>?<?=$strNavQueryString?>PAGEN_<?=$arResult["NavNum"]?>=<?=round($arResult["nEndPage"] + ($arResult["NavPageCount"] - $arResult["nEndPage"]) / 2)?>">...</a>
-<?
+<?php
 			endif;
 ?>
 		<a href="<?=$arResult["sUrlPath"]?>?<?=$strNavQueryString?>PAGEN_<?=$arResult["NavNum"]?>=<?=$arResult["NavPageCount"]?>"><?=$arResult["NavPageCount"]?></a>
-<?
+<?php
 		endif;
 ?>
 		<a class="modern-page-next" href="<?=$arResult["sUrlPath"]?>?<?=$strNavQueryString?>PAGEN_<?=$arResult["NavNum"]?>=<?=($arResult["NavPageNomer"]+1)?>"><?=GetMessage("nav_next")?></a>
-<?
+<?php
 	endif;
 endif;
 
@@ -193,11 +197,11 @@ if ($arResult["bShowAll"]):
 	if ($arResult["NavShowAll"]):
 ?>
 		<a class="modern-page-pagen" href="<?=$arResult["sUrlPath"]?>?<?=$strNavQueryString?>SHOWALL_<?=$arResult["NavNum"]?>=0"><?=GetMessage("nav_paged")?></a>
-<?
+<?php
 	else:
 ?>
 		<a class="modern-page-all" href="<?=$arResult["sUrlPath"]?>?<?=$strNavQueryString?>SHOWALL_<?=$arResult["NavNum"]?>=1"><?=GetMessage("nav_all")?></a>
-<?
+<?php
 	endif;
 endif
 ?>

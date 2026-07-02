@@ -1,5 +1,7 @@
+import { type JsonObject } from 'main.core';
+
 import type { RecentTypeItem } from 'im.v2.const';
-import type { RawChat, RawFile, RawUser, RawMessage, RawMultidialog, RawLines, MultipleRawMessage } from './common';
+import type { RawChat, RawFile, RawUser, RawMessage, RawMultidialog, RawLines, MultipleRawMessage, RawBuilder } from './common';
 
 export type MessageAddParams = {
 	chat?: {[chatId: string]: RawChat} | [],
@@ -31,7 +33,8 @@ export type MessageUpdateParams = {
 	senderId: number,
 	text: string,
 	textLegacy: string,
-	type: string
+	type: string,
+	builder: RawBuilder | null,
 };
 
 export type LastMessageViewsParams = {
@@ -235,6 +238,28 @@ export type RawReaction = {
 	reactionCounters: {[reactionType: string]: number},
 	reactionUsers: {[reactionType: string]: number[]},
 	ownReactions?: string[]
+};
+
+export type BuilderBlockAppendParams = {
+	chatId: number,
+	block: JsonObject,
+	messageId: number,
+	text: string
+};
+
+export type BuilderBlockUpdateParams = {
+	chatId: number,
+	block: JsonObject,
+	blockId: string,
+	messageId: number,
+	text: string
+};
+
+export type BuilderBlockDeleteParams = {
+	chatId: number,
+	blockId: string,
+	messageId: number,
+	text: string
 };
 
 type ReactionUser = {

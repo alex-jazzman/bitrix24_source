@@ -1,7 +1,12 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
 
-if(class_exists("lists")) return;
+if (class_exists('lists'))
+{
+	return;
+}
+
 Class lists extends CModule
 {
 	var $MODULE_ID = "lists";
@@ -79,6 +84,14 @@ Class lists extends CModule
 			$eventManager = \Bitrix\Main\EventManager::getInstance();
 			$eventManager->registerEventHandler('socialnetwork', 'onLogIndexGetContent', 'lists', '\Bitrix\Lists\Integration\Socialnetwork\Log', 'onIndexGetContent');
 			$eventManager->registerEventHandlerCompatible('im', 'OnGetNotifySchema', 'lists', \Bitrix\Lists\Integration\Im\NotifySchema::class, 'onGetNotifySchema');
+
+			$eventManager->registerEventHandler(
+				fromModuleId: 'bizproc',
+				eventType: 'onGetDocumentType',
+				toModuleId: 'lists',
+				toClass: \Bitrix\Lists\Internal\Integration\Bizproc\EventHandlers\OnGetDocumentTypes\GetDocumentTypes::class,
+				toMethod: 'onGetDocumentType',
+			);
 
 			if (isset($arParams["INSTALL_DEMO_DATA"]) && $arParams["INSTALL_DEMO_DATA"] == "Y")
 			{
@@ -236,6 +249,13 @@ Class lists extends CModule
 		$eventManager->unregisterEventHandler('socialnetwork', 'onLogIndexGetContent', 'lists', '\Bitrix\Lists\Integration\Socialnetwork\Log', 'onIndexGetContent');
 		$eventManager->unRegisterEventHandler('im', 'OnGetNotifySchema', 'lists', \Bitrix\Lists\Integration\Im\NotifySchema::class, 'onGetNotifySchema');
 
+		$eventManager->unRegisterEventHandler(
+			fromModuleId: 'bizproc',
+			eventType: 'onGetDocumentType',
+			toModuleId: 'lists',
+			toClass: \Bitrix\Lists\Internal\Integration\Bizproc\EventHandlers\OnGetDocumentTypes\GetDocumentTypes::class,
+			toMethod: 'onGetDocumentType',
+		);
 
 		UnRegisterModule("lists");
 
@@ -277,8 +297,8 @@ Class lists extends CModule
 
 	function DoInstall()
 	{
-		global $DB, $APPLICATION, $USER, $step;
-		$step = intval($step);
+		global $APPLICATION, $USER;
+		$step = (int)($_REQUEST['step'] ?? 0);
 
 		if(!$USER->IsAdmin())
 			return;
@@ -308,10 +328,10 @@ Class lists extends CModule
 
 	function DoUninstall()
 	{
-		global $DB, $APPLICATION, $USER, $step;
+		global $APPLICATION, $USER;
+		$step = (int)($_REQUEST['step'] ?? 0);
 		if($USER->IsAdmin())
 		{
-			$step = intval($step);
 			if($step < 2)
 			{
 				$APPLICATION->IncludeAdminFile(GetMessage("LISTS_UNINSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/lists/install/unstep1.php");
@@ -356,4 +376,3 @@ Class lists extends CModule
 		);
 	}
 }
-?>

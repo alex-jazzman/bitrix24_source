@@ -26,6 +26,16 @@ jn.define('im/messenger/controller/recent/service/action/dummy', (require, expor
 		onItemAction = (itemActionData) => {
 			this.logger.log('onItemAction', itemActionData);
 		};
+
+		subscribeEvents()
+		{
+			this.logger.log('subscribeEvents');
+		}
+
+		unsubscribeEvents()
+		{
+			this.logger.log('unsubscribeEvents');
+		}
 	}
 
 	module.exports = DummyActionService;

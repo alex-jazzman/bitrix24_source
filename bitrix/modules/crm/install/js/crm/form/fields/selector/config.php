@@ -8,11 +8,11 @@ return [
 	'css' => 'dist/selector.bundle.css',
 	'js' => 'dist/selector.bundle.js',
 	'rel' => [
+		'main.core',
+		'main.core.events',
+		'ui.buttons',
 		'ui.sidepanel.layout',
 		'ui.userfieldfactory',
-		'ui.buttons',
-		'main.core.events',
-		'main.core',
 	],
 	'skip_core' => false,
 ];

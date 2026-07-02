@@ -3,8 +3,9 @@
  */
 jn.define('im/messenger/lib/integration/tasksmobile/comments/message/context-menu', (require, exports, module) => {
 	const { MessageContextMenu } = require('im/messenger/api/dialog-integration/message/context-menu');
-	const { MessageMenuActionType } = require('im/messenger/const');
-	const { Color } = require('tokens');
+	const { MenuSection, MenuActions } = require('im/messenger/controller/dialog/lib/message-menu');
+
+	const { MessageMenuActionType, MessageMenuSectionId } = require('im/messenger/const');
 	const { Loc } = require('loc');
 	const { Icon } = require('ui-system/blocks/icon');
 
@@ -16,30 +17,22 @@ jn.define('im/messenger/lib/integration/tasksmobile/comments/message/context-men
 		selectResultIdByTaskIdAndMessageId,
 	} = require('tasks/statemanager/redux/slices/tasks-results-v2');
 
-	const baseColor = Color.base1.toHex();
-
-	/** @type {MessageContextMenuButton} */
+	/** @type {MessageContextMultiLevelMenuActionItem} */
 	const MarkAsResultAction = {
 		id: 'mark-as-result',
 		testId: 'MESSAGE_MENU_ACTION_MARK_AS_RESULT',
-		type: 'button',
-		text: Loc.getMessage('IMMOBILE_INTEGRATION_TASKSMOBILE_COMMENTS_MESSAGE_MENU_MARK_AS_RESULT'),
+		type: MenuActions.ActionViewType.base,
+		title: Loc.getMessage('IMMOBILE_INTEGRATION_TASKSMOBILE_COMMENTS_MESSAGE_MENU_MARK_AS_RESULT'),
 		iconName: Icon.WINDOW_FLAG.getIconName(),
-		style: {
-			fontColor: baseColor,
-		},
 	};
 
-	/** @type {MessageContextMenuButton} */
+	/** @type {MessageContextMultiLevelMenuActionItem} */
 	const UnmarkAsResultAction = {
 		id: 'unmark-as-result',
 		testId: 'MESSAGE_MENU_ACTION_UNMARK_AS_RESULT',
-		type: 'button',
-		text: Loc.getMessage('IMMOBILE_INTEGRATION_TASKSMOBILE_COMMENTS_MESSAGE_MENU_UNMARK_AS_RESULT'),
+		type: MenuActions.ActionViewType.base,
+		title: Loc.getMessage('IMMOBILE_INTEGRATION_TASKSMOBILE_COMMENTS_MESSAGE_MENU_UNMARK_AS_RESULT'),
 		iconName: Icon.CIRCLE_CROSS.getIconName(),
-		style: {
-			fontColor: baseColor,
-		},
 	};
 
 	/**
@@ -48,7 +41,7 @@ jn.define('im/messenger/lib/integration/tasksmobile/comments/message/context-men
 	class CommentContextMenu extends MessageContextMenu
 	{
 		/**
-		 * @return {Object<string, (menu: MessageMenuView, message: MessageMenuMessage) => void>}
+		 * @return {Object<string, (menu: MessageMenuView, message: MessageMenuActionHelper) => void>}
 		 */
 		getActions()
 		{
@@ -59,7 +52,7 @@ jn.define('im/messenger/lib/integration/tasksmobile/comments/message/context-men
 		}
 
 		/**
-		 * @return {Object<string, (message: MessageMenuMessage) => void>}
+		 * @return {Object<string, (message: MessageMenuActionHelper) => void>}
 		 */
 		getActionHandlers()
 		{
@@ -70,10 +63,10 @@ jn.define('im/messenger/lib/integration/tasksmobile/comments/message/context-men
 		}
 
 		/**
-		 * @param {MessageMenuMessage} message
+		 * @param {IMessageMenuActionHelper} actionHelper
 		 * @return {Promise<string[]>}
 		 */
-		async getOrderedActions(message)
+		async getOrderedActions(actionHelper)
 		{
 			return [
 				MessageMenuActionType.reply,
@@ -102,36 +95,92 @@ jn.define('im/messenger/lib/integration/tasksmobile/comments/message/context-men
 		}
 
 		/**
-		 * @param {MessageMenuView} menu
-		 * @param {MessageMenuMessage} message
+		 * @returns {Array<string|object>}
 		 */
-		addMarkAsResultAction(menu, message)
+		getOrderedActionTree(actionHelper)
 		{
-			if (this.#isAuthor(message) && !this.#isResultExist(message))
+			return [
+				{
+					sectionId: MessageMenuSectionId.dialogMain,
+					children: [
+						MessageMenuActionType.reply,
+						MessageMenuActionType.copy,
+						MessageMenuActionType.edit,
+						MessageMenuActionType.forward,
+						MessageMenuActionType.askCopilot,
+						MarkAsResultAction.id,
+						UnmarkAsResultAction.id,
+						MessageMenuActionType.createTask,
+						{
+							sectionId: MessageMenuSectionId.dialogMore,
+							nextMenuActionType: MessageMenuActionType.more,
+							children: [
+								MessageMenuActionType.pin,
+								MessageMenuActionType.unpin,
+								MessageMenuActionType.copyLink,
+								MessageMenuActionType.createEvent,
+								MessageMenuActionType.downloadToDevice,
+								MessageMenuActionType.downloadToDisk,
+								MessageMenuActionType.profile,
+							],
+						},
+					],
+				},
+				{
+					sectionId: MessageMenuSectionId.dialogFooter,
+					children: [
+						MessageMenuActionType.delete,
+						MessageMenuActionType.multiselect,
+					],
+				},
+			];
+		}
+
+		/**
+		 * @return {Record<string, MessageContextMenuSectionItem>}
+		 */
+		getSection()
+		{
+			return {
+				[MessageMenuSectionId.dialogMain]: MenuSection.MainSection,
+				[MessageMenuSectionId.dialogMore]: MenuSection.MoreSection,
+				[MessageMenuSectionId.dialogFooter]: MenuSection.MainSubSection,
+			};
+		}
+
+		/**
+		 * @param {MessageMenuView} menu
+		 * @param {MessageMenuActionHelper} actionHelper
+		 * @param {object} [options]
+		 */
+		addMarkAsResultAction(menu, actionHelper, options = {})
+		{
+			if (this.#isAuthor(actionHelper) && !this.#isResultExist(actionHelper))
 			{
-				menu.addAction(MarkAsResultAction);
+				menu.addAction(MarkAsResultAction, options);
 			}
 		}
 
 		/**
 		 * @param {MessageMenuView} menu
-		 * @param {MessageMenuMessage} message
+		 * @param {MessageMenuActionHelper} actionHelper
+		 * @param {object} [options]
 		 */
-		addUnmarkAsResultAction(menu, message)
+		addUnmarkAsResultAction(menu, actionHelper, options = {})
 		{
-			if (this.#isAuthor(message) && this.#isResultExist(message))
+			if (this.#isAuthor(actionHelper) && this.#isResultExist(actionHelper))
 			{
-				menu.addAction(UnmarkAsResultAction);
+				menu.addAction(UnmarkAsResultAction, options);
 			}
 		}
 
 		/**
-		 * @param {MessageMenuMessage} message
+		 * @param {MessageMenuActionHelper} actionHelper
 		 */
-		markAsResult(message)
+		markAsResult(actionHelper)
 		{
 			const taskId = this.relatedEntity.id;
-			const messageId = message.messageModel.id;
+			const messageId = actionHelper.messageModel.id;
 			const resultId = selectResultIdByTaskIdAndMessageId(store.getState(), taskId, messageId);
 
 			if (!resultId)
@@ -161,10 +210,10 @@ jn.define('im/messenger/lib/integration/tasksmobile/comments/message/context-men
 			return Number(message.messageModel.authorId) === Number(env.userId);
 		}
 
-		#isResultExist(message)
+		#isResultExist(actionHelper)
 		{
 			const taskId = this.relatedEntity.id;
-			const messageId = message.messageModel.id;
+			const messageId = actionHelper.messageModel.id;
 			const resultId = selectResultIdByTaskIdAndMessageId(store.getState(), taskId, messageId);
 
 			return Boolean(resultId);

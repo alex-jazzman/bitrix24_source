@@ -1,4 +1,4 @@
-import { Type, Cache, Dom } from 'main.core';
+import { Type, Cache, Dom, Tag } from 'main.core';
 
 import { type Slider } from './slider';
 import { type LabelOptions } from './types/label-options';
@@ -57,9 +57,13 @@ export class Label
 				classes.push('--visible');
 			}
 
-			return Dom.create('div', {
+			return Dom.create('button', {
 				props: {
 					className: classes.join(' '),
+				},
+				attrs: {
+					type: 'button',
+					tabIndex: this.isHidden() ? '-1' : '0',
 				},
 				children: [
 					this.getIconBox(),
@@ -295,6 +299,7 @@ export class Label
 		if (Type.isStringFilled(iconTitle) || iconTitle === null)
 		{
 			Dom.attr(this.getIconBox(), 'title', iconTitle);
+			Dom.attr(this.getContainer(), 'aria-label', iconTitle);
 			this.iconTitle = iconTitle;
 		}
 	}
@@ -313,12 +318,14 @@ export class Label
 	{
 		this.hidden = true;
 		Dom.addClass(this.getContainer(), '--hidden');
+		Dom.attr(this.getContainer(), 'tabIndex', '-1');
 	}
 
 	show(): void
 	{
 		this.hidden = false;
 		Dom.removeClass(this.getContainer(), '--hidden');
+		Dom.attr(this.getContainer(), 'tabIndex', '0');
 	}
 
 	isVisible(): boolean

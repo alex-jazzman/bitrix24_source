@@ -3,5 +3,4 @@ module.exports = {
 	output: 'dist/transfer-to-intranet.bundle.js',
 	namespace: 'BX.Intranet',
 	browserslist: true,
-	minification: true,
 };

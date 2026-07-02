@@ -853,29 +853,29 @@
                     "Type": "WriteDataStorageActivity",
                     "Activated": "Y",
                     "Properties": {
-                        "FieldValue": {
-                            "{=A4889_7438_8206_9038:startUser}": "{=A4791_5036_6881_3286:startedBy}",
-                            "{=A4889_7438_8206_9038:missingGroupChatId}": "{=A4632_2501_2036_1473:missingGroupChatId}",
-                            "{=A4889_7438_8206_9038:bot}": "{=A7426_4464_6102_9845:botId > user}"
-                        },
+						"FieldValue": {
+							"startUser": "{=A4791_5036_6881_3286:startedBy}",
+							"missingGroupChatId": "{=A4632_2501_2036_1473:missingGroupChatId}",
+							"bot": "{=A7426_4464_6102_9845:botId > user}"
+						},
                         "Author": "{=A4791_5036_6881_3286:startedBy}",
                         "StorageId": null,
                         "StorageCode": "RAG_SYSTEM_INFO_{=Workflow:TemplateId}",
                         "RewriteMode": "newItem",
                         "IsExpanded": "Y",
                         "Fields": {
-                            "{=A4889_7438_8206_9038:startUser}": {
-                                "Value": "{=A4791_5036_6881_3286:startedBy}",
-                                "FieldName": "{=A4889_7438_8206_9038:startUser}"
-                            },
-                            "{=A4889_7438_8206_9038:missingGroupChatId}": {
-                                "Value": "{=A4632_2501_2036_1473:missingGroupChatId}",
-                                "FieldName": "{=A4889_7438_8206_9038:missingGroupChatId}"
-                            },
-                            "{=A4889_7438_8206_9038:bot}": {
-                                "Value": "{=A7426_4464_6102_9845:botId > user}",
-                                "FieldName": "{=A4889_7438_8206_9038:bot}"
-                            }
+							"missingGroupChatId": {
+								"Value": "{=A4632_2501_2036_1473:missingGroupChatId}",
+								"FieldName": "missingGroupChatId"
+							},
+							"startUser": {
+								"Value": "{=A4791_5036_6881_3286:startedBy}",
+								"FieldName": "startUser"
+							},
+							"bot": {
+								"Value": "{=A7426_4464_6102_9845:botId > user}",
+								"FieldName": "bot"
+							}
                         },
                         "DynamicFilterFields": {
                             "items": []

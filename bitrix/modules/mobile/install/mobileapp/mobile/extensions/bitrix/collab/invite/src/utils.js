@@ -57,14 +57,16 @@ jn.define('collab/invite/src/utils', (require, exports, module) => {
 	};
 
 	const openGuestsInviteRestrictionsBox = async (props) => {
-		const { parentWidget, onClose } = props;
+		const { parentWidget, isProjectsV2Enabled = false, onClose } = props;
 
 		const imageUri = makeLibraryImagePath('invite-guests-disabled.svg', 'collab/invite');
 		const isAdmin = env.isAdmin;
 
 		const inviteBoxInstance = await StatusBox.open({
 			parentWidget,
-			backdropTitle: Loc.getMessage('COLLAB_GUEST_INVITE_RESTRICTIONS_BOX_TITLE'),
+			backdropTitle: isProjectsV2Enabled
+				? Loc.getMessage('COLLAB_PROJECT_GUEST_INVITE_RESTRICTIONS_BOX_TITLE')
+				: Loc.getMessage('COLLAB_GUEST_INVITE_RESTRICTIONS_BOX_TITLE'),
 			testId: 'guests-invite-restrictions-box',
 			imageUri,
 			height: 440,
@@ -102,18 +104,24 @@ jn.define('collab/invite/src/utils', (require, exports, module) => {
 	};
 
 	const openCurrentCollabGuestsInviteRestrictionsBox = (props) => {
-		const { parentWidget, onClose } = props;
+		const { parentWidget, isProjectsV2Enabled = false, onClose } = props;
 
 		const imageUri = makeLibraryImagePath('invite-guests-disabled.svg', 'collab/invite');
 
 		return StatusBox.open({
 			parentWidget,
-			backdropTitle: Loc.getMessage('COLLAB_GUESTS_INVITE_DISABLED_BY_COLLAB_ADMIN_BOX_TITLE'),
+			backdropTitle: isProjectsV2Enabled
+				? Loc.getMessage('COLLAB_PROJECT_GUESTS_INVITE_DISABLED_BY_COLLAB_ADMIN_BOX_TITLE')
+				: Loc.getMessage('COLLAB_GUESTS_INVITE_DISABLED_BY_COLLAB_ADMIN_BOX_TITLE'),
 			testId: 'current-collab-guests-invite-restrictions-box',
 			imageUri,
 			height: 440,
-			title: Loc.getMessage('COLLAB_GUESTS_INVITE_DISABLED_BY_COLLAB_ADMIN_TITLE'),
-			description: Loc.getMessage('COLLAB_GUESTS_INVITE_DISABLED_BY_COLLAB_ADMIN_DESCRIPTION'),
+			title: isProjectsV2Enabled
+				? Loc.getMessage('COLLAB_PROJECT_GUESTS_INVITE_DISABLED_BY_COLLAB_ADMIN_TITLE')
+				: Loc.getMessage('COLLAB_GUESTS_INVITE_DISABLED_BY_COLLAB_ADMIN_TITLE'),
+			description: isProjectsV2Enabled
+				? Loc.getMessage('COLLAB_PROJECT_GUESTS_INVITE_DISABLED_BY_COLLAB_ADMIN_DESCRIPTION')
+				: Loc.getMessage('COLLAB_GUESTS_INVITE_DISABLED_BY_COLLAB_ADMIN_DESCRIPTION'),
 			buttonText: Loc.getMessage('COLLAB_GUESTS_INVITE_DISABLED_BY_COLLAB_ADMIN_BUTTON_TEXT'),
 			buttonDesign: ButtonDesign.OUTLINE,
 			statusBlockStyle: {

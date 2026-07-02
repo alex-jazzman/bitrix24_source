@@ -28,8 +28,9 @@ jn.define('layout/ui/feedback-form-opener', (require, exports, module) => {
 
 		/**
 		 * @param {Object} [backdropConfig]
+		 * @param {Object} [params]
 		 */
-		openInBackdrop(backdropConfig = null)
+		openInBackdrop(backdropConfig = null, params = {})
 		{
 			const backdrop = backdropConfig ?? {
 				mediumPositionPercent: 80,
@@ -42,7 +43,9 @@ jn.define('layout/ui/feedback-form-opener', (require, exports, module) => {
 				enableNavigationBarBorder: false,
 			};
 
-			this.open({ backdrop });
+			const { title } = params;
+
+			this.open({ backdrop, title });
 		}
 
 		/**

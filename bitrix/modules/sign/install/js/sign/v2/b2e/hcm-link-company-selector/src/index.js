@@ -2,7 +2,6 @@ import { Loc, Tag, Type, Dom } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Dialog } from 'ui.entity-selector';
 import { Api } from 'sign.v2.api';
-import { Loader } from 'main.loader';
 import { CompanyConnectPage } from 'humanresources.hcmlink.company-connect-page';
 
 import './style.css';

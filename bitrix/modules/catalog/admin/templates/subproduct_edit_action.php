@@ -2,6 +2,7 @@
 
 use Bitrix\Catalog\Access\AccessController;
 use Bitrix\Catalog\Access\ActionDictionary;
+use Bitrix\Catalog\Product\Price\Calculation;
 use Bitrix\Main;
 use Bitrix\Catalog;
 
@@ -384,6 +385,8 @@ if ($allowEdit)
 
 	if ($arCatalog["SUBSCRIPTION"] == "Y")
 	{
+		$request = Main\Context::getCurrent()->getRequest();
+
 		$arCurProductGroups = array();
 
 		$dbProductGroups = CCatalogProductGroups::GetList(
@@ -423,14 +426,14 @@ if ($allowEdit)
 
 			if (isset($arCurProductGroups[$arGroup["ID"]]))
 			{
-				if (isset(${"SUBCAT_USER_GROUP_ID_".$arGroup["ID"]}) && ${"SUBCAT_USER_GROUP_ID_".$arGroup["ID"]} == "Y")
+				if ($request->getPost("SUBCAT_USER_GROUP_ID_".$arGroup["ID"]) === "Y")
 				{
-					if ((int)(${"SUBCAT_ACCESS_LENGTH_".$arGroup["ID"]}) != (int)($arCurProductGroups[$arGroup["ID"]]["ACCESS_LENGTH"])
-						|| ${"SUBCAT_ACCESS_LENGTH_TYPE_".$arGroup["ID"]} != $arCurProductGroups[$arGroup["ID"]]["ACCESS_LENGTH_TYPE"])
+					if ((int)$request->getPost("SUBCAT_ACCESS_LENGTH_".$arGroup["ID"]) != (int)($arCurProductGroups[$arGroup["ID"]]["ACCESS_LENGTH"])
+						|| $request->getPost("SUBCAT_ACCESS_LENGTH_TYPE_".$arGroup["ID"]) != $arCurProductGroups[$arGroup["ID"]]["ACCESS_LENGTH_TYPE"])
 					{
 						$arCatalogFields = array(
-							"ACCESS_LENGTH" => (int)(${"SUBCAT_ACCESS_LENGTH_".$arGroup["ID"]}),
-							"ACCESS_LENGTH_TYPE" => ${"SUBCAT_ACCESS_LENGTH_TYPE_".$arGroup["ID"]}
+							"ACCESS_LENGTH" => (int)$request->getPost("SUBCAT_ACCESS_LENGTH_".$arGroup["ID"]),
+							"ACCESS_LENGTH_TYPE" => $request->getPost("SUBCAT_ACCESS_LENGTH_TYPE_".$arGroup["ID"])
 						);
 						CCatalogProductGroups::Update($arCurProductGroups[$arGroup["ID"]]["ID"], $arCatalogFields);
 					}
@@ -442,13 +445,13 @@ if ($allowEdit)
 			}
 			else
 			{
-				if (isset(${"SUBCAT_USER_GROUP_ID_".$arGroup["ID"]}) && ${"SUBCAT_USER_GROUP_ID_".$arGroup["ID"]} == "Y")
+				if ($request->getPost("SUBCAT_USER_GROUP_ID_".$arGroup["ID"]) === "Y")
 				{
 					$arCatalogFields = array(
 						"PRODUCT_ID" => $ID,
 						"GROUP_ID" => $arGroup["ID"],
-						"ACCESS_LENGTH" => (int)(${"SUBCAT_ACCESS_LENGTH_".$arGroup["ID"]}),
-						"ACCESS_LENGTH_TYPE" => ${"SUBCAT_ACCESS_LENGTH_TYPE_".$arGroup["ID"]}
+						"ACCESS_LENGTH" => (int)$request->getPost("SUBCAT_ACCESS_LENGTH_".$arGroup["ID"]),
+						"ACCESS_LENGTH_TYPE" => $request->getPost("SUBCAT_ACCESS_LENGTH_TYPE_".$arGroup["ID"])
 					);
 					CCatalogProductGroups::Add($arCatalogFields);
 				}
@@ -507,11 +510,13 @@ if ($allowEdit)
 // region Save prices
 if ($allowEditPrices)
 {
+	$request = Main\Context::getCurrent()->getRequest();
+
 	$enableQuantityRanges = Catalog\Config\Feature::isPriceQuantityRangesEnabled();
 
 	if ($enableQuantityRanges)
 	{
-		$bUseExtForm = (isset($_POST['subprice_useextform']) && $_POST['subprice_useextform'] === 'Y');
+		$bUseExtForm = ($request->getPost('subprice_useextform') === 'Y');
 	}
 	else
 	{
@@ -526,14 +531,17 @@ if ($allowEditPrices)
 
 		for ($i = 0; $i < $intBasePriceCount; $i++)
 		{
-			${"SUBCAT_PRICE_".$arCatGroups["ID"]."_".$arCatalogBasePrices[$i]["IND"]} = str_replace([' ', ','], ['', '.'], ${"SUBCAT_PRICE_".$arCatGroups["ID"]."_".$arCatalogBasePrices[$i]["IND"]});
+			$priceGroupId = $arCatGroups["ID"];
+			$priceInd = $arCatalogBasePrices[$i]["IND"];
+			$typePrice = str_replace([' ', ','], ['', '.'], (string)$request->getPost("SUBCAT_PRICE_".$priceGroupId."_".$priceInd));
+			$typeIdList = $request->getPost("SUBCAT_ID_".$priceGroupId);
+			$typeExtraId = $request->getPost("SUBCAT_EXTRA_".$priceGroupId."_".$priceInd);
+			$typeCurrency = $request->getPost("SUBCAT_CURRENCY_".$priceGroupId."_".$priceInd);
 			$arCatalogPrice_tmp[$i] = array(
-				"ID" => (int)(${"SUBCAT_ID_".$arCatGroups["ID"]}[$arCatalogBasePrices[$i]["IND"]] ?? 0),
-				"EXTRA_ID" => ${"SUBCAT_EXTRA_".$arCatGroups["ID"]."_".$arCatalogBasePrices[$i]["IND"]}
-					? (int)(${"SUBCAT_EXTRA_".$arCatGroups["ID"]."_".$arCatalogBasePrices[$i]["IND"]})
-					: 0,
-				"PRICE" => ${"SUBCAT_PRICE_".$arCatGroups["ID"]."_".$arCatalogBasePrices[$i]["IND"]},
-				"CURRENCY" => trim(${"SUBCAT_CURRENCY_".$arCatGroups["ID"]."_".$arCatalogBasePrices[$i]["IND"]}),
+				"ID" => (int)(is_array($typeIdList) ? ($typeIdList[$priceInd] ?? 0) : 0),
+				"EXTRA_ID" => $typeExtraId ? (int)$typeExtraId : 0,
+				"PRICE" => $typePrice,
+				"CURRENCY" => trim((string)$typeCurrency),
 				"QUANTITY_FROM" => $arCatalogBasePrices[$i]["QUANTITY_FROM"],
 				"QUANTITY_TO" => $arCatalogBasePrices[$i]["QUANTITY_TO"]
 			);
@@ -549,7 +557,7 @@ if ($allowEditPrices)
 				{
 					$arCatalogPrice_tmp[$i]["CURRENCY"] = $arCatalogBasePrices[$i]["CURRENCY"];
 					$arCatalogExtra = CExtra::GetByID($arCatalogPrice_tmp[$i]["EXTRA_ID"]);
-					$arCatalogPrice_tmp[$i]["PRICE"] = roundEx($arCatalogBasePrices[$i]["PRICE"] * (1 + (float)$arCatalogExtra["PERCENTAGE"] / 100), CATALOG_VALUE_PRECISION);
+					$arCatalogPrice_tmp[$i]["PRICE"] = Calculation::roundPrecision($arCatalogBasePrices[$i]["PRICE"] * (1 + (float)$arCatalogExtra["PERCENTAGE"] / 100));
 				}
 				else
 				{

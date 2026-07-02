@@ -6,7 +6,130 @@
 	padding: 6px 10px 10px 10px;
 }
 
-.bx-im-ai-assistant-chat-header__icon {
+.right-panel-ai-chat__content .bx-im-content-chat__textarea_container {
+	padding-bottom: 0;
+}
+
+.bx-im-ai-assistant-widget-layout__container{
+	display: flex;
+	position: relative;
+	height: 100%;
+	flex-direction: column;
+	justify-content: space-between;
+	align-items: stretch;
+}
+
+.bx-im-ai-assistant-widget-layout__content {
+	flex-grow: 1;
+}
+
+.bx-im-ai-assistant-widget-layout__panel-container {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	z-index: 90;
+}
+.bx-im-ai-assistant-chat-header__container {
+	display: flex;
+	align-items: center;
+	height: 58px;
+	padding: 11px 15px;
+	background-color: var(--im-color-palette-white-base);
+}
+
+.bx-im-ai-assistant-chat-header__back {
+	--ui-icon-set__icon-color: var(--ui-color-base-40);
+	flex-shrink: 0;
+	margin-right: 12px;
 	cursor: pointer;
-	transform: scaleX(-1);
+}
+
+.bx-im-ai-assistant-chat-header__avatar {
+	flex-shrink: 0;
+	margin-right: 10px;
+}
+
+.bx-im-ai-assistant-chat-header__info {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.bx-im-ai-assistant-chat-header__subtitle {
+	font: var(--im-font-size-md) var(--im-font-family-system);
+	font-weight: var(--im-font-weight-normal);
+	color: var(--im-color-palette-gray-60);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.bx-im-ai-assistant-chat-header__icon {
+	--ui-icon-set__icon-color: var(--ui-color-base-40);
+	flex-shrink: 0;
+	margin-left: 12px;
+	cursor: pointer;
+}
+.bx-im-ai-assistant-chat-recent-list {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}
+.bx-im-copilot-widget-header__container {
+	width: 100%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: 10px 13px 14px 13px;
+	background-color: var(--im-color-palette-white-base, #fff);
+	border-bottom: 1px solid var(--ui-color-base-15);
+}
+
+.bx-im-copilot-widget-header__title {
+	flex: 1;
+	font: var(--im-font-size-2xl) var(--im-font-family-system);
+	font-weight: var(--im-font-weight-medium);
+	color: var(--im-color-palette-black-base);
+}
+
+.bx-im-copilot-widget-header__actions {
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.bx-im-copilot-widget-header__create-chat {
+	flex-shrink: 0;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	width: 44px;
+	height: 34px;
+	border-radius: 80px;
+	background-color: rgba(var(--ui-color-copilot-primary-rgb), 0.12);
+
+	cursor: pointer;
+}
+
+.bx-im-copilot-widget-header__create-chat:hover {
+	background-color:  rgba(var(--ui-color-copilot-primary-rgb), 0.2);
+}
+
+.bx-im-copilot-widget-header__create-chat_icon{
+	--ui-icon-set__icon-color: var(--ui-color-copilot-primary);
+}
+
+.bx-im-copilot-widget-header__close {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+}
+
+.bx-im-copilot-widget-header__close-icon{
+	--ui-icon-set__icon-color: var(--ui-color-base-40);
 }

@@ -1,154 +1,144 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Booking = this.BX.Booking || {};
-(function (exports,ui_buttons,main_core) {
+(function (exports, ui_buttons, main_core) {
 	'use strict';
 
 	const Button = {
-	  name: 'UiButton',
-	  emits: ['click'],
-	  props: {
-	    text: {
-	      type: String,
-	      default: ''
-	    },
-	    rightCounter: Object,
-	    size: String,
-	    state: {
-	      type: String,
-	      default: undefined,
-	      validator(val) {
-	        return main_core.Type.isUndefined(val) || Object.values(ui_buttons.ButtonState).includes(val);
-	      }
-	    },
-	    id: String,
-	    color: String,
-	    round: Boolean,
-	    icon: String,
-	    style: String,
-	    iconPosition: {
-	      type: String,
-	      validator(position) {
-	        return !position || ['left', 'right'].includes(position);
-	      }
-	    },
-	    useAirDesign: Boolean,
-	    noCaps: Boolean,
-	    disabled: Boolean,
-	    clocking: Boolean,
-	    waiting: Boolean,
-	    dataset: Object,
-	    buttonClass: [String, Array]
-	  },
-	  computed: {},
-	  created() {
-	    this.button = new ui_buttons.Button({
-	      id: this.id,
-	      text: this.text,
-	      size: this.size,
-	      color: this.color,
-	      round: this.round,
-	      icon: this.icon,
-	      style: this.style,
-	      iconPosition: this.iconPosition,
-	      useAirDesign: Boolean(this.useAirDesign),
-	      noCaps: this.noCaps,
-	      onclick: () => {
-	        this.$emit('click');
-	      },
-	      dataset: this.dataset,
-	      className: main_core.Type.isArray(this.buttonClass) ? this.buttonClass.join(' ') : this.buttonClass
-	    });
-	    if (this.useAirDesign) {
-	      this.button.setAirDesign(true);
-	    }
-	  },
-	  mounted() {
-	    var _this$button;
-	    const button = (_this$button = this.button) == null ? void 0 : _this$button.render();
-	    const slot = this.$refs.button.firstElementChild;
-	    if (slot) {
-	      button.append(slot);
-	    }
-	    this.$refs.button.replaceWith(button);
-	    if (this.disabled) {
-	      this.button.setDisabled(this.disabled);
-	    }
-	  },
-	  watch: {
-	    rightCounter: {
-	      handler(rightCounterNew) {
-	        var _this$button2;
-	        const rightCounterFiltered = rightCounterNew != null && rightCounterNew.value ? rightCounterNew : null;
-	        (_this$button2 = this.button) == null ? void 0 : _this$button2.setRightCounter(rightCounterFiltered);
-	      }
-	    },
-	    text: {
-	      handler(text) {
-	        var _this$button3;
-	        (_this$button3 = this.button) == null ? void 0 : _this$button3.setText(text);
-	      }
-	    },
-	    size: {
-	      handler(size) {
-	        var _this$button4;
-	        (_this$button4 = this.button) == null ? void 0 : _this$button4.setSize(size);
-	      }
-	    },
-	    color: {
-	      handler(color) {
-	        var _this$button5;
-	        (_this$button5 = this.button) == null ? void 0 : _this$button5.setState(color);
-	      }
-	    },
-	    state: {
-	      handler(state) {
-	        var _this$button6;
-	        (_this$button6 = this.button) == null ? void 0 : _this$button6.setState(state);
-	      }
-	    },
-	    icon: {
-	      handler(icon) {
-	        var _this$button7;
-	        (_this$button7 = this.button) == null ? void 0 : _this$button7.setIcon(icon, this.iconPosition);
-	      }
-	    },
-	    disabled: {
-	      handler(disabled) {
-	        var _this$button8;
-	        (_this$button8 = this.button) == null ? void 0 : _this$button8.setDisabled(Boolean(disabled));
-	      },
-	      immediate: true,
-	      flush: 'sync'
-	    },
-	    waiting: {
-	      handler(waiting) {
-	        var _this$button9;
-	        if (waiting !== ((_this$button9 = this.button) == null ? void 0 : _this$button9.isWaiting())) {
-	          var _this$button10;
-	          (_this$button10 = this.button) == null ? void 0 : _this$button10.setWaiting(waiting);
-	        }
-	      },
-	      immediate: true
-	    },
-	    style: {
-	      handler(style) {
-	        var _this$button11;
-	        (_this$button11 = this.button) == null ? void 0 : _this$button11.setStyle(style);
-	      }
-	    },
-	    clocking: {
-	      handler(clocking) {
-	        var _this$button12;
-	        if (clocking !== ((_this$button12 = this.button) == null ? void 0 : _this$button12.isClocking())) {
-	          var _this$button13;
-	          (_this$button13 = this.button) == null ? void 0 : _this$button13.setClocking(clocking);
-	        }
-	      },
-	      immediate: true
-	    }
-	  },
-	  template: `
+		name: 'UiButton',
+		emits: ['click'],
+		props: {
+			text: {
+				type: String,
+				default: ''
+			},
+			rightCounter: Object,
+			size: String,
+			state: {
+				type: String,
+				default: undefined,
+				validator(val) {
+					return main_core.Type.isUndefined(val) || Object.values(ui_buttons.ButtonState).includes(val);
+				}
+			},
+			id: String,
+			color: String,
+			round: Boolean,
+			icon: String,
+			style: String,
+			iconPosition: {
+				type: String,
+				validator(position) {
+					return !position || ['left', 'right'].includes(position);
+				}
+			},
+			useAirDesign: Boolean,
+			noCaps: Boolean,
+			disabled: Boolean,
+			clocking: Boolean,
+			waiting: Boolean,
+			dataset: Object,
+			buttonClass: [String, Array]
+		},
+		computed: {},
+		created() {
+			this.button = new ui_buttons.Button({
+				id: this.id,
+				text: this.text,
+				size: this.size,
+				color: this.color,
+				round: this.round,
+				icon: this.icon,
+				style: this.style,
+				iconPosition: this.iconPosition,
+				useAirDesign: Boolean(this.useAirDesign),
+				noCaps: this.noCaps,
+				onclick: () => {
+					this.$emit('click');
+				},
+				dataset: this.dataset,
+				className: main_core.Type.isArray(this.buttonClass) ? this.buttonClass.join(' ') : this.buttonClass
+			});
+			if (this.useAirDesign) {
+				this.button.setAirDesign(true);
+			}
+		},
+		mounted() {
+			const button = this.button?.render();
+			const slot = this.$refs.button.firstElementChild;
+			if (slot) {
+				button.append(slot);
+			}
+			this.$refs.button.replaceWith(button);
+			if (this.disabled) {
+				this.button.setDisabled(this.disabled);
+			}
+		},
+		watch: {
+			rightCounter: {
+				handler(rightCounterNew) {
+					const rightCounterFiltered = rightCounterNew?.value ? rightCounterNew : null;
+					this.button?.setRightCounter(rightCounterFiltered);
+				}
+			},
+			text: {
+				handler(text) {
+					this.button?.setText(text);
+				}
+			},
+			size: {
+				handler(size) {
+					this.button?.setSize(size);
+				}
+			},
+			color: {
+				handler(color) {
+					this.button?.setState(color);
+				}
+			},
+			state: {
+				handler(state) {
+					this.button?.setState(state);
+				}
+			},
+			icon: {
+				handler(icon) {
+					this.button?.setIcon(icon, this.iconPosition);
+				}
+			},
+			disabled: {
+				handler(disabled) {
+					this.button?.setDisabled(Boolean(disabled));
+				},
+				immediate: true,
+				flush: 'sync'
+			},
+			waiting: {
+				handler(waiting) {
+					if (waiting !== this.button?.isWaiting()) {
+						this.button?.setWaiting(waiting);
+						if (!waiting && this.disabled) {
+							this.button?.setDisabled(true);
+						}
+					}
+				},
+				immediate: true
+			},
+			style: {
+				handler(style) {
+					this.button?.setStyle(style);
+				}
+			},
+			clocking: {
+				handler(clocking) {
+					if (clocking !== this.button?.isClocking()) {
+						this.button?.setClocking(clocking);
+					}
+				},
+				immediate: true
+			}
+		},
+		template: `
 		<span>
 			<button ref="button">
 				<slot></slot>
@@ -157,12 +147,27 @@ this.BX.Booking = this.BX.Booking || {};
 	`
 	};
 
-	exports.AirButtonStyle = ui_buttons.AirButtonStyle;
-	exports.ButtonColor = ui_buttons.ButtonColor;
-	exports.ButtonSize = ui_buttons.ButtonSize;
-	exports.ButtonStyle = ui_buttons.ButtonStyle;
-	exports.ButtonIcon = ui_buttons.ButtonIcon;
+	Object.defineProperty(exports, "AirButtonStyle", {
+		enumerable: true,
+		get: function () { return ui_buttons.AirButtonStyle; }
+	});
+	Object.defineProperty(exports, "ButtonColor", {
+		enumerable: true,
+		get: function () { return ui_buttons.ButtonColor; }
+	});
+	Object.defineProperty(exports, "ButtonIcon", {
+		enumerable: true,
+		get: function () { return ui_buttons.ButtonIcon; }
+	});
+	Object.defineProperty(exports, "ButtonSize", {
+		enumerable: true,
+		get: function () { return ui_buttons.ButtonSize; }
+	});
+	Object.defineProperty(exports, "ButtonStyle", {
+		enumerable: true,
+		get: function () { return ui_buttons.ButtonStyle; }
+	});
 	exports.Button = Button;
 
-}((this.BX.Booking.Component = this.BX.Booking.Component || {}),BX.UI,BX));
+})(this.BX.Booking.Component = this.BX.Booking.Component || {}, BX.UI, BX);
 //# sourceMappingURL=button.bundle.js.map

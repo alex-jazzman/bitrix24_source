@@ -77,14 +77,14 @@ require_once ($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_ad
 
 <form action="">
 <select name="mid" onchange="window.location='settings.php?lang=<?=LANGUAGE_ID.(isset($_REQUEST["mid_menu"]) && $_REQUEST["mid_menu"] != ''? "&amp;mid_menu=1":"")?>&amp;mid='+this[this.selectedIndex].value;">
-<?foreach($arModules as $k=>$m):?>
-	<option value="<?echo htmlspecialcharsbx($k)?>"<?if($mid == $k) echo " selected"?>><?echo htmlspecialcharsbx($m["NAME"])?></option>
-<?endforeach;?>
+<?php foreach($arModules as $k=>$m):?>
+	<option value="<?= htmlspecialcharsbx($k)?>"<?php if($mid == $k) echo " selected"?>><?= htmlspecialcharsbx($m["NAME"])?></option>
+<?php endforeach;?>
 </select>
 </form>
 <br />
 
-<?
+<?php
 function __AdmSettingsSaveOptions($module_id, $arOptions)
 {
 	foreach($arOptions as $arOption)
@@ -210,17 +210,17 @@ function __AdmSettingsDrawRow($module_id, $Option)
 		<tr class="heading">
 			<td colspan="2"><?=$Option?></td>
 		</tr>
-	<?
+	<?php
 	elseif(isset($Option["note"])):
 	?>
 		<tr>
 			<td colspan="2" align="center">
-				<?echo BeginNote('align="center"');?>
+				<?= BeginNote('align="center"');?>
 				<?=$Option["note"]?>
-				<?echo EndNote();?>
+				<?= EndNote();?>
 			</td>
 		</tr>
-	<?
+	<?php
 	else:
 		$isChoiceSites = isset($Option[6]) && $Option[6] == "Y";
 		$listSite = array();
@@ -268,26 +268,26 @@ function __AdmSettingsDrawRow($module_id, $Option)
 				<label><?=$Option[1]?></label>
 			</td>
 		</tr>
-		<?endif;?>
-		<?if ($isChoiceSites):
+		<?php endif;?>
+		<?php if ($isChoiceSites):
 			foreach ($listSiteValue as $fieldName => $fieldValue):?>
 			<tr>
-			<?
+			<?php
 				$siteValue = str_replace($Option[0]."_", "", $fieldName);
 				renderLable($Option, $listSite, $siteValue);
 				renderInput($Option, $arControllerOption, $fieldName, $fieldValue);
 			?>
 			</tr>
-			<?endforeach;?>
-		<?else:?>
+			<?php endforeach;?>
+		<?php else:?>
 			<tr>
-			<?
+			<?php
 				renderLable($Option, $listSite);
 				renderInput($Option, $arControllerOption, $Option[0], $val);
 			?>
 			</tr>
-		<?endif;?>
-		<? if ($isChoiceSites): ?>
+		<?php endif;?>
+		<?php if ($isChoiceSites): ?>
 			<tr>
 				<td width="50%">
 					<a href="javascript:void(0)" onclick="addSiteSelector(this)" class="bx-action-href">
@@ -296,8 +296,8 @@ function __AdmSettingsDrawRow($module_id, $Option)
 				</td>
 				<td width="50%"></td>
 			</tr>
-		<? endif; ?>
-	<?
+		<?php endif; ?>
+	<?php
 	endif;
 }
 
@@ -315,7 +315,7 @@ function renderLable($Option, array $listSite, $siteValue = "")
 	$sup_text = $Option[5] ?? '';
 	$isChoiceSites = isset($Option[6]) && $Option[6] == "Y";
 	?>
-	<?if ($isChoiceSites): ?>
+	<?php if ($isChoiceSites): ?>
 	<script>
 		function changeSite(el, fieldName)
 		{
@@ -348,41 +348,41 @@ function renderLable($Option, array $listSite, $siteValue = "")
 	</script>
 	<td width="50%">
 		<select onchange="changeSite(this, '<?=htmlspecialcharsbx($Option[0])?>')">
-			<?foreach ($listSite as $lid => $siteName):?>
-				<option <?if ($siteValue ==$lid) echo "selected";?> value="<?=htmlspecialcharsbx($lid)?>">
+			<?php foreach ($listSite as $lid => $siteName):?>
+				<option <?php if ($siteValue ==$lid) echo "selected";?> value="<?=htmlspecialcharsbx($lid)?>">
 					<?=htmlspecialcharsbx($siteName)?>
 				</option>
-			<?endforeach;?>
+			<?php endforeach;?>
 		</select>
 	</td>
-	<?else:?>
-		<td<?if ($type[0]=="multiselectbox" || $type[0]=="textarea" || $type[0]=="statictext" ||
-		$type[0]=="statichtml") echo ' class="adm-detail-valign-top"'?> width="50%"><?
+	<?php else:?>
+		<td<?php if ($type[0]=="multiselectbox" || $type[0]=="textarea" || $type[0]=="statictext" ||
+		$type[0]=="statichtml") echo ' class="adm-detail-valign-top"'?> width="50%"><?php
 		if ($type[0]=="checkbox")
 			echo "<label for='".htmlspecialcharsbx($Option[0])."'>".$Option[1]."</label>";
 		else
 			echo $Option[1];
 		if ($sup_text <> '')
 		{
-			?><span class="required"><sup><?=$sup_text?></sup></span><?
+			?><span class="required"><sup><?=$sup_text?></sup></span><?php
 		}
 		?><a name="opt_<?=htmlspecialcharsbx($Option[0])?>"></a></td>
-	<?endif;
+	<?php endif;
 }
 
 function renderInput($Option, $arControllerOption, $fieldName, $val)
 {
 	$type = $Option[3];
 	$disabled = isset($Option[4]) && $Option[4] == 'Y' ? ' disabled' : '';
-	?><td width="50%"><?
+	?><td width="50%"><?php
 	if($type[0]=="checkbox"):
-		?><input type="checkbox" <?if(isset($arControllerOption[$Option[0]]))echo ' disabled title="'.GetMessage("MAIN_ADMIN_SET_CONTROLLER_ALT").'"';?> id="<?echo htmlspecialcharsbx($Option[0])?>" name="<?=htmlspecialcharsbx($fieldName)?>" value="Y"<?if($val=="Y")echo" checked";?><?=$disabled?><?if(isset($type[2]) && $type[2]<>'') echo " ".$type[2]?>><?
+		?><input type="checkbox" <?php if(isset($arControllerOption[$Option[0]]))echo ' disabled title="'.GetMessage("MAIN_ADMIN_SET_CONTROLLER_ALT").'"';?> id="<?= htmlspecialcharsbx($Option[0])?>" name="<?=htmlspecialcharsbx($fieldName)?>" value="Y"<?php if($val=="Y")echo" checked";?><?=$disabled?><?php if(isset($type[2]) && $type[2]<>'') echo " ".$type[2]?>><?php
 	elseif($type[0]=="text"):
-		?><input type="text"<?if(isset($arControllerOption[$Option[0]]))echo ' disabled title="'.GetMessage("MAIN_ADMIN_SET_CONTROLLER_ALT").'"';?> size="<?echo $type[1]?>" maxlength="255" value="<?echo htmlspecialcharsbx($val)?>" name="<?=htmlspecialcharsbx($fieldName)?>"<?=$disabled?><?=(isset($type["noautocomplete"]) && $type["noautocomplete"]? ' autocomplete="off"':'')?>><?
+		?><input type="text"<?php if(isset($arControllerOption[$Option[0]]))echo ' disabled title="'.GetMessage("MAIN_ADMIN_SET_CONTROLLER_ALT").'"';?> size="<?= $type[1]?>" maxlength="255" value="<?= htmlspecialcharsbx($val)?>" name="<?=htmlspecialcharsbx($fieldName)?>"<?=$disabled?><?=(isset($type["noautocomplete"]) && $type["noautocomplete"]? ' autocomplete="off"':'')?>><?php
 	elseif($type[0]=="password"):
 		?><input type="password"
-			<?if(isset($arControllerOption[$Option[0]])) echo ' disabled title="'.GetMessage("MAIN_ADMIN_SET_CONTROLLER_ALT").'"';?>
-			size="<?echo $type[1]?>"
+			<?php if(isset($arControllerOption[$Option[0]])) echo ' disabled title="'.GetMessage("MAIN_ADMIN_SET_CONTROLLER_ALT").'"';?>
+			size="<?= $type[1]?>"
 			maxlength="255"
 			value=""
 			name="<?=htmlspecialcharsbx($fieldName)?>"
@@ -390,35 +390,35 @@ function renderInput($Option, $arControllerOption, $fieldName, $val)
 			<?php if ($val != ''):?>placeholder="<?= GetMessage('MAIN_ADMIN_SET_PASS_SET') ?>"<?php endif; ?>
 			autocomplete="new-password"
 		>
-		<?php if ($val != ''):?><label><input type="checkbox" name="<?echo htmlspecialcharsbx($fieldName) . '_delete'?>" value="Y" title="<?= GetMessage('MAIN_ADMIN_SET_PASS_DEL_TITLE') ?>"> <?= GetMessage('MAIN_ADMIN_SET_PASS_DEL') ?></label><?php endif?>
-	<?
+		<?php if ($val != ''):?><label><input type="checkbox" name="<?= htmlspecialcharsbx($fieldName) . '_delete'?>" value="Y" title="<?= GetMessage('MAIN_ADMIN_SET_PASS_DEL_TITLE') ?>"> <?= GetMessage('MAIN_ADMIN_SET_PASS_DEL') ?></label><?php endif?>
+	<?php
 	elseif($type[0]=="selectbox"):
 		$arr = $type[1];
 		if(!is_array($arr))
 			$arr = array();
-		?><select name="<?=htmlspecialcharsbx($fieldName)?>" <?if(isset($arControllerOption[$Option[0]]))echo ' disabled title="'.GetMessage("MAIN_ADMIN_SET_CONTROLLER_ALT").'"';?> <?=$disabled?>><?
+		?><select name="<?=htmlspecialcharsbx($fieldName)?>" <?php if(isset($arControllerOption[$Option[0]]))echo ' disabled title="'.GetMessage("MAIN_ADMIN_SET_CONTROLLER_ALT").'"';?> <?=$disabled?>><?php
 		foreach($arr as $key => $v):
-			?><option value="<?echo $key?>"<?if($val==$key)echo" selected"?>><?echo htmlspecialcharsbx($v)?></option><?
+			?><option value="<?= $key?>"<?php if($val==$key)echo" selected"?>><?= htmlspecialcharsbx($v)?></option><?php
 		endforeach;
-		?></select><?
+		?></select><?php
 	elseif($type[0]=="multiselectbox"):
 		$arr = $type[1];
 		if(!is_array($arr))
 			$arr = array();
 		$arr_val = explode(",",$val);
-		?><select size="5" <?if(isset($arControllerOption[$Option[0]]))echo ' disabled title="'.GetMessage("MAIN_ADMIN_SET_CONTROLLER_ALT").'"';?> multiple name="<?=htmlspecialcharsbx($fieldName)?>[]"<?=$disabled?>><?
+		?><select size="5" <?php if(isset($arControllerOption[$Option[0]]))echo ' disabled title="'.GetMessage("MAIN_ADMIN_SET_CONTROLLER_ALT").'"';?> multiple name="<?=htmlspecialcharsbx($fieldName)?>[]"<?=$disabled?>><?php
 		foreach($arr as $key => $v):
-			?><option value="<?echo $key?>"<?if(in_array($key, $arr_val)) echo " selected"?>><?echo htmlspecialcharsbx($v)?></option><?
+			?><option value="<?= $key?>"<?php if(in_array($key, $arr_val)) echo " selected"?>><?= htmlspecialcharsbx($v)?></option><?php
 		endforeach;
-		?></select><?
+		?></select><?php
 	elseif($type[0]=="textarea"):
-		?><textarea <?if(isset($arControllerOption[$Option[0]]))echo ' disabled title="'.GetMessage("MAIN_ADMIN_SET_CONTROLLER_ALT").'"';?> rows="<?echo $type[1]?>" cols="<?echo $type[2]?>" name="<?=htmlspecialcharsbx($fieldName)?>"<?=$disabled?>><?echo htmlspecialcharsbx($val)?></textarea><?
+		?><textarea <?php if(isset($arControllerOption[$Option[0]]))echo ' disabled title="'.GetMessage("MAIN_ADMIN_SET_CONTROLLER_ALT").'"';?> rows="<?= $type[1]?>" cols="<?= $type[2]?>" name="<?=htmlspecialcharsbx($fieldName)?>"<?=$disabled?>><?= htmlspecialcharsbx($val)?></textarea><?php
 	elseif($type[0]=="statictext"):
 		echo htmlspecialcharsbx($val);
 	elseif($type[0]=="statichtml"):
 		echo $val;
 	endif;?>
-	</td><?
+	</td><?php
 }
 
 echo $strModuleSettingsTabs;

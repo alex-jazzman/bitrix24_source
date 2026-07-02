@@ -2,6 +2,7 @@
 namespace Bitrix\Mobile\AppTabs;
 
 use Bitrix\Main\Localization\Loc;
+
 use Bitrix\Mobile\Provider\UserRepository;
 use Bitrix\Mobile\Tab\Tabable;
 use Bitrix\Mobile\Config\Feature;
@@ -34,6 +35,10 @@ class MenuNew implements Tabable
 					'settings' => [
 						'objectName' => 'layout',
 						'useLargeTitleMode' => true,
+						'backgroundLayout' => [
+							'mode' => 'fixedHeight',
+							'resizeMode' => 'cover',
+						],
 					],
 				],
 				'params' => [],

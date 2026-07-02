@@ -9,10 +9,10 @@ return [
 	'css' => 'dist/file-uploader-popup.bundle.css',
 	'js' => 'dist/file-uploader-popup.bundle.js',
 	'rel' => [
+		'crm.activity.file-uploader',
 		'main.core',
 		'main.popup',
 		'ui.buttons',
-		'crm.activity.file-uploader',
 		'ui.design-tokens',
 	],
 	'skip_core' => false,

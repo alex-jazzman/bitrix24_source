@@ -1,4 +1,6 @@
 import { type JsonObject } from 'main.core';
+import { type FocusTrapOptions } from 'ui.a11y';
+
 import { type SliderEvent } from '../slider-event';
 import { type MinimizeOptions } from './minimize-options';
 import { type OuterBoundary } from './outer-boundary';
@@ -48,6 +50,11 @@ export type SliderOptions = {
 	designSystemContext?: string,
 	events?: SliderEvents | SliderEvents[],
 	useGlobalOptions?: boolean,
+
+	focusTrap?: boolean | FocusTrapOptions,
+	ariaLabel?: string;
+	ariaLabelledBy?: string;
+	targetContainer?: string | HTMLElement,
 };
 
 export type SliderEvents = { [eventName: string]: (event: SliderEvent) => void };

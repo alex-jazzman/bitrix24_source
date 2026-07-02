@@ -3,13 +3,18 @@
 }
 
 .sign-blank-selector__list {
-	padding-bottom: 20px;
+	padding-bottom: 15px;
 	display: flex;
 	flex-wrap: wrap;
 }
 
 .sign-blank-selector__list.--hidden {
 	display: none;
+}
+
+.sign-blank-selector__list.--with-buttons.--disabled {
+	opacity: .6;
+	pointer-events: none;
 }
 
 .sign-blank-selector__list_drag-area-label {
@@ -29,7 +34,7 @@
 	border: 2px dashed rgba(82,92,105,.30)
 }
 
-.sign-blank-selector__list.--dragging .sign-blank-selector__list_drag-area-label {
+.sign-settings.--b2e .sign-blank-selector__list.--dragging .sign-blank-selector__list_drag-area-label {
 	display: none;
 }
 
@@ -117,6 +122,8 @@
 	flex-direction: column;
 	gap: 6px;
 	transition: opacity 0.2s ease;
+	min-width: 0;
+	flex: 1 1 auto;
 }
 
 .sign-blank-selector__list_item-content.--hidden {
@@ -229,6 +236,12 @@
 	display: block;
 	overflow: hidden;
 	text-overflow: ellipsis;
+}
+
+.sign-blank-selector__list_item.--b2e .sign-blank-selector__list_item-title,
+.sign-blank-selector__list_item.--b2e .sign-blank-selector__list_item-info {
+	max-width: 100%;
+	overflow-wrap: anywhere;
 }
 
 .sign-blank-selector__list_item-link {
@@ -444,6 +457,7 @@
 
 @media (max-width: 768px) {
 	.sign-blank-selector__list_item.--blank {
+
 		width: calc(100% - 10px);
 	}
 }

@@ -1,19 +1,20 @@
 import { ActivityProvider } from 'crm.ai.call';
 import { DatetimeConverter } from 'crm.timeline.tools';
-import { ajax as Ajax, Event, Loc, Text } from 'main.core';
+import { ajax as Ajax, Event, Loc, Runtime, Text } from 'main.core';
 import { EventEmitter } from 'main.core.events';
-import { Menu, MenuManager } from 'main.popup';
-import { Button as ButtonUI, ButtonState } from 'ui.buttons';
+import { ButtonState } from 'ui.buttons';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
+import { Outline } from 'ui.icon-set.api.vue';
 import { UI } from 'ui.notification';
+import { Menu } from 'ui.system.menu';
+import 'crm_common';
 
 import ChatMessage from '../components/content-blocks/chat-message';
-import { Button } from '../components/layout/button';
 import ConfigurableItem from '../configurable-item';
 
 import type { CopilotConfig } from './ai/copilot-base';
 import { CopilotBase } from './ai/copilot-base';
-import { ActionParams } from './base';
+import { type ActionParams } from './base';
 
 export class OpenLines extends CopilotBase
 {
@@ -74,19 +75,16 @@ export class OpenLines extends CopilotBase
 			agreementContext: 'audio', // @todo!
 		};
 	}
-
-	getAdditionalRequestData(actionData: Object): Object
-	{
-		return {
-			scenario: 'fill_fields',
-		};
-	}
 	// endregion
 
 	// region jsEvent action handlers
 	#openChat(dialogId): void
 	{
-		window.top.BXIM?.openMessengerSlider(dialogId, { RECENT: 'N', MENU: 'N' });
+		Runtime.loadExtension('im.public.iframe').then((exports: Object) => {
+			exports.Messenger.openLines(dialogId);
+		}).catch((exception) => {
+			console.error('Error loading "im.public.iframe":', exception);
+		});
 	}
 
 	#onComplete(item: ConfigurableItem, actionData: Object, animationCallbacks: ?Object): void
@@ -112,7 +110,7 @@ export class OpenLines extends CopilotBase
 		});
 	}
 
-	#showCopilotSummary(item: ConfigurableItem, actionData: Object, animationCallbacks: ?Object): void
+	#showCopilotSummary(item: ConfigurableItem, actionData: Object): void
 	{
 		const activityId = actionData.activityId;
 		const items = actionData.summarizeTranscriptionList;
@@ -123,36 +121,41 @@ export class OpenLines extends CopilotBase
 
 		if (Object.keys(items).length === 1)
 		{
-			const jobId = Object.keys(items)[0];
-
-			void this.#openCopilotSummaryPopup(jobId, actionData);
+			void this.openCopilotSummaryPopup(actionData, ActivityProvider.openLine, Object.keys(items)[0]);
 
 			return;
 		}
 
 		if (this.#copilotSummaryMenu === null)
 		{
-			const dataId = `[data-id="copilotSummaryBlockLink_${item.getId()}"]`;
-			const menuTarget = item.getContainer().querySelector(dataId);
+			const barTarget = item.getLayoutContentBlockById('aiActionBar').getContainer();
+			const elementTarget = barTarget?.querySelector('.ui-icon-set.--o-copilot');
+			const menuTarget = elementTarget || barTarget;
 			const menuItems = Object.entries(items).reverse().map(([jobId, timestamp]) => {
 				const converter = DatetimeConverter.createFromServerTimestamp(timestamp).toUserTime();
 
 				return {
-					text: Loc.getMessage(
+					title: Loc.getMessage(
 						'CRM_TIMELINE_ITEM_ACTIVITY_OPENLINE_SUMMARIZE_TRANSCRIPTION_MENU',
 						{ '#DATE#': converter.toDatetimeString({ delimiter: ', ' }) },
 					),
-					onclick: () => void this.#openCopilotSummaryPopup(jobId, actionData),
+					design: 'copilot',
+					icon: Outline.TEXT,
+					onClick: (): void => {
+						this.#copilotSummaryMenu.close();
+
+						this.openCopilotSummaryPopup(actionData, ActivityProvider.openLine, jobId);
+					},
 				};
 			});
 
-			this.#copilotSummaryMenu = MenuManager.create({
+			this.#copilotSummaryMenu = new Menu({
 				id: `crm-timeline-activity-openline-copilot-summary-${activityId}-${Text.getRandom()}`,
-				bindElement: menuTarget,
 				animation: 'fading-slide',
+				bindElement: menuTarget,
 				autoHide: true,
-				offsetTop: 10,
 				closeByEsc: false,
+				offsetTop: 5,
 				items: menuItems,
 			});
 		}
@@ -202,8 +205,8 @@ export class OpenLines extends CopilotBase
 	#showCopilotWelcomeTour(item: ConfigurableItem): void
 	{
 		setTimeout(() => {
-			const aiCopilotBtn: Button = item.getLayoutFooterButtonById('aiButton');
-			const aiCopilotUIBtn: ButtonUI = aiCopilotBtn?.getUiButton();
+			const aiCopilotBtn = this.getFooterCopilotButton(item);
+			const aiCopilotUIBtn = aiCopilotBtn?.getUiButton();
 			if (!aiCopilotUIBtn || aiCopilotUIBtn.getState() === ButtonState.DISABLED)
 			{
 				return;
@@ -245,27 +248,6 @@ export class OpenLines extends CopilotBase
 		}, 50);
 	}
 	// endregion
-
-	async #openCopilotSummaryPopup(jobId: number, actionData: Object): void
-	{
-		await top.BX.Runtime.loadExtension('crm.ai.call');
-
-		if (this.#copilotSummaryMenu)
-		{
-			this.#copilotSummaryMenu.close();
-		}
-
-		const summary = new top.BX.Crm.AI.Call.Summary({
-			activityId: actionData.activityId,
-			ownerTypeId: actionData.ownerTypeId,
-			ownerId: actionData.ownerId,
-			languageTitle: actionData.languageTitle,
-			activityProvider: ActivityProvider.openLine,
-			jobId,
-		});
-
-		summary.open();
-	}
 
 	static isItemSupported(item: ConfigurableItem): boolean
 	{

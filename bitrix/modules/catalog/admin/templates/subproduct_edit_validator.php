@@ -50,7 +50,9 @@ if ($allowEditPrices)
 		$arCatalogBasePrices = array();
 		$arCatalogPrices = array();
 
-		$SUBCAT_ROW_COUNTER = (int)($_POST['SUBCAT_ROW_COUNTER'] ?? 0);
+		$request = Main\Context::getCurrent()->getRequest();
+
+		$SUBCAT_ROW_COUNTER = (int)($request->getPost('SUBCAT_ROW_COUNTER') ?? 0);
 		if ($SUBCAT_ROW_COUNTER < 0)
 			$strWarning .= Loc::getMessage("C2IT_INTERNAL_ERROR")."<br>";
 
@@ -59,7 +61,7 @@ if ($allowEditPrices)
 			$strWarning .= Loc::getMessage("C2IT_NO_BASE_TYPE")."<br>";
 
 		if ($enableQuantityRanges)
-			$bUseExtForm = (isset($_POST['subprice_useextform']) && $_POST['subprice_useextform'] === 'Y');
+			$bUseExtForm = ($request->getPost('subprice_useextform') === 'Y');
 		else
 			$bUseExtForm = false;
 		if (!$bUseExtForm)
@@ -67,26 +69,32 @@ if ($allowEditPrices)
 
 		for ($i = 0; $i <= $SUBCAT_ROW_COUNTER; $i++)
 		{
-			if (!isset(${"SUBCAT_BASE_PRICE_".$i}))
+			if ($request->getPost("SUBCAT_BASE_PRICE_".$i) === null)
 			{
 				continue;
 			}
-			${"SUBCAT_BASE_PRICE_".$i} = str_replace([' ', ','], ['', '.'], ${"SUBCAT_BASE_PRICE_".$i});
+			$basePrice = str_replace([' ', ','], ['', '.'], (string)$request->getPost("SUBCAT_BASE_PRICE_".$i));
+			$baseQuantityFrom = $request->getPost("SUBCAT_BASE_QUANTITY_FROM_".$i) ?? '';
+			$baseQuantityTo = $request->getPost("SUBCAT_BASE_QUANTITY_TO_".$i) ?? '';
+			$baseCurrency = $request->getPost("SUBCAT_BASE_CURRENCY_".$i) ?? '';
+			$basePriceExist = $request->getPost("SUBCAT_PRICE_EXIST_".$i) ?? '';
+			$baseCatId = $request->getPost("SUBCAT_BASE_ID");
+			$baseId = (is_array($baseCatId) ? ($baseCatId[$i] ?? 0) : 0);
 
-			if (intval(${"SUBCAT_BASE_QUANTITY_FROM_".$i}) > 0
-				|| intval(${"SUBCAT_BASE_QUANTITY_TO_".$i}) > 0
-				|| ${"SUBCAT_BASE_PRICE_".$i} <> ''
-				|| ${"SUBCAT_PRICE_EXIST_".$i} == 'Y'
+			if ((int)$baseQuantityFrom > 0
+				|| (int)$baseQuantityTo > 0
+				|| $basePrice <> ''
+				|| $basePriceExist == 'Y'
 			)
 			{
 				$arCatalogBasePrices[] = array(
-					"ID" => (int)($SUBCAT_BASE_ID[$i] ?? 0),
+					"ID" => (int)$baseId,
 					"IND" => $i,
-					"QUANTITY_FROM" => $bUseExtForm ? intval(${"SUBCAT_BASE_QUANTITY_FROM_".$i}) : '',
-					"QUANTITY_TO" => $bUseExtForm ? intval(${"SUBCAT_BASE_QUANTITY_TO_".$i}) : '',
-					"PRICE" => ($bUseExtForm || $i == 0) ? ${"SUBCAT_BASE_PRICE_".$i} : '',
-					"CURRENCY" => ${"SUBCAT_BASE_CURRENCY_".$i},
-					"CAT_PRICE_EXIST" => (${"SUBCAT_PRICE_EXIST_".$i} == 'Y' ? 'Y' : 'N'),
+					"QUANTITY_FROM" => $bUseExtForm ? (int)$baseQuantityFrom : '',
+					"QUANTITY_TO" => $bUseExtForm ? (int)$baseQuantityTo : '',
+					"PRICE" => ($bUseExtForm || $i == 0) ? $basePrice : '',
+					"CURRENCY" => $baseCurrency,
+					"CAT_PRICE_EXIST" => ($basePriceExist == 'Y' ? 'Y' : 'N'),
 				);
 			}
 		}

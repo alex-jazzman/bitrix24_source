@@ -9,10 +9,10 @@ return [
 		'./dist/user-status.bundle.js',
 	],
 	'rel' => [
-		'main.core',
 		'im.v2.application.core',
 		'im.v2.lib.utils',
 		'im.v2.provider.service.recent',
+		'main.core',
 	],
 	'skip_core' => false,
 ];

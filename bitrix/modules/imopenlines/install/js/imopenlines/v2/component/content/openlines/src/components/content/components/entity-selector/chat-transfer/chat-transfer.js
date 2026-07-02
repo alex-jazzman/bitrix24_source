@@ -1,4 +1,4 @@
-import { PopupOptions } from 'main.popup';
+import { type PopupOptions } from 'main.popup';
 
 import { MessengerPopup } from 'im.v2.component.elements.popup';
 
@@ -46,7 +46,7 @@ export const ChatTransfer = {
 				padding: 0,
 				contentPadding: 0,
 				contentBackground: '#fff',
-				className: 'bx-imol-entity-selector-chat-transfer__container',
+				className: 'bx-imol-chat-transfer-entity-selector__container',
 			};
 		},
 	},

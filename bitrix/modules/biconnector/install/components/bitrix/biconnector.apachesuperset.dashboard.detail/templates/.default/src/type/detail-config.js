@@ -9,4 +9,5 @@ export type DetailConfig = {
 	analyticScope: ?string,
 	embeddedDebugMode: boolean,
 	pdfExportEnabled: boolean,
+	infoAhaMoment: ?Object,
 }

@@ -20,6 +20,23 @@ return [
 					'dynamicSearch' => true
 				],
 			],
+			[
+				'id' => 'queue',
+				'options' => [
+					'tagOptions' => [
+						'default' => [
+							'textColor' => '#1066bb',
+							'bgColor' => '#bcedfc',
+							'avatarOptions' => [
+								'icon' => 'o-open-channels',
+								'iconColor' => '#ffffff',
+								'bgColor' => '#92B3C1',
+								'borderRadius' => '50%',
+							],
+						],
+					],
+				],
+			],
 		],
 	],
 ];

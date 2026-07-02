@@ -1,8 +1,8 @@
-import { BuilderModel, Store } from 'ui.vue3.vuex';
+import { BuilderModel } from 'ui.vue3.vuex';
 import type { GetterTree, ActionTree, MutationTree } from 'ui.vue3.vuex';
 
 import { Model } from 'booking.const';
-import { MessageStatusState, MessageStatusModel } from './types';
+import type { MessageStatusState, MessageStatusModel } from './types';
 
 export type { MessageStatusModel } from './types';
 

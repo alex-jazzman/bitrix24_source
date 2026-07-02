@@ -1,4 +1,4 @@
-import { Type, Reflection, Runtime, Dom, Browser } from 'main.core';
+import { Type, Reflection, Runtime, Dom, Browser, ready } from 'main.core';
 import { EventEmitter, type BaseEvent } from 'main.core.events';
 
 import { ChatMenu } from './chat-menu';
@@ -12,6 +12,7 @@ import { CollaborationMenu } from './collaboration-menu';
 import { RightPanel } from './right-panel';
 import { RightPanelAiChat } from './right-panel-ai-chat';
 import { RightSidebar } from './right-sidebar';
+import { SkipToContent } from 'intranet.skip-to-content';
 
 export class SiteTemplate
 {
@@ -26,6 +27,7 @@ export class SiteTemplate
 	#rightPanel: RightPanel | null = null;
 	#rightPanelAiChat: RightPanelAiChat | null = null;
 	#rightSidebar: RightSidebar | null = null;
+	#skipToContent: SkipToContent | null = null;
 
 	constructor()
 	{
@@ -35,6 +37,7 @@ export class SiteTemplate
 		this.#patchRestAPI();
 		this.#patchJSClock();
 
+		this.#skipToContent = new SkipToContent();
 		this.#goTopButton = new GoTopButton();
 		this.#leftMenu = new LeftMenu();
 		this.#rightBar = new RightBar({
@@ -48,6 +51,8 @@ export class SiteTemplate
 		this.#rightPanel = new RightPanel();
 		this.#rightPanelAiChat = new RightPanelAiChat(this.#rightPanel, this.#rightBar, this);
 		this.#rightSidebar = new RightSidebar(this.#rightPanel, this.#rightBar);
+
+		ready(() => this.#skipToContent.render());
 
 		this.#applyUserAgentRules();
 	}

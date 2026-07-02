@@ -191,6 +191,16 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 			].includes(this.dialogModel.type);
 		}
 
+		get isNested()
+		{
+			return this.dialogModel.parentChatId > 0;
+		}
+
+		get parentChatId()
+		{
+			return this.dialogModel.parentChatId;
+		}
+
 		get isCollab()
 		{
 			return this.dialogModel.type === DialogType.collab;

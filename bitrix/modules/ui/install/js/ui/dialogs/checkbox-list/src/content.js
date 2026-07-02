@@ -410,8 +410,9 @@ export const Content = {
 		optionsByTitle(): CheckboxListOption[]
 		{
 			const options: CheckboxListOption[] = [...this.dataOptions.values()];
+			const searchString = this.search.toLowerCase();
 
-			return options.filter((item) => item.title.toLowerCase().includes(this.search.toLowerCase()));
+			return options.filter((item) => (item.title ?? item.id).toLowerCase().includes(searchString));
 		},
 		categoryBySection()
 		{

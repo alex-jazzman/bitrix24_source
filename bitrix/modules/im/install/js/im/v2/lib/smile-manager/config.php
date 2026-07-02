@@ -10,12 +10,11 @@ return [
 	'css' => 'dist/smile-manager.bundle.css',
 	'js' => 'dist/smile-manager.bundle.js',
 	'rel' => [
+		'im.v2.application.core',
+		'im.v2.const',
+		'im.v2.lib.local-storage',
 		'main.core',
 		'ui.dexie',
-		'im.v2.const',
-		'im.v2.application.core',
-		'rest.client',
-		'im.v2.lib.local-storage',
 	],
 	'skip_core' => false,
 	'settings' => [

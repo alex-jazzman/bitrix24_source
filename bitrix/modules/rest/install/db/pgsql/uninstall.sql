@@ -1,8 +1,10 @@
 DROP TABLE IF EXISTS b_rest_event;
 DROP TABLE IF EXISTS b_rest_app;
+DROP TABLE IF EXISTS b_rest_app_attribute;
 DROP TABLE IF EXISTS b_rest_app_lang;
 DROP TABLE IF EXISTS b_rest_ap;
 DROP TABLE IF EXISTS b_rest_ap_permission;
+DROP TABLE IF EXISTS b_rest_incoming_webhook_attribute;
 DROP TABLE IF EXISTS b_rest_log;
 DROP TABLE IF EXISTS b_rest_placement;
 DROP TABLE IF EXISTS b_rest_placement_lang;
@@ -19,3 +21,5 @@ DROP TABLE IF EXISTS b_rest_stat_app;
 DROP TABLE IF EXISTS b_rest_access_permission;
 DROP TABLE IF EXISTS b_rest_free_app;
 DROP TABLE IF EXISTS b_rest_system_user;
+DROP TABLE IF EXISTS b_rest_app_scope_request_state;
+DROP TABLE IF EXISTS b_rest_app_scope_request;

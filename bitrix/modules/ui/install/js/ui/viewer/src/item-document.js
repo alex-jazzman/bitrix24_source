@@ -1,11 +1,12 @@
 import { Text, Tag, Uri, Loc, Dom, Reflection, Event, Runtime, ajax as Ajax, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
+import { PrintService } from './document/print-service';
 
 const Item = Reflection.namespace('BX.UI.Viewer.Item');
 const Util = Reflection.namespace('BX.util');
 const BXPromise = Reflection.namespace('BX.Promise');
 
-const DEFAULT_SCALE = 1.4;
+export const DEFAULT_SCALE = 1.4;
 const SCALE_MIN = 0.5;
 const SCALE_MAX = 3;
 
@@ -20,19 +21,21 @@ export class Document extends Item
 {
 	static #loadingLibraryPromise = null;
 	#pageNumber: number = 1;
+	#firstPageHeight: ?number = null;
 	#loadingDocumentPromise: Promise = null;
+	#updatingScalePromise: ?Promise = null;
 
 	pdfDocument;
-	pdfPages: Object<number,Object> = {};
+	pdfPages: Object<number, Object> = {};
 	scale: number = DEFAULT_SCALE;
-	pdfRenderedPages: Object<number,Object> = {};
+	pdfRenderedPages: Object<number, Object> = {};
 	lastRenderedPdfPage: number = 0;
 	contentNode: Element;
 	previewHtml: Element;
 	extraActions: HTMLElement = null;
 	disableAnnotationLayer: boolean = true;
 
-	constructor (options)
+	constructor(options)
 	{
 		super(options);
 
@@ -41,7 +44,7 @@ export class Document extends Item
 		this.scale = options.scale || DEFAULT_SCALE;
 	}
 
-	setPropertiesByNode(node:HTMLElement): void
+	setPropertiesByNode(node: HTMLElement): void
 	{
 		super.setPropertiesByNode(node);
 
@@ -66,7 +69,7 @@ export class Document extends Item
 		return result;
 	}
 
-	setSrc(src: string|Uri): this
+	setSrc(src: string | Uri): this
 	{
 		this.src = src;
 		this._pdfSrc = null;
@@ -74,7 +77,7 @@ export class Document extends Item
 		return this.#resetState();
 	}
 
-	setPdfSource(pdfSource: string|Uri|ArrayBuffer): this
+	setPdfSource(pdfSource: string | Uri | ArrayBuffer): this
 	{
 		this._pdfSrc = pdfSource;
 
@@ -87,6 +90,7 @@ export class Document extends Item
 		this.lastRenderedPdfPage = null;
 		this.pdfDocument = null;
 		this.pdfPages = {};
+		this.#firstPageHeight = null;
 		this.setPageNumber(1);
 		if (this.printer)
 		{
@@ -103,16 +107,16 @@ export class Document extends Item
 		}
 		Document.#loadingLibraryPromise = new Promise((resolve, reject) => {
 			Runtime.loadExtension('ui.pdfjs').then(() => {
-				if (!pdfjsLib.GlobalWorkerOptions.workerSrc)
+				if (!BX.UI.Pdfjs.GlobalWorkerOptions.workerSrc)
 				{
-					pdfjsLib.GlobalWorkerOptions.workerSrc = '/bitrix/js/ui/pdfjs/pdf.worker.js';
+					BX.UI.Pdfjs.GlobalWorkerOptions.workerSrc = '/bitrix/js/ui/pdfjs/dist/pdfjs.worker.bundle.js';
 				}
 
 				Document.#loadingLibraryPromise = null;
 
 				resolve();
 			})
-			.catch(reject);
+				.catch(reject);
 		});
 
 		return Document.#loadingLibraryPromise;
@@ -126,6 +130,8 @@ export class Document extends Item
 		{
 			this.loadLibrary().then(() => {
 				promise.fulfill(this);
+			}).catch((e) => {
+				console.error('Load pdf library error', e);
 			});
 
 			return promise;
@@ -133,19 +139,19 @@ export class Document extends Item
 
 		console.log('loadData pdf');
 		const ajaxPromise = Ajax.promise({
-			url: Uri.addParam(this.src, {ts: 'bxviewer'}),
+			url: Uri.addParam(this.src, { ts: 'bxviewer' }),
 			method: 'GET',
 			dataType: 'json',
 			headers: [
 				{
 					name: 'BX-Viewer-src',
-					value: this.src
+					value: this.src,
 				},
 				{
 					name: 'BX-Viewer',
-					value: 'document'
-				}
-			]
+					value: 'document',
+				},
+			],
 		});
 
 		ajaxPromise.then((response) => {
@@ -154,8 +160,8 @@ export class Document extends Item
 				this.isTransforming = false;
 				promise.reject({
 					item: this,
-					message: Loc.getMessage("JS_UI_VIEWER_ITEM_TRANSFORMATION_ERROR_1").replace('#DOWNLOAD_LINK#', this.getSrc()),
-					type: 'error'
+					message: Loc.getMessage('JS_UI_VIEWER_ITEM_TRANSFORMATION_ERROR_1').replace('#DOWNLOAD_LINK#', this.getSrc()),
+					type: 'error',
 				});
 
 				return promise;
@@ -188,16 +194,48 @@ export class Document extends Item
 	{
 		this.controller.showLoading();
 
-		this.contentNode = Dom.create('div', {
-			props: {
-				className: 'ui-viewer-item-document-content',
-				tabIndex: 2208
-			},
-		});
+		this.contentNode = Tag.render`<div class="ui-viewer-item-document-content" style="--scale-factor: ${this.scale};" tabindex="2208"></div>`;
 
 		Event.bind(this.contentNode, 'scroll', Runtime.throttle(this.handleScrollDocument.bind(this), 100));
 
 		return this.contentNode;
+	}
+
+	getNakedActions(): Array
+	{
+		const nakedActions = super.getNakedActions();
+
+		return this.insertPrintBeforeInfo(nakedActions);
+	}
+
+	insertPrintBeforeInfo(actions: Array): Array<{type: string, action: Function}>
+	{
+		actions = actions || [];
+
+		let infoIndex = null;
+		for (const [i, action] of actions.entries())
+		{
+			if (action.type === 'info')
+			{
+				infoIndex = i;
+			}
+		}
+
+		const printAction = {
+			type: 'print',
+			action: this.print.bind(this),
+		};
+
+		if (infoIndex === null)
+		{
+			actions.push(printAction);
+		}
+		else
+		{
+			actions = Util.insertIntoArray(actions, infoIndex, printAction);
+		}
+
+		return actions;
 	}
 
 	renderExtraActions(): HTMLElement
@@ -252,24 +290,26 @@ export class Document extends Item
 
 	getFirstDocumentPageHeight(): Promise<number>
 	{
-		if (this._height)
+		if (this.#firstPageHeight)
 		{
-			return Promise.resolve(this._height);
+			return Promise.resolve(this.#firstPageHeight);
 		}
 
 		return new Promise((resolve) => {
 			this.getDocumentPage(this.pdfDocument, 1).then((page) => {
-				const viewport = page.getViewport(this.scale);
-				this._height = viewport.height;
+				const viewport = this.#getViewport(page);
+				this.#firstPageHeight = viewport.height;
 
-				resolve(this._height);
+				resolve(this.#firstPageHeight);
 			});
 		});
 	}
 
 	handleScrollDocument(event): void
 	{
+		console.log('handleScrollDocument');
 		this.getFirstDocumentPageHeight().then((height) => {
+			console.log('handleScrollDocument height getFirstDocumentPageHeight', height);
 			const scrollBottom = this.contentNode.scrollHeight - this.contentNode.scrollTop - this.contentNode.clientHeight;
 			if (scrollBottom < height * PAGES_TO_PRELOAD && this.pdfDocument.numPages > this.lastRenderedPdfPage)
 			{
@@ -297,7 +337,7 @@ export class Document extends Item
 
 		this.#loadingDocumentPromise = new Promise((resolve) => {
 			this.loadData().then(() => {
-				pdfjsLib.getDocument(this._pdfSrc).promise.then((pdf) => {
+				BX.UI.Pdfjs.getDocument(this._pdfSrc).promise.then((pdf) => {
 					this.pdfDocument = pdf;
 					this.#loadingDocumentPromise = null;
 
@@ -327,12 +367,14 @@ export class Document extends Item
 
 	renderDocumentPage(pdf, pageNumber): Promise<Object>
 	{
+		console.log('renderDocumentPage', pageNumber);
 		const pagePromise = this.pdfRenderedPages[pageNumber];
 		if (pagePromise instanceof Promise)
 		{
 			return pagePromise;
 		}
-		else if(!!pagePromise)
+
+		if (pagePromise)
 		{
 			return Promise.resolve(pagePromise);
 		}
@@ -340,61 +382,32 @@ export class Document extends Item
 		this.pdfRenderedPages[pageNumber] = new Promise((resolve) => {
 			this.getDocumentPage(pdf, pageNumber).then((page) => {
 				const canvas = this.createCanvasPage();
-				const viewport = page.getViewport(this.scale);
+				const viewport = this.#getViewport(page);
 				canvas.height = viewport.height;
 				canvas.width = viewport.width;
-				const renderPromise = page.render({canvasContext: canvas.getContext('2d'), viewport: viewport});
+				const renderTask = page.render({ canvasContext: canvas.getContext('2d'), viewport });
 
 				if (!this.disableAnnotationLayer)
 				{
-					renderPromise.then(function () {
-						return page.getAnnotations();
-					}).then(function (annotationData) {
-						const annotationLayer = Dom.create('div', {
+					renderTask.promise.then(() => {
+						const annotationLayerNode = Dom.create('div', {
 							props: { className: 'ui-viewer-pdf-annotation-layer' },
 						});
 
-						Dom.insertAfter(annotationLayer, canvas);
-						Dom.adjust(annotationLayer, {
-							style: {
-								margin: '-' + canvas.offsetHeight + 'px auto 0 auto',
-								height: canvas.height + 'px',
-								width: canvas.width + 'px',
-							},
-						});
+						Dom.insertAfter(annotationLayerNode, canvas);
 
-						pdfjsLib.AnnotationLayer.render({
-							viewport: viewport.clone({ dontFlip: true }),
-							linkService: pdfjsLib.SimpleLinkService,
-							div: annotationLayer,
-							annotations: annotationData,
-							page: page,
-						});
+						return this.#renderAnnotationLayer(page, canvas, annotationLayerNode, pdf);
 					});
 				}
 
-				renderPromise.then(function() {
-					return page.getTextContent();
-				}).then(function(textContent) {
-					const textLayer = Dom.create('div', {
+				renderTask.promise.then(() => {
+					const textLayerNode = Dom.create('div', {
 						props: { className: 'ui-viewer-pdf-text-layer' },
 					});
 
-					Dom.insertAfter(textLayer, canvas);
-					Dom.adjust(textLayer, {
-						style: {
-							margin: '-' + canvas.offsetHeight + 'px auto 0 auto',
-							height: canvas.height + 'px',
-							width: canvas.width + 'px',
-						},
-					});
+					Dom.insertAfter(textLayerNode, canvas);
 
-					pdfjsLib.renderTextLayer({
-						textContent: textContent,
-						container: textLayer,
-						viewport: viewport,
-						textDivs: [],
-					});
+					return this.#renderTextLayer(page, canvas, textLayerNode);
 				});
 
 				this.lastRenderedPdfPage = Math.max(pageNumber, this.lastRenderedPdfPage);
@@ -404,7 +417,7 @@ export class Document extends Item
 					this.firstWidthDocumentPage = canvas.width;
 				}
 
-				renderPromise.then(() => {
+				renderTask.promise.then(() => {
 					this.controller.hideLoading();
 					this.pdfRenderedPages[pageNumber] = page;
 
@@ -414,6 +427,70 @@ export class Document extends Item
 		});
 
 		return this.pdfRenderedPages[pageNumber];
+	}
+
+	#getViewport(page)
+	{
+		return page.getViewport({ scale: this.scale });
+	}
+
+	#renderAnnotationLayer(page, canvas: HTMLCanvasElement, annotationLayerNode: HTMLElement, pdf): Promise
+	{
+		return page.getAnnotations().then((annotationData) => {
+			Dom.style(annotationLayerNode, {
+				margin: `-${canvas.offsetHeight}px auto 0 auto`,
+				height: `${canvas.height}px`,
+				width: `${canvas.width}px`,
+			});
+
+			const viewport = this.#getViewport(page);
+
+			const annotationLayer = new BX.UI.Pdfjs.AnnotationLayer({
+				div: annotationLayerNode,
+				accessibilityManager: null,
+				annotationCanvasMap: new Map(),
+				l10n: {
+					async translate(element: HTMLElement)
+					{
+						return Promise.resolve();
+					},
+					async get(key: string, args?: any)
+					{
+						return Promise.resolve(key);
+					},
+				},
+				page,
+				viewport,
+			});
+
+			const pdfLinkService = new BX.UI.Pdfjs.PDFLinkService();
+			pdfLinkService.setDocument(pdf);
+
+			return annotationLayer.render({
+				viewport: viewport.clone({ dontFlip: true }),
+				linkService: pdfLinkService,
+				div: annotationLayerNode,
+				annotations: annotationData,
+				page,
+			}).promise;
+		});
+	}
+
+	#renderTextLayer(page, canvas: HTMLCanvasElement, textLayerNode: HTMLElement): Promise
+	{
+		Dom.style(textLayerNode, {
+			margin: `-${canvas.offsetHeight}px auto 0 auto`,
+			height: `${canvas.height}px`,
+			width: `${canvas.width}px`,
+		});
+
+		const textLayer = new BX.UI.Pdfjs.TextLayer({
+			textContentSource: page.streamTextContent(),
+			viewport: this.#getViewport(page),
+			container: textLayerNode,
+		});
+
+		return textLayer.render().promise;
 	}
 
 	createCanvasPage(): HTMLCanvasElement
@@ -442,6 +519,7 @@ export class Document extends Item
 	afterRender(): void
 	{
 		this.loadDocument().then((pdf) => {
+			console.log('total pages', pdf.numPages);
 			for (let i = 1; i <= Math.min(pdf.numPages, PAGES_TO_PRELOAD); i++)
 			{
 				if (i === 1)
@@ -506,12 +584,12 @@ export class Document extends Item
 		this.showPrintProgress(0, this.pdfDocument.numPages);
 
 		this.printer = new PrintService({
-			pdf: this.pdfDocument
+			pdf: this.pdfDocument,
 		});
 
 		this.printer.init().then(() => {
 			this.printer.prepare({
-				onProgress: this.updatePrintProgressMessage.bind(this)
+				onProgress: this.updatePrintProgressMessage.bind(this),
 			}).then(() => {
 				this.hidePrintProgress();
 				this.printer.performPrint();
@@ -570,6 +648,13 @@ export class Document extends Item
 
 	updateScale(scale: number): Promise<void>
 	{
+		if (this.#updatingScalePromise)
+		{
+			return this.#updatingScalePromise.then(() => {
+				return this.updateScale(scale);
+			});
+		}
+
 		scale = Number(scale);
 		if (this.scale === scale)
 		{
@@ -581,76 +666,78 @@ export class Document extends Item
 		const updatePageScale = ((
 			page,
 			canvases: Array<number, HTMLCanvasElement>,
+			annotationLayers: Array<number, HTMLDivElement>,
 			textLayers: Array<number, HTMLDivElement>,
 		): Promise => {
-			const canvas = canvases[page.pageIndex];
+			const canvas = canvases[page.pageNumber - 1];
 			if (!canvas)
 			{
 				return Promise.resolve();
 			}
 
-			return new Promise((resolve) => {
-				const viewport = page.getViewport(this.scale);
-				canvas.width = viewport.width;
-				canvas.height = viewport.height;
-				page.render({
-					canvasContext: canvas.getContext('2d'),
-					viewport,
-				}).then(() => {
-					const textLayer = textLayers[page.pageIndex];
-					if (textLayer)
-					{
-						Dom.clean(textLayer);
-						Dom.adjust(textLayer, {
-							style: {
-								margin: '-' + canvas.offsetHeight + 'px auto 0 auto',
-								height: viewport.height + 'px',
-								width: viewport.width + 'px',
-							},
-						});
+			const viewport = this.#getViewport(page);
+			canvas.width = viewport.width;
+			canvas.height = viewport.height;
 
-						page.getTextContent().then((textContent) => {
-							pdfjsLib.renderTextLayer({
-								textContent,
-								container: textLayer,
-								viewport,
-								textDivs: [],
-							});
+			return page.render({
+				canvasContext: canvas.getContext('2d'),
+				viewport,
+			}).promise.then(() => {
+				const annotationLayerNode = annotationLayers[page.pageNumber - 1];
+				if (!annotationLayerNode)
+				{
+					return null;
+				}
 
-							resolve();
-						});
-					}
-					else
-					{
-						resolve();
-					}
-				});
+				Dom.clean(annotationLayerNode);
+
+				return this.#renderAnnotationLayer(page, canvas, annotationLayerNode, this.pdfDocument);
+			}).then(() => {
+				const textLayerNode = textLayers[page.pageNumber - 1];
+				if (!textLayerNode)
+				{
+					return null;
+				}
+
+				Dom.clean(textLayerNode);
+
+				return this.#renderTextLayer(page, canvas, textLayerNode);
 			});
 		});
 
 		const promises = [];
 		this.scale = scale;
-		const canvases = Array.from(this.contentNode.querySelectorAll('canvas[class="ui-viewer-document-page-canvas"]'));
-		const textLayers = Array.from(this.contentNode.querySelectorAll('div[class="ui-viewer-pdf-text-layer"]'));
+		const canvases = [...this.contentNode.querySelectorAll('canvas[class="ui-viewer-document-page-canvas"]')];
+		const annotationLayers = [...this.contentNode.querySelectorAll('div[class="ui-viewer-pdf-annotation-layer"]')];
+		const textLayers = [...this.contentNode.querySelectorAll('div[class="ui-viewer-pdf-text-layer"]')];
 		Object.values(this.pdfRenderedPages).forEach((renderedPage) => {
 			if (renderedPage instanceof Promise)
 			{
 				promises.push(new Promise((resolve) => {
 					renderedPage.then((page) => {
-						updatePageScale(page, canvases, textLayers).then(resolve);
+						updatePageScale(page, canvases, annotationLayers, textLayers).then(resolve);
 					});
 				}));
 			}
 			else
 			{
-				promises.push(updatePageScale(renderedPage, canvases, textLayers));
+				promises.push(updatePageScale(renderedPage, canvases, annotationLayers, textLayers));
 			}
+		});
+
+		Dom.style(this.contentNode, {
+			'--scale-factor': scale,
 		});
 
 		const scrollTop = this.contentNode.scrollTop * ratio;
 		this.contentNode.scrollTo(this.contentNode.scrollLeft, scrollTop);
 
-		return Promise.all(promises);
+		this.#updatingScalePromise = Promise.all(promises).finally(() => {
+			this.#updatingScalePromise = null;
+			this.#firstPageHeight = null;
+		});
+
+		return this.#updatingScalePromise;
 	}
 
 	getPagesNumber(): ?number
@@ -660,7 +747,7 @@ export class Document extends Item
 			return null;
 		}
 
-		return Text.toInteger(this.pdfDocument._pdfInfo.numPages);
+		return Text.toInteger(this.pdfDocument.numPages);
 	}
 
 	scrollToPage(pageNumber: number): Promise<void>
@@ -681,7 +768,7 @@ export class Document extends Item
 				let height = 0;
 
 				pages.forEach((page) => {
-					const viewport = page.getViewport(this.scale);
+					const viewport = page.getViewport({ scale: this.scale });
 					height += viewport.height + 7;
 				});
 
@@ -697,7 +784,7 @@ export class Document extends Item
 		return this.#pageNumber;
 	}
 
-	setPageNumber(pageNumber: number): this|null
+	setPageNumber(pageNumber: number): this | null
 	{
 		pageNumber = Text.toInteger(pageNumber);
 		if (pageNumber < 0)
@@ -725,191 +812,5 @@ export class Document extends Item
 		}
 
 		return null;
-	}
-}
-
-const PRINT_SCALE = 1;
-
-export class PrintService
-{
-	constructor(options)
-	{
-		options = options || {};
-		this.pdf = options.pdf;
-		this.iframe = null;
-		this.documentOverview = {};
-	}
-
-	init()
-	{
-		if (this.documentOverview)
-		{
-			return Promise.resolve(this.documentOverview);
-		}
-
-		return new Promise((resolve) => {
-			this.pdf.getPage(1).then((page) => {
-				const viewport = page.getViewport(PRINT_SCALE);
-
-				this.documentOverview = {
-					width: viewport.width, height: viewport.height, rotation: viewport.rotation
-				};
-
-				resolve(this.documentOverview);
-			});
-		});
-	}
-
-	/**
-	 * @param {?Object} options
-	 * @param {Function} [options.onProgress]
-	 * @return {BXPromise}
-	 */
-	prepare(options)
-	{
-		options = options || {};
-		const pageCount = this.pdf.numPages;
-		let currentPage = -1;
-		const promise = new BXPromise();
-		let onProgress = null;
-		if (Type.isFunction(options.onProgress))
-		{
-			onProgress = options.onProgress;
-		}
-
-		this.frame = this.createIframe();
-
-		const process = () => {
-			if (++currentPage >= pageCount)
-			{
-				console.log('finish', this.frame.contentWindow.document);
-
-				setTimeout(() => {
-					promise.fulfill();
-				}, 1000);
-
-				return;
-			}
-
-			this.renderPage(currentPage + 1).then(function () {
-				if (onProgress)
-				{
-					onProgress(currentPage + 1, pageCount);
-				}
-				process();
-			});
-		};
-
-		process();
-
-		return promise;
-	}
-
-	renderPage(pageNumber)
-	{
-		return this.pdf.getPage(pageNumber).then(function (page) {
-			const scratchCanvas = document.createElement('canvas');
-			const viewport = page.getViewport(1);
-			// The size of the canvas in pixels for printing.
-			const PRINT_RESOLUTION = 150;
-			const PRINT_UNITS = PRINT_RESOLUTION / 72.0;
-			scratchCanvas.width = Math.floor(viewport.width * PRINT_UNITS);
-			scratchCanvas.height = Math.floor(viewport.height * PRINT_UNITS);
-
-			// The physical size of the img as specified by the PDF document.
-			const CSS_UNITS = 96.0 / 72.0;
-			const width = Math.floor(viewport.width * CSS_UNITS) + 'px';
-			const height = Math.floor(viewport.height * CSS_UNITS) + 'px';
-
-			const ctx = scratchCanvas.getContext('2d');
-			ctx.save();
-			ctx.fillStyle = 'rgb(255, 255, 255)';
-			ctx.fillRect(0, 0, scratchCanvas.width, scratchCanvas.height);
-			ctx.restore();
-
-			const renderContext = {
-				canvasContext: ctx,
-				transform: [PRINT_UNITS, 0, 0, PRINT_UNITS, 0, 0],
-				viewport: page.getViewport(1, viewport.rotation),
-				intent: 'print'
-			};
-
-			return page.render(renderContext).promise.then(function () {
-				return {
-					scratchCanvas: scratchCanvas, width: width, height: height
-				}
-			});
-		}).then((printItem) => {
-
-			const img = document.createElement('img');
-			img.style.width = printItem.width;
-			img.style.height = printItem.height;
-
-			const scratchCanvas = printItem.scratchCanvas;
-			if (('toBlob' in scratchCanvas) && !this.disableCreateObjectURL)
-			{
-				scratchCanvas.toBlob(function (blob) {
-					img.src = URL.createObjectURL(blob);
-				});
-			}
-			else
-			{
-				img.src = scratchCanvas.toDataURL();
-			}
-
-			const wrapper = document.createElement('div');
-			wrapper.appendChild(img);
-
-			this.frame.contentWindow.document.body.appendChild(wrapper);
-		});
-	}
-
-	destroy()
-	{
-		if (this.frame)
-		{
-			Dom.remove(this.frame);
-		}
-	}
-
-	createIframe()
-	{
-		const frame = document.createElement("iframe");
-		frame.src = "about:blank";
-		frame.name = "document-print-frame";
-		frame.style.display = "none";
-		document.body.appendChild(frame);
-
-		const frameWindow = frame.contentWindow;
-		const frameDoc = frameWindow.document;
-		frameDoc.open();
-		frameDoc.write('<html><head>');
-
-		const pageSize = this.getDocumentOverview();
-		let headTags = "<style>";
-		headTags += "html, body { background: #fff !important; height: 100%; }";
-		headTags += '@supports ((size:A4) and (size:1pt 1pt)) {' + '@page { size: ' + pageSize.width + 'pt ' + pageSize.height + 'pt;}' + '}';
-		headTags += '#ad{ display:none;}';
-		headTags += '#leftbar{ display:none;}';
-		headTags += "</style>";
-
-		frameDoc.write(headTags);
-
-		frameDoc.write('</head><body>');
-		frameDoc.write('</body></html>');
-		frameDoc.close();
-
-		return frame;
-	}
-
-	performPrint()
-	{
-		this.frame.contentWindow.focus();
-		this.frame.contentWindow.print();
-	}
-
-	getDocumentOverview()
-	{
-		return this.documentOverview;
 	}
 }

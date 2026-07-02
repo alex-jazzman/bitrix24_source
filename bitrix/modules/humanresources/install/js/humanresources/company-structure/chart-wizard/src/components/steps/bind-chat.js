@@ -69,6 +69,10 @@ export const BindChat = {
 		{
 			return PermissionChecker.getInstance().isCollabsAvailable;
 		},
+		isProjectsAvailable(): boolean
+		{
+			return PermissionChecker.getInstance().isProjectsAvailable;
+		},
 		headsCreated(): boolean
 		{
 			const memberRoles = getMemberRoles(this.entityType);
@@ -139,6 +143,32 @@ export const BindChat = {
 				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_HINT_TITLE')
 				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_HINT_TITLE')
 			;
+		},
+		selectorCollabTitle(): string
+		{
+			if (this.isProjectsAvailable)
+			{
+				return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_PROJECT_TITLE');
+			}
+
+			return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_COLLAB_TITLE');
+		},
+		selectorCollabHint(): string
+		{
+			if (this.isProjectsAvailable)
+			{
+				return (
+					this.isTeamEntity
+						? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_PROJECT_DESCRIPTION')
+						: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_PROJECT_DESCRIPTION')
+				);
+			}
+
+			return (
+				this.isTeamEntity
+					? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_COLLAB_DESCRIPTION')
+					: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_COLLAB_DESCRIPTION')
+			);
 		},
 		...mapState(useChartStore, ['userId']),
 	},
@@ -240,15 +270,11 @@ export const BindChat = {
 				<div class="chart-wizard__bind-chat__item-options" v-if="isCollabsAvailable">
 					<div class="chart-wizard__bind-chat__item-options__item-content_title">
 						<div class="chart-wizard__bind-chat__item-options__item-content_title-text">
-							{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_COLLAB_TITLE') }}
+							{{ selectorCollabTitle }}
 						</div>
 					</div>
 					<span class="chart-wizard__bind-chat__item-description">
-						{{
-							isTeamEntity
-								? loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_COLLAB_DESCRIPTION')
-								: loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_COLLAB_DESCRIPTION')
-						}}
+						{{ selectorCollabHint }}
 					</span>
 					<CommunicationSelector
 						:entityId="entityId"
@@ -256,7 +282,7 @@ export const BindChat = {
 						:headsCreated="headsCreated"
 						:hasCurrentUser="hasCurrentUser"
 						:initCommunications="initCollabs"
-						:type="ChatTypeDict.collab"
+						:type="isProjectsAvailable ? ChatTypeDict.project : ChatTypeDict.collab"
 						:isTeamEntity="isTeamEntity"
 						:isEditMode="isEditMode"
 						@applyData="onCommunicationSelectorChanged"

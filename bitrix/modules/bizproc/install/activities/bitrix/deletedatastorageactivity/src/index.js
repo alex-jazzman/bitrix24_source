@@ -7,8 +7,7 @@ import {
 	getGlobalContext,
 	setGlobalContext,
 } from 'bizproc.automation';
-import { BaseEvent } from 'main.core.events';
-import { Dialog } from 'ui.entity-selector';
+import { EventEmitter, BaseEvent } from 'main.core.events';
 
 type PropertyOptions = {
 	documentType: Array<string>;
@@ -46,9 +45,7 @@ export class DeleteDataStorageActivityRenderer
 	#options: ?PropertyOptions = null;
 
 	#documentType: Array<string> = [];
-	#storageCodeInput: ?HTMLInputElement = null;
-	#currentStorageId: number = 0;
-	#currentStorageCode: string | undefined = '';
+	#currentStorageId: string = '';
 	#deleteModeElement: ?HTMLElement = null;
 	#deleteModeSelect: ?HTMLSelectElement = null;
 	#currentDeleteMode: string = '';
@@ -60,6 +57,7 @@ export class DeleteDataStorageActivityRenderer
 	#onDeleteModeChangeHandler: ?Function;
 	#dialog: ?Dialog;
 	#conditionGroupSelector: ?ConditionGroupSelector = null;
+	#storageBlocks: Array<Object> = [];
 
 	constructor()
 	{
@@ -82,20 +80,21 @@ export class DeleteDataStorageActivityRenderer
 		};
 	}
 
-	afterFormRender(form: HTMLFormElement): void
+	async afterFormRender(form: HTMLFormElement): void
 	{
+		const { StorageSelector, mapStorageBlocksToFilterFields, resolveCurrentStorageId } = await Runtime
+			.loadExtension('bizproc.storage-selector');
+
 		this.#form = form;
-		this.#dialog = Dialog.getById('entityselector_storage_id');
+
 		if (Type.isPlainObject(this.#options))
 		{
 			this.#documentType = this.#options.documentType;
 
 			if (!Type.isNil(this.#form))
 			{
-				this.#storageCodeInput = this.#form.storage_code;
-				const item = this.#dialog?.selectedItems.values()?.next()?.value;
-				this.#currentStorageId = item?.id || 0;
-				this.#currentStorageCode = this.#storageCodeInput?.value || '';
+				this.#currentStorageId = resolveCurrentStorageId(this.#form);
+
 				this.#deleteModeElement = this.#form.querySelector(
 					'[data-role="bpa-sda-delete-mode-dependent"]',
 				);
@@ -110,9 +109,18 @@ export class DeleteDataStorageActivityRenderer
 				title: 'document',
 			});
 
+			EventEmitter.subscribeOnce('BX.Bizproc.CommonNodeSettings:onBlocksReady', (event: BaseEvent) => {
+				const { blocks } = event.getData();
+				this.#storageBlocks = (blocks || []).filter(
+					(block) => block.activity?.Type === 'CreateStorageNode',
+				);
+
+				this.#initFilterFields(this.#options, mapStorageBlocksToFilterFields);
+				this.#render();
+			});
+
 			this.#initAutomationContext();
-			this.#initFilterFields(this.#options);
-			this.#initStorageSelector();
+			this.#initStorageSelector(StorageSelector);
 
 			if (this.#deleteModeSelect)
 			{
@@ -123,25 +131,26 @@ export class DeleteDataStorageActivityRenderer
 		}
 	}
 
-	#initStorageSelector(): void
+	#initStorageSelector(StorageSelector): void
 	{
-		Runtime
-			.loadExtension('bizproc.storage-selector')
-			.then(({ StorageSelector }) => {
-				this.#dialog = new StorageSelector({
-					dialogId: 'entityselector_storage_id',
-					storageCodeInput: this.#storageCodeInput,
-					onStateChange: this.#onStorageStateChange.bind(this),
-				});
-				this.#dialog.init();
-			})
-			.catch((e) => console.error(e));
+		const dialogId = 'entityselector_storage_id';
+		this.#dialog = new StorageSelector({
+			dialogId,
+			onStateChange: this.#onStorageStateChange.bind(this),
+			initialValue: this.#currentStorageId,
+			storageCodeInput: this.#form?.querySelector('[name="storage_code"]'),
+		});
+		this.#dialog.init();
 	}
 
-	#onStorageStateChange(newStorageId: number): void
+	#onStorageStateChange(newStorageId: string): void
 	{
-		this.#currentStorageId = newStorageId;
-		this.#currentStorageCode = this.#storageCodeInput?.value;
+		if (this.#currentStorageId !== String(newStorageId))
+		{
+			this.#currentStorageId = String(newStorageId);
+			this.#conditionGroupSelector = null;
+			this.#conditionGroup = new ConditionGroup();
+		}
 		this.#render();
 	}
 
@@ -196,7 +205,7 @@ export class DeleteDataStorageActivityRenderer
 
 	#render(): void
 	{
-		if ((this.#currentStorageId > 0 || this.#currentStorageCode) && this.#currentDeleteMode === 'multiple')
+		if (this.#currentStorageId && this.#currentDeleteMode === 'multiple')
 		{
 			Dom.show(this.#deleteModeElement);
 			this.#renderFilterFields();
@@ -219,16 +228,19 @@ export class DeleteDataStorageActivityRenderer
 		}
 	}
 
-	#initFilterFields(options: PropertyOptions): void
+	#initFilterFields(options: PropertyOptions, mapStorageBlocksToFilterFields: Function): void
 	{
 		this.#filterFieldsContainer = this.#form.querySelector('[data-role="bpa-sda-filter-fields-container"]');
 		this.#filteringFieldsPrefix = options.filteringFieldsPrefix;
 		this.#filterFieldsMap = new Map(
 			Object.entries(options.filterFieldsMap)
-				.map(([storageId, fieldsMap]) => [Number(storageId), fieldsMap]),
+				.map(([storageId, fieldsMap]) => [String(storageId), fieldsMap]),
 		);
 
+		this.#filterFieldsMap = mapStorageBlocksToFilterFields(this.#storageBlocks, this.#filterFieldsMap);
+
 		this.#conditionGroup = new ConditionGroup(options.conditions);
+		this.#conditionGroupSelector = null;
 	}
 
 	destroy(): void
@@ -236,6 +248,12 @@ export class DeleteDataStorageActivityRenderer
 		if (this.#deleteModeSelect)
 		{
 			Event.unbind(this.#deleteModeSelect, 'change', this.#onDeleteModeChangeHandler);
+		}
+
+		if (this.#dialog)
+		{
+			this.#dialog.destroy();
+			this.#dialog = null;
 		}
 	}
 }

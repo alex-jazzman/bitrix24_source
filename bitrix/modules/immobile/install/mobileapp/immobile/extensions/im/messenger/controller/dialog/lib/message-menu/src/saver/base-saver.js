@@ -20,6 +20,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/saver/base-saver'
 		 * @property {DialogLocator} locator
 		 * @property {DialogId} dialogId
 		 * @property {MessageHelper} messageHelper
+		 * @property {boolean} isNestedSection
 		 * @param {SaverProps} props
 		 */
 		constructor(props)
@@ -34,6 +35,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/saver/base-saver'
 			this.messageHelper = props.messageHelper;
 			this.logger = getLogger('dialog--message-menu-file-saver');
 			this.parentWidget = props.parentWidget;
+			this.isNestedSection = props.isNestedSection;
 		}
 
 		/**
@@ -69,6 +71,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/saver/base-saver'
 			return {
 				fileType,
 				dialogId: this.dialogId,
+				isNestedSection: this.isNestedSection,
 			};
 		}
 
@@ -77,7 +80,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/saver/base-saver'
 		 */
 		getFiles()
 		{
-			return this.messageHelper.filesModel;
+			return this.messageHelper.files;
 		}
 
 		showSuccessSaveToast()

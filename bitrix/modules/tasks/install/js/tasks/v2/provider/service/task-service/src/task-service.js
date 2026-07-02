@@ -1,6 +1,7 @@
 import { Event, Runtime, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
-import type { Store } from 'ui.vue3.vuex';
+import { analytics } from 'tasks.v2.lib.analytics';
+import { type Store } from 'ui.vue3.vuex';
 
 import { Core } from 'tasks.v2.core';
 import { Model, EventName, Endpoint } from 'tasks.v2.const';
@@ -13,7 +14,7 @@ import { checkListService } from 'tasks.v2.provider.service.check-list-service';
 import { remindersService } from 'tasks.v2.provider.service.reminders-service';
 import { resultService } from 'tasks.v2.provider.service.result-service';
 import { userFieldsManager } from 'tasks.v2.component.fields.user-fields';
-import type { TaskModel } from 'tasks.v2.model.tasks';
+import { type TaskModel } from 'tasks.v2.model.tasks';
 
 import { auditorService } from './auditor-service';
 import { creatorService } from './creator-service';
@@ -21,7 +22,18 @@ import { descriptionService } from './description-service';
 import { crmService } from './crm-service';
 import { TaskGetExtractor } from './task-get-extractor';
 import { mapModelToDto } from './mappers';
-import type { TaskDto, SeparateFieldsMeta, TaskSelect, UpdateResult } from './types';
+import { type TaskDto, type SeparateFieldsMeta, type TaskSelect, type UpdateResult } from './types';
+
+type propsTaskServiceAdd = {
+	task: TaskModel,
+	view?: boolean,
+};
+
+type propsTaskServiceCopy = {
+	task: TaskModel,
+	withSubTasks: boolean,
+	view?: boolean,
+};
 
 const separateFields: SeparateFieldsMeta[] = [
 	{
@@ -78,7 +90,11 @@ export const taskService = new class
 		});
 	}
 
-	async get(id: number | string, taskSelect: TaskSelect, ignoreContains: boolean = false): Promise<TaskModel>
+	async get(
+		id: number | string,
+		taskSelect: TaskSelect,
+		ignoreContains: boolean = false,
+	): Promise<{ task: ?TaskModel, error: ?Error }>
 	{
 		if (idUtils.isTemplate(id))
 		{
@@ -86,7 +102,10 @@ export const taskService = new class
 
 			await this.$store.dispatch(`${Model.Tasks}/removePartiallyLoaded`, id);
 
-			return this.getStoreTask(id);
+			return {
+				task: this.getStoreTask(id),
+				error: null,
+			};
 		}
 
 		try
@@ -195,8 +214,13 @@ export const taskService = new class
 		}
 	}
 
-	async add(task: TaskModel): Promise<[number, ?Error]>
+	async add(props: propsTaskServiceAdd): Promise<[number, ?Error]>
 	{
+		const {
+			task,
+			view,
+		} = props;
+
 		if (idUtils.isTemplate(task.id))
 		{
 			return templateService.add(task);
@@ -204,7 +228,10 @@ export const taskService = new class
 
 		try
 		{
-			const data = await apiClient.post(Endpoint.TaskAdd, { task: mapModelToDto(task) });
+			const data = await apiClient.post(Endpoint.TaskAdd, {
+				task: mapModelToDto(task),
+				view: Boolean(view),
+			});
 
 			await this.onAfterTaskAdded(task, data);
 
@@ -309,8 +336,14 @@ export const taskService = new class
 		this.deleteStore(initialTask.id);
 	}
 
-	async copy(task: TaskModel, withSubTasks: boolean): Promise<[number, ?Error]>
+	async copy(props: propsTaskServiceCopy): Promise<[number, ?Error]>
 	{
+		const {
+			task,
+			withSubTasks,
+			view,
+		} = props;
+
 		if (idUtils.isTemplate(task.id))
 		{
 			return templateService.copy(task);
@@ -323,6 +356,7 @@ export const taskService = new class
 			const data = await apiClient.post(Endpoint.TaskCopy, {
 				task: mapModelToDto({ ...task, id: task.copiedFromId, checklist: checkLists }),
 				withSubTasks,
+				view: Boolean(view),
 			});
 
 			if (task.responsibleIds.length > 1)
@@ -485,7 +519,7 @@ export const taskService = new class
 		}
 	}
 
-	async delete(id: number): Promise<void>
+	async delete(id: number, analyticsParams: Object = {}): Promise<void>
 	{
 		const taskBeforeDelete = this.getStoreTask(id);
 
@@ -499,6 +533,10 @@ export const taskService = new class
 		try
 		{
 			await apiClient.post(Endpoint.TaskDelete, { task: { id } });
+
+			analytics.sendDeleteTask(analyticsParams, {
+				taskId: id,
+			});
 
 			EventEmitter.emit(EventName.TaskDeleted, { id });
 
@@ -580,9 +618,11 @@ export const taskService = new class
 
 		const extractor = new TaskGetExtractor(data);
 
-		const task = extractor.getTask();
+		let task = extractor.getTask();
 		const currentTask = this.getStoreTask(task.id);
-		task.rights = { ...currentTask?.rights, ...task.rights };
+
+		task = this.#mergeExtractedTaskWithStoreTask(task, currentTask);
+
 		if (ignoreContains)
 		{
 			[
@@ -607,6 +647,23 @@ export const taskService = new class
 		}
 
 		void fileService.get(data.id).list(data.fileIds);
+	}
+
+	#mergeExtractedTaskWithStoreTask(task: TaskModel, currentTask: ?TaskModel): TaskModel
+	{
+		const mergedTask = { ...task };
+
+		mergedTask.rights = { ...currentTask?.rights, ...mergedTask.rights };
+
+		const mergedSubTaskIds = [...(currentTask?.subTaskIds ?? []), ...(mergedTask?.subTaskIds ?? [])];
+		mergedTask.subTaskIds = [...new Set(mergedSubTaskIds)];
+
+		const statusesFields = ['subTaskStatuses', 'relatedTaskStatuses', 'ganttTaskStatuses'];
+		statusesFields.forEach((field) => {
+			mergedTask[field] = { ...mergedTask?.[field], ...currentTask?.[field] };
+		});
+
+		return mergedTask;
 	}
 
 	deleteStore(id: number): void

@@ -1,6 +1,7 @@
 <?php
 $MESS["UI_MAIL_PROMOTION_TEXT"] = "The module [strong]Mail[/strong] is required. Please contact your Bitrix24 administrator.";
 $MESS["UI_MAIL_PROVIDER_AVAILABLE_TAG"] = "available";
+$MESS["UI_MAIL_PROVIDER_CONNECT_LABEL"] = "Connect #NAME#";
 $MESS["UI_MAIL_PROVIDER_IMAP_SUBTITLE"] = "IMAP+SMTP";
 $MESS["UI_MAIL_PROVIDER_SERVICE_NAME_AOL"] = "Aol";
 $MESS["UI_MAIL_PROVIDER_SERVICE_NAME_EXCHANGE"] = "Exchange";
@@ -14,3 +15,4 @@ $MESS["UI_MAIL_PROVIDER_SERVICE_NAME_YAHOO"] = "Yahoo!";
 $MESS["UI_MAIL_PROVIDER_SERVICE_NAME_YANDEX"] = "Yandex";
 $MESS["UI_MAIL_PROVIDER_SHOWCASE_TITLE"] = "Connect email address";
 $MESS["UI_MAIL_PROVIDER_SMTP_TITLE"] = "SMTP";
+$MESS["UI_MAIL_PROVIDER_UNAVAILABLE_LIST_LABEL"] = "Unavailable email service providers";

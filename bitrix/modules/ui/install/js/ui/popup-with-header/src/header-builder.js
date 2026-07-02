@@ -140,9 +140,9 @@ export class HeaderBuilder
 				{
 					FeaturePromotersRegistry.getPromoter({ code: descriptionOptions.code }).show();
 				}
-				else if (descriptionOptions.moreHelperCode)
+				else if (descriptionOptions.moreHelperCode && top.BX && top.BX.Helper)
 				{
-					BX.UI.InfoHelper.show(descriptionOptions.moreHelperCode);
+					top.BX.Helper.show(`redirect=detail&code=${descriptionOptions.moreHelperCode}`);
 				}
 			};
 			moreLink = Tag.render`<a onclick="${onclick}" target="_blank" class="ui-popupcomponentsmaker-header-tariff__more">${descriptionOptions.moreLabel}</a>`;

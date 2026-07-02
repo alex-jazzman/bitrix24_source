@@ -1,0 +1,10 @@
+.bx-im-copilot-textarea__left-buttons {
+	display: flex;
+	flex: 1;
+	gap: 8px;
+	overflow: hidden;
+}
+
+.bx-im-copilot-textarea__left-buttons .ui-chip {
+	max-width: 200px;
+}

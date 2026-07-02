@@ -1,0 +1,34 @@
+.booking-booking-booking__duration {
+	align-self: flex-start;
+	margin-right: auto;
+	font-size: var(--ui-font-size-xs);
+	cursor: pointer;
+}
+
+.booking-booking-booking.--overbooking .booking-booking-booking__duration {
+	letter-spacing: -0.06em;
+	font-size: calc(var(--ui-font-size-xs) - 1px);
+	align-self: center;
+}
+
+.booking-booking-booking.--small .booking-booking-booking__duration {
+	align-self: center;
+	font-size: calc(var(--ui-font-size-3xs) * var(--zoom));
+}
+
+.booking-booking-card__title-container + .booking-booking-booking__duration {
+	margin-right: initial;
+}
+
+.booking-booking-booking.--overbooking.--compact-mode .booking-booking-booking__duration,
+.booking-booking-booking:not(.--compact-mode) .booking-booking-card__row:not(.booking-booking-card__lower-row) .booking-booking-booking__duration {
+	display: none;
+}
+
+.booking-booking-booking.--resizing .booking-booking-booking__duration,
+.ui-draggable--draggable .booking-booking-booking__duration {
+	margin: auto;
+	padding: 2px;
+	border-radius: 4px;
+	animation: 300ms ease booking-highlight-time forwards;
+}

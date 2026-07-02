@@ -1,27 +1,23 @@
+import { Runtime, type JsonObject } from 'main.core';
+import { type BaseEvent, type EventEmitter } from 'main.core.events';
 import 'ui.design-tokens';
 import 'ui.fonts.opensans';
 
-import { Runtime } from 'main.core';
-import { BaseEvent } from 'main.core.events';
-
-import { Utils } from 'im.v2.lib.utils';
+import { ScrollWithGradient } from 'im.v2.component.elements.scroll-with-gradient';
 import { EventType } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
-import { ScrollWithGradient } from 'im.v2.component.elements.scroll-with-gradient';
 import { sortByDate, getUsersFromRecentItems, type SearchResultItem } from 'im.v2.lib.search';
+import { Utils } from 'im.v2.lib.utils';
+import { SearchService } from 'im.v2.provider.service.search';
 
-import { SearchService } from '../../classes/search-service';
+import { EntitySearchType, EntitySearchConfig } from '../../const/const';
 import { getFirstItemFromSearchResults } from '../../helpers/get-first-search-item';
 import { getMinTokenSize } from '../../helpers/get-min-token-size';
 import { mergeSearchItems } from '../../helpers/merge-search-items';
 import { EmptyState } from '../elements/empty-state';
 import { SearchItem } from '../elements/search-item';
-import { EntitySearchType, EntitySearchConfig } from '../../const/const';
 
 import '../css/chat-search.css';
-
-import type { JsonObject } from 'main.core';
-import type { EventEmitter } from 'main.core.events';
 
 // @vue/component
 export const AddToChatSearch = {
@@ -190,7 +186,7 @@ export const AddToChatSearch = {
 		},
 	},
 	template: `
-		<ScrollWithGradient :gradientHeight="28" :withShadow="false"> 
+		<ScrollWithGradient> 
 			<div class="bx-im-chat-search__container">
 				<div class="bx-im-chat-search__title">
 					{{ loc('IM_SEARCH_SECTION_RECENT_CHATS') }}

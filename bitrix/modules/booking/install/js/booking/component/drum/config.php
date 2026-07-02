@@ -9,8 +9,8 @@ return [
 	'js' => 'dist/drum.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'ui.date-picker',
 		'booking.component.button',
+		'ui.date-picker',
 	],
 	'skip_core' => true,
 ];

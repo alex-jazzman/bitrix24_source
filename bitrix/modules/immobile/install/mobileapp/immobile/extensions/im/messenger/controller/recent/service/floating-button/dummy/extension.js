@@ -10,6 +10,9 @@ jn.define('im/messenger/controller/recent/service/floating-button/dummy', (requi
 	 */
 	class DummyFloatingButtonService extends BaseRecentService
 	{
+		renderAccentButton;
+		renderButton;
+
 		onInit()
 		{
 			this.logger.log('onInit');
@@ -18,6 +21,11 @@ jn.define('im/messenger/controller/recent/service/floating-button/dummy', (requi
 		subscribeEvents()
 		{
 			this.logger.log('subscribeEvents');
+		}
+
+		unsubscribeEvents()
+		{
+			this.logger.log('unsubscribeEvents');
 		}
 
 		redraw()

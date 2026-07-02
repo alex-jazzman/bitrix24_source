@@ -133,7 +133,7 @@ export default class Button extends BaseButton
 
 	setIcon(icon: ?string, iconPosition: 'right' | 'left' = 'left'): this
 	{
-		if (icon && !icon.startsWith('ui-btn-icon'))
+		if (icon && !icon.startsWith('ui-btn-icon') && !icon.startsWith('ui-icon-set'))
 		{
 			this.#layout.icon?.remove();
 			this.#layout.icon = new Icon({ icon }).render();

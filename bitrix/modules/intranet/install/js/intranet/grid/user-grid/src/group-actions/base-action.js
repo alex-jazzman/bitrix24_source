@@ -162,7 +162,7 @@ export class BaseAction
 	{
 		const maxDisplayCount = 5;
 		const userValues = Object.values(users);
-		const displayedNames = userValues.slice(0, maxDisplayCount).map((user) => user.fullName);
+		const displayedNames = userValues.slice(0, maxDisplayCount);
 		const remainingCount = userValues.length - maxDisplayCount;
 		const namesString = displayedNames.join(', ');
 

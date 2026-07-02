@@ -240,12 +240,29 @@
 
 	BX.rest.AppLayout.openPath = function(applicationCode, params, callback)
 	{
-		var path = BX.type.isString(params['path']) ? params['path'] : '';
-		var availablePath = /^\/(crm\/(deal|lead|contact|company|type)|marketplace|company\/personal\/user\/[0-9]+|workgroups\/group\/[0-9]+)\//;
-
 		if (!BX.browser.IsMobile())
 		{
-			if (path !== '' && availablePath.test(path))
+			var path = BX.type.isString(params['path']) ? params['path'] : '';
+			var pathUrl;
+
+			try
+			{
+				path = decodeURIComponent(path);
+				pathUrl = new URL(path, window.location.origin);
+
+			}
+			catch (e)
+			{
+				path = '';
+			}
+
+			if (
+				path !== ''
+				&& path.startsWith('/')
+				&& pathUrl
+				&& pathUrl.origin === window.location.origin
+				&& (pathUrl.protocol === 'http:' || pathUrl.protocol === 'https:')
+			)
 			{
 				var from = 'from=rest_placement&from_app=' + applicationCode;
 				path += (path.indexOf('?') === -1 ? '?' : '&') + from;

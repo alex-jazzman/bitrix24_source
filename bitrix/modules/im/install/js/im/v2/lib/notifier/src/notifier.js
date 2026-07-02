@@ -50,4 +50,9 @@ export const Notifier = {
 	{
 		showNotification(Loc.getMessage('IM_NOTIFIER_LINK_COPY_ERROR'));
 	},
+
+	onUpdateLinkComplete(): void
+	{
+		showNotification(Loc.getMessage('IM_NOTIFIER_LINK_UPDATE_COMPLETE'));
+	},
 };

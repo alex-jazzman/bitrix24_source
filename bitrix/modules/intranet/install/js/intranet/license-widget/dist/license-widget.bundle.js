@@ -1,2 +1,1079 @@
-this.BX=this.BX||{},function(t,e,i,n,s,r,a,o,l,c){"use strict";class g extends i.EventEmitter{constructor(t){super(),babelHelpers.defineProperty(this,"cache",new e.Cache.MemoryCache),this.setOptions(t),this.setEventNamespace("BX.Intranet.LicenseWidget.Content")}setOptions(t){return this.cache.set("options",t),this}getOptions(){return this.cache.get("options",{})}getLayout(){throw new Error("Must be implemented in a child class")}getConfig(){return{html:this.getLayout(),minHeight:"58px"}}}var d,p,h,m,u,b,v;function w(t,e){(function(t,e){if(e.has(t))throw new TypeError("Cannot initialize the same private elements twice on an object")})(t,e),e.add(t)}function T(t,e,i){if("function"==typeof t?t===e:t.has(e))return arguments.length<3?e:i;throw new TypeError("Private element is not present on this object")}var E,f,O,L,k,C,y=new WeakSet;class _ extends g{constructor(){super(...arguments),w(this,y)}getConfig(){return{html:this.getLayout(),minHeight:this.getOptions().isSmall?"86px":"55px"}}getLayout(){return this.cache.remember("layout",()=>e.Tag.render(d||(d=babelHelpers.taggedTemplateLiteral(['\n\t\t\t\t<div data-id="','" class="license-widget-item license-widget-item--secondary ','">\n\t\t\t\t\t<div class="license-widget-inner ','">\n\t\t\t\t\t\t<div class="license-widget-content">\n\t\t\t\t\t\t\t','\n\t\t\t\t\t\t\t<div class="license-widget-item-content">\n\t\t\t\t\t\t\t\t',"\n\t\t\t\t\t\t\t\t","\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t","\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])),this.getLayoutId(),this.getMainClass(),this.getOptions().isSmall?"--column":"",this.getIcon(),this.getTitle(),this.getDescription(),this.getButton()))}getLayoutId(){return"license-widget-block-market"}getTitle(){return this.cache.remember("title",()=>e.Tag.render(p||(p=babelHelpers.taggedTemplateLiteral(['\n\t\t\t\t<div class="license-widget-item-name">\n\t\t\t\t\t<span>\n\t\t\t\t\t\t',"\n\t\t\t\t\t</span>\n\t\t\t\t\t","\n\t\t\t\t</div>\n\t\t\t"])),this.getOptions().title,T(y,this,I).call(this)))}getIcon(){return this.cache.remember("icon",()=>e.Tag.render(h||(h=babelHelpers.taggedTemplateLiteral(['\n\t\t\t\t<div class="license-widget-item-icon license-widget-item-icon--mp"/>\n\t\t\t']))))}getDescription(){return this.cache.remember("description",()=>this.getOptions().isPaid||this.getOptions().isDemo?this.getReminderMessage():this.getDescriptionLink())}getMainClass(){return this.getOptions().isExpired||this.getOptions().isAlmostExpired?"--market-expired":this.getOptions().isPaid||this.getOptions().isDemo?"--market-active":"--market-default"}getReminderMessage(){return this.cache.remember("reminder-message",()=>e.Tag.render(m||(m=babelHelpers.taggedTemplateLiteral(['\n\t\t\t\t<div class="license-widget-item-info">\n\t\t\t\t\t<span class="license-widget-item-info-text">\n\t\t\t\t\t\t',"\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t"])),this.getOptions().messages.remainder))}getDescriptionLink(){return this.cache.remember("description-link",()=>e.Tag.render(u||(u=babelHelpers.taggedTemplateLiteral(['\n\t\t\t\t<div class="license-widget-item-link">\n\t\t\t\t\t<span class="license-widget-item-link-text" onclick="','">\n\t\t\t\t\t\t',"\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t"])),()=>T(y,this,x).call(this),this.getOptions().description.text))}getButton(){return this.cache.remember("button",()=>e.Tag.render(b||(b=babelHelpers.taggedTemplateLiteral(['\n\t\t\t\t<a onclick="','" href="','" class="license-widget-item-btn" target="_blank">\n\t\t\t\t\t',"\n\t\t\t\t</a>\n\t\t\t"])),()=>{i.EventEmitter.emit(i.EventEmitter.GLOBAL_TARGET,"BX.Intranet.LicenseWidget.Popup:openChild")},this.getOptions().button.link,this.getOptions().button.text))}}function I(){return this.getOptions().isPaid||this.getOptions().isDemo?e.Tag.render(v||(v=babelHelpers.taggedTemplateLiteral(['<span class="license-widget-item-help" onclick="','"></span>'])),()=>T(y,this,x).call(this)):""}function x(){s.FeaturePromotersRegistry.getPromoter({code:this.getOptions().description.landingCode}).show()}function P(t,e){(function(t,e){if(e.has(t))throw new TypeError("Cannot initialize the same private elements twice on an object")})(t,e),e.add(t)}function B(t,e,i){if("function"==typeof t?t===e:t.has(e))return arguments.length<3?e:i;throw new TypeError("Private element is not present on this object")}const S=Symbol("baas widget");var A,H,N,D,R,X,M,U,W,F,G,j,z,q=new WeakSet;class K extends _{constructor(){super(...arguments),P(this,q)}getConfig(){return{html:this.getLayout(),minHeight:this.getOptions().isSmall?"86px":"55px"}}getTitle(){return this.cache.remember("title",()=>e.Tag.render(E||(E=babelHelpers.taggedTemplateLiteral(['\n\t\t\t\t<div class="license-widget-item-name">\n\t\t\t\t\t<span>\n\t\t\t\t\t\t',"\n\t\t\t\t\t</span>\n\t\t\t\t\t","\n\t\t\t\t</div>\n\t\t\t"])),this.getOptions().title,B(q,this,J).call(this)))}getDescription(){return this.getOptions().isActive?this.getReminderMessage():this.getDescriptionLink()}getDescriptionLink(){return this.cache.remember("description-link",()=>e.Tag.render(f||(f=babelHelpers.taggedTemplateLiteral(['\n\t\t\t\t<div class="license-widget-item-link">\n\t\t\t\t\t<span class="license-widget-item-link-text" onclick="','">\n\t\t\t\t\t\t',"\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t"])),()=>B(q,this,Q).call(this),this.getOptions().description.text))}getReminderMessage(){return this.cache.remember("reminder-message",()=>{const t=e.Tag.render(O||(O=babelHelpers.taggedTemplateLiteral(['\n\t\t\t\t<div class="license-widget-item-link" onclick="','">\n\t\t\t\t\t<span class="license-widget-item-link-text --active">\n\t\t\t\t\t\t',"\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t"])),B(q,this,V).bind(this),this.getOptions().messages.remainder);return BX.PULL&&e.Extension.getSettings("baas.store").pull&&(BX.PULL.extendWatch(e.Extension.getSettings("baas.store").pull.channelName),i.EventEmitter.subscribe("onPullEvent-baas",e=>{const[i,n]=e.getData();"updateService"===i&&n.purchaseCount&&(t.querySelector('[data-bx-role="purchaseCount"]').innerText=n.purchaseCount)})),t})}getLayoutId(){return"license-widget-block-baas"}getButton(){return e.Tag.render(L||(L=babelHelpers.taggedTemplateLiteral(['\n\t\t\t<a class="license-widget-item-btn" onclick="','">\n\t\t\t\t',"\n\t\t\t</a>\n\t\t"])),B(q,this,V).bind(this),this.getOptions().button.text)}getIcon(){return this.cache.remember("icon",()=>e.Tag.render(k||(k=babelHelpers.taggedTemplateLiteral(['\n\t\t\t\t<div class="license-widget-item-icon license-widget-item-icon--baas"/>\n\t\t\t']))))}getMainClass(){return this.getOptions().isActive?"--baas-active":"--baas-default"}}function J(){return this.getOptions().isActive?e.Tag.render(C||(C=babelHelpers.taggedTemplateLiteral(['<span class="license-widget-item-help" onclick="','"></span>'])),()=>B(q,this,Q).call(this)):""}function Q(){s.FeaturePromotersRegistry.getPromoter({code:this.getOptions().description.landingCode}).show()}function V(){e.Runtime.loadExtension(["baas.store"]).then(t=>{const e=t.Widget.getInstance();e[S]||e.subscribe("onClickBack",()=>{this.getOptions().licensePopup.show()}),e.bind(this.getOptions().licensePopupTarget,t.Analytics.CONTEXT_LICENSE_WIDGET).show(),i.EventEmitter.emit(i.EventEmitter.GLOBAL_TARGET,"BX.Intranet.LicenseWidget.Popup:openChild")})}function Y(t,e){(function(t,e){if(e.has(t))throw new TypeError("Cannot initialize the same private elements twice on an object")})(t,e),e.add(t)}function Z(t,e,i){if("function"==typeof t?t===e:t.has(e))return arguments.length<3?e:i;throw new TypeError("Private element is not present on this object")}var $=new WeakSet;class tt extends g{constructor(){super(...arguments),Y(this,$)}getLayout(){return this.cache.remember("layout",()=>e.Tag.render(A||(A=babelHelpers.taggedTemplateLiteral(['\n\t\t\t\t<div data-id="license-widget-block-partner" class="license-widget-item license-widget-item--secondary">\n\t\t\t\t\t<div class="license-widget-inner">\n\t\t\t\t\t\t<div class="license-widget-content">\n\t\t\t\t\t\t\t','\n\t\t\t\t\t\t\t<div class="license-widget-item-content">\n\t\t\t\t\t\t\t\t',"\n\t\t\t\t\t\t\t\t","\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t","\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])),this.getIcon(),this.getTitle(),this.getDescription(),this.getButtons()))}getConfig(){return{html:this.getLayout(),className:"license-widget-section-with-box"}}getIcon(){return this.cache.remember("icon",()=>e.Tag.render(H||(H=babelHelpers.taggedTemplateLiteral(['\n\t\t\t\t<div class="license-widget-item-icon license-widget-item-icon--b24-partner">\n\t\t\t\t\t',"\n\t\t\t\t</div>\n\t\t\t"])),this.isConnected()&&""!==this.getPartnerLogo()?e.Tag.safe(N||(N=babelHelpers.taggedTemplateLiteral(['<img class="license-widget-item-icon-img" src="','" alt="">'])),this.getPartnerLogo()):""))}getTitle(){return this.cache.remember("title",()=>{const t=this.isConnected(),i=t&&""!==this.getPartnerName()?Z($,this,et).call(this):Z($,this,it).call(this);return t&&this.getPartnerUrl()&&e.Event.bind(i,"click",async()=>{window.open(this.getPartnerUrl(),"_blank","noopener,noreferrer")}),i})}getDescription(){return this.cache.remember("description",()=>e.Tag.render(D||(D=babelHelpers.taggedTemplateLiteral(['\n\t\t\t\t<div class="license-widget-option-text --flex">\n\t\t\t\t\t',"\n\t\t\t\t</div>\n\t\t\t"])),this.getOptions().description))}getButtons(){return this.cache.remember("button",()=>this.isConnected()?Z($,this,st).call(this):Z($,this,rt).call(this))}getMoreMenu(t){return this.cache.remember("partner_menu",()=>{const e=new r.Menu({bindElement:t,cacheable:!0,items:[{text:this.getButtonTitle("feedback"),onclick:()=>{e.close(),this.showFeedbackForm()}},{text:this.getButtonTitle("discontinue"),onclick:()=>{e.close(),(new c.PartnerDiscontinue).getPopup({onConfirm:()=>{Z($,this,ot).call(this)}}).show()}}]});return e})}showFeedbackForm(){var t;const i=null!==(t=this.getOptions().feedbackFormPresets)&&void 0!==t?t:{};e.Type.isObject(i)&&!e.Type.isArray(i)&&BX.UI.Feedback.PartnerForm.showFeedback({id:"partner-feedback",presets:i,title:e.Loc.getMessage("INTRANET_LICENSE_WIDGET_PARTNER_FEEDBACK_TITLE")})}showInfoHelper(t){var e,i;null!==(e=BX)&&void 0!==e&&null!==(e=e.UI)&&void 0!==e&&e.InfoHelper?BX.UI.InfoHelper.show(t):null!==(i=BX)&&void 0!==i&&i.Helper&&BX.Helper.show("redirect=detail&code=".concat(t))}getButtonTitle(t){var e,i,n,s,r;const a=null!==(e=this.getOptions().buttons)&&void 0!==e?e:{};switch(t){case"connect":return null==a||null===(i=a.connect)||void 0===i?void 0:i.title;case"choose":return null==a||null===(n=a.choose)||void 0===n?void 0:n.title;case"feedback":return null==a||null===(s=a.menu)||void 0===s||null===(s=s.feedback)||void 0===s?void 0:s.title;case"discontinue":return null==a||null===(r=a.menu)||void 0===r||null===(r=r.discontinue)||void 0===r?void 0:r.title;default:return""}}isConnected(){var t;return Boolean(null!==(t=this.getOptions().isConnected)&&void 0!==t?t:this.getOptions().isPartnerConnect)}getPartnerName(){var t,e;return null!==(t=null!==(e=this.getOptions().integratorName)&&void 0!==e?e:this.getOptions().partnerName)&&void 0!==t?t:""}getPartnerUrl(){var t,e;return null!==(t=null!==(e=this.getOptions().integratorUrl)&&void 0!==e?e:this.getOptions().partnerUrl)&&void 0!==t?t:""}getPartnerLogo(){var t,e;return null!==(t=null!==(e=this.getOptions().integratorLogo)&&void 0!==e?e:this.getOptions().partnerLogo)&&void 0!==t?t:""}isCurrentUserAdmin(){return!0===this.getOptions().isCurrentUserAdmin}}function et(){return e.Tag.render(R||(R=babelHelpers.taggedTemplateLiteral(['\n\t\t\t<div class="license-widget-item-name --link">\n\t\t\t\t','\n\t\t\t\t<div class="license-widget-item-chevron-right">\n\t\t\t\t\t<div class="ui-icon-set --chevron-right"></div>\n\t\t\t\t</div>\n\t\t\t\t',"\n\t\t\t</div>\n\t\t"])),e.Text.encode(this.getPartnerName()),Z($,this,nt).call(this))}function it(){return e.Tag.render(X||(X=babelHelpers.taggedTemplateLiteral(['\n\t\t\t<div class="license-widget-item-name">\n\t\t\t\t<span>',"</span>\n\t\t\t\t","\n\t\t\t</div>\n\t\t"])),this.getOptions().title,Z($,this,nt).call(this))}function nt(){return e.Tag.render(M||(M=babelHelpers.taggedTemplateLiteral(['<span class="license-widget-item-help" onclick="','"></span>'])),t=>{t.stopPropagation(),BX.Helper.show("redirect=detail&code=26952922")})}function st(){const t=e.Tag.render(U||(U=babelHelpers.taggedTemplateLiteral(['\n\t\t\t<a class="license-widget-item-btn" >\n\t\t\t\t',"\n\t\t\t</a>\n\t\t"])),this.getButtonTitle("connect"));e.Event.bind(t,"click",async()=>{var t,e;Z($,this,at).call(this);const i=null!==(t=this.getOptions().connectPartnerFormParams)&&void 0!==t?t:{};null!==(e=BX)&&void 0!==e&&null!==(e=e.Intranet)&&void 0!==e&&null!==(e=e.Bitrix24)&&void 0!==e&&null!==(e=e.PartnerForm)&&void 0!==e&&e.showConnectForm?await BX.Intranet.Bitrix24.PartnerForm.showConnectForm(i):this.showInfoHelper("info_implementation_request")});const i=e.Tag.render(W||(W=babelHelpers.taggedTemplateLiteral(['\n\t\t\t<div class="license-widget-item-btn-container">\n\t\t\t\t',"\n\t\t\t</div>\n\t\t"])),t);if(this.isCurrentUserAdmin()){const t=e.Tag.render(F||(F=babelHelpers.taggedTemplateLiteral(['\n\t\t\t\t<a class="license-widget-item-btn --partner-more" >\n\t\t\t\t\t<div class="ui-icon-set --more-m"></div>\n\t\t\t\t</a>\n\t\t\t']))),n=this.getMoreMenu(t);e.Event.bind(t,"click",()=>{n.show()}),e.Dom.append(t,i)}return i}function rt(){const t=e.Tag.render(G||(G=babelHelpers.taggedTemplateLiteral(['\n\t\t\t<a class="license-widget-item-btn">\n\t\t\t\t',"\n\t\t\t</a>\n\t\t"])),this.getButtonTitle("choose"));return e.Event.bind(t,"click",()=>{this.showInfoHelper("info_implementation_request")}),e.Tag.render(j||(j=babelHelpers.taggedTemplateLiteral(['\n\t\t\t<div class="license-widget-item-btn-container">\n\t\t\t\t',"\n\t\t\t</div>\n\t\t"])),t)}function at(){i.EventEmitter.emit(i.EventEmitter.GLOBAL_TARGET,"BX.Intranet.LicenseWidget.Popup:openChild")}function ot(){var t;const i=null!==(t=this.getOptions().feedbackFormPresets)&&void 0!==t?t:{};e.Type.isObject(i)&&!e.Type.isArray(i)&&(BX.UI.Feedback.PartnerForm.showRefusal({id:"partner-refusal",presets:i,title:e.Loc.getMessage("INTRANET_LICENSE_WIDGET_PARTNER_FEEDBACK_TITLE")}),top.addEventListener("b24:form:send:success",t=>{var i;const n=null==t||null===(i=t.detail)||void 0===i||null===(i=i.object)||void 0===i||null===(i=i.identification)||void 0===i?void 0:i.id;if(e.Type.isNil(n))return;const s=String(n),r=Z($,this,lt).call(this);(0===r.length||r.includes(s))&&e.ajax.runAction("intranet.v2.Partner.Relation.delete",{}).then(()=>{Z($,this,ct).call(this)}).catch(t=>{BX.UI.Notification.Center.notify({content:e.Loc.getMessage("INTRANET_LICENSE_WIDGET_PARTNER_SUCCESS_DISCONTINUE_POPUP_ERROR")}),top.console.error(t)})},{once:!0}))}function lt(){var t;const i=null===(t=e.Extension.getSettings("ui.feedback.partnerform"))||void 0===t?void 0:t.get("partnerRefusalForms");return Array.isArray(i)?i.map(t=>null==t?void 0:t.id).filter(t=>e.Type.isNumber(t)||e.Type.isStringFilled(t)).map(String):[]}function ct(){var t;!(null===(t=top.BX.SidePanel)||void 0===t||null===(t=t.Instance)||void 0===t||!t.getOpenSliders||"function"!=typeof top.BX.SidePanel.Instance.getOpenSliders)&&top.BX.SidePanel.Instance.getOpenSliders().length>0?top.BX.Event.EventEmitter.subscribeOnce("SidePanel.Slider:onCloseComplete",()=>{Z($,this,gt).call(this).show()}):Z($,this,gt).call(this).show()}function gt(){return this.cache.remember("success-discontinue-popup",()=>{const t=new r.Popup({useAirDesign:!0,content:Z($,this,dt).call(this),closeIcon:!0,cacheable:!0,className:"license-widget-partner-success-discontinue-popup",width:590,overlay:{opacity:100,backgroundColor:"rgba(0, 32, 78, 0.46)"},buttons:[new a.Button({text:e.Loc.getMessage("INTRANET_LICENSE_WIDGET_PARTNER_SUCCESS_DISCONTINUE_POPUP_CHOOSE_NEW_BTN"),useAirDesign:!0,style:a.AirButtonStyle.FILLED,className:"license-widget-partner-success-discontinue-popup-choose-new-btn",onclick:()=>{t.close(),this.showInfoHelper("info_implementation_request"),top.BX.Event.EventEmitter.subscribeOnce("SidePanel.Slider:onCloseComplete",()=>{location.reload()})}}),new a.Button({text:e.Loc.getMessage("INTRANET_LICENSE_WIDGET_PARTNER_SUCCESS_DISCONTINUE_POPUP_CLOSE_BTN"),useAirDesign:!0,style:a.AirButtonStyle.OUTLINE,onclick:()=>{t.close(),location.reload()}})]});return t})}function dt(){return e.Tag.render(z||(z=babelHelpers.taggedTemplateLiteral(['\n\t\t\t<div class="license-widget-partner-success-discontinue-popup-content">\n\t\t\t\t<div class="license-widget-partner-success-discontinue-popup-content-text-wrapper">\n\t\t\t\t\t<div class="license-widget-partner-success-discontinue-popup-content-title">\n\t\t\t\t\t\t','\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class="license-widget-partner-success-discontinue-popup-content-description">\n\t\t\t\t\t\t','\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class="license-widget-partner-success-discontinue-popup-content-image">\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t'])),e.Loc.getMessage("INTRANET_LICENSE_WIDGET_PARTNER_SUCCESS_DISCONTINUE_POPUP_TITLE"),e.Loc.getMessage("INTRANET_LICENSE_WIDGET_PARTNER_SUCCESS_DISCONTINUE_POPUP_DESC"))}function pt(t,e,i){if("function"==typeof t?t===e:t.has(e))return arguments.length<3?e:i;throw new TypeError("Private element is not present on this object")}class ht{static show(t){pt(ht,this,St)._?(pt(ht,this,St)._.setBindElement(t),pt(ht,this,St)._.show()):(St._=pt(ht,this,new r.Popup({content:e.Loc.getMessage("INTRANET_LICENSE_WIDGET_ADMIN_RIGHTS_RESTRICTED"),bindElement:t,angle:!0,offsetTop:0,offsetLeft:40,closeIcon:!1,autoHide:!0,darkMode:!0,overlay:!1,closeByEsc:!0,width:300})),pt(ht,this,St)._.show())}}var mt,ut,bt,vt,wt,Tt,Et,ft,Ot,Lt,kt,Ct,yt,_t,It,xt,Pt,Bt,St={_:null};class At extends g{constructor(t){super(t),this.setEventNamespace("BX.Bitrix24.LicenseWidget.Content.License")}getLayout(){return this.cache.remember("layout",()=>e.Tag.render(mt||(mt=babelHelpers.taggedTemplateLiteral(['\n\t\t\t\t<div data-id="license-widget-block-tariff"\n\t\t\t\t\tclass="license-widget-item license-widget-item--main ','"\n\t\t\t\t>\n\t\t\t\t\t<div class="license-widget-inner ','">\n\t\t\t\t\t\t<div class="license-widget-content">\n\t\t\t\t\t\t\t','\n\t\t\t\t\t\t\t<div class="license-widget-item-content">\n\t\t\t\t\t\t\t\t<div class="license-widget-item-name">\n\t\t\t\t\t\t\t\t\t<span>',"</span>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t","\n\t\t\t\t\t\t\t\t","\n\t\t\t\t\t\t\t\t","\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t","\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])),this.getOptions().isExpired||this.getOptions().isAlmostExpired?"license-widget-item--expired":"",this.getOptions().isDemo?"--demo":"",this.getMainIcon(),this.getOptions().name,this.getOptions().isExpired?this.getExpiredMessage():this.getRemainderMessage(),this.getOptions().isExpired&&this.getOptions().isAlmostBlocked?this.getBlockMessage():"",this.getOptions().isAlmostBlocked?"":this.getLink(),this.getOptions().button.isAvailable?this.getButton():""))}getMainIcon(){const t=e.Tag.render(ut||(ut=babelHelpers.taggedTemplateLiteral(['\n\t\t\t<div class="license-widget-item-icon"/>\n\t\t'])));return this.getOptions().isAlmostExpired?e.Dom.addClass(t,"license-widget-item-icon--low"):this.getOptions().isExpired?e.Dom.addClass(t,"license-widget-item-icon--expired"):this.getOptions().isDemo?e.Dom.addClass(t,"license-widget-item-icon--demo"):e.Dom.addClass(t,"license-widget-item-icon--pro"),t}getButton(){if(this.getOptions().button.isAdminRestricted){const t=t=>{t.preventDefault(),ht.show(t.target)};return e.Tag.render(bt||(bt=babelHelpers.taggedTemplateLiteral(['\n\t\t\t\t<a href="#" onclick="','" class="license-widget-item-btn ','">\n\t\t\t\t\t',"\n\t\t\t\t</a>\n\t\t\t"])),t,!this.getOptions().isDemo||this.getOptions().isAlmostExpired||this.getOptions().isExpired?"":"license-widget-item-btn--green",this.getOptions().button.text)}if("POST"===this.getOptions().button.type){const t=()=>{document.querySelector("#renew-license-form").submit()};return e.Tag.render(vt||(vt=babelHelpers.taggedTemplateLiteral(['\n\t\t\t\t<button onclick="','" class="license-widget-item-btn ','">\n\t\t\t\t\t<form id="renew-license-form" action="','" method="post" target="_blank">\n\t\t\t\t\t\t<input name="license_key" value="','" hidden>\n\t\t\t\t\t</form>\n\t\t\t\t\t',"\n\t\t\t\t</button>\n\t\t\t"])),t,!this.getOptions().isDemo||this.getOptions().isAlmostExpired||this.getOptions().isExpired?"":"license-widget-item-btn--green",this.getOptions().button.link,this.getOptions().button.hashKey,this.getOptions().button.text)}return e.Tag.render(wt||(wt=babelHelpers.taggedTemplateLiteral(['\n\t\t\t<a href="','" target="_blank" class="license-widget-item-btn ','">\n\t\t\t\t',"\n\t\t\t</a>\n\t\t"])),this.getOptions().button.link,!this.getOptions().isDemo||this.getOptions().isAlmostExpired||this.getOptions().isExpired?"":"license-widget-item-btn--green",this.getOptions().button.text)}getExpiredMessage(){return this.cache.remember("expired-message",()=>e.Tag.render(Tt||(Tt=babelHelpers.taggedTemplateLiteral(['\n\t\t\t\t<div class="license-widget-item-expired-message">\n\t\t\t\t\t<span class="license-widget-item-info-text">\n\t\t\t\t\t\t',"\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t"])),this.getOptions().messages.expired))}getBlockMessage(){return this.cache.remember("block-message",()=>e.Tag.render(Et||(Et=babelHelpers.taggedTemplateLiteral(['\n\t\t\t\t<div class="license-widget-item-expired-message --scanner-info">\n\t\t\t\t\t<span class="license-widget-item-info-text">\n\t\t\t\t\t\t',"\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t"])),this.getOptions().messages.block))}getRemainderMessage(){return this.cache.remember("block-message",()=>this.getOptions().isExpired||this.getOptions().isAlmostExpired?e.Tag.render(ft||(ft=babelHelpers.taggedTemplateLiteral(['\n\t\t\t\t\t<div class="license-widget-item-expired-message --scanner-info">\n\t\t\t\t\t\t<span class="license-widget-item-info-text">\n\t\t\t\t\t\t\t',"\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t"])),this.getOptions().messages.remainder):e.Tag.render(Ot||(Ot=babelHelpers.taggedTemplateLiteral(['\n\t\t\t\t<div class="license-widget-item-info">\n\t\t\t\t\t<span class="license-widget-item-info-text">\n\t\t\t\t\t\t',"\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t"])),this.getOptions().messages.remainder))}getLink(){const t=this.getOptions().more.isAdminRestricted?t=>{t.preventDefault(),ht.show(t.target)}:()=>{};return e.Tag.render(Lt||(Lt=babelHelpers.taggedTemplateLiteral(['\n\t\t\t<a href="','" onclick="','" class="license-widget-item-link-text" target="_blank">\n\t\t\t\t',"\n\t\t\t</a>\n\t\t"])),this.getOptions().more.link,t,this.getOptions().more.text)}}class Ht extends g{constructor(t){super(t),this.setEventNamespace("BX.Bitrix24.LicenseWidget.Content.Orders")}getConfig(){return{html:this.getLayout(),minHeight:"50px"}}getLayout(){return this.cache.remember("layout",()=>e.Tag.render(kt||(kt=babelHelpers.taggedTemplateLiteral(['\n\t\t\t\t<div data-id="license-widget-block-orders" onclick="','" class="license-widget-item license-widget-item--secondary --pointer">\n\t\t\t\t\t<div class="license-widget-inner">\n\t\t\t\t\t\t<div class="license-widget-content">\n\t\t\t\t\t\t\t<div class="license-widget-item-icon license-widget-item-icon--partner"></div>\n\t\t\t\t\t\t\t<div class="license-widget-item-content">\n\t\t\t\t\t\t\t\t','\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class="license-widget-item-icon__arrow-right ui-icon-set --arrow-right"/>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t'])),()=>{this.getOptions().landingCode?s.FeaturePromotersRegistry.getPromoter({code:this.getOptions().landingCode}).show():window.open(this.getOptions().link)},this.getTitle()))}getTitle(){return this.cache.remember("title",()=>e.Tag.render(Ct||(Ct=babelHelpers.taggedTemplateLiteral(['\n\t\t\t\t<div class="license-widget-item-name">\n\t\t\t\t\t<span>\n\t\t\t\t\t\t',"\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t"])),this.getOptions().title))}}class Nt extends g{constructor(t){super(t),this.setEventNamespace("BX.Bitrix24.LicenseWidget.Content.Orders")}getConfig(){return{html:this.getLayout(),minHeight:"50px"}}getLayout(){return this.cache.remember("layout",()=>e.Tag.render(yt||(yt=babelHelpers.taggedTemplateLiteral(['\n\t\t\t\t<div data-id="license-widget-block-orders" onclick="','" class="license-widget-item license-widget-item--secondary --pointer">\n\t\t\t\t\t<div class="license-widget-inner">\n\t\t\t\t\t\t<div class="license-widget-content">\n\t\t\t\t\t\t\t<div class="license-widget-item-icon license-widget-item-icon--order"></div>\n\t\t\t\t\t\t\t<div class="license-widget-item-content">\n\t\t\t\t\t\t\t\t','\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class="license-widget-item-icon__arrow-right ui-icon-set --arrow-right"/>\n\t\t\t\t\t</div>\n\t\t\t\t\t<form id="form-purchase-history" action="','" method="post" target="_blank">\n\t\t\t\t\t\t<input name="license_key" value="','" hidden>\n\t\t\t\t\t</form>\n\t\t\t\t</div>\n\t\t\t'])),t=>{document.querySelector("#form-purchase-history").submit()},this.getTitle(),this.getOptions().link,this.getOptions().hashKey))}getTitle(){return this.cache.remember("title",()=>e.Tag.render(_t||(_t=babelHelpers.taggedTemplateLiteral(['\n\t\t\t\t<div class="license-widget-item-name">\n\t\t\t\t\t<span>\n\t\t\t\t\t\t',"\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t"])),this.getOptions().text))}}class Dt extends g{constructor(t){super(t),this.setEventNamespace("BX.Bitrix24.LicenseWidget.Content.Telephony")}getConfig(){return{html:this.getLayout(),minHeight:"43px",sizeLoader:30}}getLayout(){return this.cache.remember("layout",()=>e.Tag.render(It||(It=babelHelpers.taggedTemplateLiteral(['\n\t\t\t\t<div data-id="license-widget-block-telephony" onclick="','" class="license-widget-item license-widget-item--secondary --pointer">\n\t\t\t\t\t<div class="license-widget-inner">\n\t\t\t\t\t\t<div class="license-widget-content">\n\t\t\t\t\t\t\t<div class="license-widget-item-icon ','"/>\n\t\t\t\t\t\t\t<div class="license-widget-item-content">\n\t\t\t\t\t\t\t\t<div class="license-widget-item-name">\n\t\t\t\t\t\t\t\t\t','\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class="license-widget-item-icon__arrow-right ui-icon-set --arrow-right"/>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t'])),()=>{document.location.href=this.getOptions().link},this.getOptions().isActive?"license-widget-item-icon--tel-active":"license-widget-item-icon--tel",this.getOptions().title))}}class Rt extends g{getConfig(){return{html:this.getLayout(),minHeight:"43px",sizeLoader:30}}getLayout(){return this.cache.remember("layout",()=>{const t=this.getOptions().isAdminRestricted?t=>{t.preventDefault(),ht.show(t.target)}:()=>{window.open(this.getOptions().link,"_blank")};return e.Tag.render(xt||(xt=babelHelpers.taggedTemplateLiteral(['\n\t\t\t\t<div onclick="','" data-id="license-widget-block-whatsnew" class="license-widget-item license-widget-item--secondary --pointer">\n\t\t\t\t\t<div class="license-widget-inner">\n\t\t\t\t\t\t<div class="license-widget-content">\n\t\t\t\t\t\t\t','\n\t\t\t\t\t\t\t<div class="license-widget-item-content">\n\t\t\t\t\t\t\t\t','\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class="license-widget-item-icon__arrow-right ui-icon-set --arrow-right"/>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t'])),t,this.getMainIcon(),this.getTitle())})}getMainIcon(){return this.cache.remember("main-icon",()=>e.Tag.render(Pt||(Pt=babelHelpers.taggedTemplateLiteral(['\n\t\t\t\t<div class="license-widget-item-icon license-widget-item-icon--updates"></div>\n\t\t\t']))))}getTitle(){return this.cache.remember("title",()=>e.Tag.render(Bt||(Bt=babelHelpers.taggedTemplateLiteral(['\n\t\t\t\t<div class="license-widget-item-name">\n\t\t\t\t\t<span>\n\t\t\t\t\t\t',"\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t"])),this.getOptions().title))}}function Xt(t,e){if(e.has(t))throw new TypeError("Cannot initialize the same private elements twice on an object")}function Mt(t,e){return t.get(Ut(t,e))}function Ut(t,e,i){if("function"==typeof t?t===e:t.has(e))return arguments.length<3?e:i;throw new TypeError("Private element is not present on this object")}var Wt=new WeakMap,Ft=new WeakSet;class Gt extends i.EventEmitter{constructor(t){var i,n;super(),Xt(i=this,n=Ft),n.add(i),function(t,e,i){Xt(t,e),e.set(t,i)}(this,Wt,new e.Cache.MemoryCache),this.setOptions(t),this.setEventNamespace("BX.Intranet.LicenseWidget.Popup"),this.setEventHandlers()}setOptions(t){Mt(Wt,this).set("options",t)}getOptions(){return Mt(Wt,this).get("options",{})}show(){this.getBasePopup().show(),this.emit("show")}close(){this.getBasePopup().close()}getBasePopup(){return Mt(Wt,this).remember("popup",()=>(this.emit("init"),new n.PopupComponentsMaker({target:this.getOptions().target,width:374,content:Ut(Ft,this,jt).call(this),popupLoader:this.getOptions().loader})))}setEventHandlers(){const t=()=>{this.close()};this.subscribe("init",()=>{i.EventEmitter.subscribe(i.EventEmitter.GLOBAL_TARGET,"SidePanel.Slider:onOpenStart",t),i.EventEmitter.subscribe(i.EventEmitter.GLOBAL_TARGET,"BX.Intranet.LicenseWidget.Popup:openChild",t)})}}function jt(){return Mt(Wt,this).remember("content",()=>{var t,e;const i=[];return this.getOptions().content.license.isAvailable&&i.push(Ut(Ft,this,zt).call(this).getConfig()),this.getOptions().content.market.isAvailable&&i.push(Ut(Ft,this,qt).call(this,!1).getConfig()),this.getOptions().content.baas.isAvailable&&i.push(Ut(Ft,this,Kt).call(this,!1).getConfig()),null!==(t=this.getOptions().content.integrator)&&void 0!==t&&t.isAvailable&&i.push(Ut(Ft,this,Jt).call(this,!1).getConfig()),i.push(Ut(Ft,this,Qt).call(this).getConfig()),this.getOptions().content.telephony.isAvailable?i.push({html:[Ut(Ft,this,Vt).call(this).getConfig(),Ut(Ft,this,Yt).call(this).getConfig()]}):i.push(Ut(Ft,this,Yt).call(this).getConfig()),!this.getOptions().content.partner.isAvailable||null!==(e=this.getOptions().content.integrator)&&void 0!==e&&e.isAvailable||i.push(Ut(Ft,this,Zt).call(this).getConfig()),i})}function zt(){return Mt(Wt,this).remember("license-content",()=>new At({...this.getOptions().content.license}))}function qt(t){return Mt(Wt,this).remember("market-content",()=>new _({...this.getOptions().content.market,isSmall:t}))}function Kt(t){return Mt(Wt,this).remember("baas-content",()=>new K({...this.getOptions().content.baas,licensePopupTarget:this.getOptions().target,licensePopup:this,isAdmin:this.getOptions().isAdmin,isSmall:t}))}function Jt(t){return Mt(Wt,this).remember("integrator-content",()=>new tt({...this.getOptions().content.integrator}))}function Qt(){return Mt(Wt,this).remember("purchase-history-content",()=>new Nt({...this.getOptions().content["purchase-history"]}))}function Vt(){return Mt(Wt,this).remember("telephony-content",()=>new Dt({...this.getOptions().content.telephony}))}function Yt(){return Mt(Wt,this).remember("updates-content",()=>new Rt({...this.getOptions().content.updates}))}function Zt(){return Mt(Wt,this).remember("partner-content",()=>new Ht({...this.getOptions().content.partner}))}function $t(t,e){if(e.has(t))throw new TypeError("Cannot initialize the same private elements twice on an object")}function te(t,e){return t.get(ee(t,e))}function ee(t,e,i){if("function"==typeof t?t===e:t.has(e))return arguments.length<3?e:i;throw new TypeError("Private element is not present on this object")}var ie=new WeakMap,ne=new WeakSet;class se{constructor(){var t,i;$t(t=this,i=ne),i.add(t),function(t,e,i){$t(t,e),e.set(t,i)}(this,ie,new e.Cache.MemoryCache)}static getInstance(){return ee(se,this,ae)._||(ae._=ee(se,this,new this)),ee(se,this,ae)._}show(){ee(ne,this,re).call(this).getBasePopup().isShown()||ee(ne,this,re).call(this).show()}setOptions(t){return te(ie,this).set("options",t),this}getOptions(){return te(ie,this).get("options",{})}}function re(){return te(ie,this).remember("popup",()=>new Gt({target:this.getOptions().buttonWrapper,loader:this.getOptions().loader,content:{...this.getOptions().data}}))}var ae={_:void 0};t.LicenseWidget=se}(this.BX.Intranet=this.BX.Intranet||{},BX,BX.Event,BX.UI,BX.UI,BX.Main,BX.UI,BX.UI.Feedback,BX,BX.Intranet);
+/* eslint-disable */
+this.BX = this.BX || {};
+(function (exports, main_core, main_core_events, ui_popupcomponentsmaker, ui_infoHelper, main_popup, ui_buttons, ui_feedback_partnerform, ui_iconSet_outlined, intranet_partnerDiscontinue) {
+	'use strict';
+
+	class Content extends main_core_events.EventEmitter {
+		cache = new main_core.Cache.MemoryCache();
+		constructor(options) {
+			super();
+			this.setOptions(options);
+			this.setEventNamespace('BX.Intranet.LicenseWidget.Content');
+		}
+		setOptions(options) {
+			this.cache.set('options', options);
+			return this;
+		}
+		getOptions() {
+			return this.cache.get('options', {});
+		}
+		getLayout() {
+			throw new Error('Must be implemented in a child class');
+		}
+		getConfig() {
+			return {
+				html: this.getLayout(),
+				minHeight: '58px'
+			};
+		}
+	}
+
+	class MarketContent extends Content {
+		getConfig() {
+			return {
+				html: this.getLayout(),
+				minHeight: this.getOptions().isSmall ? '86px' : '55px'
+			};
+		}
+		getLayout() {
+			return this.cache.remember('layout', () => {
+				return main_core.Tag.render`
+				<div data-id="${this.getLayoutId()}" class="license-widget-item license-widget-item--secondary ${this.getMainClass()}">
+					<div class="license-widget-inner ${this.getOptions().isSmall ? '--column' : ''}">
+						<div class="license-widget-content">
+							${this.getIcon()}
+							<div class="license-widget-item-content">
+								${this.getTitle()}
+								${this.getDescription()}
+							</div>
+						</div>
+						${this.getButton()}
+					</div>
+				</div>
+			`;
+			});
+		}
+		getLayoutId() {
+			return 'license-widget-block-market';
+		}
+		getTitle() {
+			return this.cache.remember('title', () => {
+				return main_core.Tag.render`
+				<div class="license-widget-item-name">
+					<span>
+						${this.getOptions().title}
+					</span>
+					${this.#getHelpIcon()}
+				</div>
+			`;
+			});
+		}
+		#getHelpIcon() {
+			if (this.getOptions().isPaid || this.getOptions().isDemo) {
+				return main_core.Tag.render`<span class="license-widget-item-help" onclick="${() => this.#showHelper()}"></span>`;
+			}
+			return '';
+		}
+		#showHelper() {
+			ui_infoHelper.FeaturePromotersRegistry.getPromoter({
+				code: this.getOptions().description.landingCode
+			}).show();
+		}
+		getIcon() {
+			return this.cache.remember('icon', () => {
+				return main_core.Tag.render`
+				<div class="license-widget-item-icon license-widget-item-icon--mp"/>
+			`;
+			});
+		}
+		getDescription() {
+			return this.cache.remember('description', () => {
+				if (this.getOptions().isPaid || this.getOptions().isDemo) {
+					return this.getReminderMessage();
+				}
+				return this.getDescriptionLink();
+			});
+		}
+		getMainClass() {
+			if (this.getOptions().isExpired || this.getOptions().isAlmostExpired) {
+				return '--market-expired';
+			}
+			if (this.getOptions().isPaid || this.getOptions().isDemo) {
+				return '--market-active';
+			}
+			return '--market-default';
+		}
+		getReminderMessage() {
+			return this.cache.remember('reminder-message', () => {
+				return main_core.Tag.render`
+				<div class="license-widget-item-info">
+					<span class="license-widget-item-info-text">
+						${this.getOptions().messages.remainder}
+					</span>
+				</div>
+			`;
+			});
+		}
+		getDescriptionLink() {
+			return this.cache.remember('description-link', () => {
+				return main_core.Tag.render`
+				<div class="license-widget-item-link">
+					<span class="license-widget-item-link-text" onclick="${() => this.#showHelper()}">
+						${this.getOptions().description.text}
+					</span>
+				</div>
+			`;
+			});
+		}
+		getButton() {
+			return this.cache.remember('button', () => {
+				const onclick = () => {
+					main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.LicenseWidget.Popup:openChild');
+				};
+				return main_core.Tag.render`
+				<a onclick="${onclick}" href="${this.getOptions().button.link}" class="license-widget-item-btn" target="_blank">
+					${this.getOptions().button.text}
+				</a>
+			`;
+			});
+		}
+	}
+
+	const baasWidgetMarker = Symbol('baas widget');
+	class BaasContent extends MarketContent {
+		getConfig() {
+			return {
+				html: this.getLayout(),
+				minHeight: this.getOptions().isSmall ? '86px' : '55px'
+			};
+		}
+		getTitle() {
+			return this.cache.remember('title', () => {
+				return main_core.Tag.render`
+				<div class="license-widget-item-name">
+					<span>
+						${this.getOptions().title}
+					</span>
+					${this.#getHelpIcon()}
+				</div>
+			`;
+			});
+		}
+		#getHelpIcon() {
+			if (this.getOptions().isActive) {
+				return main_core.Tag.render`<span class="license-widget-item-help" onclick="${() => this.#showHelper()}"></span>`;
+			}
+			return '';
+		}
+		#showHelper() {
+			ui_infoHelper.FeaturePromotersRegistry.getPromoter({
+				code: this.getOptions().description.landingCode
+			}).show();
+		}
+		getDescription() {
+			if (this.getOptions().isActive) {
+				return this.getReminderMessage();
+			}
+			return this.getDescriptionLink();
+		}
+		getDescriptionLink() {
+			return this.cache.remember('description-link', () => {
+				return main_core.Tag.render`
+				<div class="license-widget-item-link">
+					<span class="license-widget-item-link-text" onclick="${() => this.#showHelper()}">
+						${this.getOptions().description.text}
+					</span>
+				</div>
+			`;
+			});
+		}
+		getReminderMessage() {
+			return this.cache.remember('reminder-message', () => {
+				const node = main_core.Tag.render`
+				<div class="license-widget-item-link" onclick="${this.#showBaasWidget.bind(this)}">
+					<span class="license-widget-item-link-text --active">
+						${this.getOptions().messages.remainder}
+					</span>
+				</div>
+			`;
+				if (BX.PULL && main_core.Extension.getSettings('baas.store').pull) {
+					BX.PULL.extendWatch(main_core.Extension.getSettings('baas.store').pull.channelName);
+					main_core_events.EventEmitter.subscribe('onPullEvent-baas', event => {
+						const [command, params] = event.getData();
+						if (command === 'updateService' && params.purchaseCount) {
+							node.querySelector('[data-bx-role="purchaseCount"]').innerText = params.purchaseCount;
+						}
+					});
+				}
+				return node;
+			});
+		}
+		getLayoutId() {
+			return 'license-widget-block-baas';
+		}
+		getButton() {
+			return main_core.Tag.render`
+			<a class="license-widget-item-btn" onclick="${this.#showBaasWidget.bind(this)}">
+				${this.getOptions().button.text}
+			</a>
+		`;
+		}
+		#showBaasWidget() {
+			main_core.Runtime.loadExtension(['baas.store']).then(exports => {
+				const widget = exports.Widget.getInstance();
+				if (!widget[baasWidgetMarker]) {
+					widget.subscribe('onClickBack', () => {
+						this.getOptions().licensePopup.show();
+					});
+				}
+				widget.bind(this.getOptions().licensePopupTarget, exports.Analytics.CONTEXT_LICENSE_WIDGET).show();
+				main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.LicenseWidget.Popup:openChild');
+			});
+		}
+		getIcon() {
+			return this.cache.remember('icon', () => {
+				return main_core.Tag.render`
+				<div class="license-widget-item-icon license-widget-item-icon--baas"/>
+			`;
+			});
+		}
+		getMainClass() {
+			if (this.getOptions().isActive) {
+				return '--baas-active';
+			}
+			return '--baas-default';
+		}
+	}
+
+	class IntegratorContent extends Content {
+		getLayout() {
+			return this.cache.remember('layout', () => {
+				return main_core.Tag.render`
+				<div data-id="license-widget-block-partner" class="license-widget-item license-widget-item--secondary">
+					<div class="license-widget-inner">
+						<div class="license-widget-content">
+							${this.getIcon()}
+							<div class="license-widget-item-content">
+								${this.getTitle()}
+								${this.getDescription()}
+							</div>
+						</div>
+						${this.getButtons()}
+					</div>
+				</div>
+			`;
+			});
+		}
+		getConfig() {
+			return {
+				html: this.getLayout(),
+				className: 'license-widget-section-with-box'
+			};
+		}
+		getIcon() {
+			return this.cache.remember('icon', () => {
+				return main_core.Tag.render`
+				<div class="license-widget-item-icon license-widget-item-icon--b24-partner">
+					${this.isConnected() && this.getPartnerLogo() !== '' ? main_core.Tag.safe`<img class="license-widget-item-icon-img" src="${this.getPartnerLogo()}" alt="">` : ''}
+				</div>
+			`;
+			});
+		}
+		getTitle() {
+			return this.cache.remember('title', () => {
+				const isPartnerConnect = this.isConnected();
+				const title = isPartnerConnect && this.getPartnerName() !== '' ? this.#getTitleWithIntegrator() : this.#getTitleWithoutPartner();
+				if (isPartnerConnect && this.getPartnerCardUrl()) {
+					main_core.Event.bind(title, 'click', async () => {
+						window.open(this.getPartnerCardUrl(), '_blank', 'noopener,noreferrer');
+					});
+				}
+				return title;
+			});
+		}
+		#getTitleWithIntegrator() {
+			const partnerName = this.getPartnerName();
+			return main_core.Tag.render`
+			<div class="license-widget-item-name --link">
+				<span class="license-widget-item-name__inner" title="${main_core.Text.encode(partnerName)}">
+					${main_core.Text.encode(partnerName)}
+				</span>
+				<div class="license-widget-item-chevron-right">
+					<div class="ui-icon-set --chevron-right"></div>
+				</div>
+				${this.#getHelpIcon()}
+			</div>
+		`;
+		}
+		#getTitleWithoutPartner() {
+			return main_core.Tag.render`
+			<div class="license-widget-item-name">
+				<span>${this.getOptions().title}</span>
+				${this.#getHelpIcon()}
+			</div>
+		`;
+		}
+		#getHelpIcon() {
+			const showHelper = event => {
+				event.stopPropagation();
+				BX.Helper.show('redirect=detail&code=26952922');
+			};
+			return main_core.Tag.render`<span class="license-widget-item-help" onclick="${showHelper}"></span>`;
+		}
+		getDescription() {
+			return this.cache.remember('description', () => {
+				return main_core.Tag.render`
+				<div class="license-widget-option-text --flex">
+					${this.getOptions().description}
+				</div>
+			`;
+			});
+		}
+		getButtons() {
+			return this.cache.remember('button', () => {
+				return this.isConnected() ? this.#renderButtonsWithConnectedPartner() : this.#renderButtonsWithoutPartner();
+			});
+		}
+		#renderButtonsWithConnectedPartner() {
+			const buttonConnect = main_core.Tag.render`
+			<a class="license-widget-item-btn" >
+				${this.getButtonTitle('connect')}
+			</a>
+		`;
+			main_core.Event.bind(buttonConnect, 'click', async () => {
+				this.#closeBasePopup();
+				const params = this.getOptions().connectPartnerFormParams ?? {};
+				if (BX?.Intranet?.Bitrix24?.PartnerForm?.showConnectForm) {
+					await BX.Intranet.Bitrix24.PartnerForm.showConnectForm(params);
+				} else {
+					this.showInfoHelper('info_implementation_request');
+				}
+			});
+			const buttonContainer = main_core.Tag.render`
+			<div class="license-widget-item-btn-container">
+				${buttonConnect}
+			</div>
+		`;
+			if (this.isCurrentUserAdmin()) {
+				const buttonMore = main_core.Tag.render`
+				<a class="license-widget-item-btn --partner-more" >
+					<div class="ui-icon-set --more-m"></div>
+				</a>
+			`;
+				const menu = this.getMoreMenu(buttonMore);
+				main_core.Event.bind(buttonMore, 'click', () => {
+					menu.show();
+				});
+				main_core.Dom.append(buttonMore, buttonContainer);
+			}
+			return buttonContainer;
+		}
+		#renderButtonsWithoutPartner() {
+			const button = main_core.Tag.render`
+			<a class="license-widget-item-btn">
+				${this.getButtonTitle('choose')}
+			</a>
+		`;
+			main_core.Event.bind(button, 'click', () => {
+				this.showInfoHelper('info_implementation_request');
+			});
+			return main_core.Tag.render`
+			<div class="license-widget-item-btn-container">
+				${button}
+			</div>
+		`;
+		}
+		getMoreMenu(bindElement) {
+			return this.cache.remember('partner_menu', () => {
+				const menu = new main_popup.Menu({
+					bindElement,
+					cacheable: true,
+					items: [{
+						text: this.getButtonTitle('feedback'),
+						onclick: () => {
+							menu.close();
+							this.showFeedbackForm();
+						}
+					}, {
+						text: this.getButtonTitle('discontinue'),
+						onclick: () => {
+							menu.close();
+							new intranet_partnerDiscontinue.PartnerDiscontinue().getPopup({
+								onConfirm: () => {
+									this.#showDiscontinueFeedbackForm();
+								}
+							}).show();
+						}
+					}]
+				});
+				return menu;
+			});
+		}
+		showFeedbackForm() {
+			const presets = this.getOptions().feedbackFormPresets ?? {};
+			if (!main_core.Type.isObject(presets) || main_core.Type.isArray(presets)) {
+				return;
+			}
+			BX.UI.Feedback.PartnerForm.showFeedback({
+				id: 'partner-feedback',
+				presets,
+				title: main_core.Loc.getMessage('INTRANET_LICENSE_WIDGET_PARTNER_FEEDBACK_TITLE')
+			});
+		}
+		showInfoHelper(articleCode) {
+			if (BX?.UI?.InfoHelper) {
+				BX.UI.InfoHelper.show(articleCode);
+				return;
+			}
+			if (BX?.Helper) {
+				BX.Helper.show(`redirect=detail&code=${articleCode}`);
+			}
+		}
+		getButtonTitle(type) {
+			const buttons = this.getOptions().buttons ?? {};
+			switch (type) {
+				case 'connect':
+					return buttons?.connect?.title;
+				case 'choose':
+					return buttons?.choose?.title;
+				case 'feedback':
+					return buttons?.menu?.feedback?.title;
+				case 'discontinue':
+					return buttons?.menu?.discontinue?.title;
+				default:
+					return '';
+			}
+		}
+		isConnected() {
+			return Boolean(this.getOptions().isConnected ?? this.getOptions().isPartnerConnect);
+		}
+		getPartnerName() {
+			return this.getOptions().integratorName ?? this.getOptions().partnerName ?? '';
+		}
+		getPartnerCardUrl() {
+			return this.getOptions().integratorCardUrl ?? this.getOptions().partnerCardUrl ?? '';
+		}
+		getPartnerLogo() {
+			return this.getOptions().integratorLogo ?? this.getOptions().partnerLogo ?? '';
+		}
+		isCurrentUserAdmin() {
+			return this.getOptions().isCurrentUserAdmin === true;
+		}
+		#closeBasePopup() {
+			main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.LicenseWidget.Popup:openChild');
+		}
+		#showDiscontinueFeedbackForm() {
+			const presets = this.getOptions().feedbackFormPresets ?? {};
+			if (!main_core.Type.isObject(presets) || main_core.Type.isArray(presets)) {
+				return;
+			}
+			BX.UI.Feedback.PartnerForm.showRefusal({
+				id: 'partner-refusal',
+				presets,
+				title: main_core.Loc.getMessage('INTRANET_LICENSE_WIDGET_PARTNER_FEEDBACK_TITLE')
+			});
+			top.addEventListener('b24:form:send:success', event => {
+				const rawFormId = event?.detail?.object?.identification?.id;
+				if (main_core.Type.isNil(rawFormId)) {
+					return;
+				}
+				const formId = String(rawFormId);
+				const refusalIds = this.#getRefusalFormIds();
+				if (refusalIds.length === 0 || refusalIds.includes(formId)) {
+					main_core.ajax.runAction('intranet.v2.Partner.Relation.delete', {}).then(() => {
+						this.#showSuccessDiscontinuePopup();
+					}).catch(error => {
+						BX.UI.Notification.Center.notify({
+							content: main_core.Loc.getMessage('INTRANET_LICENSE_WIDGET_PARTNER_SUCCESS_DISCONTINUE_POPUP_ERROR')
+						});
+						top.console.error(error);
+					});
+				}
+			}, {
+				once: true
+			});
+		}
+		#getRefusalFormIds() {
+			const forms = main_core.Extension.getSettings('ui.feedback.partnerform')?.get('partnerRefusalForms');
+			if (!Array.isArray(forms)) {
+				return [];
+			}
+			return forms.map(item => item?.id).filter(id => main_core.Type.isNumber(id) || main_core.Type.isStringFilled(id)).map(String);
+		}
+		#showSuccessDiscontinuePopup() {
+			const isSliderOpen = top.BX.SidePanel?.Instance?.getOpenSliders && typeof top.BX.SidePanel.Instance.getOpenSliders === 'function' ? top.BX.SidePanel.Instance.getOpenSliders().length > 0 : false;
+			if (isSliderOpen) {
+				top.BX.Event.EventEmitter.subscribeOnce('SidePanel.Slider:onCloseComplete', () => {
+					this.#getSuccessDiscontinuePopup().show();
+				});
+			} else {
+				this.#getSuccessDiscontinuePopup().show();
+			}
+		}
+		#getSuccessDiscontinuePopup() {
+			return this.cache.remember('success-discontinue-popup', () => {
+				const popup = new main_popup.Popup({
+					useAirDesign: true,
+					content: this.#getSuccessDiscontinuePopupContent(),
+					closeIcon: true,
+					cacheable: true,
+					className: 'license-widget-partner-success-discontinue-popup',
+					width: 590,
+					overlay: {
+						opacity: 100,
+						backgroundColor: 'rgba(0, 32, 78, 0.46)'
+					},
+					buttons: [new ui_buttons.Button({
+						text: main_core.Loc.getMessage('INTRANET_LICENSE_WIDGET_PARTNER_SUCCESS_DISCONTINUE_POPUP_CHOOSE_NEW_BTN'),
+						useAirDesign: true,
+						style: ui_buttons.AirButtonStyle.FILLED,
+						className: 'license-widget-partner-success-discontinue-popup-choose-new-btn',
+						onclick: () => {
+							popup.close();
+							this.showInfoHelper('info_implementation_request');
+							top.BX.Event.EventEmitter.subscribeOnce('SidePanel.Slider:onCloseComplete', () => {
+								location.reload();
+							});
+						}
+					}), new ui_buttons.Button({
+						text: main_core.Loc.getMessage('INTRANET_LICENSE_WIDGET_PARTNER_SUCCESS_DISCONTINUE_POPUP_CLOSE_BTN'),
+						useAirDesign: true,
+						style: ui_buttons.AirButtonStyle.OUTLINE,
+						onclick: () => {
+							popup.close();
+							location.reload();
+						}
+					})]
+				});
+				return popup;
+			});
+		}
+		#getSuccessDiscontinuePopupContent() {
+			return main_core.Tag.render`
+			<div class="license-widget-partner-success-discontinue-popup-content">
+				<div class="license-widget-partner-success-discontinue-popup-content-text-wrapper">
+					<div class="license-widget-partner-success-discontinue-popup-content-title">
+						${main_core.Loc.getMessage('INTRANET_LICENSE_WIDGET_PARTNER_SUCCESS_DISCONTINUE_POPUP_TITLE')}
+					</div>
+					<div class="license-widget-partner-success-discontinue-popup-content-description">
+						${main_core.Loc.getMessage('INTRANET_LICENSE_WIDGET_PARTNER_SUCCESS_DISCONTINUE_POPUP_DESC')}
+					</div>
+				</div>
+				<div class="license-widget-partner-success-discontinue-popup-content-image">
+				</div>
+			</div>
+		`;
+		}
+	}
+
+	class AdminRestrictedPopup {
+		static #popup = null;
+		static show(bindElement) {
+			if (this.#popup) {
+				this.#popup.setBindElement(bindElement);
+				this.#popup.show();
+			} else {
+				this.#popup = new main_popup.Popup({
+					content: main_core.Loc.getMessage('INTRANET_LICENSE_WIDGET_ADMIN_RIGHTS_RESTRICTED'),
+					bindElement,
+					angle: true,
+					offsetTop: 0,
+					offsetLeft: 40,
+					closeIcon: false,
+					autoHide: true,
+					darkMode: true,
+					overlay: false,
+					closeByEsc: true,
+					width: 300
+				});
+				this.#popup.show();
+			}
+		}
+	}
+
+	class LicenseContent extends Content {
+		constructor(options) {
+			super(options);
+			this.setEventNamespace('BX.Bitrix24.LicenseWidget.Content.License');
+		}
+		getLayout() {
+			return this.cache.remember('layout', () => {
+				return main_core.Tag.render`
+				<div data-id="license-widget-block-tariff"
+					class="license-widget-item license-widget-item--main ${this.getOptions().isExpired || this.getOptions().isAlmostExpired ? 'license-widget-item--expired' : ''}"
+				>
+					<div class="license-widget-inner ${this.getOptions().isDemo ? '--demo' : ''}">
+						<div class="license-widget-content">
+							${this.getMainIcon()}
+							<div class="license-widget-item-content">
+								<div class="license-widget-item-name">
+									<span>${this.getOptions().name}</span>
+								</div>
+								${this.getOptions().isExpired ? this.getExpiredMessage() : this.getRemainderMessage()}
+								${this.getOptions().isExpired && this.getOptions().isAlmostBlocked ? this.getBlockMessage() : ''}
+								${this.getOptions().isAlmostBlocked ? '' : this.getLink()}
+							</div>
+						</div>
+						${this.getOptions().button.isAvailable ? this.getButton() : ''}
+					</div>
+				</div>
+			`;
+			});
+		}
+		getMainIcon() {
+			const icon = main_core.Tag.render`
+			<div class="license-widget-item-icon"/>
+		`;
+			if (this.getOptions().isAlmostExpired) {
+				main_core.Dom.addClass(icon, 'license-widget-item-icon--low');
+			} else if (this.getOptions().isExpired) {
+				main_core.Dom.addClass(icon, 'license-widget-item-icon--expired');
+			} else if (this.getOptions().isDemo) {
+				main_core.Dom.addClass(icon, 'license-widget-item-icon--demo');
+			} else {
+				main_core.Dom.addClass(icon, 'license-widget-item-icon--pro');
+			}
+			return icon;
+		}
+		getButton() {
+			if (this.getOptions().button.isAdminRestricted) {
+				const onclick = event => {
+					event.preventDefault();
+					AdminRestrictedPopup.show(event.target);
+				};
+				return main_core.Tag.render`
+				<a href="#" onclick="${onclick}" class="license-widget-item-btn ${this.getOptions().isDemo && !this.getOptions().isAlmostExpired && !this.getOptions().isExpired ? 'license-widget-item-btn--green' : ''}">
+					${this.getOptions().button.text}
+				</a>
+			`;
+			}
+			if (this.getOptions().button.type === 'POST') {
+				const onclick = () => {
+					document.querySelector('#renew-license-form').submit();
+				};
+				return main_core.Tag.render`
+				<button onclick="${onclick}" class="license-widget-item-btn ${this.getOptions().isDemo && !this.getOptions().isAlmostExpired && !this.getOptions().isExpired ? 'license-widget-item-btn--green' : ''}">
+					<form id="renew-license-form" action="${this.getOptions().button.link}" method="post" target="_blank">
+						<input name="license_key" value="${this.getOptions().button.hashKey}" hidden>
+					</form>
+					${this.getOptions().button.text}
+				</button>
+			`;
+			}
+			return main_core.Tag.render`
+			<a href="${this.getOptions().button.link}" target="_blank" class="license-widget-item-btn ${this.getOptions().isDemo && !this.getOptions().isAlmostExpired && !this.getOptions().isExpired ? 'license-widget-item-btn--green' : ''}">
+				${this.getOptions().button.text}
+			</a>
+		`;
+		}
+		getExpiredMessage() {
+			return this.cache.remember('expired-message', () => {
+				return main_core.Tag.render`
+				<div class="license-widget-item-expired-message">
+					<span class="license-widget-item-info-text">
+						${this.getOptions().messages.expired}
+					</span>
+				</div>
+			`;
+			});
+		}
+		getBlockMessage() {
+			return this.cache.remember('block-message', () => {
+				return main_core.Tag.render`
+				<div class="license-widget-item-expired-message --scanner-info">
+					<span class="license-widget-item-info-text">
+						${this.getOptions().messages.block}
+					</span>
+				</div>
+			`;
+			});
+		}
+		getRemainderMessage() {
+			return this.cache.remember('block-message', () => {
+				if (this.getOptions().isExpired || this.getOptions().isAlmostExpired) {
+					return main_core.Tag.render`
+					<div class="license-widget-item-expired-message --scanner-info">
+						<span class="license-widget-item-info-text">
+							${this.getOptions().messages.remainder}
+						</span>
+					</div>
+				`;
+				}
+				return main_core.Tag.render`
+				<div class="license-widget-item-info">
+					<span class="license-widget-item-info-text">
+						${this.getOptions().messages.remainder}
+					</span>
+				</div>
+			`;
+			});
+		}
+		getLink() {
+			const onclick = this.getOptions().more.isAdminRestricted ? event => {
+				event.preventDefault();
+				AdminRestrictedPopup.show(event.target);
+			} : () => {};
+			return main_core.Tag.render`
+			<a href="${this.getOptions().more.link}" onclick="${onclick}" class="license-widget-item-link-text" target="_blank">
+				${this.getOptions().more.text}
+			</a>
+		`;
+		}
+	}
+
+	class PartnerContent extends Content {
+		constructor(options) {
+			super(options);
+			this.setEventNamespace('BX.Bitrix24.LicenseWidget.Content.Orders');
+		}
+		getConfig() {
+			return {
+				html: this.getLayout(),
+				minHeight: '50px'
+			};
+		}
+		getLayout() {
+			return this.cache.remember('layout', () => {
+				const onclick = () => {
+					if (this.getOptions().landingCode) {
+						ui_infoHelper.FeaturePromotersRegistry.getPromoter({
+							code: this.getOptions().landingCode
+						}).show();
+					} else {
+						window.open(this.getOptions().link);
+					}
+				};
+				return main_core.Tag.render`
+				<div data-id="license-widget-block-orders" onclick="${onclick}" class="license-widget-item license-widget-item--secondary --pointer">
+					<div class="license-widget-inner">
+						<div class="license-widget-content">
+							<div class="license-widget-item-icon license-widget-item-icon--partner"></div>
+							<div class="license-widget-item-content">
+								${this.getTitle()}
+							</div>
+						</div>
+						<div class="license-widget-item-icon__arrow-right ui-icon-set --arrow-right"/>
+					</div>
+				</div>
+			`;
+			});
+		}
+		getTitle() {
+			return this.cache.remember('title', () => {
+				return main_core.Tag.render`
+				<div class="license-widget-item-name">
+					<span>
+						${this.getOptions().title}
+					</span>
+				</div>
+			`;
+			});
+		}
+	}
+
+	class PurchaseHistoryContent extends Content {
+		constructor(options) {
+			super(options);
+			this.setEventNamespace('BX.Bitrix24.LicenseWidget.Content.Orders');
+		}
+		getConfig() {
+			return {
+				html: this.getLayout(),
+				minHeight: '50px'
+			};
+		}
+		getLayout() {
+			return this.cache.remember('layout', () => {
+				const onclick = event => {
+					document.querySelector('#form-purchase-history').submit();
+				};
+				return main_core.Tag.render`
+				<div data-id="license-widget-block-orders" onclick="${onclick}" class="license-widget-item license-widget-item--secondary --pointer">
+					<div class="license-widget-inner">
+						<div class="license-widget-content">
+							<div class="license-widget-item-icon license-widget-item-icon--order"></div>
+							<div class="license-widget-item-content">
+								${this.getTitle()}
+							</div>
+						</div>
+						<div class="license-widget-item-icon__arrow-right ui-icon-set --arrow-right"/>
+					</div>
+					<form id="form-purchase-history" action="${this.getOptions().link}" method="post" target="_blank">
+						<input name="license_key" value="${this.getOptions().hashKey}" hidden>
+					</form>
+				</div>
+			`;
+			});
+		}
+		getTitle() {
+			return this.cache.remember('title', () => {
+				return main_core.Tag.render`
+				<div class="license-widget-item-name">
+					<span>
+						${this.getOptions().text}
+					</span>
+				</div>
+			`;
+			});
+		}
+	}
+
+	class TelephonyContent extends Content {
+		constructor(options) {
+			super(options);
+			this.setEventNamespace('BX.Bitrix24.LicenseWidget.Content.Telephony');
+		}
+		getConfig() {
+			return {
+				html: this.getLayout(),
+				minHeight: '43px',
+				sizeLoader: 30
+			};
+		}
+		getLayout() {
+			return this.cache.remember('layout', () => {
+				const onclick = () => {
+					document.location.href = this.getOptions().link;
+				};
+				return main_core.Tag.render`
+				<div data-id="license-widget-block-telephony" onclick="${onclick}" class="license-widget-item license-widget-item--secondary --pointer">
+					<div class="license-widget-inner">
+						<div class="license-widget-content">
+							<div class="license-widget-item-icon ${this.getOptions().isActive ? 'license-widget-item-icon--tel-active' : 'license-widget-item-icon--tel'}"/>
+							<div class="license-widget-item-content">
+								<div class="license-widget-item-name">
+									${this.getOptions().title}
+								</div>
+							</div>
+						</div>
+						<div class="license-widget-item-icon__arrow-right ui-icon-set --arrow-right"/>
+					</div>
+				</div>
+			`;
+			});
+		}
+	}
+
+	class UpdatesContent extends Content {
+		getConfig() {
+			return {
+				html: this.getLayout(),
+				minHeight: '43px',
+				sizeLoader: 30
+			};
+		}
+		getLayout() {
+			return this.cache.remember('layout', () => {
+				const onclick = this.getOptions().isAdminRestricted ? event => {
+					event.preventDefault();
+					AdminRestrictedPopup.show(event.target);
+				} : () => {
+					window.open(this.getOptions().link, '_blank');
+				};
+				return main_core.Tag.render`
+				<div onclick="${onclick}" data-id="license-widget-block-whatsnew" class="license-widget-item license-widget-item--secondary --pointer">
+					<div class="license-widget-inner">
+						<div class="license-widget-content">
+							${this.getMainIcon()}
+							<div class="license-widget-item-content">
+								${this.getTitle()}
+							</div>
+						</div>
+						<div class="license-widget-item-icon__arrow-right ui-icon-set --arrow-right"/>
+					</div>
+				</div>
+			`;
+			});
+		}
+		getMainIcon() {
+			return this.cache.remember('main-icon', () => {
+				return main_core.Tag.render`
+				<div class="license-widget-item-icon license-widget-item-icon--updates"></div>
+			`;
+			});
+		}
+		getTitle() {
+			return this.cache.remember('title', () => {
+				return main_core.Tag.render`
+				<div class="license-widget-item-name">
+					<span>
+						${this.getOptions().title}
+					</span>
+				</div>
+			`;
+			});
+		}
+	}
+
+	class Popup extends main_core_events.EventEmitter {
+		#cache = new main_core.Cache.MemoryCache();
+		constructor(options) {
+			super();
+			this.setOptions(options);
+			this.setEventNamespace('BX.Intranet.LicenseWidget.Popup');
+			this.setEventHandlers();
+		}
+		setOptions(options) {
+			this.#cache.set('options', options);
+		}
+		getOptions() {
+			return this.#cache.get('options', {});
+		}
+		show() {
+			this.getBasePopup().show();
+			this.emit('show');
+		}
+		close() {
+			this.getBasePopup().close();
+		}
+		getBasePopup() {
+			return this.#cache.remember('popup', () => {
+				this.emit('init');
+				return new ui_popupcomponentsmaker.PopupComponentsMaker({
+					target: this.getOptions().target,
+					width: 374,
+					content: this.#getContent(),
+					popupLoader: this.getOptions().loader
+				});
+			});
+		}
+		#getContent() {
+			return this.#cache.remember('content', () => {
+				const content = [];
+				if (this.getOptions().content.license.isAvailable) {
+					content.push(this.#getLicenseContent().getConfig());
+				}
+				if (this.getOptions().content.market.isAvailable) {
+					content.push(this.#getMarketContent(false).getConfig());
+				}
+				if (this.getOptions().content.baas.isAvailable) {
+					content.push(this.#getBaasContent(false).getConfig());
+				}
+				if (this.getOptions().content.integrator?.isAvailable) {
+					content.push(this.#getIntegratorContent(false).getConfig());
+				}
+				content.push(this.#getPurchaseHistoryContent().getConfig());
+				if (this.getOptions().content.telephony.isAvailable) {
+					content.push({
+						html: [this.#getTelephonyContent().getConfig(), this.#getUpdatesContent().getConfig()]
+					});
+				} else {
+					content.push(this.#getUpdatesContent().getConfig());
+				}
+				if (this.getOptions().content.partner.isAvailable && !this.getOptions().content.integrator?.isAvailable) {
+					content.push(this.#getPartnerContent().getConfig());
+				}
+				return content;
+			});
+		}
+		#getLicenseContent() {
+			return this.#cache.remember('license-content', () => {
+				return new LicenseContent({
+					...this.getOptions().content.license
+				});
+			});
+		}
+		#getMarketContent(small) {
+			return this.#cache.remember('market-content', () => {
+				return new MarketContent({
+					...this.getOptions().content.market,
+					isSmall: small
+				});
+			});
+		}
+		#getBaasContent(small) {
+			return this.#cache.remember('baas-content', () => {
+				return new BaasContent({
+					...this.getOptions().content.baas,
+					licensePopupTarget: this.getOptions().target,
+					licensePopup: this,
+					isAdmin: this.getOptions().isAdmin,
+					isSmall: small
+				});
+			});
+		}
+		#getIntegratorContent(small) {
+			return this.#cache.remember('integrator-content', () => {
+				return new IntegratorContent({
+					...this.getOptions().content.integrator
+				});
+			});
+		}
+		#getPurchaseHistoryContent() {
+			return this.#cache.remember('purchase-history-content', () => {
+				return new PurchaseHistoryContent({
+					...this.getOptions().content['purchase-history']
+				});
+			});
+		}
+		#getTelephonyContent() {
+			return this.#cache.remember('telephony-content', () => {
+				return new TelephonyContent({
+					...this.getOptions().content.telephony
+				});
+			});
+		}
+		#getUpdatesContent() {
+			return this.#cache.remember('updates-content', () => {
+				return new UpdatesContent({
+					...this.getOptions().content.updates
+				});
+			});
+		}
+		#getPartnerContent() {
+			return this.#cache.remember('partner-content', () => {
+				return new PartnerContent({
+					...this.getOptions().content.partner
+				});
+			});
+		}
+		setEventHandlers() {
+			const close = () => {
+				this.close();
+			};
+			this.subscribe('init', () => {
+				main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'SidePanel.Slider:onOpenStart', close);
+				main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.LicenseWidget.Popup:openChild', close);
+			});
+		}
+	}
+
+	class LicenseWidget {
+		#cache = new main_core.Cache.MemoryCache();
+		static #instance;
+		static getInstance() {
+			if (!this.#instance) {
+				this.#instance = new this();
+			}
+			return this.#instance;
+		}
+		show() {
+			if (this.#getPopup().getBasePopup().isShown()) {
+				return;
+			}
+			this.#getPopup().show();
+		}
+		setOptions(options) {
+			this.#cache.set('options', options);
+			return this;
+		}
+		getOptions() {
+			return this.#cache.get('options', {});
+		}
+		#getPopup() {
+			return this.#cache.remember('popup', () => {
+				return new Popup({
+					target: this.getOptions().buttonWrapper,
+					loader: this.getOptions().loader,
+					content: {
+						...this.getOptions().data
+					}
+				});
+			});
+		}
+	}
+
+	exports.LicenseWidget = LicenseWidget;
+
+})(this.BX.Intranet = this.BX.Intranet || {}, BX, BX.Event, BX.UI, BX.UI, BX.Main, BX.UI, BX.UI.Feedback, BX, BX.Intranet);
 //# sourceMappingURL=license-widget.bundle.js.map

@@ -5,6 +5,7 @@ jn.define('ui-system/typography/text-field', (require, exports, module) => {
 	const { TextBase } = require('ui-system/typography/text-base');
 
 	module.exports = {
+		/** @param {TypographyTextFieldProps} props */
 		TextField: (props) => TextBase({ nativeElement: TextField, ...props }),
 	};
 });

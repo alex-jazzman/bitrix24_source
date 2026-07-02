@@ -212,17 +212,14 @@ export class DocumentSummary extends EventEmitter
 
 	#createEditDocumentBtn(item: ItemDetails): HTMLElement | null
 	{
-		if (item.hasPlaceholders)
-		{
-			return null;
-		}
 		const id = item.id;
 		const uid = item.uid;
+		const eventName = item.hasPlaceholders ? 'showPlaceholderEditor' : 'showEditor';
 
 		return Tag.render`
 			<span
 				class="${buttonClassList.join(' ')}" data-id="${id}"
-				onclick="${() => this.emit('showEditor', { uid })}"
+				onclick="${() => this.emit(eventName, { uid })}"
 			>
 				${Loc.getMessage('SIGN_DOCUMENT_SUMMARY_EDIT')}
 			</span>

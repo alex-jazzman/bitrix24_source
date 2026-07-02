@@ -2,6 +2,7 @@
  * @module selector/widget/entity/complex
  */
 jn.define('selector/widget/entity/complex', (require, exports, module) => {
+	const { BaseSelectorEntity } = require('selector/widget/entity');
 
 	/**
 	 * @class ComplexSelector
@@ -47,5 +48,14 @@ jn.define('selector/widget/entity/complex', (require, exports, module) => {
 		}
 	}
 
-	module.exports = { ComplexSelector };
+	module.exports = {
+		ComplexSelector,
+	};
 });
+
+(() => {
+	const require = (ext) => jn.require(ext);
+	const { ComplexSelector } = require('selector/widget/entity/complex');
+
+	this.ComplexSelector = ComplexSelector;
+})();

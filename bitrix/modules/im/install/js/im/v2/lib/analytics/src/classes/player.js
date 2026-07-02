@@ -1,13 +1,11 @@
 import { sendData } from 'ui.analytics';
 
 import { Core } from 'im.v2.application.core';
-import { AudioPlaybackRate, TranscriptionStatus } from 'im.v2.const';
+import { type AudioPlaybackRate, type TranscriptionStatus } from 'im.v2.const';
+import { type ImModelChat, type ImModelFile } from 'im.v2.model';
 
 import { AnalyticsCategory, AnalyticsEvent, AnalyticsTool } from '../const';
-import { getChatType } from '../helpers/get-chat-type';
-
-import type { ImModelChat, ImModelFile } from 'im.v2.model';
-import type { ExtendedChatType } from '../helpers/get-chat-type';
+import { getChatType, type ExtendedChatType } from '../helpers/get-chat-type';
 
 export class Player
 {

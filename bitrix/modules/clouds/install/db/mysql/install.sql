@@ -49,7 +49,8 @@ CREATE TABLE b_clouds_file_resize
 	PRIMARY KEY pk_b_file_resize(ID),
 	INDEX ix_b_file_resize_ts (TIMESTAMP_X),
 	INDEX ix_b_file_resize_path (TO_PATH(100)),
-	INDEX ix_b_file_resize_file (FILE_ID)
+	INDEX ix_b_file_resize_file (FILE_ID),
+	INDEX ix_b_clouds_file_resize_cleanup (ERROR_CODE, TIMESTAMP_X)
 );
 
 CREATE TABLE b_clouds_copy_queue

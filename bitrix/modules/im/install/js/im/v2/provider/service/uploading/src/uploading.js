@@ -1,29 +1,28 @@
 import { Type } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
-import { FileStatus as UploaderFileStatus, isResizableImage } from 'ui.uploader.core';
-import { runAction } from 'im.v2.lib.rest';
+import { type BaseEvent, EventEmitter } from 'main.core.events';
+import { FileStatus as UploaderFileStatus, isResizableImage, type UploaderFile, type UploaderError } from 'ui.uploader.core';
+import { type Store } from 'ui.vue3.vuex';
+
+import { type RestClient } from 'rest.client';
 
 import { Core } from 'im.v2.application.core';
 import { FileStatus, FileType, RestMethod } from 'im.v2.const';
-import { Utils } from 'im.v2.lib.utils';
 import { Logger } from 'im.v2.lib.logger';
 import { Notifier } from 'im.v2.lib.notifier';
+import { runAction } from 'im.v2.lib.rest';
+import { Utils } from 'im.v2.lib.utils';
+import { type ImModelChat, type ImModelUser, type ImModelMessage } from 'im.v2.model';
 import { SendingService } from 'im.v2.provider.service.sending';
 
+import { type UploaderWrapperFileOptions } from './classes/types/uploader-wrapper';
 import { UploaderWrapper } from './classes/uploader-wrapper';
-import { createDeferredPromise } from './utils/deferred-promise';
-
-import type { ImModelChat, ImModelUser, ImModelMessage } from 'im.v2.model';
-import type { UploaderFile, UploaderError } from 'ui.uploader.core';
-import type { Store } from 'ui.vue3.vuex';
-import type { RestClient } from 'rest.client';
-import type {
-	MessageWithFile,
-	FileFromDisk,
-	FileCommitParams,
-	UploadFilesParams,
+import {
+	type MessageWithFile,
+	type FileFromDisk,
+	type FileCommitParams,
+	type UploadFilesParams,
 } from './types/uploading';
-import type { UploaderWrapperFileOptions } from './classes/types/uploader-wrapper';
+import { createDeferredPromise } from './utils/deferred-promise';
 
 type CreateUploaderParams = {
 	dialogId: number,

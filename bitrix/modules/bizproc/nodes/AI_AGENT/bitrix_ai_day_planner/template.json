@@ -1,0 +1,3876 @@
+{
+    "NAME": "###BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_NAME###",
+    "DESCRIPTION": "###BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_DESC###",
+    "PARAMETERS": [],
+    "VARIABLES": [],
+    "CONSTANTS": {
+        "TrackedUsers": {
+            "Name": "###BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_CONST_TRACKED_USERS###",
+            "Description": "",
+            "Type": "user",
+            "Required": 1,
+            "Multiple": 1,
+            "Options": null,
+            "Default": ""
+        },
+        "BotName": {
+            "Name": "###BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_CONST_BOT_NAME###",
+            "Description": "",
+            "Type": "string",
+            "Required": 1,
+            "Multiple": 0,
+            "Options": null,
+            "Default": ""
+        },
+        "BotAvatar": {
+            "Name": "###BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_CONST_BOT_AVATAR###",
+            "Description": "",
+            "Type": "file",
+            "Required": 0,
+            "Multiple": 0,
+            "Options": null,
+            "Default": ""
+        },
+        "ScheduleType": {
+            "Name": "###BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_CONST_SCHEDULE_TYPE###",
+            "Description": "",
+            "Type": "select",
+            "Required": 0,
+            "Multiple": 0,
+            "Options": {
+                "daily": "###BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_SCHEDULE_DAILY###",
+                "weekly": "###BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_SCHEDULE_WEEKLY###"
+            },
+            "Default": "daily"
+        },
+        "ScheduleTime": {
+            "Name": "###BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_CONST_SCHEDULE_TIME###",
+            "Description": "",
+            "Type": "time",
+            "Required": 1,
+            "Multiple": 0,
+            "Options": null,
+            "Default": "07:00"
+        },
+        "ScheduleEndTime": {
+            "Name": "###BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_CONST_SCHEDULE_END_TIME###",
+            "Description": "",
+            "Type": "time",
+            "Required": 1,
+            "Multiple": 0,
+            "Options": null,
+            "Default": "17:00"
+        },
+        "ScheduleInterval": {
+            "Name": "###BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_CONST_SCHEDULE_INTERVAL###",
+            "Description": "",
+            "Type": "select",
+            "Required": 0,
+            "Multiple": 0,
+            "Options": null,
+            "Default": "1"
+        },
+        "ScheduleWeekDays": {
+            "Name": "###BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_CONST_SCHEDULE_WEEKDAYS###",
+            "Description": "",
+            "Type": "select",
+            "Required": 0,
+            "Multiple": 1,
+            "Options": null,
+            "Default": ""
+        }
+    },
+    "TEMPLATE": [
+        {
+            "Type": "NodeWorkflowActivity",
+            "Name": "Template",
+            "Properties": {
+                "Title": "###BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_NAME###",
+                "Links": [
+                    [
+                        "A1001_0001_0001_0001:o0",
+                        "A0000_0000_0000_0001:i0"
+                    ],
+                    [
+                        "A0000_0000_0000_0001:o0",
+                        "A1001_0001_0001_0003:i0"
+                    ],
+                    [
+                        "A1001_0001_0001_0003:o0",
+                        "A1001_0001_0001_0005:i0"
+                    ],
+                    [
+                        "A1001_0001_0001_0005:o0",
+                        "A0000_0000_0000_0002:i0"
+                    ],
+                    [
+                        "A0000_0000_0000_0002:o0",
+                        "A1001_0001_0001_0004:i0"
+                    ],
+                    [
+                        "A1001_0001_0001_0004:o0",
+                        "A0000_0000_0000_0003:i0"
+                    ],
+                    [
+                        "A0000_0000_0000_0002:o1",
+                        "A0000_0000_0000_0004:i0"
+                    ],
+                    [
+                        "A2001_0001_0001_0001:o0",
+                        "A2001_0001_0001_0010:i0"
+                    ],
+                    [
+                        "A2001_0001_0001_0010:o0",
+                        "A2001_0001_0001_0002:i0"
+                    ],
+                    [
+                        "A2001_0001_0001_0002:o0",
+                        "A2001_0001_0001_0003:i0"
+                    ],
+                    [
+                        "A2001_0001_0001_0003:o0",
+                        "A0000_0000_0000_0005:i0"
+                    ],
+                    [
+                        "A0000_0000_0000_0005:o0",
+                        "A2001_0001_0001_0004:i0"
+                    ],
+                    [
+                        "A2001_0001_0001_0004:o0",
+                        "A0000_0000_0000_0006:i0"
+                    ],
+                    [
+                        "A0000_0000_0000_0006:o0",
+                        "A0000_0000_0000_0007:i0"
+                    ],
+                    [
+                        "A0000_0000_0000_0007:o0",
+                        "A0000_0000_0000_0008:i0"
+                    ],
+                    [
+                        "A0000_0000_0000_0007:o1",
+                        "A0000_0000_0000_0009:i0"
+                    ],
+                    [
+                        "A0000_0000_0000_0008:o0",
+                        "A2001_0001_0001_0010:i1"
+                    ],
+                    [
+                        "A0000_0000_0000_0009:o0",
+                        "A2001_0001_0001_0010:i1"
+                    ],
+                    [
+                        "A0000_0000_0000_0005:o1",
+                        "A2001_0001_0001_0010:i1"
+                    ],
+                    [
+                        "A4001_0001_0001_0001:o0",
+                        "A0000_0000_0000_0010:i0"
+                    ],
+                    [
+                        "A3001_0001_0001_0001:o0",
+                        "A3001_0001_0001_0002:i0"
+                    ],
+                    [
+                        "A3001_0001_0001_0002:o0",
+                        "A0000_0000_0000_0011:i0"
+                    ],
+                    [
+                        "A0000_0000_0000_0011:o0",
+                        "A0000_0000_0000_0012:i0"
+                    ],
+                    [
+                        "A0000_0000_0000_0012:o0",
+                        "A0000_0000_0000_0013:i0"
+                    ],
+                    [
+                        "A0000_0000_0000_0011:o1",
+                        "A3001_0001_0001_0003:i0"
+                    ],
+                    [
+                        "A3001_0001_0001_0003:o0",
+                        "A3001_0001_0001_0004:i0"
+                    ],
+                    [
+                        "A3001_0001_0001_0004:o0",
+                        "A0000_0000_0000_0014:i0"
+                    ],
+                    [
+                        "A0000_0000_0000_0014:o0",
+                        "A3001_0001_0001_0005:i0"
+                    ],
+                    [
+                        "A3001_0001_0001_0005:o0",
+                        "A0000_0000_0000_0015:i0"
+                    ],
+                    [
+                        "A0000_0000_0000_0015:o0",
+                        "A0000_0000_0000_0016:i0"
+                    ],
+                    [
+                        "A0000_0000_0000_0016:o0",
+                        "A0000_0000_0000_0017:i0"
+                    ],
+                    [
+                        "A0000_0000_0000_0017:o0",
+                        "A0000_0000_0000_0018:i0"
+                    ],
+                    [
+                        "A0000_0000_0000_0015:o1",
+                        "A0000_0000_0000_0019:i0"
+                    ],
+                    [
+                        "A0000_0000_0000_0014:o1",
+                        "A0000_0000_0000_0020:i0"
+                    ],
+                    [
+                        "A5001_0001_0001_0001:o0",
+                        "A5001_0001_0001_0010:i0"
+                    ],
+                    [
+                        "A5001_0001_0001_0010:o0",
+                        "A5001_0001_0001_0002:i0"
+                    ],
+                    [
+                        "A5001_0001_0001_0002:o0",
+                        "A5001_0001_0001_0003:i0"
+                    ],
+                    [
+                        "A5001_0001_0001_0003:o0",
+                        "A5001_0001_0001_0004:i0"
+                    ],
+                    [
+                        "A5001_0001_0001_0004:o0",
+                        "A5001_0001_0001_0005:i0"
+                    ],
+                    [
+                        "A5001_0001_0001_0005:o0",
+                        "A0000_0000_0000_0021:i0"
+                    ],
+                    [
+                        "A0000_0000_0000_0021:o0",
+                        "A5001_0001_0001_0006:i0"
+                    ],
+                    [
+                        "A5001_0001_0001_0006:o0",
+                        "A0000_0000_0000_0022:i0"
+                    ],
+                    [
+                        "A0000_0000_0000_0022:o0",
+                        "A0000_0000_0000_0023:i0"
+                    ],
+                    [
+                        "A0000_0000_0000_0022:o1",
+                        "A0000_0000_0000_0024:i0"
+                    ],
+                    [
+                        "A0000_0000_0000_0023:o0",
+                        "A5001_0001_0001_0010:i1"
+                    ],
+                    [
+                        "A0000_0000_0000_0024:o0",
+                        "A5001_0001_0001_0010:i1"
+                    ],
+                    [
+                        "A0000_0000_0000_0021:o1",
+                        "A5001_0001_0001_0010:i1"
+                    ],
+                    [
+                        "A6001_0001_0001_0001:o0",
+                        "A6001_0001_0001_0002:i0"
+                    ],
+                    [
+                        "A6001_0001_0001_0002:o0",
+                        "A0000_0000_0000_0025:i0"
+                    ],
+                    [
+                        "A0000_0000_0000_0025:o0",
+                        "A0000_0000_0000_0026:i0"
+                    ],
+                    [
+                        "A0000_0000_0000_0026:o0",
+                        "A6001_0001_0001_0004:i0"
+                    ],
+                    [
+                        "A6001_0001_0001_0004:o0",
+                        "A0000_0000_0000_0027:i0"
+                    ],
+                    [
+                        "A0000_0000_0000_0025:o1",
+                        "A6001_0001_0001_0006:i0"
+                    ],
+                    [
+                        "A6001_0001_0001_0006:o0",
+                        "A6001_0001_0001_0007:i0"
+                    ],
+                    [
+                        "A6001_0001_0001_0007:o0",
+                        "A6001_0001_0001_0008:i0"
+                    ],
+                    [
+                        "A6001_0001_0001_0008:o0",
+                        "A6001_0001_0001_0009:i0"
+                    ],
+                    [
+                        "A6001_0001_0001_0009:o0",
+                        "A0000_0000_0000_0028:i0"
+                    ],
+                    [
+                        "A0000_0000_0000_0028:o0",
+                        "A6001_0001_0001_0010:i0"
+                    ],
+                    [
+                        "A6001_0001_0001_0010:o0",
+                        "A0000_0000_0000_0029:i0"
+                    ],
+                    [
+                        "A0000_0000_0000_0029:o0",
+                        "A6001_0001_0001_0012:i0"
+                    ]
+                ]
+            },
+            "Children": [
+                {
+                    "Name": "A1001_0001_0001_0001",
+                    "Type": "AiAgentStartTrigger",
+                    "Activated": "Y",
+                    "Properties": {
+                        "Title": "###BITRIX_AI_DAY_PLANNER_AIAGENTSTARTTRIGGER_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A1001_0001_0001_0001",
+                        "type": "trigger",
+                        "position": {
+                            "x": 100,
+                            "y": 200
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "trigger",
+                            "title": "###BITRIX_AI_DAY_PLANNER_AIAGENTSTARTTRIGGER_TITLE###",
+                            "colorIndex": 0,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "AI_ROBOT"
+                        }
+                    }
+                },
+                {
+                    "Name": "A0000_0000_0000_0001",
+                    "Type": "SetupTemplateActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "Title": "###BITRIX_AI_DAY_PLANNER_SETUPTEMPLATEACTIVITY_TITLE###",
+                        "user": "{=A1001_0001_0001_0001:startedBy}",
+                        "blocks": [
+                            {
+                                "items": [
+                                    {
+                                        "itemType": "title",
+                                        "text": "###BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_WIZARD_TITLE###"
+                                    },
+                                    {
+                                        "itemType": "description",
+                                        "text": "###BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_WIZARD_DESC###"
+                                    },
+                                    {
+                                        "itemType": "constant",
+                                        "id": "TrackedUsers",
+                                        "name": "###BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_CONST_TRACKED_USERS###",
+                                        "constantType": "user",
+                                        "description": "",
+                                        "multiple": true,
+                                        "required": true,
+                                        "options": [],
+                                        "default": ""
+                                    },
+                                    {
+                                        "itemType": "constant",
+                                        "id": "BotName",
+                                        "name": "###BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_CONST_BOT_NAME###",
+                                        "constantType": "string",
+                                        "description": "",
+                                        "multiple": false,
+                                        "required": true,
+                                        "options": [],
+                                        "default": ""
+                                    },
+                                    {
+                                        "itemType": "constant",
+                                        "id": "BotAvatar",
+                                        "name": "###BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_CONST_BOT_AVATAR###",
+                                        "constantType": "file",
+                                        "description": "",
+                                        "multiple": false,
+                                        "required": false,
+                                        "options": [],
+                                        "default": ""
+                                    },
+                                    {
+                                        "itemType": "constant",
+                                        "id": "ScheduleTime",
+                                        "name": "###BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_CONST_SCHEDULE_TIME###",
+                                        "constantType": "time",
+                                        "description": "",
+                                        "multiple": false,
+                                        "required": true,
+                                        "options": [],
+                                        "default": "07:00"
+                                    },
+                                    {
+                                        "itemType": "constant",
+                                        "id": "ScheduleEndTime",
+                                        "name": "###BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_CONST_SCHEDULE_END_TIME###",
+                                        "constantType": "time",
+                                        "description": "",
+                                        "multiple": false,
+                                        "required": true,
+                                        "options": [],
+                                        "default": "17:00"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A0000_0000_0000_0001",
+                        "type": "simple",
+                        "position": {
+                            "x": 500,
+                            "y": 200
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_SETUPTEMPLATEACTIVITY_TITLE###",
+                            "colorIndex": 2,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "SETTINGS"
+                        }
+                    }
+                },
+                {
+                    "Name": "A1001_0001_0001_0003",
+                    "Type": "CreateStorageNode",
+                    "Activated": "Y",
+                    "Properties": {
+                        "StorageTitle": "###BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_STORAGE_TITLE###",
+                        "StorageDescription": "",
+                        "StorageCode": "DAY_PLANNER_{=Workflow:TemplateId}",
+                        "Mode": "Y",
+                        "SelectedFields": [
+                            {
+                                "code": "UserId",
+                                "name": "###BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_FIELD_USER###",
+                                "type": "user",
+                                "multiple": false,
+                                "mandatory": false
+                            },
+                            {
+                                "code": "AiResult",
+                                "name": "###BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_FIELD_RESULT###",
+                                "type": "text",
+                                "multiple": false,
+                                "mandatory": false
+                            },
+                            {
+                                "code": "CreatedAt",
+                                "name": "###BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_FIELD_DATE###",
+                                "type": "datetime",
+                                "multiple": false,
+                                "mandatory": false
+                            }
+                        ],
+                        "Title": "###BITRIX_AI_DAY_PLANNER_CREATESTORAGENODE_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A1001_0001_0001_0003",
+                        "type": "simple",
+                        "position": {
+                            "x": 900,
+                            "y": 200
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_CREATESTORAGENODE_TITLE###",
+                            "colorIndex": 5,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "DATABASE"
+                        }
+                    }
+                },
+                {
+                    "Name": "A1001_0001_0001_0005",
+                    "Type": "CreateStorageNode",
+                    "Activated": "Y",
+                    "Properties": {
+                        "StorageTitle": "###BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_ENDDAY_STORAGE_TITLE###",
+                        "StorageDescription": "",
+                        "StorageCode": "DAY_PLANNER_ENDDAY_{=Workflow:TemplateId}",
+                        "Mode": "Y",
+                        "SelectedFields": [
+                            {
+                                "code": "UserId",
+                                "name": "###BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_FIELD_USER###",
+                                "type": "user",
+                                "multiple": false,
+                                "mandatory": false
+                            },
+                            {
+                                "code": "EndDayReport",
+                                "name": "###BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_FIELD_END_DAY_REPORT###",
+                                "type": "text",
+                                "multiple": false,
+                                "mandatory": false
+                            },
+                            {
+                                "code": "CreatedAt",
+                                "name": "###BIZPROC_NODES_BITRIX_AI_DAY_PLANNER_FIELD_DATE###",
+                                "type": "datetime",
+                                "multiple": false,
+                                "mandatory": false
+                            }
+                        ],
+                        "Title": "###BITRIX_AI_DAY_PLANNER_CREATESTORAGENODE_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A1001_0001_0001_0005",
+                        "type": "simple",
+                        "position": {
+                            "x": 1300,
+                            "y": 200
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_CREATESTORAGENODE_TITLE###",
+                            "colorIndex": 5,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "DATABASE"
+                        }
+                    }
+                },
+                {
+                    "Name": "A0000_0000_0000_0002",
+                    "Type": "IfElseBranchActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "Title": "###BITRIX_AI_DAY_PLANNER_IFELSEBRANCHACTIVITY_TITLE###",
+                        "mixedcondition": [
+                            {
+                                "field": "CreateErrorText",
+                                "operator": "empty",
+                                "value": "",
+                                "joiner": 0,
+                                "object": "A1001_0001_0001_0003"
+                            },
+                            {
+                                "field": "CreateErrorText",
+                                "operator": "empty",
+                                "value": "",
+                                "joiner": 0,
+                                "object": "A1001_0001_0001_0005"
+                            }
+                        ]
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A0000_0000_0000_0002",
+                        "type": "complex",
+                        "position": {
+                            "x": 1700,
+                            "y": 200
+                        },
+                        "dimensions": {
+                            "width": 230,
+                            "height": 46
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input",
+                                "isActive": true
+                            },
+                            {
+                                "id": "o0",
+                                "title": "true",
+                                "type": "output",
+                                "isActive": true
+                            },
+                            {
+                                "id": "o1",
+                                "title": "false",
+                                "type": "output",
+                                "isActive": true
+                            }
+                        ],
+                        "node": {
+                            "type": "complex",
+                            "title": "###BITRIX_AI_DAY_PLANNER_IFELSEBRANCHACTIVITY_TITLE###",
+                            "colorIndex": 3,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "CONDITION"
+                        }
+                    }
+                },
+                {
+                    "Name": "A1001_0001_0001_0004",
+                    "Type": "ImBotCreateBotActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "botName": "{=Constant:BotName}",
+                        "workPosition": "",
+                        "botCode": "BOT_{=Workflow:TemplateId}",
+                        "avatar": "{=Constant:BotAvatar}",
+                        "avatarDiskFile": null,
+                        "Title": "###BITRIX_AI_DAY_PLANNER_IMBOTCREATEBOTACTIVITY_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A1001_0001_0001_0004",
+                        "type": "simple",
+                        "position": {
+                            "x": 2100,
+                            "y": 200
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_IMBOTCREATEBOTACTIVITY_TITLE###",
+                            "colorIndex": 1,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "MESSENGER"
+                        }
+                    }
+                },
+                {
+                    "Name": "A0000_0000_0000_0003",
+                    "Type": "ImBotMessageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "botId": "{=A1001_0001_0001_0004:botId}",
+                        "botCode": "",
+                        "recipient": [
+                            "{=Constant:TrackedUsers}"
+                        ],
+                        "chatId": null,
+                        "message": "###BITRIX_AI_DAY_PLANNER_WELCOMEMESSAGE###",
+                        "asError": "N",
+                        "aiWarning": "N",
+                        "Title": "###BITRIX_AI_DAY_PLANNER_IMBOTMESSAGEACTIVITY_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A0000_0000_0000_0003",
+                        "type": "simple",
+                        "position": {
+                            "x": 2500,
+                            "y": 200
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_IMBOTMESSAGEACTIVITY_TITLE###",
+                            "colorIndex": 2,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "GO_TO_MESSAGE"
+                        }
+                    }
+                },
+                {
+                    "Name": "A0000_0000_0000_0004",
+                    "Type": "IMNotifyActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "MessageSite": "###BITRIX_AI_DAY_PLANNER_STORAGEERROR###",
+                        "MessageOut": "",
+                        "MessageType": "4",
+                        "MessageUserFrom": [
+                            "{=A1001_0001_0001_0001:startedBy}"
+                        ],
+                        "MessageUserTo": [
+                            "{=A1001_0001_0001_0001:startedBy}"
+                        ],
+                        "Title": "###BITRIX_AI_DAY_PLANNER_IMNOTIFYACTIVITY_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A0000_0000_0000_0004",
+                        "type": "simple",
+                        "position": {
+                            "x": 2100,
+                            "y": 400
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_IMNOTIFYACTIVITY_TITLE###",
+                            "colorIndex": 2,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "NOTIFICATION"
+                        }
+                    }
+                },
+                {
+                    "Name": "A2001_0001_0001_0001",
+                    "Type": "ScheduledTrigger",
+                    "Activated": "Y",
+                    "Properties": {
+                        "ScheduleType": "weekly",
+                        "RunAt": "{=Constant:ScheduleTime}",
+                        "Interval": "1",
+                        "WeekDays": [
+                            "1",
+                            "2",
+                            "3",
+                            "4",
+                            "5"
+                        ],
+                        "Title": "###BITRIX_AI_DAY_PLANNER_SCHEDULEDTRIGGER_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A2001_0001_0001_0001",
+                        "type": "trigger",
+                        "position": {
+                            "x": 100,
+                            "y": 700
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "trigger",
+                            "title": "###BITRIX_AI_DAY_PLANNER_SCHEDULEDTRIGGER_TITLE###",
+                            "colorIndex": 3,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "CALENDAR_WITH_SLOTS"
+                        }
+                    }
+                },
+                {
+                    "Name": "A2001_0001_0001_0010",
+                    "Type": "ForEachActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "Variable": "TrackedUsers",
+                        "Object": "Constant",
+                        "Title": "###BITRIX_AI_DAY_PLANNER_FOREACHACTIVITY_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A2001_0001_0001_0010",
+                        "type": "complex",
+                        "position": {
+                            "x": 500,
+                            "y": 700
+                        },
+                        "dimensions": {
+                            "width": 230,
+                            "height": 46
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "in",
+                                "type": "input",
+                                "isActive": true
+                            },
+                            {
+                                "id": "i1",
+                                "title": "->>",
+                                "type": "input",
+                                "isActive": true
+                            },
+                            {
+                                "id": "o1",
+                                "title": "out",
+                                "type": "output",
+                                "isActive": true
+                            },
+                            {
+                                "id": "o0",
+                                "title": "->>",
+                                "type": "output",
+                                "isActive": true
+                            }
+                        ],
+                        "node": {
+                            "type": "complex",
+                            "title": "###BITRIX_AI_DAY_PLANNER_FOREACHACTIVITY_TITLE###",
+                            "colorIndex": 3,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "REPEAT"
+                        }
+                    }
+                },
+                {
+                    "Name": "A2001_0001_0001_0002",
+                    "Type": "CalendarGetInform",
+                    "Activated": "Y",
+                    "Properties": {
+                        "CalendarUser": "{=A2001_0001_0001_0010:Value}",
+                        "CalendarFrom": "{=System:Now}",
+                        "CalendarTo": "{{=dateadd({=System:Now}, \"12h\")}}",
+                        "EventField": [
+                            "url"
+                        ],
+                        "Title": "###BITRIX_AI_DAY_PLANNER_CALENDARGETINFORM_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A2001_0001_0001_0002",
+                        "type": "simple",
+                        "position": {
+                            "x": 900,
+                            "y": 700
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_CALENDARGETINFORM_TITLE###",
+                            "colorIndex": 1,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "PLANNING_2"
+                        }
+                    }
+                },
+                {
+                    "Name": "A2001_0001_0001_0003",
+                    "Type": "TasksGetInfoActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "PARAM_USER_ID": "{=A2001_0001_0001_0010:Value}",
+                        "MESSAGE_COUNT_LIMIT": 100,
+                        "TaskLimit": 100,
+                        "TaskActivityDays": 7,
+                        "MessagesDays": 7,
+                        "UserTaskRole": [
+                            "O",
+                            "R"
+                        ],
+                        "TaskSelectField": [
+                            "description",
+                            "deadline",
+                            "originator",
+                            "responsible",
+                            "chat",
+                            "activityDate",
+                            "isOverdue",
+                            "url",
+                            "priority",
+                            "project"
+                        ],
+                        "TaskStatusFilter": [
+                            1,
+                            2,
+                            3,
+                            4,
+                            6,
+                            7
+                        ],
+                        "Title": "###BITRIX_AI_DAY_PLANNER_TASKSGETINFOACTIVITY_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A2001_0001_0001_0003",
+                        "type": "simple",
+                        "position": {
+                            "x": 1300,
+                            "y": 700
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_TASKSGETINFOACTIVITY_TITLE###",
+                            "colorIndex": 1,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "TASK"
+                        }
+                    }
+                },
+                {
+                    "Name": "A0000_0000_0000_0005",
+                    "Type": "IfElseBranchActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "Title": "###BITRIX_AI_DAY_PLANNER_IFELSEBRANCHACTIVITY_TITLE###",
+                        "mixedcondition": [
+                            {
+                                "field": "COUNTER_TASKS_INFO",
+                                "operator": ">",
+                                "value": 0,
+                                "joiner": 0,
+                                "object": "A2001_0001_0001_0003"
+                            },
+                            {
+                                "field": "EventsCount",
+                                "operator": ">",
+                                "value": "0",
+                                "joiner": 1,
+                                "object": "A2001_0001_0001_0002"
+                            }
+                        ]
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A0000_0000_0000_0005",
+                        "type": "complex",
+                        "position": {
+                            "x": 1700,
+                            "y": 700
+                        },
+                        "dimensions": {
+                            "width": 230,
+                            "height": 46
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input",
+                                "isActive": true
+                            },
+                            {
+                                "id": "o0",
+                                "title": "true",
+                                "type": "output",
+                                "isActive": true
+                            },
+                            {
+                                "id": "o1",
+                                "title": "false",
+                                "type": "output",
+                                "isActive": true
+                            }
+                        ],
+                        "node": {
+                            "type": "complex",
+                            "title": "###BITRIX_AI_DAY_PLANNER_IFELSEBRANCHACTIVITY_TITLE###",
+                            "colorIndex": 3,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "CONDITION"
+                        }
+                    }
+                },
+                {
+                    "Name": "A2001_0001_0001_0004",
+                    "Type": "AiAssistantAgentActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "mcpUser": "{=A2001_0001_0001_0010:Value}",
+                        "query": "###BITRIX_AI_DAY_PLANNER_QUERY###",
+                        "systemPrompt": "###BITRIX_AI_DAY_PLANNER_SYSTEMPROMPT###",
+                        "returnType": "text",
+                        "jsonSchema": "",
+                        "jsonPath": null,
+                        "usePseudonymizer": "Y",
+                        "Title": "###BITRIX_AI_DAY_PLANNER_AIASSISTANTAGENTACTIVITY_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A2001_0001_0001_0004",
+                        "type": "simple",
+                        "position": {
+                            "x": 2100,
+                            "y": 700
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input",
+                                "isActive": true
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output",
+                                "isActive": true
+                            },
+                            {
+                                "id": "a0",
+                                "title": "",
+                                "type": "aux",
+                                "isActive": true
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_AIASSISTANTAGENTACTIVITY_TITLE###",
+                            "colorIndex": 0,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "AI_ROBOT"
+                        }
+                    }
+                },
+                {
+                    "Name": "A0000_0000_0000_0006",
+                    "Type": "DeleteDataStorageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "StorageCode": "DAY_PLANNER_{=Workflow:TemplateId}",
+                        "DeleteMode": "multiple",
+                        "DynamicFilterFields": {
+                            "items": [
+                                [
+                                    {
+                                        "object": "Document",
+                                        "field": "UserId",
+                                        "operator": "=",
+                                        "value": "{=A2001_0001_0001_0010:Value}"
+                                    },
+                                    "AND"
+                                ]
+                            ]
+                        },
+                        "Title": "###BITRIX_AI_DAY_PLANNER_DELETEDATASTORAGEACTIVITY_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A0000_0000_0000_0006",
+                        "type": "simple",
+                        "position": {
+                            "x": 2500,
+                            "y": 700
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_DELETEDATASTORAGEACTIVITY_TITLE###",
+                            "colorIndex": 5,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "TRASHCAN"
+                        }
+                    }
+                },
+                {
+                    "Name": "A0000_0000_0000_0007",
+                    "Type": "IfElseBranchActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "Title": "###BITRIX_AI_DAY_PLANNER_IFELSEBRANCHACTIVITY_TITLE###",
+                        "mixedcondition": [
+                            {
+                                "field": "errorMessage",
+                                "operator": "!empty",
+                                "value": "",
+                                "joiner": 0,
+                                "object": "A2001_0001_0001_0004"
+                            }
+                        ]
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A0000_0000_0000_0007",
+                        "type": "complex",
+                        "position": {
+                            "x": 2900,
+                            "y": 700
+                        },
+                        "dimensions": {
+                            "width": 230,
+                            "height": 46
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input",
+                                "isActive": true
+                            },
+                            {
+                                "id": "o0",
+                                "title": "true",
+                                "type": "output",
+                                "isActive": true
+                            },
+                            {
+                                "id": "o1",
+                                "title": "false",
+                                "type": "output",
+                                "isActive": true
+                            }
+                        ],
+                        "node": {
+                            "type": "complex",
+                            "title": "###BITRIX_AI_DAY_PLANNER_IFELSEBRANCHACTIVITY_TITLE###",
+                            "colorIndex": 3,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "CONDITION"
+                        }
+                    }
+                },
+                {
+                    "Name": "A0000_0000_0000_0008",
+                    "Type": "WriteDataStorageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "StorageId": null,
+                        "StorageCode": "DAY_PLANNER_{=Workflow:TemplateId}",
+                        "RewriteMode": "newItem",
+                        "IsExpanded": "Y",
+                        "Author": "{=A2001_0001_0001_0010:Value}",
+                        "FieldValue": {
+                            "UserId": "{=A2001_0001_0001_0010:Value}",
+                            "AiResult": "{=A2001_0001_0001_0004:errorMessage}",
+                            "CreatedAt": "{=System:Now}"
+                        },
+                        "Fields": {
+                            "UserId": {
+                                "Value": "{=A2001_0001_0001_0010:Value}",
+                                "FieldName": "UserId"
+                            },
+                            "AiResult": {
+                                "Value": "{=A2001_0001_0001_0004:errorMessage}",
+                                "FieldName": "AiResult"
+                            },
+                            "CreatedAt": {
+                                "Value": "{=System:Now}",
+                                "FieldName": "CreatedAt"
+                            }
+                        },
+                        "DynamicFilterFields": {
+                            "items": [
+                                [
+                                    {
+                                        "object": "Document",
+                                        "field": "UserId",
+                                        "operator": "=",
+                                        "value": "{=A2001_0001_0001_0010:Value}"
+                                    },
+                                    "AND"
+                                ]
+                            ]
+                        },
+                        "Title": "###BITRIX_AI_DAY_PLANNER_WRITEDATASTORAGEACTIVITY_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A0000_0000_0000_0008",
+                        "type": "simple",
+                        "position": {
+                            "x": 3300,
+                            "y": 700
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_WRITEDATASTORAGEACTIVITY_TITLE###",
+                            "colorIndex": 5,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "PLUS_M"
+                        }
+                    }
+                },
+                {
+                    "Name": "A0000_0000_0000_0009",
+                    "Type": "WriteDataStorageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "StorageId": null,
+                        "StorageCode": "DAY_PLANNER_{=Workflow:TemplateId}",
+                        "RewriteMode": "newItem",
+                        "IsExpanded": "Y",
+                        "Author": "{=A2001_0001_0001_0010:Value}",
+                        "FieldValue": {
+                            "UserId": "{=A2001_0001_0001_0010:Value}",
+                            "AiResult": "{=A2001_0001_0001_0004:aiResult}",
+                            "CreatedAt": "{=System:Now}"
+                        },
+                        "Fields": {
+                            "UserId": {
+                                "Value": "{=A2001_0001_0001_0010:Value}",
+                                "FieldName": "UserId"
+                            },
+                            "AiResult": {
+                                "Value": "{=A2001_0001_0001_0004:aiResult}",
+                                "FieldName": "AiResult"
+                            },
+                            "CreatedAt": {
+                                "Value": "{=System:Now}",
+                                "FieldName": "CreatedAt"
+                            }
+                        },
+                        "DynamicFilterFields": {
+                            "items": [
+                                [
+                                    {
+                                        "object": "Document",
+                                        "field": "UserId",
+                                        "operator": "=",
+                                        "value": "{=A2001_0001_0001_0010:Value}"
+                                    },
+                                    "AND"
+                                ]
+                            ]
+                        },
+                        "Title": "###BITRIX_AI_DAY_PLANNER_WRITEDATASTORAGEACTIVITY_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A0000_0000_0000_0009",
+                        "type": "simple",
+                        "position": {
+                            "x": 3300,
+                            "y": 900
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_WRITEDATASTORAGEACTIVITY_TITLE###",
+                            "colorIndex": 5,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "PLUS_M"
+                        }
+                    }
+                },
+                {
+                    "Name": "A4001_0001_0001_0001",
+                    "Type": "ImBotNewMessageTrigger",
+                    "Activated": "Y",
+                    "Properties": {
+                        "BotId": null,
+                        "BotCode": "BOT_{=Workflow:TemplateId}",
+                        "SenderIds": [
+                            "{=Constant:TrackedUsers}"
+                        ],
+                        "Title": "###BITRIX_AI_DAY_PLANNER_IMBOTNEWMESSAGETRIGGER_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A4001_0001_0001_0001",
+                        "type": "trigger",
+                        "position": {
+                            "x": 100,
+                            "y": 1200
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "trigger",
+                            "title": "###BITRIX_AI_DAY_PLANNER_IMBOTNEWMESSAGETRIGGER_TITLE###",
+                            "colorIndex": 2,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "MESSAGE"
+                        }
+                    }
+                },
+                {
+                    "Name": "A0000_0000_0000_0010",
+                    "Type": "ImBotMessageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "botId": "{=A4001_0001_0001_0001:ActualBotId}",
+                        "botCode": "",
+                        "recipient": [
+                            "{=A4001_0001_0001_0001:SenderId}"
+                        ],
+                        "chatId": "{=A4001_0001_0001_0001:chatId}",
+                        "message": "###BITRIX_AI_DAY_PLANNER_BOTREPLY###",
+                        "asError": "N",
+                        "aiWarning": "N",
+                        "Title": "###BITRIX_AI_DAY_PLANNER_IMBOTMESSAGEACTIVITY_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A0000_0000_0000_0010",
+                        "type": "simple",
+                        "position": {
+                            "x": 500,
+                            "y": 1200
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_IMBOTMESSAGEACTIVITY_TITLE###",
+                            "colorIndex": 2,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "GO_TO_MESSAGE"
+                        }
+                    }
+                },
+                {
+                    "Name": "A3001_0001_0001_0001",
+                    "Type": "StartWorkTimeTrigger",
+                    "Activated": "Y",
+                    "Properties": {
+                        "USER_IDS": [
+                            "{=Constant:TrackedUsers}"
+                        ],
+                        "Title": "###BITRIX_AI_DAY_PLANNER_STARTWORKTIMETRIGGER_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A3001_0001_0001_0001",
+                        "type": "trigger",
+                        "position": {
+                            "x": 100,
+                            "y": 1700
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "trigger",
+                            "title": "###BITRIX_AI_DAY_PLANNER_STARTWORKTIMETRIGGER_TITLE###",
+                            "colorIndex": 2,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "TIMER"
+                        }
+                    }
+                },
+                {
+                    "Name": "A3001_0001_0001_0002",
+                    "Type": "ReadDataStorageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "StorageCode": "DAY_PLANNER_{=Workflow:TemplateId}",
+                        "ReturnMode": "single",
+                        "ReturnFields": [],
+                        "ReturnFieldsByStorageCode": [
+                            "AiResult",
+                            "CreatedAt"
+                        ],
+                        "DynamicFilterFields": {
+                            "items": [
+                                [
+                                    {
+                                        "object": "Document",
+                                        "field": "UserId",
+                                        "operator": "=",
+                                        "value": "{=A3001_0001_0001_0001:USER}"
+                                    },
+                                    "AND"
+                                ]
+                            ]
+                        },
+                        "OutputFields": {
+                            "AiResult": {
+                                "Name": "AiResult",
+                                "FieldName": "AiResult",
+                                "Type": "string"
+                            },
+                            "CreatedAt": {
+                                "Name": "CreatedAt",
+                                "FieldName": "CreatedAt",
+                                "Type": "datetime"
+                            }
+                        },
+                        "Title": "###BITRIX_AI_DAY_PLANNER_READDATASTORAGEACTIVITY_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A3001_0001_0001_0002",
+                        "type": "simple",
+                        "position": {
+                            "x": 500,
+                            "y": 1700
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_READDATASTORAGEACTIVITY_TITLE###",
+                            "colorIndex": 5,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "DATA_READING"
+                        }
+                    }
+                },
+                {
+                    "Name": "A0000_0000_0000_0011",
+                    "Type": "IfElseBranchActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "Title": "###BITRIX_AI_DAY_PLANNER_IFELSEBRANCHACTIVITY_TITLE###",
+                        "mixedcondition": [
+                            {
+                                "field": "AiResult",
+                                "operator": "!empty",
+                                "value": "",
+                                "joiner": 0,
+                                "object": "A3001_0001_0001_0002"
+                            },
+                            {
+                                "field": "CreatedAt",
+                                "operator": ">=",
+                                "value": "{=System:Date}",
+                                "joiner": 0,
+                                "object": "A3001_0001_0001_0002"
+                            }
+                        ]
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A0000_0000_0000_0011",
+                        "type": "complex",
+                        "position": {
+                            "x": 900,
+                            "y": 1700
+                        },
+                        "dimensions": {
+                            "width": 230,
+                            "height": 46
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input",
+                                "isActive": true
+                            },
+                            {
+                                "id": "o0",
+                                "title": "true",
+                                "type": "output",
+                                "isActive": true
+                            },
+                            {
+                                "id": "o1",
+                                "title": "false",
+                                "type": "output",
+                                "isActive": true
+                            }
+                        ],
+                        "node": {
+                            "type": "complex",
+                            "title": "###BITRIX_AI_DAY_PLANNER_IFELSEBRANCHACTIVITY_TITLE###",
+                            "colorIndex": 3,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "CONDITION"
+                        }
+                    }
+                },
+                {
+                    "Name": "A0000_0000_0000_0012",
+                    "Type": "ImBotMessageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "botId": null,
+                        "botCode": "BOT_{=Workflow:TemplateId}",
+                        "recipient": [
+                            "{=A3001_0001_0001_0001:USER}"
+                        ],
+                        "chatId": null,
+                        "message": "{{=strtolower(locdate(\"j F\"))}}\n\n{=A3001_0001_0001_0002:AiResult}",
+                        "asError": "N",
+                        "aiWarning": "Y",
+                        "Title": "###BITRIX_AI_DAY_PLANNER_IMBOTMESSAGEACTIVITY_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A0000_0000_0000_0012",
+                        "type": "simple",
+                        "position": {
+                            "x": 1300,
+                            "y": 1700
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_IMBOTMESSAGEACTIVITY_TITLE###",
+                            "colorIndex": 2,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "GO_TO_MESSAGE"
+                        }
+                    }
+                },
+                {
+                    "Name": "A0000_0000_0000_0013",
+                    "Type": "DeleteDataStorageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "StorageCode": "DAY_PLANNER_{=Workflow:TemplateId}",
+                        "DeleteMode": "multiple",
+                        "DynamicFilterFields": {
+                            "items": [
+                                [
+                                    {
+                                        "object": "Document",
+                                        "field": "UserId",
+                                        "operator": "=",
+                                        "value": "{=A3001_0001_0001_0001:USER}"
+                                    },
+                                    "AND"
+                                ]
+                            ]
+                        },
+                        "Title": "###BITRIX_AI_DAY_PLANNER_DELETEDATASTORAGEACTIVITY_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A0000_0000_0000_0013",
+                        "type": "simple",
+                        "position": {
+                            "x": 1700,
+                            "y": 1700
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_DELETEDATASTORAGEACTIVITY_TITLE###",
+                            "colorIndex": 5,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "TRASHCAN"
+                        }
+                    }
+                },
+                {
+                    "Name": "A3001_0001_0001_0003",
+                    "Type": "CalendarGetInform",
+                    "Activated": "Y",
+                    "Properties": {
+                        "CalendarUser": "{=A3001_0001_0001_0001:USER}",
+                        "CalendarFrom": "{=System:Now}",
+                        "CalendarTo": "{{=dateadd({=System:Now}, \"12h\")}}",
+                        "EventField": [
+                            "url"
+                        ],
+                        "Title": "###BITRIX_AI_DAY_PLANNER_CALENDARGETINFORM_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A3001_0001_0001_0003",
+                        "type": "simple",
+                        "position": {
+                            "x": 1300,
+                            "y": 1900
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_CALENDARGETINFORM_TITLE###",
+                            "colorIndex": 1,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "PLANNING_2"
+                        }
+                    }
+                },
+                {
+                    "Name": "A3001_0001_0001_0004",
+                    "Type": "TasksGetInfoActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "PARAM_USER_ID": "{=A3001_0001_0001_0001:USER}",
+                        "MESSAGE_COUNT_LIMIT": 100,
+                        "TaskLimit": 100,
+                        "TaskActivityDays": 7,
+                        "MessagesDays": 7,
+                        "UserTaskRole": [
+                            "O",
+                            "R"
+                        ],
+                        "TaskSelectField": [
+                            "description",
+                            "deadline",
+                            "originator",
+                            "responsible",
+                            "chat",
+                            "activityDate",
+                            "isOverdue",
+                            "url",
+                            "priority",
+                            "project"
+                        ],
+                        "TaskStatusFilter": [
+                            1,
+                            2,
+                            3,
+                            4,
+                            6,
+                            7
+                        ],
+                        "Title": "###BITRIX_AI_DAY_PLANNER_TASKSGETINFOACTIVITY_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A3001_0001_0001_0004",
+                        "type": "simple",
+                        "position": {
+                            "x": 1700,
+                            "y": 1900
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_TASKSGETINFOACTIVITY_TITLE###",
+                            "colorIndex": 1,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "TASK"
+                        }
+                    }
+                },
+                {
+                    "Name": "A0000_0000_0000_0014",
+                    "Type": "IfElseBranchActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "Title": "###BITRIX_AI_DAY_PLANNER_IFELSEBRANCHACTIVITY_TITLE###",
+                        "mixedcondition": [
+                            {
+                                "field": "COUNTER_TASKS_INFO",
+                                "operator": ">",
+                                "value": 0,
+                                "joiner": 0,
+                                "object": "A3001_0001_0001_0004"
+                            },
+                            {
+                                "field": "EventsCount",
+                                "operator": ">",
+                                "value": "0",
+                                "joiner": 1,
+                                "object": "A3001_0001_0001_0003"
+                            }
+                        ]
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A0000_0000_0000_0014",
+                        "type": "complex",
+                        "position": {
+                            "x": 2100,
+                            "y": 1900
+                        },
+                        "dimensions": {
+                            "width": 230,
+                            "height": 46
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input",
+                                "isActive": true
+                            },
+                            {
+                                "id": "o0",
+                                "title": "true",
+                                "type": "output",
+                                "isActive": true
+                            },
+                            {
+                                "id": "o1",
+                                "title": "false",
+                                "type": "output",
+                                "isActive": true
+                            }
+                        ],
+                        "node": {
+                            "type": "complex",
+                            "title": "###BITRIX_AI_DAY_PLANNER_IFELSEBRANCHACTIVITY_TITLE###",
+                            "colorIndex": 3,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "CONDITION"
+                        }
+                    }
+                },
+                {
+                    "Name": "A3001_0001_0001_0005",
+                    "Type": "AiAssistantAgentActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "mcpUser": "{=A3001_0001_0001_0001:USER}",
+                        "query": "###BITRIX_AI_DAY_PLANNER_QUERY_WDS###",
+                        "systemPrompt": "###BITRIX_AI_DAY_PLANNER_SYSTEMPROMPT###",
+                        "returnType": "text",
+                        "jsonSchema": "",
+                        "jsonPath": null,
+                        "usePseudonymizer": "Y",
+                        "Title": "###BITRIX_AI_DAY_PLANNER_AIASSISTANTAGENTACTIVITY_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A3001_0001_0001_0005",
+                        "type": "simple",
+                        "position": {
+                            "x": 2500,
+                            "y": 1900
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input",
+                                "isActive": true
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output",
+                                "isActive": true
+                            },
+                            {
+                                "id": "a0",
+                                "title": "",
+                                "type": "aux",
+                                "isActive": true
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_AIASSISTANTAGENTACTIVITY_TITLE###",
+                            "colorIndex": 0,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "AI_ROBOT"
+                        }
+                    }
+                },
+                {
+                    "Name": "A0000_0000_0000_0015",
+                    "Type": "IfElseBranchActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "Title": "###BITRIX_AI_DAY_PLANNER_IFELSEBRANCHACTIVITY_TITLE###",
+                        "mixedcondition": [
+                            {
+                                "field": "errorMessage",
+                                "operator": "empty",
+                                "value": "",
+                                "joiner": 0,
+                                "object": "A3001_0001_0001_0005"
+                            }
+                        ]
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A0000_0000_0000_0015",
+                        "type": "complex",
+                        "position": {
+                            "x": 2900,
+                            "y": 1900
+                        },
+                        "dimensions": {
+                            "width": 230,
+                            "height": 46
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input",
+                                "isActive": true
+                            },
+                            {
+                                "id": "o0",
+                                "title": "true",
+                                "type": "output",
+                                "isActive": true
+                            },
+                            {
+                                "id": "o1",
+                                "title": "false",
+                                "type": "output",
+                                "isActive": true
+                            }
+                        ],
+                        "node": {
+                            "type": "complex",
+                            "title": "###BITRIX_AI_DAY_PLANNER_IFELSEBRANCHACTIVITY_TITLE###",
+                            "colorIndex": 3,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "CONDITION"
+                        }
+                    }
+                },
+                {
+                    "Name": "A0000_0000_0000_0016",
+                    "Type": "ImBotMessageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "botId": null,
+                        "botCode": "BOT_{=Workflow:TemplateId}",
+                        "recipient": [
+                            "{=A3001_0001_0001_0001:USER}"
+                        ],
+                        "chatId": null,
+                        "message": "{{=strtolower(locdate(\"j F\"))}}\n\n{=A3001_0001_0001_0005:aiResult}",
+                        "asError": "N",
+                        "aiWarning": "Y",
+                        "Title": "###BITRIX_AI_DAY_PLANNER_IMBOTMESSAGEACTIVITY_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A0000_0000_0000_0016",
+                        "type": "simple",
+                        "position": {
+                            "x": 3300,
+                            "y": 1900
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_IMBOTMESSAGEACTIVITY_TITLE###",
+                            "colorIndex": 2,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "GO_TO_MESSAGE"
+                        }
+                    }
+                },
+                {
+                    "Name": "A0000_0000_0000_0017",
+                    "Type": "DeleteDataStorageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "StorageCode": "DAY_PLANNER_{=Workflow:TemplateId}",
+                        "DeleteMode": "multiple",
+                        "DynamicFilterFields": {
+                            "items": [
+                                [
+                                    {
+                                        "object": "Document",
+                                        "field": "UserId",
+                                        "operator": "=",
+                                        "value": "{=A3001_0001_0001_0001:USER}"
+                                    },
+                                    "AND"
+                                ]
+                            ]
+                        },
+                        "Title": "###BITRIX_AI_DAY_PLANNER_DELETEDATASTORAGEACTIVITY_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A0000_0000_0000_0017",
+                        "type": "simple",
+                        "position": {
+                            "x": 3700,
+                            "y": 1900
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_DELETEDATASTORAGEACTIVITY_TITLE###",
+                            "colorIndex": 5,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "TRASHCAN"
+                        }
+                    }
+                },
+                {
+                    "Name": "A0000_0000_0000_0018",
+                    "Type": "WriteDataStorageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "StorageId": null,
+                        "StorageCode": "DAY_PLANNER_{=Workflow:TemplateId}",
+                        "RewriteMode": "newItem",
+                        "IsExpanded": "Y",
+                        "Author": "{=A3001_0001_0001_0001:USER}",
+                        "FieldValue": {
+                            "UserId": "{=A3001_0001_0001_0001:USER}",
+                            "AiResult": "{=A3001_0001_0001_0005:aiResult}",
+                            "CreatedAt": "{=System:Now}"
+                        },
+                        "Fields": {
+                            "UserId": {
+                                "Value": "{=A3001_0001_0001_0001:USER}",
+                                "FieldName": "UserId"
+                            },
+                            "AiResult": {
+                                "Value": "{=A3001_0001_0001_0005:aiResult}",
+                                "FieldName": "AiResult"
+                            },
+                            "CreatedAt": {
+                                "Value": "{=System:Now}",
+                                "FieldName": "CreatedAt"
+                            }
+                        },
+                        "DynamicFilterFields": {
+                            "items": [
+                                [
+                                    {
+                                        "object": "Document",
+                                        "field": "UserId",
+                                        "operator": "=",
+                                        "value": "{=A3001_0001_0001_0001:USER}"
+                                    },
+                                    "AND"
+                                ]
+                            ]
+                        },
+                        "Title": "###BITRIX_AI_DAY_PLANNER_WRITEDATASTORAGEACTIVITY_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A0000_0000_0000_0018",
+                        "type": "simple",
+                        "position": {
+                            "x": 4100,
+                            "y": 1900
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_WRITEDATASTORAGEACTIVITY_TITLE###",
+                            "colorIndex": 5,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "PLUS_M"
+                        }
+                    }
+                },
+                {
+                    "Name": "A0000_0000_0000_0019",
+                    "Type": "ImBotMessageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "botId": null,
+                        "botCode": "BOT_{=Workflow:TemplateId}",
+                        "recipient": [
+                            "{=A3001_0001_0001_0001:USER}"
+                        ],
+                        "chatId": null,
+                        "message": "###BITRIX_AI_DAY_PLANNER_NODATAMESSAGE###",
+                        "asError": "N",
+                        "aiWarning": "N",
+                        "Title": "###BITRIX_AI_DAY_PLANNER_IMBOTMESSAGEACTIVITY_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A0000_0000_0000_0019",
+                        "type": "simple",
+                        "position": {
+                            "x": 3300,
+                            "y": 2100
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_IMBOTMESSAGEACTIVITY_TITLE###",
+                            "colorIndex": 2,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "GO_TO_MESSAGE"
+                        }
+                    }
+                },
+                {
+                    "Name": "A0000_0000_0000_0020",
+                    "Type": "ImBotMessageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "botId": null,
+                        "botCode": "BOT_{=Workflow:TemplateId}",
+                        "recipient": [
+                            "{=A3001_0001_0001_0001:USER}"
+                        ],
+                        "chatId": null,
+                        "message": "###BITRIX_AI_DAY_PLANNER_NODATAMESSAGE###",
+                        "asError": "N",
+                        "aiWarning": "N",
+                        "Title": "###BITRIX_AI_DAY_PLANNER_IMBOTMESSAGEACTIVITY_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A0000_0000_0000_0020",
+                        "type": "simple",
+                        "position": {
+                            "x": 2500,
+                            "y": 2100
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_IMBOTMESSAGEACTIVITY_TITLE###",
+                            "colorIndex": 2,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "GO_TO_MESSAGE"
+                        }
+                    }
+                },
+                {
+                    "Name": "A5001_0001_0001_0001",
+                    "Type": "ScheduledTrigger",
+                    "Activated": "Y",
+                    "Properties": {
+                        "ScheduleType": "weekly",
+                        "RunAt": "{=Constant:ScheduleEndTime}",
+                        "Interval": "1",
+                        "WeekDays": [
+                            "1",
+                            "2",
+                            "3",
+                            "4",
+                            "5"
+                        ],
+                        "Title": "###BITRIX_AI_DAY_PLANNER_SCHEDULEDTRIGGER_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A5001_0001_0001_0001",
+                        "type": "trigger",
+                        "position": {
+                            "x": 100,
+                            "y": 2200
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "trigger",
+                            "title": "###BITRIX_AI_DAY_PLANNER_SCHEDULEDTRIGGER_TITLE###",
+                            "colorIndex": 3,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "CALENDAR_WITH_SLOTS"
+                        }
+                    }
+                },
+                {
+                    "Name": "A5001_0001_0001_0010",
+                    "Type": "ForEachActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "Variable": "TrackedUsers",
+                        "Object": "Constant",
+                        "Title": "###BITRIX_AI_DAY_PLANNER_FOREACHACTIVITY_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A5001_0001_0001_0010",
+                        "type": "complex",
+                        "position": {
+                            "x": 500,
+                            "y": 2200
+                        },
+                        "dimensions": {
+                            "width": 230,
+                            "height": 46
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "in",
+                                "type": "input",
+                                "isActive": true
+                            },
+                            {
+                                "id": "i1",
+                                "title": "->>",
+                                "type": "input",
+                                "isActive": true
+                            },
+                            {
+                                "id": "o1",
+                                "title": "out",
+                                "type": "output",
+                                "isActive": true
+                            },
+                            {
+                                "id": "o0",
+                                "title": "->>",
+                                "type": "output",
+                                "isActive": true
+                            }
+                        ],
+                        "node": {
+                            "type": "complex",
+                            "title": "###BITRIX_AI_DAY_PLANNER_FOREACHACTIVITY_TITLE###",
+                            "colorIndex": 3,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "REPEAT"
+                        }
+                    }
+                },
+                {
+                    "Name": "A5001_0001_0001_0002",
+                    "Type": "CalendarGetInform",
+                    "Activated": "Y",
+                    "Properties": {
+                        "CalendarUser": "{=A5001_0001_0001_0010:Value}",
+                        "CalendarFrom": "{=System:Date}",
+                        "CalendarTo": "{{=dateadd({=System:Date}, \"1d\")}}",
+                        "EventField": [
+                            "url"
+                        ],
+                        "Title": "###BITRIX_AI_DAY_PLANNER_CALENDARGETINFORM_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A5001_0001_0001_0002",
+                        "type": "simple",
+                        "position": {
+                            "x": 900,
+                            "y": 2200
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_CALENDARGETINFORM_TITLE###",
+                            "colorIndex": 1,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "PLANNING_2"
+                        }
+                    }
+                },
+                {
+                    "Name": "A5001_0001_0001_0003",
+                    "Type": "TasksGetInfoActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "PARAM_USER_ID": "{=A5001_0001_0001_0010:Value}",
+                        "MESSAGE_COUNT_LIMIT": 100,
+                        "TaskLimit": 100,
+                        "TaskActivityDays": 7,
+                        "MessagesDays": 7,
+                        "UserTaskRole": [
+                            "O",
+                            "R"
+                        ],
+                        "TaskSelectField": [
+                            "description",
+                            "status",
+                            "deadline",
+                            "originator",
+                            "responsible",
+                            "chat",
+                            "activityDate",
+                            "isOverdue",
+                            "url",
+                            "priority",
+                            "project"
+                        ],
+                        "TaskStatusFilter": [
+                            1,
+                            2,
+                            3,
+                            4,
+                            6,
+                            7
+                        ],
+                        "Title": "###BITRIX_AI_DAY_PLANNER_TASKSGETINFOACTIVITY_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A5001_0001_0001_0003",
+                        "type": "simple",
+                        "position": {
+                            "x": 1300,
+                            "y": 2200
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_TASKSGETINFOACTIVITY_TITLE###",
+                            "colorIndex": 1,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "TASK"
+                        }
+                    }
+                },
+                {
+                    "Name": "A5001_0001_0001_0004",
+                    "Type": "TasksGetInfoActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "PARAM_USER_ID": "{=A5001_0001_0001_0010:Value}",
+                        "MESSAGE_COUNT_LIMIT": 50,
+                        "TaskLimit": 100,
+                        "TaskActivityDays": 1,
+                        "MessagesDays": 1,
+                        "UserTaskRole": [
+                            "R"
+                        ],
+                        "TaskSelectField": [
+                            "description",
+                            "status",
+                            "deadline",
+                            "originator",
+                            "responsible",
+                            "chat",
+                            "activityDate",
+                            "url",
+                            "priority",
+                            "project"
+                        ],
+                        "TaskStatusFilter": [
+                            5
+                        ],
+                        "Title": "###BITRIX_AI_DAY_PLANNER_TASKSGETINFOACTIVITY_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A5001_0001_0001_0004",
+                        "type": "simple",
+                        "position": {
+                            "x": 1700,
+                            "y": 2200
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_TASKSGETINFOACTIVITY_TITLE###",
+                            "colorIndex": 1,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "TASK"
+                        }
+                    }
+                },
+                {
+                    "Name": "A5001_0001_0001_0005",
+                    "Type": "TasksGetInfoActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "PARAM_USER_ID": "{=A5001_0001_0001_0010:Value}",
+                        "MESSAGE_COUNT_LIMIT": 50,
+                        "TaskLimit": 100,
+                        "TaskActivityDays": 1,
+                        "MessagesDays": 1,
+                        "UserTaskRole": [
+                            "O",
+                            "R",
+                            "A",
+                            "U"
+                        ],
+                        "TaskSelectField": [
+                            "description",
+                            "status",
+                            "deadline",
+                            "originator",
+                            "responsible",
+                            "chat",
+                            "activityDate",
+                            "url",
+                            "priority",
+                            "project"
+                        ],
+                        "TaskStatusFilter": [
+                            1,
+                            2,
+                            3,
+                            4,
+                            6,
+                            7
+                        ],
+                        "Title": "###BITRIX_AI_DAY_PLANNER_TASKSGETINFOACTIVITY_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A5001_0001_0001_0005",
+                        "type": "simple",
+                        "position": {
+                            "x": 2100,
+                            "y": 2200
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_TASKSGETINFOACTIVITY_TITLE###",
+                            "colorIndex": 1,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "TASK"
+                        }
+                    }
+                },
+                {
+                    "Name": "A0000_0000_0000_0021",
+                    "Type": "IfElseBranchActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "Title": "###BITRIX_AI_DAY_PLANNER_IFELSEBRANCHACTIVITY_TITLE###",
+                        "mixedcondition": [
+                            {
+                                "field": "COUNTER_TASKS_INFO",
+                                "operator": ">",
+                                "value": 0,
+                                "joiner": 0,
+                                "object": "A5001_0001_0001_0003"
+                            },
+                            {
+                                "field": "COUNTER_TASKS_INFO",
+                                "operator": ">",
+                                "value": 0,
+                                "joiner": 1,
+                                "object": "A5001_0001_0001_0004"
+                            },
+                            {
+                                "field": "COUNTER_TASKS_INFO",
+                                "operator": ">",
+                                "value": 0,
+                                "joiner": 1,
+                                "object": "A5001_0001_0001_0005"
+                            },
+                            {
+                                "field": "EventsCount",
+                                "operator": ">",
+                                "value": "0",
+                                "joiner": 1,
+                                "object": "A5001_0001_0001_0002"
+                            }
+                        ]
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A0000_0000_0000_0021",
+                        "type": "complex",
+                        "position": {
+                            "x": 2500,
+                            "y": 2200
+                        },
+                        "dimensions": {
+                            "width": 230,
+                            "height": 46
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input",
+                                "isActive": true
+                            },
+                            {
+                                "id": "o0",
+                                "title": "true",
+                                "type": "output",
+                                "isActive": true
+                            },
+                            {
+                                "id": "o1",
+                                "title": "false",
+                                "type": "output",
+                                "isActive": true
+                            }
+                        ],
+                        "node": {
+                            "type": "complex",
+                            "title": "###BITRIX_AI_DAY_PLANNER_IFELSEBRANCHACTIVITY_TITLE###",
+                            "colorIndex": 3,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "CONDITION"
+                        }
+                    }
+                },
+                {
+                    "Name": "A5001_0001_0001_0006",
+                    "Type": "AiAssistantAgentActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "mcpUser": "{=A5001_0001_0001_0010:Value}",
+                        "query": "###BITRIX_AI_DAY_PLANNER_ENDDAY_QUERY###",
+                        "systemPrompt": "###BITRIX_AI_DAY_PLANNER_ENDDAY_SYSTEMPROMPT###",
+                        "returnType": "text",
+                        "jsonSchema": "",
+                        "jsonPath": null,
+                        "usePseudonymizer": "Y",
+                        "Title": "###BITRIX_AI_DAY_PLANNER_AIASSISTANTAGENTACTIVITY_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A5001_0001_0001_0006",
+                        "type": "simple",
+                        "position": {
+                            "x": 2900,
+                            "y": 2200
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input",
+                                "isActive": true
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output",
+                                "isActive": true
+                            },
+                            {
+                                "id": "a0",
+                                "title": "",
+                                "type": "aux",
+                                "isActive": true
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_AIASSISTANTAGENTACTIVITY_TITLE###",
+                            "colorIndex": 0,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "AI_ROBOT"
+                        }
+                    }
+                },
+                {
+                    "Name": "A0000_0000_0000_0022",
+                    "Type": "IfElseBranchActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "Title": "###BITRIX_AI_DAY_PLANNER_IFELSEBRANCHACTIVITY_TITLE###",
+                        "mixedcondition": [
+                            {
+                                "field": "errorMessage",
+                                "operator": "!empty",
+                                "value": "",
+                                "joiner": 0,
+                                "object": "A5001_0001_0001_0006"
+                            }
+                        ]
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A0000_0000_0000_0022",
+                        "type": "complex",
+                        "position": {
+                            "x": 3300,
+                            "y": 2200
+                        },
+                        "dimensions": {
+                            "width": 230,
+                            "height": 46
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input",
+                                "isActive": true
+                            },
+                            {
+                                "id": "o0",
+                                "title": "true",
+                                "type": "output",
+                                "isActive": true
+                            },
+                            {
+                                "id": "o1",
+                                "title": "false",
+                                "type": "output",
+                                "isActive": true
+                            }
+                        ],
+                        "node": {
+                            "type": "complex",
+                            "title": "###BITRIX_AI_DAY_PLANNER_IFELSEBRANCHACTIVITY_TITLE###",
+                            "colorIndex": 3,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "CONDITION"
+                        }
+                    }
+                },
+                {
+                    "Name": "A0000_0000_0000_0023",
+                    "Type": "WriteDataStorageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "StorageId": null,
+                        "StorageCode": "DAY_PLANNER_ENDDAY_{=Workflow:TemplateId}",
+                        "RewriteMode": "newItem",
+                        "IsExpanded": "Y",
+                        "Author": "{=A5001_0001_0001_0010:Value}",
+                        "FieldValue": {
+                            "UserId": "{=A5001_0001_0001_0010:Value}",
+                            "EndDayReport": "{=A5001_0001_0001_0006:errorMessage}",
+                            "CreatedAt": "{=System:Now}"
+                        },
+                        "Fields": {
+                            "UserId": {
+                                "Value": "{=A5001_0001_0001_0010:Value}",
+                                "FieldName": "UserId"
+                            },
+                            "EndDayReport": {
+                                "Value": "{=A5001_0001_0001_0006:errorMessage}",
+                                "FieldName": "EndDayReport"
+                            },
+                            "CreatedAt": {
+                                "Value": "{=System:Now}",
+                                "FieldName": "CreatedAt"
+                            }
+                        },
+                        "DynamicFilterFields": {
+                            "items": [
+                                [
+                                    {
+                                        "object": "Document",
+                                        "field": "UserId",
+                                        "operator": "=",
+                                        "value": "{=A5001_0001_0001_0010:Value}"
+                                    },
+                                    "AND"
+                                ]
+                            ]
+                        },
+                        "Title": "###BITRIX_AI_DAY_PLANNER_WRITEDATASTORAGEACTIVITY_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A0000_0000_0000_0023",
+                        "type": "simple",
+                        "position": {
+                            "x": 3700,
+                            "y": 2200
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_WRITEDATASTORAGEACTIVITY_TITLE###",
+                            "colorIndex": 5,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "PLUS_M"
+                        }
+                    }
+                },
+                {
+                    "Name": "A0000_0000_0000_0024",
+                    "Type": "WriteDataStorageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "StorageId": null,
+                        "StorageCode": "DAY_PLANNER_ENDDAY_{=Workflow:TemplateId}",
+                        "RewriteMode": "newItem",
+                        "IsExpanded": "Y",
+                        "Author": "{=A5001_0001_0001_0010:Value}",
+                        "FieldValue": {
+                            "UserId": "{=A5001_0001_0001_0010:Value}",
+                            "EndDayReport": "{=A5001_0001_0001_0006:aiResult}",
+                            "CreatedAt": "{=System:Now}"
+                        },
+                        "Fields": {
+                            "UserId": {
+                                "Value": "{=A5001_0001_0001_0010:Value}",
+                                "FieldName": "UserId"
+                            },
+                            "EndDayReport": {
+                                "Value": "{=A5001_0001_0001_0006:aiResult}",
+                                "FieldName": "EndDayReport"
+                            },
+                            "CreatedAt": {
+                                "Value": "{=System:Now}",
+                                "FieldName": "CreatedAt"
+                            }
+                        },
+                        "DynamicFilterFields": {
+                            "items": [
+                                [
+                                    {
+                                        "object": "Document",
+                                        "field": "UserId",
+                                        "operator": "=",
+                                        "value": "{=A5001_0001_0001_0010:Value}"
+                                    },
+                                    "AND"
+                                ]
+                            ]
+                        },
+                        "Title": "###BITRIX_AI_DAY_PLANNER_WRITEDATASTORAGEACTIVITY_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A0000_0000_0000_0024",
+                        "type": "simple",
+                        "position": {
+                            "x": 3700,
+                            "y": 2400
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_WRITEDATASTORAGEACTIVITY_TITLE###",
+                            "colorIndex": 5,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "PLUS_M"
+                        }
+                    }
+                },
+                {
+                    "Name": "A6001_0001_0001_0001",
+                    "Type": "StopWorkTimeTrigger",
+                    "Activated": "Y",
+                    "Properties": {
+                        "USER_IDS": [
+                            "{=Constant:TrackedUsers}"
+                        ],
+                        "Title": "###BITRIX_AI_DAY_PLANNER_STOPWORKTIMETRIGGER_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A6001_0001_0001_0001",
+                        "type": "trigger",
+                        "position": {
+                            "x": 100,
+                            "y": 2700
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "trigger",
+                            "title": "###BITRIX_AI_DAY_PLANNER_STOPWORKTIMETRIGGER_TITLE###",
+                            "colorIndex": 2,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "TIMER"
+                        }
+                    }
+                },
+                {
+                    "Name": "A6001_0001_0001_0002",
+                    "Type": "ReadDataStorageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "StorageCode": "DAY_PLANNER_ENDDAY_{=Workflow:TemplateId}",
+                        "ReturnMode": "single",
+                        "ReturnFields": [],
+                        "ReturnFieldsByStorageCode": [
+                            "EndDayReport"
+                        ],
+                        "DynamicFilterFields": {
+                            "items": [
+                                [
+                                    {
+                                        "object": "Document",
+                                        "field": "UserId",
+                                        "operator": "=",
+                                        "value": "{=A6001_0001_0001_0001:USER}"
+                                    },
+                                    "AND"
+                                ]
+                            ]
+                        },
+                        "OutputFields": {
+                            "EndDayReport": {
+                                "Name": "EndDayReport",
+                                "FieldName": "EndDayReport",
+                                "Type": "string"
+                            }
+                        },
+                        "Title": "###BITRIX_AI_DAY_PLANNER_READDATASTORAGEACTIVITY_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A6001_0001_0001_0002",
+                        "type": "simple",
+                        "position": {
+                            "x": 500,
+                            "y": 2700
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_READDATASTORAGEACTIVITY_TITLE###",
+                            "colorIndex": 5,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "DATA_READING"
+                        }
+                    }
+                },
+                {
+                    "Name": "A0000_0000_0000_0025",
+                    "Type": "IfElseBranchActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "Title": "###BITRIX_AI_DAY_PLANNER_IFELSEBRANCHACTIVITY_TITLE###",
+                        "mixedcondition": [
+                            {
+                                "field": "EndDayReport",
+                                "operator": "!empty",
+                                "value": "",
+                                "joiner": 0,
+                                "object": "A6001_0001_0001_0002"
+                            }
+                        ]
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A0000_0000_0000_0025",
+                        "type": "complex",
+                        "position": {
+                            "x": 900,
+                            "y": 2700
+                        },
+                        "dimensions": {
+                            "width": 230,
+                            "height": 46
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input",
+                                "isActive": true
+                            },
+                            {
+                                "id": "o0",
+                                "title": "true",
+                                "type": "output",
+                                "isActive": true
+                            },
+                            {
+                                "id": "o1",
+                                "title": "false",
+                                "type": "output",
+                                "isActive": true
+                            }
+                        ],
+                        "node": {
+                            "type": "complex",
+                            "title": "###BITRIX_AI_DAY_PLANNER_IFELSEBRANCHACTIVITY_TITLE###",
+                            "colorIndex": 3,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "CONDITION"
+                        }
+                    }
+                },
+                {
+                    "Name": "A0000_0000_0000_0026",
+                    "Type": "ImBotMessageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "botId": null,
+                        "botCode": "BOT_{=Workflow:TemplateId}",
+                        "recipient": [
+                            "{=A6001_0001_0001_0001:USER}"
+                        ],
+                        "chatId": null,
+                        "message": "{{=strtolower(locdate(\"j F\"))}}\n\n{=A6001_0001_0001_0002:EndDayReport}",
+                        "asError": "N",
+                        "aiWarning": "Y",
+                        "Title": "###BITRIX_AI_DAY_PLANNER_IMBOTMESSAGEACTIVITY_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A0000_0000_0000_0026",
+                        "type": "simple",
+                        "position": {
+                            "x": 1300,
+                            "y": 2700
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_IMBOTMESSAGEACTIVITY_TITLE###",
+                            "colorIndex": 2,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "GO_TO_MESSAGE"
+                        }
+                    }
+                },
+                {
+                    "Name": "A6001_0001_0001_0004",
+                    "Type": "SaveReportActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "UserId": "{=A6001_0001_0001_0001:USER}",
+                        "ReportText": "{=A6001_0001_0001_0002:EndDayReport}",
+                        "ReportType": "AI_REPORT",
+                        "Title": "###BITRIX_AI_DAY_PLANNER_SAVEREPORTACTIVITY_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A6001_0001_0001_0004",
+                        "type": "simple",
+                        "position": {
+                            "x": 1700,
+                            "y": 2700
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_SAVEREPORTACTIVITY_TITLE###",
+                            "colorIndex": 2,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "TIMER"
+                        }
+                    }
+                },
+                {
+                    "Name": "A0000_0000_0000_0027",
+                    "Type": "DeleteDataStorageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "StorageCode": "DAY_PLANNER_ENDDAY_{=Workflow:TemplateId}",
+                        "DeleteMode": "multiple",
+                        "DynamicFilterFields": {
+                            "items": [
+                                [
+                                    {
+                                        "object": "Document",
+                                        "field": "UserId",
+                                        "operator": "=",
+                                        "value": "{=A6001_0001_0001_0001:USER}"
+                                    },
+                                    "AND"
+                                ]
+                            ]
+                        },
+                        "Title": "###BITRIX_AI_DAY_PLANNER_DELETEDATASTORAGEACTIVITY_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A0000_0000_0000_0027",
+                        "type": "simple",
+                        "position": {
+                            "x": 2100,
+                            "y": 2700
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_DELETEDATASTORAGEACTIVITY_TITLE###",
+                            "colorIndex": 5,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "TRASHCAN"
+                        }
+                    }
+                },
+                {
+                    "Name": "A6001_0001_0001_0006",
+                    "Type": "CalendarGetInform",
+                    "Activated": "Y",
+                    "Properties": {
+                        "CalendarUser": "{=A6001_0001_0001_0001:USER}",
+                        "CalendarFrom": "{=System:Date}",
+                        "CalendarTo": "{{=dateadd({=System:Date}, \"1d\")}}",
+                        "EventField": [
+                            "url"
+                        ],
+                        "Title": "###BITRIX_AI_DAY_PLANNER_CALENDARGETINFORM_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A6001_0001_0001_0006",
+                        "type": "simple",
+                        "position": {
+                            "x": 1300,
+                            "y": 2900
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_CALENDARGETINFORM_TITLE###",
+                            "colorIndex": 1,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "PLANNING_2"
+                        }
+                    }
+                },
+                {
+                    "Name": "A6001_0001_0001_0007",
+                    "Type": "TasksGetInfoActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "PARAM_USER_ID": "{=A6001_0001_0001_0001:USER}",
+                        "MESSAGE_COUNT_LIMIT": 100,
+                        "TaskLimit": 100,
+                        "TaskActivityDays": 7,
+                        "MessagesDays": 7,
+                        "UserTaskRole": [
+                            "O",
+                            "R"
+                        ],
+                        "TaskSelectField": [
+                            "description",
+                            "status",
+                            "deadline",
+                            "originator",
+                            "responsible",
+                            "chat",
+                            "activityDate",
+                            "isOverdue",
+                            "url",
+                            "priority",
+                            "project"
+                        ],
+                        "TaskStatusFilter": [
+                            1,
+                            2,
+                            3,
+                            4,
+                            6,
+                            7
+                        ],
+                        "Title": "###BITRIX_AI_DAY_PLANNER_TASKSGETINFOACTIVITY_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A6001_0001_0001_0007",
+                        "type": "simple",
+                        "position": {
+                            "x": 1700,
+                            "y": 2900
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_TASKSGETINFOACTIVITY_TITLE###",
+                            "colorIndex": 1,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "TASK"
+                        }
+                    }
+                },
+                {
+                    "Name": "A6001_0001_0001_0008",
+                    "Type": "TasksGetInfoActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "PARAM_USER_ID": "{=A6001_0001_0001_0001:USER}",
+                        "MESSAGE_COUNT_LIMIT": 50,
+                        "TaskLimit": 100,
+                        "TaskActivityDays": 1,
+                        "MessagesDays": 1,
+                        "UserTaskRole": [
+                            "R"
+                        ],
+                        "TaskSelectField": [
+                            "description",
+                            "status",
+                            "deadline",
+                            "originator",
+                            "responsible",
+                            "chat",
+                            "activityDate",
+                            "url",
+                            "priority",
+                            "project"
+                        ],
+                        "TaskStatusFilter": [
+                            5
+                        ],
+                        "Title": "###BITRIX_AI_DAY_PLANNER_TASKSGETINFOACTIVITY_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A6001_0001_0001_0008",
+                        "type": "simple",
+                        "position": {
+                            "x": 2100,
+                            "y": 2900
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_TASKSGETINFOACTIVITY_TITLE###",
+                            "colorIndex": 1,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "TASK"
+                        }
+                    }
+                },
+                {
+                    "Name": "A6001_0001_0001_0009",
+                    "Type": "TasksGetInfoActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "PARAM_USER_ID": "{=A6001_0001_0001_0001:USER}",
+                        "MESSAGE_COUNT_LIMIT": 50,
+                        "TaskLimit": 100,
+                        "TaskActivityDays": 1,
+                        "MessagesDays": 1,
+                        "UserTaskRole": [
+                            "O",
+                            "R",
+                            "A",
+                            "U"
+                        ],
+                        "TaskSelectField": [
+                            "description",
+                            "status",
+                            "deadline",
+                            "originator",
+                            "responsible",
+                            "chat",
+                            "activityDate",
+                            "url",
+                            "priority",
+                            "project"
+                        ],
+                        "TaskStatusFilter": [
+                            1,
+                            2,
+                            3,
+                            4,
+                            6,
+                            7
+                        ],
+                        "Title": "###BITRIX_AI_DAY_PLANNER_TASKSGETINFOACTIVITY_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A6001_0001_0001_0009",
+                        "type": "simple",
+                        "position": {
+                            "x": 2500,
+                            "y": 2900
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_TASKSGETINFOACTIVITY_TITLE###",
+                            "colorIndex": 1,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "TASK"
+                        }
+                    }
+                },
+                {
+                    "Name": "A0000_0000_0000_0028",
+                    "Type": "IfElseBranchActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "Title": "###BITRIX_AI_DAY_PLANNER_IFELSEBRANCHACTIVITY_TITLE###",
+                        "mixedcondition": [
+                            {
+                                "field": "COUNTER_TASKS_INFO",
+                                "operator": ">",
+                                "value": 0,
+                                "joiner": 0,
+                                "object": "A6001_0001_0001_0007"
+                            },
+                            {
+                                "field": "COUNTER_TASKS_INFO",
+                                "operator": ">",
+                                "value": 0,
+                                "joiner": 1,
+                                "object": "A6001_0001_0001_0008"
+                            },
+                            {
+                                "field": "COUNTER_TASKS_INFO",
+                                "operator": ">",
+                                "value": 0,
+                                "joiner": 1,
+                                "object": "A6001_0001_0001_0009"
+                            },
+                            {
+                                "field": "EventsCount",
+                                "operator": ">",
+                                "value": "0",
+                                "joiner": 1,
+                                "object": "A6001_0001_0001_0006"
+                            }
+                        ]
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A0000_0000_0000_0028",
+                        "type": "complex",
+                        "position": {
+                            "x": 2900,
+                            "y": 2900
+                        },
+                        "dimensions": {
+                            "width": 230,
+                            "height": 46
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input",
+                                "isActive": true
+                            },
+                            {
+                                "id": "o0",
+                                "title": "true",
+                                "type": "output",
+                                "isActive": true
+                            },
+                            {
+                                "id": "o1",
+                                "title": "false",
+                                "type": "output",
+                                "isActive": true
+                            }
+                        ],
+                        "node": {
+                            "type": "complex",
+                            "title": "###BITRIX_AI_DAY_PLANNER_IFELSEBRANCHACTIVITY_TITLE###",
+                            "colorIndex": 3,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "CONDITION"
+                        }
+                    }
+                },
+                {
+                    "Name": "A6001_0001_0001_0010",
+                    "Type": "AiAssistantAgentActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "mcpUser": "{=A6001_0001_0001_0001:USER}",
+                        "query": "###BITRIX_AI_DAY_PLANNER_ENDDAY_QUERY_FALLBACK###",
+                        "systemPrompt": "###BITRIX_AI_DAY_PLANNER_ENDDAY_SYSTEMPROMPT###",
+                        "returnType": "text",
+                        "jsonSchema": "",
+                        "jsonPath": null,
+                        "usePseudonymizer": "Y",
+                        "Title": "###BITRIX_AI_DAY_PLANNER_AIASSISTANTAGENTACTIVITY_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A6001_0001_0001_0010",
+                        "type": "simple",
+                        "position": {
+                            "x": 3300,
+                            "y": 2900
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "title": "",
+                                "type": "input",
+                                "isActive": true
+                            },
+                            {
+                                "id": "o0",
+                                "title": "",
+                                "type": "output",
+                                "isActive": true
+                            },
+                            {
+                                "id": "a0",
+                                "title": "",
+                                "type": "aux",
+                                "isActive": true
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_AIASSISTANTAGENTACTIVITY_TITLE###",
+                            "colorIndex": 0,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "AI_ROBOT"
+                        }
+                    }
+                },
+                {
+                    "Name": "A0000_0000_0000_0029",
+                    "Type": "ImBotMessageActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "botId": null,
+                        "botCode": "BOT_{=Workflow:TemplateId}",
+                        "recipient": [
+                            "{=A6001_0001_0001_0001:USER}"
+                        ],
+                        "chatId": null,
+                        "message": "{{=strtolower(locdate(\"j F\"))}}\n\n{{=if(strlen({=A6001_0001_0001_0010:aiResult}) > 0, {=A6001_0001_0001_0010:aiResult}, {=A6001_0001_0001_0010:errorMessage})}}",
+                        "asError": "N",
+                        "aiWarning": "Y",
+                        "Title": "###BITRIX_AI_DAY_PLANNER_IMBOTMESSAGEACTIVITY_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A0000_0000_0000_0029",
+                        "type": "simple",
+                        "position": {
+                            "x": 3700,
+                            "y": 2900
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_IMBOTMESSAGEACTIVITY_TITLE###",
+                            "colorIndex": 2,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "GO_TO_MESSAGE"
+                        }
+                    }
+                },
+                {
+                    "Name": "A6001_0001_0001_0012",
+                    "Type": "SaveReportActivity",
+                    "Activated": "Y",
+                    "Properties": {
+                        "UserId": "{=A6001_0001_0001_0001:USER}",
+                        "ReportText": "{{=if(strlen({=A6001_0001_0001_0010:aiResult}) > 0, {=A6001_0001_0001_0010:aiResult}, {=A6001_0001_0001_0010:errorMessage})}}",
+                        "ReportType": "AI_REPORT",
+                        "Title": "###BITRIX_AI_DAY_PLANNER_SAVEREPORTACTIVITY_TITLE###"
+                    },
+                    "Document": null,
+                    "Node": {
+                        "id": "A6001_0001_0001_0012",
+                        "type": "simple",
+                        "position": {
+                            "x": 4100,
+                            "y": 2900
+                        },
+                        "dimensions": {
+                            "width": 200,
+                            "height": 48
+                        },
+                        "ports": [
+                            {
+                                "id": "i0",
+                                "type": "input"
+                            },
+                            {
+                                "id": "o0",
+                                "type": "output"
+                            }
+                        ],
+                        "node": {
+                            "type": "simple",
+                            "title": "###BITRIX_AI_DAY_PLANNER_SAVEREPORTACTIVITY_TITLE###",
+                            "colorIndex": 2,
+                            "frameColorName": null,
+                            "frameTextAlign": null,
+                            "frameSeparatorPosition": null,
+                            "icon": "TIMER"
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

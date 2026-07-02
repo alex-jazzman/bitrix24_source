@@ -3,8 +3,8 @@
 namespace Bitrix\Im\V2;
 
 use ArrayAccess;
-use Bitrix\Im\V2\Application\Features;
 use Bitrix\Im\V2\Integration\AI\RoleManager;
+use Bitrix\Im\V2\Message\BlocksBuilder\Entity\BlocksBuilder;
 use Bitrix\Im\V2\Message\Delete\DeletionMode;
 use Bitrix\Im\V2\Message\MessageError;
 use Bitrix\Im\V2\Message\Reaction\ReactionMessage;
@@ -183,6 +183,7 @@ class Message implements ArrayAccess, RegistryEntry, ActiveRecord, RestEntity, P
 	protected ?int $prevId = null;
 
 	protected ?bool $hasMentionAll = null;
+	protected ?BlocksBuilder $builder = null;
 
 	/**
 	 * @param int|array|EO_Message|null $source
@@ -1841,6 +1842,7 @@ class Message implements ArrayAccess, RegistryEntry, ActiveRecord, RestEntity, P
 			&& !$this->getParams()->isSet(Params::KEYBOARD)
 			&& !$this->getParams()->isSet(Params::ATTACH)
 			&& !$this->getParams()->isSet(Params::STICKER_PARAMS)
+			&& !$this->getParams()->isSet(Params::BLOCKS_BUILDER)
 		);
 	}
 
@@ -1900,6 +1902,7 @@ class Message implements ArrayAccess, RegistryEntry, ActiveRecord, RestEntity, P
 			'forward' => $this->getForwardInfo(),
 			'params' => $this->getEnrichedParams(!$messageShortInfo)->toRestFormat(),
 			'viewedByOthers' => $this->isViewedByOthers(),
+			'builder' => $this->getBlocksBuilder(),
 		];
 		$rest = $onlyCommonRest;
 
@@ -1962,7 +1965,7 @@ class Message implements ArrayAccess, RegistryEntry, ActiveRecord, RestEntity, P
 		$dateTs = [];
 		$urlIds = [];
 		$isUrlOnly = false;
-		if ($config->generateUrlPreview())
+		if ($config->generateUrlPreview() && !$this->isUrlPreviewDisabled())
 		{
 			$results = Text::getDateConverterParams($this->getMessage() ?? '');
 			foreach ($results as $result)
@@ -2172,5 +2175,24 @@ class Message implements ArrayAccess, RegistryEntry, ActiveRecord, RestEntity, P
 		}
 
 		return false;
+	}
+
+	public function getBlocksBuilder(): ?BlocksBuilder
+	{
+		$this->builder ??= $this->getParams()->get(Params::BLOCKS_BUILDER)->getValue();
+		return $this->builder;
+	}
+
+	public function setBlocksBuilder(?BlocksBuilder $builder): self
+	{
+		$this->getParams()->get(Params::BLOCKS_BUILDER)->setValue($builder);
+		$this->builder = $builder;
+
+		return $this;
+	}
+
+	public function isUrlPreviewDisabled(): bool
+	{
+		return $this->getBlocksBuilder() !== null;
 	}
 }

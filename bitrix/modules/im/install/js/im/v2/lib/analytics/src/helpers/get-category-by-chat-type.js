@@ -1,8 +1,8 @@
-import { ChatType } from 'im.v2.const';
+import { ChatType, type ChatTypeItem } from 'im.v2.const';
 
 import { AnalyticsCategory } from '../const';
 
-export function getCategoryByChatType(type: $Values<typeof ChatType>): $Values<typeof AnalyticsCategory>
+export function getCategoryByChatType(type: ChatTypeItem): $Values<typeof AnalyticsCategory>
 {
 	switch (type)
 	{

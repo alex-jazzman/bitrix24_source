@@ -10,7 +10,16 @@ jn.define('mail/folder/selector', (require, exports, module) => {
 		selectSystemFolders,
 		selectRootCustomFolders,
 		selectCurrentFolder,
+		selectCurrentVirtualFolderKey,
 	} = require('mail/statemanager/redux/slices/folders/selector');
+	const { DefaultFolderType } = require('mail/enum/default-folder-type');
+	const {
+		VirtualFolder,
+		ALL_MESSAGES,
+		getNameByKey: getVirtualFolderNameByKey,
+		getCounterByKey: getVirtualFolderCounterByKey,
+		callAction: callVirtualFolderAction,
+	} = require('mail/folder/virtual');
 	const store = require('statemanager/redux/store');
 	const { dispatch } = store;
 
@@ -79,6 +88,8 @@ jn.define('mail/folder/selector', (require, exports, module) => {
 				onSelect = null,
 				additionalPropsForSelect = {},
 				customHiddenCallback,
+				folders = null,
+				selectedFolderId = null,
 			} = props;
 
 			this.additionalPropsForSelect = additionalPropsForSelect;
@@ -87,27 +98,46 @@ jn.define('mail/folder/selector', (require, exports, module) => {
 			this.parentWidget = parentWidget;
 			this.onSelect = onSelect;
 			this.customHiddenCallback = customHiddenCallback ?? null;
+			this.folders = Array.isArray(folders) ? folders : null;
+			this.selectedFolderId = selectedFolderId;
+			this.virtualFolders = [];
 
-			if (mode === Selector.SWITCH_MODE)
+			if (mode === Selector.SWITCH_MODE && !this.hasCustomFoldersSource())
 			{
 				this.mailboxSelector = new MailboxSelector({
 					parentWidget: layoutWidget,
 				});
 			}
+
+			this.virtualFolders.push(
+				new VirtualFolder(
+					getVirtualFolderNameByKey(ALL_MESSAGES),
+					ALL_MESSAGES,
+					getVirtualFolderCounterByKey(ALL_MESSAGES, store.getState()),
+				),
+			);
 		}
 
 		componentDidMount()
 		{
-			this.unsubscribeFoldersObserver = observeFoldersChange(
-				store,
-				this.onVisibleFoldersChange,
-			);
+			if (!this.hasCustomFoldersSource())
+			{
+				this.unsubscribeFoldersObserver = observeFoldersChange(
+					store,
+					this.onVisibleFoldersChange,
+				);
 
-			this.initCurrentFolder();
+				this.initCurrentFolder();
+			}
 		}
 
 		initCurrentFolder()
 		{
+			if (selectCurrentVirtualFolderKey(store.getState()) !== null)
+			{
+				return;
+			}
+
 			if (selectCurrentFolder(store.getState()) !== null && selectCurrentFolder(store.getState()) !== undefined)
 			{
 				return;
@@ -126,7 +156,7 @@ jn.define('mail/folder/selector', (require, exports, module) => {
 
 		renderMailboxSelector()
 		{
-			if (this.mode === Selector.SWITCH_MODE)
+			if (this.mode === Selector.SWITCH_MODE && !this.hasCustomFoldersSource())
 			{
 				return this.mailboxSelector;
 			}
@@ -169,6 +199,7 @@ jn.define('mail/folder/selector', (require, exports, module) => {
 							paddingHorizontal: 8,
 						},
 					},
+					this.renderVirtualFolders(),
 					this.renderSystemFolders(),
 					this.renderCustomFolders(),
 				),
@@ -177,7 +208,7 @@ jn.define('mail/folder/selector', (require, exports, module) => {
 
 		buildChildrenMap()
 		{
-			const allFolders = selectAll(store.getState());
+			const allFolders = this.getAllFolders();
 			const map = new Map();
 
 			for (const folder of allFolders)
@@ -196,9 +227,56 @@ jn.define('mail/folder/selector', (require, exports, module) => {
 			return map;
 		}
 
+		hasCustomFoldersSource()
+		{
+			return Array.isArray(this.folders);
+		}
+
+		getAllFolders()
+		{
+			return this.hasCustomFoldersSource() ? this.folders : selectAll(store.getState());
+		}
+
+		getSystemFoldersData()
+		{
+			if (!this.hasCustomFoldersSource())
+			{
+				return selectSystemFolders(store.getState());
+			}
+
+			return this.folders.filter((folder) => DefaultFolderType.getValues().includes(folder.type));
+		}
+
+		getRootCustomFoldersData()
+		{
+			if (!this.hasCustomFoldersSource())
+			{
+				return selectRootCustomFolders(store.getState());
+			}
+
+			return this.folders.filter(
+				(folder) => folder.parentId === null && !DefaultFolderType.getValues().includes(folder.type),
+			);
+		}
+
+		renderVirtualFolders()
+		{
+			if (this.mode !== Selector.SWITCH_MODE)
+			{
+				return null;
+			}
+
+			const folders = this.virtualFolders.map((folder) => this.renderFolderItem(folder));
+
+			return View(
+				{},
+				...folders,
+			);
+		}
+
 		renderSystemFolders()
 		{
-			const systemFolders = selectSystemFolders(store.getState());
+			const systemFolders = this.getSystemFoldersData();
 			const rootSystemFolders = systemFolders.filter((folder) => folder.parentId === null);
 			const childrenMap = this.buildChildrenMap();
 
@@ -210,7 +288,7 @@ jn.define('mail/folder/selector', (require, exports, module) => {
 
 		renderCustomFolders()
 		{
-			const rootCustomFolders = selectRootCustomFolders(store.getState());
+			const rootCustomFolders = this.getRootCustomFoldersData();
 
 			if (rootCustomFolders.length === 0)
 			{
@@ -249,18 +327,7 @@ jn.define('mail/folder/selector', (require, exports, module) => {
 
 		renderFolderItem(folder, level = 0)
 		{
-			let isSelected = false;
-
-			const currentFolder = selectCurrentFolder(store.getState());
-
-			if (currentFolder !== null
-				&& currentFolder !== undefined
-				&& currentFolder.id === folder.id
-				&& (this.mode === Selector.SWITCH_MODE)
-			)
-			{
-				isSelected = true;
-			}
+			const isSelected = this.isFolderSelected(folder);
 
 			let unreadCount = Number(folder.unreadCount) || '';
 
@@ -306,7 +373,7 @@ jn.define('mail/folder/selector', (require, exports, module) => {
 						},
 					},
 					Text({
-						text: folder.name,
+						text: this.getFolderTitle(folder),
 						style: {
 							paddingRight: 4,
 							fontSize: 16,
@@ -316,7 +383,7 @@ jn.define('mail/folder/selector', (require, exports, module) => {
 					}),
 					isSelected && SelectedIcon(),
 				),
-				folder.messageCount > 0
+				folder.unreadCount > 0
 				&& View(
 					{
 						style: {
@@ -337,15 +404,53 @@ jn.define('mail/folder/selector', (require, exports, module) => {
 							fontSize: 13,
 							fontWeight: '500',
 						},
-					}),
-				),
+						}),
+					),
 			);
+		}
+
+		getFolderTitle(folder)
+		{
+			return folder.formattedName || folder.name;
+		}
+
+		isFolderSelected(folder)
+		{
+			if (this.mode === Selector.MOVE_MODE && this.selectedFolderId !== null)
+			{
+				return folder.id === this.selectedFolderId;
+			}
+
+			if (this.mode !== Selector.SWITCH_MODE)
+			{
+				return false;
+			}
+
+			const currentVirtualFolderKey = selectCurrentVirtualFolderKey(store.getState());
+
+			if (folder.isVirtual === true)
+			{
+				return folder.type === currentVirtualFolderKey;
+			}
+
+			if (currentVirtualFolderKey !== null)
+			{
+				return false;
+			}
+
+			const currentFolder = selectCurrentFolder(store.getState());
+
+			return currentFolder !== null
+				&& currentFolder !== undefined
+				&& currentFolder.id === folder.id
+			;
 		}
 
 		getFolderIcon(type)
 		{
 			const icons = {
-				default: Icon.MAIL,
+				[ALL_MESSAGES]: Icon.MAIL,
+				default: Icon.MAIL_SEND,
 				drafts: Icon.FILE,
 				outcome: Icon.SEND,
 				trash: Icon.TRASHCAN,
@@ -361,6 +466,14 @@ jn.define('mail/folder/selector', (require, exports, module) => {
 		}
 
 		onFolderClick = (folder) => {
+			if (folder.isVirtual === true)
+			{
+				callVirtualFolderAction(folder.type);
+				this.layoutWidget.close();
+
+				return;
+			}
+
 			if (this.mode === Selector.MOVE_MODE && this.onSelect)
 			{
 				this.onSelect({

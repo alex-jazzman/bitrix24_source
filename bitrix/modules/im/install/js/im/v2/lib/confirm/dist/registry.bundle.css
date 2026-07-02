@@ -1,3 +1,7 @@
+.ui-message-box.im-confirm-container .popup-window-content {
+	padding-bottom: 10px;
+}
+
 .bx-im-download-all-confirm__subtitle {
 	--im-download-all-confirm__color_subtitle: rgba(var(--im-color-palette-black-solid-rgb), 0.40);
 
@@ -9,8 +13,4 @@
 
 .bx-im-download-all-confirm__subtitle a {
 	cursor: pointer;
-}
-
-.ui-message-box.im-confirm-container .popup-window-content {
-	padding-bottom: 10px;
 }

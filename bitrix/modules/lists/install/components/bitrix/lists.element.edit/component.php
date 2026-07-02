@@ -20,8 +20,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Application;
 use Bitrix\Main\DB\SqlQueryException;
+use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Lists\Internal\Integration\Crm\Validator\CrmPropertyValidator;
 
 $this->setFrameMode(false);
+
+$currentUser = CurrentUser::get();
+$currentUserId = (int)$currentUser->getId();
+$currentUserGroups = $currentUser->getUserGroups();
 
 if(!\Bitrix\Main\Loader::includeModule('lists'))
 {
@@ -41,7 +48,7 @@ $SECTION_ID = is_array($arParams['~SECTION_ID'])? 0: (int)$arParams['~SECTION_ID
 
 $accessService =
 	(new \Bitrix\Lists\Api\Service\AccessService(
-		(int)$USER->GetID(),
+		$currentUserId,
 		new \Bitrix\Lists\Service\Param([
 			'IBLOCK_TYPE_ID' => (string)$arParams['~IBLOCK_TYPE_ID'],
 			'IBLOCK_ID' => $IBLOCK_ID,
@@ -94,7 +101,7 @@ $arResult['CAN_FULL_EDIT'] = $ELEMENT_ID > 0 && $elementRight->canFullEdit();
 $lists_perm = $checkPermissionResult->getPermission();
 
 $arResult["IBLOCK_PERM"] = $lists_perm;
-$arResult["USER_GROUPS"] = $USER->GetUserGroupArray();
+$arResult["USER_GROUPS"] = $currentUserGroups;
 $arIBlock = CIBlock::GetArrayByID(intval($arParams["~IBLOCK_ID"]));
 
 if (empty($arIBlock))
@@ -434,9 +441,13 @@ if(
 			{
 				$DB->Rollback();
 				if($ex = $APPLICATION->GetException())
-					ShowError(GetMessage("CC_BLEE_DELETE_ERROR")." ".$ex->GetString());
+				{
+					ShowError(Loc::getMessage('CC_BLEE_DELETE_ERROR') . ' ' . $ex->GetString());
+				}
 				else
-					ShowError(GetMessage("CC_BLEE_DELETE_ERROR")." ".GetMessage("CC_BLEE_UNKNOWN_ERROR"));
+				{
+					ShowError(Loc::getMessage('CC_BLEE_DELETE_ERROR') . ' ' . Loc::getMessage('CC_BLEE_UNKNOWN_ERROR'));
+				}
 				$bVarsFromForm = true;
 			}
 			else
@@ -447,7 +458,7 @@ if(
 		}
 		else
 		{
-			ShowError(GetMessage("CC_BLEE_DELETE_ERROR")." ".GetMessage("CC_BLEE_UNKNOWN_ERROR"));
+			ShowError(Loc::getMessage('CC_BLEE_DELETE_ERROR') . ' ' . Loc::getMessage('CC_BLEE_UNKNOWN_ERROR'));
 			$bVarsFromForm = true;
 			LocalRedirect($arResult["~LIST_SECTION_URL"]);
 		}
@@ -546,7 +557,7 @@ if(
 								$value = str_replace(" ", "", str_replace(",", ".", $value["VALUE"]));
 								if(!is_numeric($value))
 								{
-									$strError .= GetMessage('CC_BLEE_VALIDATE_FIELD_ERROR', array('#NAME#' => $arField['NAME']))."<br />";
+									$strError .= Loc::getMessage('CC_BLEE_VALIDATE_FIELD_ERROR', ['#NAME#' => $arField['NAME']]) . '<br />';
 								}
 								$arProps[$arField["ID"]][$key] = doubleval($value);
 							}
@@ -559,7 +570,7 @@ if(
 								$value = str_replace(" ", "", str_replace(",", ".", $value));
 								if(!is_numeric($value))
 								{
-									$strError .= GetMessage('CC_BLEE_VALIDATE_FIELD_ERROR', array('#NAME#' => $arField['NAME']))."<br />";
+									$strError .= Loc::getMessage('CC_BLEE_VALIDATE_FIELD_ERROR', ['#NAME#' => $arField['NAME']]) . '<br />';
 								}
 								$arProps[$arField["ID"]][$key] = doubleval($value);
 							}
@@ -575,7 +586,7 @@ if(
 							$value = str_replace(" ", "", str_replace(",", ".", $_POST[$FIELD_ID]["VALUE"]));
 							if(!is_numeric($value))
 							{
-								$strError .= GetMessage('CC_BLEE_VALIDATE_FIELD_ERROR', array('#NAME#' => $arField['NAME']))."<br />";
+								$strError .= Loc::getMessage('CC_BLEE_VALIDATE_FIELD_ERROR', ['#NAME#' => $arField['NAME']]) . '<br />';
 							}
 							$arProps[$arField["ID"]] = doubleval($_POST[$FIELD_ID]["VALUE"]);
 						}
@@ -587,7 +598,7 @@ if(
 							$value = str_replace(" ", "", str_replace(",", ".", $_POST[$FIELD_ID]));
 							if(!is_numeric($value))
 							{
-								$strError .= GetMessage('CC_BLEE_VALIDATE_FIELD_ERROR', array('#NAME#' => $arField['NAME']))."<br />";
+								$strError .= Loc::getMessage('CC_BLEE_VALIDATE_FIELD_ERROR', ['#NAME#' => $arField['NAME']]) . '<br />';
 							}
 							$arProps[$arField["ID"]] = doubleval($_POST[$FIELD_ID]);
 						}
@@ -602,18 +613,38 @@ if(
 			}
 			else
 			{
-				if (isset($arField["PROPERTY_USER_TYPE"]["USER_TYPE"]))
+				if (isset($arField['PROPERTY_USER_TYPE']['USER_TYPE']))
 				{
-					switch ($arField["PROPERTY_USER_TYPE"]["USER_TYPE"])
+					switch ($arField['PROPERTY_USER_TYPE']['USER_TYPE'])
 					{
-						case "DiskFile":
+						case 'DiskFile':
 							if (is_array($_POST[$FIELD_ID]) && !empty($_POST[$FIELD_ID]))
 							{
-								$arProps[$arField["ID"]] = $_POST[$FIELD_ID];
+								$arProps[$arField['ID']] = $_POST[$FIELD_ID];
 							}
 							break;
+						case 'ECrm':
+							$crmPropertyValidator = new CrmPropertyValidator(
+								$arField,
+								$currentUserId,
+								$arResult['ELEMENT_PROPS'][$arField['ID']]['FULL_VALUES'] ?? null
+							);
+							$isValidCrmProperty = $crmPropertyValidator->validate($_POST[$FIELD_ID] ?? null);
+							$_POST[$FIELD_ID] = $crmPropertyValidator->getFilteredValue() ?? ['VALUE' => ''];
+
+							if (!$isValidCrmProperty)
+							{
+								$strError .= Loc::getMessage(
+									'CC_BLEE_VALIDATE_FIELD_ERROR',
+									['#NAME#' => $arField['NAME']]
+								) . '<br />';
+								break;
+							}
+
+							$arProps[$arField['ID']] = $_POST[$FIELD_ID] ?? ['VALUE' => ''];
+							break;
 						default:
-							$arProps[$arField["ID"]] = $_POST[$FIELD_ID] ?? ['VALUE' => ''];
+							$arProps[$arField['ID']] = $_POST[$FIELD_ID] ?? ['VALUE' => ''];
 					}
 				}
 				else
@@ -623,7 +654,7 @@ if(
 			}
 		}
 
-		$arElement["MODIFIED_BY"] = $USER->GetID();
+		$arElement["MODIFIED_BY"] = $currentUserId;
 		unset($arElement["TIMESTAMP_X"]);
 
 		if(count($arProps))
@@ -684,76 +715,90 @@ if(
 
 		//---BP---
 		$arResult["isConstantsTuned"] = false;
+		$complexDocumentType = null;
+		$complexDocumentId = null;
 		if($bBizproc)
 		{
-			$documentType = BizProcDocument::generateDocumentComplexType($arParams["IBLOCK_TYPE_ID"], $arResult["IBLOCK_ID"]);
-			$arDocumentStates = CBPDocument::GetDocumentStates(
-				$documentType,
-				($arResult["ELEMENT_ID"] > 0) ? BizProcDocument::getDocumentComplexId(
-					$arParams["IBLOCK_TYPE_ID"], $arResult["ELEMENT_ID"]) : null,
-				"Y"
+			$complexDocumentType = BizprocDocument::generateDocumentComplexType(
+				$arParams['IBLOCK_TYPE_ID'],
+				$arResult['IBLOCK_ID']
 			);
+			$complexDocumentId = (
+				$arResult['ELEMENT_ID'] > 0
+					? BizprocDocument::getDocumentComplexId($arParams['IBLOCK_TYPE_ID'], $arResult['ELEMENT_ID'])
+					: null
+			);
+			$arDocumentStates = CBPDocument::getDocumentStates($complexDocumentType, $complexDocumentId);
 
 			$templatesOnStartup = false;
-			$arCurrentUserGroups = $USER->GetUserGroupArray();
-			if(!$arResult["ELEMENT_FIELDS"] || $arResult["ELEMENT_FIELDS"]["CREATED_BY"] == $USER->GetID())
+			$arCurrentUserGroups = $currentUserGroups;
+			if (!$arResult['ELEMENT_FIELDS'] || $arResult['ELEMENT_FIELDS']['CREATED_BY'] == $currentUserId)
 			{
-				$arCurrentUserGroups[] = "author";
+				$arCurrentUserGroups[] = 'author';
 			}
 
-			if($arResult["ELEMENT_ID"])
+			if ($arResult['ELEMENT_ID'])
 			{
-				$canWrite = CBPDocument::CanUserOperateDocument(
+				$canWrite = CBPDocument::canUserOperateDocument(
 					CBPCanUserOperateOperation::WriteDocument,
-					$USER->GetID(),
-					BizProcDocument::getDocumentComplexId($arParams["IBLOCK_TYPE_ID"], $arResult["ELEMENT_ID"]),
-					array("AllUserGroups" => $arCurrentUserGroups, "DocumentStates" => $arDocumentStates)
+					$currentUserId,
+					$complexDocumentId,
+					['AllUserGroups' => $arCurrentUserGroups, 'DocumentStates' => $arDocumentStates]
 				);
 			}
 			else
 			{
-				$canWrite = CBPDocument::CanUserOperateDocumentType(
+				$canWrite = CBPDocument::canUserOperateDocumentType(
 					CBPCanUserOperateOperation::WriteDocument,
-					$USER->GetID(),
-					$documentType,
-					array("AllUserGroups" => $arCurrentUserGroups, "DocumentStates" => $arDocumentStates)
+					$currentUserId,
+					$complexDocumentType,
+					['AllUserGroups' => $arCurrentUserGroups, 'DocumentStates' => $arDocumentStates]
 				);
 			}
 
 			if(!$canWrite)
-				$strError = GetMessage("CC_BLEE_ACCESS_DENIED_STATUS");
+			{
+				$strError = Loc::getMessage('CC_BLEE_ACCESS_DENIED_STATUS');
+			}
 
 			if(!$strError)
 			{
-				$arBizProcParametersValues = array();
+				$arBizProcParametersValues = [];
 				foreach ($arDocumentStates as $arDocumentState)
 				{
-					if($arDocumentState["ID"] == '')
+					if($arDocumentState['ID'] == '')
 					{
 						$templatesOnStartup = true;
-						$arErrorsTmp = array();
+						$arErrorsTmp = [];
 
-						$arBizProcParametersValues[$arDocumentState["TEMPLATE_ID"]] = CBPDocument::StartWorkflowParametersValidate(
-							$arDocumentState["TEMPLATE_ID"],
-							$arDocumentState["TEMPLATE_PARAMETERS"],
-							$documentType,
-							$arErrorsTmp
-						);
+						$arBizProcParametersValues[$arDocumentState['TEMPLATE_ID']] =
+							CBPDocument::startWorkflowParametersValidate(
+								$arDocumentState['TEMPLATE_ID'],
+								$arDocumentState['TEMPLATE_PARAMETERS'],
+								$complexDocumentType,
+								$arErrorsTmp
+							)
+						;
 
-						foreach($arErrorsTmp as $e)
-							$strError .= $e["message"]."<br />";
+						foreach ($arErrorsTmp as $e)
+						{
+							$strError .= $e['message'] . '<br />';
+						}
 					}
 				}
+
 				$templates = array_merge(
-					\CBPWorkflowTemplateLoader::SearchTemplatesByDocumentType($documentType, CBPDocumentEventType::Create),
-					\CBPWorkflowTemplateLoader::SearchTemplatesByDocumentType($documentType, CBPDocumentEventType::Edit)
+					\CBPWorkflowTemplateLoader::searchTemplatesByDocumentType($complexDocumentType, CBPDocumentEventType::Create),
+					\CBPWorkflowTemplateLoader::searchTemplatesByDocumentType($complexDocumentType, CBPDocumentEventType::Edit)
 				);
-				foreach($templates as $template)
+
+				foreach ($templates as $template)
 				{
-					if(!CBPWorkflowTemplateLoader::isConstantsTuned($template["ID"]))
+					if (!CBPWorkflowTemplateLoader::isConstantsTuned($template['ID']))
 					{
-						$strError .= GetMessage('CC_BLEE_IS_CONSTANTS_TUNED')."<br />";
-						$arResult["isConstantsTuned"] = true;
+						$strError .= Loc::getMessage('CC_BLEE_IS_CONSTANTS_TUNED') . '<br />';
+						$arResult['isConstantsTuned'] = true;
+
 						break;
 					}
 				}
@@ -771,33 +816,40 @@ if(
 			{
 				if ($arResult["ELEMENT_ID"])
 				{
-					if (CLists::isEnabledLockFeature($arResult["IBLOCK_ID"]) &&
-						CIBlockElement::WF_IsLocked($ELEMENT_ID, $lockedBy, $dateLock))
+					if (
+						CLists::isEnabledLockFeature($arResult["IBLOCK_ID"])
+						&& CIBlockElement::WF_IsLocked($ELEMENT_ID, $lockedBy, $dateLock))
 					{
-						$strError = GetMessage("CC_BLEE_ELEMENT_LOCKED");
+						$strError = Loc::getMessage('CC_BLEE_ELEMENT_LOCKED');
 					}
 					else
 					{
 						$res = $obElement->Update($arResult["ELEMENT_ID"], $arElement, false, true, true);
 						if (!$res)
+						{
 							$strError = $obElement->LAST_ERROR;
+						}
 					}
 				}
 				else
 				{
 					$res = $obElement->Add($arElement, false, true, true);
 					if ($res)
+					{
 						$arResult["ELEMENT_ID"] = $res;
+					}
 					else
+					{
 						$strError = $obElement->LAST_ERROR;
+					}
 				}
 			}
 			catch(SqlQueryException)
 			{
 				$strError =
 					$arResult['ELEMENT_ID']
-						? GetMessage('CC_BLEE_INTERNAL_ERROR_ELEMENT_UPDATE')
-						: GetMessage('CC_BLEE_INTERNAL_ERROR_ELEMENT_ADD')
+						? Loc::getMessage('CC_BLEE_INTERNAL_ERROR_ELEMENT_UPDATE')
+						: Loc::getMessage('CC_BLEE_INTERNAL_ERROR_ELEMENT_ADD')
 				;
 			}
 			if (!$strError)
@@ -825,55 +877,41 @@ if(
 				);
 			}
 
-			$arBizProcWorkflowId = array();
-			foreach($arDocumentStates as $arDocumentState)
+			$arBizProcWorkflowId = [];
+			$timeToStart = null;
+			if (isset($_POST['timeToStart']) && is_numeric($_POST['timeToStart']))
 			{
-				if($arDocumentState["ID"] == '')
+				$timeToStart = (int)$_POST['timeToStart'];
+			}
+
+			$workflowService = new \Bitrix\Lists\Api\Service\WorkflowService([
+				'IBLOCK_TYPE_ID' => (string)$arParams['IBLOCK_TYPE_ID'],
+				'ID' => (int)$arResult['IBLOCK_ID'],
+				'BIZPROC' => $arResult['IBLOCK']['BIZPROC'] ?? null,
+			]);
+
+			$startWorkflowsResponse = $workflowService->startWorkflows(
+				new \Bitrix\Lists\Api\Request\WorkflowService\StartWorkflowsRequest(
+					(int)$arResult['ELEMENT_ID'],
+					$currentUserId,
+					isset($arBizProcParametersValues) && is_array($arBizProcParametersValues)
+						? $arBizProcParametersValues
+						: [],
+					$changedFields,
+					$ELEMENT_ID === 0,
+					$timeToStart,
+				)
+			);
+
+			if (!$startWorkflowsResponse->isSuccess())
+			{
+				foreach ($startWorkflowsResponse->getErrors() as $error)
 				{
-					$currentUserId = \Bitrix\Main\Engine\CurrentUser::get()->getId();
-					$workflowParameters =
-						isset($arBizProcParametersValues) && is_array($arBizProcParametersValues)
-							? ($arBizProcParametersValues[$arDocumentState['TEMPLATE_ID']] ?? [])
-							: []
-					;
-
-					$timeToStart = null;
-					if (isset($_POST['timeToStart']) && is_numeric($_POST['timeToStart']))
-					{
-						$timeToStart = (int)$_POST['timeToStart'];
-					}
-					$startWorkflowRequest = new \Bitrix\Bizproc\Api\Request\WorkflowService\StartWorkflowRequest(
-						userId: $currentUserId,
-						targetUserId: $currentUserId,
-						templateId: $arDocumentState["TEMPLATE_ID"],
-						complexDocumentId: BizProcDocument::getDocumentComplexId(
-							$arParams["IBLOCK_TYPE_ID"],
-							$arResult["ELEMENT_ID"],
-						),
-						parameters: array_merge(
-							$workflowParameters,
-							[
-								CBPDocument::PARAM_TAGRET_USER => 'user_' . $currentUserId,
-								CBPDocument::PARAM_MODIFIED_DOCUMENT_FIELDS => $changedFields,
-							]
-						),
-						startDuration: $timeToStart >= 0 ? $timeToStart : null,
-					);
-					$workflowService = new \Bitrix\Bizproc\Api\Service\WorkflowService(
-						accessService: new \Bitrix\Lists\Api\Service\WorkflowAccessService(),
-					);
-					$startWorkflowResponse = $workflowService->startWorkflow($startWorkflowRequest);
-
-					if (!$startWorkflowResponse->isSuccess())
-					{
-						foreach ($startWorkflowResponse->getErrors() as $error)
-						{
-							$strError .= $error->getMessage() . '<br/>';
-						}
-					}
+					$strError .= $error->getMessage() . '<br />';
 				}
 			}
 
+			$arBizProcWorkflowId = $startWorkflowsResponse->getWorkflowIds();
 			$bizprocIndex = intval($_REQUEST["bizproc_index"] ?? 0);
 			if($bizprocIndex > 0)
 			{
@@ -901,7 +939,7 @@ if(
 						CBPDocument::SendExternalEvent(
 							$bpId,
 							$bpEvent,
-							array("Groups" => $arCurrentUserGroups, "User" => $GLOBALS["USER"]->GetID()),
+							['Groups' => $arCurrentUserGroups, 'User' => $currentUserId],
 							$arErrorTmp
 						);
 
@@ -1016,7 +1054,7 @@ elseif($arResult["ELEMENT_ID"] || $copy_id)
 }
 else
 {//New one
-	$data["NAME"] = GetMessage("CC_BLEE_FIELD_NAME_DEFAULT");
+	$data["NAME"] = Loc::getMessage('CC_BLEE_FIELD_NAME_DEFAULT');
 	$data["IBLOCK_SECTION_ID"] = $arResult["SECTION_ID"]? $arResult["SECTION_ID"]: "";
 }
 
@@ -1181,7 +1219,7 @@ foreach($arResult["FIELDS"] as $FIELD_ID => $arField)
 }
 
 $arResult["LIST_SECTIONS"] = array(
-	"" => GetMessage("CC_BLEE_UPPER_LEVEL"),
+	"" => Loc::getMessage('CC_BLEE_UPPER_LEVEL'),
 );
 $rsSections = CIBlockSection::GetTreeList(array("IBLOCK_ID"=>$arResult["IBLOCK_ID"], "CHECK_PERMISSIONS"=>"N"));
 while($arSection = $rsSections->Fetch())

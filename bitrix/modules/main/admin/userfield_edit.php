@@ -1,15 +1,17 @@
-<?
+<?php
 /**
  * Bitrix Framework
  * @package bitrix
  * @subpackage main
- * @copyright 2001-2013 Bitrix
+ * @copyright 2001-2026 Bitrix
  */
 
 /**
  * Bitrix vars
  * @global CMain $APPLICATION
  * @global CUserTypeManager $USER_FIELD_MANAGER
+ * @global CAdminPage $adminPage
+ * @global CAdminSidePanelHelper $adminSidePanelHelper
  */
 
 use Bitrix\Main;
@@ -72,23 +74,23 @@ $bVarsFromForm = false;
 if($_SERVER["REQUEST_METHOD"] == "POST" && (!empty($_POST["save"]) || !empty($_POST["apply"])) && ($RIGHTS >= "W") && check_bitrix_sessid())
 {
 	$arFields = array(
-		"ENTITY_ID" => $_REQUEST["ENTITY_ID"] ?? '',
-		"FIELD_NAME" => $_REQUEST["FIELD_NAME"] ?? '',
-		"USER_TYPE_ID" => $_REQUEST["USER_TYPE_ID"] ?? '',
-		"XML_ID" => $_REQUEST["XML_ID"] ?? '',
-		"SORT" => $_REQUEST["SORT"] ?? '',
-		"MULTIPLE" => $_REQUEST["MULTIPLE"] ?? '',
-		"MANDATORY" => $_REQUEST["MANDATORY"] ?? '',
-		"SHOW_FILTER" => $_REQUEST["SHOW_FILTER"] ?? '',
-		"SHOW_IN_LIST" => $_REQUEST["SHOW_IN_LIST"] ?? '',
-		"EDIT_IN_LIST" => $_REQUEST["EDIT_IN_LIST"] ?? '',
-		"IS_SEARCHABLE" => $_REQUEST["IS_SEARCHABLE"] ?? '',
-		"SETTINGS" => $_REQUEST["SETTINGS"] ?? '',
-		"EDIT_FORM_LABEL" => $_REQUEST["EDIT_FORM_LABEL"] ?? '',
-		"LIST_COLUMN_LABEL" => $_REQUEST["LIST_COLUMN_LABEL"] ?? '',
-		"LIST_FILTER_LABEL" => $_REQUEST["LIST_FILTER_LABEL"] ?? '',
-		"ERROR_MESSAGE" => $_REQUEST["ERROR_MESSAGE"] ?? '',
-		"HELP_MESSAGE" => $_REQUEST["HELP_MESSAGE"] ?? '',
+		"ENTITY_ID" => $_POST["ENTITY_ID"] ?? '',
+		"FIELD_NAME" => $_POST["FIELD_NAME"] ?? '',
+		"USER_TYPE_ID" => $_POST["USER_TYPE_ID"] ?? '',
+		"XML_ID" => $_POST["XML_ID"] ?? '',
+		"SORT" => $_POST["SORT"] ?? '',
+		"MULTIPLE" => $_POST["MULTIPLE"] ?? 'N',
+		"MANDATORY" => $_POST["MANDATORY"] ?? 'N',
+		"SHOW_FILTER" => $_POST["SHOW_FILTER"] ?? 'N',
+		"SHOW_IN_LIST" => $_POST["SHOW_IN_LIST"] ?? 'Y',
+		"EDIT_IN_LIST" => $_POST["EDIT_IN_LIST"] ?? 'Y',
+		"IS_SEARCHABLE" => $_POST["IS_SEARCHABLE"] ?? 'N',
+		"SETTINGS" => $_POST["SETTINGS"] ?? [],
+		"EDIT_FORM_LABEL" => $_POST["EDIT_FORM_LABEL"] ?? [],
+		"LIST_COLUMN_LABEL" => $_POST["LIST_COLUMN_LABEL"] ?? [],
+		"LIST_FILTER_LABEL" => $_POST["LIST_FILTER_LABEL"] ?? [],
+		"ERROR_MESSAGE" => $_POST["ERROR_MESSAGE"] ?? [],
+		"HELP_MESSAGE" => $_POST["HELP_MESSAGE"] ?? [],
 	);
 
 	$obUserField  = new CUserTypeEntity;
@@ -104,7 +106,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && (!empty($_POST["save"]) || !empty($_P
 
 	if(is_object($obEnum))
 	{
-		$LIST = $_REQUEST["LIST"] ?? [];
+		$LIST = $_POST["LIST"] ?? [];
 		if(is_array($LIST))
 		{
 			foreach($LIST as $id => $value)
@@ -131,7 +133,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && (!empty($_POST["save"]) || !empty($_P
 		{
 			if (!empty($_POST["apply"]))
 			{
-				$applyUrl = $selfFolderUrl."userfield_edit.php?ID=".$ID."&lang=".LANG."&back_url=".
+				$applyUrl = $selfFolderUrl."userfield_edit.php?ID=".$ID."&lang=".LANGUAGE_ID."&back_url=".
 					urlencode($back_url)."&".$tabControl->ActiveTabParam();
 				$applyUrl = $adminSidePanelHelper->setDefaultQueryParams($applyUrl);
 				LocalRedirect($applyUrl);
@@ -144,7 +146,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && (!empty($_POST["save"]) || !empty($_P
 			}
 			else
 			{
-				$redirectUrl = $selfFolderUrl."userfield_admin.php?lang=".LANG;
+				$redirectUrl = $selfFolderUrl."userfield_admin.php?lang=".LANGUAGE_ID;
 				$redirectUrl = $adminSidePanelHelper->editUrlToPublicPage($redirectUrl);
 				$adminSidePanelHelper->localRedirect($redirectUrl);
 				LocalRedirect($redirectUrl);
@@ -163,62 +165,64 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && (!empty($_POST["save"]) || !empty($_P
 
 }
 
-if($ID>0)
+$userFieldData = [
+	'ENTITY_ID' => $_GET['ENTITY_ID'] ?? '',
+	'FIELD_NAME' => $_GET['FIELD_NAME'] ?? 'UF_',
+	'USER_TYPE_ID' => $_GET['USER_TYPE_ID'] ?? '',
+	'XML_ID' => '',
+	'SORT' => 100,
+	'MULTIPLE' => 'N',
+	'MANDATORY' => 'N',
+	'SHOW_FILTER' => 'N',
+	'SHOW_IN_LIST' => 'Y',
+	'EDIT_IN_LIST' => 'Y',
+	'IS_SEARCHABLE' => 'N',
+	'SETTINGS' => [],
+	'EDIT_FORM_LABEL' => [],
+	'LIST_COLUMN_LABEL' => [],
+	'LIST_FILTER_LABEL' => [],
+	'ERROR_MESSAGE' => [],
+	'HELP_MESSAGE' => [],
+];
+
+$checkboxes = [
+	'MULTIPLE' => 1,
+	'MANDATORY' => 1,
+	'SHOW_IN_LIST' => 1,
+	'EDIT_IN_LIST' => 1,
+	'IS_SEARCHABLE' => 1,
+];
+
+if ($ID > 0)
 {
 	$arUserField = CUserTypeEntity::GetByID($ID);
-	if(!$arUserField)
-		$ID=0;
-}
-else
-{
-	$arUserField = array(
-		"ENTITY_ID" => $_GET["ENTITY_ID"] ?? "",
-		"FIELD_NAME" => $_GET["FIELD_NAME"] ?? "UF_",
-		"USER_TYPE_ID" => $_GET["USER_TYPE_ID"] ?? "",
-		"XML_ID" => "",
-		"SORT" => 100,
-		"MULTIPLE" => "N",
-		"MANDATORY" => "N",
-		"SHOW_FILTER" => "N",
-		"SHOW_IN_LIST" => "Y",
-		"EDIT_IN_LIST" => "Y",
-		"IS_SEARCHABLE" => "N",
-		"SETTINGS" => array(),
-	);
+	if ($arUserField)
+	{
+		foreach ($userFieldData as $key => $value)
+		{
+			$userFieldData[$key] = $arUserField[$key] ?? $value;
+		}
+	}
+	else
+	{
+		$ID = 0;
+	}
 }
 
-if($bVarsFromForm)
+if ($bVarsFromForm)
 {
-	$ENTITY_ID = htmlspecialcharsbx($_REQUEST["ENTITY_ID"] ?? '');
-	$FIELD_NAME = htmlspecialcharsbx($_REQUEST["FIELD_NAME"] ?? '');
-	$USER_TYPE_ID = htmlspecialcharsbx($_REQUEST["USER_TYPE_ID"] ?? '');
-	$XML_ID = htmlspecialcharsbx($_REQUEST["XML_ID"] ?? '');
-	$SORT = htmlspecialcharsbx($_REQUEST["SORT"] ?? '');
-	$MULTIPLE = htmlspecialcharsbx($_REQUEST["MULTIPLE"] ?? '');
-	$MANDATORY = htmlspecialcharsbx($_REQUEST["MANDATORY"] ?? '');
-	$SHOW_FILTER = htmlspecialcharsbx($_REQUEST["SHOW_FILTER"] ?? '');
-	$SHOW_IN_LIST = htmlspecialcharsbx($_REQUEST["SHOW_IN_LIST"] ?? '');
-	$EDIT_IN_LIST = htmlspecialcharsbx($_REQUEST["EDIT_IN_LIST"] ?? '');
-	$IS_SEARCHABLE = htmlspecialcharsbx($_REQUEST["IS_SEARCHABLE"] ?? '');
-}
-else
-{
-	$ENTITY_ID = htmlspecialcharsbx($arUserField["ENTITY_ID"]);
-	$FIELD_NAME = htmlspecialcharsbx($arUserField["FIELD_NAME"]);
-	$USER_TYPE_ID = htmlspecialcharsbx($arUserField["USER_TYPE_ID"]);
-	$XML_ID = htmlspecialcharsbx($arUserField["XML_ID"]);
-	$SORT = htmlspecialcharsbx($arUserField["SORT"]);
-	$MULTIPLE = htmlspecialcharsbx($arUserField["MULTIPLE"]);
-	$MANDATORY = htmlspecialcharsbx($arUserField["MANDATORY"]);
-	$SHOW_FILTER = htmlspecialcharsbx($arUserField["SHOW_FILTER"]);
-	$SHOW_IN_LIST = htmlspecialcharsbx($arUserField["SHOW_IN_LIST"]);
-	$EDIT_IN_LIST = htmlspecialcharsbx($arUserField["EDIT_IN_LIST"]);
-	$IS_SEARCHABLE = htmlspecialcharsbx($arUserField["IS_SEARCHABLE"]);
+	foreach ($userFieldData as $key => $value)
+	{
+		if (isset($_POST[$key]) || isset($checkboxes[$key]))
+		{
+			$userFieldData[$key] = $_POST[$key] ?? '';
+		}
+	}
 }
 
 $arUserTypes = $USER_FIELD_MANAGER->GetUserType();
 Main\Type\Collection::sortByColumn($arUserTypes, 'DESCRIPTION', '', null, true);
-$arUserType = $USER_FIELD_MANAGER->GetUserType($USER_TYPE_ID);
+$arUserType = $USER_FIELD_MANAGER->GetUserType($userFieldData['USER_TYPE_ID']);
 if(!$arUserType)
 {
 	$arUserType = reset($arUserTypes);
@@ -245,7 +249,7 @@ if (!$adminSidePanelHelper->isPublicFrame())
 	$aMenu[] = array(
 		"TEXT"=>GetMessage("USER_TYPE_LIST"),
 		"TITLE"=>GetMessage("USER_TYPE_LIST_TITLE"),
-		"LINK"=>!empty($list_url)? $list_url : "userfield_admin.php?lang=".LANG,
+		"LINK"=>!empty($list_url)? $list_url : "userfield_admin.php?lang=".LANGUAGE_ID,
 		"ICON"=>"btn_list",
 	);
 }
@@ -255,13 +259,13 @@ if($ID>0)
 	$aMenu[] = array(
 		"TEXT"=>GetMessage("MAIN_ADD"),
 		"TITLE"=>GetMessage("USER_TYPE_ADD"),
-		"LINK"=>"userfield_edit.php?lang=".LANG,
+		"LINK"=>"userfield_edit.php?lang=".LANGUAGE_ID,
 		"ICON"=>"btn_new",
 	);
 	$aMenu[] = array(
 		"TEXT"=>GetMessage("MAIN_DELETE"),
 		"TITLE"=>GetMessage("USER_TYPE_DELETE"),
-		"LINK"=>"javascript:if(confirm('".GetMessage("USER_TYPE_DELETE_CONF")."'))window.location='userfield_admin.php?ID=".$ID."&action=delete&lang=".LANG."&".bitrix_sessid_get()."';",
+		"LINK"=>"javascript:if(confirm('".GetMessage("USER_TYPE_DELETE_CONF")."'))window.location='userfield_admin.php?ID=".$ID."&action=delete&lang=".LANGUAGE_ID."&".bitrix_sessid_get()."';",
 		"ICON"=>"btn_delete",
 	);
 }
@@ -269,7 +273,7 @@ $context = new CAdminContextMenu($aMenu);
 $context->Show();
 ?>
 
-<?
+<?php
 if($message)
 	echo $message->Show();
 ?>
@@ -327,7 +331,7 @@ BX.ready(function(){
 	{
 		for(var i in data)
 		{
-			var r = /^LIST\[n([\d]+)\]\[XML_ID\]$/.exec(i);
+			var r = /^LIST\[n([\d]+)]\[XML_ID]$/.exec(i);
 			if (r && r[1] > 0)
 			{
 				addNewRow('list_table');
@@ -338,27 +342,27 @@ BX.ready(function(){
 
 });
 </script>
-<?
+<?php
 $formAction = $APPLICATION->GetCurPage();
 $formAction = $adminSidePanelHelper->setDefaultQueryParams($formAction);
 ?>
 <form method="POST" action="<?=$formAction?>" ENCTYPE="multipart/form-data" name="post_form">
-<?
+<?php
 $tabControl->Begin();
 ?>
-<?
+<?php
 $tabControl->BeginNextTab();
 ?>
-	<?if($ID):?>
+	<?php if($ID):?>
 	<tr>
 		<td width="40%">ID:</td>
 		<td width="60%"><?=$ID?></td>
 	</tr>
-	<?endif?>
+	<?php endif?>
 	<tr class="adm-detail-required-field">
 		<td width="40%"><?=GetMessage("USERTYPE_USER_TYPE_ID")?>:</td>
 		<td width="60%">
-			<?
+			<?php
 			if($ID > 0)
 			{
 				echo htmlspecialcharsbx($arUserType["DESCRIPTION"]);
@@ -371,7 +375,21 @@ $tabControl->BeginNextTab();
 					$arr["reference"][] = $userType["DESCRIPTION"];
 					$arr["reference_id"][] = $userType["USER_TYPE_ID"];
 				}
-				echo SelectBoxFromArray("USER_TYPE_ID", $arr, $USER_TYPE_ID, "", 'OnChange="'.htmlspecialcharsbx('window.location=\''.CUtil::JSEscape($APPLICATION->GetCurPageParam("", array("USER_TYPE_ID")).'&back_url='.urlencode($back_url).'&list_url='.urlencode($list_url).'&ENTITY_ID='.$ENTITY_ID.'&USER_TYPE_ID=').'\' + this.value').'"');
+				echo SelectBoxFromArray(
+					'USER_TYPE_ID',
+					$arr,
+					$userFieldData['USER_TYPE_ID'],
+					'',
+					'OnChange="' . htmlspecialcharsbx(
+						'window.location=\'' . CUtil::JSEscape(
+							$APPLICATION->GetCurPageParam('', array('USER_TYPE_ID'))
+							. '&back_url=' . urlencode($back_url)
+							. '&list_url=' . urlencode($list_url)
+							. '&ENTITY_ID=' . urlencode((string)$userFieldData['ENTITY_ID'])
+							. '&USER_TYPE_ID='
+						) . '\' + this.value'
+					) . '"'
+				);
 			}
 			?>
 		</td>
@@ -379,53 +397,53 @@ $tabControl->BeginNextTab();
 	<tr class="adm-detail-required-field">
 		<td><?=GetMessage("USERTYPE_ENTITY_ID")?>:</td>
 		<td>
-			<?if($ID>0 || ($ENTITY_ID!="" && !$message)):?>
-				<?=$ENTITY_ID?>
-				<input type="hidden" name="ENTITY_ID" value="<?=$ENTITY_ID?>">
-			<?else:?>
-				<input type="text" name="ENTITY_ID" value="<?=$ENTITY_ID?>" maxlength="50">
-			<?endif?>
+			<?php if($ID>0 || ($userFieldData['ENTITY_ID'] != '' && !$message)):?>
+				<?=htmlspecialcharsbx($userFieldData['ENTITY_ID'])?>
+				<input type="hidden" name="ENTITY_ID" value="<?=htmlspecialcharsbx($userFieldData['ENTITY_ID'])?>">
+			<?php else:?>
+				<input type="text" name="ENTITY_ID" value="<?=htmlspecialcharsbx($userFieldData['ENTITY_ID'])?>" maxlength="50">
+			<?php endif?>
 		</td>
 	</tr>
 	<tr class="adm-detail-required-field">
 		<td><?=GetMessage("USERTYPE_FIELD_NAME")?>:</td>
 		<td>
-			<?if($ID>0):?>
-				<?=$FIELD_NAME?>
-			<?else:?>
-				<input type="text" name="FIELD_NAME" value="<?=$FIELD_NAME?>" maxlength="50">
-			<?endif?>
+			<?php if($ID>0):?>
+				<?=htmlspecialcharsbx($userFieldData['FIELD_NAME'])?>
+			<?php else:?>
+				<input type="text" name="FIELD_NAME" value="<?=htmlspecialcharsbx($userFieldData['FIELD_NAME'])?>" maxlength="50">
+			<?php endif?>
 		</td>
 	</tr>
 	<tr>
 		<td><?=GetMessage("USERTYPE_XML_ID")?>:</td>
-		<td><input type="text" name="XML_ID" value="<?=$XML_ID?>" maxlength="255"></td>
+		<td><input type="text" name="XML_ID" value="<?=htmlspecialcharsbx($userFieldData['XML_ID'])?>" maxlength="255"></td>
 	</tr>
 	<tr>
 		<td><?=GetMessage("USERTYPE_SORT")?>:</td>
-		<td><input type="text" name="SORT" value="<?=$SORT?>"></td>
+		<td><input type="text" name="SORT" value="<?=htmlspecialcharsbx((string)$userFieldData['SORT'])?>"></td>
 	</tr>
 	<?php if ($userTypeClass::isMultiplicitySupported()):?>
 	<tr>
 		<td><?=GetMessage("USERTYPE_MULTIPLE")?>:</td>
 		<td>
-			<?if($ID>0):?>
-				<?=$MULTIPLE == "Y"? GetMessage("MAIN_YES"): GetMessage("MAIN_NO")?>
-			<?else:?>
-				<input type="checkbox" name="MULTIPLE" value="Y"<?if($MULTIPLE == "Y") echo " checked"?> >
-			<?endif?>
+			<?php if($ID>0):?>
+				<?=$userFieldData['MULTIPLE'] == "Y"? GetMessage("MAIN_YES"): GetMessage("MAIN_NO")?>
+			<?php else:?>
+				<input type="checkbox" name="MULTIPLE" value="Y"<?php if($userFieldData['MULTIPLE'] == "Y") echo " checked"?> >
+			<?php endif?>
 		</td>
 	</tr>
 	<?php endif;?>
 	<?php if ($userTypeClass::isMandatorySupported()):?>
 	<tr>
 		<td><?=GetMessage("USERTYPE_MANDATORY")?>:</td>
-		<td><input type="checkbox" name="MANDATORY" value="Y"<?if($MANDATORY == "Y") echo " checked"?> ></td>
+		<td><input type="checkbox" name="MANDATORY" value="Y"<?php if($userFieldData['MANDATORY'] == "Y") echo " checked"?> ></td>
 	</tr>
 	<?php endif;?>
 	<tr>
 		<td><?=GetMessage("USERTYPE_SHOW_FILTER")?>:</td>
-		<td><?
+		<td><?php
 			$arr = array(
 				"reference" => array(
 					GetMessage("USER_TYPE_FILTER_N"),
@@ -440,61 +458,61 @@ $tabControl->BeginNextTab();
 					"S",
 				),
 			);
-			echo SelectBoxFromArray("SHOW_FILTER", $arr, $SHOW_FILTER);
+			echo SelectBoxFromArray("SHOW_FILTER", $arr, $userFieldData['SHOW_FILTER']);
 		?></td>
 	</tr>
 	<tr>
 		<td><?=GetMessage("USERTYPE_SHOW_IN_LIST")?>:</td>
-		<td><input type="checkbox" name="SHOW_IN_LIST" value="N"<?if($SHOW_IN_LIST == "N") echo " checked"?> ></td>
+		<td><input type="checkbox" name="SHOW_IN_LIST" value="N"<?php if($userFieldData['SHOW_IN_LIST'] == "N") echo " checked"?> ></td>
 	</tr>
 	<tr>
 		<td><?=GetMessage("USERTYPE_EDIT_IN_LIST")?>:</td>
-		<td><input type="checkbox" name="EDIT_IN_LIST" value="N"<?if($EDIT_IN_LIST == "N") echo " checked"?> ></td>
+		<td><input type="checkbox" name="EDIT_IN_LIST" value="N"<?php if($userFieldData['EDIT_IN_LIST'] == "N") echo " checked"?> ></td>
 	</tr>
 	<tr>
 		<td><?=GetMessage("USERTYPE_IS_SEARCHABLE")?>:</td>
-		<td><input type="checkbox" name="IS_SEARCHABLE" value="Y"<?if($IS_SEARCHABLE == "Y") echo " checked"?> ></td>
+		<td><input type="checkbox" name="IS_SEARCHABLE" value="Y"<?php if($userFieldData['IS_SEARCHABLE'] == "Y") echo " checked"?> ></td>
 	</tr>
 	<tr class="heading">
-		<td colspan="2"><?echo GetMessage("USERTYPE_SETTINGS")?></td>
+		<td colspan="2"><?= GetMessage("USERTYPE_SETTINGS")?></td>
 	</tr>
-	<?if($ID > 0):
-		echo $USER_FIELD_MANAGER->GetSettingsHTML($arUserField, $bVarsFromForm);
+	<?php if($ID > 0):
+		echo $USER_FIELD_MANAGER->GetSettingsHTML($userFieldData, $bVarsFromForm);
 	else:
 		echo $USER_FIELD_MANAGER->GetSettingsHTML($arUserType["USER_TYPE_ID"], $bVarsFromForm);
 	endif;?>
 	<tr class="heading">
-		<td colspan="2"><?echo GetMessage("USERTYPE_LANG_SETTINGS")?></td>
+		<td colspan="2"><?= GetMessage("USERTYPE_LANG_SETTINGS")?></td>
 	</tr>
 	<tr>
 		<td colspan="2" align="center">
 			<table border="0" cellspacing="10" cellpadding="2">
 				<tr>
-					<td align="right"><?echo GetMessage("USER_TYPE_LANG");?></td>
-					<td align="center" width="200"><?echo GetMessage("USER_TYPE_EDIT_FORM_LABEL");?></td>
-					<td align="center" width="200"><?echo GetMessage("USER_TYPE_LIST_COLUMN_LABEL");?></td>
-					<td align="center" width="200"><?echo GetMessage("USER_TYPE_LIST_FILTER_LABEL");?></td>
-					<td align="center" width="200"><?echo GetMessage("USER_TYPE_ERROR_MESSAGE");?></td>
-					<td align="center" width="200"><?echo GetMessage("USER_TYPE_HELP_MESSAGE");?></td>
+					<td align="right"><?= GetMessage("USER_TYPE_LANG");?></td>
+					<td align="center" width="200"><?= GetMessage("USER_TYPE_EDIT_FORM_LABEL");?></td>
+					<td align="center" width="200"><?= GetMessage("USER_TYPE_LIST_COLUMN_LABEL");?></td>
+					<td align="center" width="200"><?= GetMessage("USER_TYPE_LIST_FILTER_LABEL");?></td>
+					<td align="center" width="200"><?= GetMessage("USER_TYPE_ERROR_MESSAGE");?></td>
+					<td align="center" width="200"><?= GetMessage("USER_TYPE_HELP_MESSAGE");?></td>
 				</tr>
-				<?
+				<?php
 				$rsLanguage = CLanguage::GetList();
 				while($arLanguage = $rsLanguage->Fetch()):
 					$htmlLID = htmlspecialcharsbx($arLanguage["LID"]);
 				?>
 				<tr>
-					<td align="right"><?echo htmlspecialcharsbx($arLanguage["NAME"])?>:</td>
-					<td align="center"><input type="text" name="EDIT_FORM_LABEL[<?echo $htmlLID?>]" size="20" maxlength="255" value="<?echo htmlspecialcharsbx($bVarsFromForm? ($_REQUEST["EDIT_FORM_LABEL"][$arLanguage["LID"]] ?? '') : ($arUserField["EDIT_FORM_LABEL"][$arLanguage["LID"]] ?? ''))?>"></td>
-					<td align="center"><input type="text" name="LIST_COLUMN_LABEL[<?echo $htmlLID?>]" size="20" maxlength="255" value="<?echo htmlspecialcharsbx($bVarsFromForm? ($_REQUEST["LIST_COLUMN_LABEL"][$arLanguage["LID"]] ?? '') : ($arUserField["LIST_COLUMN_LABEL"][$arLanguage["LID"]] ?? ''))?>"></td>
-					<td align="center"><input type="text" name="LIST_FILTER_LABEL[<?echo $htmlLID?>]" size="20" maxlength="255" value="<?echo htmlspecialcharsbx($bVarsFromForm? ($_REQUEST["LIST_FILTER_LABEL"][$arLanguage["LID"]] ?? '') : ($arUserField["LIST_FILTER_LABEL"][$arLanguage["LID"]] ?? ''))?>"></td>
-					<td align="center"><input type="text" name="ERROR_MESSAGE[<?echo $htmlLID?>]" size="20" maxlength="255" value="<?echo htmlspecialcharsbx($bVarsFromForm? ($_REQUEST["ERROR_MESSAGE"][$arLanguage["LID"]] ?? '') : ($arUserField["ERROR_MESSAGE"][$arLanguage["LID"]] ?? ''))?>"></td>
-					<td align="center"><input type="text" name="HELP_MESSAGE[<?echo $htmlLID?>]" size="20" maxlength="255" value="<?echo htmlspecialcharsbx($bVarsFromForm? ($_REQUEST["HELP_MESSAGE"][$arLanguage["LID"]] ?? '') : ($arUserField["HELP_MESSAGE"][$arLanguage["LID"]] ?? ''))?>"></td>
+					<td align="right"><?= htmlspecialcharsbx($arLanguage["NAME"])?>:</td>
+					<td align="center"><input type="text" name="EDIT_FORM_LABEL[<?= $htmlLID?>]" size="20" maxlength="255" value="<?= htmlspecialcharsbx($userFieldData['EDIT_FORM_LABEL'][$arLanguage["LID"]] ?? '')?>"></td>
+					<td align="center"><input type="text" name="LIST_COLUMN_LABEL[<?= $htmlLID?>]" size="20" maxlength="255" value="<?= htmlspecialcharsbx($userFieldData['LIST_COLUMN_LABEL'][$arLanguage["LID"]] ?? '')?>"></td>
+					<td align="center"><input type="text" name="LIST_FILTER_LABEL[<?= $htmlLID?>]" size="20" maxlength="255" value="<?= htmlspecialcharsbx($userFieldData['LIST_FILTER_LABEL'][$arLanguage["LID"]] ?? '')?>"></td>
+					<td align="center"><input type="text" name="ERROR_MESSAGE[<?= $htmlLID?>]" size="20" maxlength="255" value="<?= htmlspecialcharsbx($userFieldData['ERROR_MESSAGE'][$arLanguage["LID"]] ?? '')?>"></td>
+					<td align="center"><input type="text" name="HELP_MESSAGE[<?= $htmlLID?>]" size="20" maxlength="255" value="<?= htmlspecialcharsbx($userFieldData['HELP_MESSAGE'][$arLanguage["LID"]] ?? '')?>"></td>
 				</tr>
-				<?endwhile?>
+				<?php endwhile?>
 			</table>
 		</td>
 	</tr>
-<?if(is_object($obEnum)):
+<?php if(is_object($obEnum)):
 	$tabControl->BeginNextTab();
 ?>
 	<tr>
@@ -523,7 +541,7 @@ while($item = $rsEnum->GetNext())
 	}
 }
 
-if ($MULTIPLE === 'N'):
+if ($userFieldData['MULTIPLE'] === 'N'):
 	?>
 	<tr>
 		<td>&nbsp;</td>
@@ -533,11 +551,11 @@ if ($MULTIPLE === 'N'):
 		<td><input type="radio" name="LIST[DEF][]" value="0" <?= ($hasDefaultItem ? '' : 'checked') ?>></td>
 		<td>&nbsp;</td>
 	</tr>
-<?endif?>
-<?
+<?php endif?>
+<?php
 	foreach ($enumItems as $arEnum):
-		if($bVarsFromForm && is_array($_REQUEST['LIST'][$arEnum["ID"]]))
-			foreach($_REQUEST['LIST'][$arEnum["ID"]] as $key=>$val)
+		if($bVarsFromForm && is_array($_POST['LIST'][$arEnum["ID"]] ?? null))
+			foreach($_POST['LIST'][$arEnum["ID"]] as $key=>$val)
 				$arEnum[$key] = htmlspecialcharsbx($val);
 ?>
 	<tr>
@@ -545,16 +563,16 @@ if ($MULTIPLE === 'N'):
 		<td><input type="text" name="LIST[<?=$arEnum["ID"]?>][XML_ID]" value="<?=$arEnum["XML_ID"]?>" size="15" maxlength="255"></td>
 		<td><input type="text" name="LIST[<?=$arEnum["ID"]?>][VALUE]" value="<?=$arEnum["VALUE"]?>" size="35" maxlength="255"></td>
 		<td><input type="text" name="LIST[<?=$arEnum["ID"]?>][SORT]" value="<?=$arEnum["SORT"]?>" size="5" maxlength="10"></td>
-		<td><input type="<?=($MULTIPLE=="Y"? "checkbox": "radio")?>" name="LIST[DEF][]" value="<?=$arEnum["ID"]?>" <?=($arEnum["DEF"]=="Y"? "checked": "")?>></td>
-		<td><input type="checkbox" name="LIST[<?=$arEnum["ID"]?>][DEL]" value="Y"<?if($arEnum["DEL"] == "Y") echo " checked"?>></td>
+		<td><input type="<?=($userFieldData['MULTIPLE'] == "Y"? "checkbox": "radio")?>" name="LIST[DEF][]" value="<?=$arEnum["ID"]?>" <?=($arEnum["DEF"]=="Y"? "checked": "")?>></td>
+		<td><input type="checkbox" name="LIST[<?=$arEnum["ID"]?>][DEL]" value="Y"<?php if($arEnum["DEL"] == "Y") echo " checked"?>></td>
 	</tr>
-<?
+<?php
 	endforeach;
 ?>
-<?
+<?php
 if($bVarsFromForm):
 	$n = 0;
-	foreach($_REQUEST['LIST'] as $key=>$val):
+	foreach(($_POST['LIST'] ?? []) as $key=>$val):
 		if(strncmp($key, "n", 1)===0):
 ?>
 	<tr>
@@ -562,10 +580,10 @@ if($bVarsFromForm):
 		<td><input type="text" name="LIST[n<?=$n?>][XML_ID]" value="<?=htmlspecialcharsbx($val["XML_ID"])?>" size="15" maxlength="255"></td>
 		<td><input type="text" name="LIST[n<?=$n?>][VALUE]" value="<?=htmlspecialcharsbx($val["VALUE"])?>" size="35" maxlength="255"></td>
 		<td><input type="text" name="LIST[n<?=$n?>][SORT]" value="<?=htmlspecialcharsbx($val["SORT"])?>" size="5" maxlength="10"></td>
-		<td><input type="<?=($MULTIPLE=="Y"? "checkbox": "radio")?>" name="LIST[DEF][]" value="n<?=$n?>"></td>
-		<td><input type="checkbox" name="LIST[n<?=$n?>][DEL]" value="Y"<?if($val["DEL"] == "Y") echo " checked"?>></td>
+		<td><input type="<?=($userFieldData['MULTIPLE'] == "Y"? "checkbox": "radio")?>" name="LIST[DEF][]" value="n<?=$n?>"></td>
+		<td><input type="checkbox" name="LIST[n<?=$n?>][DEL]" value="Y"<?php if($val["DEL"] == "Y") echo " checked"?>></td>
 	</tr>
-<?
+<?php
 			$n++;
 		endif;
 	endforeach;
@@ -576,10 +594,10 @@ else:
 		<td><input type="text" name="LIST[n0][XML_ID]" value="" size="15" maxlength="255"></td>
 		<td><input type="text" name="LIST[n0][VALUE]" value="" size="35" maxlength="255"></td>
 		<td><input type="text" name="LIST[n0][SORT]" value="500" size="5" maxlength="10"></td>
-		<td><input type="<?=($MULTIPLE=="Y"? "checkbox": "radio")?>" name="LIST[DEF][]" value="n0"></td>
+		<td><input type="<?=($userFieldData['MULTIPLE'] == "Y"? "checkbox": "radio")?>" name="LIST[DEF][]" value="n0"></td>
 		<td><input type="checkbox" name="LIST[n0][DEL]" value="Y"></td>
 	</tr>
-<?
+<?php
 endif;
 ?>
 	</table>
@@ -589,29 +607,29 @@ endif;
 		<td>&nbsp;</td>
 		<td><input type="button" value="<?=GetMessage("USER_TYPE_LIST_MORE")?>" OnClick="addNewRow('list_table')" ></td>
 	</tr>
-<?endif?>
-<?
+<?php endif?>
+<?php
 $tabControl->Buttons(
 	array(
 		"disabled" => ($RIGHTS < "W"),
-		"back_url" => !empty($back_url) ? $back_url : "userfield_admin.php?lang=".LANG
+		"back_url" => !empty($back_url) ? $back_url : "userfield_admin.php?lang=".LANGUAGE_ID
 	)
 );
 ?>
-<?echo bitrix_sessid_post();?>
-<?if($ID>0 && empty($bCopy)):?>
+<?= bitrix_sessid_post();?>
+<?php if($ID>0 && empty($bCopy)):?>
 	<input type="hidden" name="ID" value="<?=$ID?>">
-<?endif;?>
+<?php endif;?>
 <input type="hidden" name="back_url" value="<?=htmlspecialcharsbx($back_url)?>">
 <input type="hidden" name="list_url" value="<?=htmlspecialcharsbx($list_url)?>">
 
-<?
+<?php
 $tabControl->End();
 ?>
 
-<?
+<?php
 $tabControl->ShowWarnings("post_form", $message);
 ?>
 
 
-<?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");
+<?php require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");

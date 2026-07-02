@@ -309,6 +309,23 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons/buttons/buttons', (
 		};
 
 		/**
+		 * @param {string} chatType
+		 * @return {Array<DialogHeaderButton>}
+		 */
+		getButtonsForOptimisticChat(chatType)
+		{
+			// eslint-disable-next-line sonarjs/no-small-switch
+			switch (chatType)
+			{
+				case DialogType.copilot:
+					return [AddUsersButton];
+
+				default:
+					return [];
+			}
+		}
+
+		/**
 		 * @private
 		 * @param {DialoguesModelState?} dialogData
 		 * @return {boolean}

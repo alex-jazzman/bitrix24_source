@@ -8,13 +8,13 @@ return [
 	'css' => 'dist/registry.bundle.css',
 	'js' => 'dist/registry.bundle.js',
 	'rel' => [
-		'ui.avatar',
-		'ui.fonts.opensans',
-		'im.v2.lib.utils',
+		'im.v2.const',
 		'im.v2.lib.channel',
 		'im.v2.lib.copilot',
+		'im.v2.lib.utils',
 		'main.core',
-		'im.v2.const',
+		'ui.avatar',
+		'ui.fonts.opensans',
 	],
 	'skip_core' => false,
 ];

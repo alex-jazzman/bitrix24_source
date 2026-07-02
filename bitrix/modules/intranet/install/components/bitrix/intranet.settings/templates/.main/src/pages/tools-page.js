@@ -3,7 +3,7 @@ import { Draggable } from 'ui.draganddrop.draggable';
 import { Section, Row } from 'ui.section';
 import { Switcher } from 'ui.switcher';
 import { SwitcherNestedItem, SwitcherNested } from 'ui.switcher-nested';
-import { Loc, Type, Event as EventBX, Dom, Tag } from 'main.core';
+import { Loc, Type, Event as EventBX, Dom, Tag, Runtime } from 'main.core';
 import { SettingsSection, SettingsRow, BaseSettingsPage } from 'ui.form-elements.field';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 
@@ -22,6 +22,14 @@ type ToolConfig = {
 		title?: string,
 		text?: string,
 		confirmCaption: string,
+	},
+	enableConfirmation?: {
+		isNeeded: boolean,
+		title?: string,
+		text?: string,
+		confirmCaption?: string,
+		jsExtension?: string,
+		jsExportName?: string,
 	},
 }
 
@@ -98,10 +106,10 @@ export class ToolsPage extends BaseSettingsPage
 			});
 			toolSelectors.push(toolSelector);
 
-			if (tool.disableConfirmation.isNeeded)
+			const switcher = Switcher.getById(tool.code);
+			if (switcher)
 			{
-				const switcher = Switcher.getById(tool.code);
-				if (switcher)
+				if (tool.disableConfirmation.isNeeded)
 				{
 					EventEmitter.subscribe(
 						switcher,
@@ -110,6 +118,20 @@ export class ToolsPage extends BaseSettingsPage
 							if (!switcher.isChecked())
 							{
 								this.#showDisableConfirmation(tool, switcher);
+							}
+						}
+					);
+				}
+
+				if (tool.enableConfirmation?.isNeeded)
+				{
+					EventEmitter.subscribe(
+						switcher,
+						'toggled',
+						() => {
+							if (switcher.isChecked())
+							{
+								this.#showEnableConfirmation(tool, switcher);
 							}
 						}
 					);
@@ -323,6 +345,79 @@ export class ToolsPage extends BaseSettingsPage
 				closeByEsc: true,
 			}
 		);
+	}
+
+	#showEnableConfirmation(tool: ToolConfig, switcher: Switcher): void
+	{
+		if (tool.enableConfirmation.jsExtension && tool.enableConfirmation.jsExportName)
+		{
+			this.#showCustomEnableConfirmation(tool, switcher);
+		}
+		else
+		{
+			this.#showSimpleEnableConfirmation(tool);
+		}
+	}
+
+	#showSimpleEnableConfirmation(tool: ToolConfig): void
+	{
+		MessageBox.show({
+			title: tool.enableConfirmation.title,
+			message: tool.enableConfirmation.text,
+			useAirDesign: true,
+			okCaption: tool.enableConfirmation.confirmCaption,
+			buttons: MessageBoxButtons.OK,
+			maxWidth: 360,
+			popupOptions: {
+				id: 'enable-tool-confirmation-' + tool.code,
+			},
+		});
+	}
+
+	#showCustomEnableConfirmation(tool: ToolConfig, switcher: Switcher): void
+	{
+		this.#setSaveButtonDisabled(true);
+
+		Runtime.loadExtension(tool.enableConfirmation.jsExtension).then((exports) => {
+			const PopupClass = exports[tool.enableConfirmation.jsExportName];
+			if (!PopupClass)
+			{
+				this.#setSaveButtonDisabled(false);
+
+				return;
+			}
+
+			const popup = new PopupClass({
+				formNode: this.getFormNode(),
+				toolCode: tool.code,
+			});
+			popup.show()
+				.then(() => {
+					this.#setSaveButtonDisabled(false);
+				})
+				.catch(() => {
+					switcher.check(false, false);
+					this.#setSaveButtonDisabled(false);
+				});
+		});
+	}
+
+	#setSaveButtonDisabled(disabled: boolean): void
+	{
+		const saveBtn = document.querySelector('#intranet-settings-page #ui-button-panel-save');
+		if (saveBtn)
+		{
+			saveBtn.disabled = disabled;
+
+			if (disabled)
+			{
+				Dom.addClass(saveBtn, 'ui-btn-disabled');
+			}
+			else
+			{
+				Dom.removeClass(saveBtn, 'ui-btn-disabled');
+			}
+		}
 	}
 
 	#showDisableConfirmation(tool: ToolConfig): void

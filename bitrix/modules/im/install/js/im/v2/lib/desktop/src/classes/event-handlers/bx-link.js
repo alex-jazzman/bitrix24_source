@@ -1,4 +1,4 @@
-import { EventType, DesktopBxLink, LegacyDesktopBxLink, DesktopBroadcastAction, WINDOW_ACTIVATION_DELAY } from 'im.v2.const';
+import { EventType, DesktopBxLink, LegacyDesktopBxLink, DesktopBroadcastAction } from 'im.v2.const';
 import { DesktopApi, DesktopFeature } from 'im.v2.lib.desktop-api';
 import { DesktopBroadcastManager } from 'im.v2.lib.desktop';
 

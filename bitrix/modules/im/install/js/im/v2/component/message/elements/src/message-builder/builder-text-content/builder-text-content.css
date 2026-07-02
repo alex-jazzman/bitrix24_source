@@ -1,0 +1,39 @@
+.bx-im-message-block-base__container .--color-base {
+	--im-message-builder-color: var(--ui-color-base-1);
+
+	color: var(--im-message-builder-color);
+}
+
+.bx-im-message-block-base__container .--color-primary {
+	--im-message-builder-color: var(--ui-color-accent-main-primary);
+
+	color: var(--im-message-builder-color);
+}
+
+.bx-im-message-block-base__container .--color-secondary {
+	--im-message-builder-color: var(--ui-color-base-2);
+
+	color: var(--im-message-builder-color);
+}
+
+.bx-im-message-block-base__container .--color-alert {
+	--im-message-builder-color: var(--ui-color-accent-main-alert);
+
+	color: var(--im-message-builder-color);
+}
+
+.bx-im-message-block-base__container .--color-success {
+	--im-message-builder-color: var(--ui-color-accent-soft-element-green);
+
+	color: var(--im-message-builder-color);
+}
+
+.bx-im-message-block-base__container .--color-tertiary {
+	--im-message-builder-color: var(--ui-color-base-3);
+
+	color: var(--im-message-builder-color);
+}
+
+.bx-im-message-block-base__container .bx-im-message-text-content__container {
+	color: var(--im-message-builder-color, inherit);
+}

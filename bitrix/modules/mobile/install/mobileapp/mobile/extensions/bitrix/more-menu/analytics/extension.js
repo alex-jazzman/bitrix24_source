@@ -24,6 +24,11 @@ jn.define('more-menu/analytics', (require, exports, module) => {
 		},
 	});
 
+	const SupportBannerEvent = Object.freeze({
+		MEETUP: 'meetup',
+		SETUP_CONSULTATION: 'setup_consultation',
+	});
+
 	class MoreMenuAnalytics extends AnalyticsEvent
 	{
 		getDefaults()
@@ -124,10 +129,26 @@ jn.define('more-menu/analytics', (require, exports, module) => {
 
 			new AnalyticsEvent(eventConfig).send();
 		}
+
+		static sendSupportBannerClickEvent(type)
+		{
+			if (!Object.values(SupportBannerEvent).includes(type))
+			{
+				return;
+			}
+
+			new this({
+				tool: 'intranet',
+				category: 'ava_menu',
+				event: 'click_banner',
+				type,
+			}).send();
+		}
 	}
 
 	module.exports = {
 		MoreMenuAnalytics,
 		AHA_EVENT_KEY,
+		SupportBannerEvent,
 	};
 });

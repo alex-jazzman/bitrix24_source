@@ -1,4 +1,4 @@
-import { Tag } from 'main.core';
+import { Tag, Dom, Event } from 'main.core';
 
 export class Item
 {
@@ -7,10 +7,27 @@ export class Item
 	#name = '';
 	#counterElement: null;
 	#itemElement: null;
+	#container: null;
 	#isActive: false;
+	#isExpanded = true;
 	#path : '';
-	#shiftWidthInPixels = 10;
+	#shiftWidthInPixels = 20;
+	#maxNestingLevel = 6;
 	#zeroLevelShiftWidth = 29;
+	#childrenContainer: null;
+	#toggleButton: null;
+	#childItems = [];
+	#menu: null;
+
+	getContainer()
+	{
+		return this.#container;
+	}
+
+	getItemElement()
+	{
+		return this.#itemElement;
+	}
 
 	setCount(number)
 	{
@@ -19,11 +36,11 @@ export class Item
 
 		if (number === 0)
 		{
-			this.#counterElement.classList.add('ui-sidepanel-menu-link-text-counter-hidden');
+			Dom.addClass(this.#counterElement, 'ui-sidepanel-menu-link-text-counter-hidden');
 		}
 		else
 		{
-			this.#counterElement.classList.remove('ui-sidepanel-menu-link-text-counter-hidden');
+			Dom.removeClass(this.#counterElement, 'ui-sidepanel-menu-link-text-counter-hidden');
 		}
 	}
 
@@ -35,7 +52,7 @@ export class Item
 	disableActivity()
 	{
 		this.#isActive = false;
-		this.#itemElement.classList.remove('ui-sidepanel-menu-active');
+		Dom.removeClass(this.#itemElement, 'mail-menu-directory-item--active');
 	}
 
 	getPath()
@@ -46,12 +63,91 @@ export class Item
 	enableActivity()
 	{
 		this.#isActive = true;
-		this.#itemElement.classList.add('ui-sidepanel-menu-active');
+		Dom.addClass(this.#itemElement, 'mail-menu-directory-item--active');
 	}
 
 	isActive()
 	{
 		return this.#isActive;
+	}
+
+	collapse()
+	{
+		if (!this.#childrenContainer)
+		{
+			return;
+		}
+
+		this.#isExpanded = false;
+		const container = this.#childrenContainer;
+		Dom.style(container, 'maxHeight', `${container.scrollHeight}px`);
+		requestAnimationFrame(() => {
+			Dom.style(container, 'maxHeight', '0');
+		});
+
+		Dom.attr(this.#itemElement, 'aria-expanded', 'false');
+		const icon = this.#toggleButton.querySelector('.mail-menu-directory-toggle-icon');
+		Dom.removeClass(icon, '--chevron-down-l');
+		Dom.addClass(icon, '--chevron-top-l');
+
+		this.#setChildrenTabIndex('-1');
+	}
+
+	expand()
+	{
+		if (!this.#childrenContainer)
+		{
+			return;
+		}
+
+		this.#isExpanded = true;
+		const container = this.#childrenContainer;
+		Dom.style(container, 'maxHeight', 'none');
+		const fullHeight = container.scrollHeight;
+		Dom.style(container, 'maxHeight', '0');
+
+		requestAnimationFrame(() => {
+			Dom.style(container, 'maxHeight', `${fullHeight}px`);
+			const onEnd = () => {
+				Dom.style(container, 'maxHeight', '');
+				Event.unbind(container, 'transitionend', onEnd);
+			};
+			Event.bind(container, 'transitionend', onEnd);
+		});
+
+		Dom.attr(this.#itemElement, 'aria-expanded', 'true');
+		const icon = this.#toggleButton.querySelector('.mail-menu-directory-toggle-icon');
+		Dom.removeClass(icon, '--chevron-top-l');
+		Dom.addClass(icon, '--chevron-down-l');
+
+		this.#setChildrenTabIndex('0');
+	}
+
+	#setChildrenTabIndex(value)
+	{
+		const items = this.#childrenContainer.querySelectorAll('li[tabindex]');
+		items.forEach((item) => {
+			Dom.attr(item, 'tabindex', value);
+		});
+	}
+
+	toggle()
+	{
+		if (!this.#childrenContainer)
+		{
+			return;
+		}
+
+		if (this.#isExpanded)
+		{
+			this.collapse();
+		}
+		else
+		{
+			this.expand();
+		}
+
+		this.#menu.onToggleFolder(this.#path, this.#isExpanded);
 	}
 
 	/**
@@ -60,90 +156,189 @@ export class Item
 	 * @param directory (directory structure).
 	 * @returns {boolean}
 	 */
-	static checkProperties(directory) {
-		if(directory['path'] === undefined || directory['name'] === undefined || directory['name'] === undefined)
+	static checkProperties(directory)
+	{
+		if (directory.path === undefined || directory.name === undefined)
 		{
 			return false;
 		}
+
 		return true;
 	}
 
-	constructor(directory, menu, nestingLevel = 0, systemDirs)
+	constructor(directory, menu, systemDirs, nestingLevel = 0)
 	{
-		this.#path = directory['path'];
+		this.#path = directory.path;
+		this.#menu = menu;
 
 		let iconClass = 'default';
-		if(systemDirs['inbox'] === this.#path)
+		switch (this.#path)
 		{
-			iconClass = 'inbox';
-		}
-		else if(systemDirs['spam'] === this.#path)
-		{
-			iconClass = 'spam';
-		}
-		else if(systemDirs['outcome'] === this.#path)
-		{
-			iconClass = 'outcome';
-		}
-		else if(systemDirs['trash'] === this.#path)
-		{
-			iconClass = 'trash';
-		}
-		else if(systemDirs['drafts'] === this.#path)
-		{
-			iconClass = 'drafts';
+			case systemDirs.inbox: {
+				iconClass = 'inbox';
+
+				break;
+			}
+
+			case systemDirs.spam: {
+				iconClass = 'spam';
+
+				break;
+			}
+
+			case systemDirs.outcome: {
+				iconClass = 'outcome';
+
+				break;
+			}
+
+			case systemDirs.trash: {
+				iconClass = 'trash';
+
+				break;
+			}
+
+			case systemDirs.drafts: {
+				iconClass = 'drafts';
+
+				break;
+			}
+
+			default: {
+				break;
+			}
 		}
 
-		this.#nameOriginal = directory['name'];
+		this.#nameOriginal = directory.name;
 
 		this.#name = this.#nameOriginal.charAt(0).toUpperCase() + this.#nameOriginal.slice(1);
 
 		const itemContainer = Tag.render`<div title="${this.#name}" class="mail-menu-directory-item-container"></div>`;
-		const itemElement = Tag.render`<li class="ui-sidepanel-menu-item ui-sidepanel-menu-counter-white mail-menu-directory-item-${iconClass}">
-				<a style="padding-left: ${this.#zeroLevelShiftWidth + (this.#shiftWidthInPixels*nestingLevel)}px" class="ui-sidepanel-menu-link">
-					<div class="ui-sidepanel-menu-link-text">
-						<span class="ui-sidepanel-menu-link-text-item">${this.#name}</span>
-					</div>
-					<span class="ui-sidepanel-menu-link-text-counter">${directory['count']}</span>
-				</a>
-			</li>`;
-		itemContainer.append(itemElement);
+		const itemElement = Tag.render`
+			<li tabindex="0" class="ui-sidepanel-menu-item ui-sidepanel-menu-counter-white mail-menu-directory-item-${iconClass}">
+							<a class="ui-sidepanel-menu-link mail-menu-directory-link">
+								<div class="ui-sidepanel-menu-link-text">
+									<span class="ui-sidepanel-menu-link-text-item">${this.#name}</span>
+								</div>
+								<span class="ui-sidepanel-menu-link-text-counter">${directory.count}</span>
+							</a>
+						</li>
+		`;
 
-		itemElement.onclick = ()=>
+		const linkElement = itemElement.querySelector('.ui-sidepanel-menu-link');
+		const clampedLevel = Math.min(nestingLevel, this.#maxNestingLevel);
+		Dom.style(linkElement, 'marginLeft', `${this.#zeroLevelShiftWidth + (this.#shiftWidthInPixels * clampedLevel) + 5}px`);
+
+		const iconSetMap = {
+			inbox: '--o-mail',
+			outcome: '--o-mail-send',
+			spam: '--o-alert',
+			trash: '--o-trashcan',
+			drafts: '--o-document-sign',
+			default: '--o-folder',
+		};
+
+		const iconSetClass = iconSetMap[iconClass];
+		if (iconSetClass)
 		{
-			if(!itemContainer.isActive())
-			{
-				menu.chooseFunction(directory['path']);
-				itemContainer.enableActivity();
-			}
+			const icon = Tag.render`<span class="ui-icon-set ${iconSetClass} mail-menu-directory-item-icon"></span>`;
+			const linkText = itemElement.querySelector('.ui-sidepanel-menu-link-text');
+			Dom.prepend(icon, linkText);
 		}
 
-		const counterElement = itemElement.querySelector(".ui-sidepanel-menu-link-text-counter");
+		Dom.append(itemElement, itemContainer);
+
+		Event.bind(itemElement, 'click', () => {
+			if (!this.isActive())
+			{
+				menu.chooseFunction(directory.path);
+				this.enableActivity();
+			}
+		});
+
+		Event.bind(itemElement, 'keydown', (event) => {
+			switch (event.key)
+			{
+				case 'Enter': {
+					event.preventDefault();
+					itemElement.click();
+					itemElement.focus();
+
+					break;
+				}
+
+				case ' ': {
+					event.preventDefault();
+					this.toggle();
+
+					break;
+				}
+				case 'ArrowDown':
+				case 'ArrowUp': {
+					event.preventDefault();
+					menu.moveFocus(itemElement, event.key === 'ArrowDown' ? 1 : -1);
+
+					break;
+				}
+
+				default: {
+					break;
+				}
+			}
+		});
+
+		const counterElement = itemElement.querySelector('.ui-sidepanel-menu-link-text-counter');
 
 		this.#counterElement = counterElement;
 		this.#itemElement = itemElement;
+		this.#container = itemContainer;
 
-		itemContainer.getCount = () => this.getCount();
-		itemContainer.setCount = number => this.setCount(number);
-		itemContainer.enableActivity = () => this.enableActivity();
-		itemContainer.disableActivity = () => this.disableActivity();
-		itemContainer.isActive = () => this.isActive();
-		itemContainer.setIconClass = name => this.setIconClass(name);
+		this.setCount(directory.count);
 
-		this.setCount(directory['count']);
-
-		for(let i=0; i<directory['items'].length; i++)
+		if (directory.items && directory.items.length > 0)
 		{
-			if(!Item.checkProperties(directory['items'][i]))
+			const childrenContainer = Tag.render`<div class="mail-menu-directory-children"></div>`;
+
+			for (let i = 0; i < directory.items.length; i++)
 			{
-				continue;
+				if (!Item.checkProperties(directory.items[i]))
+				{
+					continue;
+				}
+				const childItem = new Item(directory.items[i], menu, systemDirs, nestingLevel + 1);
+				this.#childItems.push(childItem);
+				Dom.append(childItem.getContainer(), childrenContainer);
 			}
-			const subdirectory = new Item(directory['items'][i],menu,nestingLevel+1,systemDirs);
-			itemContainer.append(subdirectory);
+
+			if (this.#childItems.length > 0)
+			{
+				const paddingLeft = this.#zeroLevelShiftWidth + (this.#shiftWidthInPixels * clampedLevel);
+				const toggleLeft = paddingLeft - 20;
+				const lineLeft = toggleLeft + 10;
+
+				Dom.attr(itemElement, 'aria-expanded', 'true');
+				const toggleButton = Tag.render`<button type="button" tabindex="-1" class="mail-menu-directory-toggle" aria-label="${this.#name}"><span class="ui-icon-set --chevron-down-l mail-menu-directory-toggle-icon"></span></button>`;
+				Dom.style(toggleButton, 'left', `${toggleLeft}px`);
+
+				Event.bind(toggleButton, 'click', (event) => {
+					event.stopPropagation();
+					this.toggle();
+				});
+
+				Dom.insertAfter(toggleButton, itemElement);
+				this.#toggleButton = toggleButton;
+
+				if (nestingLevel < this.#maxNestingLevel)
+				{
+					const treeLine = Tag.render`<div class="mail-menu-directory-tree-line"></div>`;
+					Dom.style(treeLine, 'left', `${lineLeft}px`);
+					Dom.prepend(treeLine, childrenContainer);
+				}
+				Dom.append(childrenContainer, itemContainer);
+				this.#childrenContainer = childrenContainer;
+			}
 		}
 
-		menu.includeItem(itemContainer, this.#path);
-
-		return itemContainer;
+		menu.includeItem(this, this.#path);
 	}
 }

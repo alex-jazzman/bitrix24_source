@@ -1,4 +1,4 @@
-<?
+<?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 {
 	die();
@@ -25,20 +25,20 @@ $arParams['ID'] = $arParams['ID'] ?: 'def';
 $containerId = 'main-user-selector-' . $arParams['ID'];
 ?>
 <span id="<?=htmlspecialcharsbx($containerId)?>" class="main-user-selector-wrap">
-	<?if ($arResult['IS_INPUT_MULTIPLE']):?>
-		<?foreach ($arResult['TILE_ID_LIST'] as $id):?>
+	<?php if ($arResult['IS_INPUT_MULTIPLE']):?>
+		<?php foreach ($arResult['TILE_ID_LIST'] as $id):?>
 			<input type="hidden" name="<?=$arParams['INPUT_NAME']?>"
 				value="<?=htmlspecialcharsbx($id)?>"
 			>
-		<?endforeach;?>
-	<?else:?>
+		<?php endforeach;?>
+	<?php else:?>
 		<input type="hidden" id="<?=$arParams['INPUT_NAME']?>"
 			name="<?=$arParams['INPUT_NAME']?>"
 			value="<?=htmlspecialcharsbx(implode(',', $arResult['TILE_ID_LIST']))?>"
 		>
-	<?endif;?>
+	<?php endif;?>
 
-	<?
+	<?php
 	$APPLICATION->IncludeComponent('bitrix:ui.tile.selector', '', array(
 		'ID' => $arParams['ID'],
 //		'LIST' => $arResult['LIST'],
@@ -53,7 +53,7 @@ $containerId = 'main-user-selector-' . $arParams['ID'];
 	));
 	?>
 
-	<?
+	<?php
 	$APPLICATION->IncludeComponent(
 		"bitrix:main.ui.selector",
 		".default",

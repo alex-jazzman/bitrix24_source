@@ -1,16 +1,16 @@
-import type { JsonObject } from 'main.core';
-import { Type, Dom, Event, Runtime, Reflection, Browser, ajax as Ajax, Uri } from 'main.core';
+import { Type, Dom, Event, Runtime, Reflection, Browser, ajax as Ajax, Uri, type JsonObject } from 'main.core';
 import { EventEmitter, BaseEvent } from 'main.core.events';
 import { PopupManager } from 'main.popup';
 
 import { Slider } from './slider';
-import type { SliderEvent } from './slider-event';
+import { type SliderEvent } from './slider-event';
 import { Toolbar } from './toolbar';
 import { MessageEvent } from './message-event';
-import type { ToolbarItem } from './toolbar-item';
-import type { LinkOptions } from './types/link-options';
-import type { MinimizeOptions } from './types/minimize-options';
-import type { RuleOptions } from './types/rule-options';
+
+import { type ToolbarItem } from './toolbar-item';
+import { type LinkOptions } from './types/link-options';
+import { type MinimizeOptions } from './types/minimize-options';
+import { type RuleOptions } from './types/rule-options';
 
 import { type SliderOptions } from './types/slider-options';
 
@@ -876,7 +876,7 @@ export class SliderManager
 		// 	currentSlider.getLabel().moveAt(openSliders.length - index - 1); // move down
 		// });
 
-		this.losePageFocus();
+		// this.losePageFocus();
 
 		if (!this.opened)
 		{
@@ -1444,6 +1444,19 @@ export class SliderManager
 		if (!this.isValidLink(rule, link))
 		{
 			return;
+		}
+
+		if (link.anchor !== event.target)
+		{
+			// click was inside a link
+			try
+			{
+				link.anchor.focus({ preventScroll: true, focusVisible: false });
+			}
+			catch
+			{
+				// silently failed
+			}
 		}
 
 		if (Type.isFunction(rule.handler))

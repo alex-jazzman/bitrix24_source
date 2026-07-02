@@ -25,14 +25,12 @@ class ComponentExtractor extends Extractor
 
 	public function run(): array
 	{
-		if (!empty($this->componentRealVars['placement_id']))
+		$rawPlacementId = $this->componentRealVars['placement_id'] ?? null;
+		$placementId = (int)$rawPlacementId;
+		if ($placementId > 0 && (string)$placementId === (string)$rawPlacementId)
 		{
-			$placementId = (int)$this->componentRealVars['placement_id'];
-			if (
-				(string)$placementId === (string)$this->componentRealVars['placement_id']
-				&&
-				($placement = Rest\PlacementTable::getById($placementId)->fetch())
-			)
+			$placement = Rest\PlacementTable::getById($placementId)->fetch();
+			if ($placement)
 			{
 				return [
 					'ID' => $placement['APP_ID'],
@@ -41,12 +39,15 @@ class ComponentExtractor extends Extractor
 					'PLACEMENT_ID' => $placement['ID'],
 				];
 			}
+
+			return [];
 		}
 
 		if (!empty($this->componentRealVars['id']))
 		{
-			$appId = (int)$this->componentRealVars['id'];
-			if ((string)$appId === (string)$this->componentRealVars['id'])
+			$rawId = $this->componentRealVars['id'];
+			$appId = (int)$rawId;
+			if ((string)$appId === (string)$rawId)
 			{
 				return [
 					'ID' => $appId,
@@ -54,7 +55,7 @@ class ComponentExtractor extends Extractor
 			}
 
 			return [
-				'CODE' => (string)$appId,
+				'CODE' => trim((string)$rawId),
 			];
 		}
 
@@ -87,7 +88,7 @@ class ComponentExtractor extends Extractor
 			$componentPage = false;
 		}
 
-		\CComponentEngine::InitcomponentVariables(
+		\CComponentEngine::InitComponentVariables(
 			$componentPage,
 			$this->componentDefaultVars,
 			\CComponentEngine::MakeComponentVariableAliases(

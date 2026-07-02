@@ -3,6 +3,7 @@ $MESS["CRM_TIMELINE_ACTIVITY_CREATION"] = 'Activity created: #TITLE#';
 $MESS["CRM_TIMELINE_COMPANY_CREATION"] = 'Company created';
 $MESS["CRM_TIMELINE_CONTACT_CREATION"] = 'Contact created';
 $MESS["CRM_TIMELINE_DEAL_CREATION"] = 'Deal created';
+$MESS["CRM_TIMELINE_DEAL_CREATION_COPY"] = "This deal is a copy of another deal";
 $MESS["CRM_TIMELINE_DEAL_ORDER_TITLE"] = 'For order: <a href=\'#HREF#\'>##ORDER_ID#</a> of #DATE_TIME# (for #PRICE_WITH_CURRENCY#)';
 $MESS["CRM_TIMELINE_INVOICE_CREATION"] = 'Invoice created';
 $MESS["CRM_TIMELINE_LEAD_CREATION"] = 'Lead created';

@@ -1,9 +1,469 @@
-this.BX=this.BX||{},function(e,s,t,a,l){"use strict";class i{invite(){throw new Error('Implement the method "invite" in the child class')}}var r=babelHelpers.classPrivateFieldLooseKey("groupId"),o=babelHelpers.classPrivateFieldLooseKey("users");class n extends i{constructor(e,s){super(),Object.defineProperty(this,r,{writable:!0,value:void 0}),Object.defineProperty(this,o,{writable:!0,value:void 0}),babelHelpers.classPrivateFieldLooseBase(this,r)[r]=e,babelHelpers.classPrivateFieldLooseBase(this,o)[o]=s}invite(){return l.ajax.runAction("intranet.invite.inviteUsersToCollab",{data:{collabId:babelHelpers.classPrivateFieldLooseBase(this,r)[r],users:babelHelpers.classPrivateFieldLooseBase(this,o)[o]}}).then(e=>{const s=(null==e?void 0:e.data)||[];let t=null;const a=s.filter(e=>"INVITED"===e.status),i=s.filter(e=>"ACTIVE"===e.status);if(0===s.length?t="INTRANET_INVITATION_INPUT_NO_USERS":i.length===s.length?t=1===i.length?"INTRANET_INVITATION_INPUT_ALREADY_IN_COLLAB_SINGLE":"INTRANET_INVITATION_INPUT_ALREADY_IN_COLLAB_ALL":a.length!==s.length&&(t="INTRANET_INVITATION_INPUT_ALREADY_IN_COLLAB_PARTIAL"),t){const e=l.Loc.getMessage(t);l.Type.isStringFilled(e)&&BX.UI.Notification.Center.notify({content:e,autoHideDelay:2500})}return e})}}var b=babelHelpers.classPrivateFieldLooseKey("users");class c extends i{constructor(e){super(),Object.defineProperty(this,b,{writable:!0,value:void 0}),babelHelpers.classPrivateFieldLooseBase(this,b)[b]=e}invite(){return l.ajax.runAction("intranet.v2.Invitation.inviteUsers",{data:{invitations:babelHelpers.classPrivateFieldLooseBase(this,b)[b]}})}}var d=babelHelpers.classPrivateFieldLooseKey("users"),p=babelHelpers.classPrivateFieldLooseKey("departments");class v extends i{constructor(e,s){super(),Object.defineProperty(this,d,{writable:!0,value:void 0}),Object.defineProperty(this,p,{writable:!0,value:void 0}),babelHelpers.classPrivateFieldLooseBase(this,d)[d]=e,babelHelpers.classPrivateFieldLooseBase(this,p)[p]=s}invite(){return l.ajax.runAction("intranet.v2.Invitation.inviteUsers",{data:{invitations:babelHelpers.classPrivateFieldLooseBase(this,d)[d],departmentIds:babelHelpers.classPrivateFieldLooseBase(this,p)[p]}})}}var h=babelHelpers.classPrivateFieldLooseKey("options");class P extends i{constructor(e){super(),Object.defineProperty(this,h,{writable:!0,value:void 0}),babelHelpers.classPrivateFieldLooseBase(this,h)[h]=e}invite(){var e;return l.ajax.runComponentAction("bitrix:intranet.invitation","inviteWithGroupDp",{data:{invitations:babelHelpers.classPrivateFieldLooseBase(this,h)[h].users,departmentIds:babelHelpers.classPrivateFieldLooseBase(this,h)[h].departmentIds,workgroupIds:babelHelpers.classPrivateFieldLooseBase(this,h)[h].groupIds,analyticsData:null!=(e=babelHelpers.classPrivateFieldLooseBase(this,h)[h].analyticsData)?e:{},tab:"mass"}})}}let u,L,g=e=>e;const H=Object.freeze({PHONE:"phone",EMAIL:"email",ALL:"all"});var F=babelHelpers.classPrivateFieldLooseKey("cache"),B=babelHelpers.classPrivateFieldLooseKey("invalidPhoneNumbersTagIds"),T=babelHelpers.classPrivateFieldLooseKey("isReadySendInvitation"),y=babelHelpers.classPrivateFieldLooseKey("placeholder"),I=babelHelpers.classPrivateFieldLooseKey("inputType"),f=babelHelpers.classPrivateFieldLooseKey("isPhoneEnabled"),E=babelHelpers.classPrivateFieldLooseKey("isEmailEnabled"),N=babelHelpers.classPrivateFieldLooseKey("userLang"),O=babelHelpers.classPrivateFieldLooseKey("minHeight"),A=babelHelpers.classPrivateFieldLooseKey("showErrorBeforeSubmit"),_=babelHelpers.classPrivateFieldLooseKey("showErrorAfterSubmit"),m=babelHelpers.classPrivateFieldLooseKey("onReadySave"),S=babelHelpers.classPrivateFieldLooseKey("onUnreadySave"),j=babelHelpers.classPrivateFieldLooseKey("id"),w=babelHelpers.classPrivateFieldLooseKey("invite"),K=babelHelpers.classPrivateFieldLooseKey("getPreparedUserList"),x=babelHelpers.classPrivateFieldLooseKey("getErrorTags"),D=babelHelpers.classPrivateFieldLooseKey("setReadySaveState"),R=babelHelpers.classPrivateFieldLooseKey("setUnreadySaveState"),C=babelHelpers.classPrivateFieldLooseKey("getPhoneParser"),V=babelHelpers.classPrivateFieldLooseKey("getDefaultPlaceholder"),M=babelHelpers.classPrivateFieldLooseKey("getDefaultValidationMessage"),U=babelHelpers.classPrivateFieldLooseKey("getEmptyValidationMessage"),X=babelHelpers.classPrivateFieldLooseKey("onAfterTagRemove"),W=babelHelpers.classPrivateFieldLooseKey("onBeforeTagAdd"),G=babelHelpers.classPrivateFieldLooseKey("setErrorStateForTag"),k=babelHelpers.classPrivateFieldLooseKey("onEnter"),Y=babelHelpers.classPrivateFieldLooseKey("onBlur"),$=babelHelpers.classPrivateFieldLooseKey("onInput"),q=babelHelpers.classPrivateFieldLooseKey("onContainerClick"),z=babelHelpers.classPrivateFieldLooseKey("getEntityTypeByValue"),J=babelHelpers.classPrivateFieldLooseKey("addTagByValue"),Q=babelHelpers.classPrivateFieldLooseKey("parseValue"),Z=babelHelpers.classPrivateFieldLooseKey("isPhone"),ee=babelHelpers.classPrivateFieldLooseKey("addErrorBlockByMessage"),se=babelHelpers.classPrivateFieldLooseKey("removeErrorBlock"),te=babelHelpers.classPrivateFieldLooseKey("createErrorBlockByMessage");class ae extends t.EventEmitter{constructor(e){var s;super(),Object.defineProperty(this,te,{value:Ee}),Object.defineProperty(this,se,{value:fe}),Object.defineProperty(this,ee,{value:Ie}),Object.defineProperty(this,Z,{value:ye}),Object.defineProperty(this,Q,{value:Te}),Object.defineProperty(this,J,{value:Be}),Object.defineProperty(this,z,{value:Fe}),Object.defineProperty(this,q,{value:He}),Object.defineProperty(this,$,{value:ge}),Object.defineProperty(this,Y,{value:Le}),Object.defineProperty(this,k,{value:ue}),Object.defineProperty(this,G,{value:Pe}),Object.defineProperty(this,W,{value:he}),Object.defineProperty(this,X,{value:ve}),Object.defineProperty(this,U,{value:pe}),Object.defineProperty(this,M,{value:de}),Object.defineProperty(this,V,{value:ce}),Object.defineProperty(this,C,{value:be}),Object.defineProperty(this,R,{value:ne}),Object.defineProperty(this,D,{value:oe}),Object.defineProperty(this,x,{value:re}),Object.defineProperty(this,K,{value:ie}),Object.defineProperty(this,w,{value:le}),Object.defineProperty(this,F,{writable:!0,value:new l.Cache.MemoryCache}),Object.defineProperty(this,B,{writable:!0,value:[]}),Object.defineProperty(this,T,{writable:!0,value:!1}),Object.defineProperty(this,y,{writable:!0,value:void 0}),Object.defineProperty(this,I,{writable:!0,value:void 0}),Object.defineProperty(this,f,{writable:!0,value:void 0}),Object.defineProperty(this,E,{writable:!0,value:void 0}),Object.defineProperty(this,N,{writable:!0,value:null}),Object.defineProperty(this,O,{writable:!0,value:null}),Object.defineProperty(this,A,{writable:!0,value:void 0}),Object.defineProperty(this,_,{writable:!0,value:void 0}),Object.defineProperty(this,m,{writable:!0,value:void 0}),Object.defineProperty(this,S,{writable:!0,value:void 0}),Object.defineProperty(this,j,{writable:!0,value:void 0}),babelHelpers.classPrivateFieldLooseBase(this,I)[I]=null!=(s=null==e?void 0:e.inputType)?s:H.ALL,this.setEventNamespace("BX.Intranet.InvitationInput"),babelHelpers.classPrivateFieldLooseBase(this,O)[O]=null==e?void 0:e.minHeight,babelHelpers.classPrivateFieldLooseBase(this,A)[A]=!!l.Type.isBoolean(null==e?void 0:e.showErrorBeforeSubmit)&&e.showErrorBeforeSubmit,babelHelpers.classPrivateFieldLooseBase(this,_)[_]=!l.Type.isBoolean(null==e?void 0:e.showErrorAfterSubmit)||e.showErrorAfterSubmit;const t=l.Extension.getSettings("intranet.invitation-input");if(babelHelpers.classPrivateFieldLooseBase(this,I)[I]===H.PHONE&&(null==t||!t.isInvitationByPhoneAvailable))throw new Error("Incorrect component operation parameters.");babelHelpers.classPrivateFieldLooseBase(this,f)[f]=[H.ALL,H.PHONE].includes(babelHelpers.classPrivateFieldLooseBase(this,I)[I])&&Boolean(null==t?void 0:t.isInvitationByPhoneAvailable),babelHelpers.classPrivateFieldLooseBase(this,E)[E]=[H.ALL,H.EMAIL].includes(babelHelpers.classPrivateFieldLooseBase(this,I)[I]),babelHelpers.classPrivateFieldLooseBase(this,y)[y]=l.Type.isStringFilled(null==e?void 0:e.placeholder)?e.placeholder:babelHelpers.classPrivateFieldLooseBase(this,V)[V](),babelHelpers.classPrivateFieldLooseBase(this,m)[m]=l.Type.isFunction(null==e?void 0:e.onReadySave)?e.onReadySave:null,babelHelpers.classPrivateFieldLooseBase(this,S)[S]=l.Type.isFunction(null==e?void 0:e.onUnreadySave)?e.onUnreadySave:null,babelHelpers.classPrivateFieldLooseBase(this,j)[j]=l.Type.isStringFilled(null==e?void 0:e.id)?e.id:BX.Text.getRandom(5)}changeLanguage(e){l.Type.isString(e)&&(babelHelpers.classPrivateFieldLooseBase(this,N)[N]=e)}getTagSelector(){return babelHelpers.classPrivateFieldLooseBase(this,F)[F].remember("tagSelector",()=>new a.TagSelector({id:"intranet-invitation-input-"+Math.random(4),showTextBox:!0,showAddButton:!1,placeholder:babelHelpers.classPrivateFieldLooseBase(this,y)[y],tagTextColor:"#1E8D36",tagBgColor:"#D4FDB0",tagMaxWidth:200,events:{onAfterTagRemove:babelHelpers.classPrivateFieldLooseBase(this,X)[X].bind(this),onBeforeTagAdd:babelHelpers.classPrivateFieldLooseBase(this,W)[W].bind(this),onEnter:babelHelpers.classPrivateFieldLooseBase(this,k)[k].bind(this),onBlur:babelHelpers.classPrivateFieldLooseBase(this,Y)[Y].bind(this),onInput:babelHelpers.classPrivateFieldLooseBase(this,$)[$].bind(this),onContainerClick:babelHelpers.classPrivateFieldLooseBase(this,q)[q].bind(this)}}))}isReadySendInvitation(){return babelHelpers.classPrivateFieldLooseBase(this,T)[T]}render(){return babelHelpers.classPrivateFieldLooseBase(this,F)[F].remember("node",()=>{if(this.getTagSelector().renderTo(this.getWrapper()),this.getTagSelector().focusTextBox(),l.Type.isNumber(babelHelpers.classPrivateFieldLooseBase(this,O)[O])){const e=this.getTagSelector().getItemsContainer();l.Dom.style(e,"min-height",babelHelpers.classPrivateFieldLooseBase(this,O)[O]+"px")}return this.getWrapper()})}renderTo(e){l.Dom.append(this.render(),e)}getWrapper(){return babelHelpers.classPrivateFieldLooseBase(this,F)[F].remember("wrapper",()=>l.Tag.render(u||(u=g`
-				<div data-test-id="${0}" class="intranet-invitation-wrapper"></div>
-			`),babelHelpers.classPrivateFieldLooseBase(this,j)[j]))}inviteToGroup(e){const s=new n(e,babelHelpers.classPrivateFieldLooseBase(this,K)[K]());return babelHelpers.classPrivateFieldLooseBase(this,w)[w](s)}inviteToPortal(){const e=new c(babelHelpers.classPrivateFieldLooseBase(this,K)[K]());return babelHelpers.classPrivateFieldLooseBase(this,w)[w](e)}inviteToDepartment(e){const s=new v(babelHelpers.classPrivateFieldLooseBase(this,K)[K](),e);return babelHelpers.classPrivateFieldLooseBase(this,w)[w](s)}inviteToDepartmentGroup(e,s,t){const a=new P({users:babelHelpers.classPrivateFieldLooseBase(this,K)[K](),analyticsData:t,departmentIds:e,groupIds:s});return babelHelpers.classPrivateFieldLooseBase(this,w)[w](a)}hasErrorTags(){return babelHelpers.classPrivateFieldLooseBase(this,x)[x]().length>0}isEmptyTags(){return 0===this.getTagSelector().getTags().length}}function le(e){return new Promise((s,t)=>{babelHelpers.classPrivateFieldLooseBase(this,se)[se](),babelHelpers.classPrivateFieldLooseBase(this,x)[x]().length>0?(babelHelpers.classPrivateFieldLooseBase(this,ee)[ee](babelHelpers.classPrivateFieldLooseBase(this,M)[M]()),t(babelHelpers.classPrivateFieldLooseBase(this,M)[M]())):0===this.getTagSelector().getTags().length?(babelHelpers.classPrivateFieldLooseBase(this,ee)[ee](babelHelpers.classPrivateFieldLooseBase(this,U)[U]()),t(babelHelpers.classPrivateFieldLooseBase(this,U)[U]())):e.invite().then(e=>{this.getTagSelector().removeTags(),babelHelpers.classPrivateFieldLooseBase(this,R)[R](),s(e)}).catch(e=>{babelHelpers.classPrivateFieldLooseBase(this,_)[_]?babelHelpers.classPrivateFieldLooseBase(this,ee)[ee](e.errors[0].message):this.getTagSelector().removeTags(),t(e.errors[0].message)})})}function ie(){babelHelpers.classPrivateFieldLooseBase(this,se)[se]();const e=this.getTagSelector().getTags(),s=[];return e.forEach(e=>{babelHelpers.classPrivateFieldLooseBase(this,E)[E]&&"email"===e.getEntityType()&&s.push({email:e.getTitle(),languageId:babelHelpers.classPrivateFieldLooseBase(this,N)[N]}),"phone"===e.getEntityType()&&babelHelpers.classPrivateFieldLooseBase(this,f)[f]&&!babelHelpers.classPrivateFieldLooseBase(this,B)[B].includes(e.getId())&&s.push({phone:e.getTitle()})}),s}function re(){const e=this.getTagSelector().getTags(),s=[];return e.forEach(e=>{"error"===e.getEntityType()&&s.push(e),"phone"===e.getEntityType()&&babelHelpers.classPrivateFieldLooseBase(this,f)[f]&&babelHelpers.classPrivateFieldLooseBase(this,B)[B].includes(e.getId())&&s.push(e)}),s}function oe(){var e,s;this.emit("onReadySave"),babelHelpers.classPrivateFieldLooseBase(this,T)[T]=!0,null==(e=(s=babelHelpers.classPrivateFieldLooseBase(this,m))[m])||e.call(s)}function ne(){var e,s;this.emit("onUnreadySave"),babelHelpers.classPrivateFieldLooseBase(this,T)[T]=!1,null==(e=(s=babelHelpers.classPrivateFieldLooseBase(this,S))[S])||e.call(s)}function be(){return BX.PhoneNumberParser.getInstance()}function ce(){return babelHelpers.classPrivateFieldLooseBase(this,f)[f]&&!babelHelpers.classPrivateFieldLooseBase(this,E)[E]?l.Loc.getMessage("INTRANET_INVITATION_INPUT_PLACEHOLDER_PHONE"):!babelHelpers.classPrivateFieldLooseBase(this,f)[f]&&babelHelpers.classPrivateFieldLooseBase(this,E)[E]?l.Loc.getMessage("INTRANET_INVITATION_INPUT_PLACEHOLDER"):l.Loc.getMessage("INTRANET_INVITATION_INPUT_PLACEHOLDER_WITH_PHONE")}function de(){return babelHelpers.classPrivateFieldLooseBase(this,f)[f]&&!babelHelpers.classPrivateFieldLooseBase(this,E)[E]?l.Loc.getMessage("INTRANET_INVITATION_INPUT_VALIDATION_MESSAGE_PHONE"):!babelHelpers.classPrivateFieldLooseBase(this,f)[f]&&babelHelpers.classPrivateFieldLooseBase(this,E)[E]?l.Loc.getMessage("INTRANET_INVITATION_INPUT_VALIDATION_MESSAGE"):l.Loc.getMessage("INTRANET_INVITATION_INPUT_VALIDATION_MESSAGE_WITH_PHONE")}function pe(){return babelHelpers.classPrivateFieldLooseBase(this,f)[f]&&!babelHelpers.classPrivateFieldLooseBase(this,E)[E]?l.Loc.getMessage("INTRANET_INVITATION_INPUT_VALIDATION_MESSAGE_PHONE"):!babelHelpers.classPrivateFieldLooseBase(this,f)[f]&&babelHelpers.classPrivateFieldLooseBase(this,E)[E]?l.Loc.getMessage("INTRANET_INVITATION_INPUT_EMPTY_MESSAGE"):l.Loc.getMessage("INTRANET_INVITATION_INPUT_EMPTY_MESSAGE_WITH_PHONE")}function ve(e){const s=e.getTarget().getTags(),t=s.filter(e=>"error"===e.getEntityType());0===t.length&&babelHelpers.classPrivateFieldLooseBase(this,se)[se](),0===s.length?babelHelpers.classPrivateFieldLooseBase(this,R)[R]():0===t.length&&(babelHelpers.classPrivateFieldLooseBase(this,D)[D](),babelHelpers.classPrivateFieldLooseBase(this,A)[A]&&babelHelpers.classPrivateFieldLooseBase(this,se)[se]())}function he(e){const{tag:s}=e.getData();e.target.getTextBox().placeholder="",babelHelpers.classPrivateFieldLooseBase(this,D)[D](),"error"===s.getEntityType()&&(babelHelpers.classPrivateFieldLooseBase(this,G)[G](s),babelHelpers.classPrivateFieldLooseBase(this,A)[A]&&babelHelpers.classPrivateFieldLooseBase(this,ee)[ee](babelHelpers.classPrivateFieldLooseBase(this,M)[M]())),"phone"===s.getEntityType()&&babelHelpers.classPrivateFieldLooseBase(this,C)[C]().parse(s.getTitle()).then(e=>{e.valid?s.setTitle(e.rawNumber):(babelHelpers.classPrivateFieldLooseBase(this,G)[G](s),babelHelpers.classPrivateFieldLooseBase(this,B)[B].push(s.getId())),s.render()}).catch(()=>{})}function Pe(e){e.setTextColor("#E92F2A"),e.setBgColor("#FFDCDB")}function ue(e){const s=e.getTarget().getTextBoxValue();s&&!/^\s*$/.test(s)&&babelHelpers.classPrivateFieldLooseBase(this,J)[J](s)}function Le(e){babelHelpers.classPrivateFieldLooseBase(this,k)[k](e)}function ge(e){babelHelpers.classPrivateFieldLooseBase(this,D)[D]();const s=e.target,t=e.getData().event,a=[" ",","];let l=s.getTextBoxValue();const i=a.indexOf(t.data);if(-1===i)return;const r=a[i];l.endsWith(r)&&(l=l.slice(0,-1)),l&&babelHelpers.classPrivateFieldLooseBase(this,J)[J](l)}function He(){this.getTagSelector().getTextBox().focus()}function Fe(e){const s=!!babelHelpers.classPrivateFieldLooseBase(this,f)[f]&&babelHelpers.classPrivateFieldLooseBase(this,Z)[Z](e);return!!babelHelpers.classPrivateFieldLooseBase(this,E)[E]&&(l.Validation.isEmail(e)&&/^[^@]+@[^@]+\.[^@]+$/.test(e))?"email":s?"phone":"error"}function Be(e){const s=this.getTagSelector();babelHelpers.classPrivateFieldLooseBase(this,Q)[Q](e).forEach(e=>{s.addTag({id:e,title:e,entityId:"invitation-tag",entityType:babelHelpers.classPrivateFieldLooseBase(this,z)[z](e)})}),s.clearTextBox()}function Te(e){return e.split(/[\s,]+/).filter(e=>e.length>0)}function ye(e){return BX.PhoneNumber.getValidNumberRegex().test(e)}function Ie(e){if(this.getWrapper().querySelector(".intranet-invitation-input-error__wrapper"))return;const s=babelHelpers.classPrivateFieldLooseBase(this,te)[te](e);this.getWrapper().append(s),babelHelpers.classPrivateFieldLooseBase(this,R)[R](),l.Dom.hasClass(this.getTagSelector().getOuterContainer(),"--error")||l.Dom.addClass(this.getTagSelector().getOuterContainer(),"--error")}function fe(){const e=this.getWrapper().querySelector(".intranet-invitation-input-error__wrapper");e&&e.remove(),l.Dom.hasClass(this.getTagSelector().getOuterContainer(),"--error")&&l.Dom.removeClass(this.getTagSelector().getOuterContainer(),"--error")}function Ee(e){return l.Tag.render(L||(L=g`
+/* eslint-disable */
+this.BX = this.BX || {};
+(function (exports, main_core, main_core_cache, main_core_events, ui_entitySelector) {
+	'use strict';
+
+	class InvitationProvider {
+		invite() {
+			throw new Error('Implement the method "invite" in the child class');
+		}
+	}
+
+	class InvitationToGroup extends InvitationProvider {
+		#groupId;
+		#users;
+		constructor(groupId, users) {
+			super();
+			this.#groupId = groupId;
+			this.#users = users;
+			const settings = main_core.Extension.getSettings('intranet.invitation-input');
+			this.isNewProjectsAvailable = settings?.isNewProjectsAvailable;
+		}
+		invite() {
+			return main_core.ajax.runAction('intranet.invite.inviteUsersToCollab', {
+				data: {
+					collabId: this.#groupId,
+					users: this.#users
+				}
+			}).then(response => {
+				const users = response?.data || [];
+				let messageKey = null;
+				const newUsers = users.filter(u => u.status === 'INVITED');
+				const existingUsers = users.filter(u => u.status === 'ACTIVE');
+				if (users.length === 0) {
+					messageKey = 'INTRANET_INVITATION_INPUT_NO_USERS';
+				} else if (existingUsers.length === users.length) {
+					if (this.isNewProjectsAvailable) {
+						messageKey = existingUsers.length === 1 ? 'INTRANET_INVITATION_INPUT_ALREADY_IN_PROJECT_SINGLE' : 'INTRANET_INVITATION_INPUT_ALREADY_IN_PROJECT_ALL';
+					} else {
+						messageKey = existingUsers.length === 1 ? 'INTRANET_INVITATION_INPUT_ALREADY_IN_COLLAB_SINGLE' : 'INTRANET_INVITATION_INPUT_ALREADY_IN_COLLAB_ALL';
+					}
+				} else if (newUsers.length !== users.length) {
+					if (this.isNewProjectsAvailable) {
+						messageKey = 'INTRANET_INVITATION_INPUT_ALREADY_IN_PROJECT_PARTIAL';
+					} else {
+						messageKey = 'INTRANET_INVITATION_INPUT_ALREADY_IN_COLLAB_PARTIAL';
+					}
+				}
+				if (messageKey) {
+					const notificationText = main_core.Loc.getMessage(messageKey);
+					if (main_core.Type.isStringFilled(notificationText)) {
+						BX.UI.Notification.Center.notify({
+							content: notificationText,
+							autoHideDelay: 2500
+						});
+					}
+				}
+				return response;
+			});
+		}
+	}
+
+	class InvitationToPortal extends InvitationProvider {
+		#users;
+		constructor(users) {
+			super();
+			this.#users = users;
+		}
+		invite() {
+			return main_core.ajax.runAction('intranet.v2.Invitation.inviteUsers', {
+				data: {
+					invitations: this.#users
+				}
+			});
+		}
+	}
+
+	class InvitationToDepartment extends InvitationProvider {
+		#users;
+		#departments;
+		constructor(users, departments) {
+			super();
+			this.#users = users;
+			this.#departments = departments;
+		}
+		invite() {
+			return main_core.ajax.runAction('intranet.v2.Invitation.inviteUsers', {
+				data: {
+					invitations: this.#users,
+					departmentIds: this.#departments
+				}
+			});
+		}
+	}
+
+	class InvitationToDepartmentGroup extends InvitationProvider {
+		#options;
+		constructor(options) {
+			super();
+			this.#options = options;
+		}
+		invite() {
+			return main_core.ajax.runComponentAction('bitrix:intranet.invitation', 'inviteWithGroupDp', {
+				data: {
+					invitations: this.#options.users,
+					departmentIds: this.#options.departmentIds,
+					workgroupIds: this.#options.groupIds,
+					analyticsData: this.#options.analyticsData ?? {},
+					tab: 'mass'
+				}
+			});
+		}
+	}
+
+	const InvitationInputType = Object.freeze({
+		PHONE: 'phone',
+		EMAIL: 'email',
+		ALL: 'all'
+	});
+	class InvitationInput extends main_core_events.EventEmitter {
+		#cache = new main_core.Cache.MemoryCache();
+		#invalidPhoneNumbersTagIds = [];
+		#isReadySendInvitation = false;
+		#placeholder;
+		#inputType;
+		#isPhoneEnabled;
+		#isEmailEnabled;
+		#userLang = null;
+		#minHeight = null;
+		#showErrorBeforeSubmit;
+		#showErrorAfterSubmit;
+		#onReadySave;
+		#onUnreadySave;
+		#id;
+		constructor(options) {
+			super();
+			this.#inputType = options?.inputType ?? InvitationInputType.ALL;
+			this.setEventNamespace('BX.Intranet.InvitationInput');
+			this.#minHeight = options?.minHeight;
+			this.#showErrorBeforeSubmit = main_core.Type.isBoolean(options?.showErrorBeforeSubmit) ? options.showErrorBeforeSubmit : false;
+			this.#showErrorAfterSubmit = main_core.Type.isBoolean(options?.showErrorAfterSubmit) ? options.showErrorAfterSubmit : true;
+			const settings = main_core.Extension.getSettings('intranet.invitation-input');
+			if (this.#inputType === InvitationInputType.PHONE && !settings?.isInvitationByPhoneAvailable) {
+				throw new Error('Incorrect component operation parameters.');
+			}
+			this.#isPhoneEnabled = [InvitationInputType.ALL, InvitationInputType.PHONE].includes(this.#inputType) && Boolean(settings?.isInvitationByPhoneAvailable);
+			this.#isEmailEnabled = [InvitationInputType.ALL, InvitationInputType.EMAIL].includes(this.#inputType);
+			this.#placeholder = main_core.Type.isStringFilled(options?.placeholder) ? options.placeholder : this.#getDefaultPlaceholder();
+			this.#onReadySave = main_core.Type.isFunction(options?.onReadySave) ? options.onReadySave : null;
+			this.#onUnreadySave = main_core.Type.isFunction(options?.onUnreadySave) ? options.onUnreadySave : null;
+			this.#id = main_core.Type.isStringFilled(options?.id) ? options.id : BX.Text.getRandom(5);
+		}
+		changeLanguage(lang) {
+			if (main_core.Type.isString(lang)) {
+				this.#userLang = lang;
+			}
+		}
+		getTagSelector() {
+			return this.#cache.remember('tagSelector', () => {
+				return new ui_entitySelector.TagSelector({
+					id: `intranet-invitation-input-${Math.random(4)}`,
+					showTextBox: true,
+					showAddButton: false,
+					placeholder: this.#placeholder,
+					tagTextColor: '#1E8D36',
+					tagBgColor: '#D4FDB0',
+					tagMaxWidth: 200,
+					events: {
+						onAfterTagRemove: this.#onAfterTagRemove.bind(this),
+						onBeforeTagAdd: this.#onBeforeTagAdd.bind(this),
+						onEnter: this.#onEnter.bind(this),
+						onBlur: this.#onBlur.bind(this),
+						onInput: this.#onInput.bind(this),
+						onContainerClick: this.#onContainerClick.bind(this)
+					}
+				});
+			});
+		}
+		isReadySendInvitation() {
+			return this.#isReadySendInvitation;
+		}
+		render() {
+			return this.#cache.remember('node', () => {
+				this.getTagSelector().renderTo(this.getWrapper());
+				this.getTagSelector().focusTextBox();
+				if (main_core.Type.isNumber(this.#minHeight)) {
+					const itemsContainer = this.getTagSelector().getItemsContainer();
+					main_core.Dom.style(itemsContainer, 'min-height', `${this.#minHeight}px`);
+				}
+				return this.getWrapper();
+			});
+		}
+		renderTo(node) {
+			main_core.Dom.append(this.render(), node);
+		}
+		getWrapper() {
+			return this.#cache.remember('wrapper', () => {
+				return main_core.Tag.render`
+				<div data-test-id="${this.#id}" class="intranet-invitation-wrapper"></div>
+			`;
+			});
+		}
+		inviteToGroup(groupId) {
+			const invitationProvider = new InvitationToGroup(groupId, this.#getPreparedUserList());
+			return this.#invite(invitationProvider);
+		}
+		inviteToPortal() {
+			const invitationProvider = new InvitationToPortal(this.#getPreparedUserList());
+			return this.#invite(invitationProvider);
+		}
+		inviteToDepartment(departmentIds) {
+			const invitationProvider = new InvitationToDepartment(this.#getPreparedUserList(), departmentIds);
+			return this.#invite(invitationProvider);
+		}
+		inviteToDepartmentGroup(departmentIds, groupIds, analyticsData) {
+			const invitationProvider = new InvitationToDepartmentGroup({
+				users: this.#getPreparedUserList(),
+				analyticsData,
+				departmentIds,
+				groupIds
+			});
+			return this.#invite(invitationProvider);
+		}
+		hasErrorTags() {
+			return this.#getErrorTags().length > 0;
+		}
+		isEmptyTags() {
+			return this.getTagSelector().getTags().length === 0;
+		}
+		#invite(invitationProvider) {
+			return new Promise((resolve, reject) => {
+				this.#removeErrorBlock();
+				if (this.#getErrorTags().length > 0) {
+					this.#addErrorBlockByMessage(this.#getDefaultValidationMessage());
+					reject(this.#getDefaultValidationMessage());
+				} else if (this.getTagSelector().getTags().length === 0) {
+					this.#addErrorBlockByMessage(this.#getEmptyValidationMessage());
+					reject(this.#getEmptyValidationMessage());
+				} else {
+					invitationProvider.invite().then(response => {
+						this.getTagSelector().removeTags();
+						this.#setUnreadySaveState();
+						resolve(response);
+					}).catch(response => {
+						if (this.#showErrorAfterSubmit) {
+							this.#addErrorBlockByMessage(response.errors[0].message);
+						} else {
+							this.getTagSelector().removeTags();
+						}
+						reject(response.errors[0].message);
+					});
+				}
+			});
+		}
+		#getPreparedUserList() {
+			this.#removeErrorBlock();
+			const selector = this.getTagSelector();
+			const tags = selector.getTags();
+			const users = [];
+			tags.forEach(tag => {
+				if (this.#isEmailEnabled && tag.getEntityType() === 'email') {
+					users.push({
+						email: tag.getTitle(),
+						languageId: this.#userLang
+					});
+				}
+				if (tag.getEntityType() === 'phone' && this.#isPhoneEnabled && !this.#invalidPhoneNumbersTagIds.includes(tag.getId())) {
+					users.push({
+						phone: tag.getTitle()
+					});
+				}
+			});
+			return users;
+		}
+		#getErrorTags() {
+			const selector = this.getTagSelector();
+			const tags = selector.getTags();
+			const errorTags = [];
+			tags.forEach(tag => {
+				if (tag.getEntityType() === 'error') {
+					errorTags.push(tag);
+				}
+				if (tag.getEntityType() === 'phone' && this.#isPhoneEnabled && this.#invalidPhoneNumbersTagIds.includes(tag.getId())) {
+					errorTags.push(tag);
+				}
+			});
+			return errorTags;
+		}
+		#setReadySaveState() {
+			this.emit('onReadySave');
+			this.#isReadySendInvitation = true;
+			this.#onReadySave?.();
+		}
+		#setUnreadySaveState() {
+			this.emit('onUnreadySave');
+			this.#isReadySendInvitation = false;
+			this.#onUnreadySave?.();
+		}
+		#getPhoneParser() {
+			return BX.PhoneNumberParser.getInstance();
+		}
+		#getDefaultPlaceholder() {
+			if (this.#isPhoneEnabled && !this.#isEmailEnabled) {
+				return main_core.Loc.getMessage('INTRANET_INVITATION_INPUT_PLACEHOLDER_PHONE');
+			}
+			if (!this.#isPhoneEnabled && this.#isEmailEnabled) {
+				return main_core.Loc.getMessage('INTRANET_INVITATION_INPUT_PLACEHOLDER');
+			}
+			return main_core.Loc.getMessage('INTRANET_INVITATION_INPUT_PLACEHOLDER_WITH_PHONE');
+		}
+		#getDefaultValidationMessage() {
+			if (this.#isPhoneEnabled && !this.#isEmailEnabled) {
+				return main_core.Loc.getMessage('INTRANET_INVITATION_INPUT_VALIDATION_MESSAGE_PHONE');
+			}
+			if (!this.#isPhoneEnabled && this.#isEmailEnabled) {
+				return main_core.Loc.getMessage('INTRANET_INVITATION_INPUT_VALIDATION_MESSAGE');
+			}
+			return main_core.Loc.getMessage('INTRANET_INVITATION_INPUT_VALIDATION_MESSAGE_WITH_PHONE');
+		}
+		#getEmptyValidationMessage() {
+			if (this.#isPhoneEnabled && !this.#isEmailEnabled) {
+				return main_core.Loc.getMessage('INTRANET_INVITATION_INPUT_VALIDATION_MESSAGE_PHONE');
+			}
+			if (!this.#isPhoneEnabled && this.#isEmailEnabled) {
+				return main_core.Loc.getMessage('INTRANET_INVITATION_INPUT_EMPTY_MESSAGE');
+			}
+			return main_core.Loc.getMessage('INTRANET_INVITATION_INPUT_EMPTY_MESSAGE_WITH_PHONE');
+		}
+		#onAfterTagRemove(event) {
+			const selector = event.getTarget();
+			const tags = selector.getTags();
+			const errorTags = tags.filter(item => item.getEntityType() === 'error');
+			if (errorTags.length === 0) {
+				this.#removeErrorBlock();
+			}
+			if (tags.length === 0) {
+				this.#setUnreadySaveState();
+			} else if (errorTags.length === 0) {
+				this.#setReadySaveState();
+				if (this.#showErrorBeforeSubmit) {
+					this.#removeErrorBlock();
+				}
+			}
+		}
+		#onBeforeTagAdd(event) {
+			const {
+				tag
+			} = event.getData();
+			const textBox = event.target.getTextBox();
+			textBox.placeholder = '';
+			this.#setReadySaveState();
+			if (tag.getEntityType() === 'error') {
+				this.#setErrorStateForTag(tag);
+				if (this.#showErrorBeforeSubmit) {
+					this.#addErrorBlockByMessage(this.#getDefaultValidationMessage());
+				}
+			}
+			if (tag.getEntityType() === 'phone') {
+				this.#getPhoneParser().parse(tag.getTitle()).then(result => {
+					if (result.valid) {
+						tag.setTitle(result.rawNumber);
+					} else {
+						this.#setErrorStateForTag(tag);
+						this.#invalidPhoneNumbersTagIds.push(tag.getId());
+					}
+					tag.render();
+				}).catch(() => {});
+			}
+		}
+		#setErrorStateForTag(tag) {
+			tag.setTextColor('#E92F2A');
+			tag.setBgColor('#FFDCDB');
+		}
+		#onEnter(event) {
+			const selector = event.getTarget();
+			const value = selector.getTextBoxValue();
+			if (value && !/^\s*$/.test(value)) {
+				this.#addTagByValue(value);
+			}
+		}
+		#onBlur(event) {
+			this.#onEnter(event);
+		}
+		#onInput(event) {
+			this.#setReadySaveState();
+			const selector = event.target;
+			const inputEvent = event.getData().event;
+			const specialSymbols = [' ', ','];
+			let value = selector.getTextBoxValue();
+			const index = specialSymbols.indexOf(inputEvent.data);
+			if (index === -1) {
+				return;
+			}
+			const symbol = specialSymbols[index];
+			if (value.endsWith(symbol)) {
+				value = value.slice(0, -1);
+			}
+			if (value) {
+				this.#addTagByValue(value);
+			}
+		}
+		#onContainerClick() {
+			this.getTagSelector().getTextBox().focus();
+		}
+		#getEntityTypeByValue(value) {
+			const isPhone = this.#isPhoneEnabled ? this.#isPhone(value) : false;
+			const isEmail = this.#isEmailEnabled ? main_core.Validation.isEmail(value) && /^[^@]+@[^@]+\.[^@]+$/.test(value) : false;
+			if (isEmail) {
+				return 'email';
+			}
+			if (isPhone) {
+				return 'phone';
+			}
+			return 'error';
+		}
+		#addTagByValue(value) {
+			const selector = this.getTagSelector();
+			const parsedValues = this.#parseValue(value);
+			parsedValues.forEach(part => {
+				selector.addTag({
+					id: part,
+					title: part,
+					entityId: 'invitation-tag',
+					entityType: this.#getEntityTypeByValue(part)
+				});
+			});
+			selector.clearTextBox();
+		}
+		#parseValue(value) {
+			const parts = value.split(/[\s,]+/);
+			return parts.filter(part => part.length > 0);
+		}
+		#isPhone(value) {
+			return BX.PhoneNumber.getValidNumberRegex().test(value);
+		}
+		#addErrorBlockByMessage(message) {
+			if (this.getWrapper().querySelector('.intranet-invitation-input-error__wrapper')) {
+				return;
+			}
+			const errorBlock = this.#createErrorBlockByMessage(message);
+			this.getWrapper().append(errorBlock);
+			this.#setUnreadySaveState();
+			if (!main_core.Dom.hasClass(this.getTagSelector().getOuterContainer(), '--error')) {
+				main_core.Dom.addClass(this.getTagSelector().getOuterContainer(), '--error');
+			}
+		}
+		#removeErrorBlock() {
+			const errorBlock = this.getWrapper().querySelector('.intranet-invitation-input-error__wrapper');
+			if (errorBlock) {
+				errorBlock.remove();
+			}
+			if (main_core.Dom.hasClass(this.getTagSelector().getOuterContainer(), '--error')) {
+				main_core.Dom.removeClass(this.getTagSelector().getOuterContainer(), '--error');
+			}
+		}
+		#createErrorBlockByMessage(message) {
+			return main_core.Tag.render`
 			<div class="intranet-invitation-input-error__wrapper">
 				<span class="ui-icon-set --warning"></span>
-				<span class="intranet-invitation-input-error__text">${0}</span>
+				<span class="intranet-invitation-input-error__text">${message}</span>
 			</div>
-		`),e)}e.InvitationInputType=H,e.InvitationInput=ae}(this.BX.Intranet=this.BX.Intranet||{},BX.Cache,BX.Event,BX.UI.EntitySelector,BX);
+		`;
+		}
+	}
+
+	exports.InvitationInput = InvitationInput;
+	exports.InvitationInputType = InvitationInputType;
+
+})(this.BX.Intranet = this.BX.Intranet || {}, BX, BX.Cache, BX.Event, BX.UI.EntitySelector);
 //# sourceMappingURL=invitation-input.bundle.js.map

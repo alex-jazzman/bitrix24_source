@@ -1,4 +1,4 @@
-import { EventEmitter, BaseEvent } from 'main.core.events';
+import { EventEmitter, type BaseEvent } from 'main.core.events';
 
 import { Settings, EventType } from 'im.v2.const';
 import { ThemeManager, type BackgroundStyle } from 'im.v2.lib.theme';

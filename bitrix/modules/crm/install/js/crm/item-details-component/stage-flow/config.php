@@ -9,11 +9,11 @@ return [
 	'css' => 'dist/index.bundle.css',
 	'js' => 'dist/index.bundle.js',
 	'rel' => [
-		'main.core',
-		'ui.stageflow',
-		'ui.buttons',
 		'crm.stage.permission-checker',
 		'crm.stage-model',
+		'main.core',
+		'ui.buttons',
+		'ui.stageflow',
 	],
 	'skip_core' => false,
 ];

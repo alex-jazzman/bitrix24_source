@@ -81,5 +81,4 @@ $MESS['TASK_FIELD_DURATION_TYPE_VALUE_TYPE_WEEK'] = "Неделя";
 $MESS['TASK_FIELD_DURATION_TYPE_VALUE_TYPE_MONTH'] = "Месяц";
 $MESS['TASK_FIELD_DURATION_TYPE_VALUE_TYPE_YEAR'] = "Год";
 $MESS['TASK_FIELD_FLOW_ID'] = "ID потока";
-
-
+$MESS['TASK_TABLE_DESCRIPTION_FULL'] = "Набор содержит информацию о задачах и их параметрах: названия, статусы, сроки, исполнители, соисполнители и наблюдатели.";

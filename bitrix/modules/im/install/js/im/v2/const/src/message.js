@@ -40,6 +40,7 @@ export const MessageComponent = Object.freeze({
 	convertToCollabMessage: 'ConvertToCollabMessage',
 	aiAssistantMessage: 'AiAssistantMessage',
 	aiBizprocMessage: 'AiBizprocMessage',
+	builderMessage: 'builderMessage',
 	...OpenLinesMessageComponent,
 });
 

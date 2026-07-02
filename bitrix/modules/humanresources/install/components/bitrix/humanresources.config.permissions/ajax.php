@@ -5,6 +5,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\HumanResources\Access\Permission\PermissionDictionary;
 use Bitrix\HumanResources\Enum\Access\RoleCategory;
 use Bitrix\HumanResources\Service\Container;
 use Bitrix\HumanResources\Internals\Service\Container as InternalsContainer;
@@ -49,6 +50,14 @@ class HumanResourcesConfigPermissionsAjaxController extends \Bitrix\Main\Engine\
 
 			if (!empty($userGroups))
 			{
+				$allowedPermissionIds = $this->getAllowedPermissionIds($category);
+				if (!$this->validatePermissionsBelongToCategory($userGroups, $allowedPermissionIds))
+				{
+					$this->addError(new Main\Error('Invalid permissions for category', 'INVALID_PERMISSIONS'));
+
+					return [];
+				}
+
 				$permissionService->saveRolePermissions($userGroups);
 				Container::getAccessRoleRelationService()->saveRoleRelation($userGroups);
 			}
@@ -96,6 +105,46 @@ class HumanResourcesConfigPermissionsAjaxController extends \Bitrix\Main\Engine\
 			'USER_GROUPS' => $permissionService->getUserGroups(),
 			'ACCESS_RIGHTS' => $permissionService->getAccessRights(),
 		];
+	}
+
+	/**
+	 * @return list<string>
+	 */
+	private function getAllowedPermissionIds(RoleCategory $category): array
+	{
+		return match ($category)
+		{
+			RoleCategory::Department => PermissionDictionary::getDepartmentCategoryPermissionIds(),
+			RoleCategory::Team => PermissionDictionary::getTeamCategoryPermissionIds(),
+		};
+	}
+
+	private function validatePermissionsBelongToCategory(array $userGroups, array $allowedPermissionIds): bool
+	{
+		$allowedMap = array_flip($allowedPermissionIds);
+
+		foreach ($userGroups as $group)
+		{
+			if (!isset($group['accessRights']) || !is_array($group['accessRights']))
+			{
+				continue;
+			}
+
+			foreach ($group['accessRights'] as $right)
+			{
+				if (!isset($right['id']))
+				{
+					continue;
+				}
+
+				if (!isset($allowedMap[(string)$right['id']]))
+				{
+					return false;
+				}
+			}
+		}
+
+		return true;
 	}
 
 	private function deleteUserGroups(array $deletedUserGroups): void

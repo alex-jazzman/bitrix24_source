@@ -258,11 +258,11 @@ class CoreApplication
 
 		this.#pullClient.subscribe(new BasePullHandler());
 		this.#pullClient.subscribe(new RecentPullHandler());
-		this.#pullClient.subscribe(new RecentUnreadPullHandler());
 		this.#pullClient.subscribe(new NotificationPullHandler());
 		this.#pullClient.subscribe(new NotifierPullHandler());
 		this.#pullClient.subscribe(new OnlinePullHandler());
 		this.#pullClient.subscribe(new CounterPullHandler());
+		this.#pullClient.subscribe(new RecentUnreadPullHandler());
 		this.#pullClient.subscribe(new AnchorPullHandler());
 		this.#pullClient.subscribe(new SidebarPullHandler());
 		this.#pullClient.subscribe(new StickersPullHandler());

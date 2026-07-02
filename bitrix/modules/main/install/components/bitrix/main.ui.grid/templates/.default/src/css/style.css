@@ -338,9 +338,9 @@
 
 .main-grid-cell-head-container {
 	position: relative;
-	display: block;
+	display: flex;
 	box-sizing: border-box;
-	padding: 14px 16px 11px;
+	padding: 14px 16px;
 	flex-grow: 1;
 	max-width: 100%;
 }
@@ -350,16 +350,13 @@ span.main-grid-cell-head-container { box-sizing: border-box; }
 .main-grid-head-icon
 {
 	margin-right: 4px;
-	display: inline-block;
-}
-
-.main-grid-head-icon img{
-	margin-bottom: 1px;
+	display: flex;
 }
 
 .main-grid-head-title {
 	z-index: 7;
-	display: inline-block;
+	display: inline-flex;
+	align-items: center;
 	overflow: hidden;
 	padding-right: 21px;
 	max-width: 100%;
@@ -371,6 +368,16 @@ span.main-grid-cell-head-container { box-sizing: border-box; }
 	font-weight: normal;
 	font-size: 14px;
 	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+}
+
+.main-grid-head-title-tooltip {
+	width: 17px;
+	height: 17px;
+}
+
+.main-grid-head-title-tooltip .ui-hint-icon {
+	width: 17px;
+	height: 17px;
 }
 
 .main-grid-col-no-sortable { cursor: default; }
@@ -727,7 +734,7 @@ span.main-grid-cell-head-container { box-sizing: border-box; }
 
 .main-grid-cell-checkbox .main-grid-cell-content,
 .main-grid-cell-action .main-grid-cell-content {
-	top: -3px;
+	top: -2px;
 	margin-right: 0;
 	margin-left: 0;
 }
@@ -1229,6 +1236,7 @@ html:not(.bx-firefox) .main-grid-resize-button:active::after {
 }
 
 .main-grid-control-sort {
+	align-self: end;
 	position: relative;
 	top: 0;
 	left: -18px;
@@ -1465,7 +1473,7 @@ label.main-grid-checkbox {
 }
 
 .main-grid-cell-checkbox .main-grid-cell-head-container {
-	padding: 12px 0 10px;
+	padding: 0;
 }
 
 .main-grid-cell-head-container .main-grid-checkbox.main-grid-row-checkbox.main-grid-check-all {
@@ -1478,9 +1486,18 @@ label.main-grid-checkbox {
 .main-grid-fixed-top {
 	position: fixed;
 	top: 0;
-	z-index: 1;
+	z-index: 7;
 	box-shadow: 0 2px 8px -4px rgba(0, 0, 0, .4);
 	transition: none;
+}
+
+.main-grid-fixed-bar.main-grid-fixed-top .main-grid-head-title-tooltip,
+.main-grid-fixed-bar.main-grid-fixed-top .main-grid-head-title-tooltip.ui-hint,
+.main-grid-fixed-bar.main-grid-fixed-top .main-grid-head-title-tooltip.ui-hint.ui-hint-icon
+{
+	display: none;
+	width: 0;
+	height: 0;
 }
 
 .main-grid-fixed-bottom {
@@ -2660,9 +2677,11 @@ label.main-grid-checkbox {
 }
 
 .main-grid-head-title .ui-hint {
-	height: 13px;
-	width: 13px;
-	line-height: 13px;
+	display: inline-flex;
+	align-items: center;
+	justify-items: center;
+	height: fit-content;
+	width: fit-content;
 }
 
 .main-grid-head-title .ui-hint-icon {

@@ -1,4 +1,5 @@
 import {RawReaction} from '../../../../model/messages/src/reactions/types';
+import {BuilderConfig} from "../../../../model/messages/src/types/builder";
 
 declare type PullExtraParams = {
 	im_revision: number,
@@ -74,6 +75,7 @@ export type RawMessage = {
 		users: RawUser[],
 		usersShort: RawShortUser[],
 	},
+	builder: BuilderConfig,
 };
 
 

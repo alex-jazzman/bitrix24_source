@@ -10,6 +10,11 @@ if ($siteId)
 	define('SITE_ID', $siteId);
 }
 require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php');
+
+/**
+ * @global CMain $APPLICATION
+ */
+
 $request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 
 $APPLICATION->IncludeComponent(

@@ -11,6 +11,11 @@
 	overflow-clip-margin: content-box;
 }
 
+.ui-block-diagram-connection.--active,
+.ui-block-diagram-connection:hover {
+	z-index: 2;
+}
+
 .ui-block-diagram-connection:hover .ui-block-diagram-connection__target {
 	stroke: var(--pallete-blue-blue-57, #4A9DFF);
 }
@@ -27,6 +32,7 @@
 
 .ui-block-diagram-connection__target.--active {
 	stroke: var(--pallete-blue-blue-57, #4A9DFF);
+	z-index: 2;
 }
 
 .ui-block-diagram-connection__hovered {

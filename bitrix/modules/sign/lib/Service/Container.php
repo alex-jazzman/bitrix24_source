@@ -7,7 +7,7 @@ use Bitrix\Sign\Access\AccessController\AccessControllerFactory;
 use Bitrix\Sign\Access\Model\UserModelRepository;
 use Bitrix\Sign\Access\Service\AccessService;
 use Bitrix\Sign\Access\Service\RolePermissionService;
-use Bitrix\Sign\Debug\Logger;
+use Bitrix\Sign\Debug;
 use Bitrix\Sign\Factory\Access\AccessibleItemFactory;
 use Bitrix\Sign\Repository;
 use Bitrix\Sign\Connector;
@@ -40,12 +40,6 @@ class Container
 
 	private static function getService(string $name): mixed
 	{
-		$prefix = 'sign.';
-		if (mb_strpos($name, $prefix) !== 0)
-		{
-			$name = $prefix . $name;
-		}
-
 		$locator = self::getServiceLocator();
 
 		return $locator->has($name)
@@ -149,6 +143,11 @@ class Container
 		return self::getService('sign.service.api.external-sign-provider');
 	}
 
+	public function getSignBlankArchiveService(): Service\Sign\BlankArchiveService
+	{
+		return self::getService('sign.service.sign.blank.archive');
+	}
+
 	public function getSignBlankFileService(): Service\Sign\BlankFileService
 	{
 		return self::getService('sign.service.sign.blank.file');
@@ -184,6 +183,11 @@ class Container
 		return self::getService('sign.service.integration.crm.entity.relation');
 	}
 
+	public function getCrmAccessService(): Service\Integration\Crm\AccessService
+	{
+		return self::getService('sign.service.integration.crm.access');
+	}
+
 	public function getSignMobileMemberService(): Service\Integration\SignMobile\MemberService
 	{
 		return self::getService('sign.service.integration.signmobile.member');
@@ -192,6 +196,11 @@ class Container
 	public function getImService(): Service\Integration\Im\ImService
 	{
 		return self::getService('sign.service.integration.im');
+	}
+
+	public function getDiskService(): Service\Integration\Disk\DiskService
+	{
+		return self::getService('sign.service.integration.disk');
 	}
 
 	public function getHrBotMessageService(): Service\HrBotMessageService
@@ -507,9 +516,34 @@ class Container
 		return static::getService('sign.service.placeholder.aliasRoleResolver');
 	}
 
-	public function getLogger(): Logger
+	public function getLogger(string $channel = 'Default'): Debug\Logger
 	{
-		return static::getService('sign.debug.logger');
+		static $cache = [];
+
+		if (!isset($cache[$channel]))
+		{
+			$id = 'sign.' . $channel;
+
+			$inner = (new \Bitrix\Main\Diag\LoggerFactory(alwaysReturnLogger: false))->createById(
+				$id,
+				isCheckEnabledFromRegistry: false,
+				returnDefaultLoggerIfNotExists: false,
+			);
+
+			if ($inner === null)
+			{
+				$inner = (new Debug\Message2LogLogger($id))->setLevel(\Psr\Log\LogLevel::ERROR);
+			}
+
+			if ($inner instanceof \Bitrix\Main\Diag\Logger)
+			{
+				$inner->setFormatter(new Debug\SecretMaskingFormatter());
+			}
+
+			$cache[$channel] = new Debug\Logger($inner);
+		}
+
+		return $cache[$channel];
 	}
 
 	public function getPlaceholderBlockService(): Service\Sign\PlaceholderBlockService
@@ -579,7 +613,12 @@ class Container
 
 	public function getSignersListService(): SignersListService
 	{
-		return static::getService('sign.service.signerslist');
+		return static::getService(SignersListService::class);
+	}
+
+	public function getSignersListAccessService(): Service\Sign\SignersList\AccessService
+	{
+		return static::getService(Service\Sign\SignersList\AccessService::class);
 	}
 
 	public function getOnboardingService(): OnboardingService

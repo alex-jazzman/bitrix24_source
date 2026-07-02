@@ -11,7 +11,6 @@
 	align-items: center;
 	width: 100%;
 	border-top: 1px solid var(--im-menu-item__background-color_separator);
-
 	transition: border-top-color 0.2s, border-bottom-color 0.2s;
 }
 
@@ -62,9 +61,9 @@
 }
 
 .bx-im-menu_item__icon {
+	margin-right: 5px;
 	width: 20px;
 	height: 20px;
-	margin-right: 5px;
 	background-repeat: no-repeat;
 	background-size: contain;
 	background-position: center;
@@ -180,4 +179,3 @@
 .bx-im-menu_item__icon.--b24 {
 	background-image: url('./images/b24-icon.svg');
 }
-

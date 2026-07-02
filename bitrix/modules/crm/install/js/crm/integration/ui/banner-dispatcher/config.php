@@ -9,9 +9,9 @@ return [
 	'css' => 'dist/banner-dispatcher.bundle.css',
 	'js' => 'dist/banner-dispatcher.bundle.js',
 	'rel' => [
-		'ui.banner-dispatcher',
-		'ui.auto-launch',
 		'main.core',
+		'ui.auto-launch',
+		'ui.banner-dispatcher',
 	],
 	'skip_core' => false,
 ];

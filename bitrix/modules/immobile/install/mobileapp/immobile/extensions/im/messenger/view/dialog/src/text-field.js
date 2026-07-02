@@ -325,13 +325,14 @@ jn.define('im/messenger/view/dialog/text-field', (require, exports, module) => {
 		/**
 		 * @param {AssistantButton['id']} id
 		 * @param {AssistantButton} button
+		 * @param {boolean?} animated
 		 * @return {Promise<any>}
 		 */
-		updateAssistantButton(id, button)
+		updateAssistantButton(id, button, animated = true)
 		{
 			if (this.isUiAvailable())
 			{
-				return this.ui.updateAssistantButton(id, button);
+				return this.ui.updateAssistantButton(id, button, animated);
 			}
 
 			return Promise.resolve();

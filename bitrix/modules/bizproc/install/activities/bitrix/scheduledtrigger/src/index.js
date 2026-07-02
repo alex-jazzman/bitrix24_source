@@ -36,6 +36,13 @@ export class ScheduledTriggerRenderer
 		this.#updateVisibility();
 	}
 
+	destroy(): void
+	{
+		this.#timePicker?.hide();
+		this.#timePicker?.destroy();
+		this.#timePicker = null;
+	}
+
 	#bindEvents(): void
 	{
 		const typeField = this.#getField('ScheduleType');

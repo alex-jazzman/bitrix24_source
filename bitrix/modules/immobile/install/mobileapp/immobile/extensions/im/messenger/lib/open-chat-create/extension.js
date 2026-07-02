@@ -8,9 +8,7 @@ jn.define('im/messenger/lib/open-chat-create', (require, exports, module) => {
 
 	async function openChatCreateByActiveRecentTab()
 	{
-		const { RecentManager } = await requireLazy('im:messenger/controller/recent/manager');
-
-		const tabId = RecentManager.getInstance().getActiveRecent().id;
+		const tabId = serviceLocator.get('recent-manager').getActiveRecent().id;
 		const openChatCreateCollection = {
 			[NavigationTabId.chats]: openChatCreate,
 			[NavigationTabId.copilot]: directCopilotChatCreate,

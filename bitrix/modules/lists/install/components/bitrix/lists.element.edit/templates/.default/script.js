@@ -46,6 +46,24 @@ BX.Lists.ListsElementEditClass = (function ()
 					BX.Dom.append(timeElement, form);
 				};
 			}
+
+			form.addEventListener('submit', (event) => {
+				const submitter = event.submitter;
+				if (submitter && submitter.name)
+				{
+					const hidden = BX.Dom.create('input', {
+						attrs: {
+							type: 'hidden',
+							name: submitter.name,
+							value: submitter.value || '',
+						},
+					});
+					BX.Dom.append(hidden, form);
+				}
+				form.querySelectorAll('input[type="submit"], button[type="submit"]').forEach((button) => {
+					button.disabled = true;
+				});
+			});
 		}
 	};
 

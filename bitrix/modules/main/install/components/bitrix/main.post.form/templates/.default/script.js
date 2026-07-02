@@ -1139,6 +1139,7 @@ this.BX = this.BX || {};
 	  }
 	  editor.exec(function () {
 	    var buttonNode = editor.getContainer().querySelector('[data-bx-role="button-show-panel-editor"]');
+	    buttonNode === null || buttonNode === void 0 ? void 0 : buttonNode.setAttribute('aria-pressed', editorParams.showPanelEditor ? 'true' : 'false');
 	    if (editorParams.showPanelEditor) {
 	      htmlEditor.dom.toolbarCont.style.opacity = 'inherit';
 	      htmlEditor.toolbar.Show();
@@ -1311,12 +1312,27 @@ this.BX = this.BX || {};
 	  }
 	  var copilot = toolbar.querySelector('[data-id="copilot"]');
 	  if (copilot) {
+	    var isFocusReturnBound = false;
 	    copilot.addEventListener('click', function () {
+	      var _htmlEditor$iframeVie;
 	      if (!editor.isTextCopilotEnabledBySettings()) {
 	        top.BX.UI.InfoHelper.show('limit_copilot_off');
 	        return;
 	      }
 	      editor.showCopilot();
+	      if (isFocusReturnBound) {
+	        return;
+	      }
+	      var copilotInstance = (_htmlEditor$iframeVie = htmlEditor.iframeView.copilot) === null || _htmlEditor$iframeVie === void 0 ? void 0 : _htmlEditor$iframeVie.copilot;
+	      if (!copilotInstance) {
+	        return;
+	      }
+	      copilotInstance.subscribe('hide', function () {
+	        copilot.focus({
+	          focusVisible: true
+	        });
+	      });
+	      isFocusReturnBound = true;
 	    });
 	  }
 	}
@@ -1346,11 +1362,24 @@ this.BX = this.BX || {};
 	  function Toolbar(eventObject, container) {
 	    babelHelpers.classCallCheck(this, Toolbar);
 	    this.container = container.querySelector('[data-bx-role="toolbar"]');
+	    this.container.setAttribute('role', 'toolbar');
 	    this.adjustMorePosition = this.adjustMorePosition.bind(this);
 	    this.moreItem = container.querySelector('[data-bx-role="toolbar-item-more"]');
 	    this.moreItem.addEventListener('click', this.showSubmenu.bind(this));
 	    observeIntersection(this.container, this.adjustMorePosition);
 	    window.addEventListener('resize', this.adjustMorePosition);
+	    this.container.addEventListener('keydown', function (event) {
+	      if (event.key !== 'Enter' && event.key !== ' ') {
+	        return;
+	      }
+	      var button = event.target.closest('[data-bx-role="toolbar-item"], [data-bx-role="toolbar-item-more"]');
+	      if (!button) {
+	        return;
+	      }
+	      event.preventDefault();
+	      var clickTarget = button.firstElementChild || button;
+	      clickTarget.click();
+	    });
 	  }
 	  babelHelpers.createClass(Toolbar, [{
 	    key: "insertAfter",
@@ -1358,7 +1387,7 @@ this.BX = this.BX || {};
 	      if (!main_core.Type.isElementNode(button['BODY']) && !main_core.Type.isStringFilled(button['BODY'])) {
 	        return;
 	      }
-	      var item = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["<div class=\"main-post-form-toolbar-button\" data-bx-role=\"toolbar-item\"></div>"])));
+	      var item = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["<button type=\"button\" class=\"main-post-form-toolbar-button\" data-bx-role=\"toolbar-item\"></button>"])));
 	      if (main_core.Type.isElementNode(button['BODY'])) {
 	        item.appendChild(button['BODY']);
 	      } else {

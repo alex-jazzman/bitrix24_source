@@ -334,7 +334,7 @@
 }
 
 .bx-im-attach-rich__hide-icon {
-	background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='24' height='24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M15.665 7.621a.5.5 0 00-.707 0L12 10.58 9.042 7.62a.5.5 0 00-.707 0l-.713.714a.5.5 0 000 .707l2.957 2.957-2.957 2.958a.5.5 0 000 .708l.713.713a.5.5 0 00.707 0L12 13.42l2.958 2.958a.5.5 0 00.707 0l.714-.714a.5.5 0 000-.707L13.42 12l2.957-2.957a.5.5 0 000-.707l-.713-.714z' fill='%23C9CCD0'/%3E%3C/svg%3E") no-repeat center;
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' viewBox='0 0 24 24'%3E%3Cpath fill='%23c9ccd0' d='M15.665 7.621a.5.5 0 0 0-.707 0L12 10.58 9.042 7.62a.5.5 0 0 0-.707 0l-.713.714a.5.5 0 0 0 0 .707l2.957 2.957-2.957 2.958a.5.5 0 0 0 0 .708l.713.713a.5.5 0 0 0 .707 0L12 13.42l2.958 2.958a.5.5 0 0 0 .707 0l.714-.714a.5.5 0 0 0 0-.707L13.42 12l2.957-2.957a.5.5 0 0 0 0-.707z'/%3E%3C/svg%3E") no-repeat center;
 	width: 18px;
 	height: 18px;
 	position: absolute;
@@ -345,7 +345,7 @@
 }
 
 .bx-im-attach-rich__hide-icon:hover {
-	background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='24' height='24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M15.665 7.621a.5.5 0 00-.707 0L12 10.58 9.042 7.62a.5.5 0 00-.707 0l-.713.714a.5.5 0 000 .707l2.957 2.957-2.957 2.958a.5.5 0 000 .708l.713.713a.5.5 0 00.707 0L12 13.42l2.958 2.958a.5.5 0 00.707 0l.714-.714a.5.5 0 000-.707L13.42 12l2.957-2.957a.5.5 0 000-.707l-.713-.714z' fill='%23BDC1C6'/%3E%3C/svg%3E") no-repeat center;
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' viewBox='0 0 24 24'%3E%3Cpath fill='%23bdc1c6' d='M15.665 7.621a.5.5 0 0 0-.707 0L12 10.58 9.042 7.62a.5.5 0 0 0-.707 0l-.713.714a.5.5 0 0 0 0 .707l2.957 2.957-2.957 2.958a.5.5 0 0 0 0 .708l.713.713a.5.5 0 0 0 .707 0L12 13.42l2.958 2.958a.5.5 0 0 0 .707 0l.714-.714a.5.5 0 0 0 0-.707L13.42 12l2.957-2.957a.5.5 0 0 0 0-.707z'/%3E%3C/svg%3E") no-repeat center;
 }
 
 .bx-im-attach-user__container {

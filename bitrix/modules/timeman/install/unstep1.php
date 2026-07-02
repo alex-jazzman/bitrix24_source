@@ -1,3 +1,22 @@
+<?php
+
+if (!check_bitrix_sessid())
+{
+	return;
+}
+
+if ($exception = $APPLICATION->GetException())
+{
+	CAdminMessage::ShowMessage($exception->GetString());
+	?>
+	<form action="<?= $APPLICATION->GetCurPage() ?>">
+		<input type="hidden" name="lang" value="<?= LANGUAGE_ID ?>">
+		<input type="submit" value="<?= GetMessage('MOD_BACK') ?>">
+	</form>
+	<?php
+	return;
+}
+?>
 <form action="<?echo $APPLICATION->GetCurPage()?>">
 <?=bitrix_sessid_post()?>
 	<input type="hidden" name="lang" value="<?=LANGUAGE_ID?>">

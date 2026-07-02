@@ -1,124 +1,122 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Humanresources = this.BX.Humanresources || {};
-(function (exports,main_popup,ui_iconSet_actions,ui_hint,main_core,ui_entitySelector,ui_notification,ui_vue3_pinia,ui_iconSet_api_core,ui_iconSet_api_vue,humanresources_companyStructure_chartStore,humanresources_companyStructure_permissionChecker,humanresources_companyStructure_utils,humanresources_companyStructure_api) {
+(function (exports, main_popup, main_core, ui_iconSet_api_vue, humanresources_companyStructure_utils, humanresources_companyStructure_api, ui_hint, ui_entitySelector, ui_iconSet_actions, ui_notification, ui_vue3_pinia, ui_iconSet_api_core, humanresources_companyStructure_chartStore, humanresources_companyStructure_permissionChecker) {
 	'use strict';
 
 	const POPUP_CONTAINER_PREFIX = '#popup-window-content-';
 	const BasePopup = {
-	  name: 'BasePopup',
-	  emits: ['close'],
-	  props: {
-	    id: {
-	      type: String,
-	      required: true
-	    },
-	    config: {
-	      type: Object,
-	      required: false,
-	      default: {}
-	    }
-	  },
-	  computed: {
-	    popupContainer() {
-	      return `${POPUP_CONTAINER_PREFIX}${this.id}`;
-	    }
-	  },
-	  created() {
-	    this.instance = this.getPopupInstance();
-	    this.instance.show();
-	  },
-	  mounted() {
-	    this.instance.adjustPosition({
-	      forceBindPosition: true,
-	      position: this.getPopupConfig().bindOptions.position
-	    });
-	  },
-	  beforeUnmount() {
-	    if (!this.instance) {
-	      return;
-	    }
-	    this.closePopup();
-	  },
-	  methods: {
-	    getPopupInstance() {
-	      if (!this.instance) {
-	        var _PopupManager$getPopu;
-	        (_PopupManager$getPopu = main_popup.PopupManager.getPopupById(this.id)) == null ? void 0 : _PopupManager$getPopu.destroy();
-	        const config = this.getPopupConfig();
-	        this.instance = new main_popup.Popup(config);
-	        if (this.config.angleOffset) {
-	          this.instance.setAngle({
-	            offset: this.config.angleOffset
-	          });
-	        }
-	      }
-	      return this.instance;
-	    },
-	    getDefaultConfig() {
-	      return {
-	        id: this.id,
-	        className: 'hr-structure-components-base-popup',
-	        autoHide: true,
-	        animation: 'fading-slide',
-	        bindOptions: {
-	          position: 'bottom'
-	        },
-	        cacheable: false,
-	        events: {
-	          onPopupClose: () => this.closePopup(),
-	          onPopupShow: async () => {
-	            const container = this.instance.getPopupContainer();
-	            await Promise.resolve();
-	            const {
-	              top
-	            } = container.getBoundingClientRect();
-	            const offset = top + container.offsetHeight - document.body.offsetHeight;
-	            if (offset > 0) {
-	              const margin = 5;
-	              this.instance.setMaxHeight(container.offsetHeight - offset - margin);
-	            }
-	          }
-	        }
-	      };
-	    },
-	    getPopupConfig() {
-	      var _this$config$offsetTo, _this$config$bindOpti;
-	      const defaultConfig = this.getDefaultConfig();
-	      const modifiedOptions = {};
-	      const defaultClassName = defaultConfig.className;
-	      if (this.config.className) {
-	        modifiedOptions.className = `${defaultClassName} ${this.config.className}`;
-	      }
-	      const offsetTop = (_this$config$offsetTo = this.config.offsetTop) != null ? _this$config$offsetTo : defaultConfig.offsetTop;
-	      if (((_this$config$bindOpti = this.config.bindOptions) == null ? void 0 : _this$config$bindOpti.position) === 'top' && main_core.Type.isNumber(this.config.offsetTop)) {
-	        modifiedOptions.offsetTop = offsetTop - 10;
-	      }
-	      return {
-	        ...defaultConfig,
-	        ...this.config,
-	        ...modifiedOptions
-	      };
-	    },
-	    closePopup() {
-	      this.$emit('close');
-	      this.instance.destroy();
-	      this.instance = null;
-	    },
-	    enableAutoHide() {
-	      this.getPopupInstance().setAutoHide(true);
-	    },
-	    disableAutoHide() {
-	      this.getPopupInstance().setAutoHide(false);
-	    },
-	    adjustPosition() {
-	      this.getPopupInstance().adjustPosition({
-	        forceBindPosition: true,
-	        position: this.getPopupConfig().bindOptions.position
-	      });
-	    }
-	  },
-	  template: `
+		name: 'BasePopup',
+		emits: ['close'],
+		props: {
+			id: {
+				type: String,
+				required: true
+			},
+			config: {
+				type: Object,
+				required: false,
+				default: {}
+			}
+		},
+		computed: {
+			popupContainer() {
+				return `${POPUP_CONTAINER_PREFIX}${this.id}`;
+			}
+		},
+		created() {
+			this.instance = this.getPopupInstance();
+			this.instance.show();
+		},
+		mounted() {
+			this.instance.adjustPosition({
+				forceBindPosition: true,
+				position: this.getPopupConfig().bindOptions.position
+			});
+		},
+		beforeUnmount() {
+			if (!this.instance) {
+				return;
+			}
+			this.closePopup();
+		},
+		methods: {
+			getPopupInstance() {
+				if (!this.instance) {
+					main_popup.PopupManager.getPopupById(this.id)?.destroy();
+					const config = this.getPopupConfig();
+					this.instance = new main_popup.Popup(config);
+					if (this.config.angleOffset) {
+						this.instance.setAngle({
+							offset: this.config.angleOffset
+						});
+					}
+				}
+				return this.instance;
+			},
+			getDefaultConfig() {
+				return {
+					id: this.id,
+					className: 'hr-structure-components-base-popup',
+					autoHide: true,
+					animation: 'fading-slide',
+					bindOptions: {
+						position: 'bottom'
+					},
+					cacheable: false,
+					events: {
+						onPopupClose: () => this.closePopup(),
+						onPopupShow: async () => {
+							const container = this.instance.getPopupContainer();
+							await Promise.resolve();
+							const {
+								top
+							} = container.getBoundingClientRect();
+							const offset = top + container.offsetHeight - document.body.offsetHeight;
+							if (offset > 0) {
+								const margin = 5;
+								this.instance.setMaxHeight(container.offsetHeight - offset - margin);
+							}
+						}
+					}
+				};
+			},
+			getPopupConfig() {
+				const defaultConfig = this.getDefaultConfig();
+				const modifiedOptions = {};
+				const defaultClassName = defaultConfig.className;
+				if (this.config.className) {
+					modifiedOptions.className = `${defaultClassName} ${this.config.className}`;
+				}
+				const offsetTop = this.config.offsetTop ?? defaultConfig.offsetTop;
+				if (this.config.bindOptions?.position === 'top' && main_core.Type.isNumber(this.config.offsetTop)) {
+					modifiedOptions.offsetTop = offsetTop - 10;
+				}
+				return {
+					...defaultConfig,
+					...this.config,
+					...modifiedOptions
+				};
+			},
+			closePopup() {
+				this.$emit('close');
+				this.instance.destroy();
+				this.instance = null;
+			},
+			enableAutoHide() {
+				this.getPopupInstance().setAutoHide(true);
+			},
+			disableAutoHide() {
+				this.getPopupInstance().setAutoHide(false);
+			},
+			adjustPosition() {
+				this.getPopupInstance().adjustPosition({
+					forceBindPosition: true,
+					position: this.getPopupConfig().bindOptions.position
+				});
+			}
+		},
+		template: `
 		<Teleport :to="popupContainer">
 			<slot
 				:adjustPosition="adjustPosition"
@@ -131,100 +129,99 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	};
 
 	const BaseActionMenuPropsMixin = {
-	  props: {
-	    id: {
-	      type: String,
-	      required: true
-	    },
-	    bindElement: {
-	      type: HTMLElement,
-	      required: true
-	    },
-	    items: {
-	      type: Array,
-	      required: true,
-	      default: []
-	    },
-	    titleBar: {
-	      type: String,
-	      required: false
-	    },
-	    containerDataTestId: {
-	      type: String,
-	      required: false
-	    }
-	  }
+		props: {
+			id: {
+				type: String,
+				required: true
+			},
+			bindElement: {
+				type: HTMLElement,
+				required: true
+			},
+			items: {
+				type: Array,
+				required: true,
+				default: []
+			},
+			titleBar: {
+				type: String,
+				required: false
+			},
+			containerDataTestId: {
+				type: String,
+				required: false
+			}
+		}
 	};
 	const BaseActionMenu = {
-	  name: 'BaseActionMenu',
-	  mixins: [BaseActionMenuPropsMixin],
-	  props: {
-	    width: {
-	      type: Number,
-	      required: false,
-	      default: 260
-	    },
-	    delimiter: {
-	      type: Boolean,
-	      required: false,
-	      default: true
-	    },
-	    angleOffset: {
-	      type: Number,
-	      required: false,
-	      default: 0
-	    },
-	    titleBar: {
-	      type: String,
-	      required: false
-	    },
-	    className: {
-	      type: String,
-	      required: false
-	    }
-	  },
-	  emits: ['action', 'close'],
-	  components: {
-	    BasePopup
-	  },
-	  computed: {
-	    popupConfig() {
-	      const options = {
-	        width: this.width,
-	        bindElement: this.bindElement,
-	        borderRadius: 12,
-	        contentNoPaddings: true,
-	        contentPadding: 0,
-	        padding: 0,
-	        offsetTop: 4
-	      };
-	      if (this.angleOffset >= 0) {
-	        options.angleOffset = this.angleOffset;
-	      }
-	      if (this.titleBar) {
-	        options.titleBar = this.titleBar;
-	      }
-	      if (this.className) {
-	        options.className = this.className;
-	      }
-	      return options;
-	    }
-	  },
-	  methods: {
-	    onItemClick(event, item, closePopup) {
-	      var _item$disabled;
-	      event.stopPropagation();
-	      if ((_item$disabled = item.disabled) != null ? _item$disabled : false) {
-	        return;
-	      }
-	      this.$emit('action', item.id);
-	      closePopup();
-	    },
-	    close() {
-	      this.$emit('close');
-	    }
-	  },
-	  template: `
+		name: 'BaseActionMenu',
+		mixins: [BaseActionMenuPropsMixin],
+		props: {
+			width: {
+				type: Number,
+				required: false,
+				default: 260
+			},
+			delimiter: {
+				type: Boolean,
+				required: false,
+				default: true
+			},
+			angleOffset: {
+				type: Number,
+				required: false,
+				default: 0
+			},
+			titleBar: {
+				type: String,
+				required: false
+			},
+			className: {
+				type: String,
+				required: false
+			}
+		},
+		emits: ['action', 'close'],
+		components: {
+			BasePopup
+		},
+		computed: {
+			popupConfig() {
+				const options = {
+					width: this.width,
+					bindElement: this.bindElement,
+					borderRadius: 12,
+					contentNoPaddings: true,
+					contentPadding: 0,
+					padding: 0,
+					offsetTop: 4
+				};
+				if (this.angleOffset >= 0) {
+					options.angleOffset = this.angleOffset;
+				}
+				if (this.titleBar) {
+					options.titleBar = this.titleBar;
+				}
+				if (this.className) {
+					options.className = this.className;
+				}
+				return options;
+			}
+		},
+		methods: {
+			onItemClick(event, item, closePopup) {
+				event.stopPropagation();
+				if (item.disabled ?? false) {
+					return;
+				}
+				this.$emit('action', item.id);
+				closePopup();
+			},
+			close() {
+				this.$emit('close');
+			}
+		},
+		template: `
 		<BasePopup
 			:config="popupConfig"
 			v-slot="{closePopup}"
@@ -253,54 +250,53 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	};
 
 	const RouteActionMenuItem = {
-	  name: 'RouteActionMenuItem',
-	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon
-	  },
-	  props: {
-	    id: {
-	      type: String,
-	      required: true
-	    },
-	    title: {
-	      type: String,
-	      required: true
-	    },
-	    description: {
-	      type: String,
-	      required: false,
-	      default: ''
-	    },
-	    imageClass: {
-	      type: String,
-	      required: false,
-	      default: ''
-	    },
-	    itemClass: {
-	      type: String,
-	      required: false,
-	      default: ''
-	    },
-	    bIcon: {
-	      type: Object,
-	      required: false,
-	      default: null
-	    },
-	    dataTestId: {
-	      type: String,
-	      required: false
-	    }
-	  },
-	  methods: {
-	    getColor(bIcon) {
-	      var _bIcon$color;
-	      if (bIcon.colorTokenName) {
-	        return humanresources_companyStructure_utils.getColorCode(bIcon.colorTokenName);
-	      }
-	      return (_bIcon$color = bIcon.color) != null ? _bIcon$color : 'black';
-	    }
-	  },
-	  template: `
+		name: 'RouteActionMenuItem',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon
+		},
+		props: {
+			id: {
+				type: String,
+				required: true
+			},
+			title: {
+				type: String,
+				required: true
+			},
+			description: {
+				type: String,
+				required: false,
+				default: ''
+			},
+			imageClass: {
+				type: String,
+				required: false,
+				default: ''
+			},
+			itemClass: {
+				type: String,
+				required: false,
+				default: ''
+			},
+			bIcon: {
+				type: Object,
+				required: false,
+				default: null
+			},
+			dataTestId: {
+				type: String,
+				required: false
+			}
+		},
+		methods: {
+			getColor(bIcon) {
+				if (bIcon.colorTokenName) {
+					return humanresources_companyStructure_utils.getColorCode(bIcon.colorTokenName);
+				}
+				return bIcon.color ?? 'black';
+			}
+		},
+		template: `
 		<div
 			class="hr-structure-route-action-popup-menu-item"
 			:class="itemClass"
@@ -337,13 +333,13 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	};
 
 	const RouteActionMenu = {
-	  name: 'RouteActionMenu',
-	  mixins: [BaseActionMenuPropsMixin],
-	  components: {
-	    BaseActionMenu,
-	    RouteActionMenuItem
-	  },
-	  template: `
+		name: 'RouteActionMenu',
+		mixins: [BaseActionMenuPropsMixin],
+		components: {
+			BaseActionMenu,
+			RouteActionMenuItem
+		},
+		template: `
 		<BaseActionMenu
 			:id="id"
 			:items="items"
@@ -368,40 +364,40 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 
 	const SupportedColors = new Set(['red']);
 	const ActionMenuItem = {
-	  name: 'ActionMenuItem',
-	  props: {
-	    id: {
-	      type: String,
-	      required: true
-	    },
-	    title: {
-	      type: String,
-	      required: true
-	    },
-	    imageClass: {
-	      type: String,
-	      required: false,
-	      default: ''
-	    },
-	    color: {
-	      type: String,
-	      required: false,
-	      default: ''
-	    },
-	    dataTestId: {
-	      type: String,
-	      required: false
-	    }
-	  },
-	  computed: {
-	    colorClass() {
-	      if (SupportedColors.has(this.color)) {
-	        return `--${this.color}`;
-	      }
-	      return '';
-	    }
-	  },
-	  template: `
+		name: 'ActionMenuItem',
+		props: {
+			id: {
+				type: String,
+				required: true
+			},
+			title: {
+				type: String,
+				required: true
+			},
+			imageClass: {
+				type: String,
+				required: false,
+				default: ''
+			},
+			color: {
+				type: String,
+				required: false,
+				default: ''
+			},
+			dataTestId: {
+				type: String,
+				required: false
+			}
+		},
+		computed: {
+			colorClass() {
+				if (SupportedColors.has(this.color)) {
+					return `--${this.color}`;
+				}
+				return '';
+			}
+		},
+		template: `
 		<div
 			class="hr-structure-action-popup-menu-item"
 			:data-test-id="dataTestId"
@@ -419,13 +415,13 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	};
 
 	const ActionMenu = {
-	  name: 'ActionMenu',
-	  mixins: [BaseActionMenuPropsMixin],
-	  components: {
-	    BaseActionMenu,
-	    ActionMenuItem
-	  },
-	  template: `
+		name: 'ActionMenu',
+		mixins: [BaseActionMenuPropsMixin],
+		components: {
+			BaseActionMenu,
+			ActionMenuItem
+		},
+		template: `
 		<BaseActionMenu
 			:id="id"
 			:items="items"
@@ -449,40 +445,40 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	};
 
 	const UserActionMenuItem = {
-	  name: 'UserActionMenuItem',
-	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon
-	  },
-	  props: {
-	    id: {
-	      type: Number,
-	      required: true
-	    },
-	    name: {
-	      type: String,
-	      required: true
-	    },
-	    avatar: {
-	      type: String,
-	      required: false,
-	      default: null
-	    },
-	    workPosition: {
-	      type: String,
-	      required: false,
-	      default: null
-	    },
-	    dataTestId: {
-	      type: String,
-	      required: false
-	    }
-	  },
-	  methods: {
-	    loc(phraseCode, replacements = {}) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
-	    }
-	  },
-	  template: `
+		name: 'UserActionMenuItem',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon
+		},
+		props: {
+			id: {
+				type: Number,
+				required: true
+			},
+			name: {
+				type: String,
+				required: true
+			},
+			avatar: {
+				type: String,
+				required: false,
+				default: null
+			},
+			workPosition: {
+				type: String,
+				required: false,
+				default: null
+			},
+			dataTestId: {
+				type: String,
+				required: false
+			}
+		},
+		methods: {
+			loc(phraseCode, replacements = {}) {
+				return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+			}
+		},
+		template: `
 		<div
 			class="hr-structure-route-action-popup-menu-item"
 			:data-test-id="dataTestId"
@@ -508,24 +504,24 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	};
 
 	const UserListActionMenu = {
-	  name: 'UserListActionMenu',
-	  mixins: [BaseActionMenuPropsMixin],
-	  components: {
-	    BaseActionMenu,
-	    UserActionMenuItem
-	  },
-	  methods: {
-	    openUserUrl(url) {
-	      if (!url) {
-	        return;
-	      }
-	      BX.SidePanel.Instance.open(url, {
-	        width: 1100,
-	        cacheable: false
-	      });
-	    }
-	  },
-	  template: `
+		name: 'UserListActionMenu',
+		mixins: [BaseActionMenuPropsMixin],
+		components: {
+			BaseActionMenu,
+			UserActionMenuItem
+		},
+		methods: {
+			openUserUrl(url) {
+				if (!url) {
+					return;
+				}
+				BX.SidePanel.Instance.open(url, {
+					width: 1100,
+					cacheable: false
+				});
+			}
+		},
+		template: `
 		<BaseActionMenu 
 			:id="id"
 			className="hr-user-list-action-menu"
@@ -553,8 +549,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	};
 
 	const DefaultPopupLayout = {
-	  name: 'DefaultPopupLayout',
-	  template: `
+		name: 'DefaultPopupLayout',
+		template: `
 		<div
 			v-if="$slots.content"
 			class="hr-default-popup-layout__content"
@@ -564,97 +560,94 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	`
 	};
 
-	let _ = t => t,
-	  _t;
 	const ConfirmationPopup = {
-	  name: 'ConfirmationPopup',
-	  emits: ['close', 'action'],
-	  components: {
-	    BasePopup,
-	    DefaultLayoutPopup: DefaultPopupLayout
-	  },
-	  props: {
-	    title: {
-	      type: String,
-	      default: null
-	    },
-	    withoutTitleBar: {
-	      type: Boolean,
-	      default: false
-	    },
-	    description: {
-	      type: String
-	    },
-	    onlyConfirmButtonMode: {
-	      type: Boolean,
-	      default: false
-	    },
-	    confirmBtnText: {
-	      type: String,
-	      default: null
-	    },
-	    showActionButtonLoader: {
-	      type: Boolean,
-	      default: false
-	    },
-	    lockActionButton: {
-	      type: Boolean,
-	      default: false
-	    },
-	    cancelBtnText: {
-	      type: String,
-	      default: null
-	    },
-	    bindElement: {
-	      type: HTMLElement,
-	      default: null
-	    },
-	    width: {
-	      type: Number,
-	      default: 300
-	    },
-	    padding: {
-	      type: Number,
-	      default: 0
-	    },
-	    confirmButtonClass: {
-	      type: String,
-	      default: 'ui-btn-primary'
-	    },
-	    minHeight: {
-	      type: Number,
-	      default: false
-	    },
-	    maxHeight: {
-	      type: Number,
-	      default: false
-	    }
-	  },
-	  methods: {
-	    loc(phraseCode, replacements = {}) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
-	    },
-	    closeAction() {
-	      if (this.showActionButtonLoader) {
-	        return;
-	      }
-	      this.$emit('close');
-	    },
-	    performAction() {
-	      if (this.lockActionButton || this.showActionButtonLoader) {
-	        return;
-	      }
-	      this.$emit('action');
-	    },
-	    getTitleBar() {
-	      var _this$title;
-	      const {
-	        root,
-	        closeButton
-	      } = main_core.Tag.render(_t || (_t = _`
+		name: 'ConfirmationPopup',
+		emits: ['close', 'action'],
+		components: {
+			BasePopup,
+			DefaultLayoutPopup: DefaultPopupLayout
+		},
+		props: {
+			title: {
+				type: String,
+				default: null
+			},
+			withoutTitleBar: {
+				type: Boolean,
+				default: false
+			},
+			description: {
+				type: String
+			},
+			onlyConfirmButtonMode: {
+				type: Boolean,
+				default: false
+			},
+			confirmBtnText: {
+				type: String,
+				default: null
+			},
+			showActionButtonLoader: {
+				type: Boolean,
+				default: false
+			},
+			lockActionButton: {
+				type: Boolean,
+				default: false
+			},
+			cancelBtnText: {
+				type: String,
+				default: null
+			},
+			bindElement: {
+				type: HTMLElement,
+				default: null
+			},
+			width: {
+				type: Number,
+				default: 300
+			},
+			padding: {
+				type: Number,
+				default: 0
+			},
+			confirmButtonClass: {
+				type: String,
+				default: 'ui-btn-primary'
+			},
+			minHeight: {
+				type: Number,
+				default: null
+			},
+			maxHeight: {
+				type: Number,
+				default: null
+			}
+		},
+		methods: {
+			loc(phraseCode, replacements = {}) {
+				return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+			},
+			closeAction() {
+				if (this.showActionButtonLoader) {
+					return;
+				}
+				this.$emit('close');
+			},
+			performAction() {
+				if (this.lockActionButton || this.showActionButtonLoader) {
+					return;
+				}
+				this.$emit('action');
+			},
+			getTitleBar() {
+				const {
+					root,
+					closeButton
+				} = main_core.Tag.render`
 				<div class="hr-confirmation-popup__title-bar">
 					<span class="hr-confirmation-popup__title-bar-text">
-						${0}
+						${this.title ?? ''}
 					</span>
 					<div
 						class="ui-icon-set --cross-25 hr-confirmation-popup__title-bar-close-button"
@@ -662,37 +655,37 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 					>
 					</div>
 				</div>
-			`), (_this$title = this.title) != null ? _this$title : '');
-	      main_core.Event.bind(closeButton, 'click', () => {
-	        this.closeAction();
-	      });
-	      return {
-	        content: root
-	      };
-	    }
-	  },
-	  computed: {
-	    popupConfig() {
-	      return {
-	        width: this.width,
-	        bindElement: this.bindElement,
-	        borderRadius: 12,
-	        overlay: this.bindElement === null ? {
-	          opacity: 40
-	        } : false,
-	        contentNoPaddings: true,
-	        contentPadding: 0,
-	        padding: this.padding,
-	        className: 'hr_structure_confirmation_popup',
-	        autoHide: false,
-	        draggable: true,
-	        titleBar: this.withoutTitleBar ? null : this.getTitleBar(),
-	        maxHeight: this.maxHeight,
-	        minHeight: this.minHeight
-	      };
-	    }
-	  },
-	  template: `
+			`;
+				main_core.Event.bind(closeButton, 'click', () => {
+					this.closeAction();
+				});
+				return {
+					content: root
+				};
+			}
+		},
+		computed: {
+			popupConfig() {
+				return {
+					width: this.width,
+					bindElement: this.bindElement,
+					borderRadius: 12,
+					overlay: this.bindElement === null ? {
+						opacity: 40
+					} : false,
+					contentNoPaddings: true,
+					contentPadding: 0,
+					padding: this.padding,
+					className: 'hr_structure_confirmation_popup',
+					autoHide: false,
+					draggable: true,
+					titleBar: this.withoutTitleBar ? null : this.getTitleBar(),
+					maxHeight: this.maxHeight,
+					minHeight: this.minHeight
+				};
+			}
+		},
+		template: `
 		<BasePopup
 			:id="'id'"
 			:config="popupConfig"
@@ -740,157 +733,157 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 
 	// @vue/component
 	const MoveEmployeeConfirmationPopup = {
-	  name: 'MoveEmployeeConfirmationPopup',
-	  components: {
-	    ConfirmationPopup
-	  },
-	  props: {
-	    title: {
-	      type: String,
-	      default: ''
-	    },
-	    description: {
-	      type: String,
-	      required: true
-	    },
-	    confirmButtonText: {
-	      type: String,
-	      default: main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_CONFIRM_BTN')
-	    },
-	    targetType: {
-	      type: String,
-	      default: 'department'
-	    },
-	    sourceType: {
-	      type: String,
-	      default: 'department'
-	    },
-	    showRoleSelect: {
-	      type: Boolean,
-	      default: false
-	    },
-	    showCombineCheckbox: {
-	      type: Boolean,
-	      default: false
-	    },
-	    isCombineOnly: {
-	      type: Boolean,
-	      default: false
-	    },
-	    excludeEmployeeRole: {
-	      type: Boolean,
-	      default: false
-	    }
-	  },
-	  emits: ['confirm', 'close'],
-	  data() {
-	    return {
-	      selectedRole: null,
-	      combinePosition: false
-	    };
-	  },
-	  computed: {
-	    memberRoles() {
-	      return humanresources_companyStructure_api.getMemberRoles(this.targetType);
-	    },
-	    selectedRoleLabel() {
-	      switch (this.selectedRole) {
-	        case this.memberRoles.head:
-	          return this.isTeamTarget ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_TEAM_HEAD') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_HEAD');
-	        case this.memberRoles.deputyHead:
-	          return this.isTeamTarget ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_TEAM_DEPUTY') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_DEPUTY');
-	        case this.memberRoles.employee:
-	          return this.isTeamTarget ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_MEMBER') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_EMPLOYEE');
-	        default:
-	          return '';
-	      }
-	    },
-	    isCombineCheckboxEnabled() {
-	      return this.isCombineOnly || this.sourceType === humanresources_companyStructure_utils.EntityTypes.team && this.isTeamTarget;
-	    },
-	    isTeamTarget() {
-	      return this.targetType === humanresources_companyStructure_utils.EntityTypes.team;
-	    },
-	    popupTitle() {
-	      if (this.title) {
-	        return this.title;
-	      }
-	      return this.isTeamTarget ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_TITLE_TEAM') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_TITLE_DEPT');
-	    },
-	    popupCheckboxText() {
-	      return this.isTeamTarget ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_CHECKBOX_TEAM') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_CHECKBOX_DEPT');
-	    },
-	    showCombineNotice() {
-	      const isDeptToTeam = this.sourceType === humanresources_companyStructure_utils.EntityTypes.department && this.isTeamTarget;
-	      return this.isCombineOnly && isDeptToTeam;
-	    }
-	  },
-	  created() {
-	    if (this.showRoleSelect) {
-	      this.selectedRole = this.excludeEmployeeRole ? this.memberRoles.head : this.memberRoles.employee;
-	    }
-	    this.combinePosition = this.isCombineCheckboxEnabled;
-	  },
-	  methods: {
-	    loc(phrase) {
-	      return main_core.Loc.getMessage(phrase);
-	    },
-	    handleConfirm() {
-	      const payload = {
-	        role: this.selectedRole,
-	        roleLabel: this.selectedRoleLabel,
-	        isCombineMode: this.combinePosition
-	      };
-	      if (this.selectedRole !== this.memberRoles.employee) {
-	        payload.badgeText = this.selectedRoleLabel;
-	      }
-	      this.$emit('confirm', payload);
-	    },
-	    toggleRoleMenu() {
-	      const menuId = 'dnd-confirmation-role-menu';
-	      const bindElement = this.$refs.roleSelect;
-	      if (main_popup.PopupManager.getPopupById(menuId)) {
-	        main_popup.PopupManager.getPopupById(menuId).destroy();
-	        return;
-	      }
-	      const menu = new main_popup.Menu({
-	        id: menuId,
-	        bindElement,
-	        width: 334,
-	        items: this.roleMenuItems(),
-	        events: {
-	          onPopupClose: () => {
-	            menu.destroy();
-	          }
-	        }
-	      });
-	      menu.show();
-	    },
-	    roleMenuItems() {
-	      const items = [{
-	        id: this.memberRoles.head,
-	        text: this.isTeamTarget ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_TEAM_HEAD') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_HEAD')
-	      }, {
-	        id: this.memberRoles.deputyHead,
-	        text: this.isTeamTarget ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_TEAM_DEPUTY') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_DEPUTY')
-	      }];
-	      if (!this.excludeEmployeeRole) {
-	        const employeeRoleText = this.isTeamTarget ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_MEMBER') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_EMPLOYEE');
-	        items.push({
-	          id: this.memberRoles.employee,
-	          text: employeeRoleText
-	        });
-	      }
-	      return items.map(item => ({
-	        ...item,
-	        onclick: (event, menuItem) => {
-	          this.selectedRole = menuItem.id;
-	          menuItem.getMenuWindow().close();
-	        }
-	      }));
-	    }
-	  },
-	  template: `
+		name: 'MoveEmployeeConfirmationPopup',
+		components: {
+			ConfirmationPopup
+		},
+		props: {
+			title: {
+				type: String,
+				default: ''
+			},
+			description: {
+				type: String,
+				required: true
+			},
+			confirmButtonText: {
+				type: String,
+				default: main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_CONFIRM_BTN')
+			},
+			targetType: {
+				type: String,
+				default: 'department'
+			},
+			sourceType: {
+				type: String,
+				default: 'department'
+			},
+			showRoleSelect: {
+				type: Boolean,
+				default: false
+			},
+			showCombineCheckbox: {
+				type: Boolean,
+				default: false
+			},
+			isCombineOnly: {
+				type: Boolean,
+				default: false
+			},
+			excludeEmployeeRole: {
+				type: Boolean,
+				default: false
+			}
+		},
+		emits: ['confirm', 'close'],
+		data() {
+			return {
+				selectedRole: null,
+				combinePosition: false
+			};
+		},
+		computed: {
+			memberRoles() {
+				return humanresources_companyStructure_api.getMemberRoles(this.targetType);
+			},
+			selectedRoleLabel() {
+				switch (this.selectedRole) {
+					case this.memberRoles.head:
+						return this.isTeamTarget ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_TEAM_HEAD') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_HEAD');
+					case this.memberRoles.deputyHead:
+						return this.isTeamTarget ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_TEAM_DEPUTY') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_DEPUTY');
+					case this.memberRoles.employee:
+						return this.isTeamTarget ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_MEMBER') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_EMPLOYEE');
+					default:
+						return '';
+				}
+			},
+			isCombineCheckboxEnabled() {
+				return this.isCombineOnly || this.sourceType === humanresources_companyStructure_utils.EntityTypes.team && this.isTeamTarget;
+			},
+			isTeamTarget() {
+				return this.targetType === humanresources_companyStructure_utils.EntityTypes.team;
+			},
+			popupTitle() {
+				if (this.title) {
+					return this.title;
+				}
+				return this.isTeamTarget ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_TITLE_TEAM') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_TITLE_DEPT');
+			},
+			popupCheckboxText() {
+				return this.isTeamTarget ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_CHECKBOX_TEAM') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_CHECKBOX_DEPT');
+			},
+			showCombineNotice() {
+				const isDeptToTeam = this.sourceType === humanresources_companyStructure_utils.EntityTypes.department && this.isTeamTarget;
+				return this.isCombineOnly && isDeptToTeam;
+			}
+		},
+		created() {
+			if (this.showRoleSelect) {
+				this.selectedRole = this.excludeEmployeeRole ? this.memberRoles.head : this.memberRoles.employee;
+			}
+			this.combinePosition = this.isCombineCheckboxEnabled;
+		},
+		methods: {
+			loc(phrase) {
+				return main_core.Loc.getMessage(phrase);
+			},
+			handleConfirm() {
+				const payload = {
+					role: this.selectedRole,
+					roleLabel: this.selectedRoleLabel,
+					isCombineMode: this.combinePosition
+				};
+				if (this.selectedRole !== this.memberRoles.employee) {
+					payload.badgeText = this.selectedRoleLabel;
+				}
+				this.$emit('confirm', payload);
+			},
+			toggleRoleMenu() {
+				const menuId = 'dnd-confirmation-role-menu';
+				const bindElement = this.$refs.roleSelect;
+				if (main_popup.PopupManager.getPopupById(menuId)) {
+					main_popup.PopupManager.getPopupById(menuId).destroy();
+					return;
+				}
+				const menu = new main_popup.Menu({
+					id: menuId,
+					bindElement,
+					width: 334,
+					items: this.roleMenuItems(),
+					events: {
+						onPopupClose: () => {
+							menu.destroy();
+						}
+					}
+				});
+				menu.show();
+			},
+			roleMenuItems() {
+				const items = [{
+					id: this.memberRoles.head,
+					text: this.isTeamTarget ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_TEAM_HEAD') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_HEAD')
+				}, {
+					id: this.memberRoles.deputyHead,
+					text: this.isTeamTarget ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_TEAM_DEPUTY') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_DEPUTY')
+				}];
+				if (!this.excludeEmployeeRole) {
+					const employeeRoleText = this.isTeamTarget ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_MEMBER') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_EMPLOYEE');
+					items.push({
+						id: this.memberRoles.employee,
+						text: employeeRoleText
+					});
+				}
+				return items.map(item => ({
+					...item,
+					onclick: (event, menuItem) => {
+						this.selectedRole = menuItem.id;
+						menuItem.getMenuWindow().close();
+					}
+				}));
+			}
+		},
+		template: `
 		<ConfirmationPopup
 			:title="popupTitle"
 			:width="364"
@@ -939,213 +932,206 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	};
 
 	const Hint = {
-	  mounted(el, binding) {
-	    const value = main_core.Type.isString(binding == null ? void 0 : binding.value) ? binding.value.trim() : '';
-	    let hint = null;
-	    const shouldShow = () => value ? true : el.scrollWidth !== el.offsetWidth;
-	    const getText = () => main_core.Text.encode(value || el.textContent);
-	    const onMouseEnter = () => {
-	      if (!shouldShow()) {
-	        return;
-	      }
-	      hint = main_core.Reflection.getClass('BX.UI.Hint').createInstance({
-	        popupParameters: {
-	          cacheable: false,
-	          angle: {
-	            offset: 0
-	          },
-	          offsetLeft: el.getBoundingClientRect().width / 2
-	        }
-	      });
-	      hint.show(el, getText());
-	    };
-	    const onMouseLeave = () => {
-	      var _hint;
-	      (_hint = hint) == null ? void 0 : _hint.hide();
-	    };
-	    main_core.Event.bind(el, 'mouseenter', onMouseEnter);
-	    main_core.Event.bind(el, 'mouseleave', onMouseLeave);
-	  }
+		mounted(el, binding) {
+			const value = main_core.Type.isString(binding?.value) ? binding.value.trim() : '';
+			let hint = null;
+			const shouldShow = () => value ? true : el.scrollWidth !== el.offsetWidth;
+			const getText = () => main_core.Text.encode(value || el.textContent);
+			const onMouseEnter = () => {
+				if (!shouldShow()) {
+					return;
+				}
+				hint = main_core.Reflection.getClass('BX.UI.Hint').createInstance({
+					popupParameters: {
+						cacheable: false,
+						angle: {
+							offset: 0
+						},
+						offsetLeft: el.getBoundingClientRect().width / 2
+					}
+				});
+				hint.show(el, getText());
+			};
+			const onMouseLeave = () => {
+				hint?.hide();
+			};
+			main_core.Event.bind(el, 'mouseenter', onMouseEnter);
+			main_core.Event.bind(el, 'mouseleave', onMouseLeave);
+		}
 	};
 
-	let _$1 = t => t,
-	  _t$1;
 	class BaseManagementDialogHeader extends ui_entitySelector.BaseHeader {
-	  render() {
-	    return main_core.Tag.render(_t$1 || (_t$1 = _$1``));
-	  }
+		render() {
+			return main_core.Tag.render``;
+		}
 	}
 
-	let _$2 = t => t,
-	  _t$2;
 	class BaseManagementDialogFooter extends ui_entitySelector.BaseFooter {
-	  render() {
-	    return main_core.Tag.render(_t$2 || (_t$2 = _$2``));
-	  }
+		render() {
+			return main_core.Tag.render``;
+		}
 	}
 
 	// eslint-disable-next-line no-unused-vars
 	const ManagementDialog = {
-	  name: 'ManagementDialog',
-	  emits: ['managementDialogAction', 'close'],
-	  props: {
-	    id: {
-	      type: String,
-	      required: true
-	    },
-	    title: {
-	      type: String,
-	      required: false
-	    },
-	    description: {
-	      type: String,
-	      required: false
-	    },
-	    entities: {
-	      type: Array,
-	      required: true
-	    },
-	    isActive: {
-	      type: Boolean,
-	      required: false,
-	      default: false
-	    },
-	    hiddenItemsIds: {
-	      type: Array,
-	      required: false,
-	      default: []
-	    },
-	    confirmButtonText: {
-	      type: String,
-	      required: false
-	    },
-	    /** @var { ManagementDialogDataTestIds } dataTestIds */
-	    dataTestIds: {
-	      type: Object,
-	      required: false,
-	      default: {}
-	    },
-	    /** @var TabOptions */
-	    recentTabOptions: {
-	      type: Object,
-	      required: false,
-	      default: {}
-	    }
-	  },
-	  data() {
-	    return {
-	      headerContainer: HTMLElement | null,
-	      footerContainer: HTMLElement | null,
-	      selectedItemsCount: 0
-	    };
-	  },
-	  created() {
-	    this.instance = this.getDialogInstance();
-	    this.instance.show();
-	  },
-	  beforeUnmount() {
-	    if (!this.instance || !this.instance.isOpen()) {
-	      return;
-	    }
-	    this.instance.destroy();
-	  },
-	  methods: {
-	    getDialogInstance() {
-	      var _Dialog$getById;
-	      if (this.instance) {
-	        return this.instance;
-	      }
-	      (_Dialog$getById = ui_entitySelector.Dialog.getById(this.id)) == null ? void 0 : _Dialog$getById.destroy();
-	      const config = this.getDialogConfig();
-	      this.instance = new ui_entitySelector.Dialog(config);
-	      this.headerContainer = this.instance.getHeader().getContainer();
-	      this.footerContainer = this.instance.getFooter().getContainer();
-	      if (this.dataTestIds.containerDataTestId) {
-	        main_core.Dom.attr(this.instance.getContainer(), 'data-test-id', this.dataTestIds.containerDataTestId);
-	      }
-	      return this.instance;
-	    },
-	    getDialogConfig() {
-	      return {
-	        id: this.id,
-	        width: 400,
-	        height: 511,
-	        multiple: true,
-	        cacheable: false,
-	        dropdownMode: true,
-	        compactView: false,
-	        enableSearch: true,
-	        showAvatars: true,
-	        autoHide: false,
-	        popupOptions: {
-	          overlay: {
-	            opacity: 40
-	          }
-	        },
-	        header: BaseManagementDialogHeader,
-	        footer: BaseManagementDialogFooter,
-	        recentTabOptions: this.recentTabOptions,
-	        entities: this.entities,
-	        events: {
-	          'Item:onSelect': () => {
-	            this.selectedItemsCount++;
-	          },
-	          'Item:onDeselect': () => {
-	            this.selectedItemsCount--;
-	          },
-	          onLoad: event => {
-	            const dialog = event.getTarget();
-	            this.toggleItems(dialog);
-	            const tabs = dialog.getTabs();
-	            for (const tab of tabs) {
-	              if (tab.id === 'recents') {
-	                tab.select();
-	              }
-	              if (!['recents', 'search'].includes(tab.id)) {
-	                dialog.removeTab(tab.id);
-	              }
-	            }
-	          },
-	          'SearchTab:onLoad': event => {
-	            const dialog = event.getTarget();
-	            this.toggleItems(dialog);
-	          },
-	          onDestroy: () => {
-	            this.instance = null;
-	            this.$emit('close');
-	          },
-	          onHide: () => {
-	            this.$emit('close');
-	          }
-	        }
-	      };
-	    },
-	    onActionItemClick() {
-	      var _this$instance$getSel;
-	      if (this.isActive || !this.selectedItemsCount) {
-	        return;
-	      }
-	      const selectedItems = (_this$instance$getSel = this.instance.getSelectedItems()) != null ? _this$instance$getSel : [];
-	      this.$emit('managementDialogAction', selectedItems);
-	    },
-	    closeDialog() {
-	      this.$emit('close');
-	    },
-	    loc(phraseCode, replacements = {}) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
-	    },
-	    toggleItems(dialog) {
-	      if (this.hiddenItemsIds.length === 0) {
-	        return;
-	      }
-	      const items = dialog.getItems();
-	      items.forEach(item => {
-	        const hidden = this.hiddenItemsIds.includes(item.id);
-	        item.setHidden(hidden);
-	      });
-	    }
-	  },
-	  template: `
+		name: 'ManagementDialog',
+		emits: ['managementDialogAction', 'close'],
+		props: {
+			id: {
+				type: String,
+				required: true
+			},
+			title: {
+				type: String,
+				required: false
+			},
+			description: {
+				type: String,
+				required: false
+			},
+			entities: {
+				type: Array,
+				required: true
+			},
+			isActive: {
+				type: Boolean,
+				required: false,
+				default: false
+			},
+			hiddenItemsIds: {
+				type: Array,
+				required: false,
+				default: []
+			},
+			confirmButtonText: {
+				type: String,
+				required: false
+			},
+			/** @var { ManagementDialogDataTestIds } dataTestIds */
+			dataTestIds: {
+				type: Object,
+				required: false,
+				default: {}
+			},
+			/** @var TabOptions */
+			recentTabOptions: {
+				type: Object,
+				required: false,
+				default: {}
+			}
+		},
+		data() {
+			return {
+				headerContainer: HTMLElement | null,
+				footerContainer: HTMLElement | null,
+				selectedItemsCount: 0
+			};
+		},
+		created() {
+			this.instance = this.getDialogInstance();
+			this.instance.show();
+		},
+		beforeUnmount() {
+			if (!this.instance || !this.instance.isOpen()) {
+				return;
+			}
+			this.instance.destroy();
+		},
+		methods: {
+			getDialogInstance() {
+				if (this.instance) {
+					return this.instance;
+				}
+				ui_entitySelector.Dialog.getById(this.id)?.destroy();
+				const config = this.getDialogConfig();
+				this.instance = new ui_entitySelector.Dialog(config);
+				this.headerContainer = this.instance.getHeader().getContainer();
+				this.footerContainer = this.instance.getFooter().getContainer();
+				if (this.dataTestIds.containerDataTestId) {
+					main_core.Dom.attr(this.instance.getContainer(), 'data-test-id', this.dataTestIds.containerDataTestId);
+				}
+				return this.instance;
+			},
+			getDialogConfig() {
+				return {
+					id: this.id,
+					width: 400,
+					height: 511,
+					multiple: true,
+					cacheable: false,
+					dropdownMode: true,
+					compactView: false,
+					enableSearch: true,
+					showAvatars: true,
+					autoHide: false,
+					popupOptions: {
+						overlay: {
+							opacity: 40
+						}
+					},
+					header: BaseManagementDialogHeader,
+					footer: BaseManagementDialogFooter,
+					recentTabOptions: this.recentTabOptions,
+					entities: this.entities,
+					events: {
+						'Item:onSelect': () => {
+							this.selectedItemsCount++;
+						},
+						'Item:onDeselect': () => {
+							this.selectedItemsCount--;
+						},
+						onLoad: event => {
+							const dialog = event.getTarget();
+							this.toggleItems(dialog);
+							const tabs = dialog.getTabs();
+							for (const tab of tabs) {
+								if (tab.id === 'recents') {
+									tab.select();
+								}
+								if (!['recents', 'search'].includes(tab.id)) {
+									dialog.removeTab(tab.id);
+								}
+							}
+						},
+						'SearchTab:onLoad': event => {
+							const dialog = event.getTarget();
+							this.toggleItems(dialog);
+						},
+						onDestroy: () => {
+							this.instance = null;
+							this.$emit('close');
+						},
+						onHide: () => {
+							this.$emit('close');
+						}
+					}
+				};
+			},
+			onActionItemClick() {
+				if (this.isActive || !this.selectedItemsCount) {
+					return;
+				}
+				const selectedItems = this.instance.getSelectedItems() ?? [];
+				this.$emit('managementDialogAction', selectedItems);
+			},
+			closeDialog() {
+				this.$emit('close');
+			},
+			loc(phraseCode, replacements = {}) {
+				return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+			},
+			toggleItems(dialog) {
+				if (this.hiddenItemsIds.length === 0) {
+					return;
+				}
+				const items = dialog.getItems();
+				items.forEach(item => {
+					const hidden = this.hiddenItemsIds.includes(item.id);
+					item.setHidden(hidden);
+				});
+			}
+		},
+		template: `
 		<div>
 			<teleport :to="headerContainer">
 				<div class="hr-management-dialog__header_container">
@@ -1184,236 +1170,231 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	`
 	};
 
-	let _$3 = t => t,
-	  _t$3,
-	  _t2;
 	class CommunicationsStub extends ui_entitySelector.BaseStub {
-	  constructor(...args) {
-	    super(...args);
-	    this.content = null;
-	  }
-	  getContainer() {
-	    return this.cache.remember('container', () => {
-	      const title = main_core.Type.isStringFilled(this.getOption('title')) ? this.getOption('title') : '';
-	      const {
-	        stubContainer,
-	        stubTitles
-	      } = main_core.Tag.render(_t$3 || (_t$3 = _$3`
+		content = null;
+		getContainer() {
+			return this.cache.remember('container', () => {
+				const title = main_core.Type.isStringFilled(this.getOption('title')) ? this.getOption('title') : '';
+				const {
+					stubContainer,
+					stubTitles
+				} = main_core.Tag.render`
 				<div ref="stubContainer" class="communication-dialog-stub-container">
 					<div class="communication-dialog-stub-icon"></div>
 					<div ref="stubTitles" class="communication-dialog-stub-titles">
-						<div class="communication-dialog-stub-title">${0}</div>
+						<div class="communication-dialog-stub-title">${title}</div>
 					</div>
 				</div>
-			`), title);
-	      const subtitleElement = this.getSubtitleElement();
-	      if (subtitleElement) {
-	        main_core.Dom.append(subtitleElement, stubTitles);
-	      }
-	      return stubContainer;
-	    });
-	  }
-	  getSubtitleElement() {
-	    const subtitle = this.getOption('subtitle');
-	    return subtitle ? main_core.Tag.render(_t2 || (_t2 = _$3`<div class="communication-dialog-stub-subtitle">${0}</div>`), subtitle) : null;
-	  }
-	  render() {
-	    return this.getContainer();
-	  }
+			`;
+				const subtitleElement = this.getSubtitleElement();
+				if (subtitleElement) {
+					main_core.Dom.append(subtitleElement, stubTitles);
+				}
+				return stubContainer;
+			});
+		}
+		getSubtitleElement() {
+			const subtitle = this.getOption('subtitle');
+			return subtitle ? main_core.Tag.render`<div class="communication-dialog-stub-subtitle">${subtitle}</div>` : null;
+		}
+		render() {
+			return this.getContainer();
+		}
 	}
 
 	const getChatDialogEntity = function () {
-	  return {
-	    id: 'im-chat-only',
-	    dynamicLoad: true,
-	    dynamicSearch: true,
-	    filters: [{
-	      id: 'im.chatOnlyDataFilter',
-	      options: {
-	        includeSubtitle: true
-	      }
-	    }],
-	    tagOptions: {
-	      default: {
-	        textColor: '#11A9D9',
-	        bgColor: '#D3F4FF',
-	        avatar: '/bitrix/js/humanresources/company-structure/structure-components/src/images/selectors/bind-chat-chat-tag.svg'
-	      }
-	    },
-	    itemOptions: {
-	      default: {
-	        avatar: '/bitrix/js/humanresources/company-structure/structure-components/src/images/selectors/bind-chat-chat-item.svg'
-	      }
-	    },
-	    options: {
-	      searchChatTypes: ['O', 'C']
-	    }
-	  };
+		return {
+			id: 'im-chat-only',
+			dynamicLoad: true,
+			dynamicSearch: true,
+			filters: [{
+				id: 'im.chatOnlyDataFilter',
+				options: {
+					includeSubtitle: true
+				}
+			}],
+			tagOptions: {
+				default: {
+					textColor: '#11A9D9',
+					bgColor: '#D3F4FF',
+					avatar: '/bitrix/js/humanresources/company-structure/structure-components/src/images/selectors/bind-chat-chat-tag.svg'
+				}
+			},
+			itemOptions: {
+				default: {
+					avatar: '/bitrix/js/humanresources/company-structure/structure-components/src/images/selectors/bind-chat-chat-item.svg'
+				}
+			},
+			options: {
+				searchChatTypes: ['O', 'C']
+			}
+		};
 	};
 	const getChannelDialogEntity = function () {
-	  return {
-	    id: 'im-chat-only',
-	    filters: [{
-	      id: 'im.chatOnlyDataFilter',
-	      options: {
-	        includeSubtitle: true
-	      }
-	    }],
-	    dynamicLoad: true,
-	    dynamicSearch: true,
-	    tagOptions: {
-	      default: {
-	        textColor: '#8DBB00',
-	        bgColor: '#EAF6C3',
-	        avatar: '/bitrix/js/humanresources/company-structure/structure-components/src/images/selectors/bind-chat-channel-tag.svg',
-	        avatarOptions: {
-	          borderRadius: '50%'
-	        }
-	      }
-	    },
-	    itemOptions: {
-	      default: {
-	        avatar: '/bitrix/js/humanresources/company-structure/structure-components/src/images/selectors/bind-chat-channel-item.svg',
-	        avatarOptions: {
-	          borderRadius: '6px'
-	        }
-	      }
-	    },
-	    options: {
-	      searchChatTypes: ['N', 'J']
-	    }
-	  };
+		return {
+			id: 'im-chat-only',
+			filters: [{
+				id: 'im.chatOnlyDataFilter',
+				options: {
+					includeSubtitle: true
+				}
+			}],
+			dynamicLoad: true,
+			dynamicSearch: true,
+			tagOptions: {
+				default: {
+					textColor: '#8DBB00',
+					bgColor: '#EAF6C3',
+					avatar: '/bitrix/js/humanresources/company-structure/structure-components/src/images/selectors/bind-chat-channel-tag.svg',
+					avatarOptions: {
+						borderRadius: '50%'
+					}
+				}
+			},
+			itemOptions: {
+				default: {
+					avatar: '/bitrix/js/humanresources/company-structure/structure-components/src/images/selectors/bind-chat-channel-item.svg',
+					avatarOptions: {
+						borderRadius: '6px'
+					}
+				}
+			},
+			options: {
+				searchChatTypes: ['N', 'J']
+			}
+		};
 	};
-	const getCollabDialogEntity = function () {
-	  return {
-	    id: 'project',
-	    dynamicLoad: true,
-	    dynamicSearch: true,
-	    options: {
-	      type: ['collab'],
-	      createProjectLink: false,
-	      checkCollabInviteOption: true
-	    },
-	    itemOptions: {
-	      collab: {
-	        supertitle: null,
-	        subtitle: main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_COLLAB_SUPERTITLE'),
-	        textColor: '#535c69'
-	      }
-	    },
-	    tagOptions: {
-	      default: {
-	        textColor: '#207976',
-	        bgColor: '#ade7e4',
-	        avatar: '/bitrix/js/socialnetwork/entity-selector/src/images/collab-project.svg'
-	      }
-	    }
-	  };
+	const getCollabDialogEntity = function (project = false) {
+		const subtitle = project ? main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_PROJECT_SUPERTITLE') : main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_COLLAB_SUPERTITLE');
+		return {
+			id: 'project',
+			dynamicLoad: true,
+			dynamicSearch: true,
+			options: {
+				type: ['collab'],
+				createProjectLink: false,
+				checkCollabInviteOption: true
+			},
+			itemOptions: {
+				collab: {
+					supertitle: null,
+					subtitle,
+					textColor: '#535c69'
+				}
+			},
+			tagOptions: {
+				default: {
+					textColor: '#207976',
+					bgColor: '#ade7e4',
+					avatar: '/bitrix/js/socialnetwork/entity-selector/src/images/collab-project.svg'
+				}
+			}
+		};
 	};
 	const CommunicationsTypeDict = Object.freeze({
-	  chat: 'chat',
-	  channel: 'channel',
-	  collab: 'collab'
+		chat: 'chat',
+		channel: 'channel',
+		collab: 'collab',
+		project: 'project'
 	});
 	const getCommunicationsRecentTabOptions = function (entityType, chatType) {
-	  let title = '';
-	  let subtitle = '';
-	  if (chatType === CommunicationsTypeDict.chat) {
-	    title = main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_CHAT_STUB_TITLE');
-	    subtitle = entityType === humanresources_companyStructure_utils.EntityTypes.team ? main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_CHAT_TEAM_STUB_SUBTITLE') : main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_CHAT_DEPARTMENT_STUB_SUBTITLE');
-	  } else if (chatType === CommunicationsTypeDict.channel) {
-	    title = main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_CHANNEL_STUB_TITLE');
-	    subtitle = entityType === humanresources_companyStructure_utils.EntityTypes.team ? main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_CHANNEL_TEAM_STUB_SUBTITLE') : main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_CHANNEL_DEPARTMENT_STUB_SUBTITLE');
-	  } else {
-	    title = main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_COLLAB_STUB_TITLE');
-	    subtitle = entityType === humanresources_companyStructure_utils.EntityTypes.team ? main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_COLLAB_TEAM_STUB_SUBTITLE') : main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_COLLAB_DEPARTMENT_STUB_SUBTITLE');
-	  }
-	  return {
-	    visible: false,
-	    stub: CommunicationsStub.prototype.constructor,
-	    stubOptions: {
-	      title,
-	      subtitle
-	    }
-	  };
+		let title = '';
+		let subtitle = '';
+		if (chatType === CommunicationsTypeDict.chat) {
+			title = main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_CHAT_STUB_TITLE');
+			subtitle = entityType === humanresources_companyStructure_utils.EntityTypes.team ? main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_CHAT_TEAM_STUB_SUBTITLE') : main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_CHAT_DEPARTMENT_STUB_SUBTITLE');
+		} else if (chatType === CommunicationsTypeDict.channel) {
+			title = main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_CHANNEL_STUB_TITLE');
+			subtitle = entityType === humanresources_companyStructure_utils.EntityTypes.team ? main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_CHANNEL_TEAM_STUB_SUBTITLE') : main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_CHANNEL_DEPARTMENT_STUB_SUBTITLE');
+		} else if (chatType === CommunicationsTypeDict.project) {
+			title = main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_PROJECT_STUB_TITLE');
+			subtitle = entityType === humanresources_companyStructure_utils.EntityTypes.team ? main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_PROJECT_TEAM_STUB_SUBTITLE') : main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_PROJECT_DEPARTMENT_STUB_SUBTITLE');
+		} else if (chatType === CommunicationsTypeDict.collab) {
+			title = main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_COLLAB_STUB_TITLE');
+			subtitle = entityType === humanresources_companyStructure_utils.EntityTypes.team ? main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_COLLAB_TEAM_STUB_SUBTITLE') : main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_COLLAB_DEPARTMENT_STUB_SUBTITLE');
+		}
+		return {
+			visible: false,
+			stub: CommunicationsStub.prototype.constructor,
+			stubOptions: {
+				title,
+				subtitle
+			}
+		};
 	};
 
 	/**
 	 * ui.hint with reactive content
 	 */
 	const ResponsiveHint = {
-	  name: 'ResponsiveHint',
-	  props: {
-	    content: {
-	      type: String,
-	      required: true
-	    },
-	    width: {
-	      type: [Number, null],
-	      default: 300
-	    },
-	    extraClasses: {
-	      type: Object
-	    },
-	    defaultClass: {
-	      type: String,
-	      default: 'ui-hint'
-	    },
-	    top: {
-	      type: Boolean,
-	      default: false
-	    },
-	    alignCenter: {
-	      type: Boolean,
-	      default: false
-	    },
-	    checkScrollWidth: {
-	      type: Boolean,
-	      default: false
-	    }
-	  },
-	  created() {
-	    this.hint = null;
-	  },
-	  mounted() {
-	    const container = this.$refs['hint-container'];
-	    const parameters = {
-	      width: this.width
-	    };
-	    if (this.top) {
-	      parameters.bindOptions = {
-	        position: 'top'
-	      };
-	    }
-	    if (this.alignCenter) {
-	      parameters.offsetLeft = container.offsetWidth / 2 - this.width / 2 + 39;
-	      parameters.angle = {
-	        offset: this.width / 2 - 33 / 2
-	      };
-	    }
-	    main_core.Event.bind(this.$refs['hint-container'], 'mouseenter', () => {
-	      if (this.checkScrollWidth && this.$refs['hint-container'].scrollWidth === this.$refs['hint-container'].offsetWidth) {
-	        return;
-	      }
-	      this.hint = main_core.Reflection.getClass('BX.UI.Hint').createInstance({
-	        popupParameters: {
-	          ...parameters
-	        } // destruct parameters to recreate hint
-	      });
-
-	      this.hint.show(this.$refs['hint-container'], this.content);
-	    });
-	    main_core.Event.bind(this.$refs['hint-container'], 'mouseleave', () => {
-	      var _this$hint;
-	      (_this$hint = this.hint) == null ? void 0 : _this$hint.hide(); // hide() function also destroys popup
-	    });
-	  },
-
-	  unmounted() {
-	    var _this$hint2;
-	    (_this$hint2 = this.hint) == null ? void 0 : _this$hint2.hide();
-	  },
-	  template: `
+		name: 'ResponsiveHint',
+		props: {
+			content: {
+				type: String,
+				required: true
+			},
+			width: {
+				type: [Number, null],
+				default: 300
+			},
+			extraClasses: {
+				type: Object
+			},
+			defaultClass: {
+				type: String,
+				default: 'ui-hint'
+			},
+			top: {
+				type: Boolean,
+				default: false
+			},
+			alignCenter: {
+				type: Boolean,
+				default: false
+			},
+			checkScrollWidth: {
+				type: Boolean,
+				default: false
+			}
+		},
+		created() {
+			this.hint = null;
+		},
+		mounted() {
+			const container = this.$refs['hint-container'];
+			const parameters = {
+				width: this.width
+			};
+			if (this.top) {
+				parameters.bindOptions = {
+					position: 'top'
+				};
+			}
+			if (this.alignCenter) {
+				parameters.offsetLeft = container.offsetWidth / 2 - this.width / 2 + 39;
+				parameters.angle = {
+					offset: this.width / 2 - 33 / 2
+				};
+			}
+			main_core.Event.bind(this.$refs['hint-container'], 'mouseenter', () => {
+				if (this.checkScrollWidth && this.$refs['hint-container'].scrollWidth === this.$refs['hint-container'].offsetWidth) {
+					return;
+				}
+				this.hint = main_core.Reflection.getClass('BX.UI.Hint').createInstance({
+					popupParameters: {
+						...parameters
+					} // destruct parameters to recreate hint
+				});
+				this.hint.show(this.$refs['hint-container'], this.content);
+			});
+			main_core.Event.bind(this.$refs['hint-container'], 'mouseleave', () => {
+				this.hint?.hide(); // hide() function also destroys popup
+			});
+		},
+		unmounted() {
+			this.hint?.hide();
+		},
+		template: `
 		<span :class="[defaultClass, extraClasses]" ref="hint-container">
 			<slot/>
 		</span>
@@ -1422,21 +1403,21 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 
 	// @vue/component
 	const DefaultHint = {
-	  name: 'DefaultHint',
-	  components: {
-	    ResponsiveHint
-	  },
-	  props: {
-	    content: {
-	      type: String,
-	      required: true
-	    },
-	    width: {
-	      type: Number,
-	      default: 300
-	    }
-	  },
-	  template: `
+		name: 'DefaultHint',
+		components: {
+			ResponsiveHint
+		},
+		props: {
+			content: {
+				type: String,
+				required: true
+			},
+			width: {
+				type: Number,
+				default: 300
+			}
+		},
+		template: `
 		<ResponsiveHint :content=content>
 			<span class="ui-hint-icon"/>
 		</ResponsiveHint>
@@ -1444,270 +1425,266 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	};
 
 	const MoveAPI = {
-	  moveUserToDepartment: (nodeId, userId, targetNodeId, role) => {
-	    return humanresources_companyStructure_api.postData('humanresources.api.Structure.Node.Member.moveUser', {
-	      nodeId,
-	      userId,
-	      targetNodeId,
-	      roleXmlId: role
-	    });
-	  }
+		moveUserToDepartment: (nodeId, userId, targetNodeId, role) => {
+			return humanresources_companyStructure_api.postData('humanresources.api.Structure.Node.Member.moveUser', {
+				nodeId,
+				userId,
+				targetNodeId,
+				roleXmlId: role
+			});
+		}
 	};
 
 	// @vue/component
 	const MoveUserPopup = {
-	  name: 'MoveUserPopup',
-	  components: {
-	    ConfirmationPopup,
-	    BIcon: ui_iconSet_api_vue.BIcon
-	  },
-	  props: {
-	    originalNodeId: {
-	      type: Number,
-	      required: true
-	    },
-	    user: {
-	      type: Object,
-	      required: true
-	    },
-	    entityType: {
-	      type: String,
-	      required: true
-	    },
-	    executeAction: {
-	      type: Boolean,
-	      default: true
-	    },
-	    onlyMove: {
-	      type: Boolean,
-	      default: true
-	    }
-	  },
-	  emits: ['close', 'action', 'remove'],
-	  data() {
-	    return {
-	      showMoveUserActionLoader: false,
-	      hasPermission: true,
-	      showUserAlreadyBelongsToDepartmentPopup: false,
-	      accessDenied: false,
-	      selectedParentDepartment: null
-	    };
-	  },
-	  computed: {
-	    ...ui_vue3_pinia.mapState(humanresources_companyStructure_chartStore.useChartStore, ['departments', 'focusedNode']),
-	    includedNodeEntityTypesInDialog() {
-	      return this.isTeamEntity ? ['team'] : ['department'];
-	    },
-	    getMoveUserActionPhrase() {
-	      let phraseCode = '';
-	      if (this.isTeamEntity) {
-	        phraseCode = 'HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_TEAM_REMOVE_USER_DESCRIPTION';
-	      } else if (this.onlyMove) {
-	        phraseCode = 'HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_POPUP_DESCRIPTION_ONLY_MOVE';
-	      } else {
-	        return null;
-	      }
-	      phraseCode += this.user.gender === 'F' ? '_F' : '_M';
-	      return this.getStandardPhrase(phraseCode, this.originalNodeId);
-	    },
-	    getMoveUserActionPhraseWarning() {
-	      var _this$departments$get, _this$selectedParentD, _this$user$name;
-	      if (this.isTeamEntity) {
-	        return null;
-	      }
-	      const departmentName = main_core.Text.encode((_this$departments$get = this.departments.get((_this$selectedParentD = this.selectedParentDepartment) != null ? _this$selectedParentD : 0).name) != null ? _this$departments$get : '');
-	      const userName = main_core.Text.encode((_this$user$name = this.user.name) != null ? _this$user$name : '');
-	      return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_ALREADY_BELONGS_TO', {
-	        '#USER_NAME#': userName,
-	        '#DEPARTMENT_NAME#': departmentName
-	      }).replace('[link]', '').replace('[/link]', '');
-	    },
-	    getUserAlreadyBelongsToDepartmentPopupPhrase() {
-	      let phraseCode = '';
-	      if (this.isTeamEntity) {
-	        phraseCode = 'HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_ALREADY_BELONGS_TO_TEAM_DESCRIPTION';
-	        phraseCode += this.user.gender === 'F' ? '_F' : '_M';
-	      } else {
-	        phraseCode = 'HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_ALREADY_BELONGS_TO_DEPARTMENT_DESCRIPTION';
-	      }
-	      return this.getStandardPhrase(phraseCode, this.selectedParentDepartment);
-	    },
-	    memberRoles() {
-	      return humanresources_companyStructure_api.getMemberRoles(this.entityType);
-	    },
-	    isTeamEntity() {
-	      return this.entityType === humanresources_companyStructure_utils.EntityTypes.team;
-	    },
-	    confirmTitle() {
-	      if (this.isTeamEntity) {
-	        return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_TEAM_POPUP_CONFIRM_TITLE');
-	      }
-	      if (this.onlyMove) {
-	        return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_TITLE_ONLY_MOVE');
-	      }
-	      return this.userHasOtherDepartments ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_MULTIROLE_TITLE') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_TITLE');
-	    },
-	    confirmDescription() {
-	      if (this.isTeamEntity) {
-	        return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_TEAM_POPUP_ACTION_SELECT_TEAM_DESCRIPTION');
-	      }
-	      if (this.onlyMove) {
-	        return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_SELECT_DEPARTMENT_DESCRIPTION');
-	      }
-	      return this.userHasOtherDepartments ? this.getStandardPhrase('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_POPUP_MULTIROLE_DESCRIPTION', this.originalNodeId) : this.getStandardPhrase('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_POPUP_DESCRIPTION', this.originalNodeId);
-	    },
-	    isInSelectedNode() {
-	      const store = humanresources_companyStructure_chartStore.useChartStore();
-	      const nodeIds = store.multipleUsers[this.user.id];
-	      return this.selectedParentDepartment && main_core.Type.isArray(nodeIds) && nodeIds.includes(this.selectedParentDepartment);
-	    },
-	    parentNodeId() {
-	      const originalNode = this.departments.get(this.originalNodeId);
-	      const parentId = originalNode.parentId;
-	      if (!parentId) {
-	        return this.originalNodeId;
-	      }
-	      const parentNode = this.departments.get(parentId);
-	      return parentNode && parentNode.entityType === originalNode.entityType ? parentId : this.originalNodeId;
-	    },
-	    iconSet() {
-	      return ui_iconSet_api_core.Set;
-	    },
-	    userHasOtherDepartments() {
-	      const store = humanresources_companyStructure_chartStore.useChartStore();
-	      const nodeIds = store.multipleUsers[this.user.id];
-	      return main_core.Type.isArray(nodeIds) && nodeIds.length > 1;
-	    },
-	    confirmButtonText() {
-	      if (this.onlyMove) {
-	        return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_MOVE_BUTTON_ONLY_MOVE');
-	      }
-	      return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_MOVE_BUTTON');
-	    },
-	    lockMoveUserActionButton() {
-	      return !this.hasPermission || !this.userHasOtherDepartments && !this.selectedParentDepartment || this.onlyMove && !this.selectedParentDepartment;
-	    },
-	    isWarningVisible() {
-	      return this.isInSelectedNode && this.getMoveUserActionPhraseWarning;
-	    }
-	  },
-	  created() {
-	    this.permissionChecker = humanresources_companyStructure_permissionChecker.PermissionChecker.getInstance();
-	    if (!this.permissionChecker) {
-	      return;
-	    }
-	    this.action = this.isTeamEntity ? humanresources_companyStructure_permissionChecker.PermissionActions.teamAddMember : humanresources_companyStructure_permissionChecker.PermissionActions.employeeAddToDepartment;
-	    this.selectedDepartmentId = 0;
-	  },
-	  mounted() {
-	    const departmentContainer = this.$refs['department-selector'];
-	    this.departmentSelector = this.createTagSelector();
-	    this.departmentSelector.renderTo(departmentContainer);
-	  },
-	  methods: {
-	    createTagSelector() {
-	      return new ui_entitySelector.TagSelector({
-	        events: {
-	          onTagAdd: event => {
-	            this.accessDenied = false;
-	            const {
-	              tag
-	            } = event.data;
-	            this.selectedParentDepartment = tag.id;
-	            if (humanresources_companyStructure_permissionChecker.PermissionChecker.hasPermission(this.action, tag.id)) {
-	              this.hasPermission = true;
-	              return;
-	            }
-	            this.accessDenied = true;
-	            this.hasPermission = false;
-	          },
-	          onTagRemove: () => {
-	            this.selectedParentDepartment = null;
-	          }
-	        },
-	        multiple: false,
-	        dialogOptions: {
-	          width: 425,
-	          height: 350,
-	          dropdownMode: true,
-	          hideOnDeselect: true,
-	          entities: [{
-	            id: 'structure-node',
-	            options: {
-	              selectMode: 'departmentsOnly',
-	              restricted: 'addMember',
-	              includedNodeEntityTypes: this.includedNodeEntityTypesInDialog,
-	              useMultipleTabs: true
-	            }
-	          }]
-	        }
-	      });
-	    },
-	    loc(phraseCode, replacements = {}) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
-	    },
-	    async confirmMoveUser() {
-	      var _this$departments$get2, _this$departments$get3, _this$user$role;
-	      const departmentId = this.focusedNode;
-	      const userId = this.user.id;
-	      const targetNodeId = this.selectedParentDepartment;
-	      if (!targetNodeId) {
-	        this.$emit('remove');
-	        return;
-	      }
-	      if (!this.executeAction) {
-	        this.$emit('action', targetNodeId);
-	        return;
-	      }
-	      this.showMoveUserActionLoader = true;
-	      try {
-	        await MoveAPI.moveUserToDepartment(departmentId, userId, targetNodeId);
-	      } catch (error) {
-	        var _error$code;
-	        this.showMoveUserActionLoader = false;
-	        const code = (_error$code = error.code) != null ? _error$code : 0;
-	        if (code === 'MEMBER_ALREADY_BELONGS_TO_NODE') {
-	          this.showUserAlreadyBelongsToDepartmentPopup = true;
-	        } else {
-	          const phraseCode = this.isTeamEntity ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_TEAM_ERROR') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_ERROR');
-	          ui_notification.UI.Notification.Center.notify({
-	            content: phraseCode,
-	            autoHideDelay: 2000
-	          });
-	          this.$emit('close');
-	        }
-	        return;
-	      }
-	      const departmentName = main_core.Text.encode((_this$departments$get2 = (_this$departments$get3 = this.departments.get(targetNodeId)) == null ? void 0 : _this$departments$get3.name) != null ? _this$departments$get2 : '');
-	      const phraseCode = this.isTeamEntity ? 'HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_TEAM_SUCCESS_MESSAGE' : 'HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_SUCCESS_MESSAGE';
-	      ui_notification.UI.Notification.Center.notify({
-	        content: this.loc(phraseCode, {
-	          '#DEPARTMENT_NAME#': departmentName
-	        }),
-	        autoHideDelay: 2000
-	      });
-	      humanresources_companyStructure_chartStore.UserService.moveUserToEntity(departmentId, userId, targetNodeId, (_this$user$role = this.user.role) != null ? _this$user$role : this.memberRoles.employee);
-	      this.$emit('action', targetNodeId);
-	      this.showMoveUserActionLoader = false;
-	    },
-	    closeAction() {
-	      this.$emit('close');
-	    },
-	    closeUserAlreadyBelongsToDepartmentPopup() {
-	      this.showUserAlreadyBelongsToDepartmentPopup = false;
-	      this.closeAction();
-	    },
-	    getStandardPhrase(phrase, departmentId) {
-	      var _this$departments$get4, _this$departments$get5, _this$user$name2;
-	      const departmentName = main_core.Text.encode((_this$departments$get4 = (_this$departments$get5 = this.departments.get(departmentId != null ? departmentId : 0)) == null ? void 0 : _this$departments$get5.name) != null ? _this$departments$get4 : '');
-	      const userName = main_core.Text.encode((_this$user$name2 = this.user.name) != null ? _this$user$name2 : '');
-	      return this.loc(phrase, {
-	        '#USER_NAME#': userName,
-	        '#DEPARTMENT_NAME#': departmentName
-	      }).replace('[link]', `<a class="hr-department-detail-content__move-user-department-user-link" href="${this.user.url}">`).replace('[/link]', '</a>');
-	    }
-	  },
-	  template: `
+		name: 'MoveUserPopup',
+		components: {
+			ConfirmationPopup,
+			BIcon: ui_iconSet_api_vue.BIcon
+		},
+		props: {
+			originalNodeId: {
+				type: Number,
+				required: true
+			},
+			user: {
+				type: Object,
+				required: true
+			},
+			entityType: {
+				type: String,
+				required: true
+			},
+			executeAction: {
+				type: Boolean,
+				default: true
+			},
+			onlyMove: {
+				type: Boolean,
+				default: true
+			}
+		},
+		emits: ['close', 'action', 'remove'],
+		data() {
+			return {
+				showMoveUserActionLoader: false,
+				hasPermission: true,
+				showUserAlreadyBelongsToDepartmentPopup: false,
+				accessDenied: false,
+				selectedParentDepartment: null
+			};
+		},
+		computed: {
+			...ui_vue3_pinia.mapState(humanresources_companyStructure_chartStore.useChartStore, ['departments', 'focusedNode']),
+			includedNodeEntityTypesInDialog() {
+				return this.isTeamEntity ? ['team'] : ['department'];
+			},
+			getMoveUserActionPhrase() {
+				let phraseCode = '';
+				if (this.isTeamEntity) {
+					phraseCode = 'HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_TEAM_REMOVE_USER_DESCRIPTION';
+				} else if (this.onlyMove) {
+					phraseCode = 'HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_POPUP_DESCRIPTION_ONLY_MOVE';
+				} else {
+					return null;
+				}
+				phraseCode += this.user.gender === 'F' ? '_F' : '_M';
+				return this.getStandardPhrase(phraseCode, this.originalNodeId);
+			},
+			getMoveUserActionPhraseWarning() {
+				if (this.isTeamEntity) {
+					return null;
+				}
+				const departmentName = main_core.Text.encode(this.departments.get(this.selectedParentDepartment ?? 0).name ?? '');
+				const userName = main_core.Text.encode(this.user.name ?? '');
+				return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_ALREADY_BELONGS_TO', {
+					'#USER_NAME#': userName,
+					'#DEPARTMENT_NAME#': departmentName
+				}).replace('[link]', '').replace('[/link]', '');
+			},
+			getUserAlreadyBelongsToDepartmentPopupPhrase() {
+				let phraseCode = '';
+				if (this.isTeamEntity) {
+					phraseCode = 'HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_ALREADY_BELONGS_TO_TEAM_DESCRIPTION';
+					phraseCode += this.user.gender === 'F' ? '_F' : '_M';
+				} else {
+					phraseCode = 'HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_ALREADY_BELONGS_TO_DEPARTMENT_DESCRIPTION';
+				}
+				return this.getStandardPhrase(phraseCode, this.selectedParentDepartment);
+			},
+			memberRoles() {
+				return humanresources_companyStructure_api.getMemberRoles(this.entityType);
+			},
+			isTeamEntity() {
+				return this.entityType === humanresources_companyStructure_utils.EntityTypes.team;
+			},
+			confirmTitle() {
+				if (this.isTeamEntity) {
+					return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_TEAM_POPUP_CONFIRM_TITLE');
+				}
+				if (this.onlyMove) {
+					return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_TITLE_ONLY_MOVE');
+				}
+				return this.userHasOtherDepartments ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_MULTIROLE_TITLE') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_TITLE');
+			},
+			confirmDescription() {
+				if (this.isTeamEntity) {
+					return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_TEAM_POPUP_ACTION_SELECT_TEAM_DESCRIPTION');
+				}
+				if (this.onlyMove) {
+					return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_SELECT_DEPARTMENT_DESCRIPTION');
+				}
+				return this.userHasOtherDepartments ? this.getStandardPhrase('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_POPUP_MULTIROLE_DESCRIPTION', this.originalNodeId) : this.getStandardPhrase('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_POPUP_DESCRIPTION', this.originalNodeId);
+			},
+			isInSelectedNode() {
+				const store = humanresources_companyStructure_chartStore.useChartStore();
+				const nodeIds = store.multipleUsers[this.user.id];
+				return this.selectedParentDepartment && main_core.Type.isArray(nodeIds) && nodeIds.includes(this.selectedParentDepartment);
+			},
+			parentNodeId() {
+				const originalNode = this.departments.get(this.originalNodeId);
+				const parentId = originalNode.parentId;
+				if (!parentId) {
+					return this.originalNodeId;
+				}
+				const parentNode = this.departments.get(parentId);
+				return parentNode && parentNode.entityType === originalNode.entityType ? parentId : this.originalNodeId;
+			},
+			iconSet() {
+				return ui_iconSet_api_core.Set;
+			},
+			userHasOtherDepartments() {
+				const store = humanresources_companyStructure_chartStore.useChartStore();
+				const nodeIds = store.multipleUsers[this.user.id];
+				return main_core.Type.isArray(nodeIds) && nodeIds.length > 1;
+			},
+			confirmButtonText() {
+				if (this.onlyMove) {
+					return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_MOVE_BUTTON_ONLY_MOVE');
+				}
+				return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_MOVE_BUTTON');
+			},
+			lockMoveUserActionButton() {
+				return !this.hasPermission || !this.userHasOtherDepartments && !this.selectedParentDepartment || this.onlyMove && !this.selectedParentDepartment;
+			},
+			isWarningVisible() {
+				return this.isInSelectedNode && this.getMoveUserActionPhraseWarning;
+			}
+		},
+		created() {
+			this.permissionChecker = humanresources_companyStructure_permissionChecker.PermissionChecker.getInstance();
+			if (!this.permissionChecker) {
+				return;
+			}
+			this.action = this.isTeamEntity ? humanresources_companyStructure_permissionChecker.PermissionActions.teamAddMember : humanresources_companyStructure_permissionChecker.PermissionActions.employeeAddToDepartment;
+			this.selectedDepartmentId = 0;
+		},
+		mounted() {
+			const departmentContainer = this.$refs['department-selector'];
+			this.departmentSelector = this.createTagSelector();
+			this.departmentSelector.renderTo(departmentContainer);
+		},
+		methods: {
+			createTagSelector() {
+				return new ui_entitySelector.TagSelector({
+					events: {
+						onTagAdd: event => {
+							this.accessDenied = false;
+							const {
+								tag
+							} = event.data;
+							this.selectedParentDepartment = tag.id;
+							if (humanresources_companyStructure_permissionChecker.PermissionChecker.hasPermission(this.action, tag.id)) {
+								this.hasPermission = true;
+								return;
+							}
+							this.accessDenied = true;
+							this.hasPermission = false;
+						},
+						onTagRemove: () => {
+							this.selectedParentDepartment = null;
+						}
+					},
+					multiple: false,
+					dialogOptions: {
+						width: 425,
+						height: 350,
+						dropdownMode: true,
+						hideOnDeselect: true,
+						entities: [{
+							id: 'structure-node',
+							options: {
+								selectMode: 'departmentsOnly',
+								restricted: 'addMember',
+								includedNodeEntityTypes: this.includedNodeEntityTypesInDialog,
+								useMultipleTabs: true
+							}
+						}]
+					}
+				});
+			},
+			loc(phraseCode, replacements = {}) {
+				return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+			},
+			async confirmMoveUser() {
+				const departmentId = this.focusedNode;
+				const userId = this.user.id;
+				const targetNodeId = this.selectedParentDepartment;
+				if (!targetNodeId) {
+					this.$emit('remove');
+					return;
+				}
+				if (!this.executeAction) {
+					this.$emit('action', targetNodeId);
+					return;
+				}
+				this.showMoveUserActionLoader = true;
+				try {
+					await MoveAPI.moveUserToDepartment(departmentId, userId, targetNodeId);
+				} catch (error) {
+					this.showMoveUserActionLoader = false;
+					const code = error.code ?? 0;
+					if (code === 'MEMBER_ALREADY_BELONGS_TO_NODE') {
+						this.showUserAlreadyBelongsToDepartmentPopup = true;
+					} else {
+						const phraseCode = this.isTeamEntity ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_TEAM_ERROR') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_ERROR');
+						ui_notification.UI.Notification.Center.notify({
+							content: phraseCode,
+							autoHideDelay: 2000
+						});
+						this.$emit('close');
+					}
+					return;
+				}
+				const departmentName = main_core.Text.encode(this.departments.get(targetNodeId)?.name ?? '');
+				const phraseCode = this.isTeamEntity ? 'HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_TEAM_SUCCESS_MESSAGE' : 'HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_SUCCESS_MESSAGE';
+				ui_notification.UI.Notification.Center.notify({
+					content: this.loc(phraseCode, {
+						'#DEPARTMENT_NAME#': departmentName
+					}),
+					autoHideDelay: 2000
+				});
+				humanresources_companyStructure_chartStore.UserService.moveUserToEntity(departmentId, userId, targetNodeId, this.user.role ?? this.memberRoles.employee);
+				this.$emit('action', targetNodeId);
+				this.showMoveUserActionLoader = false;
+			},
+			closeAction() {
+				this.$emit('close');
+			},
+			closeUserAlreadyBelongsToDepartmentPopup() {
+				this.showUserAlreadyBelongsToDepartmentPopup = false;
+				this.closeAction();
+			},
+			getStandardPhrase(phrase, departmentId) {
+				const departmentName = main_core.Text.encode(this.departments.get(departmentId ?? 0)?.name ?? '');
+				const userName = main_core.Text.encode(this.user.name ?? '');
+				return this.loc(phrase, {
+					'#USER_NAME#': userName,
+					'#DEPARTMENT_NAME#': departmentName
+				}).replace('[link]', `<a class="hr-department-detail-content__move-user-department-user-link" href="${this.user.url}">`).replace('[/link]', '</a>');
+			}
+		},
+		template: `
 		<ConfirmationPopup
 			@action="confirmMoveUser"
 			@close="closeAction"
@@ -1770,23 +1747,23 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	`
 	};
 
-	exports.BasePopup = BasePopup;
-	exports.BaseActionMenu = BaseActionMenu;
-	exports.RouteActionMenu = RouteActionMenu;
 	exports.ActionMenu = ActionMenu;
-	exports.UserListActionMenu = UserListActionMenu;
+	exports.BaseActionMenu = BaseActionMenu;
+	exports.BasePopup = BasePopup;
+	exports.CommunicationsTypeDict = CommunicationsTypeDict;
 	exports.ConfirmationPopup = ConfirmationPopup;
-	exports.MoveEmployeeConfirmationPopup = MoveEmployeeConfirmationPopup;
+	exports.DefaultHint = DefaultHint;
 	exports.Hint = Hint;
 	exports.ManagementDialog = ManagementDialog;
-	exports.getChatDialogEntity = getChatDialogEntity;
-	exports.getChannelDialogEntity = getChannelDialogEntity;
-	exports.getCommunicationsRecentTabOptions = getCommunicationsRecentTabOptions;
-	exports.getCollabDialogEntity = getCollabDialogEntity;
-	exports.CommunicationsTypeDict = CommunicationsTypeDict;
-	exports.ResponsiveHint = ResponsiveHint;
-	exports.DefaultHint = DefaultHint;
+	exports.MoveEmployeeConfirmationPopup = MoveEmployeeConfirmationPopup;
 	exports.MoveUserPopup = MoveUserPopup;
+	exports.ResponsiveHint = ResponsiveHint;
+	exports.RouteActionMenu = RouteActionMenu;
+	exports.UserListActionMenu = UserListActionMenu;
+	exports.getChannelDialogEntity = getChannelDialogEntity;
+	exports.getChatDialogEntity = getChatDialogEntity;
+	exports.getCollabDialogEntity = getCollabDialogEntity;
+	exports.getCommunicationsRecentTabOptions = getCommunicationsRecentTabOptions;
 
-}((this.BX.Humanresources.CompanyStructure = this.BX.Humanresources.CompanyStructure || {}),BX.Main,BX,BX,BX,BX.UI.EntitySelector,BX,BX.Vue3.Pinia,BX.UI.IconSet,BX.UI.IconSet,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure));
+})(this.BX.Humanresources.CompanyStructure = this.BX.Humanresources.CompanyStructure || {}, BX.Main, BX, BX.UI.IconSet, BX.Humanresources.CompanyStructure, BX.Humanresources.CompanyStructure, BX.UI, BX.UI.EntitySelector, window, BX.UI.Notification, BX.Vue3.Pinia, BX.UI.IconSet, BX.Humanresources.CompanyStructure, BX.Humanresources.CompanyStructure);
 //# sourceMappingURL=structure-components.bundle.js.map

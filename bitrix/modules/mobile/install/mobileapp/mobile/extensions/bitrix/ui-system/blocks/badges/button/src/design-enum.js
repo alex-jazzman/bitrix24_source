@@ -11,15 +11,15 @@ jn.define('ui-system/blocks/badges/button/src/design-enum', (require, exports, m
 	class BadgeButtonDesign extends BaseEnum
 	{
 		static GREY = new BadgeButtonDesign('GREY', {
-			color: Color.baseWhiteFixed,
+			color: Color.base8,
 			backgroundColor: Color.base5,
-			borderColor: Color.bgContentPrimary,
+			borderColor: Color.base8,
 		});
 
-		static WHITE = new BadgeButtonDesign('WHITE', {
+		static LIGHT = new BadgeButtonDesign('LIGHT', {
 			color: Color.base4,
-			backgroundColor: Color.baseWhiteFixed,
-			borderColor: Color.bgContentPrimary,
+			backgroundColor: Color.base8,
+			borderColor: Color.base8,
 		});
 
 		/**

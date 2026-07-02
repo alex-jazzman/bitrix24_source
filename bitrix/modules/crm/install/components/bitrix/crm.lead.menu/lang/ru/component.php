@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_MODULE_NOT_INSTALLED"] = "Модуль crm не установлен.";
 $MESS["CRM_PERMISSION_DENIED"] = "Доступ запрещен";
 $MESS["LEAD_ADD"] = "Добавить лид";
@@ -66,14 +66,13 @@ $MESS["LEAD_CREATE_ON_BASIS_HINT_CONTENT"] = "Нажмите на кнопку �
 $MESS["LEAD_CREATE_ON_BASIS_DISABLE_HINT"] = "Больше не показывать";
 $MESS["LEAD_ADD_TITLE_PLAIN"] = "Лид";
 $MESS["LEAD_CRM_TYPE"] = "Режим работы СRM";
-$MESS["LEAD_EXCLUDE"] = "Добавить в список исключений";
+$MESS["LEAD_EXCLUDE"] = "Добавить в стоп-лист";
 $MESS["LEAD_CRM_CONFIG_STATUSES_MSGVER_1"] = "Настройка стадий";
 $MESS["LEAD_CRM_CONFIG_STATUSES_TITLE_MSGVER_1"] = "Настроить стадии лидов";
-$MESS["LEAD_EXCLUDE_TITLE"] = "Добавить лид в список исключений";
+$MESS["LEAD_EXCLUDE_TITLE"] = "Добавить лид в стоп-лист";
 $MESS["DOCUMENT_BUTTON_TEXT"] = "Документ";
 $MESS["DOCUMENT_BUTTON_TITLE"] = "Создать документ на основании лида";
 $MESS["LEAD_EXPORT_OPTION_EXPORT_PRODUCT_FIELDS"] = "Экспортировать с детализацией по товарным позициям";
 $MESS["LEAD_DEDUPE_AUTOSEARCH"] = "Автоматический поиск дубликатов";
 $MESS["LEAD_DEDUPE_HELP"] = "Как работать с дубликатами";
 $MESS["LEAD_DETACH_OPEN_LINE"] = "Открепить лид от всех чатов";
-?>

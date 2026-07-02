@@ -1,4 +1,11 @@
-(() => {
+/**
+ * @module selector/widget/entity/catalog/store
+ */
+jn.define('selector/widget/entity/catalog/store', (require, exports, module) => {
+	const { Loc } = require('loc');
+	const { ErrorNotifier } = require('utils/error-notifier');
+	const { BaseSelectorEntity } = require('selector/widget/entity');
+
 	/**
 	 * @class CatalogStoreSelector
 	 */
@@ -16,12 +23,12 @@
 
 		static getStartTypingText()
 		{
-			return BX.message('SELECTOR_COMPONENT_START_TYPING_TO_SEARCH_STORE');
+			return Loc.getMessage('SELECTOR_COMPONENT_START_TYPING_TO_SEARCH_STORE');
 		}
 
 		static getStartTypingWithCreationText()
 		{
-			return BX.message('SELECTOR_COMPONENT_START_TYPING_TO_CREATE_STORE');
+			return Loc.getMessage('SELECTOR_COMPONENT_START_TYPING_TO_CREATE_STORE');
 		}
 
 		static isCreationEnabled()
@@ -31,12 +38,12 @@
 
 		static getCreateText()
 		{
-			return BX.message('SELECTOR_COMPONENT_CREATE_STORE');
+			return Loc.getMessage('SELECTOR_COMPONENT_CREATE_STORE');
 		}
 
 		static getCreatingText()
 		{
-			return BX.message('SELECTOR_COMPONENT_CREATING_STORE');
+			return Loc.getMessage('SELECTOR_COMPONENT_CREATING_STORE');
 		}
 
 		static getCreateEntityHandler(providerOptions)
@@ -45,15 +52,15 @@
 				return BX.ajax.runAction(
 					'catalog.storeSelector.createStore',
 					{
-						json: {name: text}
-					}
+						json: { name: text },
+					},
 				).then((response) => {
 					if (response.data && response.data.id)
 					{
 						return {
 							id: response.data.id,
 							entityId: this.getEntityId(),
-							title: text
+							title: text,
 						};
 					}
 
@@ -66,9 +73,18 @@
 
 		static getTitle()
 		{
-			return BX.message('SELECTOR_COMPONENT_PICK_STORE_2');
+			return Loc.getMessage('SELECTOR_COMPONENT_PICK_STORE_2');
 		}
 	}
+
+	module.exports = {
+		CatalogStoreSelector,
+	};
+});
+
+(() => {
+	const require = (ext) => jn.require(ext);
+	const { CatalogStoreSelector } = require('selector/widget/entity/catalog/store');
 
 	this.CatalogStoreSelector = CatalogStoreSelector;
 })();

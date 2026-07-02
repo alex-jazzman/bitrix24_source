@@ -1,5 +1,5 @@
-import { Store } from 'ui.vue3.vuex';
-import { RestClient } from 'rest.client';
+import { type Store } from 'ui.vue3.vuex';
+import { type RestClient } from 'rest.client';
 
 import { Core } from 'im.v2.application.core';
 import { RestMethod, UserRole } from 'im.v2.const';
@@ -9,7 +9,7 @@ import { Utils } from 'im.v2.lib.utils';
 import { Notifier } from 'im.v2.lib.notifier';
 import { LayoutManager } from 'im.v2.lib.layout';
 
-import type { ImModelChat } from 'im.v2.model';
+import { type ImModelChat } from 'im.v2.model';
 
 export class UserService
 {

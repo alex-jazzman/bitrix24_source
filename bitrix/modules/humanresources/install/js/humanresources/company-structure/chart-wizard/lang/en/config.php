@@ -39,6 +39,13 @@ $MESS["HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_COLLAB_DESCRIPTIO
 $MESS["HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_COLLAB_REMOVE_CHECKBOX_LABEL"] = "Department collab will be created.";
 $MESS["HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_COLLAB_REMOVE_CHECKBOX_LABEL_NOT_INSIDE"] = "Department collab will be created. You have to add yourself to this department to make it visible to you.";
 $MESS["HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_COLLAB_TITLE"] = "Collabs";
+$MESS["HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_PROJECT_ADD_CHECKBOX_HINT"] = "All department employees will be added to the new project. Project members will be auto updated whenever the department staff changes.";
+$MESS["HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_PROJECT_ADD_CHECKBOX_LABEL"] = "<span>+</span> Create department project";
+$MESS["HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_PROJECT_ADD_CHECKBOX_WARNING"] = "To create a department project, go back to the previous step and add the head of the department. They will be made a project owner.";
+$MESS["HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_PROJECT_DESCRIPTION"] = "Add department employees to these projects:";
+$MESS["HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_PROJECT_REMOVE_CHECKBOX_LABEL"] = "Department project will be created.";
+$MESS["HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_PROJECT_REMOVE_CHECKBOX_LABEL_NOT_INSIDE"] = "Department project will be created. You have to add yourself to this department to make it visible to you.";
+$MESS["HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_PROJECT_TITLE"] = "Projects";
 $MESS["HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_HINT_1"] = "Create chats and channels that are guaranteed to include all team members.";
 $MESS["HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_HINT_1_W_COLLABS"] = "Create collabs, chats and channels for all team members.";
 $MESS["HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_HINT_2_MSGVER_1"] = "Never struggle to remember a collab, chat or channel to invite a new team member to.";
@@ -64,6 +71,12 @@ $MESS["HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_COLLAB_ADD_C
 $MESS["HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_COLLAB_DESCRIPTION"] = "Add team members to these collabs:";
 $MESS["HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_COLLAB_REMOVE_CHECKBOX_LABEL"] = "Team collab will be created.";
 $MESS["HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_COLLAB_REMOVE_CHECKBOX_LABEL_NOT_INSIDE"] = "Team collab will be created. You have to add yourself to this team to make it visible to you.";
+$MESS["HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_PROJECT_ADD_CHECKBOX_HINT"] = "All team members will be added to the new project. Project members will be auto updated whenever the team changes.";
+$MESS["HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_PROJECT_ADD_CHECKBOX_LABEL"] = "<span>+</span> Create team project";
+$MESS["HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_PROJECT_ADD_CHECKBOX_WARNING"] = "To create a team project, go back to the previous step and add a team leader. They will be made a project owner.";
+$MESS["HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_PROJECT_DESCRIPTION"] = "Add team members to these projects:";
+$MESS["HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_PROJECT_REMOVE_CHECKBOX_LABEL"] = "Team project will be created.";
+$MESS["HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_PROJECT_REMOVE_CHECKBOX_LABEL_NOT_INSIDE"] = "Team project will be created. You have to add yourself to this team to make it visible to you.";
 $MESS["HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_TITLE"] = "Team chats and channels";
 $MESS["HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_TITLE_BREADCRUMBS"] = "Chats and channels";
 $MESS["HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_TITLE_BREADCRUMBS_W_COLLABS"] = "Communications";
@@ -95,7 +108,9 @@ $MESS["HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_BUSINESS_PROC
 $MESS["HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_HINT_TITLE"] = "Deputy head of department can be assigned some of the management functions that are oftentimes under purview of the heads of departments. For example, they can:";
 $MESS["HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_REPORTS_DESCRIPTION"] = "Select the head of department and/or deputies that will approve the department employees' work reports.";
 $MESS["HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_REPORT_EMPTY"] = "Reports will be sent to someone higher up.";
-$MESS["HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_REPORT_EXCEPTIONS_DESCRIPTION"] = "Employees whose work reports will have to be approved by their respective immediate supervisors.";
+$MESS["HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_REPORT_EXCEPTIONS_ADD"] = "<span>+</span> Add employees with special work report approval requirements";
+$MESS["HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_REPORT_EXCEPTIONS_DESCRIPTION"] = "Employees whose work reports will have to be approved by their respective immediate supervisors:";
+$MESS["HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_REPORT_EXCEPTIONS_HINT"] = "Select employees whose work reports will have to be approved by their respective immediate supervisors.";
 $MESS["HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_REPORT_HAS_HEAD_NO_DEPUTY"] = "While the deputy head of department's position remains unfilled, reports will be sent to the head of department.";
 $MESS["HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_REPORT_NO_DEPUTY"] = "While the deputy head of department's position remains unfilled, reports will be sent to someone higher up.";
 $MESS["HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_REPORT_NO_HEAD"] = "While the head of department's position remains unfilled, reports will be sent to someone higher up.";

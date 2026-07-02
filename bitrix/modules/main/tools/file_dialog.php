@@ -1,4 +1,4 @@
-<?
+<?php
 //**************************** FILE DIALOG ACTIONS *************************************
 // File dialog PHP class - /bitrix/modules/main/classes/general/file_dialog.php
 // JS  /bitrix/js/main/file_dialog.js, /bitrix/js/main/file_dialog_engine.js
@@ -7,6 +7,11 @@
 define('PUBLIC_AJAX_MODE', true);
 
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
+
+/**
+ * @global CMain $APPLICATION
+ * @global CUser $USER
+ */
 
 if(!$USER->CanDoOperation('fileman_view_file_structure'))
 	$APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
@@ -116,4 +121,3 @@ elseif ($action == 'uploader')
 }
 
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_after.php");
-?>

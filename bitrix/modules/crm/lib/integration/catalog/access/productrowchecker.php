@@ -6,16 +6,16 @@ use Bitrix\Catalog\Access\AccessController;
 use Bitrix\Crm\Discount;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Order\BasketItem;
+use Bitrix\Crm\ProductRow;
+use Bitrix\Crm\Reservation\ProductRowReservation;
 use Bitrix\Crm\Service\Accounting;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\Error;
 
 class ProductRowChecker
 {
-	private const PRICE_ERROR = 'Insufficient permission to change product price';
-	private const DISCOUNT_ERROR = 'Insufficient permission to change product discount';
-
 	public function checkOrderCatalogRights(
 		\Bitrix\Crm\Order\Order $order
 	): Result
@@ -51,14 +51,14 @@ class ProductRowChecker
 				{
 					if ($basketItemFields->isChanged('DISCOUNT_PRICE'))
 					{
-						return $result->addError(new Error(self::DISCOUNT_ERROR));
+						return $result->addError($this->getDiscountError());
 					}
 				}
 				else
 				{
 					if ((float)$basketItemFields->get('DISCOUNT_PRICE') !== 0.0)
 					{
-						return $result->addError(new Error(self::DISCOUNT_ERROR));
+						return $result->addError($this->getDiscountError());
 					}
 				}
 			}
@@ -89,7 +89,7 @@ class ProductRowChecker
 					)
 				)
 				{
-					return $result->addError(new Error(self::PRICE_ERROR));
+					return $result->addError($this->getPriceError());
 				}
 			}
 			else
@@ -106,8 +106,52 @@ class ProductRowChecker
 					)
 				)
 				{
-					return $result->addError(new Error(self::PRICE_ERROR));
+					return $result->addError($this->getPriceError());
 				}
+			}
+		}
+
+		return $result;
+	}
+
+	protected function isReserveMode(Item $item): bool
+	{
+		return \CCrmSaleHelper::isReserveMode($item->getEntityTypeId());
+	}
+
+	protected function hasReserveAccess(Item $item): bool
+	{
+		return \CCrmSaleHelper::hasReserveAccess($item->getCategoryId() ?? 0);
+	}
+
+	public function checkReservationRights(Item $item): Result
+	{
+		$result = new Result();
+
+		if (!$this->isReserveMode($item) || $this->hasReserveAccess($item))
+		{
+			return $result;
+		}
+
+		$productRowsCollection = $item->getProductRows();
+		if (!$productRowsCollection)
+		{
+			return new Result();
+		}
+
+		/** @var ProductRow $productRow */
+		foreach ($productRowsCollection as $productRow)
+		{
+			/** @var ProductRowReservation $reservation */
+			$reservation = $productRow->getProductRowReservation();
+			if (!$reservation)
+			{
+				continue;
+			}
+
+			if ($reservation->hasChangedFields())
+			{
+				return $result->addError($this->getReserveError());
 			}
 		}
 
@@ -166,12 +210,12 @@ class ProductRowChecker
 				&& !$this->checkDiscount($productRow, $originalProductRow, $currencyId, $originalCurrencyId)
 			)
 			{
-				return $result->addError(new Error(self::DISCOUNT_ERROR));
+				return $result->addError($this->getDiscountError());
 			}
 
 			if (!$canEditPrice && !$this->checkPrice($productRow, $currencyId, $originalProductRow))
 			{
-				return $result->addError(new Error(self::PRICE_ERROR));
+				return $result->addError($this->getPriceError());
 			}
 		}
 
@@ -208,20 +252,24 @@ class ProductRowChecker
 		$updatedProductRows = [];
 		foreach ($productRows as $productRow)
 		{
-			$catalogPrice = $this->getCatalogPrice($currencyId, $productRow['PRODUCT_ID']);
-			if ($catalogPrice !== null)
-			{
-				$calculator = new Calculator($productRow);
-				$calculator->calculateBasePrice($catalogPrice);
-				$updatedProductRows[] = [...$productRow, ...$calculator->getProduct()];
-			}
-			else
-			{
-				$updatedProductRows[] = $productRow;
-			}
+			$updatedProductRows[] = $this->updateCatalogPrice($productRow, $currencyId);
 		}
 
 		return $updatedProductRows;
+	}
+
+	public function updateCatalogPrice(array $productRow, ?string $currencyId = null): array
+	{
+		$catalogPrice = $this->getCatalogPrice($currencyId, $productRow['PRODUCT_ID']);
+		if ($catalogPrice === null)
+		{
+			return $productRow;
+		}
+
+		$calculator = new Calculator($productRow);
+		$calculator->calculateBasePrice($catalogPrice);
+
+		return [...$productRow, ...$calculator->getProduct()];
 	}
 
 	protected function canEditPrice(int $ownerTypeId): bool
@@ -465,5 +513,20 @@ class ProductRowChecker
 		}
 
 		return true;
+	}
+
+	private function getPriceError(): Error
+	{
+		return new Error(Loc::getMessage('PRODUCT_ROW_CHECKER_PRICE_ERROR'));
+	}
+
+	private function getDiscountError(): Error
+	{
+		return new Error(Loc::getMessage('PRODUCT_ROW_CHECKER_DISCOUNT_ERROR'));
+	}
+
+	private function getReserveError(): Error
+	{
+		return new Error(Loc::getMessage('PRODUCT_ROW_CHECKER_RESERVE_ERROR'));
 	}
 }

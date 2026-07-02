@@ -1,0 +1,24 @@
+<?php
+$MESS["BICONNECTOR_SHARE_POPUP_COPY_LINK"] = "Copy link";
+$MESS["BICONNECTOR_SHARE_POPUP_DATE_LABEL"] = "Link valid till:";
+$MESS["BICONNECTOR_SHARE_POPUP_DATE_PAST"] = "Day and time must be in the future.";
+$MESS["BICONNECTOR_SHARE_POPUP_DATE_PLACEHOLDER"] = "Select date";
+$MESS["BICONNECTOR_SHARE_POPUP_DATE_REQUIRED"] = "Date is required.";
+$MESS["BICONNECTOR_SHARE_POPUP_DISABLED_DESC"] = "Until the dashboard is shared, guests cannot view it even if they have a link and a password.";
+$MESS["BICONNECTOR_SHARE_POPUP_ENABLED_DESC"] = "Anyone with a link and a password can view this dashboard.";
+$MESS["BICONNECTOR_SHARE_POPUP_ERROR"] = "Could not copy link.";
+$MESS["BICONNECTOR_SHARE_POPUP_ERROR_ACTIVATE"] = "Could not share dashboard.";
+$MESS["BICONNECTOR_SHARE_POPUP_ERROR_DEACTIVATE"] = "Could not unshare dashboard.";
+$MESS["BICONNECTOR_SHARE_POPUP_ERROR_SAVE"] = "Could not update link.";
+$MESS["BICONNECTOR_SHARE_POPUP_FILTER_HINT"] = "Company structure, workflow and flow filters are not available when viewing a shared dashboard.";
+$MESS["BICONNECTOR_SHARE_POPUP_GENERATE_PASSWORD"] = "Generate password";
+$MESS["BICONNECTOR_SHARE_POPUP_LINK_COPIED"] = "Link has been copied.";
+$MESS["BICONNECTOR_SHARE_POPUP_PASSWORD_GENERATED"] = "Password has been created.";
+$MESS["BICONNECTOR_SHARE_POPUP_PASSWORD_LABEL"] = "Password:";
+$MESS["BICONNECTOR_SHARE_POPUP_PASSWORD_PLACEHOLDER"] = "Create password";
+$MESS["BICONNECTOR_SHARE_POPUP_PASSWORD_REQUIRED"] = "Password is required.";
+$MESS["BICONNECTOR_SHARE_POPUP_PASSWORD_TOO_LONG"] = "Password must not include more than 32 characters.";
+$MESS["BICONNECTOR_SHARE_POPUP_PASSWORD_TOO_SHORT"] = "Password must include at least 8 characters.";
+$MESS["BICONNECTOR_SHARE_POPUP_PUBLIC_LINK"] = "Share dashboard";
+$MESS["BICONNECTOR_SHARE_POPUP_TIME_PAST"] = "Day and time must be in the future.";
+$MESS["BICONNECTOR_SHARE_POPUP_TITLE"] = "Share dashboard \"#NAME#\"";

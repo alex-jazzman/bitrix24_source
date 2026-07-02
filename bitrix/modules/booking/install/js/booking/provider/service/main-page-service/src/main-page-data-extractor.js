@@ -14,10 +14,10 @@ import type { ResourceModel } from 'booking.model.resources';
 import type { ResourceDto } from 'booking.provider.service.resources-service';
 import type { ResourceTypeModel } from 'booking.model.resource-types';
 import type { ResourceTypeDto } from 'booking.provider.service.resources-type-service';
-import type { FormsMenuModel } from 'booking.model.forms-menu';
 import type { WaitListItemModel } from 'booking.model.wait-list';
 import type { WaitListItemDto } from 'booking.provider.service.wait-list-service';
 import type { CatalogSkuEntityOptions } from 'booking.model.sku';
+import type { NotificationsSenderModel } from 'booking.model.notifications';
 
 import type { MainPageGetResponse } from './types';
 
@@ -125,23 +125,18 @@ export class MainPageDataExtractor
 		return this.#response.isIntersectionForAll;
 	}
 
-	getIsCurrentSenderAvailable(): boolean
-	{
-		return this.#response.isCurrentSenderAvailable;
-	}
-
 	getShouldShowWhatsAppEmergency(): boolean
 	{
 		return this.#response.shouldShowWhatsAppEmergency;
 	}
 
-	getFormsMenu(): FormsMenuModel
-	{
-		return this.#response.formsMenu;
-	}
-
 	getCatalogSkuEntityOptions(): CatalogSkuEntityOptions
 	{
 		return this.#response.catalogSkuEntityOptions;
+	}
+
+	getSenders(): NotificationsSenderModel[]
+	{
+		return this.#response.senders ?? [];
 	}
 }

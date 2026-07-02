@@ -2,7 +2,6 @@
 
 use Bitrix\Sign\Access\Model\UserModelRepository;
 use Bitrix\Sign\Access\Service\AccessService;
-use Bitrix\Sign\Debug\Logger;
 use Bitrix\Sign\Serializer\ItemPropertyJsonSerializer;
 use Bitrix\Sign\Service;
 use Bitrix\Sign\Config;
@@ -238,6 +237,9 @@ return [
 	],
 	'services' => [
 		'value' => [
+			\Bitrix\Sign\Debug\Logger::class => [
+				'constructor' => static fn() => Service\Container::instance()->getLogger(),
+			],
 			'sign.service.integration.crm.document' => [
 				'className' => \Bitrix\Sign\Service\Integration\Crm\BaseDocumentService::class,
 				'constructorParams' => static function() {
@@ -281,11 +283,17 @@ return [
 			'sign.service.integration.crm.events' => [
 				'className' => \Bitrix\Sign\Service\Integration\Crm\EventHandlerService::class,
 			],
+			'sign.service.integration.crm.access' => [
+				'className' => Service\Integration\Crm\AccessService::class,
+			],
 			'sign.service.integration.signmobile.member' => [
 				'className' => \Bitrix\Sign\Service\Integration\SignMobile\MemberService::class,
 			],
 			'sign.service.integration.humanresources.structurenode' => [
 				'className' => \Bitrix\Sign\Service\Integration\HumanResources\StructureNodeService::class,
+			],
+			'sign.service.integration.disk' => [
+				'className' => Service\Integration\Disk\DiskService::class,
 			],
 			'sign.container' => [
 				'className' => Service\Container::class,
@@ -410,6 +418,9 @@ return [
 				'constructorParams' => static fn() => [
 					'accessControllerFactory' => Service\Container::instance()->getAccessControllerFactory(),
 				],
+			],
+			'sign.service.sign.blank.archive' => [
+				'className' => Service\Sign\BlankArchiveService::class,
 			],
 			'sign.service.sign.blank.file' => [
 				'className' => Service\Sign\BlankFileService::class,
@@ -575,8 +586,18 @@ return [
 			'sign.repository.signerslistuser' => [
 				'className' => Repository\SignersList\SignersListUserRepository::class,
 			],
-			'sign.service.signerslist' => [
+			Service\SignersListService::class => [
 				'className' => Service\SignersListService::class,
+			],
+			Service\Sign\SignersList\AccessService::class => [
+				'className' => Service\Sign\SignersList\AccessService::class,
+				'constructorParams' => static function() {
+					$container = Service\Container::instance();
+					return [
+						'signersListService' => $container->getSignersListService(),
+						'accessControllerFactory' => $container->getAccessControllerFactory(),
+					];
+				},
 			],
 			'sign.service.onboarding' => [
 				'className' => Service\OnboardingService::class,
@@ -652,9 +673,6 @@ return [
 			],
 			'sign.service.placeholder.aliasRoleResolver' => [
 				'className' => Service\Placeholder\FieldAlias\AliasRoleResolver::class,
-			],
-			'sign.debug.logger' => [
-				'constructor' => static fn() => Logger::getInstance(),
 			],
 			'sign.service.placeholder.block' => [
 				'className' => Service\Sign\PlaceholderBlockService::class,

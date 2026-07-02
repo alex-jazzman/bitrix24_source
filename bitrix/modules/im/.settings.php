@@ -34,6 +34,12 @@ return [
 			'Im.AccessService' => [
 				'className' => \Bitrix\Im\V2\Service\AccessService::class,
 			],
+			'Im.GuestInviteSmsTransport' => [
+				'className' => \Bitrix\Im\V2\SharingLink\Transport\DefaultGuestInviteSmsTransport::class,
+			],
+			'Im.GuestInviteEmailTransport' => [
+				'className' => \Bitrix\Im\V2\SharingLink\Transport\DefaultGuestInviteEmailTransport::class,
+			],
 		],
 		'readonly' => true,
 	],

@@ -1,0 +1,38 @@
+.editor-chart-port-aux {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 10px;
+	height: 10px;
+	border: 1px solid var(--ui-color-designer-bp-pointer, #B1BBC7);
+	background-color: var(--ui-color-palette-white-base);
+	transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.editor-chart-port-aux.--active {
+	border: 1px solid var(--ui-color-blue-57);
+}
+
+.editor-chart-port-aux.--disabled {
+	border: 1px solid var(--ui-color-palette-gray-40);
+}
+
+.editor-chart-port-aux.--inactive {
+	opacity: 0.4;
+}
+
+.editor-chart-port-aux__stub {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	z-index: 3;
+	width: 10px;
+	height: 10px;
+	margin: auto;
+	border: none;
+	border-radius: none;
+	background-color: var(--ui-color-palette-white-base);
+	transform: rotate(45deg);
+}

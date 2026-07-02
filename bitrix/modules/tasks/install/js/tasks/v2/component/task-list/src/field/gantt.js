@@ -1,14 +1,17 @@
+import { TextMd } from 'ui.system.typography.vue';
+
 import { Model } from 'tasks.v2.const';
 import { HoverPill } from 'tasks.v2.component.elements.hover-pill';
 import { GanttMenu } from 'tasks.v2.application.gantt-popup';
 import { ganttService } from 'tasks.v2.provider.service.relation-service';
-import type { GanttLinkModel } from 'tasks.v2.model.gantt-links';
+import { type GanttLinkModel } from 'tasks.v2.model.gantt-links';
 
 // @vue/component
 export const Gantt = {
 	components: {
 		HoverPill,
 		GanttMenu,
+		TextMd,
 	},
 	inject: {
 		parentTaskId: 'taskId',
@@ -59,7 +62,7 @@ export const Gantt = {
 	},
 	template: `
 		<HoverPill textOnly noOffset ref="type" @click="isMenuShown = true">
-			{{ typeTitle }}
+			<TextMd>{{ typeTitle }}</TextMd>
 		</HoverPill>
 		<GanttMenu v-if="isMenuShown" v-model:type="type" :bindElement="$refs.type.$el" @close="isMenuShown = false"/>
 	`,

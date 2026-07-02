@@ -90,6 +90,11 @@ jn.define('im/messenger/lib/helper/counter', (require, exports, module) => {
 			return this.#tabs.size === 0;
 		}
 
+		get isChildCounter()
+		{
+			return this.state.parentChatId > 0;
+		}
+
 		get hasChatTab()
 		{
 			return this.#tabs.has(RecentTab.chat);

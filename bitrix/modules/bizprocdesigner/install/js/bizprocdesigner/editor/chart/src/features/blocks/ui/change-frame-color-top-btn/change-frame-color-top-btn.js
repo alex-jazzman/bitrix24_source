@@ -1,9 +1,18 @@
 import { mapActions } from 'ui.vue3.pinia';
+import { useBlockDiagram } from 'ui.block-diagram';
 import {
 	ColorMenuTopBtn,
 	diagramStore as useDiagramStore,
 	FRAME_COLOR_NAMES,
+	getContextMenuName,
 } from '../../../../entities/blocks';
+
+import type { Block, BlockId } from '../../../../shared/types';
+
+type ChangeFrameColorTopBtnSetup = {
+	getContextMenuName: (blockId: BlockId) => string,
+	updateBlock: (block: Block) => void,
+};
 
 // @vue/component
 export const ChangeFrameColorTopBtn = {
@@ -19,6 +28,15 @@ export const ChangeFrameColorTopBtn = {
 		},
 	},
 	emits: ['update:open'],
+	setup(): ChangeFrameColorTopBtnSetup
+	{
+		const { updateBlock } = useBlockDiagram();
+
+		return {
+			getContextMenuName,
+			updateBlock,
+		};
+	},
 	computed: {
 		colorName(): string
 		{
@@ -31,15 +49,20 @@ export const ChangeFrameColorTopBtn = {
 	},
 	methods: {
 		...mapActions(useDiagramStore, [
-			'updateFrameColorName',
 			'publicDraft',
 			'updateStatus',
 		]),
-		async onUpdateFrameColor(colorName: string): Promise<void>
+		async onUpdateFrameColor(frameColorName: string): Promise<void>
 		{
 			try
 			{
-				this.updateFrameColorName(this.block.id, colorName);
+				this.updateBlock({
+					...this.block,
+					node: {
+						...this.block.node,
+						frameColorName,
+					},
+				});
 				await this.publicDraft();
 				this.updateStatus(true);
 			}
@@ -53,6 +76,7 @@ export const ChangeFrameColorTopBtn = {
 		<ColorMenuTopBtn
 			:colorName="colorName"
 			:options="colorOptions"
+			:contextMenuName="getContextMenuName(block.id)"
 			@update:colorName="onUpdateFrameColor"
 			@update:open="$emit('update:open', $event)"
 		/>

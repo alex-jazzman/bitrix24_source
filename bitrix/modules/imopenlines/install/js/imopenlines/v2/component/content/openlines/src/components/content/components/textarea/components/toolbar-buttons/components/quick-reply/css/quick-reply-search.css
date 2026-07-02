@@ -1,0 +1,37 @@
+.bx-imol-quick-reply-popup__search-row {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 0 24px 12px;
+}
+
+.bx-imol-quick-reply-popup__search {
+	flex: 1;
+}
+
+.bx-imol-quick-reply-popup__search-actions {
+	--ui-icon-set__icon-color: var(--ui-color-base-2);
+	--ui-icon-set__icon-size: 22px;
+
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	gap: 8px;
+}
+
+.bx-imol-quick-reply-popup__search-actions .--hoverable {
+	cursor: pointer;
+}
+
+.bx-imol-quick-reply-popup__action-button {
+	box-sizing: border-box;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	width: 34px;
+	height: 34px;
+	padding: 0;
+	border: 1px solid var(--ui-color-palette-gray-20);
+	border-radius: 10px;
+	cursor: pointer;
+}

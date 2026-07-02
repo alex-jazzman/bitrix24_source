@@ -20,9 +20,9 @@ if (!Loader::includeModule('booking'))
 return [
 	'js' => 'dist/dictionary-service.bundle.js',
 	'rel' => [
-		'main.core',
-		'booking.core',
 		'booking.const',
+		'booking.core',
+		'main.core',
 	],
 	'skip_core' => false,
 	'settings' => [

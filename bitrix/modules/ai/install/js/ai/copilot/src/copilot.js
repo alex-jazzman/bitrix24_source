@@ -39,6 +39,7 @@ export type CopilotOptions = {
 	mode: CopilotMode.TEXT | CopilotMode.IMAGE | CopilotMode.TEXT_AND_IMAGE;
 	useText: boolean;
 	useImage: boolean;
+	responseFormat?: string;
 	extraMarkers: {[string]: string};
 	showResultInCopilot?: boolean;
 };
@@ -77,6 +78,7 @@ type InitCopilotTextControllerOptions = {
 	selectedText: string,
 	context: string,
 	addImageMenuItem: boolean,
+	responseFormat: ?string,
 }
 
 export const CopilotEvents = {
@@ -126,6 +128,7 @@ export class Copilot extends EventEmitter
 	#useImage: boolean;
 	#showResultInCopilot: ?boolean;
 	#menuForceTop: boolean = true;
+	#responseFormat: string;
 	#windowResizeHandler: Function;
 
 	static #staticEulaRestrictCallback: Function | false = null;
@@ -193,6 +196,7 @@ export class Copilot extends EventEmitter
 		this.#useText = Type.isBoolean(options.useText) ? options.useText : true;
 		this.#useImage = options.useImage === true;
 		this.#showResultInCopilot = options.showResultInCopilot;
+		this.#responseFormat = options.responseFormat || 'default';
 
 		this.#initEngine({
 			category: options.category,
@@ -246,6 +250,7 @@ export class Copilot extends EventEmitter
 					selectedText: this.#selectedText,
 					context: this.#context,
 					addImageMenuItem: this.#useImage,
+					responseFormat: this.#responseFormat,
 				});
 
 				await this.#initCopilotTextControllerMenu();
@@ -574,6 +579,7 @@ export class Copilot extends EventEmitter
 			analytics: this.#getAnalytics(),
 			showResultInCopilot: this.#showResultInCopilot,
 			menuForceTop: this.#menuForceTop,
+			responseFormat: options.responseFormat,
 		});
 
 		this.#copilotTextController.subscribe('aiResult', (event: BaseEvent) => {

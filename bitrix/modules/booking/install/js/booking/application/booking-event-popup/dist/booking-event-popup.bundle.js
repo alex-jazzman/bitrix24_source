@@ -1,2 +1,495 @@
-this.BX=this.BX||{},this.BX.Booking=this.BX.Booking||{},function(t,e,n,i,o,s,r,l,a,c,p,u,h,d,v,m,_,g,B){"use strict";const P={name:"BookingEventPopupClient",directives:{hint:l.hint},components:{UiAvatar:a.Avatar,UiButton:c.Button,UiIcon:_.BIcon},setup:()=>({AirButtonStyle:c.AirButtonStyle,ButtonSize:c.ButtonSize,ButtonStyle:c.ButtonStyle,Outline:_.Outline}),computed:{...m.mapGetters({client:B.Model.BookingInfo+"/client"}),isPermitted(){var t,e;return Boolean(null==(t=this.client)||null==(e=t.permissions)?void 0:e.read)},clientName(){return this.client?this.isPermitted?this.client.name:this.loc("BOOKING_EVENT_POPUP_NO_ACCESS"):this.loc("BOOKING_EVENT_POPUP_CLIENT_IS_UNAVAILABLE")},clientImageLink(){return this.isPermitted?this.client.image:""}},methods:{soonHint(){return{text:this.loc("BOOKING_EVENT_POPUP_SOON_HINT"),popupOptions:{}}},openClient(){if(!this.isPermitted||!this.client)return;const t=this.client.type.toLowerCase();p.SidePanelInstance.open(`/crm/${t}/details/${this.client.id}/`)}},template:'\n\t\t<div class="booking-event-popup__person-block">\n\t\t\t<div class="booking-event-popup__person">\n\t\t\t\t<div class="booking-event-popup__person_avatar">\n\t\t\t\t\t<UiAvatar\n\t\t\t\t\t\t:userName="isPermitted ? clientName : null"\n\t\t\t\t\t\t:userpicPath="clientImageLink"\n\t\t\t\t\t/>\n\t\t\t\t</div>\n\t\t\t\t<div class="booking-event-popup__person_data">\n\t\t\t\t\t<div v-if="client !== null" class="booking-event-popup__person_status">\n\t\t\t\t\t\t{{ loc(\'BOOKING_EVENT_POPUP_CLIENT\') }}\n\t\t\t\t\t</div>\n\t\t\t\t\t<div\n\t\t\t\t\t\t:class="[\n\t\t\t\t\t\t\t\'booking-event-popup__person_name\',\n\t\t\t\t\t\t\t{ \'--no-access\': !isPermitted }\n\t\t\t\t\t\t]"\n\t\t\t\t\t\t@click="openClient"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ clientName }}\n\t\t\t\t\t\t<template v-if="client && !isPermitted">\n\t\t\t\t\t\t\t<UiIcon :name="Outline.LOCK_S" :size="20" color="rgb(var(--ui-color-palette-gray-50-rgb))"/>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<UiButton\n\t\t\t\tv-hint="soonHint"\n\t\t\t\t:buttonClass="[\'--air\', ButtonStyle.NO_CAPS, AirButtonStyle.OUTLINE_NO_ACCENT]"\n\t\t\t\t:text="loc(\'BOOKING_EVENT_POPUP_CALL_LABEL\')"\n\t\t\t\t:icon="Outline.PHONE_UP"\n\t\t\t\ticonPosition="right"\n\t\t\t\t:size="ButtonSize.SMALL"\n\t\t\t\tdisabled\n\t\t\t\tuseAirDesign\n\t\t\t/>\n\t\t</div>\n\t'},b={name:"BookingEventPopupNote",components:{RichLoc:d.RichLoc,UiIcon:_.BIcon},setup:()=>({iconName:_.Outline.NOTE}),data:()=>({showedMore:!1}),computed:{...m.mapGetters({note:B.Model.BookingInfo+"/note"}),shortNote(){if(this.showedMore)return this.note;const t=this.extractMoreText(this.loc("BOOKING_EVENT_POPUP_NOTE_MORE_MSGVER_1",{"#NOTE#":""}));return this.note.slice(0,100-t.length-3).trimEnd()},richLocText(){return this.loc("BOOKING_EVENT_POPUP_NOTE_MORE_MSGVER_1",{"#NOTE#":this.shortNote})}},methods:{extractMoreText(t){const e=t.match(/\[button](.*?)\[\/button]/);return e&&e.length>1?e[1]:""}},template:'\n\t\t<div class="booking-event-popup__person-info">\n\t\t\t<div class="booking-event-popup__person-info_icon">\n\t\t\t\t<UiIcon :name="iconName" :size="22" color="rgba(250, 167, 44, 1)"/>\n\t\t\t</div>\n\t\t\t<div class="booking-event-popup__person-info_text">\n\t\t\t\t<RichLoc v-if="shortNote.length < note.length" :text="richLocText" placeholder="[button]">\n\t\t\t\t\t<template #button="{ text }">\n\t\t\t\t\t\t<span\n\t\t\t\t\t\t\tclass="booking-event-popup__person-info_text-more"\n\t\t\t\t\t\t\t@click="showedMore = true"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ text }}\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</template>\n\t\t\t\t</RichLoc>\n\t\t\t\t<text v-else>\n\t\t\t\t\t{{ note }}\n\t\t\t\t</text>\n\t\t\t</div>\n\t\t</div>\n\t'},E={name:"EntitiesList",components:{RichLoc:d.RichLoc,UiCounter:h.Counter,UiIcon:_.BIcon},props:{title:{type:String,required:!0},iconName:{type:String,required:!0},entities:{type:Array,default:()=>[]},hasNoAccess:{type:Boolean,default:!1}},setup:()=>({Outline:_.Outline,CounterSize:u.CounterSize,CounterStyle:u.CounterStyle}),data:()=>({limit:90}),computed:{entitiesCount(){return this.entities.length},hasMore(){return!this.hasNoAccess&&this.entities.length>this.names.length},more(){return this.loc("BOOKING_EVENT_POPUP_ENTITIES_MORE_MSGVER_2",{"#COUNT#":this.entities.length-this.names.length||"","#RESOURCES#":this.names.join(", ")})},count(){var t;return null!=(t=this.entitiesCount)?t:this.entities.length},names(){if(this.hasNoAccess)return[this.loc("BOOKING_EVENT_POPUP_NO_ACCESS")];if(this.limit===1/0)return this.entities.map(({name:t})=>t);let t=0;const e=[];if(1===this.entities.length)return this.entities.map(({name:t})=>t);for(const n of this.entities){if(t+n.name.length>this.limit)break;t+=n.name.length,e.push(n.name)}return e}},template:'\n\t\t<div class="booking-event-popup__resources-item">\n\t\t\t<div class="booking-event-popup__resources-item_icon">\n\t\t\t\t<UiIcon :name="iconName" :size="20"/>\n\t\t\t</div>\n\t\t\t<div class="booking-event-popup__resources-item_info">\n\t\t\t\t<div class="booking-event-popup__resources-item_title">\n\t\t\t\t\t{{ title }}\n\t\t\t\t\t<UiCounter\n\t\t\t\t\t\tv-if="!hasNoAccess"\n\t\t\t\t\t\t:value="count"\n\t\t\t\t\t\t:maxValue="999"\n\t\t\t\t\t\t:size="CounterSize.SMALL"\n\t\t\t\t\t\t:style="CounterStyle.FILLED"\n\t\t\t\t\t/>\n\t\t\t\t\t<template v-if="hasNoAccess">\n\t\t\t\t\t\t<UiIcon :name="Outline.LOCK_S" :size="20" color="rgb(var(--ui-color-palette-gray-50-rgb))"/>\n\t\t\t\t\t</template>\n\t\t\t\t</div>\n\t\t\t\t<div\n\t\t\t\t\t:class="[\n\t\t\t\t\t\t\'booking-event-popup__resources-item_text\',\n\t\t\t\t\t\t{ \'--no-access\': hasNoAccess }\n\t\t\t\t\t]"\n\t\t\t\t>\n\t\t\t\t\t<RichLoc v-if="hasMore" :text="more" placeholder="[button]" style="display: inline-block">\n\t\t\t\t\t\t<template #button="{ text }">\n\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\tv-if="hasMore"\n\t\t\t\t\t\t\t\tclass="booking-event-popup__resources-item_text-more"\n\t\t\t\t\t\t\t\t@click="limit = Infinity"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t{{ text }}\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</RichLoc>\n\t\t\t\t\t<text v-else>\n\t\t\t\t\t\t{{ names.join(\', \') }}\n\t\t\t\t\t</text>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t'},O={name:"BookingEventPopupApp",components:{BookingEventPopupClient:P,BookingEventPopupNote:b,ResourceEntitiesList:{name:"ResourceEntitiesList",components:{EntitiesList:E},computed:{...m.mapGetters({resources:B.Model.BookingInfo+"/resources"})},render(){if(0===this.resources.length)return null;const t=this.resources.some(({permissions:t})=>!t.read);return v.h(E,{title:this.loc("BOOKING_EVENT_POPUP_RESOURCES_TITLE"),iconName:_.Outline.PRODUCT,entities:t?[]:this.resources,hasNoAccess:t})}},ServicesEntitiesList:{name:"ServicesEntitiesList",components:{EntitiesList:E},computed:{...m.mapGetters({services:B.Model.BookingInfo+"/services"})},render(){if(0===this.services.length)return null;const t=this.services.some(({permissions:t})=>!t.read);return v.h(E,{title:this.loc("BOOKING_EVENT_POPUP_SERVICES_TITLE"),iconName:_.Outline.THREE_PERSONS,entities:t?[]:this.services,hasNoAccess:t})}}},props:{bookingId:{type:Number,required:!0}},data:()=>({fetching:!1}),computed:{...m.mapGetters({note:B.Model.BookingInfo+"/note"})},watch:{fetching:{handler(t){t?this.showLoader():this.hideLoader()},immediate:!0}},created(){this.loader=new s.Loader},mounted(){this.fetchBookingInfo()},methods:{async fetchBookingInfo(){try{this.fetching=!0,await r.calendarDataService.loadBookingInfo(this.bookingId)}catch(t){console.error("BookingEventPopup. Get data error",t)}finally{this.fetching=!1}},showLoader(){var t;null==(t=this.loader)||t.show(this.$refs.app)},hideLoader(){var t;null==(t=this.loader)||t.hide(this.$refs.app)}},template:'\n\t\t<div ref="app" class="booking-event-popup__content">\n\t\t\t<div class="booking-event-popup__title">{{ loc(\'BOOKING_EVENT_POPUP_TITLE\') }}</div>\n\t\t\t<BookingEventPopupClient v-if="!fetching"/>\n\t\t\t<BookingEventPopupNote v-if="note"/>\n\t\t\t<div class="booking-event-popup__resources">\n\t\t\t\t<ResourceEntitiesList/>\n\t\t\t\t<ServicesEntitiesList/>\n\t\t\t</div>\n\t\t</div>\n\t'};let N=null;var k=babelHelpers.classPrivateFieldLooseKey("bookingId"),L=babelHelpers.classPrivateFieldLooseKey("app"),I=babelHelpers.classPrivateFieldLooseKey("initPopup"),f=babelHelpers.classPrivateFieldLooseKey("mountApplication"),C=babelHelpers.classPrivateFieldLooseKey("close");function S(){N||(N=new e.Popup({id:"calendar-entity-booking-event-popup-"+babelHelpers.classPrivateFieldLooseBase(this,k)[k],bindElement:null,content:"",width:490,minHeight:100,maxHeight:330,closeByEsc:!0,closeIcon:!0,className:"booking-event-popup",autoHide:!0,events:{onPopupAfterClose:async()=>{await babelHelpers.classPrivateFieldLooseBase(this,C)[C]()}},padding:13}))}function y(t){const e=v.BitrixVue.createApp(O,{...n.Core.getParams(),bookingId:babelHelpers.classPrivateFieldLooseBase(this,k)[k]});e.mixin(i.locMixin),e.use(n.Core.getStore()),e.mount(t),babelHelpers.classPrivateFieldLooseBase(this,L)[L]=e}async function T(){var t;babelHelpers.classPrivateFieldLooseBase(this,L)[L].unmount(),babelHelpers.classPrivateFieldLooseBase(this,L)[L]=null,await n.Core.removeDynamicModule(B.Model.BookingInfo),null==(t=N)||t.destroy(),N=null}t.BookingEventPopup=class{constructor(t){Object.defineProperty(this,C,{value:T}),Object.defineProperty(this,f,{value:y}),Object.defineProperty(this,I,{value:S}),Object.defineProperty(this,k,{writable:!0,value:void 0}),Object.defineProperty(this,L,{writable:!0,value:void 0}),babelHelpers.classPrivateFieldLooseBase(this,k)[k]=t.bookingId}async show(){N||(N||babelHelpers.classPrivateFieldLooseBase(this,I)[I](),await n.Core.init({skipCoreModels:!0,skipPull:!0}),await n.Core.addDynamicModule(o.BookingInfo.create().setVariables({bookingId:babelHelpers.classPrivateFieldLooseBase(this,k)[k]})),N.show(),babelHelpers.classPrivateFieldLooseBase(this,f)[f](N.getContentContainer()))}}}(this.BX.Booking.Application=this.BX.Booking.Application||{},BX.Main,BX.Booking,BX.Booking.Component.Mixin,BX.Booking.Model,BX,BX.Booking.Provider.Service,BX.Vue3.Directives,BX.Booking.Component,BX.Booking.Component,BX.Booking.Lib,BX.UI,BX.UI.Vue3.Components,BX.UI.Vue3.Components,BX.Vue3,BX.Vue3.Vuex,BX.UI.IconSet,BX,BX.Booking.Const);
+/* eslint-disable */
+this.BX = this.BX || {};
+this.BX.Booking = this.BX.Booking || {};
+(function (exports, main_popup, ui_vue3, booking_core, booking_const, booking_component_mixin_locMixin, booking_model_bookingInfo, main_loader, ui_vue3_vuex, booking_provider_service_calendarDataService, ui_vue3_directives_hint, ui_iconSet_api_vue, ui_iconSet_outline, booking_component_avatar, booking_component_button, booking_lib_sidePanelInstance, ui_vue3_components_richLoc, ui_cnt, ui_vue3_components_counter) {
+	'use strict';
+
+	// @vue/component
+	const BookingEventPopupClient = {
+		name: 'BookingEventPopupClient',
+		directives: {
+			hint: ui_vue3_directives_hint.hint
+		},
+		components: {
+			UiAvatar: booking_component_avatar.Avatar,
+			UiButton: booking_component_button.Button,
+			UiIcon: ui_iconSet_api_vue.BIcon
+		},
+		setup() {
+			return {
+				AirButtonStyle: booking_component_button.AirButtonStyle,
+				ButtonSize: booking_component_button.ButtonSize,
+				ButtonStyle: booking_component_button.ButtonStyle,
+				Outline: ui_iconSet_api_vue.Outline
+			};
+		},
+		computed: {
+			...ui_vue3_vuex.mapGetters({
+				client: `${booking_const.Model.BookingInfo}/client`
+			}),
+			isPermitted() {
+				return Boolean(this.client?.permissions?.read);
+			},
+			clientName() {
+				if (!this.client) {
+					return this.loc('BOOKING_EVENT_POPUP_CLIENT_IS_UNAVAILABLE');
+				}
+				if (!this.isPermitted) {
+					return this.loc('BOOKING_EVENT_POPUP_NO_ACCESS');
+				}
+				return this.client.name;
+			},
+			clientImageLink() {
+				return this.isPermitted ? this.client.image : '';
+			}
+		},
+		methods: {
+			soonHint() {
+				return {
+					text: this.loc('BOOKING_EVENT_POPUP_SOON_HINT'),
+					popupOptions: {}
+				};
+			},
+			openClient() {
+				if (!this.isPermitted || !this.client) {
+					return;
+				}
+				const entity = this.client.type.toLowerCase();
+				booking_lib_sidePanelInstance.SidePanelInstance.open(`/crm/${entity}/details/${this.client.id}/`);
+			}
+		},
+		template: `
+		<div class="booking-event-popup__person-block">
+			<div class="booking-event-popup__person">
+				<div class="booking-event-popup__person_avatar">
+					<UiAvatar
+						:userName="isPermitted ? clientName : null"
+						:userpicPath="clientImageLink"
+					/>
+				</div>
+				<div class="booking-event-popup__person_data">
+					<div v-if="client !== null" class="booking-event-popup__person_status">
+						{{ loc('BOOKING_EVENT_POPUP_CLIENT') }}
+					</div>
+					<div
+						:class="[
+							'booking-event-popup__person_name',
+							{ '--no-access': !isPermitted }
+						]"
+						@click="openClient"
+					>
+						{{ clientName }}
+						<template v-if="client && !isPermitted">
+							<UiIcon :name="Outline.LOCK_S" :size="20" color="rgb(var(--ui-color-palette-gray-50-rgb))"/>
+						</template>
+					</div>
+				</div>
+			</div>
+			<UiButton
+				v-hint="soonHint"
+				:buttonClass="['--air', ButtonStyle.NO_CAPS, AirButtonStyle.OUTLINE_NO_ACCENT]"
+				:text="loc('BOOKING_EVENT_POPUP_CALL_LABEL')"
+				:icon="Outline.PHONE_UP"
+				iconPosition="right"
+				:size="ButtonSize.SMALL"
+				disabled
+				useAirDesign
+			/>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const BookingEventPopupNote = {
+		name: 'BookingEventPopupNote',
+		components: {
+			RichLoc: ui_vue3_components_richLoc.RichLoc,
+			UiIcon: ui_iconSet_api_vue.BIcon
+		},
+		setup() {
+			const iconName = ui_iconSet_api_vue.Outline.NOTE;
+			return {
+				iconName
+			};
+		},
+		data() {
+			return {
+				showedMore: false
+			};
+		},
+		computed: {
+			...ui_vue3_vuex.mapGetters({
+				note: `${booking_const.Model.BookingInfo}/note`
+			}),
+			shortNote() {
+				if (this.showedMore) {
+					return this.note;
+				}
+				const moreText = this.extractMoreText(this.loc('BOOKING_EVENT_POPUP_NOTE_MORE_MSGVER_1', {
+					'#NOTE#': ''
+				}));
+				return this.note.slice(0, 100 - moreText.length - 3).trimEnd();
+			},
+			richLocText() {
+				return this.loc('BOOKING_EVENT_POPUP_NOTE_MORE_MSGVER_1', {
+					'#NOTE#': this.shortNote
+				});
+			}
+		},
+		methods: {
+			extractMoreText(text) {
+				const regex = /\[button](.*?)\[\/button]/;
+				const matchResult = text.match(regex);
+				if (matchResult && matchResult.length > 1) {
+					return matchResult[1];
+				}
+				return '';
+			}
+		},
+		template: `
+		<div class="booking-event-popup__person-info">
+			<div class="booking-event-popup__person-info_icon">
+				<UiIcon :name="iconName" :size="22" color="rgba(250, 167, 44, 1)"/>
+			</div>
+			<div class="booking-event-popup__person-info_text">
+				<RichLoc v-if="shortNote.length < note.length" :text="richLocText" placeholder="[button]">
+					<template #button="{ text }">
+						<span
+							class="booking-event-popup__person-info_text-more"
+							@click="showedMore = true"
+						>
+							{{ text }}
+						</span>
+					</template>
+				</RichLoc>
+				<text v-else>
+					{{ note }}
+				</text>
+			</div>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const EntitiesList = {
+		name: 'EntitiesList',
+		components: {
+			RichLoc: ui_vue3_components_richLoc.RichLoc,
+			UiCounter: ui_vue3_components_counter.Counter,
+			UiIcon: ui_iconSet_api_vue.BIcon
+		},
+		props: {
+			title: {
+				type: String,
+				required: true
+			},
+			iconName: {
+				type: String,
+				required: true
+			},
+			entities: {
+				type: Array,
+				default: () => []
+			},
+			hasNoAccess: {
+				type: Boolean,
+				default: false
+			}
+		},
+		setup() {
+			return {
+				Outline: ui_iconSet_api_vue.Outline,
+				CounterSize: ui_cnt.CounterSize,
+				CounterStyle: ui_cnt.CounterStyle
+			};
+		},
+		data() {
+			return {
+				limit: 90
+			};
+		},
+		computed: {
+			entitiesCount() {
+				return this.entities.length;
+			},
+			hasMore() {
+				return !this.hasNoAccess && this.entities.length > this.names.length;
+			},
+			more() {
+				return this.loc('BOOKING_EVENT_POPUP_ENTITIES_MORE_MSGVER_2', {
+					'#COUNT#': this.entities.length - this.names.length || '',
+					'#RESOURCES#': this.names.join(', ')
+				});
+			},
+			count() {
+				return this.entitiesCount ?? this.entities.length;
+			},
+			names() {
+				if (this.hasNoAccess) {
+					return [this.loc('BOOKING_EVENT_POPUP_NO_ACCESS')];
+				}
+				if (this.limit === Infinity) {
+					return this.entities.map(({
+						name
+					}) => name);
+				}
+				let textLength = 0;
+				const names = [];
+				if (this.entities.length === 1) {
+					return this.entities.map(({
+						name
+					}) => name);
+				}
+				for (const entity of this.entities) {
+					if (textLength + entity.name.length > this.limit) {
+						break;
+					}
+					textLength += entity.name.length;
+					names.push(entity.name);
+				}
+				return names;
+			}
+		},
+		template: `
+		<div class="booking-event-popup__resources-item">
+			<div class="booking-event-popup__resources-item_icon">
+				<UiIcon :name="iconName" :size="20"/>
+			</div>
+			<div class="booking-event-popup__resources-item_info">
+				<div class="booking-event-popup__resources-item_title">
+					{{ title }}
+					<UiCounter
+						v-if="!hasNoAccess"
+						:value="count"
+						:maxValue="999"
+						:size="CounterSize.SMALL"
+						:style="CounterStyle.FILLED"
+					/>
+					<template v-if="hasNoAccess">
+						<UiIcon :name="Outline.LOCK_S" :size="20" color="rgb(var(--ui-color-palette-gray-50-rgb))"/>
+					</template>
+				</div>
+				<div
+					:class="[
+						'booking-event-popup__resources-item_text',
+						{ '--no-access': hasNoAccess }
+					]"
+				>
+					<RichLoc v-if="hasMore" :text="more" placeholder="[button]" style="display: inline-block">
+						<template #button="{ text }">
+							<span
+								v-if="hasMore"
+								class="booking-event-popup__resources-item_text-more"
+								@click="limit = Infinity"
+							>
+								{{ text }}
+							</span>
+						</template>
+					</RichLoc>
+					<text v-else>
+						{{ names.join(', ') }}
+					</text>
+				</div>
+			</div>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const ResourceEntitiesList = {
+		name: 'ResourceEntitiesList',
+		components: {
+			EntitiesList
+		},
+		computed: {
+			...ui_vue3_vuex.mapGetters({
+				resources: `${booking_const.Model.BookingInfo}/resources`
+			})
+		},
+		render() {
+			if (this.resources.length === 0) {
+				return null;
+			}
+			const hasNoAccess = this.resources.some(({
+				permissions
+			}) => !permissions.read);
+			return ui_vue3.h(EntitiesList, {
+				title: this.loc('BOOKING_EVENT_POPUP_RESOURCES_TITLE'),
+				iconName: ui_iconSet_api_vue.Outline.PRODUCT,
+				entities: hasNoAccess ? [] : this.resources,
+				hasNoAccess
+			});
+		}
+	};
+
+	// @vue/component
+	const ServicesEntitiesList = {
+		name: 'ServicesEntitiesList',
+		components: {
+			EntitiesList
+		},
+		computed: {
+			...ui_vue3_vuex.mapGetters({
+				services: `${booking_const.Model.BookingInfo}/services`
+			})
+		},
+		render() {
+			if (this.services.length === 0) {
+				return null;
+			}
+			const hasNoAccess = this.services.some(({
+				permissions
+			}) => !permissions.read);
+			return ui_vue3.h(EntitiesList, {
+				title: this.loc('BOOKING_EVENT_POPUP_SERVICES_TITLE'),
+				iconName: ui_iconSet_api_vue.Outline.THREE_PERSONS,
+				entities: hasNoAccess ? [] : this.services,
+				hasNoAccess
+			});
+		}
+	};
+
+	// @vue/component
+	const App = {
+		name: 'BookingEventPopupApp',
+		components: {
+			BookingEventPopupClient,
+			BookingEventPopupNote,
+			ResourceEntitiesList,
+			ServicesEntitiesList
+		},
+		props: {
+			bookingId: {
+				type: Number,
+				required: true
+			}
+		},
+		data() {
+			return {
+				fetching: false
+			};
+		},
+		computed: {
+			...ui_vue3_vuex.mapGetters({
+				note: `${booking_const.Model.BookingInfo}/note`
+			})
+		},
+		watch: {
+			fetching: {
+				handler(fetching) {
+					if (fetching) {
+						this.showLoader();
+					} else {
+						this.hideLoader();
+					}
+				},
+				immediate: true
+			}
+		},
+		created() {
+			this.loader = new main_loader.Loader();
+		},
+		mounted() {
+			void this.fetchBookingInfo();
+		},
+		methods: {
+			async fetchBookingInfo() {
+				try {
+					this.fetching = true;
+					await booking_provider_service_calendarDataService.calendarDataService.loadBookingInfo(this.bookingId);
+				} catch (error) {
+					console.error('BookingEventPopup. Get data error', error);
+				} finally {
+					this.fetching = false;
+				}
+			},
+			showLoader() {
+				void this.loader?.show(this.$refs.app);
+			},
+			hideLoader() {
+				void this.loader?.hide(this.$refs.app);
+			}
+		},
+		template: `
+		<div ref="app" class="booking-event-popup__content">
+			<div class="booking-event-popup__title">{{ loc('BOOKING_EVENT_POPUP_TITLE') }}</div>
+			<BookingEventPopupClient v-if="!fetching"/>
+			<BookingEventPopupNote v-if="note"/>
+			<div class="booking-event-popup__resources">
+				<ResourceEntitiesList/>
+				<ServicesEntitiesList/>
+			</div>
+		</div>
+	`
+	};
+
+	let popup = null;
+	class BookingEventPopup {
+		#bookingId;
+		#app;
+		constructor(params) {
+			this.#bookingId = params.bookingId;
+		}
+		async show() {
+			if (popup) {
+				return;
+			}
+			if (!popup) {
+				this.#initPopup();
+			}
+			await booking_core.Core.init({
+				skipCoreModels: true,
+				skipPull: true
+			});
+			await booking_core.Core.addDynamicModule(booking_model_bookingInfo.BookingInfo.create().setVariables({
+				bookingId: this.#bookingId
+			}));
+			popup.show();
+			this.#mountApplication(popup.getContentContainer());
+		}
+		#initPopup() {
+			if (popup) {
+				return;
+			}
+			popup = new main_popup.Popup({
+				id: `calendar-entity-booking-event-popup-${this.#bookingId}`,
+				bindElement: null,
+				content: '',
+				width: 490,
+				minHeight: 100,
+				maxHeight: 330,
+				closeByEsc: true,
+				closeIcon: true,
+				className: 'booking-event-popup',
+				autoHide: true,
+				events: {
+					onPopupAfterClose: async () => {
+						await this.#close();
+					}
+				},
+				padding: 13
+			});
+		}
+		#mountApplication(container) {
+			const app = ui_vue3.BitrixVue.createApp(App, {
+				...booking_core.Core.getParams(),
+				bookingId: this.#bookingId
+			});
+			app.mixin(booking_component_mixin_locMixin.locMixin);
+			app.use(booking_core.Core.getStore());
+			app.mount(container);
+			this.#app = app;
+		}
+		async #close() {
+			this.#app.unmount();
+			this.#app = null;
+			await booking_core.Core.removeDynamicModule(booking_const.Model.BookingInfo);
+			popup?.destroy();
+			popup = null;
+		}
+	}
+
+	exports.BookingEventPopup = BookingEventPopup;
+
+})(this.BX.Booking.Application = this.BX.Booking.Application || {}, BX.Main, BX.Vue3, BX.Booking, BX.Booking.Const, BX.Booking.Component.Mixin, BX.Booking.Model, BX, BX.Vue3.Vuex, BX.Booking.Provider.Service, BX.Vue3.Directives, BX.UI.IconSet, window, BX.Booking.Component, BX.Booking.Component, BX.Booking.Lib, BX.UI.Vue3.Components, BX.UI, BX.UI.Vue3.Components);
 //# sourceMappingURL=booking-event-popup.bundle.js.map

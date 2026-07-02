@@ -387,105 +387,16 @@
 	opacity: .9;
 }
 
-.ui-counter-panel__popup-item {
-	user-select: none;
+.ui-counter-panel__item--more-trigger:hover:after {
+	background: var(--color-hover);
+	transition: .1s;
 }
 
-/*update*/
-.ui-counter-panel__popup .menu-popup {
-	padding: 10px;
+.ui-counter-panel.--air .ui-counter-panel__item--more-trigger:hover,
+.ui-counter-panel.--air .ui-counter-panel__item--more-trigger.--hover {
+	--color-background: var(--color-hover);
 }
 
-.ui-counter-panel__popup-item {
-	margin: 0 0 2px 0;
-	padding: 0;
-}
-
-.ui-counter-panel__popup-item:last-child {
-	margin-bottom: unset;
-}
-
-.ui-counter-panel__popup-item .menu-popup-item-text {
-	padding: 0;
-}
-
-.ui-counter-panel__popup-item .menu-popup-item-text > span {
-	display: flex;
-	padding-left: 15px;
-}
-
-.ui-counter-panel__popup-item.--air .menu-popup-item-text > span {
-	padding-left: 0;
-}
-
-.ui-counter-panel__popup-item:before {
-	content: '';
-	position: absolute;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	border-radius: var(--border-radius-sm);
-	background: transparent;
-	z-index: -1;
-}
-
-.ui-counter-panel__popup-item:hover:before {
-	background: var(--color-active-hover);
-}
-
-.ui-counter-panel__popup-item.--active:hover:before,
-.ui-counter-panel__popup-item.--active:before {
-	background: var(--color-active);
-}
-
-.ui-counter-panel__popup-item:hover {
-	background-color: unset;
-}
-
-.ui-counter-panel__popup-item.--active .menu-popup-item-text {
-	color: #3b434f;
-}
-
-.ui-counter-panel__popup-item .ui-counter-panel__item-cross {
-	position: relative;
-	margin-left: auto;
-	opacity: 1;
-	pointer-events: auto;
-}
-
-.ui-counter-panel__popup-item .ui-counter-panel__item-value {
-	margin-right: unset;
-}
-
-.ui-counter-panel__popup-item .ui-counter-panel__item-cross {
-	width: 24px;
-	margin-right: 6px;
-	transform: none;
-	opacity: 0;
-	transition: .25s;
-	pointer-events: none;
-}
-
-.ui-counter-panel__popup-item.--active .ui-counter-panel__item-cross {
-	opacity: .6;
-	pointer-events: auto;
-}
-
-.ui-counter-panel__popup-item.--active:hover .ui-counter-panel__item-cross {
-	transition: unset;
-	opacity: .75;
-}
-
-.ui-counter-panel__popup-item .ui-counter-panel__item-cross:hover {
-	transition: unset;
-	opacity: .9;
-}
-
-.ui-counter-panel__popup-item .ui-counter-panel__item-cross i {
-	background-image: url(../images/ui-counter-panel__icon-cross-blue.svg);
-}
-
-.ui-counter-panel__popup-item .ui-counter-panel__item-value {
-	margin: auto 6px auto 7px;
+.ui-counter-panel__item--more-trigger .ui-counter-panel__item-dropdown {
+	margin-left: 4px;
 }

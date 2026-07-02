@@ -3,7 +3,6 @@ declare type UserStoredData = {
 	avatar: string,
 	bot: boolean,
 	botData: {
-		appId?: string | null,
 		code?: string,
 		isHidden?: boolean,
 		isSupportOpenline?: boolean,

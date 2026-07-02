@@ -4,15 +4,18 @@ use Bitrix\Main\Web\Json;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
+/**
+ * @global CMain $APPLICATION
+ * @var array $arParams
+ * @var string $templateFolder
+ */
+
 Bitrix\Main\UI\Extension::load('mobile.utils');
 
 //\Bitrix\Main\Page\Asset::getInstance()->addJs($templateFolder."/script.js");
 //$arParams["FORM_ID"] =
 //$arParams["NAME_TEMPLATE"]
-/**
- * @var array $arParams
- * @var CMain $APPLICATION
- */
+
 foreach ($arParams["UPLOADS"] as $v)
 {
 	if (

@@ -3,7 +3,7 @@
  * Bitrix Framework
  * @package bitrix
  * @subpackage main
- * @copyright 2001-2024 Bitrix
+ * @copyright 2001-2026 Bitrix
  */
 
 /**
@@ -38,16 +38,18 @@ $ID = intval($_REQUEST['ID'] ?? 0);
 if($_SERVER["REQUEST_METHOD"] == "POST" && (!empty($_POST['save']) || !empty($_POST['apply'])) && $isAdmin && check_bitrix_sessid())
 {
 	$arFields = array(
-		"ACTIVE" => $_POST['ACTIVE'],
-		"SORT" => $_POST['SORT'],
-		"DEF" => $_POST['DEF'],
-		"NAME" => $_POST['NAME'],
-		"CODE" => $_POST['CODE'],
-		"CULTURE_ID" => $_POST['CULTURE_ID'],
+		"ACTIVE" => $_POST['ACTIVE'] ?? '',
+		"SORT" => $_POST['SORT'] ?? '',
+		"DEF" => $_POST['DEF'] ?? '',
+		"NAME" => $_POST['NAME'] ?? '',
+		"CODE" => $_POST['CODE'] ?? '',
+		"CULTURE_ID" => $_POST['CULTURE_ID'] ?? '',
 	);
 
 	if($ID <= 0)
-		$arFields["LID"] = $_POST["LID"];
+	{
+		$arFields["LID"] = $_POST["LID"] ?? '';
+	}
 
 	$langs = new CLanguage;
 	if($ID > 0)
@@ -72,31 +74,51 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && (!empty($_POST['save']) || !empty($_P
 	}
 }
 
-if($bVarsFromForm == false)
+$language = [
+	'LID' => '',
+	'ACTIVE' => 'Y',
+	'NAME' => '',
+	'CODE' => '',
+	'DEF' => 'N',
+	'SORT' => '',
+	'CULTURE_ID' => '',
+];
+
+$checkboxes = [
+	'ACTIVE' => 1,
+	'DEF' => 1,
+];
+
+if (!$bVarsFromForm)
 {
 	$ID = 0;
-	$language = false;
-	if (!empty($_REQUEST["COPY_ID"]))
+	$lid = !empty($_REQUEST["COPY_ID"]) ? $_REQUEST["COPY_ID"] : ($_REQUEST["LID"] ?? '');
+	if (!empty($lid))
 	{
-		$lng = CLanguage::GetByID($_REQUEST["COPY_ID"]);
-		$language = $lng->Fetch();
-	}
-	elseif (!empty($_REQUEST["LID"]))
-	{
-		$lng = CLanguage::GetByID($_REQUEST["LID"]);
-		if(($language = $lng->Fetch()))
-			$ID = 1;
-	}
-	if($language === false)
-	{
-		$language = array(
-			"ACTIVE" => "Y",
-		);
+		$lng = CLanguage::GetByID($lid);
+		$languageData = $lng->Fetch();
+		if ($languageData)
+		{
+			foreach ($language as $key => $value)
+			{
+				$language[$key] = $languageData[$key] ?? $value;
+			}
+			if (!empty($_REQUEST["LID"]))
+			{
+				$ID = 1;
+			}
+		}
 	}
 }
 else
 {
-	$language = $_POST;
+	foreach ($language as $key => $value)
+	{
+		if (isset($_POST[$key]) || isset($checkboxes[$key]))
+		{
+			$language[$key] = $_POST[$key] ?? '';
+		}
+	}
 }
 
 $langField = array();
@@ -153,50 +175,50 @@ if($message)
 	echo $message->Show();
 
 ?>
-<form method="POST" action="<?echo $APPLICATION->GetCurPage()?>?" name="form1">
+<form method="POST" action="<?= $APPLICATION->GetCurPage()?>?" name="form1">
 <?=bitrix_sessid_post()?>
 <input type="hidden" name="lang" value="<?=LANGUAGE_ID?>">
-<input type="hidden" name="ID" value="<?echo $ID?>">
-<?if (!empty($_REQUEST["COPY_ID"])):?><input type="hidden" name="COPY_ID" value="<?echo HtmlFilter::encode($_REQUEST["COPY_ID"])?>"><?endif?>
-<?
+<input type="hidden" name="ID" value="<?= $ID?>">
+<?php if (!empty($_REQUEST["COPY_ID"])):?><input type="hidden" name="COPY_ID" value="<?= HtmlFilter::encode($_REQUEST["COPY_ID"])?>"><?php endif?>
+<?php
 $tabControl->Begin();
 $tabControl->BeginNextTab();
 ?>
 	<tr class="adm-detail-required-field">
 		<td width="40%">ID:</td>
-		<td width="60%"><?
+		<td width="60%"><?php
 			if($ID > 0):
 				echo $langField["LID"];
-				?><input type="hidden" name="LID" value="<? echo $langField["LID"]?>"><?
+				?><input type="hidden" name="LID" value="<?= $langField["LID"]?>"><?php
 			else:
-				?><input type="text" name="LID" size="2" maxlength="2" value="<? echo $langField["LID"]?>"><?
+				?><input type="text" name="LID" size="2" maxlength="2" value="<?= $langField["LID"]?>"><?php
 			endif;
 				?></td>
 	</tr>
 	<tr>
-		<td><label for="active"><?echo Loc::getMessage('ACTIVE')?></label></td>
-		<td><input type="checkbox" name="ACTIVE" id="active" value="Y"<?if($language["ACTIVE"] == "Y") echo " checked"?>></td>
+		<td><label for="active"><?= Loc::getMessage('ACTIVE')?></label></td>
+		<td><input type="checkbox" name="ACTIVE" id="active" value="Y"<?php if($language["ACTIVE"] == "Y") echo " checked"?>></td>
 	</tr>
 	<tr class="adm-detail-required-field">
-		<td><?echo Loc::getMessage('NAME')?></td>
-		<td><input type="text" name="NAME" size="30" maxlength="50" value="<? echo $langField["NAME"]?>"></td>
+		<td><?= Loc::getMessage('NAME')?></td>
+		<td><input type="text" name="NAME" size="30" maxlength="50" value="<?= $langField["NAME"]?>"></td>
 	</tr>
 	<tr>
 		<td><?= Loc::getMessage('lang_edit_code') ?></td>
-		<td><input type="text" name="CODE" size="30" maxlength="50" value="<? echo $langField["CODE"]?>"></td>
+		<td><input type="text" name="CODE" size="30" maxlength="50" value="<?= $langField["CODE"]?>"></td>
 	</tr>
 	<tr>
-		<td><label for="def"><?echo Loc::getMessage('DEF')?></label></td>
-		<td><input type="checkbox" name="DEF" id="def" value="Y"<?if($language["DEF"] == "Y") echo " checked"?>></td>
+		<td><label for="def"><?= Loc::getMessage('DEF')?></label></td>
+		<td><input type="checkbox" name="DEF" id="def" value="Y"<?php if($language["DEF"] == "Y") echo " checked"?>></td>
 	</tr>
 	<tr class="adm-detail-required-field">
-		<td><?echo Loc::getMessage('SORT')?></td>
-		<td><input type="text" name="SORT" size="10" maxlength="10" value="<? echo $langField["SORT"]?>"></td>
+		<td><?= Loc::getMessage('SORT')?></td>
+		<td><input type="text" name="SORT" size="10" maxlength="10" value="<?= $langField["SORT"]?>"></td>
 	</tr>
 	<tr class="adm-detail-required-field">
-		<td><?echo Loc::getMessage("lang_edit_culture")?></td>
+		<td><?= Loc::getMessage("lang_edit_culture")?></td>
 		<td>
-<?
+<?php
 $cultureRes = \Bitrix\Main\Localization\CultureTable::getList(array('order'=>array('NAME'=>'ASC')));
 $cultures = array();
 while($cult = $cultureRes->fetch())
@@ -230,11 +252,11 @@ function BXSetCulture()
 BX.ready(BXSetCulture);
 </script>
 			<select name="CULTURE_ID" onchange="BXSetCulture()" id="bx_culture_select">
-<?
+<?php
 foreach($cultures as $cult):
 ?>
-				<option value="<?=$cult["ID"]?>"<?if($cult["ID"] == $language["CULTURE_ID"]) echo " selected"?>><?=HtmlFilter::encode($cult["NAME"])?></option>
-<?
+				<option value="<?=$cult["ID"]?>"<?php if($cult["ID"] == $language["CULTURE_ID"]) echo " selected"?>><?=HtmlFilter::encode($cult["NAME"])?></option>
+<?php
 endforeach;
 ?>
 			</select>
@@ -242,36 +264,36 @@ endforeach;
 	</tr>
 	<tr>
 		<td>&nbsp;</td>
-		<td><a href="culture_edit.php?lang=<?=LANGUAGE_ID?>" id="bx_culture_link"><?echo Loc::getMessage("lang_edit_culture_edit")?></a></td>
+		<td><a href="culture_edit.php?lang=<?=LANGUAGE_ID?>" id="bx_culture_link"><?= Loc::getMessage("lang_edit_culture_edit")?></a></td>
 	</tr>
 	<tr>
-		<td><? echo Loc::getMessage('FORMAT_DATE')?></td>
+		<td><?= Loc::getMessage('FORMAT_DATE')?></td>
 		<td><input type="text" name="FORMAT_DATE" size="30" disabled="disabled"></td>
 	</tr>
 	<tr>
-		<td><? echo Loc::getMessage('FORMAT_DATETIME')?></td>
+		<td><?= Loc::getMessage('FORMAT_DATETIME')?></td>
 		<td><input type="text" name="FORMAT_DATETIME" size="30" disabled="disabled"></td>
 	</tr>
 	<tr>
-		<td><? echo Loc::getMessage('LANG_EDIT_WEEK_START')?></td>
+		<td><?= Loc::getMessage('LANG_EDIT_WEEK_START')?></td>
 		<td><input type="text" name="WEEK_START" size="30" disabled="disabled"></td>
 	</tr>
 	<tr>
-		<td><? echo Loc::getMessage('FORMAT_NAME')?></td>
+		<td><?= Loc::getMessage('FORMAT_NAME')?></td>
 		<td><input type="text" name="FORMAT_NAME" size="30" disabled="disabled"></td>
 	</tr>
 	<tr>
-		<td><? echo Loc::getMessage('CHARSET')?></td>
+		<td><?= Loc::getMessage('CHARSET')?></td>
 		<td><input type="text" name="CHARSET" size="30" disabled="disabled"></td>
 	</tr>
 	<tr>
-		<td><?echo Loc::getMessage('DIRECTION')?></td>
+		<td><?= Loc::getMessage('DIRECTION')?></td>
 		<td><input type="text" name="DIRECTION" size="30" disabled="disabled"></td>
 	</tr>
-<?$tabControl->Buttons(array("disabled"=>!$isAdmin, "back_url"=>"lang_admin.php?lang=".LANGUAGE_ID));
+<?php $tabControl->Buttons(array("disabled"=>!$isAdmin, "back_url"=>"lang_admin.php?lang=".LANGUAGE_ID));
 $tabControl->End();
 $tabControl->ShowWarnings("form1", $message);
 ?>
 </form>
 
-<?require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin.php");?>
+<?php require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin.php");?>

@@ -186,6 +186,13 @@ Class disk extends CModule
 			);
 		}
 
+		\Bitrix\Main\Config\Option::set('disk', 'unified_link.enabled', 'Y');
+		\Bitrix\Main\Config\Option::set('disk', 'unified_link.allow_document_handler_onlyoffice', 'Y');
+		\Bitrix\Main\Config\Option::set('disk', 'unified_link.allow_type_4', 'Y');
+		\Bitrix\Main\Config\Option::set('disk', 'unified_link.allow_type_8', 'Y');
+		\Bitrix\Main\Config\Option::set("disk", 'unified_link.allow_type_12', 'Y');
+		\Bitrix\Main\Config\Option::set('disk', 'custom_servers_enabled', 'Y');
+
 		return true;
 	}
 

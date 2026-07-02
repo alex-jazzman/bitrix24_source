@@ -1,6 +1,5 @@
-import {ChatType} from 'im.v2.const';
-
-import type {ImModelMarketApplication} from 'im.v2.model';
+import { ChatType, type ChatTypeItem } from 'im.v2.const';
+import { type ImModelMarketApplication } from 'im.v2.model';
 
 const MarketTypes = Object.freeze({
 	user: 'user',
@@ -12,24 +11,25 @@ const MarketTypes = Object.freeze({
 
 export class AvailabilityManager
 {
-	getAvailablePlacements(placements: ImModelMarketApplication[], dialogType: string = '')
+	getAvailablePlacements(placements: ImModelMarketApplication[], dialogType: string = ''): ImModelMarketApplication[]
 	{
-		return placements.filter(placement => this.#canShowPlacementInChat(placement, dialogType));
+		return placements.filter((placement) => this.#canShowPlacementInChat(placement, dialogType));
 	}
 
-	#canShowPlacementInChat(placement: ImModelMarketApplication, dialogType: string)
+	#canShowPlacementInChat(placement: ImModelMarketApplication, dialogType: string): boolean
 	{
 		if (!placement.options.context || !dialogType)
 		{
 			return true;
 		}
 
-		return placement.options.context.some(marketType => this.#matchDialogType(marketType, dialogType));
+		return placement.options.context.some((marketType) => this.#matchDialogType(marketType, dialogType));
 	}
 
-	#matchDialogType(marketType: string, dialogType: $Values<typeof ChatType>)
+	#matchDialogType(marketType: string, dialogType: ChatTypeItem): boolean
 	{
-		switch (marketType) {
+		switch (marketType)
+		{
 			case MarketTypes.user:
 				return this.#isUser(dialogType);
 			case MarketTypes.chat:
@@ -45,22 +45,22 @@ export class AvailabilityManager
 		}
 	}
 
-	#isUser(dialogType: $Values<typeof ChatType>): boolean
+	#isUser(dialogType: ChatTypeItem): boolean
 	{
 		return dialogType === ChatType.user;
 	}
 
-	#isChat(dialogType: $Values<typeof ChatType>): boolean
+	#isChat(dialogType: ChatTypeItem): boolean
 	{
 		return dialogType !== ChatType.lines && dialogType !== ChatType.crm && dialogType !== ChatType.user;
 	}
 
-	#isLines(dialogType: $Values<typeof ChatType>): boolean
+	#isLines(dialogType: ChatTypeItem): boolean
 	{
 		return dialogType === ChatType.lines;
 	}
 
-	#isCrm(dialogType: $Values<typeof ChatType>): boolean
+	#isCrm(dialogType: ChatTypeItem): boolean
 	{
 		return dialogType === ChatType.crm;
 	}

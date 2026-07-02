@@ -35,7 +35,7 @@ $isCollaber = (
 // If a page doesn't have a top menu then show one item with a page title or a property 'title'
 AirTemplate::tryApplyDefaultTopMenu();
 
-			?></main>
+			?></div>
 			<div class="page__sidebar" id="sidebar"><?
 				$APPLICATION->showViewContent('sidebar');
 				$APPLICATION->showViewContent('sidebar_tools_1');
@@ -49,7 +49,7 @@ AirTemplate::tryApplyDefaultTopMenu();
 				$dynamicArea->finishDynamicArea();
 			}
 		?>
-	</div>
+	</main>
 	<footer class="app__footer" id="air-footer">
 		<div class="air-footer">
 			<? if ($isBitrix24Cloud): ?>
@@ -128,7 +128,7 @@ AirTemplate::tryApplyDefaultTopMenu();
 	</footer>
 	<div class="app__right-bar" id="right-bar">
 		<? if (AirTemplate::shouldShowImBar()): ?>
-		<div class="air-chat-bar"><?php
+		<div class="air-chat-bar" role="region" aria-label="<?= Loc::getMessage('BITRIX24_CHAT_BAR_ARIA') ?>"><?php
 			$dynamicArea = new StaticArea('chat-bar');
 			$dynamicArea->setAssetMode(AssetMode::STANDARD);
 			$dynamicArea->startDynamicArea();

@@ -2,14 +2,14 @@ import { Loc, Tag } from 'main.core';
 
 export class SuccessInvitePopup
 {
-	show(): void
+	show(content: ?HTMLElement): void
 	{
 		const notificationOptions = {
 			id: 'invite-notification-result',
 			autoHideDelay: 4000,
 			closeButton: false,
 			autoHide: true,
-			content: this.#getNotificationContent(),
+			content: content || this.#getNotificationContent(),
 			useAirDesign: true,
 		};
 

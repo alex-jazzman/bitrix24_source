@@ -13,10 +13,9 @@ jn.define('im/messenger/lib/element/dialog/message/image', (require, exports, mo
 	{
 		/**
 		 * @param {MessagesModelState} modelMessage
-		 * @param {CreateMessageOptions} options
-		 * @param {FilesModelState} file
+		 * @param {CreateMessageOptions|{}} options
 		 */
-		constructor(modelMessage = {}, options = {}, file = {})
+		constructor(modelMessage, options = {})
 		{
 			super(modelMessage, options);
 
@@ -28,8 +27,8 @@ jn.define('im/messenger/lib/element/dialog/message/image', (require, exports, mo
 			}
 
 			this.setLoadText();
-
-			this.image = Image.createByFileModel(file).toMessageFormat();
+			const [firstFile = {}] = this.getModelFiles();
+			this.image = Image.createByFileModel(firstFile).toMessageFormat();
 
 			/* region deprecated properties */
 			this.imageUrl = this.image.url;
@@ -53,11 +52,6 @@ jn.define('im/messenger/lib/element/dialog/message/image', (require, exports, mo
 		getType()
 		{
 			return MessageType.image;
-		}
-
-		setShowTail()
-		{
-			return this;
 		}
 	}
 

@@ -2,6 +2,7 @@
 	--ui-system-label-size: unset;
 	--ui-system-label-bg-color: unset;
 	--ui-system-label-content-color: unset;
+	--ui-system-label-content-gradient: unset;
 	--ui-system-label-padding-x: unset;
 	--ui-system-label-border-color: transparent;
 	--ui-system-label-icon: unset;
@@ -33,6 +34,10 @@
 }
 
 .ui-system-label__value {
+	background: var(--ui-system-label-content-gradient, var(--ui-system-label-content-color));
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -131,6 +136,16 @@
 	--ui-system-label-content-color: var(--ui-color-design-tinted-success-content);
 }
 
+.ui-system-label.--style-tintedAlert {
+	--ui-system-label-bg-color: var(--ui-color-design-tinted-alert-bg);
+	--ui-system-label-content-color: var(--ui-color-design-tinted-alert-content);
+}
+
+.ui-system-label.--style-tintedViolet {
+	--ui-system-label-bg-color: var(--ui-color-design-tinted-violet-bg);
+	--ui-system-label-content-color: var(--ui-color-design-tinted-violet-content);
+}
+
 .ui-system-label.--style-tintedNoAccent {
 	--ui-system-label-bg-color: var(--ui-color-design-tinted-na-bg);
 	--ui-system-label-content-color: var(--ui-color-design-tinted-na-content);
@@ -144,6 +159,85 @@
 .ui-system-label.--style-collab {
 	--ui-system-label-bg-color: var(--ui-color-collab-bg-content-1);
 	--ui-system-label-content-color: var(--ui-color-collab-accent-primary-alt);
+}
+
+.ui-system-label.--style-filledBitrixGpt {
+	--ui-system-label-bg-color: linear-gradient(
+		256.63deg,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-5) 2.92%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-4) 26%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-3) 49.07%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-2) 76.77%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-1) 86%
+	);
+	--ui-system-label-content-color: var(--ui-color-design-filled-bitrix-gpt-content);
+}
+
+.ui-system-label.--style-tintedBitrixGpt {
+	--ui-system-label-bg-color: linear-gradient(
+		269.5deg,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-1) 1.77%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-2) 16.39%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-3) 50.5%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-4) 99.23%
+	);
+	--ui-system-label-content-color: var(--ui-color-design-tinted-bitrix-gpt-content-icon);
+	--ui-system-label-content-gradient: linear-gradient(
+		257deg,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-5) 1.67%,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-4) 20.78%,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-3) 54.22%,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-2) 78.1%,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-1) 97.21%
+	);
+}
+
+.ui-system-label.--style-tintedBitrixGpt.--bordered .ui-system-label__inner {
+	border-color: var(--ui-color-base-white-fixed);
+}
+
+.ui-system-label.--style-outlineBitrixGpt {
+	--ui-system-label-bg-color: var(--ui-color-design-outline-bitrix-gpt-bg);
+	--ui-system-label-content-color: var(--ui-color-design-outline-bitrix-gpt-content-icon);
+	--ui-system-label-content-gradient: linear-gradient(
+		257.74deg,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-5) 1.67%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-4) 21.82%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-3) 52.44%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-2) 76.41%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-1) 97.21%
+	);
+
+	position: relative;
+}
+
+.ui-system-label.--style-outlineBitrixGpt::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	padding: var(--ui-border-width-thin);
+	border-radius: inherit;
+	background: linear-gradient(
+		257.74deg,
+		var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-5) 1.67%,
+		var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-4) 21.82%,
+		var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-3) 52.44%,
+		var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-2) 76.41%,
+		var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-1) 97.21%
+	);
+	-webkit-mask:
+		linear-gradient(#fff 0 0) content-box,
+		linear-gradient(#fff 0 0);
+	-webkit-mask-composite: xor;
+	-webkit-mask:
+		linear-gradient(#fff 0 0) content-box,
+		linear-gradient(#fff 0 0);
+	        mask:
+		linear-gradient(#fff 0 0) content-box,
+		linear-gradient(#fff 0 0);
+	-webkit-mask-composite: xor;
+	        mask-composite: exclude;
+	pointer-events: none;
 }
 
 .ui-system-label.--size-md {
@@ -177,29 +271,29 @@
 }
 
 .ui-system-label.--icon-mode.--icon-check {
-	--ui-system-label-icon: url("data:image/svg+xml;charset=utf-8,%3Csvg width='16' height='16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3.692 8l2.872 3.077 5.744-6.154' stroke='%23fff' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E");
+	--ui-system-label-icon: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' viewBox='0 0 16 16'%3E%3Cpath stroke='%23fff' stroke-linecap='round' stroke-width='1.4' d='m3.692 8 2.872 3.077 5.744-6.154'/%3E%3C/svg%3E");
 }
 
 .ui-system-label.--icon-mode.--icon-attention {
-	--ui-system-label-icon: url("data:image/svg+xml;charset=utf-8,%3Csvg width='16' height='16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M8 9.644V3.692m0 8.413v.203' stroke='%23fff' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E");
+	--ui-system-label-icon: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' viewBox='0 0 16 16'%3E%3Cpath stroke='%23fff' stroke-linecap='round' stroke-width='1.4' d='M8 9.644V3.692m0 8.413v.203'/%3E%3C/svg%3E");
 }
 
 .ui-system-label.--icon-mode.--icon-cross {
-	--ui-system-label-icon: url("data:image/svg+xml;charset=utf-8,%3Csvg width='16' height='16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.923 11.077l6.154-6.154m0 6.154L4.923 4.923' stroke='%23fff' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E");
+	--ui-system-label-icon: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' viewBox='0 0 16 16'%3E%3Cpath stroke='%23fff' stroke-linecap='round' stroke-width='1.4' d='m4.923 11.077 6.154-6.154m0 6.154L4.923 4.923'/%3E%3C/svg%3E");
 }
 
 .ui-system-label.--icon-mode.--icon-question {
-	--ui-system-label-icon: url("data:image/svg+xml;charset=utf-8,%3Csvg width='16' height='16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5.972 5.727c.247-.735.907-1.466 2.08-1.466.8 0 1.976.481 1.976 1.996 0 1.514-2.078 1.98-2.078 3.41' stroke='%23fff' stroke-width='1.2' stroke-linecap='round'/%3E%3Cpath d='M8 11.74v-.073' stroke='%23fff' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+	--ui-system-label-icon: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' viewBox='0 0 16 16'%3E%3Cpath stroke='%23fff' stroke-linecap='round' stroke-width='1.2' d='M5.972 5.727c.247-.735.907-1.466 2.08-1.466.8 0 1.976.481 1.976 1.996 0 1.514-2.078 1.98-2.078 3.41'/%3E%3Cpath stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M8 11.74v-.073'/%3E%3C/svg%3E");
 }
 
 .ui-system-label.--icon-mode.--icon-checkStroke {
-	--ui-system-label-icon: url("data:image/svg+xml;charset=utf-8,%3Csvg width='16' height='16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M1 8a7 7 0 1014 0A7 7 0 001 8zm7-8a8 8 0 100 16A8 8 0 008 0z' fill='%23fff'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M11.598 5.407c.24.22.255.59.036.83L7.73 10.495a.587.587 0 01-.814.049L4.43 8.415a.587.587 0 11.764-.891l2.053 1.76 3.521-3.84a.587.587 0 01.83-.037z' fill='%23fff'/%3E%3C/svg%3E");
+	--ui-system-label-icon: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' viewBox='0 0 16 16'%3E%3Cpath fill='%23fff' fill-rule='evenodd' d='M1 8a7 7 0 1 0 14 0A7 7 0 0 0 1 8m7-8a8 8 0 1 0 0 16A8 8 0 0 0 8 0' clip-rule='evenodd'/%3E%3Cpath fill='%23fff' fill-rule='evenodd' d='M11.598 5.407c.24.22.255.59.036.83L7.73 10.495a.587.587 0 0 1-.814.049L4.43 8.415a.587.587 0 1 1 .764-.891l2.053 1.76 3.521-3.84a.587.587 0 0 1 .83-.037' clip-rule='evenodd'/%3E%3C/svg%3E");
 }
 
 .ui-system-label.--icon-mode.--icon-crossStroke {
-	--ui-system-label-icon: url("data:image/svg+xml;charset=utf-8,%3Csvg width='16' height='16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M1 8a7 7 0 1014 0A7 7 0 001 8zm7-8a8 8 0 100 16A8 8 0 008 0z' fill='%23fff'/%3E%3Cpath d='M11.234 4.944a.645.645 0 010 .912L9.002 8.09l2.232 2.232a.645.645 0 11-.913.913L8.09 9l-2.233 2.233a.645.645 0 01-.912-.913L7.176 8.09 4.944 5.856a.645.645 0 11.912-.912L8.09 7.176l2.232-2.232a.645.645 0 01.913 0z' fill='%23fff'/%3E%3C/svg%3E");
+	--ui-system-label-icon: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' viewBox='0 0 16 16'%3E%3Cpath fill='%23fff' fill-rule='evenodd' d='M1 8a7 7 0 1 0 14 0A7 7 0 0 0 1 8m7-8a8 8 0 1 0 0 16A8 8 0 0 0 8 0' clip-rule='evenodd'/%3E%3Cpath fill='%23fff' d='M11.234 4.944a.645.645 0 0 1 0 .912L9.002 8.09l2.232 2.232a.645.645 0 1 1-.913.913L8.09 9l-2.233 2.233a.645.645 0 0 1-.912-.913l2.231-2.23-2.232-2.234a.645.645 0 1 1 .912-.912L8.09 7.176l2.232-2.232a.645.645 0 0 1 .913 0'/%3E%3C/svg%3E");
 }
 
 .ui-system-label.--icon-mode.--icon-processStroke {
-	--ui-system-label-icon: url("data:image/svg+xml;charset=utf-8,%3Csvg width='16' height='16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M.558 8c-.308 0-.56.25-.539.557A8 8 0 108.557.02.529.529 0 008 .558c0 .308.25.555.557.58a6.885 6.885 0 11-7.419 7.42A.595.595 0 00.558 8z' fill='%23fff'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M7.915 3.406a.6.6 0 01.6.6V7.51h2.853a.6.6 0 110 1.2H7.915a.6.6 0 01-.6-.6V4.006a.6.6 0 01.6-.6z' fill='%23fff'/%3E%3C/svg%3E");
+	--ui-system-label-icon: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' viewBox='0 0 16 16'%3E%3Cpath fill='%23fff' d='M.558 8a.53.53 0 0 0-.539.557A8 8 0 1 0 8.557.02.53.53 0 0 0 8 .558c0 .308.25.555.557.58a6.885 6.885 0 1 1-7.419 7.42A.595.595 0 0 0 .558 8'/%3E%3Cpath fill='%23fff' fill-rule='evenodd' d='M7.915 3.406a.6.6 0 0 1 .6.6V7.51h2.853a.6.6 0 1 1 0 1.2H7.915a.6.6 0 0 1-.6-.6V4.006a.6.6 0 0 1 .6-.6' clip-rule='evenodd'/%3E%3C/svg%3E");
 }

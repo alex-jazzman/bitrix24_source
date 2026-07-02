@@ -5,12 +5,11 @@ import { ActionByRole, ActionByUserType, ChatType } from 'im.v2.const';
 import { highlightText } from 'im.v2.lib.text-highlighter';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
+import { type ImModelChat } from 'im.v2.model';
 
 import { MentionItem } from './mention-item';
 import { AddToChatDropdown } from './add-to-chat-dropdown';
-
-import type { ImModelChat } from 'im.v2.model';
-import type { MentionItemType } from '../../../mention-content';
+import { type MentionItemType } from '../../../mention-content';
 
 // @vue/component
 export const DefaultItem = {
@@ -113,7 +112,7 @@ export const DefaultItem = {
 					<div v-else class="bx-im-mention-item__subtitle" :title="currentItem.subtitle">{{ currentItem.subtitle }}</div>
 				</template>
 			</MentionItem>
-			<AddToChatDropdown v-if="canAddToChat" :dialogId="dialogId" :userId="currentItem.id" />
+			<AddToChatDropdown v-if="canAddToChat" :dialogId="dialogId" :userId="currentItem.id" :searchQuery="query" />
 		</div>
 	`,
 };

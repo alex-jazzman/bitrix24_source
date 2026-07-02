@@ -1,6 +1,6 @@
 export { RestMethod } from './rest';
 export { EventType } from './events';
-export { ChatType, DialogBlockType, DialogScrollThreshold, DialogAlignment } from './chat';
+export { ChatType, DialogBlockType, DialogScrollThreshold, DialogAlignment, DialogIdChatPrefix } from './chat';
 export { FileStatus, FileType, FileIconType, FileViewerContext, AudioPlaybackRate, AudioPlaybackState } from './file';
 export {
 	MessageType,
@@ -44,6 +44,9 @@ export { TranscriptionStatus } from './transcription';
 export { SpecialMentionDialogId } from './mention';
 export { DataAttribute } from './data-attributе';
 export { StickerPackType, StickerType } from './sticker';
+export { TabId } from './tab';
+export { SelectorEntity } from './entity-selector';
+export { MessageBuilderPlainColorToken, MessageBuilderGradientColorToken } from './message-builder.js';
 
 export type {
 	OnLayoutChangeEvent,
@@ -75,4 +78,18 @@ export type { SidebarMainPanelBlockType } from './sidebar';
 export type { LayoutType } from './layout';
 export type { RecentTypeItem } from './recent';
 export type { ApplicationContext } from './application';
+export type { ChatTypeItem } from './chat';
 export type { Relation } from './relation';
+
+export type {
+	TitleBlockType,
+	TextBlockType,
+	OrderedListBlockType,
+	UnorderedListBlockType,
+	MapBlockType,
+	LineDividerBlockType,
+	SpaceDividerBlockType,
+	TableBlockType,
+	AiAssistantSearchBlockType,
+	AnyBlockType,
+} from './message-builder';

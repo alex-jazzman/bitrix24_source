@@ -1,8 +1,8 @@
 import { Dom, Tag, Text, Loc } from 'main.core';
 import { BaseEvent } from 'main.core.events';
-import { MenuItemOptions, MenuManager, Menu } from 'main.popup';
+import { type MenuItemOptions, MenuManager, type Menu } from 'main.popup';
 
-import type { FilterData } from '@/types/filter'
+import { type FilterData } from '../types/filter';
 
 import '../css/titlebar-filter.css';
 

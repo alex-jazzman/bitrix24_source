@@ -8,9 +8,9 @@ return [
 	'css' => 'dist/permission-checker.bundle.css',
 	'js' => 'dist/permission-checker.bundle.js',
 	'rel' => [
+		'crm.stage-model',
 		'main.core',
 		'ui.notification',
-		'crm.stage-model',
 	],
 	'skip_core' => false,
 ];

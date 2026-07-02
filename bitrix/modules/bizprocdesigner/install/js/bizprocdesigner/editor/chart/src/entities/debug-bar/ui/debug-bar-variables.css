@@ -1,0 +1,67 @@
+:root {
+	--debug-bar-font-mono: 'Roboto Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+
+	--debug-bar-font-size-xs: 10px;
+	--debug-bar-font-size-sm: 11px;
+	--debug-bar-font-size-base: 14px;
+	--debug-bar-font-size-md: 15px;
+
+	--debug-bar-line-height-tight: 100%;
+	--debug-bar-line-height-base: 1.4;
+	--debug-bar-line-height-loose: 1.6;
+
+	--debug-bar-spacing-xs: 6px;
+	--debug-bar-spacing-sm: 8px;
+	--debug-bar-spacing-md: 10px;
+	--debug-bar-spacing-lg: 12px;
+	--debug-bar-spacing-xl: 16px;
+
+	--debug-bar-height-default: 306px;
+	--debug-bar-height-maximized: calc(100vh - 116px);
+	--debug-bar-header-height: 36px;
+
+	--debug-bar-icon-size: 24px;
+	--debug-bar-index-width: 24px;
+
+	--debug-bar-bg-hover: rgba(0, 0, 0, 0.02);
+	--debug-bar-bg-active: rgba(0, 0, 0, 0.08);
+
+	--debug-bar-border-light: rgba(0, 0, 0, 0.05);
+
+	--debug-bar-loading-color: rgb(51, 153, 255);
+	--debug-bar-loading-color-rgb: 51, 153, 255;
+
+	--debug-bar-scrollbar-thumb: rgba(0, 0, 0, 0.15);
+	--debug-bar-scrollbar-track: rgba(0, 0, 0, 0.03);
+	--debug-bar-scrollbar-hover: rgba(0, 0, 0, 0.25);
+
+	--debug-bar-text-secondary: #666;
+
+	--debug-bar-transition-fast: 0.15s;
+	--debug-bar-transition-base: 0.3s;
+	--debug-bar-transition-slow: 0.5s;
+
+	--debug-bar-loading-duration: 1.5s;
+
+	--debug-bar-easing-default: ease;
+	--debug-bar-easing-in-out: ease-in-out;
+
+	--debug-bar-z-index-normal: 100;
+	--debug-bar-z-index-maximized: 1000;
+
+	--debug-bar-border-radius-sm: 3px;
+	--debug-bar-border-radius-md: 4px;
+
+	--debug-bar-scrollbar-width: 6px;
+	--debug-bar-scrollbar-height: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	:root {
+		--debug-bar-transition-fast: 0.01s;
+		--debug-bar-transition-base: 0.01s;
+		--debug-bar-transition-slow: 0.01s;
+		--debug-bar-loading-duration: 0.01s;
+	}
+}
+

@@ -13,8 +13,8 @@ return [
 	'js' => 'dist/department-control.bundle.js',
 	'rel' => [
 		'main.core',
-		'ui.entity-selector',
 		'main.core.events',
+		'ui.entity-selector',
 	],
 	'skip_core' => false,
 ];

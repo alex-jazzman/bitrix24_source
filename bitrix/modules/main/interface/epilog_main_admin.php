@@ -1,30 +1,28 @@
-<?
+<?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 IncludeModuleLangFile(__FILE__);
 
 include($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/interface/lang_files.php");
-?>
-<?
 
 $isSidePanel = (isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y");
 //End of Content
 
 if(COption::GetOptionString("main", "update_devsrv", "") == "Y")
 {
-	?><br><br><?
+	?><br><br><?php
 	echo BeginNote('style="position: relative; top: -15px;"');
-	?><span class="required"><?echo GetMessage("DEVSERVER_ADMIN_MESSAGE");?></span><?
+	?><span class="required"><?= GetMessage("DEVSERVER_ADMIN_MESSAGE");?></span><?php
 	echo EndNote();
 }
 ?>
-				</div><?//adm-workarea?>
-			</td><?//adm-workarea-wrap?>
+				</div><?php //adm-workarea?>
+			</td><?php //adm-workarea-wrap?>
 		</tr>
-		<?if (!$isSidePanel):?>
+		<?php if (!$isSidePanel):?>
 		<tr class="adm-footer-wrap">
 			<td class="adm-left-side-wrap"></td>
 			<td class="adm-workarea-wrap">
-<?
+<?php
 //Footer
 $copyright = \Bitrix\Main\UI\Copyright::getBitrixCopyright();
 
@@ -34,16 +32,16 @@ $sLinks = '<a href="'.$copyright->getVendorUrl().'">'.$copyright->getVendorName(
 ?>
 			<table cellpadding="0" cellspacing="0" border="0" width="100%">
 				<tr>
-					<td><?echo $sCopyright?></td>
-					<td align="right"><a href="/bitrix/admin/copyright.php"><?echo GetMessage("epilog_admin_copyrights")?></a>&nbsp;&nbsp;|&nbsp;&nbsp;<?if(($siteSupport = getLocalPath("php_interface/this_site_support.php", BX_PERSONAL_ROOT)) !== false):?><?include($_SERVER["DOCUMENT_ROOT"].$siteSupport);?><?else:?><?echo $sLinks?><?endif;?></td>
+					<td><?= $sCopyright?></td>
+					<td align="right"><a href="/bitrix/admin/copyright.php"><?= GetMessage("epilog_admin_copyrights")?></a>&nbsp;&nbsp;|&nbsp;&nbsp;<?php if(($siteSupport = getLocalPath("php_interface/this_site_support.php", BX_PERSONAL_ROOT)) !== false):?><?php include($_SERVER["DOCUMENT_ROOT"].$siteSupport);?><?php else:?><?= $sLinks?><?php endif;?></td>
 				</tr>
 			</table>
-<?
+				<?php
 //End of Footer
 ?>
 			</td>
 		</tr>
-		<?endif;?>
+		<?php endif;?>
 	</table>
 	<div id="fav_cont_item" class="adm-favorites-main" style="display:none;">
 		<div class="adm-favorites-alignment">
@@ -84,11 +82,10 @@ $sLinks = '<a href="'.$copyright->getVendorUrl().'">'.$copyright->getVendorName(
 			</div>
 		</div>
 	</div>
-<?
+<?php
 if (!defined('ADMIN_SECTION_LOAD_AUTH') || !ADMIN_SECTION_LOAD_AUTH):
 ?>
 </body>
 </html>
-<?
+<?php
 endif;
-?>

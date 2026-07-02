@@ -1,5 +1,4 @@
 import { Type, Uri } from 'main.core';
-import { BaseEvent } from 'main.core.events';
 import { TagSelector } from 'ui.entity-selector';
 import { Set as IconSet } from 'ui.icon-set.api.vue';
 import type { TagSelectorOptions, DialogOptions, TagItemOptions } from 'ui.entity-selector';

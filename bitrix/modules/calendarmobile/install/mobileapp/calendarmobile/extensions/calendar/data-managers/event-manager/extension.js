@@ -177,8 +177,12 @@ jn.define('calendar/data-managers/event-manager', (require, exports, module) => 
 		async handlePullEventChanges(event, ownerId, calType)
 		{
 			const sectionId = Number(event.SECTION_ID);
+			const section = SectionManager.getSection(sectionId);
 
-			if (SectionManager.getSection(sectionId)?.id)
+			// Pull can arrive for a related user event while we are inside a group calendar.
+			// In that case we must not add the raw event to the current view and should
+			// resolve the event for the active context by its parent id instead.
+			if (section?.id && SectionManager.belongsToView(section, ownerId, calType))
 			{
 				this.addEventsToRedux([event]);
 

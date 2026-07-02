@@ -1,16 +1,25 @@
-import type {
-	RawChat,
-	RawFile,
-	RawMessage,
-	RawMessagesAutoDeleteConfig,
-	RawRecentItem,
-	RawUser,
-	RawCopilot,
+import { type RecentTypeItem } from 'im.v2.const';
+import {
+	type RawChat,
+	type RawFile,
+	type RawMessage,
+	type RawMessagesAutoDeleteConfig,
+	type RawRecentItem,
+	type RawUser,
+	type RawCopilot,
 } from 'im.v2.provider.service.types';
 
 export type BaseRecentQueryParams = {
 	limit: number,
-	filter: Record,
+	filter: BaseRecentFilterParams,
+};
+
+export type BaseRecentFilterParams = {
+	lastMessageDate?: ?Date,
+	lastMessageId?: number,
+	recentSection: RecentTypeItem,
+	parentId: number,
+	unread: boolean,
 };
 
 export type RecentRestResult = {

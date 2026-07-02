@@ -52,6 +52,7 @@ if ($arParams['SEF_MODE'] === 'Y')
 		'list' => '',
 		'kanban' => 'kanban/',
 		'widget' => 'widget/',
+		'details' => 'details/#activity_id#/',
 	];
 
 	if (DisablingHelper::areMyReportsInDemoMode())

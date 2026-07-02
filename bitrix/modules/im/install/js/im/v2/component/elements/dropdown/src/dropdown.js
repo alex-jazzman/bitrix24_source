@@ -1,4 +1,4 @@
-import { MenuManager, Menu } from 'main.popup';
+import { MenuManager, type Menu } from 'main.popup';
 
 import 'ui.forms';
 

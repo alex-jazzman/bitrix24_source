@@ -1,5 +1,5 @@
 import { BitrixVue } from 'ui.vue3';
-import { BookingModel } from 'booking.model.bookings';
+import type { BookingModel } from 'booking.model.bookings';
 import { locMixin } from 'booking.component.mixin.loc-mixin';
 import { App } from './components/app';
 

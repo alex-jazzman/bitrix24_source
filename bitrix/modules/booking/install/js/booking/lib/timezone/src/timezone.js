@@ -2,7 +2,7 @@ export class Timezone
 {
 	static #cache: { [key: string]: number } = {};
 
-	static getOffset(dateTs: number, timeZone: string): number
+	static getOffsetFromUtc(dateTs: number, timeZone: string): number
 	{
 		const key = `${dateTs}-${timeZone}`;
 		if (!this.#cache[key])
@@ -15,5 +15,10 @@ export class Timezone
 		}
 
 		return this.#cache[key];
+	}
+
+	static getOffsetFromClientTimezone(dateTs: number, timeZone: string): number
+	{
+		return (this.getOffsetFromUtc(dateTs, timeZone) + new Date(dateTs).getTimezoneOffset() * 60) * 1000;
 	}
 }

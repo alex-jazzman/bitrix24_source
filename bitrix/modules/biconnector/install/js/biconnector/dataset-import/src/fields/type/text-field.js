@@ -8,10 +8,12 @@ export const TextField = {
 			<div class="ui-form-label">
 				<div class="ui-ctl-label-text">{{ title }}</div>
 			</div>
-			<div class="ui-ctl ui-ctl-textarea dataset-import-textarea ui-ctl-w100 ui-ctl-no-resize">
-				<textarea 
-					class="ui-ctl-element dataset-import-textarea-element" 
-					:placeholder="placeholder" 
+			<div v-if="isReadonly">{{ value }}</div>
+			<div v-else class="ui-ctl ui-ctl-textarea dataset-import-textarea ui-ctl-w100 ui-ctl-no-resize">
+				<textarea
+					class="ui-ctl-element dataset-import-textarea-element"
+					:placeholder="placeholder"
+					:disabled="isDisabled"
 					@input="onInputChange($event.target.value)"
 					v-model="value"
 				></textarea>

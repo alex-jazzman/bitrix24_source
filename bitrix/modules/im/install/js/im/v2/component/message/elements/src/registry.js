@@ -1,3 +1,4 @@
+export { TextContent } from './text-content/text-content';
 export { MessageStatus } from './message-status/message-status';
 export { MessageAttach } from './attach/attach';
 export { MessageKeyboard } from './keyboard/keyboard';
@@ -11,3 +12,9 @@ export { MessageHeader } from './message-header/message-header';
 export { MessageFooter } from './message-footer/message-footer';
 export { DefaultMessageContent } from './default-message-content/default-message-content';
 export { CompactCommentsPanel } from './comments-panel/compact-comments-panel';
+export { BuilderTextContent } from './message-builder/builder-text-content/builder-text-content.js';
+export { SourceListButton } from './message-builder/source-list-button/list-button.js';
+export { SourceHandler } from './message-builder/source-handler/source-handler.js';
+export { AudioItem } from './message-item/audio/audio';
+export { BaseFileItem } from './message-item/base-file/base-file';
+export { VideoItem } from './message-item/video/video';

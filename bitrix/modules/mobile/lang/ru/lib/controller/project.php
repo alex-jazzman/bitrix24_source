@@ -1,0 +1,3 @@
+<?php
+
+$MESS['MOBILE_CONTROLLER_PROJECT_ACCESS_DENIED'] = 'Доступ запрещён';

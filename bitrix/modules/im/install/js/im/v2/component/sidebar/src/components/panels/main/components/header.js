@@ -1,16 +1,16 @@
+import { type JsonObject } from 'main.core';
+import { type EventEmitter } from 'main.core.events';
+import { type BitrixVueComponentProps } from 'ui.vue3';
+
+import { AddToChat, AddToCollab } from 'im.v2.component.entity-selector';
 import { EventType, ChatType, ActionByRole } from 'im.v2.const';
 import { PermissionManager } from 'im.v2.lib.permission';
-import { SidebarManager, SidebarConfig } from 'im.v2.lib.sidebar';
-import { AddToChat, AddToCollab } from 'im.v2.component.entity-selector';
+import { SidebarManager, type SidebarConfig } from 'im.v2.lib.sidebar';
+import { type ImModelRecentItem, type ImModelChat } from 'im.v2.model';
 
 import { MainMenu } from '../../../../classes/context-menu/main/main-menu';
 
 import '../css/header.css';
-
-import type { JsonObject } from 'main.core';
-import type { EventEmitter } from 'main.core.events';
-import type { BitrixVueComponentProps } from 'ui.vue3';
-import type { ImModelRecentItem, ImModelChat } from 'im.v2.model';
 
 // @vue/component
 export const MainHeader = {

@@ -1,9 +1,9 @@
-<?
+<?php
 /**
  * Bitrix Framework
  * @package bitrix
  * @subpackage main
- * @copyright 2001-2016 Bitrix
+ * @copyright 2001-2026 Bitrix
  */
 
 /**
@@ -24,7 +24,6 @@ if(!$USER->CanDoOperation('edit_other_settings') && !$USER->CanDoOperation('view
 $isAdmin = $USER->CanDoOperation('lpa_template_edit');
 
 IncludeModuleLangFile(__FILE__);
-$err_mess = "File: ".__FILE__."<br>Line: ";
 
 // variable with ID of table
 $sTableID = "tbl_main_message";
@@ -52,31 +51,26 @@ $arFilterFields = Array(
 	'find_event_type',
 );
 
-$lAdmin->InitFilter($arFilterFields);
+$filter = $lAdmin->InitFilter($arFilterFields);
 
 
 /***************************************************************************
 Functions
 ***************************************************************************/
-function CheckFilter($arFilterFields) // checking input fields
+function CheckFilter(array $filter) // checking input fields
 {
 	global $lAdmin;
 
-	$FilterArr = $arFilterFields;
-	reset($FilterArr);
-	foreach ($FilterArr as $f)
-		global ${$f};
-
 	$str = "";
-	if (trim($find_timestamp_1) <> '' || trim($find_timestamp_2) <> '')
+	if (trim($filter["find_timestamp_1"]) <> '' || trim($filter["find_timestamp_2"]) <> '')
 	{
 		$date_1_ok = false;
-		$date1_stm = MkDateTime(FmtDate($find_timestamp_1,"D.M.Y"),"d.m.Y");
-		$date2_stm = MkDateTime(FmtDate($find_timestamp_2,"D.M.Y")." 23:59","d.m.Y H:i");
-		if (!$date1_stm && trim($find_timestamp_1) <> '')
+		$date1_stm = MkDateTime(FmtDate($filter["find_timestamp_1"],"D.M.Y"),"d.m.Y");
+		$date2_stm = MkDateTime(FmtDate($filter["find_timestamp_2"],"D.M.Y")." 23:59","d.m.Y H:i");
+		if (!$date1_stm && trim($filter["find_timestamp_1"]) <> '')
 			$str.= GetMessage("MAIN_WRONG_TIMESTAMP_FROM")."<br>";
 		else $date_1_ok = true;
-		if (!$date2_stm && trim($find_timestamp_2) <> '')
+		if (!$date2_stm && trim($filter["find_timestamp_2"]) <> '')
 			$str.= GetMessage("MAIN_WRONG_TIMESTAMP_TILL")."<br>";
 		elseif ($date_1_ok && $date2_stm <= $date1_stm && $date2_stm <> '')
 			$str.= GetMessage("MAIN_FROM_TILL_TIMESTAMP")."<br>";
@@ -87,23 +81,24 @@ function CheckFilter($arFilterFields) // checking input fields
 	return true;
 }
 
-if(CheckFilter($arFilterFields))
+$arFilter = Array();
+if(CheckFilter($filter))
 {
 	$arFilter = Array(
-		"ID"			=> $find_id,
-		"TYPE"			=> $find_event_type,
-		"TYPE_ID"		=> $find_type_id,
-		"TIMESTAMP_1"	=> $find_timestamp_1,
-		"TIMESTAMP_2"	=> $find_timestamp_2,
-		"LANG"			=> $find_lid,
-		"LANGUAGE_ID"	=> $find_language_id,
-		"ACTIVE"		=> $find_active,
-		"FROM"			=> ($find!='' && $find_type == "from"? $find: $find_from),
-		"TO"			=> ($find!='' && $find_type == "to"? $find: $find_to),
-		"BCC"			=> $find_bcc,
-		"SUBJECT"		=> ($find!='' && $find_type == "subject"? $find: $find_subject),
-		"BODY_TYPE"		=> $find_body_type,
-		"BODY"			=> ($find!='' && $find_type == "body"? $find: $find_body)
+		"ID"			=> $filter["find_id"],
+		"TYPE"			=> $filter["find_event_type"],
+		"TYPE_ID"		=> $filter["find_type_id"],
+		"TIMESTAMP_1"	=> $filter["find_timestamp_1"],
+		"TIMESTAMP_2"	=> $filter["find_timestamp_2"],
+		"LANG"			=> $filter["find_lid"],
+		"LANGUAGE_ID"	=> $filter["find_language_id"],
+		"ACTIVE"		=> $filter["find_active"],
+		"FROM"			=> ($filter["find"] != '' && $filter["find_type"] == "from" ? $filter["find"] : $filter["find_from"]),
+		"TO"			=> ($filter["find"] != '' && $filter["find_type"] == "to" ? $filter["find"] : $filter["find_to"]),
+		"BCC"			=> $filter["find_bcc"],
+		"SUBJECT"		=> ($filter["find"] != '' && $filter["find_type"] == "subject" ? $filter["find"] : $filter["find_subject"]),
+		"BODY_TYPE"		=> $filter["find_body_type"],
+		"BODY"			=> ($filter["find"] != '' && $filter["find_type"] == "body" ? $filter["find"] : $filter["find_body"])
 	);
 }
 
@@ -122,7 +117,7 @@ if($lAdmin->EditAction() && $isAdmin) // if saving from list
 		"LANGUAGE_ID",
 	);
 
-	foreach($FIELDS as $ID=>$arFields)
+	foreach($_POST['FIELDS'] as $ID=>$arFields)
 	{
 		if(!$lAdmin->IsUpdated($ID))
 			continue;
@@ -189,9 +184,7 @@ if(($arID = $lAdmin->GroupAction()) && $isAdmin)
 	}
 }
 
-global $by, $order;
-
-$rsData = CEventMessage::GetList($by, $order, $arFilter);
+$rsData = CEventMessage::GetList($oSort->getField(), $oSort->getOrder(), $arFilter);
 $resultObject = null;
 if(isset($rsData->resultObject))
 	$resultObject = $rsData->resultObject;
@@ -242,13 +235,15 @@ while($language = $languages->fetch())
 }
 
 // Body
-while($arRes = $rsData->NavNext(true, "f_"))
+while($arRes = $rsData->Fetch())
 {
-	$row =& $lAdmin->AddRow($f_ID, $arRes, "message_edit.php?lang=".LANGUAGE_ID."&ID=".$f_ID, GetMessage("MAIN_ADMIN_MENU_EDIT_TITLE"));
-	$row->AddViewField("ID", '<a href="message_edit.php?lang='.LANGUAGE_ID.'&ID='.$f_ID.'" title="'.GetMessage("MAIN_ADMIN_MENU_EDIT_TITLE").'">'.$f_ID.'</a>');
+	$messageId = (int)$arRes["ID"];
+	$messageIdHtml = htmlspecialcharsbx($arRes["ID"]);
+	$row = $lAdmin->AddRow($messageId, $arRes, "message_edit.php?lang=".LANGUAGE_ID."&ID=".$messageId, GetMessage("MAIN_ADMIN_MENU_EDIT_TITLE"));
+	$row->AddViewField("ID", '<a href="message_edit.php?lang='.LANGUAGE_ID.'&ID='.$messageIdHtml.'" title="'.GetMessage("MAIN_ADMIN_MENU_EDIT_TITLE").'">'.$messageIdHtml.'</a>');
 
 	$strSITE_ID = '';
-	$db_LID = CEventMessage::GetLang($f_ID);
+	$db_LID = CEventMessage::GetLang($messageId);
 	while($ar_LID = $db_LID->Fetch())
 		$strSITE_ID .= htmlspecialcharsbx($ar_LID["LID"])."<br>";
 
@@ -263,12 +258,12 @@ while($arRes = $rsData->NavNext(true, "f_"))
 	$row->AddSelectField("EVENT_NAME", $arEventTypes);
 
 	$arActions = Array();
-	$arActions[] = array("ICON"=>"edit", "TEXT"=>GetMessage("MAIN_ADMIN_MENU_EDIT"), "ACTION"=>$lAdmin->ActionRedirect("message_edit.php?ID=".$f_ID));
-	$arActions[] = array("ICON"=>"copy", "TEXT"=>GetMessage("MAIN_ADMIN_ADD_COPY"), "ACTION"=>$lAdmin->ActionRedirect("message_edit.php?COPY_ID=".$f_ID));
+	$arActions[] = array("ICON"=>"edit", "TEXT"=>GetMessage("MAIN_ADMIN_MENU_EDIT"), "ACTION"=>$lAdmin->ActionRedirect("message_edit.php?ID=".$messageId));
+	$arActions[] = array("ICON"=>"copy", "TEXT"=>GetMessage("MAIN_ADMIN_ADD_COPY"), "ACTION"=>$lAdmin->ActionRedirect("message_edit.php?COPY_ID=".$messageId));
 	if($isAdmin)
 	{
 		$arActions[] = array("SEPARATOR"=>true);
-		$arActions[] = array("ICON"=>"delete", "TEXT"=>GetMessage("MAIN_ADMIN_MENU_DELETE"), "ACTION"=>"if(confirm('".GetMessage('CONFIRM_DEL_MESSAGE')."')) ".$lAdmin->ActionDoGroup($f_ID, "delete"));
+		$arActions[] = array("ICON"=>"delete", "TEXT"=>GetMessage("MAIN_ADMIN_MENU_DELETE"), "ACTION"=>"if(confirm('".GetMessage('CONFIRM_DEL_MESSAGE')."')) ".$lAdmin->ActionDoGroup($messageId, "delete"));
 	}
 
 	$row->AddActions($arActions);
@@ -285,7 +280,7 @@ $lAdmin->AddGroupActionTable(Array(
 $aContext = array(
 	array(
 		"TEXT" => GetMessage("ADD_TEMPL"),
-		"LINK" => "message_edit.php?lang=".LANG.'&'.GetFilterParams("find_".($type ?? '')."_"),
+		"LINK" => "message_edit.php?lang=".LANGUAGE_ID.'&'.GetFilterParams("find_".($type ?? '')."_"),
 		"TITLE" => GetMessage("ADD_TEMPL_TITLE"),
 		"ICON" => "btn_new"
 	),
@@ -300,7 +295,7 @@ $APPLICATION->SetTitle(GetMessage("TITLE"));
 require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_admin_after.php");
 ?>
 <form name="find_form" method="GET" action="<?=$APPLICATION->GetCurPage()?>?">
-<?
+<?php
 $oFilter = new CAdminFilter(
 	$sTableID."_filter",
 	array(
@@ -323,22 +318,22 @@ $oFilter->Begin();
 <tr>
 	<td><b><?=GetMessage("F_SEARCH")?></b></td>
 	<td nowrap>
-		<input type="text" size="25" name="find" value="<?echo htmlspecialcharsbx($find)?>" title="<?=GetMessage("F_SEARCH_TITLE")?>">
+		<input type="text" size="25" name="find" value="<?= htmlspecialcharsbx($filter["find"])?>" title="<?=GetMessage("F_SEARCH_TITLE")?>">
 		<select name="find_type">
-			<option value="subject"<?if($find_type=="subject") echo " selected"?>><?=GetMessage('F_THEME')?></option>
-			<option value="from"<?if($find_type=="from") echo " selected"?>><?=GetMessage('F_FROM')?></option>
-			<option value="to"<?if($find_type=="to") echo " selected"?>><?=GetMessage('F_TO')?></option>
-			<option value="body"<?if($find_type=="body") echo " selected"?>><?=GetMessage('F_CONTENT')?></option>
+			<option value="subject"<?php if($filter["find_type"]=="subject") echo " selected"?>><?=GetMessage('F_THEME')?></option>
+			<option value="from"<?php if($filter["find_type"]=="from") echo " selected"?>><?=GetMessage('F_FROM')?></option>
+			<option value="to"<?php if($filter["find_type"]=="to") echo " selected"?>><?=GetMessage('F_TO')?></option>
+			<option value="body"<?php if($filter["find_type"]=="body") echo " selected"?>><?=GetMessage('F_CONTENT')?></option>
 		</select>
 	</td>
 </tr>
 <tr>
-	<td><?echo GetMessage("MAIN_F_ID")?></td>
-	<td><input type="text" name="find_id" size="47" value="<?echo htmlspecialcharsbx($find_id)?>"></td>
+	<td><?= GetMessage("MAIN_F_ID")?></td>
+	<td><input type="text" name="find_id" size="47" value="<?= htmlspecialcharsbx($filter["find_id"])?>"></td>
 </tr>
 <tr>
-	<td><?echo GetMessage("MAIN_F_EVENT_TYPE")?></td>
-	<td><input type="text" name="find_event_type" size="47" value="<?echo htmlspecialcharsbx($find_event_type)?>"><br><?
+	<td><?= GetMessage("MAIN_F_EVENT_TYPE")?></td>
+	<td><input type="text" name="find_event_type" size="47" value="<?= htmlspecialcharsbx($filter["find_event_type"])?>"><br><?php
 		$event_type_ref = array();
 		$event_type_ref_id = array();
 		$ref_en = array();
@@ -353,73 +348,73 @@ $oFilter->Begin();
 		}
 
 		$arr = array("REFERENCE" => $event_type_ref, "REFERENCE_ID" => $event_type_ref_id);
-		echo SelectBoxFromArray("find_type_id", $arr, htmlspecialcharsbx($find_type_id), GetMessage("MAIN_ALL"));
+		echo SelectBoxFromArray("find_type_id", $arr, htmlspecialcharsbx($filter["find_type_id"]), GetMessage("MAIN_ALL"));
 	?></td>
 </tr>
 <tr>
-	<td><?echo GetMessage("MAIN_F_TIMESTAMP").":"?></td>
-	<td><?echo CalendarPeriod("find_timestamp_1", htmlspecialcharsbx($find_timestamp_1), "find_timestamp_2", htmlspecialcharsbx($find_timestamp_2), "find_form","Y")?></td>
+	<td><?= GetMessage("MAIN_F_TIMESTAMP").":"?></td>
+	<td><?= CalendarPeriod("find_timestamp_1", htmlspecialcharsbx($filter["find_timestamp_1"]), "find_timestamp_2", htmlspecialcharsbx($filter["find_timestamp_2"]), "find_form","Y")?></td>
 </tr>
 <tr>
 	<td><?=GetMessage("MAIN_F_LID")?></td>
-	<td><?echo CLang::SelectBox("find_lid", htmlspecialcharsbx($find_lid), GetMessage("MAIN_ALL")); ?></td>
+	<td><?= CLang::SelectBox("find_lid", htmlspecialcharsbx($filter["find_lid"]), GetMessage("MAIN_ALL")); ?></td>
 </tr>
 <tr>
-	<td><?echo GetMessage("main_mess_admin_lang2")?></td>
+	<td><?= GetMessage("main_mess_admin_lang2")?></td>
 	<td>
 			<select name="find_language_id">
-				<option value=""><?echo GetMessage("F_FILTER_ALL")?></option>
-				<?
+				<option value=""><?= GetMessage("F_FILTER_ALL")?></option>
+				<?php
 				unset($langOptions[""]);
 				?>
-				<? foreach($langOptions as $language_id => $name): ?>
-					<option value="<?=$language_id?>"<? if($find_language_id == $language_id) echo " selected" ?>>
+				<?php foreach($langOptions as $language_id => $name): ?>
+					<option value="<?=$language_id?>"<?php if($filter["find_language_id"] == $language_id) echo " selected" ?>>
 						<?=\Bitrix\Main\Text\HtmlFilter::encode($name)?>
 					</option>
-				<? endforeach ?>
+				<?php endforeach ?>
 			</select>
 	</td>
 </tr>
 <tr>
 	<td><?=GetMessage("F_ACTIVE")?></td>
-	<td><?
+	<td><?php
 		$arr = array("reference"=>array(GetMessage("MAIN_YES"), GetMessage("MAIN_NO")), "reference_id"=>array("Y","N"));
-		echo SelectBoxFromArray("find_active", $arr, htmlspecialcharsbx($find_active), GetMessage("MAIN_ALL"));
+		echo SelectBoxFromArray("find_active", $arr, htmlspecialcharsbx($filter["find_active"]), GetMessage("MAIN_ALL"));
 		?></td>
 </tr>
 <tr>
-	<td><?echo GetMessage("MAIN_F_FROM")?></td>
-	<td><input type="text" name="find_from" size="47" value="<?echo htmlspecialcharsbx($find_from)?>"></td>
+	<td><?= GetMessage("MAIN_F_FROM")?></td>
+	<td><input type="text" name="find_from" size="47" value="<?= htmlspecialcharsbx($filter["find_from"])?>"></td>
 </tr>
 <tr>
-	<td><?echo GetMessage("MAIN_F_TO")?></td>
-	<td><input type="text" name="find_to" size="47" value="<?echo htmlspecialcharsbx($find_to)?>"></td>
+	<td><?= GetMessage("MAIN_F_TO")?></td>
+	<td><input type="text" name="find_to" size="47" value="<?= htmlspecialcharsbx($filter["find_to"])?>"></td>
 </tr>
 <tr>
-	<td><?echo GetMessage("MAIN_F_BCC")?></td>
-	<td><input type="text" name="find_bcc" size="47" value="<?echo htmlspecialcharsbx($find_bcc)?>"></td>
+	<td><?= GetMessage("MAIN_F_BCC")?></td>
+	<td><input type="text" name="find_bcc" size="47" value="<?= htmlspecialcharsbx($filter["find_bcc"])?>"></td>
 </tr>
 <tr>
-	<td><?echo GetMessage("F_SUBJECT")?></td>
-	<td><input type="text" name="find_subject" size="47" value="<?echo htmlspecialcharsbx($find_subject)?>"></td>
+	<td><?= GetMessage("F_SUBJECT")?></td>
+	<td><input type="text" name="find_subject" size="47" value="<?= htmlspecialcharsbx($filter["find_subject"])?>"></td>
 </tr>
 <tr>
 	<td><?=GetMessage("MAIN_F_BODY_TYPE")?></td>
-	<td><?
+	<td><?php
 		$arr = array("reference"=>array(GetMessage("MAIN_TEXT"), GetMessage("MAIN_HTML")), "reference_id"=>array("text","html"));
-		echo SelectBoxFromArray("find_body_type", $arr, htmlspecialcharsbx($find_body_type), GetMessage("MAIN_ALL"));
+		echo SelectBoxFromArray("find_body_type", $arr, htmlspecialcharsbx($filter["find_body_type"]), GetMessage("MAIN_ALL"));
 		?></td>
 </tr>
 <tr>
-	<td><?echo GetMessage("MAIN_F_MESSAGE_BODY")?></td>
-	<td><input type="text" name="find_body" size="47" value="<?echo htmlspecialcharsbx($find_body)?>"></td>
+	<td><?= GetMessage("MAIN_F_MESSAGE_BODY")?></td>
+	<td><input type="text" name="find_body" size="47" value="<?= htmlspecialcharsbx($filter["find_body"])?>"></td>
 </tr>
-<?
+<?php
 $oFilter->Buttons(array("table_id"=>$sTableID, "url"=>$APPLICATION->GetCurPage(), "form"=>"find_form"));
 $oFilter->End();
 ?>
 </form>
-<?
+<?php
 // Display list
 $lAdmin->DisplayList();
 

@@ -1,4 +1,3 @@
-import { BaseEvent } from 'main.core.events';
 import { type ItemId } from 'ui.entity-selector';
 import { mapState } from 'ui.vue3.vuex';
 import { type SelectorService } from '../../../service/selector-service';

@@ -1,0 +1,5 @@
+<?php
+
+$MESS['IMMOBILE_FOLDER_CREATE_NAV_TITLE'] = 'Новая папка';
+$MESS['IMMOBILE_FOLDER_CREATE_SUBMIT_BUTTON'] = 'Создать';
+$MESS['IMMOBILE_FOLDER_CREATE_ERROR_LIMIT'] = 'Можно создать не больше 20 папок';

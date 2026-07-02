@@ -30,7 +30,7 @@ jn.define('im/messenger/provider/services/message/action', (require, exports, mo
 		{
 			if (!this.queueServiceInstanse)
 			{
-				this.queueServiceInstanse = new QueueService();
+				this.queueServiceInstanse = serviceLocator.get('queue-service');
 			}
 
 			return this.queueServiceInstanse;

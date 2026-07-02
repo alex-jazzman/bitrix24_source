@@ -492,8 +492,7 @@
 	moreTabNavigator.unsubscribeFromEvents();
 	moreTabNavigator.subscribeToEvents(More);
 	More.init();
-	// eslint-disable-next-line no-undef
-	qrauth.listenUniversalLink();
+
 	window.updateMenuItem = (id, data) => {
 		menu.updateItems([
 			{ filter: { id }, element: data },

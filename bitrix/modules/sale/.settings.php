@@ -54,6 +54,9 @@ return array(
 			'sale.basketItemInputFactory' => [
 				'className' => \Bitrix\Sale\Public\Factory\BasketItemInputFactory::class,
 			],
+			'sale.priceRounder' => [
+				'className' => \Bitrix\Sale\Public\Service\PriceRounder::class,
+			],
 		],
 	],
 	'ui.entity-selector' => [

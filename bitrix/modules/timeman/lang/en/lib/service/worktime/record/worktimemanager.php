@@ -1,5 +1,8 @@
-<?
+<?php
 $MESS["TM_BASE_SERVICE_RESULT_ERROR_NEGATIVE_DURATION"] = "Working day duration cannot be negative";
+$MESS["TM_BASE_SERVICE_RESULT_ERROR_SHIFT_DURATION_EXCEEDS_DAY"] = "Workday length must not exceed 24 hours.";
+$MESS["TM_BASE_SERVICE_RESULT_ERROR_STOP_GREATER_THAN_NOW"] = "Clock-out time must not be later than current time.";
+$MESS["TM_BASE_SERVICE_RESULT_ERROR_STOP_LESS_THAN_START"] = "Clock-out time must not be earlier than clock-in time.";
 $MESS["TM_VIOLATION_WORKTIME_MANAGER_EARLY_END_FEMALE"] = "#USER_NAME# clocked out earlier than scheduled.";
 $MESS["TM_VIOLATION_WORKTIME_MANAGER_EARLY_END_MALE"] = "#USER_NAME# clocked out earlier than scheduled.";
 $MESS["TM_VIOLATION_WORKTIME_MANAGER_EARLY_START_FEMALE"] = "#USER_NAME# clocked in earlier than scheduled.";
@@ -17,4 +20,3 @@ $MESS["TM_VIOLATION_WORKTIME_MANAGER_LATE_START_FEMALE"] = "#USER_NAME# clocked 
 $MESS["TM_VIOLATION_WORKTIME_MANAGER_LATE_START_MALE"] = "#USER_NAME# clocked in later than scheduled.";
 $MESS["TM_VIOLATION_WORKTIME_MANAGER_MIN_DAY_DURATION_FEMALE"] = "#USER_NAME#'s work hours is less than scheduled.";
 $MESS["TM_VIOLATION_WORKTIME_MANAGER_MIN_DAY_DURATION_MALE"] = "#USER_NAME#'s work hours is less than scheduled.";
-?>

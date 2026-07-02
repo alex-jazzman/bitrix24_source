@@ -1,0 +1,32 @@
+.booking-booking__resource-panel {
+	min-height: 62px;
+	overflow-x: auto;
+	display: flex;
+
+	box-sizing: border-box;
+	border-bottom: 1px solid var(--ui-color-base-10);
+}
+
+.booking-booking__resource-panel::-webkit-scrollbar {
+	display: none;
+}
+
+.booking-booking__resource-panel_resources {
+	display: flex;
+	flex-direction: row;
+}
+
+/* region week-mode */
+.booking-booking__base-component.--week-mode .booking-booking__resource-panel {
+	flex-direction: column;
+	min-width: var(--left-panel-width);
+	border: none;
+	overflow-x: hidden;
+	overflow-y: auto;
+}
+
+.booking-booking__base-component.--week-mode .booking-booking__resource-panel_resources {
+	flex-direction: column;
+}
+
+/* endregion */

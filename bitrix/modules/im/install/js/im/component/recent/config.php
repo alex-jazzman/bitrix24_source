@@ -9,12 +9,12 @@ return [
 	'js' => 'dist/recent.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'ui.vue.vuex',
-		'ui.design-tokens',
-		'im.lib.utils',
 		'im.const',
-		'ui.vue',
+		'im.lib.utils',
 		'main.core.events',
+		'ui.design-tokens',
+		'ui.vue',
+		'ui.vue.vuex',
 	],
 	'skip_core' => true,
 ];

@@ -17,9 +17,14 @@ export const ReviewItem = {
 	},
 	emits: ['editedReview'],
 	props: ['review', 'reviewIndex'],
-	data() {
+	setup: function ()
+	{
 		return {
 			contextMenu: false,
+		};
+	},
+	data() {
+		return {
 			editing: false,
 			savingReview: false,
 			newReviewText: '',

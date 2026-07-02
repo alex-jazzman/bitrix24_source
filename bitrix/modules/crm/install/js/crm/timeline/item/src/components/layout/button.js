@@ -1,20 +1,20 @@
-import { BitrixVue } from 'ui.vue3';
 import { Text, Type } from 'main.core';
 import {
 	Button as UIButton,
-	ButtonOptions,
+	type ButtonOptions,
 	ButtonState as UIButtonState,
 	SplitButton as UISplitButton,
 } from 'ui.buttons';
+import { BitrixVue } from 'ui.vue3';
+import { hint } from 'ui.vue3.directives.hint';
 
-import { BaseButton } from './baseButton';
-import { ButtonType } from '../enums/button-type';
 import { ButtonState } from '../enums/button-state';
+import { ButtonType } from '../enums/button-type';
+import { BaseButton } from './baseButton';
 import { ButtonMenu } from './button-menu';
 
-import 'ui.hint';
-
 export const Button = BitrixVue.cloneComponent(BaseButton, {
+	directives: { hint },
 	props: {
 		type: {
 			type: String,
@@ -41,11 +41,9 @@ export const Button = BitrixVue.cloneComponent(BaseButton, {
 	data(): Object
 	{
 		return {
-			popup: null,
-			uiButton: Object.freeze(null),
 			timerSecondsRemaining: 0,
 			currentState: this.state,
-			hintText: Type.isStringFilled(this.tooltip) ? this.tooltip : '',
+			hintText: this.tooltip || '',
 		};
 	},
 
@@ -65,6 +63,32 @@ export const Button = BitrixVue.cloneComponent(BaseButton, {
 		buttonContainerRef(): HTMLElement | undefined
 		{
 			return this.$refs.buttonContainer;
+		},
+
+		containerClasses(): Array
+		{
+			return [
+				this.$attrs.class,
+				{
+					'--has-ai-icon': this.iconName?.toLowerCase() === 'ai',
+					'--has-icon-only': this.type === ButtonType.ICON,
+				},
+			];
+		},
+
+		hintOptions(): ?Object
+		{
+			if (!Type.isStringFilled(this.hintText))
+			{
+				return null;
+			}
+
+			return {
+				text: Text.encode(this.hintText),
+				popupOptions: {
+					offsetTop: 5,
+				},
+			};
 		},
 	},
 
@@ -205,30 +229,6 @@ export const Button = BitrixVue.cloneComponent(BaseButton, {
 			this.hintText = tooltip;
 		},
 
-		showTooltip(): void
-		{
-			if (this.hintText === '')
-			{
-				return;
-			}
-
-			BX.UI.Hint.show(
-				this.$el,
-				this.hintText,
-				true,
-			);
-		},
-
-		hideTooltip(): void
-		{
-			if (this.hintText === '')
-			{
-				return;
-			}
-
-			BX.UI.Hint.hide(this.$el);
-		},
-
 		isInViewport(): boolean
 		{
 			const rect = this.$el.getBoundingClientRect();
@@ -255,10 +255,7 @@ export const Button = BitrixVue.cloneComponent(BaseButton, {
 
 		tooltip(newValue): void
 		{
-			this.hintText = Type.isStringFilled(newValue)
-				? Text.encode(newValue)
-				: ''
-			;
+			this.hintText = Type.isStringFilled(newValue) ? newValue : '';
 		},
 	},
 
@@ -274,11 +271,10 @@ export const Button = BitrixVue.cloneComponent(BaseButton, {
 
 	template: `
 		<div
-			:class="$attrs.class"
+			:class="containerClasses"
+			v-hint="hintOptions"
 			ref="buttonContainer"
 			@click="executeAction"
-			@mouseover="showTooltip"
-			@mouseleave="hideTooltip"
 		>
 		</div>
 	`,

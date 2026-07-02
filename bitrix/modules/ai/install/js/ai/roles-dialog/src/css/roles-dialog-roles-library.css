@@ -75,3 +75,46 @@
 	color: #B095DC;
 	background-color: #B095DC;
 }
+
+/* BitrixGPT Redesign overrides */
+.popup-window.--bitrixgpt-redesign .ai__roles-dialog_roles-library {
+	--ui-icon-set__icon-color: var(--ui-color-design-outline-bitrix-gpt-content-gradient-2, #3F68FF);
+	color: var(--ui-color-design-outline-bitrix-gpt-content-gradient-2, #3F68FF);
+}
+
+.popup-window.--bitrixgpt-redesign .ai__roles-dialog_roles-library:hover {
+	--ui-icon-set__icon-color: var(--ui-color-design-outline-bitrix-gpt-content-gradient-2, #3F68FF);
+	color: var(--ui-color-design-outline-bitrix-gpt-content-gradient-2, #3F68FF);
+	background-color: rgba(var(--ui-color-base-solid-rgb), 0.03);
+}
+
+.popup-window.--bitrixgpt-redesign .ai__roles-dialog_roles-library:focus,
+.popup-window.--bitrixgpt-redesign .ai__roles-dialog_roles-library:active {
+	--ui-icon-set__icon-color: var(--ui-color-design-outline-bitrix-gpt-content-gradient-2, #3F68FF);
+	color: var(--ui-color-design-outline-bitrix-gpt-content-gradient-2, #3F68FF);
+	background-color: rgba(var(--ui-color-base-solid-rgb), 0.07);
+}
+
+.popup-window.--bitrixgpt-redesign .ai__roles-dialog_roles-library.--selected {
+	background: var(--ui-color-accent-main-primary, #0075FF);
+}
+
+.popup-window.--bitrixgpt-redesign .ai__roles-dialog_roles-library-title {
+	background: var(--Bitrix-GPT-filled, linear-gradient(264deg, #F96269 1.67%, #F046B7 21.82%, #9D48FF 52.44%, #3F68FF 76.41%, #0098EA 97.21%));
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+}
+
+.popup-window.--bitrixgpt-redesign .ai__roles-dialog_roles-library.--selected .ai__roles-dialog_roles-library-title {
+	background: none;
+	-webkit-background-clip: unset;
+	-webkit-text-fill-color: var(--ui-color-on-primary);
+	background-clip: unset;
+}
+
+.popup-window.--bitrixgpt-redesign .ai__roles-dialog_roles-library-wrapper .ui-icon-set.--chevron-right,
+.popup-window.--bitrixgpt-redesign .ai__roles-dialog_roles-library-wrapper:hover .ui-icon-set.--chevron-right {
+	color: rgba(var(--ui-color-base-90-rgb), 0.3);
+	background-color: rgba(var(--ui-color-base-90-rgb), 0.3);
+}

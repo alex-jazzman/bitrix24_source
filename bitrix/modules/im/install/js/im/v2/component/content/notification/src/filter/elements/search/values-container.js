@@ -1,6 +1,6 @@
 import { Type } from 'main.core';
 
-import { NotificationFilterFieldTypes } from '../../notification-filter';
+import { NotificationFilterFieldTypes } from '../../const/const.js';
 import { NotificationFilterValueChip } from './value-chip';
 
 import './css/values-container.css';

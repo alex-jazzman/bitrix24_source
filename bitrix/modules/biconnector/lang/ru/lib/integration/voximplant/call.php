@@ -38,3 +38,4 @@ $MESS['VI_BIC_CALL_FIELD_TRANSCRIPT_PENDING'] = "Готовность расши
 $MESS['VI_BIC_CALL_FIELD_TRANSCRIPT_PENDING_FULL'] = "строка Y/N, признак того, что расшифровка будет получена позднее";
 $MESS['VI_BIC_CALL_FIELD_REDIAL_ATTEMPT'] = "Число попыток дозвониться";
 $MESS['VI_BIC_CALL_FIELD_COMMENT'] = "Комментарий к звонку";
+$MESS['VI_BIC_CALL_TABLE_DESCRIPTION_FULL'] = "Набор содержит информацию о звонках: идентификаторы операторов, номера абонентов и типы звонков.";

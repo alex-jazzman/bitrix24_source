@@ -11,9 +11,9 @@
 
 		static async executeAction(data)
 		{
-			const { WorkgroupUtil } = await requireLazy('project/utils');
+			const { ProjectOpener } = await requireLazy('project/opener');
 
-			void WorkgroupUtil.openProject(data.item || null, data);
+			void ProjectOpener.open(data ?? {});
 		}
 	}
 

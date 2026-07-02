@@ -71,8 +71,8 @@ if ($postRight >= 'R'):
 		['DIV' => 'edit1', 'TAB' => Loc::getMessage('MAIN_TAB_SET'), 'ICON' => '']
 	]);
 
-	$Update = $Update ?? '';
-	$Apply = $Apply ?? '';
+	$Update = (string)($request->getPost('Update') ?? '');
+	$Apply = (string)($request->getPost('Apply') ?? '');
 
 	// post save
 	if (
@@ -89,21 +89,26 @@ if ($postRight >= 'R'):
 			}
 
 			$name = $arOption[0];
+			$postValue = $request->getPost($name);
 
 			if ($arOption[2][0] === 'text-list')
 			{
 				$val = '';
-				for ($j = 0; $j < count($$name); $j++)
+				$items = is_array($postValue) ? $postValue : [];
+				foreach ($items as $item)
 				{
-					if (trim(${$name}[$j]) <> '')
+					$item = trim((string)$item);
+					if ($item !== '')
 					{
-						$val .= ($val <> '' ? ',':'') . trim(${$name}[$j]);
+						$val .= ($val !== '' ? ',' : '') . $item;
 					}
 				}
 			}
 			elseif ($arOption[2][0] === 'doubletext')
 			{
-				$val = ${$name . '_1'} . 'x' . ${$name . '_2'};
+				$val = ($request->getPost($name . '_1') ?? '')
+					. 'x'
+					. ($request->getPost($name . '_2') ?? '');
 			}
 			elseif (
 				$arOption[2][0] === 'selectbox' ||
@@ -111,20 +116,21 @@ if ($postRight >= 'R'):
 			)
 			{
 				$val = '';
-				if (isset($$name))
+				if (is_array($postValue))
 				{
-					for ($j=0; $j<count($$name); $j++)
+					foreach ($postValue as $item)
 					{
-						if (trim(${$name}[$j]) <> '')
+						$item = trim((string)$item);
+						if ($item !== '')
 						{
-							$val .= ($val <> '' ? ',':'') . trim(${$name}[$j]);
+							$val .= ($val !== '' ? ',' : '') . $item;
 						}
 					}
 				}
 			}
 			else
 			{
-				$val = $$name;
+				$val = (string)($postValue ?? '');
 			}
 
 			if ($arOption[2][0] === 'checkbox' && $val<>'Y')

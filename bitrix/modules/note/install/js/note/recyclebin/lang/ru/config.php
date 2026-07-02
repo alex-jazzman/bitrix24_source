@@ -1,0 +1,26 @@
+<?php
+$MESS['NOTE_RECYCLEBIN_BREADCRUMB_ROOT'] = 'Корзина';
+$MESS['NOTE_RECYCLEBIN_PAGE_TITLE'] = 'Корзина';
+$MESS['NOTE_RECYCLEBIN_PAGE_SUBTITLE'] = 'Документы в корзине хранятся 30 дней, а после этого автоматически удаляются';
+$MESS['NOTE_RECYCLEBIN_PAGE_MORE_LABEL'] = 'Действия';
+$MESS['NOTE_RECYCLEBIN_PAGE_EMPTY_HINT'] = 'В корзине нет документов';
+$MESS['NOTE_RECYCLEBIN_PAGE_RESTORE'] = 'Да, восстановить';
+$MESS['NOTE_RECYCLEBIN_PAGE_RESTORE_ALL'] = 'Восстановить всё';
+$MESS['NOTE_RECYCLEBIN_PAGE_EMPTY_ACTION'] = 'Очистить корзину';
+$MESS['NOTE_RECYCLEBIN_PAGE_EMPTY_ACTION_TITLE'] = 'Удалить документы из корзины?';
+$MESS['NOTE_RECYCLEBIN_PAGE_EMPTY_ACTION_CONFIRM'] = 'Да, удалить';
+$MESS['NOTE_RECYCLEBIN_ORPHAN_POPUP_TITLE'] = 'Восстановление документа';
+$MESS['NOTE_RECYCLEBIN_ORPHAN_POPUP_TEXT'] = 'Исходная база знаний для документа «#DOCUMENT#» была удалена. Выберите другую базу знаний, в которую нужно восстановить документ';
+$MESS['NOTE_RECYCLEBIN_ORPHAN_POPUP_PLACEHOLDER'] = 'Введите название базы знаний';
+$MESS['NOTE_RECYCLEBIN_BULK_POPUP_TITLE'] = 'Восстановление документов';
+$MESS['NOTE_RECYCLEBIN_BULK_POPUP_TEXT'] = 'Будут восстановлены все документы из корзины: #COUNT#';
+$MESS['NOTE_RECYCLEBIN_BULK_POPUP_ORPHAN_HINT'] = 'Исходная база знаний для некоторых документов (#COUNT#) была удалена. Выберите для них другую базу знаний';
+$MESS['NOTE_RECYCLEBIN_PAGE_RESTORE_SUCCESS'] = 'Документ восстановлен';
+$MESS['NOTE_RECYCLEBIN_PAGE_RESTORE_ALL_SUCCESS'] = 'Восстановлено документов: #COUNT#';
+$MESS['NOTE_RECYCLEBIN_PAGE_RESTORE_ALL_SUCCESS_WITH_SKIPPED'] = 'Восстановлено документов: #COUNT#, пропущено: #SKIPPED# — для них нужно выбрать другую базу знаний';
+$MESS['NOTE_RECYCLEBIN_PAGE_HARD_DELETE_SUCCESS'] = 'Документ удалён навсегда';
+$MESS['NOTE_RECYCLEBIN_PAGE_EMPTY_SUCCESS'] = 'Корзина очищена. Удалено документов: #COUNT#';
+$MESS['NOTE_RECYCLEBIN_PAGE_ERROR_GENERIC'] = 'Не удалось выполнить действие, попробуйте ещё раз немного позже';
+$MESS['NOTE_RECYCLEBIN_PAGE_CONFIRM_RESTORE_ALL'] = 'Восстановить все документы из корзины?';
+$MESS['NOTE_RECYCLEBIN_PAGE_CONFIRM_EMPTY'] = 'Все документы из корзины будут удалены навсегда';
+$MESS['NOTE_RECYCLEBIN_PAGE_CONFIRM_CANCEL'] = 'Отмена';

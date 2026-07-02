@@ -1,4 +1,4 @@
-import { Loc, Runtime, Text } from 'main.core';
+import { Runtime } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import type { Store } from 'ui.vue3.vuex';
 
@@ -10,6 +10,7 @@ import { GroupMappers, groupService, type StageDto } from 'tasks.v2.provider.ser
 import { flowService } from 'tasks.v2.provider.service.flow-service';
 import { userService } from 'tasks.v2.provider.service.user-service';
 import { fileService } from 'tasks.v2.provider.service.file-service';
+import { viewersService } from 'tasks.v2.provider.service.viewers-service';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 import type { StageModel } from 'tasks.v2.model.stages';
 
@@ -22,7 +23,6 @@ export class TaskPullHandler extends BasePullHandler
 	getMap(): { [command: string]: Function }
 	{
 		return {
-			task_add: this.#handleTaskAdded,
 			task_update: this.#handleTaskUpdated,
 			task_view: this.#handleTaskViewed,
 			task_remove: this.#handleTaskDeleted,
@@ -36,36 +36,6 @@ export class TaskPullHandler extends BasePullHandler
 			task_update: this.#handleTaskUpdatedDelayed,
 		};
 	}
-
-	#handleTaskAdded = (data): void => {
-		const features = Core.getParams().features;
-
-		// show task created balloon if miniform feature is enabled
-		const showTaskAddedBalloon = (data.AFTER.USER_ID === this.#currentUserId)
-			&& (features.isMiniformEnabled && !features.isV2Enabled)
-		;
-
-		if (showTaskAddedBalloon)
-		{
-			const url = data.AFTER.URL ?? '';
-
-			BX.UI.Notification.Center.notify({
-				id: Text.getRandom(),
-				content: Loc.getMessage('TASKS_V2_NOTIFY_TASK_CREATED'),
-				actions: [
-					{
-						title: Loc.getMessage('TASKS_V2_NOTIFY_TASK_DO_VIEW'),
-						events: {
-							click: (event, balloon) => {
-								balloon.close();
-								BX.SidePanel.Instance.open(url);
-							},
-						},
-					},
-				],
-			});
-		}
-	};
 
 	#handleTaskUpdated = (data: PushData): void => {
 		data.AFTER.UF_CRM_TASK_DELETED = data.BEFORE.UF_CRM_TASK_DELETED;
@@ -101,16 +71,16 @@ export class TaskPullHandler extends BasePullHandler
 	#pushedTasks: { [taskId: number]: TaskModel } = {};
 
 	#handleTaskUpdatedDelayed = async (data: PushData): Promise<void> => {
+		if (!taskService.hasStoreTask(data.TASK_ID))
+		{
+			return;
+		}
+
 		const task = mapPushToModel(data.TASK_ID, data.AFTER);
 
 		const { TaskFullCard } = await Runtime.loadExtension('tasks.v2.application.task-full-card');
 
 		if (data.USER_ID === this.#currentUserId && TaskFullCard.isOpened(task.id))
-		{
-			return;
-		}
-
-		if (!taskService.hasStoreTask(task.id))
 		{
 			return;
 		}
@@ -127,6 +97,7 @@ export class TaskPullHandler extends BasePullHandler
 		if (this.#needToLoadTask(data))
 		{
 			await taskService.get(task.id);
+			await this.#loadViewersQuantity(task);
 		}
 		else
 		{
@@ -135,6 +106,7 @@ export class TaskPullHandler extends BasePullHandler
 				this.#loadFlow(task),
 				userService.list(this.#getUsersIds(task)),
 				taskService.getRights(task.id),
+				this.#loadViewersQuantity(task),
 			]);
 
 			const { id, ...fields } = task;
@@ -219,6 +191,11 @@ export class TaskPullHandler extends BasePullHandler
 			...(task.accomplicesIds ?? []),
 			...(task.auditorsIds ?? []),
 		].filter((id: ?number) => id);
+	}
+
+	async #loadViewersQuantity(task: TaskModel): Promise<void>
+	{
+		await viewersService.count(task.id);
 	}
 
 	get #currentUserId(): number

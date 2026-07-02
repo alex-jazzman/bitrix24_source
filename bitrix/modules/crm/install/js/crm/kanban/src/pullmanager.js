@@ -1,5 +1,5 @@
 import { Type } from 'main.core';
-import { BaseEvent } from 'main.core.events';
+import { type BaseEvent } from 'main.core.events';
 import type { ActionItem } from 'pull.queuemanager';
 import { QueueManager } from 'pull.queuemanager';
 import PullOperation from './pulloperation';

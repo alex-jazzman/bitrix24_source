@@ -3,5 +3,4 @@ module.exports = {
 	output: 'dist/onboarding-popup.bundle.js',
 	namespace: 'BX.Crm.Perms',
 	browserslist: true,
-	minification: true,
 };

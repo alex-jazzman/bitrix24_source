@@ -1,10 +1,9 @@
 import { Loc } from 'main.core';
+import { type MenuItemOptions } from 'ui.system.menu';
 
-import { RecentMenu } from 'im.v2.lib.menu';
 import { Analytics } from 'im.v2.lib.analytics';
-
-import { CopilotRecentService } from './copilot-service';
-import type { MenuItemOptions } from 'ui.system.menu';
+import { RecentMenu } from 'im.v2.lib.menu';
+import { CopilotRecentService } from 'im.v2.provider.service.copilot';
 
 export class CopilotRecentMenu extends RecentMenu
 {

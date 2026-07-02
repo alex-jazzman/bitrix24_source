@@ -1,5 +1,5 @@
 /* eslint-disable */
-(function (exports,main_core,bizproc_automation,main_core_events,ui_entitySelector) {
+(function (exports,main_core,bizproc_automation,main_core_events) {
 	'use strict';
 
 	let _ = t => t,
@@ -7,9 +7,7 @@
 	var _form = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("form");
 	var _options = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("options");
 	var _documentType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("documentType");
-	var _storageCodeInput = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("storageCodeInput");
 	var _currentStorageId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentStorageId");
-	var _currentStorageCode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentStorageCode");
 	var _deleteModeElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("deleteModeElement");
 	var _deleteModeSelect = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("deleteModeSelect");
 	var _currentDeleteMode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentDeleteMode");
@@ -21,6 +19,7 @@
 	var _onDeleteModeChangeHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onDeleteModeChangeHandler");
 	var _dialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dialog");
 	var _conditionGroupSelector = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("conditionGroupSelector");
+	var _storageBlocks = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("storageBlocks");
 	var _initStorageSelector = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initStorageSelector");
 	var _onStorageStateChange = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onStorageStateChange");
 	var _onDeleteModeChange = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onDeleteModeChange");
@@ -75,15 +74,7 @@
 	      writable: true,
 	      value: []
 	    });
-	    Object.defineProperty(this, _storageCodeInput, {
-	      writable: true,
-	      value: null
-	    });
 	    Object.defineProperty(this, _currentStorageId, {
-	      writable: true,
-	      value: 0
-	    });
-	    Object.defineProperty(this, _currentStorageCode, {
 	      writable: true,
 	      value: ''
 	    });
@@ -131,6 +122,10 @@
 	      writable: true,
 	      value: null
 	    });
+	    Object.defineProperty(this, _storageBlocks, {
+	      writable: true,
+	      value: []
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _onDeleteModeChangeHandler)[_onDeleteModeChangeHandler] = babelHelpers.classPrivateFieldLooseBase(this, _onDeleteModeChange)[_onDeleteModeChange].bind(this);
 	  }
 	  getControlRenderers() {
@@ -146,29 +141,40 @@
 	      }
 	    };
 	  }
-	  afterFormRender(form) {
+	  async afterFormRender(form) {
+	    const {
+	      StorageSelector,
+	      mapStorageBlocksToFilterFields,
+	      resolveCurrentStorageId
+	    } = await main_core.Runtime.loadExtension('bizproc.storage-selector');
 	    babelHelpers.classPrivateFieldLooseBase(this, _form)[_form] = form;
-	    babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog] = ui_entitySelector.Dialog.getById('entityselector_storage_id');
 	    if (main_core.Type.isPlainObject(babelHelpers.classPrivateFieldLooseBase(this, _options)[_options])) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _documentType)[_documentType] = babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].documentType;
 	      if (!main_core.Type.isNil(babelHelpers.classPrivateFieldLooseBase(this, _form)[_form])) {
-	        var _babelHelpers$classPr, _babelHelpers$classPr2, _babelHelpers$classPr3, _babelHelpers$classPr4, _babelHelpers$classPr5;
-	        babelHelpers.classPrivateFieldLooseBase(this, _storageCodeInput)[_storageCodeInput] = babelHelpers.classPrivateFieldLooseBase(this, _form)[_form].storage_code;
-	        const item = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog]) == null ? void 0 : (_babelHelpers$classPr2 = _babelHelpers$classPr.selectedItems.values()) == null ? void 0 : (_babelHelpers$classPr3 = _babelHelpers$classPr2.next()) == null ? void 0 : _babelHelpers$classPr3.value;
-	        babelHelpers.classPrivateFieldLooseBase(this, _currentStorageId)[_currentStorageId] = (item == null ? void 0 : item.id) || 0;
-	        babelHelpers.classPrivateFieldLooseBase(this, _currentStorageCode)[_currentStorageCode] = ((_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _storageCodeInput)[_storageCodeInput]) == null ? void 0 : _babelHelpers$classPr4.value) || '';
+	        var _babelHelpers$classPr;
+	        babelHelpers.classPrivateFieldLooseBase(this, _currentStorageId)[_currentStorageId] = resolveCurrentStorageId(babelHelpers.classPrivateFieldLooseBase(this, _form)[_form]);
 	        babelHelpers.classPrivateFieldLooseBase(this, _deleteModeElement)[_deleteModeElement] = babelHelpers.classPrivateFieldLooseBase(this, _form)[_form].querySelector('[data-role="bpa-sda-delete-mode-dependent"]');
 	        babelHelpers.classPrivateFieldLooseBase(this, _deleteModeSelect)[_deleteModeSelect] = babelHelpers.classPrivateFieldLooseBase(this, _form)[_form].delete_mode;
-	        babelHelpers.classPrivateFieldLooseBase(this, _currentDeleteMode)[_currentDeleteMode] = ((_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _deleteModeSelect)[_deleteModeSelect]) == null ? void 0 : _babelHelpers$classPr5.value) || '';
+	        babelHelpers.classPrivateFieldLooseBase(this, _currentDeleteMode)[_currentDeleteMode] = ((_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _deleteModeSelect)[_deleteModeSelect]) == null ? void 0 : _babelHelpers$classPr.value) || '';
 	      }
 	      babelHelpers.classPrivateFieldLooseBase(this, _document)[_document] = new bizproc_automation.Document({
 	        rawDocumentType: babelHelpers.classPrivateFieldLooseBase(this, _documentType)[_documentType],
 	        documentFields: [],
 	        title: 'document'
 	      });
+	      main_core_events.EventEmitter.subscribeOnce('BX.Bizproc.CommonNodeSettings:onBlocksReady', event => {
+	        const {
+	          blocks
+	        } = event.getData();
+	        babelHelpers.classPrivateFieldLooseBase(this, _storageBlocks)[_storageBlocks] = (blocks || []).filter(block => {
+	          var _block$activity;
+	          return ((_block$activity = block.activity) == null ? void 0 : _block$activity.Type) === 'CreateStorageNode';
+	        });
+	        babelHelpers.classPrivateFieldLooseBase(this, _initFilterFields)[_initFilterFields](babelHelpers.classPrivateFieldLooseBase(this, _options)[_options], mapStorageBlocksToFilterFields);
+	        babelHelpers.classPrivateFieldLooseBase(this, _render)[_render]();
+	      });
 	      babelHelpers.classPrivateFieldLooseBase(this, _initAutomationContext)[_initAutomationContext]();
-	      babelHelpers.classPrivateFieldLooseBase(this, _initFilterFields)[_initFilterFields](babelHelpers.classPrivateFieldLooseBase(this, _options)[_options]);
-	      babelHelpers.classPrivateFieldLooseBase(this, _initStorageSelector)[_initStorageSelector]();
+	      babelHelpers.classPrivateFieldLooseBase(this, _initStorageSelector)[_initStorageSelector](StorageSelector);
 	      if (babelHelpers.classPrivateFieldLooseBase(this, _deleteModeSelect)[_deleteModeSelect]) {
 	        main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _deleteModeSelect)[_deleteModeSelect], 'change', babelHelpers.classPrivateFieldLooseBase(this, _onDeleteModeChangeHandler)[_onDeleteModeChangeHandler]);
 	      }
@@ -179,24 +185,29 @@
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _deleteModeSelect)[_deleteModeSelect]) {
 	      main_core.Event.unbind(babelHelpers.classPrivateFieldLooseBase(this, _deleteModeSelect)[_deleteModeSelect], 'change', babelHelpers.classPrivateFieldLooseBase(this, _onDeleteModeChangeHandler)[_onDeleteModeChangeHandler]);
 	    }
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog]) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog].destroy();
+	      babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog] = null;
+	    }
 	  }
 	}
-	function _initStorageSelector2() {
-	  main_core.Runtime.loadExtension('bizproc.storage-selector').then(({
-	    StorageSelector
-	  }) => {
-	    babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog] = new StorageSelector({
-	      dialogId: 'entityselector_storage_id',
-	      storageCodeInput: babelHelpers.classPrivateFieldLooseBase(this, _storageCodeInput)[_storageCodeInput],
-	      onStateChange: babelHelpers.classPrivateFieldLooseBase(this, _onStorageStateChange)[_onStorageStateChange].bind(this)
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog].init();
-	  }).catch(e => console.error(e));
+	function _initStorageSelector2(StorageSelector) {
+	  var _babelHelpers$classPr2;
+	  const dialogId = 'entityselector_storage_id';
+	  babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog] = new StorageSelector({
+	    dialogId,
+	    onStateChange: babelHelpers.classPrivateFieldLooseBase(this, _onStorageStateChange)[_onStorageStateChange].bind(this),
+	    initialValue: babelHelpers.classPrivateFieldLooseBase(this, _currentStorageId)[_currentStorageId],
+	    storageCodeInput: (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _form)[_form]) == null ? void 0 : _babelHelpers$classPr2.querySelector('[name="storage_code"]')
+	  });
+	  babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog].init();
 	}
 	function _onStorageStateChange2(newStorageId) {
-	  var _babelHelpers$classPr6;
-	  babelHelpers.classPrivateFieldLooseBase(this, _currentStorageId)[_currentStorageId] = newStorageId;
-	  babelHelpers.classPrivateFieldLooseBase(this, _currentStorageCode)[_currentStorageCode] = (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _storageCodeInput)[_storageCodeInput]) == null ? void 0 : _babelHelpers$classPr6.value;
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _currentStorageId)[_currentStorageId] !== String(newStorageId)) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _currentStorageId)[_currentStorageId] = String(newStorageId);
+	    babelHelpers.classPrivateFieldLooseBase(this, _conditionGroupSelector)[_conditionGroupSelector] = null;
+	    babelHelpers.classPrivateFieldLooseBase(this, _conditionGroup)[_conditionGroup] = new bizproc_automation.ConditionGroup();
+	  }
 	  babelHelpers.classPrivateFieldLooseBase(this, _render)[_render]();
 	}
 	function _onDeleteModeChange2() {
@@ -224,8 +235,8 @@
 	  }
 	}
 	function _getFilterExpandedState2() {
-	  var _babelHelpers$classPr7;
-	  return ((_babelHelpers$classPr7 = babelHelpers.classPrivateFieldLooseBase(this, _form)[_form].is_expanded) == null ? void 0 : _babelHelpers$classPr7.value) === 'Y';
+	  var _babelHelpers$classPr3;
+	  return ((_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _form)[_form].is_expanded) == null ? void 0 : _babelHelpers$classPr3.value) === 'Y';
 	}
 	function _saveFilterExpandedState2(isExpanded) {
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _form)[_form].is_expanded) {
@@ -236,7 +247,7 @@
 	  window.BPAShowSelector(targetInputId, 'string', '');
 	}
 	function _render2() {
-	  if ((babelHelpers.classPrivateFieldLooseBase(this, _currentStorageId)[_currentStorageId] > 0 || babelHelpers.classPrivateFieldLooseBase(this, _currentStorageCode)[_currentStorageCode]) && babelHelpers.classPrivateFieldLooseBase(this, _currentDeleteMode)[_currentDeleteMode] === 'multiple') {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _currentStorageId)[_currentStorageId] && babelHelpers.classPrivateFieldLooseBase(this, _currentDeleteMode)[_currentDeleteMode] === 'multiple') {
 	    main_core.Dom.show(babelHelpers.classPrivateFieldLooseBase(this, _deleteModeElement)[_deleteModeElement]);
 	    babelHelpers.classPrivateFieldLooseBase(this, _renderFilterFields)[_renderFilterFields]();
 	  } else {
@@ -252,14 +263,16 @@
 	    }));
 	  }
 	}
-	function _initFilterFields2(options) {
+	function _initFilterFields2(options, mapStorageBlocksToFilterFields) {
 	  babelHelpers.classPrivateFieldLooseBase(this, _filterFieldsContainer)[_filterFieldsContainer] = babelHelpers.classPrivateFieldLooseBase(this, _form)[_form].querySelector('[data-role="bpa-sda-filter-fields-container"]');
 	  babelHelpers.classPrivateFieldLooseBase(this, _filteringFieldsPrefix)[_filteringFieldsPrefix] = options.filteringFieldsPrefix;
-	  babelHelpers.classPrivateFieldLooseBase(this, _filterFieldsMap)[_filterFieldsMap] = new Map(Object.entries(options.filterFieldsMap).map(([storageId, fieldsMap]) => [Number(storageId), fieldsMap]));
+	  babelHelpers.classPrivateFieldLooseBase(this, _filterFieldsMap)[_filterFieldsMap] = new Map(Object.entries(options.filterFieldsMap).map(([storageId, fieldsMap]) => [String(storageId), fieldsMap]));
+	  babelHelpers.classPrivateFieldLooseBase(this, _filterFieldsMap)[_filterFieldsMap] = mapStorageBlocksToFilterFields(babelHelpers.classPrivateFieldLooseBase(this, _storageBlocks)[_storageBlocks], babelHelpers.classPrivateFieldLooseBase(this, _filterFieldsMap)[_filterFieldsMap]);
 	  babelHelpers.classPrivateFieldLooseBase(this, _conditionGroup)[_conditionGroup] = new bizproc_automation.ConditionGroup(options.conditions);
+	  babelHelpers.classPrivateFieldLooseBase(this, _conditionGroupSelector)[_conditionGroupSelector] = null;
 	}
 
 	exports.DeleteDataStorageActivityRenderer = DeleteDataStorageActivityRenderer;
 
-}((this.window = this.window || {}),BX,BX.Bizproc.Automation,BX.Event,BX.UI.EntitySelector));
+}((this.window = this.window || {}),BX,BX.Bizproc.Automation,BX.Event));
 //# sourceMappingURL=renderer.js.map

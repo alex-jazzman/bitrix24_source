@@ -16,8 +16,8 @@ return [
 	'css' => 'dist/terminal.bundle.css',
 	'js' => 'dist/terminal.bundle.js',
 	'rel' => [
-		'ui.feedback.form',
 		'main.core',
+		'ui.feedback.form',
 	],
 	'skip_core' => false,
 	'settings' => $settings,

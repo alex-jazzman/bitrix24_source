@@ -1,5 +1,4 @@
-<?
-$MESS['IM_LIST_RECENT_MESSAGE_DRAFT_2'] = "Черновик: #TEXT#";
+<?php
 $MESS['IM_LIST_RECENT_DELETED_MESSAGE'] = "Это сообщение было удалено";
 $MESS['IM_LIST_RECENT_BIRTHDAY'] = "Празднует сегодня день рождения!";
 $MESS['IM_LIST_RECENT_VACATION'] = "В отпуске до #VACATION_END_DATE#";
@@ -10,21 +9,12 @@ $MESS["IM_LIST_RECENT_CONNECT_ERROR"] = "Мы не смогли подключи
 $MESS['IM_LIST_RECENT_CHAT_TYPE_GROUP_V2'] = "Групповой чат";
 $MESS['IM_LIST_RECENT_CHAT_TYPE_OPEN_CHANNEL'] = "Открытый канал";
 $MESS['IM_LIST_RECENT_CHAT_TYPE_PRIVATE_CHANNEL'] = "Закрытый канал";
+$MESS['IM_LIST_RECENT_CHAT_TYPE_TASK_COMMENTS'] = "Чат задачи";
 $MESS['IM_LIST_RECENT_EMPTY'] = "Нет чатов";
 $MESS['IM_LIST_RECENT_CHAT_SELF'] = "это вы";
 $MESS['IM_LIST_RECENT_CHAT_SELF_SUBTITLE'] = "Видны только вам";
-$MESS['IM_LIST_RECENT_CREATE_CHAT_DEFAULT_TITLE'] = "Групповой чат";
-$MESS['IM_LIST_RECENT_CREATE_CONFERENCE_DEFAULT_TITLE'] = "Видеоконференция";
-$MESS['IM_LIST_RECENT_CREATE_CHANNEL_DEFAULT_TITLE'] = "Канал";
-$MESS['IM_LIST_RECENT_CREATE_COLLAB_DEFAULT_TITLE'] = "Новая коллаба";
-$MESS['IM_LIST_RECENT_CREATE_CHAT_SUBTITLE'] = "Создание чата";
-$MESS['IM_LIST_RECENT_CREATE_CONFERENCE_SUBTITLE'] = "Создание видеоконференции";
-$MESS['IM_LIST_RECENT_CREATE_CHANNEL_SUBTITLE'] = "Создание канала";
-$MESS['IM_LIST_RECENT_CREATE_COLLAB_SUBTITLE'] = "Создание коллабы";
 $MESS['IM_LIST_RECENT_EMPTY_STATE_TITLE'] = "Чатов пока нет";
 $MESS['IM_LIST_RECENT_EMPTY_STATE_SUBTITLE'] = "Сотрудники, которых вы добавите в Битрикс24, появятся в списке чатов";
 $MESS['IM_LIST_RECENT_EMPTY_STATE_INVITE_USERS'] = "Пригласить коллег";
 
 $MESS['IM_LIST_UNREAD_RECENT_EMPTY_STATE_TITLE'] = "Непрочитанных нет";
-
-$MESS['IM_LIST_UNREAD_RECENT_SLIDER_TITLE'] = "Непрочитанные";

@@ -42,21 +42,35 @@ ob_start();
 ?>
 <!--RCRD_#FULL_ID#-->
 <a id="com#ID#" name="com#ID#" bx-mpl-full-id="#FULL_ID#"></a>
-<div id="record-#FULL_ID#" class="post-comment-block post-comment-block-#NEW# post-comment-block-#APPROVED# #RATING_NONEMPTY_CLASS# mobile-longtap-menu#CLASSNAME#" <?=(isset($arResult["ajax_comment"]) && isset($comment["ID"]) && $arResult["ajax_comment"] == $comment["ID"] ? ' data-send="Y"' : '')?> <?
-	?>bx-mpl-id="#FULL_ID#" <?
-	?>bx-mpl-menu-show="#SHOW_MENU#" <?
-	?>bx-mpl-reply-show="#SHOW_POST_FORM#" <?
-	?>bx-mpl-view-url="#VIEW_URL###ID#" bx-mpl-view-show="#VIEW_SHOW#" <?
-	?>bx-mpl-edit-url="#EDIT_URL#" bx-mpl-edit-show="#EDIT_SHOW#" <?
-	?>bx-mpl-moderate-url="#MODERATE_URL#" bx-mpl-moderate-show="#MODERATE_SHOW#" bx-mpl-moderate-approved="#APPROVED#" <?
-	?>bx-mpl-delete-url="#DELETE_URL###ID#" bx-mpl-delete-show="#DELETE_SHOW#" <?
-	?>bx-mpl-createtask-show="#CREATETASK_SHOW#" <?
-	?>bx-mpl-post-entity-type="#POST_ENTITY_TYPE#" <?
-	?>bx-mpl-comment-entity-type="#COMMENT_ENTITY_TYPE#" <?
-	?>bx-mpl-vote-id="#VOTE_ID#" <?
-	?>bx-longtap-menu-eventname="BX.MPL:onGetMenuItems" <?
-	?>bx-mpl-entity-xml-id="#ENTITY_XML_ID#" <?
-	?>bx-mpl-comment-id="#ID#" <?
+<div id="record-#FULL_ID#" class="post-comment-block post-comment-block-#NEW# post-comment-block-#APPROVED# #RATING_NONEMPTY_CLASS# mobile-longtap-menu#CLASSNAME#" <?=(isset($arResult["ajax_comment"]) && isset($comment["ID"]) && $arResult["ajax_comment"] == $comment["ID"] ? ' data-send="Y"' : '')?>
+     <?php
+	?>bx-mpl-id="#FULL_ID#"
+     <?php
+	?>bx-mpl-menu-show="#SHOW_MENU#"
+     <?php
+	?>bx-mpl-reply-show="#SHOW_POST_FORM#"
+     <?php
+	?>bx-mpl-view-url="#VIEW_URL###ID#" bx-mpl-view-show="#VIEW_SHOW#"
+     <?php
+	?>bx-mpl-edit-url="#EDIT_URL#" bx-mpl-edit-show="#EDIT_SHOW#"
+     <?php
+	?>bx-mpl-moderate-url="#MODERATE_URL#" bx-mpl-moderate-show="#MODERATE_SHOW#" bx-mpl-moderate-approved="#APPROVED#"
+     <?php
+	?>bx-mpl-delete-url="#DELETE_URL###ID#" bx-mpl-delete-show="#DELETE_SHOW#"
+     <?php
+	?>bx-mpl-createtask-show="#CREATETASK_SHOW#"
+     <?php
+	?>bx-mpl-post-entity-type="#POST_ENTITY_TYPE#"
+     <?php
+	?>bx-mpl-comment-entity-type="#COMMENT_ENTITY_TYPE#"
+     <?php
+	?>bx-mpl-vote-id="#VOTE_ID#"
+     <?php
+	?>bx-longtap-menu-eventname="BX.MPL:onGetMenuItems"
+     <?php
+	?>bx-mpl-entity-xml-id="#ENTITY_XML_ID#"
+     <?php
+	?>bx-mpl-comment-id="#ID#" <?php
 ?>>
 	#BEFORE_RECORD#
 	<script>
@@ -112,7 +126,7 @@ ob_start();
 		#AFTER#
 		<div class="post-comment-control-box">
 			#BEFORE_ACTIONS#
-			<?
+			<?php
 			if (
 				!isset($arParams["SHOW_POST_FORM"])
 				|| $arParams["SHOW_POST_FORM"] != 'N'
@@ -125,20 +139,21 @@ ob_start();
 						? "return mobileReply('#ENTITY_XML_ID#', event)"
 						: $arParams["REPLY_ACTION"]
 				);
-				?><div class="post-comment-control-item" id="record-#FULL_ID#-reply-action" onclick="<?=$action?>" <?
-					?>bx-mpl-author-id="#AUTHOR_ID#" <?
-					?>bx-mpl-author-name="#AUTHOR_NAME#"><?
-					?><?=Loc::getMessage('BLOG_C_REPLY')?><?
-				?></div><?
+				?><div class="post-comment-control-item" id="record-#FULL_ID#-reply-action" onclick="<?=$action?>" <?php
+					?>bx-mpl-author-id="#AUTHOR_ID#" <?php
+					?>bx-mpl-author-name="#AUTHOR_NAME#"><?php
+					?><?=Loc::getMessage('BLOG_C_REPLY')?><?php
+				?></div><?php
 			}
 			?>
 		</div>
 	</div>
-	#AFTER_RECORD#<?
-	?><script>BX.ready(function() { BX.onCustomEvent(BX('<?=$eventNodeIdTemplate?>'), 'OnUCCommentIsInDOM', ['#ID#', BX('<?=$eventNodeIdTemplate?>')]);});</script><?
+	#AFTER_RECORD#<?php
+	?><script>BX.ready(function() { BX.onCustomEvent(BX('<?=$eventNodeIdTemplate?>'), 'OnUCCommentIsInDOM', ['#ID#', BX('<?=$eventNodeIdTemplate?>')]);});</script><?php
 ?></div>
 <!--RCRD_END_#FULL_ID#-->
-<? // post-comment-block
+<?php
+// post-comment-block
 $template = preg_replace("/[\t\n]/", "", ob_get_clean());
 
 ob_start();
@@ -172,7 +187,7 @@ ob_start();
 			<div class="post-comment-error-text"></div>
 		</div>
 	</div>
-</div><?
+</div><?php
 
 $avatar = \CFile::ResizeImageGet(
 	$USER->GetParam("PERSONAL_PHOTO"),
@@ -249,7 +264,7 @@ $thumb = preg_replace(
 	ob_get_clean()
 );
 ?>
-<div id="<?=$eventNodeId?>"><?
+<div id="<?=$eventNodeId?>"><?php
 if (empty($arParams["RECORDS"]))
 {
 	// For the future developing
@@ -264,19 +279,19 @@ else
 
 			if ($arParams["PREORDER"] == "Y")
 			{
-				?><div id="record-<?=$prefixNode?>-hidden" class="feed-hidden-post" style="display:none; overflow:hidden;"></div> <?
+				?><div id="record-<?=$prefixNode?>-hidden" class="feed-hidden-post" style="display:none; overflow:hidden;"></div> <?php
 			}
 
 			?><div class="post-comments-link-cont">
-				<a href="<?=$arParams["NAV_STRING"]?>" id="<?=$prefixNode?>_page_nav" class="post-comments-link" bx-mpl-comments-count="<?=$arResult["NAV_STRING_COUNT_MORE"]?>"><?
-					?><?=Loc::getMessage("BLOG_C_VIEW")?><?
-					?> <span class="post-comments-link-count"><?=$arResult["NAV_STRING_COUNT_MORE"]?></span><?
+				<a href="<?=$arParams["NAV_STRING"]?>" id="<?=$prefixNode?>_page_nav" class="post-comments-link" bx-mpl-comments-count="<?=$arResult["NAV_STRING_COUNT_MORE"]?>"><?php
+					?><?=Loc::getMessage("BLOG_C_VIEW")?><?php
+					?> <span class="post-comments-link-count"><?=$arResult["NAV_STRING_COUNT_MORE"]?></span><?php
 				?></a>
 				<span class="post-comments-link-loader-informer" id="<?=$prefixNode?>_page_nav_loader" style='display: none;'><?=Loc::getMessage("BLOG_C_LOADING")?></span>
-			</div><?
+			</div><?php
 			if ($arParams["PREORDER"] != "Y")
 			{
-				?><div id="record-<?=$prefixNode?>-hidden" class="feed-hidden-post" style="display:none; overflow:hidden;"></div> <?
+				?><div id="record-<?=$prefixNode?>-hidden" class="feed-hidden-post" style="display:none; overflow:hidden;"></div> <?php
 			}
 			$arParams["NAV_STRING"] = ob_get_clean();
 		}
@@ -287,9 +302,9 @@ else
 	}
 	reset($arParams["RECORDS"]);
 
-	if ($arParams["PREORDER"] != "Y"): ?><?=$arParams["NAV_STRING"]?><? endif;
+	if ($arParams["PREORDER"] != "Y"): ?><?=$arParams["NAV_STRING"]?><?php endif;
 	$iCount = 0;
-	?><!--RCRDLIST_<?=$arParams["ENTITY_XML_ID"]?>--><?
+	?><!--RCRDLIST_<?=$arParams["ENTITY_XML_ID"]?>--><?php
 	$collapsedMessages = 0;
 	$collapsedMessagesBlockIsCollapsed = true;
 	$collapsedMessagesBlock = null;
@@ -323,7 +338,7 @@ else
 				<div class="feed-com-collapsed-block">
 					#COLLAPSED_MESSAGES_BLOCK#
 				</div>
-				</div><?
+				</div><?php
 				$collapsedMessagesBlock = ob_get_clean();
 				ob_start();
 			}
@@ -350,16 +365,16 @@ else
 		$isMessageBlank = !(array_key_exists("POST_MESSAGE_TEXT", $res) && $res["POST_MESSAGE_TEXT"] !== null);
 		$collapsedMessagesBlockIsCollapsed = ($res["NEW"] == "Y" ? false : $collapsedMessagesBlockIsCollapsed);
 		$iCount++;
-		?><div id="record-<?=$arParams["ENTITY_XML_ID"]?>-<?=$res["ID"]?>-cover" <?
-			?>bx-mpl-xml-id="<?=$arParams["ENTITY_XML_ID"]?>" <?
-			?>bx-mpl-entity-id="<?=$res["ID"]?>" <?
-			?>bx-mpl-read-status="<?=(($res["NEW"] == "Y" ? "new" : "old"))?>" <?
-			?>bx-mpl-blank-status="<?=($isMessageBlank ? "blank" : "full")?>" <?
-			?>bx-mpl-block="main" <?
-		?>class="feed-com-block-cover"><?
+		?><div id="record-<?=$arParams["ENTITY_XML_ID"]?>-<?=$res["ID"]?>-cover" <?php
+			?>bx-mpl-xml-id="<?=$arParams["ENTITY_XML_ID"]?>" <?php
+			?>bx-mpl-entity-id="<?=$res["ID"]?>" <?php
+			?>bx-mpl-read-status="<?=(($res["NEW"] == "Y" ? "new" : "old"))?>" <?php
+			?>bx-mpl-blank-status="<?=($isMessageBlank ? "blank" : "full")?>" <?php
+			?>bx-mpl-block="main" <?php
+		?>class="feed-com-block-cover"><?php
 		?><?=$this->__component->parseTemplate($res, $arParams, $template)?>
 		</div>
-	<?
+		<?php
 	}
 	if ($collapsedMessagesBlock !== null)
 	{
@@ -378,14 +393,14 @@ else
 		$collapsedMessages = 0;
 		$collapsedMessagesBlockIsCollapsed = true;
 	}
-	?><!--RCRDLIST_END_<?=$arParams["ENTITY_XML_ID"]?>--><?
-	if ($arParams["PREORDER"] == "Y"): ?><?=$arParams["NAV_STRING"]?><? endif;
+	?><!--RCRDLIST_END_<?=$arParams["ENTITY_XML_ID"]?>--><?php
+	if ($arParams["PREORDER"] == "Y"): ?><?=$arParams["NAV_STRING"]?><?php endif;
 }
-?><div id="record-<?=$prefixNode?>-new"></div><?
+?><div id="record-<?=$prefixNode?>-new"></div><?php
 include_once(__DIR__."/messages.php");
 if ($arParams["SHOW_POST_FORM"] == "Y")
 {
-	?><div id="record-<?=$prefixNode?>-form-holder" style="display:none;"></div><?
+	?><div id="record-<?=$prefixNode?>-form-holder" style="display:none;"></div><?php
 }
 $ajaxParams = [];
 if ($this->__component->__parent instanceof \Bitrix\Main\Engine\Contract\Controllerable)

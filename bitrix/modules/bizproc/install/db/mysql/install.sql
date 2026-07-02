@@ -70,7 +70,7 @@ CREATE TABLE b_bp_workflow_instance (
 	WORKFLOW_RO mediumblob NULL,
 	STARTED datetime NULL,
 	STARTED_BY int NULL,
-	STARTED_EVENT_TYPE tinyint NOT NULL DEFAULT 0,
+	STARTED_EVENT_TYPE smallint NOT NULL DEFAULT 0,
 	STATUS int NULL,
 	MODIFIED datetime NOT NULL,
 	OWNER_ID varchar(32) NULL,
@@ -119,8 +119,8 @@ CREATE TABLE b_bp_task (
 	index ix_bp_tasks_sort(OVERDUE_DATE, MODIFIED),
 	index ix_bp_tasks_wf_ac(WORKFLOW_ID, ACTIVITY),
 	index ix_bp_tasks_wf_od(WORKFLOW_ID, OVERDUE_DATE),
-	index ix_bp_tasks_modified (MODIFIED),
-	index ix_bp_tasks_created (CREATED_DATE)
+	index ix_bp_tasks_modified(MODIFIED),
+	index ix_bp_tasks_created(CREATED_DATE)
 );
 
 CREATE TABLE b_bp_task_user (
@@ -133,7 +133,7 @@ CREATE TABLE b_bp_task_user (
 	primary key (ID),
 	unique ix_bp_task_user(USER_ID, TASK_ID),
 	index ix_bp_task_user_2(TASK_ID),
-	index ix_bp_task_user_3(USER_ID,STATUS)
+	index ix_bp_task_user_3(USER_ID, STATUS)
 );
 
 CREATE TABLE b_bp_history (
@@ -203,16 +203,16 @@ CREATE TABLE b_bp_rest_provider (
 );
 
 CREATE TABLE b_bp_automation_trigger (
-		ID int(18) NOT NULL AUTO_INCREMENT,
-		NAME varchar(255) NOT NULL,
-		CODE varchar(30) NOT NULL,
-		MODULE_ID varchar(32) NOT NULL,
-		ENTITY varchar(64) NOT NULL,
-		DOCUMENT_TYPE varchar(128) NOT NULL,
-		DOCUMENT_STATUS varchar(50) NOT NULL,
-		APPLY_RULES text,
-		PRIMARY KEY (ID),
-		index ix_bp_atm_trigger_1(DOCUMENT_TYPE, DOCUMENT_STATUS)
+	ID int(18) NOT NULL AUTO_INCREMENT,
+	NAME varchar(255) NOT NULL,
+	CODE varchar(30) NOT NULL,
+	MODULE_ID varchar(32) NOT NULL,
+	ENTITY varchar(64) NOT NULL,
+	DOCUMENT_TYPE varchar(128) NOT NULL,
+	DOCUMENT_STATUS varchar(50) NOT NULL,
+	APPLY_RULES text,
+	PRIMARY KEY (ID),
+	index ix_bp_atm_trigger_1(DOCUMENT_TYPE, DOCUMENT_STATUS)
 );
 
 CREATE TABLE b_bp_global_const (
@@ -255,18 +255,18 @@ CREATE TABLE b_bp_script (
 );
 
 CREATE TABLE b_bp_script_queue (
-		ID int NOT NULL auto_increment,
-		SCRIPT_ID INT NOT NULL,
-		STARTED_DATE datetime NULL,
-		STARTED_BY int NULL,
-		STATUS TINYINT UNSIGNED NOT NULL DEFAULT 0,
-		MODIFIED_DATE datetime NOT NULL,
-		MODIFIED_BY int NOT NULL,
-		WORKFLOW_PARAMETERS mediumtext NULL,
-		primary key (ID),
-		index ix_bp_sq_script_id(SCRIPT_ID),
-		index ix_bp_sq_script_id_status(SCRIPT_ID, STATUS),
-		index ix_bp_sq_started_by(STARTED_BY)
+	ID int NOT NULL auto_increment,
+	SCRIPT_ID INT NOT NULL,
+	STARTED_DATE datetime NULL,
+	STARTED_BY int NULL,
+	STATUS TINYINT UNSIGNED NOT NULL DEFAULT 0,
+	MODIFIED_DATE datetime NOT NULL,
+	MODIFIED_BY int NOT NULL,
+	WORKFLOW_PARAMETERS mediumtext NULL,
+	primary key (ID),
+	index ix_bp_sq_script_id(SCRIPT_ID),
+	index ix_bp_sq_script_id_status(SCRIPT_ID, STATUS),
+	index ix_bp_sq_started_by(STARTED_BY)
 );
 
 CREATE TABLE b_bp_script_queue_document (
@@ -341,7 +341,7 @@ CREATE TABLE `b_bp_debugger_session_workflow_context` (
 	`SESSION_ID` varchar(32) NOT NULL,
 	`WORKFLOW_ID` varchar(32) NOT NULL,
 	`TEMPLATE_SHARDS_ID` int NULL,
-	PRIMARY KEY(`ID`)
+	PRIMARY KEY (`ID`)
 );
 
 CREATE TABLE `b_bp_debugger_session_template_shards` (
@@ -350,7 +350,7 @@ CREATE TABLE `b_bp_debugger_session_template_shards` (
 	`SHARDS` mediumblob NULL,
 	`TEMPLATE_TYPE` tinyint unsigned,
 	`MODIFIED` datetime NOT NULL,
-	PRIMARY KEY(`ID`)
+	PRIMARY KEY (`ID`)
 );
 
 CREATE TABLE b_bp_workflow_duration_stat (
@@ -362,8 +362,7 @@ CREATE TABLE b_bp_workflow_duration_stat (
 	index ix_bp_wf_dur_stat_template(TEMPLATE_ID)
 );
 
-CREATE TABLE b_bp_workflow_user
-(
+CREATE TABLE b_bp_workflow_user (
 	USER_ID int NOT NULL DEFAULT 0,
 	WORKFLOW_ID varchar(32) NOT NULL,
 	IS_AUTHOR int NOT NULL DEFAULT 1,
@@ -371,14 +370,13 @@ CREATE TABLE b_bp_workflow_user
 	TASK_STATUS int NOT NULL DEFAULT 0,
 	MODIFIED datetime NOT NULL,
 	primary key (USER_ID, WORKFLOW_ID),
-	index ix_bp_wu_status (USER_ID, WORKFLOW_STATUS, TASK_STATUS, MODIFIED),
-	index ix_bp_wu_my (USER_ID, IS_AUTHOR, TASK_STATUS, MODIFIED),
-	index ix_bp_wu_my_task (USER_ID, TASK_STATUS, MODIFIED),
+	index ix_bp_wu_status(USER_ID, WORKFLOW_STATUS, TASK_STATUS, MODIFIED),
+	index ix_bp_wu_my(USER_ID, IS_AUTHOR, TASK_STATUS, MODIFIED),
+	index ix_bp_wu_my_task(USER_ID, TASK_STATUS, MODIFIED),
 	index ix_bp_wu_wf(WORKFLOW_ID)
 );
 
-CREATE TABLE b_bp_workflow_meta
-(
+CREATE TABLE b_bp_workflow_meta (
 	ID bigint unsigned NOT NULL auto_increment,
 	WORKFLOW_ID varchar(32) NOT NULL,
 	START_DURATION int unsigned,
@@ -386,8 +384,7 @@ CREATE TABLE b_bp_workflow_meta
 	index ix_bp_wf_meta_wf_id(WORKFLOW_ID)
 );
 
-CREATE TABLE b_bp_workflow_filter
-(
+CREATE TABLE b_bp_workflow_filter (
 	WORKFLOW_ID varchar(32) NOT NULL,
 	MODULE_ID varchar(32) NOT NULL,
 	ENTITY varchar(64) NOT NULL,
@@ -401,18 +398,16 @@ CREATE TABLE b_bp_workflow_filter
 	index ix_bp_wf_flt_4(STARTED)
 );
 
-CREATE TABLE b_bp_task_search_content
-(
+CREATE TABLE b_bp_task_search_content (
 	TASK_ID int NOT NULL,
 	WORKFLOW_ID varchar(32) NOT NULL,
 	SEARCH_CONTENT text NOT NULL,
 	primary key (TASK_ID),
 	index ix_bp_task_search_1(WORKFLOW_ID),
-	fulltext index ix_bp_task_search_2 (SEARCH_CONTENT)
+	fulltext index ix_bp_task_search_2(SEARCH_CONTENT)
 );
 
-CREATE TABLE b_bp_workflow_user_comment
-(
+CREATE TABLE b_bp_workflow_user_comment (
 	USER_ID int NOT NULL DEFAULT 0,
 	WORKFLOW_ID varchar(32) NOT NULL,
 	UNREAD_CNT int NOT NULL DEFAULT 0,
@@ -424,19 +419,18 @@ CREATE TABLE b_bp_workflow_user_comment
 	index ix_bp_wuc_ltm(LAST_TYPE, MODIFIED)
 );
 
-CREATE TABLE b_bp_workflow_result(
+CREATE TABLE b_bp_workflow_result (
 	ID int NOT NULL auto_increment,
 	WORKFLOW_ID varchar(32) NOT NULL,
 	ACTIVITY varchar(128) NOT NULL,
 	RESULT text NULL,
 	CREATED_DATE datetime NOT NULL,
 	PRIORITY int not null default 0,
-	KEY ix_bp_r_wf (WORKFLOW_ID),
+	KEY ix_bp_r_wf(WORKFLOW_ID),
 	primary key (ID)
 );
 
-CREATE TABLE b_bp_workflow_template_settings
-(
+CREATE TABLE b_bp_workflow_template_settings (
 	ID int NOT NULL AUTO_INCREMENT,
 	TEMPLATE_ID int NOT NULL,
 	NAME varchar(255) NOT NULL,
@@ -445,44 +439,41 @@ CREATE TABLE b_bp_workflow_template_settings
 	index ix_bp_wf_template_settings_tpl_id(TEMPLATE_ID)
 );
 
-CREATE TABLE b_bp_workflow_template_user_option
-(
+CREATE TABLE b_bp_workflow_template_user_option (
 	ID INT NOT NULL AUTO_INCREMENT,
 	TEMPLATE_ID int NOT NULL,
 	USER_ID int NOT NULL,
 	OPTION_CODE int NOT NULL,
 	PRIMARY KEY (ID),
-	UNIQUE KEY ux_bp_template_user_option (TEMPLATE_ID, USER_ID, OPTION_CODE),
-	INDEX ix_bp_user_option (USER_ID, OPTION_CODE)
+	UNIQUE KEY ux_bp_template_user_option(TEMPLATE_ID, USER_ID, OPTION_CODE),
+	INDEX ix_bp_user_option(USER_ID, OPTION_CODE)
 );
 
-CREATE TABLE b_bp_document_type_user_option
-(
+CREATE TABLE b_bp_document_type_user_option (
 	ID int NOT NULL AUTO_INCREMENT,
 	MODULE_ID varchar(32) NULL,
 	ENTITY varchar(64) NOT NULL,
 	DOCUMENT_TYPE varchar(128) NOT NULL,
 	USER_ID int NOT NULL,
 	OPTION_CODE int NOT NULL,
-	UNIQUE KEY ux_bp_document_type_user_option (MODULE_ID, ENTITY, DOCUMENT_TYPE, USER_ID, OPTION_CODE),
-	KEY ix_bp_document_type_user_option (MODULE_ID, ENTITY, USER_ID, OPTION_CODE),
+	UNIQUE KEY ux_bp_document_type_user_option(MODULE_ID, ENTITY, DOCUMENT_TYPE, USER_ID, OPTION_CODE),
+	KEY ix_bp_document_type_user_option(MODULE_ID, ENTITY, USER_ID, OPTION_CODE),
 	PRIMARY KEY (ID)
 );
 
-CREATE TABLE b_bp_workflow_template_draft
-(
-    ID int NOT NULL AUTO_INCREMENT,
+CREATE TABLE b_bp_workflow_template_draft (
+	ID int NOT NULL AUTO_INCREMENT,
 	MODULE_ID varchar(32) NOT NULL,
 	ENTITY varchar(64) NOT NULL,
 	DOCUMENT_TYPE varchar(128) NOT NULL,
-    TEMPLATE_ID int NULL,
-    TEMPLATE_DATA mediumblob NOT NULL,
+	TEMPLATE_ID int NULL,
+	TEMPLATE_DATA mediumblob NOT NULL,
 	STATUS int NOT NULL DEFAULT 0,
-    USER_ID int NOT NULL,
-    CREATED datetime NOT NULL,
-    PRIMARY KEY (ID),
-    INDEX ix_bp_wf_draft_template (TEMPLATE_ID),
-    INDEX ix_bp_wf_draft_user (USER_ID)
+	USER_ID int NOT NULL,
+	CREATED datetime NOT NULL,
+	PRIMARY KEY (ID),
+	INDEX ix_bp_wf_draft_template(TEMPLATE_ID),
+	INDEX ix_bp_wf_draft_user(USER_ID)
 );
 
 CREATE TABLE b_bp_task_archive (
@@ -493,8 +484,7 @@ CREATE TABLE b_bp_task_archive (
 	INDEX ix_bp_task_archive_wf_id(WORKFLOW_ID)
 );
 
-CREATE TABLE b_bp_task_archive_tasks
-(
+CREATE TABLE b_bp_task_archive_tasks (
 	ID int NOT NULL auto_increment,
 	ARCHIVE_ID int NOT NULL,
 	TASK_ID int NOT NULL,
@@ -505,15 +495,14 @@ CREATE TABLE b_bp_task_archive_tasks
 	INDEX ix_bp_task_archive_tasks_competed_at_archive(COMPLETED_AT, ARCHIVE_ID)
 );
 
-CREATE TABLE b_bp_robot_version_index
-(
+CREATE TABLE b_bp_robot_version_index (
 	ID int NOT NULL AUTO_INCREMENT,
 	ROBOT_CODE varchar(255) NOT NULL,
 	VERSION int NOT NULL,
 	DATE_CHANGED date NOT NULL,
 	PRIMARY KEY (ID),
-	UNIQUE KEY ux_bp_robot_version_index_robot_code (ROBOT_CODE),
-	INDEX ix_bp_robot_version_index_date_changed (DATE_CHANGED)
+	UNIQUE KEY ux_bp_robot_version_index_robot_code(ROBOT_CODE),
+	INDEX ix_bp_robot_version_index_date_changed(DATE_CHANGED)
 );
 
 CREATE TABLE b_bp_workflow_template_trigger (
@@ -525,7 +514,7 @@ CREATE TABLE b_bp_workflow_template_trigger (
 	ENTITY varchar(64) NOT NULL,
 	DOCUMENT_TYPE varchar(128) NOT NULL,
 	PRIMARY KEY (TEMPLATE_ID, TRIGGER_NAME),
-	INDEX ix_bp_wtt_tt (TRIGGER_TYPE),
+	INDEX ix_bp_wtt_tt(TRIGGER_TYPE),
 	INDEX ix_bp_wtt_med(MODULE_ID, ENTITY, DOCUMENT_TYPE)
 );
 
@@ -551,11 +540,10 @@ CREATE TABLE b_bp_workflow_template_section (
 	PATH varchar(255) NULL,
 	DATE_MODIFY datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	PRIMARY KEY (ID),
-	UNIQUE KEY ix_bp_wts_template_section_path (TEMPLATE_ID, SECTION_ID, PATH)
+	UNIQUE KEY ix_bp_wts_template_section_path(TEMPLATE_ID, SECTION_ID, PATH)
 );
 
-CREATE TABLE b_bp_storage_type
-(
+CREATE TABLE b_bp_storage_type (
 	ID int NOT NULL AUTO_INCREMENT,
 	TITLE varchar(255) NOT NULL,
 	CODE varchar(64) NULL,
@@ -565,11 +553,10 @@ CREATE TABLE b_bp_storage_type
 	CREATED_TIME datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	UPDATED_TIME datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 	PRIMARY KEY (ID),
-	UNIQUE INDEX ix_bp_storage_type_code (CODE)
+	UNIQUE INDEX ix_bp_storage_type_code(CODE)
 );
 
-CREATE TABLE b_bp_storage_field
-(
+CREATE TABLE b_bp_storage_field (
 	ID int NOT NULL AUTO_INCREMENT,
 	STORAGE_ID int NOT NULL,
 	CODE varchar(100) NOT NULL,
@@ -581,7 +568,7 @@ CREATE TABLE b_bp_storage_field
 	MANDATORY char(1) NOT NULL DEFAULT 'N',
 	SETTINGS text NULL,
 	PRIMARY KEY (ID),
-	UNIQUE KEY ux_storage_code (STORAGE_ID, CODE)
+	UNIQUE KEY ux_storage_code(STORAGE_ID, CODE)
 );
 
 CREATE TABLE b_bp_storage_record_data (
@@ -597,20 +584,20 @@ CREATE TABLE b_bp_storage_record_data (
 	CREATED_BY int NOT NULL,
 	UPDATED_BY int NOT NULL,
 	PRIMARY KEY (ID),
-	INDEX ix_storage_record_data_time_storage (CREATED_TIME, STORAGE_ID),
-	INDEX ix_storage_record_data_document_storage (DOCUMENT_ID, STORAGE_ID)
+	INDEX ix_storage_record_data_time_storage(CREATED_TIME, STORAGE_ID),
+	INDEX ix_storage_record_data_document_storage(DOCUMENT_ID, STORAGE_ID),
+	INDEX ix_storage_record_data_storage(STORAGE_ID)
 );
 
 CREATE TABLE b_bp_workflow_template_file (
-    ID int NOT NULL auto_increment,
-    TEMPLATE_ID int NOT NULL,
-    FILE_ID int NOT NULL,
-    PRIMARY KEY (ID),
-    UNIQUE KEY ux_bp_wf_template_file_template_id (TEMPLATE_ID, FILE_ID)
+	ID int NOT NULL auto_increment,
+	TEMPLATE_ID int NOT NULL,
+	FILE_ID int NOT NULL,
+	PRIMARY KEY (ID),
+	UNIQUE KEY ux_bp_wf_template_file_template_id(TEMPLATE_ID, FILE_ID)
 );
 
-CREATE TABLE `b_bp_messenger_workflow_start_message`
-(
+CREATE TABLE `b_bp_messenger_workflow_start_message` (
 	`ID` int NOT NULL AUTO_INCREMENT,
 	`QUEUE_ID` varchar(255) NOT NULL,
 	`ITEM_ID` varchar(255),
@@ -621,13 +608,12 @@ CREATE TABLE `b_bp_messenger_workflow_start_message`
 	`TTL` int NOT NULL,
 	`AVAILABLE_AT` datetime NOT NULL,
 	`STATUS` varchar(255) NOT NULL,
-	PRIMARY KEY(`ID`),
-	INDEX IX_QUEUE_ID_STATUS_AVAILABLE_AT (`QUEUE_ID`, `STATUS`, `AVAILABLE_AT`),
-	INDEX IX_STATUS_AVAILABLE_AT (`STATUS`, `UPDATED_AT`)
+	PRIMARY KEY (`ID`),
+	INDEX IX_QUEUE_ID_STATUS_AVAILABLE_AT(`QUEUE_ID`, `STATUS`, `AVAILABLE_AT`),
+	INDEX IX_STATUS_AVAILABLE_AT(`STATUS`, `UPDATED_AT`)
 );
 
-CREATE TABLE `b_bp_messenger_workflow_resume_message`
-(
+CREATE TABLE `b_bp_messenger_workflow_resume_message` (
 	`ID` bigint NOT NULL AUTO_INCREMENT,
 	`QUEUE_ID` varchar(255) NOT NULL,
 	`ITEM_ID` varchar(255),
@@ -642,3 +628,74 @@ CREATE TABLE `b_bp_messenger_workflow_resume_message`
 	INDEX IX_QUEUE_ID_AVAILABLE_AT(`QUEUE_ID`, `AVAILABLE_AT`)
 );
 
+CREATE TABLE b_bp_workflow_template_user_data (
+	ID bigint NOT NULL AUTO_INCREMENT,
+	TEMPLATE_ID int NOT NULL,
+	ENTITY_ID varchar(50) NOT NULL,
+	TYPE varchar(50) NOT NULL,
+	NAME varchar(100) NOT NULL,
+	VALUE varchar(255) NOT NULL,
+	PRIMARY KEY (ID),
+	INDEX ix_bp_wf_tpl_ud_type_entity_name (TYPE, ENTITY_ID, NAME),
+	INDEX ix_bp_wf_tpl_ud_tpl_type (TEMPLATE_ID, TYPE)
+);
+
+CREATE TABLE b_bp_debug (
+	ID bigint NOT NULL auto_increment,
+	USER_ID int NOT NULL,
+	TEMPLATE_ID int NOT NULL,
+	MODULE_ID varchar(32) NULL,
+	ENTITY varchar(64) NULL,
+	DOCUMENT_ID varchar(128) NULL,
+	ENABLED char(1) NOT NULL DEFAULT 'Y',
+	CREATED_AT datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	UPDATED_AT datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+	PRIMARY KEY (ID),
+	INDEX IX_BP_DEBUG_USER_ID(USER_ID),
+	INDEX IX_BP_DEBUG_USER_TEMPLATE_ID(USER_ID, TEMPLATE_ID)
+);
+
+CREATE TABLE b_bp_debug_session (
+	ID bigint NOT NULL auto_increment,
+	DEBUG_ID bigint NOT NULL,
+	USER_ID int NOT NULL,
+	MODULE_ID varchar(32) NULL,
+	ENTITY varchar(64) NULL,
+	DOCUMENT_ID varchar(128) NULL,
+	WORKFLOW_ID varchar(32) NULL,
+	TEMPLATE_ID int NULL,
+	START_TIME decimal(16, 6) NOT NULL,
+	END_TIME decimal(16, 6) NULL,
+	METADATA text NULL,
+	LOGS text NULL,
+	METRICS text NULL,
+	CREATED_AT datetime NOT NULL,
+	UPDATED_AT datetime NOT NULL,
+	PRIMARY KEY (ID)
+);
+
+CREATE TABLE b_bp_debug_trace (
+	ID bigint NOT NULL auto_increment,
+	DEBUG_SESSION_ID bigint NOT NULL,
+	`KEY` varchar(255) NOT NULL,
+	TYPE varchar(50) NOT NULL,
+	MESSAGE varchar(255) NULL,
+	DATA text NULL,
+	CONTEXT text NULL,
+	TIMESTAMP decimal(16, 6) NOT NULL,
+	CREATED_AT datetime NOT NULL,
+	PRIMARY KEY (ID),
+	KEY IX_BP_DEBUG_SESSION_ID(DEBUG_SESSION_ID)
+);
+
+CREATE TABLE b_bp_storage_record_field (
+	ID bigint NOT NULL AUTO_INCREMENT,
+	RECORD_ID bigint NOT NULL,
+	FIELD_ID int NOT NULL,
+	VALUE text NOT NULL,
+	VALUE_NUM decimal(18,4) DEFAULT NULL,
+	PRIMARY KEY (ID),
+	INDEX ix_storage_record_field_record_field (RECORD_ID, FIELD_ID),
+	INDEX ix_storage_record_field_value_record (FIELD_ID, VALUE(100), RECORD_ID),
+	INDEX ix_storage_record_field_num_record (FIELD_ID, VALUE_NUM, RECORD_ID)
+);

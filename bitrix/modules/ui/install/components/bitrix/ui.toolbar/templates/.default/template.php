@@ -37,6 +37,7 @@ if (!$toolbar->isEnabled())
 	'ui.icon-set.api.core',
 	'ui.icon-set.main',
 	'ui.design-tokens.air',
+	'ui.hint',
 ]);
 
 $filter = $toolbar->getFilter();
@@ -62,7 +63,7 @@ if (mb_strlen($favoriteUrl) <= 0)
 	$favoriteUrl = $APPLICATION->getProperty('FavoriteUrl', '');
 }
 
-$favoriteStar = $toolbar->hasFavoriteStar()? '<span class="ui-toolbar-star ui-icon-set__scope" id="uiToolbarStar" data-bx-title-template="' . htmlspecialcharsbx($favoriteTitleTemplate) . '" data-bx-url="' . htmlspecialcharsbx($favoriteUrl) . '"></span>' : '';
+$favoriteStar = $toolbar->hasFavoriteStar()? '<button type="button" class="ui-toolbar-star ui-icon-set__scope" id="uiToolbarStar" data-bx-title-template="' . htmlspecialcharsbx($favoriteTitleTemplate) . '" data-bx-url="' . htmlspecialcharsbx($favoriteUrl) . '"><i class="ui-toolbar-star-btn-icon"></i></button>' : '';
 
 $title = $toolbar->getTitle(false, true);
 $title = $toolbar->hasEditableTitle()
@@ -91,6 +92,7 @@ $titleStyles = !empty($titleProps) ? ' style="'.$titleProps.'"' : "";
 
 $airDesignClassnameModifier = $arResult['USE_AIR_DESIGN'] ? '--air' : '';
 
+$fullscreenButtonHtml = '';
 $copyLinkButtonHtml = '';
 
 $copyLinkButton = $toolbar->getCopyLinkButton();
@@ -108,6 +110,19 @@ if (is_null($copyLinkButton) === false)
 	<div class="ui-toolbar-copy-link-button-icon ui-icon-set $iconHoverableModifier"></div>
 </button>
 HTML;
+}
+
+if ($toolbar->hasFullscreenButton())
+{
+	$focusModeHint = (string)Loc::getMessage('UI_TOOLBAR_FOCUS_MODE_HINT');
+	$hintAttrs = '';
+	if ($focusModeHint !== '')
+	{
+		$escapedHint = htmlspecialcharsbx($focusModeHint);
+		$hintAttrs = ' data-hint-no-icon data-hint="' . $escapedHint . '" aria-label="' . $escapedHint . '"';
+	}
+
+	$fullscreenButtonHtml = '<button' . $hintAttrs . ' class="ui-toolbar-fullscreen ui-icon-set__scope" id="uiToolbarFullscreen" aria-pressed="false"><i class="ui-toolbar-fullscreen-btn-icon"></i></button>';
 }
 
 $editTitleButton = '';
@@ -176,6 +191,8 @@ $noShrinkTitleModifier = $toolbar->isTitleNoShrink() ? '--no-shrink' : '';
 					echo $favoriteStar;
 				}
 
+				echo $fullscreenButtonHtml;
+
 				if($toolbar->hasEditableTitle()): ?>
 					<div id="ui-toolbar-title-edit-result-buttons" class="ui-toolbar-title-edit-result-buttons">
 						<?= $saveTitleEditButton->render() ?>
@@ -241,6 +258,7 @@ $noShrinkTitleModifier = $toolbar->isTitleNoShrink() ? '--no-shrink' : '';
 		UI_TOOLBAR_ITEM_WAS_DELETED_FROM_LEFT: '<?= GetMessageJS('UI_TOOLBAR_ITEM_WAS_DELETED_FROM_LEFT') ?>',
 		UI_TOOLBAR_STAR_TITLE_DEFAULT_PAGE: '<?= GetMessageJS('UI_TOOLBAR_STAR_TITLE_DEFAULT_PAGE') ?>',
 		UI_TOOLBAR_STAR_TITLE_DEFAULT_PAGE_DELETE_ERROR: '<?= GetMessageJS('UI_TOOLBAR_STAR_TITLE_DEFAULT_PAGE_DELETE_ERROR') ?>',
+		UI_TOOLBAR_FOCUS_MODE_HINT: '<?= GetMessageJS('UI_TOOLBAR_FOCUS_MODE_HINT') ?>',
 	});
 
 	BX.UI.ToolbarManager.create(Object.assign(<?=\Bitrix\Main\Web\Json::encode([
@@ -255,6 +273,7 @@ $noShrinkTitleModifier = $toolbar->isTitleNoShrink() ? '--no-shrink' : '';
 			'defaultTitle' => $toolbar->getDefaultEditableTitle(),
 			'active' => $toolbar->hasEditableTitle(),
 		],
+		"fullscreenButton" => $toolbar->hasFullscreenButton(),
 	])?>,
 		{
 			target: document.getElementById('<?=$arResult["CONTAINER_ID"]?>')

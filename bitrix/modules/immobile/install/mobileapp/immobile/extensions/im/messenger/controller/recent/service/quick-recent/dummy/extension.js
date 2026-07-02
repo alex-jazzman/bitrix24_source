@@ -24,6 +24,16 @@ jn.define('im/messenger/controller/recent/service/quick-recent/dummy', (require,
 		{
 			this.logger.log('save');
 		}
+
+		subscribeEvents()
+		{
+			this.logger.log('subscribeEvents');
+		}
+
+		unsubscribeEvents()
+		{
+			this.logger.log('unsubscribeEvents');
+		}
 	}
 
 	module.exports = DummyQuickRecent;

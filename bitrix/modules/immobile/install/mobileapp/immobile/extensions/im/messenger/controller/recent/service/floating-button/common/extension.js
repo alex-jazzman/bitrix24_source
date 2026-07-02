@@ -81,6 +81,16 @@ jn.define('im/messenger/controller/recent/service/floating-button/common', (requ
 			;
 		}
 
+		unsubscribeEvents()
+		{
+			this.recentLocator.get('emitter')
+				.off(
+					RecentEventType.render.itemCollectionSizeChanged,
+					this.itemCollectionSizeChangedHandler,
+				)
+			;
+		}
+
 		redraw()
 		{
 			const size = this.recentLocator.get('render').getItemCollectionSize();

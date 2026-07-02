@@ -1,4 +1,5 @@
 import 'ui.notification';
+import { type EventEmitter } from 'main.core.events';
 
 import { Messenger } from 'im.public';
 import { ChatType, Layout, UserRole, ErrorCode, PromoId } from 'im.v2.const';
@@ -9,7 +10,7 @@ import { Utils } from 'im.v2.lib.utils';
 import { ChannelManager } from 'im.v2.lib.channel';
 import { PromoManager } from 'im.v2.lib.promo';
 import { ChatService } from 'im.v2.provider.service.chat';
-import { BaseChatContent } from 'im.v2.component.content.elements';
+import { BaseChatContent, BaseEmptyState as EmptyState } from 'im.v2.component.content.elements';
 
 import { ChannelContent } from '../../content/channel/channel';
 import { CollabContent } from '../../content/collab/collab';
@@ -18,7 +19,6 @@ import { SelfChatContent } from '../../content/self-chat/self-chat';
 import { CopilotContent } from '../../content/copilot/copilot';
 import { AiAssistantBotContent } from '../../content/ai-assistant-bot/ai-assistant-bot';
 import { TaskCommentsContent } from '../../content/task-comments/task-comments';
-import { BaseEmptyState as EmptyState } from './components/empty-state/base/base';
 import { ChannelEmptyState } from './components/empty-state/channel';
 import { EmbeddedChatPromoEmptyState } from './components/empty-state/chat/embedded-promo';
 import { EmbeddedChatEmptyState } from './components/empty-state/chat/embedded';
@@ -166,6 +166,7 @@ export const ChatOpener = {
 		dialogId(newValue, oldValue)
 		{
 			Logger.warn(`ChatContent: switching from ${oldValue || 'empty'} to ${newValue}`);
+
 			this.onChatChange();
 		},
 	},
@@ -285,6 +286,10 @@ export const ChatOpener = {
 			}
 
 			return this.userService;
+		},
+		getEmitter(): EventEmitter
+		{
+			return this.$Bitrix.eventEmitter;
 		},
 		loc(phraseCode: string): string
 		{

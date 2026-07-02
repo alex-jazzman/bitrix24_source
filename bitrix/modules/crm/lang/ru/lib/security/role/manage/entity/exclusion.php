@@ -1,3 +1,3 @@
 <?php
 
-$MESS["CRM_SECURITY_ROLE_ENTITY_TYPE_EXCLUSION"] = "Список исключений";
+$MESS["CRM_SECURITY_ROLE_ENTITY_TYPE_EXCLUSION"] = "Стоп-лист";

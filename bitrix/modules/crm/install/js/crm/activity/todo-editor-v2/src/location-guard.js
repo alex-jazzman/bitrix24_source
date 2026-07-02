@@ -1,0 +1,1 @@
+BX.Location = BX.Location || {};

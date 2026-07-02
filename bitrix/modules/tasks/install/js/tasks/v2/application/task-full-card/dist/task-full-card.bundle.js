@@ -2,20 +2,141 @@
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
-(function (exports,main_sidepanel,ui_vue3_mixins_locMixin,ui_system_skeleton,tasks_v2_lib_analytics,tasks_v2_component_elements_fieldList,tasks_v2_component_elements_contentResizer,tasks_v2_component_dropZone,tasks_v2_component_entityText,tasks_v2_component_userFieldsSlider,tasks_v2_component_fields_description,tasks_v2_component_fields_creator,tasks_v2_component_fields_responsible,tasks_v2_component_fields_deadline,tasks_v2_component_fields_status,tasks_v2_component_fields_files,tasks_v2_component_fields_checkList,tasks_v2_component_fields_group,tasks_v2_component_fields_flow,tasks_v2_component_fields_accomplices,tasks_v2_component_fields_auditors,tasks_v2_component_fields_tags,tasks_v2_component_fields_crm,tasks_v2_component_fields_datePlan,tasks_v2_component_fields_timeTracking,tasks_v2_component_fields_subTasks,tasks_v2_component_fields_parentTask,tasks_v2_component_fields_relatedTasks,tasks_v2_component_fields_gantt,tasks_v2_component_fields_results,tasks_v2_component_fields_reminders,tasks_v2_component_fields_replication,tasks_v2_component_fields_email,tasks_v2_component_fields_userFields,tasks_v2_component_fields_placements,tasks_v2_component_fields_createdDate,tasks_v2_provider_service_fileService,tasks_v2_provider_service_deadlineService,tasks_v2_provider_service_timeTrackingService,tasks_v2_component_fields_title,tasks_v2_component_fields_importance,ui_notificationManager,tasks_v2_provider_service_resultService,tasks_v2_lib_highlighter,ui_system_chip_vue,tasks_v2_core,tasks_v2_component_addTaskButton,ui_vue3,ui_system_skeleton_vue,tasks_v2_lib_ahaMoments,tasks_v2_component_markTaskButton,main_core_events,ui_vue3_vuex,ui_system_menu_vue,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_application_taskCard,tasks_v2_const,tasks_v2_lib_userSelectorDialog,tasks_v2_lib_showLimit,tasks_v2_lib_idUtils,tasks_v2_provider_service_taskService,tasks_v2_provider_service_templateService,tasks_v2_provider_service_statusService,ui_vue3_components_button,ui_vue3_directives_hint,ui_system_typography_vue,tasks_v2_component_elements_hint,main_core,ui_dialogs_messagebox) {
+(function (exports,main_sidepanel,ui_vue3_mixins_locMixin,ui_system_skeleton,tasks_v2_lib_analytics,tasks_v2_component_elements_fieldList,tasks_v2_component_elements_contentResizer,tasks_v2_component_dropZone,tasks_v2_component_entityText,tasks_v2_component_userFieldsSlider,tasks_v2_component_fields_description,tasks_v2_component_fields_creator,tasks_v2_component_fields_responsible,tasks_v2_component_fields_deadline,tasks_v2_component_fields_status,tasks_v2_component_fields_files,tasks_v2_component_fields_checkList,tasks_v2_component_fields_group,tasks_v2_component_fields_flow,tasks_v2_component_fields_accomplices,tasks_v2_component_fields_auditors,tasks_v2_component_fields_tags,tasks_v2_component_fields_crm,tasks_v2_component_fields_datePlan,tasks_v2_component_fields_timeTracking,tasks_v2_component_fields_subTasks,tasks_v2_component_fields_parentTask,tasks_v2_component_fields_relatedTasks,tasks_v2_component_fields_gantt,tasks_v2_component_fields_results,tasks_v2_component_fields_reminders,tasks_v2_component_fields_replication,tasks_v2_component_fields_email,tasks_v2_component_fields_userFields,tasks_v2_component_fields_placements,tasks_v2_component_fields_createdDate,tasks_v2_provider_service_fileService,tasks_v2_provider_service_deadlineService,tasks_v2_provider_service_timeTrackingService,tasks_v2_component_fields_title,tasks_v2_component_fields_importance,tasks_v2_component_tasksEntityPicker,ui_notificationManager,ui_vue3_components_popup,tasks_v2_provider_service_resultService,tasks_v2_lib_highlighter,ui_system_chip_vue,tasks_v2_core,tasks_v2_component_addTaskButton,ui_vue3,ui_system_skeleton_vue,tasks_v2_component_tasksUserActionsDemonstrator,tasks_v2_component_elements_hoverPill,tasks_v2_component_markTaskButton,tasks_v2_lib_ahaMoments,tasks_v2_provider_service_viewersService,main_core_events,ui_vue3_vuex,ui_system_menu_vue,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_application_taskCard,tasks_v2_const,tasks_v2_lib_userSelectorDialog,tasks_v2_lib_showLimit,tasks_v2_lib_idUtils,tasks_v2_provider_service_taskService,tasks_v2_provider_service_templateService,tasks_v2_provider_service_statusService,ui_vue3_components_button,ui_vue3_directives_hint,ui_system_typography_vue,tasks_v2_component_elements_hint,main_core,ui_dialogs_messagebox) {
 	'use strict';
 
-	const sectionPersonal = 'sectionPersonal';
-	const sectionTasks = 'sectionTasks';
-	const sectionCopy = 'sectionCopy';
-	const sectionLinks = 'sectionLinks';
+	// @vue/component
+	const TasksControlPanel = {
+	  name: 'TasksControlPanel',
+	  template: `
+		<div class="tasks-control-panel">
+			<div class="tasks-control-panel__bg"></div>
+			<div class="tasks-control-panel__content">
+				<slot />
+			</div>
+		</div>
+	`
+	};
 
 	// @vue/component
-	const BurgerMenu = {
-	  name: 'TaskFullCardBurgerMenu',
+	const TasksControlPanelSection = {
+	  name: 'TasksControlPanelSection',
 	  components: {
+	    BIcon: ui_iconSet_api_vue.BIcon
+	  },
+	  props: {
+	    controlItems: {
+	      type: Array,
+	      default: () => []
+	    }
+	  },
+	  setup() {
+	    return {
+	      Outline: ui_iconSet_api_vue.Outline
+	    };
+	  },
+	  template: `
+		<div class="tasks-control-panel-section">
+			<div class="tasks-control-panel-section__bg"></div>
+			<div class="tasks-control-panel-section__content">
+				<slot />
+				<ul class="tasks-control-panel-section__list">
+					<li v-for="controlItem in controlItems" class="tasks-control-panel-section__item">
+						<button
+							class="tasks-control-panel-section__item-action"
+							:disabled="controlItem.isDisabled || controlItem.isLocked"
+							@click="controlItem.handleClickItem"
+						>
+							<div v-if="controlItem.isLocked" class="tasks-control-panel-section__item-action-status">
+								<BIcon
+									class="tasks-control-panel-section__item-action-status-icon"
+									:name="Outline.LOCK_L"
+								/>
+							</div>
+							<div class="tasks-control-panel-section__item-vis">
+								<BIcon
+									class="tasks-control-panel-section__item-vis-icon"
+									:name="controlItem.icon"
+								/>
+							</div>
+							<p class="tasks-control-panel-section__item-text">{{ controlItem.title }}</p>
+						</button>
+					</li>
+				</ul>
+			</div>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const TasksControlPanelMenu = {
+	  name: 'TasksControlPanelMenu',
+	  components: {
+	    BIcon: ui_iconSet_api_vue.BIcon
+	  },
+	  props: {
+	    menuItems: {
+	      type: Array,
+	      default: () => []
+	    }
+	  },
+	  setup() {
+	    return {
+	      Outline: ui_iconSet_api_vue.Outline
+	    };
+	  },
+	  template: `
+		<div class="tasks-control-panel-menu">
+			<div class="tasks-control-panel-menu__bg"></div>
+			<div class="tasks-control-panel-menu__content">
+				<ul class="tasks-control-panel-menu__list">
+					<li
+						v-for="menuItem in menuItems"
+						class="tasks-control-panel-menu__item"
+						:class="menuItem.className"
+					>
+						<button
+							class="tasks-control-panel-menu__action"
+							:class="{'tasks-control-panel-menu__action_active': menuItem.isActive}"
+							:id="menuItem.id"
+							@click="menuItem.handleClickItem"
+						>
+							<div class="tasks-control-panel-menu__action-bg"></div>
+							<div class="tasks-control-panel-menu__action-content">
+								<div class="tasks-control-panel-menu__action-text">
+									<BIcon
+										class="tasks-control-panel-menu__action-text-icon"
+										:name="menuItem.icon"
+									/>
+									<span class="tasks-control-panel-menu__action-text-title">{{ menuItem.title }}</span>
+								</div>
+								<div class="tasks-control-panel-menu__action-vis">
+									<BIcon
+										class="tasks-control-panel-menu__action-vis-icon"
+										:name="Outline.CHEVRON_RIGHT_M"
+									/>
+								</div>
+							</div>
+						</button>
+					</li>
+				</ul>
+			</div>
+		</div>
+	`
+	};
+
+	const templatePickerOpenerId = 'templatePickerOpener';
+
+	// @vue/component
+	const ControlPanel = {
+	  name: 'TaskFullCardControlPanel',
+	  components: {
+	    Popup: ui_vue3_components_popup.Popup,
 	    BIcon: ui_iconSet_api_vue.BIcon,
-	    BMenu: ui_system_menu_vue.BMenu
+	    TasksControlPanel,
+	    TasksControlPanelSection,
+	    TasksControlPanelMenu,
+	    TasksEntityPicker: tasks_v2_component_tasksEntityPicker.TasksEntityPicker
 	  },
 	  inject: {
 	    task: {},
@@ -24,73 +145,79 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  },
 	  setup() {
 	    return {
+	      Main: ui_iconSet_api_vue.Main,
 	      Outline: ui_iconSet_api_vue.Outline,
+	      Solid: ui_iconSet_api_vue.Solid,
 	      userRights: tasks_v2_core.Core.getParams().rights
 	    };
 	  },
 	  data() {
 	    return {
-	      isMenuShown: false
+	      intervalAutoHideWorkaround: null,
+	      isControlPanelOpened: false,
+	      isTemplatesPickerOpened: false,
+	      popupOpenerTemplatesPicker: null
 	    };
 	  },
 	  computed: {
 	    ...ui_vue3_vuex.mapGetters({
 	      currentUserId: `${tasks_v2_const.Model.Interface}/currentUserId`
 	    }),
-	    menuOptions() {
-	      return () => ({
-	        id: 'tasks-full-card-header-burger-menu',
-	        bindElement: this.$refs.container,
-	        sections: [{
-	          code: sectionPersonal
-	        }, {
-	          code: sectionTasks
-	        }, {
-	          code: sectionCopy
-	        }, {
-	          code: sectionLinks
-	        }],
-	        items: this.menuItems
-	      });
-	    },
-	    menuItems() {
-	      return [this.task.rights.favorite && this.getFavoriteItem(), this.task.rights.watch && this.getWatchItem(), this.task.rights.mute && this.getMuteItem(), this.userRights.tasks.create && this.getCreateNewTaskItem(), this.task.rights.createSubtask && this.getCreateSubtaskItem(), this.task.rights.copy && this.getCreateTaskCopyItem(), this.userRights.tasks.createFromTemplate && this.getCreateNewTaskWithTemplateItem(), false && this.task.rights.saveAsTemplate && this.getCreateTemplateFromTaskItem(),
-	      // TODO: handle later
-	      this.getCopyTaskIdItem(), this.getGoToBitrixMarketItem(), this.userRights.tasks.robot && this.getGoToRobotsItem()].filter(item => item);
-	    },
 	    isStakeholderLocked() {
 	      return !tasks_v2_core.Core.getParams().restrictions.stakeholder.available;
-	    }
-	  },
-	  methods: {
-	    getFavoriteItem() {
-	      const favor = {
-	        title: this.loc('TASKS_V2_TASK_FULL_CARD_FAVOR_ACTION'),
-	        icon: ui_iconSet_api_vue.Outline.FAVORITE,
-	        successNotification: this.loc('TASKS_V2_TASK_FULL_CARD_FAVOR_NOTIF_SUCC'),
-	        failNotification: this.loc('TASKS_V2_TASK_FULL_CARD_FAVOR_NOTIF_FAIL')
-	      };
-	      const unFavor = {
-	        title: this.loc('TASKS_V2_TASK_FULL_CARD_UNFAVOR_ACTION'),
-	        icon: ui_iconSet_api_vue.Outline.NON_FAVORITE,
-	        successNotification: this.loc('TASKS_V2_TASK_FULL_CARD_UNFAVOR_NOTIF_SUCC'),
-	        failNotification: this.loc('TASKS_V2_TASK_FULL_CARD_UNFAVOR_NOTIF_FAIL')
-	      };
-	      const action = this.task.isFavorite ? unFavor : favor;
+	    },
+	    isInnerPopupOpened() {
+	      return Boolean(this.isTemplatesPickerOpened);
+	    },
+	    isSelfHideEnabled() {
+	      return !this.isInnerPopupOpened;
+	    },
+	    optionsPopupControlPanel() {
+	      const popupWidth = 340;
 	      return {
-	        sectionCode: sectionPersonal,
-	        title: action.title,
-	        icon: action.icon,
-	        onClick: async () => {
-	          const isSuccess = await tasks_v2_provider_service_taskService.taskService.setFavorite(this.taskId, !this.task.isFavorite);
-	          ui_notificationManager.Notifier.notifyViaBrowserProvider({
-	            id: 'task-notify-favorite',
-	            text: isSuccess ? action.successNotification : action.failNotification
-	          });
+	        bindElement: this.$refs.controlPanelOpener,
+	        className: 'tasks-full-card-header__control-panel-popup',
+	        width: popupWidth,
+	        offsetTop: 10,
+	        offsetLeft: 10 + this.$refs.controlPanelOpener.offsetWidth - popupWidth
+	      };
+	    },
+	    optionsPopupTemplatesPicker() {
+	      const openerElement = this.popupOpenerTemplatesPicker;
+	      const openerWidth = openerElement ? openerElement.offsetWidth : 0;
+	      const openerHeight = openerElement ? openerElement.offsetHeight : 0;
+	      return {
+	        positioning: {
+	          elementAnchor: openerElement,
+	          offsetVertical: openerHeight * -1 - 10,
+	          offsetHorizontal: openerWidth + 5
 	        }
 	      };
 	    },
-	    getWatchItem() {
+	    optionsTemplatesPicker() {
+	      const popupWidth = 385;
+	      const popupHeight = 385;
+	      return {
+	        context: 'tasks-card',
+	        width: popupWidth,
+	        height: popupHeight,
+	        autoHide: false,
+	        closeByEsc: false,
+	        multiple: false,
+	        enableSearch: true,
+	        dropdownMode: true,
+	        entities: [{
+	          id: tasks_v2_const.EntitySelectorEntity.TemplateCommon,
+	          options: {
+	            isFullListOpenable: true
+	          }
+	        }],
+	        popupOptions: {
+	          className: 'popup-window_entity-picker-no-check'
+	        }
+	      };
+	    },
+	    itemToggleWatch() {
 	      const watch = {
 	        title: this.loc('TASKS_V2_TASK_FULL_CARD_BECOME_AUDITOR_ACTION'),
 	        icon: ui_iconSet_api_vue.Outline.OBSERVER,
@@ -109,11 +236,11 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      };
 	      const action = this.task.auditorsIds.includes(this.currentUserId) ? unWatch : watch;
 	      return {
-	        sectionCode: sectionPersonal,
 	        title: action.title,
 	        icon: action.icon,
 	        isLocked: this.isStakeholderLocked,
-	        onClick: async () => {
+	        isDisabled: !this.task.rights.watch,
+	        handleClickItem: async () => {
 	          var _result$action$endpoi;
 	          if (this.isStakeholderLocked) {
 	            void tasks_v2_lib_showLimit.showLimit({
@@ -133,7 +260,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        }
 	      };
 	    },
-	    getMuteItem() {
+	    itemToggleNotification() {
 	      const mute = {
 	        title: this.loc('TASKS_V2_TASK_FULL_CARD_MUTE_ACTION'),
 	        icon: ui_iconSet_api_vue.Outline.SOUND_OFF,
@@ -150,10 +277,10 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      };
 	      const action = this.task.isMuted ? unMute : mute;
 	      return {
-	        sectionCode: sectionPersonal,
 	        title: action.title,
 	        icon: action.icon,
-	        onClick: async () => {
+	        isDisabled: !this.task.rights.mute,
+	        handleClickItem: async () => {
 	          const isSuccess = await tasks_v2_provider_service_taskService.taskService.setMute(this.taskId, !this.task.isMuted);
 	          ui_notificationManager.Notifier.notifyViaBrowserProvider({
 	            id: 'task-notify-mute',
@@ -163,128 +290,156 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        }
 	      };
 	    },
-	    getCreateNewTaskItem() {
+	    itemToggleFavor() {
+	      const favor = {
+	        title: this.loc('TASKS_V2_TASK_FULL_CARD_FAVOR_ACTION'),
+	        icon: ui_iconSet_api_vue.Outline.FAVORITE,
+	        successNotification: this.loc('TASKS_V2_TASK_FULL_CARD_FAVOR_NOTIF_SUCC'),
+	        failNotification: this.loc('TASKS_V2_TASK_FULL_CARD_FAVOR_NOTIF_FAIL')
+	      };
+	      const unFavor = {
+	        title: this.loc('TASKS_V2_TASK_FULL_CARD_UNFAVOR_ACTION'),
+	        icon: ui_iconSet_api_vue.Outline.NON_FAVORITE,
+	        successNotification: this.loc('TASKS_V2_TASK_FULL_CARD_UNFAVOR_NOTIF_SUCC'),
+	        failNotification: this.loc('TASKS_V2_TASK_FULL_CARD_UNFAVOR_NOTIF_FAIL')
+	      };
+	      const action = this.task.isFavorite ? unFavor : favor;
 	      return {
-	        sectionCode: sectionTasks,
+	        title: action.title,
+	        icon: action.icon,
+	        isDisabled: !this.task.rights.favorite,
+	        handleClickItem: async () => {
+	          const isSuccess = await tasks_v2_provider_service_taskService.taskService.setFavorite(this.taskId, !this.task.isFavorite);
+	          ui_notificationManager.Notifier.notifyViaBrowserProvider({
+	            id: 'task-notify-favorite',
+	            text: isSuccess ? action.successNotification : action.failNotification
+	          });
+	        }
+	      };
+	    },
+	    itemCreationTaskNew() {
+	      return {
 	        title: this.loc('TASKS_V2_TASK_FULL_CARD_CREATE_STANDALONE_TASK'),
 	        icon: ui_iconSet_api_vue.Outline.TASK,
-	        onClick: () => tasks_v2_application_taskCard.TaskCard.showCompactCard({
-	          groupId: this.task.groupId,
-	          analytics: this.getAnalytics()
-	        })
+	        handleClickItem: () => {
+	          this.isControlPanelOpened = false;
+	          tasks_v2_application_taskCard.TaskCard.showCompactCard({
+	            groupId: this.task.groupId,
+	            analytics: this.getAnalytics()
+	          });
+	        }
 	      };
 	    },
-	    getCreateSubtaskItem() {
+	    itemCreationSubtask() {
 	      return {
-	        sectionCode: sectionTasks,
 	        title: this.loc('TASKS_V2_TASK_FULL_CARD_CREATE_SUBTASK'),
 	        icon: ui_iconSet_api_vue.Outline.RELATED_TASKS,
-	        onClick: () => tasks_v2_application_taskCard.TaskCard.showCompactCard({
-	          groupId: this.task.groupId,
-	          parentId: this.taskId,
-	          analytics: this.getAnalytics(tasks_v2_const.Analytics.Element.ContextMenuSubtask)
-	        })
+	        handleClickItem: () => {
+	          this.isControlPanelOpened = false;
+	          tasks_v2_application_taskCard.TaskCard.showCompactCard({
+	            groupId: this.task.groupId,
+	            parentId: this.taskId,
+	            analytics: this.getAnalytics(tasks_v2_const.Analytics.Element.ContextMenuSubtask)
+	          });
+	        }
 	      };
 	    },
-	    getCreateTaskCopyItem() {
+	    itemCreationTaskCopy() {
 	      return {
-	        sectionCode: sectionTasks,
 	        title: this.loc('TASKS_V2_TASK_FULL_CARD_CREATE_TASK_COPY'),
 	        icon: ui_iconSet_api_vue.Outline.DUPLICATE,
-	        onClick: () => tasks_v2_application_taskCard.TaskCard.showFullCard({
+	        handleClickItem: () => tasks_v2_application_taskCard.TaskCard.showFullCard({
 	          copiedFromId: this.taskId,
 	          analytics: this.getAnalytics()
 	        })
 	      };
 	    },
-	    getCreateNewTaskWithTemplateItem() {
+	    itemCreationTaskNewWithTemplate() {
 	      return {
-	        sectionCode: sectionTasks,
+	        id: templatePickerOpenerId,
 	        title: this.loc('TASKS_V2_TASK_FULL_CARD_CREATE_STANDALONE_TASK_WITH_TEMPLATE'),
-	        icon: ui_iconSet_api_vue.Outline.CHEVRON_RIGHT_L,
-	        onClick: () => {
-	          // TODO: change to new template creation page when it will be ready
-	          BX.SidePanel.Instance.open(`/company/personal/user/${this.currentUserId}/tasks/templates/`, {
-	            newWindowLabel: false,
-	            copyLinkLabel: false
-	          });
-	        }
+	        icon: ui_iconSet_api_vue.Outline.TEMPLATE_TASK,
+	        handleClickItem: this.handleClickTemplatesPickerOpener,
+	        isActive: this.isTemplatesPickerOpened
 	      };
 	    },
-	    getCreateTemplateFromTaskItem() {
+	    itemCreationTemplateFromTask() {
 	      return {
-	        sectionCode: sectionTasks,
 	        title: this.loc('TASKS_V2_TASK_FULL_CARD_CREATE_TEMPLATE_FROM_TASK'),
 	        icon: ui_iconSet_api_vue.Outline.TEMPLATE_TASK,
-	        onClick: () => tasks_v2_application_taskCard.TaskCard.showCompactCard({
+	        handleClickItem: () => tasks_v2_application_taskCard.TaskCard.showCompactCard({
 	          groupId: this.task.groupId,
 	          analytics: this.getAnalytics()
 	        })
 	      };
 	    },
-	    getCopyTaskIdItem() {
+	    itemRoutingBitrixMarket() {
 	      return {
-	        sectionCode: sectionCopy,
-	        title: this.loc('TASKS_V2_TASK_FULL_CARD_COPY_TASK_ID_ACTION'),
-	        icon: ui_iconSet_api_vue.Outline.COPY,
-	        onClick: () => {
-	          const isCopyingSuccess = BX.clipboard.copy(this.taskId);
-	          if (isCopyingSuccess) {
-	            ui_notificationManager.Notifier.notifyViaBrowserProvider({
-	              id: 'task-notify-copy',
-	              text: this.loc('TASKS_V2_TASK_FULL_CARD_COPY_TASK_ID_NOTIF')
-	            });
-	          }
-	        }
-	      };
-	    },
-	    getGoToBitrixMarketItem() {
-	      return {
-	        sectionCode: sectionLinks,
-	        uiButtonOptions: {
-	          icon: ui_iconSet_api_vue.Outline.MARKET,
-	          text: this.loc('TASKS_V2_TASK_FULL_CARD_GO_TO_BITRIX_MARKET'),
-	          size: ui_vue3_components_button.ButtonSize.SMALL,
-	          useAirDesign: true,
-	          style: ui_vue3_components_button.AirButtonStyle.OUTLINE,
-	          wide: true,
-	          disabled: false,
-	          onclick: () => BX.rest.Marketplace.open({
+	        title: this.loc('TASKS_V2_TASK_FULL_CARD_GO_TO_BITRIX_MARKET'),
+	        icon: ui_iconSet_api_vue.Outline.MARKET,
+	        handleClickItem: () => {
+	          this.isControlPanelOpened = false;
+	          BX.rest.Marketplace.open({
 	            PLACEMENT: 'TASK_LIST_CONTEXT_MENU'
-	          })
+	          });
 	        }
 	      };
 	    },
-	    getGoToRobotsItem() {
+	    itemRoutingRobots() {
 	      const isLocked = !tasks_v2_core.Core.getParams().restrictions.robots.available;
 	      return {
-	        sectionCode: sectionLinks,
-	        uiButtonOptions: {
-	          icon: isLocked ? ui_iconSet_api_vue.Outline.LOCK_L : ui_iconSet_api_vue.Outline.ROBOT,
-	          text: this.loc('TASKS_V2_TASK_FULL_CARD_GO_TO_ROBOTS'),
-	          size: ui_vue3_components_button.ButtonSize.SMALL,
-	          useAirDesign: true,
-	          style: ui_vue3_components_button.AirButtonStyle.OUTLINE,
-	          wide: true,
-	          disabled: false,
-	          onclick: () => {
-	            if (isLocked) {
-	              this.isMenuShown = false;
-	              void tasks_v2_lib_showLimit.showLimit({
-	                featureId: tasks_v2_core.Core.getParams().restrictions.robots.featureId,
-	                bindElement: this.$refs.container
-	              });
-	              return;
-	            }
-	            BX.SidePanel.Instance.open(`/bitrix/components/bitrix/tasks.automation/slider.php?site_id=${this.loc('SITE_ID')}&project_id=${this.task.groupId}&task_id=${this.taskId}`, {
-	              cacheable: false,
-	              customLeftBoundary: 0,
-	              loader: 'bizproc:automation-loader'
+	        title: this.loc('TASKS_V2_TASK_FULL_CARD_GO_TO_ROBOTS'),
+	        icon: isLocked ? ui_iconSet_api_vue.Outline.LOCK_L : ui_iconSet_api_vue.Outline.ROBOT,
+	        handleClickItem: () => {
+	          if (isLocked) {
+	            this.isMenuShown = false;
+	            void tasks_v2_lib_showLimit.showLimit({
+	              featureId: tasks_v2_core.Core.getParams().restrictions.robots.featureId,
+	              bindElement: this.$refs.container
 	            });
+	            return;
 	          }
+	          this.isControlPanelOpened = false;
+	          BX.SidePanel.Instance.open(`/bitrix/components/bitrix/tasks.automation/slider.php?site_id=${this.loc('SITE_ID')}&project_id=${this.task.groupId}&task_id=${this.taskId}`, {
+	            cacheable: false,
+	            customLeftBoundary: 0,
+	            loader: 'bizproc:automation-loader'
+	          });
 	        }
 	      };
 	    },
+	    itemsToggle() {
+	      return [this.itemToggleWatch, this.itemToggleNotification, this.itemToggleFavor].filter(item => item);
+	    },
+	    itemsCreation() {
+	      return [this.userRights.tasks.create && this.itemCreationTaskNew, this.task.rights.createSubtask && this.itemCreationSubtask, this.task.rights.copy && this.itemCreationTaskCopy, this.userRights.tasks.createFromTemplate && this.itemCreationTaskNewWithTemplate, false && this.task.rights.saveAsTemplate && this.itemCreationTemplateFromTask // TODO: handle later
+	      ].filter(item => item);
+	    },
+	    itemsRouting() {
+	      return [this.itemRoutingBitrixMarket, this.userRights.tasks.robot && this.itemRoutingRobots].filter(item => item);
+	    }
+	  },
+	  watch: {
+	    isSelfHideEnabled(value) {
+	      this.setSelfHide(value);
+	    },
+	    async isControlPanelOpened(value) {
+	      await this.$nextTick();
+	      this.popupOpenerTemplatesPicker = value ? document.getElementById(templatePickerOpenerId) : null;
+	    }
+	  },
+	  async beforeUnmount() {
+	    // TODO: "BOTTOMSHEET REMOVING BINDINGS BUG"
+	    // remove this workaround (and other instanses) when main.popup autoHide is fixed
+	    // it prevents unbinding popup props including autoHide after
+	    // big bottomsheet is opened, e.g. "All templates" bottomsheet
+	    if (this.intervalAutoHideWorkaround) {
+	      clearInterval(this.intervalAutoHideWorkaround);
+	    }
+	    // workaround end
+	  },
+
+	  methods: {
 	    getAnalytics(element = tasks_v2_const.Analytics.Element.ContextMenu) {
 	      var _this$analytics$conte, _this$analytics;
 	      return {
@@ -292,17 +447,115 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        context: (_this$analytics$conte = (_this$analytics = this.analytics) == null ? void 0 : _this$analytics.context) != null ? _this$analytics$conte : tasks_v2_const.Analytics.Section.Tasks,
 	        additionalContext: tasks_v2_const.Analytics.SubSection.TaskCard
 	      };
+	    },
+	    freezeControlPanelPopup() {
+	      var _this$$refs$controlPa, _this$$refs$controlPa2, _this$$refs$controlPa3, _this$$refs$controlPa4;
+	      (_this$$refs$controlPa = this.$refs.controlPanelPopup) == null ? void 0 : (_this$$refs$controlPa2 = _this$$refs$controlPa.getPopupInstance()) == null ? void 0 : _this$$refs$controlPa2.setAutoHide(false);
+	      (_this$$refs$controlPa3 = this.$refs.controlPanelPopup) == null ? void 0 : (_this$$refs$controlPa4 = _this$$refs$controlPa3.getPopupInstance()) == null ? void 0 : _this$$refs$controlPa4.setClosingByEsc(false);
+	    },
+	    unfreezeControlPanelPopup() {
+	      setTimeout(() => {
+	        var _this$$refs$controlPa5, _this$$refs$controlPa6, _this$$refs$controlPa7, _this$$refs$controlPa8;
+	        (_this$$refs$controlPa5 = this.$refs.controlPanelPopup) == null ? void 0 : (_this$$refs$controlPa6 = _this$$refs$controlPa5.getPopupInstance()) == null ? void 0 : _this$$refs$controlPa6.setAutoHide(true);
+	        (_this$$refs$controlPa7 = this.$refs.controlPanelPopup) == null ? void 0 : (_this$$refs$controlPa8 = _this$$refs$controlPa7.getPopupInstance()) == null ? void 0 : _this$$refs$controlPa8.setClosingByEsc(true);
+	      }, 100);
+	    },
+	    setSelfHide(isSelfHideEnabledNew) {
+	      if (isSelfHideEnabledNew === false) {
+	        this.freezeControlPanelPopup();
+	        // TODO: "BOTTOMSHEET REMOVING BINDINGS BUG"
+	        if (this.intervalAutoHideWorkaround) {
+	          clearInterval(this.intervalAutoHideWorkaround);
+	        }
+	        this.intervalAutoHideWorkaround = setInterval(() => {
+	          this.setSelfHide(this.isSelfHideEnabled);
+	        }, 100);
+	      } else {
+	        // TODO: "BOTTOMSHEET REMOVING BINDINGS BUG"
+	        if (this.intervalAutoHideWorkaround) {
+	          clearInterval(this.intervalAutoHideWorkaround);
+	        }
+	        this.unfreezeControlPanelPopup();
+	      }
+	    },
+	    createTaskFromTemplate(templateId) {
+	      tasks_v2_application_taskCard.TaskCard.showFullCard({
+	        templateId: tasks_v2_lib_idUtils.idUtils.unbox(templateId),
+	        analytics: {
+	          context: tasks_v2_const.Analytics.Section.Templates,
+	          additionalContext: tasks_v2_const.Analytics.SubSection.TemplatesCard,
+	          element: tasks_v2_const.Analytics.Element.CreateButton
+	        }
+	      });
+	    },
+	    showTemplatesPicker() {
+	      this.isTemplatesPickerOpened = true;
+	    },
+	    closeTemplatesPicker() {
+	      this.isTemplatesPickerOpened = false;
+	    },
+	    handleClickControlPanelOpener() {
+	      this.isControlPanelOpened = !this.isControlPanelOpened;
+	    },
+	    handleCloseControlPanel() {
+	      this.isControlPanelOpened = false;
+	    },
+	    handleClickTemplatesPickerOpener() {
+	      event.preventDefault();
+	      event.stopPropagation();
+	      this.showTemplatesPicker();
+	    },
+	    handleSelectTemplatesPicker(dialog) {
+	      const entity = dialog.getSelectedItems()[0];
+	      const entityId = entity == null ? void 0 : entity.getId();
+	      if (entityId > 0) {
+	        this.createTaskFromTemplate(entityId);
+	        dialog.deselectAll();
+	      }
+	    },
+	    handleCloseTemplatesPicker() {
+	      this.closeTemplatesPicker();
 	    }
 	  },
 	  template: `
 		<div
-			class="tasks-full-card-header-burger print-ignore"
-			ref="container"
-			@click="isMenuShown = true"
+			class="tasks-full-card-header__control-panel-opener print-ignore"
+			ref="controlPanelOpener"
+			@click="handleClickControlPanelOpener"
 		>
-			<BIcon :name="Outline.MORE_L" hoverable/>
+			<BIcon
+				class="tasks-full-card-header__control-panel-opener-icon"
+				:name="Outline.HAMBURGER_MENU"
+				hoverable
+			/>
 		</div>
-		<BMenu v-if="isMenuShown" :options="menuOptions()" @close="isMenuShown = false"/>
+		<Popup
+			v-if="isControlPanelOpened"
+			ref="controlPanelPopup"
+			:options="optionsPopupControlPanel"
+			@close="handleCloseControlPanel"
+		>
+			<TasksControlPanel>
+				<TasksControlPanelSection
+					:controlItems="itemsToggle"
+				>
+				</TasksControlPanelSection>
+				<TasksControlPanelMenu
+					:menuItems="itemsCreation"
+				/>
+				<TasksControlPanelMenu
+					:menuItems="itemsRouting"
+				/>
+			</TasksControlPanel>
+		</Popup>
+		<TasksEntityPicker
+			ref="popupTemplatesPicker"
+			:isOpened="isTemplatesPickerOpened"
+			:optionsPopup="optionsPopupTemplatesPicker"
+			:optionsEntityPicker="optionsTemplatesPicker"
+			@select="handleSelectTemplatesPicker"
+			@close="handleCloseTemplatesPicker"
+		/>
 	`
 	};
 
@@ -350,8 +603,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  components: {
 	    TitleField: tasks_v2_component_fields_title.Title,
 	    Importance: tasks_v2_component_fields_importance.Importance,
-	    BurgerMenu,
-	    OpenFullCard
+	    OpenFullCard,
+	    ControlPanel
 	  },
 	  inject: {
 	    isEdit: {},
@@ -360,10 +613,12 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  },
 	  template: `
 		<div class="tasks-full-card-header">
-			<TitleField/>
-			<Importance/>
-			<BurgerMenu v-if="!isTemplate && isEdit"/>
-			<OpenFullCard v-if="embedded"/>
+			<TitleField />
+			<Importance />
+			<OpenFullCard v-if="embedded" />
+			<ControlPanel
+				v-if="!isTemplate && isEdit"
+			/>
 		</div>
 	`
 	};
@@ -919,6 +1174,11 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      return tasks_v2_core.Core.getParams().features.isTemplateEnabled;
 	    }
 	  },
+	  methods: {
+	    handleAddClick() {
+	      void this.$refs.addTaskButton.handleClick();
+	    }
+	  },
 	  template: `
 		<div class="tasks-full-card-footer print-ignore">
 			<div class="tasks-full-card-footer-create">
@@ -928,6 +1188,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 						@addTask="$emit('addTask')"
 						@copyTask="$emit('copyTask', $event)"
 						@fromTemplate="$emit('fromTemplate', $event)"
+						ref="addTaskButton"
 					/>
 					<UiButton
 						:text="loc('TASKS_V2_TASK_FULL_CARD_CANCEL')"
@@ -1109,10 +1370,10 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        title: this.loc('TASKS_V2_TASK_FULL_CARD_COMPLETE'),
 	        icon: ui_iconSet_api_vue.Outline.SENDED,
 	        onClick: () => {
-	          var _this$analytics$conte, _this$analytics, _this$analytics$addit, _this$analytics2;
+	          var _this$analytics$conte, _this$analytics;
 	          return this.waitStatus(tasks_v2_provider_service_statusService.statusService.complete(this.taskId, {
 	            context: (_this$analytics$conte = (_this$analytics = this.analytics) == null ? void 0 : _this$analytics.context) != null ? _this$analytics$conte : tasks_v2_const.Analytics.Section.Tasks,
-	            additionalContext: (_this$analytics$addit = (_this$analytics2 = this.analytics) == null ? void 0 : _this$analytics2.additionalContext) != null ? _this$analytics$addit : tasks_v2_const.Analytics.SubSection.TaskCard,
+	            additionalContext: tasks_v2_const.Analytics.SubSection.TaskCard,
 	            element: tasks_v2_const.Analytics.Element.ContextMenu
 	          }));
 	        }
@@ -1159,7 +1420,12 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        title: this.loc('TASKS_V2_TASK_FULL_CARD_DELETE'),
 	        icon: ui_iconSet_api_vue.Outline.TRASHCAN,
 	        onClick: () => {
-	          void tasks_v2_provider_service_taskService.taskService.delete(this.taskId);
+	          var _this$analytics$conte2, _this$analytics2;
+	          void tasks_v2_provider_service_taskService.taskService.delete(this.taskId, {
+	            context: (_this$analytics$conte2 = (_this$analytics2 = this.analytics) == null ? void 0 : _this$analytics2.context) != null ? _this$analytics$conte2 : tasks_v2_const.Analytics.Section.Tasks,
+	            additionalContext: tasks_v2_const.Analytics.SubSection.TaskCard,
+	            element: tasks_v2_const.Analytics.Element.ContextMenu
+	          });
 	          main_core_events.EventEmitter.emit(tasks_v2_const.EventName.CloseFullCard, {
 	            taskId: this.taskId
 	          });
@@ -1252,6 +1518,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    TextMd: ui_system_typography_vue.TextMd,
 	    TextXs: ui_system_typography_vue.TextXs,
 	    MarkTaskButton: tasks_v2_component_markTaskButton.MarkTaskButton,
+	    TasksUserActionsDemonstrator: tasks_v2_component_tasksUserActionsDemonstrator.TasksUserActionsDemonstrator,
+	    HoverPill: tasks_v2_component_elements_hoverPill.HoverPill,
 	    TemplatePermissionsButton: ui_vue3.BitrixVue.defineAsyncComponent('tasks.v2.component.template-permissions-button', 'TemplatePermissionsButton', {
 	      delay: 0,
 	      loadingComponent: {
@@ -1275,12 +1543,13 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      ButtonSize: ui_vue3_components_button.ButtonSize,
 	      ButtonIcon: ui_vue3_components_button.ButtonIcon,
 	      Outline: ui_iconSet_api_vue.Outline,
-	      TaskStatus: tasks_v2_const.TaskStatus
+	      TaskStatus: tasks_v2_const.TaskStatus,
+	      markRaw: ui_vue3.markRaw
 	    };
 	  },
 	  data() {
 	    return {
-	      loading: false,
+	      isLoadingActions: false,
 	      showStartTimeTrackingHint: false,
 	      computedSecondaryButton: null
 	    };
@@ -1323,9 +1592,44 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    selectedButtons() {
 	      return [this.primaryButton, this.secondaryButton];
 	    },
+	    isLoadingViewersCount() {
+	      var _this$task$viewers;
+	      return Boolean((_this$task$viewers = this.task.viewers) == null ? void 0 : _this$task$viewers.isLoadingCount);
+	    },
+	    isLoadingViewersList() {
+	      var _this$task$viewers2;
+	      return Boolean((_this$task$viewers2 = this.task.viewers) == null ? void 0 : _this$task$viewers2.isLoadingList);
+	    },
+	    taskViewersCount() {
+	      var _this$task$viewers3;
+	      return (_this$task$viewers3 = this.task.viewers) == null ? void 0 : _this$task$viewers3.count;
+	    },
+	    taskViewersList() {
+	      var _this$task$viewers4;
+	      return (_this$task$viewers4 = this.task.viewers) == null ? void 0 : _this$task$viewers4.list;
+	    },
+	    optionsViewersDemonstrator() {
+	      return {
+	        isLoadingCount: this.isLoadingViewersCount,
+	        isLoadingList: this.isLoadingViewersList,
+	        isOpenedOnClick: true,
+	        isOpenedOnHover: false,
+	        isDateInline: true,
+	        componentOpener: ui_vue3.markRaw(tasks_v2_component_elements_hoverPill.HoverPill),
+	        textHead: this.loc('TASKS_V2_TASK_FULL_CARD_VIEWS'),
+	        userActionsCount: this.taskViewersCount,
+	        userActionsList: this.taskViewersList,
+	        positioning: {
+	          offsetVertical: 11
+	        }
+	      };
+	    },
 	    shouldShowStartTimeTrackingHint() {
 	      var _this$primaryButton;
 	      return this.showStartTimeTrackingHint && ((_this$primaryButton = this.primaryButton) == null ? void 0 : _this$primaryButton.id) === ButtonId.Start;
+	    },
+	    shouldShowMoreButton() {
+	      return this.task.rights.remove || this.task.rights.defer || this.task.rights.delegate;
 	    },
 	    shouldShowMarkTaskButton() {
 	      return this.task.rights.mark || this.task.mark !== tasks_v2_const.Mark.None;
@@ -1334,7 +1638,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      if (this.isTemplate) {
 	        return this.settings.rights.tasks.createFromTemplate || this.task.rights.edit;
 	      }
-	      return Boolean(this.primaryButton || this.secondaryButton || this.shouldShowMarkTaskButton);
+	      return true;
 	    }
 	  },
 	  watch: {
@@ -1350,6 +1654,98 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    this.$bitrix.eventEmitter.subscribe(tasks_v2_const.EventName.TimeTrackingChange, this.handleTimeTrackingActivating);
 	  },
 	  methods: {
+	    async updateSecondaryButton() {
+	      await this.$nextTick();
+	      const inProgress = this.task.rights.timeTracking ? this.getCompleteButton(this.timer ? null : ui_vue3_components_button.AirButtonStyle.OUTLINE) : null;
+	      const statuses = {
+	        [tasks_v2_const.TaskStatus.Pending]: this.getCompleteButton(ui_vue3_components_button.AirButtonStyle.OUTLINE),
+	        [tasks_v2_const.TaskStatus.InProgress]: inProgress
+	      };
+	      let secondary = statuses[this.task.status] || null;
+	      if (secondary && this.primaryButton && secondary.id === this.primaryButton.id) {
+	        secondary = null;
+	      }
+	      this.computedSecondaryButton = secondary;
+	    },
+	    hideStartTimeTrackingHint() {
+	      this.showStartTimeTrackingHint = false;
+	    },
+	    hidePermanentStartTimeTrackingHint() {
+	      this.hideStartTimeTrackingHint();
+	      tasks_v2_lib_ahaMoments.ahaMoments.setInactive(tasks_v2_const.Option.AhaStartTimeTracking);
+	      tasks_v2_lib_ahaMoments.ahaMoments.setShown(tasks_v2_const.Option.AhaStartTimeTracking);
+	    },
+	    async waitStatus(statusPromise) {
+	      this.loading = true;
+	      await statusPromise;
+	      this.loading = false;
+	    },
+	    createTaskFromTemplate() {
+	      tasks_v2_application_taskCard.TaskCard.showFullCard({
+	        templateId: tasks_v2_lib_idUtils.idUtils.unbox(this.taskId),
+	        analytics: {
+	          context: tasks_v2_const.Analytics.Section.Templates,
+	          additionalContext: tasks_v2_const.Analytics.SubSection.TemplatesCard,
+	          element: tasks_v2_const.Analytics.Element.CreateButton
+	        }
+	      });
+	    },
+	    async updateViewersCount() {
+	      await tasks_v2_provider_service_viewersService.viewersService.count(this.taskId);
+	    },
+	    annihilateViewersList() {
+	      const viewers = this.task.viewers || {};
+	      tasks_v2_provider_service_taskService.taskService.updateStoreTask(this.taskId, {
+	        viewers: {
+	          ...viewers,
+	          list: []
+	        }
+	      });
+	    },
+	    async updateViewersList() {
+	      var _this$task$viewers5, _this$task$viewers5$l;
+	      const stepQuantityViewers = 10;
+	      const quantityViewersCurrent = ((_this$task$viewers5 = this.task.viewers) == null ? void 0 : (_this$task$viewers5$l = _this$task$viewers5.list) == null ? void 0 : _this$task$viewers5$l.length) || 0;
+	      const quantityStepNumberCurrent = Math.floor(quantityViewersCurrent / stepQuantityViewers);
+	      const quantityStepNumberToLoad = quantityStepNumberCurrent + 1;
+	      const paramsRequestGetViewers = {
+	        id: this.taskId,
+	        page: quantityStepNumberToLoad,
+	        size: stepQuantityViewers
+	      };
+	      await tasks_v2_provider_service_viewersService.viewersService.list(paramsRequestGetViewers);
+	    },
+	    refreshViewers() {
+	      this.annihilateViewersList();
+	      this.updateViewersCount();
+	    },
+	    handleOverPrimaryButton() {
+	      var _this$primaryButton2;
+	      if (this.task.rights.timeTracking && ((_this$primaryButton2 = this.primaryButton) == null ? void 0 : _this$primaryButton2.id) === ButtonId.Start && tasks_v2_lib_ahaMoments.ahaMoments.shouldShow(tasks_v2_const.Option.AhaStartTimeTracking)) {
+	        tasks_v2_lib_ahaMoments.ahaMoments.setActive(tasks_v2_const.Option.AhaStartTimeTracking);
+	        this.showStartTimeTrackingHint = true;
+	      }
+	    },
+	    handleTimeTrackingActivating() {
+	      void this.waitStatus(new Promise(resolve => {
+	        const unwatch = this.$watch(() => this.task.rights.timeTracking, async () => {
+	          await this.$nextTick();
+	          resolve();
+	        }, {
+	          immediate: false
+	        });
+	        setTimeout(() => {
+	          unwatch();
+	          resolve();
+	        }, 5000);
+	      }));
+	    },
+	    handleOpenViewersDemonstrator() {
+	      this.refreshViewers();
+	    },
+	    handleDemandViewers() {
+	      this.updateViewersList();
+	    },
 	    getStartButton() {
 	      if (!this.task.rights.start || this.timer) {
 	        return null;
@@ -1400,10 +1796,10 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        text: this.loc('TASKS_V2_TASK_FULL_CARD_COMPLETE'),
 	        style,
 	        onClick: () => {
-	          var _this$analytics$conte3, _this$analytics3, _this$analytics$addit, _this$analytics4;
+	          var _this$analytics$conte3, _this$analytics3;
 	          return this.waitStatus(tasks_v2_provider_service_statusService.statusService.complete(this.taskId, {
 	            context: (_this$analytics$conte3 = (_this$analytics3 = this.analytics) == null ? void 0 : _this$analytics3.context) != null ? _this$analytics$conte3 : tasks_v2_const.Analytics.Section.Tasks,
-	            additionalContext: (_this$analytics$addit = (_this$analytics4 = this.analytics) == null ? void 0 : _this$analytics4.additionalContext) != null ? _this$analytics$addit : tasks_v2_const.Analytics.SubSection.TaskCard,
+	            additionalContext: tasks_v2_const.Analytics.SubSection.TaskCard,
 	            element: tasks_v2_const.Analytics.Element.CompleteButton
 	          }));
 	        }
@@ -1447,64 +1843,6 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        text: this.loc('TASKS_V2_TASK_FULL_CARD_APPROVE'),
 	        onClick: () => this.waitStatus(tasks_v2_provider_service_statusService.statusService.approve(this.taskId))
 	      };
-	    },
-	    updateSecondaryButton() {
-	      void this.$nextTick(() => {
-	        const inProgress = this.task.rights.timeTracking ? this.getCompleteButton(this.timer ? null : ui_vue3_components_button.AirButtonStyle.OUTLINE) : null;
-	        const statuses = {
-	          [tasks_v2_const.TaskStatus.Pending]: this.getCompleteButton(ui_vue3_components_button.AirButtonStyle.OUTLINE),
-	          [tasks_v2_const.TaskStatus.InProgress]: inProgress
-	        };
-	        let secondary = statuses[this.task.status] || null;
-	        if (secondary && this.primaryButton && secondary.id === this.primaryButton.id) {
-	          secondary = null;
-	        }
-	        this.computedSecondaryButton = secondary;
-	      });
-	    },
-	    handleOverPrimaryButton() {
-	      var _this$primaryButton2;
-	      if (this.task.rights.timeTracking && ((_this$primaryButton2 = this.primaryButton) == null ? void 0 : _this$primaryButton2.id) === ButtonId.Start && tasks_v2_lib_ahaMoments.ahaMoments.shouldShow(tasks_v2_const.Option.AhaStartTimeTracking)) {
-	        tasks_v2_lib_ahaMoments.ahaMoments.setActive(tasks_v2_const.Option.AhaStartTimeTracking);
-	        this.showStartTimeTrackingHint = true;
-	      }
-	    },
-	    handleTimeTrackingActivating() {
-	      void this.waitStatus(new Promise(resolve => {
-	        const unwatch = this.$watch(() => this.task.rights.timeTracking, async () => {
-	          await this.$nextTick();
-	          resolve();
-	        }, {
-	          immediate: false
-	        });
-	        setTimeout(() => {
-	          unwatch();
-	          resolve();
-	        }, 5000);
-	      }));
-	    },
-	    hideStartTimeTrackingHint() {
-	      this.showStartTimeTrackingHint = false;
-	    },
-	    hidePermanentStartTimeTrackingHint() {
-	      this.hideStartTimeTrackingHint();
-	      tasks_v2_lib_ahaMoments.ahaMoments.setInactive(tasks_v2_const.Option.AhaStartTimeTracking);
-	      tasks_v2_lib_ahaMoments.ahaMoments.setShown(tasks_v2_const.Option.AhaStartTimeTracking);
-	    },
-	    async waitStatus(statusPromise) {
-	      this.loading = true;
-	      await statusPromise;
-	      this.loading = false;
-	    },
-	    createTaskFromTemplate() {
-	      tasks_v2_application_taskCard.TaskCard.showFullCard({
-	        templateId: tasks_v2_lib_idUtils.idUtils.unbox(this.taskId),
-	        analytics: {
-	          context: tasks_v2_const.Analytics.Section.Templates,
-	          additionalContext: tasks_v2_const.Analytics.SubSection.TemplatesCard,
-	          element: tasks_v2_const.Analytics.Element.CreateButton
-	        }
-	      });
 	    }
 	  },
 	  template: `
@@ -1529,14 +1867,14 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 							:size="ButtonSize.LARGE"
 							:style="primaryButton.style ?? AirButtonStyle.FILLED"
 							:disabled="Boolean(primaryButton.disabled)"
-							:loading
+							:loading="isLoadingActions"
 							:leftIcon="primaryButton.icon"
 							:dataset="{ taskButtonId: 'status' }"
 							@click="primaryButton.onClick"
 						/>
 					</div>
 					<UiButton
-						v-if="secondaryButton && !loading"
+						v-if="secondaryButton && !isLoadingActions"
 						:text="secondaryButton.text"
 						:size="ButtonSize.LARGE"
 						:style="secondaryButton.style ?? AirButtonStyle.FILLED"
@@ -1549,6 +1887,12 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				<div class="tasks-full-card-footer-edit-grow"/>
 				<MarkTaskButton v-if="!isTemplate && shouldShowMarkTaskButton"/>
 				<TemplatePermissionsButton v-if="isTemplate && task.rights.edit"/>
+				<TasksUserActionsDemonstrator
+					v-if="!isTemplate"
+					:options="optionsViewersDemonstrator"
+					@open="handleOpenViewersDemonstrator"
+					@demandUserActions="handleDemandViewers"
+				/>
 			</div>
 			<Hint
 				v-if="shouldShowStartTimeTrackingHint"
@@ -1758,7 +2102,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      placeholderImgUrl: null,
 	      taskGetError: null,
 	      isAccessRequested: true,
-	      accessRequestError: null
+	      accessRequestError: null,
+	      popupCount: 0
 	    };
 	  },
 	  computed: {
@@ -2278,6 +2623,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      } = await tasks_v2_provider_service_taskService.taskService.get(this.taskId);
 	      tasks_v2_provider_service_taskService.taskService.setSilentErrorMode(false);
 	      this.taskGetError = error;
+	      if (!this.isTemplate) {
+	        await tasks_v2_provider_service_viewersService.viewersService.count(this.taskId);
+	      }
 	    }
 	    if (!this.task) {
 	      this.isLoading = false;
@@ -2312,13 +2660,13 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    });
 	  },
 	  async mounted() {
-	    main_core_events.EventEmitter.subscribe(tasks_v2_const.EventName.FullCardHasChanges, this.handleHasChanges);
+	    this.subscribeEvents();
 	    this.renderSkeleton();
 	    this.iconUrl = (await Promise.resolve().then(function () { return marshmallow_sad_pink_with_orange_lock$1; })).default;
 	    this.notFoundUrl = (await Promise.resolve().then(function () { return marshmallow_confused_pink_with_blue_magnifier$1; })).default;
 	  },
 	  unmounted() {
-	    main_core_events.EventEmitter.unsubscribe(tasks_v2_const.EventName.FullCardHasChanges, this.handleHasChanges);
+	    this.unsubscribeEvents();
 	    if (!this.isEdit) {
 	      void this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/delete`, this.taskId);
 	      tasks_v2_provider_service_fileService.fileService.delete(this.taskId);
@@ -2327,6 +2675,39 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  },
 	  methods: {
 	    ...ui_vue3_vuex.mapActions(tasks_v2_const.Model.Interface, ['updateFullCardWidth']),
+	    subscribeEvents() {
+	      main_core_events.EventEmitter.subscribe(tasks_v2_const.EventName.FullCardHasChanges, this.handleHasChanges);
+	      main_core_events.EventEmitter.subscribe('BX.Main.Popup:onShow', this.handlePopupShow);
+	      main_core.Event.bind(document, 'keydown', this.handleKeyDown, {
+	        capture: true
+	      });
+	    },
+	    unsubscribeEvents() {
+	      main_core_events.EventEmitter.unsubscribe(tasks_v2_const.EventName.FullCardHasChanges, this.handleHasChanges);
+	      main_core_events.EventEmitter.unsubscribe('BX.Main.Popup:onShow', this.handlePopupShow);
+	      main_core.Event.unbind(document, 'keydown', this.handleKeyDown, {
+	        capture: true
+	      });
+	    },
+	    handlePopupShow(event) {
+	      const popup = event.getCompatData()[0];
+	      const onClose = () => {
+	        popup.unsubscribe('onClose', onClose);
+	        popup.unsubscribe('onDestroy', onClose);
+	        this.popupCount--;
+	      };
+	      popup.subscribe('onClose', onClose);
+	      popup.subscribe('onDestroy', onClose);
+	      this.popupCount++;
+	    },
+	    handleKeyDown(event) {
+	      if (this.isEdit || this.popupCount > 0) {
+	        return;
+	      }
+	      if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+	        this.$refs.footerCreate.handleAddClick();
+	      }
+	    },
 	    getFields(map) {
 	      return this.fields.filter(({
 	        component
@@ -2337,7 +2718,10 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    },
 	    async addTask() {
 	      const checklists = this.checklist;
-	      const [id, error] = await tasks_v2_provider_service_taskService.taskService.add(this.task);
+	      const [id, error] = await tasks_v2_provider_service_taskService.taskService.add({
+	        task: this.task,
+	        view: true
+	      });
 	      if (!id) {
 	        this.handleCreationError(error);
 	        return;
@@ -2348,12 +2732,20 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      const isSuccess = Boolean(id);
 	      this.sendAddTaskAnalytics(isSuccess, checklists);
 	      this.fireLegacyGlobalEvent();
+	      if (!this.isTemplate) {
+	        await tasks_v2_provider_service_viewersService.viewersService.count(this.taskId);
+	      }
 	    },
 	    async copyTask(event) {
 	      const {
 	        withSubTasks
 	      } = event;
-	      const [id, error] = await tasks_v2_provider_service_taskService.taskService.copy(this.task, withSubTasks);
+	      const optionsTaskCopy = {
+	        task: this.task,
+	        withSubTasks,
+	        view: true
+	      };
+	      const [id, error] = await tasks_v2_provider_service_taskService.taskService.copy(optionsTaskCopy);
 	      if (!id) {
 	        this.handleCreationError(error);
 	        return;
@@ -2363,12 +2755,16 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      await tasks_v2_provider_service_fileService.fileService.get(this.taskId).list(this.task.fileIds);
 	      tasks_v2_component_entityText.entityTextEditor.replace(this.id, id);
 	      this.fireLegacyGlobalEvent();
+	      if (!this.isTemplate) {
+	        await tasks_v2_provider_service_viewersService.viewersService.count(this.taskId);
+	      }
 	    },
 	    async createFromTemplate(event) {
 	      const {
 	        withSubTasks
 	      } = event;
-	      const [id, error] = await tasks_v2_provider_service_templateService.templateService.addTask(this.task.templateId, this.task, withSubTasks);
+	      const view = true;
+	      const [id, error] = await tasks_v2_provider_service_templateService.templateService.addTask(this.task.templateId, this.task, withSubTasks, view);
 	      if (!id) {
 	        this.handleCreationError(error);
 	        this.sendAddTaskFromTemplateAnalytics(false);
@@ -2376,6 +2772,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      }
 	      this.taskId = id;
 	      this.sendAddTaskFromTemplateAnalytics(true);
+	      await tasks_v2_provider_service_viewersService.viewersService.count(this.taskId);
 	      tasks_v2_provider_service_fileService.fileService.delete(this.id);
 	      await tasks_v2_provider_service_fileService.fileService.get(this.taskId).list(this.task.fileIds);
 	      tasks_v2_component_entityText.entityTextEditor.replace(this.id, id);
@@ -2569,7 +2966,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				>
 					<div class="tasks-full-card-content" :data-task-card-scroll="taskId" ref="scrollContent">
 						<div ref="title">
-							<TaskHeader/>
+							<TaskHeader />
 						</div>
 						<CheckList
 							:checkListId
@@ -2754,6 +3151,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 						@copyTask="copyTask"
 						@fromTemplate="createFromTemplate"
 						@close="tryClose"
+						ref="footerCreate"
 					/>
 					<ContentResizer v-if="!isTemplate" @endResize="handleEndResize"/>
 					<DropZone
@@ -3205,5 +3603,5 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 
 	exports.TaskFullCard = TaskFullCard;
 
-}((this.BX.Tasks.V2.Application = this.BX.Tasks.V2.Application || {}),BX.SidePanel,BX.Vue3.Mixins,BX.UI.System,BX.Tasks.V2.Lib,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component,BX.Tasks.V2.Component,BX.Tasks.V2.Component,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.UI.NotificationManager,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Lib,BX.UI.System.Chip.Vue,BX.Tasks.V2,BX.Tasks.V2.Component,BX.Vue3,BX.UI.System.Skeleton.Vue,BX.Tasks.V2.Lib,BX.Tasks.V2.Component,BX.Event,BX.Vue3.Vuex,BX.UI.System.Menu,BX.UI.IconSet,BX,BX.Tasks.V2.Application,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Vue3.Components,BX.Vue3.Directives,BX.UI.System.Typography.Vue,BX.Tasks.V2.Component.Elements,BX,BX.UI.Dialogs));
+}((this.BX.Tasks.V2.Application = this.BX.Tasks.V2.Application || {}),BX.SidePanel,BX.Vue3.Mixins,BX.UI.System,BX.Tasks.V2.Lib,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component,BX.Tasks.V2.Component,BX.Tasks.V2.Component,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Lib,BX.UI.NotificationManager,BX.UI.Vue3.Components,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Lib,BX.UI.System.Chip.Vue,BX.Tasks.V2,BX.Tasks.V2.Component,BX.Vue3,BX.UI.System.Skeleton.Vue,BX.Tasks.V2.Component,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Event,BX.Vue3.Vuex,BX.UI.System.Menu,BX.UI.IconSet,BX,BX.Tasks.V2.Application,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Vue3.Components,BX.Vue3.Directives,BX.UI.System.Typography.Vue,BX.Tasks.V2.Component.Elements,BX,BX.UI.Dialogs));
 //# sourceMappingURL=task-full-card.bundle.js.map

@@ -82,3 +82,4 @@ $MESS["CRM_BIC_LEAD_FIELD_UTM_SOURCE"] = "Ad source (utm_source)";
 $MESS["CRM_BIC_LEAD_FIELD_UTM_TERM"] = "Ad term (utm_term)";
 $MESS["CRM_BIC_LEAD_FIELD_WEB"] = "URL (multiple)";
 $MESS["CRM_BIC_LEAD_TABLE"] = "Lead";
+$MESS["CRM_BIC_LEAD_TABLE_DESCRIPTION_FULL"] = "Includes basic information from standard lead fields.";

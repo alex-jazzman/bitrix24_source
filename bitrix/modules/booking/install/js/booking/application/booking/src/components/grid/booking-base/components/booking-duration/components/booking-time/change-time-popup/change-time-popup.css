@@ -1,0 +1,21 @@
+.booking-booking-booking__change-time-popup_main {
+	display: flex;
+	align-items: center;
+}
+
+.booking-booking-booking__change-time-popup_separator {
+	width: 21px;
+	height: 1px;
+	margin: 0 12px;
+	background: var(--ui-color-base-20);
+}
+
+.booking-booking-booking__change-time-popup_button {
+	margin-left: 12px;
+}
+
+.booking-booking-booking__change-time-popup_error {
+	margin-top: 6px;
+	max-width: 280px;
+	color: var(--ui-color-text-alert);
+}

@@ -1,7 +1,7 @@
 import { TabList } from '../base-components/list/list';
 import { CommunicationListItem } from './list-item';
 import { Loc } from 'main.core';
-import { ListDictionary, ListDictionaryItem } from './dictionaries/list-dictionary';
+import { ListDictionary, type ListDictionaryItem } from './dictionaries/list-dictionary';
 import { CommunicationsTypeDict } from 'humanresources.company-structure.structure-components';
 
 // @vue/component

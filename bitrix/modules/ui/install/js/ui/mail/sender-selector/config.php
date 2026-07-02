@@ -9,13 +9,12 @@ return [
 	'js' => 'dist/sender-selector.bundle.js',
 	'rel' => [
 		'main.core',
-		'main.core.events',
 		'main.loader',
 		'ui.entity-selector',
+		'ui.icon-set.actions',
+		'ui.icon-set.api.core',
 		'ui.mail.provider-showcase',
 		'ui.mail.sender-editor',
-		'ui.icon-set.api.core',
-		'ui.icon-set.actions',
 	],
 	'skip_core' => false,
 ];

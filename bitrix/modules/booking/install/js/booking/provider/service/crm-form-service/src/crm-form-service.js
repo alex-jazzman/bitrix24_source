@@ -3,15 +3,13 @@ import { ajax } from 'main.core';
 import { Core } from 'booking.core';
 import { Model } from 'booking.const';
 import { ApiClient } from 'booking.lib.api-client';
-import { ResourceTypeMappers } from 'booking.provider.service.resources-type-service';
+import { ResourceTypeMappers, type ResourceTypeDto } from 'booking.provider.service.resources-type-service';
 import { ResourceMappers } from 'booking.provider.service.resources-service';
-import type { CrmFormResourceModel } from 'booking.model.crm-form';
-import type { CatalogSkuEntityOptions } from 'booking.model.sku';
-import type { ResourceSkuRelationsModel } from 'booking.model.resources';
-import type { ResourceTypeDto } from 'booking.provider.service.resources-type-service';
+import { type CatalogSkuEntityOptions } from 'booking.model.sku';
+import { type ResourceSkuRelationsModel } from 'booking.model.resources';
 
 import { mapDtoToModel } from './mapper';
-import { ResourceDto, ResourceSkuRelationsData } from './types';
+import { type ResourceDto, type ResourceSkuRelationsData } from './types';
 
 class CrmFormService
 {
@@ -20,7 +18,7 @@ class CrmFormService
 	#getCatalogSkuEntityOptionsRequest: ?Promise<{ data: CatalogSkuEntityOptions }>;
 	#getDefaultResourceSkuRelations: ?Promise<ResourceSkuRelationsData>;
 
-	async getResources(ids: number[]): Promise<CrmFormResourceModel[]>
+	async getResources(ids: number[]): Promise<ResourceDto[]>
 	{
 		try
 		{

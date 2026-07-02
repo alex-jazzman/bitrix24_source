@@ -10,9 +10,21 @@ jn.define('im/messenger/controller/recent/service/external/dummy', (require, exp
 	 */
 	class DummyExternalService extends BaseRecentService
 	{
+		getCallList;
+
 		onInit()
 		{
 			this.logger.log('on init');
+		}
+
+		subscribeEvents()
+		{
+			this.logger.log('subscribeEvents');
+		}
+
+		unsubscribeEvents()
+		{
+			this.logger.log('unsubscribeEvents');
 		}
 	}
 

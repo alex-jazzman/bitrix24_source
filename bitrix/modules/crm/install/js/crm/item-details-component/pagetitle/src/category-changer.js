@@ -198,9 +198,11 @@ export class CategoryChanger
 	{
 		const entityTypeName = BX.CrmEntityType?.resolveName(this.#entityTypeId);
 
-		const message = Loc.getMessage(`CRM_ITEM_PAGETITLE_CATEGORY_CHANGER_CONFIRM_DIALOG_MESSAGE_${entityTypeName}`)
-			|| Loc.getMessage('CRM_ITEM_PAGETITLE_CATEGORY_CHANGER_CONFIRM_DIALOG_MESSAGE')
-		;
+		const dynamicKey = `CRM_ITEM_PAGETITLE_CATEGORY_CHANGER_CONFIRM_DIALOG_MESSAGE_${entityTypeName}`;
+
+		const message = Loc.hasMessage(dynamicKey)
+			? Loc.getMessage(dynamicKey)
+			: Loc.getMessage('CRM_ITEM_PAGETITLE_CATEGORY_CHANGER_CONFIRM_DIALOG_MESSAGE');
 
 		MessageBox.show({
 			modal: true,

@@ -5,14 +5,10 @@
 
 .mail-filter-counter{
 	color: #fff;
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
 	white-space: nowrap;
 	padding: 0 18px;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
+	align-items: center;
 }
 
 .bitrix24-dark-theme .mail-filter-counter {
@@ -25,12 +21,8 @@
 
 .mail-toolbar-counter {
 	height: 33px;
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
+	align-items: center;
 	padding: 0 15px 0 10px;
 	cursor:pointer;
 	font: 14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));

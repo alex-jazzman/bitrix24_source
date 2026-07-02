@@ -1,29 +1,27 @@
-import { Event } from 'main.core';
+import { Event, type JsonObject } from 'main.core';
 
-import { TaskList } from 'im.v2.component.list.items.task';
-import { Layout, RecentType } from 'im.v2.const';
+import { TaskList, TaskUnreadList } from 'im.v2.component.list.items.task';
+import { CreateChatButton } from 'im.v2.component.list.container.elements.create-chat-button';
+import { ChatSearchInput, RecentSearch } from 'im.v2.component.search';
+import { Layout, RecentType, type LayoutType } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
-import { Logger } from 'im.v2.lib.logger';
 import { EntityCreator } from 'im.v2.lib.entity-creator';
-import { ChatSearchInput, RecentSectionSearch } from 'im.v2.component.search';
-
-import { HeaderMenu } from './components/header-menu';
+import { Logger } from 'im.v2.lib.logger';
+import { type ImModelLayout } from 'im.v2.model';
+import { HeaderMenu } from 'im.v2.component.list.container.elements.header-menu';
 
 import './css/task-container.css';
-
-import type { JsonObject } from 'main.core';
-import type { ImModelLayout } from 'im.v2.model';
-import type { LayoutType } from 'im.v2.const';
 
 // @vue/component
 export const TaskListContainer = {
 	name: 'TaskListContainer',
-	components: { TaskList, HeaderMenu, ChatSearchInput, RecentSectionSearch },
-	emits: ['selectEntity'],
+	components: { TaskList, HeaderMenu, ChatSearchInput, RecentSearch, TaskUnreadList, CreateChatButton },
+	emits: ['selectChat'],
 	data(): JsonObject
 	{
 		return {
 			searchMode: false,
+			unreadMode: false,
 			searchQuery: '',
 			isSearchLoading: false,
 		};
@@ -50,9 +48,9 @@ export const TaskListContainer = {
 		Event.unbind(document, 'mousedown', this.onDocumentClick);
 	},
 	methods: {
-		onChatClick(dialogId: string): void
+		onSelectChat(dialogId: string): void
 		{
-			this.$emit('selectEntity', { layoutName: Layout.taskComments, entityId: dialogId });
+			this.$emit('selectChat', { layoutName: Layout.taskComments, dialogId });
 		},
 		onCreateClick(): void
 		{
@@ -91,7 +89,7 @@ export const TaskListContainer = {
 		{
 			const { dialogId } = event;
 
-			this.onChatClick(dialogId);
+			this.onSelectChat(dialogId);
 		},
 		onDocumentClick(event: MouseEvent)
 		{
@@ -102,6 +100,11 @@ export const TaskListContainer = {
 				Analytics.getInstance().recentSearch.onClose(this.layoutName);
 			}
 		},
+		onToggleUnreadMode()
+		{
+			this.$store.dispatch('recent/clearUnreadCollection', { type: RecentType.taskComments });
+			this.unreadMode = !this.unreadMode;
+		},
 		loc(phraseCode: string): string
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode);
@@ -110,7 +113,11 @@ export const TaskListContainer = {
 	template: `
 		<div class="bx-im-list-container-task__container" ref="task-container">
 			<div class="bx-im-list-container-task__header_container">
-				<HeaderMenu />
+				<HeaderMenu
+					:unreadMode="unreadMode"
+					:recentSection="RecentType.taskComments"
+					@toggleUnreadMode="onToggleUnreadMode"
+				/>
 				<div class="bx-im-list-container-task__search-input_container">
 					<ChatSearchInput
 						:searchMode="searchMode"
@@ -121,21 +128,22 @@ export const TaskListContainer = {
 						@updateSearch="onUpdateSearch"
 					/>
 				</div>
-				<div @click="onCreateClick" class="bx-im-list-container-task__header_create-task"></div>
+				<CreateChatButton @click="onCreateClick" />
 			</div>
 			<div class="bx-im-list-container-task__elements_container">
 				<div class="bx-im-list-container-task__elements">
-					<RecentSectionSearch
+					<RecentSearch
 						v-show="searchMode"
 						:searchMode="searchMode"
 						:query="searchQuery"
 						:showUsersCarousel="false"
-						:recentSection="RecentType.taskComments"
+						:recentSectionType="RecentType.taskComments"
 						@loading="onLoading"
 						@openItem="onOpenSearchItem"
 						@closeSearch="onCloseSearch"
 					/>
-					<TaskList @chatClick="onChatClick" />
+					<TaskList v-if="!unreadMode" @selectChat="onSelectChat" />
+					<TaskUnreadList v-else @selectChat="onSelectChat" />
 				</div>
 			</div>
 		</div>

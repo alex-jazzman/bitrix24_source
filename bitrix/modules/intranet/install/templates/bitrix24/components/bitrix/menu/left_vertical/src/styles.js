@@ -1,3 +1,5 @@
+import 'ui.icon-set.outline';
+
 import './css/variables.css';
 import './css/menu-items-body.css';
 import './css/menu-items-footer.css';
@@ -29,4 +31,3 @@ import './css/menu-popup.css';
 import './css/menu-btn-arrow-up.css';
 import './css/menu-marta.css';
 import './css/group-panel.css';
-import './css/ai-assistant.css';

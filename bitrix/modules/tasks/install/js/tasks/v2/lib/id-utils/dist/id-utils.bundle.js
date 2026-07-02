@@ -16,6 +16,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  boxTemplate(id) {
 	    return `template${id}`;
 	  }
+	  boxTemplates(ids) {
+	    return ids.map(id => this.boxTemplate(id));
+	  }
 	  unbox(id) {
 	    const idPure = String(id).replace('template', '');
 	    return Number(idPure) || idPure;

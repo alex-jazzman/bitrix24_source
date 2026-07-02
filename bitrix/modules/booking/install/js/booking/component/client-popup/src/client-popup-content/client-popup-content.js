@@ -1,21 +1,26 @@
-import { Popup } from 'main.popup';
 import { Notifier } from 'ui.notification-manager';
 
 import { clientService } from 'booking.provider.service.client-service';
 import { CrmEntity } from 'booking.const';
 import { Button, ButtonSize, ButtonColor } from 'booking.component.button';
-import type { ClientModel } from 'booking.model.clients';
+import { type ClientModel } from 'booking.model.clients';
 
 import { ClientInput } from './components/client-input';
 import { PhoneInput } from './components/phone-input';
 import { EmailInput } from './components/email-input';
 import { deepToRawClientModel } from './lib';
-import type { CurrentClient } from './types';
+import { type CurrentClient } from './types';
 import './client-popup-content.css';
 
+// @vue/component
 export const ClientPopupContent = {
 	name: 'ClientPopupContent',
-	emits: ['create', 'close'],
+	components: {
+		Button,
+		ClientInput,
+		PhoneInput,
+		EmailInput,
+	},
 	props: {
 		adjustPosition: {
 			type: Function,
@@ -26,12 +31,18 @@ export const ClientPopupContent = {
 			default: null,
 		},
 	},
-	data(): Object
+	emits: ['create', 'close'],
+	setup(): Object
 	{
 		return {
 			ButtonSize,
 			ButtonColor,
 			CrmEntity,
+		};
+	},
+	data(): Object
+	{
+		return {
 			contact: null,
 			company: null,
 			isSaving: false,
@@ -79,6 +90,12 @@ export const ClientPopupContent = {
 			}
 
 			return clients;
+		},
+	},
+	watch: {
+		isNew(): void
+		{
+			void this.$nextTick(() => this.adjustPosition());
 		},
 	},
 	beforeMount(): void
@@ -165,18 +182,6 @@ export const ClientPopupContent = {
 		{
 			this.$emit('close');
 		},
-	},
-	watch: {
-		isNew(): void
-		{
-			void this.$nextTick(() => this.adjustPosition());
-		},
-	},
-	components: {
-		Button,
-		ClientInput,
-		PhoneInput,
-		EmailInput,
 	},
 	template: `
 		<div class="booking-booking-client-popup-header">

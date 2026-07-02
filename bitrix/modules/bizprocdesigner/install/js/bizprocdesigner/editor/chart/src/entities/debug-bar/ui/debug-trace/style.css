@@ -1,0 +1,227 @@
+@import url('../debug-bar-variables.css');
+
+.debug-bar-trace {
+	display: flex;
+}
+
+.debug-bar-traces-list .debug-bar-trace:first-child .debug-bar-trace-wrapper {
+	border-top: 1px solid var(--ui-color-divider-accent);
+}
+
+.debug-bar-traces-list .debug-bar-trace:last-child .debug-bar-trace-wrapper {
+	border-bottom: 1px solid var(--ui-color-divider-accent);
+}
+
+.debug-bar-trace-wrapper {
+	padding: var(--debug-bar-spacing-sm) 0 0 0;
+	width: auto;
+	flex: 1 1 0;
+	margin-left: var(--debug-bar-spacing-sm);
+}
+
+.debug-bar-trace:hover {
+	background: var(--debug-bar-bg-hover);
+}
+
+.debug-bar-trace-header {
+	display: flex;
+	flex-wrap: nowrap;
+	gap: var(--debug-bar-spacing-sm);
+	font-size: var(--debug-bar-font-size-sm);
+	line-height: var(--debug-bar-line-height-base);
+	position: relative;
+	overflow: hidden;
+}
+
+.debug-bar-trace-index {
+	width: var(--debug-bar-index-width);
+	background: var(--ui-color-blue-15);
+	font-family: var(--debug-bar-font-mono), monospace;
+	font-style: normal;
+	font-weight: 400;
+	font-size: var(--debug-bar-font-size-xs);
+	display: flex;
+	justify-content: center;
+	text-align: center;
+	color: var(--ui-color-base-3);
+	flex-shrink: 0;
+	padding-top: var(--debug-bar-spacing-sm);
+}
+
+.debug-bar-trace-time {
+	font-family: var(--debug-bar-font-mono), monospace;
+	font-weight: 400;
+	font-size: var(--debug-bar-font-size-base);
+	line-height: var(--debug-bar-line-height-tight);
+	letter-spacing: 0;
+	color: var(--ui-color-base-3);
+}
+
+.debug-bar-trace-type {
+	flex-shrink: 0;
+	font-family: var(--debug-bar-font-mono), monospace;
+	font-weight: 400;
+	font-size: var(--debug-bar-font-size-base);
+	text-transform: uppercase;
+	line-height: var(--debug-bar-line-height-tight);
+	letter-spacing: 0;
+	color: var(--ui-color-base-3);
+}
+
+.debug-bar-trace-key {
+	font-family: var(--debug-bar-font-mono), monospace;
+	font-weight: var(--ui-font-weight-medium);
+	font-style: Normal;
+	font-size: var(--debug-bar-font-size-base);
+	line-height: var(--debug-bar-line-height-tight);
+	letter-spacing: 0;
+	color: var(--ui-color-base-1);
+}
+
+.debug-bar-trace-message {
+	font-family: var(--debug-bar-font-mono), monospace;
+	color: var(--ui-color-base-1);
+	font-weight: var(--ui-font-weight-medium);
+	font-size: var(--debug-bar-font-size-base);
+	line-height: var(--debug-bar-line-height-tight);
+	letter-spacing: 0;
+	white-space: nowrap;
+	flex: 1 1 0;
+}
+
+.debug-bar-trace-section {
+	margin-top: var(--debug-bar-spacing-sm);
+	margin-bottom: var(--debug-bar-spacing-sm);
+}
+
+.debug-bar-trace-toggle {
+	width: 100%;
+	display: flex;
+	align-items: center;
+	gap: var(--debug-bar-spacing-xs);
+	cursor: pointer;
+	transition: background-color var(--debug-bar-transition-fast) var(--debug-bar-easing-default),
+	color var(--debug-bar-transition-fast) var(--debug-bar-easing-default);
+	font-family: inherit;
+}
+
+.debug-bar-trace-toggle:focus-visible {
+	outline: 2px solid var(--ui-color-primary, #3399FF);
+	outline-offset: 2px;
+	border-radius: var(--debug-bar-border-radius-sm);
+}
+
+.debug-bar-trace-toggle-icon {
+	font-size: var(--debug-bar-font-size-xs);
+	color: var(--ui-color-base-2);
+	line-height: 1;
+	transition: transform var(--debug-bar-transition-fast) var(--debug-bar-easing-default);
+	flex-shrink: 0;
+	will-change: transform;
+}
+
+.debug-bar-trace-toggle-label {
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--debug-bar-font-size-base);
+	color: var(--ui-color-base-2);
+	text-transform: uppercase;
+	flex-shrink: 0;
+}
+
+.debug-bar-trace-json {
+	margin-top: var(--debug-bar-spacing-xs);
+	padding: var(--debug-bar-spacing-md);
+}
+
+.debug-bar-trace-json pre {
+	margin: 0;
+	padding: 0;
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--debug-bar-font-size-base);
+	color: var(--ui-color-base-2);
+	line-height: var(--debug-bar-line-height-loose);
+	white-space: pre-wrap;
+	word-wrap: normal;
+	word-break: break-word;
+	overflow-wrap: break-word;
+}
+
+.debug-bar-trace-json {
+	scrollbar-width: thin;
+	scrollbar-color: var(--debug-bar-scrollbar-thumb) var(--debug-bar-scrollbar-track);
+}
+
+.debug-bar-trace-json::-webkit-scrollbar {
+	width: var(--debug-bar-scrollbar-width);
+	height: var(--debug-bar-scrollbar-height);
+}
+
+.debug-bar-trace-json::-webkit-scrollbar-track {
+	background: var(--debug-bar-scrollbar-track);
+	border-radius: var(--debug-bar-border-radius-sm);
+}
+
+.debug-bar-trace-json::-webkit-scrollbar-thumb {
+	background: var(--debug-bar-scrollbar-thumb);
+	border-radius: var(--debug-bar-border-radius-sm);
+}
+
+.debug-bar-trace-json::-webkit-scrollbar-thumb:hover {
+	background: var(--debug-bar-scrollbar-hover);
+}
+
+.debug-bar-traces-loading,
+.debug-bar-traces-empty {
+	padding: calc(var(--debug-bar-spacing-xl) * 1.5) var(--debug-bar-spacing-xl);
+	text-align: center;
+	font-family: var(--debug-bar-font-mono), monospace;
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--debug-bar-font-size-base);
+	line-height: var(--debug-bar-line-height-loose);
+	color: var(--ui-color-base-3);
+}
+
+.debug-bar-traces-loading {
+	background: var(--debug-bar-bg-hover);
+	border-top: 1px solid var(--ui-color-divider-accent);
+	border-bottom: 1px solid var(--ui-color-divider-accent);
+}
+
+.debug-bar-traces-empty {
+	color: var(--ui-color-base-4);
+	font-style: italic;
+}
+
+.debug-bar-traces-load-more {
+	display: flex;
+	justify-content: center;
+	padding: var(--debug-bar-spacing-md) 0;
+	border-top: 1px solid var(--debug-bar-border-light);
+}
+
+.debug-bar-traces-load-more-btn {
+	display: inline-flex;
+	align-items: center;
+	padding: var(--debug-bar-spacing-xs) var(--debug-bar-spacing-xl);
+	border: 1px solid var(--ui-color-divider-accent);
+	border-radius: var(--debug-bar-border-radius-sm, 4px);
+	background: transparent;
+	cursor: pointer;
+	font-family: var(--debug-bar-font-mono), monospace;
+	font-size: var(--debug-bar-font-size-sm);
+	color: var(--debug-bar-text-secondary);
+	transition:
+		background-color var(--debug-bar-transition-fast) var(--debug-bar-easing-default),
+		color var(--debug-bar-transition-fast) var(--debug-bar-easing-default);
+}
+
+.debug-bar-traces-load-more-btn:hover:not(:disabled) {
+	background: var(--debug-bar-bg-active);
+	color: var(--ui-color-base-1);
+}
+
+.debug-bar-traces-load-more-btn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+

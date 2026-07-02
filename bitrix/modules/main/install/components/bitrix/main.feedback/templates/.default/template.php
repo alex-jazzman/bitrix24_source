@@ -1,4 +1,4 @@
-<?
+<?php
 if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
 /**
  * Bitrix vars
@@ -11,14 +11,14 @@ if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
  */
 ?>
 <div class="mfeedback">
-<?if(!empty($arResult["ERROR_MESSAGE"]))
+<?php if(!empty($arResult["ERROR_MESSAGE"]))
 {
 	foreach($arResult["ERROR_MESSAGE"] as $v)
 		ShowError($v);
 }
 if(!empty($arResult["OK_MESSAGE"]))
 {
-	?><div class="mf-ok-text"><?=$arResult["OK_MESSAGE"]?></div><?
+	?><div class="mf-ok-text"><?=$arResult["OK_MESSAGE"]?></div><?php
 }
 ?>
 
@@ -26,25 +26,25 @@ if(!empty($arResult["OK_MESSAGE"]))
 <?=bitrix_sessid_post()?>
 	<div class="mf-name">
 		<div class="mf-text">
-			<?=GetMessage("MFT_NAME")?><?if(empty($arParams["REQUIRED_FIELDS"]) || in_array("NAME", $arParams["REQUIRED_FIELDS"])):?><span class="mf-req">*</span><?endif?>
+			<?=GetMessage("MFT_NAME")?><?php if(empty($arParams["REQUIRED_FIELDS"]) || in_array("NAME", $arParams["REQUIRED_FIELDS"])):?><span class="mf-req">*</span><?php endif?>
 		</div>
 		<input type="text" name="user_name" value="<?=$arResult["AUTHOR_NAME"]?>">
 	</div>
 	<div class="mf-email">
 		<div class="mf-text">
-			<?=GetMessage("MFT_EMAIL")?><?if(empty($arParams["REQUIRED_FIELDS"]) || in_array("EMAIL", $arParams["REQUIRED_FIELDS"])):?><span class="mf-req">*</span><?endif?>
+			<?=GetMessage("MFT_EMAIL")?><?php if(empty($arParams["REQUIRED_FIELDS"]) || in_array("EMAIL", $arParams["REQUIRED_FIELDS"])):?><span class="mf-req">*</span><?php endif?>
 		</div>
 		<input type="text" name="user_email" value="<?=$arResult["AUTHOR_EMAIL"]?>">
 	</div>
 
 	<div class="mf-message">
 		<div class="mf-text">
-			<?=GetMessage("MFT_MESSAGE")?><?if(empty($arParams["REQUIRED_FIELDS"]) || in_array("MESSAGE", $arParams["REQUIRED_FIELDS"])):?><span class="mf-req">*</span><?endif?>
+			<?=GetMessage("MFT_MESSAGE")?><?php if(empty($arParams["REQUIRED_FIELDS"]) || in_array("MESSAGE", $arParams["REQUIRED_FIELDS"])):?><span class="mf-req">*</span><?php endif?>
 		</div>
 		<textarea name="MESSAGE" rows="5" cols="40"><?=($arResult["MESSAGE"] ?? '')?></textarea>
 	</div>
 
-	<?if($arParams["USE_CAPTCHA"] == "Y"):?>
+	<?php if($arParams["USE_CAPTCHA"] == "Y"):?>
 	<div class="mf-captcha">
 		<div class="mf-text"><?=GetMessage("MFT_CAPTCHA")?></div>
 		<input type="hidden" name="captcha_sid" value="<?=$arResult["capCode"]?>">
@@ -52,7 +52,7 @@ if(!empty($arResult["OK_MESSAGE"]))
 		<div class="mf-text"><?=GetMessage("MFT_CAPTCHA_CODE")?><span class="mf-req">*</span></div>
 		<input type="text" name="captcha_word" size="30" maxlength="50" value="">
 	</div>
-	<?endif;?>
+	<?php endif;?>
 	<input type="hidden" name="PARAMS_HASH" value="<?=$arResult["PARAMS_HASH"]?>">
 	<input type="submit" name="submit" value="<?=GetMessage("MFT_SUBMIT")?>">
 </form>

@@ -220,13 +220,51 @@ $canInsertUserData = !\Bitrix\Main\Loader::includeModule('bitrix24') || !\CBitri
 																	</div>
 																	<div class="email-collab-content" style="display:inline-block;padding-top:22px;padding-right:36px;padding-left:0;padding-bottom:22px;text-align:left;">
 																		<p class="email-collab-subtitle" style="Margin:0;margin-bottom:10px;mso-line-height-rule:exactly;line-height:20px;letter-spacing:0;color:#333333;font-size:17px;font-weight:500;">
-																			<?=Loc::getMessage("INTRANET_COLLAB_JOIN_JOINED_TO_COLLAB", ['[style]' => '<span style="color:#19CC45;">', '[/style]' => '</span>'])?>
+																			<?php if ($arResult['isNewProjectsAvailable']): ?>
+																				<?=
+																					Loc::getMessage(
+																						"INTRANET_PROJECT_JOIN_JOINED_TO_PROJECT",
+																						[
+																							'[style]' => '<span style="color:#19CC45;">',
+																							'[/style]' => '</span>',
+																						]
+																					);
+																				?>
+																			<?php else: ?>
+																				<?=
+																					Loc::getMessage(
+																						"INTRANET_COLLAB_JOIN_JOINED_TO_COLLAB",
+																						[
+																							'[style]' => '<span style="color:#19CC45;">',
+																							'[/style]' => '</span>',
+																						]
+																					);
+																				?>
+																			<?php endif; ?>
 																		</p>
 																		<p class="email-collab-title" style="Margin:0;margin-bottom:24px;mso-line-height-rule:exactly;line-height:21px;letter-spacing:0;color:#333333;font-size:21px;font-weight:600;">
 																			<?= $canInsertUserData ? htmlspecialcharsbx($arParams['FIELDS']['COLLAB_NAME']) : '' ?>
 																		</p>
 																		<span class="es-button-border" style="text-align:center;cursor:pointer;background:#19CC45;display:inline-block;border-radius:8px;width:100%">
-																			<a href="<?=$arParams["LINK"]?>" target="_blank" class="es-button" style="cursor:pointer;mso-style-priority:100 !important;text-decoration:none !important;mso-line-height-rule:exactly;color:#FFFFFF;font-size:17px;font-weight:600;padding-top:13px;padding-right:46px;padding-bottom:13px;padding-left:46px;display:inline-block;background:#31CB4B;border-radius:8px;font-style:normal;line-height:16.8px;width:auto;text-align:center;letter-spacing:0;mso-padding-alt:0;"><?=Loc::getMessage("INTRANET_COLLAB_JOIN_LOGIN_TO_COLLAB")?></a>
+																			<?php if ($arResult['isNewProjectsAvailable']): ?>
+																				<a
+																					href="<?=$arParams["LINK"]?>"
+																					target="_blank"
+																					class="es-button"
+																					style="cursor:pointer;mso-style-priority:100 !important;text-decoration:none !important;mso-line-height-rule:exactly;color:#FFFFFF;font-size:17px;font-weight:600;padding-top:13px;padding-right:46px;padding-bottom:13px;padding-left:46px;display:inline-block;background:#31CB4B;border-radius:8px;font-style:normal;line-height:16.8px;width:auto;text-align:center;letter-spacing:0;mso-padding-alt:0;"
+																				>
+																					<?=Loc::getMessage("INTRANET_PROJECT_JOIN_LOGIN_TO_PROJECT")?>
+																				</a>
+																			<?php else: ?>
+																				<a
+																					href="<?=$arParams["LINK"]?>"
+																					target="_blank"
+																					class="es-button"
+																					style="cursor:pointer;mso-style-priority:100 !important;text-decoration:none !important;mso-line-height-rule:exactly;color:#FFFFFF;font-size:17px;font-weight:600;padding-top:13px;padding-right:46px;padding-bottom:13px;padding-left:46px;display:inline-block;background:#31CB4B;border-radius:8px;font-style:normal;line-height:16.8px;width:auto;text-align:center;letter-spacing:0;mso-padding-alt:0;"
+																				>
+																					<?=Loc::getMessage("INTRANET_COLLAB_JOIN_LOGIN_TO_COLLAB")?>
+																				</a>
+																			<?php endif; ?>
 																		</span>
 																	</div>
 																</td>

@@ -42,7 +42,9 @@
 	overscroll-behavior: contain;
 	margin-top: 1px;
 	position: relative;
+	/* @chef-ignore */
 	scrollbar-gutter: stable;
+	outline: none;
 }
 
 .bx-im-dialog-chat__scroll-container:hover::-webkit-scrollbar-thumb {

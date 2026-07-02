@@ -51,90 +51,12 @@
 	width: 100%;
 	align-items: center;
 	justify-content: flex-start;
+	gap: 8px;
 }
 
 .crm-entity-stream-content-gotochat-button{
 	width: 100%;
 	max-width: 65%;
-	margin-bottom: 12px;
-}
-
-.crm-entity-stream-content-gotochat-button:last-child {
-	margin-bottom: 0;
-}
-
-.crm-entity-stream-content-new-detail-gotochat_button {
-	--crm-entity-stream-content-new-detail-gotochat_button-color: var(--ui-color-primary);
-
-	position: relative;
-	width: 100%;
-	height: 44px;
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	justify-content: center;
-	border: var(--ui-border-width-thin) solid var(--crm-entity-stream-content-new-detail-gotochat_button-color);
-	background-color: var(--ui-color-background-primary);
-	color: var(--ui-color-text-secondary);
-	border-radius: var(--ui-border-radius-xs);
-	outline: none;
-}
-
-.crm-entity-stream-content-new-detail-gotochat_button.--disabled {
-	--crm-entity-stream-content-new-detail-gotochat_button-color: var(--ui-color-base-04);
-	background-color: var(--crm-entity-stream-content-new-detail-gotochat_button-color);
-	color: rgba(var(--ui-color-text-secondary-rgb), 0.3);
-}
-
-.crm-entity-stream-content-new-detail-gotochat_button.--ready {
-	--ui-color-background-primary: #2FC6F6;
-	color: var(--ui-color-on-primary);
-}
-
-.crm-entity-stream-content-new-detail-gotochat_button.--loading {
-	opacity: .4;
-	cursor: not-allowed;
-}
-
-.crm-entity-stream-content-new-detail-gotochat_button:hover {
-	cursor: pointer;
-}
-
-.crm-entity-stream-content-new-detail-gotochat_button.--disabled {
-	pointer-events: none;
-	cursor: default;
-}
-
-.crm-entity-stream-content-new-detail-gotochat_button.--whatsapp {
-	--ui-color-background-primary: #FFF;
-	--crm-entity-stream-content-new-detail-gotochat_button-color: #25D366;
-}
-
-.crm-entity-stream-content-new-detail-gotochat_button.--whatsapp.--disabled {
-	--crm-entity-stream-content-new-detail-gotochat_button-color: var(--ui-color-base-04);
-	background-color: var(--crm-entity-stream-content-new-detail-gotochat_button-color);
-	color: rgba(var(--ui-color-text-secondary-rgb), 0.3);
-}
-
-.crm-entity-stream-content-new-detail-gotochat_button.--whatsapp.--ready {
-	--ui-color-background-primary: #25D366;
-	--crm-entity-stream-content-new-detail-gotochat_button-color: #25D366;
-}
-
-.crm-entity-stream-content-new-detail-gotochat_button.--whatsapp .ui-icon-set {
-	--ui-icon-set__icon-color: #60D66A;
-}
-
-.crm-entity-stream-content-new-detail-gotochat_button-icon {
-	width: 40px;
-	height: 40px;
-	margin-right: 2px;
-}
-
-.crm-entity-stream-content-new-detail-gotochat_button-text {
-	font-weight: var(--ui-font-weight-bold);
-	font-size: var(--ui-font-size-xs);
-	text-transform: var(--ui-text-transform-uppercase);
 }
 
 .crm-entity-stream-content-gotochat-clients-selector-title{

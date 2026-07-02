@@ -26,6 +26,9 @@ global $CACHE_MANAGER;
 
 $bSocialNetwork = IsModuleInstalled('socialnetwork');
 $bIntranet = IsModuleInstalled('intranet');
+$bUseTooltip = false;
+
+$arResult['intranet'] = $bIntranet;
 
 if ($bSocialNetwork)
 {
@@ -152,11 +155,13 @@ if ($arParams["CACHE_TYPE"] == "Y" || ($arParams["CACHE_TYPE"] == "A" && COption
 else
 	$arParams["CACHE_TIME"] = 0;
 
-$arParams["DATE_TIME_FORMAT"] = trim(empty($arParams["DATE_TIME_FORMAT"]) ? $DB->DateFormatToPHP(CSite::GetDateFormat("FULL")) : $arParams["DATE_TIME_FORMAT"]);
+$arParams["DATE_TIME_FORMAT"] = trim(empty($arParams["DATE_TIME_FORMAT"]) ? $DB->DateFormatToPHP(CSite::GetDateFormat()) : $arParams["DATE_TIME_FORMAT"]);
 
 $arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE']) ? CSite::GetNameFormat(false) : str_replace(array("#NOBR#","#/NOBR#"), "", $arParams["NAME_TEMPLATE"]);
 
-$bUseLogin = isset($arParams['SHOW_LOGIN']) && $arParams['SHOW_LOGIN'] === "N" ? false : true;
+$bUseLogin = !(isset($arParams['SHOW_LOGIN']) && $arParams['SHOW_LOGIN'] === "N");
+
+$arResult['useLogin'] = $bUseLogin;
 
 if (!array_key_exists("DO_RETURN", $arParams))
 	$arParams["DO_RETURN"] = "N";
@@ -235,7 +240,7 @@ if (!isset($arResult["FatalError"]) || $arResult["FatalError"] == '')
 		}
 		else
 		{
-			$arParams['DETAIL_URL'] = $arResult["Urls"]["SonetProfile"];
+			$arParams['DETAIL_URL'] = $arResult["Urls"]["SonetProfile"] ?? '';
 		}
 	}
 	else
@@ -250,7 +255,7 @@ if (!isset($arResult["FatalError"]) || $arResult["FatalError"] == '')
 		}
 	}
 
-	$arResult["User"]["DETAIL_URL"] = $tmpUserDetailUrl = $arParams['DETAIL_URL'];
+	$arResult["User"]["DETAIL_URL"] = $tmpUserDetailUrl = $arParams['DETAIL_URL'] ?? '';
 
 	if ($bNeedGetUser)
 	{
@@ -323,10 +328,9 @@ if (!isset($arResult["FatalError"]) || $arResult["FatalError"] == '')
 						$arFileTmp = CFile::ResizeImageGet(
 							$imageFile,
 							array("width" => $iSize, "height" => $iSize),
-							BX_RESIZE_IMAGE_EXACT,
-							false
+							BX_RESIZE_IMAGE_EXACT
 						);
-						$imageImg = CFile::ShowImage($arFileTmp["src"], $iSize, $iSize, "border='0'", "");
+						$imageImg = CFile::ShowImage($arFileTmp["src"], $iSize, $iSize, "border='0'");
 					}
 				}
 
@@ -355,7 +359,7 @@ if (!isset($arResult["FatalError"]) || $arResult["FatalError"] == '')
 
 				$arResult["User"]["PersonalPhotoImgThumbnail"] = array(
 					"Image" => $imageImg,
-					"Url" => ($bSocialNetwork && $arResult["CurrentUserPerms"]["Operations"]["viewprofile"] ? : false)
+					"Url" => ($bSocialNetwork && $arResult["CurrentUserPerms"]["Operations"]["viewprofile"])
 				);
 			}
 			$arResult["User"]["DETAIL_URL"] = $tmpUserDetailUrl;
@@ -395,7 +399,7 @@ if (!isset($arResult["FatalError"]) || $arResult["FatalError"] == '')
 		}
 
 		if (
-			(!isset($arResult["FatalError"]) || $arResult["FatalError"] == '')
+			empty($arResult["FatalError"])
 			&& $arParams['AJAX_CALL'] == 'INFO'
 			&& $bUseTooltip
 		)
@@ -479,12 +483,12 @@ if (!isset($arResult["FatalError"]) || $arResult["FatalError"] == '')
 				|| (
 					(
 						!isset($arResult["User"]["EXTERNAL_AUTH_ID"])
-						|| !in_array($arResult["User"]["EXTERNAL_AUTH_ID"], array('email'))
+						|| $arResult["User"]["EXTERNAL_AUTH_ID"] != 'email'
 					)
 					&& (
 						$USER->IsAuthorized()
 						&& $arResult["CurrentUser"]
-						&& !in_array($arResult["CurrentUser"]["EXTERNAL_AUTH_ID"], array('email'))
+						&& $arResult["CurrentUser"]["EXTERNAL_AUTH_ID"] != 'email'
 					)
 				)
 			)
@@ -518,19 +522,19 @@ if (!isset($arResult["FatalError"]) || $arResult["FatalError"] == '')
 				}
 			}
 
-			if ($arResult['IS_BIRTHDAY'])
+			if (!empty($arResult['IS_BIRTHDAY']))
 			{
 				$strToolbar .= '<li class="bx-icon bx-icon-birth">'.GetMessage("MAIN_UL_TOOLBAR_BIRTHDAY").'</li>';
 				$intToolbarItems++;
 			}
 
-			if ($arResult['IS_HONOURED'])
+			if (!empty($arResult['IS_HONOURED']))
 			{
 				$strToolbar .= '<li class="bx-icon bx-icon-featured">'.GetMessage("MAIN_UL_TOOLBAR_HONORED").'</li>';
 				$intToolbarItems++;
 			}
 
-			if ($arResult['IS_ABSENT'])
+			if (!empty($arResult['IS_ABSENT']))
 			{
 				$strToolbar .= '<li class="bx-icon bx-icon-away">'.GetMessage("MAIN_UL_TOOLBAR_ABSENT").'</li>';
 				$intToolbarItems++;
@@ -546,6 +550,15 @@ if (!isset($arResult["FatalError"]) || $arResult["FatalError"] == '')
 				$strToolbar2 = "<div class='".$arResult["stylePrefix"]."-info-data-separator'></div><ul>".$strToolbar2."</ul>";
 			}
 
+			/**
+			 * Defined in card.php:
+			 * @var string $strNameFormatted
+			 * @var string $strCard
+			 * @var string $strPhoto
+			 * @var string $strPosition
+			 * @var array $arScripts
+			 */
+
 			$arResult = array(
 				"Toolbar" => $strToolbar,
 				"ToolbarItems" => $intToolbarItems,
@@ -554,7 +567,7 @@ if (!isset($arResult["FatalError"]) || $arResult["FatalError"] == '')
 				"Card" => $strCard,
 				"Photo" => $strPhoto,
 				"Position" => $strPosition,
-				"Scripts" => (!empty($arScripts) ? $arScripts : array())
+				"Scripts" => $arScripts,
 			);
 
 			$APPLICATION->RestartBuffer();
@@ -575,7 +588,8 @@ if (!isset($arResult["FatalError"]) || $arResult["FatalError"] == '')
 		$arResult["User"]["LOGIN"] = $arParams["LOGIN"] ?? '';
 		if (
 			$arParams["USE_THUMBNAIL_LIST"] == "Y"
-			&& (!isset($arParams["HREF"]) || $arParams["HREF"]) == ''
+			&& empty($arParams["HREF"])
+			&& !empty($arParams["~PERSONAL_PHOTO_IMG"])
 		)
 		{
 			$arResult["User"]["PersonalPhotoImgThumbnail"] = array(
@@ -589,7 +603,7 @@ if (!isset($arResult["FatalError"]) || $arResult["FatalError"] == '')
 			&& intval($arParams["PERSONAL_PHOTO_FILE"]["ID"]) > 0
 		)
 		{
-			$arImage = CSocNetTools::InitImage($arParams["PERSONAL_PHOTO_FILE"]["ID"], $arParams["THUMBNAIL_LIST_SIZE"], "/bitrix/images/1.gif", 1, $arParams["~HREF"], $canViewProfile);
+			$arImage = CSocNetTools::InitImage($arParams["PERSONAL_PHOTO_FILE"]["ID"], $arParams["THUMBNAIL_LIST_SIZE"], "/bitrix/images/1.gif", 1, $arParams["~HREF"], false);
 			$arResult["User"]["PersonalPhotoImgThumbnail"] = array(
 				"Image" => $arImage["IMG"],
 				"Url" => $arParams["~HREF"]

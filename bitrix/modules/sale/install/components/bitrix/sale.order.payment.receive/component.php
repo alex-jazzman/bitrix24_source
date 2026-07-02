@@ -31,22 +31,31 @@ if ($arPaySysAction = $dbPaySysAction->Fetch())
 {
 	if ($arPaySysAction["ACTION_FILE"] <> '')
 	{
-		$GLOBALS["SALE_CORRESPONDENCE"] = CSalePaySystemAction::UnSerializeParams($arPaySysAction["PARAMS"]);
-		$pathToAction = $_SERVER["DOCUMENT_ROOT"].$arPaySysAction["ACTION_FILE"];
-
-		if(!isset($GLOBALS["SALE_INPUT_PARAMS"]))
-			$GLOBALS["SALE_INPUT_PARAMS"] = array();
-
-		$pathToAction = str_replace("\\", "/", $pathToAction);
-		while (mb_substr($pathToAction, mb_strlen($pathToAction) - 1, 1) == "/")
-			$pathToAction = mb_substr($pathToAction, 0, mb_strlen($pathToAction) - 1);
-
-		if (file_exists($pathToAction))
+		try
 		{
-			if (is_dir($pathToAction))
+			$handlerFolder = \Bitrix\Sale\PaySystem\Manager::getPathToHandlerFolder($arPaySysAction["ACTION_FILE"]);
+		}
+		catch (\Bitrix\Main\IO\InvalidPathException $e)
+		{
+			$handlerFolder = null;
+		}
+		if ($handlerFolder !== null)
+		{
+			$GLOBALS["SALE_CORRESPONDENCE"] = CSalePaySystemAction::UnSerializeParams($arPaySysAction["PARAMS"]);
+			$pathToAction = $_SERVER["DOCUMENT_ROOT"] . $handlerFolder;
+
+			if(!isset($GLOBALS["SALE_INPUT_PARAMS"]))
+				$GLOBALS["SALE_INPUT_PARAMS"] = array();
+
+			$pathToAction = str_replace("\\", "/", $pathToAction);
+			while (mb_substr($pathToAction, mb_strlen($pathToAction) - 1, 1) === "/")
 			{
-				if (file_exists($pathToAction."/result_rec.php"))
-					include($pathToAction."/result_rec.php");
+				$pathToAction = mb_substr($pathToAction, 0, -1);
+			}
+
+			if (file_exists($pathToAction) && is_dir($pathToAction) && file_exists($pathToAction . "/result_rec.php"))
+			{
+				include($pathToAction."/result_rec.php");
 			}
 		}
 

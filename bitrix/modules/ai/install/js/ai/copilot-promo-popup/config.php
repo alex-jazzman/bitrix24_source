@@ -1,4 +1,4 @@
-<?
+<?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -6,12 +6,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\AI\Facade\Bitrix24;
 use Bitrix\AI\Facade\Intranet;
-use Bitrix\AI\Services\CopilotNameService;
 use Bitrix\Main\Loader;
+use Bitrix\Ui\Public\Services\Copilot\CopilotNameService;
 
 $isWestZone = false;
-$copilotName = '';
-
 if (Loader::includeModule('ai'))
 {
 	if (Loader::includeModule('bitrix24'))
@@ -22,9 +20,9 @@ if (Loader::includeModule('ai'))
 	{
 		$isWestZone = Intranet::isWestZone();
 	}
-
-	$copilotName = (new CopilotNameService())->getCopilotName();
 }
+
+$copilotName = (new CopilotNameService())->getCopilotName();
 
 return [
 	'css' => 'dist/copilot-promo-popup.bundle.css',

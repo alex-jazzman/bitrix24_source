@@ -1,1 +1,1 @@
-<?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/interface/filter_act.php");?>
+<?php require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/interface/filter_act.php");?>

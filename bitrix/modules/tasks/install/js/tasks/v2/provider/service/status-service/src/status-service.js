@@ -100,17 +100,22 @@ export const statusService = new class
 		await this.#updateStatus(id, Endpoint.TaskTrackingTimerStop, TaskStatus.Pending);
 	}
 
-	async complete(id: number, analyticsParams: Object = {}): Promise<void>
+	async complete(
+		id: number,
+		analyticsParams: Object = {},
+		handleRequireResult: boolean = true,
+	): Promise<?Error>
 	{
 		const task = taskService.getStoreTask(id);
 		if (!task)
 		{
-			return;
+			return null;
 		}
 
 		const currentUserId = Core.getStore().getters[`${Model.Interface}/currentUserId`];
 		if (
-			task.requireResult
+			handleRequireResult
+			&& task.requireResult
 			&& !Core.getParams().rights.user.admin
 			&& currentUserId !== task.creatorId
 			&& !resultService.hasOpenedResults(id)
@@ -118,7 +123,7 @@ export const statusService = new class
 		{
 			Event.EventEmitter.emit(EventName.RequiredResultsMissing, { taskId: id });
 
-			return;
+			return null;
 		}
 
 		const group = Core.getStore().getters[`${Model.Groups}/getById`](task.groupId);
@@ -137,12 +142,17 @@ export const statusService = new class
 
 		if (!canComplete)
 		{
-			return;
+			return null;
 		}
 
 		const status = task.needsControl ? TaskStatus.SupposedlyCompleted : TaskStatus.Completed;
 
-		await this.#updateStatus(id, Endpoint.TaskStatusComplete, status);
+		const error = await this.#updateStatus(id, Endpoint.TaskStatusComplete, status, true);
+
+		if (error)
+		{
+			return error;
+		}
 
 		if (scrumManager.isScrum(group?.type))
 		{
@@ -154,6 +164,8 @@ export const statusService = new class
 		});
 
 		void resultService.closeResults(id);
+
+		return null;
 	}
 
 	async renew(id: number): Promise<void>
@@ -161,7 +173,7 @@ export const statusService = new class
 		await this.#updateStatus(id, Endpoint.TaskStatusRenew, TaskStatus.Pending);
 	}
 
-	async #updateStatus(id: number, action: string, status: string): Promise<void>
+	async #updateStatus(id: number, action: string, status: string, silent: boolean = false): Promise<{ error: ?Error }>
 	{
 		const taskBeforeUpdate = taskService.getStoreTask(id);
 
@@ -169,7 +181,7 @@ export const statusService = new class
 		{
 			taskService.updateStoreTask(id, { status });
 
-			return;
+			return null;
 		}
 
 		try
@@ -179,12 +191,19 @@ export const statusService = new class
 			taskService.updateStoreTask(id, { status });
 
 			taskService.extractTask(data);
+
+			return null;
 		}
 		catch (error)
 		{
 			taskService.updateStoreTask(id, taskBeforeUpdate);
 
-			console.error(`StatusService: ${action} error`, error);
+			if (!silent)
+			{
+				console.error(`StatusService: ${action} error`, error);
+			}
+
+			return new Error(error.errors?.[0]?.message);
 		}
 	}
 }();

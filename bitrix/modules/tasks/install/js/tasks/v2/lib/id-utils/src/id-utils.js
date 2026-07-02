@@ -19,6 +19,11 @@ export const idUtils = new class
 		return `template${id}`;
 	}
 
+	boxTemplates(ids: TaskId[]): string[]
+	{
+		return ids.map((id) => this.boxTemplate(id));
+	}
+
 	unbox(id: TaskId): TaskId
 	{
 		const idPure = String(id).replace('template', '');

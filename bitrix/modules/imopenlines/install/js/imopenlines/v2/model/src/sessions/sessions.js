@@ -1,13 +1,12 @@
-import { Type } from 'main.core';
-import { ActionTree, BuilderModel, GetterTree, MutationTree } from 'ui.vue3.vuex';
+import { Type, type JsonObject } from 'main.core';
+import { BuilderModel, type ActionTree, type GetterTree, type MutationTree } from 'ui.vue3.vuex';
 
 import { formatFieldsWithConfig } from 'im.v2.model';
 
-import { sessionsFieldsConfig } from './format/field-config';
+import { type RawSession } from 'imopenlines.v2.provider.service';
 
-import type { JsonObject } from 'main.core';
-import type { RawSession } from 'imopenlines.v2.provider.service';
-import type { Session as ImolModelSession } from '../type/sessions';
+import { type Session as ImolModelSession } from '../type/sessions';
+import { sessionsFieldsConfig } from './format/field-config';
 
 type SessionsState = {
 	collection: {
@@ -45,7 +44,7 @@ export class SessionsModel extends BuilderModel
 	getGetters(): GetterTree
 	{
 		return {
-			/** @function openlines/sessions/getById */
+			/** @function openLines/sessions/getById */
 			getById: (state: SessionsState) => (id: number, getBlank: boolean = false): ?ImolModelSession => {
 				if (!state.collection[id] && getBlank)
 				{
@@ -59,7 +58,7 @@ export class SessionsModel extends BuilderModel
 
 				return state.collection[id];
 			},
-			/** @function openlines/sessions/getByChatId */
+			/** @function openLines/sessions/getByChatId */
 			getByChatId: (state: SessionsState) => (chatId: number, getBlank: boolean = false): ?ImolModelSession => {
 				const session = Object.values(state.collection).find((item: ImolModelSession) => item.chatId === chatId);
 
@@ -81,7 +80,7 @@ export class SessionsModel extends BuilderModel
 	getActions(): ActionTree
 	{
 		return {
-			/** @function openlines/sessions/set */
+			/** @function openLines/sessions/set */
 			set: (store, payload: RawSession | RawSession[]) => {
 				let sessions = payload;
 
@@ -117,7 +116,7 @@ export class SessionsModel extends BuilderModel
 					store.commit('add', itemsToAdd);
 				}
 			},
-			/** @function openlines/sessions/pin */
+			/** @function openLines/sessions/pin */
 			pin: (store, payload: { id: string | number, action: boolean }) => {
 				const existingItem = store.state.collection[payload.id];
 

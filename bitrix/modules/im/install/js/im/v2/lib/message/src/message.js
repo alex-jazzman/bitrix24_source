@@ -6,15 +6,9 @@ import { type ImModelMessage } from 'im.v2.model';
 type MessageId = string | number;
 
 export const MessageManager = {
-	isEditable(id: MessageId): string
+	isEditable(id: MessageId): boolean
 	{
-		const isRealMessage = Core.getStore().getters['messages/isRealMessage'](id);
-		const isExists = Core.getStore().getters['messages/isExists'](id);
-		const isSticker = Core.getStore().getters['stickers/messages/isSticker'](id);
-		const isOwnMessage = MessageManager.isOwnMessage(id);
-		const isCheckIn = MessageManager.isCheckInMessage(id);
-
-		if (!isRealMessage || !isExists || !isOwnMessage || isSticker || isCheckIn)
+		if (!isEditableMessageType(id) || !isExistingOwnMessage(id))
 		{
 			return false;
 		}
@@ -74,3 +68,22 @@ export const MessageManager = {
 		return preparedMessageId.startsWith(FakeMessagePrefix) || preparedMessageId.startsWith(FakeDraftMessagePrefix);
 	},
 };
+
+function isEditableMessageType(id: MessageId): boolean
+{
+	const isSticker = Core.getStore().getters['stickers/messages/isSticker'](id);
+	const isCheckIn = MessageManager.isCheckInMessage(id);
+	const isBuilder = Core.getStore().getters['messages/builder/hasBlocks'](id);
+	const isForward = Core.getStore().getters['messages/isForward'](id);
+	const isVideoNote = Core.getStore().getters['messages/isVideoNote'](id);
+
+	return !isSticker && !isCheckIn && !isBuilder && !isForward && !isVideoNote;
+}
+
+function isExistingOwnMessage(id: MessageId): boolean
+{
+	const isRealMessage = Core.getStore().getters['messages/isRealMessage'](id);
+	const isExists = Core.getStore().getters['messages/isExists'](id);
+
+	return isRealMessage && isExists && MessageManager.isOwnMessage(id);
+}

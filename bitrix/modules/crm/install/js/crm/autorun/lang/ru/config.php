@@ -39,10 +39,10 @@ $MESS['CRM_AUTORUN_BATCH_SET_OPENED_SUMMARY_CAPTION'] = 'Изменение до
 $MESS['CRM_AUTORUN_BATCH_SET_OPENED_SUMMARY_SUCCEEDED'] = 'Изменено: #number#';
 $MESS['CRM_AUTORUN_BATCH_SET_OPENED_SUMMARY_FAILED'] = 'Не удалось изменить: #number#';
 
-$MESS['CRM_AUTORUN_BATCH_EXCLUSION_TITLE'] = 'Добавление в список исключений';
-$MESS['CRM_AUTORUN_BATCH_EXCLUSION_SUMMARY_CAPTION'] = 'Добавление в список исключений завершено.';
-$MESS['CRM_AUTORUN_BATCH_EXCLUSION_SUMMARY_SUCCEEDED'] = 'Добавлено в список исключений: #number#';
-$MESS['CRM_AUTORUN_BATCH_EXCLUSION_SUMMARY_FAILED'] = 'Не удалось добавить в список исключений: #number#';
+$MESS['CRM_AUTORUN_BATCH_EXCLUSION_TITLE'] = 'Добавление в стоп-лист';
+$MESS['CRM_AUTORUN_BATCH_EXCLUSION_SUMMARY_CAPTION'] = 'Добавление в стоп-лист завершено.';
+$MESS['CRM_AUTORUN_BATCH_EXCLUSION_SUMMARY_SUCCEEDED'] = 'Добавлено в стоп-лист: #number#';
+$MESS['CRM_AUTORUN_BATCH_EXCLUSION_SUMMARY_FAILED'] = 'Не удалось добавить в стоп-лист: #number#';
 
 $MESS['CRM_AUTORUN_BATCH_SET_EXPORT_TITLE'] = 'Подготовка элементов к экспорту';
 $MESS['CRM_AUTORUN_BATCH_SET_EXPORT_TITLE_CONTACT'] = 'Подготовка контактов к экспорту';

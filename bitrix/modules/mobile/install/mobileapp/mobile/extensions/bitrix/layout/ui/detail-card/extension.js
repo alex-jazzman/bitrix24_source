@@ -20,6 +20,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { qrauth } = require('qrauth/utils');
 	const { RunActionExecutor } = require('rest/run-action-executor');
+	const { requireLazy } = require('require-lazy');
 
 	const CACHE_ID = 'DETAIL_CARD';
 	const TAB_HEADER_HEIGHT = 50;
@@ -206,25 +207,6 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 
 			this.customEvents.forEach(([event, handler]) => {
 				this.customEventEmitter.on(event, (...args) => handler(this, ...args));
-			});
-
-			this.showOnboarding();
-		}
-
-		showOnboarding()
-		{
-			void requireLazy('onboarding', false).then(({ OnboardingBase, CaseName }) => {
-				if (OnboardingBase)
-				{
-					const { isClientEnabled = false, permissions = {} } = this.getComponentParams();
-					const entityTypeId = this.getEntityTypeId();
-
-					void OnboardingBase.tryToShow(CaseName.ON_DETAIL_CARD_TELEGRAM_BOT, {
-						isClientEnabled,
-						entityTypeId,
-						hasOpenLinesAccess: permissions.openLinesAccess,
-					});
-				}
 			});
 		}
 
@@ -1127,6 +1109,8 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 
 		setActiveTab(tabId)
 		{
+			this.activeTab = tabId;
+
 			if (this.tabViewRef)
 			{
 				const currentTab = this.tabViewRef.getCurrentItem();

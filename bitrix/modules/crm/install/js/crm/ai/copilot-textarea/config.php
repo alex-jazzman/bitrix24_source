@@ -11,9 +11,9 @@ return [
 	'rel' => [
 		'ai.copilot',
 		'crm.ai.name-service',
+		'main.core',
 		'main.core.events',
 		'main.popup',
-		'main.core',
 		'ui.design-tokens',
 	],
 	'skip_core' => false,

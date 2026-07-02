@@ -7,7 +7,7 @@ import { limit } from 'booking.lib.limit';
 import { Button, ButtonSize, ButtonColor, ButtonIcon } from 'booking.component.button';
 import { ClientPopup } from 'booking.component.client-popup';
 import { Model } from 'booking.const';
-import type { ClientData } from 'booking.model.clients';
+import { type ClientData } from 'booking.model.clients';
 
 import '../client.css';
 
@@ -16,21 +16,30 @@ export type AddClientsPayload = {
 	clients: ClientData[],
 }
 
+// @vue/component
 export const Empty = {
-	emits: ['popupShown', 'popupClosed', 'addClients'],
+	directives: { hint },
 	props: {
 		id: {
 			type: [Number, String],
 			required: true,
 		},
+		itemTimeFormatted: {
+			type: String,
+			default: '',
+		},
 	},
-	directives: { hint },
-	data(): Object
+	emits: ['popupShown', 'popupClosed', 'addClients'],
+	setup(): Object
 	{
 		return {
 			ButtonSize,
 			ButtonColor,
-			ButtonIcon,
+		};
+	},
+	data(): Object
+	{
+		return {
 			isLoading: true,
 			shownClientPopup: false,
 		};
@@ -121,6 +130,11 @@ export const Empty = {
 			<div class="booking-actions-popup__item-client-info-empty">
 				<div></div>
 				<div></div>
+			</div>
+			<div v-if="itemTimeFormatted" class="booking-actions-popup-item-info">
+				<div class="booking-actions-popup-item-subtitle">
+					{{ itemTimeFormatted }}
+				</div>
 			</div>
 			<div
 				class="booking-actions-popup-item-buttons booking-actions-popup__item-client-info-btn"

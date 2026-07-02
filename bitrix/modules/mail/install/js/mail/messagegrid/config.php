@@ -8,11 +8,11 @@ return [
 	'css' => 'dist/messagegrid.bundle.css',
 	'js' => 'dist/messagegrid.bundle.js',
 	'rel' => [
-		'ui.design-tokens',
-		'ui.buttons',
-		'ui.fonts.opensans',
-		'main.core.events',
 		'main.core',
+		'main.core.events',
+		'ui.buttons',
+		'ui.design-tokens',
+		'ui.fonts.opensans',
 	],
 	'skip_core' => false,
 ];

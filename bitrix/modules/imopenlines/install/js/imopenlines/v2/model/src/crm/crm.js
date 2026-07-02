@@ -1,10 +1,9 @@
-import { BuilderModel } from 'ui.vue3.vuex';
+import { BuilderModel, type ActionTree, type GetterTree, type MutationTree } from 'ui.vue3.vuex';
 
-import type { ActionTree, GetterTree, MutationTree } from 'ui.vue3.vuex';
-import type { RawCrm } from 'imopenlines.v2.provider.service';
+import { type ImolModelCrm } from 'imopenlines.v2.model';
 
 type CrmState = {
-	collection: { [dialogId: string]: RawCrm }
+	collection: { [dialogId: string]: ImolModelCrm }
 }
 
 /* eslint-disable no-param-reassign */
@@ -22,7 +21,7 @@ export class CrmModel extends BuilderModel
 		};
 	}
 
-	getElementState(): RawCrm
+	getElementState(): ImolModelCrm
 	{
 		return {
 			crmEnabled: false,
@@ -38,8 +37,8 @@ export class CrmModel extends BuilderModel
 	getGetters(): GetterTree<CrmState>
 	{
 		return {
-			/** @function openlines/crm/getByDialogId */
-			getByDialogId: (state: CrmState) => (dialogId: string): ?RawCrm => {
+			/** @function openLines/crm/getByDialogId */
+			getByDialogId: (state: CrmState) => (dialogId: string): ?ImolModelCrm => {
 				return state.collection[dialogId] || null;
 			},
 		};
@@ -48,8 +47,8 @@ export class CrmModel extends BuilderModel
 	getActions(): ActionTree<CrmState>
 	{
 		return {
-			/** @function openlines/crm/set */
-			set: (store, payload: { dialogId: string, data: RawCrm }) => {
+			/** @function openLines/crm/set */
+			set: (store, payload: { dialogId: string, data: ImolModelCrm }) => {
 				if (!payload.data)
 				{
 					return;
@@ -62,7 +61,7 @@ export class CrmModel extends BuilderModel
 	getMutations(): MutationTree<CrmState>
 	{
 		return {
-			set: (state: CrmState, payload: { dialogId: string, data: RawCrm }) => {
+			set: (state: CrmState, payload: { dialogId: string, data: ImolModelCrm }) => {
 				const { dialogId, data } = payload;
 				const currentElement = state.collection[dialogId] ?? this.getElementState();
 				state.collection[dialogId] = { ...currentElement, ...data };

@@ -16,3 +16,4 @@ $MESS['BIZPROC_SRA_RETURN_MODE_COLLECTION_PROPERTY'] = 'Коллекция за�
 
 $MESS['BIZPROC_SRA_EMPTY_STORAGE_ID_OR_CODE'] = 'Не заполнено обязательное поле "Хранилище" или его символьный код';
 $MESS['BIZPROC_SRA_EMPTY_RETURN_FIELDS'] = 'Не заполнено обязательное поле "Возвращаемые поля"';
+$MESS['BIZPROC_SRA_EMPTY_FILTER_FIELDS'] = 'Не заполнено обязательное поле "Фильтр по полям"';

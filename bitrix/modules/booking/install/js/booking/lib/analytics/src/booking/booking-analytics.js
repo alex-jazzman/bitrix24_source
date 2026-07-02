@@ -13,6 +13,8 @@ export class BookingAnalytics
 		const $store = Core.getStore();
 		const cSection = getCSection();
 		const overbookingMap = $store.getters[`${Model.Bookings}/overbookingMap`];
+		const gridMode = $store.getters[`${Model.Interface}/gridMode`];
+
 		for (const bookingId of bookingIds)
 		{
 			const isOverbooking = overbookingMap.has(bookingId);
@@ -21,6 +23,7 @@ export class BookingAnalytics
 				category: AnalyticsCategory.booking,
 				event: 'add_booking',
 				c_section: cSection,
+				c_sub_section: gridMode,
 				c_element: 'multi_button',
 				p1: 'isMultiResource_Y',
 				p2: isOverbooking ? 'isOverbooking_Y' : 'isOverbooking_N',
@@ -32,11 +35,14 @@ export class BookingAnalytics
 
 	static sendAddBooking({ isOverbooking }: { isOverbooking: ?boolean } = {}): void
 	{
+		const $store = Core.getStore();
+
 		const options: AddBookingOptions = {
 			tool: AnalyticsTool.booking,
 			category: AnalyticsCategory.booking,
 			event: 'add_booking',
 			c_section: getCSection(),
+			c_sub_section: $store.getters[`${Model.Interface}/gridMode`],
 			c_element: 'solo_button',
 			p1: 'isMultiResource_N',
 			p2: isOverbooking ? 'isOverbooking_Y' : 'isOverbooking_N',
@@ -47,11 +53,14 @@ export class BookingAnalytics
 
 	static sendAddWaitListItem(): void
 	{
+		const $store = Core.getStore();
+
 		const options: AddBookingOptions = {
 			tool: AnalyticsTool.booking,
 			category: AnalyticsCategory.booking,
 			event: 'add_booking',
 			c_section: getCSection(),
+			c_sub_section: $store.getters[`${Model.Interface}/gridMode`],
 			c_element: 'solo_button',
 			p1: 'isMultiResource_N',
 			p2: 'isOverbooking_N',

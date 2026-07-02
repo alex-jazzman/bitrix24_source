@@ -1,10 +1,10 @@
 import { BitrixVue } from 'ui.vue3';
 import { createStore } from 'ui.vue3.vuex';
+
 import { Main } from './components/main';
 import { EntityEditorProxy } from './services/entity-editor-proxy';
+import { setEntityEditorProxy } from './shared-state';
 import store from './store/index';
-
-export let entityEditorProxy: ?EntityEditorProxy = null;
 
 export class AiFormFillApplication
 {
@@ -37,7 +37,7 @@ export class AiFormFillApplication
 
 	start(): void
 	{
-		entityEditorProxy = new EntityEditorProxy();
+		setEntityEditorProxy(new EntityEditorProxy());
 		this.#store = createStore(store());
 		this.#application = BitrixVue.createApp({
 			name: 'AiFormFill',
@@ -65,7 +65,7 @@ export class AiFormFillApplication
 		this.#application.unmount();
 		this.#application = null;
 		this.#store = null;
-		entityEditorProxy = null;
+		setEntityEditorProxy(null);
 	}
 
 	isNeededShowCloseConfirm(): boolean

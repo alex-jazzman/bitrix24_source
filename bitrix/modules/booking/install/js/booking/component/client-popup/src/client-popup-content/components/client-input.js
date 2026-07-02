@@ -1,5 +1,4 @@
-import { EventEmitter, BaseEvent } from 'main.core.events';
-import { Popup } from 'main.popup';
+import { EventEmitter } from 'main.core.events';
 import { BIcon as Icon, Set as IconSet } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.main';
 import 'ui.icon-set.actions';

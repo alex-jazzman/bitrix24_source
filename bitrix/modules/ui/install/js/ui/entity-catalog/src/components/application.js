@@ -10,8 +10,8 @@ import { Search } from './search';
 
 import { useGlobalState } from '../stores/global-state';
 
-import { GroupData } from '@/type/group';
-import type { ItemData } from '@/type/item';
+import { type GroupData } from '../types/group';
+import { type ItemData } from '../types/item';
 
 import '../css/application.css';
 

@@ -1,6 +1,5 @@
 import { Loc, Dom, Text, Type } from 'main.core';
 
-import { Parser } from '../parser';
 import { ParserUtils } from '../utils/utils';
 import { getCore, getConst } from '../utils/core-proxy';
 import { MentionHandler } from '../classes/mention-handler';
@@ -116,26 +115,6 @@ export const ParserMention = {
 			}
 			const dialogId = contextTag.split('/')[0];
 
-			let title = '';
-			messageId = Number.parseInt(messageId, 10);
-			if (Type.isNumber(messageId) && messageId > 0)
-			{
-				const message = getCore().getStore().getters['messages/getById'](messageId);
-				if (message)
-				{
-					title = Parser.purifyMessage(message);
-					const user = getCore().getStore().getters['users/get'](message.authorId);
-					if (user)
-					{
-						title = `${user.name}: ${title}`;
-					}
-				}
-			}
-			if (!Type.isStringFilled(title))
-			{
-				title = Loc.getMessage('IM_PARSER_MENTION_DIALOG');
-			}
-
 			return Dom.create({
 				tag: 'span',
 				attrs: {
@@ -143,7 +122,7 @@ export const ParserMention = {
 					'data-type': MessageMentionType.context,
 					'data-dialog-id': dialogId,
 					'data-message-id': messageId,
-					title,
+					title: Loc.getMessage('IM_PARSER_MENTION_DIALOG'),
 				},
 				text
 			}).outerHTML;

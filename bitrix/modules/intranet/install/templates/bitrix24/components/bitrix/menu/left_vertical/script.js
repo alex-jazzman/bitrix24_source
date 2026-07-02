@@ -864,7 +864,7 @@ this.BX = this.BX || {};
 				'#COUNT#': String(counterValue)
 			});
 		}
-		static #setFieldError(field) {
+		static setFieldError(field) {
 			main_core.Dom.addClass(field, 'menu-form-input-error');
 			main_core.Dom.attr(field, 'aria-invalid', 'true');
 			let errorMsg = field.parentNode.querySelector('.menu-form-error-message');
@@ -876,7 +876,7 @@ this.BX = this.BX || {};
 			errorMsg.textContent = main_core.Loc.getMessage('MENU_EMPTY_FORM_ERROR');
 			field.focus();
 		}
-		static #clearFieldError(field) {
+		static clearFieldError(field) {
 			main_core.Dom.removeClass(field, 'menu-form-input-error');
 			main_core.Dom.attr(field, 'aria-invalid', null);
 			const errorMsg = field.parentNode.querySelector('.menu-form-error-message');
@@ -886,12 +886,12 @@ this.BX = this.BX || {};
 		}
 		static checkForm(form) {
 			if (String(form.elements["text"].value).trim().length <= 0) {
-				this.#setFieldError(form.elements["text"]);
+				this.setFieldError(form.elements["text"]);
 				return false;
 			}
 			if (form.elements["link"]) {
 				if (String(form.elements["link"].value).trim().length <= 0 || Utils.refineUrl(form.elements["link"].value).length <= 0) {
-					this.#setFieldError(form.elements["link"]);
+					this.setFieldError(form.elements["link"]);
 					return false;
 				} else {
 					form.elements["link"].value = Utils.refineUrl(form.elements["link"].value);
@@ -924,11 +924,11 @@ this.BX = this.BX || {};
 				}
 			});
 			main_core.Event.bind(form.elements['text'], 'input', () => {
-				this.#clearFieldError(form.elements['text']);
+				this.clearFieldError(form.elements['text']);
 			});
 			if (form.elements['link']) {
 				main_core.Event.bind(form.elements['link'], 'input', () => {
-					this.#clearFieldError(form.elements['link']);
+					this.clearFieldError(form.elements['link']);
 				});
 			}
 			this.popup = main_popup.PopupManager.create('menu-self-item-popup', bindElement, {
@@ -2809,8 +2809,8 @@ this.BX = this.BX || {};
 			});
 		}
 		#sendData(data) {
-			main_core.Runtime.loadExtension('ui.analytics').then(exports$1 => {
-				exports$1.sendData(data);
+			main_core.Runtime.loadExtension('ui.analytics').then(exports => {
+				exports.sendData(data);
 			}).catch(err => {
 				console.error(err);
 			});
@@ -2917,10 +2917,10 @@ this.BX = this.BX || {};
 			main_sidepanel.SidePanel.Instance.open('my-groups', {
 				cacheable: false,
 				contentCallback: () => {
-					return main_core.Runtime.loadExtension('ui.sidepanel.layout').then(exports$1 => {
+					return main_core.Runtime.loadExtension('ui.sidepanel.layout').then(exports => {
 						const {
 							Layout
-						} = exports$1;
+						} = exports;
 						return Layout.createContent({
 							title: main_core.Loc.getMessage('MENU_MY_WORKGROUPS'),
 							design: {
@@ -3577,8 +3577,8 @@ this.BX = this.BX || {};
 			if (BannerDispatcher) {
 				this.addGlobalPresetToBannerDispatcher(BannerDispatcher);
 			} else {
-				main_core.Runtime.loadExtension('ui.banner-dispatcher').then(exports$1 => {
-					this.addGlobalPresetToBannerDispatcher(exports$1.BannerDispatcher);
+				main_core.Runtime.loadExtension('ui.banner-dispatcher').then(exports => {
+					this.addGlobalPresetToBannerDispatcher(exports.BannerDispatcher);
 				}).catch(() => {});
 			}
 		}

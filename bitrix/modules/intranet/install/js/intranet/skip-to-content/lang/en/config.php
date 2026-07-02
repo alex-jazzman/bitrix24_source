@@ -1,0 +1,6 @@
+<?php
+$MESS["BITRIX24_SKIP_NAV_BUTTON"] = "Browse";
+$MESS["BITRIX24_SKIP_NAV_LABEL"] = "Quick navigation";
+$MESS["BITRIX24_SKIP_NAV_MAIN_CONTENT"] = "Page content";
+$MESS["BITRIX24_SKIP_NAV_MAIN_MENU"] = "Main menu";
+$MESS["BITRIX24_SKIP_NAV_TOP_MENU"] = "Section menu";

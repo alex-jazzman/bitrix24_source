@@ -37,6 +37,11 @@ jn.define('im/messenger/provider/pull/lib/recent/chat/update-manager/update-mana
 			return this.#params.chat.dialogId;
 		}
 
+		getParentChatId()
+		{
+			return this.#params.chat?.parent_chat_id ?? 0;
+		}
+
 		getLastMessageId()
 		{
 			return this.getLastMessage().id;

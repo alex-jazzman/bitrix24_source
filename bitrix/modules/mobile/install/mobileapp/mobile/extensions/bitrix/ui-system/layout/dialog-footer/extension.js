@@ -4,7 +4,7 @@
 jn.define('ui-system/layout/dialog-footer', (require, exports, module) => {
 	const { Feature } = require('feature');
 	const { PropTypes } = require('utils/validation');
-	const { Color, Component, Indent } = require('tokens');
+	const { Component, Indent } = require('tokens');
 	const { isEmpty, isFunction, isObjectLike, merge } = require('utils/object');
 	const { Button, ButtonSize } = require('ui-system/form/buttons/button');
 
@@ -70,7 +70,6 @@ jn.define('ui-system/layout/dialog-footer', (require, exports, module) => {
 						left: 0,
 						right: 0,
 						bottom: 0,
-						backgroundColor: this.#getBackgroundColor(),
 						paddingBottom: this.isSafeArea() ? 0 : this.#getPaddingBottom(),
 						...this.getStyle(),
 					},
@@ -212,13 +211,6 @@ jn.define('ui-system/layout/dialog-footer', (require, exports, module) => {
 			onLayoutFooterHeight?.(params);
 		}
 
-		#getBackgroundColor()
-		{
-			const { backgroundColor } = this.props;
-
-			return Color.resolve(backgroundColor, Color.bgPrimary).toHex();
-		}
-
 		/**
 		 * @returns {number}
 		 */
@@ -267,7 +259,6 @@ jn.define('ui-system/layout/dialog-footer', (require, exports, module) => {
 		testId: PropTypes.string.isRequired,
 		safeArea: PropTypes.bool,
 		keyboardButton: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
-		backgroundColor: PropTypes.instanceOf(Color),
 		onLayoutFooterHeight: PropTypes.func,
 		isKeyboardShown: PropTypes.bool,
 		children: PropTypes.arrayOf(

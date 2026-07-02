@@ -1,4 +1,8 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+
+/**
+ * @var array $arResult
+ */
 
 Bitrix\Main\UI\Extension::load(["ui.tooltip", "ui.fonts.opensans"]);
 
@@ -7,16 +11,16 @@ if(\CCrmSipHelper::isEnabled())
 	\Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
 
 $publicMode = isset($arParams["PUBLIC_MODE"]) && $arParams["PUBLIC_MODE"] === true;
-?><table cellpadding="0" cellspacing="0" class="field_crm"><?
+?><table cellpadding="0" cellspacing="0" class="field_crm"><?php
 	$_suf = rand(1, 100);
 	foreach ($arResult["VALUE"] as $entityType => $arEntity):
-		?><tr><?
+		?><tr><?php
 		if($arParams['PREFIX']):
 			?><td class="field_crm_entity_type">
 			<?=GetMessage('CRM_ENTITY_TYPE_'.$entityType)?>:
-			</td><?
+			</td><?php
 		endif;
-		?><td class="field_crm_entity"><?
+		?><td class="field_crm_entity"><?php
 
 		$first = true;
 		foreach ($arEntity as $entityId => $entity)
@@ -38,11 +42,11 @@ $publicMode = isset($arParams["PUBLIC_MODE"]) && $arParams["PUBLIC_MODE"] === tr
 		}
 
 		?></td>
-		</tr><?
+		</tr><?php
 	endforeach;
 	?></table>
 
-<?if(\CCrmSipHelper::isEnabled()):?>
+<?php if(\CCrmSipHelper::isEnabled()):?>
 <script>
 	BX.ready(
 		function()
@@ -79,4 +83,4 @@ $publicMode = isset($arParams["PUBLIC_MODE"]) && $arParams["PUBLIC_MODE"] === tr
 		}
 	);
 </script>
-<? endif ?>
+<?php endif ?>

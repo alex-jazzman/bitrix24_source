@@ -41,6 +41,7 @@ jn.define('disk/uploader', (require, exports, module) => {
 						tasks,
 						layoutWidget,
 						onCommit: this.options.onCommit,
+						shouldOpenNativeViewer: this.options.shouldOpenNativeViewer,
 					}),
 				});
 

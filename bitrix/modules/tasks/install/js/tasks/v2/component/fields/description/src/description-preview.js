@@ -4,9 +4,11 @@ import 'ui.icon-set.outline';
 
 import type { UserFieldWidgetOptions } from 'disk.uploader.user-field-widget';
 
+import { Analytics } from 'tasks.v2.const';
+import { analytics } from 'tasks.v2.lib.analytics';
 import { fileService } from 'tasks.v2.provider.service.file-service';
 import { DiskUserFieldWidgetComponent } from 'tasks.v2.component.elements.user-field-widget-component';
-import { EntityCollapsibleText } from 'tasks.v2.component.entity-text';
+import { EntityCollapsibleText, EntityCollapsibleTextEvent } from 'tasks.v2.component.entity-text';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 
 import './description.css';
@@ -20,6 +22,7 @@ export const DescriptionPreview = {
 		UserFieldWidgetComponent: DiskUserFieldWidgetComponent,
 	},
 	inject: {
+		analytics: {},
 		task: {},
 		isEdit: {},
 	},
@@ -78,6 +81,34 @@ export const DescriptionPreview = {
 			};
 		},
 	},
+	methods: {
+		editButtonClick(): void
+		{
+			this.$emit('editButtonClick');
+
+			void analytics.sendDescriptionEdit({
+				...this.analytics,
+				element: Analytics.Element.DescriptionEditButton,
+			}, { taskId: this.taskId });
+		},
+		updateOpened(opened: boolean, event: string): void
+		{
+			if (event === EntityCollapsibleTextEvent.HtmlFormatterComponentMouseUp)
+			{
+				void analytics.sendDescriptionExpand({
+					...this.analytics,
+					element: Analytics.Element.DescriptionExpandClick,
+				}, { taskId: this.taskId });
+			}
+			else if (event === EntityCollapsibleTextEvent.ExpandButtonClick && opened)
+			{
+				void analytics.sendDescriptionExpand({
+					...this.analytics,
+					element: Analytics.Element.DescriptionExpandButton,
+				}, { taskId: this.taskId });
+			}
+		},
+	},
 	template: `
 		<div class="tasks-full-card-field-container print-no-box-shadow">
 			<EntityCollapsibleText
@@ -87,8 +118,10 @@ export const DescriptionPreview = {
 				:readonly
 				showFilesIndicator
 				:maxHeight="300"
+				stickyFooter
 				v-model:opened="opened"
-				@editButtonClick="$emit('editButtonClick')"
+				@update:opened="updateOpened"
+				@editButtonClick="editButtonClick"
 			>
 				<div
 					v-if="opened && filesCount"

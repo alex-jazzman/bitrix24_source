@@ -10,9 +10,9 @@ return [
 	'rel' => [
 		'main.polyfill.core',
 		'im.application.core',
-		'ui.vue',
 		'im.component.notifications',
 		'im.provider.pull',
+		'ui.vue',
 	],
 	'skip_core' => true,
 ];

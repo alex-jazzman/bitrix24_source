@@ -1,6 +1,10 @@
-import { hint } from 'ui.vue3.directives.hint';
 import { Type } from 'main.core';
 import 'ui.layout-form';
+import { hint } from 'ui.vue3.directives.hint';
+
+import { Model } from 'booking.const';
+import { normalizeSlotLength } from '../../../lib/slot-length';
+
 import './slot-length-precision-selection.css';
 
 export const SlotLengthPrecisionSelection = {
@@ -30,7 +34,7 @@ export const SlotLengthPrecisionSelection = {
 	methods: {
 		distributeInitialValue(): void
 		{
-			let remainingMinutes = this.initialValue;
+			let remainingMinutes = normalizeSlotLength(this.initialValue, this.isMultidayFeatureAvailable);
 
 			this.days = Math.floor(remainingMinutes / (24 * 60));
 			remainingMinutes %= 24 * 60;
@@ -42,22 +46,49 @@ export const SlotLengthPrecisionSelection = {
 		},
 		calculateTotalMinutes()
 		{
-			const totalMinutes = this.days * 24 * 60 + this.hours * 60 + this.minutes;
+			const totalMinutes = normalizeSlotLength(
+				this.days * 24 * 60 + this.hours * 60 + this.minutes,
+				this.isMultidayFeatureAvailable,
+			);
 
+			this.applyTotalMinutes(totalMinutes);
 			this.$emit('input', totalMinutes);
+		},
+		applyTotalMinutes(totalMinutes: number): void
+		{
+			let remainingMinutes = totalMinutes;
+
+			this.days = Math.floor(remainingMinutes / (24 * 60));
+			remainingMinutes %= 24 * 60;
+
+			this.hours = Math.floor(remainingMinutes / 60);
+			remainingMinutes %= 60;
+
+			this.minutes = remainingMinutes;
+		},
+		validateDays()
+		{
+			this.days = parseInt(this.days, 10);
+
+			if (!Type.isNumber(this.days) || this.days < 0)
+			{
+				this.days = 0;
+			}
+
+			this.calculateTotalMinutes();
 		},
 		validateHours()
 		{
 			this.hours = parseInt(this.hours, 10);
 
-			if (!Type.isNumber(this.hours))
+			if (!Type.isNumber(this.hours) || this.hours < 0)
 			{
 				this.hours = 0;
 			}
 
-			if (this.hours > 12)
+			if (this.hours > 23)
 			{
-				this.hours = 12;
+				this.hours = 23;
 			}
 
 			if (this.hours === 0)
@@ -80,7 +111,7 @@ export const SlotLengthPrecisionSelection = {
 			this.minutesFocused = false;
 			this.minutes = parseInt(this.minutes, 10);
 
-			if (!Type.isNumber(this.minutes))
+			if (!Type.isNumber(this.minutes) || this.minutes < 0)
 			{
 				this.minutes = 0;
 			}
@@ -101,8 +132,17 @@ export const SlotLengthPrecisionSelection = {
 		},
 	},
 	computed: {
-		hourHint(): Object
+		isMultidayFeatureAvailable(): boolean
 		{
+			return this.$store.getters[`${Model.Interface}/isMultidayFeatureAvailable`];
+		},
+		hourHint(): Object | null
+		{
+			if (this.isMultidayFeatureAvailable)
+			{
+				return null;
+			}
+
 			return {
 				text: this.loc('BRCW_SETTINGS_CARD_SLOT_LENGTH_PRECISION_LIMIT_HOUR'),
 				popupOptions: {
@@ -123,7 +163,10 @@ export const SlotLengthPrecisionSelection = {
 	template: `
 		<div class="ui-form resource-creation-wizard__form-slot-length-precision-selection">
 			<div class="ui-form-row-inline">
-				<div class="ui-form-row --disabled">
+				<div
+					class="ui-form-row"
+					:class="{ '--disabled': !isMultidayFeatureAvailable }"
+				>
 					<div class="ui-form-content">
 						<div class="ui-form-row">
 							<div class="ui-ctl ui-ctl-time ui-ctl-sm ui-ctl-round">
@@ -132,7 +175,9 @@ export const SlotLengthPrecisionSelection = {
 									v-model="days"
 									type="text"
 									class="ui-ctl-element"
-									disabled
+									:disabled="!isMultidayFeatureAvailable"
+									@blur="validateDays"
+									@keydown="handleEnterKey"
 								>
 							</div>
 						</div>

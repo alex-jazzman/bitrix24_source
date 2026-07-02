@@ -3,12 +3,14 @@ import type { AppStateOptions } from '../types/app-state-options';
 import type { DataFormatTemplate } from '../types/data-types';
 import { CsvApp } from './csv-app';
 import { ExternalConnectionApp } from './external-connection-app';
+import { SystemDatasetApp } from './system-dataset-app';
 import { Store } from './store';
 
 const codeMap = {
 	csv: CsvApp,
 	'1c': ExternalConnectionApp,
 	rest: ExternalConnectionApp,
+	system: SystemDatasetApp,
 	mysql: ExternalConnectionApp,
 	pgsql: ExternalConnectionApp,
 };

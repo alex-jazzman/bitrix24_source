@@ -25,11 +25,16 @@ export const ReplicationSettingsDay = {
 		useInterval: {
 			get(): boolean
 			{
-				return this.replicateParams.everyDay > 0;
+				return true;
 			},
 			set(useInterval: boolean): void
 			{
-				this.$emit('update', { everyDay: useInterval ? 1 : null });
+				if (!useInterval)
+				{
+					return;
+				}
+
+				this.$emit('update', { everyDay: this.interval });
 			},
 		},
 		interval: {
@@ -93,6 +98,8 @@ export const ReplicationSettingsDay = {
 				v-model:useInterval="useInterval"
 				v-model:interval="interval"
 				:period
+				controlType="radio"
+				inputName="tasks-replication-sheet-daily-interval-type"
 			>
 				<template #hint>
 					<QuestionMark

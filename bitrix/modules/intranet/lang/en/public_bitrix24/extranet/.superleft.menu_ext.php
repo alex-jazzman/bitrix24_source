@@ -12,4 +12,5 @@ $MESS["MENU_IM_MESSENGER_NEW"] = "Messenger";
 $MESS["MENU_LIVE_FEED"] = "Activity Stream";
 $MESS["MENU_LIVE_FEED2"] = "Feed";
 $MESS["MENU_LIVE_FEED3"] = "Feed";
+$MESS["MENU_PROJECTS"] = "Projects";
 $MESS["MENU_TASKS"] = "Tasks";

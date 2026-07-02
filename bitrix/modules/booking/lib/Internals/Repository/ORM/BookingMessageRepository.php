@@ -5,39 +5,109 @@ declare(strict_types=1);
 namespace Bitrix\Booking\Internals\Repository\ORM;
 
 use Bitrix\Booking\Internals\Exception\Exception;
+use Bitrix\Booking\Internals\Service\Notifications\BookingMessageStatus;
 use Bitrix\Booking\Internals\Service\Notifications\Entity\BookingMessage;
 use Bitrix\Booking\Internals\Service\Notifications\Entity\BookingMessageCollection;
 use Bitrix\Booking\Internals\Model\BookingMessageTable;
 use Bitrix\Booking\Internals\Repository\BookingMessageRepositoryInterface;
-use Bitrix\Booking\Internals\Service\Notifications\NotificationType;
+use Bitrix\Booking\Internals\Repository\ORM\Mapper\BookingMessageMapper;
+use Bitrix\Main\Type\DateTime;
 
 class BookingMessageRepository implements BookingMessageRepositoryInterface
 {
-	public function save(BookingMessage $bookingMessage): int
+	public function __construct(
+		private readonly BookingMessageMapper $mapper,
+	)
 	{
-		$result = BookingMessageTable::add([
+	}
+
+	public function save(BookingMessage $bookingMessage): void
+	{
+		$fields = [
 			'BOOKING_ID' => $bookingMessage->getBookingId(),
 			'NOTIFICATION_TYPE' => $bookingMessage->getNotificationType()->value,
 			'SENDER_CODE' => $bookingMessage->getSenderCode(),
 			'EXTERNAL_MESSAGE_ID' => $bookingMessage->getExternalMessageId(),
-		]);
+			'STATUS' => $bookingMessage->getStatus()?->value ?? BookingMessageStatus::Success->value,
+			'RETRY_COUNT' => $bookingMessage->getRetryCount(),
+			'NEXT_RETRY_AT' => $bookingMessage->getNextRetryAt() !== null
+				? DateTime::createFromTimestamp($bookingMessage->getNextRetryAt())
+				: null,
+			'SENT_AT' => $bookingMessage->getSentAt() !== null
+				? DateTime::createFromTimestamp($bookingMessage->getSentAt())
+				: null,
+		];
+
+		if ($bookingMessage->getId())
+		{
+			$result = BookingMessageTable::update($bookingMessage->getId(), $fields);
+		}
+		else
+		{
+			$result = BookingMessageTable::add($fields);
+		}
 
 		if (!$result->isSuccess())
 		{
 			throw new Exception(implode(', ', $result->getErrorMessages()));
 		}
 
-		$bookingMessage->setId($result->getId());
+		if (!$bookingMessage->getId())
+		{
+			$bookingMessage->setId($result->getId());
+		}
+	}
 
-		return $bookingMessage->getId();
+	public function delete(int $id): void
+	{
+		$result = BookingMessageTable::delete($id);
+
+		if (!$result->isSuccess())
+		{
+			throw new Exception(implode(', ', $result->getErrorMessages()));
+		}
+	}
+
+	public function getFailedForRetry(int $maxRetries, int $limit): BookingMessageCollection
+	{
+		$result = new BookingMessageCollection();
+
+		$queryResult = BookingMessageTable::query()
+			->setSelect(['*'])
+			->where('STATUS', '=', BookingMessageStatus::Failed->value)
+			->whereNotNull('NEXT_RETRY_AT')
+			->where('NEXT_RETRY_AT', '<=', new DateTime())
+			->where('RETRY_COUNT', '<', $maxRetries)
+			->setOrder(['NEXT_RETRY_AT' => 'ASC'])
+			->setLimit($limit)
+			->exec()
+		;
+
+		while ($row = $queryResult->fetch())
+		{
+			$result->add($this->mapper->convertFromRow($row));
+		}
+
+		return $result;
+	}
+
+	public function getById(int $id): BookingMessage|null
+	{
+		$row = BookingMessageTable::getByPrimary($id)->fetch();
+		if (!$row)
+		{
+			return null;
+		}
+
+		return $this->mapper->convertFromRow($row);
 	}
 
 	public function getLastByBookingId(int $bookingId): BookingMessage|null
 	{
 		$row = BookingMessageTable::query()
-			->setSelect($this->getDefaultSelect())
+			->setSelect(['*'])
 			->where('BOOKING_ID', '=', $bookingId)
-			->setOrder(['CREATED_AT' => 'DESC'])
+			->setOrder(['SENT_AT' => 'DESC'])
 			->setLimit(1)
 			->exec()
 			->fetch()
@@ -48,88 +118,45 @@ class BookingMessageRepository implements BookingMessageRepositoryInterface
 			return null;
 		}
 
-		return $this->createEntityFromOrmRow($row);
+		return $this->mapper->convertFromRow($row);
 	}
 
 	public function getByExternalId(string $senderCode, string $externalId): BookingMessage|null
 	{
-		$bookingMessage = BookingMessageTable::query()
-			->setSelect($this->getDefaultSelect())
+		$row = BookingMessageTable::query()
+			->setSelect(['*'])
 			->setLimit(1)
 			->where('SENDER_CODE', '=', $senderCode)
 			->where('EXTERNAL_MESSAGE_ID', '=', $externalId)
 			->exec()
-			->fetch();
+			->fetch()
 		;
-		if (!$bookingMessage)
+
+		if (!$row)
 		{
 			return null;
 		}
 
-		return $this->createEntityFromOrmRow($bookingMessage);
+		return $this->mapper->convertFromRow($row);
 	}
 
 	public function getByBookingIds(array $bookingIds): BookingMessageCollection
 	{
 		$result = new BookingMessageCollection();
 
-		$bookingMessages = BookingMessageTable::query()
-			->setSelect($this->getDefaultSelect())
+		$queryResult = BookingMessageTable::query()
+			->setSelect(['*'])
 			->whereIn('BOOKING_ID', $bookingIds)
 			->exec()
-			->fetchAll();
 		;
 
-		foreach ($bookingMessages as $bookingMessage)
+		while ($row = $queryResult->fetch())
 		{
 			$result->add(
-				$this->createEntityFromOrmRow($bookingMessage)
+				$this->mapper->convertFromRow($row)
 			);
 		}
 
 		return $result;
-	}
-
-	private function createEntityFromOrmRow(array $row): BookingMessage
-	{
-		$entity = new BookingMessage();
-
-		if (isset($row['ID']))
-		{
-			$entity->setId((int)$row['ID']);
-		}
-
-		if (isset($row['BOOKING_ID']))
-		{
-			$entity->setBookingId((int)$row['BOOKING_ID']);
-		}
-
-		if (isset($row['NOTIFICATION_TYPE']))
-		{
-			$entity->setNotificationType(NotificationType::tryFrom($row['NOTIFICATION_TYPE']));
-		}
-
-		if (isset($row['SENDER_CODE']))
-		{
-			$entity->setSenderCode($row['SENDER_CODE']);
-		}
-
-		if (isset($row['EXTERNAL_MESSAGE_ID']))
-		{
-			$entity->setExternalMessageId((string)$row['EXTERNAL_MESSAGE_ID']);
-		}
-
-		return $entity;
-	}
-
-	private function getDefaultSelect(): array
-	{
-		return [
-			'ID',
-			'BOOKING_ID',
-			'NOTIFICATION_TYPE',
-			'SENDER_CODE',
-			'EXTERNAL_MESSAGE_ID',
-		];
 	}
 }

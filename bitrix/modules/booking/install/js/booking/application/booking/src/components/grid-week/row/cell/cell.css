@@ -1,0 +1,10 @@
+.booking-booking__booking__week-grid_row-cell {
+	position: relative;
+	width: var(--booking-resource-item-width);
+	min-width: var(--booking-resource-item-width);
+	min-height: var(--booking-resource-item-height);
+	box-sizing: border-box;
+	border-right: var(--ui-border-width-thin) solid var(--ui-color-base-7);
+	padding: var(--booking-resource-item-padding);
+	border-bottom: 1px solid var(--ui-color-base-10);
+}

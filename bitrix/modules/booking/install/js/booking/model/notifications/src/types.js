@@ -31,7 +31,19 @@ export type NotificationsTemplateModel = {
 	textSms: string,
 };
 
+export type NotificationItem = { name: string, value: string };
+
+export type SenderNotifications = {
+	Info?: NotificationItem,
+	Confirmation?: NotificationItem,
+	Reminder?: NotificationItem,
+	Delayed?: NotificationItem,
+	Cancellation?: NotificationItem,
+	Feedback?: NotificationItem,
+};
+
 export type NotificationsSenderModel = {
 	code: string,
 	canUse: boolean,
+	notifications: SenderNotifications,
 };

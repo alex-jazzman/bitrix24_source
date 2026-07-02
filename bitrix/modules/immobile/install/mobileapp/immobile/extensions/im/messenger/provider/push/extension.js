@@ -208,9 +208,9 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 						return true;
 					}
 
-					const navigationController = serviceLocator.get('navigation-controller');
-					void navigationController.makeMessengerTabActive();
-					void navigationController.setActiveTab(NavigationTabId.openlines);
+					const navigationManager = serviceLocator.get('navigation-manager');
+					void navigationManager.makeMessengerTabActive();
+					void navigationManager.setActiveTab(NavigationTabId.openlines);
 
 					return false;
 				}

@@ -664,11 +664,15 @@
 
 	class ProjectCreateManager
 	{
-		static open(userId)
+		static open(propsOrUserId = {}, parentWidget = PageManager)
 		{
+			const props = typeof propsOrUserId === 'number'
+				? { userId: propsOrUserId }
+				: (propsOrUserId ?? {});
+			const userId = Number(props.userId ?? env.userId ?? 0);
 			const projectCreate = new ProjectCreate({ userId });
 
-			void PageManager.openWidget('layout', {
+			void parentWidget.openWidget('layout', {
 				backgroundColor: AppTheme.colors.bgSecondary,
 				backdrop: {
 					bounceEnable: true,

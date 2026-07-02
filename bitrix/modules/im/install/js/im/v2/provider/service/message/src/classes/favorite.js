@@ -1,5 +1,5 @@
-import { Store } from 'ui.vue3.vuex';
-import { RestClient } from 'rest.client';
+import { type Store } from 'ui.vue3.vuex';
+import { type RestClient } from 'rest.client';
 
 import { Core } from 'im.v2.application.core';
 import { RestMethod } from 'im.v2.const';

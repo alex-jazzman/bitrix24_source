@@ -35,8 +35,6 @@
 }
 
 .ai__copilot-result:not(:empty) {
-	padding-top: 11px;
-	padding-bottom: 10px;
 	box-shadow: inset 0 -7px 9px -9px var(--ui-color-base-40);
 }
 

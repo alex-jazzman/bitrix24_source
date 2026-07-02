@@ -1,0 +1,2 @@
+<?php
+$MESS["HUMANRESOURCES_ENTITY_SELECTOR_CREATE_DEPARTMENT_FOOTER"] = "Create a new department";

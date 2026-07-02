@@ -23,7 +23,7 @@
 
 .tasks-card-entity-collapsible-edit-button {
 	gap: var(--ui-space-inline-3xs);
-	opacity: 0.8;
+	opacity: 1;
 }
 
 .tasks-card-entity-collapsible-edit-button:hover {
@@ -31,15 +31,17 @@
 }
 
 .tasks-card-entity-collapsible-edit-button-text {
-	color: var(--ui-color-base-3);
+	color: var(--ui-color-accent-main-link);
 }
 
 .tasks-card-entity-collapsible-edit-button-icon {
-	--ui-icon-set__icon-color: var(--ui-color-base-3);
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-link);
+	margin-left: var(--ui-space-inline-3xs-neg);
 }
 
 .tasks-card-entity-collapsible-collapse-button {
 	gap: var(--ui-space-inline-sm);
+	padding: 0 var(--ui-space-inline-2xs2);
 }
 
 .tasks-card-entity-collapsible-collapse-button-text {
@@ -60,7 +62,18 @@
 	display: flex;
 	justify-content: flex-end;
 	align-items: center;
-	padding-bottom: var(--ui-space-inset-md2);
+	padding: var(--ui-space-inset-md2) 0;
+	background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, .8) 30%, #FFF 50%);
+}
+
+.tasks-card-entity-collapsible-footer.--sticky {
+	box-sizing: content-box;
+	position: -webkit-sticky;
+	position: sticky;
+	align-items: end;
+	height: 34px;
+	bottom: 0;
+	z-index: 5;
 }
 
 .tasks-card-entity-collapsible-footer.--without-padding {
@@ -69,12 +82,12 @@
 
 .tasks-card-entity-collapsible-footer.--with-edit-button {
 	justify-content: space-between;
-	padding-top: var(--ui-space-inset-sm);
 }
 
 .tasks-card-entity-collapsible-footer.--empty-content {
 	box-sizing: content-box;
-	padding: var(--ui-space-inset-sm) 0;
+	padding-bottom: var(--ui-space-inset-sm);
+	padding-top: 0;
 }
 
 .tasks-card-entity-collapsible-text-button.--edit {

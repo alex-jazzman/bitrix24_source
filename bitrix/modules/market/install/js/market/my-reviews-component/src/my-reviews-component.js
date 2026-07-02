@@ -9,9 +9,14 @@ export const MyReviewsComponent = {
 	props: [
 		'params', 'result',
 	],
-	data() {
+	setup: function ()
+	{
 		return {
 			filterMenu: null,
+		};
+	},
+	data() {
+		return {
 			page: 1,
 			bottomLoader: null,
 			nextPageLoadWait: false,

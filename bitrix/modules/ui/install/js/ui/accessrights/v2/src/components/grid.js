@@ -1,5 +1,5 @@
 import { Dom } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { EventEmitter } from 'main.core.events';
 import { mapGetters, mapState } from 'ui.vue3.vuex';
 import { ServiceLocator } from '../service/service-locator';
 import { Header } from './header';

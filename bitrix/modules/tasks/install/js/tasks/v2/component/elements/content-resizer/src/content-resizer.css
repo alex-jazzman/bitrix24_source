@@ -10,3 +10,22 @@
 	cursor: ew-resize;
 	z-index: 1000;
 }
+
+.b24-content-resizer::before {
+	content: '';
+	display: block;
+	width: 18px;
+	height: 40px;
+	position: absolute;
+	top: 50%;
+	left: 0;
+	opacity: 0;
+	background-image: url("../images/resize-element.svg");
+	background-repeat: no-repeat;
+	background-position: -1px;
+	transition: opacity 200ms ease;
+}
+
+.b24-content-resizer:hover::before {
+	opacity: 1;
+}

@@ -1,6 +1,7 @@
-import { MiniCardItem } from './mini-card-item';
-import { ajax as Ajax } from 'main.core';
+import { ajax as Ajax, Type } from 'main.core';
 import { MemoryCache } from 'main.core.cache';
+
+import { MiniCardItem } from './mini-card-item';
 
 export type MiniCardResolverOptions = {
 	entityTypeId: number,
@@ -36,7 +37,7 @@ export class MiniCardResolver
 		const response = await Ajax.runAction('crm.item.minicard.get', config);
 		if (response?.data)
 		{
-			const item = new MiniCardItem(response.data);
+			const item = this.#deepFreeze(new MiniCardItem(response.data));
 			MiniCardResolver.#cache.set(this.#cacheId, item);
 
 			return item;
@@ -53,5 +54,19 @@ export class MiniCardResolver
 	isLoaded(): boolean
 	{
 		return MiniCardResolver.#cache.has(this.#cacheId);
+	}
+
+	#deepFreeze(target: { [key: string]: any })
+	{
+		if (Type.isObject(target))
+		{
+			Object.values(target).forEach((value) => {
+				this.#deepFreeze(value);
+			});
+
+			return Object.freeze(target);
+		}
+
+		return target;
 	}
 }

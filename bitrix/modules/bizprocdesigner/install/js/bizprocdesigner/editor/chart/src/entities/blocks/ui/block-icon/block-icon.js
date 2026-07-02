@@ -10,6 +10,10 @@ type BlockIconSetup = {
 
 const ICON_CLASS_NAMES = {
 	base: 'editor-chart-block-icon',
+	deactivated: '--deactivated',
+};
+
+const ICON_BG_COLOR_CLASS_NAMES = {
 	bgColor_1: '--background-color-1',
 	bgColor_2: '--background-color-2',
 	bgColor_3: '--background-color-3',
@@ -55,24 +59,32 @@ export const BlockIcon = {
 		},
 		iconSize: {
 			type: Number,
-			default: 28,
+			default: 32,
+		},
+		deactivated: {
+			type: Boolean,
+			default: false,
 		},
 	},
 	setup(props): BlockIconSetup
 	{
 		const iconSet = Outline;
 
-		const iconClassNames = computed(() => ({
-			[ICON_CLASS_NAMES.base]: true,
-			[ICON_CLASS_NAMES.bgColor_1]: props.iconColorIndex === 0,
-			[ICON_CLASS_NAMES.bgColor_2]: props.iconColorIndex === 1,
-			[ICON_CLASS_NAMES.bgColor_3]: props.iconColorIndex === 2,
-			[ICON_CLASS_NAMES.bgColor_4]: props.iconColorIndex === 3,
-			[ICON_CLASS_NAMES.bgColor_5]: props.iconColorIndex === 4,
-			[ICON_CLASS_NAMES.bgColor_6]: props.iconColorIndex === 5,
-			[ICON_CLASS_NAMES.bgColor_7]: props.iconColorIndex === 6,
-			[ICON_CLASS_NAMES.bgColor_8]: props.iconColorIndex === 7,
-		}));
+		const iconClassNames = computed(() => {
+			const bgColorClassNamesMap = Object.keys(ICON_BG_COLOR_CLASS_NAMES)
+				.reduce((bgColorMap, key, index) => {
+					return {
+						...bgColorMap,
+						[ICON_BG_COLOR_CLASS_NAMES[key]]: props.iconColorIndex === index && !props.deactivated,
+					};
+				}, {});
+
+			return {
+				[ICON_CLASS_NAMES.base]: true,
+				[ICON_CLASS_NAMES.deactivated]: props.deactivated,
+				...bgColorClassNamesMap,
+			};
+		});
 
 		function getIconName(name: ?string): string
 		{

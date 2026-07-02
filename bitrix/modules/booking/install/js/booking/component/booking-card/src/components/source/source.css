@@ -1,0 +1,30 @@
+.booking-booking-card__source {
+	position: relative;
+	display: flex;
+	width: 14px;
+	height: 14px;
+	align-items: center;
+	justify-content: center;
+	margin-right: 15px;
+	border-radius: var(--ui-border-radius-circle);
+	box-shadow: var(--ui-box-shadow-graphic-glass-content-default-x) var(--ui-box-shadow-graphic-glass-content-default-y) 10px var(--ui-box-shadow-graphic-glass-content-default-spread) var(--ui-color-box-shadow-graphic-glass-content-default-color);
+}
+
+.booking-booking-card__source::after {
+	content: '';
+	position: absolute;
+	top: 0;
+	right: -9px;
+	width: 1px;
+	height: 100%;
+	background: var(--ui-color-divider-vibrant-accent-more-alt);
+}
+
+.booking-booking-card__source.--crm_form {
+	background: var(--ui-color-accent-main-primary-alt);
+}
+
+.booking-booking-card__source.--yandex {
+	background: var(--ui-color-bg-vibrant-accent) url("../images/yandex.png") center no-repeat;
+	background-size: 10px;
+}

@@ -4,10 +4,13 @@ import { defineStore } from 'ui.vue3.pinia';
 import { UI } from 'ui.notification';
 
 import { editorAPI } from '../../../shared/api';
-import { getBlockMap, isBlockPropertiesDifferent } from '../utils';
+import {
+	getBlockMap,
+	isBlockPropertiesDifferent,
+	parseItemsFromBlocksJson,
+} from '../utils';
 import { handleResponseError } from '../../../shared/utils';
 import { TEMPLATE_PUBLISH_STATUSES } from '../constants';
-import { parseItemsFromBlocksJson } from '../utils/constant-helpers';
 
 import type {
 	ActivityData,
@@ -21,7 +24,7 @@ import type {
 	TimestampMap,
 } from '../../../shared/types';
 
-export type PortType = 'input' | 'output' | 'aux' | 'top_aux';
+export type PortType = 'input' | 'output' | 'aux' | 'top_aux' | 'inputRelation' | 'outputRelation';
 
 const BLOCK_TYPES = {
 	SetupTemplateActivity: 'SetupTemplateActivity',
@@ -554,16 +557,6 @@ export const diagramStore = defineStore('bizprocdesigner-editor-diagram', {
 		addBlock(block: Block): void
 		{
 			this.blocks.push(block);
-		},
-		updateFrameColorName(blockId: BlockId, colorName: string): void
-		{
-			const block = this.blocks.find((b) => b.id === blockId);
-			if (!block)
-			{
-				return;
-			}
-
-			block.node.frameColorName = colorName;
 		},
 	},
 });

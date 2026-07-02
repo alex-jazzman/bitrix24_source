@@ -10,11 +10,14 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_be
 use Bitrix\Crm;
 use Bitrix\Crm\Conversion\DealConversionConfig;
 use Bitrix\Crm\Conversion\DealConversionWizard;
+use Bitrix\Crm\Field;
 use Bitrix\Crm\Integration\BizProc\Starter\Dto\RunDataDto;
+use Bitrix\Crm\Item;
 use Bitrix\Crm\Order\OrderDealSynchronizer;
 use Bitrix\Crm\Recurring;
 use Bitrix\Crm\Security\EntityAuthorization;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\EditorAdapter;
 use Bitrix\Crm\Synchronization\UserFieldSynchronizer;
 use Bitrix\Crm\Tracking;
 use Bitrix\Main;
@@ -471,6 +474,47 @@ elseif($action === 'SAVE')
 	$bankDetailID = isset($_POST['BANK_DETAIL_ID']) ? max((int)$_POST['BANK_DETAIL_ID'], 0) : 0;
 	//endregion
 
+	//region MY_COMPANY_ID
+	$myCompanyData = [];
+	$myCompanyDataJson = $_POST[EditorAdapter::FIELD_MY_COMPANY_DATA_NAME] ?? '';
+	if ($myCompanyDataJson !== '')
+	{
+		$editorAdapter = new EditorAdapter(new Field\Collection());
+		$myCompanyPermissions = Container::getInstance()->getUserPermissions()->myCompany();
+		$canEditMyCompany = $isNew
+			? $myCompanyPermissions->canAddByOwnerEntity(CCrmOwnerType::Deal)
+			: $myCompanyPermissions->canUpdateByOwnerEntity(CCrmOwnerType::Deal, $ID)
+		;
+		$result = $editorAdapter->getMyCompanyDataFromEmbeddedEditor($myCompanyDataJson, !$canEditMyCompany);
+		if ($result->isSuccess())
+		{
+			$resultData = $result->getData();
+			if (isset($resultData[Item::FIELD_NAME_MYCOMPANY_ID]))
+			{
+				$fields[Item::FIELD_NAME_MYCOMPANY_ID] = $resultData[Item::FIELD_NAME_MYCOMPANY_ID];
+				$myCompanyData = $resultData;
+			}
+			unset($resultData);
+		}
+		unset($editorAdapter, $myCompanyPermissions, $canEditMyCompany, $result);
+	}
+	//endregion
+
+	//region MC_REQUISITE_ID & MC_BANK_DETAIL_ID
+	if (!empty($myCompanyData))
+	{
+		$mcRequisiteId = isset($myCompanyData['MC_REQUISITE_ID']) ? max((int)$myCompanyData['MC_REQUISITE_ID'], 0) : 0;
+		$mcBankDetailId = isset($myCompanyData['MC_BANK_DETAIL_ID']) ? max((int)$myCompanyData['MC_BANK_DETAIL_ID'], 0) : 0
+		;
+	}
+	else
+	{
+		$mcRequisiteId = isset($_POST['MC_REQUISITE_ID']) ? max((int)$_POST['MC_REQUISITE_ID'], 0) : 0;
+		$mcBankDetailId = isset($_POST['MC_BANK_DETAIL_ID']) ? max((int)$_POST['MC_BANK_DETAIL_ID'], 0) : 0;
+	}
+	unset($myCompanyData);
+	//endregion
+
 	$conversionWizard = null;
 	if(isset($params['LEAD_ID']) && $params['LEAD_ID'] > 0)
 	{
@@ -623,6 +667,11 @@ elseif($action === 'SAVE')
 			$categoryId = (int)$categoryID;
 		}
 		$categoryId = max($categoryId, 0);
+
+		if (!Container::getInstance()->getUserPermissions()->entityType()->canAddItemsInCategory(CCrmOwnerType::Deal, $categoryId))
+		{
+			__CrmDealDetailsEndJsonResonse(array('ERROR' => GetMessage('CRM_TYPE_RECURRING_FIELD_RESTRICTED')));
+		}
 
 		if (
 			$fields['RECURRING']['MODE'] === Recurring\Calculator::SALE_TYPE_NON_ACTIVE_DATE
@@ -812,7 +861,7 @@ elseif($action === 'SAVE')
 	$checkExceptions = null;
 	$errorMessage = '';
 
-	if(!empty($fields) || $enableProductRows || !empty($updateEntityInfos) || $requisiteID > 0)
+	if(!empty($fields) || $enableProductRows || !empty($updateEntityInfos) || $requisiteID > 0 || $mcRequisiteId > 0)
 	{
 		$requisiteInfo = null;
 		if (!empty($fields) && !isset($isRecurringSaving))
@@ -890,7 +939,9 @@ elseif($action === 'SAVE')
 					$fields,
 					false,
 					$requisiteID > 0 ? $requisiteID : null,
-					$bankDetailID > 0 ? $bankDetailID : null
+					$bankDetailID > 0 ? $bankDetailID : null,
+					$mcRequisiteId > 0 ? $mcRequisiteId : null,
+					$mcBankDetailId > 0 ? $mcBankDetailId : null
 				);
 
 				// region InventoryManagement
@@ -986,7 +1037,9 @@ elseif($action === 'SAVE')
 					$fields,
 					false,
 					$requisiteID > 0 ? $requisiteID : null,
-					$bankDetailID > 0 ? $bankDetailID : null
+					$bankDetailID > 0 ? $bankDetailID : null,
+					$mcRequisiteId > 0 ? $mcRequisiteId : null,
+					$mcBankDetailId > 0 ? $mcBankDetailId : null
 				);
 
 				if(
@@ -1220,25 +1273,35 @@ elseif($action === 'SAVE')
 			}
 		}
 
-		if(is_array($requisiteInfo))
+		if (is_array($requisiteInfo))
 		{
-			if(isset($requisiteInfo['REQUISITE_ID']))
+			if (isset($requisiteInfo['REQUISITE_ID']))
 			{
 				$requisiteID = (int)$requisiteInfo['REQUISITE_ID'];
 			}
-			if(isset($requisiteInfo['BANK_DETAIL_ID']))
+			if (isset($requisiteInfo['BANK_DETAIL_ID']))
 			{
 				$bankDetailID = (int)$requisiteInfo['BANK_DETAIL_ID'];
 			}
+			if (isset($requisiteInfo['MC_REQUISITE_ID']))
+			{
+				$mcRequisiteId = (int)$requisiteInfo['MC_REQUISITE_ID'];
+			}
+			if (isset($requisiteInfo['MC_BANK_DETAIL_ID']))
+			{
+				$mcBankDetailId = (int)$requisiteInfo['MC_BANK_DETAIL_ID'];
+			}
 		}
 
-		if($requisiteID > 0)
+		if($requisiteID > 0 || $mcRequisiteId > 0)
 		{
 			\Bitrix\Crm\Requisite\EntityLink::register(
 				CCrmOwnerType::Deal,
 				$ID,
 				$requisiteID,
-				$bankDetailID
+				$bankDetailID,
+				$mcRequisiteId,
+				$mcBankDetailId
 			);
 		}
 

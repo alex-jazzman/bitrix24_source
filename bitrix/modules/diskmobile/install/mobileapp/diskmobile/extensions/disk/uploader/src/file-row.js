@@ -8,7 +8,7 @@ jn.define('disk/uploader/src/file-row', (require, exports, module) => {
 	const { Icon, resolveFileIcon } = require('assets/icons');
 	const { SpinnerLoader, SpinnerDesign } = require('layout/ui/loaders/spinner');
 	const { FilePreview } = require('ui-system/blocks/file/preview');
-	const { getExtension, getNameWithoutExtension } = require('utils/file');
+	const { getExtension, getNameWithoutExtension, openNativeViewer } = require('utils/file');
 	const { DiskUploaderProgressBar } = require('disk/uploader/src/progress-bar');
 	const { DiskFileRowPreviewOverlay } = require('disk/uploader/src/preview-overlay');
 	const { UploadStatus } = require('disk/uploader/src/config');
@@ -87,6 +87,7 @@ jn.define('disk/uploader/src/file-row', (require, exports, module) => {
 						paddingLeft: Component.paddingLr.toNumber(),
 						backgroundColor: Color.bgContentPrimary.toHex(),
 					},
+					onClick: () => this.#onRowClick(),
 				},
 				this.#renderPreview(),
 				this.#renderNameWithProgress(),
@@ -254,6 +255,21 @@ jn.define('disk/uploader/src/file-row', (require, exports, module) => {
 					size: 22,
 				}),
 			);
+		}
+
+		#onRowClick()
+		{
+			const { status } = this.state;
+			const { type, name, previewUrl, url, shouldOpenNativeViewer = false } = this.props;
+
+			if (shouldOpenNativeViewer && status === UploadStatus.DONE)
+			{
+				void openNativeViewer({
+					fileType: type,
+					url: previewUrl || url,
+					name,
+				});
+			}
 		}
 	}
 

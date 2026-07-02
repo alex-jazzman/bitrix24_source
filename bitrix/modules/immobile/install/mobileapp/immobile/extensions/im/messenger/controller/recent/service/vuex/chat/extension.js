@@ -5,13 +5,15 @@ jn.define('im/messenger/controller/recent/service/vuex/chat', (require, exports,
 	const { Type } = require('type');
 	const {
 		NavigationTabId,
+		RecentTab,
+		ROOT_PARENT_CHAT_ID,
 	} = require('im/messenger/const');
 	const { BaseRecentService } = require('im/messenger/controller/recent/service/base');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { AnchorMutationHandler } = require('im/messenger/controller/recent/service/vuex/lib/handlers/anchor');
 	const { CounterMutationHandler } = require('im/messenger/controller/recent/service/vuex/lib/handlers/counter');
 	const { RecentFilteredSync } = require('im/messenger/controller/recent/service/vuex/lib/sync/filter');
-	const { MessengerHeaderController } = require('im/messenger/controller/messenger-header');
+	const { isOnline } = require('device/connection');
 
 	/**
 	 * @implements {IVuexService}
@@ -26,7 +28,7 @@ jn.define('im/messenger/controller/recent/service/vuex/chat', (require, exports,
 			this.anchor = new AnchorMutationHandler(this.recentLocator, this.logger);
 			this.counter = new CounterMutationHandler(this.recentLocator, this.logger);
 			this.recentFilteredSync = new RecentFilteredSync(this.recentLocator, this.logger);
-			this.#subscribeStoreMutation();
+			this.subscribeEvents();
 		}
 
 		/**
@@ -37,6 +39,16 @@ jn.define('im/messenger/controller/recent/service/vuex/chat', (require, exports,
 			return serviceLocator.get('core').getStoreManager();
 		}
 
+		subscribeEvents()
+		{
+			this.#subscribeStoreMutation();
+		}
+
+		unsubscribeEvents()
+		{
+			this.#unsubscribeStoreMutation();
+		}
+
 		#subscribeStoreMutation()
 		{
 			this.recentFilteredSync.subscribeStoreMutation();
@@ -44,9 +56,11 @@ jn.define('im/messenger/controller/recent/service/vuex/chat', (require, exports,
 				.on('recentModel/add', this.recentAddHandler)
 				.on('recentModel/update', this.recentUpdateHandler)
 				.on('recentModel/delete', this.recentDeleteHandler)
-				.on('recentModel/storeIdCollection', this.recentFirstPageHandler)
-				.on('recentModel/deleteFromChatIdCollection', this.recentDeleteFromIdCollectionHandler)
+				.on('recentModel/storeNestedIdCollection', this.recentFirstPageHandler)
+				.on('recentModel/deleteFromNestedIdCollection', this.recentDeleteFromIdCollectionHandler)
 				.on('recentModel/recentFilteredModel/setCurrentFilter', this.filterChangeHandler)
+				.on('recentModel/recentFilteredModel/setIdCollection', this.filteredIdCollectionChangeHandler)
+				.on('recentModel/recentFilteredModel/clearIdCollection', this.filteredIdCollectionChangeHandler)
 				.on('dialoguesModel/add', this.dialogUpdateHandler)
 				.on('dialoguesModel/update', this.dialogUpdateHandler)
 				.on('dialoguesModel/clearAllCounters', this.dialogReadAllCountersHandler)
@@ -55,6 +69,29 @@ jn.define('im/messenger/controller/recent/service/vuex/chat', (require, exports,
 				.on('anchorModel/add', this.anchor.addHandler)
 				.on('anchorModel/delete', this.anchor.deleteHandler)
 				.on('anchorModel/deleteMany', this.anchor.deleteManyHandler)
+			;
+		}
+
+		#unsubscribeStoreMutation()
+		{
+			this.recentFilteredSync.unsubscribeStoreMutation();
+			this.storeManager
+				.off('recentModel/add', this.recentAddHandler)
+				.off('recentModel/update', this.recentUpdateHandler)
+				.off('recentModel/delete', this.recentDeleteHandler)
+				.off('recentModel/storeNestedIdCollection', this.recentFirstPageHandler)
+				.off('recentModel/deleteFromNestedIdCollection', this.recentDeleteFromIdCollectionHandler)
+				.off('recentModel/recentFilteredModel/setCurrentFilter', this.filterChangeHandler)
+				.off('recentModel/recentFilteredModel/setIdCollection', this.filteredIdCollectionChangeHandler)
+				.off('recentModel/recentFilteredModel/clearIdCollection', this.filteredIdCollectionChangeHandler)
+				.off('dialoguesModel/add', this.dialogUpdateHandler)
+				.off('dialoguesModel/update', this.dialogUpdateHandler)
+				.off('dialoguesModel/clearAllCounters', this.dialogReadAllCountersHandler)
+				.off('counterModel/set', this.counter.setHandler)
+				.off('counterModel/delete', this.counter.deleteHandler)
+				.off('anchorModel/add', this.anchor.addHandler)
+				.off('anchorModel/delete', this.anchor.deleteHandler)
+				.off('anchorModel/deleteMany', this.anchor.deleteManyHandler)
 			;
 		}
 
@@ -145,15 +182,22 @@ jn.define('im/messenger/controller/recent/service/vuex/chat', (require, exports,
 		};
 
 		/**
-		 * @param {MutationPayload<RecentStoreIdCollectionData>} payload
+		 * @param {MutationPayload<RecentStoreNestedIdCollectionData>} payload
 		 * @void
 		 */
 		recentFirstPageHandler = ({ payload }) => {
 			this.logger.log('recentFirstPageHandler', payload);
 
-			if (payload?.data.tab !== NavigationTabId.chats)
+			if ((payload?.data.parentChatId ?? ROOT_PARENT_CHAT_ID) !== ROOT_PARENT_CHAT_ID)
 			{
-				this.logger.log('recentFirstPageHandler: tab is not chats, skipping');
+				this.logger.log('recentFirstPageHandler: skipping nested chat update');
+
+				return;
+			}
+
+			if (payload?.data.recentSection !== RecentTab.chat)
+			{
+				this.logger.log('recentFirstPageHandler: recentSection is not chat, skipping');
 
 				return;
 			}
@@ -165,6 +209,27 @@ jn.define('im/messenger/controller/recent/service/vuex/chat', (require, exports,
 			{
 				this.logger.log('recentFirstPageHandler: firstPageItems is empty');
 			}
+
+			this.recentLocator.get('render').setItems([...callList, ...firstPageItems]);
+			void this.recentLocator.get('render').renderInstant();
+		};
+
+		/**
+		 * @param {MutationPayload<RecentFilteredSetIdCollectionData>} payload
+		 * @void
+		 */
+		filteredIdCollectionChangeHandler = ({ payload }) => {
+			this.logger.log('filteredIdCollectionChangeHandler', payload);
+
+			if (payload?.data?.tabId !== NavigationTabId.chats)
+			{
+				this.logger.log('filteredIdCollectionChangeHandler: tab is not chats, skipping');
+
+				return;
+			}
+
+			const callList = this.recentLocator.get('external').getCallList();
+			const firstPageItems = this.storeManager.store.getters['recentModel/getChatFirstPage']();
 
 			this.recentLocator.get('render').setItems([...callList, ...firstPageItems]);
 			void this.recentLocator.get('render').renderInstant();
@@ -202,15 +267,25 @@ jn.define('im/messenger/controller/recent/service/vuex/chat', (require, exports,
 		};
 
 		/**
-		 * @param {MutationPayload<RecentDeleteData>} payload
+		 * @param {MutationPayload<RecentDeleteFromNestedIdCollectionData>} payload
 		 */
 		recentDeleteFromIdCollectionHandler = ({ payload }) => {
 			this.logger.log('recentDeleteFromIdCollectionHandler', payload);
 
-			if (payload.actionName !== 'hideByNavigationTabs')
+			const hideActions = ['hideByNavigationTabs', 'hideByRecentConfigTabs'];
+			if (!hideActions.includes(payload.actionName))
 			{
 				return;
 			}
+
+			if (
+				(payload.data?.parentChatId ?? ROOT_PARENT_CHAT_ID) !== ROOT_PARENT_CHAT_ID
+				|| payload.data?.recentSection !== RecentTab.chat
+			)
+			{
+				return;
+			}
+
 			const itemId = payload?.data?.id;
 			if (!itemId)
 			{
@@ -342,7 +417,7 @@ jn.define('im/messenger/controller/recent/service/vuex/chat', (require, exports,
 				return;
 			}
 
-			MessengerHeaderController.getInstance().redrawRightButtonsIfNeeded(NavigationTabId.chats);
+			serviceLocator.get('messenger-header-manager').redrawRightButtonsIfNeeded(NavigationTabId.chats);
 		};
 
 		/**

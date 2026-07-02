@@ -30,6 +30,7 @@ jn.define('im/messenger/lib/widget/header-button/button', (require, exports, mod
 			this.testId = Type.isStringFilled(options.testId) ? options.testId : `${options.id}_button`;
 			this.badgeCode = Type.isStringFilled(options.badgeCode) ? options.badgeCode : null;
 			this.shouldShow = Type.isFunction(options.shouldShow) ? options.shouldShow : async () => true;
+			this.isAccent = Type.isFunction(options.isAccent) ? options.isAccent : () => false;
 		}
 
 		toWidgetHeaderButton()
@@ -38,6 +39,7 @@ jn.define('im/messenger/lib/widget/header-button/button', (require, exports, mod
 				id: this.id,
 				testId: this.testId,
 				type: this.type,
+				accent: this.isAccent(),
 				callback: this.callback,
 				badgeCode: this.badgeCode,
 			};

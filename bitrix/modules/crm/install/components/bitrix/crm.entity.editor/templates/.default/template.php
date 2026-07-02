@@ -829,6 +829,15 @@ if (!empty($htmlEditorConfigs))
 				numeratorSettingsContextItem: "<?=GetMessageJS('CRM_ENTITY_ED_DOCUMENT_NUMBER_NUMERATOR_SETTINGS_CONTEXT_ITEM')?>",
 			};
 
+			BX.Crm.EntityEditorEntityTag.messages =
+			{
+				footerCreateLead: "<?=GetMessageJS('CRM_ENTITY_ED_ENTITY_TAG_FOOTER_CREATE_LEAD')?>",
+				footerCreateDeal: "<?=GetMessageJS('CRM_ENTITY_ED_ENTITY_TAG_FOOTER_CREATE_DEAL')?>",
+				footerCreateInvoice: "<?=GetMessageJS('CRM_ENTITY_ED_ENTITY_TAG_FOOTER_CREATE_INVOICE')?>",
+				footerCreateQuote: "<?=GetMessageJS('CRM_ENTITY_ED_ENTITY_TAG_FOOTER_CREATE_QUOTE')?>",
+				footerCreateDynamic: "<?=GetMessageJS('CRM_ENTITY_ED_ENTITY_TAG_FOOTER_CREATE_DYNAMIC')?>",
+			};
+
 			BX.message(
 				{
 					"CRM_EDITOR_SAVE": "<?=GetMessageJS('CRM_ENTITY_ED_SAVE')?>",

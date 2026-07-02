@@ -5,6 +5,9 @@ $MESS["CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_PDF_NOT_READY"] = "The PDF file is st
 $MESS["CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_PRINT_NOT_READY"] = "Cannot print the document because the PDF file is still being created. Please try again later.";
 $MESS["CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_UPDATE_DOCUMENT_ERROR"] = "Error updating document";
 $MESS["CRM_TIMELINE_ITEM_ACTIVITY_DO_USE_PREVIOUS_MSGVER_3"] = "A template with text and configured fields has been used with the deal \"%TITLE%\", responsible person was \"%INITIATOR%\". You can reuse this template or create a new one.";
+$MESS["CRM_TIMELINE_ITEM_ACTIVITY_ENTITY_EXCLUSION_CONFIRM_DLG_HELP"] = "Do you want to add this entity to Exceptions?[helpdesklink]Learn more about Exceptions[/helpdesklink]";
+$MESS["CRM_TIMELINE_ITEM_ACTIVITY_ENTITY_EXCLUSION_CONFIRM_DLG_TITLE_DEAL"] = "Add deal to Exceptions";
+$MESS["CRM_TIMELINE_ITEM_ACTIVITY_ENTITY_EXCLUSION_CONFIRM_DLG_TITLE_LEAD"] = "Add lead to Exceptions";
 $MESS["CRM_TIMELINE_ITEM_ACTIVITY_MESSAGE_RESEND_CONFIRM_DIALOG_MESSAGE"] = "The changes you have made will not be saved if you switch to another message. Do you want to proceed?";
 $MESS["CRM_TIMELINE_ITEM_ACTIVITY_MESSAGE_RESEND_CONFIRM_DIALOG_TITLE"] = "Unsaved changes";
 $MESS["CRM_TIMELINE_ITEM_ACTIVITY_NEW_BUTTON_MSGVER_3"] = "Create new";
@@ -30,6 +33,7 @@ $MESS["CRM_TIMELINE_ITEM_CALENDAR_SHARING_SLOTS_RANGE"] = "#WEEKDAYS#; availabil
 $MESS["CRM_TIMELINE_ITEM_CALENDAR_SHARING_SLOTS_RANGE_V2"] = "#WEEKDAYS#, availability: #FROM_TIME# to #TO_TIME#, duration: #DURATION#";
 $MESS["CRM_TIMELINE_ITEM_CALENDAR_SHARING_SLOTS_RANGE_V3"] = "#WEEKDAYS#, #FROM_TIME# - #TO_TIME#";
 $MESS["CRM_TIMELINE_ITEM_CALENDAR_SHARING_SLOTS_RANGE_WITH_MORE"] = "#RANGE# , <div class='#MORE_LINK_CLASS#' data-anchor='more-link'>#AMOUNT# more</div>";
+$MESS["CRM_TIMELINE_ITEM_CALL_SCORING_DETAILS"] = "Details";
 $MESS["CRM_TIMELINE_ITEM_CALL_SCORING_EDIT_PROMPT_HINT"] = "This feature is coming soon. Edit the script on the \"AI Speech analytics and Sales scripts\" page.";
 $MESS["CRM_TIMELINE_ITEM_CALL_SCORING_RESPONSIBLE_TITLE"] = "Responsible person";
 $MESS["CRM_TIMELINE_ITEM_CALL_SCORING_SCRIPT_TITLE"] = "Script match score";

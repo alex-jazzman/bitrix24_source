@@ -1,6 +1,10 @@
 import { RelatedEntityData } from '../../../dialog-opener/dialog-opener';
 import { DialoguesModelState } from '../../../../model/dialogues/src/types';
-import { IMessageMenuMessage, IMessageMenuView } from '../../../../controller/dialog/lib/message-menu/types';
+import {
+	IMessageMenuActionHelper,
+	IMessageMenuView,
+	MessageContextMenuSectionItem
+} from '../../../../controller/dialog/lib/message-menu/types';
 
 export type MessageMenuContext = {
 	getDialog: () => DialoguesModelState;
@@ -10,7 +14,13 @@ export type MessageMenuContext = {
 export interface IMessageContextMenu {
 	getDialog: () => DialoguesModelState;
 	relatedEntity: RelatedEntityData;
-	getActions(): Record<string, (menu: IMessageMenuView, message: IMessageMenuMessage) => void>,
-	getActionHandlers(): Record<string, (message: IMessageMenuMessage) => void>,
-	getOrderedActions(message: IMessageMenuMessage): Promise<string[]>,
+	getActions(): Record<string, (menu: IMessageMenuView, actionHelper: IMessageMenuActionHelper, options: object) => void>,
+	getActionHandlers(): Record<string, (actionHelper: IMessageMenuActionHelper) => void>,
+	getOrderedActions(actionHelper?: IMessageMenuActionHelper): Promise<string[]>,
+	getOrderedActionTree(actionHelper?: IMessageMenuActionHelper): string|object[],
+	getOrderedErrorActionTree?(): string|object[],
+	getOrderedSendingActionTree?(): string|object[],
+	getSection(): Record<string, MessageContextMenuSectionItem>,
+	getErrorMenuSection?(): Record<string, MessageContextMenuSectionItem>,
+	getSendingMenuSection?(): Record<string, MessageContextMenuSectionItem>,
 }

@@ -4,6 +4,7 @@
 jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, module) => {
 	const { Type } = require('type');
 	const { Loc } = require('im/messenger/loc');
+	const { Icon } = require('assets/icons');
 	const AppTheme = require('apptheme');
 	const { Color } = require('tokens');
 
@@ -49,7 +50,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 		 * @param {MessagesModelState} modelMessage
 		 * @param {CreateMessageOptions | {}} options
 		 */
-		constructor(modelMessage = {}, options = {})
+		constructor(modelMessage, options = {})
 		{
 			this.type = this.getType();
 
@@ -57,6 +58,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			this.authorId = null;
 			this.title = {};
 			this.username = '';
+			this.isSystemStyled = false;
 			/** @deprecated use to this.avatar {AvatarDetail} */
 			this.avatarUrl = '';
 			this.avatar = null;
@@ -97,10 +99,12 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			this.commentInfo = null;
 			this.message = [];
 			this.testId = '';
+			this.dialogCode = options.dialogCode || '';
 
 			this
 				.setId(modelMessage.id)
 				.setTestId(modelMessage.id)
+				.setSystemStyleIfNeeded(modelMessage)
 				.setAuthorId(modelMessage.authorId)
 				.setTitle(modelMessage)
 				.setUsername(modelMessage.authorId)
@@ -188,6 +192,14 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			return serviceLocator.get('core').getStore().getters['messagesModel/getById'](this.id);
 		}
 
+		/**
+		 * @return {Array<FilesModelState>}
+		 */
+		getModelFiles()
+		{
+			return serviceLocator.get('core').getStore().getters['filesModel/getListByMessageId'](this.id) || [];
+		}
+
 		setId(id)
 		{
 			if (
@@ -238,6 +250,11 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 
 		setTitle(modelMessage)
 		{
+			if (this.isSystemStyled)
+			{
+				return this;
+			}
+
 			const authorId = modelMessage.authorId;
 			const user = serviceLocator.get('core').getStore().getters['usersModel/getById'](authorId);
 			if (!user)
@@ -259,6 +276,24 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			if (user.type === UserType.extranet)
 			{
 				this.title.color = Color.accentMainWarning.toHex();
+			}
+
+			const hasVacation = serviceLocator.get('core').getStore().getters['usersModel/hasVacation'](authorId);
+			if (hasVacation)
+			{
+				this.title.leftIcon = Icon.SMALL_VACATION.getIconName();
+				this.title.leftIconColor = Color.accentMainSuccess.toHex();
+
+				return this;
+			}
+
+			const hasBirthday = serviceLocator.get('core').getStore().getters['usersModel/hasBirthday'](authorId);
+			if (hasBirthday)
+			{
+				this.title.leftIcon = Icon.SMALL_GIFT.getIconName();
+				this.title.leftIconColor = Color.accentSoftElementGreen.toHex();
+
+				return this;
 			}
 
 			return this;
@@ -286,6 +321,11 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 		 */
 		setAvatar(authorId, chatId, messageId)
 		{
+			if (this.isSystemStyled)
+			{
+				return this;
+			}
+
 			const user = serviceLocator.get('core').getStore().getters['usersModel/getById'](authorId);
 			this.avatarUrl = user?.avatar ?? '';
 			this.setAvatarDetail(user, chatId, messageId);
@@ -337,6 +377,11 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 		 */
 		setAvatarUri(value)
 		{
+			if (this.isSystemStyled)
+			{
+				return;
+			}
+
 			this.avatarUrl = value;
 			if (Type.isObject(this.avatar))
 			{
@@ -387,7 +432,11 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				messageText += `\n[[b]nextId:[/b] ${nextId}]`;
 			}
 
-			const message = parser.decodeMessageFromText(messageText, options);
+			const message = parser.decodeMessageFromText(messageText, {
+				...options,
+				messageId: this.id,
+				dialogCode: this.dialogCode,
+			});
 			if (Type.isArrayFilled(message))
 			{
 				this.message = message;
@@ -490,7 +539,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 		/**
 		 *
 		 * @param {string} messageId
-		 * @param {CreateMessageOptions} options
+		 * @param {CreateMessageOptions|{}} options
 		 * @return {Message}
 		 */
 		setShowAvatarsInReaction(messageId, options)
@@ -532,7 +581,9 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			if (Type.isArrayFilled(modelMessage.attach))
 			{
 				this.attach = Attach
-					.createByMessagesModelAttach(modelMessage.attach)
+					.createByMessagesModelAttach(modelMessage.attach, {
+						isSystemStyled: this.isSystemStyled,
+					})
 					.toMessageFormat()
 				;
 			}
@@ -545,7 +596,9 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			if (Type.isArrayFilled(modelMessage.keyboard))
 			{
 				this.keyboard = Keyboard
-					.createByMessagesModelKeyboard(modelMessage.keyboard)
+					.createByMessagesModelKeyboard(modelMessage.keyboard, {
+						isSystemStyled: this.isSystemStyled,
+					})
 					.toMessageFormat()
 				;
 			}
@@ -555,6 +608,11 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 
 		setShowUsername(modelMessage, shouldShowUserName)
 		{
+			if (this.isSystemStyled)
+			{
+				return this;
+			}
+
 			const isYourMessage = modelMessage.authorId === serviceLocator.get('core').getUserId();
 			if (isYourMessage)
 			{
@@ -573,6 +631,11 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 
 		setShowAvatar(modelMessage, shouldShowAvatar)
 		{
+			if (this.isSystemStyled)
+			{
+				return this;
+			}
+
 			const isYourMessage = modelMessage.authorId === serviceLocator.get('core').getUserId();
 			if (isYourMessage)
 			{
@@ -593,6 +656,11 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 
 		setShowAvatarForce(shouldShowAvatar)
 		{
+			if (this.isSystemStyled)
+			{
+				return this;
+			}
+
 			if (Type.isBoolean(shouldShowAvatar))
 			{
 				this.showAvatar = shouldShowAvatar;
@@ -644,6 +712,11 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 
 		setFontColor(color)
 		{
+			if (this.isSystemStyled)
+			{
+				return this;
+			}
+
 			if (!Type.isStringFilled(color))
 			{
 				return this;
@@ -656,6 +729,11 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 
 		setIsBackgroundOn(isBackgroundOn)
 		{
+			if (this.isSystemStyled)
+			{
+				return this;
+			}
+
 			if (!Type.isBoolean(isBackgroundOn))
 			{
 				return this;
@@ -774,20 +852,6 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			if (Type.isNumber(px))
 			{
 				this.style.marginBottom = px;
-			}
-
-			return this;
-		}
-
-		setShowTail(showTail)
-		{
-			if (showTail)
-			{
-				this.enableTail();
-			}
-			else
-			{
-				this.disableTail();
 			}
 
 			return this;
@@ -913,36 +977,69 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 		}
 
 		/**
-		 * @private
+		 * @param {MessagesModelState} modelMessage
+		 * @return {Message}
 		 */
-		enableTail()
+		setSystemStyleIfNeeded(modelMessage)
 		{
-			if (this.me)
+			if (!Feature.isSystemMessageStyleSupported)
 			{
-				this.style.rightTail = true;
+				return this;
 			}
-			else
+
+			if (modelMessage.authorId === 0)
 			{
-				this.style.leftTail = true;
+				this.setSystemStyle();
 			}
+
+			return this;
 		}
 
 		/**
-		 * @private
+		 * @return {Message}
 		 */
-		disableTail()
+		setSystemStyle()
 		{
-			delete this.style.leftTail;
-			delete this.style.rightTail;
+			this.isSystemStyled = true;
+
+			this.showUsername = false;
+			this.title = {};
+			this.avatarUrl = null;
+			this.setIsBackgroundOn(true);
+			this.setBackgroundColor(Color.chatOverallMessageTech.toHex());
+			this.setFontColor(Color.base1.toHex());
+			this.setShowAvatarForce(false);
+			this.setAvatarUri(null);
+
+			this.style.message = {
+				fontColor: Color.base1.toHex(),
+				linkColor: Color.accentMainPrimary.toHex(),
+				quoteColor: Color.base2.toHex(),
+				mentionColor: Color.accentMainPrimary.toHex(),
+				timeColor: Color.chatOtherBase1_1.toHex(),
+				linkUnderlined: false,
+				backgroundQuoteColor: Color.chatOverallMessageTech.toHex(),
+			};
+
+			return this;
 		}
 
 		setAuthorBottomMessage(value)
 		{
+			if (this.isSystemStyled)
+			{
+				return;
+			}
+
 			this.isAuthorBottomMessage = value;
 		}
 
 		setAuthorTopMessage(value)
 		{
+			if (this.isSystemStyled)
+			{
+				return;
+			}
 			this.isAuthorTopMessage = value;
 		}
 

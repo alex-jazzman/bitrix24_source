@@ -44,6 +44,18 @@ export const ChatsMenuLinkCollab = Object.freeze({
 	dataTestId: 'hr-department-content_chats-tab__collab-list-action-link',
 });
 
+export const ChatsMenuLinkProject = Object.freeze({
+	id: ChatsMenuOption.linkCollab,
+	title: Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_PROJECT_LIST_LINK_BUTTON_TITLE'),
+	description: Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_PROJECT_LIST_LINK_BUTTON_DESC'),
+	bIcon: {
+		name: Main.COLLAB,
+		size: 20,
+		colorTokenName: 'paletteBlue50',
+	},
+	dataTestId: 'hr-department-content_chats-tab__collab-list-action-link',
+});
+
 export const ChatListDataTestIds = Object.freeze({
 	containerDataTestId: 'hr-department-content_chats-tab__chat-list-container',
 	listActionButtonDataTestId: 'hr-department-content_chats-tab__chat-list-action-button',

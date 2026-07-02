@@ -1,6 +1,8 @@
 <?
 /** @global CMain $APPLICATION */
 use Bitrix\Main;
+use Bitrix\Main\Security\Sign\BadSignatureException;
+use Bitrix\Main\Security\Sign\Signer;
 use Bitrix\Sale;
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_admin_before.php');
@@ -54,6 +56,9 @@ $errors = array();
 $boolCondParseError = false;
 $boolActParseError = false;
 $couponsAdd = false;
+$hiddenFieldSigner = new Signer();
+$conditionsSignSalt = 'sale.discount.conditions';
+$actionsSignSalt = 'sale.discount.actions';
 
 $discountID = 0;
 $copy = false;
@@ -116,18 +121,28 @@ if (
 		$boolCond = false;
 		if (array_key_exists('CONDITIONS', $_POST) && array_key_exists('CONDITIONS_CHECK', $_POST))
 		{
-			if (is_string($_POST['CONDITIONS']) && is_string($_POST['CONDITIONS_CHECK']) && md5($_POST['CONDITIONS']) == $_POST['CONDITIONS_CHECK'])
+			try
 			{
-				$CONDITIONS = base64_decode($_POST['CONDITIONS']);
-				if (CheckSerializedData($CONDITIONS))
+				if (
+					is_string($_POST['CONDITIONS'])
+					&& is_string($_POST['CONDITIONS_CHECK'])
+					&& $hiddenFieldSigner->validate($_POST['CONDITIONS'], $_POST['CONDITIONS_CHECK'], $conditionsSignSalt)
+				)
 				{
-					$CONDITIONS = unserialize($CONDITIONS, ['allowed_classes' => false]);
-					$boolCond = true;
+					$CONDITIONS = base64_decode($_POST['CONDITIONS']);
+					if (CheckSerializedData($CONDITIONS))
+					{
+						$CONDITIONS = unserialize($CONDITIONS, ['allowed_classes' => false]);
+						$boolCond = true;
+					}
+					else
+					{
+						$boolCondParseError = true;
+					}
 				}
-				else
-				{
-					$boolCondParseError = true;
-				}
+			}
+			catch (BadSignatureException $exception)
+			{
 			}
 		}
 
@@ -161,18 +176,28 @@ if (
 		$boolAct = false;
 		if (array_key_exists('ACTIONS', $_POST) && array_key_exists('ACTIONS_CHECK', $_POST))
 		{
-			if (is_string($_POST['ACTIONS']) && is_string($_POST['ACTIONS_CHECK']) && md5($_POST['ACTIONS']) == $_POST['ACTIONS_CHECK'])
+			try
 			{
-				$ACTIONS = base64_decode($_POST['ACTIONS']);
-				if (CheckSerializedData($ACTIONS))
+				if (
+					is_string($_POST['ACTIONS'])
+					&& is_string($_POST['ACTIONS_CHECK'])
+					&& $hiddenFieldSigner->validate($_POST['ACTIONS'], $_POST['ACTIONS_CHECK'], $actionsSignSalt)
+				)
 				{
-					$ACTIONS = unserialize($ACTIONS, ['allowed_classes' => false]);
-					$boolAct = true;
+					$ACTIONS = base64_decode($_POST['ACTIONS']);
+					if (CheckSerializedData($ACTIONS))
+					{
+						$ACTIONS = unserialize($ACTIONS, ['allowed_classes' => false]);
+						$boolAct = true;
+					}
+					else
+					{
+						$boolActParseError = true;
+					}
 				}
-				else
-				{
-					$boolActParseError = true;
-				}
+			}
+			catch (BadSignatureException $exception)
+			{
 			}
 		}
 
@@ -662,7 +687,9 @@ $control->BeginNextFormTab();
 
 	$control->EndCustomField('ACTIONS',
 		'<input type="hidden" name="ACTIONS" value="'.htmlspecialcharsbx($strApp).'">'.
-		'<input type="hidden" name="ACTIONS_CHECK" value="'.htmlspecialcharsbx(md5($strApp)).'">'
+		'<input type="hidden" name="ACTIONS_CHECK" value="'.
+			htmlspecialcharsbx($hiddenFieldSigner->getSignature($strApp, $actionsSignSalt)).
+		'">'
 	);
 	$control->AddSection("BT_SALE_DISCOUNT_SECT_COND", GetMessage("BT_SALE_DISCOUNT_SECTIONS_COND_ADD"));
 	$control->BeginCustomField("CONDITIONS", GetMessage('BT_SALE_DISCOUNT_EDIT_FIELDS_COND_ADD').":",false);
@@ -700,7 +727,9 @@ $control->BeginNextFormTab();
 	$strCond = base64_encode(serialize($arDiscount['CONDITIONS']));
 	$control->EndCustomField('CONDITIONS',
 		'<input type="hidden" name="CONDITIONS" value="'.htmlspecialcharsbx($strCond).'">'.
-		'<input type="hidden" name="CONDITIONS_CHECK" value="'.htmlspecialcharsbx(md5($strCond)).'">'
+		'<input type="hidden" name="CONDITIONS_CHECK" value="'.
+			htmlspecialcharsbx($hiddenFieldSigner->getSignature($strCond, $conditionsSignSalt)).
+		'">'
 	);
 $control->BeginNextFormTab();
 	$strHidden = '';

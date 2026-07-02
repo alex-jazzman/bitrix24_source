@@ -157,10 +157,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	          id: 'tasks-status-menu-complete'
 	        },
 	        onClick: () => {
-	          var _this$analytics$conte, _this$analytics, _this$analytics$addit, _this$analytics2;
+	          var _this$analytics$conte, _this$analytics;
 	          void tasks_v2_provider_service_statusService.statusService.complete(this.taskId, {
 	            context: (_this$analytics$conte = (_this$analytics = this.analytics) == null ? void 0 : _this$analytics.context) != null ? _this$analytics$conte : tasks_v2_const.Analytics.Section.Tasks,
-	            additionalContext: (_this$analytics$addit = (_this$analytics2 = this.analytics) == null ? void 0 : _this$analytics2.additionalContext) != null ? _this$analytics$addit : tasks_v2_const.Analytics.SubSection.TaskCard,
+	            additionalContext: tasks_v2_const.Analytics.SubSection.TaskCard,
 	            element: tasks_v2_const.Analytics.Element.ContextMenu
 	          });
 	        }

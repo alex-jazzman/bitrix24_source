@@ -213,12 +213,12 @@ if($strWarning !== "")
 			}
 		})();
 	</script>
-	<?
+<?php
 }
 
 $obJSPopup->StartContent();?>
 
-<?if($strWarning === ""):?>
+<?php if($strWarning === ""):?>
 <script>
 (function()
 {
@@ -290,12 +290,19 @@ $obJSPopup->StartContent();?>
 })();
 </script>
 <div id="bx-comp-params-wrap" class="bxcompprop-wrap-public"></div>
-<?CComponentParamsManager::DisplayFileDialogsScripts();?>
-<?endif; /*($strWarning === "") */?>
+<?php
+	CComponentParamsManager::DisplayFileDialogsScripts();
+?>
+<?php endif; /*($strWarning === "") */?>
 
-<?$obJSPopup->StartButtons();?>
+<?php
+$obJSPopup->StartButtons();
+?>
 	<input type="button" id="bx-comp-params-save-button" value="<?= GetMessage("comp_prop_save")?>" onclick="<?=$obJSPopup->jsPopup?>.PostParameters('<?= PageParams().'&amp;action=save'?>');" title="<?= GetMessage("comp_prop_save_title")?>" name="save" class="adm-btn-save" />
 	<input type="button" value="<?= GetMessage("comp_prop_cancel")?>" onclick="<?=$obJSPopup->jsPopup?>.CloseDialog()" title="<?= GetMessage("comp_prop_cancel_title")?>" />
-<?$obJSPopup->EndButtons();?>
+<?php
+$obJSPopup->EndButtons();
+?>
 
-<?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin_js.php");?>
+<?php
+require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin_js.php");

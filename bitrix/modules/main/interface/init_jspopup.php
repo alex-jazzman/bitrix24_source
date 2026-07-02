@@ -1,4 +1,4 @@
-<?
+<?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
 function JSPopupRedirectHandler(&$url, $skip_security_check)
@@ -21,4 +21,3 @@ function JSPopupRedirectHandler(&$url, $skip_security_check)
 }
 
 AddEventHandler('main', 'OnBeforeLocalRedirect', 'JSPopupRedirectHandler');
-?>

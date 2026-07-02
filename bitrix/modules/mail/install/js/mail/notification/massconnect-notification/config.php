@@ -9,8 +9,8 @@ return [
 	'js' => 'dist/massconnect-notification.bundle.js',
 	'rel' => [
 		'main.core',
-		'ui.banner-dispatcher',
 		'main.popup',
+		'ui.banner-dispatcher',
 	],
 	'skip_core' => false,
 ];

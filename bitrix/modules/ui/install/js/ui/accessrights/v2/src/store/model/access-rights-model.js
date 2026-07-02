@@ -1,5 +1,5 @@
 import { Runtime, Type } from 'main.core';
-import { type ActionTree, BuilderModel, GetterTree, type MutationTree } from 'ui.vue3.vuex';
+import { type ActionTree, BuilderModel, type GetterTree, type MutationTree } from 'ui.vue3.vuex';
 import { ServiceLocator } from '../../service/service-locator';
 import { compileAliasKey } from '../../utils';
 import { AccessRightsInternalizer } from './transformation/internalizer/access-rights-internalizer';
@@ -83,6 +83,7 @@ export type Variable = {
 	// used only in dependent-variables
 	conflictsWith?: Set<string>,
 	requires?: Set<string>,
+	dependant?: Set<string>,
 	secondary: ?boolean, // switcher color and size for dependent-variables
 	hint: ?string,
 }

@@ -1,4 +1,4 @@
-import { Tag, Loc } from 'main.core';
+import { Tag, Loc, Extension } from 'main.core';
 import { DiscountEar } from './discount-ear';
 
 export class DiscountEarSubscription extends DiscountEar
@@ -30,7 +30,9 @@ export class DiscountEarSubscription extends DiscountEar
 	#getDescription(): string
 	{
 		return this.isRenamedMarket
-			? Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DISCOUNT_SUBSCRIPTION_DESCRIPTION_BITRIX_GPT')
+			? Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DISCOUNT_SUBSCRIPTION_DESCRIPTION_BITRIX_GPT', {
+				'#COPILOT_NAME#': Extension.getSettings('rest.market-expired')?.copilotName ?? '',
+			})
 			: Loc.getMessage('REST_MARKET_EXPIRED_POPUP_DISCOUNT_SUBSCRIPTION_DESCRIPTION_MARKET_PLUS');
 	}
 

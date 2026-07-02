@@ -9,8 +9,8 @@ import { Model, TaskField } from 'tasks.v2.const';
 import { fieldHighlighter } from 'tasks.v2.lib.field-highlighter';
 import { fileService, EntityTypes } from 'tasks.v2.provider.service.file-service';
 import { userFieldsManager } from 'tasks.v2.component.fields.user-fields';
-import type { TaskModel } from 'tasks.v2.model.tasks';
-import type { UserFieldScheme } from 'tasks.v2.model.interface';
+import { type TaskModel } from 'tasks.v2.model.tasks';
+import { type UserFieldScheme } from 'tasks.v2.model.interface';
 
 import './add-task-button.css';
 

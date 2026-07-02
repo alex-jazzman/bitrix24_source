@@ -41,6 +41,10 @@ $presets = [
 		'DESCRIPTION' => Loc::getMessage('BP_CRM_DEAL_FCT_DESCR_DESCR'),
 		'PROPERTIES' => [ 'Document' => $map['DEAL'] ],
 		'NODE_ICON' => Outline::HANDSHAKE->name,
+		'GROUPS' => [
+			ActivityGroup::STARTER->value,
+			ActivityGroup::SALES_CRM->value,
+		],
 	],
 	[
 		'ID' => 'CONTACT',
@@ -48,6 +52,10 @@ $presets = [
 		'DESCRIPTION' => Loc::getMessage('BP_CRM_CONTACT_FCT_DESCR_DESCR'),
 		'PROPERTIES' => [ 'Document' => $map['CONTACT'] ],
 		'NODE_ICON' => Outline::CONTACT->name,
+		'GROUPS' => [
+			ActivityGroup::STARTER->value,
+			ActivityGroup::SALES_CRM->value,
+		],
 	],
 	[
 		'ID' => 'COMPANY',
@@ -55,6 +63,10 @@ $presets = [
 		'DESCRIPTION' => Loc::getMessage('BP_CRM_COMPANY_FCT_DESCR_DESCR'),
 		'PROPERTIES' => [ 'Document' => $map['COMPANY'] ],
 		'NODE_ICON' => Outline::COMPANY->name,
+		'GROUPS' => [
+			ActivityGroup::STARTER->value,
+			ActivityGroup::SALES_CRM->value,
+		],
 	],
 	[
 		'ID' => 'LEAD',
@@ -62,6 +74,10 @@ $presets = [
 		'DESCRIPTION' => Loc::getMessage('BP_CRM_LEAD_FCT_DESCR_DESCR'),
 		'PROPERTIES' => [ 'Document' => $map['LEAD'] ],
 		'NODE_ICON' => Outline::LEAD->name,
+		'GROUPS' => [
+			ActivityGroup::STARTER->value,
+			ActivityGroup::SALES_CRM->value,
+		],
 	],
 ];
 
@@ -73,6 +89,10 @@ if ($isEntitySelectorAvailable)
 		'DESCRIPTION' => Loc::getMessage('BP_CRM_QUOTE_FCT_DESCR_DESCR'),
 		'PROPERTIES' => [ 'Document' => 'crm@\Bitrix\Crm\Integration\BizProc\Document\Quote@QUOTE' ],
 		'NODE_ICON' => Outline::SUITCASE->name,
+		'GROUPS' => [
+			ActivityGroup::STARTER->value,
+			ActivityGroup::SALES_CRM->value,
+		],
 	];
 	$presets[] = [
 		'ID' => 'AUTOMATED_SOLUTION',
@@ -80,12 +100,20 @@ if ($isEntitySelectorAvailable)
 		'DESCRIPTION' => Loc::getMessage('BP_CRM_AUTOMATED_SOLUTION_FCT_DESCR_DESCR'),
 		'PROPERTIES' => [ 'IsAutomatedSolution' => 'Y' ],
 		'NODE_ICON' => Outline::SMART_PROCESS->name,
+		'GROUPS' => [
+			ActivityGroup::STARTER->value,
+			ActivityGroup::DIGITAL_WORKPLACE->value,
+		],
 	];
 	$presets[] = [
 		'ID' => 'DYNAMIC',
 		'NAME' => Loc::getMessage('BP_CRM_DYNAMIC_FCT_DESCR_NAME'),
 		'DESCRIPTION' => Loc::getMessage('BP_CRM_DYNAMIC_FCT_DESCR_DESCR'),
 		'NODE_ICON' => Outline::SMART_PROCESS->name,
+		'GROUPS' => [
+			ActivityGroup::STARTER->value,
+			ActivityGroup::SALES_CRM->value,
+		],
 	];
 }
 
@@ -97,6 +125,11 @@ if (Loader::includeModule('crm') && \CCrmSaleHelper::isWithOrdersMode())
 		'DESCRIPTION' => Loc::getMessage('BP_CRM_ORDER_FCT_DESCR_DESCR'),
 		'PROPERTIES' => [ 'Document' => $map['ORDER'] ],
 		'NODE_ICON' => Outline::CHANGE_ORDER->name,
+		'GROUPS' => [
+			ActivityGroup::STARTER->value,
+			ActivityGroup::SALES_CRM->value,
+			ActivityGroup::PAYMENT->value,
+		],
 	];
 }
 

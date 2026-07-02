@@ -1,14 +1,13 @@
-import { Store } from 'ui.vue3.vuex';
-import { RestClient } from 'rest.client';
+import { type Store } from 'ui.vue3.vuex';
+import { type RestClient } from 'rest.client';
 
 import { Core } from 'im.v2.application.core';
-import { RestMethod, ChatType } from 'im.v2.const';
+import { RestMethod, type ChatTypeItem } from 'im.v2.const';
 import { Logger } from 'im.v2.lib.logger';
 import { UuidManager } from 'im.v2.lib.uuid';
 import { runAction } from 'im.v2.lib.rest';
 import { CounterManager, CounterClearHandlersByChatType, CounterClearActions } from 'im.v2.lib.counter';
-
-import type { ImModelChat } from 'im.v2.model';
+import { type ImModelChat } from 'im.v2.model';
 
 type ReadResult = {
 	chatId: number,
@@ -32,7 +31,7 @@ export class ReadService
 		this.#restClient = Core.getRestClient();
 	}
 
-	readAllByType(type: $Values<typeof ChatType>)
+	readAllByType(type: ChatTypeItem)
 	{
 		const counterClearHandlers = CounterClearHandlersByChatType[type];
 

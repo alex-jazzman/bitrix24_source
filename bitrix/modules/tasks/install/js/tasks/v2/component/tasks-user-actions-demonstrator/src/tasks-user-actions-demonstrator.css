@@ -1,0 +1,18 @@
+.tasks-entities-demonstrator__popup.tasks-entities-demonstrator__popup_user-actions {
+	--color-collaber: var(--ui-color-collab-accent-primary);
+	--color-extranet: #ca8600;
+}
+
+.tasks-entities-picker__entity.tasks-entities-picker__entity_type_collaber .tasks-entities-picker__entity-vis-item.tasks-entities-picker__entity-vis-item_icon {
+	--ui-icon-set__icon-color: var(--color-collaber);
+}
+.tasks-entities-picker__entity.tasks-entities-picker__entity_type_extranet .tasks-entities-picker__entity-vis-item.tasks-entities-picker__entity-vis-item_icon {
+	--ui-icon-set__icon-color: var(--color-extranet);
+}
+
+.tasks-entities-picker__entity.tasks-entities-picker__entity_type_collaber .tasks-entities-picker__entity-text-name {
+	color: var(--color-collaber);
+}
+.tasks-entities-picker__entity.tasks-entities-picker__entity_type_extranet .tasks-entities-picker__entity-text-name {
+	color: var(--color-extranet);
+}

@@ -12,9 +12,9 @@ include_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/components/bitrix/main.share/uti
 
 /**
  * Come from GetTemplateProps()
- * @param string $templateName
- * @param string $siteTemplate
- * @param array $arCurrentValues
+ * @var string $templateName
+ * @var string $siteTemplate
+ * @var array $arCurrentValues
  */
 $arHandlers = __bx_share_get_handlers($templateName, $siteTemplate);
 

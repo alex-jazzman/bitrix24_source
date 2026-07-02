@@ -57,6 +57,16 @@ jn.define('im/messenger/controller/recent/service/quick-recent/common', (require
 		{
 			this.quickRecent.saveCache(sections, items);
 		}
+
+		subscribeEvents()
+		{
+			this.logger.log('subscribeEvents');
+		}
+
+		unsubscribeEvents()
+		{
+			this.logger.log('unsubscribeEvents');
+		}
 	}
 
 	module.exports = CommonQuickRecent;

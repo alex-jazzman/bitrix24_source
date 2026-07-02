@@ -64,6 +64,13 @@ class BIConnector extends \CModule
 			true, true
 		);
 
+		\CopyDirFiles(
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/biconnector/install/activities",
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/activities",
+			true,
+			true
+		);
+
 		if (!isset($params['manual_installing']))
 		{
 			$params['public_dir'] = 'biconnector';
@@ -182,6 +189,8 @@ class BIConnector extends \CModule
 			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Catalog\StoreProduct', 'onBIConnectorDataSources');
 			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Catalog\StoreDocument', 'onBIConnectorDataSources');
 			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Catalog\StoreDocumentItem', 'onBIConnectorDataSources');
+
+			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Imopenlines\Session', 'onBIConnectorDataSources');
 
 			$eventManager->registerEventHandler('main', 'OnBeforeUserUpdate', 'biconnector', '\Bitrix\BIConnector\Integration\Superset\Events\Main\User', 'onBeforeUserUpdate');
 			$eventManager->registerEventHandler('main', 'OnAfterUserUpdate', 'biconnector', '\Bitrix\BIConnector\Integration\Superset\Events\Main\User', 'onAfterUserUpdate');

@@ -1,0 +1,2 @@
+<?php
+$MESS["INTRANET_SETTINGS_TOOLS_NOTE_BASE_MAIN"] = "Knowledge base 2.0";

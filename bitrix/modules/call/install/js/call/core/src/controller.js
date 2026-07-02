@@ -1012,6 +1012,7 @@ export class CallController extends EventEmitter
 				props: { className: BX.Messenger.v2.Lib.CallManager.viewContainerClass },
 			});
 
+			externalContainer.setAttribute('data-a11y-ignore-inert', 'true');
 			document.body.appendChild(externalContainer);
 		}
 
@@ -1021,7 +1022,10 @@ export class CallController extends EventEmitter
 	createContainer()
 	{
 		this.container = BX.create("div", {
-			props: {className: `bx-messenger-call-overlay ${Util.isChatMountInPage() ? '--fixed' : ''}`},
+			props: { className: `bx-messenger-call-overlay ${Util.isChatMountInPage() ? '--fixed' : ''}` },
+			events: {
+				click: (event) => event.stopPropagation(),
+			},
 		});
 
 		const externalContainer = this.getExternalContainer();

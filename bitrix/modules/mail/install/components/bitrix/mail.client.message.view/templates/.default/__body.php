@@ -42,7 +42,7 @@ $replyCC = $message['__cc'];
 
 $datetimeFormat = \Bitrix\Main\Loader::includeModule('intranet') ? \CIntranetUtils::getCurrentDatetimeFormat() : false;
 $datetimeFormatted = \CComponentUtil::getDateTimeFormatted(
-	$message['FIELD_DATE']->getTimestamp()+\CTimeZone::getOffset(),
+	($message['INTERNALDATE'] ?? $message['FIELD_DATE'])->getTimestamp()+\CTimeZone::getOffset(),
 	$datetimeFormat,
 	\CTimeZone::getOffset()
 );
@@ -93,7 +93,8 @@ $fileRefreshButtonId = "mail_msg_{$messageId}_refresh_files_button";
 				<div class="mail-msg-view-sender">
 					<? $__from = reset($message['__from']); ?>
 					<a class="mail-msg-view-sender-name js-mailto-link" href="mailto:<?=htmlspecialcharsbx($__from['email']) ?>"
-						<? if ($__from['name']): ?>title="<?=htmlspecialcharsbx($__from['email']) ?>"<? endif ?>><?
+						<? if ($__from['name']): ?>title="<?=htmlspecialcharsbx($__from['email']) ?>"<? endif ?>
+						aria-label="<?=htmlspecialcharsbx(Loc::getMessage('MAIL_MESSAGE_NEW_FROM')) ?>: <?=htmlspecialcharsbx($__from['name'] ?: $__from['email']) ?>"><?
 						echo htmlspecialcharsbx($__from['name'] ?: $__from['email']);
 					?></a>
 					<? if (!empty($__from['name']) && !empty($__from['email']) && $__from['name'] != $__from['email']): ?>
@@ -119,6 +120,9 @@ $fileRefreshButtonId = "mail_msg_{$messageId}_refresh_files_button";
 						<? endif ?>
 					</span>
 				</div>
+				<? if ($arParams['LOADED_FROM_LOG'] == 'Y'): ?>
+					<button type="button" class="mail-msg-view-collapse-btn" aria-expanded="true" aria-label="<?=Loc::getMessage('MAIL_MESSAGE_COLLAPSE') ?>"></button>
+				<? endif ?>
 			</span>
 			<div class="mail-msg-view-rcpt-wrapper">
 				<?
@@ -159,9 +163,9 @@ $fileRefreshButtonId = "mail_msg_{$messageId}_refresh_files_button";
 							<span class="mail-msg-view-rcpt-list"><?=$type ?>:</span>
 							<? foreach ($list as $item): ?>
 								<? if ($limit == 0): ?>
-									<a class="mail-msg-view-rcpt-more mail-msg-fake-link" href="#">
+									<button type="button" class="mail-msg-view-rcpt-more">
 										<?=Loc::getMessage('MAIL_MESSAGE_RCPT_MORE', array('#NUM#' => $count)) ?>
-									</a>
+									</button>
 									<span class="mail-msg-view-rcpt-list-hidden">
 								<? endif ?>
 								<span class="mail-msg-view-rcpt-block mail-msg-list-cell-flex">
@@ -186,6 +190,7 @@ $fileRefreshButtonId = "mail_msg_{$messageId}_refresh_files_button";
 										<a class="mail-msg-view-rcpt-link js-mailto-link"
 											href="<?=htmlspecialcharsbx($item['URL']) ?>"
 											title="<?= htmlspecialcharsbx($item['HREF_TITLE']); ?>"
+											aria-label="<?=htmlspecialcharsbx($type) ?>: <?=htmlspecialcharsbx($item['TITLE']) ?>"
 											target="_blank"><?=htmlspecialcharsbx($item['TITLE']) ?></a>
 									<? else: ?>
 										<span class="mail-msg-view-rcpt"><?=htmlspecialcharsbx($item['TITLE']) ?></span>
@@ -207,17 +212,19 @@ $fileRefreshButtonId = "mail_msg_{$messageId}_refresh_files_button";
 			 id="<?= htmlspecialcharsbx($messageControlElementId) ?>"
 			<?php if($isAjaxBody): ?> style="display:none" <?php endif; ?>>
 			<div class="mail-msg-view-control-block">
-				<div class="mail-msg-view-control mail-msg-view-control-reply js-msg-view-control-reply"><?=Loc::getMessage('MAIL_MESSAGE_BTN_REPLY') ?></div>
-				<div class="mail-msg-view-control mail-msg-view-control-replyall js-msg-view-control-replyall"><?=Loc::getMessage('MAIL_MESSAGE_BTN_REPLY_All') ?></div>
-				<div class="mail-msg-view-control mail-msg-view-control-forward js-msg-view-control-forward"><?=Loc::getMessage('MAIL_MESSAGE_BTN_FWD') ?></div>
+				<button type="button" class="mail-msg-view-control mail-msg-view-control-reply js-msg-view-control-reply"><?=Loc::getMessage('MAIL_MESSAGE_BTN_REPLY') ?></button>
+				<button type="button" class="mail-msg-view-control mail-msg-view-control-replyall js-msg-view-control-replyall"><?=Loc::getMessage('MAIL_MESSAGE_BTN_REPLY_All') ?></button>
+				<button type="button" class="mail-msg-view-control mail-msg-view-control-forward js-msg-view-control-forward"><?=Loc::getMessage('MAIL_MESSAGE_BTN_FWD') ?></button>
+				<button type="button" class="mail-msg-view-control mail-msg-view-control-discuss js-msg-view-control-discuss js-mail-discuss-in-chat"
+					 data-message-id="<?= (int)$message['ID'] ?>"><?=Loc::getMessage('MAIL_MESSAGE_DISCUSS_IN_CHAT_BTN') ?></button>
 				<? if ($message['__access_level'] == 'full'): ?>
-					<div class="mail-msg-view-control mail-msg-view-control-skip js-msg-view-control-skip"
-						<? if (!preg_grep('/CRM_ACTIVITY-\d+/', $message['BIND']) || !$isCrmEnabled): ?> style="display: none; "<? endif ?>><?=Loc::getMessage('MAIL_MESSAGE_BTN_SKIP') ?></div>
+					<button type="button" class="mail-msg-view-control mail-msg-view-control-skip js-msg-view-control-skip"
+						<? if (!preg_grep('/CRM_ACTIVITY-\d+/', $message['BIND']) || !$isCrmEnabled): ?> style="display: none; "<? endif ?>><?=Loc::getMessage('MAIL_MESSAGE_BTN_SKIP') ?></button>
 					<? if (!$message['__is_outcome'] && !$message['isSpam']): ?>
-						<div class="mail-msg-view-control mail-msg-view-control-spam js-msg-view-control-spam"><?=Loc::getMessage('MAIL_MESSAGE_BTN_SPAM') ?></div>
+						<button type="button" class="mail-msg-view-control mail-msg-view-control-spam js-msg-view-control-spam"><?=Loc::getMessage('MAIL_MESSAGE_BTN_SPAM') ?></button>
 					<? endif ?>
-					<div class="mail-msg-view-control mail-msg-view-control-delete js-msg-view-control-delete"
-						<? if ($message['isTrash']): ?> data-is-trash="true" <? endif; ?>><?=Loc::getMessage('MAIL_MESSAGE_BTN_DEL') ?></div>
+					<button type="button" class="mail-msg-view-control mail-msg-view-control-delete js-msg-view-control-delete"
+						<? if ($message['isTrash']): ?> data-is-trash="true" <? endif; ?>><?=Loc::getMessage('MAIL_MESSAGE_BTN_DEL') ?></button>
 				<? endif ?>
 			</div>
 		</div>
@@ -302,14 +309,14 @@ $ajaxAttachmentElementId = '';
 
 
 <? if (!$message['hideFastReplyPanel']):?>
-	<div class="mail-msg-view-reply-panel mail-msg-view-border-bottom js-msg-view-reply-panel"
+	<button type="button" class="mail-msg-view-reply-panel mail-msg-view-border-bottom js-msg-view-reply-panel"
 		 id="<?= htmlspecialcharsbx($fastReplyElementId) ?>"
 		<?php if($isAjaxBody): ?> style="display:none" <?php endif; ?>>
-		<div class="ui-icon ui-icon-common-user mail-msg-userpic">
+		<span class="ui-icon ui-icon-common-user mail-msg-userpic" aria-hidden="true">
 			<i <? if (!empty($arResult['USER_IMAGE'])): ?> style="background: url('<?= Uri::urnEncode(htmlspecialcharsbx($arResult['USER_IMAGE'])) ?>'); background-size: 23px 23px; "<? endif ?>></i>
-		</div>
-		<div class="mail-msg-view-reply-panel-text"><?=Loc::getMessage('MAIL_MESSAGE_REPLY_Q') ?></div>
-	</div>
+		</span>
+		<span class="mail-msg-view-reply-panel-text"><?=Loc::getMessage('MAIL_MESSAGE_REPLY_Q') ?></span>
+	</button>
 <? endif; ?>
 
 <?

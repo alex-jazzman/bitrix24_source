@@ -1,5 +1,5 @@
 import { Group } from './group';
-import type { GroupData } from '@/types/group';
+import { type GroupData } from '../types/group';
 
 import '../css/group-list.css';
 

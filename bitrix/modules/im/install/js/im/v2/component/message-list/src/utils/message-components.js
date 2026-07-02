@@ -33,6 +33,7 @@ import { TaskChatCreationMessage } from 'im.v2.component.message.creation.task-c
 import { ConvertToCollabMessage } from 'im.v2.component.message.collab.convert';
 import { AiAssistantMessage } from 'im.v2.component.message.ai-assistant.answer';
 import { AiBizprocMessage } from 'im.v2.component.message.ai-bizproc';
+import { BuilderMessage } from 'im.v2.component.message.builder';
 
 export const MessageComponents = {
 	DefaultMessage,
@@ -70,4 +71,5 @@ export const MessageComponents = {
 	TaskChatCreationMessage,
 	ConvertToCollabMessage,
 	AiBizprocMessage,
+	BuilderMessage,
 };

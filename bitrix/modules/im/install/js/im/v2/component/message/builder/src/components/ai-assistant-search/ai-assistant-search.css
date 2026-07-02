@@ -1,0 +1,25 @@
+.bx-im-message-block-ai-assistant-search__container {
+	padding: 6px 0;
+	font: var(--ui-font-size-lg)/20px var(--ui-font-family-primary);
+}
+
+.bx-im-message-block-ai-assistant-search__title-container {
+	display: flex;
+	align-items: center;
+	padding: 2px 0;
+	gap: 2px;
+}
+
+.bx-im-message-block-ai-assistant-search__icon {
+	width: 18px;
+	height: 18px;
+	flex-shrink: 0;
+}
+
+.bx-im-message-block-ai-assistant-search__title {
+	color: var(--ui-color-base-1);
+}
+
+.bx-im-message-block-ai-assistant-search__text {
+	color: var(--ui-color-base-4);
+}

@@ -9,11 +9,11 @@ return [
 	'js' => 'dist/whatsApp-popup-changes-sending-messages.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
+		'booking.component.popup',
+		'booking.const',
+		'booking.provider.service.option-service',
 		'ui.vue3.components.button',
 		'ui.vue3.vuex',
-		'booking.const',
-		'booking.component.popup',
-		'booking.provider.service.option-service',
 	],
 	'skip_core' => true,
 ];

@@ -1,5 +1,5 @@
-import { BitrixVueComponentProps } from 'ui.vue3';
 import { type MenuOptions } from 'main.popup';
+import { type BitrixVueComponentProps } from 'ui.vue3';
 
 import {
 	Field,
@@ -8,18 +8,17 @@ import {
 	FieldValueList,
 	ValueEllipsis,
 } from '../../layout/index';
-
 import { ShowMoreMenu } from '../../show-more/show-more-menu';
 
-declare type Phone = {
+import './phone-field.css';
+
+type Phone = {
 	value: string,
 	href: string,
 	onclick: string,
 };
 
 const SHOWABLE_PHONES_LIMIT = 2;
-
-import './phone-field.css';
 
 export const PhoneField: BitrixVueComponentProps = {
 	name: 'PhoneField',

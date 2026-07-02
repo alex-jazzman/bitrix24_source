@@ -112,6 +112,17 @@
 	outline: none;
 }
 
+.ui-day-picker-day.--disabled {
+	cursor: not-allowed;
+	opacity: 0.35;
+	pointer-events: none;
+}
+
+.ui-day-picker-day.--disabled .ui-day-picker-day-inner {
+	color: var(--ui-color-text-secondary);
+	background-color: transparent;
+}
+
 /*.ui-day-picker-day:focus-visible .ui-day-picker-day-inner:before,*/
 .ui-day-picker-day.--focus-visible .ui-day-picker-day-inner:before {
 	content: '';

@@ -335,6 +335,7 @@ class BXEditorIframeCopilot
 	selectionTypeCaret = 'Caret';
 	resultNodeAttr = 'bxhtmled-copilot-result-node';
 	resultColor = '#8d52ec';
+	responseFormatSupported = false;
 
 	invitationLineModes = {
 		NONE: 'none',
@@ -346,7 +347,7 @@ class BXEditorIframeCopilot
 
 	/**
 	 * @param iframeView BXEditorIframeView
-	 * @param copilotParams {{moduleId, contextId, category, contextParameters, invitationLineMode, isMentionUnavailable}}
+	 * @param copilotParams {{moduleId, contextId, category, contextParameters, invitationLineMode, isMentionUnavailable, responseFormat}}
 	 */
 	constructor(iframeView, copilotParams = {})
 	{
@@ -355,20 +356,28 @@ class BXEditorIframeCopilot
 		this.contentEditable = iframeView.element;
 
 		this.copilotParams = copilotParams;
+		this.responseFormatSupported = BX.Extension?.getSettings('ai.copilot')?.get('isSupportResponseFormatting') === true;
 
 		this.invitationLineMode = copilotParams.invitationLineMode ?? this.invitationLineModes.LAST_LINE;
 		this.invitationLine = this.renderInvitationLine();
 		this.invitationLineAbsolute = this.renderInvitationLine();
 		this.insertResultNode = this.renderInsertResultNode();
 
-		this.copilot = new BX.AI.Copilot({
+		const copilotOptions = {
 			moduleId: copilotParams.moduleId,
 			contextId: copilotParams.contextId,
 			category: copilotParams.category,
 			contextParameters: copilotParams.contextParameters,
 			autoHide: true,
 			preventAutoHide: (event) => this.iframeContainer.contains(event.target),
-		});
+		};
+
+		if (this.responseFormatSupported)
+		{
+			copilotOptions.responseFormat = copilotParams.responseFormat ?? 'html';
+		}
+
+		this.copilot = new BX.AI.Copilot(copilotOptions);
 
 		this.bindHandlers();
 
@@ -459,16 +468,32 @@ class BXEditorIframeCopilot
 	aiResultHandler(event)
 	{
 		const resultNodes = this.getResultNodes();
+		const isHtmlFormat = this.responseFormatSupported
+			&& (this.copilotParams.responseFormat ?? 'html') === 'html';
 
 		let lastResultSpan;
 		if (resultNodes.length !== 0)
 		{
 			lastResultSpan = [...resultNodes].pop();
-			lastResultSpan.innerText = event.data.result;
+			if (isHtmlFormat)
+			{
+				lastResultSpan.innerHTML = event.data.result;
+			}
+			else
+			{
+				lastResultSpan.innerText = event.data.result;
+			}
 		}
 		else
 		{
-			lastResultSpan = this.getSpanWithText(event.data.result);
+			if (isHtmlFormat)
+			{
+				lastResultSpan = this.getSpanWithHtml(event.data.result);
+			}
+			else
+			{
+				lastResultSpan = this.getSpanWithText(event.data.result);
+			}
 			BX.Dom.style(lastResultSpan, 'color', this.resultColor);
 			BX.Dom.attr(lastResultSpan, this.resultNodeAttr, 'true');
 
@@ -492,7 +517,11 @@ class BXEditorIframeCopilot
 		if (this.getResultNodes().length === 0)
 		{
 			const selection = this.getSelection().getRangeAt(0);
-			const span = this.getSpanWithText(event.data.result);
+			const isHtmlFormat = this.responseFormatSupported
+				&& (this.copilotParams.responseFormat ?? 'html') === 'html';
+			const span = isHtmlFormat
+				? this.getSpanWithHtml(event.data.result)
+				: this.convertTextToHtmlSpan(event.data.result);
 			selection.deleteContents();
 			selection.insertNode(span);
 			this.iframeView.UpdateHeight();
@@ -508,7 +537,11 @@ class BXEditorIframeCopilot
 
 	addBelowHandler(event)
 	{
-		const span = this.getSpanWithText(event.data.result);
+		const isHtmlFormat = this.responseFormatSupported
+			&& (this.copilotParams.responseFormat ?? 'html') === 'html';
+		const span = isHtmlFormat
+			? this.getSpanWithHtml(event.data.result)
+			: this.getSpanWithText(event.data.result);
 
 		let lastSelectedElement = null;
 		if (this.getSelectionText() !== '')
@@ -548,10 +581,23 @@ class BXEditorIframeCopilot
 		}
 	}
 
+	convertTextToHtmlSpan(text)
+	{
+		return BX.Tag.render`<span>${text}</span>`;
+	}
+
 	getSpanWithText(text)
 	{
 		const span = BX.Dom.create('span');
 		span.innerText = text;
+
+		return span;
+	}
+
+	getSpanWithHtml(html)
+	{
+		const span = BX.Dom.create('span');
+		span.innerHTML = html;
 
 		return span;
 	}

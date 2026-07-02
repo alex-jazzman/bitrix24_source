@@ -1,16 +1,17 @@
 import { AudioPlayer } from 'crm.audio-player';
 import { LogoType } from '../enums/logo-type';
 
+// @vue/component
 export const TimelineAudio = AudioPlayer.getComponent({
 	methods: {
 		changeLogoIcon(icon: String)
 		{
-			if (!this.$parent || !this.$parent.getLogo)
+			if (!this.$root || !this.$root.getLogo)
 			{
 				return;
 			}
 
-			const logo = this.$parent.getLogo();
+			const logo = this.$root.getLogo();
 			if (!logo)
 			{
 				return;

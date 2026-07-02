@@ -1,0 +1,49 @@
+.booking-booking__week-cell-stats-overlay {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	box-sizing: border-box;
+	z-index: 6;
+	background: var(--ui-color-bg-vibrant-accent);
+}
+
+.booking-booking__week-cell-stats-overlay__content {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	width: 100%;
+	height: 100%;
+	padding: var(--ui-space-inset-2xs2) var(--ui-space-inline-xs) var(--ui-space-inline-xs) var(--ui-space-inline-xs);
+	box-sizing: border-box;
+}
+
+.booking-booking__week-cell-stats-overlay__rows {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-3xs);
+	user-select: none;
+	-webkit-user-select: none;
+}
+
+.booking-booking__week-cell-stats-overlay__row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.booking-booking__week-cell-stats-overlay__row_label {
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-normal);
+	color: var(--ui-color-base-2);
+}
+
+.booking-booking__week-cell-stats-overlay__row_counter {
+	display: flex;
+	align-items: center;
+}
+
+.booking-booking__week-cell-stats-overlay__button-container {
+	display: flex;
+	justify-content: flex-end;
+}

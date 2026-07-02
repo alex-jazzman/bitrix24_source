@@ -10,7 +10,7 @@
 }
 
 .bx-im-message-ai-assistant-base-message__container.bx-im-message-base__wrap.--opponent:last-child .bx-im-message-base__body::before {
-	background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='4' height='9' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1.202 9H4V0C3.854 2.61 2.008 5.042.354 6.718-.4 7.482.13 9 1.202 9z' fill='%23E6F4FF'/%3E%3C/svg%3E");
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='9' fill='none' viewBox='0 0 4 9'%3E%3Cpath fill='%23e6f4ff' d='M1.202 9H4V0C3.854 2.61 2.008 5.042.354 6.718-.4 7.482.13 9 1.202 9'/%3E%3C/svg%3E");
 }
 
 .bx-im-message-ai-assistant-answer__bottom-panel {
@@ -48,8 +48,7 @@
 	text-decoration: underline;
 	cursor: pointer;
 	color: inherit;
-	-webkit-text-decoration-color: var(--im-message-ai-assistant-answer__text-decoration-color_warning-link);
-	        text-decoration-color: var(--im-message-ai-assistant-answer__text-decoration-color_warning-link);
+	text-decoration-color: var(--im-message-ai-assistant-answer__text-decoration-color_warning-link);
 }
 
 .bx-im-message-ai-assistant-answer__status-container .bx-im-message-status__date {

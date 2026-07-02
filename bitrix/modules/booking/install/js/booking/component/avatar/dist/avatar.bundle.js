@@ -1,1 +1,77 @@
-this.BX=this.BX||{},this.BX.Booking=this.BX.Booking||{},function(t,a,e){"use strict";var r={name:"UiAvatar",props:{size:{type:Number,default:36},userName:{type:String,default:""},userpicPath:{type:String,default:null},baseColor:{type:String,default:null}},watch:{size:function(t){var a;null===(a=this.avatar)||void 0===a||a.setSize(t)},userpicPath:function(t){var a,e;null===(a=this.avatar)||void 0===a||a.removeUserPic(),null===(e=this.avatar)||void 0===e||e.setPic(t)},userName:function(){this.removeAvatar(),this.renderAvatar()}},created:function(){this.createAvatar()},mounted:function(){this.renderAvatar()},updated:function(){this.renderAvatar()},methods:{createAvatar:function(){this.avatar=new e.AvatarRound({size:this.size,userName:this.userName,userpicPath:this.userpicPath,baseColor:this.baseColor})},renderAvatar:function(){this.avatar||this.createAvatar(),this.avatar.renderTo(this.$refs.avatar)},removeAvatar:function(){a.Dom.clean(this.$refs.avatar),this.avatar=null}},template:'\n\t\t<div ref="avatar"></div>\n\t'};t.Avatar=r}(this.BX.Booking.Component=this.BX.Booking.Component||{},BX,BX.UI);
+/* eslint-disable */
+this.BX = this.BX || {};
+this.BX.Booking = this.BX.Booking || {};
+(function (exports, main_core, ui_avatar) {
+	'use strict';
+
+	// @vue/component
+	const Avatar = {
+		name: 'UiAvatar',
+		props: {
+			size: {
+				type: Number,
+				default: 36
+			},
+			userName: {
+				type: String,
+				default: ''
+			},
+			userpicPath: {
+				type: String,
+				default: null
+			},
+			baseColor: {
+				type: String,
+				default: null
+			}
+		},
+		watch: {
+			size(size) {
+				this.avatar?.setSize(size);
+			},
+			userpicPath(path) {
+				this.avatar?.removeUserPic();
+				this.avatar?.setPic(path);
+			},
+			userName() {
+				this.removeAvatar();
+				this.renderAvatar();
+			}
+		},
+		created() {
+			this.createAvatar();
+		},
+		mounted() {
+			this.renderAvatar();
+		},
+		updated() {
+			this.renderAvatar();
+		},
+		methods: {
+			createAvatar() {
+				this.avatar = new ui_avatar.AvatarRound({
+					size: this.size,
+					userName: this.userName,
+					userpicPath: this.userpicPath,
+					baseColor: this.baseColor
+				});
+			},
+			renderAvatar() {
+				if (!this.avatar) {
+					this.createAvatar();
+				}
+				this.avatar.renderTo(this.$refs.avatar);
+			},
+			removeAvatar() {
+				main_core.Dom.clean(this.$refs.avatar);
+				this.avatar = null;
+			}
+		},
+		template: `
+		<div ref="avatar"></div>
+	`
+	};
+
+	exports.Avatar = Avatar;
+
+})(this.BX.Booking.Component = this.BX.Booking.Component || {}, BX, BX.UI);

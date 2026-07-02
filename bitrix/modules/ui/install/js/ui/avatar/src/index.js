@@ -1,6 +1,7 @@
 import AvatarBase from './avatar-base';
 import AvatarRound from './avatar-round';
 import AvatarRoundCopilot from './avatar-round-copilot';
+import AvatarRoundBitrixGpt from './avatar-round-bitrix-gpt';
 import AvatarRoundMarta from './avatar-round-marta';
 import AvatarRoundGuest from './avatar-round-guest';
 import AvatarRoundExtranet from './avatar-round-extranet';
@@ -13,12 +14,14 @@ import AvatarSquare from './avatar-square';
 import AvatarSquareGuest from './avatar-square-guest';
 import AvatarSquareExtranet from './avatar-square-extranet';
 import AvatarSquareAccent from './avatar-square-accent';
+import { AvatarHexagonProject } from './avatar-hexagon-project.js';
 
 import './ui.avatar.css';
 
 export {
 	AvatarBase,
 	AvatarRound,
+	AvatarRoundBitrixGpt,
 	AvatarRoundCopilot,
 	AvatarRoundMarta,
 	AvatarRoundGuest,
@@ -32,4 +35,5 @@ export {
 	AvatarSquareGuest,
 	AvatarSquareExtranet,
 	AvatarSquareAccent,
-}
+	AvatarHexagonProject,
+};

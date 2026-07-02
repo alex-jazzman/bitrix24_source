@@ -16,9 +16,9 @@ jn.define('im/messenger/lib/element/dialog/message/unsupported', (require, expor
 	{
 		/**
 		 * @param {MessagesModelState} modelMessage
-		 * @param {CreateMessageOptions} options
+		 * @param {CreateMessageOptions|{}} options
 		 */
-		constructor(modelMessage = {}, options = {})
+		constructor(modelMessage, options = {})
 		{
 			super(modelMessage, options);
 
@@ -41,7 +41,6 @@ jn.define('im/messenger/lib/element/dialog/message/unsupported', (require, expor
 		}
 
 		disableTailUnsupportedMessage() {
-			this.disableTail();
 			this.isAuthorBottomMessage = false;
 			this.isAuthorTopMessage = false;
 		}

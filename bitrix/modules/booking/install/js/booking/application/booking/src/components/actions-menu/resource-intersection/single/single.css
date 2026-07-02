@@ -1,0 +1,17 @@
+.booking-booking-intersections-line {
+	width: calc(100% - 310px);
+	padding: 0 6px;
+	box-sizing: border-box;
+	min-height: 39px;
+	align-content: center;
+	overflow: auto;
+	background: var(--ui-color-background-primary);
+}
+
+/* region week-mode */
+.booking-booking__base-component.--week-mode .booking-booking-intersections-line {
+	width: 100%;
+	padding: 10px 14px;
+}
+
+/* endregion */

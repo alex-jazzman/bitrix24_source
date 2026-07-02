@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Main\Loader;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main;
 use Bitrix\Iblock;
@@ -377,6 +378,11 @@ function CatalogViewedProductCallback($productID, $UserID, $strSiteID = SITE_ID)
 	if ($productID <= 0)
 		return false;
 
+	if (!Loader::includeModule('sale'))
+	{
+		return false;
+	}
+	
 	static $arUserCache = array();
 	if ($UserID > 0)
 	{
@@ -439,110 +445,68 @@ function CatalogViewedProductCallback($productID, $UserID, $strSiteID = SITE_ID)
 			return false;
 	}
 
+	$currentPrice = 0.0;
+	$currentDiscount = 0.0;
 	$bTrace = true;
 	if ($arCatalogProduct = CCatalogProduct::GetByID($productID))
 	{
-		if ($arCatalogProduct["CAN_BUY_ZERO"] != "Y" && ($arCatalogProduct["QUANTITY_TRACE"] == "Y" && doubleval($arCatalogProduct["QUANTITY"]) <= 0))
+		if (
+			$arCatalogProduct["CAN_BUY_ZERO"] !== "Y"
+			&& ($arCatalogProduct["QUANTITY_TRACE"] === "Y"
+			&& (double)($arCatalogProduct["QUANTITY"]) <= 0)
+		)
 		{
-			$currentPrice = 0.0;
-			$currentDiscount = 0.0;
 			$bTrace = false;
 		}
 	}
 
 	if ($bTrace)
 	{
-		$arPrice = CCatalogProduct::GetOptimalPrice($productID, 1, ($UserID > 0 ? $arUserCache[$UserID] : $USER->GetUserGroupArray()), "N", array(), ($UserID > 0 ? $strSiteID : false), array());
+		$optimalPrice = CCatalogProduct::GetOptimalPrice($productID, 1, ($UserID > 0 ? $arUserCache[$UserID] : $USER->GetUserGroupArray()), "N", array(), ($UserID > 0 ? $strSiteID : false), array());
 
-		if (!empty($arPrice) && is_array($arPrice))
+		if (!empty($optimalPrice) && is_array($optimalPrice))
 		{
-			$currentPrice = $arPrice["PRICE"]["PRICE"];
-			$currentDiscount = 0.0;
+			$currentPrice = (float)$optimalPrice['RESULT_PRICE']['DISCOUNT_PRICE'];
+			$currentDiscount = (float)$optimalPrice['RESULT_PRICE']['DISCOUNT'];
 
-			if ($arPrice['PRICE']['VAT_INCLUDED'] == 'N')
+			if (
+				empty($optimalPrice["PRICE"]["CATALOG_GROUP_NAME"])
+				&& !empty($optimalPrice["PRICE"]["CATALOG_GROUP_ID"])
+			)
 			{
-				if(doubleval($arPrice['PRICE']['VAT_RATE']) > 0)
+				$catalogGroups = CCatalogGroup::GetList(
+					[],
+					[
+						'ID' => $optimalPrice["PRICE"]["CATALOG_GROUP_ID"],
+					],
+					false,
+					['nTopCount' => 1],
+					['ID','NAME','NAME_LANG'],
+				);
+
+				if ($group = $catalogGroups->Fetch())
 				{
-					$currentPrice *= (1 + $arPrice['PRICE']['VAT_RATE']);
-					$arPrice['PRICE']['VAT_INCLUDED'] = 'Y';
+					$optimalPrice["PRICE"]["CATALOG_GROUP_NAME"] =
+						!empty($group['NAME_LANG'])
+							? $group['NAME_LANG']
+							: $group['NAME']
+					;
 				}
 			}
-
-			if (!empty($arPrice["DISCOUNT"]))
-			{
-				if ($arPrice["DISCOUNT"]["VALUE_TYPE"]=="F")
-				{
-					if ($arPrice["DISCOUNT"]["CURRENCY"] == $arPrice["PRICE"]["CURRENCY"])
-						$currentDiscount = $arPrice["DISCOUNT"]["VALUE"];
-					else
-						$currentDiscount = CCurrencyRates::ConvertCurrency($arPrice["DISCOUNT"]["VALUE"], $arPrice["DISCOUNT"]["CURRENCY"], $arPrice["PRICE"]["CURRENCY"]);
-				}
-				elseif ($arPrice["DISCOUNT"]["VALUE_TYPE"]=="S")
-				{
-					if ($arPrice["DISCOUNT"]["CURRENCY"] == $arPrice["PRICE"]["CURRENCY"])
-						$currentDiscount = $arPrice["DISCOUNT"]["VALUE"];
-					else
-						$currentDiscount = CCurrencyRates::ConvertCurrency($arPrice["DISCOUNT"]["VALUE"], $arPrice["DISCOUNT"]["CURRENCY"], $arPrice["PRICE"]["CURRENCY"]);
-				}
-				else
-				{
-					$currentDiscount = $currentPrice * $arPrice["DISCOUNT"]["VALUE"] / 100.0;
-
-					if (doubleval($arPrice["DISCOUNT"]["MAX_DISCOUNT"]) > 0)
-					{
-						if ($arPrice["DISCOUNT"]["CURRENCY"] == $arPrice["PRICE"]["CURRENCY"])
-							$maxDiscount = $arPrice["DISCOUNT"]["MAX_DISCOUNT"];
-						else
-							$maxDiscount = CCurrencyRates::ConvertCurrency($arPrice["DISCOUNT"]["MAX_DISCOUNT"], $arPrice["DISCOUNT"]["CURRENCY"], $arPrice["PRICE"]["CURRENCY"]);
-
-						if ($currentDiscount > $maxDiscount)
-							$currentDiscount = $maxDiscount;
-					}
-				}
-
-				if ($arPrice["DISCOUNT"]["VALUE_TYPE"] == "S")
-				{
-					$currentDiscount_tmp = $currentPrice - $currentDiscount;
-					$currentPrice = $currentDiscount;
-					$currentDiscount = $currentDiscount_tmp;
-					unset($currentDiscount_tmp);
-				}
-				else
-				{
-					$currentPrice = $currentPrice - $currentDiscount;
-				}
-			}
-
-			if (empty($arPrice["PRICE"]["CATALOG_GROUP_NAME"]))
-			{
-				if (!empty($arPrice["PRICE"]["CATALOG_GROUP_ID"]))
-				{
-					$rsCatGroups = CCatalogGroup::GetList(array(),array('ID' => $arPrice["PRICE"]["CATALOG_GROUP_ID"]),false,array('nTopCount' => 1),array('ID','NAME','NAME_LANG'));
-					if ($arCatGroup = $rsCatGroups->Fetch())
-					{
-						$arPrice["PRICE"]["CATALOG_GROUP_NAME"] = (!empty($arCatGroup['NAME_LANG']) ? $arCatGroup['NAME_LANG'] : $arCatGroup['NAME']);
-					}
-				}
-			}
-		}
-		else
-		{
-			$currentPrice = 0.0;
-			$currentDiscount = 0.0;
 		}
 	}
 
 	$arResult = array(
 		"PREVIEW_PICTURE" => $arProduct['PREVIEW_PICTURE'],
 		"DETAIL_PICTURE" => $arProduct['DETAIL_PICTURE'],
-		"PRODUCT_PRICE_ID" => $arPrice["PRICE"]["ID"],
+		"PRODUCT_PRICE_ID" => $optimalPrice["PRICE"]["ID"] ?? null,
 		"PRICE" => $currentPrice,
-		"VAT_RATE" => $arPrice['PRICE']['VAT_RATE'],
-		"CURRENCY" => $arPrice["PRICE"]["CURRENCY"],
+		"VAT_RATE" => $optimalPrice['RESULT_PRICE']['VAT_RATE'] ?? null,
+		"CURRENCY" => $optimalPrice['RESULT_PRICE']['CURRENCY'] ?? null,
 		"DISCOUNT_PRICE" => $currentDiscount,
 		"NAME" => $arProduct["~NAME"],
 		"DETAIL_PAGE_URL" => $arProduct['~DETAIL_PAGE_URL'],
-		"NOTES" => $arPrice["PRICE"]["CATALOG_GROUP_NAME"]
+		"NOTES" => $optimalPrice["PRICE"]["CATALOG_GROUP_NAME"] ?? ''
 	);
 
 	if ($UserID > 0)
@@ -866,6 +830,11 @@ function CatalogRecurringCallback($productID, $userID)
 		return false;
 	}
 
+	if (!Loader::includeModule('sale'))
+	{
+		return false;
+	}
+
 	if ($arProduct["PRICE_TYPE"] == "T")
 	{
 		$arProduct = CCatalogProduct::GetByID($arProduct["TRIAL_PRICE_ID"]);
@@ -963,44 +932,82 @@ function CatalogRecurringCallback($productID, $userID)
 	//SIGURD: logic change. see mantiss 5036.
 	// discount applied to a final price with VAT already included.
 	if (doubleval($arPrice['PRICE']['VAT_RATE']) > 0 && $arPrice['PRICE']['VAT_INCLUDED'] != 'Y')
-		$currentPrice *= (1 + $arPrice['PRICE']['VAT_RATE']);
+	{
+		// Step 1.5: accrue VAT via sale service (0.20 → 20.0)
+		$vatCalculator = ServiceLocator::getInstance()->get('sale.vatCalculator');
+		$basketItemFactory = ServiceLocator::getInstance()->get('sale.basketItemInputFactory');
+		$currentPrice = $vatCalculator->accrueVat(
+			$basketItemFactory->createFromArray([
+				'basePrice' => $currentPrice,
+				'vatRate' => $arPrice['PRICE']['VAT_RATE'] * 100,
+				'vatIncluded' => false,
+			])
+		);
+	}
 
 	$arDiscountList = array();
 
 	if (!empty($arPrice["DISCOUNT_LIST"]))
 	{
+		// Step 3.3: resolve DiscountCalculator for iterative chain (Gap 6: one discount at a time)
+		$basketCalculator = ServiceLocator::getInstance()->get('sale.basketItemCalculator');
+		$basketItemFactory = ServiceLocator::getInstance()->get('sale.basketItemInputFactory');
 		foreach ($arPrice["DISCOUNT_LIST"] as &$arOneDiscount)
 		{
+			$priceCurrency = $arPrice["PRICE"]["CURRENCY"];
 			switch ($arOneDiscount['VALUE_TYPE'])
 			{
 				case CCatalogDiscount::TYPE_FIX:
-					if ($arOneDiscount['CURRENCY'] == $arPrice["PRICE"]["CURRENCY"])
-						$currentDiscount = $arOneDiscount['VALUE'];
-					else
-						$currentDiscount = CCurrencyRates::ConvertCurrency($arOneDiscount["VALUE"], $arOneDiscount["CURRENCY"], $arPrice["PRICE"]["CURRENCY"]);
-					$currentPrice = $currentPrice - $currentDiscount;
-					unset($currentDiscount);
+					// convert discount value to target currency before calling service (Gap 2)
+					$discountValue =
+						$arOneDiscount['CURRENCY'] === $priceCurrency
+							? (float)$arOneDiscount['VALUE']
+							: CCurrencyRates::ConvertCurrency($arOneDiscount["VALUE"], $arOneDiscount["CURRENCY"], $priceCurrency)
+					;
+					$calculationResult = $basketCalculator->calculate(
+						$basketItemFactory->createFromArray([
+							'basePrice' => $currentPrice,
+							'discountValue' => $discountValue,
+						])
+					);
+					$currentPrice = $calculationResult->price;
+
 					break;
 				case CCatalogDiscount::TYPE_PERCENT:
-					$currentDiscount = $currentPrice*$arOneDiscount["VALUE"]/100.0;
+					$calculationResult = $basketCalculator->calculate(
+						$basketItemFactory->createFromArray([
+							'basePrice' => $currentPrice,
+							'discountRate' => (float)$arOneDiscount["VALUE"],
+						])
+					);
+					// MAX_DISCOUNT clamping adapter (Gap 3)
 					if (0 < $arOneDiscount['MAX_DISCOUNT'])
 					{
-						if ($arOneDiscount['CURRENCY'] == $arPrice["PRICE"]["CURRENCY"])
-							$dblMaxDiscount = $arOneDiscount['MAX_DISCOUNT'];
-						else
-							$dblMaxDiscount = CCurrencyRates::ConvertCurrency($arOneDiscount['MAX_DISCOUNT'], $arOneDiscount["CURRENCY"], $arPrice["PRICE"]["CURRENCY"]);
-						if ($currentDiscount > $dblMaxDiscount)
-							$currentDiscount = $dblMaxDiscount;
+						$maxDiscount =
+							$arOneDiscount['CURRENCY'] === $priceCurrency
+								? (float)$arOneDiscount['MAX_DISCOUNT']
+								: CCurrencyRates::ConvertCurrency($arOneDiscount['MAX_DISCOUNT'], $arOneDiscount["CURRENCY"], $priceCurrency)
+						;
+						if ($calculationResult->discountValue > $maxDiscount)
+						{
+							$calculationResult = $basketCalculator->calculate(
+								$basketItemFactory->createFromArray([
+									'basePrice' => $currentPrice,
+									'discountValue' => $maxDiscount,
+								])
+							);
+						}
 					}
-					$currentPrice = $currentPrice - $currentDiscount;
-					unset($currentDiscount);
+					$currentPrice = $calculationResult->price;
+
 					break;
 				case CCatalogDiscount::TYPE_SALE:
-					if ($arOneDiscount['CURRENCY'] == $arPrice["PRICE"]["CURRENCY"])
-						$currentPrice = $arOneDiscount['VALUE'];
-					else
-						$currentPrice = CCurrencyRates::ConvertCurrency($arOneDiscount['VALUE'], $arOneDiscount["CURRENCY"], $arPrice["PRICE"]["CURRENCY"]);
-					break;
+					// TYPE_SALE adapter: convert target price to discount value (Gap 1)
+					$currentPrice =
+						$arOneDiscount['CURRENCY'] === $priceCurrency
+							? (float)$arOneDiscount['VALUE']
+							: CCurrencyRates::ConvertCurrency($arOneDiscount['VALUE'], $arOneDiscount["CURRENCY"], $priceCurrency)
+					;
 			}
 
 			$arOneList = array(
@@ -1016,7 +1023,6 @@ function CatalogRecurringCallback($productID, $userID)
 			}
 			$arDiscountList[] = $arOneList;
 		}
-		unset($arOneDiscount);
 	}
 
 	$recurType = $arProduct["RECUR_SCHEME_TYPE"];
@@ -1796,6 +1802,11 @@ function CatalogGetPriceTableEx($ID, $filterQauntity = 0, $arFilterType = array(
 	if ($ID <= 0)
 		return false;
 
+	if (!Loader::includeModule('sale'))
+	{
+		return false;
+	}
+	
 	$filterQauntity = (int)$filterQauntity;
 
 	if (!is_array($arFilterType))
@@ -1910,15 +1921,34 @@ function CatalogGetPriceTableEx($ID, $filterQauntity = 0, $arFilterType = array(
 
 	while ($arPrice = $dbPrice->Fetch())
 	{
+		// Step 1.5: VAT adjust via sale service (0.20 → 20.0)
+		$vatCalculator = ServiceLocator::getInstance()->get('sale.vatCalculator');
+		$inputCalculationFactory = ServiceLocator::getInstance()->get('sale.basketItemInputFactory');
 		if ($VAT_INCLUDE == 'N')
 		{
 			if ($bVatIncluded)
-				$arPrice['PRICE'] /= (1 + $fVatRate);
+			{
+				$arPrice['PRICE'] = $vatCalculator->allocateVat(
+					$inputCalculationFactory->createFromArray([
+						'basePrice' => $arPrice['PRICE'],
+						'vatRate' => $fVatRate * 100,
+						'vatIncluded' => true,
+					])
+				);
+			}
 		}
 		else
 		{
 			if (!$bVatIncluded)
-				$arPrice['PRICE'] *= (1 + $fVatRate);
+			{
+				$arPrice['PRICE'] = $vatCalculator->accrueVat(
+					$inputCalculationFactory->createFromArray([
+						'basePrice' => $arPrice['PRICE'],
+						'vatRate' => $fVatRate * 100,
+						'vatIncluded' => false,
+					])
+				);
+			}
 		}
 		$arPrice['CATALOG_GROUP_ID'] = (int)$arPrice['CATALOG_GROUP_ID'];
 

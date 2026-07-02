@@ -34,11 +34,11 @@ function displayField($placeholder, array $field, $required = false)
 		$title = $placeholder;
 	}
 	?><div class="crm-document-edit-item">
-		<label class="crm-document-edit-label" for="field-<?=\CUtil::JSEscape($placeholder);?>"><?echo htmlspecialcharsbx($title)?></label><?
+		<label class="crm-document-edit-label" for="field-<?=htmlspecialcharsbx($placeholder);?>"><?echo htmlspecialcharsbx($title)?></label><?
 	if(isset($field['VALUE']) && is_array($field['VALUE']))
 	{
 		?>
-			<select class="crm-document-edit-select" name="values[<?=htmlspecialcharsbx($placeholder);?>]" id="field-<?=\CUtil::JSEscape($placeholder);?>">
+			<select class="crm-document-edit-select" name="values[<?=htmlspecialcharsbx($placeholder);?>]" id="field-<?=htmlspecialcharsbx($placeholder);?>">
 				<?foreach($field['VALUE'] as $value)
 				{
 					$title = $value['TITLE'] ?? null;
@@ -55,7 +55,7 @@ function displayField($placeholder, array $field, $required = false)
 	elseif(!empty($field['TYPE']) && $field['TYPE'] === \Bitrix\DocumentGenerator\DataProvider::FIELD_TYPE_TEXT)
 	{
 		?>
-		<textarea class="crm-document-edit-input crm-document-edit-input-textarea" name="values[<?=htmlspecialcharsbx($placeholder);?>]" id="field-<?=\CUtil::JSEscape($placeholder);?>"<?if($required){?> required<?}
+		<textarea class="crm-document-edit-input crm-document-edit-input-textarea" name="values[<?=htmlspecialcharsbx($placeholder);?>]" id="field-<?=htmlspecialcharsbx($placeholder);?>"<?if($required){?> required<?}
 		if(array_key_exists('DEFAULT', $field))
 		{
 			?> bx-default="<?=htmlspecialcharsbx($field['DEFAULT'] ?? '');?>"<?
@@ -66,7 +66,7 @@ function displayField($placeholder, array $field, $required = false)
 	elseif(!empty($field['TYPE']) && $field['TYPE'] === \Bitrix\DocumentGenerator\DataProvider::FIELD_TYPE_DATE || $field['VALUE'] instanceof \Bitrix\DocumentGenerator\Value\DateTime)
 	{
 		?>
-		<input onclick="BX.calendar({node: this, field: this, bTime: true, bSetFocus: false, bUseSecond: true})" class="crm-document-edit-input crm-document-edit-date" name="values[<?=htmlspecialcharsbx($placeholder);?>]" value="<?=htmlspecialcharsbx($field['VALUE']);?>"<?if($required){?> required<?}?> id="field-<?=\CUtil::JSEscape($placeholder);?>"<?
+		<input onclick="BX.calendar({node: this, field: this, bTime: true, bSetFocus: false, bUseSecond: true})" class="crm-document-edit-input crm-document-edit-date" name="values[<?=htmlspecialcharsbx($placeholder);?>]" value="<?=htmlspecialcharsbx($field['VALUE']);?>"<?if($required){?> required<?}?> id="field-<?=htmlspecialcharsbx($placeholder);?>"<?
 		if(array_key_exists('DEFAULT', $field))
 		{
 			?> bx-default="<?=htmlspecialcharsbx($field['DEFAULT'] ?? '');?>"<?
@@ -77,7 +77,7 @@ function displayField($placeholder, array $field, $required = false)
 	else
 	{
 		?>
-		<input class="crm-document-edit-input" name="values[<?=htmlspecialcharsbx($placeholder);?>]" value="<?=htmlspecialcharsbx($field['VALUE']);?>"<?if($required){?> required<?}?> id="field-<?=\CUtil::JSEscape($placeholder);?>"<?
+		<input class="crm-document-edit-input" name="values[<?=htmlspecialcharsbx($placeholder);?>]" value="<?=htmlspecialcharsbx($field['VALUE']);?>"<?if($required){?> required<?}?> id="field-<?=htmlspecialcharsbx($placeholder);?>"<?
         if(array_key_exists('DEFAULT', $field))
 		{
 			?> bx-default="<?=htmlspecialcharsbx($field['DEFAULT'] ?? '');?>"<?
@@ -110,7 +110,7 @@ function displayGroup(array &$allGroups, $name, $groups, array &$placeholders, a
 	}
 	$nameParts = explode('.', $name);
 	$title = $nameParts[count($nameParts) - 1];
-	?><div class="crm-document-edit-<?=$classSuffix;?>" id="crm-document-edit-group-<?=\CUtil::JSEscape($title);?>">
+	?><div class="crm-document-edit-<?=$classSuffix;?>" id="crm-document-edit-group-<?=htmlspecialcharsbx($title);?>">
 	<h3 class="crm-document-edit-<?=$classSuffix;?>-title"><?=htmlspecialcharsbx($title);?></h3><?
 	// first show selects
 	?><div class="crm-document-edit-fields"><?

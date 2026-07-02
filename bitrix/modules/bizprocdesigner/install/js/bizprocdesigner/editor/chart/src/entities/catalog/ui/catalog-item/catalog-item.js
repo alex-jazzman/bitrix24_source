@@ -172,11 +172,14 @@ export const CatalogItem = {
 				returnProperties = [],
 				colorIndex,
 				icon = DEFAULT_ICON_NAME,
+				hasAuxPorts = false,
 				defaultSettings: {
 					width,
 					height,
 					ports = [],
 					frameColorName = null,
+					frameTextAlign = null,
+					frameSeparatorPosition = null,
 				},
 			} = toValue(item);
 
@@ -208,7 +211,10 @@ export const CatalogItem = {
 					icon,
 					title,
 					type,
+					shouldShowAuxPorts: hasAuxPorts === true,
 					...(frameColorName !== null ? { frameColorName } : {}),
+					...(frameTextAlign !== null ? { frameTextAlign } : {}),
+					...(frameSeparatorPosition !== null ? { frameSeparatorPosition } : {}),
 				},
 			};
 		}

@@ -231,7 +231,15 @@ export class Editor extends EventEmitter
 		Dom.append(resizeArea.getLayout(), this.#documentLayout);
 		await Promise.all(promises);
 		EventEmitter.unsubscribe('SidePanel.Slider:onOpenComplete', this.#onSliderOpenCompleteHandler);
-		EventEmitter.subscribeOnce('SidePanel.Slider:onOpenComplete', this.#onSliderOpenCompleteHandler);
+		const editorSlider = this.#sidePanel.getSlider('editor');
+		if (editorSlider && editorSlider.isOpen() && this.#dom.isConnected)
+		{
+			this.#handleSliderOnOpenComplete();
+		}
+		else
+		{
+			EventEmitter.subscribeOnce('SidePanel.Slider:onOpenComplete', this.#onSliderOpenCompleteHandler);
+		}
 	}
 
 	show(): Promise

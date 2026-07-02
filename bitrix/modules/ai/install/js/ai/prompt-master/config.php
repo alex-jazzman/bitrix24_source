@@ -1,7 +1,7 @@
-<?
+<?php
 
-use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
+use Bitrix\Ui\Public\Services\Copilot\CopilotNameService;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -10,6 +10,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 $currentUserId = null;
 $language = 'en';
+$copilotName = (new CopilotNameService())->getCopilotName();
 
 if (Loader::includeModule('ai'))
 {
@@ -42,5 +43,6 @@ return [
 	'settings' => [
 		'userId' => Bitrix\AI\Facade\User::getCurrentUserId(),
 		'language' => $language,
+		'copilotName' => $copilotName,
 	]
 ];

@@ -8,8 +8,10 @@ return [
 	'css' => 'dist/actions-bar.bundle.css',
 	'js' => 'dist/actions-bar.bundle.js',
 	'rel' => [
-		'ui.buttons',
 		'main.core',
+		'ui.buttons',
+		'ui.counterpanel',
+		'ui.navigationpanel',
 	],
 	'skip_core' => false,
 	'settings' => [

@@ -81,7 +81,6 @@ export default class CounterItem
 			title: null,
 			cross: null,
 			dropdownArrow: null,
-			menuItem: null,
 		};
 
 		this.counter = this.#getCounter();
@@ -105,6 +104,16 @@ export default class CounterItem
 	hasParentId(): ?string
 	{
 		return this.parentId;
+	}
+
+	hasCollapsedIcon(): boolean
+	{
+		return this.#collapsedIcon !== null;
+	}
+
+	getCollapsedIcon(): ?string
+	{
+		return this.#collapsedIcon;
 	}
 
 	#bindEvents(): void
@@ -168,21 +177,7 @@ export default class CounterItem
 	activate(isEmitEvent: boolean = true)
 	{
 		this.isActive = true;
-		if (this.parentId)
-		{
-			const target = BX.findParent(
-				this.getContainerMenu(),
-				{
-					className: 'ui-counter-panel__popup-item',
-				},
-			);
-
-			if (target)
-			{
-				Dom.addClass(target, '-active');
-			}
-		}
-		else
+		if (!this.parentId)
 		{
 			Dom.addClass(this.getContainer(), '--active');
 		}
@@ -196,22 +191,7 @@ export default class CounterItem
 	deactivate(isEmitEvent: boolean = true)
 	{
 		this.isActive = false;
-		if (this.parentId)
-		{
-			const target = BX.findParent(
-				this.getContainerMenu(),
-				{
-					className: 'ui-counter-panel__popup-item',
-				},
-			);
-
-			if (target)
-			{
-				Dom.removeClass(target, '--active');
-				Dom.removeClass(target, '--hover');
-			}
-		}
-		else
+		if (!this.parentId)
 		{
 			Dom.removeClass(this.getContainer(), '--active');
 			Dom.removeClass(this.getContainer(), '--hover');
@@ -247,21 +227,26 @@ export default class CounterItem
 	{
 		if (!this.counter)
 		{
-			const counterColor = this.color
-				? Counter.Color[this.color.toUpperCase()]
-				: (this.parentId ? Counter.Color.GRAY : Counter.Color.THEME)
-			;
-
-			this.counter = new Counter({
-				color: counterColor,
-				value: this.value,
-				animation: false,
-				useAirDesign: this.#useAirDesign,
-				style: this.#getCounterStyleByColor(counterColor),
-			});
+			this.counter = new Counter(this.getCounterOptions());
 		}
 
 		return this.counter;
+	}
+
+	getCounterOptions(): Object
+	{
+		const counterColor = this.color
+			? Counter.Color[this.color.toUpperCase()]
+			: (this.parentId ? Counter.Color.GRAY : Counter.Color.THEME)
+		;
+
+		return {
+			color: counterColor,
+			value: this.value,
+			animation: false,
+			useAirDesign: this.#useAirDesign,
+			style: this.#getCounterStyleByColor(counterColor),
+		};
 	}
 
 	getCounterContainer(): ?HTMLElement
@@ -391,22 +376,6 @@ export default class CounterItem
 		}
 
 		return this.layout.dropdownArrow;
-	}
-
-	getContainerMenu(): HTMLElement
-	{
-		if (!this.layout.menuItem)
-		{
-			this.layout.menuItem = Tag.render`
-				<span>
-					${this.#getValue()}
-					${this.title}
-					${this.#getCross()}
-				</span>
-			`;
-		}
-
-		return this.layout.menuItem;
 	}
 
 	getContainer(): HTMLElement

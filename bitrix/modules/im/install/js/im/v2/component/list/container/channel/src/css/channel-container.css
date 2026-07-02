@@ -31,19 +31,9 @@
 }
 
 .bx-im-list-container-channel__header_create-channel {
-	width: 44px;
-	height: 34px;
-	border-radius: 80px;
-	background-color: var(--im-list-container-channel__background-color_create-button);
-	background-image: url('./images/plus.svg?v2');
-	background-position: center;
-	background-repeat: no-repeat;
-	cursor: pointer;
-	transition: background-color 0.2ms ease;
-}
-
-.bx-im-list-container-channel__header_create-channel:hover {
-	background-color: var(--im-list-container-channel__background-color_create-button-hover);
+	--im-list-container-create-chat__background-color_container: var(--im-list-container-channel__background-color_create-button);
+	--im-list-container-create-chat__background-color_container-hover: var(--im-list-container-channel__background-color_create-button-hover);
+	--im-list-container-create-chat__background-color_icon: var(--ui-color-green-60);
 }
 /* End header */
 

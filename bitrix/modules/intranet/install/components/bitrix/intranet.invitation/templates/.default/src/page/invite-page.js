@@ -1,6 +1,6 @@
 import { Event, Loc, Tag } from 'main.core';
 import { Analytics } from '../analytics';
-import DepartmentControl from 'intranet.department-control';
+import { DepartmentControl } from 'intranet.department-control';
 import { InputRowFactory } from '../input-row-factory';
 import { Page } from './page';
 import { AirButtonStyle, Button, ButtonState } from 'ui.buttons';
@@ -154,13 +154,16 @@ export class InvitePage extends Page
 
 				inviteButton.setState(ButtonState.WAITING);
 
+				const departmentIds = this.#departmentControl.getValues();
+				const workgroupIds = this.#departmentControl.getGroupValues();
+
 				this.#transport.send(
 					{
 						action: 'inviteWithGroupDp',
 						data: {
 							invitations: this.#inputsRowsContainer.getEnteredInvitations(),
-							departmentIds: this.#departmentControl.getValues(),
-							workgroupIds: this.#departmentControl.getGroupValues(),
+							departmentIds,
+							workgroupIds,
 							tab: 'email',
 						},
 					},
@@ -194,6 +197,8 @@ export class InvitePage extends Page
 							userList: response.data.firedUserList,
 							isRestoreUsersAccessAvailable: response.data.isRestoreUsersAccessAvailable,
 							transport: this.#transport,
+							departmentIds,
+							workgroupIds,
 						})).show();
 					}
 				}).catch((reject) => {

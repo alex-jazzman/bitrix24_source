@@ -10,9 +10,9 @@ $APPLICATION->IncludeComponent(
 	"bitrix:socialnetwork.subscribe_list", 
 	"", 
 	Array(
-		"PAGE_VAR" => $arResult["ALIASES"]["page"],
-		"USER_VAR" => $arResult["ALIASES"]["user_id"],
-		"GROUP_VAR" => $arResult["ALIASES"]["group_id"],
+		"PAGE_VAR" => $arResult["ALIASES"]["page"] ?? null,
+		"USER_VAR" => $arResult["ALIASES"]["user_id"] ?? null,
+		"GROUP_VAR" => $arResult["ALIASES"]["group_id"] ?? null,
 		"SET_NAV_CHAIN" => $arResult["SET_NAV_CHAIN"],
 		"SET_TITLE" => $arResult["SET_TITLE"],
 		"PATH_TO_USER" => $arResult["PATH_TO_USER"],

@@ -1,4 +1,4 @@
-import { ChatType } from 'im.v2.const';
+import { type ChatTypeItem } from 'im.v2.const';
 
 import { DeleteService } from './classes/delete';
 import { LoadService } from './classes/load';
@@ -10,8 +10,7 @@ import { PinService } from './classes/pin';
 import { ReadService } from './classes/read';
 import { UserService } from './classes/user';
 import { MessagesAutoDeleteService } from './classes/messages-auto-delete';
-
-import type { UpdateChatConfig, GetMemberEntitiesConfig } from './types/chat';
+import { type ChatUpdateConfig, type GetMemberEntitiesConfig } from './types/update-chat';
 
 export class ChatService
 {
@@ -84,21 +83,20 @@ export class ChatService
 		return this.#createService.createChat(chatConfig);
 	}
 
+	createCollab(collabConfig): Promise<{ newDialogId: string, newChatId: number }>
+	{
+		return this.#createService.createCollab(collabConfig);
+	}
+
 	extendToGroupChat(chatConfig): Promise<{ newDialogId: string, newChatId: number }>
 	{
 		const config = {
 			title: null,
 			description: null,
-			isPrivate: true,
 			...chatConfig,
 		};
 
 		return this.#createService.createChat(config);
-	}
-
-	createCollab(collabConfig): Promise<{ newDialogId: string, newChatId: number }>
-	{
-		return this.#createService.createCollab(collabConfig);
 	}
 	// endregion 'create'
 
@@ -113,7 +111,7 @@ export class ChatService
 		return this.#updateService.changeAvatar(chatId, avatarFile);
 	}
 
-	updateChat(chatId: number, chatConfig: UpdateChatConfig): Promise<boolean>
+	updateChat(chatId: number, chatConfig: ChatUpdateConfig): Promise<boolean>
 	{
 		return this.#updateService.updateChat(chatId, chatConfig);
 	}
@@ -178,7 +176,7 @@ export class ChatService
 		this.#readService.readAll();
 	}
 
-	readAllByType(type: $Values<typeof ChatType>): void
+	readAllByType(type: ChatTypeItem): void
 	{
 		this.#readService.readAllByType(type);
 	}

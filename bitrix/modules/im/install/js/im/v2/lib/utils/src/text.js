@@ -1,5 +1,7 @@
 import { Type, Loc, Text, Dom } from 'main.core';
 
+import { DialogUtil } from './dialog.js';
+
 import { emojiRegex } from './emoji-regex';
 
 export const TextUtil = {
@@ -200,9 +202,11 @@ export const TextUtil = {
 
 	getMentionBbCode(dialogId: number | string, name: string): string
 	{
-		if (Type.isString(dialogId) && dialogId.startsWith('chat'))
+		if (Type.isString(dialogId) && DialogUtil.isChatDialogId(dialogId))
 		{
-			return `[CHAT=${dialogId.slice(4)}]${name}[/CHAT]`;
+			const chatId = DialogUtil.getChatIdFromDialogId(dialogId);
+
+			return `[CHAT=${chatId}]${name}[/CHAT]`;
 		}
 
 		return `[USER=${dialogId}]${name}[/USER]`;
@@ -232,5 +236,17 @@ export const TextUtil = {
 		}
 
 		return BX.clipboard?.copy(textToCopy) ? Promise.resolve() : Promise.reject();
+	},
+
+	getHostFromUrl(url: string): string
+	{
+		try
+		{
+			return new URL(url).host;
+		}
+		catch
+		{
+			return url;
+		}
 	},
 };

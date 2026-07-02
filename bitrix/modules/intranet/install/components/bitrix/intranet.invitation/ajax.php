@@ -5,15 +5,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die;
 }
 
-require_once($_SERVER["DOCUMENT_ROOT"] . $componentPath . "/analytics.php");
-
 use Bitrix\Bitrix24\Integration\Network\RegisterSettingsSynchronizer;
 use Bitrix\Intranet\Component\UserProfile;
 use Bitrix\Intranet\Entity\User;
 use Bitrix\Intranet\Infrastructure\Controller\ActionFilter\InviteLimitControl;
 use Bitrix\Intranet\Infrastructure\Controller\ActionFilter\PortalCreatorEmailConfirmationControl;
+use Bitrix\Intranet\Integration\HumanResources\DepartmentAssigner;
 use Bitrix\Intranet\Internal\Integration\Socialnetwork\ExternalAuthType;
 use Bitrix\Intranet\Internal\Integration\Bitrix24\Integrator\PartnerInfo;
+use Bitrix\Intranet\Internal\Service\Invitation\Analytics;
 use Bitrix\Intranet\Public\Type\EmailInvitation;
 use Bitrix\Intranet\Public\Type\PhoneInvitation;
 use Bitrix\Intranet\Repository\HrDepartmentRepository;
@@ -21,6 +21,7 @@ use Bitrix\Intranet\Repository\UserRepository;
 use Bitrix\Intranet\Service\UserService;
 use Bitrix\Intranet\User\Access\UserAccessController;
 use Bitrix\Intranet\User\Access\UserActionDictionary;
+use Bitrix\Intranet\User\Command\RestoreUserCommand;
 use Bitrix\Intranet\Util;
 use Bitrix\Main\Engine\AutoWire\ExactParameter;
 use Bitrix\Main\Engine\AutoWire\Parameter;
@@ -682,7 +683,7 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 
 		if (!empty($userData['ADD_EMAIL']))
 		{
-			$firedUserList = $this->checkFiredUsersAndGetData([$userData['ADD_EMAIL']]);
+			$firedUserList = $this->checkFiredUsersAndGetData([trim($userData['ADD_EMAIL'])]);
 
 			if ($firedUserList)
 			{
@@ -693,6 +694,7 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		$userData["DEPARTMENT_ID"] = $departmentCollection->map(fn (Intranet\Entity\Department $department) => $department->getIblockSectionId());
 
 		$idAdded = CIntranetInviteDialog::AddNewUser(SITE_ID, $userData, $strError, 'register');
+
 		$withDepartments = $this->isSelectedDepartments(
 			$this->getRootDepartment(),
 			$departmentCollection,
@@ -879,7 +881,11 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		]);
 	}
 
-	public function restoreFiredUsersAction(array $userIds = []): Response
+	public function restoreFiredUsersAction(
+		array $userIds = [],
+		?Intranet\Entity\Collection\DepartmentCollection $departmentCollection = null,
+		array $workgroupIds = [],
+	): Response
 	{
 		if (!$this->isRestoreUsersAccessAvailable())
 		{
@@ -889,18 +895,33 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		}
 
 		$restoredUserIds = [];
+		$departmentCollection ??= $this->getDefaultDepartmentCollection();
+		$departmentAssigner = new DepartmentAssigner($departmentCollection);
+		$groupCodes = !empty($workgroupIds) ? array_map(fn($code) => "SG{$code}", $workgroupIds) : [];
 
 		foreach ($userIds as $userId)
 		{
-			$res = Util::activateUser([
-				'userId' => $userId,
-				'currentUserId' => Intranet\CurrentUser::get()->getId(),
-				'isCurrentUserAdmin' => Intranet\CurrentUser::get()->isAdmin(),
-			]);
+			$user = (new UserRepository())->getUserById($userId);
+			$command = new RestoreUserCommand($user);
+			$result = $command->run();
 
-			if ($res)
+			if ($result->isSuccess())
 			{
 				$restoredUserIds[] = $userId;
+
+				if (Util::isIntranetUser($userId))
+				{
+					$departmentAssigner->reassignUser(new User(id: (int)$userId));
+
+					if (!empty($groupCodes))
+					{
+						\CIntranetInviteDialog::RequestToSonetGroups(
+							$userId,
+							$groupCodes,
+							'',
+						);
+					}
+				}
 			}
 		}
 

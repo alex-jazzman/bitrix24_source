@@ -30,6 +30,16 @@ jn.define('im/messenger/controller/recent/service/pagination/dummy', (require, e
 				lastItem,
 			});
 		}
+
+		subscribeEvents()
+		{
+			this.logger.log('subscribeEvents');
+		}
+
+		unsubscribeEvents()
+		{
+			this.logger.log('unsubscribeEvents');
+		}
 	}
 
 	module.exports = DummyPaginationService;

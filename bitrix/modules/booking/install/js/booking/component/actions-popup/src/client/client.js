@@ -1,10 +1,14 @@
 import { SidePanel as SidePanelMain } from 'main.sidepanel';
+import { DateTimeFormat } from 'main.date';
+import { mapGetters } from 'ui.vue3.vuex';
 import { BIcon as Icon, Set as IconSet } from 'ui.icon-set.api.vue';
 import { lazyload } from 'ui.vue3.directives.lazyload';
 import { hint } from 'ui.vue3.directives.hint';
 import 'ui.icon-set.main';
 
-import { Button, ButtonSize, ButtonColor, ButtonIcon } from 'booking.component.button';
+import { Button, ButtonSize, ButtonColor } from 'booking.component.button';
+import { Duration } from 'booking.lib.duration';
+import { Model } from 'booking.const';
 import { Loader } from 'booking.component.loader';
 import type { ClientData, ClientModel } from 'booking.model.clients';
 
@@ -18,6 +22,9 @@ export type { UpdateClientsPayload } from './edit-client-button/edit-client-butt
 export type { UpdateNotePayload } from './note/note';
 
 const SidePanel = SidePanelMain || BX.SidePanel;
+
+const TimeFormat = DateTimeFormat.getFormat('SHORT_TIME_FORMAT');
+const DateFormat = DateTimeFormat.getFormat('DAY_SHORT_MONTH_FORMAT');
 
 // @vue/component
 export const Client = {
@@ -66,6 +73,14 @@ export const Client = {
 			type: Object,
 			default: null,
 		},
+		dateFromTs: {
+			type: Number,
+			default: null,
+		},
+		dateToTs: {
+			type: Number,
+			default: null,
+		},
 	},
 	emits: [
 		'freeze',
@@ -74,16 +89,27 @@ export const Client = {
 		'updateClients',
 		'updateNote',
 	],
-	data(): Object
+	setup(): Object
 	{
 		return {
 			ButtonSize,
 			ButtonColor,
-			ButtonIcon,
+		};
+	},
+	data(): Object
+	{
+		return {
 			isLoading: true,
 		};
 	},
 	computed: {
+		...mapGetters({
+			offset: `${Model.Interface}/offset`,
+		}),
+		booking(): Object | null
+		{
+			return this.$store.getters[`${Model.Bookings}/getById`](this.id);
+		},
 		client(): ClientModel | null
 		{
 			const clientData: ClientData = this.primaryClientData;
@@ -99,6 +125,32 @@ export const Client = {
 					? client.phones[0]
 					: this.loc('BB_ACTIONS_POPUP_CLIENT_PHONE_LABEL')
 			);
+		},
+		itemTimeFormatted(): string
+		{
+			if (!this.dateFromTs || !this.dateToTs)
+			{
+				return '';
+			}
+
+			const durationMs = this.dateToTs - this.dateFromTs;
+			const isLong = durationMs >= Duration.getUnitDurations().d;
+
+			const fromSeconds = (this.dateFromTs + this.offset) / 1000;
+			const toSeconds = (this.dateToTs + this.offset) / 1000;
+
+			const fromFormatted = isLong
+				? `${DateTimeFormat.format(DateFormat, fromSeconds)} ${DateTimeFormat.format(TimeFormat, fromSeconds)}`
+				: DateTimeFormat.format(TimeFormat, fromSeconds);
+
+			const toFormatted = isLong
+				? `${DateTimeFormat.format(DateFormat, toSeconds)} ${DateTimeFormat.format(TimeFormat, toSeconds)}`
+				: DateTimeFormat.format(TimeFormat, toSeconds);
+
+			return this.loc('BOOKING_ACTIONS_POPUP_CLIENT_TIME_RANGE', {
+				'#FROM#': fromFormatted,
+				'#TO#': toFormatted,
+			});
 		},
 		clientAvatar(): string
 		{
@@ -198,6 +250,9 @@ export const Client = {
 							<div class="booking-actions-popup-item-subtitle">
 								{{ clientPhone }}
 							</div>
+							<div v-if="itemTimeFormatted" class="booking-actions-popup-item-subtitle">
+								{{ itemTimeFormatted }}
+							</div>
 						</div>
 						<div class="booking-actions-popup-item-buttons booking-actions-popup__item-client-info-btn">
 							<Button
@@ -229,6 +284,7 @@ export const Client = {
 				<template v-else>
 					<Empty
 						:id
+						:itemTimeFormatted
 						@popupShown="$emit('freeze')"
 						@popupClosed="$emit('unfreeze')"
 						@addClients="$emit('addClients', $event)"

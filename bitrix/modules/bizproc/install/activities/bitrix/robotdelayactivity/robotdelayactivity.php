@@ -14,8 +14,10 @@ class CBPRobotDelayActivity extends CBPDelayActivity
 {
 	private const START_EVENT_SORT = 90;
 	private const CONTINUE_EVENT_SORT = 91;
+	private const FIELD_USER_ID = 'USER_ID';
 	private ?int $startEventId;
 	private ?int $continueEventId;
+	private ?string $schedulerTransport = null;
 
 	public function __construct($name)
 	{
@@ -97,15 +99,19 @@ class CBPRobotDelayActivity extends CBPDelayActivity
 			}
 
 			$schedulerService = $this->workflow->getService('SchedulerService');
+			$this->schedulerTransport = $schedulerService->useMessengerTransport()
+				? SchedulerTransport::Messenger->value
+				: null
+			;
 
 			$this->startEventId = $schedulerService->subscribeOnEvent(
 				$this->getWorkflowInstanceId(),
 				$this->getName(),
 				'timeman',
 				'OnAfterTMDayStart',
-				['USER_ID' => $userId],
+				[self::FIELD_USER_ID => $userId],
 				sort: self::START_EVENT_SORT,
-				schedulerTransport: SchedulerTransport::Messenger,
+				schedulerTransport: $this->getSchedulerTransport(),
 			);
 
 			$this->continueEventId = $schedulerService->subscribeOnEvent(
@@ -113,9 +119,9 @@ class CBPRobotDelayActivity extends CBPDelayActivity
 				$this->getName(),
 				'timeman',
 				'OnAfterTMDayContinue',
-				['USER_ID' => $userId],
+				[self::FIELD_USER_ID => $userId],
 				sort: self::CONTINUE_EVENT_SORT,
-				schedulerTransport: SchedulerTransport::Messenger,
+				schedulerTransport: $this->getSchedulerTransport(),
 			);
 
 			$this->logMessage(
@@ -135,11 +141,19 @@ class CBPRobotDelayActivity extends CBPDelayActivity
 		$schedulerService = $this->workflow->GetService('SchedulerService');
 		if (isset($this->startEventId))
 		{
-			$schedulerService->unSubscribeByEventId($this->startEventId, 'USER_ID', SchedulerTransport::Messenger);
+			$schedulerService->unSubscribeByEventId(
+				$this->startEventId,
+				self::FIELD_USER_ID,
+				$this->getSchedulerTransport()
+			);
 		}
 		if (isset($this->continueEventId))
 		{
-			$schedulerService->unSubscribeByEventId($this->continueEventId, 'USER_ID', SchedulerTransport::Messenger);
+			$schedulerService->unSubscribeByEventId(
+				$this->continueEventId,
+				self::FIELD_USER_ID,
+				$this->getSchedulerTransport()
+			);
 		}
 
 		$this->startEventId = null;
@@ -240,5 +254,13 @@ class CBPRobotDelayActivity extends CBPDelayActivity
 	private static function isWaitWorkDayAvailable(): bool
 	{
 		return \CBPHelper::isWorkTimeAvailable();
+	}
+
+	private function getSchedulerTransport(): ?SchedulerTransport
+	{
+		return $this->schedulerTransport !== null
+			? SchedulerTransport::tryFrom($this->schedulerTransport)
+			: null
+		;
 	}
 }

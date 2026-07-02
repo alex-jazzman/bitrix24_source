@@ -50,11 +50,14 @@ export const TableRow = {
 			displayedValidationErrors: {
 				name: true,
 			},
-			errorPopup: {
-				name: null,
-			},
-			errorPopupTimeout: null,
 		};
+	},
+	created()
+	{
+		this.errorPopup = {
+			name: null,
+		};
+		this.errorPopupTimeout = null;
 	},
 	computed: {
 		isNameValid(): boolean
@@ -73,6 +76,11 @@ export const TableRow = {
 		{
 			const originalType = this.fieldSettings.originalType;
 			const originalName = this.fieldSettings.originalName;
+
+			if (this.sourceType === 'system')
+			{
+				return originalName;
+			}
 
 			let typeText = '';
 			if (originalType)
@@ -110,14 +118,7 @@ export const TableRow = {
 		{
 			return {
 				html: this.originalsHintText,
-				popupOptions: {
-					angle: {
-						position: 'left',
-					},
-					offsetLeft: 30,
-					offsetTop: -46,
-					autoHide: false,
-				},
+				icon: true,
 			};
 		},
 		sourceTypeCsv(): boolean
@@ -236,7 +237,7 @@ export const TableRow = {
 	// language=Vue
 	template: `
 		<tr class="format-table__row">
-			<td class="format-table__checkbox-cell">
+			<td v-if="sourceType !== 'system'" class="format-table__checkbox-cell">
 				<input class="format-table__checkbox" ref="visibilityCheckbox" type="checkbox" @change="onCheckboxClick" :checked="enabled">
 			</td>
 			<td class="format-table__cell">
@@ -272,8 +273,8 @@ export const TableRow = {
 				</div>
 			</td>
 			<td class="format-table__cell" v-if="isNeedShowOriginalNameHint">
-				<div class="format-table__orig-type-hint-wrapper" v-hint="hintOptions" ref="originalsHint">
-					<div class="format-table__orig-type-hint">
+				<div class="format-table__orig-type-hint-wrapper" ref="originalsHint">
+					<div class="format-table__orig-type-hint" v-hint="hintOptions">
 						<BIcon
 							:name="set.INFO_1"
 							:size="20"

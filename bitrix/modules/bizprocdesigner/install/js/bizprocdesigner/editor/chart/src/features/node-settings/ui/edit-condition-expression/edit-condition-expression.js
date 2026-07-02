@@ -18,7 +18,7 @@ import './style.css';
 
 // @vue/component
 export const EditConditionExpression = {
-	name: 'edit-condition-expression',
+	name: 'EditConditionExpression',
 	props:
 	{
 		/** @type ConditionConstruction */
@@ -36,7 +36,7 @@ export const EditConditionExpression = {
 	},
 	computed:
 	{
-		...mapState(useNodeSettingsStore, ['nodeSettings', 'block', 'currentRuleId']),
+		...mapState(useNodeSettingsStore, ['nodeSettings', 'block', 'currentRule']),
 		availableOperators(): Array<{ id: string, title: string }>
 		{
 			return Object.values(CONSTRUCTION_OPERATORS).map((operator) => ({
@@ -67,7 +67,7 @@ export const EditConditionExpression = {
 			}
 
 			const store = diagramStore();
-			const connectedBlocks = store.getBlockAncestorsByInputPortId(this.block, this.currentRuleId);
+			const connectedBlocks = store.getBlockAncestorsByInputPortId(this.block, this.currentRule.id);
 
 			return evaluateConditionExpressionFieldTitle(connectedBlocks, this.selectedField);
 		},
@@ -118,7 +118,7 @@ export const EditConditionExpression = {
 		...mapActions(useNodeSettingsStore, ['changeRuleExpression']),
 		onShowFieldChooseMenu(event: Event): void
 		{
-			const fieldSelector = (new FieldSelector(this.block, this.currentRuleId));
+			const fieldSelector = (new FieldSelector(this.block, this.currentRule.id));
 
 			void fieldSelector.show(event.target).then((field: ConditionExpressionField) => {
 				this.selectedField = field;
@@ -134,7 +134,7 @@ export const EditConditionExpression = {
 			const valueSelector = new ValueSelector(
 				diagramStore(),
 				this.block,
-				this.currentRuleId,
+				this.currentRule.id,
 			);
 			void valueSelector.show(event.target).then((value: string) => {
 				this.selectedValue += value;
@@ -166,12 +166,12 @@ export const EditConditionExpression = {
 		},
 	},
 	template: `
-		<div class="edit-condition-expression-form">
-			<div class="edit-condition-expression-form__item">
-				<span class="edit-condition-expression-form__label">
+		<div>
+			<div class="editor-chart-node-settings-edit-condition-expression-form__item">
+				<span class="editor-chart-node-settings-edit-condition-expression-form__label">
 					{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_CONDITION_EXPRESSION_FIELD') }}
 				</span>
-				<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown edit-condition-expression-form__dropdown">
+				<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown editor-chart-node-settings-edit-condition-expression-form__dropdown">
 					<div class="ui-ctl-after ui-ctl-icon-angle"></div>
 					<div
 						ref="fieldChooseMenu"
@@ -183,11 +183,11 @@ export const EditConditionExpression = {
 					</div>
 				</div>
 			</div>
-			<div class="edit-condition-expression-form__item">
-				<span class="edit-condition-expression-form__label">
+			<div class="editor-chart-node-settings-edit-condition-expression-form__item">
+				<span class="editor-chart-node-settings-edit-condition-expression-form__label">
 					{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_CONDITION_EXPRESSION_OPERATOR') }}
 				</span>
-				<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown edit-condition-expression-form__dropdown"
+				<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown editor-chart-node-settings-edit-condition-expression-form__dropdown"
 					 @click="onShowOperatorMenu"
 				>
 					<div class="ui-ctl-after ui-ctl-icon-angle"></div>
@@ -199,12 +199,12 @@ export const EditConditionExpression = {
 				</div>
 			</div>
 			<div v-if="isShowValueEditor"
-				class="edit-condition-expression-form__item"
+				class="editor-chart-node-settings-edit-condition-expression-form__item"
 			>
-				<span class="edit-condition-expression-form__label">
+				<span class="editor-chart-node-settings-edit-condition-expression-form__label">
 					{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_EXPRESSION_VALUE') }}
 				</span>
-				<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown edit-condition-expression-form__dropdown">
+				<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown editor-chart-node-settings-edit-condition-expression-form__dropdown">
 					<div class="ui-ctl-after ui-ctl-icon-dots" style="pointer-events: all"
 						 @click="onShowValueMenu"
 					></div>

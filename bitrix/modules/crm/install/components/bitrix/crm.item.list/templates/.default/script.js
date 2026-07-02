@@ -1,304 +1,255 @@
 /* eslint-disable */
-(function (exports,crm_entityList_panel,crm_router,crm_settingsButtonExtender,main_core,main_core_events,ui_dialogs_messagebox) {
+(function (crm_entityList_panel, crm_router, crm_settingsButtonExtender, main_core, main_core_events, ui_dialogs_messagebox) {
 	'use strict';
 
-	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-	var namespace = main_core.Reflection.namespace('BX.Crm');
-	var _isIframe = /*#__PURE__*/new WeakMap();
-	var _isEmbedded = /*#__PURE__*/new WeakMap();
-	var _settingsButtonExtenderParams = /*#__PURE__*/new WeakMap();
-	var _getToolbarComponent = /*#__PURE__*/new WeakSet();
-	var _initSettingsButtonExtender = /*#__PURE__*/new WeakSet();
-	var _initGridPanel = /*#__PURE__*/new WeakSet();
-	var ItemListComponent = /*#__PURE__*/function () {
-	  // is the list is embedded in another entity detail tab
+	const namespace = main_core.Reflection.namespace('BX.Crm');
+	class ItemListComponent {
+		#isIframe = false;
+		// is the list is embedded in another entity detail tab
+		#isEmbedded = false;
+		#settingsButtonExtenderParams;
+		constructor(params) {
+			this.exportPopups = {};
+			if (main_core.Type.isPlainObject(params)) {
+				this.entityTypeId = main_core.Text.toInteger(params.entityTypeId);
+				this.entityTypeName = params.entityTypeName;
+				this.categoryId = main_core.Text.toInteger(params.categoryId);
+				this.analytics = main_core.Type.isPlainObject(params.analytics) ? params.analytics : {};
+				if (main_core.Type.isString(params.gridId)) {
+					this.gridId = params.gridId;
+				}
+				this.progressBarContainerId = String(params.progressBarContainerId);
+				if (this.gridId && BX.Main.grid && BX.Main.gridManager) {
+					this.grid = BX.Main.gridManager.getInstanceById(this.gridId);
+					if (this.grid && params.backendUrl) {
+						BX.addCustomEvent(window, "Grid::beforeRequest", (gridData, requestParams) => {
+							if (!gridData.parent || gridData.parent !== this.grid) {
+								return;
+							}
+							const currentUrl = new main_core.Uri(requestParams.url);
+							const backendUrl = new main_core.Uri(params.backendUrl);
+							if (currentUrl.getPath() !== backendUrl.getPath()) {
+								currentUrl.setPath(backendUrl.getPath());
+								currentUrl.setQueryParams({
+									...currentUrl.getQueryParams(),
+									...backendUrl.getQueryParams()
+								});
+							}
+							requestParams.url = currentUrl.toString();
+						});
+					}
+				}
+				if (main_core.Type.isElementNode(params.errorTextContainer)) {
+					this.errorTextContainer = params.errorTextContainer;
+				}
+				if (main_core.Type.isBoolean(params.isIframe)) {
+					this.#isIframe = params.isIframe;
+				}
+				if (main_core.Type.isBoolean(params.isEmbedded)) {
+					this.#isEmbedded = params.isEmbedded;
+				}
+				if (main_core.Type.isPlainObject(params.settingsButtonExtenderParams)) {
+					this.#settingsButtonExtenderParams = params.settingsButtonExtenderParams;
+				}
+			}
+			this.reloadGridTimeoutId = 0;
+		}
+		init() {
+			this.bindEvents();
+			this.#initSettingsButtonExtender();
+			this.#initGridPanel();
+		}
+		bindEvents() {
+			main_core_events.EventEmitter.subscribe('BX.Crm.ItemListComponent:onClickDelete', this.handleItemDelete.bind(this));
+			main_core_events.EventEmitter.subscribe('BX.Crm.ItemListComponent:onStartExportCsv', event => {
+				this.handleStartExport(event, 'csv');
+			});
+			main_core_events.EventEmitter.subscribe('BX.Crm.ItemListComponent:onStartExportExcel', event => {
+				this.handleStartExport(event, 'excel');
+			});
+			const toolbarComponent = this.#getToolbarComponent();
+			if (toolbarComponent) {
+				toolbarComponent.subscribeTypeUpdatedEvent(() => {
+					const newUrl = crm_router.Router.Instance.getItemListUrl(this.entityTypeId, this.categoryId);
+					if (newUrl) {
+						window.location.href = newUrl;
+						return;
+					}
+					window.location.reload();
+				});
+				if (this.grid) {
+					toolbarComponent.subscribeCategoriesUpdatedEvent(() => {
+						this.reloadGridAfterTimeout();
+					});
+				}
+			}
+			main_core_events.EventEmitter.subscribe('Crm.EntityConverter.Converted', event => {
+				const parameters = event.data;
+				if (!main_core.Type.isArray(parameters) || !parameters[1]) {
+					return;
+				}
+				const eventData = parameters[1];
+				if (!this.entityTypeName || !eventData.entityTypeName) {
+					return;
+				}
+				this.reloadGridAfterTimeout();
+			});
+			BX.Crm.EntityEvent.subscribeToEntityType(this.entityTypeId, () => this.reloadGridAfterTimeout());
+			const addItemButton = document.querySelector('[data-role="add-new-item-button-' + this.gridId + '"]');
+			if (addItemButton) {
+				const detailUrl = addItemButton.href;
+				addItemButton.href = "javascript: void(0);";
+				main_core.Event.bind(addItemButton, 'click', event => {
+					event.preventDefault();
+					event.stopPropagation();
+					main_core_events.EventEmitter.emit("BX.Crm.ItemListComponent:onAddNewItemButtonClick", {
+						detailUrl,
+						entityTypeId: this.entityTypeId
+					});
+				});
+			}
+		}
+		#getToolbarComponent() {
+			const component = main_core.Reflection.getClass('BX.Crm.ToolbarComponent');
+			return component ? component.Instance : null;
+		}
+		#initSettingsButtonExtender() {
+			if (this.#isIframe || this.#isEmbedded || !this.#settingsButtonExtenderParams) {
+				return;
+			}
+			const toolbar = this.#getToolbarComponent();
+			if (!toolbar) {
+				console.error('BX.Crm.ToolbarComponent not found');
+				return;
+			}
+			const settingsMenu = toolbar.getSettingsButton()?.getMenuWindow();
+			if (settingsMenu) {
+				this.#settingsButtonExtenderParams.grid = this.grid;
+				this.#settingsButtonExtenderParams.rootMenu = settingsMenu;
 
-	  function ItemListComponent(params) {
-	    var _this = this;
-	    babelHelpers.classCallCheck(this, ItemListComponent);
-	    _classPrivateMethodInitSpec(this, _initGridPanel);
-	    _classPrivateMethodInitSpec(this, _initSettingsButtonExtender);
-	    _classPrivateMethodInitSpec(this, _getToolbarComponent);
-	    _classPrivateFieldInitSpec(this, _isIframe, {
-	      writable: true,
-	      value: false
-	    });
-	    _classPrivateFieldInitSpec(this, _isEmbedded, {
-	      writable: true,
-	      value: false
-	    });
-	    _classPrivateFieldInitSpec(this, _settingsButtonExtenderParams, {
-	      writable: true,
-	      value: void 0
-	    });
-	    this.exportPopups = {};
-	    if (main_core.Type.isPlainObject(params)) {
-	      this.entityTypeId = main_core.Text.toInteger(params.entityTypeId);
-	      this.entityTypeName = params.entityTypeName;
-	      this.categoryId = main_core.Text.toInteger(params.categoryId);
-	      this.analytics = main_core.Type.isPlainObject(params.analytics) ? params.analytics : {};
-	      if (main_core.Type.isString(params.gridId)) {
-	        this.gridId = params.gridId;
-	      }
-	      this.progressBarContainerId = String(params.progressBarContainerId);
-	      if (this.gridId && BX.Main.grid && BX.Main.gridManager) {
-	        this.grid = BX.Main.gridManager.getInstanceById(this.gridId);
-	        if (this.grid && params.backendUrl) {
-	          BX.addCustomEvent(window, "Grid::beforeRequest", function (gridData, requestParams) {
-	            if (!gridData.parent || gridData.parent !== _this.grid) {
-	              return;
-	            }
-	            var currentUrl = new main_core.Uri(requestParams.url);
-	            var backendUrl = new main_core.Uri(params.backendUrl);
-	            if (currentUrl.getPath() !== backendUrl.getPath()) {
-	              currentUrl.setPath(backendUrl.getPath());
-	              currentUrl.setQueryParams(_objectSpread(_objectSpread({}, currentUrl.getQueryParams()), backendUrl.getQueryParams()));
-	            }
-	            requestParams.url = currentUrl.toString();
-	          });
-	        }
-	      }
-	      if (main_core.Type.isElementNode(params.errorTextContainer)) {
-	        this.errorTextContainer = params.errorTextContainer;
-	      }
-	      if (main_core.Type.isBoolean(params.isIframe)) {
-	        babelHelpers.classPrivateFieldSet(this, _isIframe, params.isIframe);
-	      }
-	      if (main_core.Type.isBoolean(params.isEmbedded)) {
-	        babelHelpers.classPrivateFieldSet(this, _isEmbedded, params.isEmbedded);
-	      }
-	      if (main_core.Type.isPlainObject(params.settingsButtonExtenderParams)) {
-	        babelHelpers.classPrivateFieldSet(this, _settingsButtonExtenderParams, params.settingsButtonExtenderParams);
-	      }
-	    }
-	    this.reloadGridTimeoutId = 0;
-	  }
-	  babelHelpers.createClass(ItemListComponent, [{
-	    key: "init",
-	    value: function init() {
-	      this.bindEvents();
-	      _classPrivateMethodGet(this, _initSettingsButtonExtender, _initSettingsButtonExtender2).call(this);
-	      _classPrivateMethodGet(this, _initGridPanel, _initGridPanel2).call(this);
-	    }
-	  }, {
-	    key: "bindEvents",
-	    value: function bindEvents() {
-	      var _this2 = this;
-	      main_core_events.EventEmitter.subscribe('BX.Crm.ItemListComponent:onClickDelete', this.handleItemDelete.bind(this));
-	      main_core_events.EventEmitter.subscribe('BX.Crm.ItemListComponent:onStartExportCsv', function (event) {
-	        _this2.handleStartExport(event, 'csv');
-	      });
-	      main_core_events.EventEmitter.subscribe('BX.Crm.ItemListComponent:onStartExportExcel', function (event) {
-	        _this2.handleStartExport(event, 'excel');
-	      });
-	      var toolbarComponent = _classPrivateMethodGet(this, _getToolbarComponent, _getToolbarComponent2).call(this);
-	      if (toolbarComponent) {
-	        toolbarComponent.subscribeTypeUpdatedEvent(function () {
-	          var newUrl = crm_router.Router.Instance.getItemListUrl(_this2.entityTypeId, _this2.categoryId);
-	          if (newUrl) {
-	            window.location.href = newUrl;
-	            return;
-	          }
-	          window.location.reload();
-	        });
-	        if (this.grid) {
-	          toolbarComponent.subscribeCategoriesUpdatedEvent(function () {
-	            _this2.reloadGridAfterTimeout();
-	          });
-	        }
-	      }
-	      main_core_events.EventEmitter.subscribe('Crm.EntityConverter.Converted', function (event) {
-	        var parameters = event.data;
-	        if (!main_core.Type.isArray(parameters) || !parameters[1]) {
-	          return;
-	        }
-	        var eventData = parameters[1];
-	        if (!_this2.entityTypeName || !eventData.entityTypeName) {
-	          return;
-	        }
-	        _this2.reloadGridAfterTimeout();
-	      });
-	      BX.Crm.EntityEvent.subscribeToEntityType(this.entityTypeId, function () {
-	        return _this2.reloadGridAfterTimeout();
-	      });
-	      var addItemButton = document.querySelector('[data-role="add-new-item-button-' + this.gridId + '"]');
-	      if (addItemButton) {
-	        var detailUrl = addItemButton.href;
-	        addItemButton.href = "javascript: void(0);";
-	        main_core.Event.bind(addItemButton, 'click', function (event) {
-	          event.preventDefault();
-	          event.stopPropagation();
-	          main_core_events.EventEmitter.emit("BX.Crm.ItemListComponent:onAddNewItemButtonClick", {
-	            detailUrl: detailUrl,
-	            entityTypeId: _this2.entityTypeId
-	          });
-	        });
-	      }
-	    }
-	  }, {
-	    key: "reloadGridAfterTimeout",
-	    value: function reloadGridAfterTimeout() {
-	      var _this3 = this;
-	      if (!this.grid) {
-	        return;
-	      }
-	      if (this.reloadGridTimeoutId > 0) {
-	        clearTimeout(this.reloadGridTimeoutId);
-	        this.reloadGridTimeoutId = 0;
-	      }
-	      this.reloadGridTimeoutId = setTimeout(function () {
-	        _this3.grid.reload();
-	      }, 1000);
-	    }
-	  }, {
-	    key: "showErrors",
-	    value: function showErrors(errors) {
-	      var text = '';
-	      errors.forEach(function (message) {
-	        text = text + message + ' ';
-	      });
-	      if (main_core.Type.isElementNode(this.errorTextContainer)) {
-	        this.errorTextContainer.innerText = text;
-	        this.errorTextContainer.parentElement.style.display = 'block';
-	      } else {
-	        console.error(text);
-	      }
-	    }
-	  }, {
-	    key: "hideErrors",
-	    value: function hideErrors() {
-	      if (main_core.Type.isElementNode(this.errorTextContainer)) {
-	        this.errorTextContainer.innerText = '';
-	        this.errorTextContainer.parentElement.style.display = 'none';
-	      }
-	    }
-	  }, {
-	    key: "showErrorsFromResponse",
-	    value: function showErrorsFromResponse(_ref) {
-	      var errors = _ref.errors;
-	      var messages = [];
-	      errors.forEach(function (_ref2) {
-	        var message = _ref2.message;
-	        return messages.push(message);
-	      });
-	      this.showErrors(messages);
-	    } // region EventHandlers
-	  }, {
-	    key: "handleItemDelete",
-	    value: function handleItemDelete(event) {
-	      var _this4 = this;
-	      var entityTypeId = main_core.Text.toInteger(event.data.entityTypeId);
-	      var id = main_core.Text.toInteger(event.data.id);
-	      if (!entityTypeId) {
-	        this.showErrors([main_core.Loc.getMessage('CRM_TYPE_TYPE_NOT_FOUND')]);
-	        return;
-	      }
-	      if (!id) {
-	        this.showErrors([main_core.Loc.getMessage('CRM_TYPE_ITEM_NOT_FOUND')]);
-	        return;
-	      }
-	      ui_dialogs_messagebox.MessageBox.show({
-	        title: main_core.Loc.getMessage('CRM_TYPE_ITEM_DELETE_CONFIRMATION_TITLE'),
-	        message: main_core.Loc.getMessage('CRM_TYPE_ITEM_DELETE_CONFIRMATION_MESSAGE'),
-	        modal: true,
-	        buttons: ui_dialogs_messagebox.MessageBoxButtons.YES_CANCEL,
-	        onYes: function onYes(messageBox) {
-	          main_core.ajax.runAction('crm.controller.item.delete', {
-	            data: {
-	              entityTypeId: entityTypeId,
-	              id: id,
-	              analytics: _this4.analytics
-	            }
-	          }).then(function () {
-	            BX.UI.Notification.Center.notify({
-	              content: main_core.Loc.getMessage('CRM_TYPE_ITEM_DELETE_NOTIFICATION')
-	            });
-	            _this4.reloadGridAfterTimeout();
-	          })["catch"](_this4.showErrorsFromResponse.bind(_this4));
-	          messageBox.close();
-	        }
-	      });
-	    }
-	  }, {
-	    key: "handleStartExport",
-	    value: function handleStartExport(event, exportType) {
-	      this.getExportPopup(exportType).then(function (process) {
-	        return process.showDialog();
-	      });
-	    } //endregion
-	  }, {
-	    key: "getExportPopup",
-	    value: function getExportPopup(exportType) {
-	      var _this5 = this;
-	      if (this.exportPopups[exportType]) {
-	        return Promise.resolve(this.exportPopups[exportType]);
-	      }
-	      return main_core.Runtime.loadExtension('ui.stepprocessing').then(function (exports) {
-	        _this5.exportPopups[exportType] = exports.ProcessManager.create({
-	          id: 'crm.item.list.export.' + exportType,
-	          controller: 'bitrix:crm.api.itemExport',
-	          queue: [{
-	            action: 'dispatcher'
-	          }],
-	          params: {
-	            SITE_ID: main_core.Loc.getMessage('SITE_ID'),
-	            entityTypeId: _this5.entityTypeId,
-	            categoryId: _this5.categoryId,
-	            EXPORT_TYPE: exportType,
-	            COMPONENT_NAME: 'bitrix:crm.item.list'
-	          },
-	          messages: {
-	            DialogTitle: main_core.Loc.getMessage('CRM_ITEM_EXPORT_' + exportType.toUpperCase() + '_TITLE'),
-	            DialogSummary: main_core.Loc.getMessage('CRM_ITEM_EXPORT_' + exportType.toUpperCase() + '_SUMMARY')
-	          },
-	          dialogMaxWidth: '650'
-	        });
-	        _this5.exportPopups[exportType].setHandler(BX.UI.StepProcessing.ProcessCallback.StepCompleted, function (formatInner) {
-	          return function () {
-	            delete _this5.exportPopups[formatInner];
-	          };
-	        }(exportType));
-	        return _this5.exportPopups[exportType];
-	      });
-	    }
-	  }]);
-	  return ItemListComponent;
-	}();
-	function _getToolbarComponent2() {
-	  var component = main_core.Reflection.getClass('BX.Crm.ToolbarComponent');
-	  return component ? component.Instance : null;
-	}
-	function _initSettingsButtonExtender2() {
-	  var _toolbar$getSettingsB;
-	  if (babelHelpers.classPrivateFieldGet(this, _isIframe) || babelHelpers.classPrivateFieldGet(this, _isEmbedded) || !babelHelpers.classPrivateFieldGet(this, _settingsButtonExtenderParams)) {
-	    return;
-	  }
-	  var toolbar = _classPrivateMethodGet(this, _getToolbarComponent, _getToolbarComponent2).call(this);
-	  if (!toolbar) {
-	    console.error('BX.Crm.ToolbarComponent not found');
-	    return;
-	  }
-	  var settingsMenu = (_toolbar$getSettingsB = toolbar.getSettingsButton()) === null || _toolbar$getSettingsB === void 0 ? void 0 : _toolbar$getSettingsB.getMenuWindow();
-	  if (settingsMenu) {
-	    babelHelpers.classPrivateFieldGet(this, _settingsButtonExtenderParams).grid = this.grid;
-	    babelHelpers.classPrivateFieldGet(this, _settingsButtonExtenderParams).rootMenu = settingsMenu;
+				/** @see BX.Crm.SettingsButtonExtender */
+				new crm_settingsButtonExtender.SettingsButtonExtender(this.#settingsButtonExtenderParams);
+			}
+		}
+		#initGridPanel() {
+			crm_entityList_panel.init({
+				gridId: this.gridId,
+				progressBarContainerId: this.progressBarContainerId
+			});
+		}
+		reloadGridAfterTimeout() {
+			if (!this.grid) {
+				return;
+			}
+			if (this.reloadGridTimeoutId > 0) {
+				clearTimeout(this.reloadGridTimeoutId);
+				this.reloadGridTimeoutId = 0;
+			}
+			this.reloadGridTimeoutId = setTimeout(() => {
+				this.grid.reload();
+			}, 1000);
+		}
+		showErrors(errors) {
+			let text = '';
+			errors.forEach(message => {
+				text = text + message + ' ';
+			});
+			if (main_core.Type.isElementNode(this.errorTextContainer)) {
+				this.errorTextContainer.innerText = text;
+				this.errorTextContainer.parentElement.style.display = 'block';
+			} else {
+				console.error(text);
+			}
+		}
+		hideErrors() {
+			if (main_core.Type.isElementNode(this.errorTextContainer)) {
+				this.errorTextContainer.innerText = '';
+				this.errorTextContainer.parentElement.style.display = 'none';
+			}
+		}
+		showErrorsFromResponse({
+			errors
+		}) {
+			const messages = [];
+			errors.forEach(({
+				message
+			}) => messages.push(message));
+			this.showErrors(messages);
+		}
 
-	    /** @see BX.Crm.SettingsButtonExtender */
-	    new crm_settingsButtonExtender.SettingsButtonExtender(babelHelpers.classPrivateFieldGet(this, _settingsButtonExtenderParams));
-	  }
-	}
-	function _initGridPanel2() {
-	  crm_entityList_panel.init({
-	    gridId: this.gridId,
-	    progressBarContainerId: this.progressBarContainerId
-	  });
+		// region EventHandlers
+		handleItemDelete(event) {
+			const entityTypeId = main_core.Text.toInteger(event.data.entityTypeId);
+			const id = main_core.Text.toInteger(event.data.id);
+			if (!entityTypeId) {
+				this.showErrors([main_core.Loc.getMessage('CRM_TYPE_TYPE_NOT_FOUND')]);
+				return;
+			}
+			if (!id) {
+				this.showErrors([main_core.Loc.getMessage('CRM_TYPE_ITEM_NOT_FOUND')]);
+				return;
+			}
+			ui_dialogs_messagebox.MessageBox.show({
+				title: main_core.Loc.getMessage('CRM_TYPE_ITEM_DELETE_CONFIRMATION_TITLE'),
+				message: main_core.Loc.getMessage('CRM_TYPE_ITEM_DELETE_CONFIRMATION_MESSAGE'),
+				modal: true,
+				buttons: ui_dialogs_messagebox.MessageBoxButtons.YES_CANCEL,
+				onYes: messageBox => {
+					main_core.ajax.runAction('crm.controller.item.delete', {
+						data: {
+							entityTypeId,
+							id,
+							analytics: this.analytics
+						}
+					}).then(() => {
+						BX.UI.Notification.Center.notify({
+							content: main_core.Loc.getMessage('CRM_TYPE_ITEM_DELETE_NOTIFICATION')
+						});
+						this.reloadGridAfterTimeout();
+					}).catch(this.showErrorsFromResponse.bind(this));
+					messageBox.close();
+				}
+			});
+		}
+		handleStartExport(event, exportType) {
+			this.getExportPopup(exportType).then(process => process.showDialog());
+		}
+		//endregion
+
+		getExportPopup(exportType) {
+			if (this.exportPopups[exportType]) {
+				return Promise.resolve(this.exportPopups[exportType]);
+			}
+			return main_core.Runtime.loadExtension('ui.stepprocessing').then(exports$1 => {
+				this.exportPopups[exportType] = exports$1.ProcessManager.create({
+					id: 'crm.item.list.export.' + exportType,
+					controller: 'bitrix:crm.api.itemExport',
+					queue: [{
+						action: 'dispatcher'
+					}],
+					params: {
+						SITE_ID: main_core.Loc.getMessage('SITE_ID'),
+						entityTypeId: this.entityTypeId,
+						categoryId: this.categoryId,
+						EXPORT_TYPE: exportType,
+						COMPONENT_NAME: 'bitrix:crm.item.list'
+					},
+					messages: {
+						DialogTitle: main_core.Loc.getMessage('CRM_ITEM_EXPORT_' + exportType.toUpperCase() + '_TITLE'),
+						DialogSummary: main_core.Loc.getMessage('CRM_ITEM_EXPORT_' + exportType.toUpperCase() + '_SUMMARY')
+					},
+					dialogMaxWidth: '650'
+				});
+				this.exportPopups[exportType].setHandler(BX.UI.StepProcessing.ProcessCallback.StepCompleted, (formatInner => {
+					return () => {
+						delete this.exportPopups[formatInner];
+					};
+				})(exportType));
+				return this.exportPopups[exportType];
+			});
+		}
 	}
 	namespace.ItemListComponent = ItemListComponent;
 
-}((this.window = this.window || {}),BX.Crm.EntityList.Panel,BX.Crm,BX.Crm,BX,BX.Event,BX.UI.Dialogs));
+})(BX.Crm.EntityList.Panel, BX.Crm, BX.Crm, BX, BX.Event, BX.UI.Dialogs);
 //# sourceMappingURL=script.js.map

@@ -24,6 +24,8 @@ export const ChatType = Object.freeze({
 	collab: 'collab',
 });
 
+export type ChatTypeItem = $Values<typeof ChatType>;
+
 export const DialogScrollThreshold = Object.freeze({
 	none: 'none',
 	nearTheBottom: 'nearTheBottom',
@@ -41,3 +43,5 @@ export const DialogAlignment = Object.freeze({
 	left: 'left',
 	center: 'center',
 });
+
+export const DialogIdChatPrefix = 'chat';

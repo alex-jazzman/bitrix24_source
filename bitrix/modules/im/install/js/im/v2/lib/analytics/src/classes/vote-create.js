@@ -1,12 +1,13 @@
+import { type AnalyticsOptions } from 'ui.analytics';
+
 import { Core } from 'im.v2.application.core';
 import { ChatType } from 'im.v2.const';
+import { type ImModelChat } from 'im.v2.model';
+
+import { getCollabId } from '../helpers/get-collab-id.js';
+import { AnalyticsTool, AnalyticsEvent } from '../const';
 import { getCategoryByChatType } from '../helpers/get-category-by-chat-type';
 import { getUserType } from '../helpers/get-user-type';
-import { getCollabId } from '../analytics';
-import { AnalyticsTool, AnalyticsEvent } from '../const';
-
-import type { AnalyticsOptions } from 'ui.analytics';
-import type { ImModelChat } from 'im.v2.model';
 
 export class Vote
 {

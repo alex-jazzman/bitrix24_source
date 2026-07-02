@@ -1,8 +1,9 @@
-import { BaseEvent, EventEmitter } from 'main.core.events';
 import { ajax, Cache, Text } from 'main.core';
-import { ConfigContent } from '../types/content';
+import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Popup } from 'main.popup';
+
 import { Analytics } from '../analytics';
+import { type ConfigContent } from '../types/content';
 
 export class Content extends EventEmitter
 {
@@ -11,6 +12,9 @@ export class Content extends EventEmitter
 	constructor(options: Object)
 	{
 		super();
+
+		this.setEventNamespace('BX.Intranet.InvitationWidget.Content');
+
 		this.setOptions(options);
 		this.analytics = new Analytics();
 	}

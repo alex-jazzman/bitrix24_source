@@ -58,3 +58,4 @@ $MESS['CRM_BIC_COMPANY_FIELD_PHONE'] = "Телефон (множ.)";
 $MESS['CRM_BIC_COMPANY_FIELD_WEB'] = "URL (множ.)";
 $MESS['CRM_BIC_COMPANY_FIELD_EMAIL'] = "E-mail (множ.)";
 $MESS['CRM_BIC_COMPANY_FIELD_IM'] = "Мессенджеры (множ.)";
+$MESS['CRM_BIC_COMPANY_TABLE_DESCRIPTION_FULL'] = "Набор содержит основные данные о компаниях: их названия, сферы деятельности, реквизиты и информацию о сотрудниках, которые с ними работают.";

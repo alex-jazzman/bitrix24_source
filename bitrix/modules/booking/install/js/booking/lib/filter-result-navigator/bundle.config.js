@@ -3,5 +3,4 @@ module.exports = {
 	output: 'dist/filter-result-navigator.bundle.js',
 	namespace: 'BX.Booking.Lib',
 	browserslist: true,
-	minification: true,
 };

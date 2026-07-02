@@ -3,5 +3,4 @@ module.exports = {
 	output: 'dist/reminder.bundle.js',
 	namespace: 'BX.Booking.Component',
 	browserslist: true,
-	minification: true,
 };

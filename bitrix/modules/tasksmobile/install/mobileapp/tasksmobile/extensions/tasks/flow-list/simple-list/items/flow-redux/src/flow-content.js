@@ -22,6 +22,9 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 	const { FlowAiAdvice } = require('tasks/flow-list/simple-list/items/flow-redux/src/flow-ai-advice');
 	const { openActionMenu } = require('tasks/layout/flow/action-menu');
 	const { showToast } = require('toast');
+	const { StatusBox } = require('layout/ui/status-box');
+	const { qrauth } = require('qrauth/utils');
+	const { makeLibraryImagePath } = require('asset-manager');
 
 	class FlowContent extends PureComponent
 	{
@@ -561,11 +564,21 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 			return this.efficiencySuccess ? ChipStatusDesign.SUCCESS : ChipStatusDesign.ALERT;
 		}
 
+		getPathToImages()
+		{
+			return `${currentDomain}/bitrix/mobileapp/tasksmobile/extensions/tasks/flow-list/simple-list/items/flow-redux/images`;
+		}
+
+		getPathToImagesWithTheme()
+		{
+			return `${this.getPathToImages()}/${AppTheme.id}`;
+		}
+
 		getEfficiencySvgUri()
 		{
-			const pathToImages = `${currentDomain}/bitrix/mobileapp/tasksmobile/extensions/tasks/flow-list/simple-list/items/flow-redux/images/${AppTheme.id}`;
-
-			return this.efficiencySuccess ? `${pathToImages}/success.png` : `${pathToImages}/alert.png`;
+			return this.efficiencySuccess
+				? `${this.getPathToImagesWithTheme()}/success.png`
+				: `${this.getPathToImagesWithTheme()}/alert.png`;
 		}
 
 		renderEfficiency()
@@ -694,21 +707,7 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 						borderRadius: Corner.M.toNumber(),
 					},
 					testId: `${this.testId}-ai-advice-footer`,
-					onClick: () => {
-						if (this.aiAdvice.advices.length > 0)
-						{
-							FlowAiAdvice.show(this.flow, this.props.layout);
-						}
-						else
-						{
-							showToast(
-								{
-									message: Loc.getMessage('TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_TOAST'),
-								},
-								this.props.layout,
-							);
-						}
-					},
+					onClick: this.onAiAdviceFooterClick,
 				},
 				View(
 					{
@@ -813,6 +812,59 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 				}),
 			);
 		}
+
+		onAiAdviceFooterClick = () => {
+			if (this.aiAdvice.limitExceeded)
+			{
+				void StatusBox.open({
+					parentWidget: this.props.layout,
+					backdropTitle: Loc.getMessage('TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_LIMIT_EXCEEDED_BOX_TITLE'),
+					testId: 'bitrix-gpt-limit',
+					imageUri: makeLibraryImagePath('lock.svg', 'banners'),
+					height: 440,
+					buttonDesign: ButtonDesign.FILLED,
+					description: Loc.getMessage('TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_LIMIT_EXCEEDED_BOX_DESCRIPTION'),
+					buttonText: Loc.getMessage('TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_LIMIT_EXCEEDED_BOX_BUTTON'),
+					onButtonClick: () => {
+						qrauth.open({
+							layout: this.props.layout,
+							title: Loc.getMessage('TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_GOTO_WEB_TITLE'),
+							redirectUrl: '/online/?FEATURE_PROMOTER=limit_subscription_market_access_buy_marketplus',
+							hintText: Loc.getMessage('TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_GOTO_WEB_HINT'),
+							showHint: true,
+						});
+					},
+				});
+
+				return;
+			}
+
+			if (this.aiAdvice.rateLimitExceeded)
+			{
+				showToast(
+					{
+						message: Loc.getMessage('TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_RATE_LIMIT_EXCEEDED_TOAST'),
+					},
+					this.props.layout,
+				);
+
+				return;
+			}
+
+			if (this.aiAdvice.advices.length > 0)
+			{
+				FlowAiAdvice.show(this.flow, this.props.layout);
+
+				return;
+			}
+
+			showToast(
+				{
+					message: Loc.getMessage('TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_TOAST'),
+				},
+				this.props.layout,
+			);
+		};
 
 		openFlowTasksListButtonClickHandler = () => {
 			this.openFlowTasksList();

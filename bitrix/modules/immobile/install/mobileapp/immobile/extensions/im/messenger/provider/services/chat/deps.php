@@ -27,6 +27,7 @@ return [
 	'bundle' => [
 		'./src/bot',
 		'./src/comments',
+		'./src/get',
 		'./src/create',
 		'./src/health-check',
 		'./src/input-action-notify',
@@ -36,6 +37,5 @@ return [
 		'./src/service',
 		'./src/update',
 		'./src/user',
-		'../../../const/src/rest',
 	],
 ];

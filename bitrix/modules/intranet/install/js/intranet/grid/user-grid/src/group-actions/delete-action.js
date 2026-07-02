@@ -12,7 +12,7 @@ export class DeleteAction extends BaseAction
 
 	getAjaxMethod(): string
 	{
-		return 'intranet.controller.user.userlist.groupDelete';
+		return 'intranet.v2.UserList.delete';
 	}
 
 	getConfirmationPopup(): ?MessageBox

@@ -1,2 +1,29 @@
-this.BX=this.BX||{},this.BX.Booking=this.BX.Booking||{},function(i,t,s){"use strict";i.deepToRaw=function(i){const e=i=>Array.isArray(i)?i.map(i=>e(i)):s.isRef(i)||s.isReactive(i)||s.isProxy(i)?e(s.toRaw(i)):t.Type.isObject(i)?Object.keys(i).reduce((t,s)=>(t[s]=e(i[s]),t),{}):i;return e(i)}}(this.BX.Booking.Lib=this.BX.Booking.Lib||{},BX,BX.Vue3);
+/* eslint-disable */
+this.BX = this.BX || {};
+this.BX.Booking = this.BX.Booking || {};
+(function (exports, main_core, ui_vue3) {
+	'use strict';
+
+	function deepToRaw(refObj) {
+		const modelIterator = data => {
+			if (Array.isArray(data)) {
+				return data.map(item => modelIterator(item));
+			}
+			if (ui_vue3.isRef(data) || ui_vue3.isReactive(data) || ui_vue3.isProxy(data)) {
+				return modelIterator(ui_vue3.toRaw(data));
+			}
+			if (main_core.Type.isObject(data)) {
+				return Object.keys(data).reduce((acc, key) => {
+					acc[key] = modelIterator(data[key]);
+					return acc;
+				}, {});
+			}
+			return data;
+		};
+		return modelIterator(refObj);
+	}
+
+	exports.deepToRaw = deepToRaw;
+
+})(this.BX.Booking.Lib = this.BX.Booking.Lib || {}, BX, BX.Vue3);
 //# sourceMappingURL=deep-to-raw.bundle.js.map

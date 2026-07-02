@@ -8,15 +8,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 return [
 	'js' => 'dist/aha-moments.bundle.js',
 	'rel' => [
+		'booking.const',
+		'booking.core',
+		'booking.provider.service.option-service',
 		'main.core',
 		'main.popup',
 		'spotlight',
-		'ui.tour',
 		'ui.auto-launch',
 		'ui.banner-dispatcher',
-		'booking.core',
-		'booking.const',
-		'booking.provider.service.option-service',
+		'ui.tour',
 	],
 	'skip_core' => false,
 ];

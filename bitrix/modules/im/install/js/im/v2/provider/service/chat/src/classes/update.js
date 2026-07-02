@@ -1,36 +1,21 @@
-import { Type } from 'main.core';
 import { isResizableImage, resizeImage } from 'ui.uploader.core';
 
-import { Logger } from 'im.v2.lib.logger';
-import { RestMethod } from 'im.v2.const';
-import { runAction } from 'im.v2.lib.rest';
-import { Utils } from 'im.v2.lib.utils';
 import { Core } from 'im.v2.application.core';
-import { getChatRoleForUser } from 'im.v2.lib.role-manager';
+import { RestMethod } from 'im.v2.const';
+import { Logger } from 'im.v2.lib.logger';
 import { Notifier } from 'im.v2.lib.notifier';
+import { runAction } from 'im.v2.lib.rest';
+import { getChatRoleForUser } from 'im.v2.lib.role-manager';
+import { Utils } from 'im.v2.lib.utils';
 
-import type { Store } from 'ui.vue3.vuex';
-import type {
-	RestUpdateChatConfig,
-	UpdateChatConfig,
-	UpdateCollabConfig,
-	GetMemberEntitiesConfig,
-} from '../types/chat';
+import { type ChatUpdateConfig, type CollabUpdateConfig, type GetMemberEntitiesConfig } from '../types/update-chat';
 
 export class UpdateService
 {
-	#store: Store;
-
-	constructor()
-	{
-		this.#store = Core.getStore();
-	}
-
 	async prepareAvatar(avatarFile: File): Promise<File>
 	{
 		if (!isResizableImage(avatarFile))
 		{
-			// eslint-disable-next-line no-console
 			return Promise.reject(new Error('UpdateService: prepareAvatar: incorrect image'));
 		}
 
@@ -58,33 +43,33 @@ export class UpdateService
 		});
 	}
 
-	async updateChat(chatId: number, chatConfig: UpdateChatConfig): Promise<boolean>
+	async updateChat(chatId: number, chatConfig: ChatUpdateConfig): Promise<boolean>
 	{
 		Logger.warn(`ChatService: updateChat, chatId: ${chatId}`, chatConfig);
 
 		const preparedFields = await this.#prepareFields(chatConfig);
 
-		const updateResult: RestResult = await runAction(RestMethod.imV2ChatUpdate, {
-			data: {
-				id: chatId,
-				fields: preparedFields,
-			},
+		const payload = {
 			id: chatId,
-		}).catch(([error]) => {
-			console.error('ChatService: updateChat error:', error);
-			Notifier.chat.onUpdateError();
-			throw error;
-		});
+			fields: preparedFields,
+		};
+
+		const updateResult: boolean = await runAction(RestMethod.imV2ChatUpdate, { data: payload })
+			.catch(([error]) => {
+				console.error('ChatService: updateChat error:', error);
+				Notifier.chat.onUpdateError();
+				throw error;
+			});
 
 		Logger.warn('ChatService: updateChat result', updateResult);
 
-		const dialogId = `chat${chatId}`;
+		const dialogId = Utils.dialog.buildChatDialogId(chatId);
 		await this.#updateChatInModel(dialogId, chatConfig);
 
 		return updateResult;
 	}
 
-	async updateCollab(dialogId: string, collabConfig: UpdateCollabConfig): Promise<boolean>
+	async updateCollab(dialogId: string, collabConfig: CollabUpdateConfig): Promise<boolean>
 	{
 		Logger.warn(`ChatService: updateCollab, dialogId: ${dialogId}`, collabConfig);
 
@@ -110,7 +95,7 @@ export class UpdateService
 			};
 		}
 
-		const updateResult: RestResult = await runAction(RestMethod.socialnetworkCollabUpdate, {
+		const updateResult: boolean = await runAction(RestMethod.socialnetworkCollabUpdate, {
 			data: payload,
 		}).catch(([error]) => {
 			console.error('ChatService: updateCollab error:', error);
@@ -132,48 +117,26 @@ export class UpdateService
 		});
 	}
 
-	async #prepareFields(chatConfig: UpdateChatConfig): RestUpdateChatConfig
+	async #prepareFields(chatConfig: ChatUpdateConfig): ChatUpdateConfig
 	{
-		const result = {
-			title: chatConfig.title,
-			description: chatConfig.description,
-			ownerId: chatConfig.ownerId,
-			searchable: chatConfig.isAvailableInSearch ? 'Y' : 'N',
-			manageUi: chatConfig.manageUi,
-			manageUsersAdd: chatConfig.manageUsersAdd,
-			manageUsersDelete: chatConfig.manageUsersDelete,
-			manageMessages: chatConfig.manageMessages,
-			addedMemberEntities: chatConfig.addedMemberEntities,
-			deletedMemberEntities: chatConfig.deletedMemberEntities,
-			addedManagers: chatConfig.addedManagers,
-			deletedManagers: chatConfig.deletedManagers,
-		};
+		const preparedConfig = { ...chatConfig };
 
-		if (chatConfig.avatar)
+		if (preparedConfig.avatar)
 		{
-			result.avatar = await Utils.file.getBase64(chatConfig.avatar);
+			preparedConfig.avatar = await Utils.file.getBase64(chatConfig.avatar);
 		}
 
-		Object.entries(result).forEach(([key, value]) => {
-			if (Type.isUndefined(value))
-			{
-				delete result[key];
-			}
-		});
-
-		return result;
+		return preparedConfig;
 	}
 
-	#updateChatInModel(dialogId: string, chatConfig: UpdateChatConfig): Promise
+	#updateChatInModel(dialogId: string, chatConfig: ChatUpdateConfig): Promise
 	{
-		return this.#store.dispatch('chats/update', {
+		return Core.getStore().dispatch('chats/update', {
 			dialogId,
 			fields: {
 				name: chatConfig.title,
 				description: chatConfig.description,
 				ownerId: chatConfig.ownerId,
-				managerList: chatConfig.managers,
-				type: chatConfig.type,
 				role: getChatRoleForUser(chatConfig),
 				permissions: {
 					manageUi: chatConfig.manageUi,

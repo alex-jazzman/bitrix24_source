@@ -55,6 +55,26 @@ jn.define('layout/ui/detail-card/tabs/crm-product', (require, exports, module) =
 			return TabType.CRM_PRODUCT;
 		}
 
+		canShowAddProductButton()
+		{
+			return (
+				Boolean(this.state?.result?.entity?.editable)
+				&& Boolean(
+					this.state?.result?.permissions?.catalog_read
+					|| this.state?.result?.permissions?.catalog_product_add
+				)
+			);
+		}
+
+		needShowFloatingButton()
+		{
+			return this.canShowAddProductButton();
+		}
+
+		floatingButtonHandler = () => {
+			this.showAddProductMenu();
+		};
+
 		showAddProductMenu()
 		{
 			if (!this.isActive())
@@ -64,12 +84,12 @@ jn.define('layout/ui/detail-card/tabs/crm-product', (require, exports, module) =
 
 			if (this.productGridRef)
 			{
-				if (this.productGridRef.isEditable())
+				if (this.canShowAddProductButton())
 				{
 					this.productGridRef.onAddItemButtonClick();
 				}
 			}
-			else
+			else if (this.canShowAddProductButton())
 			{
 				this.needOpenAddProductMenu = true;
 			}
@@ -82,7 +102,7 @@ jn.define('layout/ui/detail-card/tabs/crm-product', (require, exports, module) =
 				return;
 			}
 
-			if (this.productGridRef && this.productGridRef.isEditable())
+			if (this.productGridRef && this.canShowAddProductButton())
 			{
 				this.productGridRef.showProductSelector();
 			}
@@ -258,8 +278,10 @@ jn.define('layout/ui/detail-card/tabs/crm-product', (require, exports, module) =
 
 		getFloatingMenuItems()
 		{
+			const isAvailable = this.canShowAddProductButton();
 			const itemsParams = {
 				isSearchOnly: Boolean(this.getPayload()?.isExternalCatalog),
+				isAvailable,
 			};
 
 			return [
@@ -267,15 +289,7 @@ jn.define('layout/ui/detail-card/tabs/crm-product', (require, exports, module) =
 					id: TabType.CRM_PRODUCT,
 					title: Loc.getMessage('CSPL_DETAIL_PRODUCT_MENU_TITLE'),
 					isSupported: true,
-					isAvailable: (detailCard) => {
-						let canReadCatalog = true;
-						if (BX.type.isPlainObject(detailCard.componentParams.permissions))
-						{
-							canReadCatalog = Boolean(detailCard.componentParams.permissions.productCatalogAccess);
-						}
-
-						return !detailCard.isReadonly() && canReadCatalog;
-					},
+					isAvailable,
 					position: 300,
 					nestedItems: CrmProductGrid.getFloatingMenuItems(itemsParams),
 					icon: Icon.ADD_PRODUCT,

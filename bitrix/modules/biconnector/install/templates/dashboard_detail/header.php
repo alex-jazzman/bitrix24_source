@@ -7,6 +7,15 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 /**
  * @var CMain $APPLICATION
  */
+
+use Bitrix\Main;
+
+Main\Loader::includeModule('intranet');
+
+Main\UI\Extension::load([
+	'intranet.sidepanel.air',
+]);
+
 ?>
 <!DOCTYPE html>
 <html>

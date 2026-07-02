@@ -53,7 +53,7 @@ export const CheckboxListCategory = {
 					<checkbox-list-option
 						:context="context"
 						:id="option.id"
-						:title="option.title"
+						:title="option.title ?? option.id"
 						:isChecked="option.value"
 						:isLocked="option?.locked"
 						:isEditable="isEditableOptionsTitle"

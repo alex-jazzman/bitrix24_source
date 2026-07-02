@@ -1,10 +1,10 @@
-import { BuilderModel, GetterTree, ActionTree, MutationTree } from 'ui.vue3.vuex';
+import { type JsonObject } from 'main.core';
+import { BuilderModel, type GetterTree, type ActionTree, type MutationTree } from 'ui.vue3.vuex';
 
-import { Settings, DialogAlignment, NotificationSettingsMode, NotificationSettingsType, NotificationSettingsBlock } from 'im.v2.const';
-import { settingsFieldsConfig } from './format/field-config';
+import { Settings, DialogAlignment, NotificationSettingsMode, type NotificationSettingsType, type NotificationSettingsBlock } from 'im.v2.const';
+
 import { formatFieldsWithConfig } from '../../../utils/validate';
-
-import type { JsonObject } from 'main.core';
+import { settingsFieldsConfig } from './format/field-config';
 
 type SettingsState = {
 	[settingName: string]: any,

@@ -70,6 +70,13 @@
 	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
+.license-widget-item-name__inner {
+	overflow: hidden;
+	white-space: nowrap;
+	max-width: 169px;
+	text-overflow: ellipsis;
+}
+
 .license-widget-item-help {
 	display: inline-block;
 	min-height: 11px;

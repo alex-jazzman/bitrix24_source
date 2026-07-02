@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_MODULE_NOT_INSTALLED"] = "Модуль crm не установлен.";
 $MESS["CRM_PERMISSION_DENIED"] = "Доступ запрещен";
 $MESS["DEAL_ADD"] = "Добавить сделку";
@@ -65,7 +65,7 @@ $MESS["DEAL_ORDER_SCENARIO"] = "Режим работы с заказами";
 $MESS["DEAL_CHANGE_CATEGORY"] = "Перенести в воронку";
 $MESS["DOCUMENT_BUTTON_TEXT"] = "Документ";
 $MESS["DOCUMENT_BUTTON_TITLE"] = "Создать документ на основании сделки";
-$MESS["DEAL_EXCLUDE"] = "Добавить в список исключений";
-$MESS["DEAL_EXCLUDE_TITLE"] = "Добавить лид в список исключений";
+$MESS["DEAL_EXCLUDE"] = "Добавить в стоп-лист";
+$MESS["DEAL_EXCLUDE_TITLE"] = "Добавить сделку в стоп-лист";
 $MESS["DEAL_STEXPORT_OPTION_EXPORT_PRODUCT_FIELDS"] = "Экспортировать с детализацией по товарным позициям";
 $MESS["DEAL_CRM_RECURRING_LIST"] = "Шаблоны регулярных сделок";

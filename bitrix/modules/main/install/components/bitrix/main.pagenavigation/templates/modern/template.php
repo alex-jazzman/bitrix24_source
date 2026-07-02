@@ -1,4 +1,4 @@
-<?
+<?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 {
 	die();
@@ -18,29 +18,29 @@ $this->setFrameMode(true);
 ?>
 <div class="modern-page-navigation">
 	<span class="modern-page-title"><?=GetMessage("pages")?></span>
-<?
+	<?php
 if($arResult["REVERSED_PAGES"] === true):
 	$first = true;
 	if ($arResult["CURRENT_PAGE"] < $arResult["PAGE_COUNT"]):
 		if (($arResult["CURRENT_PAGE"]+1) == $arResult["PAGE_COUNT"]):
 ?>
 			<a class="modern-page-previous" href="<?=htmlspecialcharsbx($arResult["URL"])?>"><?=GetMessage("nav_prev")?></a>
-<?
+		<?php
 		else:
 ?>
 			<a class="modern-page-previous" href="<?=htmlspecialcharsbx($component->replaceUrlTemplate($arResult["CURRENT_PAGE"]+1))?>"><?=GetMessage("nav_prev")?></a>
-<?
+		<?php
 		endif;
 
 		if ($arResult["START_PAGE"] < $arResult["PAGE_COUNT"]):
 			$first = false;
 ?>
 			<a class="modern-page-first" href="<?=htmlspecialcharsbx($arResult["URL"])?>">1</a>
-<?
+			<?php
 			if ($arResult["START_PAGE"] < ($arResult["PAGE_COUNT"] - 1)):
 ?>
 				<a class="modern-page-dots" href="<?=htmlspecialcharsbx($component->replaceUrlTemplate($arResult["START_PAGE"] + ($arResult["PAGE_COUNT"] - $arResult["START_PAGE"]) / 2))?>">...</a>
-<?
+			<?php
 			endif;
 		endif;
 	endif;
@@ -53,15 +53,15 @@ if($arResult["REVERSED_PAGES"] === true):
 		if ($page == $arResult["CURRENT_PAGE"]):
 ?>
 			<span class="<?=($first ? "modern-page-first " : "")?>modern-page-current"><?=$pageNumber?></span>
-<?
+		<?php
 		elseif($page == $arResult["PAGE_COUNT"]):
 ?>
 			<a href="<?=htmlspecialcharsbx($arResult["URL"])?>" class="<?=($first ? "modern-page-first" : "")?>"><?=$pageNumber?></a>
-<?
+		<?php
 		else:
 ?>
 			<a href="<?=htmlspecialcharsbx($component->replaceUrlTemplate($page))?>" class="<?=($first ? "modern-page-first" : "")?>"><?=$pageNumber?></a>
-<?
+		<?php
 		endif;
 		
 		$page--;
@@ -74,16 +74,16 @@ if($arResult["REVERSED_PAGES"] === true):
 			if ($arResult["END_PAGE"] > 2):
 ?>
 				<a class="modern-page-dots" href="<?=htmlspecialcharsbx($component->replaceUrlTemplate(round($arResult["END_PAGE"] / 2)))?>">...</a>
-<?
+			<?php
 			endif;
 ?>
 			<a href="<?=htmlspecialcharsbx($component->replaceUrlTemplate(1))?>"><?=$arResult["PAGE_COUNT"]?></a>
-<?
+		<?php
 		endif;
 	
 ?>
 		<a class="modern-page-next" href="<?=htmlspecialcharsbx($component->replaceUrlTemplate($arResult["CURRENT_PAGE"]-1))?>"><?=GetMessage("nav_next")?></a>
-<?
+	<?php
 	endif; 
 
 else:
@@ -93,22 +93,22 @@ else:
 		if ($arResult["CURRENT_PAGE"] > 2):
 ?>
 			<a class="modern-page-previous" href="<?=htmlspecialcharsbx($component->replaceUrlTemplate($arResult["CURRENT_PAGE"]-1))?>"><?=GetMessage("nav_prev")?></a>
-<?
+		<?php
 		else:
 ?>
 			<a class="modern-page-previous" href="<?=htmlspecialcharsbx($arResult["URL"])?>"><?=GetMessage("nav_prev")?></a>
-<?
+		<?php
 		endif;
 		
 		if ($arResult["START_PAGE"] > 1):
 			$first = false;
 ?>
 			<a class="modern-page-first" href="<?=htmlspecialcharsbx($arResult["URL"])?>">1</a>
-<?
+			<?php
 			if ($arResult["START_PAGE"] > 2):
 ?>
 				<a class="modern-page-dots" href="<?=htmlspecialcharsbx($component->replaceUrlTemplate(round($arResult["START_PAGE"] / 2)))?>">...</a>
-<?
+			<?php
 			endif;
 		endif;
 	endif;
@@ -119,15 +119,15 @@ else:
 		if ($page == $arResult["CURRENT_PAGE"]):
 ?>
 			<span class="<?=($first ? "modern-page-first " : "")?>modern-page-current"><?=$page?></span>
-<?
+		<?php
 		elseif($page == 1):
 ?>
 			<a href="<?=htmlspecialcharsbx($arResult["URL"])?>" class="<?=($first ? "modern-page-first" : "")?>">1</a>
-<?
+		<?php
 		else:
 ?>
 			<a href="<?=htmlspecialcharsbx($component->replaceUrlTemplate($page))?>" class="<?=($first ? "modern-page-first" : "")?>"><?=$page?></a>
-<?
+		<?php
 		endif;
 
 		$page++;
@@ -140,15 +140,15 @@ else:
 			if ($arResult["END_PAGE"] < ($arResult["PAGE_COUNT"] - 1)):
 ?>
 				<a class="modern-page-dots" href="<?=htmlspecialcharsbx($component->replaceUrlTemplate(round($arResult["END_PAGE"] + ($arResult["PAGE_COUNT"] - $arResult["END_PAGE"]) / 2)))?>">...</a>
-<?
+			<?php
 			endif;
 ?>
 			<a href="<?=htmlspecialcharsbx($component->replaceUrlTemplate($arResult["PAGE_COUNT"]))?>"><?=$arResult["PAGE_COUNT"]?></a>
-<?
+		<?php
 		endif;
 ?>
 		<a class="modern-page-next" href="<?=htmlspecialcharsbx($component->replaceUrlTemplate($arResult["CURRENT_PAGE"]+1))?>"><?=GetMessage("nav_next")?></a>
-<?
+	<?php
 	endif;
 endif;
 
@@ -156,11 +156,11 @@ if ($arResult["SHOW_ALL"]):
 	if ($arResult["ALL_RECORDS"]):
 ?>
 		<a class="modern-page-pagen" href="<?=htmlspecialcharsbx($arResult["URL"])?>"><?=GetMessage("nav_paged")?></a>
-<?
+	<?php
 	else:
 ?>
 		<a class="modern-page-all" href="<?=htmlspecialcharsbx($component->replaceUrlTemplate("all"))?>"><?=GetMessage("nav_all")?></a>
-<?
+	<?php
 	endif;
 endif
 ?>

@@ -31,6 +31,7 @@ export const CustomRow = {
 	},
 	emits: ['update:modelValue'],
 
+	timePeriodValidator: null,
 	data(): Object
 	{
 		return {
@@ -39,12 +40,12 @@ export const CustomRow = {
 			currentEndPoint: this.endPoint,
 			isExpandedStartPoint: false,
 			isExpandedEndPoint: false,
-			timePeriodValidator: new TimePeriodValidator(),
 		};
 	},
 
 	created(): void
 	{
+		this.timePeriodValidator = new TimePeriodValidator();
 		this.datePicker = new DatePicker({
 			type: 'time',
 			dateFormat: DatetimeConverter.getSiteDateTimeFormat(true),

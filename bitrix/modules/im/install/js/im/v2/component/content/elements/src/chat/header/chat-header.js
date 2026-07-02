@@ -224,9 +224,7 @@ export const ChatHeader = {
 						<AddToChatButton :dialogId="dialogId" />
 					</slot>
 					<SearchButton v-if="showSearchButton" :dialogId="dialogId" />
-					<div v-if="$slots['after-actions']" class="bx-im-chat-header__separator"></div>
 					<SidebarButton v-if="showSidebarButton" :dialogId="dialogId" />
-					<slot name="after-actions"></slot>
 				</div>
 			</FadeAnimation>
 		</div>

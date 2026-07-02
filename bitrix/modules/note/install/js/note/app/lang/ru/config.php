@@ -1,0 +1,32 @@
+<?php
+
+$MESS['NOTE_SIDEBAR_BRAND_NAME'] = 'Битрикс';
+$MESS['NOTE_SIDEBAR_BRAND_SUFFIX'] = '24';
+$MESS['NOTE_SIDEBAR_KNOWLEDGE_BASE'] = 'База знаний 2.0';
+$MESS['NOTE_SIDEBAR_COLLECTIONS'] = 'Базы знаний';
+$MESS['NOTE_SIDEBAR_DOCUMENTS'] = 'Документы';
+$MESS['NOTE_SIDEBAR_EMPTY_COLLECTIONS'] = 'Базы знаний не найдены';
+$MESS['NOTE_SIDEBAR_EMPTY_DOCUMENTS'] = 'Документы не найдены';
+$MESS['NOTE_SIDEBAR_CREATE_DOCUMENT'] = 'Новый документ';
+$MESS['NOTE_SIDEBAR_DELETE'] = 'Да, удалить';
+$MESS['NOTE_SIDEBAR_CANCEL'] = 'Отмена';
+$MESS['NOTE_SIDEBAR_CONFIRM_DELETE_COLLECTION_TITLE'] = 'Удалить базу знаний?';
+$MESS['NOTE_SIDEBAR_CONFIRM_DELETE_COLLECTION'] = 'Все документы будут перемещены в корзину на 30 дней, а база знаний — удалена';
+$MESS['NOTE_SIDEBAR_CONFIRM_DELETE_DOCUMENT_TITLE'] = 'Удалить документ?';
+$MESS['NOTE_SIDEBAR_CONFIRM_DELETE_DOCUMENT'] = 'Документ будет перемещён в корзину и автоматически удалён через 30 дней';
+$MESS['NOTE_SIDEBAR_PROMPT_COLLECTION_NAME'] = 'Новая база знаний';
+$MESS['NOTE_SIDEBAR_PROMPT_DOCUMENT_NAME'] = 'Новый документ';
+$MESS['NOTE_SIDEBAR_ERROR_GENERIC'] = 'Не удалось выполнить действие, попробуйте ещё раз немного позже';
+$MESS['NOTE_SIDEBAR_ERROR_DOCUMENT_NOT_FOUND'] = 'Недостаточно прав на просмотр документа или он был удалён';
+$MESS['NOTE_SIDEBAR_OPEN_PERMISSIONS'] = 'Права доступа';
+$MESS['NOTE_SIDEBAR_SHARED_WITH_ME'] = 'Поделились со мной';
+$MESS['NOTE_SIDEBAR_ARCHIVE'] = 'Архив';
+$MESS['NOTE_SIDEBAR_RECYCLE_BIN'] = 'Корзина';
+$MESS['NOTE_APP_HARD_DELETE_CONFIRM_TITLE'] = 'Удалить документ?';
+$MESS['NOTE_APP_HARD_DELETE_CONFIRM_MESSAGE'] = 'Документ «#TITLE#» будет удалён навсегда';
+$MESS['NOTE_APP_HARD_DELETE_CONFIRM_CANCEL'] = 'Отменить';
+$MESS['NOTE_APP_HARD_DELETE_CONFIRM_OK'] = 'Да, удалить';
+$MESS['NOTE_WORKSPACE_NOT_FOUND'] = 'Недостаточно прав на просмотр базы знаний или она была удалена';
+$MESS['NOTE_APP_ARCHIVE'] = 'Да, перенести';
+$MESS['NOTE_APP_CONFIRM_ARCHIVE_DOCUMENT_TITLE'] = 'Перенести документ в архив?';
+$MESS['NOTE_APP_CONFIRM_ARCHIVE_DOCUMENT'] = 'Документ из архива можно восстановить в любое время';

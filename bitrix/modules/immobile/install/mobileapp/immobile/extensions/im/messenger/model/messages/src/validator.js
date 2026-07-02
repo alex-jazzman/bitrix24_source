@@ -4,7 +4,6 @@
 jn.define('im/messenger/model/messages/validator', (require, exports, module) => {
 	const { Type } = require('type');
 	const { clone } = require('utils/object');
-	const { withCurrentDomain } = require('utils/url');
 	const { Uuid } = require('utils/uuid');
 	const { DateHelper } = require('im/messenger/lib/helper');
 	const { ObjectUtils, Normalizer } = require('im/messenger/lib/utils');

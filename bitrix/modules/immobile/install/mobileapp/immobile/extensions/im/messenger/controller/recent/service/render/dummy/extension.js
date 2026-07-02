@@ -80,6 +80,16 @@ jn.define('im/messenger/controller/recent/service/render/dummy', (require, expor
 
 			return 0;
 		}
+
+		subscribeEvents()
+		{
+			this.logger.log('subscribeEvents');
+		}
+
+		unsubscribeEvents()
+		{
+			this.logger.log('unsubscribeEvents');
+		}
 	}
 
 	module.exports = DummyRenderService;

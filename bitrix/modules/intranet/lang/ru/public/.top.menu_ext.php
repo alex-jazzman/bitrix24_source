@@ -1,6 +1,7 @@
 <?php
 $MESS["TOP_MENU_FAVORITE"] = "Избранное";
 $MESS["TOP_MENU_GROUPS"] = "Группы";
+$MESS["TOP_MENU_PROJECTS"] = "Проекты";
 $MESS["TOP_MENU_GROUPS_EXTRANET"] = "Группы экстранет";
 $MESS["TOP_MENU_DEPARTMENTS"] = "Подразделения";
 $MESS["TOP_MENU_TELEPHONY"] = "Телефония";
@@ -13,6 +14,7 @@ $MESS["TOP_MENU_LIVE_FEED"] = "Живая лента";
 $MESS["TOP_MENU_LIVE_FEED2"] = "Новости";
 $MESS["TOP_MENU_LIVE_FEED3"] = "Лента";
 $MESS["TOP_MENU_TASKS"] = "Задачи и Проекты";
+$MESS["TOP_MENU_TASKS_NEW"] = "Задачи";
 $MESS["TOP_MENU_CALENDAR"] = "Календарь";
 $MESS["TOP_MENU_DISK"] = "Диск";
 $MESS["TOP_MENU_DISK_DOCUMENTS"] = "Документы";
@@ -51,4 +53,5 @@ $MESS["TOP_MENU_SPACES"] = "Пространства";
 $MESS["TOP_MENU_BICONNECTOR_CONSTRUCTOR"] = "BI Конструктор";
 $MESS["TOP_MENU_BOOKING"] = "Онлайн-запись";
 $MESS["TOP_MENU_AI_AGENTS"] = "AI-агенты";
-$MESS["TOP_MENU_NOTE_BASE"] = "База знаний";
+$MESS["TOP_MENU_NOTE_BASE"] = "База знаний 2.0";
+$MESS["TOP_MENU_PERFORMAN_LIBRARY"] = "PRO Развитие";

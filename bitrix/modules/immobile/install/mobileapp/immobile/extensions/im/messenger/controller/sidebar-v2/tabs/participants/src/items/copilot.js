@@ -3,6 +3,8 @@
  */
 jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/items/copilot', (require, exports, module) => {
 	const { ParticipantUserItem } = require('im/messenger/controller/sidebar-v2/tabs/participants/src/items/user');
+	const { Color: MessengerColor } = require('im/messenger/const');
+	const { Feature } = require('im/messenger/lib/feature');
 
 	/**
 	 * @class ParticipantCopilotItem
@@ -38,11 +40,15 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/items/copilo
 
 		createTitle()
 		{
+			const style = { color: this.chatTitle.getTitleColor() };
+			if (Feature.isBitrixGptV2Available)
+			{
+				style.colorGradient = MessengerColor.copilotGradient;
+			}
+
 			return {
 				text: this.chatTitle.getTitle(),
-				style: {
-					color: this.chatTitle.getTitleColor(),
-				},
+				style,
 			};
 		}
 

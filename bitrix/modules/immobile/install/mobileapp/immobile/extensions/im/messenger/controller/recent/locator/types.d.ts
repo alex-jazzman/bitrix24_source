@@ -13,10 +13,13 @@ import { ISelectService } from '../service/select/types';
 import { IEmptyStateService } from '../service/empty-state/types';
 import { IExternalService } from '../service/external/types';
 import { IFilterService } from '../service/filter/types';
+import {IInviteBannerService} from "../service/invite-banner/types";
 
 declare type RecentLocatorServices = Partial<{
 	'id': string,
 	'ui': Promise<BaseList>,
+	'parentChatId': number,
+	'recentSection': string,
 	'quick-recent': IQuickRecentService,
 	'database-load'?: IDatabaseLoadService,
 	'server-load'?: IServerLoadService,
@@ -31,6 +34,7 @@ declare type RecentLocatorServices = Partial<{
 	select?: ISelectService,
 	external?: IExternalService,
 	emitter: JNEventEmitter,
+	inviteBanner?: IInviteBannerService,
 }>
 
 export type RecentLocator = IServiceLocator<RecentLocatorServices>;

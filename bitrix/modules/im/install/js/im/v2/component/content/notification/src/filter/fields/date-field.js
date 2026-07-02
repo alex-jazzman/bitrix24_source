@@ -1,12 +1,10 @@
-import { Dom } from 'main.core';
-import { BaseEvent } from 'main.core.events';
+import { Dom, type JsonObject } from 'main.core';
+import { type BaseEvent } from 'main.core.events';
 import { PopupManager } from 'main.popup';
 import { Menu, type MenuItemOptions } from 'ui.system.menu';
 import { DatePicker, DatePickerEvent, createDate } from 'ui.date-picker';
 import { BInput, InputSize } from 'ui.system.input.vue';
 import { BIcon, Outline as OutlineIcons } from 'ui.icon-set.api.vue';
-
-import type { JsonObject } from 'main.core';
 
 import './css/field.css';
 

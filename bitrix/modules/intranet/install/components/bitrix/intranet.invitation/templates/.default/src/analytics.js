@@ -1,5 +1,5 @@
 import { sendData } from 'ui.analytics';
-import DepartmentControl from 'intranet.department-control';
+import { DepartmentControl } from 'intranet.department-control';
 import InviteType from './type/invite-type';
 
 export class Analytics
@@ -45,6 +45,7 @@ export class Analytics
 	{
 		return {
 			section: this.#getCSection(),
+			source: this.#getCSection(),
 			type,
 		};
 	}

@@ -1,5 +1,5 @@
 import { Messenger } from 'im.public';
-import { ImModelUser } from 'im.v2.model';
+import { type ImModelUser } from 'im.v2.model';
 import { AvatarSize, ChatAvatar } from 'im.v2.component.elements.avatar';
 import { ChatTitle } from 'im.v2.component.elements.chat-title';
 

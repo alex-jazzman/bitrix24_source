@@ -5,6 +5,7 @@ import { Event, Loc, Tag, Cache } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Popup, PopupManager } from 'main.popup';
 import { Button, ButtonColor, ButtonState } from 'ui.buttons';
+import 'crm_common';
 
 import './todo-create-notification.css';
 

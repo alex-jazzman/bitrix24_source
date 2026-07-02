@@ -1,5 +1,9 @@
-<?
+<?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+
+/**
+ * @global CMain $APPLICATION
+ */
 
 $APPLICATION->SetAdditionalCSS('/bitrix/gadgets/bitrix/admin_perfmon/styles.css');
 
@@ -15,7 +19,7 @@ else:
 	$text2 = GetMessage("GD_PERFMON_NO_MODULE_INST");
 endif;
 
-?><div class="bx-gadgets-content-layout-perform"><div class="bx-gadgets-title"><?=GetMessage("GD_PERFMON")?></div><?
+?><div class="bx-gadgets-content-layout-perform"><div class="bx-gadgets-title"><?=GetMessage("GD_PERFMON")?></div><?php
 ?><div class="bx-gadget-bottom-cont<?=(
 	(
 		!$bPerfmonModuleInstalled
@@ -30,7 +34,7 @@ endif;
 	)
 		? " bx-gadget-bottom-button-cont"
 		: ""
-)?><?=($mark_value > 0 ? " bx-gadget-mark-cont" : "")?>"><?
+)?><?=($mark_value > 0 ? " bx-gadget-mark-cont" : "")?>"><?php
 	if (!$bPerfmonModuleInstalled)
 	{
 		if ($GLOBALS["USER"]->CanDoOperation('edit_other_settings'))
@@ -38,7 +42,7 @@ endif;
 			?><a class="bx-gadget-button bx-gadget-button-clickable" href="/bitrix/admin/module_admin.php?id=perfmon&install=Y&lang=<?=LANGUAGE_ID?>&<?=bitrix_sessid_get()?>">
 				<div class="bx-gadget-button-lamp"></div>
 				<div class="bx-gadget-button-text"><?=GetMessage("GD_PERFMON_ON")?></div>
-			</a><?
+			</a><?php
 		}
 	}
 	else
@@ -48,21 +52,21 @@ endif;
 			?><a class="bx-gadget-button bx-gadget-button-clickable<?=($mark_value > 0 ? " bx-gadget-button-active" : "")?>" href="/bitrix/admin/perfmon_panel.php?lang=<?=LANGUAGE_ID?>">
 				<div class="bx-gadget-button-lamp"></div>
 				<div class="bx-gadget-button-text"><?=GetMessage(($mark_value > 0 ? "GD_PERFMON_TESTED" : "GD_PERFMON_TEST"))?></div>
-			</a><?
+			</a><?php
 		}
 		elseif($mark_value > 0)
 		{
 			?><div class="bx-gadget-button bx-gadget-button-active">
 				<div class="bx-gadget-button-lamp"></div>
 				<div class="bx-gadget-button-text"><?=GetMessage("GD_PERFMON_TESTED")?></div>
-			</div><?
+			</div><?php
 		}
 
 		if ($mark_value > 0)
 		{
-			?><div class="bx-gadget-mark"><?=$mark_value?></div><?
+			?><div class="bx-gadget-mark"><?=$mark_value?></div><?php
 		}
 	}
-	?><div class="bx-gadget-desc<?=($mark_value > 0 ? " bx-gadget-desc-wmark" : "")?>"><?=$text2?></div><?
+	?><div class="bx-gadget-desc<?=($mark_value > 0 ? " bx-gadget-desc-wmark" : "")?>"><?=$text2?></div><?php
 ?></div></div>
 <div class="bx-gadget-shield"></div>

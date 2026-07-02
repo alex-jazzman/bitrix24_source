@@ -58,6 +58,10 @@ $button->setAirDesign();
 $button->setNoCaps();
 $button->setStyle(AirButtonStyle::OUTLINE);
 $button->setSize(Size::SMALL);
+if ($arResult['UNIQUE_BUTTON_ID'])
+{
+	$button->setUniqId($arResult['UNIQUE_BUTTON_ID']);
+}
 
 $button->getMainButton()->addAttribute('id', $id . '_top');
 $button->getMenuButton()->addAttribute('id', $id);

@@ -3,6 +3,7 @@
  */
 jn.define('im/messenger/lib/element/dialog/message/audio', (require, exports, module) => {
 	const { Type } = require('type');
+	const { Color } = require('tokens');
 
 	const { MessageType } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
@@ -16,10 +17,9 @@ jn.define('im/messenger/lib/element/dialog/message/audio', (require, exports, mo
 	{
 		/**
 		 * @param {MessagesModelState} modelMessage
-		 * @param {CreateMessageOptions} options
-		 * @param {FilesModelState} file
+		 * @param {CreateMessageOptions|{}} options
 		 */
-		constructor(modelMessage = {}, options = {}, file = {})
+		constructor(modelMessage, options = {})
 		{
 			super(modelMessage, options);
 
@@ -28,12 +28,12 @@ jn.define('im/messenger/lib/element/dialog/message/audio', (require, exports, mo
 				this.setMessage(modelMessage.text, { dialogId: options.dialogId });
 			}
 
-			this.setShowTail(true);
+			this.file = this.getModelFiles()[0];
 
 			const transcript = serviceLocator.get('core')
 				.getStore()
-				.getters['filesModel/transcriptModel/getById'](file.id);
-			const audio = new Audio(modelMessage, file, transcript, options);
+				.getters['filesModel/transcriptModel/getById'](this.file.id);
+			const audio = new Audio(modelMessage, this.file, transcript, options);
 			this.audio = audio.toMessageFormat();
 
 			/* region deprecated properties */
@@ -75,6 +75,28 @@ jn.define('im/messenger/lib/element/dialog/message/audio', (require, exports, mo
 			}
 
 			this.audio.playingTime = playingTime;
+		}
+
+		setSystemStyle()
+		{
+			super.setSystemStyle();
+
+			this.style.audio = {
+				rateBorderColor: Color.chatOverallTech3.toHex(),
+				rateTextColor: Color.base1.toHex(),
+				speech2TextBackgroundColor: Color.chatOverallTech.toHex(),
+				speech2TextIconColor: Color.chatOverallBaseWhite2.toHex(),
+				speech2TextLoaderColor: Color.chatOverallBaseWhite1.toHex(),
+				speech2TextCollapseIconColor: Color.chatOverallBaseWhite1.toHex(),
+				speech2TextSeparatorColor: Color.chatOverallBase0.toHex(),
+				durationColor: Color.chatOtherBase1_1.toHex(),
+				playButtonBackgroundColor: Color.accentMainPrimary.toHex(),
+				playButtonIconColor: Color.chatOverallBaseWhite1.toHex(),
+				waveColor: Color.chatOtherBase0_1.toHex(),
+				waveActiveColor: Color.accentMainPrimary.toHex(),
+			};
+
+			return this;
 		}
 	}
 

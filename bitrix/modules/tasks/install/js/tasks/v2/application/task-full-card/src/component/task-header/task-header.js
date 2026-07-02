@@ -1,7 +1,7 @@
 import { Title as TitleField } from 'tasks.v2.component.fields.title';
 import { Importance } from 'tasks.v2.component.fields.importance';
 
-import { BurgerMenu } from './burger-menu/burger-menu';
+import { ControlPanel } from './control-panel/control-panel';
 import { OpenFullCard } from './open-full-card';
 import './task-header.css';
 
@@ -11,8 +11,8 @@ export const TaskHeader = {
 	components: {
 		TitleField,
 		Importance,
-		BurgerMenu,
 		OpenFullCard,
+		ControlPanel,
 	},
 	inject: {
 		isEdit: {},
@@ -21,10 +21,12 @@ export const TaskHeader = {
 	},
 	template: `
 		<div class="tasks-full-card-header">
-			<TitleField/>
-			<Importance/>
-			<BurgerMenu v-if="!isTemplate && isEdit"/>
-			<OpenFullCard v-if="embedded"/>
+			<TitleField />
+			<Importance />
+			<OpenFullCard v-if="embedded" />
+			<ControlPanel
+				v-if="!isTemplate && isEdit"
+			/>
 		</div>
 	`,
 };

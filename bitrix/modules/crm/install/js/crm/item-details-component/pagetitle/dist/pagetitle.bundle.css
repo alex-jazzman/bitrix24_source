@@ -25,8 +25,7 @@
 	-webkit-text-decoration: underline dashed;
 	        text-decoration: underline dashed;
 	text-decoration-thickness: 1px;
-	-webkit-text-decoration-color: #ccd0d4;
-	        text-decoration-color: #ccd0d4;
+	text-decoration-color: #ccd0d4;
 	text-underline-offset: 3px;
 	color: #333;
 	display: inline-block;
@@ -47,8 +46,7 @@
 	-webkit-text-decoration: underline dashed;
 	        text-decoration: underline dashed;
 	text-decoration-thickness: 1px;
-	-webkit-text-decoration-color: #333;
-	        text-decoration-color: #333;
+	text-decoration-color: #333;
 	color: #000;
 }
 
@@ -57,6 +55,10 @@
 }
 
 .crm-details-pagetitle-prefix {
+	display: inline-flex;
+	align-items: center;
 	white-space: nowrap;
 	height: 30px;
+	color: var(--ui-color-palette-gray-70);
+	font-size: var(--ui-size-sm2);
 }

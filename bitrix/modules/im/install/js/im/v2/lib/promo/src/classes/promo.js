@@ -1,6 +1,6 @@
-import { PromoId } from 'im.v2.const';
+import { type PromoId } from 'im.v2.const';
 
-import type { PromoParams, RawPromoData } from 'im.v2.provider.pull';
+import { type PromoParams, type RawPromoData } from 'im.v2.provider.pull';
 
 export class Promo
 {

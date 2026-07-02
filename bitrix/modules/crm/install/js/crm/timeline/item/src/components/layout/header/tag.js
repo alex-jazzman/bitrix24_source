@@ -1,12 +1,12 @@
-import { Dom, Runtime, Type } from 'main.core';
+import { Dom, Text, Type } from 'main.core';
 import { Label } from 'ui.label';
+import { hint } from 'ui.vue3.directives.hint';
 
 import { Action } from '../../../action';
 import { TagType } from '../../enums/tag-type';
 
-import 'ui.hint';
-
 export const Tag = {
+	directives: { hint },
 	props: {
 		title: {
 			type: String,
@@ -29,7 +29,13 @@ export const Tag = {
 			default: TagType.SECONDARY,
 		},
 		state: String,
+		tagId: {
+			type: String,
+			required: false,
+			default: '',
+		},
 	},
+
 	computed:
 	{
 		className(): Object
@@ -56,6 +62,21 @@ export const Tag = {
 		tagContainerRef(): HTMLDivElement
 		{
 			return this.$refs.tag;
+		},
+
+		hintOptions(): ?Object
+		{
+			if (!Type.isStringFilled(this.hint))
+			{
+				return null;
+			}
+
+			return {
+				text: Text.encode(this.hint),
+				popupOptions: {
+					offsetTop: 5,
+				},
+			};
 		},
 	},
 	methods:
@@ -99,55 +120,31 @@ export const Tag = {
 			const action = new Action(this.action);
 			action.execute(this);
 		},
-
-		showTooltip(): void
-		{
-			if (this.hint === '')
-			{
-				return;
-			}
-
-			Runtime.debounce(
-				() => {
-					BX.UI.Hint.show(
-						this.$el,
-						this.hint,
-						true,
-					);
-				},
-				50,
-				this,
-			)();
-		},
-
-		hideTooltip(): void
-		{
-			if (this.hint === '')
-			{
-				return;
-			}
-
-			BX.UI.Hint.hide(this.$el);
-		},
 	},
 
 	mounted(): void
 	{
-		this.renderTag({ title: this.title, type: this.type });
+		this.renderTag({
+			title: this.title,
+			type: this.type,
+		});
 	},
 
 	updated(): void
 	{
-		this.renderTag({ title: this.title, type: this.type });
+		this.renderTag({
+			title: this.title,
+			type: this.type,
+		});
 	},
 
 	template: `
 		<div
-			ref="tag"
 			:class="className"
-			@mouseover="showTooltip"
-			@mouseleave="hideTooltip"
+			v-hint="hintOptions"
+			ref="tag"
 			@click="executeAction"
+			:data-tag-id="tagId"
 			data-hint-interactivity
 		></div>
 	`,

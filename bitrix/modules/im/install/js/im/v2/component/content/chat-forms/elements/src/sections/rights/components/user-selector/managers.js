@@ -1,6 +1,7 @@
 import { TagSelector } from 'ui.entity-selector';
 
 import { Core } from 'im.v2.application.core';
+import { SelectorEntity } from 'im.v2.const';
 
 import '../../css/managers.css';
 
@@ -24,7 +25,7 @@ export const ManagersSelector = {
 	created()
 	{
 		const preselectedItems = this.managerIds.map((userId: number) => {
-			return ['user', userId];
+			return [SelectorEntity.user, userId];
 		});
 
 		this.membersSelector = new TagSelector({
@@ -37,8 +38,8 @@ export const ManagersSelector = {
 				enableSearch: false,
 				context: 'IM_CHAT_CREATE',
 				entities: [
-					{ id: 'user' },
-					{ id: 'department' },
+					{ id: SelectorEntity.user },
+					{ id: SelectorEntity.department },
 				],
 				preselectedItems,
 			},

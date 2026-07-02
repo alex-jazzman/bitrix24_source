@@ -9,6 +9,7 @@ return [
 	'js' => 'dist/scroll-with-gradient.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
+		'im.v2.lib.directives',
 	],
 	'skip_core' => true,
 ];

@@ -396,6 +396,12 @@ else
 		}
 	}
 
+	$themeProvider = new Mobile\Provider\ThemeProvider((int)$USER->GetID(), 'bitrix24');
+	$currentTheme = $themeProvider->getCurrentTheme();
+	$currentTheme = $themeProvider->isSvgTheme($currentTheme)
+		? $themeProvider->getFallbackTheme()
+		: $currentTheme;
+
 	$data = [
 		"status" => "success",
 		"id" => $USER->GetID(),
@@ -412,6 +418,7 @@ else
 		"user" => [
 			"type" => $userRole?->value ?? 'employee',
 			"avatar" => $profile->getAvatar(),
+			"theme" => $currentTheme,
 		],
 		'avamenu' => [
 			'userInfo' => $profile->getData(),

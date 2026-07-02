@@ -9,13 +9,14 @@ return [
 	'js' => 'dist/channel-container.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'im.v2.component.list.items.channel',
+		'im.v2.component.list.container.elements.create-chat-button',
 		'im.v2.component.list.container.elements.create-chat-promo',
+		'im.v2.component.list.items.channel',
 		'im.v2.const',
 		'im.v2.lib.analytics',
+		'im.v2.lib.create-chat',
 		'im.v2.lib.logger',
 		'im.v2.lib.promo',
-		'im.v2.lib.create-chat',
 	],
 	'skip_core' => true,
 ];

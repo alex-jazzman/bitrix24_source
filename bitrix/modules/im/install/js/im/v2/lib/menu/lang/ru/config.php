@@ -37,3 +37,7 @@ $MESS["IM_LIB_MENU_REMOVE_RECENT_STICKER"] = "Удалить из недавни
 $MESS["IM_LIB_MENU_CLEAR_RECENT_STICKERS"] = "Очистить недавние";
 $MESS["IM_LIB_MENU_SEND_STICKER"] = "Отправить в чат";
 $MESS["IM_LIB_MENU_REMOVE_STICKER"] = "Удалить из набора";
+
+$MESS["IM_LIB_MENU_OPEN_UNREAD_MODE"] = "Непрочитанные";
+$MESS["IM_LIB_MENU_OPEN_ALL_MODE"] = "Все";
+$MESS["IM_LIB_MENU_READ_ALL_CHATS"] = "Прочитать всё";

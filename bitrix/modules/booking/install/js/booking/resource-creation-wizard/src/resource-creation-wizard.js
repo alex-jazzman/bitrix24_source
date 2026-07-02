@@ -5,8 +5,8 @@ import type { VueCreateAppResult } from 'ui.vue3';
 import { Core } from 'booking.core';
 import { EventName, Model } from 'booking.const';
 import { locMixin } from 'booking.component.mixin.loc-mixin';
-import { Notifications } from 'booking.model.notifications';
 import { ResourceCreationWizardModel } from 'booking.model.resource-creation-wizard';
+import { AiAgentModel } from 'booking.model.ai-agent';
 import { SidePanelInstance } from 'booking.lib.side-panel-instance';
 import { App } from './components/app';
 
@@ -39,12 +39,16 @@ export class ResourceCreationWizard
 		try
 		{
 			await Core.init();
-			await Core.addDynamicModule(
-				ResourceCreationWizardModel
-					.create()
-					.setVariables({ resourceId }),
-			);
-			await Core.addDynamicModule(Notifications.create());
+			await Promise.all([
+				Core.addDynamicModule(
+					ResourceCreationWizardModel
+						.create()
+						.setVariables({ resourceId }),
+				),
+				Core.addDynamicModule(
+					AiAgentModel.create(),
+				),
+			]);
 		}
 		catch (error)
 		{
@@ -85,8 +89,10 @@ export class ResourceCreationWizard
 		this.#application.unmount();
 		this.#application = null;
 
-		await Core.removeDynamicModule(Model.ResourceCreationWizard);
-		await Core.removeDynamicModule(Model.Notifications);
+		await Promise.all([
+			Core.removeDynamicModule(Model.ResourceCreationWizard),
+			Core.removeDynamicModule(Model.AiAgent),
+		]);
 	}
 
 	subscribe(): void

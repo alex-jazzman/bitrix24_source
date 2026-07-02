@@ -39,6 +39,15 @@ jn.define('im/messenger/controller/recent/service/server-load/copilot', (require
 		}
 
 		/**
+		 * @param {RefreshModeType} mode
+		 * @return {object}
+		 */
+		getInitRequestOptions(mode)
+		{
+			return {};
+		}
+
+		/**
 		 * @return {MessengerCoreStore}
 		 */
 		get store()
@@ -196,14 +205,15 @@ jn.define('im/messenger/controller/recent/service/server-load/copilot', (require
 
 			try
 			{
-				const recentAction = firstPage ? 'recentModel/setFirstPageByTab' : 'recentModel/setCopilot';
+				const recentAction = firstPage ? 'recentModel/setFirstPageByRecentSection' : 'recentModel/setCopilot';
 				await Promise.all([
 					this.store.dispatch('usersModel/set', modelData.users),
 					this.store.dispatch('dialoguesModel/set', modelData.dialogues),
 					this.store.dispatch('dialoguesModel/copilotModel/setCollection', modelData.copilot),
 					this.store.dispatch(recentAction, {
-						tab: this.recentLocator.get('id') ?? NavigationTabId.copilot,
+						recentSection: this.recentLocator.get('recentSection'),
 						itemList: modelData.recent,
+						parentChatId: this.recentLocator.get('parentChatId'),
 					}),
 				]);
 
@@ -332,6 +342,16 @@ jn.define('im/messenger/controller/recent/service/server-load/copilot', (require
 				nextPage: 2,
 				lastItem,
 			});
+		}
+
+		subscribeEvents()
+		{
+			this.logger.log('subscribeEvents');
+		}
+
+		unsubscribeEvents()
+		{
+			this.logger.log('unsubscribeEvents');
 		}
 	}
 

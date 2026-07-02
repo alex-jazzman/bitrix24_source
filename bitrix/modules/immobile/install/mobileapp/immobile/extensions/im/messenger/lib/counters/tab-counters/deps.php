@@ -11,4 +11,9 @@ return [
 		'im:messenger/lib/helper',
 		'im:messenger/lib/logger',
 	],
+	'bundle' => [
+		'./src/base',
+		'./src/global',
+		'./src/nested',
+	],
 ];

@@ -8,6 +8,7 @@
 
 .booking--booking--actions-popup--extra-resources-info--extra-resources-dialog .ui-selector-item-title {
 	max-height: 2rem;
+	/* @chef-ignore */
 	text-wrap: auto;
 	display: -webkit-box;
 	-webkit-line-clamp: 2;

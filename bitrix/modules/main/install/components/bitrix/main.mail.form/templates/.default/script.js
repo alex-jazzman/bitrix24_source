@@ -261,6 +261,8 @@
 
 		errorNode.innerHTML = '';
 		errorNode.append(alert.getContainer());
+		errorNode.setAttribute('tabindex', '-1');
+		errorNode.focus();
 
 		this.initScrollable();
 		if (this.__scrollable)
@@ -844,7 +846,48 @@
 		);
 
 		tagSelector.renderTo(fieldNode);
-	}
+
+		const fieldRow = BX.findParent(fieldNode, { tag: 'tr' });
+		const labelNode = fieldRow ? fieldRow.querySelector('label.main-mail-form-field-title') : null;
+
+		const selectorContainer = fieldNode.querySelector('.ui-tag-selector-outer-container');
+		if (selectorContainer)
+		{
+			selectorContainer.setAttribute('tabindex', '0');
+			selectorContainer.setAttribute('aria-haspopup', 'dialog');
+			selectorContainer.setAttribute('aria-expanded', 'false');
+			if (labelNode?.id)
+			{
+				selectorContainer.setAttribute('aria-labelledby', labelNode.id);
+			}
+
+			if (fieldNode.dataset.fieldRequired === 'true')
+			{
+				selectorContainer.setAttribute('aria-required', 'true');
+			}
+			selectorContainer.addEventListener('keydown', (event) => {
+				if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA')
+				{
+					return;
+				}
+
+				if (event.key === 'Enter' || event.key === ' ')
+				{
+					event.preventDefault();
+					const addButtonCaption = selectorContainer.querySelector('.ui-tag-selector-add-button-caption');
+					addButtonCaption?.click();
+				}
+			});
+
+			const selectorDialog = tagSelector.getDialog();
+			selectorDialog?.subscribe('onShow', () => {
+				selectorContainer.setAttribute('aria-expanded', 'true');
+			});
+			selectorDialog?.subscribe('onHide', () => {
+				selectorContainer.setAttribute('aria-expanded', 'false');
+			});
+		}
+	};
 
 	BXMainMailForm.prototype.init = function(props)
 	{
@@ -967,8 +1010,51 @@
 		});
 
 		this.hideAiImageGeneratorButton();
+		this.initSliderFocusOnOpen();
 
 		return true;
+	};
+
+	BXMainMailForm.prototype.initSliderFocusOnOpen = function()
+	{
+		const topWindow = window.top || window.parent || window;
+		const editor = this.editor;
+
+		topWindow.BX.addCustomEvent('SidePanel.Slider:onClose', (event) => {
+			const slider = event.getSlider();
+			if (!slider || slider.getFrameWindow() !== window)
+			{
+				return;
+			}
+
+			if (document.activeElement && document.activeElement !== document.body)
+			{
+				document.activeElement.blur();
+			}
+		});
+
+		topWindow.BX.addCustomEvent('SidePanel.Slider:onOpenComplete', (event) => {
+			const slider = event.getSlider();
+			if (!slider || slider.getFrameWindow() !== window || !editor)
+			{
+				return;
+			}
+
+			const iframeElement = editor.sandbox && editor.sandbox.GetIframe();
+			if (iframeElement)
+			{
+				iframeElement.focus();
+			}
+
+			setTimeout(() => {
+				editor.Focus(false);
+				const body = editor.GetIframeDoc()?.body;
+				if (body?.firstChild)
+				{
+					editor.selection.SetBefore(body.firstChild);
+				}
+			}, 0);
+		});
 	};
 
 	BXMainMailForm.prototype.initScrollable = function()
@@ -1373,7 +1459,8 @@
 
 		BX(this.fieldId).style.display = this.params.folded ? 'none' : '';
 		this.__switch.style.display = this.params.folded ? '' : 'none';
-	}
+		this.__switch.setAttribute('aria-expanded', this.params.folded ? 'false' : 'true');
+	};
 
 	BXMainMailFormField.prototype.hide = function()
 	{
@@ -1391,7 +1478,10 @@
 		this.params.folded = true;
 
 		if (!this.params.hidden)
+		{
 			this.__switch.style.display = '';
+			this.__switch.setAttribute('aria-expanded', 'false');
+		}
 
 		BX(this.fieldId).style.display = 'none';
 		BX.removeClass(this.fieldId, 'main-mail-form-drop-animation');
@@ -1405,9 +1495,20 @@
 		{
 			BX.addClass(this.fieldId, 'main-mail-form-drop-animation');
 			BX(this.fieldId).style.display = '';
+			this.__switch.setAttribute('aria-expanded', 'true');
 		}
 
 		this.__switch.style.display = 'none';
+
+		var fieldRow = BX(this.fieldId);
+		if (fieldRow)
+		{
+			var input = fieldRow.querySelector('input:not([type="hidden"]), textarea, [tabindex]');
+			if (input)
+			{
+				input.focus();
+			}
+		}
 	}
 
 	BXMainMailFormField.__types = {
@@ -1798,7 +1899,8 @@
 		);
 
 		// append original message quote
-		var quoteButton = BX.findChildByClassName(field.form.htmlForm, 'main-mail-form-quote-button', true);
+		var quoteButtonSpan = BX.findChildByClassName(field.form.htmlForm, 'main-mail-form-quote-button', true);
+		var quoteButton = quoteButtonSpan?.closest('button') || quoteButtonSpan;
 		var quoteHandler = function()
 		{
 			if (field.quoteNode.__folded)
@@ -1808,7 +1910,7 @@
 				field.setValue(editor.GetContent(), {quote: true, signature: false});
 				editor.Focus(false);
 
-				BX.hide(quoteButton.parentNode.parentNode || quoteButton.parentNode)
+				BX.hide(quoteButton.closest('[data-id="ReplyQuote"]') || quoteButton);
 
 				const editorIframeCopilot = editor.iframeView?.copilot;
 				if (
@@ -1906,7 +2008,22 @@
 				field.setValue('', {quote: true, signature: true});
 				field.form.editorInited = true;
 				BX.onCustomEvent(field.form, 'MailForm::editor::init', [field]);
-			}
+
+				const editorDoc = editor.GetIframeDoc();
+				if (editorDoc)
+				{
+					editorDoc.addEventListener('keydown', (e) => {
+						if (e.key === 'Escape')
+						{
+							const slider = top.BX.SidePanel.Instance.getTopSlider();
+							if (slider && slider.canCloseByEsc())
+							{
+								slider.close();
+							}
+						}
+					});
+				}
+			},
 		);
 
 		BX.addCustomEvent(field.form, 'MailForm:show', function ()
@@ -2217,6 +2334,7 @@
 			this.signatureSelectMenu = new BX.PopupMenuWindow({
 				maxWidth: 300,
 				maxHeight: 300,
+				focusTrap: true,
 				bindElement: this.signatureSelectButton,
 				items: [
 					{
@@ -2575,14 +2693,26 @@
 				overlay: true,
 				bindElement: this.calendarSharingLinkButton,
 				offsetLeft: 40,
+				closeByEsc: true,
 				buttons: [
 					new BX.UI.CloseButton({
 						text: BX.Loc.getMessage('MAIN_MAIL_FORM_EDITOR_CALENDAR_SHARING_POPUP_CALENDAR_OPEN_BUTTON'),
 						color: BX.UI.ButtonColor.PRIMARY,
 						events: {
 							click: () => {
+								const returnFocusTarget = this.calendarSharingLinkButton;
 								BX.SidePanel.Instance.open(
 									this.options.userCalendarPath,
+									{
+										events: {
+											onCloseComplete: () => {
+												if (returnFocusTarget && document.body.contains(returnFocusTarget))
+												{
+													returnFocusTarget.focus({ focusVisible: true });
+												}
+											},
+										},
+									},
 								);
 								this.popupOpenCalendar.close();
 							},

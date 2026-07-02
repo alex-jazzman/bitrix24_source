@@ -1,0 +1,37 @@
+.booking-booking-week-selected-cell {
+	position: absolute;
+	z-index: 3;
+	left: var(--left);
+	top: var(--top);
+	width: var(--width);
+	height: var(--height);
+	box-sizing: border-box;
+	transition: left var(--booking-animation-duration) var(--booking-animation-function);
+}
+
+.--booking-booking-no-transition .booking-booking-week-selected-cell {
+	transition: none;
+}
+
+.booking-booking-week-selected-cell.--fixed {
+	transition: none;
+}
+
+.booking-booking-week-selected-cell__restriction {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	padding: 4px 8px;
+	box-sizing: border-box;
+	border-radius: 4px;
+	background: var(--ui-color-palette-red-10, #ffeef0);
+	border: 1px solid var(--ui-color-palette-red-40, #ff7088);
+	color: var(--ui-color-palette-red-60, #cc1430);
+	font-size: var(--ui-font-size-sm);
+	text-align: center;
+	cursor: default;
+	user-select: none;
+	white-space: normal;
+	line-height: 1.3;
+}

@@ -8,8 +8,8 @@ return [
 	'js' => 'dist/main-resources.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'ui.vue3.vuex',
 		'booking.const',
+		'ui.vue3.vuex',
 	],
 	'skip_core' => true,
 ];

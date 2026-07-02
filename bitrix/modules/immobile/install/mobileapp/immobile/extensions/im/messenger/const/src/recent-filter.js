@@ -7,5 +7,9 @@ jn.define('im/messenger/const/recent-filter', (require, exports, module) => {
 		unread: 'filter-unread',
 	};
 
-	module.exports = { RecentFilterId };
+	const RecentActionId = {
+		readAll: 'read-all',
+	};
+
+	module.exports = { RecentFilterId, RecentActionId };
 });

@@ -7,13 +7,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 return [
 	'js' => 'dist/deal-helper.bundle.js',
 	'rel' => [
-		'main.core',
-		'main.sidepanel',
+		'booking.const',
+		'booking.core',
 		'booking.provider.service.booking-service',
 		'booking.provider.service.main-page-service',
-		'booking.core',
-		'booking.const',
 		'booking.provider.service.wait-list-service',
+		'main.core',
+		'main.sidepanel',
 	],
 	'skip_core' => false,
 ];

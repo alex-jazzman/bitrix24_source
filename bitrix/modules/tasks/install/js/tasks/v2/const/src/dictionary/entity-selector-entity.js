@@ -16,6 +16,7 @@ export const EntitySelectorEntity = Object.freeze({
 	DynamicMultiple: 'dynamic_multiple',
 	ReminderRecipient: 'reminder-recipient',
 	Task: 'task-with-id',
+	TemplateCommon: 'task-template',
 	Template: 'task-template-with-id',
 	MetaUser: 'meta-user',
 	AllUser: 'all-users',

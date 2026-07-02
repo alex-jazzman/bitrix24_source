@@ -3,10 +3,9 @@
  */
 
 jn.define('im/messenger/lib/element/dialog/message/banner/banners/sign/banner', (require, exports, module) => {
-	const { Type } = require('type');
 	const { BannerMessage } = require('im/messenger/lib/element/dialog/message/banner/message');
 	const { BannerMessageConfiguration } = require('im/messenger/lib/element/dialog/message/banner/configuration');
-	const { MessageParams } = require('im/messenger/const');
+	const { MessageComponent } = require('im/messenger/const');
 	const { Theme } = require('im/lib/theme');
 	const { transparent } = require('utils/color');
 
@@ -77,7 +76,7 @@ jn.define('im/messenger/lib/element/dialog/message/banner/banners/sign/banner', 
 
 		static getComponentId()
 		{
-			return MessageParams.ComponentId.SignMessage;
+			return MessageComponent.sign;
 		}
 
 		get metaData()
